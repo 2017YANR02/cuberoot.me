@@ -1,0 +1,51 @@
+# Scramble samples — eo / eo_xxxxcross / O / bin 10
+# Population in this bin: 44
+# Samples listed: 44 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+46201001,L B2 U2 R F2 L2 U2 R' F L' F R2 U' L D' F' L R2 U L2 U',O,US Nationals 2014 (2014-08-01~03),333bf R1 B #1
+186522001,U' D' F R2 B' D2 L2 F U' B2 L2 F2 R2 D' B2 R2,O,Utah Megacomp 2015 (2015-09-05),333oh Final B E1
+189363001,F2 R U' F' U R' L U' L B' U2 R2 B2 U2 B2 R' B2 L,O,MCC Gamma 2015 (2015-09-13),333ft Final A E1
+361778001,B2 L' D2 R2 D2 B2 R U2 R2 U' R' B R2 B' R' F U F' D R2,O,Tecla Rubik 2016 (2016-09-10),333 Final B #2
+591443001,U R F' L' U B2 R B' D2 R U L2 D R2 F2 U R2 D',O,Bekubes Costa Rica 2017 (2017-09-09~10),333 R1 B E1
+649288001,U' R2 D U F2 D R2 U L' B' R' B2 L2 F' L F R2 B R',O,Berkeley Fall 2017 (2017-11-18~19),333 R1 F #1
+658713001,D R2 B2 R B R' D2 L B R U' L' D2 R2 U,O,Shaker Fall 2017 (2017-12-02),333 R1 E #5
+661500026,B2 U2 L2 D2 U' F2 U R2 D L D2 U L' D U B L2 F2 D' B,O,Monnem City Cubing 2017 (2017-09-16~17),333mbf Final A #1
+821882001,R' D2 F2 L B2 F2 D2 F2 L' B U' B' L U2 B2 L U L',O,Banyumas Open 2018 (2018-07-07~08),333oh Final A #1
+905200001,U2 B U2 R2 F2 R2 U2 F L' F L F2 L U' B L' F2 U2 B,O,Ukrainian Nationals 2018 (2018-10-12~14),333 R1 B #1
+941214001,R2 U' L2 U F2 D' B2 R2 F2 R B2 U' B2 D L U2 L' F,O,Fuzhou Open 2018 (2018-11-24~25),333 Final A #3
+956237001,U' R2 U' L2 F2 U B2 F D U2 R' D2 L F2 L' D2 L2 F U,O,Cambridge Open 2018 (2018-12-15~16),333oh Final A E2
+980936001,R B' R2 U L D2 F B L' F D2 F2 D2 L2 D2 B' U2 B' L2 F2,O,Tunisia Khomsa Open 2019 (2019-01-14),333 R1 A #3
+1047778001,B2 D F2 L2 U' B2 U B2 F2 L' B L R' D F2 R' D2 L2 U F2,O,Alborz Green Cup 2019 (2019-03-07~08),333oh R1 B #3
+1062331001,U2 L R B2 U2 R' D' R2 D2 L' U2 R D' U2 R2 F2 R2,O,Lower Moreland Winter 2019 (2019-03-16),333 R2 A #1
+1111500025,F L2 U2 L2 R2 B2 F' D2 B' R2 F' L' U L' D2 U B U B R2 B' L2,O,YJ Petersburg Special 2019 (2019-04-20~21),333mbf Final A #2
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',O,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
+1208570001,L R2 F2 R' F2 D2 R' B2 R' F2 D2 U' R2 B' D' B' L2 B,O,YJ Fest Moscow 2019 (2019-06-28~30),333 R1 A E2
+1233917001,U' R B2 D F' R2 B' D2 L' F' L' D2 B2 U2 F R2 D2 F U2,O,City of Lakes Open 2019 (2019-07-27),333oh Final B #1
+1491080001,R' F2 R2 B2 D2 B2 R2 F2 L' B' D2 R' B2 F2 U' F' L' D L B',O,Ha Noi Cube Day 2020 (2020-01-05),333 R1 E #2
+1975750001,B' L2 F' D2 L2 R2 F R F D2 R2 B L B2 D2 L' B,O,Cloverdale Open 2022 (2022-06-18),333 R2 B #5
+2280525047,R F B' U' R D L' F B U B F2 R2 D2 L D2 B2 D2 R' D,O,Koalafication Tauranga 2022 (2022-10-29~30),333mbf Final A #2
+2313466001,F' D2 L' R2 U' F2 R2 F2 U' F2 D' L' D2 L2 B' L U' F,O,Grande Prairie Open 2022 (2022-11-19),333oh Final B #2
+2378836001,R D2 R2 F2 D2 R F2 D2 B2 F U' F2 L' F L2 U B D' B2,O,Cubing in Cambridge 2022 (2022-12-17),333 Final A #5
+2431300001,B R2 B R2 D2 R2 D R F' U L' B' L' B' U' F2 U2,O,Dontrien Open 2023 (2023-01-14~15),333 Final A E1
+2815229001,R U F2 L' U R2 U' L B2 L2 U2 B' U2 F L2 F U2 F,O,Bulldog Spring 2023 (2023-06-17),333oh R1 C #1
+2846759001,F' D B2 L D2 U2 B2 D2 L2 U2 R' D2 B U2 L R F' D2 B',O,Big 'n Blind Szczecinek 2023 (2023-06-30~07-02),333oh R1 A #3
+2980223001,R2 B D' F2 L B' R U B2 D' L2 D' R2 B2 R2 D2 R2 D R2,O,Hyderabad Cube Open 2023 (2023-08-11~13),333 R1 D E1
+3151379014,B R' F2 U' B2 R2 F2 L U2 R' D2 L2 B' U' F' D' F2 L2 U2 L' F',O,UNSA Speedcubing Primavera 2023 (2023-10-07~08),333mbf Final A #2
+3155239001,U2 R D2 B2 L' F2 U2 L D2 B' L B D' B2 R' B F L' U2 L2,O,Ankuram Open Saturday 2023 (2023-10-14),333bf Final B E1
+3298250096,D2 B2 U2 B2 L' F' R' U2 F2 D F2 D F2 B2 R2 U' B' D2 L B',O,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 C #1
+3533750001,L U R F R' B2 U2 R D' R2 D F2 D R2 D2 R D R',O,Acrópolis Bucaramanga 2024 (2024-02-24),333 R1 B E2
+3645743001,D2 F2 L' D2 R2 B2 R' U2 D L B2 R2 U L B2 D' B U2,O,Side Events Bangalore April 2024 (2024-04-06~07),333oh Final B #1
+3732483001,U2 F R B2 L2 D L F2 D F L' D2 F' L2 B D2 F U2,O,Cubicle Day Oxford 2024 (2024-04-28),333oh R2 B E1
+3782345001,U2 R F2 D U' B2 D L2 B2 L' U2 L B' D F2 U2 F D,O,Zibo Open 2024 (2024-05-19),333 R1 E E1
+3945299001,B R L' F2 B R' B U2 B2 D2 L2 B2 R' U2 L D' R,O,Mahavira Delhi Cube Open Saturday 2024 (2024-07-20),333 R2 B E1
+4129836001,D' F2 L2 U' L2 F' D' B' D' F2 B2 U2 R L2 D2 L2 D',O,Wiltshire September 2024 (2024-09-21~22),333 R2 A #4
+4361280032,R2 U2 F2 R2 U' L2 R B2 D2 F2 U R U F2 D' F2 U2 L2 U',O,Goiânia Xiu 2024 (2024-12-14~15),333mbf Final A #2
+4624457001,D B2 L D2 R2 F U B' R' B U' D R2 B2 D' L2 B2 D2 B2 L' F,O,Nittedal Mental Breakdown Spring 2025 (2025-04-05~06),333bf R2 B #3
+4686822001,L' B' L' D B' R' F U L2 U2 F' B U2 L2 U2 B R2 L' B2 L2 U2,O,NxN in Hanoi 2025 (2025-04-26~27),333bf R1 B #2
+4858532051,R2 D2 L2 U2 F' D2 B D2 F U2 D R B L B2 U' B R' F D2,O,Hungarian All-Rounder 7 2025 (2025-07-12),333mbf Final A #1
+5104952001,L2 U2 B' R2 F R2 B' R D R F R D L' F' R U R',O,Kumaraguru Cube Open 2025 (2025-10-11~12),333 R1 B #3
+5383506001,B2 R2 F U2 R2 U' R2 D B2 D' F2 U2 L F' D2 U' L R2 F,O,Kielce Open 2026 (2026-02-14~15),333 R1 C #4
+5634547001,R B2 R' U2 R U2 R U2 R2 D R2 U L2 D' B' R' B2 D2,O,Tomelloso Open 2026 (2026-05-16~17),333oh R1 B #2

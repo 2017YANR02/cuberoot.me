@@ -1,0 +1,8 @@
+# Scramble samples — eo / eo_xxxxcross / BGOR / bin 16
+# Population in this bin: 1
+# Samples listed: 1 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+2993517001,U2 R F2 D2 B2 U2 R2 U2 R' F' R2 U' L' D' B D2 R F' U,B,Aves María Teams 2023 (2023-08-20~21),333 R2 C #4

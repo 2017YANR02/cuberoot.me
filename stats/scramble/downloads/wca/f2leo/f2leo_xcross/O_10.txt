@@ -1,0 +1,34 @@
+# Scramble samples — f2leo / f2leo_xcross / O / bin 10
+# Population in this bin: 27
+# Samples listed: 27 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+57759001,B' D2 L2 R2 F' R2 B' L2 B D' R U2 R2 B D' L' U2 F' U,O,Desio Rubik's Ace 2014 (2014-09-14),333oh R1 A #2
+313595001,D2 R2 B F2 D2 U2 L2 U2 B' R2 F' L' R2 D B' F' D2 U L' D' F2,O,Doge Open 2016 (2016-06-18~19),333 R2 C E2
+348197001,L2 B2 D' L2 D' U' B2 D2 F L' R2 D F D' R' B F2 D2 B2,O,Michigan 2016 (2016-08-13~14),333 R1 C #4
+436180001,D2 L F D' R D2 L B' L' U R D2 F2 B' L2 F' R2 D2 L2 B,O,Cube Ala-eh II 2017 (2017-01-22),333 Final A #2
+441822001,L2 D R2 B2 R2 F2 U L2 D2 B2 U B' D R' B F R2 U' B' D2 R,O,Torneo Jorge Tadeo Lozano 2017 (2017-02-04),333oh Final D #5
+559820001,B2 L2 D2 R B2 D2 B2 L R D' L' D2 U' B D' U' R' F D' R',O,Delhi Cube Splash 2017 (2017-07-30),333 R1 F #3
+580458001,R2 B' D2 B' L2 B L2 F' R2 D' F U B2 R' F L' U R2 U2,O,MYCA Cube Day 2017 (2017-08-26),333 R1 D E1
+641636001,F2 U F2 L2 B2 L2 R2 D B' U2 L R2 B' L2 R' U' B2 D R',O,Rubik's Cube UPN 2017 (2017-11-11),333 R1 A #1
+661374012,R2 D' U2 R2 U2 B2 D2 B' L2 D' L' B' L2 U' B L F' R D2 B' L2,O,Villa Nueva Open 2017 (2017-05-27~28),333mbf Final A #1
+817455001,U2 F2 L' D2 R' F2 R D2 L' R2 D' B2 R U2 B R' F U' L' D F2,O,Crossroads Cubing 2018 (2018-06-30),333 R1 B #2
+1023870001,R' B2 F2 D2 L' F2 D2 F2 R B2 F D2 B' U R2 D' B L F D2,O,Manchester Open 2019 (2019-02-16~17),333oh Final A E2
+1033903001,R' F' D2 L' B' U' R' D' B' U R U2 B2 R2 D F2 U' R2 U2 R2 D2,O,Wrocław Open 2019 (2019-02-23~24),333oh R1 C #1
+1475078001,D F2 U' B2 U2 B2 U B2 U R F2 D R2 D F' R U2 L B' U',O,Taiyuan Winter 2019 (2019-12-22),333 R1 D #4
+1525283034,U2 L2 U2 F2 D2 L' U2 L2 F R D U F2 L2 R B' L2 R2 D2 L2 U2,O,Washington Championship 2020 (2020-01-24~26),333mbf Final A #1
+1527442001,R2 F L2 F U2 R2 F' D2 L2 F2 D U L B R' D2 F2 U' B2 D,O,Villa Rosita 2020 (2020-01-25~26),333 Final A E1
+2067628001,F' D B' L' U2 L R2 D2 F2 L' B' R2 F U F L B D2,O,Cosmocentro 2022 (2022-07-31),333 R1 C #3
+2259194001,R F' L2 F2 R2 F2 U' F2 U F2 U' R D L D B' D B' U F,O,Cubing Rising Stars Olesno 2022 (2022-10-22~23),333 R2 A #5
+3004384001,B' D2 R U' F' L D R U2 F2 B2 L' B2 D2 R2 U2 R2 U' B' L2,O,Portugalete Open 2023 (2023-08-19~20),333 R2 A #5
+3314951001,L' F' L2 U B2 U F2 U R2 D R2 B' R' U2 F' D F' R' B,O,RioMar Fortaleza II 2023 (2023-12-02~03),333oh Final B #1
+4271953001,U2 R2 U2 B2 U2 R' D2 L' U R2 B' L2 F' D U B L R B,O,Coralito Bahía De Banderas 2024 (2024-11-09~10),333oh R1 A #2
+4759249001,U L2 D2 B D2 U2 F U2 R2 D2 F' D U F U2 R D R2 F' L,O,Cube Factory League Koluszki 2025 (2025-05-24~25),333 R1 E #1
+4805786032,F R' F2 L' D' L U' L F R2 F R2 L2 F2 B D2 L' F U2 L',O,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf Final B #2
+4913129001,U2 F' B2 R2 F2 D L2 U B2 U2 L2 B2 L U' L R' F D L' F,O,More Cubing with the Cougars WV 2025 (2025-08-02~03),333 R2 A #1
+5107647004,R2 D' L2 B2 L2 B2 D2 B2 D' R2 D' L' B' U' F' D2 U' L B R U2 L2 U2,O,Please Be Quiet Reno 2025 (2025-10-18),333mbf Final A #2
+5419064001,U F U2 B' L' U D B' L D R2 F2 D2 F' D2 R2 U2 L2,O,Summer of the Cube Huancayo 2026 (2026-02-28~03-01),333 R2 A E1
+5444727001,F D2 U' F2 U R2 U' F2 R2 B2 F' R' U' F2 R' F U2 R B L,O,Loba March Ankara 2026 (2026-03-07~08),333 R1 E E2
+5508798001,R2 B2 U B2 F2 U L2 D' U F2 L' B' L' F' D R B' U R2 F2 D2,O,No Peeking Calgary 2026 (2026-04-04~05),333bf R1 B E2

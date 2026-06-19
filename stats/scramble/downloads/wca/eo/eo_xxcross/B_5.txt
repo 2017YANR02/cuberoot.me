@@ -1,0 +1,11 @@
+# Scramble samples — eo / eo_xxcross / B / bin 5
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+1128452001,D' F2 L2 U' L2 D U2 F2 R' U2 F2 U2 F D2 U' B2 U' B2,B,Chillán Open 2019 (2019-05-04),333oh Final A #1
+1599259038,F2 R2 B2 D' L2 U' R2 D U2 B' D2 U2 R F' R D B L2 U L2 U',B,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final A #3
+1761589001,F2 R2 U' B2 L2 D' L2 D2 L F D F2 L D' F' L2 F2 D',B,Richmond Open A 2021 (2021-12-11),333oh R1 A #5
+4550827001,B2 F2 R2 D' B2 L2 B2 R2 D2 U R D L D' R' F' D B' R2,B,Bergen Spring 2025 (2025-03-08~09),333oh R2 B E1

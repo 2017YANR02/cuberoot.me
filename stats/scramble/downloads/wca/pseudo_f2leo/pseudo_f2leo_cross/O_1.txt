@@ -1,0 +1,48 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / O / bin 1
+# Population in this bin: 41
+# Samples listed: 41 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+29329001,B2 R2 F2 U R2 U B2 U2 B U L2 D' F D2 U' L2 U,O,No Parity Open 2014 (2014-06-21),333 R2 A E2
+263670001,B' R2 D2 R2 B L2 F' U' R2 B' U2 F2 R' F' U L2 F2 L',O,Indian Open Rubik's Cube 2016 (2016-03-04~06),333oh R1 H #2
+292667001,U F' U' D2 B' L' F2 B2 U2 L' B L D2 F2 L D2 R' U2 R2,O,Toronto Limited Spring 2016 (2016-04-30),333 R1 F #5
+348245001,R B2 U2 B2 D B L2 U R' U' R2 U' F2 U D R2 F2 R2 D,O,Michigan 2016 (2016-08-13~14),333 R2 B #3
+377694001,D' R2 U' R2 F2 L2 B' D' F L2 D2 L2 R B' F' U' B,O,Newport Fall 2016 (2016-10-08),333 R1 A #1
+410007001,F U' L' D' R2 D' B2 L U2 R U B2 D2 R2 F' B' D2 F,O,POPS Open 2016 (2016-12-11),333oh R1 A #5
+439010001,B' U2 F' D2 U2 B' R2 B R2 U2 B' D R' U B2 D2 U B2 U2 R',O,Istres Open 2017 (2017-01-28~29),333oh Final A #4
+570407001,R2 F L2 U2 R2 F D2 R2 F2 R U' F2 R' U' F' U' B D R',O,Univalle Spring 2017 (2017-08-12~13),333oh R1 A #4
+660532008,U L2 B2 U2 B2 D R2 D' F2 D' B2 F U' L R2 F D2 B' D' U L2,O,Bydgoszcz Summer 2014 (2014-08-23~24),333mbf Final A #1
+661417119,R2 D' L2 B2 R2 F2 D' U F2 U L D B F2 U B D' U' B2 U' L,O,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #1
+662716001,U2 R2 U' R2 U L2 B2 L2 U' L' U' L2 F L' U2 R2 U L2 R2,O,Cebu Speedcubing Year End 2017 (2017-12-09),333oh Final A #5
+781796001,D2 L D2 B2 D2 B2 L2 U2 L' B' U R B2 U' L F2 L R' F',O,Shanghai Love in ECNU 2018 (2018-05-19~20),333 R1 D #1
+836499001,B2 R D F L D F U L' D2 R2 U2 L2 B2 D2 F R2 F2 R2 U2,O,ArCubingFest Queretaro 2018 (2018-07-21~22),333 R1 C #5
+1213593001,R2 F D2 F2 R2 B' D2 R2 F' D2 L2 D' F2 R D B L2 F L2 R',O,Oceania 10th Anniversary 2019 (2019-06-28~30),333oh R1 A E1
+1288199001,D B2 U F2 D B2 D F2 R2 B2 D2 L B2 F' L2 D2 R2 U' B' L,O,Denver Back to School 2019 (2019-08-31),333 R1 A #1
+1644525001,L2 D' B' R' B2 U' R2 B2 D2 R2 D' R' B U2 R2 D U' L',O,Xi'an Cherry Blossom AM 2021 (2021-04-11),333 R1 C #2
+2058578026,L' R2 F2 U' R2 D' R2 U F2 L2 R2 U' L B' R' D2 F2 D' B D' L,O,Tashkent Open 2022 (2022-07-30~31),333mbf Final A #1
+2388440001,D' R2 U R U2 D R2 B U D2 R2 F' L2 F U2 F L2 R,O,Mor Raipur Cubing Challenge 2022 (2022-12-18),333 R1 D #5
+2699635001,D2 F2 D' L2 D R2 U' R' B' D L2 D2 B' D2 B L R F2 L B2,O,Uppsalaligan 2: Malus Domestica - 2023 (2023-05-08),333bf Final B #2
+2726056001,L2 F D' L2 D B2 D2 R2 F2 U B2 U' L F2 U2 R' D2 B D',O,Anzio Open 2023 (2023-05-20~21),333 Final A #1
+2781609001,B R B' D2 F' R' D2 R2 B' R' L2 B2 R2 D' B2 L2 U2 F2 D',O,Selangor Ace Cube 2023 (2023-06-03~04),333oh Final A #5
+2827702001,L' B2 U' D2 F2 D' B' U2 D2 R F2 D2 R D2 L2 B2 U2 R' B U2 L2 U',O,CubingUSA Southern Championship 2023 (2023-06-22~25),333bf R2 A E1
+3002343001,D L F2 D U L2 B2 D L2 D' B' L2 B' F2 D2 R F2 L' D',O,Rubik's WCA World Championship 2023 (2023-08-12~15),333 R1 E #3
+3048107001,L2 U2 L2 F2 L2 F2 R2 U' R2 L B' L F2 R' F2 D2 B L' F2,O,Sandnes Open 2023 (2023-09-01~03),333 R2 B #2
+3282489001,L' B' D2 L' F L2 U' L' D2 B2 R2 B2 L' F2 R' D' L D',O,Azerbaijan Nationals 2023 (2023-11-18~19),333oh Final B E1
+3293022001,L D2 B2 D2 R2 B2 D F2 D R2 D L2 R U R B R2 B2 L2,O,Dutch Nationals 2023 (2023-11-25~26),333 R1 B #4
+3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,O,Love Is Blind Lima 2024 (2024-02-18),333fm Final A #1
+3590416001,B2 R' U2 B2 D2 R2 B2 L2 F' D2 B' D2 L' B U2 L' R,O,Nýliðamót Kubbafélagsins 2024 (2024-03-16),333 R2 C #2
+3591587001,R2 F' U L2 B' D2 B2 D2 B2 R2 B R' D' L' F2 R' F' L',O,Don't Turn SLOw Spring 2024 (2024-03-16),333 Final A #2
+3886385001,U' B U' F' B' R F2 R' D2 L2 U2 B D2 B U2 F2 U2 L2 B',O, Vasconcubos 2024 (2024-06-22~23),333 R2 B #1
+4003397001,U2 L2 R D' U' L2 D L2 F2 D R2 U2 R' D2 F' R' F2 R2 F',O,V per Varese 2024 (2024-08-10~11),333oh R1 A #4
+4099347001,R2 F2 L' U L' F R2 F' B2 R2 F2 D B2 D2 F2 R2 D R2 B,O,Ruta Valenciana III: Burjassot 2024 (2024-09-14~15),333oh Final B E2
+4233099001,U R2 D2 B2 D' B D' B2 R2 B' L2 D' R F2 U2 F2 U',O,Move It Midland 2024 (2024-10-26),333 R2 B #2
+4418682001,D L F2 L D R' D' F2 D L2 F2 B L2 F2 R2 L2 U2 L2 U,O,Casorezzo Winter Open 2025 (2025-01-11~12),333bf Final B E1
+5092081128,U' F2 U L' U' R2 L' B L' F2 D2 B' U2 D2 F' D2 L2 B U2 B' L' F',O,PBQ in Tashkent 2025 (2025-10-11~12),333mbf Final A #2
+5332983001,R L' F' U L2 F' U F' D2 B' L2 D2 L2 F D2 B' U2 F2 D L' F,O,Seoul Winter 2026 (2026-01-17~18),333bf R1 D #1
+5461592001,R2 U R F R2 U2 B' U F' U2 R2 B2 U2 B2 L2 D' R2 B2 D',O,Kanta-Hämeen Kuutionvääntelyt 2026 (2026-03-21~22),333 Final B #5
+5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,O,Sumgait Spring Open 2026 (2026-03-19),333 R1 A #4
+5507697001,R' B2 L D L2 D2 F' U R B2 D2 R2 F' D2 F D2 U' R2,O,MYHM UoSM Final Cube Open 2026 (2026-04-04~05),333 R1 A #4
+5539220001,U' R' F2 U' F U' F' R2 F2 D2 B2 R2 D' F2 D' L' B' L,O,Adelaide Autumn 2026 (2026-04-12),333 R1 D E2
+5602154001,U L2 D2 L' F D R F B' R' F' L2 U2 F2 R2 U2 F U',O,MilaNxNesas en La MataNxNza 2026 (2026-05-02~03),333 R1 C #3

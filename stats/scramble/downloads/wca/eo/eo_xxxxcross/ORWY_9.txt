@@ -1,0 +1,25 @@
+# Scramble samples — eo / eo_xxxxcross / ORWY / bin 9
+# Population in this bin: 18
+# Samples listed: 18 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+248902001,R' B' R2 B2 L2 F D' F D L' F2 L F2 B2 R B2 R,Y,Frankfurt Cube Days 2016 (2016-01-30~31),333 Final B #1
+484656001,D' L' F L2 F D' L' D' L' D R U2 L2 D B2 L2 F2,R,All is Well 2017 (2017-04-08),333 R1 B #1
+573409001,R2 B2 F D2 B2 D2 U' F' R' U2 R D U2 F D' F R2,R,Shantou Open 2017 (2017-08-20),333 R1 B E1
+652376001,F' B' U B2 U2 D' R L F' U' F' U R2 U F2 U2 F2 U B2,Y,Jiaozuo Open 2017 (2017-11-25~26),333 R2 B E2
+884423001,R2 B2 D2 F' L2 F' U2 F' L2 U2 B' R F2 D' B2 U2 R B' U2 F D',O,Stratford-upon-Avon Open 2018 (2018-09-22~23),333 R1 E #1
+924170001,B2 D2 R2 B' R2 D2 F' D' U' R' U' F R' F2 L U' L' R,Y,Almaty Altyn Cube 2018 (2018-11-03~04),333 R2 E #2
+987870001,L' F' U2 L2 U F2 L U2 R' L2 D' L2 U2 D' R2 D2 B2 D,Y,Michigan Cubing Club Alpha 2019 (2019-01-20),333 Final A #5
+1019046001,D' R2 D2 U R2 U B F2 D2 B R2 U2 R' U B' L2 B',R,Saraswati Open 2019 (2019-02-10),333 R1 B #5
+1024088029,B' F2 D2 L2 B' F' D2 R2 D2 F2 D' R' F2 U' L' B' U2 L' B F2 D',W,I Hope It's Solved Edmonton 2019 (2019-02-16~17),333mbf Final C #1
+2039522001,R2 F L2 U' R B2 L D2 L F' D2 L' F D R' D,W,El Palmar Cubing Fest 2022 (2022-07-24),333 R1 E #2
+2671570001,F2 U2 B R2 U2 F L2 B2 U2 R' D' F D B D' L' U2 L' R,O,Starkvegas Southern Side Event Special Spring 2023 (2023-04-29),333oh R1 B #5
+3369381001,B2 D2 U2 L' F2 D2 L R2 U2 B U B' R F' R2 D' R2 B',W,Sydney Summer 2023 (2023-12-16~17),333 Final A #5
+4357097051,D2 B' D' B2 R2 U' L2 U' R2 B2 U2 R' D L' B D U2 B R F L B,W,New Zealand Nationals 2024 (2024-12-13~15),333mbf Final A #1
+4813422001,R' U' F R' F' U L' D' U2 B2 D2 R2 F2 L2 U F' U' R B D2 B' R' U' F,R,Mini Mental Milano V 2025 (2025-06-22),333fm R1 A #3
+5016301001,U' L2 B R' L' D' L2 D R' F2 R2 D' F2,R,Willimiehen Kuutiopäivät 2025 (2025-09-13~14),333 R2 A #2
+5049053001,F L' B2 L B2 U D B' U2 F2 R' F2 L F2 R2 U2 L U R2,R,Hvidovre Liga II 2025 (2025-09-28),333oh R1 B #1
+5307558071,B' L2 U2 F2 D' F2 L2 D2 R2 D' R2 D B L F U' R B D R' B R',R,Multi Mayhem VA 2026 (2026-01-02~04),333mbf R1 A #3
+5666017001,D F' R D2 F' L2 R2 U2 L2 B L D B' F L B' D B2,R,West Coast Cubing Western Championship 2026 (2026-05-23~25),333 R2 C #5

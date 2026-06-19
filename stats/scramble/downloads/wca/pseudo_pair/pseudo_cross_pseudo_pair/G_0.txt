@@ -1,0 +1,18 @@
+# Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / G / bin 0
+# Population in this bin: 11
+# Samples listed: 11 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+440340001,D' F' B' U2 R L2 F B' D' L2 F U L2 D2 F2 U' B2 L2 D2,G,Montreal Open Winter 2017 (2017-02-04),333 R1 A #2
+527724001,L' B R2 U2 R F2 D R2 L2 D B2 U2 F2 L D2 L2 U2 R B2,G,2nd Negros Speedcubing Open 2017 (2017-06-10~11),333 R1 A #4
+592960001,R2 F2 D' B2 U R2 D L2 R' F' L2 U2 L' B2 F U' R2 U2 F',G,Monnem City Cubing 2017 (2017-09-16~17),333oh Final A E2
+632221001,D2 F' R' L2 U F L2 B' D B2 L D2 R B2 U2 B2 R F2 B2 R',G,St. Boois 2017 (2017-10-29),333 R2 C #3
+1252054018,R2 U2 B' R2 D2 B2 L2 B' D L F' D' U F' U' B' D2 B2 U' L2 U,G,CubingUSA Nationals 2019 (2019-08-01~04),333mbf Final A E1
+1296983001,L F2 L' B' R F2 R2 F D' F B2 R D2 B2 L B2 D2 F2 L2 B2,G,Merdeka Mind Games 2019 (2019-09-16),333ft R1 B #5
+2352400001,R' U R D' F2 B' U' B2 U' B L2 U F2 U2 L2 F2 L2,G,BCM Arya Cubing Challenge 2022 (2022-12-04),333oh R1 A E2
+4517068001,R2 B2 R2 D2 F' L2 D2 B' D2 R' B2 L' F L R' D2 R' U2,G,Chill Cubing in Chilliwack 2025 (2025-02-22),333 R1 D #3
+4596661001,F2 R B' R2 D' B2 D' R2 F L2 F2 U2 F D2 U B' U' R',G,CubeCo Coastal Cubing KZN 2025 (2025-03-21~22),333 Final B #2
+4843398001,F' L B2 R' B' L D2 L' F2 U D2 L' B2 L' F2 B2 R' D2 R2,G,Taipei Summer Open 2025 (2025-06-28~29),333 R1 C E2
+5454936001,F' R' B2 R' U2 R' D2 U2 L R2 F2 U' L' D B' D U' B2 U2,G,St. John's Winter 2026 (2026-03-15),333 R2 A #1

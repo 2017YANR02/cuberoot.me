@@ -1,0 +1,47 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGORWY / bin 3
+# Population in this bin: 40
+# Samples listed: 40 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,G,Plaza de las Américas 2014 (2014-11-15),333oh Final A #1
+188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,O,LMDL Open 2015 (2015-09-12),333 R1 B #3
+196741001,U L2 F2 D2 U' R2 D2 B2 F L2 R2 U' L U' L F R,O,Prague Open 2015 (2015-10-03~04),333ft Final A E2
+247403001,B R2 D R F B' L' D F' R' U2 F2 L F2 L U2 R B2,W,Rubikeros Open 2016 (2016-01-29~30),333 R1 B #3
+319355001,B' R' U' R' F' B2 R' D' R D L2 F2 D2 B2 U2 R2 F2 U R2,B,Indiana 2016 (2016-06-25~26),333 R2 B #2
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,R,Tulcan Open 2018 (2018-01-06),333 R1 B #2
+701333022,L2 B2 F2 L D2 L F2 L F2 U2 R B' U R2 U' L2 B' L' B F2 L B2,R,Please Be Quiet LA 2018 (2018-02-03~04),333mbf Final B #3
+842540001,B2 U2 L D2 L' U2 R' F2 L B' D' B' U2 L' R U' R' D2 R',B,VCP Invierno 2018 (2018-07-28),333 R1 A #2
+861801001,B2 D' L2 D' F2 L2 U2 B2 U F' U2 B2 U' L2 D' L2 F2 L B' U2,B,SESC Camaquã 2018 (2018-08-18~19),333ft Final A #4
+880772021,F' R2 F L2 B L2 B' L2 F2 L2 U' F U L U R' U R U L' F',W,Berkeley Summer 2018 (2018-09-15~16),333mbf Final C #1
+1017548001,D' U2 R2 D2 U' B2 L2 R2 U' R B' R B U R D R' F,G,Izhevsk Winter Cube 2019 (2019-02-09~10),333 R1 D E2
+1084160001,R2 L' U L' D2 F2 U2 R2 F L2 B D B2 L2 F2 L2 U F2 U2,B,Yancheng Spring 2019 (2019-04-06),333 R1 A #3
+1108365014,B2 R2 D' F2 U2 B2 D R2 B' R F' D' L B2 U' B R2 B' U2 L,R,Shanghai Memory Nightmare 2019 (2019-04-20~21),333mbf Final A #2
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',G,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
+1289854007,U B2 D F2 L2 B2 D L2 U L2 U2 B F2 U' R B2 L2 B' F2 L,B,Champagne Open 2019 (2019-09-07~08),333mbf Final A #1
+1728229001,F2 U R L' F' L F' D B' R2 L D2 B2 L' F2 R' B2 U' B,G,BrizZon Side Open III 2021 (2021-11-12~14),333bf R2 B #1
+1902384001,D B' D L' D2 L B2 D2 R D2 R2 B R F' D R D2 L R,G,Stevenage Spring 2022 (2022-04-30~05-01),333 R2 C #3
+1993766001,L' D' F U F2 L2 D2 R D2 U2 R' D R' B' D B' U2 L2,O,1st Salem Open 2022 (2022-06-26),333oh Final F E1
+2134410001,R B' L' U' F U2 D2 B L' F2 U2 F2 B2 D2 L U2 R' D2 R2,R,Ecuador Nationals 2022 (2022-08-26~28),333oh R1 E #3
+2249121001,D F2 D2 R B2 R' D2 F2 D L U L' B2 D' R' F R,Y,Mongolia Championship 2022 (2022-10-15~16),333 R1 F #2
+2404308001,B D' L F' L2 U' F2 D2 U L2 D' L U' F2 L' D2 U F,G,NTU Welcome 2023 (2022-12-31~2023-01-01),333 R1 E E1
+2655130001,U2 L2 B' D2 B2 D2 L2 F' R2 U' F R U' L D2 F' D R2 B,O,Swallow Spring 2023 (2023-04-22),333 R1 B #5
+2700440001,U' B2 D' U2 F' D2 F U' R2 F' L B2 L' B F U',Y,I Candanguim 2023 (2023-05-07),333 Final B #4
+2706039001,D' B2 U B D R2 D F2 U2 B R2 F' L2 B' U2 R' D,Y,DFW Cubing Spring 2023 (2023-05-07),333 R1 A #4
+2953527001,R' D2 R B2 U2 D' R2 U R B2 R F2 U2 L2 B2 D F2,W,Air Capital Cubing Summer 2023 (2023-08-05),333 R1 C #1
+3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,O,BMME 3x3 Day 2023 (2023-09-23),333mbf Final B #1
+3283160001,B U F R D R' U D2 L2 D B' R2 U2 B2 U2 B' R2 B' L2 B R2,O,Annuntia Sunday Open 2023 (2023-11-19),333bf Final A #2
+3555905001,D R' D2 U2 B' L2 B' R2 B2 D' F D U' L B' D F2,B,Manduria: Back to Apulia 2024 (2024-03-02~03),333 R2 C E2
+3835363001,F L U' B' R2 F' D2 U2 B R F L B' D F2 D B,R,Battle of Waterloo 2024 (2024-06-08~09),333oh R1 A #4
+4020677001,D F D B2 L B2 L' D' B2 L2 U L2 U2 D R2 F2 D2 R' D2,Y,Davis Summer 2024 (2024-08-17),333bf Final A #1
+4055124001,R' F U2 L2 R B2 U2 L2 R F2 U L2 F' U2 B' L2 B R' U L2 U,O,CubingUSA New England Championship 2024 (2024-08-23~25),333bf R1 B E2
+4257481001,U' B U' L2 U B2 L2 D' B2 L' D' L' D L2 D' L2 B U2,W,IISER Pune Autumn Open 2024 (2024-11-09),333oh R1 C #3
+4381910004,U F2 U' B2 L2 D B2 L' R' F' U F' L2 R2 F' L' D F2 D',Y,I Hope It's Solved Edmonton 2024 (2024-12-21~22),333mbf Final A #3
+4468810001,U' L2 F2 R2 F2 D B2 R B' R2 U2 F' L2 R' F2 D' F R,W,CETis 156 Broncos 2025 (2025-02-01~02),333 R1 B #2
+5025875001,D2 R' F2 R' U2 R U2 F U2 F2 R D' L2 D' L U F' L,G,Kushtia Cube Open 2025 (2025-09-13),333 R1 A #5
+5050275001,D F' B R B' R' L2 D2 R F' B2 L U2 R' U2 L2 F' L',W,LexOpen France 2025 (2025-09-27~28),333bf Final B #2
+5501210001,F' L F D F' D' F L' B' D2 R F' R2 F B2 U2 F L2,B,North Sound Spring 2026 (2026-04-04),333 R2 A #5
+5513603001,D2 F U' B R U2 R U' D L2 B2 D' B2 U2 L2 F2 L2 F,Y,DFW Cubing Spring 2026 (2026-03-28~29),333 Final B #1
+5658195001,B' U' L' F D2 L2 U' L U2 L D2 F D2 R2 F R2 F' D2,B,Future Park Thailand Cube Battle 2026 (2026-05-23~24),333 R1 E #5

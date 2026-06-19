@@ -1,0 +1,8 @@
+# Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / R / bin 10
+# Population in this bin: 1
+# Samples listed: 1 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+36971,D2 L2 B2 F2 L2 B2 D2 R2 D U' F' R L U B' F D' U F' D' U' L' ,R

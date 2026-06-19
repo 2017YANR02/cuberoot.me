@@ -1,0 +1,40 @@
+# Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGWY / bin 7
+# Population in this bin: 33
+# Samples listed: 33 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+6226,R2 U' L2 D L2 B2 R2 L2 D2 F2 D B2 U' B2 U2 B' D F' R' L' B' F' L' D' L' ,G
+6236,B2 F2 U B2 D B2 D' L2 U F2 U F2 D2 R' D' L2 D L' B F' R' L' U' ,G
+6238,R2 F2 D R2 U B2 U' B2 U F2 R2 B2 L2 U2 R' U L2 U' L' B' F' R' L' ,G
+6804,F2 D' R2 D' F2 R2 B2 R2 F2 U2 B2 D F2 U' R' B L' U F' D' U2 R' L2 F' ,G
+654504,R2 B2 F2 D2 L2 U' B2 U' R2 U R2 U L2 D F' R B D' B2 U' L F R' U' ,G
+865909,F2 U2 B2 U' L2 U' L2 D R2 F2 U R2 D' L2 B' F' D' R' L B' U2 F D U' L' ,G
+882734,D' B2 R2 B2 F2 D L2 U F2 D' L2 U R2 U' B' D R L' U B' L F U2 L' ,G
+882740,B2 F2 U' R2 D B2 R2 L2 D' F2 D2 L2 U' L2 B' R F D' L2 U' L B R' U' ,G
+886022,B2 U L2 F2 R2 U2 L2 U F2 D2 R2 U F' R' U' L' B D F R' ,G
+889262,B2 U B2 R2 U R2 U2 F2 D B2 U2 L2 U L' F' R D B U L' U2 F U ,B
+889274,R2 D' F2 D B2 U' F2 R2 D2 U F2 D2 R2 U' B' L' F D R U B' U2 L ,B
+889339,D' L2 U R2 L2 F2 U' R2 D F2 L2 D B2 R2 U' L' B U F R' D' L' B' U ,G
+889341,D' L2 B2 D' L2 D F2 U F2 D B2 D R2 U F' R' B D L U F' U2 R U2 ,G
+891797,B2 D U2 B2 D2 L2 D F2 L2 B2 L2 F2 U' F' D2 R L' D R2 B U F' L' ,G
+892038,L2 F2 D F2 L2 U B2 U2 R2 U' L2 D F2 L' D2 F D' R' U' B' L F' U ,G
+892040,U R2 B2 D B2 F2 L2 D' B2 D F2 U2 B' U L D R2 B R' F' U' L ,G
+892050,D' F2 U B2 D2 R2 U' F2 L2 D' R2 B2 L2 U2 L2 B' R F D2 L U R D' F L' ,G
+892058,B2 R2 U F2 D2 B2 U' B2 U R2 F2 U' L2 B' R U L F D' B' F2 R U' ,G
+915791,L2 D' F2 U' B2 U B2 L2 U L2 D B2 U B' L' F D R U B' U2 L U' ,G
+918307,F2 R2 D2 L2 F2 R2 F2 D L2 D' F2 U L2 D2 B' R L U F' D' U B' U' R' ,B
+925616,U' R2 D2 B2 U' R2 U R2 F2 U B2 D B2 L' D' F' R' B U L' F2 U2 F' ,G
+925788,D' L2 U2 R2 B2 U L2 B2 U' F2 D B2 D L' F' U' B' R D L F' U2 ,G
+925789,D' F2 U' B2 D' F2 U' R2 D2 R2 D F2 U' R2 U2 R' F L D' B2 U' B R F' U ,G
+925790,U2 R2 U B2 U F2 U' B2 R2 D L2 F2 U2 B' L' F D R U B' U2 L U' ,G
+926090,B2 D2 L2 U B2 D B2 U' R2 D R2 F2 R2 U' R' F L' U2 B2 D' B' U' R' F' U2 ,G
+926091,F2 L2 U2 L2 D L2 F2 R2 F2 L2 D' B2 F' D L' B' R D R2 U F' L' ,G
+926092,D2 R2 U R2 D' B2 U' R2 D2 R2 B2 U2 F2 U R2 B' R F' D2 R2 D' L U F R' U' ,G
+927665,R2 F2 U' F2 R2 U2 B2 U' R2 U' L2 U R2 B2 U' F' L B R2 D' R2 U' R F L' ,G
+927923,L2 U' F2 D' R2 U' F2 D F2 R2 F2 U' F2 D2 R' F L' U2 B2 D' B' U' R' F' U2 ,G
+928838,U' R2 D B2 U' L2 D2 L2 F2 R2 L2 D F2 U2 L' F' U' B' R D L F' U2 ,G
+938581,B2 F2 U L2 U' B2 U F2 D' R2 D' L2 U2 R' D2 F' D L U B R' F ,G
+938582,F2 U' L2 F2 D2 B2 U F2 D' L2 D2 B2 U' L' F' R D B U L' U2 F U' ,G
+938583,F2 L2 U' R2 U2 R2 B2 L2 F2 U' R2 D' R2 U B' R D' F U B D2 R F L' ,G

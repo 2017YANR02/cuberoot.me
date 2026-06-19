@@ -1,0 +1,15 @@
+# Scramble samples — 123x2 / f2b / WY / bin 6
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+662798001,D2 F U2 B D2 F' R2 F2 D2 L2 B2 R' B U L2 U' L R2 F' U2 F' L' F2,W,Cebu Speedcubing Year End 2017 (2017-12-09),333bf Final A #3
+809385066,B F R2 F' L2 U2 R2 F R' U' L D B2 R' F' D R B U L',Y,CubingUSA Western Championship 2018 (2018-06-15~17),333mbf Final B #1
+1125284001,U D L' B2 R2 F U D' F U' R B2 R' D2 R' F2 D2 L2 F2 R',Y,Chengdu Open 2019 (2019-05-01~02),333 R2 B #3
+3410567001,B' L2 B' R D R2 F2 D R2 D R' U2 L2 R' F R,Y,Israel Winter Open B 2024 (2024-01-12),333 R1 D #4
+4279660001,U' F R2 B' D2 F D2 F2 L F' R2 F2 R2 U' F U R' B',Y,Slow N Steady UMD Fall 2024 (2024-11-09~10),333 R1 D #1
+4621099001,D' F' U' D2 R2 D2 F2 R D2 B2 F D' F R2 B' U B2 D2,W,Mallorca Open 2025 (2025-04-05~06),333 R1 D #4
+5555501001,R2 D L R2 B2 R2 B2 U2 L' D2 R' U R2 U2 B D2 F L,W,Unicentro Tunja V 2026 (2026-04-18),333 R2 B E1
+5702637001,F2 D' B2 R' B2 L2 D2 L2 F2 L2 B D F' U2 B F L U,W,WCA South American Championship 2026 (2026-06-12~15),333oh R1 A #3

@@ -1,0 +1,9 @@
+# Scramble samples — 123x2 / f2b / BGOR / bin 14
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+888188,L2 D2 B2 D' R2 F2 U2 F2 L2 U2 R2 F2 U' F' R L U B' F D' U F' D' U' L' ,B
+893243,B2 U2 L2 D' F2 L2 U2 R2 F2 U2 F2 L2 U' L' B F D R' L D U' L' D' U' F' ,B

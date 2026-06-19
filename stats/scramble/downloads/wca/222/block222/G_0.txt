@@ -1,0 +1,30 @@
+# Scramble samples — 222 / block222 / G / bin 0
+# Population in this bin: 23
+# Samples listed: 23 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+73639001,D' B2 L2 U B2 U' R' B2 R B' F2 R F' L' F2 D R' F,G,Melbourne Cube Day 2014 (2014-11-09),333 R1 C #4
+228895001,L2 B2 L2 B2 U B2 U' L' D' B' L' B L2 D' B L2 B' D2,G,Plenty o' Parity 2015 (2015-12-12~13),333ft Final B #3
+238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
+274117001,R B2 R' B' U D L D2 F2 B2 L2 U R2 U' L2 F2 D L2,G,Indian Nationals 2016 (2016-03-25~27),333 R2 A #2
+538439001,R2 B2 D2 R2 D2 R2 D' B R' D' B D B' F' R2 F D2 R,G,National Cubing Region Open 2017 (2017-06-23~25),333 R1 I #2
+584713001,B D F2 R' F' L2 U F' R' B2 R2 L2 B R2 B D2,G,Rain City Cube Competition 2017 (2017-09-02~03),333 R1 F #1
+590550001,D2 R2 D' L2 U L2 U2 F' L D2 R2 D B U' B U2 L B',G,Israel Championship 2017 (2017-08-30~31),333 R1 D #1
+667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,G,MTD Spring 2017 (2017-12-09~10),333oh Final B #2
+1060346001,R2 F' R' F D2 F' U R F B2 U2 F2 L2 U' L2 B2 L2 F2 U' D',G,Lviv Spring Days 2019 (2019-03-16~17),333 R1 I #5
+1349793004,F2 L2 U' F2 R2 D' R2 B U' R' F R' F' U' R' B' R B U2 B R',G,345 Cube Day Allen 2019 (2019-10-13),333mbf Final A #3
+1565602013,U F2 D2 B2 D F2 R D' B2 F R' D2 R F R U2 L U B R',G,Mudd Winter 2020 (2020-02-22~23),333mbf Final B #1
+2039108001,B2 D2 U' F2 D' L2 R2 U2 F' D' B' D' B L2 D2 F2 L' D' B2,G,Norwegian Championship 2022 (2022-07-22~24),333oh Final A #2
+2121914001,B' U' D2 L2 U2 B D2 B2 D2 U' L' B L2 B D' L' D2 L,G,Edmonton Summer Twist 2022 (2022-08-21),333 Final A #3
+2261741080,B' L F' B D2 B L' F2 R D B2 D' R2 U2 F2 L' F L',G,Mini Mental Breakdown San Diego 2022 (2022-10-23),333mbf Final B #1
+2480601001,R' D' L2 B' L2 R2 B2 D2 F2 U2 L2 D F2 L' D' R F2 L,G,Kensington Summer Saturday 2023 (2023-02-11),333 R1 F E1
+3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,G,BMME 3x3 Day 2023 (2023-09-23),333mbf Final B #1
+3172485001,R U L' D L' D L2 B' R2 U L2 F D2 F2 D2 F' D2 L2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R2 D #4
+3273333001,U2 F2 D2 L2 F U2 B L2 U' L2 B2 F2 L D2 F2 R F R',G,Ekerö Open 2023 (2023-11-19),333oh R1 B #4
+3641569019,B F R2 B2 F U2 B F L F2 U' B R2 U' L' U B2 L' F',G,Pocos Cupos Bogotá VIII 2024 (2024-04-06),333mbf Final A #2
+4509788001,U' B' L2 D' U' L2 U F' L B L' B' F D2 U R',G,LA PRE Pucallpa Speedcubing 2025 (2025-02-22),333 R2 D #2
+4628160001,U2 R' D2 L F2 R' B2 R U2 R F' U' F2 L D' F L2 U',G,Langenstein City Blind Open 2025 (2025-04-05~06),333oh R1 A #5
+4791087001,B2 R2 U2 F' U2 B2 F2 R2 D B D' B R F' U2 R' B2,G,Napule È Mille Culure 2025 (2025-06-08),333 R2 A #2
+4843409001,D2 R2 F' U2 F U D' L' D2 B' U2 D2 F' U2 L2 U2 D' B',G,Taipei Summer Open 2025 (2025-06-28~29),333 R1 E #4

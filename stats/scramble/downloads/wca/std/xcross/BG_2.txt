@@ -1,0 +1,26 @@
+# Scramble samples — std / xcross / BG / bin 2
+# Population in this bin: 19
+# Samples listed: 19 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
+221498001,B D2 F L2 B' L2 U2 B L R B U2 F2 D2 R U' B' D2 U B' L2,G,Tecsup Speedcubing Open 2015 (2015-11-28),333bf Final A #1
+254507001,U2 R F' D L' U F' L' U F' D' R2 F2 D2 F2 U2 R2 F2 B,G,Molina Open 2016 (2016-02-13~14),333 R2 C #2
+260937001,D2 R2 B U2 B' F2 R2 F2 R2 U' B L R2 U' R' F' R2 F2 U,B,Big Apple Cube Clash 2016 (2016-02-27),333oh R2 B #1
+342445001,L' R2 F2 R' U2 B2 U2 L2 D L' F' L' U B2 L D2 U' F',B,SSN Cube Open 2016 (2016-08-05~06),333 R1 H #4
+538439001,R2 B2 D2 R2 D2 R2 D' B R' D' B D B' F' R2 F D2 R,G,National Cubing Region Open 2017 (2017-06-23~25),333 R1 I #2
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+841822001,R L U2 L' B' L B' U' F2 L D2 R L F2 R,G,CubingUSA Nationals 2018 (2018-07-27~29),333oh R1 K #1
+1032256016,R2 F2 R2 B F2 U2 B' F' R' F L R2 F D F' D2 F' D B,B,Singapore Cube Championship 2019 (2019-02-23~24),333mbf Final A #1
+1084160001,R2 L' U L' D2 F2 U2 R2 F L2 B D B2 L2 F2 L2 U F2 U2,B,Yancheng Spring 2019 (2019-04-06),333 R1 A #3
+1490039001,L' F2 R' B2 L D2 L2 D' L2 U' R2 U F' L2 B R' B R2,B,Xi'an New Year 2020 (2020-01-01),333 Final A #2
+1940152001,U L2 U2 L2 U' R D R F U2 F2 D' R B' R F2,B,3x3x3 Only Hamilton B 2022 (2022-05-29),333 R1 B #1
+2266902001,F2 D2 F2 U2 B2 R' B' U B R2 F2 B D2 F L2 F' L F',G,Bangkok Cube Fest 2022 (2022-10-29~30),333 R1 F #2
+2608780001,R' F U2 F2 L2 U R2 U2 R U2 R2 B' U2 D2 B2 U2 F' L2 D2 B,B,San Juan II 2023 (2023-04-02),333 R1 A #3
+3370745001,R2 D' B2 R B' U' B' U B2 R2 D2 F2 U2 F' D2 F' D F',G,Floripa Open 2023 (2023-12-16~17),333 R1 B #5
+4380412001,U2 B2 F2 L D2 F2 R2 F D L2 F' R' D' B2 L B' L,G,Clash of Cubers: Celebes Speedcubing Masters 2024 (2024-12-14~15),333 Final B E1
+4603889001,B2 R2 F2 D2 B2 R F' L2 R2 F2 R' D' B2 D R2 F R',G,Dåstrup Diverse 2025 (2025-03-29~30),333 R1 C #2
+5336111001,B F D2 B R2 U2 L2 B U2 F L' D2 F D2 U F R F2 L',G,Mumbai Cube Fiesta 2026 (2026-01-18),333 R1 D E1
+5422542002,B' R B D' L2 U2 F2 L F' U B2 U D B2 R2 U B2 L2 F L2 U',G,BL&D BLD Binningen 2026 (2026-02-28),333mbf Final B #2

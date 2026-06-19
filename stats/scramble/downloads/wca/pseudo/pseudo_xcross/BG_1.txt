@@ -1,0 +1,30 @@
+# Scramble samples — pseudo / pseudo_xcross / BG / bin 1
+# Population in this bin: 23
+# Samples listed: 23 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,G,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
+221498001,B D2 F L2 B' L2 U2 B L R B U2 F2 D2 R U' B' D2 U B' L2,G,Tecsup Speedcubing Open 2015 (2015-11-28),333bf Final A #1
+238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
+260937001,D2 R2 B U2 B' F2 R2 F2 R2 U' B L R2 U' R' F' R2 F2 U,B,Big Apple Cube Clash 2016 (2016-02-27),333oh R2 B #1
+319355001,B' R' U' R' F' B2 R' D' R D L2 F2 D2 B2 U2 R2 F2 U R2,B,Indiana 2016 (2016-06-25~26),333 R2 B #2
+637626001,U' L2 F2 D' B2 D F2 R' F' U' R2 F R2 F L2 F2 R2 F L2,B,Porto Alegre Open 2017 (2017-11-04~05),333 R2 C #4
+661369015,R2 B2 U2 B2 R2 B2 D' L B2 D' B2 L2 B D L2 B' D' L D2,B,Wuhan NxN Open 2017 (2017-05-20~21),333mbf Final A #2
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',G,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
+2354486001,L2 U B R D2 B' R2 D F U2 R' D2 R' D2 L' D2 B2 R' B,B,Cariló Open 2022 (2022-12-09~10),333 Final A #2
+2608780001,R' F U2 F2 L2 U R2 U2 R U2 R2 B' U2 D2 B2 U2 F' L2 D2 B,B,San Juan II 2023 (2023-04-02),333 R1 A #3
+3053839001,B2 R' D2 B2 L2 F2 L' U2 F2 U L2 B L' D2 B' U' B F',B,XMUM Cube Open 2023 (2023-09-10),333 R1 G #1
+3142148001,U R2 D' F2 U' F2 D' L' B2 D2 F D F' L' U2 L' F2 L',G,T-Town Showdown 2023 (2023-10-07),333 R1 A E2
+3172485001,R U L' D L' D L2 B' R2 U L2 F D2 F2 D2 F' D2 L2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R2 D #4
+3370745001,R2 D' B2 R B' U' B' U B2 R2 D2 F2 U2 F' D2 F' D F',G,Floripa Open 2023 (2023-12-16~17),333 R1 B #5
+3555905001,D R' D2 U2 B' L2 B' R2 B2 D' F D U' L B' D F2,B,Manduria: Back to Apulia 2024 (2024-03-02~03),333 R2 C E2
+3760964001,R2 F' R2 B U2 B2 F' U2 D R U2 R2 D2 F D R F' D' F,B,Bursa Mother's Day 2024 (2024-05-11~12),333oh R1 A #5
+4085197001,D2 F L2 B' D B' D L' F2 D B L2 U L2 B2 U2 D' R2,G,Summer Vibe Puck 2024 (2024-08-31~09-01),333 R2 A #4
+4430001001,D' B2 D' U2 B2 U' F2 R' D2 L' B R B' D L D2 U' R,G,Aachen Open 2025 (2025-01-18~19),333 R2 B #3
+4625607001,B U2 F D2 L2 D2 F2 R2 F2 L2 R' F2 D B2 L' F' D2 F,G,Nalsar Cube Open A 2025 (2025-04-05),333 Final B #5
+4883556001,R' F2 R D2 F2 R' U B' U F L' F2 U2 L2 U2 B' L,G,Harbin Open 2025 (2025-07-20),333 R1 B E2
+4951582001,L' D2 L F2 R' F2 D2 R F2 L2 F L B2 R' F' U' L' B' U,G,Cube Plan Baie 2025 (2025-08-15~17),333oh R1 A #2
+5522222001,F2 B' U2 L D2 L' F' U2 F L' D' R2 U2 R2 F2 D L2 D2 F,B,Jesuitinas Txantrea Open 2026 (2026-04-11~12),333 R2 A #1

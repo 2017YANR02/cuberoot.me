@@ -1,0 +1,20 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / ORWY / bin 0
+# Population in this bin: 13
+# Samples listed: 13 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+672623001,R2 U2 B2 L R' F2 R2 B' R2 D' B2 D L R' F2 U2 R' B,R,Liberty Science Center Open 2017 (2017-12-16),333oh R1 B #1
+2069087001,R2 F2 L2 D2 R2 B D2 F' L2 F2 D' L D B U2 B' R2 B U',W,Fortaleza Open 2022 (2022-07-30),333 R1 B #2
+2467347001,R2 U2 R2 L F R B2 R2 U F' R2 F L2 F2 D2 L2 F' R2 U',O,A New Year in Hamilton 2023 (2023-01-28~29),333 R1 A #1
+2587828001,U' F2 R' D2 L2 B2 F2 D2 B2 D' L B R' B U2 R2 B2 L U2,R,Holiday Open 2023 (2023-03-25),333 R1 C E2
+2601150001,F U F2 L F2 D2 U' B2 U' B2 R F U2 B2 U R F',Y,Romerike Easter Open 2023 (2023-04-01~02),333 R2 A #3
+2844779001,R2 D2 U2 R2 U2 B2 R2 F2 R' B2 F' L' F' D R2 D R' U2,O,Eretum III: WC Warmup 2023 (2023-06-30~07-02),333 R2 C #3
+3613122001,U B2 R2 B2 D' R2 D F2 L D' L D' R2 D2 B2 F' D F',O,Mololoa Open 2024 (2024-03-23~24),333 R2 B #5
+4354990001,F' R2 U2 L2 R2 F U2 R2 B' D R B D B' U2 L' U2 F2 R',W,Bristol Winter Open 2024 (2024-12-14),333 R1 A #4
+4953966001,R B2 U2 L' D2 R' D B' F2 L2 D2 F2 R2 U' R2 U' L2 U' R2,O,South India Cube Championship 2025 (2025-08-14~17),333 R1 A #1
+5005130001,L2 F2 D' R2 D U' F2 U' B' R' D2 U B' U' R2 U' L2 U2 R',W,Rubik's Dutch Nationals 2025 (2025-09-05~07),333 R3 A #1
+5117693001,R U R' F2 D' L2 F2 L' D2 F' L2 F L2 U2 D2 F2 U2 F D,R,UH Cubing San José 2025 (2025-10-18),333 Final A E1
+5210415001,U' D R2 U R D2 L' U2 F' L2 F' R2 U' L2 U F2 R2 U,Y,Kent Fall 2025 (2025-11-22),333 R1 D #3
+5424434001,B' L2 F2 U B' R' U D2 B2 L2 U2 R' D2 F2 B2 L F' R2 U2 B,W,Richardshhhon 2026 (2026-02-28~03-01),333bf R2 A #5

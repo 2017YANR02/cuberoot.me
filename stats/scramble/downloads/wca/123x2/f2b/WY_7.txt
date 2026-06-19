@@ -1,0 +1,74 @@
+# Scramble samples — 123x2 / f2b / WY / bin 7
+# Population in this bin: 67
+# Samples listed: 67 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+2686001,F B U2 B' U' R2 B D F' B2 R F2 U2 L2 B' L2 F2 L2,W,CMI Fiesta Open 2014 (2014-03-21~23),333 Final B #5
+41414001,R' U2 R2 B2 U2 R2 F2 R' U L R2 U' R F2 R D2 U F L',Y,Kielce Cube Attack 2014 (2014-07-26~27),333 R1 C E2
+57569001,D2 F2 R F2 L2 D2 L F2 R' F2 R F' U2 F L' R U' L,W,Aaruush Cube Open 2014 (2014-09-13),333oh R1 G #2
+250737001,U' B' R2 B' R B U2 B' D2 R' F R2 B2 U2 B' U2 F' D2,Y,Speedsolving Pucallpa 2016 (2016-02-06~07),333 R1 B #5
+252600001,F2 U R D' B2 R' U F' B R F U D2 L2 U B2 D2 F2 R2 D,Y,SCMU Open 2016 (2016-02-06~07),333 R2 B #5
+309356001,D2 U2 L' B2 R2 F2 L' U L' U2 B' R' B F2 R2 U' R F2 L' F2,W,Hem MariCubik Open 2016 (2016-06-05),333bf Final A E2
+326501001,D2 R2 F2 U2 L' D2 R' D2 U2 L' U F2 L' D' B L2 B2 D' B,W,Cowboys Summer 2016 (2016-07-02~03),333oh R1 B #3
+343145001,D2 L2 F' L2 B' F L2 D' F' L R U R' D' U2 L' D',Y,SSN Cube Open 2016 (2016-08-05~06),333oh R1 J #2
+361086001,D2 L2 B' D2 B2 F' L' U2 L F R B2 D2 B2 F U2 F',W,Botosani Rubik Open 2016 (2016-09-10),333 R1 B #5
+478523001,R2 D R2 F2 D F2 D2 B2 U F U' R' B2 F' U2 L' U L' U' R,Y,Guatemala Nationals 2017 (2017-03-25~26),333 R1 F #1
+541883001,U F2 R2 L2 F U' B' D2 B2 L' D' B2 D2 F2 D F2 B2 R2,Y,German Big Cube Open 2017 (2017-07-01~02),333 R2 A E1
+545171001,U2 R D2 R U2 L' D2 L F' R' U F R2 B' D R2 F2 L R2,W,Celebes Champ 2017 (2017-07-08~09),333 R1 C #2
+560586001,D2 F U2 R2 D2 F L2 B R2 F2 R2 D' L' R2 U F U' R2 U2 R',W,SSN Cube Open 2017 (2017-07-28~29),333 Final B #3
+618490001,U2 B2 R2 F2 L' U2 B2 R B' L F R' D R2 B' U2 F L' D2,Y,Michigan Cubing Club Delta 2017 (2017-10-14),333 R2 B E2
+660626027,U2 L R2 B2 F2 D2 R2 B2 R' B' U2 L F U L' R U' B' D F L' F,Y,Vitba Winter 2015 (2015-01-05~06),333mbf Final A #2
+661090001,U' L2 B2 F2 D2 R2 B2 F' R B2 F D2 F' L' U2 B D2 F' R B,Y,KJSCE Mumbai Open 2016 (2016-08-27~28),333mbf Final A #2
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,W,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+678611031,B2 D U' F2 L2 U F L' D B' F L' B2 F D' R2 U L2 U',W,Bheja Fry Year End Open 2017 (2017-12-30~31),333mbf Final B #1
+686027001,U2 F2 D R2 D' B2 D' L2 R2 F2 L' R U L' U F' L B U2,W,AZCubing Hamilton Winter 2018 (2018-01-13),333 R1 F #3
+827213001,R' U' F L2 D2 L2 F2 U2 B' L2 F' L2 D' L2 R' U' F2 L2 D2 L' D' R' B2 R' U' F,W,Cologne Open 2018 (2018-07-14~15),333fm Final A #1
+838190001,L2 F2 L2 R2 B U2 F D2 L2 F2 U L D2 F D' B' F' D R' F L2 U',Y,Bengaluru Championship 2018 (2018-07-27~29),333bf R1 A #1
+852992001,L2 D R2 U' B2 D' B2 U' R2 B2 F2 L' F' R2 U2 B R' F2 U2,Y,Indonesian Championship 2018 (2018-08-11~12),333ft Final A #5
+861754001,B2 D2 U2 L D2 F2 R' F2 L2 B2 D' L2 D' L U' R F' L F R',Y,SESC Camaquã 2018 (2018-08-18~19),333oh Final A E1
+903148001,U' L2 R2 U B2 U R2 U2 L' R D' L2 B L2 D F2 R' B',W,Raipur Cube Championship 2018 (2018-10-14),333 Final A #5
+1087149001,D B' R2 F R U F' D2 B2 L B2 R2 F' U2 L2 B' U2 D2 B,Y,Yakutsk Cubing 2019 (2019-04-07),333 R1 A E2
+1265617001,L2 D2 B' F' L2 R2 D2 R2 U L U B F' U R2 B2 L' U F2,Y,Korean Championship 2019 (2019-08-16~18),333ft Final A #2
+1387247001,R D R' L D B' D2 F2 U2 B2 L U2 R2 U' D R2 F2,W,Kjeller Open 2019 (2019-11-02~03),333oh R2 B E1
+1394629001,U' R D2 L' F' L2 U L2 U R' U' R2 B' D2 F U2 F D2,W,Hangzhou Autumn 2019 (2019-11-09~10),333bf R1 B #3
+1474339013,F2 D2 B R2 F' D2 F2 D2 R F2 R D2 L' R B' D R D2 B' D2,W,Florida Winter Break 2019 (2019-12-21~22),333mbf Final A #2
+1691596001,D2 B F2 D' R2 U' F2 D L2 D' F L' D L' D L D' B,W,Montevideo ReOpen 2021 (2021-09-19),333oh R1 A #4
+1826244001,R B' R2 D L2 U' R U D' F' L2 B L2 F R2 F R',W,Florida Spring A 2022 (2022-03-12),333 Final A #4
+1868687001,U2 F2 L2 R2 D2 U L2 D R2 B U2 F L B2 F D2 B' R',W,Cubing Returns Raipur 2022 (2022-04-09~10),333 R2 B E2
+1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,Y,MSU Quiet Qualifier 2022 (2022-05-14),333bf Final B E1
+2134129001,B2 D' F U B2 U' R F' B' U D2 B2 U2 F2 U F2 D' R2 L,Y,Ecuador Nationals 2022 (2022-08-26~28),333 R1 F #3
+2309992001,U L F' D R2 D R' F2 L2 U' R2 L' B2 L' D2 R2 L',Y,Buenos Aires Cubea 2022 (2022-11-19~20),333 R1 F #3
+2917546001,B2 D' F' B2 L B' U' L' U' L' F' U2 D2 B R2 F2 R2 F' D2 B' L',Y,Willimiehen Kuutiopäivät 2023 (2023-07-22~23),333bf Final A #1
+3073453001,U' B2 R2 F2 L2 R2 D L2 R2 U' B L F D2 U R F2 D U,Y,ADA Fall 2023 (2023-09-09),333 Final B #1
+3314795001,B2 U B' R B D2 F' B R' B' U2 B2 R2 U2 R2 F' L2 B2,W,RioMar Fortaleza II 2023 (2023-12-02~03),333 R1 C #4
+3392855013,D F' D2 B R2 F' U2 F' U B2 R' U2 R F' D2 L B' D B' L2,W,Vilnius Winter 2024 (2024-01-06~07),333mbf Final A #1
+3414025044,D' L' B' D2 B L2 D2 L2 B R2 U2 B' R' U R B2 L2 D' L2 B',Y,Pour Gesté J'ai Gâteau 2024 (2024-01-13~14),333mbf Final B #2
+3478751022,F' U2 B2 F L2 U2 F2 U2 D' L' R' F R2 B2 L2 R' B D',Y,MYHM Singapore Championship 2024 (2024-02-02~04),333mbf Final A #1
+3605433138,L' D R' U2 D F2 L B' U' D' L2 F2 D' L2 U' F2 B2 R' D B' L,W,Supermiya PBQ in Tashkent 2024 (2024-03-16~17),333mbf Final A #1
+3722618001,R' B2 R' D' R' L B R' U2 L' B2 L U2 B' L' B U2,W,Cincinnati Speed Solving 2024 (2024-04-27),333oh R1 A #2
+3729241001,R2 U' B2 R2 D' R2 B2 L2 B2 D' L' R D2 F L' D2 L F2 L',Y,Trondheim Spring 2024 (2024-04-27~28),333oh Final B #5
+3803641001,L2 D' B' D2 U' B2 U B2 L2 D2 R F' U2 B2 U2 L B' U2,W,mcubes Cubing Clash 2024 (2024-05-25~26),333 Final A #1
+4171009001,D F' L' B' D F2 U' L2 D' B L2 U F2 R' D' U2,W,Rubik's German Nationals 2024 (2024-10-04~06),333oh R2 A #5
+4198257001,U B' L F2 L' B' L' B2 R' L' U' D F2 B2 D',W,Kalyani Cube Open 2024 (2024-10-19),333 R1 A E2
+4208815001,R2 L2 D2 B' R D' F L' F2 R2 F' D2 B' D2 F' L2 U B2 U2,W,M Moves in Middlebury 2024 (2024-10-19),333 R1 D #2
+4381909004,R2 L2 U' R' B D2 L' B' U F' R F2 B2 R' L2 D2 R' D2 F2 L' F,W,I Hope It's Solved Edmonton 2024 (2024-12-21~22),333mbf Final A #2
+4444211001,D R F R2 L2 F U' F2 D' F2 U L' F2 U2 R' B2 R2,W,Altavista Side Events 2025 (2025-01-26),333 Final A #4
+4527457001,U' D' B' R2 D2 F2 L' U' B2 U L2 F2 R2 U' R2 F D F,Y,Metropolis Lara League I 2025 (2025-02-22),333 R1 C #4
+4583066001,L R2 D2 L2 D2 F2 U2 R' U2 R' F2 D B R' D L2 B L' B,Y,Cube4fun Biała Rawska Spring 2025 (2025-03-23),333 R1 C E2
+4686667001,D2 F R2 B' F U2 B D L2 R2 D' F L' D2 B' R B' D,Y,NxN in Hanoi 2025 (2025-04-26~27),333 Final A #1
+4694214001,F2 D2 R D R D R2 F L2 U2 L2 F R2 F D2 B2 D2 L D',Y,Solo Lur 2025 (2025-04-26~27),333oh R1 D #1
+4904666001,L2 D' R' F2 B2 R D L' U' F L2 D2 F' L2 F U2 B R2 D2,Y,Minerva Zapopan 2025 (2025-08-01~03),333 R1 C #2
+4935724029,B U' L2 U F2 U' R2 U2 B2 R2 U' R U2 B' R F2 D2 B' D' L',W,Kooyong Clock Clash 2025 (2025-08-16~17),333mbf Final A #1
+4937187001,U' L2 B2 D R' L' F D R2 F2 U2 R2 U' L2 F2 U L',Y,Vietnam Championship 2025 (2025-08-15~17),333 Final A #5
+4951126040,U2 F B' U2 R2 F' R L2 F U2 D' B2 R2 D' B2 U F2 U B R2,Y,Couffouleux Open 2025 (2025-08-15~17),333mbf Final A #1
+5024376001,B' L' B' U2 F2 D2 B2 D B' U2 F2 U2 L' F2 U2 L' F,W,Sardinia Open 2025 (2025-09-13~14),333 R1 C E1
+5131051001,L B' R' U2 L B2 L' U2 R D2 R D' B' D2 L' D' F',Y,Que Tout le Mont de 6 Faces 2025 (2025-10-25~26),333oh R1 A #2
+5146099001,U2 L' D B U R' F B2 R2 B2 U' B2 R2 D F2 U2 B' R U',W,Solving in Sedgefield 2025 (2025-11-01),333 R1 C #5
+5175612001,L2 D' B' L D2 B' L' U B' U R2 U' L2 D' B2 U L2 F2,W,Northern Territory Championship 2025 (2025-11-08),333 R1 A #5
+5207821026,U F2 U' B' D' L' U2 D' B L U' D R2 B2 L2 F2 D R2 U' L' F',Y,Gelves Open 2025 (2025-11-22~23),333mbf Final A #1
+5304312012,U2 L F L F2 R B2 L' B2 D2 B L R2 B2 D R2 B' F2 L B2,Y,New York Multimate PBQ III 2025 (2025-12-27~28),333mbf R1 A #3
+5354121001,L2 R F' L2 U2 L2 D' U' F2 U' R D L2 U' B2,Y,Otsu Biwako Winter 2026 (2026-02-01),333oh R1 B #2
+5365708001,L2 D' R2 D F2 D' F2 L2 F U2 F U' R' B F' L' U2 L D,Y,Mini-Tridentum 2026 (2026-01-31~02-01),333oh Final A E2
+5690398022,U' B R B U' F2 L2 D2 B' R2 D R2 L2 F' U2 R2 F L2,Y,Headache in Kode 2026 (2026-06-05~07),333mbf Final A #2

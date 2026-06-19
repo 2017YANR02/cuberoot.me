@@ -1,0 +1,13 @@
+# Scramble samples — eo / eo_cross / BGWY / bin 1
+# Population in this bin: 6
+# Samples listed: 6 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+67895001,F2 R2 D' F2 R2 D' U2 L2 R D R' D2 R D' L2 D U2 F',Y,DJ Open 2014 (2014-10-18~19),333 R1 G #5
+3186409004,B D B2 R2 U2 R2 F2 D F2 U2 F D F' R2 D' R2 B R',B,Hverdagscubing VIII - Lille Friheden 2023 (2023-10-24),333mbf Final B #1
+3233134001,U2 L2 F U' R2 U2 B' F2 D' F2 B2 U B2 L2 D B2 D' B,W,i.Cube Open 2023 (2023-11-04),333 R1 A #2
+4185127024,B R B2 D2 F2 R F2 L D2 R2 F2 L' F U2 F D2 L' D2 B,G,Taboão Bigs & Blinds 2024 (2024-10-13),333mbf Final C #1
+4517068001,R2 B2 R2 D2 F' L2 D2 B' D2 R' B2 L' F L R' D2 R' U2,G,Chill Cubing in Chilliwack 2025 (2025-02-22),333 R1 D #3
+5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1

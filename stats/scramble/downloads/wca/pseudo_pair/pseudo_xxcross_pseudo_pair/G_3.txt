@@ -1,0 +1,12 @@
+# Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / G / bin 3
+# Population in this bin: 5
+# Samples listed: 5 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+55145001,L2 B' F' R2 F2 L2 B' U' L2 B' U2 L' F U' F R2,G,360 Degree Wellness Open 2014 (2014-08-30),333 R1 B #4
+80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,G,Plaza de las Américas 2014 (2014-11-15),333oh Final A #1
+221498001,B D2 F L2 B' L2 U2 B L R B U2 F2 D2 R U' B' D2 U B' L2,G,Tecsup Speedcubing Open 2015 (2015-11-28),333bf Final A #1
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+5306686001,B F' R2 D2 F R2 F L B' D2 B2 L2 D' L' B L D,G,Westport Icebreaker 2026 (2026-01-03),333 R1 A #5

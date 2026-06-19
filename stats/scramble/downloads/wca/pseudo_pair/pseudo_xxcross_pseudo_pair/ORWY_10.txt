@@ -1,0 +1,40 @@
+# Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / ORWY / bin 10
+# Population in this bin: 33
+# Samples listed: 33 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+203212001,L2 B2 U2 R2 D2 L U2 R' B2 L B' D U F' D' L' F' D R' B',O,Delhi Autumn Open 2015 (2015-10-17~18),333 R1 J #1
+457572001,R2 F2 R2 B2 R2 B D2 L' U L' B' R U R2 D F L B' F',O,Circles Open Spring 2017 (2017-03-04),333 R1 C #3
+460175001,B2 D L2 U2 R2 D' F2 D F' U2 B L' B' D' R B' F' R2 D2 U' L B,O,Anokha Cubing Royale 2017 (2017-03-03~04),333bf Final B #2
+660554014,F2 U2 L2 R2 U2 R2 F' U2 F' U F' L' R2 F2 R B' D2 R F2 R' D',O,VIT Rubiks Cube Challenge 2014 (2014-09-26~28),333mbf Final A #2
+661208051,R2 D2 B' U2 R2 B' L2 F2 R2 B L' U' B' L' R D' F2 L B2 F2 L' F',O,Mega Minnesota Winter 2016 (2016-12-10~11),333mbf Final A #2
+809748001,B2 R2 U2 L U2 B2 U2 L' F2 R F U' B' R' D L F2 D2 U2 B,O,Michigan Cubing Club Gamma 2018 (2018-06-17),333 R2 A E1
+822076001,R B2 U2 B2 D2 R D2 R2 D2 R U R U' B' L' F R' U' B D',O,Cebu Masters 2018 (2018-07-07),333 R1 B #2
+941038001,U' F2 U R2 B2 F2 R2 F2 D' F R' B F' L' U2 F' U R U2 F',O,Fuzhou Open 2018 (2018-11-24~25),333oh R1 B E2
+948394001,L2 B' D2 B' F2 D2 L2 B L2 D2 L2 D' L U F' L D2 B2 L B2 D',O,Indianapolis Fall 2018 (2018-12-01),333 R1 B E2
+1148917001,L' F' R2 F2 R' B2 D B U' L U F2 L2 F R2 U2 B2 L2 D2 B,O,Arnold Classic Africa 2019 (2019-05-17~19),333 R1 D #4
+1174914001,F' U2 F' U F B' R' D L' U2 B R2 D2 F2 R2 D' B2 D F2 R2,O,Beijing Summer 2019 (2019-06-07~08),333 R1 B E2
+1485628001,B2 U' F2 D L2 F2 L2 B2 D F' L U F' D2 L' F D' L2 B' L2 D',O,Oklahoma 2020 (2019-12-31~2020-01-01),333bf R1 B #1
+1690303001,R B L2 F2 U' D R B' L2 D2 L2 D' R2 F2 L2 F2 L2 D2 L2 D' R,O,Cubing Ekat Open 2021 (2021-09-11~12),333oh Final A #2
+1758510015,R' F B U D' B2 R B' L D F' B2 U2 B' L2 D2 L2 F2 R2 L2 B',O,Garidech'Open 2021 (2021-12-11~12),333mbf Final A #1
+1820304001,R2 F2 R2 F2 R2 U' B2 R2 D2 L2 F D2 U' R F' L2 F2 U' L' B2,O,UIO 2022 (2022-02-26~27),333oh Final A #4
+1867052001,F' L B R2 D F2 D2 U' L2 D' B2 F2 L' F2 U' L' F2 R B R2,O,İzmir Open 2022 (2022-04-09~10),333 Final A #2
+1877556001,F U B L' F' R U' B R' B U2 B U2 B2 R2 L2 U2 L2 B' L',O,Dutch Spring 2022 (2022-04-17),333 R1 E #2
+2110160001,U B D R2 B2 U B2 L2 D' F2 B U' L' R D F U L R,O,Lincoln Summer 2022 (2022-08-20~21),333 R1 C #5
+2775068060,U2 L' D2 L2 B2 L D2 R2 D' B F R' U2 L U2 R2 U B R2 D2,O,BrizZon Side Open III 2023 (2023-06-03~04),333mbf Final B #1
+3279632001,R D' F' L2 B2 F' R2 B2 F' L U' B U2 F L' R' B' D',O,Weston-super-Mare Autumn 2023 (2023-11-18~19),333oh R1 A #5
+3598299001,U F2 L2 R D2 L U2 F2 R' B' R2 D U' F' L' B' L' D2 U2,O,Ulaanbaatar Spring 2024 (2024-03-16),333 R2 C #4
+3914046001,F' R2 D' B2 F R2 F' D2 U2 R2 U2 B2 L F R' D' U2 B' F2 U2,O,Vacaciones Cuenca Open 2024 (2024-07-06),333 R2 A #2
+3946289001,D' B' D' L2 U' F' R' U2 L' B2 D2 R2 F2 D R2 L2 F2 D B',O,Chichester Summer 2024 (2024-07-20~21),333 R1 D #4
+4226661001,B D U2 B' R2 U2 F' D2 R2 F D2 F' L D' L2 F U' B2 L' D,O,Bergen Fall 2024 (2024-10-26~27),333 Final A E2
+4468242001,D' L2 U2 B2 L2 D B2 F2 U' R2 F L' B2 L2 R' B' R2 D B' U' L',O,Naperville Winter 2025 (2025-02-01),333 R2 B #3
+4602859001,R2 U' B2 R' D' L2 B2 D F2 L2 U B2 U2 B L U2 F D U' F',O,First Solves Gothenburg 2025 (2025-03-29~30),333 R1 C #4
+4603522002,R D U F2 U2 L2 R2 B2 U F L' U2 B' L D B2 F' D B R,O,BrizZon Side Open 2025 (2025-03-29~30),333mbf Final B #1
+4638715001,D2 L2 U B2 L' D' R U' F R2 U2 B' U2 R2 B' L2 U2 F D2 R,O,Slovenska Bistrica Open 2025 (2025-04-12~13),333 R2 A E1
+4714134001,F U R' D' B U2 B R' B2 D' L2 F2 U2 D F2 R2 L2 D R',O,Kampin Kuutiopäivät 2025 (2025-05-10~11),333 R2 B E1
+4839288001,F' D' B L2 U L D2 L U F2 D2 L2 U' L2 F2 L2 D2 R U2 F,O,Gem City Pre-Flight Warm Up OH 2025 (2025-06-28~29),333oh Final A #4
+5072774001,U2 R2 B' R2 B' F2 L2 R' B' D' F L U F' R B L R2,O,DFW Cubing Fall 2025 (2025-10-04~05),333 R1 F #2
+5222106001,F U' B R' D2 U2 R' B2 F2 U2 B2 L2 U R F' D' L2 F' U B,O,Desafío Rubik's Guatemala 2025 (2025-11-22),333 R2 A #3
+5337118001,D2 U2 F' D2 L2 B' R2 F' D2 F2 D2 U2 R' U L' F' R D' U' R' B R,O,Just Judge Jura 2026 (2026-01-17~18),333bf R1 A E1

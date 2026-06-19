@@ -1,0 +1,41 @@
+# Scramble samples — pseudo / pseudo_xxcross / OR / bin 3
+# Population in this bin: 34
+# Samples listed: 34 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,O,Slow n Steady Fall 2014 (2014-11-09),333 R1 B E1
+93223001,R2 L U' L2 U L' U2 D2 R' F' R' D' F2 U' D2,R,Cubing Mérida 2014 (2014-12-29),333 R1 B #3
+100145001,F' L2 F2 U2 L2 F2 U2 L2 U2 F' R U' L' D' U L' F U F2 U',R,PB Smashathon 2015 (2015-01-17~18),333 R1 G E1
+188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,O,LMDL Open 2015 (2015-09-12),333 R1 B #3
+196741001,U L2 F2 D2 U' R2 D2 B2 F L2 R2 U' L U' L F R,O,Prague Open 2015 (2015-10-03~04),333ft Final A E2
+370006001,U2 R D2 B2 D2 R' B2 R' F L' F L2 F' L2 U' R2 U',R,Oklahoma Fall 2016 (2016-10-01),333 R1 C #2
+410766001,U2 L U2 R' U2 L2 D2 B2 R2 B D L2 D' B L2 D F' U2,R,Urdaneta City Fiesta Open 2016 (2016-12-04),333 Final B #4
+424204001,R2 F U2 L2 F R2 F L2 D2 F2 U' B L R' U B' L F L D2,R,Greece Winter Open 2016 (2016-12-28~29),333 R2 B E2
+433280001,U2 F' R2 B U2 B' D2 U2 L2 D' U' R' B2 U R B2 L' D2 U',R,Santa Fe Open 2016 (2016-12-10),333 Final A E2
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,O,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+682432001,D2 F2 L' F D' F R' D' R2 L' U' R2 D2 R2 L' F2 U2 R,R,Tulcan Open 2018 (2018-01-06),333 R1 B #2
+701333022,L2 B2 F2 L D2 L F2 L F2 U2 R B' U R2 U' L2 B' L' B F2 L B2,R,Please Be Quiet LA 2018 (2018-02-03~04),333mbf Final B #3
+797201001,B U' D' R U' F' D2 B2 L U R' F' U2 B2 D2 B R2,R,Ukrainian Open 2018 (2018-06-01~03),333 R1 D #1
+930025001,L2 B2 L2 U' F2 R2 D2 L D' B L D2 L2 D2 L2 B2 L2 B2,O,Trinity Valley Open 2018 (2018-11-10),333 R1 D E1
+1024571001,F2 R2 F2 R2 F2 U2 B U2 R' B' R2 U2 L D U R U' L R',O,GLS Winter Camp 2019 (2019-02-11~15),333 R1 A #3
+1108365014,B2 R2 D' F2 U2 B2 D R2 B' R F' D' L B2 U' B R2 B' U2 L,R,Shanghai Memory Nightmare 2019 (2019-04-20~21),333mbf Final A #2
+1776277001,R U' B2 R2 D2 B D2 R2 U L' U' R2 F' D B' D2 R,R,Bologna New Year 2022 (2022-01-02),333 R2 B #5
+1993766001,L' D' F U F2 L2 D2 R D2 U2 R' D R' B' D B' U2 L2,O,1st Salem Open 2022 (2022-06-26),333oh Final F E1
+2134410001,R B' L' U' F U2 D2 B L' F2 U2 F2 B2 D2 L U2 R' D2 R2,R,Ecuador Nationals 2022 (2022-08-26~28),333oh R1 E #3
+2655130001,U2 L2 B' D2 B2 D2 L2 F' R2 U' F R U' L D2 F' D R2 B,O,Swallow Spring 2023 (2023-04-22),333 R1 B #5
+3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,O,BMME 3x3 Day 2023 (2023-09-23),333mbf Final B #1
+3219973001,D2 R2 B2 D2 U2 B' L2 U2 L' F' R U2 R' F2 D2 F' D' L',R,IUT Esonance 2023 (2023-11-03),333 R1 C #1
+3283160001,B U F R D R' U D2 L2 D B' R2 U2 B2 U2 B' R2 B' L2 B R2,O,Annuntia Sunday Open 2023 (2023-11-19),333bf Final A #2
+3528111001,L2 U B2 L2 U L2 B2 U' L2 R' U R' B U B' L' B2 L',O,Bratislava Spring Is Coming 2024 (2024-02-17~18),333 R2 A #1
+3617254001,U2 D F2 B2 L' F2 L F' L2 D2 F2 U2 F R2 B' R2 F' U' L',R,Iguatemi Fortaleza II 2024 (2024-03-23~24),333oh R1 B E2
+3835363001,F L U' B' R2 F' D2 U2 B R F L B' D F2 D B,R,Battle of Waterloo 2024 (2024-06-08~09),333oh R1 A #4
+3843308001,L D B U B R' U' L U' F2 U' L2 U2 B2 U F2 D' F' L,O,Buchy Open 2024 (2024-06-08~09),333 R2 B #5
+4055124001,R' F U2 L2 R B2 U2 L2 R F2 U L2 F' U2 B' L2 B R' U L2 U,O,CubingUSA New England Championship 2024 (2024-08-23~25),333bf R1 B E2
+4776336001,R B2 L D' U2 R2 U F2 U2 B2 U L D2 F' U2 B D R',O,Surrey Monday Open 2025 (2025-06-02),333 Final A E1
+4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,R,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2
+5020771001,R F' R D2 L' F' B2 R2 D L2 D' R2 B2 U F' L,O,Criciúma Open 2025 (2025-09-13~14),333 R2 A #5
+5384063063,L' D' F2 L D2 L2 D2 B2 R' B R' B2 L F U' B U' B,R,Bara Multi-Blind i Jönköping 2026 (2026-02-15),333mbf Final A #2
+5475354001,D' B' D' B R' F2 D R B R' B' D2 F2 B' D2 B' D2 L2,O,Parets Open 2026 (2026-03-14~15),333 Final O #2
+5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,R,Fewest Moves Bogotá XII 2026 (2026-04-25),333fm Final A #2

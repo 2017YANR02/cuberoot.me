@@ -1,0 +1,9 @@
+# Scramble samples — f2leo / f2leo_xcross / W / bin 2
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,W,Longjum'Open 2024 (2024-01-27~28),333oh R1 A #4
+4164219001,F' U' D2 R' U F2 L D' U2 R2 B D2 R2 F D2 F' R D',W,Hublife Speedcubing 2024 (2024-09-28~29),333 R1 D #2

@@ -1,0 +1,36 @@
+# Scramble samples — std / xxcross / BG / bin 4
+# Population in this bin: 29
+# Samples listed: 29 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+55030001,B2 R' B2 D2 L2 F2 D2 L R2 F' L' D U L2 B D' U B L2,G,Ho Chi Minh Open 2014 (2014-08-31),333 R1 A E2
+80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,G,Plaza de las Américas 2014 (2014-11-15),333oh Final A #1
+132039001,R' L' D' R2 B L B' R' B D' F2 D2 L' B2 L2 F2 U2 R' L,G,Cerbuna Open 2015 (2015-04-18~19),333 R2 B #3
+188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,G,LMDL Open 2015 (2015-09-12),333 R1 B #3
+410742001,D F2 L2 D L2 U F2 L2 U L2 B R D' F U L2 U' B2 R2,B,Urdaneta City Fiesta Open 2016 (2016-12-04),333 R1 A #1
+575674001,R2 D' R' U' B' L' B' D B2 D B R2 F2 U D L2 F2 D L2 U',G,Udmurtia Open 2017 (2017-08-12~13),333 Final A #5
+660707002,U' L2 U F2 R2 B2 D2 L2 F2 U F' L D' F D' L D2 R2 F2 D2 B R,B,Mega Rubik 2015 (2015-05-02~03),333mbf Final A #1
+667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,G,MTD Spring 2017 (2017-12-09~10),333oh Final B #2
+713569001,U F2 U B2 D' U2 F2 U B' R' D' F' U2 F' R2 D2 F R U,G,Cannes FIJ 2018 (2018-02-24~25),333 R1 B #5
+740011001,F2 U2 L2 D2 L' D2 L B2 L2 D' L' U R F D' U R U,B,French Championship 2018 (2018-03-31~04-02),333 R1 C #5
+863029001,B2 R' B2 U' B' L2 U2 D2 R U' L' B2 D L2 F2 U R2 L2,G,Ural Open 2018 (2018-08-25~26),333 R1 A #1
+1004836001,D' L' F' R' U L F2 R' U2 L' F2 L2 D' L2 U' B2 L2 U,G,Return to Toronto 2019 (2019-02-02),333 R1 B #3
+1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',G,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
+1228058002,B2 U2 R2 U2 R2 D B2 L2 F' D2 B R2 F L2 D' F' U R' B' D,G,Israel Summer Open 2019 (2019-07-17~18),333mbf Final A #1
+1289854007,U B2 D F2 L2 B2 D L2 U L2 U2 B F2 U' R B2 L2 B' F2 L,B,Champagne Open 2019 (2019-09-07~08),333mbf Final A #1
+1586190001,D L2 U' F2 U' R2 U2 F2 L U2 B D2 F2 L2 B F2 R' D2 F,B,Auckland Summer Open 2020 (2020-02-29~03-01),333 R1 E #5
+1728229001,F2 U R L' F' L F' D B' R2 L D2 B2 L' F2 R' B2 U' B,G,BrizZon Side Open III 2021 (2021-11-12~14),333bf R2 B #1
+1761589001,F2 R2 U' B2 L2 D' L2 D2 L F D F2 L D' F' L2 F2 D',B,Richmond Open A 2021 (2021-12-11),333oh R1 A #5
+1902384001,D B' D L' D2 L B2 D2 R D2 R2 B R F' D R D2 L R,G,Stevenage Spring 2022 (2022-04-30~05-01),333 R2 C #3
+2517887001,F D U2 L' F2 U2 L D2 R' B' L2 U B' F2 U' B2 D2 R',G,Lincolnshire Winter 2023 (2023-02-25~26),333oh Final B #5
+3126076001,D2 F' D' R2 U2 R' F' D' R' U D' L2 U2 L D2 R F2 R,B,South Deerfield Side Events 2023 (2023-09-30),333 R1 C #5
+3185199001,F' L U L2 U2 F U B' U2 F U2 F2 U2 F U2 R U',B,Hong Kong Championship 2023 (2023-10-21~22),333 R2 A #1
+3268100001,D' L' U2 B2 U F2 R2 F2 R' F' D' R2 U2 L D2 B L',B,Cubing in Palem 2023 (2023-11-12),333 R1 D E1
+3555232001,L' R' F2 D2 R2 F2 U2 R B2 R' B U F D' L2 D' R2 B R2,G,Cube4fun in Warsaw 2024 (2024-03-02),333 R2 A E1
+4279660001,U' F R2 B' D2 F D2 F2 L F' R2 F2 R2 U' F U R' B',G,Slow N Steady UMD Fall 2024 (2024-11-09~10),333 R1 D #1
+4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,G,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2
+5267926001,L B' U2 B U' L2 R' U' L U' F' R' F R2 B' L',G,UNESP Rio Preto Open 2025 (2025-12-13~14),333bf Final B #1
+5501210001,F' L F D F' D' F L' B' D2 R F' R2 F B2 U2 F L2,B,North Sound Spring 2026 (2026-04-04),333 R2 A #5
+5547713001,B D L2 F B2 L F' U R2 U2 D' L2 U' L2 B' U' B',G,Brockport Bash 2026 (2026-04-18),333 R2 A E2

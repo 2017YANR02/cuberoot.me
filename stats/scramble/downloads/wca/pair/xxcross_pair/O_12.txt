@@ -1,0 +1,10 @@
+# Scramble samples — pair / xxcross_pair / O / bin 12
+# Population in this bin: 3
+# Samples listed: 3 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+153996001,U2 F R2 B' D2 F' U2 R2 B' U2 F' U R' D L' F' R' D2 R' F2 R,O,Pune Fall Open V2.0 2015 (2015-06-21),333 Final F #3
+880258001,D B2 R' F U' B U' R B L F2 U' R2 L2 D' R2 D R2 L2 B2,O,Quanzhou Open 2018 (2018-09-16),333 R1 D E1
+4874123001,D L' U2 F2 L D2 F2 R2 B2 R2 F2 U' L' F U B' U' L2 F2 R2 B R2,O,Campeonato Brasileiro de Cubo Mágico 2025 (2025-07-18~20),333bf R1 B E2

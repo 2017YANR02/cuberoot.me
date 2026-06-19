@@ -1,0 +1,17 @@
+# Scramble samples — pseudo / pseudo_xcross / BGOR / bin 8
+# Population in this bin: 10
+# Samples listed: 10 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+319299001,U' B L' U2 F' D B' R L2 B' L' U' R2 U2 D F2 R2 F2,B,Indiana 2016 (2016-06-25~26),333 R1 E #2
+2106500001,F R2 D2 B2 U' F2 D' R2 B2 F2 D U R F2 L2 F L B2 U' F2 D' L B',B,Yoga Summer A 2022 (2022-08-21),333bf Final A #1
+2950107001,B2 L' U2 B2 R D2 R2 U2 F2 L' U' B' D2 L F D R U2 L',B,Surat Cubing Sprint 2023 (2023-08-06),333 R1 A #3
+3450813001,D R U' L D' R D B D F R2 F2 U R2 B2 D2 B2 U R2 U,B,Southern Solves Invercargill 2024 (2024-01-27~28),333oh Final A #1
+4400998001,B' L2 D2 B U2 B2 F' D2 F2 U F' R D L' R2 B' L2 R' D2,B,Boulder Holiday Bash 2025 (2025-01-04),333 R2 A E1
+4485074001,F' R U2 F L2 F U2 B' L2 B R2 U' R' F' D' B F' U' R U,B,Lopes Up AZ 2025 (2025-02-15),333oh Final B #1
+4531451004,R2 D U2 R F2 L R F2 R' B2 D' L' B2 R2 F D B D2 U B',B,Only 3x3s in Hyderabad 2025 (2025-03-01~02),333mbf Final B #1
+4805786077,R' D2 L U' R D' R' L U B2 U L2 D R2 D F2 U2 B U L2 U2,B,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf Final B #2
+4874332003,D U2 B2 D2 R2 D2 R D2 U2 F D2 F' D' B D U F U L2 B' L,B,Campeonato Brasileiro de Cubo Mágico 2025 (2025-07-18~20),333mbf Final A #2
+5382005001,L U' B L U' R F2 D B' U D B2 L2 D' R2 L F,B,Vanderbilt Winter 2026 (2026-02-14),333oh Final A #3

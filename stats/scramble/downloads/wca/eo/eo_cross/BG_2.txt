@@ -1,0 +1,45 @@
+# Scramble samples — eo / eo_cross / BG / bin 2
+# Population in this bin: 38
+# Samples listed: 38 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,G,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
+314356001,B D2 B D2 U2 R' B' D2 R2 B' F2 L2 F R B' F,G,Strasbourg Open 2016 (2016-06-19),333 R1 D #5
+490703001,F2 R' U2 F R' B2 L' B' R' F2 L' F2 L2 D2 F2 D2 R B2 U2,B,SPB Easter Open 2017 (2017-04-15~16),333oh R1 A #2
+516559001,B U B2 R2 U2 B2 D' F U F2 L2 U' F2 D' B2 D B2,G,Eretum Open 2017 (2017-05-27~28),333 R1 B E1
+561120001,R2 D2 F2 R' F2 L' B2 R' D2 R2 U' R' F L2 F' L R B2 L2 B' L B2,B,FLIP Open 2017 (2017-07-22~23),333bf Final A #3
+661063130,U' L2 D L2 U B2 U B2 F2 R2 F' L2 R2 F' D' F2 D B2 D B,G,US Nationals 2016 (2016-07-29~31),333mbf Final A #2
+661446004,L2 F2 L F2 L B2 D2 R' U2 R' D2 F' L2 R B2 F2 U R' B R B',B,SESC Santos 2017 (2017-07-28~30),333mbf Final A #3
+700776001,B D R2 U F2 D2 R2 L U' R' U2 F2 R D2 R' U2 R B2 L2,G,Inner Mongolia Winter 2018 (2018-02-03~04),333 R1 A #1
+851005001,D' B' D B L' F2 L2 B' R' B D' L2 F2 B2 U2 D L2 D' B2,G,Kharkiv Open 2018 (2018-08-11~12),333 R2 C E1
+1073244001,R2 B2 R2 U F2 D U B R2 D B2 D F' L2 U B D',G,Ibagué Open 2019 (2019-03-31),333oh R1 B #5
+1215651001,D2 B2 U2 B2 L' F2 L D2 R' U' B' R2 U' B R' D R D R,G,Byczy Cube Race 2019 (2019-07-06~07),333 R1 A #3
+1296129052,B2 D2 R2 D L2 F2 D' B2 U2 F2 R' F2 U' L F L U B2 D2 R2 B R,G,Mental Breakdown Germany 2019 (2019-09-14~15),333mbf Final A #2
+1307755001,D2 L R' D2 B2 L' D2 F2 D2 B R2 D2 F' U2 R2 D2 L B,G,Grecia Open 2019 (2019-09-21),333 Final A E2
+2269598036,F2 U L B2 U' F2 B2 D' L2 D2 L2 U2 F2 L D L' U L B,B,Kewbz UK Championship 2022 (2022-10-28~30),333mbf Final A #2
+2542554001,D2 F L D2 L2 R2 B' U2 B F2 L' B L' B2 L2 R' D2,G,Turnin' in Termonfeckin Saturday 2023 (2023-03-11),333 Final A #2
+2674262001,D B' R D' R' D' B2 R' B' R2 B2 U D B2 D' R B2,G,Berisso al Cubo 2023 (2023-04-29~30),333oh R1 C #3
+2846983001,U2 L2 U2 F' U2 F L2 B U B L2 D' F' D L2 R2 B R',G,Valenzuela Cubing Open 2023 (2023-07-02),333 R2 C E1
+2898490001,R' U' F D R' B2 L' B' U L' D F2 D2 L' B2 U2 R F2 L2 U2 F2 B2 D2 R' U' F,B,Nod Don Denver 2023 (2023-07-16),333fm Final A #3
+3073618001,L2 U2 B F2 U2 R2 U B' U F D' F U' L2 B U2 B2,G,Brazos Cubing Fall 2023 (2023-09-10),333oh R1 B #5
+3093989001,B2 D2 L2 D R2 B2 D' B2 L2 U2 R2 F' U' B2 U' F' U' R' U',B,Kedah Cube Open 2023 (2023-09-23),333 R1 C #2
+3099187049,D R L' B R2 U' F' B2 D L2 U B2 R2 D2 F2 B2 U' B R,B,Newham Autumn - British Blind Off 2023 (2023-09-23~24),333mbf Final A #2
+3185407001,R2 U' F R' U2 B2 D2 L B2 L2 B2 D2 L B' L2 R' U' B R2 D' B',G,Hong Kong Championship 2023 (2023-10-21~22),333bf Final A #2
+3212187001,L2 D2 F2 U2 F' L2 U2 F' U B2 L2 U F' D L2 U F,G,Ventanal de la Sierra Open 2023 (2023-10-28~29),333 R1 C #3
+3238706024,F2 R' F2 U2 R2 U2 R' D2 R' D2 B2 F U2 L2 F2 L' B L B R,B,Uzbekistan Nationals 2023 (2023-11-03~05),333mbf Final A #1
+3288174001,U F2 U2 R2 B U' F L2 B' U' F' B2 U2 R2 F2 R' L' D2,B,Johor Mini 2023 (2023-11-25~26),333oh R1 C E1
+3390798001,F U' F' L2 B' L2 U2 L2 U2 B2 U' F' D2 F U B' L,B,Seoul Open 2024 (2024-01-06),333 R1 H #3
+3933600001,L D2 L U2 R2 D2 U2 R' B' L D' L U R2 D U' R' D',G,Cube4fun in Biała Podlaska 2024 (2024-07-12~14),333 R1 A #1
+3977667001,L2 F D R2 B2 F L2 B2 F R2 U2 D' F2 R2 D2 F U2 L R,G,Malaysia 15th Anniversary Championship 2024 (2024-07-27~28),333oh R1 D E1
+4285571001,B2 D' F U D' L2 B D F2 B2 D F2 R2 F2 D R2 F,B,Efterårscubing i Hvidovre 2024 (2024-11-16~17),333 R1 B #3
+4340425001,B' D2 U2 B L2 B' D2 B U2 B2 L2 R D2 L2 F R D2 L D',G,Na'Guara Metropolis Lara 2024 (2024-12-07),333 R1 D #4
+4759221001,F2 D L' B U L D B L' B U2 B2 R2 D2 B D2 U,B,Cube Factory League Koluszki 2025 (2025-05-24~25),333 R1 A #1
+4998314001,R' U' F L B D F' L U2 L' R2 F U2 F B U2 R2 B' L' U2 F D' R' U' F,B,Peru Nationals 2025 (2025-08-29~31),333fm Final A #2
+5213944001,F2 D2 L2 U2 L2 U F' U L2 U' R2 B2 D' B R' U2 L2,B,Dreht's Eich in Ergolding 2025 (2025-11-22~23),333 R2 A #3
+5311422001,B L2 R2 F L2 U2 B2 U R2 F U B F D2 U' R2 F,G,Almaty New Year 2026 (2026-01-03~04),333 R2 A #5
+5318143001,L' U2 L F' R B2 R' B R D2 R2 B2 U2 L' U2 R F2 U,G,Beijing Winter 2026 (2026-01-10~11),333 R3 B #1
+5342757001,R' U' F U2 F' R2 F' U2 R2 U2 F2 L2 R' F' R' U R2 F U' L2 R2 U R' U' F,B,PBQ Ropaži 2026 (2026-01-17~18),333fm Final A #2
+5511331001,B2 U2 F R2 F' L2 R2 B2 D2 R F' L2 F' L U2 L F' D2,G,French Championship 2026 (2026-04-04~06),333 R1 E #3
+5539335001,U' D L2 D R2 B U' F2 L2 D2 F D2 B2 R2 B R2 D2 L' U,B,NZ South Island Championship 2026 (2026-04-10~12),333 R1 A #3

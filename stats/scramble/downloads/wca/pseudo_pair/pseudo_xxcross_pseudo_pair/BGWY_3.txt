@@ -1,0 +1,21 @@
+# Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGWY / bin 3
+# Population in this bin: 14
+# Samples listed: 14 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+55145001,L2 B' F' R2 F2 L2 B' U' L2 B' U2 L' F U' F R2,G,360 Degree Wellness Open 2014 (2014-08-30),333 R1 B #4
+65804001,U' L D' F2 R' F R2 U2 R' U' R F2 R' L2 F2 U2 B2 U2 B2 L',B,Back to 360 2014 (2014-10-11~12),333 Final B #2
+80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,G,Plaza de las Américas 2014 (2014-11-15),333oh Final A #1
+221498001,B D2 F L2 B' L2 U2 B L R B U2 F2 D2 R U' B' D2 U B' L2,G,Tecsup Speedcubing Open 2015 (2015-11-28),333bf Final A #1
+661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
+861801001,B2 D' L2 D' F2 L2 U2 B2 U F' U2 B2 U' L2 D' L2 F2 L B' U2,B,SESC Camaquã 2018 (2018-08-18~19),333ft Final A #4
+1289854007,U B2 D F2 L2 B2 D L2 U L2 U2 B F2 U' R B2 L2 B' F2 L,B,Champagne Open 2019 (2019-09-07~08),333mbf Final A #1
+2249121001,D F2 D2 R B2 R' D2 F2 D L U L' B2 D' R' F R,Y,Mongolia Championship 2022 (2022-10-15~16),333 R1 F #2
+2446629001,L' B2 U' D2 F' U F R2 L' U2 R' F2 L2 F2 B2 L' D R,Y,Bundle Up Broomfield 2023 (2023-01-21),333oh Final A #3
+3315260001,R2 U' R' U2 L U2 R B2 R' U F R F' D' F2 R B',B,ZGZ Open 2023 (2023-12-02~03),333 R1 D E2
+4020677001,D F D B2 L B2 L' D' B2 L2 U L2 U2 D R2 F2 D2 R' D2,Y,Davis Summer 2024 (2024-08-17),333bf Final A #1
+5306686001,B F' R2 D2 F R2 F L B' D2 B2 L2 D' L' B L D,G,Westport Icebreaker 2026 (2026-01-03),333 R1 A #5
+5501210001,F' L F D F' D' F L' B' D2 R F' R2 F B2 U2 F L2,B,North Sound Spring 2026 (2026-04-04),333 R2 A #5
+5513603001,D2 F U' B R U2 R U' D L2 B2 D' B2 U2 L2 F2 L2 F,Y,DFW Cubing Spring 2026 (2026-03-28~29),333 Final B #1

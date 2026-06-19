@@ -1,0 +1,31 @@
+# Scramble samples — pair / xcross_pair / Y / bin 3
+# Population in this bin: 24
+# Samples listed: 24 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,Y,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
+15648001,U2 B U R B U' R' U L2 B' D2 F2 U2 R2 B2 R' L2 U2 R2,Y,Japan Contest Spring 2014 (2014-04-29),333 R1 B #1
+28786001,R' F' B' L' U' B2 L' B2 D2 R' F' U2 R D2 L D2 R D2,Y,New Albany Open 2014 (2014-06-21),333oh Final A #4
+218668001,B2 F2 R F2 L' D2 F2 U' F D' L2 B' D2 B' F U B D2,Y,Clash Of Cubers Davao 2015 (2015-11-15),333oh Final A E3
+371360001,L U D2 F2 R2 B' R' B U2 F' U D B2 R2 D' R2 U R2 B2,Y,Asian Championship 2016 (2016-10-01~03),333 R1 G #3
+523429001,F B2 R D F2 B' L D2 B2 U F2 R2 B U2 F2 U2 B D2 B',Y,Nacionales de SpeedCubing 2017 (2017-05-27~29),333oh R1 A #5
+529960001,F2 R U' F' U2 B' U L2 F' R L B2 R2 L' B2 R2 U2 F2,Y,Brno Open 2017 (2017-06-10~11),333 R2 B #5
+661146001,L2 R2 B' D2 B' R2 B2 L2 U F2 L2 F' R F R' D2 B L B2,Y,Porto Alegre Open 2016 (2016-10-15~16),333mbf Final A #2
+809386040,L2 F' D2 F' R2 F' R' F2 L' D' B F R2 F2 D' U' R F L,Y,CubingUSA Western Championship 2018 (2018-06-15~17),333mbf Final B #2
+942549001,L' U' B' R F' R F R' U2 L2 D2 B R2 F' U2 B' R2 U2 B',Y,Cariri Open 2018 (2018-11-24~25),333 R2 B E1
+970107001,L F2 L' D2 L U' L' B' D R D2 R B2 U2 L F2 B2 R' D2 R2,Y,Narva Winter 2019 (2019-01-05),333 Final A #1
+1087698050,U' R2 B2 U' R2 D' B2 D L' D2 F' R D' L2 B' L D' U2 B U' L2 U',Y,Weihai Open 2019 (2019-04-06~07),333mbf Final A #1
+1128452001,D' F2 L2 U' L2 D U2 F2 R' U2 F2 U2 F D2 U' B2 U' B2,Y,Chillán Open 2019 (2019-05-04),333oh Final A #1
+1811893001,L2 U L2 U R2 F2 D' L D F2 D2 L' B D' R' D' R' U,Y,Cocha Sub-X 2022 (2022-02-11~12),333 R1 B #3
+1933469001,B2 F D2 B2 F' R2 D' R' U' L B2 R' F' L' D' R2 B,Y,Colorado Cubing Weekend 2022 (2022-05-21~22),333 R2 A #4
+3429771001,L' R2 U2 L' F2 L2 U2 R' F2 D B L R' U L B' U R D,Y,GLS I 2024 (2024-01-20~21),333 R1 B #2
+3676507001,D2 L2 U' B2 U2 B2 R D2 L F2 R B' R2 D' R D U' B',Y,Thornhill Spring 2024 (2024-04-20),333 R2 A #1
+3825874001,L2 R2 F2 D R2 U2 F2 D' B2 L R' U F' L D B2 F2 R2 F',Y,Bacolod Big Cubes 2024 (2024-06-01~02),333 Final A #3
+4737452001,F' U2 L2 U2 B2 L2 B' U2 B' U B' U B' L B2 L' U' R,Y,Assumption Mustang Cubing 2025 (2025-05-24),333oh R1 B #2
+4797982028,L' B' U' F' U' R2 F L2 F D F L2 D2 F' R2 U2 B2 L',Y,Perdiendo el Tiempo en Granada 2025 (2025-06-14~15),333mbf Final A #2
+4920828001,R D2 R F2 D2 L U2 R D' L D B2 F' R U R' F' R,Y,Cubing in the Ocean County 2025 (2025-08-09),333 R2 B #3
+5690390001,R2 B2 F2 L' F2 U2 B2 U' B' U' B R F' L' F D U F L' F,Y,Headache in Kode 2026 (2026-06-05~07),333bf Final A #4
+5693041049,F2 L2 F U2 B L2 R2 F2 R2 L U B' R2 F D U F U R2 B' L2,Y,Brilliant Big & Blind Bravo Orlando 2026 (2026-06-06~07),333mbf Final B #1
+5693421001,D F' U2 B' D2 F' U2 R' U2 B2 F2 U2 R' B D' L2 R' B' L2,Y,Burnaby Cubes Big & Small 2026 (2026-06-07),333bf Final A E2

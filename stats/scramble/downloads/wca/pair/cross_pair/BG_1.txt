@@ -1,0 +1,40 @@
+# Scramble samples — pair / cross_pair / BG / bin 1
+# Population in this bin: 33
+# Samples listed: 33 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+213504001,B2 U2 L2 D2 F2 D2 F' L F' L2 D B2 F D' B' U2 R U2,B,AZCubing Fall 2015 (2015-11-07),333oh Final A #4
+238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
+320651001,F' U2 B F U2 F L2 F' L2 R U2 L' B' D B D R' D' R2 B',B,Lexington Summer 2016 (2016-06-25~26),333oh R1 A #4
+527724001,L' B R2 U2 R F2 D R2 L2 D B2 U2 F2 L D2 L2 U2 R B2,G,2nd Negros Speedcubing Open 2017 (2017-06-10~11),333 R1 A #4
+592960001,R2 F2 D' B2 U R2 D L2 R' F' L2 U2 L' B2 F U' R2 U2 F',G,Monnem City Cubing 2017 (2017-09-16~17),333oh Final A E2
+632221001,D2 F' R' L2 U F L2 B' D B2 L D2 R B2 U2 B2 R F2 B2 R',G,St. Boois 2017 (2017-10-29),333 R2 C #3
+660587002,R2 D B2 R2 D' U' R2 U R' F' D' L2 U B' D F L F' R' U L' F,B,PLS Autumn Reda 2014 (2014-11-08~09),333mbf Final A #1
+700776001,B D R2 U F2 D2 R2 L U' R' U2 F2 R D2 R' U2 R B2 L2,G,Inner Mongolia Winter 2018 (2018-02-03~04),333 R1 A #1
+702343001,B' D2 F' D2 L2 U2 F R2 F' D2 L' B L2 F D F' D R' B D,B,Oradea Cubing Open 2018 (2018-02-03~04),333 R1 B #1
+790386002,D2 F2 D2 F2 U2 L R D2 F R F' R2 B D R2 F' U R' D B R',G,Brasília Open 2018 (2018-05-26~27),333mbf Final A #1
+824872001,D B2 F2 U R2 B2 D F2 U' R2 U' B F2 L' F2 R' U2 L' R F L',B,Bolivia Nationals 2018 (2018-07-05~07),333bf Final A E1
+841822001,R L U2 L' B' L B' U' F2 L D2 R L F2 R,G,CubingUSA Nationals 2018 (2018-07-27~29),333oh R1 K #1
+927977001,U2 R' D' F2 L' U B D' F2 D' R' F2 R' B2 R B2 L B2 L',B,Saitama 2018 (2018-11-11),333 R1 A #3
+944546001,U2 L U2 F2 L U2 B D' B F' D2 F R B2 L2 U2 F,B,Zibo Open 2018 (2018-12-01),333oh Final A #3
+2153137015,L2 D' R2 B2 D F2 L2 R2 B R' D R2 B D' R2 U' L2 R B L2 U2,B,NZ North Island Championship 2022 (2022-09-02~04),333mbf Final A #1
+2352421001,D' B2 R B2 D2 B2 L2 F2 L2 D B2 D B L2 R' D' R' F' R,G,BCM Arya Cubing Challenge 2022 (2022-12-04),333oh R1 D E2
+2642362001,R L D F2 D' R2 F' D R2 D2 L' F2 R' U2 R' U2 L2 D2 L2,B,Cavarzere Cube Days 2023 (2023-04-15~16),333 Final A E2
+3142148001,U R2 D' F2 U' F2 D' L' B2 D2 F D F' L' U2 L' F2 L',G,T-Town Showdown 2023 (2023-10-07),333 R1 A E2
+3172485001,R U L' D L' D L2 B' R2 U L2 F D2 F2 D2 F' D2 L2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R2 D #4
+3172507001,D' B R D L D2 R' B2 L U2 R' B F L2 B2 F' L F2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R3 C #5
+3185423001,U' B' D L2 D2 R2 D' R2 F2 R F' D R' D' U R2 D L' F,B,Hong Kong Championship 2023 (2023-10-21~22),333oh R1 B E1
+3672488001,R2 B2 L2 D2 U F2 U' L2 U' F' U' L' F2 L' D' B2 F2 R2,B,RioMar Kennedy Fortaleza 2024 (2024-04-13~14),333 R2 C E1
+3705160001,L U' L2 R2 B2 U2 B U2 B L2 F2 L2 F2 L R2 B U R' B2 R',G,Club De Campo Cubing La Pintana 2024 (2024-04-20),333oh R1 A E1
+4185127024,B R B2 D2 F2 R F2 L D2 R2 F2 L' F U2 F D2 L' D2 B,G,Taboão Bigs & Blinds 2024 (2024-10-13),333mbf Final C #1
+4480203001,D2 B' R L' F' U L' U R2 D' F2 R2 F2 B2 U2 L2 F2 R' F D',B,Central Asian Tour Astana 2025 (2025-02-08~09),333oh R1 B E2
+4596661001,F2 R B' R2 D' B2 D' R2 F L2 F2 U2 F D2 U B' U' R',G,CubeCo Coastal Cubing KZN 2025 (2025-03-21~22),333 Final B #2
+4678636001,B' L' D L' U2 B2 L' U2 D B2 U' L' R' F L' B',B,Martigny Open 2025 (2025-04-26~27),333 R2 A #1
+4799697001,R D L2 B' U2 F D2 U2 F2 R2 F R' B D2 F2 U L' B2,B,Damásio Open 2025 (2025-06-14~15),333 R1 B E1
+4909935001,L' B' L' B' L2 U2 L2 U B2 D L2 B' L D2 B D U' L',G,Makati Heroes Speedcubing 2025 (2025-08-02),333 R1 A #4
+5322151001,L U2 R2 B' F U2 B R2 F' L2 D' L2 B D2 R2 D2 L D B',B,Chanteloup Open 2026 (2026-01-10~11),333 R1 A E2
+5435669001,L2 F2 U' L2 F2 R2 U' L' B2 R2 B' U' B2 F' D2 U B L2 U',G,Bern Cubing Festival 2026 (2026-03-08),333 Final C #1
+5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1
+5572071001,D2 F2 U' F R D2 F' U D2 R B2 L2 U' B2 R2 B2 U',B,National Trail Open OH 2026 (2026-04-25),333 R2 B #4

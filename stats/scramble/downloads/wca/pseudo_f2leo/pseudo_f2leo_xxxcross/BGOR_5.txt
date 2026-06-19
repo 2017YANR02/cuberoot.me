@@ -1,0 +1,26 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / BGOR / bin 5
+# Population in this bin: 19
+# Samples listed: 19 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+55145001,L2 B' F' R2 F2 L2 B' U' L2 B' U2 L' F U' F R2,G,360 Degree Wellness Open 2014 (2014-08-30),333 R1 B #4
+186963001,F R F2 U2 F' U2 B' D' R' B R2 U2 R2 B2 U2 L D2 L B2,O,Suceava Rubik Open 2015 (2015-09-12),333oh Final A #1
+382437001,R2 D' R2 U' F2 D2 U' L R F2 L2 B D' R' D R D2 L2,R,Tucuman Open 2016 (2016-10-08~09),333oh Final B #3
+518401001,F2 R2 F' R2 U2 F' R2 B' L B F2 R' F L F' D L2 B L2 D,R,Indian Nationals 2017 (2017-05-12~14),333bf R2 D E2
+664919001,R2 U' L2 F2 D B2 U R' U' B' D' F' L' D B' L R2 F D2 B,G,Zhenjiang Open 2017 (2017-12-10),333bf Final A #2
+1902384001,D B' D L' D2 L B2 D2 R D2 R2 B R F' D R D2 L R,G,Stevenage Spring 2022 (2022-04-30~05-01),333 R2 C #3
+2112413019,R F U2 F2 D' B2 D F2 D' U2 F R' B' L2 F2 D U F R B R,G,Vilnius Open 2022 (2022-08-20~21),333mbf Final A #1
+2180064001,U R U L2 B2 R2 F2 U' L2 F2 U L' F R' D R B R B,G,Hanoi Open 2022 (2022-09-18),333 Final A #3
+2541981001,D2 B2 R F' B' U B' L' R2 F2 R2 U2 F' D2 F U2 B2 L U2,B,Puriminx C 2023 (2023-03-08),333 Final C #2
+2888441001,R2 F L D' L F' D L F U L2 B2 U' R2 D F2 U' B',R,Cornhusker Cubing Classic 2023 (2023-07-15),333 R1 D #2
+3031013009,U2 L' F2 B' R' D' R' U' L2 U' B2 U D' F2 L2 D F L2 U B R,R,Pace Blind 'n Crazy Stockholm 2023 (2023-09-03),333mbf Final A #2
+3285743001,L2 B R2 B D2 U2 L2 B R2 F2 L2 D' F' D2 L U' L F' L2,B,Sleman Skewb Warm-Up 2023 (2023-11-26),333 R1 C #1
+3430055001,R U' R' U L U2 R' B R U2 L' U2 F2 R U2 R' F2 L2 D2,B,Jesuitinas Txantrea Open 2024 (2024-01-20~21),333 R1 D E1
+3670889052,R F' B' D B2 D F' B' D2 L' U F2 D F2 U R2 U' D' L2 U2,G,New Jersey Quiet Championship 2024 (2024-04-14),333mbf Final A #1
+4241958001,D R B2 L2 U2 R B2 U F' D' R D F D' R D L,R,Kublördag Västerås V - 2024 (2024-11-02),333oh Final A E2
+5005451035,L2 U2 F U2 R2 B F2 R2 F2 R2 U L B2 R2 D R2 U R' F L B2,B,Rubik's Dutch Nationals 2025 (2025-09-05~07),333mbf Final A #1
+5174969001,L2 U' R L B L' D2 R' F' L2 D' L2 U R2 L2 U2 F' B2 L2 U',G,Ladce Open 2025 (2025-11-08~09),333bf R1 B #2
+5177703001,B' U F' D' R L B2 R' L2 F2 B' R2 U2 F U2 D' F' U',G,Weihai Open 2025 (2025-11-09),333 R1 D #3
+5585595001,U2 B U2 F' L2 D2 U2 F2 D R D2 R2 D2 U L' D L2,G,Berkeley Spring 2026 (2026-04-26),333oh R1 D E2

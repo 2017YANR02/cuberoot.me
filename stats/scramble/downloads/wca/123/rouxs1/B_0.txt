@@ -1,0 +1,11 @@
+# Scramble samples — 123 / rouxs1 / B / bin 0
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+660804007,F2 D' R2 F2 R2 D B2 D2 B' L2 B2 D L' D R2 U' B R2,B,Italian Championship 2015 (2015-08-29~30),333mbf Final A #1
+1776277001,R U' B2 R2 D2 B D2 R2 U L' U' R2 F' D B' D2 R,B,Bologna New Year 2022 (2022-01-02),333 R2 B #5
+4509755001,U2 L2 D2 U2 R' F2 D2 L' R U B R' F D F2 L2 F' R2 D',B,LA PRE Pucallpa Speedcubing 2025 (2025-02-22),333 R1 D #4
+5061345001,U2 D2 R B' D B2 D2 R D U2 B2 R2 U2 R U2 B2 R' D2 L',B,Kedah Cube Open 2025 (2025-09-27),333 Final B #3

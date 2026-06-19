@@ -1,0 +1,12 @@
+# Scramble samples — pseudo / pseudo_xxcross / OR / bin 11
+# Population in this bin: 5
+# Samples listed: 5 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+36971,D2 L2 B2 F2 L2 B2 D2 R2 D U' F' R L U B' F D' U F' D' U' L' ,O
+40880,R2 D B2 F2 R2 L2 D L2 F2 D2 L2 F2 L2 U2 L' B F D R' L D U' L' D' U' F' ,O
+93906,F2 L2 D' U F2 L2 U2 L2 U2 F' R L U B' F D' U F' D' U' L' ,O
+888065,D' R2 F2 U B2 U' L2 D' B2 F2 U2 L2 B2 U2 B' L D' L2 U' L2 F' R B U L U' ,O
+888189,D2 R2 D' F2 L2 B2 L2 U' F2 D R2 D' B2 L2 R' B' L' F U F2 R' D2 B L' U' L' ,O

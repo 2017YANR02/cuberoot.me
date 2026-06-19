@@ -1,0 +1,22 @@
+# Scramble samples — pseudo / pseudo_xcross / W / bin 1
+# Population in this bin: 15
+# Samples listed: 15 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+135333001,L' D2 L' R2 F2 L B2 F2 U2 F L' F' L' R U' R' U' B2 R2,W,Doylestown Spring 2015 (2015-04-25),333 R3 A #2
+238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,W,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
+539173001,D2 F' R2 F U2 F U2 L2 R2 D' L D L' U R U R2 U2 B' L',W,Irish Championship 2017 (2017-06-24~25),333 R1 C #3
+609608005,B2 U' B2 R2 D R2 U' L U2 R F U2 B' U B2 R D L B R,W,CET Cubing Paradox 2017 (2017-10-01~02),333mbf Final A #1
+678921001,U' R' L' U B R' U2 B' D L D' R2 F2 U' B2 L2 B2 R2 D,W,Korean CWR Style 2017 (2017-12-30),333 R1 E #5
+1338373001,R F2 U2 D2 F R2 U' D2 B' L2 U2 L' B2 L2 D2 B2 L' D2 F2,W,Pönde Open 2019 (2019-10-04~06),333 R2 B E2
+2309199012,D B D' B2 L2 D' B2 L2 U' B2 F R U2 L U' R2 B2 R F D2,W,Cerrado Open 2022 (2022-11-18~20),333mbf Final A #1
+3262890001,U2 D' F U2 R D' L R2 U2 D' R2 U2 D' R' B2 L B',W,Real Cube II Lima 2023 (2023-11-11~12),333 R1 E #4
+3268100001,D' L' U2 B2 U F2 R2 F2 R' F' D' R2 U2 L D2 B L',W,Cubing in Palem 2023 (2023-11-12),333 R1 D E1
+3573745001,D F2 U' B2 D' B2 R D B' R B U2 L' D2 L' D L2,W,One Day İstanbul B 2024 (2024-03-10),333 R1 B #3
+4230218001,U2 B' D2 R2 D2 R2 B U2 F L F U' R2 D R2 F U L F',W,Wichita Speedcubing Fall 2024 (2024-10-26),333 R2 B E2
+4543243001,R' U2 F2 U2 R2 B2 U R2 U L' D2 L' D' F U2 B2 R' U,W,Luoyang Spring 2025 (2025-03-01),333 Final A #2
+4572105022,U' L2 B R' B2 L R D2 R' F2 L U' R2 U B L U' B2 L' F2,W,Megaminx on the Madison Isthmus 2025 (2025-03-15~16),333mbf Final A #1
+4844589001,U2 R' D' R F' R2 F D2 L' B2 D2 L' D2 F2 D2 R' B2,W,Aníbal ao Cubo 2025 (2025-07-05),333 Final A #4
+5086006001,R' D' L' D' F2 D' U2 B2 F2 L2 D2 U' F U F R' U2 F2 R,W,Graz Open 2025 (2025-10-04~05),333oh R1 A #3

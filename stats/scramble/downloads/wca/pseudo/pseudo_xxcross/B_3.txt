@@ -1,0 +1,29 @@
+# Scramble samples — pseudo / pseudo_xxcross / B / bin 3
+# Population in this bin: 22
+# Samples listed: 22 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+65804001,U' L D' F2 R' F R2 U2 R' U' R F2 R' L2 F2 U2 B2 U2 B2 L',B,Back to 360 2014 (2014-10-11~12),333 Final B #2
+319355001,B' R' U' R' F' B2 R' D' R D L2 F2 D2 B2 U2 R2 F2 U R2,B,Indiana 2016 (2016-06-25~26),333 R2 B #2
+376674001,B2 D' F' U' D L' U' L B2 R U2 F2 R2 D' B2 R2 D2 B2,B,Athens Fall Late Night 2016 (2016-10-08),333 R1 A #1
+410742001,D F2 L2 D L2 U F2 L2 U L2 B R D' F U L2 U' B2 R2,B,Urdaneta City Fiesta Open 2016 (2016-12-04),333 R1 A #1
+842540001,B2 U2 L D2 L' U2 R' F2 L B' D' B' U2 L' R U' R' D2 R',B,VCP Invierno 2018 (2018-07-28),333 R1 A #2
+861801001,B2 D' L2 D' F2 L2 U2 B2 U F' U2 B2 U' L2 D' L2 F2 L B' U2,B,SESC Camaquã 2018 (2018-08-18~19),333ft Final A #4
+878439001,D2 F R2 F2 L2 F' U2 B F R2 B' L' D2 F' D L' B' R2 B2,B,Hillsboro Open 2018 (2018-09-15),333 Final A #1
+945964001,U' B U2 R D2 L' U B' R2 D2 F2 L2 D F2 U' R2 L2 D',B,Melgar Summer 2018 (2018-12-01~02),333oh R1 B #5
+1084160001,R2 L' U L' D2 F2 U2 R2 F L2 B D B2 L2 F2 L2 U F2 U2,B,Yancheng Spring 2019 (2019-04-06),333 R1 A #3
+1235790001,B' R2 B R2 B2 R2 F' U2 R' F' R' F L2 F' D L2 B',B,Sherwood Park Summer 2019 (2019-07-27),333 R2 C E2
+1289854007,U B2 D F2 L2 B2 D L2 U L2 U2 B F2 U' R B2 L2 B' F2 L,B,Champagne Open 2019 (2019-09-07~08),333mbf Final A #1
+1586190001,D L2 U' F2 U' R2 U2 F2 L U2 B D2 F2 L2 B F2 R' D2 F,B,Auckland Summer Open 2020 (2020-02-29~03-01),333 R1 E #5
+3025098001,R B2 D B D L F' B' L2 F2 U2 D' B2 L2 U R D B2,B,Hooshinoo Summer 2023 (2023-09-01),333 R1 C E1
+3315260001,R2 U' R' U2 L U2 R B2 R' U F R F' D' F2 R B',B,ZGZ Open 2023 (2023-12-02~03),333 R1 D E2
+3510823001,R' D2 F' R D' F2 R F2 U2 L U2 F2 L' U2 F2 R' L' B,B,Vienna Fasching 2024 (2024-02-10~11),333oh R2 A #3
+3555905001,D R' D2 U2 B' L2 B' R2 B2 D' F D U' L B' D F2,B,Manduria: Back to Apulia 2024 (2024-03-02~03),333 R2 C E2
+4510562001,B' U R U' B L' B' U L2 F2 B L2 B L2 U2 R2 F2 R,B,CubingMGL Lunar New Year 2025 (2025-02-22),333 R2 B E2
+5207408001,R2 U2 F2 R2 U2 L D L2 F' D2 B D2 B' R2 U B2 L U',B,Nanchang Winter 2025 (2025-11-23),333 R2 A #3
+5315715001,F R B2 L2 D2 B2 U' F R2 U2 R' B L2 U2 F2 B L2 B' D2,B,Rhön Open 2026 (2026-01-10~11),333bf R1 B E1
+5501210001,F' L F D F' D' F L' B' D2 R F' R2 F B2 U2 F L2,B,North Sound Spring 2026 (2026-04-04),333 R2 A #5
+5654431001,U' R B' R' D' B' U' L2 U L2 F' U2 D2 F R2 D2 B R2,B,Spark Melbourne Autumn Sunday 2026 (2026-05-24),333 R1 A #1
+5658195001,B' U' L' F D2 L2 U' L U2 L D2 F D2 R2 F R2 F' D2,B,Future Park Thailand Cube Battle 2026 (2026-05-23~24),333 R1 E #5

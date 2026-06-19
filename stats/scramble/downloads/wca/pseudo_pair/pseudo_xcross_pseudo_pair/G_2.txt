@@ -1,0 +1,42 @@
+# Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / G / bin 2
+# Population in this bin: 35
+# Samples listed: 35 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
+187569001,F D' R' B2 L' B L' D' R' B2 U2 F2 U D2 B2 D B2 D' R2 B2,G,Music City Speedsolving 2015 (2015-09-12),333 R1 D #2
+213170001,D2 R' L' B' U L' U R' D' L B2 D B2 U' R2 D B2 L2 D2,G,Melbourne Cube Days 2015 (2015-11-07~08),333 R1 A #2
+239759001,F2 R' U2 B2 R' B2 R U2 R2 U2 B' U R2 F D' F D2 B' L',G,Great Indian Cubeathon 2016 (2016-01-08~10),333 R1 B #2
+254507001,U2 R F' D L' U F' L' U F' D' R2 F2 D2 F2 U2 R2 F2 B,G,Molina Open 2016 (2016-02-13~14),333 R2 C #2
+284468001,R' L' U F B2 U D F L' U R2 U' F2 D L2 F2 D' F2,G,Manhasset Spring 2016 (2016-04-16),333 R1 G #3
+330145001,L2 U B2 D' U2 F2 D U2 L B2 U' F2 L D L2 F' R F' U,G,Atatürk Cube Day 2016 (2016-07-16~17),333oh Final B #4
+378566001,D L2 U' R2 B2 U' L2 R2 F U' F D U2 R' B2 F' D2 R' U',G,Nanjing Autumn 2016 (2016-10-16),333oh R1 A #5
+661443001,U F2 D' R2 D' U' B2 U' R2 F L D R' B2 F2 U R2 U' L' D2 L2 U',G,Korean Championship 2017 (2017-07-28~30),333mbf Final A #1
+841822001,R L U2 L' B' L B' U' F2 L D2 R L F2 R,G,CubingUSA Nationals 2018 (2018-07-27~29),333oh R1 K #1
+850330001,L2 F' R2 F R2 D2 B' R2 F2 L2 D' R F L' F' D' L' B2 D R,G,CubingUSA Northwest Championship 2018 (2018-08-10~12),333 R1 D #2
+944587057,F2 L2 U2 B2 F' U2 F2 L R' B' R' B' L2 B' D2 F' D R B' L,G,Please Be Quiet Berkeley 2018 (2018-12-01~02),333mbf Final A #3
+1599258033,D' U' B2 L2 R2 U2 L2 D' B2 L' B' D2 R2 F R2 U2 R D2 R U2 L B,G,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final A #2
+1703620027,U2 R2 U2 L' D2 L' B2 L F R D B F' L F' D2 R' D' B L B2,G,Danish Championship 2021 (2021-10-08~10),333mbf Final A #1
+2336043016,B2 U F U2 F2 D2 R F' R' L2 B' L2 U2 B2 D2 F,G,Silence in Cebu 2022 (2022-11-26),333mbf Final A #1
+2748175001,D B D L2 B D2 L' D' F L2 D' L2 U' R2 L2 D F2 U' B2,G,Cube4fun in Bełchatów 2023 (2023-05-20~21),333 Final A E1
+3133021001,L' B2 D2 R2 F' R2 B F U2 L' F' L2 B' D2 F2 D' F' R2,G,CubingZA Cape Cubes Spring 2023 (2023-09-30~10-01),333oh R1 A #3
+3140532001,R' D' B' U2 F2 R2 F2 U2 F2 U' L2 U' B2 U' R F2 R D',G,Speedcube Battle Vallekas 2023 (2023-09-30~10-01),333 R1 B E2
+3197132001,R' F L2 U' F2 R2 D B2 L2 U2 F' U2 D2 R2 U2 L2 F R U',G,TCG Space Santa Anita 2023 (2023-10-21~22),333 R1 A #1
+3359285001,U R2 B' R U F' R2 B2 U' L2 U2 B2 U R2 B2 D F2 B',G,Jönköpingsligan Final: Kebabpizza 2023 (2023-12-12),333 Final A #3
+3368698001,U2 B' U B2 D2 B2 R2 F2 L2 U' F2 L2 R U' R D U L2 B,G,Avenida Chile VI Four Rounds 2023 (2023-12-17),333 R2 A #1
+3537029001,D' L F' L2 F' D' F' R' B2 L' B2 D2 L' B2 R B2 D2 B2 R B' L',G,Gran Asociación Open 2024 (2024-02-24~25),333bf Final A E1
+3586682001,F' D2 B L2 D2 B F2 U2 R2 F' U2 L U L2 U B L' F' D,G,San Juan V 2024 (2024-03-09),333 Final B #2
+3944313001,L2 U R2 U F2 D U2 L D' R2 U' L2 F U2 F' U' L2 F2,G,The Big Cube Melbourne 2024 (2024-07-20),333 R2 C E1
+4356107001,D R2 D' F2 L2 U L2 B2 U2 B2 U B F R' F2 L2 D' F2 L' R',G,Sin Fronteras Lite Ecuador 2024 (2024-12-14),333 R2 B #2
+4380412001,U2 B2 F2 L D2 F2 R2 F D L2 F' R' D' B2 L B' L,G,Clash of Cubers: Celebes Speedcubing Masters 2024 (2024-12-14~15),333 Final B E1
+4580693001,D2 B2 D2 F2 L2 U L2 U2 B U' B2 U F D' R F' U' F L,G,UoSM Cube Open SOR 2025 (2025-03-22~23),333oh Final B E2
+4619732001,L D' F2 D2 F R2 D2 B' D2 F D2 L' B' D' B' F2 D U',G,Crazy Cubing in Christchurch 2025 (2025-04-05~06),333oh R1 C #3
+4716901001,R D2 R F L' F' B' U' B U' R2 D2 R2 U2 R2 F2 L' D',G,Cubing Spring Rybnik 2025 (2025-05-10~11),333oh R2 A E1
+4755103001,R2 B2 D2 B2 D' B2 R2 D' R2 B L D2 U2 B U' B F R D2,G,AMR Planet Cube Open 2025 (2025-05-24~25),333 R2 A #1
+4840322001,L F R2 B2 U' D2 F R' L' D L2 U2 F2 L2 F2 L2 B U2 L2,G,Abruzzo al Cubo 2025 (2025-06-28~29),333 R1 B E1
+5336111001,B F D2 B R2 U2 L2 B U2 F L' D2 F D2 U F R F2 L',G,Mumbai Cube Fiesta 2026 (2026-01-18),333 R1 D E1
+5364148001,D2 L F2 L' F2 R' F2 U2 B2 D2 L2 B' D' B L F2 D' U2 B',G,Alcobendas Virgen de la Paz Open 2026 (2026-01-31),333 R1 C E2
+5453935036,F' L' R2 B2 L2 R2 U' F' R' U2 L R B L2 F' L2 U B' L2,G,SCU III: FMC Triple-Scoop 2026 (2026-03-14~15),333mbf Final A #2
+5571349009,U' L B2 R B2 R' F2 R' D2 B R' D2 R B2 R B2 D' F L B2,G,Blind League Dobřejovice II: Crownrise 2026 (2026-04-25),333mbf Final C #1

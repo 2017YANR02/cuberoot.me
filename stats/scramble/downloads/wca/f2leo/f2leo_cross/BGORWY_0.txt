@@ -1,0 +1,10 @@
+# Scramble samples — f2leo / f2leo_cross / BGORWY / bin 0
+# Population in this bin: 3
+# Samples listed: 3 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+2352400001,R' U R D' F2 B' U' B2 U' B L2 U F2 U2 L2 F2 L2,G,BCM Arya Cubing Challenge 2022 (2022-12-04),333oh R1 A E2
+4618949001,U' R' D' F2 R2 D' L2 R2 U L2 R D R' D2 F' D' F U,B,Moncton 2025 (2025-04-05),333 R2 C E2
+5117693001,R U R' F2 D' L2 F2 L' D2 F' L2 F L2 U2 D2 F2 U2 F D,R,UH Cubing San José 2025 (2025-10-18),333 Final A E1

@@ -1,0 +1,16 @@
+# Scramble samples — eo / eo_xxxcross / Y / bin 7
+# Population in this bin: 9
+# Samples listed: 9 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+208739001,R2 U R2 D F2 D2 U2 R2 B2 F U L2 U R2 U2 B F D L',Y,Athens Fall 2015 (2015-10-24),333 R2 C E1
+392723001,L2 R2 B' L2 B' L2 B2 D2 F D2 F L' D' U' R' F L R' D' L,Y,Jawa Timur Open 2016 (2016-11-05~06),333 R1 A E1
+660859014,D2 U2 L2 F R2 D2 B R2 U' B R2 F' R2 D B' D B R D2 L2 U2,Y,Valencia Open 2015 (2015-11-14),333mbf Final A #1
+1201932001,R2 B' D2 F' U2 B L2 B' R2 U' R F L2 F R' B U R2 F',Y,Cusco Speedcubing II 2019 (2019-06-29),333 R1 A E2
+1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,Y,MSU Quiet Qualifier 2022 (2022-05-14),333bf Final B E1
+2261587001,R D R B2 D' R L D' B U2 L2 U2 B' R2 U2 F' D,Y,Minyons de Terrassa Open 2022 (2022-10-22),333 R1 C #5
+3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024 (2024-01-27~28),333oh Final B E1
+4381056012,F2 L U2 B2 F2 R2 U2 D' L U' R2 D2 B2 U' R' D',Y,Bengal Cube Open 2024 (2024-12-20~22),333mbf Final A #1
+5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y,Adelaide Autumn 2026 (2026-04-12),333 R1 A #2

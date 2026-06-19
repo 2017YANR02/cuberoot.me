@@ -1,0 +1,20 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BG / bin 8
+# Population in this bin: 13
+# Samples listed: 13 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+99974001,U2 L D2 L U2 R2 D2 F2 U2 L F' L B' L' D U B' R' F' L,B,PB Smashathon 2015 (2015-01-17~18),333oh Final A #3
+294261001,F D' F2 D2 R B' U' B2 L' U R2 U' F2 L2 B2 D B2 U' F2 U2,B,Lviv Spring Days 2016 (2016-04-23~24),333 R1 A E2
+435777001,L2 U' L2 D F2 U L2 U' R B' L' R2 D2 B' U' R' B2 U F2 U,B,MathSoc Open 2017 (2017-01-21~22),333 Final A #3
+660502006,F R2 B' L2 B' L2 U2 F2 U' F L U2 L2 F U L2 D2 L R B' L',B,FLIP Open 2014 (2014-07-12~13),333mbf Final A #1
+661261018,L2 D' R2 U' L2 D' U' F2 R2 U F2 L F' L2 F' R' F U R' F' D B',B,Surabaya Comeback 2017 (2017-02-19),333mbf Final A #1
+1027653001,L2 U2 L' U2 B2 R' B2 L F2 D B2 L2 B L' U B2 F L R U',B,CubingUSA Northeast Championship 2019 (2019-02-16~17),333oh Final B #2
+1039461001,B2 R2 U B2 U' F2 L2 D L2 B2 R D2 B' F U' B' D2 U2 L B2 R' D,B,Honduras Master Cubes Open 2019 (2019-03-03),333bf Final A E1
+1369427001,F2 D2 L2 F' R2 F2 D2 R2 F' D2 F' R' B2 F2 L D' U B R F',B,Lanyang Open 2019 (2019-10-26~27),333 R2 B #4
+1692634001,R B D' B2 U F2 D' F2 U' B2 D' L2 F2 U' L U R' B D' U',B,September Speedcubing Tour Warszawa 2021 (2021-09-25),333 R1 E #2
+1714035001,R' D L D' L' F' B L D' R U' F' U2 B' L2 U2 F2 D2 B,B,Welcome Back Wisconsin 2 2021 (2021-10-30),333 R1 A #3
+2595977001,R D L' F' U2 L2 B2 F2 U' L2 U L2 F R D F R' U' F2,B,Lets Cube Sigua 2023 (2023-03-26),333oh R1 C #3
+4380376001,U2 B2 F2 D' R2 D' L2 F2 R B L2 D2 F D' L' F U B' D,B,Clash of Cubers: Celebes Speedcubing Masters 2024 (2024-12-14~15),333 R1 E #5
+5433533001,D R' F2 D' L2 F2 D' B2 D U' L' R' D2 U' B' R F2 U R2,B,Maribor Open 2026 (2026-03-07~08),333oh R1 A #1

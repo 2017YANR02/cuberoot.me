@@ -1,0 +1,11 @@
+# Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BGWY / bin 5
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+3670889052,R F' B' D B2 D F' B' D2 L' U F2 D F2 U R2 U' D' L2 U2,G,New Jersey Quiet Championship 2024 (2024-04-14),333mbf Final A #1
+4734607001,B U' F' D L' F' B D' F2 R' D2 L' U2 L' F2 R U2 L B R2,W,SA Side State Championship 2025 (2025-05-18),333mbf Final A #1
+4922615001,D F R2 F' R2 U2 R2 D2 U2 R' U R D' R B R' B2 L' B2 L B2,Y,Cube More in Ardmore 2025 (2025-08-09),333bf Final B E1
+5585595001,U2 B U2 F' L2 D2 U2 F2 D R D2 R2 D2 U L' D L2,G,Berkeley Spring 2026 (2026-04-26),333oh R1 D E2

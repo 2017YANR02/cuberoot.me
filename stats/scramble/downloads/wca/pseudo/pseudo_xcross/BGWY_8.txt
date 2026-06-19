@@ -1,0 +1,15 @@
+# Scramble samples — pseudo / pseudo_xcross / BGWY / bin 8
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+148919001,B2 U' R2 F2 D F2 U' R2 B2 U' B' R U L' B' F' L2 R' B2 U',B,Ukrainian Open 2015 (2015-05-29~31),333 R1 D #3
+702197001,U' B2 L2 D2 U' B2 F' U B' F' R B F' L R2 D R,B,Penn Cube Day Winter 2018 (2018-02-04),333 R2 B E2
+931666001,U' R D' F B' U D2 B' L B' L' F2 L2 F R2 U2 F' R2 D2 R2 B',B,Smart Cube Fest 2018 (2018-11-09~11),333 R1 H #1
+2106500001,F R2 D2 B2 U' F2 D' R2 B2 F2 D U R F2 L2 F L B2 U' F2 D' L B',B,Yoga Summer A 2022 (2022-08-21),333bf Final A #1
+2142155001,F U' D2 B' U2 B' D2 F2 D2 R2 B' F U F L' B R F U' L',B,Requínoa Open 2022 (2022-09-03),333oh R1 B #4
+4242219001,D2 F2 U2 B2 R' B2 F2 R' F2 L2 R' F L R' F2 U' F' D' B' R2 U2,B,New Orleans 2024 (2024-11-02),333 R2 B #3
+4326514001,B' R2 B' U2 B2 D2 L2 U F2 D L' D R' D2 R2 F D B' R',B,Happy Valley Fall PA 2024 (2024-12-01),333bf Final A #2
+4427675001,L' F B2 L B' D2 L' U' R D L' D2 B2 U2 L' F2 L2 U2 L' U2,B,Vanderbilt Winter 2025 (2025-01-18),333 R1 D #2

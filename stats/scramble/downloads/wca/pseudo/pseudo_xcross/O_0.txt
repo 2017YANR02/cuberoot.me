@@ -1,0 +1,9 @@
+# Scramble samples — pseudo / pseudo_xcross / O / bin 0
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+1365955001,R D' F R F' L2 F2 R2 D' F B2 U' L2 F2 U2 F2 U B2 L2 D2,O,Kyoto Open 2019 (2019-10-20),333 R1 B E1
+1659466001,R2 U F2 L2 R2 D' B2 D F2 L2 R2 B R U' B2 U B R2,O,Bogoroditsk Open 2021 (2021-05-29~30),333 R2 B E2

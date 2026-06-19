@@ -1,0 +1,10 @@
+# Scramble samples — eo / eo_xcross / R / bin 3
+# Population in this bin: 3
+# Samples listed: 3 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+678393001,L2 F B2 D2 L' B L' D2 R2 B2 U2 D2 R2 B' D2 F2 L2,R,Kharkiv Winter 2017 (2017-12-23~24),333 R1 C #5
+786434010,U2 B2 R D2 R' D2 U2 R' U2 R' U L' U' L' B2 U' B2 L2,R,YJ Fest 2018 (2018-05-18~20),333mbf Final A #1
+5383629001,B2 D2 B2 U' F2 L2 D' B2 U R U' L' D' B D2 B D' U B' D' B,R,Kielce Open 2026 (2026-02-14~15),333bf R1 B #1

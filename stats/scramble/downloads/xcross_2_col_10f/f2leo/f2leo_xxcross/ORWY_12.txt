@@ -1,0 +1,16 @@
+# Scramble samples — f2leo / f2leo_xxcross / ORWY / bin 12
+# Population in this bin: 9
+# Samples listed: 9 (all entries in this bin)
+# Source: scrambles.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color
+
+354799,F2 U' R2 D F2 D' B2 D2 R2 L2 F2 R2 U' R2 D2 F' L B' U2 R2 D' R' U' F' L' ,O
+888061,U2 L2 D R2 U L2 D' R2 U F2 R2 L2 D L2 U' F' D2 R U B L' F' D' R' U F' ,O
+888062,U' L2 B2 U' R2 F2 L2 B2 U B2 U' L2 D' U B' L' F' L2 U' R D U2 F' U2 L' ,O
+888065,D' R2 F2 U B2 U' L2 D' B2 F2 U2 L2 B2 U2 B' L D' L2 U' L2 F' R B U L U' ,O
+888188,L2 D2 B2 D' R2 F2 U2 F2 L2 U2 R2 F2 U' F' R L U B' F D' U F' D' U' L' ,O
+926875,F2 D2 F2 R2 B2 U B2 F2 U2 R2 L2 U' L' B F D R' L D U' L' D' U' F' ,O
+1122515,D' F2 R2 L2 D R2 U B2 U2 B2 U' L2 D L2 R' B L2 F U' R' B' L' D F' U' L' ,O
+1173762,D2 R2 U B2 R2 D F2 U L2 U B2 F2 L2 B' F' R' B2 L2 D U' F' R' L' ,O
+1251320,U2 B2 D' R2 B2 U' B2 F2 R2 U L2 U' F2 L' D2 B' U' R' F L D B U' L' ,O

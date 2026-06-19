@@ -1,0 +1,15 @@
+# Scramble samples — std / xxcross / BG / bin 11
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+484910001,U2 B2 U' L2 F2 U F2 U2 L2 D2 L' F2 D R' U B' L2 B2 F' U' B2 L B,B,Greece Spring Open 2017 (2017-04-10),333bf Final A #3
+661062063,B L2 B L2 F' L2 R2 F2 L2 F' D' L U F' R B2 D' L2 U2 F' D2 L' F2,B,US Nationals 2016 (2016-07-29~31),333mbf Final A #1
+838683001,F2 R2 U2 R2 F2 R2 F2 U' B2 U' R2 B' D' F L' U F' R' B U L,B,Wellington Winter 2018 (2018-07-21),333oh Final B #4
+1054086001,R' U F' U2 R2 F2 L B' U L B R2 F2 U2 L2 U2 B2 R' U2 D2 B2,B,Pragyan Cube Open 2019 (2019-03-17),333 R1 D #1
+1127905001,R' U' F L2 U F2 U F2 L2 U2 L2 U2 R B' R F2 U' R F' U' B L' D2 R' U' F,B,Mental Breakdown Capelle 2019 (2019-05-03~04),333fm Final A #2
+2520254001,F U' R F2 R2 U F2 R2 D' L2 U2 R2 U' L' R U' B F2 D2 F',B,Flatåsen Open 2023 (2023-02-24~26),333 R2 B #4
+3183120001,U' B D' R B2 U R2 D L2 B2 U F2 D' L F' R' D' L U' F,B,Evanston Fall 2023 (2023-10-21),333 R2 A #4
+3545832055,U' F2 D2 L' D2 F2 L F2 L F2 D' B U' B2 R U' B2 L' U F L2 U',B,Please Be Quiet Taiwan 2024 (2024-02-24~25),333mbf Final A #1

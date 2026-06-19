@@ -1,0 +1,54 @@
+# Scramble samples — eo / eo_xxcross / BGORWY / bin 5
+# Population in this bin: 47
+# Samples listed: 47 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,O,Plaza de las Américas 2014 (2014-11-15),333oh Final A #1
+81606001,B' D2 F2 R2 B F' L R B' R' D2 R B2 D2 B2 F R',O,Toronto Open Fall 2014 (2014-11-22),333oh R1 A #3
+186522001,U' D' F R2 B' D2 L2 F U' B2 L2 F2 R2 D' B2 R2,O,Utah Megacomp 2015 (2015-09-05),333oh Final B E1
+409306001,F2 L2 B L2 B L2 D2 R' D2 R' U' R2 B' F' L D' L U,W,Cape Town 2016 (2016-12-04),333 R1 C #4
+434730001,R2 D' F2 D' U' L2 U F2 R' F' L D R2 U R D' R' U2,O,Michigan Cubing Club Alpha 2017 (2017-01-21~22),333 R3 B #4
+448341001,F D2 B' D2 R2 F' R2 D2 L' B' R B D2 L D2 F2 D' R,O,Altasierra 2017 (2017-02-18),333oh Final B #4
+466802001,U' R2 B2 U F2 U F2 L2 B2 R2 B' D F' D' U2 B' F2,W,Shanghai Spring 2017 (2017-03-18~19),333 R1 A #4
+660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',W,Two days in Vitebsk 2015 (2015-10-31~11-01),333mbf Final A #1
+708988001,U2 D' B2 U' F' R U' R' B U B2 L2 U2 R2 F' U2 F' B2 L2,O,Ural Winter 2018 (2018-02-17~18),333 Final A #2
+756223001,B R2 F2 D2 B' R U' L' U D2 B' L B2 D2 R' U2 R' B2,O,Santiago UV de Otoño 2018 (2018-04-14~15),333 R1 C E1
+816854001,F2 R2 U R2 U F2 D' L F L' U' F' L' D2 B D',G,Vantaa Open 2018 (2018-06-30~07-01),333oh R2 C #4
+1015333005,B2 R B2 D2 U2 L' F2 R2 U R' D B' F' R D F' U B' D L' F,O,Medan Lunar New Year 2019 (2019-02-09~10),333mbf Final A #3
+1128452001,D' F2 L2 U' L2 D U2 F2 R' U2 F2 U2 F D2 U' B2 U' B2,B,Chillán Open 2019 (2019-05-04),333oh Final A #1
+1159751001,U D2 L F2 L' U2 D R D R' U' R2 U2 F2 L2 U B2,O,Chien Kuo Cubing Party 2019 (2019-05-26),333 R1 D #1
+1404900001,F2 U B U' B' L D' L2 U2 R2 B R2 B2 L2 F2 D L2,Y,Chengdu Winter 2019 (2019-11-09~10),333oh R1 A #5
+1599259038,F2 R2 B2 D' L2 U' R2 D U2 B' D2 U2 R F' R D B L2 U L2 U',B,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final A #3
+1643647026,L2 B2 R U' D2 B2 L' D2 L2 R' F2 U2 B' D2 L B' L' F' D' B R,R,Please Be Quiet Brisbane 2021 (2021-04-10),333mbf Final A #1
+1761589001,F2 R2 U' B2 L2 D' L2 D2 L F D F2 L D' F' L2 F2 D',B,Richmond Open A 2021 (2021-12-11),333oh R1 A #5
+2057741018,L F2 D2 L B2 D2 L' F' R' B2 R2 U' B2 L D B2 L D L2 U,G,CubingUSA Southeast Championship 2022 (2022-07-29~31),333mbf Final C #1
+2209757001,D L' F2 R' D2 R U F2 L' U D2 L2 D' B2 U F2,W,Cubing Returns To Colombo 2022 (2022-09-24~25),333 Final B #5
+2249121001,D F2 D2 R B2 R' D2 F2 D L U L' B2 D' R' F R,Y,Mongolia Championship 2022 (2022-10-15~16),333 R1 F #2
+2268083001,F' R D2 U2 F2 R D2 R' B' R2 F2 U2 R' F L U2 F,R,Slow N Spooky Open 2022 (2022-10-29~30),333 R1 B E1
+2302434001,B L D2 R' U F' U2 B2 L' U' R2 U' F2 L2 U R2 U2 L2,G,East London Autumn 2022 (2022-11-12~13),333oh R1 B E1
+2372945023,R' L2 B' L' D2 R' U2 R' U2 B R D2 F2 L U2 L U2 L B2,R,Ota Blind Winter 2022 (2022-12-18),333mbf Final A #1
+2585786001,D L2 D2 B2 R' U R' D' L2 B2 D' B2 R2 D2 B2 D',R,Guwahati Spring Cube Open 2023 (2023-03-25),333oh R1 B #1
+2782668001,L2 F2 L2 F L2 F' D2 F D' F2 U L' F' D' B' L' R U2,R,Timisoara Cube Days 2023 (2023-06-02~03),333oh Final A #5
+2894139001,F2 B L U B R U D R F2 B' R2 U2 B L2 U2 F R2 U2 D2 L2 U,Y,Lebrija 2023 (2023-07-16),333bf Final B #1
+2970286001,U' R2 B' L2 F2 R2 B U2 B2 U' F2 L2 B' R' D' U' F' U',R,Odense Classic Cubing 2023 (2023-08-12~13),333 Final B #1
+3030632001,U B' L2 D2 F' D2 L2 U' B' R2 F D F U B D,Y,Puzzling at the Shopping Centre Plaza in Salo 2023 (2023-09-02~03),333 R2 A #4
+3095972001,R' B2 R' F U2 F' R' F2 L' U2 L2 F2 L D2 L2 U2,O,Minnesota Cube Day 2023 (2023-09-23),333 R2 A E1
+3265042001,U' R D F R2 D' B' D2 L2 D2 L F2 D2 L D2 L U L2,W,Scarborough Fall A 2023 (2023-11-18),333 R1 E #2
+3375800001,L F' U D2 F2 R' L' F' B2 L F' U2 L2 B' U2 B' D2 F2 L2,Y,Speedcuber Peru II Lima 2023 (2023-12-16~17),333 R2 E #4
+3462225001,R D B' D R' B2 D2 R D2 B2 R2 D' R' B D' L B' U',O,DJ Sanghvi Cube Open 2024 (2024-01-28),333 R1 E #2
+3687446001,R' U' F L2 D2 F2 D2 R2 D2 B' D2 F D2 L' B2 L' U2 F R D F' U' R' U' F,Y,Half Turns in Hallett Cove 2024 (2024-04-20),333fm Final A #3
+3763216001,L' F' D' B2 D U2 R2 U' L2 B2 U' B' D2 R' B' L' F' R2,W,Košice Open 2024 (2024-05-18),333 Final A E2
+3840270001,R2 B2 D' B D' B U2 R2 F D B2 L2 B2 D' F',W,CubingUSA Heartland Championship 2024 (2024-06-07~09),333oh Final A #5
+4020647001,L U F B R D R B' R' D' B2 L U2 B2 U2 B2 U2 R',G,Davis Summer 2024 (2024-08-17),333 R2 C E1
+4054367001,U' R' B' U' B U R U D B' U' F B L2 U2 B2,Y,Cubi Koronel 2024 (2024-08-24~25),333oh Final A E1
+4067278042,L2 F2 R F L' U2 R' U2 R2 U F' U' F U' R' U2 L' F2,O,La La Land 2024 (2024-08-31~09-01),333mbf Final B #1
+4202540001,D2 F L2 B' L2 F D2 B2 L' F2 U2 R' U2 B U B2 U2 F',G,Dolné Orešany Cube Day 2024 (2024-10-19~20),333 R1 C #5
+4279660001,U' F R2 B' D2 F D2 F2 L F' R2 F2 R2 U' F U R' B',G,Slow N Steady UMD Fall 2024 (2024-11-09~10),333 R1 D #1
+4550827001,B2 F2 R2 D' B2 L2 B2 R2 D2 U R D L D' R' F' D B' R2,B,Bergen Spring 2025 (2025-03-08~09),333oh R2 B E1
+4816312001,U2 B2 D2 L' U L' U2 F L2 B L2 U2 D R2 U2 L2 D',Y,DFW Cubing Summer 2025 (2025-06-21~22),333 R2 B #3
+4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,G,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2
+5122870001,U L U' D2 B' U F2 D2 B' U' F' B U2 L2 F2 B' L2 B,R,FSUbers 10.0 2025 (2025-10-18),333 R2 A #1
+5349091014,L D' L2 U2 B D2 R2 D2 L2 B2 F' R' D' L' R2 D F2 U' L' F2,Y,Casagiove Winter 2026 (2026-01-24~25),333mbf Final A #1
+5690374048,R2 U F U2 L' F2 B2 R' F D' L F2 D2 L2 F2 U' D' L' F,Y,Headache in Kode 2026 (2026-06-05~07),333mbf R1 A #1

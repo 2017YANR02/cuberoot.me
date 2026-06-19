@@ -1,0 +1,9 @@
+# Scramble samples — std / cross / WY / bin 8
+# Population in this bin: 2
+# Samples listed: 2 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+1411389001,D2 R2 B D2 B2 R2 B' R2 U2 F R' B L2 R2 D' U L B' D2 U,W,SnoCo Fall 2019 (2019-11-16),333 R2 B E1
+3063155001,L2 F2 L D2 L B2 F2 R B R D F' R D2 U' L2 D2 F' L,W,Battle at Fort Hays Kansas 2023 (2023-09-09),333 R2 A #4

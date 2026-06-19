@@ -1,0 +1,11 @@
+# Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / B / bin 1
+# Population in this bin: 4
+# Samples listed: 4 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+319355001,B' R' U' R' F' B2 R' D' R D L2 F2 D2 B2 U2 R2 F2 U R2,B,Indiana 2016 (2016-06-25~26),333 R2 B #2
+637626001,U' L2 F2 D' B2 D F2 R' F' U' R2 F R2 F L2 F2 R2 F L2,B,Porto Alegre Open 2017 (2017-11-04~05),333 R2 C #4
+2354486001,L2 U B R D2 B' R2 D F U2 R' D2 R' D2 L' D2 B2 R' B,B,Cariló Open 2022 (2022-12-09~10),333 Final A #2
+3555905001,D R' D2 U2 B' L2 B' R2 B2 D' F D U' L B' D F2,B,Manduria: Back to Apulia 2024 (2024-03-02~03),333 R2 C E2

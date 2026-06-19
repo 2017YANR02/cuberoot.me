@@ -1,0 +1,27 @@
+# Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / WY / bin 8
+# Population in this bin: 20
+# Samples listed: 20 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+111256001,F2 D R2 F2 D' U2 R2 D R2 F U2 F2 D2 L R D B' D F',W,MAD Cube Weekend 2015 (2015-02-21~22),333 R1 C #1
+614064001,B' U L F B' R' L2 D' L B2 U2 R2 B2 U L2 U' L2 B2 R2 D',W,San Francisco Bay Open 2017 (2017-10-08),333 R1 F #3
+681379004,D L2 U' F2 R2 F2 D2 F2 U2 B L' D' L2 U' F' U2 R B2 D' L' U2 B R',W,Swisscubing Mental Breakdown 2018 (2018-01-06~07),333mbf Final B #3
+802956001,B U2 B L2 B F D2 U2 R2 D2 F2 U' R' D' U R D2 L' B' F' U2,W,Voronezh Open 2018 (2018-06-10~11),333oh Final A E2
+956399001,R L' U R' B R' B D' F L' F L2 B2 L2 F R2 B' L2 U2 L2,W,Imagination Station 2018 (2018-12-15),333 R1 B #2
+1035439003,R2 D B2 D L2 B2 D' L2 B2 R' F D U F2 U' L R2 U' F R' B' L2,W,Myyrmäki Spring Challenge 2019 (2019-03-01~03),333mbf Final A #1
+1035439014,D' B2 L2 D2 U R2 U' B2 R2 F' R' D' B' U L' R' D' F' D' B' L2,W,Myyrmäki Spring Challenge 2019 (2019-03-01~03),333mbf Final A #1
+1283529001,D R F' L B U2 F2 U L' U2 L2 B2 R2 U L2 F2 U' B2 L2,W,Hungarian Summer 2019 (2019-08-24~25),333 R2 D E2
+1858262001,F' D B R U' L' F B2 U L2 B2 U' L2 D R2 U' R D2 B,W,Noida Cube Open 2022 (2022-04-03),333 Final A #4
+1910986001,D2 L D' R B2 R2 U F B' L' U B2 D2 R2 U2 F U2 L2 F,W,A Bruin Cube Day 2022 (2022-05-08),333 R1 F E2
+3063155001,L2 F2 L D2 L B2 F2 R B R D F' R D2 U' L2 D2 F' L,W,Battle at Fort Hays Kansas 2023 (2023-09-09),333 R2 A #4
+4405451001,R2 U2 R' F' L D' F2 U' L' D F2 U' B2 U' L2 F2 L2 D2 F R2,W,Imagination Station B 2025 (2025-01-05),333 R1 B E1
+4524330048,U L2 B' L2 D2 L' B2 R2 U2 R' U2 R2 B2 D' U F R' B L B2 L2,W,Efficient in Elmsford Winter 2025 (2025-02-22~23),333mbf Final A #3
+4889382001,U' R' L2 B L D' R2 B D R F D F2 U D2 B2 D' F2 L2,W,Unicentro Pereira III 2025 (2025-07-26),333 R1 C #5
+4905234001,U' F L' D2 L' U2 L D2 B' D B U' B' R' F' L' B2,W,Chapacos Cuberos 2025 (2025-08-02~03),333 Final A E1
+5066898001,D2 R' B2 L2 U F D L B' L2 U D F2 U B2 L2 D' L B',W,IISER Pune October Heat 2025 (2025-10-05),333oh Final A #1
+5469641018,D2 B2 U' L2 U L2 D2 F2 D R D2 F D B R D2 U2 B2 D R B',W,Nada Que Ver Bucaramanga 2026 (2026-03-22),333mbf Final A #1
+5492760034,L B2 R2 B2 R2 F D2 L2 U2 D' F L2 F U2 F' R' U' F L' B R2,W,New York Multimate PBQ IV 2026 (2026-03-27~29),333mbf R1 A #2
+5543599001,D2 R2 D R B U D F L2 U2 B2 R2 F2 R U2 L B2 U2 B' U,W,Xi'an Cherry Blossom 2026 (2026-04-04~05),333 R3 C #5
+5583522001,U2 F' L2 B D2 B2 L2 B2 R' D2 L F D F2 U' L R2 D B',W,Tigery Open 2026 (2026-04-25~26),333 Final A #4

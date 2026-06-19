@@ -1,0 +1,25 @@
+# Scramble samples — eo / eo_xxcross / WY / bin 5
+# Population in this bin: 18
+# Samples listed: 18 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+409306001,F2 L2 B L2 B L2 D2 R' D2 R' U' R2 B' F' L D' L U,W,Cape Town 2016 (2016-12-04),333 R1 C #4
+466802001,U' R2 B2 U F2 U F2 L2 B2 R2 B' D F' D' U2 B' F2,W,Shanghai Spring 2017 (2017-03-18~19),333 R1 A #4
+660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',W,Two days in Vitebsk 2015 (2015-10-31~11-01),333mbf Final A #1
+1404900001,F2 U B U' B' L D' L2 U2 R2 B R2 B2 L2 F2 D L2,Y,Chengdu Winter 2019 (2019-11-09~10),333oh R1 A #5
+2209757001,D L' F2 R' D2 R U F2 L' U D2 L2 D' B2 U F2,W,Cubing Returns To Colombo 2022 (2022-09-24~25),333 Final B #5
+2249121001,D F2 D2 R B2 R' D2 F2 D L U L' B2 D' R' F R,Y,Mongolia Championship 2022 (2022-10-15~16),333 R1 F #2
+2894139001,F2 B L U B R U D R F2 B' R2 U2 B L2 U2 F R2 U2 D2 L2 U,Y,Lebrija 2023 (2023-07-16),333bf Final B #1
+3030632001,U B' L2 D2 F' D2 L2 U' B' R2 F D F U B D,Y,Puzzling at the Shopping Centre Plaza in Salo 2023 (2023-09-02~03),333 R2 A #4
+3095972001,R' B2 R' F U2 F' R' F2 L' U2 L2 F2 L D2 L2 U2,Y,Minnesota Cube Day 2023 (2023-09-23),333 R2 A E1
+3265042001,U' R D F R2 D' B' D2 L2 D2 L F2 D2 L D2 L U L2,W,Scarborough Fall A 2023 (2023-11-18),333 R1 E #2
+3375800001,L F' U D2 F2 R' L' F' B2 L F' U2 L2 B' U2 B' D2 F2 L2,Y,Speedcuber Peru II Lima 2023 (2023-12-16~17),333 R2 E #4
+3687446001,R' U' F L2 D2 F2 D2 R2 D2 B' D2 F D2 L' B2 L' U2 F R D F' U' R' U' F,Y,Half Turns in Hallett Cove 2024 (2024-04-20),333fm Final A #3
+3763216001,L' F' D' B2 D U2 R2 U' L2 B2 U' B' D2 R' B' L' F' R2,W,Košice Open 2024 (2024-05-18),333 Final A E2
+3840270001,R2 B2 D' B D' B U2 R2 F D B2 L2 B2 D' F',W,CubingUSA Heartland Championship 2024 (2024-06-07~09),333oh Final A #5
+4054367001,U' R' B' U' B U R U D B' U' F B L2 U2 B2,Y,Cubi Koronel 2024 (2024-08-24~25),333oh Final A E1
+4816312001,U2 B2 D2 L' U L' U2 F L2 B L2 U2 D R2 U2 L2 D',Y,DFW Cubing Summer 2025 (2025-06-21~22),333 R2 B #3
+5349091014,L D' L2 U2 B D2 R2 D2 L2 B2 F' R' D' L' R2 D F2 U' L' F2,Y,Casagiove Winter 2026 (2026-01-24~25),333mbf Final A #1
+5690374048,R2 U F U2 L' F2 B2 R' F D' L F2 D2 L2 F2 U' D' L' F,Y,Headache in Kode 2026 (2026-06-05~07),333mbf R1 A #1

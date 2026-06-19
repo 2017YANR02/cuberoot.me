@@ -1,0 +1,31 @@
+# Scramble samples — 123 / rouxs1 / BG / bin 1
+# Population in this bin: 24
+# Samples listed: 24 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+55030001,B2 R' B2 D2 L2 F2 D2 L R2 F' L' D U L2 B D' U B L2,G,Ho Chi Minh Open 2014 (2014-08-31),333 R1 A E2
+74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,B,Slow n Steady Fall 2014 (2014-11-09),333 R1 B E1
+386120001,R' D R2 F U F2 L2 F R' B2 L2 D L2 U' B2 D B2 D' B2,B,RubIquitos 2016 (2016-10-22),333 R1 A #1
+393260001,B' R' B2 R B' D R2 F2 U' L' D F2 D' L2 U L2 D' L2 F2,G,Munich Open 2016 (2016-11-05~06),333 R2 A #3
+589543001,D' F2 L2 D' L2 D L2 F2 D' R' D2 U' L D2 B D' L' R D' F2,B,Goldenfields Open 2017 (2017-09-10),333oh Final B #3
+610884001,U B2 U2 F2 U B2 L2 D' F2 L2 F' U' R D' F' L D2 L2 R' D2 L2,G,Hamilton Spring 2017 (2017-09-30~10-01),333bf R1 A #2
+854469001,U' L2 F2 D' L2 D2 B2 D' U' R2 F L F' L2 R' U R2 U' F' U,G,Mexican Championship 2018 (2018-08-10~12),333 R2 C #2
+866024001,F2 U2 L' F2 U2 R2 F2 D2 F R2 B R F L D L' U F,B,II Recife Open 2018 (2018-08-25~26),333 Final A E2
+1170989001,F2 L2 D2 U2 B L2 D2 B L' F2 L' R F2 R B' L' U B' L,B,Tuzo Clásico 2019 (2019-06-01~02),333bf Final A #3
+2536709040,F' U2 L F' L2 U F D2 F L2 D' F2 L2 B2 L B2 R' D2 L',G,I Hope It's Solved Calgary 2023 (2023-03-04~05),333mbf Final A #2
+2584817001,L2 D2 R' U2 L' U R' U2 L F' U' F D2,G,Pickering D 2023 (2023-03-26),333 R2 B #2
+2855587001,L B R' U' B2 R' F L' D2 R2 U2 D2 F D2 B R2 U2 B U2 B L2 U2,G,Bay Area Speedcubin' 49 - Berkeley 2023 (2023-07-08),333bf R1 A #3
+3526033019,L F2 L' F2 D2 B2 U2 R U2 R' U B D R B L2 D F2 L2,G,Glasgow Winter - Scottish Blind Off 2024 (2024-02-17~18),333mbf R1 A #2
+3653203001,R' D U R2 B2 D R2 B2 F2 R2 U' R U2 L' B' D' L' R' F',B,Rahn Education Open 2024 (2024-04-05~07),333oh Final A #1
+4067278042,L2 F2 R F L' U2 R' U2 R2 U F' U' F U' R' U2 L' F2,G,La La Land 2024 (2024-08-31~09-01),333mbf Final B #1
+4356571001,L2 U' R D F2 U' L2 D U2 L2 U' F' L2 R2 D L2 U2 L',G,Kirkland Pyra Fest 2024 (2024-12-14),333oh R1 B #4
+4665237001,L B F L2 F' D2 U2 F R2 D' L' B U2 B' L F D' R',G,NxN Tlaxcala 2025 (2025-04-19~20),333 R1 C E1
+4936524001,U' R D L2 D2 L2 F2 R D2 U2 B' R' B' D2 U2 R2 U F,G,Kubing in Klemzig 2025 (2025-08-17),333 R2 C #2
+5020771001,R F' R D2 L' F' B2 R2 D L2 D' R2 B2 U F' L,B,Criciúma Open 2025 (2025-09-13~14),333 R2 A #5
+5311568001,D' R' U R' B' R' B2 L D F' D2 B2 U2 L2 B D2 F U2 R2,G,Almaty New Year 2026 (2026-01-03~04),333oh R1 B #5
+5317240001,R U B D' B2 U L2 B2 D' U2 L2 R B D' L D2 R D' F,B,Super Duper San Diego 2026 (2026-01-09~11),333oh R2 A E2
+5335171001,D L2 D2 L2 F' R U' L R2 F D2 F2 B' L2 F2 R2 L2 U',B,Tassie Summer 2026 (2026-01-17~18),333 R2 C E2
+5583469028,F L2 D2 F U' B2 L U' D' F' R2 B R2 U2 B' D' B2 L2 U2,G,CubingUSA Southeast Championship 2026 (2026-04-25~26),333mbf Final A #1
+5592248001,D2 U2 F2 U2 L R B L B' U' B2 R B2 R2 F D2 R2 B R',G,Only 3x3s in Hyderabad May 2026 (2026-05-02~03),333mbf Final A #2

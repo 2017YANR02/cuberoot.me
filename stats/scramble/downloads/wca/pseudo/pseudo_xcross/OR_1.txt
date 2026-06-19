@@ -1,0 +1,32 @@
+# Scramble samples — pseudo / pseudo_xcross / OR / bin 1
+# Population in this bin: 25
+# Samples listed: 25 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+405432001,F2 L U F L F D' L F U2 F' R2 B2 D2 L2 F R2 U2 B,O,Kubvasan 2016 (2016-11-26~27),333oh R2 B E1
+410001001,L' B' R' D2 B2 R U' R' U B U B2 L F2 B2 L' D2 R2,O,POPS Open 2016 (2016-12-11),333 Final A E1
+448292001,R2 D L2 F' D2 F2 U' L' U' F B2 D' B2 U2 D F2 L2,R,Cebu Open 2017 (2017-02-18~19),333oh Final B #2
+724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018 (2018-03-10),333oh R1 A #4
+739649001,L2 R2 B2 U' F2 D2 L2 R2 F2 U R2 B' L' F U L' F U R D',O,Happy Autumn MDQ 2018 (2018-03-30~31),333 R2 A #4
+936688001,F2 R2 B L2 F2 R2 D2 U2 F' D2 R D' R2 D2 L' B' D F2 R' B2,O,Brugge Open 2018 (2018-11-17~18),333 Final B #5
+1644525001,L2 D' B' R' B2 U' R2 B2 D2 R2 D' R' B U2 R2 D U' L',O,Xi'an Cherry Blossom AM 2021 (2021-04-11),333 R1 C #2
+1675715001,U R' B' L2 F2 D F2 L2 B2 U' R' U' B' U' R2 F R',O,Bucharest Cubing Days 2021 (2021-07-24~25),333 R2 A #1
+2064065001,R D2 F' U' B' L' B L2 U F R2 U' R2 D2 L2 D2 L,R,Spruce Grove Summer 2022 (2022-07-30),333 R1 O #5
+2123958001,D2 R U' D2 R U' R2 F' B2 D R D2 F B D2 B' U2 L2 F',R,Back to School Utah 2022 (2022-08-27),333 R2 A #5
+2233574001,D' B2 R D2 U2 R' U2 L2 F' D' U2 B' R B D2 F U2 F',O,Kubiat HaGalil A 2022 (2022-10-12),333oh Final A #5
+2417974001,U2 B' D B' R' L' F U' D F2 D L2 F2 B' L2 D2 B2 L2,R,Minnesota Meetup Tuesday 2023 (2023-01-10),333 R1 B #4
+3516176001,R' U' F U B2 D' L2 U' F2 U2 F2 L' U' L' D B' U' B' F2 U2 R2 U2 R' U' F,O,Love Is Blind Lima 2024 (2024-02-18),333fm Final A #1
+3579673001,B2 U' L2 F2 D2 U' R2 U2 F2 R2 B' R' U' L' U F2 L' R,R,Iloilo City of Love Open 2024 (2024-03-09),333oh Final C #5
+3590416001,B2 R' U2 B2 D2 R2 B2 L2 F' D2 B' D2 L' B U2 L' R,O,Nýliðamót Kubbafélagsins 2024 (2024-03-16),333 R2 C #2
+3794593001,F' R B' U B' U2 R2 B2 R2 B2 F L' D2 B2 D B' R' D2,O,X-Madrid Open 2024 (2024-05-25~26),333 R2 A #3
+4382921001,L2 D' R' B2 L' B2 L2 B2 L' B D2 B2 D L D L' B2 R,R,Franconia Christmas A 2024 (2024-12-20~22),333 Final A #1
+4438681001,U D' F' R U2 F2 U2 L2 F' D2 L2 D2 R2 B2 R2 U' R' B',R,Golden Square Shopping 2025 (2025-01-18~19),333 R1 C #4
+4463879001,B' D2 B U2 F2 R2 D2 L' D L' F2 U' L B2 L' R F' U,R,Aldeilla Winter Open 2025 (2025-02-01~02),333oh Final A #2
+4519133001,F' R2 F2 L' F2 L F2 R' U2 B' L' U' L R2 F2 D' R U',O,Pitic Open 2025 (2025-02-22~23),333 R2 A #2
+4876151001,R B2 R B2 L2 F2 R2 B' F' R' F2 D2 R D' L' F2 L R,O,Ohio State Summer 2025 (2025-07-20),333 Final A E1
+5049359001,R B2 F L2 U L2 B2 D L2 F2 L2 R' F' L U' R2 B U2 B2,O,Energy Cube Białołęka 2025 (2025-09-27~28),333oh R1 A E2
+5506110001,L' R2 F2 D2 F2 R' D2 L2 U' R' F2 R2 F' D2 B2 L' R' U2,O,McBaja II 2026 (2026-04-05),333 R1 B E2
+5508904028,U2 F' D2 F2 U2 B' D2 R2 D F' D2 R D' R F U' R2 D2 L B',R,No Peeking Calgary 2026 (2026-04-04~05),333mbf Final A #2
+5569118001,R2 F B2 L2 U' B2 D2 U B2 L2 F' U R' B' U' L' B2 D R2,O,Twist and Turn Ghent 2026 (2026-04-18~19),333 R1 A #2

@@ -1,0 +1,18 @@
+# Scramble samples — f2leo / f2leo_cross / BGORWY / bin 8
+# Population in this bin: 11
+# Samples listed: 11 (all entries in this bin)
+# Source: wca_scrambles_no_wide_move.txt
+# Generated: 2026-06-18
+# Columns: id,scramble,bottom_color,competition,round
+
+577814001,U2 B' R2 D2 B D2 F' U2 F2 U R' D' L' B' F2 D' F2 U B2 L,B,Spokane Valley Summer 2017 (2017-08-26),333 R1 A E2
+658711001,R2 D2 F2 D' F2 L2 B2 R2 F' R D' B U' R B F2 R' F' U R2,B,Shaker Fall 2017 (2017-12-02),333 R1 E #3
+734945001,U2 B2 L U2 L2 B2 R U2 L' R' U R' B' F L' U F2 D B L2 U2,B,Bekubes Open 2018 (2018-03-24~25),333 R1 A #3
+1243665047,R2 F2 D2 U L2 D' R2 B2 R2 U' B' L' R U' F' R2 D' F R2 D' F2 L B2,B,Massachusetts Championship 2019 (2019-07-26~28),333mbf Final A #1
+2696362001,R U L2 D R2 B2 R2 U2 B2 U2 F' L U' B' R F2 R2 U' F,B,AlphaCubing B 2023 (2023-05-07),333 R1 C #2
+3300741001,B R' U2 F2 R B2 R2 D2 B2 D' F L U' B U F2 U' L' R,B,Holandés Cubing 2023 (2023-11-26),333 R1 I #3
+3590986012,L F B2 R B2 L' D2 L F2 D2 L U F2 L B R' D' U F' U' L2 U,B,No Peeking Calgary 2024 (2024-03-16),333mbf Final C #1
+4057447001,U L2 D B2 F2 U' R2 U2 F2 D B' R2 B2 D R F' L' B' D R,B,Welcome to Bishkek 2024 (2024-08-23~25),333 R1 A E2
+4610937001,F2 D' R' D2 L2 F2 R2 D B2 D R2 D2 U2 B' F' U' R F' L' F',B,Ulaanbaatar Spring 2025 (2025-03-29),333 R1 B E1
+4725113004,U F' R U2 R2 F2 U' F2 D U2 F' L R2 D2 R2 B2 U' F2 U B' L,B,DFW Quiet Qualifier 2025 (2025-05-17),333mbf Final A #2
+5229573001,F' R' F2 L2 U' B2 D B2 D2 U' R2 F2 R B2 U2 F' U' L' D B',B,Innovo Duitama III 2025 (2025-11-29),333 R1 B #2
