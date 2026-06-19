@@ -20,15 +20,12 @@ import YAML from 'yaml';
 // 输入:update_puzzle_stats.ps1 产出的 <puzzle_data_dir>/<key>/<key>.csv(两列 id,<key>,
 // 值 = 该打乱整解最优步数)。缺 CSV 的 puzzle 跳过并打警告(对齐 build.ts 变体语义)。
 
-interface PuzzleAltMetric {
-  metric: string;    // 备选口径 key(sq1: 'slash')
-  valueCol: string;  // 备选口径在 CSV 里的列名
-}
-
-interface PuzzleExactMetric {
-  metric: string;    // 精确档 key(sq1: 'wca_exact')
-  csv: string;       // 精确档独立 CSV 文件名(与近最优 CSV 分离,保留近最优档)
-  valueCol: string;  // 精确档在该 CSV 里的列名
+// sq1 专用:整个主口径直接取「精确 WCA 12c4 最优」(Sq1WcaSolver,独立 exact CSV + 未 ingest 块)。
+// 近最优(twophase 上界)2026-06-18 退役,不再产(见 solver/src/sq1_twophase.rs 模块头的上游/参数说明)。
+interface PuzzleExactPrimary {
+  csv: string;       // 精确档 CSV 文件名(sq1_wca_exact.csv)
+  wcaCol: string;    // 主口径列名(wca_exact)
+  altMetric: string; // 备选口径 key(slash = WCA-最优解里的 / 数,slash-最优紧上界 ≤13)
 }
 
 interface PuzzleSpec {
@@ -37,9 +34,8 @@ interface PuzzleSpec {
   label: string;
   label_zh: string;
   metric: string;    // 主口径 key(2x2x2 = htm;sq1 = wca)
-  valueCol?: string; // 主口径在 CSV 里的列名(默认 = key;sq1 = 'wca')
-  alt?: PuzzleAltMetric; // 备选口径(sq1 双口径:wca 主 + slash 备,前端可切)
-  exact?: PuzzleExactMetric; // 精确档(sq1 = WCA 12c4 可证最优,独立 CSV;主档保留近最优供对照)
+  valueCol?: string; // 主口径在 CSV 里的列名(默认 = key)
+  exactPrimary?: PuzzleExactPrimary; // sq1:主口径 = 精确 WCA 12c4 最优(取代退役的近最优)
 }
 
 // 新 puzzle 注册处:加一行 + update_puzzle_stats.ps1 的 $PUZZLE 表加对应 analyzer 即可。
@@ -47,9 +43,9 @@ const PUZZLES: PuzzleSpec[] = [
   { key: 'pocket', event: '222', label: '2x2x2', label_zh: '二阶', metric: 'htm' },
   { key: 'pyraminx', event: 'pyram', label: 'Pyraminx', label_zh: '金字塔', metric: 'htm' }, // 总 HTM 含 tips
   { key: 'skewb', event: 'skewb', label: 'Skewb', label_zh: '斜转', metric: 'htm' },
-  // sq1 analyzer 出 3 列 id,wca,slash:主口径 WCA 12c4 近最优((X,Y)=1+/=1),备选 slash(jaapsch twist)。
-  // exact 档 = WCA 12c4 可证最优(Sq1WcaSolver,独立 sq1_wca_exact.csv),前端可切「精确 / 近最优」;主档仍保留近最优。
-  { key: 'sq1', event: 'sq1', label: 'Square-1', label_zh: 'SQ1', metric: 'wca', valueCol: 'wca', alt: { metric: 'slash', valueCol: 'slash' }, exact: { metric: 'wca_exact', csv: 'sq1_wca_exact.csv', valueCol: 'wca_exact' } },
+  // sq1 主口径 = 可证 WCA 12c4 最优(Sq1WcaSolver,sq1_wca_exact.csv + 未 ingest 块),备选 slash。
+  // 近最优(twophase 上界)2026-06-18 退役:不再产 near 分布(代码仍在 solver/src/sq1_twophase.rs 作对照)。
+  { key: 'sq1', event: 'sq1', label: 'Square-1', label_zh: 'SQ1', metric: 'wca', exactPrimary: { csv: 'sq1_wca_exact.csv', wcaCol: 'wca_exact', altMetric: 'slash' } },
 ];
 
 interface Hist { min: number; max: number; counts: Map<number, number> }
@@ -158,6 +154,24 @@ async function main() {
   const puzzlesOut: Record<string, unknown> = {};
   const keys: string[] = [];
   for (const spec of PUZZLES) {
+    // sq1:主口径直接取精确 WCA 12c4 最优(exact CSV + 未 ingest 块),无近最优。
+    if (spec.exactPrimary) {
+      const exCsv = path.join(dataRoot, spec.key, spec.exactPrimary.csv);
+      const ex = await aggregateExactSq1(exCsv, spec.exactPrimary.wcaCol);
+      if (!ex) { console.warn(`  [skip] ${spec.key}: missing exact CSV ${exCsv} + 无完成块`); continue; }
+      console.log(`  [${spec.key}] exact ${ex.sampleCount} rows; wca ${ex.wcaHist.min}..${ex.wcaHist.max}, slash ${ex.slashHist.min}..${ex.slashHist.max} (含未 ingest 块)`);
+      const entry: Record<string, unknown> = {
+        event: spec.event, label: spec.label, label_zh: spec.label_zh,
+        metric: spec.metric, sample_count: ex.sampleCount, dist: histToJson(ex.wcaHist),
+      };
+      // slash 口径 = WCA-最优解里的 / 数(slash-最优紧上界,≤13);仅当有 opt_scramble 列时产出。
+      if (ex.slashHist.counts.size > 0) {
+        entry.alt = { metric: spec.exactPrimary.altMetric, dist: histToJson(ex.slashHist) };
+      }
+      puzzlesOut[spec.key] = entry;
+      keys.push(spec.key);
+      continue;
+    }
     const csvPath = path.join(dataRoot, spec.key, `${spec.key}.csv`);
     if (!fs.existsSync(csvPath)) {
       console.warn(`  [skip] ${spec.key}: missing CSV ${csvPath}`);
@@ -165,7 +179,7 @@ async function main() {
     }
     const { sampleCount, hist } = await aggregate(csvPath, spec.valueCol ?? spec.key);
     console.log(`  [${spec.key}] ${sampleCount} rows, dist ${hist.min}..${hist.max} (${spec.metric})`);
-    const entry: Record<string, unknown> = {
+    puzzlesOut[spec.key] = {
       event: spec.event,
       label: spec.label,
       label_zh: spec.label_zh,
@@ -173,29 +187,6 @@ async function main() {
       sample_count: sampleCount,
       dist: histToJson(hist),
     };
-    if (spec.alt) {
-      const { hist: altHist } = await aggregate(csvPath, spec.alt.valueCol);
-      console.log(`  [${spec.key}] alt dist ${altHist.min}..${altHist.max} (${spec.alt.metric})`);
-      entry.alt = { metric: spec.alt.metric, dist: histToJson(altHist) };
-    }
-    if (spec.exact) {
-      const exCsv = path.join(dataRoot, spec.key, spec.exact.csv);
-      const ex = await aggregateExactSq1(exCsv, spec.exact.valueCol);
-      if (ex) {
-        console.log(`  [${spec.key}] exact ${ex.sampleCount} rows; wca ${ex.wcaHist.min}..${ex.wcaHist.max}, slash ${ex.slashHist.min}..${ex.slashHist.max} (含未 ingest 块)`);
-        const exactEntry: Record<string, unknown> = {
-          metric: spec.exact.metric, sample_count: ex.sampleCount, dist: histToJson(ex.wcaHist),
-        };
-        // slash 口径 = WCA-最优解里的 / 数(slash-最优紧上界,≤13);仅当有 opt_scramble 列时产出。
-        if (ex.slashHist.counts.size > 0) {
-          exactEntry.alt = { metric: spec.alt?.metric ?? 'slash', dist: histToJson(ex.slashHist) };
-        }
-        entry.exact = exactEntry;
-      } else {
-        console.warn(`  [skip exact] ${spec.key}: missing ${exCsv} + 无完成块(近最优主档不受影响)`);
-      }
-    }
-    puzzlesOut[spec.key] = entry;
     keys.push(spec.key);
   }
 
