@@ -15,7 +15,9 @@ export interface PuzzleAltDist {
   dist: PuzzleHistEntry;
   provisional?: boolean;  // sq1 slash:仍有未判定的歧义态怪物 ⇒ dist 含紧上界(非全可证最优)
   ambiguous?: number;     // sq1 slash:歧义态总数(W=2s-1,需精确判定)
-  improved?: number;      // sq1 slash:真省刀(t=s-1)的歧义态数
+  improved?: number;      // sq1 slash:真省刀(t=s-1)的歧义态数(meta.less;实测恒 0)
+  resolved?: number;      // sq1 slash:已穷尽判定 = 此上界的歧义态数(meta.eq)
+  residual?: number;      // sq1 slash:穷尽证明超时不可行、取紧上界的最深残留态数(meta.fallback)
 }
 
 export interface PuzzleDistEntry {
@@ -35,7 +37,7 @@ export interface PuzzleDistributionJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260619sq1slashprov';
+const V = '20260619sq1slashub';
 
 export async function fetchPuzzleDistribution(): Promise<PuzzleDistributionJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_distribution.json') + `?v=${V}`);
