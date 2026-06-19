@@ -6,15 +6,16 @@
 .wp-sort-idle { opacity: 0.3; }
 .wp-sort-active { opacity: 1; color: var(--wp-text); }
 
-/* 杂项三栏 */
+/* 杂项三栏:列宽随内容(table width:auto),不铺满 → 选手与次数不被撑开;窄屏自动换行堆叠 */
 .wp-misc {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 28px;
-    align-items: start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 56px;
+    align-items: flex-start;
 }
+.wp-misc-col { flex: 0 0 auto; max-width: 100%; }
 .wp-misc-title { font-size: 0.95rem; font-weight: 600; margin: 0 0 10px; color: var(--wp-text); }
-.wp-misc-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.wp-misc-table { width: auto; border-collapse: collapse; font-size: 0.85rem; }
 .wp-misc-table th {
     text-align: left;
     font-weight: 500;
@@ -27,7 +28,7 @@
     white-space: nowrap;
 }
 .wp-misc-table td { padding: 7px 8px; border-bottom: 1px solid var(--wp-border); }
-.wp-misc-table .wp-cell-num { text-align: right; }
+.wp-misc-table .wp-cell-num { text-align: right; padding-left: 28px; }
 .wp-misc-table tbody tr:hover td { background: color-mix(in srgb, var(--wp-text) 3%, transparent); }
 .wp-misc-cuber { display: flex; align-items: center; gap: 6px; }
 .wp-misc-cuber a { color: var(--wp-blue); text-decoration: none; }
