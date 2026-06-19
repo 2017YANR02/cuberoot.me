@@ -9,9 +9,8 @@ import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronsUpDown } from 'lucide-react';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   profile: WcaPersonProfile;
@@ -50,6 +49,16 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
     return arr;
   }, [comps, sortBy, dir]);
 
+  // 序号 = 选手第几场比赛(按日期,最早=1,最新=total),与当前排序方向无关
+  const chronoRank = useMemo(() => {
+    const m = new Map<string, number>();
+    if (!comps) return m;
+    comps.slice()
+      .sort((a, b) => a.start_date.localeCompare(b.start_date))
+      .forEach((c, i) => m.set(c.id, i + 1));
+    return m;
+  }, [comps]);
+
   if (!comps) return <div className="wp-loading-inline">{t('加载比赛历史…', 'Loading competitions…')}</div>;
   if (comps.length === 0) return <div className="wp-empty">{t('暂无比赛记录', 'No competitions')}</div>;
 
@@ -58,8 +67,8 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
     if (sortBy === col) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     else { setSortBy(col); setDir(col === 'date' ? 'desc' : 'asc'); }
   };
-  const SortArrow = ({ col }: { col: SortBy }) => sortBy !== col ? null
-    : dir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />;
+  const SortArrow = ({ col }: { col: SortBy }) =>
+    <ChevronsUpDown size={12} className={`wp-sort-ic ${sortBy === col ? 'wp-sort-active' : 'wp-sort-idle'}`} />;
 
   return (
     <div className="wp-table-scroll">
@@ -78,7 +87,7 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
         </thead>
         <tbody>
           {sorted!.map((c, i) => {
-            const idx = dir === 'desc' ? i + 1 : (total - i);
+            const idx = chronoRank.get(c.id) ?? (i + 1);
             const entered = eventsByComp.get(c.id) ?? new Set();
             return (
               <tr key={c.id}>

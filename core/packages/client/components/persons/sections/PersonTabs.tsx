@@ -5,16 +5,16 @@
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { Suspense, lazy } from 'react';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
-import i18n from "@/i18n/i18n-client";
 
 const ResultsTab = lazy(() => import('./results/ResultsTab'));
 const CompsTab = lazy(() => import('./CompsTab'));
 const EventStatsTab = lazy(() => import('./EventStatsTab'));
 const MilestonesTab = lazy(() => import('./MilestonesTab'));
 const LitCitiesTab = lazy(() => import('./LitCitiesTab'));
+const MiscTab = lazy(() => import('./MiscTab'));
 
-type TabKey = 'results' | 'comps' | 'events' | 'milestones' | 'cities';
-const TAB_KEYS: TabKey[] = ['results', 'comps', 'events', 'milestones', 'cities'];
+type TabKey = 'results' | 'comps' | 'events' | 'milestones' | 'cities' | 'misc';
+const TAB_KEYS: TabKey[] = ['results', 'comps', 'events', 'milestones', 'cities', 'misc'];
 
 interface Props {
   profile: WcaPersonProfile;
@@ -41,6 +41,7 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
     events: t('项目统计', 'Event Stats'),
     milestones: t('里程碑', 'Milestones'),
     cities: t('点亮城市', 'Cities'),
+    misc: t('杂项', 'Misc'),
   };
 
   return (
@@ -63,6 +64,7 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
           {active === 'events' && <EventStatsTab results={results} comps={comps} isZh={isZh} />}
           {active === 'milestones' && <MilestonesTab profile={profile} results={results} comps={comps} isZh={isZh} />}
           {active === 'cities' && <LitCitiesTab profile={profile} comps={comps} isZh={isZh} />}
+          {active === 'misc' && <MiscTab profile={profile} comps={comps} isZh={isZh} />}
         </Suspense>
       </div>
     </section>
