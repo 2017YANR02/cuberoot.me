@@ -45,6 +45,27 @@
   border-radius: 6px;
 }
 .mem-status-refresh:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+/* 即将到期 / 已过期:状态条变色提醒 */
+.mem-status.is-warning { background: color-mix(in srgb, var(--signal-warning) 14%, transparent); }
+.mem-status.is-expired { background: color-mix(in srgb, var(--destructive) 12%, transparent); }
+.mem-status-icon { color: var(--destructive); flex-shrink: 0; }
+.mem-status.is-warning .mem-status-icon { color: var(--signal-warning); }
+.mem-status-renew {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-foreground);
+  background: var(--accent);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.mem-status-renew:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+.mem-status-renew + .mem-status-refresh { margin-left: 4px; }
 
 .mem-paid-banner {
   display: flex;

@@ -1,0 +1,62 @@
+.mem-reminder {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 12px 10px 16px;
+  border-radius: 999px;
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--signal-warning) 45%, var(--border-default));
+  box-shadow: 0 6px 24px color-mix(in srgb, black 18%, transparent);
+  font-size: 14px;
+}
+.mem-reminder.is-expired {
+  border-color: color-mix(in srgb, var(--destructive) 45%, var(--border-default));
+}
+.mem-reminder-icon { color: var(--signal-warning); flex-shrink: 0; }
+.mem-reminder.is-expired .mem-reminder-icon { color: var(--destructive); }
+.mem-reminder-text {
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mem-reminder-cta {
+  flex-shrink: 0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-foreground);
+  background: var(--accent);
+  text-decoration: none;
+}
+.mem-reminder-cta:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+.mem-reminder-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  padding: 4px;
+  background: none;
+  border: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  border-radius: 50%;
+}
+.mem-reminder-close:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+
+@media (max-width: 480px) {
+  .mem-reminder {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    transform: none;
+    max-width: none;
+    border-radius: 14px;
+  }
+  .mem-reminder-text { white-space: normal; }
+}
