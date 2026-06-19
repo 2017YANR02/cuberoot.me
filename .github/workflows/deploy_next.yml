@@ -14,6 +14,15 @@ on:
       - 'core/pnpm-lock.yaml'
       - '.github/workflows/deploy_next.yml'
 
+# Serialize deploys. Concurrent runs clobbered the shared /tmp/cuberoot-next.tar.gz:
+# run B's scp (and the `rm -f` after extract) corrupted run A's tarball mid-extract →
+# remote "gzip: stdin: invalid compressed data--format violated". One deploy at a time;
+# a newer push supersedes a still-PENDING run, but a RUNNING deploy is never cancelled
+# mid-server-swap (cancel-in-progress:false — the remote script isn't interruption-safe).
+concurrency:
+  group: deploy-next
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
