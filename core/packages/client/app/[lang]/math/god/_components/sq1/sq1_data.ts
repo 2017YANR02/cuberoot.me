@@ -7,7 +7,8 @@
  * 三套计步口径(关键,见页面 §计步):
  *   - twist / "slash":只数 "/" 切片,顶底层转免费 → 上帝之数 13(Masonjones 2005)
  *   - face-turn:(x,0)/(0,y)/"/" 各 1,双层 (x,y)=2 → 上帝之数 31(Chen 2017)
- *   - WCA 12c4:(X,Y)=1,"/"=1(UI/cstimer 报的口径)→ 上帝之数【未知】
+ *   - WCA 12c4:(X,Y)=1,"/"=1(UI/cstimer 报的口径)→ 上帝之数已收窄 26 ≤ D ≤ 27
+ *     (本站 2026-06:下界 26 实证全量真打乱、上界 27 借 Masonjones 扭转 13 换算;精确值 26/27 仍未解)
  */
 
 export interface DepthRow {
@@ -96,8 +97,12 @@ export interface MetricInfo {
   name: { zh: string; en: string };
   /** (x,y) 与 / 的计法说明 */
   rule: { zh: string; en: string };
-  /** 上帝之数:已证的数,或 null = 未解 */
+  /** 上帝之数:已证的单一值,或 null = 非单一已证值(见 godText / bound) */
   god: number | null;
+  /** 显示用:非单一值时的文本(如已收窄区间 '26–27') */
+  godText?: string;
+  /** 已知区间下/上界(WCA:下界实证、上界借用;数轴 / 逻辑用) */
+  bound?: { lo: number; hi: number };
   /** 平均最优步,未知则 null */
   avg: number | null;
   /** 状态空间(展示用精确字符串) */
@@ -134,10 +139,12 @@ export const METRICS: Record<MetricInfo['key'], MetricInfo> = {
     name: { zh: 'WCA 12c4 口径', en: 'WCA 12c4 metric' },
     rule: { zh: '(X,Y) = 1,"/" = 1(UI / 打乱长度口径)', en: '(X,Y) = 1, "/" = 1 (the UI / scramble-length metric)' },
     god: null,
+    godText: '26–27',
+    bound: { lo: 26, hi: 27 },
     avg: null,
     space: '11,958,666,854,400',
     status: 'open',
-    who: { zh: '从未被穷举计算', en: 'never exhaustively computed' },
+    who: { zh: '已收窄 26–27,精确值未解', en: 'narrowed to 26–27; exact value open' },
   },
 };
 

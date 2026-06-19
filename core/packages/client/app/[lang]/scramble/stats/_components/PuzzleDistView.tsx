@@ -9,6 +9,7 @@ import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { formatScrambleForEvent } from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import { VariantSelect } from '@/components/VariantSelect';
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compFlagIso2 } from '@/lib/country-flags';
@@ -34,6 +35,38 @@ const PUZZLE_COLOR: Record<string, string> = {
   sq1: '#9b6ef0',      // 紫
 };
 
+// sq1 2×2 之「解法目标」下拉选项(对齐主页「方法/阶段」下拉的渲染)。
+const SQ1_METRIC_OPTIONS = ['wca', 'slash'] as const;
+function sq1MetricLabel(key: string): string {
+  if (key === 'slash') return tr({ zh: 'slash 最优解', en: 'slash-optimal' });
+  return tr({ zh: 'WCA 最优解', en: 'WCA-optimal' });
+}
+
+// sq1 2×2 当前格(解法目标 target × 计步单位 unit)的口径说明。
+function sq1CellNote(target: 'wca' | 'slash', unit: 'wca' | 'slash', provisional: boolean): { zh: string; en: string } {
+  if (unit === 'wca') {
+    if (target === 'slash') {
+      return {
+        zh: 'slash 最优解的 WCA 12c4 步数 ≡ WCA 最优步数(省算定理:slash 最优解总能取到 WCA 最优)',
+        en: 'WCA-12c4 length of the slash-optimal solution ≡ WCA-optimal length',
+      };
+    }
+    return { zh: 'WCA 12c4 最优解步数((X,Y) 计 1、/ 计 1)', en: 'WCA-12c4-optimal length ((X,Y)=1, /=1)' };
+  }
+  if (target === 'slash') {
+    return provisional
+      ? {
+          zh: 'slash 最优解的 / 数(twist 口径,God 13);最深约 4.3% 的态真最优计算中,当前取紧上界',
+          en: 'slashes in the slash-optimal solution (twist, God 13); deepest ~4.3% still being solved, tight upper bound shown',
+        }
+      : {
+          zh: 'slash 最优解的 / 数(twist 口径,God 13,可证最优)',
+          en: 'slashes in the slash-optimal solution (twist metric, God 13, provably optimal)',
+        };
+  }
+  return { zh: 'WCA 最优解里的 / 数(WCA 最优前提下的 slash 含量,≥ slash 最优)', en: 'slashes inside the WCA-optimal solution (≥ slash-optimal)' };
+}
+
 // 度量说明(顶点等口径)。sq1 = 可证 WCA 12c4 最优(近最优档已退役);按选中口径 wca / slash 给说明。
 function metricNote(key: string, metric: string): { zh: string; en: string; } {
   if (key === 'pyraminx') {
@@ -41,8 +74,8 @@ function metricNote(key: string, metric: string): { zh: string; en: string; } {
   }
   if (key === 'sq1') {
     if (metric === 'slash') {
-      // slash = WCA-最优解里的 / 数(slash-最优紧上界),不是单独 slash-最优 —— 必须当面讲清。
-      return { zh: 'slash 计步:WCA 最优解里的 / 数(slash-最优的紧上界 ≤13,非单独 slash-最优)', en: 'slash count within the WCA-optimal solution (tight bound on slash-optimal ≤13, not a separate slash-optimal)' };
+      // slash = slash 最优(twist 口径,只数 /;God 13)。4.29% 歧义态(W=2s-1)真最优计算中,当前取紧上界。
+      return { zh: 'slash 最优:只数 /(twist 口径,God 13);约 4.3% 最深态真最优计算中,当前紧上界', en: "slash-optimal: fewest slashes (twist, God 13); deepest ~4.3% still being solved (upper bound)" };
     }
     return { zh: 'WCA 12c4 计步((X,Y) 计 1、/ 计 1)', en: 'WCA 12c4 ((X,Y) = 1, / = 1)' };
   }
@@ -84,7 +117,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const [examples, setExamples] = useState<Record<string, PuzzleExamplesEntry> | null>(null);
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
   // sq1 双口径:'wca'(WCA 12c4,主)/ 'slash'(jaapsch twist)。仅 sq1 有 alt。
-  const [sq1Metric, setSq1Metric] = useState<'wca' | 'slash'>('wca');
+  const [sq1Metric, setSq1Metric] = useState<'wca' | 'slash'>('wca'); // 解法目标(下拉)
+  const [sq1Unit, setSq1Unit] = useState<'wca' | 'slash'>('wca');     // 计步单位(toggle)
   // 示例:原始比赛打乱 vs 最优(最短)等价打乱(同状态)。仅当样例带最优数据时露切换。
   const [exView, setExView] = useState<'orig' | 'opt'>('orig');
 
@@ -103,13 +137,23 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const exEntry = examples?.[puzzleKey];
 
   const hasAlt = !!entry?.alt;
-  const wantSlash = sq1Metric === 'slash';
-
-  // 按口径解析直方图 / 口径 key / 示例 bin(sq1 = 可证 WCA 12c4 最优;近最优档已退役)。
-  const useAlt = wantSlash && !!entry?.alt;
-  const activeDist: PuzzleHistEntry | undefined = useAlt ? entry!.alt!.dist : entry?.dist;
-  const activeMetricKey: string = useAlt ? entry!.alt!.metric : (entry?.metric ?? '');
-  const activeBins: PuzzleExamplesEntry['bins'] | undefined = useAlt ? exEntry?.binsAlt : exEntry?.bins;
+  const slashProvisional = entry?.alt?.provisional ?? true;
+  // sq1 2×2:target(解法目标)× unit(计步单位)。四格:
+  //  unit=wca            → dist(W);两 target 同(省算定理:slash 最优解的 WCA 步数 ≡ WCA 最优步数)
+  //  unit=slash,target=slash → alt.dist(t,真 slash 最优)
+  //  unit=slash,target=wca   → wcaOptSlash(s,WCA 最优解的 slash 含量,≥ t)
+  const target = sq1Metric;
+  const unit = sq1Unit;
+  const activeDist: PuzzleHistEntry | undefined =
+    unit === 'wca' ? entry?.dist
+      : target === 'slash' ? entry?.alt?.dist
+        : (entry?.wcaOptSlash ?? entry?.alt?.dist);
+  const activeMetricKey: string = unit === 'wca' ? (entry?.metric ?? 'wca') : (entry?.alt?.metric ?? 'slash');
+  // 示例分桶:W→bins;t→binsAlt;s(格3)暂无专属示例分桶 → 不显示例。
+  const activeBins: PuzzleExamplesEntry['bins'] | undefined =
+    unit === 'wca' ? exEntry?.bins
+      : target === 'slash' ? exEntry?.binsAlt
+        : undefined;
 
   const series = useMemo<HistSeries[]>(() => {
     if (!entry || !activeDist) return [];
@@ -126,7 +170,7 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   );
   useEffect(() => {
     setSelectedBin(null); // 切 puzzle / 口径时清空,等下个 effect 按新数据重选
-  }, [puzzleKey, sq1Metric]);
+  }, [puzzleKey, sq1Metric, sq1Unit]);
   useEffect(() => {
     if (exampleBins.length === 0) return;
     setSelectedBin((prev) => {
@@ -150,7 +194,9 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     );
   }
 
-  const note = metricNote(puzzleKey, activeMetricKey);
+  const note = (puzzleKey === 'sq1' && hasAlt)
+    ? sq1CellNote(target, unit, slashProvisional)
+    : metricNote(puzzleKey, activeMetricKey);
   const total = entry.sample_count;
   const sampleLine = tr({ zh: '{n} 条样本', en: '{n} samples' }).replace('{n}', total.toLocaleString());
 
@@ -162,18 +208,39 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           <span className="scramble-stats-puzzle-metric">{tr(note)}</span>
         </div>
         {hasAlt && (
-          <div className="scramble-stats-puzzle-toggle">
-            <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '计步', en: 'Metric' })}</span>
-            <PillToggle
-              value={sq1Metric === 'slash'}
-              onChange={(v) => setSq1Metric(v ? 'slash' : 'wca')}
-              offLabel="WCA"
-              onLabel="slash"
-              ariaLabel={tr({ zh: 'SQ1 计步口径:WCA 12c4 或 slash', en: 'SQ1 move metric: WCA 12c4 or slash' })}
-            />
-          </div>
+          <>
+            <label>
+              <VariantSelect
+                value={sq1Metric}
+                options={SQ1_METRIC_OPTIONS}
+                onChange={(v) => setSq1Metric(v as 'wca' | 'slash')}
+                isZh={isZh}
+                label={sq1MetricLabel}
+                ariaLabel={tr({ zh: 'SQ1 解法目标:WCA 最优解或 slash 最优解', en: 'SQ1 solution target: WCA-optimal or slash-optimal' })}
+              />
+            </label>
+            <div className="scramble-stats-puzzle-toggle">
+              <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '计步', en: 'Count' })}</span>
+              <PillToggle
+                value={sq1Unit === 'slash'}
+                onChange={(v) => setSq1Unit(v ? 'slash' : 'wca')}
+                offLabel={tr({ zh: 'WCA 步', en: 'WCA' })}
+                onLabel={tr({ zh: 'slash', en: 'slash' })}
+                ariaLabel={tr({ zh: 'SQ1 计步单位:WCA 12c4 步数或 slash 数', en: 'SQ1 count unit: WCA-12c4 moves or slashes' })}
+              />
+            </div>
+          </>
         )}
       </div>
+
+      {puzzleKey === 'sq1' && hasAlt && unit === 'slash' && target === 'slash' && slashProvisional && (
+        <p className="scramble-stats-provisional">
+          {tr({
+            zh: 'slash 数当前为紧上界:最深约 4.3% 的态(s=11、12)真 slash 最优正在精确求解,已验证的全部 = 此上界、暂无更优解。',
+            en: 'Slashes shown are a tight upper bound: the deepest ~4.3% of states (s=11,12) are still being solved exactly; everything verified so far equals this bound.',
+          })}
+        </p>
+      )}
 
       <div className="scramble-stats-chart-wrapper">
         <DiscreteHistogram
@@ -222,10 +289,14 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           {tr({ zh: '生成时间', en: 'Generated' })}: {json.meta.generated_at}
         </span>
         <span>
-          {puzzleKey === 'sq1'
-            ? (activeMetricKey === 'slash'
-              ? tr({ zh: '口径:WCA 12c4 最优解里的 slash 数(slash-最优的紧上界,≤13;非单独 slash-最优)', en: 'Metric: slash count within the WCA-12c4-optimal solution (tight upper bound on slash-optimal, ≤13; not a separate slash-optimal)' })
-              : tr({ zh: '口径:整个打乱的可证 WCA 12c4 最优解步数(Sq1WcaSolver,精确)', en: 'Metric: provably WCA-12c4-optimal solution length (Sq1WcaSolver, exact)' }))
+          {puzzleKey === 'sq1' && hasAlt
+            ? tr(slashProvisional ? {
+              zh: '两维口径:解法目标(WCA 最优解 / slash 最优解)× 计步单位(WCA 12c4 步数 / slash 数)。注:slash 最优解的 WCA 步数恒等于 WCA 最优步数(省算定理),故「slash 最优解 × WCA 步」与「WCA 最优解 × WCA 步」同图。slash 数中 95.71% 由省算定理免搜索证明,余 4.29% 最深态真最优计算中(当前取紧上界)。',
+              en: 'Two axes: solution target (WCA- / slash-optimal) × count unit (WCA-12c4 moves / slashes). Note: a slash-optimal solution always attains the WCA-optimal length, so "slash-optimal × WCA moves" equals "WCA-optimal × WCA moves". 95.71% of slash counts are proven search-free; the deepest 4.29% are still being solved exactly (upper bound for now).',
+            } : {
+              zh: '两维口径:解法目标(WCA 最优解 / slash 最优解)× 计步单位(WCA 12c4 步数 / slash 数)。注:slash 最优解的 WCA 步数恒等于 WCA 最优步数(省算定理),故「slash 最优解 × WCA 步」与「WCA 最优解 × WCA 步」同图。slash 数全部可证最优(95.71% 省算定理免搜索 + 4.29% 最深态精确求解)。',
+              en: 'Two axes: solution target (WCA- / slash-optimal) × count unit (WCA-12c4 moves / slashes). Note: a slash-optimal solution always attains the WCA-optimal length, so "slash-optimal × WCA moves" equals "WCA-optimal × WCA moves". All slash counts are provably optimal (95.71% search-free + deepest 4.29% solved exactly).',
+            })
             : tr({ zh: '口径:整个打乱的最优解步数', en: 'Metric: optimal solution length per scramble' })}
         </span>
       </div>

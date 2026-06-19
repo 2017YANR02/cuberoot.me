@@ -153,6 +153,34 @@ async function bucketExactSq1(dataDir: string): Promise<{ wca: Map<number, strin
   return { wca, slash, optOf };
 }
 
+// sq1 **真 slash 最优**档分桶:读 sq1_slash_exact.csv(id,slash_exact,opt_scramble)。
+// 按 slash_exact(twist God 13)分桶 id + 留 id → slash 最优等价打乱(SQ1 简写记号,驱动「slash 最优打乱」)。
+// 缺该文件 → null,调用方回退 bucketExactSq1 的 slash(WCA-最优解 / 数,紧上界)。
+async function bucketSlashSq1(dataDir: string): Promise<{ slash: Map<number, string[]>; optOf: Map<string, string> } | null> {
+  const csv = path.join(dataDir, 'sq1_slash_exact.csv');
+  if (!fs.existsSync(csv)) return null;
+  const slash = new Map<number, string[]>();
+  const optOf = new Map<string, string>();
+  const rl = readline.createInterface({ input: fs.createReadStream(csv, 'utf-8'), crlfDelay: Infinity });
+  let idIdx = -1, valIdx = -1, optIdx = -1;
+  for await (const line of rl) {
+    if (!line) continue;
+    if (idIdx === -1) {
+      const h = line.split(',');
+      idIdx = h.indexOf('id'); valIdx = h.indexOf('slash_exact'); optIdx = h.indexOf('opt_scramble');
+      if (idIdx === -1 || valIdx === -1) throw new Error(`missing id/slash_exact in ${csv}`);
+      continue;
+    }
+    const c = line.split(',');
+    const id = c[idIdx];
+    const v = Number(c[valIdx]);
+    if (!id || !Number.isFinite(v)) continue;
+    let a = slash.get(v); if (!a) { a = []; slash.set(v, a); } a.push(id);
+    if (optIdx >= 0 && c[optIdx]) optOf.set(id, c[optIdx]);
+  }
+  return { slash, optOf };
+}
+
 // 每 bin 确定性均匀步长取 K 条(可复现,不依赖 Math.random)。
 // n≤K 全取;否则按 floor(i*(n-1)/(K-1)) 均匀采样,首尾两端都覆盖,中间均布。
 function pickUniform(ids: string[], k: number): string[] {
@@ -280,14 +308,20 @@ async function main() {
       if (spec.altCol) sampledAlt = sampleFrom(await bucketIdsByLen(csvPath, spec.altCol));
     }
 
-    // 精确档采样(sq1):wca_exact + opt 的 slash 数双分桶,源含未 ingest 完成块;exactOpt = 最优等价打乱(标准记号)。
+    // 精确档采样(sq1):wca_exact 分桶(bins,exactOpt=WCA 最优打乱)+ 真 slash 最优分桶
+    // (binsAlt,exactSlashOpt=slash 最优打乱)。slash 最优档缺则回退 bucketExactSq1 的 slash(紧上界 + WCA 打乱)。
     let exactWca: Map<number, string[]> | null = null;
     let exactSlash: Map<number, string[]> | null = null;
     let exactOpt = new Map<string, string>();
+    let exactSlashOpt = new Map<string, string>();
     if (spec.exact) {
       const ex = await bucketExactSq1(path.join(dataRoot, spec.key));
-      if (ex) { exactWca = sampleFrom(ex.wca); exactSlash = sampleFrom(ex.slash); exactOpt = ex.optOf; }
-      else console.warn(`  [${spec.key}] 无精确档数据(sq1_wca_exact.csv + 完成块都缺)`);
+      if (ex) {
+        exactWca = sampleFrom(ex.wca); exactSlash = sampleFrom(ex.slash);
+        exactOpt = ex.optOf; exactSlashOpt = ex.optOf; // 默认回退:slash 视图也用 WCA 最优打乱
+      } else console.warn(`  [${spec.key}] 无精确档数据(sq1_wca_exact.csv + 完成块都缺)`);
+      const sl = await bucketSlashSq1(path.join(dataRoot, spec.key));
+      if (sl) { exactSlash = sampleFrom(sl.slash); exactSlashOpt = sl.optOf; } // 真 slash 最优覆盖
     }
 
     // 2. 流式读 scrambles.txt 仅取被采样 id 的原始打乱(标准 (x,y) 记号)。
@@ -337,8 +371,9 @@ async function main() {
     };
     if (spec.exact) {
       // sq1:精确档作为唯一档,写进 bins/binsAlt(对齐其它 puzzle 的 key;近最优已退役)。
+      // bins = WCA 12c4 最优(打乱 = WCA 最优解逆);binsAlt = 真 slash 最优(打乱 = slash 最优解逆)。
       setBins('bins', exactWca, exactOpt);
-      setBins('binsAlt', exactSlash, exactOpt);
+      setBins('binsAlt', exactSlash, exactSlashOpt);
     } else {
       setBins('bins', sampledByBin, nearOpt);
       setBins('binsAlt', sampledAlt, nearOpt);
