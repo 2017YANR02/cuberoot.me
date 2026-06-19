@@ -17500,6 +17500,11 @@
       "country": "United Kingdom",
       "iso2": "GB"
     },
+    "2023VASQ09": {
+      "name": "Alonso Ignacio González Vásquez",
+      "country": "Chile",
+      "iso2": "CL"
+    },
     "2023VELA19": {
       "name": "Pablo Amoraga Velasco",
       "country": "Spain",
@@ -20592,6 +20597,9 @@
     },
     "Berkeley2006": {
       "name": "UC Berkeley 2006"
+    },
+    "BerkeleyAugustWeekday2025": {
+      "name": "Berkeley August Weekday 2025"
     },
     "BerkeleyAutumn2012": {
       "name": "Berkeley Autumn 2012"
@@ -35044,6 +35052,9 @@
     "LongmontCubeOpen2017": {
       "name": "Longmont Cube Open 2017"
     },
+    "LongmontOpen2026": {
+      "name": "Longmont Open 2026"
+    },
     "LongstoneCityBlindOpen2024": {
       "name": "Longstone City Blind Open 2024"
     },
@@ -43243,6 +43254,9 @@
     "SAC2024": {
       "name": "SAC 2024"
     },
+    "SAC2026": {
+      "name": "SAC 2026"
+    },
     "SacCubingI2017": {
       "name": "SacCubing I 2017"
     },
@@ -45636,6 +45650,9 @@
     },
     "SouthernChampionship2025": {
       "name": "Southern Championship 2025"
+    },
+    "SouthernChampionship2026": {
+      "name": "GAN Southern Championship 2026"
     },
     "SouthernChampionships2017": {
       "name": "Southern Championships 2017"
@@ -50163,6 +50180,9 @@
     },
     "VinaMasters2024": {
       "name": "Viña Masters 2024"
+    },
+    "VinaNewcomersOpen2025": {
+      "name": "Viña Newcomers Open 2025"
     },
     "VinaOpen2024": {
       "name": "Viña Open 2024"

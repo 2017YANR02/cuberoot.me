@@ -73,7 +73,7 @@
       "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
     ],
     [
-      91,
+      92,
       "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
       "3x3x3 Cube",
       "[Schoolmark Open 2019](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2019)",
@@ -221,6 +221,13 @@
     ],
     [
       58,
+      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
+      "3x3x3 One-Handed",
+      "[III Barueri Open 2019](https://www.worldcubeassociation.org/competitions/IIIBarueriOpen2019)",
+      null
+    ],
+    [
+      58,
       "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
       "3x3x3 Cube",
       "[Lake Erie Showdown 2022](https://www.worldcubeassociation.org/competitions/LakeErieShowdown2022)",
@@ -231,13 +238,6 @@
       "[Alexis Rodrigo Cazu Mendoza](https://www.worldcubeassociation.org/persons/2014MEND02)",
       "7x7x7 Cube",
       "[Fénix 2014](https://www.worldcubeassociation.org/competitions/Fenix2014)",
-      null
-    ],
-    [
-      57,
-      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
-      "3x3x3 One-Handed",
-      "[III Barueri Open 2019](https://www.worldcubeassociation.org/competitions/IIIBarueriOpen2019)",
       null
     ],
     [
@@ -290,18 +290,18 @@
       null
     ],
     [
+      55,
+      "[Damián Jail Campos](https://www.worldcubeassociation.org/persons/2015CAMP03)",
+      "Megaminx",
+      "[La Plata Open 2015](https://www.worldcubeassociation.org/competitions/LaPlataOpen2015)",
+      null
+    ],
+    [
       54,
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "3x3x3 Cube",
       "[Newport Fall 2016](https://www.worldcubeassociation.org/competitions/NewportFall2016)",
       "[WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019)"
-    ],
-    [
-      54,
-      "[Damián Jail Campos](https://www.worldcubeassociation.org/persons/2015CAMP03)",
-      "Megaminx",
-      "[La Plata Open 2015](https://www.worldcubeassociation.org/competitions/LaPlataOpen2015)",
-      null
     ],
     [
       54,
@@ -316,6 +316,13 @@
       "Square-1",
       "[Gaston Toe Twiddling 2019](https://www.worldcubeassociation.org/competitions/GastonToeTwiddling2019)",
       "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
+    ],
+    [
+      54,
+      "[Nicole Jnus Macalalad](https://www.worldcubeassociation.org/persons/2018MACA02)",
+      "Megaminx",
+      "[Cube Ala-Eh V 2020](https://www.worldcubeassociation.org/competitions/CubeAlaEhV2020)",
+      null
     ],
     [
       54,
@@ -343,13 +350,6 @@
       "[Michael Andres Castillo Lemus](https://www.worldcubeassociation.org/persons/2011CAST02)",
       "5x5x5 Cube",
       "[Bucaramanga Cultural 2017](https://www.worldcubeassociation.org/competitions/BucaramangaCultural2017)",
-      null
-    ],
-    [
-      53,
-      "[Nicole Jnus Macalalad](https://www.worldcubeassociation.org/persons/2018MACA02)",
-      "Megaminx",
-      "[Cube Ala-Eh V 2020](https://www.worldcubeassociation.org/competitions/CubeAlaEhV2020)",
       null
     ],
     [
@@ -417,6 +417,13 @@
     ],
     [
       49,
+      "[Andrés Hisashi Suzuki Cabrera](https://www.worldcubeassociation.org/persons/2016SUZU03)",
+      "Square-1",
+      "[Last Cubing Lima 2017](https://www.worldcubeassociation.org/competitions/LastCubingLima2017)",
+      null
+    ],
+    [
+      49,
       "[Ahmet Çınar Ablak](https://www.worldcubeassociation.org/persons/2018ABLA01)",
       "3x3x3 One-Handed",
       "[Edukent Weekend 2022](https://www.worldcubeassociation.org/competitions/EdukentWeekend2022)",
@@ -437,13 +444,6 @@
       "[Selangor Ace Cube 2023](https://www.worldcubeassociation.org/competitions/SelangorAceCube2023)"
     ],
     [
-      48,
-      "[Andrés Hisashi Suzuki Cabrera](https://www.worldcubeassociation.org/persons/2016SUZU03)",
-      "Square-1",
-      "[Last Cubing Lima 2017](https://www.worldcubeassociation.org/competitions/LastCubingLima2017)",
-      null
-    ],
-    [
       47,
       "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
       "3x3x3 Blindfolded",
@@ -462,7 +462,7 @@
       "[David Rendón Martínez](https://www.worldcubeassociation.org/persons/2018MART75)",
       "Skewb",
       "[San Juan III 2023](https://www.worldcubeassociation.org/competitions/SanJuanIII2023)",
-      null
+      "[SAC 2026](https://www.worldcubeassociation.org/competitions/SAC2026)"
     ],
     [
       46,
@@ -546,7 +546,7 @@
       "[Sebastiano Benato](https://www.worldcubeassociation.org/persons/2014BENA03)",
       "Pyraminx",
       "[Wirewood Pre-Nacionales 2018](https://www.worldcubeassociation.org/competitions/WirewoodPreNacionales2018)",
-      null
+      "[SAC 2026](https://www.worldcubeassociation.org/competitions/SAC2026)"
     ],
     [
       43,
@@ -644,7 +644,7 @@
       "[Bernardo Torres](https://www.worldcubeassociation.org/persons/2015TORR12)",
       "4x4x4 Cube",
       "[CojedesRubik 2016](https://www.worldcubeassociation.org/competitions/CojedesRubik2016)",
-      null
+      "[SAC 2026](https://www.worldcubeassociation.org/competitions/SAC2026)"
     ],
     [
       40,
