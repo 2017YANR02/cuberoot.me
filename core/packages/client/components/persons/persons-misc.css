@@ -35,3 +35,45 @@
 .wp-misc-cuber a:hover { color: var(--wp-accent); text-decoration: underline; }
 .wp-misc-region { display: inline-flex; align-items: center; gap: 6px; }
 .wp-misc-total td { font-weight: 600; border-top: 1px solid var(--wp-border); border-bottom: none; }
+
+/* ── 纪录 tab(历史世界/洲际/国家纪录)+ 锦标赛领奖台 ───────────────────────
+   表沿用 .wp-bycomp-table 的基础样式;此处只补项目分组列与列对齐覆盖。 */
+.wp-records-sec { margin-bottom: 28px; }
+.wp-records-sec:last-child { margin-bottom: 0; }
+/* 项目分组:同项目仅首行显示图标+名,后续行留空;新项目起加上边线 */
+.wp-records-table .wp-rec-event { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.wp-records-table .wp-rec-event-name { font-weight: 600; color: var(--wp-text); }
+.wp-records-table tbody tr.wp-rec-event-first:not(:first-child) td,
+.wp-records-table tbody tr.wp-rec-event-first th { border-top: 2px solid var(--wp-border); }
+/* 列对齐:覆盖 bycomp-table 的 nth-child(4/5) 居中(那是给排名/单次列的)。
+   记录表列序 = 项目 单次 平均 赛事 轮次 详情 → 单次/平均居左,赛事/轮次居左 */
+.wp-records-table thead th:nth-child(4),
+.wp-records-table thead th:nth-child(5) { text-align: left; }
+.wp-records-table .wp-cell-result { text-align: left; }
+.wp-records-table .wp-cell-event { vertical-align: top; }
+
+/* ── 锦标赛领奖台表 ── */
+/* 比赛分组头行 */
+.wp-podium-table .wp-podium-comp-row td {
+  background: color-mix(in srgb, var(--wp-text) 4%, transparent);
+  font-weight: 600;
+  padding-top: 10px;
+  padding-bottom: 8px;
+}
+.wp-podium-table .wp-podium-comp-row .wp-cell-comp-date {
+  display: inline-block;
+  margin-left: 10px;
+  font-weight: 400;
+  font-size: 0.82em;
+  color: var(--wp-text-sub);
+}
+/* 列对齐:1 项目 / 2 名次 / 3 单次 / 4 平均 / 5 详情 */
+.wp-podium-table thead th:nth-child(3),
+.wp-podium-table thead th:nth-child(4) { text-align: left; }
+.wp-podium-table .wp-cell-result { text-align: left; }
+.wp-podium-table thead th.wp-th-narrow { text-align: center !important; }
+.wp-podium-table .wp-cell-pos { text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* 金 / 银(取自正文色去饱和)/ 铜 */
+.wp-podium-place-1 { color: #d4a106; }
+.wp-podium-place-2 { color: color-mix(in srgb, var(--wp-text) 50%, transparent); }
+.wp-podium-place-3 { color: #b9772e; }

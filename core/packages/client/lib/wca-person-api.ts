@@ -143,6 +143,35 @@ export async function fetchWcaPersonMisc(wcaId: string): Promise<WcaPersonMisc> 
   return out;
 }
 
+// 锦标赛领奖台:某选手在 世界 / 洲际 / 国家 / 多国类型 锦标赛决赛、按该锦标赛资格内重排后名次 ≤3 的成绩。
+// 由后端预计算表 wca_championship_podiums 提供(资格内重排客户端算不了,见 server 端点注释)。
+export interface ChampionshipPodiumRow {
+  compId: string;
+  compName: string | null;
+  compDate: string | null;
+  compCountryId: string | null;
+  eventId: string;
+  level: string;             // 'world' | 大洲 id('_North America') | 国家 iso2('US') | 'greater_china'
+  place: number;             // 1..3
+  best: number;
+  average: number;           // 0 = 无平均
+  attempts: number[];
+  singleRecord: string | null;
+  averageRecord: string | null;
+}
+
+export async function fetchWcaPersonChampionshipPodiums(wcaId: string): Promise<ChampionshipPodiumRow[]> {
+  const key = `wca:champPodiums:v1:${wcaId}`;
+  const cached = cacheGet<ChampionshipPodiumRow[]>(key);
+  if (cached) return cached;
+  const res = await fetch(apiUrl(`/v1/wca/person-championship-podiums?wcaId=${encodeURIComponent(wcaId)}`));
+  if (!res.ok) throw new Error(`person-championship-podiums ${res.status}`);
+  const json = (await res.json()) as { rows?: ChampionshipPodiumRow[] };
+  const out = Array.isArray(json.rows) ? json.rows : [];
+  cacheSet(key, out);
+  return out;
+}
+
 export interface WcaCompetition {
   id: string;
   name: string;
