@@ -96,7 +96,7 @@ export function lengthAltMeta(event: string) {
   return event === 'sq1'
     ? {
       off: 'WCA', on: 'slash',
-      aria: tr({ zh: '计步口径:WCA 12c4 或 slash', en: 'Metric: WCA 12c4 or slash'
+      aria: tr({ zh: '度量:WCA 12c4 或 slash', en: 'Metric: WCA 12c4 or slash'
     }),
       offHint: tr({ zh: 'WCA 12c4:(X,Y) 计 1、/ 计 1', en: 'WCA 12c4: (X,Y) = 1, / = 1'
     }),
@@ -105,7 +105,7 @@ export function lengthAltMeta(event: string) {
     }
     : {
       off: 'HTM', on: 'QTM',
-      aria: tr({ zh: '计步口径:HTM(半圈计 1)或 QTM(半圈计 2)', en: 'Move metric: HTM (half turn = 1) or QTM (half turn = 2)'
+      aria: tr({ zh: '度量:HTM(半圈计 1)或 QTM(半圈计 2)', en: 'Move metric: HTM (half turn = 1) or QTM (half turn = 2)'
     }),
       offHint: tr({ zh: 'HTM:每 move 计 1 步', en: 'HTM: each move = 1'
     }),
@@ -151,7 +151,7 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric }
   data: EventLengthsJson | null;
   event: string;
   merged: boolean;
-  // 计步口径(由父级控制,钮提到顶栏):3x3-family HTM/QTM、sq1 WCA/slash。
+  // 度量(由父级控制,钮提到顶栏):3x3-family HTM/QTM、sq1 WCA/slash。
   metric: 'htm' | 'qtm';
 }) {
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');

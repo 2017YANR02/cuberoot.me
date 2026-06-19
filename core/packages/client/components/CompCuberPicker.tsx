@@ -252,7 +252,7 @@ export function CompCuberPicker({
                       <span className="comp-picker-name">{displayName}</span>
                       <span className="comp-picker-meta">
                         <span className="comp-picker-id">{c.id}</span>
-                        {c.city ? <> · {localizeCity(c.city, !!isZh)}</> : null}
+                        {c.city ? <> · {localizeCity(c.city, !!isZh, c.country)}</> : null}
                         {' · '}{formatDateRangeIso(c.start_date, c.end_date)}
                       </span>
                     </span>

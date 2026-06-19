@@ -677,6 +677,8 @@ interface AllComp {
   latitude_degrees: number;
   longitude_degrees: number;
   url: string;
+  // 项目修改截止时刻（ISO，单场端点专属，列表端点不返回）。94% 比赛有设；拉不到为 null。
+  event_change_deadline?: string | null;
   rounds?: Record<string, number>;
   event_regs?: Record<string, number>;
   round_meta?: Record<string, RoundMeta>;
@@ -953,6 +955,56 @@ async function fetchWcifBatch(compIds: Iterable<string>): Promise<Record<string,
   return out;
 }
 
+async function fetchChangeDeadline(compId: string): Promise<string | null> {
+  /*
+   * 拉单场 /competitions/:id 取 event_change_deadline_date（项目修改截止）。
+   * 列表端点不返回此字段，只能逐场拉。单文件缓存（24h），与 WCIF 同策略。
+   * 失败 / 无字段 → null（不缓存空，下次重试）。
+   */
+  const cacheFile = resolve(CACHE_DIR, `_compinfo_${compId}.json`);
+  if (isCacheValid(cacheFile)) {
+    try {
+      const cached = JSON.parse(readFileSync(cacheFile, 'utf-8')) as { ecd?: string | null };
+      if (typeof cached === 'object' && cached !== null && 'ecd' in cached) return cached.ecd ?? null;
+    } catch { /* 损坏 → 重拉 */ }
+  }
+  const data = await fetchWithRetry(`${WCA_API_BASE}/competitions/${compId}`, false, 30_000);
+  if (typeof data !== 'object' || data === null || !('id' in data)) return null;
+  const ecd = (data as { event_change_deadline_date?: unknown }).event_change_deadline_date;
+  const val = typeof ecd === 'string' && ecd ? ecd : null;
+  writeFileSync(cacheFile, JSON.stringify({ ecd: val }), 'utf-8');
+  return val;
+}
+
+async function fetchChangeDeadlineBatch(compIds: string[]): Promise<Record<string, string | null>> {
+  /*
+   * 有界并发拉一批比赛的 event_change_deadline_date。payload 小（单场 JSON 几 KB），
+   * 与 WCIF 批量同 CONCURRENCY 池；429 由 fetchWithRetry 内退避兜底。
+   */
+  const out: Record<string, string | null> = {};
+  if (!compIds.length) return out;
+  const CONCURRENCY = Math.max(1, Number(process.env.WCIF_CONCURRENCY) || 8);
+  let next = 0;
+  let done = 0;
+  const worker = async (): Promise<void> => {
+    for (let i = next++; i < compIds.length; i = next++) {
+      const cid = compIds[i]!;
+      try {
+        out[cid] = await fetchChangeDeadline(cid);
+      } catch (e) {
+        console.log(`[CHG][WARN] ${cid}: ${(e as Error).message ?? e}`);
+        out[cid] = null;
+      }
+      done += 1;
+      if (done % 100 === 0 || done === compIds.length) {
+        console.log(`[CHG] ${done}/${compIds.length} 修改截止已拉`);
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, compIds.length) }, worker));
+  return out;
+}
+
 function shortifyEvents(eventIds: string[]): string[] {
   // WCA 内部 event_id → 前端短名，按 WCA 官方顺序排序。
   const pairs: [number, string][] = [];
@@ -1123,6 +1175,15 @@ async function main(): Promise<void> {
       c.rounds = wcifMap[c.id]?.rounds ?? {};
       c.event_regs = wcifMap[c.id]?.eventRegs ?? {};
       c.round_meta = wcifMap[c.id]?.roundMeta ?? {};
+    }
+  }
+
+  // 5b. 拉每场「项目修改截止」（event_change_deadline_date）—— 列表端点不含，逐场单拉（小 payload）。
+  if (allComps && allComps.length) {
+    console.log(`\n[CHG] 拉取 ${allComps.length} 场修改截止...`);
+    const chgMap = await fetchChangeDeadlineBatch(allComps.map((c) => c.id));
+    for (const c of allComps) {
+      c.event_change_deadline = chgMap[c.id] ?? null;
     }
   }
 

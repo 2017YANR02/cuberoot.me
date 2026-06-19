@@ -110,7 +110,7 @@ export function searchComps(query: string, comps: Comp[], limit = 20): Comp[] {
     const name = c.name.toLowerCase();
     const nameZh = compNameZh(c.name);
     const city = (c.city || '').toLowerCase();
-    const cityZh = c.city ? localizeCity(c.city, true) : '';
+    const cityZh = c.city ? localizeCity(c.city, true, c.country) : '';
     let s = 0;
     if (id === q) s = 1000;
     else if (id.startsWith(q)) s = Math.max(s, 900);

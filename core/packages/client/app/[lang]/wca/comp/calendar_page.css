@@ -1087,19 +1087,20 @@
 .calendar-page {
     --cl-ev-w: 1.3rem;
     --cl-comp-w: 2.8rem;  /* 整场单列（实际人数 / 上限 / 满员率）；选「不显示」时收为 0 */
-    --cl-cols: 7.2rem var(--cl-country-width, 6rem) 1.4rem var(--cl-name-width, 18rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
-    --cl-min-width: 79rem;
+    --cl-reg-w: 8rem;     /* 报名列（最近的将来节点：日期 时刻 + 开放/截止/退赛/重开/修改截止；按最长 4 字标签留宽） */
+    --cl-cols: var(--cl-reg-w) 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-country-width, 6rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+    --cl-min-width: 86rem;
 }
 /* 宽值 metric（限时 / 及格线 / 晋级）：事件列加宽到能塞下 "10:00" / "≤6:00"，整体网格更宽，横向滚动 */
 .calendar-page[data-wide-metric] {
     --cl-ev-w: 3rem;
-    --cl-min-width: 114rem;
+    --cl-min-width: 121rem;
 }
 .calendar-page[data-comp-none] { --cl-comp-w: 0rem; }
 /* 经纬度：整场列拆成「纬度 + 经度」两列，各带正负号 + 两位小数（如 -122.42），比计数列宽 */
 .calendar-page[data-comp-latlng] {
     --cl-comp-w: 3.8rem;
-    --cl-cols: 7.2rem var(--cl-country-width, 6rem) 1.4rem var(--cl-name-width, 18rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+    --cl-cols: var(--cl-reg-w) 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-country-width, 6rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
 }
 .calendar-page .comp-list {
     display: flex;
@@ -1148,7 +1149,9 @@
     font-feature-settings: "tnum" 1;
     line-height: 1;
 }
-.calendar-page .cl-year-count {
+/* 年内比赛数计数 pill —— 放在「比赛名」列头排序按钮里(AZ 图标右侧) */
+.calendar-page .cl-list-count {
+    margin-left: 5px;
     font-size: 0.7rem;
     color: var(--text-sub);
     background: var(--surface-alt);
@@ -1206,7 +1209,7 @@
     display: block;
     white-space: nowrap;
 }
-/* 国家名列：日期右侧、国旗左侧的国家文字，弱色、过长截断。 */
+/* 国家名列：比赛名右侧、城市左侧的国家文字，弱色、过长截断。 */
 .calendar-page .comp-list-country {
     color: var(--text-sub);
     font-size: 0.78rem;
@@ -1243,6 +1246,39 @@
     white-space: nowrap;
     min-width: 0;
 }
+/* 报名列：下一个里程碑「日期 时刻」(弱色) + 状态词(开放绿/截止黄/24h内红/已截止灰) */
+.calendar-page .cl-reg-cell {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.calendar-page .cl-reg-when {
+    color: var(--text-sub);
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.calendar-page .cl-reg-word { flex: none; }
+.calendar-page .cl-reg-cell--open .cl-reg-word { color: var(--signal-success); }
+.calendar-page .cl-reg-cell--close .cl-reg-word { color: var(--signal-warning); }
+.calendar-page .cl-reg-cell--urgent .cl-reg-word { color: var(--destructive); }
+.calendar-page .cl-reg-cell--closed .cl-reg-word { color: var(--text-sub); font-weight: 500; }
+/* 报名列头（最左）：文字「报名」+ 排序箭头，贴左对齐（复合选择器压过后定义的 .cl-col-icon 的 justify-self:end） */
+.calendar-page .cl-col-icon.cl-reg-head {
+    justify-self: start;
+    justify-content: flex-start;
+    gap: 2px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.calendar-page .cl-reg-head-text { line-height: 1; }
 .calendar-page .cl-event-cell {
     text-align: center;
     font-size: 0.7rem;
@@ -1580,14 +1616,15 @@
     .calendar-page {
         --cl-ev-w: 1.1rem;
         --cl-comp-w: 2.4rem;
-        --cl-cols: 5.5rem var(--cl-country-width, 4.5rem) 1.2rem var(--cl-name-width, 14rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
-        --cl-min-width: 61rem;
+        --cl-reg-w: 8rem;
+        --cl-cols: var(--cl-reg-w) 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-country-width, 4.5rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+        --cl-min-width: 68rem;
     }
-    .calendar-page[data-wide-metric] { --cl-ev-w: 2.7rem; --cl-min-width: 95rem; }
+    .calendar-page[data-wide-metric] { --cl-ev-w: 2.7rem; --cl-min-width: 102rem; }
     .calendar-page[data-comp-none] { --cl-comp-w: 0rem; }
     .calendar-page[data-comp-latlng] {
         --cl-comp-w: 3.4rem;
-        --cl-cols: 5.5rem var(--cl-country-width, 4.5rem) 1.2rem var(--cl-name-width, 14rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
+        --cl-cols: var(--cl-reg-w) 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-country-width, 4.5rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
     }
     .calendar-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
     .calendar-page .event-chips--list-header .event-chip { width: 20px; height: 20px; }

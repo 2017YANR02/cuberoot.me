@@ -28,6 +28,7 @@ import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, splitChainByStatus } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
+import { useLivePrRanks } from '../../logic/use-live-pr-ranks';
 import { ResultChangeChain } from './ChangedResultValue';
 import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
@@ -209,6 +210,8 @@ function EventRoundsList({
   }, []);
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与
   const prRank = useMemo(() => computePrRank(results.filter((r) => !r.live), comps), [results, comps]);
+  // 直播行的 PR/PRn 单独从 cubing-live 源取(与 /wca/comp 领奖台同口径)。
+  const livePrRanks = useLivePrRanks(rows, wcaId);
 
   // /wca/regulations 风格的 hash 锚点:#r-{comp}-{event}-{round}
   useEffect(() => {
@@ -269,15 +272,21 @@ function EventRoundsList({
             <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
             <th>{t('单次', 'Single')}</th>
             <th>{t('平均', 'Avg')}{isMbldEvent(eventId) && <UnofficialMark />}</th>
-            <th>{t('详细成绩', 'Attempts')}</th>
+            <th className="wp-th-attempts">
+              <span className="wp-att-head"><span>{t('详细成绩', 'Attempts')}</span></span>
+            </th>
           </tr>
         </thead>
         <tbody>
           {sorted.map((r) => {
             const cmp = compById.get(r.competition_id);
             const rank = prRank.get(r.id);
-            const singleRank = rank?.singleRank ?? null;
-            const averageRank = rank?.averageRank ?? null;
+            const liveRank = r.live ? livePrRanks.get(r.id) : null;
+            const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
+            const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
+            // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
+            const singleRecord = r.regional_single_record || (liveRank?.singleTag || null);
+            const averageRecord = r.regional_average_record || (liveRank?.averageTag || null);
             const showComp = r.competition_id !== lastCompId;
             lastCompId = r.competition_id;
             // 拆 status:approved 进有效值显示;pending 仅作「待审核」标记(不改官方值)。
@@ -354,8 +363,8 @@ function EventRoundsList({
                   <span className="record-num-cell">
                     <ResultChangeChain oldValues={oldBest} eventId={eventId} kind="single" note={chain?.[chain.length - 1]?.note} />
                     {formatWcaResult(effBest, eventId, 'single')}
-                    {r.regional_single_record
-                      ? <RecordBadge record={r.regional_single_record} variant="inline" />
+                    {singleRecord
+                      ? <RecordBadge record={singleRecord} variant="inline" />
                       : singleRank
                         ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
                         : null}
@@ -365,8 +374,8 @@ function EventRoundsList({
                   <span className="record-num-cell">
                     <ResultChangeChain oldValues={oldAvg} eventId={eventId} kind="average" note={chain?.[chain.length - 1]?.note} />
                     {formatWcaResult(effAvg, eventId, 'average')}
-                    {r.regional_average_record
-                      ? <RecordBadge record={r.regional_average_record} variant="inline" />
+                    {averageRecord
+                      ? <RecordBadge record={averageRecord} variant="inline" />
                       : averageRank
                         ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
                         : null}

@@ -18,6 +18,7 @@ import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
 import { localizeCompName, resolveCompName } from '@/lib/comp-localize';
 import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
+import { adjustRankWithLiveComp, type LiveCompEntry } from '@/lib/comp-live-rank';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiUrl } from '@/lib/api-base';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
@@ -237,6 +238,39 @@ function wcaIdToCubingSlug(wcaId: string): string {
 }
 
 function roundKey(e: string, r: string): string { return `${e}:${r}`; }
+
+// 收集本场某项目某口径(single/average)下每位选手的最快有效成绩 + 国别 + 赛前官方 PB,
+// 喂给 adjustRankWithLiveComp 把实时成绩并进官方名次(修掉官方 dump 滞后造成的假名次)。
+function buildLiveCompEntries(
+  data: CompData,
+  pbMap: Record<string, PbByEvent | null>,
+  eventId: string,
+  type: 'single' | 'average',
+): LiveCompEntry[] {
+  const ev = data.events.find(e => e.i === eventId);
+  if (!ev) return [];
+  const best = new Map<number, number>();
+  for (const rd of ev.rs) {
+    for (const r of data.resultsByRound[roundKey(eventId, rd.i)] || []) {
+      const v = type === 'single' ? r.b : effectiveAvg(r);
+      if (!(v > 0)) continue;
+      const prev = best.get(r.n);
+      if (prev === undefined || v < prev) best.set(r.n, v);
+    }
+  }
+  const out: LiveCompEntry[] = [];
+  for (const [num, compBest] of best) {
+    const u = data.users[String(num)];
+    if (!u) continue;
+    out.push({
+      number: num,
+      iso2: regionToIso2(u.region).toUpperCase(),
+      compBest,
+      officialBest: u.wcaid ? pbMap[u.wcaid]?.[eventId]?.[type]?.best : undefined,
+    });
+  }
+  return out;
+}
 
 interface PodiumGroup { ev: EventMeta; rd: RoundMeta; rows: LiveResult[]; }
 
@@ -1203,8 +1237,9 @@ export default function CompDetailPage() {
   const eventBadges: Record<string, string> = {};
   const eventTopBadges: Record<string, string> = {};
   for (const ev of data.events) {
-    const rounds = validRoundsFor(ev.i);
-    const total = rounds.length > 0 ? rounds.length : ev.rs.length;
+    // 右上角徽标 = 该项目总轮次,用 WCIF 定义的全部轮数(ev.rs),含尚未举办的轮次(如还没打的决赛);
+    // 别用 validRoundsFor —— 它只数「有成绩 / 进行中」的轮,会把 status=open 的决赛漏掉(少算一轮)。
+    const total = ev.rs.length;
     if (total > 0) eventTopBadges[ev.i] = `${total}`;
   }
   if (eventParam && roundParam) {
@@ -1610,7 +1645,7 @@ function CompInfoPanel({
 }: { info: CompInfo; isZh: boolean; cubingZh: CubingZhMeta | null }) {
   const dateStr = info.start_date ? formatDateRangeIso(info.start_date, info.end_date) : '';
   const country = info.country_iso2 ? countryName(info.country_iso2.toUpperCase(), isZh) : '';
-  const cityStr = [info.city ? localizeCity(info.city, isZh) : '', country].filter(Boolean).join((i18n.language.startsWith('zh') ? ',' : ', '));
+  const cityStr = [info.city ? localizeCity(info.city, isZh, info.country_iso2) : '', country].filter(Boolean).join((i18n.language.startsWith('zh') ? ',' : ', '));
   const todayIso = toIsoDate(new Date());
   const isPast = (iso: string) => !!iso && iso.slice(0, 10) < todayIso;
   const rows: { label: string; value: React.ReactNode; past?: boolean }[] = [];
@@ -2808,8 +2843,15 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
 
   // 渲染期同步读名次缓存(命中则秒出;未命中=undefined,上面的 effect 会单查后 bump 重渲染)。
   const country = iso2.toUpperCase();
-  const singleRankInfo = getCachedRankForWca(result.e, result.b, 'single', country);
-  const avgRankInfo = getCachedRankForWca(result.e, effectiveAvg(result), 'average', country);
+  const singleRankBase = getCachedRankForWca(result.e, result.b, 'single', country);
+  const avgRankBase = getCachedRankForWca(result.e, effectiveAvg(result), 'average', country);
+  // 把本场实时成绩并进官方名次,修掉「官方 dump 滞后 → 假全国/世界第几」(同场更快成绩官方未计入)。
+  const singleRankInfo = singleRankBase
+    ? adjustRankWithLiveComp(singleRankBase, buildLiveCompEntries(data, pbMap, result.e, 'single'), result.b, number, country)
+    : singleRankBase;
+  const avgRankInfo = avgRankBase
+    ? adjustRankWithLiveComp(avgRankBase, buildLiveCompEntries(data, pbMap, result.e, 'average'), effectiveAvg(result), number, country)
+    : avgRankBase;
 
   // 破 PR:把 PR 框 + NR/WR 名次拼成一个右上角标组「PR/NR3/WR3」(只 PR 带框,名次纯文本,/ 分割).
   const renderPrMark = (info: RankResult | null | undefined) => (

@@ -894,13 +894,13 @@ export default function ScrambleStatsPage() {
         </label>
         {is333 && (
           <div className="scramble-stats-puzzle-toggle">
-            <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '计步', en: 'Metric' })}</span>
+            <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '度量', en: 'Metric' })}</span>
             <PillToggle
               value={optMetric === 'qtm'}
               onChange={(v) => setOptMetric(v ? 'qtm' : 'htm')}
               offLabel="HTM"
               onLabel="QTM"
-              ariaLabel={tr({ zh: '计步口径:HTM(半圈计 1)或 QTM(半圈计 2)', en: 'Move metric: HTM (half turn = 1) or QTM (half turn = 2)' })}
+              ariaLabel={tr({ zh: '度量:HTM(半圈计 1)或 QTM(半圈计 2)', en: 'Move metric: HTM (half turn = 1) or QTM (half turn = 2)' })}
             />
             <span className="scramble-stats-puzzle-toggle-hint">
               {optMetric === 'qtm'

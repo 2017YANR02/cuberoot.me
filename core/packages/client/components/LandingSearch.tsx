@@ -657,7 +657,7 @@ export default function LandingSearch({ cards, lang }: Props) {
               <div className="landing-search-grid">
                 {visibleComps.map(c => {
                   const displayName = localizeCompName(c.id, c.name, isZh);
-                  const cityStr = c.city ? localizeCity(c.city, isZh) : '';
+                  const cityStr = c.city ? localizeCity(c.city, isZh, c.country) : '';
                   return (
                     <Link
                       key={c.id}

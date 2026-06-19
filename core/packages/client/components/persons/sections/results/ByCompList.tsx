@@ -20,6 +20,7 @@ import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, splitChainByStatus } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
+import { useLivePrRanks } from '../../logic/use-live-pr-ranks';
 import { ResultChangeChain } from './ChangedResultValue';
 import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
@@ -89,6 +90,8 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
     results && comps ? computePrRank(results.filter((r) => !r.live), comps) : new Map(),
     [results, comps],
   );
+  // 直播行的 PR/PRn 单独从 cubing-live 源取(与 /wca/comp 领奖台同口径)。
+  const livePrRanks = useLivePrRanks(results, wcaId);
 
   const grouped = useMemo(() => {
     if (!results || !comps) return null;
@@ -177,14 +180,20 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                     <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
                     <th>{t('单次', 'Single')}</th>
                     <th>{t('平均', 'Avg')}</th>
-                    <th>{t('详细成绩', 'Attempts')}</th>
+                    <th className="wp-th-attempts">
+                      <span className="wp-att-head"><span>{t('详细成绩', 'Attempts')}</span></span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r) => {
                     const rank = prRank.get(r.id);
-                    const singleRank = rank?.singleRank ?? null;
-                    const averageRank = rank?.averageRank ?? null;
+                    const liveRank = r.live ? livePrRanks.get(r.id) : null;
+                    const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
+                    const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
+                    // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
+                    const singleRecord = r.regional_single_record || (liveRank?.singleTag || null);
+                    const averageRecord = r.regional_average_record || (liveRank?.averageTag || null);
                     const showEvent = r.event_id !== lastEvent;
                     lastEvent = r.event_id;
                     // 拆 status:approved 进有效值;pending 仅作「待审核」标记。
@@ -252,8 +261,8 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                           <span className="record-num-cell">
                             <ResultChangeChain oldValues={oldBest} eventId={r.event_id} kind="single" note={chain?.[chain.length - 1]?.note} />
                             {formatWcaResult(effBest, r.event_id, 'single')}
-                            {r.regional_single_record
-                              ? <RecordBadge record={r.regional_single_record} variant="inline" />
+                            {singleRecord
+                              ? <RecordBadge record={singleRecord} variant="inline" />
                               : singleRank
                                 ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
                                 : null}
@@ -263,8 +272,8 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                           <span className="record-num-cell">
                             <ResultChangeChain oldValues={oldAvg} eventId={r.event_id} kind="average" note={chain?.[chain.length - 1]?.note} />
                             {formatWcaResult(effAvg, r.event_id, 'average')}
-                            {r.regional_average_record
-                              ? <RecordBadge record={r.regional_average_record} variant="inline" />
+                            {averageRecord
+                              ? <RecordBadge record={averageRecord} variant="inline" />
                               : averageRank
                                 ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
                                 : null}

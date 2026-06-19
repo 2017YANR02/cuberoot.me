@@ -230,3 +230,117 @@ fn main() {
         out.flush().ok();
     }
 }
+
+// Regression guard for the MITM slash machinery (decide_t / fast_key / slash edge model).
+// Zero disk tables — pure in-memory BFS over Sq1State — so it runs in CI in well under a
+// second. This is the proof, not a claim: the §6.4 cross-validation used to be a one-off
+// manual run; this pins it. (Audited 2026-06-19; decide_t radius arithmetic is the crux.)
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Deterministic LCG — no external rng dep, no Math.random-style nondeterminism.
+    fn lcg(rng: &mut u64) -> u32 {
+        *rng = rng
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
+        (*rng >> 33) as u32
+    }
+
+    // Reachable state: apply `nslashes` slashes with random free turns between them
+    // (only legal slashes taken). Deterministic in `seed`.
+    fn gen_state(seed: u64, nslashes: usize) -> Sq1State {
+        let mut rng = seed ^ 0x9E37_79B9_7F4A_7C15;
+        let mut s = Sq1State::SOLVED;
+        let mut done = 0usize;
+        let mut guard = 0usize;
+        while done < nslashes && guard < 100_000 {
+            guard += 1;
+            let a = lcg(&mut rng) % 12;
+            let b = lcg(&mut rng) % 12;
+            let y = s.turned(a, b);
+            if y.slash_legal() {
+                s = y.slashed();
+                done += 1;
+            }
+        }
+        s
+    }
+
+    // fast_key must equal the trusted 144-rotation canonical key, and be invariant under
+    // every free top/bottom turn — the property the two BFS frontiers rely on to meet.
+    #[test]
+    fn fast_key_equals_canon_key_and_is_turn_invariant() {
+        assert_eq!(fast_key(&Sq1State::SOLVED), Sq1State::SOLVED.canon_key());
+        for seed in 0..100u64 {
+            let s = gen_state(seed, (seed % 13) as usize + 1);
+            assert_eq!(fast_key(&s), s.canon_key(), "fast_key != canon_key (seed {seed})");
+            for a in 0..12u32 {
+                for b in 0..12u32 {
+                    assert_eq!(
+                        fast_key(&s.turned(a, b)),
+                        fast_key(&s),
+                        "fast_key not turn-invariant (seed {seed}, {a},{b})"
+                    );
+                }
+            }
+        }
+    }
+
+    // slash is an involution on slash-legal states and stays slash-legal (so the class
+    // graph is undirected => backward BFS from SOLVED is valid).
+    #[test]
+    fn slashed_is_involution_and_closed() {
+        assert!(Sq1State::SOLVED.slash_legal(), "SOLVED must be slash-legal for backward BFS");
+        let mut checked = 0usize;
+        for seed in 0..150u64 {
+            let s = gen_state(seed, (seed % 11) as usize + 1);
+            for a in 0..12u32 {
+                for b in 0..12u32 {
+                    let y = s.turned(a, b);
+                    if !y.slash_legal() {
+                        continue;
+                    }
+                    let z = y.slashed();
+                    assert!(z.slash_legal(), "slashed() result not slash-legal (closure broken)");
+                    assert_eq!(z.slashed(), y, "slashed() not an involution");
+                    checked += 1;
+                }
+            }
+        }
+        assert!(checked > 1000, "too few slash-legal states exercised: {checked}");
+    }
+
+    // The decisive guard: decide_t must agree with the full bidirectional distance
+    // `slash_dist` for both s = d and s = d+1 (d = true slash-optimum). This pins the
+    // radius arithmetic cap = s/2 = ceil((s-1)/2): if it were off by one, the s = d+1
+    // case for ODD d would fail to find the existing length-d solution.
+    #[test]
+    fn decide_t_agrees_with_full_slash_dist() {
+        assert_eq!(slash_dist(Sq1State::SOLVED), Some(0));
+        let mut tested = 0usize;
+        let mut parity = [0usize; 2];
+        for seed in 0..400u64 {
+            let s = gen_state(seed.wrapping_mul(2654435761), (5 + seed % 4) as usize);
+            let d = match slash_dist(s) {
+                Some(d) => d,
+                None => continue,
+            };
+            if d < 2 || d > 8 {
+                continue; // skip trivial (cap underflow at d<2) / keep CI fast
+            }
+            // true optimum is d => no <=d-1 solution => returns Some(d)
+            assert_eq!(decide_t(s, d), Some(d), "decide_t(s,d) wrong (seed {seed}, d {d})");
+            // a length-d solution exists and d <= (d+1)-1 => must be found => returns Some(d)
+            assert_eq!(decide_t(s, d + 1), Some(d), "decide_t(s,d+1) wrong (seed {seed}, d {d})");
+            parity[(d % 2) as usize] += 1;
+            tested += 1;
+            if tested >= 16 {
+                break;
+            }
+        }
+        assert!(tested >= 12, "too few states tested: {tested}");
+        // odd d in the d+1 case is exactly what catches a radius off-by-one.
+        assert!(parity[1] >= 2, "need odd-distance states to guard the off-by-one, got {parity:?}");
+    }
+}

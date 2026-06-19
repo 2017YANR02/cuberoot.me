@@ -71,6 +71,13 @@
   width: 1.2em !important;
   flex: none;
 }
+/* TW 走 <img>(中华台北 SVG),约束尺寸对齐其他 flag-icons 旗,否则按原图尺寸撑爆 */
+.rc-flag-img {
+  width: 1.2em;
+  height: 0.9em;
+  flex: none;
+  object-fit: contain;
+}
 .rc-name {
   font-weight: 600;
   font-size: 0.92rem;

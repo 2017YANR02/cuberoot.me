@@ -161,14 +161,16 @@ export interface ChampionshipPodiumRow {
 }
 
 export async function fetchWcaPersonChampionshipPodiums(wcaId: string): Promise<ChampionshipPodiumRow[]> {
-  const key = `wca:champPodiums:v1:${wcaId}`;
+  // v2:数据由管道异步灌库,早期空表会被缓存成 []。bump key 作废旧空缓存;且只缓存非空结果,
+  // 避免「暂未灌库」的空数组被缓存 24h 导致数据到位后仍显示「暂无」。
+  const key = `wca:champPodiums:v2:${wcaId}`;
   const cached = cacheGet<ChampionshipPodiumRow[]>(key);
   if (cached) return cached;
   const res = await fetch(apiUrl(`/v1/wca/person-championship-podiums?wcaId=${encodeURIComponent(wcaId)}`));
   if (!res.ok) throw new Error(`person-championship-podiums ${res.status}`);
   const json = (await res.json()) as { rows?: ChampionshipPodiumRow[] };
   const out = Array.isArray(json.rows) ? json.rows : [];
-  cacheSet(key, out);
+  if (out.length) cacheSet(key, out);
   return out;
 }
 
