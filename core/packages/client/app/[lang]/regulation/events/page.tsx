@@ -9,7 +9,7 @@
 // how a field is reduced round to round. Shared shell + primitives do the chrome.
 
 import { useTranslation } from 'react-i18next';
-import { Trophy, ListChecks, Scissors, Timer, Hourglass, Users, Sigma, Crown } from 'lucide-react';
+import { Trophy, ListChecks, Scissors, Timer, Hourglass, Users, Sigma, Crown, History } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import { EventIcon } from '@/components/EventIcon';
@@ -31,42 +31,81 @@ interface Evt {
   zh: string;
   en: string;
   format: string;      // shorthand printed in the table, e.g. "Ao5"
-  formatZh: string;
   rank: Rank;
 }
 
 // 9b — full-round formats per event family. Source: WCA Regulations 9b1–9b6.
 const STANDARD: Evt[] = [
-  { id: '333',   zh: '三阶',     en: '3×3×3',     format: 'Ao5', formatZh: '5 次取平均', rank: 'average' },
-  { id: '222',   zh: '二阶',     en: '2×2×2',     format: 'Ao5', formatZh: '5 次取平均', rank: 'average' },
-  { id: '444',   zh: '四阶',     en: '4×4×4',     format: 'Ao5', formatZh: '5 次取平均', rank: 'average' },
-  { id: '555',   zh: '五阶',     en: '5×5×5',     format: 'Ao5', formatZh: '5 次取平均', rank: 'average' },
-  { id: 'clock', zh: '魔表',     en: 'Clock',     format: 'Ao5', formatZh: '5 次取平均', rank: 'average' },
-  { id: 'minx',  zh: '五魔方',   en: 'Megaminx',  format: 'Ao5', formatZh: '5 次取平均', rank: 'average' },
-  { id: 'pyram', zh: '金字塔',   en: 'Pyraminx',  format: 'Ao5', formatZh: '5 次取平均', rank: 'average' },
-  { id: 'skewb', zh: '斜转',     en: 'Skewb',     format: 'Ao5', formatZh: '5 次取平均', rank: 'average' },
-  { id: 'sq1',   zh: 'Square-1', en: 'Square-1',  format: 'Ao5', formatZh: '5 次取平均', rank: 'average' },
+  { id: '333',   zh: '三阶',     en: '3×3×3',     format: 'Ao5', rank: 'average' },
+  { id: '222',   zh: '二阶',     en: '2×2×2',     format: 'Ao5', rank: 'average' },
+  { id: '444',   zh: '四阶',     en: '4×4×4',     format: 'Ao5', rank: 'average' },
+  { id: '555',   zh: '五阶',     en: '5×5×5',     format: 'Ao5', rank: 'average' },
+  { id: 'clock', zh: '魔表',     en: 'Clock',     format: 'Ao5', rank: 'average' },
+  { id: 'minx',  zh: '五魔方',   en: 'Megaminx',  format: 'Ao5', rank: 'average' },
+  { id: 'pyram', zh: '金字塔',   en: 'Pyraminx',  format: 'Ao5', rank: 'average' },
+  { id: 'skewb', zh: '斜转',     en: 'Skewb',     format: 'Ao5', rank: 'average' },
+  { id: 'sq1',   zh: 'Square-1', en: 'Square-1',  format: 'Ao5', rank: 'average' },
 ];
 
 const BIG: Evt[] = [
-  { id: '666', zh: '六阶', en: '6×6×6', format: 'Mo3', formatZh: '3 次取均值', rank: 'mean' },
-  { id: '777', zh: '七阶', en: '7×7×7', format: 'Mo3', formatZh: '3 次取均值', rank: 'mean' },
+  { id: '666', zh: '六阶', en: '6×6×6', format: 'Mo3', rank: 'mean' },
+  { id: '777', zh: '七阶', en: '7×7×7', format: 'Mo3', rank: 'mean' },
 ];
 
 const VARIANT: Evt[] = [
-  { id: '333oh', zh: '三阶单手', en: '3×3×3 One-Handed', format: 'Ao5', formatZh: '5 次取平均', rank: 'average' },
-  { id: '333fm', zh: '三阶最少步', en: '3×3×3 Fewest Moves', format: 'Mo3', formatZh: '3 次取均值', rank: 'mean' },
+  { id: '333oh', zh: '三阶单手', en: '3×3×3 One-Handed', format: 'Ao5', rank: 'average' },
+  { id: '333fm', zh: '三阶最少步', en: '3×3×3 Fewest Moves', format: 'Mo3', rank: 'mean' },
 ];
 
 const BLIND: Evt[] = [
-  { id: '333bf', zh: '三阶盲拧', en: '3×3×3 Blindfolded',  format: 'Bo3', formatZh: '3 次取最优', rank: 'best' },
-  { id: '444bf', zh: '四阶盲拧', en: '4×4×4 Blindfolded',  format: 'Bo3', formatZh: '3 次取最优', rank: 'best' },
-  { id: '555bf', zh: '五阶盲拧', en: '5×5×5 Blindfolded',  format: 'Bo3', formatZh: '3 次取最优', rank: 'best' },
-  { id: '333mbf', zh: '三阶多盲', en: '3×3×3 Multi-Blind', format: 'Bo1', formatZh: '1 次定胜负', rank: 'points' },
+  { id: '333bf', zh: '三阶盲拧', en: '3×3×3 Blindfolded',  format: 'Bo5', rank: 'best' },
+  { id: '444bf', zh: '四阶盲拧', en: '4×4×4 Blindfolded',  format: 'Bo3', rank: 'best' },
+  { id: '555bf', zh: '五阶盲拧', en: '5×5×5 Blindfolded',  format: 'Bo3', rank: 'best' },
+  { id: '333mbf', zh: '三阶多盲', en: '3×3×3 Multi-Blind', format: 'Bo1', rank: 'points' },
 ];
 
 // Total = 9 + 2 + 2 + 4 = 17 official WCA events.
 const TOTAL = STANDARD.length + BIG.length + VARIANT.length + BLIND.length;
+
+// Discontinued events — once official, now retired. Format/date pairs are the
+// historical record (Magic & Master Magic 2013-01-01, With Feet 2020-01-01 after
+// its Mo3→Ao5 switch in late 2017, old-style Multi-Blind replaced 2009-01-01).
+interface Former {
+  id: string;     // EventIcon id (icons for all four still ship in svg-map)
+  zh: string;
+  en: string;
+  fmtZh: string;  // format badge (codes like "Ao5" are identical in both langs)
+  fmtEn: string;
+  gone: string;   // ISO date the event stopped being held
+  noteZh: string;
+  noteEn: string;
+}
+const FORMER: Former[] = [
+  {
+    id: 'magic', zh: '八板(魔板)', en: 'Magic',
+    fmtZh: 'Ao5', fmtEn: 'Ao5', gone: '2013-01-01',
+    noteZh: '8 块连体翻板拼图,翻成指定图案。因为只是固定手法的熟练度,且开始与结束的瞬间连资深裁判都难以公平判定,2012 年宣布、2013 年起停办。',
+    noteEn: 'An eight-tile folding puzzle flipped into a fixed pattern. It measured only rote execution, and even seasoned judges struggled to fairly call its start and finish, so it was announced in 2012 and dropped from 2013.',
+  },
+  {
+    id: 'mmagic', zh: '十二板(大师魔板)', en: 'Master Magic',
+    fmtZh: 'Ao5', fmtEn: 'Ao5', gone: '2013-01-01',
+    noteZh: '魔板的 12 块加大版,玩法相同,与魔板在同一天一起退役。',
+    noteEn: 'The twelve-tile “Master” version of Magic — same idea, retired on the very same day as Magic.',
+  },
+  {
+    id: '333ft', zh: '三阶脚拧', en: '3×3×3 With Feet',
+    fmtZh: 'Mo3 → Ao5', fmtEn: 'Mo3 → Ao5', gone: '2020-01-01',
+    noteZh: '用脚还原三阶。原本 Mo3,2017 年底改为 Ao5 以观察人气;参与率持续不达标,2020 年起移除,正式项目由 18 个减回 17 个。',
+    noteEn: 'Solving a 3×3×3 with your feet. Originally Mo3, switched to Ao5 in late 2017 to gauge interest; turnout stayed too low and it was removed from 2020, trimming the roster from 18 back to 17.',
+  },
+  {
+    id: '333mbo', zh: '三阶旧多盲', en: 'Multi-Blind Old Style',
+    fmtZh: '旧计分', fmtEn: 'old scoring', gone: '2009-01-01',
+    noteZh: '多盲的旧赛制:单把里每个魔方给 10 分钟(总时长能拖到数小时),按还原成功的比例与总用时排名 —— 会出现 2/2 胜过 12/13 的怪事。2009 年起改为现行「净得分」制(完成数 − 失败数),旧成绩单独封存为这个项目。',
+    noteEn: 'The old Multi-Blind format: ten minutes per cube in a single attempt (which could run for hours), ranked by the ratio solved and total time — so a 2/2 could beat a 12/13. From 2009 it was replaced by today’s net-score format (solved − unsolved), and the old results were archived under this separate event.',
+  },
+];
 
 function rankLabel(t: ReturnType<typeof useT>, r: Rank): string {
   return r === 'best' ? t('取最优', 'by best')
@@ -98,7 +137,6 @@ function EventTable({ rows }: { rows: Evt[] }) {
               </td>
               <td>
                 <span className="reg-num">{e.format}</span>
-                {t(e.formatZh, '') && <span className="reg-evt-text"> {t(e.formatZh, '')}</span>}
               </td>
               <td>
                 <span className={`evt-rank evt-rank-${e.rank}`}>{rankLabel(t, e.rank)}</span>
@@ -107,6 +145,29 @@ function EventTable({ rows }: { rows: Evt[] }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// Retired-event cards: icon + name, a format badge, the date it stopped being
+// held, and a one-line reason. Muted on purpose — these are history, not rules.
+function FormerCards() {
+  const t = useT();
+  return (
+    <div className="evt-former-grid">
+      {FORMER.map((e) => (
+        <div key={e.id} className="evt-former-card">
+          <div className="evt-former-head">
+            <EventIcon event={e.id} />
+            <span className="evt-former-name">{t(e.zh, e.en)}</span>
+          </div>
+          <div className="evt-former-meta">
+            <span className="evt-former-fmt">{t(e.fmtZh, e.fmtEn)}</span>
+            <span className="evt-former-gone">{t('退役', 'retired')} {e.gone}</span>
+          </div>
+          <p className="evt-former-note">{t(e.noteZh, e.noteEn)}</p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -213,6 +274,13 @@ export default function EventsChapter() {
           <EventTable rows={BLIND} />
         </div>
 
+        <Callout tone="info" label={t('2026 新规:三阶盲拧改为 Bo5', '2026 change: 3×3×3 Blindfolded is now Bo5')}>
+          {t(
+            '自 2026 年 1 月 1 日起,三阶盲拧由 Bo3 改为 Bo5:一轮里给的把数从 3 把增加到 5 把,但排名依据不变 —— 依然只看你最好的那一把,并不是取平均。四阶、五阶盲拧维持 Bo3。这是 2026 版规则的三项主要改动之一(另两项为一对一对决赛制与双轮)。',
+            'From January 1, 2026, 3×3×3 Blindfolded changed from Bo3 to Bo5: a round now gives five attempts instead of three, but the ranking is unchanged — still your single best attempt, not an average. 4×4×4 and 5×5×5 Blindfolded stay at Bo3. This is one of the three headline changes in the 2026 Regulations (the others being the head-to-head format and dual rounds).'
+          )}
+        </Callout>
+
         <Callout tone="info" label={t('想看每个项目的世界纪录与现场成绩', 'See world records and live results per event')}>
           {t('打开', 'Head to ')}
           <Link href="/wca">{t('WCA 数据中心', 'the WCA data hub')}</Link>
@@ -237,13 +305,13 @@ export default function EventsChapter() {
         <div className="evt-fmt-cards">
           <div className="evt-fmt-card">
             <div className="evt-fmt-head">
-              <span className="evt-fmt-abbr">Bo1 / Bo2 / Bo3</span>
+              <span className="evt-fmt-abbr">Bo1 / Bo3 / Bo5</span>
               <span className="evt-fmt-name">{t('取最优 · Best of X', 'Best of X')}</span>
             </div>
             <p className="evt-fmt-text">
               {t(
-                '拧 X 把(X = 1、2 或 3),只看其中最好的一把,其余忽略。盲拧、多盲都用这套:一把 DNF 不会拉低你的成绩,因为只取最优。',
-                'You make X attempts (X = 1, 2 or 3); only your best one counts and the rest are ignored. Blindfolded and Multi-Blind use this — a DNF can’t drag you down, because only the best is taken.'
+                '拧 X 把(目前 X = 1、3 或 5),只看其中最好的一把,其余忽略。盲拧、多盲都用这套:一把 DNF 不会拉低你的成绩,因为只取最优。三阶盲拧自 2026 年起由 Bo3 改为 Bo5。',
+                'You make X attempts (currently X = 1, 3 or 5); only your best one counts and the rest are ignored. Blindfolded and Multi-Blind use this — a DNF can’t drag you down, because only the best is taken. 3×3×3 Blindfolded moved from Bo3 to Bo5 in 2026.'
               )}
             </p>
             <p className="evt-fmt-rank">{t('排名 = 最好的一把', 'Ranking = your single best attempt')}</p>
@@ -525,6 +593,30 @@ export default function EventsChapter() {
             'The final round of every event (and all of Fewest Moves) is a single group where everyone solves the exact same scramble — that is the “final”. The matching scramble and fairness rules are in '
           )}
           <Link href="/regulation/scrambling">{t('打乱一章', 'the Scrambling chapter')}</Link>
+          {t('。', '.')}
+        </p>
+      </RegSection>
+
+      {/* ── 5. Discontinued events (historical addendum) ────────── */}
+      <RegSection
+        eyebrow={t('项目也会增减', 'The roster changes')}
+        title={t('已经取消的项目', 'Events the WCA no longer holds')}
+        lede={t(
+          'WCA 的项目列表并非一成不变 —— 不受欢迎、或难以公平判罚的项目会被移除,既有成绩则封存为历史纪录。下面四个项目都曾是正式项目,如今已退役。',
+          'The WCA roster is not fixed — events that prove unpopular or hard to judge fairly get retired, their results frozen as historical records. These four were once official and are now discontinued.'
+        )}
+      >
+        <h3 className="evt-block-title">
+          <History size={18} />
+          {t('退役项目一览', 'A look back at retired events')}
+        </h3>
+        <FormerCards />
+        <p className="reg-foot-note">
+          {t(
+            '退役不代表成绩被抹去:这些项目的历史排名与纪录仍保留在',
+            'Retirement does not erase results: the historical rankings and records for these events still live in '
+          )}
+          <Link href="/wca">{t('WCA 数据中心', 'the WCA data hub')}</Link>
           {t('。', '.')}
         </p>
       </RegSection>

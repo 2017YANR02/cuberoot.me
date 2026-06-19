@@ -1,7 +1,7 @@
 'use client';
-// 纪录 tab:历史世界纪录 / 历史洲际纪录 / 历史国家纪录。
-// 全部从已拉取的 results + comps 客户端算(复刻 cubingchina / WCA 官网 records 视图):
-//   某条成绩进某档 = 它的 regional_single_record 或 regional_average_record 落在该档的标记集合。
+// 纪录 tab:历史世界 / 洲际 / 国家纪录,合并为单表 —— 列头只出现一次且 sticky 悬浮顶部,
+// 三档标题(世界/洲际/国家)作为表内分组行。
+// 某条成绩进某档 = 它的 regional_single_record 或 regional_average_record 落在该档的标记集合。
 //   单次列仅当该成绩的单次标记属于本档才显示;平均列同理。按项目分组,组内按比赛日期倒序。
 
 import { useMemo } from 'react';
@@ -31,6 +31,15 @@ const WORLD_TYPES = ['WR'];
 const CONTINENT_TYPES = ['ER', 'NAR', 'SAR', 'AsR', 'OcR', 'AfR'];
 const NATIONAL_TYPES = ['NR'];
 
+// 取该档下的成绩:单次或平均标记命中即入。
+function rowsForTier(results: WcaResultRow[], types: string[]): WcaResultRow[] {
+  const set = new Set(types);
+  return results.filter((r) =>
+    (r.regional_single_record && set.has(r.regional_single_record)) ||
+    (r.regional_average_record && set.has(r.regional_average_record)),
+  );
+}
+
 export default function RecordsTab({ results, comps, isZh }: Props) {
   const t = useT();
 
@@ -58,31 +67,37 @@ export default function RecordsTab({ results, comps, isZh }: Props) {
   }
 
   return (
-    <div className="wp-records">
-      {sections.map(({ tier, rows }) => (
-        <RecordSection
-          key={tier.key}
-          title={tier.title}
-          types={tier.types}
-          rows={rows}
-          compById={compById}
-          isZh={isZh}
-        />
-      ))}
+    <div className="wp-records wp-records-scroll">
+      <table className="wp-bycomp-table wp-records-table">
+        <thead>
+          <tr>
+            <th>{t('项目', 'Event')}</th>
+            <th>{t('单次', 'Single')}</th>
+            <th>{t('平均', 'Average')}</th>
+            <th>{t('赛事', 'Competition')}</th>
+            <th>{t('轮次', 'Round')}</th>
+            <th className="wp-th-attempts">{t('详细成绩', 'Solves')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sections.map(({ tier, rows }) => (
+            <TierRows
+              key={tier.key}
+              title={tier.title}
+              types={tier.types}
+              rows={rows}
+              compById={compById}
+              isZh={isZh}
+            />
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-// 取该档下的成绩:单次或平均标记命中即入。
-function rowsForTier(results: WcaResultRow[], types: string[]): WcaResultRow[] {
-  const set = new Set(types);
-  return results.filter((r) =>
-    (r.regional_single_record && set.has(r.regional_single_record)) ||
-    (r.regional_average_record && set.has(r.regional_average_record)),
-  );
-}
-
-function RecordSection({
+// 某一档(世界/洲际/国家):一行分组标题 + 该档成绩行。项目(WCA 顺序)→ 比赛日期倒序 → 决赛在上。
+function TierRows({
   title, types, rows, compById, isZh,
 }: {
   title: string;
@@ -91,10 +106,8 @@ function RecordSection({
   compById: Map<string, WcaCompetition>;
   isZh: boolean;
 }) {
-  const t = useT();
   const typeSet = new Set(types);
 
-  // 项目(WCA 顺序)→ 比赛日期倒序 → 决赛在上。
   const sorted = rows.slice().sort((a, b) => {
     const ea = ALL_EVENT_IDS.indexOf(a.event_id);
     const eb = ALL_EVENT_IDS.indexOf(b.event_id);
@@ -107,74 +120,59 @@ function RecordSection({
 
   let lastEvent = '';
   return (
-    <section className="wp-records-sec">
-      <h3 className="wp-section-h">{title}</h3>
-      <div className="wp-table-scroll">
-        <table className="wp-bycomp-table wp-records-table">
-          <thead>
-            <tr>
-              <th>{t('项目', 'Event')}</th>
-              <th>{t('单次', 'Single')}</th>
-              <th>{t('平均', 'Average')}</th>
-              <th>{t('赛事', 'Competition')}</th>
-              <th>{t('轮次', 'Round')}</th>
-              <th className="wp-th-attempts">{t('详细成绩', 'Solves')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((r) => {
-              const cmp = compById.get(r.competition_id);
-              const showEvent = r.event_id !== lastEvent;
-              lastEvent = r.event_id;
-              const singleHit = !!r.regional_single_record && typeSet.has(r.regional_single_record);
-              const averageHit = !!r.regional_average_record && typeSet.has(r.regional_average_record);
-              return (
-                <tr key={r.id} className={showEvent ? 'wp-rec-event-first' : ''}>
-                  <th scope="row" className="wp-cell-event">
-                    {showEvent && (
-                      <span className="wp-rec-event">
-                        <EventIcon event={r.event_id} className="wp-event-icon" />
-                        <span className="wp-rec-event-name">{eventDisplayName(r.event_id, isZh)}</span>
-                      </span>
-                    )}
-                  </th>
-                  <td className="wp-cell-result">
-                    {singleHit && (
-                      <span className="record-num-cell">
-                        {formatWcaResult(r.best, r.event_id, 'single')}
-                        <RecordBadge record={r.regional_single_record} variant="inline" />
-                      </span>
-                    )}
-                  </td>
-                  <td className="wp-cell-result">
-                    {averageHit && r.average > 0 && (
-                      <span className="record-num-cell">
-                        {formatWcaResult(r.average, r.event_id, 'average')}
-                        <RecordBadge record={r.regional_average_record} variant="inline" />
-                      </span>
-                    )}
-                  </td>
-                  <td className="wp-cell-comp">
-                    {cmp ? (
-                      <Link {...compLinkProps(cmp.id, { event: r.event_id, round: r.round_type_id, view: 'result' })} className="wp-bycomp-name">
-                        <CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} />
-                      </Link>
-                    ) : r.competition_id}
-                    {cmp && <div className="wp-cell-comp-date">{formatDateRangeIso(cmp.start_date, cmp.end_date)}</div>}
-                  </td>
-                  <td>
-                    <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>{roundLabel(r.round_type_id)}</span>
-                  </td>
-                  <td className="wp-cell-attempts">
-                    <AttemptsInline attempts={r.attempts} best={r.best} eventId={r.event_id} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <>
+      <tr className="wp-records-group-row">
+        <th colSpan={6} scope="colgroup">{title}</th>
+      </tr>
+      {sorted.map((r, i) => {
+        const cmp = compById.get(r.competition_id);
+        const showEvent = r.event_id !== lastEvent;
+        lastEvent = r.event_id;
+        const singleHit = !!r.regional_single_record && typeSet.has(r.regional_single_record);
+        const averageHit = !!r.regional_average_record && typeSet.has(r.regional_average_record);
+        return (
+          <tr key={r.id} className={showEvent && i !== 0 ? 'wp-rec-event-first' : ''}>
+            <th scope="row" className="wp-cell-event">
+              {showEvent && (
+                <span className="wp-rec-event">
+                  <EventIcon event={r.event_id} className="wp-event-icon" title={eventDisplayName(r.event_id, isZh)} />
+                </span>
+              )}
+            </th>
+            <td className="wp-cell-result">
+              {singleHit && (
+                <span className="record-num-cell">
+                  {formatWcaResult(r.best, r.event_id, 'single')}
+                  <RecordBadge record={r.regional_single_record} variant="inline" />
+                </span>
+              )}
+            </td>
+            <td className="wp-cell-result">
+              {averageHit && r.average > 0 && (
+                <span className="record-num-cell">
+                  {formatWcaResult(r.average, r.event_id, 'average')}
+                  <RecordBadge record={r.regional_average_record} variant="inline" />
+                </span>
+              )}
+            </td>
+            <td className="wp-cell-comp">
+              {cmp ? (
+                <Link {...compLinkProps(cmp.id, { event: r.event_id, round: r.round_type_id, view: 'result' })} className="wp-bycomp-name">
+                  <CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} />
+                </Link>
+              ) : r.competition_id}
+              {cmp && <div className="wp-cell-comp-date">{formatDateRangeIso(cmp.start_date, cmp.end_date)}</div>}
+            </td>
+            <td>
+              <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>{roundLabel(r.round_type_id)}</span>
+            </td>
+            <td className="wp-cell-attempts">
+              <AttemptsInline attempts={r.attempts} best={r.best} eventId={r.event_id} />
+            </td>
+          </tr>
+        );
+      })}
+    </>
   );
 }
 

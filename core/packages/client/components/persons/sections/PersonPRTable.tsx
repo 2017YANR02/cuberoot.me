@@ -164,21 +164,17 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
       <div className="wp-table-scroll">
         <table className="wp-pr-table">
           <thead>
+            {/* WCA 风格单行表头:项目 | NR CR WR | 单次 | 平均 | WR CR NR(围绕中线镜像对称) */}
             <tr>
-              <th rowSpan={2} className="wp-th-event">{t('项目', 'Event')}</th>
-              <th colSpan={4} className="wp-th-group">{t('单次', 'Single')}</th>
-              <th colSpan={4} className="wp-th-group">{t('平均', 'Average')}</th>
-              {showPodium && <th colSpan={3} className="wp-th-group wp-th-podium">{t('领奖台', 'Podium')}</th>}
-            </tr>
-            <tr>
-              <th>{t('世界', 'World')}</th>
-              <th>{t('洲际', 'Continent')}</th>
-              <th>{t('地区', 'Country')}</th>
-              <th>{t('成绩', 'Result')}</th>
-              <th>{t('成绩', 'Result')}</th>
-              <th>{t('世界', 'World')}</th>
-              <th>{t('洲际', 'Continent')}</th>
-              <th>{t('地区', 'Country')}</th>
+              <th className="wp-th-event">{t('项目', 'Event')}</th>
+              <th title={t('地区排名', 'National rank')}>NR</th>
+              <th title={t('洲际排名', 'Continental rank')}>CR</th>
+              <th title={t('世界排名', 'World rank')}>WR</th>
+              <th>{t('单次', 'Single')}</th>
+              <th>{t('平均', 'Average')}</th>
+              <th title={t('世界排名', 'World rank')}>WR</th>
+              <th title={t('洲际排名', 'Continental rank')}>CR</th>
+              <th title={t('地区排名', 'National rank')}>NR</th>
               {showPodium && <th className="wp-th-medal" title={t('金牌', 'Gold')}>🥇</th>}
               {showPodium && <th className="wp-th-medal" title={t('银牌', 'Silver')}>🥈</th>}
               {showPodium && <th className="wp-th-medal" title={t('铜牌', 'Bronze')}>🥉</th>}
@@ -223,9 +219,9 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, o
                       <EventIcon event={eid} className="wp-event-icon" />
                     </span>
                   </th>
-                  <td><RankCell r={sRank.world} /></td>
-                  <td><RankCell r={sRank.continent} /></td>
                   <td><RankCell r={sRank.country} /></td>
+                  <td><RankCell r={sRank.continent} /></td>
+                  <td><RankCell r={sRank.world} /></td>
                   <td className="wp-cell-result">{sValue === null ? '—' : formatWcaResult(sValue, eid, 'single')}</td>
                   <td className="wp-cell-result">{aValue === null ? '—' : <>{formatWcaResult(aValue, eid, 'average')}{aIsUnofficial && <UnofficialMark />}</>}</td>
                   <td><RankCell r={aRank.world} /></td>
@@ -358,9 +354,9 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
             <th scope="row" className="wp-cell-event wp-sor-rowlabel" title={m.label}>
               <span className="wp-sor-abbr">{m.abbr}</span>
             </th>
-            {rankTd('world', m.key, s)}
-            {rankTd('continent', m.key, s)}
             {rankTd('country', m.key, s)}
+            {rankTd('continent', m.key, s)}
+            {rankTd('world', m.key, s)}
             {sumTd(s)}
             {sumTd(a)}
             {rankTd('world', m.key, a)}
@@ -396,9 +392,9 @@ function PersonSorSummary({ wcaId, isZh, showPodium, countryIso2, historical, in
                   )}
                 </th>
               )}
-              {rankTd('world', m.key, s, pending)}
-              {rankTd('continent', m.key, s, pending)}
               {rankTd('country', m.key, s, pending)}
+              {rankTd('continent', m.key, s, pending)}
+              {rankTd('world', m.key, s, pending)}
               {sumTd(s, pending)}
               {sumTd(a, pending)}
               {rankTd('world', m.key, a, pending)}

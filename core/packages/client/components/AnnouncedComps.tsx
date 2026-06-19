@@ -92,7 +92,7 @@ export function AnnouncedCard({ comp, isZh, lang, loggedIn = false, followed = f
   // 日期行已完整展示;两种写法都覆盖:中文「湛江公开赛2026」无空格、英文「... 2026」带空格。
   const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh })
     .replace(/\s*20\d\d\s*$/, '');
-  const city = comp.city ? (isZh ? localizeCity(comp.city, true) : comp.city) : '';
+  const city = comp.city ? (isZh ? localizeCity(comp.city, true, comp.country) : comp.city) : '';
   const country = countryName(comp.country, isZh);
   // 公示卡片同理去掉日期里的年份(48h 窗口必然当年/近年):剥掉 ISO 年份前缀 `2026-`,
   // 比赛日期 + 报名时间共用。formatDateRangeIso/formatRegStatus 是全站共享件,故只在此剥。

@@ -202,7 +202,7 @@ export default function OnThisDayModal({ date: initialDate, isZh, onClose }: Pro
                       </Link>
                       <span className="otd-meta">
                         <MapPin size={12} className="otd-icon" />
-                        <span>{localizeCity(m.comp.city, isZh)}</span>
+                        <span>{localizeCity(m.comp.city, isZh, m.comp.country)}</span>
                       </span>
                       {m.recordTier && <RecordBadge record={m.recordTier} />}
                     </li>

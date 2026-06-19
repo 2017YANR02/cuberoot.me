@@ -7,6 +7,7 @@ import Link from '@/components/AppLink';
 import { Globe2 } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { countryName } from '@/lib/country-name';
+import { localizeCityName } from '@/lib/cn-city-name';
 import { buildLitFromComps } from '../logic/lit_cities';
 import type { WcaCompetition, WcaPersonProfile } from '@/lib/wca-person-api';
 import i18n from "@/i18n/i18n-client";
@@ -72,7 +73,7 @@ export default function LitCitiesTab({ profile, comps, isZh }: Props) {
                     <Flag iso2={c.iso2} className="wp-flag-sm" />
                     <span>{c.iso2 ? countryName(c.iso2, isZh) : '—'}</span>
                   </td>
-                  <td>{c.city || '—'}</td>
+                  <td>{localizeCityName(c.city, c.iso2, isZh) || '—'}</td>
                   <td className="wp-cell-num">{c.count}</td>
                 </tr>
               ))}

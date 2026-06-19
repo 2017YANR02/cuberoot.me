@@ -46,7 +46,7 @@ function CompRow({ comp, nameZh, isZh, lang, onToggle, ended }: {
   ended: boolean;
 }) {
   const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: nameZh });
-  const city = comp.city ? (isZh ? localizeCity(comp.city, true) : comp.city) : '';
+  const city = comp.city ? (isZh ? localizeCity(comp.city, true, comp.country) : comp.city) : '';
   const country = countryName(comp.country, isZh);
   const dateStr = formatDateRangeIso(comp.start_date, comp.end_date);
   const reg = ended ? null : formatRegStatus(comp.registration_open, comp.registration_close, isZh);
