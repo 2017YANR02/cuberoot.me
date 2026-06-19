@@ -12,12 +12,32 @@ import {
   createFile,
   DataStream,
   Endianness,
+  Log,
   type ISOFile,
   type MP4BoxBuffer,
   type Movie,
   type Track,
   type Sample,
 } from 'mp4box';
+
+// mp4box 对 QuickTime/.MOV 里的私有 / 元数据 atom 会用 console.error 抛 "Invalid box type"。
+// 这对抽帧无害 (视频轨样本照常解析,真失败时我们用 parseFailed 兜底切 <video>),
+// 但 console.error 会在 Next dev 弹红色 Console Error 浮层吓人。把这一条降级到 debug,
+// 其余 mp4box 错误原样透传。模块级只打一次补丁。
+{
+  const orig = Log.error.bind(Log);
+  const patched = Log as typeof Log & { __fcPatched?: boolean };
+  if (!patched.__fcPatched) {
+    patched.__fcPatched = true;
+    Log.error = (module, msg, isofile) => {
+      if (typeof msg === 'string' && msg.includes('Invalid box type')) {
+        Log.debug(module, msg);
+        return;
+      }
+      orig(module, msg, isofile);
+    };
+  }
+}
 
 // ── 常量 ─────────────────────────────────────────────────────────────────────
 
@@ -238,7 +258,11 @@ export function useFrameBuffer(
     diagRef.current.iFrameDecoderDead = false;
     diagRef.current.strideDecoderDead = false;
 
-    const mp4File = createFile() as ISOFile;
+    // keepMdatData=true 必须开:iPhone/QuickTime 录制的 .MOV 把 moov 放在文件尾部 (mdat 在前)。
+    // mp4box 默认 discardMdatData=true,流式分块喂入时会在尾部 moov 到达前就丢弃前面的 mdat,
+    // 于是 onReady 能拿到 codec config 但 onSamples 一个样本都收不到 (samples=0 → parseFailed)。
+    // 保留 mdat 才能在 moov 解析后回头按 sample 表抽取数据。样本抽完后再清空 mp4box 内部缓冲省内存。
+    const mp4File = createFile(true) as ISOFile;
     let videoTrackId: number | null = null;
     let sampleIndex = 0;
 
@@ -410,6 +434,12 @@ export function useFrameBuffer(
         }
 
         setIsReady(true);
+
+        // 样本编码数据已全部拷进 samplesRef (onSamples 里 new Uint8Array(s.data)),
+        // mp4box 因 keepMdatData=true 还驻留着整段 mdat 缓冲 (~文件大小),不再需要。
+        // 清掉它的内部 buffer 列表,避免大视频时编码数据被双份持有 (samplesRef + mp4box) 致 OOM。
+        const mp4Stream = (mp4File as unknown as { stream?: { buffers: unknown[] } }).stream;
+        if (mp4Stream?.buffers) mp4Stream.buffers.length = 0;
       } else {
         console.warn('[FrameBuffer] NOT READY — config:', !!configRef.current, 'samples:', samplesRef.current.length);
         setParseFailed(true);
