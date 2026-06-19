@@ -503,6 +503,50 @@ wcaStatsExtraRoutes.get('/wca/person-misc', async (c) => {
   return c.json({ wcaId, myComps: compIds.length, totalMet: others.length, closest, distribution });
 });
 
+// ── 2a-quater. /v1/wca/person-championship-podiums ──
+//   GET /v1/wca/person-championship-podiums?wcaId=
+// 选手页「锦标赛领奖台」tab。预计算表 wca_championship_podiums(builder 资格内重排,见
+//   stats-build/core/championship_podiums.ts)逐行返回,客户端按 scope/level/comp 分组展示。
+// level: 'world' | 大洲 id('_North America') | 国家 iso2('US') | 多国类型('greater_china')。
+wcaStatsExtraRoutes.get('/wca/person-championship-podiums', async (c) => {
+  const wcaId = (c.req.query('wcaId') ?? '').trim().toUpperCase();
+  if (!/^[0-9]{4}[A-Z]{4}[0-9]{2}$/.test(wcaId)) return c.json({ error: 'Invalid wcaId' }, 400);
+
+  const rows = await query<{
+    comp_id: string; event_id: string; level: string; place: number;
+    best: number; average: number; attempts: number[] | null;
+    single_record: string; average_record: string;
+    comp_name: string | null; start_date: string | null; comp_country_id: string | null;
+  }>(
+    `SELECT p.comp_id, p.event_id, p.level, p.place, p.best, p.average, p.attempts,
+            p.single_record, p.average_record,
+            c.name AS comp_name, c.start_date, c.country_id AS comp_country_id
+       FROM wca_championship_podiums p
+       LEFT JOIN wca_competitions c ON c.id = p.comp_id
+      WHERE p.wca_id = ?`,
+    [wcaId],
+  );
+
+  c.header('Cache-Control', CACHE_HEADER);
+  return c.json({
+    wcaId,
+    rows: rows.map(r => ({
+      compId: r.comp_id,
+      compName: r.comp_name,
+      compDate: r.start_date,
+      compCountryId: r.comp_country_id,
+      eventId: r.event_id,
+      level: r.level,
+      place: r.place,
+      best: r.best,
+      average: r.average ?? 0,
+      attempts: r.attempts ?? [],
+      singleRecord: r.single_record || null,
+      averageRecord: r.average_record || null,
+    })),
+  });
+});
+
 // ── 2b. /v1/wca/rank-for ──
 // "我这个成绩放进 WCA 历史能排第几" —— 给 /timer 速拧计时器的世界排名徽章用.
 //   GET /v1/wca/rank-for?event=333&type=single&centis=984
