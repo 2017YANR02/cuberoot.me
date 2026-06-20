@@ -22,6 +22,7 @@ import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
 import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
+import { rotateSolutionY, Y_ROT_LABEL } from '@/lib/rotate-solution';
 import { variantLabel, stageLabel, VARIANT_STAGES } from '@/lib/scramble-variants';
 import './StageSolver.css';
 
@@ -47,7 +48,7 @@ const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
 // 方法名走全站单一真源 lib/scramble-variants(VARIANT_LABEL),别再本地复制一份。
 // 这里只定引擎支持的方法顺序(按 WASM kind 分组),标签 = variantLabel(key, isZh)。
 // 块族(原 123/222/223)聚合为一个方法 'block',块形状落在阶段下拉。
-const METHOD_KEYS: Method[] = [
+export const METHOD_KEYS: Method[] = [
   'std', 'eo', 'pair', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
   'block', 'eoline', 'dr', 'htr', 'htr2', 'fr',
 ];
@@ -110,11 +111,15 @@ interface Props {
   lang: 'zh' | 'en';
   initialMethod?: Method;
   initialStage?: number;
+  /** 深链初始视角(0..5 = FACES 索引 D/U/L/R/F/B);首次就绪时锁定该视角并出解,覆盖默认自动选最优。 */
+  initialFace?: number;
+  /** 选中方法/阶段变化时回调(analyzer 用它把 method/stage 同步进 URL,可分享/可深链)。 */
+  onSelectionChange?: (method: Method, stage: number) => void;
   /** gen 行内:更紧凑的间距 + 略小播放器。 */
   compact?: boolean;
 }
 
-export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, compact = false }: Props) {
+export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, compact = false }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
@@ -148,6 +153,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const [moves, setMoves] = useState<MovesTimed | null>(null);
   const [movesLoading, setMovesLoading] = useState(false);
   const [selSol, setSelSol] = useState(0); // 选中解法行(驱动共享播放器)
+  const [rowRot, setRowRot] = useState<Record<number, number>>({}); // 每行 y 预转体次数 0..3
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [totalMs, setTotalMs] = useState<number | null>(null);
   const [infoOpen, setInfoOpen] = useState(false); // 求解器信息弹窗
@@ -165,6 +171,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const statusRef = useRef(status);
   statusRef.current = status;
   const firstScrambleRun = useRef(true);
+
+  // 选中 method/stage 变化时上报(经 ref 取最新回调,只在 method/stage 真变时触发,不被回调身份变化牵连)。
+  const onSelRef = useRef(onSelectionChange);
+  onSelRef.current = onSelectionChange;
+  useEffect(() => { onSelRef.current?.(method, stage); }, [method, stage]);
 
   const stages = VARIANT_STAGES[method];
   const need = needOf(method);
@@ -356,6 +367,21 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     if (best >= 0) { wantAuto.current = false; setSelFace(best); void fetchMoves(best); }
   }, [computing, counts, selFace, fetchMoves]);
 
+  // 深链初始视角:首次就绪时锁定 initialFace 并直接出解(覆盖自动选最优),只跑一次。
+  // 重阶段(非 eager,如 block/f2b)也能用——单视角按需求解正是点击视角的路径。
+  const wantInitFace = useRef<number | null>(
+    initialFace != null && Number.isInteger(initialFace) && initialFace >= 0 && initialFace <= 5 ? initialFace : null,
+  );
+  useEffect(() => {
+    if (status !== 'ready' || wantInitFace.current == null) return;
+    const f = wantInitFace.current;
+    wantInitFace.current = null;
+    wantAuto.current = false;
+    setSelFace(f);
+    void fetchMoves(f);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
+
   // 条数变了且有选中格 → 重取。
   useEffect(() => {
     if (selFace !== null) void fetchMoves(selFace);
@@ -386,6 +412,18 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     return () => clearInterval(id);
   }, [moves, movesLoading]);
 
+  // 新一批解法载入时清空各行的 y 预转体。
+  useEffect(() => { setRowRot({}); }, [moves]);
+
+  // 循环某行的 y 预转体(0→y→y2→y'→0),并把它设为选中行 + 把动画重置到开头。
+  const cycleRot = useCallback((i: number) => {
+    setRowRot((prev) => ({ ...prev, [i]: (((prev[i] ?? 0) + 1) % 4) }));
+    setSelSol(i);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      try { playerRef.current?.jumpToStart?.({ flash: false }); } catch { /* */ }
+    }));
+  }, []);
+
   const copySol = useCallback((i: number, sol: string) => {
     navigator.clipboard?.writeText(sol).then(() => {
       setCopiedIdx(i);
@@ -411,7 +449,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     return Number.isFinite(v) ? v : null;
   }, [counts]);
 
-  const selSolAlg = moves && moves.sols.length > 0 ? moves.sols[Math.min(selSol, moves.sols.length - 1)].m : null;
+  const selSolAlg = moves && moves.sols.length > 0
+    ? rotateSolutionY(moves.sols[Math.min(selSol, moves.sols.length - 1)].m, rowRot[Math.min(selSol, moves.sols.length - 1)] ?? 0)
+    : null;
 
   return (
     <section className={`stsv${compact ? ' stsv-compact' : ''}`}>
@@ -599,7 +639,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                       )}
                     </div>
                     <ol className="stsv-sols-list">
-                      {moves.sols.slice(0, shown).map((sol, i) => (
+                      {moves.sols.slice(0, shown).map((sol, i) => {
+                        const rot = rowRot[i] ?? 0;
+                        const dispAlg = rotateSolutionY(sol.m, rot);
+                        return (
                         <li
                           key={i}
                           className={`stsv-sol-row${selSol === i ? ' is-active' : ''}`}
@@ -609,17 +652,27 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                             <Play size={11} />
                           </button>
                           {sol.c && <span className="stsv-sol-slot">{sol.c}</span>}
-                          <code>{sol.m}</code>
-                          <span className="stsv-sol-len">{moveLen(sol.m)}</span>
+                          <code>{dispAlg}</code>
+                          <span className="stsv-sol-len">{moveLen(dispAlg)}</span>
+                          <button
+                            type="button"
+                            className={`stsv-sol-rot${rot ? ' is-on' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); cycleRot(i); }}
+                            title={t('加预转体:循环 y → y2 → y′ → 无(换个朝向做同一套公式)', 'Pre-rotation: cycle y → y2 → y′ → none (same solve, different orientation)')}
+                            aria-label={t('加 y 预转体', 'Add y pre-rotation')}
+                          >
+                            {Y_ROT_LABEL[rot]}
+                          </button>
                           <button
                             className="stsv-sol-copy"
-                            onClick={(e) => { e.stopPropagation(); copySol(i, sol.m); }}
+                            onClick={(e) => { e.stopPropagation(); copySol(i, dispAlg); }}
                             aria-label={t('复制', 'Copy')}
                           >
                             {copiedIdx === i ? <Check size={12} /> : <Copy size={12} />}
                           </button>
                         </li>
-                      ))}
+                      );
+                      })}
                     </ol>
                   </>
                 )}
