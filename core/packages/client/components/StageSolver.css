@@ -331,6 +331,30 @@ html[data-theme='dark'] .stsv {
 .stsv-sol-copy:hover { color: var(--sv-accent); }
 .stsv-sol-row.is-active .stsv-sol-play { color: var(--sv-accent); }
 
+/* y 预转体循环按钮:文字 token 样式,启用时高亮 */
+.stsv-sol-rot {
+  flex: 0 0 auto;
+  appearance: none;
+  background: none;
+  border: 1px solid var(--sv-border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  line-height: 1;
+  min-width: 22px;
+  padding: 3px 5px;
+  color: var(--sv-text-mute);
+  text-align: center;
+}
+.stsv-sol-rot:hover { color: var(--sv-accent); border-color: var(--sv-accent); }
+.stsv-sol-rot.is-on {
+  color: var(--sv-accent);
+  border-color: var(--sv-accent);
+  background: var(--sv-accent-soft);
+  font-weight: 600;
+}
+
 /* 共享播放器:右侧固定,跟随页面滚动黏顶 */
 .stsv-player {
   flex: 0 0 300px;
