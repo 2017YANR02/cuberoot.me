@@ -1,0 +1,55 @@
+/* /scramble/solver?event=ivy — Ivy 求解器专有样式(复用 puzzle_optimal_solver.css 的 .pos-*)。 */
+
+.ivy-preview {
+  display: flex;
+  justify-content: center;
+  margin: 0.2rem 0 0.6rem;
+}
+
+.ivy-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+.ivy-metric-num {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.ivy-metric-label { color: var(--muted-foreground); font-size: 0.9rem; }
+.ivy-metric-god { margin-left: auto; color: var(--faint-foreground); font-size: 0.78rem; }
+
+.ivy-solbox {
+  margin-top: 0.7rem;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  line-height: 1.55;
+  letter-spacing: 0.02em;
+  color: var(--foreground);
+  word-break: break-word;
+  user-select: all;
+}
+
+.ivy-caveat {
+  margin: 1.2rem 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+.ivy-caveat strong { color: var(--foreground); }
+
+@media (max-width: 480px) {
+  .ivy-metric-num { font-size: 1.8rem; }
+}
