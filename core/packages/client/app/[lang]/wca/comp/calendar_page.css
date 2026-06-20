@@ -1597,7 +1597,9 @@
     .calendar-page .toolbar { gap: 0.4rem; }
     .calendar-page .search-box { min-width: 100%; }
     .calendar-page .search-box-wrap { min-width: 100%; max-width: 100%; }
-    .calendar-page .country-filter { flex: 1; min-width: 0; }
+    /* 搜索框独占一行,国家筛选才不会被挤成只剩 "所." 一截(下拉宽度跟随 trigger) */
+    .calendar-page .toolbar .search-box-comp { min-width: 100%; max-width: 100%; }
+    .calendar-page .country-filter { flex: 1 1 auto; min-width: 150px; }
     .calendar-page .weekday-cell { font-size: 0.65rem; padding: 0.4rem 0.2rem; }
     .calendar-page .day-cell { padding: 3px 3px 1px; min-width: 0; }
     .calendar-page .week-row { min-height: 90px; }
