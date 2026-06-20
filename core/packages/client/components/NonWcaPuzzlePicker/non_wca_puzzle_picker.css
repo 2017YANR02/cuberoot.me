@@ -1,0 +1,98 @@
+/* 非 WCA 魔方分组选择器 —— 「更多魔方」下拉 + 分组弹层。
+   配色全走主题 token,不硬码灰阶。 */
+
+.nwp {
+  position: relative;
+  display: inline-flex;
+}
+
+.nwp-trigger {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.nwp-trigger:hover { color: var(--foreground); }
+.nwp-trigger:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.nwp-trigger--active {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.nwp-trigger-icon { flex-shrink: 0; }
+.nwp-trigger-label { font-weight: 600; }
+.nwp-trigger-chevron { color: var(--muted-foreground); flex-shrink: 0; }
+
+.nwp-popup {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 200px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--popover);
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 200;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.nwp-group + .nwp-group { margin-top: 4px; }
+.nwp-group-title {
+  padding: 6px 10px 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint-foreground);
+}
+
+.nwp-item {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.88rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.nwp-item:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.nwp-item--active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-weight: 600;
+}
+.nwp-item-label { line-height: 1.2; }
+
+@media (max-width: 480px) {
+  .nwp-trigger { padding: 0.4rem 0.6rem; }
+  .nwp-popup {
+    /* 窄屏:贴左、限宽,不溢出视口 */
+    left: 0;
+    min-width: 180px;
+    max-width: calc(100vw - 32px);
+  }
+}
