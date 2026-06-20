@@ -47,6 +47,7 @@ import {
   attemptsPerRound, localizeRound, isBldEvent,
 } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
+import { revalidateRecon } from '../revalidate-action';
 import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles } from '@/lib/wca-results-api';
 import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
 import {
@@ -1136,7 +1137,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
       if (isEditing && editId) {
         await updateRecon(Number(editId), data);
+        // Bust the detail page's 24h ISR/Data cache (server) so it doesn't show
+        // stale fields, then router.refresh() drops the client Router Cache.
+        await revalidateRecon(editId);
         router.push(`${langPrefix}/recon/${editId}`);
+        router.refresh();
       } else {
         const created = await addRecon(data);
         router.push(`${langPrefix}/recon/${created.id}`);

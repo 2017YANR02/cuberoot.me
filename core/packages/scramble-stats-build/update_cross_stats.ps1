@@ -561,7 +561,29 @@ if($Wizard){
 }
 
 # -DryRun: 只读, 算完 delta 立即停, 绝不碰 master / JSON / 不发布 / 不补变体
-if($DryRun){ Write-Host "[DryRun] 将处理 $nNew 条新打乱; 不动任何 master/JSON/变体/不发布。" -ForegroundColor Yellow; return }
+if($DryRun){
+  Write-Host "[DryRun] 新 std 打乱: $nNew 条 (不动任何 master/JSON/变体/不发布)" -ForegroundColor Yellow
+  # 关键: 即使 0 新打乱, 变体回填仍可能有缺口 (慢变体没追平 master)。纯行数比对(只读), 与向导 survey 同口径。
+  # 实跑工作量 = (master 现有 - 变体已有) + 新 std; 各变体串行跑, 总墙钟 ≈ 各 ETA 之和 (eo 为长杆)。
+  $masterN = if(Test-Path $MasterTxt){ Lc $MasterTxt } else { 0 }
+  $dryOrder = @('eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222','roux','223','eoline','dr','f2b')
+  $dryShow  = @($dryOrder | Where-Object { $Variants -contains $_ })
+  if($dryShow.Count -gt 0){
+    Write-Host "[DryRun] 变体回填积压 (待补 = master $masterN - 变体已有; 实跑 = 待补 + 新std):" -ForegroundColor Yellow
+    $dryTot = 0
+    foreach($v in $dryShow){
+      $csv = Join-Path $ScrambleDir "stats\$v.csv"
+      if(-not (Test-Path $csv)){ Write-Host ("  {0,-14} CSV 不存在" -f $v) -ForegroundColor DarkGray; continue }
+      $have = (Lc $csv) - 1
+      $back = [Math]::Max($masterN - $have, 0)
+      $proj = $back + $nNew
+      $dryTot += $proj
+      Write-Host ("  {0,-14} 已有 {1,9}  待补 {2,6}  实跑 {3,6}  ≈{4}" -f $v,$have,$back,$proj,(Estimate $proj $VARIANT_RATE[$v]))
+    }
+    Write-Host ("[DryRun] 合计实跑 ~$dryTot 条 (串行, 总墙钟 ≈ 各 ETA 之和)") -ForegroundColor Yellow
+  }
+  return
+}
 
 # ---- 2/3. std solver + 追加 master (只在有新打乱时) ----
 $stdChanged = $false
@@ -609,7 +631,9 @@ if($Variants.Count -gt 0){
 $puzzleChanged = $false
 if($runPuzzles){
   Step "P 非3x3 puzzles 整解: $($Puzzles -join ', ')"
-  pwsh (Join-Path $PSScriptRoot 'update_puzzle_stats.ps1') -Puzzles $Puzzles
+  # 同会话 & 调用: 数组对象直接绑定 [string[]]$Puzzles。禁用 `pwsh file.ps1 -Puzzles $Puzzles`
+  # (跨进程 -File 模式数组被拆成散 token, 余项落到位置参数 -MaxNew[int] 报错)。
+  & (Join-Path $PSScriptRoot 'update_puzzle_stats.ps1') -Puzzles $Puzzles
   if($LASTEXITCODE -ne 0){ throw 'update_puzzle_stats.ps1 失败' }
   Push-Location (Join-Path $RepoRoot 'core\packages\scramble-stats-build')
   try {

@@ -21,6 +21,7 @@ import {
   getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover,
   listRecons, deleteAlternative, getSameScramble,
 } from '@/lib/recon-api';
+import { revalidateRecon } from '../revalidate-action';
 import {
   formatTime, isBldEvent, getPuzzleId, wcaPersonUrl,
   buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
@@ -1069,6 +1070,8 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
     try {
       const updated = await deleteAlternative(reconId, idx);
       setAlts(updated);
+      // setAlts updates this view instantly; bust the ISR cache for the next visitor.
+      await revalidateRecon(reconId);
     } catch (e) {
       alert((e as Error).message);
     }
