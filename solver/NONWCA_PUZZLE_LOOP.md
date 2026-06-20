@@ -126,6 +126,7 @@
 ## §2 进度日志(每单元一行:日期 / 单元 / commit 短 hash / 一句话)
 
 - 2026-06-20 / A0 / `6265c3671` / 非 WCA 分组选择器 `NonWcaPuzzlePicker`(数据驱动 family + solvable),接 solver/stats 两页,ivy 走分组下拉 proof;typecheck 绿,UI 门欠账。
+- 2026-06-20 / A0-review / `6ba92bf18` / 复核 6265c3671:executor 的 typecheck EXIT=0 属实,预警的错误(缺 family / 悬空 SOLVE_EVENTS/SOLVE_APPEND/IVY_DIST_APPEND / 暴露未用导入)均不存在;30 event 全有 family、仅 ivy solvable、守卫测试全绿。唯一清理 = 删 cstimer-scramble 里早已存在的死 i18n 导入。UI 门仍欠账(见 §4)。
 - 参照基线:`ivy`(2026-06-20,纯 TS 全 BFS,29,160 态,God 8,均值 5.74)= 本 loop 的范式样板。
 
 ---
