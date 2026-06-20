@@ -3,27 +3,42 @@
 // Super Floppy(超薄花型)整解最优步数分布 —— 理论全空间(全 3,041,280 态,精确枚举,非抽样)。
 // 数据 = lib/superfloppy-solver 的 SUPERFLOPPY_LENGTH_DISTRIBUTION(与求解器页同一份),示例由
 // superFloppyExamplesByLength 枚举每个步数档的真实状态、反推最短打乱生成(Super Floppy 不是 WCA
-// 项目,没有比赛语料,但全状态空间可枚举)。态数 ~3M,故「下载全部」按需懒算(~80MB,有警告)。
-import { useMemo, useRef, useState } from 'react';
+// 项目,没有比赛语料,但全状态空间可枚举)。态数 ~3M(>2M),故「下载全部」CSV 先 confirm + 流式生成
+// (逐状态枚举 → 分块 Blob,峰值内存有界,不一次性拼 80MB 字符串);单步数 txt 也走流式(§0.5 下载策略)。
+import { useMemo, useState } from 'react';
 import { Download } from 'lucide-react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import {
-  SUPERFLOPPY_LENGTH_DISTRIBUTION, SUPERFLOPPY_GODS_NUMBER,
-  superFloppyExamplesByLength, superFloppyAllScramblesByLength,
+  SUPERFLOPPY_LENGTH_DISTRIBUTION, SUPERFLOPPY_GODS_NUMBER, SUPERFLOPPY_TOTAL_STATES,
+  superFloppyExamplesByLength, streamSuperFloppyScrambles, superFloppyScramblesForLength,
 } from '@/lib/superfloppy-solver';
 import { tr } from '@/i18n/tr';
 
 const SUPERFLOPPY_COLOR = '#3a86ff'; // 长方体蓝(数据色,非 UI 灰阶)
 
-function downloadText(filename: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+function downloadBlob(filename: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+// Build a Blob from an iterable of lines without ever holding the whole text in one string. We batch
+// lines into chunks of ~64k and push each chunk as a separate Blob part, so peak memory stays bounded
+// even at ~3M lines (~80MB) — the browser concatenates the parts lazily inside the Blob.
+function blobFromLines(lines: Iterable<string>): Blob {
+  const parts: string[] = [];
+  let buf: string[] = [];
+  for (const line of lines) {
+    buf.push(line);
+    if (buf.length >= 65536) { parts.push(buf.join('\n') + '\n'); buf = []; }
+  }
+  if (buf.length) parts.push(buf.join('\n'));
+  return new Blob(parts, { type: 'text/plain;charset=utf-8' });
 }
 
 function stats(counts: Record<string, number>) {
@@ -73,29 +88,32 @@ export default function SuperFloppyDistView({ isZh }: { isZh: boolean }) {
   const shown = effectiveBin !== null ? (examples[effectiveBin] ?? []) : [];
   const solverHref = (scr: string) => `/scramble/solver?${new URLSearchParams({ event: 'sfl', scramble: scr })}`;
 
-  // 全量穷举(所有 3,041,279 个非平凡状态的最短打乱)按需懒算一次,供下载(~80MB,~3.6s)。
-  const allRef = useRef<Record<number, string[]> | null>(null);
-  const getAll = () => (allRef.current ??= superFloppyAllScramblesByLength());
-
-  // 下载全部状态:CSV,按最优步数分类(含还原态一行 0,)。~3M 行,点击时才算。
+  // 下载全部状态:CSV,按最优步数分类(含还原态一行 0,)。~3M 行 ~80MB:态数 >2M,默认不鼓励整包下,
+  // 点击先 confirm,再流式生成(逐状态枚举 → 分块 Blob,峰值内存有界,绝不一次性拼 80MB 大字符串)。
   const downloadAll = () => {
     if (dlBusy) return;
+    const ok = window.confirm(tr({
+      zh: '将生成全部 3,041,280 个状态的 CSV(约 80MB,3M+ 行)。文件很大,生成期间页面可能短暂卡顿。继续?',
+      en: 'This builds a CSV of all 3,041,280 states (~80MB, 3M+ rows). It is a large file and the page may briefly pause while building. Continue?',
+    }));
+    if (!ok) return;
     setDlBusy(true);
     // 让按钮态先刷新再做重活。
     setTimeout(() => {
       try {
-        const all = getAll();
-        const lines = ['optimal_length,scramble', '0,'];
-        for (let d = 1; d <= SUPERFLOPPY_GODS_NUMBER; d++) for (const s of all[d] ?? []) lines.push(`${d},${s}`);
-        downloadText('superfloppy_sfl_all_states.csv', lines.join('\n'));
+        function* csvLines(): Generator<string> {
+          yield 'optimal_length,scramble';
+          for (const { depth, scramble } of streamSuperFloppyScrambles()) yield `${depth},${scramble}`;
+        }
+        downloadBlob('superfloppy_sfl_all_states.csv', blobFromLines(csvLines()));
       } finally {
         setDlBusy(false);
       }
     }, 30);
   };
-  // 下载某步数全部:txt,每行一条打乱。
+  // 下载某步数全部:txt,每行一条打乱。大档(如 9/10 步各 ~1M 条)也走流式,不构建全 3M 记录。
   const downloadBin = (d: number) => {
-    downloadText(`superfloppy_sfl_${d}-move.txt`, (getAll()[d] ?? []).join('\n'));
+    downloadBlob(`superfloppy_sfl_${d}-move.txt`, blobFromLines(superFloppyScramblesForLength(d)));
   };
   const binCount = effectiveBin !== null ? (SUPERFLOPPY_LENGTH_DISTRIBUTION[effectiveBin] ?? 0) : 0;
 
@@ -103,7 +121,7 @@ export default function SuperFloppyDistView({ isZh }: { isZh: boolean }) {
     <>
       <div className="scramble-stats-controls">
         <div className="scramble-stats-puzzle-meta">
-          <span>{tr({ zh: '全 3,041,280 态(精确枚举)', en: 'All 3,041,280 states (exact enumeration)' })}</span>
+          <span>{tr({ zh: `全 ${SUPERFLOPPY_TOTAL_STATES.toLocaleString()} 态(精确枚举)`, en: `All ${SUPERFLOPPY_TOTAL_STATES.toLocaleString()} states (exact enumeration)` })}</span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '一次转动 = 1 步(R/L/U/D 90°/180°/270°)', en: 'one turn = 1 move (R/L/U/D 90°/180°/270°)' })}</span>
         </div>
         <button

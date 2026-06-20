@@ -6,6 +6,8 @@ import {
   superFloppyApply,
   superFloppyExamplesByLength,
   superFloppyAllScramblesByLength,
+  streamSuperFloppyScrambles,
+  superFloppyScramblesForLength,
   SUPERFLOPPY_GODS_NUMBER,
   SUPERFLOPPY_LENGTH_DISTRIBUTION,
   SUPERFLOPPY_TOTAL_STATES,
@@ -288,6 +290,34 @@ describe('superFloppyExamplesByLength', () => {
         const scr = list[Math.floor(rnd() * list.length)];
         expect(solveSuperFloppy(scr).length).toBe(d);
       }
+    }
+  });
+
+  it('streaming generators (used by the bounded "download all") match the eager corpus per depth', () => {
+    // streamSuperFloppyScrambles is the production download path: it must yield every reachable
+    // state exactly once (depth 0 = identity included) without materializing the 3M record.
+    const perDepth = new Array<number>(SUPERFLOPPY_GODS_NUMBER + 1).fill(0);
+    let total = 0;
+    for (const { depth, scramble } of streamSuperFloppyScrambles()) {
+      perDepth[depth]++;
+      total++;
+      if (depth === 0) expect(scramble).toBe(''); // identity
+    }
+    expect(total).toBe(3041280); // all states INCLUDING the solved identity
+    expect(perDepth).toEqual([...SUPERFLOPPY_LENGTH_DISTRIBUTION]);
+
+    // per-length stream count == distribution, and a sample solves in exactly that length.
+    const rnd2 = mulberry32(0x57EA11);
+    for (let d = 1; d <= SUPERFLOPPY_GODS_NUMBER; d++) {
+      let n = 0;
+      let sample = '';
+      let pick = -1;
+      for (const scr of superFloppyScramblesForLength(d)) {
+        if (pick === -1 && rnd2() < 0.02) { sample = scr; pick = n; }
+        n++;
+      }
+      expect(n, `length ${d} stream count`).toBe(SUPERFLOPPY_LENGTH_DISTRIBUTION[d]);
+      if (sample) expect(solveSuperFloppy(sample).length).toBe(d);
     }
   });
 });
