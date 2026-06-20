@@ -25,7 +25,7 @@ use crate::htr_phase2_solver::HtrPhase2Solver;
 use crate::htr_solver::HtrSolver;
 use crate::move_tables::MoveTable;
 use crate::pair_solver::PairSolver;
-use crate::pocket_solver::PocketSolver;
+use crate::cube222_solver::Cube222Solver;
 use crate::prune_tables::PackedPruneTable;
 use crate::pseudo_f2leo_solver::PseudoF2leoSolver;
 use crate::pyraminx_solver::{parse_pyraminx, PyraminxSolver};
@@ -623,27 +623,27 @@ impl ChainSolverWasm {
 /// 任意态都可解(非条件式阶段,无哨兵);支持全 18 面转记号(2x2x2 无中心,
 /// D/L/B 与对面只差整体旋转,24 旋转归一到固定 DBL 帧)。度量 HTM,God's number = 11。
 #[wasm_bindgen]
-pub struct PocketSolverWasm {
-    pocket: RefCell<Option<PocketSolver>>,
+pub struct Cube222SolverWasm {
+    cube222: RefCell<Option<Cube222Solver>>,
 }
 
 #[wasm_bindgen]
-impl PocketSolverWasm {
+impl Cube222SolverWasm {
     #[wasm_bindgen(constructor)]
     #[allow(clippy::new_without_default)]
-    pub fn new() -> PocketSolverWasm {
-        PocketSolverWasm { pocket: RefCell::new(None) }
+    pub fn new() -> Cube222SolverWasm {
+        Cube222SolverWasm { cube222: RefCell::new(None) }
     }
 
     /// 用预算好的全空间距离表(3,674,160 字节)即时构造(秒算:静态资源直载,
-    /// 跳过现场 BFS)。worker 拉 opt_pocket.bin.gz 解压后传入。
-    pub fn from_dist(dist: &[u8]) -> PocketSolverWasm {
-        PocketSolverWasm { pocket: RefCell::new(Some(PocketSolver::from_dist(dist.to_vec()))) }
+    /// 跳过现场 BFS)。worker 拉 opt_222.bin.gz 解压后传入。
+    pub fn from_dist(dist: &[u8]) -> Cube222SolverWasm {
+        Cube222SolverWasm { cube222: RefCell::new(Some(Cube222Solver::from_dist(dist.to_vec()))) }
     }
 
     fn ensure(&self) {
-        if self.pocket.borrow().is_none() {
-            *self.pocket.borrow_mut() = Some(PocketSolver::new_lean());
+        if self.cube222.borrow().is_none() {
+            *self.cube222.borrow_mut() = Some(Cube222Solver::new_lean());
         }
     }
 
@@ -651,7 +651,7 @@ impl PocketSolverWasm {
     pub fn solve(&self, scramble: &str) -> u32 {
         self.ensure();
         let alg = string_to_alg(scramble);
-        self.pocket.borrow().as_ref().unwrap().solve_one_any(&alg)
+        self.cube222.borrow().as_ref().unwrap().solve_one_any(&alg)
     }
 
     /// 一条最优解 JSON(同 Block222SolverWasm::solve_moves 形状,单条):
@@ -660,7 +660,7 @@ impl PocketSolverWasm {
     pub fn solve_moves(&self, scramble: &str) -> String {
         self.ensure();
         let alg = string_to_alg(scramble);
-        let sol = self.pocket.borrow().as_ref().unwrap().enumerate_any(&alg);
+        let sol = self.cube222.borrow().as_ref().unwrap().enumerate_any(&alg);
         let items = vec![(fmt_moves(&sol.rot, &sol.moves), String::new())];
         sols_json(sol.len, &items)
     }
@@ -703,7 +703,7 @@ impl PyraminxSolverWasm {
         Ok(self.pyra.borrow().as_ref().unwrap().solve_one(&alg))
     }
 
-    /// 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+    /// 一条最优解 JSON(同 Cube222SolverWasm::solve_moves 形状,单条):
     /// {"len":N,"sols":[{"m":"U L' B ... r b'","c":""}]}。`m` = 核心大写解 +
     /// 小写 tip 收尾(无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
     pub fn solve_moves(&self, scramble: &str) -> Result<String, JsError> {
@@ -751,7 +751,7 @@ impl SkewbSolverWasm {
         Ok(self.skewb.borrow().as_ref().unwrap().solve_one(&alg))
     }
 
-    /// 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+    /// 一条最优解 JSON(同 Cube222SolverWasm::solve_moves 形状,单条):
     /// {"len":N,"sols":[{"m":"U L' B ...","c":""}]}。`m` = 最优解序列
     /// (无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
     pub fn solve_moves(&self, scramble: &str) -> Result<String, JsError> {

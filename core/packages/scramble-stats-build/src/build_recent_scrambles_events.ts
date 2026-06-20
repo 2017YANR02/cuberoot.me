@@ -30,7 +30,7 @@ const RECENT_WINDOW_DAYS = 30; // bootstrap window when no watermark exists yet
 
 // difficulty events → puzzle-pipeline data subdir (whole-solve optimal step count).
 // value column in <key>.csv = the puzzle key itself (see build_puzzle_dist.ts).
-const DIFFICULTY_PUZZLES: Record<string, string> = { '222': 'pocket', pyram: 'pyraminx', skewb: 'skewb' };
+const DIFFICULTY_PUZZLES: Record<string, string> = { '222': '222', pyram: 'pyraminx', skewb: 'skewb' };
 
 // 333 = own rich widget; multi-blind = multi-cube blob (no single length / preview).
 const EXCLUDE_EVENTS = new Set(['333', '333mbf', '333mbo']);

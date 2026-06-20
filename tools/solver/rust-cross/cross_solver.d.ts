@@ -80,6 +80,33 @@ export class CrossSolverWasm {
 }
 
 /**
+ * 2x2x2 口袋魔方整解最优求解器(全自包含,**零表下载**):3.6MB 全空间精确距离表
+ * 首次查询时惰性现场 BFS(lean 构造,不存 132MB 联合移动表,RefCell 缓存)。
+ * 任意态都可解(非条件式阶段,无哨兵);支持全 18 面转记号(2x2x2 无中心,
+ * D/L/B 与对面只差整体旋转,24 旋转归一到固定 DBL 帧)。度量 HTM,God's number = 11。
+ */
+export class Cube222SolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * 用预算好的全空间距离表(3,674,160 字节)即时构造(秒算:静态资源直载,
+     * 跳过现场 BFS)。worker 拉 opt_222.bin.gz 解压后传入。
+     */
+    static from_dist(dist: Uint8Array): Cube222SolverWasm;
+    constructor();
+    /**
+     * 整解最优 HTM 步数(0..=11)。
+     */
+    solve(scramble: string): number;
+    /**
+     * 一条最优解 JSON(同 Block222SolverWasm::solve_moves 形状,单条):
+     * {"len":N,"sols":[{"m":"x y' R U F2 ...","c":""}]}。`m` 前缀 = 整体旋转
+     * (打乱含 D/L/B 时归一所需,可为空),`c` 恒空串(整解无槽位/视角语义)。
+     */
+    solve_moves(scramble: string): string;
+}
+
+/**
  * EOLine / DR 求解器(全自包含,**零表下载**):eo12/line/co8/slice 微 move 表与
  * 全部距离表现场从内置运动学构建。EOLine 即时构建(~1MB BFS);DR 惰性
  * (两张 ~1M 距离表,首次查询时建)。
@@ -207,33 +234,6 @@ export class HtrSolverWasm {
 }
 
 /**
- * 2x2x2 口袋魔方整解最优求解器(全自包含,**零表下载**):3.6MB 全空间精确距离表
- * 首次查询时惰性现场 BFS(lean 构造,不存 132MB 联合移动表,RefCell 缓存)。
- * 任意态都可解(非条件式阶段,无哨兵);支持全 18 面转记号(2x2x2 无中心,
- * D/L/B 与对面只差整体旋转,24 旋转归一到固定 DBL 帧)。度量 HTM,God's number = 11。
- */
-export class PocketSolverWasm {
-    free(): void;
-    [Symbol.dispose](): void;
-    /**
-     * 用预算好的全空间距离表(3,674,160 字节)即时构造(秒算:静态资源直载,
-     * 跳过现场 BFS)。worker 拉 opt_pocket.bin.gz 解压后传入。
-     */
-    static from_dist(dist: Uint8Array): PocketSolverWasm;
-    constructor();
-    /**
-     * 整解最优 HTM 步数(0..=11)。
-     */
-    solve(scramble: string): number;
-    /**
-     * 一条最优解 JSON(同 Block222SolverWasm::solve_moves 形状,单条):
-     * {"len":N,"sols":[{"m":"x y' R U F2 ...","c":""}]}。`m` 前缀 = 整体旋转
-     * (打乱含 D/L/B 时归一所需,可为空),`c` 恒空串(整解无槽位/视角语义)。
-     */
-    solve_moves(scramble: string): string;
-}
-
-/**
  * Pyraminx(金字塔)整解最优求解器(全自包含,**零表下载**):0.9MB 核心全空间
  * 精确距离表首次查询时惰性现场 BFS(lean 构造,不存 29.9MB 联合移动表,RefCell
  * 缓存)。吃全 WCA pyram 记号(大写 U/L/R/B 核心 + 小写 u/l/r/b 顶点,可带 '/2,
@@ -254,7 +254,7 @@ export class PyraminxSolverWasm {
      */
     solve(scramble: string): number;
     /**
-     * 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+     * 一条最优解 JSON(同 Cube222SolverWasm::solve_moves 形状,单条):
      * {"len":N,"sols":[{"m":"U L' B ... r b'","c":""}]}。`m` = 核心大写解 +
      * 小写 tip 收尾(无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
      */
@@ -305,7 +305,7 @@ export class SkewbSolverWasm {
      */
     solve(scramble: string): number;
     /**
-     * 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+     * 一条最优解 JSON(同 Cube222SolverWasm::solve_moves 形状,单条):
      * {"len":N,"sols":[{"m":"U L' B ...","c":""}]}。`m` = 最优解序列
      * (无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
      */
@@ -355,12 +355,12 @@ export interface InitOutput {
     readonly __wbg_block222solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_chainsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_crosssolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_cube222solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_eodrsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_f2leosolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_frsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_htrphase2solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_htrsolverwasm_free: (a: number, b: number) => void;
-    readonly __wbg_pocketsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_pyraminxsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_roux223solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_skewbsolverwasm_free: (a: number, b: number) => void;
@@ -376,6 +376,10 @@ export interface InitOutput {
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
     readonly crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+    readonly cube222solverwasm_from_dist: (a: number, b: number) => number;
+    readonly cube222solverwasm_new: () => number;
+    readonly cube222solverwasm_solve: (a: number, b: number, c: number) => number;
+    readonly cube222solverwasm_solve_moves: (a: number, b: number, c: number) => [number, number];
     readonly eodrsolverwasm_new: () => number;
     readonly eodrsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly eodrsolverwasm_solve_stage: (a: number, b: number, c: number, d: number) => [number, number];
@@ -393,10 +397,6 @@ export interface InitOutput {
     readonly htrsolverwasm_new: () => number;
     readonly htrsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
     readonly htrsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
-    readonly pocketsolverwasm_from_dist: (a: number, b: number) => number;
-    readonly pocketsolverwasm_new: () => number;
-    readonly pocketsolverwasm_solve: (a: number, b: number, c: number) => number;
-    readonly pocketsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number];
     readonly pyraminxsolverwasm_from_dist: (a: number, b: number) => number;
     readonly pyraminxsolverwasm_new: () => number;
     readonly pyraminxsolverwasm_solve: (a: number, b: number, c: number) => [number, number, number];

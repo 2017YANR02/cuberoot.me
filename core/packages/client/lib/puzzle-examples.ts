@@ -15,7 +15,7 @@ export interface PuzzleExamplesEntry {
 
 export interface PuzzleExamplesJson {
   meta: { generated_at: string };
-  puzzles: Record<string, PuzzleExamplesEntry>; // key = puzzle 名(pocket / pyraminx / skewb)
+  puzzles: Record<string, PuzzleExamplesEntry>; // key = puzzle 名(222 / pyraminx / skewb)
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)

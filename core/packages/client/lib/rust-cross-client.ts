@@ -32,7 +32,7 @@ export const TABLE_BYTES: Record<string, number> = {
   mt_eo12_alt: 147468,
   mt_ep4: 855372,
   // 整解最优全空间距离表(解压后 = 态数 × 1B):2x2x2 / 金字塔核心 / 斜转。
-  opt_pocket: 3674160,
+  opt_222: 3674160,
   opt_pyraminx: 933120,
   opt_skewb: 3149280,
 };
@@ -41,7 +41,7 @@ export const TABLE_BYTES: Record<string, number> = {
 // eodr / htr / htr2 / fr / chain 零表下载(微表/距离表现场从内置运动学建)。
 // pocket / pyraminx / skewb 拉预算好的全空间距离表 opt_*(秒算,from_dist 直载,
 // 表缺失时 worker 回退现场 BFS)。
-export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | 'pocket' | 'pyraminx' | 'skewb', string[]> = {
+export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | '222' | 'pyraminx' | 'skewb', string[]> = {
   cross: ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
   f2leo: ['pt_cross', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
   variant: [
@@ -55,7 +55,7 @@ export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'ro
   htr2: [],
   fr: [],
   chain: [],
-  pocket: ['opt_pocket'],
+  '222': ['opt_222'],
   pyraminx: ['opt_pyraminx'],
   skewb: ['opt_skewb'],
 };
@@ -200,9 +200,9 @@ export interface RustCrossPool {
    *  距离表(数秒);fr.enabled 再惰性建 FR 表。 */
   solveChain(scramble: string, config: string): Promise<{ chains: ChainResult[]; ms: number }>;
   /** 2x2x2 口袋魔方整解最优 HTM 步数（0..=11，非条件式阶段无哨兵）。全 18 记号，D/L/B 经 24 旋转归一。 */
-  solvePocketLen(scramble: string): Promise<number[]>;
+  solveCube222Len(scramble: string): Promise<number[]>;
   /** 2x2x2 整解一条最优解。`m` 前缀 = 整体旋转（打乱含 D/L/B 时归一所需，可为空），`c` 恒空串。 */
-  solvePocketMoves(scramble: string): Promise<MovesTimed>;
+  solveCube222Moves(scramble: string): Promise<MovesTimed>;
   /** 金字塔整解最优 HTM 步数（0..=15,含 tips）。全 WCA pyram 记号（大写 U/L/R/B 核心 + 小写 u/l/r/b 顶点）。 */
   solvePyraminxLen(scramble: string): Promise<number[]>;
   /** 金字塔整解一条最优解。`m` = 核心大写解 + 小写 tip 收尾（无整体旋转前缀），`c` 恒空串。 */
@@ -231,7 +231,7 @@ interface PoolWorker {
   dead: boolean;
 }
 
-export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | 'pocket' | 'pyraminx' | 'skewb' = 'cross'): RustCrossPool {
+export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | '222' | 'pyraminx' | 'skewb' = 'cross'): RustCrossPool {
   const size = Math.max(1, maxSize);
   const all: PoolWorker[] = [];
   const idle: PoolWorker[] = [];
@@ -318,7 +318,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
       pw.job = null;
       if (job) {
         if (m.type === 'face') job.resolve({ value: m.value, ms: m.ms });
-        else if (m.type === 'moves' || m.type === 'variant_moves' || m.type === 'f2leo_moves' || m.type === 'block222_moves' || m.type === 'roux223_moves' || m.type === 'eodr_moves' || m.type === 'htr_moves' || m.type === 'htr2_moves' || m.type === 'fr_moves' || m.type === 'chain_solve' || m.type === 'pocket_moves' || m.type === 'pyraminx_moves' || m.type === 'skewb_moves') job.resolve({ ...m.data, ms: m.ms });
+        else if (m.type === 'moves' || m.type === 'variant_moves' || m.type === 'f2leo_moves' || m.type === 'block222_moves' || m.type === 'roux223_moves' || m.type === 'eodr_moves' || m.type === 'htr_moves' || m.type === 'htr2_moves' || m.type === 'fr_moves' || m.type === 'chain_solve' || m.type === 'cube222_moves' || m.type === 'pyraminx_moves' || m.type === 'skewb_moves') job.resolve({ ...m.data, ms: m.ms });
         else job.resolve(m.values);
       }
       assign(pw);
@@ -445,11 +445,11 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
     solveChain(scramble, config) {
       return submit({ type: 'chain_solve', id: nextId++, scramble, config }) as Promise<{ chains: ChainResult[]; ms: number }>;
     },
-    solvePocketLen(scramble) {
-      return submit({ type: 'pocket_len', id: nextId++, scramble }) as Promise<number[]>;
+    solveCube222Len(scramble) {
+      return submit({ type: 'cube222_len', id: nextId++, scramble }) as Promise<number[]>;
     },
-    solvePocketMoves(scramble) {
-      return submit({ type: 'pocket_moves', id: nextId++, scramble }) as Promise<MovesTimed>;
+    solveCube222Moves(scramble) {
+      return submit({ type: 'cube222_moves', id: nextId++, scramble }) as Promise<MovesTimed>;
     },
     solvePyraminxLen(scramble) {
       return submit({ type: 'pyraminx_len', id: nextId++, scramble }) as Promise<number[]>;

@@ -2,7 +2,7 @@
 
 // 非 3x3 puzzle 整解最优步数分布展示(EPIC 3 新管线的消费 UI)。
 // 由难度 tab 的共享 WCA 项目选择器驱动:选中二阶/金字塔/斜转 → 传入对应 puzzleKey。
-// 数据 = stats/scramble/puzzle_distribution.json(pocket / pyraminx / skewb;sq1 待 P5d)。
+// 数据 = stats/scramble/puzzle_distribution.json(222 / pyraminx / skewb;sq1 待 P5d)。
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
@@ -22,13 +22,13 @@ import {
 import { tr } from '@/i18n/tr';
 
 // puzzle key → 在线求解器路由名(sq1 无求解器页 → 不在表里 → 示例卡不可点)。
-const PUZZLE_ROUTE: Record<string, string> = { pocket: 'pocket', pyraminx: 'pyraminx', skewb: 'skewb' };
+const PUZZLE_ROUTE: Record<string, string> = { '222': '222', pyraminx: 'pyraminx', skewb: 'skewb' };
 // 2D 预览用的 WCA event_id。
-const PUZZLE_EVENT: Record<string, string> = { pocket: '222', pyraminx: 'pyram', skewb: 'skewb', sq1: 'sq1' };
+const PUZZLE_EVENT: Record<string, string> = { '222': '222', pyraminx: 'pyram', skewb: 'skewb', sq1: 'sq1' };
 
 // 每个 puzzle 一个数据色(图表填充,非 UI 灰阶);沿用魔方色系。
 const PUZZLE_COLOR: Record<string, string> = {
-  pocket: '#f04f4f',   // 红
+  '222': '#f04f4f',   // 红
   pyraminx: '#2ec27e', // 绿
   skewb: '#3d7bf0',    // 蓝
   sq1: '#9b6ef0',      // 紫

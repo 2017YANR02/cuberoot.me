@@ -10,7 +10,7 @@
 use std::fs;
 use std::path::Path;
 
-use cube_solver::pocket_solver::PocketSolver;
+use cube_solver::cube222_solver::Cube222Solver;
 use cube_solver::pyraminx_solver::PyraminxSolver;
 use cube_solver::skewb_solver::SkewbSolver;
 
@@ -25,7 +25,7 @@ fn main() {
     let dir = Path::new(&dir);
     fs::create_dir_all(dir).expect("create out dir");
 
-    dump(dir, "opt_pocket", PocketSolver::new_lean().dist_bytes());
+    dump(dir, "opt_222", Cube222Solver::new_lean().dist_bytes());
     dump(dir, "opt_pyraminx", PyraminxSolver::new_lean().dist_bytes());
     dump(dir, "opt_skewb", SkewbSolver::new().dist_bytes());
 }

@@ -22,7 +22,7 @@ const SCRAMBLES_TSV = process.env.SCRAMBLES_TSV
   : 'D:/cube/scramble/wca_scramble/incremental/tsv/Scrambles.tsv';
 
 // key → WCA event_id(与 update_puzzle_stats.ps1 / build_puzzle_examples 注册表一致)。
-const PUZZLES = { pocket: '222', pyraminx: 'pyram', skewb: 'skewb' };
+const PUZZLES = { '222': '222', pyraminx: 'pyram', skewb: 'skewb' };
 
 let dataRoot = 'D:/cube/scramble/puzzle';
 const cfgPath = resolve(__dirname, 'config.yml');

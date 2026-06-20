@@ -34,7 +34,7 @@ const ANALYZER_DIR = resolve(repoRoot, 'solver/target/release');
 // 纯 3x3 面转(无 wide / 旋转 / 小写)→ cube48opt 可直接吃。
 const FACE_ONLY = /^[UDLRFB][2']? ?(?:[UDLRFB][2']? ?)*$/;
 const FACE_EVENTS = new Set(['333', '333oh', '333fm', '333ft']);
-const PUZZLE_BY_EVENT = { '222': 'pocket', pyram: 'pyraminx', skewb: 'skewb' };
+const PUZZLE_BY_EVENT = { '222': '222', pyram: 'pyraminx', skewb: 'skewb' };
 
 // 逆一条解 → 最优等价打乱:X2 自逆;X' ↔ X;pyraminx 小写 tip 同理。
 function invertAlg(s) {
@@ -113,7 +113,7 @@ async function main() {
 
   // 收集各类待解文本(去重)。tuple = [compId, round, group, num, text, isExtra?]。
   const faceTexts = new Set();
-  const puzzleTexts = { pocket: new Set(), pyraminx: new Set(), skewb: new Set() };
+  const puzzleTexts = { '222': new Set(), pyraminx: new Set(), skewb: new Set() };
   const collect = (src) => {
     for (const [ev, bins] of Object.entries(src)) {
       const pk = PUZZLE_BY_EVENT[ev];

@@ -248,6 +248,82 @@ export class CrossSolverWasm {
 if (Symbol.dispose) CrossSolverWasm.prototype[Symbol.dispose] = CrossSolverWasm.prototype.free;
 
 /**
+ * 2x2x2 口袋魔方整解最优求解器(全自包含,**零表下载**):3.6MB 全空间精确距离表
+ * 首次查询时惰性现场 BFS(lean 构造,不存 132MB 联合移动表,RefCell 缓存)。
+ * 任意态都可解(非条件式阶段,无哨兵);支持全 18 面转记号(2x2x2 无中心,
+ * D/L/B 与对面只差整体旋转,24 旋转归一到固定 DBL 帧)。度量 HTM,God's number = 11。
+ */
+export class Cube222SolverWasm {
+    static __wrap(ptr) {
+        const obj = Object.create(Cube222SolverWasm.prototype);
+        obj.__wbg_ptr = ptr;
+        Cube222SolverWasmFinalization.register(obj, obj.__wbg_ptr, obj);
+        return obj;
+    }
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        Cube222SolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_cube222solverwasm_free(ptr, 0);
+    }
+    /**
+     * 用预算好的全空间距离表(3,674,160 字节)即时构造(秒算:静态资源直载,
+     * 跳过现场 BFS)。worker 拉 opt_222.bin.gz 解压后传入。
+     * @param {Uint8Array} dist
+     * @returns {Cube222SolverWasm}
+     */
+    static from_dist(dist) {
+        const ptr0 = passArray8ToWasm0(dist, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.cube222solverwasm_from_dist(ptr0, len0);
+        return Cube222SolverWasm.__wrap(ret);
+    }
+    constructor() {
+        const ret = wasm.cube222solverwasm_new();
+        this.__wbg_ptr = ret;
+        Cube222SolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 整解最优 HTM 步数(0..=11)。
+     * @param {string} scramble
+     * @returns {number}
+     */
+    solve(scramble) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.cube222solverwasm_solve(this.__wbg_ptr, ptr0, len0);
+        return ret >>> 0;
+    }
+    /**
+     * 一条最优解 JSON(同 Block222SolverWasm::solve_moves 形状,单条):
+     * {"len":N,"sols":[{"m":"x y' R U F2 ...","c":""}]}。`m` 前缀 = 整体旋转
+     * (打乱含 D/L/B 时归一所需,可为空),`c` 恒空串(整解无槽位/视角语义)。
+     * @param {string} scramble
+     * @returns {string}
+     */
+    solve_moves(scramble) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.cube222solverwasm_solve_moves(this.__wbg_ptr, ptr0, len0);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) Cube222SolverWasm.prototype[Symbol.dispose] = Cube222SolverWasm.prototype.free;
+
+/**
  * EOLine / DR 求解器(全自包含,**零表下载**):eo12/line/co8/slice 微 move 表与
  * 全部距离表现场从内置运动学构建。EOLine 即时构建(~1MB BFS);DR 惰性
  * (两张 ~1M 距离表,首次查询时建)。
@@ -619,82 +695,6 @@ export class HtrSolverWasm {
 if (Symbol.dispose) HtrSolverWasm.prototype[Symbol.dispose] = HtrSolverWasm.prototype.free;
 
 /**
- * 2x2x2 口袋魔方整解最优求解器(全自包含,**零表下载**):3.6MB 全空间精确距离表
- * 首次查询时惰性现场 BFS(lean 构造,不存 132MB 联合移动表,RefCell 缓存)。
- * 任意态都可解(非条件式阶段,无哨兵);支持全 18 面转记号(2x2x2 无中心,
- * D/L/B 与对面只差整体旋转,24 旋转归一到固定 DBL 帧)。度量 HTM,God's number = 11。
- */
-export class PocketSolverWasm {
-    static __wrap(ptr) {
-        const obj = Object.create(PocketSolverWasm.prototype);
-        obj.__wbg_ptr = ptr;
-        PocketSolverWasmFinalization.register(obj, obj.__wbg_ptr, obj);
-        return obj;
-    }
-    __destroy_into_raw() {
-        const ptr = this.__wbg_ptr;
-        this.__wbg_ptr = 0;
-        PocketSolverWasmFinalization.unregister(this);
-        return ptr;
-    }
-    free() {
-        const ptr = this.__destroy_into_raw();
-        wasm.__wbg_pocketsolverwasm_free(ptr, 0);
-    }
-    /**
-     * 用预算好的全空间距离表(3,674,160 字节)即时构造(秒算:静态资源直载,
-     * 跳过现场 BFS)。worker 拉 opt_pocket.bin.gz 解压后传入。
-     * @param {Uint8Array} dist
-     * @returns {PocketSolverWasm}
-     */
-    static from_dist(dist) {
-        const ptr0 = passArray8ToWasm0(dist, wasm.__wbindgen_malloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.pocketsolverwasm_from_dist(ptr0, len0);
-        return PocketSolverWasm.__wrap(ret);
-    }
-    constructor() {
-        const ret = wasm.pocketsolverwasm_new();
-        this.__wbg_ptr = ret;
-        PocketSolverWasmFinalization.register(this, this.__wbg_ptr, this);
-        return this;
-    }
-    /**
-     * 整解最优 HTM 步数(0..=11)。
-     * @param {string} scramble
-     * @returns {number}
-     */
-    solve(scramble) {
-        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        const ret = wasm.pocketsolverwasm_solve(this.__wbg_ptr, ptr0, len0);
-        return ret >>> 0;
-    }
-    /**
-     * 一条最优解 JSON(同 Block222SolverWasm::solve_moves 形状,单条):
-     * {"len":N,"sols":[{"m":"x y' R U F2 ...","c":""}]}。`m` 前缀 = 整体旋转
-     * (打乱含 D/L/B 时归一所需,可为空),`c` 恒空串(整解无槽位/视角语义)。
-     * @param {string} scramble
-     * @returns {string}
-     */
-    solve_moves(scramble) {
-        let deferred2_0;
-        let deferred2_1;
-        try {
-            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-            const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.pocketsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0);
-            deferred2_0 = ret[0];
-            deferred2_1 = ret[1];
-            return getStringFromWasm0(ret[0], ret[1]);
-        } finally {
-            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
-        }
-    }
-}
-if (Symbol.dispose) PocketSolverWasm.prototype[Symbol.dispose] = PocketSolverWasm.prototype.free;
-
-/**
  * Pyraminx(金字塔)整解最优求解器(全自包含,**零表下载**):0.9MB 核心全空间
  * 精确距离表首次查询时惰性现场 BFS(lean 构造,不存 29.9MB 联合移动表,RefCell
  * 缓存)。吃全 WCA pyram 记号(大写 U/L/R/B 核心 + 小写 u/l/r/b 顶点,可带 '/2,
@@ -751,7 +751,7 @@ export class PyraminxSolverWasm {
         return ret[0] >>> 0;
     }
     /**
-     * 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+     * 一条最优解 JSON(同 Cube222SolverWasm::solve_moves 形状,单条):
      * {"len":N,"sols":[{"m":"U L' B ... r b'","c":""}]}。`m` = 核心大写解 +
      * 小写 tip 收尾(无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
      * @param {string} scramble
@@ -917,7 +917,7 @@ export class SkewbSolverWasm {
         return ret[0] >>> 0;
     }
     /**
-     * 一条最优解 JSON(同 PocketSolverWasm::solve_moves 形状,单条):
+     * 一条最优解 JSON(同 Cube222SolverWasm::solve_moves 形状,单条):
      * {"len":N,"sols":[{"m":"U L' B ...","c":""}]}。`m` = 最优解序列
      * (无整体旋转前缀),`c` 恒空串。非法记号 → Err(JS 异常)。
      * @param {string} scramble
@@ -1110,6 +1110,9 @@ const ChainSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined'
 const CrossSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_crosssolverwasm_free(ptr, 1));
+const Cube222SolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_cube222solverwasm_free(ptr, 1));
 const EoDrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_eodrsolverwasm_free(ptr, 1));
@@ -1125,9 +1128,6 @@ const HtrPhase2SolverWasmFinalization = (typeof FinalizationRegistry === 'undefi
 const HtrSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_htrsolverwasm_free(ptr, 1));
-const PocketSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
-    ? { register: () => {}, unregister: () => {} }
-    : new FinalizationRegistry(ptr => wasm.__wbg_pocketsolverwasm_free(ptr, 1));
 const PyraminxSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_pyraminxsolverwasm_free(ptr, 1));

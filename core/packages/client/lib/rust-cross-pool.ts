@@ -7,7 +7,7 @@
 
 import { createRustCrossPool, type RustCrossPool } from './rust-cross-client';
 
-export type PoolNeed = 'cross' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | 'pocket' | 'pyraminx' | 'skewb';
+export type PoolNeed = 'cross' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | '222' | 'pyraminx' | 'skewb';
 
 let active: { pool: RustCrossPool; need: PoolNeed } | null = null;
 
