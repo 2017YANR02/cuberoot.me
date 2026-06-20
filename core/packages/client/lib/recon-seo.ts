@@ -20,6 +20,13 @@ import { formatTime } from './recon-utils';
 
 const REVALIDATE = 86400; // 24h
 
+/** Cache tag for a single recon's SSR/ISR data. Mutations (submit/alt edit/
+ *  delete) call revalidateRecon(id) to bust this so the 24h ISR cache doesn't
+ *  serve a stale detail page after an edit. */
+export function reconCacheTag(id: string | number): string {
+  return `recon-${id}`;
+}
+
 /** Any Chinese locale (zh / zh-Hant) uses the Simplified server-SEO strings. */
 export function isZhLang(lang: string): boolean {
   return lang.startsWith('zh');
@@ -84,7 +91,7 @@ export function reconTimeText(solve: ReconSolve): string {
 export async function fetchReconForSeo(id: string): Promise<ReconSolve | null> {
   try {
     const res = await fetch(apiUrl(`/v1/recon/${encodeURIComponent(id)}`), {
-      next: { revalidate: REVALIDATE },
+      next: { revalidate: REVALIDATE, tags: [reconCacheTag(id)] },
     });
     if (!res.ok) return null;
     return (await res.json()) as ReconSolve;
@@ -99,7 +106,7 @@ export async function fetchReconForSeo(id: string): Promise<ReconSolve | null> {
 export async function fetchSameScrambleForSeo(id: string): Promise<ReconSolve[]> {
   try {
     const res = await fetch(apiUrl(`/v1/recon/${encodeURIComponent(id)}/same-scramble`), {
-      next: { revalidate: REVALIDATE },
+      next: { revalidate: REVALIDATE, tags: [reconCacheTag(id)] },
     });
     if (!res.ok) return [];
     const data = (await res.json()) as ReconSolve[];

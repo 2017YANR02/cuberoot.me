@@ -9,9 +9,8 @@
 // read it from the browser URL client-side instead.
 
 import { useEffect, useState } from 'react';
-import Link from '@/components/AppLink';
+import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft } from 'lucide-react';
 import {
   fetchWcaPerson, fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults,
   fetchWcaPersonFormer,
@@ -29,17 +28,20 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '@/components/persons/persons.css';
 import '@/components/persons/persons-misc.css';
 import '@/components/wca-results/attempts-grid.css';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 export default function PersonDetailClient() {
+  const pathname = usePathname();
   const [wcaId, setWcaId] = useState('');
   useEffect(() => {
-    // URL is /<lang>/wca/persons/<wcaId>; the rendered route is the sentinel,
-    // so derive the real id from the actual browser path.
+    // URL is /<lang>/wca/persons/<wcaId>; the rendered route is the sentinel
+    // shell (one static page reused for every id), so derive the real id from
+    // the browser path. usePathname() is the dep so this re-runs on soft
+    // navigation between two person ids — the sentinel route never remounts, so
+    // an empty dep array would keep showing the previous person.
     const m = window.location.pathname.match(/\/persons\/([^/?#]+)/);
     setWcaId(m ? decodeURIComponent(m[1]) : '');
-  }, []);
+  }, [pathname]);
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = useT();
@@ -89,7 +91,6 @@ export default function PersonDetailClient() {
   if (error) {
     return (
       <div className="wp-page">
-        <PageHeader t={t} />
         <main className="wp-main">
           <div className="wp-error">{t('加载失败', 'Failed to load')}: {error}</div>
         </main>
@@ -99,7 +100,6 @@ export default function PersonDetailClient() {
   if (!profile) {
     return (
       <div className="wp-page">
-        <PageHeader t={t} />
         <main className="wp-main">
           <div className="wp-loading">{t('加载中…', 'Loading…')}</div>
         </main>
@@ -109,7 +109,6 @@ export default function PersonDetailClient() {
 
   return (
     <div className="wp-page">
-      <PageHeader t={t} wcaId={profile.person.wca_id} />
       <main className="wp-main">
         <PersonHero profile={profile} results={results} former={former} isZh={isZh} />
         <PersonPRTable profile={profile} results={results} isZh={isZh} inclCancelled={inclCancelled} onInclCancelledChange={setInclCancelled} />
@@ -118,25 +117,5 @@ export default function PersonDetailClient() {
         <PersonTabs profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />
       </main>
     </div>
-  );
-}
-
-function PageHeader({ t, wcaId }: { t: (zh: string, en: string) => string; wcaId?: string }) {
-  return (
-    <header className="wp-header">
-      <Link href="/wca/persons" className="wp-back">
-        <ChevronLeft size={16} />
-        <span>{t('选手搜索', 'Search')}</span>
-      </Link>
-      <div className="wp-header-right">
-        {wcaId && (
-          <a
-            href={`https://www.worldcubeassociation.org/persons/${wcaId}`}
-            target="_blank" rel="noopener noreferrer"
-            className="wp-source-link"
-          >WCA</a>
-        )}
-      </div>
-    </header>
   );
 }

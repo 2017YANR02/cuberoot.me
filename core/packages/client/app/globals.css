@@ -618,6 +618,19 @@ a {
   height: 0.9em !important;
 }
 
+/* 源头兜底:TW(中华台北)是唯一渲染成真 <img> 的国旗(SVG,无 flag-icons 内禀尺寸)。
+   Flag.tsx 给它恒定挂 .cr-flag-img,默认按相邻 flag-icons span(1.33em 宽)排版、
+   height:auto 保持 4:3 比例。低特异度(单类,且 globals 先于页面 CSS 加载)=> 调用方
+   显式设宽的类(country-flag-ct / recon-person-flag 头像 / rc-flag-img 等)按源序覆盖,
+   大旗不受影响。根因:调用方传错类名或不传类名时 TW SVG 不再撑成 640×480。 */
+.cr-flag-img {
+  display: inline-block;
+  width: 1.33em;
+  height: auto;
+  object-fit: cover;
+  vertical-align: middle;
+}
+
 /* 通用清空 ×(components/ClearButton.tsx 共享样式)—— Vite index.css 漏移植,补回。
  * 苹果风:实心灰圆 + SVG 细线 ×,token 派生自动跟主题。inline 浮在 input 内,
  * standalone 流式独立圆。缺这段时按钮塌成 0×0 看不见。 */
