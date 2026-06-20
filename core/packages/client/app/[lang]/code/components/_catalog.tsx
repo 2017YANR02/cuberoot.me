@@ -770,6 +770,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Cuber search / picker. The default local index is fastest — don’t pass searchFn (the backend proxy returns empty for Chinese / single chars).',
   },
   {
+    name: 'NonWcaPuzzlePicker',
+    import: "import NonWcaPuzzlePicker from '@/components/NonWcaPuzzlePicker/NonWcaPuzzlePicker';",
+    category: 'more',
+    zh: '非 WCA 魔方分组下拉(「更多魔方」),/scramble/solver 与 /scramble/stats 共用。按家族(长方体 / 异形扭转 / Square 系 / 滑块 / 联体 / 其他)分组,数据驱动:lib/cstimer-scramble 标 solvable 的 puzzle 自动出现。linkFor(求解页跨 COEP 硬导航)或 onSelect(分布页回调)二选一。',
+    en: 'Grouped "More puzzles" dropdown for non-WCA puzzles, shared by /scramble/solver and /scramble/stats. Grouped by family (cuboids / twisty / square / sliding / siamese / other), data-driven: any puzzle flagged solvable in lib/cstimer-scramble shows up automatically. Pass linkFor (solver page, hard-nav across COEP) or onSelect (dist page callback).',
+  },
+  {
     name: 'GestureWheel',
     import: "import GestureWheel from '@/components/GestureWheel';",
     category: 'more',
