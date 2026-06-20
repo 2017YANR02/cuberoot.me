@@ -241,4 +241,40 @@ describe('renderCuboid223ScrambleSvg', () => {
     // applying R2 twice returns to solved (self-proving net consistency)
     expect(fills(renderCuboid223ScrambleSvg('R2 R2'))).toEqual(solvedFills);
   });
+
+  // The net uses its own hand-coded sticker permutation tables (U/D/R/F PERM), independent of
+  // the solver's corner/edge cycles. Cross-check that the net is a faithful group action that
+  // tracks the solver: (a) the per-color count multiset is invariant under any scramble (no
+  // sticker is created/lost), and (b) scramble ∘ (solver's solution) renders the solved net —
+  // which ties the hand-coded PERM tables to the independently-verified solver. A subtly-wrong
+  // PERM (wrong cycle direction / sticker assignment) would pass the weak checks above but fail
+  // here.
+  it('net is a faithful group action that tracks the solver across random scrambles', () => {
+    const rnd = mulberry32(0x223C0DE);
+    const solvedFills = fills(renderCuboid223ScrambleSvg(''));
+    const solvedSig = (() => {
+      const c: Record<string, number> = {};
+      for (const f of solvedFills) c[f] = (c[f] ?? 0) + 1;
+      return Object.entries(c).map(([k, v]) => `${k}:${v}`).sort().join(' ');
+    })();
+    for (let trial = 0; trial < 200; trial++) {
+      const len = 1 + Math.floor(rnd() * 16);
+      const seq: string[] = [];
+      for (let i = 0; i < len; i++) seq.push(TOKENS[Math.floor(rnd() * TOKENS.length)]);
+      const scramble = seq.join(' ');
+
+      // (a) face-count multiset invariant
+      const f = fills(renderCuboid223ScrambleSvg(scramble));
+      expect(f.length).toBe(32);
+      const c: Record<string, number> = {};
+      for (const x of f) c[x] = (c[x] ?? 0) + 1;
+      const sig = Object.entries(c).map(([k, v]) => `${k}:${v}`).sort().join(' ');
+      expect(sig, `face counts for "${scramble}"`).toBe(solvedSig);
+
+      // (b) scramble ∘ solver-solution renders the solved net (PERM ↔ solver consistency)
+      const { solution } = solveCuboid223(scramble);
+      const combined = solution ? `${scramble} ${solution}` : scramble;
+      expect(fills(renderCuboid223ScrambleSvg(combined)), `net after solving "${scramble}"`).toEqual(solvedFills);
+    }
+  });
 });
