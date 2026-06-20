@@ -6,6 +6,8 @@
  *                        需 SharedArrayBuffer)
  *   event=222/pyram/skewb → PuzzleOptimalSolver(Rust WASM 全空间精确表,无 COEP)
  *   event=sq1 → SQ1 两阶段近最优解(_Sq1Solver,纯 TS,无 worker)
+ *   event=ivy → 枫叶魔方整解最优(_IvySolver,纯 TS,29,160 态全图 BFS,无 worker)
+ *   event=133 → 1×3×3 花型整解最优(_FloppySolver,纯 TS,192 态全图 BFS,无 worker)
  *
  * COEP 只在 ?event=333(或缺省 event)时下发,见 next.config.ts headers() 的 has/missing
  * 条件匹配 —— 其余 event 是普通文档,rust-cross worker + 跨域表照常工作。COEP 是文档级的,
@@ -25,6 +27,8 @@ const Loading = () => <div style={{ padding: 16 }}>Loading…</div>;
 
 const Cube3Solver = dynamic(() => import('./_Cube3Solver'), { ssr: false, loading: Loading });
 const Sq1Solver = dynamic(() => import('./_Sq1Solver'), { ssr: false, loading: Loading });
+const IvySolver = dynamic(() => import('./_IvySolver'), { ssr: false, loading: Loading });
+const FloppySolver = dynamic(() => import('./_FloppySolver'), { ssr: false, loading: Loading });
 const PuzzleOptimalSolver = dynamic(
   () => import('../_components/PuzzleOptimalSolver').then((m) => ({ default: m.PuzzleOptimalSolver })),
   { ssr: false, loading: Loading },
@@ -33,6 +37,8 @@ const PuzzleOptimalSolver = dynamic(
 function SolverDispatch() {
   const event = useSearchParams().get('event') ?? '333';
   if (event === 'sq1') return <Sq1Solver />;
+  if (event === 'ivy') return <IvySolver />;
+  if (event === '133') return <FloppySolver />;
   const spec = SPEC_BY_EVENT[event];
   // key={event} 让非 333 之间软切换时干净 remount(换 spec/池,不留旧状态)。
   if (spec) return <PuzzleOptimalSolver key={event} spec={spec} />;
