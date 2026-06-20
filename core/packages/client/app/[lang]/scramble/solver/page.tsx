@@ -13,6 +13,7 @@
  *   event=sfl → Super Floppy 整解最优(_SuperFloppySolver,纯 TS,3,041,280 态全图 BFS,无 worker)
  *   event=ufo → UFO 整解最优(_UfoSolver,纯 TS,60,480 态全图 BFS,无 worker)
  *   event=cm2 → Cmetrick Mini 整解最优(_Cm2Solver,纯 TS,165,888 态全图 BFS,无 worker)
+ *   event=dmd → 钻石(八面体)整解最优(_DiamondSolver,纯 TS,138,240 态全图 BFS,无 worker)
  *
  * COEP 只在 ?event=333(或缺省 event)时下发,见 next.config.ts headers() 的 has/missing
  * 条件匹配 —— 其余 event 是普通文档,rust-cross worker + 跨域表照常工作。COEP 是文档级的,
@@ -39,6 +40,7 @@ const Slide8Solver = dynamic(() => import('./_Slide8Solver'), { ssr: false, load
 const SuperFloppySolver = dynamic(() => import('./_SuperFloppySolver'), { ssr: false, loading: Loading });
 const UfoSolver = dynamic(() => import('./_UfoSolver'), { ssr: false, loading: Loading });
 const Cm2Solver = dynamic(() => import('./_Cm2Solver'), { ssr: false, loading: Loading });
+const DiamondSolver = dynamic(() => import('./_DiamondSolver'), { ssr: false, loading: Loading });
 const PuzzleOptimalSolver = dynamic(
   () => import('../_components/PuzzleOptimalSolver').then((m) => ({ default: m.PuzzleOptimalSolver })),
   { ssr: false, loading: Loading },
@@ -54,6 +56,7 @@ function SolverDispatch() {
   if (event === 'sfl') return <SuperFloppySolver />;
   if (event === 'ufo') return <UfoSolver />;
   if (event === 'cm2') return <Cm2Solver />;
+  if (event === 'dmd') return <DiamondSolver />;
   const spec = SPEC_BY_EVENT[event];
   // key={event} 让非 333 之间软切换时干净 remount(换 spec/池,不留旧状态)。
   if (spec) return <PuzzleOptimalSolver key={event} spec={spec} />;
