@@ -8,7 +8,6 @@
  * prod. Catalog below maps our event ids to cstimer's internal keys + a
  * default length for random-move scramblers.
  */
-import i18n from "@/i18n/i18n-client";
 
 let worker: Worker | null = null;
 let nextId = 1;
