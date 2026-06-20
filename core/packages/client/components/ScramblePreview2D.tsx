@@ -37,6 +37,7 @@ import { renderFloppyScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/floppy_s
 import { renderCuboid223ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cuboid223_svg';
 import { renderSlide8ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/slide8_svg';
 import { renderSuperFloppyScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/superfloppy_svg';
+import { renderUfoScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/ufo_svg';
 import {
   renderUnfoldedSvgForEvent,
   eventToCubeSize,
@@ -54,7 +55,7 @@ const HAS_PREVIEW: Record<string, boolean> = {
   '333ft': true, '333mbf': true, '333mbo': true, '444': true, '444bf': true,
   '555': true, '555bf': true, '666': true, '777': true,
   pyram: true, skewb: true, sq1: true, minx: true, clock: true,
-  mirror_333: true, ivy: true, '133': true, '223': true, '8p': true, sfl: true,
+  mirror_333: true, ivy: true, '133': true, '223': true, '8p': true, sfl: true, ufo: true,
 };
 
 export function eventHasScramblePreview(event: string): boolean {
@@ -104,6 +105,7 @@ export function ScramblePreview2D({
       if (eff === '223') return renderCuboid223ScrambleSvg(scramble);
       if (eff === '8p') return renderSlide8ScrambleSvg(scramble);
       if (eff === 'sfl') return renderSuperFloppyScrambleSvg(scramble);
+      if (eff === 'ufo') return renderUfoScrambleSvg(scramble);
       if (eventToCubeSize(eff)) return renderUnfoldedSvgForEvent(eff, scramble);
       return null;
     } catch (err) {
