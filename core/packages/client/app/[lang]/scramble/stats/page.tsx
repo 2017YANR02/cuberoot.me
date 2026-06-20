@@ -8,6 +8,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
 import PuzzleDistView from './_components/PuzzleDistView';
 import IvyDistView from './_components/IvyDistView';
+import FloppyDistView from './_components/FloppyDistView';
 import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
@@ -491,8 +492,8 @@ export default function ScrambleStatsPage() {
 
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
-  // Ivy(非 WCA):难度=理论全空间分布;无长度数据、无合并/数据集/度量开关。
-  const isIvy = event === 'ivy';
+  // 非 WCA 全空间求解项目(ivy / 133 …):难度=理论全空间分布;无长度数据、无合并/数据集/度量开关。
+  const isIvy = event === 'ivy' || event === '133';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -702,7 +703,8 @@ export default function ScrambleStatsPage() {
           : event === 'skewb' ? 'skewb'
             : event === 'sq1' ? 'sq1'
               : event === 'ivy' ? 'ivy'
-                : null;
+                : event === '133' ? '133'
+                  : null;
 
   // Shared header: WCA-event selector sits ABOVE the tab bar so it drives both
   // the difficulty tab and the length tab.
@@ -792,6 +794,26 @@ export default function ScrambleStatsPage() {
           </div>
         ) : (
           <IvyDistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  // 1×3×3 花型(非 WCA 项目):难度 = 整解最优步数的理论全空间分布(全 192 态,精确;示例本地枚举);
+  // 无打乱长度数据(cstimer 定长生成),长度 tab 给说明。
+  if (event === '133') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: '1×3×3 花型无打乱长度分布(打乱由 cstimer 定长生成);整解最优步数分布见「难度」',
+              en: 'No scramble-length distribution for the 1×3×3 Floppy Cube (cstimer generates fixed-form scrambles); see "Difficulty" for the optimal-length distribution',
+            })}
+          </div>
+        ) : (
+          <FloppyDistView isZh={isZh} />
         )}
       </div>
     );
