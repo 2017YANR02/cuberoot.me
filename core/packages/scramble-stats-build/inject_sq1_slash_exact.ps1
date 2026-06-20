@@ -188,7 +188,9 @@ function Run-DecideT {
   foreach ($id in $ambIds) {
     $r = $resolved[$id]
     if (((-not $r) -or ($r.v -eq 'M') -or ($r.v -eq '') -or ($r.v -eq '-')) -and $compact.ContainsKey($id)) {
-      [void]$resid.Add("$id,$($compact[$id]),$($wcaMap[$id].s)")
+      # mitm 要逗号-free compact(state_from_scramble + split(',') 取 s);故用 wcaMap.opt(逗号-free),
+      # 不用 $compact[$id](= scrambles.txt 全记号 (a,b)/(c,d) 含逗号, 会被 split 成碎片喂崩 mitm)。
+      [void]$resid.Add("$id,$($wcaMap[$id].opt),$($wcaMap[$id].s)")
     }
   }
   if ($resid.Count -eq 0) { return 0 }

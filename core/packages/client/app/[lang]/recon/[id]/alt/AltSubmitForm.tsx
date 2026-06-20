@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { TriangleAlert, ArrowLeft, LogIn } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getRecon, addAlternative, updateAlternative } from '@/lib/recon-api';
+import { revalidateRecon } from '../../revalidate-action';
 import { getPuzzleId } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
 import { useAuthStore } from '@/lib/auth-store';
@@ -110,7 +111,10 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
       } else {
         await addAlternative(Number(parentId), trimmed);
       }
+      // Bust the parent recon's ISR cache so its alternatives section isn't stale.
+      await revalidateRecon(parentId);
       router.push(`/recon/${parentId}`);
+      router.refresh();
     } catch (e) {
       setError((e as Error).message);
       setSubmitting(false);
