@@ -77,7 +77,7 @@ export interface CstimerEvent {
 
 export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   // Random-state (length ignored by solver)
-  { id: 'gear',    key: 'gearso',  zh: '齿轮魔方',         en: 'Gear Cube',         textLabel: 'Gear',   family: 'twist'
+  { id: 'gear',    key: 'gearso',  zh: '齿轮魔方',         en: 'Gear Cube',         textLabel: 'Gear',   family: 'twist',  solvable: true
 },
   { id: 'ivy',     key: 'ivyso',   zh: '枫叶魔方',         en: 'Ivy Cube',          textLabel: 'Ivy',    family: 'twist',  solvable: true
 },
