@@ -51,6 +51,8 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
+  /* trigger 可能被挤窄(如手机端工具栏),下拉至少保持可读宽度,但不超出视口 */
+  min-width: min(13rem, 92vw);
   max-height: 420px;
   overflow: hidden;
   overflow-x: clip;
