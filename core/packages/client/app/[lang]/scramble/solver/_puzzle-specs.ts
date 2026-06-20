@@ -13,8 +13,8 @@ export const SPEC_BY_EVENT: Record<string, OptimalSolverSpec> = {
       en: 'Optimal HTM solution for any 2x2x2 scramble (exact full-space table over 3,674,160 states; God\'s number is 11). D / L / B tokens are supported; solutions may start with a whole-cube rotation.',
     },
     metric: 'HTM',
-    need: 'pocket',
-    solve: (pool, scramble) => pool.solvePocketMoves(scramble),
+    need: '222',
+    solve: (pool, scramble) => pool.solveCube222Moves(scramble),
     tokenRe: /^[URFDLB][2']?$/,
   },
   pyram: {

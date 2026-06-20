@@ -1,22 +1,22 @@
-//! pocket_analyzer binary:2x2x2 口袋魔方整解最优步数分析器。
+//! cube222_analyzer binary:2x2x2 口袋魔方整解最优步数分析器。
 //!
 //! 输出 2 列 CSV(id + 1 值):
-//!   - pocket:该打乱的整解最优 HTM 步数(0..=11,God's number = 11)。
+//!   - 222:该打乱的整解最优 HTM 步数(0..=11,God's number = 11)。
 //!
 //! 语义(异于 3x3 的条件式多视角阶段):2x2x2 任意态都可解,单值、无视角列、无 `-`。
 //! 输入支持全 18 种 3x3 面转记号(WCA 222 打乱只用 U/R/F,但稳妥起见全收):
 //! 2x2x2 无中心,D/L/B 与对面转只差整体旋转(D = y'·U / L = x'·R / B = z'·F)。
 //! 求解前把末态归一到固定 DBL 帧:在 24 个整体旋转里找唯一使 DBL 角归位归向者
 //! (旋转对角的作用 = move 对:x = R L'、y = U D'、z = F B',中层只动棱/中心,
-//! 不影响角),拼到打乱尾部后查 pocket_solver 全空间精确表。
+//! 不影响角),拼到打乱尾部后查 cube222_solver 全空间精确表。
 
 use std::sync::OnceLock;
 
 use cube_solver::cube_common::{move_state, Move, State};
 use cube_solver::executor::{run_analyzer_app, SolverWrapper};
-use cube_solver::pocket_solver::{PocketSolver, POCKET_MOVES};
+use cube_solver::cube222_solver::{Cube222Solver, CUBE222_MOVES};
 
-static S: OnceLock<PocketSolver> = OnceLock::new();
+static S: OnceLock<Cube222Solver> = OnceLock::new();
 
 /// 是否追加第 3 列「一条最优解」(逆之即最优等价打乱)。默认关(保持 2 列、旧消费者与
 /// 单测不变);打乱统计管道设 `PUZZLE_EMIT_SOLN=1` 时打开。
@@ -24,13 +24,13 @@ fn emit_soln() -> bool {
     std::env::var("PUZZLE_EMIT_SOLN").is_ok()
 }
 
-/// 固定 DBL 角 = U/R/F 都不动(位置 + 朝向)的唯一角(与 pocket_solver 同式独立推导)。
+/// 固定 DBL 角 = U/R/F 都不动(位置 + 朝向)的唯一角(与 cube222_solver 同式独立推导)。
 fn fixed_corner() -> usize {
     static V: OnceLock<usize> = OnceLock::new();
     *V.get_or_init(|| {
         let mut fixed = usize::MAX;
         for c in 0..8usize {
-            let untouched = POCKET_MOVES.iter().all(|&m| {
+            let untouched = CUBE222_MOVES.iter().all(|&m| {
                 let (cp, co) = move_state(Move::from_index(m as usize)).cp_co();
                 cp[c] == c as u8 && co[c] == 0
             });
@@ -96,25 +96,25 @@ fn normalized(alg: &[Move]) -> Vec<Move> {
 }
 
 /// 任意 18-move 打乱的 2x2x2 最优 HTM 步数:先归一到固定 DBL 帧再查表。
-fn pocket_len(s: &PocketSolver, alg: &[Move]) -> u32 {
+fn cube222_len(s: &Cube222Solver, alg: &[Move]) -> u32 {
     s.solve_one(&normalized(alg))
 }
 
-struct PocketWrapper;
+struct Cube222Wrapper;
 
-impl SolverWrapper for PocketWrapper {
+impl SolverWrapper for Cube222Wrapper {
     fn global_init() {
-        let s = S.get_or_init(PocketSolver::new);
-        eprintln!("[INFO] pocket table ready (max depth {})", s.max_depth());
+        let s = S.get_or_init(Cube222Solver::new);
+        eprintln!("[INFO] 222 table ready (max depth {})", s.max_depth());
     }
 
     fn get_csv_header() -> String {
-        if emit_soln() { "id,pocket,soln".into() } else { "id,pocket".into() }
+        if emit_soln() { "id,222,soln".into() } else { "id,222".into() }
     }
 
     fn solve(alg: &[Move], id: &str) -> String {
         let s = S.get().unwrap();
-        let len = pocket_len(s, alg);
+        let len = cube222_len(s, alg);
         if !emit_soln() {
             return format!("{},{}", id, len);
         }
@@ -132,7 +132,7 @@ impl SolverWrapper for PocketWrapper {
 
 fn main() {
     cube_solver::logo::print_logo_block();
-    run_analyzer_app::<PocketWrapper>("_pocket");
+    run_analyzer_app::<Cube222Wrapper>("_222");
 }
 
 #[cfg(test)]
@@ -140,8 +140,8 @@ mod tests {
     use super::*;
     use cube_solver::cube_common::{alg_rotation, string_to_alg};
 
-    fn solver() -> &'static PocketSolver {
-        S.get_or_init(PocketSolver::new)
+    fn solver() -> &'static Cube222Solver {
+        S.get_or_init(Cube222Solver::new)
     }
 
     fn lcg(x: u64) -> u64 {
@@ -186,22 +186,22 @@ mod tests {
         assert_eq!(ends.len(), 24, "rot24 not all distinct");
 
         // 空打乱 / 纯旋转词 = 0
-        assert_eq!(pocket_len(s, &[]), 0);
+        assert_eq!(cube222_len(s, &[]), 0);
         for w in rot24() {
-            assert_eq!(pocket_len(s, w), 0, "pure rotation word must be 0");
+            assert_eq!(cube222_len(s, w), 0, "pure rotation word must be 0");
         }
 
         // 全 18 个单 move = 1(D/L/B 与对面只差整体旋转)
         for m in Move::ALL {
-            assert_eq!(pocket_len(s, &[m]), 1, "single move {}", m.name());
+            assert_eq!(cube222_len(s, &[m]), 1, "single move {}", m.name());
         }
 
         // 手算等价(D/L/B 语义锁定):
         // D U' = 整体 y' 旋转 → 0;L2 R2 = x2 旋转,再 U2 → 1;
         // R L' U D' F B' = x·y·z 三个旋转复合 → 0。
-        assert_eq!(pocket_len(s, &string_to_alg("D U'")), 0);
-        assert_eq!(pocket_len(s, &string_to_alg("L2 R2 U2")), 1);
-        assert_eq!(pocket_len(s, &string_to_alg("R L' U D' F B'")), 0);
+        assert_eq!(cube222_len(s, &string_to_alg("D U'")), 0);
+        assert_eq!(cube222_len(s, &string_to_alg("L2 R2 U2")), 1);
+        assert_eq!(cube222_len(s, &string_to_alg("R L' U D' F B'")), 0);
     }
 
     /// URF-only 词(WCA 222 打乱形态):归一应为恒等,与 solver 直查逐位一致。
@@ -210,8 +210,8 @@ mod tests {
         let s = solver();
         for seed in 0..60u64 {
             let len = 1 + (seed as usize) % 14;
-            let alg = pseudo_word(3000 + seed, len, &POCKET_MOVES);
-            assert_eq!(pocket_len(s, &alg), s.solve_one(&alg), "seed={}", seed);
+            let alg = pseudo_word(3000 + seed, len, &CUBE222_MOVES);
+            assert_eq!(cube222_len(s, &alg), s.solve_one(&alg), "seed={}", seed);
         }
     }
 
@@ -235,7 +235,7 @@ mod tests {
             if depth == 0 {
                 return goals.contains(&st.corners);
             }
-            for &mv in &POCKET_MOVES {
+            for &mv in &CUBE222_MOVES {
                 let m = mv as usize;
                 if prev >= 0 && m / 3 == prev as usize / 3 {
                     continue; // 同面剪枝(U/R/F 两两相邻,禁同面即可保最优)
@@ -255,8 +255,8 @@ mod tests {
             for &m in &alg {
                 st.apply(m);
             }
-            let got = pocket_len(s, &alg);
-            // 每个面转(含 D/L/B)等价 1 个 pocket move ⇒ dist ≤ len ≤ 5
+            let got = cube222_len(s, &alg);
+            // 每个面转(含 D/L/B)等价 1 个 222 move ⇒ dist ≤ len ≤ 5
             assert!(got as usize <= len, "seed={} got={} len={}", seed, got, len);
             let mut want = u32::MAX;
             for dd in 0..=len as u32 {
@@ -276,12 +276,12 @@ mod tests {
         for seed in 0..20u64 {
             let len = 3 + (seed as usize) % 10;
             let alg = pseudo_scramble(9000 + seed, len);
-            let base = pocket_len(s, &alg);
+            let base = cube222_len(s, &alg);
             for r in ["x", "y", "y'", "z2", "x y", "z y'"] {
                 let mut buf: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
                 alg_rotation(&mut buf, r);
                 let ralg: Vec<Move> = buf.iter().map(|&m| Move::from_index(m as usize)).collect();
-                assert_eq!(pocket_len(s, &ralg), base, "seed={} rot={}", seed, r);
+                assert_eq!(cube222_len(s, &ralg), base, "seed={} rot={}", seed, r);
             }
         }
     }

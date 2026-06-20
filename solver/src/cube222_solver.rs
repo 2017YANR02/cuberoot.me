@@ -1,4 +1,4 @@
-//! pocket_solver: 2x2x2 口袋魔方(Pocket Cube)全空间最优求解器。
+//! cube222_solver: 2x2x2 口袋魔方(Pocket Cube)全空间最优求解器。
 //!
 //! 语义:对任意 2x2x2 态求 HTM 最优解步数(整解最优,无条件式阶段——任意态都可解)。
 //! 用途:喂 /scramble 统计管道,WCA 2x2x2 打乱语料 → 每打乱最优解长度分桶。
@@ -22,7 +22,7 @@ use std::sync::OnceLock;
 use crate::cube_common::{move_state, Move, State};
 
 /// 2x2x2 的 9 个 move(U U2 U' R R2 R' F F2 F'),固定 DBL 角。
-pub const POCKET_MOVES: [u8; 9] = [
+pub const CUBE222_MOVES: [u8; 9] = [
     Move::U as u8,
     Move::U2 as u8,
     Move::UPrime as u8,
@@ -39,13 +39,13 @@ pub const CP7: usize = 5040;
 /// 6 个自由角朝向空间 3^6(第 7 个由朝向守恒定)。
 pub const CO6: usize = 729;
 /// 联合态空间 = 7!·3^6。
-pub const POCKET_STATES: usize = CP7 * CO6;
+pub const CUBE222_STATES: usize = CP7 * CO6;
 
 const FACT7: [usize; 7] = [1, 1, 2, 6, 24, 120, 720];
 
 /// 一步解:从打乱态走 moves 到 solved。
 #[derive(Clone, Debug)]
-pub struct PocketSol {
+pub struct Cube222Sol {
     pub len: u32,
     pub moves: Vec<u8>,
 }
@@ -54,7 +54,7 @@ pub struct PocketSol {
 /// 空串=无旋转);rot_moves 为该旋转对角作用的等价 move 词(replay/验证用);
 /// moves 为归一帧下的 URF 解序列。物理含义:对打乱态先整体转 rot,再做 moves 即还原。
 #[derive(Clone, Debug)]
-pub struct PocketAnySol {
+pub struct Cube222AnySol {
     pub len: u32,
     pub rot: String,
     pub rot_moves: Vec<u8>,
@@ -63,8 +63,8 @@ pub struct PocketAnySol {
 
 /// 24 个整体旋转:(显示名如 "x y'",其对角作用的等价 move 词)。首项 ("", [])。
 /// 旋转对角的作用 = move 对:x = R L'、y = U D'、z = F B'(中层只动棱/中心,2x2x2 无)。
-/// 与 pocket_analyzer::rot24 同构,这里带显示名供在线求解器输出旋转前缀。
-pub fn pocket_rot24() -> &'static [(String, Vec<Move>)] {
+/// 与 cube222_analyzer::rot24 同构,这里带显示名供在线求解器输出旋转前缀。
+pub fn cube222_rot24() -> &'static [(String, Vec<Move>)] {
     static V: OnceLock<Vec<(String, Vec<Move>)>> = OnceLock::new();
     V.get_or_init(|| {
         use Move::*;
@@ -96,8 +96,8 @@ pub fn pocket_rot24() -> &'static [(String, Vec<Move>)] {
     })
 }
 
-pub struct PocketSolver {
-    /// 联合移动表 POCKET_STATES × 9。
+pub struct Cube222Solver {
+    /// 联合移动表 CUBE222_STATES × 9。
     mt: Vec<u32>,
     /// 全空间精确距离,idx = cp_rank*CO6 + co_rank。
     dist: Vec<u8>,
@@ -108,7 +108,7 @@ pub struct PocketSolver {
     movable: [u8; 7],
 }
 
-impl Default for PocketSolver {
+impl Default for Cube222Solver {
     fn default() -> Self {
         Self::new()
     }
@@ -160,7 +160,7 @@ fn co_unrank(mut r: usize) -> [u8; 6] {
     o
 }
 
-impl PocketSolver {
+impl Cube222Solver {
     /// 全自包含构造(~3.6MB 距离表 + 移动表现场 BFS,亚秒级)。
     pub fn new() -> Self {
         // 角排列(位置→件)与朝向增量,从 3x3 MOVE_STATES 取(2x2x2 角运动学 = 3x3 角运动学)。
@@ -175,7 +175,7 @@ impl PocketSolver {
         // 找 U/R/F 都不动(位置不变 + 朝向不变)的角 = DBL,固定它。
         let mut fixed = usize::MAX;
         for c in 0..8usize {
-            let untouched = POCKET_MOVES.iter().all(|&m| {
+            let untouched = CUBE222_MOVES.iter().all(|&m| {
                 let m = m as usize;
                 pcp[m][c] == c as u8 && pco[m][c] == 0
             });
@@ -240,10 +240,10 @@ impl PocketSolver {
         };
 
         // 移动表:对每个坐标态应用 9 个 move,记录目标坐标。
-        let mut mt = vec![0u32; POCKET_STATES * 9];
-        for idx in 0..POCKET_STATES {
+        let mut mt = vec![0u32; CUBE222_STATES * 9];
+        for idx in 0..CUBE222_STATES {
             let (cp_full, co_full) = from_coord(idx / CO6, idx % CO6);
-            for (mi, &mv) in POCKET_MOVES.iter().enumerate() {
+            for (mi, &mv) in CUBE222_MOVES.iter().enumerate() {
                 let mv = mv as usize;
                 let (mcp, mco) = (&pcp[mv], &pco[mv]);
                 let mut ncp = [0u8; 8];
@@ -257,8 +257,8 @@ impl PocketSolver {
             }
         }
 
-        // 全空间 BFS(POCKET_MOVES 对取逆封闭 ⇒ 从 solved 正向扩张即距离)。
-        let mut dist = vec![255u8; POCKET_STATES];
+        // 全空间 BFS(CUBE222_MOVES 对取逆封闭 ⇒ 从 solved 正向扩张即距离)。
+        let mut dist = vec![255u8; CUBE222_STATES];
         let solved = {
             let (cp, co) = State::SOLVED.cp_co();
             let (cr, or) = to_coord(&cp, &co);
@@ -283,7 +283,7 @@ impl PocketSolver {
             frontier = next;
         }
 
-        PocketSolver { mt, dist, fixed, movable }
+        Cube222Solver { mt, dist, fixed, movable }
     }
 
     /// 距离表最大深度(实测 God's number)。
@@ -337,8 +337,8 @@ impl PocketSolver {
         self.dist[self.coord_of(alg)] as u32
     }
 
-    /// 由坐标态求一条最优解(回溯距离表),返回从打乱态到 solved 的 move 序列(POCKET_MOVES 索引)。
-    pub fn enumerate(&self, alg: &[Move]) -> PocketSol {
+    /// 由坐标态求一条最优解(回溯距离表),返回从打乱态到 solved 的 move 序列(CUBE222_MOVES 索引)。
+    pub fn enumerate(&self, alg: &[Move]) -> Cube222Sol {
         let mut cur = self.coord_of(alg);
         let mut moves = Vec::new();
         let mut d = self.dist[cur];
@@ -347,18 +347,18 @@ impl PocketSolver {
             for mi in 0..9 {
                 let ni = self.mt[base + mi] as usize;
                 if self.dist[ni] == d - 1 {
-                    moves.push(POCKET_MOVES[mi]);
+                    moves.push(CUBE222_MOVES[mi]);
                     cur = ni;
                     d -= 1;
                     break;
                 }
             }
         }
-        PocketSol { len: moves.len() as u32, moves }
+        Cube222Sol { len: moves.len() as u32, moves }
     }
 
     /// 轻量构造(WASM 用):只建 3.6MB 全空间距离表,**不存**联合移动表(new() 的
-    /// mt 为 POCKET_STATES×9×4B ≈ 132MB,浏览器线性内存吃不消)。BFS 转移现场由
+    /// mt 为 CUBE222_STATES×9×4B ≈ 132MB,浏览器线性内存吃不消)。BFS 转移现场由
     /// 角运动学逐态计算,总转换次数与 new() 建表相同(每态 9 次),只省内存不加时。
     /// 注意:lean 实例的 mt 为空,查询只能走 solve_one / solve_one_any / enumerate_any
     /// (全程 State 级投影,不依赖 mt);不要调 enumerate(走 mt 回溯)。
@@ -373,7 +373,7 @@ impl PocketSolver {
 
         let mut fixed = usize::MAX;
         for c in 0..8usize {
-            let untouched = POCKET_MOVES.iter().all(|&m| {
+            let untouched = CUBE222_MOVES.iter().all(|&m| {
                 let m = m as usize;
                 pcp[m][c] == c as u8 && pco[m][c] == 0
             });
@@ -432,7 +432,7 @@ impl PocketSolver {
         };
 
         // 全空间 BFS:转移现场算(from_coord → 9 move → to_coord),不落 mt。
-        let mut dist = vec![255u8; POCKET_STATES];
+        let mut dist = vec![255u8; CUBE222_STATES];
         let solved = {
             let (cp, co) = State::SOLVED.cp_co();
             let (cr, or) = to_coord(&cp, &co);
@@ -446,7 +446,7 @@ impl PocketSolver {
             for &i in &frontier {
                 let idx = i as usize;
                 let (cp_full, co_full) = from_coord(idx / CO6, idx % CO6);
-                for &mv in &POCKET_MOVES {
+                for &mv in &CUBE222_MOVES {
                     let mv = mv as usize;
                     let (mcp, mco) = (&pcp[mv], &pco[mv]);
                     let mut ncp = [0u8; 8];
@@ -467,7 +467,7 @@ impl PocketSolver {
             frontier = next;
         }
 
-        PocketSolver { mt: Vec::new(), dist, fixed, movable }
+        Cube222Solver { mt: Vec::new(), dist, fixed, movable }
     }
 
     /// 角布局(固定 DBL 角 + 其余 7 个 movable 角升序),由 move 运动学现推(常数级)。
@@ -482,7 +482,7 @@ impl PocketSolver {
         }
         let mut fixed = usize::MAX;
         for c in 0..8usize {
-            let untouched = POCKET_MOVES.iter().all(|&m| {
+            let untouched = CUBE222_MOVES.iter().all(|&m| {
                 let m = m as usize;
                 pcp[m][c] == c as u8 && pco[m][c] == 0
             });
@@ -508,9 +508,9 @@ impl PocketSolver {
     /// 浏览器端「秒算」:静态资源直载距离表。查询走 solve_one_any / enumerate_any
     /// (全 State 级投影,不依赖 mt)。
     pub fn from_dist(dist: Vec<u8>) -> Self {
-        assert_eq!(dist.len(), POCKET_STATES, "pocket dist table size mismatch");
+        assert_eq!(dist.len(), CUBE222_STATES, "222 dist table size mismatch");
         let (fixed, movable) = Self::corner_layout();
-        PocketSolver { mt: Vec::new(), dist, fixed, movable }
+        Cube222Solver { mt: Vec::new(), dist, fixed, movable }
     }
 
     /// 全空间距离表原始字节(落盘成静态资源用)。
@@ -519,14 +519,14 @@ impl PocketSolver {
     }
 
     /// 任意打乱末态归一到固定 DBL 帧:在 24 个整体旋转里找唯一使 DBL 角归位归向者。
-    /// 返回(归一后全角态,选中的旋转条目)。与 pocket_analyzer::pocket_len 同语义
+    /// 返回(归一后全角态,选中的旋转条目)。与 cube222_analyzer::cube222_len 同语义
     /// (整体旋转不改最优解长,解经共轭等长)。
     fn normalize_state(&self, alg: &[Move]) -> (State, &'static (String, Vec<Move>)) {
         let mut st = State::SOLVED;
         for &m in alg {
             st.apply(m);
         }
-        for entry in pocket_rot24() {
+        for entry in cube222_rot24() {
             let mut st2 = st;
             for &m in &entry.1 {
                 st2.apply(m);
@@ -547,14 +547,14 @@ impl PocketSolver {
 
     /// 任意 18 记号打乱的一条最优解:24 旋转归一后回溯距离表(State 级,不依赖 mt,
     /// lean 实例可用)。物理含义:打乱后先整体转 rot,再做 moves 即还原。
-    pub fn enumerate_any(&self, alg: &[Move]) -> PocketAnySol {
+    pub fn enumerate_any(&self, alg: &[Move]) -> Cube222AnySol {
         let (mut st, entry) = self.normalize_state(alg);
         let mut d = self.dist[self.state_coord(&st)];
         let len = d as u32;
         let mut moves = Vec::new();
         while d > 0 {
             let before = d;
-            for &mv in &POCKET_MOVES {
+            for &mv in &CUBE222_MOVES {
                 let ns = st.applied(Move::from_index(mv as usize));
                 if self.dist[self.state_coord(&ns)] == d - 1 {
                     moves.push(mv);
@@ -565,7 +565,7 @@ impl PocketSolver {
             }
             assert!(d < before, "distance table walk stuck");
         }
-        PocketAnySol {
+        Cube222AnySol {
             len,
             rot: entry.0.clone(),
             rot_moves: entry.1.iter().map(|m| m.index() as u8).collect(),
@@ -603,11 +603,11 @@ mod tests {
 
     #[test]
     fn pt_basics() {
-        let s = PocketSolver::new();
+        let s = Cube222Solver::new();
 
         // 态空间 = 7!·3^6
-        assert_eq!(POCKET_STATES, 3_674_160);
-        assert_eq!(s.dist.len(), POCKET_STATES);
+        assert_eq!(CUBE222_STATES, 3_674_160);
+        assert_eq!(s.dist.len(), CUBE222_STATES);
 
         // DBL 固定角:U/R/F 都不动者,唯一
         assert!(s.fixed < 8);
@@ -641,7 +641,7 @@ mod tests {
 
         // 距离分布之和 = 全空间
         let h = s.depth_histogram();
-        assert_eq!(h.iter().sum::<usize>(), POCKET_STATES);
+        assert_eq!(h.iter().sum::<usize>(), CUBE222_STATES);
         assert_eq!(h[0], 1);
         assert_eq!(h.len(), 12); // 深度 0..=11
     }
@@ -675,7 +675,7 @@ mod tests {
         while !frontier.is_empty() {
             let mut next = Vec::new();
             for (cp, co) in &frontier {
-                for &mv in &POCKET_MOVES {
+                for &mv in &CUBE222_MOVES {
                     let mv = mv as usize;
                     let (mcp, mco) = (&pcp[mv], &pco[mv]);
                     let mut ncp = [0u8; 8];
@@ -694,9 +694,9 @@ mod tests {
             d += 1;
             frontier = next;
         }
-        assert_eq!(map.len(), POCKET_STATES, "brute space size mismatch");
+        assert_eq!(map.len(), CUBE222_STATES, "brute space size mismatch");
 
-        let s = PocketSolver::new();
+        let s = Cube222Solver::new();
         assert_eq!(s.max_depth(), *map.values().max().unwrap());
 
         // 全空间逐格对照:暴力的每个全角态投影到坐标后查表,距离须相等。
@@ -736,14 +736,14 @@ mod tests {
     /// enumerate 物理 replay:解序列从打乱态走回 solved。
     #[test]
     fn enumerate_solutions_replay_to_solved() {
-        let s = PocketSolver::new();
+        let s = Cube222Solver::new();
         for seed in 0..40u64 {
             let len = 1 + (seed as usize) % 25;
-            let alg = pseudo_word(5000 + seed, len, &POCKET_MOVES);
+            let alg = pseudo_word(5000 + seed, len, &CUBE222_MOVES);
             let best = s.solve_one(&alg);
             let sol = s.enumerate(&alg);
             assert_eq!(sol.len, best, "enum len != optimal, seed={}", seed);
-            assert!(sol.moves.iter().all(|&m| POCKET_MOVES.contains(&m)), "non-pocket move");
+            assert!(sol.moves.iter().all(|&m| CUBE222_MOVES.contains(&m)), "non-222 move");
 
             // 物理 replay:打乱态 + 解 → solved
             let mut st = State::SOLVED;
@@ -762,11 +762,11 @@ mod tests {
         assert!(sol.moves.is_empty());
     }
 
-    /// 与 cstimer pocketCube 同语义交叉:URF-only 打乱的最优长度一致性
+    /// 与 cstimer 2x2x2 同语义交叉:URF-only 打乱的最优长度一致性
     /// (独立 IDDFS 复核短打乱最优性,绕开 mt/dist 表)。
     #[test]
     fn optimality_spot_check_iddfs() {
-        let s = PocketSolver::new();
+        let s = Cube222Solver::new();
 
         fn dfs(st: &State, depth: u32, prev: i32) -> bool {
             if depth == 0 {
@@ -774,7 +774,7 @@ mod tests {
                     // 整解判定:8 角全归位归向(2x2x2 视角下 DBL 固定 ⇒ 直接比 corners)
                     || st.corners == State::SOLVED.corners;
             }
-            for &mv in &POCKET_MOVES {
+            for &mv in &CUBE222_MOVES {
                 let m = mv as usize;
                 if prev >= 0 && m / 3 == prev as usize / 3 {
                     continue; // 同面剪枝(U/R/F 互不为对立面,只需禁同面)
@@ -788,7 +788,7 @@ mod tests {
         }
 
         for seed in 900..914u64 {
-            let alg = pseudo_word(seed, 6, &POCKET_MOVES);
+            let alg = pseudo_word(seed, 6, &CUBE222_MOVES);
             let got = s.solve_one(&alg);
             assert!(got <= 6, "6-move URF scramble dist > 6");
             let mut st = State::SOLVED;
@@ -809,8 +809,8 @@ mod tests {
     /// lean 构造(WASM 路径,零 mt)与 full 构造距离表全空间逐格相等。
     #[test]
     fn lean_matches_full() {
-        let full = PocketSolver::new();
-        let lean = PocketSolver::new_lean();
+        let full = Cube222Solver::new();
+        let lean = Cube222Solver::new_lean();
         assert!(lean.mt.is_empty());
         assert_eq!(lean.fixed, full.fixed);
         assert_eq!(lean.movable, full.movable);
@@ -821,8 +821,8 @@ mod tests {
     /// from_dist(落盘表直载,浏览器秒算路径)与 lean 构造逐态相等,且任意打乱解一致。
     #[test]
     fn from_dist_matches_lean() {
-        let lean = PocketSolver::new_lean();
-        let loaded = PocketSolver::from_dist(lean.dist_bytes().to_vec());
+        let lean = Cube222Solver::new_lean();
+        let loaded = Cube222Solver::from_dist(lean.dist_bytes().to_vec());
         assert_eq!(loaded.dist, lean.dist, "from_dist dist != lean dist");
         assert_eq!(loaded.fixed, lean.fixed);
         assert_eq!(loaded.movable, lean.movable);
@@ -848,12 +848,12 @@ mod tests {
     /// 全 18 打乱 replay(打乱 + rot_moves + 解 → 角全归位)+ 短词 IDDFS 独立最优性对照。
     #[test]
     fn any_normalization_and_replay() {
-        let s = PocketSolver::new_lean();
+        let s = Cube222Solver::new_lean();
 
         // rot24:24 个互异旋转(末态角排列互异),首项为空
-        assert_eq!(pocket_rot24().len(), 24);
-        assert!(pocket_rot24()[0].0.is_empty() && pocket_rot24()[0].1.is_empty());
-        let mut ends: Vec<[u8; 8]> = pocket_rot24()
+        assert_eq!(cube222_rot24().len(), 24);
+        assert!(cube222_rot24()[0].0.is_empty() && cube222_rot24()[0].1.is_empty());
+        let mut ends: Vec<[u8; 8]> = cube222_rot24()
             .iter()
             .map(|(_, w)| {
                 let mut st = State::SOLVED;
@@ -868,7 +868,7 @@ mod tests {
         assert_eq!(ends.len(), 24, "rot24 not all distinct");
 
         // 纯旋转词 = 0;全 18 单 move = 1(D/L/B 与对面只差整体旋转)
-        for (_, w) in pocket_rot24() {
+        for (_, w) in cube222_rot24() {
             assert_eq!(s.solve_one_any(w), 0);
         }
         for m in Move::ALL {
@@ -880,7 +880,7 @@ mod tests {
         // URF 词:归一为恒等,与 solve_one 逐位一致
         for seed in 0..30u64 {
             let len = 1 + (seed as usize) % 14;
-            let alg = pseudo_word(11000 + seed, len, &POCKET_MOVES);
+            let alg = pseudo_word(11000 + seed, len, &CUBE222_MOVES);
             assert_eq!(s.solve_one_any(&alg), s.solve_one(&alg), "seed={}", seed);
         }
 
@@ -892,7 +892,7 @@ mod tests {
             assert!(best as usize <= len, "seed={}", seed);
             let sol = s.enumerate_any(&alg);
             assert_eq!(sol.len, best, "enum_any len != optimal, seed={}", seed);
-            assert!(sol.moves.iter().all(|&m| POCKET_MOVES.contains(&m)));
+            assert!(sol.moves.iter().all(|&m| CUBE222_MOVES.contains(&m)));
             let mut st = State::SOLVED;
             for &m in &alg {
                 st.apply(m);
@@ -904,7 +904,7 @@ mod tests {
         }
 
         // 短词独立 IDDFS 最优性对照(目标 = 24 个旋转后的 solved 角态,绕开归一与距离表)
-        let goals: Vec<[u8; 8]> = pocket_rot24()
+        let goals: Vec<[u8; 8]> = cube222_rot24()
             .iter()
             .map(|(_, w)| {
                 let mut st = State::SOLVED;
@@ -918,7 +918,7 @@ mod tests {
             if depth == 0 {
                 return goals.contains(&st.corners);
             }
-            for &mv in &POCKET_MOVES {
+            for &mv in &CUBE222_MOVES {
                 let m = mv as usize;
                 if prev >= 0 && m / 3 == prev as usize / 3 {
                     continue;

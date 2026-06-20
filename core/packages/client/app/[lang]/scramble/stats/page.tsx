@@ -134,7 +134,7 @@ const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '3
 // 非 3x3 puzzle:WCA event_id → puzzle_distribution.json 的 key。选中这些项目时,
 // 难度 tab 显示该 puzzle 的整解步数分布(数据来自独立 native solver 管线)。
 // sq1 是近最优(双阶段上界),其余三个是精确最优 —— 口径差异在 PuzzleDistView 里标注。
-const PUZZLE_EVENT_MAP: Record<string, string> = { '222': 'pocket', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1' };
+const PUZZLE_EVENT_MAP: Record<string, string> = { '222': '222', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1' };
 
 // 页面标题单一来源:h1 与 document.title(浏览器标签页)都从这里取,改标题只改这一处。
 const PAGE_TITLE = { zh: '打乱统计', en: 'Scramble Stats' };

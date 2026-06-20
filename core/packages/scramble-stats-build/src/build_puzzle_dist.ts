@@ -42,7 +42,7 @@ interface PuzzleSpec {
 
 // 新 puzzle 注册处:加一行 + update_puzzle_stats.ps1 的 $PUZZLE 表加对应 analyzer 即可。
 const PUZZLES: PuzzleSpec[] = [
-  { key: 'pocket', event: '222', label: '2x2x2', label_zh: '二阶', metric: 'htm' },
+  { key: '222', event: '222', label: '2x2x2', label_zh: '二阶', metric: 'htm' },
   { key: 'pyraminx', event: 'pyram', label: 'Pyraminx', label_zh: '金字塔', metric: 'htm' }, // 总 HTM 含 tips
   { key: 'skewb', event: 'skewb', label: 'Skewb', label_zh: '斜转', metric: 'htm' },
   // sq1 主口径 = 可证 WCA 12c4 最优(Sq1WcaSolver,sq1_wca_exact.csv + 未 ingest 块),备选 slash。
