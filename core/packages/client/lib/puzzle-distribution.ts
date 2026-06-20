@@ -33,7 +33,7 @@ export interface PuzzleDistEntry {
 
 export interface PuzzleDistributionJson {
   meta: { generated_at: string; puzzles: string[] };
-  puzzles: Record<string, PuzzleDistEntry>; // key = puzzle 名(pocket / pyraminx / skewb / sq1)
+  puzzles: Record<string, PuzzleDistEntry>; // key = puzzle 名(222 / pyraminx / skewb / sq1)
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)

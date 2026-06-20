@@ -5,7 +5,7 @@
 //   无日期的比赛(极少)排在最后。
 //
 // 数据三源(同 build_puzzle_examples.ts):
-//   <key>.csv         id + 步数列(pocket/pyraminx/skewb = id,<key>,soln;sq1 = id,wca,slash)
+//   <key>.csv         id + 步数列(222/pyraminx/skewb = id,<key>,soln;sq1 = id,wca,slash)
 //   Scrambles.tsv     id → competition_id / round / group / scramble_num / is_extra(按表头取列)
 //   competitions.tsv  competition_id → 名称 + 日期
 //
@@ -30,7 +30,7 @@ interface PuzzleSpec {
 
 // 与 build_puzzle_examples.ts / build_puzzle_dist.ts 的 PUZZLES 对齐。
 const PUZZLES: PuzzleSpec[] = [
-  { key: 'pocket', event: '222' },
+  { key: '222', event: '222' },
   { key: 'pyraminx', event: 'pyram' },
   { key: 'skewb', event: 'skewb' },
   { key: 'sq1', event: 'sq1', valueCol: 'wca', altCol: 'slash' },

@@ -35,7 +35,7 @@ param(
   [switch]$UseCached,      # 取数用本地 cache/ 最新 export zip, 不联网下载/不查官方元数据(export_date 从文件名还原, stamp 仍稳定)。向导会先问这一步
   [ValidateSet('all','stages','333opt','puzzles')]
   [string[]]$Jobs = @('all'),   # 一条龙作业选择: stages(3x3阶段难度) / 333opt(整解最优HTM) / puzzles(非3x3) / all。AI 按用户"跑X/不跑Y"映射; 默认全跑
-  [string[]]$Puzzles = @('pocket','pyraminx','skewb','sq1')   # puzzles 作业跑哪些非3x3 对象
+  [string[]]$Puzzles = @('222','pyraminx','skewb','sq1')   # puzzles 作业跑哪些非3x3 对象
 )
 $ErrorActionPreference = 'Stop'
 $ChunkExplicit = $PSBoundParameters.ContainsKey('ChunkSize')  # 显式 -ChunkSize 覆盖每变体默认

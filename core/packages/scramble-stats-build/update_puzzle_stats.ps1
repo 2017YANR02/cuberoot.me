@@ -3,7 +3,7 @@
 #
 # 一键:        pwsh update_puzzle_stats.ps1                     (全部已注册 puzzle, 增量补满)
 # 小样本验形:  pwsh update_puzzle_stats.ps1 -MaxNew 300         (只取 300 条新打乱, 跑通全链验 JSON 形状)
-# 选 puzzle:   pwsh update_puzzle_stats.ps1 -Puzzles pocket
+# 选 puzzle:   pwsh update_puzzle_stats.ps1 -Puzzles 222
 # 只重算 JSON: pwsh update_puzzle_stats.ps1 -BuildOnly          (用现有 CSV 状态重写 puzzle_distribution.json)
 #
 # 流程: WCA export Scrambles.tsv (3x3 管道已抽好的 incremental/tsv/, 缺则从 cache zip 单条目流式抽)
@@ -50,7 +50,7 @@ $PkgDir      = $PSScriptRoot
 #          近最优(twophase)2026-06-18 退役, 代码仍在 solver/src/sq1_twophase.rs 作对照。
 #   clock = 暂无 solver, 未注册; 接入时一并加 soln 列。
 $PUZZLE = @{
-  pocket   = @{ event = '222';   exe = 'pocket_analyzer.exe' }
+  '222'    = @{ event = '222';   exe = 'cube222_analyzer.exe' }
   pyraminx = @{ event = 'pyram'; exe = 'pyraminx_analyzer.exe' }
   skewb    = @{ event = 'skewb'; exe = 'skewb_analyzer.exe' }
 }

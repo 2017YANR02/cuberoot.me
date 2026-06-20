@@ -222,8 +222,8 @@ eoline 的 yk 与 yk+2 同目标(get_stats/enumerate 只跑 yk 0/1),dr 对 y 完
 3x3 的多视角阶段管道(§3)对非 3x3 不适用;非 3x3 管道统计 = **整解最优步数分布**
 (WCA 该项目打乱语料 → 最优 analyzer → 长度分桶)。新 puzzle(pyraminx / skewb / sq1)照搬四处:
 
-1. **analyzer bin**(范本 `pocket_analyzer.rs`):CSV 两列 `id,<key>`,值 = 整解最优步数;
-   key 用 puzzle 名(pocket / pyraminx / skewb / sq1)。
+1. **analyzer bin**(范本 `cube222_analyzer.rs`):CSV 两列 `id,<key>`,值 = 整解最优步数;
+   key 用 puzzle 名(222 / pyraminx / skewb / sq1)。
 2. **管道脚本** `scramble-stats-build/update_puzzle_stats.ps1` 的 `$PUZZLE` 表加一行
    (key → WCA event_id + analyzer exe)。语料自动从 3x3 管道抽好的
    `incremental/tsv/Scrambles.tsv` 按 event_id 过滤(缺则从 cache zip 流式抽),增量落
