@@ -94,6 +94,46 @@ async function readNewMeta(p: string): Promise<Map<string, NewMeta>> {
   return m;
 }
 
+async function maxIdOf(p: string): Promise<number> {
+  if (!fs.existsSync(p)) return 0;
+  let max = 0;
+  const rl = readline.createInterface({ input: fs.createReadStream(p, 'utf-8'), crlfDelay: Infinity });
+  let first = true;
+  for await (const line of rl) {
+    if (!line) continue;
+    if (first) { first = false; continue; }
+    const c = line.indexOf(',');
+    if (c <= 0) continue;
+    const id = Number(line.slice(0, c));
+    if (Number.isFinite(id) && id > max) max = id;
+  }
+  return max;
+}
+
+// stream the master split_mbf, keep rows whose numeric id > `after`, and rewrite `snap` (header +
+// those raw rows, identical column layout to new_split_mbf) so the snapshot tracks the corpus.
+async function readMetaAfter(masterPath: string, after: number, snap: string): Promise<Map<string, NewMeta>> {
+  const m = new Map<string, NewMeta>();
+  if (!fs.existsSync(masterPath)) return m;
+  const rows: string[] = [];
+  let header = 'id,scramble,competition_id,event_id,round_type_id,group_id,is_extra,scramble_num';
+  const rl = readline.createInterface({ input: fs.createReadStream(masterPath, 'utf-8'), crlfDelay: Infinity });
+  let first = true;
+  for await (const line of rl) {
+    if (!line) continue;
+    if (first) { first = false; header = line; continue; }
+    const k = line.indexOf(',');
+    if (k <= 0) continue;
+    const id = Number(line.slice(0, k));
+    if (!Number.isFinite(id) || id <= after) continue;
+    const c = line.split(',');
+    m.set(c[0], { scramble: c[1], compId: c[2], event: c[3], round: c[4], group: c[5], num: Number(c[7]), extra: c[6] === '1' });
+    rows.push(line);
+  }
+  if (rows.length > 0) fs.writeFileSync(snap, `${header}\n${rows.join('\n')}\n`);
+  return m;
+}
+
 // keep the smallest-`cap` ids in a step bucket (id asc, deterministic regardless of CSV order).
 // each entry carries the bottom-color letter that attained this bucket's step count.
 function insertCapped(arr: [string, string][], id: string, color: string, cap: number) {
@@ -122,21 +162,35 @@ async function main() {
   const compTsv = wca.comp_csv ?? path.join(dataRoot, 'competitions.tsv');
 
   const batchSnap = path.join(dataRoot, 'incremental', 'recent_scrambles_batch.csv');
+  const masterMbf = path.join(dataRoot, 'input', 'wca_scrambles_split_mbf.csv');
 
-  // 1. batch source: prefer this run's new_split_mbf; if it's empty (a no-new-scramble run, e.g.
-  //    a pure f2leo/pseudo_f2leo backfill that re-fetched and found nothing), fall back to the
-  //    last-batch snapshot so newly filled variants still join the most recent 近期打乱 batch.
+  // batch source priority:
+  //  1. this run's new_split_mbf (normal incremental path) — snapshot it for later reuse.
+  //  2. empty new_split_mbf but the master corpus advanced past the last snapshot -> derive the
+  //     delta from master's tail (id > snapshot max) and refresh the snapshot. Self-heals 近期打乱
+  //     when new scrambles landed in master via a run that never reached this step (failed
+  //     mid-pipeline, or -PublishOnly) — that leaves new_split_mbf cleared while the snapshot
+  //     stays stale. Mirrors the id-watermark the all-events build already relies on.
+  //  3. else reuse the last snapshot (e.g. pure variant backfill, nothing new in master).
   let newMeta = await readNewMeta(newMbf);
-  let fromSnapshot = false;
+  let source: string;
   if (newMeta.size > 0) {
     fs.copyFileSync(newMbf, batchSnap); // remember this batch for later variant-only refreshes
+    source = 'new batch; snapshot updated';
   } else {
-    newMeta = await readNewMeta(batchSnap);
-    fromSnapshot = true;
+    const snapMax = await maxIdOf(batchSnap);
+    const tail = snapMax > 0 ? await readMetaAfter(masterMbf, snapMax, batchSnap) : new Map<string, NewMeta>();
+    if (tail.size > 0) {
+      newMeta = tail;
+      source = `master tail (id > ${snapMax}); snapshot refreshed`;
+    } else {
+      newMeta = await readNewMeta(batchSnap);
+      source = 'last-batch snapshot';
+    }
   }
   const newCount = newMeta.size;
   if (newCount === 0) { console.log('[recent-scrambles] no batch (no new_split_mbf, no snapshot) — skipping.'); return; }
-  console.log(`[recent-scrambles] ${newCount} scrambles ${fromSnapshot ? '(last-batch snapshot)' : '(new batch; snapshot updated)'}`);
+  console.log(`[recent-scrambles] ${newCount} scrambles (${source})`);
 
   // 2. per variant: stream its full CSV, bucket ids by step per (metric, color) among the new ids
   const rank: Record<string, Record<string, Record<string, StepBuckets>>> = {};
