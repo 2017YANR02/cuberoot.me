@@ -129,6 +129,7 @@
 - 2026-06-20 / A0 / `6265c3671` / 非 WCA 分组选择器 `NonWcaPuzzlePicker`(数据驱动 family + solvable),接 solver/stats 两页,ivy 走分组下拉 proof;typecheck 绿,UI 门欠账。
 - 2026-06-20 / A0-review / `6ba92bf18` / 复核 6265c3671:executor 的 typecheck EXIT=0 属实,预警的错误(缺 family / 悬空 SOLVE_EVENTS/SOLVE_APPEND/IVY_DIST_APPEND / 暴露未用导入)均不存在;30 event 全有 family、仅 ivy solvable、守卫测试全绿。唯一清理 = 删 cstimer-scramble 里早已存在的死 i18n 导入。UI 门仍欠账(见 §4)。
 - 2026-06-20 / A1 / `7a2a56243` / `133` 1×3×3 花型纯 TS 全 BFS 最优解;实测 192 态(非估 6,144)、上帝之数 8、均值 4.43;套 Ivy 范式接 solver/stats/preview/picker;vitest 11/11 + typecheck EXIT=0 + Playwright UI 验过(零 console error)。**顺带落库 A0 遗留未提交的 Ivy proof 全套文件**(此前 ivy 实现一直只在工作树、从未 commit)。
+- 2026-06-20 / A1-review / `7a2a56243` / 独立复核 A1:executor 全部声明属实,**无真错可修**(零代码改动)。tsgo EXIT=0 + tsc -b EXIT=0(两者一致,不存在 prompt 预警的 `133` 缺失于 `SolvePuzzle`/`EVENT_ID`/`PUZZLE_BY_EVENT` 或 `floppy_svg.ts` 悬空 `MOVE_PIECES` —— `MOVE_PIECES` 实为 `floppy-solver.ts` 导出常量、svg 仅 import `floppyApply` 用本地 `CORNER_SLOTS`,预警系陈旧);vitest 11/11 绿(断言 192 态 / God 8 / 直方图 `[1,4,10,24,53,64,31,4,1]` / 独立 BFS 交叉验证 / 400 随机解最优性 + 有效性);移动语义与 cstimer `1x3x3.js` 逐字段一致(movePieces 2-cycle + 逐轴 flip)。git HEAD 确认 ivy + floppy 全套文件 + NonWcaPuzzlePicker 均已入库,fresh checkout 一致。Playwright 实测 `/scramble/solver?event=133`(预览 21 rect,R L F B R → L B F 3 步)+ `/scramble/stats?event=133`(图表 + 均值 4.43/中位 5/众数 5/God 8 + 12 示例 + 全 192 态)桌面 + 390px(无横向溢出),两页零 console error。
 - 参照基线:`ivy`(2026-06-20,纯 TS 全 BFS,29,160 态,God 8,均值 5.74)= 本 loop 的范式样板。
 
 ---
