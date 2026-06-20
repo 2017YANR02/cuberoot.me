@@ -72,7 +72,8 @@
 
 - [x] **A0 基础设施:非 WCA 项目分组选择器** —— 30 项塞不进现有 `SolveTabs` / `WcaEventSelector` 图标行。子 agent 设计可扩展的二级入口(建议:WCA 求解器留图标行,非 WCA 走一个分组下拉 / 「更多魔方」分类选择器,同款复用于 `/scramble/solver` 与 `/scramble/stats`)。门:typecheck + playwright 选择器在桌面/390px 可用、能切到 ivy。**这是后续所有单元的接线前提,先做。** ⚠ 设计可改,子 agent 给一句话理由即可,别 gate。
   完成 2026-06-20(commit `6265c3671`,UI 门欠账见 §4)。落地 = `components/NonWcaPuzzlePicker`(「更多魔方」分组下拉,按 family 分组),数据驱动自 `lib/cstimer-scramble`(每 event 加 `family` + `solvable`;A1+ 只翻 `solvable:true` 即自动出现,免改 UI)。WCA 求解器留图标行,ivy 移进分组下拉作 proof,`?event=ivy` URL 不变。
-- [ ] **A1** `133` 1×3×3 花型 — `1x3x3.js`(6,144 态,cstimer 本就全 BFS)。move R L F B 全 power。最简,先拿它验通整条 A 档流水线。
+- [x] **A1** `133` 1×3×3 花型 — `1x3x3.js`。move R L F B,每面单 180° 转(自逆),无 power/primes。
+  完成 2026-06-20(commit `7a2a56243`)。**实测可达态 = 192**(独立 BFS 枚举;非条目原估的 6,144 —— 那是 cstimer 内部 24×16×16 编码空间,真实闭包受 perm-parity == flip-popcount-parity 约束砍半 = 24×16/2 = 192)。**上帝之数 8**,均值 4.43,直方图 `[1,4,10,24,53,64,31,4,1]`。纯 TS 全图 BFS(memoized),套 Ivy 范式;移动语义逐字段照抄 cstimer `1x3x3.js`(movePieces 2-cycle swap + 逐轴 flip bit)。落地文件 = `lib/floppy-solver.ts` + `solver/_FloppySolver.tsx`(`?event=133` dispatch)+ `gen/_svg/floppy_svg.ts`(U 面 3×3 + 四侧条网图,颜色全由 state 推导 → solved 每面纯色自证)+ `stats/_components/FloppyDistView.tsx`(全 192 态精确直方图 + 自造示例 + 下载全状态 CSV/单步数 txt)+ `tests/floppy_solver.test.ts`(独立 BFS 交叉验证全过 11/11)。**本单元顺带把 A0 遗留未提交的 Ivy proof 文件一并落库**(A0 commit 6265c3671 只提交了 picker 基建,ivy_svg/IvyDistView/_IvySolver/ivy-solver/ivy_solver.css/测试 + 三处共享接线都留在工作树未 commit;A1 的共享接线与 ivy 的交错在同一 hunk,故一并提交保证 fresh checkout 一致)。门:vitest 11/11 绿、typecheck EXIT=0、Playwright UI 验过(solver+stats 桌面+390px、下拉切 133↔ivy、2D 预览渲染、本次改动零 console error)。
 - [ ] **A2** `223` 2×2×3 多米诺 — `2x2x3.js`(角 8!=40,320 × 3 中棱态 6 = **241,920**)。move U D(90°)+ R2 F2。
 - [ ] **A3** `8p` 八数码 — `slide.js`(9!/2 = **181,440**)。滑块类(非扭转):状态 = 3×3 格排列,move = 空格上下左右滑;最优 + God's number 31 分布;预览 = 数字格(非 net)。
 - [ ] **A4** `sfl` 超薄花型(Super Floppy)— `megascramble.js:33`(~1e5 ⚠)。move R/L + U/D 缩减集。
@@ -127,6 +128,7 @@
 
 - 2026-06-20 / A0 / `6265c3671` / 非 WCA 分组选择器 `NonWcaPuzzlePicker`(数据驱动 family + solvable),接 solver/stats 两页,ivy 走分组下拉 proof;typecheck 绿,UI 门欠账。
 - 2026-06-20 / A0-review / `6ba92bf18` / 复核 6265c3671:executor 的 typecheck EXIT=0 属实,预警的错误(缺 family / 悬空 SOLVE_EVENTS/SOLVE_APPEND/IVY_DIST_APPEND / 暴露未用导入)均不存在;30 event 全有 family、仅 ivy solvable、守卫测试全绿。唯一清理 = 删 cstimer-scramble 里早已存在的死 i18n 导入。UI 门仍欠账(见 §4)。
+- 2026-06-20 / A1 / `7a2a56243` / `133` 1×3×3 花型纯 TS 全 BFS 最优解;实测 192 态(非估 6,144)、上帝之数 8、均值 4.43;套 Ivy 范式接 solver/stats/preview/picker;vitest 11/11 + typecheck EXIT=0 + Playwright UI 验过(零 console error)。**顺带落库 A0 遗留未提交的 Ivy proof 全套文件**(此前 ivy 实现一直只在工作树、从未 commit)。
 - 参照基线:`ivy`(2026-06-20,纯 TS 全 BFS,29,160 态,God 8,均值 5.74)= 本 loop 的范式样板。
 
 ---
@@ -167,6 +169,7 @@
 - 新建 `_svg/<id>_svg.ts`、`lib/<id>-solver.ts`、`stats/_components/<P>DistView.tsx`、`solver/_<P>Solver.tsx`、`tests/<id>_solver.test.ts`。
 
 **测试欠账(owed UI)**:
-- **A0(2026-06-20,commit `6265c3671`)**:Playwright UI 门**未跑** —— 本机内存吃紧(free RAM 2.44GB,用户在跑大型求解器),按 loop 约束跳过 Chromium,标欠账。已做的替代验证:typecheck EXIT=0;HTTP smoke `/scramble/solver`、`/scramble/solver?event=ivy`、`/scramble/stats`、`/scramble/stats?event=ivy` 全 200(SSR 不崩 + ivy 深链不变)。**待补**:Playwright 开 solver 与 stats 两页桌面 + 390px,点开「更多魔方」下拉、经它切到 ivy、确认 0 console error + 弹层窄屏不溢出。
+- **A0(2026-06-20,commit `6265c3671`)**:Playwright UI 门当时跳过(内存吃紧)。**已于 A1(2026-06-20,commit `7a2a56243`)补齐并清账** —— Playwright 实测:`/scramble/solver?event=133` 与 `?event=ivy`、`/scramble/stats?event=133` 桌面(1280)+ 390px;NonWcaPuzzlePicker「更多魔方」下拉点开按 family 分组(长方体→1×3×3 花型、异形扭转→Ivy Cube),经它在 133↔ivy 间切换正常;弹层 390px box 右沿 192px 不溢出(viewport 375 内);2D 预览(net)渲染 solved 自证;**本次改动零 console error**(历史里出现过的 `SOLVE_EVENTS is not defined` 经核实是开站旧 chunk 残留,当前源码无该标识符、fresh 导航不复现;另有一条 `Connection closed.` 是 Turbopack RSC dev 流式偶发、reload 即消,均非代码问题)。A0 欠账清。
+- **A0 遗留:Ivy 实现从未 commit** —— A0 的 6265c3671 只提交了 picker 基建,ivy 的 6 个实现文件 + 三处共享接线一直留在工作树未入库(repo 任何分支都查不到 ivy-solver.ts)。**已于 A1 commit `7a2a56243` 一并落库**(与 A1 的共享接线交错在同一 hunk),无残留。
 
 **约束(全局规则,别违)**:dev server 永远在 `127.0.0.1:3000`,禁 `pnpm dev`、禁 dev 在跑时本地 `next build`;UI 验证走项目内 Playwright MCP;commit 只加自己的文件、不 push;LF 换行;回复中文。
