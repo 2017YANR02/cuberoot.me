@@ -61,6 +61,76 @@ const SOLVED: ReadonlyArray<number> = (() => {
   return c;
 })();
 
+// ── Geometric re-derivation of the 4 base perms (move-model fidelity anchor) ───
+// cstimer has NO UFO solver/apply (megascramble.js:34 only emits random tokens), so the move EFFECTS
+// can't be cross-checked against an oracle. Instead we re-derive U/A/B/C from the UFO's physical
+// geometry using real 3D rotation matrices — completely independently of the hardcoded U/A/B/C arrays
+// above — and assert the geometry reproduces them move-for-move. A subtly-wrong mechanism would fail
+// here even though the puzzle would still "solve" itself.
+//   Disc in the XY plane, central axis Z, 6 sectors 60° apart; balls at sectors 0,2,4. Each ball cut
+//   into 8 octants by sign(radial), sign(tangential), sign(z). Home index = slot*8 + (sr<0?4:0) +
+//   (st<0?2:0) + (sz<0?1:0) — the executor's slot/sign layout. U = rotate every top-layer (z>0) octant
+//   +60° about Z (bottom fixed); A/B/C = rotate ball 0/2/4's 8 octants 180° about its radial axis.
+const GEO_HOME: Array<{ slot: number; sr: number; st: number; sz: number; pos: [number, number, number] }> = [];
+{
+  const RAD = 10;
+  for (let slot = 0; slot < 6; slot++) {
+    const a = (slot * Math.PI) / 3;
+    const cx = RAD * Math.cos(a), cy = RAD * Math.sin(a);
+    const rad = [Math.cos(a), Math.sin(a), 0];
+    const tan = [-Math.sin(a), Math.cos(a), 0];
+    for (const sr of [1, -1]) for (const st of [1, -1]) for (const sz of [1, -1]) {
+      GEO_HOME.push({
+        slot, sr, st, sz,
+        pos: [cx + sr * rad[0] + st * tan[0], cy + sr * rad[1] + st * tan[1], sz],
+      });
+    }
+  }
+}
+function geoFindHome(p: [number, number, number]): number {
+  let best = -1, bd = Infinity;
+  for (let i = 0; i < 48; i++) {
+    const q = GEO_HOME[i].pos;
+    const d = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2 + (q[2] - p[2]) ** 2;
+    if (d < bd) { bd = d; best = i; }
+  }
+  return bd > 1e-6 ? -1 : best;
+}
+function geoIdent(): number[] { return Array.from({ length: 48 }, (_, i) => i); }
+function geoWheel(): number[] {
+  const g = geoIdent();
+  for (let i = 0; i < 48; i++) {
+    if (GEO_HOME[i].sz > 0) {
+      const [x, y, z] = GEO_HOME[i].pos;
+      const c = Math.cos(Math.PI / 3), s = Math.sin(Math.PI / 3);
+      const j = geoFindHome([c * x - s * y, s * x + c * y, z]);
+      if (j < 0) throw new Error(`geo U: no home ${i}`);
+      g[i] = j;
+    }
+  }
+  return g;
+}
+function geoFlip(bs: number): number[] {
+  const g = geoIdent();
+  const a = (bs * Math.PI) / 3;
+  const RAD = 10, cx = RAD * Math.cos(a), cy = RAD * Math.sin(a);
+  const u = [Math.cos(a), Math.sin(a), 0];
+  for (let i = 0; i < 48; i++) {
+    if (GEO_HOME[i].slot === bs) {
+      const [x, y, z] = GEO_HOME[i].pos;
+      const v = [x - cx, y - cy, z];
+      const dot = u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+      // 180° about unit axis u: R v = 2(u·v)u − v
+      const rv: [number, number, number] = [2 * dot * u[0] - v[0], 2 * dot * u[1] - v[1], 2 * dot * u[2] - v[2]];
+      const j = geoFindHome([cx + rv[0], cy + rv[1], rv[2]]);
+      if (j < 0) throw new Error(`geo flip: no home ${i}`);
+      g[i] = j;
+    }
+  }
+  return g;
+}
+const GEO = { U: geoWheel(), A: geoFlip(0), B: geoFlip(2), C: geoFlip(4) };
+
 // reference apply: next[g[i]] = cur[i].
 function refApplyPerm(cur: ReadonlyArray<number>, g: ReadonlyArray<number>): number[] {
   const next = new Array<number>(48).fill(-1);
@@ -111,6 +181,22 @@ function mulberry32(seed: number) {
 }
 
 describe('ufo-solver graph', () => {
+  it('the 4 base perms are reproduced by an independent 3D-geometry re-derivation', () => {
+    // Since cstimer offers no UFO apply/oracle, this is the move-model fidelity anchor: the move
+    // permutations the solver/reference use are exactly what the puzzle's physical rotations produce.
+    expect(GEO.U).toEqual([...U]);
+    expect(GEO.A).toEqual([...A]);
+    expect(GEO.B).toEqual([...B]);
+    expect(GEO.C).toEqual([...C]);
+    // each flip is self-inverse; the wheel has order 6 (a 6-position disc).
+    expect(compose(GEO.A, GEO.A)).toEqual(geoIdent());
+    expect(compose(GEO.B, GEO.B)).toEqual(geoIdent());
+    expect(compose(GEO.C, GEO.C)).toEqual(geoIdent());
+    let w = GEO.U, ord = 1;
+    while (w.some((v, i) => v !== i)) { w = compose(w, GEO.U); ord++; }
+    expect(ord).toBe(6);
+  });
+
   it('reaches exactly 60,480 states with the proven god-number-10 histogram', () => {
     const { total, histogram } = ufoGraphStats();
     expect(total).toBe(60480);
