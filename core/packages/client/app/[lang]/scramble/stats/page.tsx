@@ -13,6 +13,7 @@ import Cuboid223DistView from './_components/Cuboid223DistView';
 import Slide8DistView from './_components/Slide8DistView';
 import SuperFloppyDistView from './_components/SuperFloppyDistView';
 import UfoDistView from './_components/UfoDistView';
+import Cm2DistView from './_components/Cm2DistView';
 import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
@@ -497,7 +498,7 @@ export default function ScrambleStatsPage() {
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   // 非 WCA 全空间求解项目(ivy / 133 / 223 / 8p / sfl …):难度=理论全空间分布;无长度数据、无合并/数据集/度量开关。
-  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '8p' || event === 'sfl' || event === 'ufo';
+  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '8p' || event === 'sfl' || event === 'ufo' || event === 'cm2';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -712,7 +713,8 @@ export default function ScrambleStatsPage() {
                     : event === '8p' ? '8p'
                       : event === 'sfl' ? 'sfl'
                         : event === 'ufo' ? 'ufo'
-                          : null;
+                          : event === 'cm2' ? 'cm2'
+                            : null;
 
   // Shared header: WCA-event selector sits ABOVE the tab bar so it drives both
   // the difficulty tab and the length tab.
@@ -902,6 +904,26 @@ export default function ScrambleStatsPage() {
           </div>
         ) : (
           <UfoDistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  // Cmetrick Mini(非 WCA 项目):难度 = 整解最优步数的理论全空间分布(全 165,888 态,精确;示例本地枚举);
+  // 无打乱长度数据(cstimer 定长生成),长度 tab 给说明。
+  if (event === 'cm2') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: 'Cmetrick Mini 无打乱长度分布(打乱由 cstimer 定长生成);整解最优步数分布见「难度」',
+              en: 'No scramble-length distribution for the Cmetrick Mini (cstimer generates fixed-form scrambles); see "Difficulty" for the optimal-length distribution',
+            })}
+          </div>
+        ) : (
+          <Cm2DistView isZh={isZh} />
         )}
       </div>
     );
