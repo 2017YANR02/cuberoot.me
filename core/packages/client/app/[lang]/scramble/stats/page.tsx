@@ -7,12 +7,15 @@ import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
 import PuzzleDistView from './_components/PuzzleDistView';
+import IvyDistView from './_components/IvyDistView';
 import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
 import FirstAppearanceTimeline, { type TimelineEntry } from './_components/FirstAppearanceTimeline';
 import FullScrambleList from './_components/FullScrambleList';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import NonWcaPuzzlePicker from '@/components/NonWcaPuzzlePicker/NonWcaPuzzlePicker';
+import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { HelpCircle } from 'lucide-react';
@@ -312,6 +315,7 @@ export default function ScrambleStatsPage() {
     } else if (merged) {
       for (const id of MERGED_HIDDEN) all.delete(id);
     }
+    // 非 WCA 求解项目(ivy 等)不进 WCA 图标行;走 NonWcaPuzzlePicker 分组下拉。
     return all;
   }, [lengthsData, merged, tab, dataset]);
 
@@ -338,9 +342,10 @@ export default function ScrambleStatsPage() {
   }, [dataset, merged, event]);
 
   // Keep the selection on an event that actually has length data ('' = the
-  // difficulty tab's merged-family pseudo-event, always valid there).
+  // difficulty tab's merged-family pseudo-event, always valid there). Non-WCA
+  // solvable puzzles (ivy 等)走全空间分布 / 无长度数据,跳过此回退。
   useEffect(() => {
-    if (lengthsData && event !== '' && !lengthsData.events[event]) {
+    if (lengthsData && event !== '' && !CSTIMER_SOLVABLE_IDS.has(event) && !lengthsData.events[event]) {
       const first = Object.keys(lengthsData.events)[0];
       if (first) setEvent(first);
     }
@@ -486,6 +491,8 @@ export default function ScrambleStatsPage() {
 
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
+  // Ivy(非 WCA):难度=理论全空间分布;无长度数据、无合并/数据集/度量开关。
+  const isIvy = event === 'ivy';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -671,7 +678,7 @@ export default function ScrambleStatsPage() {
   // become a PillToggle sitting just left of the merge toggle. Rendered only when
   // exactly two top-level datasets exist.
   const topSets = data ? Object.entries(data.sets).filter(([, s]) => !s.event) : [];
-  const datasetToggle = (tab === 'difficulty' && !isPuzzleEvent && topSets.length === 2) ? (() => {
+  const datasetToggle = (tab === 'difficulty' && !isPuzzleEvent && !isIvy && topSets.length === 2) ? (() => {
     const [k0, s0] = topSets[0];
     const [k1, s1] = topSets[1];
     const lab = (s: SetData) => (isZh && s.label_zh) ? s.label_zh : s.label;
@@ -693,28 +700,38 @@ export default function ScrambleStatsPage() {
       : event === '222' ? '2x2x2'
         : event === 'pyram' ? 'pyraminx'
           : event === 'skewb' ? 'skewb'
-            : null;
+            : event === 'sq1' ? 'sq1'
+              : event === 'ivy' ? 'ivy'
+                : null;
 
   // Shared header: WCA-event selector sits ABOVE the tab bar so it drives both
   // the difficulty tab and the length tab.
   const header = (
     <div className="scramble-stats-header">
+      {/* 项目/事件选择置顶 — 与求解模式一致(项目行在「求解/分布」功能行之上)。分布模式下
+          这是唯一的项目选择器(全 WCA 项目);SolveTabs 在 dist 不出自己的项目行,避免重复。
+          非 WCA 有分布的项目(ivy 等)走右侧 NonWcaPuzzlePicker 分组下拉。 */}
+      <div className="scramble-stats-event-pick">
+        <WcaEventSelector
+          availableEvents={availableEvents}
+          selectedEvent={event}
+          onSelect={setEvent}
+          isZh={isZh}
+          onlyAvailable
+        />
+        <NonWcaPuzzlePicker
+          isZh={isZh}
+          availableEvents={CSTIMER_SOLVABLE_IDS}
+          selectedEvent={event}
+          onSelect={setEvent}
+        />
+      </div>
       <SolveTabs puzzle={distPuzzle} mode="dist" />
       <div className="scramble-stats-event-bar">
-        {/* 项目/事件选择 — 分布模式下唯一的项目选择器(紧贴功能行,在分类标签之上) */}
-        <div className="scramble-stats-event-pick">
-          <WcaEventSelector
-            availableEvents={availableEvents}
-            selectedEvent={event}
-            onSelect={setEvent}
-            isZh={isZh}
-            onlyAvailable
-          />
-        </div>
         <div className="scramble-stats-tabrow">
           {tabsBar}
           {datasetToggle}
-        {(tab === 'length' || (dataset === 'wca' && !isPuzzleEvent)) && (
+        {(tab === 'length' || (dataset === 'wca' && !isPuzzleEvent)) && !isIvy && (
           <div className="scramble-len-merge">
             <PillToggle
               value={merged}
@@ -759,6 +776,26 @@ export default function ScrambleStatsPage() {
       </div>
     </div>
   );
+
+  // Ivy(非 WCA 项目):难度 = 整解最优步数的理论全空间分布(全 29,160 态,精确;示例本地枚举);
+  // 无打乱长度数据(cstimer 定长生成),长度 tab 给说明。一处统一处理两 tab。
+  if (event === 'ivy') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: '枫叶魔方无打乱长度分布(打乱由 cstimer 定长生成);整解最优步数分布见「难度」',
+              en: 'No scramble-length distribution for the Ivy Cube (cstimer generates fixed-form scrambles); see "Difficulty" for the optimal-length distribution',
+            })}
+          </div>
+        ) : (
+          <IvyDistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
 
   if (tab === 'length') {
     return (

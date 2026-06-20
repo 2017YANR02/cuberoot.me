@@ -599,9 +599,17 @@
 .scramble-stats-event-bar {
   margin: 0.25rem 0 0.85rem;
 }
-/* 项目/事件选择器(分布模式唯一的项目选择器)— 紧贴功能行下方,与分类标签拉开间距 */
+/* 项目/事件选择器(分布模式唯一的项目选择器)— 置顶,紧贴下方「求解/分布」功能行,
+   对齐求解模式项目行在功能行之上的紧凑节奏 */
 .scramble-stats-event-pick {
-  margin-bottom: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin-bottom: 0.1rem;
+}
+.scramble-stats-event-pick .wca-stats-event-selector {
+  margin: 0.1rem 0 0.2rem;
 }
 .scramble-len-events {
   margin-bottom: 1rem;
@@ -664,6 +672,24 @@
   width: 0.95em;
   height: 0.95em;
 }
+/* Ivy 分布:下载全部状态(真 button + UA 重置,跟 download-all 文字链同款外观) */
+.ivy-dl-all {
+  appearance: none;
+  background: none;
+  border: none;
+  font: inherit;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.ivy-dl-all:hover { color: var(--accent); }
+.ivy-dl-all svg { flex-shrink: 0; }
 .scramble-len-footnote {
   font-size: 0.78rem;
   color: var(--text-sub);
