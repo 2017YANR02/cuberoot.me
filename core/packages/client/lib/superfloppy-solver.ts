@@ -327,11 +327,39 @@ export function superFloppyExamplesByLength(perBin = 12): Record<number, string[
 /**
  * Every non-trivial state's shortest scramble, grouped by optimal length (depths 1..13). The full
  * state space is enumerable, so this is the complete corpus (3,041,279 states; the 3,041,280th is
- * the identity/solved). Used for the "download all states" buttons — over ~3M lines, so the UI
- * builds it lazily / on demand.
+ * the identity/solved).
+ *
+ * ⚠ This materializes a ~3M-element record (tens of MB of strings) all at once — only suitable for
+ * tests / small bins. The UI must NOT use it for "download all" at 3M scale (peak memory blows up):
+ * use {@link streamSuperFloppyScrambles} / {@link superFloppyScramblesForLength} instead, which yield
+ * scrambles incrementally so a streaming Blob keeps peak memory bounded.
  */
 export function superFloppyAllScramblesByLength(): Record<number, string[]> {
   return superFloppyExamplesByLength(Infinity);
+}
+
+/**
+ * Stream every reachable state's shortest scramble as `{ depth, scramble }`, in BFS-index order
+ * (depth 0 = the solved/identity state, scramble = '' ). Walks the prebuilt graph state-by-state so
+ * peak extra memory is O(1) per yield — the caller can pipe into a chunked Blob without ever holding
+ * all ~3M scrambles (or an ~80MB CSV string) in memory at once. Optionally restrict to a single
+ * optimal length `onlyDepth`.
+ */
+export function* streamSuperFloppyScrambles(
+  onlyDepth?: number,
+): Generator<{ depth: number; scramble: string }, void, unknown> {
+  const g = graph();
+  for (let i = 0; i < g.dist.length; i++) {
+    const d = g.dist[i];
+    if (d < 0) continue;
+    if (onlyDepth !== undefined && d !== onlyDepth) continue;
+    yield { depth: d, scramble: d === 0 ? '' : indexToScramble(g, i) };
+  }
+}
+
+/** Stream just the shortest scrambles whose optimal length is exactly `depth`, one string at a time. */
+export function* superFloppyScramblesForLength(depth: number): Generator<string, void, unknown> {
+  for (const { scramble } of streamSuperFloppyScrambles(depth)) yield scramble;
 }
 
 /** Test/diagnostic only: full reachable-state count + optimal-length histogram. */
