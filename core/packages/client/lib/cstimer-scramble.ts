@@ -125,7 +125,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
 },
   { id: 'sia222',  key: 'sia222',  length: 12, zh: '联体 2×2×2',       en: 'Siamese 2×2×2',     iconClass: 'unofficial-333_siamese', family: 'siamese'
 },
-  { id: 'dmd',     key: 'dmdso',   zh: '钻石',             en: 'Diamond',           textLabel: 'Dmd',  family: 'twist'
+  { id: 'dmd',     key: 'dmdso',   zh: '钻石',             en: 'Diamond',           textLabel: 'Dmd',  family: 'twist',  solvable: true
 },
 ];
 
