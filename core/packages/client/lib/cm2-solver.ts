@@ -28,25 +28,8 @@
  */
 
 // ── Cube rotation group (order 24) built from 3×3 rotation matrices ─────────────
-// Face-axis directions, index 0..5 = +X, −X, +Y, −Y, +Z, −Z.
 type Vec3 = readonly [number, number, number];
 type Mat3 = readonly [Vec3, Vec3, Vec3];
-const DIRS: ReadonlyArray<Vec3> = [
-  [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1],
-];
-function dirIndex(v: Vec3): number {
-  for (let i = 0; i < 6; i++) {
-    if (DIRS[i][0] === v[0] && DIRS[i][1] === v[1] && DIRS[i][2] === v[2]) return i;
-  }
-  throw new Error(`bad dir ${v}`);
-}
-function applyMat(m: Mat3, v: Vec3): Vec3 {
-  return [
-    m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2],
-    m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2],
-    m[2][0] * v[0] + m[2][1] * v[1] + m[2][2] * v[2],
-  ];
-}
 function matMul(a: Mat3, b: Mat3): Mat3 {
   const r = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
   for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) for (let k = 0; k < 3; k++) r[i][j] += a[i][k] * b[k][j];
