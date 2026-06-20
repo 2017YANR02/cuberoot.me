@@ -116,7 +116,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   { id: 'crz3a',   key: 'crz3a',   length: 25, zh: '疯狂 3×3',         en: 'Crazy 3×3',         textLabel: 'Crz',  family: 'other'
 },
   { id: 'cm3',     key: 'cm3',     length: 16, zh: 'Cmetrick',         en: 'Cmetrick',          textLabel: 'Cm3',  family: 'twist' },
-  { id: 'cm2',     key: 'cm2',     length: 16, zh: 'Cmetrick Mini',    en: 'Cmetrick Mini',     textLabel: 'Cm2',  family: 'twist' },
+  { id: 'cm2',     key: 'cm2',     length: 16, zh: 'Cmetrick Mini',    en: 'Cmetrick Mini',     textLabel: 'Cm2',  family: 'twist',  solvable: true },
   { id: 'bic',     key: 'bic',     length: 25, zh: '联体魔方',         en: 'Bicube',            textLabel: 'Bic',  family: 'siamese'
 },
   { id: 'sia113',  key: 'sia113',  length: 25, zh: '联体 1×1×3',       en: 'Siamese 1×1×3',     textLabel: 'Sia113', family: 'siamese'
