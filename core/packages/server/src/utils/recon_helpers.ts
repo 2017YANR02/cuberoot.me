@@ -247,6 +247,24 @@ export function validateRow(row: Record<string, unknown>): string[] {
     }
   }
 
+  // 记号列(解法 / 打乱):每行 `//` 注释之外只能用 ASCII(英文字母+符号)。
+  // 中文等文字会被播放器当成转动 → 复盘无法播放,要写说明请放进 `//` 注释。
+  // (客户端表单已拦,这里是权威后端兜底。)
+  for (const col of ['solution', 'wca_scramble', 'optimal_scramble']) {
+    const v = row[col];
+    if (v === undefined || v === null) continue;
+    const lines = String(v).split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const idx = lines[i].indexOf('//');
+      const instr = idx >= 0 ? lines[i].slice(0, idx) : lines[i];
+      // eslint-disable-next-line no-control-regex
+      if (/[^\x00-\x7F]/.test(instr)) {
+        errors.push(`${col} line ${i + 1} has non-ASCII characters outside // comments`);
+        break;
+      }
+    }
+  }
+
   return errors;
 }
 
