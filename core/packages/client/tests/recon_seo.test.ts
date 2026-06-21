@@ -67,10 +67,10 @@ describe('reconPathSeg', () => {
 
 describe('reconCanonical', () => {
   it('en is bare, zh under /zh', () => {
-    expect(reconCanonical('2375', 'en')).toBe('https://www.cuberoot.me/recon/2375');
-    expect(reconCanonical('2375', 'zh')).toBe('https://www.cuberoot.me/zh/recon/2375');
+    expect(reconCanonical('2375', 'en')).toBe('https://cuberoot.me/recon/2375');
+    expect(reconCanonical('2375', 'zh')).toBe('https://cuberoot.me/zh/recon/2375');
   });
   it('uses the slugged segment when provided', () => {
-    expect(reconCanonical('2375', 'en', '2375-feliks')).toBe('https://www.cuberoot.me/recon/2375-feliks');
+    expect(reconCanonical('2375', 'en', '2375-feliks')).toBe('https://cuberoot.me/recon/2375-feliks');
   });
 });

@@ -10,8 +10,8 @@ import { reconCanonical, reconPathSeg } from '@/lib/recon-seo';
 // static /sitemap.xml served by both Vercel and the self-hosted standalone.
 export const dynamic = 'force-static';
 
-// Canonical host is www (apex 301/307s to it). List final, non-redirecting URLs.
-const BASE = 'https://www.cuberoot.me';
+// Canonical host is the bare domain (www redirects to it). List final, non-redirecting URLs.
+const BASE = 'https://cuberoot.me';
 
 // Kept OUT (dev/poc/internal pages, no SEO value). Locale-stripped path, exact.
 // 'trainer' now redirects to 'trainer/333' (event in the path) → list the canonical instead.
