@@ -10,6 +10,7 @@ import PuzzleDistView from './_components/PuzzleDistView';
 import IvyDistView from './_components/IvyDistView';
 import FloppyDistView from './_components/FloppyDistView';
 import Cuboid223DistView from './_components/Cuboid223DistView';
+import Cuboid233DistView from './_components/Cuboid233DistView';
 import Slide8DistView from './_components/Slide8DistView';
 import Slide15DistView from './_components/Slide15DistView';
 import SuperFloppyDistView from './_components/SuperFloppyDistView';
@@ -505,7 +506,7 @@ export default function ScrambleStatsPage() {
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   // 非 WCA 求解项目(ivy / 133 / 223 / 8p / sfl …):难度=整解最优步数分布(A/B 档全空间精确,15p 是 TIER C
   // 采样);均无打乱长度数据、无合并/数据集/度量开关 → 走 isIvy 早返回那套。
-  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a';
+  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '233' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -717,6 +718,7 @@ export default function ScrambleStatsPage() {
               : event === 'ivy' ? 'ivy'
                 : event === '133' ? '133'
                   : event === '223' ? '223'
+                    : event === '233' ? '233'
                     : event === '8p' ? '8p'
                       : event === '15p' ? '15p'
                         : event === 'sfl' ? 'sfl'
@@ -857,6 +859,24 @@ export default function ScrambleStatsPage() {
           </div>
         ) : (
           <Cuboid223DistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  if (event === '233') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: '2×3×3 多米诺无打乱长度分布(打乱由 cstimer 定长生成);整解最优步数分布(采样)见「难度」',
+              en: 'No scramble-length distribution for the 2×3×3 Domino (cstimer generates fixed-form scrambles); see "Difficulty" for the (sampled) optimal-length distribution',
+            })}
+          </div>
+        ) : (
+          <Cuboid233DistView isZh={isZh} />
         )}
       </div>
     );
