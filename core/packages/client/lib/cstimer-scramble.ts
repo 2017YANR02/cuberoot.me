@@ -81,7 +81,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
 },
   { id: 'ivy',     key: 'ivyso',   zh: '枫叶魔方',         en: 'Ivy Cube',          textLabel: 'Ivy',    family: 'twist',  solvable: true
 },
-  { id: 'dino',    key: 'dinoso',  zh: '恐龙魔方',         en: 'Dino Cube',         textLabel: 'Dino',   family: 'twist'
+  { id: 'dino',    key: 'dinoso',  zh: '恐龙魔方',         en: 'Dino Cube',         textLabel: 'Dino',   family: 'twist',  solvable: true
 },
   { id: 'mpyrso',  key: 'mpyrso',  zh: '大金字塔(随态)',   en: 'Master Pyra (RS)',  iconClass: 'unofficial-mpyram', family: 'twist',  solvable: true
 },
