@@ -17,6 +17,7 @@ import UfoDistView from './_components/UfoDistView';
 import Cm2DistView from './_components/Cm2DistView';
 import DiamondDistView from './_components/DiamondDistView';
 import GearDistView from './_components/GearDistView';
+import MpyrDistView from './_components/MpyrDistView';
 import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
@@ -502,7 +503,7 @@ export default function ScrambleStatsPage() {
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   // 非 WCA 求解项目(ivy / 133 / 223 / 8p / sfl …):难度=整解最优步数分布(A/B 档全空间精确,15p 是 TIER C
   // 采样);均无打乱长度数据、无合并/数据集/度量开关 → 走 isIvy 早返回那套。
-  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear';
+  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear' || event === 'mpyrso';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -721,7 +722,8 @@ export default function ScrambleStatsPage() {
                           : event === 'cm2' ? 'cm2'
                             : event === 'dmd' ? 'dmd'
                               : event === 'gear' ? 'gear'
-                                : null;
+                                : event === 'mpyrso' ? 'mpyrso'
+                                  : null;
 
   // Shared header: WCA-event selector sits ABOVE the tab bar so it drives both
   // the difficulty tab and the length tab.
@@ -991,6 +993,26 @@ export default function ScrambleStatsPage() {
           </div>
         ) : (
           <GearDistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  // Master Pyraminx(随态,非 WCA 项目):状态空间 ~4.6×10¹¹ 太大无法全枚举 → 难度 = **采样**整解步数分布
+  //(浏览器现场用 cstimer 自带两阶段 solver 解 N 个随机打乱,近最优、非可证最优);无打乱长度数据。
+  if (event === 'mpyrso') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: '大金字塔无打乱长度分布(打乱由 cstimer 随态生成);整解近最优步数分布见「难度」',
+              en: 'No scramble-length distribution for the Master Pyraminx (cstimer generates random-state scrambles); see "Difficulty" for the near-optimal solution-length distribution',
+            })}
+          </div>
+        ) : (
+          <MpyrDistView isZh={isZh} />
         )}
       </div>
     );
