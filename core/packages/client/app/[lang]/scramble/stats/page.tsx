@@ -11,6 +11,7 @@ import IvyDistView from './_components/IvyDistView';
 import FloppyDistView from './_components/FloppyDistView';
 import Cuboid223DistView from './_components/Cuboid223DistView';
 import Slide8DistView from './_components/Slide8DistView';
+import Slide15DistView from './_components/Slide15DistView';
 import SuperFloppyDistView from './_components/SuperFloppyDistView';
 import UfoDistView from './_components/UfoDistView';
 import Cm2DistView from './_components/Cm2DistView';
@@ -499,8 +500,9 @@ export default function ScrambleStatsPage() {
 
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
-  // 非 WCA 全空间求解项目(ivy / 133 / 223 / 8p / sfl …):难度=理论全空间分布;无长度数据、无合并/数据集/度量开关。
-  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '8p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear';
+  // 非 WCA 求解项目(ivy / 133 / 223 / 8p / sfl …):难度=整解最优步数分布(A/B 档全空间精确,15p 是 TIER C
+  // 采样);均无打乱长度数据、无合并/数据集/度量开关 → 走 isIvy 早返回那套。
+  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -713,7 +715,8 @@ export default function ScrambleStatsPage() {
                 : event === '133' ? '133'
                   : event === '223' ? '223'
                     : event === '8p' ? '8p'
-                      : event === 'sfl' ? 'sfl'
+                      : event === '15p' ? '15p'
+                        : event === 'sfl' ? 'sfl'
                         : event === 'ufo' ? 'ufo'
                           : event === 'cm2' ? 'cm2'
                             : event === 'dmd' ? 'dmd'
@@ -868,6 +871,26 @@ export default function ScrambleStatsPage() {
           </div>
         ) : (
           <Slide8DistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  // 数字华容道(非 WCA 项目,TIER C):状态空间 ≈ 1.05×10¹³ 无法整图枚举,难度 = 整解最优步数的**采样**分布
+  //(现场 IDA*+Walking-Distance 解 N 条随机态后分桶,非全空间精确曲线);无打乱长度数据,长度 tab 给说明。
+  if (event === '15p') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: '数字华容道无打乱长度分布(打乱由 cstimer 定长生成);整解最优步数采样分布见「难度」',
+              en: 'No scramble-length distribution for the 15-Puzzle (cstimer generates fixed-form scrambles); see "Difficulty" for the sampled optimal-length distribution',
+            })}
+          </div>
+        ) : (
+          <Slide15DistView isZh={isZh} />
         )}
       </div>
     );
