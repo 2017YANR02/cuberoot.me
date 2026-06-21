@@ -6,8 +6,9 @@
 /** 推送总开关。双跑期为 0,只吸收不发;翻 1 才真发(见 bark.ts)。 */
 export const PUSH_ENABLED = process.env.MONITOR_PUSH_ENABLED === '1';
 
-/** 自有站域名(纪录/PR 推送里的比赛链接指向这里,不再外链 WCA Live)。 */
-export const SITE_BASE = 'https://www.cuberoot.me';
+/** 自有站域名(纪录/PR 推送里的比赛链接指向这里,不再外链 WCA Live)。
+ *  用裸域名(无 www):www 是 CNAME 多绕一跳、国内解析偶发失败,裸域名是直连 A 记录更稳。 */
+export const SITE_BASE = 'https://cuberoot.me';
 
 /** 中国相关地区(比赛链接落 /zh 中文站):大陆 / 港 / 澳 / 台。 */
 const CHINESE_REGIONS = new Set(['CN', 'HK', 'MO', 'TW']);

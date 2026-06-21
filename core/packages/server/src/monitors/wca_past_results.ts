@@ -19,10 +19,9 @@ import { query } from '../db/connection.js';
 import { getWatchedPersons } from './watched.js';
 import { sendBark } from './bark.js';
 import { startPoller } from './poll.js';
-import { isChineseRegion } from './config.js';
+import { isChineseRegion, SITE_BASE } from './config.js';
 
 const WCA_API = 'https://www.worldcubeassociation.org/api/v0';
-const SITE_BASE = 'https://www.cuberoot.me';
 const FETCH_TIMEOUT_MS = 20_000;
 // WCA(Cloudflare 后)对突发并发返 500/429:单请求 200,48 人并发 burst 大面积 500。
 // 故串行 + 请求间隔 + 退避重试;一次只打 1 个 /results(name/iso2 从 results 行直接取,不再单独拉 profile)。
