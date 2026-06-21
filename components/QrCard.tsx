@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { CardEl, CardLayout, CardTextStyles, QrCode, TextStyle } from "@/lib/db/qr";
+import type { CardCustomText, CardEl, CardLayout, CardTextStyles, QrCode, TextStyle } from "@/lib/db/qr";
 import {
   CUBE_FACES,
   DEFAULT_QUOTES,
@@ -55,6 +55,39 @@ const txtCss = (
   }
   return out;
 };
+
+// 自建文本框层:绝对定位在面板中心 +(x,y)mm 偏移,居中锚点。data-el=ct:<id> 供编辑器拖动。
+function CustomTextLayer({
+  items,
+  defColor,
+}: {
+  items: CardCustomText[];
+  defColor: string;
+}) {
+  return (
+    <>
+      {items.map((ct) => (
+        <div
+          key={ct.id}
+          data-el={`ct:${ct.id}`}
+          style={{
+            position: "absolute",
+            left: m(10 + ct.x),
+            top: m(20 + ct.y),
+            transform: "translate(-50%, -50%)",
+            textAlign: "center",
+            whiteSpace: "pre-wrap",
+            maxWidth: m(19),
+            lineHeight: 1.2,
+            ...txtCss(ct.style, 2.4, defColor),
+          }}
+        >
+          {ct.text}
+        </div>
+      ))}
+    </>
+  );
+}
 
 const PANEL_BASE: CSSProperties = {
   width: m(20),
@@ -130,11 +163,13 @@ function FrontPanel({
   art,
   layout,
   styles,
+  customTexts,
 }: {
   quote: string;
   art: string;
   layout: CardLayout | null | undefined;
   styles: CardTextStyles | null | undefined;
+  customTexts: CardCustomText[];
 }) {
   const lines = quote.split("\n").map((l) => l.trim()).filter(Boolean);
   const [main, ...subs] = lines.length ? lines : ["热爱魔方"];
@@ -167,6 +202,7 @@ function FrontPanel({
             "linear-gradient(to top, rgba(17,17,26,0.9) 0%, rgba(17,17,26,0.6) 42%, transparent 100%)",
         }}
       />
+      <CustomTextLayer items={customTexts} defColor="#fff" />
       {qs?.hidden ? null : (
         <div
           data-el="quote"
@@ -211,6 +247,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
   const backArt = entry.backArt?.trim();
   const ts = entry.textStyles;
   const MONO = "'JetBrains Mono', ui-monospace, monospace";
+  const customBack = (entry.customTexts ?? []).filter((c) => c.side === "back");
   return (
     <div
       data-panel="back"
@@ -278,6 +315,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
         </>
       )}
       </div>
+      <CustomTextLayer items={customBack} defColor="#11111A" />
       {ts?.backText?.hidden ? null : (
         <div
           data-el="backText"
@@ -422,7 +460,13 @@ export function QrCardUnit({
         background: "#fff",
       }}
     >
-      <FrontPanel quote={quote} art={art} layout={entry.layout} styles={entry.textStyles} />
+      <FrontPanel
+        quote={quote}
+        art={art}
+        layout={entry.layout}
+        styles={entry.textStyles}
+        customTexts={(entry.customTexts ?? []).filter((c) => c.side === "front")}
+      />
       <div style={{ borderLeft: `${m(0.2)} dotted #c4c9d4` }} />
       <BackPanel entry={entry} svg={svg} />
       {cropMarks ? <CropMarks /> : null}

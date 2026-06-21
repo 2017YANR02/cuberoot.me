@@ -1,4 +1,4 @@
-import type { CardEl, CardLayout, CardTextStyles, QrCode, TextStyle } from "@/lib/db/qr";
+import type { CardCustomText, CardEl, CardLayout, CardTextStyles, QrCode, TextStyle } from "@/lib/db/qr";
 import { qrSvgBody, cubeLogo, CUBE_FACES } from "./svg";
 import { backText, frontQuote, FORMULA_TOKENS, cubeFaceletSpots, fontStack } from "./cardText";
 
@@ -69,6 +69,34 @@ function text(
       : "") +
     `>${esc(content)}</text>`
   );
+}
+
+// 自建文本框 → SVG <text>:面板中心 +(x,y)mm 偏移,多行各自一行垂直居中。defColor 随面板深浅。
+function customTextsSvg(
+  items: CardCustomText[],
+  cxC: number,
+  cyC: number,
+  defColor: string,
+): string {
+  return items
+    .map((ct) => {
+      const st = styled(ct.style, 2.4, defColor);
+      const lines = ct.text.split("\n");
+      const lh = st.size * 1.2;
+      const x = cxC + ct.x;
+      const startY = cyC + ct.y - ((lines.length - 1) * lh) / 2 + st.size * 0.35;
+      return lines
+        .map((ln, i) =>
+          text(x, startY + i * lh, st.size, st.fill, ln, {
+            weight: 600,
+            font: st.font,
+            stroke: st.stroke,
+            strokeW: st.strokeW,
+          }),
+        )
+        .join("");
+    })
+    .join("");
 }
 
 // 文字样式 → text() 用的尺寸 / 填色 / 字体栈 / 描边(集中一处,DOM 卡 txtCss 同语义)
@@ -161,10 +189,12 @@ function front(
   art: string | undefined,
   layout: CardLayout | null | undefined,
   styles: CardTextStyles | null | undefined,
+  customTexts: CardCustomText[],
 ): string {
   const x0 = bleed;
   const top = bleed;
   const cx = x0 + PANEL_W / 2;
+  const customEls = customTextsSvg(customTexts, cx, top + PANEL_H / 2, "#FFFFFF");
   const lines = quote.split("\n").map((l) => l.trim()).filter(Boolean);
   const main = lines[0] ?? "热爱魔方";
   const subs = lines.slice(1);
@@ -220,7 +250,8 @@ function front(
       `<rect x="0" y="0" width="${foldX}" height="${h}" fill="${INK}"/>` +
       `<g clip-path="url(#frontArtClip)">${body}</g>` +
       `<rect x="0" y="0" width="${foldX}" height="${h}" fill="url(#frontShade)"/>` +
-      slogan
+      slogan +
+      customEls
     );
   }
 
@@ -231,7 +262,8 @@ function front(
     (pattern ? cubeFacelets(x0, top, "frontClip") : "") +
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#frontGlow)"/>` +
     cubeLogo(cx - logoSize / 2, top + 5, logoSize) +
-    slogan
+    slogan +
+    customEls
   );
 }
 
@@ -342,13 +374,21 @@ function back(
             : ""),
       );
 
+  const customEls = customTextsSvg(
+    (entry.customTexts ?? []).filter((c) => c.side === "back"),
+    cx,
+    top + PANEL_H / 2,
+    INK,
+  );
+
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>` +
     bg +
     backTextEl +
     termEl +
     qr +
-    algEl
+    algEl +
+    customEls
   );
 }
 
@@ -422,7 +462,17 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" role="img" aria-label="魔方开放社群二维码卡片">` +
     defs +
     bleedBg +
-    front(bleed, foldX, h, quote, pattern, opts.art, entry.layout, entry.textStyles) +
+    front(
+      bleed,
+      foldX,
+      h,
+      quote,
+      pattern,
+      opts.art,
+      entry.layout,
+      entry.textStyles,
+      (entry.customTexts ?? []).filter((c) => c.side === "front"),
+    ) +
     back(foldX, bleed, entry, opts.url, pattern, opts.algSvg, opts.movesPath, opts.backArt) +
     fold +
     (cropMarks ? cropMarksSvg(bleed, w, h) : "") +
