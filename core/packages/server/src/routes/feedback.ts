@@ -220,7 +220,7 @@ feedbackRoutes.post('/feedback', async (c) => {
   sendBark({
     title: `新反馈 · ${kind}`,
     body: text.slice(0, 120),
-    url: 'https://www.cuberoot.me/feedback/admin',
+    url: 'https://cuberoot.me/feedback/admin',
     group: 'Feedback',
   }).catch(() => {});
 
@@ -486,7 +486,7 @@ feedbackRoutes.post('/feedback/:id/reply', async (c) => {
     sendBark({
       title: '反馈回复',
       body: `${user.name ?? user.wcaId}: ${text.slice(0, 120)}`,
-      url: 'https://www.cuberoot.me/feedback/admin',
+      url: 'https://cuberoot.me/feedback/admin',
       group: 'Feedback',
     }).catch(() => {});
   }
