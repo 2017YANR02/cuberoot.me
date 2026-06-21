@@ -87,6 +87,24 @@ const REGISTRY: PuzzleDistSpec[] = [
       };
     },
   },
+  {
+    event: '337',
+    label: '3x3x7',
+    scrambleLen: 40,          // = Cuboid337DistView SCRAMBLE_LEN(原现场采样口径)
+    // 337 比 335 重(实测 mean ~0.55s/solve、MAX ~4.4s 长尾)→ N 取 700,单进程 ~6-7min;
+    // 尾部足够平滑,又不被慢态拖到太久。
+    defaultN: 700,
+    quality: 'sampled-near-optimal',
+    load: async () => {
+      const m = await mod('../../client/lib/cuboid337-solver');
+      return {
+        scramble: m.randomCuboid337Scramble as SolverAdapter['scramble'],
+        solve: m.solveCuboid337 as SolverAdapter['solve'],
+        maxBound: m.CUBOID337_MAX_LENGTH as number,
+        stateCountStr: m.CUBOID337_STATE_COUNT_STR as string,
+      };
+    },
+  },
 ];
 
 // ── 简易确定性 PRNG(mulberry32),让重跑可复现(与测试同款) ───────────────────────────
