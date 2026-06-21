@@ -46,6 +46,18 @@ const INPUT_CLS =
 
 type Box = { left: number; top: number; w: number; h: number };
 
+// 手势目标:背景图(正/背面)或某个卡面元素(二维码等)
+type GTarget = { kind: "art"; lkey: "front" | "back" } | { kind: "el"; key: CardEl };
+// 单指拖动器:move 跟手、end 收尾、tap 点击(无拖动)打开面板
+type Dragger = {
+  move: (cx: number, cy: number, alt: boolean) => void;
+  end: () => void;
+  tap: () => void;
+};
+const gKey = (t: GTarget) => (t.kind === "art" ? `art:${t.lkey}` : `el:${t.key}`);
+// 可缩放目标:正/背面背景图 + 二维码(双指捏合 / 滚轮缩放)
+const gScalable = (t: GTarget) => (t.kind === "art" ? true : t.key === "qr");
+
 // 正面 / 背面背景图编辑面板(图库选择 + 上传 + 下载 + 完整显示开关 + 缩放 + 构图提示),两面共用。
 // value="" = 无图(正面则为自动轮换);showControls 控制是否显示构图区(正面始终显示,背面有图才显示)。
 function ArtPanel({
@@ -221,6 +233,17 @@ export function CardEditor({
   const wrapRef = useRef<HTMLDivElement>(null);
   // 各元素实测框(相对卡片容器 px),热区据此贴合渲染
   const [boxes, setBoxes] = useState<Partial<Record<CardEl, Box>>>({});
+  // 进行中的指针手势(单指拖动 / 双指捏合):指针表 + 当前拖动器 + 捏合状态
+  const gestureRef = useRef<null | {
+    target: GTarget;
+    pointers: Map<number, { x: number; y: number }>;
+    dragger: Dragger | null;
+    startX: number;
+    startY: number;
+    moved: boolean;
+    scaled: boolean;
+    pinch: { startDist: number; startScale: number; apply: (sc: number) => void } | null;
+  }>(null);
 
   // 悬停背景图滚轮缩放(native 非 passive 监听才能 preventDefault 拦住页面滚动);
   // 挂在整卡容器上、按坐标判定在哪个面板内,盖在语录/品牌/文案热区上时也能缩放。
@@ -234,7 +257,27 @@ export function CardEditor({
       const r = panel.getBoundingClientRect();
       return !(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom);
     };
+    const overEl = (sel: string, e: WheelEvent) => {
+      const el = wrap.querySelector<HTMLElement>(sel);
+      if (!el) return false;
+      const r = el.getBoundingClientRect();
+      return !(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom);
+    };
     const onWheel = (e: WheelEvent) => {
+      // 先判二维码(小、在最上层):悬停其上滚轮缩放二维码
+      if (overEl('[data-el="qr"]', e)) {
+        e.preventDefault();
+        setS((p) => {
+          const cur = p.layout.qr ?? { x: 0, y: 0 };
+          const next =
+            Math.round(Math.max(0.7, Math.min(1.5, (cur.s ?? 1) * Math.exp(-e.deltaY * 0.002))) * 100) / 100;
+          const layout = { ...p.layout };
+          if (cur.x === 0 && cur.y === 0 && next === 1) delete layout.qr;
+          else layout.qr = { x: cur.x, y: cur.y, ...(next === 1 ? {} : { s: next }) };
+          return { ...p, layout };
+        });
+        return;
+      }
       const lkey: "front" | "back" | null = inPanel('[data-panel="front"]', e)
         ? "front"
         : inPanel('[data-panel="back"]', e)
@@ -256,6 +299,51 @@ export function CardEditor({
     };
     wrap.addEventListener("wheel", onWheel, { passive: false });
     return () => wrap.removeEventListener("wheel", onWheel);
+  }, []);
+
+  // 统一指针手势:单指拖动 / 双指捏合缩放(移动端手势,与桌面滚轮 / 滑块共存)。
+  // 全局监听只读 gestureRef + 已存的 dragger/pinch 闭包,避免随渲染换引用。
+  useEffect(() => {
+    const onMove = (ev: PointerEvent) => {
+      const g = gestureRef.current;
+      if (!g || !g.pointers.has(ev.pointerId)) return;
+      g.pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+      if (g.pinch && g.pointers.size >= 2) {
+        const pts = [...g.pointers.values()];
+        const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+        g.pinch.apply(g.pinch.startScale * (dist / g.pinch.startDist));
+        g.scaled = true;
+        return;
+      }
+      if (g.dragger) {
+        if (Math.abs(ev.clientX - g.startX) + Math.abs(ev.clientY - g.startY) > 4) g.moved = true;
+        if (g.moved) g.dragger.move(ev.clientX, ev.clientY, ev.altKey);
+      }
+    };
+    const onUp = (ev: PointerEvent) => {
+      const g = gestureRef.current;
+      if (!g) return;
+      g.pointers.delete(ev.pointerId);
+      if (g.pointers.size === 0) {
+        const d = g.dragger;
+        const tapped = !g.moved && !g.scaled;
+        gestureRef.current = null;
+        d?.end();
+        if (tapped) d?.tap();
+      } else if (g.pinch && g.pointers.size < 2) {
+        // 捏合后还剩一指:结束本次手势的后续动作,避免突然跳变
+        g.pinch = null;
+        g.dragger = null;
+      }
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
   }, []);
 
   useEffect(() => {
@@ -339,32 +427,44 @@ export function CardEditor({
   const setFront = setArt("front");
   const setBack = setArt("back");
 
-  // 拖动元素:跟手换算 mm,磁吸到 面板中线 / 默认位 / 同面板其他元素中心;位移 <4px 视为点击
-  // 二维码特例:可自由移到整张卡任意位置(含正面),边界放到整卡、磁吸额外加两面中线
-  const startElDrag = (e: React.PointerEvent, key: CardEl) => {
-    e.preventDefault();
+  // 捏合 / 滚轮缩放落地:背景图按 cover/contain 钳缩放,二维码钳 0.7~1.5
+  const applyPinch = (target: GTarget, raw: number) => {
+    if (target.kind === "art") {
+      const cover = s.layout[target.lkey]?.fit === "cover";
+      const sc = Math.round(Math.max(cover ? 1 : 0.5, Math.min(3, raw)) * 100) / 100;
+      setArt(target.lkey)({ s: sc });
+    } else if (target.key === "qr") {
+      setQrScale(Math.round(Math.max(0.7, Math.min(1.5, raw)) * 100) / 100);
+    }
+  };
+  const currentScale = (target: GTarget): number =>
+    target.kind === "art"
+      ? s.layout[target.lkey]?.s ?? 1
+      : target.key === "qr"
+        ? s.layout.qr?.s ?? 1
+        : 1;
+
+  // 单指拖动器(元素):跟手换算 mm,磁吸到 面板中线 / 默认位 / 同面板其他元素中心。
+  // 二维码特例:可自由移到整张卡任意位置(含正面),边界放到整卡、磁吸额外加两面中线。
+  const makeElDragger = (key: CardEl, sx: number, sy: number): Dragger | null => {
     const wrap = wrapRef.current;
     const el = wrap?.querySelector<HTMLElement>(`[data-el="${key}"]`);
     const panel = el?.closest<HTMLElement>("[data-panel]");
-    if (!wrap || !el || !panel) return;
+    if (!wrap || !el || !panel) return null;
     const wr = wrap.getBoundingClientRect();
     const er = el.getBoundingClientRect();
     const pr = panel.getBoundingClientRect();
     const pxPerMm = pr.width / PANEL_MM;
     const off0 = s.layout[key] ?? { x: 0, y: 0 };
-    // 基准框(去掉当前偏移)与中心
     const baseL = er.left - off0.x * pxPerMm;
     const baseT = er.top - off0.y * pxPerMm;
     const bcx = baseL + er.width / 2;
     const bcy = baseT + er.height / 2;
-    // 二维码可跨面自由移动:边界用整卡,否则用所在面板
     const isFree = key === "qr";
     const bounds = isFree ? wr : pr;
-    // 磁吸目标(viewport px):(所在面)面中线 + 默认位 + 同面板其他元素中心
     const targetsX = [pr.left + pr.width / 2, bcx];
     const targetsY = [pr.top + pr.height / 2, bcy];
     if (isFree) {
-      // 跨面时,正反两面中线都可吸附
       wrap.querySelectorAll<HTMLElement>("[data-panel]").forEach((pn) => {
         const r = pn.getBoundingClientRect();
         targetsX.push(r.left + r.width / 2);
@@ -376,96 +476,97 @@ export function CardEditor({
       targetsX.push(r.left + r.width / 2);
       targetsY.push(r.top + r.height / 2);
     });
-    // 边界(留 0.3mm)
     const mg = 0.3 * pxPerMm;
     const minX = (bounds.left + mg - baseL) / pxPerMm;
     const maxX = (bounds.right - mg - (baseL + er.width)) / pxPerMm;
     const minY = (bounds.top + mg - baseT) / pxPerMm;
     const maxY = (bounds.bottom - mg - (baseT + er.height)) / pxPerMm;
-    const startX = e.clientX;
-    const startY = e.clientY;
     const snapPx = SNAP_MM * pxPerMm;
-    let moved = false;
-
-    const onMove = (ev: PointerEvent) => {
-      if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) > 4) moved = true;
-      if (!moved) return;
-      let ox = Math.min(maxX, Math.max(minX, off0.x + (ev.clientX - startX) / pxPerMm));
-      let oy = Math.min(maxY, Math.max(minY, off0.y + (ev.clientY - startY) / pxPerMm));
-      const xs: number[] = [];
-      const ys: number[] = [];
-      if (snapOn && !ev.altKey) {
-        const cx = bcx + ox * pxPerMm;
-        const cy = bcy + oy * pxPerMm;
-        for (const tx of targetsX) {
-          if (Math.abs(cx - tx) < snapPx) {
-            ox = (tx - bcx) / pxPerMm;
-            xs.push(tx - wr.left);
-            break;
+    return {
+      move(cx, cy, alt) {
+        let ox = Math.min(maxX, Math.max(minX, off0.x + (cx - sx) / pxPerMm));
+        let oy = Math.min(maxY, Math.max(minY, off0.y + (cy - sy) / pxPerMm));
+        const xs: number[] = [];
+        const ys: number[] = [];
+        if (snapOn && !alt) {
+          const ccx = bcx + ox * pxPerMm;
+          const ccy = bcy + oy * pxPerMm;
+          for (const tx of targetsX) {
+            if (Math.abs(ccx - tx) < snapPx) { ox = (tx - bcx) / pxPerMm; xs.push(tx - wr.left); break; }
+          }
+          for (const ty of targetsY) {
+            if (Math.abs(ccy - ty) < snapPx) { oy = (ty - bcy) / pxPerMm; ys.push(ty - wr.top); break; }
           }
         }
-        for (const ty of targetsY) {
-          if (Math.abs(cy - ty) < snapPx) {
-            oy = (ty - bcy) / pxPerMm;
-            ys.push(ty - wr.top);
-            break;
-          }
-        }
-      }
-      setGuides({ xs, ys });
-      setOffset(key, { x: Math.round(ox * 20) / 20, y: Math.round(oy * 20) / 20 });
+        setGuides({ xs, ys });
+        setOffset(key, { x: Math.round(ox * 20) / 20, y: Math.round(oy * 20) / 20 });
+      },
+      end() { setGuides({ xs: [], ys: [] }); },
+      tap() { const pnl = EL_PANEL[key]; if (pnl) setActive((a) => (a === pnl ? null : pnl)); },
     };
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-      setGuides({ xs: [], ys: [] });
-      if (!moved) {
-        const panel = EL_PANEL[key];
-        if (panel) setActive((a) => (a === panel ? null : panel));
-      }
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
   };
 
-  // 拖动背景图:平移构图(mm 存 layout.front / layout.back),磁吸回默认位;位移 <4px 视为点击打开图库面板
-  // 背面无图时不平移(只点击打开面板选图),避免存下看不见的偏移。
-  const startArtDrag = (e: React.PointerEvent, lkey: "front" | "back") => {
-    e.preventDefault();
+  // 单指拖动器(背景图):平移构图,磁吸回默认位;背面无图只点击打开面板(不平移)
+  const makeArtDragger = (lkey: "front" | "back", sx: number, sy: number): Dragger | null => {
     const sel = lkey === "front" ? '[data-panel="front"]' : '[data-panel="back"]';
     const panel = wrapRef.current?.querySelector<HTMLElement>(sel);
-    if (!panel) return;
+    if (!panel) return null;
     const pxPerMm = panel.getBoundingClientRect().width / PANEL_MM;
     const f0 = { x: 0, y: 0, ...s.layout[lkey] };
     const hasArt = lkey === "front" ? true : !!s.backArt;
     const setFn = lkey === "front" ? setFront : setBack;
     const region: Region = lkey === "front" ? "art" : "backArt";
-    const startX = e.clientX;
-    const startY = e.clientY;
-    let moved = false;
+    return {
+      move(cx, cy, alt) {
+        if (!hasArt) return;
+        let ox = Math.max(-20, Math.min(20, f0.x + (cx - sx) / pxPerMm));
+        let oy = Math.max(-20, Math.min(20, f0.y + (cy - sy) / pxPerMm));
+        if (snapOn && !alt) {
+          if (Math.abs(ox) < SNAP_MM) ox = 0;
+          if (Math.abs(oy) < SNAP_MM) oy = 0;
+        }
+        setFn({ x: Math.round(ox * 20) / 20, y: Math.round(oy * 20) / 20 });
+      },
+      end() {},
+      tap() { setActive((a) => (a === region ? null : region)); },
+    };
+  };
 
-    const onMove = (ev: PointerEvent) => {
-      if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) > 4) moved = true;
-      if (!moved || !hasArt) return;
-      let ox = Math.max(-20, Math.min(20, f0.x + (ev.clientX - startX) / pxPerMm));
-      let oy = Math.max(-20, Math.min(20, f0.y + (ev.clientY - startY) / pxPerMm));
-      if (snapOn && !ev.altKey) {
-        if (Math.abs(ox) < SNAP_MM) ox = 0;
-        if (Math.abs(oy) < SNAP_MM) oy = 0;
-      }
-      setFn({ x: Math.round(ox * 20) / 20, y: Math.round(oy * 20) / 20 });
-    };
-    const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-      if (!moved) setActive((a) => (a === region ? null : region));
-    };
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onUp);
+  // 统一手势入口(各热区 onPointerDown 调):第 1 指起拖动,第 2 指(可缩放目标)起捏合缩放
+  const startGesture = (e: React.PointerEvent, target: GTarget) => {
+    e.preventDefault();
+    let g = gestureRef.current;
+    if (g && gKey(g.target) !== gKey(target)) return; // 另一目标手势进行中,忽略
+    if (!g) {
+      g = {
+        target,
+        pointers: new Map(),
+        dragger: null,
+        startX: e.clientX,
+        startY: e.clientY,
+        moved: false,
+        scaled: false,
+        pinch: null,
+      };
+      gestureRef.current = g;
+    }
+    g.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    // 背面无背景图时不进缩放(避免存下看不见的缩放)
+    const canScale =
+      gScalable(target) && (target.kind !== "art" || target.lkey === "front" || !!s.backArt);
+    if (g.pointers.size === 2 && canScale) {
+      const pts = [...g.pointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+      g.pinch = { startDist: dist, startScale: currentScale(target), apply: (sc) => applyPinch(target, sc) };
+      g.dragger = null; // 捏合时挂起拖动
+    } else if (g.pointers.size === 1) {
+      g.startX = e.clientX;
+      g.startY = e.clientY;
+      g.dragger =
+        target.kind === "art"
+          ? makeArtDragger(target.lkey, e.clientX, e.clientY)
+          : makeElDragger(target.key, e.clientX, e.clientY);
+    }
   };
 
   // 把指定背景图(全分辨率)转 PNG 下载:canvas 画原图再导出,像素与原图一致、无损。
@@ -560,7 +661,7 @@ export function CardEditor({
             role="button"
             title="拖动调整构图,点击编辑:正面背景图"
             aria-label="正面背景图"
-            onPointerDown={(e) => startArtDrag(e, "front")}
+            onPointerDown={(e) => startGesture(e, { kind: "art", lkey: "front" })}
             className={
               "absolute touch-none select-none rounded-md transition " +
               (active === "art"
@@ -574,7 +675,7 @@ export function CardEditor({
             role="button"
             title={s.backArt ? "拖动调整构图,点击编辑:背面背景图" : "点击设置:背面背景图"}
             aria-label="背面背景图"
-            onPointerDown={(e) => startArtDrag(e, "back")}
+            onPointerDown={(e) => startGesture(e, { kind: "art", lkey: "back" })}
             className={
               "absolute touch-none select-none rounded-md transition " +
               (active === "backArt"
@@ -593,7 +694,7 @@ export function CardEditor({
                 role="button"
                 aria-label={EL_LABEL[key]}
                 title={`拖动移动:${EL_LABEL[key]}`}
-                onPointerDown={(e) => startElDrag(e, key)}
+                onPointerDown={(e) => startGesture(e, { kind: "el", key })}
                 className={
                   "absolute touch-none select-none rounded transition " +
                   (EL_PANEL[key] && active === EL_PANEL[key]
@@ -693,7 +794,7 @@ export function CardEditor({
               hasOffset={!!s.layout.front}
               onScale={(pct) => setFront({ s: pct / 100 })}
               onResetOffset={() => setOffset("front", null)}
-              dragHint="直接拖卡面上的图挪构图,鼠标悬在图上滚滚轮也能缩放;铺满模式只能放大(裁掉更多边缘),要看更全整张图就勾上面的「完整显示」。预览即裁切后成品,出血里多印的部分会被裁掉。"
+              dragHint="直接拖卡面上的图挪构图,手机两指捏合 / 鼠标滚轮可缩放;铺满模式只能放大(裁掉更多边缘),要看更全整张图就勾上面的「完整显示」。预览即裁切后成品,出血里多印的部分会被裁掉。"
               footer={
                 <span className="mt-1 block border-t border-line pt-3 text-[12px] leading-relaxed text-ink-3">
                   想生成 / 换一张正面图?到下方「用 AI 生成新背景图」按维度拼提示词,生图后用上面的「上传自己的正面图」传回来。
@@ -723,7 +824,12 @@ export function CardEditor({
               hasOffset={!!s.layout.back}
               onScale={(pct) => setBack({ s: pct / 100 })}
               onResetOffset={() => setOffset("back", null)}
-              dragHint="直接拖背面卡上的图挪构图,鼠标悬在图上滚滚轮也能缩放;预览即裁切后成品,出血里多印的部分会被裁掉。"
+              dragHint="直接拖背面卡上的图挪构图,手机两指捏合 / 鼠标滚轮可缩放;预览即裁切后成品,出血里多印的部分会被裁掉。"
+              footer={
+                <span className="mt-1 block border-t border-line pt-3 text-[12px] leading-relaxed text-ink-3">
+                  想生成 / 换一张背面图?到下方「用 AI 生成新背景图」按维度拼提示词,生图后用上面的「上传背面背景图」传回来。
+                </span>
+              }
             />
           ) : null}
 
@@ -808,7 +914,7 @@ export function CardEditor({
                 ) : null}
               </div>
               <span className="text-[12px] text-ink-3">
-                调二维码大小;太小会影响扫码,建议不低于 70%。直接拖动卡面上的二维码可自由挪位置,能跨折线移到正面。
+                调二维码大小;太小会影响扫码,建议不低于 70%。手机上两指在二维码上捏合也能缩放,桌面可滚轮缩放。直接拖动二维码可自由挪位置,能跨折线移到正面。
               </span>
               <div className="break-all rounded-md bg-white px-3 py-2 text-[12px] text-ink-2 font-mono">
                 {landingUrl}
