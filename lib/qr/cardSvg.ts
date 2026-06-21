@@ -13,6 +13,7 @@ type CardSvgOptions = {
   url: string; // 印进二维码里的落地地址(背面也显示这串,去协议)
   quote?: string; // 正面语录,\n 分行;不传按默认轮换
   art?: string; // 正面艺术图 data URI / URL;有则内嵌位图正面,无则全矢量回退
+  backArt?: string; // 背面背景图 data URI / URL;有则内嵌位图背景 + 压亮罩,无则默认底纹
   algSvg?: string; // 案例图(visualcube SVG 源串),内嵌为矢量放二维码上方
   movesPath?: { d: string; width: number }; // 记法的矢量轮廓(fontSize 1.1mm),最稳的字体方案
   monoFont?: string; // JetBrains Mono woff2 的 data URI;母版内嵌 @font-face 让记法字体独立可渲染
@@ -96,6 +97,30 @@ function cubeFacelets(x0: number, top: number, clipId: string): string {
   return `<g clip-path="url(#${clipId})">${out.join("")}</g>`;
 }
 
+// 正面 / 背面共用的背景图层(内嵌位图):与 DOM 卡 QrCard.tsx 的 ArtImage 同一套几何。
+// cover(铺满):画框 = 成品面四周各外扩出血(slice 裁满),绕成品面中心缩放,缩放钳 ≥1 绝不露底。
+// contain(默认完整显示):整图装进成品面、留 1mm 安全边(meet 不裁切),四周露底色。
+// ft = 平移(mm)+ 缩放 s(绕成品面中心);x0/top 为该面板左上角,bleed 出血。
+function artLayer(
+  art: string,
+  x0: number,
+  top: number,
+  bleed: number,
+  ft: { x: number; y: number; s?: number; fit?: "contain" | "cover" } | undefined,
+): string {
+  const cx = x0 + PANEL_W / 2;
+  const cy = top + PANEL_H / 2;
+  const fitContain = ft?.fit !== "cover";
+  const img = fitContain
+    ? `<image href="${art}" x="${x0 + 1}" y="${top + 1}" width="${PANEL_W - 2}" height="${PANEL_H - 2}" preserveAspectRatio="xMidYMid meet"/>`
+    : `<image href="${art}" x="${x0 - bleed}" y="${top - bleed}" width="${PANEL_W + 2 * bleed}" height="${PANEL_H + 2 * bleed}" preserveAspectRatio="xMidYMid slice"/>`;
+  // cover 缩放钳到 ≥1(cover 缩到 <1 会从边缘露底,违背「铺满」语义)
+  const drawScale = fitContain ? (ft?.s ?? 1) : Math.max(1, ft?.s ?? 1);
+  return ft
+    ? `<g transform="translate(${ft.x} ${ft.y}) translate(${cx} ${cy}) scale(${drawScale}) translate(${-cx} ${-cy})">${img}</g>`
+    : img;
+}
+
 // 正面:魔方艺术图(内嵌位图,印满含出血)+ 底部压暗 + slogan + 品牌名。
 // 无艺术图时退回全矢量(深色 + 散落魔方色块 + logo),保证始终能出图。
 // art 为 data URI 或可达 URL;artW/artH 是正面含出血的覆盖区(0..foldX, 0..h)。
@@ -129,22 +154,8 @@ function front(
     );
 
   if (art) {
-    // 艺术图正面。两种装法,与 DOM 卡 QrCard.tsx 同一套几何:
-    // cover(铺满):画框以「成品面中心」为锚,尺寸撑到能盖住 左/上/下 出血(右侧到折线即止),
-    //   <image> slice 裁到画框内。缩放只放大(≥1),保证缩放后画框仍盖满含出血整面,绝不露底。
-    // contain(默认完整显示):整图完整装进成品面、留 1mm 安全边(meet 不裁切),四周(含出血)露深色底。
-    // layout.front = 平移(mm)+ 缩放 s(绕成品面中心);变换后可能越界,clip 回正面出血区。
-    const ft = layout?.front;
-    const fitContain = ft?.fit !== "cover";
-    const cy = top + PANEL_H / 2;
-    const img = fitContain
-      ? `<image href="${art}" x="${x0 + 1}" y="${top + 1}" width="${PANEL_W - 2}" height="${PANEL_H - 2}" preserveAspectRatio="xMidYMid meet"/>`
-      : `<image href="${art}" x="0" y="0" width="${2 * cx}" height="${2 * cy}" preserveAspectRatio="xMidYMid slice"/>`;
-    // cover 缩放钳到 ≥1(cover 缩到 <1 会从边缘露底,违背「铺满」语义)
-    const drawScale = fitContain ? (ft?.s ?? 1) : Math.max(1, ft?.s ?? 1);
-    const body = ft
-      ? `<g transform="translate(${ft.x} ${ft.y}) translate(${cx} ${cy}) scale(${drawScale}) translate(${-cx} ${-cy})">${img}</g>`
-      : img;
+    // 艺术图正面:几何与 DOM 卡 QrCard.tsx 同源(见 artLayer 注释)。变换后可能越界,clip 回正面出血区。
+    const body = artLayer(art, x0, top, bleed, layout?.front);
     return (
       `<rect x="0" y="0" width="${foldX}" height="${h}" fill="${INK}"/>` +
       `<g clip-path="url(#frontArtClip)">${body}</g>` +
@@ -173,7 +184,8 @@ function embedSvg(svg: string, x: number, y: number, size: number): string {
   });
 }
 
-// 背面:浅色 + 流派/公式底纹 + 案例图/术语 + 标题 + 二维码 + 公式 + 网址。全矢量。
+// 背面:浅色 + 流派/公式底纹(或背景图 + 压亮罩)+ 案例图/术语 + 标题 + 二维码 + 公式 + 网址。
+// 有背景图(backArt)时衬底图 + 压亮罩(保文字 / 码可读)并隐去默认底纹;二维码白芯片始终在。
 function back(
   x0: number,
   top: number,
@@ -182,11 +194,13 @@ function back(
   pattern: boolean,
   algSvg?: string,
   movesPath?: { d: string; width: number },
+  backArt?: string,
 ): string {
   const cx = x0 + PANEL_W / 2;
   const { main, sub } = backText(entry);
   const term = entry.term?.trim();
   const hasAlg = !!entry.alg?.moves;
+  const hasBackArt = !!backArt;
 
   // 二维码白芯片:小卡用 margin:2 让码点更大更好扫,白底兼当静默区。
   // 有精选公式时二维码上移腾出下方空间(放 案例图 + 公式)。
@@ -196,12 +210,17 @@ function back(
   const chipX = cx - chip / 2;
   const chipTop = top + (hasAlg ? 12 : 15.75);
   const scale = (chip - pad * 2) / dim;
-  const qr = shift(
-    entry.layout,
-    "qr",
+  // 二维码缩放 s(绕芯片中心),与 DOM 卡 elTransform 同语义;shift 再叠加平移
+  const qrScale = entry.layout?.qr?.s ?? 1;
+  const qcy = chipTop + chip / 2;
+  const chipBody =
     `<rect x="${chipX}" y="${chipTop}" width="${chip}" height="${chip}" rx="1.4" fill="#FFFFFF" stroke="#E5E8EE" stroke-width="0.14"/>` +
-      `<g transform="translate(${(chipX + pad).toFixed(3)} ${(chipTop + pad).toFixed(3)}) scale(${scale.toFixed(4)})">${inner}</g>`,
-  );
+    `<g transform="translate(${(chipX + pad).toFixed(3)} ${(chipTop + pad).toFixed(3)}) scale(${scale.toFixed(4)})">${inner}</g>`;
+  const scaledChip =
+    qrScale !== 1
+      ? `<g transform="translate(${cx} ${qcy}) scale(${qrScale}) translate(${-cx} ${-qcy})">${chipBody}</g>`
+      : chipBody;
+  const qr = shift(entry.layout, "qr", scaledChip);
 
   // 术语角标:仅无精选公式时显示在二维码上方
   const termEl = !hasAlg && term
@@ -226,10 +245,16 @@ function back(
     algEl = shift(entry.layout, "alg", caseImg + movesEl);
   }
 
+  // 背景层:有背景图 → 衬底图(clip 在背面含出血区)+ 压亮罩;无图 → 默认色块 / 公式底纹
+  const bg = hasBackArt
+    ? `<g clip-path="url(#backArtClip)">${artLayer(backArt!, x0, top, top, entry.layout?.back)}</g>` +
+      `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backShade)"/>`
+    : (pattern ? cubeFacelets(x0, top, "backClip") : "") +
+      (pattern ? notationPattern(x0, top, "backClip", BRAND, 0.08) : "");
+
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>` +
-    (pattern ? cubeFacelets(x0, top, "backClip") : "") +
-    (pattern ? notationPattern(x0, top, "backClip", BRAND, 0.08) : "") +
+    bg +
     shift(
       entry.layout,
       "backText",
@@ -282,6 +307,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     fontFace +
     `<clipPath id="frontClip"><rect x="${bleed}" y="${bleed}" width="${PANEL_W}" height="${PANEL_H}"/></clipPath>` +
     `<clipPath id="frontArtClip"><rect x="0" y="0" width="${foldX}" height="${h}"/></clipPath>` +
+    `<clipPath id="backArtClip"><rect x="${foldX}" y="0" width="${w - foldX}" height="${h}"/></clipPath>` +
     `<clipPath id="backClip"><rect x="${foldX}" y="${bleed}" width="${PANEL_W}" height="${PANEL_H}"/></clipPath>` +
     `<linearGradient id="frontGlow" x1="0" y1="1" x2="0" y2="0">` +
     `<stop offset="0" stop-color="${BRAND}" stop-opacity="0.55"/>` +
@@ -298,6 +324,14 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     `<stop offset="0.46" stop-color="#F5F8FF"/>` +
     `<stop offset="1" stop-color="#E7EEFE"/>` +
     `</linearGradient>` +
+    // 背面背景图压亮罩:上 / 下加亮保标题与公式可读,中段透出图(二维码白芯片不怕)
+    `<linearGradient id="backShade" x1="0" y1="0" x2="0" y2="1">` +
+    `<stop offset="0" stop-color="#F5F8FF" stop-opacity="0.9"/>` +
+    `<stop offset="0.28" stop-color="#F5F8FF" stop-opacity="0.28"/>` +
+    `<stop offset="0.54" stop-color="#F5F8FF" stop-opacity="0.16"/>` +
+    `<stop offset="0.8" stop-color="#F5F8FF" stop-opacity="0.58"/>` +
+    `<stop offset="1" stop-color="#F5F8FF" stop-opacity="0.9"/>` +
+    `</linearGradient>` +
     `</defs>`;
 
   // 出血:正面深色铺到左/上/下出血,背面浅色铺到右/上/下出血
@@ -312,7 +346,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     defs +
     bleedBg +
     front(bleed, foldX, h, quote, pattern, opts.art, entry.layout) +
-    back(foldX, bleed, entry, opts.url, pattern, opts.algSvg, opts.movesPath) +
+    back(foldX, bleed, entry, opts.url, pattern, opts.algSvg, opts.movesPath, opts.backArt) +
     fold +
     (cropMarks ? cropMarksSvg(bleed, w, h) : "") +
     `</svg>`

@@ -91,6 +91,7 @@ export async function saveQr(f: FormData): Promise<void> {
     term: String(f.get("term") ?? ""),
     quote: String(f.get("quote") ?? ""),
     frontArt: String(f.get("frontArt") ?? ""),
+    backArt: String(f.get("backArt") ?? ""),
     frontArtPrompt: String(f.get("frontArtPrompt") ?? ""),
     alg: parseAlg(String(f.get("alg") ?? "")),
     layout: parseLayout(String(f.get("layout") ?? "")),

@@ -12,7 +12,7 @@ import { algToText, parseAlg } from "@/lib/qr/cardText";
 // 元素热区按实际渲染框实测贴合;位移 <4px 视为点击,打开对应编辑面板。
 // 偏移(mm)存 layout 字段,DOM 卡与矢量印刷母版同步;隐藏 input 随「保存」提交。
 
-type Region = "art" | "quote" | "back" | "alg" | "qr";
+type Region = "art" | "backArt" | "quote" | "back" | "alg" | "qr";
 
 const EL_LABEL: Record<CardEl, string> = {
   quote: "正面语录",
@@ -22,6 +22,7 @@ const EL_LABEL: Record<CardEl, string> = {
   qr: "二维码",
   alg: "精选公式",
   front: "正面背景图",
+  back: "背面背景图",
 };
 
 // 元素点击(非拖动)打开的编辑面板;brand 只可移动无面板
@@ -33,6 +34,7 @@ const EL_PANEL: Record<CardEl, Region | null> = {
   qr: "qr",
   alg: "alg",
   front: "art",
+  back: "backArt",
 };
 
 const ALL_ELS: CardEl[] = ["quote", "brand", "backText", "term", "qr", "alg"];
@@ -43,6 +45,148 @@ const INPUT_CLS =
   "w-full rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink outline-none focus:border-brand";
 
 type Box = { left: number; top: number; w: number; h: number };
+
+// 正面 / 背面背景图编辑面板(图库选择 + 上传 + 下载 + 完整显示开关 + 缩放 + 构图提示),两面共用。
+// value="" = 无图(正面则为自动轮换);showControls 控制是否显示构图区(正面始终显示,背面有图才显示)。
+function ArtPanel({
+  value,
+  onSelect,
+  offLabel,
+  offHint,
+  uploadLabel,
+  downloadLabel,
+  downloadable,
+  showControls,
+  pngBusy,
+  onDownload,
+  contain,
+  onToggleContain,
+  scalePct,
+  minPct,
+  hasOffset,
+  onScale,
+  onResetOffset,
+  dragHint,
+  footer,
+}: {
+  value: string;
+  onSelect: (src: string) => void;
+  offLabel: string;
+  offHint: string;
+  uploadLabel: string;
+  downloadLabel: string;
+  downloadable: boolean;
+  showControls: boolean;
+  pngBusy: boolean;
+  onDownload: () => void;
+  contain: boolean;
+  onToggleContain: (checked: boolean) => void;
+  scalePct: number;
+  minPct: number;
+  hasOffset: boolean;
+  onScale: (pct: number) => void;
+  onResetOffset: () => void;
+  dragHint: string;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <>
+      <div className="flex flex-wrap gap-2.5">
+        <button
+          type="button"
+          onClick={() => onSelect("")}
+          className={
+            "flex w-[72px] items-center justify-center rounded-md border px-1 text-center text-[11px] leading-tight aspect-[1/2] transition " +
+            (value === ""
+              ? "border-brand ring-2 ring-brand/30 text-brand"
+              : "border-line bg-white text-ink-3 hover:border-brand/40")
+          }
+        >
+          {offLabel}
+        </button>
+        {FRONT_ARTS.map((o) => (
+          <button
+            key={o.src}
+            type="button"
+            onClick={() => onSelect(o.src)}
+            className={
+              "w-[72px] overflow-hidden rounded-md border bg-white transition " +
+              (value === o.src
+                ? "border-brand ring-2 ring-brand/30"
+                : "border-line hover:border-brand/40")
+            }
+          >
+            {/* 按真实比例完整显示(深色补边),别像 cover 那样裁出假比例误导 */}
+            <img src={o.src} alt={o.label} className="block aspect-[1/2] w-full object-contain bg-[#11111A]" />
+            <span className="block py-0.5 text-center text-[11px] text-ink-2">{o.label}</span>
+          </button>
+        ))}
+        {value && !FRONT_ARTS.some((o) => o.src === value) ? (
+          <span className="w-[72px] overflow-hidden rounded-md border border-brand ring-2 ring-brand/30 bg-white">
+            <img src={value} alt="自己上传的图" className="block aspect-[1/2] w-full object-contain bg-[#11111A]" />
+            <span className="block py-0.5 text-center text-[11px] text-ink-2">自己上传</span>
+          </span>
+        ) : null}
+      </div>
+      <span className="text-[12px] text-ink-3">{offHint}</span>
+      <div className="grid grid-cols-2 gap-2">
+        <FileUpload accept="image/*" label={uploadLabel} onUploaded={onSelect} />
+        {downloadable ? (
+          <button
+            type="button"
+            onClick={onDownload}
+            disabled={pngBusy}
+            title="下载当前背景图的 PNG 原图,全分辨率无损,可在其他软件二次编辑"
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition disabled:opacity-60"
+          >
+            <Download size={14} /> {pngBusy ? "导出中…" : downloadLabel}
+          </button>
+        ) : null}
+      </div>
+      {showControls ? (
+        <>
+          <label className="inline-flex cursor-pointer items-center gap-1.5 text-[12px] text-ink-2">
+            <input
+              type="checkbox"
+              checked={contain}
+              // 默认勾选=完整显示;勾选时顺带清掉残留平移/缩放,保证一点不裁。取消=铺满整面(超出裁掉)
+              onChange={(e) => onToggleContain(e.target.checked)}
+              className="accent-brand"
+            />
+            完整显示整张图,一点不裁
+          </label>
+          <span className="text-[12px] text-ink-3">
+            勾选后整张图缩到能完全装进卡面,四边都保住(预留 1mm,印厂裁歪也碰不到图);图和卡片比例不一致时,空出来的地方是底色。不勾则铺满整面,超出部分裁掉。
+          </span>
+          <div className="flex items-center gap-2.5 text-[12px] text-ink-2">
+            <span className="shrink-0">缩放</span>
+            <input
+              type="range"
+              min={minPct}
+              max={300}
+              step={1}
+              value={scalePct}
+              onChange={(e) => onScale(Number(e.target.value))}
+              className="w-full accent-brand"
+            />
+            <span className="w-10 shrink-0 text-right font-mono">{scalePct}%</span>
+            {hasOffset ? (
+              <button
+                type="button"
+                onClick={onResetOffset}
+                className="shrink-0 text-brand hover:underline"
+              >
+                复位
+              </button>
+            ) : null}
+          </div>
+          <span className="text-[12px] text-ink-3">{dragHint}</span>
+        </>
+      ) : null}
+      {footer}
+    </>
+  );
+}
 
 export function CardEditor({
   entry,
@@ -63,10 +207,14 @@ export function CardEditor({
     intro: entry.intro ?? "",
     quote: entry.quote ?? "",
     art: entry.frontArt ?? "",
+    backArt: entry.backArt ?? "",
     algRaw: algToText(entry.alg),
     layout: (entry.layout ?? {}) as CardLayout,
   });
   const [active, setActive] = useState<Region | null>(null);
+  // 背面图存在性的实时快照(滚轮缩放 handler 在 [] effect 里,靠 ref 读最新值)
+  const backArtRef = useRef("");
+  backArtRef.current = s.backArt;
   const [snapOn, setSnapOn] = useState(true);
   // 拖动中的对齐参考线(相对卡片容器 px)
   const [guides, setGuides] = useState<{ xs: number[]; ys: number[] }>({ xs: [], ys: [] });
@@ -74,26 +222,35 @@ export function CardEditor({
   // 各元素实测框(相对卡片容器 px),热区据此贴合渲染
   const [boxes, setBoxes] = useState<Partial<Record<CardEl, Box>>>({});
 
-  // 悬停正面图滚轮缩放(native 非 passive 监听才能 preventDefault 拦住页面滚动);
-  // 挂在整卡容器上、按坐标判定在正面板内,盖在语录/品牌热区上时也能缩放
+  // 悬停背景图滚轮缩放(native 非 passive 监听才能 preventDefault 拦住页面滚动);
+  // 挂在整卡容器上、按坐标判定在哪个面板内,盖在语录/品牌/文案热区上时也能缩放。
+  // 正面始终可缩;背面仅在设了背景图时拦滚动并缩放(无图不打断页面滚动)。
   useEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap) return;
-    const onWheel = (e: WheelEvent) => {
-      const panel = wrap.querySelector<HTMLElement>('[data-panel="front"]');
-      if (!panel) return;
+    const inPanel = (sel: string, e: WheelEvent) => {
+      const panel = wrap.querySelector<HTMLElement>(sel);
+      if (!panel) return false;
       const r = panel.getBoundingClientRect();
-      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
-        return;
+      return !(e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom);
+    };
+    const onWheel = (e: WheelEvent) => {
+      const lkey: "front" | "back" | null = inPanel('[data-panel="front"]', e)
+        ? "front"
+        : inPanel('[data-panel="back"]', e)
+          ? "back"
+          : null;
+      if (!lkey) return;
+      if (lkey === "back" && !backArtRef.current) return; // 背面无图,不拦页面滚动
       e.preventDefault();
       setS((p) => {
-        const cur = { x: 0, y: 0, s: 1, ...p.layout.front };
+        const cur = { x: 0, y: 0, s: 1, ...p.layout[lkey] };
         const floor = cur.fit === "cover" ? 1 : 0.5; // cover 不能缩到露底
         const next =
           Math.round(Math.max(floor, Math.min(3, cur.s * Math.exp(-e.deltaY * 0.002))) * 100) / 100;
         const layout = { ...p.layout };
-        if (cur.x === 0 && cur.y === 0 && next === 1 && !cur.fit) delete layout.front;
-        else layout.front = { ...cur, s: next };
+        if (cur.x === 0 && cur.y === 0 && next === 1 && !cur.fit) delete layout[lkey];
+        else layout[lkey] = { ...cur, s: next };
         return { ...p, layout };
       });
     };
@@ -148,22 +305,42 @@ export function CardEditor({
   const setOffset = (key: CardEl, off: { x: number; y: number } | null) =>
     setS((p) => {
       const layout = { ...p.layout };
-      if (off) layout[key] = off;
-      else delete layout[key];
+      // 拖动只改位移,保留已有缩放 s(二维码可缩放,别被拖动清掉);off=null 整体复位
+      if (off) {
+        const prevS = p.layout[key]?.s;
+        layout[key] = prevS !== undefined ? { ...off, s: prevS } : off;
+      } else delete layout[key];
       return { ...p, layout };
     });
-  // 正面图平移/缩放/完整显示(layout.front):增量合并,回到默认(0,0,×1,铺满)就删键
-  const setFront = (patch: Partial<{ x: number; y: number; s: number; fit?: "cover" }>) =>
+  // 二维码缩放 s:保留位移 x/y;回到 ×1 且无位移就删键
+  const setQrScale = (sc: number) =>
     setS((p) => {
-      const next = { x: 0, y: 0, s: 1, ...p.layout.front, ...patch };
-      if (next.fit === "cover") next.s = Math.max(1, next.s); // cover 缩放只放大,保证铺满不露底
+      const prev = p.layout.qr ?? { x: 0, y: 0 };
+      const next: { x: number; y: number; s?: number } = { x: prev.x, y: prev.y };
+      if (sc !== 1) next.s = sc;
       const layout = { ...p.layout };
-      if (next.x === 0 && next.y === 0 && next.s === 1 && !next.fit) delete layout.front;
-      else layout.front = next;
+      if (next.x === 0 && next.y === 0 && next.s === undefined) delete layout.qr;
+      else layout.qr = next;
       return { ...p, layout };
     });
+  const qrScalePct = Math.round((s.layout.qr?.s ?? 1) * 100);
+  // 背景图平移/缩放/完整显示(layout.front 或 layout.back):增量合并,回默认(0,0,×1,铺满)就删键
+  const setArt =
+    (lkey: "front" | "back") =>
+    (patch: Partial<{ x: number; y: number; s: number; fit?: "cover" }>) =>
+      setS((p) => {
+        const next = { x: 0, y: 0, s: 1, ...p.layout[lkey], ...patch };
+        if (next.fit === "cover") next.s = Math.max(1, next.s); // cover 缩放只放大,保证铺满不露底
+        const layout = { ...p.layout };
+        if (next.x === 0 && next.y === 0 && next.s === 1 && !next.fit) delete layout[lkey];
+        else layout[lkey] = next;
+        return { ...p, layout };
+      });
+  const setFront = setArt("front");
+  const setBack = setArt("back");
 
   // 拖动元素:跟手换算 mm,磁吸到 面板中线 / 默认位 / 同面板其他元素中心;位移 <4px 视为点击
+  // 二维码特例:可自由移到整张卡任意位置(含正面),边界放到整卡、磁吸额外加两面中线
   const startElDrag = (e: React.PointerEvent, key: CardEl) => {
     e.preventDefault();
     const wrap = wrapRef.current;
@@ -180,9 +357,19 @@ export function CardEditor({
     const baseT = er.top - off0.y * pxPerMm;
     const bcx = baseL + er.width / 2;
     const bcy = baseT + er.height / 2;
-    // 磁吸目标(viewport px):面板中线 + 默认位 + 同面板其他元素中心
+    // 二维码可跨面自由移动:边界用整卡,否则用所在面板
+    const isFree = key === "qr";
+    const bounds = isFree ? wr : pr;
+    // 磁吸目标(viewport px):(所在面)面中线 + 默认位 + 同面板其他元素中心
     const targetsX = [pr.left + pr.width / 2, bcx];
     const targetsY = [pr.top + pr.height / 2, bcy];
+    if (isFree) {
+      // 跨面时,正反两面中线都可吸附
+      wrap.querySelectorAll<HTMLElement>("[data-panel]").forEach((pn) => {
+        const r = pn.getBoundingClientRect();
+        targetsX.push(r.left + r.width / 2);
+      });
+    }
     wrap.querySelectorAll<HTMLElement>("[data-el]").forEach((other) => {
       if (other === el || other.closest("[data-panel]") !== panel) return;
       const r = other.getBoundingClientRect();
@@ -191,10 +378,10 @@ export function CardEditor({
     });
     // 边界(留 0.3mm)
     const mg = 0.3 * pxPerMm;
-    const minX = (pr.left + mg - baseL) / pxPerMm;
-    const maxX = (pr.right - mg - (baseL + er.width)) / pxPerMm;
-    const minY = (pr.top + mg - baseT) / pxPerMm;
-    const maxY = (pr.bottom - mg - (baseT + er.height)) / pxPerMm;
+    const minX = (bounds.left + mg - baseL) / pxPerMm;
+    const maxX = (bounds.right - mg - (baseL + er.width)) / pxPerMm;
+    const minY = (bounds.top + mg - baseT) / pxPerMm;
+    const maxY = (bounds.bottom - mg - (baseT + er.height)) / pxPerMm;
     const startX = e.clientX;
     const startY = e.clientY;
     const snapPx = SNAP_MM * pxPerMm;
@@ -243,46 +430,51 @@ export function CardEditor({
     window.addEventListener("pointercancel", onUp);
   };
 
-  // 拖动正面背景图:平移构图(mm 存 layout.front),磁吸回默认位;位移 <4px 视为点击打开图库面板
-  const startArtDrag = (e: React.PointerEvent) => {
+  // 拖动背景图:平移构图(mm 存 layout.front / layout.back),磁吸回默认位;位移 <4px 视为点击打开图库面板
+  // 背面无图时不平移(只点击打开面板选图),避免存下看不见的偏移。
+  const startArtDrag = (e: React.PointerEvent, lkey: "front" | "back") => {
     e.preventDefault();
-    const panel = wrapRef.current?.querySelector<HTMLElement>('[data-panel="front"]');
+    const sel = lkey === "front" ? '[data-panel="front"]' : '[data-panel="back"]';
+    const panel = wrapRef.current?.querySelector<HTMLElement>(sel);
     if (!panel) return;
     const pxPerMm = panel.getBoundingClientRect().width / PANEL_MM;
-    const f0 = { x: 0, y: 0, ...s.layout.front };
+    const f0 = { x: 0, y: 0, ...s.layout[lkey] };
+    const hasArt = lkey === "front" ? true : !!s.backArt;
+    const setFn = lkey === "front" ? setFront : setBack;
+    const region: Region = lkey === "front" ? "art" : "backArt";
     const startX = e.clientX;
     const startY = e.clientY;
     let moved = false;
 
     const onMove = (ev: PointerEvent) => {
       if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) > 4) moved = true;
-      if (!moved) return;
+      if (!moved || !hasArt) return;
       let ox = Math.max(-20, Math.min(20, f0.x + (ev.clientX - startX) / pxPerMm));
       let oy = Math.max(-20, Math.min(20, f0.y + (ev.clientY - startY) / pxPerMm));
       if (snapOn && !ev.altKey) {
         if (Math.abs(ox) < SNAP_MM) ox = 0;
         if (Math.abs(oy) < SNAP_MM) oy = 0;
       }
-      setFront({ x: Math.round(ox * 20) / 20, y: Math.round(oy * 20) / 20 });
+      setFn({ x: Math.round(ox * 20) / 20, y: Math.round(oy * 20) / 20 });
     };
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
-      if (!moved) setActive((a) => (a === "art" ? null : "art"));
+      if (!moved) setActive((a) => (a === region ? null : region));
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onUp);
   };
 
-  // 把当前正面图(全分辨率)转 PNG 下载:canvas 画原图再导出,像素与原图一致、无损。
+  // 把指定背景图(全分辨率)转 PNG 下载:canvas 画原图再导出,像素与原图一致、无损。
   // 同源(/card、/uploads)不会污染 canvas;外链转换失败则退回直接打开原图。
   const [pngBusy, setPngBusy] = useState(false);
-  const downloadArtPng = async () => {
+  const downloadPng = async (rawSrc: string) => {
     if (pngBusy) return;
-    const src = s.art || FRONT_ARTS[0].src;
-    const base = (src.split("/").pop() || "front-art").replace(/\.[^.]+$/, "");
+    const src = rawSrc || FRONT_ARTS[0].src;
+    const base = (src.split("/").pop() || "card-art").replace(/\.[^.]+$/, "");
     setPngBusy(true);
     try {
       const img = new Image();
@@ -321,14 +513,19 @@ export function CardEditor({
     intro: s.intro.trim() || null,
     quote: s.quote.trim() || null,
     frontArt: s.art.trim() || null,
+    backArt: s.backArt.trim() || null,
     alg: parseAlg(s.algRaw),
     layout: s.layout,
   };
   const hasOffsets = Object.keys(s.layout).length > 0;
-  // 正面图缩放:cover 钳到 ≥100%(滑块与渲染一致,WYSIWYG),contain 可缩到 50%
+  // 背景图缩放:cover 钳到 ≥100%(滑块与渲染一致,WYSIWYG),contain 可缩到 50%
   const frontIsCover = s.layout.front?.fit === "cover";
   const frontScalePct = Math.round(
     Math.max(frontIsCover ? 1 : 0.5, s.layout.front?.s ?? 1) * 100,
+  );
+  const backIsCover = s.layout.back?.fit === "cover";
+  const backScalePct = Math.round(
+    Math.max(backIsCover ? 1 : 0.5, s.layout.back?.s ?? 1) * 100,
   );
 
   return (
@@ -339,6 +536,7 @@ export function CardEditor({
       <input type="hidden" name="intro" value={s.intro} form={formId} readOnly />
       <input type="hidden" name="quote" value={s.quote} form={formId} readOnly />
       <input type="hidden" name="frontArt" value={s.art} form={formId} readOnly />
+      <input type="hidden" name="backArt" value={s.backArt} form={formId} readOnly />
       <input type="hidden" name="alg" value={s.algRaw} form={formId} readOnly />
       <input
         type="hidden"
@@ -357,12 +555,12 @@ export function CardEditor({
           className="relative mx-auto w-fit [--s:2.2] sm:[--s:2.8] xl:[--s:3.4]"
         >
           <QrCardUnit entry={merged} svg={svg} cropMarks />
-          {/* 正面背景图:整个正面板的底层热区(元素热区叠在其上),拖动平移构图,点击打开图库面板 */}
+          {/* 正面背景图:正面板底层热区(元素热区叠在其上),拖动平移构图,点击打开图库面板 */}
           <span
             role="button"
             title="拖动调整构图,点击编辑:正面背景图"
             aria-label="正面背景图"
-            onPointerDown={startArtDrag}
+            onPointerDown={(e) => startArtDrag(e, "front")}
             className={
               "absolute touch-none select-none rounded-md transition " +
               (active === "art"
@@ -370,6 +568,20 @@ export function CardEditor({
                 : "cursor-grab hover:ring-2 hover:ring-brand/50 hover:bg-brand/5")
             }
             style={{ left: 0, top: 0, width: "50%", height: "100%" }}
+          />
+          {/* 背面背景图:背面板底层热区(文案/二维码热区叠在其上),点击打开图库面板,设了图可拖动平移 */}
+          <span
+            role="button"
+            title={s.backArt ? "拖动调整构图,点击编辑:背面背景图" : "点击设置:背面背景图"}
+            aria-label="背面背景图"
+            onPointerDown={(e) => startArtDrag(e, "back")}
+            className={
+              "absolute touch-none select-none rounded-md transition " +
+              (active === "backArt"
+                ? "ring-2 ring-brand bg-brand/10 cursor-grab"
+                : "cursor-pointer hover:ring-2 hover:ring-brand/50 hover:bg-brand/5")
+            }
+            style={{ left: "50%", top: 0, width: "50%", height: "100%" }}
           />
           {/* 元素热区:实测贴合,可拖动移位;点击打开对应面板 */}
           {ALL_ELS.map((key) => {
@@ -441,13 +653,15 @@ export function CardEditor({
             <span className="text-[13px] font-medium text-ink-2">
               {active === "art"
                 ? "正面背景图"
-                : active === "quote"
-                  ? "正面语录"
-                  : active === "back"
-                    ? "背面文案(标题 / 简介 / 角标)"
-                    : active === "alg"
-                      ? "背面精选公式"
-                      : "二维码"}
+                : active === "backArt"
+                  ? "背面背景图"
+                  : active === "quote"
+                    ? "正面语录"
+                    : active === "back"
+                      ? "背面文案(标题 / 简介 / 角标)"
+                      : active === "alg"
+                        ? "背面精选公式"
+                        : "二维码"}
             </span>
             <button
               type="button"
@@ -459,121 +673,58 @@ export function CardEditor({
           </div>
 
           {active === "art" ? (
-            <>
-            <div className="flex flex-wrap gap-2.5">
-              <button
-                type="button"
-                onClick={() => set("art")("")}
-                className={
-                  "flex w-[72px] items-center justify-center rounded-md border text-[11px] aspect-[1/2] transition " +
-                  (s.art === ""
-                    ? "border-brand ring-2 ring-brand/30 text-brand"
-                    : "border-line bg-white text-ink-3 hover:border-brand/40")
-                }
-              >
-                自动轮换
-              </button>
-              {FRONT_ARTS.map((o) => (
-                <button
-                  key={o.src}
-                  type="button"
-                  onClick={() => set("art")(o.src)}
-                  className={
-                    "w-[72px] overflow-hidden rounded-md border bg-white transition " +
-                    (s.art === o.src
-                      ? "border-brand ring-2 ring-brand/30"
-                      : "border-line hover:border-brand/40")
-                  }
-                >
-                  {/* 按真实比例完整显示(深色补边),别像 cover 那样裁出假比例误导 */}
-                  <img src={o.src} alt={o.label} className="block aspect-[1/2] w-full object-contain bg-[#11111A]" />
-                  <span className="block py-0.5 text-center text-[11px] text-ink-2">
-                    {o.label}
-                  </span>
-                </button>
-              ))}
-              {s.art && !FRONT_ARTS.some((o) => o.src === s.art) ? (
-                <span className="w-[72px] overflow-hidden rounded-md border border-brand ring-2 ring-brand/30 bg-white">
-                  <img src={s.art} alt="自己上传的图" className="block aspect-[1/2] w-full object-contain bg-[#11111A]" />
-                  <span className="block py-0.5 text-center text-[11px] text-ink-2">
-                    自己上传
-                  </span>
+            <ArtPanel
+              value={s.art}
+              onSelect={(src) => set("art")(src)}
+              offLabel="自动轮换"
+              offHint="自动轮换:不固定用图,批量打印时按卡片顺序轮流分配图库的图;在意印出来是哪张就选定一张。"
+              uploadLabel="上传自己的正面图"
+              downloadLabel="下载正面图 PNG"
+              downloadable
+              showControls
+              pngBusy={pngBusy}
+              onDownload={() => downloadPng(s.art)}
+              contain={s.layout.front?.fit !== "cover"}
+              onToggleContain={(checked) =>
+                setFront(checked ? { fit: undefined, x: 0, y: 0, s: 1 } : { fit: "cover" })
+              }
+              scalePct={frontScalePct}
+              minPct={frontIsCover ? 100 : 50}
+              hasOffset={!!s.layout.front}
+              onScale={(pct) => setFront({ s: pct / 100 })}
+              onResetOffset={() => setOffset("front", null)}
+              dragHint="直接拖卡面上的图挪构图,鼠标悬在图上滚滚轮也能缩放;铺满模式只能放大(裁掉更多边缘),要看更全整张图就勾上面的「完整显示」。预览即裁切后成品,出血里多印的部分会被裁掉。"
+              footer={
+                <span className="mt-1 block border-t border-line pt-3 text-[12px] leading-relaxed text-ink-3">
+                  想生成 / 换一张正面图?到下方「用 AI 生成新背景图」按维度拼提示词,生图后用上面的「上传自己的正面图」传回来。
                 </span>
-              ) : null}
-            </div>
-            <span className="text-[12px] text-ink-3">
-              自动轮换:不固定用图,批量打印时按卡片顺序轮流分配图库的图;在意印出来是哪张就选定一张。
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              <FileUpload
-                accept="image/*"
-                label="上传自己的正面图"
-                onUploaded={(url) => set("art")(url)}
-              />
-              {/* 下载当前正面图原图为 PNG(全分辨率、无损;自动轮换时下当前展示的第一张) */}
-              <button
-                type="button"
-                onClick={downloadArtPng}
-                disabled={pngBusy}
-                title="下载当前正面图的 PNG 原图,全分辨率无损,可在其他软件二次编辑"
-                className="inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-white px-3 py-2 text-[13px] text-ink-2 hover:border-brand/40 hover:text-brand transition disabled:opacity-60"
-              >
-                <Download size={14} /> {pngBusy ? "导出中…" : "下载正面图 PNG"}
-              </button>
-            </div>
-            <label className="inline-flex cursor-pointer items-center gap-1.5 text-[12px] text-ink-2">
-              <input
-                type="checkbox"
-                checked={s.layout.front?.fit !== "cover"}
-                onChange={(e) =>
-                  // 默认勾选=完整显示;勾选时顺带清掉残留平移/缩放,保证一点不裁。
-                  // 取消勾选=铺满整面(超出裁掉)
-                  setFront(
-                    e.target.checked
-                      ? { fit: undefined, x: 0, y: 0, s: 1 }
-                      : { fit: "cover" },
-                  )
-                }
-                className="accent-brand"
-              />
-              完整显示整张图,一点不裁
-            </label>
-            <span className="text-[12px] text-ink-3">
-              勾选后整张图缩到能完全装进卡面,四边都保住(预留 1mm,印厂裁歪也碰不到图);图和卡片比例不一致时,空出来的地方是深色底。不勾则铺满整面,超出部分裁掉。
-            </span>
-            <div className="flex items-center gap-2.5 text-[12px] text-ink-2">
-              <span className="shrink-0">缩放</span>
-              <input
-                type="range"
-                min={frontIsCover ? 100 : 50}
-                max={300}
-                step={1}
-                value={frontScalePct}
-                onChange={(e) => setFront({ s: Number(e.target.value) / 100 })}
-                className="w-full accent-brand"
-              />
-              <span className="w-10 shrink-0 text-right font-mono">
-                {frontScalePct}%
-              </span>
-              {s.layout.front ? (
-                <button
-                  type="button"
-                  onClick={() => setOffset("front", null)}
-                  className="shrink-0 text-brand hover:underline"
-                >
-                  复位
-                </button>
-              ) : null}
-            </div>
-            <span className="text-[12px] text-ink-3">
-              直接拖卡面上的图挪构图,鼠标悬在图上滚滚轮也能缩放;铺满模式只能放大(裁掉更多边缘),要看更全整张图就勾上面的「完整显示」。预览即裁切后成品,出血里多印的部分会被裁掉。
-            </span>
+              }
+            />
+          ) : null}
 
-            {/* 提示词组合器已挪到「卡片编辑」下方常驻板块,这里只留指引 */}
-            <span className="mt-1 block border-t border-line pt-3 text-[12px] leading-relaxed text-ink-3">
-              想生成 / 换一张正面图?到下方「用 AI 生成新背景图」按维度拼提示词,生图后用上面的「上传自己的正面图」传回来。
-            </span>
-            </>
+          {active === "backArt" ? (
+            <ArtPanel
+              value={s.backArt}
+              onSelect={(src) => set("backArt")(src)}
+              offLabel="无背景图"
+              offHint="背面默认是浅色魔方底纹 + 公式。选一张图或上传自己的图作背景后,系统自动加一层浅色压亮罩,保证标题文字与二维码清晰可扫。"
+              uploadLabel="上传背面背景图"
+              downloadLabel="下载背面图 PNG"
+              downloadable={!!s.backArt}
+              showControls={!!s.backArt}
+              pngBusy={pngBusy}
+              onDownload={() => downloadPng(s.backArt)}
+              contain={s.layout.back?.fit !== "cover"}
+              onToggleContain={(checked) =>
+                setBack(checked ? { fit: undefined, x: 0, y: 0, s: 1 } : { fit: "cover" })
+              }
+              scalePct={backScalePct}
+              minPct={backIsCover ? 100 : 50}
+              hasOffset={!!s.layout.back}
+              onScale={(pct) => setBack({ s: pct / 100 })}
+              onResetOffset={() => setOffset("back", null)}
+              dragHint="直接拖背面卡上的图挪构图,鼠标悬在图上滚滚轮也能缩放;预览即裁切后成品,出血里多印的部分会被裁掉。"
+            />
           ) : null}
 
           {active === "quote" ? (
@@ -634,6 +785,31 @@ export function CardEditor({
 
           {active === "qr" ? (
             <>
+              <div className="flex items-center gap-2.5 text-[12px] text-ink-2">
+                <span className="shrink-0">尺寸</span>
+                <input
+                  type="range"
+                  min={70}
+                  max={150}
+                  step={1}
+                  value={qrScalePct}
+                  onChange={(e) => setQrScale(Number(e.target.value) / 100)}
+                  className="w-full accent-brand"
+                />
+                <span className="w-10 shrink-0 text-right font-mono">{qrScalePct}%</span>
+                {s.layout.qr?.s ? (
+                  <button
+                    type="button"
+                    onClick={() => setQrScale(1)}
+                    className="shrink-0 text-brand hover:underline"
+                  >
+                    复位
+                  </button>
+                ) : null}
+              </div>
+              <span className="text-[12px] text-ink-3">
+                调二维码大小;太小会影响扫码,建议不低于 70%。直接拖动卡面上的二维码可自由挪位置,能跨折线移到正面。
+              </span>
               <div className="break-all rounded-md bg-white px-3 py-2 text-[12px] text-ink-2 font-mono">
                 {landingUrl}
               </div>
@@ -665,7 +841,7 @@ export function CardEditor({
         </div>
       ) : (
         <div className="mt-3 rounded-md border border-dashed border-line bg-bg-soft/50 p-4 text-[12px] leading-relaxed text-ink-3">
-          点左侧卡面上的元素(正面图 / 语录 / 二维码 / 背面文案)在此编辑。
+          点左侧卡面上的元素(正面图 / 背面图 / 语录 / 二维码 / 背面文案)在此编辑。
         </div>
       )}
       {/* 保存按钮已统一到页面右上角(form={formId} 跨 DOM 提交),此处不再放 */}

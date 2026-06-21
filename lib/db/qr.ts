@@ -9,7 +9,7 @@ export type { CardEl, CardLayout, QrAlg, QrCode, QrLink, QrType };
 export type QrUpdate = Partial<
   Pick<
     QrCode,
-    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "frontArtPrompt" | "alg" | "layout"
+    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "backArt" | "frontArtPrompt" | "alg" | "layout"
   >
 >;
 
@@ -102,25 +102,35 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
   if (patch.term !== undefined) next.term = patch.term?.trim() || null;
   if (patch.quote !== undefined) next.quote = patch.quote?.trim() || null;
   if (patch.frontArt !== undefined) next.frontArt = patch.frontArt?.trim() || null;
+  if (patch.backArt !== undefined) next.backArt = patch.backArt?.trim() || null;
   if (patch.frontArtPrompt !== undefined) next.frontArtPrompt = patch.frontArtPrompt?.trim() || null;
   if (patch.alg !== undefined) next.alg = patch.alg && patch.alg.moves ? patch.alg : null;
   if (patch.layout !== undefined) {
     // 只收已知元素键,坐标钳 ±20mm、0.1mm 取整;全空则置 null(回默认布局)
-    // front 额外带缩放 s(0.5~3,0.01 取整,1 = 默认铺满不存)
-    const KEYS: CardEl[] = ["quote", "brand", "backText", "term", "qr", "alg", "front"];
-    const clamp = (n: number) => Math.round(Math.max(-20, Math.min(20, n)) * 10) / 10;
+    // 背景图(front/back)与二维码(qr)额外带缩放 s(0.5~3,0.01 取整,1 = 默认不存)
+    // fit(铺满/完整)仅背景图用
+    const KEYS: CardEl[] = ["quote", "brand", "backText", "term", "qr", "alg", "front", "back"];
+    const ART_KEYS: CardEl[] = ["front", "back"];
+    const SCALE_KEYS: CardEl[] = ["front", "back", "qr"];
+    // 二维码 / 背景图可跨整卡移动,位移钳到 ±40mm(整卡宽);其余元素限本面 ±20mm
+    const WIDE_KEYS: CardEl[] = ["front", "back", "qr"];
+    const clamp = (n: number, wide: boolean) => {
+      const lim = wide ? 40 : 20;
+      return Math.round(Math.max(-lim, Math.min(lim, n)) * 10) / 10;
+    };
     const out: CardLayout = {};
     for (const k of KEYS) {
       const o = patch.layout?.[k];
       if (!o || !Number.isFinite(o.x) || !Number.isFinite(o.y)) continue;
-      const x = clamp(o.x);
-      const y = clamp(o.y);
+      const wide = WIDE_KEYS.includes(k);
+      const x = clamp(o.x, wide);
+      const y = clamp(o.y, wide);
       const s =
-        k === "front" && Number.isFinite(o.s)
+        SCALE_KEYS.includes(k) && Number.isFinite(o.s)
           ? Math.round(Math.max(0.5, Math.min(3, o.s!)) * 100) / 100
           : undefined;
       // 默认(不存)= 完整显示;仅显式 "cover"(铺满裁切)才落库
-      const fit = k === "front" && o.fit === "cover" ? ("cover" as const) : undefined;
+      const fit = ART_KEYS.includes(k) && o.fit === "cover" ? ("cover" as const) : undefined;
       if (x !== 0 || y !== 0 || (s !== undefined && s !== 1) || fit) {
         const v: { x: number; y: number; s?: number; fit?: "cover" } = { x, y };
         if (s !== undefined && s !== 1) v.s = s;
@@ -153,6 +163,7 @@ export async function duplicate(code: string): Promise<string | null> {
     term: src.term,
     quote: src.quote,
     frontArt: src.frontArt,
+    backArt: src.backArt,
     frontArtPrompt: src.frontArtPrompt,
     alg: src.alg,
     layout: src.layout,
