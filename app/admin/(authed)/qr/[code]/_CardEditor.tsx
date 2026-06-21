@@ -270,7 +270,7 @@ export function CardEditor({
         setS((p) => {
           const cur = p.layout.qr ?? { x: 0, y: 0 };
           const next =
-            Math.round(Math.max(0.7, Math.min(1.5, (cur.s ?? 1) * Math.exp(-e.deltaY * 0.002))) * 100) / 100;
+            Math.round(Math.max(0.01, Math.min(1.5, (cur.s ?? 1) * Math.exp(-e.deltaY * 0.002))) * 100) / 100;
           const layout = { ...p.layout };
           if (cur.x === 0 && cur.y === 0 && next === 1) delete layout.qr;
           else layout.qr = { x: cur.x, y: cur.y, ...(next === 1 ? {} : { s: next }) };
@@ -434,7 +434,8 @@ export function CardEditor({
       const sc = Math.round(Math.max(cover ? 1 : 0.5, Math.min(3, raw)) * 100) / 100;
       setArt(target.lkey)({ s: sc });
     } else if (target.key === "qr") {
-      setQrScale(Math.round(Math.max(0.7, Math.min(1.5, raw)) * 100) / 100);
+      // 二维码无下限缩小(留 0.01 防归零);上限 1.5
+      setQrScale(Math.round(Math.max(0.01, Math.min(1.5, raw)) * 100) / 100);
     }
   };
   const currentScale = (target: GTarget): number =>
@@ -895,7 +896,7 @@ export function CardEditor({
                 <span className="shrink-0">尺寸</span>
                 <input
                   type="range"
-                  min={70}
+                  min={1}
                   max={150}
                   step={1}
                   value={qrScalePct}
@@ -914,7 +915,7 @@ export function CardEditor({
                 ) : null}
               </div>
               <span className="text-[12px] text-ink-3">
-                调二维码大小;太小会影响扫码,建议不低于 70%。手机上两指在二维码上捏合也能缩放,桌面可滚轮缩放。直接拖动二维码可自由挪位置,能跨折线移到正面。
+                调二维码大小,可一直缩到很小(自己把握,印太小会扫不出来)。手机两指在码上捏合 / 桌面滚轮也能缩放。直接拖动二维码可自由挪位置,能跨折线移到正面。
               </span>
               <div className="break-all rounded-md bg-white px-3 py-2 text-[12px] text-ink-2 font-mono">
                 {landingUrl}

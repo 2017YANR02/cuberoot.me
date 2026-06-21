@@ -125,9 +125,11 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
       const wide = WIDE_KEYS.includes(k);
       const x = clamp(o.x, wide);
       const y = clamp(o.y, wide);
+      // 缩放下限:二维码可无限缩小(留 0.01 防归零/翻转),背景图保 0.5 防露底过多
+      const sMin = k === "qr" ? 0.01 : 0.5;
       const s =
         SCALE_KEYS.includes(k) && Number.isFinite(o.s)
-          ? Math.round(Math.max(0.5, Math.min(3, o.s!)) * 100) / 100
+          ? Math.round(Math.max(sMin, Math.min(3, o.s!)) * 100) / 100
           : undefined;
       // 默认(不存)= 完整显示;仅显式 "cover"(铺满裁切)才落库
       const fit = ART_KEYS.includes(k) && o.fit === "cover" ? ("cover" as const) : undefined;
