@@ -260,6 +260,11 @@ export async function getBiliCover(bvid: string): Promise<{ pic: string }> {
   return apiGet('/bili-cover', { bvid });
 }
 
+// 抖音封面:传完整 douyin url(短链或长链),服务端解析 aweme_id 后取首帧封面。
+export async function getDouyinCover(url: string): Promise<{ pic: string }> {
+  return apiGet('/douyin-cover', { url });
+}
+
 export async function resolveShortUrl(url: string): Promise<{ url: string }> {
   return apiGet('/resolve-shorturl', { url });
 }

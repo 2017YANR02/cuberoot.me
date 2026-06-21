@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import {
-  getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover,
+  getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, getDouyinCover,
   listRecons, deleteAlternative, getSameScramble,
 } from '@/lib/recon-api';
 import { revalidateRecon } from '../revalidate-action';
@@ -69,6 +69,7 @@ import { tr } from '@/i18n/tr';
 
 const YOUTUBE_LOGO = '/assets/youtube_logo.svg';
 const BILIBILI_LOGO = '/assets/bilibili_logo.svg';
+const DOUYIN_LOGO = '/assets/douyin_logo.svg';
 
 function personLinkForSolve(solve: ReconSolve, isZh: boolean): string {
   const search = isZh ? '?lang=zh' : '';
@@ -491,10 +492,12 @@ function VideoSection({ videoUrl }: { videoUrl: string }) {
 
   const ytUrls: string[] = [];
   const biliUrls: string[] = [];
+  const douyinUrls: string[] = [];
   const otherUrls: string[] = [];
   for (const u of urls) {
     if (/youtu\.?be/i.test(u)) ytUrls.push(u);
     else if (/BV[A-Za-z0-9]+/.test(u) || /bilibili\.com/i.test(u) || /b23\.tv/i.test(u)) biliUrls.push(u);
+    else if (/douyin\.com/i.test(u)) douyinUrls.push(u);
     else otherUrls.push(u);
   }
 
@@ -505,24 +508,14 @@ function VideoSection({ videoUrl }: { videoUrl: string }) {
   let embedUrls: string[];
   let linkUrls: string[];
   if (isLocal) {
-    embedUrls = [...ytUrls, ...biliUrls];
+    embedUrls = [...ytUrls, ...biliUrls, ...douyinUrls];
     linkUrls = otherUrls;
-  } else if (isCN) {
-    if (biliUrls.length > 0) {
-      embedUrls = biliUrls;
-      linkUrls = [...ytUrls, ...otherUrls];
-    } else {
-      embedUrls = ytUrls;
-      linkUrls = otherUrls;
-    }
   } else {
-    if (ytUrls.length > 0) {
-      embedUrls = ytUrls;
-      linkUrls = [...biliUrls, ...otherUrls];
-    } else {
-      embedUrls = biliUrls;
-      linkUrls = otherUrls;
-    }
+    // 国内优先 B 站/抖音(YouTube 被墙),海外优先 YouTube;选首个非空平台内嵌,其余降级为链接。
+    const priority = isCN ? [biliUrls, douyinUrls, ytUrls] : [ytUrls, biliUrls, douyinUrls];
+    const chosen = priority.find(b => b.length > 0) ?? [];
+    embedUrls = chosen;
+    linkUrls = [...ytUrls, ...biliUrls, ...douyinUrls, ...otherUrls].filter(u => !chosen.includes(u));
   }
 
   if (embedUrls.length === 0 && linkUrls.length === 0) return null;
@@ -585,6 +578,10 @@ function VideoEmbed({ url }: { url: string }) {
   }
   if (isB23) {
     return <BilibiliFacade bvId={null} href={url} />;
+  }
+
+  if (/douyin\.com/i.test(url)) {
+    return <DouyinFacade url={url} />;
   }
 
   return (
@@ -1047,6 +1044,46 @@ function BilibiliFacade({ bvId, href }: { bvId: string | null; href: string }) {
           src={BILIBILI_LOGO}
           alt="Bilibili"
           style={{ position: 'relative', width: 68, height: 68, opacity: 0.95, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
+        />
+      </div>
+    </a>
+  );
+}
+
+function DouyinFacade({ url }: { url: string }) {
+  const [cover, setCover] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    getDouyinCover(url).then(res => {
+      if (alive && res.pic) setCover(res.pic);
+    }).catch(() => { /* ignore — fall back to logo-only facade */ });
+    return () => { alive = false; };
+  }, [url]);
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="detail-video-wrap detail-video-facade"
+      style={{ display: 'block', textDecoration: 'none' }}
+    >
+      <div style={{ position: 'absolute', inset: 0, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {cover && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={cover}
+            alt=""
+            referrerPolicy="no-referrer"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
+          />
+        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={DOUYIN_LOGO}
+          alt="Douyin"
+          style={{ position: 'relative', width: 60, height: 60, opacity: 0.95, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
         />
       </div>
     </a>

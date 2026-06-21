@@ -14,7 +14,7 @@ import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { Plus, HelpCircle, TriangleAlert, LayoutGrid, List, Video } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { useReconStore, type SortKey, type SortDir } from '@/lib/recon-store';
-import { getBiliCover } from '@/lib/recon-api';
+import { getBiliCover, getDouyinCover } from '@/lib/recon-api';
 import {
   formatResult, formatTime, formatAvg, formatAoXR, formatRound, localizeRound,
 } from '@/lib/recon-utils';
@@ -195,10 +195,11 @@ function DateRangeFilter({ min, max, onChange }: DateRangeFilterProps) {
 // videoUrl 多行。按语言挑能出封面的视频：中文优先 B 站、英文优先 YouTube；
 // 首选平台没有就退而用另一平台（覆盖「只有一个链接直接用」）；两者皆无 → null（回退打乱图）。
 // b23.tv 短链不含 BV id、无法取封面，视作无 B 站封面。
-function pickReconCover(videoUrl: string | undefined, isZh: boolean): { kind: 'yt' | 'bili'; id: string } | null {
+function pickReconCover(videoUrl: string | undefined, isZh: boolean): { kind: 'yt' | 'bili' | 'douyin'; id: string } | null {
   if (!videoUrl) return null;
   let yt = '';
   let bili = '';
+  let douyin = '';
   for (const u of videoUrl.split('\n').map(s => s.trim()).filter(Boolean)) {
     if (!yt && /youtu\.?be/i.test(u)) {
       const m = u.match(/(?:v=|youtu\.be\/|\/(?:embed|shorts|live|v)\/)([A-Za-z0-9_-]{6,})/);
@@ -208,16 +209,19 @@ function pickReconCover(videoUrl: string | undefined, isZh: boolean): { kind: 'y
       const m = u.match(/(BV[A-Za-z0-9]+)/);
       if (m) bili = m[1];
     }
+    // 抖音封面在服务端按完整 URL(短链/长链)解析,故 id 存原始 URL。
+    if (!douyin && /douyin\.com/i.test(u)) douyin = u;
   }
-  const order: ('yt' | 'bili')[] = isZh ? ['bili', 'yt'] : ['yt', 'bili'];
+  const order: ('yt' | 'bili' | 'douyin')[] = isZh ? ['bili', 'douyin', 'yt'] : ['yt', 'bili', 'douyin'];
   for (const k of order) {
     if (k === 'yt' && yt) return { kind: 'yt', id: yt };
     if (k === 'bili' && bili) return { kind: 'bili', id: bili };
+    if (k === 'douyin' && douyin) return { kind: 'douyin', id: douyin };
   }
   return null;
 }
 
-// B 站封面需走后端代理（无直链 URL 规律）；模块级缓存按 bvid 去重，避免同一卡重挂载重复拉取。
+// B 站 / 抖音封面需走后端代理（无直链 URL 规律）；模块级缓存按 key 去重，避免同一卡重挂载重复拉取。
 const biliCoverCache = new Map<string, Promise<string | null>>();
 function loadBiliCover(bvid: string): Promise<string | null> {
   let p = biliCoverCache.get(bvid);
@@ -228,26 +232,37 @@ function loadBiliCover(bvid: string): Promise<string | null> {
   return p;
 }
 
-// ── 卡片缩略图：有视频→封面图（YouTube 直链 / B 站异步取），否则打乱图，再否则项目图标 ──
+const douyinCoverCache = new Map<string, Promise<string | null>>();
+function loadDouyinCover(url: string): Promise<string | null> {
+  let p = douyinCoverCache.get(url);
+  if (!p) {
+    p = getDouyinCover(url).then(r => r.pic || null).catch(() => null);
+    douyinCoverCache.set(url, p);
+  }
+  return p;
+}
+
+// ── 卡片缩略图：有视频→封面图（YouTube 直链 / B 站 / 抖音异步取），否则打乱图，再否则项目图标 ──
 function ReconCardMedia({ solve, isZh }: { solve: ReconSolve; isZh: boolean }) {
   const cover = useMemo(() => pickReconCover(solve.videoUrl, isZh), [solve.videoUrl, isZh]);
   const ytSrc = cover?.kind === 'yt' ? `https://img.youtube.com/vi/${cover.id}/mqdefault.jpg` : null;
-  const [biliSrc, setBiliSrc] = useState<string | null>(null);
+  const [asyncSrc, setAsyncSrc] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     setFailed(false);
-    setBiliSrc(null);
-    if (cover?.kind !== 'bili') return;
+    setAsyncSrc(null);
+    if (cover?.kind !== 'bili' && cover?.kind !== 'douyin') return;
     let alive = true;
-    void loadBiliCover(cover.id).then(pic => {
+    const loader = cover.kind === 'bili' ? loadBiliCover(cover.id) : loadDouyinCover(cover.id);
+    void loader.then(pic => {
       if (!alive) return;
-      if (pic) setBiliSrc(pic); else setFailed(true);
+      if (pic) setAsyncSrc(pic); else setFailed(true);
     });
     return () => { alive = false; };
   }, [cover]);
 
-  const imgSrc = failed ? null : (ytSrc ?? biliSrc);
+  const imgSrc = failed ? null : (ytSrc ?? asyncSrc);
 
   if (imgSrc) {
     return (
