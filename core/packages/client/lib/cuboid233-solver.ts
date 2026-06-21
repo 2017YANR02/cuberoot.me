@@ -7,9 +7,14 @@
  * only turn 180° (a 90° side turn would not fit). The two face centers (top + bottom) never move;
  * the 16 active cubies split into two independent 8-orbits — 8 corners and 8 edges — each freely
  * permuted (no orientation: a domino corner keeps its up/down sticker, a domino edge keeps its
- * up/down sticker). The reachable group is therefore the corner-permutation × edge-permutation
- * subgroup of S8 × S8 satisfying the coupled corner/edge parity, of order
- *   8! · 8! · 7/8 = 40,320 · 35,280 = 1,422,489,600 ≈ 1.42×10⁹.
+ * up/down sticker). Because the U 90° turn is an odd permutation of BOTH orbits while each side 180°
+ * turn is even on corners and odd on edges, every (corner-parity, edge-parity) combination is
+ * reachable — corner and edge parity are INDEPENDENT (not coupled). The reachable group is therefore
+ * the full corner-permutation × edge-permutation block S8 × S8, of order
+ *   8! · 8! = 40,320 · 40,320 = 1,625,702,400 ≈ 1.63×10⁹
+ * (verified by Schreier-Sims over the actual cstimer move set; the original physical Rub's Domino's
+ * oft-quoted 406,425,600 = 8!·8!/4 further quotients by the 4 whole-cube U-axis rotations, which the
+ * cstimer move set does not include — solved is a single fixed reference here).
  * That is far beyond TIER A (~2×10⁶ full BFS) and TIER B (~5×10⁷ packed table), so we DO NOT build
  * a full distance table. Instead each scramble is solved on demand by IDA* (iterative-deepening A*)
  * with the ADMISSIBLE heuristic max(corner-distance, edge-distance), where the two distances come
@@ -100,8 +105,8 @@ export const CUBOID233_TOKEN_RE = /^(U['2]?|[RLFB]2)$/;
 export const CUBOID233_SAMPLED_MAX_LENGTH = 18;
 /** Published-ish facts for the UI (sampled, not a proven full-space curve). */
 export const CUBOID233_SAMPLED_MEAN = 13.7;
-/** Reachable-state count (= 8!·8!·7/8), as a preformatted string (> 2^31, exact). */
-export const CUBOID233_STATE_COUNT_STR = '1,422,489,600';
+/** Reachable-state count (= 8!·8! = full S8×S8, parity decoupled), preformatted string (> 2^31, exact). */
+export const CUBOID233_STATE_COUNT_STR = '1,625,702,400';
 
 // ── piece-orbit indexing (corner perm 8!, edge perm 8!) ───────────────────────────
 const CORNER_POS: number[] = CUBIES.map((c, i) => (c.corner ? i : -1)).filter((i) => i >= 0); // 8 positions
