@@ -29,7 +29,7 @@ import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
 import { useT } from '@/hooks/useT';
 import './solve_tabs.css';
 
-export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb' | 'sq1' | 'ivy' | '133' | '223' | '8p' | 'sfl' | 'ufo' | 'cm2' | 'dmd' | 'gear';
+export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb' | 'sq1' | 'ivy' | '133' | '223' | '8p' | '15p' | 'sfl' | 'ufo' | 'cm2' | 'dmd' | 'gear';
 export type SolveSub = 'optimal' | 'stage' | 'cfop' | 'fmc';
 
 interface SolveTabsProps {
@@ -54,6 +54,7 @@ const EVENT_ID: Record<SolvePuzzle, string> = {
   '133': '133',
   '223': '223',
   '8p': '8p',
+  '15p': '15p',
   sfl: 'sfl',
   ufo: 'ufo',
   cm2: 'cm2',
@@ -64,12 +65,12 @@ const EVENT_ID: Record<SolvePuzzle, string> = {
 //(5 个图标)。非 WCA 求解项目(ivy 等)塞不进图标行,改走 NonWcaPuzzlePicker 分组下拉
 //(数据驱动:lib/cstimer-scramble 标 solvable 的 puzzle 自动出现),后续 puzzle 免改本组件。
 const PUZZLE_BY_EVENT: Record<string, SolvePuzzle> = {
-  '333': '3x3', '222': '2x2x2', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1', ivy: 'ivy', '133': '133', '223': '223', '8p': '8p', sfl: 'sfl', ufo: 'ufo', cm2: 'cm2', dmd: 'dmd', gear: 'gear',
+  '333': '3x3', '222': '2x2x2', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1', ivy: 'ivy', '133': '133', '223': '223', '8p': '8p', '15p': '15p', sfl: 'sfl', ufo: 'ufo', cm2: 'cm2', dmd: 'dmd', gear: 'gear',
 };
 // 图标行只放 WCA 求解项目(非 WCA 走分组下拉)。
 const WCA_SOLVE_EVENTS = new Set(['333', '222', 'pyram', 'skewb', 'sq1']);
 // 有「分布」数据的求解项目;ivy 走理论全空间分布(/scramble/stats?event=ivy)。
-const HAS_DISTRIBUTION: ReadonlySet<SolvePuzzle> = new Set(['3x3', '2x2x2', 'pyraminx', 'skewb', 'sq1', 'ivy', '133', '223', '8p', 'sfl', 'ufo', 'cm2', 'dmd', 'gear']);
+const HAS_DISTRIBUTION: ReadonlySet<SolvePuzzle> = new Set(['3x3', '2x2x2', 'pyraminx', 'skewb', 'sq1', 'ivy', '133', '223', '8p', '15p', 'sfl', 'ufo', 'cm2', 'dmd', 'gear']);
 
 const withEvent = (href: string, eventId: string) =>
   `${href}${href.includes('?') ? '&' : '?'}event=${eventId}`;

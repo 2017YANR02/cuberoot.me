@@ -87,8 +87,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
 },
   { id: '223',     key: '223',     zh: '2×2×3',            en: '2×2×3',             textLabel: '2×2×3',  family: 'cuboid', solvable: true },
   { id: '133',     key: '133',     zh: '1×3×3 花型',       en: '1×3×3 Floppy',      textLabel: '1×3×3',  family: 'cuboid', solvable: true },
-  { id: '15p',     key: '15prp',   zh: '数字华容道',       en: '15-Puzzle',         textLabel: '15',     family: 'slide'
-},
+  { id: '15p',     key: '15prp',   zh: '数字华容道',       en: '15-Puzzle',         textLabel: '15',     family: 'slide',  solvable: true },
   { id: '8p',      key: '8prp',    zh: '八数码',           en: '8-Puzzle',          textLabel: '8',      family: 'slide',  solvable: true },
 
   // Random-move with sensible defaults

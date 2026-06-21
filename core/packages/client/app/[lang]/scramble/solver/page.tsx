@@ -10,6 +10,7 @@
  *   event=133 → 1×3×3 花型整解最优(_FloppySolver,纯 TS,192 态全图 BFS,无 worker)
  *   event=223 → 2×2×3 整解最优(_Cuboid223Solver,纯 TS,241,920 态全图 BFS,无 worker)
  *   event=8p → 八数码整解最优(_Slide8Solver,纯 TS,181,440 态全图 BFS,无 worker)
+ *   event=15p → 数字华容道整解最优(_Slide15Solver,纯 TS,IDA*+Walking-Distance 单实例最优,无 worker)
  *   event=sfl → Super Floppy 整解最优(_SuperFloppySolver,纯 TS,3,041,280 态全图 BFS,无 worker)
  *   event=ufo → UFO 整解最优(_UfoSolver,纯 TS,60,480 态全图 BFS,无 worker)
  *   event=cm2 → Cmetrick Mini 整解最优(_Cm2Solver,纯 TS,165,888 态全图 BFS,无 worker)
@@ -38,6 +39,7 @@ const IvySolver = dynamic(() => import('./_IvySolver'), { ssr: false, loading: L
 const FloppySolver = dynamic(() => import('./_FloppySolver'), { ssr: false, loading: Loading });
 const Cuboid223Solver = dynamic(() => import('./_Cuboid223Solver'), { ssr: false, loading: Loading });
 const Slide8Solver = dynamic(() => import('./_Slide8Solver'), { ssr: false, loading: Loading });
+const Slide15Solver = dynamic(() => import('./_Slide15Solver'), { ssr: false, loading: Loading });
 const SuperFloppySolver = dynamic(() => import('./_SuperFloppySolver'), { ssr: false, loading: Loading });
 const UfoSolver = dynamic(() => import('./_UfoSolver'), { ssr: false, loading: Loading });
 const Cm2Solver = dynamic(() => import('./_Cm2Solver'), { ssr: false, loading: Loading });
@@ -55,6 +57,7 @@ function SolverDispatch() {
   if (event === '133') return <FloppySolver />;
   if (event === '223') return <Cuboid223Solver />;
   if (event === '8p') return <Slide8Solver />;
+  if (event === '15p') return <Slide15Solver />;
   if (event === 'sfl') return <SuperFloppySolver />;
   if (event === 'ufo') return <UfoSolver />;
   if (event === 'cm2') return <Cm2Solver />;
