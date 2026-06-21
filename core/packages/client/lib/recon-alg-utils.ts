@@ -159,6 +159,37 @@ export function extractAlgFromText(text: string): string {
  * - `// comment` 行首注释 → 保持无前导空格,但 trailing 空格规范为 1
  * - 一行多个 `//`:只处理第一个(第二个被视为注释文本里的内容)
  */
+/**
+ * 校验记号文本(解法 / 打乱)里的非法字符。
+ * cube 记号区(每行 `//` 注释之外)只能用英文字母和符号(ASCII);中文等任何文字
+ * 必须写在 `//` 之后当注释,否则播放器会把它当成转动 → 复盘无法播放。
+ * 返回有问题的行(行号从 1 起 + 去注释后的记号片段 + 命中的非 ASCII 字符,去重),
+ * 全部合法时返回空数组。
+ */
+export interface NotationViolation {
+  line: number;
+  snippet: string;
+  chars: string;
+}
+
+export function findIllegalNotationChars(text: string): NotationViolation[] {
+  if (!text) return [];
+  const out: NotationViolation[] = [];
+  const lines = text.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const commentIdx = lines[i].indexOf('//');
+    const instr = commentIdx >= 0 ? lines[i].slice(0, commentIdx) : lines[i];
+    const bad = new Set<string>();
+    for (const ch of instr) {
+      if ((ch.codePointAt(0) ?? 0) > 0x7f) bad.add(ch);
+    }
+    if (bad.size > 0) {
+      out.push({ line: i + 1, snippet: instr.trim(), chars: [...bad].join(' ') });
+    }
+  }
+  return out;
+}
+
 export function normalizeSolutionSlashes(text: string): string {
   return text.split('\n').map(line => {
     const idx = line.indexOf('//');
