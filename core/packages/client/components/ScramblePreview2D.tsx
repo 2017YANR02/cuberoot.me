@@ -60,7 +60,7 @@ const HAS_PREVIEW: Record<string, boolean> = {
   '333ft': true, '333mbf': true, '333mbo': true, '444': true, '444bf': true,
   '555': true, '555bf': true, '666': true, '777': true,
   pyram: true, skewb: true, sq1: true, minx: true, clock: true,
-  mirror_333: true, ivy: true, '133': true, '223': true, '8p': true, '15p': true, sfl: true, ufo: true, cm2: true, dmd: true, gear: true, mpyrso: true,
+  mirror_333: true, ivy: true, '133': true, '223': true, '8p': true, '15p': true, sfl: true, ufo: true, cm2: true, dmd: true, gear: true, mpyrso: true, crz3a: true,
 };
 
 export function eventHasScramblePreview(event: string): boolean {
