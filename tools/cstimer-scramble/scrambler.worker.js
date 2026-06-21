@@ -80,6 +80,7 @@ function generate(key, length, state) {
 // optimal; validity (scramble∘solution = solved) is the contract.
 const SOLVERS = {
   mpyrso: (scramble) => self.mpyr.solveScramble(scramble),
+  dinoso: (scramble) => self.redi.solveScramble(scramble),
 };
 
 function solve(key, scramble) {

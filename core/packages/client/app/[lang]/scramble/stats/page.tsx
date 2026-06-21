@@ -18,6 +18,7 @@ import Cm2DistView from './_components/Cm2DistView';
 import DiamondDistView from './_components/DiamondDistView';
 import GearDistView from './_components/GearDistView';
 import MpyrDistView from './_components/MpyrDistView';
+import DinoDistView from './_components/DinoDistView';
 import Crz3aDistView from './_components/Crz3aDistView';
 import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
@@ -504,7 +505,7 @@ export default function ScrambleStatsPage() {
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   // 非 WCA 求解项目(ivy / 133 / 223 / 8p / sfl …):难度=整解最优步数分布(A/B 档全空间精确,15p 是 TIER C
   // 采样);均无打乱长度数据、无合并/数据集/度量开关 → 走 isIvy 早返回那套。
-  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'crz3a';
+  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -724,6 +725,7 @@ export default function ScrambleStatsPage() {
                             : event === 'dmd' ? 'dmd'
                               : event === 'gear' ? 'gear'
                                 : event === 'mpyrso' ? 'mpyrso'
+                                  : event === 'dino' ? 'dino'
                                   : event === 'crz3a' ? 'crz3a'
                                   : null;
 
@@ -1015,6 +1017,27 @@ export default function ScrambleStatsPage() {
           </div>
         ) : (
           <MpyrDistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  // Dino Cube(随态,非 WCA 项目):状态空间 A12 = 12!/2 = 239,500,800(只有棱)超 TIER A/B 上限 →
+  // 难度 = **采样**整解步数分布(浏览器现场用 cstimer 自带 solver 解 N 个随机打乱,近最优、非可证最优);
+  // 无打乱长度数据。
+  if (event === 'dino') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: '恐龙魔方无打乱长度分布(打乱由 cstimer 随态生成);整解近最优步数分布见「难度」',
+              en: 'No scramble-length distribution for the Dino Cube (cstimer generates random-state scrambles); see "Difficulty" for the near-optimal solution-length distribution',
+            })}
+          </div>
+        ) : (
+          <DinoDistView isZh={isZh} />
         )}
       </div>
     );
