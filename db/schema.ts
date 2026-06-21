@@ -370,11 +370,11 @@ export type QrType = "redirect" | "landing";
 export type QrLink = { label: string; href: string; note?: string };
 // 卡片背面精选解法公式:名称(如 OLL 33)+ 记法 + 来源链接(主站 alg 工具)
 export type QrAlg = { name?: string; moves: string; url?: string };
-// 卡面可移动元素:正面语录 / 品牌名,背面文案 / 角标 / 二维码 / 公式区 / 正面图(平移+缩放)
-export type CardEl = "quote" | "brand" | "backText" | "term" | "qr" | "alg" | "front";
+// 卡面可移动元素:正面语录 / 品牌名,背面文案 / 角标 / 二维码 / 公式区 / 正面图 / 背面图(平移+缩放)
+export type CardEl = "quote" | "brand" | "backText" | "term" | "qr" | "alg" | "front" | "back";
 // 各元素相对默认位的偏移(mm),编辑器拖动写入;DOM 卡与矢量母版共用。
-// s = 缩放倍率(仅 front 用,默认 1;>1 放大 <1 缩小)
-// fit(仅 front):默认(不填)= 完整显示整图不裁切(留 1mm 安全边),空余露深色底;
+// s = 缩放倍率(仅 front / back 背景图用,默认 1;>1 放大 <1 缩小)
+// fit(仅 front / back):默认(不填)= 完整显示整图不裁切(留 1mm 安全边),空余露底色;
 //                "cover" = 铺满整面、超出裁掉
 export type CardLayout = Partial<
   Record<CardEl, { x: number; y: number; s?: number; fit?: "contain" | "cover" }>
@@ -391,6 +391,8 @@ export const qrCodes = sqliteTable("qr_codes", {
   term: text("term"),
   quote: text("quote"),
   frontArt: text("front_art"),
+  // 背面背景图(可选);无值时背面走默认浅色底纹(公式 / 色块散点)
+  backArt: text("back_art"),
   // 记录当前正面图是用哪条生图提示词产出的(自定义 / 模板),方便日后复刻、微调同款
   frontArtPrompt: text("front_art_prompt"),
   alg: text("alg", { mode: "json" }).$type<QrAlg>(),

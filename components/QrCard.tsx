@@ -25,6 +25,16 @@ const elShift = (layout: CardLayout | null | undefined, key: CardEl): CSSPropert
     ? { transform: `translate(${m(layout[key]!.x)}, ${m(layout[key]!.y)})` }
     : {};
 
+// 位移 + 缩放(二维码用):translate 居中缩放(transform-origin 默认 center),不影响兄弟布局
+const elTransform = (layout: CardLayout | null | undefined, key: CardEl): CSSProperties => {
+  const o = layout?.[key];
+  if (!o) return {};
+  const parts: string[] = [];
+  if (o.x || o.y) parts.push(`translate(${m(o.x)}, ${m(o.y)})`);
+  if (o.s && o.s !== 1) parts.push(`scale(${o.s})`);
+  return parts.length ? { transform: parts.join(" ") } : {};
+};
+
 const PANEL_BASE: CSSProperties = {
   width: m(20),
   height: m(40),
@@ -35,6 +45,63 @@ const PANEL_BASE: CSSProperties = {
   justifyContent: "space-between",
   boxSizing: "border-box",
 };
+
+// 正面 / 背面共用的背景图层:绝对定位铺满本面板(overflow:hidden 裁出血)。
+// 几何与矢量母版 cardSvg.ts 一致:
+//   contain(默认完整显示):整图装进成品面、留 1mm 安全边(18x38),不裁切,空余露底色。
+//   cover(铺满裁切):图框 26x46 盖住出血,绕成品面中心缩放;缩放钳 ≥1 绝不露底。
+// layout[lkey] = 平移(mm)+ 缩放 s(绕成品面中心),编辑器拖动 / 滑块写入。
+function ArtImage({
+  art,
+  layout,
+  lkey,
+}: {
+  art: string;
+  layout: CardLayout | null | undefined;
+  lkey: "front" | "back";
+}) {
+  const ft = layout?.[lkey];
+  // 默认完整显示不裁(contain);仅显式 cover 才铺满裁切
+  const fitContain = ft?.fit !== "cover";
+  // cover 缩放钳到 ≥1,与母版一致:cover 缩到 <1 会露底,违背「铺满」语义
+  const drawScale = fitContain ? (ft?.s ?? 1) : Math.max(1, ft?.s ?? 1);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={art}
+      alt=""
+      aria-hidden
+      draggable={false}
+      style={{
+        position: "absolute",
+        // 压过 Tailwind preflight 的 img{max-width:100%;height:auto},
+        // 否则绝对定位背景图宽被钳到 100% 致比例失真
+        maxWidth: "none",
+        maxHeight: "none",
+        ...(fitContain
+          ? {
+              left: m(1),
+              top: m(1),
+              width: m(18),
+              height: m(38),
+              objectFit: "contain" as const,
+              transformOrigin: `${m(9)} ${m(19)}`,
+            }
+          : {
+              left: m(-3),
+              top: m(-3),
+              width: m(26),
+              height: m(46),
+              objectFit: "cover" as const,
+              transformOrigin: `${m(13)} ${m(23)}`,
+            }),
+        transform: ft
+          ? `translate(${m(ft.x)}, ${m(ft.y)}) scale(${drawScale})`
+          : undefined,
+      }}
+    />
+  );
+}
 
 // 正面:艺术图铺满 + 底部压暗 + 语录/品牌叠底(无二维码)。杂志封面式。
 function FrontPanel({
@@ -50,14 +117,6 @@ function FrontPanel({
   const [main, ...subs] = lines.length ? lines : ["热爱魔方"];
   // 正面图几何与矢量母版 cardSvg.ts 一致(默认出血 3mm):屏幕预览(此面板 20x40)裁掉出血
   // 只看成品,即印刷裁切后的真实画面;母版另渲出血,故图框须撑到盖住出血才不露底。
-  // cover:图框以成品面中心为锚、26x46(left/top -3)盖住 左/上/下 出血,绕成品面中心缩放。
-  // contain:整图完整装进成品面、留 1mm 安全边(18x38),不裁切,空余露深色底。
-  // layout.front = 平移(mm)+ 缩放 s(绕成品面中心),编辑器拖动/滑块写入。
-  const ft = layout?.front;
-  // 默认完整显示不裁(contain);仅显式 cover 才铺满裁切
-  const fitContain = ft?.fit !== "cover";
-  // cover 缩放钳到 ≥1,与母版一致:cover 缩到 <1 会露底,违背「铺满」语义
-  const drawScale = fitContain ? (ft?.s ?? 1) : Math.max(1, ft?.s ?? 1);
   return (
     <div
       data-panel="front"
@@ -70,40 +129,7 @@ function FrontPanel({
         backgroundColor: "#11111A",
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={art}
-        alt=""
-        aria-hidden
-        draggable={false}
-        style={{
-          position: "absolute",
-          // 压过 Tailwind preflight 的 img{max-width:100%;height:auto},
-          // 否则绝对定位背景图宽被钳到 100% 致比例失真
-          maxWidth: "none",
-          maxHeight: "none",
-          ...(fitContain
-            ? {
-                left: m(1),
-                top: m(1),
-                width: m(18),
-                height: m(38),
-                objectFit: "contain" as const,
-                transformOrigin: `${m(9)} ${m(19)}`,
-              }
-            : {
-                left: m(-3),
-                top: m(-3),
-                width: m(26),
-                height: m(46),
-                objectFit: "cover" as const,
-                transformOrigin: `${m(13)} ${m(23)}`,
-              }),
-          transform: ft
-            ? `translate(${m(ft.x)}, ${m(ft.y)}) scale(${drawScale})`
-            : undefined,
-        }}
-      />
+      <ArtImage art={art} layout={layout} lkey="front" />
       <div
         aria-hidden
         style={{
@@ -150,67 +176,89 @@ function FrontPanel({
 }
 
 // 背面:唯一二维码(白芯片保证可扫)+ 按该码去向生成的文案 + 网址
+// 可选背面背景图(entry.backArt):有图则衬底图 + 浅色压亮罩(保文字 / 二维码可读),
+// 并隐去默认色块 / 公式底纹;无图则走原默认浅色底纹。
 function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
   const term = entry.term?.trim();
   const { main, sub } = backText(entry);
+  const backArt = entry.backArt?.trim();
   return (
     <div
       data-panel="back"
       style={{
         ...PANEL_BASE,
         position: "relative",
-        overflow: "hidden",
+        // overflow 放开,让二维码可拖出背面、跨折线落到正面;底纹 / 背景图各自在内层 clip 容器里裁切
+        overflow: "visible",
         color: "#11111A",
         background: "linear-gradient(165deg, #FFFFFF 0%, #F5F8FF 46%, #E7EEFE 100%)",
       }}
     >
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(42% 22% at 100% 0%, rgba(42,93,244,0.12), transparent 70%), radial-gradient(46% 24% at 0% 100%, rgba(42,93,244,0.10), transparent 70%)",
-        }}
-      />
-      {/* 散落魔方色块底纹(衬在二维码后,和正面同源散点) */}
-      <div aria-hidden style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
-        {cubeFaceletSpots().map((sp, i) => (
+      {/* 背景层裁切容器(底纹 / 背景图限定在背面内,不随 overflow:visible 外溢) */}
+      <div aria-hidden style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      {backArt ? (
+        <>
+          <ArtImage art={backArt} layout={entry.layout} lkey="back" />
+          {/* 浅色压亮罩:上 / 下加亮保标题与公式可读,中段透出图(二维码自带白芯片不怕) */}
           <div
-            key={i}
             style={{
               position: "absolute",
-              left: m(1 + sp.x * 17),
-              top: m(1 + sp.y * 37),
-              width: m(sp.size),
-              height: m(sp.size),
-              borderRadius: m(sp.size * 0.2),
-              background: CUBE_FACES[sp.colorIndex],
-              opacity: sp.opacity,
-              transform: `rotate(${sp.rot}deg)`,
+              inset: 0,
+              background:
+                "linear-gradient(to bottom, rgba(245,248,255,0.9) 0%, rgba(245,248,255,0.28) 28%, rgba(245,248,255,0.16) 54%, rgba(245,248,255,0.58) 80%, rgba(245,248,255,0.9) 100%)",
             }}
           />
-        ))}
-      </div>
-      {/* 解法流派 / 公式底纹(斜排淡蓝,衬在二维码后) */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: `${m(-4)} ${m(-3)}`,
-          transform: "rotate(-8deg)",
-          fontFamily: "ui-monospace, monospace",
-          fontSize: m(1.1),
-          lineHeight: 2.45,
-          color: "#2A5DF4",
-          opacity: 0.08,
-          whiteSpace: "nowrap",
-          pointerEvents: "none",
-        }}
-      >
-        {Array.from({ length: 16 }, (_, i) => (
-          <div key={i}>{formulaRow(i)}</div>
-        ))}
+        </>
+      ) : (
+        <>
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "radial-gradient(42% 22% at 100% 0%, rgba(42,93,244,0.12), transparent 70%), radial-gradient(46% 24% at 0% 100%, rgba(42,93,244,0.10), transparent 70%)",
+            }}
+          />
+          {/* 散落魔方色块底纹(衬在二维码后,和正面同源散点) */}
+          <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+            {cubeFaceletSpots().map((sp, i) => (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+                  left: m(1 + sp.x * 17),
+                  top: m(1 + sp.y * 37),
+                  width: m(sp.size),
+                  height: m(sp.size),
+                  borderRadius: m(sp.size * 0.2),
+                  background: CUBE_FACES[sp.colorIndex],
+                  opacity: sp.opacity,
+                  transform: `rotate(${sp.rot}deg)`,
+                }}
+              />
+            ))}
+          </div>
+          {/* 解法流派 / 公式底纹(斜排淡蓝,衬在二维码后) */}
+          <div
+            style={{
+              position: "absolute",
+              inset: `${m(-4)} ${m(-3)}`,
+              transform: "rotate(-8deg)",
+              fontFamily: "ui-monospace, monospace",
+              fontSize: m(1.1),
+              lineHeight: 2.45,
+              color: "#2A5DF4",
+              opacity: 0.08,
+              whiteSpace: "nowrap",
+              pointerEvents: "none",
+            }}
+          >
+            {Array.from({ length: 16 }, (_, i) => (
+              <div key={i}>{formulaRow(i)}</div>
+            ))}
+          </div>
+        </>
+      )}
       </div>
       <div
         data-el="backText"
@@ -262,7 +310,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
             padding: m(0.8),
             border: `${m(0.14)} solid #E5E8EE`,
             boxShadow: "0 1px 4px rgba(30,74,203,0.14)",
-            ...elShift(entry.layout, "qr"),
+            ...elTransform(entry.layout, "qr"),
           }}
         >
           <div style={{ width: m(14.5), height: m(14.5) }} dangerouslySetInnerHTML={{ __html: svg }} />

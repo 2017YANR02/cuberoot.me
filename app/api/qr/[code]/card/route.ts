@@ -66,6 +66,13 @@ export async function GET(
   const art =
     url.searchParams.get("noart") === "1" ? undefined : await resolveArt(artSrc);
 
+  // 背面背景图:仅该码显式设置才有(无默认轮换);noart=1 一并关掉走默认底纹
+  const backArtSrc = entry.backArt?.trim();
+  const backArt =
+    url.searchParams.get("noart") === "1" || !backArtSrc
+      ? undefined
+      : await resolveArt(backArtSrc);
+
   // 内嵌 JetBrains Mono(记法字体)作 url/底纹 兜底;精选公式则转矢量轮廓(最稳)
   const monoFont = await resolveArt("/fonts/jetbrains-mono-latin-500-normal.woff2");
   const moves = entry.alg?.moves
@@ -90,6 +97,7 @@ export async function GET(
   const svg = cardSvg(entry, {
     url: qrTargetUrl(code),
     art,
+    backArt,
     algSvg,
     movesPath: moves,
     monoFont,
