@@ -36,19 +36,6 @@ interface State { g: number[]; blank: number; }
 const solved = (): State => ({ g: Array.from({ length: N }, (_, i) => i), blank: BLANK });
 const keyOf = (s: State) => s.g.join(',');
 
-function expand(scr: string): Dir[] {
-  const out: Dir[] = [];
-  for (const tok of scr.trim().split(/\s+/)) {
-    if (!tok) continue;
-    const m = /^([UDLR])(\d+)?$/.exec(tok);
-    if (!m) throw new Error(`bad: ${tok}`);
-    const dir = m[1] as Dir;
-    const n = m[2] ? Number(m[2]) : 1;
-    for (let k = 0; k < n; k++) out.push(dir);
-  }
-  return out;
-}
-
 function slide(s: State, dir: Dir): boolean {
   const r = Math.floor(s.blank / W), c = s.blank % W;
   const [dr, dc] = DELTA[dir];
