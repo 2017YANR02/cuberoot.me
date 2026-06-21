@@ -17,6 +17,7 @@
  *   event=dmd → 钻石(八面体)整解最优(_DiamondSolver,纯 TS,138,240 态全图 BFS,无 worker)
  *   event=gear → 齿轮魔方整解最优(_GearSolver,纯 TS,41,472 态全图 BFS,无 worker)
  *   event=mpyrso → 大金字塔(随态)近最优(_MpyrSolver,wrap cstimer 两阶段 solver via worker,采样分布)
+ *   event=crz3a → 疯狂 3×3 近最优(_Crz3aSolver,复用站内 kociemba 两阶段 solver,标准三阶,采样分布)
  *
  * COEP 只在 ?event=333(或缺省 event)时下发,见 next.config.ts headers() 的 has/missing
  * 条件匹配 —— 其余 event 是普通文档,rust-cross worker + 跨域表照常工作。COEP 是文档级的,
@@ -47,6 +48,7 @@ const Cm2Solver = dynamic(() => import('./_Cm2Solver'), { ssr: false, loading: L
 const DiamondSolver = dynamic(() => import('./_DiamondSolver'), { ssr: false, loading: Loading });
 const GearSolver = dynamic(() => import('./_GearSolver'), { ssr: false, loading: Loading });
 const MpyrSolver = dynamic(() => import('./_MpyrSolver'), { ssr: false, loading: Loading });
+const Crz3aSolver = dynamic(() => import('./_Crz3aSolver'), { ssr: false, loading: Loading });
 const PuzzleOptimalSolver = dynamic(
   () => import('../_components/PuzzleOptimalSolver').then((m) => ({ default: m.PuzzleOptimalSolver })),
   { ssr: false, loading: Loading },
@@ -66,6 +68,7 @@ function SolverDispatch() {
   if (event === 'dmd') return <DiamondSolver />;
   if (event === 'gear') return <GearSolver />;
   if (event === 'mpyrso') return <MpyrSolver />;
+  if (event === 'crz3a') return <Crz3aSolver />;
   const spec = SPEC_BY_EVENT[event];
   // key={event} 让非 333 之间软切换时干净 remount(换 spec/池,不留旧状态)。
   if (spec) return <PuzzleOptimalSolver key={event} spec={spec} />;
