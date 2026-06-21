@@ -17,7 +17,9 @@ import { tr } from '@/i18n/tr';
 
 const CRZ3A_COLOR = '#16a34a';   // 数据绿(非 UI 灰阶)
 const DEFAULT_SAMPLE = 150;      // 默认采样个数(kociemba 建表 + 搜索较慢,适度;异步分批,可重采/取消)
-const STATE_COUNT_APPROX = 43252003274489856000; // ~4.3×10¹⁹(标准三阶魔方状态数),数量级用
+// 标准三阶魔方状态数 = 43,252,003,274,489,856,000 ≈ 4.3×10¹⁹,超过 Number.MAX_SAFE_INTEGER(2^53),
+// 写成数字字面量会丢精度,故用预格式化字符串展示(只是数量级说明,不参与计算)。
+const STATE_COUNT_APPROX = '43,252,003,274,489,856,000'; // ~4.3×10¹⁹
 
 function downloadText(filename: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
@@ -233,8 +235,8 @@ export default function Crz3aDistView({ isZh }: { isZh: boolean }) {
       <div className="scramble-stats-meta">
         <span>
           {tr({
-            zh: `这是采样估计的【近最优】长度分布,既不是全空间精确分布,也不是可证最优:疯狂 3×3 机械上就是普通三阶魔方,约有 ${STATE_COUNT_APPROX.toLocaleString()} 个状态(数量级 4.3×10¹⁹),无法整图枚举,所以这里现场生成并用站内 kociemba 两阶段求解器解了 ${sampleN.toLocaleString()} 个随机态,把解的步数分桶。两阶段解长度接近最优但不保证最短(样本量越大分布越稳)。它不是 WCA 项目,示例即采样到的真实随机打乱。`,
-            en: `This is a SAMPLED estimate of the NEAR-OPTIMAL solution-length distribution — neither the exact full-space curve nor a provably-optimal one: the Crazy 3×3 is mechanically an ordinary 3×3 cube with ≈ ${STATE_COUNT_APPROX.toLocaleString()} states (order 4.3×10¹⁹), far too many to enumerate, so ${sampleN.toLocaleString()} random states were generated and solved on the fly with the site's kociemba two-phase solver, then bucketed. Two-phase solutions are near-optimal but not guaranteed shortest (a larger sample stabilizes the curve). It is not a WCA event; the examples are the actual sampled random scrambles.`,
+            zh: `这是采样估计的【近最优】长度分布,既不是全空间精确分布,也不是可证最优:疯狂 3×3 机械上就是普通三阶魔方,约有 ${STATE_COUNT_APPROX} 个状态(数量级 4.3×10¹⁹),无法整图枚举,所以这里现场生成并用站内 kociemba 两阶段求解器解了 ${sampleN.toLocaleString()} 个随机态,把解的步数分桶。两阶段解长度接近最优但不保证最短(样本量越大分布越稳)。它不是 WCA 项目,示例即采样到的真实随机打乱。`,
+            en: `This is a SAMPLED estimate of the NEAR-OPTIMAL solution-length distribution — neither the exact full-space curve nor a provably-optimal one: the Crazy 3×3 is mechanically an ordinary 3×3 cube with ≈ ${STATE_COUNT_APPROX} states (order 4.3×10¹⁹), far too many to enumerate, so ${sampleN.toLocaleString()} random states were generated and solved on the fly with the site's kociemba two-phase solver, then bucketed. Two-phase solutions are near-optimal but not guaranteed shortest (a larger sample stabilizes the curve). It is not a WCA event; the examples are the actual sampled random scrambles.`,
           })}
         </span>
       </div>
