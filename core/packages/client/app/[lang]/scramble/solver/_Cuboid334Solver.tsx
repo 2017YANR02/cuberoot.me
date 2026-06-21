@@ -4,12 +4,12 @@
  * /scramble/solver?event=334 — 3×3×4 在线求解器。
  *
  * 纯 TS,无 worker、无下载表。3×3×4 状态空间 ≈ 1.65×10¹⁷(facelet 群阶 2.64×10¹⁸,Schreier-Sims 实算),
- * 太大无法整图 BFS;且只用浏览器可现场构建的小启发表(5 个轨道 PDB,最深 13)不足以让搜索在交互时间内
- * 跑到上帝之数(~18-20),实测深态会爆炸。策略:浅态(≤13 步)用 IDA* + max(轨道距离)可采纳启发式求
- * **可证最优**解;深态超出浏览器求解预算时给出友好的「太深」提示(贪心兜底实测会跑到 200+ 步、无意义,
- * 故不提供),引导用户用较短打乱 —— 凡能解出的都是可证最优解。求解放进 setTimeout 异步执行,期间显示
- * 「求解中」spinner。打乱来源复用 /scramble/gen 的 cstimer 桥(cstimerScramble('334')),记号与 cstimer 完全
- * 一致(U U' U2 u u' u2 R2 L2 M2 F2 B2 S2)。
+ * 太大无法整图 BFS,也没有浏览器可建的强启发让 IDA* 在交互时间内跑到上帝之数。策略 = **两阶段约简**:
+ * 阶段一把所有块归约进全 180° 子群(每轨道「进入子群」距离表作可采纳启发),阶段二只用 180° 转还原
+ *(每轨道子群小,IDA* 可采纳)。任何打乱都返回一条有界的**近最优**解(`optimal:false`);很浅的态另用
+ * 可采纳启发式给出**可证最优**解(`optimal:true`)。不存在「太深」—— 每条真打乱都能解出。求解放进
+ * setTimeout 异步执行,期间显示「求解中」spinner。打乱来源复用 cstimer 桥,记号与 cstimer 完全一致
+ *(U U' U2 u u' u2 R2 L2 M2 F2 B2 S2)。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -18,7 +18,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { SearchInput } from '@/components/SearchInput';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
-import { randomCuboid334Scramble, solveCuboid334, CUBOID334_TOO_DEEP, CUBOID334_STATE_COUNT_STR, CUBOID334_GROUP_ORDER_STR, type Cuboid334Solution } from '@/lib/cuboid334-solver';
+import { randomCuboid334Scramble, solveCuboid334, CUBOID334_STATE_COUNT_STR, CUBOID334_GROUP_ORDER_STR, type Cuboid334Solution } from '@/lib/cuboid334-solver';
 import SolveTabs from '../_components/SolveTabs';
 import { BatchSolvePanel, SolveModeToggle, type BatchSpec } from '../_components/BatchSolvePanel';
 import '../_components/puzzle_optimal_solver.css';
@@ -26,14 +26,13 @@ import './ivy_solver.css';
 
 const CUBOID334_TOKEN_RE = /^(U['2]?|u['2]?|[RLMFBS]2)$/;
 
-// random-scramble length for the buttons: short enough to always solve to a provable optimum fast.
-const RANDOM_LEN = 10;
+// random-scramble length for the buttons (cstimer 334 default is long; this mirrors a real scramble).
+const RANDOM_LEN = 40;
 
 type SolveState =
   | { kind: 'idle' }
   | { kind: 'solving' }
   | { kind: 'done'; result: Cuboid334Solution }
-  | { kind: 'too-deep' }
   | { kind: 'error'; message: string };
 
 export default function Cuboid334SolverPage() {
@@ -49,7 +48,7 @@ export default function Cuboid334SolverPage() {
 
   const trimmed = scramble.trim();
 
-  // Solve off the render path: the IDA* budget can take a moment on a moderately deep state (and the
+  // Solve off the render path: the two-phase search can take a few seconds on a deep state (and the
   // first call builds the orbit pattern databases), so defer to a macrotask and show a "solving" spinner.
   const reqRef = useRef(0);
   useEffect(() => {
@@ -61,8 +60,7 @@ export default function Cuboid334SolverPage() {
       try {
         next = { kind: 'done', result: solveCuboid334(trimmed) };
       } catch (e) {
-        const msg = String((e as Error)?.message ?? e);
-        next = msg === CUBOID334_TOO_DEEP ? { kind: 'too-deep' } : { kind: 'error', message: msg };
+        next = { kind: 'error', message: String((e as Error)?.message ?? e) };
       }
       if (reqRef.current === myReq) setState(next);
     }, 16);
@@ -111,8 +109,8 @@ export default function Cuboid334SolverPage() {
         <>
           <p className="pos-lead">
             {tr({
-              zh: '3×3×4 在线求解:用 IDA* + max(轨道距离)可采纳启发式现场算出**可证最优**解。「随机打乱」给 10 步短打乱(必能秒解最优);手输的深打乱若超出浏览器预算会提示。记号 U U’ U2 u u’ u2 R2 L2 M2 F2 B2 S2,与 cstimer 一致。',
-              en: '3×3×4 online solver: IDA* with an admissible max(orbit-distance) heuristic computes a PROVABLY OPTIMAL solution. "Random" gives a short 10-move scramble (always solved optimally and instantly); a deep pasted scramble beyond the in-browser budget is reported. Notation U U’ U2 u u’ u2 R2 L2 M2 F2 B2 S2, matching cstimer.',
+              zh: '3×3×4 在线求解:两阶段约简(先把所有块归约进全 180° 子群,再只用 180° 转还原),任何打乱都能解出一条有界的近最优解;很浅的打乱另用可采纳启发式给出可证最优解。记号 U U’ U2 u u’ u2 R2 L2 M2 F2 B2 S2,与 cstimer 一致。',
+              en: '3×3×4 online solver: a two-phase reduction (reduce every orbit into the all-180° subgroup, then finish with 180° turns only) returns a bounded near-optimal solution for ANY scramble; very shallow scrambles additionally get a provably optimal solution via an admissible heuristic. Notation U U’ U2 u u’ u2 R2 L2 M2 F2 B2 S2, matching cstimer.',
             })}
           </p>
 
@@ -151,14 +149,6 @@ export default function Cuboid334SolverPage() {
                   {tr({ zh: '打乱记号无法识别(应为 U U’ U2 u u’ u2 R2 L2 M2 F2 B2 S2)', en: 'Unrecognized notation (expected U U’ U2 u u’ u2 R2 L2 M2 F2 B2 S2)' })}: <code>{state.message}</code>
                 </p>
               )}
-              {state.kind === 'too-deep' && (
-                <p className="pos-error">
-                  {tr({
-                    zh: '这个打乱太深,超出浏览器内求解预算(3×3×4 状态空间 ≈ 1.65×10¹⁷,无浏览器可建的强启发,深态无法在交互时间内求解)。试试「随机打乱」给的较短打乱,或减少手输步数。',
-                    en: 'This scramble is too deep for the in-browser budget (the 3×3×4 has ≈1.65×10¹⁷ states with no browser-buildable strong heuristic, so deep states can\'t be solved interactively). Try the shorter "Random" scramble, or shorten the input.',
-                  })}
-                </p>
-              )}
               {state.kind === 'done' && state.result.length === 0 && (
                 <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved' })}</p>
               )}
@@ -167,7 +157,9 @@ export default function Cuboid334SolverPage() {
                   <div className="ivy-metric">
                     <span className="ivy-metric-num">{state.result.length}</span>
                     <span className="ivy-metric-label">
-                      {tr({ zh: '步 最优解', en: state.result.length === 1 ? 'move (optimal)' : 'moves (optimal)' })}
+                      {state.result.optimal
+                        ? tr({ zh: '步 最优解', en: state.result.length === 1 ? 'move (optimal)' : 'moves (optimal)' })
+                        : tr({ zh: '步 近最优解', en: state.result.length === 1 ? 'move (near-optimal)' : 'moves (near-optimal)' })}
                     </span>
                   </div>
                   <div className="ivy-solbox">{state.result.solution}</div>
@@ -179,8 +171,8 @@ export default function Cuboid334SolverPage() {
           <div className="ivy-caveat">
             <strong>{tr({ zh: '关于「最优」', en: 'About "optimal"' })}</strong>{' '}
             {tr({
-              zh: `3×3×4 有约 ${CUBOID334_STATE_COUNT_STR} 个状态(facelet 群阶 ${CUBOID334_GROUP_ORDER_STR},Schreier-Sims 实算),太大无法整图 BFS;能在浏览器现场构建的可采纳启发表最深只有 13,而上帝之数约 18-20,搜索到一定深度就会爆炸。所以浅态(≤13 步)给出可证最短解;更深的状态超出浏览器求解预算,直接友好提示「太深」(它仍可解,只是浏览器里求不出最优),凡返回的解都是可证最优。`,
-              en: `The 3×3×4 has about ${CUBOID334_STATE_COUNT_STR} states (facelet group order ${CUBOID334_GROUP_ORDER_STR}, computed by Schreier-Sims) — far too many to BFS. The strongest admissible heuristic buildable in the browser caps at depth 13 while God's number is ~18-20, so search explodes beyond a certain depth. Shallow states (≤13 moves) get a provably shortest solution; deeper states are beyond the in-browser budget and are reported as "too deep" (still solvable, just not optimally in-browser) — every returned solution is provably optimal.`,
+              zh: `3×3×4 有约 ${CUBOID334_STATE_COUNT_STR} 个状态(facelet 群阶 ${CUBOID334_GROUP_ORDER_STR},Schreier-Sims 实算),太大无法整图 BFS,浏览器里也建不出足够强的可采纳启发去逼近上帝之数(约 18-20),所以**不是**每条解都最优。采用两阶段约简:先把每个轨道归约进全 180° 子群,再只用 180° 转还原;两阶段各自在自己的小坐标里最优,合起来就是有界的**近最优**解(任何打乱都能解)。很浅的打乱会额外尝试可采纳启发的可证最优解,标为「最优」;其余标为「近最优」。`,
+              en: `The 3×3×4 has about ${CUBOID334_STATE_COUNT_STR} states (facelet group order ${CUBOID334_GROUP_ORDER_STR}, computed by Schreier-Sims) — far too many to BFS, and no admissible heuristic strong enough to reach God's number (~18-20) is buildable in the browser, so NOT every solution is optimal. The solver uses a two-phase reduction: first reduce every orbit into the all-180° subgroup, then finish with 180° turns only. Each phase is optimal over its own small coordinate, so the total is a bounded NEAR-OPTIMAL solution (every scramble solves). Very shallow scrambles additionally try an admissible-heuristic optimal solve, labeled "optimal"; the rest are labeled "near-optimal".`,
             })}
           </div>
         </>

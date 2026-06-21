@@ -1,11 +1,11 @@
 'use client';
 
-// 3×3×4(334)最优解步数分布 —— **采样**(非全空间精确曲线):3×3×4 状态空间 ≈ 165,181,768,335,360,000
-//(facelet 群阶 2,642,908,293,365,760,000,Schreier-Sims 实算),太大无法整图枚举;且浏览器可现场构建的
-// 可采纳启发表最深只有 13,而上帝之数 ~18-20,全空间深态无法在交互时间内求最优。所以这里现场生成 N 个**短随机打乱**
-//(本站 cstimer 同款生成器,固定 SCRAMBLE_LEN 步),用 IDA* + max(轨道距离)逐条求**可证最优**解,把最优步数分桶 ——
-// 即「SCRAMBLE_LEN 步随机打乱的最优解长度分布」,不是全空间最优分布(全空间深态解不出来,见说明)。下载提供
-//「下载样本」CSV(optimal_length,scramble),不提供「下载全部状态」(1.65×10¹⁷ 态不可枚举)。
+// 3×3×4(334)解步数分布 —— **采样 / 近最优**(非全空间精确曲线):3×3×4 状态空间 ≈ 165,181,768,335,360,000
+//(facelet 群阶 2,642,908,293,365,760,000,Schreier-Sims 实算),太大无法整图枚举。求解器走**两阶段约简**
+//(先把所有块归约进全 180° 子群,再只用 180° 转还原),任何随机态都能解出一条有界的**近最优**解(很浅的态另给
+// 可证最优解)。这里现场生成 N 个 cstimer 同款随机打乱(SCRAMBLE_LEN 步),逐条求解,把**返回解的步数**分桶 ——
+// 即随机态的返回解长度分布(主要为近最优,浅态为最优),不是全空间最优分布。下载提供「下载样本」CSV
+//(length,scramble,optimal),不提供「下载全部状态」(1.65×10¹⁷ 态不可枚举)。
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Download, Loader2, RotateCw } from 'lucide-react';
 import Link from '@/components/AppLink';
@@ -15,9 +15,9 @@ import { randomCuboid334Scramble, solveCuboid334, CUBOID334_STATE_COUNT_STR, CUB
 import { tr } from '@/i18n/tr';
 
 const C334_COLOR = '#0ea5e9';   // 数据天蓝(非 UI 灰阶)
-const DEFAULT_SAMPLE = 400;     // 默认采样个数(短态解极快,可多采)
-const SCRAMBLE_LEN = 8;         // 短随机打乱长度(保持在快速可证最优区间)
-const BATCH = 24;               // 每个宏任务解多少条(让出主线程)
+const DEFAULT_SAMPLE = 120;     // 默认采样个数(两阶段每条数十至数百 ms)
+const SCRAMBLE_LEN = 40;        // cstimer 同款随机打乱长度(近均匀随机态)
+const BATCH = 6;                // 每个宏任务解多少条(让出主线程)
 
 function downloadText(filename: string, text: string) {
   const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
@@ -58,12 +58,12 @@ export default function Cuboid334DistView({ isZh }: { isZh: boolean }) {
       for (let i = 0; i < BATCH && collected.length < sampleN; i++) {
         try {
           const scramble = randomCuboid334Scramble(SCRAMBLE_LEN);
-          const out = solveCuboid334(scramble); // short scrambles always solve optimally
+          const out = solveCuboid334(scramble); // two-phase: every state returns a bounded solution
           collected.push({ scramble, length: out.length, optimal: out.optimal });
           const ex = examples.get(out.length) ?? [];
           if (ex.length < 12 && scramble) { ex.push(scramble); examples.set(out.length, ex); }
         } catch {
-          // skip a too-deep sample (should not happen at this short length)
+          // a real scramble never fails to solve; ignore any unexpected parse error
         }
       }
       setDone(collected.length);
@@ -118,14 +118,14 @@ export default function Cuboid334DistView({ isZh }: { isZh: boolean }) {
   const solverHref = (scr: string) => `/scramble/solver?${new URLSearchParams({ event: '334', scramble: scr })}`;
 
   const series = useMemo<HistSeries[]>(() => [{
-    name: tr({ zh: `3×3×4(采样,${SCRAMBLE_LEN} 步打乱的最优解)`, en: `3×3×4 (sampled, optimal for ${SCRAMBLE_LEN}-move scrambles)` }),
+    name: tr({ zh: '3×3×4(采样,近最优,非全空间)', en: '3×3×4 (sampled, near-optimal, not full-space)' }),
     fillColors: [C334_COLOR],
     counts,
   }], [counts]);
 
   const downloadSample = () => {
-    const lines = ['optimal_length,scramble'];
-    for (const s of samples) lines.push(`${s.length},${s.scramble}`);
+    const lines = ['length,scramble,optimal'];
+    for (const s of samples) lines.push(`${s.length},${s.scramble},${s.optimal ? 1 : 0}`);
     downloadText('334_sample.csv', lines.join('\n'));
   };
 
@@ -141,8 +141,8 @@ export default function Cuboid334DistView({ isZh }: { isZh: boolean }) {
         <div className="scramble-stats-puzzle-meta">
           <span>
             {tr({
-              zh: `采样 ${done.toLocaleString()} / ${sampleN.toLocaleString()} 个 ${SCRAMBLE_LEN} 步随机打乱(可证最优,非全空间)`,
-              en: `Sampled ${done.toLocaleString()} / ${sampleN.toLocaleString()} ${SCRAMBLE_LEN}-move random scrambles (provably optimal, not full-space)`,
+              zh: `采样 ${done.toLocaleString()} / ${sampleN.toLocaleString()} 个随机打乱(两阶段近最优,非全空间)`,
+              en: `Sampled ${done.toLocaleString()} / ${sampleN.toLocaleString()} random scrambles (two-phase near-optimal, not full-space)`,
             })}
           </span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '一个 token = 1 步', en: 'one token = 1 move' })}</span>
@@ -163,8 +163,8 @@ export default function Cuboid334DistView({ isZh }: { isZh: boolean }) {
       {samples.length === 0 ? (
         <div className="scramble-stats-loading">
           {tr({
-            zh: `求解 ${done.toLocaleString()} / ${sampleN.toLocaleString()} 个 ${SCRAMBLE_LEN} 步随机打乱…(IDA* 可证最优)`,
-            en: `Solving ${done.toLocaleString()} / ${sampleN.toLocaleString()} ${SCRAMBLE_LEN}-move random scrambles… (IDA*, provably optimal)`,
+            zh: `求解 ${done.toLocaleString()} / ${sampleN.toLocaleString()} 个随机打乱…(两阶段约简,近最优)`,
+            en: `Solving ${done.toLocaleString()} / ${sampleN.toLocaleString()} random scrambles… (two-phase reduction, near-optimal)`,
           })}
         </div>
       ) : (
@@ -216,7 +216,7 @@ export default function Cuboid334DistView({ isZh }: { isZh: boolean }) {
 
           {stats && (
             <div className="scramble-stats-panel">
-              <div className="scramble-stats-panel-title">{tr({ zh: `摘要统计(${SCRAMBLE_LEN} 步打乱样本,可证最优)`, en: `Summary stats (${SCRAMBLE_LEN}-move scramble sample, provably optimal)` })}</div>
+              <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计(随机态样本,两阶段近最优)', en: 'Summary stats (random-state sample, two-phase near-optimal)' })}</div>
               <div className="scramble-stats-stat-grid">
                 <Cell label={tr({ zh: '样本均值', en: 'sample mean' })} value={stats.mean.toFixed(1)} />
                 <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(stats.median)} />
@@ -232,8 +232,8 @@ export default function Cuboid334DistView({ isZh }: { isZh: boolean }) {
       <div className="scramble-stats-meta">
         <span>
           {tr({
-            zh: `这是【${SCRAMBLE_LEN} 步随机打乱的最优解长度】采样分布,不是全空间最优分布:3×3×4 有 ${CUBOID334_STATE_COUNT_STR} 个状态(facelet 群阶 ${CUBOID334_GROUP_ORDER_STR},均为 Schreier-Sims 实算),太大无法整图枚举;浏览器可现场构建的可采纳启发表最深只有 13,而上帝之数约 18-20,全空间深态无法在交互时间内求最优。所以这里只对 ${sampleN.toLocaleString()} 个 ${SCRAMBLE_LEN} 步短打乱求**可证最优**解(IDA* + max(轨道距离)),把最优步数分桶。它不是 WCA 项目,示例即采样到的真实随机打乱;深度更大的随机态最优分布在浏览器里算不出来。`,
-            en: `This is a SAMPLED distribution of the OPTIMAL length of ${SCRAMBLE_LEN}-move random scrambles — not the full-space optimal distribution: the 3×3×4 has ${CUBOID334_STATE_COUNT_STR} states (facelet group order ${CUBOID334_GROUP_ORDER_STR}, both computed by Schreier-Sims), far too many to enumerate; the strongest admissible heuristic buildable in the browser caps at depth 13 while God's number is ~18-20, so deep states can't be solved optimally in interactive time. So only ${sampleN.toLocaleString()} short ${SCRAMBLE_LEN}-move scrambles are solved to a PROVABLE optimum (IDA* + max orbit distance) and bucketed. It is not a WCA event; the examples are the actual sampled random scrambles — the optimal distribution of deeper random states can't be computed in-browser.`,
+            zh: `这是【随机态的返回解长度】采样分布,不是全空间最优分布:3×3×4 有 ${CUBOID334_STATE_COUNT_STR} 个状态(facelet 群阶 ${CUBOID334_GROUP_ORDER_STR},均为 Schreier-Sims 实算),太大无法整图枚举。求解器走两阶段约简(先把所有块归约进全 180° 子群,再只用 180° 转还原),任何随机态都能解出一条有界的近最优解;很浅的态另用可采纳启发式给出可证最优解(故「可证最优占比」一般较低)。所以这里对 ${sampleN.toLocaleString()} 个 cstimer 同款随机打乱求解,把返回解的步数分桶 —— 主要是近最优、浅态为最优。它不是 WCA 项目,示例即采样到的真实随机打乱;全空间精确最优分布在浏览器里算不出来。`,
+            en: `This is a SAMPLED distribution of the RETURNED solution length on random states — not the full-space optimal distribution: the 3×3×4 has ${CUBOID334_STATE_COUNT_STR} states (facelet group order ${CUBOID334_GROUP_ORDER_STR}, both computed by Schreier-Sims), far too many to enumerate. The solver is a two-phase reduction (reduce every orbit into the all-180° subgroup, then finish with 180° turns only): ANY random state returns a bounded near-optimal solution, and very shallow states additionally get a provably optimal solution (so "proven-optimal %" is usually low). So ${sampleN.toLocaleString()} cstimer-style random scrambles are solved and their returned lengths bucketed — mostly near-optimal, optimal for shallow states. It is not a WCA event; the examples are the actual sampled random scrambles; the exact full-space optimal distribution can't be computed in-browser.`,
           })}
         </span>
       </div>
