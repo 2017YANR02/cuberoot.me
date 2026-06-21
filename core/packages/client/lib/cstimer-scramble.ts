@@ -105,7 +105,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   { id: '233',     key: '233',     length: 25, zh: '多米诺 2×3×3',     en: '2×3×3 Domino',      textLabel: '2×3×3', family: 'cuboid', solvable: true
 },
   { id: '334',     key: '334',     length: 40, zh: '3×3×4',            en: '3×3×4',             textLabel: '3×3×4', family: 'cuboid', solvable: true },
-  { id: '335',     key: '335',     length: 50, zh: '3×3×5',            en: '3×3×5',             textLabel: '3×3×5', family: 'cuboid' },
+  { id: '335',     key: '335',     length: 50, zh: '3×3×5',            en: '3×3×5',             textLabel: '3×3×5', family: 'cuboid', solvable: true },
   { id: '336',     key: '336',     length: 50, zh: '3×3×6',            en: '3×3×6',             textLabel: '3×3×6', family: 'cuboid' },
   { id: '337',     key: '337',     length: 60, zh: '3×3×7',            en: '3×3×7',             textLabel: '3×3×7', family: 'cuboid' },
   { id: 'sfl',     key: 'sfl',     length: 25, zh: '超薄花型',         en: 'Super Floppy',      textLabel: 'SFl',  family: 'cuboid', solvable: true },

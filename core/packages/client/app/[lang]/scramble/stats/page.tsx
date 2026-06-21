@@ -12,6 +12,7 @@ import FloppyDistView from './_components/FloppyDistView';
 import Cuboid223DistView from './_components/Cuboid223DistView';
 import Cuboid233DistView from './_components/Cuboid233DistView';
 import Cuboid334DistView from './_components/Cuboid334DistView';
+import Cuboid335DistView from './_components/Cuboid335DistView';
 import Slide8DistView from './_components/Slide8DistView';
 import Slide15DistView from './_components/Slide15DistView';
 import SuperFloppyDistView from './_components/SuperFloppyDistView';
@@ -507,7 +508,7 @@ export default function ScrambleStatsPage() {
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   // 非 WCA 求解项目(ivy / 133 / 223 / 8p / sfl …):难度=整解最优步数分布(A/B 档全空间精确,15p 是 TIER C
   // 采样);均无打乱长度数据、无合并/数据集/度量开关 → 走 isIvy 早返回那套。
-  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '233' || event === '334' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a';
+  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '233' || event === '334' || event === '335' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -721,6 +722,7 @@ export default function ScrambleStatsPage() {
                   : event === '223' ? '223'
                     : event === '233' ? '233'
                     : event === '334' ? '334'
+                    : event === '335' ? '335'
                     : event === '8p' ? '8p'
                       : event === '15p' ? '15p'
                         : event === 'sfl' ? 'sfl'
@@ -899,6 +901,26 @@ export default function ScrambleStatsPage() {
           </div>
         ) : (
           <Cuboid334DistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  // 3×3×5(非 WCA 项目,TIER D):可达状态 156,067,430,400(≈1.56×10¹¹,Schreier-Sims)无法整图枚举,
+  // 难度 = 整解步数的**采样**分布(现场解 N 条随机态:浅态可证最优、深态两阶段近最优);无打乱长度数据。
+  if (event === '335') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: '3×3×5 无打乱长度分布(打乱由 cstimer 定长生成);整解步数采样分布见「难度」',
+              en: 'No scramble-length distribution for the 3×3×5 (cstimer generates fixed-form scrambles); see "Difficulty" for the sampled solution-length distribution',
+            })}
+          </div>
+        ) : (
+          <Cuboid335DistView isZh={isZh} />
         )}
       </div>
     );
