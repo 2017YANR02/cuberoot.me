@@ -52,6 +52,7 @@ import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks,
 import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
 import {
   cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, normalizeSolutionSlashes,
+  findIllegalNotationChars,
 } from '@/lib/recon-alg-utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '@/lib/recon-norm-cross-extract';
 import { encodeUrlAlg, decodeUrlAlg } from '@/lib/cubedb-url';
@@ -1105,9 +1106,41 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [debouncedSolution, handleCursorSync]);
 
   // ── Submit ──
+  // 校验解法 / 打乱里的非法字符(注释 `//` 之外只允许 ASCII)。合法返回 null,
+  // 否则返回带原因 + 逐行定位的多行提示文本(给 alert 用)。
+  const validateNotationFields = (): string | null => {
+    const fields: { value: string; label: { zh: string; en: string } }[] = [
+      { value: form.solution || '', label: { zh: '解法', en: 'Solution' } },
+      { value: form.wcaScramble || '', label: { zh: 'WCA 打乱', en: 'WCA scramble' } },
+      { value: form.optimalScramble || '', label: { zh: '最优打乱', en: 'Optimal scramble' } },
+    ];
+    const problems: string[] = [];
+    for (const f of fields) {
+      for (const v of findIllegalNotationChars(f.value)) {
+        problems.push(tr({
+          zh: `${f.label.zh} 第 ${v.line} 行有非法字符「${v.chars}」:${v.snippet}`,
+          en: `${f.label.en} line ${v.line} has illegal character(s) "${v.chars}": ${v.snippet}`,
+        }));
+      }
+    }
+    if (problems.length === 0) return null;
+    const head = tr({
+      zh: '解法和打乱里只能用英文字母和符号(WCA 记号)。中文等任何文字说明请写在「//」之后当注释,否则播放器会把它当成转动、导致复盘无法播放。请修改下列位置后重试:',
+      en: 'Only English letters and symbols (WCA notation) are allowed in the solution and scramble. Put Chinese or any other text after "//" as a comment, otherwise the player treats it as a move and the reconstruction cannot play. Please fix the following and retry:',
+    });
+    return `${head}\n\n${problems.join('\n')}`;
+  };
+
   const handleSubmit = async () => {
     if (!form.event || !form.person) {
       alert(t('recon.fillRequired'));
+      return;
+    }
+    // 记号区(解法 / 打乱,`//` 注释之外)只能用英文字母和符号。中文等文字会被播放器
+    // 当成转动 → 复盘无法播放。命中则拦下并指明具体行,让用户改完(把文字移到 `//` 后)重试。
+    const notationError = validateNotationFields();
+    if (notationError) {
+      alert(notationError);
       return;
     }
     setSaving(true);
