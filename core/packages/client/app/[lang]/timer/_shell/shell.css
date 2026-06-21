@@ -305,7 +305,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   padding: 0;
   border: 0;
   background: transparent;
-  cursor: pointer;
 }
 /* NoPreview text fallback (svg). The real cube is a fixed-px twisty-player div
    sized via the `size` prop in SoloView; cap height for short viewports. */
@@ -1007,24 +1006,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   cursor: pointer;
 }
 
-/* Enlarged cube net overlay */
-.shell-net-enlarge {
-  position: fixed;
-  inset: 0;
-  z-index: 65;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: color-mix(in srgb, var(--foreground) 40%, transparent);
-}
-.shell-net-enlarge-inner {
-  padding: 18px;
-  border-radius: 14px;
-  background: var(--card);
-  border: 1px solid var(--border-default);
-}
-.shell-net-enlarge-inner svg { max-width: 84vw; height: auto; max-height: 70dvh; }
-
 /* Penalty action sheet (swipe-up) */
 .shell-penalty-sheet {
   position: fixed;
@@ -1139,7 +1120,6 @@ body:has(.timer-shell .shell-sheet-backdrop) .clawd-deskpet,
 body:has(.timer-shell .shell-penalty-sheet) .clawd-deskpet,
 body:has(.timer-shell .row-quick-sheet-backdrop) .clawd-deskpet,
 body:has(.timer-shell .row-quick-menu) .clawd-deskpet,
-body:has(.timer-shell .shell-net-enlarge) .clawd-deskpet,
 body:has(.timer-shell .shell-event-pop) .clawd-deskpet,
 body:has(.battle-container .settings-overlay.visible) .clawd-deskpet,
 body:has(.battle-container .history-overlay.visible) .clawd-deskpet,
@@ -1152,14 +1132,6 @@ body:has(.battle-container .penalty-dropdown.open) .clawd-deskpet {
   visibility: hidden !important;
   transition: opacity 120ms ease;
 }
-
-/* (c) Bottom-left auth avatar clearance: keep the bottom stat line + swipe
-   hint clear of the ~56px bottom-left global avatar zone so the
-   "ao5 / best …" labels never sit under it. Symmetric padding so the
-   centered stats stay centered (no visual de-centering). The z-index lift
-   above already keeps the rows painting over the avatar; this just stops
-   the leftmost label from being physically hidden behind it. */
-.timer-shell .shell-stat-rail { padding-left: 60px; padding-right: 60px; }
 
 /* Fullscreen: hide chrome rows, keep just the surface. */
 .timer-shell.fullscreen .shell-topbar,
