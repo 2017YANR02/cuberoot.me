@@ -112,7 +112,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   { id: 'ufo',     key: 'ufo',     length: 25, zh: 'UFO',              en: 'UFO',               textLabel: 'UFO',  family: 'twist',  solvable: true },
   { id: 'ctico',   key: 'ctico',   length: 25, zh: '二十面体',         en: 'Icosamate',         textLabel: 'Ico',  family: 'twist'
 },
-  { id: 'crz3a',   key: 'crz3a',   length: 25, zh: '疯狂 3×3',         en: 'Crazy 3×3',         textLabel: 'Crz',  family: 'other'
+  { id: 'crz3a',   key: 'crz3a',   length: 25, zh: '疯狂 3×3',         en: 'Crazy 3×3',         textLabel: 'Crz',  family: 'other',  solvable: true
 },
   { id: 'cm3',     key: 'cm3',     length: 16, zh: 'Cmetrick',         en: 'Cmetrick',          textLabel: 'Cm3',  family: 'twist' },
   { id: 'cm2',     key: 'cm2',     length: 16, zh: 'Cmetrick Mini',    en: 'Cmetrick Mini',     textLabel: 'Cm2',  family: 'twist',  solvable: true },

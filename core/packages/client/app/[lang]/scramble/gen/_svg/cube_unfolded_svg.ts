@@ -56,6 +56,8 @@ const EVENT_TO_PUZZLE: Record<string, string> = {
   '555': '5x5x5', '555bf': '5x5x5',
   '666': '6x6x6',
   '777': '7x7x7',
+  // Crazy 3×3 (crz3a) is mechanically a standard 3×3 — reuse the 3×3 unfolded net.
+  crz3a: '3x3x3',
 };
 
 /** Synthetic id for high-order NxN (N ≥ 8) without a WCA event: `nxn8`..`nxn300`. */
