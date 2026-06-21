@@ -29,15 +29,25 @@
  * 触发,文档才会拿到/卸掉 COEP;非 333 之间(222↔pyram↔skewb↔sq1)是同一个无 COEP 文档,
  * 软导航即可。各求解器 next/dynamic 懒载,保持分包(进 222 不拉 cubeopt 大 bundle)。
  *
- * URL 与分布 /scramble/stats?event= 完全对称;裸 /scramble/solver = 默认 3×3(向后兼容旧链接)。
+ * URL 与分布完全对称(分布现已合并到本页下半区);裸 /scramble/solver = 默认 3×3(向后兼容旧链接)。
+ *
+ * 求解 / 分布合页(2026-06-21):本页 = 求解区(上)+ 分布区(下,懒挂载)同一滚动页,
+ * 顶层「求解/分布」tab 已废除。分布区复用 /scramble/stats 的 ScrambleStatsPage(embedded 模式:
+ * 隐藏它自带的项目选择器,URL 键加 d 前缀避撞,跟随顶部 SolveTabs 的共享 ?event)。它由
+ * LazyVisible 包裹 —— 只在滚到折叠线下方才挂载,首屏永不触发分布里那些「现场求解采样」的卡顿。
  */
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { SPEC_BY_EVENT } from './_puzzle-specs';
+import LazyVisible from '../_components/LazyVisible';
 
 const Loading = () => <div style={{ padding: 16 }}>Loading…</div>;
+
+// 分布区(下半区)懒载:ssr:false + 只在 LazyVisible 滚入视口后才挂,既不进首屏 bundle,
+// 也不在首屏跑分布的现场求解。
+const ScrambleStatsPage = dynamic(() => import('../stats/page'), { ssr: false, loading: Loading });
 
 const Cube3Solver = dynamic(() => import('./_Cube3Solver'), { ssr: false, loading: Loading });
 const Sq1Solver = dynamic(() => import('./_Sq1Solver'), { ssr: false, loading: Loading });
@@ -92,6 +102,10 @@ export default function ScrambleSolverPage() {
   return (
     <Suspense fallback={<Loading />}>
       <SolverDispatch />
+      {/* 分布区:同一滚动页,求解区下方;懒挂载(滚到才渲染 + 才加载 chunk),首屏零分布开销。 */}
+      <LazyVisible className="scramble-dist-embed">
+        <ScrambleStatsPage embedded />
+      </LazyVisible>
     </Suspense>
   );
 }

@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * 统一「求解」中心的标签导航(/scramble 的 求解/分布/各魔方求解 入口)。
+ * 统一「求解」中心的标签导航(/scramble 各魔方求解 + 子工具入口)。
  *
- * 第一行 = 功能(求解 / 分布),两个模式共用,是顶层主导航。
- * 求解模式下第二行才出项目,直接复用全站 WcaEventSelector(同一图标选择器,只放出有
- * 在线求解器的 5 个项目:3×3 / 2×2×2 / 金字塔 / 斜转 / SQ1),与分布模式的项目选择器同款;
- * 项目=3×3 时再出一行子标签(最优解 / 阶段 / CFOP / DR)。
- * 分布模式不出项目行 —— 分布页自带 WcaEventSelector 是唯一的项目/事件选择器,
- * 避免「上面有项目、下面又有项目」的双重选择器。
+ * 「求解 / 分布」顶层切换已废除(2026-06-21):求解与分布合并到同一滚动页(求解在上、
+ * 分布在下,分布懒挂载),不再分两个 tab。本组件现在只剩**项目行 + 3×3 子标签行**。
+ *
+ * 项目行直接复用全站 WcaEventSelector(同一图标选择器,只放出有在线求解器的 5 个项目:
+ * 3×3 / 2×2×2 / 金字塔 / 斜转 / SQ1)+ 右侧非 WCA 分组下拉(ivy 等);项目=3×3 时再出
+ * 一行子标签(最优解 / 阶段 / CFOP / DR)。
  *
  * 关键:5 个项目共用一个路由 /scramble/solver?event=<id>(按 event 分发求解器),但只有
  * 3×3(event=333,cubeopt 要 SharedArrayBuffer)是发 COOP/COEP 的文档;其余 event 是普通
@@ -18,11 +18,13 @@
  *
  * active 状态完全由各页以 props 传入(本组件不读 useSearchParams,避免 Suspense/SSG
  * 退化、秒渲染)。
+ *
+ * `mode` prop 保留只为兼容大量调用方(各 _*Solver 仍传 mode="solve");求解/分布合页后
+ * 它不再影响渲染(项目行恒显示)。
  */
 
 import AppLink from '@/components/AppLink';
 import { useParams } from 'next/navigation';
-import { Sparkles, BarChart3 } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import NonWcaPuzzlePicker from '@/components/NonWcaPuzzlePicker/NonWcaPuzzlePicker';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
@@ -75,8 +77,6 @@ const PUZZLE_BY_EVENT: Record<string, SolvePuzzle> = {
 };
 // 图标行只放 WCA 求解项目(非 WCA 走分组下拉)。
 const WCA_SOLVE_EVENTS = new Set(['333', '222', 'pyram', 'skewb', 'sq1']);
-// 有「分布」数据的求解项目;ivy 走理论全空间分布(/scramble/stats?event=ivy)。
-const HAS_DISTRIBUTION: ReadonlySet<SolvePuzzle> = new Set(['3x3', '2x2x2', 'pyraminx', 'skewb', 'sq1', 'ivy', '133', '223', '233', '334', '335', '8p', '15p', 'sfl', 'ufo', 'cm2', 'dmd', 'gear', 'mpyrso', 'dino', 'crz3a']);
 
 const withEvent = (href: string, eventId: string) =>
   `${href}${href.includes('?') ? '&' : '?'}event=${eventId}`;
@@ -90,9 +90,6 @@ const SUB_ROUTE: Record<SolveSub, string> = {
   cfop: '/scramble/analyzer?tool=cfop&event=333',
   fmc: '/scramble/analyzer?tool=fmc&event=333',
 };
-
-const distHref = (p: SolvePuzzle | null) =>
-  `/scramble/stats?event=${p && HAS_DISTRIBUTION.has(p) ? EVENT_ID[p] : '333'}`;
 
 // COEP 边界 = 全站唯一发 COOP/COEP 的文档 = /scramble/solver?event=333(或裸 /scramble/solver
 // = 默认 333)。其余 event 是普通文档。跨这条边界(进/出 333)必须硬导航换文档头。
@@ -110,11 +107,8 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
   const prefix = lang === 'zh' ? '/zh' : '';
   const t = useT();
 
-  // 当前是不是 COEP 的 3×3 最优解文档
+  // 当前是不是 COEP 的 3×3 最优解文档(mode 仅在此参与硬/软导航判定,不再 gate 渲染)
   const currentIsSolver = mode === 'solve' && puzzle === '3x3' && sub === 'optimal';
-
-  // 「求解」功能标签的目标:当前项目的求解页(项目无在线求解器时退回 3×3 最优解),带 ?event=。
-  const solveHref = puzzle ? solveHrefFor(puzzle) : '/scramble/solver?event=333';
 
   // 跨 solver 边界 → 硬导航(原生 a),否则软导航(AppLink)
   const tab = (key: string, href: string, active: boolean, content: React.ReactNode, extraClass = '') => {
@@ -136,58 +130,38 @@ export default function SolveTabs({ puzzle, mode, sub }: SolveTabsProps) {
 
   return (
     <nav className="solve-tabs" aria-label={t('求解中心导航', 'Solve center navigation')}>
-      {/* 第一行(仅求解):项目选择 — 复用全站 WcaEventSelector(同一图标选择器),只放出
-          有在线求解器的 5 个项目(3×3 / 2×2×2 / 金字塔 / 斜转 / SQ1)。分布模式不出此行:分布页
-          自带 WcaEventSelector 是唯一项目/事件选择器,避免「上面有项目、下面又有项目」。 */}
-      {mode === 'solve' && (
-        <div className="solve-tab-evrow">
-          <WcaEventSelector
-            availableEvents={WCA_SOLVE_EVENTS}
-            onlyAvailable
-            selectedEvent={puzzle ? EVENT_ID[puzzle] : undefined}
-            isZh={lang === 'zh'}
-            linkFor={(id) => {
-              const p = PUZZLE_BY_EVENT[id];
-              if (!p) return null;
-              const href = solveHrefFor(p);
-              return { href, hard: currentIsSolver !== is333Href(href) };
-            }}
-          />
-          {/* 非 WCA 求解项目(ivy 等)分组下拉:塞不进图标行,数据驱动按家族分组。 */}
-          <NonWcaPuzzlePicker
-            isZh={lang === 'zh'}
-            availableEvents={CSTIMER_SOLVABLE_IDS}
-            selectedEvent={puzzle ? EVENT_ID[puzzle] : undefined}
-            linkFor={(id) => {
-              const p = PUZZLE_BY_EVENT[id];
-              if (!p) return null;
-              const href = solveHrefFor(p);
-              return { href, hard: currentIsSolver !== is333Href(href) };
-            }}
-          />
-        </div>
-      )}
-
-      {/* 第二行:功能(求解 / 分布)— 两个模式共用 */}
-      <div className="solve-tab-row solve-tab-modes">
-        {tab(
-          'solve',
-          solveHref,
-          mode === 'solve',
-          <><Sparkles size={15} /><span>{t('求解', 'Solve')}</span></>,
-          'solve-tab-mode',
-        )}
-        {tab(
-          'dist',
-          distHref(puzzle),
-          mode === 'dist',
-          <><BarChart3 size={15} /><span>{t('分布', 'Distribution')}</span></>,
-          'solve-tab-mode',
-        )}
+      {/* 项目行:复用全站 WcaEventSelector(同一图标选择器),只放出有在线求解器的 5 个项目
+          (3×3 / 2×2×2 / 金字塔 / 斜转 / SQ1)+ 右侧非 WCA 分组下拉(ivy 等)。求解/分布合页后
+          这是页面顶部唯一的项目选择器(分布区不再自带选择器,跟随这里的 ?event)。 */}
+      <div className="solve-tab-evrow">
+        <WcaEventSelector
+          availableEvents={WCA_SOLVE_EVENTS}
+          onlyAvailable
+          selectedEvent={puzzle ? EVENT_ID[puzzle] : undefined}
+          isZh={lang === 'zh'}
+          linkFor={(id) => {
+            const p = PUZZLE_BY_EVENT[id];
+            if (!p) return null;
+            const href = solveHrefFor(p);
+            return { href, hard: currentIsSolver !== is333Href(href) };
+          }}
+        />
+        {/* 非 WCA 求解项目(ivy 等)分组下拉:塞不进图标行,数据驱动按家族分组。 */}
+        <NonWcaPuzzlePicker
+          isZh={lang === 'zh'}
+          availableEvents={CSTIMER_SOLVABLE_IDS}
+          selectedEvent={puzzle ? EVENT_ID[puzzle] : undefined}
+          linkFor={(id) => {
+            const p = PUZZLE_BY_EVENT[id];
+            if (!p) return null;
+            const href = solveHrefFor(p);
+            return { href, hard: currentIsSolver !== is333Href(href) };
+          }}
+        />
       </div>
 
-      {/* 第三行(仅 3×3 求解):子标签(最优解 / 阶段 / CFOP / DR) */}
-      {mode === 'solve' && puzzle === '3x3' && (
+      {/* 子标签(仅 3×3):最优解 / 阶段 / CFOP / DR */}
+      {puzzle === '3x3' && (
         <div className="solve-tab-row solve-tab-subs">
           {tab('optimal', SUB_ROUTE.optimal, sub === 'optimal', t('最优解', 'Optimal'), 'solve-tab-sub')}
           {tab('stage', SUB_ROUTE.stage, sub === 'stage', t('阶段', 'Stage'), 'solve-tab-sub')}

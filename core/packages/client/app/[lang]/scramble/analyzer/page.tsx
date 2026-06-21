@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useQueryState, useQueryStates, parseAsString, parseAsInteger, parseAsStringEnum } from 'nuqs';
+import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle } from 'lucide-react';
@@ -29,7 +30,7 @@ import {
   type WorkerVariant,
 } from './analyze_worker_client';
 import TwistySection from '@/components/TwistySection';
-import StageSolver from '@/components/StageSolver';
+import StageSolver, { METHOD_KEYS, type Method as SsMethod } from '@/components/StageSolver';
 import ChainExplorer from '@/components/ChainExplorer';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { Flag } from '@/components/Flag';
@@ -42,7 +43,16 @@ import { statsUrl } from '@/lib/stats-base';
 import { variantLabel, stageLabel } from '@/lib/scramble-variants';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import SolveTabs from '../_components/SolveTabs';
+import LazyVisible from '../_components/LazyVisible';
 import './analyze.css';
+
+// 分布区(下半区)懒载:求解/分布合页后,analyzer(3×3 阶段/CFOP/DR)下方接同一份分布。
+// embedded 模式 → 分布的 URL 键加 d 前缀,避开 analyzer 自己的 scramble/variant/stage/colors/tool。
+// ssr:false + LazyVisible 滚入才挂,首屏不拉 chunk、不跑分布现场求解。
+const ScrambleStatsPage = dynamic(() => import('../stats/page'), {
+  ssr: false,
+  loading: () => <div style={{ padding: 16 }}>Loading…</div>,
+});
 
 const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
 
@@ -135,6 +145,13 @@ const URL_KEYS = {
   colors: parseAsString,
   src: parseAsStringEnum<'wca' | 'random'>(['wca', 'random']),
   worker: parseAsStringEnum(['ts', 'legacy']),
+  // 逐阶段最优解(StageSolver,tool=stage)的深链:method = 方法(含 block 等,独立于 CFOP 的
+  // variant 枚举),mstage = VARIANT_STAGES[method] 里的阶段索引。两者与 CFOP 的 variant/stage 互不相干。
+  method: parseAsStringEnum<SsMethod>(METHOD_KEYS),
+  mstage: parseAsInteger,
+  // face = StageSolver 6 视角(D/U/L/R/F/B)索引,锁定底色对应的那一面;只在挂载时读一次(jump-to 提示),
+  // 读完即从地址栏清掉(之后实际选中视角由 StageSolver 内部驱动,不再持久化)。
+  face: parseAsInteger,
 };
 
 function FilterChip(props: { active: boolean; title: string; amount: number; onClick: () => void }) {
@@ -160,6 +177,12 @@ function AnalyzePageInner() {
   // run once and must reflect the deep-linked URL, not later edits.
   const initUrlRef = useRef(urlState);
   const workerVariant: WorkerVariant = urlState.worker === 'legacy' ? 'legacy' : 'ts';
+
+  // 消费 face 深链后立即从地址栏清掉(initialFace 已在首渲染快照 initUrlRef 里捕获,清 URL 不影响它)。
+  useEffect(() => {
+    if (initUrlRef.current.face != null) void setUrlState({ face: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [scramble, setScramble] = useState(
     () => initUrlRef.current.scramble?.replace(/_/g, ' ').trim() || DEFAULT_SCRAMBLE,
@@ -550,7 +573,16 @@ function AnalyzePageInner() {
 
       {tool === 'stage' && (
         <section className="analyze-primary">
-          <StageSolver scramble={scramble} lang={lang} />
+          <StageSolver
+            scramble={scramble}
+            lang={lang}
+            initialMethod={initUrlRef.current.method ?? 'std'}
+            initialStage={Math.max(0, initUrlRef.current.mstage ?? 0)}
+            initialFace={initUrlRef.current.face ?? undefined}
+            onSelectionChange={(m, s) => {
+              void setUrlState({ method: m === 'std' ? null : m, mstage: s === 0 ? null : s });
+            }}
+          />
         </section>
       )}
 
@@ -762,6 +794,10 @@ export default function AnalyzePage() {
   return (
     <Suspense fallback={<div style={{ padding: 16 }}>Loading…</div>}>
       <AnalyzePageInner />
+      {/* 分布区:同一滚动页,求解(阶段/CFOP/DR)下方;懒挂载,首屏零分布开销。 */}
+      <LazyVisible className="scramble-dist-embed">
+        <ScrambleStatsPage embedded />
+      </LazyVisible>
     </Suspense>
   );
 }

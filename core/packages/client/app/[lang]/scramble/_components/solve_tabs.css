@@ -29,14 +29,8 @@
 .solve-tab:hover { color: var(--foreground); }
 .solve-tab > span { line-height: 1; }
 
-/* 第二行:功能(求解 / 分布)— 带下分隔线分隔标签头与内容;active 走主题强调色 */
-.solve-tab-modes { border-bottom: 1px solid var(--border-default); margin-bottom: 0.15rem; }
-.solve-tab-mode { font-size: 1rem; font-weight: 600; }
-.solve-tab-mode.is-active { color: var(--accent); border-bottom-color: var(--accent); }
-.solve-tab-mode.is-active svg { color: var(--accent); }
-
-/* 第一行(仅求解):项目 — 复用全站 WcaEventSelector 图标选择器(active 图标绿锁在
-   组件内)+ 右侧非 WCA 分组下拉。收紧默认 12px 上下外边距,贴合标签导航的紧凑节奏。 */
+/* 项目行:复用全站 WcaEventSelector 图标选择器(active 图标绿锁在组件内)+ 右侧非 WCA
+   分组下拉。收紧默认 12px 上下外边距,贴合标签导航的紧凑节奏。 */
 .solve-tab-evrow {
   display: flex;
   flex-wrap: wrap;
@@ -45,8 +39,12 @@
 }
 .solve-tab-evrow .wca-stats-event-selector { margin: 0.1rem 0 0.2rem; }
 
-/* 第三行:3×3 求解子标签 — 更小 */
-.solve-tab-subs { gap: 0.1rem; margin-top: 0.1rem; }
+/* 3×3 子标签(最优解 / 阶段 / CFOP / DR)— 更小;带下分隔线分隔标签头与内容 */
+.solve-tab-subs {
+  gap: 0.1rem;
+  margin-top: 0.1rem;
+  border-bottom: 1px solid var(--border-default);
+}
 .solve-tab-sub { font-size: 0.85rem; padding: 0.3rem 0.55rem; }
 .solve-tab-sub.is-active { color: var(--accent); border-bottom-color: var(--accent); }
 
