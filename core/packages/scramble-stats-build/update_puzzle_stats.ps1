@@ -17,7 +17,9 @@ param(
   [string[]]$Puzzles = @(),   # 空 = 全部已注册 puzzle
   [int]$MaxNew = 0,        # >0: 本次最多新增 N 条语料(小样本验形/限量增量); 0=取满
   [int]$ChunkSize = 200000,# analyzer 分块大小(pocket 全表直查 ~百万/s, 一块秒级)
-  [switch]$BuildOnly       # 跳过取数/解算, 直接用现有 CSV 重算 JSON
+  [switch]$BuildOnly,      # 跳过取数/解算, 直接用现有 CSV 重算 JSON
+  [int]$SampledN = 0,      # >0: TIER C/D 离线采样分布的样本数(0 = 用脚本各 event 的 defaultN)
+  [string[]]$SampledEvents = @()  # 空 = 全部已注册 TIER C/D 采样分布 event(下方 $SAMPLED_DIST_EVENTS)
 )
 $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
@@ -276,5 +278,27 @@ try {
   pnpm exec tsx src/build_puzzle_dist.ts
   if ($LASTEXITCODE -ne 0) { throw 'build_puzzle_dist 失败' }
 } finally { Pop-Location }
+
+# ---- 4. TIER C/D 离线采样分布 (stats/scramble/dist_<event>.json) ----
+# 铁律(solver/NONWCA_PUZZLE_LOOP.md §0.0 #6): TIER C/D(335 等大状态长方体/扭转/滑块)分布无法整图枚举,
+# 必须**离线**采样预计算成静态 JSON,页面只 fetch+渲染,严禁浏览器现场求解采样。这些 puzzle 没有 Rust
+# analyzer / 真题语料,求解器是 packages/client/lib/<puzzle>-solver.ts 的纯 TS 实现; build_puzzle_sampled_dist.ts
+# 直接 import 它、用它自带的 cstimer 同款随机生成器采样。每条求解 ~0.2-0.4s,N 默认几百~两千 → 单 event 几分钟。
+# 新接入一个 C/D 采样分布 = 在 build_puzzle_sampled_dist.ts 的 REGISTRY 加一行 + 此处 $SAMPLED_DIST_EVENTS 加 event。
+$SAMPLED_DIST_EVENTS = @('335')   # 已离线采样的 TIER C/D event(随后续 wave 退役各 DistView 现场采样而增长)
+$evToBuild = if ($SampledEvents -and $SampledEvents.Count -gt 0) { $SampledEvents } else { $SAMPLED_DIST_EVENTS }
+if ($evToBuild.Count -gt 0) {
+  Step "build_puzzle_sampled_dist (TIER C/D 离线采样: $($evToBuild -join ', '))"
+  Push-Location $PkgDir
+  try {
+    foreach ($ev in $evToBuild) {
+      $sampledArgs = @('exec', 'tsx', 'src/build_puzzle_sampled_dist.ts', $ev)
+      if ($SampledN -gt 0) { $sampledArgs += "$SampledN" }
+      Write-Host "  [$ev] 采样求解中 (单进程, 低优先级)…" -ForegroundColor DarkGray
+      pnpm @sampledArgs
+      if ($LASTEXITCODE -ne 0) { throw "build_puzzle_sampled_dist 失败 (event=$ev)" }
+    }
+  } finally { Pop-Location }
+}
 
 Write-Host "`n完成。发布(commit stats JSON + scp static)按 MANUAL 流程另行执行。" -ForegroundColor Green

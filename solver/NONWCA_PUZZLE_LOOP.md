@@ -25,6 +25,7 @@
 3. **诚实记质量** —— 每单元日志显式写质量桶:「近最优(均值 N 步,method=…)」或「有效 + 有界(≤N 步,未优化)」。jumbling / 天文量级的「有效 + 有界」是**已接受结果**,别假装近最优。
 4. **状态数可超 2^53** —— 一律存/显示为预格式化字符串,**禁** JS number 字面量(D1b 把 4.3e19 写成数字字面量丢精度)。
 5. **UI 债真实在欠** —— 几乎每单元带 `[untested-ui]`(dev server 没起 / RAM 被大求解器占)。逻辑全 vitest 验过,只欠 Playwright;dev 起来 + RAM 空出后一次 UI-sweep(solver+stats 页、桌面 + 390px、预览渲染、0 console error)清账。**单元内绝不自启 dev server**(见 §0 约束)。
+6. **TIER C/D 分布必须离线预计算(铁律,2026-06-21)** —— **TIER C/D 分布必须离线预计算(build 脚本 → 静态 `stats/scramble/dist_<event>.json`,经 `statsUrl` fetch),严禁浏览器现场求解采样;状态空间巨大时由 build 脚本取合理样本数 N 离线算好,页面只 fetch+渲染;新 build 脚本接入 puzzle-stats 管道。** 开 分布 tab 不准解任何打乱。现成可复用脚本 = `packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts`(参数化 `event + N`,import 该 puzzle 的纯 TS 求解器、用它自带的 cstimer 同款随机生成器采样;加新单元只在 `REGISTRY` 加一行);范本 DistView = `Cuboid335DistView.tsx`(只 `fetch(statsUrl('/stats/scramble/dist_335.json'))` 渲染,**零求解器 import**)。⚠ 旧 DistView(334/336/337/233/15p/mpyrso/crz3a/dino…)仍进页现场 `solve` 采样 = **已知债**,退役改 fetch 是后续 wave(每个机械活:加 REGISTRY 行 → 跑脚本生成 JSON → DistView 改 fetch + 删求解循环)。A/B 档不受此约束(全空间精确直方图,数据现成、本就不现场算)。
 
 ---
 
@@ -44,6 +45,7 @@
      - **C 档**(单实例最优):随机 N 条打乱,solver 长度 == 独立 IDA\*/参照最短;`scramble∘solution = solved`。
      - **D 档**(近最优):有效性必验 —— 测试的 oracle 必须**独立**(wrap-cstimer 走真引擎 round-trip;从零 reduction 则从几何**独立重导**移动置换,**禁**从 solver 字节拷贝再「自验」,A6 拷表 bug 证了什么都没测),验 `scramble∘solution = solved`;长度 ≤ 文献上界 / cstimer 同口径,质量桶照 §0.0 #3 记录。
    - **typecheck**(照 §0.0 #1,两个都跑 + `; echo EXIT=$?`,无管道):`typecheck`(tsgo)+ `typecheck:tsc` 均 EXIT=0。
+   - **分布(C/D 档专属,2026-06-21)**:**分布数据必须离线预计算**(§0.0 #6)—— build 脚本 `build_puzzle_sampled_dist.ts` 跑出 `stats/scramble/dist_<event>.json`(`histogram` 求和 == `sampleCount`),DistView **只 fetch+渲染、零求解器 import**;grep 该 DistView 确认进页**不调任何 `solve*`**(无 `setSamples`/`cancelRef`/「采样中」现场循环)。A/B 档分布是全空间精确直方图、数据现成,不在此约束内。
    - **UI**:playwright 开 `127.0.0.1:3000/scramble/solver?event=<id>` 桌面 + 390px,0 console error,**预览渲染**(solved 自证:纯色 / 复原态),分布页 `?event=<id>` 渲染。dev server 不在 `127.0.0.1:3000` → UI 验证标 §4 欠账继续,**绝不自己 `pnpm dev`**。
 5. **提交(子 agent 在单元内做)**:`git add` **只加本单元改动的文件**(别 `git add .`),commit(英文 message,结尾 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`),**不 push**。跳过了 UI 门 → message 前缀 `[untested-ui]` + §4 登记。
 6. **更新并提交本文件**:勾掉任务;§2 追加一行(日期 + 单元 + commit 短 hash);有采样分布灌注/发布 → §3 MANUAL;有测试欠账 → §4。然后 `git add solver/NONWCA_PUZZLE_LOOP.md` 单独 commit(主 loop 自己做)。
@@ -66,10 +68,12 @@
 |---|---|---|---|---|
 | **A 浏览器现场全 BFS** | ≤ ~2×10⁶ | 进页一次性 BFS 整图 memoized,查表 O(深度) 最优 | 全空间精确直方图 | 全部状态 CSV(按最优步数分类)+ 单步数 txt |
 | **B build 时预算表** | ~2×10⁶–~5×10⁷ | Node/TS build 出距离表 → 发 `stats/scramble/opt_<p>.bin.gz`,页面查表;现场 BFS 实测 >~1.5s 才落表 | 全空间精确直方图 | 同 A;**态数 >~2M 时「下载全部」CSV 会很大** → 默认给单步数 txt + 注明总量,CSV 设上限 / 异步流式 |
-| **C 单实例 IDA\*** | 巨大但单条可证最短(滑块类) | 每条打乱 IDA\* + 可采纳启发式(15p 用 walking-distance),无全表 | **采样**直方图(随机 N 条解后分桶) | 不提供全状态(无法枚举);可下载样本 |
-| **D 近最优** | 巨大且无优雅最优(大型扭转 / jumbling) | reduction / 两阶段;**random-state 的可直接复用 cstimer 自带 solver 当引擎** | 采样直方图 | 同 C |
+| **C 单实例 IDA\*** | 巨大但单条可证最短(滑块类) | 每条打乱 IDA\* + 可采纳启发式(15p 用 walking-distance),无全表 | **离线**采样直方图(§0.0 #6):build 脚本采 N 条解后分桶 → 静态 `dist_<event>.json`,页面只 fetch;**严禁浏览器现场采样** | 不提供全状态(无法枚举);可下载样本(JSON 内嵌 `generatedSamples`) |
+| **D 近最优** | 巨大且无优雅最优(大型扭转 / jumbling) | reduction / 两阶段;**random-state 的可直接复用 cstimer 自带 solver 当引擎** | **离线**采样直方图(同 C,`dist_<event>.json`,页面零现场求解) | 同 C |
 
 **档边界 puzzle**(`gear` 12.4M / `ctico` ~1e8 / `cm3` ⚠):先按上一档现场 BFS 试跑,实测慢 / 态数超阈再降一档落表。子 agent 自行实测决定,在 §1 条目旁记真实态数 + 选定档。
+
+> **C/D 分布脚本(2026-06-21)**:复用 `packages/scramble-stats-build/src/build_puzzle_sampled_dist.ts`(参数化 `event + N`,import 该 puzzle 纯 TS 求解器、用其 cstimer 同款随机生成器采样,落 `dist_<event>.json`)。接入新单元 = `REGISTRY` 加一行 + `update_puzzle_stats.ps1` 的 `$SAMPLED_DIST_EVENTS` 加 event。范本 DistView = `Cuboid335DistView.tsx`(纯 fetch+渲染)。**N 取够平滑又几分钟跑完单进程**(335 在 ~0.25s/解下取 N≈1000 ≈ 5min)。
 
 ---
 
@@ -80,7 +84,7 @@
 1. **先量闭包(§0.0 #2)+ 分流打乱类型**:读 vendored 生成器(`tools/cstimer-scramble/scramble/*.js`)判 random-MOVE vs random-STATE。
 2. **有 cstimer solver(random-STATE)→ WRAP**(mpyrso/dino 范式):`cstimerSolve(id,scr)`(`lib/cstimer-scramble.ts`)→ worker `op:'solve'` → `SOLVERS` 映射;在 vendored 源该 puzzle 的 IIFE 内**加最小 additive 导出**(`solveScramble`/`roundTripCheck`),不改上游行为。oracle = 真引擎 round-trip。**(注:剩 18 个都没有,见 §3。)**
 3. **无 cstimer solver(random-MOVE,剩 18 个的常态)→ 自建 reduction / 两阶段**。有效性 oracle 必须从几何**独立重导**移动置换(**禁**从 solver 拷),验 scramble∘solution=solved。**部分有 poly3dlib 几何**(giga/prcp/heli/helicv/ctico,见 §3)→ apply oracle 可用,但**无 solver**。
-4. **分布 = 采样**(解 N 条随机打乱直方图,显式标「采样,非全空间」);下载 = 仅样本 CSV。可枚举但 >2M 的态集才用流式下载(generator + 分块 Blob + confirm,A4 范式;**禁**拼一个巨串,A4 撞过 80MB OOM)。
+4. **分布 = 离线采样**(§0.0 #6 铁律):**严禁在 DistView 里现场 solve 采样**。用 build 脚本 `build_puzzle_sampled_dist.ts`(REGISTRY 加一行:event / solver 路径+导出名 / 打乱长度 / 默认 N / 质量桶)离线解 N 条随机打乱、分桶,落静态 `stats/scramble/dist_<event>.json`;DistView 只 `fetch(statsUrl(...))` 渲染(范本 `Cuboid335DistView.tsx`,**零求解器 import**),显式标「采样,非全空间」。新脚本 event 接入 `update_puzzle_stats.ps1` 的 `$SAMPLED_DIST_EVENTS`。下载 = JSON 内嵌 `generatedSamples` 的样本 CSV。可枚举但 >2M 的态集才用流式下载(generator + 分块 Blob + confirm,A4 范式;**禁**拼一个巨串,A4 撞过 80MB OOM)。
 5. **质量诚实(§0.0 #3)**:近最优做到就标近最优;jumbling / 天文量级「有效 + 有界」是已接受结果,别造假。
 6. **大数当字符串(§0.0 #4)**。
 7. **「单实例最优 or `too-deep`」不是合格交付(334 血泪,2026-06-21)**:TIER C/D 必须解 100% 的**真实 cstimer 打乱**(预算内最优,否则有界 reduction 兜底);务必拿 N 条真打乱跑求解器并报 solve-rate。强 factored 启发式(如 233 的 max(角,棱))只在直径相对启发表小时才收敛 —— 大直径 puzzle(长方体 335/336/337 等)的真打乱接近直径,IDA* 会爆,**必须**配两阶段 / reduction 兜底。
