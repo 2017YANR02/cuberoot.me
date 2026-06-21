@@ -74,9 +74,28 @@ function generate(key, length, state) {
   throw new Error('scramble timed out for key: ' + key);
 }
 
+// Solver registry: cstimer event key -> function(scramble) => solution string.
+// Used by the in-site solver pages for random-state puzzles that ship a real
+// cstimer two-phase solver (mpyr Master Pyraminx). Near-optimal, not provably
+// optimal; validity (scramble∘solution = solved) is the contract.
+const SOLVERS = {
+  mpyrso: (scramble) => self.mpyr.solveScramble(scramble),
+};
+
+function solve(key, scramble) {
+  const fn = SOLVERS[key];
+  if (!fn) throw new Error('no solver for key: ' + key);
+  const out = fn(scramble);
+  return String(out).trim();
+}
+
 self.onmessage = function (e) {
-  const { id, key, length, state } = e.data || {};
+  const { id, op, key, length, state, scramble } = e.data || {};
   try {
+    if (op === 'solve') {
+      self.postMessage({ id, result: solve(key, scramble) });
+      return;
+    }
     const result = generate(key, length, state);
     self.postMessage({ id, result });
   } catch (err) {

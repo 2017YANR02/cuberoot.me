@@ -83,7 +83,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
 },
   { id: 'dino',    key: 'dinoso',  zh: '恐龙魔方',         en: 'Dino Cube',         textLabel: 'Dino',   family: 'twist'
 },
-  { id: 'mpyrso',  key: 'mpyrso',  zh: '大金字塔(随态)',   en: 'Master Pyra (RS)',  iconClass: 'unofficial-mpyram', family: 'twist'
+  { id: 'mpyrso',  key: 'mpyrso',  zh: '大金字塔(随态)',   en: 'Master Pyra (RS)',  iconClass: 'unofficial-mpyram', family: 'twist',  solvable: true
 },
   { id: '223',     key: '223',     zh: '2×2×3',            en: '2×2×3',             textLabel: '2×2×3',  family: 'cuboid', solvable: true },
   { id: '133',     key: '133',     zh: '1×3×3 花型',       en: '1×3×3 Floppy',      textLabel: '1×3×3',  family: 'cuboid', solvable: true },
@@ -213,5 +213,21 @@ export async function cstimerScramble(id: string): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     pending.set(reqId, { resolve, reject });
     w.postMessage({ id: reqId, key: e.key, length: e.length });
+  });
+}
+
+/**
+ * Drive cstimer's own solver for a random-state puzzle that ships one (mpyr).
+ * Returns a near-optimal solution string for the given scramble. The worker
+ * loads the cstimer engine once; the first call may build prune tables.
+ */
+export async function cstimerSolve(id: string, scramble: string): Promise<string> {
+  const e = BY_ID.get(id);
+  if (!e) throw new Error('unknown cstimer event: ' + id);
+  const w = getWorker();
+  const reqId = nextId++;
+  return new Promise<string>((resolve, reject) => {
+    pending.set(reqId, { resolve, reject });
+    w.postMessage({ id: reqId, op: 'solve', key: e.key, scramble });
   });
 }
