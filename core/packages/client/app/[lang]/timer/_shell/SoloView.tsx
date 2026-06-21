@@ -30,7 +30,7 @@ import CubeRootLogo from '@/components/CubeRootLogo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { petReact } from '@/lib/deskpet';
 import { type MoreMenuItem } from '../_components/MoreMenu';
-import i18n, { syncLangToUrl } from '@/i18n/i18n-client';
+import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
@@ -198,8 +198,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
-  // Enlarged corner net (phone tap-to-enlarge).
-  const [previewEnlarged, setPreviewEnlarged] = useState(false);
 
   // ── Side panel (desktop rail / phone bottom sheet) ──────────────
   const [panelTab, setPanelTab] = useState<PanelTab | null>(null);
@@ -1468,16 +1466,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           cornerSlot={settings.showCubePreview ? (
             <div className="shell-corner-net">
               <div className="shell-corner-net-imgbox">
-                <button
-                  type="button"
-                  className="shell-corner-net-img"
-                  data-no-timer
-                  onClick={() => setPreviewEnlarged(true)}
-                  title={tr({ zh: '点击放大', en: 'Tap to enlarge'
-                  })}
-                >
+                <div className="shell-corner-net-img">
                   <CubePreview event={event} scramble={scramble} height="var(--cube-h)" colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
-                </button>
+                </div>
               </div>
             </div>
           ) : undefined}
@@ -1621,15 +1612,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             <div className="shell-panel-body">{renderPanelBody()}</div>
           </aside>
         </>
-      )}
-
-      {/* ── Enlarged cube net ────────────────────────────────── */}
-      {previewEnlarged && settings.showCubePreview && (
-        <div className="shell-net-enlarge" onClick={() => setPreviewEnlarged(false)}>
-          <div className="shell-net-enlarge-inner" onClick={(e) => e.stopPropagation()}>
-            <CubePreview event={event} scramble={scramble} size={40} colors={settings.colors} visualization={settings.prefer3D ? '3D' : '2D'} />
-          </div>
-        </div>
       )}
 
       {/* ── Radial gesture wheel (touch press-and-drag, idle/stopped) ── */}
