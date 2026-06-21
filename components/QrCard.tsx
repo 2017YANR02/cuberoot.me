@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { CardEl, CardLayout, QrCode } from "@/lib/db/qr";
+import type { CardEl, CardLayout, CardTextStyles, QrCode, TextStyle } from "@/lib/db/qr";
 import {
   CUBE_FACES,
   DEFAULT_QUOTES,
@@ -7,6 +7,7 @@ import {
   algImgUrl,
   backText,
   cubeFaceletSpots,
+  fontStack,
   formulaRow,
 } from "@/lib/qr/cardText";
 
@@ -33,6 +34,26 @@ const elTransform = (layout: CardLayout | null | undefined, key: CardEl): CSSPro
   if (o.x || o.y) parts.push(`translate(${m(o.x)}, ${m(o.y)})`);
   if (o.s && o.s !== 1) parts.push(`scale(${o.s})`);
   return parts.length ? { transform: parts.join(" ") } : {};
+};
+
+// 文字样式覆盖 → CSS:字号倍率 / 颜色 / 字体 / 描边(text-stroke 走 paint-order 让描边在字底)
+const txtCss = (
+  st: TextStyle | undefined,
+  baseMm: number,
+  defColor: string,
+  defFont?: string,
+): CSSProperties => {
+  const out: CSSProperties = {
+    fontSize: m(Math.round(baseMm * (st?.size ?? 1) * 1000) / 1000),
+    color: st?.color || defColor,
+  };
+  const ff = fontStack(st?.font) ?? defFont;
+  if (ff) out.fontFamily = ff;
+  if (st?.stroke && st?.strokeW) {
+    out.WebkitTextStroke = `${m(st.strokeW)} ${st.stroke}`;
+    out.paintOrder = "stroke";
+  }
+  return out;
 };
 
 const PANEL_BASE: CSSProperties = {
@@ -108,13 +129,17 @@ function FrontPanel({
   quote,
   art,
   layout,
+  styles,
 }: {
   quote: string;
   art: string;
   layout: CardLayout | null | undefined;
+  styles: CardTextStyles | null | undefined;
 }) {
   const lines = quote.split("\n").map((l) => l.trim()).filter(Boolean);
   const [main, ...subs] = lines.length ? lines : ["热爱魔方"];
+  const qs = styles?.quote;
+  const bs = styles?.brand;
   // 正面图几何与矢量母版 cardSvg.ts 一致(默认出血 3mm):屏幕预览(此面板 20x40)裁掉出血
   // 只看成品,即印刷裁切后的真实画面;母版另渲出血,故图框须撑到盖住出血才不露底。
   return (
@@ -142,46 +167,50 @@ function FrontPanel({
             "linear-gradient(to top, rgba(17,17,26,0.9) 0%, rgba(17,17,26,0.6) 42%, transparent 100%)",
         }}
       />
-      <div
-        data-el="quote"
-        style={{ position: "relative", textAlign: "center", ...elShift(layout, "quote") }}
-      >
-        <div style={{ fontSize: m(2.6), fontWeight: 800, lineHeight: 1.18 }}>{main}</div>
-        {subs.map((s, i) => (
-          <div
-            key={i}
-            style={{ fontSize: m(1.4), color: "rgba(255,255,255,0.85)", lineHeight: 1.3, marginTop: m(0.4) }}
-          >
-            {s}
-          </div>
-        ))}
-      </div>
-      <div
-        data-el="brand"
-        style={{
-          position: "relative",
-          textAlign: "center",
-          marginTop: m(1.2),
-          fontSize: m(1.4),
-          fontWeight: 700,
-          letterSpacing: m(0.1),
-          color: "rgba(255,255,255,0.92)",
-          ...elShift(layout, "brand"),
-        }}
-      >
-        魔方开放社群
-      </div>
+      {qs?.hidden ? null : (
+        <div
+          data-el="quote"
+          style={{ position: "relative", textAlign: "center", ...elShift(layout, "quote") }}
+        >
+          <div style={{ ...txtCss(qs, 2.6, "#fff"), fontWeight: 800, lineHeight: 1.18 }}>{main}</div>
+          {subs.map((s, i) => (
+            <div
+              key={i}
+              style={{ ...txtCss(qs, 1.4, "rgba(255,255,255,0.85)"), lineHeight: 1.3, marginTop: m(0.4) }}
+            >
+              {s}
+            </div>
+          ))}
+        </div>
+      )}
+      {bs?.hidden ? null : (
+        <div
+          data-el="brand"
+          style={{
+            position: "relative",
+            textAlign: "center",
+            marginTop: m(1.2),
+            fontWeight: 700,
+            letterSpacing: m(0.1),
+            ...txtCss(bs, 1.4, "rgba(255,255,255,0.92)"),
+            ...elShift(layout, "brand"),
+          }}
+        >
+          魔方开放社群
+        </div>
+      )}
     </div>
   );
 }
 
 // 背面:唯一二维码(白芯片保证可扫)+ 按该码去向生成的文案 + 网址
-// 可选背面背景图(entry.backArt):有图则衬底图 + 浅色压亮罩(保文字 / 二维码可读),
-// 并隐去默认色块 / 公式底纹;无图则走原默认浅色底纹。
+// 可选背面背景图(entry.backArt):有图则衬底图(去掉默认底纹);无图则走原默认浅色底纹。
 function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
   const term = entry.term?.trim();
   const { main, sub } = backText(entry);
   const backArt = entry.backArt?.trim();
+  const ts = entry.textStyles;
+  const MONO = "'JetBrains Mono', ui-monospace, monospace";
   return (
     <div
       data-panel="back"
@@ -197,18 +226,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
       {/* 背景层裁切容器(底纹 / 背景图限定在背面内,不随 overflow:visible 外溢) */}
       <div aria-hidden style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
       {backArt ? (
-        <>
-          <ArtImage art={backArt} layout={entry.layout} lkey="back" />
-          {/* 浅色压亮罩:上 / 下加亮保标题与公式可读,中段透出图(二维码自带白芯片不怕) */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "linear-gradient(to bottom, rgba(245,248,255,0.9) 0%, rgba(245,248,255,0.28) 28%, rgba(245,248,255,0.16) 54%, rgba(245,248,255,0.58) 80%, rgba(245,248,255,0.9) 100%)",
-            }}
-          />
-        </>
+        <ArtImage art={backArt} layout={entry.layout} lkey="back" />
       ) : (
         <>
           <div
@@ -260,20 +278,22 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
         </>
       )}
       </div>
-      <div
-        data-el="backText"
-        style={{
-          position: "relative",
-          textAlign: "center",
-          lineHeight: 1.25,
-          ...elShift(entry.layout, "backText"),
-        }}
-      >
-        <div style={{ fontSize: m(1.6), fontWeight: 700, color: "#1E4ACB" }}>{main}</div>
-        {sub ? (
-          <div style={{ fontSize: m(1.2), color: "#6B7280", marginTop: m(0.5) }}>{sub}</div>
-        ) : null}
-      </div>
+      {ts?.backText?.hidden ? null : (
+        <div
+          data-el="backText"
+          style={{
+            position: "relative",
+            textAlign: "center",
+            lineHeight: 1.25,
+            ...elShift(entry.layout, "backText"),
+          }}
+        >
+          <div style={{ ...txtCss(ts?.backText, 1.6, "#1E4ACB"), fontWeight: 700 }}>{main}</div>
+          {sub ? (
+            <div style={{ ...txtCss(ts?.backText, 1.2, "#6B7280"), marginTop: m(0.5) }}>{sub}</div>
+          ) : null}
+        </div>
+      )}
       <div
         style={{
           position: "relative",
@@ -283,19 +303,18 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
           gap: m(0.7),
         }}
       >
-        {!entry.alg?.moves && term ? (
+        {!entry.alg?.moves && term && !ts?.term?.hidden ? (
           <div
             data-el="term"
             style={{
-              fontSize: m(1.1),
               fontWeight: 700,
               letterSpacing: m(0.08),
-              color: "#1E4ACB",
               background: "rgba(42,93,244,0.10)",
               border: `${m(0.12)} solid rgba(42,93,244,0.28)`,
               borderRadius: m(2),
               padding: `${m(0.2)} ${m(0.9)}`,
               whiteSpace: "nowrap",
+              ...txtCss(ts?.term, 1.1, "#1E4ACB"),
               ...elShift(entry.layout, "term"),
             }}
           >
@@ -316,7 +335,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
           <div style={{ width: m(14.5), height: m(14.5) }} dangerouslySetInnerHTML={{ __html: svg }} />
         </div>
         {/* 精选公式:案例图(魔方)正上方对齐 记法,不显示名称 */}
-        {entry.alg?.moves ? (
+        {entry.alg?.moves && !ts?.alg?.hidden ? (
           <div
             data-el="alg"
             style={{
@@ -335,12 +354,10 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
             />
             <div
               style={{
-                fontSize: m(1.1),
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
                 fontWeight: 500,
-                color: "#2A5DF4",
                 letterSpacing: m(0.01),
                 whiteSpace: "nowrap",
+                ...txtCss(ts?.alg, 1.1, "#2A5DF4", MONO),
               }}
             >
               {entry.alg.moves}
@@ -405,7 +422,7 @@ export function QrCardUnit({
         background: "#fff",
       }}
     >
-      <FrontPanel quote={quote} art={art} layout={entry.layout} />
+      <FrontPanel quote={quote} art={art} layout={entry.layout} styles={entry.textStyles} />
       <div style={{ borderLeft: `${m(0.2)} dotted #c4c9d4` }} />
       <BackPanel entry={entry} svg={svg} />
       {cropMarks ? <CropMarks /> : null}
