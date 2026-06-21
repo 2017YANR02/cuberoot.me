@@ -11,6 +11,7 @@ import {
   setDisabled,
   update,
   type CardLayout,
+  type CardTextStyles,
   type QrType,
 } from "@/lib/db/qr";
 import { parseLinks } from "@/lib/qr/links";
@@ -66,6 +67,16 @@ function parseLayout(raw: string): CardLayout | null {
   }
 }
 
+// 文字样式 JSON({quote:{font,color,size,stroke,strokeW,hidden},...});非法 null,字段校验在 db 层
+function parseTextStyles(raw: string): CardTextStyles | null {
+  try {
+    const v = JSON.parse(raw);
+    return v && typeof v === "object" && !Array.isArray(v) ? (v as CardTextStyles) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function saveQr(f: FormData): Promise<void> {
   const code = String(f.get("code") ?? "").trim();
   if (!code) redirect("/admin/qr");
@@ -95,6 +106,7 @@ export async function saveQr(f: FormData): Promise<void> {
     frontArtPrompt: String(f.get("frontArtPrompt") ?? ""),
     alg: parseAlg(String(f.get("alg") ?? "")),
     layout: parseLayout(String(f.get("layout") ?? "")),
+    textStyles: parseTextStyles(String(f.get("textStyles") ?? "")),
     links: parseLinks(String(f.get("links") ?? "")),
   });
   revalidatePath("/admin/qr");

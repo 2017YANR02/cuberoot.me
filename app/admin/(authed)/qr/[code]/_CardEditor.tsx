@@ -2,17 +2,21 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Download } from "lucide-react";
-import type { CardEl, CardLayout, QrCode, QrType } from "@/lib/db/qr";
+import type { CardEl, CardLayout, CardTextStyles, QrCode, QrType, TextStyle } from "@/lib/db/qr";
 import { QrCardUnit, FRONT_ARTS } from "@/components/QrCard";
 import { FileUpload } from "@/components/FileUpload";
-import { algToText, parseAlg } from "@/lib/qr/cardText";
+import { algToText, CARD_FONTS, parseAlg } from "@/lib/qr/cardText";
+
+type ElStyle = TextStyle & { hidden?: boolean };
+// 可改样式 / 可删除的文字元素
+const TEXT_ELS: CardEl[] = ["quote", "brand", "backText", "term", "alg"];
 
 // 所见即所得卡片编辑器(简易 PS):卡上所有元素([data-el])可直接拖动移位,
 // 带磁吸对齐(面板中线 / 默认位 / 其他元素中心,洋红参考线提示,Alt 暂时关闭,可整体开关)。
 // 元素热区按实际渲染框实测贴合;位移 <4px 视为点击,打开对应编辑面板。
 // 偏移(mm)存 layout 字段,DOM 卡与矢量印刷母版同步;隐藏 input 随「保存」提交。
 
-type Region = "art" | "backArt" | "quote" | "back" | "alg" | "qr";
+type Region = "art" | "backArt" | "quote" | "brand" | "back" | "alg" | "qr";
 
 const EL_LABEL: Record<CardEl, string> = {
   quote: "正面语录",
@@ -28,7 +32,7 @@ const EL_LABEL: Record<CardEl, string> = {
 // 元素点击(非拖动)打开的编辑面板;brand 只可移动无面板
 const EL_PANEL: Record<CardEl, Region | null> = {
   quote: "quote",
-  brand: null,
+  brand: "brand",
   backText: "back",
   term: "back",
   qr: "qr",
@@ -200,6 +204,111 @@ function ArtPanel({
   );
 }
 
+// 单个文字元素的样式控制:字体 / 颜色 / 字号 / 描边 + 删除(隐藏)/ 恢复。built-in 文字与自建文本框共用。
+function TextStyleControls({
+  label = "文字样式",
+  style,
+  onChange,
+  onToggleHidden,
+}: {
+  label?: string;
+  style: ElStyle | undefined;
+  onChange: (patch: Partial<ElStyle>) => void;
+  onToggleHidden?: () => void;
+}) {
+  const hidden = !!style?.hidden;
+  const sizePct = Math.round((style?.size ?? 1) * 100);
+  const strokeW = style?.strokeW ?? 0;
+  return (
+    <div className="grid gap-2 rounded-md border border-line bg-white/60 p-2.5">
+      <div className="flex items-center justify-between">
+        <span className="text-[12px] font-medium text-ink-2">{label}</span>
+        {onToggleHidden ? (
+          <button
+            type="button"
+            onClick={onToggleHidden}
+            className={"text-[12px] hover:underline " + (hidden ? "text-brand" : "text-red-500")}
+          >
+            {hidden ? "恢复显示" : "删除此文字"}
+          </button>
+        ) : null}
+      </div>
+      {hidden ? (
+        <span className="text-[12px] text-ink-3">已删除,不会印在卡上。点「恢复显示」找回。</span>
+      ) : (
+        <>
+          <label className="flex items-center gap-2 text-[12px] text-ink-2">
+            <span className="w-9 shrink-0 text-ink-3">字体</span>
+            <select
+              value={style?.font ?? ""}
+              onChange={(e) => onChange({ font: e.target.value })}
+              className="flex-1 rounded-md border border-line bg-white px-2 py-1.5 text-[13px] text-ink outline-none focus:border-brand"
+            >
+              <option value="">默认</option>
+              {CARD_FONTS.map((f) => (
+                <option key={f.key} value={f.key}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="flex items-center gap-2 text-[12px] text-ink-2">
+            <span className="w-9 shrink-0 text-ink-3">颜色</span>
+            <input
+              type="color"
+              value={style?.color ?? "#ffffff"}
+              onChange={(e) => onChange({ color: e.target.value })}
+              className="h-7 w-10 cursor-pointer rounded border border-line bg-white p-0.5"
+            />
+            {style?.color ? (
+              <button type="button" onClick={() => onChange({ color: "" })} className="text-brand hover:underline">
+                默认色
+              </button>
+            ) : (
+              <span className="text-ink-3">未改(用默认色)</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-[12px] text-ink-2">
+            <span className="w-9 shrink-0 text-ink-3">字号</span>
+            <input
+              type="range"
+              min={50}
+              max={200}
+              step={5}
+              value={sizePct}
+              onChange={(e) => onChange({ size: Number(e.target.value) / 100 })}
+              className="w-full accent-brand"
+            />
+            <span className="w-9 shrink-0 text-right font-mono">{sizePct}%</span>
+          </div>
+          <div className="flex items-center gap-2 text-[12px] text-ink-2">
+            <span className="w-9 shrink-0 text-ink-3">描边</span>
+            <input
+              type="color"
+              value={style?.stroke ?? "#000000"}
+              onChange={(e) => onChange({ stroke: e.target.value, strokeW: strokeW || 0.15 })}
+              className="h-7 w-10 cursor-pointer rounded border border-line bg-white p-0.5"
+            />
+            <input
+              type="range"
+              min={0}
+              max={50}
+              step={1}
+              value={Math.round(strokeW * 100)}
+              onChange={(e) => onChange({ strokeW: Number(e.target.value) / 100 })}
+              className="w-full accent-brand"
+            />
+            <span className="w-12 shrink-0 text-right font-mono">{strokeW.toFixed(2)}mm</span>
+          </div>
+          <span className="text-[12px] text-ink-3">
+            描边粗细拖到 0 = 不描边。文字压在图片上看不清时,描个边(常配白色)就清楚了。
+          </span>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function CardEditor({
   entry,
   svg,
@@ -222,6 +331,7 @@ export function CardEditor({
     backArt: entry.backArt ?? "",
     algRaw: algToText(entry.alg),
     layout: (entry.layout ?? {}) as CardLayout,
+    textStyles: (entry.textStyles ?? {}) as CardTextStyles,
   });
   const [active, setActive] = useState<Region | null>(null);
   // 背面图存在性的实时快照(滚轮缩放 handler 在 [] effect 里,靠 ref 读最新值)
@@ -412,6 +522,27 @@ export function CardEditor({
       return { ...p, layout };
     });
   const qrScalePct = Math.round((s.layout.qr?.s ?? 1) * 100);
+  // 文字样式增量合并:清掉空值(空字体/空色/×1 字号/0 描边/false 隐藏),全空则删键
+  const setTextStyle = (key: CardEl, patch: Partial<ElStyle>) =>
+    setS((p) => {
+      const cur: ElStyle = { ...p.textStyles[key], ...patch };
+      const clean: ElStyle = {};
+      if (cur.font) clean.font = cur.font;
+      if (cur.color) clean.color = cur.color;
+      if (cur.size && cur.size !== 1) clean.size = cur.size;
+      if (cur.stroke && cur.strokeW) {
+        clean.stroke = cur.stroke;
+        clean.strokeW = cur.strokeW;
+      }
+      if (cur.hidden) clean.hidden = true;
+      const next = { ...p.textStyles };
+      if (Object.keys(clean).length) next[key] = clean;
+      else delete next[key];
+      return { ...p, textStyles: next };
+    });
+  const toggleHidden = (key: CardEl) =>
+    setTextStyle(key, { hidden: !s.textStyles[key]?.hidden });
+  const hiddenTextEls = TEXT_ELS.filter((k) => s.textStyles[k]?.hidden);
   // 背景图平移/缩放/完整显示(layout.front 或 layout.back):增量合并,回默认(0,0,×1,铺满)就删键
   const setArt =
     (lkey: "front" | "back") =>
@@ -618,6 +749,7 @@ export function CardEditor({
     backArt: s.backArt.trim() || null,
     alg: parseAlg(s.algRaw),
     layout: s.layout,
+    textStyles: s.textStyles,
   };
   const hasOffsets = Object.keys(s.layout).length > 0;
   // 背景图缩放:cover 钳到 ≥100%(滑块与渲染一致,WYSIWYG),contain 可缩到 50%
@@ -644,6 +776,13 @@ export function CardEditor({
         type="hidden"
         name="layout"
         value={JSON.stringify(s.layout)}
+        form={formId}
+        readOnly
+      />
+      <input
+        type="hidden"
+        name="textStyles"
+        value={JSON.stringify(s.textStyles)}
         form={formId}
         readOnly
       />
@@ -747,6 +886,21 @@ export function CardEditor({
             重置全部位置
           </button>
         ) : null}
+        {hiddenTextEls.length ? (
+          <span className="inline-flex flex-wrap items-center gap-1.5">
+            <span>已删文字:</span>
+            {hiddenTextEls.map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => toggleHidden(k)}
+                className="rounded-full border border-line px-2 py-0.5 text-brand hover:border-brand/40"
+              >
+                + {EL_LABEL[k]}
+              </button>
+            ))}
+          </span>
+        ) : null}
       </div>
 
       {active ? (
@@ -759,11 +913,13 @@ export function CardEditor({
                   ? "背面背景图"
                   : active === "quote"
                     ? "正面语录"
-                    : active === "back"
-                      ? "背面文案(标题 / 简介 / 角标)"
-                      : active === "alg"
-                        ? "背面精选公式"
-                        : "二维码"}
+                    : active === "brand"
+                      ? "品牌名"
+                      : active === "back"
+                        ? "背面文案(标题 / 简介 / 角标)"
+                        : active === "alg"
+                          ? "背面精选公式"
+                          : "二维码"}
             </span>
             <button
               type="button"
@@ -809,7 +965,7 @@ export function CardEditor({
               value={s.backArt}
               onSelect={(src) => set("backArt")(src)}
               offLabel="无背景图"
-              offHint="背面默认是浅色魔方底纹 + 公式。选一张图或上传自己的图作背景后,系统自动加一层浅色压亮罩,保证标题文字与二维码清晰可扫。"
+              offHint="背面默认是浅色魔方底纹 + 公式。选一张图或上传自己的图作背景;文字压在图上看不清,就点对应文字给它描个边。二维码自带白底不受影响。"
               uploadLabel="上传背面背景图"
               downloadLabel="下载背面图 PNG"
               downloadable={!!s.backArt}
@@ -846,7 +1002,20 @@ export function CardEditor({
               <span className="text-[12px] text-ink-3">
                 第一行大字,其余行小字;留空用默认语录轮换。
               </span>
+              <TextStyleControls
+                style={s.textStyles.quote}
+                onChange={(p) => setTextStyle("quote", p)}
+                onToggleHidden={() => toggleHidden("quote")}
+              />
             </>
+          ) : null}
+
+          {active === "brand" ? (
+            <TextStyleControls
+              style={s.textStyles.brand}
+              onChange={(p) => setTextStyle("brand", p)}
+              onToggleHidden={() => toggleHidden("brand")}
+            />
           ) : null}
 
           {active === "back" ? (
@@ -864,11 +1033,23 @@ export function CardEditor({
                 placeholder="简介,留空不显示(也是落地页副标题)"
                 className={INPUT_CLS + " min-h-[52px]"}
               />
+              <TextStyleControls
+                label="标题 / 简介样式"
+                style={s.textStyles.backText}
+                onChange={(p) => setTextStyle("backText", p)}
+                onToggleHidden={() => toggleHidden("backText")}
+              />
               <input
                 value={s.term}
                 onChange={(e) => set("term")(e.target.value)}
                 placeholder="魔方术语角标,如 CFOP / OLL / F2L"
                 className={INPUT_CLS}
+              />
+              <TextStyleControls
+                label="角标样式"
+                style={s.textStyles.term}
+                onChange={(p) => setTextStyle("term", p)}
+                onToggleHidden={() => toggleHidden("term")}
               />
             </>
           ) : null}
@@ -887,6 +1068,12 @@ export function CardEditor({
                 (后两段可省)。小魔方案例图按记法<span className="text-ink-2">自动生成</span>
                 ,不用传图;名称含 OLL / PLL 顶视、F2L 立体;链接是角标跳转页。
               </span>
+              <TextStyleControls
+                label="记法样式"
+                style={s.textStyles.alg}
+                onChange={(p) => setTextStyle("alg", p)}
+                onToggleHidden={() => toggleHidden("alg")}
+              />
             </>
           ) : null}
 

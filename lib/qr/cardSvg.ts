@@ -1,6 +1,6 @@
-import type { CardEl, CardLayout, QrCode } from "@/lib/db/qr";
+import type { CardEl, CardLayout, CardTextStyles, QrCode, TextStyle } from "@/lib/db/qr";
 import { qrSvgBody, cubeLogo, CUBE_FACES } from "./svg";
-import { backText, frontQuote, FORMULA_TOKENS, cubeFaceletSpots } from "./cardText";
+import { backText, frontQuote, FORMULA_TOKENS, cubeFaceletSpots, fontStack } from "./cardText";
 
 // 整张折叠卡的「印刷母版」:单个自包含、100% 矢量的 SVG(无位图、无 CSS、无外链)。
 // 二维码 / 文字 / 配色 / 魔方图形全是矢量路径,印刷厂可直接收、无限放大不糊。
@@ -49,15 +49,43 @@ function text(
   size: number,
   fill: string,
   content: string,
-  opts: { weight?: number; mono?: boolean; spacing?: number; anchor?: string } = {},
+  opts: {
+    weight?: number;
+    mono?: boolean;
+    spacing?: number;
+    anchor?: string;
+    font?: string; // 覆盖字体栈(用户选字体);否则按 mono 选 MONO/FONT
+    stroke?: string; // 描边色
+    strokeW?: number; // 描边宽 mm(paint-order 让描边在字底)
+  } = {},
 ): string {
-  const { weight = 400, mono = false, spacing, anchor = "middle" } = opts;
+  const { weight = 400, mono = false, spacing, anchor = "middle", font, stroke, strokeW } = opts;
   return (
-    `<text x="${x}" y="${y}" font-family="${mono ? MONO : FONT}" font-size="${size}" ` +
+    `<text x="${x}" y="${y}" font-family="${font ?? (mono ? MONO : FONT)}" font-size="${size}" ` +
     `font-weight="${weight}" fill="${fill}" text-anchor="${anchor}"` +
     (spacing ? ` letter-spacing="${spacing}"` : "") +
+    (stroke && strokeW
+      ? ` stroke="${stroke}" stroke-width="${strokeW}" paint-order="stroke" stroke-linejoin="round"`
+      : "") +
     `>${esc(content)}</text>`
   );
+}
+
+// 文字样式 → text() 用的尺寸 / 填色 / 字体栈 / 描边(集中一处,DOM 卡 txtCss 同语义)
+function styled(
+  st: (TextStyle & { hidden?: boolean }) | undefined,
+  baseSize: number,
+  defFill: string,
+  defMono = false,
+): { size: number; fill: string; font: string; stroke?: string; strokeW?: number } {
+  const on = !!(st?.stroke && st?.strokeW);
+  return {
+    size: Math.round(baseSize * (st?.size ?? 1) * 1000) / 1000,
+    fill: st?.color || defFill,
+    font: fontStack(st?.font) ?? (defMono ? MONO : FONT),
+    stroke: on ? st!.stroke : undefined,
+    strokeW: on ? st!.strokeW : undefined,
+  };
 }
 
 // 斜排淡色记法 / 流派文字底纹,clip 在指定面板内。fill / opacity 由调用方按深浅底定。
@@ -132,6 +160,7 @@ function front(
   pattern: boolean,
   art: string | undefined,
   layout: CardLayout | null | undefined,
+  styles: CardTextStyles | null | undefined,
 ): string {
   const x0 = bleed;
   const top = bleed;
@@ -140,18 +169,49 @@ function front(
   const main = lines[0] ?? "热爱魔方";
   const subs = lines.slice(1);
 
+  const qs = styles?.quote;
+  const bs = styles?.brand;
+  const qMain = styled(qs, 2.8, "#FFFFFF");
+  const qSub = styled(qs, 1.4, "rgba(255,255,255,0.85)");
+  const bSt = styled(bs, 1.4, "rgba(255,255,255,0.92)");
+  const qMul = qs?.size ?? 1; // 字号倍率,带动多行间距防重叠
   const mainY = top + PANEL_H - 9;
   const subEls = subs
-    .map((s, i) => text(cx, mainY + 2 + i * 1.7, 1.4, "rgba(255,255,255,0.85)", s))
+    .map((s, i) =>
+      text(cx, mainY + 2 + i * 1.7 * qMul, qSub.size, qSub.fill, s, {
+        font: qSub.font,
+        stroke: qSub.stroke,
+        strokeW: qSub.strokeW,
+      }),
+    )
     .join("");
-  const brandY = mainY + 2 + subs.length * 1.7 + 2.6;
-  const slogan =
-    shift(layout, "quote", text(cx, mainY, 2.8, "#FFFFFF", main, { weight: 800 }) + subEls) +
-    shift(
-      layout,
-      "brand",
-      text(cx, brandY, 1.4, "rgba(255,255,255,0.92)", "魔方开放社群", { weight: 700, spacing: 0.1 }),
-    );
+  const brandY = mainY + 2 + subs.length * 1.7 * qMul + 2.6;
+  const quoteEl = qs?.hidden
+    ? ""
+    : shift(
+        layout,
+        "quote",
+        text(cx, mainY, qMain.size, qMain.fill, main, {
+          weight: 800,
+          font: qMain.font,
+          stroke: qMain.stroke,
+          strokeW: qMain.strokeW,
+        }) + subEls,
+      );
+  const brandEl = bs?.hidden
+    ? ""
+    : shift(
+        layout,
+        "brand",
+        text(cx, brandY, bSt.size, bSt.fill, "魔方开放社群", {
+          weight: 700,
+          spacing: 0.1,
+          font: bSt.font,
+          stroke: bSt.stroke,
+          strokeW: bSt.strokeW,
+        }),
+      );
+  const slogan = quoteEl + brandEl;
 
   if (art) {
     // 艺术图正面:几何与 DOM 卡 QrCard.tsx 同源(见 artLayer 注释)。变换后可能越界,clip 回正面出血区。
@@ -199,7 +259,8 @@ function back(
   const cx = x0 + PANEL_W / 2;
   const { main, sub } = backText(entry);
   const term = entry.term?.trim();
-  const hasAlg = !!entry.alg?.moves;
+  const ts = entry.textStyles;
+  const hasAlg = !!entry.alg?.moves && !ts?.alg?.hidden;
   const hasBackArt = !!backArt;
 
   // 二维码白芯片:小卡用 margin:2 让码点更大更好扫,白底兼当静默区。
@@ -222,45 +283,69 @@ function back(
       : chipBody;
   const qr = shift(entry.layout, "qr", scaledChip);
 
-  // 术语角标:仅无精选公式时显示在二维码上方
-  const termEl = !hasAlg && term
+  // 术语角标:仅无精选公式时显示在二维码上方(可删除/改样式)
+  const tSt = styled(ts?.term, 1.1, BRAND_DARK);
+  const termEl = !hasAlg && term && !ts?.term?.hidden
     ? shift(
         entry.layout,
         "term",
         `<rect x="${cx - (term.length * 1.2 + 1.8) / 2}" y="${chipTop - 3.4}" width="${term.length * 1.2 + 1.8}" height="2.4" rx="1.2" fill="rgba(42,93,244,0.10)" stroke="rgba(42,93,244,0.28)" stroke-width="0.12"/>` +
-          text(cx, chipTop - 1.7, 1.1, BRAND_DARK, term, { weight: 700, spacing: 0.06 }),
+          text(cx, chipTop - 1.7, tSt.size, tSt.fill, term, { weight: 700, spacing: 0.06, font: tSt.font, stroke: tSt.stroke, strokeW: tSt.strokeW }),
       )
     : "";
 
   // 精选公式区:案例图(魔方)正上方对齐 记法,衬在二维码下方。不显示名称。
-  // 记法优先用矢量轮廓(movesPath,任何查看器都精确),无则退回 <text>(JetBrains Mono)。
+  // 记法默认用矢量轮廓(movesPath,最精确);一旦用户改了字体/字号/颜色/描边则改用 <text> 应用样式。
   let algEl = "";
   if (hasAlg) {
     const cubeSize = 6;
     const caseImg = algSvg ? embedSvg(algSvg, cx - cubeSize / 2, top + 26.8, cubeSize) : "";
     const movesY = top + 34.8;
-    const movesEl = movesPath
-      ? `<path transform="translate(${(cx - movesPath.width / 2).toFixed(3)} ${movesY})" d="${movesPath.d}" fill="${BRAND}"/>`
-      : text(cx, movesY, 1.1, BRAND, entry.alg!.moves, { mono: true, weight: 500 });
+    const algSt = ts?.alg;
+    const algStyled = !!(algSt && (algSt.font || algSt.size || algSt.color || algSt.stroke));
+    const mv = styled(algSt, 1.1, BRAND, true);
+    const movesEl =
+      movesPath && !algStyled
+        ? `<path transform="translate(${(cx - movesPath.width / 2).toFixed(3)} ${movesY})" d="${movesPath.d}" fill="${BRAND}"/>`
+        : text(cx, movesY, mv.size, mv.fill, entry.alg!.moves, { weight: 500, font: mv.font, stroke: mv.stroke, strokeW: mv.strokeW });
     algEl = shift(entry.layout, "alg", caseImg + movesEl);
   }
 
-  // 背景层:有背景图 → 衬底图(clip 在背面含出血区)+ 压亮罩;无图 → 默认色块 / 公式底纹
+  // 背景层:有背景图 → 衬底图(clip 在背面含出血区);无图 → 默认色块 / 公式底纹
   const bg = hasBackArt
-    ? `<g clip-path="url(#backArtClip)">${artLayer(backArt!, x0, top, top, entry.layout?.back)}</g>` +
-      `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backShade)"/>`
+    ? `<g clip-path="url(#backArtClip)">${artLayer(backArt!, x0, top, top, entry.layout?.back)}</g>`
     : (pattern ? cubeFacelets(x0, top, "backClip") : "") +
       (pattern ? notationPattern(x0, top, "backClip", BRAND, 0.08) : "");
+
+  // 背面标题 / 简介(可删除/改样式);字号放大时副标题下移一点防重叠
+  const bts = ts?.backText;
+  const btMain = styled(bts, 1.6, BRAND_DARK);
+  const btSub = styled(bts, 1.2, "#6B7280");
+  const btMul = bts?.size ?? 1;
+  const backTextEl = bts?.hidden
+    ? ""
+    : shift(
+        entry.layout,
+        "backText",
+        text(cx, top + 6.5, btMain.size, btMain.fill, main, {
+          weight: 700,
+          font: btMain.font,
+          stroke: btMain.stroke,
+          strokeW: btMain.strokeW,
+        }) +
+          (sub
+            ? text(cx, top + 6.5 + 2.9 * btMul, btSub.size, btSub.fill, sub, {
+                font: btSub.font,
+                stroke: btSub.stroke,
+                strokeW: btSub.strokeW,
+              })
+            : ""),
+      );
 
   return (
     `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>` +
     bg +
-    shift(
-      entry.layout,
-      "backText",
-      text(cx, top + 6.5, 1.6, BRAND_DARK, main, { weight: 700 }) +
-        (sub ? text(cx, top + 9.4, 1.2, "#6B7280", sub) : ""),
-    ) +
+    backTextEl +
     termEl +
     qr +
     algEl
@@ -324,14 +409,6 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     `<stop offset="0.46" stop-color="#F5F8FF"/>` +
     `<stop offset="1" stop-color="#E7EEFE"/>` +
     `</linearGradient>` +
-    // 背面背景图压亮罩:上 / 下加亮保标题与公式可读,中段透出图(二维码白芯片不怕)
-    `<linearGradient id="backShade" x1="0" y1="0" x2="0" y2="1">` +
-    `<stop offset="0" stop-color="#F5F8FF" stop-opacity="0.9"/>` +
-    `<stop offset="0.28" stop-color="#F5F8FF" stop-opacity="0.28"/>` +
-    `<stop offset="0.54" stop-color="#F5F8FF" stop-opacity="0.16"/>` +
-    `<stop offset="0.8" stop-color="#F5F8FF" stop-opacity="0.58"/>` +
-    `<stop offset="1" stop-color="#F5F8FF" stop-opacity="0.9"/>` +
-    `</linearGradient>` +
     `</defs>`;
 
   // 出血:正面深色铺到左/上/下出血,背面浅色铺到右/上/下出血
@@ -345,7 +422,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" role="img" aria-label="魔方开放社群二维码卡片">` +
     defs +
     bleedBg +
-    front(bleed, foldX, h, quote, pattern, opts.art, entry.layout) +
+    front(bleed, foldX, h, quote, pattern, opts.art, entry.layout, entry.textStyles) +
     back(foldX, bleed, entry, opts.url, pattern, opts.algSvg, opts.movesPath, opts.backArt) +
     fold +
     (cropMarks ? cropMarksSvg(bleed, w, h) : "") +

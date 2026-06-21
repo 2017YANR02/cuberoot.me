@@ -49,6 +49,22 @@ export function algImgUrl(alg?: QrAlg | null, size = 120): string | null {
   return `${VC_BASE}/v1/visualcube.svg?${p.toString()}`;
 }
 
+// 卡片文字字体注册表(DOM 卡 + 矢量母版共用同一份 font-family 栈;送印转轮廓兜底缺字)。
+// key 存库,stack 是 CSS / SVG 的 font-family。
+export const CARD_FONTS: { key: string; label: string; stack: string }[] = [
+  { key: "sans", label: "黑体", stack: "-apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif" },
+  { key: "serif", label: "宋体", stack: "'Songti SC', 'Noto Serif SC', 'SimSun', serif" },
+  { key: "kai", label: "楷体", stack: "'Kaiti SC', 'STKaiti', 'KaiTi', 'Noto Serif SC', serif" },
+  { key: "round", label: "圆体", stack: "'Yuanti SC', 'Hiragino Maru Gothic ProN', 'Microsoft YaHei', sans-serif" },
+  { key: "mono", label: "等宽", stack: "'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace" },
+];
+
+// 字体 key → font-family 栈;未知 / 空返回 undefined(用元素默认字体)
+export function fontStack(key?: string | null): string | undefined {
+  if (!key) return undefined;
+  return CARD_FONTS.find((f) => f.key === key)?.stack;
+}
+
 // 卡片文案逻辑(纯函数,DOM 卡片 QrCard.tsx 与矢量导出 cardSvg.ts 共用,避免两处漂移)。
 
 // 正面艺术背景图注册表(后台缩略图选择器 + 卡片轮换 + 矢量母版内嵌共用同一份)

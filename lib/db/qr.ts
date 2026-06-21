@@ -2,16 +2,45 @@ import "server-only";
 import { desc, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db, schema } from "@/db";
-import type { CardEl, CardLayout, QrAlg, QrCode, QrCodeInsert, QrLink, QrType } from "@/db/schema";
+import type { CardEl, CardLayout, CardTextStyles, QrAlg, QrCode, QrCodeInsert, QrLink, QrType, TextStyle } from "@/db/schema";
+import { CARD_FONTS } from "@/lib/qr/cardText";
 
-export type { CardEl, CardLayout, QrAlg, QrCode, QrLink, QrType };
+export type { CardEl, CardLayout, CardTextStyles, QrAlg, QrCode, QrLink, QrType, TextStyle };
 
 export type QrUpdate = Partial<
   Pick<
     QrCode,
-    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "backArt" | "frontArtPrompt" | "alg" | "layout"
+    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "backArt" | "frontArtPrompt" | "alg" | "layout" | "textStyles"
   >
 >;
+
+// 文字样式校验:只收已知文字元素 + 合法字体 key / #hex 色 / 字号倍率(0.3~3)/ 描边宽(0~1mm)
+const TEXT_ELS: CardEl[] = ["quote", "brand", "backText", "term", "alg"];
+const FONT_KEYS = new Set(CARD_FONTS.map((f) => f.key));
+const isHex = (v: unknown): v is string => typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v);
+
+function sanitizeTextStyles(raw: CardTextStyles | null | undefined): CardTextStyles | null {
+  if (!raw || typeof raw !== "object") return null;
+  const out: CardTextStyles = {};
+  for (const k of TEXT_ELS) {
+    const st = raw[k];
+    if (!st || typeof st !== "object") continue;
+    const v: TextStyle = {};
+    if (st.font && FONT_KEYS.has(st.font)) v.font = st.font;
+    if (isHex(st.color)) v.color = st.color;
+    if (Number.isFinite(st.size)) {
+      const sz = Math.round(Math.max(0.3, Math.min(3, st.size!)) * 100) / 100;
+      if (sz !== 1) v.size = sz;
+    }
+    if (isHex(st.stroke)) v.stroke = st.stroke;
+    if (Number.isFinite(st.strokeW)) {
+      const sw = Math.round(Math.max(0, Math.min(1, st.strokeW!)) * 100) / 100;
+      if (sw > 0) v.strokeW = sw;
+    }
+    if (Object.keys(v).length) out[k] = v;
+  }
+  return Object.keys(out).length ? out : null;
+}
 
 function normalize(code: string): string {
   return code.trim().toLowerCase();
@@ -143,6 +172,7 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
     next.layout = Object.keys(out).length > 0 ? out : null;
   }
   if (patch.links !== undefined) next.links = patch.links;
+  if (patch.textStyles !== undefined) next.textStyles = sanitizeTextStyles(patch.textStyles);
   if (Object.keys(next).length === 0) return;
   await db.update(schema.qrCodes).set(next).where(eq(schema.qrCodes.code, c));
 }
@@ -169,6 +199,7 @@ export async function duplicate(code: string): Promise<string | null> {
     frontArtPrompt: src.frontArtPrompt,
     alg: src.alg,
     layout: src.layout,
+    textStyles: src.textStyles,
     scans: 0,
     disabled: false,
     createdAt: Math.floor(Date.now() / 1000),

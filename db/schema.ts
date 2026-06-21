@@ -379,6 +379,26 @@ export type CardEl = "quote" | "brand" | "backText" | "term" | "qr" | "alg" | "f
 export type CardLayout = Partial<
   Record<CardEl, { x: number; y: number; s?: number; fit?: "contain" | "cover" }>
 >;
+// 文字样式覆盖:font = 字体注册表 key(lib/qr/cardText CARD_FONTS),color = #hex,size = 字号倍率(1=默认)
+// stroke = 描边色 #hex,strokeW = 描边宽 mm(0/省略 = 不描边)
+export type TextStyle = {
+  font?: string;
+  color?: string;
+  size?: number;
+  stroke?: string;
+  strokeW?: number;
+};
+// 各文字元素(quote/brand/backText/term/alg)的样式覆盖 + hidden(删除/隐藏该文字,仅影响卡面)
+export type CardTextStyles = Partial<Record<CardEl, TextStyle & { hidden?: boolean }>>;
+// 用户自建文本框:自由文字 + 所在面 + 位置(mm,相对面板中心)+ 样式
+export type CardCustomText = {
+  id: string;
+  side: "front" | "back";
+  text: string;
+  x: number;
+  y: number;
+  style?: TextStyle;
+};
 
 export const qrCodes = sqliteTable("qr_codes", {
   code: text("code").primaryKey(),
@@ -397,6 +417,10 @@ export const qrCodes = sqliteTable("qr_codes", {
   frontArtPrompt: text("front_art_prompt"),
   alg: text("alg", { mode: "json" }).$type<QrAlg>(),
   layout: text("layout", { mode: "json" }).$type<CardLayout>(),
+  // 各文字元素的字体 / 颜色 / 字号 / 描边覆盖 + 删除(hidden)
+  textStyles: text("text_styles", { mode: "json" }).$type<CardTextStyles>(),
+  // 用户自建文本框列表
+  customTexts: text("custom_texts", { mode: "json" }).$type<CardCustomText[]>(),
   scans: integer("scans").notNull().default(0),
   disabled: integer("disabled", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("created_at").notNull(),
