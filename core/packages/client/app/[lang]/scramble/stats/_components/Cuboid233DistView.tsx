@@ -1,7 +1,7 @@
 'use client';
 
 // 2×3×3 多米诺(233)整解【最优】步数分布 —— **采样**(非全空间精确曲线)。
-// 状态空间 = 1,422,489,600(8!·8!·7/8),太大无法整图枚举,所以这里在浏览器里现场生成 N 个随机打乱
+// 状态空间 = 1,625,702,400(8!·8!,角棱奇偶独立),太大无法整图枚举,所以这里在浏览器里现场生成 N 个随机打乱
 // (cstimer 真生成器),再用本站 IDA* 求解器逐条求 **可证最优** 解,把解的步数分桶。每条解都是真正最短
 // (IDA* + max(角距离, 棱距离) 可采纳启发式),但整条曲线是抽样估计、不是全空间精确分布。求解同步且快
 // (随机态毫秒级),为防深态/首条建库阻塞,分批跑、显示进度、可取消;下载提供「下载样本」CSV
@@ -235,8 +235,8 @@ export default function Cuboid233DistView({ isZh }: { isZh: boolean }) {
       <div className="scramble-stats-meta">
         <span>
           {tr({
-            zh: `这是采样估计的【最优】解长度分布:每条解都是可证最短(IDA* + max(角距离, 棱距离) 可采纳启发式),但整条曲线是抽样的、不是全空间精确分布 —— 2×3×3 多米诺有 ${CUBOID233_STATE_COUNT_STR} 个状态(8 角 × 8 棱,棱角奇偶耦合),太大无法整图枚举,所以这里现场生成并解了 ${sampleN.toLocaleString()} 个随机态,把解的步数分桶(样本量越大分布越稳)。它不是 WCA 项目,示例即采样到的真实随机打乱。`,
-            en: `This is a SAMPLED estimate of the OPTIMAL solution-length distribution: every solution is a provable shortest path (IDA* with the admissible max(corner-distance, edge-distance) heuristic), but the whole curve is sampled, not the exact full-space distribution — the 2×3×3 Domino has ${CUBOID233_STATE_COUNT_STR} states (8 corners × 8 edges under a coupled parity), far too many to enumerate, so ${sampleN.toLocaleString()} random states were generated and solved on the fly, then bucketed (a larger sample stabilizes the curve). It is not a WCA event; the examples are the actual sampled random scrambles.`,
+            zh: `这是采样估计的【最优】解长度分布:每条解都是可证最短(IDA* + max(角距离, 棱距离) 可采纳启发式),但整条曲线是抽样的、不是全空间精确分布 —— 2×3×3 多米诺有 ${CUBOID233_STATE_COUNT_STR} 个状态(8 角 × 8 棱,各自由排列,角棱奇偶独立),太大无法整图枚举,所以这里现场生成并解了 ${sampleN.toLocaleString()} 个随机态,把解的步数分桶(样本量越大分布越稳)。它不是 WCA 项目,示例即采样到的真实随机打乱。`,
+            en: `This is a SAMPLED estimate of the OPTIMAL solution-length distribution: every solution is a provable shortest path (IDA* with the admissible max(corner-distance, edge-distance) heuristic), but the whole curve is sampled, not the exact full-space distribution — the 2×3×3 Domino has ${CUBOID233_STATE_COUNT_STR} states (8 corners × 8 edges, each freely permuted with independent parities), far too many to enumerate, so ${sampleN.toLocaleString()} random states were generated and solved on the fly, then bucketed (a larger sample stabilizes the curve). It is not a WCA event; the examples are the actual sampled random scrambles.`,
           })}
         </span>
       </div>
