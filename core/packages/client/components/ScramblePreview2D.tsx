@@ -36,6 +36,7 @@ import { renderIvyScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/ivy_svg';
 import { renderFloppyScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/floppy_svg';
 import { renderCuboid223ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cuboid223_svg';
 import { renderCuboid233ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cuboid233_svg';
+import { renderCuboid334ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cuboid334_svg';
 import { renderSlide8ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/slide8_svg';
 import { renderSlide15ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/slide15_svg';
 import { renderSuperFloppyScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/superfloppy_svg';
@@ -62,7 +63,7 @@ const HAS_PREVIEW: Record<string, boolean> = {
   '333ft': true, '333mbf': true, '333mbo': true, '444': true, '444bf': true,
   '555': true, '555bf': true, '666': true, '777': true,
   pyram: true, skewb: true, sq1: true, minx: true, clock: true,
-  mirror_333: true, ivy: true, '133': true, '223': true, '233': true, '8p': true, '15p': true, sfl: true, ufo: true, cm2: true, dmd: true, gear: true, mpyrso: true, dino: true, crz3a: true,
+  mirror_333: true, ivy: true, '133': true, '223': true, '233': true, '334': true, '8p': true, '15p': true, sfl: true, ufo: true, cm2: true, dmd: true, gear: true, mpyrso: true, dino: true, crz3a: true,
 };
 
 export function eventHasScramblePreview(event: string): boolean {
@@ -111,6 +112,7 @@ export function ScramblePreview2D({
       if (eff === '133') return renderFloppyScrambleSvg(scramble);
       if (eff === '223') return renderCuboid223ScrambleSvg(scramble);
       if (eff === '233') return renderCuboid233ScrambleSvg(scramble);
+      if (eff === '334') return renderCuboid334ScrambleSvg(scramble);
       if (eff === '8p') return renderSlide8ScrambleSvg(scramble);
       if (eff === '15p') return renderSlide15ScrambleSvg(scramble);
       if (eff === 'sfl') return renderSuperFloppyScrambleSvg(scramble);

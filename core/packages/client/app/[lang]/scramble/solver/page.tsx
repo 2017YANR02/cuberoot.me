@@ -10,6 +10,7 @@
  *   event=133 → 1×3×3 花型整解最优(_FloppySolver,纯 TS,192 态全图 BFS,无 worker)
  *   event=223 → 2×2×3 整解最优(_Cuboid223Solver,纯 TS,241,920 态全图 BFS,无 worker)
  *   event=233 → 2×3×3 多米诺整解最优(_Cuboid233Solver,纯 TS,IDA*+max(角,棱)PDB 单实例最优,无 worker)
+ *   event=334 → 3×3×4 求解(_Cuboid334Solver,纯 TS,浅态 IDA* 可证最优 / 深态贪心兜底有效有界,无 worker)
  *   event=8p → 八数码整解最优(_Slide8Solver,纯 TS,181,440 态全图 BFS,无 worker)
  *   event=15p → 数字华容道整解最优(_Slide15Solver,纯 TS,IDA*+Walking-Distance 单实例最优,无 worker)
  *   event=sfl → Super Floppy 整解最优(_SuperFloppySolver,纯 TS,3,041,280 态全图 BFS,无 worker)
@@ -43,6 +44,7 @@ const IvySolver = dynamic(() => import('./_IvySolver'), { ssr: false, loading: L
 const FloppySolver = dynamic(() => import('./_FloppySolver'), { ssr: false, loading: Loading });
 const Cuboid223Solver = dynamic(() => import('./_Cuboid223Solver'), { ssr: false, loading: Loading });
 const Cuboid233Solver = dynamic(() => import('./_Cuboid233Solver'), { ssr: false, loading: Loading });
+const Cuboid334Solver = dynamic(() => import('./_Cuboid334Solver'), { ssr: false, loading: Loading });
 const Slide8Solver = dynamic(() => import('./_Slide8Solver'), { ssr: false, loading: Loading });
 const Slide15Solver = dynamic(() => import('./_Slide15Solver'), { ssr: false, loading: Loading });
 const SuperFloppySolver = dynamic(() => import('./_SuperFloppySolver'), { ssr: false, loading: Loading });
@@ -65,6 +67,7 @@ function SolverDispatch() {
   if (event === '133') return <FloppySolver />;
   if (event === '223') return <Cuboid223Solver />;
   if (event === '233') return <Cuboid233Solver />;
+  if (event === '334') return <Cuboid334Solver />;
   if (event === '8p') return <Slide8Solver />;
   if (event === '15p') return <Slide15Solver />;
   if (event === 'sfl') return <SuperFloppySolver />;
