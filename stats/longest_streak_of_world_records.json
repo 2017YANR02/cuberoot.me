@@ -742,6 +742,15 @@
     ],
     [
       "1.73",
+      3,
+      "5x5x5 Cube",
+      "Single",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
+      "Still active"
+    ],
+    [
+      "1.73",
       4,
       "Rubik's Cube",
       "Single",
@@ -766,15 +775,6 @@
       "[Yohei Oka (岡要平)](https://www.worldcubeassociation.org/persons/2006OKAY01)",
       "[Tokyo Open 2008](https://www.worldcubeassociation.org/competitions/TokyoOpen2008)",
       "[Skårup Spring 2010](https://www.worldcubeassociation.org/competitions/SkarupSpring2010)"
-    ],
-    [
-      "1.73",
-      3,
-      "5x5x5 Cube",
-      "Single",
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
-      "Still active"
     ],
     [
       "1.71",
@@ -968,20 +968,20 @@
     [
       "1.44",
       2,
-      "Pyraminx",
-      "Single",
-      "[Piotr Kózka](https://www.worldcubeassociation.org/persons/2005KOZK01)",
-      "[Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)",
-      "[Gdansk Open 2008](https://www.worldcubeassociation.org/competitions/GdanskOpen2008)"
-    ],
-    [
-      "1.44",
-      2,
       "Square-1",
       "Average",
       "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
       "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
       "Still active"
+    ],
+    [
+      "1.44",
+      2,
+      "Pyraminx",
+      "Single",
+      "[Piotr Kózka](https://www.worldcubeassociation.org/persons/2005KOZK01)",
+      "[Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)",
+      "[Gdansk Open 2008](https://www.worldcubeassociation.org/competitions/GdanskOpen2008)"
     ],
     [
       "1.40",
@@ -1794,6 +1794,15 @@
       "[Asian Championship 2014](https://www.worldcubeassociation.org/competitions/AsianChampionship2014)"
     ],
     [
+      "0.45",
+      2,
+      "Rubik's Cube",
+      "Average",
+      "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
+      "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
+      "Still active"
+    ],
+    [
       "0.44",
       3,
       "Square-1",
@@ -1801,15 +1810,6 @@
       "[Rasmus Stub Detlefsen](https://www.worldcubeassociation.org/persons/2014DETL01)",
       "[Swedish Championship 2018](https://www.worldcubeassociation.org/competitions/SwedishChampionship2018)",
       "[Schoolmark Open 2018](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2018)"
-    ],
-    [
-      "0.44",
-      2,
-      "Rubik's Cube",
-      "Average",
-      "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
-      "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)",
-      "Still active"
     ],
     [
       "0.42",
