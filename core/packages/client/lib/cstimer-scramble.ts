@@ -102,7 +102,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   { id: 'giga',    key: 'giga',    length: 30, zh: '六阶五魔',         en: 'Gigaminx',          textLabel: 'Giga', family: 'twist'
 },
   { id: 'prcp',    key: 'prcp',    length: 70, zh: '五魔金字塔',       en: 'Pyra Crystal',      textLabel: 'PrC',  family: 'twist' },
-  { id: '233',     key: '233',     length: 25, zh: '多米诺 2×3×3',     en: '2×3×3 Domino',      textLabel: '2×3×3', family: 'cuboid'
+  { id: '233',     key: '233',     length: 25, zh: '多米诺 2×3×3',     en: '2×3×3 Domino',      textLabel: '2×3×3', family: 'cuboid', solvable: true
 },
   { id: '334',     key: '334',     length: 40, zh: '3×3×4',            en: '3×3×4',             textLabel: '3×3×4', family: 'cuboid' },
   { id: '335',     key: '335',     length: 50, zh: '3×3×5',            en: '3×3×5',             textLabel: '3×3×5', family: 'cuboid' },
