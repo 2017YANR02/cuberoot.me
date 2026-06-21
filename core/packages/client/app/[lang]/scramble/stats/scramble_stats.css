@@ -1017,3 +1017,41 @@ a.scramble-timeline-scramble:hover {
     flex: 1 1 auto;
   }
 }
+
+/* ==========================================================================
+ * 嵌入求解页(求解在上、分布在下同滚动页)。求解/分布合并后,分布作为下半区嵌入:
+ * 去掉它独立页那套 min-height:100vh + 满幅背景 + 大内边距,让它无缝接在求解区下方;
+ * 但保留 .scramble-stats-page 内部那套配色 token(--bg/--text/--border…)给面板用。
+ * ========================================================================== */
+/* 嵌入区自身是一条居中列(求解区也是居中列,二者上下堆叠都居中 → 视觉连贯);
+   求解区与分布区之间一条上分隔线点明分段。 */
+.scramble-dist-embed {
+  max-width: 1100px;
+  margin: 2rem auto 0;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  border-top: 1px solid var(--border-default);
+}
+.scramble-dist-embed .scramble-stats-page {
+  min-height: 0;
+  padding: 1.25rem 0 0;
+  background: transparent;
+  align-items: stretch;
+}
+/* 嵌入区内容铺满这条列(外层 .scramble-dist-embed 已居中限宽),不再二次居中 + 限宽。 */
+.scramble-dist-embed .scramble-stats-page > * {
+  max-width: none;
+}
+.scramble-dist-embed .scramble-stats-header {
+  margin-bottom: 1rem;
+}
+@media (max-width: 480px) {
+  .scramble-dist-embed { padding: 0 0.75rem; margin-top: 1.5rem; }
+}
+/* 「分布」小标题:点明下半区是分布,克制不抢眼。 */
+.scramble-stats-embed-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.75rem;
+}
