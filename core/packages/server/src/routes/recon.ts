@@ -716,6 +716,69 @@ reconRoutes.get('/recon/bili-cover', async (c) => {
   }
 });
 
+// GET /v1/recon/douyin-cover?url=https://v.douyin.com/xxx  (或 ?awemeId=123)
+// 抖音封面无直链规律,且 share 页是反爬 JS-VM 挑战页,只能服务端代理:
+//   1. 短链 v.douyin.com/xxx → 跟 302 Location 取 aweme_id
+//   2. www.douyin.com 的 aweme detail web API(免签名)→ 取 origin_cover(首帧)
+// 失败一律回 4xx/5xx,client 退回打乱图(与 B 站封面同款降级)。
+const DOUYIN_HOST = /(?:^|\.)(douyin\.com|iesdouyin\.com)$/i;
+const DOUYIN_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+function awemeIdFromUrl(u: string): string | null {
+  const m = u.match(/(?:video|note|share\/video|share\/slides)\/(\d{6,})/)
+    ?? u.match(/[?&](?:item_ids|aweme_id|modal_id|vid)=(\d{6,})/);
+  return m ? m[1] : null;
+}
+reconRoutes.get('/recon/douyin-cover', async (c) => {
+  let awemeId = (c.req.query('awemeId') ?? '').trim();
+  const url = (c.req.query('url') ?? '').trim();
+
+  try {
+    if (!awemeId && url) {
+      // SSRF 防护:只允许抖音域名
+      let host = '';
+      try { host = new URL(url).hostname; } catch { return c.json({ error: 'Invalid url' }, 400); }
+      if (!DOUYIN_HOST.test(host)) return c.json({ error: 'Not a douyin url' }, 400);
+
+      awemeId = awemeIdFromUrl(url) ?? '';
+      if (!awemeId) {
+        // 短链 v.douyin.com/xxx 不含 id,跟一跳 302 拿真实 URL
+        const r = await fetch(url, {
+          redirect: 'manual',
+          headers: { 'User-Agent': DOUYIN_UA },
+          signal: AbortSignal.timeout(8000),
+        });
+        const loc = r.headers.get('location') ?? '';
+        awemeId = awemeIdFromUrl(loc) ?? '';
+      }
+    }
+    if (!awemeId || !/^\d{6,}$/.test(awemeId)) {
+      return c.json({ error: 'Invalid douyin url' }, 400);
+    }
+
+    const apiUrl = `https://www.douyin.com/aweme/v1/web/aweme/detail/?aweme_id=${awemeId}&device_platform=webapp&aid=6383`;
+    const res = await fetch(apiUrl, {
+      headers: { 'User-Agent': DOUYIN_UA, 'Referer': 'https://www.douyin.com/' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return c.json({ error: 'Douyin API unavailable' }, 502);
+
+    const data = await res.json() as {
+      aweme_detail?: { video?: Record<string, { url_list?: string[] }> };
+    };
+    const v = data?.aweme_detail?.video;
+    // origin_cover = 视频首帧(最像缩略图);cover/cover_original_scale 兜底
+    const pic = v?.origin_cover?.url_list?.[0]
+      ?? v?.cover?.url_list?.[0]
+      ?? v?.cover_original_scale?.url_list?.[0];
+    if (!pic) return c.json({ error: 'Cover not found' }, 404);
+
+    c.header('Cache-Control', 'public, max-age=86400');
+    return c.json({ pic: pic.replace('http://', 'https://') });
+  } catch {
+    return c.json({ error: 'Douyin API unavailable' }, 502);
+  }
+});
+
 // GET /v1/recon/resolve-shorturl?url=https://b23.tv/xxx
 // 服务端 fetch 不 follow redirect,读 Location 头返回真实 URL
 // client 端没法跨域 follow,所以必须服务端代理
