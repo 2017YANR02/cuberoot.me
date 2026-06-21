@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Download } from "lucide-react";
-import type { CardEl, CardLayout, CardTextStyles, QrCode, QrType, TextStyle } from "@/lib/db/qr";
+import type { CardCustomText, CardEl, CardLayout, CardTextStyles, QrCode, QrType, TextStyle } from "@/lib/db/qr";
 import { QrCardUnit, FRONT_ARTS } from "@/components/QrCard";
 import { FileUpload } from "@/components/FileUpload";
 import { algToText, CARD_FONTS, parseAlg } from "@/lib/qr/cardText";
@@ -50,17 +50,21 @@ const INPUT_CLS =
 
 type Box = { left: number; top: number; w: number; h: number };
 
-// 手势目标:背景图(正/背面)或某个卡面元素(二维码等)
-type GTarget = { kind: "art"; lkey: "front" | "back" } | { kind: "el"; key: CardEl };
+// 手势目标:背景图(正/背面)/ 内置元素(二维码等)/ 自建文本框
+type GTarget =
+  | { kind: "art"; lkey: "front" | "back" }
+  | { kind: "el"; key: CardEl }
+  | { kind: "ct"; id: string };
 // 单指拖动器:move 跟手、end 收尾、tap 点击(无拖动)打开面板
 type Dragger = {
   move: (cx: number, cy: number, alt: boolean) => void;
   end: () => void;
   tap: () => void;
 };
-const gKey = (t: GTarget) => (t.kind === "art" ? `art:${t.lkey}` : `el:${t.key}`);
-// 可缩放目标:正/背面背景图 + 二维码(双指捏合 / 滚轮缩放)
-const gScalable = (t: GTarget) => (t.kind === "art" ? true : t.key === "qr");
+const gKey = (t: GTarget) =>
+  t.kind === "art" ? `art:${t.lkey}` : t.kind === "ct" ? `ct:${t.id}` : `el:${t.key}`;
+// 可缩放目标:正/背面背景图 + 二维码 + 自建文本框(双指捏合 / 滚轮缩放)
+const gScalable = (t: GTarget) => t.kind === "art" || (t.kind === "el" ? t.key === "qr" : t.kind === "ct");
 
 // 正面 / 背面背景图编辑面板(图库选择 + 上传 + 下载 + 完整显示开关 + 缩放 + 构图提示),两面共用。
 // value="" = 无图(正面则为自动轮换);showControls 控制是否显示构图区(正面始终显示,背面有图才显示)。
@@ -332,8 +336,11 @@ export function CardEditor({
     algRaw: algToText(entry.alg),
     layout: (entry.layout ?? {}) as CardLayout,
     textStyles: (entry.textStyles ?? {}) as CardTextStyles,
+    customTexts: (entry.customTexts ?? []) as CardCustomText[],
   });
   const [active, setActive] = useState<Region | null>(null);
+  // 选中的自建文本框 id(与 active 互斥:选内置元素清 ct,选文本框清 active)
+  const [activeCt, setActiveCt] = useState<string | null>(null);
   // 背面图存在性的实时快照(滚轮缩放 handler 在 [] effect 里,靠 ref 读最新值)
   const backArtRef = useRef("");
   backArtRef.current = s.backArt;
@@ -341,8 +348,8 @@ export function CardEditor({
   // 拖动中的对齐参考线(相对卡片容器 px)
   const [guides, setGuides] = useState<{ xs: number[]; ys: number[] }>({ xs: [], ys: [] });
   const wrapRef = useRef<HTMLDivElement>(null);
-  // 各元素实测框(相对卡片容器 px),热区据此贴合渲染
-  const [boxes, setBoxes] = useState<Partial<Record<CardEl, Box>>>({});
+  // 各元素实测框(相对卡片容器 px),热区据此贴合渲染;key 为 CardEl 或 "ct:<id>"(自建文本框)
+  const [boxes, setBoxes] = useState<Record<string, Box>>({});
   // 进行中的指针手势(单指拖动 / 双指捏合):指针表 + 当前拖动器 + 捏合状态
   const gestureRef = useRef<null | {
     target: GTarget;
@@ -476,25 +483,33 @@ export function CardEditor({
     const wrap = wrapRef.current;
     if (!wrap) return;
     const wr = wrap.getBoundingClientRect();
-    const next: Partial<Record<CardEl, Box>> = {};
+    const next: Record<string, Box> = {};
     wrap.querySelectorAll<HTMLElement>("[data-el]").forEach((el) => {
-      const key = el.dataset.el as CardEl;
+      const key = el.dataset.el;
+      if (!key) return;
       const r = el.getBoundingClientRect();
       next[key] = { left: r.left - wr.left, top: r.top - wr.top, w: r.width, h: r.height };
     });
     setBoxes((prev) => {
-      const keys = ALL_ELS.filter((k) => next[k] || prev[k]);
-      const changed = keys.some((k) => {
+      const keys = new Set([...Object.keys(next), ...Object.keys(prev)]);
+      let changed = false;
+      for (const k of keys) {
         const a = prev[k];
         const b = next[k];
-        if (!a || !b) return true;
-        return (
+        if (!a || !b) {
+          changed = true;
+          break;
+        }
+        if (
           Math.abs(a.left - b.left) > 0.5 ||
           Math.abs(a.top - b.top) > 0.5 ||
           Math.abs(a.w - b.w) > 0.5 ||
           Math.abs(a.h - b.h) > 0.5
-        );
-      });
+        ) {
+          changed = true;
+          break;
+        }
+      }
       return changed ? next : prev;
     });
   });
@@ -543,6 +558,42 @@ export function CardEditor({
   const toggleHidden = (key: CardEl) =>
     setTextStyle(key, { hidden: !s.textStyles[key]?.hidden });
   const hiddenTextEls = TEXT_ELS.filter((k) => s.textStyles[k]?.hidden);
+
+  // ── 自建文本框 ──
+  const addCustomText = (side: "front" | "back") => {
+    const id = "t" + Math.random().toString(36).slice(2, 9);
+    setS((p) => ({
+      ...p,
+      customTexts: [...p.customTexts, { id, side, text: "新文字", x: 0, y: 0 }],
+    }));
+    setActive(null);
+    setActiveCt(id);
+  };
+  const updateCustomText = (id: string, patch: Partial<CardCustomText>) =>
+    setS((p) => ({
+      ...p,
+      customTexts: p.customTexts.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+    }));
+  const setCtStyle = (id: string, patch: Partial<TextStyle>) =>
+    setS((p) => ({
+      ...p,
+      customTexts: p.customTexts.map((c) => {
+        if (c.id !== id) return c;
+        const st: TextStyle = { ...c.style, ...patch };
+        if (!st.font) delete st.font;
+        if (!st.color) delete st.color;
+        if (!st.stroke || !st.strokeW) {
+          delete st.stroke;
+          delete st.strokeW;
+        }
+        return { ...c, style: Object.keys(st).length ? st : undefined };
+      }),
+    }));
+  const removeCustomText = (id: string) => {
+    setS((p) => ({ ...p, customTexts: p.customTexts.filter((c) => c.id !== id) }));
+    setActiveCt((a) => (a === id ? null : a));
+  };
+  const activeCustom = s.customTexts.find((c) => c.id === activeCt) ?? null;
   // 背景图平移/缩放/完整显示(layout.front 或 layout.back):增量合并,回默认(0,0,×1,铺满)就删键
   const setArt =
     (lkey: "front" | "back") =>
@@ -558,45 +609,57 @@ export function CardEditor({
   const setFront = setArt("front");
   const setBack = setArt("back");
 
-  // 捏合 / 滚轮缩放落地:背景图按 cover/contain 钳缩放,二维码钳 0.7~1.5
+  // 捏合 / 滚轮缩放落地:背景图按 cover/contain 钳缩放,二维码钳 0.01~1.5,自建文本框走字号 0.3~3
   const applyPinch = (target: GTarget, raw: number) => {
     if (target.kind === "art") {
       const cover = s.layout[target.lkey]?.fit === "cover";
       const sc = Math.round(Math.max(cover ? 1 : 0.5, Math.min(3, raw)) * 100) / 100;
       setArt(target.lkey)({ s: sc });
-    } else if (target.key === "qr") {
-      // 二维码无下限缩小(留 0.01 防归零);上限 1.5
+    } else if (target.kind === "el" && target.key === "qr") {
       setQrScale(Math.round(Math.max(0.01, Math.min(1.5, raw)) * 100) / 100);
+    } else if (target.kind === "ct") {
+      setCtStyle(target.id, { size: Math.round(Math.max(0.3, Math.min(3, raw)) * 100) / 100 });
     }
   };
   const currentScale = (target: GTarget): number =>
     target.kind === "art"
       ? s.layout[target.lkey]?.s ?? 1
-      : target.key === "qr"
-        ? s.layout.qr?.s ?? 1
-        : 1;
+      : target.kind === "ct"
+        ? s.customTexts.find((c) => c.id === target.id)?.style?.size ?? 1
+        : target.key === "qr"
+          ? s.layout.qr?.s ?? 1
+          : 1;
 
-  // 单指拖动器(元素):跟手换算 mm,磁吸到 面板中线 / 默认位 / 同面板其他元素中心。
-  // 二维码特例:可自由移到整张卡任意位置(含正面),边界放到整卡、磁吸额外加两面中线。
-  const makeElDragger = (key: CardEl, sx: number, sy: number): Dragger | null => {
+  // 通用单指拖动器:跟手换算 mm,磁吸到 面板中线 / 默认位 / 同面板其他元素中心。
+  // free=true(二维码)可跨整卡移动并吸附两面中线;否则限本面板。off0 + write 由调用方按存储位置接入。
+  const makeBoxDragger = (
+    opts: {
+      selKey: string;
+      off0: { x: number; y: number };
+      free: boolean;
+      write: (o: { x: number; y: number }) => void;
+      onTap: () => void;
+    },
+    sx: number,
+    sy: number,
+  ): Dragger | null => {
+    const { selKey, off0, free, write, onTap } = opts;
     const wrap = wrapRef.current;
-    const el = wrap?.querySelector<HTMLElement>(`[data-el="${key}"]`);
+    const el = wrap?.querySelector<HTMLElement>(`[data-el="${selKey}"]`);
     const panel = el?.closest<HTMLElement>("[data-panel]");
     if (!wrap || !el || !panel) return null;
     const wr = wrap.getBoundingClientRect();
     const er = el.getBoundingClientRect();
     const pr = panel.getBoundingClientRect();
     const pxPerMm = pr.width / PANEL_MM;
-    const off0 = s.layout[key] ?? { x: 0, y: 0 };
     const baseL = er.left - off0.x * pxPerMm;
     const baseT = er.top - off0.y * pxPerMm;
     const bcx = baseL + er.width / 2;
     const bcy = baseT + er.height / 2;
-    const isFree = key === "qr";
-    const bounds = isFree ? wr : pr;
+    const bounds = free ? wr : pr;
     const targetsX = [pr.left + pr.width / 2, bcx];
     const targetsY = [pr.top + pr.height / 2, bcy];
-    if (isFree) {
+    if (free) {
       wrap.querySelectorAll<HTMLElement>("[data-panel]").forEach((pn) => {
         const r = pn.getBoundingClientRect();
         targetsX.push(r.left + r.width / 2);
@@ -631,11 +694,50 @@ export function CardEditor({
           }
         }
         setGuides({ xs, ys });
-        setOffset(key, { x: Math.round(ox * 20) / 20, y: Math.round(oy * 20) / 20 });
+        write({ x: Math.round(ox * 20) / 20, y: Math.round(oy * 20) / 20 });
       },
       end() { setGuides({ xs: [], ys: [] }); },
-      tap() { const pnl = EL_PANEL[key]; if (pnl) setActive((a) => (a === pnl ? null : pnl)); },
+      tap: onTap,
     };
+  };
+
+  const makeElDragger = (key: CardEl, sx: number, sy: number): Dragger | null =>
+    makeBoxDragger(
+      {
+        selKey: key,
+        off0: s.layout[key] ?? { x: 0, y: 0 },
+        free: key === "qr",
+        write: (o) => setOffset(key, o),
+        onTap: () => {
+          const pnl = EL_PANEL[key];
+          if (pnl) {
+            setActiveCt(null);
+            setActive((a) => (a === pnl ? null : pnl));
+          }
+        },
+      },
+      sx,
+      sy,
+    );
+
+  // 自建文本框拖动:限本面板,点击选中打开其编辑面板
+  const makeCtDragger = (id: string, sx: number, sy: number): Dragger | null => {
+    const ct = s.customTexts.find((c) => c.id === id);
+    if (!ct) return null;
+    return makeBoxDragger(
+      {
+        selKey: `ct:${id}`,
+        off0: { x: ct.x, y: ct.y },
+        free: false,
+        write: (o) => updateCustomText(id, o),
+        onTap: () => {
+          setActive(null);
+          setActiveCt((a) => (a === id ? null : id));
+        },
+      },
+      sx,
+      sy,
+    );
   };
 
   // 单指拖动器(背景图):平移构图,磁吸回默认位;背面无图只点击打开面板(不平移)
@@ -660,7 +762,10 @@ export function CardEditor({
         setFn({ x: Math.round(ox * 20) / 20, y: Math.round(oy * 20) / 20 });
       },
       end() {},
-      tap() { setActive((a) => (a === region ? null : region)); },
+      tap() {
+        setActiveCt(null);
+        setActive((a) => (a === region ? null : region));
+      },
     };
   };
 
@@ -697,7 +802,9 @@ export function CardEditor({
       g.dragger =
         target.kind === "art"
           ? makeArtDragger(target.lkey, e.clientX, e.clientY)
-          : makeElDragger(target.key, e.clientX, e.clientY);
+          : target.kind === "ct"
+            ? makeCtDragger(target.id, e.clientX, e.clientY)
+            : makeElDragger(target.key, e.clientX, e.clientY);
     }
   };
 
@@ -786,6 +893,13 @@ export function CardEditor({
         form={formId}
         readOnly
       />
+      <input
+        type="hidden"
+        name="customTexts"
+        value={JSON.stringify(s.customTexts)}
+        form={formId}
+        readOnly
+      />
 
       {/* 左:卡片预览(点元素拖动构图);右:被选元素的编辑面板 */}
       <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
@@ -824,7 +938,7 @@ export function CardEditor({
             }
             style={{ left: "50%", top: 0, width: "50%", height: "100%" }}
           />
-          {/* 元素热区:实测贴合,可拖动移位;点击打开对应面板 */}
+          {/* 内置元素热区:实测贴合,可拖动移位;点击打开对应面板 */}
           {ALL_ELS.map((key) => {
             const b = boxes[key];
             if (!b) return null;
@@ -838,6 +952,27 @@ export function CardEditor({
                 className={
                   "absolute touch-none select-none rounded transition " +
                   (EL_PANEL[key] && active === EL_PANEL[key]
+                    ? "ring-2 ring-brand bg-brand/10 cursor-grab"
+                    : "cursor-grab hover:ring-2 hover:ring-brand/50 hover:bg-brand/5")
+                }
+                style={{ left: b.left, top: b.top, width: b.w, height: b.h }}
+              />
+            );
+          })}
+          {/* 自建文本框热区:可拖动,点击选中编辑 */}
+          {s.customTexts.map((ct) => {
+            const b = boxes[`ct:${ct.id}`];
+            if (!b) return null;
+            return (
+              <span
+                key={ct.id}
+                role="button"
+                aria-label={`自建文字:${ct.text.slice(0, 6)}`}
+                title="拖动移动 / 点击编辑此文本框"
+                onPointerDown={(e) => startGesture(e, { kind: "ct", id: ct.id })}
+                className={
+                  "absolute touch-none select-none rounded transition " +
+                  (activeCt === ct.id
                     ? "ring-2 ring-brand bg-brand/10 cursor-grab"
                     : "cursor-grab hover:ring-2 hover:ring-brand/50 hover:bg-brand/5")
                 }
@@ -901,9 +1036,77 @@ export function CardEditor({
             ))}
           </span>
         ) : null}
+        <span className="inline-flex items-center gap-1.5">
+          <span>加文字:</span>
+          <button
+            type="button"
+            onClick={() => addCustomText("front")}
+            className="rounded-full border border-line px-2 py-0.5 text-brand hover:border-brand/40"
+          >
+            + 正面
+          </button>
+          <button
+            type="button"
+            onClick={() => addCustomText("back")}
+            className="rounded-full border border-line px-2 py-0.5 text-brand hover:border-brand/40"
+          >
+            + 背面
+          </button>
+        </span>
       </div>
 
-      {active ? (
+      {activeCt && activeCustom ? (
+        <div className="mt-3 rounded-md border border-line bg-bg-soft p-3 grid gap-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-medium text-ink-2">文本框</span>
+            <button
+              type="button"
+              onClick={() => setActiveCt(null)}
+              className="text-[12px] text-ink-3 hover:text-brand"
+            >
+              收起
+            </button>
+          </div>
+          <textarea
+            value={activeCustom.text}
+            onChange={(e) => updateCustomText(activeCt, { text: e.target.value })}
+            placeholder="输入文字,可多行"
+            className={INPUT_CLS + " min-h-[52px]"}
+            autoFocus
+          />
+          <div className="flex items-center gap-2 text-[12px] text-ink-2">
+            <span className="text-ink-3">所在面</span>
+            <div className="inline-flex overflow-hidden rounded-md border border-line">
+              {(["front", "back"] as const).map((side) => (
+                <button
+                  key={side}
+                  type="button"
+                  onClick={() => updateCustomText(activeCt, { side })}
+                  className={
+                    "px-3 py-1 transition " +
+                    (activeCustom.side === side
+                      ? "bg-brand text-white"
+                      : "bg-white text-ink-2 hover:text-brand")
+                  }
+                >
+                  {side === "front" ? "正面" : "背面"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <TextStyleControls
+            style={activeCustom.style}
+            onChange={(p) => setCtStyle(activeCt, p)}
+          />
+          <button
+            type="button"
+            onClick={() => removeCustomText(activeCt)}
+            className="justify-self-start text-[12px] text-red-500 hover:underline"
+          >
+            删除此文本框
+          </button>
+        </div>
+      ) : active ? (
         <div className="mt-3 rounded-md border border-line bg-bg-soft p-3 grid gap-2.5">
           <div className="flex items-center justify-between">
             <span className="text-[13px] font-medium text-ink-2">
@@ -1135,7 +1338,7 @@ export function CardEditor({
         </div>
       ) : (
         <div className="mt-3 rounded-md border border-dashed border-line bg-bg-soft/50 p-4 text-[12px] leading-relaxed text-ink-3">
-          点左侧卡面上的元素(正面图 / 背面图 / 语录 / 二维码 / 背面文案)在此编辑。
+          点左侧卡面上的元素(正面图 / 背面图 / 语录 / 二维码 / 背面文案)在此编辑;上方「加文字」可往正反面加新文本框,选中后可改内容 / 字体 / 颜色 / 字号 / 描边 / 删除。
         </div>
       )}
       {/* 保存按钮已统一到页面右上角(form={formId} 跨 DOM 提交),此处不再放 */}

@@ -10,6 +10,7 @@ import {
   rename,
   setDisabled,
   update,
+  type CardCustomText,
   type CardLayout,
   type CardTextStyles,
   type QrType,
@@ -77,6 +78,16 @@ function parseTextStyles(raw: string): CardTextStyles | null {
   }
 }
 
+// 自建文本框 JSON 数组;非法 null,字段校验在 db 层
+function parseCustomTexts(raw: string): CardCustomText[] | null {
+  try {
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? (v as CardCustomText[]) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function saveQr(f: FormData): Promise<void> {
   const code = String(f.get("code") ?? "").trim();
   if (!code) redirect("/admin/qr");
@@ -107,6 +118,7 @@ export async function saveQr(f: FormData): Promise<void> {
     alg: parseAlg(String(f.get("alg") ?? "")),
     layout: parseLayout(String(f.get("layout") ?? "")),
     textStyles: parseTextStyles(String(f.get("textStyles") ?? "")),
+    customTexts: parseCustomTexts(String(f.get("customTexts") ?? "")),
     links: parseLinks(String(f.get("links") ?? "")),
   });
   revalidatePath("/admin/qr");

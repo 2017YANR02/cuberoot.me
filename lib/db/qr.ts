@@ -2,22 +2,40 @@ import "server-only";
 import { desc, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db, schema } from "@/db";
-import type { CardEl, CardLayout, CardTextStyles, QrAlg, QrCode, QrCodeInsert, QrLink, QrType, TextStyle } from "@/db/schema";
+import type { CardCustomText, CardEl, CardLayout, CardTextStyles, QrAlg, QrCode, QrCodeInsert, QrLink, QrType, TextStyle } from "@/db/schema";
 import { CARD_FONTS } from "@/lib/qr/cardText";
 
-export type { CardEl, CardLayout, CardTextStyles, QrAlg, QrCode, QrLink, QrType, TextStyle };
+export type { CardCustomText, CardEl, CardLayout, CardTextStyles, QrAlg, QrCode, QrLink, QrType, TextStyle };
 
 export type QrUpdate = Partial<
   Pick<
     QrCode,
-    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "backArt" | "frontArtPrompt" | "alg" | "layout" | "textStyles"
+    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "backArt" | "frontArtPrompt" | "alg" | "layout" | "textStyles" | "customTexts"
   >
 >;
 
-// 文字样式校验:只收已知文字元素 + 合法字体 key / #hex 色 / 字号倍率(0.3~3)/ 描边宽(0~1mm)
+// 文字样式校验:合法字体 key / #hex 色 / 字号倍率(0.3~3)/ 描边宽(0~1mm)。内置文字 + 自建文本框共用。
 const TEXT_ELS: CardEl[] = ["quote", "brand", "backText", "term", "alg"];
 const FONT_KEYS = new Set(CARD_FONTS.map((f) => f.key));
 const isHex = (v: unknown): v is string => typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v);
+
+function cleanStyle(st: unknown): TextStyle | null {
+  if (!st || typeof st !== "object") return null;
+  const o = st as TextStyle;
+  const v: TextStyle = {};
+  if (o.font && FONT_KEYS.has(o.font)) v.font = o.font;
+  if (isHex(o.color)) v.color = o.color;
+  if (Number.isFinite(o.size)) {
+    const sz = Math.round(Math.max(0.3, Math.min(3, o.size!)) * 100) / 100;
+    if (sz !== 1) v.size = sz;
+  }
+  if (isHex(o.stroke)) v.stroke = o.stroke;
+  if (Number.isFinite(o.strokeW)) {
+    const sw = Math.round(Math.max(0, Math.min(1, o.strokeW!)) * 100) / 100;
+    if (sw > 0) v.strokeW = sw;
+  }
+  return Object.keys(v).length ? v : null;
+}
 
 function sanitizeTextStyles(raw: CardTextStyles | null | undefined): CardTextStyles | null {
   if (!raw || typeof raw !== "object") return null;
@@ -25,21 +43,35 @@ function sanitizeTextStyles(raw: CardTextStyles | null | undefined): CardTextSty
   for (const k of TEXT_ELS) {
     const st = raw[k];
     if (!st || typeof st !== "object") continue;
-    const v: TextStyle = {};
-    if (st.font && FONT_KEYS.has(st.font)) v.font = st.font;
-    if (isHex(st.color)) v.color = st.color;
-    if (Number.isFinite(st.size)) {
-      const sz = Math.round(Math.max(0.3, Math.min(3, st.size!)) * 100) / 100;
-      if (sz !== 1) v.size = sz;
-    }
-    if (isHex(st.stroke)) v.stroke = st.stroke;
-    if (Number.isFinite(st.strokeW)) {
-      const sw = Math.round(Math.max(0, Math.min(1, st.strokeW!)) * 100) / 100;
-      if (sw > 0) v.strokeW = sw;
-    }
+    const v: TextStyle & { hidden?: boolean } = cleanStyle(st) ?? {};
+    if (st.hidden) v.hidden = true;
     if (Object.keys(v).length) out[k] = v;
   }
   return Object.keys(out).length ? out : null;
+}
+
+// 自建文本框校验:最多 30 个,id/text 必填,side front/back,位移 ±40mm,样式走 cleanStyle
+function sanitizeCustomTexts(raw: CardCustomText[] | null | undefined): CardCustomText[] | null {
+  if (!Array.isArray(raw)) return null;
+  const out: CardCustomText[] = [];
+  const clampMm = (n: unknown) =>
+    Number.isFinite(n) ? Math.round(Math.max(-40, Math.min(40, n as number)) * 10) / 10 : 0;
+  for (const t of raw.slice(0, 30)) {
+    if (!t || typeof t !== "object") continue;
+    const id = typeof t.id === "string" && t.id ? t.id.slice(0, 40) : "";
+    const text = typeof t.text === "string" ? t.text.slice(0, 200) : "";
+    if (!id || !text.trim()) continue;
+    const style = cleanStyle(t.style);
+    out.push({
+      id,
+      side: t.side === "front" ? "front" : "back",
+      text: text.replace(/\r\n/g, "\n").trimEnd(),
+      x: clampMm(t.x),
+      y: clampMm(t.y),
+      ...(style ? { style } : {}),
+    });
+  }
+  return out.length ? out : null;
 }
 
 function normalize(code: string): string {
@@ -173,6 +205,7 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
   }
   if (patch.links !== undefined) next.links = patch.links;
   if (patch.textStyles !== undefined) next.textStyles = sanitizeTextStyles(patch.textStyles);
+  if (patch.customTexts !== undefined) next.customTexts = sanitizeCustomTexts(patch.customTexts);
   if (Object.keys(next).length === 0) return;
   await db.update(schema.qrCodes).set(next).where(eq(schema.qrCodes.code, c));
 }
@@ -200,6 +233,7 @@ export async function duplicate(code: string): Promise<string | null> {
     alg: src.alg,
     layout: src.layout,
     textStyles: src.textStyles,
+    customTexts: src.customTexts,
     scans: 0,
     disabled: false,
     createdAt: Math.floor(Date.now() / 1000),
