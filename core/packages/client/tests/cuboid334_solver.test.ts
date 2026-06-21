@@ -158,9 +158,9 @@ describe('solveCuboid334 — validity (round-trip via INDEPENDENT geometry)', ()
     }
   });
 
-  it('any returned solution actually solves; deeper states are optimal, greedy, or honestly too-deep (24 trials)', () => {
+  it('deeper states either solve provably-optimally or throw an HONEST too-deep — never wrong, never hang (24 trials)', () => {
     const rnd = mulberry32(0x334d77);
-    let optCount = 0, greedyCount = 0, tooDeep = 0;
+    let optCount = 0, tooDeep = 0;
     for (let trial = 0; trial < 24; trial++) {
       const scramble = randomRefScramble(11 + Math.floor(rnd() * 8), rnd); // depth 11–18
       let res: ReturnType<typeof solveCuboid334> | null = null;
@@ -171,13 +171,14 @@ describe('solveCuboid334 — validity (round-trip via INDEPENDENT geometry)', ()
         tooDeep++;
         continue;
       }
+      // Anything that DOES return is valid AND provably optimal (the solver has no greedy fallback).
       const after = refApply(res.solution ? `${scramble} ${res.solution}` : scramble);
-      expect(keyOf(after), `round-trip: ${scramble}`).toBe(REF_SOLVED_KEY); // VALID regardless of optimality
-      if (res.optimal) { optCount++; if (res.length > 0) expect(cuboid334Heuristic(scramble)).toBeLessThanOrEqual(res.length); }
-      else greedyCount++;
+      expect(keyOf(after), `round-trip: ${scramble}`).toBe(REF_SOLVED_KEY);
+      expect(res.optimal, `returned solutions are always optimal: ${scramble}`).toBe(true);
+      if (res.length > 0) expect(cuboid334Heuristic(scramble)).toBeLessThanOrEqual(res.length);
+      optCount++;
     }
-    // The split is informational (hybrid TIER-D); the hard guarantee is that nothing returns a wrong solution.
-    expect(optCount + greedyCount + tooDeep).toBe(24);
+    expect(optCount + tooDeep).toBe(24);
   });
 });
 
