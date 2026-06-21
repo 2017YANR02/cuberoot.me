@@ -18,6 +18,16 @@
 
 ---
 
+## §0.0 铁律(踩过 22 个单元的血泪,先读)
+
+1. **编辑器 / `new-diagnostics` 诊断一律不信** —— 多 agent 跑时它们恒陈旧(幻报「X 不可赋给 SolvePuzzle」「缺于 EVENT_ID」甚至「Cannot find module 2307」,本 loop 每次都是假)。唯一真相 = 跑 `pnpm --filter @cuberoot/client typecheck`(tsgo)**和** `typecheck:tsc`,各自 `; echo EXIT=$?` 直接看(**禁** tail/head/grep 管道,管道吞过真 exit)+ `git show --stat <hash>` 验提交完整。禁凭诊断派「修复」,先用两个 typechecker 复现。
+2. **先实算真闭包,再定档** —— 估值本 loop 错过 ~7 次(dino 35,640→239.5M;233→1.42e9;ctico ~1e8→7.1e34;gear 12.4M→41,472;sfl ~1e5→3.04M;ufo 200M→60,480;dmd ~1e6→138,240)。每单元必先跑 bounded BFS(OOM/耗时守卫)量真实可达态再选 A/B/C/D,太大就降档,**禁拿纸面估值定档**。
+3. **诚实记质量** —— 每单元日志显式写质量桶:「近最优(均值 N 步,method=…)」或「有效 + 有界(≤N 步,未优化)」。jumbling / 天文量级的「有效 + 有界」是**已接受结果**,别假装近最优。
+4. **状态数可超 2^53** —— 一律存/显示为预格式化字符串,**禁** JS number 字面量(D1b 把 4.3e19 写成数字字面量丢精度)。
+5. **UI 债真实在欠** —— 几乎每单元带 `[untested-ui]`(dev server 没起 / RAM 被大求解器占)。逻辑全 vitest 验过,只欠 Playwright;dev 起来 + RAM 空出后一次 UI-sweep(solver+stats 页、桌面 + 390px、预览渲染、0 console error)清账。**单元内绝不自启 dev server**(见 §0 约束)。
+
+---
+
 ## §0 LOOP PROTOCOL(每轮照做)
 
 1. **读本文件全文**。在 §1 自顶向下找第一个未打勾任务(尊重 TIER 顺序:A→B→C→soft-gate→D)。
@@ -32,8 +42,8 @@
    - **求解器 lib**(`pnpm --filter @cuberoot/client exec vitest run tests/<puzzle>_solver.test.ts` 绿):
      - **A/B 档**:独立 BFS 交叉验证最优性 + **全枚举计数 == 全空间分布**(照 `ivy_solver.test.ts`);God's number 锁 `toBe`。
      - **C 档**(单实例最优):随机 N 条打乱,solver 长度 == 独立 IDA\*/参照最短;`scramble∘solution = solved`。
-     - **D 档**(近最优):有效性必验(`scramble∘solution = solved`)+ 长度 ≤ 文献已知上界 / cstimer 同口径;最优性不强求,但要记录与已知最优的差距。
-   - **typecheck**:`pnpm --filter @cuberoot/client typecheck`(tsgo)EXIT=0。
+     - **D 档**(近最优):有效性必验 —— 测试的 oracle 必须**独立**(wrap-cstimer 走真引擎 round-trip;从零 reduction 则从几何**独立重导**移动置换,**禁**从 solver 字节拷贝再「自验」,A6 拷表 bug 证了什么都没测),验 `scramble∘solution = solved`;长度 ≤ 文献上界 / cstimer 同口径,质量桶照 §0.0 #3 记录。
+   - **typecheck**(照 §0.0 #1,两个都跑 + `; echo EXIT=$?`,无管道):`typecheck`(tsgo)+ `typecheck:tsc` 均 EXIT=0。
    - **UI**:playwright 开 `127.0.0.1:3000/scramble/solver?event=<id>` 桌面 + 390px,0 console error,**预览渲染**(solved 自证:纯色 / 复原态),分布页 `?event=<id>` 渲染。dev server 不在 `127.0.0.1:3000` → UI 验证标 §4 欠账继续,**绝不自己 `pnpm dev`**。
 5. **提交(子 agent 在单元内做)**:`git add` **只加本单元改动的文件**(别 `git add .`),commit(英文 message,结尾 `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`),**不 push**。跳过了 UI 门 → message 前缀 `[untested-ui]` + §4 登记。
 6. **更新并提交本文件**:勾掉任务;§2 追加一行(日期 + 单元 + commit 短 hash);有采样分布灌注/发布 → §3 MANUAL;有测试欠账 → §4。然后 `git add solver/NONWCA_PUZZLE_LOOP.md` 单独 commit(主 loop 自己做)。
@@ -63,10 +73,24 @@
 
 ---
 
+## §0.6 FROM-SCRATCH TIER D 子协议(剩余 backlog 全是这个)
+
+> 剩 18 个 D 单元**无 cstimer solver 可 wrap、无现成引擎可复用**(已核实,见 §3),每个要自建 reduction / 两阶段。照此走:
+
+1. **先量闭包(§0.0 #2)+ 分流打乱类型**:读 vendored 生成器(`tools/cstimer-scramble/scramble/*.js`)判 random-MOVE vs random-STATE。
+2. **有 cstimer solver(random-STATE)→ WRAP**(mpyrso/dino 范式):`cstimerSolve(id,scr)`(`lib/cstimer-scramble.ts`)→ worker `op:'solve'` → `SOLVERS` 映射;在 vendored 源该 puzzle 的 IIFE 内**加最小 additive 导出**(`solveScramble`/`roundTripCheck`),不改上游行为。oracle = 真引擎 round-trip。**(注:剩 18 个都没有,见 §3。)**
+3. **无 cstimer solver(random-MOVE,剩 18 个的常态)→ 自建 reduction / 两阶段**。有效性 oracle 必须从几何**独立重导**移动置换(**禁**从 solver 拷),验 scramble∘solution=solved。**部分有 poly3dlib 几何**(giga/prcp/heli/helicv/ctico,见 §3)→ apply oracle 可用,但**无 solver**。
+4. **分布 = 采样**(解 N 条随机打乱直方图,显式标「采样,非全空间」);下载 = 仅样本 CSV。可枚举但 >2M 的态集才用流式下载(generator + 分块 Blob + confirm,A4 范式;**禁**拼一个巨串,A4 撞过 80MB OOM)。
+5. **质量诚实(§0.0 #3)**:近最优做到就标近最优;jumbling / 天文量级「有效 + 有界」是已接受结果,别造假。
+6. **大数当字符串(§0.0 #4)**。
+
+---
+
 ## §1 BACKLOG(有序,自顶向下:A→B→C→soft-gate→D)
 
 > 每条:`event id`(`CSTIMER_EVENTS` 的 id)/ 中文名 / cstimer 源 / 估态数 / 档 / 备注。
 > ⚠ = 态数估值,子 agent 实算核实后回填。
+> **A/B/C 段的 `[→D]` 条目(233 / cm3 / sia113 / sia123 / sia222 / ctico)= 实测超档已重分类,别在原位接** —— 它们的真实态数/记号校准留在原条目作存档,**工作顺序以 §1 TIER D2 那张表为权威**。下一个未完成单元 = TIER D2 表里第一个非 `[x]` 的。
 
 ### TIER A — 现场全 BFS 最优(易,Ivy 范式直接套)
 
@@ -129,20 +153,35 @@
 - [x] **D1b** `crz3a` 疯狂 3×3 — `megascramble.js:27`(标准 3×3 移动集,~4.3×10¹⁹)。**复用站内 3×3 求解器**(kociemba/cubeopt);评估是否值得单开页(可能只是 333 换皮)。
   完成 2026-06-20(commit `6268157ee`,UI 门欠账见 §4)。**确认 crz3a = 标准 3×3 换皮**:megascramble.js:27 `[[["U","D"],["R","L"],["F","B"]],cubesuff]` = 标准 18 move(U/D/L/R/F/B × {"",2,'}),"crazy" 只是表现层,底层就是普通 3×3(~4.3×10¹⁹ 态)。**求解法 = 直接复用站内 client 端 kociemba 两阶段求解器**(`solver/_kociemba/{cube,movetables,prune,search}`),**非** cubeopt(那是 COEP,只给 event=333)、**非** cstimer、**非**从零写引擎。**接法 = 直接 import 搜索函数**(不走 worker):`lib/crz3a-solver.ts` 在模块作用域 lazy + memoized 建一次 move/prune 表,`async solveCrz3a(scramble)` 用 kociemba `parseMoves`(直接吃标准 HTM,零记号翻译)→ apply 到 solvedCubie → `solveCube()` → `formatMoves(sol)`(**用解本身、不 invert**,故 scramble∘solution=solved);纯 TS 无 worker/无 DOM → Node vitest 可直接 import 跑。**计步口径 = HTM face turn;近最优(非可证最短)**——kociemba 两阶段默认 maxTotalLen 23。**典型近最优解长度**(22 条真 cstimer crz3a 打乱实测):**均值 ≈ 20.82,min 18,max 23**(loose 上界 26)。**有效性测试结果 = 全部 round-trip**:tests/crz3a_solver.test.ts 用 node:vm 跑真 cstimer crz3a 生成器(len 25)生成 22 条真打乱,solveCrz3a 解后用**独立**的 3×3 重 apply(从 kociemba cube.ts import parseMoves/applySequence/solvedCubie/isSolvedCubie 作 oracle,与求解器同模型但独立校验)断言 scramble∘solution=solved → 22/22 全过 + 长度 ≤ 26 + solution token 全 `/^[URFDLB][2']?$/` + 空打乱→len 0;无最优性断言。落地文件 = `lib/crz3a-solver.ts`(direct-import kociemba wrap,无 BFS/无新表)+ `solver/_Crz3aSolver.tsx`(`?event=crz3a` dispatch,async 解 + spinner,仿 D1a)+ `stats/_components/Crz3aDistView.tsx`(**采样**近最优直方图,DEFAULT_SAMPLE 150,明确标「采样/近最优/等价标准 3×3/kociemba 两阶段非可证最优」,只下载样本 CSV)。**预览复用现成展开网图**(不新写 `_svg/crz3a_svg.ts`):给 `gen/_svg/cube_unfolded_svg.ts` 的 EVENT_TO_PUZZLE 加 `crz3a:'3x3x3'` → `eventToCubeSize('crz3a')===3` → ScramblePreview2D 的 cube-size 路径自动渲标准 3×3 网(solved 每面纯色自证)。接线 6 处(grep mpyrso 同款加 crz3a):cstimer-scramble.ts `solvable:true`(family `'other'`,NonWcaPuzzlePicker 的一个真实有序分组)/ solver page.tsx dynamic+dispatch / SolveTabs.tsx SolvePuzzle+EVENT_ID+PUZZLE_BY_EVENT+HAS_DISTRIBUTION / stats page.tsx import+isIvy+distPuzzle+`event==='crz3a'` 分支 / ScramblePreview2D HAS_PREVIEW(走 cube-size 路无需新 dispatch 行)。门:**主 loop 独立复核** `git show --stat 6268157ee` 证 10 文件全在 commit(4 新:crz3a-solver.ts/_Crz3aSolver.tsx/Crz3aDistView.tsx/crz3a_solver.test.ts)+ vitest 4/4 绿 + typecheck(tsgo)EXIT=0;Playwright 实时 UI 门跳过(RAM 紧 + dev server,按硬约束不自启),`[untested-ui]` 债见 §4。**结论:crz3a 确是 333 换皮,但复用 kociemba 成本极低(direct-import,~90 行 lib + 仿 D1a 接线),单开页有价值(独立 puzzle 入口 + 采样分布),已做。**
 
-### TIER D2 — 大型扭转,逐个独立工程,近最优(soft-gate 放行后)
+### TIER D2 — 从零 reduction,18 单元(soft-gate 放行后,**易→难有序,可行性各单元再实测确认**)
 
-- [ ] **D2a** `prcp` 五魔金字塔 — `~1.67×10¹⁷`,reduction/Pochmann。
-- [ ] **D2b** `giga` 六阶五魔 — `>1e18`,reduction。
-- [ ] **D2c** `sq2` 方块二 — huge,两阶段。
-- [ ] **D2d** `ssq1` 超 Sq-1 — huge,两阶段。
-- [ ] **D2e** `bsq` 受限 Sq-1 — huge,两阶段。
-- [ ] **D2f** `334` 3×3×4 — cuboid reduction。
-- [ ] **D2g** `335` 3×3×5 — cuboid reduction。
-- [ ] **D2h** `336` 3×3×6 — cuboid reduction。
-- [ ] **D2i** `337` 3×3×7 — cuboid reduction。
-- [ ] **D2j** `bic` 联体魔方(Bicube)— huge。
-- [ ] **D2k** `heli` 直升机 — `>1e8` + **jumbling**,最难。
-- [ ] **D2l** `helicv` 弧面直升机 — **jumbling**,最难。
+> 全走 §0.6 从零 reduction(无 cheap-win,见 §3 审计);均近最优契约。`[→D]` 单元的实测态数 / 记号校准已在原 §1 条目(TIER A/B 段)+ §3 在案,这里是**工作顺序的权威表**;`[ ]` 单元从没动过,先按 §0.0 #2 量闭包。每条:client id / 名 / cstimer 源 / 量级 / 切入法。
+
+**① 长方体(层 reduction,最可行)**
+- [→D] **D2-1** `233` 2×3×3 多米诺 — `megascramble.js:30`(7 token)。实测 1.42×10⁹(8!·8!·7/8);两阶段:先棱后角。
+- [ ] **D2-2** `334` 3×3×4 — `megascramble.js:9`。cuboid reduction(先 ②×② 块归内层、再 3×3 收尾)。
+- [ ] **D2-3** `335` 3×3×5 — `megascramble.js:56`(`/ ${333}` 后接标准 333)。cuboid reduction。
+- [ ] **D2-4** `336` 3×3×6 — `megascramble.js:10`。cuboid reduction。
+- [ ] **D2-5** `337` 3×3×7 — `megascramble.js:57`。cuboid reduction。
+
+**② Square 系(两阶段,可学已有 sq1 求解器)**
+- [ ] **D2-6** `sq2` 方块二 — `utilscramble.js:552`((u,d)/ tuple 生成器)。两阶段(仿 sq1 shape→perm)。
+- [ ] **D2-7** `ssq1` 超 Sq-1(cstimer key `ssq1t`)— `utilscramble.js:563`。两阶段。
+- [ ] **D2-8** `bsq` 受限 Sq-1 — `utilscramble.js:565`(`sq1_scramble(2,len)`)。两阶段。
+
+**③ 中型 reduction**
+- [→D] **D2-9** `cm3` Cmetrick(full)— `megascramble.js:28`(18 token,9 球阵)。量级 10⁹–10¹¹;reduction / 两阶段。
+- [ ] **D2-10** `bic` 联体魔方(Bicube)— `utilscramble.js:88`(`bicube` doMove,23 facelet)。先量闭包再定法。
+- [→D] **D2-11** `sia113` 联体 1×1×3 — `megascramble.js:53`(12 token + `z2`)。量级 10⁸–10⁹;双立方 reduction。
+- [→D] **D2-12** `sia123` 联体 1×2×3 — `megascramble.js:54`(10 token + `z2`)。量级 10⁸–10⁹;双立方 reduction。
+- [→D] **D2-13** `sia222` 联体 2×2×2 — `megascramble.js:55`(11 token + `z2 y`)。量级 10⁸–10¹⁰;双立方 reduction。
+
+**④ 最难 —— 「有效 + 有界」是现实天花板(jumbling / 天文量级,§0.0 #3)**
+- [ ] **D2-14** `prcp` 五魔金字塔 — `utilscramble.js:533`(`pochscramble`,~1.67×10¹⁷;有 poly3dlib `prc` 几何当 oracle)。reduction/Pochmann。
+- [ ] **D2-15** `giga` 六阶五魔 — `utilscramble.js:461`(`gigascramble`,>1e18;有 poly3dlib `giga` 几何)。reduction。
+- [→D] **D2-16** `ctico` 二十面体 Icosamate — `utilscramble.js:567`(实测 |G|=7.1×10³⁴;有 poly3dlib `ctico` 几何 apply oracle,**但无 solver**)。reduction,接受有界。
+- [ ] **D2-17** `heli` 直升机 — `utilscramble.js:473`(`adjScramble`,>1e8 + **jumbling**;有 poly3dlib `heli` 几何)。接受有界。
+- [ ] **D2-18** `helicv` 弧面直升机 — `utilscramble.js:474`(同 heli adj,**jumbling**)。接受有界。
 
 ---
 
@@ -201,7 +240,8 @@
 - **B3 `233` 2×3×3 多米诺档位边界(2026-06-20,误分类 → 并入 soft-gate 决策批,loop 不停、跳过继续 B4)**:`233` = `megascramble.js:30` 项 `[[[["U","U'","U2"]],["R2","L2"],["F2","B2"]]]`(`value.length===1` → `mega(value[0],[""],N)`),物理 = **2(高)×3×3 长方体多米诺**:U/D 两大 3×3 面,仅顶面 U 转 90°(无 D token,cstimer 固定底面);四侧面 R/L/F/B(各 2×3 矩形)只 180°。token 字母表恰 **7 个** `U U' U2 R2 L2 F2 B2`。从机制独立几何重推导(坐标 x∈{0,1,2}/y∈{0,1}/z∈{0,1,2},18 槽全在壳上,2 个面心(顶心 (1,1,1) / 底心 (1,0,1))永不动 → 16 活动 cubie 分两个 8-轨道:8 角(4 顶 + 4 底)+ 8 棱(4 顶 + 4 底);U 90° 同 3×3 的 U 转(角循环角、棱循环棱),侧面 180° 交换顶↔底;已验 U⁴=identity、R2/L2/F2/B2 全自逆)。**实测可达态 = 1,422,489,600(≈1.42 × 10⁹)**:独立 Schreier-Sims 在 16 活动点上算 |G| = 1,422,489,600 = 8!·8!·7/8 = 40,320 × 35,280(= 上界 8!·8! = 1,625,702,400 的 7/8,棱-角奇偶耦合砍 1/8);bounded BFS(compact 编码 + heap 守卫 1.8GB)独立佐证每层累计 `[1,8,42,210,1017,4811,22435,103158,465422,2068198]`、增长比 ~×4.4–4.8 稳定、深度 9 累计 2.07M 远未完成(对照 |G| ≈14 亿,外推上帝之数 ~17–19)。**711× 于 TIER A(2 × 10⁶)、28× 于 TIER B(5 × 10⁷)上限,纯 TS 全 BFS 与 build 时 `.bin.gz` 预算表均不可行**(dist 表 >GB、全空间精确直方图 / 「下载全部状态」全做不到)。记号已校准(node:vm 真跑 cstimer 233 生成器 × 500 条 / 12,500 token → distinct token 恰 7 个、0 解析失败;cstimer 无 apply/无 solver/无图,只能验 token 集 + 解析有效性)。executor 照 A5 dino / A9 sia113 / B2 cm3 决策**未在「太大」前提上动工、未写代码**。**等用户三选一**(同前三档):① 跳过 B3 求解器(`233` 不标 `solvable:true`,只留打乱);② 允许近最优(两阶段 reduction:先归约棱、再角,可证 `scramble∘solution=solved`、长度 ≤ cstimer 同口径,但非可证最优 + 仅抽样分布);③ 在 backlog 重分类到 D 档,按对称约简陪集表(棱角分离 + 立方子群对称)走可证最优(真工程,约简后**可能**落 ~10⁷–10⁸ 仍可最优,比 cm3 更接近可行边界,但需先评估约简比)。
 - **B4 `sia123` 联体 1×2×3 档位边界(2026-06-20,误分类 → 并入 soft-gate 决策批,loop 不停、跳过继续 B5)**:`sia123` = `args2`/`formatScramble` 项 `#{[["U"],["R","r"]],%c,%l} z2 #{[["U"],["R","r"]],%c,%l}`(两块 `mega`:每 cube 轴 `[["U"],["R","r"]]` = 单 U 层 + R 面 + r 切片,后缀 cubesuff,中夹字面 `z2`;cstimer 无 apply/无 solver/无图 → 无 round-trip oracle)。物理 = 两个 3×3×3 沿共享 1×2×3 块粘连的 bandaged 双联体(比 sia113 少 `u` 自由层,略更受限)。**实测可达态 ≫ 5×10⁷**:验证过的 surf-cubie+24 取向 rigid-body BFS(compact latin1 编码 + 4.5M 节点硬上限 + heap 守卫,6 生成元全 order-4 sanity 过)逐层 new `[1,18,180,1512,12319,99278,793104]`、增长比 ~×8(10.0/8.40/8.15/8.06/7.99 收敛 8),深度 6 累计 906,412、深度 7 撞 4.5M cap;×8 外推:深度 8 ≈ 5.8×10⁷(跨 TIER B 上限)、深度 9 ≈ 4.6×10⁸、深度 10 ≈ 3.7×10⁹ → 量级 **10⁸–10⁹**(同文档 sia113「最少 bandage」档),上帝之数估 ~13–16。**超 TIER A(2M)与 TIER B(5×10⁷)上限,纯 TS 全 BFS / build 预算表均不可行**。记号已校准(node:vm 真跑 cstimer sia123 × 400 条 / 16,400 token → distinct 恰 10 个 `U U' U2 R R' R2 r r' r2` + 字面 z2、0 解析失败)。executor 照 A5 dino / A9 sia113 决策**未在「太大」前提上动工、未写代码**。**等用户三选一**(同前三档):① 跳过 B4 求解器(`sia123` 不标 `solvable:true`,只留打乱);② 允许近最优(双立方 reduction / 两阶段,可证 `scramble∘solution=solved`、长度 ≤ cstimer 同口径,非可证最优 + 仅抽样分布);③ 在 backlog 重分类到 D 档,按对称约简陪集表(立方 24 旋转对称约简)走可证最优(真工程)。
 - **B5 `sia222` 联体 2×2×2 档位边界(2026-06-20,误分类 → 并入 soft-gate 决策批,loop 不停、跳过继续 B6)**:`sia222` = `args2`/`formatScramble` 项 `#{[["U"],["R"],["F"]],%c,%l} z2 y #{[["U"],["R"],["F"]],%c,%l}`(两块 `mega`:每 cube 轴 `[["U"],["R"],["F"]]` = 单层 3-gen 像 2×2×2,后缀 cubesuff,中夹字面 `z2 y`;无 round-trip oracle)。物理 = 两个 3×3×3 沿共享 2×2×2 块粘连的 bandaged 双联体(三族中**最 bandaged**,每 cube 仅 3 个外层单面可转)。**实测可达态 ≫ 5×10⁷**:同款 rigid-body BFS(6 生成元全 order-4 sanity 过)逐层 new `[1,18,225,2700,32256,383844]`、增长比 ~×12(12.5/12.0/11.95/11.90 稳定),深度 5 累计 419,044、深度 6 撞 4.5M cap;×12 外推:深度 7 ≈ 6.0×10⁷(跨 TIER B 上限)、深度 8 ≈ 7.2×10⁸、深度 9 ≈ 8.7×10⁹ → 量级 **10⁸–10¹⁰**(z2 y 把 cube B 三轴全带进转动位故早层分支更快),上帝之数估 ~12–15。**超 TIER A/B 上限,纯 TS 全 BFS / build 预算表均不可行**。记号已校准(node:vm 真跑 cstimer sia222 × 400 条 / 16,800 token → distinct 恰 11 个 `U U' U2 R R' R2 F F' F2` + 字面 z2 y、0 解析失败)。executor**未在「太大」前提上动工、未写代码**。**等用户三选一**:① 跳过 B5 求解器(只留打乱);② 近最优(双立方 reduction,采样分布);③ 重分类 D 档对称约简陪集表最优(真工程)。
-- **B6 `ctico` 二十面体(Icosamate)档位边界(2026-06-20,误分类 → 并入 soft-gate 决策批,loop 不停、跳过;B 档全清)**:`ctico` = `utilscramble.js:568` 的 `adjScramble(["UL","UR","UrUl","FlFr","LBl","RBr"], [0x3f×6], len, minxsuff)`(6 个顶点 5 阶转 × minxsuff 4 power = 24 token,adj 全 `0x3f` 六面互邻 → 仅约束相邻 move 不重复;random-MOVE)。**但 ctico 在 cstimer `poly3dlib` 里有真几何 + 真引擎**(`getFamousPuzzle('ctico')` → `polyParam=[20,[],[],[-5,0]]` → `makePuzzle` 产 24 个 twisty 的 `moveTable`,80 facelet),= 深切顶点转的二十面体(类比 dmd A8 的八面体,但 20 面),**故有真 oracle**。**实测 |G| = 71,128,171,054,676,736,000,000,000,000,000,000 ≈ 7.1×10³⁴(EXACT,用 cstimer 自带 `grouplib.SchreierSims(moveTable 24 个 order-5 生成元).size(true)` 在 0.05s 算出)**——**远超原估 ~1e8(低估 26 个数量级)与 TIER B 5×10⁷ 上限**。bounded BFS 佐证爆炸增长:逐层 new `[1,72,2867,98640,3272880]`(比 ~×40/×34/×33),深度 4 累计 3.37M 即撞 heap 守卫。**绝非 B/D 边界,是深 D**:dist 表/全空间直方图/下载全部/build 预算表全不可套。记号已校准(node:vm 真跑 cstimer ctico × 400 条 / 10,000 token → distinct 恰 24 个 `{UL,UR,UrUl,FlFr,LBl,RBr}×minxsuff`、0 解析失败)。executor**未在「太大」前提上动工、未写代码**。**等用户三选一**:① 跳过 B6 求解器(只留打乱);② 近最优——`ctico` 既是 poly3dlib random-state 魔方(有真 solver+apply),**可像 D1 省力路直接 wrap cstimer 自带 solver 当近最优引擎**(采样分布);③ 对称约简最优**不现实**(7×10³⁴ 远超任何枚举/陪集表可行域)。
+- **B6 `ctico` 二十面体(Icosamate)档位边界(2026-06-20,误分类 → 并入 soft-gate 决策批,loop 不停、跳过;B 档全清)**:`ctico` = `utilscramble.js:568` 的 `adjScramble(["UL","UR","UrUl","FlFr","LBl","RBr"], [0x3f×6], len, minxsuff)`(6 个顶点 5 阶转 × minxsuff 4 power = 24 token,adj 全 `0x3f` 六面互邻 → 仅约束相邻 move 不重复;random-MOVE)。**但 ctico 在 cstimer `poly3dlib` 里有真几何 + 真引擎**(`getFamousPuzzle('ctico')` → `polyParam=[20,[],[],[-5,0]]` → `makePuzzle` 产 24 个 twisty 的 `moveTable`,80 facelet),= 深切顶点转的二十面体(类比 dmd A8 的八面体,但 20 面),**故有真 oracle**。**实测 |G| = 71,128,171,054,676,736,000,000,000,000,000,000 ≈ 7.1×10³⁴(EXACT,用 cstimer 自带 `grouplib.SchreierSims(moveTable 24 个 order-5 生成元).size(true)` 在 0.05s 算出)**——**远超原估 ~1e8(低估 26 个数量级)与 TIER B 5×10⁷ 上限**。bounded BFS 佐证爆炸增长:逐层 new `[1,72,2867,98640,3272880]`(比 ~×40/×34/×33),深度 4 累计 3.37M 即撞 heap 守卫。**绝非 B/D 边界,是深 D**:dist 表/全空间直方图/下载全部/build 预算表全不可套。记号已校准(node:vm 真跑 cstimer ctico × 400 条 / 10,000 token → distinct 恰 24 个 `{UL,UR,UrUl,FlFr,LBl,RBr}×minxsuff`、0 解析失败)。executor**未在「太大」前提上动工、未写代码**。**等用户三选一**:① 跳过 B6 求解器(只留打乱);② 近最优——`ctico` poly3dlib 有 `moveTable` 真几何(apply oracle 可用,A8 dmd 同源)但 **poly3dlib 不带 solver**(见下「cheap-win 审计」更正),故须自建 reduction / 两阶段(非 D1 省力 wrap),oracle = poly3dlib apply round-trip,采样分布;③ 对称约简最优**不现实**(7×10³⁴ 远超任何枚举/陪集表可行域)。
+- **cheap-win 审计(2026-06-21,主 loop):剩 18 个 D 单元无一可 wrap cheap-win,全是从零 reduction。** 逐个 grep 了 vendored cstimer 源(`tools/cstimer-scramble/scramble/*.js` + `lib/poly3dlib.js`):**cstimer solver 函数只覆盖** 2x2x3 / clock / gear / megaminx(klm,mgm via `mgmsolver`)/ pyraminx(`solveMpyr` ← D1a 用)/ redi(`solveDino` ← A5→D 用)/ fto —— **剩 18 个 id 全不命中**。具体:sq 系(sq2/ssq1[key ssq1t]/bsq)是 `sq1_scramble`/`ssq1t_scramble` 纯生成器无 solver;prcp(`pochscramble`)、giga(`gigascramble`)、heli/helicv(`adjScramble`)、bic(`bicube` doMove)、cuboid(334/335/336/337/233,megascramble.js)、cm3、sia113/sia123/sia222(megascramble.js)全是 random-MOVE 生成器。**poly3dlib 经核实只有几何**(`makePuzzle`→`moveTable`=apply,`grouplib.SchreierSims`=群阶)**没有 IDA*/solver** —— A8 dmd「有 solver」其实是闭包小(138k)自建 BFS;ctico(7.1e34)只有 apply 没法 BFS。**有 poly3dlib 几何(→ 可拿 apply 当独立 oracle)的剩余 id = giga / prcp(prc) / heli / helicv / ctico**;其余(sq 系 / cuboid / cm3 / bic / sia 系)连几何都没有,oracle 须从 §1 条目里那套独立重导的几何模型自建。**故所有 18 个走 §0.6 从零 reduction 路,无 mpyrso/dino 式省力 wrap。**
 - (采样分布(C/D 档)的灌注 / 发布 MANUAL 交接,做到时写这里)
 
 ---
