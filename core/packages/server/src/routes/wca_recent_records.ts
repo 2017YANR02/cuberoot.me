@@ -37,7 +37,7 @@ export const wcaRecentRecordsRoutes = new Hono();
 const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
 const POLL_INTERVAL_MS = 60_000;
 const FETCH_TIMEOUT_MS = 15_000;
-const SITE_BASE = 'https://www.cuberoot.me';
+const SITE_BASE = 'https://cuberoot.me';
 const INFERRED_CAP = 40;  // 首页一次最多并入多少条中国比赛推断纪录
 
 export interface RecentRecord {

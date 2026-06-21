@@ -38,7 +38,7 @@ const XHP_GATEWAY = process.env.XUNHUPAY_GATEWAY || 'https://api.xunhupay.com/pa
 const XHP_QUERY = process.env.XUNHUPAY_QUERY || 'https://api.xunhupay.com/payment/query.html';
 // notify_url / return_url 用的对外 origin(api 域;notify 必须 xunhupay 能访问到)。
 const PUBLIC_API_ORIGIN = process.env.PUBLIC_API_ORIGIN || 'https://api.cuberoot.me';
-const SITE_ORIGIN = process.env.PUBLIC_SITE_ORIGIN || 'https://www.cuberoot.me';
+const SITE_ORIGIN = process.env.PUBLIC_SITE_ORIGIN || 'https://cuberoot.me';
 
 const md5 = (s: string) => createHash('md5').update(s, 'utf8').digest('hex');
 

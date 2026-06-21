@@ -62,10 +62,10 @@ function setLangCookie(res: NextResponse, lang: Locale) {
 // these). Central — covers every route without touching a page component, and
 // SSG-safe (middleware runs on prerendered/CDN responses too, so it never opts
 // a page into dynamic rendering). English canonical is the BARE URL; Chinese is
-// /zh/…; x-default points at the bare (English) URL. Host hard-pinned to www so
-// apex / next.cuberoot.me / *.vercel.app previews self-consolidate. `rest` is
-// the locale-stripped path, so en/zh share one sub-path.
-const CANONICAL_HOST = 'https://www.cuberoot.me';
+// /zh/…; x-default points at the bare (English) URL. Host hard-pinned to the
+// bare domain so www / next.cuberoot.me / *.vercel.app previews self-consolidate.
+// `rest` is the locale-stripped path, so en/zh share one sub-path.
+const CANONICAL_HOST = 'https://cuberoot.me';
 
 function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
   const sub = rest === '/' ? '' : rest;

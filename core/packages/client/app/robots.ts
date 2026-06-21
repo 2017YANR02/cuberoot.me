@@ -28,6 +28,6 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: '*', allow: '/', disallow: ['/stats/', '/api/'] },
       { userAgent: BLOCKED_BOTS, disallow: '/' },
     ],
-    sitemap: 'https://www.cuberoot.me/sitemap.xml',
+    sitemap: 'https://cuberoot.me/sitemap.xml',
   };
 }

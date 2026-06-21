@@ -234,7 +234,7 @@ export function reconPathSeg(solve: ReconSlugInput): string {
  *  (e.g. app/sitemap.ts) may still pass just the bare id. */
 export function reconCanonical(id: string, lang: string, seg?: string): string {
   const prefix = isZhLang(lang) ? '/zh' : '';
-  return `https://www.cuberoot.me${prefix}/recon/${seg ?? id}`;
+  return `https://cuberoot.me${prefix}/recon/${seg ?? id}`;
 }
 
 /** Parse a YouTube video id from a watch / youtu.be / embed / shorts URL. null otherwise. */
