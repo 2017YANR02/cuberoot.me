@@ -23,18 +23,19 @@
  *   165,181,768,335,360,000 = (40320³·2520·2)/2 (a single inter-orbit permutation-parity link, factor 2).
  *   That is ~1.65×10¹⁷ — astronomically beyond TIER A (full BFS) and TIER B (packed table).
  *
- * WHY NOT PROVABLY-OPTIMAL EVERYWHERE: with only browser-buildable admissible pattern databases
- * (the five per-orbit BFS tables, max depths 13/9/13/7/1), the best admissible heuristic caps near 13
- * while the diameter is ~18-20, so IDA* explodes past depth ~12 (measured: a depth-12 state ≈ 3 s, a
- * depth-16 state times out even with a 102 MB joint PDB; weighted-A-star / greedy over the weak
- * heuristic either time out or wander to 200+ moves). A provably-optimal in-browser solver is not
- * feasible. So this is a HYBRID:
- *   • shallow states (≤ ~12 moves from solved) are solved PROVABLY OPTIMALLY by IDA* + the admissible
- *     max(orbit-distance) heuristic, within a node budget;
- *   • deeper states fall back to a fast greedy reduction (best-first over the same orbit distances),
- *     which always returns a VALID, BOUNDED solution (typically long — this is the accepted
- *     "effective + bounded" TIER-D outcome for a 1.65×10¹⁷-state puzzle with no small heuristic).
- * The returned `optimal` flag tells callers which path produced the solution.
+ * STRATEGY — provably-optimal-on-the-shallow-ball, honest "too-deep" beyond it:
+ * with only browser-buildable admissible pattern databases (the five per-orbit BFS tables, max depths
+ * 13/9/13/7/1), the best admissible heuristic caps near 13 while the diameter is ~18-20, so IDA*
+ * explodes past depth ~12 (measured: a depth-12 state ≈ 3 s, a depth-16 state times out even with a
+ * 102 MB joint PDB). A provably-optimal in-browser solver for ALL states is not feasible, and a greedy
+ * fallback was measured to either time out or wander to 200+ moves (a 200-move "solution" is useless),
+ * so NO "valid but long" path is offered. Instead:
+ *   • shallow states (≤ ~13 moves from solved) are solved PROVABLY OPTIMALLY by IDA* + the admissible
+ *     max(orbit-distance) heuristic, within a node budget → `optimal: true`;
+ *   • deeper states throw Error('too-deep') (the state IS solvable, just beyond the in-browser optimal
+ *     budget). The UI surfaces this gracefully and offers a short scramble that always solves.
+ * Every returned solution is therefore PROVABLY OPTIMAL; the `optimal` flag is kept on the result shape
+ * for API symmetry with the other puzzle solvers and is always true.
  */
 
 // ── geometry-derived 66-sticker model (runtime, self-verifying) ──────────────────────
