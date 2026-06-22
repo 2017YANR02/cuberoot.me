@@ -826,8 +826,8 @@ function eventCellContent(
 // 三列合并成一列，由左下拉选当前显示哪个；点列头按它升/降排序。
 // latlng = 经纬度,下拉里是一个选项,但表头/行渲染成「纬度 + 经度」两列(各自可排序)
 // 'peopleLimit' = 人数 + 上限合并成一个 metric,表头展开成两个子列（人数 | 上限），同 latlng 的双列模式
-type CompMetric = 'peopleLimit' | 'ratio' | 'nameLength' | 'cityLength' | 'latlng' | 'none';
-const COMP_METRICS: CompMetric[] = ['peopleLimit', 'ratio', 'nameLength', 'cityLength', 'latlng', 'none'];
+type CompMetric = 'peopleLimit' | 'ratio' | 'nameLength' | 'cityLength' | 'latlng';
+const COMP_METRICS: CompMetric[] = ['peopleLimit', 'ratio', 'nameLength', 'cityLength', 'latlng'];
 // 经纬度可正可负、可为 0（赤道/本初子午线），不能套用 "<=0 视为缺失" 的计数列规则
 const SIGNED_METRICS = new Set<CompMetric>(['latlng']);
 // 经纬度子列排序键：latlng 模式下点哪一列就按哪个坐标排
@@ -1112,7 +1112,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
         const cmp = collator.compare(keyOf(a), keyOf(b));
         return cmp !== 0 ? cmp * mul : byDateDesc(a, b);
       });
-    } else if (listSort && listSort.col === 'comp' && compMetric !== 'none') {
+    } else if (listSort && listSort.col === 'comp') {
       const signed = SIGNED_METRICS.has(compMetric);
       const valOf = compMetric === 'latlng'
         ? (c: Competition) => (listSort.coord === 'lat' || listSort.coord === 'lng' ? compCoord(c, listSort.coord) : null)
@@ -1200,7 +1200,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   // 后者带 LIST_BUFFER 上缓冲会指向视口外往上 8 行的位置，导致跨年时年份显示滞后）
   // 非日期序（任何列排序）时列表不再按年分组，sticky 年份无意义
   // date 排序仍是按时间分组（年份升/降而已），保留 sticky 年份；其余列排序打散年份分组
-  const sorted = !!listSort && listSort.col !== 'date' && !(listSort.col === 'comp' && compMetric === 'none');
+  const sorted = !!listSort && listSort.col !== 'date';
   useEffect(() => {
     if (items.length === 0 || sorted) { onYearChange(null); return; }
     const idx = Math.min(range.top, items.length - 1);
@@ -1382,7 +1382,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
               ) : (
                 <span
                   className={`cl-people-cell${compMetric === 'ratio' ? ' cl-limit-cell' : ''}`}
-                  title={compMetric === 'none' ? undefined : compColTitle(compMetric)}
+                  title={compColTitle(compMetric)}
                 >
                   {(() => {
                     if (compMetric === 'ratio') { const r = fillRate(c); return r == null ? '' : `${Math.round(r * 100)}%`; }
@@ -1969,7 +1969,6 @@ function CalendarPageInner() {
       ref={pageRef}
       className={`calendar-page${viewMode === 'list' ? ' calendar-page--list' : ''}${viewMode === 'compact' ? ' calendar-page--compact' : ''}${viewMode === 'globe' ? ' calendar-page--globe' : ''}`}
       data-wide-metric={viewMode === 'list' && WIDE_METRICS.has(eventMetric) ? '' : undefined}
-      data-comp-none={viewMode === 'list' && compMetric === 'none' ? '' : undefined}
       data-comp-2col={viewMode === 'list' && (compMetric === 'latlng' || compMetric === 'peopleLimit') ? '' : undefined}
       data-comp-peoplelimit={viewMode === 'list' && compMetric === 'peopleLimit' ? '' : undefined}
     >
@@ -2191,8 +2190,6 @@ function CalendarPageInner() {
             })}</option>
               <option value="latlng">{tr({ zh: '经纬度', en: 'Coordinates'
             })}</option>
-              <option value="none">{tr({ zh: '整场不显示', en: 'Hide whole-comp'
-            })}</option>
             </select>
             <select
               className="list-metric-select"
@@ -2369,9 +2366,7 @@ function CalendarPageInner() {
                 );
               })()}
               {daysChip}
-              {compMetric === 'none' ? (
-                <span className="cl-h-spacer" aria-hidden="true" />
-              ) : compMetric === 'latlng' ? (
+              {compMetric === 'latlng' ? (
                 (['lat', 'lng'] as CoordKey[]).map((k) => {
                   const Icon = k === 'lat' ? MoveVertical : MoveHorizontal;
                   const on = !!listSort && listSort.col === 'comp' && listSort.coord === k;
