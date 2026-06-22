@@ -139,7 +139,10 @@ describe('ssq1 solver — bounded length (high sample)', () => {
     lens.sort((a, b) => a - b);
     const mean = lens.reduce((a, b) => a + b, 0) / lens.length;
     // eslint-disable-next-line no-console
-    console.log(`[ssq1] N=2000 tuple length: mean=${mean.toFixed(1)} median=${lens[1000]} min=${lens[0]} max=${lens[lens.length - 1]} (bound ${SSQ1_MAX_LENGTH}); quality bucket = valid+bounded (inverse reduction)`);
+    console.log(`[ssq1] N=2000 tuple length: mean=${mean.toFixed(1)} median=${lens[1000]} min=${lens[0]} max=${lens[lens.length - 1]} (bound ${SSQ1_MAX_LENGTH}); quality bucket = valid+bounded (two-phase shape+permutation reduction)`);
+    // sanity: the reduction yields a real SPREAD of lengths (NOT the degenerate one-bar histogram the
+    // old inverse-scramble solver produced) — distinct length values must be well above 1.
+    expect(new Set(lens).size).toBeGreaterThan(5);
     expect(over).toBe(0);
     expect(lens[lens.length - 1]).toBeLessThanOrEqual(SSQ1_MAX_LENGTH);
   });

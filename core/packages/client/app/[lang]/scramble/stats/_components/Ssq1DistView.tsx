@@ -3,7 +3,7 @@
 // Super Square-1(ssq1)解步数分布 —— **离线预计算的采样直方图**(非全空间精确曲线):Super Square-1 是
 // 两个耦合的 Square-1,可达状态 ≈1.15×10²⁵(两个 Square-1 之积),太大无法整图枚举。分布由 build 脚本
 // (scramble-stats-build/src/build_puzzle_sampled_dist.ts)**离线**采 N 条 cstimer 同款随机打乱、逐条用
-// 求解器(逆约简:解 = 打乱的逆)求解、把返回解步数分桶,落静态 stats/scramble/dist_ssq1.json;本页
+// 求解器(两阶段形状+排列约简)求解、把返回解步数分桶,落静态 stats/scramble/dist_ssq1.json;本页
 // **只 fetch + 渲染**,进页不做任何求解(铁律:TIER C/D 分布严禁浏览器现场采样)。下载样本来自 JSON 内嵌
 // 的 generatedSamples。
 import { useEffect, useMemo, useState } from 'react';
@@ -119,8 +119,8 @@ export default function Ssq1DistView({ isZh }: { isZh: boolean }) {
         <div className="scramble-stats-puzzle-meta">
           <span>
             {tr({
-              zh: `${sampleCount.toLocaleString()} 条随机打乱样本(离线预计算,逆约简有效有界,非最优)`,
-              en: `${sampleCount.toLocaleString()} random-scramble samples (precomputed offline, inverse reduction valid+bounded, not optimal)`,
+              zh: `${sampleCount.toLocaleString()} 条随机打乱样本(离线预计算,两阶段约简有效有界,非最优)`,
+              en: `${sampleCount.toLocaleString()} random-scramble samples (precomputed offline, two-phase reduction valid+bounded, not optimal)`,
             })}
           </span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '一个 (a,b,c,d)/ 元组 = 1 步', en: 'one (a,b,c,d)/ tuple = 1 move' })}</span>
@@ -180,7 +180,7 @@ export default function Ssq1DistView({ isZh }: { isZh: boolean }) {
 
       {stats && (
         <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计(随机态样本,逆约简有效有界)', en: 'Summary stats (random-state sample, inverse reduction valid+bounded)' })}</div>
+          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计(随机态样本,两阶段约简有效有界)', en: 'Summary stats (random-state sample, two-phase reduction valid+bounded)' })}</div>
           <div className="scramble-stats-stat-grid">
             <Cell label={tr({ zh: '样本均值', en: 'sample mean' })} value={stats.mean.toFixed(1)} />
             <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(stats.median)} />
@@ -193,8 +193,8 @@ export default function Ssq1DistView({ isZh }: { isZh: boolean }) {
       <div className="scramble-stats-meta">
         <span>
           {tr({
-            zh: `这是【随机态的返回解长度】采样分布,不是全空间最优分布:Super Square-1 是两个耦合的 Square-1,可达状态 ${stateCountStr} 个,太大无法整图枚举,任何整图 BFS / 单阶段 IDA* 在随机态上都会爆。这条曲线由 build 脚本离线对 ${sampleCount.toLocaleString()} 个 cstimer 同款随机打乱求解、把返回解步数分桶得到 —— 求解器走构造式**逆约简**(解 = 打乱的逆),保证每条都能解且步数有界(约等于打乱长度 + 1),但**不是最优**;页面只读取预计算结果,不在浏览器里求解。它不是 WCA 项目,示例即采样到的真实随机打乱;全空间精确最优分布算不出来。步数按 cstimer 同款 (a,b,c,d)/ 元组计(每个元组 1 步)。`,
-            en: `This is a SAMPLED distribution of the RETURNED solution length on random states — not the full-space optimal distribution: the Super Square-1 is two coupled Square-1 mechanisms with ${stateCountStr} reachable states, far too many to enumerate, and any full-graph BFS / single-phase IDA* explodes on random states. The curve is precomputed offline by a build script that solves ${sampleCount.toLocaleString()} cstimer-style random scrambles and buckets the returned lengths — the solver uses a constructive INVERSE reduction (solution = the scramble inverse), which guarantees every scramble solves with a bounded length (≈ scramble length + 1) but is NOT optimal; this page only reads the precomputed result and does no in-browser solving. It is not a WCA event; the examples are the actual sampled random scrambles; the exact full-space optimal distribution can't be computed. Length is counted in cstimer-style (a,b,c,d)/ tuples (one tuple = one move).`,
+            zh: `这是【随机态的返回解长度】采样分布,不是全空间最优分布:Super Square-1 是两个耦合的 Square-1,可达状态 ${stateCountStr} 个,太大无法整图枚举,任何整图 BFS / 单阶段 IDA* 在随机态上都会爆。这条曲线由 build 脚本离线对 ${sampleCount.toLocaleString()} 个 cstimer 同款随机打乱求解、把返回解步数分桶得到 —— 求解器走**两阶段形状+排列约简**直接解实际状态(每面归方块形→解角排列→解棱排列,含奇偶校验),保证每条都能解且步数有界,但**不是最优**,解长度随打乱难度变化(故曲线呈双峰:约半数需要奇偶校验、更长);页面只读取预计算结果,不在浏览器里求解。它不是 WCA 项目,示例即采样到的真实随机打乱;全空间精确最优分布算不出来。步数按 cstimer 同款 (a,b,c,d)/ 元组计(每个元组 1 步)。`,
+            en: `This is a SAMPLED distribution of the RETURNED solution length on random states — not the full-space optimal distribution: the Super Square-1 is two coupled Square-1 mechanisms with ${stateCountStr} reachable states, far too many to enumerate, and any full-graph BFS / single-phase IDA* explodes on random states. The curve is precomputed offline by a build script that solves ${sampleCount.toLocaleString()} cstimer-style random scrambles and buckets the returned lengths — the solver uses a genuine TWO-PHASE shape+permutation reduction of the actual state (each side: reduce to cube shape → solve corner permutation → solve edge permutation, with a parity fix), which guarantees every scramble solves with a bounded length but is NOT optimal, and the length VARIES with the scramble (hence the bimodal curve: ~half the states need the parity fix and run longer); this page only reads the precomputed result and does no in-browser solving. It is not a WCA event; the examples are the actual sampled random scrambles; the exact full-space optimal distribution can't be computed. Length is counted in cstimer-style (a,b,c,d)/ tuples (one tuple = one move).`,
           })}
         </span>
         <span>{tr({ zh: '生成时间', en: 'Generated' })}: {json.generated_at}</span>
