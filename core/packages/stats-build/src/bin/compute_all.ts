@@ -35,7 +35,7 @@ const ALL_MERGED = new Set([
 // NOTE: 优先统计——聚合页面排最前，确保缓存及时释放
 const PRIORITY_STATS = [
   'wr_newcomer', 'wr_metric', 'wr_aoxr', 'average_of',
-  'wr_current', 'first_r_is_wr', 'wr_dominance',
+  'first_r_is_wr', 'wr_dominance',
 ];
 
 // NOTE: HEAVY_STATS——这些统计 RSS > 3GB
