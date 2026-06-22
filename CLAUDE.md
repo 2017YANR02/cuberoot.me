@@ -59,6 +59,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 切 dev/prod API base 永远用 `import.meta.env.DEV`,**禁** `hostname === 'localhost'` 检查 — LAN IP / Tailscale `*.ts.net` / 隧道域名都不匹配,会错走 prod 跨域被 CORS 拦死。`shared/` 包不能 import client utils,直接 `(import.meta as { env?: { DEV?: boolean } }).env?.DEV`。
 - **COOP/COEP (cubeopt-wasm SAB)**:仅 `/scramble/solver` 在 Next config `headers()` 发(Phase 4 缩到只 solver — analyzer 用 classic worker COEP 会拦死)。nginx vhost 顶 `map $request_uri` 同样匹配 `/scramble/(solver|analyzer)`(历史保留,实际 Next 自己也发)。新增 SAB 页面同步改两处。
 - **client 页面默认 SSG**(2026-05-28 起,~128 组静态走 CDN):根 `app/layout.tsx` 禁动态 API(cookies/headers),全局组件禁在 render 调 `useSearchParams`,否则整站退回动态 / CSR 空壳;语言归属在 `[lang]/layout`,i18n 走 `initImmediate:false` + `useSuspense:false`。
+- **省 Vercel 配额(写页/链接默认遵守)**:① 高基数 / 响应式 href / 离开本页的 `<Link>` 必 `prefetch={false}`(预取只省导航延迟、不影响页面加载;Next 默认全量预取会爆 Edge Request,实测占大头)。② 无 SEO 价值的动态 `[param]` 页(编辑表单 / 纯客户端详情壳)走 persons 式静态哨兵壳:`dynamicParams=false` + `generateStaticParams` 返 `['_']` + next.config beforeFiles rewrite `/:lang(en|zh)/x/:id→/:lang/x/_` + client 从 `window.location` 读真 id,别按 id SSR(否则每 id 一次 Function 渲染)。③ `public/` 大资产(wasm / 字体 / 图)必设 `Cache-Control`,别留默认 `max-age=0`(每次 304 = 1 Edge Request);analyzer worker 资产禁发 COEP。④ 取证:`/www/wwwlogs/www.cuberoot.me.log` 有全 IP+UA(`_rsc=` = Link 预取),Vercel json log 无 IP/UA。详见 memory `project_vercel_edge_requests_optimization`。
 ## 开发命令
 
 包管理用 **pnpm 11**（不是 npm）。Windows 下按全局规则用 `pwsh`。
