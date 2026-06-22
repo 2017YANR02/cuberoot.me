@@ -162,6 +162,22 @@
 .wcif-foot a { color: var(--accent); text-decoration: none; }
 .wcif-foot a:hover { text-decoration: underline; }
 
+@media (max-width: 720px) {
+    /* responsive-table: the table scrolls horizontally instead of clipping
+       its nowrap columns past the viewport edge. */
+    .wcif-table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* wide code/pre scrolls; inline code wraps */
+    .wcif-code { overflow-x: auto; }
+    .wcif-section > p code,
+    .wcif-list code,
+    .wcif-note code { overflow-wrap: anywhere; word-break: break-word; }
+}
+
 @media (max-width: 600px) {
     .wcif-page { padding: 1rem 0.9rem 3rem; }
     .wcif-field-d { min-width: 12rem; }

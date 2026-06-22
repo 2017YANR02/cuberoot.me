@@ -233,7 +233,34 @@ img.cg-flag { width: 34px; height: 25px; object-fit: cover; }
 .cg-foot a:hover { color: var(--accent); }
 .cg-foot-line { display: inline-flex; align-items: center; gap: 10px; }
 
+@media (max-width: 720px) {
+  /* single fluid column; collapse the 330px min track that bleeds past a
+     ~390px viewport, and let every card/inner block shrink to fit. */
+  .cg-grid { grid-template-columns: 1fr; gap: 18px; }
+  .cg-card { width: auto; max-width: 100%; min-width: 0; }
+  .cg-card-head,
+  .cg-card-desc,
+  .cg-code,
+  .cg-code-usage,
+  .cg-card-note,
+  .cg-row { max-width: 100%; min-width: 0; }
+  /* wide demo content scrolls inside the card instead of blowing it out */
+  .cg-stage,
+  .cg-viz,
+  .cg-attempts-demo {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* code blocks scroll horizontally rather than clip; inline code wraps */
+  .cg-code { overflow-x: auto; }
+  .cg-card-head code,
+  .cg-card-desc code,
+  .cg-card-note code,
+  .cg-note code { overflow-wrap: anywhere; word-break: break-word; }
+}
+
 @media (max-width: 640px) {
   .cg { padding: 56px 16px 40px; }
-  .cg-grid { grid-template-columns: 1fr; gap: 18px; }
 }
