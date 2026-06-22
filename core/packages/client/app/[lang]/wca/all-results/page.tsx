@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
 import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
-import { type NameMode, NAME_MODES, nameByMode, nameModeOptions, FormerNames } from '@/components/wca-stats/nameMode';
+import { type NameMode, NAME_MODES, nameByMode, FormerNames } from '@/components/wca-stats/nameMode';
 import { statsUrl } from '@/lib/stats-base';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
@@ -507,7 +507,13 @@ function AllResultsPageInner() {
                     {tr({ zh: nameStats.noteZh ?? nameStats.note ?? '', en: nameStats.note ?? '' })}
                   </p>
                 )}
-                <NameStatsView data={nameStats} isZh={isZh} queryKey="nstab" />
+                <NameStatsView
+                  data={nameStats}
+                  isZh={isZh}
+                  queryKey="nstab"
+                  nameMode={pname}
+                  onNameModeChange={(m) => update('pname', m === 'latin' ? '' : m)}
+                />
               </>
             )}
           </div>
@@ -525,18 +531,6 @@ function AllResultsPageInner() {
                 <button type="button" className={psort === 'len' ? 'active' : ''} onClick={() => setSort('len')}>
                   {tr({ zh: '名字长度', en: 'Name length' })}
                 </button>
-              </div>
-            </div>
-            <div className="wse-filter wse-filter-show">
-              <label>{tr({ zh: '名字', en: 'Name' })}</label>
-              <div className="wse-show-toggle">
-                {nameModeOptions().map(m => (
-                  <button key={m.id} type="button" title={m.title}
-                    className={pname === m.id ? 'active' : ''}
-                    onClick={() => update('pname', m.id === 'latin' ? '' : m.id)}>
-                    {m.label}
-                  </button>
-                ))}
               </div>
             </div>
             <div className="wse-filter wse-filter-show">
