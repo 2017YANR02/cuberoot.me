@@ -622,16 +622,32 @@
 .calendar-page .event-bar:hover {
     background: var(--accent-soft-strong);
 }
-.calendar-page .event-bar.is-clash {
-    background: var(--accent);
-    color: var(--accent-foreground);
+/* 填充色 = 当前报名状态(此刻):报名中绿 / 即将截止(<24h)红 / 未开放蓝 / 已截止·过去 中性灰 */
+.calendar-page .event-bar.reg-open {
+    background: color-mix(in srgb, var(--signal-success) 28%, transparent);
 }
-.calendar-page .event-bar.is-clash:hover { background: color-mix(in srgb, var(--accent) 85%, black); }
-.calendar-page .event-bar.is-none-top {
-    background: #EDECE8;
+.calendar-page .event-bar.reg-open:hover {
+    background: color-mix(in srgb, var(--signal-success) 38%, transparent);
+}
+.calendar-page .event-bar.reg-urgent {
+    background: color-mix(in srgb, var(--destructive) 30%, transparent);
+}
+.calendar-page .event-bar.reg-urgent:hover {
+    background: color-mix(in srgb, var(--destructive) 40%, transparent);
+}
+.calendar-page .event-bar.reg-upcoming {
+    background: color-mix(in srgb, var(--signal-info) 22%, transparent);
+}
+.calendar-page .event-bar.reg-upcoming:hover {
+    background: color-mix(in srgb, var(--signal-info) 32%, transparent);
+}
+.calendar-page .event-bar.reg-closed {
+    background: color-mix(in srgb, var(--text) 7%, transparent);
     color: var(--text-sub);
 }
-.calendar-page .event-bar.is-none-top:hover { background: #E0DED9; }
+.calendar-page .event-bar.reg-closed:hover {
+    background: color-mix(in srgb, var(--text) 12%, transparent);
+}
 .calendar-page .event-bar.continues-prev {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
@@ -722,9 +738,10 @@
     height: 12px;
     border-radius: 3px;
 }
-.calendar-page .legend-swatch.swatch-default { background: var(--accent-soft); }
-.calendar-page .legend-swatch.swatch-clash { background: var(--accent); }
-.calendar-page .legend-swatch.swatch-none-top { background: #EDECE8; }
+.calendar-page .legend-swatch.swatch-reg-open { background: color-mix(in srgb, var(--signal-success) 60%, transparent); }
+.calendar-page .legend-swatch.swatch-reg-urgent { background: color-mix(in srgb, var(--destructive) 60%, transparent); }
+.calendar-page .legend-swatch.swatch-reg-upcoming { background: color-mix(in srgb, var(--signal-info) 55%, transparent); }
+.calendar-page .legend-swatch.swatch-reg-closed { background: color-mix(in srgb, var(--text) 18%, transparent); }
 
 /* ── State Messages ── */
 .calendar-page .state-message {
@@ -1604,7 +1621,7 @@
     .calendar-page .day-cell { padding: 3px 3px 1px; min-width: 0; }
     .calendar-page .week-row { min-height: 90px; }
     .calendar-page .day-number { font-size: 0.7rem; }
-    .calendar-page .event-bar { font-size: 0.65rem; min-height: 18px; padding: 0 4px; gap: 3px; }
+    .calendar-page .event-bar { font-size: 0.65rem; min-height: 18px; padding: 3px 4px; gap: 3px; }
     .calendar-page .event-bar .flag-span,
     .calendar-page .event-bar .flag-img { width: 11px; height: 8px; }
     .calendar-page .week-row { grid-template-rows: 18px repeat(var(--tracks, 1), minmax(20px, auto)) 1fr; }
