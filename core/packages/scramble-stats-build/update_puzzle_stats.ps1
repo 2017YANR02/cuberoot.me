@@ -305,4 +305,22 @@ if ($evToBuild.Count -gt 0) {
   } finally { $env:TSX_TSCONFIG_PATH = $prevTsconfig; Pop-Location }
 }
 
-Write-Host "`n完成。发布(commit stats JSON + scp static)按 MANUAL 流程另行执行。" -ForegroundColor Green
+# ---- 5. TIER B 离线精确距离表 (stats/scramble/opt_<p>.bin.gz) ----
+# 铁律(solver/NONWCA_PUZZLE_LOOP.md §0.0 #10 + §0.5):态数 <2M 但浏览器现场 BFS >1.5s 或常驻 >100MB 的 puzzle
+# 落 TIER B —— 离线 BFS 整图一次,把每态精确最优距离按确定性 rank 索引、gzip 成紧凑表,浏览器只 fetch+查表+
+# 梯度下降解(可证最优)。输出确定性(无 Date.now/Math.random)、同输入逐字节可复现,故每次重跑都安全幂等。
+# 目前仅 bic(联体魔方,1,108,800 态,现场 BFS ~6.4s/~510MB)。新接入一个 TIER B = 在此列表加 build 脚本一行。
+$TIER_B_BUILDERS = @('build_bic_table.ts')   # gz ≤~2MB 的随 stats commit;更大则改 scp-only + §3 MANUAL 记一笔
+if ($TIER_B_BUILDERS.Count -gt 0) {
+  Step "TIER B 离线精确距离表 ($($TIER_B_BUILDERS -join ', '))"
+  Push-Location $PkgDir
+  try {
+    foreach ($b in $TIER_B_BUILDERS) {
+      Write-Host "  [$b] 离线 BFS + 序列化 + gzip…" -ForegroundColor DarkGray
+      pnpm exec tsx (Join-Path 'src' $b)
+      if ($LASTEXITCODE -ne 0) { throw "TIER B builder 失败 ($b)" }
+    }
+  } finally { Pop-Location }
+}
+
+Write-Host "`n完成。发布(commit stats JSON/表 + scp static)按 MANUAL 流程另行执行。" -ForegroundColor Green

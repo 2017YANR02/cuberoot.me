@@ -10,12 +10,14 @@
 // solver/NONWCA_PUZZLE_LOOP.md §0.4 wiring touch-points). Data is verified from
 // each solver's file header + NONWCA_PUZZLE_LOOP.md §1/§2 — do NOT guess.
 //
-// 全在浏览器现算, 无 Rust / 无 WASM / 无大表 / 无服务器. 状态数 (可达闭包, 多超 2^53)
-// 一律预格式化字符串, 禁 number 字面量 (§0.0 #4).
-// tier: A 现场全 BFS 最优 / C 单实例 IDA* 可证最优 / D 近最优或有界 (诚实标, §0.0 #3).
-// quality 三桶: 'optimal' (A/C 可证最短) / 'near' (近最优, 非全局最优) / 'bounded' (有效 + 有界, 非最优).
+// 多数在浏览器现算 (无 Rust / 无 WASM / 无服务器); TIER B 例外 = 离线预计算的精确距离表
+// (stats/scramble/opt_<p>.bin.gz), 浏览器 fetch + inflate + 查表 + 梯度下降, 仍可证最优, 常驻几十 MB.
+// 状态数 (可达闭包, 多超 2^53) 一律预格式化字符串, 禁 number 字面量 (§0.0 #4).
+// tier: A 现场全 BFS 最优 / B 离线精确距离表 (现场 BFS >1.5s 或常驻 >100MB 时落表, §0.0 #10) /
+//        C 单实例 IDA* 可证最优 / D 近最优或有界 (诚实标, §0.0 #3).
+// quality 三桶: 'optimal' (A/B/C 可证最短) / 'near' (近最优, 非全局最优) / 'bounded' (有效 + 有界, 非最优).
 
-export type TsTier = 'A' | 'C' | 'D';
+export type TsTier = 'A' | 'B' | 'C' | 'D';
 export type TsQuality = 'optimal' | 'near' | 'bounded';
 export interface NonWcaTsSolver {
   event: string; // cstimer event id → /scramble/solver?event=<event>
@@ -58,9 +60,9 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
   { event: '8p', zhName: '八数码', enName: '8-Puzzle', tier: 'A', quality: 'optimal',
     states: '181,440', zhStates: '= 9!/2', enStates: '= 9!/2', gods: 'God 31',
     zhMethod: '滑块类整图 BFS (复用 slider-puzzle 核, 15p 同源)', enMethod: 'sliding-tile full BFS (shared slider-puzzle core, same as 15p)' },
-  { event: 'bic', zhName: '联体魔方', enName: 'Bicube', tier: 'A', quality: 'optimal',
+  { event: 'bic', zhName: '联体魔方', enName: 'Bicube', tier: 'B', quality: 'optimal',
     states: '1,108,800', gods: 'God 28 (face-turn)',
-    zhMethod: 'bandaged 3×3×3 受限闭包整图 BFS (1.1M 态, 合法面门控), 查表即可证最短; 上帝之数 28 见 jaapsch.net', enMethod: 'full-graph BFS over the bandaged-cube closure (1.1M states), legal-move gated, provably optimal; cf. jaapsch.net God 28' },
+    zhMethod: 'TIER B 离线精确距离表 opt_bic.bin.gz (~1.8MB; 现场 BFS ~6.4s/~510MB 移动端必崩, 故落表): 浏览器 fetch+inflate → 常驻 ~10MB 类型化数组, 查表+梯度下降, 可证最优; 上帝之数 28 见 jaapsch.net', enMethod: 'TIER B offline exact-distance table opt_bic.bin.gz (~1.8MB; in-browser BFS was ~6.4s/~510MB → mobile crash, so tabled): browser fetch+inflate → ~10MB typed arrays resident, lookup + gradient descent, provably optimal; cf. jaapsch.net God 28' },
   // ── TIER C: 单实例 IDA* + 可采纳启发式, 每解可证最短 ──
   { event: '233', zhName: '2×3×3 多米诺', enName: '2×3×3 Domino', tier: 'C', quality: 'optimal',
     states: '1,625,702,400', zhStates: '= 8!·8! ≈ 1.63×10⁹', enStates: '= 8!·8! ≈ 1.63×10⁹', gods: '样本 ≤16 / sampled ≤16',
@@ -118,9 +120,10 @@ export const NONWCA_TS_PLANNED: ReadonlyArray<{ event: string; zh: string; en: s
   { event: 'helicv', zh: '弧面直升机', en: 'Curvy Copter' },
 ];
 
-// TIER 标签 (A 现场 BFS / C 单实例 IDA* / D 两阶段约简).
+// TIER 标签 (A 现场 BFS / B 离线精确表 / C 单实例 IDA* / D 两阶段约简).
 export const TS_TIER_LABEL: Record<TsTier, { zh: string; en: string }> = {
   A: { zh: 'A 现场 BFS', en: 'A live BFS' },
+  B: { zh: 'B 离线精确表', en: 'B offline table' },
   C: { zh: 'C 单实例 IDA*', en: 'C per-instance IDA*' },
   D: { zh: 'D 两阶段约简', en: 'D two-phase' },
 };

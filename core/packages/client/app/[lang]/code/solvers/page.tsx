@@ -553,8 +553,8 @@ export default function SolversPage() {
             <span className="solv-sec-note">{zh ? '浏览器现算 · 无 Rust · 无表' : 'browser-side · no Rust · no tables'}</span>
           </header>
           <p className="solv-tbl-intro">{zh
-            ? '给 /scramble/gen 的非 WCA 魔方依次造的浏览器端整解求解器 (lib/<x>-solver.ts):状态可整枚举的现场全 BFS 出可证最短 (TIER A);可证单实例最短的 IDA* (TIER C);状态空间天文级的两阶段约简则近最优 / 有效有界 (TIER D, 诚实标)。全在浏览器现算, 不依赖原生分析器或大表。'
-            : 'Browser-side whole-solve solvers built one-by-one for the non-WCA puzzles on /scramble/gen (lib/<x>-solver.ts): full BFS for provably shortest where the state space enumerates (TIER A); per-instance IDA* for provably shortest (TIER C); two-phase reduction for the astronomical ones — near-optimal or valid+bounded (TIER D, honestly labeled). All run in the browser, independent of the native analyzers or big tables.'}</p>
+            ? '给 /scramble/gen 的非 WCA 魔方依次造的浏览器端整解求解器 (lib/<x>-solver.ts):状态可整枚举的现场全 BFS 出可证最短 (TIER A);现场 BFS 太重 (>1.5s 或 >100MB) 时改离线预计算精确距离表 + 浏览器 fetch 查表 + 梯度下降, 仍可证最优 (TIER B);可证单实例最短的 IDA* (TIER C);状态空间天文级的两阶段约简则近最优 / 有效有界 (TIER D, 诚实标)。基本全在浏览器现算, 不依赖原生分析器。'
+            : 'Browser-side whole-solve solvers built one-by-one for the non-WCA puzzles on /scramble/gen (lib/<x>-solver.ts): full BFS for provably shortest where the state space enumerates (TIER A); for closures where live BFS is too heavy (>1.5s or >100MB), an offline-precomputed exact-distance table fetched + looked up + gradient-descended in the browser — still provably optimal (TIER B); per-instance IDA* for provably shortest (TIER C); two-phase reduction for the astronomical ones — near-optimal or valid+bounded (TIER D, honestly labeled). Almost all run in the browser, independent of the native analyzers.'}</p>
           <div className="solv-rows">
             {NONWCA_TS.map((s) => {
               const q = TS_QUALITY[s.quality];
