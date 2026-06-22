@@ -271,6 +271,15 @@ export const CATALOG: UtilEntry[] = [
     zh: '比赛名:去 WCA 前缀 + 中文名回退(走 cubing.com)。',
     en: 'Competition name: strip the WCA prefix and fall back to the Chinese name.',
   },
+  {
+    name: 'unofficialAoN',
+    sig: 'unofficialAoN(attempts: number[], opts?: { min?: number }): { value: number; n: number; trim: number } | null',
+    imp: "import { unofficialAoN } from '@/lib/unofficial-average';",
+    usage: 'unofficialAoN([575,657,/*…*/589]) // { value: 613, n: 26, trim: 2 }',
+    category: 'wca',
+    zh: 'cstimer 式非官方平均(AoN):给 WCA 不记平均的轮次(对阵决赛 / Bo-N)算参考平均;去最快 / 最慢各 ceil(N×5%),DNF 超额则整体 DNF,有效次数 <min 返回 null。',
+    en: 'cstimer-style unofficial AoN for rounds WCA records no average for (H2H finals / Bo-N); trims ceil(N×5%) each end, DNF if too many fail.',
+  },
 
   // ── cube ──────────────────────────────────
   {

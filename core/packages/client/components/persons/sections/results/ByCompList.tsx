@@ -15,6 +15,7 @@ import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { computePrRank } from '../../logic/progress';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { AttemptsList } from './AttemptsList';
+import { AverageValueCell } from './AverageValueCell';
 import { EditModeToggle } from './EditModeToggle';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
@@ -274,15 +275,15 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                           </span>
                         </td>
                         <td className={`wp-cell-result ${oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
-                          <span className="record-num-cell">
-                            <ResultChangeChain oldValues={oldAvg} eventId={r.event_id} kind="average" note={chain?.[chain.length - 1]?.note} />
-                            {formatWcaResult(effAvg, r.event_id, 'average')}
-                            {averageRecord
-                              ? <RecordBadge record={averageRecord} variant="inline" />
-                              : averageRank
-                                ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
-                                : null}
-                          </span>
+                          <AverageValueCell
+                            effAvg={effAvg}
+                            attempts={effAttempts}
+                            eventId={r.event_id}
+                            averageRecord={averageRecord}
+                            averageRank={averageRank}
+                            oldValues={oldAvg}
+                            note={chain?.[chain.length - 1]?.note}
+                          />
                         </td>
                         <td className="wp-cell-attempts">
                           <AttemptsList
