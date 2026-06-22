@@ -94,6 +94,44 @@ const TOPICS: Topic[] = [
       meta: '5 stages · conjugation · 2.4M samples',
     },
   },
+  {
+    slug: 'gan-ble',
+    href: '/code/algorithms/gan-ble',
+    accent: '#4C6EF5',
+    glyph: '⬡',
+    available: true,
+    zh: {
+      title: 'GAN 蓝牙协议与 AES',
+      sub: 'Smart-cube BLE & AES',
+      tagline: '智能魔方把每次转动加密成蓝牙帧;浏览器逐字节逆向 GAN v2/v3/v4 协议、用 MAC 派生密钥 AES-128 解出 R U R′ — 核心难题是 Web Bluetooth 不给 MAC',
+      meta: 'AES-128 · v2/v3/v4 · Web BT 无 MAC',
+    },
+    en: {
+      title: 'GAN BLE & AES',
+      sub: 'Smart-cube BLE & AES',
+      tagline: 'A smart cube encrypts every turn into a Bluetooth frame; the browser reverse-engineers GAN’s v2/v3/v4 protocol and AES-128-decrypts it back to R U R′ — the core problem being that Web Bluetooth hides the MAC',
+      meta: 'AES-128 · v2/v3/v4 · no MAC in Web BT',
+    },
+  },
+  {
+    slug: 'webcodecs',
+    href: '/code/algorithms/webcodecs',
+    accent: '#22D3EE',
+    glyph: '▤',
+    available: true,
+    zh: {
+      title: 'WebCodecs 帧级视频',
+      sub: 'Frame-accurate video',
+      tagline: '浏览器原生硬件编解码:mp4box 解复用 + VideoDecoder 逐帧精确到微秒地数帧判罚,VideoEncoder 确定性导出稳定 60fps — 都是 <video> 标签做不到的',
+      meta: 'VideoDecoder · mp4box · 帧精确 · 60fps',
+    },
+    en: {
+      title: 'WebCodecs video',
+      sub: 'Frame-accurate video',
+      tagline: 'Browser-native hardware codecs: mp4box demux + VideoDecoder for microsecond-accurate frame counting, and VideoEncoder for deterministic 60fps export — all things a plain <video> cannot do',
+      meta: 'VideoDecoder · mp4box · frame-accurate',
+    },
+  },
 ];
 
 export default function AlgorithmsLandingPage() {
