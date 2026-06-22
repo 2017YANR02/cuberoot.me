@@ -24,6 +24,7 @@ import { Flag } from '@/components/Flag';
 import { loadFlagData } from '@/lib/country-flags';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { ClearButton } from '@/components/ClearButton';
+import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge';
@@ -695,7 +696,7 @@ function AllResultsPageInner() {
                         </td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                         <td><Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} /></Link></td>
-                        <td className="wse-attempts-col">{formatAttempts(r.attempts, singleEvent, effType, r.value)}</td>
+                        <td className="wse-attempts-col"><AttemptsGrid attempts={r.attempts} eventId={singleEvent} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -732,7 +733,7 @@ function AllResultsPageInner() {
                         <td className="wse-value-col">{r.value != null ? formatWcaResult(r.value, singleEvent, effType) : '—'}</td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                         <td>{r.compId ? <Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} /></Link> : ''}</td>
-                        <td className="wse-attempts-col">{r.value != null && r.attempts && r.attempts.length > 0 ? formatAttempts(r.attempts, singleEvent, effType, r.value) : ''}</td>
+                        <td className="wse-attempts-col">{r.value != null ? <AttemptsGrid attempts={r.attempts} eventId={singleEvent} /> : ''}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -891,27 +892,6 @@ function AllResultsPageInner() {
       )}
     </div>
   );
-}
-
-export function formatAttempts(attempts: (number | null)[], event: string, type: 'single' | 'average', value: number): string {
-  const valid = attempts.filter(a => a != null) as number[];
-  if (valid.length === 0) return '';
-  if (type === 'single') {
-    return valid.map(v => formatWcaResult(v, event, 'single', { failure: 'dnf' })).join('  ');
-  }
-  const items = valid.map(v => formatWcaResult(v, event, 'single', { failure: 'dnf' }));
-  if (valid.length === 5) {
-    let bestIdx = 0, worstIdx = 0;
-    let bestVal = Number.MAX_SAFE_INTEGER, worstVal = -1;
-    valid.forEach((v, i) => {
-      if (v > 0 && v < bestVal) { bestVal = v; bestIdx = i; }
-      if (v === -1 || (v > 0 && v > worstVal)) { worstVal = v; worstIdx = i; }
-    });
-    items[bestIdx] = `(${items[bestIdx]})`;
-    if (worstIdx !== bestIdx) items[worstIdx] = `(${items[worstIdx]})`;
-  }
-  void value;
-  return items.join('  ');
 }
 
 export default function AllResultsPage() {
