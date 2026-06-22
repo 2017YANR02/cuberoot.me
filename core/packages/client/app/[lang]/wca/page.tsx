@@ -24,7 +24,7 @@ import { statsUrl } from '@/lib/stats-base';
 import { STAT_ICONS } from './wca-stat-icons';
 import '../wca/_wca_stats.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
+import '@/i18n/i18n-client';
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
@@ -62,7 +62,7 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; ex
 },
   { path: '/wca/grand-slam',      zh: '大满贯',       en: 'Grand Slam',      Icon: Crown
 },
-  { path: '/wca/historical',      zh: '历史排名',     en: 'Historical Ranks', Icon: History
+  { path: '/wca/all-results', extraQuery: 'show=persons', zh: '历史排名', en: 'Historical Ranks', Icon: History
 },
   { path: '/wca/fun-stats',       zh: '趣味统计',     en: 'Fun Stats',       Icon: Sparkles
 },
