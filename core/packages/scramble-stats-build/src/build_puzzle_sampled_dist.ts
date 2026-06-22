@@ -234,6 +234,26 @@ const REGISTRY: PuzzleDistSpec[] = [
     },
   },
   {
+    event: 'sq2',
+    label: 'Square-2',
+    scrambleLen: 10,          // cstimer sq2 generator length (CSTIMER_EVENTS sq2 length=10 tuples)
+    defaultN: 2000,           // solveSq2 (reduction) is ms-level → 2000 单进程几十秒
+    // 构造式 3-循环约简:有效 + 有界(实测 20000 样本 mean≈70、max 95、bound 130),非近最优(§0.0 #3 诚实记)。
+    quality: 'sampled-bounded',
+    load: async () => {
+      const m = await mod('../../client/lib/sq2-solver');
+      const solveSq2 = m.solveSq2 as (s: string) => { length: number; optimal?: boolean };
+      return {
+        // randomSq2Scramble 忠实镜像 cstimer 的 (u,d)/ 元组生成器(u,d∈[-5,6],不同时为 0)。
+        scramble: m.randomSq2Scramble as SolverAdapter['scramble'],
+        // 约简法有效+有界(非可证最优)→ optimal 取求解器返回值(一般 false)。
+        solve: (s: string) => { const o = solveSq2(s); return { length: o.length, optimal: o.optimal ?? false }; },
+        maxBound: m.SQ2_MAX_LENGTH as number,
+        stateCountStr: m.SQ2_STATE_COUNT_STR as string,
+      };
+    },
+  },
+  {
     event: 'crz3a',
     label: 'Crazy 3x3',
     scrambleLen: 25,          // cstimer crz3a generator length(CSTIMER_EVENTS crz3a length=25)
