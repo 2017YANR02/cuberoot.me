@@ -150,6 +150,28 @@ export function fetchWcaScrambles(compId: string): Promise<WcaScrambleRow[] | nu
   return p;
 }
 
+// Distinct scramble groups (A / B / C …) for one comp / event / round. Used by
+// the recon form to drive the group dropdown — multi-group rounds force a pick,
+// single-group rounds auto-fill. Returns null when there's no scramble data.
+export async function fetchScrambleGroups(
+  compId: string,
+  reconEvent: string,
+  round: string,
+): Promise<string[] | null> {
+  const wcaEventId = toWcaEventId(reconEvent);
+  const all = await fetchWcaScrambles(compId);
+  if (!all) return null;
+  const inRound = all.filter(s =>
+    s.event_id === wcaEventId &&
+    matchRoundType(round, s.round_type_id) &&
+    !s.is_extra
+  );
+  if (inRound.length === 0) return null;
+  const groups = Array.from(new Set(inRound.map(s => s.group_id).filter(Boolean)));
+  groups.sort((a, b) => a.localeCompare(b));
+  return groups;
+}
+
 export async function fetchScrambles(
   compId: string,
   reconEvent: string,

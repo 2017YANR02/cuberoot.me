@@ -854,6 +854,18 @@
   color: var(--faint-foreground);
 }
 
+/* 必填未选(如多分组未选)→ 红框 + 红提示 */
+.submit-field select.submit-input-invalid,
+.submit-field input.submit-input-invalid {
+  border-color: var(--destructive);
+}
+.submit-field select.submit-input-invalid:focus,
+.submit-field input.submit-input-invalid:focus {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--destructive) 15%, transparent);
+}
+.submit-hint-warn { color: var(--destructive); }
+
 .submit-hint-loading {
   display: inline-flex;
   align-items: center;

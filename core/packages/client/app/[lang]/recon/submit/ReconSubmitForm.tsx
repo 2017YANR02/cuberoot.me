@@ -48,7 +48,7 @@ import {
 } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
 import { revalidateRecon } from '../revalidate-action';
-import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles } from '@/lib/wca-results-api';
+import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles, fetchScrambleGroups } from '@/lib/wca-results-api';
 import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
 import {
   cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, normalizeSolutionSlashes,
@@ -70,6 +70,8 @@ import { tr } from '@/i18n/tr';
 const EVENTS = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
 const METHODS = ['CFOP', 'Roux', 'ZZ', 'Petrus', 'LBL', 'Mehta', 'ZB', 'Other'];
 const ROUNDS_FALLBACK = ['1', '2', '3', 'f'];
+// 打乱未公示(拿不到真实分组)时的兜底分组选项:A~Z。
+const ALPHA_GROUPS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 
 const SOLVE_NUM_CAP_BY_FORMAT: Record<RoundFormat, number> = {
   '1': 1, '2': 2, '3': 3, '5': 5, 'a': 5, 'm': 3, 'h': 30,
@@ -242,6 +244,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const scrambleAutoFilledRef = useRef(false);
   const wcaScrambleRef = useRef<HTMLTextAreaElement>(null);
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
+  // WCA scramble groups (A/B/C…) for the current comp/event/round.
+  // null = 未解析(等加载 / 非 WCA 赛);[] = 无打乱数据;否则是分组列表。
+  const [groupOptions, setGroupOptions] = useState<string[] | null>(null);
   const isMobile = useIsMobile();
 
   // 复用以前的填写:reuseOpen = 选择器弹窗开关;
@@ -548,6 +553,25 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return () => { cancelled = true; };
   }, [form.compWcaId]);
 
+  // ── Comp / event / round change → resolve scramble groups ──
+  // 多分组 → 下拉强制选择(边框变红提醒);单分组 → 自动填入。
+  useEffect(() => {
+    if (!form.compWcaId || !form.event || !form.round) { setGroupOptions(null); return; }
+    let cancelled = false;
+    setGroupOptions(null);
+    fetchScrambleGroups(form.compWcaId, form.event, form.round).then(groups => {
+      if (cancelled) return;
+      const list = groups ?? [];
+      setGroupOptions(list);
+      setForm(prev => {
+        if (list.length === 1 && prev.groupId !== list[0]) return { ...prev, groupId: list[0] };
+        if (list.length > 1 && prev.groupId && !list.includes(prev.groupId)) return { ...prev, groupId: '' };
+        return prev;
+      });
+    });
+    return () => { cancelled = true; };
+  }, [form.compWcaId, form.event, form.round]);
+
   const eventRoundFormats = useMemo<RoundFormat[] | null>(() => {
     if (!compRounds || !form.event) return null;
     const wcaId = toWcaEventId(form.event);
@@ -750,10 +774,21 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // ── WCA official scramble auto-fill (by comp / event / round / group / #) ──
   // Pulls the exact scramble the player got — same data as /scramble/gen. Only
   // for official WCA comps (compWcaId set); blocked once the user types their
-  // own. Group is optional (defaults to the round's first group).
+  // own. 多分组的轮次必须先选分组,否则不自动给打乱(避免误填到错的组)。
   useEffect(() => {
     if (scrambleUserTouched) return;
     if (!form.compWcaId || !form.event || !form.round || form.solveNum == null) return;
+
+    // 分组尚未解析 → 等加载;多分组且未选 → 留空等用户选(清掉自动/URL 带入的猜测打乱;
+    // 此处已过 scrambleUserTouched 守卫,wcaScramble 必非用户手输,可安全清空)。
+    if (groupOptions === null) return;
+    if (groupOptions.length > 1 && !form.groupId) {
+      setForm(prev => prev.wcaScramble ? { ...prev, wcaScramble: '' } : prev);
+      setScrambleAutoSource(null);
+      scrambleAutoFilledRef.current = false;
+      loadedScrambleKeySnapshot.current = null;
+      return;
+    }
 
     const currentKey = `${form.compWcaId}|${form.event}|${form.round}|${form.groupId ?? ''}|${form.solveNum}`;
     if (loadedScrambleKeySnapshot.current === currentKey) return;
@@ -785,7 +820,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setScrambleLoading(false); };
-  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, scrambleUserTouched, setField, isZh]);
+  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, scrambleUserTouched, setField, isZh]);
 
   // Resize the WCA scramble textarea when its value changes programmatically.
   useEffect(() => {
@@ -1497,8 +1532,30 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
                 <label className={`submit-field${reusedCls('groupId')}`}>
                   <span className="submit-label">{t('recon.group')}</span>
-                  <input type="text" value={form.groupId || ''} onChange={e => setField('groupId', e.target.value)}
-                    placeholder="A/B/C" maxLength={1} />
+                  {(() => {
+                    // 已公示 → 用真实分组(多分组强制选);未公示 / 非 WCA → 兜底 A~Z。
+                    const published = !!groupOptions && groupOptions.length > 0;
+                    const base = published ? groupOptions! : ALPHA_GROUPS;
+                    // 现有值(编辑/复用带入的非标准分组)不在列表里时也要可选,避免静默丢失。
+                    const opts = form.groupId && !base.includes(form.groupId) ? [form.groupId, ...base] : base;
+                    const needPick = published && groupOptions!.length > 1 && !form.groupId;
+                    // 单一公示分组已自动填入、无需占位;其余情形给「请选择」占位。
+                    const withPlaceholder = !(published && groupOptions!.length === 1);
+                    return (
+                      <>
+                        <select
+                          value={form.groupId || ''}
+                          onChange={e => setField('groupId', e.target.value)}
+                          className={needPick ? 'submit-input-invalid' : undefined}
+                        >
+                          {withPlaceholder && <option value="">{tr({ zh: '请选择', en: 'Select…' })}</option>}
+                          {opts.map(g => <option key={g} value={g}>{g}</option>)}
+                        </select>
+                        {needPick &&
+                          <span className="submit-hint submit-hint-warn">{tr({ zh: '请先选择分组', en: 'Select a group first' })}</span>}
+                      </>
+                    );
+                  })()}
                 </label>
                 <label className={`submit-field${reusedCls('date')}`}>
                   <span className="submit-label">{t('recon.date')}</span>
