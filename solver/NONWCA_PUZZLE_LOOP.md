@@ -33,6 +33,8 @@
 
 9. **求解器借用别人的东西必注明(铁律,2026-06-22,用户要求)** —— 用了别人的算法/源码/引擎(cstimer 移动语义照抄、wrap cstimer 自带 solver 当引擎如 `dino`=redi / `mpyrso`=两阶段、`crz3a` 用站内 kociemba 两阶段、未来 STM 用 Korf、cubelib 等)→ 必须 ① 代码内注明出处(solver 文件头注 + `/code/solvers/_fleet.ts` 方法文案写清 "wrap X"),② `/about` 的 `credits_data.json` 补/更新一条(已收录 cstimer/cube555/cubelib 等 27 条;先查重再补)。验收门(§0.4)加这一项,无出处不发。
 
+10. **TIER A 可行性看「现场 build 时间 + 常驻内存」,不只看态数(铁律,2026-06-22,bic 血泪)** —— 态数 < 2×10⁶ 是 TIER A 的**必要非充分**条件。必须实测**浏览器现场 BFS 的 build 时间和常驻内存**:`string`-keyed `Map` over ~30 万态就 100MB+、移动端(<480px,用户硬约束)直接崩。bic 1,108,800 态(< 2M)但现场 build ~7s / ~550MB(string `Map`)→ 移动必崩,**应是 TIER B**(离线预算表 → `stats/scramble/opt_<p>.bin.gz`:排序 packed-key + dist 字节,浏览器 fetch+inflate+二分查+梯度下降解,常驻 ~10–20MB,§3 MANUAL scp)。**判据:现场 BFS >1.5s 或常驻 >~100MB → 落 TIER B,别因「态数 < 2M」硬塞现场 BFS。** 子 agent 量真闭包(#2)时必须同时量 build 时间 + 峰值内存,在 §1 记下据此定档。
+
 ---
 
 ## §0 LOOP PROTOCOL(每轮照做)

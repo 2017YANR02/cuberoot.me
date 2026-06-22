@@ -11,7 +11,7 @@ description: "用户要造一个新求解器时用。**先分流**:3x3 子阶段
 - **大状态空间 / 3x3 子阶段**(需大表 + 真题统计管道)→ 走下面的 substep 一页纸 + `solver/VARIANT_PLAYBOOK.md`(Rust + WASM)。
 - **小状态非 WCA 整解求解器**(状态 ≤ ~10^6 可整枚举,如枫叶 Ivy 29,160 = 81×360)→ **纯 TS 全图 BFS,绝不碰 Rust/WASM/下载表/数据管道**。范本 = `packages/client/lib/ivy-solver.ts` + `_IvySolver.tsx` + `gen/_svg/ivy_svg.ts`(2026-06-20)。固定套路:
 
-> **批量给 `/scramble/gen` 全部非 WCA 魔方造求解器** → 有专门 loop `solver/NONWCA_PUZZLE_LOOP.md`(`/loop 继续造小魔方求解器`)。注意**不是所有都能全 BFS**:分四档 —— A 现场全 BFS 最优(≤~2e6)/ B build 预算表(~2e6–5e7,发 `.bin.gz` 查表)/ C 单实例 IDA* 最优(滑块如 15 数码)/ D 近最优(大型扭转 / jumbling,逐个独立工程,random-state 的可复用 cstimer 自带 solver)。下面七步是 A 档(Ivy 范式);B/C/D 的 delta 见该 loop §0.5/§4。
+> **批量给 `/scramble/gen` 全部非 WCA 魔方造求解器** → 有专门 loop `solver/NONWCA_PUZZLE_LOOP.md`(`/loop 继续造小魔方求解器`)。注意**不是所有都能全 BFS**:分四档 —— A 现场全 BFS 最优(≤~2e6 **且现场 build <1.5s、常驻 <~100MB;态数小≠现场可行 —— bic 1.1M 态却 7s/550MB、移动崩,应落 B**)/ B build 预算表(~2e6–5e7,发 `.bin.gz` 查表)/ C 单实例 IDA* 最优(滑块如 15 数码)/ D 近最优(大型扭转 / jumbling,逐个独立工程,random-state 的可复用 cstimer 自带 solver)。下面七步是 A 档(Ivy 范式);B/C/D 的 delta 见该 loop §0.5/§4。
   1. **移动语义照抄 cstimer**(`tools/cstimer-scramble/scramble/*.js`,逐字段),整图 BFS-from-solved 复现 god-number 直方图自证正确(独立 BFS 交叉验证)。
   2. 求解器 UI 仿 `_Sq1Solver.tsx`,接 `/scramble/solver` 的 `event=` dispatch + `SolveTabs`:非 WCA 无官方图标 → `appendEvents` 走 `textLabel`;`HAS_DISTRIBUTION` 加该 event。**接线必含**:给 `/code/solvers/_fleet.ts` 的 `NONWCA_TS` 加一行(档/质量桶/态数/God 数/方法),CI 守卫 `tests/code-solvers-fleet-sync.test.ts` 锁其 event 集 == `CSTIMER_SOLVABLE_IDS`,漏登记红。
   3. **分布数据源按是否 WCA 分**:WCA 项目 → 真题语料管道(skill `update-scramble-stats`,带比赛归属示例 + 时间线);**非 WCA 小项目(A/B 档)→ 穷举全状态**,分布 = 全空间精确直方图(数据现成在 solver 里,无管道)。范本视图 `stats/_components/IvyDistView.tsx`,接 stats 页 `event===` 分支 + `availableEvents.add` + `appendEvents`。
