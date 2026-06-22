@@ -942,6 +942,24 @@ function regMilestone(
   return { when: fmtWhen(new Date(n.t)), word: n.word, tone };
 }
 
+/** 日历胶囊填充色用的「当前报名状态」(本地此刻):未开放 / 报名中 / 即将截止(<24h) / 已截止·无字段。
+ *  纯色块无文字,故编码「此刻状态」而非列表用的「下一个里程碑」。只用已 bake 的 open/close
+ *  (CN 退赛/重开是懒拉,不进上千个胶囊的填充色);过去比赛无报名字段 → closed。 */
+function regState(
+  open: string | null | undefined,
+  close: string | null | undefined,
+): 'upcoming' | 'open' | 'urgent' | 'closed' {
+  const now = Date.now();
+  const o = open ? new Date(open).getTime() : NaN;
+  const c = close ? new Date(close).getTime() : NaN;
+  if (Number.isFinite(o) && now < o) return 'upcoming';   // 还没开放
+  if (Number.isFinite(c)) {
+    if (now >= c) return 'closed';                         // 已过截止
+    return c - now <= 86_400_000 ? 'urgent' : 'open';      // 报名中(含 24h 内紧急)
+  }
+  return Number.isFinite(o) ? 'open' : 'closed';           // 无 close:open 已过→报名中;全无字段→已截止
+}
+
 /** 列表「报名」列排序键:离现在最近的「将来」报名节点 epoch ms。已全过 / 无字段 → null(沉底)。
  *  退赛/重开是 CN-only 懒拉(排序时未必加载),故排序只用 baked 的 开放/截止/修改截止。 */
 function regSortMs(c: { registration_open?: string | null; registration_close?: string | null; event_change_deadline?: string | null }): number | null {
@@ -2424,14 +2442,12 @@ function CalendarPageInner() {
             return (
               <>
                 {week.bars.map((bar) => {
-                  const isClash = bar.comp.top_cubers.length >= 3;
-                  const hasTop = bar.comp.top_cubers.length > 0;
+                  const reg = regState(bar.comp.registration_open, bar.comp.registration_close);
                   const cancelled = isCancelledComp(bar.comp, cancelledCutoffIso);
                   const displayName = localizeName(bar.comp, isZh).replace(/ \d{4}$/, '');
                   const classes = [
                     'event-bar',
-                    isClash ? 'is-clash' : '',
-                    !hasTop ? 'is-none-top' : '',
+                    `reg-${reg}`,
                     cancelled ? 'is-cancelled' : '',
                     bar.continuesFromPrev ? 'continues-prev' : '',
                     bar.continuesToNext ? 'continues-next' : '',
@@ -2668,15 +2684,12 @@ function CalendarPageInner() {
 
       {(viewMode === 'calendar' || viewMode === 'compact') && (
         <div className="legend">
-          {viewMode === 'calendar' && mode === 'all' && (
-            <span className="legend-item"><span className="legend-swatch swatch-none-top" /> {tr({ zh: '一般比赛', en: 'No top cubers'
-            })}</span>
-          )}
           {viewMode === 'calendar' && (
             <>
-              <span className="legend-item"><span className="legend-swatch swatch-default" /> {tr({ zh: '有顶尖选手', en: 'Has top cubers'
-            })}</span>
-              <span className="legend-item"><span className="legend-swatch swatch-clash" /> {tr({ zh: '扎堆 (3+)', en: 'Clash (3+)' })}</span>
+              <span className="legend-item"><span className="legend-swatch swatch-reg-open" /> {tr({ zh: '报名中', en: 'Reg open' })}</span>
+              <span className="legend-item"><span className="legend-swatch swatch-reg-urgent" /> {tr({ zh: '即将截止', en: 'Closing <24h' })}</span>
+              <span className="legend-item"><span className="legend-swatch swatch-reg-upcoming" /> {tr({ zh: '未开放', en: 'Not yet open' })}</span>
+              <span className="legend-item"><span className="legend-swatch swatch-reg-closed" /> {tr({ zh: '已截止', en: 'Closed' })}</span>
             </>
           )}
           {viewMode === 'calendar' && (
