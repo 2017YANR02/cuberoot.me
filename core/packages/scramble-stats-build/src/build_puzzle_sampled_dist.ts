@@ -164,6 +164,23 @@ const REGISTRY: PuzzleDistSpec[] = [
     },
   },
   {
+    event: '336',
+    label: '3x3x6',
+    scrambleLen: 50,          // = Cuboid336DistView SCRAMBLE_LEN(cstimer 336 generator length=50,纯 mega 无 /333)
+    defaultN: 2000,           // 抄 335 的 N;336 两阶段每条数十~数百 ms,单进程跑几分钟为度(慢则用 -SampledN 调小)
+    quality: 'sampled-near-optimal',
+    load: async () => {
+      const m = await mod('../../client/lib/cuboid336-solver');
+      return {
+        scramble: m.randomCuboid336Scramble as SolverAdapter['scramble'],
+        solve: m.solveCuboid336 as SolverAdapter['solve'],
+        maxBound: m.CUBOID336_MAX_LENGTH as number,
+        stateCountStr: m.CUBOID336_STATE_COUNT_STR as string,
+        groupOrderStr: m.CUBOID336_GROUP_ORDER_STR as string,
+      };
+    },
+  },
+  {
     event: '337',
     label: '3x3x7',
     scrambleLen: 40,          // = Cuboid337DistView SCRAMBLE_LEN(原现场采样口径)
