@@ -825,22 +825,28 @@ function eventCellContent(
 // 列表视图整场列 metric：实际人数 / 上限(competitorLimit) / 满员率(实际÷上限) / 不显示。
 // 三列合并成一列，由左下拉选当前显示哪个；点列头按它升/降排序。
 // latlng = 经纬度,下拉里是一个选项,但表头/行渲染成「纬度 + 经度」两列(各自可排序)
-type CompMetric = 'competitors' | 'limit' | 'ratio' | 'nameLength' | 'cityLength' | 'latlng' | 'none';
-const COMP_METRICS: CompMetric[] = ['competitors', 'limit', 'ratio', 'nameLength', 'cityLength', 'latlng', 'none'];
+// 'peopleLimit' = 人数 + 上限合并成一个 metric,表头展开成两个子列（人数 | 上限），同 latlng 的双列模式
+type CompMetric = 'peopleLimit' | 'ratio' | 'nameLength' | 'cityLength' | 'latlng' | 'none';
+const COMP_METRICS: CompMetric[] = ['peopleLimit', 'ratio', 'nameLength', 'cityLength', 'latlng', 'none'];
 // 经纬度可正可负、可为 0（赤道/本初子午线），不能套用 "<=0 视为缺失" 的计数列规则
 const SIGNED_METRICS = new Set<CompMetric>(['latlng']);
 // 经纬度子列排序键：latlng 模式下点哪一列就按哪个坐标排
 type CoordKey = 'lat' | 'lng';
+// 双列 metric 的子列排序键：latlng → lat/lng；peopleLimit → people/limit
+type SubKey = CoordKey | 'people' | 'limit';
 // 列表统一排序状态：null = 默认按日期倒序。
-// col='comp' 按整场列数值（latlng 看 coord 子列）；col='name'/'city'/'country' 按比赛名/城市名/国家名首字母（locale 排序）。
+// col='comp' 按整场列数值（latlng/peopleLimit 看 coord 子列）；col='name'/'city'/'country' 按比赛名/城市名/国家名首字母（locale 排序）。
 type SortCol = 'comp' | 'name' | 'city' | 'country' | 'date' | 'reg';
-type ListSort = { col: SortCol; coord?: CoordKey; dir: 'asc' | 'desc' } | null;
+type ListSort = { col: SortCol; coord?: SubKey; dir: 'asc' | 'desc' } | null;
+
+/** peopleLimit 双列各自的标题（人数 / 上限） */
+function subColTitle(kind: 'people' | 'limit'): string {
+  return kind === 'people'
+    ? tr({ zh: '人数(过去=实际参赛,未来=已报名)', en: 'People (past: competitors, upcoming: registrations)' })
+    : tr({ zh: '人数上限', en: 'Competitor limit' });
+}
 
 function compColTitle(m: CompMetric): string {
-  if (m === 'competitors') return tr({ zh: '人数(过去=实际参赛,未来=已报名)', en: 'People (past: competitors, upcoming: registrations)'
-});
-  if (m === 'limit') return tr({ zh: '人数上限', en: 'Competitor limit'
-});
   if (m === 'ratio') return tr({ zh: '满员率(人数/上限)', en: 'Fill rate (people/limit)'
 });
   if (m === 'nameLength') return tr({ zh: '比赛名称长度(字符数)', en: 'Name length (characters)'
@@ -1080,14 +1086,12 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   /** .calendar-page 根元素 ref —— 用来按当前可视行最长 name / city 写 --cl-name-width / --cl-city-width */
   pageRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  // 整场列单值取值（仅计数/比例/长度类，用于 col='comp' 数值排序）：经纬度走 compCoord、none 返回 null
+  // 整场列单值取值（比例/长度类，用于 col='comp' 数值排序）：经纬度 / peopleLimit 走子列(valOf)、none 返回 null
   const compVal = useCallback((c: Competition): number | null | undefined =>
-    compMetric === 'competitors' ? compPeople(c)
-      : compMetric === 'limit' ? c.competitor_limit
-        : compMetric === 'ratio' ? fillRate(c)
-          : compMetric === 'nameLength' ? localizeName(c, isZh).length
-            : compMetric === 'cityLength' ? displayCityOf(c, isZh).length
-              : null, [compMetric, isZh]);
+    compMetric === 'ratio' ? fillRate(c)
+      : compMetric === 'nameLength' ? localizeName(c, isZh).length
+        : compMetric === 'cityLength' ? displayCityOf(c, isZh).length
+          : null, [compMetric, isZh]);
   // 默认按日期倒序。col='name'/'city' 按 locale 首字母排；col='comp' 按整场值排(latlng 看 coord 子列)，
   // 缺值恒沉底、同值再按日期倒序。计数列 <=0 视为缺失；经纬度可正可负可为 0，仅 null 视为缺失。
   const items = useMemo<RowItem[]>(() => {
@@ -1111,8 +1115,10 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
     } else if (listSort && listSort.col === 'comp' && compMetric !== 'none') {
       const signed = SIGNED_METRICS.has(compMetric);
       const valOf = compMetric === 'latlng'
-        ? (c: Competition) => (listSort.coord ? compCoord(c, listSort.coord) : null)
-        : compVal;
+        ? (c: Competition) => (listSort.coord === 'lat' || listSort.coord === 'lng' ? compCoord(c, listSort.coord) : null)
+        : compMetric === 'peopleLimit'
+          ? (c: Competition) => (listSort.coord === 'limit' ? (c.competitor_limit > 0 ? c.competitor_limit : null) : (compPeople(c) ?? null))
+          : compVal;
       const mul = listSort.dir === 'asc' ? 1 : -1;
       sorted.sort((a, b) => {
         const av = valOf(a), bv = valOf(b);
@@ -1364,14 +1370,21 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
                     </span>
                   );
                 })
+              ) : compMetric === 'peopleLimit' ? (
+                (['people', 'limit'] as const).map((k) => {
+                  const v = k === 'people' ? compPeople(c) : (c.competitor_limit > 0 ? c.competitor_limit : undefined);
+                  return (
+                    <span key={k} className={`cl-people-cell${k === 'limit' ? ' cl-limit-cell' : ''}`} title={subColTitle(k)}>
+                      {v != null ? v : ''}
+                    </span>
+                  );
+                })
               ) : (
                 <span
-                  className={`cl-people-cell${compMetric === 'ratio' || compMetric === 'limit' ? ' cl-limit-cell' : ''}`}
+                  className={`cl-people-cell${compMetric === 'ratio' ? ' cl-limit-cell' : ''}`}
                   title={compMetric === 'none' ? undefined : compColTitle(compMetric)}
                 >
                   {(() => {
-                    if (compMetric === 'competitors') { const p = compPeople(c); return p != null ? p : ''; }
-                    if (compMetric === 'limit') return c.competitor_limit > 0 ? c.competitor_limit : '';
                     if (compMetric === 'ratio') { const r = fillRate(c); return r == null ? '' : `${Math.round(r * 100)}%`; }
                     if (compMetric === 'nameLength') return localizeName(c, isZh).length;
                     if (compMetric === 'cityLength') return displayCityOf(c, isZh).length;
@@ -1474,14 +1487,14 @@ function CalendarPageInner() {
   // 列表整场列显示哪个 metric（实际人数/上限/满员率/不显示）。replace 不堆历史。
   const [compMetric, setCompMetric] = useQueryState(
     'cmetric',
-    parseAsStringEnum<CompMetric>(COMP_METRICS).withDefault('competitors').withOptions({ history: 'replace', scroll: false }),
+    parseAsStringEnum<CompMetric>(COMP_METRICS).withDefault('peopleLimit').withOptions({ history: 'replace', scroll: false }),
   );
   // 列表统一排序（点列头循环 降→升→默认日期序）：整场列 / 比赛名 / 城市名。null = 日期倒序。
   const [listSort, setListSort] = useState<ListSort>(null);
   // 切 metric 时,若当前正按整场列排,清掉(列含义变了);按名字/城市排的与 metric 无关,保留
   useEffect(() => { setListSort((s) => s?.col === 'comp' ? null : s); }, [compMetric]);
   // 点某列头：未排该列 → 降序；已降序 → 升序；已升序 → 取消(回日期序)。coord 用于 latlng 子列
-  const cycleSort = useCallback((col: SortCol, coord?: CoordKey) => {
+  const cycleSort = useCallback((col: SortCol, coord?: SubKey) => {
     setListSort((s) => {
       if (s && s.col === col && s.coord === coord) {
         return s.dir === 'desc' ? { col, coord, dir: 'asc' } : null;
@@ -1957,7 +1970,7 @@ function CalendarPageInner() {
       className={`calendar-page${viewMode === 'list' ? ' calendar-page--list' : ''}${viewMode === 'compact' ? ' calendar-page--compact' : ''}${viewMode === 'globe' ? ' calendar-page--globe' : ''}`}
       data-wide-metric={viewMode === 'list' && WIDE_METRICS.has(eventMetric) ? '' : undefined}
       data-comp-none={viewMode === 'list' && compMetric === 'none' ? '' : undefined}
-      data-comp-latlng={viewMode === 'list' && compMetric === 'latlng' ? '' : undefined}
+      data-comp-2col={viewMode === 'list' && (compMetric === 'latlng' || compMetric === 'peopleLimit') ? '' : undefined}
     >
       <header className="upcoming-header">
         <h1 className="upcoming-title">
@@ -2164,12 +2177,10 @@ function CalendarPageInner() {
               onChange={(e) => setCompMetric(e.target.value as CompMetric)}
               aria-label={tr({ zh: '整场列显示', en: 'Whole-comp column'
             })}
-              title={tr({ zh: '整场一列显示什么（实际人数 / 上限 / 满员率 / 名称长度 / 城市名长度 / 纬度 / 经度），点列头可排序', en: 'What the whole-comp column shows (competitors / limit / fill rate / name length / city length / latitude / longitude); click header to sort'
+              title={tr({ zh: '整场列显示什么（人数和上限 / 满员率 / 名称长度 / 城市名长度 / 纬度 / 经度），点列头可排序', en: 'What the whole-comp column shows (people & limit / fill rate / name length / city length / latitude / longitude); click header to sort'
             })}
             >
-              <option value="competitors">{tr({ zh: '人数', en: 'People'
-            })}</option>
-              <option value="limit">{tr({ zh: '人数上限', en: 'Limit'
+              <option value="peopleLimit">{tr({ zh: '人数和上限', en: 'People & limit'
             })}</option>
               <option value="ratio">{tr({ zh: '满员率', en: 'Fill rate'
             })}</option>
@@ -2380,8 +2391,29 @@ function CalendarPageInner() {
                     </button>
                   );
                 })
+              ) : compMetric === 'peopleLimit' ? (
+                (['people', 'limit'] as const).map((k) => {
+                  const Icon = k === 'people' ? Users : Gauge;
+                  const on = !!listSort && listSort.col === 'comp' && listSort.coord === k;
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      className={`cl-col-icon cl-col-sort${on ? ' is-active' : ''}`}
+                      title={subColTitle(k) + tr({ zh: '(点击排序)', en: ' (click to sort)'
+                    })}
+                      aria-pressed={on}
+                      onClick={() => cycleSort('comp', k)}
+                    >
+                      {on && (listSort?.dir === 'desc'
+                        ? <ChevronDown size={11} strokeWidth={2.25} />
+                        : <ChevronUp size={11} strokeWidth={2.25} />)}
+                      <Icon size={15} strokeWidth={1.75} />
+                    </button>
+                  );
+                })
               ) : (() => {
-                const CompIcon = compMetric === 'competitors' ? Users : compMetric === 'limit' ? Gauge : compMetric === 'nameLength' ? CaseSensitive : compMetric === 'cityLength' ? MapPin : Percent;
+                const CompIcon = compMetric === 'nameLength' ? CaseSensitive : compMetric === 'cityLength' ? MapPin : Percent;
                 const on = listSort?.col === 'comp';
                 return (
                   <button
