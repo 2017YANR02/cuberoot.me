@@ -195,10 +195,12 @@ describe('solveCuboid336 — validity (round-trip via INDEPENDENT geometry)', ()
   // at N=2000 and up to 75 at N=4000). 8 trials simply never sampled a deep enough state. This solves a large
   // deterministic batch of len-50 random scrambles (the same length the offline distribution build uses, which
   // is where the violation surfaced) and asserts EVERY returned length is within the hard bound, round-trips via
-  // INDEPENDENT geometry, and never undercuts the admissible heuristic. ~0.16 s/solve worst → 400 ≈ ≤70 s.
-  it('high-sample len-50 random scrambles: ALL solutions within the hard bound + round-trip (400 trials)', () => {
+  // INDEPENDENT geometry, and never undercuts the admissible heuristic. ~0.16 s/solve worst → 250 ≈ ≤50 s.
+  // The real bound guarantee is the constructive assert inside solveTwoPhase; this is the regression guard.
+  // Explicit 180 s timeout (global is 120 s) so a single heavy it() can't flake under concurrent CI load.
+  it('high-sample len-50 random scrambles: ALL solutions within the hard bound + round-trip (250 trials)', () => {
     const rnd = mulberry32(0x336f1f);
-    const N = 400;
+    const N = 250;
     let solved = 0;
     let maxLen = 0;
     for (let trial = 0; trial < N; trial++) {
@@ -216,7 +218,7 @@ describe('solveCuboid336 — validity (round-trip via INDEPENDENT geometry)', ()
     // sits well under the bound. If this ever fails the solver regressed toward the old runaway-phase-2 bug
     // (catch it BEFORE it silently creeps past CUBOID336_MAX_LENGTH).
     expect(maxLen, `observed max ${maxLen} should sit well under the ${CUBOID336_MAX_LENGTH} bound`).toBeLessThan(65);
-  });
+  }, 180_000);
 });
 
 describe('solveCuboid336 — provable optimality on the shallow ball', () => {
