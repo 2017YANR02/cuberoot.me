@@ -16,7 +16,7 @@
  */
 import { Hono } from 'hono';
 import { applyRelation, filterByScope, type RelationView, type RankOverride } from '../nemesizer/algo.js';
-import { getDataset, type NemesizerDataset } from '../nemesizer/loader.js';
+import { getDataset, personRanks, personRankCount, rankInEk, bestInEvKind, type NemesizerDataset } from '../nemesizer/loader.js';
 import { NEMESIZER_EVENTS } from '@cuberoot/shared/nemesizer-format';
 
 export const nemesizerRoutes = new Hono();
@@ -54,7 +54,7 @@ nemesizerRoutes.get('/nemesizer/person', (c) => {
   const idx = ds.wcaIdIndex.get(wcaId);
   if (idx === undefined) return c.json({ error: 'person not found' }, 404);
   const p = ds.persons[idx];
-  const ranks = ds.ranksByPerson[idx].map(r => ({
+  const ranks = personRanks(ds, idx).map(r => ({
     event: NEMESIZER_EVENTS[r.ev],
     kind: r.kind,
     rank: r.rank,
@@ -142,8 +142,8 @@ nemesizerRoutes.get('/nemesizer/h2h', (c) => {
     for (const kind of [0, 1]) {
       if (ev === '333mbf' && kind === 1) continue;
       const ek = evIdx * 2 + kind;
-      const r1 = ds.rankOfPerson[ek].get(i1);
-      const r2 = ds.rankOfPerson[ek].get(i2);
+      const r1 = rankInEk(ds, ek, i1);
+      const r2 = rankInEk(ds, ek, i2);
       if (r1 === undefined && r2 === undefined) continue;
       const b1 = bestOf(ds, i1, evIdx, kind);
       const b2 = bestOf(ds, i2, evIdx, kind);
@@ -194,7 +194,7 @@ nemesizerRoutes.get('/nemesizer/whatif', (c) => {
 
   const refP = ds.persons[refIdx];
   // Current ranks (real, not overridden) for the What-if form.
-  const ranks = ds.ranksByPerson[refIdx].map(r => ({
+  const ranks = personRanks(ds, refIdx).map(r => ({
     event: NEMESIZER_EVENTS[r.ev],
     kind: r.kind,
     rank: r.rank,
@@ -225,7 +225,7 @@ nemesizerRoutes.get('/nemesizer/stats', (c) => {
   if (tab === 'most' || tab === 'few') {
     const candidates: number[] = [];
     for (let i = 0; i < N; i++) {
-      if (ds.ranksByPerson[i].length > 0) candidates.push(i);
+      if (personRankCount(ds, i) > 0) candidates.push(i);
     }
     const dir = tab === 'most' ? -1 : 1;
     candidates.sort((a, b) => dir * (ds.counts.nemesisCount[a] - ds.counts.nemesisCount[b]));
@@ -277,8 +277,5 @@ nemesizerRoutes.get('/nemesizer/stats', (c) => {
 });
 
 function bestOf(ds: NemesizerDataset, p: number, ev: number, kind: number): number | undefined {
-  for (const r of ds.ranksByPerson[p]) {
-    if (r.ev === ev && r.kind === kind) return r.best;
-  }
-  return undefined;
+  return bestInEvKind(ds, p, ev, kind);
 }

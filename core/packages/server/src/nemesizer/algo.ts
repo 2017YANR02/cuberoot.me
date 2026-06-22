@@ -6,8 +6,11 @@
  * NearlyMe: same coverage as myNem but wins all but 1 of E_P's eks.
  * INearly: same coverage as iNem but P wins all but 1 of E_Q's eks.
  * OnlyJust: strict nemesis with min margin == 1.
+ *
+ * Reads the compact dataset via accessors (personRanks / rankInEk) and, on the
+ * hot all-persons loops, walks the CSR rank arrays directly (no per-rank object).
  */
-import type { NemesizerDataset, RankRef } from './loader.js';
+import { personRanks, rankInEk, type NemesizerDataset, type RankRef } from './loader.js';
 
 export type RelationView =
   | 'myNem'
@@ -25,8 +28,8 @@ export interface NemesisResult {
 export type RankOverride = Map<number, number>;
 
 function getPersonRanks(ds: NemesizerDataset, p: number, override?: RankOverride): RankRef[] {
-  if (!override || override.size === 0) return ds.ranksByPerson[p];
-  const base = ds.ranksByPerson[p];
+  if (!override || override.size === 0) return personRanks(ds, p);
+  const base = personRanks(ds, p);
   const overridden = new Map<number, RankRef>();
   for (const r of base) overridden.set(r.ev * 2 + r.kind, r);
   for (const [ek, newRank] of override) {
@@ -51,7 +54,7 @@ function pEksMapOf(pRanks: RankRef[]): Map<number, number> {
 function computeMyNem(ds: NemesizerDataset, p: number, pRanks: RankRef[]): NemesisResult[] {
   const pEksWithSplit = pRanks.map(r => {
     const ek = r.ev * 2 + r.kind;
-    const split = lowerBoundRank(ds.byEk[ek], ds.rankOfPerson[ek], r.rank);
+    const split = lowerBoundRank(ds.byEkRank[ek], r.rank);
     return { ek, split };
   });
   pEksWithSplit.sort((a, b) => a.split - b.split);
@@ -82,18 +85,17 @@ function computeMyNem(ds: NemesizerDataset, p: number, pRanks: RankRef[]): Nemes
 function computeINem(ds: NemesizerDataset, p: number, pRanks: RankRef[]): NemesisResult[] {
   const pEksMap = pEksMapOf(pRanks);
   const out: NemesisResult[] = [];
-  const ranksByPerson = ds.ranksByPerson;
-  for (let q = 0; q < ranksByPerson.length; q++) {
+  const N = ds.persons.length;
+  for (let q = 0; q < N; q++) {
     if (q === p) continue;
-    const qRanks = ranksByPerson[q];
+    const lo = ds.rbpOff[q], hi = ds.rbpOff[q + 1];
     let ok = true;
-    for (let i = 0; i < qRanks.length; i++) {
-      const r = qRanks[i];
-      const ek = r.ev * 2 + r.kind;
+    for (let j = lo; j < hi; j++) {
+      const ek = ds.rbpEv[j] * 2 + ds.rbpKind[j];
       const pRank = pEksMap.get(ek);
-      if (pRank === undefined || pRank >= r.rank) { ok = false; break; }
+      if (pRank === undefined || pRank >= ds.rbpRank[j]) { ok = false; break; }
     }
-    if (ok) out.push({ personIdx: q, sharedEkCount: qRanks.length });
+    if (ok) out.push({ personIdx: q, sharedEkCount: hi - lo });
   }
   return out;
 }
@@ -101,14 +103,15 @@ function computeINem(ds: NemesizerDataset, p: number, pRanks: RankRef[]): Nemesi
 function computeNearlyMe(ds: NemesizerDataset, p: number, pRanks: RankRef[]): NemesisResult[] {
   if (pRanks.length < 2) return [];
   const out: NemesisResult[] = [];
-  for (let q = 0; q < ds.persons.length; q++) {
+  const N = ds.persons.length;
+  for (let q = 0; q < N; q++) {
     if (q === p) continue;
     let coverage = 0;
     let qWins = 0;
     let qLoses = 0;
     for (const r of pRanks) {
       const ek = r.ev * 2 + r.kind;
-      const qRank = ds.rankOfPerson[ek].get(q);
+      const qRank = rankInEk(ds, ek, q);
       if (qRank === undefined) break;
       coverage++;
       if (qRank < r.rank) qWins++;
@@ -124,24 +127,25 @@ function computeNearlyMe(ds: NemesizerDataset, p: number, pRanks: RankRef[]): Ne
 function computeINearly(ds: NemesizerDataset, p: number, pRanks: RankRef[]): NemesisResult[] {
   const pEksMap = pEksMapOf(pRanks);
   const out: NemesisResult[] = [];
-  const ranksByPerson = ds.ranksByPerson;
-  for (let q = 0; q < ranksByPerson.length; q++) {
+  const N = ds.persons.length;
+  for (let q = 0; q < N; q++) {
     if (q === p) continue;
-    const qRanks = ranksByPerson[q];
-    if (qRanks.length < 2) continue;
+    const lo = ds.rbpOff[q], hi = ds.rbpOff[q + 1];
+    const len = hi - lo;
+    if (len < 2) continue;
     let coverage = 0;
     let pWins = 0;
     let pLoses = 0;
-    for (const r of qRanks) {
-      const ek = r.ev * 2 + r.kind;
+    for (let j = lo; j < hi; j++) {
+      const ek = ds.rbpEv[j] * 2 + ds.rbpKind[j];
       const pRank = pEksMap.get(ek);
       if (pRank === undefined) break;
       coverage++;
-      if (pRank < r.rank) pWins++;
+      if (pRank < ds.rbpRank[j]) pWins++;
       else pLoses++;
     }
-    if (coverage === qRanks.length && pLoses === 1 && pWins === qRanks.length - 1) {
-      out.push({ personIdx: q, sharedEkCount: qRanks.length });
+    if (coverage === len && pLoses === 1 && pWins === len - 1) {
+      out.push({ personIdx: q, sharedEkCount: len });
     }
   }
   return out;
@@ -156,18 +160,18 @@ function computeOnlyJust(ds: NemesizerDataset, p: number, pRanks: RankRef[], inv
     if (!invert) {
       for (const r of pRanks) {
         const ek = r.ev * 2 + r.kind;
-        const qRank = ds.rankOfPerson[ek].get(n.personIdx);
+        const qRank = rankInEk(ds, ek, n.personIdx);
         if (qRank === undefined) continue;
         const m = r.rank - qRank;
         if (m < minMargin) minMargin = m;
       }
     } else {
-      const qRanks = ds.ranksByPerson[n.personIdx];
-      for (const r of qRanks) {
-        const ek = r.ev * 2 + r.kind;
+      const lo = ds.rbpOff[n.personIdx], hi = ds.rbpOff[n.personIdx + 1];
+      for (let j = lo; j < hi; j++) {
+        const ek = ds.rbpEv[j] * 2 + ds.rbpKind[j];
         const pRank = pEksMap.get(ek);
         if (pRank === undefined) continue;
-        const m = r.rank - pRank;
+        const m = ds.rbpRank[j] - pRank;
         if (m < minMargin) minMargin = m;
       }
     }
@@ -209,12 +213,12 @@ export function filterByScope(
   return results.filter(r => ds.persons[r.personIdx].continentIdx === ci);
 }
 
-function lowerBoundRank(list: Uint32Array, rankMap: Map<number, number>, target: number): number {
-  let lo = 0, hi = list.length;
+/** First index i where rankArr[i] >= target (rankArr is ascending). */
+function lowerBoundRank(rankArr: Uint32Array, target: number): number {
+  let lo = 0, hi = rankArr.length;
   while (lo < hi) {
     const mid = (lo + hi) >> 1;
-    const r = rankMap.get(list[mid])!;
-    if (r < target) lo = mid + 1;
+    if (rankArr[mid] < target) lo = mid + 1;
     else hi = mid;
   }
   return lo;
