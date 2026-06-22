@@ -231,6 +231,15 @@ html:not([data-palette-scheme=dark]) .wse-page {
   padding: 12px;
   overflow-x: auto;
 }
+
+/* 含「详细成绩」attempts 网格的统计页(/wca/records、/wca/all-results 单项视图)表很宽:
+   1180px 上限会裁掉右侧列(5 把成绩只显示 4 把)。整页按内容自适应宽度并居中(.wse-page 自带
+   margin:0 auto),表格框同样 fit-content 避免深色 wrapper 拉满留白;窄屏超出由 overflow-x:auto
+   横向滚动兜底。`:has(.wse-attempts-col)` 仅在该列存在(单项数据视图)时生效,其他模式维持常规宽度。 */
+.wse-page:has(.wse-attempts-col) { width: fit-content; max-width: 100%; }
+.wse-page:has(.wse-attempts-col) .wse-table-wrapper { width: fit-content; max-width: 100%; }
+/* 「详细成绩」表头居中,压在下方 5 列 attempts 网格正上方 */
+.wse-table th.wse-attempts-col { text-align: center; }
 .wse-state {
   padding: 40px;
   text-align: center;
