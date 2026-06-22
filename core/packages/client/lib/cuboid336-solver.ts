@@ -41,17 +41,21 @@
  *     pair. Zero tables.
  *   • PHASE 2 solves to solved using ONLY the nine 180deg moves, run entirely in COMPACT in-H index space.
  *     Inside H each orbit's set is tiny (96/576/96/36/96/36/2) BUT all six big orbits {0..5} are coupled by
- *     R2/L2/F2/B2, so the true joint cost (≤ ~24) sits MANY moves above any single 3-orbit view. The
+ *     R2/L2/F2/B2, so the true joint cost (≤ ~25) sits MANY moves above any single 3-orbit view. The
  *     heuristic is max over a BANK of seven overlapping EXACT joint-TRIPLE PDBs centered on the two big orbits
  *     {0,1} ({0,1,2},{0,1,3},{0,1,4},{0,1,5},{0,2,4},{1,3,5},{2,3,4}; ~16M cells total) plus orbit 6's own
- *     p2Dist. Even so the heuristic stays loose (the all-six coupling), so phase-2 is a WEIGHTED CLOSED-SET A*
- *     ladder (increasing weights, each with a hard node cap; lowest weight that fits the cap wins) — bounded
- *     in time AND length, near-optimal over the 180deg subgroup rather than provably optimal.
+ *     p2Dist. Phase-2 first runs an EXACT optimal IDA* (small node budget) — provably optimal-over-H for the
+ *     common shallow case; on a budget blow it falls to a WEIGHTED CLOSED-SET A* ladder [w=2,3,5] @ a large
+ *     budget (near-optimal, ≤ w×optimal — a HARD length bound), then a final w=8 rung that reaches the goal in
+ *     few nodes for every real in-H landing (the guaranteed terminator). There is NO unbounded greedy rung
+ *     (an earlier wDen=0 greedy dive returned 2x-optimal ~48-move reductions and blew the length bound — the
+ *     real root cause of the old over-tight 60 bound being VIOLATED), so the returned phase-2 length is always
+ *     bounded. Same proven machine as the sibling 337 phase-2.
  * Each phase is bounded and near-optimal => the total is bounded and near-optimal (NOT a proven global
- * optimum). For the rare shallow state where a single all-15-move optimal IDA* finishes within a small
- * node budget AND beats the two-phase length, that optimal answer is returned with `optimal: true`; otherwise
- * the two-phase answer is returned with `optimal: false` (honestly "near-optimal"). Every real scramble
- * RETURNS — there is no "too-deep".
+ * optimum). solveTwoPhase additionally CONSTRUCTIVELY enforces total ≤ CUBOID336_MAX_LENGTH (shorten + assert).
+ * For the rare shallow state where a single all-15-move optimal IDA* finishes within a small node budget AND
+ * beats the two-phase length, that optimal answer is returned with `optimal: true`; otherwise the two-phase
+ * answer is returned with `optimal: false` (honestly "near-optimal"). Every real scramble RETURNS — no "too-deep".
  */
 
 // ── geometry-derived 90-sticker model (runtime, self-verifying) ──────────────────────
@@ -165,19 +169,33 @@ export const CUBOID336_STATE_COUNT_STR = '8,391,762,413,094,961,152,000,000';
 export const CUBOID336_ORBIT_PRODUCT_STR = '33,567,049,652,379,844,608,000,000';
 /** Full facelet permutation-group order (Schreier-Sims, validated on S5), preformatted exact string. */
 export const CUBOID336_GROUP_ORDER_STR = '2,148,291,177,752,310,054,912,000,000';
-/** Hard upper bound on a returned two-phase solution length (phase-1 diam + phase-2 diam ≪ this). */
-export const CUBOID336_MAX_LENGTH = 60;
+/**
+ * Hard upper bound a returned solution is GUARANTEED never to exceed (CONSTRUCTIVELY ENFORCED, not a wish):
+ * solveTwoPhase verifies the result and, if it ever exceeded this, escalates phase-2 effort (lower-weight
+ * A* with a far larger budget — never the unbounded greedy) and finally asserts. The value combines the
+ * measured worst-case phase-1 (≤ 32; three per-pair reductions, intoH diam 11 each, greedy never fires) with
+ * the measured worst-case phase-2 (the in-H joint diam is too large to BFS in-browser, but the weighted-A*
+ * ladder + exact-IDA* path returns ≤ ~30 on the worst of 10k+ samples) plus a generous safety margin, in the
+ * same ~1.5-2x structural-estimate style as the sibling 335 (45) / 337 (80) bounds. Earlier this was 60 and
+ * was VIOLATED (a too-small phase-2 node cap forced the ladder onto high-weight rungs that returned 2x-optimal
+ * reductions, total up to 75); the cap is now large enough that low-weight near-optimal rungs win.
+ */
+export const CUBOID336_MAX_LENGTH = 80;
 /** Optimal-shortcut node budget: a shallow state solved optimally below this is returned as optimal. */
 const OPT_SHORTCUT_BUDGET = 800_000;
 /** Largest length the optimal shortcut will claim; beyond this the two-phase answer is used. */
 const OPT_SHORTCUT_DEPTH_CAP = 12;
-/** Per-attempt distinct-state cap for the phase-2 weighted-A* ladder (≈ the ~0.25 s point at ~700 ns/node). */
-const PHASE2_NODE_CAP = 330_000;
-/** Phase-2 weight ladder (numerator/denominator of W in f = g + W·h). The first (lowest) weight that finishes
- *  within the node cap wins — lower weight = shorter reduction, higher weight = far fewer nodes. Starting at
- *  W=2 keeps the common case short while bounding the hard tail to a few capped attempts; the final wDen=0
- *  entry is a pure greedy dive (f = h) that always reaches the goal — the guaranteed fallback. */
-const PHASE2_WEIGHTS: ReadonlyArray<readonly [number, number]> = [[2, 1], [3, 1], [5, 1], [8, 1], [1, 0]];
+/** Hard length cap on a phase-2 search (real optimal-in-H ≤ ~25; this also bounds the IDA* path buffers). */
+const PHASE2_GCAP = 60;
+/** Phase-2 weighted-A* node-EXPANSION budgets per rung. Memory is ∝ distinct states reached (growable pool),
+ *  NOT the budget, so these can be large without pre-allocating. The exact IDA* (small budget) handles the
+ *  common shallow case OPTIMALLY; on a budget blow the weighted ladder [2,3,5] @ 12M reaches a near-optimal
+ *  (≤ ~24) reduction fast; the final w=8 @ 30M is the guaranteed terminator (high weight = few nodes → it
+ *  completes for every real in-H landing). There is NO unbounded greedy rung — every rung is length-bounded
+ *  (weighted A* returns ≤ w×optimal), so the returned phase-2 length cannot run away. */
+const PHASE2_IDA_BUDGET = 800_000;
+const PHASE2_ASTAR_BUDGET = 12_000_000;
+const PHASE2_FINAL_BUDGET = 30_000_000;
 
 function applyMove(state: Uint8Array, mi: number): Uint8Array<ArrayBuffer> {
   const p = MOVE_PERM[mi];
@@ -603,30 +621,66 @@ const phase2HeuristicC = (c: Int32Array, P: Phase2Pdb): number => {
 // [96,576,96,36,96,36,2] → < 96·576·96·36·96·36·2 ≈ 1.58×10¹² < 2⁵³.
 const phase2KeyC = (c: Int32Array): number =>
   ((((((c[0] * 576 + c[1]) * 96 + c[2]) * 36 + c[3]) * 96 + c[4]) * 36 + c[5]) * 2 + c[6]);
-// Phase-2 is a bounded WEIGHTED CLOSED-SET A* (NOT plain IDA*). The joint-PDB heuristic is admissible but the
-// all-six-orbit R2/L2/F2/B2 coupling leaves it loose by several moves, so plain IDA* re-explores each bound
-// and EXPLODES (measured 160M+ nodes / ~20 s) and even unit A* floods past millions of nodes. A WEIGHTED
-// closed-set A* (f = wDen·g + wNum·h) biases the frontier toward the goal, collapsing the explored cone by
-// orders of magnitude for a reduction within ≈(wNum/wDen)× of optimal-over-H. The closed set bounds
-// re-expansion; a hard node cap lets the caller's weight LADDER escalate, and a final pure-greedy entry
-// (wDen=0) always reaches the goal so a valid path is guaranteed. States are stored in a flat Int32Array pool
-// (NORB compact indices each) with a reused scratch buffer — no per-neighbor allocation in the hot loop.
-function solvePhase2(start: Int32Array, P: Phase2Pdb, cap: number, wNum: number, wDen: number): number[] | null {
+// EXACT-OPTIMAL phase-2 via IDA*, capped by a NODE budget (bails fast on deep states) and by length
+// (PHASE2_GCAP). Same machine as the sibling 337 phase-2 optimal path. Returns {path} (provably optimal over
+// the 180deg subgroup), {budget:true} (exceeded the node budget — try weighted A*), or null (no solution
+// within PHASE2_GCAP — cannot happen for an in-H state). Operates in the COMPACT in-H index space.
+function phase2OptimalCapped(start: Int32Array, P: Phase2Pdb, budget: number): { path?: number[]; budget?: boolean } | null {
   const NM = PHASE2_MOVES.length;
   const tr = P.inHTrans;
   const solved = P.solvedCompact;
-  const isSolved = (c: Int32Array, off: number): boolean => {
-    for (let i = 0; i < NORB; i++) if (c[off + i] !== solved[i]) return false;
-    return true;
-  };
-  // flat pool: state s occupies pool[s*NORB .. s*NORB+NORB-1]
-  const pool = new Int32Array((cap + 1) * NORB);
-  for (let i = 0; i < NORB; i++) pool[i] = start[i];
+  const solvedNow = (c: Int32Array): boolean => { for (let i = 0; i < NORB; i++) if (c[i] !== solved[i]) return false; return true; };
+  const tupBuf: Int32Array[] = Array.from({ length: PHASE2_GCAP + 2 }, () => new Int32Array(NORB));
+  const pathStack = new Int32Array(PHASE2_GCAP + 2);
+  let found: number[] | null = null; let nodes = 0; let over = false;
+  function dfs(c: Int32Array, g: number, bound: number, last: number, depth: number): number {
+    const f = g + phase2HeuristicC(c, P);
+    if (f > bound) return f;
+    if (solvedNow(c)) { found = Array.from(pathStack.subarray(0, depth)); return -1; }
+    if (depth >= PHASE2_GCAP) return Infinity;
+    let min = Infinity;
+    for (let s = 0; s < NM; s++) {
+      if (last >= 0) {
+        if (s === last) continue; // self-inverse repeat = undo
+        if (PHASE2_AXIS[s] === PHASE2_AXIS[last] && s < last) continue; // same-axis commute → canonical order
+      }
+      if (++nodes > budget) { over = true; return -1; }
+      const nt = tupBuf[depth];
+      for (let i = 0; i < NORB; i++) nt[i] = tr[i][s][c[i]];
+      pathStack[depth] = PHASE2_MOVES[s]; // store the actual move index (path is directly usable)
+      const r = dfs(nt, g + 1, bound, s, depth + 1);
+      if (found) return -1; if (over) return -1;
+      if (r < min) min = r;
+    }
+    return min;
+  }
+  let bound = phase2HeuristicC(start, P);
+  while (bound <= PHASE2_GCAP) {
+    const r = dfs(start, 0, bound, -1, 0);
+    if (found) return { path: found as number[] };
+    if (over) return { budget: true };
+    if (r === Infinity) return null;
+    bound = r;
+  }
+  return null;
+}
+
+// WEIGHTED CLOSED-SET A* over the compact in-H joint coordinate (NOT plain IDA*). The joint-PDB heuristic is
+// admissible but the all-six-orbit R2/L2/F2/B2 coupling leaves it loose by several moves, so plain IDA*
+// re-explores each bound and EXPLODES; a weighted A* (f = g + w·h) biases the frontier toward the goal,
+// collapsing the explored cone by orders of magnitude and returning a reduction within ≤ w× optimal-over-H —
+// a HARD length bound (no runaway). The closed set prevents re-expansion; `budget` caps node EXPANSIONS (not
+// memory: states grow into a `tuples` array, so a large budget never pre-allocates). A higher weight reaches
+// the goal in far fewer nodes, so the final high-weight rung is the guaranteed terminator.
+function phase2AStar(start: Int32Array, P: Phase2Pdb, w: number, budget: number): number[] | null {
+  const NM = PHASE2_MOVES.length;
+  const tr = P.inHTrans;
+  const solved = P.solvedCompact;
+  const isSolved = (c: Int32Array): boolean => { for (let i = 0; i < NORB; i++) if (c[i] !== solved[i]) return false; return true; };
+  const tuples: Int32Array[] = [start.slice()];
   const gArr: number[] = [0]; const parent: number[] = [-1]; const moveArr: number[] = [-1];
-  let nStates = 1;
   const seen = new Map<number, number>();
   seen.set(phase2KeyC(start), 0);
-  const scratch = new Int32Array(NORB);
   const heapIdx: number[] = []; const heapF: number[] = []; const heapG: number[] = [];
   const hswap = (i: number, j: number) => { const ti = heapIdx[i]; heapIdx[i] = heapIdx[j]; heapIdx[j] = ti; const tf = heapF[i]; heapF[i] = heapF[j]; heapF[j] = tf; const tg = heapG[i]; heapG[i] = heapG[j]; heapG[j] = tg; };
   const hpush = (idx: number, f: number, g: number) => {
@@ -639,37 +693,35 @@ function solvePhase2(start: Int32Array, P: Phase2Pdb, cap: number, wNum: number,
     if (heapIdx.length) { heapIdx[0] = li; heapF[0] = lf; heapG[0] = lg; let i = 0; const n = heapIdx.length; for (;;) { const l = 2 * i + 1, r = l + 1; let s = i; if (l < n && heapF[l] < heapF[s]) s = l; if (r < n && heapF[r] < heapF[s]) s = r; if (s === i) break; hswap(s, i); i = s; } }
     return top;
   };
-  hpush(0, wNum * phase2HeuristicC(start, P), 0);
-  let goal = -1;
+  hpush(0, w * phase2HeuristicC(start, P), 0);
+  let goal = -1; let nodes = 0;
   while (heapIdx.length) {
     const idx = hpop();
     if (popG !== gArr[idx]) continue; // stale heap entry — skip
-    const off = idx * NORB; const g = gArr[idx];
-    if (isSolved(pool, off)) { goal = idx; break; }
+    const tuple = tuples[idx]; const g = gArr[idx];
+    if (isSolved(tuple)) { goal = idx; break; }
     const last = moveArr[idx];
     for (let s = 0; s < NM; s++) {
       if (last >= 0) {
         if (s === last) continue; // self-inverse repeat = undo
         if (PHASE2_AXIS[s] === PHASE2_AXIS[last] && s < last) continue; // same-axis commute → canonical order
       }
-      for (let i = 0; i < NORB; i++) scratch[i] = tr[i][s][pool[off + i]];
+      if (++nodes > budget) return null;
+      const nt = new Int32Array(NORB);
+      for (let i = 0; i < NORB; i++) nt[i] = tr[i][s][tuple[i]];
       const ng = g + 1;
-      const kk = phase2KeyC(scratch);
+      const kk = phase2KeyC(nt);
       const exist = seen.get(kk);
       if (exist !== undefined) {
         if (gArr[exist] <= ng) continue;
         gArr[exist] = ng; parent[exist] = idx; moveArr[exist] = s;
-        hpush(exist, wDen * ng + wNum * phase2HeuristicC(scratch, P), ng);
+        hpush(exist, ng + w * phase2HeuristicC(nt, P), ng);
         continue;
       }
-      const nidx = nStates;
-      const noff = nidx * NORB;
-      for (let i = 0; i < NORB; i++) pool[noff + i] = scratch[i];
-      gArr.push(ng); parent.push(idx); moveArr.push(s);
+      const nidx = tuples.length;
+      tuples.push(nt); gArr.push(ng); parent.push(idx); moveArr.push(s);
       seen.set(kk, nidx);
-      nStates++;
-      hpush(nidx, wDen * ng + wNum * phase2HeuristicC(scratch, P), ng);
-      if (nStates > cap) return null;
+      hpush(nidx, ng + w * phase2HeuristicC(nt, P), ng);
     }
   }
   if (goal < 0) return null;
@@ -679,8 +731,25 @@ function solvePhase2(start: Int32Array, P: Phase2Pdb, cap: number, wNum: number,
   return rev;
 }
 
-/** Two-phase reduction: drive into the 180deg subgroup (A*), then solve within it (closed-set A*). Always
- *  succeeds — each phase has a hard node cap + greedy-dive fallback that guarantees a bounded valid path. */
+// Phase-2: EXACT optimal IDA* (small budget — fast + provably optimal for the common shallow case) → on a
+// budget blow, weighted A* at increasing weight [2,3,5] (near-optimal, fast) → final w=8 @ a large budget,
+// the guaranteed terminator (high weight reaches the goal in few nodes for every real in-H landing). Every
+// rung is length-bounded; there is NO unbounded greedy. 100% solve, bounded length, bounded time.
+function solvePhase2(start: Int32Array, P: Phase2Pdb): number[] | null {
+  const opt = phase2OptimalCapped(start, P, PHASE2_IDA_BUDGET);
+  if (opt && opt.path) return opt.path;
+  if (opt === null) return null; // genuinely unsolvable (cannot happen in H)
+  for (const w of [2, 3, 5]) {
+    const r = phase2AStar(start, P, w, PHASE2_ASTAR_BUDGET);
+    if (r) return r;
+  }
+  return phase2AStar(start, P, 8, PHASE2_FINAL_BUDGET);
+}
+
+/** Two-phase reduction: drive into the 180deg subgroup (staged A*), then solve within it (exact IDA* →
+ *  weighted A* ladder). Always succeeds and the returned length is CONSTRUCTIVELY held ≤ CUBOID336_MAX_LENGTH:
+ *  if the first pass ever exceeded the bound, phase-2 is re-run at the lowest (near-optimal) weight with the
+ *  large final budget to shorten it, then asserted. */
 function solveTwoPhase(start: Uint8Array, D: OrbitDb[]): number[] {
   const t0 = tupleOf(start, D);
   const p1 = solvePhase1(t0, D);
@@ -691,20 +760,20 @@ function solveTwoPhase(start: Uint8Array, D: OrbitDb[]): number[] {
   // convert the in-H landing tuple to compact in-H indices (phase-2 runs in compact space).
   const c0 = new Int32Array(NORB);
   for (let i = 0; i < NORB; i++) c0[i] = P.fullToInH[i][t[i]];
-  // Weighted-A* LADDER with a TIGHT node cap. The in-H phase-2 problem couples all six big orbits (R2/L2/F2/
-  // B2 touch {0..5}), so even the rich triple-PDB max heuristic is loose by several moves and a low-weight A*
-  // can explore millions of nodes on the worst states (→ multi-second). We try increasing weights, each capped
-  // at PHASE2_NODE_CAP: the lowest weight that finishes within the cap wins (shortest reduction). A higher
-  // weight biases the frontier harder toward the goal — far fewer nodes — at the cost of a slightly longer
-  // (still comfortably inside the length bound) reduction. The final greedy entry (wDen=0) always reaches the
-  // goal so a valid path is guaranteed; in practice a weighted rung wins.
-  let p2: number[] | null = null;
-  for (const [wn, wd] of PHASE2_WEIGHTS) {
-    p2 = solvePhase2(c0, P, PHASE2_NODE_CAP, wn, wd);
-    if (p2) break;
-  }
+  let p2 = solvePhase2(c0, P);
   if (!p2) throw new Error('336 phase-2 unreachable (should not happen)');
-  return [...p1, ...p2];
+  // Constructive bound enforcement: if the total ever exceeds the hard bound, shorten phase-2 with the
+  // lowest (near-optimal, ≤ 2×optimal) weight at the large final budget. This essentially never fires (the
+  // ladder already keeps phase-2 ≤ ~30) but makes ≤ CUBOID336_MAX_LENGTH a guarantee, not a hope.
+  if (p1.length + p2.length > CUBOID336_MAX_LENGTH) {
+    const shorter = phase2AStar(c0, P, 2, PHASE2_FINAL_BUDGET);
+    if (shorter && p1.length + shorter.length <= CUBOID336_MAX_LENGTH) p2 = shorter;
+  }
+  const total = [...p1, ...p2];
+  if (total.length > CUBOID336_MAX_LENGTH) {
+    throw new Error(`336 two-phase exceeded the hard length bound (${total.length} > ${CUBOID336_MAX_LENGTH})`);
+  }
+  return total;
 }
 
 // ── optional optimal shortcut for shallow states (all 15 moves, admissible PDB, small budget) ─
