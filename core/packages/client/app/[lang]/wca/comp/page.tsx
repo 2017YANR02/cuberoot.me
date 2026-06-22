@@ -168,6 +168,8 @@ interface Competition {
   competitor_limit: number;
   /** 实际参赛人数（过去比赛 all_past_comps.json 提供；未来比赛无此数据） */
   competitors?: number;
+  /** 已接受报名人数（未来比赛 WCIF accepted persons 总数）；满员 = registered >= competitor_limit */
+  registered?: number;
   /** 经纬度（来自比赛 JSON，Globe 视图同源）；多地代码无真实坐标为 null/缺省 */
   latitude_degrees?: number | null;
   longitude_degrees?: number | null;
@@ -682,6 +684,7 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     event_regs: w.event_regs,
     roundMeta: w.round_meta,
     competitor_limit: w.competitor_limit,
+    registered: w.registered,
     registration_open: w.registration_open ?? undefined,
     registration_close: w.registration_close ?? undefined,
     event_change_deadline: w.event_change_deadline ?? undefined,
@@ -834,11 +837,11 @@ type SortCol = 'comp' | 'name' | 'city' | 'country' | 'date' | 'reg';
 type ListSort = { col: SortCol; coord?: CoordKey; dir: 'asc' | 'desc' } | null;
 
 function compColTitle(m: CompMetric): string {
-  if (m === 'competitors') return tr({ zh: '实际参赛人数', en: 'Competitors'
+  if (m === 'competitors') return tr({ zh: '人数(过去=实际参赛,未来=已报名)', en: 'People (past: competitors, upcoming: registrations)'
 });
   if (m === 'limit') return tr({ zh: '人数上限', en: 'Competitor limit'
 });
-  if (m === 'ratio') return tr({ zh: '满员率(实际/上限)', en: 'Fill rate (competitors/limit)'
+  if (m === 'ratio') return tr({ zh: '满员率(人数/上限)', en: 'Fill rate (people/limit)'
 });
   if (m === 'nameLength') return tr({ zh: '比赛名称长度(字符数)', en: 'Name length (characters)'
 });
@@ -869,11 +872,20 @@ function compCoord(c: Competition, kind: 'lat' | 'lng'): number | null {
   return kind === 'lat' ? lat : lng;
 }
 
-/** 满员率 = min(实际人数 / 人数上限, 100%)；缺人数 / 无上限(0) → null。
+/** 整场「人数」取值:过去比赛 = 实际参赛人数(competitors);未来比赛 = 已接受报名人数(registered,开放后才有)。
+ *  让列表「实际人数」列对已开放报名的未来比赛也显示报名人数,而不只是已结束的比赛。
+ *  registered=0 多为 WCIF 数据缺口(cubing.com 域内赛 / 尚未处理),按缺失留空,不显示误导性的「0」。 */
+function compPeople(c: { competitors?: number; registered?: number }): number | undefined {
+  if (c.competitors != null) return c.competitors;
+  return c.registered ? c.registered : undefined;
+}
+
+/** 满员率 = min(人数 / 人数上限, 100%)；缺人数 / 无上限(0) → null。人数 = 实际(过去) 或 报名(未来)。
  *  人数>上限(上限填错 / 多阶段 / 多地点等)视为已满员，封顶 100%，不出现 >100% 的脏值 */
-function fillRate(c: { competitors?: number; competitor_limit: number }): number | null {
-  return c.competitors != null && c.competitor_limit > 0
-    ? Math.min(1, c.competitors / c.competitor_limit) : null;
+function fillRate(c: { competitors?: number; registered?: number; competitor_limit: number }): number | null {
+  const p = compPeople(c);
+  return p != null && c.competitor_limit > 0
+    ? Math.min(1, p / c.competitor_limit) : null;
 }
 
 function regPad(n: number): string { return String(n).padStart(2, '0'); }
@@ -942,22 +954,25 @@ function regMilestone(
   return { when: fmtWhen(new Date(n.t)), word: n.word, tone };
 }
 
-/** 日历胶囊填充色用的「当前报名状态」(本地此刻):未开放 / 报名中 / 即将截止(<24h) / 已截止·无字段。
- *  纯色块无文字,故编码「此刻状态」而非列表用的「下一个里程碑」。只用已 bake 的 open/close
- *  (CN 退赛/重开是懒拉,不进上千个胶囊的填充色);过去比赛无报名字段 → closed。 */
+/** 日历胶囊填充色用的「当前报名状态」(本地此刻):未开放 / 报名中 / 满员 / 即将截止(<24h) / 已截止·无字段。
+ *  纯色块无文字,故编码「此刻状态」而非列表用的「下一个里程碑」。只用已 bake 的 open/close + registered/limit
+ *  (CN 退赛/重开是懒拉,不进上千个胶囊的填充色);过去比赛无报名字段 → closed。
+ *  满员 = 报名窗口内且已接受报名 ≥ 上限(超额者进候补);截止后即便满员也只算 closed(反正报不了)。 */
 function regState(
   open: string | null | undefined,
   close: string | null | undefined,
-): 'upcoming' | 'open' | 'urgent' | 'closed' {
+  registered: number | null | undefined,
+  limit: number | null | undefined,
+): 'upcoming' | 'open' | 'urgent' | 'full' | 'closed' {
   const now = Date.now();
   const o = open ? new Date(open).getTime() : NaN;
   const c = close ? new Date(close).getTime() : NaN;
   if (Number.isFinite(o) && now < o) return 'upcoming';   // 还没开放
-  if (Number.isFinite(c)) {
-    if (now >= c) return 'closed';                         // 已过截止
-    return c - now <= 86_400_000 ? 'urgent' : 'open';      // 报名中(含 24h 内紧急)
-  }
-  return Number.isFinite(o) ? 'open' : 'closed';           // 无 close:open 已过→报名中;全无字段→已截止
+  if (Number.isFinite(c) && now >= c) return 'closed';    // 已过截止(满不满都报不了)
+  // 此刻在报名窗口内(或无 close 字段)
+  if (registered != null && limit != null && limit > 0 && registered >= limit) return 'full';  // 满员·仅候补
+  if (Number.isFinite(c)) return c - now <= 86_400_000 ? 'urgent' : 'open';  // 报名中(含 24h 内紧急)
+  return Number.isFinite(o) ? 'open' : 'closed';          // 无 close:open 已过→报名中;全无字段→已截止
 }
 
 /** 列表「报名」列排序键:离现在最近的「将来」报名节点 epoch ms。已全过 / 无字段 → null(沉底)。
@@ -1067,7 +1082,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
 }) {
   // 整场列单值取值（仅计数/比例/长度类，用于 col='comp' 数值排序）：经纬度走 compCoord、none 返回 null
   const compVal = useCallback((c: Competition): number | null | undefined =>
-    compMetric === 'competitors' ? c.competitors
+    compMetric === 'competitors' ? compPeople(c)
       : compMetric === 'limit' ? c.competitor_limit
         : compMetric === 'ratio' ? fillRate(c)
           : compMetric === 'nameLength' ? localizeName(c, isZh).length
@@ -1355,7 +1370,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
                   title={compMetric === 'none' ? undefined : compColTitle(compMetric)}
                 >
                   {(() => {
-                    if (compMetric === 'competitors') return c.competitors != null ? c.competitors : '';
+                    if (compMetric === 'competitors') { const p = compPeople(c); return p != null ? p : ''; }
                     if (compMetric === 'limit') return c.competitor_limit > 0 ? c.competitor_limit : '';
                     if (compMetric === 'ratio') { const r = fillRate(c); return r == null ? '' : `${Math.round(r * 100)}%`; }
                     if (compMetric === 'nameLength') return localizeName(c, isZh).length;
@@ -1735,9 +1750,20 @@ function CalendarPageInner() {
     [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, daysFilter, dateFrom, dateTo, cancelledFilter, cancelledCutoffIso, debutIds],
   );
 
+  // 中国内地比赛 WCA WCIF 多无报名数据(报名走 cubing.com),用 cn_upcoming_registrations(compId→WCA ID 列表)
+  // 的人数补 registered,让列表「人数」列 + 日历满员判定对 CN 比赛也生效。
+  const cnRegCount = useMemo(() => {
+    const m = new Map<string, number>();
+    if (cnRegistrations) for (const [id, ids] of Object.entries(cnRegistrations)) m.set(id, ids.length);
+    return m;
+  }, [cnRegistrations]);
+
   const displayedComps = useMemo(
-    () => activeComps.filter(isMatch),
-    [activeComps, isMatch],
+    () => activeComps.filter(isMatch).map((c) => {
+      const cnN = cnRegCount.get(c.id);
+      return cnN && (c.registered == null || cnN > c.registered) ? { ...c, registered: cnN } : c;
+    }),
+    [activeComps, isMatch, cnRegCount],
   );
 
   // .calendar-page 根 ref — 用来由 CompList 按视口可视行实时设 --cl-name-width / --cl-city-width
@@ -2141,7 +2167,7 @@ function CalendarPageInner() {
               title={tr({ zh: '整场一列显示什么（实际人数 / 上限 / 满员率 / 名称长度 / 城市名长度 / 纬度 / 经度），点列头可排序', en: 'What the whole-comp column shows (competitors / limit / fill rate / name length / city length / latitude / longitude); click header to sort'
             })}
             >
-              <option value="competitors">{tr({ zh: '实际人数', en: 'Competitors'
+              <option value="competitors">{tr({ zh: '人数', en: 'People'
             })}</option>
               <option value="limit">{tr({ zh: '人数上限', en: 'Limit'
             })}</option>
@@ -2442,7 +2468,7 @@ function CalendarPageInner() {
             return (
               <>
                 {week.bars.map((bar) => {
-                  const reg = regState(bar.comp.registration_open, bar.comp.registration_close);
+                  const reg = regState(bar.comp.registration_open, bar.comp.registration_close, bar.comp.registered, bar.comp.competitor_limit);
                   const cancelled = isCancelledComp(bar.comp, cancelledCutoffIso);
                   const displayName = localizeName(bar.comp, isZh).replace(/ \d{4}$/, '');
                   const classes = [
@@ -2687,6 +2713,7 @@ function CalendarPageInner() {
           {viewMode === 'calendar' && (
             <>
               <span className="legend-item"><span className="legend-swatch swatch-reg-open" /> {tr({ zh: '报名中', en: 'Reg open' })}</span>
+              <span className="legend-item"><span className="legend-swatch swatch-reg-full" /> {tr({ zh: '满员', en: 'Full' })}</span>
               <span className="legend-item"><span className="legend-swatch swatch-reg-urgent" /> {tr({ zh: '即将截止', en: 'Closing <24h' })}</span>
               <span className="legend-item"><span className="legend-swatch swatch-reg-upcoming" /> {tr({ zh: '未开放', en: 'Not yet open' })}</span>
               <span className="legend-item"><span className="legend-swatch swatch-reg-closed" /> {tr({ zh: '已截止', en: 'Closed' })}</span>
