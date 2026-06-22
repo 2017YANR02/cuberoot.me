@@ -700,12 +700,15 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-bycomp-table thead th.wp-th-narrow { text-align: right !important; }
 .wp-bycomp-table .wp-cell-pos { text-align: right; }
 .wp-bycomp-table .wp-cell-result { text-align: center; }
-/* 非官方平均(head-to-head 决赛等 WCA 不记平均的轮次):值后跟右上角「非官方」标 */
-.wp-unof-avg-cell { display: inline-block; white-space: nowrap; }
-.wp-unof-avg-tag {
-    margin-left: 4px; vertical-align: super; line-height: 1;
-    font-size: 0.56rem; font-weight: 600; white-space: nowrap;
-    color: var(--wp-text-mute);
+/* 非官方平均(head-to-head 决赛等 WCA 不记平均的轮次):值居中,右侧上下角标 —— Ao{N} 在右上、非官方在右下 */
+.wp-unof-avg-cell { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.wp-unof-avg-corner {
+    display: inline-flex; flex-direction: column; align-items: flex-start;
+    line-height: 1.15; cursor: default;
+}
+.wp-unof-avg-ao,
+.wp-unof-avg-flag {
+    font-size: 0.55rem; font-weight: 600; white-space: nowrap; color: var(--wp-text-mute);
 }
 /* 详细成绩单元格颜色 token;网格布局 + 括号占位见共享 components/wca-results/attempts-grid.css(与 /recon 同场表共用) */
 .wp-cell-attempts { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
