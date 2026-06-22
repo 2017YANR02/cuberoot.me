@@ -20,6 +20,7 @@ import Slide15DistView from './_components/Slide15DistView';
 import SuperFloppyDistView from './_components/SuperFloppyDistView';
 import UfoDistView from './_components/UfoDistView';
 import Cm2DistView from './_components/Cm2DistView';
+import Cm3DistView from './_components/Cm3DistView';
 import DiamondDistView from './_components/DiamondDistView';
 import GearDistView from './_components/GearDistView';
 import MpyrDistView from './_components/MpyrDistView';
@@ -525,7 +526,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   // 非 WCA 求解项目(ivy / 133 / 223 / 8p / sfl …):难度=整解最优步数分布(A/B 档全空间精确,15p 是 TIER C
   // 采样);均无打乱长度数据、无合并/数据集/度量开关 → 走 isIvy 早返回那套。
-  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '233' || event === '334' || event === '335' || event === '336' || event === '337' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a' || event === 'sq2' || event === 'ssq1' || event === 'bsq';
+  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '233' || event === '334' || event === '335' || event === '336' || event === '337' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'cm3' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a' || event === 'sq2' || event === 'ssq1' || event === 'bsq';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -747,6 +748,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                         : event === 'sfl' ? 'sfl'
                         : event === 'ufo' ? 'ufo'
                           : event === 'cm2' ? 'cm2'
+                          : event === 'cm3' ? 'cm3'
                             : event === 'dmd' ? 'dmd'
                               : event === 'gear' ? 'gear'
                                 : event === 'mpyrso' ? 'mpyrso'
@@ -1093,6 +1095,26 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           </div>
         ) : (
           <Cm2DistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  // Cmetrick(非 WCA 项目,TIER D):可达状态 165,112,971,264(= 24⁹/24 ≈ 1.65×10¹¹,jaapsch.net)无法整图枚举,
+  // 难度 = 整解步数的**离线采样**分布(build 脚本用从零构造式约简求解器解 N 条随机态后落静态 JSON,有界非最优);无打乱长度数据。
+  if (event === 'cm3') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: 'Cmetrick 无打乱长度分布(打乱由 cstimer 定长生成);整解步数采样分布见「难度」',
+              en: 'No scramble-length distribution for the Cmetrick (cstimer generates fixed-form scrambles); see "Difficulty" for the sampled solution-length distribution',
+            })}
+          </div>
+        ) : (
+          <Cm3DistView isZh={isZh} />
         )}
       </div>
     );

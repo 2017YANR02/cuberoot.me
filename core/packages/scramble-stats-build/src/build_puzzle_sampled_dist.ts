@@ -297,6 +297,28 @@ const REGISTRY: PuzzleDistSpec[] = [
     },
   },
   {
+    event: 'cm3',
+    label: 'Cmetrick',
+    scrambleLen: 16,          // cstimer cm3 generator length (CSTIMER_EVENTS cm3 length=16)
+    defaultN: 2000,           // 从零构造式约简,表懒建一次(~15ms)后每条求解毫秒级 → 2000 单进程秒级
+    // 从零逐球约简(cm2 的 3×3 放大):先用线翻转解 9 个符号位(G/H=Z2),再用单球对易子 gadget 逐球归位。
+    // 有效 + 有界(实测 3000 真打乱 mean≈33、median≈35、max≈41,bound 60),长度随打乱难度变化(平滑单峰,非单柱),
+    // 非最优(§0.0 #3 诚实记)。
+    quality: 'sampled-bounded',
+    load: async () => {
+      const m = await mod('../../client/lib/cm3-solver');
+      const solveCm3 = m.solveCm3 as (s: string) => { length: number; optimal?: boolean };
+      return {
+        // randomCm3Scramble 忠实镜像 cstimer 的 mega cm3 生成器(2 轴 × 3 组 × 3 幂 + 无重复规则)。
+        scramble: m.randomCm3Scramble as SolverAdapter['scramble'],
+        // 约简有效+有界(非最优)→ optimal 恒 false。
+        solve: (s: string) => ({ length: solveCm3(s).length, optimal: false }),
+        maxBound: m.CM3_MAX_LENGTH as number,
+        stateCountStr: m.CM3_STATE_COUNT_STR as string,
+      };
+    },
+  },
+  {
     event: 'crz3a',
     label: 'Crazy 3x3',
     scrambleLen: 25,          // cstimer crz3a generator length(CSTIMER_EVENTS crz3a length=25)

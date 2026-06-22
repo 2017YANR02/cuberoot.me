@@ -285,7 +285,7 @@ try {
 # analyzer / 真题语料,求解器是 packages/client/lib/<puzzle>-solver.ts 的纯 TS 实现; build_puzzle_sampled_dist.ts
 # 直接 import 它、用它自带的 cstimer 同款随机生成器采样。每条求解 ~0.2-0.4s,N 默认几百~两千 → 单 event 几分钟。
 # 新接入一个 C/D 采样分布 = 在 build_puzzle_sampled_dist.ts 的 REGISTRY 加一行 + 此处 $SAMPLED_DIST_EVENTS 加 event。
-$SAMPLED_DIST_EVENTS = @('335', '336', '337', '233', '334', 'crz3a', 'mpyrso', 'dino', 'sq2', 'ssq1', 'bsq')   # 已离线采样的 TIER C/D event(随后续 wave 退役各 DistView 现场采样而增长;15p 求解器太慢未接入)
+$SAMPLED_DIST_EVENTS = @('335', '336', '337', '233', '334', 'crz3a', 'mpyrso', 'dino', 'sq2', 'ssq1', 'bsq', 'cm3')   # 已离线采样的 TIER C/D event(随后续 wave 退役各 DistView 现场采样而增长;15p 求解器太慢未接入)
 $evToBuild = if ($SampledEvents -and $SampledEvents.Count -gt 0) { $SampledEvents } else { $SAMPLED_DIST_EVENTS }
 if ($evToBuild.Count -gt 0) {
   Step "build_puzzle_sampled_dist (TIER C/D 离线采样: $($evToBuild -join ', '))"
