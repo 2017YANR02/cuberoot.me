@@ -152,6 +152,26 @@ const nextConfig: NextConfig = {
         source: "/assets/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
       },
+      // Big content-stable wasm served straight from public/ defaulted to
+      // max-age=0 → every /frame-count load 304-revalidated (billable edge
+      // request) and risked re-downloading the whole file on a validation miss.
+      // Third-party, effectively immutable → cache 30d (rename to bust), like icons.
+      {
+        source: "/ffmpeg/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+      {
+        source: "/MediaInfoModule.wasm",
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000" }],
+      },
+      // Analyzer worker bundle (our build artifact, fixed filename → could change
+      // on rebuild). Was max-age=0; cache 1 day to kill repeat-visit 304s while a
+      // solver fix still propagates within a day. NO COEP here — the analyzer uses
+      // a classic worker and require-corp would block it (see headers note above).
+      {
+        source: "/analyze-worker/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400" }],
+      },
       // /scramble/solver 现在是统一求解路由(?event= 分发):只有 3×3 cubeopt(event=333
       // 或缺省 event)要 SharedArrayBuffer → 只给它发 COOP/COEP。其余 event(222/pyram/skewb/
       // sq1)是普通文档,绝不能套 COEP(rust-cross worker + 跨域 27MB 表会被 require-corp 拦死)。
@@ -208,6 +228,11 @@ const nextConfig: NextConfig = {
         // Crawlers enumerate the pair space; without this each pair URL burns a
         // function render after every deploy (per-deployment ISR cache reset).
         { source: "/:lang(en|zh)/memo/colpi/:pair", destination: "/:lang/memo/colpi/_" },
+        // Recon edit form: same sentinel. Every recon list/detail renders an
+        // "edit" <Link> to /recon/submit/<id>; Next prefetched them all, so each
+        // id was a MISS function render of an auth-gated, zero-SEO edit form.
+        // One static shell backs every id (see recon/submit/[editId]/page.tsx).
+        { source: "/:lang(en|zh)/recon/submit/:editId", destination: "/:lang/recon/submit/_" },
       ],
       afterFiles: [
         // Dev only: FMC chain solver (vendored cubelib) runs as a local native

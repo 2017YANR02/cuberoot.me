@@ -201,7 +201,7 @@ function MarksFeed() {
                 <div className="scrmarks-row-src">
                   <EventIcon event={m.e} className="scrmarks-evt" />
                   {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-                  <AppLink href={`/scramble/gen?comp=${encodeURIComponent(m.ci)}`} className="scrmarks-comp">
+                  <AppLink href={`/scramble/gen?comp=${encodeURIComponent(m.ci)}`} prefetch={false} className="scrmarks-comp">
                     {localizeCompName(m.ci, m.cn, isZh)}
                   </AppLink>
                   <span className="scrmarks-srcline">{compSourceLine(m.r, m.g, m.n, isZh, !!m.x)}</span>

@@ -1431,6 +1431,12 @@ export default function CompDetailPage() {
               }
               return `/scramble/gen?${q.toString()}`;
             })()}
+            // Reactive href (changes on every event/round switch) + leaves this
+            // page → Next would re-prefetch a new /scramble/gen RSC payload on each
+            // switch. That prefetch storm was ~85% of all /scramble/gen edge hits
+            // (13.5k _rsc requests from 791 real users) with near-zero click-through.
+            // Disable prefetch: clicking still navigates normally, page load unaffected.
+            prefetch={false}
             className="comp-view-tab comp-view-tab--link"
             title={tr({ zh: '查看本场打乱', en: 'View scrambles'
             })}
