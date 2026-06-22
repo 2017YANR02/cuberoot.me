@@ -31,19 +31,95 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import vm from 'node:vm';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+
+const require = createRequire(import.meta.url);
 
 // ── 求解器适配器 ────────────────────────────────────────────────────────────────────
 // 每个 puzzle 的求解器是纯 TS、按事件名各异,故用一层 adapter 抹平导出名差异。
-// scramble(rnd) → cstimer 同款随机刚体打乱;solve(scramble) → { length, optimal }。
+// 两条路:
+//   (A) 纯 TS 刚体打乱 + 纯 TS 求解(335/337/334/233)——给 scramble(len,rnd) + solve(scramble),可确定性复现。
+//   (B) 不吃刚体打乱字符串(15 数码采随机格)或求解器是 cstimer worker 引擎(只能在 Node 里走 node:vm 沙箱跑 cstimer
+//       原生 JS,无法 import client lib 因其拉 `new Worker`)——给 sampleOne(rnd) 自取一条样本。
+// 一个 spec 二选一:有 sampleOne 走 (B);否则走 (A) 的 scramble+solve。两路 solve 返回都可为 Promise(crz3a kociemba 异步)。
+type SampleResult = { length: number; optimal: boolean; scramble: string };
 interface SolverAdapter {
-  /** 生成一条 `len` 步 cstimer 同款随机刚体打乱(用注入的 rnd 复现)。 */
-  scramble: (len: number, rnd: () => number) => string;
-  solve: (scramble: string) => { length: number; optimal: boolean };
+  /** (A) 生成一条 `len` 步 cstimer 同款随机刚体打乱(用注入的 rnd 复现)。 */
+  scramble?: (len: number, rnd: () => number) => string;
+  /** (A) 求解一条打乱字符串 → { length, optimal }(可为 Promise)。 */
+  solve?: (scramble: string) => { length: number; optimal: boolean } | Promise<{ length: number; optimal: boolean }>;
+  /** (B) 自取一条样本(随机格 / cstimer 引擎自生成 + 自求解)。给了它就忽略 scramble/solve。 */
+  sampleOne?: (rnd: () => number) => SampleResult | Promise<SampleResult>;
   /** 求解器导出的硬上界常量(可选,写进 maxBound)。 */
   maxBound?: number;
   /** 预格式化的可达状态数字符串(可选;> 2^53 必为字符串,见 §0.0 #4)。 */
   stateCountStr?: string;
+  /** 预格式化的 facelet 群阶字符串(可选;334 等用)。 */
+  groupOrderStr?: string;
+}
+
+// ── cstimer 原生引擎 node:vm 沙箱(与各 *_solver.test.ts 同款) ─────────────────────────────
+// 浏览器端 lib/cstimer-scramble 走 `new Worker('/tools/...')`,Node 里跑不了。但 cstimer 的 scramble
+// 核心是纯 JS,可在 node:vm 沙箱里加载 → 直接拿 scrMgr(生成器)+ 各 puzzle 引擎(mpyr/redi 自带求解器)。
+// 这正是 mpyr_solver.test.ts / dino_solver.test.ts / crz3a_solver.test.ts 用的方式。
+let CSTIMER_SANDBOX: Record<string, unknown> | null | undefined;
+function cstimerSandbox(): Record<string, unknown> | null {
+  if (CSTIMER_SANDBOX !== undefined) return CSTIMER_SANDBOX;
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const repoRoot = path.resolve(here, '..', '..', '..', '..');
+  const candidates = [
+    path.join(repoRoot, 'tools', 'cstimer-scramble'),
+    'D:/cube/cuberoot.me/tools/cstimer-scramble',
+  ];
+  let root: string | null = null;
+  for (const c of candidates) {
+    try { if (fs.existsSync(path.join(c, 'scramble', 'megascramble.js'))) { root = c; break; } } catch { /* ignore */ }
+  }
+  if (!root) { CSTIMER_SANDBOX = null; return null; }
+  try {
+    const sandbox: Record<string, unknown> = Object.create(null);
+    sandbox.self = sandbox;
+    sandbox.globalThis = sandbox;
+    sandbox.global = sandbox;
+    sandbox.console = console;
+    sandbox.setTimeout = setTimeout;
+    sandbox.clearTimeout = clearTimeout;
+    sandbox.kernel = { getProp: () => '', setProp() {}, regProp() {}, regListener() {}, pushSignal() {} };
+    sandbox.DEBUG = false;
+    sandbox.importScripts = () => {};
+    sandbox.process = process;
+    sandbox.require = require;
+    const ctx = vm.createContext(sandbox);
+    const files = [
+      'lib/utillib.js', 'lib/isaac.js', 'lib/mathlib.js',
+      'scramble/scramble.js', 'scramble/megascramble.js',
+      'scramble/pyraminx.js', 'scramble/redi.js', 'scramble/slide.js',
+    ];
+    for (const f of files) {
+      const code = fs.readFileSync(path.join(root, f), 'utf8');
+      vm.runInContext(code, ctx, { filename: f });
+    }
+    CSTIMER_SANDBOX = sandbox;
+    return sandbox;
+  } catch (e) {
+    console.warn('[cstimer-vm] sandbox load failed:', e);
+    CSTIMER_SANDBOX = null;
+    return null;
+  }
+}
+
+/** Generate one cstimer scramble string for `key` (e.g. 'mpyrso', 'dinoso', 'crz3a'). Retries while empty. */
+function cstimerGen(scrMgr: { scramblers?: Record<string, (k: string, n?: number) => unknown>; toTxt?: (s: string) => string }, key: string, len?: number): string | null {
+  const fn = scrMgr.scramblers && scrMgr.scramblers[key];
+  if (!fn) return null;
+  let out: unknown;
+  for (let k = 0; k < 50000 && (out === undefined || out === null); k++) out = len !== undefined ? fn(key, len) : fn(key);
+  if (out == null) return null;
+  const txt = scrMgr.toTxt ? scrMgr.toTxt(String(out)) : String(out);
+  const s = String(txt).trim();
+  return s.length > 0 ? s : null;
 }
 
 interface PuzzleDistSpec {
@@ -105,6 +181,122 @@ const REGISTRY: PuzzleDistSpec[] = [
       };
     },
   },
+  {
+    event: '233',
+    label: '2x3x3 Domino',
+    scrambleLen: 25,          // cstimer 233 generator length(CSTIMER_EVENTS 233 length=25)
+    defaultN: 2000,           // solveCuboid233 毫秒级,2000 条单进程几十秒
+    quality: 'sampled-optimal',
+    load: async () => {
+      const m = await mod('../../client/lib/cuboid233-solver');
+      const solveCuboid233 = m.solveCuboid233 as (s: string) => { length: number };
+      return {
+        // randomCuboid233Scramble 忠实镜像 cstimer mega 的 233 生成器(同 7 token 字母表+无重复规则)。
+        scramble: m.randomCuboid233Scramble as SolverAdapter['scramble'],
+        // solveCuboid233 是 IDA* 可证最优(但其返回值无 optimal 字段)→ 恒标 optimal:true。
+        solve: (s: string) => ({ length: solveCuboid233(s).length, optimal: true }),
+        stateCountStr: m.CUBOID233_STATE_COUNT_STR as string,
+      };
+    },
+  },
+  {
+    event: '334',
+    label: '3x3x4',
+    scrambleLen: 40,          // = Cuboid334DistView SCRAMBLE_LEN
+    defaultN: 300,            // 实测含 warmup/方差约 ~1.5-1.6s/solve(两阶段)→ 300 条单进程 ~6-7min(N=400 超 500s)
+    quality: 'sampled-near-optimal',
+    load: async () => {
+      const m = await mod('../../client/lib/cuboid334-solver');
+      return {
+        scramble: m.randomCuboid334Scramble as SolverAdapter['scramble'],
+        solve: m.solveCuboid334 as SolverAdapter['solve'],
+        maxBound: m.CUBOID334_MAX_LENGTH as number,
+        stateCountStr: m.CUBOID334_STATE_COUNT_STR as string,
+        groupOrderStr: m.CUBOID334_GROUP_ORDER_STR as string,
+      };
+    },
+  },
+  {
+    event: 'crz3a',
+    label: 'Crazy 3x3',
+    scrambleLen: 25,          // cstimer crz3a generator length(CSTIMER_EVENTS crz3a length=25)
+    defaultN: 1000,           // kociemba 两阶段(表暖后)每条 ~数十 ms;1000 条单进程几分钟
+    quality: 'sampled-near-optimal',
+    // 打乱走 cstimer-vm 原生 crz3a 生成器(同 live view 的 cstimerScramble('crz3a'));
+    // 求解走纯 TS solveCrz3a(kociemba 两阶段,Node 可跑,异步)。
+    load: async () => {
+      const sb = cstimerSandbox();
+      if (!sb) throw new Error('cstimer sandbox unavailable for crz3a scramble generation');
+      const scrMgr = sb.scrMgr as Parameters<typeof cstimerGen>[0];
+      const m = await mod('../../client/lib/crz3a-solver');
+      const solveCrz3a = m.solveCrz3a as (s: string) => Promise<{ length: number; optimal?: boolean }>;
+      return {
+        sampleOne: async () => {
+          const scramble = cstimerGen(scrMgr, 'crz3a', 25);
+          if (!scramble) throw new Error('crz3a generator returned empty');
+          const out = await solveCrz3a(scramble);
+          return { length: out.length, optimal: out.optimal ?? false, scramble };
+        },
+        // 三阶魔方 ≈ 4.3×10¹⁹,超 2^53 → 预格式化字符串(与 Crz3aDistView STATE_COUNT_APPROX 一致)。
+        stateCountStr: '43,252,003,274,489,856,000',
+      };
+    },
+  },
+  {
+    event: 'mpyrso',
+    label: 'Master Pyraminx',
+    scrambleLen: 0,           // cstimer 随态生成器忽略长度
+    defaultN: 400,            // 实测 ~0.95s/solve(cstimer 两阶段)→ 400 条单进程 ~6min(故不取 1000)
+    quality: 'sampled-near-optimal',
+    // 生成 + 求解都走 cstimer-vm 原生引擎(mpyr.solveScramble),与 live view 的 worker 路径同源,
+    // 不 import client lib(mpyr-solver 拉 `new Worker`)。
+    load: async () => {
+      const sb = cstimerSandbox();
+      if (!sb) throw new Error('cstimer sandbox unavailable for mpyr');
+      const scrMgr = sb.scrMgr as Parameters<typeof cstimerGen>[0];
+      const mpyr = sb.mpyr as { solveScramble: (s: string) => string } | undefined;
+      if (!mpyr || typeof mpyr.solveScramble !== 'function') throw new Error('cstimer mpyr engine unavailable');
+      // 暖一次 prune 表(首条触发懒构建)。
+      cstimerGen(scrMgr, 'mpyrso');
+      return {
+        sampleOne: async () => {
+          const scramble = cstimerGen(scrMgr, 'mpyrso');
+          if (!scramble) throw new Error('mpyrso generator returned empty');
+          const sol = mpyr.solveScramble(scramble).trim();
+          const length = sol ? sol.split(/\s+/).length : 0;
+          return { length, optimal: false, scramble };
+        },
+      };
+    },
+  },
+  {
+    event: 'dino',
+    label: 'Dino Cube',
+    scrambleLen: 0,           // cstimer 随态生成器忽略长度
+    defaultN: 2000,           // dino 解很快(~7-11 步),2000 条单进程几十秒
+    quality: 'sampled-near-optimal',
+    // 生成 + 求解都走 cstimer-vm 原生引擎(redi.solveScramble),event id 'dino' 的 cstimer key 是 'dinoso'。
+    load: async () => {
+      const sb = cstimerSandbox();
+      if (!sb) throw new Error('cstimer sandbox unavailable for dino');
+      const scrMgr = sb.scrMgr as Parameters<typeof cstimerGen>[0];
+      const redi = sb.redi as { solveScramble: (s: string) => string } | undefined;
+      if (!redi || typeof redi.solveScramble !== 'function') throw new Error('cstimer redi (dino) engine unavailable');
+      cstimerGen(scrMgr, 'dinoso');
+      return {
+        sampleOne: async () => {
+          const scramble = cstimerGen(scrMgr, 'dinoso');
+          if (!scramble) throw new Error('dinoso generator returned empty');
+          const sol = redi.solveScramble(scramble).trim();
+          const length = sol ? sol.split(/\s+/).length : 0;
+          return { length, optimal: false, scramble };
+        },
+      };
+    },
+  },
+  // NOTE: 15p (数字华容道) 故意 NOT 注册 —— 其 walking-distance IDA* 对均匀随机深态单条可能跑数分钟(N=20
+  // 离线采样 >200s 未完成),即便很小的 N 也无法给出平滑直方图且有 runaway/OOM 风险(并发重 solver 在跑)。
+  // 故跳过,Slide15DistView 保持现场采样(深态在浏览器里也慢,但有进度条+可取消)。若日后换更强求解器再接入。
 ];
 
 // ── 简易确定性 PRNG(mulberry32),让重跑可复现(与测试同款) ───────────────────────────
@@ -136,13 +328,25 @@ async function buildOne(spec: PuzzleDistSpec, n: number): Promise<void> {
   let sum = 0, mn = Infinity, mx = 0, optN = 0;
   const lengthsSorted: number[] = []; // 收集所有长度求中位数(N ≤ 数万,放内存可接受)
 
+  const useSampleOne = typeof adapter.sampleOne === 'function';
+  if (!useSampleOne && (!adapter.scramble || !adapter.solve)) {
+    throw new Error(`[${spec.event}] adapter has neither sampleOne nor scramble+solve`);
+  }
+
   const t0 = Date.now();
   let done = 0;
   for (let i = 0; i < n; i++) {
     let scramble = '';
     try {
-      scramble = adapter.scramble(spec.scrambleLen, rnd);
-      const { length, optimal } = adapter.solve(scramble);
+      let length: number, optimal: boolean;
+      if (useSampleOne) {
+        const r = await adapter.sampleOne!(rnd);
+        scramble = r.scramble; length = r.length; optimal = r.optimal;
+      } else {
+        scramble = adapter.scramble!(spec.scrambleLen, rnd);
+        const out = await adapter.solve!(scramble);
+        length = out.length; optimal = out.optimal;
+      }
       counts.set(length, (counts.get(length) ?? 0) + 1);
       sum += length;
       if (length < mn) mn = length;
@@ -190,6 +394,7 @@ async function buildOne(spec: PuzzleDistSpec, n: number): Promise<void> {
   };
   if (adapter.maxBound !== undefined) out.maxBound = adapter.maxBound;
   if (adapter.stateCountStr) out.stateCountStr = adapter.stateCountStr;
+  if (adapter.groupOrderStr) out.groupOrderStr = adapter.groupOrderStr;
 
   fs.writeFileSync(outPath, JSON.stringify(out));
   const ms = Date.now() - t0;

@@ -628,6 +628,12 @@ html[data-theme=dark] .wp-page {
 @media (min-width: 768px) {
     .wp-bycomp-table .wp-cell-comp .comp-cell { max-width: 26rem; }
 }
+/* 移动端:表格在 .wp-table-scroll / .wp-records-scroll 里横向滚动,auto 表格会把
+   overflow-wrap:anywhere 的比赛名列压成逐字换行(min-content≈1ch)。给一个可读最小宽度,
+   让赛事名按词换行(常见名 ~2 行),日期不再被挤断行。 */
+@media (max-width: 767px) {
+    .wp-bycomp-table .wp-cell-comp { min-width: 12rem; }
+}
 .wp-bycomp-table .wp-cell-comp-date {
     margin-top: 2px;
     font-family: var(--font-mono);

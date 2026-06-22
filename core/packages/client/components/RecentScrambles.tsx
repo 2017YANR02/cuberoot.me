@@ -6,19 +6,19 @@
 //  - every other event → simplest scrambles of the latest batch, bucketed by scramble length;
 //    222 / pyraminx / skewb also offer a difficulty (whole-solve optimal step) mode. Fed by
 //    stats/scramble/recent_scrambles_events.json (RecentEventBody).
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import MoreToggle from '@/components/MoreToggle';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
-import { SubsetColorPicker, SubsetSwatch, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
+import { SubsetColorPicker, SubsetSwatch, useSubsetSelection, type ColorLetter, type ColorMode, type SubsetSelection } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
-import { VARIANT_ORDER, stageLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT } from '@/lib/scramble-variants';
+import { VARIANT_ORDER, stageLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, isBlockVariant, VARIANT_STAGES } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
@@ -64,14 +64,81 @@ function formatProb(p: number): string | null {
   return `${(p * 100).toFixed(1)}%`;
 }
 
+// 全局最稀有:在本批 rank 的所有 (变体 × 类型 × 底色 × 步数) 桶里,挑 distribution 概率最低的那一格,
+// 作为 333 hero 的默认选择(首屏一次性定位,用户手动改过即不再覆盖)。返回 UI 层的 variant/metric。
+function findRarestSelection(
+  data: RecentScramblesJson,
+  dist: DistributionJson,
+): { variant: string; metric: string; subsetKey: string; step: number } | null {
+  const wcaVars = dist.sets?.wca?.variants;
+  if (!wcaVars || !data.rank) return null;
+  let best: { variant: string; metric: string; subsetKey: string; step: number; p: number } | null = null;
+  for (const dataVariant in data.rank) {
+    const distVar = wcaVars[dataVariant];
+    if (!distVar) continue;
+    const byMetric = data.rank[dataVariant];
+    for (const metric in byMetric) {
+      const target = stageLabel(metric, false);
+      const distStageKey = Object.keys(distVar.data).find((s) => stageLabel(s, false) === target);
+      if (!distStageKey) continue;
+      const stageData = distVar.data[distStageKey];
+      const bySubset = byMetric[metric];
+      for (const subsetKey in bySubset) {
+        const counts = stageData?.[subsetKey]?.counts;
+        if (!counts) continue;
+        let total = 0;
+        for (const k in counts) total += counts[k];
+        if (total <= 0) continue;
+        const byStep = bySubset[subsetKey];
+        for (const stepStr in byStep) {
+          if (!byStep[stepStr]?.length) continue;   // 该步数必须本批真有样例
+          const c = counts[stepStr] ?? 0;
+          if (c <= 0) continue;
+          const p = c / total;
+          if (best === null || p < best.p) {
+            best = { variant: isBlockVariant(dataVariant) ? 'block' : dataVariant, metric, subsetKey, step: Number(stepStr), p };
+          }
+        }
+      }
+    }
+  }
+  return best ? { variant: best.variant, metric: best.metric, subsetKey: best.subsetKey, step: best.step } : null;
+}
+
 // 步数下拉选项标签(zh「N 步」/ en「N」)。tr 包住避免内联 isZh 文案三元。
 const stepOptionLabel = (n: number) => tr({ zh: `${n} 步`, en: String(n) });
 
 // Pattern B: English is bare; only Chinese is /zh-prefixed.
 const langPrefix = (lang: 'zh' | 'en') => (lang === 'zh' ? '/zh' : '');
 const genHref = (lp: string, ci: string) => `${lp}/scramble/gen?comp=${encodeURIComponent(ci)}`;
-const analyzerHref = (lp: string, scramble: string) =>
-  `${lp}/scramble/analyzer?${new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') })}`;
+// (变体, 类型) → analyzer StageSolver 的 method + 阶段索引(深链直达「砖 / F2B」这类视图)。
+// 333(整解)无 StageSolver 方法 → null,不附加参数。metric 短键(xc)与阶段全名(xcross)经
+// stageLabel 归一后按位匹配。
+function stageSolverTarget(uiVariant: string, metric: string): { method: string; stage: number } | null {
+  if (uiVariant === '333') return null;
+  const stages = VARIANT_STAGES[uiVariant as keyof typeof VARIANT_STAGES];
+  if (!stages) return null;
+  const target = stageLabel(metric, false);
+  const stage = stages.findIndex((s) => stageLabel(s, false) === target);
+  return stage >= 0 ? { method: uiVariant, stage } : null;
+}
+// 底色字母 → StageSolver 6 视角(FACES=[D,U,L,R,F,B])索引。标准配色 U=白 D=黄 F=绿 B=蓝 R=红 L=橙
+// (lib/cube-colors),故 Y→0(D) W→1(U) O→2(L) R→3(R) G→4(F) B→5(B)。锁定底色对应的视角用。
+const COLOR_FACE_INDEX: Record<ColorLetter, number> = { Y: 0, W: 1, O: 2, R: 3, G: 4, B: 5 };
+const analyzerHref = (
+  lp: string,
+  scramble: string,
+  target?: { method: string; stage: number } | null,
+  color?: ColorLetter,
+) => {
+  const p = new URLSearchParams({ scramble: scramble.trim().replace(/ /g, '_') });
+  if (target) {
+    if (target.method !== 'std') p.set('method', target.method); // std 是默认 method,省略
+    if (target.stage !== 0) p.set('mstage', String(target.stage)); // 0 是默认阶段,省略
+    if (color) p.set('face', String(COLOR_FACE_INDEX[color])); // 锁定该底色对应视角(精确展示这条的稀有步数)
+  }
+  return `${lp}/scramble/analyzer?${p.toString()}`;
+};
 
 // 比赛来源行(hero / list 行尾):国旗 + 比赛名 + 项目图标 + 轮次/组别。
 function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: string; isZh: boolean; row?: boolean }) {
@@ -183,6 +250,28 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
   const sel = useSubsetSelection('dual');
   const [expanded, setExpanded] = useState(false);
 
+  // 首屏一次性把 hero 定位到本批全局概率最低(最稀有)的那一格;用户手动改过任一选择器即不再覆盖。
+  const pickedRef = useRef(false);
+  const touchedRef = useRef(false);
+  useEffect(() => {
+    if (pickedRef.current || touchedRef.current || !data || !dist) return;
+    const best = findRarestSelection(data, dist);
+    if (!best) return;
+    pickedRef.current = true;
+    setVariant(best.variant);
+    setMetric(best.metric);
+    setStep(best.step);
+    sel.selectByKey(best.subsetKey);
+  }, [data, dist, sel]);
+
+  // 包一层选择器,记录用户是否手动交互过(防 auto-pick 在数据迟到时覆盖用户已改的选择)。
+  const markTouched = () => { touchedRef.current = true; };
+  const pickerSel: SubsetSelection = {
+    ...sel,
+    setColorMode: (m: ColorMode) => { markTouched(); sel.setColorMode(m); },
+    selectOption: (id: string) => { markTouched(); sel.selectOption(id); },
+  };
+
   const hasData = (v: string) => {
     const r = data?.rank?.[v];
     if (!r) return false;
@@ -210,6 +299,8 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
   const steps = useMemo(() => Object.keys(byStep ?? {}).map(Number).sort((a, b) => a - b), [byStep]);
   const curStep = (step != null && steps.includes(step)) ? step : (steps[0] ?? null);
   const entries = (curStep != null ? byStep?.[String(curStep)] : undefined) ?? [];
+  // 当前桶的所有条目同属一个 (变体, 类型),共享同一个 StageSolver 深链目标。
+  const ssTarget = stageSolverTarget(curVariant, curMetric);
 
   const distVar = dist?.sets?.wca?.variants?.[dataVariant];
   const distStageKey = useMemo(() => {
@@ -247,13 +338,13 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
   return (
     <>
       <div className="rs-head">
-        <SubsetColorPicker sel={sel} isZh={isZh} />
-        <VariantSelect className="rs-select" value={curVariant} options={variants} onChange={setVariant} isZh={isZh} ariaLabel={tr({ zh: '变体', en: 'Variant' })} />
+        <SubsetColorPicker sel={pickerSel} isZh={isZh} />
+        <VariantSelect className="rs-select" value={curVariant} options={variants} onChange={(v) => { markTouched(); setVariant(v); }} isZh={isZh} ariaLabel={tr({ zh: '变体', en: 'Variant' })} />
         {metrics.length > 0 && (
-          <VariantSelect className="rs-select" value={curMetric} options={metrics} onChange={setMetric} isZh={isZh} label={stageLabel} ariaLabel={tr({ zh: '类型', en: 'Type' })} />
+          <VariantSelect className="rs-select" value={curMetric} options={metrics} onChange={(v) => { markTouched(); setMetric(v); }} isZh={isZh} label={stageLabel} ariaLabel={tr({ zh: '类型', en: 'Type' })} />
         )}
         {steps.length > 0 && (
-          <select className="rs-select" value={curStep ?? ''} onChange={(e) => setStep(Number(e.target.value))} aria-label={tr({ zh: '步数', en: 'Moves' })}>
+          <select className="rs-select" value={curStep ?? ''} onChange={(e) => { markTouched(); setStep(Number(e.target.value)); }} aria-label={tr({ zh: '步数', en: 'Moves' })}>
             {steps.map((s) => (<option key={s} value={s}>{stepOptionLabel(s)}</option>))}
           </select>
         )}
@@ -279,7 +370,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
                   </Link>
                 )}
               </div>
-              <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-hero-scramble">{scramble}</Link>
+              <Link href={analyzerHref(lp, scramble, ssTarget, color)} prefetch={false} className="rs-hero-scramble">{scramble}</Link>
               {m && <CompSource m={m} lp={lp} isZh={isZh} />}
             </div>
           </div>
@@ -300,7 +391,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
                     <span className="rs-row-rank">{i + 2}</span>
                     <span className="rs-row-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>
                     <div className="rs-row-main">
-                      <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
+                      <Link href={analyzerHref(lp, scramble, ssTarget, color)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
                       {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
                     </div>
                   </li>
