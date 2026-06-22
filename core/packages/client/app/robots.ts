@@ -25,7 +25,11 @@ export default function robots(): MetadataRoute.Robots {
       // /stats/* (JSON data) and /api/* (live endpoints) are machine-fetched by
       // the app, never content — keep all crawlers out so they stop re-crawling
       // raw data files (Baidu alone hit /stats/*.json thousands of times/day).
-      { userAgent: '*', allow: '/', disallow: ['/stats/', '/api/'] },
+      // /recon/submit/* are auth-gated edit forms (one static sentinel shell, also
+      // noindex'd) — zero search value, keep crawlers out so they don't spend
+      // budget on the id space. /recon/submit (new form) + /recon/submit-sketch
+      // stay crawlable (trailing slash scopes this to the edit subtree).
+      { userAgent: '*', allow: '/', disallow: ['/stats/', '/api/', '/recon/submit/'] },
       { userAgent: BLOCKED_BOTS, disallow: '/' },
     ],
     sitemap: 'https://cuberoot.me/sitemap.xml',
