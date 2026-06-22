@@ -152,7 +152,7 @@ export function BestComboBody({
         if (!expanded) {
           return (
             <button type="button" className="sor-pb-expand" onClick={() => { setExpanded(true); loadMore(); }}>
-              {isZh ? `展开全部 ${comboCount.toLocaleString()} 种` : `Show all ${comboCount.toLocaleString()}`}
+              {tr({ zh: '展开全部', en: 'Show all' })}
             </button>
           );
         }
@@ -163,7 +163,7 @@ export function BestComboBody({
                 {loadingMore ? tr({ zh: '加载中…', en: 'Loading…' }) : (isZh ? `加载更多 (${loaded.toLocaleString()}/${comboCount.toLocaleString()})` : `Load more (${loaded.toLocaleString()}/${comboCount.toLocaleString()})`)}
               </button>
             ) : (
-              <span className="sor-pb-note">{isZh ? `已全部展开 ${comboCount.toLocaleString()} 种` : `All ${comboCount.toLocaleString()} shown`}</span>
+              <span className="sor-pb-note">{tr({ zh: '已全部展开', en: 'All shown' })}</span>
             )}
             <button type="button" className="sor-pb-collapse" onClick={() => { setExpanded(false); setMore([]); }}>{tr({ zh: '收起', en: 'Collapse' })}</button>
           </div>
