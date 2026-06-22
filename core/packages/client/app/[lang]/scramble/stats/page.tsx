@@ -1219,7 +1219,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   }
 
   // Super Square-1(非 WCA,TIER D):两个耦合的 Square-1,可达状态 ≈1.15×10²⁵,无法整图枚举,
-  // 难度 = 整解步数的**离线采样**分布(build 脚本解 N 条随机态后落静态 JSON,逆约简有效有界);无打乱长度数据。
+  // 难度 = 整解步数的**离线采样**分布(build 脚本解 N 条随机态后落静态 JSON,两阶段约简有效有界);无打乱长度数据。
   if (event === 'ssq1') {
     return (
       <div className="scramble-stats-page">
