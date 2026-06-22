@@ -1302,6 +1302,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   }
 
   const visible = items.slice(range.start, range.end);
+  const todayIso = toIsoDate(new Date()); // 列表行判定「比赛已结束」用(本地日)
 
   return (
     <div className="comp-list" ref={outerRef}>
@@ -1330,6 +1331,14 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
               onFocus={prefetch}
             >
               {(() => {
+                // 比赛已结束(今天在比赛最后一天之后)→ 一律「比赛已结束」,盖过报名状态。
+                if (endDate < todayIso) {
+                  return (
+                    <span className="cl-reg-cell cl-reg-cell--closed">
+                      <span className="cl-reg-word">{tr({ zh: '比赛已结束', en: 'Ended' })}</span>
+                    </span>
+                  );
+                }
                 // 报名列 = 全部时间点(开放/截止/退赛/重开/修改截止)里离现在最近的「将来」那个,按时间自动选。
                 const cn = cnZh[c.id];
                 const r = regMilestone(c.registration_open, c.registration_close, c.event_change_deadline, cn);
