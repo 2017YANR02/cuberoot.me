@@ -351,30 +351,37 @@ function back(
     : (pattern ? cubeFacelets(x0, top, "backClip") : "") +
       (pattern ? notationPattern(x0, top, "backClip", BRAND, 0.08) : "");
 
-  // 背面标题 / 简介(可删除/改样式);字号放大时副标题下移一点防重叠
+  // 背面标题 / 简介(可删除/改样式;均按 \n 分多行,行距 1.25 与 DOM 卡 pre-line 同);字号放大时副标题下移防重叠
   const bts = ts?.backText;
   const btMain = styled(bts, 1.6, BRAND_DARK);
   const btSub = styled(bts, 1.2, "#6B7280");
   const btMul = bts?.size ?? 1;
-  const backTextEl = bts?.hidden
-    ? ""
-    : shift(
-        entry.layout,
-        "backText",
-        text(cx, top + 6.5, btMain.size, btMain.fill, main, {
-          weight: 700,
-          font: btMain.font,
-          stroke: btMain.stroke,
-          strokeW: btMain.strokeW,
-        }) +
-          (sub
-            ? text(cx, top + 6.5 + 2.9 * btMul, btSub.size, btSub.fill, sub, {
-                font: btSub.font,
-                stroke: btSub.stroke,
-                strokeW: btSub.strokeW,
-              })
-            : ""),
-      );
+  const mainLines = main.split("\n");
+  const subLines = sub ? sub.split("\n") : [];
+  const mainLH = btMain.size * 1.25;
+  const subLH = btSub.size * 1.25;
+  const mainY0 = top + 6.5;
+  const mainEls = mainLines
+    .map((ln, i) =>
+      text(cx, mainY0 + i * mainLH, btMain.size, btMain.fill, ln, {
+        weight: 700,
+        font: btMain.font,
+        stroke: btMain.stroke,
+        strokeW: btMain.strokeW,
+      }),
+    )
+    .join("");
+  const subY0 = mainY0 + (mainLines.length - 1) * mainLH + 2.9 * btMul;
+  const subEls = subLines
+    .map((ln, i) =>
+      text(cx, subY0 + i * subLH, btSub.size, btSub.fill, ln, {
+        font: btSub.font,
+        stroke: btSub.stroke,
+        strokeW: btSub.strokeW,
+      }),
+    )
+    .join("");
+  const backTextEl = bts?.hidden ? "" : shift(entry.layout, "backText", mainEls + subEls);
 
   const customEls = customTextsSvg(
     (entry.customTexts ?? []).filter((c) => c.side === "back"),

@@ -340,9 +340,9 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
             ...elShift(entry.layout, "backText"),
           }}
         >
-          <div style={{ ...txtCss(ts?.backText, 1.6, "#1E4ACB"), fontWeight: 700 }}>{main}</div>
+          <div style={{ ...txtCss(ts?.backText, 1.6, "#1E4ACB"), fontWeight: 700, whiteSpace: "pre-line" }}>{main}</div>
           {sub ? (
-            <div style={{ ...txtCss(ts?.backText, 1.2, "#6B7280"), marginTop: m(0.5) }}>{sub}</div>
+            <div style={{ ...txtCss(ts?.backText, 1.2, "#6B7280"), marginTop: m(0.5), whiteSpace: "pre-line" }}>{sub}</div>
           ) : null}
         </div>
       )}

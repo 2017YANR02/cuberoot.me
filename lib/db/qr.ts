@@ -158,8 +158,9 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
   if (patch.label !== undefined) next.label = patch.label.trim() || "未命名";
   if (patch.type !== undefined) next.type = patch.type;
   if (patch.target !== undefined) next.target = patch.target.trim() || "/";
-  if (patch.title !== undefined) next.title = patch.title?.trim() || null;
-  if (patch.intro !== undefined) next.intro = patch.intro?.trim() || null;
+  // 标题 / 简介保留内部换行(卡面与落地页按 \n 分行),仅统一 \r\n 并 trim 两端
+  if (patch.title !== undefined) next.title = patch.title?.replace(/\r\n/g, "\n").trim() || null;
+  if (patch.intro !== undefined) next.intro = patch.intro?.replace(/\r\n/g, "\n").trim() || null;
   if (patch.term !== undefined) next.term = patch.term?.trim() || null;
   if (patch.quote !== undefined) next.quote = patch.quote?.trim() || null;
   if (patch.brand !== undefined) next.brand = patch.brand?.trim() || null;
