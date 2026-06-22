@@ -42,6 +42,7 @@ import CubeShorthand from '@/components/CubeShorthand';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { VisualCube } from '@/components/VisualCube';
 import { AttemptsList } from '@/components/persons/sections/results/AttemptsList';
+import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';
 import '@/components/wca-results/attempts-grid.css';
 import Link from '@/components/AppLink';
 import MoreToggle from '@/components/MoreToggle';
@@ -392,6 +393,22 @@ function AttemptsListDemo() {
           personName="Demo Cuber"
           compName="Demo Open 2024"
         />
+      ))}
+    </div>
+  );
+}
+
+function AttemptsGridDemo() {
+  // 同 AttemptsList,但只读静态版:跨行同列右对齐 + ao5 去尾括号占位,无点击 / 编辑。
+  const rows: { attempts: number[]; eventId: string }[] = [
+    { attempts: [5023, 4712, 6636, 5341, 4878], eventId: '333' },
+    { attempts: [5412, 5382, 9740, 5067, 4423], eventId: '333' },
+    { attempts: [15389, 11874, 8152, 11587, 8876], eventId: '333' },
+  ];
+  return (
+    <div className="cg-attempts-demo">
+      {rows.map((r, i) => (
+        <AttemptsGrid key={i} attempts={r.attempts} eventId={r.eventId} />
       ))}
     </div>
   );
@@ -844,6 +861,14 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The WCA "Attempts" cell (shared by the person page ByCompList / ByEventView and the recon page). Right-aligned solves + ao5 bracket placeholders + cross-row column alignment (layout from the shared wca-results/attempts-grid.css). A reconstructed solve links to its recon, admin edit-mode edits inline, a no-recon solve links to /recon/submit prefilled.',
     Demo: AttemptsListDemo,
     note: { zh: '点击行为需 reconLookup + 选手 / 比赛上下文;Demo 用 mock 数据,只展示对齐 + 括号占位。', en: 'Click behavior needs reconLookup + person / comp context; the demo uses mock data to show alignment + bracket placeholders only.' },
+  },
+  {
+    name: 'AttemptsGrid',
+    import: "import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';",
+    category: 'display',
+    zh: 'AttemptsList 的只读静态版 —— 同一份 wca-results/attempts-grid.css 网格(每把右对齐 + ao5 去尾括号占位 + 跨行同列小数点对齐),只传 attempts + eventId,无点击 / 编辑。不需要复盘跳转 / 行内编辑的地方(如 /wca/records 详细成绩列)用它,别再拼空格字符串。',
+    en: 'Read-only static counterpart of AttemptsList — same wca-results/attempts-grid.css grid (right-aligned solves + ao5 bracket placeholders + cross-row decimal alignment), takes just attempts + eventId, no click / edit. Use it where recon links / inline edit are not needed (e.g. the /wca/records attempts column) instead of joining a space-separated string.',
+    Demo: AttemptsGridDemo,
   },
 
   // ── 展开 / 切换 ─────────────────────────────────────────────────────────
