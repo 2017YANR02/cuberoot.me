@@ -188,6 +188,35 @@ describe('solveCuboid336 — validity (round-trip via INDEPENDENT geometry)', ()
     }
     expect(solved).toBe(8); // 100% solve-rate — the prime requirement
   });
+
+  // HIGH-SAMPLE bound regression — the test that actually exercises the deep tail that broke the old bound.
+  // A 60-move bound was VIOLATED in production (a too-small phase-2 node cap pushed the weighted-A* ladder onto
+  // high-weight rungs that returned ~2x-optimal reductions; offline sampling measured returned lengths up to 63
+  // at N=2000 and up to 75 at N=4000). 8 trials simply never sampled a deep enough state. This solves a large
+  // deterministic batch of len-50 random scrambles (the same length the offline distribution build uses, which
+  // is where the violation surfaced) and asserts EVERY returned length is within the hard bound, round-trips via
+  // INDEPENDENT geometry, and never undercuts the admissible heuristic. ~0.16 s/solve worst → 400 ≈ ≤70 s.
+  it('high-sample len-50 random scrambles: ALL solutions within the hard bound + round-trip (400 trials)', () => {
+    const rnd = mulberry32(0x336f1f);
+    const N = 400;
+    let solved = 0;
+    let maxLen = 0;
+    for (let trial = 0; trial < N; trial++) {
+      const scramble = randomCuboid336Scramble(50, rnd); // the solver's own cstimer-faithful len-50 generator
+      const res = solveCuboid336(scramble); // must NOT throw
+      const after = refApply(res.solution ? `${scramble} ${res.solution}` : scramble);
+      expect(keyOf(after), `round-trip: ${scramble}`).toBe(REF_SOLVED_KEY);
+      expect(res.length, `within hard bound: ${scramble}`).toBeLessThanOrEqual(CUBOID336_MAX_LENGTH);
+      if (res.length > 0) expect(cuboid336Heuristic(scramble)).toBeLessThanOrEqual(res.length);
+      if (res.length > maxLen) maxLen = res.length;
+      solved++;
+    }
+    expect(solved).toBe(N); // 100% solve-rate
+    // Sanity floor on the bound's headroom: the two-phase max (phase-1 ≤ ~32 + near-optimal phase-2 ≤ ~25)
+    // sits well under the bound. If this ever fails the solver regressed toward the old runaway-phase-2 bug
+    // (catch it BEFORE it silently creeps past CUBOID336_MAX_LENGTH).
+    expect(maxLen, `observed max ${maxLen} should sit well under the ${CUBOID336_MAX_LENGTH} bound`).toBeLessThan(65);
+  });
 });
 
 describe('solveCuboid336 — provable optimality on the shallow ball', () => {
