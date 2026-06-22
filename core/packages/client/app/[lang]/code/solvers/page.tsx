@@ -593,6 +593,34 @@ export default function SolversPage() {
           </p>
         </section>
 
+        {/* 纯 TS 3×3 STM 最优(研究级,引擎就绪 / UI 待接) */}
+        <section className="solv-section">
+          <header className="solv-sec-head">
+            <Boxes size={15} strokeWidth={2} />
+            <h2>{zh ? '纯 TS 3×3 STM 最优(研究级)' : 'Pure-TS 3×3 STM optimal (research)'}</h2>
+            <span className="solv-sec-note">{zh ? '可证最优 · Node daemon · UI 待接' : 'provably optimal · Node daemon · UI pending'}</span>
+          </header>
+          <div className="solv-rows">
+            <div className="solv-row">
+              <div className="solv-row-head">
+                <span className="solv-row-name">{zh ? '3×3×3 STM(转层计步)最优' : '3×3×3 STM (slice-turn) optimal'}</span>
+                <span className="solv-ts-tier">{zh ? '研究级 IDA*' : 'research IDA*'}</span>
+                <span className="solv-badge solv-q-optimal">{zh ? '可证最优' : 'provably optimal'}</span>
+              </div>
+              <div className="solv-ts-meta">
+                <span className="solv-ts-states">
+                  <span className="solv-ts-statesn">~4.3×10¹⁹</span>
+                  <span className="solv-dim"> {zh ? '态(目标含 6 中心归位,中心置换群 24 阶)' : 'states (goal includes 6 centers home; center-perm group = 24)'}</span>
+                </span>
+                <span className="solv-ts-gods">{zh ? 'STM 上帝之数 ∈ [18,20]' : "STM God's number ∈ [18,20]"}</span>
+              </div>
+              <p className="solv-perf-why">{zh
+                ? '转层计步(Slice Turn Metric)可证最优:Korf 风 IDA* + Kociemba/Korf 模式数据库(角 8!×3⁷ + 双 6 棱 12P6×2⁶,h=max,绝不相加)。纯 TS,实用至 ~深度 12;superflip 等深态正确但慢(启发强度墙,非 bug)。173MB 表离线建,生产走 Node daemon(同 cube48opt);目前仅引擎 + 测试,UI 未接。lib/stm-solver.ts + stm-cube.ts。'
+                : 'Provably-optimal Slice Turn Metric: Korf-style IDA* + Kociemba/Korf pattern DBs (corner 8!×3⁷ + two 6-edge 12P6×2⁶, h=max — never summed). Pure TS, practical to ~depth 12; superflip-class deep states are correct but slow (heuristic-strength wall, not a bug). 173MB tables built offline, production via a Node daemon (like cube48opt); engine + tests only for now, UI not yet wired. lib/stm-solver.ts + stm-cube.ts.'}</p>
+            </div>
+          </div>
+        </section>
+
         <footer className="solv-foot">
           <span>{zh
             ? `进度与日期实时取自 distribution.json (每次手动跑管道才刷新, 无定时); 吞吐/内存为 2026-05-30 实测常量。`
