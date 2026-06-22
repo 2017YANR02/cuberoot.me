@@ -1,21 +1,28 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import zlib from 'node:zlib';
 import { createRequire } from 'node:module';
 import {
-  solveBic,
+  solveBicWithTable,
   bicApply,
   parseBicScramble,
-  bicGraphStats,
-  bicExamplesByLength,
-  bicAllScramblesByLength,
+  bicBuildTable,
+  serializeBicTable,
+  deserializeBicTable,
+  bicExamplesByLengthFromTable,
+  streamBicScramblesFromTable,
+  bicScramblesForLengthFromTable,
   bicRandomWalkState,
+  bicRank,
   BIC_MOVE_NAMES,
   BIC_GODS_NUMBER,
   BIC_DIST_HISTOGRAM,
   BIC_STATE_COUNT,
+  BIC_RANK_SPACE,
   BIC_SOLVED,
+  type BicTable,
 } from '@/lib/bicube-solver';
 import { renderBicScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/bicube_svg';
 
@@ -118,6 +125,11 @@ function mulberry32(seed: number) {
   };
 }
 
+// ── The TIER-B table, built once in-Node (the SAME bicBuildTable() the offline builder ships). ─────
+// This is the resident structure the browser would hold after fetch+inflate (no in-browser BFS).
+let TABLE: BicTable;
+beforeAll(() => { TABLE = bicBuildTable(); });
+
 // ── real cstimer bic scrambles via a node:vm sandbox (same pattern as cm3_solver.test) ─────────────
 function loadCstimerBic(count: number): string[] {
   const require = createRequire(import.meta.url);
@@ -201,27 +213,84 @@ describe('bicApply', () => {
   });
 });
 
-describe('bic graph (full BFS closure)', () => {
-  it('reaches exactly 1,108,800 states with God 28 and the locked histogram', () => {
-    const { total, histogram } = bicGraphStats();
-    expect(total).toBe(1108800);
-    expect(total).toBe(BIC_STATE_COUNT);
+// ── injective rank + inverse (the table's address coordinate) ───────────────────────────────────
+describe('bic rank coordinate', () => {
+  it('the combined Lehmer rank is injective over all 1,108,800 reachable states (vs independent BFS)', () => {
+    const ref = referenceBfs();
+    const ranks = new Set<number>();
+    for (const c of ref.dist.keys()) {
+      // reconstruct a full state array from the compact "p0,p1,..." key to rank it
+      const moving = c.split(',').map(Number);
+      const st = [...SOLVED];
+      MOVING.forEach((p, j) => { st[p] = moving[j]; });
+      ranks.add(bicRank(st));
+    }
+    expect(ranks.size).toBe(1108800);
+    // every rank inside the combined coordinate space, which fits a Float64 exactly
+    expect(BIC_RANK_SPACE).toBe(40320 * 39916800);
+    expect(BIC_RANK_SPACE).toBeLessThan(2 ** 53);
+  });
+
+  it('the table ranks are sorted ascending and parallel to dist', () => {
+    for (let i = 1; i < TABLE.count; i++) expect(TABLE.ranks[i]).toBeGreaterThan(TABLE.ranks[i - 1]);
+    expect(TABLE.dist.length).toBe(TABLE.count);
+  });
+});
+
+// ── the TIER-B exact-distance table: build, histogram, round-trip, resident shape ─────────────────
+describe('bic exact-distance table (TIER B)', () => {
+  it('builds exactly 1,108,800 states with God 28 and the locked histogram (== independent BFS)', () => {
+    expect(TABLE.count).toBe(1108800);
+    expect(TABLE.count).toBe(BIC_STATE_COUNT);
+    const histogram: number[] = [];
+    for (let i = 0; i < TABLE.count; i++) histogram[TABLE.dist[i]] = (histogram[TABLE.dist[i]] ?? 0) + 1;
     expect(histogram).toEqual([...BIC_DIST_HISTOGRAM]);
     expect(histogram.length - 1).toBe(BIC_GODS_NUMBER);
     expect(BIC_GODS_NUMBER).toBe(28);
     expect(histogram.reduce((a, b) => a + b, 0)).toBe(1108800);
+    // matches the independent geometry-spec BFS, and mean ≈ 18.80
+    const ref = referenceBfs();
+    expect(ref.histogram).toEqual(histogram);
+    let sum = 0; histogram.forEach((n, i) => { sum += n * i; });
+    expect(sum).toBe(20846786);
+    expect(sum / 1108800).toBeCloseTo(18.801, 2);
   });
 
-  it('the solver histogram matches an independent (geometry-spec) BFS', () => {
-    const ref = referenceBfs();
-    expect(ref.total).toBe(1108800);
-    expect(ref.histogram).toEqual(bicGraphStats().histogram);
-    // mean ≈ 18.80 (20,846,786 / 1,108,800)
-    let sum = 0, tot = 0;
-    ref.histogram.forEach((n, i) => { sum += n * i; tot += n; });
-    expect(tot).toBe(1108800);
-    expect(sum).toBe(20846786);
-    expect(sum / tot).toBeCloseTo(18.801, 2);
+  it('serialize → gzip → gunzip → deserialize is lossless (the offline build / browser load path)', () => {
+    const raw = serializeBicTable(TABLE);
+    const gz = zlib.gzipSync(Buffer.from(raw.buffer, raw.byteOffset, raw.byteLength), { level: 9 });
+    const back = deserializeBicTable(zlib.gunzipSync(gz));
+    expect(back.count).toBe(TABLE.count);
+    expect(Array.from(back.ranks)).toEqual(Array.from(TABLE.ranks));
+    expect(Array.from(back.dist)).toEqual(Array.from(TABLE.dist));
+    // gz must stay small enough to ship in-repo (≤ ~2MB); raw stays well under the old 510MB BFS footprint
+    expect(gz.length).toBeLessThan(2_000_000);
+    expect(raw.length).toBeLessThan(5_000_000);
+  });
+
+  it('the shipped stats/scramble/opt_bic.bin.gz (if present) deserializes to the identical table', () => {
+    const candidates = [
+      path.resolve(process.cwd(), '..', '..', 'stats', 'scramble', 'opt_bic.bin.gz'),
+      path.resolve(process.cwd(), '..', '..', '..', 'stats', 'scramble', 'opt_bic.bin.gz'),
+      'D:/cube/cuberoot.me/stats/scramble/opt_bic.bin.gz',
+    ];
+    const file = candidates.find((c) => { try { return fs.existsSync(c); } catch { return false; } });
+    if (!file) { expect(true).toBe(true); return; } // builder not run yet — skip (the build script regenerates it)
+    const back = deserializeBicTable(zlib.gunzipSync(fs.readFileSync(file)));
+    expect(back.count).toBe(TABLE.count);
+    expect(Array.from(back.ranks)).toEqual(Array.from(TABLE.ranks));
+    expect(Array.from(back.dist)).toEqual(Array.from(TABLE.dist));
+  });
+
+  it('resident structure is TYPED ARRAYS of ~tens-of-MB (NOT a 1.1M-entry Map / 510MB string graph)', () => {
+    // the browser holds exactly this: a Float64Array of sorted ranks + a Uint8Array of dist bytes.
+    expect(TABLE.ranks).toBeInstanceOf(Float64Array);
+    expect(TABLE.dist).toBeInstanceOf(Uint8Array);
+    expect((TABLE as unknown as { dist: Map<unknown, unknown> }).dist instanceof Map).toBe(false);
+    const residentBytes = TABLE.ranks.byteLength + TABLE.dist.byteLength;
+    // 1.1M × (8 + 1) ≈ 10MB — tens of MB, two orders of magnitude under the old ~510MB string Map.
+    expect(residentBytes).toBeLessThan(20_000_000);
+    expect(residentBytes).toBeGreaterThan(5_000_000);
   });
 });
 
@@ -239,17 +308,17 @@ describe('parseBicScramble', () => {
   });
 });
 
-describe('solveBic', () => {
+describe('solveBicWithTable (gradient descent over the exact table)', () => {
   it('handles solved / empty input → length 0', () => {
-    expect(solveBic('')).toEqual({ solution: '', length: 0 });
-    expect(solveBic("U U'")).toEqual({ solution: '', length: 0 });
-    expect(solveBic('U2 U2')).toEqual({ solution: '', length: 0 });
-    expect(solveBic('U U U U')).toEqual({ solution: '', length: 0 });
+    expect(solveBicWithTable(TABLE, '')).toEqual({ solution: '', length: 0 });
+    expect(solveBicWithTable(TABLE, "U U'")).toEqual({ solution: '', length: 0 });
+    expect(solveBicWithTable(TABLE, 'U2 U2')).toEqual({ solution: '', length: 0 });
+    expect(solveBicWithTable(TABLE, 'U U U U')).toEqual({ solution: '', length: 0 });
   });
 
   it('rejects invalid tokens', () => {
-    expect(() => solveBic('U X')).toThrow();
-    expect(() => solveBic('foo')).toThrow();
+    expect(() => solveBicWithTable(TABLE, 'U X')).toThrow();
+    expect(() => solveBicWithTable(TABLE, 'foo')).toThrow();
   });
 
   it('provably optimal on ≥400 random legal-walk states: length == independent BFS distance, valid', () => {
@@ -259,8 +328,8 @@ describe('solveBic', () => {
     for (let trial = 0; trial < 420; trial++) {
       const len = 1 + Math.floor(rnd() * 30);
       const { scramble, state } = bicRandomWalkState(len, rnd);
-      const { solution, length } = solveBic(scramble);
-      // optimal: reported length equals the independent optimal distance
+      const { solution, length } = solveBicWithTable(TABLE, scramble);
+      // optimal: reported length equals the independent optimal distance (gradient descent over exact dist)
       if (length !== refDistOf(state)) mismatches++;
       const solToks = solution ? solution.split(' ') : [];
       expect(solToks.length).toBe(length);
@@ -284,7 +353,7 @@ describe('solveBic', () => {
       // every scramble token in the 12-alphabet (move-model contract with cstimer)
       for (const t of seq) if (!ALPHA.has(t)) illegalMoves++;
       let solOut;
-      try { solOut = solveBic(scramble); } catch { parseFails++; continue; }
+      try { solOut = solveBicWithTable(TABLE, scramble); } catch { parseFails++; continue; }
       const solToks = solOut.solution ? solOut.solution.split(' ') : [];
       for (const t of solToks) if (!ALPHA.has(t)) illegalMoves++;
       const scrState = refApplySeq(seq);
@@ -296,7 +365,7 @@ describe('solveBic', () => {
     expect(illegalMoves).toBe(0);
     expect(parseFails).toBe(0);
     expect(unsolved).toBe(0);
-    expect(suboptimal).toBe(0); // provably optimal
+    expect(suboptimal).toBe(0); // provably optimal (table holds exact optimal distances)
     // smooth, sane lengths (spec: min ~5 / max ~23 / mean ~17)
     const min = Math.min(...lens), max = Math.max(...lens);
     expect(min).toBeGreaterThanOrEqual(0);
@@ -304,9 +373,9 @@ describe('solveBic', () => {
   });
 });
 
-describe('bicExamplesByLength', () => {
+describe('bicExamplesByLengthFromTable', () => {
   it('generates valid, optimal example scrambles whose returned solution length equals the bucket', () => {
-    const ex = bicExamplesByLength(8);
+    const ex = bicExamplesByLengthFromTable(TABLE, 8);
     const bins = Object.keys(ex).map(Number).sort((a, b) => a - b);
     expect(bins.length).toBeGreaterThan(0);
     const ALPHA = new Set(BIC_MOVE_NAMES);
@@ -316,25 +385,45 @@ describe('bicExamplesByLength', () => {
       for (const scr of ex[d]) {
         const toks = scr.split(/\s+/).filter(Boolean);
         for (const t of toks) expect(ALPHA.has(t)).toBe(true);
-        expect(solveBic(scr).length).toBe(d);
-        const after = refApplySeq([...toks, ...solveBic(scr).solution.split(' ').filter(Boolean)]);
+        expect(solveBicWithTable(TABLE, scr).length).toBe(d);
+        const after = refApplySeq([...toks, ...solveBicWithTable(TABLE, scr).solution.split(' ').filter(Boolean)]);
         expect(keyOf(after)).toBe(keyOf(SOLVED));
       }
     }
   });
 
   it('full enumeration covers every non-trivial state exactly once (counts == distribution)', () => {
-    const all = bicAllScramblesByLength();
-    let total = 0;
+    // stream every state as (depth, scramble); reconstruct via the independent reference and count per depth.
+    const perDepth = new Map<number, number>();
     const seen = new Set<string>();
-    for (let d = 1; d <= BIC_GODS_NUMBER; d++) {
-      const list = all[d] ?? [];
-      expect(list.length, `depth ${d} count`).toBe(BIC_DIST_HISTOGRAM[d]);
-      total += list.length;
-      for (const scr of list) seen.add(keyOf(refApplySeq(scr.split(' '))));
+    let nonTrivial = 0;
+    for (const { depth, scramble } of streamBicScramblesFromTable(TABLE)) {
+      if (depth === 0) { expect(scramble).toBe(''); continue; }
+      perDepth.set(depth, (perDepth.get(depth) ?? 0) + 1);
+      seen.add(keyOf(refApplySeq(scramble.split(' '))));
+      nonTrivial++;
     }
-    expect(total).toBe(1108799); // all states minus the identity
+    for (let d = 1; d <= BIC_GODS_NUMBER; d++) {
+      expect(perDepth.get(d) ?? 0, `depth ${d} count`).toBe(BIC_DIST_HISTOGRAM[d]);
+    }
+    expect(nonTrivial).toBe(1108799); // all states minus the identity
     expect(seen.size).toBe(1108799); // every non-trivial state exactly once
+  });
+
+  it('bicScramblesForLengthFromTable yields the right count per depth, all valid + optimal', () => {
+    for (const d of [1, 5, 14, 28]) {
+      let n = 0;
+      for (const scr of bicScramblesForLengthFromTable(TABLE, d)) {
+        n++;
+        if (n <= 5) {
+          // spot-check the first few: optimal length == d and round-trips to solved
+          expect(solveBicWithTable(TABLE, scr).length).toBe(d);
+          const after = refApplySeq(scr.split(' '));
+          expect(refDistOf(after)).toBe(d);
+        }
+      }
+      expect(n, `count for depth ${d}`).toBe(BIC_DIST_HISTOGRAM[d]);
+    }
   });
 });
 
@@ -369,7 +458,7 @@ describe('renderBicScrambleSvg', () => {
     for (let trial = 0; trial < 30; trial++) {
       const len = 1 + Math.floor(rnd() * 14);
       const { scramble } = bicRandomWalkState(len, rnd);
-      const { solution } = solveBic(scramble);
+      const { solution } = solveBicWithTable(TABLE, scramble);
       const combined = solution ? `${scramble} ${solution}` : scramble;
       expect(fills(renderBicScrambleSvg(combined)), `after solving "${scramble}"`).toEqual(solvedFills);
     }
