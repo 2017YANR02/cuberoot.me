@@ -26,6 +26,7 @@ import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { fetchPb, prefetchPbs, type PbByEvent } from '@/lib/wca-pb';
 import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '@/lib/comp-wcif';
 import { loadNoScrambleIds } from '@/lib/comp-no-scrambles';
+import { fetchWcaScrambles } from '@/lib/wca-results-api';
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
 import { localizeCity } from '@/lib/city-localize';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -683,19 +684,26 @@ export default function CompDetailPage() {
     () => !!data && Object.values(data.resultsByRound).some(arr => arr.length > 0),
     [data],
   );
-  // 「打乱」入口跳到打乱生成器,只有 WCA 已公布打乱时才有内容。已公布 ≈ 比赛真办过
-  // (有成绩)且不在「办过但 dump 无 scrambles」黑名单(2003-2014 那 1675 场)。未来赛
-  // (无成绩)直接无打乱 → 隐藏入口,免得点进去只看到「未找到该比赛或暂无已公布的打乱」。
-  const [compHasNoScrambles, setCompHasNoScrambles] = useState(false);
+  // 「打乱」入口跳到打乱生成器,只有 WCA 已公布打乱时才有内容。两层判断:
+  //  1) 便宜短路:无成绩(未来赛)→ 必无打乱;命中「办过但 dump 无 scrambles」黑名单
+  //     (2003-2014 那 1675 场)→ 跳过实测。
+  //  2) 其余比赛实测 fetchWcaScrambles(slug)(镜像表 + WCA API 兜底,与 /scramble/gen 同源,
+  //     结果走 HTTP 缓存)真有打乱才显示入口。光靠「有成绩」会误判:刚结束的新赛成绩已出但
+  //     打乱常滞后公示(如本场 FMC World 2026),点进去只会看到「暂无已公布的打乱」。
+  const [scramblesPublished, setScramblesPublished] = useState(false);
   useEffect(() => {
-    if (!hasResults) { setCompHasNoScrambles(false); return; }
+    setScramblesPublished(false);
+    if (!hasResults) return;
     let cancel = false;
-    loadNoScrambleIds()
-      .then(set => { if (!cancel) setCompHasNoScrambles(set.has(slug)); })
-      .catch(() => {});
+    (async () => {
+      const noScramble = await loadNoScrambleIds().catch(() => new Set<string>());
+      if (cancel || noScramble.has(slug)) return;
+      const rows = await fetchWcaScrambles(slug).catch(() => null);
+      if (!cancel) setScramblesPublished(!!rows && rows.length > 0);
+    })();
     return () => { cancel = true; };
   }, [hasResults, slug]);
-  const showScramblesTab = hasResults && !compHasNoScrambles;
+  const showScramblesTab = scramblesPublished;
   // 领奖台:各项目决赛前三。比赛结束(所有项目末轮都有成绩)且有领奖台时默认展示。
   const podiumGroups = useMemo(() => (data ? computePodiumGroups(data) : []), [data]);
   const compRecords = useMemo(() => (data ? computeCompRecords(data) : []), [data]);
