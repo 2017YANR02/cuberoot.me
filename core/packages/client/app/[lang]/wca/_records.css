@@ -53,6 +53,13 @@
 /* 「详细成绩」表头居中,压在下方 attempts 网格上方(列宽由最宽一行的网格撑开,标题在该宽度内居中) */
 .records-table th.wse-attempts-col { text-align: center; }
 
+/* 纪录表很宽(详细成绩是 5 列 attempts 网格),1180px 上限会裁掉右侧列。改成整页按内容自适应宽度
+   并居中(.wse-page 自带 margin:0 auto):width:fit-content 让页 = 最宽子元素(表)宽,max-width:100%
+   兜住超宽时不溢出视口。表格框同样 fit-content,避免深色 wrapper 拉满留白;窄屏超出由 wrapper 的
+   overflow-x:auto 横向滚动兜底。 */
+.wse-page.records-page { width: fit-content; max-width: 100%; }
+.records-page .wse-table-wrapper { width: fit-content; max-width: 100%; }
+
 /* mixed 模式下 event 分组 */
 .records-event-group { margin-top: 24px; }
 .records-event-group:first-child { margin-top: 0; }
