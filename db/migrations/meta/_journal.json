@@ -225,6 +225,13 @@
       "when": 1782048083427,
       "tag": "0031_misty_slayback",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1782113782114,
+      "tag": "0032_normal_starjammers",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 import type { CardCustomText, CardEl, CardLayout, CardTextStyles, QrCode, TextStyle } from "@/lib/db/qr";
 import { qrSvgBody, cubeLogo, CUBE_FACES } from "./svg";
-import { backText, frontQuote, FORMULA_TOKENS, cubeFaceletSpots, fontStack } from "./cardText";
+import { backText, frontQuote, frontBrand, FORMULA_TOKENS, cubeFaceletSpots, fontStack } from "./cardText";
 
 // 整张折叠卡的「印刷母版」:单个自包含、100% 矢量的 SVG(无位图、无 CSS、无外链)。
 // 二维码 / 文字 / 配色 / 魔方图形全是矢量路径,印刷厂可直接收、无限放大不糊。
@@ -185,6 +185,7 @@ function front(
   foldX: number,
   h: number,
   quote: string,
+  brand: string,
   pattern: boolean,
   art: string | undefined,
   layout: CardLayout | null | undefined,
@@ -233,7 +234,7 @@ function front(
     : shift(
         layout,
         "brand",
-        text(cx, brandY, bSt.size, bSt.fill, "魔方开放社群", {
+        text(cx, brandY, bSt.size, bSt.fill, brand, {
           weight: 700,
           spacing: 0.1,
           font: bSt.font,
@@ -419,6 +420,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
   const cropMarks = opts.cropMarks ?? true;
   const pattern = opts.pattern ?? true;
   const quote = opts.quote ?? frontQuote(entry, opts.idx ?? 0);
+  const brand = frontBrand(entry);
   const w = PANEL_W * 2 + bleed * 2;
   const h = PANEL_H + bleed * 2;
   const foldX = bleed + PANEL_W;
@@ -467,6 +469,7 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
       foldX,
       h,
       quote,
+      brand,
       pattern,
       opts.art,
       entry.layout,

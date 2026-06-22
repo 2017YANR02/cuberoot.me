@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import type { CardCustomText, CardEl, CardLayout, CardTextStyles, QrCode, QrType, TextStyle } from "@/lib/db/qr";
 import { QrCardUnit, FRONT_ARTS } from "@/components/QrCard";
 import { FileUpload } from "@/components/FileUpload";
-import { algToText, CARD_FONTS, parseAlg } from "@/lib/qr/cardText";
+import { algToText, CARD_FONTS, DEFAULT_BRAND, parseAlg } from "@/lib/qr/cardText";
 
 type ElStyle = TextStyle & { hidden?: boolean };
 // 可改样式 / 可删除的文字元素
@@ -331,6 +331,7 @@ export function CardEditor({
     term: entry.term ?? "",
     intro: entry.intro ?? "",
     quote: entry.quote ?? "",
+    brand: entry.brand ?? "",
     art: entry.frontArt ?? "",
     backArt: entry.backArt ?? "",
     algRaw: algToText(entry.alg),
@@ -852,11 +853,13 @@ export function CardEditor({
     term: s.term.trim() || null,
     intro: s.intro.trim() || null,
     quote: s.quote.trim() || null,
+    brand: s.brand.trim() || null,
     frontArt: s.art.trim() || null,
     backArt: s.backArt.trim() || null,
     alg: parseAlg(s.algRaw),
     layout: s.layout,
     textStyles: s.textStyles,
+    customTexts: s.customTexts,
   };
   const hasOffsets = Object.keys(s.layout).length > 0;
   // 背景图缩放:cover 钳到 ≥100%(滑块与渲染一致,WYSIWYG),contain 可缩到 50%
@@ -876,6 +879,7 @@ export function CardEditor({
       <input type="hidden" name="term" value={s.term} form={formId} readOnly />
       <input type="hidden" name="intro" value={s.intro} form={formId} readOnly />
       <input type="hidden" name="quote" value={s.quote} form={formId} readOnly />
+      <input type="hidden" name="brand" value={s.brand} form={formId} readOnly />
       <input type="hidden" name="frontArt" value={s.art} form={formId} readOnly />
       <input type="hidden" name="backArt" value={s.backArt} form={formId} readOnly />
       <input type="hidden" name="alg" value={s.algRaw} form={formId} readOnly />
@@ -1214,11 +1218,23 @@ export function CardEditor({
           ) : null}
 
           {active === "brand" ? (
-            <TextStyleControls
-              style={s.textStyles.brand}
-              onChange={(p) => setTextStyle("brand", p)}
-              onToggleHidden={() => toggleHidden("brand")}
-            />
+            <>
+              <input
+                value={s.brand}
+                onChange={(e) => set("brand")(e.target.value)}
+                placeholder={DEFAULT_BRAND + "(留空用此默认)"}
+                className={INPUT_CLS}
+                autoFocus
+              />
+              <span className="text-[12px] text-ink-3">
+                正面底部那行社群名,改成你自己的;留空就用默认「{DEFAULT_BRAND}」。
+              </span>
+              <TextStyleControls
+                style={s.textStyles.brand}
+                onChange={(p) => setTextStyle("brand", p)}
+                onToggleHidden={() => toggleHidden("brand")}
+              />
+            </>
           ) : null}
 
           {active === "back" ? (

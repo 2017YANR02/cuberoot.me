@@ -410,6 +410,8 @@ export const qrCodes = sqliteTable("qr_codes", {
   links: text("links", { mode: "json" }).$type<QrLink[]>(),
   term: text("term"),
   quote: text("quote"),
+  // 正面品牌名;无值时卡片用默认社群名(见 lib/qr/cardText DEFAULT_BRAND)
+  brand: text("brand"),
   frontArt: text("front_art"),
   // 背面背景图(可选);无值时背面走默认浅色底纹(公式 / 色块散点)
   backArt: text("back_art"),
