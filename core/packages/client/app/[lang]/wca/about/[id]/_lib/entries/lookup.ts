@@ -201,7 +201,7 @@ ORDER BY q.value ASC, q.wca_id ASC;`
     },
     { id: 'wr_aoxr', titleZh: 'AoXR — 跨轮平均', titleEn: 'AoXR — across-round average', hintZh: '更窄的衍生指标 — 单场比赛多轮 average 平均', hintEn: 'A narrower derivative — averaging round averages within one comp'
     },
-    { id: 'all-results', toStat: true, titleZh: '直接打开全成绩表', titleEn: 'Open the All Results table', hintZh: '看翻页 + 过滤 + 搜索的实际表现', hintEn: 'Live table — pagination + filters + free-text search'
+    { id: 'all-results', toStat: true, statHref: '/wca/results', titleZh: '直接打开全成绩表', titleEn: 'Open the All Results table', hintZh: '看翻页 + 过滤 + 搜索的实际表现', hintEn: 'Live table — pagination + filters + free-text search'
     },
   ]
 };
@@ -626,7 +626,7 @@ ORDER BY subset_total ASC;`
     },
     { id: 'cohort-ranks', titleZh: '参赛届别排名', titleEn: 'Cohort Ranks', hintZh: '单项目按届别看,sum-of-ranks 全项目无届别', hintEn: 'Single event by cohort; sum-of-ranks aggregates all events without cohorting'
     },
-    { id: 'sum-of-ranks', toStat: true, statHref: '/wca/all-results?events=all', titleZh: '直接打开 Sum of Ranks', titleEn: 'Open Sum of Ranks', hintZh: '看默认 17 项 + 子集 picker + hidePodium 切换', hintEn: 'Live table — default 17 events + subset picker + hidePodium toggle'
+    { id: 'sum-of-ranks', toStat: true, statHref: '/wca/results?events=all', titleZh: '直接打开 Sum of Ranks', titleEn: 'Open Sum of Ranks', hintZh: '看默认 17 项 + 子集 picker + hidePodium 切换', hintEn: 'Live table — default 17 events + subset picker + hidePodium toggle'
     },
   ]
 };

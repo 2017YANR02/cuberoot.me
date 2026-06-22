@@ -34,7 +34,7 @@ import { tr } from '@/i18n/tr';
 const WCA_ENTRIES: { href: string; zh: string; en: string; Icon?: LucideIcon; img?: string }[] = [
   { href: '/wca/comp',        zh: '比赛', en: 'Competitions', Icon: Radio },
   { href: '/wca/records',     zh: '纪录', en: 'Records',      Icon: Trophy },
-  { href: '/wca/all-results', zh: '排名', en: 'Rankings',     Icon: ListOrdered },
+  { href: '/wca/results',     zh: '排名', en: 'Rankings',     Icon: ListOrdered },
   { href: '/wca',             zh: '统计', en: 'Statistics',   img: '/icons/wca.svg' },
 ];
 

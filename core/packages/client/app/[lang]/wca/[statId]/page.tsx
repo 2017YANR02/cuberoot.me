@@ -16,9 +16,11 @@ export function generateStaticParams() {
   return [];
 }
 
-// 已退役的 statId(功能迁走、页面删除)。命中即 404。
-//   name_stats → 迁到 /wca/all-results 空态(姓名统计 + A-Z 名录)
-const RETIRED_STATS = new Set(['name_stats']);
+// 已退役的 statId(功能迁走、页面删除 / 路由重命名)。命中即 404,避免落到 WcaStatClient 拿不到
+// JSON 的「加载失败」壳。
+//   name_stats   → 迁到 /wca/results 空态(姓名统计 + A-Z 名录)
+//   all-results  → 路由重命名为 /wca/results(原 /wca/all-results 弃用)
+const RETIRED_STATS = new Set(['name_stats', 'all-results']);
 
 export default async function Page({ params }: { params: Promise<{ statId: string }> }) {
   const { statId } = await params;

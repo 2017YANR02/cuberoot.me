@@ -1,4 +1,4 @@
-/* Sum-of-Ranks 个人最优组合工具 (.sor-tool / .sor-pb) — 排名页(/wca/all-results)与选手页共用 */
+/* Sum-of-Ranks 个人最优组合工具 (.sor-tool / .sor-pb) — 排名页(/wca/results)与选手页共用 */
 .sor-tool { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
 .sor-tool-label { font-size: 13px; color: var(--muted-foreground); }
 .sor-tool-picker { max-width: 360px; }
