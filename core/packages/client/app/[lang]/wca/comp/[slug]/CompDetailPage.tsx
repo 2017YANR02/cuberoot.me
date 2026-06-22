@@ -9,7 +9,7 @@ import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Pencil } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Pencil, Radio } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -1313,6 +1313,10 @@ export default function CompDetailPage() {
                   <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="WCA">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/icons/upstream/wca.svg" alt="WCA" />
+                  </a>
+                  {/* WCA Live 没有独立 logo(与 WCA 主站几乎一致),用 lucide Radio 表「实时成绩」 */}
+                  <a href="https://live.worldcubeassociation.org/" target="_blank" rel="noopener noreferrer" className="comp-title-icon comp-title-icon-lucide" title="WCA Live">
+                    <Radio size={18} />
                   </a>
                   {iso2 === 'cn' && (
                     <a href={cubingUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="cubing.com">
