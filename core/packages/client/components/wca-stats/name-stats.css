@@ -102,24 +102,37 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ── 选中组详情:键 + 人数 + 国旗占比 + 选手名 ── */
+/* ── 选中组详情:左侧键 + 人数,右侧国家占比堆叠条,下方选手名 ── */
 .ns-detail {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-
-.ns-detail-head {
-  display: flex;
-  align-items: baseline;
   gap: 12px;
 }
 
-.ns-key {
+/* 行头(键 + 人数)与比例条横向并排(窄屏转纵向) */
+.ns-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ns-bar-head {
   flex: 0 0 auto;
-  font-size: 1.5rem;
+  min-width: 88px;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.ns-bar-row .ns-bar {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+}
+
+.ns-key {
+  font-size: 1.4rem;
   font-weight: 700;
-  line-height: 1;
   color: var(--foreground);
   font-variant-numeric: tabular-nums;
 }
@@ -132,37 +145,25 @@
 }
 
 .ns-count {
-  flex: 0 0 auto;
-  font-size: .95rem;
+  font-size: .9rem;
   font-weight: 600;
-  color: var(--foreground);
+  color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
 }
 
 .ns-count-unit {
   font-size: .72rem;
   font-weight: 500;
-  color: var(--muted-foreground);
-  margin-left: 2px;
+  margin-left: 1px;
 }
 
-/* country flag + pct chips */
-.ns-countries {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 15px;
-}
+/* 段内:无旗时的国家名 /「其他」标签 + 百分比(白字,继承 .cr-stackbar-label 描边) */
+.ns-seg-name { font-weight: 700; }
+.ns-seg-pct { font-variant-numeric: tabular-nums; }
 
-.ns-country {
-  display: inline-flex;
-  align-items: center;
-  font-size: 13px;
-  color: var(--muted-foreground);
-  font-variant-numeric: tabular-nums;
-}
-
-.ns-country-name {
-  margin-right: 4px;
+@media (max-width: 480px) {
+  .ns-bar-row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .ns-bar-head { flex-direction: row; align-items: baseline; gap: 8px; min-width: 0; }
 }
 
 /* names: 行内流式,长名按空格换行,国旗紧贴名字 */

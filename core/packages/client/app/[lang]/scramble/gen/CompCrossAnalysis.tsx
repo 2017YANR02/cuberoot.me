@@ -17,6 +17,7 @@ import { reduceDigits, type ColorLetter } from '@/lib/cross-color-subset';
 import type { StepMapState, StepMetric } from './useStepMap';
 import { normScramble, type CompStepsState } from './useCompSteps';
 import { stageLabel } from '@/lib/scramble-variants';
+import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import type { RoundSheet } from './SheetView';
 
 // b122/b123/b222/b223/bf2b = 块类指标(1x2x2 方块 / 1x2x3 / 2x2x2 / 2x2x3 / 双1x2x3),
@@ -79,33 +80,27 @@ function segColor(step: number, min: number, max: number): string {
   return `color-mix(in srgb, var(--gen-accent) ${f}%, var(--gen-step-lo))`;
 }
 
-/** One single-row stacked bar (步号着色,无百分比文字 — 数值看图例 / tooltip)。 */
+/** One single-row stacked bar (步号着色,无百分比文字 — 数值看图例 / tooltip)。复用共享 StackedBar。 */
 function Bar({ hist, gMin, gMax, selStep, onStep }: {
   hist: Histogram; gMin: number; gMax: number;
   selStep: number | null; onStep: (s: number) => void;
 }) {
   const steps = Object.keys(hist.count).map(Number).sort((a, b) => a - b);
-  return (
-    <div className="gen-cx-bar">
-      {steps.map((s) => {
-        const c = hist.count[s];
-        const pct = Math.round((c / hist.total) * 1000) / 10;
-        const frac = c / hist.total;
-        const cls = `gen-cx-seg${selStep != null && selStep !== s ? ' is-dim' : ''}${selStep === s ? ' is-sel' : ''}`;
-        return (
-          <span
-            key={s}
-            className={cls}
-            style={{ flexGrow: c, background: segColor(s, gMin, gMax) }}
-            title={`${s} · ${pct}% (${c}/${hist.total})`}
-            onClick={() => onStep(s)}
-          >
-            <span className="gen-cx-seg-label">{frac >= 0.08 ? s : ''}</span>
-          </span>
-        );
-      })}
-    </div>
-  );
+  const segments: StackedSeg[] = steps.map((s) => {
+    const c = hist.count[s];
+    const pct = Math.round((c / hist.total) * 1000) / 10;
+    return {
+      key: s,
+      weight: c,
+      color: segColor(s, gMin, gMax),
+      label: s,
+      title: `${s} · ${pct}% (${c}/${hist.total})`,
+      dim: selStep != null && selStep !== s,
+      selected: selStep === s,
+      onClick: () => onStep(s),
+    };
+  });
+  return <StackedBar segments={segments} total={hist.total} className="gen-cx-bar" />;
 }
 
 export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, step, stepUncoveredCount, engineless, includeExtras, metric, letters, onFilterChange, t }: Props) {

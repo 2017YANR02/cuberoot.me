@@ -11,6 +11,7 @@ import { countryToIso2, personFlagIso2, loadFlagData, flagDataVersion } from '@/
 import { tr } from '@/i18n/tr';
 import DiscreteHistogram from '@/app/[lang]/scramble/stats/_components/DiscreteHistogram';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import { type NameMode, NAME_MODES, nameByMode, nameModeOptions, FormerNames } from './nameMode';
 import './name-stats.css';
 
@@ -63,31 +64,57 @@ function NamesBlock({ people, mode }: { people: People; mode: NameMode }) {
   );
 }
 
-// 选中柱子后展示该组详情:大号键 + 人数 + 国旗占比 chips + 选手名。
+// 选中柱子后展示该组详情:左侧大号键 + 人数,右侧国家占比堆叠比例条(复用 StackedBar),下方选手名。
 function BinDetail({ row, unit, isZh, mode }: { row: Row; unit: string; isZh: boolean; mode: NameMode }) {
   const [key, count, countries, people] = row;
-  const keyLabel = String(key);
+  const sumN = countries.reduce((s, co) => s + co.n, 0);
+  const others = Math.max(0, count - sumN);
+  const n = countries.length;
+  // 段宽 ∝ 人数;暖→冷渐变(最大占比 = 品牌橙,趋小转绿),与 /scramble/gen 同款观感
+  const segs: StackedSeg[] = countries.map((co, i) => {
+    const iso2 = countryToIso2(co.c);
+    const f = n > 1 ? i / (n - 1) : 0;
+    const frac = count > 0 ? co.n / count : 0;
+    return {
+      key: co.c || i,
+      weight: co.n,
+      color: `color-mix(in srgb, var(--accent) ${Math.round((1 - f) * 100)}%, var(--signal-success))`,
+      title: `${co.c} · ${fmtPct(co.p)} (${co.n.toLocaleString()})`,
+      label: (
+        <>
+          {iso2
+            ? <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />
+            : <span className="ns-seg-name">{co.c}</span>}
+          {frac >= 0.1 && <span className="ns-seg-pct">{fmtPct(co.p)}</span>}
+        </>
+      ),
+    };
+  });
+  if (others > 0) {
+    const op = (others / count) * 100;
+    segs.push({
+      key: '__other__',
+      weight: others,
+      color: 'color-mix(in srgb, var(--muted-foreground) 38%, transparent)',
+      title: `${tr({ zh: '其他', en: 'Others' })} · ${fmtPct(op)}`,
+      label: <span className="ns-seg-name">{tr({ zh: '其他', en: 'Others' })}</span>,
+    });
+  }
   return (
     <div className="ns-detail">
-      <div className="ns-detail-head">
-        <span className="ns-key">{keyLabel}{unit && <span className="ns-unit">{unit}</span>}</span>
-        <span className="ns-count">{count.toLocaleString()}{isZh && <span className="ns-count-unit">人</span>}</span>
-      </div>
-      {countries.length > 0 && (
-        <div className="ns-countries">
-          {countries.map((co, i) => {
-            const iso2 = countryToIso2(co.c);
-            return (
-              <span className="ns-country" key={i} title={co.c}>
-                {iso2
-                  ? <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />
-                  : <span className="ns-country-name">{co.c}</span>}
-                <span className="ns-country-pct">{fmtPct(co.p)}</span>
-              </span>
-            );
-          })}
+      <div className="ns-bar-row">
+        <div className="ns-bar-head">
+          <span className="ns-key">{String(key)}{unit && <span className="ns-unit">{unit}</span>}</span>
+          <span className="ns-count">{count.toLocaleString()}{isZh && <span className="ns-count-unit">人</span>}</span>
         </div>
-      )}
+        <StackedBar
+          segments={segs}
+          total={count}
+          minLabelFrac={0.04}
+          className="ns-bar"
+          ariaLabel={tr({ zh: '各国选手占比', en: 'Country breakdown' })}
+        />
+      </div>
       <NamesBlock people={people} mode={mode} />
     </div>
   );
