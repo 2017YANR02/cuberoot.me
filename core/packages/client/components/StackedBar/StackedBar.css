@@ -1,0 +1,45 @@
+/* 通用堆叠比例条 —— 抽自 /scramble/gen 的 .gen-cx-bar/.gen-cx-seg,中性类名供跨页复用。
+   track 用 currentColor 自适应所在页文字色,无需外部 token。 */
+.cr-stackbar {
+  display: flex;
+  width: 100%;
+  height: 22px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.cr-stackbar-seg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cr-stackbar-seg.is-clickable {
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.cr-stackbar-seg.is-clickable:hover {
+  opacity: 1 !important;
+}
+.cr-stackbar-seg.is-dim {
+  opacity: 0.3;
+}
+
+.cr-stackbar-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #fff; /* 段底色是动态彩色 chip,白字 + 阴影保证各色上可读(沿用 gen 约定,非主题灰阶) */
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 480px) {
+  .cr-stackbar { height: 26px; }
+}

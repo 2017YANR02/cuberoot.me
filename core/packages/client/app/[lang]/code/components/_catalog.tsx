@@ -28,6 +28,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { ListSelect } from '@/components/ListSelect';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
+import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import { VARIANT_ORDER } from '@/lib/scramble-variants';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
@@ -196,6 +197,23 @@ function RangeSliderDemo() {
 function NumberCommitDemo() {
   const [n, setN] = useState(5);
   return <NumberCommitInput value={n} min={1} max={20} onCommit={setN} className="cg-input cg-num" aria-label="count" />;
+}
+
+function StackedBarDemo() {
+  const data: [string, number, string][] = [
+    ['A', 42, 'var(--accent)'],
+    ['B', 28, 'color-mix(in srgb, var(--accent) 50%, var(--signal-success))'],
+    ['C', 18, 'var(--signal-success)'],
+    ['D', 12, 'color-mix(in srgb, var(--muted-foreground) 38%, transparent)'],
+  ];
+  const segs: StackedSeg[] = data.map(([k, w, color]) => ({
+    key: k, weight: w, color, label: `${k} ${w}%`, title: `${k} · ${w}%`,
+  }));
+  return (
+    <div style={{ width: 320, maxWidth: '100%' }}>
+      <StackedBar segments={segs} minLabelFrac={0.08} ariaLabel="demo distribution" />
+    </div>
+  );
 }
 
 function SearchInputDemo() {
@@ -801,6 +819,15 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The 2D unfolded scramble net (WCA net), pure client-side SVG (no backend). "Scramble image" means this, not a 3D iso view. Covers 2–7×7 / pyraminx / skewb / SQ1 / megaminx / clock / mirror.',
     usage: '<ScramblePreview2D event="333" scramble={scr} size={60} />',
     Demo: ScramblePreview2DDemo,
+  },
+  {
+    name: 'StackedBar',
+    import: "import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';",
+    category: 'display',
+    zh: '单行堆叠比例条:每段 flexGrow ∝ weight,自定义底色 + 居中标签(段太窄自动隐藏,仅留 tooltip),可选 onClick/dim/selected。/scramble/gen 十字分布 + /wca 姓名分布国家占比共用。',
+    en: 'Single-row stacked proportion bar: each segment flexGrow ∝ weight, custom color + centered label (hidden when too narrow, tooltip kept), optional onClick/dim/selected. Shared by /scramble/gen cross distribution and /wca name-distribution country breakdown.',
+    usage: '<StackedBar segments={[{key,weight,color,label}]} minLabelFrac={0.08} />',
+    Demo: StackedBarDemo,
   },
   {
     name: 'ChainExplorer',
