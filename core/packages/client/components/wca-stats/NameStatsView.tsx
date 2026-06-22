@@ -150,17 +150,20 @@ function fullStats(rows: Row[]) {
   return { mean: sum / total, median: pct(0.5), p10: pct(0.1), p90: pct(0.9), p99: pct(0.99) };
 }
 
-export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data: NameStatsData; isZh: boolean; queryKey?: string }) {
+export default function NameStatsView({ data, isZh, queryKey = 'type', nameMode: nameModeProp, onNameModeChange }: { data: NameStatsData; isZh: boolean; queryKey?: string; nameMode?: NameMode; onNameModeChange?: (m: NameMode) => void }) {
   const panels = useMemo(() => data.panels ?? [], [data]);
   // 指标 tab(词数 / 字符长度);名字口径四态(英文名 / 全名 / 本地名 / 含曾用名)
   const [tab, setTab] = useQueryState(
     queryKey,
     parseAsStringEnum(['parts', 'length']).withDefault('parts').withOptions({ history: 'push' }),
   );
-  const [nameMode, setNameMode] = useQueryState(
+  // 名字口径:外部受控(与名录共用同一 URL 状态)优先,否则内部 nuqs 自管
+  const [internalNameMode, setInternalNameMode] = useQueryState(
     `${queryKey}_name`,
     parseAsStringEnum<NameMode>([...NAME_MODES]).withDefault('latin').withOptions({ history: 'push' }),
   );
+  const nameMode: NameMode = nameModeProp ?? internalNameMode;
+  const setNameMode = (m: NameMode) => { if (onNameModeChange) onNameModeChange(m); else setInternalNameMode(m); };
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
 
