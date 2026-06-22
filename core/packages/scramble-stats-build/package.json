@@ -14,6 +14,7 @@
     "build:scramble-steps": "tsx src/build_scramble_steps.ts",
     "build:puzzle-dist": "tsx src/build_puzzle_dist.ts",
     "build:puzzle-sampled-dist": "tsx src/build_puzzle_sampled_dist.ts",
+    "build:bic-table": "tsx src/build_bic_table.ts",
     "scrape:algdb": "tsx bin/scrape_speedcubedb.ts"
   },
   "dependencies": {

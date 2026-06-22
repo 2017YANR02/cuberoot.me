@@ -1,14 +1,14 @@
 'use client';
 
 /**
- * /scramble/solver?event=bic — Bicube(联体魔方)整解最优在线求解器。
+ * /scramble/solver?event=bic — Bicube(联体魔方)整解最优在线求解器。TIER B(离线精确距离表)。
  *
- * 纯 TS,无 worker、无下载表:Bicube(Uwe Meffert 受限 3×3×3)的可达状态恰为 1,108,800 个,整张图在
- * 浏览器里 BFS 一次(memoized),每次求解都是查表 + 梯度下降的最优最短路(可证最短)。整图构建 ~7s,
- * 所以求解走异步(首次解时构建,UI 显示「求解中」spinner;之后秒解)。打乱来源复用 /scramble/gen 的
+ * 纯 TS:Bicube(Uwe Meffert 受限 3×3×3)可达态恰 1,108,800 个,但浏览器现场 BFS 整图实测 ~6.4s/~510MB
+ * 峰值 → 移动端必崩。故改 TIER B:离线 BFS 一次,把每态精确最优距离按确定性 rank 索引,gzip 成 ~1.8MB 的
+ * opt_bic.bin.gz;首次求解时 fetch+inflate(DecompressionStream)→ 常驻 ~10MB 类型化数组(Float64 sorted
+ * ranks + Uint8 dist),再梯度下降出可证最短解。无现场 BFS、无 510MB Map。打乱来源复用 /scramble/gen 的
  * cstimer 桥(cstimerScramble('bic')),记号与 cstimer 完全一致(U U' U2 F F' F2 L L' L2 R R' R2,
- * 受 bandaging 门控:只有未受限的面能转),保证它生成的打乱被正确求解。上帝之数 28(面转计步;
- * 出处 jaapsch.net)。
+ * 受 bandaging 门控)。上帝之数 28(面转计步;出处 jaapsch.net)。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -27,20 +27,11 @@ import './ivy_solver.css';
 const BIC_TOKEN_RE = /^[UFLR](2|')?$/;
 const BIC_NOTE = "U U' U2 F F' F2 L L' L2 R R' R2";
 
-// Defer the (synchronous, ~7s on first call) solve to a macrotask so the UI can paint the spinner first.
-function solveBicAsync(scramble: string): Promise<BicSolution> {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      try { resolve(solveBic(scramble)); } catch (e) { reject(e); }
-    }, 10);
-  });
-}
-
 type SolveState =
   | { kind: 'idle' }
   | { kind: 'solving' }
   | { kind: 'done'; result: BicSolution }
-  | { kind: 'error'; message: string };
+  | { kind: 'error'; message: string; tableError?: boolean };
 
 export default function BicSolverPage() {
   useDocumentTitle('联体魔方求解器', 'Bicube Solver');
@@ -55,17 +46,22 @@ export default function BicSolverPage() {
 
   const trimmed = scramble.trim();
 
-  // Async solve (first call builds the full graph ~7s). Guard with a request counter so a stale resolve
-  // from a previous scramble can't overwrite a newer one.
+  // Async solve: solveBic lazily fetches + inflates the ~1.8MB table on first call (then it's cached), and
+  // solves by gradient descent. Guard with a request counter so a stale resolve can't overwrite a newer one.
   const reqRef = useRef(0);
   useEffect(() => {
     if (!trimmed) { setState({ kind: 'idle' }); return; }
     const myReq = ++reqRef.current;
     setState({ kind: 'solving' });
     let cancelled = false;
-    solveBicAsync(trimmed).then(
+    solveBic(trimmed).then(
       (result) => { if (!cancelled && reqRef.current === myReq) setState({ kind: 'done', result }); },
-      (e) => { if (!cancelled && reqRef.current === myReq) setState({ kind: 'error', message: String((e as Error)?.message ?? e) }); },
+      (e) => {
+        if (cancelled || reqRef.current !== myReq) return;
+        const message = String((e as Error)?.message ?? e);
+        // a parse error starts with "bad:" (BIC_TOKEN_RE rejected); anything else = table fetch/inflate failure.
+        setState({ kind: 'error', message, tableError: !message.startsWith('bad:') });
+      },
     );
     return () => { cancelled = true; };
   }, [trimmed]);
@@ -95,11 +91,11 @@ export default function BicSolverPage() {
       return null;
     },
     solveOne: async (s) => {
-      const o = await solveBicAsync(s);
+      const o = await solveBic(s);
       return { len: o.length, solution: o.solution };
     },
     randomOne: () => cstimerScramble('bic'),
-    concurrency: 1, // single shared graph build
+    concurrency: 1, // single shared table fetch (cached after the first solve)
   }), []);
 
   return (
@@ -113,8 +109,8 @@ export default function BicSolverPage() {
         <>
           <p className="pos-lead">
             {tr({
-              zh: `联体魔方在线求解:任意打乱的整解最优解(全空间 1,108,800 态精确表,上帝之数 28,面转计步)。记号 ${BIC_NOTE},与 cstimer 一致(受 bandaging 门控)。`,
-              en: `Bicube online solver: the exact optimal solution for any scramble (full-space table over 1,108,800 states; God's number is 28 in the face-turn metric). Notation ${BIC_NOTE}, matching cstimer (gated by bandaging).`,
+              zh: `联体魔方在线求解:任意打乱的整解最优解(全空间 1,108,800 态离线精确距离表,上帝之数 28,面转计步)。记号 ${BIC_NOTE},与 cstimer 一致(受 bandaging 门控)。`,
+              en: `Bicube online solver: the exact optimal solution for any scramble (offline exact-distance table over all 1,108,800 states; God's number is 28 in the face-turn metric). Notation ${BIC_NOTE}, matching cstimer (gated by bandaging).`,
             })}
           </p>
 
@@ -145,10 +141,15 @@ export default function BicSolverPage() {
               {state.kind === 'solving' && (
                 <p className="pos-result-solved">
                   <LoaderCircle size={16} className="pos-spin" aria-hidden style={{ verticalAlign: '-3px', marginRight: 6 }} />
-                  {tr({ zh: '求解中(首次会构建整图,约 7 秒)…', en: 'Solving (the first call builds the full graph, ~7s)…' })}
+                  {tr({ zh: '求解中(首次会加载约 1.8MB 距离表)…', en: 'Solving (the first call loads the ~1.8MB distance table)…' })}
                 </p>
               )}
-              {state.kind === 'error' && (
+              {state.kind === 'error' && state.tableError && (
+                <p className="pos-error">
+                  {tr({ zh: '距离表加载失败,请检查网络后重试', en: 'Failed to load the distance table — check your connection and retry' })}: <code>{state.message}</code>
+                </p>
+              )}
+              {state.kind === 'error' && !state.tableError && (
                 <p className="pos-error">
                   {tr({ zh: `打乱记号无法识别(应为 ${BIC_NOTE})`, en: `Unrecognized notation (expected ${BIC_NOTE})` })}: <code>{state.message}</code>
                 </p>
@@ -174,8 +175,8 @@ export default function BicSolverPage() {
           <div className="ivy-caveat">
             <strong>{tr({ zh: '关于「最优」', en: 'About "optimal"' })}</strong>{' '}
             {tr({
-              zh: 'Bicube(Uwe Meffert 的受限 3×3×3,角与棱被粘成 2×1×1 块,多数面被 bandaging 锁住)的可达状态恰为 1,108,800 个,整张图可在浏览器里一次性 BFS,所以这里给出的是真正的最短解,不是近似。任何打乱最多 28 步可还原(面转计步,出处 jaapsch.net),平均约 18.80 步。',
-              en: 'The Bicube (Uwe Meffert\'s bandaged 3×3×3 — a corner and an edge glued into 2×1×1 blocks, most faces locked by bandaging) has exactly 1,108,800 reachable states, so the whole graph is BFS-ed in the browser and every solution here is a true shortest path, not an approximation. Any scramble solves in at most 28 moves (face-turn metric, figure from jaapsch.net), ~18.80 on average.',
+              zh: 'Bicube(Uwe Meffert 的受限 3×3×3,角与棱被粘成 2×1×1 块,多数面被 bandaging 锁住)的可达状态恰为 1,108,800 个,每态的精确最优距离已离线算好、压成约 1.8MB 的距离表;浏览器首次求解时加载它(常驻约 10MB),再沿表梯度下降,所以这里给出的是真正的最短解,不是近似。任何打乱最多 28 步可还原(面转计步,出处 jaapsch.net),平均约 18.80 步。',
+              en: 'The Bicube (Uwe Meffert\'s bandaged 3×3×3 — a corner and an edge glued into 2×1×1 blocks, most faces locked by bandaging) has exactly 1,108,800 reachable states; the exact optimal distance of every state is precomputed offline into a ~1.8MB table. The browser loads it on the first solve (~10MB resident) and follows it by gradient descent, so every solution here is a true shortest path, not an approximation. Any scramble solves in at most 28 moves (face-turn metric, figure from jaapsch.net), ~18.80 on average.',
             })}
           </div>
         </>
