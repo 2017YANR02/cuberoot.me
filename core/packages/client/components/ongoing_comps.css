@@ -86,6 +86,9 @@
   gap: 0.4rem;
   max-height: clamp(11rem, 34vh, 19rem);
   overflow-y: auto;
+  /* 仅纵向滚动:overflow-y:auto 会把 overflow-x:visible 算成 auto,内容稍宽即可横向拖动
+     (触屏上=左右滑)。显式锁死 overflow-x,面板只上下滚。 */
+  overflow-x: hidden;
   overscroll-behavior: contain;
   padding-right: 0.4rem;
 }
