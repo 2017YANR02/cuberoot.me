@@ -47,11 +47,13 @@
 .wp-card.wp-tabs-card { overflow: visible; }
 /* 桌面:容器不裁剪(表自适应内容、不溢出),让 thead 以页面为滚动上下文吸顶;窄屏才横向滚动 */
 .wp-records-scroll { overflow: visible; }
-/* sticky 列头吸在全局 .wp-header(高 61px,z-index:10)之下;border-collapse 下吸顶会丢单元格边框,改用 box-shadow 画下划线 */
+/* sticky 列头吸到视口顶端:选手页(.wp-page)没有全局 .wp-header,顶部无固定 chrome,
+   所以 top:0(早先的 61px 是给已不存在的 .wp-header 留位,会让列头悬在视口下方 61px 处,
+   上方留一条内容穿行的死带)。border-collapse 下吸顶会丢单元格边框,改用 box-shadow 画下划线 */
 .wp-records-table thead th,
 .wp-podium-table thead th {
   position: sticky;
-  top: 61px;
+  top: 0;
   z-index: 3;
   box-shadow: inset 0 -1px 0 var(--wp-border);
 }
