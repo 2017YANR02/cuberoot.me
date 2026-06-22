@@ -198,7 +198,6 @@ export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data:
     parseAsStringEnum<NameMode>([...NAME_MODES]).withDefault('latin').withOptions({ history: 'push' }),
   );
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
-  const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
 
   // 国旗数据加载(模块级缓存,加载完触发重渲染)
@@ -277,14 +276,12 @@ export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data:
               series={[{ name: '', fillColors: ['var(--accent)'], counts: hist.counts }]}
               isZh={isZh}
               yMode={yMode}
-              chartMode={chartMode}
               hideLegendColors
               formatBin={formatBin}
               showBarLabels={showBarLabels}
               clickableBins={hist.clickable}
               selectedBin={selectedBin}
               onBarClick={setSelectedBin}
-              onChartModeToggle={() => setChartMode(m => (m === 'pdf' ? 'cdf' : 'pdf'))}
               onYModeToggle={() => setYMode(m => (m === 'percent' ? 'count' : 'percent'))}
               modeControl="switch"
               yModeLabels={{ off: tr({ zh: '百分比', en: '%' }), on: tr({ zh: '数量', en: 'count' }) }}
