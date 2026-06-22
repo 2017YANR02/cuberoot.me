@@ -107,7 +107,7 @@ export default function VizAboutPage() {
         <h2 className="va-section-title">{t('相关页面', 'See also')}</h2>
         <ul className="va-refs">
           <li>
-            <Link href="/wca/all-results">{t('全成绩排名', 'All Results')}</Link>
+            <Link href="/wca/results">{t('全成绩排名', 'All Results')}</Link>
             {t(' — 所有选手成绩的可分页搜索。', ' — paginated search over every WCA result.')}
           </li>
           <li>

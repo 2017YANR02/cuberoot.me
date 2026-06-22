@@ -225,7 +225,7 @@ export const TRACER_PATTERNS: Pattern[] = [
 },
   {
     id: 'wca-cached',
-    route: '/wca/all-results?show=persons',
+    route: '/wca/results?show=persons',
     lit: ['browser', 'edge', 'spa', 'fetch', 'api'],
     cacheHit: true,
     eta: '< 10ms (cache hit)',

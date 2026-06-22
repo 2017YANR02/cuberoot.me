@@ -1,5 +1,5 @@
 /* DiscreteHistogram 自带样式 —— 从 scramble_stats.css 抽出,随组件 import,
-   使其可在任意页面复用(如 /wca/all-results 姓名分布)。
+   使其可在任意页面复用(如 /wca/results 姓名分布)。
    依赖局部 token(--surface/--text/--text-sub/--border/--border-strong/--accent/--accent-soft):
    scramble 页由 .scramble-stats-page 提供;其它页需在外层包一层把全局 token 桥接过来。 */
 

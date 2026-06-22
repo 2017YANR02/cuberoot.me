@@ -1,7 +1,7 @@
 'use client';
 // 选手页「最优项目组合」— 该选手在所有项目子集里名次和最低(世界排名最高)的组合.
 // 选手固定(无 picker),自动加载;同时给出单次 + 平均两块.复用排名页同款渲染体 BestComboBody.
-// 「应用到榜单」跳排名页 /wca/all-results 并选中该组合.数据源 /v1/wca/sum-of-ranks/player-best.
+// 「应用到榜单」跳排名页 /wca/results 并选中该组合.数据源 /v1/wca/sum-of-ranks/player-best.
 // 自选组合计算器在 PR 表(PersonPRTable 行多选 → Σ 块「自选」行),不在本卡.
 
 import { useEffect, useState } from 'react';
@@ -37,7 +37,7 @@ export default function PersonBestCombos({ wcaId, isZh, inclCancelled }: {
 
   // 免 lang 前缀(AppLink 自动补);返回真 href → 中键/Ctrl 原生新标签页
   const hrefFor = (events: string[], type: 'single' | 'average') =>
-    `/wca/all-results?events=${encodeURIComponent(events.join(','))}&type=${type}`;
+    `/wca/results?events=${encodeURIComponent(events.join(','))}&type=${type}`;
 
   return (
     <section className="wp-card wp-combos-card">

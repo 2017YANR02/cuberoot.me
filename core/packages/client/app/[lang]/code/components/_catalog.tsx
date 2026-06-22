@@ -636,7 +636,7 @@ export const CATALOG: ComponentEntry[] = [
     en: 'iOS-style two-choice toggle (the primary use in this project, NOT a plain boolean switch): pass onLabel/offLabel as the two mutually-exclusive option labels (e.g. Single/Average, Cumulative/Period) — only the selected one shows, highlighted. Click it, or drag the knob past the midline; omit both labels for a plain track switch. Prefer it for any two-option toggle on new pages instead of rolling a new segmented control.',
     usage: '<PillToggle value={type === "average"} onChange={v => setType(v ? "average" : "single")} onLabel="平均" offLabel="单次" />',
     Demo: PillToggleDemo,
-    note: { zh: 'page-scope 默认 min-width:0 贴合文字;两标签字数差很多才保留 min-width。当过滤器跟 select 同行时给它跟 select 同高(看 /wca/all-results 的 .wse-filter pill,34px 上下居中)。', en: 'Page-scope min-width:0 hugs the text by default; keep min-width only when the two labels differ a lot in length. When used as a filter alongside selects, match the select height (see /wca/all-results .wse-filter pill — 34px, vertically centered).' },
+    note: { zh: 'page-scope 默认 min-width:0 贴合文字;两标签字数差很多才保留 min-width。当过滤器跟 select 同行时给它跟 select 同高(看 /wca/results 的 .wse-filter pill,34px 上下居中)。', en: 'Page-scope min-width:0 hugs the text by default; keep min-width only when the two labels differ a lot in length. When used as a filter alongside selects, match the select height (see /wca/results .wse-filter pill — 34px, vertically centered).' },
   },
   {
     name: 'HeaderToggles',

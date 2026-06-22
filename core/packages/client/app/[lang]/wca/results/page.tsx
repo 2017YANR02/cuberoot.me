@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * 排名 — /wca/all-results
+ * 排名 — /wca/results
  * 同一条事件选择器,按「选中项目数」驱动两种视图:
  *   选 1 项  → 单项排名(show=results 每条成绩 / show=persons 每选手年末累积最佳;截至/当期口径)
  *   选 2+ 项 → 名次和(把所选项目的世界/国家排名相加;含查选手最优组合 + 名人堂 + 排名演化)
@@ -480,18 +480,6 @@ function AllResultsPageInner() {
           />
         </div>
       </div>
-
-      {/* 状态条:已选项目数 + 模式标签 */}
-      {mode !== 'empty' && (
-        <div className="wse-mode-status">
-          {isZh ? `已选 ${selectedSet.size} 项` : `${selectedSet.size} selected`}
-          <span className={`wse-mode-chip ${mode}`}>
-            {mode === 'sor'
-              ? tr({ zh: '名次和', en: 'Sum of Ranks' })
-              : tr({ zh: '单项', en: 'Single event' })}
-          </span>
-        </div>
-      )}
 
       {/* ============ 空态:姓名分布(name_stats viz) + 名录(A-Z 平铺) ============ */}
       {mode === 'empty' && (
