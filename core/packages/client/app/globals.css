@@ -388,6 +388,10 @@ option {
 html {
   background: var(--background);
   scrollbar-gutter: stable;
+  /* 微信内置浏览器 / iOS WebView 会在横竖屏切换或用户「调整字体」时自动放大文字,撑爆紧凑布局。
+     先压住 iOS 自动放大;微信安卓手动放大走 WebView textZoom,CSS 拦不住,需要时再上 JS 兜底。 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
