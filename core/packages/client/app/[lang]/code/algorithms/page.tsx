@@ -4,7 +4,6 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithms_landing.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 interface Topic {
