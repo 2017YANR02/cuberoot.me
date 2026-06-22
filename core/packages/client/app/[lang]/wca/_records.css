@@ -50,6 +50,9 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 「详细成绩」表头居中,压在下方 attempts 网格上方(列宽由最宽一行的网格撑开,标题在该宽度内居中) */
+.records-table th.wse-attempts-col { text-align: center; }
+
 /* mixed 模式下 event 分组 */
 .records-event-group { margin-top: 24px; }
 .records-event-group:first-child { margin-top: 0; }

@@ -20,7 +20,7 @@ import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge';
 import { RegionPicker } from '@/components/RegionPicker';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { formatAttempts } from '../all-results/page';
+import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import '../_records.css';
@@ -317,7 +317,7 @@ function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
             </td>
             <td className="wse-detail-cell">{r.d}</td>
             <td className="wse-attempts-col">
-              {r.a && r.a.length > 0 ? formatAttempts(r.a, r.e, r.t === 's' ? 'single' : 'average', r.v) : ''}
+              {r.a && r.a.length > 0 ? <AttemptsGrid attempts={r.a} eventId={r.e} /> : ''}
             </td>
           </tr>
         ))}
