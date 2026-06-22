@@ -15,6 +15,7 @@ import { writeFileSync, mkdirSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { query, closePool } from '../core/database.js';
+import { mbfMo3 } from '../core/mbf_average.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_ROOT = resolve(__dirname, '../../../../../stats/records/history');
@@ -44,6 +45,43 @@ interface Row {
 }
 
 interface CountryMeta { id: string; iso2: string; continent_id: string }
+
+// 333mbf 非官方 Mo3「当前世界纪录」—— WCA 不追踪多盲平均,results 表无 regional_average_record 标记,
+// 故上面的查询拿不到这一行。这里用与 stats-build MbfAverage 完全一致的口径(每把 0DDTTTTTMM 三段
+// 各取 3 次均值四舍五入再拼回)算历史最佳 Mo3,作为一条合成 average 行注入 world.json,
+// 使 /wca/records 当前视图(world)显示该非官方多盲平均纪录(原 wr_current 页同款行)。
+async function bestMbfMo3Row(countryById: Map<string, CountryMeta>): Promise<Row | null> {
+  const rows = await query<any>(`
+    SELECT r.id, r.person_id AS p, r.person_name AS pn, r.country_id AS pc,
+           r.competition_id AS c, comp.cell_name AS cn, comp.country_id AS cc,
+           DATE_FORMAT(comp.start_date, '%Y-%m-%d') AS d,
+           (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number)
+              FROM result_attempts ra WHERE ra.result_id = r.id) AS atts
+    FROM results r
+    JOIN competitions comp ON comp.id = r.competition_id
+    WHERE r.event_id = '333mbf'
+  `);
+  let best: { metric: number; d: string; r: any; a: number[] } | null = null;
+  for (const r of rows as any[]) {
+    const vals = String(r.atts || '').split(',').map(Number);
+    if (vals.length < 3 || vals[0] <= 0 || vals[1] <= 0 || vals[2] <= 0) continue;
+    const metric = mbfMo3(vals[0], vals[1], vals[2]);
+    // 最佳 = metric 最小;并列取日期更早者(与 wr_current 当前世界纪录页的并列处理一致)
+    if (!best || metric < best.metric || (metric === best.metric && String(r.d) < best.d)) {
+      best = { metric, d: String(r.d), r, a: [vals[0], vals[1], vals[2]] };
+    }
+  }
+  if (!best) return null;
+  const pc = countryById.get(String(best.r.pc));
+  const cc = countryById.get(String(best.r.cc));
+  if (!pc?.iso2 || !cc?.iso2) return null;
+  return {
+    e: '333mbf', t: 'a', v: best.metric, l: 'WR',
+    p: String(best.r.p), pn: String(best.r.pn), pc: pc.iso2,
+    c: String(best.r.c), cn: String(best.r.cn), cc: cc.iso2,
+    d: best.d, a: best.a,
+  };
+}
 
 async function main() {
   const t0 = Date.now();
@@ -161,6 +199,11 @@ async function main() {
 
   // 1) World
   const worldRows = all.filter(r => r.l === 'WR');
+  const mbfMo3Row = await bestMbfMo3Row(countryById);
+  if (mbfMo3Row) {
+    worldRows.push(mbfMo3Row);
+    worldRows.sort((a, b) => (a.d !== b.d ? (a.d < b.d ? 1 : -1) : a.v - b.v));
+  }
   writeJson(resolve(OUTPUT_ROOT, 'world.json'), { updated: today, rows: worldRows });
 
   // 2) 6 大洲
