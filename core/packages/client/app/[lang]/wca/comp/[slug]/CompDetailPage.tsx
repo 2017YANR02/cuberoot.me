@@ -2038,6 +2038,17 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
     <div className="comp-records">
       {groups.map(g => {
         const attemptCount = g.rows.reduce((m, e) => Math.max(m, e.res.v.length), 0);
+        // 合并同一 (选手, 轮次) 的单次 + 平均纪录到一行:同轮的 res/详情完全相同,只是
+        // 分别破了单次纪录和平均纪录,原本拆成两行重复。按 g.rows 既有顺序(已 WR→大洲→NR
+        // 排好)首次出现建行,后续同 (选手, 轮次) 并入对应单次/平均槽;不同轮次仍各自成行。
+        const mergedRows: { n: number; roundId: string; res: LiveResult; single?: CompRecordEntry; average?: CompRecordEntry }[] = [];
+        const mergedIdx = new Map<string, number>();
+        for (const e of g.rows) {
+          const key = `${e.res.n}:${e.roundId}`;
+          let i = mergedIdx.get(key);
+          if (i === undefined) { i = mergedRows.length; mergedIdx.set(key, i); mergedRows.push({ n: e.res.n, roundId: e.roundId, res: e.res }); }
+          if (e.type === 'single') mergedRows[i].single = e; else mergedRows[i].average = e;
+        }
         return (
           <section key={g.ev.i} className="comp-record-group">
             <h3 className="comp-podium-event">
@@ -2058,15 +2069,16 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
                   </tr>
                 </thead>
                 <tbody>
-                  {g.rows.map((e, idx) => {
-                    const u = users[String(e.res.n)];
+                  {mergedRows.map((row, idx) => {
+                    const u = users[String(row.n)];
                     if (!u) return null;
                     const iso2 = regionToIso2(u.region);
                     return (
+                      // allow-static-onclick: 数据表整行点击(<tr> 不能是 <button>),与本页其它成绩表同款,点开成绩详情
                       <tr
-                        key={`${e.res.n}:${e.type}:${idx}`}
+                        key={`${row.n}:${row.roundId}`}
                         className={`${idx % 2 === 1 ? 'row-odd' : ''} comp-row-clickable`}
-                        onClick={() => onClickCuber(e.res.n, e.ev.i, e.roundId)}
+                        onClick={() => onClickCuber(row.n, g.ev.i, row.roundId)}
                       >
                         <td className="td-person">
                           <Flag iso2={iso2} className="comp-flag" />
@@ -2075,24 +2087,24 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
                           </span>
                         </td>
                         <td className="td-best">
-                          {e.type === 'single' && (
+                          {row.single && (
                             <span className="record-num-cell">
-                              {formatLive(e.value, e.ev.i, false)}
-                              <RecordBadge record={e.tag} variant="inline" iso2={iso2} />
+                              {formatLive(row.single.value, g.ev.i, false)}
+                              <RecordBadge record={row.single.tag} variant="inline" iso2={iso2} />
                             </span>
                           )}
                         </td>
                         <td className="td-avg">
-                          {e.type === 'average' && (
+                          {row.average && (
                             <span className="record-num-cell">
-                              {formatLive(e.value, e.ev.i, true)}
-                              <RecordBadge record={e.tag} variant="inline" iso2={iso2} />
+                              {formatLive(row.average.value, g.ev.i, true)}
+                              <RecordBadge record={row.average.tag} variant="inline" iso2={iso2} />
                             </span>
                           )}
                         </td>
                         {Array.from({ length: attemptCount }).map((_, i) => (
-                          <td key={i} className={`td-attempt ${isAo5Bracketed(e.res.v, i) ? 'td-attempt-trimmed' : ''}`}>
-                            {formatLive(e.res.v[i] ?? 0, e.ev.i, false)}
+                          <td key={i} className={`td-attempt ${isAo5Bracketed(row.res.v, i) ? 'td-attempt-trimmed' : ''}`}>
+                            {formatLive(row.res.v[i] ?? 0, g.ev.i, false)}
                           </td>
                         ))}
                       </tr>
