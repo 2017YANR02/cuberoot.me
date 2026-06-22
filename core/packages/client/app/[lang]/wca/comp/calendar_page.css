@@ -1121,8 +1121,8 @@
     --cl-min-width: 121rem;
 }
 .calendar-page[data-comp-none] { --cl-comp-w: 0rem; }
-/* 经纬度：整场列拆成「纬度 + 经度」两列，各带正负号 + 两位小数（如 -122.42），比计数列宽 */
-.calendar-page[data-comp-latlng] {
+/* 双列整场列：经纬度（纬度 + 经度）/ 人数和上限（人数 + 上限）——整场列拆成两列，比单计数列宽 */
+.calendar-page[data-comp-2col] {
     --cl-comp-w: 3.8rem;
     --cl-cols: var(--cl-reg-w) 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-country-width, 6rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
 }
@@ -1648,7 +1648,7 @@
     }
     .calendar-page[data-wide-metric] { --cl-ev-w: 2.7rem; --cl-min-width: 102rem; }
     .calendar-page[data-comp-none] { --cl-comp-w: 0rem; }
-    .calendar-page[data-comp-latlng] {
+    .calendar-page[data-comp-2col] {
         --cl-comp-w: 3.4rem;
         --cl-cols: var(--cl-reg-w) 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-country-width, 4.5rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
     }
