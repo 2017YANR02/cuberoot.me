@@ -118,18 +118,18 @@
       "titleZh": "Rubik's Cube - Average",
       "rows": [
         [
+          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
+          "**3.51**",
+          "China",
+          "[Hefei Cubing League 3x3 III 2026](https://www.worldcubeassociation.org/competitions/HefeiCubingLeague3x3III2026)",
+          "3.68 4.61 3.39 3.41 3.45"
+        ],
+        [
           "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
           "**3.71**",
           "China",
           "[Deqing Small & Special 2026](https://www.worldcubeassociation.org/competitions/DeqingSmallSpecial2026)",
           "3.79 4.33 3.61 3.74 2.80"
-        ],
-        [
-          "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-          "**3.93**",
-          "China",
-          "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026)",
-          "5.14 4.30 3.90 3.60 3.42"
         ],
         [
           "[Zhaokun Li (李昭昆)](https://www.worldcubeassociation.org/persons/2024LIZH03)",
@@ -175,10 +175,10 @@
         ],
         [
           "[Yi Shen (沈懿)](https://www.worldcubeassociation.org/persons/2026SHEN01)",
-          "**4.77**",
+          "**4.68**",
           "China",
-          "[Deqing Small & Special 2026](https://www.worldcubeassociation.org/competitions/DeqingSmallSpecial2026)",
-          "4.39 4.90 DNF 5.03 3.60"
+          "[Hefei Cubing League 3x3 III 2026](https://www.worldcubeassociation.org/competitions/HefeiCubingLeague3x3III2026)",
+          "4.40 4.86 6.51 4.79 4.08"
         ],
         [
           "[Ruihang Xu (许瑞航)](https://www.worldcubeassociation.org/persons/2017XURU04)",
@@ -520,10 +520,10 @@
         ],
         [
           "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-          "**32.87**",
+          "**32.06**",
           "United States",
-          "[Temecula Valley Spring 2026](https://www.worldcubeassociation.org/competitions/TemeculaValleySpring2026)",
-          "40.29 32.87 41.02 39.18 38.02"
+          "[Agoura Summer 2026](https://www.worldcubeassociation.org/competitions/AgouraSummer2026)",
+          "35.16 37.34 35.93 32.06 42.84"
         ],
         [
           "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
@@ -589,10 +589,10 @@
         ],
         [
           "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-          "**36.09**",
+          "**35.95**",
           "United States",
-          "[Super Duper San Diego 2026](https://www.worldcubeassociation.org/competitions/SuperDuperSanDiego2026)",
-          "39.41 35.44 37.30 33.91 35.52"
+          "[Agoura Summer 2026](https://www.worldcubeassociation.org/competitions/AgouraSummer2026)",
+          "35.70 35.31 36.82 35.33 39.30"
         ],
         [
           "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
@@ -982,18 +982,18 @@
           "13.22 DNF DNF DNF 16.69"
         ],
         [
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "**13.46**",
+          "United States",
+          "[Quiet Prep in Palisades 2026](https://www.worldcubeassociation.org/competitions/QuietPrepinPalisades2026)",
+          "15.68 15.00 16.19 13.46 DNF"
+        ],
+        [
           "[Manuel Gutman](https://www.worldcubeassociation.org/persons/2017GUTM01)",
           "**14.36**",
           "Argentina",
           "[Irracional Di Tella 2026](https://www.worldcubeassociation.org/competitions/IrracionalDiTella2026)",
           "17.46 16.06 14.36 DNF DNF"
-        ],
-        [
-          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
-          "**14.59**",
-          "United States",
-          "[Brilliant Big Blind Orlando 2026](https://www.worldcubeassociation.org/competitions/BrilliantBigBlindOrlando2026)",
-          "DNF 14.59 15.86 DNF 15.34"
         ],
         [
           "[Jeff Park](https://www.worldcubeassociation.org/persons/2015PARK08)",
@@ -1044,6 +1044,13 @@
           "14.65 15.12 15.20 DNF 14.85"
         ],
         [
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "**15.62**",
+          "United States",
+          "[Quiet Prep in Palisades 2026](https://www.worldcubeassociation.org/competitions/QuietPrepinPalisades2026)",
+          "15.68 15.00 16.19 13.46 DNF"
+        ],
+        [
           "[Jeff Park](https://www.worldcubeassociation.org/persons/2015PARK08)",
           "**16.03**",
           "United States",
@@ -1091,13 +1098,6 @@
           "Germany",
           "[Phalsbourg Saint Antoine 2026](https://www.worldcubeassociation.org/competitions/PhalsbourgSaintAntoine2026)",
           "17.08 17.96 16.64 22.57 17.90"
-        ],
-        [
-          "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
-          "**17.88**",
-          "United States",
-          "[Redhawk Slow Summer OH 2026](https://www.worldcubeassociation.org/competitions/RedhawkSlowSummerOH2026)",
-          "17.87 14.74 18.64 17.13 DNF"
         ]
       ]
     },
@@ -1231,6 +1231,13 @@
           "21 20 20"
         ],
         [
+          "[Baiqiang Dong (董百强)](https://www.worldcubeassociation.org/persons/2008DONG06)",
+          "**20.67**",
+          "China",
+          "[Quanzhou FMC Summer 2026](https://www.worldcubeassociation.org/competitions/QuanzhouFMCSummer2026)",
+          "18 22 22"
+        ],
+        [
           "[Fabio Schwandt](https://www.worldcubeassociation.org/persons/2014SCHW02)",
           "**20.67**",
           "United Kingdom",
@@ -1243,13 +1250,6 @@
           "United States",
           "[Evanston FMC Spring 2026](https://www.worldcubeassociation.org/competitions/EvanstonFMCSpring2026)",
           "23 18 21"
-        ],
-        [
-          "[Jaehyun Jeong (정재현)](https://www.worldcubeassociation.org/persons/2016JEON02)",
-          "**20.67**",
-          "Republic of Korea",
-          "[Seoul Silent Shhpring 2026](https://www.worldcubeassociation.org/competitions/SeoulSilentShhpring2026)",
-          "21 20 21"
         ]
       ]
     },
@@ -1874,10 +1874,10 @@
         ],
         [
           "[Kaixi Guo (郭铠希)](https://www.worldcubeassociation.org/persons/2023GUOK01)",
-          "**0.92**",
+          "**0.86**",
           "China",
-          "[Quanzhou Summer 2026](https://www.worldcubeassociation.org/competitions/QuanzhouSummer2026)",
-          "2.04 0.92 1.80 2.13 1.86"
+          "[Guangzhou Special 2026](https://www.worldcubeassociation.org/competitions/GuangzhouSpecial2026)",
+          "1.23 1.81 5.10 2.41 0.86"
         ],
         [
           "[Łukasz Burliga](https://www.worldcubeassociation.org/persons/2013BURL01)",
@@ -1956,6 +1956,13 @@
           "1.75 1.32 2.59 1.28 1.50"
         ],
         [
+          "[Dominic Redisi](https://www.worldcubeassociation.org/persons/2019REDI02)",
+          "**1.54**",
+          "United States",
+          "[GA Cubers Pride 2026](https://www.worldcubeassociation.org/competitions/GACubersPride2026)",
+          "1.51 1.40 1.40 2.68 1.72"
+        ],
+        [
           "[Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01)",
           "**1.56**",
           "Czech Republic",
@@ -1982,13 +1989,6 @@
           "China",
           "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026)",
           "1.46 1.57 1.53 DNF 1.64"
-        ],
-        [
-          "[Dominic Redisi](https://www.worldcubeassociation.org/persons/2019REDI02)",
-          "**1.68**",
-          "United States",
-          "[Georgia Championship 2026](https://www.worldcubeassociation.org/competitions/GeorgiaChampionship2026)",
-          "1.28 1.45 1.43 2.15 2.52"
         ],
         [
           "[Alex Rosado Saez de Langarica](https://www.worldcubeassociation.org/persons/2023LANG03)",
