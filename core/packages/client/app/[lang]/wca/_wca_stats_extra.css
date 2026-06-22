@@ -232,7 +232,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
   overflow-x: auto;
 }
 
-/* 含「详细成绩」attempts 网格的统计页(/wca/records、/wca/all-results 单项视图)表很宽:
+/* 含「详细成绩」attempts 网格的统计页(/wca/records、/wca/results 单项视图)表很宽:
    1180px 上限会裁掉右侧列(5 把成绩只显示 4 把)。整页按内容自适应宽度并居中(.wse-page 自带
    margin:0 auto),表格框同样 fit-content 避免深色 wrapper 拉满留白;窄屏超出由 overflow-x:auto
    横向滚动兜底。`:has(.wse-attempts-col)` 仅在该列存在(单项数据视图)时生效,其他模式维持常规宽度。 */
@@ -246,27 +246,6 @@ html:not([data-palette-scheme=dark]) .wse-page {
   color: var(--muted-foreground);
 }
 .wse-state-error { color: var(--destructive); }
-/* 排名页:已选项目数 + 模式标签(单项 / 名次和),由事件选择器选中数量驱动 */
-.wse-mode-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--muted-foreground);
-  margin: 10px 0 2px;
-}
-.wse-mode-chip {
-  padding: 2px 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  border: 1px solid var(--border-default);
-}
-.wse-mode-chip.single { color: var(--muted-foreground); }
-.wse-mode-chip.sor {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
 .wse-result-meta {
   font-size: 13px;
   color: var(--muted-foreground);

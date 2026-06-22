@@ -123,7 +123,7 @@ export default function PredictionAboutPage() {
             {t(' — 单选手成绩分布 KDE 可视化。', ' — per-cuber result distribution KDE visualisation.')}
           </li>
           <li>
-            <Link href="/wca/all-results">{t('全成绩排名', 'All Results')}</Link>
+            <Link href="/wca/results">{t('全成绩排名', 'All Results')}</Link>
             {t(' — 查看任意项目的历史 WR 排列。', ' — browse historical WR progressions per event.')}
           </li>
         </ul>

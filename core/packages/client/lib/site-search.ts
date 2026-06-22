@@ -77,7 +77,7 @@ export const TOOL_ITEMS: ToolItem[] = [
 export const LOOKUP_ITEMS: LookupItem[] = [
   { path: '/wca/grand-slam',       zh: '大满贯',       en: 'Grand Slam'
 },
-  { path: '/wca/all-results',      zh: '全部成绩排名', en: 'All Results'
+  { path: '/wca/results',          zh: '全部成绩排名', en: 'All Results'
 },
   { path: '/wca/cohort-ranks',     zh: '参赛届别排名', en: 'Cohort Ranks'
 },
@@ -85,9 +85,9 @@ export const LOOKUP_ITEMS: LookupItem[] = [
 },
   { path: '/wca/all-events-done',  zh: '全项目达成',   en: 'All Events Done'
 },
-  { path: '/wca/all-results',     extraQuery: 'events=all', zh: '全项目排名',   en: 'Sum of Ranks'
+  { path: '/wca/results',         extraQuery: 'events=all', zh: '全项目排名',   en: 'Sum of Ranks'
 },
-  { path: '/wca/all-results', extraQuery: 'events=all&hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium'
+  { path: '/wca/results', extraQuery: 'events=all&hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium'
 },
 ];
 

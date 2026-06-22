@@ -2,7 +2,7 @@
 
 // 通用单行堆叠比例条:每段 flexGrow ∝ weight,着色 + 居中标签(段太窄自动隐藏标签,仅留 tooltip)。
 // 抽自 /scramble/gen 的十字分布条(原 .gen-cx-bar/.gen-cx-seg),改中性类名供跨页复用
-//(/scramble/gen 十字分析 + /wca/all-results 姓名分布国家占比)。
+//(/scramble/gen 十字分析 + /wca/results 姓名分布国家占比)。
 import type { ReactNode, KeyboardEvent } from 'react';
 import './StackedBar.css';
 

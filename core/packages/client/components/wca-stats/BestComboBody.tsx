@@ -1,5 +1,5 @@
 'use client';
-// Sum-of-Ranks「最优项目组合」单 type 渲染体 — 排名页(/wca/all-results 名次和)与选手页共用.
+// Sum-of-Ranks「最优项目组合」单 type 渲染体 — 排名页(/wca/results 名次和)与选手页共用.
 // 只渲染内容(名次行 + 组合列表 + 展开/加载更多 + 脚注 / 无成绩提示),不含外框 .sor-pb 与选手头像;
 // 由调用方决定外层包裹.自带「加载更多组合」懒分页状态(player-combos 端点,offset=16).
 

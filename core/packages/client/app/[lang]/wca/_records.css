@@ -51,7 +51,7 @@
 }
 
 /* 「详细成绩」attempts 网格的表头居中 + 整页按内容自适应居中,统一在 _wca_stats_extra.css 里按
-   `.wse-page:has(.wse-attempts-col)` 处理(records / all-results 共用),这里不再单独写。 */
+   `.wse-page:has(.wse-attempts-col)` 处理(records / results 共用),这里不再单独写。 */
 
 /* mixed 模式下 event 分组 */
 .records-event-group { margin-top: 24px; }
