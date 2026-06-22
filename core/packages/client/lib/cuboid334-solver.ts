@@ -33,8 +33,17 @@
  *     H" — so no fragile coset quotient is needed (left cosets of H are NOT a well-defined quotient under
  *     the move action; a single-rep coset BFS gives wrong distances). The admissible phase-1 heuristic is
  *     max over orbits of `intoH[idx]` = the per-orbit BFS distance (over ALL 12 moves) to the nearest
- *     in-H sub-state (a multi-source BFS seeded from every in-H index). IDA* over the joint per-orbit
- *     index tuple with that heuristic; phase-1 depth is bounded by max(intoH) per orbit.
+ *     in-H sub-state (a multi-source BFS seeded from every in-H index). The search is ITERATIVE-DEEPENING
+ *     A* (IDDFS) over the joint per-orbit index tuple with that admissible bound + same-face / commuting-
+ *     axis move pruning. IDDFS holds NO closed set (O(depth) memory ⇒ OOM IMPOSSIBLE) and is provably
+ *     complete, so it terminates on EVERY reachable state. [It REPLACES an earlier closed-set weighted-A*
+ *     whose visited set was keyed on all five orbits — but the always-in-H orbit 4 (face centers) and the
+ *     once-reduced orbits 1/3 stay permuted by U/u 90° turns the goal no longer cares about, so a single
+ *     phase-1-relevant (corner,corner) state appeared under thousands of irrelevant labelings, blowing the
+ *     node pool past the 3M cap on a fraction of legal states → null → "phase-1 unreachable" throw (and the
+ *     high-cap retry OOM'd).] 334's TWO independent corner orbits (0,2, intoH ≤ 11 each) make max(intoH)
+ *     ≤ 11 a looser bound than 335's (true joint reduction ≈13–15), so the deep IDDFS bounds expand more
+ *     nodes — bounded by an empirical sweep (worst-case node count is locked in the test).
  *   • PHASE 2 solves to solved using ONLY the eight 180° moves. Inside H each orbit's 180°-reachable
  *     sub-state set is small (MEASURED 96/576/96/576/2, max BFS depth ≤8), so the per-orbit exact
  *     180°-distance PDB drives a fast IDA* over the joint phase-2 coordinate.
@@ -159,10 +168,15 @@ export const CUBOID334_STATE_COUNT_STR = '165,181,768,335,360,000';
 export const CUBOID334_GROUP_ORDER_STR = '2,642,908,293,365,760,000';
 /** Hard upper bound on a returned two-phase solution length (phase-1 diam + phase-2 diam ≪ this). */
 export const CUBOID334_MAX_LENGTH = 40;
-/** Optimal-shortcut node budget: a shallow state solved optimally below this is returned as optimal. */
-const OPT_SHORTCUT_BUDGET = 800_000;
-/** Largest length the optimal shortcut will claim; beyond this the two-phase answer is used. */
-const OPT_SHORTCUT_DEPTH_CAP = 12;
+// Optimal-shortcut node budget / depth cap. Read at CALL time (not module load) so an env override is
+// honoured even when set after import — e.g. a test can drop the budget to 1 to force the two-phase path
+// in isolation without a file-wide env. A shallow state solved optimally below the budget is returned as
+// optimal; beyond the depth cap the two-phase answer is used.
+const envNum = (name: string): number | undefined => {
+  try { const v = typeof process !== 'undefined' ? process?.env?.[name] : undefined; if (v == null || v === '') return undefined; const n = Number(v); return Number.isFinite(n) ? n : undefined; } catch { return undefined; }
+};
+const optShortcutBudget = (): number => envNum('CUBOID334_OPT_BUDGET') ?? 800_000;
+const optShortcutDepthCap = (): number => envNum('CUBOID334_OPT_CAP') ?? 12;
 
 function applyMove(state: Uint8Array, mi: number): Uint8Array<ArrayBuffer> {
   const p = MOVE_PERM[mi];
@@ -349,20 +363,25 @@ function dbs(): OrbitDb[] {
   return DBS;
 }
 
-// ── joint phase-2 pattern databases (EXACT distances over orbit pairs) ────────────────
-// Phase-2 (180°-only, within H) has the same independent-corner-orbit weakness as phase-1: per-orbit
-// max(p2Dist) ≤ 7 underestimates the ~14-move joint cost and IDA* floods. The in-H sub-states per orbit
-// are tiny (96/576/96/36/2), so two JOINT PDBs over the orbit PAIRS {0,2} (96·96 = 9216) and {1,3}
-// (576·36 = 20736) are cheap to BFS exactly. max(pdb02, pdb13) is an ADMISSIBLE and very tight phase-2
-// heuristic → IDA* converges in milliseconds. Each PDB is a one-time BFS over the eight 180° moves.
+// ── joint phase-2 pattern databases (EXACT distances over orbit groups) ───────────────
+// Phase-2 (180°-only, within H) has an independent-corner-orbit weakness: per-orbit max(p2Dist) ≤ 7 — and
+// even the pair PDB max(dist02, dist13) — UNDERESTIMATE the joint cost, because the three large orbits 0,1,2
+// (the two corner orbits + the big edge-column orbit) interact and a pair PDB sees only two at a time. With
+// the loose pair heuristic the phase-2 search FLOODS (a pure IDA* re-expanded to >200 s; even a closed-set
+// A* explores most of the 3.66e9 in-H space). The in-H sets are small (96/576/96/36/2), so a JOINT TRIPLE
+// PDB over {0,1,2} (96·576·96 = 5,308,416 entries, ~5.3 MB, one BFS) captures the full coupling of the
+// hard orbits; combined with the {1,3} pair it gives a TIGHT admissible heuristic max(dist012, dist13) → the
+// closed-set A* converges in ms. Each PDB is a one-time BFS over the eight 180° moves at module load.
 interface Phase2Pdb {
   // per-orbit: full dense index → compact in-H index (−1 if the full index is not in H)
   fullToInH: Int32Array[]; // [orbitIdx] indexed by full dense index
-  // joint pair distances (exact, over P2 moves) for the two orbit pairs.
-  dist02: Uint8Array; // index = inH0 * inH2count + inH2
-  dist13: Uint8Array; // index = inH1 * inH3count + inH3
+  // joint distances (exact, over P2 moves).
+  dist012: Uint8Array; // index = (inH0 * inH1count + inH1) * inH2count + inH2
+  dist13: Uint8Array;  // index = inH1 * inH3count + inH3
+  inH1count: number;
   inH2count: number;
   inH3count: number;
+  inHCounts: number[]; // compact in-H size per orbit (= 96/576/96/36/2) — for the closed-set joint key
 }
 function buildPhase2Pdb(D: OrbitDb[]): Phase2Pdb {
   // compact in-H index per orbit + per-P2-move transition over in-H indices.
@@ -408,12 +427,36 @@ function buildPhase2Pdb(D: OrbitDb[]): Phase2Pdb {
     }
     return dist;
   };
+  // BFS a joint TRIPLE (orbits a,b,c) over P2 moves from solved → exact distance table.
+  // index = (ia * nb + ib) * nc + ic. Sizes are small (≤ 5.3M), one BFS each.
+  const tripleBfs = (a: number, b: number, c: number): Uint8Array => {
+    const na = inHList[a].length, nb = inHList[b].length, nc = inHList[c].length;
+    const dist = new Uint8Array(na * nb * nc).fill(255);
+    const start = (fullToInH[a][0] * nb + fullToInH[b][0]) * nc + fullToInH[c][0];
+    dist[start] = 0;
+    let fr = [start]; let d = 0;
+    while (fr.length) {
+      const nx: number[] = [];
+      for (const u of fr) {
+        const ia = (u / (nb * nc)) | 0; const rem = u % (nb * nc); const ib = (rem / nc) | 0; const ic = rem % nc;
+        for (let s = 0; s < PHASE2_MOVES.length; s++) {
+          const v = (inHTrans[a][s][ia] * nb + inHTrans[b][s][ib]) * nc + inHTrans[c][s][ic];
+          if (dist[v] === 255) { dist[v] = d + 1; nx.push(v); }
+        }
+      }
+      if (!nx.length) break;
+      fr = nx; d++;
+    }
+    return dist;
+  };
   return {
     fullToInH,
-    dist02: pairBfs(0, 2),
+    dist012: tripleBfs(0, 1, 2),
     dist13: pairBfs(1, 3),
+    inH1count: inHList[1].length,
     inH2count: inHList[2].length,
     inH3count: inHList[3].length,
+    inHCounts: inHList.map((l) => l.length),
   };
 }
 let P2PDB: Phase2Pdb | null = null;
@@ -445,26 +488,18 @@ function phase1Solved(tuple: Int32Array, D: OrbitDb[]): boolean {
   for (let i = 0; i < NORB; i++) if (D[i].intoH[tuple[i]] !== 0) return false;
   return true;
 }
-// Phase-1: reduce every orbit into the 180° subgroup H. The only browser-buildable admissible guide,
-// max(intoH), is weak — the two corner orbits 0 and 2 are independent (verified: neither index determines
-// the other), so the JOINT into-H cost (optimal reductions sit at 13–15 moves) is badly underestimated by
-// max(intoH) ≤ 11; a plain admissible IDA* floods at the top bounds (measured up to ~80M nodes / 78 s). A
-// joint pruning table would tighten the heuristic to optimal, but a useful joint over a 40320 corner orbit
-// is ≥101M entries whose multi-source BFS does ~1.2 B RANDOM accesses into a 100 MB array — memory-latency
-// bound at 1–2 MINUTES regardless of JIT/queue tuning — far too heavy for an interactive solve. So phase-1
-// is a CLOSED-SET WEIGHTED-A* with NO precomputed tables: f = g + W·max(intoH), with a closed set keyed on
-// the packed joint tuple (each joint state expanded at most once → loop-free, hard-bounded by a closed-set
-// CAP). The weight biases the frontier greedily toward H, collapsing the explored region by orders of
-// magnitude; the reduction is within ≈W× optimal (short and bounded — the contract). One W=5 attempt
-// finishes inside the cap on every measured real state (≤ ~1.5 s / ≤ ~23 moves); a single greedier W=12
-// fallback covers any cap-out so the total time stays bounded and a valid reduction is ALWAYS returned.
-// Zero build cost.
-// Phase-1 heuristic. Plain max(intoH) ≤ 11 badly underestimates the JOINT cost (the two corner orbits 0
-// and 2 are independent, so reducing both needs roughly intoH[0] + intoH[2] vertical moves). We therefore
-// use h = max( intoH[1], intoH[3], intoH[0] + intoH[2] ): a far tighter guide. The additive term over the
-// two independent corner orbits is NOT a provable lower bound (a single 90° move can lower both at once),
-// so the resulting reduction is near-optimal rather than provably optimal — exactly the TIER-D contract —
-// but it collapses the A* frontier from tens of millions of nodes to a few thousand → sub-second solves.
+// Phase-1 heuristic = the TIGHT additive estimate h = max( intoH[1], intoH[3], intoH[0] + intoH[2] ).
+// `intoH[idx]` is the per-orbit BFS distance (over all 12 moves) to the nearest in-H sub-state. Plain
+// max(intoH) ≤ 11 badly underestimates the JOINT cost: the two corner orbits 0 and 2 are independent
+// (verified — neither index determines the other), so reducing BOTH costs ≈ intoH[0]+intoH[2] vertical
+// turns, and the true joint reduction sits at ≈13–20. The additive term over the two independent corner
+// orbits is NOT a provable lower bound (a single U/u 90° turn CAN lower both at once), so this h is
+// (slightly) INADMISSIBLE → phase-1 is near-optimal over its own coordinate, the TIER-D contract. That is
+// deliberate: an inadmissible-but-tight h keeps the IDDFS frontier from exploding (a pure admissible
+// max(intoH) IDDFS re-expands tens of millions of nodes and yields 40+-move reductions — measured) while
+// staying COMPLETE (the goal has h=0, so once the f-bound reaches the goal-path's max f the goal is found).
+// (Orbit 4 = the two face centers is always already in H, intoH ≡ 0, so it never binds — 334's analogue of
+// 335's always-in-H wing orbits.)
 const phase1H = (t: Int32Array, D: OrbitDb[]): number => {
   const a0 = D[0].intoH[t[0]], a2 = D[2].intoH[t[2]];
   let m = a0 + a2;
@@ -472,70 +507,145 @@ const phase1H = (t: Int32Array, D: OrbitDb[]): number => {
   const a3 = D[3].intoH[t[3]]; if (a3 > m) m = a3;
   return m;
 };
-// closed-set dedup. The full joint index 40320³·2520·2 ≈ 3.3e17 exceeds 2^53, so it can't be ONE exact
-// double; and a per-node string concat is a heavy constant factor when the search visits millions of
-// nodes. We therefore use a TWO-LEVEL numeric Map: outer key = corner-triple ((t0·40320+t1)·40320+t2) <
-// 2^48 (exact), inner key = the small suffix t3·2+t4 < 5040. Pure number keys → fast, no string garbage.
-function phase1CornerKey(t: Int32Array): number { return (t[0] * 40320 + t[1]) * 40320 + t[2]; }
-function phase1SuffixKey(t: Int32Array): number { return t[3] * 2 + t[4]; }
-// One weighted-A* attempt with a hard cap on the number of DISTINCT states (node pool). Each distinct
-// joint state owns exactly ONE pool slot: a g-improving re-discovery UPDATES that slot's g/parent/move and
-// re-pushes it (lazy decrease-key) rather than allocating a new node, so the pool == the closed set and
-// memory is bounded by `cap` (~40 B/node). (An earlier version allocated a node per push, letting churn
-// balloon the pool to 15 GB.) Returns the move path, or null if it hits the cap before reaching H.
-function phase1Attempt(t0: Int32Array, D: OrbitDb[], weight: number, cap: number, greedy = false): number[] | null {
-  // key(g, h) = greedy ? h : g + weight·h. Greedy best-first dives straight to H (fast, slightly longer
-  // reduction); weighted-A* (greedy=false) gives a shorter reduction when the frontier stays small.
-  const fKey = (g: number, h: number) => (greedy ? h : g + weight * h);
+// Phase-1 search = ITERATIVE-DEEPENING A* (IDDFS) over the joint orbit tuple — STACK-BASED, NO closed set.
+//
+// WHY IDDFS, NOT THE EARLIER CLOSED-SET A*:  the old A* keyed its closed set on ALL FIVE orbits (corner
+// triple ((t0·40320+t1)·40320+t2) OUTER, suffix t3·2+t4 INNER). Orbit 4 (the two face centers) is always
+// already in H and IRRELEVANT to the phase-1 goal, and orbits 1/3 stay in H once reduced, yet the U/u 90°
+// turns keep permuting orbits the goal no longer cares about, so a single phase-1-relevant (corner,corner)
+// configuration appears under many distinct labelings of the not-yet-bound orbits. The closed set therefore
+// stored the SAME phase-1-relevant state under thousands of labelings and the node pool blew past its 3M
+// cap on a fraction of legal states, returning null → the `solveTwoPhase` "phase-1 unreachable" throw (and
+// the high-cap retry OOM'd). IDDFS holds NO closed set (O(depth) memory ⇒ OOM IMPOSSIBLE) and, since H is
+// reachable from every state, terminates on EVERY state. The tight additive h (above) keeps the per-bound
+// frontier small so a deep len-40 state finishes in well under a second (measured below); the result is a
+// SHORT reduction (≤ ~23 moves, like the old A*) so the total stays under CUBOID334_MAX_LENGTH.
+//
+// f-BOUND vs RECURSION-DEPTH ceilings are SEPARATE: because h can overestimate, the f = g + h along the
+// goal path can exceed the path's own length, so the f-bound (PHASE1_FBOUND_CAP) must run higher than the
+// actual move count; the recursion depth (PHASE1_MAX_DEPTH) caps the move count itself (= O(depth) memory
+// and a hard length bound). Move pruning (sound for shortest paths): forbid a second turn of the SAME face
+// (two same-face turns collapse to one power) and canonicalize the order of the two commuting opposite
+// faces on each axis by move index.
+const PHASE1_MAX_DEPTH = 28;     // hard ceiling on the reduction MOVE COUNT (measured near-optimal ≤ ~24)
+const PHASE1_FBOUND_CAP = 52;    // hard ceiling on the f = g + (overestimating) h bound (= MAX_DEPTH + max h)
+function solvePhase1(t0: Int32Array, D: OrbitDb[]): number[] | null {
+  if (phase1Solved(t0, D)) return [];
+  let found: number[] | null = null;
+  const path = new Int32Array(PHASE1_MAX_DEPTH + 1);
+  const tupBuf: Int32Array[] = Array.from({ length: PHASE1_MAX_DEPTH + 2 }, () => new Int32Array(NORB));
+  function dfs(t: Int32Array, g: number, bound: number, last: number, depth: number): number {
+    const f = g + phase1H(t, D);
+    if (f > bound) return f;
+    if (phase1Solved(t, D)) { found = Array.from(path.subarray(0, depth)); return -1; }
+    if (depth >= PHASE1_MAX_DEPTH) return Infinity; // never search below the move-count ceiling
+    let min = Infinity;
+    const lastFace = last >= 0 ? MOVES[last].name[0] : '';
+    for (let mi = 0; mi < NG; mi++) {
+      if (last >= 0) {
+        const mf = MOVES[mi].name[0];
+        if (mf === lastFace) continue; // same face twice → redundant (collapses to one power)
+        if (MOVE_AXIS[mi] === MOVE_AXIS[last] && mi < last) continue; // commuting opposite faces → canonical order
+      }
+      const nt = tupBuf[depth];
+      for (let i = 0; i < NORB; i++) nt[i] = D[i].trans[mi][t[i]];
+      path[depth] = mi;
+      const r = dfs(nt, g + 1, bound, mi, depth + 1);
+      if (found) return -1;
+      if (r < min) min = r;
+    }
+    return min;
+  }
+  let bound = phase1H(t0, D);
+  while (bound <= PHASE1_FBOUND_CAP) {
+    const r = dfs(t0, 0, bound, -1, 0);
+    if (found) return found;
+    if (r === Infinity) return null; // exhausted the reachable graph within the ceilings without entering H
+    bound = r;
+  }
+  return null;
+}
+
+// ── phase-2 closed-set A* (solve within the 180° subgroup using only 180° moves) ─────
+// Heuristic = max( dist012[i0,i1,i2], dist13[i1,i3] ): the exact joint distance of the three hard orbits
+// {0,1,2} (two corner orbits + the big edge-column orbit) and the {1,3} pair. ADMISSIBLE (each is an exact
+// distance of a sub-problem ignoring the other orbits) and TIGHT (the triple captures the corner/edge
+// coupling that a pair PDB misses) → the closed-set A* converges in ms and the result is OPTIMAL over H.
+function phase2Heuristic(tuple: Int32Array, P: Phase2Pdb): number {
+  const i0 = P.fullToInH[0][tuple[0]], i1 = P.fullToInH[1][tuple[1]];
+  const i2 = P.fullToInH[2][tuple[2]], i3 = P.fullToInH[3][tuple[3]];
+  const h012 = P.dist012[(i0 * P.inH1count + i1) * P.inH2count + i2];
+  const h13 = P.dist13[i1 * P.inH3count + i3];
+  return h012 > h13 ? h012 : h13;
+}
+function phase2Solved(tuple: Int32Array, D: OrbitDb[]): boolean {
+  for (let i = 0; i < NORB; i++) if (D[i].p2Dist[tuple[i]] !== 0) return false;
+  return true;
+}
+// Compact in-H JOINT index (a single exact double): the closed-set key for phase-2 A*. The in-H sub-state
+// sets are tiny (96·576·96·36·2 ≈ 3.66e9 < 2^53), so the mixed-radix pack is exact. Phase-2 stays entirely
+// within H (every P2 move keeps each orbit in H), so every reachable phase-2 state HAS a compact index.
+function phase2Key(tuple: Int32Array, P: Phase2Pdb): number {
+  const c = P.inHCounts;
+  let k = P.fullToInH[0][tuple[0]];
+  k = k * c[1] + P.fullToInH[1][tuple[1]];
+  k = k * c[2] + P.fullToInH[2][tuple[2]];
+  k = k * c[3] + P.fullToInH[3][tuple[3]];
+  k = k * c[4] + P.fullToInH[4][tuple[4]];
+  return k;
+}
+// Phase-2 = CLOSED-SET A* within the 180° subgroup H. The earlier PURE IDA* (no closed set) under the loose
+// pair PDB RE-EXPANDED an exponential frontier and FLOODED to >200 s on a fraction of in-H endpoints — the
+// latent hang the closed-set phase-1 used to mask by landing on easier endpoints. A* with a closed set keyed
+// on the compact in-H JOINT index (above) expands each phase-2 state at most ONCE, so the work is bounded by
+// the (small) reachable in-H ball — memory-safe (NOT the inflated all-orbit phase-1 key: every orbit here is
+// tiny in H, worst ≈ 82k states visited) and, under the TIGHT max(dist012, dist13) heuristic, converges in
+// ms. The heuristic is admissible ⇒ the returned reduction is OPTIMAL over H.
+function solvePhase2(t0: Int32Array, D: OrbitDb[], P: Phase2Pdb, maxBound: number): number[] | null {
+  if (phase2Solved(t0, D)) return [];
   const tuples: Int32Array[] = [t0.slice()];
   const gArr: number[] = [0]; const parent: number[] = [-1]; const moveArr: number[] = [-1];
-  // seen: state → its pool index (one slot per distinct state).
-  const seen = new Map<number, Map<number, number>>();
-  const idxOf = (t: Int32Array): number | undefined => seen.get(phase1CornerKey(t))?.get(phase1SuffixKey(t));
-  const setIdx = (t: Int32Array, idx: number) => { const ck = phase1CornerKey(t); let inner = seen.get(ck); if (!inner) { inner = new Map(); seen.set(ck, inner); } inner.set(phase1SuffixKey(t), idx); };
-  setIdx(t0, 0);
-  // binary min-heap over pool indices keyed on f; heapG records the g at push time (lazy decrease-key:
-  // a popped entry whose heapG no longer matches the slot's current g is stale and skipped).
+  const seen = new Map<number, number>(); // joint key → pool index (one slot per distinct in-H state)
+  seen.set(phase2Key(t0, P), 0);
+  // binary min-heap over pool indices keyed on f; heapG = g at push time (lazy decrease-key).
   const heapIdx: number[] = []; const heapF: number[] = []; const heapG: number[] = [];
   const hswap = (a: number, b: number) => { const ti = heapIdx[a]; heapIdx[a] = heapIdx[b]; heapIdx[b] = ti; const tf = heapF[a]; heapF[a] = heapF[b]; heapF[b] = tf; const tg = heapG[a]; heapG[a] = heapG[b]; heapG[b] = tg; };
-  const hpush = (idx: number, f: number, g: number) => {
-    let i = heapIdx.length; heapIdx.push(idx); heapF.push(f); heapG.push(g);
-    while (i > 0) { const p = (i - 1) >> 1; if (heapF[p] <= heapF[i]) break; hswap(p, i); i = p; }
-  };
+  const hpush = (idx: number, f: number, g: number) => { let i = heapIdx.length; heapIdx.push(idx); heapF.push(f); heapG.push(g); while (i > 0) { const p = (i - 1) >> 1; if (heapF[p] <= heapF[i]) break; hswap(p, i); i = p; } };
   let popG = 0;
   const hpop = (): number => {
     const top = heapIdx[0]; popG = heapG[0]; const li = heapIdx.pop()!; const lf = heapF.pop()!; const lg = heapG.pop()!;
     if (heapIdx.length) { heapIdx[0] = li; heapF[0] = lf; heapG[0] = lg; let i = 0; const n = heapIdx.length; for (;;) { const l = 2 * i + 1, r = l + 1; let s = i; if (l < n && heapF[l] < heapF[s]) s = l; if (r < n && heapF[r] < heapF[s]) s = r; if (s === i) break; hswap(s, i); i = s; } }
     return top;
   };
-  hpush(0, fKey(0, phase1H(t0, D)), 0);
+  hpush(0, phase2Heuristic(t0, P), 0);
   let goal = -1;
   while (heapIdx.length) {
     const idx = hpop();
-    if (popG !== gArr[idx]) continue; // stale heap entry (this slot's g was improved later) — skip
+    if (popG !== gArr[idx]) continue; // stale (g improved later)
     const tuple = tuples[idx]; const g = gArr[idx];
-    if (phase1Solved(tuple, D)) { goal = idx; break; }
+    if (phase2Solved(tuple, D)) { goal = idx; break; }
+    if (g >= maxBound) continue; // never extend beyond the hard length bound
     const last = moveArr[idx];
-    for (let mi = 0; mi < NG; mi++) {
+    for (const mi of PHASE2_MOVES) {
       if (last >= 0) {
-        if (mi === INVERSE_MOVE[last]) continue;
-        if (MOVE_AXIS[mi] === MOVE_AXIS[last] && mi < last) continue;
+        if (MOVE_AXIS[mi] === MOVE_AXIS[last] && mi < last) continue; // commuting opposite faces → canonical order
+        if (mi === last) continue;                                    // 180° move is its own inverse
       }
       const nt = new Int32Array(NORB);
       for (let i = 0; i < NORB; i++) nt[i] = D[i].trans[mi][tuple[i]];
       const ng = g + 1;
-      const exist = idxOf(nt);
+      const key = phase2Key(nt, P);
+      const exist = seen.get(key);
       if (exist !== undefined) {
-        if (gArr[exist] <= ng) continue;          // already reached as cheaply or cheaper
-        gArr[exist] = ng; parent[exist] = idx; moveArr[exist] = mi; // decrease-key: reuse the slot
-        hpush(exist, fKey(ng, phase1H(nt, D)), ng);
+        if (gArr[exist] <= ng) continue;
+        gArr[exist] = ng; parent[exist] = idx; moveArr[exist] = mi; // decrease-key: reuse slot
+        hpush(exist, ng + phase2Heuristic(nt, P), ng);
         continue;
       }
       const nidx = tuples.length;
       tuples.push(nt); gArr.push(ng); parent.push(idx); moveArr.push(mi);
-      setIdx(nt, nidx);
-      hpush(nidx, fKey(ng, phase1H(nt, D)), ng);
-      if (nidx + 1 > cap) return null; // distinct-state pool bounded → memory bounded; caller retries
+      seen.set(key, nidx);
+      hpush(nidx, ng + phase2Heuristic(nt, P), ng);
     }
   }
   if (goal < 0) return null;
@@ -544,69 +654,10 @@ function phase1Attempt(t0: Int32Array, D: OrbitDb[], weight: number, cap: number
   rev.reverse();
   return rev;
 }
-function solvePhase1(t0: Int32Array, D: OrbitDb[]): number[] | null {
-  if (phase1Solved(t0, D)) return [];
-  // Weighted-A* (W=2) with the tight additive heuristic: the frontier stays small (a few thousand nodes),
-  // so A* returns a SHORT reduction fast (measured ≤ ~0.3 s, ≤ ~14 moves). The node cap hard-bounds memory
-  // (~40 B/node → ≤ ~120 MB at 3 M nodes); H is reachable from every state, so it always succeeds. The
-  // greedy fallback is only for the pathological case the cap is hit (it dives but gives a longer path).
-  return phase1Attempt(t0, D, 2, 3_000_000) ?? phase1Attempt(t0, D, 2, 3_000_000, true);
-}
 
-// ── phase-2 IDA* (solve within the 180° subgroup using only 180° moves) ──────────────
-// Plain max(p2Dist) ≤ 7 underestimates the ~14-move joint phase-2 cost (orbits 0,2 independent) and IDA*
-// floods (measured ~9-17 s). The phase-2 heuristic is therefore the ADMISSIBLE joint-pair PDB
-// max(dist02[i0,i2], dist13[i1,i3]) (exact distances over the tiny in-H orbit pairs) → tight, IDA*
-// converges in ms and the result is provably optimal over the 180° subgroup.
-function phase2Heuristic(tuple: Int32Array, P: Phase2Pdb): number {
-  const i0 = P.fullToInH[0][tuple[0]], i1 = P.fullToInH[1][tuple[1]];
-  const i2 = P.fullToInH[2][tuple[2]], i3 = P.fullToInH[3][tuple[3]];
-  const h02 = P.dist02[i0 * P.inH2count + i2];
-  const h13 = P.dist13[i1 * P.inH3count + i3];
-  return h02 > h13 ? h02 : h13;
-}
-function phase2Solved(tuple: Int32Array, D: OrbitDb[]): boolean {
-  for (let i = 0; i < NORB; i++) if (D[i].p2Dist[tuple[i]] !== 0) return false;
-  return true;
-}
-function solvePhase2(t0: Int32Array, D: OrbitDb[], P: Phase2Pdb, maxBound: number): number[] | null {
-  const tupBuf: Int32Array[] = Array.from({ length: 48 }, () => new Int32Array(NORB));
-  const pathStack = new Int32Array(48);
-  let found: number[] | null = null;
-
-  function dfs(tuple: Int32Array, g: number, bound: number, last: number, depth: number): number {
-    const f = g + phase2Heuristic(tuple, P);
-    if (f > bound) return f;
-    if (phase2Solved(tuple, D)) { found = Array.from(pathStack.subarray(0, depth)); return -1; }
-    let min = Infinity;
-    for (const mi of PHASE2_MOVES) {
-      if (last >= 0) {
-        // every 180° move is its own inverse → undo-pruning = same-move repeat (caught by axis order too)
-        if (MOVE_AXIS[mi] === MOVE_AXIS[last] && mi < last) continue;
-        if (mi === last) continue;
-      }
-      const nt = tupBuf[depth];
-      for (let i = 0; i < NORB; i++) nt[i] = D[i].trans[mi][tuple[i]];
-      pathStack[depth] = mi;
-      const r = dfs(nt, g + 1, bound, mi, depth + 1);
-      if (found) return -1;
-      if (r < min) min = r;
-    }
-    return min;
-  }
-
-  let bound = phase2Heuristic(t0, P);
-  while (bound <= maxBound) {
-    const r = dfs(t0, 0, bound, -1, 0);
-    if (found) return found;
-    if (r === Infinity) return null;
-    bound = r;
-  }
-  return null;
-}
-
-/** Two-phase reduction: drive into the 180° subgroup (A*), then solve within it (IDA*). Always succeeds.
- *  Both phases are optimal over their own small coordinate ⇒ the total is bounded and near-optimal. */
+/** Two-phase reduction: drive into the 180° subgroup (phase-1 IDDFS), then solve within it (phase-2
+ *  closed-set A*). Always succeeds — H is reachable from every state and both searches are complete. Each
+ *  phase is (near-)optimal over its own small coordinate ⇒ the total is bounded and near-optimal. */
 function solveTwoPhase(start: Uint8Array, D: OrbitDb[]): number[] {
   const t0 = tupleOf(start, D);
   const p1 = solvePhase1(t0, D);
@@ -632,6 +683,7 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
   let budgetHit = false;
   const h = (tuple: Int32Array): number => { let m = 0; for (let i = 0; i < NORB; i++) { const d = D[i].optDist[tuple[i]]; if (d > m) m = d; } return m; };
   const solvedTuple = (tuple: Int32Array): boolean => { for (let i = 0; i < NORB; i++) if (D[i].optDist[tuple[i]] !== 0) return false; return true; };
+  const budget = optShortcutBudget();
 
   function dfs(tuple: Int32Array, g: number, bound: number, last: number, depth: number): number {
     const f = g + h(tuple);
@@ -643,7 +695,7 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
         if (mi === INVERSE_MOVE[last]) continue;
         if (MOVE_AXIS[mi] === MOVE_AXIS[last] && mi < last) continue;
       }
-      if (++nodes > OPT_SHORTCUT_BUDGET) { budgetHit = true; return -1; }
+      if (++nodes > budget) { budgetHit = true; return -1; }
       const nt = tupBuf[depth];
       for (let i = 0; i < NORB; i++) nt[i] = D[i].trans[mi][tuple[i]];
       pathStack[depth] = mi;
@@ -656,7 +708,8 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
   }
 
   let bound = h(t0);
-  while (bound <= OPT_SHORTCUT_DEPTH_CAP) {
+  const depthCap = optShortcutDepthCap();
+  while (bound <= depthCap) {
     const r = dfs(t0, 0, bound, -1, 0);
     if (found) {
       const sol: number[] = found;
