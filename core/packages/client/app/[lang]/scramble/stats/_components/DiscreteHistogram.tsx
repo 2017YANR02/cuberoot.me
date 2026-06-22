@@ -45,6 +45,9 @@ interface Props {
   yModeLabels?: { off: string; on: string };
   // NOTE: 稀疏整数轴(中间有空档 bin)。开启后 x 标签只标有数据的 bin(抽稀)、命中区填满空档。
   gapAware?: boolean;
+  // NOTE: 点击 y 轴区域(刻度标签 + 轴线那条竖带)触发 —— 用作 %/计数 切换的隐式入口。
+  onYAxisClick?: () => void;
+  yAxisTitle?: string;
 }
 
 const W = 760, H = 400;
@@ -53,7 +56,7 @@ const PAD = { l: 56, r: 20, t: 40, b: 44 };
 const chartW = W - PAD.l - PAD.r;
 const chartH = H - PAD.t - PAD.b;
 
-export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, yModeLabel, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, modeControl = 'button', chartModeLabels, yModeLabels, gapAware }: Props) {
+export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, yModeLabel, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, modeControl = 'button', chartModeLabels, yModeLabels, gapAware, onYAxisClick, yAxisTitle }: Props) {
   const clickableSet = useMemo(() => new Set(clickableBins ?? []), [clickableBins]);
   // NOTE: svg 内 <linearGradient> id 必须全局唯一，用 React 的 useId 前缀
   const gradPrefix = useId().replace(/:/g, '_');
@@ -200,6 +203,21 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
         {/* X/Y 轴线 */}
         <line x1={PAD.l} x2={PAD.l + chartW} y1={PAD.t + chartH} y2={PAD.t + chartH} style={{ stroke: 'var(--border-strong)' }} />
         <line x1={PAD.l} x2={PAD.l} y1={PAD.t} y2={PAD.t + chartH} style={{ stroke: 'var(--border-strong)' }} />
+        {/* y 轴可点竖带(刻度标签 + 轴线):点它切换 %/计数 —— 放在标签之上以接住点击 */}
+        {onYAxisClick && (
+          <rect
+            className="scramble-hist-yaxis-hit"
+            x={0}
+            y={PAD.t}
+            width={PAD.l}
+            height={chartH}
+            fill="transparent"
+            style={{ cursor: 'pointer' }}
+            onClick={onYAxisClick}
+          >
+            {yAxisTitle && <title>{yAxisTitle}</title>}
+          </rect>
+        )}
         {/* Bars */}
         {series.map((s, si) => (
           <g key={`s${si}`}>
