@@ -13,9 +13,8 @@
   margin-bottom: 20px;
 }
 
-/* 名字口径下拉(英文名 / 全名 / 本地名 / 含曾用名):推到右侧,与指标 tab 分开 */
+/* 名字口径下拉(英文名 / 全名 / 本地名 / 含曾用名):紧跟指标 tab,不留中间空隙 */
 .ns-name-select {
-  margin-left: auto;
   padding: 7px 12px;
   border: 1px solid var(--border-default);
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
@@ -64,6 +63,15 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* 图表上方工具条:提示语 + 纵轴 百分比/数量 开关(开关挪出图表,避免盖住柱子) */
+.ns-dist-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .ns-hint {
