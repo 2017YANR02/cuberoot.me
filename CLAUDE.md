@@ -41,6 +41,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 部署拓扑 (Phase 4 后 — 2026-05-27)
 
+> **push = 上线(默认别 push)**:`git push origin main` 会让 Vercel + 服务器**立刻自动重建上线**;`git commit` 只是本地(免费、不部署、多 AI 共仓也能互见)。**默认只 commit + 本地验证(dev/typecheck/test/Playwright),不 push**。仅这些情形才 push,且**先告知用户**:① 用户明说上线 / push;② DB 迁移要在线上库生效(本地能测,线上只在服务器部署重启时自动 apply);③ 改 nginx / systemd / 服务器 env / 后端 API 行为(仅生产存在,本地无等价);④ bug 只在生产复现需部署验证;⑤ 线上正坏的紧急修。普通功能 / bug / 重构 / UI / 文案做完 commit 即停,攒着等用户说上线。
+
 - **主域 `cuberoot.me` / `www.cuberoot.me`** 走 **DNS 分线路** (provider 自带分流):
   - 一条线路 → 自有服务器 IP → nginx `proxy_pass 127.0.0.1:3002` → systemd `cuberoot-next` (Next standalone)。vhost `ops/nginx/www.cuberoot.me.conf`,改 nginx 走 `deploy_nginx.yml`(scp + `nginx -t` + reload + 失败回滚 .bak)。
   - 另一条线路 → Vercel Hobby `cuberoot-me` project → 同一份 Next 代码 + Vercel edge。Vercel 自动从 GitHub main 跑 build,部署是 push-triggered。
