@@ -202,73 +202,8 @@
   font-weight: 500;
 }
 
-/* 图例：独立 HTML 叠在 SVG 左上；字号随 controls bar，不随 SVG 缩放 */
-.scramble-hist-wrapper { position: relative; }
-
-.scramble-hist-legend {
-  position: absolute;
-  /* SVG viewBox: y 轴 100% 刻度在 y=40/400 = 10%；y 轴在 x=56/760 ≈ 7.4%
-     用 % 随 SVG 缩放，top 始终齐平 100% 刻度，left 始终紧贴 y 轴右侧 */
-  top: 10%;
-  left: 7.8%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  align-items: flex-start;
-  pointer-events: none;  /* 让 axis 下面柱子可点穿透；内部可交互元素重新打开 */
-}
-.scramble-hist-legend > * { pointer-events: auto; }
-
-.scramble-hist-legend-select {
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.85rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-.scramble-hist-legend-select:hover { border-color: var(--border-strong); }
-.scramble-hist-legend-select:focus { outline: none; border-color: var(--accent); }
-
-.scramble-hist-legend-chips {
-  display: inline-flex;
-  gap: 3px;
-  padding: 2px 0;
-}
-.scramble-hist-legend-chips.clickable { cursor: pointer; }
-/* 四色:4 个底色排成 2x2,不再一长条 */
-.scramble-hist-legend-chips.is-quad { display: inline-grid; grid-template-columns: repeat(2, 14px); gap: 3px; }
-.scramble-hist-legend-chip {
-  width: 14px;
-  height: 14px;
-  display: inline-block;
-  border-radius: 2px;
-}
-.scramble-hist-legend-chip.with-stroke { border: 1px solid var(--border-strong); }
-
-.scramble-hist-legend-toggles {
-  display: inline-flex;
-  gap: 0.375rem;
-}
-.scramble-hist-legend-btn {
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.8rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-}
-.scramble-hist-legend-btn:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
+/* 直方图自身样式（.scramble-hist-* + 图例）已抽到 _components/DiscreteHistogram.css，
+   随组件 import，可跨页复用。此处仅保留页面级容器 .scramble-stats-chart-wrapper。 */
 
 /* ── 图表容器 ── */
 .scramble-stats-chart-wrapper {
@@ -277,19 +212,6 @@
   border-radius: 14px;
   padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
-}
-
-.scramble-hist-wrapper { width: 100%; }
-.scramble-hist { width: 100%; height: auto; }
-
-.scramble-hist { display: block; }
-
-
-.scramble-hist-empty {
-  padding: 3rem;
-  text-align: center;
-  color: var(--text-sub);
-  font-size: 0.85rem;
 }
 
 /* ── 统计摘要 + CN 收益面板 ── */
@@ -417,12 +339,7 @@
 }
 
 /* ── 极端 bin 示例 ── */
-.scramble-hist-bar-clickable {
-  transition: opacity 0.15s ease;
-}
-.scramble-hist-bar-clickable:hover {
-  opacity: 1 !important;
-}
+/* .scramble-hist-bar-clickable 已随组件移入 DiscreteHistogram.css */
 
 /* 示例面板 header：标题 + 下载按钮同一行 */
 .scramble-stats-examples-header {

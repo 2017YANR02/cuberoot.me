@@ -1,6 +1,8 @@
 'use client';
 
 import { useId, useMemo } from 'react';
+import PillToggle from '@/components/PillToggle/PillToggle';
+import './DiscreteHistogram.css';
 
 export interface HistSeries {
   name: string;
@@ -32,6 +34,15 @@ interface Props {
   onSetChange?: (v: string) => void;
   // NOTE: 隐藏图例里的颜色 chip(外部已有底色 picker 时避免重复)
   hideLegendColors?: boolean;
+  // NOTE: 自定义 x 轴刻度文案(默认 String(v));用于把折叠的尾部 bin 标成 "N+" 等
+  formatBin?: (v: number) => string;
+  // NOTE: 强制开/关柱顶 计数+百分比 标签(默认仅单 series 时显示);bin 很多时关掉避免横向重叠
+  showBarLabels?: boolean;
+  // NOTE: 模式控件样式 —— 'button'(默认,小方钮循环) / 'switch'(PillToggle 滑动开关)
+  modeControl?: 'button' | 'switch';
+  // switch 模式下两端标签(默认 PDF/CDF、%/count)
+  chartModeLabels?: { off: string; on: string };
+  yModeLabels?: { off: string; on: string };
 }
 
 const W = 760, H = 400;
@@ -40,7 +51,7 @@ const PAD = { l: 56, r: 20, t: 40, b: 44 };
 const chartW = W - PAD.l - PAD.r;
 const chartH = H - PAD.t - PAD.b;
 
-export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, yModeLabel, setOptions, activeSet, onSetChange, hideLegendColors }: Props) {
+export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, yModeLabel, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, modeControl = 'button', chartModeLabels, yModeLabels }: Props) {
   const clickableSet = useMemo(() => new Set(clickableBins ?? []), [clickableBins]);
   // NOTE: svg 内 <linearGradient> id 必须全局唯一，用 React 的 useId 前缀
   const gradPrefix = useId().replace(/:/g, '_');
@@ -117,7 +128,7 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
     return `${(p * 100).toFixed(1)}%`;
   };
 
-  const showLabels = series.length === 1;
+  const showLabels = showBarLabels ?? (series.length === 1);
   // 柱多→格窄,标签字号自适应缩小,避免相邻 1/N 标签横向撞在一起。
   const labelFont = slotW < 22 ? 7.5 : slotW < 28 ? 8.5 : slotW < 36 ? 9.5 : 10;
 
@@ -154,7 +165,7 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
           return (
             <g key={`x${v}`}>
               <line x1={x} x2={x} y1={PAD.t + chartH} y2={PAD.t + chartH + 4} style={{ stroke: 'var(--border-strong)' }} />
-              <text x={x} y={PAD.t + chartH + 18} textAnchor="middle" fontSize="12" style={{ fill: 'var(--text)' }}>{v}</text>
+              <text x={x} y={PAD.t + chartH + 18} textAnchor="middle" fontSize="12" style={{ fill: 'var(--text)' }}>{formatBin ? formatBin(v) : v}</text>
             </g>
           );
         })}
@@ -273,24 +284,49 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
           );
         })}
         {(onChartModeToggle || onYModeToggle) && (
-          <div className="scramble-hist-legend-toggles">
-            {onChartModeToggle && (
-              <button
-                className="scramble-hist-legend-btn"
-                onClick={onChartModeToggle}
-                title={`Switch to ${chartMode === 'pdf' ? 'CDF' : 'PDF'}`}
-              >
-                {chartMode === 'pdf' ? 'PDF' : 'CDF'}
-              </button>
-            )}
-            {onYModeToggle && (
-              <button
-                className="scramble-hist-legend-btn"
-                onClick={onYModeToggle}
-                title={`Switch to ${yMode === 'percent' ? 'count' : '%'}`}
-              >
-                {yModeLabel ?? (yMode === 'percent' ? '%' : 'count')}
-              </button>
+          <div className={`scramble-hist-legend-toggles${modeControl === 'switch' ? ' is-switch' : ''}`}>
+            {modeControl === 'switch' ? (
+              <>
+                {onChartModeToggle && (
+                  <PillToggle
+                    value={chartMode === 'cdf'}
+                    onChange={onChartModeToggle}
+                    offLabel={chartModeLabels?.off ?? 'PDF'}
+                    onLabel={chartModeLabels?.on ?? 'CDF'}
+                    ariaLabel="PDF / CDF"
+                  />
+                )}
+                {onYModeToggle && (
+                  <PillToggle
+                    value={yMode === 'count'}
+                    onChange={onYModeToggle}
+                    offLabel={yModeLabels?.off ?? '%'}
+                    onLabel={yModeLabels?.on ?? 'count'}
+                    ariaLabel="percent / count"
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                {onChartModeToggle && (
+                  <button
+                    className="scramble-hist-legend-btn"
+                    onClick={onChartModeToggle}
+                    title={`Switch to ${chartMode === 'pdf' ? 'CDF' : 'PDF'}`}
+                  >
+                    {chartMode === 'pdf' ? 'PDF' : 'CDF'}
+                  </button>
+                )}
+                {onYModeToggle && (
+                  <button
+                    className="scramble-hist-legend-btn"
+                    onClick={onYModeToggle}
+                    title={`Switch to ${yMode === 'percent' ? 'count' : '%'}`}
+                  >
+                    {yModeLabel ?? (yMode === 'percent' ? '%' : 'count')}
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}
@@ -300,14 +336,16 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
 }
 
 // NOTE: 渐变 stops —— 单色 → 一个 stop；多色 → 均分分布
+// stop-color 走 style 而非属性,这样 colors 可传 CSS 变量(如 'var(--accent)');
+// 属性形式的 stop-color 不解析 var(),style 形式(CSS 属性)才解析。
 function gradientStops(colors: string[]) {
-  if (colors.length === 0) return <stop offset="0%" stopColor="#8B7D72" />;
+  if (colors.length === 0) return <stop offset="0%" style={{ stopColor: '#8B7D72' }} />;
   if (colors.length === 1) {
-    return <stop offset="0%" stopColor={colors[0]} />;
+    return <stop offset="0%" style={{ stopColor: colors[0] }} />;
   }
   return colors.map((c, i) => {
     const offset = (i / (colors.length - 1)) * 100;
-    return <stop key={i} offset={`${offset}%`} stopColor={c} />;
+    return <stop key={i} offset={`${offset}%`} style={{ stopColor: c }} />;
   });
 }
 
