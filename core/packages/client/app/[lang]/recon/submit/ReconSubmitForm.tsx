@@ -601,12 +601,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return Array.from({ length: max }, (_, i) => i + 1);
   }, [form.event, form.round, eventRoundFormats]);
 
-  useEffect(() => {
-    if (form.solveNum != null && !solveNumOptions.includes(form.solveNum)) {
-      setField('solveNum', undefined);
-    }
-  }, [solveNumOptions, form.solveNum, setField]);
-
   // ── Avg auto-fetch ──
   useEffect(() => {
     if (avgUserTouched) return;
@@ -1521,14 +1515,24 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
                 <label className="submit-field">
                   <span className="submit-label">#</span>
-                  <select
+                  {/* 下拉给常用第几把,也允许手填任意正整数 */}
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    list="recon-solvenum-options"
+                    placeholder={tr({ zh: '选择或输入', en: 'Pick or type' })}
                     value={form.solveNum ?? ''}
-                    onChange={e => setField('solveNum', e.target.value === '' ? undefined : Number(e.target.value))}
-                  >
-                      <option value="">{tr({ zh: '请选择', en: 'Select…'
-                    })}</option>
-                      {solveNumOptions.map(n => <option key={n} value={n}>{n}</option>)}
-                  </select>
+                    onChange={e => {
+                      const raw = e.target.value.trim();
+                      if (raw === '') { setField('solveNum', undefined); return; }
+                      if (!/^\d+$/.test(raw)) return;   // 只收数字
+                      const n = Number(raw);
+                      if (n >= 1) setField('solveNum', n); // 必须正整数
+                    }}
+                  />
+                  <datalist id="recon-solvenum-options">
+                    {solveNumOptions.map(n => <option key={n} value={n} />)}
+                  </datalist>
                 </label>
                 <label className={`submit-field${reusedCls('groupId')}`}>
                   <span className="submit-label">{t('recon.group')}</span>
