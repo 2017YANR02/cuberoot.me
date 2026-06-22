@@ -28,29 +28,6 @@
 .ns-name-select:hover { border-color: var(--border-strong); }
 .ns-name-select:focus-visible { outline: none; border-color: var(--accent); }
 
-.ns-tab {
-  padding: 7px 18px;
-  border-radius: 9px;
-  border: 1px solid var(--border-default);
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s;
-}
-
-.ns-tab:hover {
-  color: var(--foreground);
-  border-color: var(--border-strong);
-}
-
-.ns-tab.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-foreground);
-}
-
 /* ── 分布(复用 DiscreteHistogram)──
    把图表组件期望的局部 token 桥接到 /wca 全局 token;
    --border-strong / --accent / --accent-soft 已是全局 token,组件直接用。 */

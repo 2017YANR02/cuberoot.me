@@ -10,6 +10,7 @@ import { Flag } from '@/components/Flag';
 import { countryToIso2, personFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { tr } from '@/i18n/tr';
 import DiscreteHistogram from '@/app/[lang]/scramble/stats/_components/DiscreteHistogram';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { type NameMode, NAME_MODES, nameByMode, nameModeOptions, FormerNames } from './nameMode';
 import './name-stats.css';
 
@@ -191,6 +192,9 @@ export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data:
   if (!active) return null;
   const unit = tab === 'length' ? tr({ zh: '字', en: '' }) : tr({ zh: '词', en: '' });
   const modeOptions = nameModeOptions();
+  // 指标二选一(词数 / 字符长度)→ PillToggle;标签取面板自身的本地化名
+  const partsP = baseMetrics.find(p => p.id === 'parts');
+  const lengthP = baseMetrics.find(p => p.id === 'length');
 
   const detailRow = selectedBin != null ? hist?.detail.get(selectedBin) : undefined;
   // bin 不多(词数,≤12 格)时柱顶显示 计数+百分比;字符长度格多则关闭避免重叠
@@ -199,15 +203,13 @@ export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data:
   return (
     <div className="ns-view">
       <div className="ns-tabs">
-        {baseMetrics.map(p => (
-          <button
-            key={p.id}
-            className={`ns-tab${p.id === tab ? ' active' : ''}`}
-            onClick={() => setTab(p.id as 'parts' | 'length')}
-          >
-            {isZh ? p.labelZh : p.labelEn}
-          </button>
-        ))}
+        <PillToggle
+          value={tab === 'length'}
+          onChange={v => setTab(v ? 'length' : 'parts')}
+          offLabel={tr({ zh: partsP?.labelZh ?? '词数', en: partsP?.labelEn ?? 'Word count' })}
+          onLabel={tr({ zh: lengthP?.labelZh ?? '字符长度', en: lengthP?.labelEn ?? 'Length' })}
+          ariaLabel={tr({ zh: '指标:词数或字符长度', en: 'Metric: word count or character length' })}
+        />
         {hasModes && (
           <select
             className="ns-name-select"
