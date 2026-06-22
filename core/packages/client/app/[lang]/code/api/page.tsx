@@ -48,6 +48,17 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 
 // 全部对外端点,前缀 /v1。method / path 据 packages/server/src/routes/* 真实定义抽取;
 // 鉴权门据 requireAuth / requireAdmin(X-Admin-Key)/ 支付回调签名判定。
+// ─ covers-routes-start ─ DRIFT-GUARD: route files documented by this catalog.
+//   tests/code-schema-api-drift.test.ts asserts (tokens here ∩ on-disk route files)
+//   equals the set mounted via app.route('/v1', …) in packages/server/src/index.ts.
+//   CI red here = a newly-mounted route is undocumented: add its endpoints below,
+//   then add the file stem to this list.
+//   alg alg_sets analytics announced_comps article auth cn_comp_names colpi
+//   comp_follows cube cubeopt_solve cubing_live feedback health historical_ranks
+//   membership nav_sites nemesizer ops paint progress recon scramble_555
+//   scramble_marks sponsors timer_backups wca_format wca_fun_stats wca_proxy
+//   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wiki
+// ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
   // ---- auth ----
   { d: 'auth', m: 'GET', p: '/v1/auth/login', g: 'public', zh: '跳转 WCA OAuth 授权页', en: 'Redirect to WCA OAuth' },
