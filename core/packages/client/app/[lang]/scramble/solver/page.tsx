@@ -19,6 +19,7 @@
  *   event=sfl → Super Floppy 整解最优(_SuperFloppySolver,纯 TS,3,041,280 态全图 BFS,无 worker)
  *   event=ufo → UFO 整解最优(_UfoSolver,纯 TS,60,480 态全图 BFS,无 worker)
  *   event=cm2 → Cmetrick Mini 整解最优(_Cm2Solver,纯 TS,165,888 态全图 BFS,无 worker)
+ *   event=cm3 → Cmetrick(3×3 球阵)求解(_Cm3Solver,纯 TS,从零构造式约简,有界非最优,无 worker)
  *   event=dmd → 钻石(八面体)整解最优(_DiamondSolver,纯 TS,138,240 态全图 BFS,无 worker)
  *   event=gear → 齿轮魔方整解最优(_GearSolver,纯 TS,41,472 态全图 BFS,无 worker)
  *   event=mpyrso → 大金字塔(随态)近最优(_MpyrSolver,wrap cstimer 两阶段 solver via worker,采样分布)
@@ -69,6 +70,7 @@ const Slide15Solver = dynamic(() => import('./_Slide15Solver'), { ssr: false, lo
 const SuperFloppySolver = dynamic(() => import('./_SuperFloppySolver'), { ssr: false, loading: Loading });
 const UfoSolver = dynamic(() => import('./_UfoSolver'), { ssr: false, loading: Loading });
 const Cm2Solver = dynamic(() => import('./_Cm2Solver'), { ssr: false, loading: Loading });
+const Cm3Solver = dynamic(() => import('./_Cm3Solver'), { ssr: false, loading: Loading });
 const DiamondSolver = dynamic(() => import('./_DiamondSolver'), { ssr: false, loading: Loading });
 const GearSolver = dynamic(() => import('./_GearSolver'), { ssr: false, loading: Loading });
 const MpyrSolver = dynamic(() => import('./_MpyrSolver'), { ssr: false, loading: Loading });
@@ -98,6 +100,7 @@ function SolverDispatch() {
   if (event === 'sfl') return <SuperFloppySolver />;
   if (event === 'ufo') return <UfoSolver />;
   if (event === 'cm2') return <Cm2Solver />;
+  if (event === 'cm3') return <Cm3Solver />;
   if (event === 'dmd') return <DiamondSolver />;
   if (event === 'gear') return <GearSolver />;
   if (event === 'mpyrso') return <MpyrSolver />;
