@@ -227,6 +227,52 @@ describe('solveCuboid335 — provable optimality on the shallow ball', () => {
   });
 });
 
+describe('solveCuboid335 — phase-1 completeness regression (no "phase-1 unreachable" throw)', () => {
+  // This EXACT legal scramble (a real solver-generated state) made the OLD closed-set A* blow its 8M node
+  // pool — and a 60M re-run OOM'd — returning null → `Error: 335 phase-1 unreachable`. Its true phase-1
+  // reduction depth is only 12 (corner orbit intoH=9, cap-edge intoH=1; ≤6.05M IDDFS nodes, ~0.4 s). The
+  // IDDFS phase-1 (no closed set) solves it deterministically. Round-trip via the INDEPENDENT geometry.
+  const FAILING = "U B2 R2 B2 U B2 U' F2 R2 D' F2 L2 U R2 F2 U2 R2 D2 B2 D' R2 F2 U2 D R2 B2 U' L2 U' D R2 F2 R2 B2 R2 U2 D2 R2 D L2";
+
+  it('the exact previously-failing scramble solves and round-trips to solved', () => {
+    const res = solveCuboid335(FAILING); // MUST NOT throw
+    expect(res.length).toBeGreaterThan(0);
+    expect(res.length).toBeLessThanOrEqual(CUBOID335_MAX_LENGTH);
+    const after = refApply(`${FAILING} ${res.solution}`);
+    expect(keyOf(after), 'scramble ∘ solution = solved').toBe(REF_SOLVED_KEY);
+    expect(cuboid335Heuristic(FAILING)).toBeLessThanOrEqual(res.length);
+  }, 60_000);
+
+  it('a deterministic 5000-scramble sweep (fixed seed) NEVER throws and every solution round-trips', () => {
+    // The bug lived in phase-1 (the reduction search that ran AFTER the optimal-shortcut bailed). To prove
+    // phase-1 never throws across many states WITHOUT paying the multi-second optimal-shortcut IDA* per
+    // state, drop the shortcut budget to 1 for THIS test only (env read at call time, restored in the
+    // finally) so every state takes the fast two-phase path that exercises phase-1. Each solve still goes
+    // through the full public solveCuboid335 → solveTwoPhase → solvePhase1, so a phase-1 failure WOULD throw.
+    const prevBudget = process.env.CUBOID335_OPT_BUDGET;
+    process.env.CUBOID335_OPT_BUDGET = '1';
+    try {
+      const rnd = mulberry32(0x335f1c); // FIXED seed → deterministic
+      const N = 5000;
+      let solved = 0, maxLen = 0;
+      for (let i = 0; i < N; i++) {
+        const scramble = randomCuboid335Scramble(40, rnd);
+        const res = solveCuboid335(scramble); // MUST NOT throw for ANY state — the prime requirement
+        const after = refApply(`${scramble} ${res.solution}`);
+        expect(keyOf(after), `round-trip #${i}: ${scramble}`).toBe(REF_SOLVED_KEY);
+        expect(res.length, `bounded #${i}`).toBeLessThanOrEqual(CUBOID335_MAX_LENGTH);
+        if (res.length > maxLen) maxLen = res.length;
+        solved++;
+      }
+      expect(solved).toBe(N); // ZERO throws over 5000 random legal states — real post-fix failure rate = 0
+      expect(maxLen).toBeLessThanOrEqual(CUBOID335_MAX_LENGTH);
+    } finally {
+      if (prevBudget === undefined) delete process.env.CUBOID335_OPT_BUDGET;
+      else process.env.CUBOID335_OPT_BUDGET = prevBudget;
+    }
+  }, 300_000);
+});
+
 describe('renderCuboid335ScrambleSvg', () => {
   const fills = (svg: string) => [...svg.matchAll(/fill="([^"]+)"/g)].map((m) => m[1]).filter((f) => f !== 'none');
 
