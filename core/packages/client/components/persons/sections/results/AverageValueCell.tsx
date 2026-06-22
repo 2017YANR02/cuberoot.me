@@ -30,10 +30,13 @@ export function AverageValueCell({
       en: `Unofficial average: cstimer-style Ao${unof.n} (drop fastest/slowest ${unof.trim} each, mean the rest); WCA records no average for this round`,
     });
     return (
-      <span className="wp-unof-avg-cell">
+      <span className="wp-unof-avg-cell" title={tip}>
         <ResultChangeChain oldValues={oldValues} eventId={eventId} kind="average" note={note} />
-        {formatWcaResult(unof.value, eventId, 'average')}
-        <sup className="wp-unof-avg-tag" title={tip}>{tr({ zh: `Ao${unof.n} 非官方`, en: `Ao${unof.n} unofficial` })}</sup>
+        <span className="wp-unof-avg-val">{formatWcaResult(unof.value, eventId, 'average')}</span>
+        <span className="wp-unof-avg-corner">
+          <span className="wp-unof-avg-ao">{`Ao${unof.n}`}</span>
+          <span className="wp-unof-avg-flag">{tr({ zh: '非官方', en: 'unofficial' })}</span>
+        </span>
       </span>
     );
   }
