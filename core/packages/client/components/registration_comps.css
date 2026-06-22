@@ -30,6 +30,8 @@
 
 .reg-cards {
   display: grid;
+  /* minmax(0,…) 而非默认 1fr:grid item min-width:auto 会让 1fr 列撑到卡片 min-content
+     宽,挤出横向溢出(窄屏卡片被顶到 423px、整个面板横滑)。允许列缩到 0 即贴合容器。 */
   grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
   gap: 0.55rem;
 }
@@ -158,5 +160,5 @@
 .reg-login-hint:hover { color: var(--accent); }
 
 @media (max-width: 560px) {
-  .reg-cards { grid-template-columns: 1fr; }
+  .reg-cards { grid-template-columns: minmax(0, 1fr); }
 }
