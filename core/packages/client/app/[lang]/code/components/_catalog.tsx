@@ -158,8 +158,8 @@ function PillToggleDemo() {
   return (
     <div className="cg-row">
       <PillToggle value={a} onChange={setA} ariaLabel="switch" />
-      <PillToggle value={b} onChange={setB} onLabel={tr({ zh: '开', en: 'On'
-    })} offLabel={tr({ zh: '关', en: 'Off'
+      <PillToggle value={b} onChange={setB} onLabel={tr({ zh: '平均', en: 'Average'
+    })} offLabel={tr({ zh: '单次', en: 'Single'
     })} />
     </div>
   );
@@ -615,11 +615,11 @@ export const CATALOG: ComponentEntry[] = [
     name: 'PillToggle',
     import: "import PillToggle from '@/components/PillToggle/PillToggle';",
     category: 'toggle',
-    zh: 'iOS 风格布尔开关。可点击,也能拖动滑钮横向滑过中线切换;不传 on/off 文字 = 纯滑轨开关。',
-    en: 'iOS-style boolean switch. Click it, or drag the knob past the midline; omit the on/off labels for a plain track switch.',
-    usage: '<PillToggle value={on} onChange={setOn} ariaLabel="dark mode" />',
+    zh: 'iOS 风格二选一开关(本项目主力用法,不是普通布尔开关):传 onLabel/offLabel = 两个互斥选项的标签(如 单次/平均、截至/当期),只显示并高亮当前选中那个。可点击,也能拖动滑钮横滑过中线切换;两个标签都不传 = 纯滑轨开关。新页面凡二选一切换优先用它,别另造 segmented 控件。',
+    en: 'iOS-style two-choice toggle (the primary use in this project, NOT a plain boolean switch): pass onLabel/offLabel as the two mutually-exclusive option labels (e.g. Single/Average, Cumulative/Period) — only the selected one shows, highlighted. Click it, or drag the knob past the midline; omit both labels for a plain track switch. Prefer it for any two-option toggle on new pages instead of rolling a new segmented control.',
+    usage: '<PillToggle value={type === "average"} onChange={v => setType(v ? "average" : "single")} onLabel="平均" offLabel="单次" />',
     Demo: PillToggleDemo,
-    note: { zh: 'page-scope 默认 min-width:0 贴合文字;on/off 文案差很多才保留 min-width。', en: 'Page-scope min-width:0 hugs the text by default; keep min-width only when on/off labels differ a lot.' },
+    note: { zh: 'page-scope 默认 min-width:0 贴合文字;两标签字数差很多才保留 min-width。当过滤器跟 select 同行时给它跟 select 同高(看 /wca/all-results 的 .wse-filter pill,34px 上下居中)。', en: 'Page-scope min-width:0 hugs the text by default; keep min-width only when the two labels differ a lot in length. When used as a filter alongside selects, match the select height (see /wca/all-results .wse-filter pill — 34px, vertically centered).' },
   },
   {
     name: 'HeaderToggles',
