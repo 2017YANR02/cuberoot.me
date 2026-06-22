@@ -151,6 +151,8 @@ interface CompEntry {
   top_cubers: TopCuber[];
   rounds?: Record<string, number>;
   event_regs?: Record<string, number>;
+  /** 已接受报名人数（WCIF accepted persons 总数）；满员判定 = registered >= competitor_limit */
+  registered?: number;
   round_meta?: Record<string, RoundMeta>;
 }
 
@@ -681,6 +683,8 @@ interface AllComp {
   event_change_deadline?: string | null;
   rounds?: Record<string, number>;
   event_regs?: Record<string, number>;
+  /** 已接受报名人数（WCIF accepted persons 总数）；满员判定 = registered >= competitor_limit */
+  registered?: number;
   round_meta?: Record<string, RoundMeta>;
 }
 
@@ -1168,12 +1172,14 @@ async function main(): Promise<void> {
   for (const c of compsData) {
     c.rounds = wcifMap[c.id!]?.rounds ?? {};
     c.event_regs = wcifMap[c.id!]?.eventRegs ?? {};
+    c.registered = wcifMap[c.id!]?.competitors?.length ?? 0;
     c.round_meta = wcifMap[c.id!]?.roundMeta ?? {};
   }
   if (allComps) {
     for (const c of allComps) {
       c.rounds = wcifMap[c.id]?.rounds ?? {};
       c.event_regs = wcifMap[c.id]?.eventRegs ?? {};
+      c.registered = wcifMap[c.id]?.competitors?.length ?? 0;
       c.round_meta = wcifMap[c.id]?.roundMeta ?? {};
     }
   }

@@ -41,6 +41,8 @@ export interface UpcomingCompRecord {
   rounds?: Record<string, number>;
   /** event 短码 → 该项目报名人数（WCIF persons[].registration.eventIds 聚合）；老 dump 缺省 */
   event_regs?: Record<string, number>;
+  /** 已接受报名人数（WCIF accepted persons 总数）；满员 = registered >= competitor_limit；老 dump 缺省 */
+  registered?: number;
   /** event 短码 → round-1 WCIF 配置（限时/及格/晋级/资格）；未来比赛内联（量小）；老 dump 缺省 */
   round_meta?: Record<string, RoundMeta>;
 }
