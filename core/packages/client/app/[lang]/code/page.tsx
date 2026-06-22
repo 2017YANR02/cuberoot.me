@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './code_index.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 interface Card {
