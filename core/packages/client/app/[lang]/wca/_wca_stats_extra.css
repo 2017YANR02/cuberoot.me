@@ -397,6 +397,9 @@ html:not([data-palette-scheme=dark]) .wse-page {
    flex-shrink:0 防止在 events-bar flex 里被压窄到文字钻进滑钮下面;
    align-self:flex-start 防止在 column flex 的 .wse-filter 里被 stretch 拉满整列宽(手机端半屏长) */
 .pill-toggle.wse-pill { min-width: 0; flex-shrink: 0; align-self: flex-start; height: 26px; font-size: 12px; }
+/* 作过滤器(.wse-filter 直接子)时跟同行 select / input(34px)同高,内容已 align-items:center
+   → 与相邻控件上下居中对齐;events-bar 里的「废止项」不是 .wse-filter 直接子,仍 26px 不受影响 */
+.wse-filter > .pill-toggle.wse-pill { height: 34px; font-size: 13px; }
 
 /* 数据细节列 */
 .wse-detail-cell {
