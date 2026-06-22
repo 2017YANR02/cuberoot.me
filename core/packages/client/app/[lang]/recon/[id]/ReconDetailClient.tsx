@@ -1079,12 +1079,11 @@ function DouyinFacade({ url }: { url: string }) {
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6 }}
           />
         )}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={DOUYIN_LOGO}
-          alt="Douyin"
-          style={{ position: 'relative', width: 60, height: 60, opacity: 0.95, filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.5))' }}
-        />
+        {/* 官方抖音 logo(深色字+青红 note)为浅底设计,放白色圆角片上保证盖在封面上也清晰 */}
+        <div style={{ position: 'relative', background: '#fff', borderRadius: 10, padding: '10px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.45)' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={DOUYIN_LOGO} alt="Douyin" style={{ display: 'block', width: 92, height: 'auto' }} />
+        </div>
       </div>
     </a>
   );

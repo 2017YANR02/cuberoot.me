@@ -165,19 +165,42 @@ export default function WcaEventSelector({
   const renderAppendButton = ({ id, iconClass, label, textLabel }: AppendItem) => {
     const isActive = isMulti ? selectedEvents!.has(id) : id === selectedEvent;
     const tooltip = label ?? eventDisplayName(id, isZh);
-    return (
-      <button
-        key={id}
-        className={`event-btn${isActive ? ' active' : ''}${iconClass ? '' : ' event-btn-text'}`}
-        data-tooltip={tooltip}
-        data-event={id}
-        onClick={() => (isMulti ? onToggle!(id) : onSelect?.(id))}
-      >
+    const cls = `event-btn${isActive ? ' active' : ''}${iconClass ? '' : ' event-btn-text'}`;
+    const inner = (
+      <>
         {iconClass
           ? <CubingIcon icon={iconClass} />
           : <span className="event-text-label">{textLabel ?? id}</span>}
         {eventBadges(id, isActive)}
         {removeBtn(id, isActive)}
+      </>
+    );
+
+    // 链接模式:与官方事件一致渲染成真实 <a>/AppLink(中键/Ctrl 新开),供「求解」中心把
+    // 非 WCA 求解项目(ivy)做成可跳转项;跨 COEP 边界用原生 <a> 整页加载。
+    const link = linkFor ? linkFor(id) : null;
+    if (link) {
+      const aria = isActive ? 'page' : undefined;
+      return link.hard ? (
+        <a key={id} href={`${prefix}${link.href}`} className={cls} data-tooltip={tooltip} data-event={id} aria-label={tooltip} aria-current={aria}>
+          {inner}
+        </a>
+      ) : (
+        <AppLink key={id} href={link.href} className={cls} data-tooltip={tooltip} data-event={id} aria-label={tooltip} aria-current={aria}>
+          {inner}
+        </AppLink>
+      );
+    }
+
+    return (
+      <button
+        key={id}
+        className={cls}
+        data-tooltip={tooltip}
+        data-event={id}
+        onClick={() => (isMulti ? onToggle!(id) : onSelect?.(id))}
+      >
+        {inner}
       </button>
     );
   };
