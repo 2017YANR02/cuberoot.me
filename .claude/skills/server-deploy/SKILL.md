@@ -41,6 +41,10 @@ ssh root@cuberoot 'PGPASSWORD=314159 psql -U recon_user -h 127.0.0.1 -d cuberoot
 
 **老流程(已废弃)**:之前是 "先 ssh ALTER → 再 push 代码",顺序反过来会让新版 server 在 SELECT 新列时直接 500。现在 push 即可,Actions 自动按"先 migrate 后 pm2 restart"顺序跑。
 
+## 同步 /code 文档页(有 CI 守卫,漏改会红)
+
+加 migration → 同步 `core/packages/client/app/[lang]/code/schema/page.tsx` 的 `MIGRATIONS` 账本(加一行 `{ n, slug, desc }`)。新挂载 route(`app.route('/v1', …)`)→ 同步 `.../code/api/page.tsx` 的 `covers-routes` 清单 + 端点。守卫 `tests/code-schema-api-drift.test.ts`,漏改 CI 红。
+
 ## PG 方言关键(写 SQL / 改 server 路由前必看)
 
 驱动是 `postgres@^3`(porsager),`db/connection.ts` 里 `query()` helper 接 `?` 占位符,内部自动 `?→$N` 改写,业务路由 SQL 字符串保持 `?` 即可,跟旧 MariaDB 写法一致。
