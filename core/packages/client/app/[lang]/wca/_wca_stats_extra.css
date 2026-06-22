@@ -47,6 +47,14 @@ html:not([data-palette-scheme=dark]) .wse-page {
 .wse-page h1 { margin: 0 0 8px; font-size: 1.75rem; font-weight: 700; }
 .wse-subtitle { margin: 0; color: var(--muted-foreground); font-size: 14px; }
 
+/* 空态分区标题(姓名分布 / 名录 A–Z 同页堆叠时的分隔) */
+.wse-section-title {
+  margin: 32px 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
 .wse-filters {
   display: flex;
   flex-wrap: wrap;

@@ -123,7 +123,6 @@ function AllResultsPageInner() {
       q: parseAsString,
       basis: parseAsString,
       hidePodium: parseAsString, // 名次和:未登领奖台
-      eview: parseAsString,      // 空态视图:'dist'(姓名分布) | 'list'(名录 A-Z)
       psort: parseAsString,      // 名录排序:'name'(首字母) | 'len'(名字长度)
       pdir: parseAsString,       // 'asc' | 'desc'
       pname: parseAsString,      // 名录名字口径:latin | full | local | aka
@@ -163,8 +162,7 @@ function AllResultsPageInner() {
   const page = parseInt(query.page ?? '1', 10);
   const size = parseInt(query.size ?? '100', 10);
   const hidePodium = query.hidePodium === '1';
-  // 空态:姓名分布(name_stats viz)/ 名录(A-Z 平铺列表)
-  const eview: 'dist' | 'list' = query.eview === 'list' ? 'list' : 'dist';
+  // 空态:姓名分布 + 名录(A-Z 平铺列表)同页共存(分布在上、名录在下)
   const psort: 'name' | 'len' = query.psort === 'len' ? 'len' : 'name';
   const pdir: 'asc' | 'desc' = query.pdir === 'desc' ? 'desc' : 'asc';
   const pname: NameMode = (NAME_MODES as string[]).includes(query.pname ?? '') ? (query.pname as NameMode) : 'latin';
@@ -287,18 +285,18 @@ function AllResultsPageInner() {
 
   // 空态「分布」:姓名统计(静态 JSON,缓存一次)
   useEffect(() => {
-    if (mode !== 'empty' || eview !== 'dist' || nameStats) return;
+    if (mode !== 'empty' || nameStats) return;
     setLoading(true); setError(null);
     // v=2:name_stats 加了 全名/本地名/含曾用名 面板(shape 变),bump 破浏览器 + CDN 缓存
     fetch(statsUrl('/stats/name_stats.json?v=2'))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j: NameStatsPayload) => setNameStats(j))
       .catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [mode, eview, nameStats]);
+  }, [mode, nameStats]);
 
   // 空态「名录」:全选手 A-Z(按 首字母 / 名字长度 排序,可叠加国家)
   useEffect(() => {
-    if (mode !== 'empty' || eview !== 'list') return;
+    if (mode !== 'empty') return;
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
     qs.set('sort', psort); qs.set('dir', pdir); qs.set('name', pname);
@@ -310,7 +308,7 @@ function AllResultsPageInner() {
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j: { rows: DirRow[]; total: number }) => setDirData({ rows: j.rows, total: j.total }))
       .catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [mode, eview, psort, pdir, pname, plmin, plmax, country, page, size]);
+  }, [mode, psort, pdir, pname, plmin, plmax, country, page, size]);
 
   // 名次和数据
   useEffect(() => {
@@ -497,121 +495,105 @@ function AllResultsPageInner() {
       {/* ============ 空态:姓名分布(name_stats viz) + 名录(A-Z 平铺) ============ */}
       {mode === 'empty' && (
         <>
-          <div className="wse-filters">
-            <div className="wse-filter wse-filter-show">
-              <label>{tr({ zh: '视图', en: 'View' })}</label>
-              <div className="wse-show-toggle">
-                <button type="button" className={eview === 'dist' ? 'active' : ''} onClick={() => setQuery({ eview: 'dist', page: null })}>{tr({ zh: '姓名分布', en: 'Distribution' })}</button>
-                <button type="button" className={eview === 'list' ? 'active' : ''} onClick={() => setQuery({ eview: 'list', page: null })}>{tr({ zh: '名录 A–Z', en: 'Directory A–Z' })}</button>
-              </div>
-            </div>
-            {eview === 'list' && (
+          {/* ── 姓名分布 ── */}
+          <h2 className="wse-section-title">{tr({ zh: '姓名分布', en: 'Name distribution' })}</h2>
+          <div className="wse-table-wrapper">
+            {loading && !nameStats && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...' })}</div>}
+            {error && !nameStats && <div className="wse-state wse-state-error">Error: {error}</div>}
+            {nameStats && (
               <>
-                <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
-                <div className="wse-filter wse-filter-show">
-                  <label>{tr({ zh: '排序', en: 'Sort' })}</label>
-                  <div className="wse-show-toggle">
-                    <button type="button" className={psort === 'name' ? 'active' : ''} onClick={() => setSort('name')}>
-                      {tr({ zh: '首字母', en: 'A–Z' })}
-                    </button>
-                    <button type="button" className={psort === 'len' ? 'active' : ''} onClick={() => setSort('len')}>
-                      {tr({ zh: '名字长度', en: 'Name length' })}
-                    </button>
-                  </div>
-                </div>
-                <div className="wse-filter wse-filter-show">
-                  <label>{tr({ zh: '名字', en: 'Name' })}</label>
-                  <div className="wse-show-toggle">
-                    {nameModeOptions().map(m => (
-                      <button key={m.id} type="button" title={m.title}
-                        className={pname === m.id ? 'active' : ''}
-                        onClick={() => update('pname', m.id === 'latin' ? '' : m.id)}>
-                        {m.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div className="wse-filter wse-filter-show">
-                  <label title={tr({ zh: '按当前名字口径的字符数筛选', en: 'Filter by character count of the current name form' })}>
-                    {tr({ zh: '长度', en: 'Length' })}
-                  </label>
-                  <div className="wse-len-range">
-                    <input type="number" min={0} inputMode="numeric" className="wse-len-input"
-                      placeholder={tr({ zh: '最小', en: 'min' })} value={plmin}
-                      onChange={e => update('plmin', e.target.value)} />
-                    <span className="wse-len-dash">–</span>
-                    <input type="number" min={0} inputMode="numeric" className="wse-len-input"
-                      placeholder={tr({ zh: '最大', en: 'max' })} value={plmax}
-                      onChange={e => update('plmax', e.target.value)} />
-                    {(plmin || plmax) && (
-                      <ClearButton variant="standalone"
-                        onClick={() => setQuery({ plmin: null, plmax: null, page: null })} />
-                    )}
-                  </div>
-                </div>
+                {(nameStats.note || nameStats.noteZh) && (
+                  <p className="wse-subtitle" style={{ marginTop: 0 }}>
+                    {tr({ zh: nameStats.noteZh ?? nameStats.note ?? '', en: nameStats.note ?? '' })}
+                  </p>
+                )}
+                <NameStatsView data={nameStats} isZh={isZh} queryKey="nstab" />
               </>
             )}
           </div>
 
-          <div className="wse-table-wrapper">
-            {/* 分布视图 */}
-            {eview === 'dist' && (
-              <>
-                {loading && !nameStats && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...' })}</div>}
-                {error && !nameStats && <div className="wse-state wse-state-error">Error: {error}</div>}
-                {nameStats && (
-                  <>
-                    {(nameStats.note || nameStats.noteZh) && (
-                      <p className="wse-subtitle" style={{ marginTop: 0 }}>
-                        {tr({ zh: nameStats.noteZh ?? nameStats.note ?? '', en: nameStats.note ?? '' })}
-                      </p>
-                    )}
-                    <NameStatsView data={nameStats} isZh={isZh} queryKey="nstab" />
-                  </>
+          {/* ── 名录 A–Z ── */}
+          <h2 className="wse-section-title">{tr({ zh: '名录 A–Z', en: 'Directory A–Z' })}</h2>
+          <div className="wse-filters">
+            <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+            <div className="wse-filter wse-filter-show">
+              <label>{tr({ zh: '排序', en: 'Sort' })}</label>
+              <div className="wse-show-toggle">
+                <button type="button" className={psort === 'name' ? 'active' : ''} onClick={() => setSort('name')}>
+                  {tr({ zh: '首字母', en: 'A–Z' })}
+                </button>
+                <button type="button" className={psort === 'len' ? 'active' : ''} onClick={() => setSort('len')}>
+                  {tr({ zh: '名字长度', en: 'Name length' })}
+                </button>
+              </div>
+            </div>
+            <div className="wse-filter wse-filter-show">
+              <label>{tr({ zh: '名字', en: 'Name' })}</label>
+              <div className="wse-show-toggle">
+                {nameModeOptions().map(m => (
+                  <button key={m.id} type="button" title={m.title}
+                    className={pname === m.id ? 'active' : ''}
+                    onClick={() => update('pname', m.id === 'latin' ? '' : m.id)}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="wse-filter wse-filter-show">
+              <label title={tr({ zh: '按当前名字口径的字符数筛选', en: 'Filter by character count of the current name form' })}>
+                {tr({ zh: '长度', en: 'Length' })}
+              </label>
+              <div className="wse-len-range">
+                <input type="number" min={0} inputMode="numeric" className="wse-len-input"
+                  placeholder={tr({ zh: '最小', en: 'min' })} value={plmin}
+                  onChange={e => update('plmin', e.target.value)} />
+                <span className="wse-len-dash">–</span>
+                <input type="number" min={0} inputMode="numeric" className="wse-len-input"
+                  placeholder={tr({ zh: '最大', en: 'max' })} value={plmax}
+                  onChange={e => update('plmax', e.target.value)} />
+                {(plmin || plmax) && (
+                  <ClearButton variant="standalone"
+                    onClick={() => setQuery({ plmin: null, plmax: null, page: null })} />
                 )}
-              </>
-            )}
-
-            {/* 名录视图 */}
-            {eview === 'list' && (
+              </div>
+            </div>
+          </div>
+          <div className="wse-table-wrapper">
+            {loading && !dirData && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...' })}</div>}
+            {error && !dirData && <div className="wse-state wse-state-error">Error: {error}</div>}
+            {dirData && (
               <>
-                {loading && !dirData && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...' })}</div>}
-                {error && !dirData && <div className="wse-state wse-state-error">Error: {error}</div>}
-                {dirData && (
-                  <>
-                    <div className="wse-result-meta">{tr({ zh: `共 ${dirData.total.toLocaleString()} 人`, en: `${dirData.total.toLocaleString()} cubers` })}</div>
-                    <table className="wse-table">
-                      <thead>
-                        <tr>
-                          <th className="wse-rank-col">#</th>
-                          <th>
-                            {/* 列头箭头 = 当前排序方向(首字母 / 名字长度都排这一列),点一下翻方向;排序键由上方切换器选 */}
-                            <button type="button" className="wse-th-sort" onClick={() => setQuery({ pdir: pdir === 'asc' ? 'desc' : 'asc', page: null })}>
-                              {tr({ zh: '选手', en: 'Person' })}
-                              {pdir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-                            </button>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {dirData.rows.map((r, i) => (
-                          <tr key={r.wcaId}>
-                            <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
-                            <td>
-                              {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                              <span className="ns-person-wrap">
-                                <Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}</Link>
-                                {pname === 'aka' && <FormerNames former={r.former} />}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {dirData.total > size && (
-                      <Paginator page={page} totalPages={totalPages(dirData)} size={size} pageSizeOptions={PAGE_SIZE_OPTIONS} isZh={isZh} onPageChange={(p) => update('page', String(p), false)} onSizeChange={(s) => update('size', String(s))} />
-                    )}
-                  </>
+                <div className="wse-result-meta">{tr({ zh: `共 ${dirData.total.toLocaleString()} 人`, en: `${dirData.total.toLocaleString()} cubers` })}</div>
+                <table className="wse-table">
+                  <thead>
+                    <tr>
+                      <th className="wse-rank-col">#</th>
+                      <th>
+                        {/* 列头箭头 = 当前排序方向(首字母 / 名字长度都排这一列),点一下翻方向;排序键由上方切换器选 */}
+                        <button type="button" className="wse-th-sort" onClick={() => setQuery({ pdir: pdir === 'asc' ? 'desc' : 'asc', page: null })}>
+                          {tr({ zh: '选手', en: 'Person' })}
+                          {pdir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                        </button>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dirData.rows.map((r, i) => (
+                      <tr key={r.wcaId}>
+                        <td className="wse-rank-col">{(page - 1) * size + i + 1}</td>
+                        <td>
+                          {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
+                          <span className="ns-person-wrap">
+                            <Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}</Link>
+                            {pname === 'aka' && <FormerNames former={r.former} />}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {dirData.total > size && (
+                  <Paginator page={page} totalPages={totalPages(dirData)} size={size} pageSizeOptions={PAGE_SIZE_OPTIONS} isZh={isZh} onPageChange={(p) => update('page', String(p), false)} onSizeChange={(s) => update('size', String(s))} />
                 )}
               </>
             )}
