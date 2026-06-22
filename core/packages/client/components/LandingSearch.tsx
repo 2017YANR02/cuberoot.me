@@ -41,7 +41,6 @@ import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
 const EventIcon = dynamic(
@@ -218,11 +217,11 @@ export default function LandingSearch({ cards, lang }: Props) {
     if (stackMatches.length > 0) { pushInternal(langHref(`/code/stack/${stackMatches[0].slug}`)); return; }
     if (glossaryMatches.length > 0) { pushInternal(`${langHref('/wiki')}#${glossaryMatches[0].slug}`); return; }
     if (algSetMatches.length > 0) { const a = algSetMatches[0]; pushInternal(langHref(`/alg/${a.puzzle}/${a.setSlug}`)); return; }
-    if (personMatches.length > 0) { pushInternal(langHref(`/wca/persons/${personMatches[0].wcaId}`)); return; }
     if (compMatches.length > 0) {
       pushInternal(compLinkProps(compMatches[0].id, undefined, lang).href);
       return;
     }
+    if (personMatches.length > 0) { pushInternal(langHref(`/wca/persons/${personMatches[0].wcaId}`)); return; }
     if (reconMatches.length > 0) { pushInternal(langHref(`/recon/${reconPathSeg(reconMatches[0])}`)); return; }
   };
 
@@ -637,8 +636,6 @@ export default function LandingSearch({ cards, lang }: Props) {
           </>
           )}
 
-          {!yearMatch && personsSection}
-
           {compMatches.length > 0 && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
@@ -679,6 +676,8 @@ export default function LandingSearch({ cards, lang }: Props) {
               </div>
             </section>
           )}
+
+          {!yearMatch && personsSection}
 
           {reconMatches.length > 0 && (
             <section className="landing-search-section">
