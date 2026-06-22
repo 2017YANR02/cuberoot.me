@@ -222,6 +222,40 @@ const CARDS: Card[] = [
     },
   },
   {
+    href: '/code/api',
+    glyph: '⇄',
+    accent: '#22D3EE',
+    zh: {
+      title: 'API',
+      sub: 'Endpoint Reference',
+      tagline: 'cuberoot.me 后端 Hono 服务的全部对外端点:按 16 个业务域分组,每条标方法、鉴权门、缓存档,可搜可筛。前端只经 apiUrl() 单入口调用',
+      meta: '208 端点 · 16 域 · /v1',
+    },
+    en: {
+      title: 'API',
+      sub: 'Endpoint Reference',
+      tagline: 'Every public endpoint of cuberoot.me’s Hono backend, grouped into 16 domains — each tagged with method, auth gate and cache tier, searchable and filterable. The frontend reaches them only through the single apiUrl() entry',
+      meta: '208 endpoints · 16 domains · /v1',
+    },
+  },
+  {
+    href: '/code/schema',
+    glyph: '▦',
+    accent: '#6366F1',
+    zh: {
+      title: '数据库 Schema',
+      sub: 'Data Model',
+      tagline: 'cuberoot.me 自有 PostgreSQL 的数据模型:按领域分组的全部表 + 关键列,加 0001→0061 迁移时间线。与 WST 导出(来源)、WCIF(格式)互补的第三块',
+      meta: '100 表 · 61 迁移 · 启动自动 apply',
+    },
+    en: {
+      title: 'Database Schema',
+      sub: 'Data Model',
+      tagline: 'cuberoot.me’s own PostgreSQL data model: every table grouped by domain with key columns, plus the 0001→0061 migration timeline. The third piece beside the WST export (source) and WCIF (format)',
+      meta: '100 tables · 61 migrations · auto-applied',
+    },
+  },
+  {
     href: '/code/wca-export',
     glyph: '⛁',
     accent: '#5BA8FF',

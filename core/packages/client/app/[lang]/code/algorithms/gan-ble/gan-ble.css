@@ -1,0 +1,396 @@
+/* /code/algorithms/gan-ble — BLE protocol + AES teardown. All colors via tokens. */
+
+.ganble-page {
+  position: relative;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  overflow: hidden;
+}
+.ganble-grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--accent) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 7%, transparent) 1px, transparent 1px);
+  background-size: 30px 30px;
+  mask-image: radial-gradient(ellipse 80% 50% at 50% 0%, black, transparent 75%);
+}
+.ganble-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 22px 20px 80px;
+}
+
+.ganble-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 36px;
+}
+.ganble-back {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+.ganble-back:hover { color: var(--accent); }
+.ganble-tag {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+/* Hero */
+.ganble-hero { margin-bottom: 54px; }
+.ganble-hero-jargon {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-bottom: 18px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+.ganble-hero-jargon span {
+  color: color-mix(in srgb, var(--accent) 70%, var(--muted-foreground));
+  opacity: 0.7;
+}
+.ganble-title {
+  font-size: clamp(28px, 6vw, 46px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin: 0 0 18px;
+}
+.ganble-lede {
+  font-size: clamp(15px, 2.4vw, 18px);
+  line-height: 1.7;
+  color: var(--muted-foreground);
+  max-width: 70ch;
+  margin: 0 0 28px;
+}
+.ganble-herostats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  max-width: 640px;
+}
+.ganble-herostats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+}
+.ganble-herostats b {
+  font-family: var(--font-mono, monospace);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.ganble-herostats span {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+
+/* Section heads */
+.ganble-h2 {
+  font-size: clamp(20px, 3.4vw, 26px);
+  font-weight: 700;
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+.ganble-sub {
+  color: var(--muted-foreground);
+  font-size: 14.5px;
+  line-height: 1.6;
+  margin: 0 0 18px;
+  max-width: 68ch;
+}
+.ganble-page section { margin-bottom: 56px; }
+
+/* Core difficulty */
+.ganble-puzzle-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 18px;
+}
+.ganble-puzzle-card {
+  position: relative;
+  border-radius: 14px;
+  padding: 20px 18px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+}
+.ganble-puzzle-native { border-color: color-mix(in srgb, var(--signal-success) 45%, var(--border-default)); }
+.ganble-puzzle-web { border-color: color-mix(in srgb, var(--destructive) 45%, var(--border-default)); }
+.ganble-puzzle-head {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+  margin-bottom: 12px;
+}
+.ganble-puzzle-card code {
+  display: block;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  color: var(--foreground);
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+.ganble-puzzle-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  margin: 0 0 14px;
+}
+.ganble-ok, .ganble-bad {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.ganble-ok { color: var(--signal-success); background: color-mix(in srgb, var(--signal-success) 16%, transparent); }
+.ganble-bad { color: var(--destructive); background: color-mix(in srgb, var(--destructive) 16%, transparent); }
+.ganble-puzzle-note {
+  margin-top: 18px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--foreground);
+  padding-left: 14px;
+  border-left: 3px solid var(--accent);
+}
+
+/* Decrypt pipeline */
+.ganble-pipe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.ganble-pipe-step {
+  position: relative;
+  flex: 1 1 150px;
+  min-width: 0;
+  appearance: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 14px 14px 14px 14px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  transition: border-color 0.15s, transform 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ganble-pipe-step:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default)); }
+.ganble-pipe-step.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, var(--card));
+}
+.ganble-pipe-no {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.ganble-pipe-title { font-size: 15px; font-weight: 700; color: var(--foreground); }
+.ganble-pipe-one { font-size: 12px; line-height: 1.45; color: var(--muted-foreground); }
+.ganble-pipe-arrow {
+  position: absolute;
+  right: -11px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  font-size: 14px;
+  color: color-mix(in srgb, var(--accent) 60%, var(--muted-foreground));
+}
+.ganble-pipe-detail {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  border-radius: 14px;
+  padding: 22px 20px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+}
+.ganble-pipe-detail-no {
+  font-family: var(--font-mono, monospace);
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1;
+  color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.ganble-pipe-detail-body { flex: 1; min-width: 0; }
+.ganble-pipe-detail-body h3 { font-size: 18px; font-weight: 700; margin: 0 0 8px; }
+.ganble-pipe-detail-body p {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--muted-foreground);
+  margin: 0 0 12px;
+}
+.ganble-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 12.5px;
+  line-height: 1.6;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  color: var(--foreground);
+  overflow-x: auto;
+  white-space: pre;
+  margin: 0;
+}
+.ganble-code-formula { margin-top: 16px; }
+
+/* Byte grids */
+.ganble-bytes { margin: 16px 0; }
+.ganble-bytes-label { font-size: 12.5px; color: var(--muted-foreground); margin-bottom: 8px; }
+.ganble-bytes-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ganble-byte {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  color: var(--muted-foreground);
+  border: 1px solid transparent;
+}
+.ganble-byte-hot {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 34%, transparent);
+  font-weight: 700;
+}
+
+/* Version table */
+.ganble-vtable-wrap { overflow-x: auto; margin-top: 14px; }
+.ganble-vtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 540px;
+}
+.ganble-vtable th, .ganble-vtable td {
+  text-align: left;
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border-default);
+  vertical-align: top;
+  line-height: 1.45;
+}
+.ganble-vtable thead th {
+  font-family: var(--font-mono, monospace);
+  color: var(--accent);
+  font-size: 14px;
+  border-bottom: 2px solid color-mix(in srgb, var(--accent) 40%, var(--border-default));
+}
+.ganble-vtable tbody th {
+  color: var(--muted-foreground);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ganble-vtable td { color: var(--foreground); }
+
+/* MAC chain */
+.ganble-mac-chain { list-style: none; margin: 16px 0 0; padding: 0; }
+.ganble-mac-step {
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px dashed var(--border-default);
+}
+.ganble-mac-step:last-child { border-bottom: none; }
+.ganble-mac-no {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.ganble-mac-step h4 { font-size: 15px; font-weight: 700; margin: 2px 0 5px; }
+.ganble-mac-step p { font-size: 13.5px; line-height: 1.6; color: var(--muted-foreground); margin: 0; }
+.ganble-selfheal {
+  margin-top: 22px;
+  border-radius: 12px;
+  padding: 16px 18px;
+  background: color-mix(in srgb, var(--signal-warning) 9%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--signal-warning) 35%, var(--border-default));
+}
+.ganble-selfheal h4 { font-size: 14.5px; font-weight: 700; margin: 0 0 7px; }
+.ganble-selfheal p { font-size: 13.5px; line-height: 1.65; color: var(--muted-foreground); margin: 0; }
+
+/* Usage prose */
+.ganble-usage p {
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+  max-width: 74ch;
+  margin: 0 0 14px;
+}
+
+/* Links */
+.ganble-links ul { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+.ganble-links a {
+  font-size: 14px;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.ganble-links a:hover { border-bottom-color: color-mix(in srgb, var(--accent) 50%, transparent); }
+
+/* Footer */
+.ganble-foot {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-default);
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+}
+.ganble-foot a { color: var(--muted-foreground); text-decoration: none; }
+.ganble-foot a:hover { color: var(--accent); }
+
+/* Responsive */
+@media (max-width: 720px) {
+  .ganble-herostats { grid-template-columns: repeat(2, 1fr); }
+  .ganble-puzzle-row { grid-template-columns: 1fr; }
+  .ganble-pipe-step { flex: 1 1 100%; }
+  .ganble-pipe-arrow { display: none; }
+}
+@media (max-width: 480px) {
+  .ganble-inner { padding: 16px 14px 60px; }
+  .ganble-pipe-detail { flex-direction: column; gap: 10px; }
+  .ganble-pipe-detail-no { font-size: 28px; }
+}
