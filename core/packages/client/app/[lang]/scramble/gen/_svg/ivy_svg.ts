@@ -1,12 +1,15 @@
 /**
  * Ivy Cube (枫叶魔方) state preview SVG — a flat cross net derived from the solver's exact
- * state model (lib/ivy-solver). Each face = a square split into a center diamond + 4 corner
- * triangles; the Ivy has only 2 turning corners per face (on a diagonal), the other 2 are frame.
+ * state model (lib/ivy-solver). Each face = a square showing 2 quarter-circle corner "petals"
+ * (the 2 turning corners, which lie on an anti-diagonal) + 1 leaf/eye-shaped center piece
+ * (everything else, bounded by the 2 concave arcs). No straight diagonal cuts, no frame corners:
+ * the center piece fills the whole square including the 2 non-turning corners.
  *
- * Colors come straight from the (centers, corners) state, so solved → every face uniform, and
- * moves permute consistently with the solver (single source of move truth = ivyApply). The two
- * turning corners per face are the 4 tetrahedral Ivy vertices UBR(axis0) UFL(axis1) DFR(axis2)
- * DBL(axis3), placed by the standard cross unfold.
+ * Colors come straight from the (centers, corners) state, so solved → every face uniform (the
+ * petal color equals the center color, so the face looks solid), and moves permute consistently
+ * with the solver (single source of move truth = ivyApply). The two turning corners per face are
+ * the 4 tetrahedral Ivy vertices UBR(axis0) UFL(axis1) DFR(axis2) DBL(axis3), placed by the
+ * standard cross unfold.
  */
 import { ivyApply, MOVE_CENTERS } from '@/lib/ivy-solver';
 
@@ -26,9 +29,9 @@ const S = 30;
 type Slot = 'TL' | 'TR' | 'BL' | 'BR';
 interface FaceDesc { fi: number; col: number; row: number; tris: Partial<Record<Slot, number>>; }
 
-// Per-face: grid cell in the cross net + which diagonal triangle slot is which turning corner
-// (axis index). Verified by construction: at the solved state every region of a face is its
-// home color, so the face is uniform.
+// Per-face: grid cell in the cross net + which corner slot is which turning corner (axis index).
+// Verified by construction: at the solved state every region of a face is its home color, so the
+// face is uniform.
 const FACES: FaceDesc[] = [
   { fi: 0, col: 1, row: 0, tris: { TR: 0, BL: 1 } }, // U
   { fi: 4, col: 0, row: 1, tris: { TR: 1, BL: 3 } }, // L
@@ -46,10 +49,6 @@ function cornerColorId(faceIdx: number, axis: number, ori: number): number {
 }
 
 function fmt(n: number): string { return Number(n.toFixed(2)).toString(); }
-function poly(pts: Array<[number, number]>, fill: string): string {
-  const d = pts.map(([x, y]) => `${fmt(x)},${fmt(y)}`).join(' ');
-  return `<polygon points="${d}" fill="${fill}" stroke="${STROKE}" stroke-width="1" stroke-linejoin="round"/>`;
-}
 
 export function renderIvyScrambleSvg(scramble: string, colors: string[] = IVY_DEFAULT_COLORS): string {
   let centers = [0, 1, 2, 3, 4, 5];
@@ -72,23 +71,34 @@ export function renderIvyScrambleSvg(scramble: string, colors: string[] = IVY_DE
     const x = f.col * S;
     const y = f.row * S;
     const h = S / 2;
-    const cx = x + h;
-    const cy = y + h;
-    // center diamond
-    out.push(poly([[cx, y], [x + S, cy], [cx, y + S], [x, cy]], colors[centers[f.fi]] ?? FRAME));
-    // 4 corner triangles
-    const slots: Record<Slot, Array<[number, number]>> = {
-      TL: [[x, y], [cx, y], [x, cy]],
-      TR: [[cx, y], [x + S, y], [x + S, cy]],
-      BL: [[x, cy], [x, y + S], [cx, y + S]],
-      BR: [[x + S, cy], [x + S, y + S], [cx, y + S]],
+    // Edge midpoints.
+    const tm: [number, number] = [x + h, y];
+    const rm: [number, number] = [x + S, y + h];
+    const bm: [number, number] = [x + h, y + S];
+    const lm: [number, number] = [x, y + h];
+    // Each corner petal: corner point + its two adjacent edge-midpoints. Arc radius h, centered
+    // at the corner, bulging TOWARD the face center.
+    const petals: Record<Slot, { corner: [number, number]; a: [number, number]; b: [number, number] }> = {
+      TL: { corner: [x, y], a: tm, b: lm },
+      TR: { corner: [x + S, y], a: rm, b: tm },
+      BL: { corner: [x, y + S], a: lm, b: bm },
+      BR: { corner: [x + S, y + S], a: bm, b: rm },
     };
-    (Object.keys(slots) as Slot[]).forEach((slot) => {
+
+    // 1) Whole face square = the leaf-shaped center piece + non-turning corners (center color).
+    out.push(
+      `<rect x="${fmt(x)}" y="${fmt(y)}" width="${fmt(S)}" height="${fmt(S)}" fill="${colors[centers[f.fi]] ?? FRAME}" stroke="${STROKE}" stroke-width="1" stroke-linejoin="round"/>`,
+    );
+
+    // 2) The 2 turning-corner petals on top (quarter discs). Sweep flag 1 makes the arc bulge
+    //    toward the face center for the corner→a→b winding chosen above (SVG y-axis points down).
+    (Object.keys(petals) as Slot[]).forEach((slot) => {
       const axis = f.tris[slot];
-      const fill = axis === undefined
-        ? FRAME
-        : (colors[cornerColorId(f.fi, axis, corners[axis])] ?? FRAME);
-      out.push(poly(slots[slot], fill));
+      if (axis === undefined) return;
+      const fill = colors[cornerColorId(f.fi, axis, corners[axis])] ?? FRAME;
+      const p = petals[slot];
+      const d = `M ${fmt(p.corner[0])} ${fmt(p.corner[1])} L ${fmt(p.a[0])} ${fmt(p.a[1])} A ${fmt(h)} ${fmt(h)} 0 0 1 ${fmt(p.b[0])} ${fmt(p.b[1])} Z`;
+      out.push(`<path d="${d}" fill="${fill}" stroke="${STROKE}" stroke-width="1" stroke-linejoin="round"/>`);
     });
   }
 
