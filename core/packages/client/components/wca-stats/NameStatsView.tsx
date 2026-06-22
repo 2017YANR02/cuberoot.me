@@ -10,7 +10,6 @@ import { Flag } from '@/components/Flag';
 import { countryToIso2, personFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { tr } from '@/i18n/tr';
 import DiscreteHistogram from '@/app/[lang]/scramble/stats/_components/DiscreteHistogram';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { type NameMode, NAME_MODES, nameByMode, nameModeOptions, FormerNames } from './nameMode';
 import './name-stats.css';
 
@@ -226,18 +225,9 @@ export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data:
 
       {hist ? (
         <div className="ns-dist">
-          <div className="ns-dist-bar">
-            <p className="ns-hint">
-              {tr({ zh: '点击柱子查看该组的国家分布与选手', en: 'Click a bar to see that group’s countries and competitors' })}
-            </p>
-            <PillToggle
-              value={yMode === 'count'}
-              onChange={() => setYMode(m => (m === 'percent' ? 'count' : 'percent'))}
-              offLabel={tr({ zh: '百分比', en: '%' })}
-              onLabel={tr({ zh: '数量', en: 'count' })}
-              ariaLabel={tr({ zh: '纵轴:百分比或数量', en: 'Y axis: percent or count' })}
-            />
-          </div>
+          <p className="ns-hint">
+            {tr({ zh: '点击柱子查看该组选手;点击纵轴切换 百分比 / 数量', en: 'Click a bar to see that group’s competitors; click the y-axis to toggle percent / count' })}
+          </p>
           <div className="ns-dist-card">
             <DiscreteHistogram
               series={[{ name: '', fillColors: ['var(--accent)'], counts: hist.counts }]}
@@ -249,6 +239,8 @@ export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data:
               clickableBins={hist.clickable}
               selectedBin={selectedBin}
               onBarClick={setSelectedBin}
+              onYAxisClick={() => setYMode(m => (m === 'percent' ? 'count' : 'percent'))}
+              yAxisTitle={tr({ zh: '点击切换 百分比 / 数量', en: 'Click to toggle percent / count' })}
             />
           </div>
 
