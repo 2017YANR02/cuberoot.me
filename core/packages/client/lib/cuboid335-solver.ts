@@ -160,10 +160,40 @@ export const CUBOID335_STATE_COUNT_STR = '156,067,430,400';
 export const CUBOID335_ORBIT_PRODUCT_STR = '22,473,709,977,600';
 /** Hard upper bound on a returned two-phase solution length (phase-1 diam + phase-2 diam ≪ this). */
 export const CUBOID335_MAX_LENGTH = 45;
+// Optimal-shortcut budget/cap. The two-phase reduction is honestly NEAR-optimal — it overshoots the true
+// optimum by a mean of +5..+9 moves on real states (measured), and it essentially never returns a solution
+// in 13..15 (its floor is ~16). So whenever the provably-optimal IDA* below DOESN'T fire, the returned
+// length is badly inflated. The earlier cap (12) + tiny budget (800k) let it fire only for states whose
+// TRUE optimum is ≤ 12, while the bulk of real random states actually have a true optimum of 13..15 (the
+// corner orbit's diameter is 13). The result was a BIMODAL length distribution: a spike at 12 (shortcut
+// fires) + a dead zone at 13..15 (shortcut can't reach it, two-phase floors at 16) + a fake hump from the
+// inflated two-phase answers. Raising the cap/budget so the EXACT IDA* covers the realistic range
+// (true-opt ≲ 16) makes almost every state return its provable optimum → the distribution becomes the true,
+// unimodal one (peak ~14). The corner-dominated max-PDB heuristic is weak for deep states, so the node
+// budget grows steeply with depth; we therefore use TWO regimes:
+//   • In the browser the single solve runs synchronously on the main thread (see _Cuboid335Solver.tsx), so
+//     a multi-second IDA* would freeze the tab. A modest budget keeps the worst real solve ≲ ~0.7 s and
+//     still fills the 13..14 peak; the rare harder state (true-opt ≥ ~15) falls back to two-phase.
+//   • Offline (Node — the dist-build sampler / tests) there is no UI to freeze, so a large budget lets the
+//     EXACT solver finish for ~99% of states (worst ≈ 7 s), yielding the correct unimodal histogram. Both
+//     regimes are overridable via env for tuning (CUBOID335_OPT_BUDGET / CUBOID335_OPT_CAP).
+const IS_NODE = typeof process !== 'undefined' && !!(process as { versions?: { node?: string } }).versions?.node
+  && typeof (globalThis as { window?: unknown }).window === 'undefined';
+const envNum = (name: string): number | undefined => {
+  try {
+    const v = typeof process !== 'undefined' ? (process as { env?: Record<string, string | undefined> }).env?.[name] : undefined;
+    if (v == null) return undefined;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : undefined;
+  } catch { return undefined; }
+};
 /** Optimal-shortcut node budget: a shallow state solved optimally below this is returned as optimal. */
-const OPT_SHORTCUT_BUDGET = 800_000;
+// Offline 50M ⇒ ~98% of real states return their provable optimum (worst single solve ≈ 5–7 s, occasionally
+// more on a pathological deep state — acceptable for the manual offline dist build); browser 3M keeps the
+// synchronous main-thread solve ≲ ~0.7 s while still filling the true 13..14 peak.
+const OPT_SHORTCUT_BUDGET = envNum('CUBOID335_OPT_BUDGET') ?? (IS_NODE ? 50_000_000 : 3_000_000);
 /** Largest length the optimal shortcut will claim; beyond this the two-phase answer is used. */
-const OPT_SHORTCUT_DEPTH_CAP = 12;
+const OPT_SHORTCUT_DEPTH_CAP = envNum('CUBOID335_OPT_CAP') ?? (IS_NODE ? 20 : 16);
 
 function applyMove(state: Uint8Array, mi: number): Uint8Array<ArrayBuffer> {
   const p = MOVE_PERM[mi];
