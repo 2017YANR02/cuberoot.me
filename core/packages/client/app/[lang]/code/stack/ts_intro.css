@@ -1252,6 +1252,26 @@ main { position: relative; z-index: 1; }
 .compare-col, .compare-col > *, .future-card,
 .logo-card, .ai-tool { min-width: 0; }
 
+/* ── Mobile: wrap long inline code in prose ──
+   Block code (.code / .why-code / .ts-code) keeps white-space:pre + overflow-x:auto. */
+@media (max-width: 600px) {
+  .sec-desc code,
+  .def-card p code,
+  .tl-card p code,
+  .why-card p code,
+  .cmp-table td code,
+  .future-card p code,
+  .ts-card > p code,
+  .ai-reverse p code,
+  .spotlight p code,
+  .spotlight-list code,
+  .ai-stat p code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
 }
 /* end @scope (.ts-intro-root) */
 

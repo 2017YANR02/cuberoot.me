@@ -225,4 +225,14 @@
   .algo-page { padding: 60px 18px 50px; }
   .algo-page-head { margin-bottom: 36px; }
   .algo-section { margin-top: 40px; padding-top: 24px; }
+
+  /* Inline (non-pre) code in prose must wrap instead of clipping at the page
+     root. Block code in pre.algo-code and the .algo-eq display blocks keep
+     their own overflow-x:auto scrolling and are excluded. */
+  .algo-section p code,
+  .algo-section li code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }

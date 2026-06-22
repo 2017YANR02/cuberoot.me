@@ -1351,5 +1351,12 @@ main { position: relative; z-index: 1; }
 .logo-card, .tag-card, .engine-card,
 .footgun-card, .preamble, .famous-row { min-width: 0; }
 
+
+  @media (max-width: 720px) {
+    .cmp-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  }
+  @media (max-width: 600px) {
+    :not(pre) > code { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+  }
 }
 /* end @scope (.latex-intro-root) */
