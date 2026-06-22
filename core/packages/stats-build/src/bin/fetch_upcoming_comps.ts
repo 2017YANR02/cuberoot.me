@@ -423,6 +423,8 @@ interface CnComp {
   start_date: string;
   end_date: string;
   competitor_limit: number;
+  /** cubing.com 实际报名人数(含无 WCA ID 的新人,故比 WCA-ID 名单准);满员判定用它 */
+  registered_competitors?: number;
 }
 
 async function fetchCubingChinaComps(): Promise<CnComp[]> {
@@ -484,6 +486,7 @@ async function fetchCubingChinaComps(): Promise<CnComp[]> {
       start_date: start,
       end_date: end,
       competitor_limit: limit,
+      registered_competitors: typeof c.registered_competitors === 'number' ? c.registered_competitors : undefined,
     });
   }
 
@@ -1169,17 +1172,25 @@ async function main(): Promise<void> {
     console.log(`\n[WCIF] 补拉 ${cnOnlyIds.size} 场 CN 比赛轮次...`);
     Object.assign(wcifMap, await fetchWcifBatch(cnOnlyIds));
   }
+  // CN 内地比赛的报名走 cubing.com,WCA WCIF 多为 0;用 cubing.com 的 registered_competitors(含新人)
+  // 覆盖,满员判定才准(comp id = cubing.com alias 去横线)。已缓存,二次调用近免费。
+  const cnRegById = new Map<string, number>();
+  for (const cn of await fetchCubingChinaComps()) {
+    if (typeof cn.registered_competitors === 'number') cnRegById.set(cn.alias.replace(/-/g, ''), cn.registered_competitors);
+  }
+  const regOf = (id: string | undefined): number =>
+    Math.max(wcifMap[id ?? '']?.competitors?.length ?? 0, (id && cnRegById.get(id)) || 0);
   for (const c of compsData) {
     c.rounds = wcifMap[c.id!]?.rounds ?? {};
     c.event_regs = wcifMap[c.id!]?.eventRegs ?? {};
-    c.registered = wcifMap[c.id!]?.competitors?.length ?? 0;
+    c.registered = regOf(c.id);
     c.round_meta = wcifMap[c.id!]?.roundMeta ?? {};
   }
   if (allComps) {
     for (const c of allComps) {
       c.rounds = wcifMap[c.id]?.rounds ?? {};
       c.event_regs = wcifMap[c.id]?.eventRegs ?? {};
-      c.registered = wcifMap[c.id]?.competitors?.length ?? 0;
+      c.registered = regOf(c.id);
       c.round_meta = wcifMap[c.id]?.roundMeta ?? {};
     }
   }
