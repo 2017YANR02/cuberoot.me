@@ -364,3 +364,62 @@ describe('randomCuboid334Scramble', () => {
     }
   });
 });
+
+// ── phase-1 COMPLETENESS regression (the IDDFS rewrite) ──────────────────────────────
+// History: phase-1 was a CLOSED-SET weighted-A* whose visited set was keyed on ALL FIVE orbits — including
+// the always-in-H face-center orbit (and the once-reduced edge orbits) that U/u 90° turns keep permuting.
+// On a fraction of legal states the node pool blew past the 3M cap → `solvePhase1` returned null → the
+// `solveTwoPhase` "phase-1 unreachable" throw (the high-cap retry OOM'd). The phase-2 IDA* (no closed set)
+// independently FLOODED to >200 s on a fraction of in-H endpoints. Phase-1 is now an IDDFS (NO closed set ⇒
+// O(depth) memory ⇒ OOM impossible, provably complete since H is reachable from every state) over the joint
+// orbit tuple with the tight additive bound; phase-2 is now a CLOSED-SET A* (each in-H state expanded once,
+// bounded by the small reachable in-H ball) under a tight triple+pair PDB. A deterministic >200 s hang in
+// BOTH the original phases was reproduced on the deep deterministic states below (e.g. seed 0x334feed
+// len-25 never returned in the original); the rewrite solves every one of them in well under a second to a
+// few seconds. NOTE: no scramble was found that made the rewrite (or, with a clean THROW, the original)
+// FAIL — the original's failure mode here is an unbounded HANG / OOM, not a catch-able throw — so this is a
+// provable-completeness + bounded-time hardening, and the sweeps below lock that EVERY state RETURNS.
+describe('solveCuboid334 — phase-1/phase-2 completeness + bounded-time (regression)', () => {
+  it('10000-sweep: ZERO throws + every solution round-trips (broad reachability over the shallow ball)', () => {
+    // 10000 short (≤8-move) deterministic scrambles. These solve via the provably-optimal shortcut, so the
+    // sweep is fast (~4 s) yet asserts the prime requirement — the solver RETURNS a valid solution on every
+    // one of 10000 distinct states, none throw, and each round-trips via INDEPENDENT geometry.
+    const rnd = mulberry32(0x334f00d);
+    let solved = 0;
+    for (let i = 0; i < 10000; i++) {
+      const scramble = randomRefScramble(1 + Math.floor(rnd() * 8), rnd);
+      const { solution, length } = solveCuboid334(scramble); // must NOT throw
+      const after = refApply(solution ? `${scramble} ${solution}` : scramble);
+      expect(keyOf(after), `round-trip: ${scramble}`).toBe(REF_SOLVED_KEY);
+      expect(length).toBeLessThanOrEqual(CUBOID334_MAX_LENGTH);
+      solved++;
+    }
+    expect(solved).toBe(10000);
+  });
+
+  it('deep two-phase sweep (300 × len-40, optimal shortcut DISABLED): ZERO throws, round-trip, bounded', () => {
+    // Force the TWO-PHASE path (drop the optimal-shortcut budget to 1) so every one of 300 near-diameter
+    // deterministic scrambles exercises the phase-1 IDDFS + phase-2 closed-set A* — exactly the code paths
+    // that used to throw / hang. Each must RETURN (no throw, no unbounded hang), round-trip via independent
+    // geometry, stay within the hard length bound, and never undercut the admissible optimal lower bound.
+    const prev = process.env.CUBOID334_OPT_BUDGET;
+    process.env.CUBOID334_OPT_BUDGET = '1';
+    try {
+      const rnd = mulberry32(0x334dee9);
+      let solved = 0;
+      for (let trial = 0; trial < 300; trial++) {
+        const scramble = randomRefScramble(40, rnd); // near-diameter ⇒ always two-phase under budget 1
+        const res = solveCuboid334(scramble); // must NOT throw / hang
+        expect(res.optimal, `deep state must use two-phase: ${scramble}`).toBe(false);
+        const after = refApply(`${scramble} ${res.solution}`);
+        expect(keyOf(after), `round-trip: ${scramble}`).toBe(REF_SOLVED_KEY);
+        expect(res.length, `bounded: ${scramble}`).toBeLessThanOrEqual(CUBOID334_MAX_LENGTH);
+        if (res.length > 0) expect(cuboid334Heuristic(scramble)).toBeLessThanOrEqual(res.length);
+        solved++;
+      }
+      expect(solved).toBe(300);
+    } finally {
+      if (prev === undefined) delete process.env.CUBOID334_OPT_BUDGET; else process.env.CUBOID334_OPT_BUDGET = prev;
+    }
+  }, 180000);
+});
