@@ -589,6 +589,14 @@ html[data-theme=dark] .wp-page {
 /* 自适应内容:表宽随内容(不再 width:100% 撑满容器 → 列间不留大空隙),左对齐占用所需宽度。
    容器(.wp-main 1440)只作上限:内容超出则压缩/换行,不足则表自然收窄。仅作用选手页,不碰 recon。 */
 .wp-main .wp-bycomp-table { width: auto; }
+/* 桌面端把整张卡片收紧到表格宽度 → 右侧不再留大片空白(表已 width:auto 列不留空隙)。
+   .wp-table-scroll 是 overflow:auto 容器,收缩排版下会塌成 0 宽把表推进横滑;桌面有余量,
+   改 visible 让它按表格真实宽度上报,block 才能 fit-content 到表宽。移动端不动(下方 max-width:767px
+   仍走满宽 + 横滑)。 */
+@media (min-width: 768px) {
+    .wp-main .wp-bycomp-block { width: fit-content; max-width: 100%; }
+    .wp-main .wp-bycomp-block .wp-table-scroll { overflow-x: visible; }
+}
 /* 赛事 / 项目统计 / 点亮城市 表同理:列随内容,不撑满(否则末列被推到最右、中间留大空隙) */
 .wp-main .wp-comps-table,
 .wp-main .wp-event-stats-table,
