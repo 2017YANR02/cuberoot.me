@@ -192,29 +192,27 @@ describe('renderIvyScrambleSvg', () => {
   const FRAME = '#1c1c1c';
   const fills = (svg: string) => [...svg.matchAll(/fill="([^"]+)"/g)].map((m) => m[1]);
 
-  it('solved → 6 uniform faces (3 home-colored regions + 2 frame each), one color per face', () => {
+  it('solved → 6 uniform faces (center lens + 2 petals share the home color), one color per face', () => {
     const f = fills(renderIvyScrambleSvg(''));
-    expect(f.length).toBe(30); // 6 faces × (center + 4 triangles)
+    expect(f.length).toBe(18); // 6 faces × (center lens + 2 petals); cut lines are strokes, not fills
     const faceColors = new Set<string>();
     for (let i = 0; i < 6; i++) {
-      const face = f.slice(i * 5, i * 5 + 5);
-      const frames = face.filter((c) => c === FRAME);
-      const colored = face.filter((c) => c !== FRAME);
-      expect(frames.length).toBe(2);
-      expect(colored.length).toBe(3);
-      expect(new Set(colored).size).toBe(1); // all colored regions same home color
-      faceColors.add(colored[0]);
+      const face = f.slice(i * 3, i * 3 + 3); // [petal, petal, lens] in FACES order
+      // when solved, the 2 petal colors equal the center color → face looks solid
+      expect(new Set(face).size).toBe(1);
+      faceColors.add(face[0]);
     }
     // each face is a distinct home color → color mapping is a bijection over the 6 colors
     expect(faceColors.size).toBe(6);
     expect([...faceColors].sort()).toEqual([...IVY_DEFAULT_COLORS].sort());
   });
 
-  it('scrambles render without crashing and keep the 12 frame triangles fixed', () => {
+  it('scrambles render without crashing; every region gets a real face color (no frame fallback)', () => {
     for (const scr of ['R', "L' D", 'R L D B', "R' L' D' B'"]) {
       const f = fills(renderIvyScrambleSvg(scr));
-      expect(f.length).toBe(30);
-      expect(f.filter((c) => c === FRAME).length).toBe(12); // 2 per face, never colored
+      expect(f.length).toBe(18); // 6 faces × 3 regions
+      expect(f.some((c) => c === FRAME)).toBe(false); // FRAME is only a fallback; never triggers for valid states
+      expect(f.every((c) => (IVY_DEFAULT_COLORS as string[]).includes(c))).toBe(true);
     }
   });
 });
