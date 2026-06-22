@@ -31,7 +31,7 @@ import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
 import { useT } from '@/hooks/useT';
 import './solve_tabs.css';
 
-export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb' | 'sq1' | 'ivy' | '133' | '223' | '233' | '334' | '335' | '337' | '8p' | '15p' | 'sfl' | 'ufo' | 'cm2' | 'dmd' | 'gear' | 'mpyrso' | 'dino' | 'crz3a';
+export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb' | 'sq1' | 'ivy' | '133' | '223' | '233' | '334' | '335' | '336' | '337' | '8p' | '15p' | 'sfl' | 'ufo' | 'cm2' | 'dmd' | 'gear' | 'mpyrso' | 'dino' | 'crz3a';
 export type SolveSub = 'optimal' | 'stage' | 'cfop' | 'fmc';
 
 interface SolveTabsProps {
@@ -58,6 +58,7 @@ const EVENT_ID: Record<SolvePuzzle, string> = {
   '233': '233',
   '334': '334',
   '335': '335',
+  '336': '336',
   '337': '337',
   '8p': '8p',
   '15p': '15p',
@@ -74,7 +75,7 @@ const EVENT_ID: Record<SolvePuzzle, string> = {
 //(5 个图标)。非 WCA 求解项目(ivy 等)塞不进图标行,改走 NonWcaPuzzlePicker 分组下拉
 //(数据驱动:lib/cstimer-scramble 标 solvable 的 puzzle 自动出现),后续 puzzle 免改本组件。
 const PUZZLE_BY_EVENT: Record<string, SolvePuzzle> = {
-  '333': '3x3', '222': '2x2x2', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1', ivy: 'ivy', '133': '133', '223': '223', '233': '233', '334': '334', '335': '335', '337': '337', '8p': '8p', '15p': '15p', sfl: 'sfl', ufo: 'ufo', cm2: 'cm2', dmd: 'dmd', gear: 'gear', mpyrso: 'mpyrso', dino: 'dino', crz3a: 'crz3a',
+  '333': '3x3', '222': '2x2x2', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1', ivy: 'ivy', '133': '133', '223': '223', '233': '233', '334': '334', '335': '335', '336': '336', '337': '337', '8p': '8p', '15p': '15p', sfl: 'sfl', ufo: 'ufo', cm2: 'cm2', dmd: 'dmd', gear: 'gear', mpyrso: 'mpyrso', dino: 'dino', crz3a: 'crz3a',
 };
 // 图标行只放 WCA 求解项目(非 WCA 走分组下拉)。
 const WCA_SOLVE_EVENTS = new Set(['333', '222', 'pyram', 'skewb', 'sq1']);
