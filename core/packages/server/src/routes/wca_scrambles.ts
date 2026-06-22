@@ -86,8 +86,16 @@ function planDifficulty(layout: StepsLayout | null, variant: string, stage: stri
   if (subset.length === 0) return null;
   const allSlots: number[] = [];
   for (const ch of STEP_COLORS6) { const v = st[ch]; if (typeof v !== 'number') return null; allSlots.push(v); }
+  // gmCol = 该 std 阶段「六色最优」的可索引表达式:cross/xcross 用预算列 gm_cross6/gm_xcross6;
+  // xxcross/xxxcross/xxxxcross 用 LEAST(全 6 底色槽) —— 与 migration 0061 的表达式索引同形(slot 序
+  // B,G,O,R,W,Y = allSlots),六色查询直接命中、子集查询作 `gmCol <= max(steps)` 前过滤。
+  // 非 std(eo/pair/f2leo…)无预算 → null,走 (event_id,rnd) 通用飞镖索引。
   const gmCol = variant === 'std'
-    ? (stage === 'cross' ? 's.gm_cross6' : stage === 'xcross' ? 's.gm_xcross6' : null)
+    ? (stage === 'cross' ? 's.gm_cross6'
+      : stage === 'xcross' ? 's.gm_xcross6'
+      : (stage === 'xxcross' || stage === 'xxxcross' || stage === 'xxxxcross')
+        ? `LEAST(${allSlots.map((n) => `s.steps[${n}]`).join(',')})`
+        : null)
     : null;
   let predCol: string;
   if (gmCol && isAll6(colors)) predCol = gmCol;
@@ -237,66 +245,30 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
       // 客户端据此重试而不是误判为空(404 专留给查询成功但 0 行的「确实无匹配」,见末尾)。
       if (!plan) return c.json({ error: 'difficulty data not available', event }, 503);
       const diffWhere = `${plan.predCol} IN (${dSteps.join(',')})`;
-      const isHot = plan.predCol.startsWith('s.gm_');
-      // 子集底色(冷路径)前过滤:gmCol <= max(steps) 走索引,把整分区扫描降到小候选集。
-      // dSteps 已由 parseStepList 校验为整数,内联安全。isHot(全六色)已直接走 gm 列,无需再加。
-      const gmPrefilter = !isHot && plan.gmCol ? ` AND ${plan.gmCol} <= ${Math.max(...dSteps)}` : '';
+      // 子集底色前过滤:子集最小 ∈ steps ⟹ 六色最小 ≤ max(steps),加 `gmCol <= max` 走 gm 列 / std 深阶段
+      // LEAST 表达式索引,把整分区扫描降到小候选集。dSteps 已由 parseStepList 校验为整数,内联安全。
+      // 六色查询 predCol 即 gmCol(已直接命中索引)→ 不再重复加。
+      const gmPrefilter = plan.gmCol && plan.predCol !== plan.gmCol ? ` AND ${plan.gmCol} <= ${Math.max(...dSteps)}` : '';
       let drows: RandomRow[];
-      if (!hasFrom && !hasTo && isHot) {
-        // 热路径:gm 列有索引 → 飞镖采样 ~1ms(同全时段 random,环绕补齐)。
+      if (!hasFrom && !hasTo) {
+        // 全时段统一飞镖采样:rnd>=dart 正向取 count,不足再 rnd<dart 环绕补齐。predCol/前过滤命中
+        // gm_cross6/xcross6 列索引、std 深阶段六色 LEAST 表达式索引、或 (event_id,rnd) 通用索引过滤 —— 一律
+        // LIMIT 提前停,毫秒级(替代旧 ORDER BY random() 整分区扫描:333 ~1.3M 行实测 2.5s,见 migration 0061)。
         const dart = Math.random();
-        drows = await query<RandomRow>(
-          `SELECT ${RANDOM_COLS}
+        const dartSql = (cmp: '>=' | '<') => `SELECT ${RANDOM_COLS}
              FROM wca_scramble_steps s
              ${STEPS_WS_JOIN}
              LEFT JOIN wca_competitions c ON c.id = s.competition_id
              ${OPT_JOIN}
-            WHERE s.event_id = ? AND ${diffWhere} AND s.rnd >= ? ${optFilter}
-            ORDER BY s.rnd, ws.id LIMIT ?`,
-          [event, dart, count],
-        );
+            WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} AND s.rnd ${cmp} ? ${optFilter}
+            ORDER BY s.rnd, ws.id LIMIT ?`;
+        drows = await query<RandomRow>(dartSql('>='), [event, dart, count]);
         if (drows.length < count) {
-          const more = await query<RandomRow>(
-            `SELECT ${RANDOM_COLS}
-               FROM wca_scramble_steps s
-               ${STEPS_WS_JOIN}
-               LEFT JOIN wca_competitions c ON c.id = s.competition_id
-               ${OPT_JOIN}
-              WHERE s.event_id = ? AND ${diffWhere} AND s.rnd < ? ${optFilter}
-              ORDER BY s.rnd, ws.id LIMIT ?`,
-            [event, dart, count - drows.length],
-          );
+          const more = await query<RandomRow>(dartSql('<'), [event, dart, count - drows.length]);
           drows = drows.concat(more);
         }
-      } else if (!hasFrom && !hasTo && optFilter) {
-        // 最优 + 难度(较少用):optimal 作过滤需在 limit 前 join,保持整体 join 后随机。
-        drows = await query<RandomRow>(
-          `SELECT ${RANDOM_COLS}
-             FROM wca_scramble_steps s
-             ${STEPS_WS_JOIN}
-             LEFT JOIN wca_competitions c ON c.id = s.competition_id
-             ${OPT_JOIN}
-            WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} ${optFilter}
-            ORDER BY random() LIMIT ?`,
-          [event, count],
-        );
-      } else if (!hasFrom && !hasTo) {
-        // 子集底色冷路径:先在 steps 表筛 + 随机 + limit count,再 join 取文本/比赛名/最优 —— 只 join
-        // count 行。否则对全候选集(中等步数 bin 可达上万行)做 6 列自然键 join 会慢到秒级(实测某
-        // 三步 bin 9.6s);先 limit 后 join 把同一查询降到 ~0.5s(EXPLAIN 验证)。
-        drows = await query<RandomRow>(
-          `SELECT ${RANDOM_COLS}
-             FROM (SELECT competition_id, event_id, round_type_id, group_id, is_extra, scramble_num
-                     FROM wca_scramble_steps s
-                    WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere}
-                    ORDER BY random() LIMIT ?) s
-             ${STEPS_WS_JOIN}
-             LEFT JOIN wca_competitions c ON c.id = s.competition_id
-             ${OPT_JOIN}`,
-          [event, count],
-        );
       } else {
-        // 难度 + 日期:comp-sampling 叠难度谓词。
+        // 难度 + 日期:comp-sampling 叠难度谓词(+ gmPrefilter 缩候选)。
         const dWhere: string[] = []; const dParams: string[] = [];
         if (hasFrom) { dWhere.push('start_date >= ?'); dParams.push(from); }
         if (hasTo) { dWhere.push('start_date <= ?'); dParams.push(to); }
