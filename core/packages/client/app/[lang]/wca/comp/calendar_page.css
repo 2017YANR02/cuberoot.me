@@ -635,6 +635,12 @@
 .calendar-page .event-bar.reg-urgent:hover {
     background: color-mix(in srgb, var(--destructive) 40%, transparent);
 }
+.calendar-page .event-bar.reg-full {
+    background: color-mix(in srgb, var(--signal-warning) 32%, transparent);
+}
+.calendar-page .event-bar.reg-full:hover {
+    background: color-mix(in srgb, var(--signal-warning) 42%, transparent);
+}
 .calendar-page .event-bar.reg-upcoming {
     background: color-mix(in srgb, var(--signal-info) 22%, transparent);
 }
@@ -740,6 +746,7 @@
 }
 .calendar-page .legend-swatch.swatch-reg-open { background: color-mix(in srgb, var(--signal-success) 60%, transparent); }
 .calendar-page .legend-swatch.swatch-reg-urgent { background: color-mix(in srgb, var(--destructive) 60%, transparent); }
+.calendar-page .legend-swatch.swatch-reg-full { background: color-mix(in srgb, var(--signal-warning) 65%, transparent); }
 .calendar-page .legend-swatch.swatch-reg-upcoming { background: color-mix(in srgb, var(--signal-info) 55%, transparent); }
 .calendar-page .legend-swatch.swatch-reg-closed { background: color-mix(in srgb, var(--text) 18%, transparent); }
 
