@@ -10,10 +10,10 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-/* 名字口径切换(英文名 / 全名 / 本地名):推到右侧,与指标 tab 分开 */
+/* 名字口径切换(英文名 / 全名 / 本地名 / 含曾用名):推到右侧,与指标 tab 分开 */
 .ns-name-modes {
   margin-left: auto;
   display: inline-flex;
@@ -44,30 +44,95 @@
   color: var(--accent-foreground);
 }
 
-/* list */
-.ns-list {
+/* ── 分布(复用 DiscreteHistogram)──
+   把图表组件期望的局部 token 桥接到 /wca 全局 token;
+   --border-strong / --accent / --accent-soft 已是全局 token,组件直接用。 */
+.ns-dist {
+  --bg: var(--background);
+  --surface: var(--card);
+  --text: var(--foreground);
+  --text-sub: var(--muted-foreground);
+  --border: var(--border-default);
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 12px;
 }
 
-.ns-row {
+.ns-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
+.ns-dist-card {
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+
+.ns-empty {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+
+/* ── 摘要统计 ── */
+.ns-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  letter-spacing: .02em;
+  margin-bottom: 12px;
+}
+
+.ns-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ns-stat-cell {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  align-items: flex-start;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--background);
+  border: 1px solid var(--border-default);
 }
 
-/* main: key + bar + count */
-.ns-main {
+.ns-stat-label {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  letter-spacing: .02em;
+}
+
+.ns-stat-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--foreground);
+  line-height: 1.2;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 选中组详情:键 + 人数 + 国旗占比 + 选手名 ── */
+.ns-detail {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ns-detail-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
 
 .ns-key {
   flex: 0 0 auto;
-  min-width: 2.8em;
-  text-align: right;
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
@@ -82,25 +147,8 @@
   margin-left: 2px;
 }
 
-.ns-bar {
-  flex: 1 1 auto;
-  height: 12px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--foreground) 7%, transparent);
-  overflow: hidden;
-}
-
-.ns-bar-fill {
-  height: 100%;
-  min-width: 3px;
-  border-radius: 6px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent));
-}
-
 .ns-count {
   flex: 0 0 auto;
-  min-width: 5.2em;
-  text-align: right;
   font-size: .95rem;
   font-weight: 600;
   color: var(--foreground);
@@ -112,14 +160,6 @@
   font-weight: 500;
   color: var(--muted-foreground);
   margin-left: 2px;
-}
-
-/* sub: 缩进对齐到 bar 起点下方 */
-.ns-sub {
-  padding-left: calc(2.8em + 14px);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 /* country flag + pct chips */
@@ -198,15 +238,17 @@
 @media (max-width: 480px) {
   .ns-key {
     font-size: 1.25rem;
-    min-width: 2.2em;
   }
-  .ns-main {
-    gap: 10px;
+  .ns-stat-grid {
+    gap: 5px;
   }
-  .ns-count {
-    min-width: 0;
+  .ns-stat-cell {
+    padding: 6px 7px;
   }
-  .ns-sub {
-    padding-left: calc(2.2em + 10px);
+  .ns-stat-value {
+    font-size: 1rem;
+  }
+  .ns-dist-card {
+    padding: 12px 14px;
   }
 }
