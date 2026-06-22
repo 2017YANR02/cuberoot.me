@@ -15,8 +15,8 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,
-  LineChart, TrendingDown, Radio, Target, Calculator, Search,
-  ListOrdered, Users, Percent, LayoutGrid, Crown, History, Sparkles, BellRing,
+  LineChart, TrendingDown, Target, Calculator, Search,
+  Users, Percent, LayoutGrid, Crown, History, Sparkles, BellRing,
   type LucideIcon,
 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -41,8 +41,7 @@ const LOOKUP = '__lookup__';
 
 const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon
  }[] = [
-  { path: '/wca/comp',       zh: '比赛',     en: 'Comp',         Icon: Radio
-},
+  // 比赛 / 纪录 / 排名 已上移到首页直达卡,这里不再重复
   { path: '/wca/viz',        zh: '分布',     en: 'Distribution', Icon: LineChart
 },
   { path: '/wca/prediction', zh: '预测',     en: 'Prediction',   Icon: TrendingDown
@@ -55,9 +54,7 @@ const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon
 
 const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; extraQuery?: string
  }[] = [
-  { path: '/wca/records',         zh: '纪录',         en: 'Records',         Icon: Trophy
-},
-  { path: '/wca/all-results',     zh: '排名',         en: 'Rankings',        Icon: ListOrdered },
+  // 纪录 / 排名 已上移到首页直达卡,这里不再重复
   { path: '/wca/cohort-ranks',    zh: '届别排名',     en: 'Cohort Ranks',    Icon: Users
 },
   { path: '/wca/success-rate',    zh: '完成率',       en: 'Success Rate',    Icon: Percent },
