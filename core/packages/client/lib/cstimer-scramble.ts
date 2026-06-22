@@ -95,7 +95,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
 },
   { id: 'helicv',  key: 'helicv',  length: 20, zh: '弧面直升机',       en: 'Curvy Copter',      iconClass: 'unofficial-curvycopter', family: 'twist'
 },
-  { id: 'sq2',     key: 'sq2',     length: 10, zh: '方块二',           en: 'Square-2',          textLabel: 'Sq2',  family: 'sq'
+  { id: 'sq2',     key: 'sq2',     length: 10, zh: '方块二',           en: 'Square-2',          textLabel: 'Sq2',  family: 'sq', solvable: true
 },
   { id: 'ssq1',    key: 'ssq1t',   length: 10, zh: '超 Sq-1',          en: 'Super Sq-1',        textLabel: 'SSq1', family: 'sq' },
   { id: 'bsq',     key: 'bsq',     length: 10, zh: '受限 Sq-1',        en: 'Bandaged Sq-1',     textLabel: 'BSq1', family: 'sq' },
