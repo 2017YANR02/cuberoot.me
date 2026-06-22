@@ -187,6 +187,16 @@ function AnalyzePageInner() {
   const [scramble, setScramble] = useState(
     () => initUrlRef.current.scramble?.replace(/_/g, ' ').trim() || DEFAULT_SCRAMBLE,
   );
+  // 打乱输入框自动撑高,长打乱在窄屏(手机/iOS,无 CSS field-sizing)能完整换行显示
+  const scrambleRef = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = scrambleRef.current;
+    if (!el) return;
+    const grow = () => { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; };
+    grow();
+    window.addEventListener('resize', grow);
+    return () => window.removeEventListener('resize', grow);
+  }, [scramble]);
   const [howfar, setHowfar] = useState<Howfar>(() => {
     const urlV = initUrlRef.current.howfar;
     if (urlV === 1 || urlV === 2 || urlV === 3 || urlV === 4) return urlV;
@@ -470,12 +480,13 @@ function AnalyzePageInner() {
             linkTitle={t('查看大图', 'View full size')}
           />
         </div>
-        <input
+        <textarea
+          ref={scrambleRef}
           className="analyze-scramble"
-          type="text"
+          rows={1}
           value={scramble}
-          onChange={(e) => { setScramble(e.target.value); setWcaMeta(null); }}
-          onKeyDown={(e) => { if (e.key === 'Enter') { void setTool('cfop'); runAnalyze(); } }}
+          onChange={(e) => { setScramble(e.target.value.replace(/\n/g, ' ')); setWcaMeta(null); }}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void setTool('cfop'); runAnalyze(); } }}
           placeholder={t('输入打乱（标准 WCA 记号）', 'Scramble (WCA notation)')}
           spellCheck={false}
           autoCapitalize="off"

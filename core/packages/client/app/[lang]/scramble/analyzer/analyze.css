@@ -51,7 +51,7 @@
 
 .analyze-input-row {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     gap: 0;
     margin-bottom: 0.6rem;
 }
@@ -74,8 +74,14 @@
     padding: 0.55rem 0.75rem;
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 0.9rem;
+    line-height: 1.4;
     color: var(--az-text);
     outline: none;
+    /* 多行自动撑高(JS 控制 height),长打乱在窄屏完整换行 */
+    resize: none;
+    overflow: hidden;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
 }
 
 .analyze-scramble:focus {
