@@ -1971,6 +1971,7 @@ function CalendarPageInner() {
       data-wide-metric={viewMode === 'list' && WIDE_METRICS.has(eventMetric) ? '' : undefined}
       data-comp-none={viewMode === 'list' && compMetric === 'none' ? '' : undefined}
       data-comp-2col={viewMode === 'list' && (compMetric === 'latlng' || compMetric === 'peopleLimit') ? '' : undefined}
+      data-comp-peoplelimit={viewMode === 'list' && compMetric === 'peopleLimit' ? '' : undefined}
     >
       <header className="upcoming-header">
         <h1 className="upcoming-title">

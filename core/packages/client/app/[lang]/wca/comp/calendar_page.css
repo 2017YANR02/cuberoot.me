@@ -1126,6 +1126,8 @@
     --cl-comp-w: 3.8rem;
     --cl-cols: var(--cl-reg-w) 7.2rem 1.4rem var(--cl-name-width, 18rem) var(--cl-country-width, 6rem) var(--cl-city-width, 11rem) 1.6rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
 }
+/* 人数 / 上限是 2-4 位计数,不需要经纬度那么宽,收窄让两列贴近 */
+.calendar-page[data-comp-peoplelimit] { --cl-comp-w: 2.4rem; }
 .calendar-page .comp-list {
     display: flex;
     flex-direction: column;
@@ -1652,6 +1654,7 @@
         --cl-comp-w: 3.4rem;
         --cl-cols: var(--cl-reg-w) 5.5rem 1.2rem var(--cl-name-width, 14rem) var(--cl-country-width, 4.5rem) var(--cl-city-width, 8rem) 1.4rem var(--cl-comp-w) var(--cl-comp-w) repeat(21, var(--cl-ev-w));
     }
+    .calendar-page[data-comp-peoplelimit] { --cl-comp-w: 2.3rem; }
     .calendar-page .event-chips-grid { padding: 4px 8px; gap: 4px; }
     .calendar-page .event-chips--list-header .event-chip { width: 20px; height: 20px; }
     .calendar-page .event-chips--list-header .event-chip .cubing-icon { font-size: 0.85rem; }
