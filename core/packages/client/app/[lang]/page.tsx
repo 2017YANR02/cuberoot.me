@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Heart } from 'lucide-react';
+import { Heart, Radio, Trophy, ListOrdered, type LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import LandingCubeHero from '../_components/LandingCubeHero';
@@ -29,6 +29,14 @@ import { useEffectiveTheme } from '@/lib/theme';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../landing.css';
 import { tr } from '@/i18n/tr';
+
+// 原单张「WCA 统计」hero 拆成四张直达卡;统计卡保留 WCA 标志作品牌锚点,其余用 lucide 图标。
+const WCA_ENTRIES: { href: string; zh: string; en: string; Icon?: LucideIcon; img?: string }[] = [
+  { href: '/wca/comp',        zh: '比赛', en: 'Competitions', Icon: Radio },
+  { href: '/wca/records',     zh: '纪录', en: 'Records',      Icon: Trophy },
+  { href: '/wca/all-results', zh: '排名', en: 'Rankings',     Icon: ListOrdered },
+  { href: '/wca',             zh: '统计', en: 'Statistics',   img: '/icons/wca.svg' },
+];
 
 export default function LandingPage() {
   // Landing tab title is just the brand, no page suffix — matches Vite's
@@ -66,16 +74,21 @@ export default function LandingPage() {
 
       <OngoingComps lang={lang} />
 
-      {/* WCA full-width hero — top-level entry, not in any section */}
-      <Link href="/wca" className="wca-hero" prefetch={false}>
-        <img src="/icons/wca.svg" alt="WCA" className="wca-hero-logo" />
-        <div className="wca-hero-meta">
-          <div className="wca-hero-title">{tr({ zh: 'WCA 统计', en: 'WCA Statistics'
-        })}</div>
-          <div className="wca-hero-sub">{tr({ zh: '魔方世界所有数据切片', en: 'Every slice of the cubing world'
-        })}</div>
-        </div>
-      </Link>
+      {/* WCA 入口 — 顶层,原单张「WCA 统计」hero 拆成四张直达卡:比赛 / 纪录 / 排名 / 统计 */}
+      <div className="wca-hero-grid">
+        {WCA_ENTRIES.map((e) => (
+          <Link key={e.href} href={e.href} className="wca-hero-card" prefetch={false}>
+            <div className="wca-hero-card-icon">
+              {e.img
+                ? <img src={e.img} alt="WCA" className="wca-hero-card-logo" />
+                : e.Icon
+                  ? <e.Icon size={30} strokeWidth={1.5} />
+                  : null}
+            </div>
+            <div className="wca-hero-card-name">{tr({ zh: e.zh, en: e.en })}</div>
+          </Link>
+        ))}
+      </div>
 
       <div className="cards-sections">
         {SECTIONS.map((sec) => (

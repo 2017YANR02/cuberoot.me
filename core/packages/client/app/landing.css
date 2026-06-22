@@ -68,14 +68,22 @@
 }
 
 /* ── WCA full-width hero (顶层入口,在 SECTIONS 之上) ── */
-.landing-page .wca-hero {
-    display: flex;
-    align-items: center;
-    gap: 1.75rem;
+/* WCA 入口:原单张 hero 拆成四张直达卡(比赛 / 纪录 / 排名 / 统计) */
+.landing-page .wca-hero-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
     width: 100%;
     max-width: 1100px;
     margin: 0 0 5rem;
-    padding: 2.25rem 2.75rem;
+}
+.landing-page .wca-hero-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
+    padding: 2rem 1rem;
     background: linear-gradient(135deg, var(--surface) 0%, color-mix(in srgb, var(--surface) 85%, var(--bg)) 100%);
     border: 1px solid var(--border-strong, var(--border));
     border-radius: 16px;
@@ -83,40 +91,34 @@
     color: var(--text);
     transition: border-color 0.18s ease, transform 0.18s ease;
 }
-.landing-page .wca-hero:hover {
+.landing-page .wca-hero-card:hover {
     border-color: var(--accent);
     transform: translateY(-1px);
 }
-.landing-page .wca-hero-logo {
-    width: 64px;
-    height: 64px;
-    flex-shrink: 0;
-    border-radius: 14px;
+.landing-page .wca-hero-card-icon {
+    display: flex;
+    color: var(--accent);
+}
+.landing-page .wca-hero-card-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 }
-.landing-page .wca-hero-meta {
-    flex: 1;
-    min-width: 0;
-}
-.landing-page .wca-hero-title {
+.landing-page .wca-hero-card-name {
     font-family: var(--font-serif);
-    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-size: 1.2rem;
     font-weight: 500;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
     line-height: 1.1;
-    margin-bottom: 0.35rem;
-}
-.landing-page .wca-hero-sub {
-    color: var(--text-sub);
-    font-size: 0.92rem;
-    line-height: 1.5;
 }
 @media (max-width: 640px) {
-    .landing-page .wca-hero {
-        flex-direction: column;
-        text-align: center;
-        padding: 1.75rem 1.25rem;
-        gap: 1rem;
+    .landing-page .wca-hero-grid {
+        grid-template-columns: repeat(2, 1fr);
+        margin-bottom: 3rem;
+    }
+    .landing-page .wca-hero-card {
+        padding: 1.5rem 0.75rem;
     }
 }
 
