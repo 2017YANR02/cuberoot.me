@@ -153,40 +153,45 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
           <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} propose={!admin} />
         </div>
       )}
-      {grouped.map(({ comp, rows }) => {
-        // event 内只在第一行显示项目名,视觉分组
-        let lastEvent = '';
-        return (
-          <div key={comp.id} className="wp-bycomp-block">
-            <div className="wp-bycomp-header">
-              <Link
-                {...compLinkProps(comp.id, { view: 'result' })}
-                prefetch={false}
-                className="wp-bycomp-name"
-              ><CompCell compId={comp.id} compName={comp.name} isZh={isZh} /></Link>
-              <span className="wp-bycomp-date">{formatDateRangeIso(comp.start_date, comp.end_date)}</span>
-            </div>
-            <div className="wp-table-scroll">
-              <table className="wp-bycomp-table">
-                <thead>
-                  <tr>
-                    <th>{t('项目', 'Event')}</th>
-                    <th>
-                      <span className="wp-th-info">
-                        {t('轮次', 'Round')}
-                        <InfoTooltip content={t(ROUND_HINT_ZH, ROUND_HINT_EN)} />
-                      </span>
-                    </th>
-                    <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
-                    <th>{t('单次', 'Single')}</th>
-                    <th>{t('平均', 'Avg')}</th>
-                    <th className="wp-th-attempts">
-                      <span className="wp-att-head"><span>{t('详细成绩', 'Attempts')}</span></span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => {
+      {/* 合并成单表:列头只在表顶出现一次并 sticky 悬浮(仿纪录 tab);每场比赛 = 一个 <tbody> 组,
+          组头行(比赛名 + 日期)跨整行,列头不再每场重复 */}
+      <div className="wp-sticky-scroll">
+        <table className="wp-bycomp-table wp-sticky-table">
+          <thead>
+            <tr>
+              <th>{t('项目', 'Event')}</th>
+              <th>
+                <span className="wp-th-info">
+                  {t('轮次', 'Round')}
+                  <InfoTooltip content={t(ROUND_HINT_ZH, ROUND_HINT_EN)} />
+                </span>
+              </th>
+              <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
+              <th>{t('单次', 'Single')}</th>
+              <th>{t('平均', 'Avg')}</th>
+              <th className="wp-th-attempts">
+                <span className="wp-att-head"><span>{t('详细成绩', 'Attempts')}</span></span>
+              </th>
+            </tr>
+          </thead>
+          {grouped.map(({ comp, rows }) => {
+            // event 内只在第一行显示项目名,视觉分组
+            let lastEvent = '';
+            return (
+              <tbody key={comp.id} className="wp-bycomp-group">
+                <tr className="wp-bycomp-group-row">
+                  <th colSpan={6} scope="colgroup">
+                    <div className="wp-bycomp-grouphead">
+                      <Link
+                        {...compLinkProps(comp.id, { view: 'result' })}
+                        prefetch={false}
+                        className="wp-bycomp-name"
+                      ><CompCell compId={comp.id} compName={comp.name} isZh={isZh} /></Link>
+                      <span className="wp-bycomp-date">{formatDateRangeIso(comp.start_date, comp.end_date)}</span>
+                    </div>
+                  </th>
+                </tr>
+                {rows.map((r) => {
                     const rank = prRank.get(r.id);
                     const liveRank = r.live ? livePrRanks.get(r.id) : null;
                     const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
@@ -326,12 +331,11 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                       </tr>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      })}
+              </tbody>
+            );
+          })}
+        </table>
+      </div>
       {editTarget && (
         <ResultChangeEditor
           target={editTarget}
