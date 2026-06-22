@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,
   LineChart, TrendingDown, Target, Calculator, Search,
-  Users, Percent, LayoutGrid, Crown, History, Sparkles, BellRing,
+  Users, Percent, LayoutGrid, Crown, Sparkles, BellRing,
   type LucideIcon,
 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -61,8 +61,6 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; ex
   { path: '/wca/all-events-done', zh: '全项目达成',   en: 'All Events Done', Icon: LayoutGrid
 },
   { path: '/wca/grand-slam',      zh: '大满贯',       en: 'Grand Slam',      Icon: Crown
-},
-  { path: '/wca/all-results', extraQuery: 'show=persons', zh: '历史排名', en: 'Historical Ranks', Icon: History
 },
   { path: '/wca/fun-stats',       zh: '趣味统计',     en: 'Fun Stats',       Icon: Sparkles
 },
