@@ -332,6 +332,7 @@ function computePodiumGroups(data: CompData): PodiumGroup[] {
 interface CompRecordEntry {
   ev: EventMeta;
   res: LiveResult;
+  roundId: string; // 纪录所在轮次 (点击行打开该轮成绩详情)
   type: 'single' | 'average';
   tag: string;   // WR / AsR / NR / ...
   value: number; // single→best, average→effectiveAvg
@@ -356,7 +357,7 @@ function computeCompRecords(data: CompData): CompRecordGroup[] {
           if (!tag || value <= 0) return;
           const key = `${ev.i}|${res.n}|${type}`;
           const prev = best.get(key);
-          if (!prev || value < prev.value) best.set(key, { ev, res, type, tag, value });
+          if (!prev || value < prev.value) best.set(key, { ev, res, roundId: rd.i, type, tag, value });
         };
         push('single', res.sr, res.b);
         push('average', String(res.ar || ''), effectiveAvg(res));
@@ -1495,7 +1496,7 @@ export default function CompDetailPage() {
                   groups={compRecords}
                   users={data.users}
                   isZh={isZh}
-                  onClickCuber={n => setModal({ kind: 'all', number: n })}
+                  onClickCuber={(n, eventId, roundId) => setModal({ kind: 'round', number: n, eventId, roundId })}
                 />
                 {podiumGroups.length > 0 && (
                   <h2 className="comp-pod-section-h">{tr({ zh: '领奖台', en: 'Podiums'
@@ -1515,7 +1516,7 @@ export default function CompDetailPage() {
               admin={isAdmin}
               onEdit={setEditTarget}
               onRefresh={refreshChanges}
-              onClickCuber={n => setModal({ kind: 'all', number: n })}
+              onClickCuber={(n, eventId, roundId) => setModal({ kind: 'round', number: n, eventId, roundId })}
             />
           </>
         ) : !isPsych ? (
@@ -1971,7 +1972,7 @@ interface PodiumViewProps {
   isZh: boolean;
   pbMap: Record<string, PbByEvent | null>;
   compIso2?: string;
-  onClickCuber: (number: number) => void;
+  onClickCuber: (number: number, eventId: string, roundId: string) => void;
   changeMap?: Map<string, ResultChange[]>;
   compId?: string;
   compName?: string;
@@ -2007,7 +2008,7 @@ function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber, change
             admin={admin}
             onEdit={onEdit}
             onRefresh={onRefresh}
-            onClickCuber={onClickCuber}
+            onClickCuber={n => onClickCuber(n, g.ev.i, g.rd.i)}
           />
         </section>
       ))}
@@ -2019,7 +2020,7 @@ interface CompRecordsViewProps {
   groups: CompRecordGroup[];
   users: Record<string, User>;
   isZh: boolean;
-  onClickCuber: (number: number) => void;
+  onClickCuber: (number: number, eventId: string, roundId: string) => void;
 }
 
 // 比赛纪录:逐项目列出本场产生的官方纪录 (单次 / 平均),复用成绩表的列结构与记录标志。
@@ -2057,7 +2058,7 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
                       <tr
                         key={`${e.res.n}:${e.type}:${idx}`}
                         className={`${idx % 2 === 1 ? 'row-odd' : ''} comp-row-clickable`}
-                        onClick={() => onClickCuber(e.res.n)}
+                        onClick={() => onClickCuber(e.res.n, e.ev.i, e.roundId)}
                       >
                         <td className="td-person">
                           <Flag iso2={iso2} className="comp-flag" />
