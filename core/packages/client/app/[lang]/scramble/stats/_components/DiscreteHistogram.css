@@ -93,3 +93,11 @@
 .scramble-hist-bar-clickable:hover {
   opacity: 1 !important;
 }
+
+/* y 轴可点竖带:hover 浮现一层淡 accent 底,提示「点这里切换 %/计数」 */
+.scramble-hist-yaxis-hit {
+  transition: fill 0.15s ease;
+}
+.scramble-hist-yaxis-hit:hover {
+  fill: color-mix(in srgb, var(--accent) 9%, transparent);
+}
