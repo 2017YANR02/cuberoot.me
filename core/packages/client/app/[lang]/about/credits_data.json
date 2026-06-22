@@ -188,5 +188,19 @@
     "zh": "/regulation 规则页:检查 / 打乱 / 判定 / 罚时等核心条款整理自 WCA 官方《竞赛规则与指南》;末节「拼装缺陷判定」的 11 张配图 + 文字移植自 WCA Regulations Committee《Regulation 5b5f Visual Guide》(均已注明来源)",
     "en": "/regulation page: core articles (inspection / scrambling / judging / penalties) compiled from the official WCA Regulations & Guidelines; the assembly-defect section reproduces the 11 photos + text from the WCA Regulations Committee's Regulation 5b5f Visual Guide (all credited)",
     "long_en": "the `/regulation` page summarizes the most-asked WCA Regulations (inspection, scrambling, solved-state misalignment, +2/DNF, time limits, special events, puzzle rules) with diagrams; its final section reproduces, with attribution, the text and all example photos of the WCA Regulations Committee's official 5b5f Visual Guide slide deck on judging partially-detached / not-fully-placed pieces"
+  },
+  {
+    "name": "Herbert Kociemba — Two-Phase Algorithm & Cube Explorer",
+    "url": "https://kociemba.org/cube.htm",
+    "zh": "Kociemba 两阶段算法 + 立方坐标模型(corner/edge 排列 / twist / flip 编码、面转表):/scramble/solver 的 3×3 两阶段解(含 crz3a 疯狂 3×3)、STM 最优解器的状态编码、cube48opt 服务端最优解器都基于此;Cube Explorer 是已知唯一的 STM 最优解器(参照)",
+    "en": "Kociemba's two-phase algorithm + cube coordinate model (corner/edge perm, twist, flip encoders; face-move tables) underpin the /scramble/solver 3×3 two-phase solve (incl. the crz3a Crazy-3×3 solver), the STM optimal solver's state encoding, and the server-side cube48opt optimal solver; Cube Explorer is the only known prior STM-optimal solver (reference)",
+    "long_en": "Herbert Kociemba's two-phase algorithm and the Singmaster cubie coordinate model (corner/edge permutation ranks, corner-twist / edge-flip ranks, face-move arrays — also as ported in cs0x7f's min2phase.js) are the basis of the site's client-side 3×3 two-phase solver (the derive-scramble flow + the crz3a solver), the new pure-TS 3×3×3 STM optimal solver's state encoding (cross-validated against these tables), and the server-side cube48opt optimal-solve daemon. Cube Explorer (kociemba.org) is the only known pre-existing STM-optimal solver — the reference our STM goal-test (centers must end home) follows"
+  },
+  {
+    "name": "Richard E. Korf — IDA* + Pattern Databases",
+    "url": "https://web.cs.ucla.edu/~korf/",
+    "zh": "Korf 的 IDA* + 模式数据库(AAAI 1997)+ 滑块 walking-distance 启发:STM 最优解器的角表(8!×3⁷)+ 双 6 棱表(12P6×2⁶)、h=max(...) 可采纳启发,数字华容道 15p 的 walking-distance,cube48opt 3×3 最优解都出自此法",
+    "en": "Korf's IDA* with pattern databases (AAAI 1997) + the sliding-tile walking-distance heuristic: the STM optimal solver's corner PDB (8!×3⁷) + two 6-edge PDBs (12P6×2⁶) with h = max(...), the 15-puzzle (15p) walking-distance optimal solve, and cube48opt's 3×3 optimal solve all use this method",
+    "long_en": "Richard E. Korf's 'Finding Optimal Solutions to Rubik's Cube Using Pattern Databases' (AAAI 1997) — max/additive pattern-database IDA* — is the method behind the pure-TS 3×3×3 STM optimal solver (corner PDB 8!×3⁷ + two disjoint 6-edge PDBs 12P6×2⁶, admissible h = max of EXACT BFS distances rebuilt over the 27 STM generators) and, via his walking-distance heuristic, the 15-puzzle optimal solver (/scramble/solver 15p); the server-side cube48opt 3×3 optimal-solve daemon is in the same lineage"
   }
 ]
