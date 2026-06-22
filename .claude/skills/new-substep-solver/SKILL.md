@@ -7,6 +7,7 @@ description: "用户要造一个新求解器时用。**先分流**:3x3 子阶段
 
 ## §0 先分流(造任何求解器前先判这一步)
 
+- **借用必注明(铁律,2026-06-22)**:求解器用了别人的东西(cstimer 移动语义照抄 / wrap cstimer 自带 solver 当引擎:dino=redi、mpyrso=两阶段 / crz3a=站内 kociemba / STM=Korf / cubelib 等)→ ① solver 文件头注 + `/code/solvers/_fleet.ts` 方法文案写清出处,② `/about` 的 `credits_data.json` 补/更新一条(已收录 27 条,先查重)。无出处不发。
 - **大状态空间 / 3x3 子阶段**(需大表 + 真题统计管道)→ 走下面的 substep 一页纸 + `solver/VARIANT_PLAYBOOK.md`(Rust + WASM)。
 - **小状态非 WCA 整解求解器**(状态 ≤ ~10^6 可整枚举,如枫叶 Ivy 29,160 = 81×360)→ **纯 TS 全图 BFS,绝不碰 Rust/WASM/下载表/数据管道**。范本 = `packages/client/lib/ivy-solver.ts` + `_IvySolver.tsx` + `gen/_svg/ivy_svg.ts`(2026-06-20)。固定套路:
 
