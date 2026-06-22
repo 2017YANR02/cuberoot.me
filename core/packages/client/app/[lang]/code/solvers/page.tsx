@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Cpu, Database, Gauge, HardDrive, Globe, Layers, CircleCheck, CircleDashed, CircleDot } from 'lucide-react';
+import { Cpu, Database, Gauge, HardDrive, Globe, Layers, Boxes, CircleCheck, CircleDashed, CircleDot } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { statsUrl } from '@/lib/stats-base';
 import { fetchPuzzleDistribution } from '@/lib/puzzle-distribution';
@@ -78,6 +78,100 @@ const BROWSER: BrowserSolver[] = [
   { key: '2x2x2 pocket', zhEngine: 'PocketSolverWasm (零表下载, 3.6MB 距离表现场建, 免 132MB 移动表)', enEngine: 'PocketSolverWasm (zero downloads, 3.6MB distance table built in-wasm, no 132MB move table)', zhLatency: '首算惰性建表后即时; /scramble/solver?event=222 在线出最优解', enLatency: 'lazy first-solve build, then instant; serves optimal solutions on /scramble/solver?event=222' },
   { key: 'Pyraminx', zhEngine: 'PyraminxSolverWasm (零表下载, 0.9MB 核心距离表现场建, 免 29.9MB 移动表)', enEngine: 'PyraminxSolverWasm (zero downloads, 0.9MB core distance table built in-wasm, no 29.9MB move table)', zhLatency: '首算惰性建表 ~0.6s 后即时; /scramble/solver?event=pyram 在线出最优解', enLatency: 'lazy first-solve build (~0.6s), then instant; serves optimal solutions on /scramble/solver?event=pyram' },
   { key: 'Skewb', zhEngine: 'SkewbSolverWasm (零表下载, 3.0MB 距离表现场建, 转移件级现算免 ~100.8MB 联合移动表)', enEngine: 'SkewbSolverWasm (zero downloads, 3.0MB distance table built in-wasm, piecewise transitions — no ~100.8MB joint move table)', zhLatency: '首算惰性建表 ~3.3s 后即时; /scramble/solver?event=skewb 在线出最优解', enLatency: 'lazy first-solve build (~3.3s), then instant; serves optimal solutions on /scramble/solver?event=skewb' },
+];
+
+// 纯 TS 非 WCA 求解器舰队 (NONWCA_PUZZLE_LOOP, lib/<x>-solver.ts). 全在浏览器现算, 无 Rust / 无 WASM /
+// 无大表 / 无服务器. 状态数 (可达闭包, 多超 2^53) 一律预格式化字符串, 禁 number 字面量 (§0.0 #4).
+// tier: A 现场全 BFS 最优 / C 单实例 IDA* 可证最优 / D 近最优或有界 (诚实标, §0.0 #3).
+// quality 三桶: 'optimal' (A/C 可证最短) / 'near' (近最优, 非全局最优) / 'bounded' (有效 + 有界, 非最优).
+// 数据核实自各 solver 头注 + solver/NONWCA_PUZZLE_LOOP.md §1/§2 (2026-06-22).
+type TsTier = 'A' | 'C' | 'D';
+type TsQuality = 'optimal' | 'near' | 'bounded';
+interface NonWcaTsSolver {
+  event: string; // cstimer event id → /scramble/solver?event=<event>
+  zhName: string; enName: string;
+  tier: TsTier;
+  quality: TsQuality;
+  states: string; // 可达态闭包, 预格式化字符串 (可超 2^53)
+  zhStates?: string; enStates?: string; // states 旁补充 (近似量级 / 口径)
+  gods?: string; // 上帝之数 / MAX_LENGTH (带口径标签)
+  zhMethod: string; enMethod: string;
+}
+
+// 顺序: 可证最优 (A 现场 BFS → C 单实例 IDA*) → 近最优 (D hybrid) → 有效 + 有界 (D 构造式).
+const NONWCA_TS: NonWcaTsSolver[] = [
+  // ── TIER A: 现场全 BFS, 整图可达态 ≤ ~3M, 每解可证最短 ──
+  { event: 'ivy', zhName: '枫叶魔方', enName: 'Ivy Cube', tier: 'A', quality: 'optimal',
+    states: '29,160', gods: 'God 8',
+    zhMethod: '进页一次全图 BFS (81×360 态), 查表即最短', enMethod: 'one full-graph BFS on load (81×360 states), table lookup = shortest' },
+  { event: '133', zhName: '1×3×3 花型', enName: '1×3×3 Floppy', tier: 'A', quality: 'optimal',
+    states: '192', zhStates: '= 24×16/2', enStates: '= 24×16/2', gods: 'God 8',
+    zhMethod: '全图 BFS (奇偶约束砍半的真闭包), 套 Ivy 范式', enMethod: 'full-graph BFS (true closure halved by a parity constraint), Ivy pattern' },
+  { event: 'sfl', zhName: '超薄花型', enName: 'Super Floppy', tier: 'A', quality: 'optimal',
+    states: '3,041,280', zhStates: '= P(12,4)×4⁴', enStates: '= P(12,4)×4⁴', gods: 'God 13',
+    zhMethod: '整图 BFS (整数排名编码, build+BFS ~573ms)', enMethod: 'full-graph BFS (integer-rank encoding, build+BFS ~573ms)' },
+  { event: 'ufo', zhName: 'UFO', enName: 'UFO', tier: 'A', quality: 'optimal',
+    states: '60,480', gods: 'God 10',
+    zhMethod: '整图 BFS <50ms (球半刚体锁, 真闭包远低于着色上界)', enMethod: 'full-graph BFS <50ms (rigid ball-halves; true closure far below the coloring bound)' },
+  { event: 'cm2', zhName: 'Cmetrick Mini', enName: 'Cmetrick Mini', tier: 'A', quality: 'optimal',
+    states: '165,888', zhStates: '= 24⁴/2', enStates: '= 24⁴/2', gods: 'God 10',
+    zhMethod: '2×2 球阵整图 BFS (face-turn 口径, build+BFS ~293ms)', enMethod: '2×2 ball-grid full BFS (face-turn metric, build+BFS ~293ms)' },
+  { event: 'dmd', zhName: '钻石', enName: 'Diamond', tier: 'A', quality: 'optimal',
+    states: '138,240', gods: 'God 10',
+    zhMethod: '八面体面转整图 BFS; cstimer 真引擎 round-trip 锚定', enMethod: 'octahedron face-turn full BFS; anchored by cstimer real-engine round-trip' },
+  { event: 'gear', zhName: '齿轮魔方', enName: 'Gear Cube', tier: 'A', quality: 'optimal',
+    states: '41,472', gods: 'God 6 (face-turn)',
+    zhMethod: '齿轮含齿旋转编码整图 BFS ~173ms (实测落 TIER A 非 B)', enMethod: 'gear-tooth-encoded full BFS ~173ms (measured into TIER A, not B)' },
+  { event: '8p', zhName: '八数码', enName: '8-Puzzle', tier: 'A', quality: 'optimal',
+    states: '181,440', zhStates: '= 9!/2', enStates: '= 9!/2', gods: 'God 31',
+    zhMethod: '滑块类整图 BFS (复用 slider-puzzle 核, 15p 同源)', enMethod: 'sliding-tile full BFS (shared slider-puzzle core, same as 15p)' },
+  // ── TIER C: 单实例 IDA* + 可采纳启发式, 每解可证最短 ──
+  { event: '233', zhName: '2×3×3 多米诺', enName: '2×3×3 Domino', tier: 'C', quality: 'optimal',
+    states: '1,625,702,400', zhStates: '= 8!·8! ≈ 1.63×10⁹', enStates: '= 8!·8! ≈ 1.63×10⁹', gods: '样本 ≤16 / sampled ≤16',
+    zhMethod: '8 角 + 8 棱各满 PDB, IDA* + max(角,棱) 可采纳启发式出可证最短', enMethod: 'full corner & edge PDBs; IDA* + admissible max(corner, edge) → provably shortest' },
+  // ── TIER D: 两阶段约简, 近最优 (浅态可证最优捷径, 深态诚实标近最优) ──
+  { event: '335', zhName: '3×3×5', enName: '3×3×5', tier: 'D', quality: 'near',
+    states: '156,067,430,400', zhStates: '≈ 1.56×10¹¹', enStates: '≈ 1.56×10¹¹', gods: 'cap CUBOID335_MAX_LENGTH=45',
+    zhMethod: 'phase-1 IDDFS 归约进 H + phase-2 重叠 PDB; 采样 98.25% 可证最优, 中位 ~14', enMethod: 'phase-1 IDDFS into H + phase-2 overlapping PDBs; 98.25% provably optimal in sampling, median ~14' },
+  { event: '337', zhName: '3×3×7', enName: '3×3×7', tier: 'D', quality: 'near',
+    states: '126,859,598,081,556,480,000', zhStates: '≈ 1.27×10²⁰', enStates: '≈ 1.27×10²⁰', gods: 'cap CUBOID337_MAX_LENGTH=80',
+    zhMethod: '两阶段约简 hybrid (16 token); 浅态可证最优捷径, 余诚实近最优', enMethod: 'two-phase reduction hybrid (16 tokens); optimal shortcut on shallow states, else honest near-optimal' },
+  { event: '334', zhName: '3×3×4', enName: '3×3×4', tier: 'D', quality: 'near',
+    states: '165,181,768,335,360,000', zhStates: '≈ 1.65×10¹⁷ (物理态)', enStates: '≈ 1.65×10¹⁷ (physical)', gods: 'cap CUBOID334_MAX_LENGTH=40',
+    zhMethod: '两阶段约简 hybrid; 中位 ~17, 浅态可证最优捷径', enMethod: 'two-phase reduction hybrid; median ~17, optimal shortcut on shallow states' },
+  { event: '336', zhName: '3×3×6', enName: '3×3×6', tier: 'D', quality: 'near',
+    states: '8,391,762,413,094,961,152,000,000', zhStates: '≈ 8.4×10²⁴ (物理态)', enStates: '≈ 8.4×10²⁴ (physical)', gods: 'cap CUBOID336_MAX_LENGTH=80',
+    zhMethod: '两阶段约简 hybrid (21 token 全刚体); 7 张重叠 EXACT joint-triple PDB max 启发', enMethod: 'two-phase reduction hybrid (21 rigid tokens); 7 overlapping EXACT joint-triple PDBs max heuristic' },
+  { event: 'crz3a', zhName: '疯狂 3×3', enName: 'Crazy 3×3', tier: 'D', quality: 'near',
+    states: '~4.3×10¹⁹', zhStates: '标准 3×3', enStates: 'standard 3×3', gods: 'bound 26 (HTM)',
+    zhMethod: '底层即普通 3×3, 直接 import 站内 kociemba 两阶段; 典型 18–23 HTM', enMethod: 'really a plain 3×3 — imports the site kociemba two-phase; typically 18–23 HTM' },
+  { event: 'mpyrso', zhName: '大金字塔', enName: 'Master Pyraminx', tier: 'D', quality: 'near',
+    states: '~4.6×10¹¹', gods: '均值 ~21 / mean ~21 (face-turn)',
+    zhMethod: 'wrap cstimer 自带两阶段 solver 当引擎 (无全 BFS / 无表)', enMethod: 'wraps cstimer’s own two-phase solver as the engine (no full BFS, no tables)' },
+  // ── TIER D: 从零构造式约简, 有效 + 有界 (非最优) ──
+  { event: 'sq2', zhName: '方块二', enName: 'Square-2', tier: 'D', quality: 'bounded',
+    states: '76,828,484,468,736,000', zhStates: '= 12·18! ≈ 7.68×10¹⁶', enStates: '= 12·18! ≈ 7.68×10¹⁶', gods: 'cap SQ2_MAX_LENGTH=130',
+    zhMethod: '构造式 3-循环约简 (parity fix + conjugator 表路由); 均值 ~70 元组', enMethod: 'constructive 3-cycle reduction (parity fix + conjugator routing); mean ~70 tuples' },
+  { event: 'ssq1', zhName: '超 Sq-1', enName: 'Super Square-1', tier: 'D', quality: 'bounded',
+    states: '≈1.15×10²⁵', zhStates: '两个耦合 Sq-1', enStates: 'two coupled Sq-1s', gods: 'cap SSQ1_MAX_LENGTH=60',
+    zhMethod: '真两阶段形状 + 置换约简 (单面 3,678 形状); 采样双峰 (奇偶分支)', enMethod: 'genuine two-phase shape + permutation reduction (3,678 single-face shapes); bimodal sampling (parity branch)' },
+  { event: 'bsq', zhName: '受限 Sq-1', enName: 'Bandaged Square-1', tier: 'D', quality: 'bounded',
+    states: '518,400', zhStates: '形状 coset = 720² (全群更大, 不可全 BFS)', enStates: 'shape coset = 720² (full group larger, no full BFS)', gods: 'cap BSQ_MAX_LENGTH=90',
+    zhMethod: '构造式三阶段 (形状→角排列→定角棱排列), 只吐合法 (x,0)+/', enMethod: 'constructive three stages (shape → corner perm → fixed-corner edge perm), legal (x,0)+/ only' },
+];
+
+// 已登记但尚未建求解器的 TIER D2 backlog (诚实: 未建). 见 solver/NONWCA_PUZZLE_LOOP.md §1 TIER D2 表.
+const NONWCA_TS_PLANNED: ReadonlyArray<{ event: string; zh: string; en: string }> = [
+  { event: 'cm3', zh: 'Cmetrick', en: 'Cmetrick' },
+  { event: 'bic', zh: '联体魔方', en: 'Bicube' },
+  { event: 'sia113', zh: '联体 1×1×3', en: 'Siamese 1×1×3' },
+  { event: 'sia123', zh: '联体 1×2×3', en: 'Siamese 1×2×3' },
+  { event: 'sia222', zh: '联体 2×2×2', en: 'Siamese 2×2×2' },
+  { event: 'prcp', zh: '五魔金字塔', en: 'Pyraminx Crystal' },
+  { event: 'giga', zh: '六阶五魔', en: 'Gigaminx' },
+  { event: 'ctico', zh: '二十面体', en: 'Icosamate' },
+  { event: 'heli', zh: '直升机', en: 'Helicopter' },
+  { event: 'helicv', zh: '弧面直升机', en: 'Curvy Copter' },
 ];
 
 // 每个原生分析器实际 mmap 的磁盘表 (D:\cube\cuberoot.me\solver\tables\, 大小为真实文件字节).
@@ -260,6 +354,19 @@ function fmtInt(n: number): string {
 
 const STATUS_ICON = { complete: CircleCheck, partial: CircleDot, seed: CircleDashed } as const;
 
+// TIER 标签 (A 现场 BFS / C 单实例 IDA* / D 两阶段约简).
+const TS_TIER_LABEL: Record<TsTier, { zh: string; en: string }> = {
+  A: { zh: 'A 现场 BFS', en: 'A live BFS' },
+  C: { zh: 'C 单实例 IDA*', en: 'C per-instance IDA*' },
+  D: { zh: 'D 两阶段约简', en: 'D two-phase' },
+};
+// quality 三桶, 诚实标: 可证最优 / 近最优 / 有效 + 有界.
+const TS_QUALITY: Record<TsQuality, { zh: string; en: string; cls: string }> = {
+  optimal: { zh: '可证最优', en: 'provably optimal', cls: 'solv-q-optimal' },
+  near: { zh: '近最优', en: 'near-optimal', cls: 'solv-q-near' },
+  bounded: { zh: '有效 + 有界', en: 'valid + bounded', cls: 'solv-q-bounded' },
+};
+
 export default function SolversPage() {
   const { i18n } = useTranslation();
   const zh = i18n.language.startsWith('zh');
@@ -332,14 +439,15 @@ export default function SolversPage() {
           <h1 className="solv-title">solvers<span className="solv-cursor">_</span></h1>
           <p className="solv-sub">
             {zh
-              ? '魔方分阶段求解器舰队:本机原生分析器(喂打乱分布 + 比赛预计算)与浏览器端 WASM(gen 页现算)的进度、吞吐、内存。'
-              : 'The staged cube-solver fleet: native analyzers (feeding the scramble distribution + per-comp precompute) and browser WASM (live solve on the gen page) — coverage, throughput, memory.'}
+              ? '魔方求解器舰队:本机原生分析器(喂打乱分布 + 比赛预计算)、浏览器端 WASM(gen 页现算),与一支纯 TypeScript 非 WCA 求解器(浏览器现算,无 Rust / 无表)。进度、吞吐、内存、覆盖。'
+              : 'The cube-solver fleet: native analyzers (feeding the scramble distribution + per-comp precompute), browser WASM (live solve on the gen page), and a pure-TypeScript non-WCA solver fleet (browser-side, no Rust, no tables) — coverage, throughput, memory.'}
           </p>
           <div className="solv-herostats">
             <div className="solv-stat"><span className="solv-stat-num">{NATIVE.length}</span><span className="solv-stat-label">{zh ? '原生分析器' : 'native analyzers'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">~51<small>GB</small></span><span className="solv-stat-label">{zh ? '剪枝表' : 'pruning tables'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">{completeN}<small>/{NATIVE.length}</small></span><span className="solv-stat-label">{zh ? '已补齐' : 'fully covered'}</span></div>
             <div className="solv-stat"><span className="solv-stat-num">0.9–1.25M<small>/s</small></span><span className="solv-stat-label">{zh ? '吞吐跨度' : 'throughput span'}</span></div>
+            <div className="solv-stat"><span className="solv-stat-num">{NONWCA_TS.length}</span><span className="solv-stat-label">{zh ? '纯 TS 非 WCA' : 'pure-TS non-WCA'}</span></div>
           </div>
         </header>
 
@@ -538,6 +646,54 @@ export default function SolversPage() {
             {zh
               ? '浏览器装不下 GB 级 huge 表, 故深阶段 (xxxxcross) 比原生慢几个量级; 无 SharedArrayBuffer, worker 之间不共享表。常见比赛已由 comp_steps 预计算秒出, 现算只在未收录比赛兜底。'
               : 'Browsers cannot hold GB-scale huge tables, so deep stages (xxxxcross) are orders of magnitude slower than native; no SharedArrayBuffer means workers do not share tables. Common comps are served instantly from comp_steps precompute — live solve is only a fallback for uncovered comps.'}
+          </p>
+        </section>
+
+        {/* 纯 TS 非 WCA 求解器 */}
+        <section className="solv-section">
+          <header className="solv-sec-head">
+            <Boxes size={15} strokeWidth={2} />
+            <h2>{zh ? '纯 TS 非 WCA 求解器' : 'Pure-TS non-WCA solvers'}</h2>
+            <span className="solv-sec-note">{zh ? '浏览器现算 · 无 Rust · 无表' : 'browser-side · no Rust · no tables'}</span>
+          </header>
+          <p className="solv-tbl-intro">{zh
+            ? '给 /scramble/gen 的非 WCA 魔方依次造的浏览器端整解求解器 (lib/<x>-solver.ts):状态可整枚举的现场全 BFS 出可证最短 (TIER A);可证单实例最短的 IDA* (TIER C);状态空间天文级的两阶段约简则近最优 / 有效有界 (TIER D, 诚实标)。全在浏览器现算, 不依赖原生分析器或大表。'
+            : 'Browser-side whole-solve solvers built one-by-one for the non-WCA puzzles on /scramble/gen (lib/<x>-solver.ts): full BFS for provably shortest where the state space enumerates (TIER A); per-instance IDA* for provably shortest (TIER C); two-phase reduction for the astronomical ones — near-optimal or valid+bounded (TIER D, honestly labeled). All run in the browser, independent of the native analyzers or big tables.'}</p>
+          <div className="solv-rows">
+            {NONWCA_TS.map((s) => {
+              const q = TS_QUALITY[s.quality];
+              const stateNote = zh ? s.zhStates : s.enStates;
+              return (
+                <div className="solv-row" key={s.event}>
+                  <div className="solv-row-head">
+                    <Link className="solv-row-name solv-ts-link" href={`/scramble/solver?event=${s.event}`} prefetch={false}>
+                      {zh ? s.zhName : s.enName}
+                    </Link>
+                    <span className="solv-ts-tier">{zh ? TS_TIER_LABEL[s.tier].zh : TS_TIER_LABEL[s.tier].en}</span>
+                    <span className={`solv-badge ${q.cls}`}>{zh ? q.zh : q.en}</span>
+                  </div>
+                  <div className="solv-ts-meta">
+                    <span className="solv-ts-states">
+                      <span className="solv-ts-statesn">{s.states}</span>
+                      <span className="solv-dim"> {zh ? '态' : 'states'}{stateNote ? ` ${stateNote}` : ''}</span>
+                    </span>
+                    {s.gods && <span className="solv-ts-gods">{s.gods}</span>}
+                  </div>
+                  <p className="solv-perf-why">{zh ? s.zhMethod : s.enMethod}</p>
+                </div>
+              );
+            })}
+          </div>
+          <p className="solv-ts-planned">
+            <span className="solv-ts-planned-h">{zh ? '规划中 (未建):' : 'Planned (not built):'}</span>{' '}
+            {NONWCA_TS_PLANNED.map((p, i) => (
+              <span key={p.event}>{i > 0 ? ' · ' : ''}{zh ? p.zh : p.en}</span>
+            ))}
+          </p>
+          <p className="solv-browser-note">
+            {zh
+              ? 'TIER A/C 分布是全空间精确直方图 (A) 或离线采样直方图 (C);TIER D 分布一律离线预计算 → 静态 dist_<event>.json, 分布页只 fetch+渲染, 不在浏览器现场求解采样。'
+              : 'TIER A/C distributions are exact full-space histograms (A) or offline-sampled (C); every TIER D distribution is precomputed offline into a static dist_<event>.json — the distribution page only fetches and renders, never solves live.'}
           </p>
         </section>
 
