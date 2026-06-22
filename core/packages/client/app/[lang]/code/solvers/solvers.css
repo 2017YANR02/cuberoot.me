@@ -276,7 +276,43 @@
 .solv-tbl-built { margin: 13px 0 0; font-size: 12px; color: var(--muted-foreground); line-height: 1.55; }
 .solv-tbl-note { margin: 11px 0 0; font-size: 11.5px; color: var(--faint-foreground); line-height: 1.55; }
 
+/* pure-TS non-WCA solver fleet */
+.solv-ts-link { text-decoration: none; }
+.solv-ts-link:hover { color: var(--accent); }
+.solv-ts-tier {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--faint-foreground);
+}
+/* quality buckets: optimal (success) / near-optimal (info) / valid+bounded (warning) */
+.solv-q-optimal { color: var(--signal-success); background: color-mix(in srgb, var(--signal-success) 14%, transparent); }
+.solv-q-near { color: var(--signal-info); background: color-mix(in srgb, var(--signal-info) 15%, transparent); }
+.solv-q-bounded { color: var(--signal-warning); background: color-mix(in srgb, var(--signal-warning) 16%, transparent); }
+.solv-ts-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 9px 0 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.solv-ts-states { min-width: 0; }
+.solv-ts-statesn { color: var(--foreground); font-weight: 650; word-break: break-all; }
+.solv-ts-gods { color: var(--muted-foreground); white-space: nowrap; flex-shrink: 0; }
+.solv-ts-planned {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--faint-foreground);
+}
+.solv-ts-planned-h { font-family: var(--font-mono); letter-spacing: 0.03em; }
+
 @media (max-width: 600px) {
+  .solv-ts-tier { margin-left: 0; }
+  .solv-ts-meta { flex-direction: column; gap: 3px; }
   .solv-page { padding: 22px 14px 64px; }
   .solv-sec-head { flex-wrap: wrap; }
   .solv-sec-note { margin-left: 24px; width: 100%; }
