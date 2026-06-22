@@ -13,31 +13,23 @@
   align-items: center;
   gap: 12px;
 }
-/* toggle 固定宽,区域选择器吃剩余空间并可压缩(标签 ellipsis 兜底),保证始终一行 */
-.records-toolbar-row .records-show-toggle { flex-shrink: 0; }
+/* 视图下拉固定宽,区域选择器吃剩余空间并可压缩(标签 ellipsis 兜底),保证始终一行 */
+.records-toolbar-row .records-mode-select { flex-shrink: 0; }
 .records-page .records-toolbar-row .region-picker { min-width: 0; }
 
-/* show toggle */
-.records-show-toggle {
-  display: inline-flex;
+/* 视图下拉:当前 / 历史 / 混合 */
+.records-mode-select {
+  height: 34px;
+  padding: 6px 10px;
   border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   border-radius: 6px;
-  overflow: hidden;
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
-}
-.records-show-toggle button {
-  padding: 6px 14px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  font: inherit;
-  color: var(--muted-foreground);
-}
-.records-show-toggle button:hover { color: var(--foreground); }
-.records-show-toggle button.active {
-  background: color-mix(in srgb, var(--foreground) 10%, transparent);
   color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
 }
+.records-mode-select:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
 
 /* RegionPicker 颜色变量覆盖 — 默认 light theme,这里改成 wca-stats 深色 */
 .records-page .region-picker {
