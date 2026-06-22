@@ -58,6 +58,9 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
   { event: '8p', zhName: '八数码', enName: '8-Puzzle', tier: 'A', quality: 'optimal',
     states: '181,440', zhStates: '= 9!/2', enStates: '= 9!/2', gods: 'God 31',
     zhMethod: '滑块类整图 BFS (复用 slider-puzzle 核, 15p 同源)', enMethod: 'sliding-tile full BFS (shared slider-puzzle core, same as 15p)' },
+  { event: 'bic', zhName: '联体魔方', enName: 'Bicube', tier: 'A', quality: 'optimal',
+    states: '1,108,800', gods: 'God 28 (face-turn)',
+    zhMethod: 'bandaged 3×3×3 受限闭包整图 BFS (1.1M 态, 合法面门控), 查表即可证最短; 上帝之数 28 见 jaapsch.net', enMethod: 'full-graph BFS over the bandaged-cube closure (1.1M states), legal-move gated, provably optimal; cf. jaapsch.net God 28' },
   // ── TIER C: 单实例 IDA* + 可采纳启发式, 每解可证最短 ──
   { event: '233', zhName: '2×3×3 多米诺', enName: '2×3×3 Domino', tier: 'C', quality: 'optimal',
     states: '1,625,702,400', zhStates: '= 8!·8! ≈ 1.63×10⁹', enStates: '= 8!·8! ≈ 1.63×10⁹', gods: '样本 ≤16 / sampled ≤16',
@@ -105,7 +108,6 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
 // 已登记但尚未建求解器的 TIER D2 backlog (诚实: 未建). 见 solver/NONWCA_PUZZLE_LOOP.md §1 TIER D2 表.
 // CI 守卫断言这些 event 与 CSTIMER_SOLVABLE_IDS 不相交 (已建/可解的不该还挂"规划中").
 export const NONWCA_TS_PLANNED: ReadonlyArray<{ event: string; zh: string; en: string }> = [
-  { event: 'bic', zh: '联体魔方', en: 'Bicube' },
   { event: 'sia113', zh: '联体 1×1×3', en: 'Siamese 1×1×3' },
   { event: 'sia123', zh: '联体 1×2×3', en: 'Siamese 1×2×3' },
   { event: 'sia222', zh: '联体 2×2×2', en: 'Siamese 2×2×2' },
