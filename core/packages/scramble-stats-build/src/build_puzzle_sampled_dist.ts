@@ -275,6 +275,28 @@ const REGISTRY: PuzzleDistSpec[] = [
     },
   },
   {
+    event: 'bsq',
+    label: 'Bandaged Square-1',
+    scrambleLen: 10,          // cstimer bsq generator length (CSTIMER_EVENTS bsq length=10 = #slices)
+    defaultN: 2000,           // 三阶段约简:小表懒建一次(~tens ms)后每条求解毫秒级 → 2000 单进程秒级
+    // 受限 </,(1,0)> 移动集(顶层 (x,0) + 切片,底层从不直接转)的构造式三阶段约简(形状→角排列→棱排列),
+    // 解实际状态、只发合法 bsq 招式:有效 + 有界(实测 3000 样本 mean≈16、max≈63、bound 90),
+    // 长度随打乱难度变化(真分布,非单柱),非最优(§0.0 #3 诚实记)。
+    quality: 'sampled-bounded',
+    load: async () => {
+      const m = await mod('../../client/lib/bsq-solver');
+      const solveBsq = m.solveBsq as (s: string) => { length: number; optimal?: boolean };
+      return {
+        // randomBsqScramble 忠实镜像 cstimer 的 bsq 生成器(sq1_getseq(1,2,len),y 恒 0 → (x,0) 顶转 + /)。
+        scramble: m.randomBsqScramble as SolverAdapter['scramble'],
+        // 约简有效+有界(非最优)→ optimal 取求解器返回值(恒 false)。
+        solve: (s: string) => { const o = solveBsq(s); return { length: o.length, optimal: o.optimal ?? false }; },
+        maxBound: m.BSQ_MAX_LENGTH as number,
+        stateCountStr: m.BSQ_STATE_COUNT_STR as string,
+      };
+    },
+  },
+  {
     event: 'crz3a',
     label: 'Crazy 3x3',
     scrambleLen: 25,          // cstimer crz3a generator length(CSTIMER_EVENTS crz3a length=25)
