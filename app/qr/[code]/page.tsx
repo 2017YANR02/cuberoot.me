@@ -118,10 +118,10 @@ export default async function QrLandingPage({
             </span>
           ) : null}
         </div>
-        <h1 className="mt-5 text-center text-[22px] font-semibold text-ink">
+        <h1 className="mt-5 whitespace-pre-line text-center text-[22px] font-semibold text-ink">
           {title}
         </h1>
-        <p className="mt-3 text-center text-[14px] leading-7 text-ink-3">
+        <p className="mt-3 whitespace-pre-line text-center text-[14px] leading-7 text-ink-3">
           {intro}
         </p>
 

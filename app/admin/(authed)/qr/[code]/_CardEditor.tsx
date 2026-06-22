@@ -1240,11 +1240,11 @@ export function CardEditor({
 
           {active === "back" ? (
             <>
-              <input
+              <textarea
                 value={s.title}
                 onChange={(e) => set("title")(e.target.value)}
-                placeholder="标题,留空用默认(也是落地页大标题)"
-                className={INPUT_CLS}
+                placeholder={"标题,可换行(回车分多行)\n留空用默认,也是落地页大标题"}
+                className={INPUT_CLS + " min-h-[52px]"}
                 autoFocus
               />
               <textarea
