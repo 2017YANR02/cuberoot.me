@@ -41,17 +41,18 @@
 .wp-records-sec { margin-bottom: 28px; }
 .wp-records-sec:last-child { margin-bottom: 0; }
 
-/* ── 纪录单表:列头只出现一次且 sticky 悬浮(三档合并成一张表,档标题作表内分组行)── */
+/* ── sticky 单表工具:列头只出现一次并吸顶,分组标题作表内整行 —— 纪录 / 领奖台 / 按比赛 共用 ──
+   用法:外层 <div class="wp-sticky-scroll"> 包一张 <table class="wp-sticky-table">(thead 写一次)。
+   新表要这套效果只加这两个类,不必再来这里登记选择器。 */
 /* 解除 sticky 阻断:tabs 卡片默认 overflow:hidden(走圆角裁剪)会成为滚动容器,令 thead 无法相对视口吸顶;
    内容本就被 wp-tab-body 内边距收进圆角内,放开裁剪无视觉副作用 */
 .wp-card.wp-tabs-card { overflow: visible; }
 /* 桌面:容器不裁剪(表自适应内容、不溢出),让 thead 以页面为滚动上下文吸顶;窄屏才横向滚动 */
-.wp-records-scroll { overflow: visible; }
+.wp-sticky-scroll { overflow: visible; }
 /* sticky 列头吸到视口顶端:选手页(.wp-page)没有全局 .wp-header,顶部无固定 chrome,
    所以 top:0(早先的 61px 是给已不存在的 .wp-header 留位,会让列头悬在视口下方 61px 处,
    上方留一条内容穿行的死带)。border-collapse 下吸顶会丢单元格边框,改用 box-shadow 画下划线 */
-.wp-records-table thead th,
-.wp-podium-table thead th {
+.wp-sticky-table thead th {
   position: sticky;
   top: 0;
   z-index: 3;
@@ -75,9 +76,8 @@
 .wp-records-table .wp-records-group-row:not(:first-child) th,
 .wp-podium-table .wp-records-group-row:not(:first-child) th { border-top: 2px solid var(--wp-border-strong); }
 @media (max-width: 767px) {
-  .wp-records-scroll { overflow-x: auto; }       /* 窄屏:表宽超屏 → 横向滚动 */
-  .wp-records-table thead th,
-  .wp-podium-table thead th { position: static; box-shadow: none; }  /* 横滚容器会破坏视口吸顶,移动端不吸顶 */
+  .wp-sticky-scroll { overflow-x: auto; }       /* 窄屏:表宽超屏 → 横向滚动 */
+  .wp-sticky-table thead th { position: static; box-shadow: none; }  /* 横滚容器会破坏视口吸顶,移动端不吸顶 */
 }
 /* 项目分组:同项目仅首行显示图标+名,后续行留空;新项目起加上边线 */
 .wp-records-table .wp-rec-event { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
