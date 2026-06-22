@@ -31,6 +31,8 @@
 
 8. **采样分布形状是质检最后一关,可疑就自查别直接发(铁律,2026-06-22,用户要求)** —— 分布出炉**先验形状**:**双峰 / 有空档 / 某峰边缘正好卡在求解器某常量(optimal-shortcut cap、phase 下限、IDA* bound、采样预算)= 大概率求解器假象不是魔方本身**(335 双峰 = 捷径 cap 卡 12 而真最优区 9-16,已修 `bb39cbfda`);**退化单柱(全 `{'11':N}`)= 偷工**(返回 `scramble⁻¹` 只原路退回,ssq1 初版,已打回)。看出可疑形状**必须自查 → 修求解器 / 抬 cap → 重生**,别直接发;唯有能用魔方结构(奇偶分支等固定多几步,如 ssq1 真双峰)解释第二峰才放行。细则见 skill `new-substep-solver` §0 步骤 3。
 
+9. **求解器借用别人的东西必注明(铁律,2026-06-22,用户要求)** —— 用了别人的算法/源码/引擎(cstimer 移动语义照抄、wrap cstimer 自带 solver 当引擎如 `dino`=redi / `mpyrso`=两阶段、`crz3a` 用站内 kociemba 两阶段、未来 STM 用 Korf、cubelib 等)→ 必须 ① 代码内注明出处(solver 文件头注 + `/code/solvers/_fleet.ts` 方法文案写清 "wrap X"),② `/about` 的 `credits_data.json` 补/更新一条(已收录 cstimer/cube555/cubelib 等 27 条;先查重再补)。验收门(§0.4)加这一项,无出处不发。
+
 ---
 
 ## §0 LOOP PROTOCOL(每轮照做)
