@@ -97,12 +97,14 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
   { event: 'bsq', zhName: '受限 Sq-1', enName: 'Bandaged Square-1', tier: 'D', quality: 'bounded',
     states: '518,400', zhStates: '形状 coset = 720² (全群更大, 不可全 BFS)', enStates: 'shape coset = 720² (full group larger, no full BFS)', gods: 'cap BSQ_MAX_LENGTH=90',
     zhMethod: '构造式三阶段 (形状→角排列→定角棱排列), 只吐合法 (x,0)+/', enMethod: 'constructive three stages (shape → corner perm → fixed-corner edge perm), legal (x,0)+/ only' },
+  { event: 'cm3', zhName: 'Cmetrick', enName: 'Cmetrick', tier: 'D', quality: 'bounded',
+    states: '165,112,971,264', zhStates: '≈ 1.65×10¹¹ = 24⁹/24', enStates: '≈ 1.65×10¹¹ = 24⁹/24', gods: 'cap CM3_MAX_LENGTH=60',
+    zhMethod: '从零逐球约简 (cm2 的 3×3 放大): 先用线翻转解 9 个符号位 (G/H=Z2), 再用单球对易子 gadget 逐球归位; 参考 jaapsch.net', enMethod: 'from-scratch ball-by-ball reduction (the 3×3 scaling of cm2): line-flips solve the 9 sign bits (G/H=Z2), then single-ball commutator gadgets fix each ball; cf. jaapsch.net' },
 ];
 
 // 已登记但尚未建求解器的 TIER D2 backlog (诚实: 未建). 见 solver/NONWCA_PUZZLE_LOOP.md §1 TIER D2 表.
 // CI 守卫断言这些 event 与 CSTIMER_SOLVABLE_IDS 不相交 (已建/可解的不该还挂"规划中").
 export const NONWCA_TS_PLANNED: ReadonlyArray<{ event: string; zh: string; en: string }> = [
-  { event: 'cm3', zh: 'Cmetrick', en: 'Cmetrick' },
   { event: 'bic', zh: '联体魔方', en: 'Bicube' },
   { event: 'sia113', zh: '联体 1×1×3', en: 'Siamese 1×1×3' },
   { event: 'sia123', zh: '联体 1×2×3', en: 'Siamese 1×2×3' },
