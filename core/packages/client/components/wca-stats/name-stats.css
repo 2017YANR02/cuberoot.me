@@ -13,13 +13,21 @@
   margin-bottom: 20px;
 }
 
-/* 名字口径切换(英文名 / 全名 / 本地名 / 含曾用名):推到右侧,与指标 tab 分开 */
-.ns-name-modes {
+/* 名字口径下拉(英文名 / 全名 / 本地名 / 含曾用名):推到右侧,与指标 tab 分开 */
+.ns-name-select {
   margin-left: auto;
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--border-default);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  color: var(--foreground);
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
 }
+.ns-name-select:hover { border-color: var(--border-strong); }
+.ns-name-select:focus-visible { outline: none; border-color: var(--accent); }
 
 .ns-tab {
   padding: 7px 18px;

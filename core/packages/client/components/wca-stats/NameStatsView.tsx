@@ -209,19 +209,17 @@ export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data:
           </button>
         ))}
         {hasModes && (
-          <div className="ns-name-modes" role="group">
+          <select
+            className="ns-name-select"
+            value={nameMode}
+            onChange={e => setNameMode(e.target.value as NameMode)}
+            aria-label={tr({ zh: '姓名口径', en: 'Name form' })}
+            title={modeOptions.find(m => m.id === nameMode)?.title}
+          >
             {modeOptions.map(m => (
-              <button
-                key={m.id}
-                type="button"
-                className={`ns-tab${nameMode === m.id ? ' active' : ''}`}
-                onClick={() => setNameMode(m.id)}
-                title={m.title}
-              >
-                {m.label}
-              </button>
+              <option key={m.id} value={m.id}>{m.label}</option>
             ))}
-          </div>
+          </select>
         )}
       </div>
 
