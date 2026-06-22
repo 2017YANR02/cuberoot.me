@@ -63,9 +63,9 @@ function NamesBlock({ people, mode }: { people: People; mode: NameMode }) {
 }
 
 // 选中柱子后展示该组详情:大号键 + 人数 + 国旗占比 chips + 选手名。
-function BinDetail({ row, cap, unit, isZh, mode }: { row: Row; cap: number | null; unit: string; isZh: boolean; mode: NameMode }) {
+function BinDetail({ row, unit, isZh, mode }: { row: Row; unit: string; isZh: boolean; mode: NameMode }) {
   const [key, count, countries, people] = row;
-  const keyLabel = cap != null && key === cap ? `${cap}+` : String(key);
+  const keyLabel = String(key);
   return (
     <div className="ns-detail">
       <div className="ns-detail-head">
@@ -101,64 +101,27 @@ function StatCell({ label, value }: { label: string; value: string }) {
   );
 }
 
-// 把尾部小计数行合并成单个 "N+" 桶:计数求和、国旗按可见 top-N 累加、选手名拼接取样。
-function mergeRows(capKey: number, tail: Row[]): Row {
-  let count = 0;
-  const cmap = new Map<string, number>();
-  let ptotal = 0;
-  const items: PersonItem[] = [];
-  for (const [, c, countries, people] of tail) {
-    count += c;
-    for (const co of countries) cmap.set(co.c, (cmap.get(co.c) ?? 0) + co.n);
-    ptotal += people.total;
-    items.push(...people.items);
-  }
-  const countries: Country[] = [...cmap.entries()]
-    .map(([c, n]) => ({ c, n, p: count > 0 ? (n / count) * 100 : 0 }))
-    .sort((a, b) => b.n - a.n)
-    .slice(0, 8);
-  return [capKey, count, countries, { total: ptotal, items: items.slice(0, 40) }];
-}
-
 interface Hist {
   counts: Record<string, number>;
   detail: Map<number, Row>;
-  cap: number | null;
   clickable: number[];
   span: number;
 }
 
+// 每个 key 一根柱,完全展开(不折叠尾部);DiscreteHistogram 会补齐 min..max 间的空档为 0。
 function buildHist(rows: Row[]): Hist | null {
   if (rows.length === 0) return null;
   const sorted = [...rows].sort((a, b) => a[0] - b[0]);
-  const minK = sorted[0][0];
-  const maxK = sorted[sorted.length - 1][0];
-  const total = sorted.reduce((s, r) => s + r[1], 0);
-  // 跨度 > 22 个整数 bin(字符长度长尾)→ 折叠 98% 分位之后的尾部到单个 "N+" 桶,
-  // 否则几十个近乎为 0 的窄柱不可读。词数(1..10)永远不触发。
-  let cap: number | null = null;
-  if (maxK - minK > 22) {
-    let cum = 0;
-    for (const [k, c] of sorted) { cum += c; if (cum / total >= 0.98) { cap = k; break; } }
-    if (cap == null || cap >= maxK) cap = null;
-  }
   const counts: Record<string, number> = {};
   const detail = new Map<number, Row>();
-  const tail: Row[] = [];
   for (const r of sorted) {
-    if (cap != null && r[0] >= cap) { tail.push(r); continue; }
     counts[String(r[0])] = r[1];
     detail.set(r[0], r);
   }
-  if (cap != null && tail.length > 0) {
-    const merged = mergeRows(cap, tail);
-    counts[String(cap)] = merged[1];
-    detail.set(cap, merged);
-  }
-  const clickable = Object.keys(counts).map(Number).filter(k => (counts[String(k)] ?? 0) > 0).sort((a, b) => a - b);
-  const lo = clickable.length ? clickable[0] : 0;
-  const hi = clickable.length ? clickable[clickable.length - 1] : 0;
-  return { counts, detail, cap, clickable, span: hi - lo + 1 };
+  const clickable = sorted.map(r => r[0]);
+  const lo = clickable[0];
+  const hi = clickable[clickable.length - 1];
+  return { counts, detail, clickable, span: hi - lo + 1 };
 }
 
 function modeBin(counts: Record<string, number>): number | null {
@@ -230,10 +193,6 @@ export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data:
   const modeOptions = nameModeOptions();
 
   const detailRow = selectedBin != null ? hist?.detail.get(selectedBin) : undefined;
-  // 折叠时把 cap 那一格标成 "N+";词数不折叠 → 无 formatBin
-  const formatBin = hist?.cap != null
-    ? (v: number) => (v === hist.cap ? `${hist.cap}+` : String(v))
-    : undefined;
   // bin 不多(词数,≤12 格)时柱顶显示 计数+百分比;字符长度格多则关闭避免重叠
   const showBarLabels = !!hist && hist.span <= 12;
 
@@ -277,8 +236,8 @@ export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data:
               isZh={isZh}
               yMode={yMode}
               hideLegendColors
-              formatBin={formatBin}
               showBarLabels={showBarLabels}
+              gapAware
               clickableBins={hist.clickable}
               selectedBin={selectedBin}
               onBarClick={setSelectedBin}
@@ -303,7 +262,7 @@ export default function NameStatsView({ data, isZh, queryKey = 'type' }: { data:
 
           {detailRow && (
             <div className="ns-dist-card">
-              <BinDetail row={detailRow} cap={hist.cap} unit={unit} isZh={isZh} mode={nameMode} />
+              <BinDetail row={detailRow} unit={unit} isZh={isZh} mode={nameMode} />
             </div>
           )}
         </div>

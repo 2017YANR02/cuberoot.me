@@ -43,6 +43,8 @@ interface Props {
   // switch 模式下两端标签(默认 PDF/CDF、%/count)
   chartModeLabels?: { off: string; on: string };
   yModeLabels?: { off: string; on: string };
+  // NOTE: 稀疏整数轴(中间有空档 bin)。开启后 x 标签只标有数据的 bin(抽稀)、命中区填满空档。
+  gapAware?: boolean;
 }
 
 const W = 760, H = 400;
@@ -51,7 +53,7 @@ const PAD = { l: 56, r: 20, t: 40, b: 44 };
 const chartW = W - PAD.l - PAD.r;
 const chartH = H - PAD.t - PAD.b;
 
-export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, yModeLabel, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, modeControl = 'button', chartModeLabels, yModeLabels }: Props) {
+export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, yModeLabel, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, modeControl = 'button', chartModeLabels, yModeLabels, gapAware }: Props) {
   const clickableSet = useMemo(() => new Set(clickableBins ?? []), [clickableBins]);
   // NOTE: svg 内 <linearGradient> id 必须全局唯一，用 React 的 useId 前缀
   const gradPrefix = useId().replace(/:/g, '_');
@@ -104,6 +106,30 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
   const slotInnerW = slotW * (1 - groupPad);
   const slotPadL = (slotW - slotInnerW) / 2;
   const barW = slotInnerW / series.length;
+
+  // gapAware:稀疏整数轴(如姓名「字符长度」,中间有空档长度无人)。
+  //   ① x 轴只标有数据的 bin(贪心 ~24px 间距抽稀),不标空档(否则标了点不动);
+  //   ② 命中区按相邻有数据 bin 的中点扩展,填满空档,稀疏柱也好点。
+  // 非 gapAware(打乱页):每个 bin 都标,命中区=单格宽 —— 原行为不变。
+  const xLabelSet = new Set<number>();
+  const hitSpans = new Map<number, { x: number; w: number }>();
+  if (gapAware) {
+    const popIdx: number[] = [];
+    for (let i = 0; i < nBins; i++) {
+      const v = xMin + i;
+      if (series.some((s) => (s.counts[String(v)] ?? 0) > 0)) popIdx.push(i);
+    }
+    let lastLabelX = -Infinity;
+    for (let p = 0; p < popIdx.length; p++) {
+      const i = popIdx[p];
+      const cx = PAD.l + i * slotW + slotW / 2;
+      if (cx - lastLabelX >= 24) { xLabelSet.add(xMin + i); lastLabelX = cx; }
+      // 命中区:左右各扩到与相邻有数据 bin 的中点(端点用自身格边)
+      const left = p > 0 ? PAD.l + ((popIdx[p - 1] + i) / 2 + 0.5) * slotW : PAD.l + i * slotW;
+      const right = p < popIdx.length - 1 ? PAD.l + ((i + popIdx[p + 1]) / 2 + 0.5) * slotW : PAD.l + (i + 1) * slotW;
+      hitSpans.set(xMin + i, { x: left, w: right - left });
+    }
+  }
 
   const yTicks: number[] = [];
   const yStep = niceStep(yMax, 5);
@@ -165,7 +191,9 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
           return (
             <g key={`x${v}`}>
               <line x1={x} x2={x} y1={PAD.t + chartH} y2={PAD.t + chartH + 4} style={{ stroke: 'var(--border-strong)' }} />
-              <text x={x} y={PAD.t + chartH + 18} textAnchor="middle" fontSize="12" style={{ fill: 'var(--text)' }}>{formatBin ? formatBin(v) : v}</text>
+              {(!gapAware || xLabelSet.has(v)) && (
+                <text x={x} y={PAD.t + chartH + 18} textAnchor="middle" fontSize="12" style={{ fill: 'var(--text)' }}>{formatBin ? formatBin(v) : v}</text>
+              )}
             </g>
           );
         })}
@@ -210,12 +238,14 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
             点该列任意位置都能选中该 bin —— 跟「点 0~7 数字所在列」一致,不留死区。 */}
         {onBarClick && clickableBins && series.length === 1 && Array.from({ length: nBins }, (_, i) => xMin + i).map((v, bi) => {
           if (!clickableSet.has(v)) return null;
+          // gapAware 时命中区扩到相邻有数据 bin 的中点(填满空档);否则单格宽。
+          const span = gapAware ? hitSpans.get(v) : undefined;
           return (
             <rect
               key={`hit${v}`}
-              x={PAD.l + bi * slotW}
+              x={span ? span.x : PAD.l + bi * slotW}
               y={PAD.t}
-              width={slotW}
+              width={span ? span.w : slotW}
               height={chartH + 18}
               fill="transparent"
               style={{ cursor: 'pointer' }}
