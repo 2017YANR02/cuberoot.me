@@ -60,7 +60,7 @@ export default function NonWcaPuzzlePicker({
   const selected = selectedEvent && ids.has(selectedEvent) ? cstimerEvent(selectedEvent) : null;
   const triggerLabel = selected
     ? nameOf(selected, isZh)
-    : tr({ zh: '更多魔方', en: 'More puzzles' });
+    : tr({ zh: '更多', en: 'More' });
 
   useEffect(() => {
     if (!open) return;
