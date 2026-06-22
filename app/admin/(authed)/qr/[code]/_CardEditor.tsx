@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { Download } from "lucide-react";
 import type { CardCustomText, CardEl, CardLayout, CardTextStyles, QrCode, QrType, TextStyle } from "@/lib/db/qr";
 import { QrCardUnit, FRONT_ARTS } from "@/components/QrCard";
@@ -380,6 +380,17 @@ export function CardEditor({
   const [active, setActive] = useState<Region | null>(null);
   // 选中的自建文本框 id(与 active 互斥:选内置元素清 ct,选文本框清 active)
   const [activeCt, setActiveCt] = useState<string | null>(null);
+  // 卡面就地编辑:双击卡上文字直接改字。box 为打开时元素位置快照(编辑期间稳定),font 镜像该元素字体,apply 写回对应状态字段
+  const [inlineEdit, setInlineEdit] = useState<null | {
+    boxKey: string;
+    box: Box;
+    text: string;
+    multiline: boolean;
+    placeholder: string;
+    font: CSSProperties;
+    apply: (v: string) => void;
+  }>(null);
+  const inlineRef = useRef<HTMLTextAreaElement>(null);
   // 背面图存在性的实时快照(滚轮缩放 handler 在 [] effect 里,靠 ref 读最新值)
   const backArtRef = useRef("");
   backArtRef.current = s.backArt;
@@ -553,6 +564,23 @@ export function CardEditor({
     });
   });
 
+  // 就地编辑文本域:打开 / 输入时随内容撑高,打开时聚焦并全选
+  useLayoutEffect(() => {
+    const el = inlineRef.current;
+    if (!el || !inlineEdit) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [inlineEdit?.text, inlineEdit?.boxKey]);
+  useEffect(() => {
+    const el = inlineRef.current;
+    if (el && inlineEdit) {
+      el.focus();
+      el.select();
+    }
+    // 只在打开 / 切换目标时聚焦
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inlineEdit?.boxKey]);
+
   const set = (k: keyof typeof s) => (v: string) => setS((p) => ({ ...p, [k]: v }));
   const setOffset = (key: CardEl, off: { x: number; y: number } | null) =>
     setS((p) => {
@@ -633,6 +661,71 @@ export function CardEditor({
     setActiveCt((a) => (a === id ? null : a));
   };
   const activeCustom = s.customTexts.find((c) => c.id === activeCt) ?? null;
+
+  // ── 卡面就地编辑文字 ──
+  // 某元素 / 文本框的 取值 / 写回 / 是否多行 / 占位;qr / alg 等不就地编辑(结构化或非文字),返回 null
+  const inlineConfig = (
+    boxKey: string,
+  ): { get: () => string; set: (v: string) => void; multiline: boolean; placeholder: string } | null => {
+    if (boxKey.startsWith("ct:")) {
+      const id = boxKey.slice(3);
+      const ct = s.customTexts.find((c) => c.id === id);
+      if (!ct) return null;
+      return { get: () => ct.text, set: (v) => updateCustomText(id, { text: v }), multiline: true, placeholder: "文字" };
+    }
+    switch (boxKey as CardEl) {
+      case "quote":
+        return { get: () => s.quote, set: set("quote"), multiline: true, placeholder: "语录(留空用默认)" };
+      case "brand":
+        return { get: () => s.brand, set: set("brand"), multiline: false, placeholder: DEFAULT_BRAND };
+      case "backText":
+        return { get: () => s.title, set: set("title"), multiline: true, placeholder: "标题(留空用默认)" };
+      case "term":
+        return { get: () => s.term, set: set("term"), multiline: false, placeholder: "角标" };
+      default:
+        return null;
+    }
+  };
+
+  // 双击卡上文字 → 原位打开就地编辑框,字体镜像该元素;不可就地编辑的元素忽略(仍可走右侧面板)
+  const openInlineEdit = (boxKey: string) => {
+    const conf = inlineConfig(boxKey);
+    const wrap = wrapRef.current;
+    if (!conf || !wrap) return;
+    const el = wrap.querySelector<HTMLElement>(`[data-el="${boxKey}"]`);
+    if (!el) return;
+    // 取最深的首个文字子节点量字体(语录 / 标题主行在内层 div)
+    let node: HTMLElement = el;
+    while (node.firstElementChild instanceof HTMLElement) node = node.firstElementChild;
+    const cs = window.getComputedStyle(node);
+    const wr = wrap.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    setActive(null);
+    setActiveCt(null);
+    setInlineEdit({
+      boxKey,
+      box: { left: r.left - wr.left, top: r.top - wr.top, w: r.width, h: r.height },
+      text: conf.get(),
+      multiline: conf.multiline,
+      placeholder: conf.placeholder,
+      font: {
+        fontSize: cs.fontSize,
+        fontFamily: cs.fontFamily,
+        fontWeight: cs.fontWeight as CSSProperties["fontWeight"],
+        lineHeight: cs.lineHeight,
+        letterSpacing: cs.letterSpacing,
+        textAlign: "center",
+      },
+      apply: conf.set,
+    });
+  };
+
+  // 收尾:失焦 / 回车(单行)写回并关闭;Esc 放弃改动直接关
+  const commitInline = () => {
+    if (inlineEdit) inlineEdit.apply(inlineEdit.text);
+    setInlineEdit(null);
+  };
+  const cancelInline = () => setInlineEdit(null);
   // 背景图平移/缩放/完整显示(layout.front 或 layout.back):增量合并,回默认(0,0,×1,铺满)就删键
   const setArt =
     (lkey: "front" | "back") =>
@@ -990,8 +1083,9 @@ export function CardEditor({
                 key={key}
                 role="button"
                 aria-label={EL_LABEL[key]}
-                title={`拖动移动:${EL_LABEL[key]}`}
+                title={`拖动移动 / 双击改字:${EL_LABEL[key]}`}
                 onPointerDown={(e) => startGesture(e, { kind: "el", key })}
+                onDoubleClick={() => openInlineEdit(key)}
                 className={
                   "absolute touch-none select-none rounded transition " +
                   (EL_PANEL[key] && active === EL_PANEL[key]
@@ -1011,8 +1105,9 @@ export function CardEditor({
                 key={ct.id}
                 role="button"
                 aria-label={`自建文字:${ct.text.slice(0, 6)}`}
-                title="拖动移动 / 点击编辑此文本框"
+                title="拖动移动 / 双击改字"
                 onPointerDown={(e) => startGesture(e, { kind: "ct", id: ct.id })}
+                onDoubleClick={() => openInlineEdit(`ct:${ct.id}`)}
                 className={
                   "absolute touch-none select-none rounded transition " +
                   (activeCt === ct.id
@@ -1040,12 +1135,43 @@ export function CardEditor({
               style={{ left: 0, top: y, width: "100%", height: 1, background: "#FF2D92", zIndex: 7 }}
             />
           ))}
+          {/* 卡面就地编辑框:盖在被双击文字上(白底深字 + 镜像字体),失焦 / 回车写回 */}
+          {inlineEdit ? (
+            <textarea
+              ref={inlineRef}
+              value={inlineEdit.text}
+              placeholder={inlineEdit.placeholder}
+              onChange={(e) =>
+                setInlineEdit((cur) => (cur ? { ...cur, text: e.target.value } : cur))
+              }
+              onBlur={commitInline}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  cancelInline();
+                } else if (e.key === "Enter" && !inlineEdit.multiline) {
+                  e.preventDefault();
+                  commitInline();
+                }
+              }}
+              rows={1}
+              spellCheck={false}
+              className="absolute resize-none overflow-hidden rounded-[3px] bg-white/95 px-1 py-0.5 text-ink shadow-[0_2px_10px_rgba(0,0,0,0.25)] outline-none ring-2 ring-brand"
+              style={{
+                left: Math.max(0, inlineEdit.box.left - 6),
+                top: inlineEdit.box.top - 3,
+                width: Math.max(inlineEdit.box.w + 12, 64),
+                zIndex: 30,
+                ...inlineEdit.font,
+              }}
+            />
+          ) : null}
         </div>
       </div>
 
       <div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-ink-3">
-        <span>点元素编辑,按住拖动移位;改完点右上角「保存」生效。</span>
+        <span>点元素编辑,按住拖动移位,双击文字直接在卡上改字;改完点右上角「保存」生效。</span>
         <label className="inline-flex cursor-pointer items-center gap-1.5">
           <input
             type="checkbox"
