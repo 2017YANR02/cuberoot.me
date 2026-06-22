@@ -157,7 +157,7 @@ function nodeProcessEnv(): string | undefined {
 }
 
 export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boolean }): Promise<AlgFile> {
-  // NOTE: 用 import.meta.env.DEV 而不是 hostname 检查 — 走 LAN IP / Tailscale ts.net
+  // NOTE: 用 import.meta.env.DEV 而不是 hostname 检查 — 走 LAN IP / 隧道域名(dev.cuberoot.me)
   // 等其它 dev host 时,hostname 检查会错判成 prod 直接打 api.cuberoot.me 跨域,
   // 而 api 的 CORS allowlist 没那些 host → 浏览器拦截。vite 在 client build 时
   // 替换 import.meta.env.DEV;server 端 loadAlg 不被调,?.DEV undefined 走 prod 分支也无害。
