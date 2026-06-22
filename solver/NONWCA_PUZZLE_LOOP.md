@@ -297,6 +297,7 @@
 - `stats/page.tsx` — `event===<id>` 渲染 `<P>DistView` + 关掉 WCA 专属开关(dataset/merge/timeline,照 `isIvy`/ivy 那段早返回);非 WCA solvable 的项目已被 length-reset effect 跳过(`CSTIMER_SOLVABLE_IDS.has(event)`),无需再改;`distPuzzle` 高亮映射按需加分支。**不再用 `availableEvents.add` / `appendEvents`**(A0 前的旧法,已删)。
 - `ScramblePreview2D.tsx` — `HAS_PREVIEW[<id>]=true` + dispatch `renderXScrambleSvg`。
 - 新建 `_svg/<id>_svg.ts`、`lib/<id>-solver.ts`、`stats/_components/<P>DistView.tsx`、`solver/_<P>Solver.tsx`、`tests/<id>_solver.test.ts`。
+- `app/[lang]/code/solvers/_fleet.ts` — 给 `NONWCA_TS` 加一行(event/名/档/质量桶/态数/God 数/方法,数据照本单元 solver 头注 + §1/§2);CI 守卫 `tests/code-solvers-fleet-sync.test.ts` 锁 `NONWCA_TS` 的 event 集 == `CSTIMER_SOLVABLE_IDS`,漏登记直接红。
 
 **测试欠账(owed UI)**:
 - **A0(2026-06-20,commit `6265c3671`)**:Playwright UI 门当时跳过(内存吃紧)。**已于 A1(2026-06-20,commit `7a2a56243`)补齐并清账** —— Playwright 实测:`/scramble/solver?event=133` 与 `?event=ivy`、`/scramble/stats?event=133` 桌面(1280)+ 390px;NonWcaPuzzlePicker「更多魔方」下拉点开按 family 分组(长方体→1×3×3 花型、异形扭转→Ivy Cube),经它在 133↔ivy 间切换正常;弹层 390px box 右沿 192px 不溢出(viewport 375 内);2D 预览(net)渲染 solved 自证;**本次改动零 console error**(历史里出现过的 `SOLVE_EVENTS is not defined` 经核实是开站旧 chunk 残留,当前源码无该标识符、fresh 导航不复现;另有一条 `Connection closed.` 是 Turbopack RSC dev 流式偶发、reload 即消,均非代码问题)。A0 欠账清。
