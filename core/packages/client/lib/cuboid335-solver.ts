@@ -31,11 +31,13 @@
  *   • PHASE 1 drives every orbit INTO the all-180° subgroup H = ⟨U2,D2,R2,L2,F2,B2⟩. The goal test is
  *     unambiguous — "every orbit sub-state is in H" (per-orbit `intoH==0`). Only the corner orbit (intoH
  *     ≤ 11) and the cap-edge orbit (intoH ≤ 4) ever need reducing; the three wing orbits are always in H
- *     (180°-only moves can't take them out). Phase-1 is a CLOSED-SET A* (weight 1, heuristic
- *     max(intoH[corner]+intoH[cap-edge], intoH[wings])) with a fast TWO-LEVEL NUMERIC closed-set key
- *     (outer = corner·40320+edge < 2^31, inner = the three small wing indices < 24³) — no string garbage.
- *     The additive term over the two big orbits is what keeps the frontier finite; the closed set bounds
- *     re-expansion (so the worst real state finishes ≤ ~2 s, 100% solve), with a greedy-dive safety net.
+ *     (180°-only moves can't take them out). Phase-1 is an ITERATIVE-DEEPENING A* (IDDFS) over the joint
+ *     orbit tuple with the admissible bound max(intoH) and same-face / commuting-axis move pruning. IDDFS
+ *     holds NO closed set (O(depth) memory ⇒ OOM impossible) and is provably complete, so it finishes on
+ *     EVERY reachable state (measured true reduction depth ≤ 13; worst ≤ 6.05M nodes / ~0.4 s). [It
+ *     REPLACES an earlier closed-set A* whose set was keyed on all five orbits — the always-in-H wing
+ *     orbits, permuted by U/D turns, multiplied each phase-1-relevant state by up to 24³ labelings, blowing
+ *     the node pool past 8M and OOM-ing past 60M on ~0.05% of legal states → "phase-1 unreachable" throw.]
  *   • PHASE 2 finishes inside H using only the six 180° moves. Each orbit's in-H set is tiny
  *     (96/576/24/24/24), so EXACT joint-pair PDBs (corners×cap-edges = 96·576, the two larger wings
  *     24·24, plus the lone third wing) give a tight admissible heuristic and IDA* converges in a few ms,
@@ -191,9 +193,11 @@ const envNum = (name: string): number | undefined => {
 // Offline 50M ⇒ ~98% of real states return their provable optimum (worst single solve ≈ 5–7 s, occasionally
 // more on a pathological deep state — acceptable for the manual offline dist build); browser 3M keeps the
 // synchronous main-thread solve ≲ ~0.7 s while still filling the true 13..14 peak.
-const OPT_SHORTCUT_BUDGET = envNum('CUBOID335_OPT_BUDGET') ?? (IS_NODE ? 50_000_000 : 3_000_000);
+// Read at CALL time (not module load) so the env override is honoured even when set after import — e.g. a
+// test can drop the budget to 1 to force the fast two-phase path, in isolation, without a file-wide env.
+const optShortcutBudget = (): number => envNum('CUBOID335_OPT_BUDGET') ?? (IS_NODE ? 50_000_000 : 3_000_000);
 /** Largest length the optimal shortcut will claim; beyond this the two-phase answer is used. */
-const OPT_SHORTCUT_DEPTH_CAP = envNum('CUBOID335_OPT_CAP') ?? (IS_NODE ? 20 : 16);
+const optShortcutDepthCap = (): number => envNum('CUBOID335_OPT_CAP') ?? (IS_NODE ? 20 : 16);
 
 function applyMove(state: Uint8Array, mi: number): Uint8Array<ArrayBuffer> {
   const p = MOVE_PERM[mi];
@@ -469,93 +473,64 @@ function phase1Solved(tuple: Int32Array, D: OrbitDb[]): boolean {
   for (let i = 0; i < NORB; i++) if (D[i].intoH[tuple[i]] !== 0) return false;
   return true;
 }
-// Phase-1 heuristic. Plain max(intoH) badly UNDER-guides the JOINT reduction: it's dominated by the corner
-// orbit (intoH ≤ 11) and gives the search ZERO pressure to ALSO drive the cap-edge orbit (intoH ≤ 4) into
-// H, so the A* frontier explodes and misses the goal on ~1% of real states (the bug this replaces). The
-// two big orbits 0 (corner columns) and 1 (cap outer-edges) both leave/enter H only via U/D 90° turns and
-// otherwise need separate work, so reducing both costs roughly intoH[0] + intoH[1]; the three wing orbits
-// are always already in H (180°-only moves can't take them out) and never bind. Hence
-//   h = max( intoH[0] + intoH[1],  intoH[wings] ).
-// The additive term is NOT a provable lower bound (one U/D move can lower both big orbits at once), so the
-// reduction is near-optimal rather than provably optimal — exactly the TIER-D contract — but it collapses
-// the A* frontier from a non-terminating blow-up to a few hundred-thousand nodes → ≤ ~2 s, 100% solve.
+// Phase-1 admissible lower bound: max over orbits of intoH (min moves to enter H). Each orbit independently
+// needs ≥ intoH[orbit] moves into H, and one move advances at most one orbit toward 0 by ≥1, so the max is a
+// valid (admissible) lower bound on the joint reduction depth. (It is NOT tight — one U/D turn can lower
+// several orbits at once — so phase-1 is near-optimal over its own coordinate, the TIER-D contract.)
 const phase1H = (t: Int32Array, D: OrbitDb[]): number => {
-  let m = D[0].intoH[t[0]] + D[1].intoH[t[1]];
-  for (let i = 2; i < NORB; i++) { const v = D[i].intoH[t[i]]; if (v > m) m = v; }
+  let m = 0;
+  for (let i = 0; i < NORB; i++) { const v = D[i].intoH[t[i]]; if (v > m) m = v; }
   return m;
 };
-// Fast two-level NUMERIC closed-set key. The joint index 40320²·24³ exceeds a single safe slot, so:
-//   outer key = corner·40320 + cap-edge  (< 40320² ≈ 1.63×10⁹, exact double)
-//   inner key = (wing2·24 + wing3)·24 + wing4  (< 24³ = 13824)
-// Pure number keys → fast, no per-node string garbage.
-function phase1OuterKey(t: Int32Array): number { return t[0] * 40320 + t[1]; }
-function phase1InnerKey(t: Int32Array): number { return (t[2] * 24 + t[3]) * 24 + t[4]; }
-// One weighted-A* attempt with a hard cap on the number of DISTINCT states (node pool). Each distinct
-// joint state owns exactly ONE pool slot (lazy decrease-key), so memory is bounded by `cap`. Returns the
-// move path, or null if it hits the cap before reaching H.
-function phase1Attempt(t0: Int32Array, D: OrbitDb[], weight: number, cap: number, greedy = false): number[] | null {
-  const fKey = (g: number, h: number) => (greedy ? h : g + weight * h);
-  const tuples: Int32Array[] = [t0.slice()];
-  const gArr: number[] = [0]; const parent: number[] = [-1]; const moveArr: number[] = [-1];
-  const seen = new Map<number, Map<number, number>>();
-  const idxOf = (t: Int32Array): number | undefined => seen.get(phase1OuterKey(t))?.get(phase1InnerKey(t));
-  const setIdx = (t: Int32Array, idx: number) => { const ok = phase1OuterKey(t); let inner = seen.get(ok); if (!inner) { inner = new Map(); seen.set(ok, inner); } inner.set(phase1InnerKey(t), idx); };
-  setIdx(t0, 0);
-  const heapIdx: number[] = []; const heapF: number[] = []; const heapG: number[] = [];
-  const hswap = (a: number, b: number) => { const ti = heapIdx[a]; heapIdx[a] = heapIdx[b]; heapIdx[b] = ti; const tf = heapF[a]; heapF[a] = heapF[b]; heapF[b] = tf; const tg = heapG[a]; heapG[a] = heapG[b]; heapG[b] = tg; };
-  const hpush = (idx: number, f: number, g: number) => {
-    let i = heapIdx.length; heapIdx.push(idx); heapF.push(f); heapG.push(g);
-    while (i > 0) { const p = (i - 1) >> 1; if (heapF[p] <= heapF[i]) break; hswap(p, i); i = p; }
-  };
-  let popG = 0;
-  const hpop = (): number => {
-    const top = heapIdx[0]; popG = heapG[0]; const li = heapIdx.pop()!; const lf = heapF.pop()!; const lg = heapG.pop()!;
-    if (heapIdx.length) { heapIdx[0] = li; heapF[0] = lf; heapG[0] = lg; let i = 0; const n = heapIdx.length; for (;;) { const l = 2 * i + 1, r = l + 1; let s = i; if (l < n && heapF[l] < heapF[s]) s = l; if (r < n && heapF[r] < heapF[s]) s = r; if (s === i) break; hswap(s, i); i = s; } }
-    return top;
-  };
-  hpush(0, fKey(0, phase1H(t0, D)), 0);
-  let goal = -1;
-  while (heapIdx.length) {
-    const idx = hpop();
-    if (popG !== gArr[idx]) continue; // stale heap entry (this slot's g was improved later) — skip
-    const tuple = tuples[idx]; const g = gArr[idx];
-    if (phase1Solved(tuple, D)) { goal = idx; break; }
-    const last = moveArr[idx];
-    for (let mi = 0; mi < NG; mi++) {
-      if (last >= 0) {
-        if (mi === INVERSE_MOVE[last]) continue;
-        if (MOVE_AXIS[mi] === MOVE_AXIS[last] && mi < last) continue;
-      }
-      const nt = new Int32Array(NORB);
-      for (let i = 0; i < NORB; i++) nt[i] = D[i].trans[mi][tuple[i]];
-      const ng = g + 1;
-      const exist = idxOf(nt);
-      if (exist !== undefined) {
-        if (gArr[exist] <= ng) continue;
-        gArr[exist] = ng; parent[exist] = idx; moveArr[exist] = mi;
-        hpush(exist, fKey(ng, phase1H(nt, D)), ng);
-        continue;
-      }
-      const nidx = tuples.length;
-      tuples.push(nt); gArr.push(ng); parent.push(idx); moveArr.push(mi);
-      setIdx(nt, nidx);
-      hpush(nidx, fKey(ng, phase1H(nt, D)), ng);
-      if (nidx + 1 > cap) return null;
-    }
-  }
-  if (goal < 0) return null;
-  const rev: number[] = [];
-  for (let i = goal; i >= 0 && moveArr[i] >= 0; i = parent[i]) rev.push(moveArr[i]);
-  rev.reverse();
-  return rev;
-}
+// Phase-1 search = iterative-deepening A* (IDDFS with an admissible bound) over the joint orbit tuple.
+//
+// WHY IDDFS, NOT THE EARLIER CLOSED-SET A*:  the old A* keyed its closed set on ALL FIVE orbits
+// (corner·40320+cap-edge OUTER, wing2·wing3·wing4 INNER). The three wing orbits are always already in H and
+// IRRELEVANT to the phase-1 goal, yet the U/D 90° turns permute them, so a single phase-1-relevant
+// (corner,cap-edge) configuration appears under up to 24³ = 13824 distinct wing labelings. The closed set
+// therefore stored the SAME phase-1 state thousands of times and the node pool blew past 8M — and past 60M
+// (heap OOM) — on a fraction of legal states (e.g. the corner orbit at intoH=9), returning null → throw.
+// The true joint reduction depth of those states is only ≤ 13 (measured: a 6000-state sweep peaks at 9–10,
+// max 13), reachable in ≤ 6.05M IDDFS nodes / ≤ ~0.4 s. IDDFS holds NO closed set (O(depth) memory, so OOM
+// is IMPOSSIBLE) and is provably complete for a finite reachable graph with an admissible bound, so it
+// terminates on EVERY state. Move pruning: forbid a second turn of the SAME face (always redundant — two
+// same-face turns collapse to one power) and canonicalize the order of the two faces on each axis (U/D, R/L,
+// F/B all commute) by move index — both sound for shortest-path search.
+const PHASE1_MAX_DEPTH = 20; // ample headroom over the measured max true depth (13)
 function solvePhase1(t0: Int32Array, D: OrbitDb[]): number[] | null {
   if (phase1Solved(t0, D)) return [];
-  // A* (weight=1) with the additive heuristic — the CLOSED SET bounds expansion (no IDA* re-expansion
-  // blow-up), so the worst real state finishes in ≤ ~2 s, mean ~0.1 s, with a 100% solve-rate (measured
-  // over 800 real cstimer scrambles: 0 failures). The greedy-dive fallback is a safety net for the (never
-  // observed) cap-out so the worst-case time stays bounded. H is reachable from every state.
-  return phase1Attempt(t0, D, 1, 8_000_000) ?? phase1Attempt(t0, D, 2, 8_000_000, true);
+  let found: number[] | null = null;
+  const path = new Int32Array(PHASE1_MAX_DEPTH + 1);
+  const tupBuf: Int32Array[] = Array.from({ length: PHASE1_MAX_DEPTH + 2 }, () => new Int32Array(NORB));
+  function dfs(t: Int32Array, g: number, bound: number, last: number, depth: number): number {
+    const f = g + phase1H(t, D);
+    if (f > bound) return f;
+    if (phase1Solved(t, D)) { found = Array.from(path.subarray(0, depth)); return -1; }
+    let min = Infinity;
+    const lastFace = last >= 0 ? MOVES[last].name[0] : '';
+    for (let mi = 0; mi < NG; mi++) {
+      if (last >= 0) {
+        const mf = MOVES[mi].name[0];
+        if (mf === lastFace) continue; // same face twice → redundant (collapses to one power)
+        if (MOVE_AXIS[mi] === MOVE_AXIS[last] && mi < last) continue; // commuting opposite faces → canonical order
+      }
+      const nt = tupBuf[depth];
+      for (let i = 0; i < NORB; i++) nt[i] = D[i].trans[mi][t[i]];
+      path[depth] = mi;
+      const r = dfs(nt, g + 1, bound, mi, depth + 1);
+      if (found) return -1;
+      if (r < min) min = r;
+    }
+    return min;
+  }
+  let bound = phase1H(t0, D);
+  while (bound <= PHASE1_MAX_DEPTH) {
+    const r = dfs(t0, 0, bound, -1, 0);
+    if (found) return found;
+    if (r === Infinity) return null; // exhausted the whole reachable graph without entering H (unreachable)
+    bound = r;
+  }
+  return null;
 }
 
 // ── phase-2 IDA* (solve within the 180° subgroup using only 180° moves) ──────────────
@@ -630,6 +605,7 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
   let budgetHit = false;
   const h = (tuple: Int32Array): number => { let m = 0; for (let i = 0; i < NORB; i++) { const d = D[i].optDist[tuple[i]]; if (d > m) m = d; } return m; };
   const solvedTuple = (tuple: Int32Array): boolean => { for (let i = 0; i < NORB; i++) if (D[i].optDist[tuple[i]] !== 0) return false; return true; };
+  const budget = optShortcutBudget();
 
   function dfs(tuple: Int32Array, g: number, bound: number, last: number, depth: number): number {
     const f = g + h(tuple);
@@ -641,7 +617,7 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
         if (mi === INVERSE_MOVE[last]) continue;
         if (MOVE_AXIS[mi] === MOVE_AXIS[last] && mi < last) continue;
       }
-      if (++nodes > OPT_SHORTCUT_BUDGET) { budgetHit = true; return -1; }
+      if (++nodes > budget) { budgetHit = true; return -1; }
       const nt = tupBuf[depth];
       for (let i = 0; i < NORB; i++) nt[i] = D[i].trans[mi][tuple[i]];
       pathStack[depth] = mi;
@@ -654,7 +630,8 @@ function solveOptimalShallow(start: Uint8Array, D: OrbitDb[]): number[] | null {
   }
 
   let bound = h(t0);
-  while (bound <= OPT_SHORTCUT_DEPTH_CAP) {
+  const depthCap = optShortcutDepthCap();
+  while (bound <= depthCap) {
     const r = dfs(t0, 0, bound, -1, 0);
     if (found) {
       const sol: number[] = found;
