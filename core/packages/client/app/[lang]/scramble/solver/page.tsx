@@ -55,6 +55,7 @@ const Cube3Solver = dynamic(() => import('./_Cube3Solver'), { ssr: false, loadin
 const Sq1Solver = dynamic(() => import('./_Sq1Solver'), { ssr: false, loading: Loading });
 const Sq2Solver = dynamic(() => import('./_Sq2Solver'), { ssr: false, loading: Loading });
 const Ssq1Solver = dynamic(() => import('./_Ssq1Solver'), { ssr: false, loading: Loading });
+const BsqSolver = dynamic(() => import('./_BsqSolver'), { ssr: false, loading: Loading });
 const IvySolver = dynamic(() => import('./_IvySolver'), { ssr: false, loading: Loading });
 const FloppySolver = dynamic(() => import('./_FloppySolver'), { ssr: false, loading: Loading });
 const Cuboid223Solver = dynamic(() => import('./_Cuboid223Solver'), { ssr: false, loading: Loading });
@@ -83,6 +84,7 @@ function SolverDispatch() {
   if (event === 'sq1') return <Sq1Solver />;
   if (event === 'sq2') return <Sq2Solver />;
   if (event === 'ssq1') return <Ssq1Solver />;
+  if (event === 'bsq') return <BsqSolver />;
   if (event === 'ivy') return <IvySolver />;
   if (event === '133') return <FloppySolver />;
   if (event === '223') return <Cuboid223Solver />;
