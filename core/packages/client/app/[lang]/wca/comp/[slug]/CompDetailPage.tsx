@@ -1720,7 +1720,7 @@ function CompInfoRows({
   isZh: boolean;
 }) {
   return (
-    <dl className="comp-info-panel">
+    <dl className={`comp-info-panel${isZh ? ' comp-info-panel--zh' : ''}`}>
       {activeRows.map((r, i) => (
         <div key={r.label} className="comp-info-row">
           <dt className="comp-info-label">{r.label}</dt>

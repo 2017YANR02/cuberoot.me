@@ -409,6 +409,10 @@
     grid-template-columns: 56px 1fr;
     column-gap: 10px;
   }
+  /* zh 标签最多 4 个汉字;微信内置浏览器字体比 Safari 偏宽,固定 56px 会在「报名时间/修改截止/候补截止」处折行。
+     改自适应宽度 + 不折行,保证一行(英文标签长,仍走 56px 固定列以免挤掉值列) */
+  .comp-info-panel--zh .comp-info-row { grid-template-columns: max-content 1fr; }
+  .comp-info-panel--zh .comp-info-label { white-space: nowrap; }
 }
 
 .comp-source-toggle {
