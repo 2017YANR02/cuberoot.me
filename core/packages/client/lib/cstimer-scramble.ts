@@ -97,7 +97,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
 },
   { id: 'sq2',     key: 'sq2',     length: 10, zh: '方块二',           en: 'Square-2',          textLabel: 'Sq2',  family: 'sq', solvable: true
 },
-  { id: 'ssq1',    key: 'ssq1t',   length: 10, zh: '超 Sq-1',          en: 'Super Sq-1',        textLabel: 'SSq1', family: 'sq' },
+  { id: 'ssq1',    key: 'ssq1t',   length: 10, zh: '超 Sq-1',          en: 'Super Sq-1',        textLabel: 'SSq1', family: 'sq', solvable: true },
   { id: 'bsq',     key: 'bsq',     length: 10, zh: '受限 Sq-1',        en: 'Bandaged Sq-1',     textLabel: 'BSq1', family: 'sq' },
   { id: 'giga',    key: 'giga',    length: 30, zh: '六阶五魔',         en: 'Gigaminx',          textLabel: 'Giga', family: 'twist'
 },

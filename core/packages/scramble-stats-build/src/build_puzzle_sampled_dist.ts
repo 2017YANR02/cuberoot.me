@@ -254,6 +254,26 @@ const REGISTRY: PuzzleDistSpec[] = [
     },
   },
   {
+    event: 'ssq1',
+    label: 'Super Square-1',
+    scrambleLen: 10,          // cstimer ssq1t generator length (CSTIMER_EVENTS ssq1 length=10 tuples)
+    defaultN: 2000,           // solveSsq1 (inverse reduction) is O(n) → 2000 单进程几秒
+    // 构造式逆约简(解 = 打乱的逆):有效 + 有界(实测 2000 样本 mean≈11、max 11、bound 40),非最优(§0.0 #3 诚实记)。
+    quality: 'sampled-bounded',
+    load: async () => {
+      const m = await mod('../../client/lib/ssq1-solver');
+      const solveSsq1 = m.solveSsq1 as (s: string) => { length: number; optimal?: boolean };
+      return {
+        // randomSsq1Scramble 忠实镜像 cstimer 的 ssq1t (a,b,c,d)/ 生成器(两个独立 sq1_getseq 织成 4 元组)。
+        scramble: m.randomSsq1Scramble as SolverAdapter['scramble'],
+        // 逆约简有效+有界(非最优)→ optimal 取求解器返回值(一般 false)。
+        solve: (s: string) => { const o = solveSsq1(s); return { length: o.length, optimal: o.optimal ?? false }; },
+        maxBound: m.SSQ1_MAX_LENGTH as number,
+        stateCountStr: m.SSQ1_STATE_COUNT_STR as string,
+      };
+    },
+  },
+  {
     event: 'crz3a',
     label: 'Crazy 3x3',
     scrambleLen: 25,          // cstimer crz3a generator length(CSTIMER_EVENTS crz3a length=25)

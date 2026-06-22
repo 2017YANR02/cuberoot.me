@@ -26,6 +26,7 @@ import MpyrDistView from './_components/MpyrDistView';
 import DinoDistView from './_components/DinoDistView';
 import Crz3aDistView from './_components/Crz3aDistView';
 import Sq2DistView from './_components/Sq2DistView';
+import Ssq1DistView from './_components/Ssq1DistView';
 import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
@@ -523,7 +524,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   // 非 WCA 求解项目(ivy / 133 / 223 / 8p / sfl …):难度=整解最优步数分布(A/B 档全空间精确,15p 是 TIER C
   // 采样);均无打乱长度数据、无合并/数据集/度量开关 → 走 isIvy 早返回那套。
-  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '233' || event === '334' || event === '335' || event === '336' || event === '337' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a' || event === 'sq2';
+  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '233' || event === '334' || event === '335' || event === '336' || event === '337' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a' || event === 'sq2' || event === 'ssq1';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -751,6 +752,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                                   : event === 'dino' ? 'dino'
                                   : event === 'crz3a' ? 'crz3a'
                                   : event === 'sq2' ? 'sq2'
+                                  : event === 'ssq1' ? 'ssq1'
                                   : null;
 
   // Shared header: WCA-event selector sits ABOVE the tab bar so it drives both
@@ -1211,6 +1213,26 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           </div>
         ) : (
           <Sq2DistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  // Super Square-1(非 WCA,TIER D):两个耦合的 Square-1,可达状态 ≈1.15×10²⁵,无法整图枚举,
+  // 难度 = 整解步数的**离线采样**分布(build 脚本解 N 条随机态后落静态 JSON,逆约简有效有界);无打乱长度数据。
+  if (event === 'ssq1') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: 'Super Square-1 无打乱长度分布(打乱由 cstimer 定长生成);整解步数采样分布见「难度」',
+              en: 'No scramble-length distribution for the Super Square-1 (cstimer generates fixed-length scrambles); see "Difficulty" for the sampled solution-length distribution',
+            })}
+          </div>
+        ) : (
+          <Ssq1DistView isZh={isZh} />
         )}
       </div>
     );
