@@ -30,7 +30,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
 import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
-import ShowToggle, { type ShowMode } from '@/components/wca-stats/ShowToggle';
+import { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { EventIcon } from '@/components/EventIcon';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -601,22 +601,34 @@ function AllResultsPageInner() {
           <div className="wse-filters">
             <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '显示', en: 'Show' })}</label>
-              <ShowToggle value={show} onChange={handleShowChange} isZh={isZh} />
+              <PillToggle
+                className="wse-pill"
+                value={show === 'persons'}
+                onChange={(v) => handleShowChange(v ? 'persons' : 'results')}
+                onLabel={tr({ zh: '选手', en: 'Persons' })}
+                offLabel={tr({ zh: '成绩', en: 'Results' })}
+              />
             </div>
-            <div className="wse-filter">
+            <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '类型', en: 'Type' })}</label>
-              <select value={effType} onChange={e => update('type', e.target.value)}>
-                <option value="single">{tr({ zh: '单次', en: 'Single' })}</option>
-                <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>
-              </select>
+              <PillToggle
+                className="wse-pill"
+                value={effType === 'average'}
+                onChange={(v) => update('type', v ? 'average' : 'single')}
+                onLabel={tr({ zh: '平均', en: 'Average' })}
+                offLabel={tr({ zh: '单次', en: 'Single' })}
+              />
             </div>
             <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
             <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '口径', en: 'Basis' })}</label>
-              <div className="wse-show-toggle">
-                <button type="button" className={basis === 'cumulative' ? 'active' : ''} onClick={() => handleBasisChange('cumulative')}>{tr({ zh: '截至', en: 'Cumulative' })}</button>
-                <button type="button" className={basis === 'period' ? 'active' : ''} onClick={() => handleBasisChange('period')}>{tr({ zh: '当期', en: 'Period' })}</button>
-              </div>
+              <PillToggle
+                className="wse-pill"
+                value={basis === 'cumulative'}
+                onChange={(v) => handleBasisChange(v ? 'cumulative' : 'period')}
+                onLabel={tr({ zh: '截至', en: 'Cumulative' })}
+                offLabel={tr({ zh: '当期', en: 'Period' })}
+              />
             </div>
             <div className="wse-filter">
               <label>{tr({ zh: '年份', en: 'Year' })}</label>
@@ -739,12 +751,15 @@ function AllResultsPageInner() {
         <>
           <div className="wse-filters">
             <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
-            <div className="wse-filter">
+            <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '类型', en: 'Type' })}</label>
-              <select value={type} onChange={e => update('type', e.target.value)}>
-                <option value="single">{tr({ zh: '单次', en: 'Single' })}</option>
-                <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>
-              </select>
+              <PillToggle
+                className="wse-pill"
+                value={type === 'average'}
+                onChange={(v) => update('type', v ? 'average' : 'single')}
+                onLabel={tr({ zh: '平均', en: 'Average' })}
+                offLabel={tr({ zh: '单次', en: 'Single' })}
+              />
               {/* 名次和的平均走官方数据,多盲无官方平均 → 不计入,明确告知 */}
               {type === 'average' && selectedSet.has('333mbf') && (
                 <span className="wse-sor-note">{tr({ zh: '多盲平均(非官方 Mo3)不计入名次和', en: 'Multi-Blind average (unofficial Mo3) is not counted in the sum of ranks'
