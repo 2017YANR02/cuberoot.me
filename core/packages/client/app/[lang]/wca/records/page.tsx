@@ -44,7 +44,7 @@ function regionUrl(region: string): string {
   return `/stats/records/history/country/${region}.json`;
 }
 
-type Show = 'history' | 'mixed';
+type Show = 'current' | 'history' | 'mixed';
 
 function RecordsPageInner() {
   const { i18n } = useTranslation();
@@ -59,13 +59,13 @@ function RecordsPageInner() {
     { history: 'replace', scroll: false },
   );
 
-  const show: Show = q.show === 'mixed' ? 'mixed' : 'history';
+  const show: Show = q.show === 'mixed' ? 'mixed' : q.show === 'history' ? 'history' : 'current';
   const region = q.region || 'world';
   const event = q.event || '';
 
   useEffect(() => {
-    if (q.show !== 'history' && q.show !== 'mixed') {
-      setQ({ show: 'history' });
+    if (q.show !== 'current' && q.show !== 'history' && q.show !== 'mixed') {
+      setQ({ show: 'current' });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q.show]);
@@ -118,6 +118,28 @@ function RecordsPageInner() {
     return new Set(bundle.rows.map(r => r.e));
   }, [bundle]);
 
+  // 「当前」视图:每个 (项目, 类型) 在该区域的现行纪录 = 历史进程里成绩最好(v 最小)的那行;
+  // 并列(同值多人)全列,按日期升序 —— 与 wr_current 当前世界纪录页的并列处理一致。
+  // 区域选择器决定口径:world → 当前世界纪录,某洲 → 当前大洲纪录,某国 → 当前国家纪录。
+  const currentRows = useMemo(() => {
+    if (show !== 'current') return [];
+    const best = new Map<string, { v: number; rows: Row[] }>();
+    for (const r of visibleRows) {
+      const k = `${r.e}-${r.t}`;
+      const cur = best.get(k);
+      if (!cur || r.v < cur.v) best.set(k, { v: r.v, rows: [r] });
+      else if (r.v === cur.v) cur.rows.push(r);
+    }
+    const out: Row[] = [];
+    for (const id of ALL_EVENT_IDS) {
+      for (const t of ['s', 'a'] as const) {
+        const g = best.get(`${id}-${t}`);
+        if (g) out.push(...[...g.rows].sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : 0)));
+      }
+    }
+    return out;
+  }, [visibleRows, show]);
+
   const grouped = useMemo(() => {
     if (show !== 'history') return null;
     const map = new Map<string, Row[]>();
@@ -147,26 +169,25 @@ function RecordsPageInner() {
         <h1>{tr({ zh: '纪录', en: 'Records'
         })}</h1>
         <p className="wse-subtitle">
-          {tr({ zh: '历史上所有曾被打破的世界 / 大洲 / 国家纪录', en: 'Every world / continental / national record ever set'
+          {show === 'current'
+            ? tr({ zh: '各项目当前的世界 / 大洲 / 国家纪录', en: 'Current world / continental / national record for each event' })
+            : tr({ zh: '历史上所有曾被打破的世界 / 大洲 / 国家纪录', en: 'Every world / continental / national record ever set'
         })}
         </p>
       </header>
 
       <div className="records-toolbar">
         <div className="records-toolbar-row">
-          <div className="records-show-toggle">
-            <button
-              type="button"
-              className={show === 'history' ? 'active' : ''}
-              onClick={() => update('show', 'history')}
-            >{tr({ zh: '历史', en: 'History'
-            })}</button>
-            <button
-              type="button"
-              className={show === 'mixed' ? 'active' : ''}
-              onClick={() => update('show', 'mixed')}
-            >{tr({ zh: '混合', en: 'Mixed' })}</button>
-          </div>
+          <select
+            className="records-mode-select"
+            value={show}
+            onChange={(e) => update('show', e.target.value)}
+            aria-label={tr({ zh: '视图', en: 'View' })}
+          >
+            <option value="current">{tr({ zh: '当前', en: 'Current' })}</option>
+            <option value="history">{tr({ zh: '历史', en: 'History' })}</option>
+            <option value="mixed">{tr({ zh: '混合', en: 'Mixed' })}</option>
+          </select>
 
           <RegionPicker
             value={region}
@@ -192,8 +213,12 @@ function RecordsPageInner() {
         {bundle && !loading && (
           <>
             {visibleRows.length === 0 && (
-              <div className="wse-state">{tr({ zh: '该区域 / 项目暂无历史纪录', en: 'No historical records for this region / event'
+              <div className="wse-state">{tr({ zh: '该区域 / 项目暂无纪录', en: 'No records for this region / event'
             })}</div>
+            )}
+
+            {show === 'current' && currentRows.length > 0 && (
+              <RowsTable rows={currentRows} isZh={isZh} showEvent={!event} showRank={false} />
             )}
 
             {show === 'history' && grouped && grouped.map(g => (
@@ -222,9 +247,10 @@ interface RowsTableProps {
   rows: Row[];
   isZh: boolean;
   showEvent: boolean;
+  showRank?: boolean;
 }
 
-function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
+function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
   const ranks = useMemo(() => {
     const totals = new Map<string, number>();
     for (const r of rows) {
@@ -267,8 +293,7 @@ function RowsTable({ rows, isZh, showEvent }: RowsTableProps) {
           <tr key={`${r.p}-${r.c}-${r.e}-${r.t}-${i}`}>
             <td>
               <RecordBadge record={r.l} />
-              {' '}
-              <span className="records-rank">#{ranks[i]}</span>
+              {showRank && <>{' '}<span className="records-rank">#{ranks[i]}</span></>}
             </td>
             {showEvent && (
               <td>
