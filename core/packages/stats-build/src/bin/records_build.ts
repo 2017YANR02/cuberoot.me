@@ -15,7 +15,7 @@ import { writeFileSync, mkdirSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { query, closePool } from '../core/database.js';
-import { mbfMo3 } from '../core/mbf_average.js';
+import { MbfAverage } from '../statistics/mbf_average.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_ROOT = resolve(__dirname, '../../../../../stats/records/history');
@@ -47,39 +47,22 @@ interface Row {
 interface CountryMeta { id: string; iso2: string; continent_id: string }
 
 // 333mbf 非官方 Mo3「当前世界纪录」—— WCA 不追踪多盲平均,results 表无 regional_average_record 标记,
-// 故上面的查询拿不到这一行。这里用与 stats-build MbfAverage 完全一致的口径(每把 0DDTTTTTMM 三段
-// 各取 3 次均值四舍五入再拼回)算历史最佳 Mo3,作为一条合成 average 行注入 world.json,
-// 使 /wca/records 当前视图(world)显示该非官方多盲平均纪录(原 wr_current 页同款行)。
+// 故上面的查询拿不到这一行。复用 stats-build 现成的 MbfAverage 引擎(bestMo3Raw 给出历史最佳 Mo3 的
+// 编码值 + 原始 id/三把成绩,口径与 wr_average_history 完全一致),映射成一条合成 average 行注入
+// world.json,使 /wca/records 当前视图(world)显示该非官方多盲平均纪录(原 wr_current 页同款行)。
 async function bestMbfMo3Row(countryById: Map<string, CountryMeta>): Promise<Row | null> {
-  const rows = await query<any>(`
-    SELECT r.id, r.person_id AS p, r.person_name AS pn, r.country_id AS pc,
-           r.competition_id AS c, comp.cell_name AS cn, comp.country_id AS cc,
-           DATE_FORMAT(comp.start_date, '%Y-%m-%d') AS d,
-           (SELECT GROUP_CONCAT(ra.value ORDER BY ra.attempt_number)
-              FROM result_attempts ra WHERE ra.result_id = r.id) AS atts
-    FROM results r
-    JOIN competitions comp ON comp.id = r.competition_id
-    WHERE r.event_id = '333mbf'
-  `);
-  let best: { metric: number; d: string; r: any; a: number[] } | null = null;
-  for (const r of rows as any[]) {
-    const vals = String(r.atts || '').split(',').map(Number);
-    if (vals.length < 3 || vals[0] <= 0 || vals[1] <= 0 || vals[2] <= 0) continue;
-    const metric = mbfMo3(vals[0], vals[1], vals[2]);
-    // 最佳 = metric 最小;并列取日期更早者(与 wr_current 当前世界纪录页的并列处理一致)
-    if (!best || metric < best.metric || (metric === best.metric && String(r.d) < best.d)) {
-      best = { metric, d: String(r.d), r, a: [vals[0], vals[1], vals[2]] };
-    }
-  }
+  const best = await new MbfAverage().bestMo3Raw();
   if (!best) return null;
-  const pc = countryById.get(String(best.r.pc));
-  const cc = countryById.get(String(best.r.cc));
+  const pc = countryById.get(best.countryId);
+  const cc = countryById.get(best.compCountry);
   if (!pc?.iso2 || !cc?.iso2) return null;
+  const dt = new Date(best.startDate);
+  const d = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
   return {
-    e: '333mbf', t: 'a', v: best.metric, l: 'WR',
-    p: String(best.r.p), pn: String(best.r.pn), pc: pc.iso2,
-    c: String(best.r.c), cn: String(best.r.cn), cc: cc.iso2,
-    d: best.d, a: best.a,
+    e: '333mbf', t: 'a', v: best.value, l: 'WR',
+    p: best.personId, pn: best.personName, pc: pc.iso2,
+    c: best.compId, cn: best.compCell, cc: cc.iso2,
+    d, a: best.attempts,
   };
 }
 

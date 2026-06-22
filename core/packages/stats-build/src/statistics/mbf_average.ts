@@ -1,8 +1,7 @@
 // NOTE: 333mbf/333mbo Mo3 平均值——数据引擎(非页面)
 // 独立页 /wca/mbf_average 已退役(2026-06-10);此类不再产页面 JSON,只作数据提供者:
 //   wr_average_history → rankingFor() / historyFor()(排名 + WR 历史)
-// NOTE: bestRankingRow() 原供 wr_current 取"历史最佳 Mo3 一行",wr_current 已于 2026-06-22 退役
-//   (移植进 /wca/records 当前视图),该方法暂无调用方,保留作潜在复用。
+//   records_build      → bestMo3Raw()(历史最佳 Mo3 原始数据,注入 world.json 当前多盲平均行)
 // 算法:333mbf 从 DB 算 Mo3,WCA 编码 0DDTTTTTMM 拆 DD/TTTTT/MM 各取均值(ROUND)再拼;
 //      333mbo 历史上仅 1 人完成过 3 轮,硬编码。
 import { formatDate, calcDays, filterWrHistory } from '../core/format_date.js';
@@ -32,6 +31,8 @@ export class MbfAverage extends Statistic {
   private _mbfHistory: unknown[][] = [];
   private _mbfRanking6col: unknown[][] = [];
   private _ranking: Record<string, unknown[][]> = {};
+  // 历史最佳 Mo3 的原始数据(未格式化),供 records 管道注入 world.json 当前多盲平均行复用
+  private _bestMo3: { row: RowDataPacket; metric: number; v1: number; v2: number; v3: number } | null = null;
   private _computed = false;
 
   constructor() {
@@ -59,6 +60,9 @@ export class MbfAverage extends Statistic {
         result.person_id,
         person.country_id,
         CONCAT('[', competition.cell_name, '](https://www.worldcubeassociation.org/competitions/', competition.id, ')') competition_link,
+        competition.id AS comp_id,
+        competition.cell_name AS comp_cell,
+        competition.country_id AS comp_country,
         competition.start_date
       FROM results result
       JOIN persons person ON person.wca_id = person_id AND person.sub_id = 1
@@ -90,6 +94,8 @@ export class MbfAverage extends Statistic {
       const [v1, v2, v3] = vals;
       const mo3 = mbfMo3(v1, v2, v3);
       computed.push({ row: r, metric: mo3, v1, v2, v3 });
+      // 历史最佳(metric 最小);query 已按 start_date 升序,严格小于 → 并列保留更早者
+      if (!this._bestMo3 || mo3 < this._bestMo3.metric) this._bestMo3 = { row: r, metric: mo3, v1, v2, v3 };
     }
     // NOTE: 内存管理——遍历完成后释放原始查询结果
     queryResults = null;
@@ -176,11 +182,26 @@ export class MbfAverage extends Statistic {
     return [];
   }
 
-  // NOTE: 历史最佳 Mo3 那一行（7 列，含 Details）。原供已退役的 wr_current 委托,当前无调用方。
-  // [rank, person_link, mo3Str, country_id, dateStr, competition_link, details]
-  async bestRankingRow(eventName: string): Promise<unknown[] | null> {
+  // NOTE: 333mbf 历史最佳 Mo3 的原始数据(未格式化),供 records 管道(records_build.ts)注入
+  // world.json 的「当前世界纪录」多盲平均行复用——避免在那边重复写一份相同的查询 + 取最优循环。
+  // 返回编码后的 Mo3 值 + 原始 id/国家/三把成绩,由调用方按需映射(iso2、记号格式等)。
+  async bestMo3Raw(): Promise<{
+    value: number; personId: string; personName: string; countryId: string;
+    compId: string; compCell: string; compCountry: string; startDate: Date; attempts: number[];
+  } | null> {
     await this.computeData();
-    const rows = this._ranking[eventName];
-    return rows && rows.length > 0 ? rows[0] : null;
+    if (!this._bestMo3) return null;
+    const r = this._bestMo3.row;
+    return {
+      value: this._bestMo3.metric,
+      personId: String(r['person_id']),
+      personName: String(r['person_name']),
+      countryId: String(r['country_id']),
+      compId: String(r['comp_id']),
+      compCell: String(r['comp_cell']),
+      compCountry: String(r['comp_country']),
+      startDate: r['start_date'] as Date,
+      attempts: [this._bestMo3.v1, this._bestMo3.v2, this._bestMo3.v3],
+    };
   }
 }
