@@ -10,7 +10,7 @@ export type { CardCustomText, CardEl, CardLayout, CardTextStyles, QrAlg, QrCode,
 export type QrUpdate = Partial<
   Pick<
     QrCode,
-    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "frontArt" | "backArt" | "frontArtPrompt" | "alg" | "layout" | "textStyles" | "customTexts"
+    "label" | "type" | "target" | "title" | "intro" | "links" | "term" | "quote" | "brand" | "frontArt" | "backArt" | "frontArtPrompt" | "alg" | "layout" | "textStyles" | "customTexts"
   >
 >;
 
@@ -162,6 +162,7 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
   if (patch.intro !== undefined) next.intro = patch.intro?.trim() || null;
   if (patch.term !== undefined) next.term = patch.term?.trim() || null;
   if (patch.quote !== undefined) next.quote = patch.quote?.trim() || null;
+  if (patch.brand !== undefined) next.brand = patch.brand?.trim() || null;
   if (patch.frontArt !== undefined) next.frontArt = patch.frontArt?.trim() || null;
   if (patch.backArt !== undefined) next.backArt = patch.backArt?.trim() || null;
   if (patch.frontArtPrompt !== undefined) next.frontArtPrompt = patch.frontArtPrompt?.trim() || null;
@@ -227,6 +228,7 @@ export async function duplicate(code: string): Promise<string | null> {
     links: src.links,
     term: src.term,
     quote: src.quote,
+    brand: src.brand,
     frontArt: src.frontArt,
     backArt: src.backArt,
     frontArtPrompt: src.frontArtPrompt,

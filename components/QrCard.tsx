@@ -9,6 +9,7 @@ import {
   cubeFaceletSpots,
   fontStack,
   formulaRow,
+  frontBrand,
 } from "@/lib/qr/cardText";
 
 // 2x4cm 折叠卡:正面(slogan + 魔方艺术图)| 折线 | 背面(解法流派公式底纹 + 唯一二维码)。
@@ -160,12 +161,14 @@ function ArtImage({
 // 正面:艺术图铺满 + 底部压暗 + 语录/品牌叠底(无二维码)。杂志封面式。
 function FrontPanel({
   quote,
+  brand,
   art,
   layout,
   styles,
   customTexts,
 }: {
   quote: string;
+  brand: string;
   art: string;
   layout: CardLayout | null | undefined;
   styles: CardTextStyles | null | undefined;
@@ -232,7 +235,7 @@ function FrontPanel({
             ...elShift(layout, "brand"),
           }}
         >
-          魔方开放社群
+          {brand}
         </div>
       )}
     </div>
@@ -449,6 +452,7 @@ export function QrCardUnit({
   cropMarks?: boolean;
 }) {
   const quote = entry.quote?.trim() || DEFAULT_QUOTES[idx % DEFAULT_QUOTES.length];
+  const brand = frontBrand(entry);
   const art = entry.frontArt?.trim() || FRONT_ARTS[idx % FRONT_ARTS.length].src;
   return (
     <div
@@ -462,6 +466,7 @@ export function QrCardUnit({
     >
       <FrontPanel
         quote={quote}
+        brand={brand}
         art={art}
         layout={entry.layout}
         styles={entry.textStyles}

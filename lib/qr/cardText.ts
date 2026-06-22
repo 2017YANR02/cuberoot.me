@@ -159,6 +159,14 @@ export function frontQuote(entry: Pick<QrCode, "quote">, idx = 0): string {
   return entry.quote?.trim() || DEFAULT_QUOTES[idx % DEFAULT_QUOTES.length];
 }
 
+// 正面品牌名默认值(留空时用);后台可改 entry.brand 覆盖
+export const DEFAULT_BRAND = "魔方开放社群";
+
+// 正面品牌名:优先后台填的 brand,留空用默认社群名。DOM 卡与矢量母版共用,避免漂移。
+export function frontBrand(entry: Pick<QrCode, "brand">): string {
+  return entry.brand?.trim() || DEFAULT_BRAND;
+}
+
 // 背面主标题:优先用后台填的 title,否则按类型 + 去向兜底
 // 副标题:完全跟随「简介」字段,留空即不显示(所见即所得,不自动拼链接名/兜底文案)
 export function backText(entry: QrCode): { main: string; sub: string } {
