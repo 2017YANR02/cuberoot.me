@@ -31,7 +31,8 @@ const STAT_CATEGORIES = [
     iconName: 'Trophy',
     preserveOrder: true,
     // NOTE: top10_history 不单独注册——其 bar chart race 已嵌入 wr_metric 第 0 个 panel
-    ids: ['wr_current', 'wr_metric', 'wr_aoxr', 'wr_dominance', 'wr_non_pr', 'wr_newcomer',
+    // NOTE: wr_current(当前世界纪录)已退役 2026-06-22 —— 移植进 /wca/records 的「当前」视图(支持全部区域)
+    ids: ['wr_metric', 'wr_aoxr', 'wr_dominance', 'wr_non_pr', 'wr_newcomer',
           'average_of', 'consecutive_sub_5_average'],
   },
   {

@@ -51,7 +51,6 @@ $stats = @(
   'most_distinct_dates_competed_on',
   'shortest_time_to_get_all_singles',
   'shortest_time_to_get_all_singles_and_averages',
-  'wr_current',
   # 阶段 B — transform 统计
   'most_completed_solves',
   'worst_result_on_podium',

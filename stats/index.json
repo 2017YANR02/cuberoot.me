@@ -6,11 +6,6 @@
       "iconName": "Trophy",
       "stats": [
         {
-          "id": "wr_current",
-          "titleEn": "Current world records",
-          "titleZh": "当前世界纪录"
-        },
-        {
           "id": "wr_metric",
           "titleEn": "Metric",
           "titleZh": "指标",

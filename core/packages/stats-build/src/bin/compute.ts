@@ -49,7 +49,6 @@ export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = 
   'most_distinct_dates_competed_on': () => import('../statistics/most_distinct_dates_competed_on.js'),
   'shortest_time_to_get_all_singles': () => import('../statistics/shortest_time_to_get_all_singles.js'),
   'shortest_time_to_get_all_singles_and_averages': () => import('../statistics/shortest_time_to_get_all_singles_and_averages.js'),
-  'wr_current': () => import('../statistics/wr_current.js'),
   // NOTE: 阶段 B — GroupedStatistic 子类
   'most_completed_solves': () => import('../statistics/most_completed_solves.js'),
   'worst_result_on_podium': () => import('../statistics/worst_result_on_podium.js'),

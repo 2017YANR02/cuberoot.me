@@ -1,7 +1,8 @@
 // NOTE: 333mbf/333mbo Mo3 平均值——数据引擎(非页面)
 // 独立页 /wca/mbf_average 已退役(2026-06-10);此类不再产页面 JSON,只作数据提供者:
-//   wr_current        → bestRankingRow()(历史最佳 Mo3 一行)
 //   wr_average_history → rankingFor() / historyFor()(排名 + WR 历史)
+// NOTE: bestRankingRow() 原供 wr_current 取"历史最佳 Mo3 一行",wr_current 已于 2026-06-22 退役
+//   (移植进 /wca/records 当前视图),该方法暂无调用方,保留作潜在复用。
 // 算法:333mbf 从 DB 算 Mo3,WCA 编码 0DDTTTTTMM 拆 DD/TTTTT/MM 各取均值(ROUND)再拼;
 //      333mbo 历史上仅 1 人完成过 3 轮,硬编码。
 import { formatDate, calcDays, filterWrHistory } from '../core/format_date.js';
@@ -175,7 +176,7 @@ export class MbfAverage extends Statistic {
     return [];
   }
 
-  // NOTE: 供 WrCurrent 委托——历史最佳 Mo3 那一行（7 列，含 Details）。
+  // NOTE: 历史最佳 Mo3 那一行（7 列，含 Details）。原供已退役的 wr_current 委托,当前无调用方。
   // [rank, person_link, mo3Str, country_id, dateStr, competition_link, details]
   async bestRankingRow(eventName: string): Promise<unknown[] | null> {
     await this.computeData();
