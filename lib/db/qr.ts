@@ -168,25 +168,21 @@ export async function update(code: string, patch: QrUpdate): Promise<void> {
   if (patch.frontArtPrompt !== undefined) next.frontArtPrompt = patch.frontArtPrompt?.trim() || null;
   if (patch.alg !== undefined) next.alg = patch.alg && patch.alg.moves ? patch.alg : null;
   if (patch.layout !== undefined) {
-    // 只收已知元素键,坐标钳 ±20mm、0.1mm 取整;全空则置 null(回默认布局)
+    // 只收已知元素键,坐标钳 ±40mm、0.1mm 取整;全空则置 null(回默认布局)
     // 背景图(front/back)与二维码(qr)额外带缩放 s(0.5~3,0.01 取整,1 = 默认不存)
     // fit(铺满/完整)仅背景图用
     const KEYS: CardEl[] = ["quote", "brand", "backText", "term", "qr", "alg", "front", "back"];
     const ART_KEYS: CardEl[] = ["front", "back"];
     const SCALE_KEYS: CardEl[] = ["front", "back", "qr"];
-    // 二维码 / 背景图可跨整卡移动,位移钳到 ±40mm(整卡宽);其余元素限本面 ±20mm
-    const WIDE_KEYS: CardEl[] = ["front", "back", "qr"];
-    const clamp = (n: number, wide: boolean) => {
-      const lim = wide ? 40 : 20;
-      return Math.round(Math.max(-lim, Math.min(lim, n)) * 10) / 10;
-    };
+    // 所有可拖元素(文字 / 二维码 / 背景图)都可跨整卡移动到对面,位移统一钳到 ±40mm(整卡宽)
+    const clamp = (n: number) =>
+      Math.round(Math.max(-40, Math.min(40, n)) * 10) / 10;
     const out: CardLayout = {};
     for (const k of KEYS) {
       const o = patch.layout?.[k];
       if (!o || !Number.isFinite(o.x) || !Number.isFinite(o.y)) continue;
-      const wide = WIDE_KEYS.includes(k);
-      const x = clamp(o.x, wide);
-      const y = clamp(o.y, wide);
+      const x = clamp(o.x);
+      const y = clamp(o.y);
       // 缩放下限:二维码可无限缩小(留 0.01 防归零/翻转),背景图保 0.5 防露底过多
       const sMin = k === "qr" ? 0.01 : 0.5;
       const s =
