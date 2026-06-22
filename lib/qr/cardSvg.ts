@@ -180,6 +180,7 @@ function artLayer(
 // 正面:魔方艺术图(内嵌位图,印满含出血)+ 底部压暗 + slogan + 品牌名。
 // 无艺术图时退回全矢量(深色 + 散落魔方色块 + logo),保证始终能出图。
 // art 为 data URI 或可达 URL;artW/artH 是正面含出血的覆盖区(0..foldX, 0..h)。
+// 返回 { bg, fg } 分层:文字 fg 由调用方统一画在两面 bg 之上,文字才能拖过折线压在对面背景上。
 function front(
   bleed: number,
   foldX: number,
@@ -191,7 +192,7 @@ function front(
   layout: CardLayout | null | undefined,
   styles: CardTextStyles | null | undefined,
   customTexts: CardCustomText[],
-): string {
+): { bg: string; fg: string } {
   const x0 = bleed;
   const top = bleed;
   const cx = x0 + PANEL_W / 2;
@@ -242,30 +243,30 @@ function front(
           strokeW: bSt.strokeW,
         }),
       );
-  const slogan = quoteEl + brandEl;
+  const fg = quoteEl + brandEl + customEls;
 
   if (art) {
     // 艺术图正面:几何与 DOM 卡 QrCard.tsx 同源(见 artLayer 注释)。变换后可能越界,clip 回正面出血区。
     const body = artLayer(art, x0, top, bleed, layout?.front);
-    return (
-      `<rect x="0" y="0" width="${foldX}" height="${h}" fill="${INK}"/>` +
-      `<g clip-path="url(#frontArtClip)">${body}</g>` +
-      `<rect x="0" y="0" width="${foldX}" height="${h}" fill="url(#frontShade)"/>` +
-      slogan +
-      customEls
-    );
+    return {
+      bg:
+        `<rect x="0" y="0" width="${foldX}" height="${h}" fill="${INK}"/>` +
+        `<g clip-path="url(#frontArtClip)">${body}</g>` +
+        `<rect x="0" y="0" width="${foldX}" height="${h}" fill="url(#frontShade)"/>`,
+      fg,
+    };
   }
 
   // 无图回退:全矢量深色封面
   const logoSize = 7.5;
-  return (
-    `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="${INK}"/>` +
-    (pattern ? cubeFacelets(x0, top, "frontClip") : "") +
-    `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#frontGlow)"/>` +
-    cubeLogo(cx - logoSize / 2, top + 5, logoSize) +
-    slogan +
-    customEls
-  );
+  return {
+    bg:
+      `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="${INK}"/>` +
+      (pattern ? cubeFacelets(x0, top, "frontClip") : "") +
+      `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#frontGlow)"/>` +
+      cubeLogo(cx - logoSize / 2, top + 5, logoSize),
+    fg,
+  };
 }
 
 // 把一段 <svg> 作为嵌套矢量放进卡片坐标(保留其 viewBox,只改外层 x/y/尺寸)
@@ -288,7 +289,7 @@ function back(
   algSvg?: string,
   movesPath?: { d: string; width: number },
   backArt?: string,
-): string {
+): { bg: string; fg: string } {
   const cx = x0 + PANEL_W / 2;
   const { main, sub } = backText(entry);
   const term = entry.term?.trim();
@@ -382,15 +383,12 @@ function back(
     INK,
   );
 
-  return (
-    `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>` +
-    bg +
-    backTextEl +
-    termEl +
-    qr +
-    algEl +
-    customEls
-  );
+  return {
+    bg:
+      `<rect x="${x0}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>` +
+      bg,
+    fg: backTextEl + termEl + qr + algEl + customEls,
+  };
 }
 
 function cropMarksSvg(bleed: number, w: number, h: number): string {
@@ -460,23 +458,29 @@ export function cardSvg(entry: QrCode, opts: CardSvgOptions): string {
 
   const fold = `<line x1="${foldX}" y1="${bleed}" x2="${foldX}" y2="${bleed + PANEL_H}" stroke="rgba(0,0,0,0.18)" stroke-width="0.12" stroke-dasharray="0.8 0.8"/>`;
 
+  const f = front(
+    bleed,
+    foldX,
+    h,
+    quote,
+    brand,
+    pattern,
+    opts.art,
+    entry.layout,
+    entry.textStyles,
+    (entry.customTexts ?? []).filter((c) => c.side === "front"),
+  );
+  const b = back(foldX, bleed, entry, opts.url, pattern, opts.algSvg, opts.movesPath, opts.backArt);
+
+  // 先铺两面背景,再叠两面文字 / 二维码:任一面的文字拖过折线都压在对面背景之上(与 DOM 卡 z-index 同效)
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}" role="img" aria-label="魔方开放社群二维码卡片">` +
     defs +
     bleedBg +
-    front(
-      bleed,
-      foldX,
-      h,
-      quote,
-      brand,
-      pattern,
-      opts.art,
-      entry.layout,
-      entry.textStyles,
-      (entry.customTexts ?? []).filter((c) => c.side === "front"),
-    ) +
-    back(foldX, bleed, entry, opts.url, pattern, opts.algSvg, opts.movesPath, opts.backArt) +
+    f.bg +
+    b.bg +
+    f.fg +
+    b.fg +
     fold +
     (cropMarks ? cropMarksSvg(bleed, w, h) : "") +
     `</svg>`

@@ -21,6 +21,10 @@ export { FRONT_ARTS };
 
 const m = (n: number) => `calc(var(--s) * ${n}mm)`;
 
+// 文字 / 二维码前景层级:压在两面背景(艺术图 / 底纹)之上。
+// 两面板都 overflow:visible,前景统一抬到 z=1,任一面文字拖过折线都盖在对面背景上(与矢量母版 bg/fg 分层同效)。
+const FG_Z = 1;
+
 // 元素位置微调(编辑器拖动写入,mm):translate 只动自己,不影响兄弟布局
 const elShift = (layout: CardLayout | null | undefined, key: CardEl): CSSProperties =>
   layout?.[key]
@@ -73,6 +77,7 @@ function CustomTextLayer({
           data-el={`ct:${ct.id}`}
           style={{
             position: "absolute",
+            zIndex: FG_Z,
             left: m(10 + ct.x),
             top: m(20 + ct.y),
             transform: "translate(-50%, -50%)",
@@ -187,29 +192,33 @@ function FrontPanel({
         ...PANEL_BASE,
         justifyContent: "flex-end",
         position: "relative",
-        overflow: "hidden",
+        // overflow 放开,让文字 / 二维码可拖出正面、跨折线落到背面;艺术图 / 压暗罩各自在内层 clip 容器里裁切
+        overflow: "visible",
         color: "#fff",
         backgroundColor: "#11111A",
       }}
     >
-      <ArtImage art={art} layout={layout} lkey="front" />
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: "58%",
-          background:
-            "linear-gradient(to top, rgba(17,17,26,0.9) 0%, rgba(17,17,26,0.6) 42%, transparent 100%)",
-        }}
-      />
+      {/* 背景层裁切容器(艺术图 + 底部压暗限定在正面内,不随 overflow:visible 外溢) */}
+      <div aria-hidden style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+        <ArtImage art={art} layout={layout} lkey="front" />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: "58%",
+            background:
+              "linear-gradient(to top, rgba(17,17,26,0.9) 0%, rgba(17,17,26,0.6) 42%, transparent 100%)",
+          }}
+        />
+      </div>
       <CustomTextLayer items={customTexts} defColor="#fff" />
       {qs?.hidden ? null : (
         <div
           data-el="quote"
-          style={{ position: "relative", textAlign: "center", ...elShift(layout, "quote") }}
+          style={{ position: "relative", zIndex: FG_Z, textAlign: "center", ...elShift(layout, "quote") }}
         >
           <div style={{ ...txtCss(qs, 2.6, "#fff"), fontWeight: 800, lineHeight: 1.18 }}>{main}</div>
           {subs.map((s, i) => (
@@ -227,6 +236,7 @@ function FrontPanel({
           data-el="brand"
           style={{
             position: "relative",
+            zIndex: FG_Z,
             textAlign: "center",
             marginTop: m(1.2),
             fontWeight: 700,
@@ -324,6 +334,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
           data-el="backText"
           style={{
             position: "relative",
+            zIndex: FG_Z,
             textAlign: "center",
             lineHeight: 1.25,
             ...elShift(entry.layout, "backText"),
@@ -338,6 +349,7 @@ function BackPanel({ entry, svg }: { entry: QrCode; svg: string }) {
       <div
         style={{
           position: "relative",
+          zIndex: FG_Z,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",

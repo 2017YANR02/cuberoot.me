@@ -707,7 +707,8 @@ export function CardEditor({
       {
         selKey: key,
         off0: s.layout[key] ?? { x: 0, y: 0 },
-        free: key === "qr",
+        // 所有内置元素都可跨折线拖到对面(原仅二维码可),边界放到整卡
+        free: true,
         write: (o) => setOffset(key, o),
         onTap: () => {
           const pnl = EL_PANEL[key];
@@ -721,7 +722,7 @@ export function CardEditor({
       sy,
     );
 
-  // 自建文本框拖动:限本面板,点击选中打开其编辑面板
+  // 自建文本框拖动:可跨折线拖到对面(side 字段不变,靠位移跨面),点击选中打开其编辑面板
   const makeCtDragger = (id: string, sx: number, sy: number): Dragger | null => {
     const ct = s.customTexts.find((c) => c.id === id);
     if (!ct) return null;
@@ -729,7 +730,7 @@ export function CardEditor({
       {
         selKey: `ct:${id}`,
         off0: { x: ct.x, y: ct.y },
-        free: false,
+        free: true,
         write: (o) => updateCustomText(id, o),
         onTap: () => {
           setActive(null);
@@ -926,7 +927,7 @@ export function CardEditor({
                 ? "ring-2 ring-brand bg-brand/10 cursor-grab"
                 : "cursor-grab hover:ring-2 hover:ring-brand/50 hover:bg-brand/5")
             }
-            style={{ left: 0, top: 0, width: "50%", height: "100%" }}
+            style={{ left: 0, top: 0, width: "50%", height: "100%", zIndex: 5 }}
           />
           {/* 背面背景图:背面板底层热区(文案/二维码热区叠在其上),点击打开图库面板,设了图可拖动平移 */}
           <span
@@ -940,7 +941,7 @@ export function CardEditor({
                 ? "ring-2 ring-brand bg-brand/10 cursor-grab"
                 : "cursor-pointer hover:ring-2 hover:ring-brand/50 hover:bg-brand/5")
             }
-            style={{ left: "50%", top: 0, width: "50%", height: "100%" }}
+            style={{ left: "50%", top: 0, width: "50%", height: "100%", zIndex: 5 }}
           />
           {/* 内置元素热区:实测贴合,可拖动移位;点击打开对应面板 */}
           {ALL_ELS.map((key) => {
@@ -959,7 +960,7 @@ export function CardEditor({
                     ? "ring-2 ring-brand bg-brand/10 cursor-grab"
                     : "cursor-grab hover:ring-2 hover:ring-brand/50 hover:bg-brand/5")
                 }
-                style={{ left: b.left, top: b.top, width: b.w, height: b.h }}
+                style={{ left: b.left, top: b.top, width: b.w, height: b.h, zIndex: 6 }}
               />
             );
           })}
@@ -980,7 +981,7 @@ export function CardEditor({
                     ? "ring-2 ring-brand bg-brand/10 cursor-grab"
                     : "cursor-grab hover:ring-2 hover:ring-brand/50 hover:bg-brand/5")
                 }
-                style={{ left: b.left, top: b.top, width: b.w, height: b.h }}
+                style={{ left: b.left, top: b.top, width: b.w, height: b.h, zIndex: 6 }}
               />
             );
           })}
@@ -990,7 +991,7 @@ export function CardEditor({
               key={`gx${x}`}
               aria-hidden
               className="pointer-events-none absolute"
-              style={{ left: x, top: 0, width: 1, height: "100%", background: "#FF2D92" }}
+              style={{ left: x, top: 0, width: 1, height: "100%", background: "#FF2D92", zIndex: 7 }}
             />
           ))}
           {guides.ys.map((y) => (
@@ -998,7 +999,7 @@ export function CardEditor({
               key={`gy${y}`}
               aria-hidden
               className="pointer-events-none absolute"
-              style={{ left: 0, top: y, width: "100%", height: 1, background: "#FF2D92" }}
+              style={{ left: 0, top: y, width: "100%", height: 1, background: "#FF2D92", zIndex: 7 }}
             />
           ))}
         </div>
