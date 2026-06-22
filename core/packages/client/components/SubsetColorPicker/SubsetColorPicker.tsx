@@ -73,6 +73,7 @@ export interface SubsetSelection {
   options: SubsetOption[];    // 当前模式下可选的子集(cn 为空 = 无需子选)
   activeOptionId: string;
   selectOption: (id: string) => void;
+  selectByKey: (key: string) => void;  // 按任意 subsetKey 直接定位(推导 mode + 子选,供自动选最稀有用)
 }
 
 // 把一个 subsetKey(如 'Y' / 'WY' / 'BGOR' / 'BGORWY')反推成初始 mode + 子选状态,
@@ -150,6 +151,13 @@ export function useSubsetSelection(initialMode: ColorMode = 'cn', initialSubsetK
       colorMode, setColorMode,
       subsetKey: subsetKeyFromLetters(selectedColors),
       selectedColors, options, activeOptionId, selectOption,
+      selectByKey: (key: string) => {
+        const d = deriveSubsetInit(colorMode, key);
+        setColorMode(d.mode);
+        setSingleColor(d.single);
+        setDualPairKey(d.dual);
+        setQuadExcludedPairKey(d.quad);
+      },
     };
   }, [colorMode, singleColor, dualPairKey, quadExcludedPairKey]);
 }

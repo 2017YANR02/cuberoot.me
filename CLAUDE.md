@@ -147,3 +147,7 @@ pnpm --filter @cuberoot/client lint
 ## 造 SQ1 最优求解器 loop
 
 `/loop 继续造 SQ1 最优求解器`(或"造 SQ1 最优""SQ1 WCA loop")= 读 `solver/SQ1_WCA_LOOP.md` + `solver/SQ1_WCA_GODS_NUMBER.md` 全文,按前者 §0 协议推进 §1 backlog;终极目标=SQ1 WCA 12c4 最优求解器 + 算出 `D_WCA`;允许 ≤15GB 大表、严禁 OOM、线程 12/14;规则/backlog/进度/坑全在那两文件,别在此展开。
+
+## 造非 WCA 小魔方求解器 loop
+
+`/loop 继续造小魔方求解器`(或"造非 WCA 求解器""继续造 puzzle 求解器")= 读 `solver/NONWCA_PUZZLE_LOOP.md` 全文,按 §0 协议推进 §1 backlog;纯 TS 路线(Ivy 范式,**非** Rust),给 `/scramble/gen` 非 WCA 魔方依次造求解器,能最优就最优、否则近最优;分档(A 现场 BFS / B 预算表 / C 单实例 IDA* / D 近最优)+ backlog + 进度全在那文件,TIER D 前有 soft-gate,别在此展开。
