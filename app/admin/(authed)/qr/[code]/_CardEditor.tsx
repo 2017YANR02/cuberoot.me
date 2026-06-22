@@ -208,6 +208,44 @@ function ArtPanel({
   );
 }
 
+// 高度随内容自适应的文本域:输入 / 换行即按 scrollHeight 撑高,不出滚动条。
+// 走 INPUT_CLS 统一样式,minHeight 兜底初始高度。
+function AutoTextarea({
+  value,
+  onChange,
+  placeholder,
+  autoFocus,
+  minHeight = 52,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  autoFocus?: boolean;
+  minHeight?: number;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto"; // 先收起再量,缩短内容时也能回缩
+    const cs = window.getComputedStyle(el);
+    const border = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+    el.style.height = Math.max(minHeight, el.scrollHeight + border) + "px";
+  }, [value, minHeight]);
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      autoFocus={autoFocus}
+      rows={1}
+      className={INPUT_CLS}
+      style={{ minHeight, resize: "none", overflow: "hidden" }}
+    />
+  );
+}
+
 // 单个文字元素的样式控制:字体 / 颜色 / 字号 / 描边 + 删除(隐藏)/ 恢复。built-in 文字与自建文本框共用。
 function TextStyleControls({
   label = "文字样式",
@@ -1072,11 +1110,10 @@ export function CardEditor({
               收起
             </button>
           </div>
-          <textarea
+          <AutoTextarea
             value={activeCustom.text}
-            onChange={(e) => updateCustomText(activeCt, { text: e.target.value })}
+            onChange={(v) => updateCustomText(activeCt, { text: v })}
             placeholder="输入文字,可多行"
-            className={INPUT_CLS + " min-h-[52px]"}
             autoFocus
           />
           <div className="flex items-center gap-2 text-[12px] text-ink-2">
@@ -1200,11 +1237,11 @@ export function CardEditor({
 
           {active === "quote" ? (
             <>
-              <textarea
+              <AutoTextarea
                 value={s.quote}
-                onChange={(e) => set("quote")(e.target.value)}
+                onChange={set("quote")}
                 placeholder={"慢就是快\n一次打乱 一次成长"}
-                className={INPUT_CLS + " min-h-[64px]"}
+                minHeight={64}
                 autoFocus
               />
               <span className="text-[12px] text-ink-3">
@@ -1240,18 +1277,16 @@ export function CardEditor({
 
           {active === "back" ? (
             <>
-              <textarea
+              <AutoTextarea
                 value={s.title}
-                onChange={(e) => set("title")(e.target.value)}
+                onChange={set("title")}
                 placeholder={"标题,可换行(回车分多行)\n留空用默认,也是落地页大标题"}
-                className={INPUT_CLS + " min-h-[52px]"}
                 autoFocus
               />
-              <textarea
+              <AutoTextarea
                 value={s.intro}
-                onChange={(e) => set("intro")(e.target.value)}
+                onChange={set("intro")}
                 placeholder="简介,留空不显示(也是落地页副标题)"
-                className={INPUT_CLS + " min-h-[52px]"}
               />
               <TextStyleControls
                 label="标题 / 简介样式"
