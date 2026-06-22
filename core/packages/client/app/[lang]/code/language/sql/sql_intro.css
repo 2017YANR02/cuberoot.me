@@ -1353,5 +1353,12 @@ main { position: relative; z-index: 1; }
 .compare-col, .compare-col > *, .future-card,
 .logo-card, .anti-card { min-width: 0; }
 
+
+  @media (max-width: 720px) {
+    .cmp-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  }
+  @media (max-width: 600px) {
+    :not(pre) > code { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+  }
 }
 /* end @scope (.sql-intro-root) */

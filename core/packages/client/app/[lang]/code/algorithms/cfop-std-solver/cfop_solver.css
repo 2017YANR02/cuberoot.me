@@ -63,3 +63,17 @@
 .algo-page .algo-subsection-title code {
   font-size: 0.92em;
 }
+
+@media (max-width: 760px) {
+  /* Inline code inside subsection headings must wrap, not clip at the page
+     root. .algo-eq stays a scrollable block (its own overflow-x:auto). */
+  .algo-page .algo-subsection-title { overflow-wrap: anywhere; }
+  .algo-page .algo-subsection-title code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  /* Collapse the term/value grid so a long term can't force horizontal scroll. */
+  .algo-page .algo-kv { grid-template-columns: 1fr; gap: 4px 0; }
+  .algo-page .algo-kv > dd { margin-bottom: 8px; }
+}

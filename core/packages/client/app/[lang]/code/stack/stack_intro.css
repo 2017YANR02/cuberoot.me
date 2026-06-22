@@ -649,3 +649,21 @@ a.adopter-card:hover::before { opacity: 1; height: 3px; }
   opacity: 1;
   transform: translateY(0);
 }
+
+/* ── Mobile: wrap long inline code in prose (block <pre> code keeps pre) ── */
+@media (max-width: 600px) {
+  .stack-intro-prose code,
+  .stack-intro-feature-desc code,
+  .stack-intro-timeline-desc code,
+  .stack-prose-wide p code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  /* long mono links can be unbreakable URLs */
+  .stack-intro-links a,
+  .stack-links-list a {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}

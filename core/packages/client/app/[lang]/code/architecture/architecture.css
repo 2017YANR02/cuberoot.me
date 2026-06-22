@@ -540,6 +540,7 @@ html[data-theme=dark] .arch-page { --accent: #6B8FCE; }
   margin: 0 0 36px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .diagram-svg {
   display: block;
@@ -1084,6 +1085,29 @@ html[data-theme=dark] .arch-page { --accent: #6B8FCE; }
   /* 行内 code 默认 nowrap,窄屏下长 URL (https://dev.cuberoot.me/) 会推爆段落。
      窄屏放宽 wrap 规则;wss:// localhost:5173 等代码字面量按 / : 切断 OK。 */
   .arch-page code { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+}
+
+/* 窄屏:viewBox 760/880/980 的 SVG 被 width:100% 压到 ~313px,文字仅 4-7px 不可读。
+   停掉收缩,固定一个可读宽度,让 .arch-diagram 横向滚动(容器已 overflow-x:auto)。
+   700px 给 880-viewBox ~0.8x、980-viewBox ~0.71x,最小标签 ≳9px。 */
+@media (max-width: 680px) {
+  .diagram-svg {
+    width: auto;
+    min-width: 700px;
+    max-width: none;
+  }
+  /* 右沿淡入提示「可横滑」,鼠标/触摸滚动后被滚动条覆盖即止。 */
+  .arch-diagram {
+    background-image: linear-gradient(
+      to left,
+      color-mix(in srgb, var(--bg-elev) 90%, transparent) 0%,
+      transparent 28px
+    );
+    background-repeat: no-repeat;
+    background-attachment: local;
+    background-position: right center;
+    background-size: 28px 100%;
+  }
 }
 
 /* ── 10 Request Tracer ──────────────────────── */

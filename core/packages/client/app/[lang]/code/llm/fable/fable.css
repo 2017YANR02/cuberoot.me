@@ -685,4 +685,9 @@
   .fable-timeline::before { display: none; }
   .fable-tl-item { padding-top: 0; padding-left: 26px; }
   .fable-lede { font-size: 17px; }
+  /* wrap long inline code in dev notes (block .fable-code keeps overflow-x:auto) */
+  .fable-dev-note code {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }
