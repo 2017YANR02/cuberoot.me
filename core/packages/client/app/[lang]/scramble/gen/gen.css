@@ -1441,28 +1441,8 @@ html[data-theme=dark] .gen-page {
     color: var(--gen-text-mute);
     font-variant-numeric: tabular-nums;
 }
+/* 条形图行内的 bar 拉伸填满(bar 本体样式见 components/StackedBar/StackedBar.css) */
 .gen-cx-row .gen-cx-bar { flex: 1; min-width: 0; }
-.gen-cx-bar {
-    display: flex;
-    width: 100%;
-    height: 22px;
-    border-radius: 6px;
-    overflow: hidden;
-    background: color-mix(in srgb, var(--gen-text) 5%, transparent);
-}
-.gen-cx-seg {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-    overflow: hidden;
-}
-.gen-cx-seg-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #fff; /* on dynamic green→terracotta chip */
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
-}
 .gen-cx-legend {
     display: flex;
     flex-wrap: wrap;
