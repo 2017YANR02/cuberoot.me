@@ -31,6 +31,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
 import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
+import { countryName } from '@/lib/country-name';
 import { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { EventIcon } from '@/components/EventIcon';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -276,6 +277,12 @@ function AllResultsPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [, setFlagBust] = useState(0);
   const countries = useCountries();
+  // bar race「按国家」:选中国家 id → iso2(拆分文件名 key)+ 本地化显示名
+  const barRaceCountryOpt = countries.find(c => c.id === country);
+  const barRaceCountryIso2 = barRaceCountryOpt?.iso2 ?? '';
+  const barRaceCountryName = barRaceCountryOpt
+    ? (barRaceCountryOpt.iso2 ? countryName(barRaceCountryOpt.iso2, isZh) : barRaceCountryOpt.name)
+    : '';
   useEffect(() => { loadFlagData().then(v => setFlagBust(v)); }, []);
 
   // 单项数据
@@ -707,6 +714,8 @@ function AllResultsPageInner() {
               controlledEventId={singleEvent}
               controlledMetric={effType}
               controlledMode={show === 'persons' ? 'persons' : 'results'}
+              controlledCountry={barRaceCountryIso2 || undefined}
+              controlledCountryName={barRaceCountryName || undefined}
               controlledMetricLabelZh={effMetricMeta.zh}
               controlledMetricLabelEn={effMetricMeta.en}
             />

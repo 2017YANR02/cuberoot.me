@@ -179,6 +179,7 @@ interface FrameParams {
   eventId: string;
   metric: Metric;
   metricLabel?: string;
+  countryName?: string;
   persons: Record<string, PersonInfo>;
   comps: Record<string, CompInfo>;
   isZh: boolean;
@@ -270,7 +271,8 @@ function renderFrame(ctx: Ctx2D, p: FrameParams): void {
     : p.metric === 'average' ? 'Avgs'
     : p.metric.toUpperCase();
   const ml = p.metricLabel ?? (p.isZh ? fallbackZh : fallbackEn);
-  const titleText = p.isZh ? `${eventNameZh}${ml}` : `${eventNameEn} ${ml}`;
+  const baseTitle = p.isZh ? `${eventNameZh}${ml}` : `${eventNameEn} ${ml}`;
+  const titleText = p.countryName ? `${p.countryName} ${baseTitle}` : baseTitle;
 
   ctx.fillStyle = '#ccc';
   ctx.font = `600 30px ${FONT_SANS}`;
@@ -463,11 +465,13 @@ export interface ExportOptions {
   previewCanvas?: HTMLCanvasElement | null;
   /** 父组件传入的 metric 短名(与左侧 metric selector 一致),如 "BAo5"/"中位数" */
   metricLabel?: string;
+  /** 选了国家时的显示名(随语言);设了则横幅显示「保持全国纪录」+ 标题前缀国名 */
+  countryName?: string;
 }
 
 export async function exportTop10Video(opts: ExportOptions): Promise<void> {
   const { events, eventId, metric, persons, comps, startMs, endMs, mode, speed,
-    rankChangeDates, isZh, abortRef, onProgress, previewCanvas, metricLabel } = opts;
+    rankChangeDates, isZh, abortRef, onProgress, previewCanvas, metricLabel, countryName } = opts;
   const raceMode: RaceMode = opts.raceMode ?? 'persons';
 
   // 预览 ctx(每 N 帧 drawImage 到外部 canvas,UX + 调试用)
