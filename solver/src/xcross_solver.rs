@@ -724,15 +724,20 @@ impl XCrossSolver {
             }
             let m = row[ki] as usize;
             let mut pruned = false;
+            let mut max_h = 0u32; // 子状态各槽启发式最大值;==0 ⟺ 该子集已全解
             for (j, &(i1, i2, i3, slot)) in coords.iter().enumerate() {
                 let m1 = cj[m][slot] as usize;
                 let n_i1 = mt_e4[i1 + m1] as usize;
                 let n_i2 = mt_c[i2 + m1] as usize;
                 let n_i3 = mt_e[i3 + m1] as usize;
                 let idx: u64 = (n_i1 as u64 + n_i2 as u64) * 24 + n_i3 as u64;
-                if pt.get(idx) as u32 >= depth {
+                let h = pt.get(idx) as u32;
+                if h >= depth {
                     pruned = true;
                     break;
+                }
+                if h > max_h {
+                    max_h = h;
                 }
                 next[j] = (n_i1, n_i2 * 18, n_i3 * 18, slot);
             }
@@ -742,7 +747,9 @@ impl XCrossSolver {
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if max_h > 0 {
+                // max_h==0 且 depth>1:子集已解却还要再走 depth-1 步 → 更短解 + 无效尾动
+                // (如 XCross 已成再多转一个 U),冗余,跳过不递归。
                 self.enumerate_multi(&next[..n], depth - 1, m as u8, path, out, cap);
             }
             path.pop();
@@ -1080,6 +1087,55 @@ mod tests {
             strs.len()
         );
         eprintln!("enumerated {} optimal (14-move) xxxxcross solutions; or18 ref found ✓", strs.len());
+    }
+
+    /// 回归:枚举(含 +2 松弛)出的 XCross 解不得带「无效尾动」——
+    /// 即去掉最后一步后该子集就已解(如 XCross 已成再多转一个 U,U 不动 XCross 任何块)。
+    /// 复现用户报的 R2 U' R2 … 在 x' 视角下出现 `… B U` / `… B U2` / `… B U'` 冗余解。
+    /// 跑:`cargo test --release -- --ignored enumerate_no_redundant_trailing`
+    #[test]
+    #[ignore]
+    fn enumerate_no_redundant_trailing() {
+        use crate::cube_common::MOVE_NAMES;
+        let _lock = test_env_lock().lock().unwrap_or_else(|e| e.into_inner());
+        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tables");
+        std::env::set_var("CUBE_TABLE_DIR", &dir);
+
+        let scramble = "R2 U' R2 B2 U' L2 R2 U2 F2 U L F2 L' B D B2 L2 U B";
+        let alg = string_to_alg(scramble);
+        let solver = XCrossSolver::new(false);
+        let rots = ["", "z2", "z'", "z", "x'", "x"];
+
+        // k=1 = XCross(单槽);extra=2 暴露松弛解里的尾动冗余。
+        let mut total = 0usize;
+        for rot in rots {
+            let (best_len, items) = solver.enumerate_best(&alg, rot, 1, 2, 100_000);
+            if best_len == 0 || best_len >= 99 {
+                continue;
+            }
+            let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+            let mut a = base.clone();
+            alg_rotation(&mut a, rot);
+            for (combo, path) in &items {
+                assert!(!path.is_empty(), "解不应为空");
+                // 去掉最后一步后,combo 子集不得已解(否则末步是无效尾动)。
+                let prefix = &path[..path.len() - 1];
+                let full: Vec<u8> = a.iter().copied().chain(prefix.iter().copied()).collect();
+                let max_h = combo
+                    .iter()
+                    .map(|&s| solver.slot_h(&solver.get_virt(&full, s)))
+                    .max()
+                    .unwrap_or(0);
+                assert!(
+                    max_h > 0,
+                    "rot={:?} 解去掉末步后已解(冗余尾动): {}",
+                    rot,
+                    path.iter().map(|&m| MOVE_NAMES[m as usize]).collect::<Vec<_>>().join(" "),
+                );
+                total += 1;
+            }
+        }
+        eprintln!("checked {} enumerated XCross solutions (6 views, +2 slack); no redundant trailing move ✓", total);
     }
 
     /// 节点天花板:用 huge 表(完美 pair 启发式)跑 25001 的 6 视角 xxxxc,报告节点。
