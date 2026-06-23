@@ -780,6 +780,13 @@ impl SkewbSolverWasm {
 /// 搜到此深度断定无解最坏 ~250ms(实测有界,worker 线程 + 终止兜底)。再高(14)无解情形到秒级。
 const CROSS_MASK_DEPTH: u32 = 12;
 
+/// 受限步法 XCross / F2L(variant 1..=4)搜索深度上限。小表 cascade,per-slot
+/// pt_cross_C4E0 可采纳下界。实测(单视角,solver 本机):深度 13 时最坏 ~470ms
+/// (xxxxcross 无解情形搜满 13 层断定无解 / 深解搜索),深度 14 飙到 ~5s(会卡 tab)。
+/// 故钉 13:覆盖正常可解深度(xc/xxc/xxxc 受限最优 ≤ 13;多数 xxxxc 也 ≤ 13),
+/// 真·受限最优 > 13 的(罕见深 F2L)返回「无解」哨兵,代价换不卡 tab。
+const XCROSS_MASK_DEPTH: u32 = 13;
+
 #[wasm_bindgen]
 pub struct CrossSolverWasm {
     cross: CrossSolver,
@@ -893,19 +900,25 @@ impl CrossSolverWasm {
     }
 
     /// 受限步法版 solve_face:`mask` = 18 个 move 的 bitmask(bit m=1 表示 move m 允许)。
-    /// 仅 cross(variant 0)接 masked 引擎;限制下无解返回 u32::MAX 哨兵(client 显示 '-')。
-    /// xcross(variant>0)暂无 masked 引擎 → 回退不受限(Phase 2 接上)。
+    /// cross(variant 0)走 CrossSolver masked;xcross/F2L(variant 1..=4)走 XCrossSolver
+    /// 小表 cascade masked(per-slot pt_cross_C4E0 可采纳下界,XCROSS_MASK_DEPTH 封顶)。
+    /// 限制下(或深解超界)无解返回 u32::MAX 哨兵(client 显示 '-')。
     pub fn solve_face_masked(&self, scramble: &str, variant: u32, face: u32, mask: u32) -> u32 {
-        if variant != 0 {
-            return self.solve_face(scramble, variant, face);
-        }
         let alg = string_to_alg(scramble);
         let rot = [ROTS[(face as usize).min(5)]];
-        self.cross.get_stats_masked(&alg, &rot, mask, CROSS_MASK_DEPTH)[0].unwrap_or(u32::MAX)
+        if variant == 0 {
+            return self.cross.get_stats_masked(&alg, &rot, mask, CROSS_MASK_DEPTH)[0]
+                .unwrap_or(u32::MAX);
+        }
+        let max_v = (variant.min(4) - 1) as usize; // 1→0(xc) .. 4→3(xxxxc)
+        self.xcross
+            .get_stats_small_masked(&alg, &rot, max_v, mask, XCROSS_MASK_DEPTH)[0]
+            .unwrap_or(u32::MAX)
     }
 
     /// 受限步法版 solve_moves(同 solve_moves 形状)。cross 走 enumerate_solutions_masked;
-    /// 限制下无解 → len=u32::MAX 哨兵 + 空解集。xcross(variant>0)暂回退不受限。
+    /// xcross/F2L(variant 1..=4)走 XCrossSolver enumerate_best_masked / enumerate_combo_masked。
+    /// 限制下(或深解超界)无解 → len=u32::MAX 哨兵 + 空解集。
     #[allow(clippy::too_many_arguments)]
     pub fn solve_moves_masked(
         &self,
@@ -917,22 +930,41 @@ impl CrossSolverWasm {
         combo: &str,
         mask: u32,
     ) -> String {
-        if variant != 0 {
-            return self.solve_moves(scramble, variant, face, extra, cap, combo);
-        }
         let alg = string_to_alg(scramble);
         let rot = ROTS[(face as usize).min(5)];
-        match self
-            .cross
-            .enumerate_solutions_masked(&alg, rot, extra, cap as usize, mask, CROSS_MASK_DEPTH)
-        {
-            Some((len, sols)) => {
-                let items: Vec<(String, String)> =
-                    sols.iter().map(|p| (fmt_moves(rot, p), String::new())).collect();
-                sols_json(len, &items)
-            }
-            None => sols_json(u32::MAX, &[]),
+        let cap = cap as usize;
+        if variant == 0 {
+            return match self
+                .cross
+                .enumerate_solutions_masked(&alg, rot, extra, cap, mask, CROSS_MASK_DEPTH)
+            {
+                Some((len, sols)) => {
+                    let items: Vec<(String, String)> =
+                        sols.iter().map(|p| (fmt_moves(rot, p), String::new())).collect();
+                    sols_json(len, &items)
+                }
+                None => sols_json(u32::MAX, &[]),
+            };
         }
+        let k = (variant.min(4)) as usize; // 1..=4 槽
+        let label = |combo: &[usize]| {
+            combo.iter().map(|&s| SLOT_LABELS[s]).collect::<Vec<_>>().join(" ")
+        };
+        let slots = parse_combo(combo);
+        let (len, sols) = if slots.is_empty() {
+            self.xcross
+                .enumerate_best_masked(&alg, rot, k, extra, cap, mask, XCROSS_MASK_DEPTH)
+        } else {
+            self.xcross
+                .enumerate_combo_masked(&alg, rot, &slots, extra, cap, mask, XCROSS_MASK_DEPTH)
+        };
+        // best_len==99 = 限制下(或超界)无解 → u32::MAX 哨兵 + 空解集(同 cross None 分支语义)。
+        if len >= 99 {
+            return sols_json(u32::MAX, &[]);
+        }
+        let items: Vec<(String, String)> =
+            sols.iter().map(|(combo, p)| (fmt_moves(rot, p), label(combo))).collect();
+        sols_json(len, &items)
     }
 }
 

@@ -220,8 +220,9 @@ export class CrossSolverWasm {
     }
     /**
      * 受限步法版 solve_face:`mask` = 18 个 move 的 bitmask(bit m=1 表示 move m 允许)。
-     * 仅 cross(variant 0)接 masked 引擎;限制下无解返回 u32::MAX 哨兵(client 显示 '-')。
-     * xcross(variant>0)暂无 masked 引擎 → 回退不受限(Phase 2 接上)。
+     * cross(variant 0)走 CrossSolver masked;xcross/F2L(variant 1..=4)走 XCrossSolver
+     * 小表 cascade masked(per-slot pt_cross_C4E0 可采纳下界,XCROSS_MASK_DEPTH 封顶)。
+     * 限制下(或深解超界)无解返回 u32::MAX 哨兵(client 显示 '-')。
      * @param {string} scramble
      * @param {number} variant
      * @param {number} face
@@ -265,7 +266,8 @@ export class CrossSolverWasm {
     }
     /**
      * 受限步法版 solve_moves(同 solve_moves 形状)。cross 走 enumerate_solutions_masked;
-     * 限制下无解 → len=u32::MAX 哨兵 + 空解集。xcross(variant>0)暂回退不受限。
+     * xcross/F2L(variant 1..=4)走 XCrossSolver enumerate_best_masked / enumerate_combo_masked。
+     * 限制下(或深解超界)无解 → len=u32::MAX 哨兵 + 空解集。
      * @param {string} scramble
      * @param {number} variant
      * @param {number} face
