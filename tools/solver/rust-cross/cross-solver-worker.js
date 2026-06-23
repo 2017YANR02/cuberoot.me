@@ -133,7 +133,7 @@ self.onmessage = async (e) => {
       if (!solver) throw new Error('cross solver not initialized');
       const t0 = performance.now();
       const json = solver.solve_moves(
-        msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50,
+        msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50, msg.combo ?? '',
       );
       self.postMessage({ type: 'moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'f2leo') {
@@ -155,7 +155,7 @@ self.onmessage = async (e) => {
       const t0 = performance.now();
       // 单格(F2LEO/Pseudo F2LEO × stage × face)多解步骤。前缀可能含尾随 y(破 y 对称)。
       const json = f2leoSolver.solve_moves(
-        msg.scramble, !!msg.pseudo, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20,
+        msg.scramble, !!msg.pseudo, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '',
       );
       self.postMessage({ type: 'f2leo_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'variant') {
@@ -302,7 +302,7 @@ self.onmessage = async (e) => {
       const t0 = performance.now();
       // 单格(variant × stage × face)多解步骤。eo 前缀可能含尾随 y(破 y 对称)。
       const json = variantSolver.solve_moves(
-        msg.scramble, msg.variant | 0, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20,
+        msg.scramble, msg.variant | 0, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '',
       );
       self.postMessage({ type: 'variant_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     }

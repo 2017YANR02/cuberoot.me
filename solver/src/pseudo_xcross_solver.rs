@@ -975,6 +975,9 @@ impl PseudoSmallSolver {
     /// combo,各自 best_len..best_len+extra 步全部解(真实 rot 帧 move 索引路径,cap 封顶)。
     /// pseudo 系无 frame:每条解的 frame = 传入的 `rot`。
     /// 返回 (best_len, 每条解 (frame=rot, combo corner 槽位, move 路径))。
+    /// `force`:用户指定的目标槽位集合(索引 ⊂ {0,1,2,3},0=BL/1=BR/2=FR/3=FL);空 =
+    /// 自动挑最优槽(逐位与原先一致)。非空时只枚举"目标槽位集合 == force"的候选(pseudo
+    /// source 仍在幸存里自动择优),不与其它槽组合比较。
     pub fn enumerate_small(
         &self,
         alg: &[Move],
@@ -982,6 +985,7 @@ impl PseudoSmallSolver {
         stage: usize,
         extra: u32,
         cap: usize,
+        force: &[usize],
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         alg_rotation(&mut a, rot);
@@ -1018,6 +1022,16 @@ impl PseudoSmallSolver {
         let st = self.initial_states(&a);
         let mut tasks = self.build_tasks(&st, stage);
         tasks.sort_by_key(|t| t.1);
+
+        // 用户指定槽位:只留"目标槽位集合 == force"的候选(pseudo source 仍自动择优)。
+        // 空 force 不进此分支 ⇒ 逐字节与原先一致。过滤后空 → 下方 best_len 保持 99,
+        // 落到 `best_len >= 99` 返回 (0, 空),即现有无解形态。
+        if !force.is_empty() {
+            let want: std::collections::BTreeSet<usize> = force.iter().copied().collect();
+            tasks.retain(|(pairs, _)| {
+                pairs.iter().map(|p| p.slot).collect::<std::collections::BTreeSet<usize>>() == want
+            });
+        }
 
         // 复用 solve_pairs_task 求每 task 长度,取 best_len = min,并收集**所有**并列最优
         // (长度 == best_len)的 task。用 `>`(非 `>=`)以便 h == best_len 的候选也被评估
@@ -1289,7 +1303,7 @@ mod tests {
                 for stage in 0..4usize {
                     let want = exp[stage * 6 + ri];
                     let t = Instant::now();
-                    let (len, results) = solver.enumerate_small(&alg, rot, stage, 0, 20);
+                    let (len, results) = solver.enumerate_small(&alg, rot, stage, 0, 20, &[]);
                     eprintln!(
                         "[enum] `{}` rot={:<3} stage={} len={} sols={} in {:.1}ms",
                         scr,
