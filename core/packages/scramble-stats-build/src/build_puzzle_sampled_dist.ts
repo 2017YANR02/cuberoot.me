@@ -319,6 +319,28 @@ const REGISTRY: PuzzleDistSpec[] = [
     },
   },
   {
+    event: 'heli',
+    label: 'Helicopter Cube',
+    scrambleLen: 20,          // cstimer heli generator length (CSTIMER_EVENTS heli length=20)
+    defaultN: 2000,           // 从零对易子约简,gadget 库 build 一次(<1s)后每条求解毫秒级 → 2000 单进程秒级
+    // 从零对易子约简(按轨道分组的棱翼缓冲):奇偶前缀 + 角 3-循环 + 角扭转 + 4 个棱翼轨道各自缓冲 3-循环。
+    // 有效 + 有界(实测 1000+ 真打乱 mean≈212、max≈304,bound 400),长度随打乱难度变化(平滑单峰,非单柱),
+    // 非最优(§0.0 #3 诚实记)。
+    quality: 'sampled-bounded',
+    load: async () => {
+      const m = await mod('../../client/lib/heli-solver');
+      const solveHeli = m.solveHeli as (s: string) => { length: number; optimal?: boolean };
+      return {
+        // randomHeliScramble 忠实镜像 cstimer 的 adjScramble heli 生成器(12 棱名 + adj 掩码无重复规则)。
+        scramble: m.randomHeliScramble as SolverAdapter['scramble'],
+        // 约简有效+有界(非最优)→ optimal 恒 false。
+        solve: (s: string) => ({ length: solveHeli(s).length, optimal: false }),
+        maxBound: m.HELI_MAX_LENGTH as number,
+        stateCountStr: m.HELI_STATE_COUNT_STR as string,
+      };
+    },
+  },
+  {
     event: 'crz3a',
     label: 'Crazy 3x3',
     scrambleLen: 25,          // cstimer crz3a generator length(CSTIMER_EVENTS crz3a length=25)
