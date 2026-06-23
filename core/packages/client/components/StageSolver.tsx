@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { createPortal } from 'react-dom';
 import { Loader2, Copy, Check, Info, X } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
+import { SubsetColorPicker, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
 import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
@@ -93,6 +94,10 @@ const FACES: { face: CubeFace; rot: string }[] = [
   { face: 'F', rot: "x'" },
   { face: 'B', rot: 'x' },
 ];
+// 6 视角底面 → 色字母,供「底色」子集过滤(只显示选中底色对应的面):U=白 D=黄 F=绿 B=蓝 L=橙 R=红。
+const FACE_LETTER: Record<CubeFace, ColorLetter> = {
+  U: 'W', D: 'Y', F: 'G', B: 'B', L: 'O', R: 'R',
+};
 
 // 解法搜索的长度松弛:最多比最优长 2 步(= 旧「含次优 +2」档的搜索深度,不引入新成本)。
 // 展示条数(cap)在此深度内按长度升序收集;条数才是用户可调的旋钮。
@@ -209,6 +214,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const [totalMs, setTotalMs] = useState<number | null>(null);
   const [infoOpen, setInfoOpen] = useState(false); // 求解器信息弹窗
   const [shown, setShown] = useState(0);
+
+  // 「底色」子集(六色/四色/双色/单色)——只显示选中底色对应的视角格(色中性 cross 选择)。
+  // 纯显示/选择层:6 面照常全算,过滤只影响展示与「自动选最优」的候选集。
+  const subsetSel = useSubsetSelection('cn');
+  const visibleColors = useMemo(() => new Set(subsetSel.selectedColors), [subsetSel.selectedColors]);
+  const faceVisible = useCallback((i: number) => visibleColors.has(FACE_LETTER[FACES[i].face]), [visibleColors]);
 
   const poolRef = useRef<RustCrossPool | null>(null);
   // 共享 3D 播放器实例(TwistySection 回填),供解法行 ▷ 跳到开头并播放。
@@ -453,14 +464,24 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [method, stage, normScramble]);
 
-  // 算完(computing→false)且要求自动选 → 选最优(min count)视角并出解。
+  // 算完(computing→false)且要求自动选 → 选最优(min count)视角并出解(仅可见底色的面)。
   useEffect(() => {
     if (computing || !wantAuto.current) return;
     if (selFace !== null) { wantAuto.current = false; return; }
     let best = -1, bestV = Infinity;
-    counts.forEach((v, i) => { if (v != null && !isSentinel(v) && v < bestV) { bestV = v; best = i; } });
+    counts.forEach((v, i) => { if (faceVisible(i) && v != null && !isSentinel(v) && v < bestV) { bestV = v; best = i; } });
     if (best >= 0) { wantAuto.current = false; setSelFace(best); void fetchMoves(best); }
-  }, [computing, counts, selFace, fetchMoves]);
+  }, [computing, counts, selFace, fetchMoves, faceVisible]);
+
+  // 切「底色」后:若当前选中视角被过滤掉,改选可见面里的最优(无可见解则收起解法面板)。
+  useEffect(() => {
+    if (selFace === null || faceVisible(selFace)) return;
+    let best = -1, bestV = Infinity;
+    counts.forEach((v, i) => { if (faceVisible(i) && v != null && !isSentinel(v) && v < bestV) { bestV = v; best = i; } });
+    if (best >= 0) { setSelFace(best); void fetchMoves(best); }
+    else { setSelFace(null); setMoves(null); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subsetSel.subsetKey]);
 
   // 深链初始视角:首次就绪时锁定 initialFace 并直接出解(覆盖自动选最优),只跑一次。
   // 重阶段(非 eager,如 block/f2b)也能用——单视角按需求解正是点击视角的路径。
@@ -538,11 +559,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   }, []);
 
   // 最优步数(min),用于「best」标记 —— 所有并列最少的视角都算最优;htr/htr2 哨兵不参与。
+  // 仅在当前「底色」可见的视角中取最优(被过滤掉的面不参与)。
   const bestVal = useMemo(() => {
     let v = Infinity;
-    counts.forEach((c) => { if (c != null && !isSentinel(c) && c < v) v = c; });
+    counts.forEach((c, i) => { if (faceVisible(i) && c != null && !isSentinel(c) && c < v) v = c; });
     return Number.isFinite(v) ? v : null;
-  }, [counts]);
+  }, [counts, faceVisible]);
 
   // 当前 (方法, 阶段) 可选的槽位组合;.length<2 时(纯十字 k=0 / 满 F2L k=4)不显示选择器。
   const slotCombos = useMemo(() => kCombos(slotCount(method, stage)), [method, stage]);
@@ -582,6 +604,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     <section className={`stsv${compact ? ' stsv-compact' : ''}`}>
       {/* 控件常驻:求解器加载期间也能切方法/阶段/条数(切方法即换池),UI 不被 loading 替换。 */}
       <div className="stsv-controls">
+        {/* 底色子集(色中性 cross 选择):只显示选中底色对应的视角格;复用 /scramble/stats 的同款 picker。 */}
+        <div className="stsv-control stsv-control-subset">
+          <span>{t('底色', 'Color')}</span>
+          <SubsetColorPicker sel={subsetSel} isZh={lang === 'zh'} />
+        </div>
         <label className="stsv-control">
           <span>{t('方法', 'Method')}</span>
           <select value={method} onChange={(e) => setMethod(e.target.value as Method)}>
@@ -693,6 +720,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           {/* 6 视角对比:点格选视角;最优(min)视角带 best 标记 */}
           <div className="stsv-angles">
             {FACES.map((f, i) => {
+              if (!faceVisible(i)) return null; // 被「底色」过滤掉的面不显示
               const loading = (eager && computing) || (selFace === i && movesLoading);
               const isBest = counts[i] != null && counts[i] === bestVal;
               return (
