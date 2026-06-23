@@ -21,6 +21,8 @@ import * as THREE from 'three';
 import Cubelet from '../cubelet';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { EDGE_NAMES, type EdgeName } from './dinoState';
+import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 /** Cube half-side (world units). Frames like a ~3x3 in the shared camera rig. */
 export const H = Cubelet.SIZE * 2; // 128
@@ -46,6 +48,12 @@ const STICKER_INSET = 0.04; // fraction toward the triangle centroid
  *  triangular facelets the same soft "pillow" look as the NxN rounded-square stickers
  *  (cubelet.ts `makeStickerShape`), instead of raw sharp points. */
 const STICKER_CORNER_R = 0.16;
+/** Body corner/edge ROUND radius (world units) — the sharp tetra is replaced by its
+ *  rounded version (r-eroded tetra then dilated by a sphere of radius r), so a tilted
+ *  piece shows a smooth rounded body in the opening, not a sharp spike or a flat
+ *  chamfer facet. The rounding only removes material (opening ⊆ original tetra), so
+ *  the cut-plane zero-interpenetration is unaffected. */
+const BODY_ROUND = 9;
 
 const BODY_COLOR = 0x141414;
 
@@ -227,6 +235,56 @@ function roundedTriSticker(
   return geom;
 }
 
+/** Evenly-spread unit directions on a sphere (Fibonacci lattice). */
+function fibonacciSphere(n: number): THREE.Vector3[] {
+  const out: THREE.Vector3[] = [];
+  const ga = Math.PI * (3 - Math.sqrt(5));
+  for (let i = 0; i < n; i++) {
+    const y = 1 - (i / (n - 1)) * 2;
+    const r = Math.sqrt(Math.max(0, 1 - y * y));
+    const t = ga * i;
+    out.push(new THREE.Vector3(Math.cos(t) * r, y, Math.sin(t) * r));
+  }
+  return out;
+}
+
+/**
+ * A tetra body with smoothly ROUNDED corners + edges (not a flat chamfer). Builds
+ * the rounded solid as the Minkowski sum of the r-eroded tetra with a sphere of
+ * radius r: erode each face inward by r → 4 eroded verts, sphere-sample radius r
+ * around each, convex-hull, then smooth normals. Morphological opening ⊆ the original
+ * tetra, so it stays inside the wedge (zero-interpenetration unaffected).
+ */
+function roundedTetraBody(v: THREE.Vector3[]): THREE.BufferGeometry {
+  // 4 outward face planes (n·x = d, inside = n·x ≤ d); face k is opposite vertex k.
+  const faceVerts: Array<[number, number, number]> = [[1, 2, 3], [0, 2, 3], [0, 1, 3], [0, 1, 2]];
+  const planes = faceVerts.map(([a, b, cc], k) => {
+    let n = new THREE.Vector3().subVectors(v[b], v[a]).cross(new THREE.Vector3().subVectors(v[cc], v[a])).normalize();
+    let d = n.dot(v[a]);
+    if (n.dot(v[k]) > d) { n = n.negate(); d = -d; } // orient so the opposite vertex is inside
+    return { n, d };
+  });
+  const fib = fibonacciSphere(28);
+  const pts: THREE.Vector3[] = [];
+  for (let k = 0; k < 4; k++) {
+    // eroded vertex k = intersection of the 3 faces adjacent to vertex k, each pushed in by r
+    const adj = [0, 1, 2, 3].filter((m) => m !== k);
+    const ev = solve3(
+      { n: [planes[adj[0]].n.x, planes[adj[0]].n.y, planes[adj[0]].n.z], rhs: planes[adj[0]].d - BODY_ROUND },
+      { n: [planes[adj[1]].n.x, planes[adj[1]].n.y, planes[adj[1]].n.z], rhs: planes[adj[1]].d - BODY_ROUND },
+      { n: [planes[adj[2]].n.x, planes[adj[2]].n.y, planes[adj[2]].n.z], rhs: planes[adj[2]].d - BODY_ROUND },
+    );
+    if (!ev) continue;
+    for (const d of fib) pts.push(ev.clone().addScaledVector(d, BODY_ROUND));
+  }
+  let geom: THREE.BufferGeometry = new ConvexGeometry(pts);
+  geom.deleteAttribute('normal');
+  geom.deleteAttribute('uv');
+  geom = mergeVertices(geom);
+  geom.computeVertexNormals(); // smooth (averaged) normals → reads as a rounded surface
+  return geom;
+}
+
 export interface PieceBuild {
   pivot: THREE.Object3D;
   group: THREE.Group;
@@ -244,17 +302,11 @@ export function buildPieceMesh(slot: number): PieceBuild {
   const wedge = wedgeGeometry(name);
   const group = new THREE.Group();
 
-  // Body: the solid tetra (4 verts, 4 triangular faces). BufferGeometry, all faces.
+  // Body: a ROUNDED tetra (see roundedTetraBody) — smooth rounded corners + edges so
+  // a tilted piece shows a soft body in the opening, not a sharp spike. The rounded
+  // solid is a subset of the wedge, so zero-interpenetration still holds.
   const v = wedge.verts;
-  const faces4 = tetraFaces(v);
-  const pos: number[] = [];
-  for (const [a, b, c] of faces4) {
-    pos.push(v[a].x, v[a].y, v[a].z, v[b].x, v[b].y, v[b].z, v[c].x, v[c].y, v[c].z);
-  }
-  const bodyGeom = new THREE.BufferGeometry();
-  bodyGeom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  bodyGeom.computeVertexNormals();
-  const bodyMesh = new THREE.Mesh(bodyGeom, bodyMat);
+  const bodyMesh = new THREE.Mesh(roundedTetraBody(v), bodyMat);
   bodyMesh.userData.simRole = 'body';
   group.add(bodyMesh);
 
@@ -281,24 +333,6 @@ export function buildPieceMesh(slot: number): PieceBuild {
   pivot.add(group);
   pivot.userData.dinoSlot = slot;
   return { pivot, group };
-}
-
-/** The 4 faces of a tetra (vertex-index triples), wound consistently outward. */
-function tetraFaces(v: THREE.Vector3[]): Array<[number, number, number]> {
-  // centroid for outward winding
-  const c = new THREE.Vector3();
-  for (const p of v) c.add(p);
-  c.multiplyScalar(0.25);
-  const combos: Array<[number, number, number]> = [
-    [0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3],
-  ];
-  return combos.map(([a, b, d]) => {
-    const ab = v[b].clone().sub(v[a]);
-    const ad = v[d].clone().sub(v[a]);
-    const n = ab.cross(ad);
-    const outward = v[a].clone().sub(c);
-    return (n.dot(outward) >= 0 ? [a, b, d] : [a, d, b]) as [number, number, number];
-  });
 }
 
 /**
