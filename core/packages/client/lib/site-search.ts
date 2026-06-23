@@ -15,6 +15,7 @@ import { API_ORIGIN } from '@/lib/api-base';
 import { ABOUT_REGISTRY } from '@/app/[lang]/wca/about/[id]/_lib/registry';
 import { STACK_TOOLS_META, type StackToolMeta } from '@/app/[lang]/code/stack/_lib/stack_meta';
 import GLOSSARY_DATA from '@/app/[lang]/wiki/glossary.json';
+import { WR_METRICS, resultsQueryForMetric } from '@/lib/wr-metrics';
 
 export interface SiteSearchCard {
   id: string;
@@ -89,6 +90,13 @@ export const LOOKUP_ITEMS: LookupItem[] = [
 },
   { path: '/wca/results', extraQuery: 'events=all&hidePodium=1', zh: '全能但无牌', en: 'All-Around · No Podium'
 },
+  // wr_metric 退役并入 /wca/results 后,把 13 个指标登记回搜索(单次/平均→排名,其余→指标视图),别丢可搜索性
+  ...WR_METRICS.map((m): LookupItem => ({
+    path: '/wca/results',
+    extraQuery: resultsQueryForMetric(m.id),
+    zh: `${m.zh} 排名`,
+    en: `${m.en} rankings`,
+  })),
 ];
 
 const MIN_LEN_LATIN = 2;
