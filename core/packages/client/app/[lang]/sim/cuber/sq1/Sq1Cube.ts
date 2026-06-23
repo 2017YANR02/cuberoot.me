@@ -38,6 +38,11 @@ import {
   moveToString,
 } from './sq1State';
 import Sq1Twister from './Sq1Twister';
+import MoveHistory from '../MoveHistory';
+import { makeAnim, type PieceAnim } from '../pieceAnim';
+import type { TweenCube } from '../TweenTwister';
+
+export type { PieceAnim };
 
 export interface PieceEntry {
   pieceId: number;
@@ -51,41 +56,7 @@ export interface MiddleEntry {
   side: 1 | -1;
 }
 
-/** One piece's animation plan for a single move. delta is applied as
- *  `pivot.quat = delta · current; pivot.pos = delta · current_pos`.
- *  `axis`+`angle` carry the *signed* world-space rotation so Sq1Twister can
- *  interpolate as `q(angle·v, axis)` instead of slerp(start,end). slerp's
- *  shortest-path flip at dot<0 makes 180° turns (top/bot=±6, slice) take
- *  whichever arc floating-point error nudges into — visually `(6,…)` then
- *  randomly looks like `(-6,…)` depending on accumulated quaternion drift. */
-export interface PieceAnim {
-  pivot: THREE.Object3D;
-  startQuat: THREE.Quaternion;
-  endQuat: THREE.Quaternion;
-  startPos: THREE.Vector3;
-  endPos: THREE.Vector3;
-  axis: THREE.Vector3;
-  angle: number;
-}
-
-export class Sq1History {
-  moves: string[] = [];
-  redoStack: string[] = [];
-  init = '';
-  get length(): number {
-    return this.moves.length;
-  }
-  clear(): void {
-    this.moves.length = 0;
-    this.redoStack.length = 0;
-  }
-  record(move: string): void {
-    this.moves.push(move);
-    this.redoStack.length = 0;
-  }
-}
-
-export default class Sq1Cube extends THREE.Group {
+export default class Sq1Cube extends THREE.Group implements TweenCube<Sq1Move> {
   pieces: PieceEntry[] = [];
   middle: MiddleEntry[] = [];
   state: Sq1State = solvedSq1();
@@ -93,7 +64,7 @@ export default class Sq1Cube extends THREE.Group {
   dirty = true;
   readonly puzzleType = 'sq1' as const;
   order: number = 0;
-  history = new Sq1History();
+  history = new MoveHistory();
   twister: Sq1Twister;
 
   constructor() {
@@ -202,12 +173,23 @@ export default class Sq1Cube extends THREE.Group {
   finishMove(anims: PieceAnim[], move: Sq1Move): void {
     for (const a of anims) {
       a.pivot.quaternion.copy(a.endQuat);
-      a.pivot.position.copy(a.endPos);
+      if (a.endPos) a.pivot.position.copy(a.endPos);
     }
     this.state = applySq1Move(this.state, move);
     this.history.record(moveToString(move));
     this.dirty = true;
     for (const cb of this.callbacks) cb();
+  }
+
+  /** Snap a move into place without recording history (undo/redo replay). */
+  applyMoveSilent(move: Sq1Move): void {
+    const anims = this.beginMove(move);
+    for (const a of anims) {
+      a.pivot.quaternion.copy(a.endQuat);
+      if (a.endPos) a.pivot.position.copy(a.endPos);
+    }
+    this.state = applySq1Move(this.state, move);
+    this.dirty = true;
   }
 
   /** Instant version: snap end pose without animating. */
@@ -245,14 +227,12 @@ export default class Sq1Cube extends THREE.Group {
     this.callbacks.length = 0;
   }
 
+  /** SQ1 pieces translate (layer turns swing the pivot off-axis), so every anim
+   *  carries the position arc (withPos=true). */
   private _makeAnim(
     pivot: THREE.Object3D, delta: THREE.Quaternion,
     axis: THREE.Vector3, angle: number,
   ): PieceAnim {
-    const startQuat = pivot.quaternion.clone();
-    const endQuat = delta.clone().multiply(startQuat);
-    const startPos = pivot.position.clone();
-    const endPos = startPos.clone().applyQuaternion(delta);
-    return { pivot, startQuat, endQuat, startPos, endPos, axis, angle };
+    return makeAnim(pivot, delta, axis, angle, true);
   }
 }

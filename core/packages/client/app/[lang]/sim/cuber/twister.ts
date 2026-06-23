@@ -3,7 +3,7 @@ import * as THREE from "three";
 import Cube from "./cube";
 import Cubelet from "./cubelet";
 import tweener from "./tweener";
-import CubeGroup from "./group";
+import { timing } from "./tweenTiming";
 import initStackKernel, { apply_rotates as stackKernelApplyRotates, apply_rotates_no_flat as stackKernelApplyRotatesNoFlat } from "@cuberoot/stack-kernel";
 import { ensureWorkerInit, workerApply } from "./setup_worker_client";
 
@@ -750,7 +750,7 @@ export default class Twister {
       }
       success = this.cube.lock("a", 1);
       if (success) {
-        tweener.tween(0, 1, CubeGroup.frames * action.times, (value: number) => {
+        tweener.tween(0, 1, timing.frames * action.times, (value: number) => {
           if (value == 1) {
             this.cube.unlock("a", 1);
             this.cube.callback();

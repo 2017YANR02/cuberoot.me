@@ -18,7 +18,7 @@ import { HALF_MID, LAYER_HEIGHT, W, WEDGE_HALF_CHORD } from './sq1Geometry';
 import { applySq1Move, moveToString, snapValidLayerTurn, type Sq1Move } from './sq1State';
 import type Sq1Cube from './Sq1Cube';
 import tweener from '../tweener';
-import CubeGroup from '../group';
+import { tweenDuration } from '../tweenTiming';
 
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const TOP_Y = HALF_MID + LAYER_HEIGHT;
@@ -200,7 +200,7 @@ export function sq1DragCommit(
   const endQuats = start.starts.map((s) => qSnap.clone().multiply(s.quat));
   const endPoss = start.starts.map((s) => s.pos.clone().applyQuaternion(qSnap));
 
-  const frames = Math.max(2, Math.round(CubeGroup.tweenDuration(Math.max(0.5, Math.abs(visualUnits) / 3))));
+  const frames = Math.max(2, Math.round(tweenDuration(Math.max(0.5, Math.abs(visualUnits) / 3))));
   tweener.tween(0, 1, frames, (v) => {
     for (let i = 0; i < start.starts.length; i++) {
       start.starts[i].pivot.quaternion.slerpQuaternions(curQuats[i], endQuats[i], v);

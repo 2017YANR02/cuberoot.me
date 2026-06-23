@@ -21,6 +21,11 @@ import {
   solvedRedi, applyRediMove, isSolved, rediMoveToString,
 } from './rediState';
 import RediTwister from './RediTwister';
+import MoveHistory from '../MoveHistory';
+import { makeAnim, type PieceAnim } from '../pieceAnim';
+import type { TweenCube } from '../TweenTwister';
+
+export type { PieceAnim };
 
 export interface EdgeEntry {
   /** Stable piece id (= its solved slot). */
@@ -36,28 +41,11 @@ export interface CornerEntry {
   group: THREE.Group;
 }
 
-/** One piece's animation plan for a single move (axis-angle). */
-export interface PieceAnim {
-  pivot: THREE.Object3D;
-  startQuat: THREE.Quaternion;
-  endQuat: THREE.Quaternion;
-  axis: THREE.Vector3;
-  angle: number;
-}
-
-export class RediHistory {
-  moves: string[] = [];
-  redoStack: string[] = [];
-  init = '';
-  get length(): number { return this.moves.length; }
-  clear(): void { this.moves.length = 0; this.redoStack.length = 0; }
-  record(move: string): void { this.moves.push(move); this.redoStack.length = 0; }
-}
 
 /** Precomputed unit axis per corner. */
 const AXES: THREE.Vector3[] = CORNER_AXIS.map(([x, y, z]) => cornerAxis(x, y, z));
 
-export default class RediCube extends THREE.Group {
+export default class RediCube extends THREE.Group implements TweenCube<RediMove> {
   edges: EdgeEntry[] = [];
   corners: CornerEntry[] = [];
   /** Discrete state: edge perm + corner orientations. */
@@ -66,7 +54,7 @@ export default class RediCube extends THREE.Group {
   dirty = true;
   readonly puzzleType = 'redi' as const;
   order = 0;
-  history = new RediHistory();
+  history = new MoveHistory();
   twister: RediTwister;
 
   constructor() {
@@ -116,9 +104,9 @@ export default class RediCube extends THREE.Group {
     const anims: PieceAnim[] = [];
     for (const slot of CORNER_CYCLE[move.corner]) {
       const entry = this.edgeById(this.state.edges[slot]);
-      anims.push(this._makeAnim(entry.pivot, delta, axis, angle));
+      anims.push(makeAnim(entry.pivot, delta, axis, angle));
     }
-    anims.push(this._makeAnim(this.corners[move.corner].pivot, delta, axis, angle));
+    anims.push(makeAnim(this.corners[move.corner].pivot, delta, axis, angle));
     return anims;
   }
 
@@ -139,6 +127,14 @@ export default class RediCube extends THREE.Group {
   applyMovesInstant(moves: RediMove[]): void {
     this.applyStateInstant(solvedRedi());
     for (const move of moves) this.applyMoveInstant(move);
+  }
+
+  /** Snap a move into place without recording history (undo/redo replay). */
+  applyMoveSilent(move: RediMove): void {
+    const anims = this.beginMove(move);
+    for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
+    this.state = applyRediMove(this.state, move);
+    this.dirty = true;
   }
 
   /** Debug: carve out (hide) the whole cap that corner 0 rotates — its 3 edge
@@ -171,14 +167,5 @@ export default class RediCube extends THREE.Group {
     this.edges.length = 0;
     this.corners.length = 0;
     this.callbacks.length = 0;
-  }
-
-  private _makeAnim(
-    pivot: THREE.Object3D, delta: THREE.Quaternion,
-    axis: THREE.Vector3, angle: number,
-  ): PieceAnim {
-    const startQuat = pivot.quaternion.clone();
-    const endQuat = delta.clone().multiply(startQuat);
-    return { pivot, startQuat, endQuat, axis, angle };
   }
 }

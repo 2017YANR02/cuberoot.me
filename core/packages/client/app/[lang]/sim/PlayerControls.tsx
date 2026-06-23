@@ -34,7 +34,7 @@ import {
 import { Alg, Move } from 'cubing/alg';
 import World from './cuber/world';
 import { TwistAction } from './cuber/twister';
-import CubeGroup from './cuber/group';
+import { timing } from './cuber/tweenTiming';
 import { parseSq1Scramble, movesToString, type Sq1Move } from './cuber/sq1/sq1State';
 import { parseIvyMoves } from './cuber/ivy/IvyTwister';
 import type { IvyMove } from './cuber/ivy/IvyCube';
@@ -338,7 +338,7 @@ export default function PlayerControls({
   const [derivingScramble, setDerivingScramble] = useState(false);
 
   useEffect(() => {
-    CubeGroup.frames = Math.max(2, Math.round(30 / speed));
+    timing.frames = Math.max(2, Math.round(30 / speed));
   }, [speed]);
 
   const playTimerRef = useRef<number | null>(null);
