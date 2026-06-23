@@ -22,7 +22,7 @@ use std::sync::Arc;
 
 use crate::cube_common::{
     alg_rotation, array_to_index, conj_moves_flat, get_diagonal_view, get_neighbor_view,
-    state_space, valid_moves, Move,
+    state_space, valid_moves, valid_moves_masked, Move, MoveMask, ValidMovesTable,
 };
 use crate::executor::bump_node_count;
 use crate::move_tables::{self, MoveTable};
@@ -977,6 +977,365 @@ impl XCrossSolver {
     }
 }
 
+// ============================================================================
+// 受限 move 集小表 cascade(Phase 2:XCross / F2L std 阶段步法限制)
+// ----------------------------------------------------------------------------
+// 与上面无限制 cascade 同结构、同剪枝表(pt_cross_C4E0),仅把 `valid_moves()`
+// 换成 `valid_moves_masked(mask)`,并加 `max_depth` 上限(限制下可能无解)。
+//
+// 正确性同 Phase 1 cross:pt_cross_C4E0 是「无限制」单槽 XCross 距离 → 对任意
+// mask 仍是可采纳下界(受限距离 ≥ 无限制距离)。从该下界起步的 IDA* 迭代加深,
+// 首个成功深度即真·受限最优(≤ max_depth);超过 max_depth 仍无解返回 99 哨兵。
+// mask=MASK_ALL 且 max_depth 够大时与无限制版逐格 bit-exact。
+impl XCrossSolver {
+    /// search_multi 的受限版:`vm` 是预过滤的 valid-moves 表(`valid_moves_masked`)。
+    fn search_multi_masked(
+        &self,
+        coords: &[(usize, usize, usize, usize)],
+        depth: u32,
+        prev: u8,
+        vm: &ValidMovesTable,
+    ) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let cj = conj_moves_flat();
+        let pt = &self.pt_cross_c4e0;
+        let n = coords.len();
+
+        let mut local: u64 = 0;
+        let mut next = [(0usize, 0usize, 0usize, 0usize); 4];
+        for ki in 0..count {
+            let m = row[ki] as usize;
+            local += 1;
+            let mut pruned = false;
+            for (j, &(i1, i2, i3, slot)) in coords.iter().enumerate() {
+                let m1 = cj[m][slot] as usize;
+                let n_i1 = mt_e4[i1 + m1] as usize;
+                let n_i2 = mt_c[i2 + m1] as usize;
+                let n_i3 = mt_e[i3 + m1] as usize;
+                let idx: u64 = (n_i1 as u64 + n_i2 as u64) * 24 + n_i3 as u64;
+                if pt.get(idx) as u32 >= depth {
+                    pruned = true;
+                    break;
+                }
+                next[j] = (n_i1, n_i2 * 18, n_i3 * 18, slot);
+            }
+            if pruned {
+                continue;
+            }
+            if depth == 1 {
+                bump_node_count(local);
+                return true;
+            }
+            if self.search_multi_masked(&next[..n], depth - 1, m as u8, vm) {
+                bump_node_count(local);
+                return true;
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    /// solve_subset 的受限版:max_d 内无解返回 99。
+    fn solve_subset_masked(
+        &self,
+        st: &[VirtState; 4],
+        slots: &[usize],
+        subset_h: u32,
+        prev_stage: u32,
+        max_d: u32,
+        vm: &ValidMovesTable,
+    ) -> u32 {
+        if subset_h == 0 {
+            return 0;
+        }
+        let n = slots.len();
+        let mut coords = [(0usize, 0usize, 0usize, 0usize); 4];
+        for (j, &k) in slots.iter().enumerate() {
+            coords[j] = (
+                st[k].im as usize,
+                (st[k].ic as usize) * 18,
+                (st[k].ie as usize) * 18,
+                k,
+            );
+        }
+        let start = subset_h.max(prev_stage);
+        for d in start..=max_d {
+            if self.search_multi_masked(&coords[..n], d, 18, vm) {
+                return d;
+            }
+        }
+        99
+    }
+
+    /// get_stats_small 的受限版:返回单个变体 `max_v`(0=xc..3=xxxxc)的 6 视角值,
+    /// max_depth 内无解的视角为 None(client 侧映射 u32::MAX 哨兵显示 '-')。
+    /// 注:cascade 的 prev_stage 单调约束(后阶段 ≥ 前阶段)只在「无限制」下成立;
+    /// 受限时各阶段独立从自身 subset_h 起步,prev_stage 传 0(不引入跨阶段下界,
+    /// 因为限制可能让浅阶段反而比深阶段「相对更难」搜)。只算 max_v 这一个变体。
+    pub fn get_stats_small_masked(
+        &self,
+        alg: &[Move],
+        rots: &[&str],
+        max_v: usize,
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> Vec<Option<u32>> {
+        const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
+        const TRIPS: [(usize, usize, usize); 4] = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)];
+
+        let vm = valid_moves_masked(mask);
+        let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        let mut out = Vec::with_capacity(rots.len());
+        for rot in rots {
+            let mut a = base.clone();
+            alg_rotation(&mut a, rot);
+            let st: [VirtState; 4] = std::array::from_fn(|k| self.get_virt(&a, k));
+            let h0: [u32; 4] = std::array::from_fn(|k| self.slot_h(&st[k]));
+
+            // combos + max_d 按变体选;受限「最优」= min over combos(<= max_depth)。
+            let combos: Vec<Vec<usize>> = match max_v {
+                0 => vec![vec![0], vec![1], vec![2], vec![3]],
+                1 => PAIRS.iter().map(|&(x, y)| vec![x, y]).collect(),
+                2 => TRIPS.iter().map(|&(x, y, z)| vec![x, y, z]).collect(),
+                _ => vec![vec![0, 1, 2, 3]],
+            };
+            let cap_d = match max_v {
+                0 => 12u32,
+                1 => 14,
+                _ => 16,
+            }
+            .min(max_depth);
+
+            // 按可采纳下界升序;限制下解可能更深,故评估到下界 > 当前最优才停。
+            let mut scored: Vec<(u32, Vec<usize>)> = combos
+                .into_iter()
+                .map(|c| (c.iter().map(|&s| h0[s]).max().unwrap(), c))
+                .collect();
+            scored.sort_by_key(|t| t.0);
+            let mut best = 99u32;
+            for (h, c) in &scored {
+                if *h > best {
+                    break;
+                }
+                let res = self.solve_subset_masked(&st, c, *h, 0, cap_d, &vm);
+                best = best.min(res);
+            }
+            out.push(if best >= 99 { None } else { Some(best) });
+        }
+        out
+    }
+
+    /// enumerate_multi 的受限版。
+    #[allow(clippy::too_many_arguments)]
+    fn enumerate_multi_masked(
+        &self,
+        coords: &[(usize, usize, usize, usize)],
+        depth: u32,
+        prev: u8,
+        path: &mut Vec<u8>,
+        out: &mut Vec<Vec<u8>>,
+        cap: usize,
+        vm: &ValidMovesTable,
+    ) {
+        if out.len() >= cap {
+            return;
+        }
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let cj = conj_moves_flat();
+        let pt = &self.pt_cross_c4e0;
+        let n = coords.len();
+        let mut next = [(0usize, 0usize, 0usize, 0usize); 4];
+        for ki in 0..count {
+            if out.len() >= cap {
+                return;
+            }
+            let m = row[ki] as usize;
+            let mut pruned = false;
+            let mut max_h = 0u32;
+            for (j, &(i1, i2, i3, slot)) in coords.iter().enumerate() {
+                let m1 = cj[m][slot] as usize;
+                let n_i1 = mt_e4[i1 + m1] as usize;
+                let n_i2 = mt_c[i2 + m1] as usize;
+                let n_i3 = mt_e[i3 + m1] as usize;
+                let idx: u64 = (n_i1 as u64 + n_i2 as u64) * 24 + n_i3 as u64;
+                let h = pt.get(idx) as u32;
+                if h >= depth {
+                    pruned = true;
+                    break;
+                }
+                if h > max_h {
+                    max_h = h;
+                }
+                next[j] = (n_i1, n_i2 * 18, n_i3 * 18, slot);
+            }
+            if pruned {
+                continue;
+            }
+            path.push(m as u8);
+            if depth == 1 {
+                out.push(path.clone());
+            } else if max_h > 0 {
+                self.enumerate_multi_masked(&next[..n], depth - 1, m as u8, path, out, cap, vm);
+            }
+            path.pop();
+        }
+    }
+
+    /// enumerate_best 的受限版:挑最优 combo(<= max_depth)后枚举多解;限制下无解返回 (99, []).
+    #[allow(clippy::too_many_arguments)]
+    pub fn enumerate_best_masked(
+        &self,
+        alg: &[Move],
+        rot: &str,
+        k: usize,
+        extra: u32,
+        cap: usize,
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> (u32, Vec<(Vec<usize>, Vec<u8>)>) {
+        const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
+        const TRIPS: [(usize, usize, usize); 4] = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)];
+
+        let vm = valid_moves_masked(mask);
+        let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        let mut a = base.clone();
+        alg_rotation(&mut a, rot);
+        let st: [VirtState; 4] = std::array::from_fn(|j| self.get_virt(&a, j));
+        let h0: [u32; 4] = std::array::from_fn(|j| self.slot_h(&st[j]));
+
+        let combos: Vec<Vec<usize>> = match k {
+            1 => vec![vec![0], vec![1], vec![2], vec![3]],
+            2 => PAIRS.iter().map(|&(x, y)| vec![x, y]).collect(),
+            3 => TRIPS.iter().map(|&(x, y, z)| vec![x, y, z]).collect(),
+            _ => vec![vec![0, 1, 2, 3]],
+        };
+        let cap_d = match k {
+            1 => 12u32,
+            2 => 14,
+            _ => 16,
+        }
+        .min(max_depth);
+
+        let mut scored: Vec<(u32, Vec<usize>)> = combos
+            .into_iter()
+            .map(|c| (c.iter().map(|&s| h0[s]).max().unwrap(), c))
+            .collect();
+        scored.sort_by_key(|t| t.0);
+
+        let mut best_len = 99u32;
+        let mut evaluated: Vec<(Vec<usize>, u32)> = Vec::new();
+        for (h, c) in &scored {
+            if *h > best_len {
+                break;
+            }
+            let res = self.solve_subset_masked(&st, c, *h, 0, cap_d, &vm);
+            if res < best_len {
+                best_len = res;
+            }
+            evaluated.push((c.clone(), res));
+        }
+
+        if best_len == 0 || best_len >= 99 {
+            return (best_len, Vec::new());
+        }
+        let tied: Vec<Vec<usize>> = evaluated
+            .into_iter()
+            .filter(|(_, l)| *l == best_len)
+            .map(|(c, _)| c)
+            .collect();
+        let out = self.enumerate_tied_masked(&st, &tied, best_len, extra, cap, &vm);
+        (best_len, out)
+    }
+
+    /// enumerate_combo 的受限版(指定单个 combo)。
+    #[allow(clippy::too_many_arguments)]
+    pub fn enumerate_combo_masked(
+        &self,
+        alg: &[Move],
+        rot: &str,
+        combo: &[usize],
+        extra: u32,
+        cap: usize,
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> (u32, Vec<(Vec<usize>, Vec<u8>)>) {
+        let vm = valid_moves_masked(mask);
+        let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        let mut a = base.clone();
+        alg_rotation(&mut a, rot);
+        let st: [VirtState; 4] = std::array::from_fn(|j| self.get_virt(&a, j));
+        let h = combo.iter().map(|&s| self.slot_h(&st[s])).max().unwrap_or(99);
+        let cap_d = match combo.len() {
+            1 => 12u32,
+            2 => 14,
+            _ => 16,
+        }
+        .min(max_depth);
+        let best_len = self.solve_subset_masked(&st, combo, h, 0, cap_d, &vm);
+        if best_len == 0 || best_len >= 99 {
+            return (best_len, Vec::new());
+        }
+        let out = self.enumerate_tied_masked(&st, &[combo.to_vec()], best_len, extra, cap, &vm);
+        (best_len, out)
+    }
+
+    /// enumerate_tied 的受限版。
+    #[allow(clippy::too_many_arguments)]
+    fn enumerate_tied_masked(
+        &self,
+        st: &[VirtState; 4],
+        tied: &[Vec<usize>],
+        best_len: u32,
+        extra: u32,
+        cap: usize,
+        vm: &ValidMovesTable,
+    ) -> Vec<(Vec<usize>, Vec<u8>)> {
+        let mut out: Vec<(Vec<usize>, Vec<u8>)> = Vec::new();
+        let mut path = Vec::new();
+        'outer: for d in best_len..=(best_len + extra).min(16) {
+            for combo in tied {
+                if out.len() >= cap {
+                    break 'outer;
+                }
+                let n = combo.len();
+                let mut coords = [(0usize, 0usize, 0usize, 0usize); 4];
+                for (j, &s) in combo.iter().enumerate() {
+                    coords[j] = (
+                        st[s].im as usize,
+                        (st[s].ic as usize) * 18,
+                        (st[s].ie as usize) * 18,
+                        s,
+                    );
+                }
+                let mut combo_out: Vec<Vec<u8>> = Vec::new();
+                self.enumerate_multi_masked(
+                    &coords[..n],
+                    d,
+                    18,
+                    &mut path,
+                    &mut combo_out,
+                    cap - out.len(),
+                    vm,
+                );
+                for sol in combo_out {
+                    out.push((combo.clone(), sol));
+                }
+            }
+        }
+        out
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1363,4 +1722,5 @@ mod tests {
             agg[0].1, agg[1].1, agg[2].1, agg[3].1, agg[4].1);
         eprintln!("(单视角;analyzer 实际 ×6 视角。WASM 预估 ×1.5-3。)\n");
     }
+
 }

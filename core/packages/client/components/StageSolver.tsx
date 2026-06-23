@@ -107,8 +107,8 @@ const LIMIT_OPTIONS = [5, 10, 25, 50, 0];
 const NO_LIMIT_CAP = 100000;
 
 // 步法限制(对齐 or18 /solver 第一行):6 个 move 面 U D L R F B 各自允许/禁止,默认全允许。
-// 目前仅纯十字(std stage 0)生效——其余阶段引擎暂无 masked 搜索(Phase 2+ 接上),宽层/滑层/转体
-// (u d l r / M E S / x y z)对 HTM 最优引擎无对应记号,不做。
+// std 全阶段生效(cross + XCross/F2L,变体 0..4 均接 masked 引擎);其余方法引擎暂无 masked 搜索,
+// 宽层/滑层/转体(u d l r / M E S / x y z)对 HTM 最优引擎无对应记号,不做。
 // move 索引:U=0..2 D=3..5 L=6..8 R=9..11 F=12..14 B=15..17;面 i 的三个 move 位 = 0b111<<(3i)。
 const MOVE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
 const ALL_MOVE_MASK = (1 << 18) - 1; // 0x3FFFF = 全部允许
@@ -261,7 +261,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   // 步法限制:6 个 move 面是否允许(U D L R F B 顺序);默认全允许。仅 std 纯十字阶段生效。
   const [allowedFaces, setAllowedFaces] = useState<boolean[]>(() => [true, true, true, true, true, true]);
-  const maskSupported = method === 'std' && stage === 0;
+  // 步法限制覆盖全部 std 阶段:cross(stage0,变体 0)+ XCross/F2L(stage1..4,变体 1..4)。
+  // std 的 stage 索引 = WASM variant(见 pool.solveFace(scr, stage, ...) 调用),变体 0..4 均接 masked
+  // 引擎(cross_solver / xcross_solver 小表 cascade)。其余方法暂无 masked 搜索(回退不受限)。
+  const maskSupported = method === 'std';
   const moveMask = useMemo(() => {
     let m = 0;
     allowedFaces.forEach((on, i) => { if (on) m |= 0b111 << (3 * i); });
