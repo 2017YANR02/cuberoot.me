@@ -46,6 +46,12 @@ interface Top10Index {
 }
 // 「按人」指标(single/average/bao5...)与「按成绩」流(single_r/average_r);故 string key
 type EventData = Record<string, PbEvent[]>;
+// 「按国家」文件:streams + 自包含 persons/comps 字典(全局 index 不再汇各国引用)
+interface CountryFileData {
+  persons?: Record<string, PersonInfo>;
+  comps?: Record<string, CompInfo>;
+  [stream: string]: PbEvent[] | Record<string, PersonInfo> | Record<string, CompInfo> | undefined;
+}
 
 const FALLBACK_START = '2003-08-22';
 const SPEEDS = [5, 30, 100, 365] as const;
@@ -108,15 +114,20 @@ export default function Top10HistoryPage({
   controlledMetricLabelZh,
   controlledMetricLabelEn,
   controlledMode,
+  controlledCountry,
+  controlledCountryName,
 }: {
   controlledEventId?: string;
   controlledMetric?: Metric;
   controlledMetricLabelZh?: string;
   controlledMetricLabelEn?: string;
   controlledMode?: RaceMode;   // 'persons'(默认,按人)| 'results'(按成绩,同人可多条)
+  controlledCountry?: string;       // 国家 id(results.country_id);设了 = 该国 race,空 = 全球
+  controlledCountryName?: string;   // 国家显示名(随语言,由父级算好)
 } = {}) {
   const embedded = !!controlledEventId;
   const mode: RaceMode = controlledMode ?? 'persons';
+  const country = controlledCountry || '';
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
 
@@ -124,8 +135,11 @@ export default function Top10HistoryPage({
   const [error, setError] = useState<string | null>(null);
   const [eventId, setEventId] = useState<string>(controlledEventId || '333');
   const [eventDataCache] = useState<Map<string, EventData>>(() => new Map());
+  // 「按国家」数据缓存:`${eventId}:${iso2}` -> CountryFileData(懒加载 country/{event}/{ISO2}.json)
+  const [countryDataCache] = useState<Map<string, CountryFileData>>(() => new Map());
   const [, setCacheTick] = useState(0); // 触发缓存写入后的 rerender
   const [eventLoading, setEventLoading] = useState<boolean>(false);
+  const [countryLoading, setCountryLoading] = useState<boolean>(false);
   const [metric, setMetric] = useState<Metric>('single');
   const [dateMs, setDateMs] = useState<number>(isoToMs(FALLBACK_START));
   const [playing, setPlaying] = useState<boolean>(false);
@@ -187,6 +201,27 @@ export default function Top10HistoryPage({
       });
   }, [eventId, index, eventDataCache]);
 
+  // 选了国家时:lazy fetch country/{event}/{ISO2}.json(单国家小文件,缓存后切回即时)
+  useEffect(() => {
+    if (!index || !country) return;
+    const ckey = `${eventId}:${country}`;
+    if (countryDataCache.has(ckey)) return;
+    setCountryLoading(true);
+    fetch(statsUrl(`/stats/top10_history/country/${eventId}/${country.toUpperCase()}.json`))
+      .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+      .then((d: CountryFileData) => {
+        countryDataCache.set(ckey, d);
+        setCountryLoading(false);
+        setCacheTick(t => t + 1);
+      })
+      .catch(() => {
+        // 该国无数据文件(404 等)→ 存空,前端显示「数据不足」,不再重试
+        countryDataCache.set(ckey, {});
+        setCountryLoading(false);
+        setCacheTick(t => t + 1);
+      });
+  }, [eventId, country, index, countryDataCache]);
+
   // metric 是否可用(MBLD 只 single);成绩模式看 average_r 是否存在
   const eventInfo = index?.eventInfo[eventId];
   const hasAverage = mode === 'results'
@@ -196,10 +231,15 @@ export default function Top10HistoryPage({
     if (!hasAverage && metric === 'average') setMetric('single');
   }, [hasAverage, metric]);
 
-  const eventData = eventDataCache.get(eventId);
   // 成绩模式读 `${metric}_r` 流(不按人去重);选手模式读 `${metric}`
   const dataKey = mode === 'results' ? `${metric}_r` : metric;
-  const events: PbEvent[] = eventData?.[dataKey] ?? [];
+  // 选了国家 → country/{event}/{ISO2}.json(自包含 streams + persons + comps);否则全球 per-event 流 + index 字典
+  const countryFile = country ? countryDataCache.get(`${eventId}:${country}`) : undefined;
+  const events: PbEvent[] = country
+    ? ((countryFile?.[dataKey] as PbEvent[] | undefined) ?? [])
+    : (eventDataCache.get(eventId)?.[dataKey] ?? []);
+  const activePersons: Record<string, PersonInfo> = country ? (countryFile?.persons ?? {}) : (index?.persons ?? {});
+  const activeComps: Record<string, CompInfo> = country ? (countryFile?.comps ?? {}) : (index?.comps ?? {});
 
   const endMs = useMemo(() => {
     if (events.length === 0) return isoToMs(FALLBACK_START) + DAY_MS;
@@ -216,7 +256,7 @@ export default function Top10HistoryPage({
   const prevEventMetricRef = useRef('');
   useEffect(() => {
     if (events.length === 0) return;
-    const key = `${eventId}:${metric}:${mode}`;
+    const key = `${eventId}:${metric}:${mode}:${country}`;
     if (key !== prevEventMetricRef.current) {
       prevEventMetricRef.current = key;
       setDateMs(endMs);
@@ -224,7 +264,7 @@ export default function Top10HistoryPage({
     } else {
       setDateMs(prev => Math.max(startMs, Math.min(endMs, prev)));
     }
-  }, [startMs, endMs, eventId, metric, mode, events.length]);
+  }, [startMs, endMs, eventId, metric, mode, country, events.length]);
 
   // NOTE: PB 模式专用 — 只保留"top-10 顺序变化"的日期
   //   纯个人成绩提升(同人同名次)/ 不进 top-10 的 PB 都跳过
@@ -366,7 +406,7 @@ export default function Top10HistoryPage({
     return out;
   }, [axis]);
 
-  const top1Person = replay?.top1Pid ? index?.persons[replay.top1Pid] : null;
+  const top1Person = replay?.top1Pid ? (activePersons[replay.top1Pid] ?? null) : null;
   const top1DurationDays = replay?.top1SinceDate
     ? Math.max(0, Math.floor((isoToMs(dateIso) - isoToMs(replay.top1SinceDate)) / DAY_MS))
     : 0;
@@ -402,13 +442,14 @@ export default function Top10HistoryPage({
     try {
       await exportTop10Video({
         events, eventId, metric, raceMode: mode,
-        persons: index.persons, comps: index.comps,
+        persons: activePersons, comps: activeComps,
         startMs, endMs, mode: playMode, speed,
         rankChangeDates, isZh,
         abortRef: exportAbortRef.current,
         onProgress: setExportProg,
         previewCanvas: previewCanvasRef.current,
         metricLabel,
+        countryName: controlledCountryName,
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -422,7 +463,7 @@ export default function Top10HistoryPage({
       setExporting(false);
       setExportProg(null);
     }
-  }, [exporting, events, index, eventId, metric, mode, metricLabel, startMs, endMs, playMode, speed, rankChangeDates, isZh]);
+  }, [exporting, events, index, activePersons, activeComps, eventId, metric, mode, metricLabel, controlledCountryName, startMs, endMs, playMode, speed, rankChangeDates, isZh]);
 
   const cancelExport = useCallback(() => {
     exportAbortRef.current.aborted = true;
@@ -522,12 +563,12 @@ export default function Top10HistoryPage({
               <Flag iso2={top1Person.iso2} className="t10h-holder-flag" />
             )}
             <div className="t10h-holder-text">
-              <div className="t10h-holder-name">{top1Name || (eventLoading ? tr({ zh: '加载中…', en: 'Loading…'
+              <div className="t10h-holder-name">{top1Name || ((eventLoading || countryLoading) ? tr({ zh: '加载中…', en: 'Loading…'
                                       }) : '')}</div>
               <div className="t10h-holder-sub">
-                {top1Person && ((isZh
-                                                ? `保持纪录 ${top1DurationDays} 天`
-                                                : `World record holder for ${top1DurationDays} days`))}
+                {top1Person && (country
+                  ? tr({ zh: `保持全国纪录 ${top1DurationDays} 天`, en: `National record holder for ${top1DurationDays} days` })
+                  : tr({ zh: `保持纪录 ${top1DurationDays} 天`, en: `World record holder for ${top1DurationDays} days` }))}
               </div>
             </div>
           </div>
@@ -535,7 +576,10 @@ export default function Top10HistoryPage({
             <div className="t10h-bigtitle-pre">
               <EventIcon event={eventId} className="t10h-bigtitle-icon" />
               <span>
-                {isZh ? `${eventNameZh}${metricLabel}` : `${eventNameEn} ${metricLabel}`}
+                {(() => {
+                  const base = tr({ zh: `${eventNameZh}${metricLabel}`, en: `${eventNameEn} ${metricLabel}` });
+                  return controlledCountryName ? `${controlledCountryName} ${base}` : base;
+                })()}
               </span>
             </div>
             <div className="t10h-bigdate">{dateIso}</div>
@@ -544,8 +588,8 @@ export default function Top10HistoryPage({
 
         <BarRaceChart
           rows={top10.map((row, idx) => {
-            const person = index.persons[row.pid];
-            const comp = index.comps[row.c];
+            const person = activePersons[row.pid];
+            const comp = activeComps[row.c];
             const compNameRaw = comp?.name ?? row.c;
             const compName = localizeCompName(row.c, compNameRaw, isZh);
             const compIso2 = compFlagIso2(row.c);
@@ -577,6 +621,7 @@ export default function Top10HistoryPage({
           hideAxisLabels={axis.hideAxis}
           rowH={rowH}
           showN={SHOW_N}
+          emptyText={country && !countryLoading ? tr({ zh: '该国暂无足够数据', en: 'Not enough data for this country' }) : undefined}
         />
       </div>
 
