@@ -147,8 +147,10 @@ export class Top10History extends Statistic {
     const allPids = new Set<string>();
     const allCids = new Set<string>();
     // NOTE: 每个 event 的所有指标输出 + 元信息
-    const eventOutputs: Record<string, Partial<Record<MetricKey, PbEvent[]>>> = {};
-    const eventMetricCounts: Record<string, Partial<Record<MetricKey, number>>> = {};
+    //   key 含「按人」指标(single/average/bao5...)与「按成绩」流(single_r/average_r —— 不按人去重,
+    //   同一选手可占多条,对应 /wca/results 的「成绩」榜)。故用 string key。
+    const eventOutputs: Record<string, Record<string, PbEvent[]>> = {};
+    const eventMetricCounts: Record<string, Record<string, number>> = {};
 
     // NOTE: 调试 / 增量重生:TOP10_ONLY_EVENTS=333mbf,... 只跑指定 event(产物索引随之仅含这些 event,
     //   需外部 merge 回完整索引)。生产 CI 不设此变量 → 跑全 21 个。
@@ -228,6 +230,19 @@ export class Top10History extends Statistic {
         summary.push(`${mk}=${result.events.length}/${result.everInTop.size}`);
       }
 
+      // NOTE: 「按成绩」流 — 不按人去重,每条成绩是独立实体,同一选手可占多条
+      //   (对齐 /wca/results 的「成绩」榜:每条 result 行各算一名次)。只做 single/average。
+      const resultMetrics: MetricKey[] = ['single'];
+      if (!singleOnly || isMbf) resultMetrics.push('average');  // 333mbf:非官方 Mo3
+      for (const mk of resultMetrics) {
+        const res = this.runResultMetric(rows, mk, isMbf && mk === 'average');
+        eventOutputs[eventId][`${mk}_r`] = res.events;
+        eventMetricCounts[eventId][`${mk}_r`] = res.events.length;
+        for (const pid of res.pids) allPids.add(pid);
+        for (const cid of res.cids) allCids.add(cid);
+        summary.push(`${mk}_r=${res.events.length}`);
+      }
+
       // NOTE: 释放 rows
       rows.length = 0;
       if (global.gc) global.gc();
@@ -246,6 +261,7 @@ export class Top10History extends Statistic {
       hasAverage: boolean;
       hasAo5: boolean;
       metrics: MetricKey[];
+      hasResultsAverage: boolean;
     }> = {};
     for (const [eid, out] of Object.entries(eventOutputs)) {
       writeFileSync(
@@ -253,11 +269,14 @@ export class Top10History extends Statistic {
         JSON.stringify(out),
         'utf-8',
       );
-      const metrics = Object.keys(out) as MetricKey[];
+      const allKeys = Object.keys(out);
+      // 「按人」指标列表(给前端 metric 选择器),排除 *_r 成绩流
+      const metrics = allKeys.filter(k => !k.endsWith('_r')) as MetricKey[];
       eventInfo[eid] = {
         hasAverage: metrics.includes('average'),
         hasAo5: metrics.includes('bao5'),
         metrics,
+        hasResultsAverage: allKeys.includes('average_r'),
       };
     }
 
@@ -289,19 +308,7 @@ export class Top10History extends Statistic {
     // 1) 算 metric 值并按 (date, pid) 取 min
     const byDate = new Map<string, Map<string, { v: number; c: string }>>();
     for (const r of rows) {
-      let v: number | null;
-      if (mk === 'single') v = r.best > 0 ? r.best : null;
-      else if (mk === 'average') {
-        if (mbfAvg) {
-          // 恰好 3 次成功 → Mo3(>0);DNF / 不足 3 次 → computeMbfMo3 返回 -1/0 → 排除
-          const mo3 = r.vals ? computeMbfMo3(r.vals) : 0;
-          v = mo3 > 0 ? mo3 : null;
-        } else {
-          v = r.avg > 0 ? r.avg : null;
-        }
-      }
-      else if (r.vals) v = computeAttemptMetric(mk, r.vals);
-      else v = null;
+      const v = this.metricValue(r, mk, mbfAvg);
       if (v == null || !Number.isFinite(v)) continue;
       let day = byDate.get(r.d);
       if (!day) { day = new Map(); byDate.set(r.d, day); }
@@ -346,6 +353,62 @@ export class Top10History extends Statistic {
 
     const filtered = events.filter(e => everInTop.has(e.p));
     return { events: filtered, everInTop };
+  }
+
+  // NOTE: 单行 → 指标值(single/average/ao5 衍生);mbfAvg=333mbf 非官方 Mo3。无效返回 null。
+  private metricValue(r: CompactRow, mk: MetricKey, mbfAvg: boolean): number | null {
+    if (mk === 'single') return r.best > 0 ? r.best : null;
+    if (mk === 'average') {
+      if (mbfAvg) {
+        // 恰好 3 次成功 → Mo3(>0);DNF / 不足 3 次 → computeMbfMo3 返回 -1/0 → 排除
+        const mo3 = r.vals ? computeMbfMo3(r.vals) : 0;
+        return mo3 > 0 ? mo3 : null;
+      }
+      return r.avg > 0 ? r.avg : null;
+    }
+    return r.vals ? computeAttemptMetric(mk, r.vals) : null;
+  }
+
+  // NOTE: 「按成绩」流 — 每条 result 行各为独立实体,不按人去重。
+  //   产出「曾进过历史 TOP K 条成绩」的全部成绩(每条 {d,p,v,c}),按日期升序。
+  //   判定:一条成绩曾进 TOP K ⟺ 它出现当日,严格更优的已有成绩 < K 条
+  //   (它的名次随时间只会变差,故「曾进 TOP K」等价「出现即在 TOP K」)。
+  //   前端只渲染 TOP 10,K=TOP_K_EVER=30 留安全余量(与「按人」流一致)。
+  private runResultMetric(
+    rows: CompactRow[],
+    mk: MetricKey,
+    mbfAvg = false,
+  ): { events: PbEvent[]; pids: Set<string>; cids: Set<string> } {
+    // 1) 算每条成绩的值
+    const ents: PbEvent[] = [];
+    for (const r of rows) {
+      const v = this.metricValue(r, mk, mbfAvg);
+      if (v == null || !Number.isFinite(v)) continue;
+      ents.push({ d: r.d, p: r.pid, v, c: r.comp });
+    }
+    // 2) 按 (日期升序, 值升序) 排:同日内更优成绩先处理,使阈值正确计入同日更优者
+    ents.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.v - b.v));
+
+    // 3) 维护「至今最优 K 个值」升序数组(末位 = 第 K 优 = 阈值),逐条判定是否曾进 TOP K
+    const bestK: number[] = [];
+    const insertSorted = (v: number) => {
+      let lo = 0, hi = bestK.length;
+      while (lo < hi) { const mid = (lo + hi) >>> 1; if (bestK[mid] < v) lo = mid + 1; else hi = mid; }
+      bestK.splice(lo, 0, v);
+    };
+    let seen = 0;
+    const events: PbEvent[] = [];
+    const pids = new Set<string>();
+    const cids = new Set<string>();
+    for (const e of ents) {
+      const qualifies = seen < TOP_K_EVER || e.v <= bestK[bestK.length - 1];
+      if (qualifies) { events.push(e); pids.add(e.p); cids.add(e.c); }
+      if (bestK.length < TOP_K_EVER) insertSorted(e.v);
+      else if (e.v < bestK[bestK.length - 1]) { bestK.pop(); insertSorted(e.v); }
+      seen++;
+    }
+    // events 已按日期升序(前端二分查找需要)
+    return { events, pids, cids };
   }
 
   private async fetchPersons(ids: Set<string>): Promise<Record<string, PersonInfo>> {

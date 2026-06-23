@@ -35,6 +35,7 @@ interface EventInfo {
   hasAverage: boolean;
   hasAo5?: boolean;
   metrics?: Metric[];
+  hasResultsAverage?: boolean;  // 「成绩」流是否有 average_r(333mbf 用非官方 Mo3)
 }
 interface Top10Index {
   events: string[];
@@ -43,7 +44,8 @@ interface Top10Index {
   persons: Record<string, PersonInfo>;
   comps: Record<string, CompInfo>;
 }
-type EventData = Partial<Record<Metric, PbEvent[]>>;
+// 「按人」指标(single/average/bao5...)与「按成绩」流(single_r/average_r);故 string key
+type EventData = Record<string, PbEvent[]>;
 
 const FALLBACK_START = '2003-08-22';
 const SPEEDS = [5, 30, 100, 365] as const;
@@ -71,21 +73,26 @@ function findEventIdxByDate(events: PbEvent[], dateIso: string): number {
   return ans;
 }
 
-interface PersonState { v: number; c: string; d: string }
+interface PersonState { pid: string; v: number; c: string; d: string }
 interface ReplayResult {
+  // key:选手模式 = pid(去重);成绩模式 = `i${序号}`(唯一,允许同一选手出现多条)
   state: Map<string, PersonState>;
   top1Pid: string | null;
   top1V: number;
   top1SinceDate: string | null;
 }
-function replayState(events: PbEvent[], idxInclusive: number): ReplayResult {
+type RaceMode = 'persons' | 'results';
+function replayState(events: PbEvent[], idxInclusive: number, mode: RaceMode): ReplayResult {
   const state = new Map<string, PersonState>();
   let top1Pid: string | null = null;
   let top1V = Infinity;
   let top1SinceDate: string | null = null;
   for (let i = 0; i <= idxInclusive; i++) {
     const e = events[i];
-    state.set(e.p, { v: e.v, c: e.c, d: e.d });
+    // 选手模式按 pid 去重(同人后出现的更优 PB 覆盖);成绩模式每条独立(按序号),同人可多条
+    const key = mode === 'results' ? `i${i}` : e.p;
+    state.set(key, { pid: e.p, v: e.v, c: e.c, d: e.d });
+    // top1 永远按「人」追踪(横幅 = WR 保持者);同人破自己纪录不重置保持天数
     if (e.v < top1V) {
       if (e.p !== top1Pid) top1SinceDate = e.d;
       top1Pid = e.p;
@@ -100,13 +107,16 @@ export default function Top10HistoryPage({
   controlledMetric,
   controlledMetricLabelZh,
   controlledMetricLabelEn,
+  controlledMode,
 }: {
   controlledEventId?: string;
   controlledMetric?: Metric;
   controlledMetricLabelZh?: string;
   controlledMetricLabelEn?: string;
+  controlledMode?: RaceMode;   // 'persons'(默认,按人)| 'results'(按成绩,同人可多条)
 } = {}) {
   const embedded = !!controlledEventId;
+  const mode: RaceMode = controlledMode ?? 'persons';
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
 
@@ -177,15 +187,19 @@ export default function Top10HistoryPage({
       });
   }, [eventId, index, eventDataCache]);
 
-  // metric 是否可用(MBLD 只 single)
+  // metric 是否可用(MBLD 只 single);成绩模式看 average_r 是否存在
   const eventInfo = index?.eventInfo[eventId];
-  const hasAverage = eventInfo?.hasAverage ?? true;
+  const hasAverage = mode === 'results'
+    ? (eventInfo?.hasResultsAverage ?? eventInfo?.hasAverage ?? true)
+    : (eventInfo?.hasAverage ?? true);
   useEffect(() => {
     if (!hasAverage && metric === 'average') setMetric('single');
   }, [hasAverage, metric]);
 
   const eventData = eventDataCache.get(eventId);
-  const events: PbEvent[] = eventData?.[metric] ?? [];
+  // 成绩模式读 `${metric}_r` 流(不按人去重);选手模式读 `${metric}`
+  const dataKey = mode === 'results' ? `${metric}_r` : metric;
+  const events: PbEvent[] = eventData?.[dataKey] ?? [];
 
   const endMs = useMemo(() => {
     if (events.length === 0) return isoToMs(FALLBACK_START) + DAY_MS;
@@ -202,7 +216,7 @@ export default function Top10HistoryPage({
   const prevEventMetricRef = useRef('');
   useEffect(() => {
     if (events.length === 0) return;
-    const key = `${eventId}:${metric}`;
+    const key = `${eventId}:${metric}:${mode}`;
     if (key !== prevEventMetricRef.current) {
       prevEventMetricRef.current = key;
       setDateMs(endMs);
@@ -210,17 +224,20 @@ export default function Top10HistoryPage({
     } else {
       setDateMs(prev => Math.max(startMs, Math.min(endMs, prev)));
     }
-  }, [startMs, endMs, eventId, metric, events.length]);
+  }, [startMs, endMs, eventId, metric, mode, events.length]);
 
   // NOTE: PB 模式专用 — 只保留"top-10 顺序变化"的日期
   //   纯个人成绩提升(同人同名次)/ 不进 top-10 的 PB 都跳过
   //   增量维护 top-N:O(events × N) 总开销,3000 PB × 10 ≈ 30K op
   const rankChangeDates = useMemo(() => {
     const datesSet = new Set<string>();
-    const top: Array<{ pid: string; v: number }> = [];
+    const top: Array<{ key: string; v: number }> = [];
     let prevOrder: string[] = [];
-    for (const e of events) {
-      const oldIdx = top.findIndex(x => x.pid === e.p);
+    for (let i = 0; i < events.length; i++) {
+      const e = events[i];
+      // 选手模式 key=pid(同人更优 PB 替换旧条);成绩模式 key 唯一(每条独立,不替换)
+      const ekey = mode === 'results' ? `i${i}` : e.p;
+      const oldIdx = top.findIndex(x => x.key === ekey);
       if (oldIdx >= 0) {
         top.splice(oldIdx, 1);
       } else if (top.length >= SHOW_N && e.v >= top[top.length - 1].v) {
@@ -232,9 +249,9 @@ export default function Top10HistoryPage({
         const mid = (lo + hi) >>> 1;
         if (top[mid].v < e.v) lo = mid + 1; else hi = mid;
       }
-      top.splice(lo, 0, { pid: e.p, v: e.v });
+      top.splice(lo, 0, { key: ekey, v: e.v });
       if (top.length > SHOW_N) top.length = SHOW_N;
-      const newOrder = top.map(x => x.pid);
+      const newOrder = top.map(x => x.key);
       const changed = newOrder.length !== prevOrder.length
         || newOrder.some((p, i) => p !== prevOrder[i]);
       if (changed) {
@@ -243,7 +260,7 @@ export default function Top10HistoryPage({
       }
     }
     return [...datesSet].sort();
-  }, [events]);
+  }, [events, mode]);
 
   const playingRef = useRef(playing);
   const speedRef = useRef(speed);
@@ -324,13 +341,13 @@ export default function Top10HistoryPage({
     if (events.length === 0) return null;
     const idx = findEventIdxByDate(events, dateIso);
     if (idx < 0) return null;
-    return replayState(events, idx);
-  }, [events, dateIso]);
+    return replayState(events, idx, mode);
+  }, [events, dateIso, mode]);
 
   const top10 = useMemo(() => {
     if (!replay) return [];
     return [...replay.state.entries()]
-      .map(([pid, st]) => ({ pid, ...st }))
+      .map(([key, st]) => ({ key, ...st }))
       .sort((a, b) => a.v - b.v || a.d.localeCompare(b.d))
       .slice(0, SHOW_N);
   }, [replay]);
@@ -384,7 +401,7 @@ export default function Top10HistoryPage({
     await new Promise<void>(r => requestAnimationFrame(() => r()));
     try {
       await exportTop10Video({
-        events, eventId, metric,
+        events, eventId, metric, raceMode: mode,
         persons: index.persons, comps: index.comps,
         startMs, endMs, mode: playMode, speed,
         rankChangeDates, isZh,
@@ -405,7 +422,7 @@ export default function Top10HistoryPage({
       setExporting(false);
       setExportProg(null);
     }
-  }, [exporting, events, index, eventId, metric, metricLabel, startMs, endMs, playMode, speed, rankChangeDates, isZh]);
+  }, [exporting, events, index, eventId, metric, mode, metricLabel, startMs, endMs, playMode, speed, rankChangeDates, isZh]);
 
   const cancelExport = useCallback(() => {
     exportAbortRef.current.aborted = true;
@@ -533,7 +550,8 @@ export default function Top10HistoryPage({
             const compName = localizeCompName(row.c, compNameRaw, isZh);
             const compIso2 = compFlagIso2(row.c);
             return {
-              key: row.pid,
+              key: row.key,
+              colorKey: row.pid,
               href: wcaPersonUrl(row.pid),
               name: person ? displayCuberName(person.name, isZh) : row.pid,
               iso2: person?.iso2 ?? null,
@@ -629,9 +647,19 @@ export default function Top10HistoryPage({
 
       {events.length > 0 && (
         <div className="t10h-note">
-          {(isZh
-                              ? `数据自 ${events[0]?.d ?? '—'}。共 ${events.length} 次 PB 事件,涉及 ${replay ? new Set(events.map(e => e.p)).size : 0} 名曾进过历史 TOP ${index.topK} 的选手。`
-                              : `Data since ${events[0]?.d ?? '—'}. ${events.length} PB events from ${new Set(events.map(e => e.p)).size} cubers who were ever in the historical top ${index.topK}.`)}
+          {(() => {
+            const since = events[0]?.d ?? '—';
+            const cubers = new Set(events.map(e => e.p)).size;
+            return mode === 'results'
+              ? tr({
+                  zh: `数据自 ${since}。共 ${events.length} 条曾进过历史 TOP ${index.topK} 的成绩,来自 ${cubers} 名选手(同一选手可多次上榜)。`,
+                  en: `Data since ${since}. ${events.length} results that were ever in the historical top ${index.topK}, from ${cubers} cubers (one cuber may hold multiple slots).`,
+                })
+              : tr({
+                  zh: `数据自 ${since}。共 ${events.length} 次 PB 事件,涉及 ${cubers} 名曾进过历史 TOP ${index.topK} 的选手。`,
+                  en: `Data since ${since}. ${events.length} PB events from ${cubers} cubers who were ever in the historical top ${index.topK}.`,
+                });
+          })()}
           <div className="t10h-legend">
             {([
               ['Asia', tr({ zh: '亚洲', en: 'Asia'
