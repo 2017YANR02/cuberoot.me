@@ -36,12 +36,20 @@
 
 // ── piece-tracking move model (geometry-free; the specialization supplies the tables) ──────────────
 export interface RestrictedMoveModel {
-  /** Number of tracked pieces (corners first, then edges). */
+  /** Number of tracked pieces (corners first, then edges, then centers). */
   NP: number;
   /** Number of tracked corners (slots 0..NC-1). */
   NC: number;
   /** Number of tracked edges (slots NC..NC+NE-1). */
   NE: number;
+  /**
+   * Number of tracked CENTERS (slots NC+NE..NP-1). Defaults to 0 (e.g. sia222 has no movable centers, so its
+   * model omits this and stays unchanged). For sia123 the inner `r` slice 4-cycles four face-centers, whose
+   * POSITION couples to corner/edge parity and must be tracked; their ORIENTATION is invisible (single solid
+   * sticker) so the goal does NOT constrain it. We track centers as POSITION-ONLY pieces: cornerRank/edgeRank
+   * ignore them, centerRank ranks their permutation, and isSolvedVec treats center orientation as don't-care.
+   */
+  NZ?: number;
   /** Move token names in engine order (e.g. ["R","R2","R'","U",…]). */
   tokens: ReadonlyArray<string>;
   /** Per-token "axis"/face letter — consecutive same-axis moves are pruned in IDA*. */
@@ -65,7 +73,7 @@ export interface RestrictedMoveModel {
  * into number[NP][NP][24] arrays (unreachable cells stay -1) for O(1) indexing.
  */
 export function buildMoveModel(raw: {
-  NP: number; NC: number; NE: number;
+  NP: number; NC: number; NE: number; NZ?: number;
   tokens: ReadonlyArray<string>; axes: ReadonlyArray<string>;
   acts: ReadonlyArray<ReadonlyArray<number>>;
   cornerTwP: Record<string, Record<string, ReadonlyArray<number>>>;
@@ -84,7 +92,7 @@ export function buildMoveModel(raw: {
     return out;
   };
   return {
-    NP: raw.NP, NC: raw.NC, NE: raw.NE,
+    NP: raw.NP, NC: raw.NC, NE: raw.NE, NZ: raw.NZ ?? 0,
     tokens: raw.tokens, axes: raw.axes,
     acts: raw.acts.map((a) => Int32Array.from(a)),
     cornerTwP: densify(raw.cornerTwP), edgeFlP: densify(raw.edgeFlP),
@@ -112,28 +120,38 @@ export function applyTokenVec(m: RestrictedMoveModel, t: number, v: Int32Array):
   return out;
 }
 
-/** True iff the vector is solved. */
+/**
+ * True iff the vector is solved. Corners + edges must be home with orientation 0; CENTER pieces (slots
+ * NC+NE..NP-1) only need to be in their home POSITION — their orientation is invisible (single solid sticker),
+ * matching the puzzle / cstimer notion of solved. (For models with NZ=0 this reduces to the all-codes-home test.)
+ */
 export function isSolvedVec(m: RestrictedMoveModel, v: Int32Array): boolean {
-  for (let j = 0; j < m.NP; j++) if (v[j] !== j * 24) return false;
+  const NZ = m.NZ ?? 0;
+  const nonCenter = m.NP - NZ;
+  for (let j = 0; j < nonCenter; j++) if (v[j] !== j * 24) return false;
+  for (let j = nonCenter; j < m.NP; j++) if (((v[j] / 24) | 0) !== j) return false; // center: position only
   return true;
 }
 
 // ── PDB rank functions (injective coordinate → dense byte index) ────────────────────────────────
 const FACT = (() => { const f = [1]; for (let i = 1; i <= 12; i++) f[i] = f[i - 1] * i; return f; })();
+// reusable scratch for the corner/center perm-rank hot paths (single-threaded; not reentrant within a call).
+const _seen = new Uint8Array(16);
+const _cp = new Int32Array(16);
 
-/** Corner PDB rank: perm rank of the 7-corner permutation × 3^NC twist. Dense size = NC! · 3^NC. */
+/** Corner PDB rank: perm rank of the NC-corner permutation × 3^NC twist. Dense size = NC! · 3^NC. */
 export function cornerRank(m: RestrictedMoveModel, v: Int32Array): number {
   const NC = m.NC;
   // permutation rank (which piece sits at each corner slot)
   let r = 0;
-  const seen = new Array<boolean>(NC).fill(false);
-  const cp = new Array<number>(NC);
+  const seen = _seen; for (let i = 0; i < NC; i++) seen[i] = 0;
+  const cp = _cp;
   for (let j = 0; j < NC; j++) cp[j] = (v[j] / 24) | 0;
   for (let i = 0; i < NC; i++) {
     let s = 0;
     for (let k = 0; k < cp[i]; k++) if (!seen[k]) s++;
     r = r * (NC - i) + s;
-    seen[cp[i]] = true;
+    seen[cp[i]] = 1;
   }
   let tw = 0;
   for (let j = 0; j < NC; j++) tw = tw * 3 + m.cornerTwP[cp[j]][j][v[j] % 24];
@@ -151,42 +169,81 @@ export interface EdgePdbDef {
   pieces: ReadonlyArray<number>;
   /** Dense byte-array size (positions·flips). */
   size: number;
+  /**
+   * Precomputed hot-path lookup (built once in makeEdgePdbDef): pieceToIdx[pieceId] = the 0..k-1 rank slot for a
+   * tracked piece (the pieces sorted ascending), or -1 if untracked. Avoids the per-call sort + Map allocation
+   * that dominated edgeRank in IDA* (called twice per node). Indexed by raw piece id.
+   */
+  pieceToIdx: Int32Array;
 }
 export function makeEdgePdbDef(m: RestrictedMoveModel, pieces: ReadonlyArray<number>): EdgePdbDef {
   const k = pieces.length;
   let pos = 1;
   for (let i = 0; i < k; i++) pos *= (m.NE - i);
-  return { pieces, size: pos * (1 << k) };
+  const sorted = [...pieces].sort((a, b) => a - b);
+  const pieceToIdx = new Int32Array(m.NP).fill(-1);
+  sorted.forEach((p, i) => { pieceToIdx[p] = i; });
+  return { pieces, size: pos * (1 << k), pieceToIdx };
 }
-/** Rank a state into an edge PDB's dense index. */
+// reusable scratch buffers for the rank hot paths (single-threaded; never reentrant within one rank call).
+const _sl = new Int32Array(16);
+const _fl = new Int32Array(16);
+const _used = new Uint8Array(16);
+/** Rank a state into an edge PDB's dense index. Allocation-free hot path (precomputed pieceToIdx + scratch). */
 export function edgeRank(m: RestrictedMoveModel, def: EdgePdbDef, v: Int32Array): number {
   const k = def.pieces.length;
   const NC = m.NC, NE = m.NE;
-  const order = [...def.pieces].sort((a, b) => a - b);
-  const pos = new Map<number, number>(); order.forEach((p, i) => pos.set(p, i));
-  const sl = new Array<number>(k), fl = new Array<number>(k);
+  const pieceToIdx = def.pieceToIdx;
+  const sl = _sl, fl = _fl;
   for (let j = 0; j < NE; j++) {
     const code = v[NC + j];
     const piece = (code / 24) | 0;
-    if (pos.has(piece)) { const i = pos.get(piece)!; sl[i] = j; fl[i] = m.edgeFlP[piece][NC + j][code % 24]; }
+    const i = pieceToIdx[piece];
+    if (i >= 0) { sl[i] = j; fl[i] = m.edgeFlP[piece][NC + j][code % 24]; }
   }
   let r = 0;
-  const used = new Array<boolean>(NE).fill(false);
+  const used = _used; for (let i = 0; i < NE; i++) used[i] = 0;
   for (let i = 0; i < k; i++) {
     let sm = 0;
     for (let s = 0; s < sl[i]; s++) if (!used[s]) sm++;
     r = r * (NE - i) + sm;
-    used[sl[i]] = true;
+    used[sl[i]] = 1;
   }
   let f = 0;
   for (let i = 0; i < k; i++) f = f * 2 + fl[i];
   return r * (1 << k) + f;
 }
 
+/**
+ * CENTER PDB rank: the permutation rank of the NZ center pieces among the NZ center slots (POSITION-only — center
+ * orientation is invisible/don't-care). Dense size = NZ!. Tiny (NZ ≤ ~5). For sia123 the reachable center-position
+ * orbit is just 4 (the four r-axis face-centers in a single 4-cycle; the 5th center is positionally fixed), so the
+ * dense table is mostly 255 with 4 reached cells — its exact distance folds the center 4-cycle into the heuristic
+ * and the goal. Models with NZ=0 never call this.
+ */
+export function centerRank(m: RestrictedMoveModel, v: Int32Array): number {
+  const NZ = m.NZ ?? 0;
+  const base = m.NP - NZ; // first center slot
+  let r = 0;
+  const seen = _seen; for (let i = 0; i < NZ; i++) seen[i] = 0;
+  const cp = _cp;
+  for (let j = 0; j < NZ; j++) cp[j] = ((v[base + j] / 24) | 0) - base; // local center piece id 0..NZ-1
+  for (let i = 0; i < NZ; i++) {
+    let s = 0;
+    for (let k = 0; k < cp[i]; k++) if (!seen[k]) s++;
+    r = r * (NZ - i) + s;
+    seen[cp[i]] = 1;
+  }
+  return r;
+}
+export function centerRankSpace(m: RestrictedMoveModel): number { return FACT[m.NZ ?? 0]; }
+
 // ── pattern databases (resident dense byte arrays) ──────────────────────────────────────────────
 export interface RestrictedPdbs {
   corner: Uint8Array;       // dense, indexed by cornerRank
   edges: { def: EdgePdbDef; dist: Uint8Array }[]; // each dense, indexed by edgeRank(def, …)
+  /** Optional center-POSITION PDB (dense NZ! distances). Present only for models with movable centers (NZ>0). */
+  centers?: Uint8Array;
 }
 
 /** OFFLINE: BFS-from-solved over the corner projection → exact distances. Used by the build script + tests. */
@@ -232,18 +289,45 @@ export function buildEdgePdb(m: RestrictedMoveModel, def: EdgePdbDef): Uint8Arra
   return dist;
 }
 
-/** OFFLINE: build all PDBs for a model given the edge-piece groupings. */
+/** OFFLINE: BFS-from-solved over the center-POSITION projection → exact distances. NZ! dense (tiny). */
+export function buildCenterPdb(m: RestrictedMoveModel): Uint8Array {
+  const dist = new Uint8Array(centerRankSpace(m)).fill(255);
+  const start = solvedVec(m);
+  dist[centerRank(m, start)] = 0;
+  let frontier: Int32Array[] = [start];
+  let d = 0;
+  while (frontier.length) {
+    const next: Int32Array[] = [];
+    for (const v of frontier) {
+      for (let t = 0; t < m.tokens.length; t++) {
+        const o = applyTokenVec(m, t, v);
+        const r = centerRank(m, o);
+        if (dist[r] === 255) { dist[r] = d + 1; next.push(o); }
+      }
+    }
+    frontier = next; d++;
+  }
+  return dist;
+}
+
+/** OFFLINE: build all PDBs for a model given the edge-piece groupings. Builds a center PDB iff NZ>0. */
 export function buildPdbs(m: RestrictedMoveModel, edgeGroups: ReadonlyArray<ReadonlyArray<number>>): RestrictedPdbs {
   const corner = buildCornerPdb(m);
   const edges = edgeGroups.map((g) => { const def = makeEdgePdbDef(m, g); return { def, dist: buildEdgePdb(m, def) }; });
-  return { corner, edges };
+  const out: RestrictedPdbs = { corner, edges };
+  if ((m.NZ ?? 0) > 0) out.centers = buildCenterPdb(m);
+  return out;
 }
 
-/** Admissible heuristic = max over the corner PDB and every edge PDB. */
+/** Admissible heuristic = max over the corner PDB, every edge PDB, and (if present) the center-position PDB. */
 export function heuristic(m: RestrictedMoveModel, pdbs: RestrictedPdbs, v: Int32Array): number {
   let h = pdbs.corner[cornerRank(m, v)];
   for (const e of pdbs.edges) {
     const d = e.dist[edgeRank(m, e.def, v)];
+    if (d > h) h = d;
+  }
+  if (pdbs.centers) {
+    const d = pdbs.centers[centerRank(m, v)];
     if (d > h) h = d;
   }
   return h;
@@ -260,44 +344,155 @@ export interface SolveResult {
 }
 
 /**
- * IDA* with the PDB heuristic. Returns the provably shortest solution, or null if `nodeCap` is exceeded before
- * a solution is found (only possible for pathologically deep states well beyond real scrambles — the caller
- * decides what to do). `maxDepth` bounds the iterative deepening.
+ * IDA* with the PDB heuristic.
+ *
+ * With the default `hWeight = 1` it is a plain admissible IDA* and returns the PROVABLY SHORTEST solution (or
+ * null if `nodeCap` is exceeded). For puzzles whose optimal depth is too large for plain IDA* to reach in a
+ * reasonable time (e.g. the sia123 half — restricted ⟨U,R,r⟩ 3×3, real scrambles sit at depth ~17-20 where
+ * plain IDA* runs for tens of seconds), pass `hWeight > 1`: the heuristic is inflated in the bound test
+ * (weighted-A* / WIDA*), which finds a solution far faster while guaranteeing it is at most a factor `hWeight`
+ * longer than optimal (in practice within a few moves). The returned solution is always VALID (it really solves
+ * the state) — only its optimality is relaxed. `maxDepth` bounds the iterative deepening.
  */
 export function idaSolve(
   m: RestrictedMoveModel, pdbs: RestrictedPdbs, start: Int32Array,
-  opts: { maxDepth?: number; nodeCap?: number } = {},
+  opts: { maxDepth?: number; nodeCap?: number; hWeight?: number } = {},
 ): SolveResult | null {
   const maxDepth = opts.maxDepth ?? 40;
   const nodeCap = opts.nodeCap ?? Number.POSITIVE_INFINITY;
+  const hWeight = opts.hWeight ?? 1;
+  const NP = m.NP;
   const NT = m.tokens.length;
-  const axes = m.axes;
+  // numeric axis ids (cheaper than string compare in the hot DFS loop)
+  const axisId = new Int32Array(NT);
+  { const seenA = new Map<string, number>(); for (let t = 0; t < NT; t++) { const a = m.axes[t]; let id = seenA.get(a); if (id === undefined) { id = seenA.size; seenA.set(a, id); } axisId[t] = id; } }
+  // preallocated per-depth state buffers (avoid a fresh Int32Array per node) + the move action tables.
+  const acts = m.acts;
+  const stack: Int32Array[] = [];
+  for (let d = 0; d <= maxDepth + 1; d++) stack.push(new Int32Array(NP));
+  // applyTokenInto: write (act applied to src) into dst, no allocation.
+  const applyInto = (t: number, src: Int32Array, dst: Int32Array): void => {
+    const act = acts[t];
+    for (let j = 0; j < NP; j++) {
+      const code = src[j];
+      const o = code % 24;
+      const piece = (code / 24) | 0;
+      const mm = act[j * 24 + o];
+      dst[(mm / 24) | 0] = piece * 24 + (mm % 24);
+    }
+  };
   let nodes = 0;
   let capped = false;
-
   const path: number[] = [];
-  function dfs(v: Int32Array, g: number, bound: number, lastAxis: string): boolean {
+
+  function dfs(depth: number, g: number, bound: number, lastAxis: number): boolean {
+    const v = stack[depth];
     const h = heuristic(m, pdbs, v);
-    if (g + h > bound) return false;
+    const f = hWeight === 1 ? g + h : g + Math.ceil(hWeight * h);
+    if (f > bound) return false;
     if (h === 0 && isSolvedVec(m, v)) return true;
     nodes++;
     if (nodes > nodeCap) { capped = true; return false; }
+    const dst = stack[depth + 1];
     for (let t = 0; t < NT; t++) {
-      const ax = axes[t];
-      if (ax === lastAxis) continue; // same-face consecutive moves are redundant
-      const nv = applyTokenVec(m, t, v);
+      const ax = axisId[t];
+      if (ax === lastAxis) continue; // same-axis consecutive moves are redundant
+      applyInto(t, v, dst);
       path.push(t);
-      if (dfs(nv, g + 1, bound, ax)) return true;
+      if (dfs(depth + 1, g + 1, bound, ax)) return true;
       path.pop();
       if (capped) return false;
     }
     return false;
   }
 
-  for (let bound = heuristic(m, pdbs, start); bound <= maxDepth; bound++) {
+  const h0 = heuristic(m, pdbs, start);
+  for (let bound = hWeight === 1 ? h0 : Math.ceil(hWeight * h0); bound <= maxDepth; bound++) {
     nodes = 0; capped = false; path.length = 0;
-    if (dfs(start, 0, bound, '')) return { path: [...path], length: path.length, nodes };
+    stack[0].set(start);
+    if (dfs(0, 0, bound, -1)) return { path: [...path], length: path.length, nodes };
     if (capped) return null;
+  }
+  return null;
+}
+
+/**
+ * GREEDY best-first search with the PDB heuristic — a FAST, near-optimal solver for states too deep for plain
+ * IDA* (e.g. the sia123 half: real scrambles sit at depth ~17-20 where admissible IDA* runs for tens of seconds).
+ * GBFS expands the open node with the smallest h first, keeps a visited set, and reconstructs the path on hitting
+ * a solved state. It finds A valid solution in milliseconds; its length is NOT guaranteed optimal but is close in
+ * practice (the heuristic is a tight projection distance). The solution always really solves the state (verified
+ * by reconstruction). `nodeCap` bounds the open/closed growth (huge here, never hit on real scrambles).
+ *
+ * Determinism: the open set is a binary min-heap keyed by (h, insertion-order) so the result is reproducible for
+ * a given start (no Date.now / Math.random). Ties break by insertion order (FIFO within an h-level).
+ */
+export function gbfsSolve(
+  m: RestrictedMoveModel, pdbs: RestrictedPdbs, start: Int32Array,
+  opts: { nodeCap?: number } = {},
+): SolveResult | null {
+  const nodeCap = opts.nodeCap ?? 600_000; // bounds memory; never hit on real sia123 scrambles
+  const NP = m.NP, NT = m.tokens.length;
+  const axisId = new Int32Array(NT);
+  { const seenA = new Map<string, number>(); for (let t = 0; t < NT; t++) { const a = m.axes[t]; let id = seenA.get(a); if (id === undefined) { id = seenA.size; seenA.set(a, id); } axisId[t] = id; } }
+  const acts = m.acts;
+  const key = (v: Int32Array): string => { let s = ''; for (let j = 0; j < NP; j++) s += String.fromCharCode(v[j] + 1); return s; };
+  const applyInto = (t: number, src: Int32Array, dst: Int32Array): void => {
+    const act = acts[t];
+    for (let j = 0; j < NP; j++) { const code = src[j]; const o = code % 24; const piece = (code / 24) | 0; const mm = act[j * 24 + o]; dst[(mm / 24) | 0] = piece * 24 + (mm % 24); }
+  };
+  // node store: parallel arrays. parent[i] = node index, move[i] = token used to reach i, lastAxis[i], depth[i].
+  const states: Int32Array[] = [start.slice()];
+  const parent: number[] = [-1];
+  const moveOf: number[] = [-1];
+  const lastAxisOf: number[] = [-1];
+  const depthOf: number[] = [0];
+  const visited = new Set<string>([key(start)]);
+  // binary min-heap keyed by (h ASC, depth DESC) — the depth-DESC tiebreak makes the search DIVE toward the goal
+  // on heuristic plateaus instead of expanding the whole plateau breadth-first (which OOMs). FIFO within a tie
+  // by insertion seq keeps it deterministic.
+  const heapH: number[] = []; const heapKey: number[] = []; const heapSeq: number[] = []; const heapNode: number[] = [];
+  let seq = 0;
+  // sort key: lower is better. primary h (×1e6), minus depth (deeper = smaller key), so combine: h*1e6 - depth.
+  const lt = (a: number, b: number): boolean => (heapKey[a] < heapKey[b]) || (heapKey[a] === heapKey[b] && heapSeq[a] < heapSeq[b]);
+  const swap = (a: number, b: number): void => { const th = heapH[a]; heapH[a] = heapH[b]; heapH[b] = th; const tk = heapKey[a]; heapKey[a] = heapKey[b]; heapKey[b] = tk; const ts = heapSeq[a]; heapSeq[a] = heapSeq[b]; heapSeq[b] = ts; const tn = heapNode[a]; heapNode[a] = heapNode[b]; heapNode[b] = tn; };
+  const hPush = (h: number, depth: number, node: number): void => {
+    let i = heapH.length; heapH.push(h); heapKey.push(h * 1e6 - depth); heapSeq.push(seq); heapNode.push(node); seq++;
+    while (i > 0) { const p = (i - 1) >> 1; if (lt(p, i) || (heapKey[p] === heapKey[i] && heapSeq[p] === heapSeq[i])) break; swap(i, p); i = p; }
+  };
+  const hPop = (): number => {
+    const top = heapNode[0]; const n = heapH.length - 1;
+    heapH[0] = heapH[n]; heapKey[0] = heapKey[n]; heapSeq[0] = heapSeq[n]; heapNode[0] = heapNode[n]; heapH.pop(); heapKey.pop(); heapSeq.pop(); heapNode.pop();
+    let i = 0; const len = heapH.length;
+    for (;;) { const l = 2 * i + 1, r = l + 1; let s = i; if (l < len && lt(l, s)) s = l; if (r < len && lt(r, s)) s = r; if (s === i) break; swap(i, s); i = s; }
+    return top;
+  };
+  hPush(heuristic(m, pdbs, start), 0, 0);
+  const child = new Int32Array(NP);
+  let expanded = 0;
+  while (heapH.length) {
+    const node = hPop();
+    const v = states[node];
+    if (heuristic(m, pdbs, v) === 0 && isSolvedVec(m, v)) {
+      const path: number[] = []; let cur = node;
+      while (parent[cur] >= 0) { path.push(moveOf[cur]); cur = parent[cur]; }
+      path.reverse();
+      return { path, length: path.length, nodes: expanded };
+    }
+    expanded++;
+    if (expanded > nodeCap) return null;
+    const la = lastAxisOf[node];
+    const dg = depthOf[node] + 1;
+    for (let t = 0; t < NT; t++) {
+      if (axisId[t] === la) continue;
+      applyInto(t, v, child);
+      const k = key(child);
+      if (visited.has(k)) continue;
+      visited.add(k);
+      const idx = states.length;
+      states.push(child.slice()); parent.push(node); moveOf.push(t); lastAxisOf.push(axisId[t]); depthOf.push(dg);
+      hPush(heuristic(m, pdbs, child), dg, idx);
+    }
   }
   return null;
 }
