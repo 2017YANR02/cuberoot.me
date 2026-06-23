@@ -10,7 +10,8 @@ import { colorForRow } from '@/lib/bar-race-colors';
 const BAR_FRAC = 60;
 
 export interface BarRaceRow {
-  key: string;            // 稳定 id(选手 wcaId),决定重排动画身份 + 配色
+  key: string;            // 稳定 id,决定重排动画身份(成绩模式=成绩序号,允许同人多条)
+  colorKey?: string;      // 配色种子(默认=key);成绩模式传 pid 让同一选手多条同色
   href: string;
   name: string;
   iso2: string | null;
@@ -58,7 +59,7 @@ export default function BarRaceChart({
           <div key={row.key} className="t10h-row" style={{ transform: `translateY(${i * rowH}px)` }}>
             <div className="t10h-rank">{row.rankLabel}</div>
             <a className="t10h-bar" href={row.href} target="_blank" rel="noopener"
-              style={{ width: left(row.value), background: colorForRow(row.key, row.country) }} title={row.name}>
+              style={{ width: left(row.value), background: colorForRow(row.colorKey ?? row.key, row.country) }} title={row.name}>
               {row.iso2 && <Flag iso2={row.iso2} className="t10h-bar-flag" />}
               <span className="t10h-bar-name">{row.name}</span>
             </a>

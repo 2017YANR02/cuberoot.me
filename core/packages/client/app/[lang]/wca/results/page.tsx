@@ -700,11 +700,13 @@ function AllResultsPageInner() {
           </div>
 
           {/* 纪录走势 bar chart race:常显在排名表上方(方案 B)。复用 wr_metric 的 Top10HistoryPage,
-              受控到当前单项 + 单次 / 平均;筛选(年份 / 国家 / 选手)只作用于下方表,走势恒为全时段 WR。 */}
+              受控到当前单项 + 单次 / 平均;筛选(年份 / 国家 / 选手)只作用于下方表,走势恒为全时段。
+              图义跟随「显示」开关:选手 = 历史前 10 选手(按人去重);成绩 = 历史最快前 10 条成绩(同人可多条)。 */}
           <div className="wse-barrace">
             <Top10HistoryPage
               controlledEventId={singleEvent}
               controlledMetric={effType}
+              controlledMode={show === 'persons' ? 'persons' : 'results'}
               controlledMetricLabelZh={effMetricMeta.zh}
               controlledMetricLabelEn={effMetricMeta.en}
             />
