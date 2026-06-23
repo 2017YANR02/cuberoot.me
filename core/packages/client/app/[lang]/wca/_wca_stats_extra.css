@@ -35,6 +35,15 @@ html:not([data-palette-scheme=dark]) .wse-page {
   align-items: center;
   margin-bottom: 12px;
 }
+/* 「类型」下拉单独成行时(指标视图 / 空态:无同行 filter 可并)外层,轻量不套 .wse-filters 卡片 */
+.wse-type-standalone { margin: 0 0 16px; }
+/* 不被全宽容器拉满:filter 收到内容宽,select 也别 stretch 成整页宽,给个合理定宽 */
+.wse-type-standalone .wse-filter { width: fit-content; min-width: 0; }
+.wse-type-standalone .wse-filter select { width: auto; min-width: 160px; }
+/* 嵌入「指标」视图时,wr_metric 的 note 段贴着类型下拉下方,留点呼吸 */
+.wca-stats-embedded-note { margin: 4px 0 16px; }
+/* 单项视图:排名表上方常显的「纪录走势」bar race 容器,留点上下间距 */
+.wse-barrace { margin: 0 0 16px; }
 .wse-back {
   color: var(--muted-foreground);
   text-decoration: none;

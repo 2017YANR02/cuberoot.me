@@ -24,6 +24,11 @@ const ALL_MERGED = new Set([
   'top10_history',
 ]);
 
+// NOTE: RETIRED——统计的 JSON 仍生成(被别处消费),但其单独页面/路由已退役、索引页不再列卡。
+//   wr_metric → 整体迁进 /wca/results 的「指标」视图(?view=metric);wr_metric.json 仍被
+//   /wca/results 嵌入 + fetch_upcoming_comps / gen_wr_ids 消费,故留在 REGISTRY,只是不列卡。
+const RETIRED = new Set(['wr_metric']);
+
 // NOTE: iconName 字段是 lucide-react 组件名，前端映射为 <Icon>。不再用 emoji。
 const STAT_CATEGORIES = [
   {
@@ -32,7 +37,9 @@ const STAT_CATEGORIES = [
     preserveOrder: true,
     // NOTE: top10_history 不单独注册——其 bar chart race 已嵌入 wr_metric 第 0 个 panel
     // NOTE: wr_current(当前世界纪录)已退役 2026-06-22 —— 移植进 /wca/records 的「当前」视图(支持全部区域)
-    ids: ['wr_metric', 'wr_aoxr', 'wr_dominance', 'wr_non_pr', 'wr_newcomer',
+    // NOTE: wr_metric(指标)已退役 2026-06-22 —— 移植进 /wca/results 的「指标」视图(?view=metric);
+    //   wr_metric.json 仍照常生成(被 /wca/results 嵌入 + fetch_upcoming_comps / gen_wr_ids 消费),只是不再单独成页/列卡。
+    ids: ['wr_aoxr', 'wr_dominance', 'wr_non_pr', 'wr_newcomer',
           'average_of', 'consecutive_sub_5_average'],
   },
   {
@@ -164,7 +171,7 @@ interface RawMetricPanel { id?: string; labelEn?: string; labelZh?: string }
 
 function main() {
   // NOTE: 可用统计——REGISTRY 中排除 ALL_MERGED
-  const availableIds = Object.keys(REGISTRY).filter(id => !ALL_MERGED.has(id));
+  const availableIds = Object.keys(REGISTRY).filter(id => !ALL_MERGED.has(id) && !RETIRED.has(id));
 
   // NOTE: 从已生成的 JSON 文件读取标题 + metricPanels(供 LandingSearch 搜指标名)
   const titles = new Map<string, { title: string; titleZh: string; metrics?: MetricEntry[] }>();
