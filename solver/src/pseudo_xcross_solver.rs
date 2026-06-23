@@ -21,7 +21,10 @@
 use std::sync::Arc;
 use std::sync::OnceLock;
 
-use crate::cube_common::{alg_rotation, conj_moves_flat, state_space, valid_moves, Move};
+use crate::cube_common::{
+    alg_rotation, conj_moves_flat, state_space, valid_moves, valid_moves_masked, Move, MoveMask,
+    ValidMovesTable,
+};
 use crate::executor::bump_node_count;
 use crate::move_tables::{self, MoveTable};
 use crate::prune_tables::{self, PackedPruneTable};
@@ -1073,6 +1076,376 @@ impl PseudoSmallSolver {
                 let combo: Vec<usize> = pairs.iter().map(|p| p.slot).collect();
                 let mut task_out: Vec<Vec<u8>> = Vec::new();
                 self.enum_pairs(pairs, d, 18, &mut path, &mut task_out, cap - out.len());
+                for sol in task_out {
+                    out.push((rot.to_string(), combo.clone(), sol));
+                }
+            }
+        }
+        (best_len, out)
+    }
+}
+
+// ============================================================================
+// 受限步法 Pseudo cascade(Phase 3:move mask)
+// ----------------------------------------------------------------------------
+// 与上面无限制小表 cascade 同结构、同剪枝(pt_pscross + 现场 BFS cross+corner 表),仅把
+// `valid_moves()` 换成 `valid_moves_masked(mask)` 并加 `max_depth` 上限。正确性:cc 表与
+// pt_pscross 是无限制距离的可采纳下界,对任意 mask 仍可采纳 ⇒ IDA* 首达即真·受限最优
+// (≤ max_depth),超界返回 99 哨兵。pseudo 系无 frame:每条解 frame = 传入 rot。
+impl PseudoSmallSolver {
+    fn cross_search_masked(&self, i1: usize, i2: usize, depth: u32, prev: u8, vm: &ValidMovesTable) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt = self.mt_edge2.as_u32();
+        for k in 0..count {
+            let m = row[k] as usize;
+            let n1 = mt[i1 + m] as usize;
+            let n2 = mt[i2 + m] as usize;
+            let idx = (n1 as u64) * (state_space::EDGE2 as u64) + n2 as u64;
+            if self.pt_pscross.get(idx) as u32 >= depth {
+                continue;
+            }
+            if depth == 1 {
+                return true;
+            }
+            if self.cross_search_masked(n1 * 18, n2 * 18, depth - 1, m as u8, vm) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn solve_cross_masked(&self, alg: &[u8], vm: &ValidMovesTable, max_depth: u32) -> u32 {
+        let mt = self.mt_edge2.as_u32();
+        let mut i1 = state_space::EDGE2_A_SOLVED;
+        let mut i2 = state_space::EDGE2_B_SOLVED;
+        for &m in alg {
+            i1 = mt[i1 * 18 + m as usize] as usize;
+            i2 = mt[i2 * 18 + m as usize] as usize;
+        }
+        let idx = (i1 as u64) * (state_space::EDGE2 as u64) + i2 as u64;
+        let d_min = self.pt_pscross.get(idx) as u32;
+        if d_min == 0 {
+            return 0;
+        }
+        for d in d_min..=max_depth {
+            if self.cross_search_masked(i1 * 18, i2 * 18, d, 18, vm) {
+                return d;
+            }
+        }
+        99
+    }
+
+    fn search_pairs_masked(&self, pairs: &[PsPair], depth: u32, prev: u8, vm: &ValidMovesTable) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let n = pairs.len();
+        let ref_slot = pairs[0].slot;
+
+        let mut local: u64 = 0;
+        let mut next = [PsPair { im: 0, ic: 0, ie: 0, slot: 0, diff: 0 }; 3];
+        for k in 0..count {
+            let m = row[k] as usize;
+            local += 1;
+            let mut pruned = false;
+            let mut leaf_ok = depth == 1;
+            for (j, p) in pairs.iter().enumerate() {
+                let m_p = self.trans[ref_slot][p.slot][m] as usize;
+                let n_im = mt_e4[p.im as usize + m_p] as u32;
+                let n_ic = mt_c[p.ic as usize * 18 + m_p] as u32;
+                if self.cc.h(n_im, n_ic) >= depth {
+                    pruned = true;
+                    break;
+                }
+                let n_ie = mt_e[p.ie as usize * 18 + m_p] as u32;
+                if leaf_ok && n_ie != 2 * p.diff {
+                    leaf_ok = false;
+                }
+                next[j] = PsPair { im: n_im, ic: n_ic, ie: n_ie, slot: p.slot, diff: p.diff };
+            }
+            if pruned {
+                continue;
+            }
+            if depth == 1 {
+                if leaf_ok {
+                    bump_node_count(local);
+                    return true;
+                }
+            } else if self.search_pairs_masked(&next[..n], depth - 1, m as u8, vm) {
+                bump_node_count(local);
+                return true;
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    fn solve_pairs_task_masked(&self, pairs: &[PsPair], h: u32, lower: u32, max_d: u32, vm: &ValidMovesTable) -> u32 {
+        let root_solved = pairs
+            .iter()
+            .all(|p| self.cc.h(p.im, p.ic) == 0 && p.ie == 2 * p.diff);
+        if root_solved {
+            return 0;
+        }
+        let start = std::cmp::max(h.max(lower), 1);
+        for d in start..=max_d {
+            if self.search_pairs_masked(pairs, d, 18, vm) {
+                return d;
+            }
+        }
+        99
+    }
+
+    /// 受限版单阶段(stage 0=cross / 1=xcross / 2=xxcross / 3=xxxcross)6 视角;无解视角为 None。
+    pub fn pseudo_get_stage_small_masked(
+        &self,
+        alg: &[Move],
+        stage: usize,
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> Vec<Option<u32>> {
+        const ROTS: [&str; 6] = ["", "z2", "z'", "z", "x'", "x"];
+        let vm = valid_moves_masked(mask);
+        let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        ROTS.iter()
+            .map(|r| {
+                let mut a = base.clone();
+                alg_rotation(&mut a, r);
+                let v = if stage == 0 {
+                    self.solve_cross_masked(&a, &vm, 8u32.min(max_depth))
+                } else {
+                    let st = self.initial_states(&a);
+                    let tasks = self.build_tasks(&st, stage);
+                    let mut sorted = tasks;
+                    sorted.sort_by_key(|t| t.1);
+                    let max_d = 16u32.min(max_depth);
+                    let mut best = 99u32;
+                    for (pairs, h) in &sorted {
+                        if *h > best {
+                            break;
+                        }
+                        let res = self.solve_pairs_task_masked(pairs, *h, 0, max_d, &vm);
+                        best = best.min(res);
+                    }
+                    best
+                };
+                if v >= 99 { None } else { Some(v) }
+            })
+            .collect()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn enum_cross_masked(
+        &self,
+        i1: usize,
+        i2: usize,
+        depth: u32,
+        prev: u8,
+        path: &mut Vec<u8>,
+        out: &mut Vec<Vec<u8>>,
+        cap: usize,
+        vm: &ValidMovesTable,
+    ) {
+        if out.len() >= cap {
+            return;
+        }
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt = self.mt_edge2.as_u32();
+        for k in 0..count {
+            if out.len() >= cap {
+                return;
+            }
+            let m = row[k] as usize;
+            let n1 = mt[i1 + m] as usize;
+            let n2 = mt[i2 + m] as usize;
+            let idx = (n1 as u64) * (state_space::EDGE2 as u64) + n2 as u64;
+            let h = self.pt_pscross.get(idx) as u32;
+            if h >= depth {
+                continue;
+            }
+            path.push(m as u8);
+            if depth == 1 {
+                out.push(path.clone());
+            } else if h > 0 {
+                self.enum_cross_masked(n1 * 18, n2 * 18, depth - 1, m as u8, path, out, cap, vm);
+            }
+            path.pop();
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn enum_pairs_masked(
+        &self,
+        pairs: &[PsPair],
+        depth: u32,
+        prev: u8,
+        path: &mut Vec<u8>,
+        out: &mut Vec<Vec<u8>>,
+        cap: usize,
+        vm: &ValidMovesTable,
+    ) {
+        if out.len() >= cap {
+            return;
+        }
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let cj = conj_moves_flat();
+        let n = pairs.len();
+        let ref_slot = pairs[0].slot;
+        let inv_ref = (4 - ref_slot) & 3;
+
+        let mut next = [PsPair { im: 0, ic: 0, ie: 0, slot: 0, diff: 0 }; 3];
+        for k in 0..count {
+            if out.len() >= cap {
+                return;
+            }
+            let m = row[k] as usize;
+            let mut pruned = false;
+            let mut all_cc0 = true;
+            let mut eo_ok = true;
+            for (j, p) in pairs.iter().enumerate() {
+                let m_p = self.trans[ref_slot][p.slot][m] as usize;
+                let n_im = mt_e4[p.im as usize + m_p] as u32;
+                let n_ic = mt_c[p.ic as usize * 18 + m_p] as u32;
+                let h = self.cc.h(n_im, n_ic);
+                if h >= depth {
+                    pruned = true;
+                    break;
+                }
+                if h != 0 {
+                    all_cc0 = false;
+                }
+                let n_ie = mt_e[p.ie as usize * 18 + m_p] as u32;
+                if n_ie != 2 * p.diff {
+                    eo_ok = false;
+                }
+                next[j] = PsPair { im: n_im, ic: n_ic, ie: n_ie, slot: p.slot, diff: p.diff };
+            }
+            if pruned {
+                continue;
+            }
+            let solved = all_cc0 && eo_ok;
+            let real_m = cj[m][inv_ref];
+            path.push(real_m);
+            if depth == 1 {
+                if solved {
+                    out.push(path.clone());
+                }
+            } else if !solved {
+                self.enum_pairs_masked(&next[..n], depth - 1, m as u8, path, out, cap, vm);
+            }
+            path.pop();
+        }
+    }
+
+    /// 受限版 enumerate_small:同形 (best_len, Vec<(frame, combo, sol)>);限制下无解返回 (99, []).
+    #[allow(clippy::too_many_arguments)]
+    pub fn enumerate_small_masked(
+        &self,
+        alg: &[Move],
+        rot: &str,
+        stage: usize,
+        extra: u32,
+        cap: usize,
+        force: &[usize],
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
+        let vm = valid_moves_masked(mask);
+        let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        alg_rotation(&mut a, rot);
+
+        // ---- stage 0:pseudo_cross ----
+        if stage == 0 {
+            let cap_d = 18u32.min(max_depth);
+            let mt = self.mt_edge2.as_u32();
+            let mut i1 = state_space::EDGE2_A_SOLVED;
+            let mut i2 = state_space::EDGE2_B_SOLVED;
+            for &m in &a {
+                i1 = mt[i1 * 18 + m as usize] as usize;
+                i2 = mt[i2 * 18 + m as usize] as usize;
+            }
+            let best_len = self.solve_cross_masked(&a, &vm, cap_d);
+            if best_len == 0 {
+                return (0, Vec::new());
+            }
+            if best_len >= 99 {
+                return (99, Vec::new());
+            }
+            let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+            let mut path = Vec::new();
+            for d in best_len..=(best_len + extra).min(cap_d) {
+                let mut cross_out: Vec<Vec<u8>> = Vec::new();
+                self.enum_cross_masked(i1 * 18, i2 * 18, d, 18, &mut path, &mut cross_out, cap - out.len(), &vm);
+                for sol in cross_out {
+                    out.push((rot.to_string(), vec![], sol));
+                }
+                if out.len() >= cap {
+                    break;
+                }
+            }
+            return (best_len, out);
+        }
+
+        // ---- stage 1/2/3:多槽 pair cascade ----
+        let st = self.initial_states(&a);
+        let mut tasks = self.build_tasks(&st, stage);
+        tasks.sort_by_key(|t| t.1);
+
+        if !force.is_empty() {
+            let want: std::collections::BTreeSet<usize> = force.iter().copied().collect();
+            tasks.retain(|(pairs, _)| {
+                pairs.iter().map(|p| p.slot).collect::<std::collections::BTreeSet<usize>>() == want
+            });
+        }
+        let cap_d = 18u32.min(max_depth);
+
+        let mut best_len = 99u32;
+        let mut evaluated: Vec<(Vec<PsPair>, u32)> = Vec::new();
+        for (pairs, h) in &tasks {
+            if *h > best_len {
+                break;
+            }
+            let res = self.solve_pairs_task_masked(pairs, *h, 0, cap_d, &vm);
+            if res < best_len {
+                best_len = res;
+            }
+            evaluated.push((pairs.clone(), res));
+        }
+
+        let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+        if best_len == 0 {
+            return (0, Vec::new());
+        }
+        if best_len >= 99 {
+            return (99, Vec::new());
+        }
+
+        let tied: Vec<Vec<PsPair>> = evaluated
+            .into_iter()
+            .filter(|(_, l)| *l == best_len)
+            .map(|(pairs, _)| pairs)
+            .collect();
+        let mut path = Vec::new();
+        'outer: for d in best_len..=(best_len + extra).min(cap_d) {
+            for pairs in &tied {
+                if out.len() >= cap {
+                    break 'outer;
+                }
+                let combo: Vec<usize> = pairs.iter().map(|p| p.slot).collect();
+                let mut task_out: Vec<Vec<u8>> = Vec::new();
+                self.enum_pairs_masked(pairs, d, 18, &mut path, &mut task_out, cap - out.len(), &vm);
                 for sol in task_out {
                     out.push((rot.to_string(), combo.clone(), sol));
                 }

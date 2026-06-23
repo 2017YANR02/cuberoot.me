@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260623e';
+const V = 'v=20260623g';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -122,28 +122,32 @@ export interface RustCrossPool {
   ): Promise<MovesTimed>;
   /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)整变体 24 值:[cross,xc,xxc,xxxc]×6 朝向(已折叠 z0/z2/z3/z1/x3/x1)。 */
   solveF2leo(scramble: string, pseudo: boolean): Promise<number[]>;
-  /** 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc)。cross 极快 → 先单算 cross 秒出,深阶段后台补。 */
-  solveF2leoStage(scramble: string, pseudo: boolean, stage: number): Promise<number[]>;
-  /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)单格(× stage × face)多解步骤 + 计算耗时。前缀可能含尾随 y(破 y 对称)。 */
+  /** 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc)。cross 极快 → 先单算 cross 秒出,深阶段后台补。
+   *  mask:18 个 move 的 bitmask(省略=不限步法);受限下无解视角返 0xFFFFFFFF 哨兵。 */
+  solveF2leoStage(scramble: string, pseudo: boolean, stage: number, mask?: number): Promise<number[]>;
+  /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)单格(× stage × face)多解步骤 + 计算耗时。前缀可能含尾随 y(破 y 对称)。
+   *  opts.mask 同 solveF2leoStage(省略=不限);受限下无解 len=0xFFFFFFFF。 */
   solveF2leoMoves(
     scramble: string,
     pseudo: boolean,
     face: number,
     stage: number,
-    opts?: { extra?: number; cap?: number; combo?: string },
+    opts?: { extra?: number; cap?: number; combo?: string; mask?: number },
   ): Promise<MovesTimed>;
   /** 其余变体(0=pair/1=eo/2=pseudo/3=pseudo_pair)整变体 24/30 值 × 6 朝向(物理面序 z0/z2/z3/z1/x3/x1)。 */
   solveVariant(scramble: string, variant: number): Promise<number[]>;
-  /** 变体单阶段 6 值(stage 0=cross.. ),cross 先出深阶段后台补。 */
-  solveVariantStage(scramble: string, variant: number, stage: number): Promise<number[]>;
+  /** 变体单阶段 6 值(stage 0=cross.. ),cross 先出深阶段后台补。
+   *  mask:18 个 move 的 bitmask(省略=不限步法);受限下无解视角返 0xFFFFFFFF 哨兵。 */
+  solveVariantStage(scramble: string, variant: number, stage: number, mask?: number): Promise<number[]>;
   /** 变体单格(variant × stage × face)多解步骤 + 计算耗时。eo 的步骤前缀可能含尾随 y(破 y 对称)。
-   *  combo = 固定已解 xcross 槽集(or18「槽位」);base = 自由对槽(or18「基态」,仅 pair/pseudo_pair,-1=auto)。 */
+   *  combo = 固定已解 xcross 槽集(or18「槽位」);base = 自由对槽(or18「基态」,仅 pair/pseudo_pair,-1=auto)。
+   *  opts.mask 同 solveVariantStage(省略=不限);受限下无解 len=0xFFFFFFFF。 */
   solveVariantMoves(
     scramble: string,
     variant: number,
     face: number,
     stage: number,
-    opts?: { extra?: number; cap?: number; combo?: string; base?: number },
+    opts?: { extra?: number; cap?: number; combo?: string; base?: number; mask?: number },
   ): Promise<MovesTimed>;
   /** 2x2x2 块 6 视角(每视角 = 该底色 4 个贴底块最小),物理面序 z0/z2/z3/z1/x3/x1。 */
   solveBlock222Stage(scramble: string): Promise<number[]>;
@@ -377,25 +381,33 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
     solveF2leo(scramble, pseudo) {
       return submit({ type: 'f2leo', id: nextId++, scramble, pseudo }) as Promise<number[]>;
     },
-    solveF2leoStage(scramble, pseudo, stage) {
-      return submit({ type: 'f2leo_stage', id: nextId++, scramble, pseudo, stage }) as Promise<number[]>;
+    solveF2leoStage(scramble, pseudo, stage, mask) {
+      return submit({
+        type: 'f2leo_stage', id: nextId++, scramble, pseudo, stage,
+        ...(mask != null ? { mask } : {}),
+      }) as Promise<number[]>;
     },
     solveF2leoMoves(scramble, pseudo, face, stage, opts = {}) {
       return submit({
         type: 'f2leo_moves', id: nextId++, scramble, pseudo, face, stage,
         extra: opts.extra ?? 0, cap: opts.cap ?? 20, combo: opts.combo ?? '',
+        ...(opts.mask != null ? { mask: opts.mask } : {}),
       }) as Promise<MovesTimed>;
     },
     solveVariant(scramble, variant) {
       return submit({ type: 'variant', id: nextId++, scramble, variant }) as Promise<number[]>;
     },
-    solveVariantStage(scramble, variant, stage) {
-      return submit({ type: 'variant_stage', id: nextId++, scramble, variant, stage }) as Promise<number[]>;
+    solveVariantStage(scramble, variant, stage, mask) {
+      return submit({
+        type: 'variant_stage', id: nextId++, scramble, variant, stage,
+        ...(mask != null ? { mask } : {}),
+      }) as Promise<number[]>;
     },
     solveVariantMoves(scramble, variant, face, stage, opts = {}) {
       return submit({
         type: 'variant_moves', id: nextId++, scramble, variant, face, stage,
         extra: opts.extra ?? 0, cap: opts.cap ?? 20, combo: opts.combo ?? '', base: opts.base ?? -1,
+        ...(opts.mask != null ? { mask: opts.mask } : {}),
       }) as Promise<MovesTimed>;
     },
     solveBlock222Stage(scramble) {

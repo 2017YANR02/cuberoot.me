@@ -18,7 +18,7 @@ use std::sync::Arc;
 
 use crate::cube_common::{
     alg_rotation, array_to_index, conj_moves_flat, get_diagonal_view, get_neighbor_view,
-    state_space, valid_moves, Move,
+    state_space, valid_moves, valid_moves_masked, Move, MoveMask, ValidMovesTable,
 };
 use crate::executor::bump_node_count;
 use crate::move_tables::{self, MoveTable};
@@ -1286,6 +1286,561 @@ impl PairSolver {
                     &mut path,
                     &mut task_out,
                     cap - out.len(),
+                );
+                for sol in task_out {
+                    out.push((rot.to_string(), combo.clone(), sol));
+                }
+            }
+        }
+        (best_len, out)
+    }
+}
+
+// ============================================================================
+// 受限步法 Pair cascade(Phase 3:move mask,小表路径)
+// ----------------------------------------------------------------------------
+// 与上面无限制小表 cascade 同结构、同剪枝(pt_cross_ins_C4 / pt_pair_C4E0 / pt_cross_C4E0,
+// huge 全 None),仅把 `valid_moves()` 换成 `valid_moves_masked(mask)` 并加 `max_depth`
+// 上限。stage 0/1 复用 solve_1/2_group 的搜索结构(本就无 huge),其 search_1/search_2 在
+// wasm 不查 huge 表 ⇒ 这里只重写它们的受限版。正确性:所有剪枝表是无限制距离的可采纳下界,
+// 对任意 mask 仍可采纳 ⇒ IDA* 首达即真·受限最优(≤ max_depth),超界返回 99 哨兵。无 frame。
+impl PairSolver {
+    fn search_1_masked(&self, i1: usize, i2: usize, i3: usize, depth: u32, prev: u8, s1: usize, vm: &ValidMovesTable) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let cj = conj_moves_flat();
+
+        let mut local: u64 = 0;
+        for k in 0..count {
+            let m = row[k] as usize;
+            local += 1;
+            let mc = cj[m][s1] as usize;
+            let n1 = mt_e4[i1 + mc] as usize;
+            let n2 = mt_c[i2 + mc] as usize;
+            if self.pt_cross_ins_c4.get((n1 + n2) as u64) as u32 >= depth {
+                continue;
+            }
+            let n3 = mt_e[i3 + mc] as usize;
+            if self.pt_pair_c4e0.get((n3 * 24 + n2) as u64) as u32 >= depth {
+                continue;
+            }
+            if depth == 1 {
+                if self.pt_cross_ins_c4.get((n1 + n2) as u64) == 0
+                    && self.pt_pair_c4e0.get((n3 * 24 + n2) as u64) == 0
+                {
+                    bump_node_count(local);
+                    return true;
+                }
+            } else if self.search_1_masked(n1, n2 * 18, n3 * 18, depth - 1, m as u8, s1, vm) {
+                bump_node_count(local);
+                return true;
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn search_2_masked(
+        &self,
+        im_p: usize, ic_p: usize, ie_p: usize,
+        im_x: usize, ic_x: usize, ie_x: usize,
+        depth: u32, prev: u8, s_p: usize, s_x: usize,
+        vm: &ValidMovesTable,
+    ) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let cj = conj_moves_flat();
+
+        let mut local: u64 = 0;
+        for k in 0..count {
+            let m = row[k] as usize;
+            local += 1;
+            let mc_x = cj[m][s_x] as usize;
+            let n_im_x = mt_e4[im_x + mc_x] as usize;
+            let n_ic_x = mt_c[ic_x + mc_x] as usize;
+            let n_ie_x = mt_e[ie_x + mc_x] as usize;
+            let idx_xc: u64 = (n_im_x as u64 + n_ic_x as u64) * 24 + n_ie_x as u64;
+            if self.pt_cross_c4e0.get(idx_xc) as u32 >= depth {
+                continue;
+            }
+            let mc_p = cj[m][s_p] as usize;
+            let n_im_p = mt_e4[im_p + mc_p] as usize;
+            let n_ic_p = mt_c[ic_p + mc_p] as usize;
+            if self.pt_cross_ins_c4.get((n_im_p + n_ic_p) as u64) as u32 >= depth {
+                continue;
+            }
+            let n_ie_p = mt_e[ie_p + mc_p] as usize;
+            if self.pt_pair_c4e0.get((n_ie_p * 24 + n_ic_p) as u64) as u32 >= depth {
+                continue;
+            }
+            if depth == 1 {
+                if self.pt_pair_c4e0.get((n_ie_p * 24 + n_ic_p) as u64) == 0
+                    && self.pt_cross_c4e0.get(idx_xc) == 0
+                {
+                    bump_node_count(local);
+                    return true;
+                }
+            } else if self.search_2_masked(
+                n_im_p, n_ic_p * 18, n_ie_p * 18,
+                n_im_x, n_ic_x * 18, n_ie_x * 18,
+                depth - 1, m as u8, s_p, s_x, vm,
+            ) {
+                bump_node_count(local);
+                return true;
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    /// 受限版 solve_1_group(stage 0:cross+pair 1 槽)。max_depth 内无解返回 99。
+    fn solve_1_group_masked(&self, alg: &[u8], vm: &ValidMovesTable, max_depth: u32) -> u32 {
+        let mut tasks: Vec<(usize, u32)> = (0..4)
+            .map(|s1| {
+                let st = self.get_virt(alg, s1);
+                let h = self.pt_cross_ins_c4.get((st.im + st.ic) as u64) as u32;
+                (s1, h)
+            })
+            .collect();
+        tasks.sort_by_key(|t| t.1);
+        let mut min_v = 99u32;
+        for &(s1, h) in &tasks {
+            if h > min_v {
+                continue;
+            }
+            let st = self.get_virt(alg, s1);
+            if h == 0 && self.pt_pair_c4e0.get((st.ie * 24 + st.ic) as u64) == 0 {
+                return 0;
+            }
+            for d in h.max(1)..=max_depth {
+                if self.search_1_masked(st.im as usize, (st.ic as usize) * 18, (st.ie as usize) * 18, d, 18, s1, vm) {
+                    if d < min_v {
+                        min_v = d;
+                    }
+                    break;
+                }
+            }
+        }
+        min_v
+    }
+
+    /// 受限版 solve_2_group(stage 1:xcross+pair)。max_depth 内无解返回 99。
+    fn solve_2_group_masked(&self, alg: &[u8], lower_bound: u32, vm: &ValidMovesTable, max_depth: u32) -> u32 {
+        let mut tasks: Vec<(usize, usize, u32)> = Vec::with_capacity(12);
+        for fix in 0..4 {
+            for tgt in 0..4 {
+                if fix == tgt {
+                    continue;
+                }
+                let sp = self.get_virt(alg, tgt);
+                let sx = self.get_virt(alg, fix);
+                let h1 = self.pt_cross_ins_c4.get((sp.im + sp.ic) as u64) as u32;
+                let h2 = self
+                    .pt_cross_c4e0
+                    .get((sx.im as u64 + sx.ic as u64) * 24 + sx.ie as u64) as u32;
+                tasks.push((tgt, fix, std::cmp::max(h1, h2)));
+            }
+        }
+        tasks.sort_by_key(|t| t.2);
+        let mut min_v = 99u32;
+        for &(s1, s2, h) in &tasks {
+            if h > min_v {
+                continue;
+            }
+            let sp = self.get_virt(alg, s1);
+            let sx = self.get_virt(alg, s2);
+            if h == 0 && self.pt_pair_c4e0.get((sp.ie * 24 + sp.ic) as u64) == 0 {
+                return 0;
+            }
+            let start_d = std::cmp::max(h.max(1), lower_bound);
+            for d in start_d..=max_depth {
+                if self.search_2_masked(
+                    sp.im as usize, (sp.ic as usize) * 18, (sp.ie as usize) * 18,
+                    sx.im as usize, (sx.ic as usize) * 18, (sx.ie as usize) * 18,
+                    d, 18, s1, s2, vm,
+                ) {
+                    if d < min_v {
+                        min_v = d;
+                    }
+                    break;
+                }
+            }
+        }
+        min_v
+    }
+
+    /// search_small 的受限版(stage 2/3:pair 槽 + N xcross 槽)。
+    #[allow(clippy::too_many_arguments)]
+    fn search_small_masked(
+        &self,
+        p_im: usize, p_ic: usize, p_ie: usize, p_slot: usize,
+        xc: &[(usize, usize, usize, usize)],
+        depth: u32, prev: u8, vm: &ValidMovesTable,
+    ) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let cj = conj_moves_flat();
+        let n = xc.len();
+
+        let mut local: u64 = 0;
+        let mut nxc = [(0usize, 0usize, 0usize, 0usize); 3];
+        for k in 0..count {
+            let m = row[k] as usize;
+            local += 1;
+            let mc_p = cj[m][p_slot] as usize;
+            let nim_p = mt_e4[p_im + mc_p] as usize;
+            let nic_p = mt_c[p_ic + mc_p] as usize;
+            if self.pt_cross_ins_c4.get((nim_p + nic_p) as u64) as u32 >= depth {
+                continue;
+            }
+            let nie_p = mt_e[p_ie + mc_p] as usize;
+            if self.pt_pair_c4e0.get((nie_p * 24 + nic_p) as u64) as u32 >= depth {
+                continue;
+            }
+            let mut pruned = false;
+            for j in 0..n {
+                let (im, ic, ie, slot) = xc[j];
+                let mc = cj[m][slot] as usize;
+                let n1 = mt_e4[im + mc] as usize;
+                let n2 = mt_c[ic + mc] as usize;
+                let n3 = mt_e[ie + mc] as usize;
+                if self.pt_cross_c4e0.get(((n1 + n2) * 24 + n3) as u64) as u32 >= depth {
+                    pruned = true;
+                    break;
+                }
+                nxc[j] = (n1, n2 * 18, n3 * 18, slot);
+            }
+            if pruned {
+                continue;
+            }
+            if depth == 1 {
+                bump_node_count(local);
+                return true;
+            }
+            if self.search_small_masked(nim_p, nic_p * 18, nie_p * 18, p_slot, &nxc[..n], depth - 1, m as u8, vm) {
+                bump_node_count(local);
+                return true;
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn solve_small_task_masked(
+        &self,
+        st: &[VirtState; 4],
+        tgt: usize,
+        xc_slots: &[usize],
+        h: u32,
+        lower: u32,
+        max_d: u32,
+        vm: &ValidMovesTable,
+    ) -> u32 {
+        let sp = &st[tgt];
+        if h == 0 && self.pt_pair_c4e0.get((sp.ie * 24 + sp.ic) as u64) == 0 {
+            return 0;
+        }
+        let mut xc = [(0usize, 0usize, 0usize, 0usize); 3];
+        for (j, &s) in xc_slots.iter().enumerate() {
+            xc[j] = (st[s].im as usize, (st[s].ic as usize) * 18, (st[s].ie as usize) * 18, s);
+        }
+        let n = xc_slots.len();
+        let start = std::cmp::max(h.max(lower), 1);
+        for d in start..=max_d {
+            if self.search_small_masked(sp.im as usize, (sp.ic as usize) * 18, (sp.ie as usize) * 18, tgt, &xc[..n], d, 18, vm) {
+                return d;
+            }
+        }
+        99
+    }
+
+    fn solve_3_small_masked(&self, alg: &[u8], lower: u32, vm: &ValidMovesTable, max_d: u32) -> u32 {
+        const PAIRS: [[usize; 2]; 6] = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
+        let st: [VirtState; 4] = std::array::from_fn(|s| self.get_virt(alg, s));
+        let mut tasks: Vec<(usize, usize, usize, u32)> = Vec::with_capacity(12);
+        for p in &PAIRS {
+            for tgt in 0..4 {
+                if tgt == p[0] || tgt == p[1] {
+                    continue;
+                }
+                let h = self.h_ins(&st[tgt]).max(self.h_c4e0(&st[p[0]])).max(self.h_c4e0(&st[p[1]]));
+                tasks.push((tgt, p[0], p[1], h));
+            }
+        }
+        tasks.sort_by_key(|t| t.3);
+        let mut min_v = 99u32;
+        for &(tgt, x1, x2, h) in &tasks {
+            if h > min_v {
+                continue;
+            }
+            let res = self.solve_small_task_masked(&st, tgt, &[x1, x2], h, lower, max_d, vm);
+            if res < min_v {
+                min_v = res;
+            }
+        }
+        min_v
+    }
+
+    fn solve_4_small_masked(&self, alg: &[u8], lower: u32, vm: &ValidMovesTable, max_d: u32) -> u32 {
+        let st: [VirtState; 4] = std::array::from_fn(|s| self.get_virt(alg, s));
+        let mut tasks: Vec<(usize, [usize; 3], u32)> = Vec::with_capacity(4);
+        for tgt in 0..4 {
+            let mut fix = [0usize; 3];
+            let mut fi = 0;
+            for k in 0..4 {
+                if k != tgt {
+                    fix[fi] = k;
+                    fi += 1;
+                }
+            }
+            let h = self
+                .h_ins(&st[tgt])
+                .max(self.h_c4e0(&st[fix[0]]))
+                .max(self.h_c4e0(&st[fix[1]]))
+                .max(self.h_c4e0(&st[fix[2]]));
+            tasks.push((tgt, fix, h));
+        }
+        tasks.sort_by_key(|t| t.2);
+        let mut min_v = 99u32;
+        for &(tgt, fix, h) in &tasks {
+            if h > min_v {
+                continue;
+            }
+            let res = self.solve_small_task_masked(&st, tgt, &fix, h, lower, max_d, vm);
+            if res < min_v {
+                min_v = res;
+            }
+        }
+        min_v
+    }
+
+    /// 受限版单阶段 6 视角(stage 0..3);限制下无解的视角为 None。
+    pub fn get_stage_small_masked(
+        &self,
+        alg: &[Move],
+        rots: &[&str],
+        stage: usize,
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> Vec<Option<u32>> {
+        let vm = valid_moves_masked(mask);
+        let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        rots.iter()
+            .map(|r| {
+                let mut a = base.clone();
+                alg_rotation(&mut a, r);
+                let v = match stage {
+                    0 => self.solve_1_group_masked(&a, &vm, 18u32.min(max_depth)),
+                    1 => self.solve_2_group_masked(&a, 0, &vm, 18u32.min(max_depth)),
+                    2 => self.solve_3_small_masked(&a, 0, &vm, 18u32.min(max_depth)),
+                    _ => self.solve_4_small_masked(&a, 0, &vm, 18u32.min(max_depth)),
+                };
+                if v >= 99 { None } else { Some(v) }
+            })
+            .collect()
+    }
+
+    /// enum_small 的受限版。
+    #[allow(clippy::too_many_arguments)]
+    fn enum_small_masked(
+        &self,
+        p_im: usize, p_ic: usize, p_ie: usize, p_slot: usize,
+        xc: &[(usize, usize, usize, usize)],
+        depth: u32, prev: u8,
+        path: &mut Vec<u8>, out: &mut Vec<Vec<u8>>, cap: usize,
+        vm: &ValidMovesTable,
+    ) {
+        if out.len() >= cap {
+            return;
+        }
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let cj = conj_moves_flat();
+        let n = xc.len();
+        let mut nxc = [(0usize, 0usize, 0usize, 0usize); 3];
+        for k in 0..count {
+            if out.len() >= cap {
+                return;
+            }
+            let m = row[k] as usize;
+            let mc_p = cj[m][p_slot] as usize;
+            let nim_p = mt_e4[p_im + mc_p] as usize;
+            let nic_p = mt_c[p_ic + mc_p] as usize;
+            let h_ins = self.pt_cross_ins_c4.get((nim_p + nic_p) as u64) as u32;
+            if h_ins >= depth {
+                continue;
+            }
+            let nie_p = mt_e[p_ie + mc_p] as usize;
+            let h_pair = self.pt_pair_c4e0.get((nie_p * 24 + nic_p) as u64) as u32;
+            if h_pair >= depth {
+                continue;
+            }
+            let mut pruned = false;
+            let mut max_h = h_ins.max(h_pair);
+            for j in 0..n {
+                let (im, ic, ie, slot) = xc[j];
+                let mc = cj[m][slot] as usize;
+                let n1 = mt_e4[im + mc] as usize;
+                let n2 = mt_c[ic + mc] as usize;
+                let n3 = mt_e[ie + mc] as usize;
+                let hs = self.pt_cross_c4e0.get(((n1 + n2) * 24 + n3) as u64) as u32;
+                if hs >= depth {
+                    pruned = true;
+                    break;
+                }
+                if hs > max_h {
+                    max_h = hs;
+                }
+                nxc[j] = (n1, n2 * 18, n3 * 18, slot);
+            }
+            if pruned {
+                continue;
+            }
+            path.push(m as u8);
+            if depth == 1 {
+                out.push(path.clone());
+            } else if max_h > 0 {
+                self.enum_small_masked(nim_p, nic_p * 18, nie_p * 18, p_slot, &nxc[..n], depth - 1, m as u8, path, out, cap, vm);
+            }
+            path.pop();
+        }
+    }
+
+    /// 受限版 enumerate_small:同形 (best_len, Vec<(frame, combo, sol)>);限制下无解返回 (99, []).
+    #[allow(clippy::too_many_arguments)]
+    pub fn enumerate_small_masked(
+        &self,
+        alg: &[Move],
+        rot: &str,
+        stage: usize,
+        extra: u32,
+        cap: usize,
+        force: &[usize],
+        base_slot: i32,
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
+        const PAIRS: [[usize; 2]; 6] = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
+        let vm = valid_moves_masked(mask);
+        let cap_d = 18u32.min(max_depth);
+        let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        alg_rotation(&mut a, rot);
+        let st: [VirtState; 4] = std::array::from_fn(|s| self.get_virt(&a, s));
+
+        let mut tasks: Vec<(usize, Vec<usize>, u32)> = Vec::new();
+        match stage {
+            0 => {
+                for tgt in 0..4 {
+                    tasks.push((tgt, vec![], self.h_ins(&st[tgt])));
+                }
+            }
+            1 => {
+                for tgt in 0..4 {
+                    for fix in 0..4 {
+                        if fix == tgt {
+                            continue;
+                        }
+                        tasks.push((tgt, vec![fix], self.h_ins(&st[tgt]).max(self.h_c4e0(&st[fix]))));
+                    }
+                }
+            }
+            2 => {
+                for p in &PAIRS {
+                    for tgt in 0..4 {
+                        if tgt == p[0] || tgt == p[1] {
+                            continue;
+                        }
+                        let h = self.h_ins(&st[tgt]).max(self.h_c4e0(&st[p[0]])).max(self.h_c4e0(&st[p[1]]));
+                        tasks.push((tgt, vec![p[0], p[1]], h));
+                    }
+                }
+            }
+            _ => {
+                for tgt in 0..4 {
+                    let fix: Vec<usize> = (0..4).filter(|&k| k != tgt).collect();
+                    let h = fix.iter().fold(self.h_ins(&st[tgt]), |acc, &s| acc.max(self.h_c4e0(&st[s])));
+                    tasks.push((tgt, fix, h));
+                }
+            }
+        }
+        tasks.sort_by_key(|t| t.2);
+
+        if base_slot >= 0 {
+            let b = base_slot as usize;
+            tasks.retain(|(tgt, _xc, _h)| *tgt == b);
+        }
+        if !force.is_empty() {
+            let fset: std::collections::BTreeSet<usize> = force.iter().copied().collect();
+            tasks.retain(|(_tgt, xc_slots, _h)| {
+                xc_slots.iter().copied().collect::<std::collections::BTreeSet<usize>>() == fset
+            });
+        }
+        if (base_slot >= 0 || !force.is_empty()) && tasks.is_empty() {
+            return (99, Vec::new());
+        }
+
+        let mut best_len = 99u32;
+        let mut evaluated: Vec<(usize, Vec<usize>, u32)> = Vec::new();
+        for (tgt, xc_slots, h) in &tasks {
+            if *h > best_len {
+                break;
+            }
+            let res = self.solve_small_task_masked(&st, *tgt, xc_slots, *h, 0, cap_d, &vm);
+            if res < best_len {
+                best_len = res;
+            }
+            evaluated.push((*tgt, xc_slots.clone(), res));
+        }
+
+        if best_len == 0 {
+            return (0, Vec::new());
+        }
+        if best_len >= 99 {
+            return (99, Vec::new());
+        }
+
+        let tied: Vec<(usize, Vec<usize>)> = evaluated
+            .into_iter()
+            .filter(|(_, _, l)| *l == best_len)
+            .map(|(tgt, xc_slots, _)| (tgt, xc_slots))
+            .collect();
+        let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+        let mut path = Vec::new();
+        'outer: for d in best_len..=(best_len + extra).min(cap_d) {
+            for (tgt, xc_slots) in &tied {
+                if out.len() >= cap {
+                    break 'outer;
+                }
+                let sp = &st[*tgt];
+                let mut xc = [(0usize, 0usize, 0usize, 0usize); 3];
+                for (j, &s) in xc_slots.iter().enumerate() {
+                    xc[j] = (st[s].im as usize, (st[s].ic as usize) * 18, (st[s].ie as usize) * 18, s);
+                }
+                let n = xc_slots.len();
+                let mut combo = vec![*tgt];
+                combo.extend(xc_slots.iter().copied());
+                let mut task_out: Vec<Vec<u8>> = Vec::new();
+                self.enum_small_masked(
+                    sp.im as usize, (sp.ic as usize) * 18, (sp.ie as usize) * 18, *tgt,
+                    &xc[..n], d, 18, &mut path, &mut task_out, cap - out.len(), &vm,
                 );
                 for sol in task_out {
                     out.push((rot.to_string(), combo.clone(), sol));
