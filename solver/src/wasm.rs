@@ -41,6 +41,19 @@ const ROTS: [&str; 6] = ["", "z2", "z'", "z", "x'", "x"];
 /// F2L 槽位标签(对齐 or18:BL=0 BR=1 FR=2 FL=3)。
 const SLOT_LABELS: [&str; 4] = ["BL", "BR", "FR", "FL"];
 
+/// 用户指定槽位组合:逗号分隔的槽位索引串(如 "2" / "0,1");空串 = 自动挑最优槽。
+/// 去重 + 排序 + 只收 0..3,非法输入静默丢弃(降级为该串能解析出的子集;全非法=空=auto)。
+fn parse_combo(s: &str) -> Vec<usize> {
+    let mut v: Vec<usize> = s
+        .split(',')
+        .filter_map(|t| t.trim().parse::<usize>().ok())
+        .filter(|&i| i < 4)
+        .collect();
+    v.sort_unstable();
+    v.dedup();
+    v
+}
+
 /// 把一条 move 索引路径转成步骤串,带视角前缀(rot 非空时)。
 fn fmt_moves(rot: &str, path: &[u8]) -> String {
     let body = path
@@ -846,6 +859,7 @@ impl CrossSolverWasm {
         face: u32,
         extra: u32,
         cap: u32,
+        combo: &str,
     ) -> String {
         let alg = string_to_alg(scramble);
         let rot = ROTS[(face as usize).min(5)];
@@ -862,7 +876,13 @@ impl CrossSolverWasm {
         let label = |combo: &[usize]| {
             combo.iter().map(|&s| SLOT_LABELS[s]).collect::<Vec<_>>().join(" ")
         };
-        let (len, sols) = self.xcross.enumerate_best(&alg, rot, k, extra, cap);
+        // combo 非空 = 用户指定槽位(只枚举该 combo);空 = 自动挑最优槽。
+        let slots = parse_combo(combo);
+        let (len, sols) = if slots.is_empty() {
+            self.xcross.enumerate_best(&alg, rot, k, extra, cap)
+        } else {
+            self.xcross.enumerate_combo(&alg, rot, &slots, extra, cap)
+        };
         let items: Vec<(String, String)> =
             sols.iter().map(|(combo, p)| (fmt_moves(rot, p), label(combo))).collect();
         sols_json(len, &items)
@@ -973,6 +993,7 @@ impl F2leoSolverWasm {
         stage: u32,
         extra: u32,
         cap: u32,
+        combo: &str,
     ) -> String {
         let alg = string_to_alg(scramble);
         let rot = ROTS[(face as usize).min(5)];
@@ -985,16 +1006,18 @@ impl F2leoSolverWasm {
                 .collect::<Vec<_>>()
                 .join(" ")
         };
-        // enumerate_small 现返回 (best_len, Vec<(frame, combo, sol)>):每条解带自己的 frame + 槽位
+        // combo 非空 = 用户指定目标槽位(只枚举槽位集合匹配的候选);空 = 自动挑最优。
+        let force = parse_combo(combo);
+        // enumerate_small 返回 (best_len, Vec<(frame, combo, sol)>):每条解带自己的 frame + 槽位
         // (并列最优可能跨不同槽 / 不同 y-frame)。
         let (len, raw) = if pseudo {
             self.ensure_pseudo();
             let b = self.pseudo.borrow();
-            b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap)
+            b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force)
         } else {
             self.ensure_f2leo();
             let b = self.f2leo.borrow();
-            b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap)
+            b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force)
         };
         let items: Vec<(String, String)> =
             raw.iter().map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo))).collect();
@@ -1205,11 +1228,14 @@ impl VariantSolverWasm {
         stage: u32,
         extra: u32,
         cap: u32,
+        combo: &str,
     ) -> String {
         let alg = string_to_alg(scramble);
         let rot = ROTS[(face as usize).min(5)];
         let stage = stage as usize;
         let cap = cap as usize;
+        // combo 非空 = 用户指定目标槽位(只枚举槽位集合匹配的候选);空 = 自动挑最优。
+        let force = parse_combo(combo);
         let label = |combo: &[usize]| {
             combo
                 .iter()
@@ -1228,25 +1254,25 @@ impl VariantSolverWasm {
             0 => {
                 self.ensure_pair();
                 let b = self.pair.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap);
+                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force);
                 pack(len, raw)
             }
             1 => {
                 self.ensure_eo();
                 let b = self.eo.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap);
+                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force);
                 pack(len, raw)
             }
             2 => {
                 self.ensure_pseudo();
                 let b = self.pseudo.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap);
+                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force);
                 pack(len, raw)
             }
             3 => {
                 self.ensure_pseudo_pair();
                 let b = self.pseudo_pair.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap);
+                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force);
                 pack(len, raw)
             }
             _ => sols_json(0, &[]),

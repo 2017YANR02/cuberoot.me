@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260623a';
+const V = 'v=20260623b';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -117,7 +117,7 @@ export interface RustCrossPool {
     scramble: string,
     variant: number,
     face: number,
-    opts?: { extra?: number; cap?: number },
+    opts?: { extra?: number; cap?: number; combo?: string },
   ): Promise<MovesTimed>;
   /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)整变体 24 值:[cross,xc,xxc,xxxc]×6 朝向(已折叠 z0/z2/z3/z1/x3/x1)。 */
   solveF2leo(scramble: string, pseudo: boolean): Promise<number[]>;
@@ -129,7 +129,7 @@ export interface RustCrossPool {
     pseudo: boolean,
     face: number,
     stage: number,
-    opts?: { extra?: number; cap?: number },
+    opts?: { extra?: number; cap?: number; combo?: string },
   ): Promise<MovesTimed>;
   /** 其余变体(0=pair/1=eo/2=pseudo/3=pseudo_pair)整变体 24/30 值 × 6 朝向(物理面序 z0/z2/z3/z1/x3/x1)。 */
   solveVariant(scramble: string, variant: number): Promise<number[]>;
@@ -141,7 +141,7 @@ export interface RustCrossPool {
     variant: number,
     face: number,
     stage: number,
-    opts?: { extra?: number; cap?: number },
+    opts?: { extra?: number; cap?: number; combo?: string },
   ): Promise<MovesTimed>;
   /** 2x2x2 块 6 视角(每视角 = 该底色 4 个贴底块最小),物理面序 z0/z2/z3/z1/x3/x1。 */
   solveBlock222Stage(scramble: string): Promise<number[]>;
@@ -361,7 +361,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
     solveMoves(scramble, variant, face, opts = {}) {
       return submit({
         type: 'moves', id: nextId++, scramble, variant, face,
-        extra: opts.extra ?? 0, cap: opts.cap ?? 50,
+        extra: opts.extra ?? 0, cap: opts.cap ?? 50, combo: opts.combo ?? '',
       }) as Promise<MovesTimed>;
     },
     solveF2leo(scramble, pseudo) {
@@ -373,7 +373,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
     solveF2leoMoves(scramble, pseudo, face, stage, opts = {}) {
       return submit({
         type: 'f2leo_moves', id: nextId++, scramble, pseudo, face, stage,
-        extra: opts.extra ?? 0, cap: opts.cap ?? 20,
+        extra: opts.extra ?? 0, cap: opts.cap ?? 20, combo: opts.combo ?? '',
       }) as Promise<MovesTimed>;
     },
     solveVariant(scramble, variant) {
@@ -385,7 +385,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
     solveVariantMoves(scramble, variant, face, stage, opts = {}) {
       return submit({
         type: 'variant_moves', id: nextId++, scramble, variant, face, stage,
-        extra: opts.extra ?? 0, cap: opts.cap ?? 20,
+        extra: opts.extra ?? 0, cap: opts.cap ?? 20, combo: opts.combo ?? '',
       }) as Promise<MovesTimed>;
     },
     solveBlock222Stage(scramble) {

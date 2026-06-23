@@ -1821,6 +1821,8 @@ impl EOSmallSolver {
     /// 排序)。stage 0 无 slot(只 EO+cross),每条 combo 为空。
     ///
     /// best_len 后逐深度 d 外层、候选内层交错收集(跨候选也按长度升序);`cap` 是**总**条数上界。
+    /// `force`:用户指定的槽位组合(槽位索引 0..3,0=BL/1=BR/2=FR/3=FL);空 = 自动挑最优槽
+    /// (行为与原先逐位一致)。非空时只枚举该 combo(用它自身最优长度),不与其它槽比较。
     pub fn enumerate_small(
         &self,
         alg: &[Move],
@@ -1828,6 +1830,7 @@ impl EOSmallSolver {
         stage: usize,
         extra: u32,
         cap: usize,
+        force: &[usize],
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let alg_idx: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
@@ -1899,11 +1902,16 @@ impl EOSmallSolver {
         const XXC: [&[usize]; 6] = [&[0, 1], &[0, 2], &[0, 3], &[1, 2], &[1, 3], &[2, 3]];
         const XXXC: [&[usize]; 4] = [&[0, 1, 2], &[0, 1, 3], &[0, 2, 3], &[1, 2, 3]];
         const XXXXC: [&[usize]; 1] = [&[0, 1, 2, 3]];
-        let combos: &[&[usize]] = match stage {
-            1 => &XC,
-            2 => &XXC,
-            3 => &XXXC,
-            _ => &XXXXC,
+        let forced: [&[usize]; 1] = [force];
+        let combos: &[&[usize]] = if force.is_empty() {
+            match stage {
+                1 => &XC,
+                2 => &XXC,
+                3 => &XXXC,
+                _ => &XXXXC,
+            }
+        } else {
+            &forced
         };
 
         let mut ctxs: Vec<[EoSlotSmall; 4]> = Vec::with_capacity(2);
@@ -2113,7 +2121,7 @@ mod tests {
                 for stage in 0..5usize {
                     let want = exp[stage * 6 + ri];
                     let t0 = std::time::Instant::now();
-                    let (len, items) = solver.enumerate_small(&alg, rot, stage, 0, 20);
+                    let (len, items) = solver.enumerate_small(&alg, rot, stage, 0, 20, &[]);
                     let dt = t0.elapsed();
                     eprintln!(
                         "rot={:>2} stage={} -> len={} items={} ({:.2?})",

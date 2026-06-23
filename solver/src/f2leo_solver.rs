@@ -630,6 +630,8 @@ impl F2leoSolver {
     /// move 路径为该 frame 帧 raw move 索引。extra=允许超出最优步数;cap=最多收集**总**条数。
     /// 空解集 + len=0 ⟹ 该 face 已解(0 步)。
     #[allow(clippy::type_complexity)]
+    /// `force`:用户指定槽位组合(索引 0..3,0=BL/1=BR/2=FR/3=FL);空 = 自动挑最优槽(逐位与
+    /// 原先一致)。非空时只枚举该 combo(用它自身最优长度),不与其它槽比较。
     pub fn enumerate_small(
         &self,
         alg: &[Move],
@@ -637,6 +639,7 @@ impl F2leoSolver {
         stage: usize,
         extra: u32,
         cap: usize,
+        force: &[usize],
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
@@ -706,10 +709,15 @@ impl F2leoSolver {
         }
 
         // ---- stage 1/2/3:combo cascade ----
-        let combos: &[&[usize]] = match stage {
-            1 => &XC,
-            2 => &XXC,
-            _ => &XXXC,
+        let forced: [&[usize]; 1] = [force];
+        let combos: &[&[usize]] = if force.is_empty() {
+            match stage {
+                1 => &XC,
+                2 => &XXC,
+                _ => &XXXC,
+            }
+        } else {
+            &forced
         };
         let cap_d = match stage {
             1 => CAP_XC,
@@ -1430,7 +1438,7 @@ mod enum_tests {
                 let counts = solver.get_stage(&alg, stage);
                 for face in 0..6usize {
                     let (len, sols) =
-                        solver.enumerate_small(&alg, ROTS[face], stage, 0, 100);
+                        solver.enumerate_small(&alg, ROTS[face], stage, 0, 100, &[]);
                     assert_eq!(
                         len, counts[face],
                         "f2leo len mismatch scr={scr} stage={stage} face={face}: enum {len} vs count {}",

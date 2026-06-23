@@ -811,21 +811,62 @@ impl XCrossSolver {
             evaluated.push((c.clone(), res));
         }
 
-        let mut out: Vec<(Vec<usize>, Vec<u8>)> = Vec::new();
         if best_len == 0 || best_len >= 99 {
-            return (best_len.min(0), out);
+            return (best_len.min(0), Vec::new());
         }
-
-        // 并列最优的 combo(长度 == best_len)。逐深度 d 外层、combo 内层交错枚举,
-        // 使跨 combo 也按长度升序;每条解带它自己的 combo;cap 控总条数。
+        // 并列最优的 combo(长度 == best_len)。
         let tied: Vec<Vec<usize>> = evaluated
             .into_iter()
             .filter(|(_, l)| *l == best_len)
             .map(|(c, _)| c)
             .collect();
+        let out = self.enumerate_tied(&st, &tied, best_len, extra, cap);
+        (best_len, out)
+    }
+
+    /// 指定单个 combo(用户选定的槽位组合,槽位索引 0..3)枚举其多解:用该 combo 自身的最优
+    /// 长度(不与其它槽比较),再逐深度收集到 best+extra。combo 长度即变体槽数 k。
+    /// 返回与 enumerate_best 同形 (best_len, Vec<(combo, sol)>)。
+    pub fn enumerate_combo(
+        &self,
+        alg: &[Move],
+        rot: &str,
+        combo: &[usize],
+        extra: u32,
+        cap: usize,
+    ) -> (u32, Vec<(Vec<usize>, Vec<u8>)>) {
+        let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        let mut a = base.clone();
+        alg_rotation(&mut a, rot);
+        let st: [VirtState; 4] = std::array::from_fn(|j| self.get_virt(&a, j));
+        let h = combo.iter().map(|&s| self.slot_h(&st[s])).max().unwrap_or(99);
+        let max_d = match combo.len() {
+            1 => 12,
+            2 => 14,
+            _ => 16,
+        };
+        let best_len = self.solve_subset(&st, combo, h, 0, max_d);
+        if best_len == 0 || best_len >= 99 {
+            return (best_len.min(0), Vec::new());
+        }
+        let out = self.enumerate_tied(&st, &[combo.to_vec()], best_len, extra, cap);
+        (best_len, out)
+    }
+
+    /// 给定一组 combo + 最优长度,逐深度 d 外层、combo 内层交错枚举(跨 combo 也按长度升序);
+    /// 每条解带它自己的 combo;cap 控总条数。enumerate_best / enumerate_combo 共用。
+    fn enumerate_tied(
+        &self,
+        st: &[VirtState; 4],
+        tied: &[Vec<usize>],
+        best_len: u32,
+        extra: u32,
+        cap: usize,
+    ) -> Vec<(Vec<usize>, Vec<u8>)> {
+        let mut out: Vec<(Vec<usize>, Vec<u8>)> = Vec::new();
         let mut path = Vec::new();
         'outer: for d in best_len..=(best_len + extra).min(16) {
-            for combo in &tied {
+            for combo in tied {
                 if out.len() >= cap {
                     break 'outer;
                 }
@@ -846,7 +887,7 @@ impl XCrossSolver {
                 }
             }
         }
-        (best_len, out)
+        out
     }
 
     /// 小表版 6 视角 × 4 阶段,返回 24 值,顺序 [xc×6, xxc×6, xxxc×6, xxxxc×6]。
