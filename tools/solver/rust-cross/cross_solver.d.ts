@@ -71,12 +71,23 @@ export class CrossSolverWasm {
      */
     solve_face(scramble: string, variant: number, face: number): number;
     /**
+     * 受限步法版 solve_face:`mask` = 18 个 move 的 bitmask(bit m=1 表示 move m 允许)。
+     * 仅 cross(variant 0)接 masked 引擎;限制下无解返回 u32::MAX 哨兵(client 显示 '-')。
+     * xcross(variant>0)暂无 masked 引擎 → 回退不受限(Phase 2 接上)。
+     */
+    solve_face_masked(scramble: string, variant: number, face: number, mask: number): number;
+    /**
      * 单格(variant × face)多解步骤,返回 JSON 串。
      * variant:0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc;face:0..5 对应 ROTS。
      * extra:允许超出最优的步数(0=只最优长度全部解);cap:最多收集条数。
      * 解步骤带视角前缀(face>0 时如 "z2 R U ..."),combo 是该格选中的 F2L 槽位。
      */
     solve_moves(scramble: string, variant: number, face: number, extra: number, cap: number, combo: string): string;
+    /**
+     * 受限步法版 solve_moves(同 solve_moves 形状)。cross 走 enumerate_solutions_masked;
+     * 限制下无解 → len=u32::MAX 哨兵 + 空解集。xcross(variant>0)暂回退不受限。
+     */
+    solve_moves_masked(scramble: string, variant: number, face: number, extra: number, cap: number, combo: string, mask: number): string;
 }
 
 /**
@@ -377,7 +388,9 @@ export interface InitOutput {
     readonly crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
+    readonly crosssolverwasm_solve_face_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
+    readonly crosssolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
     readonly cube222solverwasm_from_dist: (a: number, b: number) => number;
     readonly cube222solverwasm_new: () => number;
     readonly cube222solverwasm_solve: (a: number, b: number, c: number) => number;

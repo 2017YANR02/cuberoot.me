@@ -127,14 +127,20 @@ self.onmessage = async (e) => {
     } else if (msg.type === 'face') {
       if (!solver) throw new Error('cross solver not initialized');
       const t0 = performance.now();
-      const v = solver.solve_face(msg.scramble, msg.variant, msg.face);
+      const v = (msg.mask != null)
+        ? solver.solve_face_masked(msg.scramble, msg.variant, msg.face, msg.mask >>> 0)
+        : solver.solve_face(msg.scramble, msg.variant, msg.face);
       self.postMessage({ type: 'face', id: msg.id, value: v, ms: performance.now() - t0 });
     } else if (msg.type === 'moves') {
       if (!solver) throw new Error('cross solver not initialized');
       const t0 = performance.now();
-      const json = solver.solve_moves(
-        msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50, msg.combo ?? '',
-      );
+      const json = (msg.mask != null)
+        ? solver.solve_moves_masked(
+            msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50, msg.combo ?? '', msg.mask >>> 0,
+          )
+        : solver.solve_moves(
+            msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50, msg.combo ?? '',
+          );
       self.postMessage({ type: 'moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'f2leo') {
       if (!f2leoSolver) throw new Error('f2leo solver not initialized');

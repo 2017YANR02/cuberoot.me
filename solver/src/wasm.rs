@@ -776,6 +776,10 @@ impl SkewbSolverWasm {
     }
 }
 
+/// 受限步法 cross 搜索的深度上限:可解情形(禁 0–1 面)最优 ≤ ~10 远在界内;禁 2 面常无解,
+/// 搜到此深度断定无解最坏 ~250ms(实测有界,worker 线程 + 终止兜底)。再高(14)无解情形到秒级。
+const CROSS_MASK_DEPTH: u32 = 12;
+
 #[wasm_bindgen]
 pub struct CrossSolverWasm {
     cross: CrossSolver,
@@ -886,6 +890,49 @@ impl CrossSolverWasm {
         let items: Vec<(String, String)> =
             sols.iter().map(|(combo, p)| (fmt_moves(rot, p), label(combo))).collect();
         sols_json(len, &items)
+    }
+
+    /// 受限步法版 solve_face:`mask` = 18 个 move 的 bitmask(bit m=1 表示 move m 允许)。
+    /// 仅 cross(variant 0)接 masked 引擎;限制下无解返回 u32::MAX 哨兵(client 显示 '-')。
+    /// xcross(variant>0)暂无 masked 引擎 → 回退不受限(Phase 2 接上)。
+    pub fn solve_face_masked(&self, scramble: &str, variant: u32, face: u32, mask: u32) -> u32 {
+        if variant != 0 {
+            return self.solve_face(scramble, variant, face);
+        }
+        let alg = string_to_alg(scramble);
+        let rot = [ROTS[(face as usize).min(5)]];
+        self.cross.get_stats_masked(&alg, &rot, mask, CROSS_MASK_DEPTH)[0].unwrap_or(u32::MAX)
+    }
+
+    /// 受限步法版 solve_moves(同 solve_moves 形状)。cross 走 enumerate_solutions_masked;
+    /// 限制下无解 → len=u32::MAX 哨兵 + 空解集。xcross(variant>0)暂回退不受限。
+    #[allow(clippy::too_many_arguments)]
+    pub fn solve_moves_masked(
+        &self,
+        scramble: &str,
+        variant: u32,
+        face: u32,
+        extra: u32,
+        cap: u32,
+        combo: &str,
+        mask: u32,
+    ) -> String {
+        if variant != 0 {
+            return self.solve_moves(scramble, variant, face, extra, cap, combo);
+        }
+        let alg = string_to_alg(scramble);
+        let rot = ROTS[(face as usize).min(5)];
+        match self
+            .cross
+            .enumerate_solutions_masked(&alg, rot, extra, cap as usize, mask, CROSS_MASK_DEPTH)
+        {
+            Some((len, sols)) => {
+                let items: Vec<(String, String)> =
+                    sols.iter().map(|p| (fmt_moves(rot, p), String::new())).collect();
+                sols_json(len, &items)
+            }
+            None => sols_json(u32::MAX, &[]),
+        }
     }
 }
 
