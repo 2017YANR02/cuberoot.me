@@ -17,7 +17,9 @@
 
 use std::sync::{Arc, OnceLock};
 
-use crate::cube_common::{alg_rotation, state_space, valid_moves, Move};
+use crate::cube_common::{
+    alg_rotation, state_space, valid_moves, valid_moves_masked, Move, MoveMask, ValidMovesTable,
+};
 use crate::move_tables::{self, MoveTable};
 
 /// (棱槽 slot, 角槽 pslot)。
@@ -913,6 +915,647 @@ impl PseudoF2leoSolver {
                     break 'ex;
                 }
                 enum_cand(self, &mut out, fi, ci, d, &ctxs);
+            }
+        }
+        (best_len, out)
+    }
+}
+
+// ============================================================================
+// 受限步法 Pseudo F2LEO(Phase 3:move mask)
+// ----------------------------------------------------------------------------
+// 与上面无限制小表 cascade 同结构、同剪枝表(4-seed pscross + 自建 xcross 剪枝),仅把
+// `valid_moves()` 换成 `valid_moves_masked(mask)` 并加 `max_depth` 上限。正确性同
+// f2leo masked:剪枝表是无限制距离的可采纳下界,对任意 mask 仍可采纳 ⇒ IDA* 首达即
+// 真·受限最优(≤ max_depth),超界返回 99 哨兵。叶子 EO 门控走真实 frame。
+impl PseudoF2leoSolver {
+    fn search_cross_masked(
+        &self,
+        i1: usize,
+        i2: usize,
+        eo: [usize; 4],
+        depth: u32,
+        prev: u8,
+        vm: &ValidMovesTable,
+    ) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let m2 = self.mt_edge2.as_u32();
+        let me = self.mt_edge.as_u32();
+        let pc = &self.prune.cross;
+        for k in 0..count {
+            let m = row[k] as usize;
+            let n1 = m2[i1 + m] as usize;
+            let n2 = m2[i2 + m] as usize;
+            let pr = pc[n1 * E2 + n2] as u32;
+            if pr >= depth {
+                continue;
+            }
+            let ne: [usize; 4] = std::array::from_fn(|t| me[eo[t] + m] as usize);
+            if depth == 1 {
+                if ne.iter().all(|&e| e % 2 == 0) {
+                    return true;
+                }
+            } else if self.search_cross_masked(
+                n1 * 18,
+                n2 * 18,
+                std::array::from_fn(|t| ne[t] * 18),
+                depth - 1,
+                m as u8,
+                vm,
+            ) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn solve_cross_masked(&self, i1: usize, i2: usize, eo: [usize; 4], vm: &ValidMovesTable, max_depth: u32) -> u32 {
+        let pr = self.prune.cross[i1 * E2 + i2] as u32;
+        if pr == 0 && eo.iter().all(|&e| e % 2 == 0) {
+            return 0;
+        }
+        let start = pr.max(1);
+        let eo18: [usize; 4] = std::array::from_fn(|t| eo[t] * 18);
+        for d in start..=max_depth {
+            if self.search_cross_masked(i1 * 18, i2 * 18, eo18, d, 18, vm) {
+                return d;
+            }
+        }
+        99
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn search_combo_masked(
+        &self,
+        e4_24: usize,
+        corn: &[usize],
+        edge: &[usize],
+        egoal: &[usize],
+        free: &[usize],
+        prune: &[&[u8]],
+        depth: u32,
+        prev: u8,
+        vm: &ValidMovesTable,
+    ) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let m4 = self.mt_edge4.as_u32();
+        let mc = self.mt_corn.as_u32();
+        let me = self.mt_edge.as_u32();
+        let n = corn.len();
+        let nf = free.len();
+        for k in 0..count {
+            let m = row[k] as usize;
+            let ne4 = m4[e4_24 + m] as usize;
+            let mut ncorn = [0usize; 3];
+            let mut pruned = false;
+            for i in 0..n {
+                let nc = mc[corn[i] + m] as usize;
+                if prune[i][ne4 + nc] as u32 >= depth {
+                    pruned = true;
+                    break;
+                }
+                ncorn[i] = nc;
+            }
+            if pruned {
+                continue;
+            }
+            if depth == 1 {
+                let mut ok = true;
+                for i in 0..n {
+                    if me[edge[i] + m] as usize != egoal[i] {
+                        ok = false;
+                        break;
+                    }
+                }
+                if ok {
+                    for j in 0..nf {
+                        if me[free[j] + m] as usize % 2 != 0 {
+                            ok = false;
+                            break;
+                        }
+                    }
+                }
+                if ok {
+                    return true;
+                }
+            } else {
+                let mut nc18 = [0usize; 3];
+                let mut ne18 = [0usize; 3];
+                let mut nf18 = [0usize; 3];
+                for i in 0..n {
+                    nc18[i] = ncorn[i] * 18;
+                    ne18[i] = me[edge[i] + m] as usize * 18;
+                }
+                for j in 0..nf {
+                    nf18[j] = me[free[j] + m] as usize * 18;
+                }
+                if self.search_combo_masked(
+                    ne4,
+                    &nc18[..n],
+                    &ne18[..n],
+                    egoal,
+                    &nf18[..nf],
+                    prune,
+                    depth - 1,
+                    m as u8,
+                    vm,
+                ) {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn solve_combo_masked(
+        &self,
+        e4_24: usize,
+        corn_root: &[usize; 4],
+        edge_root: &[usize; 4],
+        combo: &[Pair],
+        h: u32,
+        cap: u32,
+        best: u32,
+        vm: &ValidMovesTable,
+    ) -> u32 {
+        let n = combo.len();
+        let mut prune_refs = [self.prune.xcross[0].as_slice(); 3];
+        let mut corn = [0usize; 3];
+        let mut edge = [0usize; 3];
+        let mut egoal = [0usize; 3];
+        let mut slot_set = [false; 4];
+        for (i, &(s, p)) in combo.iter().enumerate() {
+            prune_refs[i] = self.prune.xcross[p].as_slice();
+            corn[i] = corn_root[p];
+            edge[i] = edge_root[s];
+            egoal[i] = SLOT_EDGE[s];
+            slot_set[s] = true;
+        }
+        let mut free = [0usize; 3];
+        let mut nf = 0;
+        for s in 0..4 {
+            if !slot_set[s] {
+                free[nf] = edge_root[s];
+                nf += 1;
+            }
+        }
+        let root_ok = (0..n).all(|i| prune_refs[i][e4_24 + corn[i]] == 0 && edge[i] == egoal[i])
+            && (0..nf).all(|j| free[j] % 2 == 0);
+        if root_ok {
+            return 0;
+        }
+        let corn18: [usize; 3] = std::array::from_fn(|i| corn[i] * 18);
+        let edge18: [usize; 3] = std::array::from_fn(|i| edge[i] * 18);
+        let free18: [usize; 3] = std::array::from_fn(|j| free[j] * 18);
+        let max_d = cap.min(best.saturating_sub(1));
+        let start = h.max(1);
+        for d in start..=max_d {
+            if self.search_combo_masked(
+                e4_24,
+                &corn18[..n],
+                &edge18[..n],
+                &egoal[..n],
+                &free18[..nf],
+                &prune_refs[..n],
+                d,
+                18,
+                vm,
+            ) {
+                return d;
+            }
+        }
+        99
+    }
+
+    fn solve_stage_masked(
+        &self,
+        e4_24: usize,
+        corn_root: &[usize; 4],
+        edge_root: &[usize; 4],
+        combos: &[Vec<Pair>],
+        cap: u32,
+        vm: &ValidMovesTable,
+    ) -> u32 {
+        let xt = &self.prune.xcross;
+        let m = combos.len();
+        let mut scored: [(u32, &Vec<Pair>); 36] = [(0, &combos[0]); 36];
+        for k in 0..m {
+            let c = &combos[k];
+            let h = c
+                .iter()
+                .map(|&(_s, p)| xt[p][e4_24 + corn_root[p]] as u32)
+                .max()
+                .unwrap();
+            scored[k] = (h, c);
+        }
+        scored[..m].sort_by_key(|t| t.0);
+        let mut best = 99u32;
+        for &(h, combo) in &scored[..m] {
+            if h > best {
+                break;
+            }
+            let res = self.solve_combo_masked(e4_24, corn_root, edge_root, combo, h, cap, 99, vm);
+            best = best.min(res);
+        }
+        best
+    }
+
+    /// 受限版 get_stage:返回 6 视角值(12 朝向折叠 min);限制下无解的视角为 None。
+    pub fn get_stage_masked(
+        &self,
+        alg: &[Move],
+        stage: usize,
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> Vec<Option<u32>> {
+        const ROTS12: [&str; 12] =
+            ["", "y", "z2", "z2 y", "z'", "z' y", "z", "z y", "x'", "x' y", "x", "x y"];
+        let vm = valid_moves_masked(mask);
+        let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        let cb = combos();
+        let mut v = [99u32; 12];
+        for (r, rot) in ROTS12.iter().enumerate() {
+            let mut a = base.clone();
+            alg_rotation(&mut a, rot);
+            let (i1, i2, e4_24, corn, edg) = self.root_state(&a);
+            v[r] = match stage {
+                0 => self.solve_cross_masked(i1, i2, edg, &vm, CAP_CROSS.min(max_depth)),
+                1 => self.solve_stage_masked(e4_24, &corn, &edg, &cb.xc, CAP_XC.min(max_depth), &vm),
+                2 => self.solve_stage_masked(e4_24, &corn, &edg, &cb.xxc, CAP_XXC.min(max_depth), &vm),
+                _ => self.solve_stage_masked(e4_24, &corn, &edg, &cb.xxxc, CAP_XXXC.min(max_depth), &vm),
+            };
+        }
+        (0..6)
+            .map(|k| {
+                let best = v[2 * k].min(v[2 * k + 1]);
+                if best >= 99 { None } else { Some(best) }
+            })
+            .collect()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn enum_cross_masked(
+        &self,
+        i1: usize,
+        i2: usize,
+        eo: [usize; 4],
+        depth: u32,
+        prev: u8,
+        path: &mut Vec<u8>,
+        out: &mut Vec<Vec<u8>>,
+        cap: usize,
+        vm: &ValidMovesTable,
+    ) {
+        if out.len() >= cap {
+            return;
+        }
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let m2 = self.mt_edge2.as_u32();
+        let me = self.mt_edge.as_u32();
+        let pc = &self.prune.cross;
+        for k in 0..count {
+            if out.len() >= cap {
+                return;
+            }
+            let m = row[k] as usize;
+            let n1 = m2[i1 + m] as usize;
+            let n2 = m2[i2 + m] as usize;
+            let pr = pc[n1 * E2 + n2] as u32;
+            if pr >= depth {
+                continue;
+            }
+            let ne: [usize; 4] = std::array::from_fn(|t| me[eo[t] + m] as usize);
+            path.push(m as u8);
+            if depth == 1 {
+                if ne.iter().all(|&e| e % 2 == 0) {
+                    out.push(path.clone());
+                }
+            } else if pr > 0 || ne.iter().any(|&e| e % 2 != 0) {
+                self.enum_cross_masked(
+                    n1 * 18,
+                    n2 * 18,
+                    std::array::from_fn(|t| ne[t] * 18),
+                    depth - 1,
+                    m as u8,
+                    path,
+                    out,
+                    cap,
+                    vm,
+                );
+            }
+            path.pop();
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn enum_combo_masked(
+        &self,
+        e4_24: usize,
+        corn: &[usize],
+        edge: &[usize],
+        egoal: &[usize],
+        free: &[usize],
+        prune: &[&[u8]],
+        depth: u32,
+        prev: u8,
+        path: &mut Vec<u8>,
+        out: &mut Vec<Vec<u8>>,
+        cap: usize,
+        vm: &ValidMovesTable,
+    ) {
+        if out.len() >= cap {
+            return;
+        }
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let m4 = self.mt_edge4.as_u32();
+        let mc = self.mt_corn.as_u32();
+        let me = self.mt_edge.as_u32();
+        let n = corn.len();
+        let nf = free.len();
+        for k in 0..count {
+            if out.len() >= cap {
+                return;
+            }
+            let m = row[k] as usize;
+            let ne4 = m4[e4_24 + m] as usize;
+            let mut ncorn = [0usize; 3];
+            let mut pruned = false;
+            let mut max_pr = 0u32;
+            for i in 0..n {
+                let nc = mc[corn[i] + m] as usize;
+                let pr = prune[i][ne4 + nc] as u32;
+                if pr >= depth {
+                    pruned = true;
+                    break;
+                }
+                if pr > max_pr {
+                    max_pr = pr;
+                }
+                ncorn[i] = nc;
+            }
+            if pruned {
+                continue;
+            }
+            let mut ok = true;
+            for i in 0..n {
+                if me[edge[i] + m] as usize != egoal[i] {
+                    ok = false;
+                    break;
+                }
+            }
+            if ok {
+                for j in 0..nf {
+                    if me[free[j] + m] as usize % 2 != 0 {
+                        ok = false;
+                        break;
+                    }
+                }
+            }
+            path.push(m as u8);
+            if depth == 1 {
+                if ok {
+                    out.push(path.clone());
+                }
+            } else if !(max_pr == 0 && ok) {
+                let mut nc18 = [0usize; 3];
+                let mut ne18 = [0usize; 3];
+                let mut nf18 = [0usize; 3];
+                for i in 0..n {
+                    nc18[i] = ncorn[i] * 18;
+                    ne18[i] = me[edge[i] + m] as usize * 18;
+                }
+                for j in 0..nf {
+                    nf18[j] = me[free[j] + m] as usize * 18;
+                }
+                self.enum_combo_masked(
+                    ne4,
+                    &nc18[..n],
+                    &ne18[..n],
+                    egoal,
+                    &nf18[..nf],
+                    prune,
+                    depth - 1,
+                    m as u8,
+                    path,
+                    out,
+                    cap,
+                    vm,
+                );
+            }
+            path.pop();
+        }
+    }
+
+    /// 受限版 enumerate_small:同形 (best_len, Vec<(frame, combo, sol)>);限制下无解返回 (99, []).
+    #[allow(clippy::too_many_arguments)]
+    pub fn enumerate_small_masked(
+        &self,
+        alg: &[Move],
+        rot: &str,
+        stage: usize,
+        extra: u32,
+        cap: usize,
+        force: &[usize],
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
+        let vm = valid_moves_masked(mask);
+        let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
+        let frames = [rot.to_string(), y_frame];
+
+        // ---- stage 0:pscross + 4 棱 EO ----
+        if stage == 0 {
+            let cap_d = CAP_CROSS.min(max_depth);
+            let mut roots: Vec<(u32, usize, usize, usize, [usize; 4])> = Vec::with_capacity(2);
+            for (fi, fr) in frames.iter().enumerate() {
+                let mut a = base.clone();
+                alg_rotation(&mut a, fr);
+                let (i1, i2, _e4, _corn, edg) = self.root_state(&a);
+                let pr = self.prune.cross[i1 * E2 + i2] as u32;
+                let eo_ok = edg.iter().all(|&e| e % 2 == 0);
+                if pr == 0 && eo_ok {
+                    return (0, Vec::new());
+                }
+                let h = if pr == 0 { 1 } else { pr };
+                roots.push((h, fi, i1, i2, edg));
+            }
+            roots.sort_by_key(|t| (t.0, t.1));
+            let d0 = roots.iter().map(|t| t.0).min().unwrap_or(1).max(1);
+
+            let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+            let mut best_len = 99u32;
+            let mut tied: Vec<usize> = Vec::new();
+            'bd0: for d in d0..=cap_d {
+                for (ri, &(h, _fi, i1, i2, edg)) in roots.iter().enumerate() {
+                    if h > d {
+                        continue;
+                    }
+                    let eo18: [usize; 4] = std::array::from_fn(|t| edg[t] * 18);
+                    let mut co: Vec<Vec<u8>> = Vec::new();
+                    let mut path = Vec::new();
+                    self.enum_cross_masked(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut co, 1, &vm);
+                    if !co.is_empty() {
+                        tied.push(ri);
+                    }
+                }
+                if !tied.is_empty() {
+                    best_len = d;
+                    break 'bd0;
+                }
+            }
+            if best_len >= 99 {
+                return (99, Vec::new());
+            }
+            'collect0: for d in best_len..=(best_len + extra).min(cap_d) {
+                for &ri in &tied {
+                    if out.len() >= cap {
+                        break 'collect0;
+                    }
+                    let (_h, fi, i1, i2, edg) = roots[ri];
+                    let eo18: [usize; 4] = std::array::from_fn(|t| edg[t] * 18);
+                    let mut co: Vec<Vec<u8>> = Vec::new();
+                    let mut path = Vec::new();
+                    self.enum_cross_masked(i1 * 18, i2 * 18, eo18, d, 18, &mut path, &mut co, cap - out.len(), &vm);
+                    for sol in co {
+                        out.push((frames[fi].clone(), vec![], sol));
+                    }
+                }
+            }
+            return (best_len, out);
+        }
+
+        // ---- stage 1/2/3:(棱槽,角槽) combo cascade ----
+        let cb = combos();
+        let cs0: &[Vec<Pair>] = match stage {
+            1 => &cb.xc,
+            2 => &cb.xxc,
+            _ => &cb.xxxc,
+        };
+        let cs_filt: Vec<Vec<Pair>>;
+        let cs: &[Vec<Pair>] = if force.is_empty() {
+            cs0
+        } else {
+            let fset: std::collections::BTreeSet<usize> = force.iter().copied().collect();
+            cs_filt = cs0
+                .iter()
+                .filter(|c| {
+                    c.iter().map(|&(s, _)| s).collect::<std::collections::BTreeSet<usize>>() == fset
+                })
+                .cloned()
+                .collect();
+            &cs_filt
+        };
+        let cap_d = match stage {
+            1 => CAP_XC,
+            2 => CAP_XXC,
+            _ => CAP_XXXC,
+        }
+        .min(max_depth);
+
+        struct Ctx {
+            e4_24: usize,
+            corn: [usize; 4],
+            edg: [usize; 4],
+        }
+        let mut ctxs: Vec<Ctx> = Vec::with_capacity(2);
+        let mut cands: Vec<(u32, usize, usize)> = Vec::new();
+        let xt = &self.prune.xcross;
+        for fr in frames.iter() {
+            let mut a = base.clone();
+            alg_rotation(&mut a, fr);
+            let (_i1, _i2, e4_24, corn, edg) = self.root_state(&a);
+            let fi = ctxs.len();
+            for (ci, combo) in cs.iter().enumerate() {
+                let h = combo
+                    .iter()
+                    .map(|&(_s, p)| xt[p][e4_24 + corn[p]] as u32)
+                    .max()
+                    .unwrap();
+                cands.push((h, fi, ci));
+            }
+            ctxs.push(Ctx { e4_24, corn, edg });
+        }
+        if cs.is_empty() {
+            return (99, Vec::new());
+        }
+        cands.sort_by_key(|t| t.0);
+        let d0 = cands.iter().map(|t| t.0).min().unwrap_or(1).max(1);
+
+        let run = |solver: &Self, fi: usize, ci: usize, d: u32, out: &mut Vec<Vec<u8>>, cap: usize, ctxs: &[Ctx]| {
+            let ctx = &ctxs[fi];
+            let combo = &cs[ci];
+            let n = combo.len();
+            let mut prune_refs = [xt[0].as_slice(); 3];
+            let mut corn18 = [0usize; 3];
+            let mut edge18 = [0usize; 3];
+            let mut egoal = [0usize; 3];
+            let mut in_set = [false; 4];
+            for (i, &(s, p)) in combo.iter().enumerate() {
+                prune_refs[i] = xt[p].as_slice();
+                corn18[i] = ctx.corn[p] * 18;
+                edge18[i] = ctx.edg[s] * 18;
+                egoal[i] = SLOT_EDGE[s];
+                in_set[s] = true;
+            }
+            let mut free18 = [0usize; 3];
+            let mut nf = 0;
+            for s in 0..4 {
+                if !in_set[s] {
+                    free18[nf] = ctx.edg[s] * 18;
+                    nf += 1;
+                }
+            }
+            let mut path = Vec::new();
+            solver.enum_combo_masked(
+                ctx.e4_24, &corn18[..n], &edge18[..n], &egoal[..n], &free18[..nf],
+                &prune_refs[..n], d, 18, &mut path, out, cap, &vm,
+            );
+        };
+
+        let mut best_len = 99u32;
+        let mut tied: Vec<(usize, usize)> = Vec::new();
+        'bd: for d in d0..=cap_d {
+            for &(h, fi, ci) in &cands {
+                if h > d {
+                    continue;
+                }
+                let mut probe: Vec<Vec<u8>> = Vec::new();
+                run(self, fi, ci, d, &mut probe, 1, &ctxs);
+                if !probe.is_empty() {
+                    tied.push((fi, ci));
+                }
+            }
+            if !tied.is_empty() {
+                best_len = d;
+                break 'bd;
+            }
+        }
+        if best_len >= 99 {
+            return (99, Vec::new());
+        }
+
+        let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+        'collect: for d in best_len..=(best_len + extra).min(cap_d) {
+            for &(fi, ci) in &tied {
+                if out.len() >= cap {
+                    break 'collect;
+                }
+                let mut cand_out: Vec<Vec<u8>> = Vec::new();
+                run(self, fi, ci, d, &mut cand_out, cap - out.len(), &ctxs);
+                let label: Vec<usize> = cs[ci].iter().map(|&(s, _p)| s).collect();
+                for sol in cand_out {
+                    out.push((frames[fi].clone(), label.clone(), sol));
+                }
             }
         }
         (best_len, out)

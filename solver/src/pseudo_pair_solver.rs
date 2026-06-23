@@ -16,7 +16,8 @@
 use std::sync::Arc;
 
 use crate::cube_common::{
-    alg_rotation, array_to_index, conj_moves_flat, rot_map, state_space, valid_moves, Move,
+    alg_rotation, array_to_index, conj_moves_flat, rot_map, state_space, valid_moves,
+    valid_moves_masked, Move, MoveMask, ValidMovesTable,
 };
 use crate::executor::bump_node_count;
 use crate::move_tables::{self, MoveTable};
@@ -2256,6 +2257,386 @@ impl PseudoPairSmallSolver {
                 combo.extend(xc.iter().map(|q| q.slot));
                 let mut combo_out: Vec<Vec<u8>> = Vec::new();
                 self.enum_collect(p, xc, d, 18, &mut path, &mut combo_out, cap - out.len());
+                for sol in combo_out {
+                    out.push((frame.clone(), combo.clone(), sol));
+                }
+            }
+        }
+        (best_len, out)
+    }
+}
+
+// ============================================================================
+// 受限步法 Pseudo-Pair cascade(Phase 3:move mask,小表路径)
+// ----------------------------------------------------------------------------
+// 与上面无限制小表 cascade 同结构、同剪枝(现场 BFS cc / ins / pspair 表),仅把
+// `valid_moves()` 换成 `valid_moves_masked(mask)` 并加 `max_depth` 上限。所有剪枝表是
+// 无限制距离的可采纳下界,对任意 mask 仍可采纳 ⇒ IDA* 首达即真·受限最优(≤ max_depth),
+// 超界返回 99 哨兵。无 frame:每条解 frame = 传入 rot。task 构建(stage 0..3 候选)与
+// enumerate_small 同构,统一收进 build_tasks_pp。
+impl PseudoPairSmallSolver {
+    /// 与 enumerate_small 同构构建某 stage 的候选 (pair, xcross 集, 根启发式)。
+    fn build_tasks_pp(&self, st: &[PpConjState; 4], stage: usize) -> Vec<(PpPair, Vec<PpXc>, u32)> {
+        let mut tasks: Vec<(PpPair, Vec<PpXc>, u32)> = Vec::new();
+        match stage {
+            0 => {
+                for cs in 0..4 {
+                    for es in 0..4 {
+                        let p = Self::mk_pair(st, cs, es);
+                        let h = self.pair_h(&p);
+                        tasks.push((p, vec![], h));
+                    }
+                }
+            }
+            1 => {
+                for pc in 0..4 {
+                    for pe in 0..4 {
+                        for xc_c in 0..4 {
+                            if xc_c == pc {
+                                continue;
+                            }
+                            for xc_e in 0..4 {
+                                if xc_e == pe {
+                                    continue;
+                                }
+                                let p = Self::mk_pair(st, pc, pe);
+                                let q = Self::mk_xc(st, xc_c, xc_e);
+                                let h = self.pair_h(&p).max(self.xc_h(&q));
+                                tasks.push((p, vec![q], h));
+                            }
+                        }
+                    }
+                }
+            }
+            2 => {
+                for pc in 0..4 {
+                    for pe in 0..4 {
+                        let rem_c: Vec<usize> = (0..4).filter(|&x| x != pc).collect();
+                        let rem_e: Vec<usize> = (0..4).filter(|&x| x != pe).collect();
+                        for &c0 in &rem_c {
+                            for &c1 in &rem_c {
+                                if c1 == c0 {
+                                    continue;
+                                }
+                                for &e0 in &rem_e {
+                                    for &e1 in &rem_e {
+                                        if e1 == e0 {
+                                            continue;
+                                        }
+                                        if c0 > c1 {
+                                            continue;
+                                        }
+                                        let p = Self::mk_pair(st, pc, pe);
+                                        let q0 = Self::mk_xc(st, c0, e0);
+                                        let q1 = Self::mk_xc(st, c1, e1);
+                                        let h = self.pair_h(&p).max(self.xc_h(&q0)).max(self.xc_h(&q1));
+                                        tasks.push((p, vec![q0, q1], h));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {
+                const PERMS: [[usize; 3]; 6] = [
+                    [0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0],
+                ];
+                for pc in 0..4 {
+                    for pe in 0..4 {
+                        let rem_c: Vec<usize> = (0..4).filter(|&x| x != pc).collect();
+                        let rem_e: Vec<usize> = (0..4).filter(|&x| x != pe).collect();
+                        for perm in &PERMS {
+                            let p = Self::mk_pair(st, pc, pe);
+                            let q0 = Self::mk_xc(st, rem_c[0], rem_e[perm[0]]);
+                            let q1 = Self::mk_xc(st, rem_c[1], rem_e[perm[1]]);
+                            let q2 = Self::mk_xc(st, rem_c[2], rem_e[perm[2]]);
+                            let h = self
+                                .pair_h(&p)
+                                .max(self.xc_h(&q0))
+                                .max(self.xc_h(&q1))
+                                .max(self.xc_h(&q2));
+                            tasks.push((p, vec![q0, q1, q2], h));
+                        }
+                    }
+                }
+            }
+        }
+        tasks
+    }
+
+    fn search_masked(&self, p: &PpPair, xc: &[PpXc], depth: u32, prev: u8, vm: &ValidMovesTable) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let ref_slot = p.slot;
+        let n = xc.len();
+
+        let mut local: u64 = 0;
+        let mut nxc = [PpXc::default(); 3];
+        for k in 0..count {
+            let m = row[k] as usize;
+            local += 1;
+
+            let n_im = mt_e4[p.im as usize + m] as u32;
+            let n_ic = mt_c[p.ic as usize * 18 + m] as u32;
+            if self.ins[p.diff as usize].h(n_im, n_ic) >= depth {
+                continue;
+            }
+            let n_ie = mt_e[p.ie as usize * 18 + m] as u32;
+            if self.pair[p.diff as usize].h(n_ie, n_ic) >= depth {
+                continue;
+            }
+
+            let mut pruned = false;
+            for (j, q) in xc.iter().enumerate() {
+                let m_q = self.trans[ref_slot][q.slot][m] as usize;
+                let q_im = mt_e4[q.im as usize + m_q] as u32;
+                let q_ic = mt_c[q.ic as usize * 18 + m_q] as u32;
+                if self.cc.h(q_im, q_ic) >= depth {
+                    pruned = true;
+                    break;
+                }
+                let q_ie = mt_e[q.ie as usize * 18 + m_q] as u32;
+                nxc[j] = PpXc { im: q_im, ic: q_ic, ie: q_ie, slot: q.slot, diff: q.diff };
+            }
+            if pruned {
+                continue;
+            }
+
+            if depth == 1 {
+                let mut leaf = self.pair[p.diff as usize].h(n_ie, n_ic) == 0
+                    && self.ins[p.diff as usize].h(n_im, n_ic) == 0;
+                if leaf {
+                    for q in nxc.iter().take(n) {
+                        if self.cc.h(q.im, q.ic) != 0 || q.ie != 2 * q.diff {
+                            leaf = false;
+                            break;
+                        }
+                    }
+                }
+                if leaf {
+                    bump_node_count(local);
+                    return true;
+                }
+            } else {
+                let np = PpPair { im: n_im, ic: n_ic, ie: n_ie, slot: p.slot, diff: p.diff };
+                if self.search_masked(&np, &nxc[..n], depth - 1, m as u8, vm) {
+                    bump_node_count(local);
+                    return true;
+                }
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    fn solve_task_masked(&self, p: &PpPair, xc: &[PpXc], h: u32, lower: u32, max_d: u32, vm: &ValidMovesTable) -> u32 {
+        let root_solved = self.ins[p.diff as usize].h(p.im, p.ic) == 0
+            && self.pair[p.diff as usize].h(p.ie, p.ic) == 0
+            && xc.iter().all(|q| self.cc.h(q.im, q.ic) == 0 && q.ie == 2 * q.diff);
+        if root_solved {
+            return 0;
+        }
+        let start = std::cmp::max(h.max(lower), 1);
+        for d in start..=max_d {
+            if self.search_masked(p, xc, d, 18, vm) {
+                return d;
+            }
+        }
+        99
+    }
+
+    /// 受限版单阶段 6 视角(stage 0..3);限制下无解的视角为 None。
+    pub fn pseudo_pair_get_stage_small_masked(
+        &self,
+        alg: &[Move],
+        stage: usize,
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> Vec<Option<u32>> {
+        const ROTS: [&str; 6] = ["", "z2", "z'", "z", "x'", "x"];
+        let vm = valid_moves_masked(mask);
+        let max_d = 20u32.min(max_depth);
+        let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        ROTS.iter()
+            .map(|r| {
+                let mut a = base.clone();
+                alg_rotation(&mut a, r);
+                let st = self.initial_states(&a);
+                let mut tasks = self.build_tasks_pp(&st, stage);
+                tasks.sort_by_key(|t| t.2);
+                let mut best = 99u32;
+                for (p, xc, h) in &tasks {
+                    if *h > best {
+                        break;
+                    }
+                    let res = self.solve_task_masked(p, xc, *h, 0, max_d, &vm);
+                    best = best.min(res);
+                }
+                if best >= 99 { None } else { Some(best) }
+            })
+            .collect()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn enum_collect_masked(
+        &self,
+        p: &PpPair,
+        xc: &[PpXc],
+        depth: u32,
+        prev: u8,
+        path: &mut Vec<u8>,
+        out: &mut Vec<Vec<u8>>,
+        cap: usize,
+        vm: &ValidMovesTable,
+    ) {
+        if out.len() >= cap {
+            return;
+        }
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let ref_slot = p.slot;
+        let inv = (4 - ref_slot) % 4;
+        let cj = conj_moves_flat();
+        let n = xc.len();
+        let mut nxc = [PpXc::default(); 3];
+        for k in 0..count {
+            if out.len() >= cap {
+                return;
+            }
+            let m = row[k] as usize;
+
+            let n_im = mt_e4[p.im as usize + m] as u32;
+            let n_ic = mt_c[p.ic as usize * 18 + m] as u32;
+            if self.ins[p.diff as usize].h(n_im, n_ic) >= depth {
+                continue;
+            }
+            let n_ie = mt_e[p.ie as usize * 18 + m] as u32;
+            if self.pair[p.diff as usize].h(n_ie, n_ic) >= depth {
+                continue;
+            }
+
+            let mut pruned = false;
+            for (j, q) in xc.iter().enumerate() {
+                let m_q = self.trans[ref_slot][q.slot][m] as usize;
+                let q_im = mt_e4[q.im as usize + m_q] as u32;
+                let q_ic = mt_c[q.ic as usize * 18 + m_q] as u32;
+                if self.cc.h(q_im, q_ic) >= depth {
+                    pruned = true;
+                    break;
+                }
+                let q_ie = mt_e[q.ie as usize * 18 + m_q] as u32;
+                nxc[j] = PpXc { im: q_im, ic: q_ic, ie: q_ie, slot: q.slot, diff: q.diff };
+            }
+            if pruned {
+                continue;
+            }
+
+            path.push(cj[m][inv]);
+            let mut solved = self.pair[p.diff as usize].h(n_ie, n_ic) == 0
+                && self.ins[p.diff as usize].h(n_im, n_ic) == 0;
+            if solved {
+                for q in nxc.iter().take(n) {
+                    if self.cc.h(q.im, q.ic) != 0 || q.ie != 2 * q.diff {
+                        solved = false;
+                        break;
+                    }
+                }
+            }
+            if depth == 1 {
+                if solved {
+                    out.push(path.clone());
+                }
+            } else if !solved {
+                let np = PpPair { im: n_im, ic: n_ic, ie: n_ie, slot: p.slot, diff: p.diff };
+                self.enum_collect_masked(&np, &nxc[..n], depth - 1, m as u8, path, out, cap, vm);
+            }
+            path.pop();
+        }
+    }
+
+    /// 受限版 enumerate_small:同形 (best_len, Vec<(frame, combo, sol)>);限制下无解返回 (99, []).
+    #[allow(clippy::too_many_arguments)]
+    pub fn enumerate_small_masked(
+        &self,
+        alg: &[Move],
+        rot: &str,
+        stage: usize,
+        extra: u32,
+        cap: usize,
+        force: &[usize],
+        base: i32,
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
+        let vm = valid_moves_masked(mask);
+        let cap_d = 20u32.min(max_depth);
+        let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        alg_rotation(&mut a, rot);
+        let st = self.initial_states(&a);
+
+        let mut tasks = self.build_tasks_pp(&st, stage);
+        if base >= 0 {
+            let b = base as usize;
+            tasks.retain(|(p, _xc, _)| p.slot == b);
+        }
+        if !force.is_empty() {
+            let want: std::collections::BTreeSet<usize> = force.iter().copied().collect();
+            tasks.retain(|(_p, xc, _)| {
+                xc.iter().map(|q| q.slot).collect::<std::collections::BTreeSet<usize>>() == want
+            });
+        }
+        if (base >= 0 || !force.is_empty()) && tasks.is_empty() {
+            return (99, Vec::new());
+        }
+        tasks.sort_by_key(|t| t.2);
+
+        let mut best_len = 99u32;
+        let mut evaluated: Vec<(PpPair, Vec<PpXc>, u32)> = Vec::new();
+        for (p, xc, h) in &tasks {
+            if *h > best_len {
+                break;
+            }
+            let res = self.solve_task_masked(p, xc, *h, 0, cap_d, &vm);
+            if res < best_len {
+                best_len = res;
+            }
+            evaluated.push((*p, xc.clone(), res));
+        }
+
+        if best_len == 0 {
+            return (0, Vec::new());
+        }
+        if best_len >= 99 {
+            return (99, Vec::new());
+        }
+
+        let tied: Vec<(PpPair, Vec<PpXc>)> = evaluated
+            .into_iter()
+            .filter(|(_, _, l)| *l == best_len)
+            .map(|(p, xc, _)| (p, xc))
+            .collect();
+        let frame = rot.to_string();
+        let mut out: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+        let mut path = Vec::new();
+        'outer: for d in best_len..=(best_len + extra).min(cap_d) {
+            for (p, xc) in &tied {
+                if out.len() >= cap {
+                    break 'outer;
+                }
+                let mut combo: Vec<usize> = Vec::with_capacity(1 + xc.len());
+                combo.push(p.slot);
+                combo.extend(xc.iter().map(|q| q.slot));
+                let mut combo_out: Vec<Vec<u8>> = Vec::new();
+                self.enum_collect_masked(p, xc, d, 18, &mut path, &mut combo_out, cap - out.len(), &vm);
                 for sol in combo_out {
                     out.push((frame.clone(), combo.clone(), sol));
                 }

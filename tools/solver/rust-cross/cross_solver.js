@@ -512,6 +512,23 @@ export class F2leoSolverWasm {
         return v2;
     }
     /**
+     * 受限步法版 solve_f2leo_stage:`mask` = 18 个 move 的 bitmask。限制下无解的视角
+     * 返回 u32::MAX 哨兵(client 显示 '-')。variant_mask_depth(mask) 封顶。
+     * @param {string} scramble
+     * @param {boolean} pseudo
+     * @param {number} stage
+     * @param {number} mask
+     * @returns {Uint32Array}
+     */
+    solve_f2leo_stage_masked(scramble, pseudo, stage, mask) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.f2leosolverwasm_solve_f2leo_stage_masked(this.__wbg_ptr, ptr0, len0, pseudo, stage, mask);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
      * 单格(F2LEO/Pseudo F2LEO × stage × face)多解步骤,返回 JSON {"len","combo","sols"}。
      * pseudo=false → F2LEO,true → Pseudo F2LEO;两者破坏 y 对称(同 eo),最优可能只在 rot·y
      * 帧达成,故步骤前缀用 enumerate_small 返回的真实帧(可能含尾 y,如 "x' y")。
@@ -534,6 +551,34 @@ export class F2leoSolverWasm {
             const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
             const ret = wasm.f2leosolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, pseudo, face, stage, extra, cap, ptr1, len1);
+            deferred3_0 = ret[0];
+            deferred3_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+    /**
+     * 受限步法版 solve_moves(同形 JSON)。限制下(或超界)无解 → len=u32::MAX 哨兵 + 空解集。
+     * @param {string} scramble
+     * @param {boolean} pseudo
+     * @param {number} face
+     * @param {number} stage
+     * @param {number} extra
+     * @param {number} cap
+     * @param {string} combo
+     * @param {number} mask
+     * @returns {string}
+     */
+    solve_moves_masked(scramble, pseudo, face, stage, extra, cap, combo, mask) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            const ret = wasm.f2leosolverwasm_solve_moves_masked(this.__wbg_ptr, ptr0, len0, pseudo, face, stage, extra, cap, ptr1, len1, mask);
             deferred3_0 = ret[0];
             deferred3_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
@@ -1117,6 +1162,35 @@ export class VariantSolverWasm {
         }
     }
     /**
+     * 受限步法版 solve_moves(同形 JSON)。限制下(或超界)无解 → len=u32::MAX 哨兵 + 空解集。
+     * @param {string} scramble
+     * @param {number} variant
+     * @param {number} face
+     * @param {number} stage
+     * @param {number} extra
+     * @param {number} cap
+     * @param {string} combo
+     * @param {number} base
+     * @param {number} mask
+     * @returns {string}
+     */
+    solve_moves_masked(scramble, variant, face, stage, extra, cap, combo, base, mask) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            const ret = wasm.variantsolverwasm_solve_moves_masked(this.__wbg_ptr, ptr0, len0, variant, face, stage, extra, cap, ptr1, len1, base, mask);
+            deferred3_0 = ret[0];
+            deferred3_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+    /**
      * 单阶段 6 值。两遍 UI:先 cross(stage 0)秒出,深阶段后台补。
      * @param {string} scramble
      * @param {number} variant
@@ -1127,6 +1201,23 @@ export class VariantSolverWasm {
         const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.variantsolverwasm_solve_stage(this.__wbg_ptr, ptr0, len0, variant, stage);
+        var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+        return v2;
+    }
+    /**
+     * 受限步法版 solve_stage(单阶段 6 视角)。`mask` = 18 个 move 的 bitmask;限制下无解的
+     * 视角返回 u32::MAX 哨兵(client 显示 '-')。variant_mask_depth(mask) 封顶。
+     * @param {string} scramble
+     * @param {number} variant
+     * @param {number} stage
+     * @param {number} mask
+     * @returns {Uint32Array}
+     */
+    solve_stage_masked(scramble, variant, stage, mask) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.variantsolverwasm_solve_stage_masked(this.__wbg_ptr, ptr0, len0, variant, stage, mask);
         var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
         wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
         return v2;

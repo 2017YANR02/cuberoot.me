@@ -47,6 +47,16 @@ export type Method = 'std' | 'eo' | 'pair' | 'pseudo' | 'pseudo_pair' | 'f2leo' 
 const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
   pair: 0, eo: 1, pseudo: 2, pseudo_pair: 3,
 };
+// 步法限制(move mask)已支持的方法:std + pair + eo。剪枝表「含边」启发式够紧;受限搜索深度
+// 按禁面数自适应封顶(见 wasm.rs variant_mask_depth):禁 1 面 ~0.25s 全覆盖,禁 ≥2 面压低 cap
+// 秒回(重限制多为无解,浏览器实测 flat cap12 下 stage0 禁2面 pair 15s/eo 30s,故压回 <~1s)。
+// pseudo/pseudo_pair/f2leo/pseudo_f2leo 小表丢边,受限下爆炸更狠(12-90s)→ 按红线不支持。
+// 块族 / BFS 陪集族(eoline/dr/htr/htr2/fr)由后续 agent 评估。
+const MASK_SUPPORTED: ReadonlySet<Method> = new Set<Method>(['std', 'pair', 'eo']);
+// pair/eo(variant 族):禁 1 面恒可解 → IDA* 早终止有界(浏览器实测 ~0.25s);禁 ≥2 面常无解
+// → 搜满深度爆炸(实测 15-30s,depth cap 压不下来),故 UI 限单面(点另一面 = 换禁的那面),
+// 结构性杜绝重限制卡顿。std(cross/xcross)状态空间小 + 精确剪枝,禁多面也有界 → 不限。
+const SINGLE_FACE_METHODS: ReadonlySet<Method> = new Set<Method>(['pair', 'eo']);
 // 方法名走全站单一真源 lib/scramble-variants(VARIANT_LABEL),别再本地复制一份。
 // 这里只定引擎支持的方法顺序(按 WASM kind 分组),标签 = variantLabel(key, isZh)。
 // 块族(原 123/222/223)聚合为一个方法 'block',块形状落在阶段下拉。
@@ -261,10 +271,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   // 步法限制:6 个 move 面是否允许(U D L R F B 顺序);默认全允许。仅 std 纯十字阶段生效。
   const [allowedFaces, setAllowedFaces] = useState<boolean[]>(() => [true, true, true, true, true, true]);
-  // 步法限制覆盖全部 std 阶段:cross(stage0,变体 0)+ XCross/F2L(stage1..4,变体 1..4)。
-  // std 的 stage 索引 = WASM variant(见 pool.solveFace(scr, stage, ...) 调用),变体 0..4 均接 masked
-  // 引擎(cross_solver / xcross_solver 小表 cascade)。其余方法暂无 masked 搜索(回退不受限)。
-  const maskSupported = method === 'std';
+  // 步法限制(move mask)已支持的方法集:std(cross_solver/xcross_solver)+ IDA* 小表族
+  // (pair/eo/pseudo/pseudo_pair = VariantSolver,f2leo/pseudo_f2leo = F2leoSolver)。这些都
+  // 走可采纳下界 + 迭代加深 masked 搜索,VARIANT_MASK_DEPTH 封顶 ⇒ 受限无解返哨兵不卡 tab。
+  // 块族(block/roux 122/123/223)与 BFS 陪集族(eoline/dr/htr/htr2/fr)暂不支持(后续接 / 不适用)。
+  const maskSupported = MASK_SUPPORTED.has(method);
+  const singleFace = SINGLE_FACE_METHODS.has(method); // pair/eo:UI 限最多禁 1 面(见上方注释)
   const moveMask = useMemo(() => {
     let m = 0;
     allowedFaces.forEach((on, i) => { if (on) m |= 0b111 << (3 * i); });
@@ -369,8 +381,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           } catch { /* skip face */ }
         }));
       } else {
+        const stageMask = restrictedRef.current ? moveMaskRef.current : undefined;
         const vals = kind === 'f2leo'
-          ? await pool.solveF2leoStage(scr, method === 'pseudo_f2leo', stage)
+          ? await pool.solveF2leoStage(scr, method === 'pseudo_f2leo', stage, stageMask)
           : kind === 'block222'
             ? await pool.solveBlock222Stage(scr)
             : kind === 'roux223'
@@ -383,9 +396,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                     ? await pool.solveHtr2Stage(scr)
                     : kind === 'fr'
                       ? await pool.solveFrStage(scr)
-                      : await pool.solveVariantStage(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], stage);
+                      : await pool.solveVariantStage(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], stage, stageMask);
         if (computeReq.current === my) {
-          for (let i = 0; i < 6; i++) result[i] = vals[i] ?? null;
+          // 受限下无解的视角 = u32::MAX(0xFFFFFFFF)哨兵 → null('-')。
+          for (let i = 0; i < 6; i++) { const v = vals[i]; result[i] = (v == null || v === 0xffffffff) ? null : v; }
           setCounts(result.slice());
         }
       }
@@ -443,10 +457,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       const cap = limit === 0 ? NO_LIMIT_CAP : limit;
       // 搜索深度恒定 = 最优+SLACK(=旧「+2」档,不引入新的性能成本);cap=用户选的展示条数,
       // 引擎按长度升序收集、够数即停。条数填不满时(短解不够)如实返回更少。
+      const movesMask = restrictedRef.current ? moveMaskRef.current : undefined;
       const res = kind === 'std'
-        ? await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: restrictedRef.current ? moveMaskRef.current : undefined })
+        ? await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: movesMask })
         : kind === 'f2leo'
-          ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap, combo })
+          ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap, combo, mask: movesMask })
           : kind === 'block222'
             ? await pool.solveBlock222Moves(scr, f, { extra: SOL_SLACK, cap })
             : kind === 'roux223'
@@ -459,7 +474,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                     ? await pool.solveHtr2Moves(scr, f, { extra: SOL_SLACK, cap })
                     : kind === 'fr'
                       ? await pool.solveFrMoves(scr, f, { extra: SOL_SLACK, cap })
-                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap, combo, base });
+                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap, combo, base, mask: movesMask });
       if (movesReq.current === my) {
         // 引擎按 HTM 升序收集;同 HTM 再按 QTM 升序(180°=2),Array.sort 稳定 → 原 DFS 序兜底。
         const sols = [...res.sols].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
@@ -757,14 +772,23 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       {/* 步法限制(仅纯十字阶段;6 个 move 面 U D L R F B 勾选,默认全开)。 */}
       {maskSupported && (
         <div className="stsv-moverestrict">
-          <span className="stsv-mr-label">{t('步法限制', 'Allowed moves')}</span>
+          <span className="stsv-mr-label">{t('步法限制', 'Allowed moves')}{singleFace ? t('(限单面)', ' (one face)') : ''}</span>
           <div className="stsv-mr-grid" role="group" aria-label={t('步法限制', 'Allowed moves')}>
             {MOVE_FACES.map((f, i) => (
               <button
                 key={f}
                 type="button"
                 className={`stsv-mr-cell${allowedFaces[i] ? ' is-on' : ''}`}
-                onClick={() => setAllowedFaces((prev) => prev.map((v, j) => (j === i ? !v : v)))}
+                onClick={() => setAllowedFaces((prev) => {
+                  // singleFace(pair/eo):最多禁 1 面 —— 禁已禁的 → 全开;否则只禁这一面(自动放开其余)
+                  if (singleFace) {
+                    if (!prev[i]) return [true, true, true, true, true, true];
+                    const next = [true, true, true, true, true, true];
+                    next[i] = false;
+                    return next;
+                  }
+                  return prev.map((v, j) => (j === i ? !v : v));
+                })}
                 aria-pressed={allowedFaces[i]}
                 title={allowedFaces[i]
                   ? t(`允许 ${f}(点击禁用)`, `${f} allowed (click to forbid)`)
@@ -910,7 +934,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                 {moves && !movesLoading && moves.sols.length === 0 && (
                   <div className="stsv-empty">
                     {restricted && isSentinel(moves.len)
-                      ? t('该步法限制下无解(或超出 12 步深度上限)', 'No solution under this move restriction (within the 12-move depth cap)')
+                      ? t('该步法限制下无解(或超出深度上限)', 'No solution under this move restriction (within the depth cap)')
                       : isSentinel(moves.len)
                         ? (method === 'htr2'
                           ? t('该视角未处于 HTR,HTR 收尾不适用', 'This view is not in HTR, so HTR-finish does not apply')

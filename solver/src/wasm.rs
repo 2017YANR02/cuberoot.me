@@ -787,6 +787,24 @@ const CROSS_MASK_DEPTH: u32 = 12;
 /// 真·受限最优 > 13 的(罕见深 F2L)返回「无解」哨兵,代价换不卡 tab。
 const XCROSS_MASK_DEPTH: u32 = 13;
 
+/// 受限步法 IDA* 小表族(实际仅 **pair / eo** 接入)搜索深度上限。
+/// **注意:depth cap 单独压不住 variant 族的重限制爆炸。** 浏览器实测:stage0 禁 1 面 ~0.25s
+/// (解浅早终止),但禁 2 面常无解,masked IDA* 要搜满深度才能证伪,而剪枝表是「无限制距离」
+/// 对受限无解给不出有用下界 → cap 12/10/8 一律 15-30s(不像 CrossSolver 有精确距离表能秒证
+/// 无解 → cross/xcross 禁多面仍 <0.6s)。**真正的兜底是 client UI 把 pair/eo 限单面**
+/// (StageSolver SINGLE_FACE_METHODS):禁 1 面恒可解 → 必早终止有界,结构性杜绝 2+ 面。本函数
+/// 自适应封顶(禁面越多 cap 越低)仅作二次防御 + 文档;UI 限单面后实际只会收到 0|1 面禁用(cap12)。
+/// **pseudo / pseudo_pair / f2leo / pseudo_f2leo 不接入 MASK_SUPPORTED**:小表启发式**丢边**爆
+/// 炸更狠(12-90s);理论上也可像 pair/eo 限单面接入,但其 1 面时延未验证,留作后续。
+fn variant_mask_depth(mask: u32) -> u32 {
+    let forbidden = (0..6).filter(|i| (mask >> (3 * i)) & 0b111 == 0).count();
+    match forbidden {
+        0 | 1 => 12,
+        2 => 10,
+        _ => 8,
+    }
+}
+
 #[wasm_bindgen]
 pub struct CrossSolverWasm {
     cross: CrossSolver,
@@ -1102,6 +1120,60 @@ impl F2leoSolverWasm {
             raw.iter().map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo))).collect();
         sols_json(len, &items)
     }
+
+    /// 受限步法版 solve_f2leo_stage:`mask` = 18 个 move 的 bitmask。限制下无解的视角
+    /// 返回 u32::MAX 哨兵(client 显示 '-')。variant_mask_depth(mask) 封顶。
+    pub fn solve_f2leo_stage_masked(&self, scramble: &str, pseudo: bool, stage: u32, mask: u32) -> Vec<u32> {
+        let alg = string_to_alg(scramble);
+        let st = stage.min(3) as usize;
+        let out = if pseudo {
+            self.ensure_pseudo();
+            self.pseudo.borrow().as_ref().unwrap().get_stage_masked(&alg, st, mask, variant_mask_depth(mask))
+        } else {
+            self.ensure_f2leo();
+            self.f2leo.borrow().as_ref().unwrap().get_stage_masked(&alg, st, mask, variant_mask_depth(mask))
+        };
+        out.into_iter().map(|v| v.unwrap_or(u32::MAX)).collect()
+    }
+
+    /// 受限步法版 solve_moves(同形 JSON)。限制下(或超界)无解 → len=u32::MAX 哨兵 + 空解集。
+    #[allow(clippy::too_many_arguments)]
+    pub fn solve_moves_masked(
+        &self,
+        scramble: &str,
+        pseudo: bool,
+        face: u32,
+        stage: u32,
+        extra: u32,
+        cap: u32,
+        combo: &str,
+        mask: u32,
+    ) -> String {
+        let alg = string_to_alg(scramble);
+        let rot = ROTS[(face as usize).min(5)];
+        let stage = stage.min(3) as usize;
+        let cap = cap as usize;
+        let label = |combo: &[usize]| {
+            combo.iter().map(|&s| SLOT_LABELS[s.min(3)]).collect::<Vec<_>>().join(" ")
+        };
+        let force = parse_combo(combo);
+        let (len, raw) = if pseudo {
+            self.ensure_pseudo();
+            let b = self.pseudo.borrow();
+            b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, variant_mask_depth(mask))
+        } else {
+            self.ensure_f2leo();
+            let b = self.f2leo.borrow();
+            b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, variant_mask_depth(mask))
+        };
+        // best_len==99 = 限制下(或超界)无解 → u32::MAX 哨兵 + 空解集。
+        if len >= 99 {
+            return sols_json(u32::MAX, &[]);
+        }
+        let items: Vec<(String, String)> =
+            raw.iter().map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo))).collect();
+        sols_json(len, &items)
+    }
 }
 
 /// 其余 comp 变体的浏览器小表求解(count-only,逐格 bit-exact 对照大表/huge 路径)。
@@ -1358,6 +1430,93 @@ impl VariantSolverWasm {
                 pack(len, raw)
             }
             _ => sols_json(0, &[]),
+        }
+    }
+
+    /// 受限步法版 solve_stage(单阶段 6 视角)。`mask` = 18 个 move 的 bitmask;限制下无解的
+    /// 视角返回 u32::MAX 哨兵(client 显示 '-')。variant_mask_depth(mask) 封顶。
+    pub fn solve_stage_masked(&self, scramble: &str, variant: u32, stage: u32, mask: u32) -> Vec<u32> {
+        let alg = string_to_alg(scramble);
+        let st = stage as usize;
+        let out: Vec<Option<u32>> = match variant {
+            0 => {
+                self.ensure_pair();
+                self.pair.borrow().as_ref().unwrap().get_stage_small_masked(&alg, &ROTS, st, mask, variant_mask_depth(mask))
+            }
+            1 => {
+                self.ensure_eo();
+                self.eo.borrow().as_ref().unwrap().eo_get_stage_small_masked(&alg, st, mask, variant_mask_depth(mask))
+            }
+            2 => {
+                self.ensure_pseudo();
+                self.pseudo.borrow().as_ref().unwrap().pseudo_get_stage_small_masked(&alg, st, mask, variant_mask_depth(mask))
+            }
+            3 => {
+                self.ensure_pseudo_pair();
+                self.pseudo_pair.borrow().as_ref().unwrap().pseudo_pair_get_stage_small_masked(&alg, st, mask, variant_mask_depth(mask))
+            }
+            _ => vec![None; 6],
+        };
+        out.into_iter().map(|v| v.unwrap_or(u32::MAX)).collect()
+    }
+
+    /// 受限步法版 solve_moves(同形 JSON)。限制下(或超界)无解 → len=u32::MAX 哨兵 + 空解集。
+    #[allow(clippy::too_many_arguments)]
+    pub fn solve_moves_masked(
+        &self,
+        scramble: &str,
+        variant: u32,
+        face: u32,
+        stage: u32,
+        extra: u32,
+        cap: u32,
+        combo: &str,
+        base: i32,
+        mask: u32,
+    ) -> String {
+        let alg = string_to_alg(scramble);
+        let rot = ROTS[(face as usize).min(5)];
+        let stage = stage as usize;
+        let cap = cap as usize;
+        let force = parse_combo(combo);
+        let label = |combo: &[usize]| {
+            combo.iter().map(|&s| SLOT_LABELS[s.min(3)]).collect::<Vec<_>>().join(" ")
+        };
+        let pack = |len: u32, raw: Vec<(String, Vec<usize>, Vec<u8>)>| -> String {
+            if len >= 99 {
+                return sols_json(u32::MAX, &[]);
+            }
+            let items: Vec<(String, String)> =
+                raw.iter().map(|(frame, combo, p)| (fmt_moves(frame, p), label(combo))).collect();
+            sols_json(len, &items)
+        };
+        let d = variant_mask_depth(mask);
+        match variant {
+            0 => {
+                self.ensure_pair();
+                let b = self.pair.borrow();
+                let (len, raw) = b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, base, mask, d);
+                pack(len, raw)
+            }
+            1 => {
+                self.ensure_eo();
+                let b = self.eo.borrow();
+                let (len, raw) = b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, d);
+                pack(len, raw)
+            }
+            2 => {
+                self.ensure_pseudo();
+                let b = self.pseudo.borrow();
+                let (len, raw) = b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, d);
+                pack(len, raw)
+            }
+            3 => {
+                self.ensure_pseudo_pair();
+                let b = self.pseudo_pair.borrow();
+                let (len, raw) = b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, cap, &force, base, mask, d);
+                pack(len, raw)
+            }
+            _ => sols_json(u32::MAX, &[]),
         }
     }
 }
