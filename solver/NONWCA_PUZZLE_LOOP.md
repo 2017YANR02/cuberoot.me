@@ -21,7 +21,7 @@
 ## §0.0 铁律(踩过 22 个单元的血泪,先读)
 
 1. **编辑器 / `new-diagnostics` 诊断一律不信** —— 多 agent 跑时它们恒陈旧(幻报「X 不可赋给 SolvePuzzle」「缺于 EVENT_ID」甚至「Cannot find module 2307」,本 loop 每次都是假)。唯一真相 = 跑 `pnpm --filter @cuberoot/client typecheck`(tsgo)**和** `typecheck:tsc`,各自 `; echo EXIT=$?` 直接看(**禁** tail/head/grep 管道,管道吞过真 exit)+ `git show --stat <hash>` 验提交完整。禁凭诊断派「修复」,先用两个 typechecker 复现。
-2. **先实算真闭包,再定档** —— 估值本 loop 错过 ~7 次(dino 35,640→239.5M;233→1.42e9;ctico ~1e8→7.1e34;gear 12.4M→41,472;sfl ~1e5→3.04M;ufo 200M→60,480;dmd ~1e6→138,240)。每单元必先跑 bounded BFS(OOM/耗时守卫)量真实可达态再选 A/B/C/D,太大就降档,**禁拿纸面估值定档**。
+2. **先实算真闭包,再定档** —— 估值本 loop 错过 ~7 次(dino 35,640→239.5M;233→1.42e9;ctico ~1e8→7.1e34;gear 12.4M→41,472;sfl ~1e5→3.04M;ufo 200M→60,480;dmd ~1e6→138,240)。每单元必先跑 bounded BFS(OOM/耗时守卫)量真实可达态再选 A/B/C/D,太大就降档,**禁拿纸面估值定档**。**重开一个延后单元时同样要 BFS 到饱和(frontier→0)重测,别信 §1/§3 里旧记的态数 —— 一个「深度 N / M 态」也可能是 mid-BFS 路标被误当总数**(sia113 血泪 2026-06-23:§3 记的「2,626,601 / 深度 19」实为**深度-20 累计路标**,BFS 继续到深度 21 已 4,839,262 且前沿仍 1.2M、直径 >21,真陪集 ~10⁷⁺ → 单表 PDB 常驻 ≥110MB 移动端发不动 = TRUE WALL;我据 bic 范式 + 旧 2.6M 数字重开,实测才知前提是错的)。
 3. **诚实记质量** —— 每单元日志显式写质量桶:「近最优(均值 N 步,method=…)」或「有效 + 有界(≤N 步,未优化)」。jumbling / 天文量级的「有效 + 有界」是**已接受结果**,别假装近最优。
 4. **状态数可超 2^53** —— 一律存/显示为预格式化字符串,**禁** JS number 字面量(D1b 把 4.3e19 写成数字字面量丢精度)。
 5. **UI 债真实在欠** —— 几乎每单元带 `[untested-ui]`(dev server 没起 / RAM 被大求解器占)。逻辑全 vitest 验过,只欠 Playwright;dev 起来 + RAM 空出后一次 UI-sweep(solver+stats 页、桌面 + 390px、预览渲染、0 console error)清账。**单元内绝不自启 dev server**(见 §0 约束)。
