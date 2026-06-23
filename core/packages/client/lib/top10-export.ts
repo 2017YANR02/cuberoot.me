@@ -442,10 +442,13 @@ export interface ExportProgress {
   framesDone: number;
   framesTotal: number;
 }
+export type RaceMode = 'persons' | 'results';
 export interface ExportOptions {
   events: PbEvent[];
   eventId: string;
   metric: Metric;
+  /** 'persons'(按人,默认)| 'results'(按成绩,同人可多条) */
+  raceMode?: RaceMode;
   persons: Record<string, PersonInfo>;
   comps: Record<string, CompInfo>;
   startMs: number;
@@ -465,6 +468,7 @@ export interface ExportOptions {
 export async function exportTop10Video(opts: ExportOptions): Promise<void> {
   const { events, eventId, metric, persons, comps, startMs, endMs, mode, speed,
     rankChangeDates, isZh, abortRef, onProgress, previewCanvas, metricLabel } = opts;
+  const raceMode: RaceMode = opts.raceMode ?? 'persons';
 
   // 预览 ctx(每 N 帧 drawImage 到外部 canvas,UX + 调试用)
   let previewCtx: CanvasRenderingContext2D | null = null;
@@ -533,7 +537,8 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
   }
 
   // 增量推进 state(避免每帧 O(events) 重 replay)
-  const state = new Map<string, { v: number; c: string; d: string }>();
+  // key:选手模式=pid(去重,同人更优 PB 覆盖);成绩模式=`i${序号}`(唯一,同人可多条)
+  const state = new Map<string, { pid: string; v: number; c: string; d: string }>();
   let curIdx = -1;
   let top1Pid: string | null = null;
   let top1V = Infinity;
@@ -543,7 +548,9 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
     while (curIdx < target) {
       curIdx++;
       const e = events[curIdx];
-      state.set(e.p, { v: e.v, c: e.c, d: e.d });
+      const key = raceMode === 'results' ? `i${curIdx}` : e.p;
+      state.set(key, { pid: e.p, v: e.v, c: e.c, d: e.d });
+      // top1 永远按「人」追踪(横幅 = WR 保持者)
       if (e.v < top1V) {
         if (e.p !== top1Pid) top1Since = e.d;
         top1Pid = e.p;
@@ -574,8 +581,7 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
       if (targetEvIdx >= 0) advanceTo(targetEvIdx);
 
       // top10
-      const top10 = [...state.entries()]
-        .map(([pid, st]) => ({ pid, ...st }))
+      const top10 = [...state.values()]
         .sort((a, b) => a.v - b.v || a.d.localeCompare(b.d))
         .slice(0, SHOW_N);
 
@@ -655,7 +661,7 @@ export async function exportTop10Video(opts: ExportOptions): Promise<void> {
   const a = document.createElement('a');
   const tsTag = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   a.href = url;
-  a.download = `top10_${eventId}_${metric}_${mode}_${tsTag}.mp4`;
+  a.download = `top10_${eventId}_${metric}_${raceMode}_${mode}_${tsTag}.mp4`;
   document.body.appendChild(a);
   a.click();
   a.remove();
