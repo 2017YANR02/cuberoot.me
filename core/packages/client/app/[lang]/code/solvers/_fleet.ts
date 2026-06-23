@@ -105,6 +105,9 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
   { event: 'cm3', zhName: 'Cmetrick', enName: 'Cmetrick', tier: 'D', quality: 'bounded',
     states: '165,112,971,264', zhStates: '≈ 1.65×10¹¹ = 24⁹/24', enStates: '≈ 1.65×10¹¹ = 24⁹/24', gods: 'cap CM3_MAX_LENGTH=60',
     zhMethod: '从零逐球约简 (cm2 的 3×3 放大): 先用线翻转解 9 个符号位 (G/H=Z2), 再用单球对易子 gadget 逐球归位; 参考 jaapsch.net', enMethod: 'from-scratch ball-by-ball reduction (the 3×3 scaling of cm2): line-flips solve the 9 sign bits (G/H=Z2), then single-ball commutator gadgets fix each ball; cf. jaapsch.net' },
+  { event: 'heli', zhName: '直升机', enName: 'Helicopter Cube', tier: 'D', quality: 'bounded',
+    states: '11,848,661,611,315,200,000', zhStates: '≈ 1.18×10¹⁹ = 8!·3⁷·(6!)⁴/2 (Schreier-Sims 验证)', enStates: '≈ 1.18×10¹⁹ = 8!·3⁷·(6!)⁴/2 (Schreier-Sims verified)', gods: 'cap HELI_MAX_LENGTH=400',
+    zhMethod: '从零对易子约简 (按轨道分组的棱翼缓冲): 奇偶前缀 + 角 3-循环 + 角扭转 + 4 个棱翼轨道各自缓冲 3-循环; 移动语义/打乱镜像 cstimer (cs0x7f), 几何/oracle 用 cstimer poly3dlib', enMethod: 'from-scratch commutator reduction (per-orbit wing buffers): parity prefix + corner 3-cycles + corner twists + per-orbit (4 wing orbits) buffer 3-cycles; move semantics/scrambler mirror cstimer (cs0x7f), geometry/oracle from cstimer poly3dlib' },
 ];
 
 // 已登记但尚未建求解器的 TIER D2 backlog (诚实: 未建). 见 solver/NONWCA_PUZZLE_LOOP.md §1 TIER D2 表.
@@ -116,7 +119,6 @@ export const NONWCA_TS_PLANNED: ReadonlyArray<{ event: string; zh: string; en: s
   { event: 'prcp', zh: '五魔金字塔', en: 'Pyraminx Crystal' },
   { event: 'giga', zh: '六阶五魔', en: 'Gigaminx' },
   { event: 'ctico', zh: '二十面体', en: 'Icosamate' },
-  { event: 'heli', zh: '直升机', en: 'Helicopter' },
   { event: 'helicv', zh: '弧面直升机', en: 'Curvy Copter' },
 ];
 
