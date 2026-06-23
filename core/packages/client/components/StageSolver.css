@@ -316,7 +316,6 @@ html[data-theme='dark'] .stsv {
   border-radius: 4px;
   white-space: nowrap;
 }
-.stsv-sol-play,
 .stsv-sol-copy {
   background: none;
   border: none;
@@ -327,9 +326,7 @@ html[data-theme='dark'] .stsv {
   padding: 2px;
   flex: 0 0 auto;
 }
-.stsv-sol-play:hover,
 .stsv-sol-copy:hover { color: var(--sv-accent); }
-.stsv-sol-row.is-active .stsv-sol-play { color: var(--sv-accent); }
 
 /* y 预转体循环按钮:文字 token 样式,启用时高亮 */
 .stsv-sol-rot {
