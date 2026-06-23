@@ -24,12 +24,22 @@ export const Y_ROT_LABEL = ['y', 'y', 'y2', "y'"] as const;
 /**
  * @param alg  原始解法(空格分隔,通常纯单层面转,也容忍含前导旋转)
  * @param n    预转体次数 0..3(会取模);0 原样返回
+ *
+ * 解法开头若带朝向前缀(如 `z` / `x'` / `x' y`,= 选面视角的整体旋转),y 预转体作用在
+ * **该前缀之后**(显示成 `z y …` 而非 `y z …`):前缀原样保留,只对其后的实际转动重写朝向。
  */
 export function rotateSolutionY(alg: string, n: number): string {
   const k = ((Math.trunc(n) % 4) + 4) % 4;
   const body = alg.trim();
   if (k === 0 || !body) return body;
-  const tokens = `${Y_INV[k]} ${body} ${Y_PREFIX[k]}`.trim().split(/\s+/);
+  // 剥离开头连续的整体旋转 token(x/y/z ± 2/'),y 预转体插在它们之后。
+  const all = body.split(/\s+/);
+  let p = 0;
+  while (p < all.length && /^[xyz][2']?$/.test(all[p])) p++;
+  const prefix = all.slice(0, p);
+  const moves = all.slice(p);
+  if (moves.length === 0) return body; // 全是旋转,无实际转动可重写
+  const tokens = `${Y_INV[k]} ${moves.join(' ')} ${Y_PREFIX[k]}`.trim().split(/\s+/);
   const relabeled = normalize(tokens);
-  return [Y_PREFIX[k], ...relabeled].join(' ').trim();
+  return [...prefix, Y_PREFIX[k], ...relabeled].join(' ').trim();
 }
