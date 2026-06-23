@@ -464,6 +464,28 @@ const REGISTRY: PuzzleDistSpec[] = [
       };
     },
   },
+  {
+    event: 'sia222',
+    label: 'Siamese 2×2×2',
+    scrambleLen: 12,          // = CSTIMER_EVENTS sia222 length (each cube-A / cube-B block is 12 tokens)
+    // 三张 PDB 离线 BFS 一次(~90s),之后每条按 z2 y 拆半 + 各半 IDA* 几十 ms → N=2000 单进程几 min。
+    defaultN: 2000,
+    // per-half 最优拼接 = 全局最优(直积结构),故 sampled-OPTIMAL(不同于长方体的 near-optimal)。
+    quality: 'sampled-optimal',
+    load: async () => {
+      const m = await mod('../../client/lib/sia222-solver');
+      const sia222BuildPdbs = m.sia222BuildPdbs as () => unknown;
+      const solveSia222Length = m.solveSia222Length as (pdbs: unknown, s: string) => { length: number; optimal: boolean };
+      // build the PDBs ONCE here; reuse across all samples.
+      const pdbs = sia222BuildPdbs();
+      return {
+        scramble: m.randomSia222Scramble as SolverAdapter['scramble'],
+        solve: (s: string) => solveSia222Length(pdbs, s),
+        maxBound: m.SIA222_MAX_LENGTH as number,
+        stateCountStr: m.SIA222_BONDED_GROUP_ORDER as string,
+      };
+    },
+  },
   // NOTE: 15p (数字华容道) 故意 NOT 注册 —— 其 walking-distance IDA* 对均匀随机深态单条可能跑数分钟(N=20
   // 离线采样 >200s 未完成),即便很小的 N 也无法给出平滑直方图且有 runaway/OOM 风险(并发重 solver 在跑)。
   // 故跳过,Slide15DistView 保持现场采样(深态在浏览器里也慢,但有进度条+可取消)。若日后换更强求解器再接入。

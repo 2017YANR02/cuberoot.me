@@ -285,7 +285,7 @@ try {
 # analyzer / 真题语料,求解器是 packages/client/lib/<puzzle>-solver.ts 的纯 TS 实现; build_puzzle_sampled_dist.ts
 # 直接 import 它、用它自带的 cstimer 同款随机生成器采样。每条求解 ~0.2-0.4s,N 默认几百~两千 → 单 event 几分钟。
 # 新接入一个 C/D 采样分布 = 在 build_puzzle_sampled_dist.ts 的 REGISTRY 加一行 + 此处 $SAMPLED_DIST_EVENTS 加 event。
-$SAMPLED_DIST_EVENTS = @('335', '336', '337', '233', '334', 'crz3a', 'mpyrso', 'dino', 'sq2', 'ssq1', 'bsq', 'cm3', 'heli', 'helicv', 'ctico')   # 已离线采样的 TIER C/D event(随后续 wave 退役各 DistView 现场采样而增长;15p 求解器太慢未接入)
+$SAMPLED_DIST_EVENTS = @('335', '336', '337', '233', '334', 'crz3a', 'mpyrso', 'dino', 'sq2', 'ssq1', 'bsq', 'cm3', 'heli', 'helicv', 'ctico', 'sia222')   # 已离线采样的 TIER C/D event(随后续 wave 退役各 DistView 现场采样而增长;15p 求解器太慢未接入)
 $evToBuild = if ($SampledEvents -and $SampledEvents.Count -gt 0) { $SampledEvents } else { $SAMPLED_DIST_EVENTS }
 if ($evToBuild.Count -gt 0) {
   Step "build_puzzle_sampled_dist (TIER C/D 离线采样: $($evToBuild -join ', '))"
@@ -310,7 +310,7 @@ if ($evToBuild.Count -gt 0) {
 # 落 TIER B —— 离线 BFS 整图一次,把每态精确最优距离按确定性 rank 索引、gzip 成紧凑表,浏览器只 fetch+查表+
 # 梯度下降解(可证最优)。输出确定性(无 Date.now/Math.random)、同输入逐字节可复现,故每次重跑都安全幂等。
 # 目前仅 bic(联体魔方,1,108,800 态,现场 BFS ~6.4s/~510MB)。新接入一个 TIER B = 在此列表加 build 脚本一行。
-$TIER_B_BUILDERS = @('build_bic_table.ts')   # gz ≤~2MB 的随 stats commit;更大则改 scp-only + §3 MANUAL 记一笔
+$TIER_B_BUILDERS = @('build_bic_table.ts', 'build_sia222_table.ts')   # gz ≤~2MB 的随 stats commit (opt_bic);更大改 scp-only + §3 MANUAL (opt_sia222 ~4MB → 发布到 static, 不进 repo)
 if ($TIER_B_BUILDERS.Count -gt 0) {
   Step "TIER B 离线精确距离表 ($($TIER_B_BUILDERS -join ', '))"
   Push-Location $PkgDir
