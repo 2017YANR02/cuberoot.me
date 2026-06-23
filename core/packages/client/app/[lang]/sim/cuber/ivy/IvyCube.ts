@@ -39,25 +39,15 @@ import { COLORS } from '../define';
 import { MOVE_CENTERS } from '@/lib/ivy-solver';
 import { facePathsGrooved, type Corner } from './ivyFacePaths';
 import IvyTwister from './IvyTwister';
+import MoveHistory from '../MoveHistory';
+import { makeAnim, type PieceAnim } from '../pieceAnim';
+import type { TweenCube } from '../TweenTwister';
 
 export interface IvyMove { axis: number; times: number; name: string; }
 
-export interface IvyAnim {
-  pivot: THREE.Object3D;
-  startQuat: THREE.Quaternion;
-  endQuat: THREE.Quaternion;
-  axis: THREE.Vector3;
-  angle: number;
-}
-
-export class IvyHistory {
-  moves: string[] = [];
-  redoStack: string[] = [];
-  init = '';
-  get length(): number { return this.moves.length; }
-  clear(): void { this.moves.length = 0; this.redoStack.length = 0; }
-  record(move: string): void { this.moves.push(move); this.redoStack.length = 0; }
-}
+/** Ivy anims are quaternion-only (corners turn in place). Alias the shared type
+ *  so existing IvyAnim references + the SimPage import keep working. */
+export type IvyAnim = PieceAnim;
 
 // Face order = lib/ivy-solver: U R F B L D = 0..5.
 const FACE_LETTER = ['U', 'R', 'F', 'B', 'L', 'D'] as const;
@@ -150,12 +140,12 @@ function outlinePoints(d: string): THREE.Vector2[] {
   return pts;
 }
 
-export default class IvyCube extends THREE.Group {
+export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
   readonly puzzleType = 'ivy' as const;
   order = 0;
   dirty = true;
   callbacks: (() => void)[] = [];
-  history = new IvyHistory();
+  history = new MoveHistory();
   twister: IvyTwister;
 
   /** centerPivot[piece] — the pivot of center piece `piece` (home face = piece). */
@@ -340,11 +330,7 @@ export default class IvyCube extends THREE.Group {
       this.centerPivot[this.pivotAtFace[fb]],
       this.centerPivot[this.pivotAtFace[fd]],
     ];
-    return pivots.map((pivot) => {
-      const startQuat = pivot.quaternion.clone();
-      const endQuat = delta.clone().multiply(startQuat);
-      return { pivot, startQuat, endQuat, axis: axisV, angle };
-    });
+    return pivots.map((pivot) => makeAnim(pivot, delta, axisV, angle));
   }
 
   /** Advance the discrete state (face permutation + corner twist) for a move. */

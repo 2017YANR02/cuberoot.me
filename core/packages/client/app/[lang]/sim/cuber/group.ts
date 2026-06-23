@@ -4,17 +4,9 @@ import { TwistAction } from "./twister";
 import Cube from "./cube";
 import * as THREE from "three";
 import tweener, { Tween } from "./tweener";
+import { timing } from "./tweenTiming";
 
 export default class CubeGroup extends THREE.Group {
-  public static frames = 30;
-
-  /** Tween duration formula shared with sq1: scales sub-linearly with the move
-   *  magnitude `d` (in 90° units). 90° = frames; 180° = ~1.33×frames; 30° =
-   *  0.5×frames. Sq1Twister reads this so the two animations stay in lockstep
-   *  if anyone retunes the curve. */
-  static tweenDuration(d: number): number {
-    return CubeGroup.frames * (2 - 2 / (d + 1));
-  }
   public static readonly AXIS_VECTOR: { [key: string]: THREE.Vector3 } = {
     a: new THREE.Vector3(1, 1, 1),
     x: new THREE.Vector3(-1, 0, 0),
@@ -228,7 +220,7 @@ export default class CubeGroup extends THREE.Group {
       this.drop();
     } else {
       const d = Math.abs(delta) / (Math.PI / 2);
-      const duration = CubeGroup.frames * (2 - 2 / (d + 1));
+      const duration = timing.frames * (2 - 2 / (d + 1));
       this.tween = tweener.tween(this.angle, angle, duration, (value: number) => {
         this.angle = value;
         if (Math.abs(this.angle - angle) < 1e-6) {
