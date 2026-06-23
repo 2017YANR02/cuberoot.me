@@ -64,15 +64,13 @@ html:not([data-palette-scheme=dark]) .wse-page {
   color: var(--foreground);
 }
 
+/* 筛选行不套卡片外框(背景 / 边框 / 内边距),留白靠 gap + margin —— 遵全局「不加多余外框」 */
 .wse-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 12px 16px;
-  margin: 24px 0 16px;
-  padding: 16px;
-  background: color-mix(in srgb, var(--foreground) 3%, transparent);
-  border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
+  margin: 16px 0;
+  padding: 0;
 }
 
 .wse-filter {
@@ -472,7 +470,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
 /* Mobile */
 @media (max-width: 600px) {
   .wse-page { padding: 16px 8px; }
-  .wse-filters { padding: 12px; gap: 10px; }
+  .wse-filters { gap: 10px; }
   .wse-filter { min-width: 0; flex: 1 0 calc(50% - 8px); }
   .wse-filter-q { flex: 1 0 100%; }
   .wse-table th, .wse-table td { padding: 6px 8px; font-size: 13px; }

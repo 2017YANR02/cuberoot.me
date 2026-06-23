@@ -339,7 +339,7 @@ for (const def of METRIC_DEFS) {
     },
     { id: 'wr_dominance', titleZh: '屠榜', titleEn: 'Dominance', hintZh: '同维度看"领先程度"', hintEn: 'Same dimensions, but measuring the lead size'
     },
-    { id: 'wr_metric', toStat: true, titleZh: '直接打开 Metric 总表', titleEn: 'Jump to Metric explorer', hintZh: '13 个指标 × 项目下拉', hintEn: '13 metrics × event dropdown'
+    { id: 'wr_metric', toStat: true, statHref: '/wca/results?view=metric', titleZh: '直接打开 Metric 总表', titleEn: 'Jump to Metric explorer', hintZh: '13 个指标 × 项目下拉', hintEn: '13 metrics × event dropdown'
     },
   ]
 };

@@ -35,6 +35,7 @@ import { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { EventIcon } from '@/components/EventIcon';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { WcaStatView } from '@/components/wca-stats/WcaStatView';
+import { WR_METRICS, RANK_TYPE_IDS, DEFAULT_METRIC_ID } from '@/lib/wr-metrics';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
@@ -110,28 +111,6 @@ interface SorRow {
 interface CensusRow { rank: number; wcaId: string; name: string; iso2: string | null; subsetsWon: number; }
 interface Census { type: string; inclCancelled: boolean; noPodium?: boolean; year: number | null; years: number[]; distinct: number; totalSubsets: number; rows: CensusRow[]; }
 interface TimelinePoint { year: number; distinct: number; }
-
-// 顶层「类型」下拉的全部选项 —— 与 stats/wr_metric.json 的 metricPanels 一致(顺序同)。
-// 逻辑分组(基本: single/average;复合: bao5..wpa;分布: median..ratio)仅作参考,UI 不再显示组标题。
-// 单次 / 平均 → 排名视图(本页原功能,type 口径);其余 11 个派生指标 → 嵌入的 wr_metric 视图(mmetric=<id>)。
-const WR_METRICS: { id: string; zh: string; en: string }[] = [
-  { id: 'single', zh: '单次', en: 'Single' },
-  { id: 'average', zh: '平均', en: 'Average' },
-  { id: 'bao5', zh: 'BAo5', en: 'BAo5' },
-  { id: 'wao5', zh: 'WAo5', en: 'WAo5' },
-  { id: 'mo5', zh: 'Mo5', en: 'Mo5' },
-  { id: 'bpa', zh: 'BPA', en: 'BPA' },
-  { id: 'wpa', zh: 'WPA', en: 'WPA' },
-  { id: 'median', zh: '中位数', en: 'Median' },
-  { id: 'bestc', zh: '最佳有效', en: 'Best Counting' },
-  { id: 'worstc', zh: '最差有效', en: 'Worst Counting' },
-  { id: 'worst', zh: '轮次最差成绩', en: 'Worst' },
-  { id: 'variance', zh: '方差', en: 'Variance' },
-  { id: 'ratio', zh: '最佳/平均比值', en: 'Best/Avg' },
-];
-// 走排名视图的两个口径(其余 id 一律走 wr_metric 指标视图)
-const RANK_TYPE_IDS = new Set(['single', 'average']);
-const DEFAULT_METRIC_ID = 'bao5';
 
 function AllResultsPageInner() {
   const { i18n } = useTranslation();
@@ -216,16 +195,21 @@ function AllResultsPageInner() {
     if (psort === key) setQuery({ pdir: pdir === 'asc' ? 'desc' : 'asc', page: null });
     else setQuery({ psort: key, pdir: 'asc', page: null });
   };
-  const basisRaw = query.basis;
-  const basis: 'period' | 'cumulative' =
-    basisRaw === 'cumulative' || basisRaw === 'period'
-      ? basisRaw
-      : (show === 'persons' ? 'cumulative' : 'period');
-  // 多盲平均 = 非官方 Mo3(builder 现算进 wca_results_flat),单项可排;名次和不计入
+  // 多盲平均 = 非官方 Mo3(builder 现算进 wca_results_flat,有 is_avg 行),单项可排;名次和不计入
   const isMbldAvg = singleEvent === '333mbf';
   const effType: 'single' | 'average' = type === 'average' ? 'average' : 'single';
   // 单项 bar race 的指标标签(single/average 必在 WR_METRICS 内);复用同一份口径表,免再写语言三元
   const effMetricMeta = WR_METRICS.find(m => m.id === effType)!;
+  // 333mbf 非官方平均只有「当期」口径:historical_ranks_snapshot 不含 333mbf 平均(截至口径会 400),
+  // wca_results_flat 的 is_avg 行只支持 period → 强制 period 并禁用「口径」切换,避免落到 historical-ranks。
+  const mbfAvgPeriodOnly = isMbldAvg && effType === 'average';
+  const basisRaw = query.basis;
+  const basis: 'period' | 'cumulative' =
+    mbfAvgPeriodOnly
+      ? 'period'
+      : basisRaw === 'cumulative' || basisRaw === 'period'
+        ? basisRaw
+        : (show === 'persons' ? 'cumulative' : 'period');
 
   // ---- 事件选择(累加) ----
   const serializeEvents = (set: Set<string>): string => {
@@ -673,7 +657,8 @@ function AllResultsPageInner() {
             </div>
             {typeSelect}
             <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
-            <div className="wse-filter wse-filter-show">
+            <div className="wse-filter wse-filter-show"
+              title={mbfAvgPeriodOnly ? tr({ zh: '多盲非官方平均仅支持「当期」口径', en: 'Multi-Blind unofficial average supports the period basis only' }) : undefined}>
               <label>{tr({ zh: '口径', en: 'Basis' })}</label>
               <PillToggle
                 className="wse-pill"
@@ -681,6 +666,7 @@ function AllResultsPageInner() {
                 onChange={(v) => handleBasisChange(v ? 'cumulative' : 'period')}
                 onLabel={tr({ zh: '截至', en: 'Cumulative' })}
                 offLabel={tr({ zh: '当期', en: 'Period' })}
+                disabled={mbfAvgPeriodOnly}
               />
             </div>
             <div className="wse-filter">
