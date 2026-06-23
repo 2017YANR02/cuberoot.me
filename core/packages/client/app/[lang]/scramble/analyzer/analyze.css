@@ -15,8 +15,7 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--az-bg);
     color: var(--az-text);
-    min-height: 100vh;
-    min-height: 100dvh;
+    /* 不撑满屏:同页下方恒有「分布」区,满屏 min-height 会在求解内容矮时留大片空白。 */
     max-width: 1024px;
     margin: 0 auto;
     padding: 1.5rem 1.25rem 3rem;

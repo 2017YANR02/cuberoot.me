@@ -102,8 +102,9 @@ const FACE_LETTER: Record<CubeFace, ColorLetter> = {
 // 解法搜索的长度松弛:最多比最优长 2 步(= 旧「含次优 +2」档的搜索深度,不引入新成本)。
 // 展示条数(cap)在此深度内按长度升序收集;条数才是用户可调的旋钮。
 const SOL_SLACK = 2;
-// 「条数」可选项。
-const LIMIT_OPTIONS = [5, 10, 25, 50];
+// 「最大数量」可选项;0 = 无上限(枚举 best+SLACK 深度内全部解,用极大 cap 实现)。
+const LIMIT_OPTIONS = [5, 10, 25, 50, 0];
+const NO_LIMIT_CAP = 100000;
 
 // F2L 槽位标签(对齐 solver wasm SLOT_LABELS:BL=0 BR=1 FR=2 FL=3)。
 const SLOT_LABELS = ['BL', 'BR', 'FR', 'FL'] as const;
@@ -241,7 +242,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   const stages = VARIANT_STAGES[method];
   const need = needOf(method);
-  const eager = stage <= EAGER_MAX[method];
+  // 全阶段自动批算(无「计算」按钮);heavy 仅用于「可能较慢」提示。
+  const heavy = stage > EAGER_MAX[method];
   // 设备并行度只在客户端可知;Node 21+ SSR 也有全局 navigator(hardwareConcurrency=构建机核数)
   // 会渲染出 4,移动端客户端是 2 → hydration mismatch。挂载后再取,水合期两端都渲染占位值。
   const [poolSize, setPoolSize] = useState<number | null>(null);
@@ -348,12 +350,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setMoves(null);
     setCounts([null, null, null, null, null, null]);
     setTotalMs(null);
-    if (!eager) { setComputing(false); wantAuto.current = false; return; }
     wantAuto.current = true; // 算完自动选最优视角
     await computeAll();
-  }, [eager, computeAll]);
+  }, [computeAll]);
 
-  // ready / 方法 / 阶段 变化时:eager 阶段自动批算 6 面;重阶段只清空待用户点「计算」。
+  // ready / 方法 / 阶段 变化时:自动批算全部 6 面(含重阶段,无「计算」按钮)。
   useEffect(() => {
     if (status === 'ready') void compute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -383,25 +384,27 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       const combo = sc >= 1 && comboArity(selSlotRef.current) === sc ? selSlotRef.current : '';
       // 用户指定基态(自由对单槽):仅 pair/pseudo_pair 生效,其余传 -1(引擎忽略)。
       const base = hasBase(method) && selBaseRef.current !== '' ? Number(selBaseRef.current) : -1;
+      // 展示条数上限:limit=0(无上限)→ 极大 cap,引擎枚举该深度内全部解。
+      const cap = limit === 0 ? NO_LIMIT_CAP : limit;
       // 搜索深度恒定 = 最优+SLACK(=旧「+2」档,不引入新的性能成本);cap=用户选的展示条数,
       // 引擎按长度升序收集、够数即停。条数填不满时(短解不够)如实返回更少。
       const res = kind === 'std'
-        ? await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap: limit, combo })
+        ? await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo })
         : kind === 'f2leo'
-          ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap: limit, combo })
+          ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap, combo })
           : kind === 'block222'
-            ? await pool.solveBlock222Moves(scr, f, { extra: SOL_SLACK, cap: limit })
+            ? await pool.solveBlock222Moves(scr, f, { extra: SOL_SLACK, cap })
             : kind === 'roux223'
-              ? await pool.solveRoux223Moves(scr, stage, f, { extra: SOL_SLACK, cap: limit })
+              ? await pool.solveRoux223Moves(scr, stage, f, { extra: SOL_SLACK, cap })
               : kind === 'eodr'
-                ? await pool.solveEoDrMoves(scr, eoDrStage(method, stage), f, { extra: SOL_SLACK, cap: limit })
+                ? await pool.solveEoDrMoves(scr, eoDrStage(method, stage), f, { extra: SOL_SLACK, cap })
                 : kind === 'htr'
-                  ? await pool.solveHtrMoves(scr, f, { extra: SOL_SLACK, cap: limit })
+                  ? await pool.solveHtrMoves(scr, f, { extra: SOL_SLACK, cap })
                   : kind === 'htr2'
-                    ? await pool.solveHtr2Moves(scr, f, { extra: SOL_SLACK, cap: limit })
+                    ? await pool.solveHtr2Moves(scr, f, { extra: SOL_SLACK, cap })
                     : kind === 'fr'
-                      ? await pool.solveFrMoves(scr, f, { extra: SOL_SLACK, cap: limit })
-                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit, combo, base });
+                      ? await pool.solveFrMoves(scr, f, { extra: SOL_SLACK, cap })
+                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap, combo, base });
       if (movesReq.current === my) {
         // 引擎按 HTM 升序收集;同 HTM 再按 QTM 升序(180°=2),Array.sort 稳定 → 原 DFS 序兜底。
         const sols = [...res.sols].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
@@ -426,6 +429,17 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setSelFace(f);
     void fetchMoves(f);
   }, [selFace, fetchMoves]);
+
+  // 终止:WASM 同步求解无法中途打断 → 真正停掉 = terminate 在跑的 worker(pool.abort)。
+  // 同时 bump req 丢弃在途结果(被 abort 的任务 reject('aborted'),由 req 守卫静默吞掉)。
+  const stopMoves = useCallback(() => {
+    ++movesReq.current;
+    ++computeReq.current;
+    try { poolRef.current?.abort(); } catch { /* */ }
+    setMovesLoading(false);
+    setComputing(false);
+    wantAuto.current = false;
+  }, []);
 
   // 切换槽位:同步 ref(fetchMoves 立即读到新值)+ 上报(进 URL 深链)后重算当前视角。
   // 若新固定槽含当前基态(自由对须与固定槽不交)→ 基态回「自动」,避免无效组合。
@@ -648,21 +662,17 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           </label>
         )}
         <label className="stsv-control">
-          <span>{t('显示条数', 'Show')}</span>
+          <span>{t('最大数量', 'Max')}</span>
           <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
             {LIMIT_OPTIONS.map((n) => (
-              <option key={n} value={n}>{t(`最多 ${n} 条`, `Up to ${n}`)}</option>
+              <option key={n} value={n}>{n === 0 ? t('无上限', '∞') : n}</option>
             ))}
           </select>
         </label>
-        <button
-          className="stsv-compute"
-          onClick={() => { wantAuto.current = true; void computeAll(); }}
-          disabled={computing || status !== 'ready'}
-        >
-          {computing ? <Loader2 size={14} className="stsv-spin" /> : null}
-          {t('计算', 'Compute')}
-        </button>
+        {/* 终止:求解进行中(批算 / 枚举)显示在「最大数量」右侧,停掉跑飞的搜索(尤其无上限)。 */}
+        {(computing || movesLoading) && (
+          <button type="button" className="stsv-stop" onClick={stopMoves}>{t('终止', 'Stop')}</button>
+        )}
         <button
           type="button"
           className="stsv-diag"
@@ -721,7 +731,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           <div className="stsv-angles">
             {FACES.map((f, i) => {
               if (!faceVisible(i)) return null; // 被「底色」过滤掉的面不显示
-              const loading = (eager && computing) || (selFace === i && movesLoading);
+              const loading = computing || (selFace === i && movesLoading);
               const isBest = counts[i] != null && counts[i] === bestVal;
               return (
                 <button
@@ -768,11 +778,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               )}
             </div>
           )}
-          {!eager && (
+          {heavy && (
             <div className="stsv-hint">
               {t(
-                '该阶段搜索较重,不自动算:点「计算」算全部 6 面,或点单个视角只算它(最坏数十秒)。',
-                'This stage is heavy, so it does not auto-run: click Compute for all 6 faces, or click one face to solve just it (up to tens of seconds).',
+                '该阶段搜索较重,自动求解可能需数十秒。',
+                'This stage is heavy; auto-solving may take up to tens of seconds.',
               )}
             </div>
           )}
@@ -813,7 +823,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                       {shown < moves.sols.length
                         ? t(`${shown} / ${moves.sols.length} 条解法`, `${shown} / ${moves.sols.length} solutions`)
                         : t(`${moves.sols.length} 条解法`, `${moves.sols.length} solutions`)}
-                      {moves.sols.length >= limit && (
+                      {limit !== 0 && moves.sols.length >= limit && (
                         <span className="stsv-sols-more">{t(' · 已达上限,可能更多', ' · capped, may be more')}</span>
                       )}
                     </div>
