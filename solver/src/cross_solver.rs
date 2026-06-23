@@ -172,14 +172,17 @@ impl CrossSolver {
             let n_i1 = mt[i1 + m] as usize;
             let n_i2 = mt[i2 + m] as usize;
             let idx = (n_i1 as u64) * (state_space::EDGE2 as u64) + n_i2 as u64;
-            if self.pt.get(idx) as u32 >= depth {
+            let h = self.pt.get(idx) as u32;
+            if h >= depth {
                 continue;
             }
             path.push(m as u8);
             if depth == 1 {
                 // h < 1 ⟹ h==0 ⟹ 已解
                 out.push(path.clone());
-            } else {
+            } else if h > 0 {
+                // h==0 且 depth>1:子状态已解却还要再走 depth-1 步 → 该解 = 更短解 + 无效尾动
+                // (如十字已成再多转一个 U),冗余,跳过不递归。
                 self.enumerate(n_i1 * 18, n_i2 * 18, depth - 1, m as u8, path, out, cap, vm);
             }
             path.pop();
