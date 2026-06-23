@@ -93,6 +93,17 @@ html[data-theme='dark'] .stsv {
   border: 1px solid var(--sv-accent);
 }
 .stsv-retry:hover { background: var(--sv-accent-soft); }
+/* 终止按钮:工具栏内「最大数量」右侧,求解进行中显示;红框文字按钮,停掉跑飞的搜索 */
+.stsv-stop {
+  font: inherit;
+  padding: 6px 16px;
+  cursor: pointer;
+  border-radius: 6px;
+  background: none;
+  color: var(--sv-accent);
+  border: 1px solid var(--sv-accent);
+}
+.stsv-stop:hover { background: var(--sv-accent-soft); }
 
 /* ── controls ── */
 .stsv-controls {
@@ -118,19 +129,6 @@ html[data-theme='dark'] .stsv {
 /* 底色 picker 嵌进工具栏:下拉与色块整行靠左,高度与相邻 select 对齐 */
 .stsv-control-subset .subset-picker { gap: 8px; min-height: 33px; }
 .stsv-control-subset .subset-picker-mode { color: var(--sv-text); }
-.stsv-compute {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font: inherit;
-  padding: 7px 18px;
-  cursor: pointer;
-  border-radius: 6px;
-  background: var(--sv-accent);
-  color: #fff;
-  border: none;
-}
-.stsv-compute:disabled { opacity: 0.55; cursor: default; }
 .stsv-diag {
   margin-left: auto;
   align-self: center;
