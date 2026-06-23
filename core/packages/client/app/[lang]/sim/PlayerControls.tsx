@@ -36,6 +36,26 @@ import World from './cuber/world';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
 import { parseSq1Scramble, movesToString, type Sq1Move } from './cuber/sq1/sq1State';
+import { parseIvyMoves } from './cuber/ivy/IvyTwister';
+import type { IvyMove } from './cuber/ivy/IvyCube';
+import { classifyIvyTokens } from '@/lib/ivy-solver';
+import {
+  parseDinoMoves, dinoMovesToString, randomDinoScramble, type DinoMove,
+} from './cuber/dino/dinoState';
+
+/** Random Ivy scramble: ~9 R/L/D/B turns, no immediate axis repeat. */
+function randomIvyScramble(): string {
+  const L = 'RLDB';
+  const out: string[] = [];
+  let last = -1;
+  for (let i = 0; i < 9; i++) {
+    let a = Math.floor(Math.random() * 4);
+    if (a === last) a = (a + 1 + Math.floor(Math.random() * 3)) % 4;
+    last = a;
+    out.push(L[a] + (Math.random() < 0.5 ? "'" : ''));
+  }
+  return out.join(' ');
+}
 import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg, countMoves } from '@/lib/cube3';
 import { cleanForPlayer, extractAlgFromText } from '@/lib/recon-alg-utils';
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
@@ -71,10 +91,12 @@ function convertSq1Text(text: string, convert: (s: string) => string): string {
 const PUZZLE_TYPE_OPTIONS = [
   { value: 'nxn',      iconClass: 'event-333', labelZh: 'NxN',    labelEn: 'NxN' },
   { value: 'sq1',      iconClass: 'event-sq1', labelZh: 'Square-1', labelEn: 'Square-1' },
+  { value: 'ivy',      iconClass: 'unofficial-ivy', labelZh: '枫叶魔方', labelEn: 'Ivy Cube' },
   { value: 'pyraminx', iconClass: 'event-pyram', labelZh: '金字塔', labelEn: 'Pyraminx' },
   { value: 'skewb',    iconClass: 'event-skewb', labelZh: '斜转',  labelEn: 'Skewb'
 },
   { value: 'megaminx', iconClass: 'event-minx',  labelZh: '五魔',  labelEn: 'Megaminx' },
+  { value: 'dino',     iconClass: 'unofficial-dino', labelZh: '恐龙', labelEn: 'Dino' },
 ] as const;
 
 function PuzzleTypeSelect({ value, onChange, isZh }: {
@@ -160,7 +182,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'pyraminx' | 'skewb' | 'megaminx';
+export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'pyraminx' | 'skewb' | 'megaminx';
 
 function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
@@ -180,6 +202,34 @@ function invertSq1Moves(moves: Sq1Move[]): Sq1Move[] {
     out.push(m.kind === 'slice' ? m : { kind: 'turn', top: -m.top, bot: -m.bot });
   }
   return out;
+}
+
+function invertDinoMoves(moves: DinoMove[]): DinoMove[] {
+  const out: DinoMove[] = [];
+  for (let i = moves.length - 1; i >= 0; i--) {
+    out.push({ corner: moves[i].corner, dir: moves[i].dir === 1 ? -1 : 1 });
+  }
+  return out;
+}
+
+/** Fold consecutive same-corner Dino twists mod 3 (X X = X', X X' = id, …). */
+function reduceDinoAlg(s: string): string {
+  const moves = parseDinoMoves(s);
+  const out: DinoMove[] = [];
+  for (const m of moves) {
+    const last = out[out.length - 1];
+    if (last && last.corner === m.corner) {
+      // accumulate net turns mod 3 (dir +1 = +120, -1 = -120 ≡ +240)
+      const net = (((last.dir === 1 ? 1 : 2) + (m.dir === 1 ? 1 : 2)) % 3 + 3) % 3;
+      out.pop();
+      if (net === 1) out.push({ corner: m.corner, dir: 1 });
+      else if (net === 2) out.push({ corner: m.corner, dir: -1 });
+      // net === 0 → cancelled, push nothing
+    } else {
+      out.push(m);
+    }
+  }
+  return dinoMovesToString(out);
 }
 
 function normalizeTo1x1(action: TwistAction): TwistAction | null {
@@ -232,9 +282,11 @@ export default function PlayerControls({
   skewbNotation, onSkewbNotationChange,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
+  const isIvy = puzzleKind === 'ivy';
+  const isDino = puzzleKind === 'dino';
   const isTwistyMode = isTwistyPuzzle(puzzleKind);
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
-  const is3x3 = !isSq1 && !isTwistyMode && order === 3;
+  const is3x3 = !isSq1 && !isIvy && !isDino && !isTwistyMode && order === 3;
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -314,7 +366,7 @@ export default function PlayerControls({
   }, []);
 
   const actions = useMemo<TwistAction[]>(() => {
-    if (isSq1) return [];
+    if (isSq1 || isIvy || isDino) return [];
     if (!algDraft.trim()) return [];
     try {
       const cleaned = cleanForPlayer(algDraft);
@@ -326,17 +378,44 @@ export default function PlayerControls({
     } catch {
       return [];
     }
-  }, [algDraft, isSq1]);
+  }, [algDraft, isSq1, isIvy, isDino]);
 
   const sq1Actions = useMemo<Sq1Move[]>(() => {
     if (!isSq1) return [];
     return parseSq1Scramble(algDraft);
   }, [algDraft, isSq1]);
 
-  const totalSteps = isSq1 ? sq1Actions.length : actions.length;
+  const ivyActions = useMemo<IvyMove[]>(() => {
+    if (!isIvy) return [];
+    try { return parseIvyMoves(algDraft); } catch { return []; }
+  }, [algDraft, isIvy]);
+
+  // Ivy live-input validation: classify both boxes so a bad token (e.g. a 3x3
+  // "F") highlights red in-place AND blocks playback — instead of throwing and
+  // crashing the page. Non-Ivy puzzles keep their own handling (null spans).
+  const ivySetupSpans = useMemo(() => (isIvy ? classifyIvyTokens(setupDraft) : null), [isIvy, setupDraft]);
+  const ivyAlgSpans = useMemo(() => (isIvy ? classifyIvyTokens(algDraft) : null), [isIvy, algDraft]);
+  const ivyCanPlay = !isIvy
+    || (!ivySetupSpans!.some((s) => s.bad) && !ivyAlgSpans!.some((s) => s.bad));
+
+  const dinoActions = useMemo<DinoMove[]>(() => {
+    if (!isDino) return [];
+    return parseDinoMoves(algDraft);
+  }, [algDraft, isDino]);
+
+  const totalSteps = isSq1
+    ? sq1Actions.length
+    : isIvy
+      ? (ivyCanPlay ? ivyActions.length : 0)
+      : isDino
+        ? dinoActions.length
+        : actions.length;
 
   const jumpToStep = useCallback(async (n: number) => {
     if (!world) return;
+    // Release any held-partial (debug) turn first: an NxN frozen layer holds the
+    // cube lock, which would make the replay's group.twist below spin forever.
+    world.controller.clearFrozen();
     if (isSq1) {
       const sq1Cube = world.cube as unknown as import('./cuber/sq1/Sq1Cube').default;
       sq1Cube.twister.finish();
@@ -352,6 +431,33 @@ export default function PlayerControls({
       setStep(target);
       return;
     }
+    if (isIvy) {
+      // A bad token in either box → can't play: leave the cube as-is (the box
+      // shows the offending token in red) rather than feeding it to the parser.
+      if (!ivyCanPlay) { setStep(0); return; }
+      const ivyCube = world.cube as unknown as import('./cuber/ivy/IvyCube').default;
+      ivyCube.twister.finish();
+      const effSetup = settings.playbackMode === 'algorithm'
+        ? (setupDraft + ' ' + invertAlg(algDraft)).trim()
+        : setupDraft;
+      ivyCube.twister.setup(effSetup);
+      const target = Math.max(0, Math.min(n, ivyActions.length));
+      for (let i = 0; i < target; i++) ivyCube.applyMoveInstant(ivyActions[i]);
+      setStep(target);
+      return;
+    }
+    if (isDino) {
+      const dinoCube = world.cube as unknown as import('./cuber/dino/DinoCube').default;
+      dinoCube.twister.finish();
+      const effSetup = settings.playbackMode === 'algorithm'
+        ? (setupDraft + ' ' + dinoMovesToString(invertDinoMoves(dinoActions))).trim()
+        : setupDraft;
+      dinoCube.twister.setup(effSetup);
+      const target = Math.max(0, Math.min(n, dinoActions.length));
+      for (let i = 0; i < target; i++) dinoCube.applyMoveInstant(dinoActions[i]);
+      setStep(target);
+      return;
+    }
     const cube = world.cube as import('./cuber/cube').default;
     const effectiveSetup = settings.playbackMode === 'algorithm'
       ? (setupDraft + ' ' + invertAlg(algDraft)).trim()
@@ -362,7 +468,7 @@ export default function PlayerControls({
       cube.twister.twist(actions[i], true, true);
     }
     setStep(target);
-  }, [world, setupDraft, algDraft, actions, sq1Actions, isSq1, settings.playbackMode]);
+  }, [world, setupDraft, algDraft, actions, sq1Actions, ivyActions, dinoActions, isSq1, isIvy, isDino, ivyCanPlay, settings.playbackMode]);
 
   const skipAutoResetRef = useRef(false);
   const animatingScrambleRef = useRef(false);
@@ -371,7 +477,7 @@ export default function PlayerControls({
   useEffect(() => {
     if (skipAutoResetRef.current) {
       skipAutoResetRef.current = false;
-      setStep(isSq1 ? sq1Actions.length : actions.length);
+      setStep(isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : actions.length);
       return;
     }
     if (animatingScrambleRef.current) {
@@ -381,13 +487,21 @@ export default function PlayerControls({
     }
     jumpToStep(stepRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setupDraft, actions, sq1Actions, settings.playbackMode]);
+  }, [setupDraft, actions, sq1Actions, ivyActions, dinoActions, settings.playbackMode]);
 
   const handleCaretSync = useCallback((text: string, caretIndex: number) => {
     const before = text.slice(0, caretIndex);
     const algBefore = extractAlgFromText(before);
     if (isSq1) {
       jumpToStep(parseSq1Scramble(algBefore).length);
+      return;
+    }
+    if (isIvy) {
+      try { jumpToStep(parseIvyMoves(algBefore).length); } catch { /* ignore */ }
+      return;
+    }
+    if (isDino) {
+      jumpToStep(parseDinoMoves(algBefore).length);
       return;
     }
     try {
@@ -397,7 +511,7 @@ export default function PlayerControls({
       }
       jumpToStep(n);
     } catch { /* ignore */ }
-  }, [jumpToStep, isSq1]);
+  }, [jumpToStep, isSq1, isIvy, isDino]);
 
   const stepForward = useCallback(() => { jumpToStep(step + 1); }, [jumpToStep, step]);
   const stepBack = useCallback(() => { jumpToStep(step - 1); }, [jumpToStep, step]);
@@ -408,7 +522,7 @@ export default function PlayerControls({
       return;
     }
     const intervalMs = Math.max(60, Math.round(600 / speed));
-    const total = isSq1 ? sq1Actions.length : actions.length;
+    const total = isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : actions.length;
     playTimerRef.current = window.setInterval(() => {
       const s = stepRef.current;
       if (s >= total) { setPlaying(false); return; }
@@ -416,6 +530,12 @@ export default function PlayerControls({
         if (isSq1) {
           const sq1Cube = world.cube as unknown as import('./cuber/sq1/Sq1Cube').default;
           sq1Cube.twister.twist(sq1Actions[s], false, true);
+        } else if (isIvy) {
+          const ivyCube = world.cube as unknown as import('./cuber/ivy/IvyCube').default;
+          ivyCube.twister.twist(ivyActions[s], false, true);
+        } else if (isDino) {
+          const dinoCube = world.cube as unknown as import('./cuber/dino/DinoCube').default;
+          dinoCube.twister.twist(dinoActions[s], false, true);
         } else {
           const cube = world.cube as import('./cuber/cube').default;
           cube.twister.twist(actions[s], false, true);
@@ -427,7 +547,7 @@ export default function PlayerControls({
     return () => {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
     };
-  }, [playing, actions, sq1Actions, world, speed, isSq1]);
+  }, [playing, actions, sq1Actions, ivyActions, dinoActions, world, speed, isSq1, isIvy, isDino]);
 
   const tool = (transform: (s: string) => string) => () => {
     const combined = (setupDraft + ' ' + algDraft).trim();
@@ -441,27 +561,32 @@ export default function PlayerControls({
   };
 
   // Per-puzzle "消步" (cancel redundant moves) + invert. SQ1 has its own token
-  // model; pyraminx/skewb/megaminx can't use the cube's mod-4 fold.
+  // model; pyraminx/skewb/megaminx can't use the cube's mod-4 fold. Dino: only
+  // collapse a token immediately followed by its inverse (and X X = X', X X X = id)
+  // would need a full reducer — keep it simple, just drop trivially-cancelling pairs.
   const simplifyForPuzzle = useCallback((s: string): string => {
     if (isSq1) return simplifySq1Alg(s, sq1Format);
+    if (isIvy) return s; // ivy R R = R' (not R2) — NxN fold doesn't apply
+    if (isDino) return reduceDinoAlg(s);
     if (isTwistyMode) return simplifyTwistyAlg(s);
     return simplifyAlg(s);
-  }, [isSq1, isTwistyMode, sq1Format]);
+  }, [isSq1, isIvy, isDino, isTwistyMode, sq1Format]);
 
   const invertForPuzzle = useCallback((s: string): string => {
+    if (isDino) return dinoMovesToString(invertDinoMoves(parseDinoMoves(s)));
     if (!isSq1) return invertAlg(s);
     const inv = invertSq1Alg(s);
     return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
-  }, [isSq1, sq1Format]);
+  }, [isSq1, isDino, sq1Format]);
 
   // Whether 消步 would actually shorten the sequence — drives the button's
   // enabled state so it doubles as a "可以消步" hint.
   const canSimplify = useMemo(() => {
     const combined = (setupDraft + ' ' + algDraft).trim();
     if (!combined) return false;
-    const count = (s: string) => (isSq1 ? parseSq1Tokens(s).length : countMoves(s));
+    const count = (s: string) => (isSq1 ? parseSq1Tokens(s).length : isDino ? parseDinoMoves(s).length : countMoves(s));
     return count(simplifyForPuzzle(combined)) < count(combined);
-  }, [setupDraft, algDraft, isSq1, simplifyForPuzzle]);
+  }, [setupDraft, algDraft, isSq1, isDino, simplifyForPuzzle]);
 
   // Copy the current page URL (puzzle + scramble + solution params) so the exact
   // sim state can be shared. Works for any puzzle — the URL always carries state.
@@ -517,7 +642,7 @@ export default function PlayerControls({
 
   // QWERTY: keymap → twist + append (no virtual keyboard, just hard keys).
   const applyMove = useCallback((k: KeyMove) => {
-    if (isSq1 || isTwistyMode) return;
+    if (isSq1 || isIvy || isDino || isTwistyMode) return;
     let action: TwistAction | null = new TwistAction(k.sign, !!k.reverse, 1);
     let moveText = action.value;
     if (world && world.cube.order === 1) {
@@ -539,7 +664,7 @@ export default function PlayerControls({
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
-  }, [world, isSq1, isTwistyMode, onAlgChange]);
+  }, [world, isSq1, isIvy, isDino, isTwistyMode, onAlgChange]);
 
   const handleScramble = useCallback(async () => {
     const reqId = ++scrambleReqIdRef.current;
@@ -595,6 +720,12 @@ export default function PlayerControls({
         // shows on /scramble/gen and that parseSq1Tokens also accepts.
         const raw = await tnoodleRandomScramble('sq1');
         scramble = raw ? formatScrambleForEvent('sq1', raw) : '';
+      } else if (isIvy) {
+        scramble = randomIvyScramble();
+      } else if (isDino) {
+        // No external generator — Dino is a self-contained sim. A random sequence
+        // of legal corner twists is a valid scramble (no solver needed).
+        scramble = dinoMovesToString(randomDinoScramble(15));
       } else if (order >= 2 && order <= 7) {
         const eventId = `${order}${order}${order}`;
         scramble = await tnoodleRandomScramble(eventId);
@@ -603,13 +734,14 @@ export default function PlayerControls({
       }
     } catch (err) {
       console.warn('[sim] scramble failed:', err);
-      scramble = isSq1 ? '' : randomMoveScrambleNxN(order);
+      scramble = isSq1 ? '' : isIvy ? randomIvyScramble() : isDino ? '' : randomMoveScrambleNxN(order);
     }
     if (reqId !== scrambleReqIdRef.current) return;
     if (!scramble) return;
-    // SQ1 always animates — instant apply would be visually indistinguishable
-    // from no rotation. The animation is the whole point.
-    const animate = isSq1 || settings.animateScramble;
+    world.controller.clearFrozen(); // release any debug held-partial turn first
+    // SQ1 / Ivy / Dino always animate — instant apply would be visually
+    // indistinguishable from no rotation. The animation is the whole point.
+    const animate = isSq1 || isIvy || isDino || settings.animateScramble;
     if (animate) {
       animatingScrambleRef.current = true;
       world.cube.twister.setup('');
@@ -629,7 +761,7 @@ export default function PlayerControls({
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, order, isSq1, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
+  }, [world, order, isSq1, isIvy, isDino, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
 
   // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
   // recover the clean rotation-free scramble it solves, drop it into the
@@ -670,20 +802,29 @@ export default function PlayerControls({
   return (
     <div className="sim-player">
       <div className="sim-player-row sim-player-row--top">
-        <textarea
-          ref={setupElRef}
-          defaultValue={setupDraft}
-          rows={1}
-          spellCheck={false}
-          className="sim-player-input"
-          placeholder={t('打乱', 'Scramble')}
-          onInput={(e) => {
-            const el = e.currentTarget;
-            autosize(el);
-            setSetupDraft(el.value);
-            onSetupChange(el.value);
-          }}
-        />
+        <div className="sim-player-hlwrap">
+          {ivySetupSpans && (
+            <div className="sim-player-hl" aria-hidden="true">
+              {ivySetupSpans.map((s, i) => (
+                <span key={i} className={s.bad ? 'bad' : undefined}>{s.text}</span>
+              ))}
+            </div>
+          )}
+          <textarea
+            ref={setupElRef}
+            defaultValue={setupDraft}
+            rows={1}
+            spellCheck={false}
+            className={ivySetupSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
+            placeholder={t('打乱', 'Scramble')}
+            onInput={(e) => {
+              const el = e.currentTarget;
+              autosize(el);
+              setSetupDraft(el.value);
+              onSetupChange(el.value);
+            }}
+          />
+        </div>
         {is3x3 && (
           <button
             type="button"
@@ -708,29 +849,38 @@ export default function PlayerControls({
       </div>
 
       <div className="sim-player-row">
-        <textarea
-          ref={algElRef}
-          defaultValue={algDraft}
-          rows={1}
-          spellCheck={false}
-          className="sim-player-input"
-          placeholder={t('解法', 'Solution')}
-          onInput={(e) => {
-            const el = e.currentTarget;
-            autosize(el);
-            setAlgDraft(el.value);
-            onAlgChange(el.value);
-            handleCaretSync(el.value, el.selectionStart ?? 0);
-          }}
-          onClick={(e) => {
-            const el = e.currentTarget;
-            handleCaretSync(el.value, el.selectionStart ?? 0);
-          }}
-          onKeyUp={(e) => {
-            const el = e.currentTarget;
-            handleCaretSync(el.value, el.selectionStart ?? 0);
-          }}
-        />
+        <div className="sim-player-hlwrap">
+          {ivyAlgSpans && (
+            <div className="sim-player-hl" aria-hidden="true">
+              {ivyAlgSpans.map((s, i) => (
+                <span key={i} className={s.bad ? 'bad' : undefined}>{s.text}</span>
+              ))}
+            </div>
+          )}
+          <textarea
+            ref={algElRef}
+            defaultValue={algDraft}
+            rows={1}
+            spellCheck={false}
+            className={ivyAlgSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
+            placeholder={t('解法', 'Solution')}
+            onInput={(e) => {
+              const el = e.currentTarget;
+              autosize(el);
+              setAlgDraft(el.value);
+              onAlgChange(el.value);
+              handleCaretSync(el.value, el.selectionStart ?? 0);
+            }}
+            onClick={(e) => {
+              const el = e.currentTarget;
+              handleCaretSync(el.value, el.selectionStart ?? 0);
+            }}
+            onKeyUp={(e) => {
+              const el = e.currentTarget;
+              handleCaretSync(el.value, el.selectionStart ?? 0);
+            }}
+          />
+        </div>
         {puzzleKind === 'skewb' && skewbNotation && onSkewbNotationChange && (
           <select
             className="sim-player-mode"
@@ -942,8 +1092,10 @@ function PuzzleSettings({
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const isSq1Local = puzzleKind === 'sq1';
+  const isIvyLocal = puzzleKind === 'ivy';
+  const isDinoLocal = puzzleKind === 'dino';
   const isTwistyLocal = isTwistyPuzzle(puzzleKind);
-  const isNxNLocal = !isSq1Local && !isTwistyLocal;
+  const isNxNLocal = !isSq1Local && !isIvyLocal && !isDinoLocal && !isTwistyLocal;
   const [open, setOpen] = useState(true);
   const [keymapOpen, setKeymapOpen] = useState(false);
 
@@ -1022,10 +1174,10 @@ function PuzzleSettings({
             <div className="sim-puzzle-section">
               <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
               <PuzzleTypeSelect
-                value={isTwistyLocal ? puzzleKind : (isSq1Local ? 'sq1' : 'nxn')}
+                value={isTwistyLocal ? (puzzleKind as string) : isSq1Local ? 'sq1' : isIvyLocal ? 'ivy' : isDinoLocal ? 'dino' : 'nxn'}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
                   else onPuzzleChange(order || 3);
                 }}
               />
@@ -1083,6 +1235,19 @@ function PuzzleSettings({
                 </select>
               </div>
             )}
+            {isNxNLocal && (
+              <div className="sim-puzzle-section">
+                <div className="sim-puzzle-section-title">{t('视图', 'View')}</div>
+                <select
+                  className="sim-puzzle-select"
+                  value={settings.viewMode}
+                  onChange={(e) => set('viewMode', e.target.value as 'cube' | 'net')}
+                >
+                  <option value="cube">{t('立体图', '3D cube')}</option>
+                  <option value="net">{t('平面图', 'Flat net')}</option>
+                </select>
+              </div>
+            )}
             <button
               type="button"
               className="sim-keymap-open-btn"
@@ -1127,6 +1292,27 @@ function PuzzleSettings({
             <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
             <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
             <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
+            {!isTwistyLocal && (
+              <Toggle
+                label={t('调试:半转停住', 'Debug: hold partial turn')}
+                value={settings.holdPartialTurn}
+                onChange={(v) => set('holdPartialTurn', v)}
+              />
+            )}
+            {!isTwistyLocal && (
+              <Toggle
+                label={t('调试:结构着色', 'Debug: structure colors')}
+                value={settings.debugStructureColor}
+                onChange={(v) => set('debugStructureColor', v)}
+              />
+            )}
+            {(isIvyLocal || isDinoLocal) && (
+              <Toggle
+                label={t('调试:挖角', 'Debug: carve corner')}
+                value={settings.debugCarveCorner}
+                onChange={(v) => set('debugCarveCorner', v)}
+              />
+            )}
           </div>
           <ColorRow label={t('内核色', 'Core color')}>
             <SwatchCell

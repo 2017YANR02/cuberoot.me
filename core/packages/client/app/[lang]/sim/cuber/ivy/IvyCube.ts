@@ -7,13 +7,20 @@
  *   - 4 CORNER pivots (turning corners, axes R L D B = 0..3 per lib/ivy-solver),
  *     each holding its 3 petal meshes (one per adjacent face);
  *   - 6 CENTER pivots, each holding one "eye" lens mesh.
- * Each visible region is a black 3D BODY shaped like a SPHERICAL SHELL — its outer
- * cap is the flat region on the cube face, its side walls run radially inward to a
- * smooth ball core (radius CORE_R) — with a thin colored STICKER raised on top
- * (inset toward its own centroid, so the body shows as black grooves). A corner
- * turn rotates a solid cap (corner body + its petals + the 3 adjacent center
- * bodies); the opening it leaves reveals the smooth ball core + the shells' curved
- * walls, like a real Ivy — not a flat slab or the sharp box "fan" this replaced.
+ * Each piece BODY is the EXACT Ivy solid, built by true CSG (_buildBodies): the Ivy cube
+ * is a cube cut by 4 spheres of radius E (= edge) centered at the 4 alternating
+ * (tetrahedral) vertices. A corner body = cube ∩ its sphere − the other 3 (a point
+ * inside exactly 1 sphere); a center/leaf body = cube ∩ its face's two spheres − the
+ * other 2 (inside exactly 2; with R = E its tips reach the cube corners). A thin colored
+ * STICKER is raised + inset on top, so the body shows as the grooves of a real Ivy; there
+ * is NO ball core (the ≥3-sphere region is purely interior, never reaching a face). A
+ * corner turn rotates a solid set (corner body + its petals + the 3 adjacent center
+ * bodies) 120° about the body diagonal through its vertex. Because every OTHER piece is
+ * subtracted out of that vertex's sphere while the moving pieces are inside it, and the
+ * sphere's mesh is oriented to be invariant under the 120° turn (see alignedSphereGeo),
+ * the moving solid angle stays exactly inside the invariant sphere ⇒ it slides past the
+ * stationary pieces with ZERO interpenetration, revealing their real curved inner
+ * surfaces (a real Ivy — not a flat slab, box "fan", ball, or an approximation).
  *
  * A move = a 120° corner twist about a body diagonal. The 3 faces meeting at a
  * corner are cyclically permuted by that rotation, so ONE rigid rotation of
@@ -26,12 +33,12 @@
 import * as THREE from 'three';
 // eslint-disable-next-line import/no-unresolved
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
+import { Brush, Evaluator, INTERSECTION, SUBTRACTION, type CSGOperation } from 'three-bvh-csg';
 import Cubelet from '../cubelet';
 import { COLORS } from '../define';
 import { MOVE_CENTERS } from '@/lib/ivy-solver';
 import { facePathsGrooved, type Corner } from './ivyFacePaths';
 import IvyTwister from './IvyTwister';
-import { DEBUG_ARC_STROKE_MAT } from '../debugColors';
 
 export interface IvyMove { axis: number; times: number; name: string; }
 
@@ -92,10 +99,36 @@ const LOCAL_NAME: Corner[] = ['a', 'b', 'c', 'd']; // TL TR BL BR
 const E = Cubelet.SIZE * 3;        // cube edge
 const HALF = E / 2;
 const DEPTH = E * 0.03;            // colored sticker thickness (raised above body)
-const CORE_R = HALF * 0.7;         // ball-core radius; piece bodies are spherical shells down to it
+// The 4 turning-corner vertices (tetrahedral) = the centers of the 4 cutting spheres.
+// The exact Ivy cube is the cube cut by 4 spheres of radius E (= edge) centered at
+// these alternating vertices: a point inside exactly 1 sphere is a corner piece, inside
+// exactly 2 is a center/leaf piece (radius E ⇒ each leaf's tips reach the cube corners,
+// the canonical Ivy look). The piece bodies are built by true CSG from these spheres
+// (_buildBodies), so an Ivy turn is a real solid angle. Researched + numerically
+// verified (R = edge; surface = exactly 2 piece types, no visible core).
+const TURN_VERTS = CORNER_POS.map((c) => new THREE.Vector3(c[0], c[1], c[2]).multiplyScalar(HALF));
 const GROOVE = 0.03;               // radial width of the lens↔petal groove (true-arc concentric gap)
 const LIFT = E * 0.004;
 const TWO_PI_3 = (2 * Math.PI) / 3;
+
+// CSG cutting-sphere tessellation. Each sphere is an icosphere ORIENTED so one of its
+// 3-fold (face-center) axes points along its vertex's body diagonal. A 120° corner
+// twist about that diagonal is then an exact symmetry of the icosphere's tessellation
+// (verified vertex-set mismatch ~1e-7), so the turning sphere — the only surface
+// separating the moving solid angle (inside it) from the stationary pieces (subtracted
+// out of it) — is invariant under the turn ⇒ zero interpenetration, not just small.
+const SPHERE_DETAIL = 5;
+const _icoFace0 = new THREE.IcosahedronGeometry(1, 0).attributes.position;
+const ICO_3FOLD = new THREE.Vector3()
+  .add(new THREE.Vector3().fromBufferAttribute(_icoFace0, 0))
+  .add(new THREE.Vector3().fromBufferAttribute(_icoFace0, 1))
+  .add(new THREE.Vector3().fromBufferAttribute(_icoFace0, 2))
+  .normalize();
+function alignedSphereGeo(dirUnit: THREE.Vector3): THREE.BufferGeometry {
+  const geo = new THREE.IcosahedronGeometry(E, SPHERE_DETAIL);
+  geo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(ICO_3FOLD, dirUnit));
+  return geo;
+}
 
 const svgLoader = new SVGLoader();
 function shapesFromPath(d: string): THREE.Shape[] {
@@ -158,19 +191,55 @@ export default class IvyCube extends THREE.Group {
       this.baseSign[m] = v.dot(new THREE.Vector3(...FACE_NORMAL[fb])) > 0.5 ? 1 : -1;
     }
 
-    // Smooth black ball core (like a real Ivy's spherical core). Each piece body
-    // is a spherical SHELL carved down to this radius, so a corner turn reveals a
-    // smooth curved surface — not a flat slab or a sharp box fan. Sits a hair
-    // inside the shells' inner rims so it backs the grooves between them.
-    const core = new THREE.Mesh(
-      new THREE.SphereGeometry(CORE_R * 0.985, 48, 32),
-      this.bodyMat,
-    );
-    core.userData.simRole = 'core'; // structure-coloring debug overlay (debugColors.ts)
-    this.add(core);
-
+    // Pieces = the exact Ivy CSG (no ball core): each body is the cube intersected with
+    // its own cutting sphere(s) and subtracted by the others (_buildBodies). Turning /
+    // carving reveals their real curved inner surfaces. Stickers + arc-strokes are then
+    // laid on top per face (_buildFaces).
+    this._buildBodies();
     this._buildFaces();
     this.twister = new IvyTwister(this);
+  }
+
+  /** Build the 4 corner + 6 center piece BODIES as exact CSG solids and parent each to
+   *  its pivot. Each cutting sphere (radius E, centered at a turning vertex) is oriented
+   *  so a 120° twist about that vertex's body diagonal is an exact symmetry of its mesh
+   *  → the turning sphere is invariant under the turn, and since a corner piece is INSIDE
+   *  its sphere while every other piece is SUBTRACTED out of it, the moving solid angle
+   *  stays exactly inside the invariant sphere ⇒ zero interpenetration. The CSG-
+   *  interpolated normals give flat-shaded cube faces + smooth sphere caps for free.
+   *  Tagged 'body' for the structure-color debug overlay; share this.bodyMat. */
+  private _buildBodies(): void {
+    const ev = new Evaluator();
+    ev.useGroups = false; // one body material → a single merged group per piece
+    const cube = new Brush(new THREE.BoxGeometry(E, E, E));
+    cube.updateMatrixWorld();
+    const spheres = TURN_VERTS.map((v) => {
+      const b = new Brush(alignedSphereGeo(v.clone().normalize()));
+      b.position.copy(v);
+      b.updateMatrixWorld();
+      return b;
+    });
+    const csg = (a: Brush, b: Brush, op: CSGOperation): Brush => ev.evaluate(a, b, op);
+    const attach = (brush: Brush, parent: THREE.Object3D): void => {
+      const mesh = new THREE.Mesh(brush.geometry, this.bodyMat);
+      mesh.userData.simRole = 'body';
+      parent.add(mesh);
+    };
+    // Corner piece a: inside sphere a, carved out of the other 3 (inside exactly 1).
+    for (let a = 0; a < 4; a++) {
+      let r = csg(cube, spheres[a], INTERSECTION);
+      for (let o = 0; o < 4; o++) if (o !== a) r = csg(r, spheres[o], SUBTRACTION);
+      attach(r, this.cornerPivot[a]);
+    }
+    // Center piece f: inside both of face f's turning-corner spheres, carved out of the
+    // other 2 (inside exactly 2 → the leaf, tips reaching the cube corners since R = E).
+    for (let f = 0; f < 6; f++) {
+      const [a, b] = FACE_CORNERS[f];
+      let r = csg(cube, spheres[a], INTERSECTION);
+      r = csg(r, spheres[b], INTERSECTION);
+      for (let o = 0; o < 4; o++) if (o !== a && o !== b) r = csg(r, spheres[o], SUBTRACTION);
+      attach(r, this.centerPivot[f]);
+    }
   }
 
   private _buildFaces(): void {
@@ -184,39 +253,11 @@ export default class IvyCube extends THREE.Group {
       const outward = new THREE.Vector3(...FACE_NORMAL[f]);
       const pos = O.clone().add(outward.clone().multiplyScalar(LIFT));
       const matrix = new THREE.Matrix4().makeBasis(Ux, Uy, geoNormal).setPosition(pos);
-      // Body sits flush at the true surface (no LIFT) so its rim recesses below
-      // the raised colored sticker → clean grooves, no z-fight.
-      const bodyMatrix = new THREE.Matrix4().makeBasis(Ux, Uy, geoNormal).setPosition(O);
+      // The black piece BODIES are NOT built from these outlines — they are true CSG
+      // solids built once in _buildBodies (cube ∩/− the 4 cutting spheres), so a turn
+      // opens a real solid angle. The outline here only backs the raised + inset colored
+      // sticker that sits on top of the body (the grooved color of a real Ivy).
       const flip = geoNormal.dot(outward) < 0;
-
-      // Spherical-shell body, built from the region outline points (outlinePoints):
-      // outer cap = the region on the cube face; side walls run radially in to the
-      // ball core (CORE_R), open at the core end so the smooth core shows through —
-      // a turn opens a curved surface, not flat slabs. The SAME points also back the
-      // colored sticker, so the body never extends past its own color: a turn can
-      // only lead with color, never a bare body rim that would slice a neighbor's
-      // arc (the user-reported "圆弧被截断"; skill pitfall #12+#13). The lens↔petal
-      // groove is the true-arc concentric gap baked into facePathsGrooved.
-      const buildShell = (pts: THREE.Vector2[]): THREE.BufferGeometry => {
-        const N = pts.length;
-        const outer = pts.map((p) => new THREE.Vector3(p.x, p.y, 0).applyMatrix4(bodyMatrix));
-        const inner = outer.map((p) => p.clone().setLength(CORE_R));
-        const tris = THREE.ShapeUtils.triangulateShape(pts, []);
-        const verts: number[] = [];
-        const tri = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3): void => {
-          verts.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
-        };
-        for (const [i, j, k] of tris) tri(outer[i], outer[j], outer[k]); // outer cap
-        for (let i = 0; i < N; i++) {                                    // radial side walls
-          const j = (i + 1) % N;
-          tri(outer[i], outer[j], inner[j]);
-          tri(outer[i], inner[j], inner[i]);
-        }
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-        geo.computeVertexNormals();
-        return geo;
-      };
 
       // which two locals are turning corners + their axis
       const turning: { name: Corner; axis: number }[] = [];
@@ -228,22 +269,16 @@ export default class IvyCube extends THREE.Group {
       const color = COLORS[FACE_LETTER[f]];
 
       const place = (d: string, parent: THREE.Object3D, cornerAxis?: number, centerPiece?: number): void => {
-        // (1) Black BODY — a spherical shell down to the ball core, so a corner
-        // turn opens a smooth curved surface (real Ivy look), not flat slabs.
-        // Tagged 'body' for the structure-coloring debug overlay (debugColors.ts).
         const capPts = outlinePoints(d);
-        const bodyMesh = new THREE.Mesh(buildShell(capPts), this.bodyMat);
-        bodyMesh.userData.simRole = 'body';
-        parent.add(bodyMesh);
 
-        // (2) Colored STICKER — thin, raised above the body, flat on the face.
-        // Uses the SAME outline points as the body, so the sticker exactly caps the
-        // body (no bare rim, no cyan tips) and a turn never leads with bare body that
-        // would cut a neighbor's arc. Every curved edge is a TRUE circular arc
-        // (facePathsGrooved): petals are the real radius-1 arcs reaching the cube
-        // corners, the lens is concentric radius-(1-GROOVE) arcs, so the visible
-        // lens↔petal groove is an even-width gap bounded by true circles — not a
-        // scaled/elliptical approximation, and no corner spikes ("触角").
+        // (1) Colored STICKER — thin, raised above the body, flat on the face. The CSG
+        // body (built in _buildBodies) fills the whole piece region and tiles its
+        // neighbors exactly along the shared cut sphere; this sticker is inset (grooved)
+        // and raised, so the body shows as a thin groove around the color, like a real
+        // Ivy. Every curved edge is a TRUE circular arc (facePathsGrooved): petals are
+        // the real radius-1 arcs reaching the cube corners, the lens is concentric
+        // radius-(1-GROOVE) arcs, so the visible lens↔petal groove is an even-width gap
+        // bounded by true circles — not a scaled/elliptical approximation, no spikes.
         const g = new THREE.ExtrudeGeometry(new THREE.Shape(capPts.map((p) => p.clone())), { depth: DEPTH, bevelEnabled: false });
         if (flip) g.translate(0, 0, -DEPTH);
         g.applyMatrix4(matrix);
@@ -258,21 +293,6 @@ export default class IvyCube extends THREE.Group {
         if (centerPiece !== undefined) mesh.userData.ivyCenterPiece = centerPiece;
         mesh.userData.simRole = 'sticker'; // left untouched by the debug overlay
         parent.add(mesh);
-
-        // (3) Debug ARC STROKE — a bright outline tracing this region's visible
-        // edge (the inset sticker outline), sitting just above the sticker, hidden
-        // by default. applyDebugArcStroke toggles it: freeze a turn half-way and
-        // every colored arc should stay a continuous closed loop — a break means a
-        // body is wrongly covering the arc there (the bug this guards against).
-        const loop = capPts.map((p) => new THREE.Vector3(p.x, p.y, 0).applyMatrix4(bodyMatrix));
-        const stroke = new THREE.Mesh(
-          new THREE.TubeGeometry(new THREE.CatmullRomCurve3(loop, true, 'catmullrom', 0), Math.max(32, loop.length * 2), E * 0.012, 6, true),
-          DEBUG_ARC_STROKE_MAT,
-        );
-        stroke.position.copy(outward).multiplyScalar(LIFT + DEPTH + E * 0.01);
-        stroke.userData.simRole = 'arcstroke';
-        stroke.visible = false;
-        parent.add(stroke);
       };
 
       place(fp.petals[0], this.cornerPivot[turning[0].axis], turning[0].axis);
@@ -296,10 +316,16 @@ export default class IvyCube extends THREE.Group {
   /** Pick the IvyMove for a drag on corner `axis` with geometric rotation sign
    *  `geomSign` (sign of the angle about cornerAxisVec, right-hand rule). The
    *  power (times 1 vs 2) is folded in here via baseSign so beginMove's signed
-   *  angle matches geomSign — callers needn't know baseSign. */
+   *  angle matches geomSign — callers needn't know baseSign. Naming uses the /sim's
+   *  STANDARD convention: a single 120° twist (times 1) = a bare letter "R", its
+   *  inverse (times 2) = "R'", so a dragged single twist records as "R" (not "R'").
+   *  This is intentionally the OPPOSITE of lib/ivy-solver's cstimer notation (where
+   *  a bare letter = the base turn applied TWICE); the /sim is a self-contained
+   *  world (own random scramble + drags, no solveIvy), so it reads naturally. Keep
+   *  in sync with IvyTwister.parseIvyMoves. */
   pickMove(axis: number, geomSign: number): IvyMove {
     const times = geomSign * this.baseSign[axis] > 0 ? 1 : 2;
-    return { axis, times, name: AXIS_LETTER[axis] + (times === 1 ? "'" : '') };
+    return { axis, times, name: AXIS_LETTER[axis] + (times === 1 ? '' : "'") };
   }
 
   /** Build the per-piece animation plan for a move (no state change yet). */
@@ -366,6 +392,24 @@ export default class IvyCube extends THREE.Group {
     // Notify listeners (UI sync + lets SimPage drop a frozen debug-hold turn,
     // since reset re-poses all pivots). setup()/_replay() already fire these.
     for (const cb of this.callbacks) cb();
+  }
+
+  /** Debug: carve out (hide) EVERYTHING an R turn moves — the R corner piece (axis
+   *  0: its 3 petals) PLUS the 3 centers that R cycles (the same pivot set
+   *  `beginMove({axis:0})` rotates) — so the surrounding pieces' curved inner
+   *  surfaces show through the opening, like lifting the whole R layer off
+   *  a real Ivy. Hiding a pivot hides its whole subtree while each child keeps its
+   *  own `.visible` (e.g. arc-stroke overlays). OFF restores ALL pivots (not just
+   *  the ones it hid), so it's correct even if the state permuted while carved. */
+  setCarveCorner(on: boolean): void {
+    if (on) {
+      this.cornerPivot[0].visible = false; // axis 0 = R (AXIS_LETTER 'RLDB')
+      for (const f of MOVE_CENTERS[0]) this.centerPivot[this.pivotAtFace[f]].visible = false;
+    } else {
+      for (const p of this.cornerPivot) p.visible = true;
+      for (const p of this.centerPivot) p.visible = true;
+    }
+    this.dirty = true;
   }
 
   get complete(): boolean {

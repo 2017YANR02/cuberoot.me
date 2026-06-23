@@ -17,6 +17,7 @@
  */
 import * as THREE from 'three';
 import type DinoCube from './DinoCube';
+import type { PieceAnim } from './DinoCube';
 import {
   CORNER_AXIS, CORNER_CYCLE, type DinoMove,
 } from './dinoState';
@@ -82,54 +83,92 @@ const _v = new THREE.Vector3();
 const _p1 = new THREE.Vector3();
 const _p2 = new THREE.Vector3();
 
+/** A resolved drag: the move to fire + the screen-space unit tangent oriented
+ *  ALONG the drag, so projecting later drag onto it advances the turn 0→full (for
+ *  live "hold partial turn" tracking). */
+export interface DinoLivePlan {
+  move: DinoMove;
+  tangentX: number;
+  tangentY: number;
+}
+
 /**
- * Given a pick + the screen drag vector (dx,dy in CSS px, y down), choose the move.
- * Returns null if no candidate's tangent aligns enough with the drag.
+ * Resolve a pick + the screen drag vector (dx,dy in CSS px, y down) into the move
+ * AND the drag-aligned screen tangent. Scores each candidate corner by how well the
+ * screen tangent of a +120° twist at the grab point aligns with the drag; picks the
+ * best, sign(dot) is the direction (never a fixed sign — the tangent flips across
+ * the axis). Null if no candidate aligns. All math in y-down screen px so SimPage
+ * can project later drag with the same sign convention.
  */
+export function dinoResolveLive(
+  cube: DinoCube,
+  hit: DinoPickHit,
+  scene: THREE.Scene, camera: THREE.Camera,
+  dxPx: number, dyPx: number, width: number, height: number,
+): DinoLivePlan | null {
+  scene.updateMatrixWorld();
+  const dragX = dxPx;
+  const dragY = dyPx; // y down
+  const dragLen = Math.hypot(dragX, dragY);
+  if (dragLen < 1e-3) return null;
+  const pScreen = worldToScreenPx(hit.point, camera, width, height);
+  const originWorld = new THREE.Vector3().setFromMatrixPosition(cube.matrixWorld);
+  let best: { corner: number; dir: 1 | -1; cos: number; tx: number; ty: number } | null = null;
+  for (const corner of hit.candidates) {
+    const axisLocal = CORNER_AXIS[corner];
+    _v.set(axisLocal[0], axisLocal[1], axisLocal[2]).normalize();
+    const axisWorld = _v.clone().transformDirection(scene.matrixWorld);
+    // tangential world direction at hit point for +120°: axis × (point - origin).
+    const r = hit.point.clone().sub(originWorld);
+    const tangentWorld = axisWorld.clone().cross(r);
+    if (tangentWorld.lengthSq() < 1e-9) continue;
+    // screen tangent = project(point + tangent) - project(point), y down
+    _p1.copy(hit.point).add(tangentWorld.multiplyScalar(0.1));
+    const tScreen = worldToScreenPx(_p1, camera, width, height);
+    let tx = tScreen.x - pScreen.x;
+    let ty = tScreen.y - pScreen.y;
+    const tLen = Math.hypot(tx, ty);
+    if (tLen < 1e-3) continue;
+    tx /= tLen; ty /= tLen;
+    const dot = tx * dragX + ty * dragY;
+    const cos = dot / dragLen;
+    if (!best || Math.abs(cos) > Math.abs(best.cos)) {
+      best = { corner, dir: dot >= 0 ? 1 : -1, cos, tx, ty };
+    }
+  }
+  if (!best || Math.abs(best.cos) < 0.2) return null;
+  // Orient the unit tangent along the drag so (laterDrag·tangent)/PX grows 0→1.
+  return {
+    move: { corner: best.corner, dir: best.dir },
+    tangentX: best.tx * best.dir,
+    tangentY: best.ty * best.dir,
+  };
+}
+
+/** Back-compat discrete-fire path: just the move (no live tracking). */
 export function dinoResolveMove(
   cube: DinoCube,
   hit: DinoPickHit,
   scene: THREE.Scene, camera: THREE.Camera,
   dxPx: number, dyPx: number, width: number, height: number,
 ): DinoMove | null {
-  scene.updateMatrixWorld();
-  // Drag vector in NDC-ish screen space (y up to match projection).
-  const dragX = dxPx;
-  const dragY = -dyPx;
-  const dragLen = Math.hypot(dragX, dragY);
-  if (dragLen < 1e-3) return null;
+  return dinoResolveLive(cube, hit, scene, camera, dxPx, dyPx, width, height)?.move ?? null;
+}
 
-  // Hit point in world space → project to screen px.
-  const pScreen = worldToScreenPx(hit.point, camera, width, height);
-
-  let best: { corner: number; dir: 1 | -1; score: number } | null = null;
-  for (const corner of hit.candidates) {
-    const axisLocal = CORNER_AXIS[corner];
-    // axis in world space (cube may be rotated by scene.matrixWorld)
-    _v.set(axisLocal[0], axisLocal[1], axisLocal[2]).normalize();
-    const axisWorld = _v.clone().transformDirection(scene.matrixWorld);
-    // tangential world direction at hit point for +120°: axis × (point - origin).
-    // origin in world space = cube position (scene rotates about it).
-    const originWorld = new THREE.Vector3().setFromMatrixPosition(cube.matrixWorld);
-    const r = hit.point.clone().sub(originWorld);
-    const tangentWorld = axisWorld.clone().cross(r);
-    if (tangentWorld.lengthSq() < 1e-9) continue;
-    // screen tangent = project(point + tangent) - project(point)
-    _p1.copy(hit.point).add(tangentWorld.multiplyScalar(0.1));
-    const tScreen = worldToScreenPx(_p1, camera, width, height);
-    const tx = tScreen.x - pScreen.x;
-    const ty = -(tScreen.y - pScreen.y); // y up
-    const tLen = Math.hypot(tx, ty);
-    if (tLen < 1e-3) continue;
-    // dot of unit tangent with unit drag
-    const dot = (tx * dragX + ty * dragY) / (tLen * dragLen);
-    const score = Math.abs(dot);
-    if (!best || score > best.score) {
-      best = { corner, dir: dot >= 0 ? 1 : -1, score };
-    }
+/** Live partial-turn helpers (debug "hold half-turn" mode). `anims` come from
+ *  DinoCube.beginMove; each carries pivot + startQuat + axis + full signed angle. */
+export function dinoApplyPartial(anims: PieceAnim[], t: number): void {
+  const tt = Math.max(0, Math.min(1, t));
+  const q = new THREE.Quaternion();
+  for (const a of anims) {
+    q.setFromAxisAngle(a.axis, a.angle * tt);
+    a.pivot.quaternion.multiplyQuaternions(q, a.startQuat);
   }
-  if (!best || best.score < 0.2) return null;
-  return { corner: best.corner, dir: best.dir };
+}
+
+/** Snap the affected pivots back to their pre-turn pose (cancel a frozen turn). */
+export function dinoSnapBack(anims: PieceAnim[]): void {
+  for (const a of anims) a.pivot.quaternion.copy(a.startQuat);
 }
 
 function worldToScreenPx(

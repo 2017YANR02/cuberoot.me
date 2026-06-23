@@ -151,9 +151,10 @@ describe('Dino state — notation', () => {
     expect(parseDinoMoves('UFR foo R2 DBL').length).toBe(2);
   });
 
-  it('dinoMoveToString uses bare for +120 and prime for -120', () => {
-    expect(dinoMoveToString({ corner: 7, dir: 1 })).toBe('UFR');
-    expect(dinoMoveToString({ corner: 7, dir: -1 })).toBe("UFR'");
+  it('dinoMoveToString uses bare for the clockwise (-120) twist, prime for +120', () => {
+    // Bare = clockwise = dir -1 (R-is-clockwise intuition); primed = CCW = dir +1.
+    expect(dinoMoveToString({ corner: 7, dir: -1 })).toBe('UFR');
+    expect(dinoMoveToString({ corner: 7, dir: 1 })).toBe("UFR'");
   });
 });
 

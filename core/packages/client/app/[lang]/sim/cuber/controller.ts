@@ -84,6 +84,7 @@ export default class Controller {
   }
   set disable(value: boolean) {
     this.handleUp();
+    this.clearFrozen(); // releasing the cube (puzzle switch etc.) drops any frozen turn
     this._disable = value;
   }
 
@@ -94,6 +95,24 @@ export default class Controller {
    *  'rotate' — upstream cuber 默认行为:snap 到 x/y/z 单轴 + 90° + 记 TwistAction。
    *  'view'   — 同 orbit 路径但 onOrbit 内不 commit,纯改 scene.rotation。 */
   dragEmpty: 'orbit' | 'rotate' | 'view' = 'orbit';
+  /** paint 模式:任何拖拽(含贴纸上)都当 orbit 转视角,绝不拧层;单击仍走 taps(→ 涂色)。
+   *  仅 /scramble/solver 立体涂色用,默认关 → /sim 行为不变。需配合 dragEmpty='view'。 */
+  public paintMode = false;
+  /** 开发者调试:开启后拖一层转到一半松手 → 不吸附 90°、不记步,冻结在当前角度
+   *  (逐帧看中间态)。下次 handleDown / disable / clearFrozen() 时干净释放。 */
+  public holdPartial = false;
+  /** 被 holdPartial 冻结、仍 holding(锁着)的那一层;非空 = 当前有冻结的半转。 */
+  private frozenGroup: CubeGroup | null = null;
+  /** 释放冻结的半转:角度归零 + drop()(烘焙 0° = 无逻辑变化,解锁、清 slice)。 */
+  clearFrozen(): void {
+    if (!this.frozenGroup) return;
+    this.frozenGroup.angle = 0;
+    this.frozenGroup.drop();
+    this.frozenGroup = null;
+    this.world.dirty = true;
+  }
+  /** 停掉 rAF 循环用(paint 组件卸载时调,避免反复挂载累积空跑循环 + 泄漏整个 world)。 */
+  private _loopStopped = false;
   /** orbit 模式下每次 pointermove 触发,delta 是相对上一次的位移 (像素)。 */
   public onOrbit: ((dx: number, dy: number) => void) | null = null;
   /** orbit 模式下追踪上一次 move 坐标 (像素),用来算 delta。 */
@@ -113,8 +132,14 @@ export default class Controller {
   }
 
   loop(): void {
+    if (this._loopStopped) return;
     requestAnimationFrame(this.loop.bind(this));
     this.update();
+  }
+
+  /** 永久停掉 loop()(不可恢复)。/sim 不调,行为不变。 */
+  stop(): void {
+    this._loopStopped = true;
   }
 
   update(): void {
@@ -235,8 +260,9 @@ export default class Controller {
       if (Math.min(this.world.width, this.world.height) / d > 128) {
         return;
       }
-      // 拖空白 + orbit 模式 → 切到 orbit 分支,不走整体转
-      if (this.holder.index === -1 && (this.dragEmpty === 'orbit' || this.dragEmpty === 'view')) {
+      // 拖空白 + orbit 模式 → 切到 orbit 分支,不走整体转。
+      // paintMode 下任何拖拽(含贴纸上)都走 orbit,绝不拧层(单击没位移 → 不进这里 → handleUp 派 taps 涂色)。
+      if ((this.paintMode || this.holder.index === -1) && (this.dragEmpty === 'orbit' || this.dragEmpty === 'view')) {
         this.dragging = false;
         this.orbiting = true;
         this.orbitLastX = this.down.x;
@@ -250,6 +276,10 @@ export default class Controller {
       }
       this.dragging = false;
       this.rotating = true;
+      // Starting a real turn (not orbit — orbit returned above): release any
+      // held-partial frozen layer first, else its lock makes group.drag() below
+      // spin forever. Orbiting keeps the freeze (inspect from other angles).
+      this.clearFrozen();
       if (this.holder.index === -1) {
         if (dx * dx > dy * dy) {
           this.axis = "y";
@@ -403,6 +433,20 @@ export default class Controller {
       }
     }
     if (this.rotating) {
+      // Debug hold-partial: freeze a single-layer turn at its current dragged
+      // angle (no 90° snap, no bake/record). Only single slices (no wide/alt,
+      // no whole-cube orbit) and only when not view-locked.
+      if (this.holdPartial && this.group && !this.lock && this.wideExtras.length === 0) {
+        this.group.angle = this.contingle + this.angle; // snap visual to finger
+        this.frozenGroup = this.group;
+        this.group = null;
+        this.holder.index = -1;
+        this.dragging = false;
+        this.rotating = false;
+        this.orbiting = false;
+        this.world.dirty = true;
+        return;
+      }
       let angle = this.angle;
       if (!this.lock) {
         if (Math.abs(angle) < Math.PI / 4) {

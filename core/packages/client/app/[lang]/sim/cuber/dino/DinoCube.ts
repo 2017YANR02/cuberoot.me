@@ -144,6 +144,21 @@ export default class DinoCube extends THREE.Group {
     for (const move of moves) this.applyMoveInstant(move);
   }
 
+  /** Debug: carve out (hide) the 3 edge pieces currently occupying corner 0's slots
+   *  — exactly the group `beginMove({ corner: 0 })` rotates — so the core sphere and
+   *  the neighbors' inner faces show through, like lifting one corner's tripod off a
+   *  real Dino. OFF restores ALL pieces (correct even if the state permuted while
+   *  carved). Hiding a pivot hides its whole subtree; children keep their own
+   *  `.visible`. */
+  setCarveCorner(on: boolean): void {
+    if (on) {
+      for (const slot of CORNER_CYCLE[0]) this.pieceById(this.perm[slot]).pivot.visible = false;
+    } else {
+      for (const p of this.pieces) p.pivot.visible = true;
+    }
+    this.dirty = true;
+  }
+
   get complete(): boolean {
     return isSolved(this.perm);
   }

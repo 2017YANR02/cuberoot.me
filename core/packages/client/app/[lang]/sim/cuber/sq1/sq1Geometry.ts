@@ -171,7 +171,9 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
   });
 
   const group = new THREE.Group();
-  group.add(new THREE.Mesh(bodyGeom, bodyMat));
+  const bodyMesh = new THREE.Mesh(bodyGeom, bodyMat);
+  bodyMesh.userData.simRole = 'body'; // structure-coloring debug overlay (debugColors.ts)
+  group.add(bodyMesh);
 
   // Top sticker (raised ExtrudeGeometry, inset toward centroid for body-color seams).
   const topInsetVerts: [number, number][] = corner
@@ -256,7 +258,9 @@ export function buildMiddlePair(): MiddlePair {
     geom.rotateX(-Math.PI / 2);
     geom.translate(0, -HALF_MID, 0);
     const pivot = new THREE.Object3D();
-    pivot.add(new THREE.Mesh(geom, bodyMat));
+    const bodyMesh = new THREE.Mesh(geom, bodyMat);
+    bodyMesh.userData.simRole = 'body'; // structure-coloring debug overlay (debugColors.ts)
+    pivot.add(bodyMesh);
 
     const stickerH = MID_HEIGHT - 2 * SIDE_INSET_V;
     const addSticker = (color: number, axisFace: 'L' | 'R' | 'F' | 'B', zFrom: number, zTo: number, xFrom: number, xTo: number): void => {

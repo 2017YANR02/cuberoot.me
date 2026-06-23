@@ -11,9 +11,13 @@
  * 11!/2 = 19,958,400 reachable states, even-permutation parity.)
  *
  * Notation (self-contained /sim world, like Ivy): a corner is named by its 3 face
- * letters in fixed order U/D, F/B, L/R (e.g. UFR, DBL). A bare token = +120°, a
- * primed token (UFR') = −120°. We never feed this to an external solver, so the
- * convention only has to be internally consistent (bare and primed are inverses).
+ * letters in fixed order U/D, F/B, L/R (e.g. UFR, DBL). A bare token = a CLOCKWISE
+ * 120° twist of that corner viewed from outside (−120° about its outward body
+ * diagonal); a primed token (UFR') = the CCW inverse (+120°). Bare = clockwise
+ * matches standard cube notation (R is clockwise), so a single clockwise drag
+ * records the bare letter — not a prime. We never feed this to an external solver,
+ * so the convention only has to be internally consistent (bare and primed are
+ * inverses).
  */
 
 /** Edge slot order (index 0..11). Each name is the two faces the edge touches. */
@@ -61,7 +65,9 @@ export const CORNER_CYCLE: ReadonlyArray<readonly [number, number, number]> = [
 export interface DinoMove {
   /** Corner index 0..7 (CORNER_NAMES / CORNER_AXIS / CORNER_CYCLE). */
   corner: number;
-  /** +1 = bare token (+120°), -1 = primed (−120°). */
+  /** Physical twist: +1 = +120° about the corner's outward body diagonal (CCW
+   *  viewed from outside → the PRIMED token); -1 = −120° (clockwise → the BARE
+   *  token). The dir↔token mapping lives in dinoMoveToString / parseDinoMoves. */
   dir: 1 | -1;
 }
 
@@ -102,14 +108,17 @@ export function parseDinoMoves(text: string): DinoMove[] {
     if (!m) continue;
     const corner = CORNER_INDEX.get(m[1]);
     if (corner === undefined) continue;
-    out.push({ corner, dir: m[2] ? -1 : 1 });
+    out.push({ corner, dir: m[2] ? 1 : -1 });
   }
   return out;
 }
 
-/** Render one move back to its canonical token. */
+/** Render one move back to its canonical token. Bare = the clockwise twist
+ *  (dir -1, −120°); primed = its CCW inverse (dir +1). Chosen so a single clockwise
+ *  drag records the bare letter (R-is-clockwise intuition). Must stay the exact
+ *  inverse of parseDinoMoves. */
 export function dinoMoveToString(move: DinoMove): string {
-  return CORNER_NAMES[move.corner] + (move.dir === -1 ? "'" : '');
+  return CORNER_NAMES[move.corner] + (move.dir === 1 ? "'" : '');
 }
 
 export function dinoMovesToString(moves: DinoMove[]): string {
