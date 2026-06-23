@@ -25,13 +25,27 @@ import { EDGE_NAMES, type EdgeName } from './dinoState';
 /** Cube half-side (world units). Frames like a ~3x3 in the shared camera rig. */
 export const H = Cubelet.SIZE * 2; // 128
 
-/** Cut-plane offset as a fraction of H. 1.2 leaves a clean gap between pieces. */
-export const CUT = 1.2;
+/** Cut-plane offset as a fraction of H. Zero-interpenetration requires CUT ≥ 1.0
+ *  (moving pieces have C·v ≥ CUT·H; the stationary peak is (2−CUT)·H, so the two
+ *  are disjoint iff CUT ≥ 1.0). The visible diagonal face "X" is the cut-off corner
+ *  gap = (CUT−1)·H per edge end — 1.07 gives a thin Dino-like seam with a safe
+ *  margin above 1.0; don't drop below ~1.03 or pieces visibly scrape on a turn. */
+export const CUT = 1.07;
 
-/** Sticker lift above the body face (world units). */
-const STICKER_LIFT = 1.2;
-/** How far the colored triangle is inset from the body tetra's face edges. */
-const STICKER_INSET = 0.1; // fraction toward the triangle centroid
+/** Sticker lift above the body face (world units) — just enough to clear z-fighting
+ *  with the body's own face; the visible thickness comes from STICKER_DEPTH. */
+const STICKER_LIFT = 0.5;
+/** Extruded sticker thickness (world units) — gives the facelet a raised "pillow"
+ *  like the NxN ExtrudeGeometry stickers, not a flat plane. */
+const STICKER_DEPTH = 6;
+/** How far the colored triangle is inset from the body tetra's face edges — just a
+ *  thin black outline around each sticker. The big diagonal "X" is the CUT gap,
+ *  not this; keep this small so adjacent stickers nearly meet. */
+const STICKER_INSET = 0.04; // fraction toward the triangle centroid
+/** Corner-rounding radius as a fraction of the triangle's shortest edge — gives the
+ *  triangular facelets the same soft "pillow" look as the NxN rounded-square stickers
+ *  (cubelet.ts `makeStickerShape`), instead of raw sharp points. */
+const STICKER_CORNER_R = 0.16;
 
 const BODY_COLOR = 0x141414;
 
@@ -171,6 +185,48 @@ function stickerMat(color: number): THREE.MeshPhongMaterial {
   });
 }
 
+/**
+ * Rounded-corner triangle sticker on the plane through p0/p1/p2 (already inset +
+ * lifted, so coplanar just outside the body face). Builds a 2D rounded-triangle
+ * Shape (`quadraticCurveTo` at each corner, like the NxN `makeStickerShape`) in the
+ * face's in-plane basis, then maps it back to 3D — so dino facelets get the same
+ * soft pillow corners as the NxN stickers instead of sharp points.
+ */
+function roundedTriSticker(
+  p0: THREE.Vector3, p1: THREE.Vector3, p2: THREE.Vector3, normal: THREE.Vector3,
+): THREE.BufferGeometry {
+  const n = normal.clone().normalize();
+  const u = new THREE.Vector3().subVectors(p1, p0).normalize();
+  const w = new THREE.Vector3().crossVectors(n, u).normalize(); // in-plane, ⊥ u
+  const origin = p0;
+  const to2 = (p: THREE.Vector3): THREE.Vector2 => {
+    const d = p.clone().sub(origin);
+    return new THREE.Vector2(d.dot(u), d.dot(w));
+  };
+  const C = [to2(p0), to2(p1), to2(p2)];
+  const minEdge = Math.min(C[0].distanceTo(C[1]), C[1].distanceTo(C[2]), C[2].distanceTo(C[0]));
+  const r = minEdge * STICKER_CORNER_R;
+  // trimA = point on the edge entering corner i (from i−1); trimB = leaving (to i+1).
+  const trimA = (i: number): THREE.Vector2 =>
+    C[i].clone().add(C[(i + 2) % 3].clone().sub(C[i]).normalize().multiplyScalar(r));
+  const trimB = (i: number): THREE.Vector2 =>
+    C[i].clone().add(C[(i + 1) % 3].clone().sub(C[i]).normalize().multiplyScalar(r));
+  const shape = new THREE.Shape();
+  const b0 = trimB(0);
+  shape.moveTo(b0.x, b0.y);
+  for (const i of [1, 2, 0]) {
+    const a = trimA(i), b = trimB(i);
+    shape.lineTo(a.x, a.y);
+    shape.quadraticCurveTo(C[i].x, C[i].y, b.x, b.y);
+  }
+  shape.closePath();
+  // Extrude for a raised pillow (matches NxN); the shape's z=0 face sits at the
+  // (lifted) body plane and the colored top is STICKER_DEPTH outward along n.
+  const geom = new THREE.ExtrudeGeometry(shape, { depth: STICKER_DEPTH, bevelEnabled: false, curveSegments: 8 });
+  geom.applyMatrix4(new THREE.Matrix4().makeBasis(u, w, n).setPosition(origin));
+  return geom;
+}
+
 export interface PieceBuild {
   pivot: THREE.Object3D;
   group: THREE.Group;
@@ -214,11 +270,7 @@ export function buildPieceMesh(slot: number): PieceBuild {
     const inset = (p: THREE.Vector3): THREE.Vector3 =>
       p.clone().lerp(centroid, STICKER_INSET).add(lift);
     const sp = [inset(p0), inset(p1), inset(p2)];
-    const sGeom = new THREE.BufferGeometry();
-    sGeom.setAttribute('position', new THREE.Float32BufferAttribute(
-      [sp[0].x, sp[0].y, sp[0].z, sp[1].x, sp[1].y, sp[1].z, sp[2].x, sp[2].y, sp[2].z], 3,
-    ));
-    sGeom.computeVertexNormals();
+    const sGeom = roundedTriSticker(sp[0], sp[1], sp[2], FACE_NORMAL[face]);
     const sMesh = new THREE.Mesh(sGeom, stickerMat(DINO_FACE_COLOR[face]));
     sMesh.userData.simRole = 'sticker';
     sMesh.userData.dinoFace = face;

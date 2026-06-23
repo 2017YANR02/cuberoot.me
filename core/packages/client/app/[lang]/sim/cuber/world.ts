@@ -4,10 +4,12 @@ import Cubelet from "./cubelet";
 import * as THREE from "three";
 import Controller from "./controller";
 import Sq1Cube from "./sq1/Sq1Cube";
-import FaceHints from "./face_hints";
+import IvyCube from "./ivy/IvyCube";
+import DinoCube from "./dino/DinoCube";
+import FaceHints, { IVY_CORNER_HINTS } from "./face_hints";
 
-/** Puzzle slot — either an NxN cube (order >= 1) or SQ1 (sentinel 'sq1'). */
-export type PuzzleKind = number | 'sq1';
+/** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, or Dino (corner-turning). */
+export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino';
 
 export default class World {
   public width = 1;
@@ -16,10 +18,10 @@ export default class World {
   public scene: THREE.Scene;
   public camera: THREE.PerspectiveCamera;
 
-  /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube. Consumers that
-   *  reach into NxN-specific fields (instancedRenderer, table, locks) must
-   *  first check `world.puzzleKind` !== 'sq1'. */
-  public cube!: Cube | Sq1Cube;
+  /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
+   *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
+   *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
+  public cube!: Cube | Sq1Cube | IvyCube | DinoCube;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -29,15 +31,19 @@ export default class World {
 
   private cubes: Cube[] = [];
   private sq1Cube: Sq1Cube | null = null;
+  private ivyCube: IvyCube | null = null;
+  private dinoCube: DinoCube | null = null;
   /** Current puzzle kind, mirrors what was last passed to setPuzzle. */
   public puzzleKind: PuzzleKind = 3;
   public callbacks: (() => void)[] = [];
 
   public controller: Controller;
 
-  /** 6 个面方位指示器(彩色面板 + U/D/L/R/F/B 字母),拖动时淡入。
-   *  挂在 scene 下,所以会跟着 scene.rotation 一起转,等价于"贴在 cube 上"。 */
+  /** 方位指示器,拖动时淡入,挂在 scene 下跟随 scene.rotation。
+   *  faceHints = 6 面字母(U/D/L/R/F/B,NxN/SQ1);ivyHints = Ivy 的 4 个角转
+   *  轴字母(R/L/D/B)—— 角转魔方没有 6 面转动,显示 4 个角标才贴切。 */
   public faceHints!: FaceHints;
+  public ivyHints!: FaceHints;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -62,6 +68,10 @@ export default class World {
     this.controller = new Controller(this);
     this.faceHints = new FaceHints();
     this.scene.add(this.faceHints);
+    // Ivy: corner-turner — 4 twist-axis labels (R/L/D/B) at the corners, pushed a
+    // bit farther out than face labels since corners are farther from center.
+    this.ivyHints = new FaceHints(Cubelet.SIZE, IVY_CORNER_HINTS, 3.0);
+    this.scene.add(this.ivyHints);
     this.setPuzzle(3);
   }
 
@@ -87,6 +97,27 @@ export default class World {
       // SQ1: Controller reaches into cube.table.groups (NxN layer state) on
       // empty-space drag, which Sq1Cube doesn't have. Disable it; SimPage
       // installs a separate sq1 drag-rotate handler that updates this.cube.rotation.
+      this.controller.disable = true;
+      this._ensureSq1Lights();
+    } else if (kind === 'ivy') {
+      if (this.ivyCube == null) {
+        this.ivyCube = new IvyCube();
+        this.ivyCube.callbacks.push(this.callback);
+      }
+      this.cube = this.ivyCube;
+      // Like SQ1, Ivy has no NxN layer table; disable the NxN controller. SimPage
+      // installs a whole-cube drag-rotate handler for it.
+      this.controller.disable = true;
+      this._ensureSq1Lights(); // small oblique solid — reuse the wrap-around rig
+    } else if (kind === 'dino') {
+      if (this.dinoCube == null) {
+        this.dinoCube = new DinoCube();
+        this.dinoCube.callbacks.push(this.callback);
+      }
+      this.cube = this.dinoCube;
+      // Dino: same as SQ1 — the NxN Controller doesn't apply. SimPage installs a
+      // dedicated dino drag-to-turn + view-rotate handler. Reuse the SQ1 rim-light
+      // rig (Dino is a small object with many oblique tetra facets too).
       this.controller.disable = true;
       this._ensureSq1Lights();
     } else {
@@ -167,13 +198,16 @@ export default class World {
     // ~166) — so at the NxN reference it overflows the viewport. SIZE*4.6 pulls
     // it back to the same ~0.85 fill the NxN view has. NxN path unchanged.
     const isSq1 = this.puzzleKind === 'sq1';
-    const refHalf = isSq1 ? Cubelet.SIZE * 4.6 : Cubelet.SIZE * 3;
+    const isDino = this.puzzleKind === 'dino';
+    // Dino cube spans [-2,2]·SIZE (corners at ~3.5·SIZE); ~4.0 frames it to the
+    // same fill as the NxN-3 reference.
+    const refHalf = isSq1 ? Cubelet.SIZE * 4.6 : isDino ? Cubelet.SIZE * 4.0 : Cubelet.SIZE * 3;
     const distance = refHalf * this.perspective;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
     this.camera.position.z = distance;
-    // near/far margins: SQ1's solid is deeper along view, so widen its near cut.
-    this.camera.near = distance - Cubelet.SIZE * (isSq1 ? 5 : 4);
+    // near/far margins: SQ1/Dino solids are deeper along view, so widen the near cut.
+    this.camera.near = distance - Cubelet.SIZE * (isSq1 || isDino ? 5 : 4);
     this.camera.far = distance + Cubelet.SIZE * 8;
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);

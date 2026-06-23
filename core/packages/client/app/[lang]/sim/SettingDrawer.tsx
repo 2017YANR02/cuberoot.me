@@ -11,6 +11,7 @@ import { CUBE_FILL } from '@/lib/cube-colors';
 import World from './cuber/world';
 import CubeGroup from './cuber/group';
 import Cubelet from './cuber/cubelet';
+import { applyDebugStructureColors } from './cuber/debugColors';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 import i18n from '@/i18n/i18n-client';
@@ -39,6 +40,9 @@ export interface SimSettings {
   /** 背面视图小窗:右上角第二个相机从背后看魔方。NxN/SQ1 走自有第二渲染器,
    *  twisty (金字塔/斜转/五魔) 走 cubing.js 原生 backView。 */
   backView: boolean;
+  /** NxN 主视图形态:'cube' = 立体 3D(默认);'net' = 2D 平面展开图(可拖动转层)。
+   *  仅 NxN 生效,SQ1 / twisty 忽略。 */
+  viewMode: 'cube' | 'net';
   /** 解法回放模式:
    *  - 'moves'     = 默认。cube 起点 = setup,alg 向前播,看 alg 把魔方拧成什么。
    *  - 'algorithm' = cube 终点 = setup(setup 为空 → 还原态),起点 = setup·alg⁻¹,
@@ -49,6 +53,16 @@ export interface SimSettings {
    *  - 'rotate' = 整体转 (NxN 记 x/y/z 进 move list,松手 snap 90°);
    *  - 'view'   = 纯切视角,不 commit 任何 move,绿面是 F 就一直是 F。 */
   dragEmpty: 'orbit' | 'rotate' | 'view';
+  /** 开发者调试(任意魔方):开启后拖拽转动实时跟手,松手即冻结在当前部分角度,
+   *  不补完也不弹回(逐帧看中间态用)。再次拖拽 / 关掉此项 / 复位都会清掉冻结态。 */
+  holdPartialTurn: boolean;
+  /** 开发者调试(任意魔方):内部结构着色 —— 把每片的 body(壳 / 块 / frame)染青、
+   *  核心(球核 / 内填充箱)染品红,色贴片不动。转动开口时一眼看清露出的是实体结构
+   *  还是 void/bug。见 cuber/debugColors.ts。 */
+  debugStructureColor: boolean;
+  /** 开发者调试(枫叶):挖角 —— 隐藏 R 对应的角块(3 片花瓣 + 壳体),露出球核与
+   *  相邻 3 个中心的内壁,像把真枫叶拆掉一个角,用来检查内部结构。见 IvyCube.setCarveCorner。 */
+  debugCarveCorner: boolean;
   /** 内核色 (frame + 内层 slice 填充板的颜色) */
   coreColor: string;
   /** 6 面色 (WCA 默认) */
@@ -80,8 +94,12 @@ export const DEFAULT_SETTINGS: SimSettings = {
   checkeredBg: false,
   lockView: false,
   backView: false,
+  viewMode: 'cube',
   playbackMode: 'moves',
   dragEmpty: 'view',
+  holdPartialTurn: false,
+  debugStructureColor: false,
+  debugCarveCorner: false,
   coreColor: '#202020',
   faceColors: { ...DEFAULT_FACE_COLORS },
 };
@@ -128,6 +146,7 @@ function mapFrames(v: number): number { return Math.max(3, Math.round(60 - (v / 
 export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
+  world.controller.holdPartial = s.holdPartialTurn;
   // scale 由滚轮直接改 world.scale + 防抖反算 settings (round 损失 ≤0.005),
   // 这里如果差距在 round 误差内就别回写,避免滚动途中突跳
   const targetScale = mapScale(s.scale);
@@ -147,9 +166,9 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   // face hints (拖动时浮现的 U/D/L/R/F/B 色板) 跟主 face colors 走。
   world.faceHints.setFaceColors(s.faceColors);
   CubeGroup.frames = mapFrames(s.speed);
-  // NxN-only options skipped for SQ1 (sticker thickness / hollow / hint / face
-  // colors are baked at construction time for the SQ1 wedges).
-  if (world.puzzleKind !== 'sq1') {
+  // NxN-only options skipped for SQ1 / Ivy / Dino (sticker thickness / hollow / hint /
+  // face colors are baked at construction time for their non-NxN geometry).
+  if (world.puzzleKind !== 'sq1' && world.puzzleKind !== 'ivy' && world.puzzleKind !== 'dino') {
     const cube = world.cube as import('./cuber/cube').default;
     cube.arrow = s.arrow;
     cube.instancedRenderer.thickness = s.thickness;
@@ -164,6 +183,18 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     Cubelet.CORE_BASIC.color.set(s.coreColor);
     Cubelet._PANEL_MAT.color.set(s.coreColor);
     cube.instancedRenderer.setFaceColors(s.faceColors);
+  }
+  // Developer "structure coloring" overlay (any puzzle). MUST run after the NxN
+  // block above — that block re-sets frame/inner materials every call (the
+  // `hollow` setter writes unconditionally), so applying here lets the overlay
+  // capture the fresh base + restore it correctly. No-op when off.
+  applyDebugStructureColors(world.cube, s.debugStructureColor);
+  // Carve out (hide) one corner's moving group to inspect the core + neighbors'
+  // inner walls — corner-turning puzzles only (Ivy / Dino).
+  if (world.puzzleKind === 'ivy') {
+    (world.cube as import('./cuber/ivy/IvyCube').default).setCarveCorner(s.debugCarveCorner);
+  } else if (world.puzzleKind === 'dino') {
+    (world.cube as import('./cuber/dino/DinoCube').default).setCarveCorner(s.debugCarveCorner);
   }
   world.dirty = true;
   world.cube.dirty = true;

@@ -12,8 +12,9 @@
  *   Each puzzle builder tags its meshes `userData.simRole`:
  *     - 'body' — the solid filler under each sticker (Ivy shell walls, SQ1 piece
  *                extrude, NxN frame). Debug → cyan.
- *     - 'core' — the shared central mass (Ivy ball-core sphere, NxN inner box).
- *                Debug → magenta.
+ *     - 'core' — a shared central mass (e.g. NxN inner box). Debug → magenta.
+ *                (Ivy has no core mesh — its pieces are solid wedges that cap the
+ *                interior sphere themselves; only their 'body' role shows.)
  *     - 'sticker' (optional tag) — left untouched.
  *   `applyDebugStructureColors(root, on)` traverses and, per tagged mesh, swaps
  *   `mesh.material` to the role's debug material (stashing the original in
@@ -64,19 +65,7 @@ export function applyDebugStructureColors(root: THREE.Object3D, on: boolean): vo
   });
 }
 
-/** Bright, unlit outline material for the "arc stroke" debug overlay. Flat yellow
- *  so it reads as a crisp loop on top of any colored sticker AND on the cyan debug
- *  body. Shared app-lifetime singleton. */
-export const DEBUG_ARC_STROKE_MAT = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-
-/** Show (on) / hide (off) every mesh tagged `userData.simRole === 'arcstroke'` — a
- *  bright outline a puzzle builds along each colored region's visible edge (Ivy
- *  only so far; no-op where none exist). Turn it on and freeze a turn half-way: if
- *  the loop stays continuous the arc is correct; any break = a body is wrongly
- *  covering the colored arc there. Call AFTER applySettings (same as the others). */
-export function applyDebugArcStroke(root: THREE.Object3D, on: boolean): void {
-  root.traverse((obj) => {
-    const mesh = obj as THREE.Mesh;
-    if (mesh.isMesh && mesh.userData.simRole === 'arcstroke') mesh.visible = on;
-  });
-}
+// (removed) Arc-stroke debug overlay — was an Ivy-only tool for verifying curved
+// sticker arcs stay continuous (occlusion bug #12). Deleted: only Ivy had curved
+// edges, and structure-coloring + hold-partial + the analytic vertex check cover
+// that failure mode without a per-piece tube-geometry overlay.

@@ -34,12 +34,19 @@ import Toucher from './Toucher';
 import { TwistAction } from './cuber/twister';
 import CubeGroup from './cuber/group';
 import Sq1Cube from './cuber/sq1/Sq1Cube';
+import DinoCube, { type PieceAnim } from './cuber/dino/DinoCube';
 import tweener, { type Tween } from './cuber/tweener';
 import {
-  sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit,
-  type Sq1DragStart,
+  sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit, sq1DragSnapBack,
+  type Sq1DragStart, type Sq1TurnDrag,
 } from './cuber/sq1/sq1Drag';
 import { moveToString as sq1MoveToString } from './cuber/sq1/sq1State';
+import IvyCube, { type IvyAnim } from './cuber/ivy/IvyCube';
+import {
+  ivyPickHit, ivyResolveMove, ivyResolveLive, ivyApplyPartial, ivySnapBack, type IvyHit,
+} from './cuber/ivy/ivyDrag';
+import { dinoPickHit, dinoResolveMove, dinoResolveLive, dinoApplyPartial, dinoSnapBack, type DinoPickHit } from './cuber/dino/dinoDrag';
+import { dinoMoveToString } from './cuber/dino/dinoState';
 import { FACE } from './cuber/define';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import TwistySection from '@/components/TwistySection';
@@ -51,6 +58,7 @@ import {
 import PlayerControls, { type SimPuzzle } from './PlayerControls';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
+import SimCubeNet from './_SimCubeNet';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
@@ -70,9 +78,9 @@ export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
 }
 
-/** Narrow `world.cube` to the NxN Cube type. Returns null for SQ1. */
+/** Narrow `world.cube` to the NxN Cube type. Returns null for SQ1 / Ivy / Dino. */
 function asNxN(world: World): Cube | null {
-  return world.puzzleKind === 'sq1' ? null : (world.cube as Cube);
+  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino') ? null : (world.cube as Cube);
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -144,6 +152,8 @@ export default function SimPage() {
     const raw = query.puzzle;
     if (!raw) return 3;
     if (raw === 'sq1') return 'sq1';
+    if (raw === 'ivy') return 'ivy';
+    if (raw === 'dino') return 'dino';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
@@ -168,6 +178,16 @@ export default function SimPage() {
   const backSizeRef = useRef<number>(140);
   const wasCompleteRef = useRef(false);
   const userMoveRef = useRef<((action: TwistAction | string) => void) | null>(null);
+  // Debug "hold partial turn": closure that snaps the currently-frozen SQ1/Ivy
+  // partial turn back to its pre-drag pose (NxN's frozen layer lives in the
+  // controller). Cleared by clearPartialFreeze() — called before any new gesture,
+  // on toggle-off, and (ref dropped) after any committed cube change.
+  const partialSnapBackRef = useRef<(() => void) | null>(null);
+  const clearPartialFreeze = useCallback(() => {
+    if (partialSnapBackRef.current) { partialSnapBackRef.current(); partialSnapBackRef.current = null; }
+    worldRef.current?.controller.clearFrozen();
+    if (worldRef.current) worldRef.current.dirty = true;
+  }, []);
   // pyraminx / skewb / megaminx TwistyPlayer instance — used by PlayerControls
   // to jumpToStart + play during animateScramble.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -287,6 +307,11 @@ export default function SimPage() {
     const world = new World();
     worldRef.current = world;
     setWorldTick((n) => n + 1);
+    // Any committed cube change (move / scramble / reset / replay fires callbacks)
+    // re-poses the pivots, so a stale SQ1/Ivy freeze snap-back would corrupt them —
+    // just drop the closure (don't snap). NxN's frozen layer is released by the
+    // controller / PlayerControls before such ops.
+    world.callbacks.push(() => { partialSnapBackRef.current = null; });
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true, alpha: true, preserveDrawingBuffer: true,
@@ -486,6 +511,37 @@ export default function SimPage() {
     let sq1DownX = 0;
     let sq1DownY = 0;
     let sq1MovedPastThreshold = false;
+    // Ivy: drag a petal (a turning corner) to twist it; a drag on a lens/center
+    // or empty space orbits the whole scene (pinch still zooms via the shared
+    // block below). A move is a discrete 120° twist, so we fire once past a
+    // small threshold (no live finger-tracking yet — see ivyDrag.ts).
+    let ivyRotating = false;
+    let ivyLastX = 0;
+    let ivyLastY = 0;
+    let ivyPick: IvyHit | null = null; // pending corner-twist gesture (cube grabbed)
+    let ivyDownX = 0;
+    let ivyDownY = 0;
+    let ivyMoved = false;
+    // Debug hold-partial: live-tracked Ivy turn. While set, pointermove maps drag
+    // → t∈[0,1] and rotates the tripod live; pointerup freezes it (no commit).
+    let ivyLive: { anims: IvyAnim[]; tx: number; ty: number; downX: number; downY: number } | null = null;
+    const IVY_TURN_THRESHOLD_PX = 6;
+    const IVY_FULL_PX = 150; // drag px (along the turn tangent) for a full 120° turn
+    // Dino drag state (discrete 120° — pick on pointerdown, fire whole move on the
+    // first move past threshold, else orbit). Separate from sq1's continuous drag.
+    let dinoPending = false;
+    let dinoHit: DinoPickHit | null = null;
+    let dinoDownX = 0;
+    let dinoDownY = 0;
+    let dinoFired = false;
+    let dinoRotating = false;
+    let dinoLastX = 0;
+    let dinoLastY = 0;
+    // Debug hold-partial: live-tracked Dino turn (mirrors ivyLive). While set,
+    // pointermove maps drag → t∈[0,1] and rotates the tripod live; pointerup freezes.
+    let dinoLive: { anims: PieceAnim[]; tx: number; ty: number; downX: number; downY: number } | null = null;
+    const DINO_DRAG_THRESHOLD_PX = 6;
+    const DINO_FULL_PX = 150; // drag px (along the turn tangent) for a full 120° turn
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -498,6 +554,32 @@ export default function SimPage() {
         panLastY = e.clientY;
         renderer.domElement.setPointerCapture(e.pointerId);
         return;
+      }
+      if (worldRef.current?.puzzleKind === 'ivy' && (e.pointerType !== 'mouse' || e.button === 0)) {
+        const isTouchMulti = e.pointerType === 'touch' && activePointers.size >= 1;
+        if (!isTouchMulti) {
+          const w = worldRef.current;
+          const r0 = renderer.domElement.getBoundingClientRect();
+          const lx = e.clientX - r0.left;
+          const ly = e.clientY - r0.top;
+          // Grab anywhere on the cube → turn (drag direction picks the corner);
+          // only an off-cube miss orbits the view (on-cube never rotates whole).
+          ivyPick = w.cube instanceof IvyCube
+            ? ivyPickHit(w.cube, w.scene, w.camera, lx, ly, w.width, w.height)
+            : null;
+          ivyDownX = lx;
+          ivyDownY = ly;
+          ivyMoved = false;
+          ivyRotating = ivyPick === null; // orbit only when the cube was missed
+          ivyLastX = e.clientX;
+          ivyLastY = e.clientY;
+          if (e.pointerType !== 'touch') renderer.domElement.setPointerCapture(e.pointerId);
+        }
+        if (e.pointerType === 'touch') {
+          activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (activePointers.size === 2) { ivyRotating = false; ivyPick = null; }
+        }
+        if (e.pointerType !== 'touch') return;
       }
       if (worldRef.current?.puzzleKind === 'sq1' && (e.pointerType !== 'mouse' || e.button === 0)) {
         const isTouchMulti = e.pointerType === 'touch' && activePointers.size >= 1;
@@ -525,6 +607,31 @@ export default function SimPage() {
         }
         if (e.pointerType !== 'touch') return;
       }
+      if (worldRef.current?.puzzleKind === 'dino' && (e.pointerType !== 'mouse' || e.button === 0)) {
+        const isTouchMulti = e.pointerType === 'touch' && activePointers.size >= 1;
+        if (!isTouchMulti) {
+          const r0 = renderer.domElement.getBoundingClientRect();
+          dinoDownX = e.clientX - r0.left;
+          dinoDownY = e.clientY - r0.top;
+          dinoPending = true;
+          dinoFired = false;
+          dinoRotating = false;
+          dinoHit = null;
+          dinoLastX = e.clientX;
+          dinoLastY = e.clientY;
+          if (e.pointerType !== 'touch') renderer.domElement.setPointerCapture(e.pointerId);
+        }
+        if (e.pointerType === 'touch') {
+          activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (activePointers.size === 2) {
+            dinoPending = false;
+            dinoFired = false;
+            dinoRotating = false;
+            dinoHit = null;
+          }
+        }
+        if (e.pointerType !== 'touch') return;
+      }
       if (e.pointerType !== 'touch') return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (activePointers.size === 2) {
@@ -535,6 +642,7 @@ export default function SimPage() {
         pinchStartPan = { x: world.panX, y: world.panY };
         pinching = true;
         sq1Rotating = false;
+        dinoRotating = false;
         world.controller.disable = true;
       }
     };
@@ -547,6 +655,62 @@ export default function SimPage() {
         world.panX += d.x;
         world.panY += d.y;
         world.resize();
+        return;
+      }
+      // Debug hold-partial: live-track the locked Ivy turn (drag → partial angle).
+      if (worldRef.current?.puzzleKind === 'ivy' && ivyLive) {
+        const r0 = renderer.domElement.getBoundingClientRect();
+        const lx = e.clientX - r0.left;
+        const ly = e.clientY - r0.top;
+        const proj = (lx - ivyLive.downX) * ivyLive.tx + (ly - ivyLive.downY) * ivyLive.ty;
+        ivyApplyPartial(ivyLive.anims, proj / IVY_FULL_PX);
+        worldRef.current.dirty = true;
+        return;
+      }
+      if (worldRef.current?.puzzleKind === 'ivy' && ivyPick && !ivyMoved) {
+        const w = worldRef.current;
+        const r0 = renderer.domElement.getBoundingClientRect();
+        const lx = e.clientX - r0.left;
+        const ly = e.clientY - r0.top;
+        const ddx = lx - ivyDownX;
+        const ddy = ly - ivyDownY;
+        if (ddx * ddx + ddy * ddy >= IVY_TURN_THRESHOLD_PX * IVY_TURN_THRESHOLD_PX) {
+          ivyMoved = true;
+          if (w.cube instanceof IvyCube) {
+            if (settingsRef.current.holdPartialTurn) {
+              // Lock a live partial turn: resolve corner + drag-aligned tangent,
+              // drop any prior freeze, begin (pivots tracked live, NOT committed).
+              const plan = ivyResolveLive(w.cube, w.camera, ivyPick, ivyDownX, ivyDownY, lx, ly, w.width, w.height);
+              if (plan) {
+                clearPartialFreeze();
+                const anims = w.cube.beginMove(plan.move);
+                ivyLive = { anims, tx: plan.tangentX, ty: plan.tangentY, downX: ivyDownX, downY: ivyDownY };
+                const proj = (lx - ivyDownX) * plan.tangentX + (ly - ivyDownY) * plan.tangentY;
+                ivyApplyPartial(anims, proj / IVY_FULL_PX);
+                w.dirty = true;
+              }
+            } else {
+              const move = ivyResolveMove(w.cube, w.camera, ivyPick, ivyDownX, ivyDownY, lx, ly, w.width, w.height);
+              if (move) {
+                w.cube.twister.twist(move, false, true);
+                userMoveRef.current?.(move.name);
+              }
+            }
+          }
+          ivyPick = null;
+        }
+        return;
+      }
+      if (worldRef.current?.puzzleKind === 'ivy' && ivyRotating) {
+        const dx = e.clientX - ivyLastX;
+        const dy = e.clientY - ivyLastY;
+        ivyLastX = e.clientX;
+        ivyLastY = e.clientY;
+        const k = mapOrbitK(settingsRef.current.sensitivity);
+        world.scene.rotation.y += dx * k;
+        world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
+        world.scene.updateMatrix();
+        world.dirty = true;
         return;
       }
       if (worldRef.current?.puzzleKind === 'sq1') {
@@ -587,6 +751,15 @@ export default function SimPage() {
               c.twister.finish();
               tweener.finish();
               sq1Drag = sq1DragStart(c, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
+              // If a prior hold-partial freeze is live, sq1DragStart just captured
+              // its rotated pivots as the start pose — snap back & re-capture clean.
+              // (Orbit returns null → freeze preserved so you can inspect it.)
+              if (sq1Drag && partialSnapBackRef.current) {
+                clearPartialFreeze();
+                if (sq1Drag.kind === 'turn') {
+                  sq1Drag = sq1DragStart(c, w.scene, w.camera, sq1DownX, sq1DownY, w.width, w.height);
+                }
+              }
             }
             if (sq1Drag?.kind === 'slice') {
               const c2 = w.cube as Sq1Cube;
@@ -628,6 +801,83 @@ export default function SimPage() {
           }
         }
       }
+      if (worldRef.current?.puzzleKind === 'dino') {
+        if (dinoLive) {
+          const r0 = renderer.domElement.getBoundingClientRect();
+          const lx = e.clientX - r0.left;
+          const ly = e.clientY - r0.top;
+          const proj = (lx - dinoLive.downX) * dinoLive.tx + (ly - dinoLive.downY) * dinoLive.ty;
+          dinoApplyPartial(dinoLive.anims, proj / DINO_FULL_PX);
+          worldRef.current.dirty = true;
+          return;
+        }
+        const rmove = renderer.domElement.getBoundingClientRect();
+        const localX = e.clientX - rmove.left;
+        const localY = e.clientY - rmove.top;
+        if (dinoRotating) {
+          const dx = e.clientX - dinoLastX;
+          const dy = e.clientY - dinoLastY;
+          dinoLastX = e.clientX;
+          dinoLastY = e.clientY;
+          const k = mapOrbitK(settingsRef.current.sensitivity);
+          world.scene.rotation.y += dx * k;
+          world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
+          world.scene.updateMatrix();
+          world.dirty = true;
+          return;
+        }
+        if (dinoPending && !dinoFired && !pinching) {
+          const dx = localX - dinoDownX;
+          const dy = localY - dinoDownY;
+          if (Math.hypot(dx, dy) >= DINO_DRAG_THRESHOLD_PX) {
+            dinoFired = true; // consume this gesture either as a turn or orbit
+            const w = worldRef.current;
+            const c = w.cube;
+            if (c instanceof DinoCube) {
+              c.twister.finish();
+              tweener.finish();
+              // pick from the original pointerdown location (before the drag moved)
+              dinoHit = dinoPickHit(c, w.scene, w.camera, dinoDownX, dinoDownY, w.width, w.height);
+              if (dinoHit) {
+                if (settingsRef.current.holdPartialTurn) {
+                  // Live partial turn: resolve corner + drag tangent, begin the turn
+                  // (pivots tracked live, NOT committed) — freeze on pointerup.
+                  const plan = dinoResolveLive(c, dinoHit, w.scene, w.camera, dx, dy, w.width, w.height);
+                  if (plan) {
+                    clearPartialFreeze();
+                    const anims = c.beginMove(plan.move);
+                    dinoLive = { anims, tx: plan.tangentX, ty: plan.tangentY, downX: dinoDownX, downY: dinoDownY };
+                    const proj = (localX - dinoDownX) * plan.tangentX + (localY - dinoDownY) * plan.tangentY;
+                    dinoApplyPartial(anims, proj / DINO_FULL_PX);
+                    w.dirty = true;
+                    dinoPending = false;
+                    return;
+                  }
+                } else {
+                  const move = dinoResolveMove(c, dinoHit, w.scene, w.camera, dx, dy, w.width, w.height);
+                  if (move) {
+                    c.twister.twist(move, false, true);
+                    userMoveRef.current?.(dinoMoveToString(move));
+                    dinoPending = false;
+                    return;
+                  }
+                }
+              }
+            }
+            // missed a piece, or no aligned corner → orbit the rest of this gesture
+            dinoRotating = true;
+            dinoHit = null;
+            dinoLastX = e.clientX;
+            dinoLastY = e.clientY;
+            const k = mapOrbitK(settingsRef.current.sensitivity);
+            world.scene.rotation.y += dx * k;
+            world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
+            world.scene.updateMatrix();
+            world.dirty = true;
+            return;
+          }
+        }
+      }
       if (e.pointerType !== 'touch') return;
       if (!activePointers.has(e.pointerId)) return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -656,14 +906,37 @@ export default function SimPage() {
         if (w) {
           const c = w.cube;
           if (c instanceof Sq1Cube) {
-            const move = sq1DragCommit(c, sq1Drag, sq1DragLastDelta);
-            if (move) userMoveRef.current?.(new TwistAction(sq1MoveToString(move), false, 1));
+            if (settingsRef.current.holdPartialTurn) {
+              // Hold-partial: freeze where released (pivots already live-dragged),
+              // register snap-back, do NOT commit.
+              const frozen: Sq1TurnDrag = sq1Drag;
+              partialSnapBackRef.current = () => sq1DragSnapBack(frozen);
+            } else {
+              const move = sq1DragCommit(c, sq1Drag, sq1DragLastDelta);
+              if (move) userMoveRef.current?.(new TwistAction(sq1MoveToString(move), false, 1));
+            }
           }
         }
         sq1Drag = null;
         sq1DragLastDelta = 0;
         sq1MovedPastThreshold = false;
         sq1Pending = false;
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
+      if (ivyLive) {
+        // Hold-partial: freeze where released — keep the live pivots, register a
+        // snap-back (next turn / toggle-off restores them), do NOT commit.
+        const frozen = ivyLive.anims;
+        partialSnapBackRef.current = () => ivySnapBack(frozen);
+        ivyLive = null;
+        ivyPick = null;
+        ivyMoved = false;
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
+      if (ivyRotating || ivyPick) {
+        ivyRotating = false;
+        ivyPick = null;
+        ivyMoved = false;
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
       }
       if (sq1Rotating) {
@@ -690,11 +963,38 @@ export default function SimPage() {
         }
       }
       sq1Pending = false;
+      if (dinoLive) {
+        // Hold-partial: freeze where released — keep the live pivots, register a
+        // snap-back (next turn / toggle-off restores them), do NOT commit.
+        const frozen = dinoLive.anims;
+        partialSnapBackRef.current = () => dinoSnapBack(frozen);
+        dinoLive = null;
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
+      // Dino: the move (if any) already fired on pointermove. Just clear state and
+      // snap the view if we were orbiting in 'rotate' mode.
+      if (dinoRotating) {
+        if (settingsRef.current?.dragEmpty === 'rotate') {
+          const q = Math.PI / 2;
+          world.scene.rotation.y = Math.round(world.scene.rotation.y / q) * q;
+          world.scene.rotation.x = Math.round(world.scene.rotation.x / q) * q;
+          world.scene.updateMatrix();
+          world.dirty = true;
+        }
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      } else if (dinoPending) {
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
+      dinoPending = false;
+      dinoFired = false;
+      dinoRotating = false;
+      dinoHit = null;
       if (e.pointerType !== 'touch') return;
       activePointers.delete(e.pointerId);
       if (pinching && activePointers.size < 2) {
         pinching = false;
-        world.controller.disable = worldRef.current?.puzzleKind === 'sq1';
+        const pk = worldRef.current?.puzzleKind;
+        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino';
         syncScaleToSettings();
       }
     };
@@ -725,12 +1025,26 @@ export default function SimPage() {
       const now = performance.now();
       const dt = now - lastFrameAt;
       lastFrameAt = now;
+      // Dino is corner-turning: the 6-face U/D/L/R/F/B hint letters don't describe
+      // its moves, so we don't surface them (skill pitfall #10). SQ1 shows them on
+      // its own drag-rotate flag; NxN via the controller.
       const viewing = world.puzzleKind === 'sq1'
         ? sq1Rotating
-        : world.controller.isViewRotating;
-      if (viewing) world.faceHints.show();
-      else world.faceHints.hide();
-      if (world.faceHints.tick(dt)) world.dirty = true;
+        : world.puzzleKind === 'ivy'
+          ? ivyRotating
+          : world.puzzleKind === 'dino'
+            ? false
+            : world.controller.isViewRotating;
+      // Ivy is a corner-turner: show its 4 twist-axis labels (R/L/D/B at the
+      // corners) instead of the 6 face letters; other puzzles keep face hints.
+      // (Dino is also corner-turning but has no hint set — `viewing` is false for
+      // it above, so its faceHints stay hidden.)
+      const hints = world.puzzleKind === 'ivy' ? world.ivyHints : world.faceHints;
+      if (viewing) hints.show(); else hints.hide();
+      (world.puzzleKind === 'ivy' ? world.faceHints : world.ivyHints).hide();
+      const hintA = world.faceHints.tick(dt);
+      const hintB = world.ivyHints.tick(dt);
+      if (hintA || hintB) world.dirty = true;
       if (world.dirty || world.cube.dirty) {
         renderer.clear();
         renderer.render(world.scene, world.camera);
@@ -818,8 +1132,11 @@ export default function SimPage() {
     saveSettings(settings);
     const world = worldRef.current;
     if (world) applySettings(world, settings, prevSettingsRef.current ?? undefined);
+    // Turning hold-partial OFF clears any frozen partial turn (SQ1/Ivy snap-back +
+    // NxN layer release via controller, done inside clearPartialFreeze).
+    if (prevSettingsRef.current?.holdPartialTurn && !settings.holdPartialTurn) clearPartialFreeze();
     prevSettingsRef.current = settings;
-  }, [settings]);
+  }, [settings, clearPartialFreeze]);
 
   // Re-layout the back-view window (size + fullscreen-button offset) and force a
   // repaint when the toggle flips, the puzzle engine changes, or the world is
@@ -947,6 +1264,9 @@ export default function SimPage() {
   const getWorld = useCallback((): World | null => worldRef.current, []);
   const getRenderer = useCallback((): THREE.WebGLRenderer | null => rendererRef.current, []);
 
+  // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
+  const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
+
   return (
     <div className={`sim-page${fullscreen ? ' sim-page--fullscreen' : ''}${settings.checkeredBg ? ' sim-page--checkered' : ''}`}>
       <header className="sim-header">
@@ -958,7 +1278,16 @@ export default function SimPage() {
       </header>
 
       <div className="sim-body">
-        <div className="sim-canvas-wrap" ref={containerRef}>
+        <div className={`sim-canvas-wrap${netMode ? ' sim-canvas-wrap--net' : ''}`} ref={containerRef}>
+          {netMode && (
+            <SimCubeNet
+              getWorld={getWorld}
+              worldTick={worldTick}
+              order={order}
+              userMoveRef={userMoveRef}
+              faceColors={settings.faceColors}
+            />
+          )}
           {twisty ? (
             <TwistySection
               puzzle={puzzleParam}
@@ -986,7 +1315,7 @@ export default function SimPage() {
             <div
               ref={backFrameRef}
               className="sim-backview"
-              style={{ display: settings.backView ? 'block' : 'none' }}
+              style={{ display: settings.backView && !netMode ? 'block' : 'none' }}
               aria-hidden
             />
           )}
@@ -1002,7 +1331,7 @@ export default function SimPage() {
           {/* Swap main view ↔ back-view mini window. Only while the cuber engine
               back-view is on (NxN / SQ1); twisty puzzles use cubing.js native
               back-view and aren't covered here. */}
-          {!twisty && settings.backView && (
+          {!twisty && !netMode && settings.backView && (
             <button
               ref={swapButtonRef}
               type="button"

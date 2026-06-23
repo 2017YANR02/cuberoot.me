@@ -133,6 +133,38 @@
   display: block;
 }
 
+/* 平面图 (net) 模式:盖住 3D canvas(含背面视图小窗的 canvas),露出 SVG 展开图。
+ * 两条都带 !important 覆盖上面的 display:block !important;多一个 class 提高优先级。 */
+.sim-canvas-wrap--net canvas {
+  display: none !important;
+}
+.sim-net {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--card);
+}
+.sim-net-svg {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  touch-action: none;
+}
+.sim-net-svg rect {
+  cursor: grab;
+}
+.sim-net--fallback {
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 24px;
+}
+
 /* TwistySection (pyraminx / skewb / megaminx) — fill .sim-canvas-wrap fully.
  * 关键:不要给 twisty-player 写 `display: *`。会盖住 shadow root 里
  * `:host { display: grid }`,内部 .wrapper(grid item + contain:size)就拿不到

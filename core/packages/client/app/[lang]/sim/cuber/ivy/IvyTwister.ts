@@ -8,20 +8,31 @@ import tweener, { type Tween } from '../tweener';
 import CubeGroup from '../group';
 import type IvyCube from './IvyCube';
 import type { IvyAnim, IvyMove } from './IvyCube';
-import { parseIvyScramble } from '@/lib/ivy-solver';
 
 const AXIS_LETTER = 'RLDB';
+const TOKEN_RE = /^([RLDB])('?)$/i;
 
-/** Parse an Ivy scramble (R L D B with ') into moves. Reuses the solver's
- *  tokenizer so a /scramble/gen?event=ivy scramble is read identically. Strict
- *  (throws on a bad token); callers in the live /sim boxes gate on
- *  `classifyIvyTokens` first so a stray token never reaches here. */
+/** Parse an Ivy scramble (R L D B with ') into moves, in the /sim's STANDARD
+ *  notation: a bare letter = ONE 120° twist (times 1), a primed letter = its
+ *  inverse (times 2 = the base turn twice). This is the natural cube convention,
+ *  so a dragged single twist records + replays as "R" (not "R'"). NOTE: this is
+ *  intentionally the OPPOSITE of lib/ivy-solver's cstimer notation (bare = the base
+ *  turn applied twice), which /scramble must keep for cstimer scramble
+ *  compatibility — the /sim is a self-contained world (its own random scramble +
+ *  drags, no solveIvy), so it uses the intuitive convention. Keep in sync with
+ *  IvyCube.pickMove's naming. Strict (throws on a bad token); the live /sim boxes
+ *  gate on `classifyIvyTokens` first so a stray token never reaches here. */
 export function parseIvyMoves(scramble: string): IvyMove[] {
-  return parseIvyScramble(scramble).map((mi) => {
-    const axis = mi >> 1;
-    const primed = (mi & 1) === 1;
-    return { axis, times: primed ? 1 : 2, name: AXIS_LETTER[axis] + (primed ? "'" : '') };
-  });
+  const out: IvyMove[] = [];
+  for (const tok of scramble.trim().split(/\s+/)) {
+    if (!tok) continue;
+    const m = TOKEN_RE.exec(tok);
+    if (!m) throw new Error(`bad: ${tok}`);
+    const axis = AXIS_LETTER.indexOf(m[1].toUpperCase());
+    const primed = !!m[2];
+    out.push({ axis, times: primed ? 2 : 1, name: AXIS_LETTER[axis] + (primed ? "'" : '') });
+  }
+  return out;
 }
 
 export default class IvyTwister {
