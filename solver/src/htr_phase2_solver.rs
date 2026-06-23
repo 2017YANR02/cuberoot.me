@@ -231,13 +231,15 @@ impl HtrPhase2Solver {
             let col = G3_MOVES.iter().position(|&g| g as usize == m).unwrap();
             let nc = self.mt_corn[c * 6 + col] as usize;
             let ne = self.mt_edge[e * 6 + col] as usize;
-            if self.dist[nc * EDGES + ne] as u32 >= depth {
+            let h = self.dist[nc * EDGES + ne] as u32;
+            if h >= depth {
                 continue;
             }
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if h > 0 {
+                // h==0 且 depth>1:已解却还要再走 depth-1 步 → 更短解 + 无效尾动,跳过。
                 self.enum_paths(nc, ne, depth - 1, m as u8, path, out, cap);
             }
             path.pop();
