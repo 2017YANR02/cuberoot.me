@@ -181,6 +181,22 @@ export function parseIvyScramble(scramble: string): number[] {
   return out;
 }
 
+export interface IvyTokenSpan { text: string; bad: boolean; }
+
+/** Split a scramble/alg string into spans (whitespace preserved), flagging any
+ *  token that isn't a valid Ivy move. Powers the /sim input's in-place red
+ *  highlight + play gate: a bad token (e.g. a 3x3 "F") blocks playback and is
+ *  shown red instead of crashing. The solver path keeps using the strict
+ *  `parseIvyScramble` (a bad scramble must not silently yield a wrong solution). */
+export function classifyIvyTokens(text: string): IvyTokenSpan[] {
+  const out: IvyTokenSpan[] = [];
+  for (const part of text.split(/(\s+)/)) {
+    if (part === '') continue;
+    out.push({ text: part, bad: !/^\s+$/.test(part) && !TOKEN_RE.test(part) });
+  }
+  return out;
+}
+
 /** Apply a scramble to the solved cube and return its state index. */
 export function ivyScrambleToIndex(scramble: string): number {
   const g = graph();
