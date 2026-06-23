@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260623c';
+const V = 'v=20260623d';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -110,14 +110,15 @@ export interface MovesTimed extends MovesResult {
 
 export interface RustCrossPool {
   ready: Promise<void>; // 首个 worker 就绪
-  /** variant 0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc;face 0..5。返回单格步数 + 计算耗时。 */
-  solveFace(scramble: string, variant: number, face: number): Promise<FaceResult>;
-  /** 单格多解步骤 + 计算耗时。 */
+  /** variant 0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc;face 0..5。返回单格步数 + 计算耗时。
+   *  mask:18 个 move 的 bitmask(bit m=1 表示允许),省略=不限步法;仅 cross(variant 0)生效。 */
+  solveFace(scramble: string, variant: number, face: number, mask?: number): Promise<FaceResult>;
+  /** 单格多解步骤 + 计算耗时。opts.mask 同 solveFace(省略=不限)。 */
   solveMoves(
     scramble: string,
     variant: number,
     face: number,
-    opts?: { extra?: number; cap?: number; combo?: string },
+    opts?: { extra?: number; cap?: number; combo?: string; mask?: number },
   ): Promise<MovesTimed>;
   /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)整变体 24 值:[cross,xc,xxc,xxxc]×6 朝向(已折叠 z0/z2/z3/z1/x3/x1)。 */
   solveF2leo(scramble: string, pseudo: boolean): Promise<number[]>;
@@ -360,13 +361,17 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
   return {
     ready,
     size,
-    solveFace(scramble, variant, face) {
-      return submit({ type: 'face', id: nextId++, scramble, variant, face }) as Promise<FaceResult>;
+    solveFace(scramble, variant, face, mask) {
+      return submit({
+        type: 'face', id: nextId++, scramble, variant, face,
+        ...(mask != null ? { mask } : {}),
+      }) as Promise<FaceResult>;
     },
     solveMoves(scramble, variant, face, opts = {}) {
       return submit({
         type: 'moves', id: nextId++, scramble, variant, face,
         extra: opts.extra ?? 0, cap: opts.cap ?? 50, combo: opts.combo ?? '',
+        ...(opts.mask != null ? { mask: opts.mask } : {}),
       }) as Promise<MovesTimed>;
     },
     solveF2leo(scramble, pseudo) {
