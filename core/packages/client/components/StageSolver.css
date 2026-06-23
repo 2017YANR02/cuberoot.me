@@ -316,6 +316,20 @@ html[data-theme='dark'] .stsv {
   border-radius: 4px;
   white-space: nowrap;
 }
+/* pair/pseudo_pair:两段标签容器(固定槽 + 自由对) */
+.stsv-sol-slots { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; }
+/* 固定已解槽(「槽位」):中性暗 pill,与 accent 的「基态」自由对 pill 区分 */
+.stsv-sol-slot-fixed {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--sv-text-mute);
+  background: color-mix(in srgb, var(--sv-text-mute) 14%, transparent);
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
 .stsv-sol-copy {
   background: none;
   border: none;
