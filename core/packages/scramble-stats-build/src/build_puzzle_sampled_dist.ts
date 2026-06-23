@@ -486,6 +486,9 @@ const REGISTRY: PuzzleDistSpec[] = [
       };
     },
   },
+  // NOTE: sia123 (联体 1×2×3) 故意 NOT 注册 —— TRUE WALL: 实测每半边 ⟨U,R,r⟩ 在 length-25 cstimer 打乱下最优
+  // 解 ~17-20 步, 投影 PDB(角 diam14 / 棱 diam15-17 / 中心 4)启发太弱, 最优 IDA* 单条 60-150s, 而 WIDA*/GBFS
+  // 近最优要么不收敛要么 OOM。需两阶段约简才能快, 属未完成的后续设计。详见 solver/NONWCA_PUZZLE_LOOP.md。
   // NOTE: 15p (数字华容道) 故意 NOT 注册 —— 其 walking-distance IDA* 对均匀随机深态单条可能跑数分钟(N=20
   // 离线采样 >200s 未完成),即便很小的 N 也无法给出平滑直方图且有 runaway/OOM 风险(并发重 solver 在跑)。
   // 故跳过,Slide15DistView 保持现场采样(深态在浏览器里也慢,但有进度条+可取消)。若日后换更强求解器再接入。
