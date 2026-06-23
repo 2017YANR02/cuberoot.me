@@ -1220,6 +1220,8 @@ impl VariantSolverWasm {
     /// extra:超出最优的步数(0=只最优长度全部解);cap:最多收集条数。
     /// 步骤带视角前缀:多数变体即 ROTS[face];**eo** 因破坏 y 对称,最优可能只在 rot·y 帧达成,
     /// 故前缀用 enumerate_small 返回的真实帧(可能形如 "x' y",含两个旋转 token)。
+    /// `combo`:固定已解 xcross 槽集(or18「槽位」,空=自动);`base`:自由对槽(or18「基态」,
+    /// 仅 pair/pseudo_pair 用,-1=自动),eo/pseudo 忽略。
     pub fn solve_moves(
         &self,
         scramble: &str,
@@ -1229,12 +1231,13 @@ impl VariantSolverWasm {
         extra: u32,
         cap: u32,
         combo: &str,
+        base: i32,
     ) -> String {
         let alg = string_to_alg(scramble);
         let rot = ROTS[(face as usize).min(5)];
         let stage = stage as usize;
         let cap = cap as usize;
-        // combo 非空 = 用户指定目标槽位(只枚举槽位集合匹配的候选);空 = 自动挑最优。
+        // combo 非空 = 用户指定固定槽集(or18「槽位」);base>=0 = 指定自由对(or18「基态」)。
         let force = parse_combo(combo);
         let label = |combo: &[usize]| {
             combo
@@ -1254,7 +1257,7 @@ impl VariantSolverWasm {
             0 => {
                 self.ensure_pair();
                 let b = self.pair.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force);
+                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force, base);
                 pack(len, raw)
             }
             1 => {
@@ -1272,7 +1275,7 @@ impl VariantSolverWasm {
             3 => {
                 self.ensure_pseudo_pair();
                 let b = self.pseudo_pair.borrow();
-                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force);
+                let (len, raw) = b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, cap, &force, base);
                 pack(len, raw)
             }
             _ => sols_json(0, &[]),

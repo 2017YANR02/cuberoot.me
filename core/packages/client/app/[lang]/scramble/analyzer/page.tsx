@@ -152,8 +152,10 @@ const URL_KEYS = {
   // face = StageSolver 6 视角(D/U/L/R/F/B)索引,锁定底色对应的那一面;只在挂载时读一次(jump-to 提示),
   // 读完即从地址栏清掉(之后实际选中视角由 StageSolver 内部驱动,不再持久化)。
   face: parseAsInteger,
-  // slot = StageSolver 指定的 F2L 槽位组合(逗号分隔索引,如 "2" / "0,1");持久化可分享,空=自动。
+  // slot = StageSolver 指定的固定已解 F2L 槽组合(逗号分隔索引,如 "2" / "0,1");持久化可分享,空=自动。
   slot: parseAsString,
+  // base = StageSolver 基态/自由对(单槽索引 "0".."3",对齐 or18 Free Pair);仅 pair/pseudo_pair,空=自动。
+  base: parseAsString,
 };
 
 function FilterChip(props: { active: boolean; title: string; amount: number; onClick: () => void }) {
@@ -593,10 +595,12 @@ function AnalyzePageInner() {
             initialStage={Math.max(0, initUrlRef.current.mstage ?? 0)}
             initialFace={initUrlRef.current.face ?? undefined}
             initialSlot={initUrlRef.current.slot ?? undefined}
+            initialBase={initUrlRef.current.base ?? undefined}
             onSelectionChange={(m, s) => {
               void setUrlState({ method: m === 'std' ? null : m, mstage: s === 0 ? null : s });
             }}
             onSlotChange={(sl) => { void setUrlState({ slot: sl || null }); }}
+            onBaseChange={(b) => { void setUrlState({ base: b || null }); }}
           />
         </section>
       )}

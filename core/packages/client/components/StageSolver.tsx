@@ -102,13 +102,16 @@ const LIMIT_OPTIONS = [5, 10, 25, 50];
 
 // F2L 槽位标签(对齐 solver wasm SLOT_LABELS:BL=0 BR=1 FR=2 FL=3)。
 const SLOT_LABELS = ['BL', 'BR', 'FR', 'FL'] as const;
-// 某 (方法, 阶段) 需选的 F2L 槽数:cross 族 = stage(stage0=纯十字无槽);基态/伪基态自带一个
-// pair 槽 = stage+1;其余(block/eoline/dr/htr/fr)无 F2L 槽 = 0(不显示槽位选择器)。
+// 某 (方法, 阶段) 的「槽位」下拉需选的固定已解 F2L 槽数 = stage(stage0=纯十字/纯基态无固定槽)。
+// cross 族(std/eo/pseudo/f2leo/pseudo_f2leo)= 已解槽;基态/伪基态(pair/pseudo_pair)= 已解的
+// 固定 xcross 槽(自由对另由「基态」下拉单独选,见 hasBase);其余(block/eoline/dr/htr/fr)= 0。
+const SLOT_METHODS: Method[] = ['std', 'eo', 'pseudo', 'f2leo', 'pseudo_f2leo', 'pair', 'pseudo_pair'];
 function slotCount(method: Method, stageIdx: number): number {
-  if (method === 'pair' || method === 'pseudo_pair') return stageIdx + 1;
-  if (method === 'std' || method === 'eo' || method === 'pseudo' || method === 'f2leo' || method === 'pseudo_f2leo') return stageIdx;
-  return 0;
+  return SLOT_METHODS.includes(method) ? stageIdx : 0;
 }
+// 「基态」(对齐 or18 Free Pair)= 自由对槽,仅 pair/pseudo_pair 有;与「槽位」的固定槽不交,
+// 引擎在自由对固定为该槽下挑最优(pseudo 的源件仍自动)。
+const hasBase = (m: Method): boolean => m === 'pair' || m === 'pseudo_pair';
 // {0,1,2,3} 选 k 的全部组合(规范序,与 solver 的 PAIRS/TRIPS 一致)。
 function kCombos(k: number): number[][] {
   const res: number[][] = [];
@@ -143,11 +146,15 @@ interface Props {
   initialSlot?: string;
   /** 槽位选择变化时回调(analyzer 用它把 slot 同步进 URL,可分享/可深链)。 */
   onSlotChange?: (slot: string) => void;
+  /** 深链初始基态(自由对单槽索引 "0".."3";''/缺省 = 自动);仅 pair/pseudo_pair 有意义。 */
+  initialBase?: string;
+  /** 基态选择变化时回调(analyzer 用它把 base 同步进 URL,可分享/可深链)。 */
+  onBaseChange?: (base: string) => void;
   /** gen 行内:更紧凑的间距 + 略小播放器。 */
   compact?: boolean;
 }
 
-export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, compact = false }: Props) {
+export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
@@ -181,9 +188,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const [moves, setMoves] = useState<MovesTimed | null>(null);
   const [movesLoading, setMovesLoading] = useState(false);
   const [selSol, setSelSol] = useState(0); // 选中解法行(驱动共享播放器)
-  const [selSlot, setSelSlot] = useState(initialSlot); // 用户指定槽位组合(逗号分隔索引,''=自动挑最优)
+  const [selSlot, setSelSlot] = useState(initialSlot); // 用户指定固定已解槽组合(逗号分隔索引,''=自动)
   const selSlotRef = useRef(selSlot);
   selSlotRef.current = selSlot;
+  const [selBase, setSelBase] = useState(initialBase); // 用户指定基态/自由对(单槽索引 "0".."3",''=自动)
+  const selBaseRef = useRef(selBase);
+  selBaseRef.current = selBase;
   const [rowRot, setRowRot] = useState<Record<number, number>>({}); // 每行 y 预转体次数 0..3
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [totalMs, setTotalMs] = useState<number | null>(null);
@@ -350,6 +360,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       // 用户指定槽位:仅当其槽数与当前阶段一致时生效(切阶段后旧选择失配 → 回退自动)。
       const sc = slotCount(method, stage);
       const combo = sc >= 1 && comboArity(selSlotRef.current) === sc ? selSlotRef.current : '';
+      // 用户指定基态(自由对单槽):仅 pair/pseudo_pair 生效,其余传 -1(引擎忽略)。
+      const base = hasBase(method) && selBaseRef.current !== '' ? Number(selBaseRef.current) : -1;
       // 搜索深度恒定 = 最优+SLACK(=旧「+2」档,不引入新的性能成本);cap=用户选的展示条数,
       // 引擎按长度升序收集、够数即停。条数填不满时(短解不够)如实返回更少。
       const res = kind === 'std'
@@ -368,7 +380,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                     ? await pool.solveHtr2Moves(scr, f, { extra: SOL_SLACK, cap: limit })
                     : kind === 'fr'
                       ? await pool.solveFrMoves(scr, f, { extra: SOL_SLACK, cap: limit })
-                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit, combo });
+                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit, combo, base });
       if (movesReq.current === my) {
         // 引擎按 HTM 升序收集;同 HTM 再按 QTM 升序(180°=2),Array.sort 稳定 → 原 DFS 序兜底。
         const sols = [...res.sols].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
@@ -395,12 +407,27 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   }, [selFace, fetchMoves]);
 
   // 切换槽位:同步 ref(fetchMoves 立即读到新值)+ 上报(进 URL 深链)后重算当前视角。
+  // 若新固定槽含当前基态(自由对须与固定槽不交)→ 基态回「自动」,避免无效组合。
   const changeSlot = useCallback((v: string) => {
     selSlotRef.current = v;
     setSelSlot(v);
     onSlotChange?.(v);
+    const fixed = new Set(v ? v.split(',').map(Number) : []);
+    if (selBaseRef.current !== '' && fixed.has(Number(selBaseRef.current))) {
+      selBaseRef.current = '';
+      setSelBase('');
+      onBaseChange?.('');
+    }
     if (selFace !== null) void fetchMoves(selFace);
-  }, [selFace, fetchMoves, onSlotChange]);
+  }, [selFace, fetchMoves, onSlotChange, onBaseChange]);
+
+  // 切换基态(自由对):同步 ref + 上报后重算当前视角。
+  const changeBase = useCallback((v: string) => {
+    selBaseRef.current = v;
+    setSelBase(v);
+    onBaseChange?.(v);
+    if (selFace !== null) void fetchMoves(selFace);
+  }, [selFace, fetchMoves, onBaseChange]);
 
   // 切方法/阶段/打乱 → 槽位回「自动」(旧选择对新阶段的槽数多半失配)。跳过首挂,
   // 否则会立刻清掉深链带进来的 initialSlot。
@@ -410,6 +437,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     selSlotRef.current = '';
     setSelSlot('');
     onSlotChange?.('');
+    selBaseRef.current = '';
+    setSelBase('');
+    onBaseChange?.('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [method, stage, normScramble]);
 
@@ -506,6 +536,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   // 当前 (方法, 阶段) 可选的槽位组合;.length<2 时(纯十字 k=0 / 满 F2L k=4)不显示选择器。
   const slotCombos = useMemo(() => kCombos(slotCount(method, stage)), [method, stage]);
+  // 基态(自由对)可选项 = BL/BR/FR/FL 去掉已被「槽位」占用的固定槽(保证不交)。仅 pair/pseudo_pair 显示。
+  const baseOptions = useMemo(() => {
+    const fixed = new Set(selSlot ? selSlot.split(',').map(Number) : []);
+    return [0, 1, 2, 3].filter((i) => !fixed.has(i));
+  }, [selSlot]);
 
   const selSolAlg = moves && moves.sols.length > 0
     ? rotateSolutionY(moves.sols[Math.min(selSol, moves.sols.length - 1)].m, rowRot[Math.min(selSol, moves.sols.length - 1)] ?? 0)
@@ -538,6 +573,18 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                 const v = c.join(',');
                 return <option key={v} value={v}>{comboLabel(v)}</option>;
               })}
+            </select>
+          </label>
+        )}
+        {/* 基态(自由对):仅 pair/pseudo_pair。选哪个槽是「正在配的那一对」,其余槽自动当固定已解。 */}
+        {hasBase(method) && (
+          <label className="stsv-control">
+            <span>{t('基态', 'Free Pair')}</span>
+            <select value={selBase} onChange={(e) => changeBase(e.target.value)}>
+              <option value="">{t('自动(最优)', 'Auto (best)')}</option>
+              {baseOptions.map((i) => (
+                <option key={i} value={String(i)}>{SLOT_LABELS[i]}</option>
+              ))}
             </select>
           </label>
         )}

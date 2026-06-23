@@ -1042,6 +1042,8 @@ export class VariantSolverWasm {
      * extra:超出最优的步数(0=只最优长度全部解);cap:最多收集条数。
      * 步骤带视角前缀:多数变体即 ROTS[face];**eo** 因破坏 y 对称,最优可能只在 rot·y 帧达成,
      * 故前缀用 enumerate_small 返回的真实帧(可能形如 "x' y",含两个旋转 token)。
+     * `combo`:固定已解 xcross 槽集(or18「槽位」,空=自动);`base`:自由对槽(or18「基态」,
+     * 仅 pair/pseudo_pair 用,-1=自动),eo/pseudo 忽略。
      * @param {string} scramble
      * @param {number} variant
      * @param {number} face
@@ -1049,9 +1051,10 @@ export class VariantSolverWasm {
      * @param {number} extra
      * @param {number} cap
      * @param {string} combo
+     * @param {number} base
      * @returns {string}
      */
-    solve_moves(scramble, variant, face, stage, extra, cap, combo) {
+    solve_moves(scramble, variant, face, stage, extra, cap, combo, base) {
         let deferred3_0;
         let deferred3_1;
         try {
@@ -1059,7 +1062,7 @@ export class VariantSolverWasm {
             const len0 = WASM_VECTOR_LEN;
             const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
-            const ret = wasm.variantsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, variant, face, stage, extra, cap, ptr1, len1);
+            const ret = wasm.variantsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, variant, face, stage, extra, cap, ptr1, len1, base);
             deferred3_0 = ret[0];
             deferred3_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
