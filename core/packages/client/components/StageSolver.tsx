@@ -106,6 +106,13 @@ const SOL_SLACK = 2;
 const LIMIT_OPTIONS = [5, 10, 25, 50, 0];
 const NO_LIMIT_CAP = 100000;
 
+// 步法限制(对齐 or18 /solver 第一行):6 个 move 面 U D L R F B 各自允许/禁止,默认全允许。
+// 目前仅纯十字(std stage 0)生效——其余阶段引擎暂无 masked 搜索(Phase 2+ 接上),宽层/滑层/转体
+// (u d l r / M E S / x y z)对 HTM 最优引擎无对应记号,不做。
+// move 索引:U=0..2 D=3..5 L=6..8 R=9..11 F=12..14 B=15..17;面 i 的三个 move 位 = 0b111<<(3i)。
+const MOVE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
+const ALL_MOVE_MASK = (1 << 18) - 1; // 0x3FFFF = 全部允许
+
 // F2L 槽位标签(对齐 solver wasm SLOT_LABELS:BL=0 BR=1 FR=2 FL=3)。
 const SLOT_LABELS = ['BL', 'BR', 'FR', 'FL'] as const;
 // 某 (方法, 阶段) 的「槽位」下拉需选的固定已解 F2L 槽数 = stage(stage0=纯十字/纯基态无固定槽)。
@@ -145,17 +152,22 @@ const sideCounts = (alg: string) => {
   }
   return { R, L, F, B };
 };
-// 在 0..3 个 y 预转体里挑最顺手的朝向:
+// 在 0..3 个 y 预转体里挑最顺手的朝向(字典序最大):
 //   ① 主目标 R+L 越多越好(食指/无名指拨,无需换握);
-//   ② 同分时 F≥B(F 比后排的 B 好按)→ 取 F−B 大的。
+//   ② 同分时 F≥B(F 比后排的 B 好按)→ 取 F−B 大的;
+//   ③ 再同分(F==B)时 R≥L(右手食指更顺)→ 取 R−L 大的。
 // y 预转体只在 F/R/B/L 间置换、U/D 不变,且 y2 同时交换 R↔L、F↔B → R+L 并列的两个朝向(相差 y2)
-// 恰好是「F 多 / B 多」之分,正好用 F≥B 决出。两者全并列再偏好 0(不额外转体)。
+// 恰好是「F 多/B 多」之分(用 ② 决);若它们 F==B,则恰好是「R 多/L 多」之分(用 ③ 决)。全平偏好 0(不额外转体)。
 const bestErgoRot = (alg: string): number => {
-  let best = 0, bestRL = -1, bestFB = -Infinity;
+  let best = 0, bRL = -1, bFB = -Infinity, bR_L = -Infinity;
   for (let n = 0; n < 4; n++) {
     const { R, L, F, B } = sideCounts(rotateSolutionY(alg, n));
-    const rl = R + L, fb = F - B;
-    if (rl > bestRL || (rl === bestRL && fb > bestFB)) { bestRL = rl; bestFB = fb; best = n; }
+    const rl = R + L, fb = F - B, r_l = R - L;
+    if (rl > bRL
+      || (rl === bRL && fb > bFB)
+      || (rl === bRL && fb === bFB && r_l > bR_L)) {
+      bRL = rl; bFB = fb; bR_L = r_l; best = n;
+    }
   }
   return best;
 };
@@ -247,6 +259,21 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const visibleColors = useMemo(() => new Set(subsetSel.selectedColors), [subsetSel.selectedColors]);
   const faceVisible = useCallback((i: number) => visibleColors.has(FACE_LETTER[FACES[i].face]), [visibleColors]);
 
+  // 步法限制:6 个 move 面是否允许(U D L R F B 顺序);默认全允许。仅 std 纯十字阶段生效。
+  const [allowedFaces, setAllowedFaces] = useState<boolean[]>(() => [true, true, true, true, true, true]);
+  const maskSupported = method === 'std' && stage === 0;
+  const moveMask = useMemo(() => {
+    let m = 0;
+    allowedFaces.forEach((on, i) => { if (on) m |= 0b111 << (3 * i); });
+    return m >>> 0;
+  }, [allowedFaces]);
+  const restricted = maskSupported && moveMask !== ALL_MOVE_MASK;
+  // 经 ref 喂给 computeAll/fetchMoves(不进它们的 deps,避免回调身份抖动);recompute 由专门 effect 驱动。
+  const moveMaskRef = useRef(moveMask);
+  moveMaskRef.current = moveMask;
+  const restrictedRef = useRef(restricted);
+  restrictedRef.current = restricted;
+
   const poolRef = useRef<RustCrossPool | null>(null);
   // 共享 3D 播放器实例(TwistySection 回填),供解法行 ▷ 跳到开头并播放。
   const playerRef = useRef<{ jumpToStart?: (o?: { flash?: boolean }) => void; play?: () => void } | null>(null);
@@ -332,7 +359,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       if (kind === 'std') {
         await Promise.all(FACES.map(async (_f, f) => {
           try {
-            const r = await pool.solveFace(scr, stage, f);
+            const r = await pool.solveFace(scr, stage, f, restrictedRef.current ? moveMaskRef.current : undefined);
             if (computeReq.current !== my) return;
             result[f] = r.value;
             setCounts((prev) => { const n = prev.slice(); n[f] = r.value; return n; });
@@ -414,7 +441,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       // 搜索深度恒定 = 最优+SLACK(=旧「+2」档,不引入新的性能成本);cap=用户选的展示条数,
       // 引擎按长度升序收集、够数即停。条数填不满时(短解不够)如实返回更少。
       const res = kind === 'std'
-        ? await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo })
+        ? await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: restrictedRef.current ? moveMaskRef.current : undefined })
         : kind === 'f2leo'
           ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap, combo })
           : kind === 'block222'
@@ -543,6 +570,15 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [limit]);
 
+  // 步法限制变化(或切到/离开支持的阶段)→ 重算当前阶段并重新自动选最优视角。跳过首挂。
+  const firstMaskRun = useRef(true);
+  useEffect(() => {
+    if (firstMaskRun.current) { firstMaskRun.current = false; return; }
+    if (statusRef.current !== 'ready') return;
+    void compute();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moveMask, maskSupported]);
+
   // 信息弹窗:Esc 关。
   useEffect(() => {
     if (!infoOpen) return;
@@ -568,8 +604,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   }, [moves, movesLoading]);
 
   // 新一批解法载入时:每条自动挑最顺手的 y 预转体(R/L 最多),用户仍可点 y 按钮覆盖。
+  // 步法限制生效时不自动转体——y 转体会重标 F/R/B/L,可能把禁用的面转回解法里,破坏限制。
   useEffect(() => {
-    if (!moves) { setRowRot({}); return; }
+    if (!moves || restrictedRef.current) { setRowRot({}); return; }
     const next: Record<number, number> = {};
     moves.sols.forEach((sol, i) => { const r = bestErgoRot(sol.m); if (r) next[i] = r; });
     setRowRot(next);
@@ -714,6 +751,38 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         </button>
       </div>
 
+      {/* 步法限制(仅纯十字阶段;6 个 move 面 U D L R F B 勾选,默认全开)。 */}
+      {maskSupported && (
+        <div className="stsv-moverestrict">
+          <span className="stsv-mr-label">{t('步法限制', 'Allowed moves')}</span>
+          <div className="stsv-mr-grid" role="group" aria-label={t('步法限制', 'Allowed moves')}>
+            {MOVE_FACES.map((f, i) => (
+              <button
+                key={f}
+                type="button"
+                className={`stsv-mr-cell${allowedFaces[i] ? ' is-on' : ''}`}
+                onClick={() => setAllowedFaces((prev) => prev.map((v, j) => (j === i ? !v : v)))}
+                aria-pressed={allowedFaces[i]}
+                title={allowedFaces[i]
+                  ? t(`允许 ${f}(点击禁用)`, `${f} allowed (click to forbid)`)
+                  : t(`已禁用 ${f}(点击允许)`, `${f} forbidden (click to allow)`)}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          {restricted && (
+            <button
+              type="button"
+              className="stsv-mr-reset"
+              onClick={() => setAllowedFaces([true, true, true, true, true, true])}
+            >
+              {t('全选', 'All')}
+            </button>
+          )}
+        </div>
+      )}
+
       {status === 'loading' && (
         <div className="stsv-loading">
           <div className="stsv-status">
@@ -837,13 +906,15 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
                 {moves && !movesLoading && moves.sols.length === 0 && (
                   <div className="stsv-empty">
-                    {isSentinel(moves.len)
-                      ? (method === 'htr2'
-                        ? t('该视角未处于 HTR,HTR 收尾不适用', 'This view is not in HTR, so HTR-finish does not apply')
-                        : method === 'fr'
-                          ? t('该视角未处于 HTR,Floppy 还原不适用', 'This view is not in HTR, so Floppy Reduction does not apply')
-                          : t('该视角未处于 DR,HTR 不适用', 'This view is not in DR, so HTR does not apply'))
-                      : t('该视角已解(0 步)', 'Already solved (0 moves)')}
+                    {restricted && isSentinel(moves.len)
+                      ? t('该步法限制下无解(或超出 12 步深度上限)', 'No solution under this move restriction (within the 12-move depth cap)')
+                      : isSentinel(moves.len)
+                        ? (method === 'htr2'
+                          ? t('该视角未处于 HTR,HTR 收尾不适用', 'This view is not in HTR, so HTR-finish does not apply')
+                          : method === 'fr'
+                            ? t('该视角未处于 HTR,Floppy 还原不适用', 'This view is not in HTR, so Floppy Reduction does not apply')
+                            : t('该视角未处于 DR,HTR 不适用', 'This view is not in DR, so HTR does not apply'))
+                        : t('该视角已解(0 步)', 'Already solved (0 moves)')}
                   </div>
                 )}
 

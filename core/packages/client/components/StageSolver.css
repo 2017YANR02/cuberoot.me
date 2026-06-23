@@ -142,6 +142,48 @@ html[data-theme='dark'] .stsv {
 }
 .stsv-diag:hover { color: var(--sv-accent); }
 
+/* 步法限制:6 个 move 面(U D L R F B)勾选行,默认全开;禁用的面变灰。 */
+.stsv-moverestrict {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 12px;
+}
+.stsv-mr-label { font-size: 12px; color: var(--sv-text-sub); }
+.stsv-mr-grid { display: inline-flex; gap: 6px; }
+.stsv-mr-cell {
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  min-width: 34px;
+  padding: 5px 0;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 6px;
+  background: var(--sv-surface);
+  color: var(--sv-text-mute);
+  border: 1px solid var(--sv-border);
+  text-decoration: line-through;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.stsv-mr-cell.is-on {
+  color: var(--sv-accent);
+  border-color: var(--sv-accent);
+  background: var(--sv-accent-soft);
+  text-decoration: none;
+}
+.stsv-mr-reset {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  border-radius: 6px;
+  background: none;
+  color: var(--sv-text-sub);
+  border: 1px solid var(--sv-border-strong);
+}
+.stsv-mr-reset:hover { color: var(--sv-accent); border-color: var(--sv-accent); }
+
 /* 求解器信息弹窗(createPortal 到 body,用全站 token 不用 --sv-*) */
 .stsv-modal-backdrop {
   position: fixed;

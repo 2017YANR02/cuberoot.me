@@ -219,6 +219,22 @@ export class CrossSolverWasm {
         return ret >>> 0;
     }
     /**
+     * 受限步法版 solve_face:`mask` = 18 个 move 的 bitmask(bit m=1 表示 move m 允许)。
+     * 仅 cross(variant 0)接 masked 引擎;限制下无解返回 u32::MAX 哨兵(client 显示 '-')。
+     * xcross(variant>0)暂无 masked 引擎 → 回退不受限(Phase 2 接上)。
+     * @param {string} scramble
+     * @param {number} variant
+     * @param {number} face
+     * @param {number} mask
+     * @returns {number}
+     */
+    solve_face_masked(scramble, variant, face, mask) {
+        const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.crosssolverwasm_solve_face_masked(this.__wbg_ptr, ptr0, len0, variant, face, mask);
+        return ret >>> 0;
+    }
+    /**
      * 单格(variant × face)多解步骤,返回 JSON 串。
      * variant:0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc;face:0..5 对应 ROTS。
      * extra:允许超出最优的步数(0=只最优长度全部解);cap:最多收集条数。
@@ -240,6 +256,34 @@ export class CrossSolverWasm {
             const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
             const ret = wasm.crosssolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, variant, face, extra, cap, ptr1, len1);
+            deferred3_0 = ret[0];
+            deferred3_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+    /**
+     * 受限步法版 solve_moves(同 solve_moves 形状)。cross 走 enumerate_solutions_masked;
+     * 限制下无解 → len=u32::MAX 哨兵 + 空解集。xcross(variant>0)暂回退不受限。
+     * @param {string} scramble
+     * @param {number} variant
+     * @param {number} face
+     * @param {number} extra
+     * @param {number} cap
+     * @param {string} combo
+     * @param {number} mask
+     * @returns {string}
+     */
+    solve_moves_masked(scramble, variant, face, extra, cap, combo, mask) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            const ret = wasm.crosssolverwasm_solve_moves_masked(this.__wbg_ptr, ptr0, len0, variant, face, extra, cap, ptr1, len1, mask);
             deferred3_0 = ret[0];
             deferred3_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);

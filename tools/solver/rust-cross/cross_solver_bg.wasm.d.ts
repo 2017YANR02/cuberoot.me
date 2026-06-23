@@ -24,7 +24,9 @@ export const crosssolverwasm_new: (a: number, b: number, c: number, d: number, e
 export const crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
 export const crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
 export const crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
+export const crosssolverwasm_solve_face_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
 export const crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
+export const crosssolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
 export const cube222solverwasm_from_dist: (a: number, b: number) => number;
 export const cube222solverwasm_new: () => number;
 export const cube222solverwasm_solve: (a: number, b: number, c: number) => number;
