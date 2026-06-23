@@ -52,11 +52,16 @@ const VARIANT_ID: Record<'pair' | 'eo' | 'pseudo' | 'pseudo_pair', number> = {
 // 秒回(重限制多为无解,浏览器实测 flat cap12 下 stage0 禁2面 pair 15s/eo 30s,故压回 <~1s)。
 // pseudo/pseudo_pair/f2leo/pseudo_f2leo 小表丢边,受限下爆炸更狠(12-90s)→ 按红线不支持。
 // 块族 / BFS 陪集族(eoline/dr/htr/htr2/fr)由后续 agent 评估。
-const MASK_SUPPORTED: ReadonlySet<Method> = new Set<Method>(['std', 'pair', 'eo']);
-// pair/eo(variant 族):禁 1 面恒可解 → IDA* 早终止有界(浏览器实测 ~0.25s);禁 ≥2 面常无解
-// → 搜满深度爆炸(实测 15-30s,depth cap 压不下来),故 UI 限单面(点另一面 = 换禁的那面),
-// 结构性杜绝重限制卡顿。std(cross/xcross)状态空间小 + 精确剪枝,禁多面也有界 → 不限。
-const SINGLE_FACE_METHODS: ReadonlySet<Method> = new Set<Method>(['pair', 'eo']);
+const MASK_SUPPORTED: ReadonlySet<Method> = new Set<Method>([
+  'std', 'pair', 'eo', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
+]);
+// variant/f2leo 族(pair/eo/pseudo/pseudo_pair/f2leo/pseudo_f2leo):禁 1 面恒可解 → IDA* 早终止
+// 有界(浏览器实测 ~0.25-1s);禁 ≥2 面常无解 → 搜满深度爆炸(实测 15-30s,depth cap 压不下来,
+// 因剪枝表是「无限制距离」对受限无解无下界),故 UI 限单面(点另一面 = 换禁的那面),结构性杜绝
+// 重限制卡顿。std(cross/xcross)状态空间小 + 精确距离剪枝,禁多面也秒证无解(<0.6s)→ 不限。
+const SINGLE_FACE_METHODS: ReadonlySet<Method> = new Set<Method>([
+  'pair', 'eo', 'pseudo', 'pseudo_pair', 'f2leo', 'pseudo_f2leo',
+]);
 // 方法名走全站单一真源 lib/scramble-variants(VARIANT_LABEL),别再本地复制一份。
 // 这里只定引擎支持的方法顺序(按 WASM kind 分组),标签 = variantLabel(key, isZh)。
 // 块族(原 123/222/223)聚合为一个方法 'block',块形状落在阶段下拉。
