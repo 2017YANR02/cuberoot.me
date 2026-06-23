@@ -248,10 +248,11 @@
       ]
     },
     "333mbf": {
-      "hasAverage": false,
+      "hasAverage": true,
       "hasAo5": false,
       "metrics": [
-        "single"
+        "single",
+        "average"
       ]
     },
     "333ft": {
@@ -17709,6 +17710,181 @@
       "name": "Yi Shen (沈懿)",
       "country": "China",
       "iso2": "CN"
+    },
+    "2007LUTH01": {
+      "name": "Mats Luthman",
+      "country": "Sweden",
+      "iso2": "SE"
+    },
+    "2009SANC06": {
+      "name": "Asier Cardoso Sánchez",
+      "country": "Spain",
+      "iso2": "ES"
+    },
+    "2010BZDZ01": {
+      "name": "Bartosz Bździel",
+      "country": "Poland",
+      "iso2": "PL"
+    },
+    "2010GORK01": {
+      "name": "Krzysztof Górka",
+      "country": "Poland",
+      "iso2": "PL"
+    },
+    "2010VAZQ02": {
+      "name": "Ignacio Vázquez Jiménez",
+      "country": "Spain",
+      "iso2": "ES"
+    },
+    "2011WISN03": {
+      "name": "Mariusz Wiśniewski",
+      "country": "Poland",
+      "iso2": "PL"
+    },
+    "2012BARA01": {
+      "name": "Moanish C. S. Barathiar",
+      "country": "India",
+      "iso2": "IN"
+    },
+    "2012BESS01": {
+      "name": "Oleksii Bessonov (Олексій Бессонов)",
+      "country": "Ukraine",
+      "iso2": "UA"
+    },
+    "2012DROZ02": {
+      "name": "Radosław Drozdowicz",
+      "country": "Poland",
+      "iso2": "PL"
+    },
+    "2012OTAN01": {
+      "name": "Diego Millán Otón",
+      "country": "Spain",
+      "iso2": "ES"
+    },
+    "2012TOKA02": {
+      "name": "Tomasz Tokarski",
+      "country": "Poland",
+      "iso2": "PL"
+    },
+    "2013CHEN22": {
+      "name": "Victor Chenu",
+      "country": "France",
+      "iso2": "FR"
+    },
+    "2013CHEN46": {
+      "name": "Zhihuang Chen (陈志煌)",
+      "country": "China",
+      "iso2": "CN"
+    },
+    "2013CLAP01": {
+      "name": "Maxime Clapié",
+      "country": "France",
+      "iso2": "FR"
+    },
+    "2013CONT01": {
+      "name": "Oscar Alberto Ceballos Contreras",
+      "country": "Venezuela",
+      "iso2": "VE"
+    },
+    "2013GARC08": {
+      "name": "Jesús Lindo García",
+      "country": "Spain",
+      "iso2": "ES"
+    },
+    "2013HOLM01": {
+      "name": "Kristian Holme",
+      "country": "Norway",
+      "iso2": "NO"
+    },
+    "2013LOYA01": {
+      "name": "Samuel Adrián Pérez Loya",
+      "country": "Mexico",
+      "iso2": "MX"
+    },
+    "2013MAHE02": {
+      "name": "M Aashrit Krishna Sankaran",
+      "country": "India",
+      "iso2": "IN"
+    },
+    "2013TITO02": {
+      "name": "Georgiy Titov (Георгій Тітов)",
+      "country": "Ukraine",
+      "iso2": "UA"
+    },
+    "2013YAOS02": {
+      "name": "Shun Yao (姚舜)",
+      "country": "China",
+      "iso2": "CN"
+    },
+    "2014DETU01": {
+      "name": "Eddy Deturche",
+      "country": "France",
+      "iso2": "FR"
+    },
+    "2014JANE01": {
+      "name": "Piotr Janecki",
+      "country": "Poland",
+      "iso2": "PL"
+    },
+    "2014KHAR01": {
+      "name": "Prabal Khare",
+      "country": "India",
+      "iso2": "IN"
+    },
+    "2014KOLE03": {
+      "name": "Viktor Kolesnichenko (Віктор Колесніченко)",
+      "country": "Ukraine",
+      "iso2": "UA"
+    },
+    "2014PATT02": {
+      "name": "Thomas Patterson",
+      "country": "United Kingdom",
+      "iso2": "GB"
+    },
+    "2014SCRU01": {
+      "name": "Pilan Scruggs",
+      "country": "USA",
+      "iso2": "US"
+    },
+    "2015CORT01": {
+      "name": "Alfredo David Flores Cortero",
+      "country": "Mexico",
+      "iso2": "MX"
+    },
+    "2015HETI01": {
+      "name": "Ting He (禾廷)",
+      "country": "China",
+      "iso2": "CN"
+    },
+    "2016AMBE02": {
+      "name": "Dieter Amberger",
+      "country": "Austria",
+      "iso2": "AT"
+    },
+    "2016IBAR05": {
+      "name": "Jorge Manuel Lira Ibarra",
+      "country": "Mexico",
+      "iso2": "MX"
+    },
+    "2016ZENK01": {
+      "name": "Viktor Zenk",
+      "country": "Sweden",
+      "iso2": "SE"
+    },
+    "2017CHAN16": {
+      "name": "Matteo Chancerel",
+      "country": "France",
+      "iso2": "FR"
+    },
+    "2018REIN04": {
+      "name": "Thomas Reinke",
+      "country": "USA",
+      "iso2": "US"
+    },
+    "2021SMIG01": {
+      "name": "Adam Śmigaj",
+      "country": "Poland",
+      "iso2": "PL"
     }
   },
   "comps": {
@@ -52175,6 +52351,36 @@
     },
     "ZwolleOpen2018": {
       "name": "Zwolle Open 2018"
+    },
+    "BaraMultiBlindiBoras2024": {
+      "name": "Bara Multi-Blind i Borås 2024"
+    },
+    "IndianOpen2013": {
+      "name": "Indian Open 2013"
+    },
+    "NittedalMBFall2025": {
+      "name": "Nittedal MB Fall 2025"
+    },
+    "NittedalMBSpring2025": {
+      "name": "Nittedal MB Spring 2025"
+    },
+    "NittedalMentalBreakdown2024": {
+      "name": "Nittedal Mental Breakdown 2024"
+    },
+    "ParkSlopePBQ2025": {
+      "name": "Park Slope PBQ 2025"
+    },
+    "PleaseBeQuietBelgium2018": {
+      "name": "PBQ Belgium 2018"
+    },
+    "ShhicagoII2024": {
+      "name": "Shhicago II 2024"
+    },
+    "SwedishBlindMarathon2025": {
+      "name": "Swedish Blind Marathon 2025"
+    },
+    "SwisscubingCupV2019": {
+      "name": "Swisscubing Cup V 2019"
     }
   }
 }
