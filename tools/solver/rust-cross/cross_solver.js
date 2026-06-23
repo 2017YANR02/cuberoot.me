@@ -228,20 +228,23 @@ export class CrossSolverWasm {
      * @param {number} face
      * @param {number} extra
      * @param {number} cap
+     * @param {string} combo
      * @returns {string}
      */
-    solve_moves(scramble, variant, face, extra, cap) {
-        let deferred2_0;
-        let deferred2_1;
+    solve_moves(scramble, variant, face, extra, cap, combo) {
+        let deferred3_0;
+        let deferred3_1;
         try {
             const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.crosssolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, variant, face, extra, cap);
-            deferred2_0 = ret[0];
-            deferred2_1 = ret[1];
+            const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            const ret = wasm.crosssolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, variant, face, extra, cap, ptr1, len1);
+            deferred3_0 = ret[0];
+            deferred3_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
         } finally {
-            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
         }
     }
 }
@@ -473,20 +476,23 @@ export class F2leoSolverWasm {
      * @param {number} stage
      * @param {number} extra
      * @param {number} cap
+     * @param {string} combo
      * @returns {string}
      */
-    solve_moves(scramble, pseudo, face, stage, extra, cap) {
-        let deferred2_0;
-        let deferred2_1;
+    solve_moves(scramble, pseudo, face, stage, extra, cap, combo) {
+        let deferred3_0;
+        let deferred3_1;
         try {
             const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.f2leosolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, pseudo, face, stage, extra, cap);
-            deferred2_0 = ret[0];
-            deferred2_1 = ret[1];
+            const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            const ret = wasm.f2leosolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, pseudo, face, stage, extra, cap, ptr1, len1);
+            deferred3_0 = ret[0];
+            deferred3_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
         } finally {
-            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
         }
     }
     /**
@@ -1042,20 +1048,23 @@ export class VariantSolverWasm {
      * @param {number} stage
      * @param {number} extra
      * @param {number} cap
+     * @param {string} combo
      * @returns {string}
      */
-    solve_moves(scramble, variant, face, stage, extra, cap) {
-        let deferred2_0;
-        let deferred2_1;
+    solve_moves(scramble, variant, face, stage, extra, cap, combo) {
+        let deferred3_0;
+        let deferred3_1;
         try {
             const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.variantsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, variant, face, stage, extra, cap);
-            deferred2_0 = ret[0];
-            deferred2_1 = ret[1];
+            const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            const ret = wasm.variantsolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, variant, face, stage, extra, cap, ptr1, len1);
+            deferred3_0 = ret[0];
+            deferred3_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
         } finally {
-            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
         }
     }
     /**

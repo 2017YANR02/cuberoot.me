@@ -681,6 +681,8 @@ impl PseudoF2leoSolver {
     /// (并列槽可能落在不同 frame)。空解集 + len=0 ⟹ 该 face 已解。
     /// best_len 与原"首个成功深度"逐字节一致;此处把**所有**该深度成功的候选(跨 frame /
     /// 跨 combo)都收集为并列解,d 外层、候选内层交错以保长度升序;cap 控总条数。
+    /// `force`:用户指定的目标槽位集合(索引 ⊂ {0,1,2,3},0=BL/1=BR/2=FR/3=FL);空 = 自动挑
+    /// 最优槽(逐位与原先一致)。非空时只枚举"目标槽位集合 == force"的 combo(pseudo source 仍自动)。
     pub fn enumerate_small(
         &self,
         alg: &[Move],
@@ -688,6 +690,7 @@ impl PseudoF2leoSolver {
         stage: usize,
         extra: u32,
         cap: usize,
+        force: &[usize],
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
@@ -770,6 +773,21 @@ impl PseudoF2leoSolver {
             1 => &cb.xc,
             2 => &cb.xxc,
             _ => &cb.xxxc,
+        };
+        // 用户指定槽位:只保留"目标槽位集合(combo 各 (s,_) 的 s)== force"的 combo;空 force 不过滤。
+        let cs_filt: Vec<Vec<Pair>>;
+        let cs: &[Vec<Pair>] = if force.is_empty() {
+            cs
+        } else {
+            let fset: std::collections::BTreeSet<usize> = force.iter().copied().collect();
+            cs_filt = cs
+                .iter()
+                .filter(|c| {
+                    c.iter().map(|&(s, _)| s).collect::<std::collections::BTreeSet<usize>>() == fset
+                })
+                .cloned()
+                .collect();
+            &cs_filt
         };
         let cap_d = match stage {
             1 => CAP_XC,
@@ -1561,7 +1579,7 @@ mod enum_tests {
                 let counts = solver.get_stage(&alg, stage);
                 for face in 0..6usize {
                     let (len, items) =
-                        solver.enumerate_small(&alg, ROTS[face], stage, 0, 100);
+                        solver.enumerate_small(&alg, ROTS[face], stage, 0, 100, &[]);
                     assert_eq!(
                         len, counts[face],
                         "pseudo len mismatch scr={scr} stage={stage} face={face}: enum {len} vs count {}",

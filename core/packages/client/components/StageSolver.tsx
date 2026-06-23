@@ -100,6 +100,28 @@ const SOL_SLACK = 2;
 // 「条数」可选项。
 const LIMIT_OPTIONS = [5, 10, 25, 50];
 
+// F2L 槽位标签(对齐 solver wasm SLOT_LABELS:BL=0 BR=1 FR=2 FL=3)。
+const SLOT_LABELS = ['BL', 'BR', 'FR', 'FL'] as const;
+// 某 (方法, 阶段) 需选的 F2L 槽数:cross 族 = stage(stage0=纯十字无槽);基态/伪基态自带一个
+// pair 槽 = stage+1;其余(block/eoline/dr/htr/fr)无 F2L 槽 = 0(不显示槽位选择器)。
+function slotCount(method: Method, stageIdx: number): number {
+  if (method === 'pair' || method === 'pseudo_pair') return stageIdx + 1;
+  if (method === 'std' || method === 'eo' || method === 'pseudo' || method === 'f2leo' || method === 'pseudo_f2leo') return stageIdx;
+  return 0;
+}
+// {0,1,2,3} 选 k 的全部组合(规范序,与 solver 的 PAIRS/TRIPS 一致)。
+function kCombos(k: number): number[][] {
+  const res: number[][] = [];
+  const rec = (start: number, cur: number[]) => {
+    if (cur.length === k) { res.push(cur.slice()); return; }
+    for (let i = start; i < 4; i++) { cur.push(i); rec(i + 1, cur); cur.pop(); }
+  };
+  rec(0, []);
+  return res;
+}
+const comboArity = (c: string): number => (c ? c.split(',').length : 0);
+const comboLabel = (c: string): string => c.split(',').map((i) => SLOT_LABELS[Number(i)]).join(' ');
+
 // 步骤前缀可能含 1~2 个旋转 token(eo/f2leo 破 y 对称时如 "x' y")。算实际转动数(HTM)时剥掉。
 const moveLen = (sol: string) => sol.replace(/^([xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
 // QTM(180°=2)走 shared 的 countQtm,单一来源;它本身会跳过 x/y/z 旋转 token。HTM 相同时按它升序排。
@@ -155,6 +177,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const [moves, setMoves] = useState<MovesTimed | null>(null);
   const [movesLoading, setMovesLoading] = useState(false);
   const [selSol, setSelSol] = useState(0); // 选中解法行(驱动共享播放器)
+  const [selSlot, setSelSlot] = useState(''); // 用户指定槽位组合(逗号分隔索引,''=自动挑最优)
+  const selSlotRef = useRef(selSlot);
+  selSlotRef.current = selSlot;
   const [rowRot, setRowRot] = useState<Record<number, number>>({}); // 每行 y 预转体次数 0..3
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [totalMs, setTotalMs] = useState<number | null>(null);
@@ -318,12 +343,15 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     try {
       const scr = scrambleRef.current.trim();
       const kind = kindOf(method, stages[stage] ?? '');
+      // 用户指定槽位:仅当其槽数与当前阶段一致时生效(切阶段后旧选择失配 → 回退自动)。
+      const sc = slotCount(method, stage);
+      const combo = sc >= 1 && comboArity(selSlotRef.current) === sc ? selSlotRef.current : '';
       // 搜索深度恒定 = 最优+SLACK(=旧「+2」档,不引入新的性能成本);cap=用户选的展示条数,
       // 引擎按长度升序收集、够数即停。条数填不满时(短解不够)如实返回更少。
       const res = kind === 'std'
-        ? await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap: limit })
+        ? await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap: limit, combo })
         : kind === 'f2leo'
-          ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap: limit })
+          ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap: limit, combo })
           : kind === 'block222'
             ? await pool.solveBlock222Moves(scr, f, { extra: SOL_SLACK, cap: limit })
             : kind === 'roux223'
@@ -336,7 +364,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                     ? await pool.solveHtr2Moves(scr, f, { extra: SOL_SLACK, cap: limit })
                     : kind === 'fr'
                       ? await pool.solveFrMoves(scr, f, { extra: SOL_SLACK, cap: limit })
-                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit });
+                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit, combo });
       if (movesReq.current === my) {
         // 引擎按 HTM 升序收集;同 HTM 再按 QTM 升序(180°=2),Array.sort 稳定 → 原 DFS 序兜底。
         const sols = [...res.sols].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
@@ -361,6 +389,16 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setSelFace(f);
     void fetchMoves(f);
   }, [selFace, fetchMoves]);
+
+  // 切换槽位:同步 ref(fetchMoves 立即读到新值)后重算当前视角。
+  const changeSlot = useCallback((v: string) => {
+    selSlotRef.current = v;
+    setSelSlot(v);
+    if (selFace !== null) void fetchMoves(selFace);
+  }, [selFace, fetchMoves]);
+
+  // 切方法/阶段/打乱 → 槽位回「自动」(旧选择对新阶段的槽数多半失配)。
+  useEffect(() => { setSelSlot(''); }, [method, stage, normScramble]);
 
   // 算完(computing→false)且要求自动选 → 选最优(min count)视角并出解。
   useEffect(() => {
@@ -473,6 +511,18 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             {stages.map((k, i) => <option key={k} value={i}>{stageLabel(k, lang === 'zh')}</option>)}
           </select>
         </label>
+        {slotCount(method, stage) >= 1 && (
+          <label className="stsv-control">
+            <span>{t('槽位', 'Slot')}</span>
+            <select value={selSlot} onChange={(e) => changeSlot(e.target.value)}>
+              <option value="">{t('自动(最优)', 'Auto (best)')}</option>
+              {kCombos(slotCount(method, stage)).map((c) => {
+                const v = c.join(',');
+                return <option key={v} value={v}>{comboLabel(v)}</option>;
+              })}
+            </select>
+          </label>
+        )}
         <label className="stsv-control">
           <span>{t('显示条数', 'Show')}</span>
           <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>

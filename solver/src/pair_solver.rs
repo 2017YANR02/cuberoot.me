@@ -1145,6 +1145,9 @@ impl PairSolver {
     /// (在同一 best_len 解出)的 combo,各自的 best_len..best_len+extra 步全部解
     /// (rot 帧 move 索引路径,cap 封顶)。
     /// 返回 (best_len, 每条解 (frame=rot, combo 槽位[pair tgt 在首位,其后为 xcross 槽], move 路径))。
+    /// `force`:用户指定槽位组合(索引 0..3,0=BL/1=BR/2=FR/3=FL,即输出 combo `{tgt}∪xc_slots`);
+    /// 空 = 自动挑最优(逐字节与原先一致)。非空时只保留槽位集合 == force 的候选,solver 仍在幸存
+    /// 候选里(同一槽位集合可能有不同 tgt/fixed 分配)自动挑最优。
     pub fn enumerate_small(
         &self,
         alg: &[Move],
@@ -1152,6 +1155,7 @@ impl PairSolver {
         stage: usize,
         extra: u32,
         cap: usize,
+        force: &[usize],
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         const PAIRS: [[usize; 2]; 6] = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]];
         let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
@@ -1201,6 +1205,19 @@ impl PairSolver {
             }
         }
         tasks.sort_by_key(|t| t.2);
+
+        // 用户指定槽位:只留槽位集合 {tgt}∪xc_slots 等于 force 的候选(force 空 = 不过滤,逐字节同原先)。
+        if !force.is_empty() {
+            let fset: std::collections::BTreeSet<usize> = force.iter().copied().collect();
+            tasks.retain(|(tgt, xc_slots, _h)| {
+                let mut s: std::collections::BTreeSet<usize> = xc_slots.iter().copied().collect();
+                s.insert(*tgt);
+                s == fset
+            });
+            if tasks.is_empty() {
+                return (0, Vec::new());
+            }
+        }
 
         // 复用 solve_small_task 求每个 task 长度,取 best_len = min,并收集**所有**
         // 并列最优(长度 == best_len)的 task。用 `>`(非 `>=`)以便 h == best_len 的
@@ -1375,7 +1392,7 @@ mod tests {
             for (ri, rot) in rots.iter().enumerate() {
                 for stage in 0..4usize {
                     let want = exp[stage * 6 + ri];
-                    let (len, items) = solver.enumerate_small(&alg, rot, stage, 0, 200);
+                    let (len, items) = solver.enumerate_small(&alg, rot, stage, 0, 200, &[]);
                     assert_eq!(
                         len, want,
                         "len mismatch `{}` rot={} stage={}: got {} want {}",

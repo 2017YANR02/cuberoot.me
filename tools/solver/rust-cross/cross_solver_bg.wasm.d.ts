@@ -24,7 +24,7 @@ export const crosssolverwasm_new: (a: number, b: number, c: number, d: number, e
 export const crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
 export const crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
 export const crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
-export const crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+export const crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
 export const cube222solverwasm_from_dist: (a: number, b: number) => number;
 export const cube222solverwasm_new: () => number;
 export const cube222solverwasm_solve: (a: number, b: number, c: number) => number;
@@ -35,7 +35,7 @@ export const eodrsolverwasm_solve_stage: (a: number, b: number, c: number, d: nu
 export const f2leosolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => number;
 export const f2leosolverwasm_solve_f2leo: (a: number, b: number, c: number) => [number, number];
 export const f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
-export const f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
+export const f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
 export const f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
 export const frsolverwasm_new: () => number;
 export const frsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
@@ -59,7 +59,7 @@ export const skewbsolverwasm_solve: (a: number, b: number, c: number) => [number
 export const skewbsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number, number, number];
 export const variantsolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number, q: number, r: number, s: number, t: number, u: number, v: number, w: number, x: number, y: number, z: number) => number;
 export const variantsolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
-export const variantsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
+export const variantsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
 export const variantsolverwasm_solve_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
 export const __wbindgen_externrefs: WebAssembly.Table;
 export const __wbindgen_malloc: (a: number, b: number) => number;

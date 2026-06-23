@@ -76,7 +76,7 @@ export class CrossSolverWasm {
      * extra:允许超出最优的步数(0=只最优长度全部解);cap:最多收集条数。
      * 解步骤带视角前缀(face>0 时如 "z2 R U ..."),combo 是该格选中的 F2L 槽位。
      */
-    solve_moves(scramble: string, variant: number, face: number, extra: number, cap: number): string;
+    solve_moves(scramble: string, variant: number, face: number, extra: number, cap: number, combo: string): string;
 }
 
 /**
@@ -160,7 +160,7 @@ export class F2leoSolverWasm {
      * 帧达成,故步骤前缀用 enumerate_small 返回的真实帧(可能含尾 y,如 "x' y")。
      * stage:0=cross/1=xc/2=xxc/3=xxxc;extra:超出最优步数(0=只最优长度全部解);cap:最多条数。
      */
-    solve_moves(scramble: string, pseudo: boolean, face: number, stage: number, extra: number, cap: number): string;
+    solve_moves(scramble: string, pseudo: boolean, face: number, stage: number, extra: number, cap: number, combo: string): string;
     /**
      * Pseudo F2LEO 24 值,顺序同上。
      */
@@ -341,7 +341,7 @@ export class VariantSolverWasm {
      * 步骤带视角前缀:多数变体即 ROTS[face];**eo** 因破坏 y 对称,最优可能只在 rot·y 帧达成,
      * 故前缀用 enumerate_small 返回的真实帧(可能形如 "x' y",含两个旋转 token)。
      */
-    solve_moves(scramble: string, variant: number, face: number, stage: number, extra: number, cap: number): string;
+    solve_moves(scramble: string, variant: number, face: number, stage: number, extra: number, cap: number, combo: string): string;
     /**
      * 单阶段 6 值。两遍 UI:先 cross(stage 0)秒出,深阶段后台补。
      */
@@ -375,7 +375,7 @@ export interface InitOutput {
     readonly crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
-    readonly crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+    readonly crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
     readonly cube222solverwasm_from_dist: (a: number, b: number) => number;
     readonly cube222solverwasm_new: () => number;
     readonly cube222solverwasm_solve: (a: number, b: number, c: number) => number;
@@ -386,7 +386,7 @@ export interface InitOutput {
     readonly f2leosolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => number;
     readonly f2leosolverwasm_solve_f2leo: (a: number, b: number, c: number) => [number, number];
     readonly f2leosolverwasm_solve_f2leo_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
-    readonly f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
+    readonly f2leosolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
     readonly f2leosolverwasm_solve_pseudo_f2leo: (a: number, b: number, c: number) => [number, number];
     readonly frsolverwasm_new: () => number;
     readonly frsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
@@ -410,7 +410,7 @@ export interface InitOutput {
     readonly skewbsolverwasm_solve_moves: (a: number, b: number, c: number) => [number, number, number, number];
     readonly variantsolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number, o: number, p: number, q: number, r: number, s: number, t: number, u: number, v: number, w: number, x: number, y: number, z: number) => number;
     readonly variantsolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
-    readonly variantsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
+    readonly variantsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
     readonly variantsolverwasm_solve_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
