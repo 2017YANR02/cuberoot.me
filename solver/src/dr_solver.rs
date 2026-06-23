@@ -264,17 +264,20 @@ impl DrSolver {
             let m = row[k] as usize;
             let neo = self.mt_eo[eo * 18 + m] as usize;
             let nsl = self.mt_slice[sl * 18 + m] as usize;
-            if self.pt_eo_slice[neo * SLICE + nsl] as u32 >= depth {
+            let h_eo = self.pt_eo_slice[neo * SLICE + nsl] as u32;
+            if h_eo >= depth {
                 continue;
             }
             let nco = self.mt_co[co * 18 + m] as usize;
-            if self.pt_co_slice[nco * SLICE + nsl] as u32 >= depth {
+            let h_co = self.pt_co_slice[nco * SLICE + nsl] as u32;
+            if h_co >= depth {
                 continue;
             }
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if h_eo > 0 || h_co > 0 {
+                // 两表皆 0 ⟺ 该 DR 已解;depth>1 还要走步 = 更短解 + 无效尾动,跳过。
                 self.enum_paths(neo, nco, nsl, depth - 1, m as u8, path, out, cap);
             }
             path.pop();

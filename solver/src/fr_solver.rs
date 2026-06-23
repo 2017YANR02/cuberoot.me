@@ -269,13 +269,15 @@ impl FrSolver {
             }
             let col = G3_MOVES.iter().position(|&g| g as usize == m).unwrap();
             let nc = self.step(c, col);
-            if self.dist[nc] as u32 >= depth {
+            let h = self.dist[nc] as u32;
+            if h >= depth {
                 continue;
             }
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if h > 0 {
+                // h==0 且 depth>1:已解却还要再走 depth-1 步 → 更短解 + 无效尾动,跳过。
                 self.enum_paths(nc, depth - 1, m as u8, path, out, cap);
             }
             path.pop();

@@ -226,13 +226,15 @@ impl Block222Solver {
             let m = row[k] as usize;
             let nc = mt_c[c * 18 + m] as usize;
             let ne = mt_e[e * 18 + m] as usize;
-            if self.pt[nc * state_space::EDGE3 + ne] as u32 >= depth {
+            let h = self.pt[nc * state_space::EDGE3 + ne] as u32;
+            if h >= depth {
                 continue;
             }
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if h > 0 {
+                // h==0 且 depth>1:已解却还要再走 depth-1 步 → 更短解 + 无效尾动,跳过。
                 self.enumerate(nc, ne, depth - 1, m as u8, path, out, cap);
             }
             path.pop();

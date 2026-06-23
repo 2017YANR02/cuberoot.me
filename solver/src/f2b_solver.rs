@@ -401,7 +401,8 @@ impl F2BSolver {
                 mt_c2[fb.0 * 18 + m] as usize,
                 mt_e3[fb.1 * 18 + m] as usize,
             );
-            if self.d(nfb.0, nfb.1) >= depth {
+            let h_fb = self.d(nfb.0, nfb.1);
+            if h_fb >= depth {
                 continue;
             }
             let m2 = rm2[m] as usize;
@@ -409,7 +410,8 @@ impl F2BSolver {
                 mt_c2[sb.0 * 18 + m2] as usize,
                 mt_e3[sb.1 * 18 + m2] as usize,
             );
-            if self.d(nsb.0, nsb.1) >= depth
+            let h_sb = self.d(nsb.0, nsb.1);
+            if h_sb >= depth
                 || self.pt_cc[nfb.0 * state_space::CORNER2 + nsb.0] as u32 >= depth
                 || (!self.pt_ee.is_empty()
                     && self.pt_ee[nfb.1 * state_space::EDGE3 + nsb.1] as u32 >= depth)
@@ -429,7 +431,8 @@ impl F2BSolver {
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if h_fb > 0 || h_sb > 0 {
+                // 两块皆解(h_fb==0 && h_sb==0)却仍要走步 = 更短解 + 无效尾动,跳过。
                 self.enum_paths(nfb, nsb, depth - 1, m as u8, path, out, cap);
             }
             path.pop();
