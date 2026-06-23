@@ -2084,9 +2084,12 @@ impl PseudoPairSmallSolver {
     /// pseudo_pair_get_stage_small 同口径挑最优 combo(pair 槽 + xcross 槽集),枚举其
     /// best_len..best_len+extra 步全部解(真实 rot 帧 move 索引路径,cap 封顶)。
     /// 返回 (best_len, combo 槽位[首位 pair corner-slot,后跟各 xcross corner-slot], 解集)。
-    /// `force`:用户指定的目标槽位集合(索引 0..3,0=BL/1=BR/2=FR/3=FL);空 = 自动挑最优槽
-    /// (逐位与原先一致)。非空时只保留"目标槽位集合 == force"的候选(pseudo 的 source 件仍自动),
-    /// 不与其它槽集比较。
+    /// 用户指定(对齐 or18 Pseudo Pairing 求解器的「槽位」+「基态」下拉):
+    ///   `force` = **固定已解 xcross 槽集**(索引 0..3,size=stage,即 or18「槽位」,不含自由对);
+    ///             空 = 该集自动挑最优。
+    ///   `base`  = **自由对槽**(or18「基态/Free Pair」,= pair 的 corner 槽 cs;edge 源件仍自动);
+    ///             -1 = 自动挑最优。
+    /// 二者独立过滤,且都空/-1 时不过滤(逐位与原先 golden 一致)。
     pub fn enumerate_small(
         &self,
         alg: &[Move],
@@ -2095,6 +2098,7 @@ impl PseudoPairSmallSolver {
         extra: u32,
         cap: usize,
         force: &[usize],
+        base: i32,
     ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
         let mut a: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         alg_rotation(&mut a, rot);
@@ -2189,15 +2193,20 @@ impl PseudoPairSmallSolver {
                 }
             }
         }
-        // 用户指定槽位:只保留"目标槽位集合 == force"的候选(pair 的 source 件仍自动)。
-        // 目标槽位集合 = pair 槽 ∪ 各 xcross 槽(与下方 combo 标签同口径)。空 force 不过滤。
+        // 用户指定:`base` = 自由对槽(or18「基态」,= pair 的 corner 槽 p.slot);`force` = 固定
+        // 已解 xcross 槽集(or18「槽位」,不含自由对)。二者独立过滤;都空/-1 = 不过滤(逐位同原 golden)。
+        if base >= 0 {
+            let b = base as usize;
+            tasks.retain(|(p, _xc, _)| p.slot == b);
+        }
         if !force.is_empty() {
             let want: std::collections::BTreeSet<usize> = force.iter().copied().collect();
-            tasks.retain(|(p, xc, _)| {
-                let got: std::collections::BTreeSet<usize> =
-                    std::iter::once(p.slot).chain(xc.iter().map(|q| q.slot)).collect();
-                got == want
+            tasks.retain(|(_p, xc, _)| {
+                xc.iter().map(|q| q.slot).collect::<std::collections::BTreeSet<usize>>() == want
             });
+        }
+        if (base >= 0 || !force.is_empty()) && tasks.is_empty() {
+            return (0, Vec::new());
         }
         tasks.sort_by_key(|t| t.2);
 
@@ -2384,7 +2393,7 @@ mod small_tests {
                 for stage in 0..4usize {
                     let want = exp[stage * 6 + ri];
                     let t = std::time::Instant::now();
-                    let (len, items) = solver.enumerate_small(&alg, rot, stage, 0, 20, &[]);
+                    let (len, items) = solver.enumerate_small(&alg, rot, stage, 0, 20, &[], -1);
                     eprintln!(
                         "[pp-enum] rot={:?} stage={} len={} sols={} {:.0}ms",
                         rot, stage, len, items.len(), t.elapsed().as_secs_f64() * 1e3

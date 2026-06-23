@@ -302,7 +302,7 @@ self.onmessage = async (e) => {
       const t0 = performance.now();
       // 单格(variant × stage × face)多解步骤。eo 前缀可能含尾随 y(破 y 对称)。
       const json = variantSolver.solve_moves(
-        msg.scramble, msg.variant | 0, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '',
+        msg.scramble, msg.variant | 0, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '', msg.base ?? -1,
       );
       self.postMessage({ type: 'variant_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     }
