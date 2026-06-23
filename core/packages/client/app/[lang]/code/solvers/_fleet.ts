@@ -63,6 +63,9 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
   { event: 'bic', zhName: '联体魔方', enName: 'Bicube', tier: 'B', quality: 'optimal',
     states: '1,108,800', gods: 'God 28 (face-turn)',
     zhMethod: 'TIER B 离线精确距离表 opt_bic.bin.gz (~1.8MB; 现场 BFS ~6.4s/~510MB 移动端必崩, 故落表): 浏览器 fetch+inflate → 常驻 ~10MB 类型化数组, 查表+梯度下降, 可证最优; 上帝之数 28 见 jaapsch.net', enMethod: 'TIER B offline exact-distance table opt_bic.bin.gz (~1.8MB; in-browser BFS was ~6.4s/~510MB → mobile crash, so tabled): browser fetch+inflate → ~10MB typed arrays resident, lookup + gradient descent, provably optimal; cf. jaapsch.net God 28' },
+  { event: 'sia222', zhName: '联体 2×2×2', enName: 'Siamese 2×2×2', tier: 'B', quality: 'optimal',
+    states: '29,124,745,198,874,117,548,277,760,000', zhStates: '= |G_A|² (直积), 每半 ⟨U,R,F⟩ 阶 170,659,735,142,400', enStates: '= |G_A|² (direct product); each ⟨U,R,F⟩ half order 170,659,735,142,400', gods: 'per-half 最优拼接 / per-half optimal concat',
+    zhMethod: '直积 G=G_A×G_B (实测 A/B 招式不相交且对易): 按 z2 y 拆半, 各半受限 ⟨U,R,F⟩ 3×3×3 用 IDA*+模式库 (角 PDB 3,674,160 + 两张互补 6 棱 PDB, max 启发) 求最优, 拼接=全局最优. 三表 ~18.8MB 常驻 → 离线 BFS 发 opt_sia222.bin.gz (~4MB, >2MB 故发布到 static, 非进 repo); 桌面优先. 复用 lib/restricted-cube-solver 引擎 (sia123/sia113 将共用)', enMethod: 'direct product G=G_A×G_B (A/B moves disjoint & commuting, measured): split at z2 y, solve each restricted ⟨U,R,F⟩ 3×3×3 half optimally with IDA*+PDBs (corner PDB 3,674,160 + two complementary 6-edge PDBs, max heuristic), concatenate = globally optimal. ~18.8MB resident → offline-built opt_sia222.bin.gz (~4MB, >2MB so published to static, not committed); desktop-first. Reuses the lib/restricted-cube-solver engine (shared by future sia123/sia113)' },
   // ── TIER C: 单实例 IDA* + 可采纳启发式, 每解可证最短 ──
   { event: '233', zhName: '2×3×3 多米诺', enName: '2×3×3 Domino', tier: 'C', quality: 'optimal',
     states: '1,625,702,400', zhStates: '= 8!·8! ≈ 1.63×10⁹', enStates: '= 8!·8! ≈ 1.63×10⁹', gods: '样本 ≤16 / sampled ≤16',
@@ -121,7 +124,6 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
 export const NONWCA_TS_PLANNED: ReadonlyArray<{ event: string; zh: string; en: string }> = [
   { event: 'sia113', zh: '联体 1×1×3', en: 'Siamese 1×1×3' },
   { event: 'sia123', zh: '联体 1×2×3', en: 'Siamese 1×2×3' },
-  { event: 'sia222', zh: '联体 2×2×2', en: 'Siamese 2×2×2' },
   { event: 'prcp', zh: '五魔金字塔', en: 'Pyraminx Crystal' },
   { event: 'giga', zh: '六阶五魔', en: 'Gigaminx' },
 ];
