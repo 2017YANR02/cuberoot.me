@@ -798,13 +798,15 @@ impl PseudoSmallSolver {
             let n1 = mt[i1 + m] as usize;
             let n2 = mt[i2 + m] as usize;
             let idx = (n1 as u64) * (state_space::EDGE2 as u64) + n2 as u64;
-            if self.pt_pscross.get(idx) as u32 >= depth {
+            let h = self.pt_pscross.get(idx) as u32;
+            if h >= depth {
                 continue;
             }
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if h > 0 {
+                // h==0 且 depth>1:已解却还要再走 depth-1 步 → 更短解 + 无效尾动,跳过。
                 self.enum_cross(n1 * 18, n2 * 18, depth - 1, m as u8, path, out, cap);
             }
             path.pop();
@@ -851,18 +853,23 @@ impl PseudoSmallSolver {
             }
             let m = row[k] as usize;
             let mut pruned = false;
-            let mut leaf_ok = depth == 1;
+            let mut all_cc0 = true; // 所有 pair 的 cross+corner 表皆 0
+            let mut eo_ok = true; // 所有 pair 伪棱归位(n_ie == 2*diff)
             for (j, p) in pairs.iter().enumerate() {
                 let m_p = self.trans[ref_slot][p.slot][m] as usize;
                 let n_im = mt_e4[p.im as usize + m_p] as u32;
                 let n_ic = mt_c[p.ic as usize * 18 + m_p] as u32;
-                if self.cc.h(n_im, n_ic) >= depth {
+                let h = self.cc.h(n_im, n_ic);
+                if h >= depth {
                     pruned = true;
                     break;
                 }
+                if h != 0 {
+                    all_cc0 = false;
+                }
                 let n_ie = mt_e[p.ie as usize * 18 + m_p] as u32;
-                if leaf_ok && n_ie != 2 * p.diff {
-                    leaf_ok = false;
+                if n_ie != 2 * p.diff {
+                    eo_ok = false;
                 }
                 next[j] = PsPair {
                     im: n_im,
@@ -875,14 +882,16 @@ impl PseudoSmallSolver {
             if pruned {
                 continue;
             }
+            let solved = all_cc0 && eo_ok; // 全 pair cc 解且伪棱归位 ⟺ 该子集已解
             // raw 搜索 m(ref 共轭帧)→ 真实 rot 帧 move。
             let real_m = cj[m][inv_ref];
             path.push(real_m);
             if depth == 1 {
-                if leaf_ok {
+                if solved {
                     out.push(path.clone());
                 }
-            } else {
+            } else if !solved {
+                // 全解却仍要走 depth-1 步 = 更短解 + 无效尾动,跳过。
                 self.enum_pairs(&next[..n], depth - 1, m as u8, path, out, cap);
             }
             path.pop();

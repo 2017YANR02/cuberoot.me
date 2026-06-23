@@ -164,13 +164,15 @@ pub(crate) fn enumerate_product(
         let m = row[k] as usize;
         let na = mt_a[a * 18 + m] as usize;
         let nb = mt_b[b * 18 + m] as usize;
-        if pt[na * b_space + nb] as u32 >= depth {
+        let h = pt[na * b_space + nb] as u32;
+        if h >= depth {
             continue;
         }
         path.push(m as u8);
         if depth == 1 {
             out.push(path.clone());
-        } else {
+        } else if h > 0 {
+            // h==0 且 depth>1:已解却还要再走 depth-1 步 → 更短解 + 无效尾动,跳过。
             enumerate_product(mt_a, mt_b, b_space, pt, na, nb, depth - 1, m as u8, path, out, cap);
         }
         path.pop();

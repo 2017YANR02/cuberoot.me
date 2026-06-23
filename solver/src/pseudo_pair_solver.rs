@@ -2050,21 +2050,23 @@ impl PseudoPairSmallSolver {
 
             // raw 搜索 move m 反共轭回真实 rot 帧。
             path.push(cj[m][inv]);
-            if depth == 1 {
-                let mut leaf = self.pair[p.diff as usize].h(n_ie, n_ic) == 0
-                    && self.ins[p.diff as usize].h(n_im, n_ic) == 0;
-                if leaf {
-                    for q in nxc.iter().take(n) {
-                        if self.cc.h(q.im, q.ic) != 0 || q.ie != 2 * q.diff {
-                            leaf = false;
-                            break;
-                        }
+            // 子状态是否已全解(pair 解 ∧ 各 xcross 槽 cc 解且伪棱归位)——与叶子同一判据。
+            let mut solved = self.pair[p.diff as usize].h(n_ie, n_ic) == 0
+                && self.ins[p.diff as usize].h(n_im, n_ic) == 0;
+            if solved {
+                for q in nxc.iter().take(n) {
+                    if self.cc.h(q.im, q.ic) != 0 || q.ie != 2 * q.diff {
+                        solved = false;
+                        break;
                     }
                 }
-                if leaf {
+            }
+            if depth == 1 {
+                if solved {
                     out.push(path.clone());
                 }
-            } else {
+            } else if !solved {
+                // 全解却仍要走 depth-1 步 = 更短解 + 无效尾动,跳过。
                 let np = PpPair {
                     im: n_im,
                     ic: n_ic,

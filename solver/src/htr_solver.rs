@@ -365,13 +365,15 @@ impl HtrSolver {
             }
             let nc = self.mt_cp[c * 18 + m] as usize;
             let ns = self.mt_split[s * 18 + m] as usize;
-            if self.dist[nc * SPLIT + ns] as u32 >= depth {
+            let h = self.dist[nc * SPLIT + ns] as u32;
+            if h >= depth {
                 continue;
             }
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if h > 0 {
+                // h==0 且 depth>1:已解却还要再走 depth-1 步 → 更短解 + 无效尾动,跳过。
                 self.enum_paths(nc, ns, depth - 1, m as u8, path, out, cap);
             }
             path.pop();

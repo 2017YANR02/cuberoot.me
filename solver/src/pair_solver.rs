@@ -1099,23 +1099,30 @@ impl PairSolver {
             let mc_p = cj[m][p_slot] as usize;
             let nim_p = mt_e4[p_im + mc_p] as usize;
             let nic_p = mt_c[p_ic + mc_p] as usize;
-            if self.pt_cross_ins_c4.get((nim_p + nic_p) as u64) as u32 >= depth {
+            let h_ins = self.pt_cross_ins_c4.get((nim_p + nic_p) as u64) as u32;
+            if h_ins >= depth {
                 continue;
             }
             let nie_p = mt_e[p_ie + mc_p] as usize;
-            if self.pt_pair_c4e0.get((nie_p * 24 + nic_p) as u64) as u32 >= depth {
+            let h_pair = self.pt_pair_c4e0.get((nie_p * 24 + nic_p) as u64) as u32;
+            if h_pair >= depth {
                 continue;
             }
             let mut pruned = false;
+            let mut max_h = h_ins.max(h_pair); // pair + 各 xcross 槽启发式最大值;==0 ⟺ 全解
             for j in 0..n {
                 let (im, ic, ie, slot) = xc[j];
                 let mc = cj[m][slot] as usize;
                 let n1 = mt_e4[im + mc] as usize;
                 let n2 = mt_c[ic + mc] as usize;
                 let n3 = mt_e[ie + mc] as usize;
-                if self.pt_cross_c4e0.get(((n1 + n2) * 24 + n3) as u64) as u32 >= depth {
+                let hs = self.pt_cross_c4e0.get(((n1 + n2) * 24 + n3) as u64) as u32;
+                if hs >= depth {
                     pruned = true;
                     break;
+                }
+                if hs > max_h {
+                    max_h = hs;
                 }
                 nxc[j] = (n1, n2 * 18, n3 * 18, slot);
             }
@@ -1125,7 +1132,8 @@ impl PairSolver {
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if max_h > 0 {
+                // max_h==0 ⟺ pair 与全 xcross 槽皆解;depth>1 还要走步 = 更短解 + 无效尾动,跳过。
                 self.enum_small(nim_p, nic_p * 18, nie_p * 18, p_slot, &nxc[..n], depth - 1, m as u8, path, out, cap);
             }
             path.pop();

@@ -1725,7 +1725,8 @@ impl EOSmallSolver {
                 if pr == 0 && neo == 0 {
                     out.push(path.clone());
                 }
-            } else {
+            } else if pr > 0 || neo != 0 {
+                // cross+EO 全解(pr==0 && neo==0)却仍要走 depth-1 步 = 更短解 + 无效尾动,跳过。
                 self.enum_cross(n1 * 18, n2 * 18, neo, depth - 1, m as u8, path, out, cap);
             }
             path.pop();
@@ -1769,19 +1770,25 @@ impl EOSmallSolver {
             let nd = mt_ep4[i_dep + m] as usize;
             let neo = mt_eo[i_eo + m] as usize;
             let idx_de: u64 = nd as u64 * state_space::EO12 as u64 + neo as u64;
-            if self.pt_ep4eo12.get(idx_de) as u32 >= depth {
+            let h_de = self.pt_ep4eo12.get(idx_de) as u32;
+            if h_de >= depth {
                 continue;
             }
             let mut pruned = false;
+            let mut max_h = h_de; // DE+EO 与各槽 cross 的启发式最大值;==0 ⟺ 全解
             for j in 0..n {
                 let (i1, i2, i3, slot) = xc[j];
                 let m_slot = cj[m][slot] as usize;
                 let n1 = mt_e4[i1 + m_slot] as usize;
                 let n2 = mt_c[i2 + m_slot] as usize;
                 let n3 = mt_e[i3 + m_slot] as usize;
-                if self.pt_cross_c4e0.get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32 >= depth {
+                let hs = self.pt_cross_c4e0.get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32;
+                if hs >= depth {
                     pruned = true;
                     break;
+                }
+                if hs > max_h {
+                    max_h = hs;
                 }
                 nxc[j] = (n1, n2 * 18, n3 * 18, slot);
             }
@@ -1791,7 +1798,8 @@ impl EOSmallSolver {
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if max_h > 0 {
+                // max_h==0 ⟺ DE+EO 与全槽皆解;depth>1 还要走步 = 更短解 + 无效尾动,跳过。
                 self.enum_small(&nxc[..n], nd * 18, neo * 18, depth - 1, m as u8, path, out, cap);
             }
             path.pop();

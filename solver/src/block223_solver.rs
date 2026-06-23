@@ -206,17 +206,20 @@ impl Block223Solver {
             let m = row[k] as usize;
             let nc2 = mt_c2[c2 * 18 + m] as usize;
             let ne3 = mt_e3[e3 * 18 + m] as usize;
-            if self.s1.pt[nc2 * state_space::EDGE3 + ne3] as u32 >= depth {
+            let h1 = self.s1.pt[nc2 * state_space::EDGE3 + ne3] as u32;
+            if h1 >= depth {
                 continue;
             }
             let ne2 = mt_e2[e2 * 18 + m] as usize;
-            if self.pt_ce2[nc2 * state_space::EDGE2 + ne2] as u32 >= depth {
+            let h2 = self.pt_ce2[nc2 * state_space::EDGE2 + ne2] as u32;
+            if h2 >= depth {
                 continue;
             }
             path.push(m as u8);
             if depth == 1 {
                 out.push(path.clone());
-            } else {
+            } else if h1 > 0 || h2 > 0 {
+                // 两表皆 0 ⟺ 该块已解;depth>1 还要走步 = 更短解 + 无效尾动,跳过。
                 self.enum_paths(nc2, ne3, ne2, depth - 1, m as u8, path, out, cap);
             }
             path.pop();

@@ -505,7 +505,8 @@ impl F2leoSolver {
                 if ne.iter().all(|&e| e % 2 == 0) {
                     out.push(path.clone());
                 }
-            } else {
+            } else if pr > 0 || ne.iter().any(|&e| e % 2 != 0) {
+                // cross 已解(pr==0)且自由棱 EO 全好却仍要走步 = 更短解 + 无效尾动,跳过。
                 self.enum_cross(
                     n1 * 18,
                     n2 * 18,
@@ -556,38 +557,45 @@ impl F2leoSolver {
             let ne4 = m4[e4_24 + m] as usize;
             let mut ncorn = [0usize; 3];
             let mut pruned = false;
+            let mut max_pr = 0u32; // 各槽 prune 最大值;==0 是「全解」的必要条件之一
             for i in 0..n {
                 let nc = mc[corn[i] + m] as usize;
-                if prune[i][ne4 + nc] as u32 >= depth {
+                let pr = prune[i][ne4 + nc] as u32;
+                if pr >= depth {
                     pruned = true;
                     break;
+                }
+                if pr > max_pr {
+                    max_pr = pr;
                 }
                 ncorn[i] = nc;
             }
             if pruned {
                 continue;
             }
-            path.push(m as u8);
-            if depth == 1 {
-                let mut ok = true;
-                for i in 0..n {
-                    if me[edge[i] + m] as usize != egoal[i] {
+            // 子状态目标判定(与 depth==1 叶子同一判据):已解槽棱归位 ∧ 自由棱 EO 全好。
+            let mut ok = true;
+            for i in 0..n {
+                if me[edge[i] + m] as usize != egoal[i] {
+                    ok = false;
+                    break;
+                }
+            }
+            if ok {
+                for j in 0..nf {
+                    if me[free[j] + m] as usize % 2 != 0 {
                         ok = false;
                         break;
                     }
                 }
-                if ok {
-                    for j in 0..nf {
-                        if me[free[j] + m] as usize % 2 != 0 {
-                            ok = false;
-                            break;
-                        }
-                    }
-                }
+            }
+            path.push(m as u8);
+            if depth == 1 {
                 if ok {
                     out.push(path.clone());
                 }
-            } else {
+            } else if !(max_pr == 0 && ok) {
+                // 全解(各槽 prune==0 ∧ 槽棱归位 ∧ 自由棱 EO)却仍要走步 = 更短解 + 无效尾动,跳过。
                 let mut nc18 = [0usize; 3];
                 let mut ne18 = [0usize; 3];
                 let mut nf18 = [0usize; 3];
