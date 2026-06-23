@@ -108,6 +108,9 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
   { event: 'heli', zhName: '直升机', enName: 'Helicopter Cube', tier: 'D', quality: 'bounded',
     states: '11,848,661,611,315,200,000', zhStates: '≈ 1.18×10¹⁹ = 8!·3⁷·(6!)⁴/2 (Schreier-Sims 验证)', enStates: '≈ 1.18×10¹⁹ = 8!·3⁷·(6!)⁴/2 (Schreier-Sims verified)', gods: 'cap HELI_MAX_LENGTH=400',
     zhMethod: '从零对易子约简 (按轨道分组的棱翼缓冲): 奇偶前缀 + 角 3-循环 + 角扭转 + 4 个棱翼轨道各自缓冲 3-循环; 移动语义/打乱镜像 cstimer (cs0x7f), 几何/oracle 用 cstimer poly3dlib', enMethod: 'from-scratch commutator reduction (per-orbit wing buffers): parity prefix + corner 3-cycles + corner twists + per-orbit (4 wing orbits) buffer 3-cycles; move semantics/scrambler mirror cstimer (cs0x7f), geometry/oracle from cstimer poly3dlib' },
+  { event: 'helicv', zhName: '弧面直升机', enName: 'Curvy Copter', tier: 'D', quality: 'bounded',
+    states: '3,033,257,372,496,691,200,000', zhStates: '≈ 3.03×10²¹ = 8!·3⁷·(6!)⁴·2¹²/2⁵ (Schreier-Sims, 直升机的 256 倍)', enStates: '≈ 3.03×10²¹ = 8!·3⁷·(6!)⁴·2¹²/2⁵ (Schreier-Sims, 256× the Helicopter Cube)', gods: 'cap HELICV_MAX_LENGTH=400',
+    zhMethod: '从零对易子约简 (同直升机打乱群 + 12 个弧面棱块): 17 位奇偶前缀 (同时清角/4 面块轨道奇偶 + 解 12 个棱块) + 角 3-循环 + 角扭转 + 4 个面块轨道各自缓冲 3-循环; 移动语义/打乱镜像 cstimer (cs0x7f), 几何/oracle 用 cstimer poly3dlib', enMethod: 'from-scratch commutator reduction (same scramble group as the Helicopter Cube + 12 curvy edge pieces): a 17-bit parity prefix (clears corner/4 face-orbit parities AND solves the 12 edge pieces) + corner 3-cycles + corner twists + per-orbit (4 face orbits) buffer 3-cycles; move semantics/scrambler mirror cstimer (cs0x7f), geometry/oracle from cstimer poly3dlib' },
 ];
 
 // 已登记但尚未建求解器的 TIER D2 backlog (诚实: 未建). 见 solver/NONWCA_PUZZLE_LOOP.md §1 TIER D2 表.
@@ -119,7 +122,6 @@ export const NONWCA_TS_PLANNED: ReadonlyArray<{ event: string; zh: string; en: s
   { event: 'prcp', zh: '五魔金字塔', en: 'Pyraminx Crystal' },
   { event: 'giga', zh: '六阶五魔', en: 'Gigaminx' },
   { event: 'ctico', zh: '二十面体', en: 'Icosamate' },
-  { event: 'helicv', zh: '弧面直升机', en: 'Curvy Copter' },
 ];
 
 // TIER 标签 (A 现场 BFS / B 离线精确表 / C 单实例 IDA* / D 两阶段约简).
