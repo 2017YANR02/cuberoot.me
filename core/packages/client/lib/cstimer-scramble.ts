@@ -91,7 +91,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   { id: '8p',      key: '8prp',    zh: '八数码',           en: '8-Puzzle',          textLabel: '8',      family: 'slide',  solvable: true },
 
   // Random-move with sensible defaults
-  { id: 'heli',    key: 'heli',    length: 20, zh: '直升机',           en: 'Helicopter',        iconClass: 'unofficial-helicopter', family: 'twist'
+  { id: 'heli',    key: 'heli',    length: 20, zh: '直升机',           en: 'Helicopter',        iconClass: 'unofficial-helicopter', family: 'twist', solvable: true
 },
   { id: 'helicv',  key: 'helicv',  length: 20, zh: '弧面直升机',       en: 'Curvy Copter',      iconClass: 'unofficial-curvycopter', family: 'twist'
 },
