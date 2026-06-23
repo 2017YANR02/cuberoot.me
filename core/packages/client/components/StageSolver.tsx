@@ -139,11 +139,15 @@ interface Props {
   initialFace?: number;
   /** 选中方法/阶段变化时回调(analyzer 用它把 method/stage 同步进 URL,可分享/可深链)。 */
   onSelectionChange?: (method: Method, stage: number) => void;
+  /** 深链初始槽位组合(逗号分隔索引,如 "2" / "0,1");''/缺省 = 自动挑最优。 */
+  initialSlot?: string;
+  /** 槽位选择变化时回调(analyzer 用它把 slot 同步进 URL,可分享/可深链)。 */
+  onSlotChange?: (slot: string) => void;
   /** gen 行内:更紧凑的间距 + 略小播放器。 */
   compact?: boolean;
 }
 
-export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, compact = false }: Props) {
+export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, compact = false }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
@@ -177,7 +181,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const [moves, setMoves] = useState<MovesTimed | null>(null);
   const [movesLoading, setMovesLoading] = useState(false);
   const [selSol, setSelSol] = useState(0); // 选中解法行(驱动共享播放器)
-  const [selSlot, setSelSlot] = useState(''); // 用户指定槽位组合(逗号分隔索引,''=自动挑最优)
+  const [selSlot, setSelSlot] = useState(initialSlot); // 用户指定槽位组合(逗号分隔索引,''=自动挑最优)
   const selSlotRef = useRef(selSlot);
   selSlotRef.current = selSlot;
   const [rowRot, setRowRot] = useState<Record<number, number>>({}); // 每行 y 预转体次数 0..3
@@ -390,15 +394,24 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     void fetchMoves(f);
   }, [selFace, fetchMoves]);
 
-  // 切换槽位:同步 ref(fetchMoves 立即读到新值)后重算当前视角。
+  // 切换槽位:同步 ref(fetchMoves 立即读到新值)+ 上报(进 URL 深链)后重算当前视角。
   const changeSlot = useCallback((v: string) => {
     selSlotRef.current = v;
     setSelSlot(v);
+    onSlotChange?.(v);
     if (selFace !== null) void fetchMoves(selFace);
-  }, [selFace, fetchMoves]);
+  }, [selFace, fetchMoves, onSlotChange]);
 
-  // 切方法/阶段/打乱 → 槽位回「自动」(旧选择对新阶段的槽数多半失配)。
-  useEffect(() => { setSelSlot(''); }, [method, stage, normScramble]);
+  // 切方法/阶段/打乱 → 槽位回「自动」(旧选择对新阶段的槽数多半失配)。跳过首挂,
+  // 否则会立刻清掉深链带进来的 initialSlot。
+  const firstSlotReset = useRef(true);
+  useEffect(() => {
+    if (firstSlotReset.current) { firstSlotReset.current = false; return; }
+    selSlotRef.current = '';
+    setSelSlot('');
+    onSlotChange?.('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [method, stage, normScramble]);
 
   // 算完(computing→false)且要求自动选 → 选最优(min count)视角并出解。
   useEffect(() => {
@@ -491,6 +504,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     return Number.isFinite(v) ? v : null;
   }, [counts]);
 
+  // 当前 (方法, 阶段) 可选的槽位组合;.length<2 时(纯十字 k=0 / 满 F2L k=4)不显示选择器。
+  const slotCombos = useMemo(() => kCombos(slotCount(method, stage)), [method, stage]);
+
   const selSolAlg = moves && moves.sols.length > 0
     ? rotateSolutionY(moves.sols[Math.min(selSol, moves.sols.length - 1)].m, rowRot[Math.min(selSol, moves.sols.length - 1)] ?? 0)
     : null;
@@ -511,12 +527,14 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             {stages.map((k, i) => <option key={k} value={i}>{stageLabel(k, lang === 'zh')}</option>)}
           </select>
         </label>
-        {slotCount(method, stage) >= 1 && (
+        {/* 槽位选择器仅在「有得选」时显示:k=4(满 F2L,唯一组合 BL BR FR FL,等于自动)
+            和 k=0(纯十字无槽)都只有 ≤1 个组合,不显示。 */}
+        {slotCombos.length >= 2 && (
           <label className="stsv-control">
             <span>{t('槽位', 'Slot')}</span>
             <select value={selSlot} onChange={(e) => changeSlot(e.target.value)}>
               <option value="">{t('自动(最优)', 'Auto (best)')}</option>
-              {kCombos(slotCount(method, stage)).map((c) => {
+              {slotCombos.map((c) => {
                 const v = c.join(',');
                 return <option key={v} value={v}>{comboLabel(v)}</option>;
               })}
