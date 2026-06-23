@@ -341,6 +341,28 @@ const REGISTRY: PuzzleDistSpec[] = [
     },
   },
   {
+    event: 'helicv',
+    label: 'Curvy Copter',
+    scrambleLen: 20,          // cstimer helicv generator length (CSTIMER_EVENTS helicv length=20; same adjScramble as heli)
+    defaultN: 2000,           // 从零对易子约简,gadget 库 build 一次(<1s)后每条求解毫秒级 → 2000 单进程秒级
+    // 从零对易子约简(同直升机打乱群 + 12 个弧面棱块):17 位奇偶前缀(同时清角/4 面块轨道奇偶 + 解 12 个棱块)
+    // + 角 3-循环 + 角扭转 + 4 个面块轨道各自缓冲 3-循环。有效 + 有界(实测 1000+ 真打乱 mean≈206、max≤290,
+    // bound 400),长度随打乱难度变化(平滑单峰,非单柱),非最优(§0.0 #3 诚实记)。
+    quality: 'sampled-bounded',
+    load: async () => {
+      const m = await mod('../../client/lib/helicv-solver');
+      const solveHelicv = m.solveHelicv as (s: string) => { length: number; optimal?: boolean };
+      return {
+        // randomHelicvScramble 忠实镜像 cstimer 的 adjScramble helicv 生成器(与 heli 同一调用)。
+        scramble: m.randomHelicvScramble as SolverAdapter['scramble'],
+        // 约简有效+有界(非最优)→ optimal 恒 false。
+        solve: (s: string) => ({ length: solveHelicv(s).length, optimal: false }),
+        maxBound: m.HELICV_MAX_LENGTH as number,
+        stateCountStr: m.HELICV_STATE_COUNT_STR as string,
+      };
+    },
+  },
+  {
     event: 'crz3a',
     label: 'Crazy 3x3',
     scrambleLen: 25,          // cstimer crz3a generator length(CSTIMER_EVENTS crz3a length=25)
