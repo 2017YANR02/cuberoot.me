@@ -47,6 +47,9 @@ import {
 } from './cuber/ivy/ivyDrag';
 import { dinoPickHit, dinoResolveMove, dinoResolveLive, dinoApplyPartial, dinoSnapBack, type DinoPickHit } from './cuber/dino/dinoDrag';
 import { dinoMoveToString } from './cuber/dino/dinoState';
+import RediCube, { type PieceAnim as RediPieceAnim } from './cuber/redi/RediCube';
+import { rediPickHit, rediResolveMove, rediResolveLive, rediApplyPartial, rediSnapBack, type RediPickHit } from './cuber/redi/rediDrag';
+import { rediMoveToString } from './cuber/redi/rediState';
 import { FACE } from './cuber/define';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import TwistySection from '@/components/TwistySection';
@@ -78,9 +81,9 @@ export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
 }
 
-/** Narrow `world.cube` to the NxN Cube type. Returns null for SQ1 / Ivy / Dino. */
+/** Narrow `world.cube` to the NxN Cube type. Returns null for SQ1 / Ivy / Dino / Redi. */
 function asNxN(world: World): Cube | null {
-  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino') ? null : (world.cube as Cube);
+  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi') ? null : (world.cube as Cube);
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -154,6 +157,7 @@ export default function SimPage() {
     if (raw === 'sq1') return 'sq1';
     if (raw === 'ivy') return 'ivy';
     if (raw === 'dino') return 'dino';
+    if (raw === 'redi') return 'redi';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
@@ -542,6 +546,19 @@ export default function SimPage() {
     let dinoLive: { anims: PieceAnim[]; tx: number; ty: number; downX: number; downY: number } | null = null;
     const DINO_DRAG_THRESHOLD_PX = 6;
     const DINO_FULL_PX = 150; // drag px (along the turn tangent) for a full 120° turn
+    // Redi drag state (discrete 120°, mirrors dino). Corner-turning like Dino but
+    // with visible twisting corner pieces.
+    let rediPending = false;
+    let rediHit: RediPickHit | null = null;
+    let rediDownX = 0;
+    let rediDownY = 0;
+    let rediFired = false;
+    let rediRotating = false;
+    let rediLastX = 0;
+    let rediLastY = 0;
+    let rediLive: { anims: RediPieceAnim[]; tx: number; ty: number; downX: number; downY: number } | null = null;
+    const REDI_DRAG_THRESHOLD_PX = 6;
+    const REDI_FULL_PX = 150; // drag px (along the turn tangent) for a full 120° turn
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -632,6 +649,31 @@ export default function SimPage() {
         }
         if (e.pointerType !== 'touch') return;
       }
+      if (worldRef.current?.puzzleKind === 'redi' && (e.pointerType !== 'mouse' || e.button === 0)) {
+        const isTouchMulti = e.pointerType === 'touch' && activePointers.size >= 1;
+        if (!isTouchMulti) {
+          const r0 = renderer.domElement.getBoundingClientRect();
+          rediDownX = e.clientX - r0.left;
+          rediDownY = e.clientY - r0.top;
+          rediPending = true;
+          rediFired = false;
+          rediRotating = false;
+          rediHit = null;
+          rediLastX = e.clientX;
+          rediLastY = e.clientY;
+          if (e.pointerType !== 'touch') renderer.domElement.setPointerCapture(e.pointerId);
+        }
+        if (e.pointerType === 'touch') {
+          activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (activePointers.size === 2) {
+            rediPending = false;
+            rediFired = false;
+            rediRotating = false;
+            rediHit = null;
+          }
+        }
+        if (e.pointerType !== 'touch') return;
+      }
       if (e.pointerType !== 'touch') return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (activePointers.size === 2) {
@@ -643,6 +685,7 @@ export default function SimPage() {
         pinching = true;
         sq1Rotating = false;
         dinoRotating = false;
+        rediRotating = false;
         world.controller.disable = true;
       }
     };
@@ -878,6 +921,83 @@ export default function SimPage() {
           }
         }
       }
+      if (worldRef.current?.puzzleKind === 'redi') {
+        if (rediLive) {
+          const r0 = renderer.domElement.getBoundingClientRect();
+          const lx = e.clientX - r0.left;
+          const ly = e.clientY - r0.top;
+          const proj = (lx - rediLive.downX) * rediLive.tx + (ly - rediLive.downY) * rediLive.ty;
+          rediApplyPartial(rediLive.anims, proj / REDI_FULL_PX);
+          worldRef.current.dirty = true;
+          return;
+        }
+        const rmove = renderer.domElement.getBoundingClientRect();
+        const localX = e.clientX - rmove.left;
+        const localY = e.clientY - rmove.top;
+        if (rediRotating) {
+          const dx = e.clientX - rediLastX;
+          const dy = e.clientY - rediLastY;
+          rediLastX = e.clientX;
+          rediLastY = e.clientY;
+          const k = mapOrbitK(settingsRef.current.sensitivity);
+          world.scene.rotation.y += dx * k;
+          world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
+          world.scene.updateMatrix();
+          world.dirty = true;
+          return;
+        }
+        if (rediPending && !rediFired && !pinching) {
+          const dx = localX - rediDownX;
+          const dy = localY - rediDownY;
+          if (Math.hypot(dx, dy) >= REDI_DRAG_THRESHOLD_PX) {
+            rediFired = true; // consume this gesture either as a turn or orbit
+            const w = worldRef.current;
+            const c = w.cube;
+            if (c instanceof RediCube) {
+              c.twister.finish();
+              tweener.finish();
+              // pick from the original pointerdown location (before the drag moved)
+              rediHit = rediPickHit(c, w.scene, w.camera, rediDownX, rediDownY, w.width, w.height);
+              if (rediHit) {
+                if (settingsRef.current.holdPartialTurn) {
+                  // Live partial turn: resolve corner + drag tangent, begin the turn
+                  // (pivots tracked live, NOT committed) — freeze on pointerup.
+                  const plan = rediResolveLive(c, rediHit, w.scene, w.camera, dx, dy, w.width, w.height);
+                  if (plan) {
+                    clearPartialFreeze();
+                    const anims = c.beginMove(plan.move);
+                    rediLive = { anims, tx: plan.tangentX, ty: plan.tangentY, downX: rediDownX, downY: rediDownY };
+                    const proj = (localX - rediDownX) * plan.tangentX + (localY - rediDownY) * plan.tangentY;
+                    rediApplyPartial(anims, proj / REDI_FULL_PX);
+                    w.dirty = true;
+                    rediPending = false;
+                    return;
+                  }
+                } else {
+                  const move = rediResolveMove(c, rediHit, w.scene, w.camera, dx, dy, w.width, w.height);
+                  if (move) {
+                    c.twister.twist(move, false, true);
+                    userMoveRef.current?.(rediMoveToString(move));
+                    rediPending = false;
+                    return;
+                  }
+                }
+              }
+            }
+            // missed a piece, or no aligned corner → orbit the rest of this gesture
+            rediRotating = true;
+            rediHit = null;
+            rediLastX = e.clientX;
+            rediLastY = e.clientY;
+            const k = mapOrbitK(settingsRef.current.sensitivity);
+            world.scene.rotation.y += dx * k;
+            world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
+            world.scene.updateMatrix();
+            world.dirty = true;
+            return;
+          }
+        }
+      }
       if (e.pointerType !== 'touch') return;
       if (!activePointers.has(e.pointerId)) return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -989,12 +1109,38 @@ export default function SimPage() {
       dinoFired = false;
       dinoRotating = false;
       dinoHit = null;
+      if (rediLive) {
+        // Hold-partial: freeze where released — keep the live pivots, register a
+        // snap-back (next turn / toggle-off restores them), do NOT commit.
+        const frozen = rediLive.anims;
+        partialSnapBackRef.current = () => rediSnapBack(frozen);
+        rediLive = null;
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
+      // Redi: the move (if any) already fired on pointermove. Just clear state and
+      // snap the view if we were orbiting in 'rotate' mode.
+      if (rediRotating) {
+        if (settingsRef.current?.dragEmpty === 'rotate') {
+          const q = Math.PI / 2;
+          world.scene.rotation.y = Math.round(world.scene.rotation.y / q) * q;
+          world.scene.rotation.x = Math.round(world.scene.rotation.x / q) * q;
+          world.scene.updateMatrix();
+          world.dirty = true;
+        }
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      } else if (rediPending) {
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
+      rediPending = false;
+      rediFired = false;
+      rediRotating = false;
+      rediHit = null;
       if (e.pointerType !== 'touch') return;
       activePointers.delete(e.pointerId);
       if (pinching && activePointers.size < 2) {
         pinching = false;
         const pk = worldRef.current?.puzzleKind;
-        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino';
+        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino' || pk === 'redi';
         syncScaleToSettings();
       }
     };

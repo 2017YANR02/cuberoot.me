@@ -6,10 +6,11 @@ import Controller from "./controller";
 import Sq1Cube from "./sq1/Sq1Cube";
 import IvyCube from "./ivy/IvyCube";
 import DinoCube from "./dino/DinoCube";
+import RediCube from "./redi/RediCube";
 import FaceHints, { IVY_CORNER_HINTS } from "./face_hints";
 
-/** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, or Dino (corner-turning). */
-export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino';
+/** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, Dino, or Redi (corner-turning). */
+export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi';
 
 export default class World {
   public width = 1;
@@ -21,7 +22,7 @@ export default class World {
   /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
    *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
    *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
-  public cube!: Cube | Sq1Cube | IvyCube | DinoCube;
+  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -33,6 +34,7 @@ export default class World {
   private sq1Cube: Sq1Cube | null = null;
   private ivyCube: IvyCube | null = null;
   private dinoCube: DinoCube | null = null;
+  private rediCube: RediCube | null = null;
   /** Current puzzle kind, mirrors what was last passed to setPuzzle. */
   public puzzleKind: PuzzleKind = 3;
   public callbacks: (() => void)[] = [];
@@ -120,6 +122,17 @@ export default class World {
       // rig (Dino is a small object with many oblique tetra facets too).
       this.controller.disable = true;
       this._ensureSq1Lights();
+    } else if (kind === 'redi') {
+      if (this.rediCube == null) {
+        this.rediCube = new RediCube();
+        this.rediCube.callbacks.push(this.callback);
+      }
+      this.cube = this.rediCube;
+      // Redi: corner-turning like Dino — the NxN Controller doesn't apply. SimPage
+      // installs a dedicated redi drag-to-turn + view-rotate handler. Reuse the SQ1
+      // rim-light rig (many oblique facets on the corner + edge pieces).
+      this.controller.disable = true;
+      this._ensureSq1Lights();
     } else {
       if (this.cubes[kind] == undefined) {
         this.cubes[kind] = new Cube(kind);
@@ -199,15 +212,16 @@ export default class World {
     // it back to the same ~0.85 fill the NxN view has. NxN path unchanged.
     const isSq1 = this.puzzleKind === 'sq1';
     const isDino = this.puzzleKind === 'dino';
-    // Dino cube spans [-2,2]·SIZE (corners at ~3.5·SIZE); ~4.0 frames it to the
-    // same fill as the NxN-3 reference.
-    const refHalf = isSq1 ? Cubelet.SIZE * 4.6 : isDino ? Cubelet.SIZE * 4.0 : Cubelet.SIZE * 3;
+    const isRedi = this.puzzleKind === 'redi';
+    // Dino/Redi cubes span [-2,2]·SIZE (corners at ~3.5·SIZE); ~4.0 frames them to
+    // the same fill as the NxN-3 reference.
+    const refHalf = isSq1 ? Cubelet.SIZE * 4.6 : (isDino || isRedi) ? Cubelet.SIZE * 4.0 : Cubelet.SIZE * 3;
     const distance = refHalf * this.perspective;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
     this.camera.position.z = distance;
-    // near/far margins: SQ1/Dino solids are deeper along view, so widen the near cut.
-    this.camera.near = distance - Cubelet.SIZE * (isSq1 || isDino ? 5 : 4);
+    // near/far margins: SQ1/Dino/Redi solids are deeper along view, so widen the near cut.
+    this.camera.near = distance - Cubelet.SIZE * (isSq1 || isDino || isRedi ? 5 : 4);
     this.camera.far = distance + Cubelet.SIZE * 8;
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);

@@ -166,9 +166,9 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   // face hints (拖动时浮现的 U/D/L/R/F/B 色板) 跟主 face colors 走。
   world.faceHints.setFaceColors(s.faceColors);
   CubeGroup.frames = mapFrames(s.speed);
-  // NxN-only options skipped for SQ1 / Ivy / Dino (sticker thickness / hollow / hint /
-  // face colors are baked at construction time for their non-NxN geometry).
-  if (world.puzzleKind !== 'sq1' && world.puzzleKind !== 'ivy' && world.puzzleKind !== 'dino') {
+  // NxN-only options skipped for SQ1 / Ivy / Dino / Redi (sticker thickness / hollow /
+  // hint / face colors are baked at construction time for their non-NxN geometry).
+  if (world.puzzleKind !== 'sq1' && world.puzzleKind !== 'ivy' && world.puzzleKind !== 'dino' && world.puzzleKind !== 'redi') {
     const cube = world.cube as import('./cuber/cube').default;
     cube.arrow = s.arrow;
     cube.instancedRenderer.thickness = s.thickness;
@@ -195,6 +195,8 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     (world.cube as import('./cuber/ivy/IvyCube').default).setCarveCorner(s.debugCarveCorner);
   } else if (world.puzzleKind === 'dino') {
     (world.cube as import('./cuber/dino/DinoCube').default).setCarveCorner(s.debugCarveCorner);
+  } else if (world.puzzleKind === 'redi') {
+    (world.cube as import('./cuber/redi/RediCube').default).setCarveCorner(s.debugCarveCorner);
   }
   world.dirty = true;
   world.cube.dirty = true;
