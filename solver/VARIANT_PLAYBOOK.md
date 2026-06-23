@@ -41,6 +41,12 @@
 - `conj_buf`: alg → `alg_rotation(rot)` → `rot_map()[yk]` 逐 move 重映射;`walk` 从 solved 索引走表。
 - 多解枚举照 `CrossSolver::enumerate` 形状(`valid_moves()` 剪 move + pt 剪枝 + cap),
   多位置合并按 `(len, yk)` 排序 cap 截断。
+- **必防「无效尾动」**(枚举专属,搜索/length 不受影响):一条解必须**恰好在最后一步**才命中目标,
+  否则次优(+slack)枚举会吐出「更短解 + 一步废动」——典型如 XCross 成型后再转个 `U`(U 层不动
+  XCross 任何块)。修法:在 `enumerate` 里捕获**子状态启发式** `h`(多分量目标取 max,带额外谓词的
+  如 f2leo EO/棱归位要并进 `solved` 判定),`if depth == 1 { push }` 后改 `else if h > 0 { recurse }`
+  ——子状态已全解(`h==0`)却仍有 `depth` 要走就跳过。最优长度解天然不受影响(其任何前缀都不可能已解)。
+  回归测试照 `xcross_solver::enumerate_no_redundant_trailing`(去掉末步后子集不得已解)。
 - `lib.rs` 注册模块(放 wasm 可编区,别进 native-only 块)。
 - analyzer bin `src/bin/<v>_analyzer.rs` 照 `block222_analyzer.rs`:`SolverWrapper` + OnceLock 单例 +
   `run_analyzer_app::<W>("_<variant>")`(suffix 必须 = `_<变体名>`,管道靠它拼输出文件名)。

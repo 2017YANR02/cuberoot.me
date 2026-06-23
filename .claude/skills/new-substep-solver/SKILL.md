@@ -35,7 +35,7 @@ description: "用户要造一个新求解器时用。**先分流**:3x3 子阶段
 
 1. 语义:件集合(面交集推导)→ 状态空间(乘积坐标,常量都在 `cube_common::state_space`)→ ≤3000 万态走全空间精确距离表,否则 IDA* + `max(子目标精确表)` 可采纳启发式(范本 block223:复用 roux_s1 全表 + 角2×棱2 小表)。深目标(均值 >11 步,如 f2b)小积表 max 顶不动,要上「接近完整目标的子集」大表(>1G 态走 nibble 落盘 + mmap,见 f2b pt9);对称双块用扭曲共轭(同一张表,sb 步进走 rot_map[2][m]);轴类目标(EO/DR)对面底色同值、y 不变,get_stats 少跑 yk。慢变体独立 CSV(别并进已满灌的 CSV 逼全量重算)。
 2. 视角:1 个规范位置 + `alg_rotation`(6 底色)× `rot_map`(y^k)共轭;标签用探针法 `face_map`;CSV 每视角列 = 等价位置 min,列序 z0/z2/z3/z1/x3/x1。每视角可有多目标(fb_square 前/后双方块 = 双 pt 双 solved 索引,取 min)。
-3. Rust:solver 模块(双轨 new/from_tables)+ analyzer bin(suffix `_<变体名>`,一个 bin 可输出多 stage 列)+ 测试三件套(独立运动学暴力对照是金标准;大空间用 radix-24 Vec 替 HashMap)+ e2e。
+3. Rust:solver 模块(双轨 new/from_tables)+ analyzer bin(suffix `_<变体名>`,一个 bin 可输出多 stage 列)+ 测试三件套(独立运动学暴力对照是金标准;大空间用 radix-24 Vec 替 HashMap)+ e2e。**枚举器必防「无效尾动」**:子状态已全解(启发式 `h==0`,多分量取 max+额外谓词)却仍有 depth 时**跳过递归**(`else if h > 0 { recurse }`),否则次优枚举吐「更短解+一步废动」(如 XCross 成型后再 `U`);最优解不受影响,回归测试照 `xcross_solver::enumerate_no_redundant_trailing`。详见 playbook §1。
 4. WASM 重建仪式 7 步(build_wasm.ps1 → copy → worker 手维护 → client TABLE_SETS/V bump → pool → StageSolver → playwright 桌面+手机验收,native↔WASM 逐格相等)。多个相关方法共享表时合并一个 WASM 类 + 一个 need(范本 Roux223SolverWasm:4 阶段 flat stage id,重表 RefCell 惰性建)。
 5. 统计:两套数据集首灌 + update_cross_stats.ps1 五处注册(数字变体名键加引号)+ backfill 两处 + build.ts VariantSpec + stats 页三处 + 发布(**先 push 代码等部署,再 scp static,否则旧 bundle 撞新 JSON 崩**)。
 6. 主页近期打乱:build_recent_scrambles.ts `VARIANTS`(块类变体加 `metrics: [stage名]`)+ RecentScrambles.tsx 三处(VARIANT_ORDER/VARIANT_LABEL/METRIC_ORDER+LABEL)→ 重跑 build:recent-scrambles。
