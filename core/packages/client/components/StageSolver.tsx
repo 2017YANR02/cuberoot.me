@@ -135,6 +135,31 @@ const comboLabel = (c: string): string => c.split(',').map((i) => SLOT_LABELS[Nu
 const moveLen = (sol: string) => sol.replace(/^([xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
 // QTM(180°=2)走 shared 的 countQtm,单一来源;它本身会跳过 x/y/z 旋转 token。HTM 相同时按它升序排。
 
+// 解法里 F/R/B/L 四个侧面各自的转动数(剥掉前导整体旋转;U/D 中性不计)。
+const sideCounts = (alg: string) => {
+  const body = alg.replace(/^([xyz][2']?\s+)+/, '');
+  let R = 0, L = 0, F = 0, B = 0;
+  for (const tok of body.split(/\s+/)) {
+    const c = tok[0];
+    if (c === 'R') R++; else if (c === 'L') L++; else if (c === 'F') F++; else if (c === 'B') B++;
+  }
+  return { R, L, F, B };
+};
+// 在 0..3 个 y 预转体里挑最顺手的朝向:
+//   ① 主目标 R+L 越多越好(食指/无名指拨,无需换握);
+//   ② 同分时 F≥B(F 比后排的 B 好按)→ 取 F−B 大的。
+// y 预转体只在 F/R/B/L 间置换、U/D 不变,且 y2 同时交换 R↔L、F↔B → R+L 并列的两个朝向(相差 y2)
+// 恰好是「F 多 / B 多」之分,正好用 F≥B 决出。两者全并列再偏好 0(不额外转体)。
+const bestErgoRot = (alg: string): number => {
+  let best = 0, bestRL = -1, bestFB = -Infinity;
+  for (let n = 0; n < 4; n++) {
+    const { R, L, F, B } = sideCounts(rotateSolutionY(alg, n));
+    const rl = R + L, fb = F - B;
+    if (rl > bestRL || (rl === bestRL && fb > bestFB)) { bestRL = rl; bestFB = fb; best = n; }
+  }
+  return best;
+};
+
 // 把解法前导的整体旋转(视角前缀 + y 预转体,如 "z2 y")与实际转动分离。
 // 播放器把 lead 折进 setup(打乱之后),只动画 body → 开头的整体转体不参与动画
 // (用户要从「转体做完」的朝向起步)。无前导旋转时 lead='',行为不变。
@@ -542,8 +567,13 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     return () => clearInterval(id);
   }, [moves, movesLoading]);
 
-  // 新一批解法载入时清空各行的 y 预转体。
-  useEffect(() => { setRowRot({}); }, [moves]);
+  // 新一批解法载入时:每条自动挑最顺手的 y 预转体(R/L 最多),用户仍可点 y 按钮覆盖。
+  useEffect(() => {
+    if (!moves) { setRowRot({}); return; }
+    const next: Record<number, number> = {};
+    moves.sols.forEach((sol, i) => { const r = bestErgoRot(sol.m); if (r) next[i] = r; });
+    setRowRot(next);
+  }, [moves]);
 
   // 循环某行的 y 预转体(0→y→y2→y'→0),并把它设为选中行 + 把动画重置到开头。
   const cycleRot = useCallback((i: number) => {
