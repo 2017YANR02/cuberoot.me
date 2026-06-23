@@ -575,32 +575,45 @@ export default function PlayerControls({
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       return;
     }
-    const intervalMs = Math.max(60, Math.round(600 / speed));
+    // Completion-driven playback: poll frequently and only advance to the next
+    // move once the current one's animation has *finished*. We pass force=false
+    // so a still-running tween makes twist() return false (drop) instead of
+    // truncating it — this is what guarantees每一步完整做完才接下一步. (force=true
+    // on a wall-clock interval truncated the current turn whenever the timer beat
+    // the eased animation, which 120° corner turns — Redi/Dino/Ivy ≈567ms vs the
+    // old 600ms interval — hit on the slightest frame-rate jank.) Speed scales the
+    // animation length via CubeGroup.frames (separate effect), not the poll rate.
     const total = isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : isRedi ? rediActions.length : actions.length;
     playTimerRef.current = window.setInterval(() => {
       const s = stepRef.current;
       if (s >= total) { setPlaying(false); return; }
-      if (world) {
-        if (isSq1) {
-          const sq1Cube = world.cube as unknown as import('./cuber/sq1/Sq1Cube').default;
-          sq1Cube.twister.twist(sq1Actions[s], false, true);
-        } else if (isIvy) {
-          const ivyCube = world.cube as unknown as import('./cuber/ivy/IvyCube').default;
-          ivyCube.twister.twist(ivyActions[s], false, true);
-        } else if (isDino) {
-          const dinoCube = world.cube as unknown as import('./cuber/dino/DinoCube').default;
-          dinoCube.twister.twist(dinoActions[s], false, true);
-        } else if (isRedi) {
-          const rediCube = world.cube as unknown as import('./cuber/redi/RediCube').default;
-          rediCube.twister.twist(rediActions[s], false, true);
-        } else {
-          const cube = world.cube as import('./cuber/cube').default;
-          cube.twister.twist(actions[s], false, true);
-        }
+      if (!world) return;
+      let started = false;
+      if (isSq1) {
+        const sq1Cube = world.cube as unknown as import('./cuber/sq1/Sq1Cube').default;
+        started = sq1Cube.twister.twist(sq1Actions[s], false, false);
+      } else if (isIvy) {
+        const ivyCube = world.cube as unknown as import('./cuber/ivy/IvyCube').default;
+        started = ivyCube.twister.twist(ivyActions[s], false, false);
+      } else if (isDino) {
+        const dinoCube = world.cube as unknown as import('./cuber/dino/DinoCube').default;
+        started = dinoCube.twister.twist(dinoActions[s], false, false);
+      } else if (isRedi) {
+        const rediCube = world.cube as unknown as import('./cuber/redi/RediCube').default;
+        started = rediCube.twister.twist(rediActions[s], false, false);
+      } else {
+        const cube = world.cube as import('./cuber/cube').default;
+        // NxN twist(force=false) returns true even for a same-axis/same-face turn
+        // (it runs in parallel or cancel+restarts), so gate on the cube's own lock
+        // state to keep playback strictly one-turn-at-a-time.
+        if (cube.busy) return;
+        started = cube.twister.twist(actions[s], false, false);
       }
+      // Busy (previous turn still animating) → wait for the next poll, keep step.
+      if (!started) return;
       stepRef.current = s + 1;
       setStep(s + 1);
-    }, intervalMs);
+    }, 16);
     return () => {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
     };
