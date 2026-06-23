@@ -138,13 +138,27 @@ describe('ssq1 solver — bounded length (high sample)', () => {
     }
     lens.sort((a, b) => a - b);
     const mean = lens.reduce((a, b) => a + b, 0) / lens.length;
+    const max = lens[lens.length - 1];
     // eslint-disable-next-line no-console
-    console.log(`[ssq1] N=2000 tuple length: mean=${mean.toFixed(1)} median=${lens[1000]} min=${lens[0]} max=${lens[lens.length - 1]} (bound ${SSQ1_MAX_LENGTH}); quality bucket = valid+bounded (two-phase shape+permutation reduction)`);
+    console.log(`[ssq1] N=2000 tuple length: mean=${mean.toFixed(1)} median=${lens[1000]} min=${lens[0]} max=${max} (bound ${SSQ1_MAX_LENGTH}); quality bucket = valid+bounded (parity-aware two-phase shape+permutation reduction)`);
     // sanity: the reduction yields a real SPREAD of lengths (NOT the degenerate one-bar histogram the
     // old inverse-scramble solver produced) — distinct length values must be well above 1.
     expect(new Set(lens).size).toBeGreaterThan(5);
     expect(over).toBe(0);
-    expect(lens[lens.length - 1]).toBeLessThanOrEqual(SSQ1_MAX_LENGTH);
+    expect(max).toBeLessThanOrEqual(SSQ1_MAX_LENGTH);
+    // BASELINE (locked to the parity-aware fix, 2026-06-22). The old solver bolted a fixed ~14-slice
+    // edge-only parity generator onto ~41% of solves → a spurious second hump (mean 28.1, max 41, hard
+    // gap ~28-30). Folding the parity into the shape solve collapsed it to a single smooth mode. Lock the
+    // numbers so any regression toward the bolt-on (or a degenerate solver) trips here — change these
+    // ONLY with a deliberate re-audit (a review signal, not a value to widen away).
+    expect(max).toBe(28);                          // was 41 (the +14 bolt-on); now the main mode's tail
+    expect(Math.round(mean * 10)).toBe(230);       // mean ≈ 23.0 (was 28.1)
+    // UNIMODAL: no large interior gap (the old gap at ~28-30 split the two humps). Allow only the sparse
+    // low-end tail (< 18 tuples is rare); above it the histogram must be contiguous (no ≥2 empty span).
+    const present = [...new Set(lens)].filter((l) => l >= 18).sort((a, b) => a - b);
+    for (let i = 1; i < present.length; i++) {
+      expect(present[i] - present[i - 1], `interior gap ${present[i - 1]}→${present[i]} (a 2nd hump regressed?)`).toBeLessThanOrEqual(1);
+    }
   });
 });
 
