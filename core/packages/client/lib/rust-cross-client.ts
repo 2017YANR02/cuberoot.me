@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260623b';
+const V = 'v=20260623c';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -135,13 +135,14 @@ export interface RustCrossPool {
   solveVariant(scramble: string, variant: number): Promise<number[]>;
   /** 变体单阶段 6 值(stage 0=cross.. ),cross 先出深阶段后台补。 */
   solveVariantStage(scramble: string, variant: number, stage: number): Promise<number[]>;
-  /** 变体单格(variant × stage × face)多解步骤 + 计算耗时。eo 的步骤前缀可能含尾随 y(破 y 对称)。 */
+  /** 变体单格(variant × stage × face)多解步骤 + 计算耗时。eo 的步骤前缀可能含尾随 y(破 y 对称)。
+   *  combo = 固定已解 xcross 槽集(or18「槽位」);base = 自由对槽(or18「基态」,仅 pair/pseudo_pair,-1=auto)。 */
   solveVariantMoves(
     scramble: string,
     variant: number,
     face: number,
     stage: number,
-    opts?: { extra?: number; cap?: number; combo?: string },
+    opts?: { extra?: number; cap?: number; combo?: string; base?: number },
   ): Promise<MovesTimed>;
   /** 2x2x2 块 6 视角(每视角 = 该底色 4 个贴底块最小),物理面序 z0/z2/z3/z1/x3/x1。 */
   solveBlock222Stage(scramble: string): Promise<number[]>;
@@ -385,7 +386,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
     solveVariantMoves(scramble, variant, face, stage, opts = {}) {
       return submit({
         type: 'variant_moves', id: nextId++, scramble, variant, face, stage,
-        extra: opts.extra ?? 0, cap: opts.cap ?? 20, combo: opts.combo ?? '',
+        extra: opts.extra ?? 0, cap: opts.cap ?? 20, combo: opts.combo ?? '', base: opts.base ?? -1,
       }) as Promise<MovesTimed>;
     },
     solveBlock222Stage(scramble) {
