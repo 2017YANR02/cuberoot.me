@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   solveIvy,
   parseIvyScramble,
+  classifyIvyTokens,
   ivyGraphStats,
   ivyApply,
   ivyExamplesByLength,
@@ -106,6 +107,16 @@ describe('solveIvy', () => {
     expect(() => solveIvy('R X')).toThrow();
     expect(() => solveIvy('R2')).toThrow();
     expect(() => parseIvyScramble('U')).toThrow(); // U is not an Ivy axis
+  });
+
+  it('classifyIvyTokens flags non-Ivy tokens (drives the /sim input red highlight + play gate)', () => {
+    expect(classifyIvyTokens('R').every((s) => !s.bad)).toBe(true);
+    // a 3x3 "F" is not an Ivy move → flagged bad (blocks playback, shown red)
+    expect(classifyIvyTokens("R F R'").filter((s) => s.bad).map((s) => s.text)).toEqual(['F']);
+    expect(classifyIvyTokens('U2').some((s) => s.bad)).toBe(true);
+    expect(classifyIvyTokens('').every((s) => !s.bad)).toBe(true);
+    // whitespace preserved and never flagged, so the highlight mirror stays aligned
+    expect(classifyIvyTokens('R  L').map((s) => s.text)).toEqual(['R', '  ', 'L']);
   });
 
   it('solutions are valid and optimal across random scrambles (independent check)', () => {
