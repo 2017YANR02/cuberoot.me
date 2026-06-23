@@ -215,6 +215,10 @@ export interface RustCrossPool {
   /** 丢弃所有「排队未派发」的任务(已在 worker 里跑的 ≤size 个无法中断)。切变体/打乱集时调,
    *  避免新请求(如快 cross)排在旧变体一堆慢任务后面干等。被丢的任务 reject('cancelled')。 */
   clearQueue(): void;
+  /** 终止当前在跑的 worker(WASM 同步求解无法中途打断,只能 terminate),拒绝其在手任务 +
+   *  清空排队;保留空闲 ready worker(被杀的下次 submit 按需重新预热,重载表)。
+   *  供「无上限」枚举的终止按钮真正停掉跑飞的搜索。被中止任务 reject('aborted')。 */
+  abort(): void;
   size: number;
   terminate(): void;
 }
@@ -465,6 +469,20 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
       return submit({ type: 'skewb_moves', id: nextId++, scramble }) as Promise<MovesTimed>;
     },
     clearQueue() { while (queue.length) queue.shift()!.reject(new Error('cancelled')); },
+    abort() {
+      // 只终止在跑的 worker(有 job 的);空闲 ready worker 保留,避免无谓重载表。
+      for (const pw of all) {
+        if (!pw.job) continue;
+        pw.job.reject(new Error('aborted'));
+        pw.job = null;
+        try { pw.w.terminate(); } catch { /* */ }
+        pw.dead = true;
+      }
+      for (let i = all.length - 1; i >= 0; i--) if (all[i].dead) { all.splice(i, 1); spawned--; }
+      for (let i = idle.length - 1; i >= 0; i--) if (idle[i].dead) idle.splice(i, 1);
+      while (queue.length) queue.shift()!.reject(new Error('aborted'));
+      loading = false;
+    },
     terminate() { for (const pw of all) pw.w.terminate(); },
   };
 }
