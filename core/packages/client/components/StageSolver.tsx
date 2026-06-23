@@ -767,6 +767,13 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           className={`stsv-sol-row${selSol === i ? ' is-active' : ''}`}
                           onClick={() => selectSol(i, true)}
                         >
+                          <button
+                            className="stsv-sol-copy"
+                            onClick={(e) => { e.stopPropagation(); copySol(i, dispAlg); }}
+                            aria-label={t('复制', 'Copy')}
+                          >
+                            {copiedIdx === i ? <Check size={12} /> : <Copy size={12} />}
+                          </button>
                           <span className="stsv-sol-len">{moveLen(dispAlg)}</span>
                           <button
                             type="button"
@@ -776,13 +783,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                             aria-label={t('加 y 预转体', 'Add y pre-rotation')}
                           >
                             {Y_ROT_LABEL[rot]}
-                          </button>
-                          <button
-                            className="stsv-sol-copy"
-                            onClick={(e) => { e.stopPropagation(); copySol(i, dispAlg); }}
-                            aria-label={t('复制', 'Copy')}
-                          >
-                            {copiedIdx === i ? <Check size={12} /> : <Copy size={12} />}
                           </button>
                           {sol.c && <span className="stsv-sol-slot">{sol.c}</span>}
                           <code>{dispAlg}</code>
