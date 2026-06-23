@@ -104,7 +104,8 @@ html[data-theme='dark'] .stsv {
 }
 .stsv-control { display: flex; flex-direction: column; gap: 4px; }
 .stsv-control > span { font-size: 12px; color: var(--sv-text-sub); }
-.stsv-control select {
+/* 直接子 select 才套工具栏外观;嵌套的「底色」picker(孙级 .subset-picker-mode)保留自带样式。 */
+.stsv-control > select {
   font: inherit;
   padding: 6px 8px;
   min-width: 150px;
@@ -113,7 +114,10 @@ html[data-theme='dark'] .stsv {
   border: 1px solid var(--sv-border-strong);
   border-radius: 6px;
 }
-.stsv-control select:focus { outline: none; border-color: var(--sv-accent); }
+.stsv-control > select:focus { outline: none; border-color: var(--sv-accent); }
+/* 底色 picker 嵌进工具栏:下拉与色块整行靠左,高度与相邻 select 对齐 */
+.stsv-control-subset .subset-picker { gap: 8px; min-height: 33px; }
+.stsv-control-subset .subset-picker-mode { color: var(--sv-text); }
 .stsv-compute {
   display: inline-flex;
   align-items: center;
