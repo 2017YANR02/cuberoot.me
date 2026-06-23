@@ -129,6 +129,16 @@ const comboLabel = (c: string): string => c.split(',').map((i) => SLOT_LABELS[Nu
 const moveLen = (sol: string) => sol.replace(/^([xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
 // QTM(180°=2)走 shared 的 countQtm,单一来源;它本身会跳过 x/y/z 旋转 token。HTM 相同时按它升序排。
 
+// 把解法前导的整体旋转(视角前缀 + y 预转体,如 "z2 y")与实际转动分离。
+// 播放器把 lead 折进 setup(打乱之后),只动画 body → 开头的整体转体不参与动画
+// (用户要从「转体做完」的朝向起步)。无前导旋转时 lead='',行为不变。
+function splitLeadRot(a: string): { lead: string; body: string } {
+  const toks = a.trim().split(/\s+/).filter(Boolean);
+  let p = 0;
+  while (p < toks.length && /^[xyz][2']?$/.test(toks[p])) p++;
+  return { lead: toks.slice(0, p).join(' '), body: toks.slice(p).join(' ') };
+}
+
 // 条件式阶段(htr / htr2 / fr)在非 DR / 非 HTR 视角返回哨兵(三者同值 0xffffffff):
 // 该格显示 '-',且不参与 best / min 统计。
 const isSentinel = (v: number | null | undefined): boolean => v === HTR_NOT_DR || v === HTR2_NOT_HTR || v === FR_NOT_HTR;
@@ -542,9 +552,31 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     return [0, 1, 2, 3].filter((i) => !fixed.has(i));
   }, [selSlot]);
 
+  // 解法行槽位标签。pair/pseudo_pair:combo 约定首位 = 自由对 tgt、其后 = 固定 xcross 槽
+  // (见 enumerate_small),拆成「固定槽(槽位)」+「自由对(基态)」两段区分显示(固定在前)。
+  // 其余方法:整串一个 accent pill(无自由对语义)。
+  const renderSolSlots = (c: string) => {
+    if (!hasBase(method)) return <span className="stsv-sol-slot">{c}</span>;
+    const toks = c.split(/\s+/).filter(Boolean);
+    const free = toks[0];
+    const fixed = toks.slice(1);
+    return (
+      <span className="stsv-sol-slots">
+        {fixed.length > 0 && (
+          <span className="stsv-sol-slot-fixed" title={t('已解固定槽(槽位)', 'Fixed solved slots')}>{fixed.join(' ')}</span>
+        )}
+        <span className="stsv-sol-slot" title={t('基态(正在配的自由对)', 'Free pair (基态)')}>{free}</span>
+      </span>
+    );
+  };
+
   const selSolAlg = moves && moves.sols.length > 0
     ? rotateSolutionY(moves.sols[Math.min(selSol, moves.sols.length - 1)].m, rowRot[Math.min(selSol, moves.sols.length - 1)] ?? 0)
     : null;
+  // 动画:把前导整体转体(z2 y…)折进 setup(打乱之后),只播实际转动 → 开头转体不动画化。
+  const selSolParts = selSolAlg != null ? splitLeadRot(selSolAlg) : null;
+  const playerSetup = selSolParts && selSolParts.lead ? `${normScramble} ${selSolParts.lead}` : normScramble;
+  const playerAlg = selSolParts ? (selSolParts.body || (selSolAlg ?? '')) : null;
 
   return (
     <section className={`stsv${compact ? ' stsv-compact' : ''}`}>
@@ -784,7 +816,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           >
                             {Y_ROT_LABEL[rot]}
                           </button>
-                          {sol.c && <span className="stsv-sol-slot">{sol.c}</span>}
+                          {sol.c && renderSolSlots(sol.c)}
                           <code>{dispAlg}</code>
                         </li>
                       );
@@ -795,9 +827,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               </div>
 
               {/* 单个共享 3D 播放器:跟随选中解法行 */}
-              {selSolAlg && (
+              {selSolAlg && playerAlg != null && (
                 <div className="stsv-player">
-                  <TwistySection puzzle="3x3x3" scramble={normScramble} alg={selSolAlg} playerRef={playerRef} />
+                  <TwistySection puzzle="3x3x3" scramble={playerSetup} alg={playerAlg} playerRef={playerRef} />
                 </div>
               )}
             </div>
