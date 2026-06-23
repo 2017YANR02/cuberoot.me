@@ -365,6 +365,28 @@ const REGISTRY: PuzzleDistSpec[] = [
     },
   },
   {
+    event: 'ctico',
+    label: 'Icosamate',
+    scrambleLen: 20,          // cstimer ctico generator length (CSTIMER_EVENTS ctico length=25; 20 here keeps samples comparable to heli/helicv)
+    defaultN: 2000,           // 从零对易子约简,gadget 库 build 一次(~14s,faceC3 全三元组覆盖)后每条求解 ~2ms → 2000 单进程秒级
+    // 深切顶点转二十面体的从零对易子约简:12 角(Z5 取向)3-循环 + Z5 扭转,19 个可动面心保持角不变 3-循环,
+    // 角取向之和与步数耦合(每转 +1 mod5)用前缀调到 5 倍数。有效 + 有界(实测 2000 真打乱 mean≈872、max≈1227,
+    // bound 2000),长度随打乱难度变化(平滑单峰),非最优(§0.0 #3 诚实记)。
+    quality: 'sampled-bounded',
+    load: async () => {
+      const m = await mod('../../client/lib/ctico-solver');
+      const solveCtico = m.solveCtico as (s: string) => { length: number; optimal?: boolean };
+      return {
+        // randomCticoScramble 忠实镜像 cstimer 的 adjScramble ctico 生成器(6 顶点轴 × minxsuff 4 power,adj 全 0x3f)。
+        scramble: m.randomCticoScramble as SolverAdapter['scramble'],
+        // 约简有效+有界(非最优)→ optimal 恒 false。
+        solve: (s: string) => ({ length: solveCtico(s).length, optimal: false }),
+        maxBound: m.CTICO_MAX_LENGTH as number,
+        stateCountStr: m.CTICO_STATE_COUNT_STR as string,
+      };
+    },
+  },
+  {
     event: 'crz3a',
     label: 'Crazy 3x3',
     scrambleLen: 25,          // cstimer crz3a generator length(CSTIMER_EVENTS crz3a length=25)
