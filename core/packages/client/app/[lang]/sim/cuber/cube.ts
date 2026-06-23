@@ -113,6 +113,17 @@ export default class Cube extends THREE.Group {
     }
   }
 
+  /** True while any layer is mid-twist (a lock is held). Cleared on drop().
+   *  Playback uses this to serialize moves — a new turn waits until the current
+   *  one fully finishes, including same-axis / same-face turns that lock() would
+   *  otherwise let run in parallel (or that group.twist would cancel+restart). */
+  get busy(): boolean {
+    for (const lock of this.locks.values()) {
+      if (lock.size > 0) return true;
+    }
+    return false;
+  }
+
   lock(axis: string, layer: number): boolean {
     if (this.locks.get("a")?.has(1)) {
       return false;
