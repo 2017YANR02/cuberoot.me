@@ -28,7 +28,8 @@ use std::sync::Arc;
 
 use crate::cube_common::{
     alg_rotation, array_to_index, conj_moves_flat, get_diagonal_view, get_neighbor_view,
-    get_plus_table_idx, state_space, sym_moves_flat, valid_moves, Move,
+    get_plus_table_idx, state_space, sym_moves_flat, valid_moves, valid_moves_masked, Move,
+    MoveMask, ValidMovesTable,
 };
 use crate::executor::bump_node_count;
 use crate::move_tables::{self, MoveTable};
@@ -1987,6 +1988,514 @@ impl EOSmallSolver {
                 let mut out: Vec<Vec<u8>> = Vec::new();
                 let mut path = Vec::new();
                 self.enum_small(&xc[..n], i_dep0, i_eo0, d, 18, &mut path, &mut out, cap - items.len());
+                for sol in out {
+                    items.push((frames[fi].clone(), combo.to_vec(), sol));
+                }
+            }
+        }
+        (best_len, items)
+    }
+}
+
+// ============================================================================
+// 受限步法 EO cascade(Phase 3:move mask,小表路径)
+// ----------------------------------------------------------------------------
+// 与上面无限制小表 cascade 同结构、同剪枝(pt_cross / pt_cross_C4E0 / pt_ep4eo12),仅把
+// `valid_moves()` 换成 `valid_moves_masked(mask)` 并加 `max_depth` 上限。count 路径仍走
+// 12-sym(对面底色折叠),每 sym 受限可能无解 ⇒ 99 哨兵,折叠 min(两 sym 取小)。正确性:
+// pt 表是无限制距离的可采纳下界,对任意 mask 仍可采纳 ⇒ IDA* 首达即真·受限最优
+// (≤ max_depth),超界返回 99。EO 破 y-对称,枚举走 rot / rot·y 两帧(逐条带 frame)。
+impl EOSmallSolver {
+    fn cross_search_masked(&self, i1: usize, i2: usize, i_eo: usize, depth: u32, prev: u8, vm: &ValidMovesTable) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt2 = self.mt_edge2.as_u32();
+        let mt_eo = self.mt_eo12.as_u32();
+
+        let mut local: u64 = 0;
+        for k in 0..count {
+            let m = row[k] as usize;
+            local += 1;
+            let n1 = mt2[i1 + m] as usize;
+            let n2 = mt2[i2 + m] as usize;
+            let idx: u64 = n1 as u64 * state_space::EDGE2 as u64 + n2 as u64;
+            let pr = self.pt_cross.get(idx) as u32;
+            if pr >= depth {
+                continue;
+            }
+            let neo = mt_eo[i_eo + m] as usize;
+            if depth == 1 {
+                if pr == 0 && neo == 0 {
+                    bump_node_count(local);
+                    return true;
+                }
+            } else if self.cross_search_masked(n1 * 18, n2 * 18, neo, depth - 1, m as u8, vm) {
+                bump_node_count(local);
+                return true;
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    /// 受限版 stage 0(cross+EO)12 sym;每 sym 无解 = 99。
+    fn cross_stats_sym_masked(&self, alg: &[u8], vm: &ValidMovesTable, max_depth: u32) -> Vec<u32> {
+        let mut res = vec![99u32; 12];
+        for s in 0..12 {
+            let (i1, i2, ieo) = self.cross_indices_sym(alg, s);
+            let idx: u64 = i1 as u64 * state_space::EDGE2 as u64 + i2 as u64;
+            let mut h = self.pt_cross.get(idx) as u32;
+            if h == 0 && ieo != 0 {
+                h = 1;
+            }
+            if h == 0 && ieo == 0 {
+                res[s] = 0;
+                continue;
+            }
+            for d in h..=max_depth {
+                if self.cross_search_masked(i1 as usize * 18, i2 as usize * 18, ieo as usize, d, 18, vm) {
+                    res[s] = d;
+                    break;
+                }
+            }
+        }
+        res
+    }
+
+    fn search_small_masked(
+        &self,
+        xc: &[(usize, usize, usize, usize)],
+        i_dep: usize,
+        i_eo: usize,
+        depth: u32,
+        prev: u8,
+        vm: &ValidMovesTable,
+    ) -> bool {
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let mt_ep4 = self.mt_ep4.as_u32();
+        let mt_eo = self.mt_eo12_alt.as_u32();
+        let cj = conj_moves_flat();
+        let n = xc.len();
+
+        let mut local: u64 = 0;
+        let mut nxc = [(0usize, 0usize, 0usize, 0usize); 4];
+        for k in 0..count {
+            let m = row[k] as usize;
+            local += 1;
+            let nd = mt_ep4[i_dep + m] as usize;
+            let neo = mt_eo[i_eo + m] as usize;
+            let idx_de: u64 = nd as u64 * state_space::EO12 as u64 + neo as u64;
+            if self.pt_ep4eo12.get(idx_de) as u32 >= depth {
+                continue;
+            }
+            let mut pruned = false;
+            for j in 0..n {
+                let (i1, i2, i3, slot) = xc[j];
+                let m_slot = cj[m][slot] as usize;
+                let n1 = mt_e4[i1 + m_slot] as usize;
+                let n2 = mt_c[i2 + m_slot] as usize;
+                let n3 = mt_e[i3 + m_slot] as usize;
+                if self.pt_cross_c4e0.get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32 >= depth {
+                    pruned = true;
+                    break;
+                }
+                nxc[j] = (n1, n2 * 18, n3 * 18, slot);
+            }
+            if pruned {
+                continue;
+            }
+            if depth == 1 {
+                bump_node_count(local);
+                return true;
+            }
+            if self.search_small_masked(&nxc[..n], nd * 18, neo * 18, depth - 1, m as u8, vm) {
+                bump_node_count(local);
+                return true;
+            }
+        }
+        bump_node_count(local);
+        false
+    }
+
+    fn solve_subset_masked(
+        &self,
+        st: &[EoSlotSmall; 4],
+        slots: &[usize],
+        h: u32,
+        lower: u32,
+        max_d: u32,
+        vm: &ValidMovesTable,
+    ) -> u32 {
+        if h == 0 {
+            return 0;
+        }
+        let mut xc = [(0usize, 0usize, 0usize, 0usize); 4];
+        for (j, &s) in slots.iter().enumerate() {
+            xc[j] = (st[s].i1 as usize, (st[s].i2 as usize) * 18, (st[s].i3 as usize) * 18, s);
+        }
+        let n = slots.len();
+        let i_dep = (st[slots[0]].idep as usize) * 18;
+        let i_eo = (st[slots[0]].ieo as usize) * 18;
+        let start = std::cmp::max(h.max(lower), 1);
+        for d in start..=max_d {
+            if self.search_small_masked(&xc[..n], i_dep, i_eo, d, 18, vm) {
+                return d;
+            }
+        }
+        99
+    }
+
+    fn stage_for_sym_masked(
+        &self,
+        st: &[EoSlotSmall; 4],
+        stage: usize,
+        max_d: u32,
+        vm: &ValidMovesTable,
+    ) -> u32 {
+        const XC: [&[usize]; 4] = [&[0], &[1], &[2], &[3]];
+        const XXC: [&[usize]; 6] = [&[0, 1], &[0, 2], &[0, 3], &[1, 2], &[1, 3], &[2, 3]];
+        const XXXC: [&[usize]; 4] = [&[0, 1, 2], &[0, 1, 3], &[0, 2, 3], &[1, 2, 3]];
+        const XXXXC: [&[usize]; 1] = [&[0, 1, 2, 3]];
+        let combos: &[&[usize]] = match stage {
+            1 => &XC,
+            2 => &XXC,
+            3 => &XXXC,
+            _ => &XXXXC,
+        };
+        let h_de = self.h_ep4eo12(&st[0]);
+        let mut scored: Vec<(u32, &[usize])> = combos
+            .iter()
+            .map(|&c| {
+                let h = c.iter().map(|&s| self.h_c4e0(&st[s])).max().unwrap().max(h_de);
+                (h, c)
+            })
+            .collect();
+        scored.sort_by_key(|t| t.0);
+        let mut min_v = 99u32;
+        for &(h, combo) in &scored {
+            if h > min_v {
+                break;
+            }
+            let res = self.solve_subset_masked(st, combo, h, 0, max_d, vm);
+            if res < min_v {
+                min_v = res;
+            }
+        }
+        min_v
+    }
+
+    /// 受限版单阶段 6 视角(stage 0=eo_cross / 1..4=eo_x..xxxxcross);无解视角为 None。
+    pub fn eo_get_stage_small_masked(
+        &self,
+        alg: &[Move],
+        stage: usize,
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> Vec<Option<u32>> {
+        let vm = valid_moves_masked(mask);
+        let alg_idx: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        let sym12: Vec<u32> = if stage == 0 {
+            self.cross_stats_sym_masked(&alg_idx, &vm, 12u32.min(max_depth))
+        } else {
+            let max_d = 20u32.min(max_depth);
+            (0..12)
+                .map(|sym| {
+                    let st: [EoSlotSmall; 4] = std::array::from_fn(|s| self.slot_virt(&alg_idx, sym, s));
+                    self.stage_for_sym_masked(&st, stage, max_d, &vm)
+                })
+                .collect()
+        };
+        (0..6)
+            .map(|c| {
+                let best = sym12[2 * c].min(sym12[2 * c + 1]);
+                if best >= 99 { None } else { Some(best) }
+            })
+            .collect()
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn enum_cross_masked(
+        &self,
+        i1: usize,
+        i2: usize,
+        i_eo: usize,
+        depth: u32,
+        prev: u8,
+        path: &mut Vec<u8>,
+        out: &mut Vec<Vec<u8>>,
+        cap: usize,
+        vm: &ValidMovesTable,
+    ) {
+        if out.len() >= cap {
+            return;
+        }
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt2 = self.mt_edge2.as_u32();
+        let mt_eo = self.mt_eo12.as_u32();
+        for k in 0..count {
+            if out.len() >= cap {
+                return;
+            }
+            let m = row[k] as usize;
+            let n1 = mt2[i1 + m] as usize;
+            let n2 = mt2[i2 + m] as usize;
+            let pr = self.pt_cross.get(n1 as u64 * state_space::EDGE2 as u64 + n2 as u64) as u32;
+            if pr >= depth {
+                continue;
+            }
+            let neo = mt_eo[i_eo + m] as usize;
+            path.push(m as u8);
+            if depth == 1 {
+                if pr == 0 && neo == 0 {
+                    out.push(path.clone());
+                }
+            } else if pr > 0 || neo != 0 {
+                self.enum_cross_masked(n1 * 18, n2 * 18, neo, depth - 1, m as u8, path, out, cap, vm);
+            }
+            path.pop();
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn enum_small_masked(
+        &self,
+        xc: &[(usize, usize, usize, usize)],
+        i_dep: usize,
+        i_eo: usize,
+        depth: u32,
+        prev: u8,
+        path: &mut Vec<u8>,
+        out: &mut Vec<Vec<u8>>,
+        cap: usize,
+        vm: &ValidMovesTable,
+    ) {
+        if out.len() >= cap {
+            return;
+        }
+        let (vmoves, vcnt) = vm;
+        let count = vcnt[prev as usize] as usize;
+        let row = &vmoves[prev as usize];
+        let mt_e4 = self.mt_edge4.as_u32();
+        let mt_c = self.mt_corn.as_u32();
+        let mt_e = self.mt_edge.as_u32();
+        let mt_ep4 = self.mt_ep4.as_u32();
+        let mt_eo = self.mt_eo12_alt.as_u32();
+        let cj = conj_moves_flat();
+        let n = xc.len();
+        let mut nxc = [(0usize, 0usize, 0usize, 0usize); 4];
+        for k in 0..count {
+            if out.len() >= cap {
+                return;
+            }
+            let m = row[k] as usize;
+            let nd = mt_ep4[i_dep + m] as usize;
+            let neo = mt_eo[i_eo + m] as usize;
+            let idx_de: u64 = nd as u64 * state_space::EO12 as u64 + neo as u64;
+            let h_de = self.pt_ep4eo12.get(idx_de) as u32;
+            if h_de >= depth {
+                continue;
+            }
+            let mut pruned = false;
+            let mut max_h = h_de;
+            for j in 0..n {
+                let (i1, i2, i3, slot) = xc[j];
+                let m_slot = cj[m][slot] as usize;
+                let n1 = mt_e4[i1 + m_slot] as usize;
+                let n2 = mt_c[i2 + m_slot] as usize;
+                let n3 = mt_e[i3 + m_slot] as usize;
+                let hs = self.pt_cross_c4e0.get((n1 as u64 + n2 as u64) * 24 + n3 as u64) as u32;
+                if hs >= depth {
+                    pruned = true;
+                    break;
+                }
+                if hs > max_h {
+                    max_h = hs;
+                }
+                nxc[j] = (n1, n2 * 18, n3 * 18, slot);
+            }
+            if pruned {
+                continue;
+            }
+            path.push(m as u8);
+            if depth == 1 {
+                out.push(path.clone());
+            } else if max_h > 0 {
+                self.enum_small_masked(&nxc[..n], nd * 18, neo * 18, depth - 1, m as u8, path, out, cap, vm);
+            }
+            path.pop();
+        }
+    }
+
+    /// 受限版 enumerate_small:同形 (best_len, Vec<(frame, combo, sol)>);限制下无解返回 (99, []).
+    #[allow(clippy::too_many_arguments)]
+    pub fn enumerate_small_masked(
+        &self,
+        alg: &[Move],
+        rot: &str,
+        stage: usize,
+        extra: u32,
+        cap: usize,
+        force: &[usize],
+        mask: MoveMask,
+        max_depth: u32,
+    ) -> (u32, Vec<(String, Vec<usize>, Vec<u8>)>) {
+        let vm = valid_moves_masked(mask);
+        let alg_idx: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
+        let y_frame = if rot.is_empty() { "y".to_string() } else { format!("{} y", rot) };
+        let frames = [rot.to_string(), y_frame];
+
+        // stage 0(eo_cross)
+        if stage == 0 {
+            let cap_d = 12u32.min(max_depth);
+            let mut roots: Vec<(u32, usize, usize, usize, usize)> = Vec::with_capacity(2);
+            for (fi, fr) in frames.iter().enumerate() {
+                let mut a = alg_idx.clone();
+                alg_rotation(&mut a, fr);
+                let (i1, i2, ieo) = self.rot_virt_cross(&a);
+                let mut h = self.pt_cross.get(i1 as u64 * state_space::EDGE2 as u64 + i2 as u64) as u32;
+                if h == 0 && ieo != 0 {
+                    h = 1;
+                }
+                roots.push((h, fi, i1 as usize, i2 as usize, ieo as usize));
+            }
+            roots.sort_by_key(|t| (t.0, t.1));
+            let d0 = roots.iter().map(|t| t.0).min().unwrap_or(0);
+
+            let mut best_len = 99u32;
+            let mut tied: Vec<usize> = Vec::new();
+            'find0: for d in d0..=cap_d {
+                for (ri, &(h, _, i1, i2, ieo)) in roots.iter().enumerate() {
+                    if h > d {
+                        continue;
+                    }
+                    let mut probe: Vec<Vec<u8>> = Vec::new();
+                    let mut path = Vec::new();
+                    self.enum_cross_masked(i1 * 18, i2 * 18, ieo, d, 18, &mut path, &mut probe, 1, &vm);
+                    if !probe.is_empty() {
+                        tied.push(ri);
+                    }
+                }
+                if !tied.is_empty() {
+                    best_len = d;
+                    break 'find0;
+                }
+            }
+            if best_len >= 99 {
+                return (99, Vec::new());
+            }
+            let mut items: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+            'collect0: for d in best_len..=(best_len + extra).min(cap_d) {
+                for &ri in &tied {
+                    if items.len() >= cap {
+                        break 'collect0;
+                    }
+                    let (_, fi, i1, i2, ieo) = roots[ri];
+                    let mut out: Vec<Vec<u8>> = Vec::new();
+                    let mut path = Vec::new();
+                    self.enum_cross_masked(i1 * 18, i2 * 18, ieo, d, 18, &mut path, &mut out, cap - items.len(), &vm);
+                    for sol in out {
+                        items.push((frames[fi].clone(), vec![], sol));
+                    }
+                }
+            }
+            return (best_len, items);
+        }
+
+        // stage 1..4
+        const XC: [&[usize]; 4] = [&[0], &[1], &[2], &[3]];
+        const XXC: [&[usize]; 6] = [&[0, 1], &[0, 2], &[0, 3], &[1, 2], &[1, 3], &[2, 3]];
+        const XXXC: [&[usize]; 4] = [&[0, 1, 2], &[0, 1, 3], &[0, 2, 3], &[1, 2, 3]];
+        const XXXXC: [&[usize]; 1] = [&[0, 1, 2, 3]];
+        let forced: [&[usize]; 1] = [force];
+        let combos: &[&[usize]] = if force.is_empty() {
+            match stage {
+                1 => &XC,
+                2 => &XXC,
+                3 => &XXXC,
+                _ => &XXXXC,
+            }
+        } else {
+            &forced
+        };
+        let cap_d = 20u32.min(max_depth);
+
+        let mut ctxs: Vec<[EoSlotSmall; 4]> = Vec::with_capacity(2);
+        let mut cands: Vec<(u32, usize, usize)> = Vec::new();
+        for (fi, fr) in frames.iter().enumerate() {
+            let mut a = alg_idx.clone();
+            alg_rotation(&mut a, fr);
+            let st: [EoSlotSmall; 4] = std::array::from_fn(|s| self.rot_virt(&a, s));
+            let h_de = self.h_ep4eo12(&st[0]);
+            for (ci, c) in combos.iter().enumerate() {
+                let h = c.iter().map(|&s| self.h_c4e0(&st[s])).max().unwrap_or(0).max(h_de);
+                cands.push((h, fi, ci));
+            }
+            ctxs.push(st);
+        }
+        cands.sort_by_key(|t| t.0);
+
+        let mk_xc = |st: &[EoSlotSmall; 4], combo: &[usize]| {
+            let mut xc = [(0usize, 0usize, 0usize, 0usize); 4];
+            for (j, &s) in combo.iter().enumerate() {
+                xc[j] = (st[s].i1 as usize, (st[s].i2 as usize) * 18, (st[s].i3 as usize) * 18, s);
+            }
+            xc
+        };
+
+        let d0 = cands.iter().map(|t| t.0).min().unwrap_or(0);
+        let mut best_len = 99u32;
+        let mut tied: Vec<usize> = Vec::new();
+        'find: for d in d0..=cap_d {
+            for (ci, &(h, fi, cidx)) in cands.iter().enumerate() {
+                if h > d {
+                    continue;
+                }
+                let st = &ctxs[fi];
+                let combo = combos[cidx];
+                let n = combo.len();
+                let xc = mk_xc(st, combo);
+                let i_dep0 = (st[0].idep as usize) * 18;
+                let i_eo0 = (st[0].ieo as usize) * 18;
+                let mut probe: Vec<Vec<u8>> = Vec::new();
+                let mut path = Vec::new();
+                self.enum_small_masked(&xc[..n], i_dep0, i_eo0, d, 18, &mut path, &mut probe, 1, &vm);
+                if !probe.is_empty() {
+                    tied.push(ci);
+                }
+            }
+            if !tied.is_empty() {
+                best_len = d;
+                break 'find;
+            }
+        }
+        if best_len >= 99 {
+            return (99, Vec::new());
+        }
+
+        let mut items: Vec<(String, Vec<usize>, Vec<u8>)> = Vec::new();
+        'collect: for d in best_len..=(best_len + extra).min(cap_d) {
+            for &ci in &tied {
+                if items.len() >= cap {
+                    break 'collect;
+                }
+                let (_, fi, cidx) = cands[ci];
+                let st = &ctxs[fi];
+                let combo = combos[cidx];
+                let n = combo.len();
+                let xc = mk_xc(st, combo);
+                let i_dep0 = (st[0].idep as usize) * 18;
+                let i_eo0 = (st[0].ieo as usize) * 18;
+                let mut out: Vec<Vec<u8>> = Vec::new();
+                let mut path = Vec::new();
+                self.enum_small_masked(&xc[..n], i_dep0, i_eo0, d, 18, &mut path, &mut out, cap - items.len(), &vm);
                 for sol in out {
                     items.push((frames[fi].clone(), combo.to_vec(), sol));
                 }

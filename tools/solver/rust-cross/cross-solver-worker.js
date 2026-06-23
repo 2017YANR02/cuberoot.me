@@ -154,15 +154,22 @@ self.onmessage = async (e) => {
       if (!f2leoSolver) throw new Error('f2leo solver not initialized');
       const t0 = performance.now();
       // 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc),cross 极快 → UI 先单算 cross 秒出。
-      const out = f2leoSolver.solve_f2leo_stage(msg.scramble, !!msg.pseudo, msg.stage | 0);
+      // mask 存在 = 受限步法(f2leo/pseudo_f2leo),无解视角返 u32::MAX 哨兵。
+      const out = (msg.mask != null)
+        ? f2leoSolver.solve_f2leo_stage_masked(msg.scramble, !!msg.pseudo, msg.stage | 0, msg.mask >>> 0)
+        : f2leoSolver.solve_f2leo_stage(msg.scramble, !!msg.pseudo, msg.stage | 0);
       self.postMessage({ type: 'f2leo', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
     } else if (msg.type === 'f2leo_moves') {
       if (!f2leoSolver) throw new Error('f2leo solver not initialized');
       const t0 = performance.now();
       // 单格(F2LEO/Pseudo F2LEO × stage × face)多解步骤。前缀可能含尾随 y(破 y 对称)。
-      const json = f2leoSolver.solve_moves(
-        msg.scramble, !!msg.pseudo, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '',
-      );
+      const json = (msg.mask != null)
+        ? f2leoSolver.solve_moves_masked(
+            msg.scramble, !!msg.pseudo, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '', msg.mask >>> 0,
+          )
+        : f2leoSolver.solve_moves(
+            msg.scramble, !!msg.pseudo, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '',
+          );
       self.postMessage({ type: 'f2leo_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'variant') {
       if (!variantSolver) throw new Error('variant solver not initialized');
@@ -174,7 +181,10 @@ self.onmessage = async (e) => {
       if (!variantSolver) throw new Error('variant solver not initialized');
       const t0 = performance.now();
       // 单阶段 6 值。cross(stage 0)先出,深阶段后台补。
-      const out = variantSolver.solve_stage(msg.scramble, msg.variant | 0, msg.stage | 0);
+      // mask 存在 = 受限步法(pair/eo/pseudo/pseudo_pair),无解视角返 u32::MAX 哨兵。
+      const out = (msg.mask != null)
+        ? variantSolver.solve_stage_masked(msg.scramble, msg.variant | 0, msg.stage | 0, msg.mask >>> 0)
+        : variantSolver.solve_stage(msg.scramble, msg.variant | 0, msg.stage | 0);
       self.postMessage({ type: 'variant', id: msg.id, values: Array.from(out), ms: performance.now() - t0 });
     } else if (msg.type === 'block222_stage') {
       if (!block222Solver) throw new Error('block222 solver not initialized');
@@ -307,9 +317,13 @@ self.onmessage = async (e) => {
       if (!variantSolver) throw new Error('variant solver not initialized');
       const t0 = performance.now();
       // 单格(variant × stage × face)多解步骤。eo 前缀可能含尾随 y(破 y 对称)。
-      const json = variantSolver.solve_moves(
-        msg.scramble, msg.variant | 0, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '', msg.base ?? -1,
-      );
+      const json = (msg.mask != null)
+        ? variantSolver.solve_moves_masked(
+            msg.scramble, msg.variant | 0, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '', msg.base ?? -1, msg.mask >>> 0,
+          )
+        : variantSolver.solve_moves(
+            msg.scramble, msg.variant | 0, msg.face | 0, msg.stage | 0, msg.extra ?? 0, msg.cap ?? 20, msg.combo ?? '', msg.base ?? -1,
+          );
       self.postMessage({ type: 'variant_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     }
   } catch (err) {
