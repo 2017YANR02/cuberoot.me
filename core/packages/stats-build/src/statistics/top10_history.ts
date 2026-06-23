@@ -15,6 +15,7 @@ import { fileURLToPath } from 'url';
 import { Statistic } from '../core/statistic.js';
 import type { StatJson } from '../core/statistic.js';
 import { formatDate } from '../core/format_date.js';
+import { computeMbfMo3 } from '../core/mbf_average.js';
 import { query as dbQuery } from '../core/database.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -31,8 +32,11 @@ const ALL_EVENTS = [
   '333ft','magic','mmagic','333mbo',
 ] as const;
 
-// NOTE: multi-blind 系列只有 single,无 average
+// NOTE: multi-blind 系列无官方 average。但 333mbf 用「非官方 Mo3」平均(恰好 3 次成功取均值,
+//   与 all-results / wr_metric 的多盲平均口径一致);333mbo(旧多盲)仍只 single。
 const SINGLE_ONLY_EVENTS = new Set<string>(['333mbf', '333mbo']);
+// NOTE: 用非官方 Mo3 平均的 multi-blind 项目(需拉 attempts 从 3 次算 Mo3,而非读 r.average)
+const MBF_AVG_EVENTS = new Set<string>(['333mbf']);
 
 // NOTE: Mo3 项目(一轮 3 次,无 ao5 衍生指标)
 const MO3_EVENTS = new Set<string>(['666', '777', '333bf', '333fm', '444bf', '555bf']);
@@ -146,15 +150,24 @@ export class Top10History extends Statistic {
     const eventOutputs: Record<string, Partial<Record<MetricKey, PbEvent[]>>> = {};
     const eventMetricCounts: Record<string, Partial<Record<MetricKey, number>>> = {};
 
-    for (const eventId of ALL_EVENTS) {
+    // NOTE: 调试 / 增量重生:TOP10_ONLY_EVENTS=333mbf,... 只跑指定 event(产物索引随之仅含这些 event,
+    //   需外部 merge 回完整索引)。生产 CI 不设此变量 → 跑全 21 个。
+    const onlySet = process.env.TOP10_ONLY_EVENTS
+      ? new Set(process.env.TOP10_ONLY_EVENTS.split(',').map(s => s.trim()).filter(Boolean))
+      : null;
+    const eventsToRun = onlySet ? ALL_EVENTS.filter(e => onlySet.has(e)) : ALL_EVENTS;
+
+    for (const eventId of eventsToRun) {
       const t = Date.now();
       const singleOnly = SINGLE_ONLY_EVENTS.has(eventId);
       const isAo5 = AO5_EVENTS.has(eventId);
-      const tag = singleOnly ? 'single' : (isAo5 ? 'all' : 'single+avg');
+      const isMbf = MBF_AVG_EVENTS.has(eventId);   // 333mbf:非官方 Mo3 平均(从 attempts 算)
+      const needsAttempts = isAo5 || isMbf;        // 需拉 attempts(Ao5 5 次衍生指标 / 333mbf Mo3)
+      const tag = isMbf ? 'single+mbfAvg' : (singleOnly ? 'single' : (isAo5 ? 'all' : 'single+avg'));
       if (VERBOSE) process.stdout.write(`  Top10 history ${eventId} (${tag})...`);
 
-      // NOTE: SQL — Ao5 events 加 LEFT JOIN result_attempts + GROUP_CONCAT 拉 attempts
-      const sql = isAo5
+      // NOTE: SQL — 需 attempts 的 event(Ao5 / 333mbf)加 LEFT JOIN result_attempts + GROUP_CONCAT
+      const sql = needsAttempts
         ? `SELECT r.person_id, r.best, r.average, r.competition_id AS comp_id, c.start_date AS d,
                  GROUP_CONCAT(ra.value ORDER BY ra.attempt_number) AS attempts
            FROM results r
@@ -181,7 +194,7 @@ export class Top10History extends Statistic {
       // NOTE: 转 CompactRow,只保留必要字段
       const rows: CompactRow[] = rawRows.map(r => {
         const attemptsStr = r['attempts'] != null ? String(r['attempts']) : '';
-        const vals = isAo5 && attemptsStr
+        const vals = needsAttempts && attemptsStr
           ? attemptsStr.split(',').map(Number)
           : null;
         return {
@@ -190,7 +203,8 @@ export class Top10History extends Statistic {
           best: Number(r['best']) || 0,
           avg: Number(r['average']) || 0,
           comp: String(r['comp_id']),
-          vals: vals && vals.length === 5 ? vals : null,
+          // Ao5 须满 5 次(衍生指标按 5 算);333mbf(Mo3)保留 1-3 次原样,交 computeMbfMo3 判定
+          vals: vals ? (isMbf ? vals : (vals.length === 5 ? vals : null)) : null,
         };
       });
       rawRows = null;
@@ -201,12 +215,12 @@ export class Top10History extends Statistic {
 
       // NOTE: 决定本 event 跑哪些 metric
       const metricsToRun: MetricKey[] = ['single'];
-      if (!singleOnly) metricsToRun.push('average');
+      if (!singleOnly || isMbf) metricsToRun.push('average');  // 333mbf:非官方 Mo3 平均
       if (isAo5) metricsToRun.push(...ATTEMPT_METRICS);
 
       const summary: string[] = [];
       for (const mk of metricsToRun) {
-        const result = this.runMetric(rows, mk);
+        const result = this.runMetric(rows, mk, isMbf);
         eventOutputs[eventId][mk] = result.events;
         eventMetricCounts[eventId][mk] = result.events.length;
         for (const pid of result.everInTop) allPids.add(pid);
@@ -270,13 +284,22 @@ export class Top10History extends Statistic {
   private runMetric(
     rows: CompactRow[],
     mk: MetricKey,
+    mbfAvg = false,   // 333mbf:average 走非官方 Mo3(从 attempts 算)而非 r.average
   ): { events: PbEvent[]; everInTop: Set<string> } {
     // 1) 算 metric 值并按 (date, pid) 取 min
     const byDate = new Map<string, Map<string, { v: number; c: string }>>();
     for (const r of rows) {
       let v: number | null;
       if (mk === 'single') v = r.best > 0 ? r.best : null;
-      else if (mk === 'average') v = r.avg > 0 ? r.avg : null;
+      else if (mk === 'average') {
+        if (mbfAvg) {
+          // 恰好 3 次成功 → Mo3(>0);DNF / 不足 3 次 → computeMbfMo3 返回 -1/0 → 排除
+          const mo3 = r.vals ? computeMbfMo3(r.vals) : 0;
+          v = mo3 > 0 ? mo3 : null;
+        } else {
+          v = r.avg > 0 ? r.avg : null;
+        }
+      }
       else if (r.vals) v = computeAttemptMetric(mk, r.vals);
       else v = null;
       if (v == null || !Number.isFinite(v)) continue;

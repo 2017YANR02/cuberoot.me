@@ -20,7 +20,8 @@ export function generateStaticParams() {
 // JSON 的「加载失败」壳。
 //   name_stats   → 迁到 /wca/results 空态(姓名统计 + A-Z 名录)
 //   all-results  → 路由重命名为 /wca/results(原 /wca/all-results 弃用)
-const RETIRED_STATS = new Set(['name_stats', 'all-results']);
+//   wr_metric    → 迁到 /wca/results 的「记录·指标」视图(?view=metric;wr_metric.json 仍生成,只是不再单独成页)
+const RETIRED_STATS = new Set(['name_stats', 'all-results', 'wr_metric']);
 
 export default async function Page({ params }: { params: Promise<{ statId: string }> }) {
   const { statId } = await params;

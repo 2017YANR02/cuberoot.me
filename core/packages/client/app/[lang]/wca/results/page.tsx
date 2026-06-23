@@ -34,6 +34,7 @@ import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelec
 import { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { EventIcon } from '@/components/EventIcon';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import { WcaStatView } from '@/components/wca-stats/WcaStatView';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
@@ -42,6 +43,9 @@ import '@/i18n/i18n-client';
 // echarts-for-react / SorRace 仅客户端,名次和的名人堂时间线 + 排名演化用,懒挂.
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 const SorRace = dynamic(() => import('@/components/wca-stats/SorRace'), { ssr: false });
+// 单项视图(单次 / 平均)排名表上方常显的「纪录走势」bar chart race —— 复用 wr_metric 的同款组件(受控:
+// controlledEventId=当前单项, controlledMetric=single/average)。组件较重(含视频导出/canvas),懒挂 + 仅客户端.
+const Top10HistoryPage = dynamic(() => import('@/components/wca-stats/Top10HistoryPage'), { ssr: false });
 
 const ACTIVE_EVENTS = [
   '333','222','444','555','666','777',
@@ -107,14 +111,36 @@ interface CensusRow { rank: number; wcaId: string; name: string; iso2: string | 
 interface Census { type: string; inclCancelled: boolean; noPodium?: boolean; year: number | null; years: number[]; distinct: number; totalSubsets: number; rows: CensusRow[]; }
 interface TimelinePoint { year: number; distinct: number; }
 
+// 顶层「类型」下拉的全部选项 —— 与 stats/wr_metric.json 的 metricPanels 一致(顺序同)。
+// 逻辑分组(基本: single/average;复合: bao5..wpa;分布: median..ratio)仅作参考,UI 不再显示组标题。
+// 单次 / 平均 → 排名视图(本页原功能,type 口径);其余 11 个派生指标 → 嵌入的 wr_metric 视图(mmetric=<id>)。
+const WR_METRICS: { id: string; zh: string; en: string }[] = [
+  { id: 'single', zh: '单次', en: 'Single' },
+  { id: 'average', zh: '平均', en: 'Average' },
+  { id: 'bao5', zh: 'BAo5', en: 'BAo5' },
+  { id: 'wao5', zh: 'WAo5', en: 'WAo5' },
+  { id: 'mo5', zh: 'Mo5', en: 'Mo5' },
+  { id: 'bpa', zh: 'BPA', en: 'BPA' },
+  { id: 'wpa', zh: 'WPA', en: 'WPA' },
+  { id: 'median', zh: '中位数', en: 'Median' },
+  { id: 'bestc', zh: '最佳有效', en: 'Best Counting' },
+  { id: 'worstc', zh: '最差有效', en: 'Worst Counting' },
+  { id: 'worst', zh: '轮次最差成绩', en: 'Worst' },
+  { id: 'variance', zh: '方差', en: 'Variance' },
+  { id: 'ratio', zh: '最佳/平均比值', en: 'Best/Avg' },
+];
+// 走排名视图的两个口径(其余 id 一律走 wr_metric 指标视图)
+const RANK_TYPE_IDS = new Set(['single', 'average']);
+const DEFAULT_METRIC_ID = 'bao5';
+
 function AllResultsPageInner() {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const personHref = (id: string) => `/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${id}`;
-  useDocumentTitle('排名', 'Rankings');
-
   const [query, setQuery] = useQueryStates(
     {
+      view: parseAsString,      // 'metric' = 嵌入 wr_metric 指标视图;其余/null = 排名
+      mmetric: parseAsString,   // 指标视图选中的指标 id(WcaStatView 的 scoped 'm'+'metric');顶层下拉驱动
       events: parseAsString,    // 逗号串;null=默认 333;'__none__'=空
       type: parseAsString,
       country: parseAsString,
@@ -135,6 +161,11 @@ function AllResultsPageInner() {
     { history: 'replace', scroll: false },
   );
 
+  // ---- 顶层视图:排名(本页原功能) / 指标(嵌入退役 wr_metric 的某个派生指标视图) ----
+  // 统一在「排名」标题下:单次 / 平均 = 排名表;派生指标 = wr_metric 记录视图。不再出现「指标」字样。
+  const view: 'rank' | 'metric' = query.view === 'metric' ? 'metric' : 'rank';
+  useDocumentTitle('排名', 'Rankings');
+
   // ---- 选中项目 → 模式 ----
   const selectedSet: Set<string> = useMemo(() => {
     if (query.events == null) return new Set(['333']);
@@ -153,6 +184,18 @@ function AllResultsPageInner() {
 
   // 共享 / 单项参数
   const type = (query.type ?? 'single') as 'single' | 'average';
+  // 指标视图选中的指标 id(默认 bao5);顶层「类型」下拉在指标视图下回显它
+  const metricId = view === 'metric' ? (query.mmetric || DEFAULT_METRIC_ID) : null;
+  // 顶层「类型」下拉当前值:排名视图=口径 id(single/average);指标视图=指标 id
+  const typeView: string = view === 'metric' ? (metricId ?? DEFAULT_METRIC_ID) : type;
+  // 切换:single/average → 排名视图(清 view+mmetric);其余 id → 指标视图(view=metric, mmetric=id)
+  const onTypeViewChange = (id: string) => {
+    if (RANK_TYPE_IDS.has(id)) {
+      setQuery({ view: null, mmetric: null, type: id === 'average' ? 'average' : null, page: null });
+    } else {
+      setQuery({ view: 'metric', mmetric: id, type: null, page: null });
+    }
+  };
   const country = query.country ?? '';
   const show: ShowMode = (query.show === 'persons') ? 'persons' : 'results';
   const currentYear = new Date().getUTCFullYear();
@@ -181,6 +224,8 @@ function AllResultsPageInner() {
   // 多盲平均 = 非官方 Mo3(builder 现算进 wca_results_flat),单项可排;名次和不计入
   const isMbldAvg = singleEvent === '333mbf';
   const effType: 'single' | 'average' = type === 'average' ? 'average' : 'single';
+  // 单项 bar race 的指标标签(single/average 必在 WR_METRICS 内);复用同一份口径表,免再写语言三元
+  const effMetricMeta = WR_METRICS.find(m => m.id === effType)!;
 
   // ---- 事件选择(累加) ----
   const serializeEvents = (set: Set<string>): string => {
@@ -251,7 +296,7 @@ function AllResultsPageInner() {
 
   // 单项数据
   useEffect(() => {
-    if (mode !== 'single') return;
+    if (view !== 'rank' || mode !== 'single') return;
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
     qs.set('event', singleEvent);
@@ -282,22 +327,22 @@ function AllResultsPageInner() {
         .then((j: { rows: ResultRow[]; total: number }) => setData({ mode: 'results', rows: j.rows, total: j.total }))
         .catch(e => setError(e.message)).finally(() => setLoading(false));
     }
-  }, [mode, show, basis, singleEvent, effType, country, year, month, qFromUrl, page, size]);
+  }, [view, mode, show, basis, singleEvent, effType, country, year, month, qFromUrl, page, size]);
 
   // 空态「分布」:姓名统计(静态 JSON,缓存一次)
   useEffect(() => {
-    if (mode !== 'empty' || nameStats) return;
+    if (view !== 'rank' || mode !== 'empty' || nameStats) return;
     setLoading(true); setError(null);
     // v=2:name_stats 加了 全名/本地名/含曾用名 面板(shape 变),bump 破浏览器 + CDN 缓存
     fetch(statsUrl('/stats/name_stats.json?v=2'))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j: NameStatsPayload) => setNameStats(j))
       .catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [mode, nameStats]);
+  }, [view, mode, nameStats]);
 
   // 空态「名录」:全选手 A-Z(按 首字母 / 名字长度 排序,可叠加国家)
   useEffect(() => {
-    if (mode !== 'empty') return;
+    if (view !== 'rank' || mode !== 'empty') return;
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
     qs.set('sort', psort); qs.set('dir', pdir); qs.set('name', pname);
@@ -309,11 +354,11 @@ function AllResultsPageInner() {
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j: { rows: DirRow[]; total: number }) => setDirData({ rows: j.rows, total: j.total }))
       .catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [mode, psort, pdir, pname, plmin, plmax, country, page, size]);
+  }, [view, mode, psort, pdir, pname, plmin, plmax, country, page, size]);
 
   // 名次和数据
   useEffect(() => {
-    if (mode !== 'sor') return;
+    if (view !== 'rank' || mode !== 'sor') return;
     setLoading(true); setError(null);
     const qs = new URLSearchParams();
     qs.set('type', type);
@@ -326,7 +371,7 @@ function AllResultsPageInner() {
     fetch(apiUrl(`/v1/wca/sum-of-ranks?${qs.toString()}`))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(setSorData).catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [mode, type, country, sorEventsParam, hidePodium, page, size]);
+  }, [view, mode, type, country, sorEventsParam, hidePodium, page, size]);
 
   // ---- 名次和工具:名人堂 + 排名演化 ----
   const [raceOpen, setRaceOpen] = useState(false);
@@ -415,6 +460,20 @@ function AllResultsPageInner() {
 
   const eventsLabel = isZh ? `项目(已选 ${selectedCount} / ${RANK_EVENTS.length})` : `Events (${selectedCount}/${RANK_EVENTS.length} selected)`;
 
+  // 顶层「类型」下拉(单次 / 平均 = 排名口径;其余派生指标 = 嵌入 wr_metric 对应指标视图)。
+  // 同时是 排名 ↔ 指标 的切换入口,故各模式(单项 / 名次和 / 空态 / 指标视图)都渲染一份,保证哪都能切。
+  // 各模式互斥 → 同时只挂一份,id 不重复。单项里放在「显示」右侧,其余模式作首个控件。
+  const typeSelect = (
+    <div className="wse-filter wse-filter-show">
+      <label htmlFor="wse-type-view">{tr({ zh: '类型', en: 'Type' })}</label>
+      <select id="wse-type-view" value={typeView} onChange={(e) => onTypeViewChange(e.target.value)}>
+        {WR_METRICS.map(m => (
+          <option key={m.id} value={m.id}>{tr({ zh: m.zh, en: m.en })}</option>
+        ))}
+      </select>
+    </div>
+  );
+
   return (
     <div className="wse-page">
       <header className="wse-header">
@@ -423,18 +482,31 @@ function AllResultsPageInner() {
         </div>
         <h1 className="wse-title-row">
           {tr({ zh: '排名', en: 'Rankings' })}
-          <Link
-            href={mode === 'sor' ? '/wca/about/sum-of-ranks' : '/wca/about/all-results'}
-            className="wse-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?' })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page' })}
-          >
-            <HelpCircle size={18} strokeWidth={1.75} />
-          </Link>
+          {view === 'rank' && (
+            <Link
+              href={mode === 'sor' ? '/wca/about/sum-of-ranks' : '/wca/about/all-results'}
+              className="wse-title-help"
+              title={tr({ zh: '这页是干啥的?', en: 'What is this page?' })}
+              aria-label={tr({ zh: '查看说明', en: 'About this page' })}
+            >
+              <HelpCircle size={18} strokeWidth={1.75} />
+            </Link>
+          )}
         </h1>
-        <p className="wse-subtitle">{subtitle}</p>
+        {view === 'rank' && <p className="wse-subtitle">{subtitle}</p>}
       </header>
 
+      {/* ============ 指标视图:嵌入退役的 wr_metric;指标由「类型」下拉受控(隐藏其内置选择器)。
+          顶层「类型」下拉作为 afterEventSelector 插在 WcaStatView 的项目选择器之后 → 项目在类型上方 ============ */}
+      {view === 'metric' && (
+        <WcaStatView
+          statId="wr_metric" headerMode="note" urlScope="m" metricId={metricId}
+          afterEventSelector={<div className="wse-type-standalone">{typeSelect}</div>}
+        />
+      )}
+
+      {/* ↓↓↓ 排名视图(本页原功能):事件多选 + 空态 / 单项 / 名次和 ↓↓↓ */}
+      {view === 'rank' && (<>
       {/* 名次和:排名演化 race(世界 / 大洲 / 国家),懒挂 */}
       {mode === 'sor' && (
         <div className="sor-census" style={{ marginBottom: 16 }}>
@@ -484,6 +556,7 @@ function AllResultsPageInner() {
       {/* ============ 空态:姓名分布(name_stats viz) + 名录(A-Z 平铺) ============ */}
       {mode === 'empty' && (
         <>
+          <div className="wse-type-standalone">{typeSelect}</div>
           {/* ── 姓名分布 ── */}
           <h2 className="wse-section-title">{tr({ zh: '姓名分布', en: 'Name distribution' })}</h2>
           <div className="wse-table-wrapper">
@@ -598,16 +671,7 @@ function AllResultsPageInner() {
                 offLabel={tr({ zh: '成绩', en: 'Results' })}
               />
             </div>
-            <div className="wse-filter wse-filter-show">
-              <label>{tr({ zh: '类型', en: 'Type' })}</label>
-              <PillToggle
-                className="wse-pill"
-                value={effType === 'average'}
-                onChange={(v) => update('type', v ? 'average' : 'single')}
-                onLabel={tr({ zh: '平均', en: 'Average' })}
-                offLabel={tr({ zh: '单次', en: 'Single' })}
-              />
-            </div>
+            {typeSelect}
             <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
             <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '口径', en: 'Basis' })}</label>
@@ -647,6 +711,17 @@ function AllResultsPageInner() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* 纪录走势 bar chart race:常显在排名表上方(方案 B)。复用 wr_metric 的 Top10HistoryPage,
+              受控到当前单项 + 单次 / 平均;筛选(年份 / 国家 / 选手)只作用于下方表,走势恒为全时段 WR。 */}
+          <div className="wse-barrace">
+            <Top10HistoryPage
+              controlledEventId={singleEvent}
+              controlledMetric={effType}
+              controlledMetricLabelZh={effMetricMeta.zh}
+              controlledMetricLabelEn={effMetricMeta.en}
+            />
           </div>
 
           <div className="wse-table-wrapper">
@@ -739,22 +814,14 @@ function AllResultsPageInner() {
       {mode === 'sor' && (
         <>
           <div className="wse-filters">
+            {typeSelect}
             <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
-            <div className="wse-filter wse-filter-show">
-              <label>{tr({ zh: '类型', en: 'Type' })}</label>
-              <PillToggle
-                className="wse-pill"
-                value={type === 'average'}
-                onChange={(v) => update('type', v ? 'average' : 'single')}
-                onLabel={tr({ zh: '平均', en: 'Average' })}
-                offLabel={tr({ zh: '单次', en: 'Single' })}
-              />
-              {/* 名次和的平均走官方数据,多盲无官方平均 → 不计入,明确告知 */}
-              {type === 'average' && selectedSet.has('333mbf') && (
-                <span className="wse-sor-note">{tr({ zh: '多盲平均(非官方 Mo3)不计入名次和', en: 'Multi-Blind average (unofficial Mo3) is not counted in the sum of ranks'
-                })}</span>
-              )}
-            </div>
+            {/* 单次 / 平均 由「类型」下拉统一控制(单次 / 平均 → 排名,派生指标 → 指标视图);此处仅保留「多盲平均不计入名次和」提示 */}
+            {type === 'average' && selectedSet.has('333mbf') && (
+              <div className="wse-filter wse-filter-show">
+                <span className="wse-sor-note">{tr({ zh: '多盲平均(非官方 Mo3)不计入名次和', en: 'Multi-Blind average (unofficial Mo3) is not counted in the sum of ranks' })}</span>
+              </div>
+            )}
             <div className="wse-filter">
               <label>{tr({ zh: '过滤', en: 'Filter' })}</label>
               <PillToggle
@@ -878,6 +945,7 @@ function AllResultsPageInner() {
           </div>
         </>
       )}
+      </>)}
     </div>
   );
 }
