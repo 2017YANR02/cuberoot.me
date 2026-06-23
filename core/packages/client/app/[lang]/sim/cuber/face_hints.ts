@@ -5,18 +5,29 @@
 import * as THREE from 'three';
 import Cubelet from './cubelet';
 
-interface Face {
-  letter: 'U' | 'D' | 'L' | 'R' | 'F' | 'B';
-  normal: THREE.Vector3;
+export interface OrientationHint {
+  letter: string;
+  /** Direction from cube center the label floats along (need not be unit). */
+  dir: THREE.Vector3;
 }
 
-const FACES: Face[] = [
-  { letter: 'U', normal: new THREE.Vector3(0, 1, 0) },
-  { letter: 'D', normal: new THREE.Vector3(0, -1, 0) },
-  { letter: 'L', normal: new THREE.Vector3(-1, 0, 0) },
-  { letter: 'R', normal: new THREE.Vector3(1, 0, 0) },
-  { letter: 'F', normal: new THREE.Vector3(0, 0, 1) },
-  { letter: 'B', normal: new THREE.Vector3(0, 0, -1) },
+const FACE_HINTS: OrientationHint[] = [
+  { letter: 'U', dir: new THREE.Vector3(0, 1, 0) },
+  { letter: 'D', dir: new THREE.Vector3(0, -1, 0) },
+  { letter: 'L', dir: new THREE.Vector3(-1, 0, 0) },
+  { letter: 'R', dir: new THREE.Vector3(1, 0, 0) },
+  { letter: 'F', dir: new THREE.Vector3(0, 0, 1) },
+  { letter: 'B', dir: new THREE.Vector3(0, 0, -1) },
+];
+
+// Ivy is a corner-turner: its 4 twist axes (R/L/D/B) sit at tetrahedral corners,
+// matching CORNER_POS/AXIS_LETTER in cuber/ivy/IvyCube. Shown on orbit instead of
+// the 6 face letters — a corner puzzle has no 6 face turns.
+export const IVY_CORNER_HINTS: OrientationHint[] = [
+  { letter: 'R', dir: new THREE.Vector3(1, 1, -1) },
+  { letter: 'L', dir: new THREE.Vector3(-1, 1, 1) },
+  { letter: 'D', dir: new THREE.Vector3(1, -1, 1) },
+  { letter: 'B', dir: new THREE.Vector3(-1, -1, -1) },
 ];
 
 function makeLetterTexture(letter: string): THREE.CanvasTexture {
@@ -48,13 +59,16 @@ export default class FaceHints extends THREE.Group {
 
   /** unit = 1 个 cubelet 的边长。NxN/SQ1 用 Cubelet.SIZE (默认 64);
    *  cubing.js puzzle (skewb 等) bbox 半径 ~1,传 ~0.6。 */
-  constructor(unit: number = Cubelet.SIZE) {
+  /** `hints` = label set (default 6 faces; Ivy passes IVY_CORNER_HINTS).
+   *  `distanceMul` × unit = how far out the labels float (corners are farther
+   *  from center than face centers, so Ivy passes a larger value). */
+  constructor(unit: number = Cubelet.SIZE, hints: OrientationHint[] = FACE_HINTS, distanceMul = 2.6) {
     super();
-    const distance = unit * 2.6;
+    const distance = unit * distanceMul;
     const size = unit * 1.2;
 
-    for (const face of FACES) {
-      const letterTex = makeLetterTexture(face.letter);
+    for (const hint of hints) {
+      const letterTex = makeLetterTexture(hint.letter);
       const letterMat = new THREE.SpriteMaterial({
         map: letterTex,
         transparent: true,
@@ -65,7 +79,7 @@ export default class FaceHints extends THREE.Group {
         depthWrite: false,
       });
       const sprite = new THREE.Sprite(letterMat);
-      sprite.position.copy(face.normal).multiplyScalar(distance);
+      sprite.position.copy(hint.dir).normalize().multiplyScalar(distance);
       sprite.scale.set(size, size, 1);
       this.letterMats.push(letterMat);
       this.add(sprite);

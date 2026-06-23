@@ -159,6 +159,15 @@ export function sq1DragApply(start: Sq1TurnDrag, delta: number): void {
   }
 }
 
+/** Snap the dragged pivots back to their pre-drag pose (cancel a frozen partial
+ *  turn — debug "hold partial" mode). No state change; state was never committed. */
+export function sq1DragSnapBack(start: Sq1TurnDrag): void {
+  for (const s of start.starts) {
+    s.pivot.quaternion.copy(s.quat);
+    s.pivot.position.copy(s.pos);
+  }
+}
+
 /** Snap Δθ to nearest *slash-valid* 30° unit, tween from current → snapped
  *  end, commit state + history. Returns the committed move (null if 0 units =
  *  snap back).

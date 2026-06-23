@@ -326,6 +326,7 @@ export default class InstancedRenderer extends THREE.Group {
     const geo = isSuperOrder ? Cubelet._FRAME_LOW : Cubelet._FRAME;
     const m = new THREE.InstancedMesh(geo, mat, count);
     m.frustumCulled = false;
+    m.userData.simRole = 'body'; // structure-coloring debug overlay (debugColors.ts)
     // moving mesh 由我们 setSliceAngle() 设 quaternion → matrixAutoUpdate 让 three 复合 matrix
     // static mesh 永远 identity
     m.matrixAutoUpdate = moving;
@@ -338,6 +339,7 @@ export default class InstancedRenderer extends THREE.Group {
     const mat = isSuperOrder ? Cubelet.CORE_BASIC : Cubelet.CORE;
     const m = new THREE.InstancedMesh(INNER_BOX, mat, count);
     m.frustumCulled = false;
+    m.userData.simRole = 'core'; // structure-coloring debug overlay (debugColors.ts)
     m.matrixAutoUpdate = moving;
     if (!moving) m.matrix.identity();
     return m;

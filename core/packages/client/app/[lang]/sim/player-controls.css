@@ -42,6 +42,52 @@
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* Ivy live-input red highlight. A mirror layer renders the same text behind the
+   (transparent-bg) textarea; invalid tokens get a red backdrop. The real text
+   stays on the textarea on top so it's always readable. The mirror's metrics
+   MUST match the textarea (font/size/line-height/padding/border-box) or the red
+   drifts off the token. */
+.sim-player-hlwrap {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+}
+.sim-player-hlwrap .sim-player-input {
+  flex: 1;
+  min-width: 0;
+}
+.sim-player-input--hl {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+.sim-player-hl {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--background);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  color: transparent;
+  pointer-events: none;
+  overflow: hidden;
+}
+.sim-player-hl .bad {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--destructive) 30%, transparent);
+  box-shadow: 0 0 0 1px var(--destructive);
+}
+
 .sim-player-row button {
   display: inline-flex;
   align-items: center;
