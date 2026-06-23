@@ -48,6 +48,7 @@ import { renderCm2ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cm2_svg';
 import { renderCm3ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/cm3_svg';
 import { renderHeliScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/heli_svg';
 import { renderHelicvScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/helicv_svg';
+import { renderCticoScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/ctico_svg';
 import { renderDiamondScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/diamond_svg';
 import { renderGearScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/gear_svg';
 import { renderMpyrScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/mpyr_svg';
@@ -73,7 +74,7 @@ const HAS_PREVIEW: Record<string, boolean> = {
   '333ft': true, '333mbf': true, '333mbo': true, '444': true, '444bf': true,
   '555': true, '555bf': true, '666': true, '777': true,
   pyram: true, skewb: true, sq1: true, minx: true, clock: true,
-  mirror_333: true, ivy: true, '133': true, '223': true, '233': true, '334': true, '335': true, '336': true, '337': true, '8p': true, '15p': true, sfl: true, ufo: true, cm2: true, cm3: true, heli: true, helicv: true, dmd: true, gear: true, mpyrso: true, dino: true, crz3a: true, sq2: true, ssq1: true, bsq: true, bic: true,
+  mirror_333: true, ivy: true, '133': true, '223': true, '233': true, '334': true, '335': true, '336': true, '337': true, '8p': true, '15p': true, sfl: true, ufo: true, cm2: true, cm3: true, heli: true, helicv: true, ctico: true, dmd: true, gear: true, mpyrso: true, dino: true, crz3a: true, sq2: true, ssq1: true, bsq: true, bic: true,
 };
 
 export function eventHasScramblePreview(event: string): boolean {
@@ -134,6 +135,7 @@ export function ScramblePreview2D({
       if (eff === 'cm3') return renderCm3ScrambleSvg(scramble);
       if (eff === 'heli') return renderHeliScrambleSvg(scramble);
       if (eff === 'helicv') return renderHelicvScrambleSvg(scramble);
+      if (eff === 'ctico') return renderCticoScrambleSvg(scramble);
       if (eff === 'dmd') return renderDiamondScrambleSvg(scramble);
       if (eff === 'gear') return renderGearScrambleSvg(scramble);
       if (eff === 'mpyrso') return renderMpyrScrambleSvg(scramble);

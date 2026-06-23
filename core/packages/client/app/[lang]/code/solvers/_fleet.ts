@@ -97,8 +97,8 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
     states: '76,828,484,468,736,000', zhStates: '= 12·18! ≈ 7.68×10¹⁶', enStates: '= 12·18! ≈ 7.68×10¹⁶', gods: 'cap SQ2_MAX_LENGTH=130',
     zhMethod: '构造式 3-循环约简 (parity fix + conjugator 表路由); 均值 ~70 元组', enMethod: 'constructive 3-cycle reduction (parity fix + conjugator routing); mean ~70 tuples' },
   { event: 'ssq1', zhName: '超 Sq-1', enName: 'Super Square-1', tier: 'D', quality: 'bounded',
-    states: '≈1.15×10²⁵', zhStates: '两个耦合 Sq-1', enStates: 'two coupled Sq-1s', gods: 'cap SSQ1_MAX_LENGTH=60',
-    zhMethod: '真两阶段形状 + 置换约简 (单面 3,678 形状); 采样双峰 (奇偶分支)', enMethod: 'genuine two-phase shape + permutation reduction (3,678 single-face shapes); bimodal sampling (parity branch)' },
+    states: '≈1.15×10²⁵', zhStates: '两个耦合 Sq-1', enStates: 'two coupled Sq-1s', gods: 'cap SSQ1_MAX_LENGTH=40',
+    zhMethod: '真两阶段形状 + 置换约简 (单面 3,678 形状); 奇偶校验折进形状解 (非固定长生成元), 分布单峰 (均值约 23)', enMethod: 'genuine two-phase shape + permutation reduction (3,678 single-face shapes); edge parity folded into the shape solve (no fixed-length generator), unimodal distribution (mean ≈ 23)' },
   { event: 'bsq', zhName: '受限 Sq-1', enName: 'Bandaged Square-1', tier: 'D', quality: 'bounded',
     states: '518,400', zhStates: '形状 coset = 720² (全群更大, 不可全 BFS)', enStates: 'shape coset = 720² (full group larger, no full BFS)', gods: 'cap BSQ_MAX_LENGTH=90',
     zhMethod: '构造式三阶段 (形状→角排列→定角棱排列), 只吐合法 (x,0)+/', enMethod: 'constructive three stages (shape → corner perm → fixed-corner edge perm), legal (x,0)+/ only' },
@@ -111,6 +111,9 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
   { event: 'helicv', zhName: '弧面直升机', enName: 'Curvy Copter', tier: 'D', quality: 'bounded',
     states: '3,033,257,372,496,691,200,000', zhStates: '≈ 3.03×10²¹ = 8!·3⁷·(6!)⁴·2¹²/2⁵ (Schreier-Sims, 直升机的 256 倍)', enStates: '≈ 3.03×10²¹ = 8!·3⁷·(6!)⁴·2¹²/2⁵ (Schreier-Sims, 256× the Helicopter Cube)', gods: 'cap HELICV_MAX_LENGTH=400',
     zhMethod: '从零对易子约简 (同直升机打乱群 + 12 个弧面棱块): 17 位奇偶前缀 (同时清角/4 面块轨道奇偶 + 解 12 个棱块) + 角 3-循环 + 角扭转 + 4 个面块轨道各自缓冲 3-循环; 移动语义/打乱镜像 cstimer (cs0x7f), 几何/oracle 用 cstimer poly3dlib', enMethod: 'from-scratch commutator reduction (same scramble group as the Helicopter Cube + 12 curvy edge pieces): a 17-bit parity prefix (clears corner/4 face-orbit parities AND solves the 12 edge pieces) + corner 3-cycles + corner twists + per-orbit (4 face orbits) buffer 3-cycles; move semantics/scrambler mirror cstimer (cs0x7f), geometry/oracle from cstimer poly3dlib' },
+  { event: 'ctico', zhName: '二十面体', enName: 'Icosamate', tier: 'D', quality: 'bounded',
+    states: '3,556,408,552,733,836,800,000,000,000,000,000', zhStates: '≈ 3.556×10³³ = 12!·5¹²·20!/80 (Schreier-Sims 验证)', enStates: '≈ 3.556×10³³ = 12!·5¹²·20!/80 (Schreier-Sims verified)', gods: 'cap CTICO_MAX_LENGTH=2000',
+    zhMethod: '从零对易子约简 (深切顶点转二十面体): 12 个角 (Z5 取向) 用 3-循环 + Z5 扭转归位 (角取向之和与步数耦合 +1 mod5, 用前缀调到 5 倍数), 再用保持角不变的面心 3-循环归位 19 个可动面心 (1 个面心被所有转动固定); 移动语义/打乱镜像 cstimer (cs0x7f), 几何/oracle 用 cstimer poly3dlib', enMethod: 'from-scratch commutator reduction (deep-cut vertex-turning icosahedron): the 12 corners (Z5 orientation) fixed with 3-cycles + Z5 twists (orientation sum couples to move count +1 mod 5, neutralized with a prefix), then 19 movable face-centers fixed with vertex-preserving face-center 3-cycles (1 face-center is fixed by every turn); move semantics/scrambler mirror cstimer (cs0x7f), geometry/oracle from cstimer poly3dlib' },
 ];
 
 // 已登记但尚未建求解器的 TIER D2 backlog (诚实: 未建). 见 solver/NONWCA_PUZZLE_LOOP.md §1 TIER D2 表.
@@ -121,7 +124,6 @@ export const NONWCA_TS_PLANNED: ReadonlyArray<{ event: string; zh: string; en: s
   { event: 'sia222', zh: '联体 2×2×2', en: 'Siamese 2×2×2' },
   { event: 'prcp', zh: '五魔金字塔', en: 'Pyraminx Crystal' },
   { event: 'giga', zh: '六阶五魔', en: 'Gigaminx' },
-  { event: 'ctico', zh: '二十面体', en: 'Icosamate' },
 ];
 
 // TIER 标签 (A 现场 BFS / B 离线精确表 / C 单实例 IDA* / D 两阶段约简).
