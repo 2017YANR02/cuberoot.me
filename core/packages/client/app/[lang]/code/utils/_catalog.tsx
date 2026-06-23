@@ -300,6 +300,15 @@ export const CATALOG: UtilEntry[] = [
     zh: 'SQ1 序列三套计步口径:扭转(只数 /)/ WCA 12c4 / 面转(双层=2),复用 parseSq1Tokens。详见 /math/god?event=sq1。',
     en: "Counts a Square-1 (x,y)/ sequence under all 3 metrics (twist / WCA 12c4 / face-turn). See /math/god?event=sq1.",
   },
+  {
+    name: 'countQtm / supportsQtm',
+    sig: 'countQtm(line: string): number\nsupportsQtm(eventId: string): boolean',
+    imp: "import { countQtm, supportsQtm } from '@cuberoot/shared/scramble-length';",
+    usage: "countQtm(\"R U2 R'\") // 4  (末位 2 的半转算 2,旋转 token 算 0)",
+    category: 'cube',
+    zh: '3x3 面转序列的 QTM 计数(180°=2),整体旋转 x/y/z 不计 — 打乱与求解解法通用的单一来源。HTM 相同时给解法排序的二级键就用它。',
+    en: 'QTM count of a 3x3 face-turn sequence (180°=2; whole-cube rotations count 0). Single source for both scrambles and solver solutions.',
+  },
 
   // ── util ──────────────────────────────────
   {
