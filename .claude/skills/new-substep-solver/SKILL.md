@@ -7,7 +7,9 @@ description: "用户要造一个新求解器时用。**先分流**:3x3 子阶段
 
 ## §0 先分流(造任何求解器前先判这一步)
 
-- **借用必注明(铁律,2026-06-22)**:求解器用了别人的东西(cstimer 移动语义照抄 / wrap cstimer 自带 solver 当引擎:dino=redi、mpyrso=两阶段 / crz3a=站内 kociemba / STM=Korf / cubelib 等)→ ① solver 文件头注 + `/code/solvers/_fleet.ts` 方法文案写清出处,② `/about` 的 `credits_data.json` 补/更新一条(已收录 27 条,先查重)。无出处不发。
+- **借用必注明(铁律,2026-06-22)**:求解器用了别人的东西(cstimer 移动语义照抄 / wrap cstimer 自带 solver 当引擎:dino=redi、mpyrso=两阶段 / crz3a=站内 kociemba / STM=Korf / cubelib 等)→ ① solver 文件头注 + `/code/solvers/_fleet.ts` 方法文案写清出处,② `/about` 的 `credits_data.json` 补/更新一条(已收录 ~30 条,先查重)。无出处不发。
+- **从零 reduction 先验 gadget 再动手(铁律,2026-06-22 heli/helicv/prcp/sia 批)**:TIER C/D 从零 reduction 动手前,先从几何 bit-exact 导出 piece model(逐 facelet 对 cstimer moveTable / poly3dlib apply),**再搜「每个件型的纯 3-循环 commutator 是否存在」**(2-gen + 浅 setup,bounded 别 OOM)。**存在 → 可建**(heli=角+4 棱轨道、helicv=+17bit 奇偶,均成);**不存在 → 早红灯延后、别硬磨**:件强耦合(prcp/giga 五魔系角棱:2000 万 comm 全是 5-循环、无纯 3-循环)或子群太深(sia 系棱 intoH 深度 19)= BLD 专属引擎 effort-gated epic,非一轮 loop 单元。
+- **复用兄弟单元 reduction 前必重验「同群」(铁律,2026-06-22 helicv)**:共用 cstimer 打乱生成器 ≠ 同置换群 —— helicv 共用 heli 的 `adjScramble`(同 12 token)但 curvy 切多了 12 棱件、群大 256×(3e21),盲抄会建错;先从几何 bit-exact 重导 piece model 确认同群,再决定复用 / 另写(本项目兄弟文件 cuboid334-337 即先例)。
 - **大状态空间 / 3x3 子阶段**(需大表 + 真题统计管道)→ 走下面的 substep 一页纸 + `solver/VARIANT_PLAYBOOK.md`(Rust + WASM)。
 - **小状态非 WCA 整解求解器**(状态 ≤ ~10^6 可整枚举,如枫叶 Ivy 29,160 = 81×360)→ **纯 TS 全图 BFS,绝不碰 Rust/WASM/下载表/数据管道**。范本 = `packages/client/lib/ivy-solver.ts` + `_IvySolver.tsx` + `gen/_svg/ivy_svg.ts`(2026-06-20)。固定套路:
 
