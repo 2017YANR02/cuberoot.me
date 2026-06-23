@@ -10,10 +10,18 @@
  * shape-then-permutation split is tiny and BFS-able:
  *   • SHAPE space of ONE side: only 3,678 reachable shapes, diameter 14 (verified by BFS).
  *   • In cube shape, CORNER permutation closes at 8! = 40,320 (BFS over cube→cube macros).
- *   • In cube shape with corners solved, EDGE permutation is the EVEN group A8 = 20,160 (a real Square-1
- *     has no short pure 3-cycles — corner-only/edge-only macros are all even, so corner-fixing edge perms
- *     form A8). The remaining ODD half (the famous Square-1 "parity") is handled by ONE constructively-
- *     found odd corner-fixing edge generator that flips edge-perm parity, then A8 finishes.
+ *   • In cube shape with corners solved, EDGE permutation is the EVEN group A8 = 20,160 (on ONE side
+ *     corner-perm parity ≡ edge-perm parity ALWAYS in the corner-fixing subgroup — verified by BFS — so a
+ *     corner-fixing edge word can only reach the even half; the edge perm is ODD after the corner solve
+ *     exactly when the reduced state has corner-par ≠ edge-par, ≈¼ of sides). The famous Square-1 "parity"
+ *     is folded into the SHAPE solve, not bolted on: when corner-par ⊕ edge-par = 1 we pick a different
+ *     cube-shape ARRIVAL with corner-par ⊕ edge-par = 0 via a bounded prefix-BFS (each candidate shape-
+ *     resolved by the table) — measured ≈ +1 slice on average. The corner BFS (full S8) then leaves edges
+ *     even and the A8 table closes. (This REPLACED an earlier fixed ~14-slice EDGE-ONLY parity generator
+ *     that was appended wholesale to ~41% of solves and produced a spurious discrete +14 SECOND HUMP in the
+ *     length distribution — an unoptimized-construction artifact, NOT a genuine parity branch; the audited
+ *     true minimal odd-edge cost in this reduction is ~13–14 standalone but ≈ +1 when absorbed into the
+ *     shape solve. Audited + corrected 2026-06-22; cf. the bsq fragment-metric fix.)
  * The two coupled sides are solved INDEPENDENTLY into atomic op-words, then COMPOSED at the shared slice:
  * each side is split into "rounds" (layer-turn packs between slices); the side with fewer slices is padded
  * with an IDENTITY word (`/ /` adds 2 slices; `U6/ U6/ U6/` adds 3) so both reach a common slice count
@@ -234,8 +242,6 @@ interface SsqTables {
   macros: { w: Op[]; cmap: number[] }[];
   /** edge composite generators (op-word fixing corners + their edge posMap). */
   eGens: { w: Op[]; emap: number[] }[];
-  /** one ODD corner-fixing edge generator (flips edge-perm parity), built constructively. */
-  oddGen: { w: Op[]; emap: number[] } | null;
 }
 let TABLES: SsqTables | null = null;
 
@@ -349,56 +355,79 @@ function buildTables(): SsqTables {
     }
   }
 
-  // -- one ODD corner-fixing edge generator (Square-1 "parity"): constructed deterministically by
-  //    driving a short scramble through shape+corner solve until corners are identity & edges ODD.
-  //    The composite word maps solved → (corner id, odd edge), an odd corner-fixing edge op. --
-  let oddGen: { w: Op[]; emap: number[] } | null = null;
-  {
-    const shapeSolveOps = (arr: U8): Op[] => {
-      let cur = shapeKeyOf(arr); const out: Op[] = []; let g = 0;
-      while (cur !== SHAPE_CUBE_KEY) { const e = shapeParent.get(cur); if (!e) throw new Error('ssq1: shape unreachable ' + cur); out.push(e.op); cur = e.pk; if (++g > 200) throw new Error('ssq1: shape walk'); }
-      return out;
-    };
-    // deterministic LCG (no Math.random — reproducible table) to probe short scrambles
-    let seed = 0x9e3779b9 >>> 0;
-    const rand12 = (): number => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % 12; };
-    for (let iter = 0; iter < 40000 && !oddGen; iter++) {
-      let p = new Uint8Array(SOLVED_P0) as U8; const ww: Op[] = [];
-      let cnt = 0, safety = 0;
-      while (cnt < 6) { if (++safety > 100000) break; const x = rand12() - 5, y = rand12() - 5; const size = (x === 0 ? 0 : 1) + (y === 0 ? 0 : 1);
-        if (size > 0 || cnt === 0) { if (!lockedSide(p, x, y)) { if (x) { p = rotTop(p, x); ww.push({ t: x }); } if (y) { p = rotBot(p, y); ww.push({ b: y }); } cnt++; p = sliceSide(p); ww.push({ s: true }); } } }
-      const w2 = [...ww, ...shapeSolveOps(p)]; let cur = applyOpsSide(solved0, w2);
-      const w3 = [...w2, ...cornerSolveOps(CORNER_POS.map((s) => cur[s]))]; cur = applyOpsSide(solved0, w3);
-      let cid = true; for (let i = 0; i < 8; i++) if (cur[CORNER_POS[i]] !== i) { cid = false; break; }
-      if (cid && permParity(EDGE_POS.map((s) => cur[s] - CORNER_EDGE_GAP)) === 1) {
-        const emap = new Array<number>(8); EDGE_POS.forEach((s, i) => { emap[cur[s] - CORNER_EDGE_GAP] = i; });
-        oddGen = { w: w3, emap };
-      }
-    }
-  }
-
-  return { shapeParent, cornerParent, edgeParent, macros, eGens, oddGen };
+  return { shapeParent, cornerParent, edgeParent, macros, eGens };
 }
 function tables(): SsqTables { if (!TABLES) TABLES = buildTables(); return TABLES; }
 
-/** Full per-side solution: shape → corner perm → edge perm (A8, + odd-parity fix). Returns atomic ops. */
+/** Table shape-solve: shortest op-word taking `cur` to cube shape, plus the resulting array. */
+function shapeSolveOps(T: SsqTables, cur: U8): { ops: Op[]; arr: U8 } {
+  const ops: Op[] = []; let q = cur; let k = shapeKeyOf(q); let g = 0;
+  while (k !== SHAPE_CUBE_KEY) { const e = T.shapeParent.get(k); if (!e) throw new Error('ssq1: shape unreachable ' + k); ops.push(e.op); q = applyOpSide(q, e.op); k = e.pk; if (++g > 200) throw new Error('ssq1: shape walk'); }
+  return { ops, arr: q };
+}
+/** Count slices (op-word length in `/` units) — the fragment metric the solver reports. */
+function sliceCount(ops: readonly Op[]): number { let n = 0; for (const op of ops) if ('s' in op) n++; return n; }
+/** Reduced parity bit corner-perm ⊕ edge-perm at a cube-shape array (determines whether the edge perm is
+ *  ODD after the corner solve: each S8 corner macro is even ⇒ edge-par after corner solve = e ⊕ c). */
+function xorParity(arr: U8, off: number): number {
+  return permParity(CORNER_POS.map((s) => arr[s] - off)) ^ permParity(EDGE_POS.map((s) => arr[s] - off - CORNER_EDGE_GAP));
+}
+
+/** Full per-side solution: PARITY-AWARE shape solve → corner perm (S8) → edge perm (A8). Returns atomic ops.
+ *  Square-1 "edge parity": on one side corner-perm parity ≡ edge-perm parity in the corner-fixing subgroup,
+ *  so after solving corners the edge perm is odd exactly when the reduced state has corner-par ≠ edge-par
+ *  (≈¼ of sides). Rather than bolt a fixed ~14-slice edge-only generator on afterwards (the old approach —
+ *  it produced a discrete +14 second hump), we FOLD the parity into the shape solve: pick a cube-shape
+ *  arrival with corner-par ⊕ edge-par = 0. A bounded prefix-BFS (≤ PARITY_FIX_PREFIX tuples, each candidate
+ *  shape-resolved via the table) finds the cheapest such arrival — measured ≈ +1 slice on average (vs +14),
+ *  100% success at depth 4. The corner BFS (full S8) then leaves edges EVEN ⇒ the A8 table closes. */
+const PARITY_FIX_PREFIX = 4;
 function solveSideOps(arr: U8, off: number): Op[] {
   const T = tables();
   const out: Op[] = [];
   let cur = new Uint8Array(arr) as U8;
-  // shape
-  { let k = shapeKeyOf(cur); let g = 0; while (k !== SHAPE_CUBE_KEY) { const e = T.shapeParent.get(k); if (!e) throw new Error('ssq1: shape unreachable ' + k); out.push(e.op); cur = applyOpSide(cur, e.op); k = e.pk; if (++g > 200) throw new Error('ssq1: shape walk'); } }
-  if (shapeKeyOf(cur) !== SHAPE_CUBE_KEY) throw new Error('ssq1: side not cube shape');
-  // corner perm
-  { let key = CORNER_POS.map((s) => cur[s] - off).join(''); let g = 0; while (key !== '01234567') { const e = T.cornerParent.get(key); if (!e) throw new Error('ssq1: corner perm unreachable ' + key); const w = invOps(T.macros[e.mi].w); out.push(...w); cur = applyOpsSide(cur, w); key = e.pk; if (++g > 200) throw new Error('ssq1: corner walk'); } }
-  // edge perm — odd-parity fix first, then solve within A8
-  {
-    let ev = EDGE_POS.map((s) => cur[s] - off - CORNER_EDGE_GAP);
-    if (permParity(ev) === 1) {
-      if (!T.oddGen) throw new Error('ssq1: no odd-parity generator');
-      out.push(...T.oddGen.w); cur = applyOpsSide(cur, T.oddGen.w); ev = EDGE_POS.map((s) => cur[s] - off - CORNER_EDGE_GAP);
+
+  // -- parity-aware shape solve: reach cube shape with corner-par ⊕ edge-par = 0 (cheapest) --
+  const direct = shapeSolveOps(T, cur);
+  if (xorParity(direct.arr, off) === 0) {
+    out.push(...direct.ops); cur = direct.arr;
+  } else {
+    // bounded prefix-BFS over (kt,kb)/ tuples; each candidate shape-resolved via the table; pick the
+    // parity-correct arrival of minimum total slices (prefix + shape solve).
+    let best: { pre: Op[]; ss: { ops: Op[]; arr: U8 }; cost: number } | null = null;
+    const seen = new Set<string>([cur.join(',')]);
+    let frontier: { p: U8; pre: Op[] }[] = [{ p: new Uint8Array(cur) as U8, pre: [] }];
+    for (let d = 1; d <= PARITY_FIX_PREFIX && !best; d++) {
+      const next: { p: U8; pre: Op[] }[] = [];
+      for (const { p, pre } of frontier) {
+        for (let kt = 0; kt < 12; kt++) for (let kb = 0; kb < 12; kb++) {
+          if ((kt !== 0 || kb !== 0) && lockedSide(p, kt, kb)) continue;
+          let q = p; const seg: Op[] = [];
+          if (kt) { q = rotTop(q, kt); seg.push({ t: kt }); }
+          if (kb) { q = rotBot(q, kb); seg.push({ b: kb }); }
+          q = sliceSide(q); seg.push({ s: true });
+          const kq = q.join(','); if (seen.has(kq)) continue; seen.add(kq);
+          const npre = [...pre, ...seg];
+          const ss = shapeSolveOps(T, q);
+          if (xorParity(ss.arr, off) === 0) {
+            const cost = sliceCount(npre) + sliceCount(ss.ops);
+            if (!best || cost < best.cost) best = { pre: npre, ss, cost };
+          }
+          next.push({ p: q, pre: npre });
+        }
+      }
+      frontier = next;
     }
-    let key = ev.join(''); let g = 0;
+    if (!best) throw new Error('ssq1: parity-aware shape solve not found within prefix bound');
+    out.push(...best.pre, ...best.ss.ops); cur = best.ss.arr;
+  }
+  if (shapeKeyOf(cur) !== SHAPE_CUBE_KEY) throw new Error('ssq1: side not cube shape');
+
+  // corner perm (S8 — handles even OR odd corner permutation)
+  { let key = CORNER_POS.map((s) => cur[s] - off).join(''); let g = 0; while (key !== '01234567') { const e = T.cornerParent.get(key); if (!e) throw new Error('ssq1: corner perm unreachable ' + key); const w = invOps(T.macros[e.mi].w); out.push(...w); cur = applyOpsSide(cur, w); key = e.pk; if (++g > 200) throw new Error('ssq1: corner walk'); } }
+  // edge perm (now guaranteed EVEN → A8 table closes)
+  {
+    let key = EDGE_POS.map((s) => cur[s] - off - CORNER_EDGE_GAP).join(''); let g = 0;
     while (key !== '01234567') { const e = T.edgeParent.get(key); if (!e) throw new Error('ssq1: edge perm unreachable ' + key); const w = invOps(T.eGens[e.gi].w); out.push(...w); cur = applyOpsSide(cur, w); key = e.pk; if (++g > 200) throw new Error('ssq1: edge walk'); }
   }
   return out;
@@ -433,12 +462,14 @@ export interface Ssq1Solution { solution: string; length: number; optimal: boole
 
 /**
  * Validated upper bound on the solution length, in (a,b,c,d)/ tuples. The reduction is "valid + bounded",
- * NOT optimal: shape ≤ 14 ops, corner perm ≤ ~13 macros, edge perm ≤ ~14 composites (+ a deep odd-parity
- * generator on ~half of states). Composed at the shared slice, the measured worst case over a high random
- * sample is ~43 tuples; SSQ1_MAX_LENGTH carries comfortable margin and is asserted in the test so it can
- * never be silently violated (the 336 lesson — a bound the solver provably stays under).
+ * NOT optimal: parity-aware shape solve ≤ ~16 slices, corner perm ≤ ~13 macros, edge perm ≤ ~14 composites,
+ * composed at the shared slice. With the parity fix folded into the shape solve (no more +14 edge-only
+ * bolt-on) the distribution is unimodal: measured mean ≈ 23, worst case 28 over a 2000 random sample;
+ * SSQ1_MAX_LENGTH = 40 carries comfortable margin (>10) and is asserted in the test so it can never be
+ * silently violated (the 336 lesson — a bound the solver provably stays under). Tightened from 60 → 40
+ * after the 2026-06-22 parity-hump fix dropped the max from 41 to 28.
  */
-export const SSQ1_MAX_LENGTH = 60;
+export const SSQ1_MAX_LENGTH = 40;
 
 /** Two coupled Square-1 mechanisms ⇒ ≈ product of the per-side reachable-state counts
  *  (3,393,693,768,000² ≈ 1.15×10²⁵). > 2^53 so MUST be a string (§0.0 #4); an estimate. */
@@ -452,10 +483,10 @@ function isSolvedState(st: SsqState): boolean {
 
 /**
  * Solve a Super Square-1 scramble by a genuine TWO-PHASE reduction of the ACTUAL state (not the scramble
- * path): each side is reduced to cube shape (3,678-shape BFS), then its corner permutation (8! table) and
- * edge permutation (A8 table + a constructive odd-parity generator) are solved; the two coupled sides are
- * composed at the shared slice (each side padded with an identity word so their slice counts match). The
- * result is VALID + BOUNDED (`optimal` always false); its length varies with the actual scramble.
+ * path): each side is reduced to cube shape (3,678-shape BFS, parity-aware so the edge perm lands in A8),
+ * then its corner permutation (8! table) and edge permutation (A8 table) are solved; the two coupled sides
+ * are composed at the shared slice (each side padded with an identity word so their slice counts match).
+ * The result is VALID + BOUNDED (`optimal` always false); its length varies with the actual scramble.
  * Throws only on internal invariant failure.
  */
 export function solveSsq1(scramble: string): Ssq1Solution {
