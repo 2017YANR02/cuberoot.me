@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, Copy, Check, Play, Info, X } from 'lucide-react';
+import { Loader2, Copy, Check, Info, X } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import { FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
@@ -646,7 +646,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                         <li
                           key={i}
                           className={`stsv-sol-row${selSol === i ? ' is-active' : ''}`}
-                          onClick={() => selectSol(i, false)}
+                          onClick={() => selectSol(i, true)}
                         >
                           <span className="stsv-sol-len">{moveLen(dispAlg)}</span>
                           <button
@@ -664,9 +664,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                             aria-label={t('复制', 'Copy')}
                           >
                             {copiedIdx === i ? <Check size={12} /> : <Copy size={12} />}
-                          </button>
-                          <button className="stsv-sol-play" aria-label={t('播放', 'Play')} onClick={(e) => { e.stopPropagation(); selectSol(i, true); }}>
-                            <Play size={11} />
                           </button>
                           {sol.c && <span className="stsv-sol-slot">{sol.c}</span>}
                           <code>{dispAlg}</code>
