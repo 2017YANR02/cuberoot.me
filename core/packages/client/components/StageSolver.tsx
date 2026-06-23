@@ -648,11 +648,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           className={`stsv-sol-row${selSol === i ? ' is-active' : ''}`}
                           onClick={() => selectSol(i, false)}
                         >
-                          <button className="stsv-sol-play" aria-label={t('播放', 'Play')} onClick={(e) => { e.stopPropagation(); selectSol(i, true); }}>
-                            <Play size={11} />
-                          </button>
-                          {sol.c && <span className="stsv-sol-slot">{sol.c}</span>}
-                          <code>{dispAlg}</code>
                           <span className="stsv-sol-len">{moveLen(dispAlg)}</span>
                           <button
                             type="button"
@@ -670,6 +665,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           >
                             {copiedIdx === i ? <Check size={12} /> : <Copy size={12} />}
                           </button>
+                          <button className="stsv-sol-play" aria-label={t('播放', 'Play')} onClick={(e) => { e.stopPropagation(); selectSol(i, true); }}>
+                            <Play size={11} />
+                          </button>
+                          {sol.c && <span className="stsv-sol-slot">{sol.c}</span>}
+                          <code>{dispAlg}</code>
                         </li>
                       );
                       })}
