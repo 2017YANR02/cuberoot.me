@@ -165,6 +165,10 @@ describe('bsq solver — bounded length + non-degenerate spread (high sample)', 
     // eslint-disable-next-line no-console
     console.log(`[bsq] N=2000 fragment length: mean=${mean.toFixed(1)} median=${lens[1000]} min=${lens[0]} max=${lens[lens.length - 1]} (bound ${BSQ_MAX_LENGTH}); quality bucket = valid+bounded (three-stage shape+corner+edge reduction)`);
     // NON-degenerate spread (guards against the inverse-of-scramble cheat that produced a single-bar dist).
+    // NOTE: the length histogram is genuinely MULTI-MODAL — that is REAL structure of the restricted bsq
+    // move set (corner-perm group = 120-perm near-subgroup ≤6 frags + 600-perm far-coset ≥9 frags; edge
+    // 3-cycles floor at 8 frags), NOT a solver artifact — do not "smooth" it (see bsq-solver.ts header
+    // "DISTRIBUTION SHAPE"). The search minimizes fragment count (the reported metric); mean ≈ 16, max ≈ 60.
     expect(new Set(lens).size).toBeGreaterThan(5);
     expect(over).toBe(0);
     expect(lens[lens.length - 1]).toBeLessThanOrEqual(BSQ_MAX_LENGTH);

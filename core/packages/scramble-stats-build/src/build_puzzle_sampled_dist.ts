@@ -280,8 +280,10 @@ const REGISTRY: PuzzleDistSpec[] = [
     scrambleLen: 10,          // cstimer bsq generator length (CSTIMER_EVENTS bsq length=10 = #slices)
     defaultN: 2000,           // 三阶段约简:小表懒建一次(~tens ms)后每条求解毫秒级 → 2000 单进程秒级
     // 受限 </,(1,0)> 移动集(顶层 (x,0) + 切片,底层从不直接转)的构造式三阶段约简(形状→角排列→棱排列),
-    // 解实际状态、只发合法 bsq 招式:有效 + 有界(实测 3000 样本 mean≈16、max≈63、bound 90),
-    // 长度随打乱难度变化(真分布,非单柱),非最优(§0.0 #3 诚实记)。
+    // 解实际状态、只发合法 bsq 招式:有效 + 有界(2026-06-22 改 fragment-weighted 搜索后实测 2000 样本
+    // mean≈15.5、max≈61、bound 90),非最优(§0.0 #3 诚实记)。长度分布多峰是受限移动集的真实结构
+    // (角排列分裂成 120 态近子群 ≤6 frag + 600 态远陪集 ≥9 frag;棱 3-循环最短 8 frag),非求解器假象,
+    // 已核实不可平滑(见 lib/bsq-solver.ts 头注「DISTRIBUTION SHAPE」)。
     quality: 'sampled-bounded',
     load: async () => {
       const m = await mod('../../client/lib/bsq-solver');

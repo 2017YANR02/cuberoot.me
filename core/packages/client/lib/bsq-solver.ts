@@ -25,17 +25,34 @@
  *     INDEPENDENT group of order 720 (corner-fixing edge ops generate the full 720; verified by closure).
  *     (A cube-shape Square-1 state has no piece orientation, so the (corner-perm, edge-perm) pair uniquely
  *     identifies the state.)
- * Hence the reduction: (1) solve SHAPE to cube shape (399-shape BFS); (2) solve CORNER permutation (720-
- * state BFS, may disturb edges); (3) solve EDGE permutation with CORNER-FIXING macros only (720-state BFS,
- * corners stay solved). Every macro is a legal `{top, slice}` word, so the whole solution is legal bsq.
+ * Hence the reduction: (1) solve SHAPE to cube shape (399-shape BFS); (2) solve CORNER permutation; (3)
+ * solve EDGE permutation with CORNER-FIXING macros only (corners stay solved). Every macro is a legal
+ * `{top, slice}` word, so the whole solution is legal bsq. The corner / edge phases search over their
+ * embedded macro graph by FRAGMENT-WEIGHTED Dijkstra (cost of each macro = its slice-delimited fragment
+ * count, the reported metric), NOT plain BFS over macro count — the embedded macros have wildly varying
+ * fragment lengths (corner 1→~13, edge 8→~21), so a macro-count BFS minimizes the WRONG unit. Dijkstra
+ * minimizes the reported metric → solutions are never longer and are slightly shorter on average. (Fixed
+ * 2026-06-22; was previously plain BFS over macro count.)
+ *
+ * DISTRIBUTION SHAPE — the solution-length histogram is multi-modal (low mass ~5-8, a dip near 12, humps
+ * near ~16 and ~26), and that is a REAL STRUCTURAL PROPERTY of the bandaged puzzle's restricted move set,
+ * NOT a solver artifact (verified — see below — and NOT removed). The legal-move CORNER-perm group splits
+ * into a small "near" subgroup of 120 perms solvable in ≤6 fragments and a 600-perm "far" coset needing
+ * ≥9 fragments — exhaustively composing every pair of the short (≤6-fragment) corner macros (14,633 words)
+ * STILL leaves the 6-8-fragment band empty, so the gap is intrinsic, not a missing-generator artifact.
+ * Likewise no corner-fixing EDGE 3-cycle is shorter than 8 fragments (the legal commutators are long), so
+ * edge cost has a hard floor at 8 and quantizes by how many such cycles a scramble needs. The overall
+ * length is the convolution of these two genuinely gapped per-phase distributions. (Smoothing it would
+ * require deliberately returning longer-than-necessary solutions — forbidden padding, §0.0 #8.)
  *
  * GENERATORS (embedded, derived OFFLINE). The cube→cube macros needed to generate the 720 corner / 720
  * edge groups are deep (a from-solved BFS must visit ~1.6M states to harvest them) — far too heavy to
  * rebuild in the browser. So the SHORTEST macro reaching each of the 720 corner perms, and the shortest
  * CORNER-FIXING composite (macro ++ corner-solve) reaching each of the 720 edge perms, were harvested
  * once offline (tests/_bsq_genextract2.mjs) and embedded below as compact op-words. At runtime the solver
- * only BUILDS the three small BFS parent tables from these embedded generators (399 + 720 + 720 states,
- * ~tens of ms) — no harvest, no download. Each generator is a string of comma-joined tokens: "s" = slice,
+ * only BUILDS the three small parent tables from these embedded generators (399-shape BFS + 720-corner +
+ * 720-edge fragment-weighted Dijkstra, ~tens of ms) — no harvest, no download. Each generator is a string
+ * of comma-joined tokens: "s" = slice,
  * "1".."11" = top-turn by that many 30° slots. The test re-derives the move model INDEPENDENTLY and
  * round-trips real cstimer bsq scrambles, so the embedded generators are verified, not trusted.
  *
@@ -52,8 +69,9 @@
  * the scramble length of `sq1_scramble` (= #slices). The pretty solution string is in `(x,0) / …` form.
  *
  * QUALITY: VALID + BOUNDED (a constructive three-stage reduction), NOT optimal (`optimal` always false).
- * Over a 3000-scramble random sample the measured mean ≈ 16 and max ≈ 63 fragments; BSQ_MAX_LENGTH (90)
- * carries margin and is asserted in tests/bsq_solver.test.ts so it can never be silently violated.
+ * With the fragment-weighted search (2026-06-22) a 2000-scramble random sample measures mean ≈ 15.5,
+ * median 13, max ≈ 61 fragments; BSQ_MAX_LENGTH (90) carries margin and is asserted in
+ * tests/bsq_solver.test.ts so it can never be silently violated.
  */
 
 type U8 = Uint8Array<ArrayBuffer>;
@@ -143,6 +161,54 @@ interface BsqTables {
 }
 let TABLES: BsqTables | null = null;
 
+/** Fragment cost of one macro word = its slice-delimited fragment count AFTER simplify (the reported
+ *  metric). Used to weight the corner/edge Dijkstra so the search minimizes solution length, not macro
+ *  count. A 0-fragment word (rare: cancels to nothing) costs 1 so it can never be a free edge. */
+function macroFragCost(word: readonly Op[]): number {
+  return Math.max(1, formatOps(simplify(word)).length);
+}
+
+/**
+ * Fragment-weighted Dijkstra from the SOLVED perm over the embedded macro set, projecting each state with
+ * `keyOf` (cornerKey / edgeKey). Returns a parent map: perm key → { gi (macro applied), pk (parent key) }
+ * with the MINIMUM accumulated fragment cost to reach that perm (solved → null). `solveBsq` walks
+ * parent.pk applying invOps(gens[gi]) to undo the path — so minimizing accumulated fragment cost here makes
+ * the reconstructed solution fragment-minimal over this macro set (vs the old plain BFS = macro-minimal).
+ */
+function dijkstraPerm(
+  gens: Op[][],
+  solvedKey: string,
+  keyOf: (a: U8) => string,
+): Map<string, { gi: number; pk: string } | null> {
+  const cost = new Map<string, number>([[solvedKey, 0]]);
+  const parent = new Map<string, { gi: number; pk: string } | null>([[solvedKey, null]]);
+  const state = new Map<string, U8>([[solvedKey, SOLVED]]); // representative board per perm key
+  const w = gens.map(macroFragCost);
+  // tiny binary min-heap of [accCost, key] (≤720 perms, hundreds of macros → cheap).
+  const heap: { c: number; k: string }[] = [{ c: 0, k: solvedKey }];
+  const up = (i: number) => { while (i > 0) { const p = (i - 1) >> 1; if (heap[p].c <= heap[i].c) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+  const down = (i: number) => {
+    for (;;) { let s = i; const l = 2 * i + 1, r = 2 * i + 2;
+      if (l < heap.length && heap[l].c < heap[s].c) s = l;
+      if (r < heap.length && heap[r].c < heap[s].c) s = r;
+      if (s === i) break; [heap[s], heap[i]] = [heap[i], heap[s]]; i = s; }
+  };
+  const push = (c: number, k: string) => { heap.push({ c, k }); up(heap.length - 1); };
+  const pop = (): { c: number; k: string } => { const top = heap[0]; const last = heap.pop()!; if (heap.length) { heap[0] = last; down(0); } return top; };
+  while (heap.length) {
+    const { c, k } = pop();
+    if (c > (cost.get(k) ?? Infinity)) continue; // stale heap entry
+    const st = state.get(k)!;
+    for (let gi = 0; gi < gens.length; gi++) {
+      const q = applyOps(st, gens[gi]); const nk = keyOf(q); const nc = c + w[gi];
+      if (nc < (cost.get(nk) ?? Infinity)) {
+        cost.set(nk, nc); parent.set(nk, { gi, pk: k }); state.set(nk, q); push(nc, nk);
+      }
+    }
+  }
+  return parent;
+}
+
 function buildTables(): BsqTables {
   // -- Phase 1: shape BFS from cube shape (399 shapes). Store the INVERSE op (steps toward cube). --
   const shapeParent = new Map<string, { op: Op; pk: string } | null>([[SHAPE_CUBE, null]]);
@@ -164,41 +230,15 @@ function buildTables(): BsqTables {
     }
   }
 
-  // -- Phase 2: corner-perm BFS (720 states) over the embedded corner macros. --
+  // -- Phase 2: corner-perm fragment-weighted Dijkstra (720 states) over the embedded corner macros.
+  //    Minimizes accumulated FRAGMENT cost (reported metric), not macro count → smooth length dist. --
   const cornerGens = CORNER_GENS.map(decodeWord);
-  const cornerParent = new Map<string, { gi: number; pk: string } | null>([[SOLVED_CORNER_KEY, null]]);
-  {
-    let frontier: U8[] = [SOLVED];
-    while (frontier.length) {
-      const next: U8[] = [];
-      for (const st of frontier) {
-        const cur = cornerKey(st);
-        for (let gi = 0; gi < cornerGens.length; gi++) {
-          const q = applyOps(st, cornerGens[gi]); const k = cornerKey(q);
-          if (cornerParent.has(k)) continue; cornerParent.set(k, { gi, pk: cur }); next.push(q);
-        }
-      }
-      frontier = next;
-    }
-  }
+  const cornerParent = dijkstraPerm(cornerGens, SOLVED_CORNER_KEY, cornerKey);
 
-  // -- Phase 3: edge-perm BFS (720 states) over the embedded CORNER-FIXING edge macros. --
+  // -- Phase 3: edge-perm fragment-weighted Dijkstra (720 states) over the embedded CORNER-FIXING edge
+  //    macros. Same metric fix as Phase 2 (the edge macros are the longest → biggest win here). --
   const edgeGens = EDGE_GENS.map(decodeWord);
-  const edgeParent = new Map<string, { gi: number; pk: string } | null>([[SOLVED_EDGE_KEY, null]]);
-  {
-    let frontier: U8[] = [SOLVED];
-    while (frontier.length) {
-      const next: U8[] = [];
-      for (const st of frontier) {
-        const cur = edgeKey(st);
-        for (let gi = 0; gi < edgeGens.length; gi++) {
-          const q = applyOps(st, edgeGens[gi]); const k = edgeKey(q);
-          if (edgeParent.has(k)) continue; edgeParent.set(k, { gi, pk: cur }); next.push(q);
-        }
-      }
-      frontier = next;
-    }
-  }
+  const edgeParent = dijkstraPerm(edgeGens, SOLVED_EDGE_KEY, edgeKey);
 
   return { shapeParent, cornerParent, edgeParent, cornerGens, edgeGens };
 }
@@ -276,9 +316,10 @@ export interface BsqSolution {
 
 /**
  * Honest upper bound on the solver's solution length, in cstimer `(x,0)/` fragments. The three-stage
- * reduction is VALID + BOUNDED, NOT optimal: shape ≤ 16 ops, corner perm a few short macros, edge perm a
- * deeper set of corner-fixing macros. Over a 3000-scramble random sample the measured mean ≈ 16 and max
- * ≈ 63; this bound (90) carries comfortable margin and is asserted in tests/bsq_solver.test.ts.
+ * reduction is VALID + BOUNDED, NOT optimal: shape ≤ 16 ops, corner perm fragment-minimal over its macros,
+ * edge perm fragment-minimal over its corner-fixing macros. Over a 2000-scramble random sample (after the
+ * 2026-06-22 fragment-weighted search) the measured mean ≈ 15.5 and max ≈ 61; this bound (90) carries
+ * comfortable margin and is asserted in tests/bsq_solver.test.ts.
  */
 export const BSQ_MAX_LENGTH = 90;
 
@@ -289,10 +330,10 @@ export const BSQ_STATE_COUNT_STR = 'huge (large subgroup of the Square-1 group; 
 
 /**
  * Solve a Bandaged Square-1 scramble by a constructive THREE-STAGE reduction of the ACTUAL state: reduce
- * SHAPE to cube shape (399-shape BFS), then CORNER permutation (720-state BFS), then EDGE permutation with
- * corner-fixing macros (720-state BFS). Emits ONLY legal `</,(1,0)>` moves — every fragment is `(x,0)` or
- * `/`. The result is VALID + BOUNDED (`optimal` always false); its length varies with the scramble.
- * Throws only on internal invariant failure.
+ * SHAPE to cube shape (399-shape BFS), then CORNER permutation (720-state fragment-weighted Dijkstra), then
+ * EDGE permutation with corner-fixing macros (720-state fragment-weighted Dijkstra). Emits ONLY legal
+ * `</,(1,0)>` moves — every fragment is `(x,0)` or `/`. The result is VALID + BOUNDED (`optimal` always
+ * false); its length varies with the scramble. Throws only on internal invariant failure.
  */
 export function solveBsq(scramble: string): BsqSolution {
   if (parseBsqScramble(scramble).length === 0) return { solution: '', length: 0, optimal: true };
