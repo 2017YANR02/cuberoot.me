@@ -93,7 +93,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   // Random-move with sensible defaults
   { id: 'heli',    key: 'heli',    length: 20, zh: '直升机',           en: 'Helicopter',        iconClass: 'unofficial-helicopter', family: 'twist', solvable: true
 },
-  { id: 'helicv',  key: 'helicv',  length: 20, zh: '弧面直升机',       en: 'Curvy Copter',      iconClass: 'unofficial-curvycopter', family: 'twist'
+  { id: 'helicv',  key: 'helicv',  length: 20, zh: '弧面直升机',       en: 'Curvy Copter',      iconClass: 'unofficial-curvycopter', family: 'twist', solvable: true
 },
   { id: 'sq2',     key: 'sq2',     length: 10, zh: '方块二',           en: 'Square-2',          textLabel: 'Sq2',  family: 'sq', solvable: true
 },

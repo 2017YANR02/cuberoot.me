@@ -73,6 +73,7 @@ const UfoSolver = dynamic(() => import('./_UfoSolver'), { ssr: false, loading: L
 const Cm2Solver = dynamic(() => import('./_Cm2Solver'), { ssr: false, loading: Loading });
 const Cm3Solver = dynamic(() => import('./_Cm3Solver'), { ssr: false, loading: Loading });
 const HeliSolver = dynamic(() => import('./_HeliSolver'), { ssr: false, loading: Loading });
+const HelicvSolver = dynamic(() => import('./_HelicvSolver'), { ssr: false, loading: Loading });
 const DiamondSolver = dynamic(() => import('./_DiamondSolver'), { ssr: false, loading: Loading });
 const GearSolver = dynamic(() => import('./_GearSolver'), { ssr: false, loading: Loading });
 const MpyrSolver = dynamic(() => import('./_MpyrSolver'), { ssr: false, loading: Loading });
@@ -105,6 +106,7 @@ function SolverDispatch() {
   if (event === 'cm2') return <Cm2Solver />;
   if (event === 'cm3') return <Cm3Solver />;
   if (event === 'heli') return <HeliSolver />;
+  if (event === 'helicv') return <HelicvSolver />;
   if (event === 'dmd') return <DiamondSolver />;
   if (event === 'gear') return <GearSolver />;
   if (event === 'mpyrso') return <MpyrSolver />;
