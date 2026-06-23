@@ -9,7 +9,7 @@ import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import World from './cuber/world';
-import CubeGroup from './cuber/group';
+import { timing } from './cuber/tweenTiming';
 import Cubelet from './cuber/cubelet';
 import { applyDebugStructureColors } from './cuber/debugColors';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
@@ -165,7 +165,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   world.scene.updateMatrix();
   // face hints (拖动时浮现的 U/D/L/R/F/B 色板) 跟主 face colors 走。
   world.faceHints.setFaceColors(s.faceColors);
-  CubeGroup.frames = mapFrames(s.speed);
+  timing.frames = mapFrames(s.speed);
   // NxN-only options skipped for SQ1 / Ivy / Dino / Redi (sticker thickness / hollow /
   // hint / face colors are baked at construction time for their non-NxN geometry).
   if (world.puzzleKind !== 'sq1' && world.puzzleKind !== 'ivy' && world.puzzleKind !== 'dino' && world.puzzleKind !== 'redi') {

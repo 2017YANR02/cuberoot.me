@@ -152,19 +152,19 @@ export default function PllPerformerOverlay({
     let cleanup: (() => void) | null = null;
 
     void (async () => {
-      const [THREE, worldMod, twisterMod, groupMod] = await Promise.all([
+      const [THREE, worldMod, twisterMod, timingMod] = await Promise.all([
         import('three'),
         import('@/app/[lang]/sim/cuber/world'),
         import('@/app/[lang]/sim/cuber/twister'),
-        import('@/app/[lang]/sim/cuber/group'),
+        import('@/app/[lang]/sim/cuber/tweenTiming'),
       ]);
       if (cancelled) return;
 
       const World = worldMod.default;
       const { TwistAction } = twisterMod;
-      const CubeGroup = groupMod.default;
+      const { timing } = timingMod;
       twistActionCtorRef.current = TwistAction;
-      setFramesRef.current = (f: number) => { CubeGroup.frames = f; };
+      setFramesRef.current = (f: number) => { timing.frames = f; };
 
       const world = new World();
       world.setPuzzle(3);

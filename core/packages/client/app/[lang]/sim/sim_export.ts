@@ -11,7 +11,7 @@
 import * as THREE from 'three';
 import { Alg } from 'cubing/alg';
 import World from './cuber/world';
-import CubeGroup from './cuber/group';
+import { timing } from './cuber/tweenTiming';
 import tweener from './cuber/tweener';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import i18n from "@/i18n/i18n-client";
@@ -58,7 +58,7 @@ function expandAlg(alg: string): string {
 function estimateTotalFrames(alg: string): number {
   const leafs = expandAlg(alg).split(/\s+/).filter(Boolean);
   // 单 move = CubeGroup.frames 帧; 同轴串行假设占满。给个保守估算: 移动数 × frames × 0.9
-  const perMove = CubeGroup.frames;
+  const perMove = timing.frames;
   return HOLD_START_FRAMES + Math.max(perMove, Math.round(leafs.length * perMove * 0.9)) + HOLD_END_FRAMES;
 }
 
@@ -84,7 +84,7 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
   const origPixelRatio = renderer.getPixelRatio();
   const origWorldW = world.width;
   const origWorldH = world.height;
-  const origFrames = CubeGroup.frames;
+  const origFrames = timing.frames;
 
   let previewCtx: CanvasRenderingContext2D | null = null;
   if (previewCanvas) {
@@ -241,7 +241,7 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
   } finally {
     // 5. 恢复 — 不管成功失败都要复位, 否则 UI canvas 卡在 1080p
     tweener.paused = false;
-    CubeGroup.frames = origFrames;
+    timing.frames = origFrames;
     renderer.setPixelRatio(origPixelRatio);
     renderer.setSize(origWorldW, origWorldH, false);
     // setSize 第二参数 false 不动 style, 但 setPixelRatio 可能已改 drawingBuffer; 强制还原

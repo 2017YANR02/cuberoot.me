@@ -21,6 +21,11 @@ import {
   solvedDino, applyDinoMove, isSolved, dinoMoveToString,
 } from './dinoState';
 import DinoTwister from './DinoTwister';
+import MoveHistory from '../MoveHistory';
+import { makeAnim, type PieceAnim } from '../pieceAnim';
+import type { TweenCube } from '../TweenTwister';
+
+export type { PieceAnim };
 
 export interface PieceEntry {
   /** Stable piece id (= its solved slot). */
@@ -29,28 +34,10 @@ export interface PieceEntry {
   group: THREE.Group;
 }
 
-/** One piece's animation plan for a single move (axis-angle, like Sq1). */
-export interface PieceAnim {
-  pivot: THREE.Object3D;
-  startQuat: THREE.Quaternion;
-  endQuat: THREE.Quaternion;
-  axis: THREE.Vector3;
-  angle: number;
-}
-
-export class DinoHistory {
-  moves: string[] = [];
-  redoStack: string[] = [];
-  init = '';
-  get length(): number { return this.moves.length; }
-  clear(): void { this.moves.length = 0; this.redoStack.length = 0; }
-  record(move: string): void { this.moves.push(move); this.redoStack.length = 0; }
-}
-
 /** Precomputed unit axis (THREE.Vector3) per corner. */
 const AXES: THREE.Vector3[] = CORNER_AXIS.map(([x, y, z]) => cornerAxis(x, y, z));
 
-export default class DinoCube extends THREE.Group {
+export default class DinoCube extends THREE.Group implements TweenCube<DinoMove> {
   pieces: PieceEntry[] = [];
   /** perm[slot] = pieceId currently in that slot. */
   perm: number[] = solvedDino();
@@ -58,7 +45,7 @@ export default class DinoCube extends THREE.Group {
   dirty = true;
   readonly puzzleType = 'dino' as const;
   order = 0;
-  history = new DinoHistory();
+  history = new MoveHistory();
   twister: DinoTwister;
 
   constructor() {
@@ -120,7 +107,7 @@ export default class DinoCube extends THREE.Group {
     for (const slot of slots) {
       const pieceId = this.perm[slot];
       const entry = this.pieceById(pieceId);
-      anims.push(this._makeAnim(entry.pivot, delta, axis, angle));
+      anims.push(makeAnim(entry.pivot, delta, axis, angle));
     }
     return anims;
   }
@@ -142,6 +129,14 @@ export default class DinoCube extends THREE.Group {
   applyMovesInstant(moves: DinoMove[]): void {
     this.applyStateInstant(solvedDino());
     for (const move of moves) this.applyMoveInstant(move);
+  }
+
+  /** Snap a move into place without recording history (undo/redo replay). */
+  applyMoveSilent(move: DinoMove): void {
+    const anims = this.beginMove(move);
+    for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
+    this.perm = applyDinoMove(this.perm, move);
+    this.dirty = true;
   }
 
   /** Debug: carve out (hide) the 3 edge pieces currently occupying corner 0's slots
@@ -175,14 +170,5 @@ export default class DinoCube extends THREE.Group {
     });
     this.pieces.length = 0;
     this.callbacks.length = 0;
-  }
-
-  private _makeAnim(
-    pivot: THREE.Object3D, delta: THREE.Quaternion,
-    axis: THREE.Vector3, angle: number,
-  ): PieceAnim {
-    const startQuat = pivot.quaternion.clone();
-    const endQuat = delta.clone().multiply(startQuat);
-    return { pivot, startQuat, endQuat, axis, angle };
   }
 }
