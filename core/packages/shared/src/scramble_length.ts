@@ -30,13 +30,16 @@ export function supportsQtm(eventId: string): boolean {
   return QTM_EVENTS.has(eventId);
 }
 
-/** QTM token count of one 3x3 scramble line: a `2`-suffixed move (half turn) = 2. */
-function countQtm(line: string): number {
+/** QTM token count of a face-turn sequence: a `2`-suffixed move (half turn) = 2,
+ *  any other face turn = 1. Whole-cube rotations (x/y/z) are not turns and count 0
+ *  — a no-op for WCA scrambles (pure face turns) but needed for solver solutions
+ *  that carry a leading orientation like `z'`. */
+export function countQtm(line: string): number {
   const t = line.trim();
   if (!t) return 0;
   let n = 0;
   for (const tok of t.split(/\s+/)) {
-    if (!tok) continue;
+    if (!tok || /^[xyz][2']?$/.test(tok)) continue;
     n += tok.endsWith('2') ? 2 : 1;
   }
   return n;

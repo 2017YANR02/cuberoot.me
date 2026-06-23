@@ -24,6 +24,7 @@ import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed }
 import { normalizeScramble } from '@/lib/cross-solver';
 import { rotateSolutionY, Y_ROT_LABEL } from '@/lib/rotate-solution';
 import { variantLabel, stageLabel, VARIANT_STAGES } from '@/lib/scramble-variants';
+import { countQtm } from '@cuberoot/shared/scramble-length';
 import './StageSolver.css';
 
 function fmtMs(ms: number): string {
@@ -99,12 +100,9 @@ const SOL_SLACK = 2;
 // 「条数」可选项。
 const LIMIT_OPTIONS = [5, 10, 25, 50];
 
-// 步骤前缀可能含 1~2 个旋转 token(eo/f2leo 破 y 对称时如 "x' y")。算实际转动数时剥掉。
-const moveTokens = (sol: string) => sol.replace(/^([xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean);
-const moveLen = (sol: string) => moveTokens(sol).length;
-// QTM:180° 转(末位 '2')计 2,其余面转计 1;旋转 token(若混入)不计。HTM 相同时按它升序排。
-const qtmLen = (sol: string) =>
-  moveTokens(sol).reduce((s, t) => (/^[xyz][2']?$/.test(t) ? s : s + (t.endsWith('2') ? 2 : 1)), 0);
+// 步骤前缀可能含 1~2 个旋转 token(eo/f2leo 破 y 对称时如 "x' y")。算实际转动数(HTM)时剥掉。
+const moveLen = (sol: string) => sol.replace(/^([xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
+// QTM(180°=2)走 shared 的 countQtm,单一来源;它本身会跳过 x/y/z 旋转 token。HTM 相同时按它升序排。
 
 // 条件式阶段(htr / htr2 / fr)在非 DR / 非 HTR 视角返回哨兵(三者同值 0xffffffff):
 // 该格显示 '-',且不参与 best / min 统计。
@@ -341,7 +339,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                       : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap: limit });
       if (movesReq.current === my) {
         // 引擎按 HTM 升序收集;同 HTM 再按 QTM 升序(180°=2),Array.sort 稳定 → 原 DFS 序兜底。
-        const sols = [...res.sols].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (qtmLen(a.m) - qtmLen(b.m)));
+        const sols = [...res.sols].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
         setMoves({ ...res, sols });
         setSelSol(0);
         setCounts((prev) => { const next = prev.slice(); next[f] = res.len; return next; });
