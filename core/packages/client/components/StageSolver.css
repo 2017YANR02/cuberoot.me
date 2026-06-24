@@ -186,8 +186,6 @@ html[data-theme='dark'] .stsv {
 .stsv-mr-18 { align-items: flex-start; }
 .stsv-mr-rows { display: flex; flex-direction: column; gap: 6px; }
 .stsv-mr-18 .stsv-mr-grid { display: flex; }
-/* 中层(M E S)与旋转(x y z)同一视觉行,两组间留较大间隔区分语义。 */
-.stsv-mr-line { display: flex; gap: 14px; }
 .stsv-mr-hint { font-size: 11px; line-height: 1.4; color: var(--sv-text-sub); max-width: 220px; }
 
 /* 求解器信息弹窗(createPortal 到 body,用全站 token 不用 --sv-*) */
