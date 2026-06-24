@@ -38,7 +38,13 @@ interface Bundle { updated: string; rows: Row[] }
 
 const CONTINENT_SLUGS = new Set(['africa', 'asia', 'europe', 'northAmerica', 'oceania', 'southAmerica']);
 
-function regionUrl(region: string): string {
+function regionUrl(region: string, gender: 'all' | 'm' | 'f'): string {
+  if (gender !== 'all') {
+    // 性别(女子/男子)纪录只做 world + 6 大洲,无国家级 → 非洲名归 world 兜底
+    const base = `/stats/records/history/gender/${gender}`;
+    if (CONTINENT_SLUGS.has(region)) return `${base}/continent/${region}.json`;
+    return `${base}/world.json`;
+  }
   if (region === 'world' || region === '') return '/stats/records/history/world.json';
   if (CONTINENT_SLUGS.has(region)) return `/stats/records/history/continent/${region}.json`;
   return `/stats/records/history/country/${region}.json`;
@@ -55,6 +61,7 @@ function RecordsPageInner() {
       show: parseAsString,
       region: parseAsString,
       event: parseAsString,
+      gender: parseAsString,
     },
     { history: 'replace', scroll: false },
   );
@@ -62,6 +69,7 @@ function RecordsPageInner() {
   const show: Show = q.show === 'mixed' ? 'mixed' : q.show === 'history' ? 'history' : 'current';
   const region = q.region || 'world';
   const event = q.event || '';
+  const gender: 'all' | 'm' | 'f' = q.gender === 'm' || q.gender === 'f' ? q.gender : 'all';
 
   useEffect(() => {
     if (q.show !== 'current' && q.show !== 'history' && q.show !== 'mixed') {
@@ -98,7 +106,7 @@ function RecordsPageInner() {
     setLoading(true);
     setError(null);
     setBundle(null);
-    fetch(statsUrl(regionUrl(region)))
+    fetch(statsUrl(regionUrl(region, gender)))
       .then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -106,7 +114,15 @@ function RecordsPageInner() {
       .then((j: Bundle) => setBundle(j))
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [region]);
+  }, [region, gender]);
+
+  // 切到性别(女子/男子)纪录时,国家级不存在 → 把残留的国家区域回退到 world
+  useEffect(() => {
+    if (gender !== 'all' && region !== 'world' && !CONTINENT_SLUGS.has(region)) {
+      setQ({ region: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gender, region]);
 
   const visibleRows = useMemo(() => {
     if (!bundle) return [];
@@ -169,10 +185,13 @@ function RecordsPageInner() {
         <h1>{tr({ zh: '纪录', en: 'Records'
         })}</h1>
         <p className="wse-subtitle">
-          {show === 'current'
-            ? tr({ zh: '各项目当前的世界 / 大洲 / 国家纪录', en: 'Current world / continental / national record for each event' })
-            : tr({ zh: '历史上所有曾被打破的世界 / 大洲 / 国家纪录', en: 'Every world / continental / national record ever set'
-        })}
+          {gender !== 'all'
+            ? (show === 'current'
+              ? tr({ zh: `${gender === 'f' ? '女子' : '男子'}各项目当前的世界 / 大洲纪录`, en: `Current ${gender === 'f' ? "women's" : "men's"} world / continental record per event` })
+              : tr({ zh: `历史上所有${gender === 'f' ? '女子' : '男子'}世界 / 大洲纪录`, en: `Every ${gender === 'f' ? "women's" : "men's"} world / continental record ever set` }))
+            : (show === 'current'
+              ? tr({ zh: '各项目当前的世界 / 大洲 / 国家纪录', en: 'Current world / continental / national record for each event' })
+              : tr({ zh: '历史上所有曾被打破的世界 / 大洲 / 国家纪录', en: 'Every world / continental / national record ever set' }))}
         </p>
       </header>
 
@@ -192,9 +211,20 @@ function RecordsPageInner() {
           <RegionPicker
             value={region}
             isZh={isZh}
-            restrictTo={manifestCountriesSorted}
+            restrictTo={gender === 'all' ? manifestCountriesSorted : []}
             onChange={(v) => update('region', v)}
           />
+
+          <select
+            className="records-mode-select"
+            value={gender}
+            onChange={(e) => update('gender', e.target.value === 'all' ? '' : e.target.value)}
+            aria-label={tr({ zh: '性别', en: 'Gender' })}
+          >
+            <option value="all">{tr({ zh: '所有', en: 'All' })}</option>
+            <option value="m">{tr({ zh: '男', en: 'Male' })}</option>
+            <option value="f">{tr({ zh: '女', en: 'Female' })}</option>
+          </select>
         </div>
 
         <WcaEventSelector
