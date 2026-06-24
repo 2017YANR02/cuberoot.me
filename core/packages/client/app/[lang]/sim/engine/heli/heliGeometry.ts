@@ -26,8 +26,7 @@ import { SIZE } from '../define';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { HELI_CORNERS, HELI_FACE_OF } from '@/lib/heli-solver';
 import { EDGE_AXIS, EDGE_MID } from './heliState';
-import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
-import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { roundedSolid, type Plane } from '../polytopeCut';
 import { makeSticker } from '../stickerGeom';
 
 /** Cube half-side (world units) — same scale as Dino so the shared camera frames it. */
@@ -77,9 +76,8 @@ const _edgeMidV = EDGE_MID.map(([x, y, z]) => new THREE.Vector3(x * H, y * H, z 
 /** Unit twist axis (world) for edge e — used by the cube/drag for the 180° rotation. */
 export function edgeAxisVec(e: number): THREE.Vector3 { return _edgeAxisV[e].clone(); }
 
-// ── convex cell geometry (cube ∩ half-spaces) ───────────────────────────────────────
-interface Plane { n: [number, number, number]; d: number } // n·x ≤ d
-
+// ── convex cell geometry (cube ∩ half-spaces) — polytope solver + Minkowski rounding
+// shared in ../polytopeCut (also used by megaminx). ──────────────────────────────────
 function bodyPlanes(capEdges: ReadonlyArray<number>): Plane[] {
   const planes: Plane[] = [
     { n: [1, 0, 0], d: H }, { n: [-1, 0, 0], d: H },
@@ -92,68 +90,6 @@ function bodyPlanes(capEdges: ReadonlyArray<number>): Plane[] {
     else planes.push({ n: [ax, ay, az], d: CUT });                          // a·x ≤ CUT
   }
   return planes;
-}
-
-function solve3(p: Plane, q: Plane, r: Plane): THREE.Vector3 | null {
-  const A = [p.n, q.n, r.n], b = [p.d, q.d, r.d];
-  const det = (M: number[][]): number =>
-    M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1])
-    - M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0])
-    + M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
-  const D = det(A);
-  if (Math.abs(D) < 1e-9) return null;
-  const col = (i: number): number[][] => A.map((row, k) => row.map((val, j) => (j === i ? b[k] : val)));
-  return new THREE.Vector3(det(col(0)) / D, det(col(1)) / D, det(col(2)) / D);
-}
-
-/** Vertices of the convex polytope ∩{planes} (n·x ≤ d). */
-function polytopeVerts(planes: Plane[]): THREE.Vector3[] {
-  const EPS = 1e-3;
-  const feasible = (v: THREE.Vector3): boolean =>
-    planes.every((p) => p.n[0] * v.x + p.n[1] * v.y + p.n[2] * v.z <= p.d + EPS);
-  const verts: THREE.Vector3[] = [];
-  for (let i = 0; i < planes.length; i++)
-    for (let j = i + 1; j < planes.length; j++)
-      for (let k = j + 1; k < planes.length; k++) {
-        const v = solve3(planes[i], planes[j], planes[k]);
-        if (v && feasible(v) && !verts.some((w) => w.distanceTo(v) < 1e-3)) verts.push(v);
-      }
-  return verts;
-}
-
-function fibonacciSphere(n: number): THREE.Vector3[] {
-  const out: THREE.Vector3[] = [];
-  const ga = Math.PI * (3 - Math.sqrt(5));
-  for (let i = 0; i < n; i++) {
-    const y = 1 - (i / (n - 1)) * 2;
-    const r = Math.sqrt(Math.max(0, 1 - y * y));
-    const t = ga * i;
-    out.push(new THREE.Vector3(Math.cos(t) * r, y, Math.sin(t) * r));
-  }
-  return out;
-}
-const FIB = fibonacciSphere(26);
-
-/**
- * Smoothly rounded solid = Minkowski opening of the polytope ∩{planes} by radius r:
- * erode every plane inward by r, sphere-sample radius r around each eroded vertex,
- * convex-hull, smooth normals. The opening ⊆ the original cell, so zero-interpenetration
- * is preserved. Falls back to the sharp hull if the cell is too small to erode.
- */
-function roundedSolid(planes: Plane[], r: number): THREE.BufferGeometry {
-  const eroded = polytopeVerts(planes.map((p) => ({ n: p.n, d: p.d - r })));
-  const pts: THREE.Vector3[] = [];
-  if (eroded.length >= 4) {
-    for (const ev of eroded) for (const dir of FIB) pts.push(ev.clone().addScaledVector(dir, r));
-  } else {
-    pts.push(...polytopeVerts(planes)); // too small to round — keep sharp
-  }
-  let geom: THREE.BufferGeometry = new ConvexGeometry(pts);
-  geom.deleteAttribute('normal');
-  geom.deleteAttribute('uv');
-  geom = mergeVertices(geom);
-  geom.computeVertexNormals();
-  return geom;
 }
 
 // ── materials ───────────────────────────────────────────────────────────────────────

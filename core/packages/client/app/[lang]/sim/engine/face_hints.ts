@@ -4,6 +4,7 @@
 // 跟 cube 状态(转体)解耦 — 即便用户做了 y/y' 整体转,F 仍指那个屏幕方位 (+Z)。
 import * as THREE from 'three';
 import { SIZE } from './define';
+import { FACE_NORMAL, FACE_NAME } from './mega/megaState';
 
 export interface OrientationHint {
   letter: string;
@@ -56,6 +57,13 @@ export const REX_CORNER_HINTS: OrientationHint[] = [
   { letter: 'UBR', dir: new THREE.Vector3(1, 1, -1) },
   { letter: 'UFR', dir: new THREE.Vector3(1, 1, 1) },
 ];
+
+// Megaminx is a FACE-turner (dodecahedron): 12 face labels at the face centers, matching
+// FACE_NAME / FACE_NORMAL in mega/megaState (PG order U/F/L/BL/BR/R/C/A/I/BF/E/D).
+export const MEGA_FACE_HINTS: OrientationHint[] = FACE_NAME.map((letter, i) => ({
+  letter,
+  dir: new THREE.Vector3(FACE_NORMAL[i][0], FACE_NORMAL[i][1], FACE_NORMAL[i][2]),
+}));
 
 // Helicopter is an EDGE-turner: its 12 twist axes sit at the edge midpoints. Each
 // label = the edge's 2-letter name (UF, UR, …) at that edge's midpoint direction —
