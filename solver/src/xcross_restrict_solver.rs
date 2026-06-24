@@ -443,20 +443,24 @@ impl XCrossRestrictSolver {
         (corner_code(4 + slot, 0), edge_code(slot, 0))
     }
 
-    /// 从给定视角(face)+ 槽(slot)算起点 (cross_coord, slot_corner, slot_edge, center)。
+    /// 从给定视角(face)算起点 (cross_coord, [4 槽角], [4 槽棱], center)。一次把 4 个 F2L 槽的
+    /// 角/棱编码全部沿共轭打乱推到当前态(各槽件相互独立、各自演化),多对搜索按 active 子集取用。
     /// 打乱按 ROTS_FACE[face] 逐 move 共轭(面动),从 SOLVED 应用。
-    fn start_state(&self, scramble: &[usize], face: usize, slot: usize) -> (u32, u8, u8, u8) {
+    fn start_state_all(&self, scramble: &[usize], face: usize) -> (u32, [u8; 4], [u8; 4], u8) {
         let conj = CrossRestrictSolver::conjugate_scramble_pub(scramble, ROTS_FACE[face.min(5)]);
         let mut cross = self.solved_cross;
-        let (mut corner, mut edge) = Self::solved_pair(slot);
+        let mut corners: [u8; 4] = std::array::from_fn(|s| Self::solved_pair(s).0);
+        let mut edges: [u8; 4] = std::array::from_fn(|s| Self::solved_pair(s).1);
         let mut center = 0u8;
         for &m in &conj {
             cross = self.step_cross(cross, m);
-            corner = self.step_corner(corner, m);
-            edge = self.step_edge(edge, m);
+            for s in 0..4 {
+                corners[s] = self.step_corner(corners[s], m);
+                edges[s] = self.step_edge(edges[s], m);
+            }
             center = self.step_center(center, m);
         }
-        (cross, corner, edge, center)
+        (cross, corners, edges, center)
     }
 
     // ---------- 两个 PDB(运行时建,无文件)----------
@@ -587,8 +591,8 @@ impl XCrossRestrictSolver {
         self.solve_view_slot_budgeted(scramble, face, slot, pdbs, max_rot_count, max_bound, &mut budget)
     }
 
-    /// 带节点预算版:返回最优解;`budget.hit` 置位表示因超预算放弃(结果 None 但「非无解」)。
-    /// 预算不限(SearchBudget::unlimited)时行为与无预算版逐字节一致。
+    /// 带节点预算版(单槽便捷包装):xcross = 十字 + 1 个 F2L 对。多槽版的 active=&[slot] 特例,
+    /// 行为与原单对实现逐字节一致(T1-T4 据此)。
     #[allow(clippy::too_many_arguments)]
     fn solve_view_slot_budgeted(
         &self,
@@ -600,36 +604,57 @@ impl XCrossRestrictSolver {
         max_bound: u32,
         budget: &mut SearchBudget,
     ) -> Option<Vec<usize>> {
-        let goal_centers = [0u8];
-        let (start_cross, start_corner, start_edge, start_center) =
-            self.start_state(scramble, face, slot);
+        self.solve_view_slots_budgeted(scramble, face, &[slot], pdbs, max_rot_count, max_bound, budget)
+    }
 
-        let (solved_corner, solved_edge) = Self::solved_pair(slot);
-        let pdb_pair = &pdbs.pairs[slot];
-        let pdb_cross = &pdbs.cross;
-        let pdb_center = &pdbs.center_restore;
+    /// 多对受限最优:解「face 视角 + active 槽集」(十字 + 这 k 个 F2L 对同时归位 + 中心复原)。
+    /// h = max(PDB_cross, 各 active 对 PDB 取最大, center_restore),全部为可采纳下界 ⇒ max 可采纳;
+    /// IDA* 迭代加深,首达即最优。k=1 退化为 xcross,k=2/3/4 = xxcross/xxxcross/F2L。
+    /// `budget.hit` 置位 = 超预算放弃(结果 None 但「非无解」,调用方据此显 ⋯)。
+    #[allow(clippy::too_many_arguments)]
+    fn solve_view_slots_budgeted(
+        &self,
+        scramble: &[usize],
+        face: usize,
+        active: &[usize],
+        pdbs: &Pdbs,
+        max_rot_count: u32,
+        max_bound: u32,
+        budget: &mut SearchBudget,
+    ) -> Option<Vec<usize>> {
+        let goal_centers = [0u8];
+        let (start_cross, corners, edges, start_center) = self.start_state_all(scramble, face);
+        let solved: [(u8, u8); 4] = std::array::from_fn(Self::solved_pair);
 
         if start_cross == self.solved_cross
-            && start_corner == solved_corner
-            && start_edge == solved_edge
             && start_center == 0
+            && active
+                .iter()
+                .all(|&s| corners[s] == solved[s].0 && edges[s] == solved[s].1)
         {
             return Some(Vec::new());
         }
 
-        let hc = pdb_cross[start_cross as usize];
-        let hp = pdb_pair[start_corner as usize * EDGE_STATES + start_edge as usize];
-        if hc == u8::MAX || hp == u8::MAX {
+        let hc = pdbs.cross[start_cross as usize];
+        if hc == u8::MAX {
             return None;
         }
-        let h0 = hc.max(hp).max(pdb_center[start_center as usize]) as u32;
+        let mut h0 = hc.max(pdbs.center_restore[start_center as usize]);
+        for &s in active {
+            let hp = pdbs.pairs[s][corners[s] as usize * EDGE_STATES + edges[s] as usize];
+            if hp == u8::MAX {
+                return None;
+            }
+            if hp > h0 {
+                h0 = hp;
+            }
+        }
 
-        for bound in h0..=max_bound {
+        for bound in (h0 as u32)..=max_bound {
             let mut path: Vec<usize> = Vec::new();
             if let Some(sol) = self.ida(
-                start_cross, start_corner, start_edge, start_center, 0, bound, &pdbs.allowed_moves,
-                &goal_centers, max_rot_count, pdb_cross, pdb_pair, pdb_center, &solved_corner,
-                &solved_edge, &mut path, budget,
+                start_cross, corners, edges, start_center, 0, bound, &pdbs.allowed_moves,
+                &goal_centers, max_rot_count, pdbs, active, &solved, &mut path, budget,
             ) {
                 return Some(sol);
             }
@@ -653,31 +678,31 @@ impl XCrossRestrictSolver {
         self.solve_view_slot_with(scramble, face, slot, &pdbs, max_rot_count)
     }
 
-    /// IDA* 递归(h 剪枝 + 同格相邻剪枝 + rot 预算)。
+    /// IDA* 递归(多对:h 剪枝 + 同格相邻剪枝 + rot 预算)。corners/edges 为 4 槽的当前编码(Copy,
+    /// 每步只推 active 槽),active = 需归位的槽集,solved = 4 槽各自的目标 (角,棱)。
     #[allow(clippy::too_many_arguments)]
     fn ida(
         &self,
         cross: u32,
-        corner: u8,
-        edge: u8,
+        corners: [u8; 4],
+        edges: [u8; 4],
         center: u8,
         depth: u32,
         bound: u32,
         allowed_moves: &[usize],
         goal_centers: &[u8],
         max_rot: u32,
-        pdb_cross: &[u8],
-        pdb_pair: &[u8],
-        pdb_center: &[u8],
-        solved_corner: &u8,
-        solved_edge: &u8,
+        pdbs: &Pdbs,
+        active: &[usize],
+        solved: &[(u8, u8); 4],
         path: &mut Vec<usize>,
         budget: &mut SearchBudget,
     ) -> Option<Vec<usize>> {
         if cross == self.solved_cross
-            && corner == *solved_corner
-            && edge == *solved_edge
             && goal_centers.contains(&center)
+            && active
+                .iter()
+                .all(|&s| corners[s] == solved[s].0 && edges[s] == solved[s].1)
         {
             return Some(path.clone());
         }
@@ -687,13 +712,21 @@ impl XCrossRestrictSolver {
             budget.hit = true;
             return None;
         }
-        let hc = pdb_cross[cross as usize];
-        let hp = pdb_pair[corner as usize * EDGE_STATES + edge as usize];
-        if hc == u8::MAX || hp == u8::MAX {
+        let hc = pdbs.cross[cross as usize];
+        if hc == u8::MAX {
             return None;
         }
-        let h = hc.max(hp).max(pdb_center[center as usize]) as u32;
-        if depth + h > bound {
+        let mut h = hc.max(pdbs.center_restore[center as usize]);
+        for &s in active {
+            let hp = pdbs.pairs[s][corners[s] as usize * EDGE_STATES + edges[s] as usize];
+            if hp == u8::MAX {
+                return None;
+            }
+            if hp > h {
+                h = hp;
+            }
+        }
+        if depth + h as u32 > bound {
             return None;
         }
         let rots_used = path.iter().filter(|&&m| m >= 45).count() as u32;
@@ -707,13 +740,17 @@ impl XCrossRestrictSolver {
                 continue;
             }
             let nc = self.step_cross(cross, m);
-            let ncorner = self.step_corner(corner, m);
-            let nedge = self.step_edge(edge, m);
+            let mut ncorners = corners;
+            let mut nedges = edges;
+            for &s in active {
+                ncorners[s] = self.step_corner(corners[s], m);
+                nedges[s] = self.step_edge(edges[s], m);
+            }
             let ncenter = self.step_center(center, m);
             path.push(m);
             if let Some(sol) = self.ida(
-                nc, ncorner, nedge, ncenter, depth + 1, bound, allowed_moves, goal_centers, max_rot,
-                pdb_cross, pdb_pair, pdb_center, solved_corner, solved_edge, path, budget,
+                nc, ncorners, nedges, ncenter, depth + 1, bound, allowed_moves, goal_centers,
+                max_rot, pdbs, active, solved, path, budget,
             ) {
                 return Some(sol);
             }
@@ -796,26 +833,49 @@ impl XCrossRestrictSolver {
         })
     }
 
-    /// 带节点预算的 6 视角网格(交互用):每格 = 该面 4 槽最小步数。返回 i64:
+    /// {0,1,2,3} 选 k 的全部组合(规范升序),= xxcross/xxxcross/F2L 的「固定已解槽集」候选。
+    /// k=1→4 个单槽(xcross),k=2→6,k=3→4,k=4→1(满 F2L)。k=0→[[]](纯十字,实际不走本引擎)。
+    fn k_subsets(k: usize) -> Vec<Vec<usize>> {
+        let mut res: Vec<Vec<usize>> = Vec::new();
+        let mut cur: Vec<usize> = Vec::new();
+        fn rec(start: usize, k: usize, cur: &mut Vec<usize>, res: &mut Vec<Vec<usize>>) {
+            if cur.len() == k {
+                res.push(cur.clone());
+                return;
+            }
+            for i in start..4 {
+                cur.push(i);
+                rec(i + 1, k, cur, res);
+                cur.pop();
+            }
+        }
+        rec(0, k, &mut cur, &mut res);
+        res
+    }
+
+    /// 带节点预算的 6 视角网格(交互用):每格 = 该面在「k 对组合」上的最小步数(k=1 xcross /
+    /// 2 xxcross / 3 xxxcross / 4 F2L)。auto:对 C(4,k) 个组合各搜、取最小。返回 i64:
     /// ≥0 = 步数;-1 = 受限下真无解(h=INF 秒证 / 或 MAX_BOUND 内穷尽无解);-2 = 未在节点预算内判定
     /// (限制过宽:含较多 wide/slice/rotation 等搬中心 move 时,no-center 启发式偏松、分支爆炸 →
     /// 撞预算,价值低,显 ⋯)。建表恒 ≈40ms(中心移出主表),贵的只是宽集的搜索,故用节点预算兜底。
-    /// `node_limit` = 单 (face,slot) IDA* 节点上限(每格独立)。
+    /// `node_limit` = 单 (face,组合) IDA* 节点上限(每格独立)。
     pub fn solve_xcross_restricted_grid_budgeted(
         &self,
         scramble: &[usize],
         allowed: u64,
         max_rot_count: u32,
         node_limit: u64,
+        k: usize,
     ) -> [i64; 6] {
         let pdbs = self.build_pdbs(allowed);
+        let combos = Self::k_subsets(k);
         std::array::from_fn(|face| {
             let mut best: Option<u32> = None;
             let mut any_budget = false;
-            for slot in 0..4 {
+            for combo in &combos {
                 let mut budget = SearchBudget { nodes: 0, limit: node_limit, hit: false };
-                match self.solve_view_slot_budgeted(
-                    scramble, face, slot, &pdbs, max_rot_count, Self::MAX_BOUND, &mut budget,
+                match self.solve_view_slots_budgeted(
+                    scramble, face, combo, &pdbs, max_rot_count, Self::MAX_BOUND, &mut budget,
                 ) {
                     Some(sol) => {
                         let l = sol.len() as u32;
@@ -833,7 +893,7 @@ impl XCrossRestrictSolver {
         })
     }
 
-    /// 多解枚举:face 视角下、长度 ∈ [opt, opt+extra]、最多 cap 条解(升序、去重)。无预算版。
+    /// 多解枚举:face 视角下、长度 ∈ [opt, opt+extra]、最多 cap 条解(升序、去重)。无预算 k=1 版。
     pub fn solve_xcross_restricted_enum(
         &self,
         scramble: &[usize],
@@ -843,10 +903,12 @@ impl XCrossRestrictSolver {
         extra: u32,
         cap: usize,
     ) -> Vec<Vec<usize>> {
-        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, u64::MAX)
+        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, u64::MAX, &Self::k_subsets(1))
     }
 
-    /// 带节点预算的多解枚举(交互用):某槽超节点预算只是不贡献,不拖垮整个视角。
+    /// 带节点预算的多解枚举(交互用):某组合超节点预算只是不贡献,不拖垮整个视角。
+    /// `k` = 同时归位的 F2L 对数(1 xcross / 2 xxcross / 3 xxxcross / 4 F2L);`combo` = 用户固定的
+    /// 槽集(Some → 只枚举该组合;None → 枚举全部 C(4,k) 组合并合并取最优)。
     #[allow(clippy::too_many_arguments)]
     pub fn solve_xcross_restricted_enum_budgeted(
         &self,
@@ -857,8 +919,14 @@ impl XCrossRestrictSolver {
         extra: u32,
         cap: usize,
         node_limit: u64,
+        k: usize,
+        combo: Option<Vec<usize>>,
     ) -> Vec<Vec<usize>> {
-        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, node_limit)
+        let combos = match combo {
+            Some(c) => vec![c],
+            None => Self::k_subsets(k),
+        };
+        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, node_limit, &combos)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -871,21 +939,23 @@ impl XCrossRestrictSolver {
         extra: u32,
         cap: usize,
         node_limit: u64,
+        combos: &[Vec<usize>],
     ) -> Vec<Vec<usize>> {
         let goal_centers = [0u8];
         let pdbs = self.build_pdbs(allowed);
+        let solved: [(u8, u8); 4] = std::array::from_fn(Self::solved_pair);
 
-        // 每槽独立预算(与 grid 一致):某槽超节点预算只是不贡献,不会拖垮整个视角的枚举。
+        // 每组合独立预算(与 grid 一致):某组合超节点预算只是不贡献,不会拖垮整个视角的枚举。
         let fresh = || SearchBudget { nodes: 0, limit: node_limit, hit: false };
-        let mut slot_opt = [None::<u32>; 4];
+        let mut combo_opt: Vec<Option<u32>> = vec![None; combos.len()];
         let mut global_opt: Option<u32> = None;
-        for slot in 0..4 {
+        for (ci, combo) in combos.iter().enumerate() {
             let mut b = fresh();
             if let Some(sol) =
-                self.solve_view_slot_budgeted(scramble, face, slot, &pdbs, max_rot, Self::MAX_BOUND, &mut b)
+                self.solve_view_slots_budgeted(scramble, face, combo, &pdbs, max_rot, Self::MAX_BOUND, &mut b)
             {
                 let l = sol.len() as u32;
-                slot_opt[slot] = Some(l);
+                combo_opt[ci] = Some(l);
                 global_opt = Some(global_opt.map_or(l, |g| g.min(l)));
             }
         }
@@ -896,22 +966,20 @@ impl XCrossRestrictSolver {
 
         let mut sols: Vec<Vec<usize>> = Vec::new();
         for lim in opt..=opt + extra {
-            for slot in 0..4 {
+            for (ci, combo) in combos.iter().enumerate() {
                 if sols.len() >= cap {
                     break;
                 }
-                match slot_opt[slot] {
+                match combo_opt[ci] {
                     Some(o) if o <= lim => {}
                     _ => continue,
                 }
-                let (sc, scn, se, sce) = self.start_state(scramble, face, slot);
-                let (solved_corner, solved_edge) = Self::solved_pair(slot);
+                let (sc, corners, edges, sce) = self.start_state_all(scramble, face);
                 let mut path: Vec<usize> = Vec::new();
                 let mut b = fresh();
                 self.dfs_exact(
-                    sc, scn, se, sce, 0, lim, &pdbs.allowed_moves, &goal_centers, max_rot,
-                    &pdbs.cross, &pdbs.pairs[slot], &pdbs.center_restore, &solved_corner,
-                    &solved_edge, &mut path, &mut sols, cap, &mut b,
+                    sc, corners, edges, sce, 0, lim, &pdbs.allowed_moves, &goal_centers, max_rot,
+                    &pdbs, combo, &solved, &mut path, &mut sols, cap, &mut b,
                 );
             }
             if sols.len() >= cap {
@@ -929,19 +997,17 @@ impl XCrossRestrictSolver {
     fn dfs_exact(
         &self,
         cross: u32,
-        corner: u8,
-        edge: u8,
+        corners: [u8; 4],
+        edges: [u8; 4],
         center: u8,
         depth: u32,
         lim: u32,
         allowed_moves: &[usize],
         goal_centers: &[u8],
         max_rot: u32,
-        pdb_cross: &[u8],
-        pdb_pair: &[u8],
-        pdb_center: &[u8],
-        solved_corner: &u8,
-        solved_edge: &u8,
+        pdbs: &Pdbs,
+        active: &[usize],
+        solved: &[(u8, u8); 4],
         path: &mut Vec<usize>,
         sols: &mut Vec<Vec<usize>>,
         cap: usize,
@@ -951,9 +1017,10 @@ impl XCrossRestrictSolver {
             return;
         }
         if cross == self.solved_cross
-            && corner == *solved_corner
-            && edge == *solved_edge
             && goal_centers.contains(&center)
+            && active
+                .iter()
+                .all(|&s| corners[s] == solved[s].0 && edges[s] == solved[s].1)
         {
             if depth == lim {
                 sols.push(path.clone());
@@ -968,13 +1035,21 @@ impl XCrossRestrictSolver {
             budget.hit = true;
             return;
         }
-        let hc = pdb_cross[cross as usize];
-        let hp = pdb_pair[corner as usize * EDGE_STATES + edge as usize];
-        if hc == u8::MAX || hp == u8::MAX {
+        let hc = pdbs.cross[cross as usize];
+        if hc == u8::MAX {
             return;
         }
-        let h = hc.max(hp).max(pdb_center[center as usize]) as u32;
-        if depth + h > lim {
+        let mut h = hc.max(pdbs.center_restore[center as usize]);
+        for &s in active {
+            let hp = pdbs.pairs[s][corners[s] as usize * EDGE_STATES + edges[s] as usize];
+            if hp == u8::MAX {
+                return;
+            }
+            if hp > h {
+                h = hp;
+            }
+        }
+        if depth + h as u32 > lim {
             return;
         }
         let rots_used = path.iter().filter(|&&m| m >= 45).count() as u32;
@@ -988,13 +1063,17 @@ impl XCrossRestrictSolver {
                 continue;
             }
             let nc = self.step_cross(cross, m);
-            let ncorner = self.step_corner(corner, m);
-            let nedge = self.step_edge(edge, m);
+            let mut ncorners = corners;
+            let mut nedges = edges;
+            for &s in active {
+                ncorners[s] = self.step_corner(corners[s], m);
+                nedges[s] = self.step_edge(edges[s], m);
+            }
             let ncenter = self.step_center(center, m);
             path.push(m);
             self.dfs_exact(
-                nc, ncorner, nedge, ncenter, depth + 1, lim, allowed_moves, goal_centers, max_rot,
-                pdb_cross, pdb_pair, pdb_center, solved_corner, solved_edge, path, sols, cap, budget,
+                nc, ncorners, nedges, ncenter, depth + 1, lim, allowed_moves, goal_centers,
+                max_rot, pdbs, active, solved, path, sols, cap, budget,
             );
             path.pop();
             if sols.len() >= cap || budget.hit {
@@ -1474,7 +1553,8 @@ mod tests {
         depth_cap: u32,
     ) -> Option<u32> {
         let allowed_moves: Vec<usize> = (0..54).filter(|&m| (allowed >> m) & 1 == 1).collect();
-        let (sc, scn, se, sce) = solver.start_state(scramble, face, slot);
+        let (sc, corners, edges, sce) = solver.start_state_all(scramble, face);
+        let (scn, se) = (corners[slot], edges[slot]);
         let (goal_corner, goal_edge) = XCrossRestrictSolver::solved_pair(slot);
         let is_goal = |cross: u32, corner: u8, edge: u8, center: u8| -> bool {
             cross == solver.solved_cross
@@ -1588,4 +1668,179 @@ mod tests {
         eprintln!("T4: verified {} (face,slot) cases — IDA* optimal == independent IDDFS optimal", checked);
     }
 
+    // ===== T5: 多对(xxcross/F2L)合法性 + 可采纳性 =====
+
+    /// 多槽 IDDFS oracle:同 bfs_oracle_view_slot,但目标 = cross + active 各槽全归位 + center=0。
+    /// 无启发,纯枚举(仅同格相邻剪枝,无损);返回最短步数(≤depth_cap),无解 None。
+    #[allow(clippy::too_many_arguments)]
+    fn bfs_oracle_view_slots(
+        solver: &XCrossRestrictSolver,
+        scramble: &[usize],
+        face: usize,
+        active: &[usize],
+        allowed: u64,
+        max_rot: u32,
+        depth_cap: u32,
+    ) -> Option<u32> {
+        let allowed_moves: Vec<usize> = (0..54).filter(|&m| (allowed >> m) & 1 == 1).collect();
+        let (sc, corners, edges, sce) = solver.start_state_all(scramble, face);
+        let solved: [(u8, u8); 4] = std::array::from_fn(XCrossRestrictSolver::solved_pair);
+        let active: Vec<usize> = active.to_vec();
+        let is_goal = |cross: u32, cs: &[u8; 4], es: &[u8; 4], center: u8| -> bool {
+            cross == solver.solved_cross
+                && center == 0
+                && active.iter().all(|&s| cs[s] == solved[s].0 && es[s] == solved[s].1)
+        };
+
+        #[allow(clippy::too_many_arguments)]
+        fn dfs(
+            solver: &XCrossRestrictSolver,
+            cross: u32,
+            corners: [u8; 4],
+            edges: [u8; 4],
+            center: u8,
+            rots: u32,
+            remaining: u32,
+            max_rot: u32,
+            allowed_moves: &[usize],
+            active: &[usize],
+            prev_cell: i32,
+            is_goal: &dyn Fn(u32, &[u8; 4], &[u8; 4], u8) -> bool,
+        ) -> bool {
+            if is_goal(cross, &corners, &edges, center) {
+                return true;
+            }
+            if remaining == 0 {
+                return false;
+            }
+            for &m in allowed_moves {
+                if (m / 3) as i32 == prev_cell {
+                    continue;
+                }
+                let is_rot = m >= 45;
+                let nrot = if is_rot { rots + 1 } else { rots };
+                if is_rot && nrot > max_rot {
+                    continue;
+                }
+                let nc = solver.step_cross(cross, m);
+                let mut ncs = corners;
+                let mut nes = edges;
+                for &s in active {
+                    ncs[s] = solver.step_corner(corners[s], m);
+                    nes[s] = solver.step_edge(edges[s], m);
+                }
+                let nce = solver.step_center(center, m);
+                if dfs(
+                    solver, nc, ncs, nes, nce, nrot, remaining - 1, max_rot, allowed_moves, active,
+                    (m / 3) as i32, is_goal,
+                ) {
+                    return true;
+                }
+            }
+            false
+        }
+
+        for d in 0..=depth_cap {
+            if dfs(solver, sc, corners, edges, sce, 0, d, max_rot, &allowed_moves, &active, -1, &is_goal) {
+                return Some(d);
+            }
+        }
+        None
+    }
+
+    #[test]
+    fn t5_multipair_valid_and_optimal() {
+        let solver = XCrossRestrictSolver::new();
+        // (A) replay 合法性 + 单调性:含 wide/slice/rotation 的丰富受限集(同 T4),启发式快搜。
+        let mut rich: u64 = 0;
+        for b in [0u32, 3, 6, 9, 12, 15, 18, 21, 24, 27, 36, 39, 42, 45, 48] {
+            rich |= 0b111u64 << b;
+        }
+        let max_rot = 2u32;
+        let pdbs_rich = solver.build_pdbs(rich);
+        let combos2 = XCrossRestrictSolver::k_subsets(2);
+        let cap_valid = 16u32;
+        let node_budget = 2_000_000u64;
+        let mut checked_valid = 0usize;
+        for seed in 0..6u64 {
+            let scramble = random_face_scramble(22_000 + seed, 4);
+            for face in 0..6 {
+                let single: Vec<Option<u32>> = (0..4)
+                    .map(|slot| {
+                        solver
+                            .solve_view_slot_bounded(&scramble, face, slot, &pdbs_rich, max_rot, cap_valid)
+                            .map(|s| s.len() as u32)
+                    })
+                    .collect();
+                for combo in &combos2 {
+                    let mut b = SearchBudget { nodes: 0, limit: node_budget, hit: false };
+                    let sol = match solver.solve_view_slots_budgeted(
+                        &scramble, face, combo, &pdbs_rich, max_rot, cap_valid, &mut b,
+                    ) {
+                        Some(s) => s,
+                        None => continue, // 无解或超预算 → 跳过
+                    };
+                    let l = sol.len() as u32;
+                    // replay:解套到真魔方上,combo 里每个槽的 xcross(cross + 该对)都必须真解出。
+                    for &slot in combo {
+                        assert!(
+                            replay::xcross_solved_after(&scramble, face, slot, &sol),
+                            "T5(A) seed {} face {} combo {:?}: solution does NOT solve slot {}",
+                            seed, face, combo, slot
+                        );
+                    }
+                    // 单调性:解 2 对至少和解任一单对一样难。
+                    for &slot in combo {
+                        if let Some(s1) = single[slot] {
+                            assert!(
+                                l >= s1,
+                                "T5(A) seed {} face {} combo {:?}: xxcross {} < single slot {} = {}",
+                                seed, face, combo, l, slot, s1
+                            );
+                        }
+                    }
+                    checked_valid += 1;
+                }
+            }
+        }
+        assert!(checked_valid >= 30, "T5(A) checked too few ({})", checked_valid);
+
+        // (B) 可采纳性 spot-check:低分支受限集(6 面 + M,M 搬中心)+ 极短打乱 → L 小、oracle 可行。
+        //     oracle 只探到求解器声称的 L:在 <L 找到 ⟹ 启发式不可采纳(bug)。
+        let mut tight: u64 = 0;
+        for b in [0u32, 3, 6, 9, 12, 15, 36] {
+            tight |= 0b111u64 << b;
+        }
+        let pdbs_tight = solver.build_pdbs(tight);
+        let cap_opt = 8u32;
+        let mut checked_opt = 0usize;
+        for seed in 0..5u64 {
+            let scramble = random_face_scramble(33_000 + seed, 2);
+            for face in 0..6 {
+                for combo in &combos2 {
+                    let mut b = SearchBudget::unlimited();
+                    let mine = solver.solve_view_slots_budgeted(
+                        &scramble, face, combo, &pdbs_tight, max_rot, cap_opt, &mut b,
+                    );
+                    let l = match mine {
+                        Some(s) => s.len() as u32,
+                        None => continue,
+                    };
+                    let oracle = bfs_oracle_view_slots(&solver, &scramble, face, combo, tight, max_rot, l);
+                    assert_eq!(
+                        oracle,
+                        Some(l),
+                        "INADMISSIBLE k=2: seed {} face {} combo {:?}: ida {} but IDDFS {:?}",
+                        seed, face, combo, l, oracle
+                    );
+                    checked_opt += 1;
+                }
+            }
+        }
+        assert!(checked_opt >= 10, "T5(B) checked too few ({})", checked_opt);
+        eprintln!(
+            "T5: {} validity(replay+monotonic, k=2 rich) + {} admissibility(k=2 tight) cases ok",
+            checked_valid, checked_opt
+        );
+    }
 }

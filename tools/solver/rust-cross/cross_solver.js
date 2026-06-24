@@ -1337,22 +1337,24 @@ export class XCrossRestrictSolverWasm {
         return this;
     }
     /**
-     * 6 视角受限最优 xcross 步数网格(PDB 只建一次,6 视角 × 4 槽共用),返回 JSON 数组
-     * `[l0,l1,l2,l3,l4,l5]`,-1 = 该视角受限下不可解。每格 = 该面 4 个 F2L 槽的最小步数。
+     * 6 视角受限最优网格(PDB 只建一次,6 视角 × C(4,k) 组合共用),返回 JSON 数组
+     * `[l0,l1,l2,l3,l4,l5]`,-1 = 真无解 / -2 = 限制过宽未在预算内判定。每格 = 该面在「k 对组合」
+     * 上的最小步数(`k`=同时归位的 F2L 对数:1 xcross / 2 xxcross / 3 xxxcross / 4 F2L)。
      * 54-bit allowed mask = (allowed_hi << 32) | allowed_lo;`max_rot_count` = 解里整体旋转动上限。
      * @param {string} scramble
      * @param {number} allowed_lo
      * @param {number} allowed_hi
      * @param {number} max_rot_count
+     * @param {number} k
      * @returns {string}
      */
-    solve_xcross_restricted_grid(scramble, allowed_lo, allowed_hi, max_rot_count) {
+    solve_xcross_restricted_grid(scramble, allowed_lo, allowed_hi, max_rot_count, k) {
         let deferred2_0;
         let deferred2_1;
         try {
             const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.xcrossrestrictsolverwasm_solve_xcross_restricted_grid(this.__wbg_ptr, ptr0, len0, allowed_lo, allowed_hi, max_rot_count);
+            const ret = wasm.xcrossrestrictsolverwasm_solve_xcross_restricted_grid(this.__wbg_ptr, ptr0, len0, allowed_lo, allowed_hi, max_rot_count, k);
             deferred2_0 = ret[0];
             deferred2_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
@@ -1361,9 +1363,9 @@ export class XCrossRestrictSolverWasm {
         }
     }
     /**
-     * 受限最优 xcross「多解枚举」:返回 JSON `{len, sols:[{m,c}]}`,解按长度升序、
-     * 长度 ∈ [最优, 最优+extra]、最多 `cap` 条;空集 → len = u32::MAX 哨兵。`c` 恒空串
-     * (受限 xcross 暂不标 F2L 槽,跨槽取最优枚举)。参数同 grid + face/extra/cap。
+     * 受限最优「多解枚举」:返回 JSON `{len, sols:[{m,c}]}`,解按长度升序、长度 ∈ [最优, 最优+extra]、
+     * 最多 `cap` 条;空集 → len = u32::MAX 哨兵。`c` 恒空串(阶段已隐含对数,组合由槽位下拉指定)。
+     * `k` = 同时归位的 F2L 对数;`combo` = 逗号分隔的固定槽集(空串=自动枚举全部 C(4,k) 组合)。
      * @param {string} scramble
      * @param {number} face
      * @param {number} allowed_lo
@@ -1371,20 +1373,24 @@ export class XCrossRestrictSolverWasm {
      * @param {number} max_rot_count
      * @param {number} extra
      * @param {number} cap
+     * @param {number} k
+     * @param {string} combo
      * @returns {string}
      */
-    solve_xcross_restricted_moves(scramble, face, allowed_lo, allowed_hi, max_rot_count, extra, cap) {
-        let deferred2_0;
-        let deferred2_1;
+    solve_xcross_restricted_moves(scramble, face, allowed_lo, allowed_hi, max_rot_count, extra, cap, k, combo) {
+        let deferred3_0;
+        let deferred3_1;
         try {
             const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.xcrossrestrictsolverwasm_solve_xcross_restricted_moves(this.__wbg_ptr, ptr0, len0, face, allowed_lo, allowed_hi, max_rot_count, extra, cap);
-            deferred2_0 = ret[0];
-            deferred2_1 = ret[1];
+            const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len1 = WASM_VECTOR_LEN;
+            const ret = wasm.xcrossrestrictsolverwasm_solve_xcross_restricted_moves(this.__wbg_ptr, ptr0, len0, face, allowed_lo, allowed_hi, max_rot_count, extra, cap, k, ptr1, len1);
+            deferred3_0 = ret[0];
+            deferred3_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
         } finally {
-            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
         }
     }
 }

@@ -426,17 +426,18 @@ export class XCrossRestrictSolverWasm {
      */
     constructor();
     /**
-     * 6 视角受限最优 xcross 步数网格(PDB 只建一次,6 视角 × 4 槽共用),返回 JSON 数组
-     * `[l0,l1,l2,l3,l4,l5]`,-1 = 该视角受限下不可解。每格 = 该面 4 个 F2L 槽的最小步数。
+     * 6 视角受限最优网格(PDB 只建一次,6 视角 × C(4,k) 组合共用),返回 JSON 数组
+     * `[l0,l1,l2,l3,l4,l5]`,-1 = 真无解 / -2 = 限制过宽未在预算内判定。每格 = 该面在「k 对组合」
+     * 上的最小步数(`k`=同时归位的 F2L 对数:1 xcross / 2 xxcross / 3 xxxcross / 4 F2L)。
      * 54-bit allowed mask = (allowed_hi << 32) | allowed_lo;`max_rot_count` = 解里整体旋转动上限。
      */
-    solve_xcross_restricted_grid(scramble: string, allowed_lo: number, allowed_hi: number, max_rot_count: number): string;
+    solve_xcross_restricted_grid(scramble: string, allowed_lo: number, allowed_hi: number, max_rot_count: number, k: number): string;
     /**
-     * 受限最优 xcross「多解枚举」:返回 JSON `{len, sols:[{m,c}]}`,解按长度升序、
-     * 长度 ∈ [最优, 最优+extra]、最多 `cap` 条;空集 → len = u32::MAX 哨兵。`c` 恒空串
-     * (受限 xcross 暂不标 F2L 槽,跨槽取最优枚举)。参数同 grid + face/extra/cap。
+     * 受限最优「多解枚举」:返回 JSON `{len, sols:[{m,c}]}`,解按长度升序、长度 ∈ [最优, 最优+extra]、
+     * 最多 `cap` 条;空集 → len = u32::MAX 哨兵。`c` 恒空串(阶段已隐含对数,组合由槽位下拉指定)。
+     * `k` = 同时归位的 F2L 对数;`combo` = 逗号分隔的固定槽集(空串=自动枚举全部 C(4,k) 组合)。
      */
-    solve_xcross_restricted_moves(scramble: string, face: number, allowed_lo: number, allowed_hi: number, max_rot_count: number, extra: number, cap: number): string;
+    solve_xcross_restricted_moves(scramble: string, face: number, allowed_lo: number, allowed_hi: number, max_rot_count: number, extra: number, cap: number, k: number, combo: string): string;
 }
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -515,8 +516,8 @@ export interface InitOutput {
     readonly variantsolverwasm_solve_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly variantsolverwasm_solve_stage_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly xcrossrestrictsolverwasm_new: () => number;
-    readonly xcrossrestrictsolverwasm_solve_xcross_restricted_grid: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
-    readonly xcrossrestrictsolverwasm_solve_xcross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
+    readonly xcrossrestrictsolverwasm_solve_xcross_restricted_grid: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+    readonly xcrossrestrictsolverwasm_solve_xcross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => [number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
