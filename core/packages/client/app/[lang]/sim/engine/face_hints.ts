@@ -89,6 +89,16 @@ export const SKEWB_CORNER_HINTS: OrientationHint[] = [
   { letter: 'DBL', dir: new THREE.Vector3(-1, -1, -1) },
 ];
 
+// Pyraminx is a vertex-turner: 4 vertex axes labelled U/L/R/B — matches VERTEX_NAMES
+// in pyra/pyraState. dirs are the raw tetra vertex directions (V0..V3); world applies
+// the same apex-up rotation as the cube so the labels sit on the displayed vertices.
+export const PYRA_VERTEX_HINTS: OrientationHint[] = [
+  { letter: 'U', dir: new THREE.Vector3(1, 1, 1) },    // V0 → apex
+  { letter: 'L', dir: new THREE.Vector3(1, -1, -1) },  // V1
+  { letter: 'R', dir: new THREE.Vector3(-1, 1, -1) },  // V2
+  { letter: 'B', dir: new THREE.Vector3(-1, -1, 1) },  // V3
+];
+
 // Redi is a corner-turner too (all 8 corners). Real-Redi notation: F L B R = the 4
 // TOP corners, f l b r = the 4 BOTTOM — matches CORNER_NAMES / CORNER_AXIS in
 // cuber/redi/rediState.

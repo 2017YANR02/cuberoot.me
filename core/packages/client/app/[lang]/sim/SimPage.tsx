@@ -59,6 +59,9 @@ import { heliMoveToString, type HeliMove } from './engine/heli/heliState';
 import SkewbCube from './engine/skewb/SkewbCube';
 import { skewbPickHit, skewbResolveMove, skewbResolveLive, type SkewbPickHit } from './engine/skewb/skewbDrag';
 import { skewbMoveToString, type SkewbMove } from './engine/skewb/skewbState';
+import PyraCube from './engine/pyra/PyraCube';
+import { pyraPickHit, pyraResolveMove, pyraResolveLive, type PyraPickHit } from './engine/pyra/pyraDrag';
+import { pyraMoveToString, type PyraMove } from './engine/pyra/pyraState';
 import { orbitScene, snapViewToQuadrant } from './engine/viewControls';
 import {
   CornerTurnGesture, type CornerGestureCtx, type CornerGestureHandle, type CornerTurnAdapter,
@@ -97,7 +100,7 @@ export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
 
 /** Twisty puzzles (cubing.js by default) that ALSO have an in-house Three.js engine
  *  renderer — the user picks which one via the `renderer` toggle (skill: keep both). */
-export const ENGINE_TWISTY = new Set<string>(['skewb']);
+export const ENGINE_TWISTY = new Set<string>(['skewb', 'pyraminx']);
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle. */
 function asNxN(world: World): Cube | null {
@@ -610,15 +613,22 @@ export default function SimPage() {
       beginMove: (c, m) => c.beginMove(m), moveToString: skewbMoveToString,
       fullPx: 150, threshold: 6,
     };
-    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli' | 'skewb', CornerGestureHandle> = {
+    const pyraAdapter: CornerTurnAdapter<PyraCube, PyraMove, PyraPickHit> = {
+      match: (c): c is PyraCube => c instanceof PyraCube,
+      pickHit: pyraPickHit, resolveLive: pyraResolveLive, resolveMove: pyraResolveMove,
+      beginMove: (c, m) => c.beginMove(m), moveToString: pyraMoveToString,
+      fullPx: 150, threshold: 6,
+    };
+    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx', CornerGestureHandle> = {
       dino: new CornerTurnGesture(dinoAdapter, cornerCtx),
       redi: new CornerTurnGesture(rediAdapter, cornerCtx),
       rex: new CornerTurnGesture(rexAdapter, cornerCtx),
       heli: new CornerTurnGesture(heliAdapter, cornerCtx),
       skewb: new CornerTurnGesture(skewbAdapter, cornerCtx),
+      pyraminx: new CornerTurnGesture(pyraAdapter, cornerCtx),
     };
     const cornerGestureFor = (pk: unknown): CornerGestureHandle | null =>
-      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb' ? cornerGestures[pk] : null;
+      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb' || pk === 'pyraminx' ? cornerGestures[pk] : null;
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -987,8 +997,9 @@ export default function SimPage() {
             : world.puzzleKind === 'rex' ? world.rexHints
               : world.puzzleKind === 'heli' ? world.heliHints
                 : world.puzzleKind === 'skewb' ? world.skewbHints
-                  : world.faceHints;
-      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints];
+                  : world.puzzleKind === 'pyraminx' ? world.pyraHints
+                    : world.faceHints;
+      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints, world.pyraHints];
       if (viewing) activeHints.show(); else activeHints.hide();
       for (const h of allHints) if (h !== activeHints) h.hide();
       let hintsAnimating = false;

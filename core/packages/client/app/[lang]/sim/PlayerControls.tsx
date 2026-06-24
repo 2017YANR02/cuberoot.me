@@ -54,6 +54,9 @@ import {
 import {
   parseSkewbMoves, skewbMovesToString, randomSkewbScramble, type SkewbMove,
 } from './engine/skewb/skewbState';
+import {
+  parsePyraMoves, pyraMovesToString, invertPyraMoves, reducePyraAlg, randomPyraScramble, type PyraMove,
+} from './engine/pyra/pyraState';
 
 /** Random Ivy scramble: ~9 R/L/D/B turns, no immediate axis repeat. */
 function randomIvyScramble(): string {
@@ -349,7 +352,7 @@ function reduceSkewbAlg(s: string): string {
 // per puzzle in one descriptor collapses what used to be ~13 parallel `isDino||isRedi
 // ||…` branches into a single `corner` lookup. Adding a corner-turn puzzle = one entry
 // here + one line in `cornerKind` below (mirrors the engine/cornerTurnGesture adapters).
-type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'skewb';
+type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx';
 
 interface CornerSpec {
   /** Parse alg / scramble text → the puzzle's move list. */
@@ -411,6 +414,13 @@ const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
     invert: (m) => invertSkewbMoves(m as SkewbMove[]),
     reduce: reduceSkewbAlg,
     scramble: () => skewbMovesToString(randomSkewbScramble(12)),
+  },
+  pyraminx: {
+    parse: parsePyraMoves,
+    toString: (m) => pyraMovesToString(m as PyraMove[]),
+    invert: (m) => invertPyraMoves(m as PyraMove[]),
+    reduce: reducePyraAlg,
+    scramble: () => pyraMovesToString(randomPyraScramble(10)),
   },
 };
 
@@ -485,20 +495,25 @@ export default function PlayerControls({
   // Skewb on the in-house engine — a corner-turn engine puzzle, NOT the cubing.js
   // twisty path. The cubing.js skewb stays a twisty puzzle (renderer 'cubing').
   const isSkewbEngine = puzzleKind === 'skewb' && renderer === 'engine';
+  const isPyraEngine = puzzleKind === 'pyraminx' && renderer === 'engine';
+  // Skewb + Pyraminx have an in-house engine alternative; on the 'engine' renderer they
+  // behave like the other engine (corner-turn) puzzles, NOT the cubing.js twisty path.
+  const isEngineTwisty = isSkewbEngine || isPyraEngine;
   // PuzzleGeometry explore puzzle (cubing.js TwistyPlayer, world-less) — twisty-class,
   // so it shares every twisty branch below (scramble / simplify / no-world guards).
   const isPgMode = typeof puzzleKind === 'string' && isPgPuzzleId(puzzleKind);
-  const isTwistyMode = (isTwistyPuzzle(puzzleKind) || isPgMode) && !isSkewbEngine;
-  // Corner/edge-turn engine puzzle descriptor (Dino/Redi/Rex/Heli/Skewb), or null for
-  // everything else. One mapping line per puzzle; every player branch below keys off
-  // `corner` instead of a per-puzzle boolean chain.
+  const isTwistyMode = (isTwistyPuzzle(puzzleKind) || isPgMode) && !isEngineTwisty;
+  // Corner/edge-turn engine puzzle descriptor (Dino/Redi/Rex/Heli/Skewb/Pyraminx), or
+  // null for everything else. One mapping line per puzzle; every player branch below
+  // keys off `corner` instead of a per-puzzle boolean chain.
   const cornerKind: CornerKind | null =
     puzzleKind === 'dino' ? 'dino'
       : puzzleKind === 'redi' ? 'redi'
         : puzzleKind === 'rex' ? 'rex'
           : puzzleKind === 'heli' ? 'heli'
             : isSkewbEngine ? 'skewb'
-              : null;
+              : isPyraEngine ? 'pyraminx'
+                : null;
   const corner = cornerKind ? CORNER_SPECS[cornerKind] : null;
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
   const is3x3 = !isSq1 && !isIvy && !corner && !isTwistyMode && order === 3;
@@ -512,7 +527,7 @@ export default function PlayerControls({
     ? `/${params.lang}` : ((i18n.language.startsWith('zh') ? '/zh' : '/en'));
   // Engine-skewb uses the self-contained engine notation (UFR/UFL…), which /recon
   // (WCA skewb notation) can't parse — suppress the recon hand-off there.
-  const reconEvent = isSkewbEngine ? null : reconEventForSim(puzzleKind);
+  const reconEvent = isEngineTwisty ? null : reconEventForSim(puzzleKind);
 
   const [algDraft, setAlgDraft] = useState(alg);
   const [setupDraft, setSetupDraft] = useState(setup ?? '');
@@ -1225,7 +1240,7 @@ export default function PlayerControls({
         onPuzzleChange={onPuzzleChange}
         renderer={renderer}
         onRendererChange={onRendererChange}
-        isSkewbEngine={isSkewbEngine}
+        isEngineTwisty={isEngineTwisty}
         settings={settings}
         onSettingsChange={onSettingsChange}
         t={t}
@@ -1316,7 +1331,7 @@ const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<SimSettings, 
 
 function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
-  renderer, onRendererChange, isSkewbEngine,
+  renderer, onRendererChange, isEngineTwisty,
   settings, onSettingsChange, t,
   applyMove, keymap, onKeymapChange, onResetKeymap,
 }: {
@@ -1327,7 +1342,7 @@ function PuzzleSettings({
   renderer: 'cubing' | 'engine';
   onRendererChange?: (r: 'cubing' | 'engine') => void;
   /** True when puzzleKind is an ENGINE_TWISTY puzzle on the in-house engine. */
-  isSkewbEngine: boolean;
+  isEngineTwisty: boolean;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
   t: (zh: string, en: string) => string;
@@ -1346,15 +1361,15 @@ function PuzzleSettings({
   const isHeliLocal = puzzleKind === 'heli';
   // A corner-turn engine puzzle locally (Dino/Redi/Rex/Heli/engine-Skewb) — used to
   // gate the corner-only debug toggles + keep the type select / non-NxN layout right.
-  const isCornerLocal = isDinoLocal || isRediLocal || isRexLocal || isHeliLocal || isSkewbEngine;
+  const isCornerLocal = isDinoLocal || isRediLocal || isRexLocal || isHeliLocal || isEngineTwisty;
   // A PuzzleGeometry explore puzzle (rendered by cubing.js TwistyPlayer) — twisty-class.
   const isPgLocal = typeof puzzleKind === 'string' && isPgPuzzleId(puzzleKind);
   // Engine-skewb is rendered by the engine, so it's NOT a "twisty" (cubing.js) puzzle
   // for the purposes of the NxN/engine option gating below. PG explore puzzles ARE
   // twisty-class (no in-house engine) → fold them in so the engine-only toggles hide.
-  const isTwistyLocal = (isTwistyPuzzle(puzzleKind) || isPgLocal) && !isSkewbEngine;
-  // Whether this puzzle has a cubing.js ↔ engine renderer choice (skewb).
-  const hasRendererChoice = puzzleKind === 'skewb';
+  const isTwistyLocal = (isTwistyPuzzle(puzzleKind) || isPgLocal) && !isEngineTwisty;
+  // Whether this puzzle has a cubing.js ↔ engine renderer choice (skewb / pyraminx).
+  const hasRendererChoice = puzzleKind === 'skewb' || puzzleKind === 'pyraminx';
   const isNxNLocal = !isSq1Local && !isIvyLocal && !isCornerLocal && !isTwistyLocal;
   const [open, setOpen] = useState(true);
   const [keymapOpen, setKeymapOpen] = useState(false);
@@ -1434,7 +1449,7 @@ function PuzzleSettings({
             <div className="sim-puzzle-section">
               <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
               <PuzzleTypeSelect
-                value={(isTwistyLocal || isSkewbEngine) ? (puzzleKind as string) : isSq1Local ? 'sq1' : isIvyLocal ? 'ivy' : isDinoLocal ? 'dino' : isRediLocal ? 'redi' : isRexLocal ? 'rex' : isHeliLocal ? 'heli' : 'nxn'}
+                value={(isTwistyLocal || isEngineTwisty) ? (puzzleKind as string) : isSq1Local ? 'sq1' : isIvyLocal ? 'ivy' : isDinoLocal ? 'dino' : isRediLocal ? 'redi' : isRexLocal ? 'rex' : isHeliLocal ? 'heli' : 'nxn'}
                 isZh={isZh}
                 onChange={(v) => {
                   if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);

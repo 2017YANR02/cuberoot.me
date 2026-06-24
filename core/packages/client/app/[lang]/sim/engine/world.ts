@@ -10,12 +10,15 @@ import RediCube from "./redi/RediCube";
 import RexCube from "./rex/RexCube";
 import HeliCube from "./heli/HeliCube";
 import SkewbCube from "./skewb/SkewbCube";
-import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS } from "./face_hints";
+import PyraCube from "./pyra/PyraCube";
+import { APEX_UP_QUAT } from "./pyra/pyraGeometry";
+import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS } from "./face_hints";
 
 /** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, Dino, Redi, Rex (corner-turning),
- *  Heli (edge-turning Helicopter Cube), or Skewb (deep-cut corner-turning; the
- *  in-house engine alternative to the cubing.js TwistyPlayer skewb). */
-export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'skewb';
+ *  Heli (edge-turning Helicopter Cube), Skewb (deep-cut corner-turning), or Pyraminx
+ *  (vertex-turning tetrahedron). Skewb + Pyraminx are the in-house engine alternatives
+ *  to the cubing.js TwistyPlayer renders (chosen via the `renderer` toggle). */
+export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx';
 
 export default class World {
   public width = 1;
@@ -27,7 +30,7 @@ export default class World {
   /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
    *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
    *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
-  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | SkewbCube;
+  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | SkewbCube | PyraCube;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -43,6 +46,7 @@ export default class World {
   private rexCube: RexCube | null = null;
   private heliCube: HeliCube | null = null;
   private skewbCube: SkewbCube | null = null;
+  private pyraCube: PyraCube | null = null;
   /** Current puzzle kind, mirrors what was last passed to setPuzzle. */
   public puzzleKind: PuzzleKind = 3;
   public callbacks: (() => void)[] = [];
@@ -61,6 +65,8 @@ export default class World {
   public rexHints!: FaceHints;
   public heliHints!: FaceHints;
   public skewbHints!: FaceHints;
+  /** Pyraminx vertex-turn labels — 4 vertices U/L/R/B. */
+  public pyraHints!: FaceHints;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -110,6 +116,12 @@ export default class World {
     // corners (vertices ≈3.46·SIZE), so float labels out past them (3.7) + shrink (0.78).
     this.skewbHints = new FaceHints(SIZE, SKEWB_CORNER_HINTS, 3.7, 0.78);
     this.scene.add(this.skewbHints);
+    // Pyraminx: 4 vertex labels. The cube group carries an apex-up rotation; apply the
+    // same to the hints so each label sits on the displayed vertex. Float them past the
+    // tetra vertices (≈2.6·SIZE out) and single-letter sized like Ivy.
+    this.pyraHints = new FaceHints(SIZE, PYRA_VERTEX_HINTS, 3.0, 1.0);
+    this.pyraHints.quaternion.copy(APEX_UP_QUAT);
+    this.scene.add(this.pyraHints);
     this.setPuzzle(3);
   }
 
@@ -200,6 +212,17 @@ export default class World {
       // Skewb: deep-cut corner-turning — NxN Controller doesn't apply. SimPage installs
       // a dedicated skewb drag-to-turn + view-rotate handler (corner-gesture registry).
       // Reuse the SQ1 rim-light rig (14 solid wedge pieces with many oblique facets).
+      this.controller.disable = true;
+      this._ensureSq1Lights();
+    } else if (kind === 'pyraminx') {
+      if (this.pyraCube == null) {
+        this.pyraCube = new PyraCube();
+        this.pyraCube.callbacks.push(this.callback);
+      }
+      this.cube = this.pyraCube;
+      // Pyraminx: vertex-turning tetrahedron — NxN Controller doesn't apply. SimPage
+      // installs a dedicated pyra drag-to-turn + view-rotate handler (corner-gesture
+      // registry). Reuse the SQ1 rim-light rig (14 wedge pieces, many oblique facets).
       this.controller.disable = true;
       this._ensureSq1Lights();
     } else {
