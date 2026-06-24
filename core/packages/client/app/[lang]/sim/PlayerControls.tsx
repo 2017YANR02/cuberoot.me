@@ -48,6 +48,9 @@ import {
 import {
   parseRexMoves, rexMovesToString, randomRexScramble, type RexMove,
 } from './engine/rex/rexState';
+import {
+  parseHeliMoves, heliMovesToString, randomHeliScrambleMoves, type HeliMove,
+} from './engine/heli/heliState';
 
 /** Random Ivy scramble: ~9 R/L/D/B turns, no immediate axis repeat. */
 function randomIvyScramble(): string {
@@ -105,6 +108,7 @@ const PUZZLE_TYPE_OPTIONS = [
   { value: 'dino',     iconClass: 'unofficial-dino', labelZh: '恐龙', labelEn: 'Dino' },
   { value: 'redi',     iconClass: 'unofficial-redi', labelZh: 'Redi', labelEn: 'Redi' },
   { value: 'rex',      iconClass: 'unofficial-rex', labelZh: 'Rex', labelEn: 'Rex Cube' },
+  { value: 'heli',     iconClass: 'unofficial-helicopter', labelZh: '直升机', labelEn: 'Helicopter' },
 ] as const;
 
 function PuzzleTypeSelect({ value, onChange, isZh }: {
@@ -190,7 +194,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'pyraminx' | 'skewb' | 'megaminx';
+export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'pyraminx' | 'skewb' | 'megaminx';
 
 function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
@@ -292,6 +296,24 @@ function reduceRexAlg(s: string): string {
   return rexMovesToString(out);
 }
 
+/** Invert a Helicopter sequence: every edge twist is a 180° involution, so the inverse
+ *  is just the reversed sequence (each move unchanged). */
+function invertHeliMoves(moves: HeliMove[]): HeliMove[] {
+  return [...moves].reverse();
+}
+
+/** Collapse adjacent identical edge twists (X X = identity — each is an involution). */
+function reduceHeliAlg(s: string): string {
+  const moves = parseHeliMoves(s);
+  const out: HeliMove[] = [];
+  for (const m of moves) {
+    const last = out[out.length - 1];
+    if (last && last.edge === m.edge) out.pop(); // X X = id
+    else out.push(m);
+  }
+  return heliMovesToString(out);
+}
+
 function normalizeTo1x1(action: TwistAction): TwistAction | null {
   const s = action.sign;
   if (s === 'x' || s === 'y' || s === 'z') return action;
@@ -346,9 +368,10 @@ export default function PlayerControls({
   const isDino = puzzleKind === 'dino';
   const isRedi = puzzleKind === 'redi';
   const isRex = puzzleKind === 'rex';
+  const isHeli = puzzleKind === 'heli';
   const isTwistyMode = isTwistyPuzzle(puzzleKind);
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
-  const is3x3 = !isSq1 && !isIvy && !isDino && !isRedi && !isRex && !isTwistyMode && order === 3;
+  const is3x3 = !isSq1 && !isIvy && !isDino && !isRedi && !isRex && !isHeli && !isTwistyMode && order === 3;
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -428,7 +451,7 @@ export default function PlayerControls({
   }, []);
 
   const actions = useMemo<TwistAction[]>(() => {
-    if (isSq1 || isIvy || isDino || isRedi || isRex) return [];
+    if (isSq1 || isIvy || isDino || isRedi || isRex || isHeli) return [];
     if (!algDraft.trim()) return [];
     try {
       const cleaned = cleanForPlayer(algDraft);
@@ -440,7 +463,7 @@ export default function PlayerControls({
     } catch {
       return [];
     }
-  }, [algDraft, isSq1, isIvy, isDino, isRedi, isRex]);
+  }, [algDraft, isSq1, isIvy, isDino, isRedi, isRex, isHeli]);
 
   const sq1Actions = useMemo<Sq1Move[]>(() => {
     if (!isSq1) return [];
@@ -475,6 +498,11 @@ export default function PlayerControls({
     return parseRexMoves(algDraft);
   }, [algDraft, isRex]);
 
+  const heliActions = useMemo<HeliMove[]>(() => {
+    if (!isHeli) return [];
+    return parseHeliMoves(algDraft);
+  }, [algDraft, isHeli]);
+
   const totalSteps = isSq1
     ? sq1Actions.length
     : isIvy
@@ -485,7 +513,9 @@ export default function PlayerControls({
           ? rediActions.length
           : isRex
             ? rexActions.length
-            : actions.length;
+            : isHeli
+              ? heliActions.length
+              : actions.length;
 
   const jumpToStep = useCallback(async (n: number) => {
     if (!world) return;
@@ -558,6 +588,18 @@ export default function PlayerControls({
       setStep(target);
       return;
     }
+    if (isHeli) {
+      const heliCube = world.cube as unknown as import('./engine/heli/HeliCube').default;
+      heliCube.twister.finish();
+      const effSetup = settings.playbackMode === 'algorithm'
+        ? (setupDraft + ' ' + heliMovesToString(invertHeliMoves(heliActions))).trim()
+        : setupDraft;
+      heliCube.twister.setup(effSetup);
+      const target = Math.max(0, Math.min(n, heliActions.length));
+      for (let i = 0; i < target; i++) heliCube.applyMoveInstant(heliActions[i]);
+      setStep(target);
+      return;
+    }
     const cube = world.cube as import('./engine/nxn/cube').default;
     const effectiveSetup = settings.playbackMode === 'algorithm'
       ? (setupDraft + ' ' + invertAlg(algDraft)).trim()
@@ -568,7 +610,7 @@ export default function PlayerControls({
       cube.twister.twist(actions[i], true, true);
     }
     setStep(target);
-  }, [world, setupDraft, algDraft, actions, sq1Actions, ivyActions, dinoActions, rediActions, rexActions, isSq1, isIvy, isDino, isRedi, isRex, ivyCanPlay, settings.playbackMode]);
+  }, [world, setupDraft, algDraft, actions, sq1Actions, ivyActions, dinoActions, rediActions, rexActions, heliActions, isSq1, isIvy, isDino, isRedi, isRex, isHeli, ivyCanPlay, settings.playbackMode]);
 
   const skipAutoResetRef = useRef(false);
   const animatingScrambleRef = useRef(false);
@@ -577,7 +619,7 @@ export default function PlayerControls({
   useEffect(() => {
     if (skipAutoResetRef.current) {
       skipAutoResetRef.current = false;
-      setStep(isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : isRedi ? rediActions.length : isRex ? rexActions.length : actions.length);
+      setStep(isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : isRedi ? rediActions.length : isRex ? rexActions.length : isHeli ? heliActions.length : actions.length);
       return;
     }
     if (animatingScrambleRef.current) {
@@ -587,7 +629,7 @@ export default function PlayerControls({
     }
     jumpToStep(stepRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setupDraft, actions, sq1Actions, ivyActions, dinoActions, rediActions, rexActions, settings.playbackMode]);
+  }, [setupDraft, actions, sq1Actions, ivyActions, dinoActions, rediActions, rexActions, heliActions, settings.playbackMode]);
 
   const handleCaretSync = useCallback((text: string, caretIndex: number) => {
     const before = text.slice(0, caretIndex);
@@ -612,6 +654,10 @@ export default function PlayerControls({
       jumpToStep(parseRexMoves(algBefore).length);
       return;
     }
+    if (isHeli) {
+      jumpToStep(parseHeliMoves(algBefore).length);
+      return;
+    }
     try {
       let n = 0;
       for (const node of new Alg(algBefore).expand().childAlgNodes()) {
@@ -619,7 +665,7 @@ export default function PlayerControls({
       }
       jumpToStep(n);
     } catch { /* ignore */ }
-  }, [jumpToStep, isSq1, isIvy, isDino, isRedi, isRex]);
+  }, [jumpToStep, isSq1, isIvy, isDino, isRedi, isRex, isHeli]);
 
   const stepForward = useCallback(() => { jumpToStep(step + 1); }, [jumpToStep, step]);
   const stepBack = useCallback(() => { jumpToStep(step - 1); }, [jumpToStep, step]);
@@ -637,7 +683,7 @@ export default function PlayerControls({
     // the eased animation, which 120° corner turns — Redi/Dino/Ivy ≈567ms vs the
     // old 600ms interval — hit on the slightest frame-rate jank.) Speed scales the
     // animation length via CubeGroup.frames (separate effect), not the poll rate.
-    const total = isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : isRedi ? rediActions.length : isRex ? rexActions.length : actions.length;
+    const total = isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : isRedi ? rediActions.length : isRex ? rexActions.length : isHeli ? heliActions.length : actions.length;
     playTimerRef.current = window.setInterval(() => {
       const s = stepRef.current;
       if (s >= total) { setPlaying(false); return; }
@@ -658,6 +704,9 @@ export default function PlayerControls({
       } else if (isRex) {
         const rexCube = world.cube as unknown as import('./engine/rex/RexCube').default;
         started = rexCube.twister.twist(rexActions[s], false, false);
+      } else if (isHeli) {
+        const heliCube = world.cube as unknown as import('./engine/heli/HeliCube').default;
+        started = heliCube.twister.twist(heliActions[s], false, false);
       } else {
         const cube = world.cube as import('./engine/nxn/cube').default;
         // NxN twist(force=false) returns true even for a same-axis/same-face turn
@@ -674,7 +723,7 @@ export default function PlayerControls({
     return () => {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
     };
-  }, [playing, actions, sq1Actions, ivyActions, dinoActions, rediActions, rexActions, world, speed, isSq1, isIvy, isDino, isRedi, isRex]);
+  }, [playing, actions, sq1Actions, ivyActions, dinoActions, rediActions, rexActions, heliActions, world, speed, isSq1, isIvy, isDino, isRedi, isRex, isHeli]);
 
   const tool = (transform: (s: string) => string) => () => {
     const combined = (setupDraft + ' ' + algDraft).trim();
@@ -697,27 +746,29 @@ export default function PlayerControls({
     if (isDino) return reduceDinoAlg(s);
     if (isRedi) return reduceRediAlg(s);
     if (isRex) return reduceRexAlg(s);
+    if (isHeli) return reduceHeliAlg(s);
     if (isTwistyMode) return simplifyTwistyAlg(s);
     return simplifyAlg(s);
-  }, [isSq1, isIvy, isDino, isRedi, isRex, isTwistyMode, sq1Format]);
+  }, [isSq1, isIvy, isDino, isRedi, isRex, isHeli, isTwistyMode, sq1Format]);
 
   const invertForPuzzle = useCallback((s: string): string => {
     if (isDino) return dinoMovesToString(invertDinoMoves(parseDinoMoves(s)));
     if (isRedi) return rediMovesToString(invertRediMoves(parseRediMoves(s)));
     if (isRex) return rexMovesToString(invertRexMoves(parseRexMoves(s)));
+    if (isHeli) return heliMovesToString(invertHeliMoves(parseHeliMoves(s)));
     if (!isSq1) return invertAlg(s);
     const inv = invertSq1Alg(s);
     return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
-  }, [isSq1, isDino, isRedi, isRex, sq1Format]);
+  }, [isSq1, isDino, isRedi, isRex, isHeli, sq1Format]);
 
   // Whether 消步 would actually shorten the sequence — drives the button's
   // enabled state so it doubles as a "可以消步" hint.
   const canSimplify = useMemo(() => {
     const combined = (setupDraft + ' ' + algDraft).trim();
     if (!combined) return false;
-    const count = (s: string) => (isSq1 ? parseSq1Tokens(s).length : isDino ? parseDinoMoves(s).length : isRedi ? parseRediMoves(s).length : isRex ? parseRexMoves(s).length : countMoves(s));
+    const count = (s: string) => (isSq1 ? parseSq1Tokens(s).length : isDino ? parseDinoMoves(s).length : isRedi ? parseRediMoves(s).length : isRex ? parseRexMoves(s).length : isHeli ? parseHeliMoves(s).length : countMoves(s));
     return count(simplifyForPuzzle(combined)) < count(combined);
-  }, [setupDraft, algDraft, isSq1, isDino, isRedi, isRex, simplifyForPuzzle]);
+  }, [setupDraft, algDraft, isSq1, isDino, isRedi, isRex, isHeli, simplifyForPuzzle]);
 
   // Copy the current page URL (puzzle + scramble + solution params) so the exact
   // sim state can be shared. Works for any puzzle — the URL always carries state.
@@ -773,7 +824,7 @@ export default function PlayerControls({
 
   // QWERTY: keymap → twist + append (no virtual keyboard, just hard keys).
   const applyMove = useCallback((k: KeyMove) => {
-    if (isSq1 || isIvy || isDino || isRedi || isTwistyMode) return;
+    if (isSq1 || isIvy || isDino || isRedi || isRex || isHeli || isTwistyMode) return;
     let action: TwistAction | null = new TwistAction(k.sign, !!k.reverse, 1);
     let moveText = action.value;
     if (world && world.cube.order === 1) {
@@ -795,7 +846,7 @@ export default function PlayerControls({
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
-  }, [world, isSq1, isIvy, isDino, isRedi, isTwistyMode, onAlgChange]);
+  }, [world, isSq1, isIvy, isDino, isRedi, isRex, isHeli, isTwistyMode, onAlgChange]);
 
   const handleScramble = useCallback(async () => {
     const reqId = ++scrambleReqIdRef.current;
@@ -865,6 +916,10 @@ export default function PlayerControls({
         // Self-contained sim — a random sequence of legal corner twists is a valid
         // Rex scramble (no solver needed).
         scramble = rexMovesToString(randomRexScramble(25));
+      } else if (isHeli) {
+        // Self-contained sim — a cstimer-faithful random edge-twist sequence (the
+        // /scramble solver isn't needed just to scramble the visual cube).
+        scramble = heliMovesToString(randomHeliScrambleMoves(20));
       } else if (order >= 2 && order <= 7) {
         const eventId = `${order}${order}${order}`;
         scramble = await tnoodleRandomScramble(eventId);
@@ -873,14 +928,14 @@ export default function PlayerControls({
       }
     } catch (err) {
       console.warn('[sim] scramble failed:', err);
-      scramble = isSq1 ? '' : isIvy ? randomIvyScramble() : isDino ? '' : isRedi ? '' : isRex ? '' : randomMoveScrambleNxN(order);
+      scramble = isSq1 ? '' : isIvy ? randomIvyScramble() : isDino ? '' : isRedi ? '' : isRex ? '' : isHeli ? '' : randomMoveScrambleNxN(order);
     }
     if (reqId !== scrambleReqIdRef.current) return;
     if (!scramble) return;
     world.controller.clearFrozen(); // release any debug held-partial turn first
     // SQ1 / Ivy / Dino / Redi always animate — instant apply would be visually
     // indistinguishable from no rotation. The animation is the whole point.
-    const animate = isSq1 || isIvy || isDino || isRedi || isRex || settings.animateScramble;
+    const animate = isSq1 || isIvy || isDino || isRedi || isRex || isHeli || settings.animateScramble;
     if (animate) {
       animatingScrambleRef.current = true;
       world.cube.twister.setup('');
@@ -900,7 +955,7 @@ export default function PlayerControls({
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, order, isSq1, isIvy, isDino, isRedi, isRex, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
+  }, [world, order, isSq1, isIvy, isDino, isRedi, isRex, isHeli, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
 
   // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
   // recover the clean rotation-free scramble it solves, drop it into the
@@ -1235,8 +1290,9 @@ function PuzzleSettings({
   const isDinoLocal = puzzleKind === 'dino';
   const isRediLocal = puzzleKind === 'redi';
   const isRexLocal = puzzleKind === 'rex';
+  const isHeliLocal = puzzleKind === 'heli';
   const isTwistyLocal = isTwistyPuzzle(puzzleKind);
-  const isNxNLocal = !isSq1Local && !isIvyLocal && !isDinoLocal && !isRediLocal && !isRexLocal && !isTwistyLocal;
+  const isNxNLocal = !isSq1Local && !isIvyLocal && !isDinoLocal && !isRediLocal && !isRexLocal && !isHeliLocal && !isTwistyLocal;
   const [open, setOpen] = useState(true);
   const [keymapOpen, setKeymapOpen] = useState(false);
 
@@ -1315,10 +1371,10 @@ function PuzzleSettings({
             <div className="sim-puzzle-section">
               <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
               <PuzzleTypeSelect
-                value={isTwistyLocal ? (puzzleKind as string) : isSq1Local ? 'sq1' : isIvyLocal ? 'ivy' : isDinoLocal ? 'dino' : isRediLocal ? 'redi' : isRexLocal ? 'rex' : 'nxn'}
+                value={isTwistyLocal ? (puzzleKind as string) : isSq1Local ? 'sq1' : isIvyLocal ? 'ivy' : isDinoLocal ? 'dino' : isRediLocal ? 'redi' : isRexLocal ? 'rex' : isHeliLocal ? 'heli' : 'nxn'}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
                   else onPuzzleChange(order || 3);
                 }}
               />
@@ -1447,7 +1503,7 @@ function PuzzleSettings({
                 onChange={(v) => set('debugStructureColor', v)}
               />
             )}
-            {(isIvyLocal || isDinoLocal || isRediLocal || isRexLocal) && (
+            {(isIvyLocal || isDinoLocal || isRediLocal || isRexLocal || isHeliLocal) && (
               <Toggle
                 label={t('调试:挖角', 'Debug: carve corner')}
                 value={settings.debugCarveCorner}

@@ -23,6 +23,7 @@ import { CUBE_FILL } from '@/lib/cube-colors';
 import { EDGE_NAMES, type EdgeName } from './dinoState';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { makeSticker } from '../stickerGeom';
 
 /** Cube half-side (world units). Frames like a ~3x3 in the shared camera rig. */
 export const H = SIZE * 2; // 128
@@ -323,10 +324,9 @@ export function buildPieceMesh(slot: number): PieceBuild {
       p.clone().lerp(centroid, STICKER_INSET).add(lift);
     const sp = [inset(p0), inset(p1), inset(p2)];
     const sGeom = roundedTriSticker(sp[0], sp[1], sp[2], FACE_NORMAL[face]);
-    const sMesh = new THREE.Mesh(sGeom, stickerMat(DINO_FACE_COLOR[face]));
-    sMesh.userData.simRole = 'sticker';
-    sMesh.userData.dinoFace = face;
-    group.add(sMesh);
+    // makeSticker bakes in the black-walls invariant (caps colored, side walls body-dark)
+    // so grazing-angle grooves stay visible — see stickerGeom.ts / sim-add-puzzle skill.
+    group.add(makeSticker(sGeom, stickerMat(DINO_FACE_COLOR[face]), bodyMat, { dinoFace: face }));
   }
 
   const pivot = new THREE.Object3D();

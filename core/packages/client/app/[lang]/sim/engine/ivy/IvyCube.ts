@@ -37,7 +37,7 @@ import { Brush, Evaluator } from 'three-bvh-csg';
 import { SIZE } from '../define';
 import { COLORS } from '../define';
 import { alignedSphereGeo, cutCell } from '../csgCut';
-import { extrudeOntoFace } from '../stickerGeom';
+import { extrudeOntoFace, makeSticker } from '../stickerGeom';
 import { MOVE_CENTERS } from '@/lib/ivy-solver';
 import { facePathsGrooved, type Corner } from './ivyFacePaths';
 import IvyTwister from './IvyTwister';
@@ -248,7 +248,10 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
         // scales onto the E×E face via the basis (extrudeOntoFace, shared in ../stickerGeom).
         const outline = outlinePoints(d).map((p): [number, number] => [p.x, p.y]);
         const g = extrudeOntoFace(outline, { u: Ux, v: Uy, n: geoNormal, origin: pos }, DEPTH, flip);
-        const mesh = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color }));
+        // black-walls invariant: caps colored, side walls body-dark (this.bodyMat) → the
+        // lens↔petal arc stays visible edge-on (see stickerGeom.ts / sim-add-puzzle skill).
+        // makeSticker also tags userData.simRole='sticker' (debug overlay leaves it alone).
+        const mesh = makeSticker(g, new THREE.MeshLambertMaterial({ color }), this.bodyMat);
         // Tag every tile so a raycast (ivyDrag) maps any hit back to a turn:
         // petals carry their turning-corner axis (that one corner always moves
         // them — petals are corner-parented); lenses carry their center-piece id
@@ -257,7 +260,6 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
         // direction picks the corner.
         if (cornerAxis !== undefined) mesh.userData.ivyCornerAxis = cornerAxis;
         if (centerPiece !== undefined) mesh.userData.ivyCenterPiece = centerPiece;
-        mesh.userData.simRole = 'sticker'; // left untouched by the debug overlay
         parent.add(mesh);
       };
 

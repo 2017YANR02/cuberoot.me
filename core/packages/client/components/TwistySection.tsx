@@ -68,6 +68,13 @@ const FACE_TABLES: Record<string, FaceTable | undefined> = {
   '3x3x3': SKEWB_FACES,
 };
 
+// Camera-distance ↔ Scale-slider (0..100) mapping for the cubing.js TwistyPlayer —
+// ONE source of truth shared by the settings effect and the wheel/pinch zoom handler.
+const CAM_DIST_MIN = 3, CAM_DIST_MAX = 9; // cameraDistance: closest (scale 100) .. farthest (scale 0)
+const scaleToDist = (scale: number): number => CAM_DIST_MAX - (scale / 100) * (CAM_DIST_MAX - CAM_DIST_MIN);
+const distToScale = (d: number): number => Math.max(0, Math.min(100, Math.round(((CAM_DIST_MAX - d) / (CAM_DIST_MAX - CAM_DIST_MIN)) * 100)));
+const clampDist = (d: number): number => Math.max(CAM_DIST_MIN, Math.min(CAM_DIST_MAX, d));
+
 /** sim PuzzleSettings 透传过来,只用其中跟 TwistyPlayer 能映射的字段。
  *  字段说明:
  *  - scale 0..100 → cameraDistance (反向):upstream cuber 50=1.0,这里映 [3, 9]
@@ -93,7 +100,7 @@ export interface TwistySettings {
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, settings, backView,
+  puzzle, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView,
 }: {
   puzzle: string;
   scramble: string;
@@ -111,6 +118,9 @@ export default function TwistySection({
    *  press handler 走 raycast → addMove → 我们这里截到 move 文本。
    *  程序化设 alg/setup 走 model.alg.set 不经 addMove,不会误触发。 */
   onUserMove?: (moveText: string) => void;
+  /** wheel / 双指捏合缩放产生的新 scale (0..100) 回调 — sim 把它写回 settings.scale,
+   *  让缩放持久化 + Scale 滑条同步 (对齐 NxN/engine 的 syncScaleToSettings)。 */
+  onScaleChange?: (scale: number) => void;
   /** sim 的 PuzzleSettings 子集:scale / yaw / pitch / speed / hint。
    *  其它 NxN-only 项 (thickness / hollow / arrow / coreColor / faceColors) 不传。 */
   settings?: TwistySettings;
@@ -128,6 +138,14 @@ export default function TwistySection({
   const [playerNonce, setPlayerNonce] = useState(0);
   const onUserMoveRef = useRef(onUserMove);
   useEffect(() => { onUserMoveRef.current = onUserMove; }, [onUserMove]);
+  const onScaleChangeRef = useRef(onScaleChange);
+  useEffect(() => { onScaleChangeRef.current = onScaleChange; }, [onScaleChange]);
+  // True while a 2-finger pinch-zoom is in progress (until ALL fingers lift) — the
+  // skewb pixel-drag handler stands down so a pinch never commits y/x rotations.
+  const pinchingRef = useRef(false);
+  // Last-applied camera distance. cubing's `cameraDistance` is WRITE-ONLY (its getter
+  // throws), so we mirror every write here to read the current zoom for wheel/pinch.
+  const liveDistRef = useRef<number>(6);
 
   // NOTE: 自动加载 cubing 库——import 完成后 setCtor 触发重渲染
   useEffect(() => {
@@ -304,7 +322,7 @@ export default function TwistySection({
     if (!player || !settings) return;
     const yawDeg = ((settings.viewAngle - 50) / 50) * 180;
     const pitchDeg = ((50 - settings.viewGradient) / 50) * 90;
-    const dist = 9 - (settings.scale / 100) * 6;
+    const dist = scaleToDist(settings.scale);
     const tempo = settings.speed <= 50
       ? 0.2 + (settings.speed / 50) * 0.8
       : 1 + ((settings.speed - 50) / 50) * 3;
@@ -324,7 +342,7 @@ export default function TwistySection({
         try { player.cameraLatitude = pitchDeg; } catch { /* */ }
       }
     }
-    try { player.cameraDistance = dist; } catch { /* */ }
+    try { player.cameraDistance = dist; liveDistRef.current = dist; } catch { /* */ }
     try { player.tempoScale = tempo; } catch { /* */ }
     try { player.hintFacelets = settings.hint ? 'floating' : 'none'; } catch { /* */ }
     try { player.backView = settings.backView ? 'top-right' : 'none'; } catch { /* */ }
@@ -695,6 +713,7 @@ export default function TwistySection({
     };
 
     const sectionDown = (e: PointerEvent) => {
+      if (pinchingRef.current) return; // a pinch-zoom owns this gesture
       if (active) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       active = true;
@@ -709,6 +728,7 @@ export default function TwistySection({
       if (lockedLon === null) lockedLon = latestLon;
     };
     const sectionMove = (e: PointerEvent) => {
+      if (pinchingRef.current) return; // suspended while pinch-zooming
       if (!active || e.pointerId !== activePid) return;
       const dx = e.clientX - downX;
       const dy = e.clientY - downY;
@@ -769,6 +789,90 @@ export default function TwistySection({
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [puzzle, playerNonce]);
+
+  // Wheel (desktop) + 2-finger pinch (mobile) zoom for the cubing.js TwistyPlayer.
+  // cubing.js's orbit controls only change lat/lon (never distance) and have NO wheel
+  // handler, so zoom is otherwise reachable only via the Scale slider — pyraminx /
+  // skewb / megaminx had neither wheel nor pinch zoom. We drive `player.cameraDistance`
+  // directly for a smooth gesture, then debounce-sync the final value back to
+  // settings.scale (onScaleChange) so it persists + the slider stays in sync (mirrors
+  // the NxN/engine syncScaleToSettings). During a pinch we listen in the CAPTURE phase
+  // on the container (an ancestor of the player's shadow-DOM canvas) and stopPropagation,
+  // so cubing's DragTracker never sees the 2 fingers → no orbit; the skewb pixel-drag
+  // handler stands down via pinchingRef (capture order: section ancestor fires first and
+  // sees pinchingRef already set on the 2nd-finger pointerdown).
+  useEffect(() => {
+    const host = containerRef.current;
+    const player = playerInstRef.current;
+    if (!host || !player) return;
+    const setDist = (d: number): void => {
+      const next = clampDist(d);
+      liveDistRef.current = next;
+      try { player.cameraDistance = next; } catch { /* */ }
+    };
+    let scaleSyncTimer: number | null = null;
+    const syncScale = (d: number): void => {
+      if (scaleSyncTimer) window.clearTimeout(scaleSyncTimer);
+      scaleSyncTimer = window.setTimeout(() => { onScaleChangeRef.current?.(distToScale(d)); }, 200);
+    };
+
+    const onWheel = (e: WheelEvent): void => {
+      e.preventDefault();
+      setDist(liveDistRef.current * (e.deltaY > 0 ? 1.08 : 0.92));
+      syncScale(liveDistRef.current);
+    };
+    host.addEventListener('wheel', onWheel, { passive: false });
+
+    const pts = new Map<number, { x: number; y: number }>();
+    let startFingerDist = 0, startCamDist = 0;
+    const fingerDist = (): number => {
+      const [a, b] = [...pts.values()];
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    };
+    const onDown = (e: PointerEvent): void => {
+      if (e.pointerType !== 'touch') return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) {
+        pinchingRef.current = true;
+        startFingerDist = fingerDist();
+        startCamDist = liveDistRef.current;
+        e.stopPropagation();
+      }
+    };
+    const onMove = (e: PointerEvent): void => {
+      if (e.pointerType !== 'touch' || !pts.has(e.pointerId)) return;
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinchingRef.current && pts.size === 2) {
+        e.stopPropagation();
+        e.preventDefault();
+        const ratio = fingerDist() / Math.max(startFingerDist, 1);
+        setDist(startCamDist / Math.max(ratio, 0.01)); // fingers apart → closer camera
+      }
+    };
+    const onUp = (e: PointerEvent): void => {
+      if (e.pointerType !== 'touch' || !pts.has(e.pointerId)) return;
+      const endingPinch = pinchingRef.current && pts.size === 2; // this lift drops 2 → 1
+      if (endingPinch) e.stopPropagation();
+      pts.delete(e.pointerId);
+      if (endingPinch) syncScale(liveDistRef.current);
+      // keep pinchingRef true (skewb stays suspended) until ALL fingers lift, so a
+      // lingering single finger can't resume a pixel-drag from a stale baseline.
+      if (pts.size === 0) pinchingRef.current = false;
+    };
+    host.addEventListener('pointerdown', onDown, true);
+    host.addEventListener('pointermove', onMove, true);
+    host.addEventListener('pointerup', onUp, true);
+    host.addEventListener('pointercancel', onUp, true);
+    return () => {
+      if (scaleSyncTimer) window.clearTimeout(scaleSyncTimer);
+      host.removeEventListener('wheel', onWheel);
+      host.removeEventListener('pointerdown', onDown, true);
+      host.removeEventListener('pointermove', onMove, true);
+      host.removeEventListener('pointerup', onUp, true);
+      host.removeEventListener('pointercancel', onUp, true);
+      pinchingRef.current = false;
+    };
+  }, [playerNonce, puzzle]);
 
   return (
     <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}`}>
