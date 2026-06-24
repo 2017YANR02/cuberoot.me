@@ -31,7 +31,7 @@ import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
 import { useT } from '@/hooks/useT';
 import './solve_tabs.css';
 
-export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb' | 'sq1' | 'sq2' | 'ssq1' | 'bsq' | 'ivy' | '133' | '223' | '233' | '334' | '335' | '336' | '337' | '8p' | '15p' | 'sfl' | 'ufo' | 'cm2' | 'cm3' | 'heli' | 'helicv' | 'ctico' | 'dmd' | 'gear' | 'mpyrso' | 'dino' | 'crz3a' | 'bic';
+export type SolvePuzzle = '3x3' | '2x2x2' | 'pyraminx' | 'skewb' | 'sq1' | 'sq2' | 'ssq1' | 'bsq' | 'ivy' | '133' | '223' | '233' | '334' | '335' | '336' | '337' | '8p' | '15p' | 'sfl' | 'ufo' | 'cm2' | 'cm3' | 'heli' | 'helicv' | 'ctico' | 'dmd' | 'gear' | 'mpyrso' | 'dino' | 'crz3a' | 'bic' | 'sia123' | 'sia222';
 export type SolveSub = 'optimal' | 'stage' | 'cfop' | 'fmc';
 
 interface SolveTabsProps {
@@ -78,12 +78,14 @@ const EVENT_ID: Record<SolvePuzzle, string> = {
   dino: 'dino',
   crz3a: 'crz3a',
   bic: 'bic',
+  sia123: 'sia123',
+  sia222: 'sia222',
 };
 // 求解中心项目行复用全站 WcaEventSelector(同一图标选择器),仅放出有在线求解器的 WCA 项目
 //(5 个图标)。非 WCA 求解项目(ivy 等)塞不进图标行,改走 NonWcaPuzzlePicker 分组下拉
 //(数据驱动:lib/cstimer-scramble 标 solvable 的 puzzle 自动出现),后续 puzzle 免改本组件。
 const PUZZLE_BY_EVENT: Record<string, SolvePuzzle> = {
-  '333': '3x3', '222': '2x2x2', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1', sq2: 'sq2', ssq1: 'ssq1', bsq: 'bsq', ivy: 'ivy', '133': '133', '223': '223', '233': '233', '334': '334', '335': '335', '336': '336', '337': '337', '8p': '8p', '15p': '15p', sfl: 'sfl', ufo: 'ufo', cm2: 'cm2', cm3: 'cm3', heli: 'heli', helicv: 'helicv', ctico: 'ctico', dmd: 'dmd', gear: 'gear', mpyrso: 'mpyrso', dino: 'dino', crz3a: 'crz3a', bic: 'bic',
+  '333': '3x3', '222': '2x2x2', pyram: 'pyraminx', skewb: 'skewb', sq1: 'sq1', sq2: 'sq2', ssq1: 'ssq1', bsq: 'bsq', ivy: 'ivy', '133': '133', '223': '223', '233': '233', '334': '334', '335': '335', '336': '336', '337': '337', '8p': '8p', '15p': '15p', sfl: 'sfl', ufo: 'ufo', cm2: 'cm2', cm3: 'cm3', heli: 'heli', helicv: 'helicv', ctico: 'ctico', dmd: 'dmd', gear: 'gear', mpyrso: 'mpyrso', dino: 'dino', crz3a: 'crz3a', bic: 'bic', sia123: 'sia123', sia222: 'sia222',
 };
 // 图标行只放 WCA 求解项目(非 WCA 走分组下拉)。
 const WCA_SOLVE_EVENTS = new Set(['333', '222', 'pyram', 'skewb', 'sq1']);

@@ -81,6 +81,8 @@ const MpyrSolver = dynamic(() => import('./_MpyrSolver'), { ssr: false, loading:
 const DinoSolver = dynamic(() => import('./_DinoSolver'), { ssr: false, loading: Loading });
 const Crz3aSolver = dynamic(() => import('./_Crz3aSolver'), { ssr: false, loading: Loading });
 const BicSolver = dynamic(() => import('./_BicSolver'), { ssr: false, loading: Loading });
+const Sia123Solver = dynamic(() => import('./_Sia123Solver'), { ssr: false, loading: Loading });
+const Sia222Solver = dynamic(() => import('./_Sia222Solver'), { ssr: false, loading: Loading });
 const PuzzleOptimalSolver = dynamic(
   () => import('../_components/PuzzleOptimalSolver').then((m) => ({ default: m.PuzzleOptimalSolver })),
   { ssr: false, loading: Loading },
@@ -115,6 +117,8 @@ function SolverDispatch() {
   if (event === 'dino') return <DinoSolver />;
   if (event === 'crz3a') return <Crz3aSolver />;
   if (event === 'bic') return <BicSolver />;
+  if (event === 'sia123') return <Sia123Solver />;
+  if (event === 'sia222') return <Sia222Solver />;
   const spec = SPEC_BY_EVENT[event];
   // key={event} 让非 333 之间软切换时干净 remount(换 spec/池,不留旧状态)。
   if (spec) return <PuzzleOptimalSolver key={event} spec={spec} />;
