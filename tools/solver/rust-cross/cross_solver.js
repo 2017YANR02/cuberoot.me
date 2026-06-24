@@ -189,6 +189,33 @@ export class CrossRestrictSolverWasm {
             wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
         }
     }
+    /**
+     * 受限最优十字「多解枚举」(对齐 analyzer「最大数量」):返回 JSON `{len, sols:[{m,c}]}`,
+     * 解按长度升序、长度 ∈ [最优, 最优+extra]、最多 `cap` 条;空集 → len = u32::MAX 哨兵。
+     * `c` 恒空串(cross 无 F2L 槽)。参数同 `solve_cross_restricted` + extra/cap。
+     * @param {string} scramble
+     * @param {number} face
+     * @param {number} allowed_lo
+     * @param {number} allowed_hi
+     * @param {number} max_rot_count
+     * @param {number} extra
+     * @param {number} cap
+     * @returns {string}
+     */
+    solve_cross_restricted_moves(scramble, face, allowed_lo, allowed_hi, max_rot_count, extra, cap) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.crossrestrictsolverwasm_solve_cross_restricted_moves(this.__wbg_ptr, ptr0, len0, face, allowed_lo, allowed_hi, max_rot_count, extra, cap);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
 }
 if (Symbol.dispose) CrossRestrictSolverWasm.prototype[Symbol.dispose] = CrossRestrictSolverWasm.prototype.free;
 

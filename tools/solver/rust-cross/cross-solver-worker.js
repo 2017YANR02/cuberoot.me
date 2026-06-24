@@ -158,15 +158,13 @@ self.onmessage = async (e) => {
       const value = sol === '' ? 0xffffffff : sol.split(/\s+/).filter(Boolean).length;
       self.postMessage({ type: 'cr_face', id: msg.id, value, ms: performance.now() - t0 });
     } else if (msg.type === 'cr_moves') {
-      // 受限最优十字单视角解法(BFS 首达即最优,返一条)。受限无解 → len=0xFFFFFFFF + 空解集。
+      // 受限最优十字多解枚举(长度 ∈ [最优,最优+extra],最多 cap 条,升序)。受限无解 → len=0xFFFFFFFF + 空解集。
       if (!crossRestrictSolver) throw new Error('cross_restrict solver not initialized');
       const t0 = performance.now();
-      const sol = crossRestrictSolver.solve_cross_restricted(
-        msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0,
+      const json = crossRestrictSolver.solve_cross_restricted_moves(
+        msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.extra ?? 2, msg.cap ?? 10,
       );
-      const len = sol === '' ? 0xffffffff : sol.split(/\s+/).filter(Boolean).length;
-      const sols = sol === '' ? [] : [{ m: sol, c: '' }];
-      self.postMessage({ type: 'cr_moves', id: msg.id, data: { len, sols }, ms: performance.now() - t0 });
+      self.postMessage({ type: 'cr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'f2leo') {
       if (!f2leoSolver) throw new Error('f2leo solver not initialized');
       const t0 = performance.now();

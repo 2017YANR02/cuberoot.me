@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260623h';
+const V = 'v=20260623i';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -127,8 +127,9 @@ export interface RustCrossPool {
    *  (0-17 面 / 18-35 宽 / 36-44 中层 M/E/S / 45-53 旋转 x/y/z);maxRot=解里旋转上限。
    *  受限无解返 0xFFFFFFFF。需 'cross_restrict' 池(零表)。 */
   solveCrossRestrictFace(scramble: string, face: number, lo: number, hi: number, maxRot: number): Promise<FaceResult>;
-  /** or18 式受限最优十字单视角解法(BFS 首达即最优,返一条)。受限无解 len=0xFFFFFFFF + 空解集。 */
-  solveCrossRestrictMoves(scramble: string, face: number, lo: number, hi: number, maxRot: number): Promise<MovesTimed>;
+  /** or18 式受限最优十字单视角「多解枚举」:长度 ∈ [最优, 最优+extra],最多 cap 条(升序)。
+   *  受限无解 len=0xFFFFFFFF + 空解集。 */
+  solveCrossRestrictMoves(scramble: string, face: number, lo: number, hi: number, maxRot: number, extra: number, cap: number): Promise<MovesTimed>;
   /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)整变体 24 值:[cross,xc,xxc,xxxc]×6 朝向(已折叠 z0/z2/z3/z1/x3/x1)。 */
   solveF2leo(scramble: string, pseudo: boolean): Promise<number[]>;
   /** 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc)。cross 极快 → 先单算 cross 秒出,深阶段后台补。
@@ -390,8 +391,8 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     solveCrossRestrictFace(scramble, face, lo, hi, maxRot) {
       return submit({ type: 'cr_face', id: nextId++, scramble, face, lo, hi, maxRot }) as Promise<FaceResult>;
     },
-    solveCrossRestrictMoves(scramble, face, lo, hi, maxRot) {
-      return submit({ type: 'cr_moves', id: nextId++, scramble, face, lo, hi, maxRot }) as Promise<MovesTimed>;
+    solveCrossRestrictMoves(scramble, face, lo, hi, maxRot, extra, cap) {
+      return submit({ type: 'cr_moves', id: nextId++, scramble, face, lo, hi, maxRot, extra, cap }) as Promise<MovesTimed>;
     },
     solveF2leo(scramble, pseudo) {
       return submit({ type: 'f2leo', id: nextId++, scramble, pseudo }) as Promise<number[]>;
