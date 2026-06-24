@@ -20,6 +20,11 @@ import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 
+/** Canvas background. 'auto' = solid, follows the page theme (var --background);
+ *  'white'/'dark' = fixed solid; 'checkerDark'/'checkerLight' = fixed transparent
+ *  checkerboard (twizzle style). */
+export type SimBoardBg = 'auto' | 'white' | 'dark' | 'checkerDark' | 'checkerLight';
+
 export interface SimSettings {
   sensitivity: number;
   scale: number;
@@ -35,8 +40,8 @@ export interface SimSettings {
   hint: boolean;
   /** 点打乱按钮:false=instant 应用,true=慢动画逐 move 播放 */
   animateScramble: boolean;
-  /** 画布背景:false=纯色 (var --background),true=透明棋盘格 (twizzle 风格) */
-  checkeredBg: boolean;
+  /** 画布背景。见 SimBoardBg。 */
+  boardBg: SimBoardBg;
   /** 锁定大小+位置:禁滚轮/捏合缩放 + 中右键/双指平移;旋转视角和转动仍可用 */
   lockView: boolean;
   /** 背面视图小窗:右上角第二个相机从背后看魔方。NxN/SQ1 走自有第二渲染器,
@@ -93,7 +98,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   arrow: false,
   hint: false,
   animateScramble: false,
-  checkeredBg: false,
+  boardBg: 'auto',
   lockView: false,
   backView: false,
   viewMode: 'cube',
@@ -113,7 +118,13 @@ export function loadSettings(): SimSettings {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<SimSettings>) };
+    const parsed = JSON.parse(raw) as Partial<SimSettings> & { checkeredBg?: boolean };
+    const merged = { ...DEFAULT_SETTINGS, ...parsed };
+    // Migrate the old boolean checkeredBg → boardBg (true = the dark twizzle grid;
+    // false stays the theme-following solid, i.e. 'auto').
+    if (!('boardBg' in parsed) && parsed.checkeredBg) merged.boardBg = 'checkerDark';
+    delete (merged as { checkeredBg?: boolean }).checkeredBg;
+    return merged;
   } catch {
     return DEFAULT_SETTINGS;
   }
