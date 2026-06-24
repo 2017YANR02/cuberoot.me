@@ -166,6 +166,7 @@ function PuzzleTypeSelect({ value, onChange, isZh }: {
               onClick={() => { onChange(o.value); setOpen(false); }}
             >
               <CubingIcon icon={o.iconClass} className="sim-puzzle-type-icon" />
+              <span className="sim-puzzle-type-label">{isZh ? o.labelZh : o.labelEn}</span>
             </button>
           ))}
         </div>
