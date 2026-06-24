@@ -1374,7 +1374,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
                 </label>
                 <label className="submit-field">
-                  <span className="submit-label">{t('recon.time')}</span>
+                  <span className="submit-label">{tr({ zh: '成绩(千分位)', en: 'Time (0.001s)' })}</span>
                   <input
                     type="text"
                     value={timeInput}
@@ -1384,11 +1384,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       setTimeAutoSource(null);
                       timeAutoFilledRef.current = false;
                     }}
-                    readOnly={!!timeAutoSource}
-                    className={timeAutoSource ? 'submit-input-locked' : undefined}
-                    title={timeAutoSource ? tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch'
-                                        }) : undefined}
+                    title={tr({ zh: '精确到千分位的成绩;自动填充后仍可手动改', en: 'Result to the thousandth; still editable after auto-fill'
+                    })}
                   />
+                  {timeAutoSource ? <span className="submit-hint">{timeAutoSource}</span> : null}
                 </label>
                 {isBldEvent(form.event ?? '') && (
                   <>

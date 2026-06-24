@@ -21,6 +21,8 @@ export interface ListSelectItem {
   searchTerms?: string;
   /** ISO2 国家码;非空时 label 前渲染 <Flag> */
   country?: string;
+  /** 置灰 + 不可选 (如该项暂无条目) */
+  disabled?: boolean;
 }
 
 interface ListSelectProps {
@@ -122,8 +124,9 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
               <button
                 key={i.value}
                 type="button"
-                className={`list-select-item${value === i.value ? ' list-select-item--active' : ''}`}
-                onClick={() => select(i.value)}
+                disabled={i.disabled}
+                className={`list-select-item${value === i.value ? ' list-select-item--active' : ''}${i.disabled ? ' list-select-item--disabled' : ''}`}
+                onClick={() => { if (!i.disabled) select(i.value); }}
               >
                 {i.country && <Flag iso2={i.country} className="list-select-flag" />}
                 <span className="list-select-label">

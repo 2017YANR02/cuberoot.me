@@ -45,6 +45,7 @@ import {
 import { computePrRank } from '@/components/persons/logic/progress';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
+import { buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
@@ -878,6 +879,12 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
     return allComps.find(c => c.name === solve.comp)?.id ?? null;
   }, [solve.compWcaId, solve.comp, allComps]);
 
+  // 取整 comp 对象拿 start_date / country_iso2,与 /wca/persons 的「点去复盘」链接同源(同一比赛日期/国别)。
+  const compObj = useMemo(
+    () => allComps?.find(c => c.id === effectiveCompWcaId) ?? null,
+    [allComps, effectiveCompWcaId],
+  );
+
   const rows = useMemo(() => {
     if (!allResults || !effectiveCompWcaId || !solve.event) return [];
     const wcaEid = toWcaEventId(solve.event);
@@ -916,7 +923,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                 <th>{tr({ zh: '单次', en: 'Single'
                 })}</th>
                 <th>{tr({ zh: '平均', en: 'Avg' })}</th>
-                <th>{tr({ zh: '详细成绩', en: 'Attempts'
+                <th className="wp-th-attempts">{tr({ zh: '详细成绩', en: 'Attempts'
                 })}</th>
               </tr>
             </thead>
@@ -963,6 +970,15 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                         roundTypeId={r.round_type_id}
                         currentReconId={solve.id}
                         findReconForCell={findReconForCell}
+                        submitCtx={solve.personId && effectiveCompWcaId ? {
+                          personId: solve.personId,
+                          personName: solve.person ?? '',
+                          personCountry: solve.personCountry?.toUpperCase() || undefined,
+                          compId: effectiveCompWcaId,
+                          compName: compObj?.name ?? solve.comp ?? '',
+                          compCountry: (compObj?.country_iso2 ?? solve.country)?.toUpperCase() || undefined,
+                          compDate: compObj?.start_date ?? (solve.date ? solve.date.slice(0, 10) : undefined),
+                        } : null}
                         langQuery={(i18n.language.startsWith('zh') ? '?lang=zh' : '')}
                       />
                     </td>
@@ -977,7 +993,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
   );
 }
 
-function RoundAttempts({ attempts, best, eventId, roundTypeId, currentReconId, findReconForCell, langQuery }: {
+function RoundAttempts({ attempts, best, eventId, roundTypeId, currentReconId, findReconForCell, langQuery, submitCtx }: {
   attempts: number[];
   best: number;
   eventId: string;
@@ -985,6 +1001,11 @@ function RoundAttempts({ attempts, best, eventId, roundTypeId, currentReconId, f
   currentReconId: number;
   findReconForCell: (roundTypeId: string, attemptNum: number) => number | undefined;
   langQuery: string;
+  // 无复盘 solve 点击跳 /recon/submit 的预填上下文(身份字段);为 null 时该 solve 不可点。
+  submitCtx: {
+    personId: string; personName: string; personCountry?: string;
+    compId: string; compName: string; compCountry?: string; compDate?: string;
+  } | null;
 }) {
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
   const validNums = attempts.filter(x => x > 0);
@@ -1001,6 +1022,25 @@ function RoundAttempts({ attempts, best, eventId, roundTypeId, currentReconId, f
         if (reconId && !isCurrent) {
           return (
             <Link key={i} href={`/recon/${reconId}${langQuery}`} className={`${cls} same-comp-event-att-link`}>
+              {formatted}
+            </Link>
+          );
+        }
+        // 没复盘 → 点击去复盘(预填好选手/比赛/项目/轮次/第几把),与 /wca/persons 同一条 buildReconSubmitHref
+        if (!reconId && submitCtx) {
+          return (
+            <Link
+              key={i}
+              href={buildReconSubmitHref({
+                wcaEventId: eventId, roundTypeId, solveNum: i + 1,
+                personId: submitCtx.personId, personName: submitCtx.personName,
+                personCountry: submitCtx.personCountry, compId: submitCtx.compId,
+                compName: submitCtx.compName, compCountry: submitCtx.compCountry,
+                compDate: submitCtx.compDate,
+              })}
+              className={`${cls} same-comp-event-att-link`}
+              title={tr({ zh: '还没有复盘 — 点击去复盘这一把', en: 'No reconstruction yet — click to reconstruct' })}
+            >
               {formatted}
             </Link>
           );
