@@ -1,0 +1,86 @@
+/* Group-theory kernel panel. Borderless (spacing-led, per house style); a single top
+   hairline separates it from the controls above. All colours via theme tokens. */
+.gt-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-default);
+  color: var(--foreground);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.gt-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--accent);
+}
+.gt-title { font-weight: 600; }
+.gt-src {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
+.gt-loading { color: var(--muted-foreground); }
+
+.gt-order { display: flex; flex-direction: column; gap: 0.1rem; }
+.gt-order-num {
+  font-family: var(--font-mono);
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+.gt-order-lbl { color: var(--muted-foreground); font-size: 0.75rem; }
+.gt-order-sub {
+  margin-top: 0.15rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.gt-rows { display: flex; flex-direction: column; gap: 0.55rem; margin: 0; }
+.gt-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.gt-row > dt { color: var(--muted-foreground); white-space: nowrap; }
+.gt-row > dd { margin: 0; text-align: right; }
+.gt-row-block { flex-direction: column; align-items: stretch; gap: 0.3rem; }
+.gt-row-block > dd { text-align: left; }
+
+.gt-mono { font-family: var(--font-mono); }
+.gt-dim { color: var(--muted-foreground); }
+
+.gt-orbits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.gt-orbits > li { display: flex; align-items: baseline; gap: 0.5rem; }
+.gt-orbit-name { font-weight: 600; min-width: 5.5em; }
+.gt-orbits .gt-mono { margin-left: auto; }
+
+.gt-gens { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.gt-gen {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  padding: 0.08rem 0.35rem;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  color: var(--foreground);
+}
+
+.gt-foot {
+  color: var(--muted-foreground);
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+}
+
+@media (max-width: 480px) {
+  .gt-row { flex-direction: column; align-items: stretch; gap: 0.15rem; }
+  .gt-row > dd { text-align: left; }
+  .gt-orbits > li { flex-wrap: wrap; }
+  .gt-orbits .gt-mono { margin-left: 0; }
+}
