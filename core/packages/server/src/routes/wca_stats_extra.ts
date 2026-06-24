@@ -153,6 +153,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const q = (c.req.query('q') ?? '').trim();
   const basis = (c.req.query('basis') ?? 'period').toLowerCase();  // 'period'(当期) | 'cumulative'(截至年末)
   const group = (c.req.query('group') ?? 'result').toLowerCase();  // 'result'(每条成绩) | 'person'(每选手一行)
+  const gender = (c.req.query('gender') ?? 'all').toLowerCase();   // 'all' | 'm' | 'f';性别下拉,JOIN wca_persons 过滤
   const page = Math.max(1, intParam(c.req.query('page'), 1));
   const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
 
@@ -160,6 +161,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   if (basis !== 'period' && basis !== 'cumulative') return c.json({ error: 'Invalid basis' }, 400);
   if (group !== 'result' && group !== 'person') return c.json({ error: 'Invalid group' }, 400);
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
+  if (gender !== 'all' && gender !== 'm' && gender !== 'f') return c.json({ error: 'Invalid gender' }, 400);
   // 333mbf 平均 = 非官方 Mo3,数据由 wca_results_flat 的 is_avg=true 行提供(builder 现算写入)。
   const cn = await resolveCountry(country);
   if (!cn.ok) return c.json({ error: cn.err }, 400);
@@ -214,9 +216,15 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
     where.push(`(${conds.join(' OR ')})`);
   }
 
+  // 性别过滤:gender 是每人恒定值(wca_persons.gender),JOIN 进来过滤即可,不必灌进 11M 行的 wca_results_flat。
+  // JOIN 出现在 FROM 之后、WHERE 之前 → 其 ? 占位排在 where 参数前,故 genderParams 必须前置拼接。
+  // 名次按行位置算,自动在性别子集内重排(与「按国家筛会重排」一致)。
+  const genderJoin = gender === 'all' ? '' : `JOIN wca_persons gp ON gp.wca_id = t.wca_id AND gp.gender = ?`;
+  const genderParams: unknown[] = gender === 'all' ? [] : [gender];
+
   const offset = (page - 1) * size;
-  const totalParams = [...params];
-  const dataParams = [...params, size, offset];
+  const totalParams = [...genderParams, ...params];
+  const dataParams = [...genderParams, ...params, size, offset];
 
   // ── group=person:每选手一行(区间内最佳),实时聚合 over wca_results_flat ──
   // bests: DISTINCT ON 取每人最小值 + 其 PB 上下文(comp/date/attempts);
@@ -235,6 +243,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
           SELECT DISTINCT ON (t.wca_id)
                  t.wca_id, t.value, t.person_country_id, t.comp_id, t.comp_date, t.attempts
           FROM wca_results_flat t
+          ${genderJoin}
           WHERE ${where.join(' AND ')}
           ORDER BY t.wca_id, t.value ASC
         ),
@@ -256,14 +265,14 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
         dataParams,
       ),
       query<{ n: string }>(
-        `SELECT COUNT(*) AS n FROM (SELECT DISTINCT t.wca_id FROM wca_results_flat t WHERE ${where.join(' AND ')}) s`,
+        `SELECT COUNT(*) AS n FROM (SELECT DISTINCT t.wca_id FROM wca_results_flat t ${genderJoin} WHERE ${where.join(' AND ')}) s`,
         totalParams,
       ),
     ]);
     const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
     c.header('Cache-Control', CACHE_HEADER);
     return c.json({
-      event, type, country: cn.id, year, month, basis, group, page, size, total,
+      event, type, country: cn.id, year, month, basis, group, gender, page, size, total,
       rows: rows.map(r => ({
         rank: parseInt(r.rnk, 10), value: r.value,
         wcaId: r.wca_id, name: r.person_name,
@@ -295,6 +304,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
       FROM (
         SELECT t.id, t.value, t.wca_id
         FROM wca_results_flat t
+        ${genderJoin}
         WHERE ${where.join(' AND ')}
         ORDER BY t.value ASC, t.wca_id ASC
         LIMIT ? OFFSET ?
@@ -308,7 +318,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
       dataParams,
     ),
     query<{ n: string }>(
-      `SELECT COUNT(*) AS n FROM wca_results_flat t WHERE ${where.join(' AND ')}`,
+      `SELECT COUNT(*) AS n FROM wca_results_flat t ${genderJoin} WHERE ${where.join(' AND ')}`,
       totalParams,
     ),
   ]);
@@ -316,7 +326,7 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    event, type, country: cn.id, year, month, q, page, size, total,
+    event, type, country: cn.id, year, month, q, gender, page, size, total,
     rows: rows.map((r, i) => ({
       rank: offset + i + 1, value: r.value,
       wcaId: r.wca_id, name: r.person_name,
@@ -343,12 +353,14 @@ wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
   const sort = (c.req.query('sort') ?? 'name').toLowerCase();   // 'name'(首字母) | 'len'(名字长度)
   const dir = (c.req.query('dir') ?? 'asc').toLowerCase();      // 'asc' | 'desc'
   const nameMode = (c.req.query('name') ?? 'latin').toLowerCase(); // latin | full | local | aka
+  const gender = (c.req.query('gender') ?? 'all').toLowerCase();   // 'all' | 'm' | 'f'
   const page = Math.max(1, intParam(c.req.query('page'), 1));
   const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
 
   if (sort !== 'name' && sort !== 'len') return c.json({ error: 'Invalid sort' }, 400);
   if (dir !== 'asc' && dir !== 'desc') return c.json({ error: 'Invalid dir' }, 400);
   if (!['latin', 'full', 'local', 'aka'].includes(nameMode)) return c.json({ error: 'Invalid name' }, 400);
+  if (gender !== 'all' && gender !== 'm' && gender !== 'f') return c.json({ error: 'Invalid gender' }, 400);
   const cn = await resolveCountry(country);
   if (!cn.ok) return c.json({ error: cn.err }, 400);
 
@@ -379,6 +391,7 @@ wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
   const where: string[] = [];
   const params: unknown[] = [];
   if (cn.id) { where.push(`p.country_id = ?`); params.push(cn.id); }
+  if (gender !== 'all') { where.push(`p.gender = ?`); params.push(gender); }
   // 本地名口径只列真有本地名的选手
   if (nameMode === 'local') where.push(`p.name ~ '\\([^)]+\\)\\s*$'`);
   if (lenMin != null) { where.push(`${lenExpr} >= ?`); params.push(lenMin); }
@@ -409,7 +422,7 @@ wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    country: cn.id, sort, dir, name: nameMode, lenMin, lenMax, page, size, total,
+    country: cn.id, sort, dir, name: nameMode, gender, lenMin, lenMax, page, size, total,
     rows: rows.map(r => ({
       wcaId: r.wca_id, name: r.name, countryId: r.country_id, iso2: r.iso2,
       ...(r.former_names && r.former_names.length ? { former: r.former_names } : {}),

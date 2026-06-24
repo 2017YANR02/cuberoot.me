@@ -271,7 +271,7 @@ async function main() {
     `SELECT id, iso2, name, continent_id FROM countries`,
   );
   const [persons] = await conn.query<mysql.RowDataPacket[]>(
-    `SELECT wca_id, name, country_id FROM persons WHERE sub_id = 1`,
+    `SELECT wca_id, name, country_id, gender FROM persons WHERE sub_id = 1`,
   );
   // 比赛 id→name reference(仅供 sor_over_time_build 解析"最后贡献 SOR 的那场比赛"名;不灌 PG)
   const [competitions] = await conn.query<mysql.RowDataPacket[]>(
@@ -300,7 +300,8 @@ async function main() {
   {
     const f = createWriteStream(resolve(outDir, 'wca_persons.copy.tsv'));
     for (const p of persons) {
-      f.write(`${pgEsc(p['wca_id'] as string)}\t${pgEsc(p['name'] as string)}\t${pgEsc(p['country_id'] as string)}\n`);
+      // gender: WCA 'm'/'f'/''(未公开,空串);列 NOT NULL DEFAULT '' 故空串直接写
+      f.write(`${pgEsc(p['wca_id'] as string)}\t${pgEsc(p['name'] as string)}\t${pgEsc(p['country_id'] as string)}\t${pgEsc((p['gender'] as string | null) ?? '')}\n`);
     }
     f.end();
   }
@@ -529,7 +530,7 @@ TRUNCATE historical_best_ranks;
 
 \\copy wca_continents (id, name) FROM 'wca_continents.copy.tsv';
 \\copy wca_countries (id, iso2, name, continent_id) FROM 'wca_countries.copy.tsv';
-\\copy wca_persons (wca_id, name, country_id) FROM 'wca_persons.copy.tsv';
+\\copy wca_persons (wca_id, name, country_id, gender) FROM 'wca_persons.copy.tsv';
 \\copy historical_ranks_snapshot (event_id, year, wca_id, single, average, country_id, single_world_rank, single_country_rank, single_continent_rank, avg_world_rank, avg_country_rank, avg_continent_rank, best_single_comp_id, best_single_date, best_single_attempts, best_average_comp_id, best_average_date, best_average_attempts) FROM 'historical_ranks_snapshot.copy.tsv';
 \\copy historical_ranks_monthly_snapshot (event_id, year, month, wca_id, single, average, country_id, single_world_rank, single_country_rank, single_continent_rank, avg_world_rank, avg_country_rank, avg_continent_rank) FROM 'historical_ranks_monthly_snapshot.copy.tsv';
 \\copy historical_best_ranks (wca_id, event_id, s_world_rank, s_world_value, s_world_year, s_cont_rank, s_cont_value, s_cont_year, s_country_rank, s_country_value, s_country_year, a_world_rank, a_world_value, a_world_year, a_cont_rank, a_cont_value, a_cont_year, a_country_rank, a_country_value, a_country_year) FROM 'historical_best_ranks.copy.tsv';

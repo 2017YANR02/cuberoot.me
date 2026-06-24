@@ -25,10 +25,12 @@ CREATE TABLE IF NOT EXISTS wca_continents (
 CREATE TABLE IF NOT EXISTS wca_persons (
   wca_id     VARCHAR(20) PRIMARY KEY,
   name       VARCHAR(200) NOT NULL,
-  country_id VARCHAR(50) NOT NULL
+  country_id VARCHAR(50) NOT NULL,
+  gender     VARCHAR(1) NOT NULL DEFAULT ''   -- 'm'/'f'/''(未公开);/wca/results 性别下拉用(migration 0062)
 );
 
 CREATE INDEX IF NOT EXISTS wca_persons_country ON wca_persons (country_id);
+CREATE INDEX IF NOT EXISTS wca_persons_gender ON wca_persons (gender);
 -- 选手名录(排名页空态 A-Z 视图)排序:名字首字母 + 名字长度(剥本地名注释后的拉丁名长度,见 migration 0052)
 -- + 全名长度(含括号本地名,migration 0053)
 CREATE INDEX IF NOT EXISTS wca_persons_name ON wca_persons (name);

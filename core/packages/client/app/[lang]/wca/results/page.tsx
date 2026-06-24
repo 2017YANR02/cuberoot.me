@@ -124,6 +124,7 @@ function AllResultsPageInner() {
       events: parseAsString,    // 逗号串;null=默认 333;'__none__'=空
       type: parseAsString,
       country: parseAsString,
+      gender: parseAsString,    // 性别:all(默认,省略) / m / f
       show: parseAsString,      // 单项:results / persons
       year: parseAsString,
       month: parseAsString,
@@ -177,6 +178,7 @@ function AllResultsPageInner() {
     }
   };
   const country = query.country ?? '';
+  const gender: 'all' | 'm' | 'f' = query.gender === 'm' || query.gender === 'f' ? query.gender : 'all';
   const show: ShowMode = (query.show === 'persons') ? 'persons' : 'results';
   const currentYear = new Date().getUTCFullYear();
   const yearRaw = parseInt(query.year ?? '0', 10);
@@ -295,6 +297,7 @@ function AllResultsPageInner() {
     qs.set('page', String(page));
     qs.set('size', String(size));
     if (country) qs.set('country', country);
+    if (gender !== 'all') qs.set('gender', gender);
     if (show === 'persons' && basis === 'cumulative') {
       qs.set('year', String(year));
       fetch(apiUrl(`/v1/wca/historical-ranks?${qs.toString()}`))
@@ -318,7 +321,7 @@ function AllResultsPageInner() {
         .then((j: { rows: ResultRow[]; total: number }) => setData({ mode: 'results', rows: j.rows, total: j.total }))
         .catch(e => setError(e.message)).finally(() => setLoading(false));
     }
-  }, [view, mode, show, basis, singleEvent, effType, country, year, month, qFromUrl, page, size]);
+  }, [view, mode, show, basis, singleEvent, effType, country, gender, year, month, qFromUrl, page, size]);
 
   // 空态「分布」:姓名统计(静态 JSON,缓存一次)
   useEffect(() => {
@@ -341,11 +344,12 @@ function AllResultsPageInner() {
     if (plmax) qs.set('lmax', plmax);
     qs.set('page', String(page)); qs.set('size', String(size));
     if (country) qs.set('country', country);
+    if (gender !== 'all') qs.set('gender', gender);
     fetch(apiUrl(`/v1/wca/persons-directory?${qs.toString()}`))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((j: { rows: DirRow[]; total: number }) => setDirData({ rows: j.rows, total: j.total }))
       .catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [view, mode, psort, pdir, pname, plmin, plmax, country, page, size]);
+  }, [view, mode, psort, pdir, pname, plmin, plmax, country, gender, page, size]);
 
   // 名次和数据
   useEffect(() => {
@@ -465,6 +469,19 @@ function AllResultsPageInner() {
     </div>
   );
 
+  // 性别下拉(所有 / 男 / 女)。WCA 不设性别纪录,但排名按性别筛是常见口径(对标 WCA rankings / cubing.com);
+  // 名次按位置算 → 自动在性别子集内重排。默认 all 省略出 URL。
+  const genderSelect = (
+    <div className="wse-filter wse-filter-show">
+      <label htmlFor="wse-gender">{tr({ zh: '性别', en: 'Gender' })}</label>
+      <select id="wse-gender" value={gender} onChange={(e) => update('gender', e.target.value === 'all' ? '' : e.target.value)}>
+        <option value="all">{tr({ zh: '所有', en: 'All' })}</option>
+        <option value="m">{tr({ zh: '男', en: 'Male' })}</option>
+        <option value="f">{tr({ zh: '女', en: 'Female' })}</option>
+      </select>
+    </div>
+  );
+
   return (
     <div className="wse-page">
       <header className="wse-header">
@@ -575,6 +592,7 @@ function AllResultsPageInner() {
           <h2 className="wse-section-title">{tr({ zh: '名录 A–Z', en: 'Directory A–Z' })}</h2>
           <div className="wse-filters">
             <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+            {genderSelect}
             <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '排序', en: 'Sort' })}</label>
               <div className="wse-show-toggle">
@@ -664,6 +682,7 @@ function AllResultsPageInner() {
             </div>
             {typeSelect}
             <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+            {genderSelect}
             <div className="wse-filter wse-filter-show"
               title={mbfAvgPeriodOnly ? tr({ zh: '多盲非官方平均仅支持「当期」口径', en: 'Multi-Blind unofficial average supports the period basis only' }) : undefined}>
               <label>{tr({ zh: '口径', en: 'Basis' })}</label>
