@@ -75,6 +75,11 @@ const STICKER_DEPTH = 1.5;
 const STICKER_INSET_DIST = 0.6;
 const STICKER_CORNER_R = 0.16;
 const BODY_ROUND = 1;
+/** Each piece is shrunk toward its own centroid by this factor, opening a uniform
+ *  gap to its neighbours so the dark core shows through as a thick seam — without
+ *  enlarging the sticker inset (which would expose the perpendicular side stickers in
+ *  the deep V-groove and bleed colour). 1 = no gap; smaller = wider seams. */
+const PIECE_SHRINK = 0.9;
 const BODY_COLOR = 0x141414;
 
 const bodyMat = new THREE.MeshPhongMaterial({
@@ -237,20 +242,29 @@ export function buildPyraPiece(kind: 'tip' | 'corner' | 'edge', a: number, b = -
     group.add(makeSticker(sGeom, stickerMat(FACE_COLOR[m]), bodyMat, { simStickerNormal: nrm.clone(), pyraFace: m }));
   }
 
+  // Shrink the whole piece toward its home centroid: world = pivot · ((1−s)·c + s·p).
+  // The centroid rotates with the piece (correct), points pull in toward it → uniform
+  // gaps to neighbours that reveal the dark core as a thick, bleed-free seam.
+  group.scale.setScalar(PIECE_SHRINK);
+  group.position.copy(center).multiplyScalar(1 - PIECE_SHRINK);
+
   const pivot = new THREE.Object3D();
   pivot.add(group);
   return { pivot, group, center };
 }
 
+/** Flat near-black, unlit — so the core reads as a clean dark void through the inter-
+ *  piece gaps (lit phong would shade it grey and look like a peeking ball). */
+const coreMat = new THREE.MeshBasicMaterial({ color: 0x0a0a0a });
+
 /** Inner core: a sphere (rotation-invariant → never interpenetrates a turning piece),
  *  radius < the inscribed-sphere so it only shows black through the grooves. */
 export function buildCore(): THREE.Mesh {
   // Just under the inscribed-sphere radius (face distance = A/√3 ≈ 0.577A) so the dark
-  // core fills the 3-way gaps where pieces meet (e.g. each face centroid) without
-  // poking past a face — hides the colored side-sticker backs that would otherwise
-  // show through those gaps. Rotation-invariant, so it never interpenetrates a turn.
-  const geom = new THREE.SphereGeometry(PYRA_A * 0.5, 32, 24);
-  const mesh = new THREE.Mesh(geom, bodyMat);
+  // core fills the gaps where pieces separate (esp. the face centre) without poking
+  // past a face. Rotation-invariant, so it never interpenetrates a turn.
+  const geom = new THREE.SphereGeometry(PYRA_A * 0.56, 32, 24);
+  const mesh = new THREE.Mesh(geom, coreMat);
   mesh.userData.simRole = 'core';
   return mesh;
 }
