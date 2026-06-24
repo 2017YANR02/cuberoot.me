@@ -1,7 +1,7 @@
 // Ported from huazhechen/cuber (MIT) — src/cuber/cubelet.ts
 // 重构:不再每 cubelet 起 Mesh 子物,只保留 logical state(position/quaternion/colors[])。
 // 渲染交给 cube.instancedRenderer (2 个 InstancedMesh)。
-import { FACE, COLORS } from "./define";
+import { FACE, COLORS, SIZE } from "../define";
 import * as THREE from "three";
 
 class Frame extends THREE.BufferGeometry {
@@ -148,7 +148,8 @@ const FACE_LABELS: Record<number, string> = {
 };
 
 export default class Cubelet extends THREE.Group {
-  public static readonly SIZE: number = 64;
+  /** Re-export of the shared unit scale (see define.SIZE). */
+  public static readonly SIZE: number = SIZE;
   private static readonly _BORDER_WIDTH: number = 3;
   private static readonly _EDGE_WIDTH: number = 2;
   private static readonly _STICKER_DEPTH: number = 0.1;

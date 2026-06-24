@@ -8,10 +8,10 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
-import World from './cuber/world';
-import { timing } from './cuber/tweenTiming';
-import Cubelet from './cuber/cubelet';
-import { applyDebugStructureColors } from './cuber/debugColors';
+import World from './engine/world';
+import { timing } from './engine/tweenTiming';
+import Cubelet from './engine/nxn/cubelet';
+import { applyDebugStructureColors } from './engine/debugColors';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 import i18n from '@/i18n/i18n-client';
@@ -168,8 +168,8 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   timing.frames = mapFrames(s.speed);
   // NxN-only options skipped for SQ1 / Ivy / Dino / Redi (sticker thickness / hollow /
   // hint / face colors are baked at construction time for their non-NxN geometry).
-  if (world.puzzleKind !== 'sq1' && world.puzzleKind !== 'ivy' && world.puzzleKind !== 'dino' && world.puzzleKind !== 'redi') {
-    const cube = world.cube as import('./cuber/cube').default;
+  if (world.puzzleKind !== 'sq1' && world.puzzleKind !== 'ivy' && world.puzzleKind !== 'dino' && world.puzzleKind !== 'redi' && world.puzzleKind !== 'rex') {
+    const cube = world.cube as import('./engine/nxn/cube').default;
     cube.arrow = s.arrow;
     cube.instancedRenderer.thickness = s.thickness;
     cube.instancedRenderer.hollow = s.hollow;
@@ -192,11 +192,13 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   // Carve out (hide) one corner's moving group to inspect the core + neighbors'
   // inner walls — corner-turning puzzles only (Ivy / Dino).
   if (world.puzzleKind === 'ivy') {
-    (world.cube as import('./cuber/ivy/IvyCube').default).setCarveCorner(s.debugCarveCorner);
+    (world.cube as import('./engine/ivy/IvyCube').default).setCarveCorner(s.debugCarveCorner);
   } else if (world.puzzleKind === 'dino') {
-    (world.cube as import('./cuber/dino/DinoCube').default).setCarveCorner(s.debugCarveCorner);
+    (world.cube as import('./engine/dino/DinoCube').default).setCarveCorner(s.debugCarveCorner);
   } else if (world.puzzleKind === 'redi') {
-    (world.cube as import('./cuber/redi/RediCube').default).setCarveCorner(s.debugCarveCorner);
+    (world.cube as import('./engine/redi/RediCube').default).setCarveCorner(s.debugCarveCorner);
+  } else if (world.puzzleKind === 'rex') {
+    (world.cube as import('./engine/rex/RexCube').default).setCarveCorner(s.debugCarveCorner);
   }
   world.dirty = true;
   world.cube.dirty = true;

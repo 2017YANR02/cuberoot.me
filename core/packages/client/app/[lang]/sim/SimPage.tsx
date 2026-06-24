@@ -26,31 +26,34 @@ import {
   Maximize2, Minimize2,
   ArrowLeftRight,
 } from 'lucide-react';
-import World from './cuber/world';
-import type Cube from './cuber/cube';
-import Cubelet from './cuber/cubelet';
-import { createBackView, type BackView } from './cuber/backView';
+import World from './engine/world';
+import type Cube from './engine/nxn/cube';
+import { SIZE } from './engine/define';
+import { createBackView, type BackView } from './engine/backView';
 import Toucher from './Toucher';
-import { TwistAction } from './cuber/twister';
-import CubeGroup from './cuber/group';
-import Sq1Cube from './cuber/sq1/Sq1Cube';
-import DinoCube, { type PieceAnim } from './cuber/dino/DinoCube';
-import tweener, { type Tween } from './cuber/tweener';
+import { TwistAction } from './engine/nxn/twister';
+import CubeGroup from './engine/nxn/group';
+import Sq1Cube from './engine/sq1/Sq1Cube';
+import DinoCube, { type PieceAnim } from './engine/dino/DinoCube';
+import tweener, { type Tween } from './engine/tweener';
 import {
   sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit, sq1DragSnapBack,
   type Sq1DragStart, type Sq1TurnDrag,
-} from './cuber/sq1/sq1Drag';
-import { moveToString as sq1MoveToString } from './cuber/sq1/sq1State';
-import IvyCube, { type IvyAnim } from './cuber/ivy/IvyCube';
+} from './engine/sq1/sq1Drag';
+import { moveToString as sq1MoveToString } from './engine/sq1/sq1State';
+import IvyCube, { type IvyAnim } from './engine/ivy/IvyCube';
 import {
   ivyPickHit, ivyResolveMove, ivyResolveLive, ivyApplyPartial, ivySnapBack, type IvyHit,
-} from './cuber/ivy/ivyDrag';
-import { dinoPickHit, dinoResolveMove, dinoResolveLive, dinoApplyPartial, dinoSnapBack, type DinoPickHit } from './cuber/dino/dinoDrag';
-import { dinoMoveToString } from './cuber/dino/dinoState';
-import RediCube, { type PieceAnim as RediPieceAnim } from './cuber/redi/RediCube';
-import { rediPickHit, rediResolveMove, rediResolveLive, rediApplyPartial, rediSnapBack, type RediPickHit } from './cuber/redi/rediDrag';
-import { rediMoveToString } from './cuber/redi/rediState';
-import { FACE } from './cuber/define';
+} from './engine/ivy/ivyDrag';
+import { dinoPickHit, dinoResolveMove, dinoResolveLive, dinoApplyPartial, dinoSnapBack, type DinoPickHit } from './engine/dino/dinoDrag';
+import { dinoMoveToString } from './engine/dino/dinoState';
+import RediCube, { type PieceAnim as RediPieceAnim } from './engine/redi/RediCube';
+import { rediPickHit, rediResolveMove, rediResolveLive, rediApplyPartial, rediSnapBack, type RediPickHit } from './engine/redi/rediDrag';
+import { rediMoveToString } from './engine/redi/rediState';
+import RexCube, { type PieceAnim as RexPieceAnim } from './engine/rex/RexCube';
+import { rexPickHit, rexResolveMove, rexResolveLive, rexApplyPartial, rexSnapBack, type RexPickHit } from './engine/rex/rexDrag';
+import { rexMoveToString } from './engine/rex/rexState';
+import { FACE } from './engine/define';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import TwistySection from '@/components/TwistySection';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -81,9 +84,9 @@ export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
 }
 
-/** Narrow `world.cube` to the NxN Cube type. Returns null for SQ1 / Ivy / Dino / Redi. */
+/** Narrow `world.cube` to the NxN Cube type. Returns null for SQ1 / Ivy / Dino / Redi / Rex. */
 function asNxN(world: World): Cube | null {
-  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi') ? null : (world.cube as Cube);
+  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex') ? null : (world.cube as Cube);
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -158,6 +161,7 @@ export default function SimPage() {
     if (raw === 'ivy') return 'ivy';
     if (raw === 'dino') return 'dino';
     if (raw === 'redi') return 'redi';
+    if (raw === 'rex') return 'rex';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
@@ -475,7 +479,7 @@ export default function SimPage() {
       const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       const ny = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
       const minDim = Math.min(w.width, w.height);
-      const halfH = (Cubelet.SIZE * 3 * w.height) / (minDim * oldScale);
+      const halfH = (SIZE * 3 * w.height) / (minDim * oldScale);
       const halfW = halfH * (w.width / w.height);
       const tFac = 1 - oldScale / newScale;
       w.panX += nx * halfW * tFac;
@@ -489,7 +493,7 @@ export default function SimPage() {
     const screenDeltaToWorld = (dxPx: number, dyPx: number) => {
       const w = worldRef.current;
       if (!w) return { x: 0, y: 0 };
-      const cubeWorldSize = Cubelet.SIZE * 3;
+      const cubeWorldSize = SIZE * 3;
       const px = w.height;
       const k = (cubeWorldSize / w.scale) / Math.max(px, 1);
       return { x: -dxPx * k, y: dyPx * k };
@@ -559,6 +563,18 @@ export default function SimPage() {
     let rediLive: { anims: RediPieceAnim[]; tx: number; ty: number; downX: number; downY: number } | null = null;
     const REDI_DRAG_THRESHOLD_PX = 6;
     const REDI_FULL_PX = 150; // drag px (along the turn tangent) for a full 120° turn
+    // Rex drag state (discrete 120°, mirrors dino/redi). Deep-cut corner-turner.
+    let rexPending = false;
+    let rexHit: RexPickHit | null = null;
+    let rexDownX = 0;
+    let rexDownY = 0;
+    let rexFired = false;
+    let rexRotating = false;
+    let rexLastX = 0;
+    let rexLastY = 0;
+    let rexLive: { anims: RexPieceAnim[]; tx: number; ty: number; downX: number; downY: number } | null = null;
+    const REX_DRAG_THRESHOLD_PX = 6;
+    const REX_FULL_PX = 150; // drag px (along the turn tangent) for a full 120° turn
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -674,6 +690,31 @@ export default function SimPage() {
         }
         if (e.pointerType !== 'touch') return;
       }
+      if (worldRef.current?.puzzleKind === 'rex' && (e.pointerType !== 'mouse' || e.button === 0)) {
+        const isTouchMulti = e.pointerType === 'touch' && activePointers.size >= 1;
+        if (!isTouchMulti) {
+          const r0 = renderer.domElement.getBoundingClientRect();
+          rexDownX = e.clientX - r0.left;
+          rexDownY = e.clientY - r0.top;
+          rexPending = true;
+          rexFired = false;
+          rexRotating = false;
+          rexHit = null;
+          rexLastX = e.clientX;
+          rexLastY = e.clientY;
+          if (e.pointerType !== 'touch') renderer.domElement.setPointerCapture(e.pointerId);
+        }
+        if (e.pointerType === 'touch') {
+          activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (activePointers.size === 2) {
+            rexPending = false;
+            rexFired = false;
+            rexRotating = false;
+            rexHit = null;
+          }
+        }
+        if (e.pointerType !== 'touch') return;
+      }
       if (e.pointerType !== 'touch') return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (activePointers.size === 2) {
@@ -686,6 +727,7 @@ export default function SimPage() {
         sq1Rotating = false;
         dinoRotating = false;
         rediRotating = false;
+        rexRotating = false;
         world.controller.disable = true;
       }
     };
@@ -998,6 +1040,81 @@ export default function SimPage() {
           }
         }
       }
+      if (worldRef.current?.puzzleKind === 'rex') {
+        if (rexLive) {
+          const r0 = renderer.domElement.getBoundingClientRect();
+          const lx = e.clientX - r0.left;
+          const ly = e.clientY - r0.top;
+          const proj = (lx - rexLive.downX) * rexLive.tx + (ly - rexLive.downY) * rexLive.ty;
+          rexApplyPartial(rexLive.anims, proj / REX_FULL_PX);
+          worldRef.current.dirty = true;
+          return;
+        }
+        const rmove = renderer.domElement.getBoundingClientRect();
+        const localX = e.clientX - rmove.left;
+        const localY = e.clientY - rmove.top;
+        if (rexRotating) {
+          const dx = e.clientX - rexLastX;
+          const dy = e.clientY - rexLastY;
+          rexLastX = e.clientX;
+          rexLastY = e.clientY;
+          const k = mapOrbitK(settingsRef.current.sensitivity);
+          world.scene.rotation.y += dx * k;
+          world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
+          world.scene.updateMatrix();
+          world.dirty = true;
+          return;
+        }
+        if (rexPending && !rexFired && !pinching) {
+          const dx = localX - rexDownX;
+          const dy = localY - rexDownY;
+          if (Math.hypot(dx, dy) >= REX_DRAG_THRESHOLD_PX) {
+            rexFired = true; // consume this gesture either as a turn or orbit
+            const w = worldRef.current;
+            const c = w.cube;
+            if (c instanceof RexCube) {
+              c.twister.finish();
+              tweener.finish();
+              // pick from the original pointerdown location (before the drag moved)
+              rexHit = rexPickHit(c, w.scene, w.camera, rexDownX, rexDownY, w.width, w.height);
+              if (rexHit) {
+                if (settingsRef.current.holdPartialTurn) {
+                  const plan = rexResolveLive(c, rexHit, w.scene, w.camera, dx, dy, w.width, w.height);
+                  if (plan) {
+                    clearPartialFreeze();
+                    const anims = c.beginMove(plan.move);
+                    rexLive = { anims, tx: plan.tangentX, ty: plan.tangentY, downX: rexDownX, downY: rexDownY };
+                    const proj = (localX - rexDownX) * plan.tangentX + (localY - rexDownY) * plan.tangentY;
+                    rexApplyPartial(anims, proj / REX_FULL_PX);
+                    w.dirty = true;
+                    rexPending = false;
+                    return;
+                  }
+                } else {
+                  const move = rexResolveMove(c, rexHit, w.scene, w.camera, dx, dy, w.width, w.height);
+                  if (move) {
+                    c.twister.twist(move, false, true);
+                    userMoveRef.current?.(rexMoveToString(move));
+                    rexPending = false;
+                    return;
+                  }
+                }
+              }
+            }
+            // missed a piece, or no aligned corner → orbit the rest of this gesture
+            rexRotating = true;
+            rexHit = null;
+            rexLastX = e.clientX;
+            rexLastY = e.clientY;
+            const k = mapOrbitK(settingsRef.current.sensitivity);
+            world.scene.rotation.y += dx * k;
+            world.scene.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, world.scene.rotation.x + dy * k));
+            world.scene.updateMatrix();
+            world.dirty = true;
+            return;
+          }
+        }
+      }
       if (e.pointerType !== 'touch') return;
       if (!activePointers.has(e.pointerId)) return;
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -1135,12 +1252,36 @@ export default function SimPage() {
       rediFired = false;
       rediRotating = false;
       rediHit = null;
+      if (rexLive) {
+        const frozen = rexLive.anims;
+        partialSnapBackRef.current = () => rexSnapBack(frozen);
+        rexLive = null;
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
+      // Rex: the move (if any) already fired on pointermove. Clear state + snap the
+      // view if we were orbiting in 'rotate' mode.
+      if (rexRotating) {
+        if (settingsRef.current?.dragEmpty === 'rotate') {
+          const q = Math.PI / 2;
+          world.scene.rotation.y = Math.round(world.scene.rotation.y / q) * q;
+          world.scene.rotation.x = Math.round(world.scene.rotation.x / q) * q;
+          world.scene.updateMatrix();
+          world.dirty = true;
+        }
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      } else if (rexPending) {
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
+      rexPending = false;
+      rexFired = false;
+      rexRotating = false;
+      rexHit = null;
       if (e.pointerType !== 'touch') return;
       activePointers.delete(e.pointerId);
       if (pinching && activePointers.size < 2) {
         pinching = false;
         const pk = worldRef.current?.puzzleKind;
-        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino' || pk === 'redi';
+        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino' || pk === 'redi' || pk === 'rex';
         syncScaleToSettings();
       }
     };
@@ -1159,7 +1300,7 @@ export default function SimPage() {
       const host = backFrameRef.current;
       if (!host) return;
       if (!backViewRef.current) {
-        backViewRef.current = createBackView(THREE, Cubelet.SIZE, backSizeRef.current);
+        backViewRef.current = createBackView(THREE, SIZE, backSizeRef.current);
         host.appendChild(backViewRef.current.domElement);
       }
       backViewRef.current.render(w);
@@ -1171,26 +1312,32 @@ export default function SimPage() {
       const now = performance.now();
       const dt = now - lastFrameAt;
       lastFrameAt = now;
-      // Dino is corner-turning: the 6-face U/D/L/R/F/B hint letters don't describe
-      // its moves, so we don't surface them (skill pitfall #10). SQ1 shows them on
-      // its own drag-rotate flag; NxN via the controller.
+      // Corner-turners (Ivy/Dino/Redi) surface their own twist-axis labels at the
+      // corners instead of the 6-face U/D/L/R/F/B letters (those don't describe a
+      // corner turn — skill pitfall #10). Each puzzle reveals its set on its own
+      // drag-rotate flag; NxN via the controller.
       const viewing = world.puzzleKind === 'sq1'
         ? sq1Rotating
         : world.puzzleKind === 'ivy'
           ? ivyRotating
           : world.puzzleKind === 'dino'
-            ? false
-            : world.controller.isViewRotating;
-      // Ivy is a corner-turner: show its 4 twist-axis labels (R/L/D/B at the
-      // corners) instead of the 6 face letters; other puzzles keep face hints.
-      // (Dino is also corner-turning but has no hint set — `viewing` is false for
-      // it above, so its faceHints stay hidden.)
-      const hints = world.puzzleKind === 'ivy' ? world.ivyHints : world.faceHints;
-      if (viewing) hints.show(); else hints.hide();
-      (world.puzzleKind === 'ivy' ? world.faceHints : world.ivyHints).hide();
-      const hintA = world.faceHints.tick(dt);
-      const hintB = world.ivyHints.tick(dt);
-      if (hintA || hintB) world.dirty = true;
+            ? dinoRotating
+            : world.puzzleKind === 'redi'
+              ? rediRotating
+              : world.puzzleKind === 'rex'
+                ? rexRotating
+                : world.controller.isViewRotating;
+      const activeHints = world.puzzleKind === 'ivy' ? world.ivyHints
+        : world.puzzleKind === 'dino' ? world.dinoHints
+          : world.puzzleKind === 'redi' ? world.rediHints
+            : world.puzzleKind === 'rex' ? world.rexHints
+              : world.faceHints;
+      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints];
+      if (viewing) activeHints.show(); else activeHints.hide();
+      for (const h of allHints) if (h !== activeHints) h.hide();
+      let hintsAnimating = false;
+      for (const h of allHints) if (h.tick(dt)) hintsAnimating = true;
+      if (hintsAnimating) world.dirty = true;
       if (world.dirty || world.cube.dirty) {
         renderer.clear();
         renderer.render(world.scene, world.camera);

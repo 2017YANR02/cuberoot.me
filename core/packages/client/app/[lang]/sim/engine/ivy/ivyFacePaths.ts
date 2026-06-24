@@ -8,6 +8,8 @@
  * carving a center "eye" lens + two petals. IvyCube maps these onto the 3D cube
  * faces (SVGLoader -> ExtrudeGeometry).
  */
+import { circleIntersect } from '../stickerGeom';
+
 export type Corner = 'a' | 'b' | 'c' | 'd'; // a=(0,0) b=(1,0) c=(0,1) d=(1,1)
 
 const LC: Record<Corner, [number, number]> = {
@@ -59,14 +61,6 @@ export function facePaths(turn: [Corner, Corner]): FacePaths {
   return { lens, petals };
 }
 
-/** The two intersection points of circle(C0,r0) & circle(C1,r1). */
-function circleIntersect(C0: [number, number], r0: number, C1: [number, number], r1: number): [[number, number], [number, number]] {
-  const dx = C1[0] - C0[0], dy = C1[1] - C0[1], d = Math.hypot(dx, dy);
-  const a = (r0 * r0 - r1 * r1 + d * d) / (2 * d);
-  const h = Math.sqrt(Math.max(0, r0 * r0 - a * a));
-  const xm = C0[0] + (a * dx) / d, ym = C0[1] + (a * dy) / d;
-  return [[xm + (h * dy) / d, ym - (h * dx) / d], [xm - (h * dy) / d, ym + (h * dx) / d]];
-}
 const d2 = (p: [number, number], q: [number, number]): number => (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2;
 
 /** Like facePaths, but opens an EVEN-WIDTH groove of radial width `w` between the

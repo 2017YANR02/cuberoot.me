@@ -23,6 +23,9 @@
  * this to an external solver, so the convention only has to be internally
  * consistent (bare and primed are exact inverses).
  */
+import {
+  parseCornerMoves, cornerMoveToString, cornerMovesToString, randomCornerScramble,
+} from '../cornerNotation';
 
 /** Edge slot order (index 0..11). Each name is the two faces the edge touches.
  *  Identical to the Dino model (same 12 cube edges). */
@@ -116,20 +119,10 @@ export function applyRediMove(state: RediState, move: RediMove): RediState {
 }
 
 const TOKEN_RE = /^([FLBRflbr])('?)$/;
-const CORNER_INDEX = new Map<string, number>(CORNER_NAMES.map((n, i) => [n, i]));
 
 /** Parse a scramble/alg string into moves. Unknown tokens are skipped. */
 export function parseRediMoves(text: string): RediMove[] {
-  const out: RediMove[] = [];
-  for (const raw of text.trim().split(/\s+/)) {
-    if (!raw) continue;
-    const m = TOKEN_RE.exec(raw);
-    if (!m) continue;
-    const corner = CORNER_INDEX.get(m[1]);
-    if (corner === undefined) continue;
-    out.push({ corner, dir: m[2] ? 1 : -1 });
-  }
-  return out;
+  return parseCornerMoves(text, TOKEN_RE, CORNER_NAMES);
 }
 
 /** Render one move back to its canonical token. Bare = the clockwise twist
@@ -137,11 +130,11 @@ export function parseRediMoves(text: string): RediMove[] {
  *  clockwise drag records the bare letter. Must stay the exact inverse of
  *  parseRediMoves. */
 export function rediMoveToString(move: RediMove): string {
-  return CORNER_NAMES[move.corner] + (move.dir === 1 ? "'" : '');
+  return cornerMoveToString(move, CORNER_NAMES);
 }
 
 export function rediMovesToString(moves: RediMove[]): string {
-  return moves.map(rediMoveToString).join(' ');
+  return cornerMovesToString(moves, CORNER_NAMES);
 }
 
 /** True iff every edge is home AND every corner orientation is 0. */
@@ -156,15 +149,7 @@ export function isSolved(state: RediState): boolean {
  * second twist of the same corner just composes, wasting length).
  */
 export function randomRediScramble(n = 20): RediMove[] {
-  const out: RediMove[] = [];
-  let last = -1;
-  for (let i = 0; i < n; i++) {
-    let corner: number;
-    do { corner = Math.floor(Math.random() * 8); } while (corner === last);
-    last = corner;
-    out.push({ corner, dir: Math.random() < 0.5 ? 1 : -1 });
-  }
-  return out;
+  return randomCornerScramble(n);
 }
 
 /** Apply a whole scramble to solved and return the resulting state. */

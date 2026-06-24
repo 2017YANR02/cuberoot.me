@@ -19,9 +19,9 @@
  */
 
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
-import type World from './cuber/world';
-import type CubeType from './cuber/cube';
-import { TwistAction } from './cuber/twister';
+import type World from './engine/world';
+import type CubeType from './engine/nxn/cube';
+import { TwistAction } from './engine/nxn/twister';
 import { useT } from '@/hooks/useT';
 
 type FaceLetter = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';

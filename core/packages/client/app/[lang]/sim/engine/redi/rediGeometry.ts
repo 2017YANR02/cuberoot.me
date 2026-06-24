@@ -30,14 +30,14 @@
  * orientation (twists left-multiply R(axis, ±120°)).
  */
 import * as THREE from 'three';
-import Cubelet from '../cubelet';
+import { SIZE } from '../define';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { EDGE_NAMES, CORNER_AXIS, type EdgeName } from './rediState';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 /** Cube half-side (world units). Frames like a ~3x3 in the shared camera rig. */
-export const H = Cubelet.SIZE * 2; // 128
+export const H = SIZE * 2; // 128
 
 /** Grid line position (the corner third): corner squares span [GRID, H], edge
  *  squares span [−GRID, GRID], the centre cell is [−GRID, GRID]². H/3 gives the

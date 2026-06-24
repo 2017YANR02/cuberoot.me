@@ -6,6 +6,12 @@ export const FACE = {
 } as const;
 export type FACE = 0 | 1 | 2 | 3 | 4 | 5;
 
+/** Unit cubelet edge length — the universal scale for the whole engine (camera
+ *  distance, light positions, face-hint offsets, every puzzle's geometry). Lives
+ *  here (not on the NxN Cubelet class) so the non-NxN engines + world + face_hints
+ *  read the scale without importing the NxN piece. Cubelet.SIZE re-exports it. */
+export const SIZE = 64;
+
 // 标准 WCA 6 面色取自全站单一来源 lib/cube-colors;Core/Gray/High 是 sim 专属。
 import { CUBE_FILL } from "@/lib/cube-colors";
 export const COLORS: { [key: string]: string } = {

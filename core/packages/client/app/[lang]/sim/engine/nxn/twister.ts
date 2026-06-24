@@ -2,8 +2,8 @@
 import * as THREE from "three";
 import Cube from "./cube";
 import Cubelet from "./cubelet";
-import tweener from "./tweener";
-import { timing } from "./tweenTiming";
+import tweener from "../tweener";
+import { timing } from "../tweenTiming";
 import initStackKernel, { apply_rotates as stackKernelApplyRotates, apply_rotates_no_flat as stackKernelApplyRotatesNoFlat } from "@cuberoot/stack-kernel";
 import { ensureWorkerInit, workerApply } from "./setup_worker_client";
 
