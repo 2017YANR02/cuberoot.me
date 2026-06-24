@@ -526,7 +526,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       const movesMask = restrictedRef.current ? moveMaskRef.current : undefined;
       const res = kind === 'std'
         ? (useCrRef.current
-          ? await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current)
+          ? await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap)
           : await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: movesMask }))
         : kind === 'f2leo'
           ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap, combo, mask: movesMask })
