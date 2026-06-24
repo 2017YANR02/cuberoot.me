@@ -23,7 +23,7 @@ import { Brush, Evaluator } from 'three-bvh-csg';
 import { SIZE, COLORS } from '../define';
 import { CORNER_AXIS, EDGE_MID, PETAL_FACE, PETAL_CORNER, FACE_LETTERS } from './rexState';
 import { rexFaceRegions, type RexRegion } from './rexFacePaths';
-import { cubeFaceBasis, extrudeOntoFace, type FaceBasis } from '../stickerGeom';
+import { cubeFaceBasis, extrudeOntoFace, makeSticker, type FaceBasis } from '../stickerGeom';
 import { alignedSphereGeo, cutCell } from '../csgCut';
 
 /** Cube half-side (world units). Frames like a ~3x3 in the shared camera rig (corners
@@ -158,7 +158,9 @@ function buildSticker(region: RexRegion, b: FaceBasis, color: string): THREE.Mes
   const outline = region.pts.map(([a, bb]): [number, number] => [a * H, bb * H]);
   const origin = b.n.clone().multiplyScalar(H + STICKER_LIFT);
   const geo = extrudeOntoFace(outline, { u: b.u, v: b.v, n: b.n, origin }, STICKER_DEPTH);
-  return new THREE.Mesh(geo, stickerMat(color));
+  // black-walls invariant (caps colored, walls body-dark) → grazing-angle grooves stay
+  // visible. attachStickers adds rexType/rexId/rexFace userData on top.
+  return makeSticker(geo, stickerMat(color), bodyMat);
 }
 
 /** Attach each face's 9 analytic stickers (1 centre + 4 petals + 4 edges) to the

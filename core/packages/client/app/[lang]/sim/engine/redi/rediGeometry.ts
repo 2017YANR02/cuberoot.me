@@ -35,6 +35,7 @@ import { CUBE_FILL } from '@/lib/cube-colors';
 import { EDGE_NAMES, CORNER_AXIS, type EdgeName } from './rediState';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { makeSticker } from '../stickerGeom';
 
 /** Cube half-side (world units). Frames like a ~3x3 in the shared camera rig. */
 export const H = SIZE * 2; // 128
@@ -195,10 +196,9 @@ function buildSticker(poly: THREE.Vector3[], face: string): THREE.Mesh {
   centroid.multiplyScalar(1 / poly.length);
   const lift = FACE_NORMAL[face].clone().multiplyScalar(STICKER_LIFT);
   const inset = poly.map((p) => p.clone().lerp(centroid, STICKER_INSET).add(lift));
-  const mesh = new THREE.Mesh(roundedPolySticker(inset, FACE_NORMAL[face]), stickerMat(REDI_FACE_COLOR[face]));
-  mesh.userData.simRole = 'sticker';
-  mesh.userData.rediFace = face;
-  return mesh;
+  // makeSticker bakes in the black-walls invariant (caps colored, side walls body-dark)
+  // so grazing-angle grooves stay visible — see stickerGeom.ts / sim-add-puzzle skill.
+  return makeSticker(roundedPolySticker(inset, FACE_NORMAL[face]), stickerMat(REDI_FACE_COLOR[face]), bodyMat, { rediFace: face });
 }
 
 export interface PieceBuild {

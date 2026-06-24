@@ -154,3 +154,26 @@ export function extrudeOntoFace(
   geo.applyMatrix4(new THREE.Matrix4().makeBasis(basis.u, basis.v, basis.n).setPosition(basis.origin));
   return geo;
 }
+
+/**
+ * Build a sticker mesh from an extruded sticker geometry — the ONE place that encodes
+ * the black-walls invariant so no puzzle can forget it. An `ExtrudeGeometry` has two
+ * material groups: [0] = the top/bottom caps, [1] = the side walls. Passing the material
+ * array `[capMat, wallMat]` makes the caps colored and the WALLS body-dark, so a colored
+ * wall never occludes the thin black groove at a grazing viewing angle (which would make
+ * the dividing line vanish on a steeply-tilted face). `wallMat` must be the piece's body
+ * (dark) material so the wall matches the groove. Also tags `userData.simRole='sticker'`
+ * for the structure-color debug overlay (debugColors.ts leaves stickers untouched).
+ * Used by every cube-faced engine puzzle (dino/redi/rex/heli/ivy); see sim-add-puzzle skill.
+ */
+export function makeSticker(
+  geo: THREE.BufferGeometry,
+  capMat: THREE.Material,
+  wallMat: THREE.Material,
+  userData?: Record<string, unknown>,
+): THREE.Mesh {
+  const mesh = new THREE.Mesh(geo, [capMat, wallMat]);
+  mesh.userData.simRole = 'sticker';
+  if (userData) Object.assign(mesh.userData, userData);
+  return mesh;
+}

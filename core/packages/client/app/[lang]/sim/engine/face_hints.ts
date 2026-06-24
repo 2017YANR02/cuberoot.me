@@ -57,6 +57,25 @@ export const REX_CORNER_HINTS: OrientationHint[] = [
   { letter: 'UFR', dir: new THREE.Vector3(1, 1, 1) },
 ];
 
+// Helicopter is an EDGE-turner: its 12 twist axes sit at the edge midpoints. Each
+// label = the edge's 2-letter name (UF, UR, …) at that edge's midpoint direction —
+// matches HELI_EDGE_NAMES / EDGE_MID in cuber/heli/heliState. Shown on orbit instead
+// of the 6 face letters (an edge puzzle has no 6 face turns).
+export const HELI_EDGE_HINTS: OrientationHint[] = [
+  { letter: 'UF', dir: new THREE.Vector3(0, 1, 1) },
+  { letter: 'UR', dir: new THREE.Vector3(1, 1, 0) },
+  { letter: 'UB', dir: new THREE.Vector3(0, 1, -1) },
+  { letter: 'UL', dir: new THREE.Vector3(-1, 1, 0) },
+  { letter: 'FR', dir: new THREE.Vector3(1, 0, 1) },
+  { letter: 'BR', dir: new THREE.Vector3(1, 0, -1) },
+  { letter: 'BL', dir: new THREE.Vector3(-1, 0, -1) },
+  { letter: 'FL', dir: new THREE.Vector3(-1, 0, 1) },
+  { letter: 'DF', dir: new THREE.Vector3(0, -1, 1) },
+  { letter: 'DR', dir: new THREE.Vector3(1, -1, 0) },
+  { letter: 'DB', dir: new THREE.Vector3(0, -1, -1) },
+  { letter: 'DL', dir: new THREE.Vector3(-1, -1, 0) },
+];
+
 // Redi is a corner-turner too (all 8 corners). Real-Redi notation: F L B R = the 4
 // TOP corners, f l b r = the 4 BOTTOM — matches CORNER_NAMES / CORNER_AXIS in
 // cuber/redi/rediState.
