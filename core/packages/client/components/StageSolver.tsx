@@ -301,9 +301,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     allowedFaces.forEach((on, i) => { if (on) m |= 0b111 << (3 * i); });
     return m >>> 0;
   }, [allowedFaces]);
-  // 经 ref 喂给 computeAll/fetchMoves(不进它们的 deps,避免回调身份抖动);recompute 由专门 effect 驱动。
-  const moveMaskRef = useRef(moveMask);
-  moveMaskRef.current = moveMask;
 
   // —— 纯十字阶段(std stage 0)的「全 18 格」受限:走 CrossRestrictSolverWasm(54-move BFS)。
   // 仅此阶段铺满 18 格(6面+6宽+3中层+3旋转);其余方法/阶段沿用上面的 6 面 mask 引擎。
@@ -324,18 +321,29 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const crMaxRot = useMemo(() => (crCells[15] || crCells[16] || crCells[17] ? 2 : 0), [crCells]);
   // 受限 = 偏离「仅 6 面」基线(lo=0x3FFFF, hi=0)。
   const crRestricted = isCrossStage && (crMask.lo !== CR_FACE_LO || crMask.hi !== 0);
+  // 仅当用到「6 面之外」的格(宽/中层/旋转 = 高位 bit)才需 54-move cr 引擎;纯 6 面子集仍走老快引擎
+  // (CrossSolver 精确剪枝 <0.6s、零建表)→ 18 格对最常见的 6 面限制零性能回归。
+  const crNeedsEngine = isCrossStage && (crMask.hi !== 0 || (crMask.lo >>> 18) !== 0);
   const crMaskRef = useRef(crMask);
   crMaskRef.current = crMask;
   const crMaxRotRef = useRef(crMaxRot);
   crMaxRotRef.current = crMaxRot;
-  // 用此 cross 受限路径求解(纯十字阶段且偏离基线)→ computeAll/fetchMoves 路由到 cr 池。
-  const useCrRef = useRef(isCrossStage && crRestricted);
-  useCrRef.current = isCrossStage && crRestricted;
+  // 走 54-move cr 池求解(纯十字阶段且用到 6 面外的格)→ computeAll/fetchMoves 路由到 cr 池。
+  const useCrRef = useRef(crNeedsEngine);
+  useCrRef.current = crNeedsEngine;
 
   // 统一「受限」语义(驱动:关闭 y-省力转体、无解文案):6 面 mask 受限 或 cross 18 格受限。
   const restricted = (maskSupported && moveMask !== ALL_MOVE_MASK) || crRestricted;
   const restrictedRef = useRef(restricted);
   restrictedRef.current = restricted;
+
+  // 实际喂老 6 面 mask 引擎的 mask(未受限 = undefined)。纯十字阶段:6 面子集取 crMask 低 18 位
+  // (与 moveMask 同序同格式),用到 6 面外的格时改走 cr 引擎(此处不喂 mask)。其余阶段取 moveMask。
+  const activeMask: number | undefined = isCrossStage
+    ? (crRestricted && !crNeedsEngine ? (crMask.lo & CR_FACE_LO) : undefined)
+    : (maskSupported && moveMask !== ALL_MOVE_MASK ? moveMask : undefined);
+  const activeMaskRef = useRef(activeMask);
+  activeMaskRef.current = activeMask;
 
   // cross 受限专用轻量池(零表,worker 构造现场建 coord/center transition);惰性建、卸载即终止。
   const crPoolRef = useRef<RustCrossPool | null>(null);
@@ -439,7 +447,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               result[f] = r.value;
               setCounts((prev) => { const n = prev.slice(); n[f] = r.value; return n; });
             } else {
-              const r = await pool.solveFace(scr, stage, f, restrictedRef.current ? moveMaskRef.current : undefined);
+              const r = await pool.solveFace(scr, stage, f, activeMaskRef.current);
               if (computeReq.current !== my) return;
               result[f] = r.value;
               setCounts((prev) => { const n = prev.slice(); n[f] = r.value; return n; });
@@ -447,7 +455,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           } catch { /* skip face */ }
         }));
       } else {
-        const stageMask = restrictedRef.current ? moveMaskRef.current : undefined;
+        const stageMask = activeMaskRef.current;
         const vals = kind === 'f2leo'
           ? await pool.solveF2leoStage(scr, method === 'pseudo_f2leo', stage, stageMask)
           : kind === 'block222'
@@ -523,7 +531,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       const cap = limit === 0 ? NO_LIMIT_CAP : limit;
       // 搜索深度恒定 = 最优+SLACK(=旧「+2」档,不引入新的性能成本);cap=用户选的展示条数,
       // 引擎按长度升序收集、够数即停。条数填不满时(短解不够)如实返回更少。
-      const movesMask = restrictedRef.current ? moveMaskRef.current : undefined;
+      const movesMask = activeMaskRef.current;
       const res = kind === 'std'
         ? (useCrRef.current
           ? await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap)
