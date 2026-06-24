@@ -83,6 +83,7 @@ import {
   type SimSettings,
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
+import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { WheelPicker } from '@/components/WheelPicker';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
@@ -114,6 +115,14 @@ const PUZZLE_TYPE_OPTIONS = [
   { value: 'heli',     iconClass: 'unofficial-helicopter', labelZh: '直升机', labelEn: 'Helicopter' },
 ] as const;
 
+// Engine puzzles above + cubing.js PuzzleGeometry puzzles (explore set, rendered
+// via TwistyPlayer — see pgCatalog.ts). The PG entries are appended at runtime so
+// the catalog stays the single source of truth.
+const ALL_PUZZLE_TYPE_OPTIONS: { value: string; iconClass: string; labelZh: string; labelEn: string }[] = [
+  ...PUZZLE_TYPE_OPTIONS,
+  ...PG_PUZZLES.map((p) => ({ value: p.id, iconClass: p.icon, labelZh: p.zh, labelEn: p.en })),
+];
+
 function PuzzleTypeSelect({ value, onChange, isZh }: {
   value: string;
   onChange: (v: string) => void;
@@ -130,7 +139,7 @@ function PuzzleTypeSelect({ value, onChange, isZh }: {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  const current = PUZZLE_TYPE_OPTIONS.find(o => o.value === value) ?? PUZZLE_TYPE_OPTIONS[0];
+  const current = ALL_PUZZLE_TYPE_OPTIONS.find(o => o.value === value) ?? ALL_PUZZLE_TYPE_OPTIONS[0];
 
   return (
     <div ref={ref} className="sim-puzzle-type-select">
@@ -147,7 +156,7 @@ function PuzzleTypeSelect({ value, onChange, isZh }: {
       </button>
       {open && (
         <div className="sim-puzzle-type-popup">
-          {PUZZLE_TYPE_OPTIONS.map(o => (
+          {ALL_PUZZLE_TYPE_OPTIONS.map(o => (
             <button
               key={o.value}
               type="button"
@@ -197,7 +206,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'pyraminx' | 'skewb' | 'megaminx';
+export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'pyraminx' | 'skewb' | 'megaminx' | PgPuzzleId;
 
 function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
@@ -1329,9 +1338,12 @@ function PuzzleSettings({
   // A corner-turn engine puzzle locally (Dino/Redi/Rex/Heli/engine-Skewb) — used to
   // gate the corner-only debug toggles + keep the type select / non-NxN layout right.
   const isCornerLocal = isDinoLocal || isRediLocal || isRexLocal || isHeliLocal || isSkewbEngine;
+  // A PuzzleGeometry explore puzzle (rendered by cubing.js TwistyPlayer) — twisty-class.
+  const isPgLocal = typeof puzzleKind === 'string' && isPgPuzzleId(puzzleKind);
   // Engine-skewb is rendered by the engine, so it's NOT a "twisty" (cubing.js) puzzle
-  // for the purposes of the NxN/engine option gating below.
-  const isTwistyLocal = isTwistyPuzzle(puzzleKind) && !isSkewbEngine;
+  // for the purposes of the NxN/engine option gating below. PG explore puzzles ARE
+  // twisty-class (no in-house engine) → fold them in so the engine-only toggles hide.
+  const isTwistyLocal = (isTwistyPuzzle(puzzleKind) || isPgLocal) && !isSkewbEngine;
   // Whether this puzzle has a cubing.js ↔ engine renderer choice (skewb).
   const hasRendererChoice = puzzleKind === 'skewb';
   const isNxNLocal = !isSq1Local && !isIvyLocal && !isCornerLocal && !isTwistyLocal;
@@ -1417,6 +1429,7 @@ function PuzzleSettings({
                 isZh={isZh}
                 onChange={(v) => {
                   if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
+                  else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}
               />
