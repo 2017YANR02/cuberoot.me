@@ -1,59 +1,149 @@
 'use client';
 /**
- * GroupTheoryPanel — the visible half of the "group-theory kernel" render mode. The
- * puzzle is still drawn by our Three.js engine (PyraCube …); this panel surfaces what
- * the geometry can't show: the exact group order via Schreier-Sims, the Z_o ≀ S_n
- * orbit structure, the unconstrained reassembly count and the constraint index — all
- * computed live in-browser by the vendored cubing.js puzzle-geometry (lazy-loaded so
- * its ~3.4k-line compiler never lands in the default bundle).
+ * GroupTheoryPanel — the visible half of the "群论内核" render mode. Our Three.js engine
+ * (PyraCube …) still draws the pixels; this panel runs the *real* vendored cubing.js
+ * group theory on top of it, live:
  *
- * Every number here is a group invariant (independent of how our move notation maps
- * onto PG's), so the panel is rigorous without a geometric move bridge.
+ *   • static invariants — |G| via Schreier-Sims, the Zₒ≀Sₙ orbit structure, the
+ *     unconstrained reassembly count and the constraint index;
+ *   • live state — the current group element's order + a group-theoretic solved test,
+ *     mirrored from the engine's own moves (faithful: group-solved ⇔ geometry-solved);
+ *   • actions — 群论打乱 = a uniform random STATE via the BSGS (a true random state,
+ *     not a random-move shuffle) and 群论还原 = a BSGS factorisation solve.
+ *
+ * Everything is computed in-browser by the vendored puzzle-geometry, lazy-loaded so its
+ * ~3.4k-line compiler never lands in the default bundle.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Sigma } from 'lucide-react';
+import { Sigma, Shuffle, Wand2 } from 'lucide-react';
 import type { PgGroupFacts } from './engine/pgBackbone';
+import type { PgEngineBinding } from './engine/pgBinding';
 import './group-theory-panel.css';
 
-/** Sim puzzle kind → vendored PG puzzle name (a `pgPuzzle` key). Extend as engine
- *  puzzles gain a PG kernel. */
-const PG_NAME: Record<string, string> = {
-  pyraminx: 'pyraminx',
-};
+/** Minimal structural view of an engine cube (PyraCube …) the panel drives. */
+export interface SimEngineCube {
+  history: { init: string; moves: string[] };
+  callbacks: (() => void)[];
+  complete: boolean;
+  twister: { setup(s: string): void; push(s: string): void };
+}
+/** Minimal view of the sim World the panel reads (to confirm the active cube is the
+ *  expected engine puzzle before driving it). */
+export interface SimWorldView {
+  puzzleKind: string | number;
+  cube: SimEngineCube;
+}
+
+/** Engine puzzle kinds wired to a PG kernel (kept in sync with pgBindings). */
+const PG_BOUND: Record<string, true> = { pyraminx: true };
 
 const SUBS = '₀₁₂₃₄₅₆₇₈₉';
 const sub = (n: number): string => String(n).split('').map((d) => SUBS[+d]).join('');
 const grp = (b: bigint): string => b.toLocaleString('en-US');
-/** Z_o ≀ S_n for an oriented orbit, S_n for an unoriented one. */
+/** Zₒ≀Sₙ for an oriented orbit, Sₙ for an unoriented one. */
 const wreath = (pieces: number, oriMod: number): string =>
   (oriMod > 1 ? `ℤ${sub(oriMod)}≀S${sub(pieces)}` : `S${sub(pieces)}`);
 
-export default function GroupTheoryPanel({ puzzle }: { puzzle: string }) {
+interface LiveState { solved: boolean; order: number; solveLen: number; }
+
+export default function GroupTheoryPanel({
+  puzzle, getWorld,
+}: { puzzle: string; getWorld: () => SimWorldView | null }) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string): string => (isZh ? zh : en);
 
-  const pgName = PG_NAME[puzzle];
+  const bound = !!PG_BOUND[puzzle];
+  const bindingRef = useRef<PgEngineBinding<unknown> | null>(null);
   const [facts, setFacts] = useState<PgGroupFacts | null>(null);
   const [ms, setMs] = useState(0);
+  const [live, setLive] = useState<LiveState | null>(null);
+
+  // The active engine cube, but only once the World has actually switched to this
+  // puzzle (avoids grabbing the default NxN cube — whose history shape differs — in
+  // the brief window before setPuzzle runs).
+  const activeCube = useCallback((): SimEngineCube | null => {
+    const w = getWorld();
+    if (!w || w.puzzleKind !== puzzle) return null;
+    const c = w.cube;
+    return c && Array.isArray(c.history?.moves) ? c : null;
+  }, [getWorld, puzzle]);
 
   useEffect(() => {
-    if (!pgName) return;
+    if (!bound) return;
     let alive = true;
+    let cube: SimEngineCube | null = null;
+    let cb: (() => void) | null = null;
+    let raf = 0;
     setFacts(null);
-    void import('./engine/pgBackbone').then(({ PgBackbone }) => {
+    setLive(null);
+
+    void import('./engine/pgBindings').then(({ createBinding }) => {
+      if (!alive) return;
+      const binding = createBinding(puzzle) as PgEngineBinding<unknown> | null;
+      if (!binding) return;
+      bindingRef.current = binding;
       const t0 = performance.now();
-      const f = new PgBackbone(pgName).facts();
-      const dt = performance.now() - t0;
+      const f = binding.facts();
       if (!alive) return;
       setFacts(f);
-      setMs(dt);
-    });
-    return () => { alive = false; };
-  }, [pgName]);
+      setMs(performance.now() - t0);
 
-  if (!pgName) return null;
+      const refresh = () => {
+        if (!cube) return;
+        binding.rebuildFromString(`${cube.history.init} ${cube.history.moves.join(' ')}`.trim());
+        const ss = binding.solveString();
+        const solveLen = ss ? ss.trim().split(/\s+/).length : 0;
+        setLive({ solved: binding.solved, order: binding.currentOrder(), solveLen });
+      };
+      const attach = () => {
+        if (!alive) return;
+        const c = activeCube();
+        if (c) {
+          cube = c;
+          cb = refresh;
+          c.callbacks.push(cb);
+          refresh();
+        } else {
+          raf = requestAnimationFrame(attach);
+        }
+      };
+      attach();
+    });
+
+    return () => {
+      alive = false;
+      if (raf) cancelAnimationFrame(raf);
+      if (cube && cb) {
+        const i = cube.callbacks.indexOf(cb);
+        if (i >= 0) cube.callbacks.splice(i, 1);
+      }
+      bindingRef.current = null;
+    };
+  }, [puzzle, bound, activeCube]);
+
+  const onScramble = useCallback(() => {
+    const c = activeCube();
+    const b = bindingRef.current;
+    if (!c || !b) return;
+    const s = b.scrambleString();
+    // Apply instantly as the base state: a uniform random STATE needs a long BSGS
+    // word to reach, which would animate for ~30s — so jump there (like the main
+    // scramble button's non-animated path) rather than play every turn.
+    c.twister.setup(s);
+  }, [activeCube]);
+
+  const onSolve = useCallback(() => {
+    const c = activeCube();
+    const b = bindingRef.current;
+    if (!c || !b) return;
+    b.rebuildFromString(`${c.history.init} ${c.history.moves.join(' ')}`.trim());
+    const s = b.solveString();
+    if (s) c.twister.push(s); // animate the BSGS solution
+  }, [activeCube]);
+
+  if (!bound) return null;
 
   return (
     <section className="gt-panel">
@@ -79,6 +169,34 @@ export default function GroupTheoryPanel({ puzzle }: { puzzle: string }) {
                 </span>
               </div>
             )}
+          </div>
+
+          <div className="gt-live">
+            <div className={`gt-live-state ${live?.solved ? 'is-solved' : 'is-scrambled'}`}>
+              {live?.solved ? t('已还原', 'Solved') : t('打乱中', 'Scrambled')}
+            </div>
+            <div className="gt-live-facts">
+              <span>
+                {t('当前元素阶', 'element order')} <b className="gt-mono">{live ? live.order : '—'}</b>
+              </span>
+              <span>
+                {t('群论解', 'BSGS solution')} <b className="gt-mono">{live ? `${live.solveLen}` : '—'}</b>
+                {live ? t(' 步', ' moves') : ''}
+              </span>
+            </div>
+          </div>
+
+          <div className="gt-actions">
+            <button type="button" className="gt-btn" onClick={onScramble}>
+              <Shuffle size={14} aria-hidden /> {t('群论打乱', 'Random-state scramble')}
+            </button>
+            <button type="button" className="gt-btn" onClick={onSolve} disabled={!!live?.solved}>
+              <Wand2 size={14} aria-hidden /> {t('群论还原', 'BSGS solve')}
+            </button>
+          </div>
+          <div className="gt-actions-note">
+            {t('打乱 = BSGS 均匀采样的随机态;还原 = 强生成集分解',
+              'scramble = uniform random state via BSGS · solve = strong-generating-set factorisation')}
           </div>
 
           <dl className="gt-rows">
