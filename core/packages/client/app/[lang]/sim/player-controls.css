@@ -369,19 +369,30 @@
   z-index: 200;
   box-shadow: 0 6px 20px rgba(0,0,0,0.2);
   display: flex;
-  gap: 2px;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 150px;
+  max-height: 320px;
+  overflow-y: auto;
 }
 .sim-puzzle-type-item {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
   border: 1px solid transparent;
   border-radius: 4px;
   background: none;
   color: var(--muted-foreground);
   cursor: pointer;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+}
+.sim-puzzle-type-label {
+  font-size: 13px;
 }
 .sim-puzzle-type-item:hover {
   background: var(--accent);
