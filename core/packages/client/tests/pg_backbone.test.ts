@@ -40,6 +40,8 @@ describe('PgBackbone (pyraminx)', () => {
   it('exposes exact group facts via Schreier-Sims', () => {
     const f = new PgBackbone('pyraminx').facts();
     expect(f.order).toBe(906992640n);
+    expect(f.turningOrder).toBe(75582720n); // classic count, no whole-puzzle rotation
+    expect(f.reorientations).toBe(12n); // |A4|
     expect(f.reassembly).toBe(174142586880n);
     expect(f.index).toBe(192n);
     expect(f.orbits).toEqual([

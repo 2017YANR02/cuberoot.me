@@ -88,6 +88,7 @@ import {
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
+import GroupTheoryPanel from './GroupTheoryPanel';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { WheelPicker } from '@/components/WheelPicker';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
@@ -477,8 +478,8 @@ interface Props {
   onSkewbNotationChange?: (n: SkewbNotation) => void;
   /** Renderer for an ENGINE_TWISTY puzzle (skewb): 'cubing' = cubing.js TwistyPlayer
    *  (default), 'engine' = the in-house Three.js engine. */
-  renderer?: 'cubing' | 'engine';
-  onRendererChange?: (r: 'cubing' | 'engine') => void;
+  renderer?: 'cubing' | 'engine' | 'group';
+  onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
 }
 
 export default function PlayerControls({
@@ -495,7 +496,7 @@ export default function PlayerControls({
   // Skewb on the in-house engine — a corner-turn engine puzzle, NOT the cubing.js
   // twisty path. The cubing.js skewb stays a twisty puzzle (renderer 'cubing').
   const isSkewbEngine = puzzleKind === 'skewb' && renderer === 'engine';
-  const isPyraEngine = puzzleKind === 'pyraminx' && renderer === 'engine';
+  const isPyraEngine = puzzleKind === 'pyraminx' && (renderer === 'engine' || renderer === 'group');
   // Skewb + Pyraminx have an in-house engine alternative; on the 'engine' renderer they
   // behave like the other engine (corner-turn) puzzles, NOT the cubing.js twisty path.
   const isEngineTwisty = isSkewbEngine || isPyraEngine;
@@ -1339,8 +1340,8 @@ function PuzzleSettings({
   onOrderChange: (n: number) => void;
   puzzleKind: SimPuzzle;
   onPuzzleChange: (kind: SimPuzzle) => void;
-  renderer: 'cubing' | 'engine';
-  onRendererChange?: (r: 'cubing' | 'engine') => void;
+  renderer: 'cubing' | 'engine' | 'group';
+  onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
   /** True when puzzleKind is an ENGINE_TWISTY puzzle on the in-house engine. */
   isEngineTwisty: boolean;
   settings: SimSettings;
@@ -1464,12 +1465,18 @@ function PuzzleSettings({
                 <select
                   className="sim-puzzle-select"
                   value={renderer}
-                  onChange={(e) => onRendererChange(e.target.value as 'cubing' | 'engine')}
-                  title={t('cubing.js 官方渲染 或 本站自有引擎(圆润外观 + 拖拽转动)', 'cubing.js renderer or the in-house engine (rounded look + drag-to-turn)')}
+                  onChange={(e) => onRendererChange(e.target.value as 'cubing' | 'engine' | 'group')}
+                  title={t('cubing.js 官方渲染 / 本站自有引擎(圆润外观 + 拖拽转动)/ 群论内核(引擎 + 群结构面板)', 'cubing.js renderer / in-house engine (rounded look + drag) / group-theory kernel (engine + group panel)')}
                 >
                   <option value="cubing">cubing.js</option>
                   <option value="engine">{t('自有引擎', 'Engine')}</option>
+                  {puzzleKind === 'pyraminx' && (
+                    <option value="group">{t('群论内核', 'Group theory')}</option>
+                  )}
                 </select>
+                {renderer === 'group' && puzzleKind === 'pyraminx' && (
+                  <GroupTheoryPanel puzzle={puzzleKind} />
+                )}
               </div>
             )}
             {isNxNLocal && (

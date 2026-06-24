@@ -165,9 +165,10 @@ export default function SimPage() {
       puzzle: parseAsString.withDefault('3'),
       alg: parseAsString,
       setup: parseAsString,
-      // Which renderer for an ENGINE_TWISTY puzzle (skewb): cubing.js TwistyPlayer
-      // (default) or the in-house Three.js engine. Default 'cubing' → omitted from URL.
-      renderer: parseAsStringEnum(['cubing', 'engine'] as const).withDefault('cubing'),
+      // Which renderer for an ENGINE_TWISTY puzzle: cubing.js TwistyPlayer (default),
+      // the in-house Three.js engine, or 'group' = the engine + a live group-theory
+      // panel backed by the vendored puzzle-geometry. Default 'cubing' → omitted.
+      renderer: parseAsStringEnum(['cubing', 'engine', 'group'] as const).withDefault('cubing'),
     },
     { history: 'replace', scroll: false },
   );
@@ -194,7 +195,8 @@ export default function SimPage() {
   // alternative AND the renderer toggle is set to 'engine' (default 'cubing' keeps
   // the cubing.js TwistyPlayer). `twisty` = "use the cubing.js path" — false for
   // engine-skewb, which then falls through to the World/Three.js route below.
-  const useEngine = isTwistyPuzzle(puzzleParam) && ENGINE_TWISTY.has(puzzleParam) && query.renderer === 'engine';
+  const useEngine = isTwistyPuzzle(puzzleParam) && ENGINE_TWISTY.has(puzzleParam)
+    && (query.renderer === 'engine' || query.renderer === 'group');
   // A PuzzleGeometry puzzle (explore set) renders via cubing.js TwistyPlayer's
   // experimentalPuzzleDescription — twisty-class, no in-house engine.
   const pgDef = typeof puzzleParam === 'string' ? PG_DEF_BY_ID[puzzleParam] : undefined;
@@ -1079,7 +1081,7 @@ export default function SimPage() {
   // Switch an ENGINE_TWISTY puzzle (skewb) between the cubing.js TwistyPlayer and the
   // in-house engine. Flips `renderer` in the URL; the [twisty] world-init effect then
   // builds/tears down the World, and the sync effect routes the puzzle into it.
-  const handleRendererChange = useCallback((r: 'cubing' | 'engine') => {
+  const handleRendererChange = useCallback((r: 'cubing' | 'engine' | 'group') => {
     setQuery({ renderer: r === 'cubing' ? null : r });
   }, [setQuery]);
 
