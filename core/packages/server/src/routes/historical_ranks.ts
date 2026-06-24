@@ -34,6 +34,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
   const year = parseInt(c.req.query('year') ?? '0', 10);
   const country = c.req.query('country') ?? '';                 // '' = worldwide; 否则 country.id 或 ISO2
   const type = String(c.req.query('type') ?? 'single').toLowerCase(); // 'single' | 'average'
+  const gender = String(c.req.query('gender') ?? 'all').toLowerCase(); // 'all' | 'm' | 'f'
   const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10));
   const size = Math.min(MAX_PAGE_SIZE, Math.max(1, parseInt(c.req.query('size') ?? String(DEFAULT_PAGE_SIZE), 10)));
 
@@ -46,6 +47,9 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
   }
   if (type !== 'single' && type !== 'average') {
     return c.json({ error: 'Invalid type' }, 400);
+  }
+  if (gender !== 'all' && gender !== 'm' && gender !== 'f') {
+    return c.json({ error: 'Invalid gender' }, 400);
   }
   // 333mbf 没有 average
   if (event === '333mbf' && type === 'average') {
@@ -82,14 +86,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
   const offset = (page - 1) * size;
   const orderRank = countryId ? crCol : wrCol;
 
-  const whereExtra = countryId
-    ? `AND ${crCol} > 0 AND s.country_id = ?`
-    : `AND ${wrCol} > 0`;
-  const params: unknown[] = [event, year];
-  if (countryId) params.push(countryId);
-  params.push(size, offset);
-
-  const rows = await query<{
+  let rows: {
     wca_id: string;
     name: string;
     val: number | null;
@@ -101,45 +98,105 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
     comp_name: string | null;
     comp_date: string | null;
     attempts: number[] | null;
-  }>(
-    `
-    SELECT
-      s.wca_id          AS wca_id,
-      p.name            AS name,
-      ${valCol}         AS val,
-      s.country_id      AS country_id,
-      co.iso2           AS iso2,
-      ${wrCol}          AS world_rank,
-      ${crCol}          AS country_rank,
-      ${compIdCol}      AS comp_id,
-      c.name            AS comp_name,
-      ${dateCol}        AS comp_date,
-      ${attsCol}        AS attempts
-    FROM historical_ranks_snapshot s
-    JOIN wca_persons p ON p.wca_id = s.wca_id
-    LEFT JOIN wca_countries co ON co.id = s.country_id
-    LEFT JOIN wca_competitions c ON c.id = ${compIdCol}
-    WHERE s.event_id = ? AND s.year = ?
-      ${whereExtra}
-    ORDER BY ${orderRank} ASC, s.wca_id ASC
-    LIMIT ? OFFSET ?
-    `,
-    params,
-  );
+  }[];
+  let total: number;
 
-  // ── 总数 (单独 count;免分页越界判断)
-  const countParams: unknown[] = [event, year];
-  if (countryId) countParams.push(countryId);
-  const totalRow = await query<{ n: string }>(
-    `
-    SELECT COUNT(*) AS n
-    FROM historical_ranks_snapshot s
-    WHERE s.event_id = ? AND s.year = ?
-      ${countryId ? `AND ${crCol} > 0 AND s.country_id = ?` : `AND ${wrCol} > 0`}
-    `,
-    countParams,
-  );
-  const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
+  if (gender === 'all') {
+    // 默认快路径:用快照里预算好的全球/国家名次,走索引排序。
+    const whereExtra = countryId
+      ? `AND ${crCol} > 0 AND s.country_id = ?`
+      : `AND ${wrCol} > 0`;
+    const params: unknown[] = [event, year];
+    if (countryId) params.push(countryId);
+    params.push(size, offset);
+
+    rows = await query(
+      `
+      SELECT
+        s.wca_id          AS wca_id,
+        p.name            AS name,
+        ${valCol}         AS val,
+        s.country_id      AS country_id,
+        co.iso2           AS iso2,
+        ${wrCol}          AS world_rank,
+        ${crCol}          AS country_rank,
+        ${compIdCol}      AS comp_id,
+        c.name            AS comp_name,
+        ${dateCol}        AS comp_date,
+        ${attsCol}        AS attempts
+      FROM historical_ranks_snapshot s
+      JOIN wca_persons p ON p.wca_id = s.wca_id
+      LEFT JOIN wca_countries co ON co.id = s.country_id
+      LEFT JOIN wca_competitions c ON c.id = ${compIdCol}
+      WHERE s.event_id = ? AND s.year = ?
+        ${whereExtra}
+      ORDER BY ${orderRank} ASC, s.wca_id ASC
+      LIMIT ? OFFSET ?
+      `,
+      params,
+    );
+    const countParams: unknown[] = [event, year];
+    if (countryId) countParams.push(countryId);
+    const totalRow = await query<{ n: string }>(
+      `
+      SELECT COUNT(*) AS n
+      FROM historical_ranks_snapshot s
+      WHERE s.event_id = ? AND s.year = ?
+        ${countryId ? `AND ${crCol} > 0 AND s.country_id = ?` : `AND ${wrCol} > 0`}
+      `,
+      countParams,
+    );
+    total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
+  } else {
+    // 性别过滤:快照里的名次是全球/全国口径,不能直接用 → JOIN wca_persons 过滤 gender 后
+    // 用 RANK() OVER (ORDER BY 值) 在「该性别(可叠加国家)」子集内重排;按值有成绩 = valCol IS NOT NULL。
+    const where = `s.event_id = ? AND s.year = ? AND p.gender = ? AND ${valCol} IS NOT NULL${countryId ? ' AND s.country_id = ?' : ''}`;
+    const params: unknown[] = [event, year, gender];
+    if (countryId) params.push(countryId);
+    const dataParams = [...params, size, offset];
+
+    rows = await query(
+      `
+      WITH base AS (
+        SELECT
+          s.wca_id          AS wca_id,
+          p.name            AS name,
+          ${valCol}         AS val,
+          s.country_id      AS country_id,
+          co.iso2           AS iso2,
+          ${compIdCol}      AS comp_id,
+          c.name            AS comp_name,
+          ${dateCol}        AS comp_date,
+          ${attsCol}        AS attempts
+        FROM historical_ranks_snapshot s
+        JOIN wca_persons p ON p.wca_id = s.wca_id
+        LEFT JOIN wca_countries co ON co.id = s.country_id
+        LEFT JOIN wca_competitions c ON c.id = ${compIdCol}
+        WHERE ${where}
+      ),
+      ranked AS (
+        SELECT *, RANK() OVER (ORDER BY val ASC) AS rnk FROM base
+      )
+      SELECT wca_id, name, val, country_id, iso2,
+             rnk AS world_rank, rnk AS country_rank,
+             comp_id, comp_name, comp_date, attempts
+      FROM ranked
+      ORDER BY val ASC, wca_id ASC
+      LIMIT ? OFFSET ?
+      `,
+      dataParams,
+    );
+    const totalRow = await query<{ n: string }>(
+      `
+      SELECT COUNT(*) AS n
+      FROM historical_ranks_snapshot s
+      JOIN wca_persons p ON p.wca_id = s.wca_id
+      WHERE ${where}
+      `,
+      params,
+    );
+    total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
+  }
 
   c.header('Cache-Control', 'public, max-age=300, s-maxage=86400');
   return c.json({
@@ -147,6 +204,7 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
     year,
     country: countryId,
     type,
+    gender,
     page,
     size,
     total,
