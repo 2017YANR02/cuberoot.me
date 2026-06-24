@@ -78,7 +78,7 @@ import PlayerControls, { type SimPuzzle } from './PlayerControls';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
-import GroupTheoryPanel from './GroupTheoryPanel';
+import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import SimCubeNet from './_SimCubeNet';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
@@ -1238,6 +1238,10 @@ export default function SimPage() {
     return rendererRef.current?.domElement ?? null;
   }, []);
   const getWorld = useCallback((): World | null => worldRef.current, []);
+  // The sim World as the structural shape GroupTheoryPanel reads (puzzleKind + cube);
+  // the panel only drives it when renderer==='group' and the active puzzle has a PG kernel.
+  const getWorldView = useCallback((): SimWorldView | null =>
+    worldRef.current as unknown as SimWorldView | null, []);
   const getRenderer = useCallback((): THREE.WebGLRenderer | null => rendererRef.current, []);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
@@ -1377,7 +1381,7 @@ export default function SimPage() {
             </CollapsibleSection>
           )}
           {query.renderer === 'group' && puzzleParam === 'pyraminx' && (
-            <GroupTheoryPanel puzzle="pyraminx" />
+            <GroupTheoryPanel puzzle="pyraminx" getWorld={getWorldView} />
           )}
         </aside>
       </div>
