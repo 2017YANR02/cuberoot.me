@@ -10,9 +10,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { PgEngineBinding, type MoveBridge } from './pgBinding';
 import { pyraPgBridge } from './pyra/pyraPgBridge';
+import { dinoPgBridge } from './dino/dinoPgBridge';
+import { skewbPgBridge } from './skewb/skewbPgBridge';
+import { heliPgBridge } from './heli/heliPgBridge';
 
+// Keyed by the ENGINE puzzle kind (the World.puzzleKind / SimPuzzle), not the PG name —
+// e.g. engine 'heli' → bridge.pgName 'helicopter'.
 const BRIDGES: Record<string, MoveBridge<any>> = {
   pyraminx: pyraPgBridge,
+  dino: dinoPgBridge,
+  skewb: skewbPgBridge,
+  heli: heliPgBridge,
 };
 
 /** Engine puzzle kinds that have a PG group-theory binding (for the render toggle). */
