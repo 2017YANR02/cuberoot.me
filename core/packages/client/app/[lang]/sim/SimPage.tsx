@@ -72,6 +72,7 @@ import {
   mapOrbitK, mapTurnDragFactor, type SimSettings,
 } from './SettingDrawer';
 import PlayerControls, { type SimPuzzle } from './PlayerControls';
+import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
 import SimCubeNet from './_SimCubeNet';
@@ -181,6 +182,7 @@ export default function SimPage() {
     if (raw === 'rex') return 'rex';
     if (raw === 'heli') return 'heli';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
+    if (isPgPuzzleId(raw)) return raw as SimPuzzle;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
     return n;
@@ -190,7 +192,10 @@ export default function SimPage() {
   // the cubing.js TwistyPlayer). `twisty` = "use the cubing.js path" — false for
   // engine-skewb, which then falls through to the World/Three.js route below.
   const useEngine = isTwistyPuzzle(puzzleParam) && ENGINE_TWISTY.has(puzzleParam) && query.renderer === 'engine';
-  const twisty = isTwistyPuzzle(puzzleParam) && !useEngine;
+  // A PuzzleGeometry puzzle (explore set) renders via cubing.js TwistyPlayer's
+  // experimentalPuzzleDescription — twisty-class, no in-house engine.
+  const pgDef = typeof puzzleParam === 'string' ? PG_DEF_BY_ID[puzzleParam] : undefined;
+  const twisty = (isTwistyPuzzle(puzzleParam) || pgDef !== undefined) && !useEngine;
   const useEngineRef = useRef(useEngine);
   useEffect(() => { useEngineRef.current = useEngine; }, [useEngine]);
 
@@ -1048,7 +1053,9 @@ export default function SimPage() {
     // The world-init effect's [twisty] dep tears down any live cuber instance.
     // An ENGINE_TWISTY puzzle (skewb) with renderer='engine' falls through to World.
     const toEngine = ENGINE_TWISTY.has(kind as string) && useEngineRef.current;
-    if (isTwistyPuzzle(kind) && !toEngine) { writeUrl(); return; }
+    // Twisty-class (cubing.js: pyraminx/megaminx/skewb + PuzzleGeometry explore
+    // set) never touches World — just update the URL.
+    if ((isTwistyPuzzle(kind) || (typeof kind === 'string' && isPgPuzzleId(kind))) && !toEngine) { writeUrl(); return; }
     const wk = kind as PuzzleKind; // narrowed at runtime: number / sq1 / … / heli / 'skewb'
     if (!world || world.puzzleKind === wk) { writeUrl(); return; }
     world.setPuzzle(wk);
@@ -1245,7 +1252,8 @@ export default function SimPage() {
           )}
           {twisty ? (
             <TwistySection
-              puzzle={puzzleParam}
+              puzzle={String(puzzleParam)}
+              puzzleDescription={pgDef}
               // Skewb-only: translate Sarah → WCA so cubing.js plays the alg the
               // user intended. URL stays in original notation; TwistyPlayer sees
               // WCA. For pyraminx/megaminx, pass through.
