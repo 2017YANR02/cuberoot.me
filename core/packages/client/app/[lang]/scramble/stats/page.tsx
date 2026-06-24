@@ -33,6 +33,8 @@ import Sq2DistView from './_components/Sq2DistView';
 import Ssq1DistView from './_components/Ssq1DistView';
 import BsqDistView from './_components/BsqDistView';
 import BicDistView from './_components/BicDistView';
+import Sia123DistView from './_components/Sia123DistView';
+import Sia222DistView from './_components/Sia222DistView';
 import ScrambleLengthView, {
   type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
@@ -530,7 +532,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   // 非 WCA 求解项目(ivy / 133 / 223 / 8p / sfl …):难度=整解最优步数分布(A/B 档全空间精确,15p 是 TIER C
   // 采样);均无打乱长度数据、无合并/数据集/度量开关 → 走 isIvy 早返回那套。
-  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '233' || event === '334' || event === '335' || event === '336' || event === '337' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'cm3' || event === 'heli' || event === 'helicv' || event === 'ctico' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a' || event === 'sq2' || event === 'ssq1' || event === 'bsq' || event === 'bic';
+  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '233' || event === '334' || event === '335' || event === '336' || event === '337' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'cm3' || event === 'heli' || event === 'helicv' || event === 'ctico' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a' || event === 'sq2' || event === 'ssq1' || event === 'bsq' || event === 'bic' || event === 'sia123';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -765,6 +767,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                                   : event === 'ssq1' ? 'ssq1'
                                   : event === 'bsq' ? 'bsq'
                                   : event === 'bic' ? 'bic'
+                                  : event === 'sia123' ? 'sia123'
                                   : null;
 
   // Shared header: WCA-event selector sits ABOVE the tab bar so it drives both
@@ -1123,6 +1126,46 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           </div>
         ) : (
           <BicDistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  // Siamese 1×2×3(联体 1×2×3,非 WCA 项目,TIER B 两阶段):单 cube 全空间 ~10⁸–10⁹ 无法整图枚举,
+  // 难度 = 两阶段(棱→H 陪集表 + in-H)求解器返回解步数的**离线采样**分布(有界非全空间最优);无打乱长度数据。
+  if (event === 'sia123') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: '联体 1×2×3 无打乱长度分布(打乱由 cstimer 定长生成);解步数采样分布见「难度」',
+              en: 'No scramble-length distribution for the Siamese 1×2×3 (cstimer generates fixed-form scrambles); see "Difficulty" for the sampled solution-length distribution',
+            })}
+          </div>
+        ) : (
+          <Sia123DistView isZh={isZh} />
+        )}
+      </div>
+    );
+  }
+
+  // Siamese 2×2×2(联体 2×2×2,非 WCA 项目,TIER B 直积 per-half 最优):整空间 ≈2.9×10²⁸ 无法整图枚举,
+  // 难度 = 按 z2 y 拆半 + 各半 IDA*(角+双 6 棱 PDB)最优解步数的**离线采样**分布(per-half 最优拼接=全局最优);无打乱长度数据。
+  if (event === 'sia222') {
+    return (
+      <div className="scramble-stats-page">
+        {header}
+        {tab === 'length' ? (
+          <div className="scramble-stats-loading">
+            {tr({
+              zh: '联体 2×2×2 无打乱长度分布(打乱由 cstimer 定长生成);最优解步数采样分布见「难度」',
+              en: 'No scramble-length distribution for the Siamese 2×2×2 (cstimer generates fixed-form scrambles); see "Difficulty" for the sampled optimal-solution-length distribution',
+            })}
+          </div>
+        ) : (
+          <Sia222DistView isZh={isZh} />
         )}
       </div>
     );
