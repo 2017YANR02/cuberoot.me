@@ -903,7 +903,7 @@ impl XCrossRestrictSolver {
         extra: u32,
         cap: usize,
     ) -> Vec<Vec<usize>> {
-        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, u64::MAX, &Self::k_subsets(1))
+        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, u64::MAX, &Self::k_subsets(1), &mut |_| {})
     }
 
     /// 带节点预算的多解枚举(交互用):某组合超节点预算只是不贡献,不拖垮整个视角。
@@ -921,12 +921,13 @@ impl XCrossRestrictSolver {
         node_limit: u64,
         k: usize,
         combo: Option<Vec<usize>>,
+        emit: &mut dyn FnMut(&[usize]),
     ) -> Vec<Vec<usize>> {
         let combos = match combo {
             Some(c) => vec![c],
             None => Self::k_subsets(k),
         };
-        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, node_limit, &combos)
+        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, node_limit, &combos, emit)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -940,6 +941,7 @@ impl XCrossRestrictSolver {
         cap: usize,
         node_limit: u64,
         combos: &[Vec<usize>],
+        emit: &mut dyn FnMut(&[usize]),
     ) -> Vec<Vec<usize>> {
         let goal_centers = [0u8];
         let pdbs = self.build_pdbs(allowed);
@@ -979,7 +981,7 @@ impl XCrossRestrictSolver {
                 let mut b = fresh();
                 self.dfs_exact(
                     sc, corners, edges, sce, 0, lim, &pdbs.allowed_moves, &goal_centers, max_rot,
-                    &pdbs, combo, &solved, &mut path, &mut sols, cap, &mut b,
+                    &pdbs, combo, &solved, &mut path, &mut sols, cap, &mut b, emit,
                 );
             }
             if sols.len() >= cap {
@@ -1012,6 +1014,7 @@ impl XCrossRestrictSolver {
         sols: &mut Vec<Vec<usize>>,
         cap: usize,
         budget: &mut SearchBudget,
+        emit: &mut dyn FnMut(&[usize]),
     ) {
         if sols.len() >= cap || budget.hit {
             return;
@@ -1023,6 +1026,7 @@ impl XCrossRestrictSolver {
                 .all(|&s| corners[s] == solved[s].0 && edges[s] == solved[s].1)
         {
             if depth == lim {
+                emit(path);
                 sols.push(path.clone());
             }
             return;
@@ -1073,7 +1077,7 @@ impl XCrossRestrictSolver {
             path.push(m);
             self.dfs_exact(
                 nc, ncorners, nedges, ncenter, depth + 1, lim, allowed_moves, goal_centers,
-                max_rot, pdbs, active, solved, path, sols, cap, budget,
+                max_rot, pdbs, active, solved, path, sols, cap, budget, emit,
             );
             path.pop();
             if sols.len() >= cap || budget.hit {

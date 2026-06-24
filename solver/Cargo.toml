@@ -28,8 +28,11 @@ rayon = "1.10"
 
 # wasm:bindgen 胶水。求解器确定性,无需 getrandom。
 # crate 与 wasm-bindgen CLI 版本必须精确匹配(见构建脚本注释)。
+# js-sys:解法流式回调(每枚举到一条解即 call 进 JS,worker 实时 postMessage 给 UI)。
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2"
+# 钉死 0.2.122 与已装 wasm-bindgen-cli 精确匹配;js-sys 随之解析到兼容 0.2.122 的版本。
+wasm-bindgen = "=0.2.122"
+js-sys = "0.3"
 
 [profile.release]
 opt-level = 3

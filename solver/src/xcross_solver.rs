@@ -766,6 +766,7 @@ impl XCrossSolver {
         k: usize,
         extra: u32,
         cap: usize,
+        emit: &mut dyn FnMut(&[usize], &[u8]),
     ) -> (u32, Vec<(Vec<usize>, Vec<u8>)>) {
         const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
         const TRIPS: [(usize, usize, usize); 4] = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)];
@@ -820,7 +821,7 @@ impl XCrossSolver {
             .filter(|(_, l)| *l == best_len)
             .map(|(c, _)| c)
             .collect();
-        let out = self.enumerate_tied(&st, &tied, best_len, extra, cap);
+        let out = self.enumerate_tied(&st, &tied, best_len, extra, cap, emit);
         (best_len, out)
     }
 
@@ -834,6 +835,7 @@ impl XCrossSolver {
         combo: &[usize],
         extra: u32,
         cap: usize,
+        emit: &mut dyn FnMut(&[usize], &[u8]),
     ) -> (u32, Vec<(Vec<usize>, Vec<u8>)>) {
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
         let mut a = base.clone();
@@ -849,12 +851,13 @@ impl XCrossSolver {
         if best_len == 0 || best_len >= 99 {
             return (best_len.min(0), Vec::new());
         }
-        let out = self.enumerate_tied(&st, &[combo.to_vec()], best_len, extra, cap);
+        let out = self.enumerate_tied(&st, &[combo.to_vec()], best_len, extra, cap, emit);
         (best_len, out)
     }
 
     /// 给定一组 combo + 最优长度,逐深度 d 外层、combo 内层交错枚举(跨 combo 也按长度升序);
     /// 每条解带它自己的 combo;cap 控总条数。enumerate_best / enumerate_combo 共用。
+    /// `emit(combo, sol)`:每枚举到一条解即回调(流式输出用,顺序 = 长度升序、DFS 序)。
     fn enumerate_tied(
         &self,
         st: &[VirtState; 4],
@@ -862,6 +865,7 @@ impl XCrossSolver {
         best_len: u32,
         extra: u32,
         cap: usize,
+        emit: &mut dyn FnMut(&[usize], &[u8]),
     ) -> Vec<(Vec<usize>, Vec<u8>)> {
         let mut out: Vec<(Vec<usize>, Vec<u8>)> = Vec::new();
         let mut path = Vec::new();
@@ -883,6 +887,7 @@ impl XCrossSolver {
                 let mut combo_out: Vec<Vec<u8>> = Vec::new();
                 self.enumerate_multi(&coords[..n], d, 18, &mut path, &mut combo_out, cap - out.len());
                 for sol in combo_out {
+                    emit(combo, &sol);
                     out.push((combo.clone(), sol));
                 }
             }
@@ -1202,6 +1207,7 @@ impl XCrossSolver {
         cap: usize,
         mask: MoveMask,
         max_depth: u32,
+        emit: &mut dyn FnMut(&[usize], &[u8]),
     ) -> (u32, Vec<(Vec<usize>, Vec<u8>)>) {
         const PAIRS: [(usize, usize); 6] = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)];
         const TRIPS: [(usize, usize, usize); 4] = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)];
@@ -1253,7 +1259,7 @@ impl XCrossSolver {
             .filter(|(_, l)| *l == best_len)
             .map(|(c, _)| c)
             .collect();
-        let out = self.enumerate_tied_masked(&st, &tied, best_len, extra, cap, &vm);
+        let out = self.enumerate_tied_masked(&st, &tied, best_len, extra, cap, &vm, emit);
         (best_len, out)
     }
 
@@ -1268,6 +1274,7 @@ impl XCrossSolver {
         cap: usize,
         mask: MoveMask,
         max_depth: u32,
+        emit: &mut dyn FnMut(&[usize], &[u8]),
     ) -> (u32, Vec<(Vec<usize>, Vec<u8>)>) {
         let vm = valid_moves_masked(mask);
         let base: Vec<u8> = alg.iter().map(|m| m.index() as u8).collect();
@@ -1285,7 +1292,7 @@ impl XCrossSolver {
         if best_len == 0 || best_len >= 99 {
             return (best_len, Vec::new());
         }
-        let out = self.enumerate_tied_masked(&st, &[combo.to_vec()], best_len, extra, cap, &vm);
+        let out = self.enumerate_tied_masked(&st, &[combo.to_vec()], best_len, extra, cap, &vm, emit);
         (best_len, out)
     }
 
@@ -1299,6 +1306,7 @@ impl XCrossSolver {
         extra: u32,
         cap: usize,
         vm: &ValidMovesTable,
+        emit: &mut dyn FnMut(&[usize], &[u8]),
     ) -> Vec<(Vec<usize>, Vec<u8>)> {
         let mut out: Vec<(Vec<usize>, Vec<u8>)> = Vec::new();
         let mut path = Vec::new();
@@ -1328,6 +1336,7 @@ impl XCrossSolver {
                     vm,
                 );
                 for sol in combo_out {
+                    emit(combo, &sol);
                     out.push((combo.clone(), sol));
                 }
             }
@@ -1460,7 +1469,7 @@ mod tests {
         let solver = XCrossSolver::new(false);
 
         // k=4 = 全 4 槽 = xxxxcross;cap 拉高确保 14 步全部解都枚举出来
-        let (best_len, items) = solver.enumerate_best(&alg, "", 4, 0, 100_000);
+        let (best_len, items) = solver.enumerate_best(&alg, "", 4, 0, 100_000, &mut |_, _| {});
         assert_eq!(best_len, 14, "xxxxcross optimal must be 14, got {}", best_len);
         assert!(items.iter().all(|(c, _)| *c == vec![0, 1, 2, 3]), "全 4 槽 combo");
 
@@ -1509,7 +1518,7 @@ mod tests {
         // k=1 = XCross(单槽);extra=2 暴露松弛解里的尾动冗余。
         let mut total = 0usize;
         for rot in rots {
-            let (best_len, items) = solver.enumerate_best(&alg, rot, 1, 2, 100_000);
+            let (best_len, items) = solver.enumerate_best(&alg, rot, 1, 2, 100_000, &mut |_, _| {});
             if best_len == 0 || best_len >= 99 {
                 continue;
             }

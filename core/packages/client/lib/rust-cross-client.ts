@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260624g';
+const V = 'v=20260624h';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -117,12 +117,14 @@ export interface RustCrossPool {
   /** variant 0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc;face 0..5。返回单格步数 + 计算耗时。
    *  mask:18 个 move 的 bitmask(bit m=1 表示允许),省略=不限步法;仅 cross(variant 0)生效。 */
   solveFace(scramble: string, variant: number, face: number, mask?: number): Promise<FaceResult>;
-  /** 单格多解步骤 + 计算耗时。opts.mask 同 solveFace(省略=不限)。 */
+  /** 单格多解步骤 + 计算耗时。opts.mask 同 solveFace(省略=不限)。
+   *  onPartial:流式回调,每枚举到一条解即触发(算一条出一条);最终 Promise 仍 resolve 完整权威结果。 */
   solveMoves(
     scramble: string,
     variant: number,
     face: number,
     opts?: { extra?: number; cap?: number; combo?: string; mask?: number },
+    onPartial?: (sol: SolItem, len: number) => void,
   ): Promise<MovesTimed>;
   /** or18 式受限最优十字(6面+6宽+3中层+3旋转)单视角步数(含解里整体旋转计数)。
    *  allowed = 54-bit:lo=低 32 位、hi=高 22 位,bit m=1 允许 move m
@@ -137,8 +139,9 @@ export interface RustCrossPool {
    *  限制过宽未在预算内判定返 0xFFFFFFFE(⋯)。需 'xcross_restrict' 池(零表)。 */
   solveXCrossRestrictGrid(scramble: string, lo: number, hi: number, maxRot: number, k: number): Promise<number[]>;
   /** 受限最优单视角「多解枚举」:长度 ∈ [最优, 最优+extra],最多 cap 条(升序)。`k`=对数;
-   *  `combo`=逗号分隔固定槽集(''=自动枚举全部 C(4,k) 组合)。受限无解 len=0xFFFFFFFF + 空解集。 */
-  solveXCrossRestrictMoves(scramble: string, face: number, lo: number, hi: number, maxRot: number, extra: number, cap: number, k: number, combo: string): Promise<MovesTimed>;
+   *  `combo`=逗号分隔固定槽集(''=自动枚举全部 C(4,k) 组合)。受限无解 len=0xFFFFFFFF + 空解集。
+   *  onPartial:流式回调,每枚举到一条解即触发(c 恒空串)。 */
+  solveXCrossRestrictMoves(scramble: string, face: number, lo: number, hi: number, maxRot: number, extra: number, cap: number, k: number, combo: string, onPartial?: (sol: SolItem, len: number) => void): Promise<MovesTimed>;
   /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)整变体 24 值:[cross,xc,xxc,xxxc]×6 朝向(已折叠 z0/z2/z3/z1/x3/x1)。 */
   solveF2leo(scramble: string, pseudo: boolean): Promise<number[]>;
   /** 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc)。cross 极快 → 先单算 cross 秒出,深阶段后台补。
@@ -251,6 +254,9 @@ interface Job {
   msg: Record<string, unknown>;
   resolve: (v: unknown) => void;
   reject: (e: Error) => void;
+  // 流式:worker 每枚举到一条解发 *_partial,这里回调给调用方做渐进显示;
+  // 不清 job、不派下一个,直到最终 moves/xcr_moves 消息才结算 resolve。
+  onPartial?: (sol: SolItem, len: number) => void;
 }
 
 interface PoolWorker {
@@ -343,6 +349,11 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
         fail(pw, new Error(m.error || 'init failed'));
         return;
       }
+      // 流式 partial:回调给调用方,但不结算 job(等最终 moves/xcr_moves 才 resolve + 派下一个)。
+      if (m.type === 'moves_partial' || m.type === 'xcr_partial') {
+        pw.job?.onPartial?.({ m: m.m, c: m.c }, m.len);
+        return;
+      }
       const job = pw.job;
       pw.job = null;
       if (job) {
@@ -361,7 +372,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     w.postMessage(initMsg);
   }
 
-  function submit(msg: Record<string, unknown>): Promise<unknown> {
+  function submit(msg: Record<string, unknown>, onPartial?: Job['onPartial']): Promise<unknown> {
     // 含 Rw/Fw/旋转的打乱(如 3BLD 朝向尾缀)会让魔方偏离白顶绿前;Rust 端 string_to_alg
     // 直接跳过无法识别 token 会静默算错,故先归正到白顶绿前的纯 HTM 再喂 worker。
     // pyraminx / skewb 例外:记号非 3x3 语义(pyram 小写 tips;skewb 角转 120°,X2=240°),
@@ -370,7 +381,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
       && (msg.type.startsWith('pyraminx_') || msg.type.startsWith('skewb_'));
     if (typeof msg.scramble === 'string' && !isNon333) msg.scramble = normalizeScramble(msg.scramble) ?? msg.scramble;
     return new Promise((resolve, reject) => {
-      const job: Job = { msg, resolve, reject };
+      const job: Job = { msg, resolve, reject, onPartial };
       const free = idle.pop();
       if (free && free.ready && !free.dead) dispatch(free, job);
       else { queue.push(job); maybeSpawn(); }
@@ -390,12 +401,12 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
         ...(mask != null ? { mask } : {}),
       }) as Promise<FaceResult>;
     },
-    solveMoves(scramble, variant, face, opts = {}) {
+    solveMoves(scramble, variant, face, opts = {}, onPartial) {
       return submit({
         type: 'moves', id: nextId++, scramble, variant, face,
         extra: opts.extra ?? 0, cap: opts.cap ?? 50, combo: opts.combo ?? '',
         ...(opts.mask != null ? { mask: opts.mask } : {}),
-      }) as Promise<MovesTimed>;
+      }, onPartial) as Promise<MovesTimed>;
     },
     solveCrossRestrictFace(scramble, face, lo, hi, maxRot) {
       return submit({ type: 'cr_face', id: nextId++, scramble, face, lo, hi, maxRot }) as Promise<FaceResult>;
@@ -406,8 +417,8 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     solveXCrossRestrictGrid(scramble, lo, hi, maxRot, k) {
       return submit({ type: 'xcr_grid', id: nextId++, scramble, lo, hi, maxRot, k }) as Promise<number[]>;
     },
-    solveXCrossRestrictMoves(scramble, face, lo, hi, maxRot, extra, cap, k, combo) {
-      return submit({ type: 'xcr_moves', id: nextId++, scramble, face, lo, hi, maxRot, extra, cap, k, combo }) as Promise<MovesTimed>;
+    solveXCrossRestrictMoves(scramble, face, lo, hi, maxRot, extra, cap, k, combo, onPartial) {
+      return submit({ type: 'xcr_moves', id: nextId++, scramble, face, lo, hi, maxRot, extra, cap, k, combo }, onPartial) as Promise<MovesTimed>;
     },
     solveF2leo(scramble, pseudo) {
       return submit({ type: 'f2leo', id: nextId++, scramble, pseudo }) as Promise<number[]>;
