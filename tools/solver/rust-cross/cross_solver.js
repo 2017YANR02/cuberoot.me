@@ -135,6 +135,63 @@ export class ChainSolverWasm {
 }
 if (Symbol.dispose) ChainSolverWasm.prototype[Symbol.dispose] = ChainSolverWasm.prototype.free;
 
+/**
+ * Cross restricted optimal 求解器(任意受限 54-move 集 + 中心朝向)。
+ * 运行时建表(无外部表文件):coord_trans(190080*54)+ center_trans(24*54),
+ * 构造即建好。`solve_cross_restricted` 走 BFS,首达即最优。
+ */
+export class CrossRestrictSolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        CrossRestrictSolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_crossrestrictsolverwasm_free(ptr, 0);
+    }
+    /**
+     * 无需任何表字节,构造时现场建全部 transition 表。
+     */
+    constructor() {
+        const ret = wasm.crossrestrictsolverwasm_new();
+        this.__wbg_ptr = ret;
+        CrossRestrictSolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 受限最优十字求解(从角度 `face` 看的十字),返回空格分隔的步骤串("" = 受限下不可解)。
+     * `scramble`:面动打乱串(只认 18 面动名)。
+     * `face`:0..5 视角(对应 analyzer 的 ROTS = ["","z2","z'","z","x'","x"]);
+     *         等价于 `search_cross(alg, ROTS[face])`,内部走逐 move 共轭。
+     * 54-bit allowed mask = (allowed_hi << 32) | allowed_lo(bit m = 1 表示 move m 允许)。
+     * `max_rot_count`:整体旋转动(x/y/z)在解里的最大个数。
+     * center_offset 固定 = [0](终态中心必须复原)。
+     * @param {string} scramble
+     * @param {number} face
+     * @param {number} allowed_lo
+     * @param {number} allowed_hi
+     * @param {number} max_rot_count
+     * @returns {string}
+     */
+    solve_cross_restricted(scramble, face, allowed_lo, allowed_hi, max_rot_count) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.crossrestrictsolverwasm_solve_cross_restricted(this.__wbg_ptr, ptr0, len0, face, allowed_lo, allowed_hi, max_rot_count);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) CrossRestrictSolverWasm.prototype[Symbol.dispose] = CrossRestrictSolverWasm.prototype.free;
+
 export class CrossSolverWasm {
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
@@ -1256,6 +1313,9 @@ const Block222SolverWasmFinalization = (typeof FinalizationRegistry === 'undefin
 const ChainSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_chainsolverwasm_free(ptr, 1));
+const CrossRestrictSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_crossrestrictsolverwasm_free(ptr, 1));
 const CrossSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_crosssolverwasm_free(ptr, 1));

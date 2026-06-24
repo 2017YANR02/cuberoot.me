@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260623g';
+const V = 'v=20260623h';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -41,8 +41,10 @@ export const TABLE_BYTES: Record<string, number> = {
 // eodr / htr / htr2 / fr / chain 零表下载(微表/距离表现场从内置运动学建)。
 // pocket / pyraminx / skewb 拉预算好的全空间距离表 opt_*(秒算,from_dist 直载,
 // 表缺失时 worker 回退现场 BFS)。
-export const TABLE_SETS: Record<'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | '222' | 'pyraminx' | 'skewb', string[]> = {
+export const TABLE_SETS: Record<'cross' | 'cross_restrict' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | '222' | 'pyraminx' | 'skewb', string[]> = {
   cross: ['pt_cross', 'pt_cross_C4E0', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
+  // or18 式受限最优十字:零表下载,worker 构造时现场建 coord/center transition。
+  cross_restrict: [],
   f2leo: ['pt_cross', 'mt_edge2', 'mt_edge4', 'mt_corn', 'mt_edge'],
   variant: [
     'pt_cross_C4E0', 'pt_cross_ins_C4', 'pt_pair_C4E0', 'mt_edge4', 'mt_corn', 'mt_edge',
@@ -120,6 +122,13 @@ export interface RustCrossPool {
     face: number,
     opts?: { extra?: number; cap?: number; combo?: string; mask?: number },
   ): Promise<MovesTimed>;
+  /** or18 式受限最优十字(6面+6宽+3中层+3旋转)单视角步数(含解里整体旋转计数)。
+   *  allowed = 54-bit:lo=低 32 位、hi=高 22 位,bit m=1 允许 move m
+   *  (0-17 面 / 18-35 宽 / 36-44 中层 M/E/S / 45-53 旋转 x/y/z);maxRot=解里旋转上限。
+   *  受限无解返 0xFFFFFFFF。需 'cross_restrict' 池(零表)。 */
+  solveCrossRestrictFace(scramble: string, face: number, lo: number, hi: number, maxRot: number): Promise<FaceResult>;
+  /** or18 式受限最优十字单视角解法(BFS 首达即最优,返一条)。受限无解 len=0xFFFFFFFF + 空解集。 */
+  solveCrossRestrictMoves(scramble: string, face: number, lo: number, hi: number, maxRot: number): Promise<MovesTimed>;
   /** F2LEO(pseudo=false)/ Pseudo F2LEO(pseudo=true)整变体 24 值:[cross,xc,xxc,xxxc]×6 朝向(已折叠 z0/z2/z3/z1/x3/x1)。 */
   solveF2leo(scramble: string, pseudo: boolean): Promise<number[]>;
   /** 单阶段 6 值(stage 0=cross/1=xc/2=xxc/3=xxxc)。cross 极快 → 先单算 cross 秒出,深阶段后台补。
@@ -241,7 +250,7 @@ interface PoolWorker {
   dead: boolean;
 }
 
-export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | '222' | 'pyraminx' | 'skewb' = 'cross'): RustCrossPool {
+export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_restrict' | 'f2leo' | 'variant' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr' | 'chain' | '222' | 'pyraminx' | 'skewb' = 'cross'): RustCrossPool {
   const size = Math.max(1, maxSize);
   const all: PoolWorker[] = [];
   const idle: PoolWorker[] = [];
@@ -327,8 +336,8 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
       const job = pw.job;
       pw.job = null;
       if (job) {
-        if (m.type === 'face') job.resolve({ value: m.value, ms: m.ms });
-        else if (m.type === 'moves' || m.type === 'variant_moves' || m.type === 'f2leo_moves' || m.type === 'block222_moves' || m.type === 'roux223_moves' || m.type === 'eodr_moves' || m.type === 'htr_moves' || m.type === 'htr2_moves' || m.type === 'fr_moves' || m.type === 'chain_solve' || m.type === 'cube222_moves' || m.type === 'pyraminx_moves' || m.type === 'skewb_moves') job.resolve({ ...m.data, ms: m.ms });
+        if (m.type === 'face' || m.type === 'cr_face') job.resolve({ value: m.value, ms: m.ms });
+        else if (m.type === 'moves' || m.type === 'cr_moves' || m.type === 'variant_moves' || m.type === 'f2leo_moves' || m.type === 'block222_moves' || m.type === 'roux223_moves' || m.type === 'eodr_moves' || m.type === 'htr_moves' || m.type === 'htr2_moves' || m.type === 'fr_moves' || m.type === 'chain_solve' || m.type === 'cube222_moves' || m.type === 'pyraminx_moves' || m.type === 'skewb_moves') job.resolve({ ...m.data, ms: m.ms });
         else job.resolve(m.values);
       }
       assign(pw);
@@ -377,6 +386,12 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'f2leo' | '
         extra: opts.extra ?? 0, cap: opts.cap ?? 50, combo: opts.combo ?? '',
         ...(opts.mask != null ? { mask: opts.mask } : {}),
       }) as Promise<MovesTimed>;
+    },
+    solveCrossRestrictFace(scramble, face, lo, hi, maxRot) {
+      return submit({ type: 'cr_face', id: nextId++, scramble, face, lo, hi, maxRot }) as Promise<FaceResult>;
+    },
+    solveCrossRestrictMoves(scramble, face, lo, hi, maxRot) {
+      return submit({ type: 'cr_moves', id: nextId++, scramble, face, lo, hi, maxRot }) as Promise<MovesTimed>;
     },
     solveF2leo(scramble, pseudo) {
       return submit({ type: 'f2leo', id: nextId++, scramble, pseudo }) as Promise<number[]>;
