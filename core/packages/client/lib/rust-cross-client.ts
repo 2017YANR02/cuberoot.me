@@ -11,7 +11,7 @@ import { normalizeScramble } from './cross-solver';
 const BASE = '/tools/solver/rust-cross';
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效;
 // 表(27MB)不变,不加版本以走缓存。每次重建 wasm/worker 必须 bump。
-const V = 'v=20260624c';
+const V = 'v=20260624e';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。

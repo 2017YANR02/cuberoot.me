@@ -28,7 +28,7 @@
 
 use crate::cross_restrict_solver::{
     decode_coord, encode_coord, solved_coord, CrossRestrictSolver, CROSS_COORD, MOVE_NAMES_54,
-    NCENTER, ROTS_FACE,
+    ROTS_FACE,
 };
 use crate::cube_common::{State, MOVE_STATES};
 
@@ -277,11 +277,14 @@ fn edge_decode(code: u8) -> (usize, u8) {
 
 // ---------- 求解器 ----------
 
-/// 受限集相关的 PDB 缓存(slot/face/scramble 无关,只随 allowed 变):cross PDB + 4 槽 pair PDB。
+/// 受限集相关的 PDB 缓存(slot/face/scramble 无关,只随 allowed 变):cross PDB + 4 槽 pair PDB
+/// + center_restore(把中心搬回原位的下界,24 态)。
 struct Pdbs {
     allowed_moves: Vec<usize>,
     cross: Vec<u8>,
     pairs: [Vec<u8>; 4],
+    /// center_restore[center] = 受限最优把中心从该朝向搬回 solved(0)的步数(24 态)。
+    center_restore: Vec<u8>,
 }
 
 /// 节点预算:限制单次 (face,slot) IDA* 的访问节点数。宽限制(允许 move 多)分支爆炸,
@@ -458,79 +461,50 @@ impl XCrossRestrictSolver {
 
     // ---------- 两个 PDB(运行时建,无文件)----------
 
-    /// PDB_cross = (cross-coord, center) → 受限 54-move 最优到 solved-cross 距离(忽略 rot)。
-    /// over allowed_moves(每步法格对逆封闭 ⇒ 无向图 ⇒ 正向 BFS = 距离)。
-    /// `max_states`:可达状态数上限;超出 → BFS 中止、返回 (部分表, complete=false)。宽限制(允许
-    /// move 多)可达空间大、建表慢且价值低 → 调用方据此判「太宽」而非干等。`usize::MAX` = 不限。
-    fn build_pdb_cross(
-        &self,
-        allowed_moves: &[usize],
-        goal_centers: &[u8],
-        limit: u8,
-        max_states: usize,
-    ) -> (Vec<u8>, bool) {
+    /// PDB_cross[cross-coord] = 受限 54-move 最优到 solved-cross 距离(**忽略中心 + rot**,松弛下界)。
+    /// 中心不再进表(那是 24× 膨胀的根源):中心在搜索态里单独追踪、目标处校验;表只剩 190080,
+    /// 每次受限集现场建 ≈0.3s(原 cross×center=4.56M 表的 1/24)。over allowed_moves(每步法格对逆
+    /// 封闭 ⇒ 无向图 ⇒ 正向 BFS = 距离)。INF 仅当 cross-coord 在该受限集下从 solved 真不可达
+    /// (如 {U,R,F,r} 动不了某十字棱)→ 据此秒证无解。全 BFS 不设深度上限(190080 极小)。
+    fn build_pdb_cross(&self, allowed_moves: &[usize]) -> Vec<u8> {
         const INF: u8 = u8::MAX;
-        let mut h = vec![INF; CROSS_COORD * NCENTER];
-        let mut q: std::collections::VecDeque<(u32, u8)> = std::collections::VecDeque::new();
-        let mut visited = 0usize;
-        for &gc in goal_centers {
-            let id = self.solved_cross as usize * NCENTER + gc as usize;
-            if h[id] == INF {
-                h[id] = 0;
-                visited += 1;
-                q.push_back((self.solved_cross, gc));
-            }
-        }
-        while let Some((coord, center)) = q.pop_front() {
-            let d = h[coord as usize * NCENTER + center as usize];
-            if d >= limit {
-                continue;
-            }
+        let mut h = vec![INF; CROSS_COORD];
+        let mut q: std::collections::VecDeque<u32> = std::collections::VecDeque::new();
+        h[self.solved_cross as usize] = 0;
+        q.push_back(self.solved_cross);
+        while let Some(coord) = q.pop_front() {
+            let d = h[coord as usize];
             for &m in allowed_moves {
                 let nc = self.step_cross(coord, m);
-                let ncen = self.step_center(center, m);
-                let id = nc as usize * NCENTER + ncen as usize;
-                if h[id] == INF {
-                    h[id] = d + 1;
-                    visited += 1;
-                    if visited > max_states {
-                        return (h, false); // 太宽:可达空间超预算,放弃建全表
-                    }
-                    q.push_back((nc, ncen));
+                if h[nc as usize] == INF {
+                    h[nc as usize] = d + 1;
+                    q.push_back(nc);
                 }
             }
         }
-        (h, true)
+        h
     }
 
-    /// PDB_pair = (slot_corner, slot_edge, center) → 受限 54-move 最优到 pair-solved 距离(忽略 rot)。
-    /// 状态空间 24×24×24 = 13824(tiny)。从 solved-pair(本 slot)反向 BFS。
-    fn build_pdb_pair(&self, slot: usize, allowed_moves: &[usize], goal_centers: &[u8]) -> Vec<u8> {
+    /// PDB_pair[slot_corner * 24 + slot_edge] = 受限最优到 pair-solved 距离(**忽略中心 + rot**)。
+    /// 状态空间 24×24 = 576(tiny)。中心同 cross PDB 一样移出表、只在搜索态里追踪。
+    fn build_pdb_pair(&self, slot: usize, allowed_moves: &[usize]) -> Vec<u8> {
         const INF: u8 = u8::MAX;
-        let size = CORNER_STATES * EDGE_STATES * NCENTER;
+        let size = CORNER_STATES * EDGE_STATES;
         let mut h = vec![INF; size];
-        let idx = |c: u8, e: u8, ce: u8| -> usize {
-            (c as usize * EDGE_STATES + e as usize) * NCENTER + ce as usize
-        };
+        let idx = |c: u8, e: u8| -> usize { c as usize * EDGE_STATES + e as usize };
         let (sc, se) = Self::solved_pair(slot);
-        let mut q: std::collections::VecDeque<(u8, u8, u8)> = std::collections::VecDeque::new();
-        for &gc in goal_centers {
-            let id = idx(sc, se, gc);
-            if h[id] == INF {
-                h[id] = 0;
-                q.push_back((sc, se, gc));
-            }
-        }
-        while let Some((c, e, ce)) = q.pop_front() {
-            let d = h[idx(c, e, ce)];
+        let mut q: std::collections::VecDeque<(u8, u8)> = std::collections::VecDeque::new();
+        h[idx(sc, se)] = 0;
+        q.push_back((sc, se));
+        while let Some((c, e)) = q.pop_front() {
+            let d = h[idx(c, e)];
             for &m in allowed_moves {
                 let nc = self.step_corner(c, m);
                 let ne = self.step_edge(e, m);
-                let ncen = self.step_center(ce, m);
-                let id = idx(nc, ne, ncen);
+                let id = idx(nc, ne);
                 if h[id] == INF {
                     h[id] = d + 1;
-                    q.push_back((nc, ne, ncen));
+                    q.push_back((nc, ne));
                 }
             }
         }
@@ -539,31 +513,44 @@ impl XCrossRestrictSolver {
 
     // ---------- 单视角 IDA* ----------
 
-    /// 受限集相关的 PDB 缓存:cross PDB(slot 无关)+ 4 个槽各自的 pair PDB。
-    /// 一次受限集只建一次,6 视角 × 4 槽 共用,免重复建 4.5M 表。
-    fn build_pdbs(&self, allowed: u64) -> Pdbs {
-        // 不限状态数(测试 / 无预算路径):cross PDB 必完整。
-        self.build_pdbs_budgeted(allowed, usize::MAX)
-            .expect("unlimited build_pdbs must complete")
+    /// center_restore[center] = 受限最优把中心从该朝向搬回 solved(0)的步数(忽略 cross/pair)。
+    /// 24 态 BFS(中心仅经 rot/wide/slice 改变,面动恒等;move 格对逆封闭 ⇒ 无向 ⇒ 从 0 正向 BFS
+    /// = 到 0 距离)。作可采纳的**第三下界**,专治「cross+pair 已复原但中心被旋转移走」时 no-center
+    /// h=0 的假象 —— 否则该态全无剪枝,宽受限集(含旋转)分支爆炸撞预算 → 误报无解。
+    fn build_center_restore(&self, allowed_moves: &[usize]) -> Vec<u8> {
+        const INF: u8 = u8::MAX;
+        let mut h = vec![INF; 24]; // 24 = 立方体朝向群阶(= center_trans 维度)
+        let mut q: std::collections::VecDeque<u8> = std::collections::VecDeque::new();
+        h[0] = 0;
+        q.push_back(0u8);
+        while let Some(c) = q.pop_front() {
+            let d = h[c as usize];
+            for &m in allowed_moves {
+                let nc = self.step_center(c, m);
+                if h[nc as usize] == INF {
+                    h[nc as usize] = d + 1;
+                    q.push_back(nc);
+                }
+            }
+        }
+        h
     }
 
-    /// 带可达状态预算的 PDB 构建:cross PDB 超 `max_states` → 返回 None(限制过宽,不建表)。
-    /// pair PDB 状态空间恒小(24×24×24)无需预算。
-    fn build_pdbs_budgeted(&self, allowed: u64, max_states: usize) -> Option<Pdbs> {
+    /// 受限集相关的 PDB 缓存:cross PDB(slot 无关,190080)+ 4 个槽各自的 pair PDB(576)
+    /// + center_restore(24)。一次受限集只建一次,6 视角 × 4 槽 共用。中心移出主表后三张表都小,
+    /// 现场建 ≈0.3s,无需预算/太宽闸。
+    fn build_pdbs(&self, allowed: u64) -> Pdbs {
         let allowed_moves: Vec<usize> = (0..54).filter(|&m| (allowed >> m) & 1 == 1).collect();
-        let goal_centers = [0u8];
-        let (cross, complete) =
-            self.build_pdb_cross(&allowed_moves, &goal_centers, 20, max_states);
-        if !complete {
-            return None;
-        }
+        let cross = self.build_pdb_cross(&allowed_moves);
         let pairs: [Vec<u8>; 4] =
-            std::array::from_fn(|slot| self.build_pdb_pair(slot, &allowed_moves, &goal_centers));
-        Some(Pdbs {
+            std::array::from_fn(|slot| self.build_pdb_pair(slot, &allowed_moves));
+        let center_restore = self.build_center_restore(&allowed_moves);
+        Pdbs {
             allowed_moves,
             cross,
             pairs,
-        })
+            center_restore,
+        }
     }
 
     /// 受限 xcross IDA* 的 bound 上界(超过即视为「该受限集下不可解」返回 None)。
@@ -620,6 +607,7 @@ impl XCrossRestrictSolver {
         let (solved_corner, solved_edge) = Self::solved_pair(slot);
         let pdb_pair = &pdbs.pairs[slot];
         let pdb_cross = &pdbs.cross;
+        let pdb_center = &pdbs.center_restore;
 
         if start_cross == self.solved_cross
             && start_corner == solved_corner
@@ -629,20 +617,19 @@ impl XCrossRestrictSolver {
             return Some(Vec::new());
         }
 
-        let hc = pdb_cross[start_cross as usize * NCENTER + start_center as usize];
-        let hp = pdb_pair[(start_corner as usize * EDGE_STATES + start_edge as usize) * NCENTER
-            + start_center as usize];
+        let hc = pdb_cross[start_cross as usize];
+        let hp = pdb_pair[start_corner as usize * EDGE_STATES + start_edge as usize];
         if hc == u8::MAX || hp == u8::MAX {
             return None;
         }
-        let h0 = hc.max(hp) as u32;
+        let h0 = hc.max(hp).max(pdb_center[start_center as usize]) as u32;
 
         for bound in h0..=max_bound {
             let mut path: Vec<usize> = Vec::new();
             if let Some(sol) = self.ida(
                 start_cross, start_corner, start_edge, start_center, 0, bound, &pdbs.allowed_moves,
-                &goal_centers, max_rot_count, pdb_cross, pdb_pair, &solved_corner, &solved_edge,
-                &mut path, budget,
+                &goal_centers, max_rot_count, pdb_cross, pdb_pair, pdb_center, &solved_corner,
+                &solved_edge, &mut path, budget,
             ) {
                 return Some(sol);
             }
@@ -681,6 +668,7 @@ impl XCrossRestrictSolver {
         max_rot: u32,
         pdb_cross: &[u8],
         pdb_pair: &[u8],
+        pdb_center: &[u8],
         solved_corner: &u8,
         solved_edge: &u8,
         path: &mut Vec<usize>,
@@ -699,13 +687,12 @@ impl XCrossRestrictSolver {
             budget.hit = true;
             return None;
         }
-        let hc = pdb_cross[cross as usize * NCENTER + center as usize];
-        let hp =
-            pdb_pair[(corner as usize * EDGE_STATES + edge as usize) * NCENTER + center as usize];
+        let hc = pdb_cross[cross as usize];
+        let hp = pdb_pair[corner as usize * EDGE_STATES + edge as usize];
         if hc == u8::MAX || hp == u8::MAX {
             return None;
         }
-        let h = hc.max(hp) as u32;
+        let h = hc.max(hp).max(pdb_center[center as usize]) as u32;
         if depth + h > bound {
             return None;
         }
@@ -726,7 +713,7 @@ impl XCrossRestrictSolver {
             path.push(m);
             if let Some(sol) = self.ida(
                 nc, ncorner, nedge, ncenter, depth + 1, bound, allowed_moves, goal_centers, max_rot,
-                pdb_cross, pdb_pair, solved_corner, solved_edge, path, budget,
+                pdb_cross, pdb_pair, pdb_center, solved_corner, solved_edge, path, budget,
             ) {
                 return Some(sol);
             }
@@ -810,30 +797,26 @@ impl XCrossRestrictSolver {
     }
 
     /// 带节点预算的 6 视角网格(交互用):每格 = 该面 4 槽最小步数。返回 i64:
-    /// ≥0 = 步数;-1 = 受限下无解;-2 = 限制过宽(PDB 可达空间或 IDA* 分支超预算,价值低)放弃。
-    /// `node_limit` = 单 (face,slot) IDA* 节点上限(每格独立);`max_states` = PDB 可达状态上限。
+    /// ≥0 = 步数;-1 = 受限下真无解(h=INF 秒证 / 或 MAX_BOUND 内穷尽无解);-2 = 未在节点预算内判定
+    /// (限制过宽:含较多 wide/slice/rotation 等搬中心 move 时,no-center 启发式偏松、分支爆炸 →
+    /// 撞预算,价值低,显 ⋯)。建表恒 ≈40ms(中心移出主表),贵的只是宽集的搜索,故用节点预算兜底。
+    /// `node_limit` = 单 (face,slot) IDA* 节点上限(每格独立)。
     pub fn solve_xcross_restricted_grid_budgeted(
         &self,
         scramble: &[usize],
         allowed: u64,
         max_rot_count: u32,
         node_limit: u64,
-        max_states: usize,
     ) -> [i64; 6] {
-        // PDB 可达空间超预算 → 整盘「太宽」(-2),秒返不干等建表。
-        let pdbs = match self.build_pdbs_budgeted(allowed, max_states) {
-            Some(p) => p,
-            None => return [-2; 6],
-        };
+        let pdbs = self.build_pdbs(allowed);
         std::array::from_fn(|face| {
             let mut best: Option<u32> = None;
             let mut any_budget = false;
             for slot in 0..4 {
                 let mut budget = SearchBudget { nodes: 0, limit: node_limit, hit: false };
-                let r = self.solve_view_slot_budgeted(
+                match self.solve_view_slot_budgeted(
                     scramble, face, slot, &pdbs, max_rot_count, Self::MAX_BOUND, &mut budget,
-                );
-                match r {
+                ) {
                     Some(sol) => {
                         let l = sol.len() as u32;
                         best = Some(best.map_or(l, |b| b.min(l)));
@@ -844,8 +827,8 @@ impl XCrossRestrictSolver {
             }
             match best {
                 Some(l) => l as i64,
-                None if any_budget => -2,
-                None => -1,
+                None if any_budget => -2, // 限制过宽,未在预算内判定 → ⋯
+                None => -1,               // 真无解
             }
         })
     }
@@ -860,10 +843,10 @@ impl XCrossRestrictSolver {
         extra: u32,
         cap: usize,
     ) -> Vec<Vec<usize>> {
-        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, u64::MAX, usize::MAX)
+        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, u64::MAX)
     }
 
-    /// 带节点 + PDB 状态预算的多解枚举(交互用):超预算(限制过宽)→ 返回已收集的解(可能为空)。
+    /// 带节点预算的多解枚举(交互用):某槽超节点预算只是不贡献,不拖垮整个视角。
     #[allow(clippy::too_many_arguments)]
     pub fn solve_xcross_restricted_enum_budgeted(
         &self,
@@ -874,9 +857,8 @@ impl XCrossRestrictSolver {
         extra: u32,
         cap: usize,
         node_limit: u64,
-        max_states: usize,
     ) -> Vec<Vec<usize>> {
-        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, node_limit, max_states)
+        self.enum_with_budget(scramble, face, allowed, max_rot, extra, cap, node_limit)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -889,13 +871,9 @@ impl XCrossRestrictSolver {
         extra: u32,
         cap: usize,
         node_limit: u64,
-        max_states: usize,
     ) -> Vec<Vec<usize>> {
         let goal_centers = [0u8];
-        let pdbs = match self.build_pdbs_budgeted(allowed, max_states) {
-            Some(p) => p,
-            None => return Vec::new(), // 限制过宽:PDB 可达空间超预算
-        };
+        let pdbs = self.build_pdbs(allowed);
 
         // 每槽独立预算(与 grid 一致):某槽超节点预算只是不贡献,不会拖垮整个视角的枚举。
         let fresh = || SearchBudget { nodes: 0, limit: node_limit, hit: false };
@@ -932,8 +910,8 @@ impl XCrossRestrictSolver {
                 let mut b = fresh();
                 self.dfs_exact(
                     sc, scn, se, sce, 0, lim, &pdbs.allowed_moves, &goal_centers, max_rot,
-                    &pdbs.cross, &pdbs.pairs[slot], &solved_corner, &solved_edge, &mut path,
-                    &mut sols, cap, &mut b,
+                    &pdbs.cross, &pdbs.pairs[slot], &pdbs.center_restore, &solved_corner,
+                    &solved_edge, &mut path, &mut sols, cap, &mut b,
                 );
             }
             if sols.len() >= cap {
@@ -961,6 +939,7 @@ impl XCrossRestrictSolver {
         max_rot: u32,
         pdb_cross: &[u8],
         pdb_pair: &[u8],
+        pdb_center: &[u8],
         solved_corner: &u8,
         solved_edge: &u8,
         path: &mut Vec<usize>,
@@ -989,13 +968,12 @@ impl XCrossRestrictSolver {
             budget.hit = true;
             return;
         }
-        let hc = pdb_cross[cross as usize * NCENTER + center as usize];
-        let hp =
-            pdb_pair[(corner as usize * EDGE_STATES + edge as usize) * NCENTER + center as usize];
+        let hc = pdb_cross[cross as usize];
+        let hp = pdb_pair[corner as usize * EDGE_STATES + edge as usize];
         if hc == u8::MAX || hp == u8::MAX {
             return;
         }
-        let h = hc.max(hp) as u32;
+        let h = hc.max(hp).max(pdb_center[center as usize]) as u32;
         if depth + h > lim {
             return;
         }
@@ -1016,7 +994,7 @@ impl XCrossRestrictSolver {
             path.push(m);
             self.dfs_exact(
                 nc, ncorner, nedge, ncenter, depth + 1, lim, allowed_moves, goal_centers, max_rot,
-                pdb_cross, pdb_pair, solved_corner, solved_edge, path, sols, cap, budget,
+                pdb_cross, pdb_pair, pdb_center, solved_corner, solved_edge, path, sols, cap, budget,
             );
             path.pop();
             if sols.len() >= cap || budget.hit {
@@ -1609,4 +1587,5 @@ mod tests {
         assert!(checked >= 30, "T4 verified too few cases ({}); widen scope", checked);
         eprintln!("T4: verified {} (face,slot) cases — IDA* optimal == independent IDDFS optimal", checked);
     }
+
 }

@@ -211,12 +211,13 @@ function splitLeadRot(a: string): { lead: string; body: string } {
   return { lead: toks.slice(0, p).join(' '), body: toks.slice(p).join(' ') };
 }
 
-// 受限 xcross「限制过宽超节点预算」哨兵(worker 把 Rust -2 映射成此值):该视角可解但分支爆炸,
-// 价值低(允许越多最优越接近无限制),引擎主动略过 → 格子显 '⋯' + 提示缩小,而非卡死或误标无解。
+// 受限 xcross「限制过宽未在节点预算内判定」哨兵(worker 把 Rust -2 映射成此值):该视角多半可解,但
+// 含较多 wide/slice/rotation 搬中心 move → no-center 启发式偏松、分支爆炸撞预算,价值低 → 显 '⋯' +
+// 提示缩小,而非卡死或误标无解。纯面 / 面+少量 slice 等常用限制恒在预算内秒出精确解。
 const XCR_TOO_BROAD = 0xfffffffe;
 const isTooBroad = (v: number | null | undefined): boolean => v === XCR_TOO_BROAD;
 // 条件式阶段(htr / htr2 / fr)在非 DR / 非 HTR 视角返回哨兵(三者同值 0xffffffff):
-// 该格显示 '-',且不参与 best / min 统计。受限「太宽」哨兵同样不入 min(显 '⋯')。
+// 该格显示 '-',且不参与 best / min 统计。受限 xcross「太宽」哨兵同样不入 min(显 '⋯')。
 const isSentinel = (v: number | null | undefined): boolean => v === HTR_NOT_DR || v === HTR2_NOT_HTR || v === FR_NOT_HTR || v === XCR_TOO_BROAD;
 
 interface Props {
@@ -907,8 +908,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           )}
           {counts.some(isTooBroad) && (
             <span className="stsv-mr-hint">
-              {t('⋯ = 限制过宽,该视角已略过;缩小允许范围可得精确解',
-                '⋯ = restriction too broad, view skipped; narrow the allowed moves for an exact result')}
+              {t('⋯ = 该格限制过宽,未在预算内算出;缩小范围(尤其少选宽/中层/旋转)可得精确解',
+                '⋯ = restriction too broad to resolve within budget here; narrow it (esp. fewer wide/slice/rotation) for an exact result')}
             </span>
           )}
         </div>

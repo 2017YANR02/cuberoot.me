@@ -1613,19 +1613,15 @@ impl Default for CrossRestrictSolverWasm {
     }
 }
 
-/// 受限 xcross 单 (face,slot) IDA* 节点预算:超此即判「限制过宽」(-2),避免宽限制分支爆炸卡死。
-/// 紧限制(实际有用的限制)远在预算内出精确解。~1.5M 节点在 release wasm ≈ 数十 ms。
+/// 受限 xcross 单 (face,slot) IDA* 节点预算:超此即放弃该格(返回无解 -1),兜底极弱受限集
+/// (如纯 {U,R,M})下「联合不可解」状态的深搜。紧/常规限制远在预算内出精确解。
 const XCR_NODE_LIMIT: u64 = 1_500_000;
-
-/// 受限 xcross PDB 可达状态预算:cross PDB(cross-coord×center,满空间 4.56M)BFS 超此 → 判
-/// 「限制过宽」(-2),秒返不干等建表。宽限制(允许 move 多)可达空间趋满、建表慢且价值低
-/// (允许越多最优越接近无限制)。紧限制可达空间小,远在预算内。~120 万态在 wasm ≈ 1-2s。
-const XCR_MAX_PDB_STATES: usize = 1_200_000;
 
 /// XCross restricted optimal 求解器(任意受限 54-move 集 + 中心朝向追踪)。
 /// 运行时建表(无外部表文件):物理 54-move cross/corner/edge/center transition + 双 PDB
-/// (cross×center、pair×center,均按受限 move 集现场建),IDA* h=max(两 PDB)可采纳。
-/// 与 CrossRestrictSolverWasm 同样**零下载成本**:用到才在 worker 现场建表。
+/// (cross 190080、pair 576,均按受限 move 集现场建、**中心移出表只在搜索态追踪**),IDA*
+/// h=max(两 PDB)可采纳。每次受限集建表 ≈0.3s(原 4.56M 的 1/24)。与 CrossRestrictSolverWasm
+/// 同样**零下载成本**:用到才在 worker 现场建表。
 #[wasm_bindgen]
 pub struct XCrossRestrictSolverWasm {
     solver: XCrossRestrictSolver,
@@ -1653,10 +1649,9 @@ impl XCrossRestrictSolverWasm {
     ) -> String {
         let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
         let sc = CrossRestrictSolver::parse_scramble(scramble);
-        // 节点预算:紧限制(高价值)恒在预算内出精确解;宽限制(分支爆炸 + 价值低)超预算 → -2,
-        // UI 提示「限制过宽」而非卡死。每 (face,slot) 独立预算,~1.5M 节点 ≈ 数十 ms。
+        // 每 (face,slot) 独立节点预算兜底极弱受限集深搜;常规限制远在预算内出精确解。
         let grid = self.solver.solve_xcross_restricted_grid_budgeted(
-            &sc, allowed, max_rot_count, XCR_NODE_LIMIT, XCR_MAX_PDB_STATES,
+            &sc, allowed, max_rot_count, XCR_NODE_LIMIT,
         );
         let arr = grid
             .iter()
@@ -1683,8 +1678,7 @@ impl XCrossRestrictSolverWasm {
         let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
         let sc = CrossRestrictSolver::parse_scramble(scramble);
         let sols = self.solver.solve_xcross_restricted_enum_budgeted(
-            &sc, face as usize, allowed, max_rot_count, extra, cap as usize,
-            XCR_NODE_LIMIT, XCR_MAX_PDB_STATES,
+            &sc, face as usize, allowed, max_rot_count, extra, cap as usize, XCR_NODE_LIMIT,
         );
         if sols.is_empty() {
             return sols_json(u32::MAX, &[]);
