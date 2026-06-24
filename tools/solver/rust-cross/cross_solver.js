@@ -1308,6 +1308,86 @@ export class VariantSolverWasm {
     }
 }
 if (Symbol.dispose) VariantSolverWasm.prototype[Symbol.dispose] = VariantSolverWasm.prototype.free;
+
+/**
+ * XCross restricted optimal 求解器(任意受限 54-move 集 + 中心朝向追踪)。
+ * 运行时建表(无外部表文件):物理 54-move cross/corner/edge/center transition + 双 PDB
+ * (cross×center、pair×center,均按受限 move 集现场建),IDA* h=max(两 PDB)可采纳。
+ * 与 CrossRestrictSolverWasm 同样**零下载成本**:用到才在 worker 现场建表。
+ */
+export class XCrossRestrictSolverWasm {
+    __destroy_into_raw() {
+        const ptr = this.__wbg_ptr;
+        this.__wbg_ptr = 0;
+        XCrossRestrictSolverWasmFinalization.unregister(this);
+        return ptr;
+    }
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_xcrossrestrictsolverwasm_free(ptr, 0);
+    }
+    /**
+     * 无需任何表字节,构造时现场建全部 transition 表(~41MB RAM,~110ms,仅 worker 内存)。
+     */
+    constructor() {
+        const ret = wasm.xcrossrestrictsolverwasm_new();
+        this.__wbg_ptr = ret;
+        XCrossRestrictSolverWasmFinalization.register(this, this.__wbg_ptr, this);
+        return this;
+    }
+    /**
+     * 6 视角受限最优 xcross 步数网格(PDB 只建一次,6 视角 × 4 槽共用),返回 JSON 数组
+     * `[l0,l1,l2,l3,l4,l5]`,-1 = 该视角受限下不可解。每格 = 该面 4 个 F2L 槽的最小步数。
+     * 54-bit allowed mask = (allowed_hi << 32) | allowed_lo;`max_rot_count` = 解里整体旋转动上限。
+     * @param {string} scramble
+     * @param {number} allowed_lo
+     * @param {number} allowed_hi
+     * @param {number} max_rot_count
+     * @returns {string}
+     */
+    solve_xcross_restricted_grid(scramble, allowed_lo, allowed_hi, max_rot_count) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.xcrossrestrictsolverwasm_solve_xcross_restricted_grid(this.__wbg_ptr, ptr0, len0, allowed_lo, allowed_hi, max_rot_count);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * 受限最优 xcross「多解枚举」:返回 JSON `{len, sols:[{m,c}]}`,解按长度升序、
+     * 长度 ∈ [最优, 最优+extra]、最多 `cap` 条;空集 → len = u32::MAX 哨兵。`c` 恒空串
+     * (受限 xcross 暂不标 F2L 槽,跨槽取最优枚举)。参数同 grid + face/extra/cap。
+     * @param {string} scramble
+     * @param {number} face
+     * @param {number} allowed_lo
+     * @param {number} allowed_hi
+     * @param {number} max_rot_count
+     * @param {number} extra
+     * @param {number} cap
+     * @returns {string}
+     */
+    solve_xcross_restricted_moves(scramble, face, allowed_lo, allowed_hi, max_rot_count, extra, cap) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(scramble, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.xcrossrestrictsolverwasm_solve_xcross_restricted_moves(this.__wbg_ptr, ptr0, len0, face, allowed_lo, allowed_hi, max_rot_count, extra, cap);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+}
+if (Symbol.dispose) XCrossRestrictSolverWasm.prototype[Symbol.dispose] = XCrossRestrictSolverWasm.prototype.free;
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
@@ -1376,6 +1456,9 @@ const SkewbSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined'
 const VariantSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_variantsolverwasm_free(ptr, 1));
+const XCrossRestrictSolverWasmFinalization = (typeof FinalizationRegistry === 'undefined')
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry(ptr => wasm.__wbg_xcrossrestrictsolverwasm_free(ptr, 1));
 
 function getArrayU32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;

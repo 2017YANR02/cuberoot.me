@@ -15,6 +15,7 @@ export const __wbg_pyraminxsolverwasm_free: (a: number, b: number) => void;
 export const __wbg_roux223solverwasm_free: (a: number, b: number) => void;
 export const __wbg_skewbsolverwasm_free: (a: number, b: number) => void;
 export const __wbg_variantsolverwasm_free: (a: number, b: number) => void;
+export const __wbg_xcrossrestrictsolverwasm_free: (a: number, b: number) => void;
 export const block222solverwasm_new: (a: number, b: number, c: number, d: number) => number;
 export const block222solverwasm_solve: (a: number, b: number, c: number) => [number, number];
 export const block222solverwasm_solve_face: (a: number, b: number, c: number, d: number) => number;
@@ -71,6 +72,9 @@ export const variantsolverwasm_solve_moves: (a: number, b: number, c: number, d:
 export const variantsolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => [number, number];
 export const variantsolverwasm_solve_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
 export const variantsolverwasm_solve_stage_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+export const xcrossrestrictsolverwasm_new: () => number;
+export const xcrossrestrictsolverwasm_solve_xcross_restricted_grid: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+export const xcrossrestrictsolverwasm_solve_xcross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
 export const __wbindgen_externrefs: WebAssembly.Table;
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

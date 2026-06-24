@@ -15,6 +15,7 @@ use crate::block223_solver::{block223_label, Block223Solver};
 use crate::chain_solver::{chain_json, parse_chain_config, ChainSolver};
 use crate::cross_restrict_solver::{CrossRestrictSolver, MOVE_NAMES_54};
 use crate::cross_solver::CrossSolver;
+use crate::xcross_restrict_solver::XCrossRestrictSolver;
 use crate::cube_common::{state_space, string_to_alg, MOVE_NAMES};
 use crate::dr_solver::{dr_axis_label, DrSolver};
 use crate::eo_cross_solver::EOSmallSolver;
@@ -1607,6 +1608,102 @@ impl CrossRestrictSolverWasm {
 }
 
 impl Default for CrossRestrictSolverWasm {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// 受限 xcross 单 (face,slot) IDA* 节点预算:超此即判「限制过宽」(-2),避免宽限制分支爆炸卡死。
+/// 紧限制(实际有用的限制)远在预算内出精确解。~1.5M 节点在 release wasm ≈ 数十 ms。
+const XCR_NODE_LIMIT: u64 = 1_500_000;
+
+/// 受限 xcross PDB 可达状态预算:cross PDB(cross-coord×center,满空间 4.56M)BFS 超此 → 判
+/// 「限制过宽」(-2),秒返不干等建表。宽限制(允许 move 多)可达空间趋满、建表慢且价值低
+/// (允许越多最优越接近无限制)。紧限制可达空间小,远在预算内。~120 万态在 wasm ≈ 1-2s。
+const XCR_MAX_PDB_STATES: usize = 1_200_000;
+
+/// XCross restricted optimal 求解器(任意受限 54-move 集 + 中心朝向追踪)。
+/// 运行时建表(无外部表文件):物理 54-move cross/corner/edge/center transition + 双 PDB
+/// (cross×center、pair×center,均按受限 move 集现场建),IDA* h=max(两 PDB)可采纳。
+/// 与 CrossRestrictSolverWasm 同样**零下载成本**:用到才在 worker 现场建表。
+#[wasm_bindgen]
+pub struct XCrossRestrictSolverWasm {
+    solver: XCrossRestrictSolver,
+}
+
+#[wasm_bindgen]
+impl XCrossRestrictSolverWasm {
+    /// 无需任何表字节,构造时现场建全部 transition 表(~41MB RAM,~110ms,仅 worker 内存)。
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> XCrossRestrictSolverWasm {
+        XCrossRestrictSolverWasm {
+            solver: XCrossRestrictSolver::new(),
+        }
+    }
+
+    /// 6 视角受限最优 xcross 步数网格(PDB 只建一次,6 视角 × 4 槽共用),返回 JSON 数组
+    /// `[l0,l1,l2,l3,l4,l5]`,-1 = 该视角受限下不可解。每格 = 该面 4 个 F2L 槽的最小步数。
+    /// 54-bit allowed mask = (allowed_hi << 32) | allowed_lo;`max_rot_count` = 解里整体旋转动上限。
+    pub fn solve_xcross_restricted_grid(
+        &self,
+        scramble: &str,
+        allowed_lo: u32,
+        allowed_hi: u32,
+        max_rot_count: u32,
+    ) -> String {
+        let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
+        let sc = CrossRestrictSolver::parse_scramble(scramble);
+        // 节点预算:紧限制(高价值)恒在预算内出精确解;宽限制(分支爆炸 + 价值低)超预算 → -2,
+        // UI 提示「限制过宽」而非卡死。每 (face,slot) 独立预算,~1.5M 节点 ≈ 数十 ms。
+        let grid = self.solver.solve_xcross_restricted_grid_budgeted(
+            &sc, allowed, max_rot_count, XCR_NODE_LIMIT, XCR_MAX_PDB_STATES,
+        );
+        let arr = grid
+            .iter()
+            .map(|l| l.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        format!("[{}]", arr)
+    }
+
+    /// 受限最优 xcross「多解枚举」:返回 JSON `{len, sols:[{m,c}]}`,解按长度升序、
+    /// 长度 ∈ [最优, 最优+extra]、最多 `cap` 条;空集 → len = u32::MAX 哨兵。`c` 恒空串
+    /// (受限 xcross 暂不标 F2L 槽,跨槽取最优枚举)。参数同 grid + face/extra/cap。
+    #[allow(clippy::too_many_arguments)]
+    pub fn solve_xcross_restricted_moves(
+        &self,
+        scramble: &str,
+        face: u32,
+        allowed_lo: u32,
+        allowed_hi: u32,
+        max_rot_count: u32,
+        extra: u32,
+        cap: u32,
+    ) -> String {
+        let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
+        let sc = CrossRestrictSolver::parse_scramble(scramble);
+        let sols = self.solver.solve_xcross_restricted_enum_budgeted(
+            &sc, face as usize, allowed, max_rot_count, extra, cap as usize,
+            XCR_NODE_LIMIT, XCR_MAX_PDB_STATES,
+        );
+        if sols.is_empty() {
+            return sols_json(u32::MAX, &[]);
+        }
+        let len = sols[0].len() as u32;
+        let items: Vec<(String, String)> = sols
+            .iter()
+            .map(|s| {
+                (
+                    s.iter().map(|&m| MOVE_NAMES_54[m]).collect::<Vec<_>>().join(" "),
+                    String::new(),
+                )
+            })
+            .collect();
+        sols_json(len, &items)
+    }
+}
+
+impl Default for XCrossRestrictSolverWasm {
     fn default() -> Self {
         Self::new()
     }

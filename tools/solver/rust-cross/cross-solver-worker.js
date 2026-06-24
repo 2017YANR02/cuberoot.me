@@ -23,6 +23,7 @@ let htr2Solver = null;    // HtrPhase2SolverWasm(G3→solved),零表下载,648KB
 let frSolver = null;      // FrSolverWasm(HTR→FR,Floppy 还原),零表下载,3456 态陪集表首查惰性现场 BFS
 let chainSolver = null;   // ChainSolverWasm(mallard 链式 EO→DR→HTR→[FR]→Finish),零表下载,首查惰性建全套距离表
 let crossRestrictSolver = null; // CrossRestrictSolverWasm(or18 式受限最优十字:6面+6宽+3中层+3旋转 54-move),零表下载,构造即建 coord/center transition
+let xcrossRestrictSolver = null; // XCrossRestrictSolverWasm(受限最优 xcross=十字+1 F2L 对,54-move + 中心追踪 + 双 PDB IDA*),零表下载,构造现场建表
 let cube222Solver = null;  // Cube222SolverWasm(2x2x2 口袋魔方整解最优),拉 opt_222(3.6MB)直接 from_dist
 let pyraminxSolver = null; // PyraminxSolverWasm(金字塔整解最优,含 tips),拉 opt_pyraminx(0.9MB)直接 from_dist
 let skewbSolver = null;   // SkewbSolverWasm(斜转整解最优),拉 opt_skewb(3.0MB)直接 from_dist
@@ -96,6 +97,10 @@ async function init(glueUrl, wasmUrl, tablesBase, need) {
     // or18 式受限最优十字(6面+6宽+3中层+3旋转):零表下载,构造现场建
     // coord_trans(190080×54)+ center_trans(24×54),~数百 ms。BFS 首达即最优。
     crossRestrictSolver = new mod.CrossRestrictSolverWasm();
+  } else if (need === 'xcross_restrict') {
+    // 受限最优 xcross(十字 + 1 F2L 对):零表下载,构造现场建物理 54-move
+    // cross/corner/edge/center transition + 双 PDB（用到才按受限集建）,IDA* h=max 可采纳。
+    xcrossRestrictSolver = new mod.XCrossRestrictSolverWasm();
   } else if (need === 'chain') {
     // 链式(EO→DR→HTR→[FR]→Finish):零表下载;首次 solve_chain 现场建
     // EOLine/DR/HTR/htr2 距离表(数秒),fr.enabled 再惰性建 FR 陪集表。
@@ -165,6 +170,24 @@ self.onmessage = async (e) => {
         msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.extra ?? 2, msg.cap ?? 10,
       );
       self.postMessage({ type: 'cr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
+    } else if (msg.type === 'xcr_grid') {
+      // 受限最优 xcross 6 视角长度网格(PDB 只建一次,6 视角 × 4 槽共用)。
+      // wasm 返 JSON [l0..l5]:-1=受限下不可解 → 0xFFFFFFFF 哨兵;-2=限制过宽超节点预算 → 0xFFFFFFFE。
+      if (!xcrossRestrictSolver) throw new Error('xcross_restrict solver not initialized');
+      const t0 = performance.now();
+      const json = xcrossRestrictSolver.solve_xcross_restricted_grid(
+        msg.scramble, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0,
+      );
+      const arr = JSON.parse(json).map((v) => (v === -2 ? 0xfffffffe : v < 0 ? 0xffffffff : v));
+      self.postMessage({ type: 'xcr_grid', id: msg.id, values: arr, ms: performance.now() - t0 });
+    } else if (msg.type === 'xcr_moves') {
+      // 受限最优 xcross 多解枚举(长度 ∈ [最优,最优+extra],最多 cap 条,升序)。无解 → len=0xFFFFFFFF。
+      if (!xcrossRestrictSolver) throw new Error('xcross_restrict solver not initialized');
+      const t0 = performance.now();
+      const json = xcrossRestrictSolver.solve_xcross_restricted_moves(
+        msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.extra ?? 2, msg.cap ?? 10,
+      );
+      self.postMessage({ type: 'xcr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'f2leo') {
       if (!f2leoSolver) throw new Error('f2leo solver not initialized');
       const t0 = performance.now();

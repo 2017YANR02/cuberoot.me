@@ -211,9 +211,13 @@ function splitLeadRot(a: string): { lead: string; body: string } {
   return { lead: toks.slice(0, p).join(' '), body: toks.slice(p).join(' ') };
 }
 
+// 受限 xcross「限制过宽超节点预算」哨兵(worker 把 Rust -2 映射成此值):该视角可解但分支爆炸,
+// 价值低(允许越多最优越接近无限制),引擎主动略过 → 格子显 '⋯' + 提示缩小,而非卡死或误标无解。
+const XCR_TOO_BROAD = 0xfffffffe;
+const isTooBroad = (v: number | null | undefined): boolean => v === XCR_TOO_BROAD;
 // 条件式阶段(htr / htr2 / fr)在非 DR / 非 HTR 视角返回哨兵(三者同值 0xffffffff):
-// 该格显示 '-',且不参与 best / min 统计。
-const isSentinel = (v: number | null | undefined): boolean => v === HTR_NOT_DR || v === HTR2_NOT_HTR || v === FR_NOT_HTR;
+// 该格显示 '-',且不参与 best / min 统计。受限「太宽」哨兵同样不入 min(显 '⋯')。
+const isSentinel = (v: number | null | undefined): boolean => v === HTR_NOT_DR || v === HTR2_NOT_HTR || v === FR_NOT_HTR || v === XCR_TOO_BROAD;
 
 interface Props {
   scramble: string;
@@ -302,9 +306,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     return m >>> 0;
   }, [allowedFaces]);
 
-  // —— 纯十字阶段(std stage 0)的「全 18 格」受限:走 CrossRestrictSolverWasm(54-move BFS)。
-  // 仅此阶段铺满 18 格(6面+6宽+3中层+3旋转);其余方法/阶段沿用上面的 6 面 mask 引擎。
+  // —— 「全 18 格」受限阶段:纯十字(std stage 0)走 CrossRestrictSolverWasm(54-move BFS),
+  // xcross(std stage 1)走 XCrossRestrictSolverWasm(54-move + 中心追踪 + 双 PDB IDA*)。
+  // 这两个阶段铺满 18 格(6面+6宽+3中层+3旋转);其余方法/阶段沿用上面的 6 面 mask 引擎。
   const isCrossStage = method === 'std' && stage === 0;
+  const isXCrossStage = method === 'std' && stage === 1;
+  const isGridStage = isCrossStage || isXCrossStage; // 渲 18 格 + 走 54-move 受限引擎的阶段
   const [crCells, setCrCells] = useState<boolean[]>(() => CR_DEFAULT.slice());
   // 18 格 → 54-bit allowed:格 i 覆盖 move [3i,3i+2];lo=低 32 位、hi=高 22 位。
   const crMask = useMemo(() => {
@@ -320,10 +327,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   // 任一旋转格(x/y/z = 格 15/16/17)开 → 允许解里含整体旋转(上限 2,够「换面触达」又不爆 BFS)。
   const crMaxRot = useMemo(() => (crCells[15] || crCells[16] || crCells[17] ? 2 : 0), [crCells]);
   // 受限 = 偏离「仅 6 面」基线(lo=0x3FFFF, hi=0)。
-  const crRestricted = isCrossStage && (crMask.lo !== CR_FACE_LO || crMask.hi !== 0);
-  // 仅当用到「6 面之外」的格(宽/中层/旋转 = 高位 bit)才需 54-move cr 引擎;纯 6 面子集仍走老快引擎
-  // (CrossSolver 精确剪枝 <0.6s、零建表)→ 18 格对最常见的 6 面限制零性能回归。
-  const crNeedsEngine = isCrossStage && (crMask.hi !== 0 || (crMask.lo >>> 18) !== 0);
+  const crRestricted = isGridStage && (crMask.lo !== CR_FACE_LO || crMask.hi !== 0);
+  // 仅当用到「6 面之外」的格(宽/中层/旋转 = 高位 bit)才需 54-move 受限引擎;纯 6 面子集仍走老快引擎
+  // (cross/xcross masked 精确剪枝、零建表)→ 18 格对最常见的 6 面限制零性能回归。
+  const crNeedsEngine = isGridStage && (crMask.hi !== 0 || (crMask.lo >>> 18) !== 0);
   const crMaskRef = useRef(crMask);
   crMaskRef.current = crMask;
   const crMaxRotRef = useRef(crMaxRot);
@@ -339,7 +346,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   // 实际喂老 6 面 mask 引擎的 mask(未受限 = undefined)。纯十字阶段:6 面子集取 crMask 低 18 位
   // (与 moveMask 同序同格式),用到 6 面外的格时改走 cr 引擎(此处不喂 mask)。其余阶段取 moveMask。
-  const activeMask: number | undefined = isCrossStage
+  const activeMask: number | undefined = isGridStage
     ? (crRestricted && !crNeedsEngine ? (crMask.lo & CR_FACE_LO) : undefined)
     : (maskSupported && moveMask !== ALL_MOVE_MASK ? moveMask : undefined);
   const activeMaskRef = useRef(activeMask);
@@ -351,7 +358,16 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     if (!crPoolRef.current) crPoolRef.current = createRustCrossPool(Math.min(3, poolSizeForDevice()), 'cross_restrict');
     return crPoolRef.current;
   }, []);
-  useEffect(() => () => { crPoolRef.current?.terminate(); crPoolRef.current = null; }, []);
+  // xcross 受限专用池(零表,worker 构造现场建 54-move transition;PDB 用到才按受限集建)。
+  const xcrPoolRef = useRef<RustCrossPool | null>(null);
+  const getXcrPool = useCallback(() => {
+    if (!xcrPoolRef.current) xcrPoolRef.current = createRustCrossPool(Math.min(3, poolSizeForDevice()), 'xcross_restrict');
+    return xcrPoolRef.current;
+  }, []);
+  useEffect(() => () => {
+    crPoolRef.current?.terminate(); crPoolRef.current = null;
+    xcrPoolRef.current?.terminate(); xcrPoolRef.current = null;
+  }, []);
 
   const poolRef = useRef<RustCrossPool | null>(null);
   // 共享 3D 播放器实例(TwistySection 回填),供解法行 ▷ 跳到开头并播放。
@@ -435,7 +451,15 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     const wall = performance.now();
     const kind = kindOf(method, stages[stage] ?? '');
     try {
-      if (kind === 'std') {
+      if (kind === 'std' && isXCrossStage && useCrRef.current) {
+        // xcross 18 格受限 → XCrossRestrictSolver(54-move + 中心追踪)。grid 单调用:PDB 只建一次,
+        // 6 视角 × 4 槽共用(远优于逐面各自重建表)。受限无解视角 → 0xFFFFFFFF 哨兵。
+        const vals = await getXcrPool().solveXCrossRestrictGrid(scr, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current);
+        if (computeReq.current === my) {
+          for (let f = 0; f < 6; f++) result[f] = vals[f] ?? null;
+          setCounts(result.slice());
+        }
+      } else if (kind === 'std') {
         const useCr = useCrRef.current; // 纯十字 18 格受限 → CrossRestrictSolver(54-move)引擎
         const crPool = useCr ? getCrPool() : null;
         await Promise.all(FACES.map(async (_f, f) => {
@@ -534,7 +558,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       const movesMask = activeMaskRef.current;
       const res = kind === 'std'
         ? (useCrRef.current
-          ? await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap)
+          ? (isXCrossStage
+            ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap)
+            : await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap))
           : await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: movesMask }))
         : kind === 'f2leo'
           ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap, combo, mask: movesMask })
@@ -671,7 +697,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     if (statusRef.current !== 'ready') return;
     void compute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moveMask, maskSupported, crMask.lo, crMask.hi, crMaxRot, isCrossStage]);
+  }, [moveMask, maskSupported, crMask.lo, crMask.hi, crMaxRot, isGridStage]);
 
   // 信息弹窗:Esc 关。
   useEffect(() => {
@@ -845,9 +871,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         </button>
       </div>
 
-      {/* 步法限制:纯十字阶段(std stage0)铺全 18 格(6面+6宽+3中层+3旋转,走 54-move BFS);
-          其余支持的方法/阶段保留 6 面 mask 勾选。 */}
-      {isCrossStage ? (
+      {/* 步法限制:cross(std stage0)/ xcross(std stage1)铺全 18 格(6面+6宽+3中层+3旋转,
+          走 54-move 受限引擎);其余支持的方法/阶段保留 6 面 mask 勾选。 */}
+      {isGridStage ? (
         <div className="stsv-moverestrict stsv-mr-18">
           <span className="stsv-mr-label">{t('步法限制', 'Allowed moves')}</span>
           <div className="stsv-mr-rows">
@@ -878,6 +904,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             >
               {t('全选', 'All')}
             </button>
+          )}
+          {counts.some(isTooBroad) && (
+            <span className="stsv-mr-hint">
+              {t('⋯ = 限制过宽,该视角已略过;缩小允许范围可得精确解',
+                '⋯ = restriction too broad, view skipped; narrow the allowed moves for an exact result')}
+            </span>
           )}
         </div>
       ) : maskSupported ? (
@@ -979,7 +1011,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   title={`${faceDesc(f.face)}${t(' · 点击求解', ' · click to solve')}`}
                 >
                   {counts[i] != null ? (
-                    <span className="stsv-angle-n">{isSentinel(counts[i]) ? '-' : counts[i]}</span>
+                    <span className="stsv-angle-n">{isTooBroad(counts[i]) ? '⋯' : isSentinel(counts[i]) ? '-' : counts[i]}</span>
                   ) : loading ? (
                     <Loader2 size={12} className="stsv-spin" />
                   ) : (

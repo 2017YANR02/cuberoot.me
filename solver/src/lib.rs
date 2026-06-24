@@ -34,6 +34,10 @@ pub mod sq1_solver;
 // sq1 two-phase:cstimer 移植的近最优 SQ1 求解器(slash 数,毫秒级;管道默认走它)。
 pub mod sq1_twophase;
 pub mod xcross_solver;
+// xcross restricted optimal:任意受限 54-move 集 + 中心朝向 + center_offset/max_rot 的最优
+// xcross(cross + 1 F2L pair)IDA*。全自包含(运行时建表 + 双 PDB,无外部文件),
+// native+wasm 双轨可编。
+pub mod xcross_restrict_solver;
 
 // --- native-only(依赖 rayon / 磁盘表生成 / mmap manager,WASM 不编)---
 #[cfg(not(target_arch = "wasm32"))]
