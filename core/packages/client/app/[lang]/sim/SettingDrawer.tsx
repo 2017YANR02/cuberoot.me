@@ -168,7 +168,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   timing.frames = mapFrames(s.speed);
   // NxN-only options skipped for SQ1 / Ivy / Dino / Redi (sticker thickness / hollow /
   // hint / face colors are baked at construction time for their non-NxN geometry).
-  if (world.puzzleKind !== 'sq1' && world.puzzleKind !== 'ivy' && world.puzzleKind !== 'dino' && world.puzzleKind !== 'redi' && world.puzzleKind !== 'rex' && world.puzzleKind !== 'heli') {
+  if (world.puzzleKind !== 'sq1' && world.puzzleKind !== 'ivy' && world.puzzleKind !== 'dino' && world.puzzleKind !== 'redi' && world.puzzleKind !== 'rex' && world.puzzleKind !== 'heli' && world.puzzleKind !== 'skewb') {
     const cube = world.cube as import('./engine/nxn/cube').default;
     cube.arrow = s.arrow;
     cube.instancedRenderer.thickness = s.thickness;
@@ -201,6 +201,8 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     (world.cube as import('./engine/rex/RexCube').default).setCarveCorner(s.debugCarveCorner);
   } else if (world.puzzleKind === 'heli') {
     (world.cube as import('./engine/heli/HeliCube').default).setCarveCorner(s.debugCarveCorner);
+  } else if (world.puzzleKind === 'skewb') {
+    (world.cube as import('./engine/skewb/SkewbCube').default).setCarveCorner(s.debugCarveCorner);
   }
   world.dirty = true;
   world.cube.dirty = true;

@@ -13,7 +13,7 @@
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
-import { useQueryStates, parseAsString } from 'nuqs';
+import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import HomeLink from '@/components/HomeLink';
 // THREE is type-only at module scope — runtime instance is dynamically imported
@@ -26,7 +26,7 @@ import {
   Maximize2, Minimize2,
   ArrowLeftRight,
 } from 'lucide-react';
-import World from './engine/world';
+import World, { type PuzzleKind } from './engine/world';
 import type Cube from './engine/nxn/cube';
 import { SIZE } from './engine/define';
 import { createBackView, type BackView } from './engine/backView';
@@ -56,6 +56,9 @@ import { rexMoveToString, type RexMove } from './engine/rex/rexState';
 import HeliCube from './engine/heli/HeliCube';
 import { heliPickHit, heliResolveMove, heliResolveLive, type HeliPickHit } from './engine/heli/heliDrag';
 import { heliMoveToString, type HeliMove } from './engine/heli/heliState';
+import SkewbCube from './engine/skewb/SkewbCube';
+import { skewbPickHit, skewbResolveMove, skewbResolveLive, type SkewbPickHit } from './engine/skewb/skewbDrag';
+import { skewbMoveToString, type SkewbMove } from './engine/skewb/skewbState';
 import { orbitScene, snapViewToQuadrant } from './engine/viewControls';
 import {
   CornerTurnGesture, type CornerGestureCtx, type CornerGestureHandle, type CornerTurnAdapter,
@@ -91,9 +94,13 @@ export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
 }
 
-/** Narrow `world.cube` to the NxN Cube type. Returns null for SQ1 / Ivy / Dino / Redi / Rex. */
+/** Twisty puzzles (cubing.js by default) that ALSO have an in-house Three.js engine
+ *  renderer — the user picks which one via the `renderer` toggle (skill: keep both). */
+export const ENGINE_TWISTY = new Set<string>(['skewb']);
+
+/** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle. */
 function asNxN(world: World): Cube | null {
-  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex' || world.puzzleKind === 'heli') ? null : (world.cube as Cube);
+  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex' || world.puzzleKind === 'heli' || world.puzzleKind === 'skewb') ? null : (world.cube as Cube);
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -154,6 +161,9 @@ export default function SimPage() {
       puzzle: parseAsString.withDefault('3'),
       alg: parseAsString,
       setup: parseAsString,
+      // Which renderer for an ENGINE_TWISTY puzzle (skewb): cubing.js TwistyPlayer
+      // (default) or the in-house Three.js engine. Default 'cubing' → omitted from URL.
+      renderer: parseAsStringEnum(['cubing', 'engine'] as const).withDefault('cubing'),
     },
     { history: 'replace', scroll: false },
   );
@@ -175,7 +185,14 @@ export default function SimPage() {
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
     return n;
   }, [query.puzzle]);
-  const twisty = isTwistyPuzzle(puzzleParam);
+  // A twisty puzzle is rendered by the in-house engine when it has an engine
+  // alternative AND the renderer toggle is set to 'engine' (default 'cubing' keeps
+  // the cubing.js TwistyPlayer). `twisty` = "use the cubing.js path" — false for
+  // engine-skewb, which then falls through to the World/Three.js route below.
+  const useEngine = isTwistyPuzzle(puzzleParam) && ENGINE_TWISTY.has(puzzleParam) && query.renderer === 'engine';
+  const twisty = isTwistyPuzzle(puzzleParam) && !useEngine;
+  const useEngineRef = useRef(useEngine);
+  useEffect(() => { useEngineRef.current = useEngine; }, [useEngine]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<World | null>(null);
@@ -582,14 +599,21 @@ export default function SimPage() {
       beginMove: (c, m, dir) => c.beginMove(m, dir), moveToString: heliMoveToString,
       fullPx: 200, threshold: 6,
     };
-    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli', CornerGestureHandle> = {
+    const skewbAdapter: CornerTurnAdapter<SkewbCube, SkewbMove, SkewbPickHit> = {
+      match: (c): c is SkewbCube => c instanceof SkewbCube,
+      pickHit: skewbPickHit, resolveLive: skewbResolveLive, resolveMove: skewbResolveMove,
+      beginMove: (c, m) => c.beginMove(m), moveToString: skewbMoveToString,
+      fullPx: 150, threshold: 6,
+    };
+    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli' | 'skewb', CornerGestureHandle> = {
       dino: new CornerTurnGesture(dinoAdapter, cornerCtx),
       redi: new CornerTurnGesture(rediAdapter, cornerCtx),
       rex: new CornerTurnGesture(rexAdapter, cornerCtx),
       heli: new CornerTurnGesture(heliAdapter, cornerCtx),
+      skewb: new CornerTurnGesture(skewbAdapter, cornerCtx),
     };
     const cornerGestureFor = (pk: unknown): CornerGestureHandle | null =>
-      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' ? cornerGestures[pk] : null;
+      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb' ? cornerGestures[pk] : null;
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -909,7 +933,7 @@ export default function SimPage() {
       if (pinching && activePointers.size < 2) {
         pinching = false;
         const pk = worldRef.current?.puzzleKind;
-        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli';
+        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb';
         syncScaleToSettings();
       }
     };
@@ -957,8 +981,9 @@ export default function SimPage() {
           : world.puzzleKind === 'redi' ? world.rediHints
             : world.puzzleKind === 'rex' ? world.rexHints
               : world.puzzleKind === 'heli' ? world.heliHints
-                : world.faceHints;
-      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints];
+                : world.puzzleKind === 'skewb' ? world.skewbHints
+                  : world.faceHints;
+      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints];
       if (viewing) activeHints.show(); else activeHints.hide();
       for (const h of allHints) if (h !== activeHints) h.hide();
       let hintsAnimating = false;
@@ -1019,32 +1044,43 @@ export default function SimPage() {
     const world = worldRef.current;
     // kind === 3 → null clears `puzzle` (it's the default, auto-omitted anyway).
     const writeUrl = () => setQuery({ puzzle: kind === 3 ? null : String(kind) });
-    // Twisty puzzles don't use World — just update URL. The world-init
-    // effect's [twisty] dep tears down the live cuber instance.
-    if (isTwistyPuzzle(kind)) { writeUrl(); return; }
-    if (!world || world.puzzleKind === kind) { writeUrl(); return; }
-    world.setPuzzle(kind);
+    // A twisty puzzle on the cubing.js renderer doesn't use World — just update URL.
+    // The world-init effect's [twisty] dep tears down any live cuber instance.
+    // An ENGINE_TWISTY puzzle (skewb) with renderer='engine' falls through to World.
+    const toEngine = ENGINE_TWISTY.has(kind as string) && useEngineRef.current;
+    if (isTwistyPuzzle(kind) && !toEngine) { writeUrl(); return; }
+    const wk = kind as PuzzleKind; // narrowed at runtime: number / sq1 / … / heli / 'skewb'
+    if (!world || world.puzzleKind === wk) { writeUrl(); return; }
+    world.setPuzzle(wk);
     wasCompleteRef.current = true;
     ensureCubeCallback();
     applySettings(world, settingsRef.current);
     writeUrl();
   }, [ensureCubeCallback, setQuery]);
 
+  // Switch an ENGINE_TWISTY puzzle (skewb) between the cubing.js TwistyPlayer and the
+  // in-house engine. Flips `renderer` in the URL; the [twisty] world-init effect then
+  // builds/tears down the World, and the sync effect routes the puzzle into it.
+  const handleRendererChange = useCallback((r: 'cubing' | 'engine') => {
+    setQuery({ renderer: r === 'cubing' ? null : r });
+  }, [setQuery]);
+
   const handleOrder = useCallback((n: number) => {
     handlePuzzle(n);
   }, [handlePuzzle]);
 
-  // URL puzzle param → cube. For twisty puzzles there's no world to sync —
-  // mirror to local puzzleKind state so PlayerControls renders correctly.
+  // URL puzzle param → cube. On the cubing.js path there's no world to sync —
+  // mirror to local puzzleKind state so PlayerControls renders correctly. Engine
+  // puzzles (incl. engine-skewb, where `twisty` is false) route into World.
   useEffect(() => {
-    if (isTwistyPuzzle(puzzleParam)) {
+    if (twisty) {
       setPuzzleKind(puzzleParam);
       return;
     }
     if (!worldRef.current) return;
-    if (worldRef.current.puzzleKind === puzzleParam) return;
+    if (worldRef.current.puzzleKind === (puzzleParam as PuzzleKind)) return;
     handlePuzzle(puzzleParam);
-  }, [puzzleParam, handlePuzzle, worldTick]);
+  }, [twisty, puzzleParam, handlePuzzle, worldTick]);
 
   const prevSettingsRef = useRef<SimSettings | null>(null);
   useEffect(() => {
@@ -1299,6 +1335,8 @@ export default function SimPage() {
             twistyPlayerRef={twistyPlayerRef}
             skewbNotation={skewbNotation}
             onSkewbNotationChange={setSkewbNotation}
+            renderer={query.renderer}
+            onRendererChange={handleRendererChange}
           />
           {!twisty && (
             <CollapsibleSection

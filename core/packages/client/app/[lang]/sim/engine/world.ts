@@ -9,11 +9,13 @@ import DinoCube from "./dino/DinoCube";
 import RediCube from "./redi/RediCube";
 import RexCube from "./rex/RexCube";
 import HeliCube from "./heli/HeliCube";
-import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS } from "./face_hints";
+import SkewbCube from "./skewb/SkewbCube";
+import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS } from "./face_hints";
 
-/** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, Dino, Redi, Rex (corner-turning), or
- *  Heli (edge-turning Helicopter Cube). */
-export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli';
+/** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, Dino, Redi, Rex (corner-turning),
+ *  Heli (edge-turning Helicopter Cube), or Skewb (deep-cut corner-turning; the
+ *  in-house engine alternative to the cubing.js TwistyPlayer skewb). */
+export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'skewb';
 
 export default class World {
   public width = 1;
@@ -25,7 +27,7 @@ export default class World {
   /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
    *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
    *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
-  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube;
+  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | SkewbCube;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -40,6 +42,7 @@ export default class World {
   private rediCube: RediCube | null = null;
   private rexCube: RexCube | null = null;
   private heliCube: HeliCube | null = null;
+  private skewbCube: SkewbCube | null = null;
   /** Current puzzle kind, mirrors what was last passed to setPuzzle. */
   public puzzleKind: PuzzleKind = 3;
   public callbacks: (() => void)[] = [];
@@ -57,6 +60,7 @@ export default class World {
   public rediHints!: FaceHints;
   public rexHints!: FaceHints;
   public heliHints!: FaceHints;
+  public skewbHints!: FaceHints;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -102,6 +106,10 @@ export default class World {
     // float them to 3.4 to clear the geometry; shrink a bit so 12 don't crowd.
     this.heliHints = new FaceHints(SIZE, HELI_EDGE_HINTS, 3.4, 0.82);
     this.scene.add(this.heliHints);
+    // Skewb: 8 corners, 3-letter labels like Dino/Rex. Corner pieces keep solid cube
+    // corners (vertices ≈3.46·SIZE), so float labels out past them (3.7) + shrink (0.78).
+    this.skewbHints = new FaceHints(SIZE, SKEWB_CORNER_HINTS, 3.7, 0.78);
+    this.scene.add(this.skewbHints);
     this.setPuzzle(3);
   }
 
@@ -181,6 +189,17 @@ export default class World {
       // Heli: edge-turning (Helicopter Cube) — NxN Controller doesn't apply. SimPage
       // installs a dedicated heli drag-to-turn + view-rotate handler. Reuse the SQ1
       // rim-light rig (32 solid wedge pieces with many oblique facets).
+      this.controller.disable = true;
+      this._ensureSq1Lights();
+    } else if (kind === 'skewb') {
+      if (this.skewbCube == null) {
+        this.skewbCube = new SkewbCube();
+        this.skewbCube.callbacks.push(this.callback);
+      }
+      this.cube = this.skewbCube;
+      // Skewb: deep-cut corner-turning — NxN Controller doesn't apply. SimPage installs
+      // a dedicated skewb drag-to-turn + view-rotate handler (corner-gesture registry).
+      // Reuse the SQ1 rim-light rig (14 solid wedge pieces with many oblique facets).
       this.controller.disable = true;
       this._ensureSq1Lights();
     } else {
@@ -265,15 +284,16 @@ export default class World {
     const isRedi = this.puzzleKind === 'redi';
     const isRex = this.puzzleKind === 'rex';
     const isHeli = this.puzzleKind === 'heli';
-    // Dino/Redi/Rex/Heli cubes span [-2,2]·SIZE (corners at ~3.5·SIZE); ~4.0 frames them
-    // to the same fill as the NxN-3 reference.
-    const refHalf = isSq1 ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli) ? SIZE * 4.0 : SIZE * 3;
+    const isSkewb = this.puzzleKind === 'skewb';
+    // Dino/Redi/Rex/Heli/Skewb cubes span [-2,2]·SIZE (corners at ~3.5·SIZE); ~4.0 frames
+    // them to the same fill as the NxN-3 reference.
+    const refHalf = isSq1 ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isSkewb) ? SIZE * 4.0 : SIZE * 3;
     const distance = refHalf * this.perspective;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
     this.camera.position.z = distance;
-    // near/far margins: SQ1/Dino/Redi/Rex/Heli solids are deeper along view, so widen the near cut.
-    this.camera.near = distance - SIZE * (isSq1 || isDino || isRedi || isRex || isHeli ? 5 : 4);
+    // near/far margins: SQ1/Dino/Redi/Rex/Heli/Skewb solids are deeper along view, so widen the near cut.
+    this.camera.near = distance - SIZE * (isSq1 || isDino || isRedi || isRex || isHeli || isSkewb ? 5 : 4);
     this.camera.far = distance + SIZE * 8;
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);
