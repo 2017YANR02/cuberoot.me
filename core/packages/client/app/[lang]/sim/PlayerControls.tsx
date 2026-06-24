@@ -72,6 +72,7 @@ import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg, countMoves } from
 import { cleanForPlayer, extractAlgFromText } from '@/lib/recon-alg-utils';
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
+import { pgRandomScramble } from '@/lib/pg-scramble';
 import {
   formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg,
   simplifySq1Alg, invertSq1Alg, parseSq1Tokens,
@@ -483,7 +484,10 @@ export default function PlayerControls({
   // Skewb on the in-house engine — a corner-turn engine puzzle, NOT the cubing.js
   // twisty path. The cubing.js skewb stays a twisty puzzle (renderer 'cubing').
   const isSkewbEngine = puzzleKind === 'skewb' && renderer === 'engine';
-  const isTwistyMode = isTwistyPuzzle(puzzleKind) && !isSkewbEngine;
+  // PuzzleGeometry explore puzzle (cubing.js TwistyPlayer, world-less) — twisty-class,
+  // so it shares every twisty branch below (scramble / simplify / no-world guards).
+  const isPgMode = typeof puzzleKind === 'string' && isPgPuzzleId(puzzleKind);
+  const isTwistyMode = (isTwistyPuzzle(puzzleKind) || isPgMode) && !isSkewbEngine;
   // Corner/edge-turn engine puzzle descriptor (Dino/Redi/Rex/Heli/Skewb), or null for
   // everything else. One mapping line per puzzle; every player branch below keys off
   // `corner` instead of a per-puzzle boolean chain.
@@ -904,7 +908,11 @@ export default function PlayerControls({
     if (isTwistyMode) {
       let twistyScramble = '';
       try {
-        twistyScramble = (await tnoodleRandomScramble(puzzleKind as string)) ?? '';
+        // PuzzleGeometry explore puzzles have no tnoodle event — generate a random
+        // move sequence from the live player's own move set instead.
+        twistyScramble = isPgPuzzleId(puzzleKind as string)
+          ? await pgRandomScramble(twistyPlayerRef?.current)
+          : ((await tnoodleRandomScramble(puzzleKind as string)) ?? '');
       } catch (err) {
         console.warn('[sim] twisty scramble failed:', err);
       }
