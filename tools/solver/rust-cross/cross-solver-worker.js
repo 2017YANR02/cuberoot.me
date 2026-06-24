@@ -171,8 +171,8 @@ self.onmessage = async (e) => {
       );
       self.postMessage({ type: 'cr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'xcr_grid') {
-      // 受限最优 xcross 6 视角长度网格(PDB 只建一次,6 视角 × 4 槽共用)。
-      // wasm 返 JSON [l0..l5]:-1=受限下不可解 → 0xFFFFFFFF 哨兵;-2=限制过宽超节点预算 → 0xFFFFFFFE。
+      // 受限最优 xcross 6 视角长度网格(PDB 每次受限集只建一次 ≈40ms,6 视角 × 4 槽共用)。
+      // wasm 返 JSON [l0..l5]:-1=真无解 → 0xFFFFFFFF;-2=限制过宽未在预算内判定 → 0xFFFFFFFE(⋯)。
       if (!xcrossRestrictSolver) throw new Error('xcross_restrict solver not initialized');
       const t0 = performance.now();
       const json = xcrossRestrictSolver.solve_xcross_restricted_grid(

@@ -414,8 +414,9 @@ export class VariantSolverWasm {
 /**
  * XCross restricted optimal 求解器(任意受限 54-move 集 + 中心朝向追踪)。
  * 运行时建表(无外部表文件):物理 54-move cross/corner/edge/center transition + 双 PDB
- * (cross×center、pair×center,均按受限 move 集现场建),IDA* h=max(两 PDB)可采纳。
- * 与 CrossRestrictSolverWasm 同样**零下载成本**:用到才在 worker 现场建表。
+ * (cross 190080、pair 576,均按受限 move 集现场建、**中心移出表只在搜索态追踪**),IDA*
+ * h=max(两 PDB)可采纳。每次受限集建表 ≈0.3s(原 4.56M 的 1/24)。与 CrossRestrictSolverWasm
+ * 同样**零下载成本**:用到才在 worker 现场建表。
  */
 export class XCrossRestrictSolverWasm {
     free(): void;
