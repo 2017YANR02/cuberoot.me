@@ -57,6 +57,8 @@ import { renderSq2ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/sq2_svg';
 import { renderSsq1ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/ssq1_svg';
 import { renderBsqScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/bsq_svg';
 import { renderBicScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/bicube_svg';
+import { renderSia123ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/sia123_svg';
+import { renderSia222ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/sia222_svg';
 import {
   renderUnfoldedSvgForEvent,
   eventToCubeSize,
@@ -74,7 +76,7 @@ const HAS_PREVIEW: Record<string, boolean> = {
   '333ft': true, '333mbf': true, '333mbo': true, '444': true, '444bf': true,
   '555': true, '555bf': true, '666': true, '777': true,
   pyram: true, skewb: true, sq1: true, minx: true, clock: true,
-  mirror_333: true, ivy: true, '133': true, '223': true, '233': true, '334': true, '335': true, '336': true, '337': true, '8p': true, '15p': true, sfl: true, ufo: true, cm2: true, cm3: true, heli: true, helicv: true, ctico: true, dmd: true, gear: true, mpyrso: true, dino: true, crz3a: true, sq2: true, ssq1: true, bsq: true, bic: true,
+  mirror_333: true, ivy: true, '133': true, '223': true, '233': true, '334': true, '335': true, '336': true, '337': true, '8p': true, '15p': true, sfl: true, ufo: true, cm2: true, cm3: true, heli: true, helicv: true, ctico: true, dmd: true, gear: true, mpyrso: true, dino: true, crz3a: true, sq2: true, ssq1: true, bsq: true, bic: true, sia123: true, sia222: true,
 };
 
 export function eventHasScramblePreview(event: string): boolean {
@@ -144,6 +146,8 @@ export function ScramblePreview2D({
       if (eff === 'ssq1') return renderSsq1ScrambleSvg(scramble);
       if (eff === 'bsq') return renderBsqScrambleSvg(scramble);
       if (eff === 'bic') return renderBicScrambleSvg(scramble);
+      if (eff === 'sia123') return renderSia123ScrambleSvg(scramble);
+      if (eff === 'sia222') return renderSia222ScrambleSvg(scramble);
       if (eventToCubeSize(eff)) return renderUnfoldedSvgForEvent(eff, scramble);
       return null;
     } catch (err) {
