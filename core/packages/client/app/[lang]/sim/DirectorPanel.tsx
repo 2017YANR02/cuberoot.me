@@ -11,7 +11,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Camera, Film } from 'lucide-react';
 import * as THREE from 'three';
-import World from './cuber/world';
+import World from './engine/world';
 import { exportSimVideo, type ExportProgress } from './sim_export';
 import './director-panel.css';
 import { tr } from '@/i18n/tr';

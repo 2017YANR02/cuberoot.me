@@ -1,5 +1,5 @@
 // Ported from huazhechen/cuber (MIT) — src/vue/Viewport/toucher.ts
-import { TouchAction } from "./cuber/controller";
+import { TouchAction } from "./engine/nxn/controller";
 
 export default class Toucher {
   dom!: HTMLElement;

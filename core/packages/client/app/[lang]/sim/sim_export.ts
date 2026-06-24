@@ -10,9 +10,9 @@
  */
 import * as THREE from 'three';
 import { Alg } from 'cubing/alg';
-import World from './cuber/world';
-import { timing } from './cuber/tweenTiming';
-import tweener from './cuber/tweener';
+import World from './engine/world';
+import { timing } from './engine/tweenTiming';
+import tweener from './engine/tweener';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import i18n from "@/i18n/i18n-client";
 

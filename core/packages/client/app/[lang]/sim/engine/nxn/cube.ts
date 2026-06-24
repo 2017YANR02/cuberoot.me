@@ -3,11 +3,11 @@
 // 构造从 O(N³) 全量循环改为 O(N²) 表面枚举。
 import { GroupTable } from "./group";
 import Cubelet from "./cubelet";
-import { FACE } from "./define";
+import { FACE } from "../define";
 import * as THREE from "three";
 import Twister, { TwistAction } from "./twister";
 import History from "./history";
-import tweener from "./tweener";
+import tweener from "../tweener";
 import InstancedRenderer from "./instanced";
 
 export default class Cube extends THREE.Group {

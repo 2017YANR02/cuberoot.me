@@ -18,7 +18,7 @@ import * as THREE from "three";
 import Cubelet from "./cubelet";
 import Cube from "./cube";
 import CubeGroup from "./group";
-import { FACE, COLORS } from "./define";
+import { FACE, COLORS } from "../define";
 
 const HALF = Cubelet.SIZE / 2;
 const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);

@@ -1,5 +1,5 @@
 /**
- * Ivy drag-to-turn helpers (mirrors sq1Drag.ts, but for a corner-turning puzzle).
+ * Ivy drag-to-turn helpers (corner-turning puzzle).
  *
  * Grab ANYWHERE on the cube and drag → it turns. Pointerdown raycasts the cube:
  *   - hit a petal  → candidate corners = [that petal's corner];
@@ -8,15 +8,16 @@
  *   - missed the cube entirely → null (SimPage orbits the view; on-cube never orbits).
  * On drag we score each candidate corner by how well the screen-space tangent of
  * rotating the grab point about that corner's body diagonal aligns with the drag
- * vector, then fire the best (corner, direction). So the drag direction itself
- * picks the corner — no need to hit a thin petal precisely. An Ivy move is a
- * discrete 120° twist, so it fires once past a small threshold (no live
- * finger-tracking yet). IvyCube.pickMove folds in baseSign so the chosen power
- * keeps the discrete state in sync with lib/ivy-solver.
+ * (shared cuberDrag.scoreCornerTwist), then fire the best (corner, direction).
+ * IvyCube.pickMove folds in baseSign so the chosen power keeps the discrete state in
+ * sync with the /sim's notation.
  */
 import * as THREE from 'three';
 import type IvyCube from './IvyCube';
-import type { IvyMove, IvyAnim } from './IvyCube';
+import type { IvyMove } from './IvyCube';
+import { scoreCornerTwist } from '../cuberDrag';
+
+export { applyPartial as ivyApplyPartial, snapBack as ivySnapBack } from '../cuberDrag';
 
 const _raycaster = new THREE.Raycaster();
 const _ndc = new THREE.Vector2();
@@ -28,11 +29,6 @@ export interface IvyHit {
   centerWorld: THREE.Vector3;
   /** Turning-corner axes that can move the grabbed piece. */
   candidates: number[];
-}
-
-function project(p: THREE.Vector3, camera: THREE.Camera, width: number, height: number): { x: number; y: number } {
-  const v = p.clone().project(camera); // NDC, y up
-  return { x: (v.x * 0.5 + 0.5) * width, y: (-v.y * 0.5 + 0.5) * height };
 }
 
 /** Raycast the cube. Any hit returns the grab + the corners that can move it (so
@@ -81,33 +77,16 @@ export function ivyResolveLive(
   curX: number, curY: number,
   width: number, height: number,
 ): IvyLivePlan | null {
-  const dragX = curX - downX;
-  const dragY = curY - downY; // screen px, y down
-  const p0 = project(hit.pointWorld, camera, width, height);
-  const r = hit.pointWorld.clone().sub(hit.centerWorld);
-  let bestAxis = -1;
-  let bestScore = 0;
-  let bestTx = 0, bestTy = 0;
-  for (const axis of hit.candidates) {
-    const axisWorld = cube.cornerAxisVec(axis).transformDirection(cube.matrixWorld);
-    const tangent = new THREE.Vector3().crossVectors(axisWorld, r);
-    if (tangent.lengthSq() < 1e-9) continue;
-    tangent.normalize();
-    const p1 = project(hit.pointWorld.clone().add(tangent), camera, width, height);
-    let tx = p1.x - p0.x;
-    let ty = p1.y - p0.y;
-    const tl = Math.hypot(tx, ty);
-    if (tl < 1e-6) continue;
-    tx /= tl; ty /= tl;
-    const s = dragX * tx + dragY * ty; // signed alignment of the drag with +rotation
-    if (Math.abs(s) > Math.abs(bestScore)) { bestScore = s; bestAxis = axis; bestTx = tx; bestTy = ty; }
-  }
-  if (bestAxis < 0) return null;
-  // geomSign: +1 when the drag goes along +tangent (positive rotation about the
-  // corner axis). pickMove folds in baseSign to choose the power (R vs R').
-  const sign = bestScore >= 0 ? 1 : -1;
-  // Orient the tangent along the drag so (laterDrag·tangent)/PX grows 0→1.
-  return { move: cube.pickMove(bestAxis, sign), tangentX: bestTx * sign, tangentY: bestTy * sign };
+  const score = scoreCornerTwist(
+    hit.candidates,
+    (axis) => cube.cornerAxisVec(axis).transformDirection(cube.matrixWorld),
+    hit.pointWorld, hit.centerWorld,
+    curX - downX, curY - downY,
+    camera, width, height,
+  );
+  if (!score) return null;
+  // pickMove folds in baseSign to choose the power (R vs R') from the geometric sign.
+  return { move: cube.pickMove(score.corner, score.dir), tangentX: score.tangentX, tangentY: score.tangentY };
 }
 
 /** Back-compat: just the move (discrete-fire path). */
@@ -120,20 +99,4 @@ export function ivyResolveMove(
   width: number, height: number,
 ): IvyMove | null {
   return ivyResolveLive(cube, camera, hit, downX, downY, curX, curY, width, height)?.move ?? null;
-}
-
-/** Live partial-turn helpers (debug "hold half-turn" mode). `anims` come from
- *  IvyCube.beginMove; each carries pivot + startQuat + axis + full signed angle. */
-export function ivyApplyPartial(anims: IvyAnim[], t: number): void {
-  const tt = Math.max(0, Math.min(1, t));
-  const q = new THREE.Quaternion();
-  for (const a of anims) {
-    q.setFromAxisAngle(a.axis, a.angle * tt);
-    a.pivot.quaternion.multiplyQuaternions(q, a.startQuat);
-  }
-}
-
-/** Snap the affected pivots back to their pre-turn pose (cancel a frozen turn). */
-export function ivySnapBack(anims: IvyAnim[]): void {
-  for (const a of anims) a.pivot.quaternion.copy(a.startQuat);
 }
