@@ -891,6 +891,7 @@
 
 .same-comp-event-table .wp-th-info { display: inline-flex; align-items: center; gap: 3px; }
 .same-comp-event-table .wp-th-narrow { width: 50px; text-align: center !important; }
+.same-comp-event-table thead th.wp-th-attempts { text-align: center; }
 
 /* .wp-attempts-flow / .wp-att 网格对齐 + 括号占位走共享
    components/wca-results/attempts-grid.css(与 /wca/persons 同一份,ReconDetailClient 已 import) */
