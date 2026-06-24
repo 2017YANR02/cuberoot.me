@@ -157,6 +157,13 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/records_build.ts
 
+      # 性别(女子/男子)历史纪录进程 — /wca/records 性别下拉数据源(world + 6 大洲)
+      - name: Build gendered historical records JSON (women/men)
+        working-directory: core/packages/stats-build
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+        run: npx tsx src/bin/records_gender_build.ts
+
       - name: Fetch upcoming comps
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/fetch_upcoming_comps.ts --refresh
