@@ -150,7 +150,11 @@ function mkRaisedRectSticker(w: number, h: number, mat: THREE.MeshPhongMaterial)
     bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.6,
     bevelOffset: 0, bevelSegments: 1,
   });
-  return new THREE.Mesh(geom, mat);
+  const mesh = new THREE.Mesh(geom, mat);
+  // 立体贴片 toggle: extruded along mesh-local +z, flatten via mesh.scale.z (stickerThickness.ts).
+  mesh.userData.simRole = 'sticker';
+  mesh.userData.simFlatten = 'scaleZ';
+  return mesh;
 }
 
 // ─── piece builder ────────────────────────────────────────────────────────
@@ -187,6 +191,8 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
   });
   const topSticker = new THREE.Mesh(topStickerGeom, mkStickerMat(SQ1_COLORS[faces.top]));
   topSticker.position.z = STICKER_Z;
+  topSticker.userData.simRole = 'sticker'; // 立体贴片: flatten via mesh.scale.z (stickerThickness.ts)
+  topSticker.userData.simFlatten = 'scaleZ';
   group.add(topSticker);
 
   if (corner) {

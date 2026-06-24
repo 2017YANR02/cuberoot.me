@@ -198,7 +198,7 @@ function buildSticker(poly: THREE.Vector3[], face: string): THREE.Mesh {
   const inset = poly.map((p) => p.clone().lerp(centroid, STICKER_INSET).add(lift));
   // makeSticker bakes in the black-walls invariant (caps colored, side walls body-dark)
   // so grazing-angle grooves stay visible — see stickerGeom.ts / sim-add-puzzle skill.
-  return makeSticker(roundedPolySticker(inset, FACE_NORMAL[face]), stickerMat(REDI_FACE_COLOR[face]), bodyMat, { rediFace: face });
+  return makeSticker(roundedPolySticker(inset, FACE_NORMAL[face]), stickerMat(REDI_FACE_COLOR[face]), bodyMat, { rediFace: face, simStickerNormal: FACE_NORMAL[face].clone() });
 }
 
 export interface PieceBuild {
