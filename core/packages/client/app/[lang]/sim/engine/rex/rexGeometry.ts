@@ -160,7 +160,7 @@ function buildSticker(region: RexRegion, b: FaceBasis, color: string): THREE.Mes
   const geo = extrudeOntoFace(outline, { u: b.u, v: b.v, n: b.n, origin }, STICKER_DEPTH);
   // black-walls invariant (caps colored, walls body-dark) → grazing-angle grooves stay
   // visible. attachStickers adds rexType/rexId/rexFace userData on top.
-  return makeSticker(geo, stickerMat(color), bodyMat);
+  return makeSticker(geo, stickerMat(color), bodyMat, { simStickerNormal: b.n.clone() });
 }
 
 /** Attach each face's 9 analytic stickers (1 centre + 4 petals + 4 edges) to the

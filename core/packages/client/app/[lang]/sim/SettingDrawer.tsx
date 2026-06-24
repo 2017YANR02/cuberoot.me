@@ -11,7 +11,8 @@ import { CUBE_FILL } from '@/lib/cube-colors';
 import World from './engine/world';
 import { timing } from './engine/tweenTiming';
 import Cubelet from './engine/nxn/cubelet';
-import { applyDebugStructureColors } from './engine/debugColors';
+import { applyDebugStructureColors, applyEngineBodyOverlay } from './engine/debugColors';
+import { applyStickerThickness } from './engine/stickerThickness';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 import i18n from '@/i18n/i18n-client';
@@ -143,6 +144,11 @@ function mapPitch(v: number): number { return ((1 - v / 50) * Math.PI) / 2; }   
 // speed: 0=慢 100=快 → CubeGroup.frames (帧数,越小越快)。默认 50 = 30 帧 (现状)
 function mapFrames(v: number): number { return Math.max(3, Math.round(60 - (v / 100) * 55)); }
 
+/** The in-house Three.js engine puzzles (everything that is NOT an order-N NxN cube).
+ *  Their geometry is baked at construction with no InstancedRenderer, so style toggles
+ *  (立体贴片 / 镂空 / structure colors) are applied generically off userData tags. */
+const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'ivy', 'dino', 'redi', 'rex', 'heli', 'skewb']);
+
 export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
@@ -166,9 +172,8 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   // face hints (拖动时浮现的 U/D/L/R/F/B 色板) 跟主 face colors 走。
   world.faceHints.setFaceColors(s.faceColors);
   timing.frames = mapFrames(s.speed);
-  // NxN-only options skipped for SQ1 / Ivy / Dino / Redi (sticker thickness / hollow /
-  // hint / face colors are baked at construction time for their non-NxN geometry).
-  if (world.puzzleKind !== 'sq1' && world.puzzleKind !== 'ivy' && world.puzzleKind !== 'dino' && world.puzzleKind !== 'redi' && world.puzzleKind !== 'rex' && world.puzzleKind !== 'heli' && world.puzzleKind !== 'skewb') {
+  if (!ENGINE_BODY_PUZZLES.has(world.puzzleKind as string)) {
+    // NxN: sticker thickness / hollow / hint / face colors live on the InstancedRenderer.
     const cube = world.cube as import('./engine/nxn/cube').default;
     cube.arrow = s.arrow;
     cube.instancedRenderer.thickness = s.thickness;
@@ -183,12 +188,18 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     Cubelet.CORE_BASIC.color.set(s.coreColor);
     Cubelet._PANEL_MAT.color.set(s.coreColor);
     cube.instancedRenderer.setFaceColors(s.faceColors);
+    // Structure-coloring overlay (NxN path). MUST run after the block above — it
+    // re-sets frame/inner materials every call (the `hollow` setter writes
+    // unconditionally), so applying here captures the fresh base + restores it
+    // correctly. No-op when off.
+    applyDebugStructureColors(world.cube, s.debugStructureColor);
+  } else {
+    // In-house engine puzzles (SQ1 / Ivy / Dino / Redi / Rex / Heli / Skewb): their
+    // sticker thickness + body materials are baked at construction (no InstancedRenderer),
+    // so 立体贴片 / 镂空 / structure-colors are applied generically off userData tags.
+    applyStickerThickness(world.cube, s.thickness);
+    applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor);
   }
-  // Developer "structure coloring" overlay (any puzzle). MUST run after the NxN
-  // block above — that block re-sets frame/inner materials every call (the
-  // `hollow` setter writes unconditionally), so applying here lets the overlay
-  // capture the fresh base + restore it correctly. No-op when off.
-  applyDebugStructureColors(world.cube, s.debugStructureColor);
   // Carve out (hide) one corner's moving group to inspect the core + neighbors'
   // inner walls — corner-turning puzzles only (Ivy / Dino).
   if (world.puzzleKind === 'ivy') {

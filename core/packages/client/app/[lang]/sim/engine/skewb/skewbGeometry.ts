@@ -213,7 +213,7 @@ function buildPiece(rep: THREE.Vector3, slotTag: { key: string; value: number })
     const lift = nrm.clone().multiplyScalar(STICKER_LIFT);
     const sp = poly.map((p) => p.clone().lerp(centroid, STICKER_INSET).add(lift));
     const sGeom = roundedPolySticker(sp, nrm);
-    group.add(makeSticker(sGeom, stickerMat(SKEWB_FACE_COLOR[f]), bodyMat, { skewbFace: f }));
+    group.add(makeSticker(sGeom, stickerMat(SKEWB_FACE_COLOR[f]), bodyMat, { skewbFace: f, simStickerNormal: nrm.clone() }));
   }
 
   const pivot = new THREE.Object3D();
