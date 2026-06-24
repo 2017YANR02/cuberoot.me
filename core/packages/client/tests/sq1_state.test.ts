@@ -7,7 +7,7 @@ import {
   isSlashValid,
   snapValidLayerTurn,
   SOLVED_PIECES,
-} from '@/app/[lang]/sim/cuber/sq1/sq1State';
+} from '@/app/[lang]/sim/engine/sq1/sq1State';
 
 describe('SQ1 state', () => {
   it('solved state has 24 slots matching SOLVED_PIECES', () => {

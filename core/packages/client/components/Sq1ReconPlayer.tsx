@@ -22,10 +22,10 @@ import {
 } from 'react';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
 import { parseSq1Tokens } from '@/lib/sq1-svg';
-import type World from '@/app/[lang]/sim/cuber/world';
-import type Sq1Cube from '@/app/[lang]/sim/cuber/sq1/Sq1Cube';
-import type { Sq1Move } from '@/app/[lang]/sim/cuber/sq1/sq1State';
-import type { BackView } from '@/app/[lang]/sim/cuber/backView';
+import type World from '@/app/[lang]/sim/engine/world';
+import type Sq1Cube from '@/app/[lang]/sim/engine/sq1/Sq1Cube';
+import type { Sq1Move } from '@/app/[lang]/sim/engine/sq1/sq1State';
+import type { BackView } from '@/app/[lang]/sim/engine/backView';
 import './Sq1ReconPlayer.css';
 
 const PLAY_INTERVAL_MS = 520;
@@ -88,7 +88,7 @@ export default function Sq1ReconPlayer({
 
     void (async () => {
       const THREE = await import('three');
-      const { default: World } = await import('@/app/[lang]/sim/cuber/world');
+      const { default: World } = await import('@/app/[lang]/sim/engine/world');
       if (cancelled) return;
       const host = hostRef.current;
       if (!host) return;
@@ -96,10 +96,10 @@ export default function Sq1ReconPlayer({
       // Optional always-on back-view window (recon submit forces it).
       let mkBackView: ((px: number) => BackView) | null = null;
       if (backView) {
-        const { default: Cubelet } = await import('@/app/[lang]/sim/cuber/cubelet');
-        const { createBackView } = await import('@/app/[lang]/sim/cuber/backView');
+        const { SIZE } = await import('@/app/[lang]/sim/engine/define');
+        const { createBackView } = await import('@/app/[lang]/sim/engine/backView');
         if (cancelled) return;
-        mkBackView = (px: number) => createBackView(THREE, Cubelet.SIZE, px);
+        mkBackView = (px: number) => createBackView(THREE, SIZE, px);
       }
 
       const world = new World();

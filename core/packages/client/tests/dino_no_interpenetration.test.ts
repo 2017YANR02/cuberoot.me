@@ -13,8 +13,8 @@
  * (or geometry regression) turns this red.
  */
 import { describe, it, expect } from 'vitest';
-import { wedgeGeometry, CUT, H } from '@/app/[lang]/sim/cuber/dino/dinoGeometry';
-import { EDGE_NAMES, CORNER_AXIS, CORNER_CYCLE } from '@/app/[lang]/sim/cuber/dino/dinoState';
+import { wedgeGeometry, CUT, H } from '@/app/[lang]/sim/engine/dino/dinoGeometry';
+import { EDGE_NAMES, CORNER_AXIS, CORNER_CYCLE } from '@/app/[lang]/sim/engine/dino/dinoState';
 
 describe('Dino geometry — zero interpenetration', () => {
   it('CUT keeps a positive gap (must stay > 1.0)', () => {
