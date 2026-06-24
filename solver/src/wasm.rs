@@ -82,6 +82,18 @@ fn sols_json(len: u32, sols: &[(String, String)]) -> String {
     format!("{{\"len\":{},\"sols\":[{}]}}", len, arr)
 }
 
+/// 流式解法回调:每枚举到一条解即 call 进 JS(worker 端 onSol 回调 postMessage 给 UI)。
+/// `m`=带视角前缀的步骤串,`c`=槽位标签(无槽阶段空串),`len`=该解步数(不含视角前缀)。
+/// 求解仍同步返回完整 JSON 作权威结果;回调只为「算一条出一条」的渐进显示。call 失败静默忽略。
+fn emit_sol(on_sol: &js_sys::Function, m: &str, c: &str, len: usize) {
+    let _ = on_sol.call3(
+        &JsValue::NULL,
+        &JsValue::from_str(m),
+        &JsValue::from_str(c),
+        &JsValue::from_f64(len as f64),
+    );
+}
+
 /// 2x2x2 块求解(1 角 + 3 棱)。表最小:mt_edge3 (~743KB) + mt_corn (~1.7KB),
 /// 全空间精确距离表构造时现场 BFS(253,440 态,毫秒级)——查长度 O(1),枚举首达即最优。
 /// 每视角 = 该底色 4 个贴底块;解前缀 = rot + y^k,`c` = 块标签(URF..DRB)。
@@ -883,6 +895,7 @@ impl CrossSolverWasm {
     /// variant:0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc;face:0..5 对应 ROTS。
     /// extra:允许超出最优的步数(0=只最优长度全部解);cap:最多收集条数。
     /// 解步骤带视角前缀(face>0 时如 "z2 R U ..."),combo 是该格选中的 F2L 槽位。
+    #[allow(clippy::too_many_arguments)]
     pub fn solve_moves(
         &self,
         scramble: &str,
@@ -891,15 +904,22 @@ impl CrossSolverWasm {
         extra: u32,
         cap: u32,
         combo: &str,
+        on_sol: &js_sys::Function,
     ) -> String {
         let alg = string_to_alg(scramble);
         let rot = ROTS[(face as usize).min(5)];
         let cap = cap as usize;
         if variant == 0 {
-            // cross 无槽位:c 留空串。
+            // cross 无槽位:c 留空串。cross 极快,枚举完后逐条回放给 on_sol(流式协议统一)。
             let (len, sols) = self.cross.enumerate_solutions(&alg, rot, extra, cap);
-            let items: Vec<(String, String)> =
-                sols.iter().map(|p| (fmt_moves(rot, p), String::new())).collect();
+            let items: Vec<(String, String)> = sols
+                .iter()
+                .map(|p| {
+                    let m = fmt_moves(rot, p);
+                    emit_sol(on_sol, &m, "", p.len());
+                    (m, String::new())
+                })
+                .collect();
             return sols_json(len, &items);
         }
         let k = (variant.min(4)) as usize; // 1..=4 槽
@@ -907,12 +927,14 @@ impl CrossSolverWasm {
         let label = |combo: &[usize]| {
             combo.iter().map(|&s| SLOT_LABELS[s]).collect::<Vec<_>>().join(" ")
         };
+        // 流式回调:每枚举到一条解即 fmt + label 后 call 进 JS(worker postMessage 给 UI)。
+        let mut emit = |combo: &[usize], p: &[u8]| emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len());
         // combo 非空 = 用户指定槽位(只枚举该 combo);空 = 自动挑最优槽。
         let slots = parse_combo(combo);
         let (len, sols) = if slots.is_empty() {
-            self.xcross.enumerate_best(&alg, rot, k, extra, cap)
+            self.xcross.enumerate_best(&alg, rot, k, extra, cap, &mut emit)
         } else {
-            self.xcross.enumerate_combo(&alg, rot, &slots, extra, cap)
+            self.xcross.enumerate_combo(&alg, rot, &slots, extra, cap, &mut emit)
         };
         let items: Vec<(String, String)> =
             sols.iter().map(|(combo, p)| (fmt_moves(rot, p), label(combo))).collect();
@@ -949,6 +971,7 @@ impl CrossSolverWasm {
         cap: u32,
         combo: &str,
         mask: u32,
+        on_sol: &js_sys::Function,
     ) -> String {
         let alg = string_to_alg(scramble);
         let rot = ROTS[(face as usize).min(5)];
@@ -959,8 +982,14 @@ impl CrossSolverWasm {
                 .enumerate_solutions_masked(&alg, rot, extra, cap, mask, CROSS_MASK_DEPTH)
             {
                 Some((len, sols)) => {
-                    let items: Vec<(String, String)> =
-                        sols.iter().map(|p| (fmt_moves(rot, p), String::new())).collect();
+                    let items: Vec<(String, String)> = sols
+                        .iter()
+                        .map(|p| {
+                            let m = fmt_moves(rot, p);
+                            emit_sol(on_sol, &m, "", p.len());
+                            (m, String::new())
+                        })
+                        .collect();
                     sols_json(len, &items)
                 }
                 None => sols_json(u32::MAX, &[]),
@@ -970,13 +999,14 @@ impl CrossSolverWasm {
         let label = |combo: &[usize]| {
             combo.iter().map(|&s| SLOT_LABELS[s]).collect::<Vec<_>>().join(" ")
         };
+        let mut emit = |combo: &[usize], p: &[u8]| emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len());
         let slots = parse_combo(combo);
         let (len, sols) = if slots.is_empty() {
             self.xcross
-                .enumerate_best_masked(&alg, rot, k, extra, cap, mask, XCROSS_MASK_DEPTH)
+                .enumerate_best_masked(&alg, rot, k, extra, cap, mask, XCROSS_MASK_DEPTH, &mut emit)
         } else {
             self.xcross
-                .enumerate_combo_masked(&alg, rot, &slots, extra, cap, mask, XCROSS_MASK_DEPTH)
+                .enumerate_combo_masked(&alg, rot, &slots, extra, cap, mask, XCROSS_MASK_DEPTH, &mut emit)
         };
         // best_len==99 = 限制下(或超界)无解 → u32::MAX 哨兵 + 空解集(同 cross None 分支语义)。
         if len >= 99 {
@@ -1700,6 +1730,7 @@ impl XCrossRestrictSolverWasm {
         cap: u32,
         k: u32,
         combo: &str,
+        on_sol: &js_sys::Function,
     ) -> String {
         let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
         let sc = CrossRestrictSolver::parse_scramble(scramble);
@@ -1714,9 +1745,14 @@ impl XCrossRestrictSolverWasm {
                     .collect(),
             )
         };
+        // 流式回调:每枚举到一条解即格式化(54-move 记号,c 恒空串)后 call 进 JS。
+        let mut emit = |seq: &[usize]| {
+            let m = seq.iter().map(|&x| MOVE_NAMES_54[x]).collect::<Vec<_>>().join(" ");
+            emit_sol(on_sol, &m, "", seq.len());
+        };
         let sols = self.solver.solve_xcross_restricted_enum_budgeted(
             &sc, face as usize, allowed, max_rot_count, extra, cap as usize, XCR_NODE_LIMIT,
-            k as usize, combo_v,
+            k as usize, combo_v, &mut emit,
         );
         if sols.is_empty() {
             return sols_json(u32::MAX, &[]);

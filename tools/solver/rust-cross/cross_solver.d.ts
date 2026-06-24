@@ -113,13 +113,13 @@ export class CrossSolverWasm {
      * extra:允许超出最优的步数(0=只最优长度全部解);cap:最多收集条数。
      * 解步骤带视角前缀(face>0 时如 "z2 R U ..."),combo 是该格选中的 F2L 槽位。
      */
-    solve_moves(scramble: string, variant: number, face: number, extra: number, cap: number, combo: string): string;
+    solve_moves(scramble: string, variant: number, face: number, extra: number, cap: number, combo: string, on_sol: Function): string;
     /**
      * 受限步法版 solve_moves(同 solve_moves 形状)。cross 走 enumerate_solutions_masked;
      * xcross/F2L(variant 1..=4)走 XCrossSolver enumerate_best_masked / enumerate_combo_masked。
      * 限制下(或深解超界)无解 → len=u32::MAX 哨兵 + 空解集。
      */
-    solve_moves_masked(scramble: string, variant: number, face: number, extra: number, cap: number, combo: string, mask: number): string;
+    solve_moves_masked(scramble: string, variant: number, face: number, extra: number, cap: number, combo: string, mask: number, on_sol: Function): string;
 }
 
 /**
@@ -437,7 +437,7 @@ export class XCrossRestrictSolverWasm {
      * 最多 `cap` 条;空集 → len = u32::MAX 哨兵。`c` 恒空串(阶段已隐含对数,组合由槽位下拉指定)。
      * `k` = 同时归位的 F2L 对数;`combo` = 逗号分隔的固定槽集(空串=自动枚举全部 C(4,k) 组合)。
      */
-    solve_xcross_restricted_moves(scramble: string, face: number, allowed_lo: number, allowed_hi: number, max_rot_count: number, extra: number, cap: number, k: number, combo: string): string;
+    solve_xcross_restricted_moves(scramble: string, face: number, allowed_lo: number, allowed_hi: number, max_rot_count: number, extra: number, cap: number, k: number, combo: string, on_sol: Function): string;
 }
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -473,8 +473,8 @@ export interface InitOutput {
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_face: (a: number, b: number, c: number, d: number, e: number) => number;
     readonly crosssolverwasm_solve_face_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
-    readonly crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
-    readonly crosssolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
+    readonly crosssolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: any) => [number, number];
+    readonly crosssolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: any) => [number, number];
     readonly cube222solverwasm_from_dist: (a: number, b: number) => number;
     readonly cube222solverwasm_new: () => number;
     readonly cube222solverwasm_solve: (a: number, b: number, c: number) => number;
@@ -517,7 +517,9 @@ export interface InitOutput {
     readonly variantsolverwasm_solve_stage_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly xcrossrestrictsolverwasm_new: () => number;
     readonly xcrossrestrictsolverwasm_solve_xcross_restricted_grid: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
-    readonly xcrossrestrictsolverwasm_solve_xcross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => [number, number];
+    readonly xcrossrestrictsolverwasm_solve_xcross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: any) => [number, number];
+    readonly __wbindgen_exn_store: (a: number) => void;
+    readonly __externref_table_alloc: () => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

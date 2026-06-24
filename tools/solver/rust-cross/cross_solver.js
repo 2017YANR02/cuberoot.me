@@ -330,9 +330,10 @@ export class CrossSolverWasm {
      * @param {number} extra
      * @param {number} cap
      * @param {string} combo
+     * @param {Function} on_sol
      * @returns {string}
      */
-    solve_moves(scramble, variant, face, extra, cap, combo) {
+    solve_moves(scramble, variant, face, extra, cap, combo, on_sol) {
         let deferred3_0;
         let deferred3_1;
         try {
@@ -340,7 +341,7 @@ export class CrossSolverWasm {
             const len0 = WASM_VECTOR_LEN;
             const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
-            const ret = wasm.crosssolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, variant, face, extra, cap, ptr1, len1);
+            const ret = wasm.crosssolverwasm_solve_moves(this.__wbg_ptr, ptr0, len0, variant, face, extra, cap, ptr1, len1, on_sol);
             deferred3_0 = ret[0];
             deferred3_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
@@ -359,9 +360,10 @@ export class CrossSolverWasm {
      * @param {number} cap
      * @param {string} combo
      * @param {number} mask
+     * @param {Function} on_sol
      * @returns {string}
      */
-    solve_moves_masked(scramble, variant, face, extra, cap, combo, mask) {
+    solve_moves_masked(scramble, variant, face, extra, cap, combo, mask, on_sol) {
         let deferred3_0;
         let deferred3_1;
         try {
@@ -369,7 +371,7 @@ export class CrossSolverWasm {
             const len0 = WASM_VECTOR_LEN;
             const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
-            const ret = wasm.crosssolverwasm_solve_moves_masked(this.__wbg_ptr, ptr0, len0, variant, face, extra, cap, ptr1, len1, mask);
+            const ret = wasm.crosssolverwasm_solve_moves_masked(this.__wbg_ptr, ptr0, len0, variant, face, extra, cap, ptr1, len1, mask, on_sol);
             deferred3_0 = ret[0];
             deferred3_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
@@ -1375,9 +1377,10 @@ export class XCrossRestrictSolverWasm {
      * @param {number} cap
      * @param {number} k
      * @param {string} combo
+     * @param {Function} on_sol
      * @returns {string}
      */
-    solve_xcross_restricted_moves(scramble, face, allowed_lo, allowed_hi, max_rot_count, extra, cap, k, combo) {
+    solve_xcross_restricted_moves(scramble, face, allowed_lo, allowed_hi, max_rot_count, extra, cap, k, combo, on_sol) {
         let deferred3_0;
         let deferred3_1;
         try {
@@ -1385,7 +1388,7 @@ export class XCrossRestrictSolverWasm {
             const len0 = WASM_VECTOR_LEN;
             const ptr1 = passStringToWasm0(combo, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
             const len1 = WASM_VECTOR_LEN;
-            const ret = wasm.xcrossrestrictsolverwasm_solve_xcross_restricted_moves(this.__wbg_ptr, ptr0, len0, face, allowed_lo, allowed_hi, max_rot_count, extra, cap, k, ptr1, len1);
+            const ret = wasm.xcrossrestrictsolverwasm_solve_xcross_restricted_moves(this.__wbg_ptr, ptr0, len0, face, allowed_lo, allowed_hi, max_rot_count, extra, cap, k, ptr1, len1, on_sol);
             deferred3_0 = ret[0];
             deferred3_1 = ret[1];
             return getStringFromWasm0(ret[0], ret[1]);
@@ -1404,6 +1407,20 @@ function __wbg_get_imports() {
         },
         __wbg___wbindgen_throw_1506f2235d1bdba0: function(arg0, arg1) {
             throw new Error(getStringFromWasm0(arg0, arg1));
+        },
+        __wbg_call_6e37a87ff352da3d: function() { return handleError(function (arg0, arg1, arg2, arg3, arg4) {
+            const ret = arg0.call(arg1, arg2, arg3, arg4);
+            return ret;
+        }, arguments); },
+        __wbindgen_cast_0000000000000001: function(arg0) {
+            // Cast intrinsic for `F64 -> Externref`.
+            const ret = arg0;
+            return ret;
+        },
+        __wbindgen_cast_0000000000000002: function(arg0, arg1) {
+            // Cast intrinsic for `Ref(String) -> Externref`.
+            const ret = getStringFromWasm0(arg0, arg1);
+            return ret;
         },
         __wbindgen_init_externref_table: function() {
             const table = wasm.__wbindgen_externrefs;
@@ -1467,6 +1484,12 @@ const XCrossRestrictSolverWasmFinalization = (typeof FinalizationRegistry === 'u
     ? { register: () => {}, unregister: () => {} }
     : new FinalizationRegistry(ptr => wasm.__wbg_xcrossrestrictsolverwasm_free(ptr, 1));
 
+function addToExternrefTable0(obj) {
+    const idx = wasm.__externref_table_alloc();
+    wasm.__wbindgen_externrefs.set(idx, obj);
+    return idx;
+}
+
 function getArrayU32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return getUint32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
@@ -1490,6 +1513,15 @@ function getUint8ArrayMemory0() {
         cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer);
     }
     return cachedUint8ArrayMemory0;
+}
+
+function handleError(f, args) {
+    try {
+        return f.apply(this, args);
+    } catch (e) {
+        const idx = addToExternrefTable0(e);
+        wasm.__wbindgen_exn_store(idx);
+    }
 }
 
 function passArray8ToWasm0(arg, malloc) {
