@@ -118,7 +118,7 @@ const FACE_LETTER: Record<CubeFace, ColorLetter> = {
 // 展示条数(cap)在此深度内按长度升序收集;条数才是用户可调的旋钮。
 const SOL_SLACK = 2;
 // 「最大数量」可选项;0 = 无上限(枚举 best+SLACK 深度内全部解,用极大 cap 实现)。
-const LIMIT_OPTIONS = [5, 10, 25, 50, 0];
+const LIMIT_OPTIONS = [1, 5, 10, 25, 50, 0];
 const NO_LIMIT_CAP = 100000;
 
 // 步法限制(对齐 or18 /solver 第一行):6 个 move 面 U D L R F B 各自允许/禁止,默认全允许。
