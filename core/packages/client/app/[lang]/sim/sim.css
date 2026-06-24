@@ -184,22 +184,27 @@
   height: 100% !important;
 }
 
-/* 透明棋盘格背景 (twizzle 风格)。WebGL 已 alpha:true,canvas 透明,
- * 这里 CSS 背景透出来。color-mix 让格子跟主题 foreground 算,
- * 深色主题下浅一点深色,浅色主题下深一点浅色,自动适配。 */
-.sim-page--checkered .sim-canvas-wrap {
-  background-color: var(--background);
+/* 画布背景 (data-board-bg)。WebGL 用 alpha:true,canvas 透明,CSS 背景透出来。
+ * 'auto' = 纯色跟随页面主题 (var --background)。其余 4 个是 art-directed 的
+ * 固定背景(故意与明暗主题无关 —— 用户显式选择,像 /calc 钉色),所以这里直接
+ * 用主题调色板的字面色值而非会翻转的 token。 */
+.sim-page[data-board-bg="auto"] .sim-canvas-wrap { background-color: var(--background); }
+.sim-page[data-board-bg="white"] .sim-canvas-wrap { background-color: #ffffff; }
+.sim-page[data-board-bg="dark"] .sim-canvas-wrap { background-color: #1c1917; }
+
+.sim-page[data-board-bg="checkerDark"] .sim-canvas-wrap {
+  --sim-grid: color-mix(in srgb, #f0ebe3 10%, transparent);
+  background-color: #1c1917;
+}
+.sim-page[data-board-bg="checkerLight"] .sim-canvas-wrap {
+  --sim-grid: color-mix(in srgb, #181716 7%, transparent);
+  background-color: #ffffff;
+}
+.sim-page[data-board-bg="checkerDark"] .sim-canvas-wrap,
+.sim-page[data-board-bg="checkerLight"] .sim-canvas-wrap {
   background-image:
-    linear-gradient(45deg,
-      color-mix(in srgb, var(--foreground) 10%, transparent) 25%,
-      transparent 25%, transparent 75%,
-      color-mix(in srgb, var(--foreground) 10%, transparent) 75%
-    ),
-    linear-gradient(45deg,
-      color-mix(in srgb, var(--foreground) 10%, transparent) 25%,
-      transparent 25%, transparent 75%,
-      color-mix(in srgb, var(--foreground) 10%, transparent) 75%
-    );
+    linear-gradient(45deg, var(--sim-grid) 25%, transparent 25%, transparent 75%, var(--sim-grid) 75%),
+    linear-gradient(45deg, var(--sim-grid) 25%, transparent 25%, transparent 75%, var(--sim-grid) 75%);
   background-position: 0 0, 12px 12px;
   background-size: 24px 24px;
 }

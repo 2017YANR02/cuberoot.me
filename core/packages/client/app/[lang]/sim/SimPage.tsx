@@ -1244,7 +1244,7 @@ export default function SimPage() {
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
 
   return (
-    <div className={`sim-page${fullscreen ? ' sim-page--fullscreen' : ''}${settings.checkeredBg ? ' sim-page--checkered' : ''}`}>
+    <div className={`sim-page${fullscreen ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg}>
       <header className="sim-header">
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
