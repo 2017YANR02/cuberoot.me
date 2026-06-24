@@ -4,7 +4,7 @@ import {
   solvedDino, applyDinoMove, applyDinoScramble, isSolved,
   parseDinoMoves, dinoMoveToString, dinoMovesToString,
   randomDinoScramble, type DinoMove,
-} from '@/app/[lang]/sim/cuber/dino/dinoState';
+} from '@/app/[lang]/sim/engine/dino/dinoState';
 
 // ── Independent geometric re-derivation (move-model fidelity anchor) ──────────
 // The Dino Cube is corner-turning: cube [-1,1]^3, 12 edge pieces (one per cube

@@ -21,8 +21,8 @@ import {
   useCallback, useEffect, useRef, useState, type RefObject,
 } from 'react';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
-import type World from '@/app/[lang]/sim/cuber/world';
-import type { BackView } from '@/app/[lang]/sim/cuber/backView';
+import type World from '@/app/[lang]/sim/engine/world';
+import type { BackView } from '@/app/[lang]/sim/engine/backView';
 import './CuberReconPlayer.css';
 
 const PLAY_INTERVAL_MS = 520;
@@ -70,7 +70,7 @@ export default function CuberReconPlayer({
   const applyStep = useCallback((n: number) => {
     const world = worldRef.current;
     if (!world || world.puzzleKind === 'sq1') return;
-    const cube = world.cube as import('@/app/[lang]/sim/cuber/cube').default;
+    const cube = world.cube as import('@/app/[lang]/sim/engine/nxn/cube').default;
     const toks = tokensRef.current;
     const target = Math.max(0, Math.min(n, toks.length));
     const prefix = toks.slice(0, target).join(' ');
@@ -93,9 +93,9 @@ export default function CuberReconPlayer({
 
     void (async () => {
       const THREE = await import('three');
-      const { default: World } = await import('@/app/[lang]/sim/cuber/world');
-      const { default: Cubelet } = await import('@/app/[lang]/sim/cuber/cubelet');
-      const { createBackView } = await import('@/app/[lang]/sim/cuber/backView');
+      const { default: World } = await import('@/app/[lang]/sim/engine/world');
+      const { SIZE } = await import('@/app/[lang]/sim/engine/define');
+      const { createBackView } = await import('@/app/[lang]/sim/engine/backView');
       if (cancelled) return;
       const host = hostRef.current;
       if (!host) return;
@@ -120,7 +120,7 @@ export default function CuberReconPlayer({
       rendererRef.current = renderer;
 
       // Always-on back-view mini window (recon forces it).
-      const backView = createBackView(THREE, Cubelet.SIZE, 120);
+      const backView = createBackView(THREE, SIZE, 120);
       backViewRef.current = backView;
       if (backFrameRef.current) backFrameRef.current.appendChild(backView.domElement);
 
@@ -213,7 +213,7 @@ export default function CuberReconPlayer({
         }
         backViewRef.current?.dispose();
         backViewRef.current = null;
-        (world.cube as import('@/app/[lang]/sim/cuber/cube').default).dispose?.();
+        (world.cube as import('@/app/[lang]/sim/engine/nxn/cube').default).dispose?.();
         renderer.dispose();
         renderer.forceContextLoss?.();
         worldRef.current = null;
@@ -268,7 +268,7 @@ export default function CuberReconPlayer({
         setPlaying(false);
         return;
       }
-      const cube = world.cube as import('@/app/[lang]/sim/cuber/cube').default;
+      const cube = world.cube as import('@/app/[lang]/sim/engine/nxn/cube').default;
       cube.twister.push(toks[s]);
       setStep(s + 1);
     }, PLAY_INTERVAL_MS);
