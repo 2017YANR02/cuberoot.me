@@ -22,6 +22,7 @@ import {
 import type {
   PuzzleGeometry,
   PGOrbitsDef,
+  PGTransform,
   VisibleState,
   PuzzleName,
 } from '@/lib/puzzle-geometry';
@@ -138,5 +139,43 @@ export class PgBackbone {
       moveNames: this.od.movenames.slice(),
     };
     return this.cachedFacts;
+  }
+
+  /**
+   * Group facts computed over a SPECIFIC generator set, instead of all of PG's move ops.
+   * Used when PG's move list includes cuts that aren't standard puzzle moves: the megaminx
+   * `d f 0.7` exposes 6 deep 2-layer slices on top of the 12 shallow face turns, and those
+   * slices permute centers → inflate |G| 60× (6.04×10⁶⁹). Over the 12 face turns alone you
+   * get the canonical megaminx group 30!·20!·2²⁷·3¹⁹ ≈ 1.01×10⁶⁸ (and a clean integer
+   * constraint index). The provided gens ARE the turning generators, so turningOrder ==
+   * order, reorientations == 1. Orbit shape + reassembly come from the orbit def (unchanged).
+   */
+  factsOver(gens: PGTransform[], moveNames?: readonly string[]): PgGroupFacts {
+    const order = schreierSims(gens.map((m) => m.toPerm()), () => {});
+    const orbits = this.solvedState.orbits;
+    // Reassembly over only the orbits the generators actually act on. PG's reassemblySize()
+    // counts EVERY orbit, including megaminx's 12 centers — which the face turns never move
+    // (a spurious 12!). Restricting to moved orbits gives the conventional constraint index
+    // (megaminx → 2³·3 = 24, not 12!·24).
+    let reassembly = 1n;
+    orbits.forEach((o, i) => {
+      if (!gens.some((g) => !g.orbits[i].isIdentity())) return; // unmoved orbit (e.g. centers)
+      let f = 1n;
+      for (let k = 2n; k <= BigInt(o.perm.length); k++) f *= k;
+      reassembly *= f * BigInt(o.orimod) ** BigInt(o.perm.length);
+    });
+    return {
+      order,
+      turningOrder: order,
+      reorientations: 1n,
+      reassembly,
+      index: reassembly / order,
+      orbits: orbits.map((o, i) => ({
+        name: this.od.orbitnames[i],
+        pieces: o.perm.length,
+        oriMod: o.orimod,
+      })),
+      moveNames: moveNames ? [...moveNames] : this.od.movenames.slice(),
+    };
   }
 }
