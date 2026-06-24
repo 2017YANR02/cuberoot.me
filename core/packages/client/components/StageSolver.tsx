@@ -20,7 +20,7 @@ import { Loader2, Copy, Check, Info, X } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
 import { SubsetColorPicker, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
-import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
+import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
 import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
 import { rotateSolutionY, Y_ROT_LABEL } from '@/lib/rotate-solution';
@@ -286,7 +286,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const [totalMs, setTotalMs] = useState<number | null>(null);
   const [infoOpen, setInfoOpen] = useState(false); // 求解器信息弹窗
-  const [shown, setShown] = useState(0);
 
   // 「底色」子集(六色/四色/双色/单色)——只显示选中底色对应的视角格(色中性 cross 选择)。
   // 纯显示/选择层:6 面照常全算,过滤只影响展示与「自动选最优」的候选集。
@@ -546,6 +545,31 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setMovesLoading(true);
     setMoves(null);
     setSelSol(0);
+
+    // 流式累积:支持流式的引擎(std 6 面 cross/xcross/F2L + 受限 54-move xcross)每枚举到
+    // 一条解就经 onPartial 推来,这里合批(rAF)刷进 state ——「算一条出一条」,不再等全算完。
+    // 同 HTM 再按 QTM 升序;Array.sort 稳定 → 原到达序(长度升序)兜底。
+    const sortSols = (xs: SolItem[]) =>
+      [...xs].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
+    const acc: SolItem[] = [];
+    const seen = new Set<string>();
+    let bestLen = Infinity;
+    let raf = 0;
+    const flush = () => {
+      raf = 0;
+      if (movesReq.current !== my) return;
+      setMoves({ len: bestLen === Infinity ? 0xffffffff : bestLen, sols: sortSols(acc), ms: 0 });
+    };
+    const onPartial = (sol: SolItem, len: number) => {
+      if (movesReq.current !== my) return;
+      const key = `${sol.m} ${sol.c}`; // 同 m 不同槽(c)算两条;xcr 的 c 恒空 → 按 m 去重
+      if (seen.has(key)) return;
+      seen.add(key);
+      acc.push(sol);
+      if (len < bestLen) bestLen = len;
+      if (!raf) raf = requestAnimationFrame(flush);
+    };
+
     try {
       const scr = scrambleRef.current.trim();
       const kind = kindOf(method, stages[stage] ?? '');
@@ -562,9 +586,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       const res = kind === 'std'
         ? (useCrRef.current
           ? (isXfStage
-            ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap, stage, combo)
+            ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap, stage, combo, onPartial)
             : await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap))
-          : await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: movesMask }))
+          : await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: movesMask }, onPartial))
         : kind === 'f2leo'
           ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap, combo, mask: movesMask })
           : kind === 'block222'
@@ -581,8 +605,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                       ? await pool.solveFrMoves(scr, f, { extra: SOL_SLACK, cap })
                       : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap, combo, base, mask: movesMask });
       if (movesReq.current === my) {
-        // 引擎按 HTM 升序收集;同 HTM 再按 QTM 升序(180°=2),Array.sort 稳定 → 原 DFS 序兜底。
-        const sols = [...res.sols].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
+        if (raf) cancelAnimationFrame(raf);
+        // 最终权威结果(已去重/排序/截断);与流式累积同集合同序 → 收尾无可见跳动。
+        const sols = sortSols(res.sols);
         setMoves({ ...res, sols });
         setSelSol(0);
         setCounts((prev) => { const next = prev.slice(); next[f] = res.len; return next; });
@@ -709,22 +734,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [infoOpen]);
-
-  // 解法逐条流式出现。
-  useEffect(() => {
-    if (!moves || movesLoading) { setShown(0); return; }
-    const total = moves.sols.length;
-    if (total === 0) { setShown(0); return; }
-    setShown(0);
-    const step = Math.max(1, Math.ceil(total / 32));
-    let n = 0;
-    const id = setInterval(() => {
-      n = Math.min(total, n + step);
-      setShown(n);
-      if (n >= total) clearInterval(id);
-    }, 30);
-    return () => clearInterval(id);
-  }, [moves, movesLoading]);
 
   // 新一批解法载入时:每条自动挑最顺手的 y 预转体(R/L 最多),用户仍可点 y 按钮覆盖。
   // 步法限制生效时不自动转体——y 转体会重标 F/R/B/L,可能把禁用的面转回解法里,破坏限制。
@@ -1072,8 +1081,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   {moves && !isSentinel(moves.len) && <span className="stsv-len">{moves.len} HTM</span>}
                 </div>
 
-                {movesLoading && (
-                  <div className="stsv-status"><Loader2 size={14} className="stsv-spin" />{t('枚举解法…', 'Enumerating…')}</div>
+                {movesLoading && (!moves || moves.sols.length === 0) && (
+                  <div className="stsv-status"><Loader2 size={14} className="stsv-spin" />{t('搜索最优解…', 'Searching…')}</div>
                 )}
 
                 {moves && !movesLoading && moves.sols.length === 0 && (
@@ -1090,18 +1099,18 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   </div>
                 )}
 
-                {moves && !movesLoading && moves.sols.length > 0 && (
+                {moves && moves.sols.length > 0 && (
                   <>
                     <div className="stsv-sols-count">
-                      {shown < moves.sols.length
-                        ? t(`${shown} / ${moves.sols.length} 条解法`, `${shown} / ${moves.sols.length} solutions`)
+                      {movesLoading
+                        ? t(`${moves.sols.length} 条 · 搜索中…`, `${moves.sols.length} found · searching…`)
                         : t(`${moves.sols.length} 条解法`, `${moves.sols.length} solutions`)}
-                      {limit !== 0 && moves.sols.length >= limit && (
+                      {!movesLoading && limit !== 0 && moves.sols.length >= limit && (
                         <span className="stsv-sols-more">{t(' · 已达上限,可能更多', ' · capped, may be more')}</span>
                       )}
                     </div>
                     <ol className="stsv-sols-list">
-                      {moves.sols.slice(0, shown).map((sol, i) => {
+                      {moves.sols.map((sol, i) => {
                         const rot = rowRot[i] ?? 0;
                         const dispAlg = rotateSolutionY(sol.m, rot);
                         return (

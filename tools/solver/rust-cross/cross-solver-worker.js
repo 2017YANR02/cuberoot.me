@@ -144,12 +144,15 @@ self.onmessage = async (e) => {
     } else if (msg.type === 'moves') {
       if (!solver) throw new Error('cross solver not initialized');
       const t0 = performance.now();
+      // 流式:每枚举到一条解,Rust 即回调 onSol → 立刻 postMessage 给主线程(算一条出一条)。
+      // 同步求解仍最终返回完整 JSON(权威结果);partial 仅作渐进显示。
+      const onSol = (m, c, len) => self.postMessage({ type: 'moves_partial', id: msg.id, m, c, len });
       const json = (msg.mask != null)
         ? solver.solve_moves_masked(
-            msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50, msg.combo ?? '', msg.mask >>> 0,
+            msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50, msg.combo ?? '', msg.mask >>> 0, onSol,
           )
         : solver.solve_moves(
-            msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50, msg.combo ?? '',
+            msg.scramble, msg.variant, msg.face, msg.extra ?? 0, msg.cap ?? 50, msg.combo ?? '', onSol,
           );
       self.postMessage({ type: 'moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'cr_face') {
@@ -184,8 +187,10 @@ self.onmessage = async (e) => {
       // 受限最优 xcross 多解枚举(长度 ∈ [最优,最优+extra],最多 cap 条,升序)。无解 → len=0xFFFFFFFF。
       if (!xcrossRestrictSolver) throw new Error('xcross_restrict solver not initialized');
       const t0 = performance.now();
+      // 流式:同 moves,每枚举到一条解即回调 → postMessage partial(xcr 的 c 恒空串)。
+      const onSol = (m, c, len) => self.postMessage({ type: 'xcr_partial', id: msg.id, m, c, len });
       const json = xcrossRestrictSolver.solve_xcross_restricted_moves(
-        msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.extra ?? 2, msg.cap ?? 10, msg.k | 0, msg.combo ?? '',
+        msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.extra ?? 2, msg.cap ?? 10, msg.k | 0, msg.combo ?? '', onSol,
       );
       self.postMessage({ type: 'xcr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'f2leo') {
