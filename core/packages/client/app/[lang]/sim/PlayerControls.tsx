@@ -84,7 +84,7 @@ import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import {
   Slider, Toggle, KeymapModal,
   DEFAULT_SETTINGS, DEFAULT_FACE_COLORS,
-  type SimSettings,
+  type SimSettings, type SimBoardBg,
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
@@ -1578,7 +1578,19 @@ function PuzzleSettings({
               </select>
             </label>
             <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
-            <Toggle label={t('棋盘格背景', 'Checkered background')} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
+            <label className="sim-toggle">
+              <span>{t('画布背景', 'Background')}</span>
+              <select
+                value={settings.boardBg}
+                onChange={(e) => set('boardBg', e.target.value as SimBoardBg)}
+              >
+                <option value="auto">{t('跟随主题', 'Theme')}</option>
+                <option value="white">{t('纯白', 'White')}</option>
+                <option value="dark">{t('深灰', 'Dark')}</option>
+                <option value="checkerDark">{t('深色棋盘', 'Dark grid')}</option>
+                <option value="checkerLight">{t('浅色棋盘', 'Light grid')}</option>
+              </select>
+            </label>
             <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} />
             <Toggle label={t('背面视图', 'Back view')} value={settings.backView} onChange={(v) => set('backView', v)} />
             {/* 立体贴片 / 镂空 are rendered by the in-house engine (NxN + SQ1/Ivy/Dino/
