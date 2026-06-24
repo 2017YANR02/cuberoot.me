@@ -88,7 +88,6 @@ import {
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
-import GroupTheoryPanel from './GroupTheoryPanel';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { WheelPicker } from '@/components/WheelPicker';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
@@ -1474,9 +1473,6 @@ function PuzzleSettings({
                     <option value="group">{t('群论内核', 'Group theory')}</option>
                   )}
                 </select>
-                {renderer === 'group' && puzzleKind === 'pyraminx' && (
-                  <GroupTheoryPanel puzzle={puzzleKind} />
-                )}
               </div>
             )}
             {isNxNLocal && (
