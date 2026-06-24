@@ -206,7 +206,7 @@ function stickerMesh(tri: THREE.Vector3[], faceIdx: number): THREE.Mesh {
   const lift = normal.clone().multiplyScalar(STICKER_LIFT);
   const sp = tri.map((p) => p.clone().lerp(centroid, STICKER_INSET).add(lift));
   // black-walls invariant (caps colored, walls body-dark) → grazing-angle grooves stay visible.
-  return makeSticker(triSticker(sp[0], sp[1], sp[2], normal), stickerMats[faceIdx], bodyMat);
+  return makeSticker(triSticker(sp[0], sp[1], sp[2], normal), stickerMats[faceIdx], bodyMat, { simStickerNormal: normal.clone() });
 }
 
 export interface PieceBuild { pivot: THREE.Object3D; group: THREE.Group; }

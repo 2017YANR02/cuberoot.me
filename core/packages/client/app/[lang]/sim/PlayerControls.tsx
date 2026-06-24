@@ -1541,8 +1541,14 @@ function PuzzleSettings({
             <Toggle label={t('棋盘格背景', 'Checkered background')} value={settings.checkeredBg} onChange={(v) => set('checkeredBg', v)} />
             <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} />
             <Toggle label={t('背面视图', 'Back view')} value={settings.backView} onChange={(v) => set('backView', v)} />
-            <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
-            <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
+            {/* 立体贴片 / 镂空 are rendered by the in-house engine (NxN + SQ1/Ivy/Dino/
+                Redi/Rex/Heli/engine-Skewb), not by cubing.js — hide for twisty puzzles. */}
+            {!isTwistyLocal && (
+              <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
+            )}
+            {!isTwistyLocal && (
+              <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
+            )}
             <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
             <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
             {!isTwistyLocal && (

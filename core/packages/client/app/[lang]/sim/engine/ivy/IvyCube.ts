@@ -251,7 +251,7 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
         // black-walls invariant: caps colored, side walls body-dark (this.bodyMat) → the
         // lens↔petal arc stays visible edge-on (see stickerGeom.ts / sim-add-puzzle skill).
         // makeSticker also tags userData.simRole='sticker' (debug overlay leaves it alone).
-        const mesh = makeSticker(g, new THREE.MeshLambertMaterial({ color }), this.bodyMat);
+        const mesh = makeSticker(g, new THREE.MeshLambertMaterial({ color }), this.bodyMat, { simStickerNormal: outward.clone() });
         // Tag every tile so a raycast (ivyDrag) maps any hit back to a turn:
         // petals carry their turning-corner axis (that one corner always moves
         // them — petals are corner-parented); lenses carry their center-piece id

@@ -326,7 +326,7 @@ export function buildPieceMesh(slot: number): PieceBuild {
     const sGeom = roundedTriSticker(sp[0], sp[1], sp[2], FACE_NORMAL[face]);
     // makeSticker bakes in the black-walls invariant (caps colored, side walls body-dark)
     // so grazing-angle grooves stay visible — see stickerGeom.ts / sim-add-puzzle skill.
-    group.add(makeSticker(sGeom, stickerMat(DINO_FACE_COLOR[face]), bodyMat, { dinoFace: face }));
+    group.add(makeSticker(sGeom, stickerMat(DINO_FACE_COLOR[face]), bodyMat, { dinoFace: face, simStickerNormal: FACE_NORMAL[face].clone() }));
   }
 
   const pivot = new THREE.Object3D();

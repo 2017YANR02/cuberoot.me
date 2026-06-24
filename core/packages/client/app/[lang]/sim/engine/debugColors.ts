@@ -42,6 +42,43 @@ const ROLE_MAT: Record<string, THREE.Material> = {
   core: DEBUG_CORE_MAT,
 };
 
+/** See-through body material for the "hollow" (镂空) look on the in-house engine
+ *  puzzles — mirrors NxN's `Cubelet.TRANS` (gray, opacity 0.1, no depth write) so a
+ *  hollowed body matches across every puzzle type. App-lifetime singleton, never
+ *  color-mutated (bodies share one material, so a `.color` write would bleed). */
+export const HOLLOW_MAT = new THREE.MeshBasicMaterial({
+  color: 0x808080, transparent: true, opacity: 0.1, depthWrite: false,
+});
+
+/**
+ * Single deterministic owner of every body/core mesh material for the in-house
+ * engine puzzles (SQ1 / Ivy / Dino / Redi / Rex / Heli / Skewb), composing the
+ * "hollow" (镂空) and "structure colors" debug toggles in ONE pass so they can't
+ * corrupt each other the way two independent material-swap layers would (each
+ * stashing/restoring `origMat` clobbers the other when both transition).
+ *
+ * The genuine build material is captured ONCE per mesh into `userData.simBaseMat`
+ * — this function is the only thing that ever sets these materials, so the first
+ * read is always the real base (never HOLLOW_MAT / DEBUG_*). Every call then
+ * derives the effective material purely from that base + the current flags, in
+ * priority debug > hollow > base. Idempotent; call on every applySettings.
+ *
+ * (NxN is NOT routed here: its thickness/hollow/hint/faceColors live on the
+ * InstancedRenderer, and its debug overlay runs via applyDebugStructureColors
+ * after the NxN block — see SettingDrawer.applySettings.)
+ */
+export function applyEngineBodyOverlay(root: THREE.Object3D, hollow: boolean, debug: boolean): void {
+  root.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const role = mesh.userData.simRole as string | undefined;
+    if (role !== 'body' && role !== 'core') return;
+    if (mesh.userData.simBaseMat === undefined) mesh.userData.simBaseMat = mesh.material;
+    const base = mesh.userData.simBaseMat as THREE.Material | THREE.Material[];
+    mesh.material = debug ? ROLE_MAT[role] : hollow ? HOLLOW_MAT : base;
+  });
+}
+
 /** Swap (on) / restore (off) bright debug materials on every mesh tagged with a
  *  recolorable `userData.simRole` ('body' / 'core'). Idempotent. Stickers and
  *  untagged meshes are ignored. Call AFTER applySettings (see file header). */
