@@ -1,0 +1,356 @@
+/* Roux trainer — SHARED styles only.
+ * Shell layout, top bar, mode selector, modal, fav sidebar, and the selector
+ * primitives (SingleSelect / MultiSelect / Slider). Each trainer VIEW gets its
+ * OWN css file later — keep view-specific styles OUT of here.
+ *
+ * Dual-theme page: all colors via site tokens (auto light/dark). Never hardcode
+ * hex/greys; translucency via color-mix(in srgb, var(--foreground) N%, transparent).
+ *
+ * Class-naming convention for view agents:
+ *   - shell:        .roux-root .roux-topbar .roux-body .roux-main .roux-fav-sidebar
+ *   - buttons:      .roux-btn (+ .roux-btn-outline / .roux-btn-text / .roux-btn-primary)
+ *   - icon buttons: .roux-icon-btn (+ .roux-icon-btn-active)
+ *   - selectors:    .roux-sel .roux-sel-label .roux-sel-row .roux-sel-radio
+ *                   .roux-sel-check .roux-sel-slider ...
+ *   - modal:        .roux-modal-overlay .roux-modal .roux-modal-title/body/actions
+ *   - markdown:     .roux-markdown
+ *   - field label:  .roux-field-label
+ * View files should namespace their OWN classes as .roux-<view>-* (e.g.
+ * .roux-block-scramble) to avoid collisions, and REUSE the shared classes above.
+ */
+
+/* ---- shell --------------------------------------------------------------- */
+.roux-root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: var(--foreground);
+  background: var(--background);
+}
+.roux-skeleton {
+  min-height: 60vh;
+}
+
+.roux-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border-default);
+  flex-wrap: wrap;
+}
+.roux-topbar-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+.roux-topbar-spacer {
+  flex: 1 1 auto;
+}
+.roux-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.roux-mode-select {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  padding: 7px 30px 7px 12px;
+  cursor: pointer;
+  max-width: 70vw;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+}
+.roux-mode-select:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 35%, transparent);
+}
+
+.roux-body {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 14px;
+}
+.roux-body-with-fav {
+  max-width: 1120px;
+}
+.roux-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.roux-fav-sidebar {
+  flex: 0 0 300px;
+  max-width: 300px;
+}
+
+.roux-stub {
+  padding: 24px;
+  border: 1px dashed var(--border-default);
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+/* ---- buttons ------------------------------------------------------------- */
+.roux-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.roux-btn-outline {
+  border-color: var(--accent);
+  border-width: 2px;
+  color: var(--accent);
+  background: transparent;
+}
+.roux-btn-outline:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.roux-btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.roux-btn-primary:hover {
+  background: color-mix(in srgb, var(--primary) 88%, black);
+}
+.roux-btn-text {
+  color: var(--accent);
+}
+.roux-btn-text:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.roux-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.roux-icon-btn:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+.roux-icon-btn-active {
+  color: var(--accent);
+}
+
+/* ---- modal --------------------------------------------------------------- */
+.roux-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+.roux-modal {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 85vh;
+  overflow: auto;
+  background: var(--popover);
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--foreground) 22%, transparent);
+  padding: 20px 22px;
+}
+.roux-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.roux-modal-close:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+.roux-modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 30px 12px 0;
+}
+.roux-modal-body {
+  font-size: 0.95rem;
+}
+.roux-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ---- markdown (info dialog) --------------------------------------------- */
+.roux-markdown {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--foreground);
+}
+.roux-markdown h1 {
+  font-size: 1.25rem;
+  margin: 0 0 10px;
+}
+.roux-markdown h2 {
+  font-size: 1.05rem;
+  margin: 18px 0 8px;
+}
+.roux-markdown ul {
+  padding-left: 20px;
+  margin: 6px 0;
+}
+.roux-markdown li {
+  margin: 3px 0;
+}
+.roux-markdown code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+.roux-markdown a {
+  color: var(--accent);
+  word-break: break-all;
+}
+.roux-markdown hr {
+  border: none;
+  border-top: 1px solid var(--border-default);
+  margin: 16px 0;
+}
+
+/* ---- selector primitives ------------------------------------------------ */
+.roux-field-label,
+.roux-sel-label {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  margin-bottom: 6px;
+}
+.roux-sel {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.roux-sel-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: center;
+}
+.roux-sel-radio,
+.roux-sel-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+}
+.roux-sel-radio input,
+.roux-sel-check input {
+  accent-color: var(--accent);
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+/* slider */
+.roux-sel-slider {
+  width: 100%;
+}
+.roux-sel-slider-track-wrap {
+  padding: 0 6px;
+}
+.roux-sel-range {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.roux-sel-marks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  gap: 2px;
+}
+.roux-sel-mark {
+  font: inherit;
+  font-size: 0.8rem;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  flex: 0 0 auto;
+}
+.roux-sel-mark:hover {
+  color: var(--foreground);
+}
+.roux-sel-mark-active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ---- mobile ------------------------------------------------------------- */
+@media (max-width: 599px) {
+  .roux-body,
+  .roux-body-with-fav {
+    flex-direction: column;
+    padding: 12px 10px;
+  }
+  .roux-fav-sidebar {
+    flex: 1 1 auto;
+    max-width: 100%;
+    width: 100%;
+  }
+  .roux-topbar {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .roux-mode-select {
+    flex: 1 1 auto;
+    max-width: none;
+  }
+}

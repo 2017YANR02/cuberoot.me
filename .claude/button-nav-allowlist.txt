@@ -3,6 +3,7 @@
 # 理由见 tests/no-button-navigation.test.ts 的 ALLOWLIST(两处保持一致)。
 app/[lang]/recon/submit/ReconSubmitForm.tsx
 app/[lang]/trainer/[puzzle]/[set]/TrainerSetClient.tsx
+app/[lang]/alg/[puzzle]/[set]/select/TrainerSetClient.tsx
 app/[lang]/recon/[id]/alt/AltSubmitForm.tsx
 app/[lang]/scramble/gen/SheetView.tsx
 components/DeskPetSearch.tsx
