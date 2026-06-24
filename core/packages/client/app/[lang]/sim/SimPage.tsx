@@ -62,6 +62,9 @@ import { skewbMoveToString, type SkewbMove } from './engine/skewb/skewbState';
 import PyraCube from './engine/pyra/PyraCube';
 import { pyraPickHit, pyraResolveMove, pyraResolveLive, type PyraPickHit } from './engine/pyra/pyraDrag';
 import { pyraMoveToString, type PyraMove } from './engine/pyra/pyraState';
+import MegaminxCube from './engine/mega/MegaminxCube';
+import { megaPickHit, megaResolveMove, megaResolveLive, type MegaPickHit } from './engine/mega/megaDrag';
+import { megaMoveToString, type MegaMove } from './engine/mega/megaState';
 import { orbitScene, snapViewToQuadrant } from './engine/viewControls';
 import {
   CornerTurnGesture, type CornerGestureCtx, type CornerGestureHandle, type CornerTurnAdapter,
@@ -101,15 +104,15 @@ export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
 
 /** Twisty puzzles (cubing.js by default) that ALSO have an in-house Three.js engine
  *  renderer — the user picks which one via the `renderer` toggle (skill: keep both). */
-export const ENGINE_TWISTY = new Set<string>(['skewb', 'pyraminx']);
+export const ENGINE_TWISTY = new Set<string>(['skewb', 'pyraminx', 'megaminx']);
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
-const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli']);
+const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx']);
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle. */
 function asNxN(world: World): Cube | null {
-  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex' || world.puzzleKind === 'heli' || world.puzzleKind === 'skewb') ? null : (world.cube as Cube);
+  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex' || world.puzzleKind === 'heli' || world.puzzleKind === 'skewb' || world.puzzleKind === 'megaminx') ? null : (world.cube as Cube);
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -626,16 +629,23 @@ export default function SimPage() {
       beginMove: (c, m) => c.beginMove(m), moveToString: pyraMoveToString,
       fullPx: 150, threshold: 6,
     };
-    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx', CornerGestureHandle> = {
+    const megaAdapter: CornerTurnAdapter<MegaminxCube, MegaMove, MegaPickHit> = {
+      match: (c): c is MegaminxCube => c instanceof MegaminxCube,
+      pickHit: megaPickHit, resolveLive: megaResolveLive, resolveMove: megaResolveMove,
+      beginMove: (c, m) => c.beginMove(m), moveToString: megaMoveToString,
+      fullPx: 130, threshold: 6,
+    };
+    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx', CornerGestureHandle> = {
       dino: new CornerTurnGesture(dinoAdapter, cornerCtx),
       redi: new CornerTurnGesture(rediAdapter, cornerCtx),
       rex: new CornerTurnGesture(rexAdapter, cornerCtx),
       heli: new CornerTurnGesture(heliAdapter, cornerCtx),
       skewb: new CornerTurnGesture(skewbAdapter, cornerCtx),
       pyraminx: new CornerTurnGesture(pyraAdapter, cornerCtx),
+      megaminx: new CornerTurnGesture(megaAdapter, cornerCtx),
     };
     const cornerGestureFor = (pk: unknown): CornerGestureHandle | null =>
-      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb' || pk === 'pyraminx' ? cornerGestures[pk] : null;
+      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb' || pk === 'pyraminx' || pk === 'megaminx' ? cornerGestures[pk] : null;
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -1005,8 +1015,9 @@ export default function SimPage() {
               : world.puzzleKind === 'heli' ? world.heliHints
                 : world.puzzleKind === 'skewb' ? world.skewbHints
                   : world.puzzleKind === 'pyraminx' ? world.pyraHints
-                    : world.faceHints;
-      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints, world.pyraHints];
+                    : world.puzzleKind === 'megaminx' ? world.megaHints
+                      : world.faceHints;
+      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints, world.pyraHints, world.megaHints];
       if (viewing) activeHints.show(); else activeHints.hide();
       for (const h of allHints) if (h !== activeHints) h.hide();
       let hintsAnimating = false;

@@ -13,6 +13,7 @@ import { pyraPgBridge } from './pyra/pyraPgBridge';
 import { dinoPgBridge } from './dino/dinoPgBridge';
 import { skewbPgBridge } from './skewb/skewbPgBridge';
 import { heliPgBridge } from './heli/heliPgBridge';
+import { megaPgBridge } from './mega/megaPgBridge';
 
 // Keyed by the ENGINE puzzle kind (the World.puzzleKind / SimPuzzle), not the PG name —
 // e.g. engine 'heli' → bridge.pgName 'helicopter'.
@@ -21,6 +22,7 @@ const BRIDGES: Record<string, MoveBridge<any>> = {
   dino: dinoPgBridge,
   skewb: skewbPgBridge,
   heli: heliPgBridge,
+  megaminx: megaPgBridge,
 };
 
 /** Engine puzzle kinds that have a PG group-theory binding (for the render toggle). */

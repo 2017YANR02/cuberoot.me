@@ -41,6 +41,13 @@ export interface MoveBridge<M> {
    *  the binding then still mirrors live state + serves Schreier-Sims facts, but
    *  `solveMoves`/`scrambleMoves` return empty. */
   readonly solvable?: boolean;
+  /** Compute the displayed group facts (|G|, index) over the engine's OWN generators
+   *  rather than all of PG's move ops. Set when PG's cut exposes extra slices that aren't
+   *  standard puzzle moves (megaminx: 6 deep 2-layer slices inflate |G| 60×). Default false. */
+  readonly factsOverEngineGens?: boolean;
+  /** Generator names to show in the panel when `factsOverEngineGens` (e.g. the 12 face
+   *  names), indexed like `engineGens`. */
+  readonly factsMoveNames?: readonly string[];
 }
 
 export class PgEngineBinding<M> {
@@ -55,6 +62,7 @@ export class PgEngineBinding<M> {
   readonly solvable: boolean;
   /** Number of moves currently mirrored into the state. */
   moveCount = 0;
+  private cachedFacts?: PgGroupFacts;
 
   constructor(private readonly bridge: MoveBridge<M>) {
     this.backbone = new PgBackbone(bridge.pgName);
@@ -65,9 +73,11 @@ export class PgEngineBinding<M> {
     this.state = this.id;
   }
 
-  /** |G| — from the BSGS when built, else the Schreier-Sims count (same number). */
+  /** |G| — from the BSGS when built, else the Schreier-Sims count. For a non-solvable
+   *  bridge this respects `factsOverEngineGens` (e.g. megaminx's 1.01×10⁶⁸ over the 12 face
+   *  turns, not PG's 6.04×10⁶⁹ over all 18 cuts). */
   get order(): bigint {
-    return this.group ? this.group.order : this.backbone.facts().order;
+    return this.group ? this.group.order : this.facts().order;
   }
 
   reset(): void {
@@ -130,7 +140,12 @@ export class PgEngineBinding<M> {
   }
 
   facts(): PgGroupFacts {
-    return this.backbone.facts();
+    if (!this.cachedFacts) {
+      this.cachedFacts = this.bridge.factsOverEngineGens
+        ? this.backbone.factsOver(this.gens, this.bridge.factsMoveNames)
+        : this.backbone.facts();
+    }
+    return this.cachedFacts;
   }
 
   private wordToMoves(word: WordStep[]): M[] {

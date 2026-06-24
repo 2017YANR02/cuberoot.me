@@ -57,6 +57,9 @@ import {
 import {
   parsePyraMoves, pyraMovesToString, invertPyraMoves, reducePyraAlg, randomPyraScramble, type PyraMove,
 } from './engine/pyra/pyraState';
+import {
+  parseMegaMoves, megaMovesToString, invertMegaMoves, reduceMegaAlg, randomMegaScramble, type MegaMove,
+} from './engine/mega/megaState';
 
 /** Random Ivy scramble: ~9 R/L/D/B turns, no immediate axis repeat. */
 function randomIvyScramble(): string {
@@ -352,7 +355,7 @@ function reduceSkewbAlg(s: string): string {
 // per puzzle in one descriptor collapses what used to be ~13 parallel `isDino||isRedi
 // ||…` branches into a single `corner` lookup. Adding a corner-turn puzzle = one entry
 // here + one line in `cornerKind` below (mirrors the engine/cornerTurnGesture adapters).
-type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx';
+type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx';
 
 interface CornerSpec {
   /** Parse alg / scramble text → the puzzle's move list. */
@@ -421,6 +424,13 @@ const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
     invert: (m) => invertPyraMoves(m as PyraMove[]),
     reduce: reducePyraAlg,
     scramble: () => pyraMovesToString(randomPyraScramble(10)),
+  },
+  megaminx: {
+    parse: parseMegaMoves,
+    toString: (m) => megaMovesToString(m as MegaMove[]),
+    invert: (m) => invertMegaMoves(m as MegaMove[]),
+    reduce: reduceMegaAlg,
+    scramble: () => megaMovesToString(randomMegaScramble(30)),
   },
 };
 
@@ -496,9 +506,11 @@ export default function PlayerControls({
   // twisty path. The cubing.js skewb stays a twisty puzzle (renderer 'cubing').
   const isSkewbEngine = puzzleKind === 'skewb' && (renderer === 'engine' || renderer === 'group');
   const isPyraEngine = puzzleKind === 'pyraminx' && (renderer === 'engine' || renderer === 'group');
-  // Skewb + Pyraminx have an in-house engine alternative; on the 'engine' renderer they
-  // behave like the other engine (corner-turn) puzzles, NOT the cubing.js twisty path.
-  const isEngineTwisty = isSkewbEngine || isPyraEngine;
+  const isMegaEngine = puzzleKind === 'megaminx' && (renderer === 'engine' || renderer === 'group');
+  // Skewb + Pyraminx + Megaminx have an in-house engine alternative; on the 'engine'/'group'
+  // renderer they behave like the other engine (corner-/face-turn) puzzles, NOT the cubing.js
+  // twisty path.
+  const isEngineTwisty = isSkewbEngine || isPyraEngine || isMegaEngine;
   // PuzzleGeometry explore puzzle (cubing.js TwistyPlayer, world-less) — twisty-class,
   // so it shares every twisty branch below (scramble / simplify / no-world guards).
   const isPgMode = typeof puzzleKind === 'string' && isPgPuzzleId(puzzleKind);
@@ -513,7 +525,8 @@ export default function PlayerControls({
           : puzzleKind === 'heli' ? 'heli'
             : isSkewbEngine ? 'skewb'
               : isPyraEngine ? 'pyraminx'
-                : null;
+                : isMegaEngine ? 'megaminx'
+                  : null;
   const corner = cornerKind ? CORNER_SPECS[cornerKind] : null;
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
   const is3x3 = !isSq1 && !isIvy && !corner && !isTwistyMode && order === 3;
@@ -1368,8 +1381,8 @@ function PuzzleSettings({
   // for the purposes of the NxN/engine option gating below. PG explore puzzles ARE
   // twisty-class (no in-house engine) → fold them in so the engine-only toggles hide.
   const isTwistyLocal = (isTwistyPuzzle(puzzleKind) || isPgLocal) && !isEngineTwisty;
-  // Whether this puzzle has a cubing.js ↔ engine renderer choice (skewb / pyraminx).
-  const hasRendererChoice = puzzleKind === 'skewb' || puzzleKind === 'pyraminx';
+  // Whether this puzzle has a cubing.js ↔ engine renderer choice (skewb / pyraminx / megaminx).
+  const hasRendererChoice = puzzleKind === 'skewb' || puzzleKind === 'pyraminx' || puzzleKind === 'megaminx';
   // Pure-engine puzzles (no cubing.js) that have a PG group-theory kernel — they get a
   // 自有引擎 ↔ 群论内核 toggle (no 'cubing' option). Dino / Heli.
   const isPgBoundEngine = puzzleKind === 'dino' || puzzleKind === 'heli';
@@ -1474,7 +1487,7 @@ function PuzzleSettings({
                 >
                   {hasRendererChoice && <option value="cubing">cubing.js</option>}
                   <option value="engine">{t('自有引擎', 'Engine')}</option>
-                  {(puzzleKind === 'pyraminx' || puzzleKind === 'skewb' || isPgBoundEngine) && (
+                  {(puzzleKind === 'pyraminx' || puzzleKind === 'skewb' || puzzleKind === 'megaminx' || isPgBoundEngine) && (
                     <option value="group">{t('群论内核', 'Group theory')}</option>
                   )}
                 </select>
@@ -1622,7 +1635,7 @@ function PuzzleSettings({
                 onChange={(v) => set('debugStructureColor', v)}
               />
             )}
-            {(isIvyLocal || isCornerLocal) && (
+            {(isIvyLocal || (isCornerLocal && puzzleKind !== 'megaminx')) && (
               <Toggle
                 label={t('调试:挖角', 'Debug: carve corner')}
                 value={settings.debugCarveCorner}
