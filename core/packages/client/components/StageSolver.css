@@ -184,6 +184,11 @@ html[data-theme='dark'] .stsv {
 }
 .stsv-mr-reset:hover { color: var(--sv-accent); border-color: var(--sv-accent); }
 
+/* 纯十字阶段:全 18 格步法限制(6 面 / 6 宽 / 3 中层 / 3 旋转,堆 4 行)。 */
+.stsv-mr-18 { align-items: flex-start; }
+.stsv-mr-rows { display: flex; flex-direction: column; gap: 6px; }
+.stsv-mr-18 .stsv-mr-grid { display: flex; }
+
 /* 求解器信息弹窗(createPortal 到 body,用全站 token 不用 --sv-*) */
 .stsv-modal-backdrop {
   position: fixed;
