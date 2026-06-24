@@ -36,28 +36,38 @@ export interface MoveBridge<M> {
   toString(moves: M[]): string;
   /** Optional: collapse redundant consecutive turns (shortens solver output). */
   reduce?(text: string): string;
+  /** Whether to build the constructive BSGS (solve/scramble). Default true. Set false
+   *  for groups too large to factor in-browser (e.g. the helicopter cube, ~10^20) —
+   *  the binding then still mirrors live state + serves Schreier-Sims facts, but
+   *  `solveMoves`/`scrambleMoves` return empty. */
+  readonly solvable?: boolean;
 }
 
 export class PgEngineBinding<M> {
   readonly backbone: PgBackbone;
-  private readonly group: PgGroup;
+  /** The constructive BSGS — null when the bridge opts out (group too large to factor
+   *  in-browser); live mirroring + facts still work, solve/scramble don't. */
+  private readonly group: PgGroup | null;
   private readonly gens: PGTransform[];
   private readonly id: PGTransform;
   private state: PGTransform;
+  /** True when solve/scramble are available (the BSGS was built). */
+  readonly solvable: boolean;
   /** Number of moves currently mirrored into the state. */
   moveCount = 0;
 
   constructor(private readonly bridge: MoveBridge<M>) {
     this.backbone = new PgBackbone(bridge.pgName);
     this.gens = bridge.engineGens(this.backbone.od);
-    this.group = new PgGroup(this.gens);
+    this.solvable = bridge.solvable !== false;
+    this.group = this.solvable ? new PgGroup(this.gens) : null;
     this.id = this.gens[0].e();
     this.state = this.id;
   }
 
-  /** |G| from the BSGS (independent of Schreier-Sims; same number). */
+  /** |G| — from the BSGS when built, else the Schreier-Sims count (same number). */
   get order(): bigint {
-    return this.group.order;
+    return this.group ? this.group.order : this.backbone.facts().order;
   }
 
   reset(): void {
@@ -99,13 +109,14 @@ export class PgEngineBinding<M> {
    *  factorisation of the inverse (pure group theory). Reduced if the bridge supports
    *  it. Empty when already solved. */
   solveMoves(): M[] {
-    if (this.solved) return [];
+    if (!this.group || this.solved) return [];
     const word = this.group.factor(this.state.inv());
     return this.wordToMoves(word);
   }
 
   /** A real random-STATE scramble: a uniform-random element of G, as engine moves. */
   scrambleMoves(): M[] {
+    if (!this.group) return [];
     const { word } = this.group.randomElement();
     return this.wordToMoves(word);
   }

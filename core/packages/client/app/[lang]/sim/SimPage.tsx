@@ -103,6 +103,10 @@ export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
  *  renderer — the user picks which one via the `renderer` toggle (skill: keep both). */
 export const ENGINE_TWISTY = new Set<string>(['skewb', 'pyraminx']);
 
+/** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
+ *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
+const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli']);
+
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle. */
 function asNxN(world: World): Cube | null {
   return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex' || world.puzzleKind === 'heli' || world.puzzleKind === 'skewb') ? null : (world.cube as Cube);
@@ -1380,8 +1384,8 @@ export default function SimPage() {
               />
             </CollapsibleSection>
           )}
-          {query.renderer === 'group' && puzzleParam === 'pyraminx' && (
-            <GroupTheoryPanel puzzle="pyraminx" getWorld={getWorldView} />
+          {query.renderer === 'group' && PG_BOUND_KINDS.has(String(puzzleParam)) && (
+            <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />
           )}
         </aside>
       </div>

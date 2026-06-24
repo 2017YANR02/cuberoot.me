@@ -36,7 +36,7 @@ export interface SimWorldView {
 }
 
 /** Engine puzzle kinds wired to a PG kernel (kept in sync with pgBindings). */
-const PG_BOUND: Record<string, true> = { pyraminx: true };
+const PG_BOUND: Record<string, true> = { pyraminx: true, dino: true, skewb: true, heli: true };
 
 const SUBS = '₀₁₂₃₄₅₆₇₈₉';
 const sub = (n: number): string => String(n).split('').map((d) => SUBS[+d]).join('');
@@ -59,6 +59,9 @@ export default function GroupTheoryPanel({
   const [facts, setFacts] = useState<PgGroupFacts | null>(null);
   const [ms, setMs] = useState(0);
   const [live, setLive] = useState<LiveState | null>(null);
+  // Whether the BSGS solve/scramble are available (false for groups too large to
+  // factor in-browser, e.g. the helicopter cube — facts + live state still show).
+  const [solvable, setSolvable] = useState(true);
 
   // The active engine cube, but only once the World has actually switched to this
   // puzzle (avoids grabbing the default NxN cube — whose history shape differs — in
@@ -84,6 +87,7 @@ export default function GroupTheoryPanel({
       const binding = createBinding(puzzle) as PgEngineBinding<unknown> | null;
       if (!binding) return;
       bindingRef.current = binding;
+      setSolvable(binding.solvable);
       const t0 = performance.now();
       const f = binding.facts();
       if (!alive) return;
@@ -93,9 +97,13 @@ export default function GroupTheoryPanel({
       const refresh = () => {
         if (!cube) return;
         binding.rebuildFromString(`${cube.history.init} ${cube.history.moves.join(' ')}`.trim());
-        const ss = binding.solveString();
+        // The badge follows the engine's own geometry (faithful to what's on screen);
+        // PG's fixed-in-space group can be a multiple of the engine's, so state==id is
+        // stricter than visually-solved — use cube.complete instead.
+        const complete = cube.complete;
+        const ss = binding.solvable && !complete ? binding.solveString() : '';
         const solveLen = ss ? ss.trim().split(/\s+/).length : 0;
-        setLive({ solved: binding.solved, order: binding.currentOrder(), solveLen });
+        setLive({ solved: complete, order: complete ? 1 : binding.currentOrder(), solveLen });
       };
       const attach = () => {
         if (!alive) return;
@@ -179,25 +187,36 @@ export default function GroupTheoryPanel({
               <span>
                 {t('当前元素阶', 'element order')} <b className="gt-mono">{live ? live.order : '—'}</b>
               </span>
-              <span>
-                {t('群论解', 'BSGS solution')} <b className="gt-mono">{live ? `${live.solveLen}` : '—'}</b>
-                {live ? t(' 步', ' moves') : ''}
-              </span>
+              {solvable && (
+                <span>
+                  {t('群论解', 'BSGS solution')} <b className="gt-mono">{live ? `${live.solveLen}` : '—'}</b>
+                  {live ? t(' 步', ' moves') : ''}
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="gt-actions">
-            <button type="button" className="gt-btn" onClick={onScramble}>
-              <Shuffle size={14} aria-hidden /> {t('群论打乱', 'Random-state scramble')}
-            </button>
-            <button type="button" className="gt-btn" onClick={onSolve} disabled={!!live?.solved}>
-              <Wand2 size={14} aria-hidden /> {t('群论还原', 'BSGS solve')}
-            </button>
-          </div>
-          <div className="gt-actions-note">
-            {t('打乱 = BSGS 均匀采样的随机态;还原 = 强生成集分解',
-              'scramble = uniform random state via BSGS · solve = strong-generating-set factorisation')}
-          </div>
+          {solvable ? (
+            <>
+              <div className="gt-actions">
+                <button type="button" className="gt-btn" onClick={onScramble}>
+                  <Shuffle size={14} aria-hidden /> {t('群论打乱', 'Random-state scramble')}
+                </button>
+                <button type="button" className="gt-btn" onClick={onSolve} disabled={!!live?.solved}>
+                  <Wand2 size={14} aria-hidden /> {t('群论还原', 'BSGS solve')}
+                </button>
+              </div>
+              <div className="gt-actions-note">
+                {t('打乱 = BSGS 均匀采样的随机态;还原 = 强生成集分解',
+                  'scramble = uniform random state via BSGS · solve = strong-generating-set factorisation')}
+              </div>
+            </>
+          ) : (
+            <div className="gt-actions-note">
+              {t('群过大,BSGS 构造性求解不可用;仅展示群结构 + 实时状态',
+                'group too large for in-browser BSGS factorisation — structure + live state only')}
+            </div>
+          )}
 
           <dl className="gt-rows">
             <div className="gt-row">
