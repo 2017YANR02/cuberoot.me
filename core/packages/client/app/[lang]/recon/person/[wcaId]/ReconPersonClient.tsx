@@ -9,11 +9,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ExternalLink, LogOut, TriangleAlert } from 'lucide-react';
+import { LogOut, TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listPersonRecons } from '@/lib/recon-api';
 import {
-  formatTime, formatAvg, formatRound, wcaPersonUrl,
+  formatTime, formatAvg, formatRound,
 } from '@/lib/recon-utils';
 import { compLinkProps } from '@/lib/comp-link';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -24,6 +24,7 @@ import { reconPathSeg } from '@/lib/recon-seo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { RecordBadge } from '@/components/RecordBadge';
 import { EventIcon } from '@/components/EventIcon';
+import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import { useAuthStore } from '@/lib/auth-store';
 import '../../recon.css';
@@ -145,14 +146,15 @@ export default function ReconPersonClient() {
     return out;
   };
 
-  const ROLE_TABS: { key: Role; label: string }[] = [
-    { key: 'all', label: tr({ zh: '全部', en: 'All' }) },
-    { key: 'solver', label: tr({ zh: '选手', en: 'Solver'
-    }) },
-    { key: 'reconer', label: tr({ zh: '复盘者', en: 'Reconstructor'
-    }) },
-    { key: 'adder', label: tr({ zh: '添加者', en: 'Added by'
-    }) },
+  // 角色下拉项;暂无条目的角色置灰不可选(全部始终可选)。不显示计数(项目规范)。
+  const roleItems: ListSelectItem[] = [
+    { value: 'all', label: tr({ zh: '全部', en: 'All' }) },
+    { value: 'solver', label: tr({ zh: '选手', en: 'Solver'
+    }), disabled: counts.solver === 0 },
+    { value: 'reconer', label: tr({ zh: '复盘者', en: 'Reconstructor'
+    }), disabled: counts.reconer === 0 },
+    { value: 'adder', label: tr({ zh: '添加者', en: 'Added by'
+    }), disabled: counts.adder === 0 },
   ];
 
   return (
@@ -166,13 +168,14 @@ export default function ReconPersonClient() {
               : <span className="recon-person-initial">{(displayName || '?').charAt(0).toUpperCase()}</span>}
         </div>
         <div className="recon-person-id">
-          <h1>{displayName}</h1>
-          <div className="recon-person-meta">
-            {avatarUrl && identity.country && <Flag iso2={identity.country} className="recon-inline-flag" />}
-            <a href={wcaPersonUrl(wcaId)} target="_blank" rel="noopener noreferrer">
-              {wcaId}<ExternalLink size={12} />
-            </a>
-          </div>
+          <h1>
+            <Link href={`/wca/persons/${wcaId}`} className="recon-person-name-link">{displayName}</Link>
+          </h1>
+          {avatarUrl && identity.country && (
+            <div className="recon-person-meta">
+              <Flag iso2={identity.country} className="recon-inline-flag" />
+            </div>
+          )}
           <div className="recon-person-stats">
             <span><b>{counts.solver}</b> {tr({ zh: '选手', en: 'solver'
             })}</span>
@@ -190,17 +193,15 @@ export default function ReconPersonClient() {
         )}
       </div>
 
-      <div className="recon-type-toggle recon-person-roles">
-        {ROLE_TABS.map(tab => (
-          <button
-            key={tab.key}
-            type="button"
-            className={`toggle-btn${role === tab.key ? ' active' : ''}`}
-            onClick={() => { setRole(tab.key); setDisplayCount(PAGE_SIZE); }}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="recon-person-roles">
+        <ListSelect
+          items={roleItems}
+          value={role}
+          onChange={(v) => { setRole(v as Role); setDisplayCount(PAGE_SIZE); }}
+          allLabel={tr({ zh: '全部', en: 'All' })}
+          clearable={false}
+          className="recon-person-role-select"
+        />
       </div>
 
       {loading && <div className="recon-loading">{tr({ zh: '加载中…', en: 'Loading…'

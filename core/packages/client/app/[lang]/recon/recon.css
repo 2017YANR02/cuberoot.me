@@ -359,14 +359,16 @@ img.recon-inline-flag {
 /* --- Mono 列样式 --- */
 .mono { font-family: 'Roboto Mono', monospace; }
 
-/* NOTE: dsingle 列加粗+截断 */
+/* NOTE: dsingle 列加粗;不 overflow:hidden——会裁掉 record-num-cell 右上角的内联纪录角标
+   (YT 前缀的 4 字角标如 YTWB 会被切成 YTW)。角标恒越过数字右缘 ~17px(left:calc(100%-18px)
+   定位),靠下面的 padding-right 把数字整体左移、在列右侧腾出空间,避免角标溢到 solver 列盖住国旗。 */
 .col-dsingle {
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: 110px;
   white-space: nowrap;
   font-weight: 600;
 }
+/* 优先级要高于 .recon-table tbody td 的 padding 简写(否则 longhand 被覆盖)。 */
+.recon-table .col-dsingle { padding-right: 22px; }
 
 /* --- WCA/non-WCA toggle 按钮组 --- */
 .recon-type-toggle {

@@ -123,3 +123,9 @@ img.list-select-flag { object-fit: cover; }
 }
 .list-select-item:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
 .list-select-item--active { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+.list-select-item--disabled {
+  color: var(--muted-foreground);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.list-select-item--disabled:hover { background: none; }
