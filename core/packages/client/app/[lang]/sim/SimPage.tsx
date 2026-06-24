@@ -78,6 +78,7 @@ import PlayerControls, { type SimPuzzle } from './PlayerControls';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
+import GroupTheoryPanel from './GroupTheoryPanel';
 import SimCubeNet from './_SimCubeNet';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
@@ -1374,6 +1375,9 @@ export default function SimPage() {
                 alg={algParam}
               />
             </CollapsibleSection>
+          )}
+          {query.renderer === 'group' && puzzleParam === 'pyraminx' && (
+            <GroupTheoryPanel puzzle="pyraminx" />
           )}
         </aside>
       </div>
