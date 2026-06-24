@@ -229,7 +229,7 @@ const fn make_move(cp: [u8; 8], co: [u8; 8], ep: [u8; 12], eo: [u8; 12]) -> Stat
 const Z0: [u8; 8] = [0, 0, 0, 0, 0, 0, 0, 0];
 const Z0E: [u8; 12] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
-const MOVE_STATES: [State; 18] = [
+pub const MOVE_STATES: [State; 18] = [
     // U
     make_move([3, 0, 1, 2, 4, 5, 6, 7], Z0, [0, 1, 2, 3, 7, 4, 5, 6, 8, 9, 10, 11], Z0E),
     // U2
