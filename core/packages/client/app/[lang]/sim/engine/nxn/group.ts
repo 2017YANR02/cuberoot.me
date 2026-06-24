@@ -3,8 +3,8 @@ import Cubelet from "./cubelet";
 import { TwistAction } from "./twister";
 import Cube from "./cube";
 import * as THREE from "three";
-import tweener, { Tween } from "./tweener";
-import { timing } from "./tweenTiming";
+import tweener, { Tween } from "../tweener";
+import { timing } from "../tweenTiming";
 
 export default class CubeGroup extends THREE.Group {
   public static readonly AXIS_VECTOR: { [key: string]: THREE.Vector3 } = {

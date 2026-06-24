@@ -1,10 +1,10 @@
 // Ported from huazhechen/cuber (MIT) — src/cuber/controller.ts
-import { FACE } from "./define";
+import { FACE } from "../define";
 import Cubelet from "./cubelet";
 import CubeGroup from "./group";
 import * as THREE from "three";
-import World from "./world";
-import tweener from "./tweener";
+import World from "../world";
+import tweener from "../tweener";
 import { TwistAction } from "./twister";
 
 export class TouchAction {

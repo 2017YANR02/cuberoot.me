@@ -33,9 +33,11 @@
 import * as THREE from 'three';
 // eslint-disable-next-line import/no-unresolved
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
-import { Brush, Evaluator, INTERSECTION, SUBTRACTION, type CSGOperation } from 'three-bvh-csg';
-import Cubelet from '../cubelet';
+import { Brush, Evaluator } from 'three-bvh-csg';
+import { SIZE } from '../define';
 import { COLORS } from '../define';
+import { alignedSphereGeo, cutCell } from '../csgCut';
+import { extrudeOntoFace } from '../stickerGeom';
 import { MOVE_CENTERS } from '@/lib/ivy-solver';
 import { facePathsGrooved, type Corner } from './ivyFacePaths';
 import IvyTwister from './IvyTwister';
@@ -86,7 +88,7 @@ const FACE_QUADS: [number, number, number][][] = [
 ];
 const LOCAL_NAME: Corner[] = ['a', 'b', 'c', 'd']; // TL TR BL BR
 
-const E = Cubelet.SIZE * 3;        // cube edge
+const E = SIZE * 3;        // cube edge
 const HALF = E / 2;
 const DEPTH = E * 0.03;            // colored sticker thickness (raised above body)
 // The 4 turning-corner vertices (tetrahedral) = the centers of the 4 cutting spheres.
@@ -101,24 +103,11 @@ const GROOVE = 0.03;               // radial width of the lens↔petal groove (t
 const LIFT = E * 0.004;
 const TWO_PI_3 = (2 * Math.PI) / 3;
 
-// CSG cutting-sphere tessellation. Each sphere is an icosphere ORIENTED so one of its
-// 3-fold (face-center) axes points along its vertex's body diagonal. A 120° corner
-// twist about that diagonal is then an exact symmetry of the icosphere's tessellation
-// (verified vertex-set mismatch ~1e-7), so the turning sphere — the only surface
-// separating the moving solid angle (inside it) from the stationary pieces (subtracted
-// out of it) — is invariant under the turn ⇒ zero interpenetration, not just small.
+// CSG cutting-sphere tessellation: the icosphere is oriented (alignedSphereGeo, shared in
+// ../csgCut) so a 120° corner twist is an EXACT symmetry of its mesh ⇒ the turning sphere
+// is invariant under the turn ⇒ zero interpenetration (not just small). Detail 5 balances
+// smooth cut vs CSG cost.
 const SPHERE_DETAIL = 5;
-const _icoFace0 = new THREE.IcosahedronGeometry(1, 0).attributes.position;
-const ICO_3FOLD = new THREE.Vector3()
-  .add(new THREE.Vector3().fromBufferAttribute(_icoFace0, 0))
-  .add(new THREE.Vector3().fromBufferAttribute(_icoFace0, 1))
-  .add(new THREE.Vector3().fromBufferAttribute(_icoFace0, 2))
-  .normalize();
-function alignedSphereGeo(dirUnit: THREE.Vector3): THREE.BufferGeometry {
-  const geo = new THREE.IcosahedronGeometry(E, SPHERE_DETAIL);
-  geo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(ICO_3FOLD, dirUnit));
-  return geo;
-}
 
 const svgLoader = new SVGLoader();
 function shapesFromPath(d: string): THREE.Shape[] {
@@ -204,32 +193,21 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
     const cube = new Brush(new THREE.BoxGeometry(E, E, E));
     cube.updateMatrixWorld();
     const spheres = TURN_VERTS.map((v) => {
-      const b = new Brush(alignedSphereGeo(v.clone().normalize()));
+      const b = new Brush(alignedSphereGeo(E, v.clone().normalize(), SPHERE_DETAIL));
       b.position.copy(v);
       b.updateMatrixWorld();
       return b;
     });
-    const csg = (a: Brush, b: Brush, op: CSGOperation): Brush => ev.evaluate(a, b, op);
-    const attach = (brush: Brush, parent: THREE.Object3D): void => {
-      const mesh = new THREE.Mesh(brush.geometry, this.bodyMat);
+    const attach = (geo: THREE.BufferGeometry, parent: THREE.Object3D): void => {
+      const mesh = new THREE.Mesh(geo, this.bodyMat);
       mesh.userData.simRole = 'body';
       parent.add(mesh);
     };
     // Corner piece a: inside sphere a, carved out of the other 3 (inside exactly 1).
-    for (let a = 0; a < 4; a++) {
-      let r = csg(cube, spheres[a], INTERSECTION);
-      for (let o = 0; o < 4; o++) if (o !== a) r = csg(r, spheres[o], SUBTRACTION);
-      attach(r, this.cornerPivot[a]);
-    }
+    for (let a = 0; a < 4; a++) attach(cutCell(ev, cube, spheres, [a]), this.cornerPivot[a]);
     // Center piece f: inside both of face f's turning-corner spheres, carved out of the
     // other 2 (inside exactly 2 → the leaf, tips reaching the cube corners since R = E).
-    for (let f = 0; f < 6; f++) {
-      const [a, b] = FACE_CORNERS[f];
-      let r = csg(cube, spheres[a], INTERSECTION);
-      r = csg(r, spheres[b], INTERSECTION);
-      for (let o = 0; o < 4; o++) if (o !== a && o !== b) r = csg(r, spheres[o], SUBTRACTION);
-      attach(r, this.centerPivot[f]);
-    }
+    for (let f = 0; f < 6; f++) attach(cutCell(ev, cube, spheres, FACE_CORNERS[f]), this.centerPivot[f]);
   }
 
   private _buildFaces(): void {
@@ -242,7 +220,6 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
       const geoNormal = new THREE.Vector3().crossVectors(Ux, Uy).normalize();
       const outward = new THREE.Vector3(...FACE_NORMAL[f]);
       const pos = O.clone().add(outward.clone().multiplyScalar(LIFT));
-      const matrix = new THREE.Matrix4().makeBasis(Ux, Uy, geoNormal).setPosition(pos);
       // The black piece BODIES are NOT built from these outlines — they are true CSG
       // solids built once in _buildBodies (cube ∩/− the 4 cutting spheres), so a turn
       // opens a real solid angle. The outline here only backs the raised + inset colored
@@ -259,8 +236,6 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
       const color = COLORS[FACE_LETTER[f]];
 
       const place = (d: string, parent: THREE.Object3D, cornerAxis?: number, centerPiece?: number): void => {
-        const capPts = outlinePoints(d);
-
         // (1) Colored STICKER — thin, raised above the body, flat on the face. The CSG
         // body (built in _buildBodies) fills the whole piece region and tiles its
         // neighbors exactly along the shared cut sphere; this sticker is inset (grooved)
@@ -269,9 +244,10 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
         // the real radius-1 arcs reaching the cube corners, the lens is concentric
         // radius-(1-GROOVE) arcs, so the visible lens↔petal groove is an even-width gap
         // bounded by true circles — not a scaled/elliptical approximation, no spikes.
-        const g = new THREE.ExtrudeGeometry(new THREE.Shape(capPts.map((p) => p.clone())), { depth: DEPTH, bevelEnabled: false });
-        if (flip) g.translate(0, 0, -DEPTH);
-        g.applyMatrix4(matrix);
+        // Ux/Uy are the face's full edge vectors (length E), so the unit-square outline
+        // scales onto the E×E face via the basis (extrudeOntoFace, shared in ../stickerGeom).
+        const outline = outlinePoints(d).map((p): [number, number] => [p.x, p.y]);
+        const g = extrudeOntoFace(outline, { u: Ux, v: Uy, n: geoNormal, origin: pos }, DEPTH, flip);
         const mesh = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color }));
         // Tag every tile so a raycast (ivyDrag) maps any hit back to a turn:
         // petals carry their turning-corner axis (that one corner always moves

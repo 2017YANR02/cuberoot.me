@@ -18,14 +18,14 @@
  * raised tris on the piece's two faces.
  */
 import * as THREE from 'three';
-import Cubelet from '../cubelet';
+import { SIZE } from '../define';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { EDGE_NAMES, type EdgeName } from './dinoState';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 
 /** Cube half-side (world units). Frames like a ~3x3 in the shared camera rig. */
-export const H = Cubelet.SIZE * 2; // 128
+export const H = SIZE * 2; // 128
 
 /** Cut-plane offset as a fraction of H. Zero-interpenetration requires CUT ≥ 1.0
  *  (moving pieces have C·v ≥ CUT·H; the stationary peak is (2−CUT)·H, so the two

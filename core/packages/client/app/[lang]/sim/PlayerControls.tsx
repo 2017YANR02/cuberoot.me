@@ -32,19 +32,22 @@ import {
   Search, Loader2,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
-import World from './cuber/world';
-import { TwistAction } from './cuber/twister';
-import { timing } from './cuber/tweenTiming';
-import { parseSq1Scramble, movesToString, type Sq1Move } from './cuber/sq1/sq1State';
-import { parseIvyMoves } from './cuber/ivy/IvyTwister';
-import type { IvyMove } from './cuber/ivy/IvyCube';
+import World from './engine/world';
+import { TwistAction } from './engine/nxn/twister';
+import { timing } from './engine/tweenTiming';
+import { parseSq1Scramble, movesToString, type Sq1Move } from './engine/sq1/sq1State';
+import { parseIvyMoves } from './engine/ivy/IvyTwister';
+import type { IvyMove } from './engine/ivy/IvyCube';
 import { classifyIvyTokens } from '@/lib/ivy-solver';
 import {
   parseDinoMoves, dinoMovesToString, randomDinoScramble, type DinoMove,
-} from './cuber/dino/dinoState';
+} from './engine/dino/dinoState';
 import {
   parseRediMoves, rediMovesToString, randomRediScramble, type RediMove,
-} from './cuber/redi/rediState';
+} from './engine/redi/rediState';
+import {
+  parseRexMoves, rexMovesToString, randomRexScramble, type RexMove,
+} from './engine/rex/rexState';
 
 /** Random Ivy scramble: ~9 R/L/D/B turns, no immediate axis repeat. */
 function randomIvyScramble(): string {
@@ -101,6 +104,7 @@ const PUZZLE_TYPE_OPTIONS = [
   { value: 'megaminx', iconClass: 'event-minx',  labelZh: '五魔',  labelEn: 'Megaminx' },
   { value: 'dino',     iconClass: 'unofficial-dino', labelZh: '恐龙', labelEn: 'Dino' },
   { value: 'redi',     iconClass: 'unofficial-redi', labelZh: 'Redi', labelEn: 'Redi' },
+  { value: 'rex',      iconClass: 'unofficial-rex', labelZh: 'Rex', labelEn: 'Rex Cube' },
 ] as const;
 
 function PuzzleTypeSelect({ value, onChange, isZh }: {
@@ -186,7 +190,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'pyraminx' | 'skewb' | 'megaminx';
+export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'pyraminx' | 'skewb' | 'megaminx';
 
 function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
@@ -262,6 +266,32 @@ function reduceRediAlg(s: string): string {
   return rediMovesToString(out);
 }
 
+function invertRexMoves(moves: RexMove[]): RexMove[] {
+  const out: RexMove[] = [];
+  for (let i = moves.length - 1; i >= 0; i--) {
+    out.push({ corner: moves[i].corner, dir: moves[i].dir === 1 ? -1 : 1 });
+  }
+  return out;
+}
+
+/** Fold consecutive same-corner Rex twists mod 3 (X X = X', X X' = id, …). */
+function reduceRexAlg(s: string): string {
+  const moves = parseRexMoves(s);
+  const out: RexMove[] = [];
+  for (const m of moves) {
+    const last = out[out.length - 1];
+    if (last && last.corner === m.corner) {
+      const net = (((last.dir === 1 ? 1 : 2) + (m.dir === 1 ? 1 : 2)) % 3 + 3) % 3;
+      out.pop();
+      if (net === 1) out.push({ corner: m.corner, dir: 1 });
+      else if (net === 2) out.push({ corner: m.corner, dir: -1 });
+    } else {
+      out.push(m);
+    }
+  }
+  return rexMovesToString(out);
+}
+
 function normalizeTo1x1(action: TwistAction): TwistAction | null {
   const s = action.sign;
   if (s === 'x' || s === 'y' || s === 'z') return action;
@@ -315,9 +345,10 @@ export default function PlayerControls({
   const isIvy = puzzleKind === 'ivy';
   const isDino = puzzleKind === 'dino';
   const isRedi = puzzleKind === 'redi';
+  const isRex = puzzleKind === 'rex';
   const isTwistyMode = isTwistyPuzzle(puzzleKind);
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
-  const is3x3 = !isSq1 && !isIvy && !isDino && !isRedi && !isTwistyMode && order === 3;
+  const is3x3 = !isSq1 && !isIvy && !isDino && !isRedi && !isRex && !isTwistyMode && order === 3;
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -397,7 +428,7 @@ export default function PlayerControls({
   }, []);
 
   const actions = useMemo<TwistAction[]>(() => {
-    if (isSq1 || isIvy || isDino || isRedi) return [];
+    if (isSq1 || isIvy || isDino || isRedi || isRex) return [];
     if (!algDraft.trim()) return [];
     try {
       const cleaned = cleanForPlayer(algDraft);
@@ -409,7 +440,7 @@ export default function PlayerControls({
     } catch {
       return [];
     }
-  }, [algDraft, isSq1, isIvy, isDino, isRedi]);
+  }, [algDraft, isSq1, isIvy, isDino, isRedi, isRex]);
 
   const sq1Actions = useMemo<Sq1Move[]>(() => {
     if (!isSq1) return [];
@@ -439,6 +470,11 @@ export default function PlayerControls({
     return parseRediMoves(algDraft);
   }, [algDraft, isRedi]);
 
+  const rexActions = useMemo<RexMove[]>(() => {
+    if (!isRex) return [];
+    return parseRexMoves(algDraft);
+  }, [algDraft, isRex]);
+
   const totalSteps = isSq1
     ? sq1Actions.length
     : isIvy
@@ -447,7 +483,9 @@ export default function PlayerControls({
         ? dinoActions.length
         : isRedi
           ? rediActions.length
-          : actions.length;
+          : isRex
+            ? rexActions.length
+            : actions.length;
 
   const jumpToStep = useCallback(async (n: number) => {
     if (!world) return;
@@ -455,7 +493,7 @@ export default function PlayerControls({
     // cube lock, which would make the replay's group.twist below spin forever.
     world.controller.clearFrozen();
     if (isSq1) {
-      const sq1Cube = world.cube as unknown as import('./cuber/sq1/Sq1Cube').default;
+      const sq1Cube = world.cube as unknown as import('./engine/sq1/Sq1Cube').default;
       sq1Cube.twister.finish();
       const effSetup = settings.playbackMode === 'algorithm'
         ? (setupDraft + ' ' + movesToString(invertSq1Moves(sq1Actions))).trim()
@@ -473,7 +511,7 @@ export default function PlayerControls({
       // A bad token in either box → can't play: leave the cube as-is (the box
       // shows the offending token in red) rather than feeding it to the parser.
       if (!ivyCanPlay) { setStep(0); return; }
-      const ivyCube = world.cube as unknown as import('./cuber/ivy/IvyCube').default;
+      const ivyCube = world.cube as unknown as import('./engine/ivy/IvyCube').default;
       ivyCube.twister.finish();
       const effSetup = settings.playbackMode === 'algorithm'
         ? (setupDraft + ' ' + invertAlg(algDraft)).trim()
@@ -485,7 +523,7 @@ export default function PlayerControls({
       return;
     }
     if (isDino) {
-      const dinoCube = world.cube as unknown as import('./cuber/dino/DinoCube').default;
+      const dinoCube = world.cube as unknown as import('./engine/dino/DinoCube').default;
       dinoCube.twister.finish();
       const effSetup = settings.playbackMode === 'algorithm'
         ? (setupDraft + ' ' + dinoMovesToString(invertDinoMoves(dinoActions))).trim()
@@ -497,7 +535,7 @@ export default function PlayerControls({
       return;
     }
     if (isRedi) {
-      const rediCube = world.cube as unknown as import('./cuber/redi/RediCube').default;
+      const rediCube = world.cube as unknown as import('./engine/redi/RediCube').default;
       rediCube.twister.finish();
       const effSetup = settings.playbackMode === 'algorithm'
         ? (setupDraft + ' ' + rediMovesToString(invertRediMoves(rediActions))).trim()
@@ -508,7 +546,19 @@ export default function PlayerControls({
       setStep(target);
       return;
     }
-    const cube = world.cube as import('./cuber/cube').default;
+    if (isRex) {
+      const rexCube = world.cube as unknown as import('./engine/rex/RexCube').default;
+      rexCube.twister.finish();
+      const effSetup = settings.playbackMode === 'algorithm'
+        ? (setupDraft + ' ' + rexMovesToString(invertRexMoves(rexActions))).trim()
+        : setupDraft;
+      rexCube.twister.setup(effSetup);
+      const target = Math.max(0, Math.min(n, rexActions.length));
+      for (let i = 0; i < target; i++) rexCube.applyMoveInstant(rexActions[i]);
+      setStep(target);
+      return;
+    }
+    const cube = world.cube as import('./engine/nxn/cube').default;
     const effectiveSetup = settings.playbackMode === 'algorithm'
       ? (setupDraft + ' ' + invertAlg(algDraft)).trim()
       : setupDraft;
@@ -518,7 +568,7 @@ export default function PlayerControls({
       cube.twister.twist(actions[i], true, true);
     }
     setStep(target);
-  }, [world, setupDraft, algDraft, actions, sq1Actions, ivyActions, dinoActions, rediActions, isSq1, isIvy, isDino, isRedi, ivyCanPlay, settings.playbackMode]);
+  }, [world, setupDraft, algDraft, actions, sq1Actions, ivyActions, dinoActions, rediActions, rexActions, isSq1, isIvy, isDino, isRedi, isRex, ivyCanPlay, settings.playbackMode]);
 
   const skipAutoResetRef = useRef(false);
   const animatingScrambleRef = useRef(false);
@@ -527,7 +577,7 @@ export default function PlayerControls({
   useEffect(() => {
     if (skipAutoResetRef.current) {
       skipAutoResetRef.current = false;
-      setStep(isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : isRedi ? rediActions.length : actions.length);
+      setStep(isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : isRedi ? rediActions.length : isRex ? rexActions.length : actions.length);
       return;
     }
     if (animatingScrambleRef.current) {
@@ -537,7 +587,7 @@ export default function PlayerControls({
     }
     jumpToStep(stepRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setupDraft, actions, sq1Actions, ivyActions, dinoActions, rediActions, settings.playbackMode]);
+  }, [setupDraft, actions, sq1Actions, ivyActions, dinoActions, rediActions, rexActions, settings.playbackMode]);
 
   const handleCaretSync = useCallback((text: string, caretIndex: number) => {
     const before = text.slice(0, caretIndex);
@@ -558,6 +608,10 @@ export default function PlayerControls({
       jumpToStep(parseRediMoves(algBefore).length);
       return;
     }
+    if (isRex) {
+      jumpToStep(parseRexMoves(algBefore).length);
+      return;
+    }
     try {
       let n = 0;
       for (const node of new Alg(algBefore).expand().childAlgNodes()) {
@@ -565,7 +619,7 @@ export default function PlayerControls({
       }
       jumpToStep(n);
     } catch { /* ignore */ }
-  }, [jumpToStep, isSq1, isIvy, isDino, isRedi]);
+  }, [jumpToStep, isSq1, isIvy, isDino, isRedi, isRex]);
 
   const stepForward = useCallback(() => { jumpToStep(step + 1); }, [jumpToStep, step]);
   const stepBack = useCallback(() => { jumpToStep(step - 1); }, [jumpToStep, step]);
@@ -583,26 +637,29 @@ export default function PlayerControls({
     // the eased animation, which 120° corner turns — Redi/Dino/Ivy ≈567ms vs the
     // old 600ms interval — hit on the slightest frame-rate jank.) Speed scales the
     // animation length via CubeGroup.frames (separate effect), not the poll rate.
-    const total = isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : isRedi ? rediActions.length : actions.length;
+    const total = isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : isDino ? dinoActions.length : isRedi ? rediActions.length : isRex ? rexActions.length : actions.length;
     playTimerRef.current = window.setInterval(() => {
       const s = stepRef.current;
       if (s >= total) { setPlaying(false); return; }
       if (!world) return;
       let started = false;
       if (isSq1) {
-        const sq1Cube = world.cube as unknown as import('./cuber/sq1/Sq1Cube').default;
+        const sq1Cube = world.cube as unknown as import('./engine/sq1/Sq1Cube').default;
         started = sq1Cube.twister.twist(sq1Actions[s], false, false);
       } else if (isIvy) {
-        const ivyCube = world.cube as unknown as import('./cuber/ivy/IvyCube').default;
+        const ivyCube = world.cube as unknown as import('./engine/ivy/IvyCube').default;
         started = ivyCube.twister.twist(ivyActions[s], false, false);
       } else if (isDino) {
-        const dinoCube = world.cube as unknown as import('./cuber/dino/DinoCube').default;
+        const dinoCube = world.cube as unknown as import('./engine/dino/DinoCube').default;
         started = dinoCube.twister.twist(dinoActions[s], false, false);
       } else if (isRedi) {
-        const rediCube = world.cube as unknown as import('./cuber/redi/RediCube').default;
+        const rediCube = world.cube as unknown as import('./engine/redi/RediCube').default;
         started = rediCube.twister.twist(rediActions[s], false, false);
+      } else if (isRex) {
+        const rexCube = world.cube as unknown as import('./engine/rex/RexCube').default;
+        started = rexCube.twister.twist(rexActions[s], false, false);
       } else {
-        const cube = world.cube as import('./cuber/cube').default;
+        const cube = world.cube as import('./engine/nxn/cube').default;
         // NxN twist(force=false) returns true even for a same-axis/same-face turn
         // (it runs in parallel or cancel+restarts), so gate on the cube's own lock
         // state to keep playback strictly one-turn-at-a-time.
@@ -617,7 +674,7 @@ export default function PlayerControls({
     return () => {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
     };
-  }, [playing, actions, sq1Actions, ivyActions, dinoActions, rediActions, world, speed, isSq1, isIvy, isDino, isRedi]);
+  }, [playing, actions, sq1Actions, ivyActions, dinoActions, rediActions, rexActions, world, speed, isSq1, isIvy, isDino, isRedi, isRex]);
 
   const tool = (transform: (s: string) => string) => () => {
     const combined = (setupDraft + ' ' + algDraft).trim();
@@ -639,26 +696,28 @@ export default function PlayerControls({
     if (isIvy) return s; // ivy R R = R' (not R2) — NxN fold doesn't apply
     if (isDino) return reduceDinoAlg(s);
     if (isRedi) return reduceRediAlg(s);
+    if (isRex) return reduceRexAlg(s);
     if (isTwistyMode) return simplifyTwistyAlg(s);
     return simplifyAlg(s);
-  }, [isSq1, isIvy, isDino, isRedi, isTwistyMode, sq1Format]);
+  }, [isSq1, isIvy, isDino, isRedi, isRex, isTwistyMode, sq1Format]);
 
   const invertForPuzzle = useCallback((s: string): string => {
     if (isDino) return dinoMovesToString(invertDinoMoves(parseDinoMoves(s)));
     if (isRedi) return rediMovesToString(invertRediMoves(parseRediMoves(s)));
+    if (isRex) return rexMovesToString(invertRexMoves(parseRexMoves(s)));
     if (!isSq1) return invertAlg(s);
     const inv = invertSq1Alg(s);
     return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
-  }, [isSq1, isDino, isRedi, sq1Format]);
+  }, [isSq1, isDino, isRedi, isRex, sq1Format]);
 
   // Whether 消步 would actually shorten the sequence — drives the button's
   // enabled state so it doubles as a "可以消步" hint.
   const canSimplify = useMemo(() => {
     const combined = (setupDraft + ' ' + algDraft).trim();
     if (!combined) return false;
-    const count = (s: string) => (isSq1 ? parseSq1Tokens(s).length : isDino ? parseDinoMoves(s).length : isRedi ? parseRediMoves(s).length : countMoves(s));
+    const count = (s: string) => (isSq1 ? parseSq1Tokens(s).length : isDino ? parseDinoMoves(s).length : isRedi ? parseRediMoves(s).length : isRex ? parseRexMoves(s).length : countMoves(s));
     return count(simplifyForPuzzle(combined)) < count(combined);
-  }, [setupDraft, algDraft, isSq1, isDino, isRedi, simplifyForPuzzle]);
+  }, [setupDraft, algDraft, isSq1, isDino, isRedi, isRex, simplifyForPuzzle]);
 
   // Copy the current page URL (puzzle + scramble + solution params) so the exact
   // sim state can be shared. Works for any puzzle — the URL always carries state.
@@ -723,7 +782,7 @@ export default function PlayerControls({
       moveText = action.value;
     }
     if (world) {
-      const cube = world.cube as import('./cuber/cube').default;
+      const cube = world.cube as import('./engine/nxn/cube').default;
       cube.twister.twist(action, false, true);
     }
     const algEl = algElRef.current;
@@ -802,6 +861,10 @@ export default function PlayerControls({
         // Self-contained sim — a random sequence of legal corner twists is a valid
         // Redi scramble (no solver needed).
         scramble = rediMovesToString(randomRediScramble(20));
+      } else if (isRex) {
+        // Self-contained sim — a random sequence of legal corner twists is a valid
+        // Rex scramble (no solver needed).
+        scramble = rexMovesToString(randomRexScramble(25));
       } else if (order >= 2 && order <= 7) {
         const eventId = `${order}${order}${order}`;
         scramble = await tnoodleRandomScramble(eventId);
@@ -810,14 +873,14 @@ export default function PlayerControls({
       }
     } catch (err) {
       console.warn('[sim] scramble failed:', err);
-      scramble = isSq1 ? '' : isIvy ? randomIvyScramble() : isDino ? '' : isRedi ? '' : randomMoveScrambleNxN(order);
+      scramble = isSq1 ? '' : isIvy ? randomIvyScramble() : isDino ? '' : isRedi ? '' : isRex ? '' : randomMoveScrambleNxN(order);
     }
     if (reqId !== scrambleReqIdRef.current) return;
     if (!scramble) return;
     world.controller.clearFrozen(); // release any debug held-partial turn first
     // SQ1 / Ivy / Dino / Redi always animate — instant apply would be visually
     // indistinguishable from no rotation. The animation is the whole point.
-    const animate = isSq1 || isIvy || isDino || isRedi || settings.animateScramble;
+    const animate = isSq1 || isIvy || isDino || isRedi || isRex || settings.animateScramble;
     if (animate) {
       animatingScrambleRef.current = true;
       world.cube.twister.setup('');
@@ -837,7 +900,7 @@ export default function PlayerControls({
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, order, isSq1, isIvy, isDino, isRedi, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
+  }, [world, order, isSq1, isIvy, isDino, isRedi, isRex, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
 
   // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
   // recover the clean rotation-free scramble it solves, drop it into the
@@ -1171,8 +1234,9 @@ function PuzzleSettings({
   const isIvyLocal = puzzleKind === 'ivy';
   const isDinoLocal = puzzleKind === 'dino';
   const isRediLocal = puzzleKind === 'redi';
+  const isRexLocal = puzzleKind === 'rex';
   const isTwistyLocal = isTwistyPuzzle(puzzleKind);
-  const isNxNLocal = !isSq1Local && !isIvyLocal && !isDinoLocal && !isRediLocal && !isTwistyLocal;
+  const isNxNLocal = !isSq1Local && !isIvyLocal && !isDinoLocal && !isRediLocal && !isRexLocal && !isTwistyLocal;
   const [open, setOpen] = useState(true);
   const [keymapOpen, setKeymapOpen] = useState(false);
 
@@ -1251,10 +1315,10 @@ function PuzzleSettings({
             <div className="sim-puzzle-section">
               <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
               <PuzzleTypeSelect
-                value={isTwistyLocal ? (puzzleKind as string) : isSq1Local ? 'sq1' : isIvyLocal ? 'ivy' : isDinoLocal ? 'dino' : isRediLocal ? 'redi' : 'nxn'}
+                value={isTwistyLocal ? (puzzleKind as string) : isSq1Local ? 'sq1' : isIvyLocal ? 'ivy' : isDinoLocal ? 'dino' : isRediLocal ? 'redi' : isRexLocal ? 'rex' : 'nxn'}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
                   else onPuzzleChange(order || 3);
                 }}
               />
@@ -1383,7 +1447,7 @@ function PuzzleSettings({
                 onChange={(v) => set('debugStructureColor', v)}
               />
             )}
-            {(isIvyLocal || isDinoLocal || isRediLocal) && (
+            {(isIvyLocal || isDinoLocal || isRediLocal || isRexLocal) && (
               <Toggle
                 label={t('调试:挖角', 'Debug: carve corner')}
                 value={settings.debugCarveCorner}

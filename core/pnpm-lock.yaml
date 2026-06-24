@@ -240,6 +240,9 @@ importers:
       three:
         specifier: ^0.183.2
         version: 0.183.2
+      three-bvh-csg:
+        specifier: ^0.0.18
+        version: 0.0.18(three-mesh-bvh@0.9.10(three@0.183.2))(three@0.183.2)
       unist-util-visit:
         specifier: ^5.1.0
         version: 5.1.0
@@ -3302,6 +3305,17 @@ packages:
 
   text-segmentation@1.0.3:
     resolution: {integrity: sha512-iOiPUo/BGnZ6+54OsWxZidGCsdU8YbE4PSpdPinp7DeMtUJNJBoJ/ouUSTJjHkh1KntHaltHl/gDs2FC4i5+Nw==}
+
+  three-bvh-csg@0.0.18:
+    resolution: {integrity: sha512-M3GCZMmGFgASGuDf+YMamM83nVlD/vdwzVHcYbFxgW+g1S7/nKPiuY00YVHOMbjmJPh8mLevGZL65ItHUuGt2w==}
+    peerDependencies:
+      three: '>=0.179.0'
+      three-mesh-bvh: '>=0.9.7'
+
+  three-mesh-bvh@0.9.10:
+    resolution: {integrity: sha512-UOlTgPIeqUURcwaG8knxvBaruwZlC4X3/WSHEFO7rYvMVv/YNUrkfFEszvfj36pXV88dCHoHNnIp0PifkirnTQ==}
+    peerDependencies:
+      three: '>= 0.159.0'
 
   three@0.170.0:
     resolution: {integrity: sha512-FQK+LEpYc0fBD+J8g6oSEyyNzjp+Q7Ks1C568WWaoMRLW+TkNNWmenWeGgJjV105Gd+p/2ql1ZcjYvNiPZBhuQ==}
@@ -6628,6 +6642,15 @@ snapshots:
     dependencies:
       utrie: 1.0.2
     optional: true
+
+  three-bvh-csg@0.0.18(three-mesh-bvh@0.9.10(three@0.183.2))(three@0.183.2):
+    dependencies:
+      three: 0.183.2
+      three-mesh-bvh: 0.9.10(three@0.183.2)
+
+  three-mesh-bvh@0.9.10(three@0.183.2):
+    dependencies:
+      three: 0.183.2
 
   three@0.170.0: {}
 
