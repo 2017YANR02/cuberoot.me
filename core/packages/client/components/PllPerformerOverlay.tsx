@@ -4,7 +4,7 @@
  * Clawd PLL Performer — native clawd presents a real 3D cube turning a PLL alg.
  *
  * An enlarged focused modal overlay that renders a real 3x3 with the existing
- * /sim `sim-cuber-three` WebGL engine (app/[lang]/sim/cuber/*), floats the cube
+ * /sim `sim-cuber-three` WebGL engine (app/[lang]/sim/engine/*), floats the cube
  * in the UPPER part of the stage, and sits clawd's EXACT native body (no arms,
  * no fingers — only its two static pincer nubs, four legs, two eyes) at the
  * bottom-center "presenting" the cube. Plays a chosen PLL case move-by-move and
@@ -30,9 +30,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type * as THREE from 'three';
 import { Play, Pause, RotateCcw, X } from 'lucide-react';
 import { loadAlg, type AlgCase } from '@cuberoot/shared';
-import type World from '@/app/[lang]/sim/cuber/world';
-import type Cube from '@/app/[lang]/sim/cuber/cube';
-import type { TwistAction as TwistActionT } from '@/app/[lang]/sim/cuber/twister';
+import type World from '@/app/[lang]/sim/engine/world';
+import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
+import type { TwistAction as TwistActionT } from '@/app/[lang]/sim/engine/nxn/twister';
 import {
   tokenizeAlg,
   invertAlg,
@@ -154,9 +154,9 @@ export default function PllPerformerOverlay({
     void (async () => {
       const [THREE, worldMod, twisterMod, timingMod] = await Promise.all([
         import('three'),
-        import('@/app/[lang]/sim/cuber/world'),
-        import('@/app/[lang]/sim/cuber/twister'),
-        import('@/app/[lang]/sim/cuber/tweenTiming'),
+        import('@/app/[lang]/sim/engine/world'),
+        import('@/app/[lang]/sim/engine/nxn/twister'),
+        import('@/app/[lang]/sim/engine/tweenTiming'),
       ]);
       if (cancelled) return;
 
