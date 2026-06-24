@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, Blocks, ScanSearch, Box, type LucideIcon } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -22,6 +22,18 @@ import i18n from '@/i18n/i18n-client';
 
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
 const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);
+
+/** Method trainers / recognition that aren't a per-set timing drill — surfaced per puzzle. */
+const TRAINER_MODULES: Record<string, { href: string; zh: string; en: string; Icon: LucideIcon }[]> = {
+  '3x3': [
+    { href: '/alg/3bld', zh: '3BLD 盲拧训练', en: '3BLD Trainer', Icon: Eye },
+    { href: '/alg/roux', zh: 'Roux 桥式训练', en: 'Roux Trainer', Icon: Blocks },
+    { href: '/recognize/pll', zh: 'PLL 识别训练', en: 'PLL Recognition', Icon: ScanSearch },
+  ],
+  'skewb': [
+    { href: '/alg/skewb-trainer', zh: 'Skewb 技巧训练', en: 'Skewb Skills', Icon: Box },
+  ],
+};
 
 function isPuzzle(s: string): s is AlgPuzzle {
   return (ALG_PUZZLES as readonly string[]).includes(s);
@@ -125,6 +137,17 @@ export default function AlgPuzzleClient() {
           );
         })}
       </div>
+
+      {TRAINER_MODULES[puzzle] && (
+        <div className="alg-train-modules">
+          <span className="alg-train-modules-label">{tr({ zh: '训练专区', en: 'Trainers' })}</span>
+          {TRAINER_MODULES[puzzle].map(m => (
+            <Link key={m.href} href={m.href} className="alg-train-module" prefetch={false}>
+              <m.Icon size={15} /> {tr({ zh: m.zh, en: m.en })}
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
