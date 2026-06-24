@@ -58,7 +58,9 @@ export interface PgGroupFacts {
 
 export class PgBackbone {
   readonly pg: PuzzleGeometry;
-  private readonly od: PGOrbitsDef;
+  /** The compiled orbit/move algebra (solved state, move ops, names). Public so the
+   *  per-puzzle binding can lift the generators it needs for its BSGS. */
+  readonly od: PGOrbitsDef;
   /** Pristine solved reference (mul is functional, so this never mutates). */
   private readonly solvedState: VisibleState;
   private readonly moveIndex: Map<string, number>;

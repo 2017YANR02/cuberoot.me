@@ -1,0 +1,133 @@
+/**
+ * PgEngineBinding — the GENERAL binding layer between an in-house /sim engine puzzle
+ * and the vendored cubing.js group theory. It is puzzle-agnostic: give it a
+ * `MoveBridge<M>` (which PG puzzle, how the engine's own moves embed as PG group
+ * elements, and how to parse/print them) and it provides, in *engine move* terms:
+ *
+ *   • live state mirroring   — applyMove / rebuild from the engine's move history,
+ *   • group-theoretic solved — `solved` (state === identity in G),
+ *   • current element order   — `currentOrder()`,
+ *   • a real random-STATE scramble — `scrambleMoves()` (uniform over G via the BSGS,
+ *     a true random state, not a random-move shuffle),
+ *   • a group-theory solver   — `solveMoves()` (BSGS factorisation of the inverse),
+ *   • the exact group facts   — `facts()` (Schreier-Sims, via PgBackbone).
+ *
+ * The BSGS is built over the *engine's* generators (each expressed as a PG transform),
+ * so every word it returns is already a playable engine move sequence — no second
+ * notation hop. See `pyra/pyraPgBridge.ts` for the pilot.
+ */
+import { PgBackbone, type PgGroupFacts } from './pgBackbone';
+import { PgGroup, type WordStep } from './pgGroup';
+import type { PGOrbitsDef, PGTransform, PuzzleName } from '@/lib/puzzle-geometry';
+
+export interface MoveBridge<M> {
+  /** Vendored PG puzzle name (a `pgPuzzle` key). */
+  readonly pgName: PuzzleName;
+  /** The engine's generators as PG transforms, indexed identically to the WordStep
+   *  `gi` returned by `moveToStep`. */
+  engineGens(od: PGOrbitsDef): PGTransform[];
+  /** Engine move → BSGS step (which generator, inverted?). */
+  moveToStep(m: M): WordStep;
+  /** BSGS step → engine move (exact inverse of `moveToStep`). */
+  stepToMove(s: WordStep): M;
+  /** Parse a scramble/alg string into engine moves. */
+  parse(text: string): M[];
+  /** Print engine moves to a string the engine's twister can replay. */
+  toString(moves: M[]): string;
+  /** Optional: collapse redundant consecutive turns (shortens solver output). */
+  reduce?(text: string): string;
+}
+
+export class PgEngineBinding<M> {
+  readonly backbone: PgBackbone;
+  private readonly group: PgGroup;
+  private readonly gens: PGTransform[];
+  private readonly id: PGTransform;
+  private state: PGTransform;
+  /** Number of moves currently mirrored into the state. */
+  moveCount = 0;
+
+  constructor(private readonly bridge: MoveBridge<M>) {
+    this.backbone = new PgBackbone(bridge.pgName);
+    this.gens = bridge.engineGens(this.backbone.od);
+    this.group = new PgGroup(this.gens);
+    this.id = this.gens[0].e();
+    this.state = this.id;
+  }
+
+  /** |G| from the BSGS (independent of Schreier-Sims; same number). */
+  get order(): bigint {
+    return this.group.order;
+  }
+
+  reset(): void {
+    this.state = this.id;
+    this.moveCount = 0;
+  }
+
+  /** Mirror one engine move into the maintained group element. */
+  applyMove(m: M): void {
+    const s = this.bridge.moveToStep(m);
+    const g = s.inv ? this.gens[s.gi].inv() : this.gens[s.gi];
+    this.state = this.state.mul(g);
+    this.moveCount++;
+  }
+
+  /** Rebuild the state from a full move list (e.g. engine history.init + moves). */
+  rebuild(moves: M[]): void {
+    this.reset();
+    for (const m of moves) this.applyMove(m);
+  }
+
+  /** Rebuild from a scramble/alg string. */
+  rebuildFromString(text: string): void {
+    this.rebuild(this.bridge.parse(text));
+  }
+
+  /** Group-theoretic solved test (state is the identity of G). */
+  get solved(): boolean {
+    return this.state.equal(this.id);
+  }
+
+  /** Order of the current element (1 = solved); the number of repeats of the whole
+   *  current scramble that return to solved. */
+  currentOrder(): number {
+    return this.state.order();
+  }
+
+  /** A solution: engine moves that return the current state to solved, via BSGS
+   *  factorisation of the inverse (pure group theory). Reduced if the bridge supports
+   *  it. Empty when already solved. */
+  solveMoves(): M[] {
+    if (this.solved) return [];
+    const word = this.group.factor(this.state.inv());
+    return this.wordToMoves(word);
+  }
+
+  /** A real random-STATE scramble: a uniform-random element of G, as engine moves. */
+  scrambleMoves(): M[] {
+    const { word } = this.group.randomElement();
+    return this.wordToMoves(word);
+  }
+
+  /** Solution / scramble as a replayable string. */
+  solveString(): string {
+    return this.movesToString(this.solveMoves());
+  }
+  scrambleString(): string {
+    return this.movesToString(this.scrambleMoves());
+  }
+
+  facts(): PgGroupFacts {
+    return this.backbone.facts();
+  }
+
+  private wordToMoves(word: WordStep[]): M[] {
+    return word.map((s) => this.bridge.stepToMove(s));
+  }
+
+  private movesToString(moves: M[]): string {
+    const s = this.bridge.toString(moves);
+    return this.bridge.reduce ? this.bridge.reduce(s) : s;
+  }
+}
