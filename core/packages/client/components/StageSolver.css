@@ -163,14 +163,12 @@ html[data-theme='dark'] .stsv {
   background: var(--sv-surface);
   color: var(--sv-text-mute);
   border: 1px solid var(--sv-border);
-  text-decoration: line-through;
   transition: color 0.12s, border-color 0.12s, background 0.12s;
 }
 .stsv-mr-cell.is-on {
   color: var(--sv-accent);
   border-color: var(--sv-accent);
   background: var(--sv-accent-soft);
-  text-decoration: none;
 }
 .stsv-mr-reset {
   font: inherit;
