@@ -11,6 +11,9 @@ pub mod block223_solver;
 // chain:mallard 式链式 EO→DR→HTR→[FR]→Finish 编排(全自包含,native+wasm 双轨)。
 pub mod chain_solver;
 pub mod cross_solver;
+// cross restricted optimal:任意受限 54-move 集 + 中心朝向 + center_offset/max_rot 的最优十字 BFS。
+// 全自包含(运行时建表,无外部文件),native+wasm 双轨可编。
+pub mod cross_restrict_solver;
 // eoline / dr / htr / f2b:全自包含(微表现场建 / 复用 s1 表),native+wasm 双轨可编。
 pub mod dr_solver;
 pub mod eoline_solver;

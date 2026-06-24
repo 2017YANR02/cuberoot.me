@@ -20,7 +20,7 @@ import { Loader2, Copy, Check, Info, X } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
 import { SubsetColorPicker, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
-import { FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
+import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
 import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
 import { rotateSolutionY, Y_ROT_LABEL } from '@/lib/rotate-solution';
@@ -127,6 +127,20 @@ const NO_LIMIT_CAP = 100000;
 // move 索引:U=0..2 D=3..5 L=6..8 R=9..11 F=12..14 B=15..17;面 i 的三个 move 位 = 0b111<<(3i)。
 const MOVE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
 const ALL_MOVE_MASK = (1 << 18) - 1; // 0x3FFFF = 全部允许
+
+// 纯十字阶段的「全 18 格步法限制」(对齐 or18 /solver 全网格):6 面 + 6 宽 + 3 中层 + 3 旋转。
+// 走 CrossRestrictSolverWasm 的 54-move BFS(or18 式中心追踪 + 真转体);每格 = 该记号的 3 个变体
+// (m, m2, m'),对应 54-move 索引 [3i, 3i+2]:面 0-17 / 宽 18-35 / 中层 36-44 / 旋转 45-53。
+const CR_CELLS = ['U', 'D', 'L', 'R', 'F', 'B', 'u', 'd', 'l', 'r', 'f', 'b', 'M', 'E', 'S', 'x', 'y', 'z'] as const;
+const CR_ROWS: { key: string; cells: number[] }[] = [
+  { key: 'face', cells: [0, 1, 2, 3, 4, 5] },
+  { key: 'wide', cells: [6, 7, 8, 9, 10, 11] },
+  { key: 'slice', cells: [12, 13, 14] },
+  { key: 'rot', cells: [15, 16, 17] },
+];
+// 默认 = 仅 6 面允许(= 标准 HTM 十字),宽/中层/旋转需用户主动开。
+const CR_DEFAULT: boolean[] = [true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false];
+const CR_FACE_LO = (1 << 18) - 1; // 仅 6 面全开时的 lo(hi=0)= 未受限基线
 
 // F2L 槽位标签(对齐 solver wasm SLOT_LABELS:BL=0 BR=1 FR=2 FL=3)。
 const SLOT_LABELS = ['BL', 'BR', 'FR', 'FL'] as const;
@@ -287,12 +301,49 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     allowedFaces.forEach((on, i) => { if (on) m |= 0b111 << (3 * i); });
     return m >>> 0;
   }, [allowedFaces]);
-  const restricted = maskSupported && moveMask !== ALL_MOVE_MASK;
   // 经 ref 喂给 computeAll/fetchMoves(不进它们的 deps,避免回调身份抖动);recompute 由专门 effect 驱动。
   const moveMaskRef = useRef(moveMask);
   moveMaskRef.current = moveMask;
+
+  // —— 纯十字阶段(std stage 0)的「全 18 格」受限:走 CrossRestrictSolverWasm(54-move BFS)。
+  // 仅此阶段铺满 18 格(6面+6宽+3中层+3旋转);其余方法/阶段沿用上面的 6 面 mask 引擎。
+  const isCrossStage = method === 'std' && stage === 0;
+  const [crCells, setCrCells] = useState<boolean[]>(() => CR_DEFAULT.slice());
+  // 18 格 → 54-bit allowed:格 i 覆盖 move [3i,3i+2];lo=低 32 位、hi=高 22 位。
+  const crMask = useMemo(() => {
+    let lo = 0, hi = 0;
+    crCells.forEach((on, i) => {
+      if (!on) return;
+      for (let b = 3 * i; b < 3 * i + 3; b++) {
+        if (b < 32) lo |= 1 << b; else hi |= 1 << (b - 32);
+      }
+    });
+    return { lo: lo >>> 0, hi: hi >>> 0 };
+  }, [crCells]);
+  // 任一旋转格(x/y/z = 格 15/16/17)开 → 允许解里含整体旋转(上限 2,够「换面触达」又不爆 BFS)。
+  const crMaxRot = useMemo(() => (crCells[15] || crCells[16] || crCells[17] ? 2 : 0), [crCells]);
+  // 受限 = 偏离「仅 6 面」基线(lo=0x3FFFF, hi=0)。
+  const crRestricted = isCrossStage && (crMask.lo !== CR_FACE_LO || crMask.hi !== 0);
+  const crMaskRef = useRef(crMask);
+  crMaskRef.current = crMask;
+  const crMaxRotRef = useRef(crMaxRot);
+  crMaxRotRef.current = crMaxRot;
+  // 用此 cross 受限路径求解(纯十字阶段且偏离基线)→ computeAll/fetchMoves 路由到 cr 池。
+  const useCrRef = useRef(isCrossStage && crRestricted);
+  useCrRef.current = isCrossStage && crRestricted;
+
+  // 统一「受限」语义(驱动:关闭 y-省力转体、无解文案):6 面 mask 受限 或 cross 18 格受限。
+  const restricted = (maskSupported && moveMask !== ALL_MOVE_MASK) || crRestricted;
   const restrictedRef = useRef(restricted);
   restrictedRef.current = restricted;
+
+  // cross 受限专用轻量池(零表,worker 构造现场建 coord/center transition);惰性建、卸载即终止。
+  const crPoolRef = useRef<RustCrossPool | null>(null);
+  const getCrPool = useCallback(() => {
+    if (!crPoolRef.current) crPoolRef.current = createRustCrossPool(Math.min(3, poolSizeForDevice()), 'cross_restrict');
+    return crPoolRef.current;
+  }, []);
+  useEffect(() => () => { crPoolRef.current?.terminate(); crPoolRef.current = null; }, []);
 
   const poolRef = useRef<RustCrossPool | null>(null);
   // 共享 3D 播放器实例(TwistySection 回填),供解法行 ▷ 跳到开头并播放。
@@ -377,12 +428,22 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     const kind = kindOf(method, stages[stage] ?? '');
     try {
       if (kind === 'std') {
+        const useCr = useCrRef.current; // 纯十字 18 格受限 → CrossRestrictSolver(54-move)引擎
+        const crPool = useCr ? getCrPool() : null;
         await Promise.all(FACES.map(async (_f, f) => {
           try {
-            const r = await pool.solveFace(scr, stage, f, restrictedRef.current ? moveMaskRef.current : undefined);
-            if (computeReq.current !== my) return;
-            result[f] = r.value;
-            setCounts((prev) => { const n = prev.slice(); n[f] = r.value; return n; });
+            if (useCr && crPool) {
+              const r = await crPool.solveCrossRestrictFace(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current);
+              if (computeReq.current !== my) return;
+              // 受限无解 → 0xFFFFFFFF 哨兵(isSentinel 命中 → 显 '-',且不入 bestVal/自动选最优)。
+              result[f] = r.value;
+              setCounts((prev) => { const n = prev.slice(); n[f] = r.value; return n; });
+            } else {
+              const r = await pool.solveFace(scr, stage, f, restrictedRef.current ? moveMaskRef.current : undefined);
+              if (computeReq.current !== my) return;
+              result[f] = r.value;
+              setCounts((prev) => { const n = prev.slice(); n[f] = r.value; return n; });
+            }
           } catch { /* skip face */ }
         }));
       } else {
@@ -464,7 +525,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       // 引擎按长度升序收集、够数即停。条数填不满时(短解不够)如实返回更少。
       const movesMask = restrictedRef.current ? moveMaskRef.current : undefined;
       const res = kind === 'std'
-        ? await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: movesMask })
+        ? (useCrRef.current
+          ? await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current)
+          : await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: movesMask }))
         : kind === 'f2leo'
           ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap, combo, mask: movesMask })
           : kind === 'block222'
@@ -600,7 +663,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     if (statusRef.current !== 'ready') return;
     void compute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moveMask, maskSupported]);
+  }, [moveMask, maskSupported, crMask.lo, crMask.hi, crMaxRot, isCrossStage]);
 
   // 信息弹窗:Esc 关。
   useEffect(() => {
@@ -774,8 +837,42 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         </button>
       </div>
 
-      {/* 步法限制(仅纯十字阶段;6 个 move 面 U D L R F B 勾选,默认全开)。 */}
-      {maskSupported && (
+      {/* 步法限制:纯十字阶段(std stage0)铺全 18 格(6面+6宽+3中层+3旋转,走 54-move BFS);
+          其余支持的方法/阶段保留 6 面 mask 勾选。 */}
+      {isCrossStage ? (
+        <div className="stsv-moverestrict stsv-mr-18">
+          <span className="stsv-mr-label">{t('步法限制', 'Allowed moves')}</span>
+          <div className="stsv-mr-rows">
+            {CR_ROWS.map((row) => (
+              <div key={row.key} className="stsv-mr-grid" role="group" aria-label={t('步法限制', 'Allowed moves')}>
+                {row.cells.map((ci) => (
+                  <button
+                    key={ci}
+                    type="button"
+                    className={`stsv-mr-cell${crCells[ci] ? ' is-on' : ''}`}
+                    onClick={() => setCrCells((prev) => prev.map((v, j) => (j === ci ? !v : v)))}
+                    aria-pressed={crCells[ci]}
+                    title={crCells[ci]
+                      ? t(`允许 ${CR_CELLS[ci]}(点击禁用)`, `${CR_CELLS[ci]} allowed (click to forbid)`)
+                      : t(`已禁用 ${CR_CELLS[ci]}(点击允许)`, `${CR_CELLS[ci]} forbidden (click to allow)`)}
+                  >
+                    {CR_CELLS[ci]}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+          {crRestricted && (
+            <button
+              type="button"
+              className="stsv-mr-reset"
+              onClick={() => setCrCells(CR_DEFAULT.slice())}
+            >
+              {t('全选', 'All')}
+            </button>
+          )}
+        </div>
+      ) : maskSupported ? (
         <div className="stsv-moverestrict">
           <span className="stsv-mr-label">{t('步法限制', 'Allowed moves')}{singleFace ? t('(限单面)', ' (one face)') : ''}</span>
           <div className="stsv-mr-grid" role="group" aria-label={t('步法限制', 'Allowed moves')}>
@@ -813,7 +910,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             </button>
           )}
         </div>
-      )}
+      ) : null}
 
       {status === 'loading' && (
         <div className="stsv-loading">

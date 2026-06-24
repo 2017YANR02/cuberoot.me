@@ -13,6 +13,7 @@ use wasm_bindgen::prelude::*;
 use crate::block222_solver::{block_label, Block222Solver, Y_NAMES};
 use crate::block223_solver::{block223_label, Block223Solver};
 use crate::chain_solver::{chain_json, parse_chain_config, ChainSolver};
+use crate::cross_restrict_solver::{CrossRestrictSolver, MOVE_NAMES_54};
 use crate::cross_solver::CrossSolver;
 use crate::cube_common::{state_space, string_to_alg, MOVE_NAMES};
 use crate::dr_solver::{dr_axis_label, DrSolver};
@@ -1518,5 +1519,60 @@ impl VariantSolverWasm {
             }
             _ => sols_json(u32::MAX, &[]),
         }
+    }
+}
+
+/// Cross restricted optimal 求解器(任意受限 54-move 集 + 中心朝向)。
+/// 运行时建表(无外部表文件):coord_trans(190080*54)+ center_trans(24*54),
+/// 构造即建好。`solve_cross_restricted` 走 BFS,首达即最优。
+#[wasm_bindgen]
+pub struct CrossRestrictSolverWasm {
+    solver: CrossRestrictSolver,
+}
+
+#[wasm_bindgen]
+impl CrossRestrictSolverWasm {
+    /// 无需任何表字节,构造时现场建全部 transition 表。
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> CrossRestrictSolverWasm {
+        CrossRestrictSolverWasm {
+            solver: CrossRestrictSolver::new(),
+        }
+    }
+
+    /// 受限最优十字求解(从角度 `face` 看的十字),返回空格分隔的步骤串("" = 受限下不可解)。
+    /// `scramble`:面动打乱串(只认 18 面动名)。
+    /// `face`:0..5 视角(对应 analyzer 的 ROTS = ["","z2","z'","z","x'","x"]);
+    ///         等价于 `search_cross(alg, ROTS[face])`,内部走逐 move 共轭。
+    /// 54-bit allowed mask = (allowed_hi << 32) | allowed_lo(bit m = 1 表示 move m 允许)。
+    /// `max_rot_count`:整体旋转动(x/y/z)在解里的最大个数。
+    /// center_offset 固定 = [0](终态中心必须复原)。
+    pub fn solve_cross_restricted(
+        &self,
+        scramble: &str,
+        face: u32,
+        allowed_lo: u32,
+        allowed_hi: u32,
+        max_rot_count: u32,
+    ) -> String {
+        let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
+        let sc = CrossRestrictSolver::parse_scramble(scramble);
+        match self
+            .solver
+            .solve_face_restricted(&sc, face as usize, allowed, max_rot_count)
+        {
+            Some(seq) => seq
+                .iter()
+                .map(|&m| MOVE_NAMES_54[m])
+                .collect::<Vec<_>>()
+                .join(" "),
+            None => String::new(),
+        }
+    }
+}
+
+impl Default for CrossRestrictSolverWasm {
+    fn default() -> Self {
+        Self::new()
     }
 }

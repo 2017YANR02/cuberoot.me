@@ -47,6 +47,30 @@ export class ChainSolverWasm {
     solve_chain(scramble: string, config_json: string): string;
 }
 
+/**
+ * Cross restricted optimal 求解器(任意受限 54-move 集 + 中心朝向)。
+ * 运行时建表(无外部表文件):coord_trans(190080*54)+ center_trans(24*54),
+ * 构造即建好。`solve_cross_restricted` 走 BFS,首达即最优。
+ */
+export class CrossRestrictSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * 无需任何表字节,构造时现场建全部 transition 表。
+     */
+    constructor();
+    /**
+     * 受限最优十字求解(从角度 `face` 看的十字),返回空格分隔的步骤串("" = 受限下不可解)。
+     * `scramble`:面动打乱串(只认 18 面动名)。
+     * `face`:0..5 视角(对应 analyzer 的 ROTS = ["","z2","z'","z","x'","x"]);
+     *         等价于 `search_cross(alg, ROTS[face])`,内部走逐 move 共轭。
+     * 54-bit allowed mask = (allowed_hi << 32) | allowed_lo(bit m = 1 表示 move m 允许)。
+     * `max_rot_count`:整体旋转动(x/y/z)在解里的最大个数。
+     * center_offset 固定 = [0](终态中心必须复原)。
+     */
+    solve_cross_restricted(scramble: string, face: number, allowed_lo: number, allowed_hi: number, max_rot_count: number): string;
+}
+
 export class CrossSolverWasm {
     free(): void;
     [Symbol.dispose](): void;
@@ -387,6 +411,7 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_block222solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_chainsolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_crossrestrictsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_crosssolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_cube222solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_eodrsolverwasm_free: (a: number, b: number) => void;
@@ -404,6 +429,8 @@ export interface InitOutput {
     readonly block222solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly chainsolverwasm_new: () => number;
     readonly chainsolverwasm_solve_chain: (a: number, b: number, c: number, d: number, e: number) => [number, number];
+    readonly crossrestrictsolverwasm_new: () => number;
+    readonly crossrestrictsolverwasm_solve_cross_restricted: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
     readonly crosssolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => number;
     readonly crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];
