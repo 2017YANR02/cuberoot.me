@@ -1613,9 +1613,26 @@ impl Default for CrossRestrictSolverWasm {
     }
 }
 
-/// 受限 xcross 单 (face,slot) IDA* 节点预算:超此即放弃该格(返回无解 -1),兜底极弱受限集
+/// 受限 单 (face,组合) IDA* 节点预算:超此即放弃该格(返回 -2 太宽),兜底极弱受限集
 /// (如纯 {U,R,M})下「联合不可解」状态的深搜。紧/常规限制远在预算内出精确解。
+/// 单视角枚举(用户点了某面、愿意等)用满预算;网格(6 面齐算、每次切格重算)按下方均摊压低。
 const XCR_NODE_LIMIT: u64 = 1_500_000;
+
+/// 网格(概览)总节点预算目标:6 视角 × C(4,k) 组合均摊到每 (face,组合)。k≥2(xxcross/xxxcross/
+/// F2L)组合多 + 多对启发式偏松易爆炸,不压低则一次切格要十几秒;均摊后整张网格 ≈3-4s。k≤1(xcross)
+/// 维持满预算 XCR_NODE_LIMIT 不回归。`per_combo = max(下限, 目标/(6×组合数))`。
+const XCR_GRID_TARGET_TOTAL: u64 = 12_000_000;
+const XCR_GRID_MIN_PER_COMBO: u64 = 300_000;
+
+/// C(4,k):k 对在 4 个 F2L 槽里的组合数(网格预算均摊用)。
+fn n_combos(k: u32) -> u64 {
+    match k {
+        1 => 4,
+        2 => 6,
+        3 => 4,
+        _ => 1, // k=0(纯十字,不走本引擎)/ k=4(满 F2L)均 1
+    }
+}
 
 /// XCross restricted optimal 求解器(任意受限 54-move 集 + 中心朝向追踪)。
 /// 运行时建表(无外部表文件):物理 54-move cross/corner/edge/center transition + 双 PDB
@@ -1637,8 +1654,9 @@ impl XCrossRestrictSolverWasm {
         }
     }
 
-    /// 6 视角受限最优 xcross 步数网格(PDB 只建一次,6 视角 × 4 槽共用),返回 JSON 数组
-    /// `[l0,l1,l2,l3,l4,l5]`,-1 = 该视角受限下不可解。每格 = 该面 4 个 F2L 槽的最小步数。
+    /// 6 视角受限最优网格(PDB 只建一次,6 视角 × C(4,k) 组合共用),返回 JSON 数组
+    /// `[l0,l1,l2,l3,l4,l5]`,-1 = 真无解 / -2 = 限制过宽未在预算内判定。每格 = 该面在「k 对组合」
+    /// 上的最小步数(`k`=同时归位的 F2L 对数:1 xcross / 2 xxcross / 3 xxxcross / 4 F2L)。
     /// 54-bit allowed mask = (allowed_hi << 32) | allowed_lo;`max_rot_count` = 解里整体旋转动上限。
     pub fn solve_xcross_restricted_grid(
         &self,
@@ -1646,12 +1664,18 @@ impl XCrossRestrictSolverWasm {
         allowed_lo: u32,
         allowed_hi: u32,
         max_rot_count: u32,
+        k: u32,
     ) -> String {
         let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
         let sc = CrossRestrictSolver::parse_scramble(scramble);
-        // 每 (face,slot) 独立节点预算兜底极弱受限集深搜;常规限制远在预算内出精确解。
+        // 网格预算均摊:k≤1(xcross)维持满预算;k≥2 按组合数压低,整张网格 ≈3-4s 不卡死。
+        let per_combo = if k <= 1 {
+            XCR_NODE_LIMIT
+        } else {
+            (XCR_GRID_TARGET_TOTAL / (6 * n_combos(k))).max(XCR_GRID_MIN_PER_COMBO)
+        };
         let grid = self.solver.solve_xcross_restricted_grid_budgeted(
-            &sc, allowed, max_rot_count, XCR_NODE_LIMIT,
+            &sc, allowed, max_rot_count, per_combo, k as usize,
         );
         let arr = grid
             .iter()
@@ -1661,9 +1685,9 @@ impl XCrossRestrictSolverWasm {
         format!("[{}]", arr)
     }
 
-    /// 受限最优 xcross「多解枚举」:返回 JSON `{len, sols:[{m,c}]}`,解按长度升序、
-    /// 长度 ∈ [最优, 最优+extra]、最多 `cap` 条;空集 → len = u32::MAX 哨兵。`c` 恒空串
-    /// (受限 xcross 暂不标 F2L 槽,跨槽取最优枚举)。参数同 grid + face/extra/cap。
+    /// 受限最优「多解枚举」:返回 JSON `{len, sols:[{m,c}]}`,解按长度升序、长度 ∈ [最优, 最优+extra]、
+    /// 最多 `cap` 条;空集 → len = u32::MAX 哨兵。`c` 恒空串(阶段已隐含对数,组合由槽位下拉指定)。
+    /// `k` = 同时归位的 F2L 对数;`combo` = 逗号分隔的固定槽集(空串=自动枚举全部 C(4,k) 组合)。
     #[allow(clippy::too_many_arguments)]
     pub fn solve_xcross_restricted_moves(
         &self,
@@ -1674,11 +1698,25 @@ impl XCrossRestrictSolverWasm {
         max_rot_count: u32,
         extra: u32,
         cap: u32,
+        k: u32,
+        combo: &str,
     ) -> String {
         let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
         let sc = CrossRestrictSolver::parse_scramble(scramble);
+        let combo_v: Option<Vec<usize>> = if combo.trim().is_empty() {
+            None
+        } else {
+            Some(
+                combo
+                    .split(',')
+                    .filter_map(|t| t.trim().parse::<usize>().ok())
+                    .filter(|&i| i < 4)
+                    .collect(),
+            )
+        };
         let sols = self.solver.solve_xcross_restricted_enum_budgeted(
             &sc, face as usize, allowed, max_rot_count, extra, cap as usize, XCR_NODE_LIMIT,
+            k as usize, combo_v,
         );
         if sols.is_empty() {
             return sols_json(u32::MAX, &[]);

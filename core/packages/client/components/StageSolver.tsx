@@ -308,11 +308,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   }, [allowedFaces]);
 
   // —— 「全 18 格」受限阶段:纯十字(std stage 0)走 CrossRestrictSolverWasm(54-move BFS),
-  // xcross(std stage 1)走 XCrossRestrictSolverWasm(54-move + 中心追踪 + 双 PDB IDA*)。
-  // 这两个阶段铺满 18 格(6面+6宽+3中层+3旋转);其余方法/阶段沿用上面的 6 面 mask 引擎。
+  // xcross/xxcross/xxxcross/F2L(std stage 1..4)走 XCrossRestrictSolverWasm(54-move + 中心追踪 +
+  // 多对 PDB IDA*,k=stage 对同时归位)。std 全阶段都铺满 18 格(6面+6宽+3中层+3旋转);其余方法沿用
+  // 上面的 6 面 mask 引擎。纯 6 面子集仍走老快引擎(零回归),仅宽/中层/旋转才落 54-move 受限引擎。
   const isCrossStage = method === 'std' && stage === 0;
-  const isXCrossStage = method === 'std' && stage === 1;
-  const isGridStage = isCrossStage || isXCrossStage; // 渲 18 格 + 走 54-move 受限引擎的阶段
+  const isXfStage = method === 'std' && stage >= 1; // xcross/xxcross/xxxcross/F2L:k=stage 对
+  const isGridStage = isCrossStage || isXfStage; // 渲 18 格 + 走 54-move 受限引擎的阶段
   const [crCells, setCrCells] = useState<boolean[]>(() => CR_DEFAULT.slice());
   // 18 格 → 54-bit allowed:格 i 覆盖 move [3i,3i+2];lo=低 32 位、hi=高 22 位。
   const crMask = useMemo(() => {
@@ -452,10 +453,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     const wall = performance.now();
     const kind = kindOf(method, stages[stage] ?? '');
     try {
-      if (kind === 'std' && isXCrossStage && useCrRef.current) {
-        // xcross 18 格受限 → XCrossRestrictSolver(54-move + 中心追踪)。grid 单调用:PDB 只建一次,
-        // 6 视角 × 4 槽共用(远优于逐面各自重建表)。受限无解视角 → 0xFFFFFFFF 哨兵。
-        const vals = await getXcrPool().solveXCrossRestrictGrid(scr, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current);
+      if (kind === 'std' && isXfStage && useCrRef.current) {
+        // xcross/xxcross/xxxcross/F2L 18 格受限 → XCrossRestrictSolver(54-move + 中心追踪 + 多对)。
+        // grid 单调用:PDB 只建一次,6 视角 × C(4,k) 组合共用。k=stage 对;无解 0xFFFFFFFF、太宽 0xFFFFFFFE。
+        const vals = await getXcrPool().solveXCrossRestrictGrid(scr, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, stage);
         if (computeReq.current === my) {
           for (let f = 0; f < 6; f++) result[f] = vals[f] ?? null;
           setCounts(result.slice());
@@ -559,8 +560,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       const movesMask = activeMaskRef.current;
       const res = kind === 'std'
         ? (useCrRef.current
-          ? (isXCrossStage
-            ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap)
+          ? (isXfStage
+            ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap, stage, combo)
             : await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap))
           : await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: movesMask }))
         : kind === 'f2leo'
@@ -872,8 +873,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         </button>
       </div>
 
-      {/* 步法限制:cross(std stage0)/ xcross(std stage1)铺全 18 格(6面+6宽+3中层+3旋转,
-          走 54-move 受限引擎);其余支持的方法/阶段保留 6 面 mask 勾选。 */}
+      {/* 步法限制:std 全阶段(cross/xcross/xxcross/xxxcross/F2L)铺全 18 格(6面+6宽+3中层+3旋转,
+          宽/中层/旋转走 54-move 受限引擎,纯 6 面仍走老快引擎零回归);其余方法保留 6 面 mask 勾选。 */}
       {isGridStage ? (
         <div className="stsv-moverestrict stsv-mr-18">
           <span className="stsv-mr-label">{t('步法限制', 'Allowed moves')}</span>

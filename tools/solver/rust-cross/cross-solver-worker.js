@@ -176,7 +176,7 @@ self.onmessage = async (e) => {
       if (!xcrossRestrictSolver) throw new Error('xcross_restrict solver not initialized');
       const t0 = performance.now();
       const json = xcrossRestrictSolver.solve_xcross_restricted_grid(
-        msg.scramble, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0,
+        msg.scramble, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.k | 0,
       );
       const arr = JSON.parse(json).map((v) => (v === -2 ? 0xfffffffe : v < 0 ? 0xffffffff : v));
       self.postMessage({ type: 'xcr_grid', id: msg.id, values: arr, ms: performance.now() - t0 });
@@ -185,7 +185,7 @@ self.onmessage = async (e) => {
       if (!xcrossRestrictSolver) throw new Error('xcross_restrict solver not initialized');
       const t0 = performance.now();
       const json = xcrossRestrictSolver.solve_xcross_restricted_moves(
-        msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.extra ?? 2, msg.cap ?? 10,
+        msg.scramble, msg.face | 0, msg.lo >>> 0, msg.hi >>> 0, msg.maxRot | 0, msg.extra ?? 2, msg.cap ?? 10, msg.k | 0, msg.combo ?? '',
       );
       self.postMessage({ type: 'xcr_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     } else if (msg.type === 'f2leo') {
