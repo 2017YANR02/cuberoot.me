@@ -1,0 +1,103 @@
+// Vendored from cubing.js (https://github.com/cubing/cubing.js) v0.63.3 —
+// the `puzzle-geometry` subsystem (group theory + geometry compiler) by
+// Tomas Rokicki et al. Brought into this repo with the authors' permission.
+// Licensed MPL-2.0 (cubing.js is dual "MPL-2.0 OR GPL-3.0-or-later"; used here
+// under MPL-2.0, https://mozilla.org/MPL/2.0/). Original: src/cubing/puzzle-geometry/colors.ts
+// Only change vs upstream: external `../alg`/`../kpuzzle` imports repointed to
+// the published `cubing/alg` & `cubing/kpuzzle` (Move/QuantumMove + KPuzzle types).
+
+export enum PGColors {
+  White = "#ffffff",
+  Orange = "#ff8000",
+  Green = "#44ee00",
+  Red = "#ff0000",
+  Blue = "#2266ff",
+  Yellow = "#f4f400",
+
+  LightGray = "#aaaaaa",
+  MediumGray = "#888888",
+  DarkGray = "#5c5c5c",
+
+  Purple = "#8800dd",
+  Cream = "#e8d0a0",
+  Pink = "#ff66cc",
+
+  BoldBlue = "#0000ff",
+  Aqua = "#3399ff",
+  DarkGreen = "#008800",
+  Lime = "#99ff00",
+  Teal = "#007a89",
+  Brown = "#7d3b11",
+  Lavender = "#b9a1ff",
+  SeaGreen = "#5ec4b6",
+  harcoal = "#292929",
+  Burgundy = "#980000",
+  Cerise = "#d41f69",
+}
+
+// TODO: change this back to a const JSON definition.
+export function defaultPlatonicColorSchemes(): any {
+  return {
+    // the colors should use the same naming convention as the nets, above.
+    4: {
+      F: PGColors.Green,
+      D: PGColors.Yellow,
+      L: PGColors.Red,
+      R: PGColors.Blue,
+    },
+    6: {
+      U: PGColors.White,
+      F: PGColors.Green,
+      R: PGColors.Red,
+      D: PGColors.Yellow,
+      B: PGColors.Blue,
+      L: PGColors.Orange,
+    },
+    8: {
+      U: PGColors.White,
+      F: PGColors.Green,
+      R: PGColors.Red,
+      D: PGColors.Yellow,
+      BB: PGColors.Blue,
+      L: PGColors.Purple,
+      BL: PGColors.Orange,
+      BR: PGColors.MediumGray,
+    },
+    12: {
+      U: PGColors.White,
+      F: PGColors.DarkGreen,
+      R: PGColors.Red,
+      C: PGColors.Cream,
+      A: PGColors.Aqua,
+      L: PGColors.Purple,
+      E: PGColors.Pink,
+      BF: PGColors.Lime,
+      BR: PGColors.BoldBlue,
+      BL: PGColors.Yellow,
+      I: PGColors.Orange,
+      D: PGColors.MediumGray,
+    },
+    20: {
+      R: PGColors.Yellow,
+      C: PGColors.Cerise,
+      F: PGColors.DarkGreen,
+      E: PGColors.DarkGray,
+      L: PGColors.Purple,
+      U: PGColors.White,
+      A: PGColors.Teal,
+      G: PGColors.Red,
+      I: PGColors.Brown,
+      S: PGColors.Lavender,
+      H: PGColors.Aqua,
+      J: PGColors.SeaGreen,
+      B: PGColors.Green,
+      K: PGColors.Cream,
+      D: PGColors.LightGray,
+      M: PGColors.Pink,
+      O: PGColors.harcoal,
+      P: PGColors.Orange,
+      N: PGColors.Burgundy,
+      Q: PGColors.BoldBlue,
+    },
+  };
+}
