@@ -23,6 +23,7 @@ export const chainsolverwasm_new: () => number;
 export const chainsolverwasm_solve_chain: (a: number, b: number, c: number, d: number, e: number) => [number, number];
 export const crossrestrictsolverwasm_new: () => number;
 export const crossrestrictsolverwasm_solve_cross_restricted: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+export const crossrestrictsolverwasm_solve_cross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
 export const crosssolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => number;
 export const crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
 export const crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];

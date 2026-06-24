@@ -1569,6 +1569,41 @@ impl CrossRestrictSolverWasm {
             None => String::new(),
         }
     }
+
+    /// 受限最优十字「多解枚举」(对齐 analyzer「最大数量」):返回 JSON `{len, sols:[{m,c}]}`,
+    /// 解按长度升序、长度 ∈ [最优, 最优+extra]、最多 `cap` 条;空集 → len = u32::MAX 哨兵。
+    /// `c` 恒空串(cross 无 F2L 槽)。参数同 `solve_cross_restricted` + extra/cap。
+    #[allow(clippy::too_many_arguments)]
+    pub fn solve_cross_restricted_moves(
+        &self,
+        scramble: &str,
+        face: u32,
+        allowed_lo: u32,
+        allowed_hi: u32,
+        max_rot_count: u32,
+        extra: u32,
+        cap: u32,
+    ) -> String {
+        let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
+        let sc = CrossRestrictSolver::parse_scramble(scramble);
+        let sols = self.solver.solve_face_restricted_enum(
+            &sc, face as usize, allowed, max_rot_count, extra, cap as usize,
+        );
+        if sols.is_empty() {
+            return sols_json(u32::MAX, &[]);
+        }
+        let len = sols[0].len() as u32;
+        let items: Vec<(String, String)> = sols
+            .iter()
+            .map(|s| {
+                (
+                    s.iter().map(|&m| MOVE_NAMES_54[m]).collect::<Vec<_>>().join(" "),
+                    String::new(),
+                )
+            })
+            .collect();
+        sols_json(len, &items)
+    }
 }
 
 impl Default for CrossRestrictSolverWasm {

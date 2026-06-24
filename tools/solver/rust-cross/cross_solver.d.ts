@@ -69,6 +69,12 @@ export class CrossRestrictSolverWasm {
      * center_offset 固定 = [0](终态中心必须复原)。
      */
     solve_cross_restricted(scramble: string, face: number, allowed_lo: number, allowed_hi: number, max_rot_count: number): string;
+    /**
+     * 受限最优十字「多解枚举」(对齐 analyzer「最大数量」):返回 JSON `{len, sols:[{m,c}]}`,
+     * 解按长度升序、长度 ∈ [最优, 最优+extra]、最多 `cap` 条;空集 → len = u32::MAX 哨兵。
+     * `c` 恒空串(cross 无 F2L 槽)。参数同 `solve_cross_restricted` + extra/cap。
+     */
+    solve_cross_restricted_moves(scramble: string, face: number, allowed_lo: number, allowed_hi: number, max_rot_count: number, extra: number, cap: number): string;
 }
 
 export class CrossSolverWasm {
@@ -431,6 +437,7 @@ export interface InitOutput {
     readonly chainsolverwasm_solve_chain: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly crossrestrictsolverwasm_new: () => number;
     readonly crossrestrictsolverwasm_solve_cross_restricted: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+    readonly crossrestrictsolverwasm_solve_cross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
     readonly crosssolverwasm_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => number;
     readonly crosssolverwasm_solve: (a: number, b: number, c: number, d: number) => [number, number];
     readonly crosssolverwasm_solve_cumulative: (a: number, b: number, c: number, d: number) => [number, number];

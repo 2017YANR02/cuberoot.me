@@ -805,6 +805,140 @@ impl CrossRestrictSolver {
         self.solve_from(coord, center, allowed, &[0], max_rot_count)
     }
 
+    /// 受限最优十字「多解枚举」:返回长度在 [最优, 最优+extra] 内、最多 `cap` 条解(按长度升序)。
+    ///
+    /// 用于 analyzer 的「最大数量」(旧引擎 enumerate_solutions 的 cr 版)。做法:
+    /// ① 从目标(solved coord, center 0)反向 BFS 建可采纳下界表 `h`(忽略 rot 预算;因每个
+    ///    步法格 = {m,m2,m'} 对逆封闭 ⇒ 受限 move 图无向 ⇒ 正向 BFS 距离 = 到目标距离);
+    /// ② 用 `solve_from` 取**精确最优** d(尊重 rot 预算);
+    /// ③ h 剪枝 DFS 收集 depth ∈ [d, d+extra] 的到达解,同格相邻剪枝(连着两步同一格必可约,
+    ///    不丢最优/近最优),旋转步受 max_rot_count 限;收满 collect_cap 即停,排序后截到 cap。
+    pub fn solve_face_restricted_enum(
+        &self,
+        scramble: &[usize],
+        face: usize,
+        allowed: u64,
+        max_rot_count: u32,
+        extra: u32,
+        cap: usize,
+    ) -> Vec<Vec<usize>> {
+        let conj = Self::conjugate_scramble(scramble, ROTS_FACE[face.min(5)]);
+        let mut start_coord = self.solved;
+        let mut start_center = 0u8;
+        for &m in &conj {
+            start_coord = self.step_coord(start_coord, m);
+            start_center = self.step_center(start_center, m);
+        }
+        let allowed_moves: Vec<usize> = (0..54).filter(|&m| (allowed >> m) & 1 == 1).collect();
+        let goal_centers = [0u8]; // center_offset = [0]
+
+        // 精确最优(尊重 rot 预算);无解 → 空。
+        let opt = match self.solve_from(start_coord, start_center, allowed, &goal_centers, max_rot_count) {
+            Some(p) => p.len() as u32,
+            None => return Vec::new(),
+        };
+
+        // h 下界表:目标反向 BFS(over coord×center,忽略 rot)。
+        const INF: u8 = u8::MAX;
+        let mut h = vec![INF; CROSS_COORD * 24];
+        let mut q: std::collections::VecDeque<(u32, u8)> = std::collections::VecDeque::new();
+        for &gc in &goal_centers {
+            let id = self.solved as usize * 24 + gc as usize;
+            if h[id] == INF {
+                h[id] = 0;
+                q.push_back((self.solved, gc));
+            }
+        }
+        while let Some((coord, center)) = q.pop_front() {
+            let d = h[coord as usize * 24 + center as usize];
+            if d as u32 >= opt + extra {
+                continue; // 超出可用预算的层不必再扩(h 只需到 limit)
+            }
+            for &m in &allowed_moves {
+                let nc = self.step_coord(coord, m);
+                let ncen = self.step_center(center, m);
+                let id = nc as usize * 24 + ncen as usize;
+                if h[id] == INF {
+                    h[id] = d + 1;
+                    q.push_back((nc, ncen));
+                }
+            }
+        }
+
+        // 迭代加深:lim 从 opt 逐层到 opt+extra,每层只记 depth==lim 的解 ⇒ 最短优先、绝不漏最优;
+        // 收满 cap 即停。每层 dfs_exact 遇「更早到达目标」即返回(防冗余 padding 解)。
+        let mut sols: Vec<Vec<usize>> = Vec::new();
+        for lim in opt..=opt + extra {
+            if sols.len() >= cap {
+                break;
+            }
+            let mut path: Vec<usize> = Vec::new();
+            self.dfs_exact(
+                start_coord, start_center, 0, 0, lim, &h, &allowed_moves, &goal_centers,
+                max_rot_count, &mut path, &mut sols, cap,
+            );
+        }
+        sols.truncate(cap);
+        sols
+    }
+
+    /// 定长 h 剪枝 DFS:只收集**长度恰为 `lim`** 的到达解(同格相邻剪枝、rot 预算、cap 上限)。
+    /// 遇更早(depth<lim)到达目标即返回(更短解由更小 lim 那趟收集,避免冗余 padding)。
+    #[allow(clippy::too_many_arguments)]
+    fn dfs_exact(
+        &self,
+        coord: u32,
+        center: u8,
+        rots: u32,
+        depth: u32,
+        lim: u32,
+        h: &[u8],
+        allowed_moves: &[usize],
+        goal_centers: &[u8],
+        max_rot: u32,
+        path: &mut Vec<usize>,
+        sols: &mut Vec<Vec<usize>>,
+        cap: usize,
+    ) {
+        if sols.len() >= cap {
+            return;
+        }
+        if coord == self.solved && goal_centers.contains(&center) {
+            if depth == lim {
+                sols.push(path.clone());
+            }
+            return; // 到达目标即止(更短解归更小 lim 趟;不延伸出冗余步)
+        }
+        if depth == lim {
+            return; // 到长度上限仍未达标
+        }
+        let hv = h[coord as usize * 24 + center as usize];
+        if hv == u8::MAX || depth + hv as u32 > lim {
+            return; // 不可达 / 剩余步数不够到目标
+        }
+        let prev_cell = path.last().map(|&m| m / 3);
+        for &m in allowed_moves {
+            if Some(m / 3) == prev_cell {
+                continue; // 同格相邻(必可约)剪枝
+            }
+            let is_rot = m >= 45;
+            if is_rot && rots + 1 > max_rot {
+                continue;
+            }
+            let nc = self.step_coord(coord, m);
+            let ncen = self.step_center(center, m);
+            path.push(m);
+            self.dfs_exact(
+                nc, ncen, rots + if is_rot { 1 } else { 0 }, depth + 1, lim, h,
+                allowed_moves, goal_centers, max_rot, path, sols, cap,
+            );
+            path.pop();
+            if sols.len() >= cap {
+                return;
+            }
+        }
+    }
+
     /// 把面动序列经 rotation 串逐 move 共轭(与 `cube_common::alg_rotation` 完全一致):
     /// 每个面动 `m`(面 = m/3)的面被 rotation 的面置换 `f` 重映射成 `3*f[m/3] + m%3`。
     /// rotation 串可含多个 token(如 "z' y"),依次应用。
@@ -1286,6 +1420,48 @@ mod tests {
             shorter_count > 0,
             "full 54-move never shortened any of 30 scrambles — suspicious"
         );
+    }
+
+    // ===== 多解枚举:全解有效、去重、长度 ∈ [opt,opt+2]、升序、首条 = 最优、且存在多解 =====
+
+    #[test]
+    fn enumerate_multiple_solutions_valid_sorted() {
+        let solver = CrossRestrictSolver::new();
+        let face_mask = mask_18_faces();
+        let mut saw_multi = false;
+        for seed in 0..20u64 {
+            let scramble = random_face_scramble(7000 + seed, 20);
+            let sols = solver.solve_face_restricted_enum(&scramble, 0, face_mask, 0, 2, 50);
+            assert!(!sols.is_empty(), "seed={} no solutions", seed);
+            let opt = solver.solve(&scramble, face_mask, &[0], 0).unwrap().len();
+            // 升序
+            for w in sols.windows(2) {
+                assert!(w[0].len() <= w[1].len(), "seed={} not sorted", seed);
+            }
+            // 长度 ∈ [opt, opt+2],首条 = 最优
+            assert_eq!(sols[0].len(), opt, "seed={} first not optimal", seed);
+            for s in &sols {
+                assert!(s.len() >= opt && s.len() <= opt + 2, "seed={} len {} opt {}", seed, s.len(), opt);
+            }
+            // 去重
+            let set: std::collections::HashSet<&Vec<usize>> = sols.iter().collect();
+            assert_eq!(set.len(), sols.len(), "seed={} duplicate solutions", seed);
+            // 每条独立 replay 校验真解十字 + 中心复原
+            for s in &sols {
+                let mut st = FullState::solved();
+                for &m in &scramble {
+                    st = st.apply(m);
+                }
+                for &m in s {
+                    st = st.apply(m);
+                }
+                assert!(st.cross_solved_centers_home(), "seed={} sol {:?} does not solve cross", seed, s);
+            }
+            if sols.len() > 1 {
+                saw_multi = true;
+            }
+        }
+        assert!(saw_multi, "enumeration never returned >1 solution — suspicious");
     }
 
     // ===== D. 受限不可解:只许 {U,U2,U'} 必返回 None 且不挂 =====
