@@ -411,6 +411,33 @@ export class VariantSolverWasm {
     solve_stage_masked(scramble: string, variant: number, stage: number, mask: number): Uint32Array;
 }
 
+/**
+ * XCross restricted optimal 求解器(任意受限 54-move 集 + 中心朝向追踪)。
+ * 运行时建表(无外部表文件):物理 54-move cross/corner/edge/center transition + 双 PDB
+ * (cross×center、pair×center,均按受限 move 集现场建),IDA* h=max(两 PDB)可采纳。
+ * 与 CrossRestrictSolverWasm 同样**零下载成本**:用到才在 worker 现场建表。
+ */
+export class XCrossRestrictSolverWasm {
+    free(): void;
+    [Symbol.dispose](): void;
+    /**
+     * 无需任何表字节,构造时现场建全部 transition 表(~41MB RAM,~110ms,仅 worker 内存)。
+     */
+    constructor();
+    /**
+     * 6 视角受限最优 xcross 步数网格(PDB 只建一次,6 视角 × 4 槽共用),返回 JSON 数组
+     * `[l0,l1,l2,l3,l4,l5]`,-1 = 该视角受限下不可解。每格 = 该面 4 个 F2L 槽的最小步数。
+     * 54-bit allowed mask = (allowed_hi << 32) | allowed_lo;`max_rot_count` = 解里整体旋转动上限。
+     */
+    solve_xcross_restricted_grid(scramble: string, allowed_lo: number, allowed_hi: number, max_rot_count: number): string;
+    /**
+     * 受限最优 xcross「多解枚举」:返回 JSON `{len, sols:[{m,c}]}`,解按长度升序、
+     * 长度 ∈ [最优, 最优+extra]、最多 `cap` 条;空集 → len = u32::MAX 哨兵。`c` 恒空串
+     * (受限 xcross 暂不标 F2L 槽,跨槽取最优枚举)。参数同 grid + face/extra/cap。
+     */
+    solve_xcross_restricted_moves(scramble: string, face: number, allowed_lo: number, allowed_hi: number, max_rot_count: number, extra: number, cap: number): string;
+}
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
@@ -429,6 +456,7 @@ export interface InitOutput {
     readonly __wbg_roux223solverwasm_free: (a: number, b: number) => void;
     readonly __wbg_skewbsolverwasm_free: (a: number, b: number) => void;
     readonly __wbg_variantsolverwasm_free: (a: number, b: number) => void;
+    readonly __wbg_xcrossrestrictsolverwasm_free: (a: number, b: number) => void;
     readonly block222solverwasm_new: (a: number, b: number, c: number, d: number) => number;
     readonly block222solverwasm_solve: (a: number, b: number, c: number) => [number, number];
     readonly block222solverwasm_solve_face: (a: number, b: number, c: number, d: number) => number;
@@ -485,6 +513,9 @@ export interface InitOutput {
     readonly variantsolverwasm_solve_moves_masked: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number) => [number, number];
     readonly variantsolverwasm_solve_stage: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly variantsolverwasm_solve_stage_masked: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly xcrossrestrictsolverwasm_new: () => number;
+    readonly xcrossrestrictsolverwasm_solve_xcross_restricted_grid: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly xcrossrestrictsolverwasm_solve_xcross_restricted_moves: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => [number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

@@ -35,7 +35,7 @@ pub const MOVE_NAMES_54: [&str; 54] = [
 pub const ROTS_FACE: [&str; 6] = ["", "z2", "z'", "z", "x'", "x"];
 
 /// 每个 move 的 ep[12](与 or18 `moves[...].ep` 一致):new_ep[i] = ep[EP[i]]。
-const EP: [[u8; 12]; 54] = [
+pub const EP: [[u8; 12]; 54] = [
     // 0 U
     [0, 1, 2, 3, 7, 4, 5, 6, 8, 9, 10, 11],
     // 1 U2
@@ -147,7 +147,7 @@ const EP: [[u8; 12]; 54] = [
 ];
 
 /// 每个 move 的 eo[12](与 or18 `moves[...].eo` 一致):neo[i] = (eo[EP[i]] + EO[i]) % 2。
-const EO: [[u8; 12]; 54] = [
+pub const EO: [[u8; 12]; 54] = [
     // 0 U
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     // 1 U2
@@ -492,7 +492,7 @@ pub struct CrossRestrictSolver {
 /// 单个边件在每个 move 下的去向:edge_dest[m][s] = (新槽位, 朝向增量)。
 /// 语义来自 or18 apply_move:new_ep[i] = ep[move.ep[i]],new_eo[i] = (eo[move.ep[i]] + move.eo[i])%2。
 /// ⇒ 若件在输入槽 s,则它出现在那个使 move.ep[i] == s 成立的输出槽 i,朝向增量 = move.eo[i]。
-fn build_edge_dest() -> [[(u8, u8); 12]; 54] {
+pub fn build_edge_dest() -> [[(u8, u8); 12]; 54] {
     let mut tbl = [[(0u8, 0u8); 12]; 54];
     for m in 0..54 {
         for i in 0..12 {
@@ -510,7 +510,7 @@ fn build_edge_dest() -> [[(u8, u8); 12]; 54] {
 ///   R_ep[E_m[i]] = E_m̄[R_ep[i]]   (m̄ = conj_r(m),f 为旋转面置换)
 ///   R_eo[E_m[x]] = R_eo[x] + EO_m̄[R_ep[x]] + EO_m[x]  (mod 2)
 /// 对 18 个面动生成元联立;2/' 变体 = 基础自复合。返回 [9][12] 的 (新槽,翻向增量)。
-fn build_rotation_edge_dests() -> [[(u8, u8); 12]; 9] {
+pub fn build_rotation_edge_dests() -> [[(u8, u8); 12]; 9] {
     // 基础旋转的面置换 f[6](face t → f[t],与 cube_common::alg_rotation 同表)。
     let base_face_perm: [[usize; 6]; 3] = [
         [5, 4, 2, 3, 0, 1], // x
@@ -630,6 +630,28 @@ fn build_center_to_index() -> std::collections::HashMap<[u8; 6], u8> {
     map
 }
 
+/// center-index → center[6] 向量(供 xcross_restrict 重建 center_trans)。
+pub fn center_vec_of(ci: usize) -> [u8; 6] {
+    INDEX_TO_CENTER[ci]
+}
+
+/// center[6] 向量 → center-index(供 xcross_restrict 重建 center_trans)。
+pub fn center_index_of(v: &[u8; 6]) -> Option<u8> {
+    INDEX_TO_CENTER
+        .iter()
+        .position(|x| x == v)
+        .map(|i| i as u8)
+}
+
+/// 在 center 向量 cur 上施加 move m,返回新 center 向量(供 xcross_restrict 重建 center_trans)。
+pub fn step_center_vec(cur: &[u8; 6], m: usize) -> [u8; 6] {
+    let mut nc = [0u8; 6];
+    for i in 0..6 {
+        nc[i] = cur[CENTER[m][i] as usize];
+    }
+    nc
+}
+
 impl CrossRestrictSolver {
     /// 运行时建全部表(restriction-independent),无需任何外部文件。
     pub fn new() -> Self {
@@ -728,6 +750,17 @@ impl CrossRestrictSolver {
     #[inline]
     fn step_coord(&self, c: u32, m: usize) -> u32 {
         self.coord_trans[c as usize * 54 + m]
+    }
+
+    /// 公开版 `step_coord`(供 xcross_restrict 复用同一份 54-move cross-coord 转移表)。
+    #[inline]
+    pub fn step_coord_pub(&self, c: u32, m: usize) -> u32 {
+        self.coord_trans[c as usize * 54 + m]
+    }
+
+    /// 公开版 `conjugate_scramble`(供 xcross_restrict 复用同一份逐 move 共轭)。
+    pub fn conjugate_scramble_pub(scramble: &[usize], rot: &str) -> Vec<usize> {
+        Self::conjugate_scramble(scramble, rot)
     }
 
     /// 在 center-index ci 上施加 move m。
