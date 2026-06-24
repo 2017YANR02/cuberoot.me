@@ -13,6 +13,7 @@ import { timing } from './engine/tweenTiming';
 import Cubelet from './engine/nxn/cubelet';
 import { applyDebugStructureColors, applyEngineBodyOverlay } from './engine/debugColors';
 import { applyStickerThickness } from './engine/stickerThickness';
+import { applyHintFacelets } from './engine/hintFacelets';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 import i18n from '@/i18n/i18n-client';
@@ -172,6 +173,11 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   // face hints (拖动时浮现的 U/D/L/R/F/B 色板) 跟主 face colors 走。
   world.faceHints.setFaceColors(s.faceColors);
   timing.frames = mapFrames(s.speed);
+  // Hint-facelet backdrop color (CSS --background) — shared by the NxN renderer and
+  // the generic engine hint so ghosts fade into the page background in both themes.
+  const hintBg = typeof window !== 'undefined'
+    ? getComputedStyle(document.documentElement).getPropertyValue('--background').trim()
+    : '';
   if (!ENGINE_BODY_PUZZLES.has(world.puzzleKind as string)) {
     // NxN: sticker thickness / hollow / hint / face colors live on the InstancedRenderer.
     const cube = world.cube as import('./engine/nxn/cube').default;
@@ -179,10 +185,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     cube.instancedRenderer.thickness = s.thickness;
     cube.instancedRenderer.hollow = s.hollow;
     cube.instancedRenderer.hint = s.hint;
-    if (typeof window !== 'undefined') {
-      const bg = getComputedStyle(document.documentElement).getPropertyValue('--background').trim();
-      if (bg) cube.instancedRenderer.setHintBackdrop(bg);
-    }
+    if (hintBg) cube.instancedRenderer.setHintBackdrop(hintBg);
     // 内核色: frame (CORE + CORE_BASIC,前者 Phong 后者 Basic) + 内层 slice 填充板共享
     Cubelet.CORE.color.set(s.coreColor);
     Cubelet.CORE_BASIC.color.set(s.coreColor);
@@ -199,6 +202,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // so 立体贴片 / 镂空 / structure-colors are applied generically off userData tags.
     applyStickerThickness(world.cube, s.thickness);
     applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor);
+    applyHintFacelets(world.cube, s.hint, hintBg);
   }
   // Carve out (hide) one corner's moving group to inspect the core + neighbors'
   // inner walls — corner-turning puzzles only (Ivy / Dino).
