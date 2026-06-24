@@ -76,6 +76,19 @@ export const HELI_EDGE_HINTS: OrientationHint[] = [
   { letter: 'DL', dir: new THREE.Vector3(-1, -1, 0) },
 ];
 
+// Skewb is a deep-cut corner-turner (all 8 corners turn). 3-letter U/D F/B L/R labels
+// like the Dino/Rex — matches CORNER_NAMES / CORNER_AXIS in cuber/skewb/skewbState.
+export const SKEWB_CORNER_HINTS: OrientationHint[] = [
+  { letter: 'UFR', dir: new THREE.Vector3(1, 1, 1) },
+  { letter: 'UFL', dir: new THREE.Vector3(-1, 1, 1) },
+  { letter: 'UBR', dir: new THREE.Vector3(1, 1, -1) },
+  { letter: 'UBL', dir: new THREE.Vector3(-1, 1, -1) },
+  { letter: 'DFR', dir: new THREE.Vector3(1, -1, 1) },
+  { letter: 'DFL', dir: new THREE.Vector3(-1, -1, 1) },
+  { letter: 'DBR', dir: new THREE.Vector3(1, -1, -1) },
+  { letter: 'DBL', dir: new THREE.Vector3(-1, -1, -1) },
+];
+
 // Redi is a corner-turner too (all 8 corners). Real-Redi notation: F L B R = the 4
 // TOP corners, f l b r = the 4 BOTTOM — matches CORNER_NAMES / CORNER_AXIS in
 // cuber/redi/rediState.
