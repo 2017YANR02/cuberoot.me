@@ -1,0 +1,296 @@
+/* AnalyzerView — view-specific styles (de-MUI port).
+ * Reuses shared .roux-* classes from ../roux.css; everything new is namespaced
+ * .roux-analyzer-*. All colors via site tokens; translucency via color-mix.
+ * Light + dark inherited from tokens. Mobile stacks vertically < 480px.
+ */
+
+.roux-analyzer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Paper-equivalent panel (MUI <Paper>). */
+.roux-analyzer-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* ---- scramble input ----------------------------------------------------- */
+.roux-analyzer-scramble {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+.roux-analyzer-scramble-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.roux-analyzer-scramble-input {
+  width: 100%;
+  resize: vertical;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 1.05rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: none;
+  border-bottom: 2px solid var(--input);
+  border-radius: 6px 6px 0 0;
+  padding: 8px 10px;
+}
+.roux-analyzer-scramble-input:focus {
+  outline: none;
+  border-bottom-color: var(--ring);
+}
+.roux-analyzer-scramble-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.roux-analyzer-scramble-actions .roux-btn {
+  justify-content: center;
+}
+
+/* ---- config row --------------------------------------------------------- */
+.roux-analyzer-config {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+}
+.roux-analyzer-config-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 80px;
+}
+.roux-analyzer-select {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  padding: 6px 28px 6px 10px;
+  cursor: pointer;
+  max-width: 160px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+.roux-analyzer-select:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 35%, transparent);
+}
+
+/* ---- solutions + cube grid --------------------------------------------- */
+.roux-analyzer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.roux-analyzer-col {
+  min-width: 0;
+}
+.roux-analyzer-sol-block {
+  display: flex;
+}
+.roux-analyzer-sol-head {
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+}
+.roux-analyzer-title {
+  color: var(--muted-foreground);
+  font-weight: 500;
+  border-bottom: 3px solid;
+}
+.roux-analyzer-stage-tag {
+  display: inline-block;
+  margin-top: 7px;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  text-transform: none;
+}
+.roux-analyzer-sol-gap {
+  flex-shrink: 100;
+  flex-basis: 1.5rem;
+  min-width: 1.5em;
+}
+.roux-analyzer-sol-body {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+/* per-solution row */
+.roux-analyzer-sol-list {
+  line-height: 1;
+}
+.roux-analyzer-sol-row {
+  display: flex;
+  margin-bottom: 2px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.roux-analyzer-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6ch;
+  padding: 2px 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  margin-right: 4px;
+}
+.roux-analyzer-sol-moves {
+  margin-left: 5px;
+  font-size: 1.25rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+/* ---- quiz / spoiler ----------------------------------------------------- */
+.roux-analyzer-quiz-clickable {
+  cursor: pointer;
+}
+.roux-analyzer-quiz {
+  width: 100%;
+}
+.roux-analyzer-hint-line {
+  width: 100%;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  text-align: center;
+  color: var(--foreground);
+}
+.roux-analyzer-hint-pairs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.roux-analyzer-quiz-hint {
+  margin-top: 8px;
+  font-size: 1rem;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+/* ---- color pair squares ------------------------------------------------- */
+.roux-analyzer-colorpair {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.roux-analyzer-colorsq {
+  display: inline-block;
+  width: 1rem;
+  height: 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 50%, transparent);
+}
+
+/* ---- cube column -------------------------------------------------------- */
+.roux-analyzer-cube-col {
+  display: flex;
+  justify-content: center;
+}
+.roux-analyzer-cube-wrap {
+  background: transparent;
+}
+
+/* ---- full solution (my solution) --------------------------------------- */
+.roux-analyzer-full-solution {
+  padding-bottom: 16px;
+  line-height: 1;
+}
+.roux-analyzer-stage-list {
+  font-family: inherit;
+}
+.roux-analyzer-stage {
+  display: flex;
+  padding-top: 5px;
+  padding-left: 5px;
+}
+.roux-analyzer-stage-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 0.7rem;
+  margin-left: 5px;
+  padding: 2px 6px;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.roux-analyzer-stage-btn-active {
+  border-color: var(--accent);
+}
+.roux-analyzer-stage-text {
+  color: var(--foreground);
+  text-transform: none;
+}
+
+/* ---- solution input textarea (modal) ----------------------------------- */
+.roux-analyzer-solution-input {
+  width: 100%;
+  resize: vertical;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 1rem;
+  line-height: 1.4;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  padding: 10px;
+}
+.roux-analyzer-solution-input:focus {
+  outline: none;
+  border-color: var(--ring);
+}
+
+/* ---- mobile ------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .roux-analyzer-scramble {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .roux-analyzer-scramble-actions {
+    flex-direction: row;
+  }
+  .roux-analyzer-scramble-actions .roux-btn {
+    flex: 1 1 0;
+  }
+  .roux-analyzer-grid {
+    grid-template-columns: 1fr;
+  }
+  .roux-analyzer-select {
+    max-width: none;
+  }
+  .roux-analyzer-config-item {
+    flex: 1 1 40%;
+  }
+  .roux-analyzer-sol-moves {
+    font-size: 1.05rem;
+  }
+}

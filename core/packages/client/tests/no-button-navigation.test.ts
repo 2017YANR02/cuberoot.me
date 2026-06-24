@@ -23,6 +23,8 @@ const ALLOWLIST = new Set([
   'app/[lang]/recon/submit/ReconSubmitForm.tsx',
   // 「开始」按钮带 disabled 门控(canStart),<a> 无法 disable;就绪后才跳 /run
   'app/[lang]/trainer/[puzzle]/[set]/TrainerSetClient.tsx',
+  // 同上,迁入 /alg 的并行副本(选 case 后才跳 /run)
+  'app/[lang]/alg/[puzzle]/[set]/select/TrainerSetClient.tsx',
   // 表单「取消」动作,与提交按钮成对,语义是 action 非链接
   'app/[lang]/recon/[id]/alt/AltSubmitForm.tsx',
   // 已是真 <a href> + 修饰键判断的渐进增强(中键/Ctrl/Cmd/Shift 保留浏览器默认) —— 正确范式

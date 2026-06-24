@@ -1,0 +1,41 @@
+/* Shared color-scheme controls (Input.tsx). Tokens only, dual-theme. */
+.roux-color-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+.roux-color-setter {
+  margin-bottom: 8px;
+}
+.roux-color-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.roux-color-field-label {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.roux-color-input {
+  width: 100%;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--foreground);
+  background: var(--card);
+  border: 1px solid var(--input);
+  border-radius: 4px;
+}
+.roux-color-input:focus {
+  outline: none;
+  border-color: var(--ring);
+}
+.roux-color-help {
+  font-size: 0.75rem;
+  color: var(--faint-foreground);
+}
+.roux-color-divider {
+  border: none;
+  border-top: 1px solid var(--border-default);
+  margin: 16px 0;
+}
