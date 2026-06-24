@@ -13,23 +13,12 @@
   align-items: center;
   gap: 12px;
 }
-/* 视图下拉固定宽,区域选择器吃剩余空间并可压缩(标签 ellipsis 兜底),保证始终一行 */
-.records-toolbar-row .records-mode-select { flex-shrink: 0; }
+/* 视图 / 性别下拉(ListSelect:lucide chevron + 暗色 popup)固定贴合宽,区域选择器吃剩余空间
+   并可压缩(标签 ellipsis 兜底),保证始终一行 */
+.records-toolbar-row .records-toolbar-select { flex-shrink: 0; }
+.records-toolbar-row .records-toolbar-select .list-select-trigger { width: auto; }
+.records-toolbar-row .records-toolbar-select .list-select-popup { min-width: 150px; }
 .records-page .records-toolbar-row .region-picker { min-width: 0; }
-
-/* 视图下拉:当前 / 历史 / 混合 */
-.records-mode-select {
-  height: 34px;
-  padding: 6px 10px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
-  color: var(--foreground);
-  font: inherit;
-  font-size: 14px;
-  cursor: pointer;
-}
-.records-mode-select:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
 
 /* RegionPicker 颜色变量覆盖 — 默认 light theme,这里改成 wca-stats 深色 */
 .records-page .region-picker {

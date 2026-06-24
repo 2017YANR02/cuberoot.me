@@ -19,6 +19,7 @@ import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge';
 import { RegionPicker } from '@/components/RegionPicker';
+import { ListSelect } from '@/components/ListSelect';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -197,16 +198,18 @@ function RecordsPageInner() {
 
       <div className="records-toolbar">
         <div className="records-toolbar-row">
-          <select
-            className="records-mode-select"
+          <ListSelect
+            className="records-toolbar-select"
+            items={[
+              { value: 'current', label: tr({ zh: '当前', en: 'Current' }) },
+              { value: 'history', label: tr({ zh: '历史', en: 'History' }) },
+              { value: 'mixed', label: tr({ zh: '混合', en: 'Mixed' }) },
+            ]}
             value={show}
-            onChange={(e) => update('show', e.target.value)}
-            aria-label={tr({ zh: '视图', en: 'View' })}
-          >
-            <option value="current">{tr({ zh: '当前', en: 'Current' })}</option>
-            <option value="history">{tr({ zh: '历史', en: 'History' })}</option>
-            <option value="mixed">{tr({ zh: '混合', en: 'Mixed' })}</option>
-          </select>
+            onChange={(v) => update('show', v)}
+            allLabel={tr({ zh: '当前', en: 'Current' })}
+            clearable={false}
+          />
 
           <RegionPicker
             value={region}
@@ -215,16 +218,18 @@ function RecordsPageInner() {
             onChange={(v) => update('region', v)}
           />
 
-          <select
-            className="records-mode-select"
+          <ListSelect
+            className="records-toolbar-select"
+            items={[
+              { value: 'all', label: tr({ zh: '所有', en: 'All' }) },
+              { value: 'm', label: tr({ zh: '男', en: 'Male' }) },
+              { value: 'f', label: tr({ zh: '女', en: 'Female' }) },
+            ]}
             value={gender}
-            onChange={(e) => update('gender', e.target.value === 'all' ? '' : e.target.value)}
-            aria-label={tr({ zh: '性别', en: 'Gender' })}
-          >
-            <option value="all">{tr({ zh: '所有', en: 'All' })}</option>
-            <option value="m">{tr({ zh: '男', en: 'Male' })}</option>
-            <option value="f">{tr({ zh: '女', en: 'Female' })}</option>
-          </select>
+            onChange={(v) => update('gender', v === 'all' ? '' : v)}
+            allLabel={tr({ zh: '所有', en: 'All' })}
+            clearable={false}
+          />
         </div>
 
         <WcaEventSelector
