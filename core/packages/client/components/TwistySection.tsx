@@ -100,9 +100,14 @@ export interface TwistySettings {
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView,
+  puzzle, puzzleDescription, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView,
 }: {
   puzzle: string;
+  /** cubing.js PuzzleGeometry description string (e.g. "c e 0"). When set, the
+   *  player renders this puzzle via `experimentalPuzzleDescription` and ignores
+   *  `puzzle` — lets /sim show any PuzzleGeometry puzzle (alpha.twizzle.net/explore
+   *  set) with no in-house engine. See app/[lang]/sim/pgCatalog.ts. */
+  puzzleDescription?: string;
   scramble: string;
   alg: string;
   /** 撑满父容器（左栏分栏模式），否则走原 inline 固定宽模式 */
@@ -165,11 +170,14 @@ export default function TwistySection({
     const container = containerRef.current;
     container.innerHTML = '';
     const playerInit: Record<string, unknown> = {
-      puzzle,
       experimentalSetupAlg: scramble,
       alg,
       controlPanel: 'bottom-row',
     };
+    // PuzzleGeometry puzzle (explore set) → set the description and omit `puzzle`
+    // entirely (mirrors alpha.twizzle.net/explore's `delete config.puzzle`).
+    if (puzzleDescription) playerInit.experimentalPuzzleDescription = puzzleDescription;
+    else playerInit.puzzle = puzzle;
     if (twistOnClick) playerInit.experimentalMovePressInput = 'basic';
     const player = new Ctor(playerInit);
     playerInstRef.current = player;
@@ -279,7 +287,7 @@ export default function TwistySection({
     // 故意只在结构性 prop 变 (puzzle / Ctor / fillPane / twistOnClick) 时重建。
     // scramble/alg 走下面的 setter 路径,不触发重建。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Ctor, puzzle, fillPane, twistOnClick]);
+  }, [Ctor, puzzle, puzzleDescription, fillPane, twistOnClick]);
 
   // backView prop 强制接管 cubing.js 原生背面视图(recon 用)。undefined 时不碰,
   // 让 settings.backView 那条路径(/sim)负责。
