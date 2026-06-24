@@ -132,11 +132,11 @@ const ALL_MOVE_MASK = (1 << 18) - 1; // 0x3FFFF = 全部允许
 // 走 CrossRestrictSolverWasm 的 54-move BFS(or18 式中心追踪 + 真转体);每格 = 该记号的 3 个变体
 // (m, m2, m'),对应 54-move 索引 [3i, 3i+2]:面 0-17 / 宽 18-35 / 中层 36-44 / 旋转 45-53。
 const CR_CELLS = ['U', 'D', 'L', 'R', 'F', 'B', 'u', 'd', 'l', 'r', 'f', 'b', 'M', 'E', 'S', 'x', 'y', 'z'] as const;
-const CR_ROWS: { key: string; cells: number[] }[] = [
-  { key: 'face', cells: [0, 1, 2, 3, 4, 5] },
-  { key: 'wide', cells: [6, 7, 8, 9, 10, 11] },
-  { key: 'slice', cells: [12, 13, 14] },
-  { key: 'rot', cells: [15, 16, 17] },
+// 4 类记号分组,但布局成 3 个视觉行:面 / 宽 / (中层 + 旋转同一行,中层在左、旋转在右)。
+const CR_LINES: { key: string; cells: number[] }[][] = [
+  [{ key: 'face', cells: [0, 1, 2, 3, 4, 5] }],
+  [{ key: 'wide', cells: [6, 7, 8, 9, 10, 11] }],
+  [{ key: 'slice', cells: [12, 13, 14] }, { key: 'rot', cells: [15, 16, 17] }],
 ];
 // 默认 = 仅 6 面允许(= 标准 HTM 十字),宽/中层/旋转需用户主动开。
 const CR_DEFAULT: boolean[] = [true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false];
@@ -879,9 +879,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         <div className="stsv-moverestrict stsv-mr-18">
           <span className="stsv-mr-label">{t('步法限制', 'Allowed moves')}</span>
           <div className="stsv-mr-rows">
-            {CR_ROWS.map((row) => (
-              <div key={row.key} className="stsv-mr-grid" role="group" aria-label={t('步法限制', 'Allowed moves')}>
-                {row.cells.map((ci) => (
+            {CR_LINES.map((line, li) => (
+              <div key={li} className="stsv-mr-line">
+                {line.map((row) => (
+                  <div key={row.key} className="stsv-mr-grid" role="group" aria-label={t('步法限制', 'Allowed moves')}>
+                    {row.cells.map((ci) => (
                   <button
                     key={ci}
                     type="button"
@@ -894,6 +896,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                   >
                     {CR_CELLS[ci]}
                   </button>
+                    ))}
+                  </div>
                 ))}
               </div>
             ))}
