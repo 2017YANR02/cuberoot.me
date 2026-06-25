@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { SIZE } from './define';
 import { FACE_NORMAL, FACE_NAME } from './mega/megaState';
+import { FACE_NORMAL as FTO_NORMAL, FACE_TOKEN as FTO_TOKEN } from './fto/ftoState';
 
 export interface OrientationHint {
   letter: string;
@@ -63,6 +64,14 @@ export const REX_CORNER_HINTS: OrientationHint[] = [
 export const MEGA_FACE_HINTS: OrientationHint[] = FACE_NAME.map((letter, i) => ({
   letter,
   dir: new THREE.Vector3(FACE_NORMAL[i][0], FACE_NORMAL[i][1], FACE_NORMAL[i][2]),
+}));
+
+// FTO is a FACE-turner (octahedron): 8 face labels at the face centers, matching
+// FACE_TOKEN / FACE_NORMAL in fto/ftoState (cubing.js orientation, U up). The cube has no
+// base reorientation, so the raw normals already sit on the displayed faces.
+export const FTO_FACE_HINTS: OrientationHint[] = FTO_TOKEN.map((letter, i) => ({
+  letter,
+  dir: new THREE.Vector3(FTO_NORMAL[i][0], FTO_NORMAL[i][1], FTO_NORMAL[i][2]),
 }));
 
 // Helicopter is an EDGE-turner: its 12 twist axes sit at the edge midpoints. Each

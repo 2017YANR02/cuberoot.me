@@ -12,14 +12,15 @@ import HeliCube from "./heli/HeliCube";
 import SkewbCube from "./skewb/SkewbCube";
 import PyraCube from "./pyra/PyraCube";
 import MegaminxCube from "./mega/MegaminxCube";
+import FtoCube from "./fto/FtoCube";
 import { APEX_UP_QUAT } from "./pyra/pyraGeometry";
-import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS, MEGA_FACE_HINTS } from "./face_hints";
+import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS, MEGA_FACE_HINTS, FTO_FACE_HINTS } from "./face_hints";
 
 /** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, Dino, Redi, Rex (corner-turning),
  *  Heli (edge-turning Helicopter Cube), Skewb (deep-cut corner-turning), or Pyraminx
  *  (vertex-turning tetrahedron). Skewb + Pyraminx are the in-house engine alternatives
  *  to the cubing.js TwistyPlayer renders (chosen via the `renderer` toggle). */
-export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx';
+export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto';
 
 export default class World {
   public width = 1;
@@ -31,7 +32,7 @@ export default class World {
   /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
    *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
    *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
-  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | SkewbCube | PyraCube | MegaminxCube;
+  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | SkewbCube | PyraCube | MegaminxCube | FtoCube;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -49,6 +50,7 @@ export default class World {
   private skewbCube: SkewbCube | null = null;
   private pyraCube: PyraCube | null = null;
   private megaCube: MegaminxCube | null = null;
+  private ftoCube: FtoCube | null = null;
   /** Current puzzle kind, mirrors what was last passed to setPuzzle. */
   public puzzleKind: PuzzleKind = 3;
   public callbacks: (() => void)[] = [];
@@ -71,6 +73,8 @@ export default class World {
   public pyraHints!: FaceHints;
   /** Megaminx 12 face-turn labels at the face centers. */
   public megaHints!: FaceHints;
+  /** FTO 8 face-turn labels at the octahedron face centers. */
+  public ftoHints!: FaceHints;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -130,6 +134,10 @@ export default class World {
     // floated just past the faces and shrunk so 12 labels don't crowd.
     this.megaHints = new FaceHints(SIZE, MEGA_FACE_HINTS, 2.9, 0.8);
     this.scene.add(this.megaHints);
+    // FTO: 8 face labels at the octahedron face centers (inradius ≈1.85·SIZE). The solid
+    // reaches ≈3.2·SIZE at its vertices, so float the labels past them (3.4) + shrink.
+    this.ftoHints = new FaceHints(SIZE, FTO_FACE_HINTS, 3.4, 0.95);
+    this.scene.add(this.ftoHints);
     this.setPuzzle(3);
   }
 
@@ -244,6 +252,17 @@ export default class World {
       // registry). Reuse the SQ1 rim-light rig (62 solid wedge pieces, many oblique facets).
       this.controller.disable = true;
       this._ensureSq1Lights();
+    } else if (kind === 'fto') {
+      if (this.ftoCube == null) {
+        this.ftoCube = new FtoCube();
+        this.ftoCube.callbacks.push(this.callback);
+      }
+      this.cube = this.ftoCube;
+      // FTO: face-turning octahedron — NxN Controller doesn't apply. SimPage installs a
+      // dedicated fto drag-to-turn + view-rotate handler (corner-gesture registry). Reuse
+      // the SQ1 rim-light rig (51 solid wedge cells, many oblique facets).
+      this.controller.disable = true;
+      this._ensureSq1Lights();
     } else {
       if (this.cubes[kind] == undefined) {
         this.cubes[kind] = new Cube(kind);
@@ -328,15 +347,17 @@ export default class World {
     const isHeli = this.puzzleKind === 'heli';
     const isSkewb = this.puzzleKind === 'skewb';
     const isMega = this.puzzleKind === 'megaminx';
+    const isFto = this.puzzleKind === 'fto';
     // Dino/Redi/Rex/Heli/Skewb cubes span [-2,2]·SIZE (corners at ~3.5·SIZE); the megaminx
-    // dodecahedron reaches ~3.0·SIZE at its vertices; ~4.0 frames them to the NxN-3 fill.
-    const refHalf = isSq1 ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isSkewb || isMega) ? SIZE * 4.0 : SIZE * 3;
+    // dodecahedron reaches ~3.0·SIZE at its vertices; the FTO octahedron ~3.2·SIZE; ~4.0
+    // frames them to the NxN-3 fill.
+    const refHalf = isSq1 ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto) ? SIZE * 4.0 : SIZE * 3;
     const distance = refHalf * this.perspective;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
     this.camera.position.z = distance;
-    // near/far margins: SQ1/Dino/Redi/Rex/Heli/Skewb/Mega solids are deeper along view, so widen the near cut.
-    this.camera.near = distance - SIZE * (isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega ? 5 : 4);
+    // near/far margins: SQ1/Dino/Redi/Rex/Heli/Skewb/Mega/FTO solids are deeper along view, so widen the near cut.
+    this.camera.near = distance - SIZE * (isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto ? 5 : 4);
     this.camera.far = distance + SIZE * 8;
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);
