@@ -182,12 +182,13 @@ export default function SimPage() {
       puzzle: parseAsString.withDefault('3'),
       alg: parseAsString,
       setup: parseAsString,
-      // Which renderer for an ENGINE_TWISTY puzzle: cubing.js TwistyPlayer (default) or
-      // 'group' = the in-house Three.js engine + a live group-theory panel backed by the
-      // vendored puzzle-geometry. Default 'cubing' → omitted. 'engine' is the retired
-      // engine-without-panel mode — still parsed so old links degrade to the engine view
-      // (treated as 'group' everywhere), no longer offered in the UI.
-      renderer: parseAsStringEnum(['cubing', 'engine', 'group'] as const).withDefault('cubing'),
+      // Which renderer for an ENGINE_TWISTY puzzle: 'group' = the in-house Three.js engine
+      // + a live group-theory panel backed by the vendored puzzle-geometry (the default —
+      // its strict superset of the engine view, so the preferred entry point), or 'cubing'
+      // = the cubing.js TwistyPlayer. Default 'group' → omitted; 'cubing' is written
+      // explicitly. 'engine' is the retired engine-without-panel mode — still parsed so old
+      // links degrade to the engine view (treated as 'group' everywhere), no longer in the UI.
+      renderer: parseAsStringEnum(['cubing', 'engine', 'group'] as const).withDefault('group'),
     },
     { history: 'replace', scroll: false },
   );
@@ -1125,7 +1126,8 @@ export default function SimPage() {
   // in-house engine. Flips `renderer` in the URL; the [twisty] world-init effect then
   // builds/tears down the World, and the sync effect routes the puzzle into it.
   const handleRendererChange = useCallback((r: 'cubing' | 'engine' | 'group') => {
-    setQuery({ renderer: r === 'cubing' ? null : r });
+    // 'group' is the default → omit it from the URL; write 'cubing' explicitly.
+    setQuery({ renderer: r === 'group' ? null : r });
   }, [setQuery]);
 
   const handleOrder = useCallback((n: number) => {
