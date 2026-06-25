@@ -65,9 +65,15 @@ fn axis_pruned(mc: usize, pc: usize) -> bool {
 // 这三个常量是「整体旋转作为完整 cube State 算子」的角/棱 (perm+ori),满足对全部 18 面动
 // g 有 R·g·R⁻¹ = conj(g)(face_perm:x=[5,4,2,3,0,1] y=[0,1,5,4,2,3] z=[3,2,0,1,4,5]),
 // 且 order-4、parity 符合真旋转(角两 4-cycle 偶、棱三 4-cycle 奇)。运行时 assert 复核(见 new)。
+//
+// 棱朝向 EO 的硬要求:必须与面动 MOVE_STATES 同一物理约定(cubing.js 标准 EO),否则 x/z 轴宽动
+// (l/r/f/b/M/S = 旋转·面)继承错误 EO,与面动混用时按出现奇偶产生「十字 4 棱整体翻向」的不还原。
+// 共轭+order-4+parity 留有「整体翻全部 12 棱」的中心化 gauge 自由度(T 与所有 State 交换,conj 看不见
+// ⇒ assert 拦不住),旧 x/z 常量恰好落在错的那一支(y 轴恰好对)。此处 ROT_X/Z 的 EO 已据 cubing.js
+// 物理真值校正(逐棱翻向位与面动一致,全 54 算子 0 不忠实,JS 复刻模型实证);ROT_Y 本就忠实,未动。
 const ROT_X: ([u8; 8], [u8; 12]) = (
     [14, 16, 5, 1, 22, 20, 7, 11],
-    [23, 19, 11, 15, 16, 3, 8, 1, 20, 5, 12, 7],
+    [22, 18, 10, 14, 17, 2, 9, 0, 21, 4, 13, 6],
 );
 const ROT_Y: ([u8; 8], [u8; 12]) = (
     [3, 6, 9, 0, 15, 18, 21, 12],
@@ -75,7 +81,7 @@ const ROT_Y: ([u8; 8], [u8; 12]) = (
 );
 const ROT_Z: ([u8; 8], [u8; 12]) = (
     [4, 17, 19, 8, 2, 13, 23, 10],
-    [8, 16, 20, 12, 2, 18, 4, 10, 0, 22, 6, 14],
+    [9, 17, 21, 13, 3, 19, 5, 11, 1, 23, 7, 15],
 );
 
 /// 旋转的面置换(中心怎么搬):x/y/z。
@@ -2054,5 +2060,20 @@ mod tests {
             }
         }
         assert!(total > 0, "未枚举到任何解");
+    }
+
+    // ===== 回归锁:旋转算子 EO 必须是 cubing.js 物理真值(防中心化 T gauge 退回)。=====
+    // x/y/z 的完整 State(perm+ori,3*pos+ori / 2*pos+ori 编码)由 cubing.js 物理真值反推到本模块
+    // slot 编号(JS 复刻模型校准面动双射后导出,全 54 算子 0 不忠实)。共轭/order-4/parity 都看不见
+    // 「整体翻 12 棱」的 gauge,只有锁死具体 EO 才能拦住 x/z 退回错支(那会让宽动十字按奇偶翻向不还原)。
+    #[test]
+    fn t8_rotation_ops_match_cubing_physical_truth() {
+        let o = |m: usize| replay::move_state_54(m);
+        let x = State { corners: [11, 7, 20, 22, 1, 5, 16, 14], edges: [14, 10, 18, 22, 13, 4, 21, 6, 9, 2, 17, 0] };
+        let y = State { corners: [9, 0, 3, 6, 21, 12, 15, 18], edges: [7, 1, 3, 5, 14, 8, 10, 12, 22, 16, 18, 20] };
+        let z = State { corners: [13, 2, 10, 23, 17, 4, 8, 19], edges: [17, 9, 13, 21, 1, 15, 7, 23, 3, 11, 5, 19] };
+        assert_eq!(o(45), x, "x rotation op != cubing physical truth(EO gauge 退回?)");
+        assert_eq!(o(48), y, "y rotation op != cubing physical truth");
+        assert_eq!(o(51), z, "z rotation op != cubing physical truth");
     }
 }
