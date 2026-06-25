@@ -614,7 +614,7 @@ if($nNew -gt 0){
 }
 
 # ---- 4. 变体补缺 (eo/pseudo/pseudo_pair/pair/f2leo 系 各自跟 master 锁步, 可中断续跑) ----
-$variantChanged = $false
+if(-not $PublishOnly){ $variantChanged = $false }   # PublishOnly: 保留行内设的 true, 否则变体待补 0 时这里重置成 false 会让步骤 5 build 不触发(修 PublishOnly 不重算的 bug)
 if($Variants.Count -gt 0){
   Step "4 变体补缺: $($Variants -join ', ')"
   if(-not (Test-Path $MasterTxt)){ throw "master $MasterTxt 不存在" }
@@ -811,50 +811,11 @@ if($NoPublish){
       }
       Write-Host "  [delta] 增量发布完成 ($($deltaRel -join ', '))。" -ForegroundColor DarkCyan
     } else {
-    # 发布 stats/scramble 到 static: 打成单个 .tgz -> scp 一个文件(二进制安全, 不走 pwsh 管道)
-    # -> 远端原子替换。比 scp -r 逐个传 ~1.5w 小文件快一个量级。
-    $tgz = Join-Path $env:TEMP 'cuberoot_scramble_publish.tgz'
-    Write-Host "  [1/3] tar 打包 stats/scramble ..." -ForegroundColor DarkCyan
-    $t0 = Get-Date
-    Remove-Item $tgz -Force -ErrorAction SilentlyContinue
-    # tar 异步起进程 + 主线程每 5s 打当前压缩字节数(Start-Job 里 Write-Host 会被缓冲到
-    # Receive-Job 才出, 看不到实时进度, 所以用主线程轮询)。上次全量 ~280MB 可对照估完成度。
-    $tarP = Start-Process tar -ArgumentList '-czf',$tgz,'-C',(Join-Path $RepoRoot 'stats'),'scramble' -NoNewWindow -PassThru
-    while(-not $tarP.HasExited){
-      Start-Sleep -Seconds 5
-      if(Test-Path $tgz){
-        $cur = [math]::Round((Get-Item $tgz).Length/1MB,1)
-        Write-Host ("        tar ... {0} MB ({1}s)" -f $cur, [int]((Get-Date)-$t0).TotalSeconds) -ForegroundColor DarkGray
-      }
-    }
-    if($tarP.ExitCode -ne 0){ throw 'tar 打包失败' }
-    $mb = [math]::Round((Get-Item $tgz).Length/1MB,1)
-    Write-Host "  [1/3] tar 完成 ${mb} MB (用时 $([int]((Get-Date)-$t0).TotalSeconds)s)" -ForegroundColor DarkCyan
-    # scp 单次网络传输, 非 TTY 下无内置进度条; 故起一个后台 poller 每 3s 读远端 _publish.tgz 大小, 打 N/total MB。
-    Write-Host "  [2/3] scp ${mb} MB -> static (开始 $(Get-Date -Format HH:mm:ss)) ..." -ForegroundColor DarkCyan
-    $t1 = Get-Date
-    $poller = Start-Job -ArgumentList $StaticHost,$StaticDest,$mb -ScriptBlock {
-      param($h,$d,$total)
-      while($true){
-        Start-Sleep -Seconds 3
-        $sz = ssh $h "stat -c %s '$d/_publish.tgz' 2>/dev/null || echo 0" 2>$null
-        $cur = [math]::Round(([double]($sz)) / 1MB, 1)
-        if($cur -gt 0){ Write-Host "        scp ... ${cur}/${total} MB" -ForegroundColor DarkGray }
-      }
-    }
-    scp $tgz "${StaticHost}:${StaticDest}/_publish.tgz"
-    $scpExit = $LASTEXITCODE
-    Stop-Job $poller -ErrorAction SilentlyContinue; Receive-Job $poller -ErrorAction SilentlyContinue; Remove-Job $poller -Force -ErrorAction SilentlyContinue
-    if($scpExit -ne 0){ throw 'scp tgz 失败' }
-    $sec = [Math]::Max([int]((Get-Date)-$t1).TotalSeconds, 1)
-    Write-Host "  [2/3] scp 完成 (用时 ${sec}s, ~$([math]::Round($mb/$sec,1)) MB/s)" -ForegroundColor DarkCyan
-    # 原子替换 + 清理孤儿: 解到 scramble.new -> 换上 (旧的暂留 scramble.prev 兜底) -> 删旧 + tgz。
-    # 直接覆盖式 untar 不删"本次不再产出"的旧文件(如某 bin 样本数超 1000 不再出 txt), 故整目录替换。
-    Write-Host "  [3/3] 远端原子替换 + 解包 ..." -ForegroundColor DarkCyan
-    ssh $StaticHost "set -e; cd '${StaticDest}'; rm -rf scramble.new scramble.prev; mkdir scramble.new; tar -xzf _publish.tgz -C scramble.new --strip-components=1; if [ -d scramble ]; then mv scramble scramble.prev; fi; mv scramble.new scramble; rm -rf scramble.prev _publish.tgz"
-    if($LASTEXITCODE -ne 0){ throw '远端原子替换失败' }
-    Write-Host "  [3/3] 远端替换完成。" -ForegroundColor DarkCyan
-    Remove-Item $tgz -Force -ErrorAction SilentlyContinue
+    # stages: gitignored 的 comp_steps/bundle/downloads 也会变(git status 看不见整变更集),
+    # 走 sha1 内容增量发布(publish_scramble_incremental.ps1): 维护本地 sha1 清单, 只传内容真变的
+    # 文件 + 删远端孤儿; 首次(无清单)自动全量 tar 建基线。把每次 ~590MB 整包降到典型增量的 changed 小包。
+    & (Join-Path $PSScriptRoot 'publish_scramble_incremental.ps1')
+    if($LASTEXITCODE -ne 0){ throw '增量 static 发布失败' }
     }
   } else { Write-Host 'stats/scramble 无变化, 跳过 commit。' -ForegroundColor Yellow }
 }

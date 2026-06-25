@@ -7,7 +7,7 @@ description: "用户要更新 /scramble/stats(打乱难度 / 步数分布)的数
 
 **一条龙:一个命令 `update_cross_stats.ps1`,`-Jobs` 选作业,跑完共享一次发布**(commit+push + scp 换 static,覆盖三类产物)。三类作业都只能本地(stages 需 solver 34GB 表 / 333opt 需 cubeopt 表):
 
-> **发布是增量的(2026-06-15)**:不跑 stages 的小作业(`333opt`/`puzzles` 只重写几个 tracked JSON)只 scp 变化的文件(`.tmp` + 远端原子 `mv`),**秒级**;只有 `stages`(comp_steps/下载包等 gitignored 文件会增删)才走整目录打包 `tar -czf` ~467MB → 原子换(~35min)。判据是 `-not $runStages` 时 `git status stats/scramble` 即完整变更集。
+> **发布全增量(2026-06-25)**:所有作业都只传变化的文件。非 stages 小作业(`333opt`/`puzzles`)走 `git status` diff scp(`.tmp`+远端原子 `mv`),秒级;**stages 走 `publish_scramble_incremental.ps1`**——维护本地 sha1 内容清单(`incremental/publish_manifest.sha1`),每次只 diff 出内容真变的文件打小包 scp + 删远端孤儿,把过去每次 ~590MB 整包 tar(~35min)降到典型增量的 changed 小包(几十个 comp_steps + 变动 JSON,分钟级)。首次无清单(或 `-Baseline`)自动全量 tar 建基线。复用现有免密 `ssh cuberoot`,不引入 rsync。
 
 | job | 对象 | 内部 | 产物 |
 |-----|------|------|------|
@@ -26,6 +26,7 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1 -NoPublish      #
 **NL 映射**(AI 按用户话传 flag):"更新统计"=`-Jobs all`;"只跑333"=`-Jobs 333opt`;"跑 X/Y"=`-Jobs X,Y`;"不跑 X"=去掉 X 后的列表;"不跑 eo" 等**变体级**=`-Variants <去掉eo的列表>`(仅 stages 内,见 A)。
 
 要点:
+- ⛔ **非 WCA 采样默认停用(2026-06-25 用户要求)**:`puzzles` 作业**不再**为非 WCA puzzle(335 等 TIER C/D)跑离线采样分布 `dist_<event>.json`。`update_puzzle_stats.ps1` 采样步已默认关(加 `-Sampled` 才跑),一条龙 / 裸跑都不采样。**别为「补全分布」把这默认去掉 / 加回采样**;要恢复需用户显式说。详见 `solver/NONWCA_PUZZLE_LOOP.md` §0.0 #12。
 - **333opt 只做 inject**(折当前 `solver/333opt/out.*.csv`);那条 **~3.5 天全量求解仍是独立后台** `node solver/333opt/solve_loop.mjs`(按需续解,见 C),不在一条龙里。
 - **stages 的 build 会覆写 distribution/examples 的 '333' 变体 → 脚本在 stages build 之后自动补 333 inject 还原**(不用再记得手跑;`willInject = run333opt 或 stages有变`)。
 - 三类作业**共享发布**;`-NoPublish` 一起跳过。
