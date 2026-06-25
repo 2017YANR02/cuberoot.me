@@ -1,7 +1,7 @@
 'use client';
 
 // /regulation/news — WCA 规则与赛事动态。
-// 忠实搬运 WCA 官方近期公告(项目列表变更 / 竞赛要求政策 5.5 / 静默锦标赛说明)。
+// 忠实搬运 WCA 官方近期公告(项目列表变更 / 竞赛要求政策 5.5 / 安静锦标赛说明)。
 // 英文取官方原文措辞,中文为忠实翻译,按时间倒序排列。非注册表章节,
 // 故不走 RegArticleLayout —— 自带面包屑 + 来源页脚,复用 .reg-page 外壳。
 
@@ -58,12 +58,6 @@ export default function RegulationNews() {
               'Recent WCA changes to its regulations, policy and the list of official events',
             )}
           </p>
-          <p className="reg-lede">
-            {t(
-              '以下内容忠实搬运自 WCA 官方公告与说明文档:英文取官方原文,中文为翻译。点每条右上角链接可查看官方原文。',
-              'The items below are faithfully relayed from the official WCA announcements and explainer: the English follows the original wording, the Chinese is a translation. Each item links to its official source.',
-            )}
-          </p>
         </header>
 
         <div className="news-list">
@@ -96,7 +90,7 @@ export default function RegulationNews() {
                 </div>
                 <p>
                   {t(
-                    '自 2014 年斜转以来首个新增的 WCA 官方项目,采用与多数项目相同的 5 次取平均(Ao5)赛制。',
+                    '自 2014 年斜转以来首个新增的 WCA 官方项目,采用与目前多数项目相同的"五次计平均"(Ao5)赛制。',
                     'The first new WCA event since Skewb was added in 2014. It uses the same Average of 5 format as most current events.',
                   )}
                 </p>
@@ -127,7 +121,7 @@ export default function RegulationNews() {
                 <p>
                   <strong>{t('移除原因:', 'Why: ')}</strong>
                   {t(
-                    'WCA 理事会指出魔表存在根本性的设计问题——极易发生意外,且难以正确打乱;是否还原在远处也难以辨认,大幅削弱了观赏性。魔表与 WCA 旗下其它魔方有本质区别,移除它能强化 WCA 作为"三维几何扭转魔方组织"的定位。',
+                    'WCA 董事会指出,魔表与其它项目所用的魔方存在根本性差异:它极易发生比赛事故,难以正确打乱,还需要与其它速拧项目不同的流程或设备;无论从远处判断是否还原、还是观察复原进展都很困难,大幅削弱了观赏性。移除魔表能强化 WCA 作为"专注于三维几何形态转动谜题"的组织定位。',
                     'The WCA Board cited fundamental design issues — Clock is highly prone to incidents and difficult to scramble correctly, and whether a Clock is solved is not easily visible at a distance, substantially diminishing spectator appeal. Clock differs fundamentally from other puzzles in the WCA’s portfolio, and its removal strengthens the WCA’s identity as an organization for three-dimensional geometrical twisty puzzles.',
                   )}
                 </p>
@@ -174,9 +168,9 @@ export default function RegulationNews() {
               )}
             </p>
 
-            <Callout tone="info" label={t('① 静默锦标赛(Quiet Championship)', '① Quiet Championship')}>
+            <Callout tone="info" label={t('① 安静锦标赛(Quiet Championship)', '① Quiet Championship')}>
               {t(
-                '各国与地区现在可以设立一个专门承办盲拧系列项目与三阶最少步的独立锦标赛。具体规则见下方《静默锦标赛说明》。',
+                '各国与地区现在可以设立一个专门承办盲拧系列项目与三阶最少步的独立锦标赛。具体规则见下方《安静锦标赛说明》。',
                 'Countries and regions can now establish a separate championship dedicated to the Blindfolded events and 3×3×3 Fewest Moves. See the Quiet Championship explainer below for the details.',
               )}
             </Callout>
@@ -190,8 +184,8 @@ export default function RegulationNews() {
               )}
             </Callout>
 
-            {/* 静默锦标赛说明(官方 explainer 文档)*/}
-            <h3 className="news-sub-title">{t('静默锦标赛说明', 'Quiet Championship explainer')}</h3>
+            {/* 安静锦标赛说明(官方 explainer 文档)*/}
+            <h3 className="news-sub-title">{t('安静锦标赛说明', 'Quiet Championship explainer')}</h3>
             <div className="news-meta" style={{ marginTop: -8 }}>
               <SourceLink href={QUIET_DOC} label={t('官方说明文档', 'Official explainer document')} />
             </div>
@@ -213,10 +207,10 @@ export default function RegulationNews() {
                 </p>
               </div>
               <div className="news-term">
-                <div className="news-term-name">{t('静默锦标赛(新)', 'Quiet Championship (new)')}<small>Quiet</small></div>
+                <div className="news-term-name">{t('安静锦标赛(新)', 'Quiet Championship (new)')}<small>Quiet</small></div>
                 <p className="news-term-def">
                   {t(
-                    '可以承办俗称 PBQ 项目(Please Be Quiet,"请保持安静")的锦标赛,包括:三阶盲拧、四阶盲拧、五阶盲拧、三阶多盲、三阶最少步。',
+                    '可以承办俗称"安静项目"(PBQ,Please Be Quiet)的锦标赛,包括:三阶盲拧、四阶盲拧、五阶盲拧、三阶多盲、三阶最少步。',
                     'A championship that can hold the events commonly referred to as PBQ-events (Please Be Quiet). This championship can hold 3×3×3 Blindfolded, 4×4×4 Blindfolded, 5×5×5 Blindfolded, 3×3×3 Multi-Blind and 3×3×3 Fewest Moves.',
                   )}
                 </p>
@@ -250,7 +244,7 @@ export default function RegulationNews() {
                   <tr>
                     <th>{t('项目', 'Event')}</th>
                     <th>{t('主锦标赛', 'Main')}</th>
-                    <th>{t('静默锦标赛', 'Quiet')}</th>
+                    <th>{t('安静锦标赛', 'Quiet')}</th>
                     <th>{t('最少步锦标赛', 'FM')}</th>
                   </tr>
                 </thead>
@@ -283,7 +277,7 @@ export default function RegulationNews() {
             {' · '}
             <a href={POST_POLICY} target="_blank" rel="noopener noreferrer">{t('竞赛要求政策 5.5', 'Requirements Policy 5.5')}</a>
             {' · '}
-            <a href={QUIET_DOC} target="_blank" rel="noopener noreferrer">{t('静默锦标赛说明', 'Quiet Championship explainer')}</a>
+            <a href={QUIET_DOC} target="_blank" rel="noopener noreferrer">{t('安静锦标赛说明', 'Quiet Championship explainer')}</a>
           </p>
         </footer>
       </div>
