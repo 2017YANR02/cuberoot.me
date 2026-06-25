@@ -19,7 +19,9 @@ param(
   [int]$ChunkSize = 200000,# analyzer 分块大小(pocket 全表直查 ~百万/s, 一块秒级)
   [switch]$BuildOnly,      # 跳过取数/解算, 直接用现有 CSV 重算 JSON
   [int]$SampledN = 0,      # >0: TIER C/D 离线采样分布的样本数(0 = 用脚本各 event 的 defaultN)
-  [string[]]$SampledEvents = @()  # 空 = 全部已注册 TIER C/D 采样分布 event(下方 $SAMPLED_DIST_EVENTS)
+  [string[]]$SampledEvents = @(),  # 空 = 全部已注册 TIER C/D 采样分布 event(下方 $SAMPLED_DIST_EVENTS)
+  [switch]$Sampled,        # 显式启用 TIER C/D 非 WCA 离线采样分布(默认关: 用户停用; 一条龙/裸跑都不再采样)。手动 build_puzzle_sampled_dist.ts 直调路径不受影响
+  [switch]$RebuildTierB    # 显式重建 TIER B 确定性精确距离表(默认关: 表只依赖魔方几何, 跑一次永久不变, 每次重算纯浪费)。首次生成 / 新接入 TIER B 时才传
 )
 $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
@@ -287,7 +289,9 @@ try {
 # 新接入一个 C/D 采样分布 = 在 build_puzzle_sampled_dist.ts 的 REGISTRY 加一行 + 此处 $SAMPLED_DIST_EVENTS 加 event。
 $SAMPLED_DIST_EVENTS = @('335', '336', '337', '233', '334', 'crz3a', 'mpyrso', 'dino', 'sq2', 'ssq1', 'bsq', 'cm3', 'heli', 'helicv', 'ctico', 'sia222')   # 已离线采样的 TIER C/D event(随后续 wave 退役各 DistView 现场采样而增长;15p / sia123 求解器太慢未接入)
 $evToBuild = if ($SampledEvents -and $SampledEvents.Count -gt 0) { $SampledEvents } else { $SAMPLED_DIST_EVENTS }
-if ($evToBuild.Count -gt 0) {
+if (-not $Sampled) {
+  Write-Host '  [采样] 非 WCA 项目 TIER C/D 离线采样分布默认停用 (用户要求; 显式 -Sampled 才跑)。' -ForegroundColor DarkGray
+} elseif ($evToBuild.Count -gt 0) {
   Step "build_puzzle_sampled_dist (TIER C/D 离线采样: $($evToBuild -join ', '))"
   Push-Location $PkgDir
   # crz3a/15p 的求解器 import client 端 `@/` 别名(kociemba 等),tsx 需指向 client tsconfig 才能解析;
@@ -311,7 +315,9 @@ if ($evToBuild.Count -gt 0) {
 # 梯度下降解(可证最优)。输出确定性(无 Date.now/Math.random)、同输入逐字节可复现,故每次重跑都安全幂等。
 # 目前仅 bic(联体魔方,1,108,800 态,现场 BFS ~6.4s/~510MB)。新接入一个 TIER B = 在此列表加 build 脚本一行。
 $TIER_B_BUILDERS = @('build_bic_table.ts', 'build_sia222_table.ts')   # gz ≤~2MB 的随 stats commit (opt_bic);更大改 scp-only + §3 MANUAL (opt_sia222 ~4MB → 发布到 static, 不进 repo). sia123 builder 在仓(build_sia123_table.ts)但未接入流水线(求解器太慢, 未上线)
-if ($TIER_B_BUILDERS.Count -gt 0) {
+if (-not $RebuildTierB) {
+  Write-Host '  [TIER B] 确定性精确距离表默认跳过 (只依赖魔方几何, 跑一次永久不变; 首次生成 / 新接入用 -RebuildTierB)。' -ForegroundColor DarkGray
+} elseif ($TIER_B_BUILDERS.Count -gt 0) {
   Step "TIER B 离线精确距离表 ($($TIER_B_BUILDERS -join ', '))"
   Push-Location $PkgDir
   try {
