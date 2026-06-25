@@ -120,14 +120,70 @@ function Lc($p){ $n=0; foreach($l in [IO.File]::ReadLines($p)){ $n++ }; $n }
 # /timer「原始/最优打乱」最优数据 -> prod PG wca_scramble_optimal(自动灌库, 取代手动 \copy)。
 # 每份 export 都是该批项目的"全量"最优集, 故按 event_id 整批替换(DELETE+COPY in tx), 幂等可重跑。
 # 服务器端密码从自身 /root/core-api/.env 读, 不把任何凭据写进(进 git 的)本脚本。
+#
+# 灌库全增量(2026-06-25): static 文件早已增量发布; PG 这条(optimal + steps)以前每次全量 DELETE+COPY /
+# TRUNCATE 重灌(单次 ~270MB), 现也改行级 sha1 内容 diff —— 本地照常 build 全量 CSV(本地算力不计成本),
+# 灌库时只 UPSERT 内容真变的行 + DELETE 已消失的自然键(典型增量几千行=KB 级)。manifest 存 incremental/,
+# 仅在远端灌库成功后才落盘(失败则不更新, 下次重试)。无 manifest=基线: 走原全量路径并建基线。
+# 想强制全量重建: 删对应 pg_*_manifest.tsv 即回退基线路径。
+function Invoke-PgDiff {
+  param([string]$Csv, [string]$Manifest, [int]$KeyCols = 6, [switch]$Header)
+  $diff = Join-Path $PSScriptRoot 'pg_incremental_diff.mjs'
+  $bn = [IO.Path]::GetFileNameWithoutExtension($Manifest)
+  $delta = Join-Path $env:TEMP "${bn}_delta.csv"
+  $deleted = Join-Path $env:TEMP "${bn}_deleted.txt"
+  $newMan = "$Manifest.new"
+  $argv = @('--csv',$Csv,'--manifest',$Manifest,'--key-cols',"$KeyCols",'--out-delta',$delta,'--out-deleted',$deleted,'--out-manifest',$newMan)
+  if($Header){ $argv += '--header' }
+  $json = & node $diff @argv
+  if($LASTEXITCODE -ne 0){ throw "pg_incremental_diff 失败 ($Csv)" }
+  [pscustomobject]@{ Stat = ($json | Select-Object -Last 1 | ConvertFrom-Json); DeltaCsv = $delta; DeletedTxt = $deleted; NewManifest = $newMan }
+}
 function Load-OptimalToPg {
   param([string]$LocalCsv, [string]$Tag, [string]$EventsInList)
   if(-not (Test-Path $LocalCsv)){ Write-Host "  [timer-optimal] ${Tag}: 缺 $LocalCsv, 跳过" -ForegroundColor DarkGray; return }
   $rows = (Lc $LocalCsv) - 1
   if($rows -le 0){ Write-Host "  [timer-optimal] ${Tag}: CSV 0 行, 跳过" -ForegroundColor DarkGray; return }
-  $remoteCsv = "/root/_timer_optimal_$Tag.csv"
-  $remoteSql = "/root/_timer_optimal_$Tag.sql"
-  $sql = @"
+  $pwExpr = '$(grep -oP ''DB_PASS=\K.*'' /root/core-api/.env | tr -d ''[:space:]'')'
+  $manifest = Join-Path $IncrDir "pg_optimal_${Tag}_manifest.tsv"
+  $manifestExisted = Test-Path $manifest
+  $d = Invoke-PgDiff -Csv $LocalCsv -Manifest $manifest -KeyCols 6 -Header
+  $st = $d.Stat
+  if($manifestExisted){
+    if($st.deltaRows -eq 0 -and $st.deleted -eq 0){
+      Write-Host "  [timer-optimal] ${Tag}: 无变化, 跳过 (manifest 命中全量 $rows 行)" -ForegroundColor DarkGray
+      Move-Item -Force $d.NewManifest $manifest; Remove-Item $d.DeltaCsv,$d.DeletedTxt -Force -EA SilentlyContinue; return
+    }
+    Write-Host "  [timer-optimal] ${Tag}: 增量 UPSERT $($st.deltaRows) 行 + DELETE $($st.deleted) 键 (全量 $rows) ..." -ForegroundColor DarkCyan
+    $remoteDelta="/root/_opt_${Tag}_delta.csv"; $remoteDel="/root/_opt_${Tag}_del.csv"; $remoteSql="/root/_opt_${Tag}.sql"
+    $sql = @"
+\set ON_ERROR_STOP on
+BEGIN;
+CREATE TEMP TABLE _opt_stage (LIKE wca_scramble_optimal) ON COMMIT DROP;
+\copy _opt_stage (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,htm,optimal_scramble) FROM '$remoteDelta' WITH (FORMAT csv, HEADER true)
+INSERT INTO wca_scramble_optimal AS t (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,htm,optimal_scramble)
+  SELECT competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,htm,optimal_scramble FROM _opt_stage
+  ON CONFLICT (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num)
+  DO UPDATE SET htm=EXCLUDED.htm, optimal_scramble=EXCLUDED.optimal_scramble;
+CREATE TEMP TABLE _opt_del (competition_id varchar(32), event_id varchar(6), round_type_id varchar(1), group_id varchar(3), is_extra smallint, scramble_num int) ON COMMIT DROP;
+\copy _opt_del FROM '$remoteDel' WITH (FORMAT csv)
+DELETE FROM wca_scramble_optimal t USING _opt_del d
+  WHERE t.competition_id=d.competition_id AND t.event_id=d.event_id AND t.round_type_id=d.round_type_id AND t.group_id=d.group_id AND t.is_extra=d.is_extra AND t.scramble_num=d.scramble_num;
+COMMIT;
+SELECT count(*) AS wca_scramble_optimal_total FROM wca_scramble_optimal;
+"@
+    $localSql = Join-Path $env:TEMP "_opt_${Tag}.sql"
+    [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
+    scp $d.DeltaCsv "${StaticHost}:$remoteDelta"; if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag delta scp 失败" }
+    scp $d.DeletedTxt "${StaticHost}:$remoteDel"; if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag del scp 失败" }
+    scp $localSql "${StaticHost}:$remoteSql"; if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag SQL scp 失败" }
+    $remoteCmd = "PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteDelta $remoteDel $remoteSql; exit `$rc"
+    ssh $StaticHost $remoteCmd
+    if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag 增量灌库失败" }
+    Remove-Item $localSql -Force -EA SilentlyContinue
+  } else {
+    $remoteCsv = "/root/_timer_optimal_$Tag.csv"; $remoteSql = "/root/_timer_optimal_$Tag.sql"
+    $sql = @"
 \set ON_ERROR_STOP on
 BEGIN;
 DELETE FROM wca_scramble_optimal WHERE event_id IN ($EventsInList);
@@ -135,70 +191,123 @@ DELETE FROM wca_scramble_optimal WHERE event_id IN ($EventsInList);
 COMMIT;
 SELECT count(*) AS wca_scramble_optimal_total FROM wca_scramble_optimal;
 "@
-  $localSql = Join-Path $env:TEMP "_timer_optimal_$Tag.sql"
-  [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
-  Write-Host "  [timer-optimal] ${Tag}: scp $rows 行 + 整批替换 wca_scramble_optimal ($EventsInList) ..." -ForegroundColor DarkCyan
-  scp $LocalCsv "${StaticHost}:$remoteCsv"
-  if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag CSV scp 失败" }
-  scp $localSql "${StaticHost}:$remoteSql"
-  if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag SQL scp 失败" }
-  $pwExpr = '$(grep -oP ''DB_PASS=\K.*'' /root/core-api/.env | tr -d ''[:space:]'')'
-  $remoteCmd = "PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteCsv $remoteSql; exit `$rc"
-  ssh $StaticHost $remoteCmd
-  if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag psql 灌库失败" }
-  Remove-Item $localSql -Force -ErrorAction SilentlyContinue
-  Write-Host "  [timer-optimal] ${Tag}: 完成 ($rows 行已上线)。" -ForegroundColor Green
+    $localSql = Join-Path $env:TEMP "_timer_optimal_$Tag.sql"
+    [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
+    Write-Host "  [timer-optimal] ${Tag}: 基线全量 scp $rows 行 + 整批替换 ($EventsInList) ..." -ForegroundColor DarkCyan
+    scp $LocalCsv "${StaticHost}:$remoteCsv"; if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag CSV scp 失败" }
+    scp $localSql "${StaticHost}:$remoteSql"; if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag SQL scp 失败" }
+    $remoteCmd = "PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteCsv $remoteSql; exit `$rc"
+    ssh $StaticHost $remoteCmd
+    if($LASTEXITCODE -ne 0){ throw "[timer-optimal] $Tag psql 灌库失败" }
+    Remove-Item $localSql -Force -EA SilentlyContinue
+  }
+  Move-Item -Force $d.NewManifest $manifest
+  Remove-Item $d.DeltaCsv,$d.DeletedTxt -Force -EA SilentlyContinue
+  Write-Host "  [timer-optimal] ${Tag}: 完成 (manifest 已更新, 全量 $rows 行)。" -ForegroundColor Green
 }
 # 难度 steps 索引 -> prod PG wca_scramble_steps(+ layout meta)。CSV 无 rnd 列:先 \copy 进临时表,
 # 再 INSERT JOIN wca_scrambles 补 rnd(顺带丢掉云表暂无的自然键,即覆盖缺口)。layout 内联灌 meta 单行。
+# DISTINCT ON(自然键): WCA dump 偶有同场同轮配两套 scramble(两 id / 同自然键, 如 CuboMaticaCuiaba2026 333),
+#   _wss_stage 因此会有 2 行/自然键 -> JOIN 后撞 wca_scramble_steps 的自然键主键。DISTINCT ON 确定性收一行
+#   (rnd 取自唯一的 canonical wca_scrambles 行), 任何比赛的同类重复都自动兜住, 不再灌库失败。
 # 失败非致命(只警告不 throw):migration 0057 未部署到 prod 时这步会失败,部署后下次 run 自动灌上。
 # 服务器密码从其自身 /root/core-api/.env 读,不把凭据写进(进 git 的)本脚本。
 function Load-StepsToPg {
   param([string]$LocalCsv, [string]$LocalLayout, [string]$Stamp)
   if(-not (Test-Path $LocalCsv) -or -not (Test-Path $LocalLayout)){ Write-Host '  [steps] 缺 CSV/layout, 跳过灌库' -ForegroundColor DarkGray; return }
   $rows = (Lc $LocalCsv)
-  Write-Host "  [steps] gzip+scp $rows 行 -> 临时表 -> INSERT JOIN wca_scrambles 补 rnd + layout meta ..." -ForegroundColor DarkCyan
-  # gzip(747MB -> ~150MB)
-  $gz = "$LocalCsv.gz"
-  Remove-Item $gz -Force -ErrorAction SilentlyContinue
-  $fin=[IO.File]::OpenRead($LocalCsv); $fout=[IO.File]::Create($gz)
-  $gzs=New-Object IO.Compression.GZipStream($fout,[IO.Compression.CompressionLevel]::Fastest)
-  $fin.CopyTo($gzs); $gzs.Close(); $fout.Close(); $fin.Close()
-  $remoteGz='/root/_wss.csv.gz'; $remoteCsv='/root/_wss.csv'; $remoteSql='/root/_wss.sql'
-  scp $gz "${StaticHost}:$remoteGz"; $scpRc=$LASTEXITCODE
-  Remove-Item $gz -Force -ErrorAction SilentlyContinue
-  if($scpRc -ne 0){ Write-Host '  [steps] scp 失败, 跳过灌库' -ForegroundColor Yellow; return }
+  $pwExpr = '$(grep -oP ''DB_PASS=\K.*'' /root/core-api/.env | tr -d ''[:space:]'')'
   # layout JSONB 内联(单引号字面串 + dollar-quote tag,避免 PowerShell/SQL 转义);json 内无 $/反引号
   $layout = ([IO.File]::ReadAllText($LocalLayout)).Trim()
   $metaIns = "INSERT INTO wca_scramble_steps_meta (id,layout,generated_at) VALUES (1, " + '$WSSL$' + $layout + '$WSSL$' + "::jsonb, '$Stamp') ON CONFLICT (id) DO UPDATE SET layout=EXCLUDED.layout, generated_at=EXCLUDED.generated_at;"
-  $sql = @"
+  $manifest = Join-Path $IncrDir 'pg_wss_manifest.tsv'
+  $manifestExisted = Test-Path $manifest
+  $d = Invoke-PgDiff -Csv $LocalCsv -Manifest $manifest -KeyCols 6   # steps CSV 无 header
+  $st = $d.Stat
+  if($manifestExisted){
+    if($st.deltaRows -eq 0 -and $st.deleted -eq 0){
+      Write-Host "  [steps] 无变化, 只刷新 meta (manifest 命中全量 $rows 行)" -ForegroundColor DarkGray
+      $remoteSql='/root/_wss_meta.sql'
+      $sql = "\set ON_ERROR_STOP on`nBEGIN;`n$metaIns`nCOMMIT;`n"
+      $localSql = Join-Path $env:TEMP '_wss_meta.sql'
+      [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
+      scp $localSql "${StaticHost}:$remoteSql" | Out-Null
+      if($LASTEXITCODE -eq 0){ ssh $StaticHost "PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteSql; exit `$rc" | Out-Null }
+      Remove-Item $localSql -Force -EA SilentlyContinue
+      Move-Item -Force $d.NewManifest $manifest; Remove-Item $d.DeltaCsv,$d.DeletedTxt -Force -EA SilentlyContinue; return
+    }
+    Write-Host "  [steps] 增量 UPSERT $($st.deltaRows) 行 + DELETE $($st.deleted) 键 (全量 $rows) ..." -ForegroundColor DarkCyan
+    $remoteDelta='/root/_wss_delta.csv'; $remoteDel='/root/_wss_del.csv'; $remoteSql='/root/_wss.sql'
+    $sql = @"
+\set ON_ERROR_STOP on
+BEGIN;
+CREATE TEMP TABLE _wss_stage (competition_id varchar(32), event_id varchar(6), round_type_id varchar(1), group_id varchar(3), is_extra smallint, scramble_num int, gm_cross6 smallint, gm_xcross6 smallint, steps smallint[]) ON COMMIT DROP;
+\copy _wss_stage (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,gm_cross6,gm_xcross6,steps) FROM '$remoteDelta' WITH (FORMAT csv)
+INSERT INTO wca_scramble_steps AS t (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,rnd,steps,gm_cross6,gm_xcross6)
+  SELECT DISTINCT ON (s.competition_id,s.event_id,s.round_type_id,s.group_id,s.is_extra,s.scramble_num)
+         s.competition_id,s.event_id,s.round_type_id,s.group_id,s.is_extra,s.scramble_num,w.rnd,s.steps,s.gm_cross6,s.gm_xcross6
+  FROM _wss_stage s JOIN wca_scrambles w USING (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num)
+  ORDER BY s.competition_id,s.event_id,s.round_type_id,s.group_id,s.is_extra,s.scramble_num, s.gm_cross6 NULLS LAST, s.gm_xcross6 NULLS LAST, w.rnd
+  ON CONFLICT (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num)
+  DO UPDATE SET rnd=EXCLUDED.rnd, steps=EXCLUDED.steps, gm_cross6=EXCLUDED.gm_cross6, gm_xcross6=EXCLUDED.gm_xcross6;
+CREATE TEMP TABLE _wss_del (competition_id varchar(32), event_id varchar(6), round_type_id varchar(1), group_id varchar(3), is_extra smallint, scramble_num int) ON COMMIT DROP;
+\copy _wss_del FROM '$remoteDel' WITH (FORMAT csv)
+DELETE FROM wca_scramble_steps t USING _wss_del d
+  WHERE t.competition_id=d.competition_id AND t.event_id=d.event_id AND t.round_type_id=d.round_type_id AND t.group_id=d.group_id AND t.is_extra=d.is_extra AND t.scramble_num=d.scramble_num;
+$metaIns
+COMMIT;
+SELECT 'wca_scramble_steps_total='||count(*) FROM wca_scramble_steps;
+"@
+    $localSql = Join-Path $env:TEMP '_wss.sql'
+    [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
+    scp $d.DeltaCsv "${StaticHost}:$remoteDelta"; if($LASTEXITCODE -ne 0){ Write-Host '  [steps] delta scp 失败, 跳过(manifest 不更新)' -ForegroundColor Yellow; Remove-Item $d.NewManifest -Force -EA SilentlyContinue; return }
+    scp $d.DeletedTxt "${StaticHost}:$remoteDel" | Out-Null; if($LASTEXITCODE -ne 0){ Write-Host '  [steps] del scp 失败, 跳过' -ForegroundColor Yellow; Remove-Item $d.NewManifest -Force -EA SilentlyContinue; return }
+    scp $localSql "${StaticHost}:$remoteSql" | Out-Null; if($LASTEXITCODE -ne 0){ Write-Host '  [steps] SQL scp 失败, 跳过' -ForegroundColor Yellow; Remove-Item $localSql,$d.NewManifest -Force -EA SilentlyContinue; return }
+    $remoteCmd = "PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteDelta $remoteDel $remoteSql; exit `$rc"
+    ssh $StaticHost $remoteCmd
+    $loadRc=$LASTEXITCODE
+    Remove-Item $localSql -Force -ErrorAction SilentlyContinue
+    if($loadRc -ne 0){ Write-Host '  [steps] 增量灌库失败(非致命): 0057 未部署? manifest 不更新, 下次重试。' -ForegroundColor Yellow; Remove-Item $d.NewManifest -Force -EA SilentlyContinue; return }
+  } else {
+    Write-Host "  [steps] 基线全量 gzip+scp $rows 行 -> TRUNCATE+INSERT ..." -ForegroundColor DarkCyan
+    $gz = "$LocalCsv.gz"
+    Remove-Item $gz -Force -ErrorAction SilentlyContinue
+    $fin=[IO.File]::OpenRead($LocalCsv); $fout=[IO.File]::Create($gz)
+    $gzs=New-Object IO.Compression.GZipStream($fout,[IO.Compression.CompressionLevel]::Fastest)
+    $fin.CopyTo($gzs); $gzs.Close(); $fout.Close(); $fin.Close()
+    $remoteGz='/root/_wss.csv.gz'; $remoteCsv='/root/_wss.csv'; $remoteSql='/root/_wss.sql'
+    scp $gz "${StaticHost}:$remoteGz"; $scpRc=$LASTEXITCODE
+    Remove-Item $gz -Force -ErrorAction SilentlyContinue
+    if($scpRc -ne 0){ Write-Host '  [steps] scp 失败, 跳过灌库' -ForegroundColor Yellow; Remove-Item $d.NewManifest -Force -EA SilentlyContinue; return }
+    $sql = @"
 \set ON_ERROR_STOP on
 BEGIN;
 CREATE TEMP TABLE _wss_stage (competition_id varchar(32), event_id varchar(6), round_type_id varchar(1), group_id varchar(3), is_extra smallint, scramble_num int, gm_cross6 smallint, gm_xcross6 smallint, steps smallint[]) ON COMMIT DROP;
 \copy _wss_stage (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,gm_cross6,gm_xcross6,steps) FROM '$remoteCsv' WITH (FORMAT csv)
 TRUNCATE wca_scramble_steps;
 INSERT INTO wca_scramble_steps (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,rnd,steps,gm_cross6,gm_xcross6)
-  SELECT s.competition_id,s.event_id,s.round_type_id,s.group_id,s.is_extra,s.scramble_num,w.rnd,s.steps,s.gm_cross6,s.gm_xcross6
-  FROM _wss_stage s JOIN wca_scrambles w USING (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num);
+  SELECT DISTINCT ON (s.competition_id,s.event_id,s.round_type_id,s.group_id,s.is_extra,s.scramble_num)
+         s.competition_id,s.event_id,s.round_type_id,s.group_id,s.is_extra,s.scramble_num,w.rnd,s.steps,s.gm_cross6,s.gm_xcross6
+  FROM _wss_stage s JOIN wca_scrambles w USING (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num)
+  ORDER BY s.competition_id,s.event_id,s.round_type_id,s.group_id,s.is_extra,s.scramble_num, s.gm_cross6 NULLS LAST, s.gm_xcross6 NULLS LAST, w.rnd;
 $metaIns
 COMMIT;
 SELECT 'wca_scramble_steps_total='||count(*) FROM wca_scramble_steps;
 "@
-  $localSql = Join-Path $env:TEMP '_wss_load.sql'
-  [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
-  scp $localSql "${StaticHost}:$remoteSql" | Out-Null
-  if($LASTEXITCODE -ne 0){ Write-Host '  [steps] SQL scp 失败, 跳过' -ForegroundColor Yellow; Remove-Item $localSql -Force -EA SilentlyContinue; return }
-  $pwExpr = '$(grep -oP ''DB_PASS=\K.*'' /root/core-api/.env | tr -d ''[:space:]'')'
-  # 先 gunzip,再 psql -f(\copy 读已解压文件),最后清理远端临时文件
-  $remoteCmd = "gunzip -f $remoteGz && PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteCsv $remoteGz $remoteSql; exit `$rc"
-  ssh $StaticHost $remoteCmd
-  $loadRc=$LASTEXITCODE
-  Remove-Item $localSql -Force -ErrorAction SilentlyContinue
-  if($loadRc -ne 0){
-    Write-Host '  [steps] psql 灌库失败(非致命): migration 0057 可能尚未部署到 prod,部署后下次 run 自动灌。' -ForegroundColor Yellow
-  } else {
-    Write-Host "  [steps] 完成 ($rows 行已上线 wca_scramble_steps)。" -ForegroundColor Green
+    $localSql = Join-Path $env:TEMP '_wss_load.sql'
+    [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
+    scp $localSql "${StaticHost}:$remoteSql" | Out-Null
+    if($LASTEXITCODE -ne 0){ Write-Host '  [steps] SQL scp 失败, 跳过' -ForegroundColor Yellow; Remove-Item $localSql,$d.NewManifest -Force -EA SilentlyContinue; return }
+    # 先 gunzip,再 psql -f(\copy 读已解压文件),最后清理远端临时文件
+    $remoteCmd = "gunzip -f $remoteGz && PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db -v ON_ERROR_STOP=1 -f $remoteSql; rc=`$?; rm -f $remoteCsv $remoteGz $remoteSql; exit `$rc"
+    ssh $StaticHost $remoteCmd
+    $loadRc=$LASTEXITCODE
+    Remove-Item $localSql -Force -ErrorAction SilentlyContinue
+    if($loadRc -ne 0){ Write-Host '  [steps] psql 灌库失败(非致命): migration 0057 可能尚未部署到 prod,部署后下次 run 自动灌。manifest 不更新。' -ForegroundColor Yellow; Remove-Item $d.NewManifest -Force -EA SilentlyContinue; return }
   }
+  Move-Item -Force $d.NewManifest $manifest
+  Remove-Item $d.DeltaCsv,$d.DeletedTxt -Force -EA SilentlyContinue
+  Write-Host "  [steps] 完成 (manifest 已更新, 全量 $rows 行)。" -ForegroundColor Green
 }
 function AppendData($master,$src,$skipHeader){
   # LF 安全追加: 先确保 master 末尾有换行, 再逐行 append (跳过源 header)
