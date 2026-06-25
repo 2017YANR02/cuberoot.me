@@ -36,7 +36,7 @@ export interface SimWorldView {
 }
 
 /** Engine puzzle kinds wired to a PG kernel (kept in sync with pgBindings). */
-const PG_BOUND: Record<string, true> = { pyraminx: true, dino: true, skewb: true, heli: true, megaminx: true };
+const PG_BOUND: Record<string, true> = { pyraminx: true, dino: true, skewb: true, heli: true, megaminx: true, fto: true };
 
 const SUBS = '₀₁₂₃₄₅₆₇₈₉';
 const sub = (n: number): string => String(n).split('').map((d) => SUBS[+d]).join('');
