@@ -125,6 +125,22 @@ export default class MegaminxCube extends THREE.Group implements TweenCube<MegaM
 
   reset(): void { this.applyStateInstant(solvedMega()); }
 
+  /** Debug: carve out (hide) the 11 pieces currently on face 0 — exactly the group a
+   *  turn of that face rotates (its center + the 5 corners + 5 edges in its live slots) —
+   *  so the core and the neighbours' inner walls show through, like lifting one cap off a
+   *  real megaminx. The face-turn analog of the corner-turners' carve-corner. OFF restores
+   *  ALL pieces (correct even if the state permuted while carved). */
+  setCarveFace(on: boolean): void {
+    if (on) {
+      for (const pivot of this.pivotsForMove({ face: 0, dir: 1 })) pivot.visible = false;
+    } else {
+      for (const p of this.corners) p.pivot.visible = true;
+      for (const p of this.edges) p.pivot.visible = true;
+      for (const p of this.centers) p.pivot.visible = true;
+    }
+    this.dirty = true;
+  }
+
   get complete(): boolean { return isSolved(this.state); }
 
   dispose(): void {

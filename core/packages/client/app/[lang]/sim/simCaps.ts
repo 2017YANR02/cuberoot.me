@@ -20,18 +20,23 @@ export interface SimPuzzleCaps {
    *                 (skewb / pyraminx / megaminx — these get the renderer dropdown)
    *  - `never`      cubing.js TwistyPlayer only (PG explore puzzles) */
   engine: 'always' | 'engineMode' | 'never';
-  /** Supports the 挖角 (carve-corner) debug toggle = corner-turn engine puzzles + ivy.
-   *  Megaminx is face-turn (no corner to carve); NxN / SQ1 have no carve either. */
-  carveCorner: boolean;
+  /** Supports the 挖角 (carve-corner) debug toggle = corner-turn engine puzzles + ivy
+   *  (hide one corner's moving group → reveal the core). */
+  carveCorner?: boolean;
+  /** Supports the 挖面 (carve-face) debug toggle = face-turn engine puzzles (megaminx)
+   *  (hide one face's 11-piece moving group → reveal the core). The face-turn analog of
+   *  carveCorner; the two are mutually exclusive per puzzle (corner-turn vs face-turn). */
+  carveFace?: boolean;
 }
 
-const NXN_CAPS: SimPuzzleCaps = { engine: 'always', carveCorner: false };
-const TWISTY_CAPS: SimPuzzleCaps = { engine: 'never', carveCorner: false };
+const NXN_CAPS: SimPuzzleCaps = { engine: 'always' };
+const TWISTY_CAPS: SimPuzzleCaps = { engine: 'never' };
 
 /** Per-kind capabilities. Keyed by the string puzzle kinds; NxN (numeric kind) and
- *  PG explore puzzles fall back to NXN_CAPS / TWISTY_CAPS respectively. */
+ *  PG explore puzzles fall back to NXN_CAPS / TWISTY_CAPS respectively. Omitted carve*
+ *  flags default to false. */
 const CAPS: Record<string, SimPuzzleCaps> = {
-  sq1: { engine: 'always', carveCorner: false },
+  sq1: { engine: 'always' },
   ivy: { engine: 'always', carveCorner: true },
   dino: { engine: 'always', carveCorner: true },
   redi: { engine: 'always', carveCorner: true },
@@ -39,7 +44,7 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   heli: { engine: 'always', carveCorner: true },
   skewb: { engine: 'engineMode', carveCorner: true },
   pyraminx: { engine: 'engineMode', carveCorner: true },
-  megaminx: { engine: 'engineMode', carveCorner: false },
+  megaminx: { engine: 'engineMode', carveFace: true },
 };
 
 /** Static capabilities for a puzzle kind (independent of the active renderer). */
@@ -54,6 +59,8 @@ export interface ResolvedCaps {
   engineActive: boolean;
   /** Show the 挖角 (carve-corner) debug toggle. */
   carveCorner: boolean;
+  /** Show the 挖面 (carve-face) debug toggle. */
+  carveFace: boolean;
   /** Show the cubing.js ↔ 群论内核 renderer dropdown. */
   hasRendererChoice: boolean;
 }
@@ -64,7 +71,8 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
   const engineActive = c.engine === 'always' || (c.engine === 'engineMode' && renderer !== 'cubing');
   return {
     engineActive,
-    carveCorner: engineActive && c.carveCorner,
+    carveCorner: engineActive && !!c.carveCorner,
+    carveFace: engineActive && !!c.carveFace,
     hasRendererChoice: c.engine === 'engineMode',
   };
 }
