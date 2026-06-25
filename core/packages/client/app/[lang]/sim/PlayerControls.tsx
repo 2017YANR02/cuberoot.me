@@ -1625,6 +1625,13 @@ function PuzzleSettings({
                 onChange={(v) => set('debugCarveCorner', v)}
               />
             )}
+            {caps.carveFace && (
+              <Toggle
+                label={t('调试:挖面', 'Debug: carve face')}
+                value={settings.debugCarveFace}
+                onChange={(v) => set('debugCarveFace', v)}
+              />
+            )}
           </div>
           <ColorRow label={t('内核色', 'Core color')}>
             <SwatchCell
