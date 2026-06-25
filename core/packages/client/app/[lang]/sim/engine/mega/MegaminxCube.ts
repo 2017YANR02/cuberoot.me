@@ -130,7 +130,7 @@ export default class MegaminxCube extends THREE.Group implements TweenCube<MegaM
    *  so the core and the neighbours' inner walls show through, like lifting one cap off a
    *  real megaminx. The face-turn analog of the corner-turners' carve-corner. OFF restores
    *  ALL pieces (correct even if the state permuted while carved). */
-  setCarveFace(on: boolean): void {
+  setCarve(on: boolean): void {
     if (on) {
       for (const pivot of this.pivotsForMove({ face: 0, dir: 1 })) pivot.visible = false;
     } else {

@@ -98,7 +98,7 @@ export default class RexCube extends CornerTurnCube<RexMove> {
 
   /** Debug: hide the whole cap corner 0 rotates (its 15 pieces by current perm), so
    *  the core + neighbours' inner faces show through. OFF restores ALL pieces. */
-  setCarveCorner(on: boolean): void {
+  setCarve(on: boolean): void {
     if (on) {
       for (const slot of CENTER_CAP[0]) this.centers[this.state.centers[slot]].pivot.visible = false;
       for (const slot of EDGE_CAP[0]) this.edges[this.state.edges[slot]].pivot.visible = false;
