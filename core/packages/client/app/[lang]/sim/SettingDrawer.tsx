@@ -216,22 +216,11 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     applyHintFacelets(world.cube, s.hint, hintBg);
   }
   // Carve out (hide) one corner's moving group to inspect the core + neighbors'
-  // inner walls — corner-turning puzzles only (Ivy / Dino).
-  if (world.puzzleKind === 'ivy') {
-    (world.cube as import('./engine/ivy/IvyCube').default).setCarveCorner(s.debugCarveCorner);
-  } else if (world.puzzleKind === 'dino') {
-    (world.cube as import('./engine/dino/DinoCube').default).setCarveCorner(s.debugCarveCorner);
-  } else if (world.puzzleKind === 'redi') {
-    (world.cube as import('./engine/redi/RediCube').default).setCarveCorner(s.debugCarveCorner);
-  } else if (world.puzzleKind === 'rex') {
-    (world.cube as import('./engine/rex/RexCube').default).setCarveCorner(s.debugCarveCorner);
-  } else if (world.puzzleKind === 'heli') {
-    (world.cube as import('./engine/heli/HeliCube').default).setCarveCorner(s.debugCarveCorner);
-  } else if (world.puzzleKind === 'skewb') {
-    (world.cube as import('./engine/skewb/SkewbCube').default).setCarveCorner(s.debugCarveCorner);
-  } else if (world.puzzleKind === 'pyraminx') {
-    (world.cube as import('./engine/pyra/PyraCube').default).setCarveCorner(s.debugCarveCorner);
-  }
+  // inner walls. Any cube that implements setCarveCorner opts in (corner-turn
+  // engine puzzles + ivy) — face-turn megaminx / NxN / SQ1 simply lack the method
+  // → no-op. Toggle visibility is declared once in simCaps (caps.carveCorner); this
+  // duck-typed call needs no per-puzzle chain.
+  (world.cube as { setCarveCorner?: (on: boolean) => void }).setCarveCorner?.(s.debugCarveCorner);
   world.dirty = true;
   world.cube.dirty = true;
   world.resize();

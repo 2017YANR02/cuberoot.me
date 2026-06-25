@@ -91,6 +91,7 @@ import {
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
+import { resolveCaps } from './simCaps';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { WheelPicker } from '@/components/WheelPicker';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
@@ -1254,7 +1255,6 @@ export default function PlayerControls({
         onPuzzleChange={onPuzzleChange}
         renderer={renderer}
         onRendererChange={onRendererChange}
-        isEngineTwisty={isEngineTwisty}
         settings={settings}
         onSettingsChange={onSettingsChange}
         t={t}
@@ -1345,7 +1345,7 @@ const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<SimSettings, 
 
 function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
-  renderer, onRendererChange, isEngineTwisty,
+  renderer, onRendererChange,
   settings, onSettingsChange, t,
   applyMove, keymap, onKeymapChange, onResetKeymap,
 }: {
@@ -1355,8 +1355,6 @@ function PuzzleSettings({
   onPuzzleChange: (kind: SimPuzzle) => void;
   renderer: 'cubing' | 'engine' | 'group';
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
-  /** True when puzzleKind is an ENGINE_TWISTY puzzle on the in-house engine. */
-  isEngineTwisty: boolean;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
   t: (zh: string, en: string) => string;
@@ -1367,26 +1365,12 @@ function PuzzleSettings({
 }) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
-  const isSq1Local = puzzleKind === 'sq1';
-  const isIvyLocal = puzzleKind === 'ivy';
-  const isDinoLocal = puzzleKind === 'dino';
-  const isRediLocal = puzzleKind === 'redi';
-  const isRexLocal = puzzleKind === 'rex';
-  const isHeliLocal = puzzleKind === 'heli';
-  // A corner-turn engine puzzle locally (Dino/Redi/Rex/Heli/engine-Skewb) — used to
-  // gate the corner-only debug toggles + keep the type select / non-NxN layout right.
-  const isCornerLocal = isDinoLocal || isRediLocal || isRexLocal || isHeliLocal || isEngineTwisty;
-  // A PuzzleGeometry explore puzzle (rendered by cubing.js TwistyPlayer) — twisty-class.
-  const isPgLocal = typeof puzzleKind === 'string' && isPgPuzzleId(puzzleKind);
-  // Engine-skewb is rendered by the engine, so it's NOT a "twisty" (cubing.js) puzzle
-  // for the purposes of the NxN/engine option gating below. PG explore puzzles ARE
-  // twisty-class (no in-house engine) → fold them in so the engine-only toggles hide.
-  const isTwistyLocal = (isTwistyPuzzle(puzzleKind) || isPgLocal) && !isEngineTwisty;
-  // Whether this puzzle has a cubing.js ↔ 群论内核 renderer choice (skewb / pyraminx /
-  // megaminx). Pure-engine PG puzzles (dino / heli) have no cubing.js alternative, so no
-  // toggle — their group panel is always on (gated in SimPage, not here).
-  const hasRendererChoice = puzzleKind === 'skewb' || puzzleKind === 'pyraminx' || puzzleKind === 'megaminx';
-  const isNxNLocal = !isSq1Local && !isIvyLocal && !isCornerLocal && !isTwistyLocal;
+  // Per-puzzle UI capabilities come from the single registry in simCaps — no per-kind
+  // boolean chains here. `caps.engineActive` gates the engine-only toggles, `caps.carveCorner`
+  // the 挖角 toggle, `caps.hasRendererChoice` the cubing.js ↔ 群论内核 dropdown. Adding a
+  // puzzle's controls = one simCaps entry, never an edit to the toggle JSX below.
+  const caps = resolveCaps(puzzleKind, renderer);
+  const isNxNLocal = typeof puzzleKind === 'number';
   const [open, setOpen] = useState(true);
   const [keymapOpen, setKeymapOpen] = useState(false);
 
@@ -1465,7 +1449,7 @@ function PuzzleSettings({
             <div className="sim-puzzle-section">
               <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
               <PuzzleTypeSelect
-                value={(isTwistyLocal || isEngineTwisty) ? (puzzleKind as string) : isSq1Local ? 'sq1' : isIvyLocal ? 'ivy' : isDinoLocal ? 'dino' : isRediLocal ? 'redi' : isRexLocal ? 'rex' : isHeliLocal ? 'heli' : 'nxn'}
+                value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
                   if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
@@ -1478,7 +1462,7 @@ function PuzzleSettings({
                 panel). The standalone 自有引擎 (engine without panel) option was retired —
                 群论内核 is its strict superset. Only puzzles with a cubing.js renderer get a
                 toggle; pure-engine PG puzzles (dino/heli) have no alternative, so no select. */}
-            {hasRendererChoice && onRendererChange && (
+            {caps.hasRendererChoice && onRendererChange && (
               <div className="sim-puzzle-section">
                 <div className="sim-puzzle-section-title">{t('渲染', 'Renderer')}</div>
                 <select
@@ -1612,29 +1596,29 @@ function PuzzleSettings({
             <Toggle label={t('背面视图', 'Back view')} value={settings.backView} onChange={(v) => set('backView', v)} />
             {/* 立体贴片 / 镂空 are rendered by the in-house engine (NxN + SQ1/Ivy/Dino/
                 Redi/Rex/Heli/engine-Skewb), not by cubing.js — hide for twisty puzzles. */}
-            {!isTwistyLocal && (
+            {caps.engineActive && (
               <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
             )}
-            {!isTwistyLocal && (
+            {caps.engineActive && (
               <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
             )}
             <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
             <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
-            {!isTwistyLocal && (
+            {caps.engineActive && (
               <Toggle
                 label={t('调试:半转停住', 'Debug: hold partial turn')}
                 value={settings.holdPartialTurn}
                 onChange={(v) => set('holdPartialTurn', v)}
               />
             )}
-            {!isTwistyLocal && (
+            {caps.engineActive && (
               <Toggle
                 label={t('调试:结构着色', 'Debug: structure colors')}
                 value={settings.debugStructureColor}
                 onChange={(v) => set('debugStructureColor', v)}
               />
             )}
-            {(isIvyLocal || (isCornerLocal && puzzleKind !== 'megaminx')) && (
+            {caps.carveCorner && (
               <Toggle
                 label={t('调试:挖角', 'Debug: carve corner')}
                 value={settings.debugCarveCorner}
