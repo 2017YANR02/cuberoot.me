@@ -1618,18 +1618,14 @@ function PuzzleSettings({
                 onChange={(v) => set('debugStructureColor', v)}
               />
             )}
-            {caps.carveCorner && (
+            {caps.carve && (
               <Toggle
-                label={t('调试:挖角', 'Debug: carve corner')}
-                value={settings.debugCarveCorner}
-                onChange={(v) => set('debugCarveCorner', v)}
-              />
-            )}
-            {caps.carveFace && (
-              <Toggle
-                label={t('调试:挖面', 'Debug: carve face')}
-                value={settings.debugCarveFace}
-                onChange={(v) => set('debugCarveFace', v)}
+                label={t(
+                  caps.carve === 'corner' ? '调试:挖角' : caps.carve === 'face' ? '调试:挖面' : '调试:挖棱',
+                  caps.carve === 'corner' ? 'Debug: carve corner' : caps.carve === 'face' ? 'Debug: carve face' : 'Debug: carve edge',
+                )}
+                value={settings.debugCarve}
+                onChange={(v) => set('debugCarve', v)}
               />
             )}
           </div>

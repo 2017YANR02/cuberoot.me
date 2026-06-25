@@ -365,7 +365,7 @@ export default class IvyCube extends THREE.Group implements TweenCube<IvyMove> {
    *  a real Ivy. Hiding a pivot hides its whole subtree while each child keeps its
    *  own `.visible` (e.g. arc-stroke overlays). OFF restores ALL pivots (not just
    *  the ones it hid), so it's correct even if the state permuted while carved. */
-  setCarveCorner(on: boolean): void {
+  setCarve(on: boolean): void {
     if (on) {
       this.cornerPivot[0].visible = false; // axis 0 = R (AXIS_LETTER 'RLDB')
       for (const f of MOVE_CENTERS[0]) this.centerPivot[this.pivotAtFace[f]].visible = false;

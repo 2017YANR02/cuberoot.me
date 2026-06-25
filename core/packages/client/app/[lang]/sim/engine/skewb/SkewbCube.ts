@@ -96,7 +96,7 @@ export default class SkewbCube extends CornerTurnCube<SkewbMove> {
   /** Debug: carve out (hide) the whole cap grip 0 rotates — its 4 corner pieces (by
    *  current perm) + 3 centre pieces — so the core + neighbours' inner faces show
    *  through, like lifting one cap off a real Skewb. OFF restores ALL pieces. */
-  setCarveCorner(on: boolean): void {
+  setCarve(on: boolean): void {
     if (on) {
       this.cornerById(this.state.cornerPerm[0]).pivot.visible = false;
       for (const slot of CORNER_CYCLE[0]) this.cornerById(this.state.cornerPerm[slot]).pivot.visible = false;

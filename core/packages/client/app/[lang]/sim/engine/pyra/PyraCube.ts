@@ -76,7 +76,7 @@ export default class PyraCube extends THREE.Group implements TweenCube<PyraMove>
   /** Debug: hide vertex 0's whole turning layer (its corner + tip + the 3 edges
    *  currently around it) so the core + neighbors' inner faces show, like lifting one
    *  corner tripod off a real pyraminx. OFF restores everything. */
-  setCarveCorner(on: boolean): void {
+  setCarve(on: boolean): void {
     if (on) {
       this.corners[0].pivot.visible = false;
       this.tips[0].pivot.visible = false;
