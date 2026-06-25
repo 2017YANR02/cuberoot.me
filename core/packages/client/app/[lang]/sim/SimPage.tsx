@@ -173,9 +173,11 @@ export default function SimPage() {
       puzzle: parseAsString.withDefault('3'),
       alg: parseAsString,
       setup: parseAsString,
-      // Which renderer for an ENGINE_TWISTY puzzle: cubing.js TwistyPlayer (default),
-      // the in-house Three.js engine, or 'group' = the engine + a live group-theory
-      // panel backed by the vendored puzzle-geometry. Default 'cubing' → omitted.
+      // Which renderer for an ENGINE_TWISTY puzzle: cubing.js TwistyPlayer (default) or
+      // 'group' = the in-house Three.js engine + a live group-theory panel backed by the
+      // vendored puzzle-geometry. Default 'cubing' → omitted. 'engine' is the retired
+      // engine-without-panel mode — still parsed so old links degrade to the engine view
+      // (treated as 'group' everywhere), no longer offered in the UI.
       renderer: parseAsStringEnum(['cubing', 'engine', 'group'] as const).withDefault('cubing'),
     },
     { history: 'replace', scroll: false },
@@ -200,11 +202,12 @@ export default function SimPage() {
     return n;
   }, [query.puzzle]);
   // A twisty puzzle is rendered by the in-house engine when it has an engine
-  // alternative AND the renderer toggle is set to 'engine' (default 'cubing' keeps
-  // the cubing.js TwistyPlayer). `twisty` = "use the cubing.js path" — false for
-  // engine-skewb, which then falls through to the World/Three.js route below.
+  // alternative AND the renderer toggle is off cubing.js (default 'cubing' keeps the
+  // cubing.js TwistyPlayer). The non-cubing view is always the engine + group panel
+  // ('group'; stale 'engine' links land here too). `twisty` = "use the cubing.js path"
+  // — false for engine-skewb, which then falls through to the World/Three.js route below.
   const useEngine = isTwistyPuzzle(puzzleParam) && ENGINE_TWISTY.has(puzzleParam)
-    && (query.renderer === 'engine' || query.renderer === 'group');
+    && query.renderer !== 'cubing';
   // A PuzzleGeometry puzzle (explore set) renders via cubing.js TwistyPlayer's
   // experimentalPuzzleDescription — twisty-class, no in-house engine.
   const pgDef = typeof puzzleParam === 'string' ? PG_DEF_BY_ID[puzzleParam] : undefined;
@@ -1395,7 +1398,11 @@ export default function SimPage() {
               />
             </CollapsibleSection>
           )}
-          {query.renderer === 'group' && PG_BOUND_KINDS.has(String(puzzleParam)) && (
+          {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
+              PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli) have
+              no cubing.js option at all → the panel is always on for them. */}
+          {PG_BOUND_KINDS.has(String(puzzleParam))
+            && (query.renderer !== 'cubing' || !ENGINE_TWISTY.has(String(puzzleParam))) && (
             <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />
           )}
         </aside>

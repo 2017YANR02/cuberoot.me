@@ -485,8 +485,9 @@ interface Props {
   /** Skewb-only: Sarah vs WCA notation. Owner SimPage persists in localStorage. */
   skewbNotation?: SkewbNotation;
   onSkewbNotationChange?: (n: SkewbNotation) => void;
-  /** Renderer for an ENGINE_TWISTY puzzle (skewb): 'cubing' = cubing.js TwistyPlayer
-   *  (default), 'engine' = the in-house Three.js engine. */
+  /** Renderer for an ENGINE_TWISTY puzzle: 'cubing' = cubing.js TwistyPlayer (default),
+   *  'group' = the in-house Three.js engine + group-theory panel. 'engine' (engine without
+   *  panel) is retired — still typed so stale URLs parse, treated as 'group'. */
   renderer?: 'cubing' | 'engine' | 'group';
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
 }
@@ -504,12 +505,12 @@ export default function PlayerControls({
   const isIvy = puzzleKind === 'ivy';
   // Skewb on the in-house engine — a corner-turn engine puzzle, NOT the cubing.js
   // twisty path. The cubing.js skewb stays a twisty puzzle (renderer 'cubing').
-  const isSkewbEngine = puzzleKind === 'skewb' && (renderer === 'engine' || renderer === 'group');
-  const isPyraEngine = puzzleKind === 'pyraminx' && (renderer === 'engine' || renderer === 'group');
-  const isMegaEngine = puzzleKind === 'megaminx' && (renderer === 'engine' || renderer === 'group');
-  // Skewb + Pyraminx + Megaminx have an in-house engine alternative; on the 'engine'/'group'
-  // renderer they behave like the other engine (corner-/face-turn) puzzles, NOT the cubing.js
-  // twisty path.
+  const isSkewbEngine = puzzleKind === 'skewb' && renderer !== 'cubing';
+  const isPyraEngine = puzzleKind === 'pyraminx' && renderer !== 'cubing';
+  const isMegaEngine = puzzleKind === 'megaminx' && renderer !== 'cubing';
+  // Skewb + Pyraminx + Megaminx have an in-house engine alternative; off the cubing.js
+  // renderer (= 群论内核) they behave like the other engine (corner-/face-turn) puzzles,
+  // NOT the cubing.js twisty path.
   const isEngineTwisty = isSkewbEngine || isPyraEngine || isMegaEngine;
   // PuzzleGeometry explore puzzle (cubing.js TwistyPlayer, world-less) — twisty-class,
   // so it shares every twisty branch below (scramble / simplify / no-world guards).
@@ -1381,11 +1382,10 @@ function PuzzleSettings({
   // for the purposes of the NxN/engine option gating below. PG explore puzzles ARE
   // twisty-class (no in-house engine) → fold them in so the engine-only toggles hide.
   const isTwistyLocal = (isTwistyPuzzle(puzzleKind) || isPgLocal) && !isEngineTwisty;
-  // Whether this puzzle has a cubing.js ↔ engine renderer choice (skewb / pyraminx / megaminx).
+  // Whether this puzzle has a cubing.js ↔ 群论内核 renderer choice (skewb / pyraminx /
+  // megaminx). Pure-engine PG puzzles (dino / heli) have no cubing.js alternative, so no
+  // toggle — their group panel is always on (gated in SimPage, not here).
   const hasRendererChoice = puzzleKind === 'skewb' || puzzleKind === 'pyraminx' || puzzleKind === 'megaminx';
-  // Pure-engine puzzles (no cubing.js) that have a PG group-theory kernel — they get a
-  // 自有引擎 ↔ 群论内核 toggle (no 'cubing' option). Dino / Heli.
-  const isPgBoundEngine = puzzleKind === 'dino' || puzzleKind === 'heli';
   const isNxNLocal = !isSq1Local && !isIvyLocal && !isCornerLocal && !isTwistyLocal;
   const [open, setOpen] = useState(true);
   const [keymapOpen, setKeymapOpen] = useState(false);
@@ -1474,22 +1474,21 @@ function PuzzleSettings({
                 }}
               />
             </div>
-            {(hasRendererChoice || isPgBoundEngine) && onRendererChange && (
+            {/* Renderer choice: cubing.js ↔ 群论内核 (= the in-house engine + a live group
+                panel). The standalone 自有引擎 (engine without panel) option was retired —
+                群论内核 is its strict superset. Only puzzles with a cubing.js renderer get a
+                toggle; pure-engine PG puzzles (dino/heli) have no alternative, so no select. */}
+            {hasRendererChoice && onRendererChange && (
               <div className="sim-puzzle-section">
                 <div className="sim-puzzle-section-title">{t('渲染', 'Renderer')}</div>
                 <select
                   className="sim-puzzle-select"
-                  // Pure-engine PG puzzles (dino/heli) have no cubing.js option and always
-                  // render via the engine, so the toggle is just engine ↔ group there.
-                  value={isPgBoundEngine ? (renderer === 'group' ? 'group' : 'engine') : renderer}
+                  value={renderer === 'cubing' ? 'cubing' : 'group'}
                   onChange={(e) => onRendererChange(e.target.value as 'cubing' | 'engine' | 'group')}
-                  title={t('cubing.js 官方渲染 / 本站自有引擎(圆润外观 + 拖拽转动)/ 群论内核(引擎 + 群结构面板)', 'cubing.js renderer / in-house engine (rounded look + drag) / group-theory kernel (engine + group panel)')}
+                  title={t('cubing.js 官方渲染 / 群论内核(本站引擎:圆润外观 + 拖拽转动 + 群结构面板)', 'cubing.js renderer / group-theory kernel (in-house engine: rounded look + drag + group panel)')}
                 >
-                  {hasRendererChoice && <option value="cubing">cubing.js</option>}
-                  <option value="engine">{t('自有引擎', 'Engine')}</option>
-                  {(puzzleKind === 'pyraminx' || puzzleKind === 'skewb' || puzzleKind === 'megaminx' || isPgBoundEngine) && (
-                    <option value="group">{t('群论内核', 'Group theory')}</option>
-                  )}
+                  <option value="cubing">cubing.js</option>
+                  <option value="group">{t('群论内核', 'Group theory')}</option>
                 </select>
               </div>
             )}
