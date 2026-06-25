@@ -1,0 +1,132 @@
+/* ─── /regulation/news — WCA 规则与赛事动态 ───
+ * 复用 .reg-page 的 token 与排版;这里只补"新闻条目"专属件:
+ * 条目分隔、日期/来源头、新增/移除卡、里程碑时间线、Yes/No 适用矩阵。
+ * ────────────────────────────────────────────── */
+
+.news-list { margin-top: 8px; }
+
+/* ── 单条新闻 ───────────────────────────────── */
+.news-item {
+  margin-top: 64px; padding-top: 48px;
+  border-top: 2px solid color-mix(in srgb, var(--blue) 30%, var(--rule));
+}
+.news-item:first-child { margin-top: 40px; padding-top: 0; border-top: 0; }
+
+.news-meta {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px;
+  margin-bottom: 14px;
+}
+.news-date {
+  font-family: var(--font-mono); font-size: 12.5px; font-weight: 600;
+  letter-spacing: .04em; color: var(--blue);
+  padding: 4px 11px; border-radius: 999px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+}
+.news-source {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13.5px; color: var(--ink-dim); text-decoration: none;
+  transition: color .15s;
+}
+.news-source:hover { color: var(--blue); text-decoration: underline; }
+
+.news-title {
+  font-size: clamp(23px, 3.4vw, 31px); font-weight: 700;
+  letter-spacing: -.018em; line-height: 1.18; margin: 0 0 14px;
+}
+.news-lede { font-size: 17px; color: var(--ink-dim); margin: 0 0 26px; max-width: 64ch; }
+
+.news-sub-title {
+  font-size: clamp(18px, 2.4vw, 21px); font-weight: 700;
+  letter-spacing: -.012em; margin: 40px 0 18px;
+}
+
+/* ── 新增 / 移除 双卡 ───────────────────────── */
+.news-change-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.news-change {
+  border: 1px solid var(--rule); border-radius: 16px; padding: 24px 26px 26px;
+}
+.news-change.add {
+  border-color: color-mix(in srgb, var(--ok) 36%, var(--rule));
+  background: color-mix(in srgb, var(--ok) 6%, var(--card));
+}
+.news-change.remove {
+  border-color: color-mix(in srgb, var(--bad) 36%, var(--rule));
+  background: color-mix(in srgb, var(--bad) 6%, var(--card));
+}
+.news-change-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.news-evt {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 14px; flex: none;
+  background: color-mix(in srgb, var(--blue) 10%, transparent);
+}
+.news-evt .cubing-icon { font-size: 34px; color: var(--blue); }
+.news-change-name { font-size: 19px; font-weight: 700; line-height: 1.2; }
+.news-change-name small {
+  display: block; font-size: 13px; font-weight: 500;
+  color: var(--ink-faint); margin-top: 3px;
+}
+.news-tag {
+  font-size: 12px; font-weight: 700; letter-spacing: .03em;
+  padding: 3px 10px; border-radius: 999px; margin-bottom: 11px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.news-tag.add { color: var(--ok); background: color-mix(in srgb, var(--ok) 15%, transparent); }
+.news-tag.remove { color: var(--bad); background: color-mix(in srgb, var(--bad) 15%, transparent); }
+.news-change p { margin: 0 0 12px; font-size: 15.5px; line-height: 1.66; color: var(--ink-dim); }
+.news-change p:last-child { margin-bottom: 0; }
+.news-change p strong { color: var(--ink); font-weight: 600; }
+
+/* ── 里程碑时间线 ───────────────────────────── */
+.news-milestones { list-style: none; padding: 0; margin: 26px 0 0; display: grid; gap: 0; }
+.news-ms {
+  display: grid; grid-template-columns: 132px 1fr; gap: 18px; align-items: baseline;
+  position: relative; padding: 16px 0 16px 22px;
+}
+.news-ms::before {
+  content: ''; position: absolute; left: 3px; top: 22px; bottom: -16px;
+  width: 2px; background: color-mix(in srgb, var(--blue) 28%, var(--rule));
+}
+.news-ms:last-child::before { display: none; }
+.news-ms::after {
+  content: ''; position: absolute; left: 0; top: 20px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--blue); box-shadow: 0 0 0 4px var(--bg);
+}
+.news-ms-date { font-family: var(--font-mono); font-size: 13.5px; font-weight: 600; color: var(--blue); }
+.news-ms-text { font-size: 15.5px; line-height: 1.6; color: var(--ink-dim); }
+.news-ms-text strong { color: var(--ink); font-weight: 600; }
+
+/* ── 术语定义列表 ───────────────────────────── */
+.news-terms { margin: 4px 0 0; display: grid; gap: 16px; }
+.news-term {
+  border: 1px solid var(--rule); border-radius: 14px; padding: 20px 22px;
+  background: var(--card);
+}
+.news-term-name { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 7px; }
+.news-term-name small { font-family: var(--font-mono); font-weight: 500; font-size: 12.5px; color: var(--ink-faint); margin-left: 8px; }
+.news-term-def { font-size: 15.5px; line-height: 1.66; color: var(--ink-dim); margin: 0; }
+
+/* ── 适用矩阵(Yes/No)─────────────────────── */
+.news-dist { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 15.5px; overflow: hidden; border-radius: 12px; }
+.news-dist th {
+  text-align: center; font-weight: 600; color: var(--ink-faint);
+  font-size: 12px; letter-spacing: .03em;
+  padding: 12px 10px; border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+}
+.news-dist th:first-child { text-align: left; }
+.news-dist td { padding: 12px 10px; border-bottom: 1px solid var(--rule); text-align: center; }
+.news-dist td:first-child { text-align: left; color: var(--ink); font-weight: 500; }
+.news-dist tr:last-child td { border-bottom: 0; }
+.news-dist .y { background: color-mix(in srgb, var(--ok) 12%, transparent); color: var(--ok); font-weight: 600; }
+.news-dist .n { background: color-mix(in srgb, var(--bad) 11%, transparent); color: var(--bad); font-weight: 600; }
+.news-dist-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--rule); border-radius: 12px; }
+
+/* ── 响应式 ─────────────────────────────────── */
+@media (max-width: 720px) {
+  .news-item { margin-top: 52px; padding-top: 40px; }
+  .news-change-grid { grid-template-columns: 1fr; gap: 14px; }
+  .news-ms { grid-template-columns: 1fr; gap: 4px; }
+  .news-dist { font-size: 14.5px; }
+  .news-dist th, .news-dist td { padding: 11px 8px; }
+}
