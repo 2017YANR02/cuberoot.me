@@ -353,20 +353,14 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const activeMaskRef = useRef(activeMask);
   activeMaskRef.current = activeMask;
 
-  // cross 受限专用轻量池(零表,worker 构造现场建 coord/center transition);惰性建、卸载即终止。
-  const crPoolRef = useRef<RustCrossPool | null>(null);
-  const getCrPool = useCallback(() => {
-    if (!crPoolRef.current) crPoolRef.current = createRustCrossPool(Math.min(3, poolSizeForDevice()), 'cross_restrict');
-    return crPoolRef.current;
-  }, []);
   // xcross 受限专用池(零表,worker 构造现场建 54-move transition;PDB 用到才按受限集建)。
+  // 纯十字(k=0)、xcross/xxcross/…(k=stage)统一走这一个池;旧 cross-only 池已退役(宽动表有 bug)。
   const xcrPoolRef = useRef<RustCrossPool | null>(null);
   const getXcrPool = useCallback(() => {
     if (!xcrPoolRef.current) xcrPoolRef.current = createRustCrossPool(Math.min(3, poolSizeForDevice()), 'xcross_restrict');
     return xcrPoolRef.current;
   }, []);
   useEffect(() => () => {
-    crPoolRef.current?.terminate(); crPoolRef.current = null;
     xcrPoolRef.current?.terminate(); xcrPoolRef.current = null;
   }, []);
 
@@ -450,31 +444,24 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     const wall = performance.now();
     const kind = kindOf(method, stages[stage] ?? '');
     try {
-      if (kind === 'std' && isXfStage && useCrRef.current) {
-        // xcross/xxcross/xxxcross/F2L 18 格受限 → XCrossRestrictSolver(54-move + 中心追踪 + 多对)。
-        // grid 单调用:PDB 只建一次,6 视角 × C(4,k) 组合共用。k=stage 对;无解 0xFFFFFFFF、太宽 0xFFFFFFFE。
+      if (kind === 'std' && useCrRef.current) {
+        // cross/xcross/xxcross/xxxcross/F2L 18 格受限(含宽/中层/转体)→ 统一走 XCrossRestrictSolver
+        // (54-move + 中心追踪 + 多对 PDB);k=stage,纯十字 stage=0 即「0 对」纯十字。旧 cross-only
+        // 引擎(CrossRestrictSolver)的宽动表会让中心-相对帧与真机失同步(解不还原),已退役。
+        // grid 单调用:PDB 只建一次,6 视角 × C(4,k) 组合共用。无解 0xFFFFFFFF、太宽 0xFFFFFFFE。
         const vals = await getXcrPool().solveXCrossRestrictGrid(scr, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, stage);
         if (computeReq.current === my) {
           for (let f = 0; f < 6; f++) result[f] = vals[f] ?? null;
           setCounts(result.slice());
         }
       } else if (kind === 'std') {
-        const useCr = useCrRef.current; // 纯十字 18 格受限 → CrossRestrictSolver(54-move)引擎
-        const crPool = useCr ? getCrPool() : null;
+        // 未受限 / 仅 6 面子集:走老快引擎(masked 精确剪枝、零建表,零回归)。
         await Promise.all(FACES.map(async (_f, f) => {
           try {
-            if (useCr && crPool) {
-              const r = await crPool.solveCrossRestrictFace(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current);
-              if (computeReq.current !== my) return;
-              // 受限无解 → 0xFFFFFFFF 哨兵(isSentinel 命中 → 显 '-',且不入 bestVal/自动选最优)。
-              result[f] = r.value;
-              setCounts((prev) => { const n = prev.slice(); n[f] = r.value; return n; });
-            } else {
-              const r = await pool.solveFace(scr, stage, f, activeMaskRef.current);
-              if (computeReq.current !== my) return;
-              result[f] = r.value;
-              setCounts((prev) => { const n = prev.slice(); n[f] = r.value; return n; });
-            }
+            const r = await pool.solveFace(scr, stage, f, activeMaskRef.current);
+            if (computeReq.current !== my) return;
+            result[f] = r.value;
+            setCounts((prev) => { const n = prev.slice(); n[f] = r.value; return n; });
           } catch { /* skip face */ }
         }));
       } else {
@@ -595,9 +582,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       const movesMask = activeMaskRef.current;
       const res = kind === 'std'
         ? (useCrRef.current
-          ? (isXfStage
-            ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, slack, cap, stage, combo, onPartial)
-            : await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, slack, cap))
+          ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, slack, cap, stage, combo, onPartial)
           : await pool.solveMoves(scr, stage, f, { extra: slack, cap, combo, mask: movesMask }, onPartial))
         : kind === 'f2leo'
           ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: slack, cap, combo, mask: movesMask })
