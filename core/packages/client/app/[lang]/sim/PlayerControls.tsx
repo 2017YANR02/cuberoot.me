@@ -1593,7 +1593,7 @@ function PuzzleSettings({
             </label>
             <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
             <label className="sim-toggle">
-              <span>{t('画布背景', 'Background')}</span>
+              <span>{t('背景', 'Background')}</span>
               <select
                 value={settings.boardBg}
                 onChange={(e) => set('boardBg', e.target.value as SimBoardBg)}
