@@ -101,7 +101,7 @@ export default class RediCube extends CornerTurnCube<RediMove> {
    *  pieces (by current perm) + its corner piece — so the core and neighbors' inner
    *  faces show through, like lifting one tripod off a real Redi. OFF restores ALL
    *  pieces (correct even if the state permuted while carved). */
-  setCarveCorner(on: boolean): void {
+  setCarve(on: boolean): void {
     if (on) {
       for (const slot of CORNER_CYCLE[0]) this.edgeById(this.state.edges[slot]).pivot.visible = false;
       this.corners[0].pivot.visible = false;

@@ -67,12 +67,10 @@ export interface SimSettings {
    *  核心(球核 / 内填充箱)染品红,色贴片不动。转动开口时一眼看清露出的是实体结构
    *  还是 void/bug。见 cuber/debugColors.ts。 */
   debugStructureColor: boolean;
-  /** 开发者调试(角转魔方):挖角 —— 隐藏一个角的会动块组,露出核心与相邻块内壁,像把
-   *  真魔方拆掉一个角,用来检查内部结构。见各 Cube 的 setCarveCorner。 */
-  debugCarveCorner: boolean;
-  /** 开发者调试(转面魔方,如五魔):挖面 —— 隐藏一个面的会动块组(中心 + 5 角 + 5 棱),
-   *  露出核心与相邻块内壁,挖角的转面版。见 MegaminxCube.setCarveFace。 */
-  debugCarveFace: boolean;
+  /** 开发者调试(角转/转面/转棱魔方):挖块 —— 隐藏一次转动的会动块组,露出核心与相邻块
+   *  内壁。标签按魔方转动的元素自适应:角转=挖角、转面=挖面(五魔)、转棱=挖棱(直升机)。
+   *  各 Cube 统一实现 `setCarve(on)`;显隐 + 元素在 simCaps 的 `carve` capability 声明。 */
+  debugCarve: boolean;
   /** 内核色 (frame + 内层 slice 填充板的颜色) */
   coreColor: string;
   /** 6 面色 (WCA 默认) */
@@ -109,8 +107,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   dragEmpty: 'view',
   holdPartialTurn: false,
   debugStructureColor: false,
-  debugCarveCorner: false,
-  debugCarveFace: false,
+  debugCarve: false,
   coreColor: '#202020',
   faceColors: { ...DEFAULT_FACE_COLORS },
 };
@@ -219,15 +216,12 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor);
     applyHintFacelets(world.cube, s.hint, hintBg);
   }
-  // Carve out (hide) one corner's moving group to inspect the core + neighbors'
-  // inner walls. Any cube that implements setCarveCorner opts in (corner-turn
-  // engine puzzles + ivy) — face-turn megaminx / NxN / SQ1 simply lack the method
-  // → no-op. Toggle visibility is declared once in simCaps (caps.carveCorner); this
-  // duck-typed call needs no per-puzzle chain.
-  (world.cube as { setCarveCorner?: (on: boolean) => void }).setCarveCorner?.(s.debugCarveCorner);
-  // Carve a whole face's moving group — the face-turn analog (megaminx). Same duck-type:
-  // any cube with setCarveFace opts in; visibility is declared once in simCaps (carveFace).
-  (world.cube as { setCarveFace?: (on: boolean) => void }).setCarveFace?.(s.debugCarveFace);
+  // Carve: hide one move's moving group — corner / face / edge, whatever the puzzle
+  // turns — to inspect the core + neighbours' inner walls. Any cube that implements
+  // setCarve opts in (corner-turners + ivy, megaminx, helicopter); NxN / SQ1 lack it
+  // → no-op. Which element (label 挖角/挖面/挖棱) is declared once in simCaps (caps.carve);
+  // this duck-typed call needs no per-puzzle chain.
+  (world.cube as { setCarve?: (on: boolean) => void }).setCarve?.(s.debugCarve);
   world.dirty = true;
   world.cube.dirty = true;
   world.resize();

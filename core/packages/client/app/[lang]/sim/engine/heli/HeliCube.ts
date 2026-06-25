@@ -127,8 +127,9 @@ export default class HeliCube extends THREE.Group implements TweenCube<HeliMove>
   /** Debug "carve": hide the pieces edge 0's twist rotates (2 corners + 4 wings) so the
    *  core + neighbors' inner faces show through, like lifting one edge's flap off a real
    *  Helicopter. OFF restores ALL pieces (correct even if the state permuted while
-   *  carved). Named setCarveCorner to match the shared debug toggle across cuber engines. */
-  setCarveCorner(on: boolean): void {
+   *  carved). The helicopter turns edges, so this is "carve edge" (挖棱) — the edge-turn
+   *  analog of the corner-turners' carve-corner. */
+  setCarve(on: boolean): void {
     if (on) {
       for (const s of CORNER_SLOTS[0]) this.cornerPieces[this.state.cp[s]].pivot.visible = false;
       for (const s of WING_SLOTS[0]) this.wingPieces[this.state.wp[s]].pivot.visible = false;

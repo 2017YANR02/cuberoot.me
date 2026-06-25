@@ -91,7 +91,7 @@ export default class DinoCube extends CornerTurnCube<DinoMove> {
    *  the neighbors' inner faces show through, like lifting one corner's tripod off a
    *  real Dino. OFF restores ALL pieces (correct even if the state permuted while
    *  carved). */
-  setCarveCorner(on: boolean): void {
+  setCarve(on: boolean): void {
     if (on) {
       for (const slot of CORNER_CYCLE[0]) this.pieceById(this.perm[slot]).pivot.visible = false;
     } else {
