@@ -28,7 +28,7 @@ import { useRouter, useParams } from 'next/navigation';
 import {
   Play, Pause, SkipBack, SkipForward, RotateCcw,
   FlipHorizontal2, FlipVertical2, Eraser, Sparkles, RotateCw,
-  Settings, ChevronRight, Shuffle, Link2, Check, Upload,
+  Shuffle, Link2, Check, Upload,
   Search, Loader2,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
@@ -1384,7 +1384,6 @@ function PuzzleSettings({
   // puzzle's controls = one simCaps entry, never an edit to the toggle JSX below.
   const caps = resolveCaps(puzzleKind, renderer);
   const isNxNLocal = typeof puzzleKind === 'number';
-  const [open, setOpen] = useState(true);
   const [keymapOpen, setKeymapOpen] = useState(false);
 
   const activePreset = STYLE_PRESETS.find(
@@ -1445,18 +1444,6 @@ function PuzzleSettings({
 
   return (
     <section className="sim-puzzle">
-      <button
-        type="button"
-        className="sim-puzzle-head"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-label={t('魔方设置', 'Puzzle Settings')}
-        title={t('魔方设置', 'Puzzle Settings')}
-      >
-        <ChevronRight size={14} className={'sim-puzzle-caret' + (open ? ' open' : '')} />
-        <Settings size={14} />
-      </button>
-      {open && (
         <div className="sim-puzzle-body">
           <div className="sim-puzzle-row">
             <div className="sim-puzzle-section">
@@ -1677,7 +1664,6 @@ function PuzzleSettings({
             ))}
           </ColorRow>
         </div>
-      )}
       <KeymapModal
         open={keymapOpen}
         onClose={() => setKeymapOpen(false)}

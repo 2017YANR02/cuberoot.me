@@ -208,9 +208,8 @@
 }
 
 .sim-puzzle {
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  /* No card frame (house style, matches .gt-panel): stacked panels are separated
+     by a single top hairline (.sim-side > * + *), not wrapped in a bordered box. */
 }
 .sim-puzzle-head {
   display: flex;

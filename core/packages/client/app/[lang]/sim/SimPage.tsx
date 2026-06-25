@@ -22,7 +22,7 @@ import HomeLink from '@/components/HomeLink';
 import type * as THREE from 'three';
 import {
   ChevronLeft, ChevronRight,
-  BookOpen, Film,
+  BookOpen,
   Maximize2, Minimize2,
   ArrowLeftRight,
 } from 'lucide-react';
@@ -292,18 +292,10 @@ export default function SimPage() {
     if (typeof window === 'undefined') return false;
     try { return localStorage.getItem('sim.panel.algs') === '1'; } catch { return false; }
   });
-  const [directorOpen, setDirectorOpen] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try { return localStorage.getItem('sim.panel.director') === '1'; } catch { return false; }
-  });
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try { localStorage.setItem('sim.panel.algs', algsOpen ? '1' : '0'); } catch { /* private */ }
   }, [algsOpen]);
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try { localStorage.setItem('sim.panel.director', directorOpen ? '1' : '0'); } catch { /* private */ }
-  }, [directorOpen]);
 
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
@@ -1409,20 +1401,13 @@ export default function SimPage() {
             onRendererChange={handleRendererChange}
           />
           {!twisty && (
-            <CollapsibleSection
-              open={directorOpen}
-              onToggle={() => setDirectorOpen((o) => !o)}
-              icon={Film}
-              label={t('录制', 'Record')}
-            >
-              <DirectorPanel
-                getCanvas={getCanvas}
-                getWorld={getWorld}
-                getRenderer={getRenderer}
-                setup={setupParam}
-                alg={algParam}
-              />
-            </CollapsibleSection>
+            <DirectorPanel
+              getCanvas={getCanvas}
+              getWorld={getWorld}
+              getRenderer={getRenderer}
+              setup={setupParam}
+              alg={algParam}
+            />
           )}
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
               PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli) have
