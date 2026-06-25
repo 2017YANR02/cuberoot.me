@@ -242,6 +242,16 @@ function localizeName(c: { id?: string; name: string; name_zh?: string }, isZh: 
   return localizeCompName(c.id ?? '', c.name, isZh, { explicitNameZh: c.name_zh });
 }
 
+// 日历/紧凑/详情视图里去掉名字结尾的年份 —— 月历自带年月,名字里的年是冗余。
+// 英文名 "Wuhan Open 2026"(空格分隔)和中文名贴年 "漳州公开赛2026"(stripWcaPrefix 把前缀年挪到尾部、
+// 结尾是 CJK 时不加空格)都要去掉,否则只有英文名/带拉丁后缀的被剥、纯中文名残留年份(就是用户看到的不一致)。
+// 仅用于日历相关视图;列表视图保留年份(跨年滚动需消歧)。
+function localizeNameNoYear(c: { id?: string; name: string; name_zh?: string }, isZh: boolean): string {
+  const name = localizeName(c, isZh);
+  const out = name.replace(/\s*(?:19|20)\d{2}$/, '').trimEnd();
+  return out || name;
+}
+
 function Flag({ iso2 }: { iso2: string }) {
   return <SharedFlag iso2={iso2} spanClassName="flag-span" imgClassName="flag-img" />;
 }
@@ -559,7 +569,7 @@ function CompModal({ comp, isZh, onClose, t, cancelled, loggedIn, followed, onTo
     return () => { cancelled = true; };
   }, [comp.id, comp.rounds]);
 
-  const displayName = localizeName(comp, isZh);
+  const displayName = localizeNameNoYear(comp, isZh);
   const displayCity = isZh ? (comp.city_zh || localizeCity(comp.city, true, comp.country)) : comp.city;
   const displayCountry = countryName(comp.country, isZh);
 
@@ -2507,7 +2517,7 @@ function CalendarPageInner() {
                 {week.bars.map((bar) => {
                   const reg = regState(bar.comp.registration_open, bar.comp.registration_close, bar.comp.registered, bar.comp.competitor_limit);
                   const cancelled = isCancelledComp(bar.comp, cancelledCutoffIso);
-                  const displayName = localizeName(bar.comp, isZh).replace(/ \d{4}$/, '');
+                  const displayName = localizeNameNoYear(bar.comp, isZh);
                   const classes = [
                     'event-bar',
                     `reg-${reg}`,
@@ -2597,7 +2607,7 @@ function CalendarPageInner() {
                       const titleText = tile.count > 1
                         ? `${countryName(c.country, isZh)} — ${tile.count}${tr({ zh: ' 场', en: ' comps'
                         })}`
-                        : `${localizeName(c, isZh)} — ${c.top_cubers.length} cubers`;
+                        : `${localizeNameNoYear(c, isZh)} — ${c.top_cubers.length} cubers`;
                       return (
                         <button
                           key={`${c.country.toLowerCase()}-${c.id}`}
@@ -2712,7 +2722,7 @@ function CalendarPageInner() {
                   return s <= dayListDate && dayListDate <= e;
                 })
                 .map((c) => {
-                  const displayName = localizeName(c, isZh);
+                  const displayName = localizeNameNoYear(c, isZh);
                   const top = getCompRecordTop(c.id);
                   const cancelled = isCancelledComp(c, cancelledCutoffIso);
                   const prefetchRounds = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
