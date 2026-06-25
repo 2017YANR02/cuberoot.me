@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / B / bin 4
-# Population in this bin: 41
-# Samples listed: 41 (all entries in this bin)
+# Population in this bin: 42
+# Samples listed: 42 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 108204001,U2 R2 L2 F2 D B D' R2 U L2 F' U2 B R2 L2 F2 D2 F,B,San Pedro de Macoris Open 2015 (2015-02-08),333 R2 A #4
@@ -46,3 +46,4 @@
 5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1
 5645811001,F' D F2 U2 F' U F D U2 F' D2 F2 D2 R' B2,B,Las Palmas Ahome 2026 (2026-05-16~17),333oh Final A #3
 5700996020,B2 U' B2 F2 L2 D U' R D' B' F2 L' R' D U' F' U' F D,B,Redhawk Slow Summer OH 2026 (2026-06-13~14),333mbf Final A #1
+5708060001,U2 B2 R2 D' F' L2 D' B D2 B2 U2 F' L2 D2 B U2 L' B' R2,B,Agoura Summer 2026 (2026-06-20),333 R1 B #2

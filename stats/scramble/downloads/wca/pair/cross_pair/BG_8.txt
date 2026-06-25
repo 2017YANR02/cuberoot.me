@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BG / bin 8
-# Population in this bin: 408
+# Population in this bin: 410
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 679001,R2 U2 B2 R2 U B2 D' U' L' D R F2 D' L' B F2 U L' R2,B,Cube Kingdom II 2014 (2014-03-15),333 Final A #5
@@ -77,7 +77,7 @@
 5587715001,U2 B2 L B2 R D2 B2 R2 D2 B D R' U' F L D' U2 L B',B,Odd Day in Hong Kong 2026 (2026-04-26),333 R1 H #4
 626568001,B2 L2 B R2 U2 R2 D2 F R2 D' B' L B' F R' D' B' U2 R U,B,Classic City Spooks 2017 (2017-10-27~29),333 R1 A E2
 4340426001,L' B' R' F2 R' F' R2 U' R B' R' F2 U2 L D2 R L2 F2 L',B,Na'Guara Metropolis Lara 2024 (2024-12-07),333 R1 D #5
-655486001,R2 U2 B2 D' U2 R2 U' F2 L U2 B' F' D L' U' B2 F' U2 B2,B,APJ BLD Open 2017 (2017-11-25~26),333oh R1 B #4
+5711695001,R2 B2 L2 B' U2 B2 R2 F2 L2 U R B2 F2 U B2 F D L R2 F2,B,Cubestuff Grand Challenge - The Leonardo 2026 (2026-06-20~21),333 R1 C E2
 5485816001,R2 D U2 F2 D2 L2 F2 R2 D' R' D L F2 D' B D U2 F U R',B,Budapest Open 2026 (2026-03-28~29),333 R2 B #4
 660489002,D2 B2 F2 L2 F2 L' B2 L D2 L' F2 U L2 B D R D F' R U L2,B,Plentzia Open 2014 (2014-06-28~29),333mbf Final A #2
 660894002,B2 D F2 U R2 D R2 U2 L2 R2 B U2 F' L D2 R D' F' L D2 U L B2,B,Dnepr Super Blind 2016 (2016-01-09~10),333mbf Final A #2

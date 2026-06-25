@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / BG / bin 4
-# Population in this bin: 879
+# Population in this bin: 887
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1160360001,L2 F' D2 F L2 B' U2 B2 L U L2 R2 D2 F2 L R2 U',G,Nacionales Uruguayo 2019 (2019-05-18),333 Final A #5
@@ -15,7 +15,7 @@
 2418873001,B' R' U L2 D2 F2 R F2 D2 B2 U2 D' R2 F2 D R' B F2,G,Cubing Tlaxcala 2023 (2023-01-07~08),333 Final A E1
 68271001,U F2 B D' B2 D B D2 B' U R2 D B2 U L2 U' B2 D,G,Rice University 2014 (2014-10-18),333 R2 B #3
 5289942001,F' L2 R2 F2 U' R2 U L2 F2 B' U2 F' D F2 L B2 L' R2 B' L2,G,San Jose del Monte Speedcubing Open III 2025 (2025-12-20),333bf Final B E1
-1785281001,R2 L F2 D B D2 B L U2 F' L2 F L2 F R2 F2 R2 L2,B,Taiwan Open 2022 (2022-01-14~16),333 R1 A E2
+5715371001,F2 D2 L' F2 R B2 F2 L' R F' D2 R F L U F' U B' R',G,UVG Cubing 2026 (2026-06-20),333 Final B #3
 77694001,B D' F U2 R' B2 D' R B2 U2 F B2 L2 D R2 D2 R2 U' L2,B,Cubetcha 2014 (2014-11-01),333 Final A E2
 1461241001,F' D2 B U2 F U2 R2 F L2 U2 R' B L' D' R' U2 B R B D,B,TCG Spring 2019 (2019-12-14~15),333 R1 J E1
 85083001,D' F B D' L2 D' R' B2 R2 U' F' D2 R2 B' R2 B U2 B U2,B,Urdaneta City Fiesta Open 2014 (2014-12-06),333 R1 B #4
@@ -99,8 +99,8 @@
 3676247001,B' R D F2 D' F2 R2 U' R2 U R2 B2 L' U' F2 U L2 F' U',B,Goulburn Open 2024 (2024-04-20),333 R2 C E2
 1370900001,L2 U2 R2 D2 R2 F U2 L2 R B2 U2 L' B' U' R' B' D2 U2,B,Cubeland Arequipa Speedsolving 2019 (2019-10-26),333 R2 D #4
 3493350001,U D F' U' D2 F D' L2 D' R' D R' U2 L' F2 R' F2,B,Mysore Cube Open 2024 (2024-02-03~04),333 R1 D #5
-5404243001,U' B R' D' B' R' B' U B2 R2 F2 U' F2 R2 U' B R2,G,Zeer Rangsit Cubing 2026 (2026-02-21~22),333 Final A E2
-2269598036,F2 U L B2 U' F2 B2 D' L2 D2 L2 U2 F2 L D L' U L B,B,Kewbz UK Championship 2022 (2022-10-28~30),333mbf Final A #2
+5711015001,R L' F D2 F2 R D2 B D2 L2 U2 D F2 D' B2 R B2,B,Oldham County Summer 2026 (2026-06-20),333 R1 E E2
+5708597018,F2 U R' D R' D' F' U F2 R' D' L2 B2 U2 R2 U2 F' L,G,SCU IV: Don't Be Blinded by the Solstice 2026 (2026-06-20),333mbf Final A #1
 4693370001,B' D' R2 D' B U2 L2 U R' U B' U D' B2 U L2 U' D',B,NSW State Championship 2025 (2025-04-26~27),333 R1 B #3
 416045001,U R2 F2 U F' L' U' B L D F2 U2 B L2 F B2 L2 B D2,B,Bekasi Cube Days 2016 (2016-12-17~18),333oh Final B E2
 1168306021,U2 R' B2 L D2 B2 F2 L R B' D2 F R D' B2 F2 L2 R' U L' D',G,CubingUSA Southern Championship 2019 (2019-06-01~02),333mbf Final B #1
@@ -184,7 +184,7 @@
 722958001,L' F2 U2 R' F' L F B' R' L' U' L2 U' D2 R2 B2 U2 L2,G,CubingUSA Heartland Championship 2018 (2018-03-09~11),333 R1 A #1
 3570364001,R' D' R D2 F2 D' B2 U R2 B2 D2 B R2 B2 U' F L F',B,Vanderbilt Spring 2024 (2024-03-09),333 R1 A #2
 1445335001,F D2 F' D2 R' U2 L2 D2 F L D' B2 R2 U' F2 R2 U' R2,B,Ugine Jeu et Jouet 2019 (2019-12-07~08),333oh Final A #1
-1143204001,U2 L2 F2 D2 U' B2 U' F2 U' F L2 D2 B' U L D2 R2 F R2 U2,G,Koalafication Melbourne 2019 (2019-05-18~19),333oh Final A E1
+5708060001,U2 B2 R2 D' F' L2 D' B D2 B2 U2 F' L2 D2 B U2 L' B' R2,B,Agoura Summer 2026 (2026-06-20),333 R1 B #2
 5463639028,R2 D2 L2 U D' R2 U' R' B2 D' B' L2 F' R2 B2 L2 D2 B2 L B2,B,Jonsered Open 2026 (2026-03-21~22),333mbf Final A #1
 2696069001,L2 F D2 F2 U2 L2 B L2 U' B2 F D2 L' B2 U L2 R2 F2,G,National Capital Region B 2023 (2023-05-07),333 R2 A #4
 1087194001,U2 R' D2 R U2 L F2 L' F R D' F' D U R U L' R' D',G,Yakutsk Cubing 2019 (2019-04-07),333 Final A #3

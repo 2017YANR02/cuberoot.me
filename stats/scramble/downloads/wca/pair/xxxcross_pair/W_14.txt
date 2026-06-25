@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / W / bin 14
-# Population in this bin: 100
-# Samples listed: 100 (all entries in this bin)
+# Population in this bin: 101
+# Samples listed: 101 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 264001,B2 L' R2 F2 U2 B2 F2 L B2 U' L' R B' U' B2 D' F L2 D R2,W,Montréal Open 2014 (2014-03-15),333 R2 B #4
@@ -105,3 +105,4 @@
 5378919001,R' U D R2 B' U' L' U' R' L2 B2 U2 R2 F2 D2 F' R2 L2 F,W,Leuven Open 2026 (2026-02-07),333 R1 C #1
 5503711001,D2 F' L2 B D2 B2 D2 U' L2 R' B' D' F U' F' L' R2 D2 R,W,Kirkkonummen Kuutionvääntelyt 2026 (2026-04-03~05),333 R1 C E1
 5553710001,F2 D L2 B2 U' F2 U L2 D F' U' L' U B2 R D' L' B' R D',W,LA PRE Cubing Pucallpa 2026 (2026-04-18),333 R1 F #4
+5715932001,L R2 B2 R2 U R2 D2 U L2 B2 D2 F' U' R' B' F' D R' F R,W,24K Glitterati Cube Open 2026 (2026-06-21),333 R1 B #5

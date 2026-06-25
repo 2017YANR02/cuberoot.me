@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / Y / bin 8
-# Population in this bin: 986
+# Population in this bin: 990
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5485776013,R2 F2 B U' F' R' D' R' D2 F L2 D2 R2 B2 D2 F' R2 U F2 L' B' L,Y,Maxi Mental Delft 2026 (2026-03-28~29),333mbf Final B #1
@@ -54,7 +54,7 @@
 5275284001,D L2 U R' L2 F R' B F2 U' F2 D F2 B2 R2 U' D2 R2 B2,Y,Wiltshire Winter 2025 (2025-12-13~14),333 R1 D E1
 188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,Y,LMDL Open 2015 (2015-09-12),333 R1 B #3
 189975001,L' D2 L' D2 L2 U2 B2 F D2 F L D L' D' L B2 L2,Y,Brisbane Spring 2015 (2015-09-19),333oh R1 A #1
-201086001,B U F' B' L' B' D2 L' F2 B U2 F2 L' D2 L B2 R2,Y,Spanish Championship 2015 (2015-10-09~11),333 R1 B #4
+5709375001,R' B2 D2 F2 D2 L2 R' U2 B U R2 D L U L2 F R2 F2,Y,B-Game - Bastardo Open 2026 (2026-06-13~14),333 R2 C #2
 202154001,U' F R2 F U2 L U' D R' U2 D2 F2 L2 D2 B L2 F' D2 F',Y,Cubing ATMOSphere 2015 (2015-10-10~11),333 R1 G #1
 211548001,D B2 U' L2 U2 F2 D2 L' B F2 L U R D' B' R U2 B2,Y,APJ BLD Open 2015 (2015-10-31~11-01),333oh Final D #1
 211938001,F' U F' B2 L' B' U D2 R2 U L' D2 R U2 D2 L',Y,APJ BLD Open 2015 (2015-10-31~11-01),333 R1 J E2
@@ -92,7 +92,7 @@
 2297865001,F' U2 F' L' U2 L2 B F R2 B' R2 L' D2 R D R' U F2,Y,Maitland Spring 2022 (2022-11-12),333 R1 B E1
 2043513017,U2 L' B' U F2 R2 D' F2 U2 R2 D F' U B2 L' U' L B L,Y,Mallorca Open 2022 (2022-07-23~24),333mbf Final A #1
 4727795001,D2 R2 L D' F2 R' F2 R' B2 L2 U D2 B D2 F B2 R2 L2,Y,Nanterre Open 2025 (2025-05-17~18),333 R1 B #2
-4050368001,R' U F D2 U2 B L2 R2 F U2 L' B D2 B' F' L' D',Y,Las Piñas Speedcubing Open 2024 (2024-08-25),333oh Final B #3
+5710305001,L2 F R' F D2 R2 D F R D2 F2 R F2 R' F2 L' F' L2,Y,Wakefield Summer 2026 (2026-06-20~21),333 Final A #5
 3384548001,R2 B2 D2 B' L2 D2 B' L' B2 U2 L' D2 U' F2 U2 R' F' U2 L' F2,Y,Julekubing 2023 (2023-12-29),333bf Final A E2
 1702315001,L2 R2 D' B2 D R2 B2 D2 F L2 R' B' U2 F D' F D F' U',Y,Montpellier Open 2021 (2021-10-09~10),333 R2 A #1
 3462050001,R' B' D2 L2 D B2 R F' B2 R2 D R2 U' B2 R2 D R2 D2 R,Y,Prescott Cubing Winter 2024 (2024-01-27),333 R1 D #2

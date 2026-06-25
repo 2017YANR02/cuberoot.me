@@ -2,7 +2,7 @@
 # Population in this bin: 3
 # Samples listed: 3 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2562938006,D2 R' L B D F L U' R B' D R2 U2 R2 L2 D F2 D F2 L2 B' L',B,Cles Side Events 2023 (2023-03-18~19),333mbf Final A #1

@@ -2,7 +2,7 @@
 # Population in this bin: 11
 # Samples listed: 11 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 156731001,U' R B2 U2 R U R' F L' U' B' L' B2 D2 R F2 D2 R2 L,B,Cannes Open 2015 (2015-06-27~28),333 R1 A #2

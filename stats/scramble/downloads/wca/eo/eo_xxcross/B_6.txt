@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / B / bin 6
-# Population in this bin: 109
-# Samples listed: 109 (all entries in this bin)
+# Population in this bin: 110
+# Samples listed: 110 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -114,3 +114,4 @@
 5667765013,R' D F2 D2 L B2 R U2 L2 F2 R U' B' R' D' U L2 F2 R B R',B,PBQ Santa Cruz 92.2 FM 2026 (2026-05-23),333mbf Final A #1
 5680669001,U2 L2 U' R2 F2 D2 R2 D R2 F D2 B L F D2 U' B U' R2,B,Oruro Open 10th Anniversary 2026 (2026-05-30~31),333oh Final B #4
 5700997050,D' F' B2 U' D' R2 U' B' R2 D2 B' D2 L2 B2 R2 B L2 U',B,Redhawk Slow Summer OH 2026 (2026-06-13~14),333mbf Final B #1
+5706477001,D2 F' U2 L' B2 L' B2 R2 F2 R' U' B2 U' L F2 R' B L',B,Cluj Cubing Sports Festival 2026 (2026-06-13),333oh Final B #3

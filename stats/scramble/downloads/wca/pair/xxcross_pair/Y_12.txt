@@ -2,7 +2,7 @@
 # Population in this bin: 7
 # Samples listed: 7 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 759182001,D' F' B R F L' F D L U' B2 U R2 U' R2 U2 F2 L2 B2,Y,Oakridge Cube Open - April 2018 (2018-04-14~15),333oh R1 B #2

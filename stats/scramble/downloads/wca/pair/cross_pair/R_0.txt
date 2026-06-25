@@ -2,7 +2,7 @@
 # Population in this bin: 1
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5243105001,U' B2 U L2 D' F2 L2 U B2 F U2 B' L' B F2 L' F R2,R,Hungarian All-Rounder 12 2025 (2025-12-06),333oh Final A E2

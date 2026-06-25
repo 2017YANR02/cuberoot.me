@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BGWY / bin 1
-# Population in this bin: 39
-# Samples listed: 39 (all entries in this bin)
+# Population in this bin: 40
+# Samples listed: 40 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 55030001,B2 R' B2 D2 L2 F2 D2 L R2 F' L' D U L2 B D' U B L2,G,Ho Chi Minh Open 2014 (2014-08-31),333 R1 A E2
@@ -44,3 +44,4 @@
 5583469028,F L2 D2 F U' B2 L U' D' F' R2 B R2 U2 B' D' B2 L2 U2,G,CubingUSA Southeast Championship 2026 (2026-04-25~26),333mbf Final A #1
 5592248001,D2 U2 F2 U2 L R B L B' U' B2 R B2 R2 F D2 R2 B R',G,Only 3x3s in Hyderabad May 2026 (2026-05-02~03),333mbf Final A #2
 5645801001,D2 F2 D2 B' F2 L2 B R D R B2 U' F' L' B2 D2 R F,W,Las Palmas Ahome 2026 (2026-05-16~17),333oh R2 A E2
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1

@@ -2,7 +2,7 @@
 # Population in this bin: 284
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4239030001,B R2 D2 L2 R2 B2 D2 B' L' U2 R U' F2 R' U2 F2 D2 B' D',Y,Cubing Kazakhstan Nationals 2024 (2024-10-25~27),333 Final A #4

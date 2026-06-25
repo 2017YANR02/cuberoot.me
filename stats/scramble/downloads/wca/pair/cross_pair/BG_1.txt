@@ -2,7 +2,7 @@
 # Population in this bin: 33
 # Samples listed: 33 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 213504001,B2 U2 L2 D2 F2 D2 F' L F' L2 D B2 F D' B' U2 R U2,B,AZCubing Fall 2015 (2015-11-07),333oh Final A #4

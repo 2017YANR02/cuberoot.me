@@ -2,7 +2,7 @@
 # Population in this bin: 318
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 13167001,B2 R2 F2 U' B2 F2 D' F2 U F2 U' B' U2 B' D2 F D B2 R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333oh Final A E1

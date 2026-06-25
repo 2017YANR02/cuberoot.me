@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / WY / bin 9
-# Population in this bin: 292
+# Population in this bin: 294
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 13959001,D2 U F2 R2 U2 L2 D' U R' U L' F U F R B F U R,W,Toronto Open Spring 2014 (2014-04-26),333oh R1 A #4
@@ -148,7 +148,7 @@
 4841150001,D2 F D2 L2 R2 F' D2 U2 B' U2 L F U' R F' D L' B' R B2,W,Toowoomba Twist Off 2025 (2025-06-28),333 R2 A #2
 4836127001,U' F2 R2 F U2 F2 L2 R2 F R D F L' D F R' U' B' U2,W,Warm Up Seattle 2025 (2025-06-28~29),333oh Final A #1
 2586695001,B R U B2 D2 B2 F2 D' B2 U' F U R' B L F2 D' R' U2,W,All or Nothing Bogotá 2023 (2023-03-26),333oh Final B #1
-5453938035,U2 F D L' F2 L2 R B2 R' U2 D B L' U B' F R B' L2 U,W,SCU III: FMC Triple-Scoop 2026 (2026-03-14~15),333mbf Final C #1
+5716877037,D' F' U2 F2 R2 B2 D L2 F2 R' D U F L R B R F' D,W,Maine Open 2026 (2026-06-19~20),333mbf Final A #1
 2600327030,R' D' R' B2 L2 U2 R2 F2 U2 B' F L' U2 L' D2 U R' B F2 L' F2,W,Please Be Quiet Brisbane 2023 (2023-04-01~02),333mbf Final A #1
 5556431001,D B' U F U2 B2 R2 B2 R2 D2 U F2 L' D' U' R D2 U B2,W,New Providence Spring AM 2026 (2026-04-18),333oh Final A #1
 5641238001,U2 R' D2 B D' F D2 R U' R2 D2 R' L D2 B2 L F2 L' F,W,Cubing Returns to Kolkata 2026 (2026-05-17),333 R2 B #1

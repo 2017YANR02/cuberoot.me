@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / G / bin 7
-# Population in this bin: 797
+# Population in this bin: 798
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 981107001,L2 B2 R2 U2 R2 D B2 D L2 R' B2 D2 B' L B' U F' D2 L' F2,G,Florence Winter 2019 (2019-01-12),333 R1 D E2
@@ -142,7 +142,7 @@
 660812015,D2 U2 B' F2 R2 B D2 F' L R2 B' F' L F' L' U B R B L2,G,Barcelona FME Open 2015 (2015-09-12~13),333mbf Final A #3
 4204718001,L2 B' D R2 D F2 U' F2 L2 U2 B D' R2 F2 R' D' U F L2 U,G,BrizZon Side Open IV 2024 (2024-10-19~20),333bf R1 A #2
 5089771001,B' R' D B2 L2 F R2 F D2 B2 R2 U F U2 F' U F,G,Cube4fun in Nowa Sarzyna 2025 (2025-10-12),333 R2 B #2
-4944997001,B2 R F2 L U2 R' B2 L' D2 F' L' U' F R' B' R2 B L,G,Manaus Plaza Open II 2025 (2025-08-16),333oh Final B E1
+5711018001,R' B2 F2 D B2 D R2 U L2 U R F2 L' U B D2 L B,G,Oldham County Summer 2026 (2026-06-20),333 Final A #3
 660967004,B2 U2 B2 R2 F2 L B2 L B2 U2 L' F' D' U2 L R2 B F R2 U' L2 U',G,Selandia Open 2016 (2016-04-16),333mbf Final A #1
 2796032001,B' R2 B' R' B R' D' R' B U2 D2 R' B2 R2 F2 L' B2 L' F2,G,Maitland Winter 2023 (2023-06-17),333 R2 B #5
 2793149001,D' B2 U' F U' F' D F' R B' D' B2 L2 U' D2 B2 D' R2,G,Vancouver Pride 2023 (2023-06-11),333 R1 A E2

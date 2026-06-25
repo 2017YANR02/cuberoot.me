@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / Y / bin 1
-# Population in this bin: 77
-# Samples listed: 77 (all entries in this bin)
+# Population in this bin: 78
+# Samples listed: 78 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 64339001,F' D2 F R2 B' D B D' B' D' R2 D2 B L2 D L',Y,Hamilton Spring 2014 (2014-10-05),333oh Final A #2
@@ -82,3 +82,4 @@
 5511581001,L B' L2 R2 F D2 B F L2 R2 U2 R2 D L2 F' L F L' F L' F,Y,French Championship 2026 (2026-04-04~06),333bf R1 C #2
 5552865001,R L' B' U2 L F2 B R B' R2 U2 F2 U' R2 U' L2 D2 R2 D2 B' L2,Y,Minerbe Open 2026 (2026-04-18~19),333bf Final A #5
 5630571001,B2 U' D' L2 U' F' U D2 F' U' B' D2 F R2 F2 B L2 U,Y,3x3x3 un Nekas Cits Rīgā 2026 (2026-05-16),333bf R1 B #5
+5716877022,U2 D2 R2 L' F' L2 D B U B D2 F B2 R2 F L2 U B' D,Y,Maine Open 2026 (2026-06-19~20),333mbf Final A #1

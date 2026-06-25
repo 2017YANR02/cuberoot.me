@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / Y / bin 2
-# Population in this bin: 942
+# Population in this bin: 943
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 866875001,L2 F B' L2 F U2 D2 B U R2 L2 F2 D F2 L2 D R2 F2 D,Y,Canada's Best in the West 2018 (2018-08-24~26),333oh R1 B #1

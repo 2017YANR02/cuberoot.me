@@ -2,7 +2,7 @@
 # Population in this bin: 98
 # Samples listed: 98 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 82221001,U F2 D2 F2 R2 B2 D B2 F R2 D2 R' B2 U' L' B2 F U2,Y,Johannesburg 2014 (2014-11-23),333 R1 D #5

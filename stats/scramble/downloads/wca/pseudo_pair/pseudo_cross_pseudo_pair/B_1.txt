@@ -2,7 +2,7 @@
 # Population in this bin: 159
 # Samples listed: 159 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 22227001,U2 F2 D2 F D2 F' R2 B' R B U' R2 B U' L F2 U B U B',B,Zhejiang University Open 2014 (2014-05-24),333bf Final A #3

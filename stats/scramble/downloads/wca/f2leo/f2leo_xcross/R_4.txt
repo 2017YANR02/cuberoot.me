@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / R / bin 4
-# Population in this bin: 434
+# Population in this bin: 436
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4927962001,R2 U R2 B D B' U' D F' D2 L2 F2 D' B2 U2 D L2 B2,R,Coffee Cup Tacoma 2025 (2025-08-09~10),333 R1 A #2
@@ -168,7 +168,7 @@
 3927288001,L2 B' L2 R2 F R2 D2 B2 R2 B2 R B R2 U' R F' R' D U,R,Get Ready Grove City 2024 (2024-07-13),333oh Final A #1
 5696350001,F L2 F' U B2 U' B2 L2 B U R2 B2 D B2 R2 D2 L' D2,R,Onelooking in Olomouc 2026 (2026-06-13),333 R2 B #1
 4020383005,D2 U2 B2 D' U2 R' D2 U L' D2 R' D' U L F U,R,Shhicago II 2024 (2024-08-17~18),333mbf Final B #3
-5571347017,B L2 B2 U2 F' R2 F2 U' R2 B U' B F' L2 R' U' F2 U L',R,Blind League Dobřejovice II: Crownrise 2026 (2026-04-25),333mbf Final B #1
+5715961001,D' L F' D F' D2 B' D' R2 L2 U B2 L2 U' F2 U B2 F U,R,24K Glitterati Cube Open 2026 (2026-06-21),333 Final A E1
 5049687001,F L' U L2 R2 B2 D L2 U B2 U' L' B' D' R2 D2 L U' R',R,Gouverneur NxNoPeeking 2025 (2025-09-27~28),333bf Final B #3
 1628094001,R' U' F U F L F' L2 U L2 U2 L' D' B2 L2 D R2 D' F2 D' R D2 R' U' F,R,New Zealand Nationals 2020 (2020-12-11~13),333fm Final A #3
 1637821001,D L D F' D L' D' L2 U B2 L2 B2 L2 B' L2 D2 L',R,Jieyang Good Morning 2021 (2021-01-31),333 Final A #5

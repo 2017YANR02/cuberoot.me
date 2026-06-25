@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / B / bin 5
-# Population in this bin: 837
+# Population in this bin: 840
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2992291001,L2 D' L2 D2 U' L2 R' F D2 B2 F' L D' R D L' R B' L2,B,Podolian Open 2023 (2023-08-19~20),333bf Final A E2
@@ -83,7 +83,7 @@
 5274502063,R' L2 B2 D U R2 F2 D2 B2 R' D' F' L R' B2 U' B D B L' F,B,New Zealand Nationals 2025 (2025-12-12~14),333mbf Final A #2
 5392938001,R2 D2 U2 L D2 B2 R' D2 U L R' F' U' B U F' U',B,Guangdong Open - Revival & Rival 2026 (2026-02-06~08),333 Final O #3
 1181772019,U R2 D F2 R2 D2 B2 F2 L2 D2 B R B' R' B' R D L2 R' U2 L' F2,B,Please Be Quiet Toronto 2019 (2019-06-16),333mbf Final A #3
-4114953001,B' D' B2 F2 D2 L B2 U2 L2 R' B2 D' L2 B2 L2 F2 L F' L',B,Logroño Open 2024 (2024-09-14),333 Final D E1
+5706477001,D2 F' U2 L' B2 L' B2 R2 F2 R' U' B2 U' L F2 R' B L',B,Cluj Cubing Sports Festival 2026 (2026-06-13),333oh Final B #3
 2596324001,L B' R' D2 L2 D F B2 L B' R2 L2 B2 U2 B2 U' F2 R2 L2,B,Ignatian Open 2023 (2023-03-25~26),333 R2 B #1
 3586849001,F U L2 D' R U2 R' U' B2 L2 B R2 U2 F2 L2 F' R2 F L' D,B,Innova Schools Mosquera 2024 (2024-03-10),333 Final A #1
 411140001,F U2 R2 D2 F R2 U2 R2 F' R' U F2 L' U2 R' U' L' B2,B,Charrua 2016 (2016-12-03),333 R1 A #2

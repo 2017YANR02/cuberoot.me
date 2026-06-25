@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / Y / bin 8
-# Population in this bin: 883
+# Population in this bin: 887
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5090348001,R' U2 R B R' U' B R D L2 F L2 F D2 F2 B U R',Y,Puzzling Puzzles Vantaa 2025 (2025-10-11~12),333oh R1 A #4

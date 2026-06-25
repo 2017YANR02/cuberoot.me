@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / WY / bin 4
-# Population in this bin: 336
+# Population in this bin: 337
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3998525002,F2 R' D2 R' U2 B2 R F2 D2 U R2 U L D2 B' L' R F2 L' B R',W,Blind Till Nine in Vietnam 2024 (2024-08-10),333mbf Final A #2
@@ -104,7 +104,7 @@
 826009001,F2 U2 F2 L' U2 L D2 F R' B2 L' U2 R' B' R U L F',Y,Kansai Summer 2018 (2018-07-14),333 R1 C #5
 841743027,R2 U2 L2 U2 F2 L' R F R U' B L2 B2 F' U B2 R2 U2 L2 U,W,CubingUSA Nationals 2018 (2018-07-27~29),333mbf Final B #2
 4004849001,R F B2 R' F D F2 R D' L R2 D' L2 F2 L2 D' B2 R,W,Puzzling at JHS Aug 2024 (2024-08-10~11),333 Final C #1
-849745001,L2 D2 B2 L2 F2 R B2 L R' F L' B' U' R' B' D' B2 L2 B2 D2,Y,LGA Open 2018 (2018-08-11),333 R2 B #5
+5709769001,B L' F L B' U' B' L B2 R2 F2 R D2 L2 F2 U2 B U2 L',W,Oslo Open 2026 (2026-06-19~21),333 R3 B #5
 3718548001,U B' L F L' B' L D F L2 U' R2 D2 F2 D2 B2 R B2 L,W,Empire State Spring Special 2024 (2024-04-27),333oh Final B #5
 868528001,B2 L2 U L2 U B2 L2 R' F2 L F' R' B U2 F' R' B2 D U',Y,4th Guwahati Open 2018 (2018-09-01~02),333 R1 F E2
 888783001,D' F2 U2 B D B2 D' L2 D' B' U F2 U2 L U2 B2 U2 R2,W,Oakville Limited Fall 2018 (2018-09-29),333oh Final A #3

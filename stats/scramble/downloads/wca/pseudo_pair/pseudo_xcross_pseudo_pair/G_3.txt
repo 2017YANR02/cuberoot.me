@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / G / bin 3
-# Population in this bin: 709
+# Population in this bin: 711
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 7046001,R B2 R' F R D' B' D' R' U' D L' D2 B2 L D2 F2 B2,G,CSP Open 2014 (2014-03-30),333 R1 A #4
@@ -42,7 +42,7 @@
 3099189047,D2 B U' D' L2 D' L2 F2 R' F' L2 F2 D' L2 U2 B2 R2 D2 B' L B,G,Newham Autumn - British Blind Off 2023 (2023-09-23~24),333mbf Final B #1
 4706619001,L2 U2 R U2 L U2 D2 B D F R' B2 R2 F B' L2 U2 F D2,G,Songinokhairkhan Cup 2025 (2025-05-03),333 Final A #5
 3414876013,F U' F B2 R U2 B' R' U' R F2 U2 B2 D F2 L2 U2 R2 L2 D',G,DFW Winter Variation 2024 (2024-01-13~14),333mbf Final B #1
-3716028001,F D2 R F' L B' D' R2 B F2 L' F2 R D2 R2 F2 B2 D,G,UNSA Speedcubing Otoño 2024 (2024-04-27~28),333 R1 A #2
+5708572010,D2 B2 D' B2 D' F2 U2 B2 U F' R2 F R' B' R2 F2 L' B F U' B,G,More Cubes Kelburn 2026 (2026-06-21),333mbf Final A #2
 3693723001,F B D' R' L' F' L2 U' F B R2 U2 B2 R2 F R2 U2 B L',G,CFL Brzeziny Spring Open 2024 (2024-04-13~14),333 R1 D #2
 1953343001,B2 L2 U R L' D2 R B R2 D' B2 U' F2 U' L2 U2 R' B,G,Buccaneer Bonanza 2022 (2022-06-03~04),333oh R1 B E1
 3557420001,D B2 U2 F U2 F R2 B' U2 B2 L' D2 F D' R D' U2 L' R2,G,Chernivtsi Open 2024 (2024-03-02~03),333oh Final A #5

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / Y / bin 6
-# Population in this bin: 244
+# Population in this bin: 245
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 9262001,D2 F' R2 U2 F' L2 B2 D2 B D B' D R2 D' U B L D' R2,Y,SLS Tarnowskie Gory 2014 (2014-04-05),333oh Final C #3
@@ -25,7 +25,7 @@
 5040564001,L' U2 D' R2 L B2 D2 L' B L2 F R B2 L U2 F2 R' U2 B' L2,Y,San Ramon Fall 2025 (2025-09-20),333bf Final A E2
 317462001,B2 D2 B2 D2 L F2 D2 R2 B' L' B' U2 R2 D' L2 F' U B2 L',Y,Slow N Steady Spring 2016 (2016-06-18~19),333 R1 F #1
 317590001,L2 F2 D' B2 D R U' B' U' R D F2 U2 L U2 D2 R L,Y,Slow N Steady Spring 2016 (2016-06-18~19),333 R2 C #3
-352796001,F2 U2 B D2 B D2 U2 L' B2 U2 R B L2 U L2 U B F,Y,The Most Serene Competition 2016 (2016-08-27),333 R2 B #3
+5705029001,B2 D' F2 D2 U' F2 R2 U L2 R' U B2 L' F2 D B U' B2 F,Y,Hefei Cubing League 3x3 III 2026 (2026-06-17),333 R1 D E2
 408541001,L2 D2 B2 R2 D U2 F2 R2 B2 F L F2 R2 F' L D F,Y,Athens Winter 2016 (2016-12-04),333ft R1 A #3
 429728001,L2 U2 F2 D2 F' L2 R2 B' L U' B' R2 U2 B' L2 R' D B' R',Y,Cubers East India Open 2017 (2017-01-07~08),333 R1 C E2
 440704001,F U' R' U' F R2 U2 R' F' B2 R2 D' L2 B2 L2 F2 U2 R2 U R2,Y,Cube Challenge Quark 2017 (2017-02-05),333 R1 C E1

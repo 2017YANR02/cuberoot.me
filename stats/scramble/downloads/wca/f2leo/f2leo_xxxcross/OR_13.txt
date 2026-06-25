@@ -2,7 +2,7 @@
 # Population in this bin: 50
 # Samples listed: 50 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5665242001,B U2 R2 U2 B2 U2 B L2 U2 L U' B' F' D' R' F' U2 R2 B2 L',O,Hangzhou Open 2026 (2026-05-23),333 R1 A E2

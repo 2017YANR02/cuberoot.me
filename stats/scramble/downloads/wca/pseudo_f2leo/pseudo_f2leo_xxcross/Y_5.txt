@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / Y / bin 5
-# Population in this bin: 954
+# Population in this bin: 955
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3904784001,L2 B2 L2 D B2 L2 D' F2 L2 F R' U R2 D2 B D U' B U2,Y, Wembley Quimbaya 2024 (2024-06-30),333 R1 A E2
@@ -108,7 +108,7 @@
 392723001,L2 R2 B' L2 B' L2 B2 D2 F D2 F L' D' U' R' F L R' D' L,Y,Jawa Timur Open 2016 (2016-11-05~06),333 R1 A E1
 1288233001,L2 F U2 B' L2 D2 R2 F2 L2 F L U2 B U B' D2 L F' L,Y,Denver Back to School 2019 (2019-08-31),333 R1 E E2
 409093001,D B2 D' R2 D' U2 L U2 L2 B D U' B2 F' R B D2 U2,Y,ODU Big Blue Winter 2016 (2016-12-03),333 R1 D E1
-3120043001,D' F2 D' R2 U R2 B2 L2 R2 U' B2 L U' L' R' B F2 L2 R B2,Y,Bengal Cube Open 2023 (2023-09-22~24),333 R1 B E1
+5705003001,L D' L2 D2 U F2 R2 U' R2 U' F' D2 U L U' B' L2 B2 U,Y,Hefei Cubing League 3x3 III 2026 (2026-06-17),333 R1 A #2
 2791974001,F D2 B2 F U2 B' L2 F2 U' R' D2 R F2 D R B' L2 D' R2,Y,Laguna Speedcubing Open II 2023 (2023-06-11),333 Final A #3
 5607117001,U2 R D2 R U2 B2 L U2 R F R U' F' D B2 U L2 D L2,Y,Zhongshan Open 2026 (2026-05-02),333 R1 H E1
 416115001,L' D' L' U2 D2 B2 R2 B U B2 R' U2 D2 F2 U2 D2 R' D2 B2,Y,Sydney Championship 2016 (2016-12-17~18),333 R1 D #4

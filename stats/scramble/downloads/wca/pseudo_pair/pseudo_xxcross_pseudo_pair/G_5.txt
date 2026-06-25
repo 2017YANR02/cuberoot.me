@@ -2,7 +2,7 @@
 # Population in this bin: 680
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 8961001,L2 F R2 B2 L2 B2 R2 D' F' R' D R2 B' D2 L' F' L F',G,BP Cube Day 2014 (2014-04-05),333oh Final C #1

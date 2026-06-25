@@ -2,7 +2,7 @@
 # Population in this bin: 2
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1025192001,D2 F R2 D2 R2 B' F2 L R2 U' R B2 D2 F D B L F2 U B' L2,B,UCSD Winter 2019 (2019-02-16~17),333bf R1 A #3

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / B / bin 2
-# Population in this bin: 409
+# Population in this bin: 410
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3752773001,R2 D2 B' U2 R2 B' R2 B L B U' L2 U' L' F U2 B' L2 R,B,North Jersey Speedsolving B 2024 (2024-05-12),333 R1 A #2
@@ -14,7 +14,7 @@
 91237001,U F2 D' L2 U2 F2 D' U F' D B2 R F U R2 U B2 D' F',B,Genius Kid India Open 2014 (2014-12-21),333 R1 D #2
 99925001,B2 R2 B2 F U2 F2 D2 R2 B U2 F L B2 F U B2 L D B2 R' F',B,PB Smashathon 2015 (2015-01-17~18),333oh R1 B #3
 121646001,D2 R' L D' R U2 R2 U2 R2 F' L2 D' F2 U' B2 U R2 U B2,B,Atlantic Open 2015 (2015-03-28),333 Final B #2
-2269598036,F2 U L B2 U' F2 B2 D' L2 D2 L2 U2 F2 L D L' U L B,B,Kewbz UK Championship 2022 (2022-10-28~30),333mbf Final A #2
+5716877002,B U2 F U2 F2 R2 F R' U R B' D2 F U' R2 F2 U2 B' D2,B,Maine Open 2026 (2026-06-19~20),333mbf Final A #1
 5689894001,L U B2 R2 F2 L' D2 L' R D2 B2 U L D2 B' R2 U' L2 D2,B,Tramsheds IX: June Sunday 2026 (2026-06-07),333 Final A #5
 144015001,D2 R D2 B2 F2 R F2 L U2 F2 R2 F U' L U R U B2 R B',B,Clock N' Stuff 2015 (2015-05-23),333ft Final A #3
 151139001,F U' R2 U F2 U2 B' D2 F' R D L2 D2 F2 R2 U' B2 U B2,B,Finnish Open 2015 (2015-06-13~14),333 R1 C #5

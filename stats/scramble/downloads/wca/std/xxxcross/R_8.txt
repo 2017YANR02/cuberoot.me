@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / R / bin 8
-# Population in this bin: 941
+# Population in this bin: 946
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4676817001,R' U2 B U2 B' R2 F U' B' F' U' F D R2 D2 L2 B,R,Let's Twist Again Landsbro 2025 (2025-04-26~27),333 Final B #1
@@ -36,7 +36,7 @@
 103659001,L2 D2 B2 L' B2 L D2 L U' F' L2 D2 U' L2 D' R F2 D R2,R,Pré-Mundial 2015 (2015-01-23~25),333ft R1 C #3
 2154354001,L D' B2 U L2 U L2 B R' B' L2 U' F U F' L2 D,R,Pretzel Mania 2022 (2022-09-03~04),333 R1 H E1
 1515717001,D2 R F D2 R' B2 R D' F' B2 R' D2 B2 R' F2 U2 L U2 L B2,R,Alberta 5th Anniversary 2020 (2020-01-18~19),333oh R1 A #1
-105912001,L' U' F' R2 L' D R D2 L2 U R' B2 U2 D2 R' B2 L' D2,R,Winter West Ukraine 2015 (2015-01-31~02-01),333 R2 A #4
+5705044001,F L D' R2 D' R' B' U F2 R' B2 R L2 U2 B2 L2 F2 B' U',R,Hefei Cubing League 3x3 III 2026 (2026-06-17),333 R1 G #1
 4441195001,R' U2 R' D2 L' D2 F2 D2 R U F2 D' R U B2 U2,R,Utah Ice Cubing 2025 (2025-01-25),333oh R1 A #5
 4436017001,R2 U2 B' R B R2 F' R B' R2 F B' R2 L2 D2,R,Starting Viña 2025 (2025-01-18~19),333oh R1 B #3
 2461343001,L2 B U' D' R' D' R2 U L' F2 U D2 B D2 F2 B R2 B',R,Cozy Cubing Poway 2023 (2023-01-29),333oh R1 A #3
@@ -129,7 +129,7 @@
 2410501001,U2 D F R' L2 F B U2 L2 U2 B2 R F2 R2 D2 R U R2 D,R,Mum's the Word 2023 (2023-01-08),333 R1 C #3
 1913255001,U2 L D2 R L' U L2 F U' L2 D2 L2 F U2 F2 D2,R,Arkadia 2022 (2022-05-07~08),333 R1 A #3
 1836428001,R D F2 B R' F2 B L2 D' R U' R U2 L' F2 U2 B2 L2,R,Maine Spring 2022 (2022-03-19),333oh R1 B E2
-4823164001,B2 D R' L2 U' R2 F2 R2 U' F' L2 U F' U2 R' U',R,Yunnan Open 2025 (2025-06-22),333oh R1 A #5
+5708571018,U D2 F' D2 B2 L D F U2 F2 U2 R2 D2 F D2 F' R2 U2 B D',R,More Cubes Kelburn 2026 (2026-06-21),333mbf Final A #1
 3034873001,R D2 R2 D2 F2 D2 L' D2 L B L2 F' U' R2 D2 R' U R2 U,R,Cubing Around Metrotown 2023 (2023-09-02),333 R1 E #1
 4454898018,D L2 B' U' R2 U' B2 R2 U' F2 L' D2 F R2 D' B R' B2 D' B R,R,Ropaži Winter 2025 (2025-01-25~26),333mbf Final A #1
 498467001,R D' F2 D L' U' F' U2 B2 L F U2 D2 L2 F' D2 F2 R2 F' B',R,Nanjing Spring 2017 (2017-04-30~05-01),333 R2 A #1
@@ -190,7 +190,7 @@
 661464021,F2 L' B2 F2 U2 F2 L' U2 L2 B' U B' F2 L' B L2 B2 R2 D,R,ChimboteRubik 2017 (2017-08-19~20),333mbf Final A #2
 1169459025,R' U2 R2 D2 L2 F2 L2 B2 U2 F L' F' R D2 U' F2 D' L B L B,R,Metro Speedcubing Open 2019 (2019-06-01~02),333mbf Final A #1
 661486031,L2 U2 L2 B R2 B2 F U2 R2 B' R B' D2 B' L D2 L U R B D2,R,SCMU 2017 (2017-09-01~03),333mbf Final A #1
-662538001,D R2 U2 L2 F2 D L2 U L D2 F D F U R' U2 L2 D R' B' L2,R,Malabar Winter Cube Open 2017 (2017-12-10),333bf Final A E2
+5709191001,F D L2 U2 F2 L2 D F2 U' F' U R' U' L2 B R2 F U,R,B-Game - Bastardo Open 2026 (2026-06-13~14),333 Final A E2
 664775038,F2 R2 F2 D' U2 B2 R2 D2 U' L2 U2 B' L U' F D' R' B L' B' U' B' L,R,Big 'n Blind 2017 (2017-12-10),333mbf Final A #1
 912687001,D L' D2 R2 L U' D R' F D2 R D2 L2 U2 F2 D2 F2,R,Flag City Fall 2018 (2018-10-20~21),333ft Final B #5
 671830001,F2 D2 R D2 L' B2 R2 D2 B2 D' R F2 R2 U L2 F2 D2,R,Last Cubing Lima 2017 (2017-12-09~10),333 R1 E #2

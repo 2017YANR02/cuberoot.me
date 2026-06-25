@@ -2,7 +2,7 @@
 # Population in this bin: 105
 # Samples listed: 105 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 232664001,B U' F2 B' D R2 F' D F' D' B U2 B2 R2 U2 F',W,Sivar Open 2015 (2015-12-20),333oh R1 C E1

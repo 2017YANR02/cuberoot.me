@@ -1,8 +1,8 @@
 # Scramble samples — 222 / block222 / Y / bin 1
-# Population in this bin: 161
-# Samples listed: 161 (all entries in this bin)
+# Population in this bin: 162
+# Samples listed: 162 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 33876001,L D2 R U2 L F2 L2 U2 B2 D2 F' D U' R2 F L2 F U' R2 D',Y,P3 Grand Open 2014 (2014-06-28~29),333bf Final A E1
@@ -166,3 +166,4 @@
 5592163001,D2 F2 D' F2 R B2 U2 L B2 L' B' U2 B2 R' U L' U L',Y,Only 3x3s in Hyderabad May 2026 (2026-05-02~03),333 R2 A #4
 5670951001,R' U R2 D2 U' L2 U L2 F' U2 L' F D2 U' L R' U2 R2,Y,Solo Lur 2026 (2026-05-30~31),333 Final A E2
 5693421001,D F' U2 B' D2 F' U2 R' U2 B2 F2 U2 R' B D' L2 R' B' L2,Y,Burnaby Cubes Big & Small 2026 (2026-06-07),333bf Final A E2
+5716213022,D' F' B U2 B' U' R F' R2 F2 U D2 L2 D2 B2 D' R' U' L B,Y,Flinders Park Side Events 2026 (2026-06-20~21),333mbf Final A #1

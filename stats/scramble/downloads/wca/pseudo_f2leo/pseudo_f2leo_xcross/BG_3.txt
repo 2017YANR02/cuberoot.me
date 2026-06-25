@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BG / bin 3
-# Population in this bin: 685
+# Population in this bin: 688
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -195,7 +195,7 @@
 5501210001,F' L F D F' D' F L' B' D2 R F' R2 F B2 U2 F L2,B,North Sound Spring 2026 (2026-04-04),333 R2 A #5
 920288041,B2 L2 D2 F2 R' B2 R' F2 R D2 U B F2 R2 U L' U' B L R2 B' L',B,Polish Championship 2018 (2018-10-26~28),333mbf Final A #1
 4063126001,B' U' D2 R U B U R' U' L' D2 L F2 L F2 L U2 B',B,Hvidovre Sommer & Efterår 2024 (2024-08-31~09-01),333 Final A #3
-930029001,L2 D2 L' D2 L' F2 R B2 U2 R' B R' F' L' U B' R B2 R,G,Trinity Valley Open 2018 (2018-11-10),333 R1 E #3
+5716877002,B U2 F U2 F2 R2 F R' U R B' D2 F U' R2 F2 U2 B' D2,B,Maine Open 2026 (2026-06-19~20),333mbf Final A #1
 3341717001,U' R' L2 D2 F L' U' F2 R2 B2 L2 U2 B' D2 B' R2 D' F' L2,G,Waterloo Favourites Autumn 2023 (2023-12-16),333 R1 D #1
 3216287001,L B2 L2 F2 L F2 L' B2 R U2 B' F U' L2 F L2 R2 U2 B D',G,VIII CUBIFMA 2023 (2023-10-26~27),333oh Final B #5
 3085734001,U B2 U L' D F R U D F2 U R2 F2 L2 F2 R2 U2 L D B,G,Margarita Open 2023 (2023-09-16~17),333 R2 B #2

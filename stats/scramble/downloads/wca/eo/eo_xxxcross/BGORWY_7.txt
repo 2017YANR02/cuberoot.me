@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGORWY / bin 7
-# Population in this bin: 50
-# Samples listed: 50 (all entries in this bin)
+# Population in this bin: 51
+# Samples listed: 51 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 115238001,D R' U L' U2 B U2 L2 B' L' U' B2 U2 R2 U L2 D L2 B2,W,Summit City Open 2015 (2015-03-07),333 R2 A E1
@@ -55,3 +55,4 @@
 5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y,Adelaide Autumn 2026 (2026-04-12),333 R1 A #2
 5583676001,L D B2 D2 B2 U2 R2 F2 R' U2 R' U2 B2 F' L' D2 L' F2 D,R,Tigery Open 2026 (2026-04-25~26),333oh Final A #2
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2
+5707715001,D2 R L D' L D' F' U2 L' R2 D2 F2 B U2 F R2 F,R,Garland City NY 2026 (2026-06-20),333 Final B #5

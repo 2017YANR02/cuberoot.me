@@ -2,7 +2,7 @@
 # Population in this bin: 594
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3806975001,L F2 U' L2 U2 R B' D2 L B2 R L2 F2 U2 L' B D L2,G,TCG Space lll Santa Anita 2024 (2024-05-25~26),333 R1 B #1

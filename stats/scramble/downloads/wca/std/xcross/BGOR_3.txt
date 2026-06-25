@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGOR / bin 3
-# Population in this bin: 533
+# Population in this bin: 535
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3164001,F' B2 R2 L F U2 F R B' R2 B L2 U B2 U' L2 D F2,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 D #4
@@ -29,7 +29,7 @@
 189381001,L' F2 D2 L R D2 R' F2 U F L' U B R2 B' L F' L' F2,R,MCC Gamma 2015 (2015-09-13),333oh R1 C #3
 191419001,D2 F' D2 L2 F' U2 F D2 B R2 U B2 D' L' D U' L2 B2 L' U F L B,B,Moscow South-West Open 2015 (2015-09-19~20),333bf R2 A #2
 3273333001,U2 F2 D2 L2 F U2 B L2 U' L2 B2 F2 L D2 F2 R F R',G,Ekerö Open 2023 (2023-11-19),333oh R1 B #4
-5101282001,L2 B D2 R2 D2 L' F L D B2 D R D2 R B' F',O,Cubing in Westerly RI 2025 (2025-10-11~12),333 R2 B E2
+5708446001,U' R2 D L' U2 L' U L2 U2 R2 L F2 L D2 B2 F' R U',R,Cubing in the Park Reno 2026 (2026-06-20),333 R2 B #5
 3614622001,F' D' F2 U B2 D' L2 B2 D' R2 B' U' R D2 L U' L D' L',O,Wiltshire March 2024 (2024-03-23~24),333 R2 C E1
 212823001,U2 L2 R' D2 R B2 R U2 B2 R D' B R' D U' R2 B2 L' D2,B,Cubetcha 2015 (2015-10-24),333 R1 D #1
 219941001,R2 D2 R2 U B2 L2 F2 D' F2 R2 F' D' F' U' L' U2 L' U' R,G,UT Open 2015 (2015-11-23),333 R2 A #1
@@ -121,7 +121,7 @@
 788375001,U L2 B D2 B2 U B' D B R' U2 F' L2 F' L2 U2 B D2,B,Tea Time Spring 2018 (2018-05-26~27),333 R2 B #3
 789982001,D' L2 D2 L' F D' F' L' F' D F2 B2 L2 D' L2 U' L2 U R2 U',B,Clock N' Cats 2018 (2018-05-26),333 R1 A #4
 4126175001,L' D2 L' B L' D2 B F2 R D2 L' U2 D2 L2 F2 D L2 B2,R,McMinnville Cubing Fall 2024 (2024-09-21),333oh R1 A #5
-793777001,L2 F2 U L2 D U F' U F R2 D2 U' B' D' L2 U2,R,Slovakian Cube Day 2018 (2018-05-27),333 Final A #2
+5716213022,D' F' B U2 B' U' R F' R2 F2 U D2 L2 D2 B2 D' R' U' L B,O,Flinders Park Side Events 2026 (2026-06-20~21),333mbf Final A #1
 5240283001,B' L D2 F2 L' F2 L2 R F2 D2 L2 B2 F R' U R' U' F' R2,B,Clash of Cubers III Davao 2025 (2025-11-30),333 Final A #2
 3664661035,L2 U2 R2 U' R2 B2 F2 U2 B U L' F2 L' F' U' B D2 R' B' L2,G,Nittedal Mental Breakdown 2024 (2024-04-13~14),333mbf Final A #2
 817937001,B2 D2 R2 F2 D' B2 U R' U R2 B2 L U' F' R' B2 F,O,Maryland 2018 (2018-06-30~07-01),333 Final A E2

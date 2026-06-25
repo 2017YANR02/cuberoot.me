@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / B / bin 4
-# Population in this bin: 154
-# Samples listed: 154 (all entries in this bin)
+# Population in this bin: 156
+# Samples listed: 156 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2
@@ -159,3 +159,5 @@
 5692705035,D F2 R' U' F2 D B2 R2 D2 U B D2 R2 B' R2 F2 R B L' F2,B,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333mbf Final A #1
 5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,B,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1
 5702637001,F2 D' B2 R' B2 L2 D2 L2 F2 L2 B D F' U2 B F L U,B,WCA South American Championship 2026 (2026-06-12~15),333oh R1 A #3
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
+5714763014,U F' R D' U2 B F2 R2 B D2 R2 L U' B2 R2 F2 L' D L,B,Greenwoods Big Blind & Beyond 2026 (2026-06-21),333mbf Final A #1

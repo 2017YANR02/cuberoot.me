@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / Y / bin 10
-# Population in this bin: 30
-# Samples listed: 30 (all entries in this bin)
+# Population in this bin: 31
+# Samples listed: 31 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 17388001,R B R2 U2 D' B2 D2 R' L' D B D2 F' U2 D2 F' L2 B U2 B2,Y,Apollo Open 2014 (2014-05-04),333oh Final A #4
@@ -35,3 +35,4 @@
 4961861001,F L' B' U R' F U2 B' D F2 B2 U2 L2 D F2 D2 L2 B2 D B,Y,Azeméis Open 2025 (2025-08-23~24),333 R2 A E2
 5195985001,F U R2 B2 D2 L2 F2 D' U' L2 B' L F L2 F' R F2 L',Y,Basauri Open 2025 (2025-11-15~16),333 R1 B #4
 5564172001,F2 L B2 L2 R2 D2 B' R2 F D2 F U B2 D' R D2 B R D,Y,NOLA Cube Fest 2026 (2026-04-18),333 R1 B #4
+5710305001,L2 F R' F D2 R2 D F R D2 F2 R F2 R' F2 L' F' L2,Y,Wakefield Summer 2026 (2026-06-20~21),333 Final A #5

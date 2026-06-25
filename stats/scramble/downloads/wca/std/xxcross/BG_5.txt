@@ -1,15 +1,15 @@
 # Scramble samples — std / xxcross / BG / bin 5
-# Population in this bin: 224
+# Population in this bin: 226
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
 5587689001,U L2 U2 B2 D2 L B2 L U F2 D L' R' B' L D' U' B,B,Odd Day in Hong Kong 2026 (2026-04-26),333 R1 D E1
 107292001,D2 L D2 L' B2 R U2 F2 U B2 L F' U B2 D2 U2 F' U2 R',B,SMA Winter 2015 (2015-02-07),333 R1 B #3
 114998001,L' U' F' R' L' D' L B' D L2 B R2 U2 F2 U2 R2 D2 B D2,G,Murcia 2015 (2015-03-07),333 R2 A E2
-149825001,D R2 B2 F2 U' B2 F2 D2 L2 B2 L U F' D U2 B R' B' D R2,B,Slow n Steady Spring 2015 (2015-06-06),333 R2 B #1
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
 167436001,L2 F2 L2 D U2 R2 D' B2 D2 B2 R' B' F' U L U R' D' R' B',G,ŚLS Sosnowiec 2015 (2015-07-18~19),333oh R1 C #4
 189381001,L' F2 D2 L R D2 R' F2 U F L' U B R2 B' L F' L' F2,B,MCC Gamma 2015 (2015-09-13),333oh R1 C #3
 190589001,R2 B' D' R2 U R' D2 F' L2 D' R2 D2 L2 F' U2 B2 U2,G,Hungarian Open 2015 (2015-09-18~20),333 R2 B #4
@@ -163,7 +163,7 @@
 4124124001,R U2 L2 D' B2 U' L2 D F2 U' F2 R' F U F R' D2 U' L',B,Cube4fun Wisła Masters 2024 (2024-09-21~22),333 R1 C #4
 4164742001,F2 R2 D2 B2 L' B2 L' D2 L' B2 D' L R2 F2 R U L' R',B,North Luzon Championship 2024 (2024-09-29),333oh Final B #1
 4171190030,L' U F' R' F D F D' F' L F2 U2 R F2 L2 U2 R' B2 U2 L' F2,B,Rubik's German Nationals 2024 (2024-10-04~06),333mbf Final A #1
-4202540001,D2 F L2 B' L2 F D2 B2 L' F2 U2 R' U2 B U B2 U2 F',G,Dolné Orešany Cube Day 2024 (2024-10-19~20),333 R1 C #5
+5713345001,R U2 L' B2 F2 R' F2 R' D2 U' B' D U2 F R2 D' U2 L' U',B,Żmigród Open 2026 (2026-06-20~21),333 R1 A #3
 4204912053,B2 R B2 D2 B2 U2 L B2 L2 F2 D' F2 L2 U' L R D2 F L' F,G,BrizZon Side Open IV 2024 (2024-10-19~20),333mbf Final A #2
 4207510001,D' R2 U2 L U2 L' B2 L2 F' R' F2 R2 D2 B2 L2 U' F D,G,Brest Open 2024 (2024-10-19~20),333oh R1 A #4
 4253761001,F U2 B' U2 F' D2 U2 R' U2 F' D' B2 L' U' L2 U2 B U,B,Big Cube Blast Dhaka 2024 (2024-11-08),333 R1 F E1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / O / bin 5
-# Population in this bin: 891
+# Population in this bin: 895
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 7910001,R2 U' B2 U L2 F2 R' B R' F2 U' B D2 U' F L2 R2 U,O,Welwyn Garden City Open 2014 (2014-04-05~06),333bf Final B #3
@@ -13,7 +13,7 @@
 4000072028,B U2 R2 B L2 B' L2 U2 L' F D' F2 D' B' U' R B D' L' F2,O,CubingUSA New England Quiet Championship 2024 (2024-08-10),333mbf Final B #1
 51132001,R' F2 R F2 D2 R2 U2 L B2 U' L2 B U B' D L' U2 B',O,Kaliska Open 2014 (2014-08-16~17),333oh R1 A #2
 2959104001,D R2 D F' L' F' L F R B L D B2 U' F2 D' L2 U,O,Peru Nationals 2023 (2023-08-04~06),333oh R1 C #3
-1527432001,L2 U2 L2 U F2 D L2 U B' L D2 L2 D' L' F2 R' B U F2,O,Villa Rosita 2020 (2020-01-25~26),333 R2 B #3
+5705141001,R' D R' U2 R2 B' F2 L2 U2 B R2 D' B' U2 B2 R2 B' R,O,Rockfort City Cubing Challenge 2026 (2026-06-13~14),333 R2 A E2
 4668466001,R2 B' L2 F' D2 U2 F' R2 B2 U L' D' L B2 U R2 B D,O,Cubing Comes to Madurai 2025 (2025-04-20),333 R1 A E2
 74822001,F2 D2 U F2 U L2 D' B2 F2 R2 U2 L' D2 F' L' R2 F' L2 F U',O,Slow n Steady Fall 2014 (2014-11-09),333 R1 B #4
 2156557001,F2 U' L' U L2 D' R2 B2 U2 B2 U' L F' L' R U L2 R' D',O,Apollo Bay Cubing 2022 (2022-09-10~11),333oh R1 B #3

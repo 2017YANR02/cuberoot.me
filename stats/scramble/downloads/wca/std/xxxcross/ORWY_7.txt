@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / ORWY / bin 7
-# Population in this bin: 292
+# Population in this bin: 293
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R,Telangana Cube Championship 2024 (2024-08-23~25),333oh R1 E E1
@@ -166,7 +166,7 @@
 5432779001,U' R' D R' B' D L U2 F L2 B L2 D2 F2 R2 U2 F D,W,Wiltshire Spring 2026 (2026-03-07~08),333 R3 C E2
 2883103001,R2 F' R' U' R2 U R2 B2 U' R2 U' F D' R2 B2 D2 R' B,W,Guwahati Summer Cube Open 2023 (2023-07-16),333 R1 D #5
 5433188001,U L B' L' B D' R B R' D' F2 U2 F2 U2 R2 U2 F B L2 U2,R,BrizZon Side Open II 2026 (2026-03-07~08),333bf R2 A #2
-2980880025,U F' U' R2 F U' R F R2 F L2 B2 U2 R2 F R2 U' F L D2 L B2,O,Hyderabad Cube Open 2023 (2023-08-11~13),333mbf Final B #1
+5707715001,D2 R L D' L D' F' U2 L' R2 D2 F2 B U2 F R2 F,R,Garland City NY 2026 (2026-06-20),333 Final B #5
 5217038044,F U L2 F' U2 F U2 F2 L2 D2 L' D' L2 U' R' B2 D L',Y,Rizal Raise a Silence 2025 (2025-11-23),333mbf Final A #1
 2983292021,L' F2 D' U' R2 U F2 L2 B R' B' L R2 F U L2 B' L2,O,Tauranga Open 2023 (2023-08-19~20),333mbf Final B #1
 3031001001,R' U' F D B2 U' R2 U' R2 U' R' F' U B2 U2 F L' R' F2 L R2 D R' U' F,Y,Pace Blind 'n Crazy Stockholm 2023 (2023-09-03),333fm Final A #3

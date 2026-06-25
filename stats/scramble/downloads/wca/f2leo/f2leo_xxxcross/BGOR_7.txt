@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / BGOR / bin 7
-# Population in this bin: 256
+# Population in this bin: 257
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -102,7 +102,7 @@
 1252174001,R2 F R D B L' B' L' B L' D' B2 U' F2 U B2 U R2 F2 B2,B,Puget Sound Summer 2019 (2019-08-10),333oh R1 A E2
 1263974001,F2 R B2 L D2 B2 F2 U2 L F2 U' B2 L' F U R2 B' L2 F' U2,G,Bay Area Speedcubin' 19 2019 (2019-08-18),333oh R1 B #2
 1265184001,F' R' L U L2 U D' F R F' R' B2 L2 D2 R U2 R' B2 L2 B2,G,Kharkiv Open 2019 (2019-08-17~18),333ft Final B #4
-4652357001,B' R2 B D F2 U' B2 L2 B2 L2 U B L F U2 B F2 R2,O,Shenyang Spring 2025 (2025-04-13),333 R1 D E1
+5707715001,D2 R L D' L D' F' U2 L' R2 D2 F2 B U2 F R2 F,R,Garland City NY 2026 (2026-06-20),333 Final B #5
 4614811001,L' F R2 U L F L' B' F2 L U2 R' B2 L F2 B2 L' U' R,G,Chiclayo Classic 2025 (2025-03-30),333oh Final B #3
 1353166001,R' U2 L R2 F2 D2 U L2 D2 F L' F' D L' D B2 D',O,KubeKids Vila Velha 2019 (2019-10-12~13),333 R1 E #3
 4682526001,U' L2 B' R D2 B L D2 B2 L' B L2 U' F2 U2 D' R2 D',B,UNSA Speedcubing Otoño 2025 (2025-04-26),333 R2 F E2

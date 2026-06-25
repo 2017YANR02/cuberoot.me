@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / O / bin 6
-# Population in this bin: 557
+# Population in this bin: 561
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2769423001,U2 B2 D2 B2 F L2 U2 F' R D' B' R2 D2 F2 U' L U F2 D2,O,Singapore AMK CC Cubing A 2023 (2023-06-03),333 R1 F #1
@@ -90,7 +90,7 @@
 3815606039,F D2 R2 B' L D F' B2 D B R U2 R2 U R2 B2 U' F2 U' L B,O,Glasgow Summer - Scottish Blind Off 2024 (2024-06-01~02),333mbf Final B #1
 1350990001,L2 R2 B2 R2 U' L2 U' F2 U R U B2 R F2 L U L2 D2,O,Daegu Autumn Open 2019 (2019-10-13),333oh Final C #1
 5312470001,R2 B2 L R2 F2 U2 R2 U2 R' B2 U2 R F D2 U' R2 B U',O,OKC Winter 2026 (2026-01-10),333 R2 C #1
-506491001,F U R U B2 R2 B2 R F R' B U2 B L2 B2 R2 D2 B2,O,Hoogland Open 2017 (2017-05-13),333oh R1 B #5
+5705069001,B2 R' B2 U2 R2 U2 L' U2 F2 R D' U B2 D' L B D2 U' F,O,Hefei Cubing League 3x3 III 2026 (2026-06-17),333 R2 C #5
 4803872001,R U F' U R2 F U2 B2 L' D F2 L D2 F2 U2 L2 U2 L F2,O,PBs in Phibblestown 2025 (2025-06-15),333 R1 B E1
 3482046001,R' F2 D U2 L2 D R2 F2 D L D' L' D' U2 R2 B2 L2,O,Burnaby Basics 2024 (2024-02-03),333 R1 E #1
 551977001,R2 B2 L' F2 R' F' B D B U D R2 U F2 D R2 F2 R2 D',O,Canadian Open 2017 (2017-07-15~16),333 R1 F E2

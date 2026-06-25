@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / O / bin 1
-# Population in this bin: 78
-# Samples listed: 78 (all entries in this bin)
+# Population in this bin: 79
+# Samples listed: 79 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 13215001,B2 L2 D' B2 D F2 D R2 F2 R U L2 U R U,O,Velbert Easter Open 2014 (2014-04-18~20),333 R2 B #5
@@ -83,3 +83,4 @@
 5658180001,R2 B' D' B' R U' F' L U' F2 L2 D' F2 D F2 D' B2 R2 L,O,Future Park Thailand Cube Battle 2026 (2026-05-23~24),333 R1 C #4
 5668085001,L U' L' D2 R F2 R2 F2 D' R2 D F2 D R B2 D' R2,O,Welcome Back UPDS 2026 (2026-05-23),333 R1 B #5
 5679789001,L B R F2 B D2 R' B U2 B2 R2 B2 R2 D2 B2 R' B',O,The Last Frontier Spring 2026 (2026-05-30),333 R1 A #1
+5705148001,D2 L B2 U2 R' D2 L' R2 B D2 R' D2 R U2 B' L F L',O,Rockfort City Cubing Challenge 2026 (2026-06-13~14),333 R2 B E2

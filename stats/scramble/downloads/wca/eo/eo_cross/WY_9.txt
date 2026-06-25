@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / WY / bin 9
-# Population in this bin: 121
-# Samples listed: 121 (all entries in this bin)
+# Population in this bin: 122
+# Samples listed: 122 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 15655001,U2 L2 F U2 B' F D2 R2 B L2 U2 L B R D B2 U' B F' R,W,Japan Contest Spring 2014 (2014-04-29),333 R1 C #1
@@ -126,3 +126,4 @@
 5621669001,L2 F B2 R2 D L2 D U B2 L2 U L F' D2 R' U L B' U2 L2 U2,W,Longjum'Open 2026 (2026-05-08~10),333bf R2 A #3
 5653313001,B2 D2 U B2 L2 U' R2 B2 R2 D2 F L R D' B' R U' B2 L2 R2 F,W,Christchurch Autumn 2026 (2026-05-23~24),333 R2 C #4
 5684275001,L' B' R D2 F2 D2 F' L2 D2 B' U2 B' L D' L' B U' B F' U2 B R2,W,Kansai BLD Summer 2026 (2026-06-06),333bf Final A #2
+5714700001,R' D' U2 R2 F2 D' R2 F2 B L U R' D' F L U2 F' U' B' L,W,Greenwoods Big Blind & Beyond 2026 (2026-06-21),333bf Final B E1

@@ -2,7 +2,7 @@
 # Population in this bin: 413
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2533429046,U' F2 D R' U' D L F D' U2 F R2 B2 L2 D2 F2 B' R2 U2 D B' L2,W,MBLD in a Madison Meeting Room 2023 (2023-03-04~05),333mbf Final A #2

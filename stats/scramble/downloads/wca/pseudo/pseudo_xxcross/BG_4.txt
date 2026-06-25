@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / BG / bin 4
-# Population in this bin: 339
+# Population in this bin: 341
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4883556001,R' F2 R D2 F2 R' U B' U F L' F2 U2 L2 U2 B' L,G,Harbin Open 2025 (2025-07-20),333 R1 B E2
@@ -40,7 +40,7 @@
 3443568001,L' U B2 F2 U2 R2 U' R2 F2 R2 F U' F2 L' F' U2 R2 D' B',G,Back To Tri-Cities 2024 (2024-01-20),333 Final A #5
 418476001,F' L2 D2 B' L2 U2 F2 L2 F' U2 L' D2 L' F' L D' B D U2,B,Opal Open 2016 (2016-12-17~18),333oh R1 A #5
 5006395057,D2 L' F2 U2 B2 D' U L2 U2 L B' R F D2 R' U' B L' B' L',B,New York Quiet Championship 2025 (2025-09-06~07),333mbf Final A #2
-3952715001,L F R' B2 R' U2 B2 D L2 U2 F R2 F' B2 L2 F' R2 D2 F',B,Midlands Mix-up 2024 (2024-07-20~21),333 R1 C #4
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
 5539591001,U2 R2 B' D2 F' L2 B U2 R2 D U' R F2 D' R2 B U2 B2 F,B,NZ South Island Championship 2026 (2026-04-10~12),333oh R2 A #5
 461837001,F2 R2 F2 U' F2 D2 F2 L' B2 U' B2 F2 D2 R2 U' L' D' B U2,G,SSL 1 Jönköping 2017 (2017-03-04~05),333 R1 B #4
 463067001,L2 U L2 F2 R2 U' B2 U F U L' D2 R' B2 L F U2 R' U',G,Anaadyanta Cube Open 2017 (2017-03-11),333 R1 O #5
@@ -78,7 +78,7 @@
 836298001,L B' U2 F U2 B2 U R B U' R2 D2 R2 L2 D F2 U' L2 D B2,B,Holy Toledo Summer 2018 (2018-07-21),333 R1 E E2
 838284001,F2 B' L' D' B' R U' F U F R2 U' D' R2 F2 U2 F2 U,G,Bengaluru Championship 2018 (2018-07-27~29),333 R1 G E2
 839680001,F' B R2 L2 D' R' U2 F2 U R U B2 D R2 U' R2 D2 R2,B,Beijing Summer 2018 (2018-07-29),333 Final D E1
-841747013,R2 B2 D2 B L2 F' D2 U2 B' F' U' R' D' U F' L2 U' L2 B2 R' D2,B,CubingUSA Nationals 2018 (2018-07-27~29),333mbf Final D #2
+5714763014,U F' R D' U2 B F2 R2 B D2 R2 L U' B2 R2 F2 L' D L,B,Greenwoods Big Blind & Beyond 2026 (2026-06-21),333mbf Final A #1
 3664645001,F2 B R2 D L F' U' R' D2 L' U2 R U2 B2 L2 D2 R' D L' F2 D',G,Nittedal Mental Breakdown 2024 (2024-04-13~14),333bf Final A E1
 862504001,R2 U2 R2 B2 D L2 D' L' B' D F2 L F L2 B2 F2 D2 F,B,Caarn Ahmedabad Cube Open 2018 (2018-08-25),333 R2 A #4
 3535219001,F' D2 F B2 L U2 D' F' L F' L' D2 L B2 D2 R U2 R2,G,Carnaval Cubero Azuero 2024 (2024-02-24),333oh R1 B #3

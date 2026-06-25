@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / Y / bin 6
-# Population in this bin: 795
+# Population in this bin: 797
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5432743001,F2 D L2 D B2 L2 U' B2 L2 U F R B2 R U2 F2 R F,Y,Wiltshire Spring 2026 (2026-03-07~08),333 R2 C E1
@@ -107,7 +107,7 @@
 1462209001,R2 U2 L2 B' U2 B2 F2 U2 L D F2 U' L2 D' U2 F U L2 U' L B,Y,New Zealand Nationals 2019 (2019-12-13~15),333bf R1 B E2
 541883001,U F2 R2 L2 F U' B' D2 B2 L' D' B2 D2 F2 D F2 B2 R2,Y,German Big Cube Open 2017 (2017-07-01~02),333 R2 A E1
 3405467001,D F2 D B2 U2 F R2 B U2 R' B2 F' D2 U F2 L',Y,Michigan Mini 13 2024 (2024-01-08),333 R1 A #1
-2249117001,D2 R2 D' U B2 U2 R' F' D2 F D L R' D' L' B2 U,Y,Mongolia Championship 2022 (2022-10-15~16),333 R1 E #5
+5707922001,F B' D' F D R B L B' F2 U' B2 D L2 F2 U' F2 U' D',Y,GA Cubers Pride 2026 (2026-06-20),333 Final B #3
 4459312001,U L U2 L' F U F' R B' F2 R' F2 U2 B2 R F2 R B2 R' U2 L' F',Y,Wellington Mind Games 2025 (2025-01-26),333bf R1 B E1
 547349001,R2 F2 D2 B2 R2 D' B2 R B R2 U F2 R B' F L',Y,CubingUSA Nationals 2017 (2017-07-07~09),333oh R2 C #5
 3012609001,U2 F' L2 B2 D2 U2 F' D2 R D R' U F' R2 U2 B2 D U2 L' F,Y,Cubing at Tramsheds Saturday 2023 (2023-08-26),333bf Final A E1

@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / ORWY / bin 1
-# Population in this bin: 305
+# Population in this bin: 308
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5677611018,D2 R2 L2 U R B2 U R' L' D B' L' F2 R D2 R U2 L',W,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf R1 B #2
@@ -32,7 +32,7 @@
 268905001,R' D2 L U2 L' U2 L D R' U B2 U' L D U2 R2 U2 B',W,Tulip Open 2016 (2016-03-20),333 Final A #1
 272516001,L2 D2 F' B2 D2 L2 B D2 R' U2 R B2 U2 L D2 F2 L',O,Cilegon Open 2016 (2016-03-26),333 Final A E2
 278780001,L' U2 R F2 R' F2 L2 D2 R F2 L2 U' F' R' B2 R B2 F' U F',R,Jeonju Spring 2016 (2016-04-02),333oh R1 E #1
-282342001,F2 L' D L' D' R U2 F U' L2 F' U R2 U F2 L2 D,W,Finnish Open 2016 (2016-04-16~17),333 R1 B #4
+5710536001,D' B2 U2 L D2 R' U2 F2 R' U2 R2 B' R' D' B' D2 F2 U2 B D' L' F2,W,Valdepeñas Open 2026 (2026-06-13~14),333bf R1 A E2
 4898934002,F2 R2 F2 U2 L U' B2 L U' R B2 R' L B2 R2 U L2 U2,W,Swedish Blind Marathon 2025 (2025-08-02),333mbf Final A #1
 295619001,D' F2 R2 B2 R2 D2 U' F2 D' B2 F' R D F' D F D2 L2,Y,Summit City Open 2016 (2016-05-07),333oh Final A #5
 5328114001,B D' F2 B U D' B' D F2 U' F' B U2 R2 L2 B,W,Ohio State Winter 2026 (2026-01-17),333 Final A #3
@@ -140,7 +140,7 @@
 5052712001,L D2 R' L2 D L' D' B2 R' U2 D L2 U B2 R2 L2 D',R,Montserrat Open Serra 2025 (2025-09-27~28),333 R1 A E1
 4344416001,L2 F2 D2 U' F2 U' B2 L2 D2 U' B2 F' U L2 R2 B D' R',W,Flushing Glow PM 2024 (2024-12-07),333 Final A E2
 1447386001,F2 D B2 U2 R2 D R2 F R2 U B' D L2 D2 B' D' R2 U2,Y,Beijing Winter 2019 (2019-12-07~08),333 R1 A #1
-1451557001,F2 D' L2 D' L2 B2 U' B2 R2 F2 D B D B2 R' F2 R2 B R' D',R,Bekubes Plaza Real Alajuela 2019 (2019-12-07~08),333 R1 A #4
+5716877022,U2 D2 R2 L' F' L2 D B U B D2 F B2 R2 F L2 U B' D,Y,Maine Open 2026 (2026-06-19~20),333mbf Final A #1
 1458510001,D' L2 D' B2 D' U' F2 U' L' D2 R2 U L' B2 U F2 R' B2,O,Santa Claus Cube Race Poland 2019 (2019-12-06~08),333 R1 A #5
 1509556001,D2 U2 R2 B R2 D2 F' L F' D2 R F2 U2 F' L2 B L2 F2 L' F2,R,Lima Cuberano 2020 (2020-01-18~19),333bf R1 B #1
 4616076001,D2 L2 U2 R2 F' R2 B D F L2 F2 D2 B2 D' R2 F D' R2,Y,Xuzhou Newcomers 2025 (2025-03-30),333 R1 E #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / O / bin 3
-# Population in this bin: 648
+# Population in this bin: 651
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1013692042,F2 U' B2 D2 L2 F2 U R2 D L2 F2 R' F2 L F U' L' B2 U L' F2 D',O,MathSoc Open 2019 (2019-02-09~10),333mbf Final A #1
@@ -25,7 +25,7 @@
 74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,O,Slow n Steady Fall 2014 (2014-11-09),333 R1 B E1
 5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',O,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1
 97375001,F2 D L2 U L2 U2 L2 R2 B2 U' F D2 F2 L' U2 F R2 D' B2 L' F' L',O,Shaastra Cube Open 2015 (2015-01-03~04),333bf Final B E2
-3209525001,B' L' D F' R' F' L U' B L2 D L2 U B2 U R2 U' R',O,Afraid in Airdrie 2023 (2023-10-29),333 R2 D #3
+5716213022,D' F' B U2 B' U' R F' R2 F2 U D2 L2 D2 B2 D' R' U' L B,O,Flinders Park Side Events 2026 (2026-06-20~21),333mbf Final A #1
 3163412001,U2 L B' F2 U2 F2 L U2 L2 U2 F2 R' B' U R2 F' U' R' F',O,Beskid Cubing 2023 (2023-10-14~15),333oh R1 C #4
 106335001,L2 U D' B' R' D R L B U' L2 U L2 D R2 F2 D F2,O,B.O.N.D. Open 2015 (2015-01-31~02-01),333 R2 A #4
 4730277001,D2 B' D2 L2 F' U2 B' R B L' U2 L U2 F' L' D B2 F',O,Żmigród Open 2025 (2025-05-17~18),333oh Final C #5
@@ -54,7 +54,7 @@
 219953001,R2 D B2 D' L2 D L2 U L2 D F' U L B2 D' U F L R U',O,UT Open 2015 (2015-11-23),333 R2 B E1
 226890001,L2 B' L2 R2 D2 B2 F2 R2 U2 F2 R U' R B' L U' B L' R D' L',O,Cape Town Open 2015 (2015-12-06~07),333 R2 D E2
 239630001,R' U D R F2 L' B' L2 B' R' D2 R D2 R F2 U2 R B2,O,Great Indian Cubeathon 2016 (2016-01-08~10),333ft Final B E1
-258520001,R U2 B R' U B' U B R' B D B2 D' F2 U' R2 U,O,Caltech Winter 2016 (2016-02-20),333 R2 B #1
+5708050001,R' F2 L B2 D2 L' B2 U2 R2 U B L R B U2 F2 D U F2 L' F2,O,Toronto Mini Big & Blind 2026 (2026-06-20),333bf Final B E1
 3116465001,R' F L' D2 R2 D B' U2 R2 B2 U R2 U2 F2 U' D2 L' F L',O,UCSD Unofficial Events 2023 (2023-09-30),333 R1 C #2
 3741301001,R' D F2 R2 U2 L2 U2 F2 L F2 B' R' U' L B' F D2 R,O,Korum Cube Challenge 2024 (2024-05-03~05),333oh R1 B #3
 267251001,U2 R2 U2 F L2 D2 B D2 L U2 R B2 L U2 F L' R U' L',O,Roskilde by Vote 2016 (2016-03-13),333bf Final A #2
@@ -101,7 +101,7 @@
 482927001,F' B2 R L D2 B U' D F2 R' D R2 F' L2 D2 F2 R2 F L2 F',O,Eugene 3x3 Mania 2017 (2017-04-08),333ft Final B #3
 1409193001,D2 F2 D U2 R2 B2 U2 B2 R' U' R2 U2 L B' F2 R D L' F,O,Bobcat Battle 2019 (2019-11-16),333 R1 C E2
 4251755001,R U' B2 R2 B2 L2 F2 U' F' R' U R' B F2 L' B2 F' R,O,Canadian Prairie Championship 2024 (2024-11-02~03),333oh Final A #1
-511700001,L B U' B' U R2 D2 L' B U2 B2 L F2 R2 F2 B2 U2 R' B2 D2,O,Danish Open 2017 (2017-05-19~21),333 R2 B #3
+5712612001,R' U2 F2 L2 F' L F' B' D L' U D' R2 U R2 F2 U2 R2 D2,O,Montevideo Gaming House Open 2026 (2026-06-21),333oh Final B E2
 512895001,R B2 L' D2 R U F R2 D' R2 F2 R2 D2 R2 F' D2 R2 F B2,O,Sumatra Open 2017 (2017-05-21),333 R1 C #4
 3011926001,D' B2 L' F U2 F2 D F2 U' F2 U' R2 B' D' B' D' B D' R',O,Slovenian Nationals 2023 (2023-08-25~27),333 R1 C #2
 5255128001,F U F' U' B2 U2 F L2 B L B2 L2 F2 L D2 R2 L' F',O,Pucallpa al Cubo 2025 (2025-12-07),333 Final A #4

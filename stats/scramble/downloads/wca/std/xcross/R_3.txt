@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / R / bin 3
-# Population in this bin: 144
-# Samples listed: 144 (all entries in this bin)
+# Population in this bin: 145
+# Samples listed: 145 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 14805001,D B2 L2 D2 B2 D' B2 D B' U2 L2 D' R2 F U' R F' R U2 B' L',R,Didas Brest 2014 (2014-04-26~27),333bf Final A #3
@@ -149,3 +149,4 @@
 5575168001,L D B U2 D' R D2 L' D R' D2 L' B2 R F2 L B2 D F' D2,R,Munich Open 2026 (2026-04-25~26),333bf R1 B #5
 5596414001,F D' R2 B R2 D2 F2 L2 F L2 D' R B' R' U R B L F2,R,Oregon State Spring 2026 (2026-05-02),333 R2 A E2
 5692705004,D F D B2 R2 D' L2 U' B2 D B U' R' F L2 U L2 R' D' B R2,R,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333mbf Final A #1
+5708446001,U' R2 D L' U2 L' U L2 U2 R2 L F2 L D2 B2 F' R U',R,Cubing in the Park Reno 2026 (2026-06-20),333 R2 B #5

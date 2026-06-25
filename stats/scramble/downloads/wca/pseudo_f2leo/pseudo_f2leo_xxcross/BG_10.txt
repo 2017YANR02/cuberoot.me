@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BG / bin 10
-# Population in this bin: 609
+# Population in this bin: 610
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5550238001,D' L2 B R' U D B' L U' R F2 R2 U2 F2 D' R2 F2 U L2,B,Cube Factory League Jeżów 2026 (2026-04-18~19),333 R1 E #3
@@ -122,7 +122,7 @@
 3236679001,R' D' L' F' R2 F2 U2 R2 B' U2 B' D2 F U F2 R2 F D' L B2,B,Aves María v9 2023 (2023-11-06),333 Final A #2
 4079804001,U' B2 R U R D2 L' B D2 R2 D2 R2 F2 D' L2 F2 U F L,B,Dublin Ohio Summer AM 2024 (2024-09-07),333 R1 A #1
 672648001,R2 D2 U' F2 L2 D U2 F2 R2 U F' R2 B2 L B D' U R D L2 F',B,Liberty Science Center Open 2017 (2017-12-16),333oh R1 E #5
-5629383001,R2 B2 R D R2 U L2 D2 R2 U L2 B2 F R B D' L2 F2 U,B,Just Sides in Lyndhurst 2026 (2026-05-16),333oh R1 B #3
+5713940001,D2 L' R2 D' R2 U B2 U L2 B' U L2 R D' L' F' D2 U' F2,B,Lavey-Vous les Mains 2026 (2026-06-20~21),333 R2 A #5
 4531451015,U B L' F2 D' B L' F' R' U L D F2 D F2 U2 B2 U R2 D2 B R,B,Only 3x3s in Hyderabad 2025 (2025-03-01~02),333mbf Final B #1
 4503068001,D' B U' R' D' L D B2 D' R2 D2 F2 U' L2 F2 B2 U2 L B' L',B,Verano on Asunción 2025 (2025-02-15~16),333 Final A #3
 686025001,R2 F2 R2 U' F2 U' R2 U' L2 F2 D2 L B F L' R' U L U' F',B,AZCubing Hamilton Winter 2018 (2018-01-13),333 R1 F #1

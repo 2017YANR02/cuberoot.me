@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / ORWY / bin 7
-# Population in this bin: 266
+# Population in this bin: 267
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,O,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -56,7 +56,7 @@
 660859014,D2 U2 L2 F R2 D2 B R2 U' B R2 F' R2 D B' D B R D2 L2 U2,Y,Valencia Open 2015 (2015-11-14),333mbf Final A #1
 661090001,U' L2 B2 F2 D2 R2 B2 F' R B2 F D2 F' L' U2 B D2 F' R B,Y,KJSCE Mumbai Open 2016 (2016-08-27~28),333mbf Final A #2
 667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,Y,MTD Spring 2017 (2017-12-09~10),333oh Final B #2
-713569001,U F2 U B2 D' U2 F2 U B' R' D' F' U2 F' R2 D2 F R U,R,Cannes FIJ 2018 (2018-02-24~25),333 R1 B #5
+5707715001,D2 R L D' L D' F' U2 L' R2 D2 F2 B U2 F R2 F,R,Garland City NY 2026 (2026-06-20),333 Final B #5
 728361001,L2 F2 R2 U F2 R2 F2 U2 L' U2 B' U B L2 U' F' L2 B,W,Ponikva Open 2018 (2018-03-17),333 R1 C E1
 738648001,D2 L' F2 L2 B2 R' D2 U2 R2 B U' B' U2 L' B' D2 L' F2,O,Lviv Spring Days 2018 (2018-03-24~25),333ft Final A #4
 740861042,F2 D2 B2 D' L2 B2 D' F2 U2 R B2 D' R2 D2 F' L U L2 U' L2 U',O,CFCTC Open 2018 (2018-03-31~04-01),333mbf Final A #1

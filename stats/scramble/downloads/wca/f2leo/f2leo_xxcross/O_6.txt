@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / O / bin 6
-# Population in this bin: 712
+# Population in this bin: 715
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2497001,L' D2 R' D2 R' U2 L B U2 L F' U L' D2 U' B U2,O,CMI Fiesta Open 2014 (2014-03-21~23),333 R1 B #5
@@ -53,7 +53,7 @@
 3705415001,D' R2 U' L2 D U2 L' F D' F' L U2 R' D2 U' L' D' B',O,DFW Quiet Qualifier 2024 (2024-04-27),333bf Final B #3
 240327001,L U' B D' F2 R2 B' U' D2 R' F D2 B' D2 L2 F' R2 F U2,O,Cubelonia 2016 (2016-01-09~10),333oh R1 C #1
 1193965001,B' F U2 L2 B2 U2 L' D B2 F L2 U' B2 D' B D2 R2,O,Belgian Solstice 2019 (2019-06-22~23),333 R1 B #5
-4696104001,L U' B L U2 B2 L D2 R' D' U' L' R U L U' R2,O,Southern Utah Summer 2025 (2025-05-03),333 R1 B #1
+5705141001,R' D R' U2 R2 B' F2 L2 U2 B R2 D' B' U2 B2 R2 B' R,O,Rockfort City Cubing Challenge 2026 (2026-06-13~14),333 R2 A E2
 1113046013,L F2 D2 F2 D2 L2 U2 R F D F D F2 L U2 R U L2 F' L2,O,French Championship 2019 (2019-04-20~22),333mbf Final A #2
 2105327001,F2 L2 B2 L2 U' F2 L2 D U R2 U' L' F L' U' B D' F U2 F2,O,Israel Championship 2022 (2022-08-16~18),333 R1 D E2
 5134675001,D2 L2 F2 D' B2 D2 B' L' R D2 L' F' U2 B2 U' F2 D',O,İzmir October 2025 (2025-10-25~26),333oh R1 B #1
@@ -118,7 +118,7 @@
 621062001,D2 U' F2 U' B2 L2 F2 U2 B2 F U' L R2 U2 F' U' F2 D R' D' L2 U',O,Gessate Open 2017 (2017-10-21),333bf R1 A E1
 629137001,D2 L2 R' U2 B2 F2 L' D2 U2 B' U R2 U2 B2 U2 R2 F2 R' F,O,San Ramon Cubed 2017 (2017-10-28),333 R2 E #4
 4980453008,R B2 D2 U' F2 D' B2 L2 D2 B' D2 B D' F2 L2 F' U2 L F' L,O,Israel Championship 2025 (2025-08-25~28),333mbf Final A #1
-5054050034,R2 D2 F R D B2 L U' L2 B D2 F2 B' U2 B U' L2 B L' F',O,SacQuiet Fall 2025 (2025-09-27),333mbf Final A #1
+5715016001,R' F2 R' B2 L' B2 D2 L2 R2 B' D U2 L F' U L2 B' D L2,O,Santpedor Open 2026 (2026-06-20~21),333 R1 B E1
 3659194001,R' U2 B2 F2 D B2 F2 U' R2 F2 D2 B2 R' B L' B U2,O,Ho Chi Minh Spring 2024 (2024-04-06~07),333 R2 E #2
 3983198043,B' R' B U F B2 U F R' D' R' F2 R' L' U2 F2 U2 F' L' F',O,Zoioff Brasília 2024 (2024-08-03~04),333mbf Final A #2
 653004001,D2 B L2 R2 B2 L2 F2 U2 R B U F' U' B' U B2 R' U2 B2 L2 U',O,Texas BLD Showdown 2017 (2017-11-19),333bf R1 A #2

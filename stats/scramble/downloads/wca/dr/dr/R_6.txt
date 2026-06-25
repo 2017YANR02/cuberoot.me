@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / R / bin 6
-# Population in this bin: 557
+# Population in this bin: 561
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 10957001,U2 L' F2 D2 R2 F2 L' F2 D2 R F L' F2 L2 R' F' R D,R,Lexington Spring 2014 (2014-04-12),333oh R1 B #2
@@ -88,7 +88,7 @@
 1350990001,L2 R2 B2 R2 U' L2 U' F2 U R U B2 R F2 L U L2 D2,R,Daegu Autumn Open 2019 (2019-10-13),333oh Final C #1
 4942522017,F U' L F2 D' R2 F U2 R D2 R2 L F2 L2 B2 R U B R B' L',R,Rubik's Irish Championship 2025 (2025-08-15~17),333mbf Final A #2
 3542162001,F2 L' B2 R F2 L' U2 R2 B2 F2 R D2 B' R2 B2 F' R' U' F',R,Feltre Winter Open 2024 (2024-02-24~25),333 R2 A #3
-5149324001,F2 L D2 R' F2 L U2 R D' F' D2 F2 U2 B2 U' L R2 B',R,c't Open Hannover 2025 (2025-11-01~02),333 R2 C #4
+5705069001,B2 R' B2 U2 R2 U2 L' U2 F2 R D' U B2 D' L B D2 U' F,R,Hefei Cubing League 3x3 III 2026 (2026-06-17),333 R2 C #5
 5010708001,L2 R2 F U2 B' R2 B R' F' R2 F2 D' L F L' D2 L,R,La Cacería GT 2025 (2025-09-06),333 R1 D #1
 4289618001,L2 U2 B2 R B2 L2 B2 U2 L' D2 L F2 B U' B' R2 D2 F2,R,Campeonato Brasileiro de Cubo Mágico 2024 (2024-11-15~17),333 R2 A #4
 4146040001,D2 B2 D2 R B2 L R' B2 R U2 D L' U L2 D' B L2 F2 U,R,Airdrie NxNs 2024 (2024-09-29),333 R1 A #1

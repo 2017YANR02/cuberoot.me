@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / G / bin 6
-# Population in this bin: 810
+# Population in this bin: 811
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 951223001,L2 U' F2 D' R2 F2 U2 R2 U' B' D R' B D2 B D U2 B2 L2 U2 B' L2,G,GLS Cup Final 2018 (2018-12-01~02),333bf R1 A #2

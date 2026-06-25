@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / BGORWY / bin 9
-# Population in this bin: 991
+# Population in this bin: 994
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1553179001,L2 B2 R2 D B2 D2 U' B L' R' F U2 B R2 U2 R D2 R' U',B,MathSoc Delhi Open 2020 (2020-02-15~16),333oh R1 C #3

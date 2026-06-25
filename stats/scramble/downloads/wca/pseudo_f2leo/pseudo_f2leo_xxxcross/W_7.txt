@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / W / bin 7
-# Population in this bin: 818
+# Population in this bin: 819
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3483929001,D B' D F' U2 B U L F2 R F' L2 U2 B2 U' L2 D' F2 L2,W,Empire State Winter 2024 (2024-02-03~04),333 R1 C #2
@@ -163,7 +163,7 @@
 661052019,D' L2 F2 L2 D' F2 R' B' L B2 F' D2 U B2 F' U B' R' B R2,W,Brasileiro 2016 (2016-07-22~24),333mbf Final A #2
 5299728001,U2 R' D2 B2 R2 D' B2 D' U' B D2 U' R2 U R U R' F L2 U',W,Krungthep Farewell 2025 (2025-12-28),333bf R1 A E1
 4296100001,F2 R' B2 D2 R2 U2 F D2 B' F' D F2 R F' R2 B2 R D2 B2,W,SABA Cube Open Kerala 2024 (2024-11-16~17),333 R1 F #3
-661170006,R2 D' L2 D R2 F2 D' U' R U' B' F2 D2 U F' L B L' U' R B R,W,GeniusCube 2016 (2016-11-05~07),333mbf Final A #1
+5709769001,B L' F L B' U' B' L B2 R2 F2 R D2 L2 F2 U2 B U2 L',W,Oslo Open 2026 (2026-06-19~21),333 R3 B #5
 3490689001,U2 L2 B2 L' F2 D' B2 U' L' B2 L2 F R2 D2 B U2 F' R2 B L2,W,Berkeley Winter 2024 (2024-02-04),333bf R1 C #1
 1581573001,D2 R' F2 R' F2 R U2 B2 L2 U2 F U F' U' R2 U B2 D' B',W,Osijek Open 2020 (2020-02-29~03-01),333oh R1 A E2
 4363253001,R2 B U' B2 L' D2 R B2 L' U2 B2 U' B2 R' B' D' L2 B',W,Rocklin Winter 2024 (2024-12-15),333 R1 B #2

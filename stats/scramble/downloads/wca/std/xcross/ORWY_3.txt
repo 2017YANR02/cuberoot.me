@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / ORWY / bin 3
-# Population in this bin: 535
+# Population in this bin: 537
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4933863001,L2 F2 R B2 U2 R B2 L U' L' D2 F' D' F R2 D F2 L2,Y,Visayas Championship 2025 (2025-08-09~10),333 R2 A E1

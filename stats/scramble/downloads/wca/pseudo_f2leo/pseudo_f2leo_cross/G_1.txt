@@ -2,7 +2,7 @@
 # Population in this bin: 41
 # Samples listed: 41 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,G,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5

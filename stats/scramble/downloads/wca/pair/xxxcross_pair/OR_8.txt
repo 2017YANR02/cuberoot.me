@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / OR / bin 8
-# Population in this bin: 222
+# Population in this bin: 223
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -177,7 +177,7 @@
 4329316001,B' L2 U B U2 B' R' D B2 R B2 U2 L F2 R' B2 D2 U R,O,Michigan Mini 25 2024 (2024-12-02),333 Final A E2
 5338850001,L2 B' D R F2 R' D' R D2 R U2 D2 R' B2 R2 B R2,R,Franconia Winter 2026 (2026-01-23~24),333 R1 A #4
 4340443001,R2 F2 U2 D' B R B' L' F U2 R2 D2 R2 B' R2 D2 B2 D' B,O,Na'Guara Metropolis Lara 2024 (2024-12-07),333 R2 B #1
-4346204001,L U2 B2 R' B2 D2 R' D2 R2 F2 B L2 U2 B R' U' F2 D' U',R,Varaždin Open 2024 (2024-12-07~08),333 R1 C E2
+5709191001,F D L2 U2 F2 L2 D F2 U' F' U R' U' L2 B R2 F U,R,B-Game - Bastardo Open 2026 (2026-06-13~14),333 Final A E2
 4351235001,B2 D' R U2 L' F2 U2 R2 U2 R D2 B D' B' U' R F L2 F2,O,Taiwan Championship 2024 (2024-12-06~08),333oh R1 C #1
 4379363001,F2 L D F2 D L2 D' U B D L' D' F' L D' F U,O,Kenya Nationals 2024 (2024-12-21),333 R2 A E1
 4454898018,D L2 B' U' R2 U' B2 R2 U' F2 L' D2 F R2 D' B R' B2 D' B R,R,Ropaži Winter 2025 (2025-01-25~26),333mbf Final A #1

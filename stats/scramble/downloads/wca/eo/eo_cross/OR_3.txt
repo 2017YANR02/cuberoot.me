@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / OR / bin 3
-# Population in this bin: 401
+# Population in this bin: 402
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3222001,U' R2 U L2 R2 F2 L2 U' R B2 U L' F2 D' F2 L2 F L,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 L E1
@@ -69,7 +69,7 @@
 4550949001,F' B2 L2 U2 L D L D R' D B2 D2 R L2 U2 L2,R,Gdańska Liga Speedcubingu II 2025 (2025-03-08~09),333 R1 D #2
 4676359025,L F D2 L2 U2 R2 B' D2 F2 L2 U' R' B' F D L' B D R2 B' L,R,Zoioff Campinas 2025 (2025-04-26~27),333mbf Final A #2
 3238706024,F2 R' F2 U2 R2 U2 R' D2 R' D2 B2 F U2 L2 F2 L' B L B R,R,Uzbekistan Nationals 2023 (2023-11-03~05),333mbf Final A #1
-2270367001,D' R2 F2 D2 L2 U B2 R' D2 R' D F U2 B R2 F D2 F',R,Swedish Championship 2022 (2022-10-28~30),333 R2 B E1
+5705148001,D2 L B2 U2 R' D2 L' R2 B D2 R' D2 R U2 B' L F L',O,Rockfort City Cubing Challenge 2026 (2026-06-13~14),333 R2 B E2
 630044001,L2 D L2 D F2 U2 B2 U L D U L F2 R D2 B2 R D2,O,U.R.A. Back to School 2017 (2017-10-28~29),333 Final A #1
 3640730001,U2 R2 B D2 L2 D2 R2 U2 B L F2 L' U' B' R' B' L2 R,O,Bangalore Newcomers 2024 (2024-03-30~31),333oh R2 B #2
 647035001,U' L' U2 F' R2 U2 L2 B' U L D B2 L2 D F2 R2 U',O,Finnish Championship 2017 (2017-11-17~19),333oh R2 A #3

@@ -2,7 +2,7 @@
 # Population in this bin: 20
 # Samples listed: 20 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 55145001,L2 B' F' R2 F2 L2 B' U' L2 B' U2 L' F U' F R2,G,360 Degree Wellness Open 2014 (2014-08-30),333 R1 B #4

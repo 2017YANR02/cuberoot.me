@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BG / bin 1
-# Population in this bin: 325
+# Population in this bin: 326
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 22227001,U2 F2 D2 F D2 F' R2 B' R B U' R2 B U' L F2 U B U B',B,Zhejiang University Open 2014 (2014-05-24),333bf Final A #3

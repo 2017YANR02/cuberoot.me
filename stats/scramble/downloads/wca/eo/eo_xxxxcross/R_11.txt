@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / R / bin 11
-# Population in this bin: 506
+# Population in this bin: 507
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2
@@ -155,7 +155,7 @@
 933836001,D F2 R2 U' R2 D' R2 B2 L B R2 U2 F2 D' B' U L2 R D2,R,Pikkujoulut 2018 (2018-11-16~18),333oh R1 B #2
 939517001,F L' F' R2 L F U' D F' B2 D2 B U2 D2 L2 B' R2 L2,R,Warden of the West Azerbaijan 2018 (2018-11-25),333 Final A #4
 3755281043,R2 U2 L' D2 U2 F2 U2 F2 B U' R2 B L R B' L2 F D' U2 B,R,Blind Faith Denver 2024 (2024-05-11~12),333mbf R1 A #2
-5178455001,B U2 L2 D B2 R2 D' R2 L' D F2 D' F L R' D2 U R2,R,M5 Open A Bengaluru 2025 (2025-11-08),333 R1 A #3
+5714188001,D2 L U2 B R U' D2 F D R U2 F2 D2 F2 R2 B R2 L2 D2,R,Shenyang Cubing League 3x3 I 2026 (2026-06-17),333 R2 B #1
 3076074013,L2 U B2 F D2 F' R2 B F2 L2 F2 R D2 B' L B2 D2 B' R B' L2,R,Szansa Cubing Open Warsaw 2023 (2023-09-16~17),333mbf Final B #1
 4384835001,B' D2 F' L2 U2 L2 B L2 R' F2 U' L' B R2 B' D2 L' D2 F2,R,Bangalore Cube Open 2024 (2024-12-21~22),333 R1 I #1
 953581001,R D L U2 F2 U' L' B2 L B D R2 U2 B2 D2 F B2 D2 F,R,Liberty Science Center Open 2018 (2018-12-08),333 R1 D E2

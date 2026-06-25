@@ -2,7 +2,7 @@
 # Population in this bin: 67
 # Samples listed: 67 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 30696001,F B' D' L U R D R' U2 L F' D2 B2 U2 R2 F' R2 B D2 B,G,São Paulo Open 2014 (2014-06-20~22),333ft R1 A E1

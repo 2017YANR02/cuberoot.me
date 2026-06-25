@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / R / bin 6
-# Population in this bin: 738
+# Population in this bin: 739
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5437765001,D2 R B R2 B F2 D2 F' R2 U' L' U' B' D2 L' F2 R' F,R,Dobeles Pavasaris 2026 (2026-03-07~08),333oh Final A #4

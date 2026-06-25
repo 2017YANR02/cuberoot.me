@@ -2,7 +2,7 @@
 # Population in this bin: 7
 # Samples listed: 7 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 824584001,L2 U2 L F2 L2 D2 L U' L2 F2 R' B2 F2 L' U2 B2 D' B,W,Phoenix Cube Championship 2018 (2018-07-07~08),333oh Final A E1

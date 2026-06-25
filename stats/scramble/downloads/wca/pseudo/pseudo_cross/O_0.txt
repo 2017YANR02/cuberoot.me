@@ -2,7 +2,7 @@
 # Population in this bin: 26
 # Samples listed: 26 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 313319001,B2 U2 L2 B2 D2 B D2 F' D2 F2 D2 L B R U2 B2 R' U R U,O,Cajun Cube Clash 2016 (2016-06-18),333 R1 C #1
