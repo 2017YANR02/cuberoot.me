@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / WY / bin 6
-# Population in this bin: 611
+# Population in this bin: 612
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1584013001,L2 R2 D2 U' B2 L2 D R2 U' L' B L' U L B' R' D R2 B',W,Hamburg International 2020 (2020-02-29~03-01),333 R1 C #5
@@ -43,7 +43,7 @@
 3497590001,U F2 D' B2 F2 L2 F2 R2 D' U2 B2 L' F2 U B' F' R2,W,Going Back to the Gong 2024 (2024-02-10~11),333 R1 F E2
 232933001,D R2 D' B2 D2 F2 L U' R' B2 L' R D L2 R' U R',W,Merry Cubing 2015 (2015-12-20),333 R1 C #3
 3388915001,U2 L2 D F2 D' R2 B2 D2 B2 U R2 U2 B' U R' F' U' R2 D',W,Matale Cubing Year-End 2023 (2023-12-30~31),333 R2 C E1
-3787051001,F2 R2 U2 L2 B L2 F' D2 F D' F2 U R2 U L' R2 D L' B' L2 U2,W,Side Events Rīga 2024 (2024-05-25),333bf Final B E1
+5714108001,U R' D' B2 L' F' L2 F' R2 U' F2 U2 F2 L' U2 L2,W,Lavey-Vous les Mains 2026 (2026-06-20~21),333 Final B #5
 4105485063,U2 L U' L2 R2 D' R2 B2 R2 U2 B' L2 D U R2 U2 R D' R2 D,W,SacQuiet Fall 2024 (2024-09-15),333mbf Final A #1
 4567060033,R D F B2 L' U F' R D2 F R2 L2 F B2 D2 F R' B D' L2 U,W,Baja Spring 2025 (2025-03-14~16),333mbf Final A #1
 250137001,R2 F2 D U B2 D L2 U B2 U' R D L' F' U2 F2 L2 D2 R2,W,Mantua Tiny Open 2016 (2016-02-06),333 Final A #3

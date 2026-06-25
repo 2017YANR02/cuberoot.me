@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / BGOR / bin 4
-# Population in this bin: 216
+# Population in this bin: 217
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 14808001,F B' U2 B U R' F' D F2 D2 R2 L2 F R2 L2 F' B2 U2 D2,O,Didas Brest 2014 (2014-04-26~27),333ft Final A #1
@@ -141,7 +141,7 @@
 2859551001,D F2 R2 D' B2 U' R2 F2 B U' R' U' R2 F L' D L' F L2,R,OH in a Madison Ballroom 2023 (2023-07-08),333oh Final A E2
 2871483001,L' U D2 F' D2 B' U2 B' R2 U L B R' U2 R2 B' R2 U2,O,Sens Open 2023 (2023-07-08~09),333oh R1 B #2
 2894785001,L' F' L' F2 L D2 R2 B2 R' F2 U2 D F R F' R2 D2 F' L B2,O,Feltre: WC Warmup 2023 (2023-07-15~16),333bf R2 A #3
-2898814001,U L U F2 U' F2 U' R2 D R2 U2 L R' U2 L U' R' F L',R,Bucharest Summer Cubes A 2023 (2023-07-15),333 R2 A E1
+5708060001,U2 B2 R2 D' F' L2 D' B D2 B2 U2 F' L2 D2 B U2 L' B' R2,B,Agoura Summer 2026 (2026-06-20),333 R1 B #2
 5516180001,L' U2 L2 U2 F R2 B' U2 B R U2 R' B F2 L' F D,G,Marble City Cubing NY 2026 (2026-04-11),333 Final B #1
 2918661001,U R2 U2 F' U2 B F' R2 B' D2 F R2 U L U L B' R2 U2,R,No Parity Joniškis 2023 (2023-07-22),333oh Final A #5
 2944708001,L2 B D2 R U F2 U D2 L F2 R2 U2 L' F2 L' F' L B',O,Piera Open 2023 (2023-07-29~30),333 R1 D #3

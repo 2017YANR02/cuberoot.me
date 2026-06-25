@@ -2,7 +2,7 @@
 # Population in this bin: 20
 # Samples listed: 20 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 558930001,F R' U' R' F2 U B R U' F' L2 D2 F2 R2 L' B2 R' B2 U2,W,SNZ Northern 2017 (2017-07-23),333 R1 A #5

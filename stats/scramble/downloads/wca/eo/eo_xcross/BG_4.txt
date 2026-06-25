@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / BG / bin 4
-# Population in this bin: 103
-# Samples listed: 103 (all entries in this bin)
+# Population in this bin: 104
+# Samples listed: 104 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,G,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -108,3 +108,4 @@
 5645811001,F' D F2 U2 F' U F D U2 F' D2 F2 D2 R' B2,B,Las Palmas Ahome 2026 (2026-05-16~17),333oh Final A #3
 5693421001,D F' U2 B' D2 F' U2 R' U2 B2 F2 U2 R' B D' L2 R' B' L2,G,Burnaby Cubes Big & Small 2026 (2026-06-07),333bf Final A E2
 5700996020,B2 U' B2 F2 L2 D U' R D' B' F2 L' R' D U' F' U' F D,B,Redhawk Slow Summer OH 2026 (2026-06-13~14),333mbf Final A #1
+5708060001,U2 B2 R2 D' F' L2 D' B D2 B2 U2 F' L2 D2 B U2 L' B' R2,B,Agoura Summer 2026 (2026-06-20),333 R1 B #2

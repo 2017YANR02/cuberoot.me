@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / R / bin 4
-# Population in this bin: 300
+# Population in this bin: 302
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3938051001,U D R' B2 U' F R F2 L' U' R2 B2 U2 D' R2 U D L,R,Varna Open 2024 (2024-07-13),333 Final A #2
@@ -115,7 +115,7 @@
 1187239001,B' F2 D2 L2 D2 L2 B2 L2 F' U2 R' F' U2 B U' F' L' R' F2 D2,R,Cape Fear Cubing 2019 (2019-06-22),333 R1 E #4
 1194381001,U L2 U L2 U' F2 L2 F2 U B2 F' D' R B2 U' L B' R2 B',R,Bulldog Qualifier 2019 (2019-06-22~23),333 R1 B #4
 1216661001,R2 U' L2 F2 R2 U2 L2 U F U' R' D F2 R2 F2 R' B' D R2 B' L,R,Beyond Zacatecas 2019 (2019-07-06~07),333bf R1 A #3
-5498950001,B D2 F2 L2 F2 R2 F' D' L2 F2 U' B U' R B' R F R,R,Shri Ram Cubing Challenge 2026 (2026-03-28~29),333 R1 E #1
+5712662001,R' U' F R2 U' B2 L2 D' L' F R' L' F2 U' B2 U2 F2 L2 D R2 F2 L2 F R' U' F,R,FMC Sicily & Ticino 2026 (2026-06-20),333fm R1 A #1
 4906965048,U' F2 U L' F2 L F R' U2 R F2 R' U2 R' D2 F2 D2 F' U2 L2 U2,R,Guangzhou 3x3 Quiet Day 2025 (2025-08-03),333mbf Final A #1
 1253468001,F2 U2 L2 F2 D B2 U' L2 U R2 D' B L B F' R' B D2 R2 D',R,Austin Summer 2019 (2019-08-10),333 R1 D E1
 1262036001,L B2 D R2 F R' U' B L' D' B' D B2 D' F2 U L2 U' R2 D2,R,Baia Mare North Open 2019 (2019-08-17~18),333 R1 A E2
@@ -190,7 +190,7 @@
 3298247079,U R2 D' B2 D F2 D L2 F2 U' F L' U' L R' U2 F U2 R2 B',R,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 B #1
 3302918079,L' U D2 B L2 B2 L' B L2 F2 B2 L D2 L' B2 L' U2 D R' D',R,NaticubeBLD 2023 (2023-12-02),333mbf Final A #1
 3333168015,D F' U2 L B2 U2 B2 L2 D2 L2 U2 D F' U L2 R F' D' L' D2,R,Rhein-Neckar Mental Breakdown 2023 (2023-12-09~10),333mbf Final A #2
-4218576001,D' L' D R2 B2 L' D2 L F' R2 D2 B2 R2 L F2 R D2 L B2,R,Avenida Chile XVI 2024 (2024-10-20),333 R2 D #3
+5706827001,L' F L D R2 B R' D2 B' R F2 B R2 U2 F D2 F B,R,Nacionales Honduras 2026 (2026-06-13~14),333 Final A #3
 3443256001,L2 D R2 D' R2 U' R2 U' R2 L' D L' U2 F L' R B F2 L',R,Partage Summer 2024 (2024-01-20~21),333oh R1 A #1
 3443731001,L' U' B' R2 B2 D L2 F2 U B2 L2 B R2 D' R' F2 R' U2 B,R,Melbourne Summer 2024 (2024-01-19~21),333 R3 A E2
 4254658001,F' D F L2 F' L' D L D L' B L2 U2 R2 B2 R2 B',R,Cool Down Berkeley 2024 (2024-11-03),333oh R1 A #2

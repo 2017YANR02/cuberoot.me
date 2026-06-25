@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / G / bin 6
-# Population in this bin: 306
+# Population in this bin: 307
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 55145001,L2 B' F' R2 F2 L2 B' U' L2 B' U2 L' F U' F R2,G,360 Degree Wellness Open 2014 (2014-08-30),333 R1 B #4
@@ -140,7 +140,7 @@
 1910982001,U' B' L2 U' R2 D2 F2 D2 F2 L2 R' U2 R2 F D2 U R' U R',G,A Bruin Cube Day 2022 (2022-05-08),333 R1 F #3
 1920969001,U' B' L2 F D2 B2 L2 R2 F' R2 L' B' R' F2 U2 L' R2 U F',G,Gauteng Autumn 2022 (2022-05-15),333 R1 B #5
 1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,G,MSU Quiet Qualifier 2022 (2022-05-14),333bf Final B E1
-5634398019,U' F2 B' R U' R U' B2 R2 B U' F' D2 F2 B L2 F2 B' L2 U',G,Please Don't DNF Beijing 2026 (2026-05-16~17),333mbf Final A #2
+5716225001,B' U' R2 U' F D' R' D R2 F2 B2 U' R2 D2 F2 L' D' L2 U,G,Noida Summer Cube Open 2026 (2026-06-20),333 R1 B #5
 4621909023,D R2 D2 F2 D' R2 F2 U2 F L' D' U B L' F2 U' F L U' B' L,G,Mental Breakdown Landvetter 2025 (2025-04-06),333mbf Final B #1
 2112944007,L2 R' B2 U2 R' B2 U' B2 F2 D F2 U2 L' F2 U' B L2 D2,G,BrizZon Side Open IV 2022 (2022-08-13~15),333mbf Final B #1
 2180064001,U R U L2 B2 R2 F2 U' L2 F2 U L' F R' D R B R B,G,Hanoi Open 2022 (2022-09-18),333 Final A #3

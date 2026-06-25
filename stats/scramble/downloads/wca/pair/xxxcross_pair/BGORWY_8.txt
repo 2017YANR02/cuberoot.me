@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGORWY / bin 8
-# Population in this bin: 678
+# Population in this bin: 679
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2661804001,F2 D2 L F2 R' D2 L F2 D' U' L' U' L' B2 D L2 F' R2,G,Country Roads Huntington 2023 (2023-04-22),333 Final A #1
@@ -51,7 +51,7 @@
 254512001,R2 B2 D R2 B2 U F2 D' F2 U' R B' R' U2 R2 U2 B' U R' B',O,Molina Open 2016 (2016-02-13~14),333 R2 C E2
 1397934025,U L2 U L2 R2 U' L2 F2 U2 B' F2 L' R B L' U F' L2 D2 L',G,OSU Blind Weekend 2019 (2019-11-08~10),333mbf Final B #3
 260573001,B' L2 R2 D2 B' R2 F' L2 B2 U2 R F' R2 D L' U' B D L' B,R,Big Apple Cube Clash 2016 (2016-02-27),333 R1 F #1
-2321156001,R2 U' L2 B R D' F2 R2 D L B D2 R2 U2 D2 B' U2 F B,W,Northside Spring Sunday 2022 (2022-11-27),333 R1 E #3
+5709191001,F D L2 U2 F2 L2 D F2 U' F' U R' U' L2 B R2 F U,R,B-Game - Bastardo Open 2026 (2026-06-13~14),333 Final A E2
 1810530001,L2 U2 B2 L' B2 U2 L' U B2 L' D' F2 L' F U2 R2 F',W,Cape Fear 2022 (2022-02-12),333 R1 C #5
 5355832028,U2 D' F U2 F2 B2 U B' D' L R2 F2 D' L2 U' D' R2 B2 U2 L2 U,O,Mini Mental Milano VIII 2026 (2026-02-01),333mbf Final A #2
 4776825023,B2 R2 U' B2 D R2 D F R' F' R U2 F' U' B U2 B' U' L2 U,O,Episode VII - The Blind Awakens Israel 2025 (2025-06-06),333mbf Final A #2

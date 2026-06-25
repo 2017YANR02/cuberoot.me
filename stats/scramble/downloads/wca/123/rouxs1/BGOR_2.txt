@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BGOR / bin 2
-# Population in this bin: 519
+# Population in this bin: 520
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5542001,D' R2 L' F' R2 B2 U B L' U2 F2 L2 U2 F2 B2 U' R2 D' R2 U',B,Swiss Open 2014 (2014-03-29~30),333oh R1 A #2
@@ -67,7 +67,7 @@
 1562929001,R2 D R2 B2 R2 D' B2 D L2 F' R B U2 L2 D B D' R2 U' B2,B,Hernando Summer 2020 (2020-02-22~23),333oh R1 B #1
 433280001,U2 F' R2 B U2 B' D2 U2 L2 D' U' R' B2 U R B2 L' D2 U',B,Santa Fe Open 2016 (2016-12-10),333 Final A E2
 2568768001,B2 R2 U2 L2 U' R2 U' R2 F2 D' F' U2 L' F L' D' R2 F L2,R,Pickering B 2023 (2023-03-19),333 Final A #4
-3205913154,R2 F D L2 D2 B2 L2 F2 L2 F2 U' R D2 U R' F2 R2 D F2 L2,G,Please Be Quiet in Astana 2023 (2023-10-28~29),333mbf Final B #1
+5707613001,F U2 F' D2 F' D2 F' L2 D' F L' F2 L' D' F' L' F' D,G,No Veas Ocaña 2026 (2026-06-20),333 R2 A #5
 447429001,B U2 D' F D B R L' F' R D B2 U D' F2 D R2 U',O,Singapore Rubik's Cube Competition 2017 (2017-02-18~19),333 R1 B #4
 2317978001,R L2 B2 R2 F' D2 B2 F' D L' D R2 F' R F2 L' U F,G,Butler Blitz 2022 (2022-11-26),333 R1 A #1
 3740974001,L U' R' U' D2 B R' U F' L B2 R' U2 B2 R' U2 F U,O,Korum Cube Challenge 2024 (2024-05-03~05),333 R3 C E1

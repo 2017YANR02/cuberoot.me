@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGWY / bin 4
-# Population in this bin: 222
+# Population in this bin: 223
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 10812001,B2 L R' D2 B2 F D F R D2 L' B L B' U' R,W,Open Cube Project 2014 (2014-04-12),333 Final A E2
@@ -204,4 +204,4 @@
 4996276001,B U2 F2 B' D' B2 U2 R' U2 D2 F U2 D' L2 U2 F2 D' B2 D,Y,Please Be Finished Brisbane 2025 (2025-08-30~31),333bf Final A E2
 4998016014,D R U' D2 L2 U2 F2 R' U2 L' R' B R2 F' L B L2 D U L2 U,B,Kārķi Open 2025 (2025-08-28~31),333mbf Final A #1
 4999936001,B' R2 F2 U' B2 F2 R2 D2 U' R U F' U B2 D' R2 B' U' B,G,Colégio Asther Open 2025 (2025-09-06),333 R1 C E2
-5006395039,F2 R F2 D2 B2 F2 R B' D2 U R' U' F L' R' B L B',B,New York Quiet Championship 2025 (2025-09-06~07),333mbf Final A #2
+5709769001,B L' F L B' U' B' L B2 R2 F2 R D2 L2 F2 U2 B U2 L',W,Oslo Open 2026 (2026-06-19~21),333 R3 B #5

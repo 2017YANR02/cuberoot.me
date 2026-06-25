@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGWY / bin 6
-# Population in this bin: 421
+# Population in this bin: 422
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -108,7 +108,7 @@
 2960943001,F2 R U' L U2 L' U F L2 F D2 B D2 F' U2 F' R2 D2 R,W,Burgas Open 2023 (2023-08-05~06),333 R2 C E2
 2854370001,L2 D2 F' L2 U2 B' L2 D2 F D' F' L2 U' L2 D2 U R F2 L2,G,Las Acacias al Cubo Open 2023 (2023-07-01),333oh R1 A #2
 885100020,D2 R D2 B2 R2 D2 R B2 D2 B R' B2 D' B2 F2 D' F2 R' D' B R2,W,Swiss Nationals 2018 (2018-09-21~23),333mbf Final A #2
-5616013001,U' L2 B2 R2 U' B2 L2 D' U F R U L' U2 F2 D' F2 D,B,Darmstadt Open 2026 (2026-05-09~10),333 Final A #3
+5706477001,D2 F' U2 L' B2 L' B2 R2 F2 R' U' B2 U' L F2 R' B L',B,Cluj Cubing Sports Festival 2026 (2026-06-13),333oh Final B #3
 4367726001,U' F2 U' R' D F2 L F' U L' U2 B2 L' D2 L2 U2 L' F2 L2,G,Bulgarian Nationals 2024 (2024-12-14~15),333oh Final A #3
 5419672001,U' F' U2 F U2 L D' B2 L' U2 F2 L' B2 U2 R D2 F L2,G,Open de Gatineau 2026 (2026-02-28),333oh Final B #4
 898107001,F' R2 U2 B D B' D' R2 L2 D2 B' R2 F R2 L2 F' L2 U2,G,Sicily Open 2018 (2018-10-06~07),333 R2 A #5

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGWY / bin 4
-# Population in this bin: 301
+# Population in this bin: 303
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4486197001,B' D2 L2 F U' F2 R U R F2 U R2 U F2 R2 B2 D2 F,G,Cubing Returns Nagpur 2025 (2025-02-16),333 R1 D #2
@@ -52,7 +52,7 @@
 3857187001,D B2 D' U2 F2 R2 U2 B L B' R' D2 R B D2 F' D F2,G,Energy Cube Ciechanów 2024 (2024-06-15~16),333oh R2 A #2
 563965001,B2 R2 U R' U R' F' R D R2 U2 R2 U2 R2 B2 U2 B2 R U2 R,B,Classic City Summer 2017 (2017-08-05),333 R3 A E2
 595691001,L2 U R2 D' B2 D' L2 R2 D' F D' U2 R' B' U B' U L' R,W,Golden Rubik's Cube 2017 (2017-09-14~15),333oh R1 A #3
-621132001,D2 B' D2 B2 U2 R2 F' L2 B' L2 F' D' F' L B F D L F' R2,G,Zhanjiang Open 2017 (2017-10-22),333oh Final A #3
+5709769001,B L' F L B' U' B' L B2 R2 F2 R D2 L2 F2 U2 B U2 L',W,Oslo Open 2026 (2026-06-19~21),333 R3 B #5
 3687119001,B' R F2 L' U2 L2 R' B2 D F2 R' U' L D2 F2 R F2,B,Cubing at the Y - Stoughton 2024 (2024-04-20),333 R1 E #5
 4228990001,D2 L' F' D' F2 L2 F' L2 U2 F R D2 R' D2 U2 L2 D,W,Frankfurt Cube Days 2024 (2024-10-26~27),333oh R1 A #4
 5466732001,B' U2 R' B D2 U2 B D F' D L' D R' D' R,B,Arkansas Championship 2026 (2026-03-20~22),333 R1 B #4
@@ -184,7 +184,7 @@
 3043883001,B' U' L2 D2 R D2 R' D2 F2 L2 R D' L' B2 D U F U L' B' L2,Y,Budapest Back to School 2023 (2023-09-02~03),333bf Final A E2
 4899202001,F2 D2 U L2 F2 R F2 U2 L2 U2 R D' U2 R' F R2 F,Y,Nyíregyháza Open 2025 (2025-08-02~03),333 R2 B #3
 3089021001,U B2 U2 R' D2 B2 D2 B2 R' F' D F2 U' L2 B D B,W,Avenida Chile III 2023 (2023-09-17),333 R2 B E1
-3117867001,B2 F2 D2 R' D2 B2 F2 L' D F2 U2 F R2 D L D' B2 U',G,Australian Nationals 2023 (2023-09-28~10-01),333 R1 E E1
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
 3151049001,F2 D2 U2 F2 U2 B' F2 R B2 F2 R' B' D L R D B' D,G,UNSA Speedcubing Primavera 2023 (2023-10-07~08),333 R1 G #2
 5023707001,U2 B U2 L' D' L2 U2 B2 U' R2 U' F R B' D F' D2 F2 L' F',B,Clásico Tlaxcala 2025 (2025-09-13~14),333bf R1 B #3
 4973455001,R2 F D2 R' F2 B2 R' D2 B L F2 L2 B2 U2 R B2 U,W,Solve Well in Wellington 2025 (2025-08-23~24),333oh R1 B #2

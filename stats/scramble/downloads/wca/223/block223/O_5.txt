@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / O / bin 5
-# Population in this bin: 856
+# Population in this bin: 859
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5428457001,F D2 F' U' F2 D2 F2 R2 U' B2 D' R U B2 L2 U' R D R,O,Megaminx Madness AZ 2026 (2026-03-07),333 Final D E2
@@ -52,7 +52,7 @@
 5704381065,F' B U B L' B2 L' F' R L' B2 D L2 U F2 D' F2 B2 L2 U',O,GAN Southern Championship 2026 (2026-06-11~14),333mbf Final A #1
 1869406001,R2 F R' F' R' U R U2 F R2 U2 F' D2 R2 F2 U' B L2,O,Cubing Party Xela 2022 (2022-04-10),333 R1 B E1
 228012001,B R B D F L2 D2 F2 D2 B' R' U2 B U2 D2 L2 F' D2 F,O,Santa Lucía Open 2015 (2015-12-12),333 R1 A E2
-3463952001,R2 B D2 B2 F2 R2 B2 F2 R B D L F2 L B2 L F R2 U',O,Almaty Cubers Open 2024 (2024-01-27~28),333bf Final A E2
+5714763034,D' B2 D B' R' F' D2 B D R U2 D F2 U F2 B2 U R B R2,O,Greenwoods Big Blind & Beyond 2026 (2026-06-21),333mbf Final A #1
 1585884001,L2 B2 U2 R2 U' R2 B2 D2 R F D U L2 B' L' F R2 D2,O,Score Cube Day 2020 (2020-02-29),333 R1 B #3
 238028001,U L2 F2 B2 L U2 L2 F L' B2 R2 B' L2 U2 R2 L2 B,O,Music City Winter 2016 (2016-01-02),333 Final B #3
 245615001,B2 U' F2 U' B2 F2 D L2 U2 B D U B2 R' U' B L2 D' U2,O,Shaastra Cube Open 2016 (2016-01-23~24),333oh R1 H #3

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / Y / bin 7
-# Population in this bin: 116
-# Samples listed: 116 (all entries in this bin)
+# Population in this bin: 117
+# Samples listed: 117 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1993001,F' D' F2 R2 U F R F2 D R' D' F2 D2 F R2 F2 R2 L2,Y,Zonhoven Open 2014 (2014-03-22~23),333 R1 A #1
@@ -121,3 +121,4 @@
 5575666026,L' U2 R2 D' L2 R2 B2 U2 F' U F U2 B L' R' U2 F' U F' L2 U',Y,WCC Western PBQ Championship - Santa Clara 2026 (2026-04-25),333mbf Final A #2
 5599613028,L U B D2 B F R2 B L' D F' R' D2 F2 D U' F L' F,Y,Campeonato Mineiro 2026 (2026-05-01~03),333mbf Final A #2
 5642895001,D2 B L2 U' F2 R2 F' B R' D R F2 L2 B2 L2 U F2 B2,Y,Hamoye Jinju 2026 (2026-05-16~17),333 R1 D E3
+5706565028,B2 R2 D' U R2 F2 L U2 F2 L' F U2 B R2 D2 F' L2,Y,Quiet Prep in Palisades 2026 (2026-06-19),333mbf Final B #1

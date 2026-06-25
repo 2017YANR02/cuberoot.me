@@ -2,7 +2,7 @@
 # Population in this bin: 8
 # Samples listed: 8 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 109373001,R2 U2 B' F2 D2 F' D2 L2 B2 F D2 L D R D' B' L' D' B U' L,B,MathSoc Open 2015 (2015-02-21~22),333 R1 A #5

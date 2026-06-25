@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / ORWY / bin 3
-# Population in this bin: 799
+# Population in this bin: 801
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4486321001,B2 D2 L2 D L2 F2 U' R' B2 D L' U F2 D L' R' D2 B,O,NxNs at Finprov 2025 (2025-02-16),333 R1 B E2
@@ -32,7 +32,7 @@
 4372919001,F2 D' F2 D2 L2 U' F2 U2 B R2 U L2 D2 B2 R2 F2 D' B,W,Réau Open 2024 (2024-11-23~24),333 R2 C #3
 3023285001,L D' R2 F' D' L2 U2 R2 U' R2 U' L D R2 U2 B' U F2,R,Mysore Cube Open 2023 (2023-08-26~27),333 R1 C #1
 4799859001,R2 L F U' L' F' L2 F2 D2 F2 B2 R F2 U2 D2 L' D2 L B D' L2 U',O,Damásio Open 2025 (2025-06-14~15),333bf Final A E1
-131623001,F2 L F2 L D2 B2 L2 D U L R2 U B2 R2 U2 L' D' F2,R,Slovenian Open 2015 (2015-04-18~19),333oh Final A E1
+5716877022,U2 D2 R2 L' F' L2 D B U B D2 F B2 R2 F L2 U B' D,Y,Maine Open 2026 (2026-06-19~20),333mbf Final A #1
 3298254089,L2 F2 D2 F' L2 D' F2 R2 F' D' B2 U2 L2 U2 L2 B' L2 B' L2,W,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R2 A #3
 1822105004,U2 L2 B2 L2 U2 L2 F U2 B2 F' D' R' U2 R' D B2 U' B D',Y,Kubkvarna 2022 (2022-03-05~06),333mbf Final B #1
 1307755001,D2 L R' D2 B2 L' D2 F2 D2 B R2 D2 F' U2 R2 D2 L B,R,Grecia Open 2019 (2019-09-21),333 Final A E2

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / O / bin 4
-# Population in this bin: 297
+# Population in this bin: 298
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4987001,F D2 U2 F' D2 R2 B' F' D2 U2 R F' D' L D' R2 U L2 B2 R' B L,O,Tula Open 2014 (2014-03-28~30),333bf R1 B E2
@@ -178,7 +178,7 @@
 2890844001,R2 U2 F' U2 L2 F L2 F D2 U R D2 L' F' D B U' L D',O,Canadian Championship 2023 (2023-07-13~16),333 R1 C #5
 2894785001,L' F' L' F2 L D2 R2 B2 R' F2 U2 D F R F' R2 D2 F' L B2,O,Feltre: WC Warmup 2023 (2023-07-15~16),333bf R2 A #3
 4145379001,U' B' R D' L2 F' D L' U R2 D' F2 U' F2 L2 R' D' F2,O,Planetário Rio Open 2024 (2024-09-28~29),333 R1 C #2
-2974880001,U' D2 B' F U2 B F2 L2 U F D R2 F' R F D' U' L2,O,San Marcos Open 2023 (2023-08-12~13),333 R1 G #1
+5708084001,R2 D R' D2 B2 U2 R B2 R F2 U2 R B' D' B2 R2 F L' B',O,Agoura Summer 2026 (2026-06-20),333 R1 E #5
 3008829001,U L F' L2 U2 B2 L2 B' L2 B U2 F U R' F2 D' B' U R' U L' F,O,Pingtung Summer Open 2023 (2023-08-26~27),333bf R1 C #3
 4850256001,D R' B2 R B2 R' B2 R2 D2 F R' B2 U' L R2 B' L B,O,Rubik's WCA World Championship 2025 (2025-07-03~06),333 R2 D E1
 3028500001,R U' D F L F D B2 L U2 L' B2 R F' R2 D2 R,O,U Cube at UQ Sunday 2023 (2023-09-03),333 R2 A #1

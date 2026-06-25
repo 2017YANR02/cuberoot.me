@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / R / bin 5
-# Population in this bin: 818
+# Population in this bin: 820
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3775412001,F L2 B D B' L B L F D B D2 R2 F' R2,R,Mriy Diy Cubing Lviv 2024 (2024-05-18~19),333 R1 A #4

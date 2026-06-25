@@ -2,7 +2,7 @@
 # Population in this bin: 94
 # Samples listed: 94 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 67173001,B U2 R' F2 U' B2 R F' R2 D2 L' U2 R2 F U2 F' U2 R2 L2 F' R2,W,UPV Open 2014 (2014-10-18~19),333 R2 A #3

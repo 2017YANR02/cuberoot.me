@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGORWY / bin 4
-# Population in this bin: 331
+# Population in this bin: 333
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 10812001,B2 L R' D2 B2 F D F R D2 L' B L B' U' R,W,Open Cube Project 2014 (2014-04-12),333 Final A E2
@@ -14,7 +14,7 @@
 81606001,B' D2 F2 R2 B F' L R B' R' D2 R B2 D2 B2 F R',O,Toronto Open Fall 2014 (2014-11-22),333oh R1 A #3
 83417001,D' U2 F2 U' L2 B2 F2 U' F' L2 U' F D2 L2 R D' R' U2,W,Rubik Huehue 2014 (2014-11-29~30),333 R1 A #5
 102115001,R' B2 R' B2 D2 R2 B2 L2 U B' F' L B2 U' L D2 R2 U' R,W,Speed Cubing Mumbai Unlimited 2015 (2015-01-16~18),333 R1 L E1
-5272669001,U F2 R2 U' L B U2 L' U R2 B D2 F2 B' L' F2,W,Nacionales Guatemala 2025 (2025-12-12~14),333oh Final B #4
+5709769001,B L' F L B' U' B' L B2 R2 F2 R D2 L2 F2 U2 B U2 L',W,Oslo Open 2026 (2026-06-19~21),333 R3 B #5
 138386001,R' F B' R2 B2 D' B2 L' B R B' U2 B D2 F' U2 D2 F R2,G,UW Spring 2015 (2015-05-09),333oh Final A #1
 4238607001,D B2 R' D2 R D' B R2 B' R' L' F2 U2 D' L2 D' R2,R,SPAC Open 2024 (2024-10-27),333 R1 C #4
 163135001,B U2 F' U2 F U2 R2 F U2 B' L' D' R' D' B L B' D' L2,Y,FLIP Open 2015 (2015-07-11~12),333oh R1 B #3
@@ -68,7 +68,7 @@
 661142016,B2 D2 R2 B2 L2 D F2 D' R F U2 B L' U' F' L2 B R F' U2 B R,B,ÅF Swedish Cube Open 2016 (2016-10-15~16),333mbf Final A #1
 661369015,R2 B2 U2 B2 R2 B2 D' L B2 D' B2 L2 B D L2 B' D' L D2,B,Wuhan NxN Open 2017 (2017-05-20~21),333mbf Final A #2
 667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,Y,MTD Spring 2017 (2017-12-09~10),333oh Final B #2
-3374115001,L B' D R D F2 U' B2 U R2 B U' R2 B2 U F2 B2 L2,O,Indian Nationals 2023 (2023-12-15~17),333oh R1 B E1
+5706827001,L' F L D R2 B R' D2 B' R F2 B R2 U2 F D2 F B,R,Nacionales Honduras 2026 (2026-06-13~14),333 Final A #3
 4020379015,B R2 B D2 F U2 B U2 R2 U' R B F L R U' R' F' D2 L B,Y,Shhicago II 2024 (2024-08-17~18),333mbf Final A #2
 685877001,B' R2 F' U R F L2 F2 B R L2 F' B R2 F2 R2 L2 F',O,Bogor Open 2018 (2018-01-13~14),333oh R1 B #3
 694330001,L2 B2 R F R U2 F2 B L' D' B' U2 R2 D2 F L2 B,G,MathSoc Open 2018 (2018-01-27~28),333 R1 F #3

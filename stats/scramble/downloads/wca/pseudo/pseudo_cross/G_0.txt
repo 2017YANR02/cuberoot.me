@@ -2,7 +2,7 @@
 # Population in this bin: 22
 # Samples listed: 22 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 440340001,D' F' B' U2 R L2 F B' D' L2 F U L2 D2 F2 U' B2 L2 D2,G,Montreal Open Winter 2017 (2017-02-04),333 R1 A #2

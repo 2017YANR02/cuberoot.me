@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / B / bin 6
-# Population in this bin: 301
+# Population in this bin: 302
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4715653001,B D2 F2 L2 D2 B' F U2 F2 R' U' B' L2 D U' F L B2 U',B,German Open 2025 (2025-05-10~11),333oh Final A E2
@@ -40,7 +40,7 @@
 438104001,R' D2 R2 U2 B2 L R2 B2 F U2 F R2 B' F2 L' U2 R,B,Wirewood 3 2017 (2017-01-29),333oh R1 B #2
 444620001,U' F R B' L2 F' D2 B' L D L2 U2 R2 B' L2 B R2 L2 U2,B,Forest City Open 2017 (2017-02-11),333oh Final C #4
 484545001,R2 B2 L2 D B2 D U' F2 R2 U2 F' L' B2 R D2 L' U' L B' L,B,Piedemonte 2017 (2017-04-08),333oh R1 B #3
-485473001,L2 D2 L2 U F2 L2 D B2 U2 B' L' F R2 F' D' L B' R' B2,B,Manaus Plaza Open 2017 (2017-04-08~09),333 R2 B #2
+5713345001,R U2 L' B2 F2 R' F2 R' D2 U' B' D U2 F R2 D' U2 L' U',B,Żmigród Open 2026 (2026-06-20~21),333 R1 A #3
 495585001,B2 D' R2 L U B D' B' L B2 U D' B2 L2 D2 R2 U',B,L.P. 3600 Rubik 2017 (2017-04-22),333oh Final A E2
 496090001,F' D2 U2 F' U2 B R' D' L' F2 R' B' D B U2 R F,B,Bukidnon Speedcubing Challenge 2017 (2017-04-22),333oh Final A E1
 4237530007,D2 F2 U' L2 R2 U B2 L2 R2 U2 F L' F' L R2 D L D' F' U2 L B,B,Quiet Seattle October 2024 (2024-10-26),333mbf Final A #1

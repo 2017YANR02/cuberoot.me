@@ -2,7 +2,7 @@
 # Population in this bin: 535
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3820216001,F U F2 D L2 R2 U' L2 U' L2 F U2 L2 D' F2 L' D' B U' B',R,Tianjin Open 2024 (2024-06-01),333bf R1 A #2

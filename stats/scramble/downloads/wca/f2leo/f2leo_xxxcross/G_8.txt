@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / G / bin 8
-# Population in this bin: 930
+# Population in this bin: 931
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3888175073,D2 R2 F' D2 L2 R D2 F2 L D2 U L' D L' D U' L F' L,G,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final B #1
@@ -171,7 +171,7 @@
 661417220,R2 B2 U' F2 D2 R2 D F2 L2 D' L' F D2 B2 D2 B' R D B F D,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #1
 5558688001,U' F2 L2 D2 B D2 F' U2 L2 B' U2 R2 D B2 F2 L U' B',G,Cube Against Cancer - Orange County 2026 (2026-04-19),333 R1 C #4
 661422035,U2 F R2 U2 L2 F' L2 D2 B' D U2 L' R2 D R D2 F2 L' B D' L B2,G,Poznań Side Challenge 2017 (2017-07-08~09),333mbf Final A #2
-5283028001,B' U2 R2 B2 U2 L' R2 D2 R' F2 D R' F' L' F' L B F D,G,Turning in Corning 2025 (2025-12-20),333oh Final B #1
+5711018001,R' B2 F2 D B2 D R2 U L2 U R F2 L' U B D2 L B,G,Oldham County Summer 2026 (2026-06-20),333 Final A #3
 4464737001,L2 U' F' D B2 D2 B2 D B2 U B' L' D' F2 D' L2 R2 F,G,Los Reyes del Cubo Chiclayo III 2025 (2025-01-25~26),333 R2 C E2
 671071001,U2 F2 R U' B U2 D' R U2 L2 F U2 B2 U' L2 F2 D' F2 U',G,Skillcon 2017 (2017-12-16~17),333 R1 A E1
 2969806006,L' U2 L2 U L2 D B2 F2 U' L U2 L2 U2 B' R2 U F R2 B' L,G,Turkish Nationals 2023 (2023-08-10~13),333mbf Final A #1

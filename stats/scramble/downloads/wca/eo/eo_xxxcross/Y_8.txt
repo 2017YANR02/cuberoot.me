@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / Y / bin 8
-# Population in this bin: 114
-# Samples listed: 114 (all entries in this bin)
+# Population in this bin: 117
+# Samples listed: 117 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 13215001,B2 L2 D' B2 D F2 D R2 F2 R U L2 U R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333 R2 B #5
@@ -119,3 +119,6 @@
 5599613028,L U B D2 B F R2 B L' D F' R' D2 F2 D U' F L' F,Y,Campeonato Mineiro 2026 (2026-05-01~03),333mbf Final A #2
 5686040001,D2 B2 L2 U F2 U2 B2 U' R2 L B2 R' D B2 U2 L' F R2,Y,CuboMática Cuiabá 2026 (2026-06-06),333oh Final A #3
 5702243001,L2 D R2 U B' L2 B' U2 F2 R U2 F2 R B2 L' U2 B' D',Y,Caminos de Guanajuato - Celaya 2026 (2026-06-13),333 Final A #3
+5709268001,L' U F' R2 L2 D' B2 R2 U B2 R2 D2 R2 D2 L' U2 F2 D2,Y,B-Game - Bastardo Open 2026 (2026-06-13~14),333 R2 B E2
+5709375001,R' B2 D2 F2 D2 L2 R' U2 B U R2 D L U L2 F R2 F2,Y,B-Game - Bastardo Open 2026 (2026-06-13~14),333 R2 C #2
+5710305001,L2 F R' F D2 R2 D F R D2 F2 R F2 R' F2 L' F' L2,Y,Wakefield Summer 2026 (2026-06-20~21),333 Final A #5

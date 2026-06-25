@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGORWY / bin 5
-# Population in this bin: 358
+# Population in this bin: 359
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -43,7 +43,7 @@
 380810001,F D' L2 U' F2 L2 U2 L' F2 L' B2 L2 U' F2 L2 U D,G,Rubik's Cube Pune Open 2016 (2016-10-15~16),333 R1 C #5
 392723001,L2 R2 B' L2 B' L2 B2 D2 F D2 F L' D' U' R' F L R' D' L,Y,Jawa Timur Open 2016 (2016-11-05~06),333 R1 A E1
 393260001,B' R' B2 R B' D R2 F2 U' L' D F2 D' L2 U L2 D' L2 F2,G,Munich Open 2016 (2016-11-05~06),333 R2 A #3
-5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y,Adelaide Autumn 2026 (2026-04-12),333 R1 A #2
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
 410742001,D F2 L2 D L2 U F2 L2 U L2 B R D' F U L2 U' B2 R2,B,Urdaneta City Fiesta Open 2016 (2016-12-04),333 R1 A #1
 411140001,F U2 R2 D2 F R2 U2 R2 F' R' U F2 L' U2 R' U' L' B2,B,Charrua 2016 (2016-12-03),333 R1 A #2
 434730001,R2 D' F2 D' U' L2 U F2 R' F' L D R2 U R D' R' U2,O,Michigan Cubing Club Alpha 2017 (2017-01-21~22),333 R3 B #4

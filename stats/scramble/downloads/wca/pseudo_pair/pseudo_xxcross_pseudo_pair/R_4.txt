@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / R / bin 4
-# Population in this bin: 56
-# Samples listed: 56 (all entries in this bin)
+# Population in this bin: 57
+# Samples listed: 57 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 39712001,U2 L' B2 L' D F2 B' U B D' F' R2 B2 U2 D2 B D2 F',R,Les Santes Open 2014 (2014-07-18~19),333ft Final A #3
@@ -61,3 +61,4 @@
 5053823001,F D2 F2 B' R' U' R2 F D' B L2 F2 B D2 F2 U2 L2 U2 L2,R,Amor y Amistad Aves María 2025 (2025-09-27~28),333 R2 B #4
 5218724004,L2 F2 L2 F2 U2 F2 D B2 R' B' D L' U' L2 R' F2 L' F D' L2 U',R,Zacatecas Mexican Qualifier 2025 (2025-11-22~23),333mbf Final A #1
 5456211001,U L' U B2 R2 F2 U L2 B2 U' R' F' U' B2 R' F R' D2,R,Stockholmsligan 4: Bilar - 2026 (2026-03-19),333 Final A #1
+5706827001,L' F L D R2 B R' D2 B' R F2 B R2 U2 F D2 F B,R,Nacionales Honduras 2026 (2026-06-13~14),333 Final A #3

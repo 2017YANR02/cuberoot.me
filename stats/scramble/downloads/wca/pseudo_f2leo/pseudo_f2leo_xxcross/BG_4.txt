@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BG / bin 4
-# Population in this bin: 154
-# Samples listed: 154 (all entries in this bin)
+# Population in this bin: 155
+# Samples listed: 155 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 27263001,R' F' B L D R2 L D F' L' F2 B' D2 B' L2 U2 L2 U2 F' L2,G,Polish Nationals 2014 (2014-05-31~06-01),333 R2 B #3
@@ -159,3 +159,4 @@
 5692705035,D F2 R' U' F2 D B2 R2 D2 U B D2 R2 B' R2 F2 R B L' F2,B,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333mbf Final A #1
 5693041049,F2 L2 F U2 B L2 R2 F2 R2 L U B' R2 F D U F U R2 B' L2,G,Brilliant Big & Blind Bravo Orlando 2026 (2026-06-06~07),333mbf Final B #1
 5702637001,F2 D' B2 R' B2 L2 D2 L2 F2 L2 B D F' U2 B F L U,B,WCA South American Championship 2026 (2026-06-12~15),333oh R1 A #3
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1

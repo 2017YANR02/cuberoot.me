@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / R / bin 5
-# Population in this bin: 871
+# Population in this bin: 874
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3626799001,B U2 F2 D2 L2 U R2 U' F2 R2 U' B2 L B2 D2 F' L B R2 D,R,Red Stick Spring 2024 (2024-03-30),333 R2 B #3
@@ -12,7 +12,7 @@
 2600262001,L' D' R' F2 U' F' D R' U' R B2 L2 F' U2 L2 U2 F' U B R2,R,Please Be Quiet Brisbane 2023 (2023-04-01~02),333bf R1 A E1
 5478116001,R2 D2 R2 F' U2 F U2 F L' U2 L' F' U' R2 B2 R2 F',R,Pocatello Potato Palooza 2026 (2026-03-28),333 R2 B #3
 2993523001,B D' L2 U' L2 U2 L2 R2 U R2 F D B' D' U F' L D',R,Aves María Teams 2023 (2023-08-20~21),333 Final A #3
-985092047,D' R2 F2 U' L2 F2 U2 B2 D2 F2 R2 B' U R2 D F' L F L' F' D,R,The Great British Blind Off 2019 (2019-01-19~20),333mbf Final A #2
+5706565030,U2 R2 D2 R' B2 R' D2 R U2 L' D B2 F' L2 U' L D B2 L2 D B R,R,Quiet Prep in Palisades 2026 (2026-06-19),333mbf Final B #1
 2051938001,B U2 L2 F U2 F R2 B2 R2 F' U L R2 F' L F L2 B,R,Inland Empire Summer 2022 (2022-07-30),333 R1 B E2
 2333532001,D2 L' D R D' L2 B' R2 U2 R F R2 U2 D2 F' B2 D2 R2 F,R,Oxente Open 2022 (2022-11-26~27),333 Final A E1
 4501826001,B2 R2 L' U2 F' R' F' R2 L2 U L2 U' R2 D F2 R2 U2 B D,R,Acrópolis Bucaramanga 2025 (2025-02-15),333 R1 A #2

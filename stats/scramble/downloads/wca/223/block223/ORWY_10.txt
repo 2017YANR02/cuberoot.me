@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / ORWY / bin 10
-# Population in this bin: 92
-# Samples listed: 92 (all entries in this bin)
+# Population in this bin: 93
+# Samples listed: 93 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4812001,L2 R2 D' U2 R2 F2 D2 B2 F L2 B D2 L D2 L2 D' R' U F' D2 B,O,Dixon Spring 2014 (2014-03-29),333bf Final A E2
@@ -97,3 +97,4 @@
 5645686001,B D R2 D2 B2 L R2 F2 D2 R' D R2 B' R' B2 D2 B2 R D',O,Las Palmas Ahome 2026 (2026-05-16~17),333 R2 A #4
 5677609054,B' R' F2 R U2 B2 L U2 L U2 R' D B' D U F2 D' L D' F' L B,O,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf R1 A #3
 5686158001,U R' L2 B' D2 L2 F2 D2 F' R2 D2 R' U B2 F' R D' B' F2 U2,O,Only Cubes in ABQ 2026 (2026-06-06),333 R2 B #2
+5709315001,R' U D F' R' U B R2 B' D B2 D2 B R2 F' D2 L2 D2 L2 B' L2,O,B-Game - Bastardo Open 2026 (2026-06-13~14),333 Final B #5

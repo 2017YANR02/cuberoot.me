@@ -2,7 +2,7 @@
 # Population in this bin: 807
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5691925006,L D2 L' U2 L D2 L2 B2 U B D U L D2 R' B D B' L B,R,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final B #1

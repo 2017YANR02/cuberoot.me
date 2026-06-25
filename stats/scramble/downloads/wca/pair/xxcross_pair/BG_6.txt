@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / BG / bin 6
-# Population in this bin: 606
+# Population in this bin: 608
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2376455001,B F L2 U2 B D2 B R' F2 R B R B R' U B2 D R',G,Rubik's WCA Oceanic Championship 2022 (2022-12-15~18),333 R3 A #5
@@ -95,7 +95,7 @@
 574903001,L2 D2 B2 R' U2 R D2 U2 B L2 B' L' U B U R2 B' R F',B,ChimboteRubik 2017 (2017-08-19~20),333oh Final A E2
 5618076001,B2 D F2 U2 L' B2 F2 U' B2 R2 U B D' L R F',G,Reno Spring 2026 (2026-05-09~10),333oh R1 A E2
 5579035001,R2 F L2 F2 U2 B L2 D2 U2 L' U2 B2 D F' U F' D' U,G,UCOM Paraguay 2026 (2026-04-25~26),333 Final A #2
-598371001,F' B' R2 B D F' U L2 U' B' R2 U2 R2 L U2 R F2 D2,B,Polish Open 2017 (2017-09-15~17),333 R1 B #5
+5713345001,R U2 L' B2 F2 R' F2 R' D2 U' B' D U2 F R2 D' U2 L' U',B,Żmigród Open 2026 (2026-06-20~21),333 R1 A #3
 623149001,L F2 D2 R2 U2 R2 B2 R' U2 R2 D' B' F2 L2 D' R' B D' B R2,B,Manaus Plaza Open II 2017 (2017-10-21~22),333oh R1 A #3
 4595542010,U' B U' F2 D2 U' R2 D2 R2 L F U L' B' F L2 F L,G,Buckeye Big Brain Ohio State 2025 (2025-03-08~09),333mbf Final A #1
 635731004,D2 U2 F' D2 F' R2 B2 D2 B L2 U L' R2 U' L2 D U' R D B' R B R2,G,USTA Winter Open 2017 (2017-11-04~05),333mbf Final A #3

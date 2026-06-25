@@ -2,7 +2,7 @@
 # Population in this bin: 35
 # Samples listed: 35 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 41414001,R' U2 R2 B2 U2 R2 F2 R' U L R2 U' R F2 R D2 U F L',Y,Kielce Cube Attack 2014 (2014-07-26~27),333 R1 C E2

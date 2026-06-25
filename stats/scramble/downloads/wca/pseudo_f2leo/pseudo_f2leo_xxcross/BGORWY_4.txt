@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGORWY / bin 4
-# Population in this bin: 458
+# Population in this bin: 460
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5023707001,U2 B U2 L' D' L2 U2 B2 U' R2 U' F R B' D F' D2 F2 L' F',B,Clásico Tlaxcala 2025 (2025-09-13~14),333bf R1 B #3

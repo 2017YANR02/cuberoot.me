@@ -2,7 +2,7 @@
 # Population in this bin: 49
 # Samples listed: 49 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 261430001,B U2 F L2 B L2 R2 F2 D' F2 D2 L' U B' D' R' F' L B2,B,Cubéate Weekend 2016 (2016-02-27~28),333 R1 C E1

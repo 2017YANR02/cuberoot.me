@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / B / bin 4
-# Population in this bin: 73
-# Samples listed: 73 (all entries in this bin)
+# Population in this bin: 74
+# Samples listed: 74 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 102864001,U2 F2 D L2 B2 U R2 U' F' R' D F2 R2 F2 U' R D' U2 F2,B,Eretum Open 2015 (2015-01-11),333 Final A #2
@@ -78,3 +78,4 @@
 5539591001,U2 R2 B' D2 F' L2 B U2 R2 D U' R F2 D' R2 B U2 B2 F,B,NZ South Island Championship 2026 (2026-04-10~12),333oh R2 A #5
 5692705035,D F2 R' U' F2 D B2 R2 D2 U B D2 R2 B' R2 F2 R B L' F2,B,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333mbf Final A #1
 5702637001,F2 D' B2 R' B2 L2 D2 L2 F2 L2 B D F' U2 B F L U,B,WCA South American Championship 2026 (2026-06-12~15),333oh R1 A #3
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1

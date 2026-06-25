@@ -2,7 +2,7 @@
 # Population in this bin: 1
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4922615001,D F R2 F' R2 U2 R2 D2 U2 R' U R D' R B R' B2 L' B2 L B2,Y,Cube More in Ardmore 2025 (2025-08-09),333bf Final B E1

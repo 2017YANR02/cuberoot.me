@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / B / bin 5
-# Population in this bin: 669
+# Population in this bin: 670
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3356759001,D' R L' D' L U2 D' L' F U2 R2 D2 F B2 L2 F' L2 U' F L' F',B,Mexican Championship 2023 (2023-12-14~17),333bf R1 B E1

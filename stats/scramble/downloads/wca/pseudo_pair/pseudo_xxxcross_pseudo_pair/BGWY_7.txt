@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BGWY / bin 7
-# Population in this bin: 481
+# Population in this bin: 482
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2255124020,B2 D2 L' R2 D2 B2 L' F2 U F2 U' L2 F' L F' R U2 L B2,B,Westfries Open 2022 (2022-10-22~23),333mbf Final A #1
@@ -170,7 +170,7 @@
 4399665001,L F' L2 D B' D' L' F L2 U2 F' B2 L2 F2 R F' D' B',G,Hannukubing Israel 2024 (2024-12-31~2025-01-01),333 R2 A #2
 4276691116,F' R L2 U F2 L2 D' L F' U2 B2 D2 R' F2 R F2 U2 F2 U2 L B',G,Colombian Nationals Avenida Chile 2024 (2024-11-09~11),333mbf Final A #2
 1463681001,R2 D' R2 F2 U' B2 D' L2 R2 U2 F U2 L' B' L' D B D2 U2 R2,B,Cubing Zacatecas 2019 (2019-12-14~15),333 R1 C E2
-1465085001,B' F L2 B F2 R2 F L' U2 R B2 F' D R' F L2 D2,W,IFAM Open 2019 (2019-12-14~15),333 R2 A E1
+5706565028,B2 R2 D' U R2 F2 L U2 F2 L' F U2 B R2 D2 F' L2,Y,Quiet Prep in Palisades 2026 (2026-06-19),333mbf Final B #1
 2894139001,F2 B L U B R U D R F2 B' R2 U2 B L2 U2 F R2 U2 D2 L2 U,G,Lebrija 2023 (2023-07-16),333bf Final B #1
 1485747001,U2 R2 B' L2 U2 L2 B2 R2 F' D2 B L F2 D2 U' B' R B2 L B' U,Y,Sariki in Moscow 2020 (2020-01-02),333oh R1 A #3
 3133374001,L2 D F2 D B2 U2 F2 U2 R D R' U R2 B L2 U2 L2 D2,B,Swisscubing Cup Final 2023 (2023-09-30~10-01),333 Final A E2

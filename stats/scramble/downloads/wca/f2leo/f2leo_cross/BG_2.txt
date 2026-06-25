@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BG / bin 2
-# Population in this bin: 297
+# Population in this bin: 299
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 33026001,U2 R' D2 F' L' U R' B' L F2 L D2 F' B2 L2 D2 R2 L2,G,Masterpress Summer 2014 (2014-06-28~29),333oh Final A E2
@@ -81,7 +81,7 @@
 759291001,F U' L F2 U B' R D' R2 U' F' U2 R2 F2 B L2 U2 F' R2,B,Oakridge Cube Open - April 2018 (2018-04-14~15),333 R1 G E1
 776036001,F D2 L' F L' U2 D B R D L D2 F2 D2 B R2 F D2,B,Atlanta Subdivisions 2018 (2018-05-12),333 R1 C #4
 802674032,U2 B' L2 B2 U2 B' L2 F L2 F L2 R B2 F2 L' B2 U B L F' R2 B' L2,G,Puebla Be Quiet 2018 (2018-06-09~10),333mbf Final A #2
-4626213001,U F2 D B2 D' F2 D U2 F D L2 F D2 R' B' F2 R F' D B,G,Nalsar Cube Open C 2025 (2025-04-06),333bf Final A E1
+5706565021,U2 L2 R2 D B2 D U F2 B' R' B F L' D2 L' B2 U2 L' U B',G,Quiet Prep in Palisades 2026 (2026-06-19),333mbf Final B #1
 5034297001,D L U' L D F2 D2 L2 U2 B L2 U' B L' U L R B' L2,G,Cubing Kerala Travancore Open 2025 (2025-09-21),333mbf Final A #1
 841822001,R L U2 L' B' L B' U' F2 L D2 R L F2 R,G,CubingUSA Nationals 2018 (2018-07-27~29),333oh R1 K #1
 3933600001,L D2 L U2 R2 D2 U2 R' B' L D' L U R2 D U' R' D',G,Cube4fun in Biała Podlaska 2024 (2024-07-12~14),333 R1 A #1

@@ -2,7 +2,7 @@
 # Population in this bin: 1
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5087097031,L2 B D L D2 F2 L2 R2 B' R2 B F' L2 U R' B' L' F' U B,O,Blind Marathon in Rzeszów 2025 (2025-10-11),333mbf Final A #1

@@ -1,15 +1,15 @@
 # Scramble samples — std / xxxcross / BGOR / bin 7
-# Population in this bin: 286
+# Population in this bin: 287
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
 5588346001,B D2 L2 F L2 R2 F R D' L' F2 R2 U L B2 R2 B2,O,Achacachi Speedcubing Open 2026 (2026-04-26),333 R1 E #2
 36432001,D2 F2 D2 R2 U' F2 L2 F2 U' L F' U2 B2 D' L2 B' R2 D',B,FLIP Open 2014 (2014-07-12~13),333 R2 A #5
 52675001,B' R2 U' R D' R2 U D2 B U B2 D' F2 B2 D2 B2 D L2,O,ABHC 2014 (2014-08-23~25),333oh Final A #1
-53449001,B2 U' L2 U L2 U' F2 U L2 B2 U F R' F R B D2 B L,O,Bydgoszcz Summer 2014 (2014-08-23~24),333oh R1 B E1
+5707715001,D2 R L D' L D' F' U2 L' R2 D2 F2 B U2 F R2 F,R,Garland City NY 2026 (2026-06-20),333 Final B #5
 4014678001,U2 R B D' F2 D F' L D' U2 F' B2 U2 F2 R2 U2 R2 B' U' L2 U,G,Rhein-Neckar Mental Squaredown 2024 (2024-08-17~18),333bf R2 A E1
 68780001,F2 L2 B' L B L' U' B' R' D2 F2 U2 B2 L U2 R D2 L B2,O,Hungarian Open 2014 (2014-10-17~19),333oh Final A #5
 74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,O,Slow n Steady Fall 2014 (2014-11-09),333 R1 B E1

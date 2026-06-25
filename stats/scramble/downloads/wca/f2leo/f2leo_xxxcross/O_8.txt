@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / O / bin 8
-# Population in this bin: 863
+# Population in this bin: 864
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 9064001,R F2 L F2 D2 F2 L' F' L R' F' L B' L U' L2 F D,O,SESC Santo Amaro 2014 (2014-04-05~06),333 R1 B #1
@@ -61,7 +61,7 @@
 1174125001,R' B' D' F' D2 B' L2 U' B2 R U2 R F2 U2 L U2 B2 L' B2,O,Pulmapelipäivät 2019 (2019-06-07~09),333 R1 B #4
 3995883001,R2 F2 D' U2 L2 R2 F' U2 L' U' F2 U' F' R2 D' U B2 R D',O,CubingUSA Western Championship 2024 (2024-08-02~04),333bf R1 C #2
 232551001,F' U' B' L2 D2 B' U' R F U2 R B2 L2 U2 F2 U R2 U2,O,Welcome Thay Cambridge 2015 (2015-12-19~20),333oh R1 A #5
-4659975019,D' B2 U2 R2 B' L F L U2 F' R2 D' F2 U' B2 R2 D L B' L,O,CF Goes Sideways Brzeziny 2025 (2025-04-12~13),333mbf Final B #1
+5712606001,D' L' U2 R' F B2 R2 U' L' U2 F2 D R2 D2 R2 B2 D' F2 L2,O,Montevideo Gaming House Open 2026 (2026-06-21),333oh Final B #1
 4241322001,B2 U' R B2 U F' U' D' B2 D F' L2 B2 L2 D2 B' D2 B L2 D',O,Newmarket Side Events 2024 (2024-11-02),333bf R1 B E2
 859918001,D B' R' D R' B2 L2 F2 U R U2 B2 L2 U' R2 L2 D,O,Warm Up Sydney 2018 (2018-08-19),333 R1 F #3
 4276692077,L2 B2 D2 R' D2 L' D2 R D R F R2 F2 D2 L R2 B2 F' L' F,O,Colombian Nationals Avenida Chile 2024 (2024-11-09~11),333mbf Final B #1

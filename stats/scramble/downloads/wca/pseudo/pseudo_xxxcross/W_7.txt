@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / W / bin 7
-# Population in this bin: 892
+# Population in this bin: 893
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4542026001,B' R2 D2 B2 F' D2 R2 F' R' F L2 U2 R U F2 U' L',W,Nepali Nationals 2025 (2025-02-27~03-01),333oh R1 A #1

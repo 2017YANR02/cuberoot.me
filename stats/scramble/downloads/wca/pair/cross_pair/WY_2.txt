@@ -2,7 +2,7 @@
 # Population in this bin: 398
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 47921001,F U2 F D2 F' R2 F L2 F R2 D' L2 R B2 R F2 D' F' U2,W,Rubik's Cube European Championships 2014 (2014-08-08~10),333 R1 O #5

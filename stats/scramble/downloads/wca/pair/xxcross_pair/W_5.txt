@@ -2,7 +2,7 @@
 # Population in this bin: 20
 # Samples listed: 20 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 39017001,D B2 R' U R' F U2 L' F' R2 B2 D2 B2 D F2 D' R2 L2 U,W,Croatian Open 2014 (2014-07-19~20),333 R2 A #1

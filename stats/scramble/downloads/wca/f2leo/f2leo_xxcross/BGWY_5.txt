@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGWY / bin 5
-# Population in this bin: 230
+# Population in this bin: 231
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -16,7 +16,7 @@
 118969001,D B D B' U' L B D B D2 F2 R D2 R' F2 L' B2 D2 B2,W,Melbourne Autumn 2015 (2015-03-22),333oh Final A E2
 119076001,D2 L B2 L' D2 L2 D2 B2 L2 D' B2 F L2 B D2 L2 U' R',Y,Indian Open Rubik's Cube 2015 (2015-03-20~22),333oh R1 B #2
 189381001,L' F2 D2 L R D2 R' F2 U F L' U B R2 B' L F' L' F2,B,MCC Gamma 2015 (2015-09-13),333oh R1 C #3
-189975001,L' D2 L' D2 L2 U2 B2 F D2 F L D L' D' L B2 L2,Y,Brisbane Spring 2015 (2015-09-19),333oh R1 A #1
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
 199054001,F' U2 B' L2 F D2 F2 R2 U2 B' D' U' F U' R F' R,Y,San Martin Open 2015 (2015-10-10),333 R2 B #2
 5690374048,R2 U F U2 L' F2 B2 R' F D' L F2 D2 L2 F2 U' D' L' F,Y,Headache in Kode 2026 (2026-06-05~07),333mbf R1 A #1
 208565001,B2 U F' U R L U2 D L U2 F D2 F D2 F U2 R2 F2,B,Back to Santiago 2015 (2015-10-25),333 R1 B #5

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / G / bin 4
-# Population in this bin: 324
+# Population in this bin: 325
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3888175073,D2 R2 F' D2 L2 R D2 F2 L D2 U L' D L' D U' L F' L,G,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final B #1
@@ -75,7 +75,7 @@
 3735449040,F U' B D' F' L2 D' F' B U' R F B L2 B2 D2 B D2 B' L',G,BrizZon Side Open II 2024 (2024-05-01~05),333mbf Final A #2
 5599819001,R' U' B R B2 D L' D' L U2 B2 U' D2 R2 U' F2 R2 L2 D' B2 L2 U,G,FME Campos Open 2026 (2026-05-02),333bf Final A #1
 3659453001,L D' B2 U L2 D2 B2 R F2 L B2 D' U B' D B' L' U',G,SLS Kwiecień 2024 (2024-04-13),333 R2 A #2
-775526010,U2 F2 L2 F2 D' L2 D R2 D' F U' B2 D' U F' U' R B2 R' F2 L2 U,G,SESC Gravataí 2018 (2018-05-05~06),333mbf Final B #1
+5715925001,B2 R L' B R L F' L2 U F2 B D2 F U2 F' L2 F' B2 D2,G,24K Glitterati Cube Open 2026 (2026-06-21),333 R1 A #5
 4973143001,L' B' L2 R' D2 L F2 R2 B2 R' D2 U2 F D' F2 L D' B' L,G,Berkeley August Weekday 2025 (2025-08-27),333 R1 B #1
 3686493001,U F B' D R D' F2 R F2 B2 D R2 B L2 B D2 B R2 B2 L' F2,G,Berkeley Spring 2024 (2024-04-21),333bf Final A E2
 812053001,L B' U2 L D F L2 D2 R2 U B' R2 U2 B2 R2 U2 F R2,G,Fairview Cube Day 2018 (2018-06-24),333oh R1 B #3

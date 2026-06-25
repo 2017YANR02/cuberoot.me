@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / WY / bin 7
-# Population in this bin: 228
+# Population in this bin: 229
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1993001,F' D' F2 R2 U F R F2 D R' D' F2 D2 F R2 F2 R2 L2,Y,Zonhoven Open 2014 (2014-03-22~23),333 R1 A #1
@@ -176,7 +176,7 @@
 4017929001,B' U2 B2 F D2 B' L2 D2 R U' L B2 R' D' R' F' U2 L' U,W,Córdoba Cubea 2024 (2024-08-17~18),333 R1 B E2
 4057629001,L' U' B2 U2 L' B' D' L' D L D2 B2 L2 U2 D2 F' U2 L2,Y,Welcome to Bishkek 2024 (2024-08-23~25),333oh R1 A #5
 4090288017,D' B2 L F B' L' B F2 D2 L2 U' B2 U F2 U R B2 U' B' L2 U',Y,Titan Big N' Blind 2024 (2024-09-07~08),333mbf Final A #2
-4103922001,U B F2 D U2 B2 F2 L2 U B2 D' U2 R' U R2 B' F' L2 D2 F,Y,Heerenveen Open 2024 (2024-09-15),333 R2 B #3
+5706565028,B2 R2 D' U R2 F2 L U2 F2 L' F U2 B R2 D2 F' L2,Y,Quiet Prep in Palisades 2026 (2026-06-19),333mbf Final B #1
 5122315001,U' B' D L U2 B U2 B' R2 F2 R2 F' D F' L2 D' L' F L2,Y,Strossburi Open 2025 (2025-10-18~19),333 R2 B E2
 4176573015,U L' D' R2 F U2 R' U' F2 D' L2 U' D2 B2 L2 U2 F2 R2 D F' R2 B',Y,Chevry Open 2024 (2024-10-05~06),333mbf Final A #1
 4189803001,L B D R D' F' D2 F2 D' L U B2 U2 L2 D2 R B2 D2 L',W,Luso-Bussaco Open 2024 (2024-10-12~13),333 R1 C #5

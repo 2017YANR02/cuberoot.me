@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / W / bin 5
-# Population in this bin: 635
+# Population in this bin: 636
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2349420001,F' U2 L F' D' B D' B2 L D2 F L2 D2 L2 D2 F' U L,W,TCG Power Up 2022 (2022-12-03~04),333 R2 A #3

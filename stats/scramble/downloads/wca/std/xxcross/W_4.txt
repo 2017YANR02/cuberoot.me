@@ -2,7 +2,7 @@
 # Population in this bin: 6
 # Samples listed: 6 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2239491001,R2 D2 L2 D B2 D2 B2 U F R2 B' D2 B U' F U2 B' D L' B' L,W,Pucallpa Cubea 2022 (2022-10-16),333bf Final A E2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / ORWY / bin 7
-# Population in this bin: 472
+# Population in this bin: 473
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2198244038,B U' D' B2 L B' U B2 D2 F2 L2 U2 L2 B2 U' F2 U' R B,W,Trondheim Mental Breakdown 2022 (2022-09-24~25),333mbf Final A #3
@@ -30,7 +30,7 @@
 208040001,D R2 D' U' F2 R2 D L' D B' L R F' U2 L D' B' R',W,Ural Autumn 2015 (2015-10-24~25),333 R2 A #5
 5307370001,D' R' L2 D2 B D2 U2 B' L2 R2 B R2 B' U R D B' U F' U',W,Lugo Open 2026 (2026-01-03),333 R1 B #3
 227905001,D2 L2 D2 L' F2 D2 F2 L D2 B2 D' B D L U L' B2 L' U,Y,MIT Fall 2015 (2015-12-12),333 R1 D #5
-4890753032,L' R2 U' F2 D' R F D' U' R D' U' L2 U B' F L' F,R,Championnat Canadien 2025 (2025-07-24~27),333mbf Final A #2
+5706565028,B2 R2 D' U R2 F2 L U2 F2 L' F U2 B R2 D2 F' L2,Y,Quiet Prep in Palisades 2026 (2026-06-19),333mbf Final B #1
 244495001,R' B2 U2 R2 B2 D2 R' D B2 D U2 R' U' F' L F L' F',O,Campeonato Chileno de Verano 2016 (2016-01-23),333oh Final C #2
 251726001,U' F2 D' U2 B2 U B2 F2 U' L2 F' R F' R' F' D2 B D,R,UiO Open 2016 (2016-02-07),333oh R1 B E2
 260573001,B' L2 R2 D2 B' R2 F' L2 B2 U2 R F' R2 D L' U' B D L' B,R,Big Apple Cube Clash 2016 (2016-02-27),333 R1 F #1

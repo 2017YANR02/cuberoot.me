@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / R / bin 3
-# Population in this bin: 23
-# Samples listed: 23 (all entries in this bin)
+# Population in this bin: 24
+# Samples listed: 24 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 144836001,D' L2 D' R B L2 F2 R D' B' R2 F' L2 D2 F' B2 U2 B2 D2,R,HEM MariCubik Open 2015 (2015-05-31),333 R1 A #3
@@ -28,3 +28,4 @@
 5028032001,R2 B2 L2 B2 U' F2 B U B D' R' F' U F L2 R B2 R',R,Athens Never Ending Summer A 2025 (2025-09-13),333 R2 B E2
 5065416001,U2 L2 B2 U2 B2 U' R2 D' L' F' R2 B2 U R D' R2 U' L U',R,Clock & 'Minx Ohio 2025 (2025-10-04),333 Final B E1
 5519177001,U B' U D L2 B U2 B D2 L U' R2 U2 R2 B' U2 F' B L B',R,Mairena Open 2026 (2026-04-11~12),333bf Final A #1
+5708446001,U' R2 D L' U2 L' U L2 U2 R2 L F2 L D2 B2 F' R U',R,Cubing in the Park Reno 2026 (2026-06-20),333 R2 B #5

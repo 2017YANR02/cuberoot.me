@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / B / bin 2
-# Population in this bin: 901
+# Population in this bin: 904
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4298941001,U B' D2 U2 R2 F' L2 B2 R2 U' B2 R2 F2 U2 F L R' U2,B,Sydney Spring Saturday 2024 (2024-11-16),333oh R1 B #5
@@ -46,7 +46,7 @@
 736513001,R2 D2 R2 D F2 D' U2 R2 D R2 F' D2 F2 D B' L2 B F2 L F',B,Eugene Spring 2018 (2018-03-31),333 R2 C #3
 1507460001,L' D' B' U F' R D2 F2 L' B' R' U' R2 B2 D R2 F2 U2 F2,B,Perfect Vision Provo 2020 (2020-01-18),333 R1 B #4
 4465441001,U2 R F2 D2 F2 R' B2 L U' B' R' D2 F' R U' F U B2 U2,B,Lyon Last Layer 2025 (2025-02-01~02),333 R1 E #5
-3991423001,L2 U2 F' D2 L2 U2 F' L2 U2 F R U2 R D2 F' L D' R,B,Slovak Nationals 2024 (2024-08-02~04),333 R1 A E2
+5708571018,U D2 F' D2 B2 L D F U2 F2 U2 R2 D2 F D2 F' R2 U2 B D',B,More Cubes Kelburn 2026 (2026-06-21),333mbf Final A #1
 3375924001,U2 L2 F2 R2 U' R2 U F' U L2 D B2 U F2 L2 B' U2 B' L,B,Speedcuber Peru II Lima 2023 (2023-12-16~17),333bf R1 A #3
 3896574001,F R2 B F R2 F L2 U' L U2 B2 L' B D F' L B' L',B,Wrocław Cubing Holiday 2024 (2024-06-29~30),333oh R1 A E1
 2605633001,B' L2 B U' R' F R U B2 L2 U B2 D2 F2 D L U F,B,Minerva Guadalajara 2023 (2023-04-01~02),333oh R1 B E2
@@ -179,7 +179,7 @@
 1778652001,F2 L2 R2 D L2 U F2 U B2 L2 D2 L' U' F L F2 L' F2,B,Gem City 2022 (2022-01-09),333 R1 G E2
 807179001,R F' R B2 R L2 F L F R B2 R L' F2 D2 F2 L2 U2,B,Georgia Open 2018 (2018-06-15),333oh Final A #2
 661352027,B' F' U2 B D2 U2 R2 B R D' B F' D F L2 R2 D2 R2 U B,B,Crossroads Cubing Spring 2017 (2017-05-13),333mbf Final A #1
-4553942001,R2 B2 D' R2 U2 R' D R2 B F2 D' F2 U2 B2 D' F2 L2,B,VERK III 2025 (2025-03-08~09),333oh R1 A #3
+5708060001,U2 B2 R2 D' F' L2 D' B D2 B2 U2 F' L2 D2 B U2 L' B' R2,B,Agoura Summer 2026 (2026-06-20),333 R1 B #2
 822081001,F2 U R2 L2 F L2 D' F2 B' D' L2 U F2 R2 U F2,B,Cebu Masters 2018 (2018-07-07),333 R1 B E2
 5571441001,F2 U R2 B2 R' B2 R F U F' B2 U R2 U' D F2 U R',B,INUMP São Paulo 2026 (2026-04-25),333oh Final A E2
 661396014,F U2 R2 B U2 R2 U2 B D2 F R2 D B' F' R' B2 L2 U L' B' L2 U',B,Brasileiro 2017 (2017-06-16~18),333mbf Final A #1

@@ -2,7 +2,7 @@
 # Population in this bin: 53
 # Samples listed: 53 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 175912001,U' F B' L' F2 B L2 B2 D' B' U B2 L2 U2 D R2 L2 B2 D R2 U2,W,Cross-strait Cubing Exchange 2015 (2015-08-15~16),333 R1 H #3

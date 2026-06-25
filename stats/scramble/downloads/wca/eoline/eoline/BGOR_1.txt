@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / BGOR / bin 1
-# Population in this bin: 316
+# Population in this bin: 317
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5416353001,D2 U2 L2 R2 F2 L R' B' D2 L' U2 R2 F L F R F,B,Good Solves in Gibson Park 2026 (2026-03-01),333 R1 C #5
@@ -165,7 +165,7 @@
 4212237010,F' U B2 L2 R U2 B2 R B2 R B' R2 B2 U' B2 F' D2 B L',B,Cambridge Autumn - British Blind Off 2024 (2024-10-19~20),333mbf Final A #2
 4354268001,U2 F2 D' L D2 B2 L2 B2 R' D2 R' D' U2 R D L2 D,O,Santa Claus Cube Race Mysłowice 2024 (2024-12-14),333oh Final B #5
 4734487001,L2 D2 B L2 B2 U2 L2 D2 F D F' D' U' B D' B U L,B,Grove City Weeknight Trios 2025 (2025-05-22),333 R1 C #5
-2530878001,R U R U L' B2 U L' U2 R2 B2 D B2 D R2 L2,R,Edinburgh Spring 2023 (2023-03-04~05),333 Final A #5
+5705148001,D2 L B2 U2 R' D2 L' R2 B D2 R' D2 R U2 B' L F L',O,Rockfort City Cubing Challenge 2026 (2026-06-13~14),333 R2 B E2
 2542554001,D2 F L D2 L2 R2 B' U2 B F2 L' B L' B2 L2 R' D2,G,Turnin' in Termonfeckin Saturday 2023 (2023-03-11),333 Final A #2
 2542964001,U R L' D R2 D' F2 L D' F2 R2 U2 R U2 R2 F2 R' F,O,Virginia Beach Spring 2023 (2023-03-11),333 R2 B #5
 4398473001,L2 F' L2 R2 F D2 L2 B F2 D2 R F' L' F' L U2 R F L,G,Just Cube and Go Pangasinan 2024 (2024-12-28),333 R1 A #1

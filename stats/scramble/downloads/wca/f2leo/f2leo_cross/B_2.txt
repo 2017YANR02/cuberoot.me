@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / B / bin 2
-# Population in this bin: 154
-# Samples listed: 154 (all entries in this bin)
+# Population in this bin: 155
+# Samples listed: 155 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 45920001,L2 D2 R F' B2 L F B' D' L2 D2 F' B D2 L2 B' D2 B',B,US Nationals 2014 (2014-08-01~03),333 R2 B #3
@@ -159,3 +159,4 @@
 5634691001,U F' R' B2 U2 L2 U L2 U' F2 U B2 R' D L' R' U L2 D',B,Aalborg Spring 2026 (2026-05-16),333 Final A E1
 5689894001,L U B2 R2 F2 L' D2 L' R D2 B2 U L D2 B' R2 U' L2 D2,B,Tramsheds IX: June Sunday 2026 (2026-06-07),333 Final A #5
 5691703001,U2 B2 D2 B2 F U2 F' U2 L' R U' R B2 F2 L2 F D' B',B,Sofia Summer 2026 (2026-06-06~07),333oh Final A #3
+5716877002,B U2 F U2 F2 R2 F R' U R B' D2 F U' R2 F2 U2 B' D2,B,Maine Open 2026 (2026-06-19~20),333mbf Final A #1

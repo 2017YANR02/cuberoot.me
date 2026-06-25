@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / B / bin 5
-# Population in this bin: 107
-# Samples listed: 107 (all entries in this bin)
+# Population in this bin: 109
+# Samples listed: 109 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 29350001,B F2 R2 F U2 F' R2 F' D F' D' B F D2 U2 L2 R' B' F2 L B,B,No Parity Open 2014 (2014-06-21),333bf R1 B #2
@@ -112,3 +112,5 @@
 5669975001,R' B' L2 U2 D B2 D F L' F R F2 U2 R L' F2 R',B,ROC the Cube NY 2026 (2026-05-30),333 Final A E2
 5692705035,D F2 R' U' F2 D B2 R2 D2 U B D2 R2 B' R2 F2 R B L' F2,B,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333mbf Final A #1
 5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,B,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1
+5713345001,R U2 L' B2 F2 R' F2 R' D2 U' B' D U2 F R2 D' U2 L' U',B,Żmigród Open 2026 (2026-06-20~21),333 R1 A #3
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1

@@ -2,7 +2,7 @@
 # Population in this bin: 219
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 31996001,F' B' U F2 U2 F' U2 D R F L2 B2 R' L' D2 L' B2 L F2 B2 L,Y,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #5

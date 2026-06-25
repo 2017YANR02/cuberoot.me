@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGORWY / bin 3
-# Population in this bin: 783
+# Population in this bin: 785
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3212179001,L2 F L' R2 B' U2 F' R2 B' L2 F D' B2 D B2 R' D U2,O,Ventanal de la Sierra Open 2023 (2023-10-28~29),333 R1 B #2
@@ -122,7 +122,7 @@
 3588708008,F' U2 F2 D' F2 L2 R2 U2 L2 B2 U2 F R F' L R2 U R U L' F2,B,Manchester MBLD Day 2024 (2024-03-16),333mbf Final B #2
 3642947008,D2 B2 D2 F' R2 D2 U2 F2 R D2 B U' F' U' B' L2 B' U' F',R,Please Be Quiet Auckland 2024 (2024-04-07),333mbf Final A #2
 5164842001,F2 D L2 U' L2 D2 B2 D' L F2 L B R' U L2 D' B F',B,Best in West Lafayette 2025 (2025-11-08),333oh R1 B #1
-632367001,U2 B' L U D2 F L2 F U D2 B R F2 U2 B2 R L2 B2 L,G,St. Boois 2017 (2017-10-29),333oh R1 B #2
+5716213022,D' F' B U2 B' U' R F' R2 F2 U D2 L2 D2 B2 D' R' U' L B,O,Flinders Park Side Events 2026 (2026-06-20~21),333mbf Final A #1
 5335865001,L D' L B2 R2 D' L2 D2 F2 D B2 U' L U2 B' F D2 U L2,W,Georgia Championship 2026 (2026-01-17~18),333oh R1 A #5
 4279660001,U' F R2 B' D2 F D2 F2 L F' R2 F2 R2 U' F U R' B',R,Slow N Steady UMD Fall 2024 (2024-11-09~10),333 R1 D #1
 660542036,B2 U2 B' R2 B' D2 B' D2 B2 U2 R F2 D U2 F R' U' F' R' F D' L' F2,B,TCG Lima 2014 (2014-09-06~07),333mbf Final A #1

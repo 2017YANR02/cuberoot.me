@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BGORWY / bin 2
-# Population in this bin: 773
+# Population in this bin: 774
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5355244033,B2 D2 B2 L U2 R2 B2 F2 L' B U' F' D F' L2 U' R2 D2 F' L' F2,O,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final A #2
@@ -39,7 +39,7 @@
 4531641001,F' U2 F' L2 B U2 F2 R2 D2 L2 F' U R U2 F2 U' L D2 B R',W,Green Winter 2025 (2025-03-01),333 Final A #4
 2042559032,R2 U2 L2 F2 U L2 U2 F2 U B' L B' F' D2 L U' B2 R' B U L B,Y,Please Be Solved Vancouver 2022 (2022-07-23~24),333mbf Final A #3
 3954965001,R' D2 F D2 B' L2 B2 F L R' B' D B' L' R B' L B2,R,Rubik's WCA North American Championship 2024 (2024-07-18~21),333 R1 M #5
-2992291001,L2 D' L2 D2 U' L2 R' F D2 B2 F' L D' R D L' R B' L2,R,Podolian Open 2023 (2023-08-19~20),333bf Final A E2
+5707613001,F U2 F' D2 F' D2 F' L2 D' F L' F2 L' D' F' L' F' D,G,No Veas Ocaña 2026 (2026-06-20),333 R2 A #5
 1687000001,B2 L2 B' D2 F' U2 B2 L2 F U2 F' R D F D2 L' F2 L',R,Offline Schwyz Saturday 2021 (2021-08-14),333 R1 C #2
 3510071001,F' D' F' U' F2 L' U F U' B' U2 B L2 F' B' L' F',W,Plaza Center Cube Lima lll 2024 (2024-02-10~11),333 R1 G #2
 3006023001,F2 D2 B2 L B2 L2 D2 L' B2 R' U' F2 U' F' L' D2 L2 D,Y,Ajax 3x3x3 Morning 2023 (2023-08-26),333 R2 C #2

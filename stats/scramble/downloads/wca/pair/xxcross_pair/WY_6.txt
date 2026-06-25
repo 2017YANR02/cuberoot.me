@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / WY / bin 6
-# Population in this bin: 481
+# Population in this bin: 482
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3261628010,B2 L2 F2 U B2 D2 F2 D' F2 L' U2 R2 U L2 U' B' D L B' L,W,Virginia Championship 2023 (2023-11-10~12),333mbf Final A #1
@@ -81,7 +81,7 @@
 3998485001,L2 B' R2 F' D2 L2 F' D' B2 L D F2 U2 F2 R2 U2 R F U' B',W,Blind Till Nine in Vietnam 2024 (2024-08-10),333bf Final A #1
 3346448001,L B D2 F' D F L' D L D' R D R2 U B2 D L2 B R',Y,UCSD Winter 2023 (2023-12-16),333bf Final A E2
 3903905001,D2 U F2 L2 B2 L2 U2 L U' L2 F L' F L2 U L F',Y,Humble Cube Rumble Summer 2024 (2024-06-30),333 R2 B #5
-3483149032,U' R U2 F' U R L2 U' F2 U B L2 U F2 U' D' R2 U2 L B,Y,Lugano Big & Blind 2024 (2024-02-03~04),333mbf Final A #2
+5705029001,B2 D' F2 D2 U' F2 R2 U L2 R' U B2 L' F2 D B U' B2 F,Y,Hefei Cubing League 3x3 III 2026 (2026-06-17),333 R1 D E2
 3413911001,D' B R2 F' U2 B U2 F' L U' L' F R2 U' F R B',W,Ottawa 3x3x3 Winter C 2024 (2024-01-13),333 R1 A E2
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,W,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
 5533319001,R B U' B D2 F2 D' R2 D U' F2 D' F U2 B' D R' F2 U2,Y,Desafio Aves María Sabaneta 2026 (2026-04-12),333 Final A E2

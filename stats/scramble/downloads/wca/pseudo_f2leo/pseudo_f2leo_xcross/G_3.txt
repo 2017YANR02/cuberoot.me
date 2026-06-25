@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / G / bin 3
-# Population in this bin: 343
+# Population in this bin: 344
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 11096001,F2 R2 U2 R' B2 U' R U2 B U' B2 R' B2 D B' U,G,Slovenian Open 2014 (2014-04-12~13),333 R2 B #4
@@ -196,7 +196,7 @@
 3212347001,F2 D' R2 B' U' R' L2 F' D2 F R' L2 U R2 D B2 R2 D',G,Ventanal de la Sierra Open 2023 (2023-10-28~29),333oh R1 C #2
 3875063001,R' D2 B D' R' F B' R B' R F2 D2 L2 B2 D L2 F2 U2 B2,G,St. John's 2024 (2024-06-22),333 R1 D E2
 3258097001,L2 F2 B R2 B R' L2 U2 L' D L2 B2 L D2 L' U2 F2 R' D',G,Guildford Autumn 2023 (2023-11-11~12),333bf Final A E1
-3651661001,F' R2 F' R D2 B2 L2 U' B2 U B L2 U2 R2 B2 R F,G,DFW Eclipse Cubing 2024 (2024-04-06~07),333 R2 B #5
+5715371001,F2 D2 L' F2 R B2 F2 L' R F' D2 R F L U F' U B' R',G,UVG Cubing 2026 (2026-06-20),333 Final B #3
 3961192017,F R' U' B' L U' R' L2 U2 F U2 F' R2 D2 L B2 L',G,New Rochelle at Nite 4 2024 (2024-07-25),333mbf Final B #1
 4793904001,F2 U2 B R2 F' D R2 D' F' R2 U2 L' D L D' U2,G,Yancheng Open 2025 (2025-06-07),333 Final A E2
 3327767001,R' U' F R U2 B2 L2 B D' B2 U' F D2 R U R2 F2 U' D2 L2 D' R' U' F,G,Farum Meet the Cats 2023 (2023-12-10),333fm R1 A #3

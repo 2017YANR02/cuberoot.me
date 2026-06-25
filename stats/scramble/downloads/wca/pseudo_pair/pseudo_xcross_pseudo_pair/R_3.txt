@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / R / bin 3
-# Population in this bin: 664
+# Population in this bin: 665
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2568701027,U2 F2 R' D L U F2 U F2 U L2 B2 L' D B2 F' U B L' B' L',R,Di Tella Open 2023 (2023-03-18~19),333mbf Final B #1

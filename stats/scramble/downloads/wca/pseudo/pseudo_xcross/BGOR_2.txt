@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BGOR / bin 2
-# Population in this bin: 530
+# Population in this bin: 532
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3733001,U2 R F' L' B2 L F2 R D' F' L2 D2 F2 D2 L' U2 R2 U2,G,Kharkiv Special 2014 (2014-03-22),333ft R1 A #2
@@ -46,7 +46,7 @@
 3133021001,L' B2 D2 R2 F' R2 B F U2 L' F' L2 B' D2 F2 D' F' R2,G,CubingZA Cape Cubes Spring 2023 (2023-09-30~10-01),333oh R1 A #3
 262356001,B2 D2 L2 U L2 U' R2 U2 R2 U R' D' L' R' D2 F2 U' B' L' D2,O,Murcia 2016 (2016-03-05),333 Final A #5
 270583001,B D2 L2 F' R2 D2 F' U2 L' R2 U2 L' R2 U B' L' D2 B,O,CSP Open 2016 (2016-03-20),333 Final H #1
-1902368001,F' U F B2 D' F B R' U R' U F2 U F2 R2 B,B,Stevenage Spring 2022 (2022-04-30~05-01),333 R2 A #1
+5707606001,R2 F' U2 B2 L U2 B2 D2 F2 L R2 U' B L B' U' F U',R,No Veas Ocaña 2026 (2026-06-20),333 R1 C #5
 279331001,D B2 R2 B2 D U2 R2 F2 D' L2 R' B D2 U2 L2 B' F2 L U' R,O,Virginia Open Spring 2016 (2016-04-02),333oh R1 B #3
 4118123001,B R2 B2 F' L2 U2 F L U L' F2 D2 L B2 U F2 D R,R,New York Championship 2024 (2024-09-14~15),333oh R1 B E2
 292125001,B2 U2 B2 L D2 R2 F2 U' R2 U2 F2 R' U' F L B' D' R2,O,CCC Spring Open 2016 (2016-04-29~05-01),333oh R1 D #2

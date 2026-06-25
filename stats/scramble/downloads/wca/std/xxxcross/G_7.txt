@@ -2,7 +2,7 @@
 # Population in this bin: 77
 # Samples listed: 77 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 53529001,B' U2 F R2 B' D2 L2 D2 U' L' U' B' F' R B2 D2 F' D2 L',G,Vancouver Open Summer 2014 (2014-08-23),333 R1 A #4

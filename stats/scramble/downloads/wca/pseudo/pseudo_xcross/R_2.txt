@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / R / bin 2
-# Population in this bin: 148
-# Samples listed: 148 (all entries in this bin)
+# Population in this bin: 149
+# Samples listed: 149 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 17474001,D2 B2 L2 B D2 L2 R2 F2 D' L D R U' L2 F U2 F' U',R,Apollo Open 2014 (2014-05-04),333 R2 B E1
@@ -153,3 +153,4 @@
 5692705004,D F D B2 R2 D' L2 U' B2 D B U' R' F L2 U L2 R' D' B R2,R,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333mbf Final A #1
 5696208049,R' B L2 B R2 U L2 F2 L' U' D2 B' U2 R2 B U2 D2 F R2 B' L2,R,Manchester Cubing League - Third 2026 (2026-06-13),333mbf Final A #1
 5704103001,R B L D' B D' R' L2 B L' B2 U2 D' R2 D' L2 U,R,GAN Southern Championship 2026 (2026-06-11~14),333oh R2 A E1
+5707606001,R2 F' U2 B2 L U2 B2 D2 F2 L R2 U' B L B' U' F U',R,No Veas Ocaña 2026 (2026-06-20),333 R1 C #5

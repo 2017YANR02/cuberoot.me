@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / O / bin 8
-# Population in this bin: 118
-# Samples listed: 118 (all entries in this bin)
+# Population in this bin: 119
+# Samples listed: 119 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 53449001,B2 U' L2 U L2 U' F2 U L2 B2 U F R' F R B D2 B L,O,Bydgoszcz Summer 2014 (2014-08-23~24),333oh R1 B E1
@@ -123,3 +123,4 @@
 5638207001,R F D' B2 D' R2 D' B2 F2 D F2 L2 F' R' B D' R2 B2 L',O,Desafío Cubero Alta Gracia 2026 (2026-05-16~17),333 R1 A E1
 5645401001,D2 R2 U' F2 R2 D F2 D2 R' U F2 R D L2 F U B2 R B R',O,Oklahoma Championship 2026 (2026-05-15~17),333bf Final A E1
 5677610005,L2 B2 D2 L2 D F2 D B2 D' B F L' D' F' D2 L2 B' U' L B' L2,O,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf R1 B #1
+5712606001,D' L' U2 R' F B2 R2 U' L' U2 F2 D R2 D2 R2 B2 D' F2 L2,O,Montevideo Gaming House Open 2026 (2026-06-21),333oh Final B #1

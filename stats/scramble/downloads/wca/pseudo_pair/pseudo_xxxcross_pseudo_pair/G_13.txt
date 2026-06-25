@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / G / bin 13
-# Population in this bin: 214
+# Population in this bin: 215
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 8407001,U L2 D F2 L2 R2 U' L2 R2 B L B L' F L' U R B' L D',G,Danish Open Championship 2014 (2014-04-05~06),333 R1 C #3
@@ -137,7 +137,7 @@
 2959085001,R' U' F R' F' U' F D B R2 D F L' B2 U2 R2 L2 D' F2 D2 R2 F2 R2 F2 R' U' F,G,Peru Nationals 2023 (2023-08-04~06),333fm Final A #1
 3069748001,F2 L2 D R2 U2 L2 D F2 L2 B2 D F U F2 R' U L' D' B U' B',G,Visayas Championship 2023 (2023-09-08~10),333 R2 C E2
 3132937001,L' F' R2 F' D2 B' U2 L2 U2 F L2 R' F' L' D' U L' D' B2,G,CubingZA Cape Cubes Spring 2023 (2023-09-30~10-01),333 R1 B #3
-3141703001,U F2 U F2 L2 R2 D' F2 R2 D' F' D B2 L' R' F' L D' R2 D',G,Jordan Nationals 2023 (2023-10-06~07),333 R1 D #2
+5715006001,U' R2 F2 R2 D' U2 R' D' B F D2 U R B2 D' R D F,G,Santpedor Open 2026 (2026-06-20~21),333 R1 A #3
 3143628054,L R2 D' U2 R2 D B2 D2 B2 U2 B' L2 D' F U B F2 L F' D',G,Gurugram Cube Open 2023 (2023-10-07~08),333mbf Final A #1
 3180025001,B U F' B' L U F B D B D2 F B2 D2 F' D2 R D2,G,Roskilde For Alle 2023 (2023-10-20~22),333bf R1 A E1
 3198362030,B' D' L2 U' R2 D2 L2 D' F2 D B2 U' B R' B2 L F D B' R' B R2,G,FMCats Georgia 2023 (2023-10-28),333mbf Final A #1

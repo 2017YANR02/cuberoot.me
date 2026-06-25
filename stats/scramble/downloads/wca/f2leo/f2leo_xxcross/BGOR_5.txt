@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGOR / bin 5
-# Population in this bin: 247
+# Population in this bin: 248
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5433363044,D' R' B2 D' L F' U2 B' U2 R' D2 L U2 D2 L F2 R U2 L B,O,BrizZon Side Open II 2026 (2026-03-07~08),333mbf Final A #2
@@ -11,7 +11,7 @@
 55030001,B2 R' B2 D2 L2 F2 D2 L R2 F' L' D U L2 B D' U B L2,G,Ho Chi Minh Open 2014 (2014-08-31),333 R1 A E2
 81606001,B' D2 F2 R2 B F' L R B' R' D2 R B2 D2 B2 F R',O,Toronto Open Fall 2014 (2014-11-22),333oh R1 A #3
 86524001,B2 L2 U' R2 D' U2 F2 D U L F' U' B' U' R2 B2 L2 B L2 B D',R,Tachikawa 3x3 Fest 2014 (2014-12-14),333bf Final A E1
-105739001,D2 L F L F2 D2 F D' B2 U2 R' D' R2 D' F2 B2 U2 L2,R,San Lorenzo Open 2015 (2015-01-31~02-01),333 R2 A E1
+5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
 164772001,D2 F L2 F R2 F' D2 B2 F2 L' R' F L2 B2 R U B U' F2 L,R,Perth Winter 2015 (2015-07-18),333 R2 B E2
 186522001,U' D' F R2 B' D2 L2 F U' B2 L2 F2 R2 D' B2 R2,O,Utah Megacomp 2015 (2015-09-05),333oh Final B E1
 189381001,L' F2 D2 L R D2 R' F2 U F L' U B R2 B' L F' L' F2,B,MCC Gamma 2015 (2015-09-13),333oh R1 C #3

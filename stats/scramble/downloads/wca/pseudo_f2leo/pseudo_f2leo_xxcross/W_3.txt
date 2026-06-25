@@ -2,7 +2,7 @@
 # Population in this bin: 6
 # Samples listed: 6 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 247403001,B R2 D R F B' L' D F' R' U2 F2 L F2 L U2 R B2,W,Rubikeros Open 2016 (2016-01-29~30),333 R1 B #3

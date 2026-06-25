@@ -2,7 +2,7 @@
 # Population in this bin: 351
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4311551041,B' D F B R2 F2 L B' U2 D2 B U2 R2 D2 B2 U R' F L',R,East Bay Big and Blind 2024 (2024-11-24),333mbf Final A #1

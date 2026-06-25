@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / W / bin 5
-# Population in this bin: 829
+# Population in this bin: 833
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2100560023,R B2 R2 F2 U2 L2 F2 U B R B D2 B' D2 R2 B U B' L' F2,W,Korean Championship 2022 (2022-08-12~14),333mbf Final A #1
@@ -145,7 +145,7 @@
 5433396001,D R L2 F R' F' R2 F L D B2 U R2 U2 B2 D F2 L2 F',W,Maribor Open 2026 (2026-03-07~08),333 R2 B #3
 631360001,D' L' B2 L' D' B L2 D2 B R D R L D2 R D2 R2 D2,W,ChicaGhosts 2017 (2017-10-28),333 R2 D #1
 635110001,F' L2 D2 F' L2 R2 F' U2 L2 R2 F D' R' F2 D2 F U2 L R D2,W,Kjeller Open 2017 (2017-11-04~05),333oh R2 D #3
-635524001,U2 D F' R' U B U' D' L U2 L2 F2 R2 F2 D2 B2 D F2 D' R2,W,Nanjing Autumn 2017 (2017-11-04~05),333 R1 D #2
+5708084001,R2 D R' D2 B2 U2 R B2 R F2 U2 R B' D' B2 R2 F L' B',W,Agoura Summer 2026 (2026-06-20),333 R1 E #5
 643701013,B2 R2 U' L2 R2 B2 L2 R2 U2 R U' B' U B F2 R2 B U F L' F,W,Pão de Queijo Open 2017 (2017-11-18~19),333mbf Final A #1
 644333001,R' U' F D2 F2 L2 F2 U2 R' B2 F2 R' B' R B' F' D U B2 R' F D R' U' F,W,PSKubing 2017 (2017-11-18~19),333fm Final A #1
 3081682001,D2 F D' F2 D2 F2 R2 L' B2 L R2 F2 D2 R F' R2,W,Kericho Open 2023 (2023-09-16),333 Final D E1

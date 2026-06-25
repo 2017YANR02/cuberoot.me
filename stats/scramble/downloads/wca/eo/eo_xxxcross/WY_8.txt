@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / WY / bin 8
-# Population in this bin: 225
+# Population in this bin: 228
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 13215001,B2 L2 D' B2 D F2 D R2 F2 R U L2 U R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333 R2 B #5
@@ -73,7 +73,7 @@
 975136001,D R' U R F L D B' R' B' L U' R2 U' R2 L2 U' R2 U,W,Another Bruin Cube Day 2019 (2019-01-12),333oh R1 C #4
 979237001,R' D2 B2 R2 F2 R B2 L' F2 D2 L D' F' U' F D' R' B F2 L',Y, Tlaxcallan 2019 (2019-01-12~13),333 R1 A #4
 984819001,U2 R2 U' L' U2 R U2 R U2 B U2 L2 F L2 U2 L2 F D2,Y,Poções 2019 (2019-01-19~20),333oh Final A E1
-985467001,L2 B2 D F2 U F2 U B2 U' L' U2 R' F U2 B' U2 R2 D2 F,W,Hendersonville Winter 2019 (2019-01-19~20),333oh Final A E1
+5709375001,R' B2 D2 F2 D2 L2 R' U2 B U R2 D L U L2 F R2 F2,Y,B-Game - Bastardo Open 2026 (2026-06-13~14),333 R2 C #2
 1019643001,L2 B2 L2 R2 D2 R2 F' R2 F2 U' F' R2 F2 L' F2 L' D' B' U2,Y,Brilliant Ballarat 2019 (2019-02-16~17),333 R1 C E1
 1039950001,F2 D' R D2 F' L2 F L' B' D2 B2 D2 L' B2 R' D2 L' D2 L,W,Carte Blanche Kube Open 2019 (2019-03-02~03),333ft Final A #1
 1040919001,L' U2 F2 D2 R F2 L2 U2 R F' L2 D' F' R U' B R2 U R2,W,Hobart Open 2019 (2019-03-09),333oh R1 C E1
@@ -127,7 +127,7 @@
 2552821001,R D B' L' D2 B2 R U2 F2 L' F R' D R D' R2 B2 R,W,Central Washington Evens 2023 (2023-03-12),333 R1 D #2
 2565891001,B2 L2 B' F' D2 F' D' F D' U B U' F U2 R' D,Y,Mölnlycke Open 2023 (2023-03-18~19),333 Final A #4
 2700440001,U' B2 D' U2 F' D2 F U' R2 F' L B2 L' B F U',Y,I Candanguim 2023 (2023-05-07),333 Final B #4
-2794526001,L' F R2 D' R U F2 D R2 D2 R2 B2 D2 L U2 L2 U,W,Colorado Mountain Tour - Grand Junction 2023 (2023-06-14),333 R2 A E1
+5709268001,L' U F' R2 L2 D' B2 R2 U B2 R2 D2 R2 D2 L' U2 F2 D2,Y,B-Game - Bastardo Open 2026 (2026-06-13~14),333 R2 B E2
 2816860001,U R B2 R F' R2 B2 D2 B' R2 U2 L B' U2 L' B' L2 D,W,Southern Ontario Summer - Oshawa 2023 (2023-06-24),333oh Final B #5
 2894211001,B2 L' U D' L' D2 R F2 U D' R2 D L2 D2 R D2,Y,EuskalCubing La Perrera Open 2023 (2023-07-17),333 R1 A #5
 2980879026,D2 L' F' U L U' L2 B' L R2 U' F2 U' R2 D L2 F2 U B' D',Y,Hyderabad Cube Open 2023 (2023-08-11~13),333mbf Final A #1
@@ -146,7 +146,7 @@
 3369381001,B2 D2 U2 L' F2 D2 L R2 U2 B U B' R F' R2 D' R2 B',W,Sydney Summer 2023 (2023-12-16~17),333 Final A #5
 3412585001,D2 L2 U B2 R2 D' L2 B2 F2 D L U R' B2 U L2 U R2,W,Come Back to Landvetter 2024 (2024-01-13~14),333 R2 A E1
 3413911001,D' B R2 F' U2 B U2 F' L U' L' F R2 U' F R B',W,Ottawa 3x3x3 Winter C 2024 (2024-01-13),333 R1 A E2
-3423064001,D F' R F2 L2 B2 U R2 D2 U2 F' L U' L' B' D' B' F2,W,Iguatemi Fortaleza 2024 (2024-01-13~14),333 R1 D #4
+5710305001,L2 F R' F D2 R2 D F R D2 F2 R F2 R' F2 L' F' L2,Y,Wakefield Summer 2026 (2026-06-20~21),333 Final A #5
 3435766001,U2 L D' B2 L2 U2 F' L2 F L2 B2 F' L' R B' D R F2 R',W,SacCubing XVI 2024 (2024-01-20~21),333 R2 C #1
 5416353001,D2 U2 L2 R2 F2 L R' B' D2 L' U2 R2 F L F R F,Y,Good Solves in Gibson Park 2026 (2026-03-01),333 R1 C #5
 3482497001,F2 L2 B F D2 U2 R2 D2 R' D2 R U' B' L R2 U' B R U,W,Altavista Open 2024 (2024-02-03~04),333oh Final C #5

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / R / bin 3
-# Population in this bin: 362
+# Population in this bin: 364
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5787001,R L2 F' L' F2 L U F L2 U' D2 B2 L2 B D2 B' U2 F' D2,R,GuateRubik 2014 (2014-03-30),333oh R1 A #3
@@ -200,7 +200,7 @@
 2568716001,L' D F2 B2 R2 U L F U2 F U' B2 U2 D2 L2 F2 U' L2,R,Pickering B 2023 (2023-03-19),333 R1 C #1
 4417361001,R U' L2 B2 F U2 F L2 F' R D2 U R B2 F' L2 D F',R,Ottawa Mini Winter C 2025 (2025-01-11),333 R1 C #2
 3380609001,R' B R' D2 B2 L2 B2 R' F2 D2 R2 U F2 L' R' F' R' U,R,Changsha Open 2023 (2023-12-23),333 R1 F E2
-2663140001,F2 U F2 R2 D R2 F2 U2 R2 B' U' B2 R2 D' U2 F R' F2,R,Cubing on Par A 2023 (2023-04-22),333 R2 B #4
+5705154001,R' B D' F2 L U2 F2 U2 L2 F2 R B2 F R' U2 B2 L R',R,Rockfort City Cubing Challenge 2026 (2026-06-13~14),333 R2 C E1
 4709066002,R' B' D' F2 D2 R' D2 U2 F2 L2 U2 R2 F U' B' F2 U2 R' B' F2 L' F',R,Rio Cubolympics 2025 (2025-05-01~04),333mbf Final C #2
 5133646001,U' R' F R2 F2 U' L B R' F R2 B U2 L2 U2 L2 D2 R,R,Rocky Mountain Championship 2025 (2025-10-24~26),333 Final A E2
 2635277001,B' D2 U2 L2 B' D2 B' R2 B2 L2 U' F2 L' F' R' D R F U,R,Carquef'Open 2023 (2023-04-15~16),333 R1 C #5

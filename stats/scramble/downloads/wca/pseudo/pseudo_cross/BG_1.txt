@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / BG / bin 1
-# Population in this bin: 658
+# Population in this bin: 659
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4635102044,D' L' F2 L2 D2 F' B D' L F2 B2 D2 F U2 L2 U2 B' D2 F L2,B,Tip of Skåne 2025 (2025-04-12),333mbf Final A #1
@@ -16,7 +16,7 @@
 3134088001,F D2 B U' F D2 R2 F2 U' R2 U' F2 L2 U' L2 D R F2,B,Growel's 101 Cube Open 2023 (2023-09-30~10-01),333oh R1 B #5
 2066249001,D R2 D' B2 D' B2 D' F2 U2 R F' R' F' D' L R2 F' D2 L',B,Lazarillo Open 2022 (2022-07-30~31),333 R2 A #2
 57634001,F' R' L' D F2 U D' R L U' R' L2 D' R2 B2 U' B2 U B2,B,Aaruush Cube Open 2014 (2014-09-13),333 R1 H #4
-4532597022,U2 L2 F' L2 B2 D' L2 D2 R2 B2 D L' B' D2 R U' B U B' L B',G,Side n' Blind Nové Mesto 2025 (2025-03-01~02),333mbf Final B #2
+5707689015,L2 B' L2 F2 R2 U2 F' R B' R2 B2 L2 R B' U2 L' F U' B',G,No Veas Ocaña 2026 (2026-06-20),333mbf Final A #1
 3089854001,L2 F2 D' F2 R2 U2 B2 F2 U F' L R2 U2 L' D2 F' L2 F2 D2,B,Plaza Center Cube Lima I 2023 (2023-09-16~17),333oh R1 D #5
 66339001,U R2 D2 B R B' R' U' R2 U2 B2 L D2 R2 B2 R2 F2 L' B2,B,Montevideo Open 2014 (2014-10-11),333 R2 B #3
 81750001,D' L2 R2 U2 B2 U' R2 D2 B' L F R2 B F2 D' B' F L' B,G,Coimbra Open 2014 (2014-11-22),333 R1 B E2

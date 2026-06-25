@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BG / bin 6
-# Population in this bin: 228
+# Population in this bin: 229
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -182,7 +182,7 @@
 4279476001,U2 F R2 D' L2 B2 L2 R2 D L2 B D' B D' U R F L' R,B,Delhi Cube Challenge 2024 (2024-11-09~10),333oh Final A #3
 4284414001,L2 U2 R' B2 L F2 L' D2 L' B L2 R2 F' L' R D' R U,B,Speedy Southport 2024 (2024-11-16~17),333 R1 A #2
 4294179001,B2 L F L' F U2 F' U R U2 B2 L2 U' D L2 U' F2 U' F2,B,Berkeley November Weekday Tricubealon 2024 (2024-11-18),333 R1 B #1
-4316275001,L U2 B' R2 D2 R2 U2 B2 R2 L B2 F R2 U2 F2 L U2,B,Lincolnshire Autumn 2024 (2024-11-23~24),333 R2 A #4
+5706477001,D2 F' U2 L' B2 L' B2 R2 F2 R' U' B2 U' L F2 R' B L',B,Cluj Cubing Sports Festival 2026 (2026-06-13),333oh Final B #3
 4327846001,U2 L2 B2 R' B' R2 B' L' U2 F2 R' U2 B2 R' B2 R2 F2 D R,G,Spanish Championship 2024 (2024-11-29~12-01),333oh Final A E2
 4367726001,U' F2 U' R' D F2 L F' U L' U2 B2 L' D2 L2 U2 L' F2 L2,G,Bulgarian Nationals 2024 (2024-12-14~15),333oh Final A #3
 5355244030,U2 L2 B' U2 L2 B' F' U' F R2 D B' U2 B' L D R2 D' L',G,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final A #2

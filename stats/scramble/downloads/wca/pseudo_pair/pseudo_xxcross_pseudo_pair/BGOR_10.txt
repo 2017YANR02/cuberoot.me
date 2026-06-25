@@ -2,7 +2,7 @@
 # Population in this bin: 25
 # Samples listed: 25 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-18
+# Generated: 2026-06-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3460001,R2 B2 R' D2 L' R' B2 L' D2 U2 B U F L' B2 U B2 U2 F2 R' D L2 U',B,CMI Fiesta Open 2014 (2014-03-21~23),333bf R1 E #2
