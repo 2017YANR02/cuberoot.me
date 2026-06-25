@@ -6,6 +6,7 @@
 // <slug>/page.tsx; shared scaffolding is in _components/ and _data/.
 
 import { useTranslation } from 'react-i18next';
+import { Newspaper, ArrowRight } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useT } from '../../../hooks/useT';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -59,6 +60,29 @@ export default function RegulationHub() {
             )}
           </p>
         </header>
+
+        <Link href="/regulation/news" className="reg-hub-news">
+          <span className="reg-hub-news-icon"><Newspaper size={22} /></span>
+          <span className="reg-hub-news-body">
+            <span className="reg-hub-news-eyebrow">
+              <span className="reg-hub-news-dot" />
+              {t('最新动态', "What’s New")}
+            </span>
+            <span className="reg-hub-news-title">
+              {t(
+                'FTO 成为新项目、魔表退役,静默锦标赛与资格起始日期',
+                'FTO added & Clock retired · Quiet Championships & qualification start dates',
+              )}
+            </span>
+            <span className="reg-hub-news-sub">
+              {t(
+                'WCA 官方对项目列表与竞赛要求政策的近期调整(2026 年 5–6 月)',
+                'Recent WCA changes to the events list and Competition Requirements Policy (May–Jun 2026)',
+              )}
+            </span>
+          </span>
+          <ArrowRight size={20} className="reg-hub-news-arrow" />
+        </Link>
 
         <section className="reg-hub-group">
           <h2 className="reg-hub-group-title">{t('核心条款', 'Core articles')}</h2>
