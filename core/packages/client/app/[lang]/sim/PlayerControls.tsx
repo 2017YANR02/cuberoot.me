@@ -60,6 +60,9 @@ import {
 import {
   parseMegaMoves, megaMovesToString, invertMegaMoves, reduceMegaAlg, randomMegaScramble, type MegaMove,
 } from './engine/mega/megaState';
+import {
+  parseFtoMoves, ftoMovesToString, invertFtoMoves, reduceFtoAlg, randomFtoScramble, type FtoMove,
+} from './engine/fto/ftoState';
 
 /** Random Ivy scramble: ~9 R/L/D/B turns, no immediate axis repeat. */
 function randomIvyScramble(): string {
@@ -117,6 +120,7 @@ const PUZZLE_TYPE_OPTIONS = [
   { value: 'skewb',    iconClass: 'event-skewb', labelZh: '斜转',  labelEn: 'Skewb'
 },
   { value: 'megaminx', iconClass: 'event-minx',  labelZh: '五魔',  labelEn: 'Megaminx' },
+  { value: 'fto',      iconClass: 'unofficial-fto', labelZh: 'FTO', labelEn: 'FTO' },
   { value: 'dino',     iconClass: 'unofficial-dino', labelZh: '恐龙', labelEn: 'Dino' },
   { value: 'redi',     iconClass: 'unofficial-redi', labelZh: 'Redi', labelEn: 'Redi' },
   { value: 'rex',      iconClass: 'unofficial-rex', labelZh: 'Rex', labelEn: 'Rex Cube' },
@@ -215,10 +219,10 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'pyraminx' | 'skewb' | 'megaminx' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | PgPuzzleId;
 
-function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' {
-  return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
+function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' | 'fto' {
+  return p === 'pyraminx' || p === 'skewb' || p === 'megaminx' || p === 'fto';
 }
 
 const SAME_AXIS_1X1: Record<string, 'x' | 'y' | 'z'> = {
@@ -356,7 +360,7 @@ function reduceSkewbAlg(s: string): string {
 // per puzzle in one descriptor collapses what used to be ~13 parallel `isDino||isRedi
 // ||…` branches into a single `corner` lookup. Adding a corner-turn puzzle = one entry
 // here + one line in `cornerKind` below (mirrors the engine/cornerTurnGesture adapters).
-type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx';
+type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto';
 
 interface CornerSpec {
   /** Parse alg / scramble text → the puzzle's move list. */
@@ -432,6 +436,13 @@ const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
     invert: (m) => invertMegaMoves(m as MegaMove[]),
     reduce: reduceMegaAlg,
     scramble: () => megaMovesToString(randomMegaScramble(30)),
+  },
+  fto: {
+    parse: parseFtoMoves,
+    toString: (m) => ftoMovesToString(m as FtoMove[]),
+    invert: (m) => invertFtoMoves(m as FtoMove[]),
+    reduce: reduceFtoAlg,
+    scramble: () => ftoMovesToString(randomFtoScramble(30)),
   },
 };
 
@@ -509,10 +520,11 @@ export default function PlayerControls({
   const isSkewbEngine = puzzleKind === 'skewb' && renderer !== 'cubing';
   const isPyraEngine = puzzleKind === 'pyraminx' && renderer !== 'cubing';
   const isMegaEngine = puzzleKind === 'megaminx' && renderer !== 'cubing';
-  // Skewb + Pyraminx + Megaminx have an in-house engine alternative; off the cubing.js
+  const isFtoEngine = puzzleKind === 'fto' && renderer !== 'cubing';
+  // Skewb + Pyraminx + Megaminx + FTO have an in-house engine alternative; off the cubing.js
   // renderer (= 群论内核) they behave like the other engine (corner-/face-turn) puzzles,
   // NOT the cubing.js twisty path.
-  const isEngineTwisty = isSkewbEngine || isPyraEngine || isMegaEngine;
+  const isEngineTwisty = isSkewbEngine || isPyraEngine || isMegaEngine || isFtoEngine;
   // PuzzleGeometry explore puzzle (cubing.js TwistyPlayer, world-less) — twisty-class,
   // so it shares every twisty branch below (scramble / simplify / no-world guards).
   const isPgMode = typeof puzzleKind === 'string' && isPgPuzzleId(puzzleKind);
@@ -528,7 +540,8 @@ export default function PlayerControls({
             : isSkewbEngine ? 'skewb'
               : isPyraEngine ? 'pyraminx'
                 : isMegaEngine ? 'megaminx'
-                  : null;
+                  : isFtoEngine ? 'fto'
+                    : null;
   const corner = cornerKind ? CORNER_SPECS[cornerKind] : null;
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
   const is3x3 = !isSq1 && !isIvy && !corner && !isTwistyMode && order === 3;
@@ -1452,7 +1465,7 @@ function PuzzleSettings({
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto') onPuzzleChange(v);
                   else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}

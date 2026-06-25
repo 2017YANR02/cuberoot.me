@@ -49,6 +49,7 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   skewb: { engine: 'engineMode', carve: 'corner' },
   pyraminx: { engine: 'engineMode', carve: 'corner' },
   megaminx: { engine: 'engineMode', carve: 'face' },
+  fto: { engine: 'engineMode', carve: 'face' },
 };
 
 /** Static capabilities for a puzzle kind (independent of the active renderer). */

@@ -65,6 +65,9 @@ import { pyraMoveToString, type PyraMove } from './engine/pyra/pyraState';
 import MegaminxCube from './engine/mega/MegaminxCube';
 import { megaPickHit, megaResolveMove, megaResolveLive, type MegaPickHit } from './engine/mega/megaDrag';
 import { megaMoveToString, type MegaMove } from './engine/mega/megaState';
+import FtoCube from './engine/fto/FtoCube';
+import { ftoPickHit, ftoResolveMove, ftoResolveLive, type FtoPickHit } from './engine/fto/ftoDrag';
+import { ftoMoveToString, type FtoMove } from './engine/fto/ftoState';
 import { orbitScene, snapViewToQuadrant } from './engine/viewControls';
 import {
   CornerTurnGesture, type CornerGestureCtx, type CornerGestureHandle, type CornerTurnAdapter,
@@ -96,23 +99,29 @@ import { useT } from "@/hooks/useT";
 const BACKVIEW_MARGIN = 8;
 
 /** Twisty puzzles rendered by cubing.js (not the local cuber engine). */
-export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx'] as const;
+export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx', 'fto'] as const;
 export type TwistyPuzzle = typeof TWISTY_PUZZLES[number];
 export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
-  return p === 'pyraminx' || p === 'skewb' || p === 'megaminx';
+  return p === 'pyraminx' || p === 'skewb' || p === 'megaminx' || p === 'fto';
 }
 
 /** Twisty puzzles (cubing.js by default) that ALSO have an in-house Three.js engine
  *  renderer — the user picks which one via the `renderer` toggle (skill: keep both). */
-export const ENGINE_TWISTY = new Set<string>(['skewb', 'pyraminx', 'megaminx']);
+export const ENGINE_TWISTY = new Set<string>(['skewb', 'pyraminx', 'megaminx', 'fto']);
+
+/** Cubing.js `experimentalPuzzleDescription` for ENGINE_TWISTY puzzles that are NOT a
+ *  built-in TwistyPlayer puzzle id (skewb/pyraminx/megaminx are built-ins; FTO is a
+ *  PuzzleGeometry octahedron). Fed to TwistySection so the cubing.js renderer still works.
+ *  Copied verbatim from the vendored puzzle-geometry `FTO` entry. */
+const ENGINE_TWISTY_DEF: Record<string, string> = { fto: 'o f 0.333333333333333' };
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
-const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx']);
+const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto']);
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle. */
 function asNxN(world: World): Cube | null {
-  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex' || world.puzzleKind === 'heli' || world.puzzleKind === 'skewb' || world.puzzleKind === 'megaminx') ? null : (world.cube as Cube);
+  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex' || world.puzzleKind === 'heli' || world.puzzleKind === 'skewb' || world.puzzleKind === 'megaminx' || world.puzzleKind === 'fto') ? null : (world.cube as Cube);
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -196,6 +205,7 @@ export default function SimPage() {
     if (raw === 'rex') return 'rex';
     if (raw === 'heli') return 'heli';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
+    if (raw === 'fto') return 'fto';
     if (isPgPuzzleId(raw)) return raw as SimPuzzle;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
@@ -209,8 +219,11 @@ export default function SimPage() {
   const useEngine = isTwistyPuzzle(puzzleParam) && ENGINE_TWISTY.has(puzzleParam)
     && query.renderer !== 'cubing';
   // A PuzzleGeometry puzzle (explore set) renders via cubing.js TwistyPlayer's
-  // experimentalPuzzleDescription — twisty-class, no in-house engine.
-  const pgDef = typeof puzzleParam === 'string' ? PG_DEF_BY_ID[puzzleParam] : undefined;
+  // experimentalPuzzleDescription — twisty-class, no in-house engine. FTO is a promoted
+  // engine-twisty whose cubing.js render also needs a description (it's not a built-in id).
+  const pgDef = typeof puzzleParam === 'string'
+    ? (PG_DEF_BY_ID[puzzleParam] ?? ENGINE_TWISTY_DEF[puzzleParam])
+    : undefined;
   const twisty = (isTwistyPuzzle(puzzleParam) || pgDef !== undefined) && !useEngine;
   const useEngineRef = useRef(useEngine);
   useEffect(() => { useEngineRef.current = useEngine; }, [useEngine]);
@@ -641,7 +654,13 @@ export default function SimPage() {
       beginMove: (c, m) => c.beginMove(m), moveToString: megaMoveToString,
       fullPx: 130, threshold: 6,
     };
-    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx', CornerGestureHandle> = {
+    const ftoAdapter: CornerTurnAdapter<FtoCube, FtoMove, FtoPickHit> = {
+      match: (c): c is FtoCube => c instanceof FtoCube,
+      pickHit: ftoPickHit, resolveLive: ftoResolveLive, resolveMove: ftoResolveMove,
+      beginMove: (c, m) => c.beginMove(m), moveToString: ftoMoveToString,
+      fullPx: 140, threshold: 6,
+    };
+    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto', CornerGestureHandle> = {
       dino: new CornerTurnGesture(dinoAdapter, cornerCtx),
       redi: new CornerTurnGesture(rediAdapter, cornerCtx),
       rex: new CornerTurnGesture(rexAdapter, cornerCtx),
@@ -649,9 +668,10 @@ export default function SimPage() {
       skewb: new CornerTurnGesture(skewbAdapter, cornerCtx),
       pyraminx: new CornerTurnGesture(pyraAdapter, cornerCtx),
       megaminx: new CornerTurnGesture(megaAdapter, cornerCtx),
+      fto: new CornerTurnGesture(ftoAdapter, cornerCtx),
     };
     const cornerGestureFor = (pk: unknown): CornerGestureHandle | null =>
-      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb' || pk === 'pyraminx' || pk === 'megaminx' ? cornerGestures[pk] : null;
+      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb' || pk === 'pyraminx' || pk === 'megaminx' || pk === 'fto' ? cornerGestures[pk] : null;
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -971,7 +991,7 @@ export default function SimPage() {
       if (pinching && activePointers.size < 2) {
         pinching = false;
         const pk = worldRef.current?.puzzleKind;
-        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb';
+        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb' || pk === 'fto';
         syncScaleToSettings();
       }
     };
@@ -1022,8 +1042,9 @@ export default function SimPage() {
                 : world.puzzleKind === 'skewb' ? world.skewbHints
                   : world.puzzleKind === 'pyraminx' ? world.pyraHints
                     : world.puzzleKind === 'megaminx' ? world.megaHints
-                      : world.faceHints;
-      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints, world.pyraHints, world.megaHints];
+                      : world.puzzleKind === 'fto' ? world.ftoHints
+                        : world.faceHints;
+      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints, world.pyraHints, world.megaHints, world.ftoHints];
       if (viewing) activeHints.show(); else activeHints.hide();
       for (const h of allHints) if (h !== activeHints) h.hide();
       let hintsAnimating = false;
