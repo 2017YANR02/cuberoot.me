@@ -1484,8 +1484,8 @@ function PuzzleSettings({
                   onChange={(e) => onRendererChange(e.target.value as 'cubing' | 'engine' | 'group')}
                   title={t('cubing.js 官方渲染 / 群论内核(本站引擎:圆润外观 + 拖拽转动 + 群结构面板)', 'cubing.js renderer / group-theory kernel (in-house engine: rounded look + drag + group panel)')}
                 >
-                  <option value="cubing">cubing.js</option>
                   <option value="group">{t('群论内核', 'Group theory')}</option>
+                  <option value="cubing">cubing.js</option>
                 </select>
               </div>
             )}
