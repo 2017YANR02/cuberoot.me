@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-24T22:31:27.760Z",
+  "generated_at": "2026-06-25T22:38:11.176Z",
   "notes": "Centiseconds (cs): divide by 100 for seconds. Moves: integer.",
   "events": {
     "222": {
@@ -5389,7 +5389,7 @@
           "year": 2026,
           "wr_single": 276,
           "wr_avg": 351,
-          "solves": 118149
+          "solves": 118147
         }
       ],
       "topN_single": [
@@ -6251,7 +6251,7 @@
         {
           "year": 2026,
           "cubers": 35697,
-          "solves": 118149
+          "solves": 118147
         }
       ],
       "wr_single_progression": [
@@ -43316,7 +43316,7 @@
           "year": 2026,
           "wr_single": 73,
           "wr_avg": 151,
-          "solves": 31044
+          "solves": 31042
         }
       ],
       "topN_single": [
@@ -43896,7 +43896,7 @@
         {
           "year": 2026,
           "cubers": 11850,
-          "solves": 31044
+          "solves": 31042
         }
       ],
       "wr_single_progression": [
