@@ -15,7 +15,10 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(__dirname, 'out.0.csv');
-const TOTAL = 1297444;
+// TOTAL = 活的语料行数(与 solve.mjs 的 CORPUS 同源, 计含逗号的 "id,scramble" 行)。
+// 别再硬编码: master 池随新比赛增长(曾固定 1297444, 池涨到 1304126 后会提前 break 漏掉尾部)。
+const CORPUS = process.env.CORPUS ? resolve(process.env.CORPUS) : 'D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt';
+const TOTAL = existsSync(CORPUS) ? readFileSync(CORPUS, 'utf8').split('\n').filter((l) => l.indexOf(',') > 0).length : 1297444;
 const lines = () => (existsSync(OUT) ? readFileSync(OUT, 'utf8').split('\n').filter(Boolean).length : 0);
 
 let stuck = 0, run = 0;
