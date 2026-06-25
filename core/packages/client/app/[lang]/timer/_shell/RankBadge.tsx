@@ -131,8 +131,17 @@ export default function RankBadge({
   // the timer — just render nothing rather than read .rank off undefined.
   if (pills.length === 0) return null;
 
+  // 药丸已按 WR > CR > NR 排好.一旦某档是纪录(名次=1),更低档必然也是纪录
+  // (世界第一 ⊂ 大洲第一 ⊂ 全国第一),低档徽章纯属冗余 —— 截到第一个纪录档为止,
+  // 丢掉它下面的.非纪录名次(>1)全部保留.
+  const shownPills: typeof pills = [];
+  for (const p of pills) {
+    shownPills.push(p);
+    if (p.data.rank === 1) break;
+  }
+
   // 展开说明:把各档名次摊开 + 免责声明(对比历史比赛成绩,非实时官方排名).
-  const parts = pills.map(({ scope, data }) => {
+  const parts = shownPills.map(({ scope, data }) => {
     const n = data.rank.toLocaleString('en-US');
     return isZh ? `${SCOPE_ZH[scope]} #${n}` : `${SCOPE_EN[scope]} #${n}`;
   });
@@ -152,7 +161,7 @@ export default function RankBadge({
         >
           {/* 单 chip:WR12/AsR9/NR9;名次为 1 即该档纪录,改用 RecordBadge(WR/AsR/NR) */}
           <span className="rank-chip-inner">
-            {pills.map(({ scope, label, data }, i) => (
+            {shownPills.map(({ scope, label, data }, i) => (
               <Fragment key={scope}>
                 {i > 0 && <span className="rank-chip-sep">/</span>}
                 {data.rank === 1

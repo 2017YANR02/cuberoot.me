@@ -84,3 +84,5 @@ core/packages/server/src/tools/test_output.txt
 # vendored cubelib FMC solver build output
 fmc/target/
 fmc/**/target/
+
+.vercel

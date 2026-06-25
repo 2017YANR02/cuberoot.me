@@ -568,6 +568,16 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
       return;
     }
 
+    // NOTE: Tab 键——派发 Tab keydown 给目标 textarea,由 ReconAutofill 接管(开补全 / 接受高亮项)
+    if (key === 'tab') {
+      const el = target.current;
+      if (el && !isCE(el)) {
+        el.focus();
+        el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+      }
+      return;
+    }
+
     if (key === 'shift') {
       const now = Date.now();
       setShiftState(prev => {
@@ -841,6 +851,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
                 <u>U</u>
               </button>
             )}
+            <button type="button" data-key="tab" className="vkb-fn vkb-tab">Tab</button>
             <button type="button" data-key=" " className="vkb-space">space</button>
             <button type="button" data-key="enter" className="vkb-return">return</button>
             <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del">

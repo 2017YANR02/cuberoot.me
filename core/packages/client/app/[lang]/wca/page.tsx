@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useIsAdmin } from '@/lib/auth-store';
 import { statsUrl } from '@/lib/stats-base';
 import { STAT_ICONS } from './wca-stat-icons';
 import '../wca/_wca_stats.css';
@@ -52,7 +53,7 @@ const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon
 },
 ];
 
-const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; extraQuery?: string
+const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; extraQuery?: string; adminOnly?: boolean
  }[] = [
   // 纪录 / 排名 已上移到首页直达卡,这里不再重复
   { path: '/wca/cohort-ranks',    zh: '届别排名',     en: 'Cohort Ranks',    Icon: Users
@@ -64,11 +65,12 @@ const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; ex
 },
   { path: '/wca/fun-stats',       zh: '趣味统计',     en: 'Fun Stats',       Icon: Sparkles
 },
-  { path: '/wca/result-watch',    zh: '成绩变更',     en: 'Result Changes',  Icon: BellRing },
+  { path: '/wca/result-watch',    zh: '成绩变更',     en: 'Result Changes',  Icon: BellRing, adminOnly: true },
 ];
 
 export default function WcaStatsIndex() {
   const { i18n } = useTranslation();
+  const isAdmin = useIsAdmin();
   useDocumentTitle('WCA 统计', 'WCA Statistics');
   const [data, setData] = useState<IndexData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -244,7 +246,7 @@ export default function WcaStatsIndex() {
 
             {sec.key === LOOKUP && (
               <div className="wca-tools-grid">
-                {LOOKUP_ITEMS.map(it => {
+                {LOOKUP_ITEMS.filter(it => !it.adminOnly || isAdmin).map(it => {
                   const to = it.extraQuery ? `${it.path}?${it.extraQuery}` : it.path;
                   return (
                     <Link key={`${it.path}|${it.extraQuery ?? ''}`} href={to} className="wca-tool-card">

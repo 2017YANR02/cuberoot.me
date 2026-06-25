@@ -42,16 +42,29 @@ export function RecordSelect({ value, onChange, className, records, placeholder,
     [q, items],
   );
 
-  /** Validate typed text against the option list; commit only an exact (case-insensitive) match. */
-  const commit = () => {
-    const t = text.trim();
-    if (t === '') {
-      if (value) onChange('');
-    } else {
-      const match = items.find(it => it.code.toLowerCase() === t.toLowerCase());
-      if (match) onChange(match.code);
-      // else: not in the list → keep the previous value (revert)
+  /**
+   * 归一键入文本:① 列表里的精确码;② 合法码 + 末尾排名数字(PR2 / FWR2 / NR3)。
+   * 返回 '' 表示清空、null 表示非法(保留原值)、否则为规范化后的码。
+   */
+  const canonicalize = (raw: string): string | null => {
+    const t = raw.trim();
+    if (t === '') return '';
+    const exact = items.find(it => it.code.toLowerCase() === t.toLowerCase());
+    if (exact) return exact.code;
+    const m = /^(.*?)(\d+)$/.exec(t);
+    if (m) {
+      const baseMatch = items.find(it => it.code.toLowerCase() === m[1].toLowerCase());
+      if (baseMatch) return baseMatch.code + m[2];
     }
+    return null;
+  };
+
+  /** Validate typed text against the option list (+ trailing rank number); commit only valid values. */
+  const commit = () => {
+    const c = canonicalize(text);
+    if (c === '') { if (value) onChange(''); }
+    else if (c != null) onChange(c);
+    // else: not a valid code → keep the previous value (revert)
     setEditing(false);
     setOpen(false);
   };
@@ -64,17 +77,22 @@ export function RecordSelect({ value, onChange, className, records, placeholder,
     inputRef.current?.blur();
   };
 
+  // 键入「合法码 + 排名数字」(列表里没有的)时,把它作为合成选项摆进下拉,给出可选反馈。
+  const typedExtra = (() => {
+    if (!q) return null;
+    const c = canonicalize(text);
+    if (!c || filtered.some(it => it.code.toLowerCase() === c.toLowerCase())) return null;
+    return c;
+  })();
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         // commit current text on outside click
-        const t = text.trim();
-        if (t === '') { if (value) onChange(''); }
-        else {
-          const match = items.find(it => it.code.toLowerCase() === t.toLowerCase());
-          if (match) onChange(match.code);
-        }
+        const c = canonicalize(text);
+        if (c === '') { if (value) onChange(''); }
+        else if (c != null) onChange(c);
         setEditing(false);
         setOpen(false);
       }
@@ -137,6 +155,16 @@ export function RecordSelect({ value, onChange, className, records, placeholder,
       </div>
       {open && (
         <div className="record-select-popup">
+          {typedExtra && (
+            <button
+              key="__typed"
+              type="button"
+              className="record-select-item"
+              onMouseDown={e => { e.preventDefault(); select(typedExtra); }}
+            >
+              <RecordBadge record={typedExtra} />
+            </button>
+          )}
           {filtered.map(({ code, count }) => (
             <button
               key={code}
@@ -148,7 +176,7 @@ export function RecordSelect({ value, onChange, className, records, placeholder,
               {count != null && <span className="record-select-count">({count})</span>}
             </button>
           ))}
-          {filtered.length === 0 && (
+          {filtered.length === 0 && !typedExtra && (
             <div className="record-select-noresult">{tr({ zh: '无匹配', en: 'no match' })}</div>
           )}
         </div>

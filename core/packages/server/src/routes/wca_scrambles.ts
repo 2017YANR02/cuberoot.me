@@ -250,39 +250,50 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
       // 六色查询 predCol 即 gmCol(已直接命中索引)→ 不再重复加。
       const gmPrefilter = plan.gmCol && plan.predCol !== plan.gmCol ? ` AND ${plan.gmCol} <= ${Math.max(...dSteps)}` : '';
       let drows: RandomRow[];
+      // 难度模式下,optimal 是「软偏好」而非硬过滤:稀有 bin(如 0 步十字,全表仅 2 条)可能命中真题,
+      // 但它们都还没算出最优等态(wca_scramble_optimal 覆盖不全),硬加 `o IS NOT NULL` 会把本就存在的真题
+      // 判成空 → 误报 404「无匹配」。故先带 optFilter 取;开了最优却 0 行时,回退到同难度的不带 optFilter
+      // 查询(难度是主筛,拿到原打乱也好过死路)。客户端对无 o 字段的条目自动用原打乱。
       if (!hasFrom && !hasTo) {
         // 全时段统一飞镖采样:rnd>=dart 正向取 count,不足再 rnd<dart 环绕补齐。predCol/前过滤命中
         // gm_cross6/xcross6 列索引、std 深阶段六色 LEAST 表达式索引、或 (event_id,rnd) 通用索引过滤 —— 一律
         // LIMIT 提前停,毫秒级(替代旧 ORDER BY random() 整分区扫描:333 ~1.3M 行实测 2.5s,见 migration 0061)。
         const dart = Math.random();
-        const dartSql = (cmp: '>=' | '<') => `SELECT ${RANDOM_COLS}
+        const dartSql = (cmp: '>=' | '<', opt: string) => `SELECT ${RANDOM_COLS}
              FROM wca_scramble_steps s
              ${STEPS_WS_JOIN}
              LEFT JOIN wca_competitions c ON c.id = s.competition_id
              ${OPT_JOIN}
-            WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} AND s.rnd ${cmp} ? ${optFilter}
+            WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} AND s.rnd ${cmp} ? ${opt}
             ORDER BY s.rnd, ws.id LIMIT ?`;
-        drows = await query<RandomRow>(dartSql('>='), [event, dart, count]);
-        if (drows.length < count) {
-          const more = await query<RandomRow>(dartSql('<'), [event, dart, count - drows.length]);
-          drows = drows.concat(more);
-        }
+        const runDart = async (opt: string): Promise<RandomRow[]> => {
+          let r = await query<RandomRow>(dartSql('>=', opt), [event, dart, count]);
+          if (r.length < count) {
+            const more = await query<RandomRow>(dartSql('<', opt), [event, dart, count - r.length]);
+            r = r.concat(more);
+          }
+          return r;
+        };
+        drows = await runDart(optFilter);
+        if (optFilter && drows.length === 0) drows = await runDart('');
       } else {
         // 难度 + 日期:comp-sampling 叠难度谓词(+ gmPrefilter 缩候选)。
         const dWhere: string[] = []; const dParams: string[] = [];
         if (hasFrom) { dWhere.push('start_date >= ?'); dParams.push(from); }
         if (hasTo) { dWhere.push('start_date <= ?'); dParams.push(to); }
-        drows = await query<RandomRow>(
+        const runComp = (opt: string) => query<RandomRow>(
           `SELECT ${RANDOM_COLS}
              FROM wca_scramble_steps s
              JOIN (SELECT id, name FROM wca_competitions WHERE ${dWhere.join(' AND ')}
                     ORDER BY random() LIMIT ${COMP_SAMPLE}) c ON c.id = s.competition_id
              ${STEPS_WS_JOIN}
              ${OPT_JOIN}
-            WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} ${optFilter}
+            WHERE s.event_id = ?${gmPrefilter} AND ${diffWhere} ${opt}
             ORDER BY random() LIMIT ?`,
           [...dParams, event, count],
         );
+        drows = await runComp(optFilter);
+        if (optFilter && drows.length === 0) drows = await runComp('');
       }
       if (drows.length === 0) return c.json({ error: 'no scrambles for difficulty', event }, 404);
       c.header('Cache-Control', 'no-store');

@@ -154,8 +154,11 @@ export interface CubeDriver {
   brand: CubeBrand;
   /** Primary GATT service UUID this driver advertises with. */
   service: string;
-  /** Extra services the picker needs access to (battery, device-info, etc.). */
-  optionalServices?: string[];
+  /** Extra services the picker needs access to (battery, device-info, etc.).
+   * Entries may be full UUID strings or numeric 16-bit aliases (e.g. 0x180f).
+   * Do NOT pre-stringify a numeric alias — `String(0x180f)` yields the decimal
+   * "6159", which Web Bluetooth rejects as an invalid service name. */
+  optionalServices?: (string | number)[];
   /**
    * True when this driver derives its AES key from the cube MAC (GAN family).
    * The hook will resolve a MAC (and prompt the user if needed) before start().

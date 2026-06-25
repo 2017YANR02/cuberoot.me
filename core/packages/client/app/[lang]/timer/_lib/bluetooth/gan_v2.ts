@@ -410,7 +410,7 @@ function decodeFrame(frame: Uint8Array, dec: MoveDecodeState): string[] {
 export const ganV2Driver: CubeDriver = {
   brand: 'gan-v2' satisfies CubeBrand,
   service: GAN_V2_SERVICE,
-  optionalServices: [String(BATTERY_SERVICE)],
+  optionalServices: [BATTERY_SERVICE],
   needsMac: true,
 
   matches(device: BluetoothDevice): boolean {

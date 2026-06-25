@@ -71,10 +71,6 @@ export const METHOD_KEYS: Method[] = [
 ];
 // 阶段键序 + 显示名同样走 scramble-variants(VARIANT_STAGES / stageLabel),
 // WASM 阶段索引 i ↔ VARIANT_STAGES[method][i],与 /scramble/stats 完全同名。
-// 自动批算(eager)的最深阶段;更深的留点击按需(单视角搜索重,弱小表启发式)。
-const EAGER_MAX: Record<Method, number> = {
-  std: 3, eo: 2, pair: 3, pseudo: 3, pseudo_pair: 2, f2leo: 1, pseudo_f2leo: 1, block: 3, eoline: 1, dr: 0, htr: 0, htr2: 0, fr: 0,
-};
 type Kind = 'std' | 'variant' | 'f2leo' | 'block222' | 'roux223' | 'eodr' | 'htr' | 'htr2' | 'fr';
 // block 方法按阶段分流:block222 阶段走专用 Block222SolverWasm,其余走 Roux223SolverWasm
 // (其阶段 id 0..4 恰与 VARIANT_STAGES.block 的索引一一对应,无需映射)。
@@ -114,10 +110,12 @@ const FACE_LETTER: Record<CubeFace, ColorLetter> = {
   U: 'W', D: 'Y', F: 'G', B: 'B', L: 'O', R: 'R',
 };
 
-// 解法搜索的长度松弛:最多比最优长 2 步(= 旧「含次优 +2」档的搜索深度,不引入新成本)。
-// 展示条数(cap)在此深度内按长度升序收集;条数才是用户可调的旋钮。
+// 解法搜索的长度松弛(默认值):最多比最优长 2 步(= 旧「含次优 +2」档)。用户可在「最大步数」下拉
+// 调到 最优+0..6;每个面最优不同 → 用「相对最优」语义,跨面一致、cross 阶段也不会因绝对大值而爆炸。
 const SOL_SLACK = 2;
-// 「最大数量」可选项;0 = 无上限(枚举 best+SLACK 深度内全部解,用极大 cap 实现)。
+// 「最大步数」可选项 = 比该面最优多几步(slack);展示条数(cap)在此深度内按长度升序收集。
+const SLACK_OPTIONS = [0, 1, 2, 3, 4, 5, 6];
+// 「最大数量」可选项;0 = 无上限(枚举 best+slack 深度内全部解,用极大 cap 实现)。
 const LIMIT_OPTIONS = [1, 5, 10, 25, 50, 0];
 const NO_LIMIT_CAP = 100000;
 
@@ -269,7 +267,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const [errMsg, setErrMsg] = useState('');
   const [method, setMethod] = useState<Method>(initialMethod);
   const [stage, setStage] = useState(initialStage);
-  const [limit, setLimit] = useState(10); // 展示条数(最短优先);搜索深度恒定 = 最优+SLACK
+  const [limit, setLimit] = useState(10); // 展示条数(最短优先)
+  const [slack, setSlack] = useState(SOL_SLACK); // 搜索深度 = 最优 + slack(用户可调,默认 +2)
   const [counts, setCounts] = useState<(number | null)[]>([null, null, null, null, null, null]);
   const [computing, setComputing] = useState(false);
   const [selFace, setSelFace] = useState<number | null>(null);
@@ -391,8 +390,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   const stages = VARIANT_STAGES[method];
   const need = needOf(method);
-  // 全阶段自动批算(无「计算」按钮);heavy 仅用于「可能较慢」提示。
-  const heavy = stage > EAGER_MAX[method];
   // 设备并行度只在客户端可知;Node 21+ SSR 也有全局 navigator(hardwareConcurrency=构建机核数)
   // 会渲染出 4,移动端客户端是 2 → hydration mismatch。挂载后再取,水合期两端都渲染占位值。
   const [poolSize, setPoolSize] = useState<number | null>(null);
@@ -547,27 +544,40 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setSelSol(0);
 
     // 流式累积:支持流式的引擎(std 6 面 cross/xcross/F2L + 受限 54-move xcross)每枚举到
-    // 一条解就经 onPartial 推来,这里合批(rAF)刷进 state ——「算一条出一条」,不再等全算完。
+    // 一条解就经 onPartial 推来。同长解在一个 DFS 深度内几乎同时枚举完(亚帧),整批刷会「一次蹦出」;
+    // 这里把「到达」与「揭示」解耦——逐帧少量铺开成肉眼可见的瀑布,跨深度的真实时间间隔原样保留。
     // 同 HTM 再按 QTM 升序;Array.sort 稳定 → 原到达序(长度升序)兜底。
     const sortSols = (xs: SolItem[]) =>
       [...xs].sort((a, b) => (moveLen(a.m) - moveLen(b.m)) || (countQtm(a.m) - countQtm(b.m)));
     const acc: SolItem[] = [];
     const seen = new Set<string>();
     let bestLen = Infinity;
+    let shown = 0;                          // 已揭示条数(瀑布,与到达解耦)
+    let finalRes: MovesTimed | null = null; // 权威结果到位后瀑布排空到它为止
     let raf = 0;
-    const flush = () => {
+    // 步长随剩余量放大 → 不论一批多大都在 ~0.2s 内铺完(快阶段不被拖慢),小批仍逐条可见。
+    const render = () => {
       raf = 0;
       if (movesReq.current !== my) return;
-      setMoves({ len: bestLen === Infinity ? 0xffffffff : bestLen, sols: sortSols(acc), ms: 0 });
+      const sorted = sortSols(acc);
+      const target = finalRes ? finalRes.sols.length : sorted.length;
+      if (shown < target) shown += Math.max(1, Math.ceil((target - shown) / 16));
+      if (shown > target) shown = target;
+      if (finalRes && shown >= target) {
+        setMoves({ ...finalRes, sols: sorted });        // 收尾:权威 len/ms 元数据
+      } else {
+        setMoves({ len: bestLen === Infinity ? 0xffffffff : bestLen, sols: sorted.slice(0, shown), ms: 0 });
+      }
+      if (shown < target) raf = requestAnimationFrame(render);
     };
     const onPartial = (sol: SolItem, len: number) => {
       if (movesReq.current !== my) return;
-      const key = `${sol.m} ${sol.c}`; // 同 m 不同槽(c)算两条;xcr 的 c 恒空 → 按 m 去重
+      const key = `${sol.m}|${sol.c}`; // 同 m 不同槽(c)算两条;xcr 的 c 恒空 → 按 m 去重
       if (seen.has(key)) return;
       seen.add(key);
       acc.push(sol);
       if (len < bestLen) bestLen = len;
-      if (!raf) raf = requestAnimationFrame(flush);
+      if (!raf) raf = requestAnimationFrame(render);
     };
 
     try {
@@ -580,35 +590,36 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       const base = hasBase(method) && selBaseRef.current !== '' ? Number(selBaseRef.current) : -1;
       // 展示条数上限:limit=0(无上限)→ 极大 cap,引擎枚举该深度内全部解。
       const cap = limit === 0 ? NO_LIMIT_CAP : limit;
-      // 搜索深度恒定 = 最优+SLACK(=旧「+2」档,不引入新的性能成本);cap=用户选的展示条数,
+      // 搜索深度 = 最优 + slack(默认 +2;用户可在「最大步数」下拉调到 +0..6);cap=用户选的展示条数,
       // 引擎按长度升序收集、够数即停。条数填不满时(短解不够)如实返回更少。
       const movesMask = activeMaskRef.current;
       const res = kind === 'std'
         ? (useCrRef.current
           ? (isXfStage
-            ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap, stage, combo, onPartial)
-            : await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, SOL_SLACK, cap))
-          : await pool.solveMoves(scr, stage, f, { extra: SOL_SLACK, cap, combo, mask: movesMask }, onPartial))
+            ? await getXcrPool().solveXCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, slack, cap, stage, combo, onPartial)
+            : await getCrPool().solveCrossRestrictMoves(scr, f, crMaskRef.current.lo, crMaskRef.current.hi, crMaxRotRef.current, slack, cap))
+          : await pool.solveMoves(scr, stage, f, { extra: slack, cap, combo, mask: movesMask }, onPartial))
         : kind === 'f2leo'
-          ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: SOL_SLACK, cap, combo, mask: movesMask })
+          ? await pool.solveF2leoMoves(scr, method === 'pseudo_f2leo', f, stage, { extra: slack, cap, combo, mask: movesMask })
           : kind === 'block222'
-            ? await pool.solveBlock222Moves(scr, f, { extra: SOL_SLACK, cap })
+            ? await pool.solveBlock222Moves(scr, f, { extra: slack, cap })
             : kind === 'roux223'
-              ? await pool.solveRoux223Moves(scr, stage, f, { extra: SOL_SLACK, cap })
+              ? await pool.solveRoux223Moves(scr, stage, f, { extra: slack, cap })
               : kind === 'eodr'
-                ? await pool.solveEoDrMoves(scr, eoDrStage(method, stage), f, { extra: SOL_SLACK, cap })
+                ? await pool.solveEoDrMoves(scr, eoDrStage(method, stage), f, { extra: slack, cap })
                 : kind === 'htr'
-                  ? await pool.solveHtrMoves(scr, f, { extra: SOL_SLACK, cap })
+                  ? await pool.solveHtrMoves(scr, f, { extra: slack, cap })
                   : kind === 'htr2'
-                    ? await pool.solveHtr2Moves(scr, f, { extra: SOL_SLACK, cap })
+                    ? await pool.solveHtr2Moves(scr, f, { extra: slack, cap })
                     : kind === 'fr'
-                      ? await pool.solveFrMoves(scr, f, { extra: SOL_SLACK, cap })
-                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: SOL_SLACK, cap, combo, base, mask: movesMask });
+                      ? await pool.solveFrMoves(scr, f, { extra: slack, cap })
+                      : await pool.solveVariantMoves(scr, VARIANT_ID[method as 'pair' | 'eo' | 'pseudo' | 'pseudo_pair'], f, stage, { extra: slack, cap, combo, base, mask: movesMask });
       if (movesReq.current === my) {
-        if (raf) cancelAnimationFrame(raf);
-        // 最终权威结果(已去重/排序/截断);与流式累积同集合同序 → 收尾无可见跳动。
-        const sols = sortSols(res.sols);
-        setMoves({ ...res, sols });
+        // 最终权威结果(已去重/排序/截断)接管累积集,瀑布继续排空到它为止(同集合同序 → 无跳动)。
+        acc.length = 0;
+        acc.push(...res.sols);
+        finalRes = res;
+        if (!raf) raf = requestAnimationFrame(render);
         setSelSol(0);
         setCounts((prev) => { const next = prev.slice(); next[f] = res.len; return next; });
         // 新算出的解法载入后,把动画重置到开头(否则可能停在上一条的进度)。
@@ -621,7 +632,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     } finally {
       if (movesReq.current === my) setMovesLoading(false);
     }
-  }, [method, stage, limit]);
+  }, [method, stage, limit, slack]);
 
   const clickFace = useCallback((f: number) => {
     wantAuto.current = false;
@@ -712,11 +723,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
-  // 条数变了且有选中格 → 重取。
+  // 条数 / 最大步数变了且有选中格 → 重取。
   useEffect(() => {
     if (selFace !== null) void fetchMoves(selFace);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [limit]);
+  }, [limit, slack]);
 
   // 步法限制变化(或切到/离开支持的阶段)→ 重算当前阶段并重新自动选最优视角。跳过首挂。
   const firstMaskRun = useRef(true);
@@ -860,6 +871,15 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             </select>
           </label>
         )}
+        {/* 最大步数 = 比该面最优多几步(相对最优,跨面一致;cross 阶段也不会因绝对大值爆炸)。 */}
+        <label className="stsv-control">
+          <span>{t('最大步数', 'Max len')}</span>
+          <select value={slack} onChange={(e) => setSlack(Number(e.target.value))}>
+            {SLACK_OPTIONS.map((k) => (
+              <option key={k} value={k}>{k === 0 ? t('最优', 'Opt') : `${t('最优', 'Opt')}+${k}`}</option>
+            ))}
+          </select>
+        </label>
         <label className="stsv-control">
           <span>{t('最大数量', 'Max')}</span>
           <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
@@ -1058,14 +1078,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               )}
             </div>
           )}
-          {heavy && (
-            <div className="stsv-hint">
-              {t(
-                '该阶段搜索较重,自动求解可能需数十秒。',
-                'This stage is heavy; auto-solving may take up to tens of seconds.',
-              )}
-            </div>
-          )}
 
           {selFace !== null && (
             <div className="stsv-result">
@@ -1102,9 +1114,14 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                 {moves && moves.sols.length > 0 && (
                   <>
                     <div className="stsv-sols-count">
-                      {movesLoading
-                        ? t(`${moves.sols.length} 条 · 搜索中…`, `${moves.sols.length} found · searching…`)
-                        : t(`${moves.sols.length} 条解法`, `${moves.sols.length} solutions`)}
+                      {movesLoading ? (
+                        <>
+                          {t(`${moves.sols.length} 条`, `${moves.sols.length} found`)}
+                          <Loader2 size={12} className="stsv-spin stsv-sols-spin" aria-label={t('搜索中…', 'Searching…')} />
+                        </>
+                      ) : (
+                        t(`${moves.sols.length} 条解法`, `${moves.sols.length} solutions`)
+                      )}
                       {!movesLoading && limit !== 0 && moves.sols.length >= limit && (
                         <span className="stsv-sols-more">{t(' · 已达上限,可能更多', ' · capped, may be more')}</span>
                       )}
@@ -1136,7 +1153,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           >
                             {Y_ROT_LABEL[rot]}
                           </button>
-                          {sol.c && renderSolSlots(sol.c)}
+                          {/* 槽位无可选(满 F2L XXXXCross 唯一组合 BL BR FR FL / 纯十字)时标签多余,隐藏(同选择器条件)。 */}
+                          {sol.c && slotCombos.length >= 2 && renderSolSlots(sol.c)}
                           <code>{dispAlg}</code>
                         </li>
                       );

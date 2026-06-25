@@ -41,6 +41,13 @@ const stepRange = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_
 
 interface StepsLayout { variants: Record<string, Record<string, Record<string, number>>> }
 
+// distribution.json 里每 (方法,阶段,底色) 步数直方图带真实 min/max —— 滑块端点取这个,
+// 不再写死 0..14(六色十字其实 0–7、白十字 0–8、xcross 1–8…实际可选范围差很多)。
+interface DiffHist { min: number; max: number; counts: Record<string, number> }
+interface DiffDistJson {
+  sets: Record<string, { variants: Record<string, { data: Record<string, Record<string, DiffHist>> }> }>;
+}
+
 // 同态项目:打乱可由 God's-number 最优等态打乱作真题的等价替身(同一魔方态,更短)。
 // 3x3 纯面转族(333/oh/ft/fm)+ 二阶/金字塔/斜转(各自精确最优 solver)。
 // 盲拧/多盲带宽块定向(本地求解的是剥定向后的态,非同态)、sq1(近最优,无 solver 解列)、
@@ -147,15 +154,57 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stageOpts]);
 
+  // 实际可选步数范围:distribution.json 里当前 (方法,阶段,底色) 直方图的真实 min/max,
+  // 用作滑块端点。仅难度过滤开启时惰性拉(~429KB);拉到前 / 缺数据回退静态 [STEP_MIN, STEP_MAX]。
+  const [diffDist, setDiffDist] = useState<DiffDistJson | null>(null);
+  useEffect(() => {
+    if (!(canDifficulty && settings.wcaDifficultyOn) || diffDist) return;
+    let cancelled = false;
+    void fetch(statsUrl('/stats/scramble/distribution.json'))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (!cancelled && j?.sets) setDiffDist(j as DiffDistJson); })
+      .catch(() => { /* 拉不到 → 回退静态 0..14 */ });
+    return () => { cancelled = true; };
+  }, [canDifficulty, settings.wcaDifficultyOn, diffDist]);
+
+  // 整解(方法 '333')无配色维度,数据落伪子集 'ALL';其余按所选底色子集查直方图。
+  const effectiveDiffSubset = settings.wcaDiffVariant === '333' ? 'ALL' : diffSel.subsetKey;
+  const [stepLo, stepHi] = useMemo<[number, number]>(() => {
+    const h = diffDist?.sets?.wca?.variants?.[settings.wcaDiffVariant]?.data?.[settings.wcaDiffStage]?.[effectiveDiffSubset];
+    if (h && Number.isFinite(h.min) && Number.isFinite(h.max) && h.max >= h.min) return [h.min, h.max];
+    return [STEP_MIN, STEP_MAX];
+  }, [diffDist, settings.wcaDiffVariant, settings.wcaDiffStage, effectiveDiffSubset]);
+  // 刻度尽量标全整数;范围宽到标签会重叠时,按 nice 步长(1/2/5/10…)抽稀,始终含两端。
+  const stepMarks = useMemo(() => {
+    const span = stepHi - stepLo;
+    if (span <= 0) return [stepLo];
+    const MAX_LABELS = 16;
+    const stride = [1, 2, 5, 10, 20, 50].find((s) => Math.floor(span / s) + 1 <= MAX_LABELS) ?? span;
+    const marks: number[] = [];
+    for (let n = stepLo; n <= stepHi; n += stride) marks.push(n);
+    if (marks[marks.length - 1] !== stepHi) marks.push(stepHi);
+    return marks;
+  }, [stepLo, stepHi]);
+
   // 步数范围以连续区间 [lo, hi] 表示,落库仍是展开的步数列表(端点 / spec 不变)。
   const diffLo = settings.wcaDiffSteps.length ? settings.wcaDiffSteps[0] : DEFAULT_STEP_RANGE[0];
   const diffHi = settings.wcaDiffSteps.length ? settings.wcaDiffSteps[settings.wcaDiffSteps.length - 1] : DEFAULT_STEP_RANGE[1];
+  // 显示时夹进实际范围(切到端点更窄的方法/阶段/底色时即时收拢,滑块不越界)。
+  const shownLo = Math.min(Math.max(diffLo, stepLo), stepHi);
+  const shownHi = Math.max(Math.min(diffHi, stepHi), stepLo);
+
   // 难度开启但步数为空(首次开 / 历史遗留)→ 填默认区间,保证滑块与过滤口径一致。
   useEffect(() => {
     if (canDifficulty && settings.wcaDifficultyOn && settings.wcaDiffSteps.length === 0) {
       updateSettings({ wcaDiffSteps: stepRange(...DEFAULT_STEP_RANGE) });
     }
   }, [canDifficulty, settings.wcaDifficultyOn, settings.wcaDiffSteps.length, updateSettings]);
+  // 端点收窄后把已存的范围夹回去(持久化,过滤口径与滑块一致)。
+  useEffect(() => {
+    if (!(canDifficulty && settings.wcaDifficultyOn) || settings.wcaDiffSteps.length === 0) return;
+    if (shownLo !== diffLo || shownHi !== diffHi) updateSettings({ wcaDiffSteps: stepRange(shownLo, shownHi) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepLo, stepHi]);
 
   return (
     <div className="wca-src-config">
@@ -235,16 +284,16 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
                   </div>
                   <div className="wca-src-steps-range">
                     <span className="wca-src-steps-readout">
-                      {diffLo === diffHi
-                        ? tr({ zh: `${diffLo} 步`, en: `${diffLo} moves` })
-                        : tr({ zh: `${diffLo}–${diffHi} 步`, en: `${diffLo}–${diffHi} moves` })}
+                      {shownLo === shownHi
+                        ? tr({ zh: `${shownLo} 步`, en: `${shownLo} moves` })
+                        : tr({ zh: `${shownLo}–${shownHi} 步`, en: `${shownLo}–${shownHi} moves` })}
                     </span>
                     <RangeSlider
-                      min={STEP_MIN}
-                      max={STEP_MAX}
-                      value={[diffLo, diffHi]}
+                      min={stepLo}
+                      max={stepHi}
+                      value={[shownLo, shownHi]}
                       onChange={([a, b]) => updateSettings({ wcaDiffSteps: stepRange(a, b) })}
-                      marks={[STEP_MIN, 7, STEP_MAX]}
+                      marks={stepMarks}
                       ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
                     />
                   </div>

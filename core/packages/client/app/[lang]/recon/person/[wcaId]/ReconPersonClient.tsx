@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { LogOut, TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
@@ -39,6 +39,7 @@ const PAGE_SIZE = 60;
 
 export default function ReconPersonClient() {
   const params = useParams();
+  const router = useRouter();
   const wcaId = String(params?.wcaId ?? '');
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -134,6 +135,25 @@ export default function ReconPersonClient() {
 
   const displayed = filtered.slice(0, displayCount);
   const hasMore = filtered.length > displayCount;
+
+  // 整行可点 → 复盘详情(支持 Ctrl/中键新开),与 /recon 列表页一致;
+  // 行内已有 <a>(选手/比赛/角色)点击时不抢导航;非 Link 导航手动补 zh 前缀。
+  const detailUrl = useCallback((s: ReconSolve) => `${isZh ? '/zh' : ''}/recon/${reconPathSeg(s)}`, [isZh]);
+  const handleRowClick = useCallback((e: React.MouseEvent, s: ReconSolve) => {
+    if ((e.target as HTMLElement).closest('a')) return;
+    const url = detailUrl(s);
+    if (e.ctrlKey || e.metaKey) window.open(url, '_blank');
+    else router.push(url);
+  }, [router, detailUrl]);
+  const handleRowMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button === 1 && !(e.target as HTMLElement).closest('a')) e.preventDefault();
+  }, []);
+  const handleRowMouseUp = useCallback((e: React.MouseEvent, s: ReconSolve) => {
+    if (e.button !== 1) return;
+    if ((e.target as HTMLElement).closest('a')) return;
+    e.preventDefault();
+    window.open(detailUrl(s), '_blank');
+  }, [detailUrl]);
 
   const roleBadges = (r: RoleFlags) => {
     const out: { key: string; label: string }[] = [];
@@ -245,7 +265,12 @@ export default function ReconPersonClient() {
                     const compName = s.comp ? localizeCompName(s.compWcaId ?? '', s.comp, isZh) : '';
                     const compFlag = s.country ? <Flag iso2={s.country} className="recon-inline-flag" /> : null;
                     return (
-                      <tr key={s.id}>
+                      <tr
+                        key={s.id}
+                        onClick={(e) => handleRowClick(e, s)}
+                        onMouseDown={handleRowMouseDown}
+                        onMouseUp={(e) => handleRowMouseUp(e, s)}
+                      >
                         <td className="col-event">
                           {s.event
                             ? (isWcaEvent(s.event)

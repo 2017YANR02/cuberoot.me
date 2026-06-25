@@ -74,7 +74,9 @@ export function getPuzzleId(event: string): string {
 
 // ── Record class ──
 export function getRecordClass(val: string): string {
-  const v = val.toUpperCase();
+  // 女子纪录 F 前缀(YT 在 F 前)归一为对应非女子码,末尾排名数字也剥掉再上色:
+  // YTFWR→YTWR、FAsR→AsR、FWR2→WR、NR3→NR。
+  const v = val.toUpperCase().replace(/^YTF/, 'YT').replace(/^F(?=[A-Z])/, '').replace(/\d+$/, '');
   // Personal-best labels incl. average variants (timer: "PB", "PB AO5", "PB AO12").
   // Treat the whole PB/PR family as a personal record so they share one badge color.
   if (/^P[RB](\s|$)/.test(v)) return 'pr';
@@ -205,7 +207,10 @@ export const RECORD_OPTIONS: string[] = (() => {
   const base = ['WR', 'AsR', 'AfR', 'ER', 'NAR', 'OcR', 'SAR', 'NR', 'PR'];
   // 每个 R 结尾的码紧跟其 B 变体:WR, WB, AsR, AsB, …
   const withB = base.flatMap(c => (c.endsWith('R') ? [c, c.slice(0, -1) + 'B'] : [c]));
-  const types = [...withB, ...withB.map(t => 'YT' + t)];
+  // 女子纪录 F 前缀:除个人纪录(PR/PB)外每个码都有 F 变体,紧跟原码(WR, FWR, …)。
+  const withF = withB.flatMap(c => (/^P[RB]$/.test(c) ? [c] : [c, 'F' + c]));
+  // YT 变体;YT 与 F 同时出现时 YT 在前(YTFWR)。
+  const types = [...withF, ...withF.map(t => 'YT' + t)];
   const prefixes = ['', 'cancelled '];
   const out: string[] = [];
   for (const p of prefixes) for (const t of types) out.push(p + t);
@@ -222,8 +227,8 @@ const RECORD_TO_CONTINENT: Record<string, string> = {
  */
 export function isRecordCodeAllowedFor(code: string, personIso2: string | null | undefined): boolean {
   if (!code) return true;
-  // 归一:剥 cancelled / YT 前缀,B 后缀视同对应 R 后缀(AsB 同 AsR 受大洲约束)。
-  const core = code.replace(/^cancell?ed?\s+/i, '').trim().replace(/^YT/, '').replace(/B$/, 'R');
+  // 归一:剥 cancelled / YT / F(女子)前缀,B 后缀视同对应 R 后缀(AsB 同 AsR 受大洲约束)。
+  const core = code.replace(/^cancell?ed?\s+/i, '').trim().replace(/^YT/, '').replace(/^F/, '').replace(/B$/, 'R');
   const cont = RECORD_TO_CONTINENT[core];
   if (!cont) return true;
   if (!personIso2) return true;

@@ -28,6 +28,8 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
   // 管理员「编辑模式」:开 → 点无复盘成绩进行内编辑;关(默认)→ 和访客一样点击跳 /recon/submit 复盘。
   // (开关 UI 在各视图「全部成绩」标题右侧;admin 判定在子视图内做)
   const [editMode, setEditMode] = useState(false);
+  // 「详细成绩」逐把 PR 名次角标的显示开关(默认开;开关 UI 在各视图「全部成绩」标题右侧)。
+  const [showAttemptRanks, setShowAttemptRanks] = useState(true);
   // 子 tab(按项目 / 按比赛)+ 选中项目均为页内瞬时态 → replace,不堆历史
   const [q, setQ] = useQueryStates(
     { sub: parseAsString, event: parseAsString },
@@ -96,10 +98,12 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
             isZh={isZh}
             editMode={editMode}
             onToggleEditMode={() => setEditMode((v) => !v)}
+            showAttemptRanks={showAttemptRanks}
+            onToggleAttemptRanks={() => setShowAttemptRanks((v) => !v)}
           />
         )}
         {sub === 'comp' && (
-          <ByCompList wcaId={profile.person.wca_id} personName={profile.person.name} personCountry={profile.person.country_iso2} results={mResults} comps={mComps} reconLookup={reconLookup} isZh={isZh} editMode={editMode} onToggleEditMode={() => setEditMode((v) => !v)} />
+          <ByCompList wcaId={profile.person.wca_id} personName={profile.person.name} personCountry={profile.person.country_iso2} results={mResults} comps={mComps} reconLookup={reconLookup} isZh={isZh} editMode={editMode} onToggleEditMode={() => setEditMode((v) => !v)} showAttemptRanks={showAttemptRanks} onToggleAttemptRanks={() => setShowAttemptRanks((v) => !v)} />
         )}
       </Suspense>
     </div>

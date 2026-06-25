@@ -18,15 +18,46 @@ import { lookupZblsAlgs, lookupZblsAlgsBrute } from './zbls_lookup';
 import { F2L_SLOT_DEFS as _SLOTS_FOR_BRUTE } from './stage_detect';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
 
+/** Invert a space-separated move sequence (reverse order + flip each move). */
+function invertSeq(seq: string): string {
+  return seq.trim().split(/\s+/).filter(Boolean).reverse().map(tok => {
+    const m = /^([A-Za-z]+)(\d*)('?)$/.exec(tok);
+    if (!m) return tok;
+    const [, base, digit, prime] = m;
+    if (digit === '2') return base + '2';           // 自反,方向无关
+    return base + digit + (prime ? '' : "'");        // 翻转方向
+  }).join(' ');
+}
+
+/**
+ * Expand grouped repeats so cubing.js sees plain moves:
+ *   `(R' F R F')2` → `R' F R F' R' F R F'`、`(R U)2'` → 逆序重复、`(R U)` → 去括号。
+ * 不展开会被下面的 paren-strip 砍成悬空数字 `R' F R F' 2`,cubing.js 解析失败 → 整条建议失效。
+ * 循环处理一层嵌套(由内向外),非贪婪匹配最内层 `(...)`。
+ */
+function expandGroups(text: string): string {
+  let cur = text;
+  for (let guard = 0; guard < 8; guard++) {
+    const next = cur.replace(/\(([^()]*)\)\s*(\d*)\s*('?)/g, (_m, inner: string, countStr: string, prime: string) => {
+      const count = countStr ? parseInt(countStr, 10) : 1;
+      const seq = prime ? invertSeq(inner) : inner.trim();
+      return Array.from({ length: Math.max(0, count) }, () => seq).join(' ');
+    });
+    if (next === cur) break;
+    cur = next;
+  }
+  return cur;
+}
+
 /** Strip comments + paren grouping, return a string with only move tokens. */
 export function movesOnly(text: string): string {
-  return text
+  return expandGroups(text
     .split('\n')
     .map(line => {
       const i = line.indexOf('//');
       return (i >= 0 ? line.substring(0, i) : line);
     })
-    .join(' ')
+    .join(' '))
     // Strip anything that isn't a valid alg-token char. Catches parens,
     // regrip arrows (↑↓), middle dot (·), ellipsis (... / …), and any other
     // annotation. Kept: ASCII letters / digits / apostrophe / whitespace.
@@ -50,6 +81,48 @@ export function lineRange(text: string, idx: number): { start: number; end: numb
   let e = idx;
   while (e < text.length && text[e] !== '\n') e++;
   return { start: s, end: e };
+}
+
+/** cross 已建立的阶段(非 none / 非 pscross)。 */
+function crossDone(stage: string): boolean {
+  return stage !== 'none' && stage !== 'pscross';
+}
+
+/**
+ * 「cancel into」prev 修正:计算用于解读「当前行」的 effective prev pattern。
+ *
+ * 正常每行结尾 cross 都在;但 cancel-into 行会故意留一两步、把 cross 边翻上去,靠下一行首动
+ * 抵消补回 —— 于是上一行结尾 cross 是断的。这种情况下,直接拿「scramble+prevMoves」当 prev 会
+ * 让下一行把"被 cancel 的那把"和"真正新解的那把"一起算成 xxcross。
+ *
+ * 修正:仅当①上一行结尾 cross 断了、且②再上一行结尾 cross 已建立(说明这是 cancel-into 而非
+ * 还没拼出 cross)时,把当前行的前缀逐步并入 prev,直到 cross 复原 —— 此时被 cancel 的那把已
+ * 计入 prev,当前行只会被记成真正新解的 pair。其余情况返回原始 prev。
+ */
+export async function resolveEffectivePrev(
+  scramble: string,
+  prevMoves: string,
+  lineMoves: string,
+  linesBefore: string,
+): Promise<KPattern> {
+  const prevPattern = await patternFromAlg([scramble, prevMoves].filter(Boolean).join(' '));
+  const ps = await detectStage(prevPattern);
+  if (crossDone(ps.stage)) return prevPattern;
+
+  // 再上一行边界:linesBefore 去尾换行后,最后一个 '\n' 之前即"上一行之前"的全部内容。
+  const lb = linesBefore.replace(/\n+$/, '');
+  const lastNl = lb.lastIndexOf('\n');
+  const beforePrev = lastNl >= 0 ? lb.substring(0, lastNl) : '';
+  const beforePrevPattern = await patternFromAlg([scramble, movesOnly(beforePrev)].filter(Boolean).join(' '));
+  if (!crossDone((await detectStage(beforePrevPattern)).stage)) return prevPattern;
+
+  // cancel-into:并入当前行前缀,直到 cross 复原(被 cancel 的那把就在此刻补完)。
+  const tokens = lineMoves.split(/\s+/).filter(Boolean);
+  for (let k = 1; k <= tokens.length; k++) {
+    const st = await patternFromAlg([scramble, prevMoves, tokens.slice(0, k).join(' ')].filter(Boolean).join(' '));
+    if (crossDone((await detectStage(st)).stage)) return st;
+  }
+  return prevPattern;
 }
 
 export interface AlgSuggestion {

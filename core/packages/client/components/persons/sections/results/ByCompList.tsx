@@ -17,6 +17,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { EditModeToggle } from './EditModeToggle';
+import { AttemptRanksToggle } from './AttemptRanksToggle';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, splitChainByStatus } from '@/lib/result-watch-api';
@@ -60,11 +61,13 @@ interface Props {
   isZh: boolean;
   editMode?: boolean;
   onToggleEditMode?: () => void;
+  showAttemptRanks?: boolean;
+  onToggleAttemptRanks?: () => void;
 }
 
 // 轮次显示元数据走 utils/wca_round_meta (ByEventView / 复盘页同场比赛表也用)
 
-export default function ByCompList({ wcaId, personName, personCountry, results, comps, reconLookup, isZh, editMode, onToggleEditMode }: Props) {
+export default function ByCompList({ wcaId, personName, personCountry, results, comps, reconLookup, isZh, editMode, onToggleEditMode, showAttemptRanks = true, onToggleAttemptRanks }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
   const myWcaId = useAuthStore((s) => s.user?.wcaId);
@@ -149,9 +152,12 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
 
   return (
     <div className="wp-bycomp">
-      {canEdit && onToggleEditMode && (
+      {(onToggleAttemptRanks || (canEdit && onToggleEditMode)) && (
         <div className="wp-section-h-row wp-section-h-row-bare">
-          <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} propose={!admin} />
+          <span className="wp-section-h-tools">
+            {onToggleAttemptRanks && <AttemptRanksToggle active={showAttemptRanks} onToggle={onToggleAttemptRanks} />}
+            {canEdit && onToggleEditMode && <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} propose={!admin} />}
+          </span>
         </div>
       )}
       {/* 合并成单表:列头只在表顶出现一次并 sticky 悬浮(仿纪录 tab);每场比赛 = 一个 <tbody> 组,
@@ -306,6 +312,8 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             compDate={comp.start_date}
                             attemptOlds={effAttempts.map((_, i) => attemptOldValues(chain, i))}
                             penalties={effectiveAttemptPenalties(chain)}
+                            attemptRanks={showAttemptRanks ? (rank?.attemptRanks ?? null) : null}
+                            singleRecord={showAttemptRanks ? singleRecord : null}
                             onEdit={(index, newValue, note) =>
                               recordAttemptEdit({
                                 target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
