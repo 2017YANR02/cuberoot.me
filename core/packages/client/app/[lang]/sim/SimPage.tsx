@@ -372,7 +372,10 @@ export default function SimPage() {
     });
     renderer.autoClear = false;
     renderer.setClearColor(0xffffff, 0);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    // Render at ≥2× device pixels (supersampled) so high-contrast tilted edges — e.g. the
+    // megaminx's bold black seams against white/colour faces — don't stairstep on 1× displays
+    // where 4×MSAA alone isn't enough. Capped at 2.5× to bound fill cost on hi-DPI screens.
+    renderer.setPixelRatio(Math.min(Math.max(window.devicePixelRatio, 2), 2.5));
     rendererRef.current = renderer;
 
     container.appendChild(renderer.domElement);

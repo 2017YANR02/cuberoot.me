@@ -246,7 +246,7 @@ export default function GroupTheoryPanel({
               </dd>
             </div>
 
-            <div className="gt-row">
+            <div className="gt-row gt-row-block">
               <dt>{t('无约束总数', 'Reassembly')}</dt>
               <dd className="gt-mono">{grp(facts.reassembly)}</dd>
             </div>
