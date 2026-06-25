@@ -24,6 +24,8 @@
 
 ## 步骤
 
+> **标准入口(2026-06-25 起)**:`core/packages/scramble-stats-build/update_cross_stats.ps1 -Jobs 333opt` 已集成 **5a 求解(solve_loop 续跑补齐)→ 5b inject → export**。直接跑 ps1 即可端到端;`-SkipSolve333` 只 inject 不求解。下面的手动分步仍可单独跑(调试/分阶段)。
+
 ```bash
 # CWD = solver/333opt/ —— 默认即生产:opt9 15G + in-proc 12 线程 + 按 id 续跑
 node solve_loop.mjs   # ★全量用这个★ 自动重启 wrapper(见下「unwind 崩溃」)。内部反复跑 solve.mjs 12 直到全量完

@@ -5,7 +5,8 @@
 # 一条龙(默认):pwsh update_cross_stats.ps1          (= -Jobs all: stages 3x3阶段难度 + 333opt 整解最优 + puzzles 非3x3, 共享一次发布)
 # 只跑某作业:  pwsh update_cross_stats.ps1 -Jobs 333opt        (任选 stages/333opt/puzzles; 多个: -Jobs stages,puzzles)
 # 选 puzzle:   pwsh update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1
-#   注: 333opt 只做 inject(折当前 solver/333opt/out.*.csv); 那条 ~3.5 天全量求解仍是独立后台 `node solve_loop.mjs`。
+#   注: 333opt = 先求解(solve_loop 把 master 池没解的 333 整解最优补齐, 续跑可断点)再 inject(折 out.0.csv)。
+#       首次全量 ~3.5 天(15G opt9 表, 12 线程, ~4/s), 之后每次只补增量缺口(快)。只想 inject 不求解加 -SkipSolve333。
 #   注: stages 的 build 会覆写 distribution/examples 的 '333' 变体, 故 stages 一跑脚本会自动补 333 inject 还原(免手动)。
 # 强制向导:    pwsh update_cross_stats.ps1 -Interactive   (取数前问 TSV 来源, 取数后问: 跑哪些变体 / 每变体几块 / 是否发布)
 # 用本地缓存:  pwsh update_cross_stats.ps1 -UseCached     (取数不联网, 用 cache/ 最新 export zip)
@@ -27,6 +28,7 @@ param(
   [string]$SourceCsv,     # 测试源 (input 形状 csv) 替代下载 export
   [switch]$NoPublish,     # 跑完只更新本地 csv + JSON, 不 commit/push/scp
   [switch]$SkipSolve,     # 调试: 跳过 incremental + std 解算, 复用上次取数/solver 产出, 直接走追加/变体/发布
+  [switch]$SkipSolve333,  # 跳过 333opt 整解最优求解(solve_loop), 只 inject 当前 out.0.csv(快路径: 已解部分直接发布)
   [string[]]$Variants = @('eo','pseudo','pseudo_pair','pair','f2leo','pseudo_f2leo','222','roux','223','eoline','dr','f2b'),  # 跟 std 锁步补缺的全部 12 变体 (@()=只 std)。瓶颈始终是 eo ~0.9/s; 想快跑显式 -Variants eo,pseudo,pseudo_pair 跳过重型
   [int]$ChunkSize = 20000, # 显式传则覆盖所有变体的分块大小; 不传则用每变体默认(见 $VARIANT_CHUNK: eo/pair=2000, 其余=20000)。逐块追加, 中断只丢当前块
   [int]$MaxChunks = 0,     # >0: 每个变体最多跑 N 块就停, 之后照常重算+发布(还差的下次 run 自动续)。0=补满。用于"只跑一两块"而无需人工盯/中途 kill
@@ -814,6 +816,25 @@ if($stdChanged -or $variantChanged){
       if($LASTEXITCODE -ne 0){ throw 'build:recent-scrambles 失败' }
     }
   } finally { Pop-Location }
+}
+
+# ---- 5a. 333opt 整解最优 全量求解 (solve_loop: 把 master 池没解的 333 整解最优补齐, 再由 5b inject) ----
+# 续跑: out.0.csv 已有 id 自动跳过, 全解时 solve_loop 秒退(不载 15G 表)。-SkipSolve333 跳过只 inject。
+# BelowNormal(本 ps1 顶部已设, 子 node 继承)+ 12 线程 in-proc(solve_loop 钉死)。15G opt9 表需 ~16G 空闲。
+if($run333opt -and -not $SkipSolve333){
+  $opt333Dir = Join-Path $SolverDir '333opt'
+  $solveLoop = Join-Path $opt333Dir 'solve_loop.mjs'
+  if(Test-Path $solveLoop){
+    $freeGB = (Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory/1MB
+    if($freeGB -lt 16){ Write-Host ("[333opt-solve] 警告: 空闲内存 {0:N1}G (<16G), 15G 表可能换页变慢(别让它写 C 盘)。" -f $freeGB) -ForegroundColor Yellow }
+    Step '5a 333 整解最优全量求解 — node solver/333opt/solve_loop.mjs (续跑; 首次全量~3.5天, 增量缺口快; 已全解则秒退)'
+    Push-Location $opt333Dir
+    try { node solve_loop.mjs; $solveRc = $LASTEXITCODE } finally { Pop-Location }
+    if($solveRc -eq 2){ throw '333opt solve_loop 连续 3 次零进展, 已停下报警(unwind/表加载问题)。未 inject 半成品, 请人工查。' }
+    if($solveRc -ne 0){ throw "333opt solve_loop 失败 (rc=$solveRc)" }
+  } else {
+    Write-Host '[333opt-solve] 无 solve_loop.mjs, 跳过求解(仍尝试 inject 现有 out.0.csv)。' -ForegroundColor DarkGray
+  }
 }
 
 # ---- 5b. 333opt inject (必须在 stages build 之后: build 会覆写 distribution/examples 的 '333' 变体, 这里还原/更新) ----
