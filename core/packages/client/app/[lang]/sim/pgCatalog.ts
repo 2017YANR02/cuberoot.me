@@ -51,8 +51,9 @@ export const PG_PUZZLES = [
   { id: 'emperorpyraminx',  def: 't v -0.428571428571429 v 0.142857142857143 v 0.714285714285714 v 1.28571428571429 v 1.85714285714286 v 2.42857142857143', zh: '帝王金字塔', en: 'Emperor Pyraminx', icon: 'unofficial-mpyram' },
   { id: 'emperortetraminx', def: 't v -0.428571428571429 v 0.142857142857143 v 0.714285714285714 v 1.28571428571429 v 1.85714285714286', zh: 'Emperor Tetraminx', en: 'Emperor Tetraminx', icon: 'unofficial-mtetram' },
   { id: 'jingpyraminx',     def: 't f 0',                  zh: 'Jing Pyraminx', en: 'Jing Pyraminx',  icon: 'event-pyram' },
-  // octa (o)
-  { id: 'fto',              def: 'o f 0.333333333333333',  zh: 'FTO',        en: 'FTO',               icon: 'unofficial-fto' },
+  // octa (o) — FTO is promoted to a first-class /sim engine kind (dual renderer); see
+  // PlayerControls SimPuzzle + ENGINE_TWISTY. Its cubing.js `def` lives in SimPage's
+  // ENGINE_TWISTY_DEF, fed to TwistyPlayer.experimentalPuzzleDescription as before.
   { id: 'masterfto',        def: 'o f 0.5 f 0',            zh: 'Master FTO', en: 'Master FTO',        icon: 'unofficial-fto' },
   { id: 'skewbdiamond',     def: 'o f 0',                  zh: 'Skewb Diamond', en: 'Skewb Diamond',  icon: 'unofficial-fto' },
   { id: 'christophersjewel', def: 'o v 0.577350269189626', zh: "Christopher's Jewel", en: "Christopher's Jewel", icon: 'unofficial-fto' },

@@ -160,7 +160,7 @@ function mapFrames(v: number): number { return Math.max(3, Math.round(60 - (v / 
 /** The in-house Three.js engine puzzles (everything that is NOT an order-N NxN cube).
  *  Their geometry is baked at construction with no InstancedRenderer, so style toggles
  *  (立体贴片 / 镂空 / structure colors) are applied generically off userData tags. */
-const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'ivy', 'dino', 'redi', 'rex', 'heli', 'skewb', 'pyraminx', 'megaminx']);
+const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'ivy', 'dino', 'redi', 'rex', 'heli', 'skewb', 'pyraminx', 'megaminx', 'fto']);
 
 export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
