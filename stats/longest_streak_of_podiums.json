@@ -38,7 +38,7 @@
   ],
   "rows": [
     [
-      119,
+      120,
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "3x3x3 Cube",
       "[Cubing in Cill Chainnigh 2019](https://www.worldcubeassociation.org/competitions/CubinginCillChainnigh2019)",
@@ -143,7 +143,7 @@
       null
     ],
     [
-      69,
+      70,
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "4x4x4 Cube",
       "[Kubsala Winter 2023](https://www.worldcubeassociation.org/competitions/KubsalaWinter2023)",
@@ -178,6 +178,13 @@
       "[WCA Asian Championship 2018](https://www.worldcubeassociation.org/competitions/AsianChampionship2018)"
     ],
     [
+      64,
+      "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
+      "7x7x7 Cube",
+      "[YJ Malaysia Cube Open 2022](https://www.worldcubeassociation.org/competitions/YJMalaysiaCubeOpen2022)",
+      null
+    ],
+    [
       63,
       "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
       "7x7x7 Cube",
@@ -190,13 +197,6 @@
       "7x7x7 Cube",
       "[Cubing in Cill Chainnigh 2019](https://www.worldcubeassociation.org/competitions/CubinginCillChainnigh2019)",
       "[SzczeciNxN 2026](https://www.worldcubeassociation.org/competitions/SzczeciNxN2026)"
-    ],
-    [
-      63,
-      "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
-      "7x7x7 Cube",
-      "[YJ Malaysia Cube Open 2022](https://www.worldcubeassociation.org/competitions/YJMalaysiaCubeOpen2022)",
-      null
     ],
     [
       63,
@@ -389,6 +389,13 @@
     ],
     [
       52,
+      "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
+      "Square-1",
+      "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
+      null
+    ],
+    [
+      52,
       "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
       "Pyraminx",
       "[Chengdu Flash Cube Open 2023](https://www.worldcubeassociation.org/competitions/ChengduFlashCubeOpen2023)",
@@ -399,13 +406,6 @@
       "[Vicenzo Guerino Cecchini](https://www.worldcubeassociation.org/persons/2015CECC01)",
       "Square-1",
       "[Big Pine Open 2015](https://www.worldcubeassociation.org/competitions/BigPineOpen2015)",
-      null
-    ],
-    [
-      51,
-      "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
-      "Square-1",
-      "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
       null
     ],
     [
@@ -509,14 +509,14 @@
     [
       43,
       "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
-      "5x5x5 Cube",
+      "6x6x6 Cube",
       "[Full Steps in Brest 2016](https://www.worldcubeassociation.org/competitions/FullStepsinBrest2016)",
       "[Project Kedzierzyn-Kozle 2021](https://www.worldcubeassociation.org/competitions/ProjectKedzierzynKozle2021)"
     ],
     [
       43,
       "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
-      "6x6x6 Cube",
+      "5x5x5 Cube",
       "[Full Steps in Brest 2016](https://www.worldcubeassociation.org/competitions/FullStepsinBrest2016)",
       "[Project Kedzierzyn-Kozle 2021](https://www.worldcubeassociation.org/competitions/ProjectKedzierzynKozle2021)"
     ],
@@ -626,6 +626,13 @@
       "[OH in a Madison Ballroom 2023](https://www.worldcubeassociation.org/competitions/OHinaMadisonBallroom2023)"
     ],
     [
+      41,
+      "[Tomasz Pietruszka](https://www.worldcubeassociation.org/persons/2021PIET01)",
+      "Megaminx",
+      "[Żory Open 2024](https://www.worldcubeassociation.org/competitions/ZoryOpen2024)",
+      null
+    ],
+    [
       40,
       "[Marcin Kowalczyk](https://www.worldcubeassociation.org/persons/2011KOWA01)",
       "3x3x3 Multi-Blind",
@@ -659,13 +666,6 @@
       "Megaminx",
       "[New Zealand Nationals 2019](https://www.worldcubeassociation.org/competitions/NewZealandNationals2019)",
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
-    ],
-    [
-      40,
-      "[Tomasz Pietruszka](https://www.worldcubeassociation.org/persons/2021PIET01)",
-      "Megaminx",
-      "[Żory Open 2024](https://www.worldcubeassociation.org/competitions/ZoryOpen2024)",
-      null
     ],
     [
       39,
@@ -710,6 +710,13 @@
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
     ],
     [
+      39,
+      "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
+      "4x4x4 Blindfolded",
+      "[Rubik's UK Championship 2023](https://www.worldcubeassociation.org/competitions/RubiksUKChampionship2023)",
+      null
+    ],
+    [
       38,
       "[Witali Bułatow](https://www.worldcubeassociation.org/persons/2015BUAT01)",
       "3x3x3 Multi-Blind",
@@ -722,13 +729,6 @@
       "3x3x3 Cube",
       "[Fairview Cube Day 2018](https://www.worldcubeassociation.org/competitions/FairviewCubeDay2018)",
       "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
-    ],
-    [
-      38,
-      "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
-      "4x4x4 Blindfolded",
-      "[Rubik's UK Championship 2023](https://www.worldcubeassociation.org/competitions/RubiksUKChampionship2023)",
-      null
     ],
     [
       38,
