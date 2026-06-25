@@ -17,8 +17,9 @@
  */
 import * as THREE from 'three';
 import { SIZE } from '../define';
-import { FACE_NORMAL, CORNER_FACES, EDGE_FACES } from './megaState';
+import { FACE_NORMAL, FACE_NAME, CORNER_FACES, EDGE_FACES } from './megaState';
 import { roundedSolid, polytopeVerts, type Plane } from '../polytopeCut';
+import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import {
   offsetInward, roundCorners, extrudeOntoFace, makeSticker, polyArea2, type V2,
 } from '../stickerGeom';
@@ -31,25 +32,21 @@ const CUT = R_IN * 0.7;
 const BODY_ROUND = 2.5;        // body corner/edge round radius (world units)
 const STICKER_LIFT = 0.6;      // raise above body face to clear z-fighting
 const STICKER_DEPTH = 3.5;     // extruded thickness → raised "pillow"
-const STICKER_INSET = SIZE * 0.022;  // inward groove width (world units) — thin megaminx seam
-const STICKER_ROUND = SIZE * 0.04;   // corner-round setback (world units)
-const BODY_COLOR = 0x141414;
+const STICKER_INSET = SIZE * 0.04;   // inward groove width (world units) — bold megaminx seam
+// Corner-round setback. MUST stay comfortably larger than STICKER_INSET: offsetInward shrinks
+// the rounded corner's arc by INSET, so if the arc radius ≤ INSET the arc inverts into an
+// outward spike (skill pitfall #12). Keeping ROUND ≈ 2.3× INSET leaves margin at acute corners.
+const STICKER_ROUND = SIZE * 0.09;
+const BODY_COLOR = 0x0a0a0a;         // near-black so the bold grooves read as crisp twizzle seams
 
-// Standard 12-color megaminx scheme, indexed by face (U,F,L,BL,BR,R,C,A,I,BF,E,D).
-const MEGA_COLORS = [
-  0xf5f5f5, // 0  U  white
-  0x1fa82a, // 1  F  green
-  0x7e3fbf, // 2  L  purple
-  0xf7d108, // 3  BL yellow
-  0x1565e0, // 4  BR blue
-  0xe02424, // 5  R  red
-  0x9aa0a6, // 6  C  gray
-  0x8ce060, // 7  A  light green
-  0xf08000, // 8  I  orange
-  0xff7fb0, // 9  BF pink
-  0x36c5e8, // 10 E  sky
-  0xc9a26a, // 11 D  tan
-];
+// Megaminx face colours = the EXACT cubing.js / twizzle scheme. The dodecahedron is the
+// 12-face platonic solid, so its colours are the vendored puzzle-geometry's `12` scheme,
+// pulled by face name into our FACE_NAME order — same source twizzle renders from, so every
+// face matches twizzle.net pixel-for-pixel (U white, F dark green, L purple, … D gray).
+const PG_DODECA_SCHEME = defaultPlatonicColorSchemes()[12] as Record<string, string>;
+const MEGA_COLORS: number[] = FACE_NAME.map(
+  (name) => parseInt(PG_DODECA_SCHEME[name].slice(1), 16),
+);
 
 // ── materials ─────────────────────────────────────────────────────────────────────
 const bodyMat = new THREE.MeshPhongMaterial({
