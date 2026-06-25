@@ -4,11 +4,14 @@
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
-  padding-top: 0.85rem;
+  /* Horizontal padding matches the sibling .sim-puzzle-body (12px) so the content lines up
+     with the controls above instead of sitting flush against the aside edges. */
+  padding: 0.85rem 12px 0.85rem;
   border-top: 1px solid var(--border-default);
   color: var(--foreground);
   font-size: 0.82rem;
   line-height: 1.4;
+  min-width: 0;
 }
 
 .gt-head {
@@ -27,13 +30,16 @@
 
 .gt-loading { color: var(--muted-foreground); }
 
-.gt-order { display: flex; flex-direction: column; gap: 0.1rem; }
+.gt-order { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .gt-order-num {
   font-family: var(--font-mono);
-  font-size: 1.45rem;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--foreground);
+  /* The dodecahedron's |G| is a 68-digit number — wrap it instead of overflowing the panel. */
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 .gt-order-lbl { color: var(--muted-foreground); font-size: 0.75rem; }
 .gt-order-sub {
@@ -50,11 +56,12 @@
   gap: 0.75rem;
 }
 .gt-row > dt { color: var(--muted-foreground); white-space: nowrap; }
-.gt-row > dd { margin: 0; text-align: right; }
+.gt-row > dd { margin: 0; text-align: right; min-width: 0; }
 .gt-row-block { flex-direction: column; align-items: stretch; gap: 0.3rem; }
 .gt-row-block > dd { text-align: left; }
 
-.gt-mono { font-family: var(--font-mono); }
+/* Mono numerics (reassembly etc.) can be enormous — let them wrap, never overflow. */
+.gt-mono { font-family: var(--font-mono); overflow-wrap: anywhere; }
 .gt-dim { color: var(--muted-foreground); }
 
 .gt-orbits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; }
