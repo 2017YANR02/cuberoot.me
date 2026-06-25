@@ -113,6 +113,13 @@
   display: flex;
   flex-direction: column;
 }
+/* Borderless sections (house style, matches .gt-panel): a single top hairline
+   separates stacked panels instead of wrapping each in a card. The first section
+   gets no line (it sits at the panel top). .sim-player / .gt-panel already declare
+   the same border-top — identical rule, renders as one line, no doubling. */
+.sim-side > * + * {
+  border-top: 1px solid var(--border-default);
+}
 
 /* 窄屏:cube 在上,面板在下;面板限高,可滚动 */
 @media (max-width: 767px) {
