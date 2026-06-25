@@ -13,7 +13,7 @@ use wasm_bindgen::prelude::*;
 use crate::block222_solver::{block_label, Block222Solver, Y_NAMES};
 use crate::block223_solver::{block223_label, Block223Solver};
 use crate::chain_solver::{chain_json, parse_chain_config, ChainSolver};
-use crate::cross_restrict_solver::{CrossRestrictSolver, MOVE_NAMES_54};
+use crate::cross_restrict_solver::{CrossRestrictSolver, MOVE_NAMES_54, ROTS_FACE};
 use crate::cross_solver::CrossSolver;
 use crate::xcross_restrict_solver::XCrossRestrictSolver;
 use crate::cube_common::{state_space, string_to_alg, MOVE_NAMES};
@@ -1754,10 +1754,16 @@ impl XCrossRestrictSolverWasm {
                     .collect(),
             )
         };
-        // 流式回调:每枚举到一条解即格式化(54-move 记号,c 恒空串)后 call 进 JS。
+        // 视角前缀:解是在 conjugate(scramble, ROTS_FACE[face]) 上求的,真机须先转到该帧。
+        // 与全站其他求解器约定一致(`.m` 含视角前缀);face 0 前缀为空。len 不含前缀(旋转免费)。
+        let pfx = ROTS_FACE[(face as usize).min(5)];
+        let with_pfx = |body: String| -> String {
+            if pfx.is_empty() { body } else { format!("{} {}", pfx, body) }
+        };
+        // 流式回调:每枚举到一条解即格式化(54-move 记号 + 视角前缀,c 恒空串)后 call 进 JS。
         let mut emit = |seq: &[usize]| {
-            let m = seq.iter().map(|&x| MOVE_NAMES_54[x]).collect::<Vec<_>>().join(" ");
-            emit_sol(on_sol, &m, "", seq.len());
+            let body = seq.iter().map(|&x| MOVE_NAMES_54[x]).collect::<Vec<_>>().join(" ");
+            emit_sol(on_sol, &with_pfx(body), "", seq.len());
         };
         let sols = self.solver.solve_xcross_restricted_enum_budgeted(
             &sc, face as usize, allowed, max_rot_count, extra, cap as usize, XCR_NODE_LIMIT,
@@ -1771,7 +1777,7 @@ impl XCrossRestrictSolverWasm {
             .iter()
             .map(|s| {
                 (
-                    s.iter().map(|&m| MOVE_NAMES_54[m]).collect::<Vec<_>>().join(" "),
+                    with_pfx(s.iter().map(|&m| MOVE_NAMES_54[m]).collect::<Vec<_>>().join(" ")),
                     String::new(),
                 )
             })

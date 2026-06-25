@@ -85,42 +85,7 @@ const ROT_FACE_PERM: [[u8; 6]; 3] = [
     [3, 2, 0, 1, 4, 5], // z
 ];
 
-/// 每个 face(0=U..5=B)的 4 角 + 4 棱(home 槽位)。由 cube_common 几何(探针)得到。
-const FACE_CORNERS: [[usize; 4]; 6] = [
-    [0, 1, 2, 3], // U
-    [4, 5, 6, 7], // D
-    [0, 3, 4, 7], // L
-    [1, 2, 5, 6], // R
-    [2, 3, 6, 7], // F
-    [0, 1, 4, 5], // B
-];
-const FACE_EDGES: [[usize; 4]; 6] = [
-    [4, 5, 6, 7],   // U
-    [8, 9, 10, 11], // D
-    [0, 3, 7, 11],  // L
-    [1, 2, 5, 9],   // R
-    [2, 3, 6, 10],  // F
-    [0, 1, 4, 8],   // B
-];
-/// 三个中层 slice 的 4 条棱:M(L-R 之间)、E(U-D)、S(F-B)。
-const SLICE_M_EDGES: [usize; 4] = [4, 6, 8, 10];
-const SLICE_E_EDGES: [usize; 4] = [0, 1, 2, 3];
-const SLICE_S_EDGES: [usize; 4] = [5, 7, 9, 11];
-
 // ---------- 物理 54-move 全 cube State 算子构建 ----------
-
-/// 把一个旋转「限制」到 moving cubie(face 层 + 平行中层 / 中层棱),其余恒等。
-/// rot 把这些 cubie 在自身集合内置换(旋转保持各层 setwise),故直接拷 rot 的值即得合法 partial。
-fn partial(rot: &State, mc: &[usize], me: &[usize]) -> State {
-    let mut s = State::SOLVED;
-    for &i in mc {
-        s.corners[i] = rot.corners[i];
-    }
-    for &i in me {
-        s.edges[i] = rot.edges[i];
-    }
-    s
-}
 
 #[inline]
 fn st(c: [u8; 8], e: [u8; 12]) -> State {
@@ -134,9 +99,12 @@ fn st(c: [u8; 8], e: [u8; 12]) -> State {
 /// 返回 (ops[54], center_perm[54])。center_perm[m][i] = 中心向量在 m 下:new_center[i]=center[perm[i]]。
 fn build_phys_moves() -> ([State; 54], [[u8; 6]; 54]) {
     // 旋转 base 与逆 / 幂。
-    let x = st(ROT_X.0, ROT_X.1);
-    let y = st(ROT_Y.0, ROT_Y.1);
-    let z = st(ROT_Z.0, ROT_Z.1);
+    // 注意:ROT_X/Y/Z 常量实际编码的是 x'/y'/z'(其 face_perm 给 new_U=old_B 等 = 逆向旋转,
+    // 锚点:已验证的 MOVE_STATES[U] 为 UF→UL ⇒ 真 y(U 向)= F→L,而 ROT_Y 面置换给 F→R = y')。
+    // 故此处取逆得到几何正确的 x/y/z,使下游宽动/中层/旋转算子与 MOVE_NAMES_54 记号一致。
+    let x = st(ROT_X.0, ROT_X.1).inverse();
+    let y = st(ROT_Y.0, ROT_Y.1).inverse();
+    let z = st(ROT_Z.0, ROT_Z.1).inverse();
     let comp = |a: &State, b: &State| a.compose(b);
     let pow = |b: &State, n: u32| {
         let mut s = State::SOLVED;
@@ -156,29 +124,20 @@ fn build_phys_moves() -> ([State; 54], [[u8; 6]; 54]) {
         ops[m] = MOVE_STATES[m];
     }
 
-    // 18..36 wide:每档 (轴旋转 base, 该 wide 的活动角/棱)。base 为该 wide「1 次」的旋转,
-    // 2/' 变体 = base 自复合(在活动集合内)。活动集 = face 层角棱 + 平行 slice 棱。
-    // 顺序与 MOVE_NAMES_54:u(18) d(21) l(24) r(27) f(30) b(33),每个 1/2/'。
-    // u→y(U 面顺时针=y),d→y',l→x',r→x,f→z,b→z'(方向由「该 wide 与对应整体旋转同手性」定)。
-    let wide_defs: [(State, usize); 6] = [
-        (y.clone_state(), 0),  // u  → face U(0)
-        (yi.clone_state(), 1), // d  → face D(1)
-        (xi.clone_state(), 2), // l  → face L(2)
-        (x.clone_state(), 3),  // r  → face R(3)
-        (z.clone_state(), 4),  // f  → face F(4)
-        (zi.clone_state(), 5), // b  → face B(5)
+    // 18..36 wide:用组合恒等式 base = 旋转 · 对面(已验证正确的旋转算子复合面动,几何精确)。
+    // 旧法 partial(把旋转限制到部分块)漏掉「宽动转动中心参照系 ⇒ 未动的对面棱朝向数也变」的翻向,
+    // x/z 轴会错(y 轴恰好不翻),是受限宽动解不还原的根因。组合式天然正确。
+    // u=y·D, d=y'·U, l=x'·R, r=x·L, f=z·B, b=z'·F(MOVE_STATES 面动索引:U0 D3 L6 R9 F12 B15)。
+    let wide_defs: [(&State, usize); 6] = [
+        (&y, 3),   // u = y · D
+        (&yi, 0),  // d = y'· U
+        (&xi, 9),  // l = x'· R
+        (&x, 6),   // r = x · L
+        (&z, 15),  // f = z · B
+        (&zi, 12), // b = z'· F
     ];
-    for (w, (rot, face)) in wide_defs.iter().enumerate() {
-        let mut me: Vec<usize> = FACE_EDGES[*face].to_vec();
-        // 平行 slice 棱:U/D 用 E,L/R 用 M,F/B 用 S。
-        let slice = match *face {
-            0 | 1 => SLICE_E_EDGES,
-            2 | 3 => SLICE_M_EDGES,
-            _ => SLICE_S_EDGES,
-        };
-        me.extend_from_slice(&slice);
-        let mc = FACE_CORNERS[*face];
-        let base = partial(rot, &mc, &me);
+    for (w, (rot, opp)) in wide_defs.iter().enumerate() {
+        let base = rot.compose(&MOVE_STATES[*opp]);
         let b2 = comp(&base, &base);
         let b3 = comp(&b2, &base);
         ops[18 + w * 3] = base;
@@ -186,15 +145,11 @@ fn build_phys_moves() -> ([State; 54], [[u8; 6]; 54]) {
         ops[18 + w * 3 + 2] = b3;
     }
 
-    // 36..45 slice M/E/S(各 1/2/')。base = 对应轴旋转限制到 4 条 slice 棱。
-    // M→x'(同 L 向),E→y'(同 D 向),S→z(同 F 向)。
-    let slice_defs: [(State, [usize; 4]); 3] = [
-        (xi.clone_state(), SLICE_M_EDGES),
-        (yi.clone_state(), SLICE_E_EDGES),
-        (z.clone_state(), SLICE_S_EDGES),
-    ];
-    for (s, (rot, edges)) in slice_defs.iter().enumerate() {
-        let base = partial(rot, &[], edges);
+    // 36..45 slice M/E/S:用 base = 对面面动逆 · 对应宽动(宽动已正确)。
+    // M=L'·l, E=D'·d, S=F'·f(面逆索引:L'8 D'5 F'14;宽动 base:l24 d21 f30)。
+    let slice_defs: [(usize, usize); 3] = [(8, 24), (5, 21), (14, 30)];
+    for (s, (finv, wbase)) in slice_defs.iter().enumerate() {
+        let base = MOVE_STATES[*finv].compose(&ops[*wbase]);
         let b2 = comp(&base, &base);
         let b3 = comp(&b2, &base);
         ops[36 + s * 3] = base;
@@ -234,10 +189,11 @@ fn build_phys_moves() -> ([State; 54], [[u8; 6]; 54]) {
         center_perm[m] = id6;
     }
     // wide/slice/rotation 用各自旋转分量的面置换(注意方向 ' = 逆 = base^3)。
-    // 旋转 base 面置换:x=ROT_FACE_PERM[0], y=[1], z=[2];逆 = base^3。
-    let fp_x = ROT_FACE_PERM[0];
-    let fp_y = ROT_FACE_PERM[1];
-    let fp_z = ROT_FACE_PERM[2];
+    // ROT_FACE_PERM 与 ROT_X/Y/Z 同样编码逆向旋转(x'/y'/z'),取逆(base^3)得正确 x/y/z 面置换,
+    // 与上面取逆后的旋转算子一致。
+    let fp_x = powf(&ROT_FACE_PERM[0], 3);
+    let fp_y = powf(&ROT_FACE_PERM[1], 3);
+    let fp_z = powf(&ROT_FACE_PERM[2], 3);
     let fp_xi = powf(&fp_x, 3);
     let fp_yi = powf(&fp_y, 3);
     let fp_zi = powf(&fp_z, 3);
@@ -357,7 +313,12 @@ impl XCrossRestrictSolver {
         let (ops, center_perm) = build_phys_moves();
 
         // ---- 自检:旋转 order-4 + 共轭全 18 面动(物理保真的硬保证)----
-        for (r, fp) in [(45usize, ROT_FACE_PERM[0]), (48, ROT_FACE_PERM[1]), (51, ROT_FACE_PERM[2])] {
+        for (r, fp_raw) in [(45usize, ROT_FACE_PERM[0]), (48, ROT_FACE_PERM[1]), (51, ROT_FACE_PERM[2])] {
+            // ROT_FACE_PERM 编码逆向旋转;ops[r] 已取逆为正确 x/y/z,故面置换也取逆与之一致。
+            let mut fp = [0u8; 6];
+            for i in 0..6 {
+                fp[fp_raw[i] as usize] = i as u8;
+            }
             let rot = ops[r];
             // order-4
             let mut s = State::SOLVED;
@@ -1375,10 +1336,12 @@ mod tests {
     #[test]
     fn rotations_coherent_and_order4() {
         // x/y/z(45/48/51)必须:order-4,且共轭全部 18 面动到 conj(face)(几何精确的硬保证)。
+        // 面置换 = 几何正确的 x/y/z(new_center[i]=center[perm[i]]):x 给 new_U=F(F→U)等。
+        // (历史:旧版 ROT_FACE_PERM 编码 x'/y'/z',这里是其逆 = 正确朝向,与 build_phys_moves 取逆一致。)
         let fps: [(usize, [usize; 6]); 3] = [
-            (45, [5, 4, 2, 3, 0, 1]),
-            (48, [0, 1, 5, 4, 2, 3]),
-            (51, [3, 2, 0, 1, 4, 5]),
+            (45, [4, 5, 2, 3, 1, 0]),
+            (48, [0, 1, 4, 5, 3, 2]),
+            (51, [2, 3, 1, 0, 4, 5]),
         ];
         for (idx, fp) in fps {
             let rot = replay::move_state_54(idx);
@@ -1403,13 +1366,15 @@ mod tests {
 
     #[test]
     fn wide_slice_move_exactly_correct_cubies() {
-        // wide r(27):移动 R 角{1,2,5,6} + R 棱{1,2,5,9} + M 棱{4,6,8,10},共 4 角 8 棱,order-4。
-        // slice M(36):移动 M 棱{4,6,8,10},0 角,order-4。其余 wide/slice 同理由 build 保证。
+        // wide r(27):换位 R 角{1,2,5,6} + R 棱{1,2,5,9} + M 棱{4,6,8,10},共 4 角 8 棱,order-4。
+        // slice M(36):换位 M 棱{4,6,8,10},0 角,order-4。其余 wide/slice 同理由 build 保证。
+        // 只验「位置置换」(piece 位置):朝向是固定帧约定产物(宽动转中心 ⇒ 对面棱朝向数也变),
+        // 与几何无关、随约定变;朝向正确性由 t6(宽动=旋转·对面)+ t7(枚举解真还原)兜底。
         let moved_c = |s: &State| -> Vec<usize> {
-            (0..8).filter(|&i| s.corners[i] / 3 != i as u8 || s.corners[i] % 3 != 0).collect()
+            (0..8).filter(|&i| s.corners[i] / 3 != i as u8).collect()
         };
         let moved_e = |s: &State| -> Vec<usize> {
-            (0..12).filter(|&i| s.edges[i] / 2 != i as u8 || s.edges[i] % 2 != 0).collect()
+            (0..12).filter(|&i| s.edges[i] / 2 != i as u8).collect()
         };
         let ord4 = |s: &State| -> bool {
             let mut t = State::SOLVED;
@@ -2022,5 +1987,72 @@ mod tests {
                 name, build_ms, n, solved, capped, med, p90, max, within(333_000), within(1_500_000), within(5_000_000), med_t, max_t, avg_len
             );
         }
+    }
+
+    // ===== 回归:宽动 == 旋转·对面(组合恒等式)。=====
+    // 这是历史 bug 的守卫:旧版宽动用 partial(把旋转限制到部分块)构造,漏掉「宽动转动中心参照系
+    // ⇒ 未动的对面棱朝向数也变」的翻向(x/z 轴错),受限 xxcross 解法套真魔方不还原。组合式
+    // (旋转算子 · 对面面动)天然正确;旋转算子本身已由 new() 的「共轭全 18 面动」断言锚定到 MOVE_STATES,
+    // 故此恒等式 + 那条断言 = 宽动几何正确性的完整链。任何把宽动改回 partial 式都会让此测试红。
+    #[test]
+    fn t6_wide_equals_rotation_times_opposite_face() {
+        let o = |m: usize| replay::move_state_54(m);
+        // (wide_base_idx, rot_idx, opp_face_idx):u=y·D, d=y'·U, l=x'·R, r=x·L, f=z·B, b=z'·F。
+        let cases: [(usize, usize, usize); 6] = [
+            (18, 48, 3),  // u = y · D
+            (21, 50, 0),  // d = y'· U
+            (24, 47, 9),  // l = x'· R
+            (27, 45, 6),  // r = x · L
+            (30, 51, 15), // f = z · B
+            (33, 53, 12), // b = z'· F
+        ];
+        for (wi, ri, fi) in cases {
+            assert_eq!(
+                o(wi),
+                o(ri).compose(&o(fi)),
+                "wide ops[{}] != rot[{}]·face[{}]",
+                wi,
+                ri,
+                fi
+            );
+        }
+    }
+
+    // ===== 回归:受限 xxcross 枚举解套真魔方(ops 重放)必须真解出 cross + 该组合 2 槽。=====
+    // 守住「枚举解 ↔ 物理算子」一致:任何解都须在完整 cube State 上真还原 cross(8,9,10,11)+ slot。
+    #[test]
+    fn t7_emitted_xxcross_solutions_really_solve() {
+        let _lock = test_env_lock().lock().unwrap_or_else(|e| e.into_inner());
+        use_real_tables();
+        let solver = XCrossRestrictSolver::new();
+        let scramble = CrossRestrictSolver::parse_scramble(
+            "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'",
+        );
+        // 限制集 cells {0,1,2(面 U D L), 9,10,11(宽 r f b)}(用户报 bug 的那组)。
+        let mut allowed: u64 = 0;
+        for c in [0usize, 1, 2, 9, 10, 11] {
+            allowed |= 0b111u64 << (c * 3);
+        }
+        let mut total = 0;
+        for face in 0..6usize {
+            let sols = solver.solve_xcross_restricted_enum_budgeted(
+                &scramble, face, allowed, 0, 0, 3, 50_000_000, 2, None, &mut |_| {},
+            );
+            for sol in &sols {
+                // 每条解须真解出某 2 个槽的 xcross(cross + 那 2 槽角棱),否则即「套真魔方不还原」的 bug。
+                let solved_slots = (0..4)
+                    .filter(|&s| replay::xcross_solved_after(&scramble, face, s, sol))
+                    .count();
+                assert!(
+                    solved_slots >= 2,
+                    "face {} 解 {:?} 只真解出 {} 槽(<2),受限 xxcross 解法不还原",
+                    face,
+                    sol.iter().map(|&m| MOVE_NAMES_54[m]).collect::<Vec<_>>().join(" "),
+                    solved_slots
+                );
+                total += 1;
+            }
+        }
+        assert!(total > 0, "未枚举到任何解");
     }
 }
