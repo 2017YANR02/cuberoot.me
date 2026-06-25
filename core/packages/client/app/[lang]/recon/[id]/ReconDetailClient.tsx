@@ -1038,7 +1038,7 @@ function RoundAttempts({ attempts, best, eventId, roundTypeId, currentReconId, f
                 compName: submitCtx.compName, compCountry: submitCtx.compCountry,
                 compDate: submitCtx.compDate,
               })}
-              className={`${cls} same-comp-event-att-link`}
+              className={`${cls} same-comp-event-att-tonew`}
               title={tr({ zh: '还没有复盘 — 点击去复盘这一把', en: 'No reconstruction yet — click to reconstruct' })}
             >
               {formatted}

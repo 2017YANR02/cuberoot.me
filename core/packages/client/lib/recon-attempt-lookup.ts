@@ -51,6 +51,10 @@ export interface ReconSubmitPrefill {
   compName: string;
   compCountry?: string;
   compDate?: string;
+  /** 原始成绩(罚时前的 base,单位秒)。仅当该次有罚时才传——否则交给表单自动获取。 */
+  rawTimeSec?: number;
+  /** 单次纪录标记(选手页该把显示的角标,如 PR119 / WR / NR)。传了就预填「单次纪录」并锁住,免表单按「最佳把」重算。 */
+  singleRecordTag?: string;
 }
 
 /**
@@ -71,6 +75,8 @@ export function buildReconSubmitHref(p: ReconSubmitPrefill): string {
   params.set('comp', p.compName);
   if (p.compCountry) params.set('country', p.compCountry);
   if (p.compDate) params.set('date', p.compDate);
+  if (p.rawTimeSec != null) params.set('rawTime', String(p.rawTimeSec));
+  if (p.singleRecordTag) params.set('singleRecord', p.singleRecordTag);
   params.set('official', '1');
   return `/recon/submit?${params.toString()}`;
 }

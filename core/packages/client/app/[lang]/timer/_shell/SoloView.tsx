@@ -34,6 +34,7 @@ import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
+import { takeScramble } from '../_lib/scramble/scramble_pool';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
@@ -44,7 +45,7 @@ import { displayCuberName } from '@/lib/name-utils';
 import { fetchMarks, addMark, markKey, type ScrambleMark } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
-import { useTimer } from '../_lib/useTimer';
+import { useTimer, type TimerPhase } from '../_lib/useTimer';
 import { formatMs, bestSingle, bestAverageOfN, summarize } from '../_lib/stats';
 import type { EventId, Penalty, Solve } from '../_lib/types';
 import { EVENTS, isBldEvent } from '../_lib/types';
@@ -53,7 +54,7 @@ import {
   importCstimerJson, exportCsv, exportSpeedstacks,
   listSessions, getActiveSessionId, moveSolveToSession,
 } from '../_lib/storage/db';
-import { formatTargetTime, useApplyTheme, useSettings } from '../_lib/settings';
+import { formatTargetTime, useApplyTheme, useSettings, getSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
 import { getMetronome } from '../_lib/sound/metronome';
 import { useBluetoothCube } from '../_lib/bluetooth';
@@ -83,6 +84,7 @@ import BulkScrambleModal from '../_components/BulkScrambleModal';
 import DrillModal from '../_components/DrillModal';
 import { generateDrillScramble, type DrillType } from '../_lib/scramble/drill';
 import SolverHints from '../_components/SolverHints';
+import SolverHintPanel from '../_components/SolverHintPanel';
 import { OLL_CASES } from '../_lib/scramble/algs/oll_cases';
 import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
 import HistogramChart from '../_components/charts/HistogramChart';
@@ -294,6 +296,18 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}`
     : 'random';
 
+  // Live timer phase (written through after useTimer below) — read by the scramble
+  // buffer's safety gate so background generation never blocks a running solve.
+  const phaseRef = useRef<TimerPhase>('idle');
+  // Background scramble generation is only safe in non-timing phases: useTimer
+  // captures start/stop with performance.now() inside the keypress handler, so a
+  // slow random-state generation (4x4 / sq1) mid-solve would corrupt the time.
+  // Also off in seeded-sync mode (must not advance the shared counter ahead).
+  const canGenScramble = useCallback(() => {
+    const p = phaseRef.current;
+    return (p === 'idle' || p === 'stopped' || p === 'inspecting') && !getSettings().syncSeed;
+  }, []);
+
   const genScramble = useCallback((): string => {
     if (drillTarget && drillAllowed) {
       const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
@@ -304,9 +318,13 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (settings.scrambleSource === 'wca' && hasWcaSource(wcaSpecRef.current)) {
       return peekWca(wcaSpecRef.current) ?? '';
     }
-    return generateScramble(event);
+    // Local generation: serve from the background buffer (instant), except in
+    // deterministic seeded-sync mode where consumption order must stay exact.
+    const s = getSettings();
+    if (s.syncSeed) return generateScramble(event);
+    return takeScramble(`${event}|${s.cnMode}`, () => generateScramble(event), canGenScramble);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig]);
+  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, canGenScramble]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
@@ -386,6 +404,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     void loadFlagData().then((v) => setFlagVer((cur) => (v !== cur ? v : cur)));
   }, [settings.scrambleSource]);
   const wcaSource = settings.scrambleSource === 'wca' && !scrambleLoading ? wcaMetaFor(scramble) : null;
+  // 开了「最优打乱」但这条是回退的原打乱(该难度档无最优等态)→ 在打乱右侧标「非最优」。
+  const wcaNonOptimal = settings.wcaUseOptimal && !!wcaSource?.nonOptimal;
   const wcaSrcDisplay = useMemo(() => {
     if (!wcaSource) return null;
     return {
@@ -928,7 +948,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, []);
 
   // ── Keyboard shortcuts ──────────────────────────────────────────
-  const phaseRef = useRef(timer.phase);
+  // phaseRef is declared up by genScramble (the scramble buffer's safety gate
+  // reads it); keep it in sync with the live timer phase here.
   useEffect(() => { phaseRef.current = timer.phase; }, [timer.phase]);
   const anyModalOpen =
     settingsOpen || shortcutsOpen || bluetoothOpen ||
@@ -943,6 +964,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       if (anyModalOpenRef.current) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      // Focus inside an always-present in-page control region (e.g. the 解法提示
+      // panel's selects/buttons) must not arm the timer on Space.
+      if (target && target.closest('[data-no-timer]')) return;
       // Holding Space auto-repeats keydown; swallow the page-scroll default on
       // every repeat, but only arm the timer once (first non-repeat keydown).
       if (e.code === 'Space') { e.preventDefault(); if (e.repeat) return; warmupSound(); onPressDown(); return; }
@@ -988,6 +1012,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       if (anyModalOpenRef.current) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (target && target.closest('[data-no-timer]')) return;
       if (e.code === 'Space') { e.preventDefault(); onPressUp(); }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -1408,7 +1433,15 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                           ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
                           : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
                     }</span>
-                  : (displayScramble || <span className="scramble-empty">—</span>)}</span>
+                  : displayScramble
+                    ? <><span className="scramble-moves">{displayScramble}</span>{wcaNonOptimal && (
+                        <span
+                          className="scramble-nonopt"
+                          data-no-timer
+                          title={tr({ zh: '该难度档暂无最优等态打乱,显示原始 WCA 打乱', en: 'No optimal-equivalent scramble for this difficulty — showing the original WCA scramble' })}
+                        >{tr({ zh: '非最优', en: 'non-optimal' })}</span>
+                      )}</>
+                    : <span className="scramble-empty">—</span>}</span>
               {scrambleCopied && (
                 <span className="scramble-copied-flash" data-no-timer>{tr({ zh: '已复制', en: 'Copied'
                 })}</span>
@@ -1559,10 +1592,13 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             );
           })()}
         </div>
-        {event === '333' && <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} /></div>}
         {(event === '222' || event === 'pyra' || event === 'skewb' || event === 'sq1' || event === 'mega') && (
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
+
+        {/* 解法提示常驻面板(333):逐阶段最优 + 分步解法(含 3D 演示)。
+            桌面收成主区右侧竖栏,手机落在打乱图下方;可收起。 */}
+        {event === '333' && <SolverHintPanel scramble={scramble} isZh={isZh} />}
 
         {/* Session stats — vertical cstimer-style list, bottom-left of the main
             area. Only once there's data (no bare dashes at idle). */}

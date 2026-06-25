@@ -14,37 +14,17 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Star, ChevronRight } from 'lucide-react';
-import {
-  solveByMethodId,
-  METHOD_REGISTRY,
-  type MethodId,
-  type SolveResult,
-} from '../_lib/solver/methods';
 import { solve2x2, solve2x2Face } from '../_lib/solver/cube2x2';
 import { solvePyra, solvePyraV } from '../_lib/solver/pyra';
 import { solveSkewb, solveSkewbFace } from '../_lib/solver/skewb';
 import { solveSq1, type Sq1Result } from '../_lib/solver/sq1';
 import { solveMega, type MegaSolveResult } from '../_lib/solver/mega';
-import SolverCompareModal from './SolverCompareModal';
-import StageSolverModal from './StageSolverModal';
+import StepSolve from './StepSolve';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 type SmallEvent = '222' | 'pyra' | 'skewb';
 type Sq1Event = 'sq1';
 type MegaEvent = 'mega';
-
-const METHOD_LS_KEY = 'timer.solverHints.method';
-
-function loadSavedMethod(): MethodId {
-  try {
-    const v = localStorage.getItem(METHOD_LS_KEY);
-    if (v && METHOD_REGISTRY.some(m => m.id === v)) return v as MethodId;
-  } catch {
-    /* ignore */
-  }
-  return 'cfop';
-}
 
 interface Props {
   scramble: string;
@@ -55,166 +35,11 @@ interface Props {
 }
 
 export default function SolverHints({ scramble, isZh, event = '333' }: Props) {
-  if (event === 'sq1') {
-    return <Sq1Hints scramble={scramble} isZh={isZh} />;
-  }
-  if (event === 'mega') {
-    return <MegaHints scramble={scramble} isZh={isZh} />;
-  }
-  if (event !== '333') {
-    return <SmallPuzzleHints scramble={scramble} isZh={isZh} event={event} />;
-  }
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [stageOpen, setStageOpen] = useState(false);
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [stepOpen, setStepOpen] = useState(false);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [methodId, setMethodId] = useState<MethodId>(loadSavedMethod);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [stepResults, setStepResults] = useState<Record<MethodId, SolveResult | null>>(
-    () => ({ cfop: null, roux: null, petrus: null, zz: null, eodr: null, thistle: null }),
-  );
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [stepComputing, setStepComputing] = useState(false);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [compareOpen, setCompareOpen] = useState(false);
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    try { localStorage.setItem(METHOD_LS_KEY, methodId); } catch { /* ignore */ }
-  }, [methodId]);
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    setStepResults({ cfop: null, roux: null, petrus: null, zz: null, eodr: null, thistle: null });
-  }, [scramble]);
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (!stepOpen) return;
-    if (stepResults[methodId]) return;
-    setStepComputing(true);
-    let cancelled = false;
-    const t = setTimeout(() => {
-      if (cancelled) return;
-      try {
-        const r = solveByMethodId(scramble, methodId);
-        if (!cancelled) {
-          setStepResults(prev => ({ ...prev, [methodId]: r }));
-          setStepComputing(false);
-        }
-      } catch {
-        if (!cancelled) {
-          setStepResults(prev => ({ ...prev, [methodId]: { stages: [], totalMoves: 0 } }));
-          setStepComputing(false);
-        }
-      }
-    }, 0);
-    return () => {
-      cancelled = true;
-      clearTimeout(t);
-    };
-  }, [stepOpen, scramble, methodId, stepResults]);
-
-  const stepResult = stepResults[methodId];
-
-  const title = tr({ zh: '解法提示', en: 'Solver hints' });
-  const stepTitle = tr({ zh: '分步解法', en: 'Step-by-step' });
-
-  return (
-    <div style={wrapperStyle}>
-      <div className="solver-hints" style={hintsStyle}>
-        <button
-          type="button"
-          onClick={() => setStageOpen(true)}
-          style={toggleBtnStyle}
-        >
-          <span>{title}</span>
-          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7 }} />
-        </button>
-      </div>
-      <div className="solver-hints" style={hintsStyle}>
-        <button
-          type="button"
-          onClick={() => setStepOpen(o => !o)}
-          style={toggleBtnStyle}
-          aria-expanded={stepOpen}
-        >
-          <span>{stepTitle}</span>
-          <ChevronRight size={13} style={{ marginLeft: 'auto', opacity: 0.7, transform: stepOpen ? 'rotate(90deg)' : 'none', transition: 'transform 120ms' }} />
-        </button>
-        {stepOpen && (
-          <div style={bodyStyle}>
-            <div style={tabStripStyle}>
-              {METHOD_REGISTRY.map(m => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setMethodId(m.id)}
-                  style={methodId === m.id ? tabActiveStyle : tabStyle}
-                >
-                  {(isZh ? m.nameZh : m.nameEn)}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setCompareOpen(true)}
-                style={compareBtnStyle}
-              >
-                {tr({ zh: '对比全部', en: 'Compare all'
-                })}
-              </button>
-            </div>
-            {stepComputing && !stepResult && (
-              <div style={{ opacity: 0.6, fontSize: 13 }}>
-                {tr({ zh: '计算中…', en: 'Computing…'
-                })}
-              </div>
-            )}
-            {stepResult && (
-              <>
-                {stepResult.stages.map(s => (
-                  <div key={s.head} style={rowStyle}>
-                    <span style={labelStyle}>{s.head}</span>
-                    <span style={countStyle}>
-                      {s.failed ? '—' : s.moves.length}
-                    </span>
-                    <span style={algStyle}>
-                      {s.failed
-                        ? tr({ zh: '未找到', en: 'no solution' })
-                        : (s.moves.length === 0 ? tr({ zh: '(跳过)', en: '(skip)'
-                                                        }) : s.moves.join(' '))}
-                    </span>
-                  </div>
-                ))}
-                <div style={rowStyle}>
-                  <span style={labelBestStyle}>{tr({ zh: '总计', en: 'Total'
-                })}</span>
-                  <span style={countBestStyle}>{stepResult.totalMoves}</span>
-                  <span style={algStyle} />
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-      {stageOpen && (
-        <StageSolverModal
-          scramble={scramble}
-          isZh={isZh}
-          onClose={() => setStageOpen(false)}
-        />
-      )}
-      {compareOpen && (
-        <SolverCompareModal
-          scramble={scramble}
-          isZh={isZh}
-          onClose={() => setCompareOpen(false)}
-        />
-      )}
-    </div>
-  );
+  if (event === 'sq1') return <Sq1Hints scramble={scramble} isZh={isZh} />;
+  if (event === 'mega') return <MegaHints scramble={scramble} isZh={isZh} />;
+  if (event !== '333') return <SmallPuzzleHints scramble={scramble} isZh={isZh} event={event} />;
+  // 3x3「分步解法」现常驻在解法提示面板里(StepSolve),不再走这里的内联弹窗。
+  return <StepSolve scramble={scramble} isZh={isZh} />;
 }
 
 interface SmallProps {
@@ -655,41 +480,4 @@ const algBestStyle: React.CSSProperties = {
   ...algStyle,
   fontWeight: 600,
   color: 'var(--accent)',
-};
-
-const tabStripStyle: React.CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: 4,
-  alignItems: 'center',
-  marginBottom: 4,
-};
-
-const tabStyle: React.CSSProperties = {
-  padding: '3px 10px',
-  background: 'transparent',
-  border: '1px solid var(--border-default)',
-  borderRadius: 999,
-  color: 'var(--muted-foreground)',
-  fontSize: 12,
-  cursor: 'pointer',
-};
-
-const tabActiveStyle: React.CSSProperties = {
-  ...tabStyle,
-  background: 'var(--accent)',
-  color: 'var(--accent-foreground)',
-  borderColor: 'var(--accent)',
-  fontWeight: 600,
-};
-
-const compareBtnStyle: React.CSSProperties = {
-  marginLeft: 'auto',
-  padding: '3px 10px',
-  background: 'transparent',
-  border: '1px dashed var(--border-default)',
-  borderRadius: 999,
-  color: 'var(--muted-foreground)',
-  fontSize: 12,
-  cursor: 'pointer',
 };

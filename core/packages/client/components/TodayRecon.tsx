@@ -120,7 +120,8 @@ export default function TodayRecon({ lang }: Props) {
 
   if (!recons || recons.length === 0) return null;
 
-  const [first, ...rest] = recons;
+  // 默认显示首行两条(一行两卡);其余折进「更多」。
+  const visible = expanded ? recons : recons.slice(0, 2);
 
   return (
     <div className="today-recon">
@@ -130,13 +131,12 @@ export default function TodayRecon({ lang }: Props) {
         <Link href="/recon" prefetch={false} className="tr-all">{tr({ zh: '全部', en: 'All recons' })}</Link>
       </div>
 
-      <ReconCard solve={first} isZh={isZh} />
+      <div className="tr-cards">
+        {visible.map((s) => <ReconCard key={s.id} solve={s} isZh={isZh} />)}
+      </div>
 
-      {rest.length > 0 && (
-        <>
-          {expanded && rest.map((s) => <ReconCard key={s.id} solve={s} isZh={isZh} />)}
-          <MoreToggle expanded={expanded} onToggle={() => setExpanded((v) => !v)} />
-        </>
+      {recons.length > 2 && (
+        <MoreToggle expanded={expanded} onToggle={() => setExpanded((v) => !v)} />
       )}
     </div>
   );

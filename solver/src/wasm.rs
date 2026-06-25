@@ -1646,13 +1646,21 @@ impl Default for CrossRestrictSolverWasm {
 /// 受限 单 (face,组合) IDA* 节点预算:超此即放弃该格(返回 -2 太宽),兜底极弱受限集
 /// (如纯 {U,R,M})下「联合不可解」状态的深搜。紧/常规限制远在预算内出精确解。
 /// 单视角枚举(用户点了某面、愿意等)用满预算;网格(6 面齐算、每次切格重算)按下方均摊压低。
-const XCR_NODE_LIMIT: u64 = 1_500_000;
+/// 2026-06:cross↔角/棱 pos 联合 PDB 上线后启发式大幅收紧(宽受限 xxcross 实测 80M 节点解不出
+/// → 中位 ~1-6M),故把满预算从 1.5M 抬到 12M;用户点开单面(愿等)绝大多数宽限制能在 ~1-3s
+/// 出精确解(WASM 实测单面枚举满预算约 ~2-4s 上界)。极端宽集(全 wide+slice)最优证明重尾、
+/// 个别格仍超预算 → ⋯(那是最优搜索在高冗余 move 集上的固有代价,非 bug)。
+const XCR_NODE_LIMIT: u64 = 12_000_000;
 
 /// 网格(概览)总节点预算目标:6 视角 × C(4,k) 组合均摊到每 (face,组合)。k≥2(xxcross/xxxcross/
-/// F2L)组合多 + 多对启发式偏松易爆炸,不压低则一次切格要十几秒;均摊后整张网格 ≈3-4s。k≤1(xcross)
-/// 维持满预算 XCR_NODE_LIMIT 不回归。`per_combo = max(下限, 目标/(6×组合数))`。
-const XCR_GRID_TARGET_TOTAL: u64 = 12_000_000;
-const XCR_GRID_MIN_PER_COMBO: u64 = 300_000;
+/// F2L)组合多 + 多对启发式偏松易爆炸,不压低则一次切格要十几秒;均摊后整张网格 ≈4-5s。k≤1(xcross)
+/// 维持满预算 XCR_NODE_LIMIT 不回归。`per_combo = clamp(目标/(6×组合数), 下限, 上限)`。
+/// 联合 PDB 收紧启发式后,同等网格预算能解出远多于旧版的宽限制格(旧版几乎全 ⋯)。
+const XCR_GRID_TARGET_TOTAL: u64 = 48_000_000;
+const XCR_GRID_MIN_PER_COMBO: u64 = 600_000;
+/// 单格上限:防 k=3/4(组合少)单格分到过大预算把网格拖慢;每格 ≤ 此值,整张网格 wall-clock 受控。
+/// WASM 实测 k=2 网格(每格 ~1.3M)整张 ~2.5-3s;此上限只在 k=3/4 生效。
+const XCR_GRID_MAX_PER_COMBO: u64 = 2_000_000;
 
 /// C(4,k):k 对在 4 个 F2L 槽里的组合数(网格预算均摊用)。
 fn n_combos(k: u32) -> u64 {
@@ -1698,11 +1706,12 @@ impl XCrossRestrictSolverWasm {
     ) -> String {
         let allowed: u64 = ((allowed_hi as u64) << 32) | (allowed_lo as u64);
         let sc = CrossRestrictSolver::parse_scramble(scramble);
-        // 网格预算均摊:k≤1(xcross)维持满预算;k≥2 按组合数压低,整张网格 ≈3-4s 不卡死。
+        // 网格预算均摊:k≤1(xcross)维持满预算;k≥2 按组合数压低后再钳进 [下限, 上限],整张网格 ≈4-5s。
         let per_combo = if k <= 1 {
             XCR_NODE_LIMIT
         } else {
-            (XCR_GRID_TARGET_TOTAL / (6 * n_combos(k))).max(XCR_GRID_MIN_PER_COMBO)
+            (XCR_GRID_TARGET_TOTAL / (6 * n_combos(k)))
+                .clamp(XCR_GRID_MIN_PER_COMBO, XCR_GRID_MAX_PER_COMBO)
         };
         let grid = self.solver.solve_xcross_restricted_grid_budgeted(
             &sc, allowed, max_rot_count, per_combo, k as usize,

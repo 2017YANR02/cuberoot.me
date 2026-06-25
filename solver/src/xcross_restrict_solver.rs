@@ -36,8 +36,29 @@ use crate::cube_common::{State, MOVE_STATES};
 pub const CORNER_STATES: usize = 24;
 /// 棱块状态空间(单棱):12 位置 × 2 朝向 = 24(追踪槽棱)。
 pub const EDGE_STATES: usize = 24;
+/// cross **位置**坐标空间:12P4 = 11880(= CROSS_COORD/16,丢弃 4 翻向位)。联合 PDB
+/// (cross↔角 / cross↔棱)用此位置坐标,比全 cross-coord(190080)小 16×,建表快 16×;
+/// cross 翻向的下界仍由全 cross PDB 的 max 覆盖,只损失「翻向↔角/棱」二阶交互。
+pub const CROSS_POS_STATES: usize = 11880;
 /// 4 个十字棱件 id(D 层)。
 pub const CROSS_PIECES: [usize; 4] = [8, 9, 10, 11];
+
+/// cell(=move/3,18 类:6 面 + 6 wide + 3 slice + 3 rotation)→ 空间轴(0=U-D / 1=L-R / 2=F-B)。
+/// 同轴上所有 move 两两对易(该轴生成子群 = ⟨U⟩×⟨E⟩×⟨D⟩ 型阿贝尔群,wide/slice/rotation 皆其元素),
+/// 故连续同轴 move 可规范化为「cell 严格升序」唯一序 → 安全剪掉同轴乱序的全部冗余分支(保最优)。
+const CELL_AXIS: [u8; 18] = [
+    0, 0, 1, 1, 2, 2, // U D L R F B
+    0, 0, 1, 1, 2, 2, // u d l r f b
+    1, 0, 2, // M E S
+    1, 0, 2, // x y z
+];
+
+/// 同轴规范序剪枝:候选 cell `mc` 紧跟在 cell `pc` 之后是否应被剪掉。
+/// 同轴且 `mc <= pc` 即剪(含同 cell 连击 = 旧 `mc==pc` 规则的超集):同轴段内只许严格升序。
+#[inline]
+fn axis_pruned(mc: usize, pc: usize) -> bool {
+    CELL_AXIS[mc] == CELL_AXIS[pc] && mc <= pc
+}
 
 // ---------- 物理整体旋转 base(x/y/z),由 cubie 重标 + 共轭定解一次性求出后固化 ----------
 //
@@ -278,11 +299,17 @@ fn edge_decode(code: u8) -> (usize, u8) {
 // ---------- 求解器 ----------
 
 /// 受限集相关的 PDB 缓存(slot/face/scramble 无关,只随 allowed 变):cross PDB + 4 槽 pair PDB
-/// + center_restore(把中心搬回原位的下界,24 态)。
+/// + 4 槽 cross↔角 / cross↔棱 联合 PDB + center_restore。
+/// 联合表(190080×24=4.56M)抓「解十字不破坏该槽角/棱」的交互难度 —— 宽受限集下 cross/pair/center
+/// 三投影各自 ~4 但 max 远低于真实联合距离(7+),联合表把下界顶上来,是宽集不再爆炸的关键。
 struct Pdbs {
     allowed_moves: Vec<usize>,
     cross: Vec<u8>,
     pairs: [Vec<u8>; 4],
+    /// cross_corner[slot][cross*24 + corner_code] = 受限最优同时归位(十字 + 该槽角)的步数。
+    cross_corner: [Vec<u8>; 4],
+    /// cross_edge[slot][cross*24 + edge_code] = 受限最优同时归位(十字 + 该槽棱)的步数。
+    cross_edge: [Vec<u8>; 4],
     /// center_restore[center] = 受限最优把中心从该朝向搬回 solved(0)的步数(24 态)。
     center_restore: Vec<u8>,
 }
@@ -306,6 +333,9 @@ pub struct XCrossRestrictSolver {
     ops: [State; 54],
     /// cross_trans[c * 54 + m] = cross-coord c 上施加 move m 的新 cross-coord(4 棱 8,9,10,11)。
     cross_trans: Vec<u32>,
+    /// cross_pos_trans[p * 54 + m] = cross **位置**坐标 p(0..11880)上施加 move m 的新位置坐标。
+    /// 位置置换与翻向无关,故从 cross_trans 取 ori=0 代表元除 16 派生。联合 PDB 建表用。
+    cross_pos_trans: Vec<u32>,
     /// corner_trans[c * 54 + m] = 槽角编码 c(任一角)上施加 move m 的新槽角编码。
     corner_trans: Vec<u8>,
     /// edge_trans[e * 54 + m] = 槽棱编码 e 上施加 move m 的新槽棱编码。
@@ -407,12 +437,22 @@ impl XCrossRestrictSolver {
             }
         }
 
+        // cross 位置转移表(11880×54):位置置换与翻向无关 ⇒ 取每个位置坐标的 ori=0 代表元
+        // (full = p*16),查 cross_trans 后除 16 即新位置坐标。
+        let mut cross_pos_trans = vec![0u32; CROSS_POS_STATES * 54];
+        for p in 0..CROSS_POS_STATES {
+            for m in 0..54 {
+                cross_pos_trans[p * 54 + m] = cross_trans[(p * 16) * 54 + m] / 16;
+            }
+        }
+
         // center_trans:中心向量(6 面)编成 0..24 索引(枚举所有可达中心朝向)。
         let center_trans = build_center_trans(&center_perm);
 
         XCrossRestrictSolver {
             ops,
             cross_trans,
+            cross_pos_trans,
             corner_trans,
             edge_trans,
             center_trans,
@@ -423,6 +463,10 @@ impl XCrossRestrictSolver {
     #[inline]
     fn step_cross(&self, c: u32, m: usize) -> u32 {
         self.cross_trans[c as usize * 54 + m]
+    }
+    #[inline]
+    fn step_cross_pos(&self, p: u32, m: usize) -> u32 {
+        self.cross_pos_trans[p as usize * 54 + m]
     }
     #[inline]
     fn step_corner(&self, c: u8, m: usize) -> u8 {
@@ -515,6 +559,60 @@ impl XCrossRestrictSolver {
         h
     }
 
+    /// 联合 PDB:cross **位置**坐标(11880)× 该槽角编码(24)= 285K。BFS 从 (solved_pos, solved_corner)
+    /// 出发,沿受限 move 集同时推 cross 位置与该角(各自转移表),距离 = 同时归位下界(忽略 cross 翻向)。
+    /// over allowed_moves(格对逆封闭 ⇒ 无向 ⇒ 正向 BFS = 距离)。INF = 该联合态受限下不可达 → 秒证无解。
+    fn build_pdb_cross_corner(&self, slot: usize, allowed_moves: &[usize]) -> Vec<u8> {
+        const INF: u8 = u8::MAX;
+        let size = CROSS_POS_STATES * CORNER_STATES;
+        let mut h = vec![INF; size];
+        let idx = |p: u32, k: u8| -> usize { p as usize * CORNER_STATES + k as usize };
+        let (sc, _) = Self::solved_pair(slot);
+        let sp = self.solved_cross / 16;
+        h[idx(sp, sc)] = 0;
+        let mut q: std::collections::VecDeque<(u32, u8)> = std::collections::VecDeque::new();
+        q.push_back((sp, sc));
+        while let Some((p, k)) = q.pop_front() {
+            let d = h[idx(p, k)];
+            for &m in allowed_moves {
+                let np = self.step_cross_pos(p, m);
+                let nk = self.step_corner(k, m);
+                let id = idx(np, nk);
+                if h[id] == INF {
+                    h[id] = d + 1;
+                    q.push_back((np, nk));
+                }
+            }
+        }
+        h
+    }
+
+    /// 联合 PDB:cross **位置**坐标(11880)× 该槽棱编码(24)= 285K。同 cross_corner,但推该槽棱。
+    fn build_pdb_cross_edge(&self, slot: usize, allowed_moves: &[usize]) -> Vec<u8> {
+        const INF: u8 = u8::MAX;
+        let size = CROSS_POS_STATES * EDGE_STATES;
+        let mut h = vec![INF; size];
+        let idx = |p: u32, e: u8| -> usize { p as usize * EDGE_STATES + e as usize };
+        let (_, se) = Self::solved_pair(slot);
+        let sp = self.solved_cross / 16;
+        h[idx(sp, se)] = 0;
+        let mut q: std::collections::VecDeque<(u32, u8)> = std::collections::VecDeque::new();
+        q.push_back((sp, se));
+        while let Some((p, e)) = q.pop_front() {
+            let d = h[idx(p, e)];
+            for &m in allowed_moves {
+                let np = self.step_cross_pos(p, m);
+                let ne = self.step_edge(e, m);
+                let id = idx(np, ne);
+                if h[id] == INF {
+                    h[id] = d + 1;
+                    q.push_back((np, ne));
+                }
+            }
+        }
+        h
+    }
+
     // ---------- 单视角 IDA* ----------
 
     /// center_restore[center] = 受限最优把中心从该朝向搬回 solved(0)的步数(忽略 cross/pair)。
@@ -548,13 +646,52 @@ impl XCrossRestrictSolver {
         let cross = self.build_pdb_cross(&allowed_moves);
         let pairs: [Vec<u8>; 4] =
             std::array::from_fn(|slot| self.build_pdb_pair(slot, &allowed_moves));
+        let cross_corner: [Vec<u8>; 4] =
+            std::array::from_fn(|slot| self.build_pdb_cross_corner(slot, &allowed_moves));
+        let cross_edge: [Vec<u8>; 4] =
+            std::array::from_fn(|slot| self.build_pdb_cross_edge(slot, &allowed_moves));
         let center_restore = self.build_center_restore(&allowed_moves);
         Pdbs {
             allowed_moves,
             cross,
             pairs,
+            cross_corner,
+            cross_edge,
             center_restore,
         }
+    }
+
+    /// 受限可采纳启发式:h = max(cross, center_restore, 各 active 槽 [pair, cross↔角, cross↔棱])。
+    /// 任一分量 INF(受限下该子模式不可达)⇒ 联合不可解,返回 None。所有分量皆可采纳下界 ⇒ max 可采纳。
+    /// 三处搜索(h0 / ida / dfs_exact)共用,口径一致。
+    #[inline]
+    fn heuristic(
+        &self,
+        cross: u32,
+        corners: &[u8; 4],
+        edges: &[u8; 4],
+        center: u8,
+        active: &[usize],
+        pdbs: &Pdbs,
+    ) -> Option<u32> {
+        let hc = pdbs.cross[cross as usize];
+        if hc == u8::MAX {
+            return None;
+        }
+        let mut h = hc.max(pdbs.center_restore[center as usize]);
+        let cp = (cross / 16) as usize; // cross 位置坐标(联合表索引)
+        for &s in active {
+            let cc = corners[s];
+            let ee = edges[s];
+            let hp = pdbs.pairs[s][cc as usize * EDGE_STATES + ee as usize];
+            let hcc = pdbs.cross_corner[s][cp * CORNER_STATES + cc as usize];
+            let hce = pdbs.cross_edge[s][cp * EDGE_STATES + ee as usize];
+            if hp == u8::MAX || hcc == u8::MAX || hce == u8::MAX {
+                return None;
+            }
+            h = h.max(hp).max(hcc).max(hce);
+        }
+        Some(h as u32)
     }
 
     /// 受限 xcross IDA* 的 bound 上界(超过即视为「该受限集下不可解」返回 None)。
@@ -635,22 +772,12 @@ impl XCrossRestrictSolver {
             return Some(Vec::new());
         }
 
-        let hc = pdbs.cross[start_cross as usize];
-        if hc == u8::MAX {
-            return None;
-        }
-        let mut h0 = hc.max(pdbs.center_restore[start_center as usize]);
-        for &s in active {
-            let hp = pdbs.pairs[s][corners[s] as usize * EDGE_STATES + edges[s] as usize];
-            if hp == u8::MAX {
-                return None;
-            }
-            if hp > h0 {
-                h0 = hp;
-            }
-        }
+        let h0 = match self.heuristic(start_cross, &corners, &edges, start_center, active, pdbs) {
+            Some(h) => h,
+            None => return None,
+        };
 
-        for bound in (h0 as u32)..=max_bound {
+        for bound in h0..=max_bound {
             let mut path: Vec<usize> = Vec::new();
             if let Some(sol) = self.ida(
                 start_cross, corners, edges, start_center, 0, bound, &pdbs.allowed_moves,
@@ -712,28 +839,20 @@ impl XCrossRestrictSolver {
             budget.hit = true;
             return None;
         }
-        let hc = pdbs.cross[cross as usize];
-        if hc == u8::MAX {
-            return None;
-        }
-        let mut h = hc.max(pdbs.center_restore[center as usize]);
-        for &s in active {
-            let hp = pdbs.pairs[s][corners[s] as usize * EDGE_STATES + edges[s] as usize];
-            if hp == u8::MAX {
-                return None;
-            }
-            if hp > h {
-                h = hp;
-            }
-        }
-        if depth + h as u32 > bound {
+        let h = match self.heuristic(cross, &corners, &edges, center, active, pdbs) {
+            Some(h) => h,
+            None => return None,
+        };
+        if depth + h > bound {
             return None;
         }
         let rots_used = path.iter().filter(|&&m| m >= 45).count() as u32;
         let prev_cell = path.last().map(|&m| m / 3);
         for &m in allowed_moves {
-            if Some(m / 3) == prev_cell {
-                continue;
+            if let Some(pc) = prev_cell {
+                if axis_pruned(m / 3, pc) {
+                    continue;
+                }
             }
             let is_rot = m >= 45;
             if is_rot && rots_used + 1 > max_rot {
@@ -1039,28 +1158,20 @@ impl XCrossRestrictSolver {
             budget.hit = true;
             return;
         }
-        let hc = pdbs.cross[cross as usize];
-        if hc == u8::MAX {
-            return;
-        }
-        let mut h = hc.max(pdbs.center_restore[center as usize]);
-        for &s in active {
-            let hp = pdbs.pairs[s][corners[s] as usize * EDGE_STATES + edges[s] as usize];
-            if hp == u8::MAX {
-                return;
-            }
-            if hp > h {
-                h = hp;
-            }
-        }
-        if depth + h as u32 > lim {
+        let h = match self.heuristic(cross, &corners, &edges, center, active, pdbs) {
+            Some(h) => h,
+            None => return,
+        };
+        if depth + h > lim {
             return;
         }
         let rots_used = path.iter().filter(|&&m| m >= 45).count() as u32;
         let prev_cell = path.last().map(|&m| m / 3);
         for &m in allowed_moves {
-            if Some(m / 3) == prev_cell {
-                continue;
+            if let Some(pc) = prev_cell {
+                if axis_pruned(m / 3, pc) {
+                    continue;
+                }
             }
             let is_rot = m >= 45;
             if is_rot && rots_used + 1 > max_rot {
@@ -1846,5 +1957,70 @@ mod tests {
             "T5: {} validity(replay+monotonic, k=2 rich) + {} admissibility(k=2 tight) cases ok",
             checked_valid, checked_opt
         );
+    }
+
+    // ===== MEASURE: 宽受限集真实节点数(opt-in,不进常规 CI)=====
+    // `cargo test -p cube_solver measure_broad_node_counts -- --ignored --nocapture`
+    #[test]
+    #[ignore]
+    fn measure_broad_node_counts() {
+        let solver = XCrossRestrictSolver::new();
+        // 受限集,从贴近真实到极端:
+        //  R1: 6 面 + wide r + wide f(用户截图那种 1-2 个宽)
+        //  R2: 6 面 + 全 wide
+        //  B : 6 面 + 全 wide + 全 slice(极端宽,压力上界)
+        let mut r1: u64 = 0;
+        for b in [0u32,3,6,9,12,15, 27,30] { r1 |= 0b111u64 << b; } // +r(27)+f(30)
+        let mut r2: u64 = 0;
+        for b in [0u32,3,6,9,12,15, 18,21,24,27,30,33] { r2 |= 0b111u64 << b; }
+        let mut bb: u64 = 0;
+        for b in [0u32,3,6,9,12,15, 18,21,24,27,30,33, 36,39,42] { bb |= 0b111u64 << b; }
+        let sets: [(&str, u64, u32); 3] = [("R1 faces+r+f", r1, 0), ("R2 faces+wide", r2, 0), ("B +slice", bb, 0)];
+        let node_cap: u64 = 80_000_000;
+        let combos2 = XCrossRestrictSolver::k_subsets(2);
+
+        for (name, allowed, max_rot) in sets {
+            let t_build = std::time::Instant::now();
+            let pdbs = solver.build_pdbs(allowed);
+            let build_ms = t_build.elapsed().as_millis();
+            let mut nodes_all: Vec<u64> = Vec::new();
+            let mut times: Vec<u128> = Vec::new();
+            let mut capped = 0usize;
+            let mut lens: Vec<u32> = Vec::new();
+            let t_set = std::time::Instant::now();
+            for seed in 0..8u64 {
+                let scramble = random_face_scramble(40_000 + seed, 22);
+                for face in 0..6 {
+                    // 只测第一个组合(slot {0,1}),足够代表;全组合太慢。
+                    let combo = &combos2[0];
+                    let mut budget = SearchBudget { nodes: 0, limit: node_cap, hit: false };
+                    let t = std::time::Instant::now();
+                    let r = solver.solve_view_slots_budgeted(
+                        &scramble, face, combo, &pdbs, max_rot, XCrossRestrictSolver::MAX_BOUND, &mut budget,
+                    );
+                    let el = t.elapsed().as_millis();
+                    nodes_all.push(budget.nodes);
+                    times.push(el);
+                    if budget.hit { capped += 1; }
+                    if let Some(s) = r { lens.push(s.len() as u32); }
+                }
+            }
+            nodes_all.sort_unstable();
+            times.sort_unstable();
+            let med = nodes_all[nodes_all.len()/2];
+            let p90 = nodes_all[nodes_all.len()*9/10];
+            let max = *nodes_all.last().unwrap();
+            let med_t = times[times.len()/2];
+            let max_t = *times.last().unwrap();
+            let solved = lens.len();
+            let avg_len = if solved>0 { lens.iter().sum::<u32>() as f64 / solved as f64 } else { 0.0 };
+            // 候选预算下能解出的比例(nodes ≤ B ⇒ 该预算内能找到解)。
+            let n = nodes_all.len();
+            let within = |b: u64| nodes_all.iter().filter(|&&x| x <= b).count() * 100 / n;
+            eprintln!(
+                "[{}] build={}ms cases={} solved={} capped={} | nodes med={} p90={} max={} | within 333k={}% 1.5M={}% 5M={}% | ms med={} max={} | avg_len={:.1}",
+                name, build_ms, n, solved, capped, med, p90, max, within(333_000), within(1_500_000), within(5_000_000), med_t, max_t, avg_len
+            );
+        }
     }
 }

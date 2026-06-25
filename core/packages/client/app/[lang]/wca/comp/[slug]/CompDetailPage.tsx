@@ -1323,10 +1323,13 @@ export default function CompDetailPage() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/icons/upstream/wca.svg" alt="WCA" />
                   </a>
-                  {/* WCA Live 没有独立 logo(与 WCA 主站几乎一致),用 lucide Radio 表「实时成绩」 */}
-                  <a href="https://live.worldcubeassociation.org/" target="_blank" rel="noopener noreferrer" className="comp-title-icon comp-title-icon-lucide" title="WCA Live">
-                    <Radio size={18} />
-                  </a>
+                  {/* WCA Live 没有独立 logo(与 WCA 主站几乎一致),用 lucide Radio 表「实时成绩」。
+                      中国比赛走 cubing.com 直播,没有 WCA Live 页面,故 CN 不显示此图标。 */}
+                  {iso2 !== 'cn' && (
+                    <a href="https://live.worldcubeassociation.org/" target="_blank" rel="noopener noreferrer" className="comp-title-icon comp-title-icon-lucide" title="WCA Live">
+                      <Radio size={18} />
+                    </a>
+                  )}
                   {iso2 === 'cn' && (
                     <a href={cubingUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="cubing.com">
                       {/* eslint-disable-next-line @next/next/no-img-element */}

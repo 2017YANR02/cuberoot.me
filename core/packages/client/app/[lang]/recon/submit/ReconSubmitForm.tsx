@@ -60,7 +60,7 @@ import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { parseSq1Tokens, formatScrambleForEvent } from '@/lib/sq1-svg';
 import type { Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, Box, ChevronDown, ChevronRight, History, Home, Loader2, LogIn, UserPlus, ListPlus } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, Box, ChevronDown, ChevronRight, History, Home, Loader2, LogIn, UserPlus, ListPlus, AlertTriangle } from 'lucide-react';
 import '../recon.css';
 import './recon_submit.css';
 import { tr } from '@/i18n/tr';
@@ -215,7 +215,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [timeInput, setTimeInput] = useState('');
   const [avgInput, setAvgInput] = useState('');
   const [execInput, setExecInput] = useState('');
-  const [dupWarning, setDupWarning] = useState('');
+  const [dupId, setDupId] = useState<number | null>(null);
   const [avgUserTouched, setAvgUserTouched] = useState(false);
   const [avgAutoSource, setAvgAutoSource] = useState<string | null>(null);
   const [avgLoading, setAvgLoading] = useState(false);
@@ -417,6 +417,23 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       reconer: authUser?.name ?? prev.reconer,
       reconerId: authUser?.wcaId ?? prev.reconerId,
     }));
+    // 原始成绩(罚时前的 base,秒):仅当链接带 rawTime 才覆盖「原始成绩」并锁住,
+    // 防下面的自动获取把它改回含罚时的官方值;「单次」仍交给自动获取取官方值。
+    const rawTimeRaw = searchParams?.get('rawTime');
+    if (rawTimeRaw) {
+      const n = parseFloat(rawTimeRaw);
+      if (!isNaN(n) && n > 0) {
+        setTimeInput(formatTimeInput(n));
+        setTimeUserTouched(true);
+      }
+    }
+    // 单次纪录:链接带了选手页那把的角标(PR119 / 区域纪录)→ 预填并锁住,
+    // 防自动获取按「该轮最佳把」重算把它清空(点的往往不是最佳把)。
+    const singleRecordRaw = searchParams?.get('singleRecord');
+    if (singleRecordRaw) {
+      setField('regionalSingleRecord', singleRecordRaw);
+      setSingleRecordUserTouched(true);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -902,7 +919,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // ── Duplicate detection ──
   useEffect(() => {
     if (!form.comp || !form.event || !form.round || form.solveNum == null) {
-      setDupWarning('');
+      setDupId(null);
       return;
     }
     const timer = setTimeout(async () => {
@@ -916,9 +933,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           person: form.person,
           excludeId: isEditing && editId ? Number(editId) : undefined,
         });
-        if (result.exists) setDupWarning(`⚠️ Duplicate found (#${result.id})`);
-        else setDupWarning('');
-      } catch { setDupWarning(''); }
+        if (result.exists) setDupId(result.id ?? null);
+        else setDupId(null);
+      } catch { setDupId(null); }
     }, 500);
     return () => clearTimeout(timer);
   }, [form.comp, form.event, form.round, form.solveNum, form.personId, form.person, isEditing, editId]);
@@ -1298,7 +1315,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             </Link>
           )}
         </div>
-        {dupWarning && <div className="submit-warning">{dupWarning}</div>}
+        {dupId != null && (
+          <div className="submit-warning">
+            <AlertTriangle size={14} />
+            <Link href={`${langPrefix}/recon/${dupId}`} className="submit-warning-link">
+              {tr({ zh: `已存在复盘 (#${dupId}),点击查看`, en: `Duplicate found (#${dupId}) — view` })}
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="submit-layout">
@@ -1374,7 +1398,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
                 </label>
                 <label className="submit-field">
-                  <span className="submit-label">{tr({ zh: '成绩(千分位)', en: 'Time (0.001s)' })}</span>
+                  <span className="submit-label">{tr({ zh: '原始成绩(千分位)', en: 'Original time (0.001s)' })}</span>
                   <input
                     type="text"
                     value={timeInput}
@@ -1449,7 +1473,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               <div className="submit-row">
                 <label className={`submit-field submit-field-narrow${reusedCls('official')}`}>
                   <span className="submit-label">WCA</span>
-                  <select value={form.official ? '1' : '0'} onChange={e => setField('official', e.target.value === '1')}>
+                  <select value={form.official ? '1' : '0'} onChange={e => {
+                    const isOfficial = e.target.value === '1';
+                    setField('official', isOfficial);
+                    // 切到「非 WCA」且国家还没填 → 默认填登录用户(WCA ID)所在国家。
+                    if (!isOfficial && !form.country) {
+                      const iso2 = (authUser?.country || personFlagIso2(authUser?.wcaId ?? '')).toLowerCase();
+                      if (iso2) setField('country', iso2);
+                    }
+                  }}>
                     <option value="1">WCA</option>
                     <option value="0">{t('recon.badge.nonWca')}</option>
                   </select>
@@ -1638,8 +1670,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               </div>
             </CollapsibleSection>
 
-            {/* WCA scramble */}
-            <label className="submit-field submit-block">
+            {/* WCA scramble (用 div 而非 label:label 会把空白处点击转发给首个可聚焦后代「选已有」按钮) */}
+            <div className="submit-field submit-block">
               <span className="submit-label submit-label-row">
                 {t('recon.wcaScramble')}
                 <button
@@ -1674,10 +1706,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                 })}</span>
                 : scrambleAutoSource ? <span className="submit-hint">{scrambleAutoSource}</span> : null}
-            </label>
+            </div>
 
-            {/* Optimal scramble */}
-            <label className="submit-field submit-block">
+            {/* Optimal scramble (同上:用 div 避免空白点击转发到「选已有」) */}
+            <div className="submit-field submit-block">
               <span className="submit-label submit-label-row">
                 {t('recon.optimalScramble')}
                 <button
@@ -1699,7 +1731,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 ref={el => { if (el) autoResize(el); }}
                 style={{ overflow: 'hidden', resize: 'none' }}
               />
-            </label>
+            </div>
 
             {/* Mobile: inline player between scramble and solution */}
             {isMobile && form.event && (
