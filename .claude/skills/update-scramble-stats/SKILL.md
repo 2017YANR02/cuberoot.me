@@ -8,6 +8,8 @@ description: "用户要更新 /scramble/stats(打乱难度 / 步数分布)的数
 **一条龙:一个命令 `update_cross_stats.ps1`,`-Jobs` 选作业,跑完共享一次发布**(commit+push + scp 换 static,覆盖三类产物)。三类作业都只能本地(stages 需 solver 34GB 表 / 333opt 需 cubeopt 表):
 
 > **发布全增量(2026-06-25)**:所有作业都只传变化的文件。非 stages 小作业(`333opt`/`puzzles`)走 `git status` diff scp(`.tmp`+远端原子 `mv`),秒级;**stages 走 `publish_scramble_incremental.ps1`**——维护本地 sha1 内容清单(`incremental/publish_manifest.sha1`),每次只 diff 出内容真变的文件打小包 scp + 删远端孤儿,把过去每次 ~590MB 整包 tar(~35min)降到典型增量的 changed 小包(几十个 comp_steps + 变动 JSON,分钟级)。首次无清单(或 `-Baseline`)自动全量 tar 建基线。复用现有免密 `ssh cuberoot`,不引入 rsync。
+>
+> **PG 灌库也全增量(2026-06-25)**:`wca_scramble_optimal` + `wca_scramble_steps` 以前每次全量 `DELETE`+`\copy` / `TRUNCATE` 重灌(单次 ~270MB),现同样走行级 sha1 内容 diff(`pg_incremental_diff.mjs` + `incremental/pg_*_manifest.tsv`)——本地照常 build 全量 CSV,灌库只 `UPSERT` 内容真变的行 + `DELETE` 已消失自然键(典型增量几千行=KB,无变化=零传输只刷 meta)。manifest 仅在远端灌库成功后落盘(失败不更新,下次重试)。无 manifest=基线:走原全量路径并建基线;**删对应 `pg_*_manifest.tsv` 即强制全量重建**。重复自然键(steps 偶有,WCA dump 同场两套 scramble)diff 侧按首次出现去重 + 服务端 `DISTINCT ON` 双保险。
 
 | job | 对象 | 内部 | 产物 |
 |-----|------|------|------|
@@ -35,7 +37,7 @@ pwsh core/packages/scramble-stats-build/update_cross_stats.ps1 -NoPublish      #
 - **难度 tab puzzle**(222/pyram/skewb):analyzer 开 `PUZZLE_EMIT_SOLN=1` 多产 soln 列(`update_puzzle_stats.ps1` 已固定开);`build_puzzle_examples.ts` 反推存第 3 元 `[id,scr,opt]`。改 analyzer 要 `cargo build --release --bin {cube222,skewb,pyraminx}_analyzer`。
 - **难度 tab 三阶**:333opt inject 已带(examples 第 4 元)。
 - **长度 tab**(3x3 面转族 + 222/pyram/skewb):`build_length_opt.mjs`(一条龙 step 5c,增量)产 `event_length_examples_opt.json`(text→opt overlay);CI 日更的 base 不被覆盖。3x3 走 cube48opt5(972M 表),puzzle 走 analyzer。**首跑慢(~1284 个 3x3 解,opt5 ~40min);增量再跑很快**。
-- **/timer 真题最优**:走 PG `wca_scramble_optimal`(非 static)。**一条龙自动灌库**(2026-06-14 起,不再手动 `\copy`):333opt job 在 inject 后跑 `solver/333opt/export_optimal.mjs` 产 `wca_optimal.csv`,puzzles job 跑 `export_puzzle_optimal.mjs` 产 `wca_optimal_puzzle.csv`,发布步 6b 自动 scp + 按 event_id 整批替换(`DELETE`+`\copy` in tx,幂等)上线;密码服务器端从 `/root/core-api/.env` 读(不入仓库脚本)。`-NoPublish` 一并跳过(只产 CSV 不灌)。前端 `OPTIMAL_EVENTS`(WcaSourceConfig)gate 开关显示;开关 ON 时 date 模式传 `optimal=1`(服务端只回有最优等态的真题)、comp 模式客户端过滤,**不再静默回退原打乱**(某项目覆盖率不足时该池空→回退随机生成)。sq1/魔表无(占位注明)。
+- **/timer 真题最优**:走 PG `wca_scramble_optimal`(非 static)。**一条龙自动灌库**(2026-06-14 起,不再手动 `\copy`):333opt job 在 inject 后跑 `solver/333opt/export_optimal.mjs` 产 `wca_optimal.csv`,puzzles job 跑 `export_puzzle_optimal.mjs` 产 `wca_optimal_puzzle.csv`,发布步 6b 自动**行级增量灌库**(2026-06-25 起,见上「PG 灌库也全增量」):sha1 行清单 diff,只 `UPSERT` 变动行 + `DELETE` 删除键(无 manifest=基线走原 `DELETE`+`\copy` 全量);密码服务器端从 `/root/core-api/.env` 读(不入仓库脚本)。`-NoPublish` 一并跳过(只产 CSV 不灌)。前端 `OPTIMAL_EVENTS`(WcaSourceConfig)gate 开关显示;开关 ON 时 date 模式传 `optimal=1`(服务端只回有最优等态的真题)、comp 模式客户端过滤,**不再静默回退原打乱**(某项目覆盖率不足时该池空→回退随机生成)。sq1/魔表无(占位注明)。
 
 **「首次出现时间线」数据**(/scramble/stats 难度+长度 tab 顶栏「图表 / 时间线」开关:每步数 / 长度第一次出现在哪场比赛,按 comp 开始日期升序、同日按 id):**全部走一条龙自动产,无需手动**。前端缺数据的组合显「数据生成中」提示(占位,后端照样跑)。
 - **难度 stages**(十字 / F2L / EO / DR 多变体 × 六/四/双/单色):`build:first-appearance`(步骤 5,跟 distribution 一起)→ `difficulty_first_appearance.json`(顶层 wca 合并池)+ `difficulty_first_appearance_wca_<event>.json` per-event 分片(前端懒加载)。
