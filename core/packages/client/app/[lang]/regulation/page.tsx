@@ -70,7 +70,7 @@ export default function RegulationHub() {
             </span>
             <span className="reg-hub-news-title">
               {t(
-                'FTO 成为新项目、魔表退役,静默锦标赛与资格起始日期',
+                'FTO 成为新项目、魔表退役,安静锦标赛与资格起始日期',
                 'FTO added & Clock retired · Quiet Championships & qualification start dates',
               )}
             </span>
