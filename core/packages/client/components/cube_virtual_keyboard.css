@@ -154,6 +154,14 @@
     color: #007AFF !important;
 }
 
+/* NOTE: space 左侧切出的 Tab 键——触发解法补全 */
+.vkb-tab {
+    flex: 0 0 52px !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.02em;
+    color: #8e8e93 !important;
+}
+
 /* CubeKeyboardSection 桌面端 toggle 按钮 — 展开/收起虚拟键盘 */
 .vkb-toggle {
     display: inline-flex;

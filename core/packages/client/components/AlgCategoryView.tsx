@@ -14,7 +14,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, Flag } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -32,6 +32,7 @@ import { listSubmissions } from '@/lib/alg_api';
 import { reorderCases } from '@/lib/alg_sets_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
+import { displayAlgCaseName } from '@/lib/alg_case_display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
@@ -366,6 +367,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
           <span className="alg-cat-count">{visibleCases.length} {tr({ zh: '个', en: 'cases'
         })}</span>
         )}
+        {data && !showSubgroupPicker && (
+          <Link href={`/alg/${puzzleParam}/${set}/select`} className="alg-train-cta" prefetch={false}>
+            <Flag size={14} /> {tr({ zh: '开始训练', en: 'Train' })}
+          </Link>
+        )}
         {isAdmin && data && !showSubgroupPicker && (
           <>
             <button
@@ -507,7 +513,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                         </div>
                         <div className="alg-case-info">
                           <div className="alg-case-name">
-                            <span className="alg-case-letter">{c.name}</span>
+                            <span className="alg-case-letter">{displayAlgCaseName(puzzleParam, set, c.name)}</span>
                             {c.number != null && <span className="alg-case-index">#{c.number}</span>}
                             {oriCount > 1 && (
                               <button

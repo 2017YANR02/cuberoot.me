@@ -850,6 +850,18 @@
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
+/* 没复盘的成绩:静态白色,只悬停才提示可点(去复盘);区别于有复盘的橙色链接 */
+.same-comp-event-att-tonew {
+  text-decoration: none;
+  color: var(--foreground);
+  transition: color 0.12s, text-decoration-color 0.12s;
+}
+.same-comp-event-att-tonew:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
 
 /* 表格基础布局 — 复制自 persons.css .wp-bycomp-table */
 .wp-table-scroll { overflow-x: auto; }

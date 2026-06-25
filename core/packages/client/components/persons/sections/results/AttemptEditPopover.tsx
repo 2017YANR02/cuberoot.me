@@ -46,7 +46,7 @@ const cancelStyle: CSSProperties = {
 };
 
 export function AttemptEditPopover({
-  value, eventId, oldValues, cls, format, penalty, isAdmin, isOwner, onSetOriginal, onCorrect, onSetPenalty,
+  value, eventId, oldValues, cls, format, penalty, rankBadge, isAdmin, isOwner, onSetOriginal, onCorrect, onSetPenalty,
 }: {
   value: number;
   eventId: string;
@@ -54,6 +54,7 @@ export function AttemptEditPopover({
   cls?: string;
   format: (v: number) => string;
   penalty?: number;
+  rankBadge?: React.ReactNode;   // 编辑模式下也展示 PR 角标(与非编辑视图一致)
   isAdmin?: boolean;       // 管理员:任何改动即时生效
   isOwner?: boolean;       // 本人页面:罚时即时生效(其余改动仍需审核)
   onSetOriginal: (v: number, note?: string) => Promise<void> | void;
@@ -67,7 +68,7 @@ export function AttemptEditPopover({
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const [orig, setOrig] = useState('');
   const [next, setNext] = useState('');
-  const [pen, setPen] = useState('');        // 罚时档位 = +2 的次数('' = 无,'1'..'8')
+  const [pen, setPen] = useState('1');       // 罚时档位 = +2 的次数('1'..'8';进入罚时即至少 +2,无「无」档)
   const [note, setNote] = useState('');
   const [mode, setMode] = useState<'orig' | 'next' | 'penalty'>(initialMode); // 先选操作再填
   const [busy, setBusy] = useState(false);
@@ -98,7 +99,7 @@ export function AttemptEditPopover({
     setPos({ top, left });
   }, []);
 
-  const close = useCallback(() => { setOpen(false); setMode(initialMode); setOrig(''); setNext(''); setPen(''); setNote(''); }, [initialMode]);
+  const close = useCallback(() => { setOpen(false); setMode(initialMode); setOrig(''); setNext(''); setPen('1'); setNote(''); }, [initialMode]);
 
   useEffect(() => {
     if (!open) return;
@@ -115,7 +116,7 @@ export function AttemptEditPopover({
   const toggle = () => {
     if (open) { close(); return; }
     setMode(initialMode);
-    setPen(penalty && penalty > 0 ? String(Math.round(penalty / PENALTY_STEP_CS)) : '');  // 厘秒 → 档位
+    setPen(penalty && penalty > 0 ? String(Math.round(penalty / PENALTY_STEP_CS)) : '1');  // 厘秒 → 档位(默认 +2,不再有「无」)
     reposition();
     setOpen(true);
   };
@@ -154,7 +155,7 @@ export function AttemptEditPopover({
           ? tr({ zh: '点击改这一次(原始 / 改判 / 罚时)', en: 'Edit this solve (original / corrected / penalty)' })
           : tr({ zh: '点击提议改这一次(需管理员审核)', en: 'Propose an edit (needs admin review)' })}
         onClick={(e) => { e.stopPropagation(); toggle(); }}
-      >{olds}<SolveValue value={value} penalty={penalty} format={format} /></span>
+      >{olds}<SolveValue value={value} penalty={penalty} format={format} />{rankBadge}</span>
       {open && pos && createPortal(
         <>
           <div style={backdropStyle} onClick={close} />
@@ -162,9 +163,9 @@ export function AttemptEditPopover({
             <label style={rowStyle}>
               <span style={rowLabelStyle}>{tr({ zh: '操作', en: 'Action' })}</span>
               <select style={inputStyle} value={mode} onChange={(e) => setMode(e.target.value as 'orig' | 'next' | 'penalty')}>
+                {allowPenalty && <option value="penalty">{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</option>}
                 <option value="orig">{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</option>
                 <option value="next">{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</option>
-                {allowPenalty && <option value="penalty">{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</option>}
               </select>
             </label>
             <span style={curStyle}>{tr({ zh: '当前', en: 'now' })} <SolveValue value={value} penalty={penalty} format={format} /></span>
@@ -196,7 +197,6 @@ export function AttemptEditPopover({
               <label style={rowStyle}>
                 <span style={rowLabelStyle}>{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</span>
                 <select style={inputStyle} value={pen} onChange={(e) => setPen(e.target.value)}>
-                  <option value="">{tr({ zh: '无', en: 'none' })}</option>
                   {Array.from({ length: maxPenaltyCount }, (_, i) => i + 1).map((n) => (
                     <option key={n} value={n}>+{n * 2}</option>
                   ))}

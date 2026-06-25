@@ -11,7 +11,15 @@
  * Discrete by default (step=1). `value` is always [lo, hi] with lo <= hi; the
  * setters clamp so the handles can't cross. Style follows theme tokens
  * (--accent fill/thumb), so it adapts to light/dark and palette themes.
+ *
+ * Overlap handling: with two stacked inputs only the topmost thumb under the
+ * cursor is grabbable, and a thumb on top can move only one way (hi is clamped
+ * >= lo, lo <= hi) — so overlapping or adjacent thumbs would get stuck. We float
+ * whichever thumb the cursor is nearer to (when they overlap, by which side of
+ * the thumb the cursor is on) on every pointer move, so grabbing the left side
+ * drags left and the right side drags right. Keyboard stays unaffected.
  */
+import { useRef } from 'react';
 import './RangeSlider.css';
 
 export interface RangeSliderProps {
@@ -38,15 +46,40 @@ export function RangeSlider({
   const setLo = (n: number) => onChange([Math.min(Math.max(n, min), hi), hi]);
   const setHi = (n: number) => onChange([lo, Math.max(Math.min(n, max), lo)]);
 
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const loRef = useRef<HTMLInputElement>(null);
+  const hiRef = useRef<HTMLInputElement>(null);
+
+  // Put the thumb the cursor is nearest to on top so it (not its buried twin)
+  // receives the grab. When the thumbs overlap their pixel positions are equal,
+  // so the tie-break by cursor side decides direction: cursor left of the thumb
+  // → lo on top (drags left); right → hi on top (drags right). Set imperatively
+  // (not via React state) so it lands before the pending pointerdown grabs.
+  const floatNearestThumb = (clientX: number) => {
+    const loEl = loRef.current, hiEl = hiRef.current, wrap = wrapRef.current;
+    if (!loEl || !hiEl || !wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    const xOf = (n: number) => rect.left + ((n - min) / span) * rect.width;
+    const dLo = Math.abs(clientX - xOf(lo));
+    const dHi = Math.abs(clientX - xOf(hi));
+    const loOnTop = dLo < dHi || (dLo === dHi && clientX <= xOf(lo));
+    loEl.style.zIndex = loOnTop ? '4' : '2';
+    hiEl.style.zIndex = loOnTop ? '3' : '5';
+  };
+
   return (
     <div
+      ref={wrapRef}
       className={`range-slider${disabled ? ' is-disabled' : ''}`}
       style={{ ['--rs-lo' as string]: pct(lo), ['--rs-hi' as string]: pct(hi) }}
+      onPointerMove={(e) => floatNearestThumb(e.clientX)}
+      onPointerDown={(e) => floatNearestThumb(e.clientX)}
     >
       <div className="range-slider-rail">
         <div className="range-slider-fill" />
       </div>
       <input
+        ref={loRef}
         type="range"
         className="range-slider-input range-slider-input-lo"
         min={min} max={max} step={step} value={lo} disabled={disabled}
@@ -55,6 +88,7 @@ export function RangeSlider({
         aria-valuetext={fmt(lo)}
       />
       <input
+        ref={hiRef}
         type="range"
         className="range-slider-input range-slider-input-hi"
         min={min} max={max} step={step} value={hi} disabled={disabled}

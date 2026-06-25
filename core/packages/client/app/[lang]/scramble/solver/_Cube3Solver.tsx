@@ -21,13 +21,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Trash2, Upload, Download, Sparkles, X, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, Trash2, Upload, Download, Sparkles, Shuffle, X } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { streamApiUrl } from '@/lib/api-base';
 import { authHeaders } from '@/lib/admin-api';
 import { useAuthStore } from '@/lib/auth-store';
-import CubingPreview2D from './_CubingPreview2D';
-import { faceletToCubie, validateFacelet } from './facelet';
+import { faceletToCubie, validateFacelet, cubieToFacelet } from './facelet';
 import {
   formatMoves,
   invertSequence,
@@ -38,6 +37,7 @@ import {
   type CubieCube,
 } from './_kociemba/cube';
 import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from './_InteractiveCubeNet';
+import Interactive3DCube from './_Interactive3DCube';
 import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 import SolveTabs from "../_components/SolveTabs";
@@ -172,7 +172,6 @@ export default function Cube3Solver() {
     window.addEventListener('resize', upd);
     return () => window.removeEventListener('resize', upd);
   }, []);
-  const [showScramblePreview, setShowScramblePreview] = useState(true);
   const pendingSolveRef = useRef(false);
   const [autoDownloadTable, setAutoDownloadTable] = useState(true);
   // Optional save folder (File System Access API). When set, generated tables
@@ -180,15 +179,12 @@ export default function Cube3Solver() {
   const saveDirRef = useRef<FileSystemDirectoryHandle | null>(null);
   const [saveDirName, setSaveDirName] = useState<string | null>(null);
   const justGeneratedRef = useRef(false);
-  const [showLogs, setShowLogs] = useState(false);
-  type InputMode = 'paint' | 'random' | 'paste';
-  // Input method in URL (?input) so the chosen tab is shareable + back/forward works.
-  const [inputMode, setInputMode] = useQueryState(
-    'input',
-    parseAsStringEnum<InputMode>(['paint', 'random', 'paste']).withDefault('paint'),
+  // Paint view in URL (?paint): 'net' = 2D unfolded cross, 'cube' = rotatable 3D.
+  // Both edit the same paintFacelet, so switching keeps the painted state.
+  const [paintView, setPaintView] = useQueryState(
+    'paint',
+    parseAsStringEnum<'net' | 'cube'>(['net', 'cube']).withDefault('net'),
   );
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
   // Solve source in URL (?via): 'local' = download/generate the prun table
   // in-browser, 'cloud' = POST scrambles to api.cuberoot.me which solves with the
   // server-side opt6 table (no download, login-gated). Same optimal solution.
@@ -211,20 +207,11 @@ export default function Cube3Solver() {
   // Read all localStorage-backed prefs post-mount; persist on change.
   useEffect(() => {
     try {
-      const sp = localStorage.getItem('cubeopt.showPreview');
-      if (sp !== null) setShowScramblePreview(sp === '1');
       const ad = localStorage.getItem('cubeopt.autoDownload');
       if (ad !== null) setAutoDownloadTable(ad === '1');
-      const sl = localStorage.getItem('cubeopt.showLogs');
-      if (sl !== null) setShowLogs(sl === '1');
-      const sa = localStorage.getItem('cubeopt.showAdvanced');
-      if (sa !== null) setShowAdvanced(sa === '1');
     } catch { /* corrupt entries */ }
   }, []);
-  useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.showPreview', showScramblePreview ? '1' : '0'); } catch { /* */ } }, [mounted, showScramblePreview]);
   useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.autoDownload', autoDownloadTable ? '1' : '0'); } catch { /* */ } }, [mounted, autoDownloadTable]);
-  useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.showLogs', showLogs ? '1' : '0'); } catch { /* */ } }, [mounted, showLogs]);
-  useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.showAdvanced', showAdvanced ? '1' : '0'); } catch { /* */ } }, [mounted, showAdvanced]);
 
   const workerRef = useRef<Worker | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -318,6 +305,15 @@ export default function Cube3Solver() {
     kociembaCancelRef.current?.();
     setKociembaBusy(false);
     setStateInfo(t('已取消。', 'Cancelled.'));
+  };
+
+  // Shared by both paint views (2D net + 3D cube): derive a scramble from the
+  // painted state via Kociemba.
+  const handlePaintSolve = (fc: string) => {
+    if (kociembaBusy) return;
+    runKociembaForState(fc).catch((e: Error) => {
+      setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`));
+    });
   };
 
   const bindCubeoptWorker = (w: Worker) => {
@@ -743,18 +739,24 @@ export default function Cube3Solver() {
     });
   })();
 
-  const previewScramble = useMemo(() => {
+  // Mirror the first scramble line onto the painted canvas: applying it to a
+  // solved cube IS the state being solved, so the top net doubles as a live
+  // preview. Painting diverges the canvas freely; 求打乱 writes back a scramble
+  // whose state equals what's painted (worker inverts the solution), so the
+  // round-trip causes no visual jump. Empty / partial lines leave the canvas.
+  useEffect(() => {
     const first = scrambles.split('\n').map(s => s.trim()).find(Boolean);
-    if (!first) return null;
+    if (!first) return;
     try {
-      parseMoves(first);
-      return first;
-    } catch { return null; }
+      setPaintFacelet(cubieToFacelet(applySequence(solvedCubie(), parseMoves(first))));
+    } catch { /* partial or invalid maneuver — keep the current canvas */ }
   }, [scrambles]);
 
   const cloudMode = solveSource === 'cloud';
   const busy = cloudMode ? cloudBusy : readyState === 'busy';
   const solveDisabled = cloudMode ? (!stateOk || !user) : (readyState === 'no-solver' || !stateOk);
+  // Whether the painted state can be turned into a scramble (no empty stickers + legal cube).
+  const paintSolveBlocked = paintFacelet.includes('X') || !!validateFacelet(paintFacelet);
 
   return (
     <div className="cubeopt-page">
@@ -792,66 +794,47 @@ export default function Cube3Solver() {
         </div>
       )}
 
-      {cloudMode && cloudStatus && (
-        <div className="cubeopt-info">
-          {cloudBusy && <Loader2 size={14} className="spinning" />}
-          <span>{cloudStatus}</span>
-          {cloudBusy && <span className="cloud-timer">{Math.floor(cloudLiveMs / 1000)}s</span>}
-          {cloudBusy && (
-            <button className="btn-cancel-sm" onClick={cancelCloud}>
-              <X size={12} /> {t('取消', 'Cancel')}
-            </button>
-          )}
+      <section className="cubeopt-card">
+        <div className="paint-view-toggle" role="tablist">
+          <button
+            role="tab"
+            aria-selected={paintView === 'net'}
+            className={`pmt-btn${paintView === 'net' ? ' is-active' : ''}`}
+            onClick={() => setPaintView('net')}
+          >
+            {t('平面图', '2D net')}
+          </button>
+          <button
+            role="tab"
+            aria-selected={paintView === 'cube'}
+            className={`pmt-btn${paintView === 'cube' ? ' is-active' : ''}`}
+            onClick={() => setPaintView('cube')}
+          >
+            {t('立体图', '3D cube')}
+          </button>
         </div>
-      )}
-
-      <div className="cubeopt-tabs" role="tablist">
-        <button role="tab" aria-selected={inputMode === 'paint'} className={`tab${inputMode === 'paint' ? ' is-active' : ''}`} onClick={() => setInputMode('paint')}>
-          {t('从状态画', 'Paint state')}
-        </button>
-        <button role="tab" aria-selected={inputMode === 'random'} className={`tab${inputMode === 'random' ? ' is-active' : ''}`} onClick={() => setInputMode('random')}>
-          {t('随机生成', 'Random')}
-        </button>
-        <button role="tab" aria-selected={inputMode === 'paste'} className={`tab${inputMode === 'paste' ? ' is-active' : ''}`} onClick={() => setInputMode('paste')}>
-          {t('直接粘贴', 'Paste')}
-        </button>
-      </div>
-
-      {inputMode === 'paint' && (
-        <section className="cubeopt-card">
-          <div className="paint-wrap">
+        <div className="paint-wrap">
+          {paintView === 'cube' ? (
+            <Interactive3DCube
+              facelet={paintFacelet}
+              onChange={setPaintFacelet}
+              activeColor={paintColor}
+              onActiveColorChange={setPaintColor}
+              pixelSize={paintCanvasSize}
+              hideSolve
+            />
+          ) : (
             <InteractiveCubeNet
               facelet={paintFacelet}
               onChange={setPaintFacelet}
               activeColor={paintColor}
               onActiveColorChange={setPaintColor}
               pixelSize={paintCanvasSize}
-              solveLabel={{ zh: '求打乱', en: 'Derive scramble'
-            }}
-              onSolve={(fc) => {
-                if (kociembaBusy) return;
-                runKociembaForState(fc).catch((e: Error) => {
-                  setStateInfo(t(`从状态求解失败:${e.message}`, `Solve from state failed: ${e.message}`));
-                });
-              }}
+              hideSolve
             />
-          </div>
-        </section>
-      )}
-
-      {inputMode === 'random' && (
-        <section className="cubeopt-card">
-          <div className="row">
-            <select className="ctl-sm" value={scrLen} onChange={(e) => setScrLen(parseInt(e.target.value, 10))}>
-              {SCR_LEN_OPTS.map(n => <option key={n} value={n}>{n} {t('步', 'moves')}</option>)}
-            </select>
-            <select className="ctl-sm" value={scrNum} onChange={(e) => setScrNum(parseInt(e.target.value, 10))}>
-              {SCR_NUM_OPTS.map(n => <option key={n} value={n}>{n} {t('个', 'cubes')}</option>)}
-            </select>
-            <button className="btn-primary" onClick={genRandom}>{t('生成到打乱框', 'Generate')}</button>
-          </div>
-        </section>
-      )}
+          )}
+        </div>
+      </section>
 
       {stateInfo && (
         <div className="cubeopt-info">
@@ -871,17 +854,18 @@ export default function Cube3Solver() {
           <button className="btn-icon" onClick={inverseScrambles} title={t('每行反向', 'Invert each line')}>
             <Sparkles size={14} />
           </button>
-          <button
-            className={`btn-icon${showScramblePreview ? ' is-active' : ''}`}
-            onClick={() => setShowScramblePreview(v => !v)}
-            title={t('显示第一行打乱产生的状态', 'Show state after the first scramble')}
-          >
-            {showScramblePreview ? <Eye size={14} /> : <EyeOff size={14} />}
-          </button>
           <button className="btn-icon" onClick={() => setScrambles('')} title={t('清空', 'Clear')}>
             <Trash2 size={14} />
           </button>
           <span className="row-spacer" />
+          <button
+            className="btn"
+            disabled={paintSolveBlocked || kociembaBusy}
+            onClick={() => handlePaintSolve(paintFacelet)}
+            title={t('从上面画的状态反推一个打乱,填进下面的框', 'Derive a scramble from the painted state above into the box')}
+          >
+            <Sparkles size={14} /> {t('求打乱', 'Derive scramble')}
+          </button>
           {busy ? (
             <button className="btn-cancel" onClick={cloudMode ? cancelCloud : cancelCubeopt} title={cloudMode
               ? t('中止云端请求。', 'Abort the cloud request.')
@@ -914,21 +898,28 @@ export default function Cube3Solver() {
             </button>
           )}
         </div>
+        <div className="row scramble-gen">
+          <span className="lbl">{t('随机', 'Random')}</span>
+          <select className="ctl-sm" value={scrLen} onChange={(e) => setScrLen(parseInt(e.target.value, 10))}>
+            {SCR_LEN_OPTS.map(n => <option key={n} value={n}>{n} {t('步', 'moves')}</option>)}
+          </select>
+          <select className="ctl-sm" value={scrNum} onChange={(e) => setScrNum(parseInt(e.target.value, 10))}>
+            {SCR_NUM_OPTS.map(n => <option key={n} value={n}>{n} {t('个', 'cubes')}</option>)}
+          </select>
+          <button className="btn" onClick={genRandom} title={t('按步数×个数生成随机打乱填进下面的框', 'Generate random scrambles (length × count) into the box below')}>
+            <Shuffle size={14} /> {t('随机生成', 'Generate')}
+          </button>
+        </div>
         <textarea
           className="scramble-area"
-          rows={inputMode === 'paste' ? 6 : 4}
-          placeholder={inputMode === 'paste'
-            ? t('把 cubedb / cstimer / WCA scramble 粘到这里,每行一个,然后 Solve。',
-                'Paste scrambles here (one per line), then Solve.')
-            : "R U R' U' R' F R2 U' R' U' R U R' F'"}
+          rows={4}
+          placeholder={t(
+            '每行一个打乱,可手输或粘贴 cubedb / cstimer / WCA scramble(如 R U R\' U\' ...),然后 Solve。',
+            'One scramble per line — type or paste from cubedb / cstimer / WCA (e.g. R U R\' U\' ...), then Solve.'
+          )}
           value={scrambles}
           onChange={(e) => setScrambles(e.target.value)}
         />
-        {showScramblePreview && previewScramble && (
-          <div className="scramble-preview-mini">
-            <CubingPreview2D scramble={previewScramble} size={14} className="scramble-preview-svg" />
-          </div>
-        )}
       </section>
 
       {solveResults.size > 0 && (
@@ -965,8 +956,7 @@ export default function Cube3Solver() {
       )}
 
       <section className="cubeopt-card cubeopt-advanced">
-        <button className="advanced-toggle" onClick={() => setShowAdvanced(v => !v)}>
-          {showAdvanced ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        <div className="advanced-head">
           <span>{t('高级设置', 'Advanced')}</span>
           <span className="advanced-summary">
             {cloudMode
@@ -978,9 +968,8 @@ export default function Cube3Solver() {
                   {readyState === 'busy' && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}
                 </>}
           </span>
-        </button>
-        {showAdvanced && (
-          <>
+        </div>
+        <>
             <div className="row">
               <span className="lbl">{t('求解来源', 'Solve via')}</span>
               <select className="ctl" value={solveSource} disabled={busy}
@@ -992,10 +981,22 @@ export default function Cube3Solver() {
             {cloudMode && (
               <p className="cloud-note">
                 {t(
-                  '云端用服务器的 opt6 表(1.9G)求最优解,解和本地各档完全一样,只是免你下载多 GB 的表。一次最多 5 条;多数几秒出解,最难的打乱(19-20 步最优)在 2 核服务器上可能要 1 分钟左右,串行排队。',
-                  'The server solves with its opt6 table (1.9G). The solution is identical to every local table — this just saves you the multi-GB download. Up to 5 scrambles at once; most finish in seconds, but the hardest scrambles (19-20 move optimal) can take ~1 min on the 2-core server, processed in a serial queue.'
+                  '云端用服务器的 opt6 表(1.9G)求最优解,解和本地各档完全一样,只是免你下载多 GB 的表。一次最多 5 条;多数几秒出解,最难的打乱(19-20 步最优)在 2 核服务器上可能要 1 分钟左右,串行排队。每个 IP 每 5 分钟最多 30 次,管理员不限。',
+                  'The server solves with its opt6 table (1.9G). The solution is identical to every local table — this just saves you the multi-GB download. Up to 5 scrambles at once; most finish in seconds, but the hardest scrambles (19-20 move optimal) can take ~1 min on the 2-core server, processed in a serial queue. Each IP gets up to 30 requests per 5 min; admins are exempt.'
                 )}
               </p>
+            )}
+            {cloudMode && cloudStatus && (
+              <div className="cubeopt-info">
+                {cloudBusy && <Loader2 size={14} className="spinning" />}
+                <span>{cloudStatus}</span>
+                {cloudBusy && <span className="cloud-timer">{Math.floor(cloudLiveMs / 1000)}s</span>}
+                {cloudBusy && (
+                  <button className="btn-cancel-sm" onClick={cancelCloud}>
+                    <X size={12} /> {t('取消', 'Cancel')}
+                  </button>
+                )}
+              </div>
             )}
             {!cloudMode && (
             <div className="row">
@@ -1052,25 +1053,18 @@ export default function Cube3Solver() {
             </div>
             </>)}
           </>
-        )}
       </section>
 
       <section className="cubeopt-card">
         <div className="row">
           <span className="lbl">Logs</span>
-          <button className="btn" onClick={() => setShowLogs(v => !v)}>
-            {showLogs ? t('收起', 'Hide') : t('展开 raw 输出', 'Show raw output')}
-            {logs ? ` (${logs.split('\n').length - 1})` : ''}
+          {logs && <span className="advanced-summary">{logs.split('\n').length - 1}</span>}
+          <span className="row-spacer" />
+          <button className="btn-icon" onClick={() => setLogs('')} title={t('清空日志', 'Clear logs')}>
+            <Trash2 size={14} />
           </button>
-          {showLogs && (
-            <button className="btn-icon" onClick={() => setLogs('')} title="Clear logs">
-              <Trash2 size={14} />
-            </button>
-          )}
         </div>
-        {showLogs && (
-          <textarea ref={logsRef} className="logs-area" rows={10} value={logs} readOnly />
-        )}
+        <textarea ref={logsRef} className="logs-area" rows={10} value={logs} readOnly />
       </section>
 
       <p className="cubeopt-foot">
@@ -1094,43 +1088,18 @@ const INLINE_CSS = `
   margin-bottom: 0.25rem;
 }
 .cubeopt-header h1 { margin: 0; font-size: 1.6rem; font-weight: 600; }
-.cubeopt-tabs {
-  display: flex; gap: 0.25rem;
-  margin: 0.75rem 0;
-  border-bottom: 1px solid var(--border, #333);
-}
-.cubeopt-tabs .tab {
-  background: transparent; border: none; color: var(--text-muted, #aaa);
-  padding: 0.45rem 0.9rem; font-size: 0.9rem; cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.12s ease, border-color 0.12s ease;
-}
-.cubeopt-tabs .tab:hover { color: var(--text); }
-.cubeopt-tabs .tab.is-active {
-  color: var(--accent, #ff8800);
-  border-bottom-color: var(--accent, #ff8800);
-}
+.scramble-gen .ctl-sm { flex: 0 1 auto; min-width: 4.5rem; }
 .row-spacer { flex: 1; }
-.advanced-toggle {
+.advanced-head {
   display: flex; align-items: center; gap: 0.4rem;
-  width: 100%; background: transparent; border: none; color: var(--text);
-  padding: 0.25rem 0; font-size: 0.9rem; cursor: pointer; text-align: left;
+  width: 100%; color: var(--text);
+  padding: 0.25rem 0 0.5rem; font-size: 0.9rem;
 }
-.advanced-toggle:hover { color: var(--accent, #ff8800); }
 .advanced-summary {
   margin-left: auto; color: var(--text-muted, #888); font-size: 0.8rem;
   display: inline-flex; align-items: center; gap: 0.3rem;
 }
 .cubeopt-advanced { padding-bottom: 0.25rem; }
-.scramble-preview-mini {
-  margin-top: 0.5rem;
-  display: inline-block;
-  padding: 0.4rem;
-  background: var(--panel-sub, #181818);
-  border-radius: 5px;
-  border: 1px dashed var(--border, #333);
-}
 .cubeopt-warn {
   background: #3a2912; border: 1px solid #ff8800; color: #ffcc88;
   padding: 0.5rem 0.75rem; border-radius: 6px; margin-bottom: 0.75rem;
@@ -1199,7 +1168,6 @@ const INLINE_CSS = `
 }
 .btn-icon { padding: 0.35rem 0.45rem; }
 .btn-icon.is-active { border-color: var(--accent, #ff8800); color: var(--accent, #ff8800); }
-.scramble-preview-svg { flex-shrink: 0; }
 .solutions-list {
   list-style: none; margin: 0.25rem 0 0; padding: 0;
   display: flex; flex-direction: column; gap: 0.2rem;
@@ -1273,6 +1241,22 @@ const INLINE_CSS = `
 }
 .paint-wrap {
   display: flex; justify-content: center;
+}
+.paint-view-toggle {
+  display: flex; gap: 0.25rem; width: fit-content;
+  margin: 0 auto 0.75rem; padding: 0.2rem;
+  background: var(--panel-sub, #181818);
+  border: 1px solid var(--border, #333);
+  border-radius: 7px;
+}
+.paint-view-toggle .pmt-btn {
+  background: transparent; border: none; color: var(--text-muted, #aaa);
+  padding: 0.3rem 0.85rem; font-size: 0.82rem; cursor: pointer;
+  border-radius: 5px; transition: background 0.12s ease, color 0.12s ease;
+}
+.paint-view-toggle .pmt-btn:hover { color: var(--text); }
+.paint-view-toggle .pmt-btn.is-active {
+  background: var(--accent, #ff8800); color: #000; font-weight: 600;
 }
 .auto-dl {
   display: inline-flex; align-items: center; gap: 0.35rem;

@@ -36,7 +36,7 @@ import { getCaretRect } from '@/lib/textarea_caret';
 import { patternFromAlg, countMoves } from '@/lib/cube3';
 import { buildCommentSuggestions } from '@/lib/popup_suggest';
 import { detectStage } from '@/lib/stage_detect';
-import { suggestAlg, movesOnly, lineRange } from '@/lib/recon_autofill_core';
+import { suggestAlg, movesOnly, lineRange, resolveEffectivePrev } from '@/lib/recon_autofill_core';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
 import './ReconAutofill.css';
 import { tr } from '@/i18n/tr';
@@ -71,6 +71,8 @@ interface CommentPopup {
   solved: boolean;
   /** 行号——光标移到不同行时关闭 popup(避免显示陈旧候选)。 */
   lineIdx: number;
+  /** 由用户主动 Tab 触发(开启「cancel into」前瞻);重建时需沿用,否则会被自动逻辑清掉。 */
+  explicit: boolean;
 }
 
 interface AlgPopup {
@@ -116,8 +118,8 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     close();
   }, [textareaRef, close]);
 
-  /** Build a CommentPopup for the current line state. */
-  const buildCommentPopup = useCallback(async (caret: number): Promise<CommentPopup | null> => {
+  /** Build a CommentPopup for the current line state. `explicit` = 用户主动 Tab(开 cancel-into 前瞻)。 */
+  const buildCommentPopup = useCallback(async (caret: number, explicit = false): Promise<CommentPopup | null> => {
     const ta = textareaRef.current;
     if (!ta) return null;
     const { start, end } = lineRange(value, caret);
@@ -141,9 +143,10 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     const moveCount = countMoves(thisLineMovesText);
 
     // Apply scramble + prev moves → prevPattern; +current line moves → currPattern.
-    const prevAlg = [scramble, prevMoves].filter(Boolean).join(' ');
+    // prev 用 cancel-into 修正版:上一行若是「留步靠本行首动抵消」的 cancel-into,被 cancel 的
+    // 那把要计入 prev,否则本行会把它和真正新解的那把一起误判成 xxcross。
     const currAlg = [scramble, currMoves].filter(Boolean).join(' ');
-    const prevPattern = await patternFromAlg(prevAlg);
+    const prevPattern = await resolveEffectivePrev(scramble, prevMoves, thisLineMovesText, linesBefore);
     const currPattern = await patternFromAlg(currAlg);
 
     const entries = await buildCommentSuggestions({
@@ -151,6 +154,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       currPattern,
       lineMovesText: thisLineMovesText,
       moveCount,
+      explicit,
     });
 
     if (entries.length === 0) return null;
@@ -166,6 +170,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       caret,
       solved: currStage.stage === 'solved',
       lineIdx,
+      explicit,
     };
   }, [textareaRef, value, scramble]);
 
@@ -210,7 +215,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     // (user might be filtering by partial query).
     const slashIdx = lineUpToCaret.indexOf('//');
     if (slashIdx >= 0) {
-      const p = await buildCommentPopup(caret);
+      const p = await buildCommentPopup(caret, true);
       if (p) {
         setPopup(p);
         setSelected(0);
@@ -221,7 +226,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     // If line has moves but no `//`, comment popup
     const movesLineText = movesOnly(fullLine);
     if (movesLineText.length > 0 && !lineUpToCaret.includes('//')) {
-      const p = await buildCommentPopup(caret);
+      const p = await buildCommentPopup(caret, true);
       if (p) {
         setPopup(p);
         setSelected(0);
@@ -315,7 +320,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     let cancelled = false;
     (async () => {
       const next = popup.kind === 'comment'
-        ? await buildCommentPopup(caret)
+        ? await buildCommentPopup(caret, popup.explicit)
         : await buildAlgPopup(caret);
       if (cancelled) return;
       // alg 空态(没匹配的提示文本)只在手动 Tab 触发时给反馈;边打边过滤遇到没
@@ -475,11 +480,22 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const ta = textareaRef.current;
   if (!ta) return null;
   const taRect = ta.getBoundingClientRect();
-  const POPUP_WIDTH = 320;
-  const left = Math.min(
-    taRect.left + popup.pos.left - ta.offsetLeft,
-    window.innerWidth - POPUP_WIDTH - 8,
-  );
+  // 弹窗宽度自适应内容(width:max-content),不再死锁 320:桌面右侧有空间就一行铺开,
+  // 只有贴近右边缘 / 手机端放不下时才收窄到可用宽度并由 CSS 换行。
+  const GUTTER = 8;
+  const HARD_MAX = 680;
+  const MIN_W = 280;
+  const caretLeft = Math.max(0, taRect.left + popup.pos.left - ta.offsetLeft);
+  const roomRight = window.innerWidth - caretLeft - GUTTER;
+  let left: number;
+  let maxWidth: number;
+  if (roomRight >= MIN_W) {
+    left = caretLeft;                                  // 锚在光标处
+    maxWidth = Math.min(HARD_MAX, roomRight);
+  } else {
+    maxWidth = Math.min(HARD_MAX, window.innerWidth - 2 * GUTTER);
+    left = Math.max(GUTTER, window.innerWidth - GUTTER - maxWidth);  // 贴右边缘
+  }
   const top = taRect.top + popup.pos.top - ta.offsetTop + popup.pos.lineHeight + 4;
 
   const emptyReasonKey = popup.kind === 'alg' ? popup.emptyReasonKey : undefined;
@@ -488,7 +504,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     <div
       className="recon-autofill"
       data-recon-autofill="1"
-      style={{ position: 'fixed', left, top, width: POPUP_WIDTH, maxHeight: 280 }}
+      style={{ position: 'fixed', left, top, width: 'max-content', maxWidth, maxHeight: 280 }}
     >
       {popup.entries.length === 0 && emptyReasonKey && (
         <div className="recon-autofill-empty">

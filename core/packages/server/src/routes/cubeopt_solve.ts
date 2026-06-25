@@ -9,8 +9,8 @@
  *
  * Guards (all three the user asked for):
  *   • login gate     — requireAuth; anonymous users keep the local-download path.
- *   • IP rate limit   — dedicated sliding window (expensive op; the global 30/min
- *                       writer limit is far too loose here).
+ *   • IP rate limit   — dedicated sliding window (30 POSTs / 5 min); admins exempt.
+ *                       The global 30/min writer limit is too loose for this op.
  *   • serial queue    — intrinsic to the daemon (synchronous solve) + per-request
  *                       timeout + queue-depth cap in cubeopt/daemon.ts.
  *
@@ -22,7 +22,7 @@
  */
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
-import { requireAuth } from '../utils/recon_helpers.js';
+import { requireAuth, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
 import { solveOptimal, isEnabled, isReady, ensureDaemon, getLastLoadMs } from '../cubeopt/daemon.js';
 
 export const cubeoptSolveRoutes = new Hono();
@@ -32,11 +32,11 @@ const MAX_SCRAMBLES = 5;
 const MAX_MOVES = 50;
 const TOKEN = /^[URFDLB][2']?$/;
 
-// Dedicated per-IP sliding window: at most 6 POSTs / 5 min (each <=5 scrambles).
+// Dedicated per-IP sliding window: at most 30 POSTs / 5 min (each <=5 scrambles).
 // Solve work is bounded mostly by the global serial daemon queue; this just stops
-// one client monopolising it.
+// one client monopolising it. Admins bypass it entirely (see the route).
 const POST_WINDOW_MS = 5 * 60_000;
-const POST_MAX = 6;
+const POST_MAX = 30;
 const ipHits = new Map<string, number[]>();
 function checkSolveRateLimit(ip: string): void {
   const now = Date.now();
@@ -67,8 +67,10 @@ cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
   c.header('Cache-Control', 'no-store');
   if (!isEnabled()) return c.json({ error: 'Cloud optimal solve is not available' }, 503, NO_CACHE);
 
-  checkSolveRateLimit(getIp(c));
-  await requireAuth(c); // login gate — throws → 401
+  const user = await requireAuth(c); // login gate — throws → 401
+  // Admins have no throttle; everyone else gets the per-IP window above. Doing
+  // auth first also means anonymous/invalid probes never burn a real user's quota.
+  if (!ADMIN_WCA_IDS.includes(user.wcaId)) checkSolveRateLimit(getIp(c));
 
   let body: { scrambles?: unknown };
   try {

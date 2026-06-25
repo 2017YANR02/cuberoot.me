@@ -128,6 +128,8 @@ html[data-theme=dark] .wp-page {
 .wp-section-h-row .wp-section-h { margin: 0; }
 /* 按比赛视图无标题:图标单独留点上下边距,左对齐 */
 .wp-section-h-row-bare { margin: 4px 0 12px; }
+/* 「全部成绩」标题右侧工具组(PR 名次开关 + 编辑模式开关) */
+.wp-section-h-tools { display: inline-flex; align-items: center; gap: 8px; }
 
 /* ── 最优项目组合(复用全局 .sor-pb / .sor-tool-hint,见 components/wca-stats/best-combos.css)── */
 .wp-combos-card {
@@ -714,19 +716,46 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-cell-attempts { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 /* 详细成绩里的旧值(被改的那一次)压缩,尽量少撑宽 */
 .wp-cell-attempts .wp-old-result { font-size: 0.72em; margin-right: 3px; }
-/* 「详细成绩」表头压在下方 attempts 网格正上方:同列模板 + 同字号(8.5ch 同宽)→ 标题跨 5 列居中 */
+/* 「详细成绩」表头压在下方 attempts 网格正上方:同列模板 + 同字号 + 同列下限(10ch)→ 表头序号与下方成绩同列对齐。
+   下限提到 10ch:容下「值 + PR 角标」(如 (4.61 PR119)≈9ch),使表头与各行该列都贴 10ch 下限 → 列宽一致不漂移。 */
 .wp-bycomp-table thead th.wp-th-attempts { text-align: left; }
 .wp-th-attempts .wp-att-head {
     display: inline-grid;
-    grid-template-columns: repeat(5, minmax(8.5ch, max-content));
+    grid-template-columns: repeat(5, minmax(10ch, max-content));
     gap: 4px 12px;
     justify-content: start;
-    font-size: 0.85rem;            /* 对齐 tbody 单元格字号,使 8.5ch 与下方网格同宽 */
+    font-size: 0.85rem;            /* 对齐 tbody 单元格字号,使 10ch 与下方网格同宽 */
+}
+/* tbody 详细成绩网格同步提到 10ch(仅 /wca/persons,recon 同场表仍走共享 8.5ch) */
+.wp-cell-attempts .wp-attempts-flow {
+    grid-template-columns: repeat(5, minmax(10ch, max-content));
 }
 .wp-th-attempts .wp-att-head > span {
     grid-column: 1 / -1;           /* 跨 5 列 → 在整块 attempts 宽度内居中 */
     text-align: center;
     font-size: 0.72rem;            /* 标题字号与其它表头一致 */
+}
+/* ── 列头排序(单次 / 平均 / 详细成绩每一把)────────────────────────────── */
+.wp-sort-th {
+    appearance: none; background: none; border: none; padding: 0; font: inherit;
+    display: inline-flex; align-items: center; gap: 3px; cursor: pointer; color: inherit;
+    transition: color 0.12s;
+}
+.wp-sort-th:hover { color: var(--wp-text); }
+.wp-sort-th.is-active { color: var(--wp-blue); font-weight: 600; }
+/* 「详细成绩」表头下方的把序号(1..5)排序触发 */
+/* display:contents → 5 个序号直接成为 .wp-att-head 网格项,落到第 2 行各列、与下方成绩同列对齐 */
+.wp-th-attempts .wp-att-head > span.wp-att-sort { display: contents; }
+.wp-att-sort-i {
+    appearance: none; background: none; border: 1px solid transparent; font: inherit;
+    display: inline-flex; align-items: center; gap: 1px; justify-self: center;
+    padding: 1px 5px; border-radius: 5px; cursor: pointer; line-height: 1.4;
+    color: var(--wp-text-sub); transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.wp-att-sort-i:hover { color: var(--wp-text); border-color: var(--wp-border); }
+.wp-att-sort-i.is-active {
+    color: var(--wp-blue); border-color: var(--wp-blue);
+    background: color-mix(in srgb, var(--wp-blue) 12%, transparent);
 }
 /* 表头带 InfoTooltip 的布局 wrapper:横向 flex + 间距,实际触发 / 弹层走组件 */
 .wp-th-info {

@@ -64,6 +64,9 @@ export interface RankFlag {
    *  rank 一经赋值即冻结,后续更好成绩不会"挤掉"它. */
   singleRank: number | null;
   averageRank: number | null;
+  /** 每把单次的时间序 dense rank,口径同 singleRank(在该轮开始前、本人各轮最佳单次集合里).
+   *  下标对齐 result.attempts;最好那把 == singleRank(同值同名次,与单次列一致).无效次 = null. */
+  attemptRanks: (number | null)[];
 }
 
 // 时间序轮次顺序: 用于同一比赛内 round 排序 (老轮次在前). 与展示用的 ROUND_ORDER 相反.
@@ -108,19 +111,31 @@ export function computePrRank(
     const eid = r.event_id;
     let singleRank: number | null = null;
     let averageRank: number | null = null;
+    // 每把单次都按「该轮开始前的 seen 集合」算名次(口径同单次列).先全部算完再把 r.best 并入,
+    // 这样最好那把(== r.best)与单次列的 singleRank 取自同一 seen、值相同 → 名次必然相等.
+    const seen = singlesSeen.get(eid) ?? new Set<number>();
+    // 逐把名次:在「该轮开始前的 round-best 集合 + 同轮更早的把」里算 dense rank.
+    //   - 用 temp(seen 的副本)逐把累积,不污染持久 round-best 集合(列口径只认各轮最佳).
+    //   - 同轮更早更快的把会压低后面把的名次(如 30.67 在前 → 38.75 不再是 PR).
+    //   - 最好那把 = 全轮最小,同轮更早的把都 ≥ 它、不影响其名次 → 仍等于单次列 singleRank.
+    //   - DNF/DNS(v<0)视作 +∞:名次 = 已见 distinct 数 + 1(不加入集合).v===0(空位)不出名次.
+    const temp = new Set(seen);
+    const attemptRanks = (r.attempts ?? []).map(v => {
+      if (isValidValue(v)) { const rk = rankFor(v, temp); temp.add(v); return rk; }
+      return v < 0 ? temp.size + 1 : null;
+    });
     if (isValidValue(r.best)) {
-      const seen = singlesSeen.get(eid) ?? new Set<number>();
       singleRank = rankFor(r.best, seen);
       seen.add(r.best);
       singlesSeen.set(eid, seen);
     }
     if (isValidValue(r.average)) {
-      const seen = averagesSeen.get(eid) ?? new Set<number>();
-      averageRank = rankFor(r.average, seen);
-      seen.add(r.average);
-      averagesSeen.set(eid, seen);
+      const seenA = averagesSeen.get(eid) ?? new Set<number>();
+      averageRank = rankFor(r.average, seenA);
+      seenA.add(r.average);
+      averagesSeen.set(eid, seenA);
     }
-    out.set(r.id, { singleRank, averageRank });
+    out.set(r.id, { singleRank, averageRank, attemptRanks });
   }
   return out;
 }

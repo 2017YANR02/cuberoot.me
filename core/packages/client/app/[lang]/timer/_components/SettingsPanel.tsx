@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, CloudDownload, CloudUpload, Download, FileSpreadsheet, LogIn, RefreshCw, Target } from 'lucide-react';
+import { ChevronDown, ChevronRight, CloudDownload, CloudUpload, Download, FileSpreadsheet, LogIn, RefreshCw, Target, X } from 'lucide-react';
 import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
@@ -495,8 +495,18 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         aria-labelledby="settings-modal-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 id="settings-modal-title">{tr({ zh: '设置', en: 'Settings'
-        })}</h2>
+        <div className="solver-modal-head">
+          <h2 id="settings-modal-title">{tr({ zh: '设置', en: 'Settings'
+          })}</h2>
+          <button
+            type="button"
+            className="solver-modal-x"
+            onClick={onClose}
+            aria-label={tr({ zh: '关闭', en: 'Close' })}
+          >
+            <X size={18} />
+          </button>
+        </div>
 
         <p className="settings-gesture-hint">
           {tr({ zh: '按住并拖动呼出轮盘', en: 'Press & drag to open the wheel'

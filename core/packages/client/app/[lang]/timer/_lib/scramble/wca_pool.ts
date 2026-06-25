@@ -57,6 +57,8 @@ export interface WcaSourceSpec {
 /** 一条真实打乱的来源元数据(键名对齐首页 RecentScrambles 的 ScrMeta)。 */
 export interface WcaScrambleMeta {
   ci: string; cn: string; e: string; r: string; g: string; n: number; x: 0 | 1;
+  // 开了「最优打乱」却拿到原打乱(该难度档无最优等态,服务器回退)→ UI 标「非最优」。
+  nonOptimal?: boolean;
 }
 interface RandomItem extends WcaScrambleMeta { scramble: string; o?: string } // o = 最优打乱(server 带,见 wca_scramble_optimal)
 
@@ -69,6 +71,59 @@ const compRows: Record<string, { scramble: string; meta: WcaScrambleMeta }[]> = 
 // 用于让 UI 显式提示,而不是悄悄伪造一条本地生成打乱(无比赛来源、且不符所选难度)。
 // 与「瞬时空(还在加载 / 网络失败)」区分:后者不进此集合,稍后重取。
 const knownEmpty = new Set<string>();
+
+// localStorage persistence — so reopening the timer (or returning to a source /
+// setting used before) serves the first scramble instantly from cache and tops
+// up in the background, instead of waiting on the cold network fetch. Only a
+// never-before-fetched context still needs the one round trip. SSR / node (tests)
+// have no localStorage; every access is guarded.
+const STORE_KEY = 'cuberoot.wca-pool.v1';
+const STORE_TTL = 7 * 24 * 3600 * 1000; // 7 天后视为过期,丢弃
+const STORE_KEYS_CAP = 8;               // 最多缓存几个来源(按 pools 顺序保留最近的)
+const STORE_PER_KEY = 50;               // 每个来源最多缓存几条
+let hydrated = false;
+
+function lsAvailable(): Storage | null {
+  try { return typeof localStorage !== 'undefined' ? localStorage : null; } catch { return null; }
+}
+
+/** Restore queued scrambles + their metadata from a previous session (once). */
+function hydrate(): void {
+  if (hydrated) return;
+  hydrated = true;
+  const ls = lsAvailable();
+  if (!ls) return;
+  try {
+    const raw = ls.getItem(STORE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw) as { t: number; pools: Record<string, string[]>; meta: [string, WcaScrambleMeta][] };
+    if (!data || typeof data.t !== 'number' || Date.now() - data.t > STORE_TTL) return;
+    for (const [k, q] of Object.entries(data.pools ?? {})) if (Array.isArray(q) && q.length) pools[k] ??= q.slice();
+    for (const [s, m] of data.meta ?? []) if (!metaByScramble.has(s)) metaByScramble.set(s, m);
+  } catch { /* corrupt / unavailable — ignore */ }
+}
+
+let persistTimer = 0;
+/** Debounced write of the current queues + the metadata they reference. */
+function persist(): void {
+  const ls = lsAvailable();
+  if (!ls || persistTimer) return;
+  persistTimer = (setTimeout as typeof window.setTimeout)(() => {
+    persistTimer = 0;
+    try {
+      const keys = Object.keys(pools).filter((k) => pools[k]?.length).slice(-STORE_KEYS_CAP);
+      const out: Record<string, string[]> = {};
+      const meta: [string, WcaScrambleMeta][] = [];
+      const seen = new Set<string>();
+      for (const k of keys) {
+        const q = pools[k]!.slice(0, STORE_PER_KEY);
+        out[k] = q;
+        for (const s of q) { if (!seen.has(s)) { const m = metaByScramble.get(s); if (m) { meta.push([s, m]); seen.add(s); } } }
+      }
+      ls.setItem(STORE_KEY, JSON.stringify({ t: Date.now(), pools: out, meta }));
+    } catch { /* quota / unavailable — ignore */ }
+  }, 600);
+}
 
 /** Normalize stray non-ASCII punctuation (e.g. a Pyraminx scramble that used ’
  *  instead of ') so cubing.js / renderers accept the move string. */
@@ -135,6 +190,7 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
   knownEmpty.delete(key);
   const q = (pools[key] ??= []);
   for (const it of rows) { q.push(it.scramble); rememberMeta(it.scramble, it.meta); }
+  persist();
 }
 
 /** date mode: top up from the server's random sampler (optionally date-bounded). */
@@ -163,11 +219,16 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   const q = (pools[key] ??= []);
   for (const it of items) {
     if (!it?.scramble) continue;
-    // 最优模式且该条带最优等态 → 用最优打乱(同态,更短),否则原打乱。
-    const s = normalize(spec.optimal && it.o ? it.o : it.scramble);
+    // 最优模式且该条带最优等态 → 用最优打乱(同态,更短);否则用原打乱(服务器在稀有难度档无最优时回退)。
+    const useOpt = spec.optimal && !!it.o;
+    const s = normalize(useOpt ? it.o! : it.scramble);
     q.push(s);
-    rememberMeta(s, { ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x });
+    rememberMeta(s, {
+      ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x,
+      ...(spec.optimal && !useOpt ? { nonOptimal: true } : {}),
+    });
   }
+  persist();
 }
 
 function fill(spec: WcaSourceSpec): Promise<void> {
@@ -209,6 +270,7 @@ export function isWcaSourceEmpty(spec: WcaSourceSpec): boolean {
 
 /** Warm the pool ahead of time (on spec change / when WCA mode turns on). */
 export function prefetchWca(spec: WcaSourceSpec): void {
+  hydrate();
   const key = specKey(spec);
   if (!key) return;
   if ((pools[key]?.length ?? 0) < REFILL_AT) void fill(spec);
@@ -217,9 +279,11 @@ export function prefetchWca(spec: WcaSourceSpec): void {
 /** Synchronous take — returns a scramble if the queue has one (and tops it up in
  *  the background), else null so the caller can show loading and await nextWca. */
 export function peekWca(spec: WcaSourceSpec): string | null {
+  hydrate();
   const key = specKey(spec);
   if (!key) return null;
   const s = pools[key]?.shift() ?? null;
+  if (s) persist(); // 反映已消费,避免重开时端出同一条
   if ((pools[key]?.length ?? 0) < REFILL_AT) void fill(spec);
   return s;
 }
@@ -227,15 +291,19 @@ export function peekWca(spec: WcaSourceSpec): string | null {
 /** Async take — ensures the queue is filled, then returns one. null if the source
  *  has no real scrambles (e.g. picked comp lacks the event) or the fetch failed. */
 export async function nextWca(spec: WcaSourceSpec): Promise<string | null> {
+  hydrate();
   const key = specKey(spec);
   if (!key) return null;
   if ((pools[key]?.length ?? 0) === 0) await fill(spec);
-  return pools[key]?.shift() ?? null;
+  const s = pools[key]?.shift() ?? null;
+  if (s) persist();
+  return s;
 }
 
 /** Source metadata for a scramble previously dispensed by this pool, else null
  *  (locally generated scramble, or one evicted from the capped meta map). */
 export function wcaMetaFor(scramble: string): WcaScrambleMeta | null {
+  hydrate();
   return metaByScramble.get(normalize(scramble)) ?? null;
 }
 

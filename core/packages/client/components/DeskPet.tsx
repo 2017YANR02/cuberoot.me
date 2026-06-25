@@ -245,12 +245,15 @@ const CSS = `
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-badge{left:60%;top:54%;}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-badge{left:66%;top:22%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge{left:58%;top:37%;}
-/* Admin new-submission badge — clickable, top-right, accent-colored (distinct from the red fb badge). */
+/* Admin new-submission badge — clickable, accent-colored (distinct from the red
+   fb badge). Sits on the pet's body, mirrored opposite the fb badge so both can
+   show at once without overlapping (was pinned to the container corner, which is
+   far from the crab since it's drawn in the box's lower-middle). */
 .clawd-deskpet-badge-admin{pointer-events:auto;cursor:pointer;border:none;margin:0;appearance:none;
   background:var(--accent,#3b82f6);}
-.clawd-deskpet[data-char=clawd] .clawd-deskpet-badge-admin,
-.clawd-deskpet[data-char=calico] .clawd-deskpet-badge-admin,
-.clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge-admin{left:auto;right:-5px;top:2px;}
+.clawd-deskpet[data-char=clawd] .clawd-deskpet-badge-admin{left:33%;top:54%;}
+.clawd-deskpet[data-char=calico] .clawd-deskpet-badge-admin{left:22%;top:22%;}
+.clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge-admin{left:30%;top:37%;}
 /* Mini (edge-cling) mode: the art is drawn lying sideways; flip on the left edge
    so it faces inward. The mini-anim class eases the slide-into-place / crabwalk /
    peek nudge; plain drags clear it so they stay 1:1 with the pointer. */

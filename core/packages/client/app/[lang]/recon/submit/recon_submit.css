@@ -558,11 +558,10 @@
   letter-spacing: 0.03em;
 }
 
-/* 打乱框标签行:label 文字 + 右侧「选已有」触发 */
+/* 打乱框标签行:label 文字 + 紧跟其后的「选已有」触发(贴左,不留空隙) */
 .submit-label-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
 }
 .scramble-pick-btn {
@@ -878,6 +877,9 @@
 
 /* --- 重复警告 --- */
 .submit-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 10px 16px;
   background: color-mix(in srgb, var(--signal-warning) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--signal-warning) 30%, transparent);
@@ -885,6 +887,14 @@
   color: var(--signal-warning);
   font-size: 0.85rem;
   margin-bottom: 16px;
+}
+.submit-warning-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.submit-warning-link:hover {
+  text-decoration-thickness: 2px;
 }
 
 /* --- 解法 label 后的 STM/TPS 内联显示 --- */
