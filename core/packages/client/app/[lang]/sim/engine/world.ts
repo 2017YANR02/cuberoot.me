@@ -275,6 +275,12 @@ export default class World {
     }
     this.puzzleKind = kind;
     this.scene.add(this.cube);
+    // Camera framing is a pure function of puzzleKind (per-puzzle refHalf in resize()),
+    // so it MUST re-frame the moment the kind changes — otherwise a puzzle switched in
+    // after init keeps the previous puzzle's frame (e.g. FTO, which needs a wider
+    // refHalf than NxN-3, renders oversized until some later resize happens to run).
+    // width/height default to 1, so this is safe before SimPage sets the real size.
+    this.resize();
     this.dirty = true;
   }
 
