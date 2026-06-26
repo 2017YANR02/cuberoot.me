@@ -94,6 +94,38 @@ interface AlgPopup {
 
 type Popup = CommentPopup | AlgPopup | null;
 
+// 首阶段(无十字)候选按阶段分 3 列展示:cross / xcross / xxcross。
+const FIRST_STAGE_COLS: FirstStageSet[] = ['cross', 'xcross', 'xxcross'];
+
+/** 把首阶段 popup 的扁平 entries 按类别分成 [cross, xcross, xxcross] 三列(每列是 entries 的下标)。 */
+function firstStageColumns(entries: AlgPopup['entries']): number[][] {
+  return FIRST_STAGE_COLS.map(cat => {
+    const out: number[] = [];
+    entries.forEach((e, i) => { if (e.category === cat) out.push(i); });
+    return out;
+  });
+}
+
+/** 三列内 2D 方向键导航:←→ 切列(cross/xcross/xxcross),↑↓ 列内移动。返回新的扁平下标。 */
+function navFirstStage(cols: number[][], selected: number, key: string): number {
+  let col = cols.findIndex(c => c.includes(selected));
+  if (col < 0) col = cols.findIndex(c => c.length > 0);
+  if (col < 0) return selected;
+  let row = Math.max(0, cols[col].indexOf(selected));
+  const sideways = (dir: number): void => {
+    for (let k = 0; k < cols.length; k++) {
+      col = (col + dir + cols.length) % cols.length;
+      if (cols[col].length > 0) break;
+    }
+    row = Math.min(row, cols[col].length - 1);
+  };
+  if (key === 'ArrowDown') row = Math.min(row + 1, cols[col].length - 1);
+  else if (key === 'ArrowUp') row = Math.max(row - 1, 0);
+  else if (key === 'ArrowLeft') sideways(-1);
+  else if (key === 'ArrowRight') sideways(1);
+  return cols[col][row] ?? selected;
+}
+
 /**
  * Main hook + JSX renderer. Always renders into a portal so positioning isn't
  * constrained by the textarea's containing layout.
@@ -444,14 +476,24 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
         const caret = ta.selectionStart;
         dismissedLineIdxRef.current = (ta.value.substring(0, caret).match(/\n/g) ?? []).length;
         close();
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (popup.entries.length === 0) return;
-        setSelected(s => (s + 1) % popup.entries.length);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (popup.entries.length === 0) return;
-        setSelected(s => (s - 1 + popup.entries.length) % popup.entries.length);
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        // 首阶段三列:←→ 切 cross/xcross/xxcross 列,↑↓ 列内移动。
+        if (popup.kind === 'alg' && popup.firstStage && popup.entries.length > 0) {
+          e.preventDefault();
+          const cols = firstStageColumns(popup.entries);
+          setSelected(s => navFirstStage(cols, s, e.key));
+          return;
+        }
+        // 其余 popup:仅 ↑↓ 循环扁平列表;←/→ 保留默认(移动光标)。
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (popup.entries.length === 0) return;
+          setSelected(s => (s + 1) % popup.entries.length);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (popup.entries.length === 0) return;
+          setSelected(s => (s - 1 + popup.entries.length) % popup.entries.length);
+        }
       } else if (e.key === 'Enter') {
         // Cubedb behavior: Enter doesn't accept; it inserts newline (default).
         // Popup will close and re-open on the new line.
@@ -562,11 +604,13 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const ta = textareaRef.current;
   if (!ta) return null;
   const taRect = ta.getBoundingClientRect();
+  // 首阶段(cross/xcross/xxcross)三列展示:固定占满分配宽度让三列均分;其余 popup 仍按内容自适应。
+  const isCols = popup.kind === 'alg' && !!popup.firstStage && popup.entries.length > 0;
   // 弹窗宽度自适应内容(width:max-content),不再死锁 320:桌面右侧有空间就一行铺开,
   // 只有贴近右边缘 / 手机端放不下时才收窄到可用宽度并由 CSS 换行。
   const GUTTER = 8;
-  const HARD_MAX = 680;
-  const MIN_W = 280;
+  const HARD_MAX = isCols ? 760 : 680;
+  const MIN_W = isCols ? 360 : 280;
   const caretLeft = Math.max(0, taRect.left + popup.pos.left - ta.offsetLeft);
   const roomRight = window.innerWidth - caretLeft - GUTTER;
   let left: number;
@@ -582,12 +626,13 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
 
   const emptyReasonKey = popup.kind === 'alg' ? popup.emptyReasonKey : undefined;
   const loading = popup.kind === 'alg' && popup.loading;
+  const colData = isCols && popup.kind === 'alg' ? firstStageColumns(popup.entries) : null;
 
   return createPortal(
     <div
       className="recon-autofill"
       data-recon-autofill="1"
-      style={{ position: 'fixed', left, top, width: 'max-content', maxWidth, maxHeight: 280 }}
+      style={{ position: 'fixed', left, top, width: isCols ? maxWidth : 'max-content', maxWidth, maxHeight: 280 }}
     >
       {loading && (
         <div className="recon-autofill-empty recon-autofill-loading">
@@ -600,7 +645,43 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
           {t(emptyReasonKey)}
         </div>
       )}
-      {popup.entries.map((entry, i) => {
+      {colData && popup.kind === 'alg' ? (
+        <div className="recon-autofill-cols">
+          {isMobile && (
+            <button
+              type="button"
+              className="recon-autofill-close recon-autofill-cols-close"
+              onMouseDown={e => { e.preventDefault(); e.stopPropagation(); dismiss(); }}
+              aria-label={tr({ zh: '关闭自动补全', en: 'Close suggestions' })}
+              title={tr({ zh: '关闭(本行不再自动弹)', en: 'Close (won\'t reopen on this line)' })}
+            >
+              <X size={12} />
+            </button>
+          )}
+          {colData.map((idxs, ci) => (
+            <div key={ci} className="recon-autofill-col">
+              <div className="recon-autofill-col-head">{FIRST_STAGE_COLS[ci].toUpperCase()}</div>
+              {idxs.length === 0 ? (
+                <div className="recon-autofill-col-empty">—</div>
+              ) : idxs.map(i => {
+                const entry = popup.entries[i];
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`recon-autofill-row recon-autofill-row--col${selected === i ? ' is-selected' : ''}`}
+                    onMouseDown={e => { e.preventDefault(); insertAlg(entry.text, popup); }}
+                    onMouseEnter={() => setSelected(i)}
+                  >
+                    <span className="recon-autofill-text">{entry.text}</span>
+                    {!isMobile && i === selected && <span className="recon-autofill-tab-hint">Tab</span>}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      ) : popup.entries.map((entry, i) => {
         const text = typeof entry === 'string' ? entry : entry.text;
         const cat = typeof entry === 'string' ? null : entry.category;
         return (

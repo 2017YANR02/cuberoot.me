@@ -102,6 +102,45 @@
   to { transform: rotate(360deg); }
 }
 
+/* 首阶段三列:cross / xcross / xxcross 并排 */
+.recon-autofill-cols {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+}
+.recon-autofill-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.recon-autofill-col + .recon-autofill-col {
+  border-left: 1px solid var(--border-default);
+}
+.recon-autofill-col-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 5px 8px 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+  background: var(--popover);
+}
+.recon-autofill-col-empty {
+  padding: 6px 8px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.recon-autofill-row--col { gap: 4px; padding: 5px 8px; }
+.recon-autofill-cols-close {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 2;
+}
+
 /* ✕ 按钮——手机端占用第一行 Tab hint 的槽位(桌面 Tab hint 与之互斥) */
 .recon-autofill-close {
   flex: 0 0 auto;
