@@ -1074,14 +1074,28 @@ export default function PlayerControls({
       return;
     }
     if (!world) return;
+    const tw = world.cube.twister as unknown as { length: number; setup: (e: string) => void; push: (e: string) => void };
+    // 动画仍在播时再次点播放键 = 直接跳到完整打乱态(走快速 WASM 整体应用,不从头重播,
+    // 高阶 400+ 步宽转也是瞬时)。等价于解法框 focus 的跳过。
+    if (tw.length > 0) { tw.setup(scramble); return; }
     // Animate from solved: reset the cube instantly, then queue the scramble moves
     // via push() (the engine's tweened playback — the same primitive the auto-animate
     // scramble uses). setupDraft is unchanged, so the setup-sync effect never fires
     // and won't snap the cube mid-animation — no animatingScrambleRef needed here.
     world.controller.clearFrozen();
-    world.cube.twister.setup('');
-    world.cube.twister.push(scramble);
+    tw.setup('');
+    tw.push(scramble);
   }, [setupDraft, isTwistyMode, world, onSetupChange, onAlgChange, twistyPlayerRef]);
+
+  // 点解法框时,若打乱动画仍在逐步播放(高阶打乱可达 400+ 步 ≈ 分钟级),立即落到完整打乱态,
+  // 让用户马上能在打乱好的魔方上输解法。走快速整体应用 setup(打乱文本):它清空待播队列后用
+  // WASM 路径一次性重建,不逐步 replay,高阶宽转也不卡(逐步 finish 会几百万次 getColor 卡死)。
+  const flushPendingScramble = useCallback(() => {
+    if (!world || isTwistyMode) return;
+    const tw = (world.cube as unknown as { twister?: { length: number; setup: (e: string) => void } }).twister;
+    const scr = setupDraft.trim();
+    if (tw && tw.length > 0 && scr) tw.setup(scr);
+  }, [world, isTwistyMode, setupDraft]);
 
   // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
   // recover the clean rotation-free scramble it solves, drop it into the
@@ -1194,6 +1208,7 @@ export default function PlayerControls({
             spellCheck={false}
             className={ivyAlgSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
             placeholder={t('解法', 'Solution')}
+            onFocus={flushPendingScramble}
             onInput={(e) => {
               const el = e.currentTarget;
               autosize(el);
