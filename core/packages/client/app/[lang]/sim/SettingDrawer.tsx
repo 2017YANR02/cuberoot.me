@@ -251,7 +251,9 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // sticker thickness + body materials are baked at construction (no InstancedRenderer),
     // so 立体贴片 / 镂空 / structure-colors are applied generically off userData tags.
     applyStickerThickness(world.cube, s.thickness);
-    applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor);
+    // 原核 (raw/stickerless body): generic across the in-house engines — paints each
+    // body from its sibling stickers' colors + hides the tiles. Raw > debug > hollow.
+    applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor, s.coreStyle === 'raw');
     applyHintFacelets(world.cube, s.hint, hintBg);
   }
   // Carve: hide one move's moving group to inspect the core + neighbours' inner walls.
