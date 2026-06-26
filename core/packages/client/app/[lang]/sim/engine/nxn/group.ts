@@ -177,16 +177,19 @@ export default class CubeGroup extends THREE.Group {
       // 渲染走 instancedRenderer; 不再 reparent THREE 节点
     }
     this.cube.instancedRenderer.beginSlice(this);
-    // 占位板挡中空。超高阶原核 → 切到扇形彩色横截面(按该层四周块当前色刷,跟打乱态);
-    // 否则用 Cubelet._PANEL 深色盒(普通阶看不见、超高阶非原核为深色)。
+    // 占位板挡中空。原核(任意阶)→ 切到扇形彩色横截面(按该层四周块当前色刷,跟打乱态),
+    // 超高阶填空壳中心、中低阶盖掉 inner box 露出的深色中心,所有 nxn 转层切面都五彩;
+    // 非原核 → 用 Cubelet._PANEL 深色盒(普通阶看不见、超高阶非原核为深色占位)。
     if (this.panel) {
       const ir = this.cube.instancedRenderer;
-      if (ir.superOrder && ir.rawCore) {
+      if (ir.rawCore) {
         if (!this.fanGeo) this.fanGeo = buildPanelFan(this.cube.order, this.axisIdx);
         colorPanelFan(this.fanGeo, this.cube, this.axisIdx, this.layer);
         if (this.panel.geometry !== this.fanGeo) { this.panel.geometry = this.fanGeo; this.panel.scale.set(1, 1, 1); }
-      } else if (this.panel.geometry !== Cubelet._PANEL) {
-        this.panel.geometry = Cubelet._PANEL; this.panel.scale.copy(this.boxScale);
+        this.panel.material = Cubelet._PANEL_FAN_MAT;  // 带 polygonOffset,盖过方形块顶/inner box 出斜条纹
+      } else {
+        if (this.panel.geometry !== Cubelet._PANEL) { this.panel.geometry = Cubelet._PANEL; this.panel.scale.copy(this.boxScale); }
+        this.panel.material = Cubelet._PANEL_MAT;       // 深色盒,无 offset,不戳穿实心块
       }
       this.panel.visible = true;
     }

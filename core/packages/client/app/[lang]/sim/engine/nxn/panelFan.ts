@@ -9,7 +9,8 @@
  * 每段三角平涂「该段对应那块表面块当前外面色」。几何 bake 真实尺寸(in-plane 满宽 N*SIZE,
  * 沿轴薄 SIZE-1,两面在 ±(SIZE-1)/2),panel.scale=1。颜色每次 hold 按当前打乱态重刷。
  *
- * 仅超高阶原核用;普通阶 panel 被实心块挡住不需要(走 Cubelet._PANEL 深色盒)。
+ * 全阶原核转层都用(group.hold 在 rawCore 时挂):超高阶填空壳中心、中低阶用 polygonOffset
+ * 盖掉 inner box 露出的深色中心,所有 nxn 切面都是连续斜向彩色条纹。非原核才走 Cubelet._PANEL 深色盒。
  */
 import * as THREE from "three";
 import { FACE, COLORS, SIZE } from "../define";
@@ -26,8 +27,9 @@ function faceFor(axis: number, sign: number): FACE {
 export function buildPanelFan(order: number, axis: number): THREE.BufferGeometry {
   const N = order;
   const p = (axis + 1) % 3, q = (axis + 2) % 3;
-  const HALF = (N * SIZE) / 2;   // in-plane 满宽半径(到表面);外圈被 ring 块挡住
-  const TH = (SIZE - 1) / 2;     // 沿轴半厚(略小于 SIZE/2,缩在层内防与块顶面共面 z-fight)
+  const HALF = (N * SIZE) / 2;   // in-plane 满宽半径(到外表面);扇面铺满整个切面(含周边块那一圈)
+  const TH = SIZE / 2;           // 沿轴半厚 = 半个块高,扇面齐平到切面;与周边块的方形块顶共面,
+                                 // 靠 _PANEL_MAT 的 polygonOffset 盖过它 → 出连续斜条纹而非方块台阶
   const mk = (aSign: number, pu: number, qu: number): [number, number, number] => {
     const v: [number, number, number] = [0, 0, 0];
     v[axis] = aSign * TH; v[p] = pu * HALF; v[q] = qu * HALF; return v;
