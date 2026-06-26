@@ -193,12 +193,24 @@ export default class Cubelet extends THREE.Group {
     g.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
     return g;
   })();
-  /** panel 材质:白基色 + vertexColors(实际色全由几何顶点色定:_PANEL 是 Core,panelFan 是各块面色)
-   *  + DoubleSide(扇形/盒子两面都渲染,免管绕序)。 */
+  /** 盒子占位板材质:白基色 + vertexColors(_PANEL 几何带 Core 顶点色 → 渲染出深色)+ DoubleSide。
+   *  低/中阶被实心块挡住、超高阶非原核作深色占位板。**无** polygonOffset —— 否则会被拉向镜头侧
+   *  戳穿中低阶的实心块,露黑三角。扇形横截面另用 _PANEL_FAN_MAT。 */
   public static readonly _PANEL_MAT: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({
     color: 0xffffff,
     vertexColors: true,
     side: THREE.DoubleSide,
+  });
+  /** 扇形横截面材质(panelFan 专用):白基色 + vertexColors(顶点色=各周边块外面色)+ DoubleSide。
+   *  polygonOffset 负值:扇面齐平切面时与周边块的方形块顶共面,负 offset 让扇面赢 z-test 盖过块顶,
+   *  使切面是连续斜条纹而非方块台阶。仅超高阶原核转层挂(group.hold),与盒子占位板隔离互不影响。 */
+  public static readonly _PANEL_FAN_MAT: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    vertexColors: true,
+    side: THREE.DoubleSide,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
   });
 
   /** 超高阶简化 sticker (PlaneGeometry, 2 tri vs ExtrudeGeometry 204 tri)。

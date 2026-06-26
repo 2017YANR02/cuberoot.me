@@ -113,7 +113,7 @@ export default class InstancedRenderer extends THREE.Group {
   private _arrow = false;
   private _hint = false;
   private _hollow = false;
-  /** 原核 (raw/stickerless body) 状态 + 资源。仅 order < superOrderThreshold 生效。 */
+  /** 原核 (raw/stickerless body) 状态 + 资源。全阶生效(低/中阶 Phong+inner,超高阶 unlit Basic 壳)。 */
   private _rawCore = false;
   private _rawAttrs: RawAttrs | null = null;
   private _rawFrameGeo: THREE.BufferGeometry | null = null;
@@ -789,19 +789,21 @@ export default class InstancedRenderer extends THREE.Group {
         this.movingInner.material = mat;
       }
     }
-    // 占位板/扇形横截面材质统一走白基色 + vertexColors + 双面(实际色全由几何顶点色定)。
-    // 运行时强制纠正:dev HMR 可能保留旧 _PANEL_MAT 实例(Core 基色/单面),否则顶点色被乘暗。
-    const pm = Cubelet._PANEL_MAT;
-    if (!pm.vertexColors || pm.side !== THREE.DoubleSide) { pm.vertexColors = true; pm.side = THREE.DoubleSide; pm.needsUpdate = true; }
-    pm.color.setRGB(1, 1, 1);
+    // 占位板(盒子)+ 扇形横截面材质都走白基色 + vertexColors + 双面(实际色全由几何顶点色定)。
+    // 运行时强制纠正:dev HMR 可能保留旧实例(Core 基色/单面/丢 polygonOffset),否则顶点色被乘暗或方块块顶又冒出。
+    for (const pm of [Cubelet._PANEL_MAT, Cubelet._PANEL_FAN_MAT]) {
+      if (!pm.vertexColors || pm.side !== THREE.DoubleSide) { pm.vertexColors = true; pm.side = THREE.DoubleSide; pm.needsUpdate = true; }
+      pm.color.setRGB(1, 1, 1);
+    }
+    const fm = Cubelet._PANEL_FAN_MAT;  // 扇形须保留负 polygonOffset 才能盖过方形块顶
+    if (!fm.polygonOffset) { fm.polygonOffset = true; fm.polygonOffsetFactor = -1; fm.polygonOffsetUnits = -1; fm.needsUpdate = true; }
     this._rawCore = on;
     this.cube.dirty = true;
   }
 
-  /** group.hold 读它:超高阶原核时挂扇形彩色横截面(panelFan),否则用 Cubelet._PANEL 深色盒。 */
+  /** group.hold 读它:原核(任意阶)转层挂扇形彩色横截面(panelFan)替换深色占位板,
+   *  非原核才用 Cubelet._PANEL 深色盒。 */
   get rawCore(): boolean { return this._rawCore; }
-  /** 超高阶(无 inner、只造表面 cubelet)= 转层会露中空,需要 panel 填。 */
-  get superOrder(): boolean { return !this.hasInner; }
 
   set arrow(value: boolean) {
     if (value === this._arrow) return;
