@@ -59,6 +59,7 @@ import { renderBsqScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/bsq_svg';
 import { renderBicScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/bicube_svg';
 import { renderSia123ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/sia123_svg';
 import { renderSia222ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/sia222_svg';
+import { renderBakedNet } from '@/app/[lang]/scramble/gen/_svg/_baked_nets';
 import {
   renderUnfoldedSvgForEvent,
   eventToCubeSize,
@@ -77,6 +78,8 @@ const HAS_PREVIEW: Record<string, boolean> = {
   '555': true, '555bf': true, '666': true, '777': true,
   pyram: true, skewb: true, sq1: true, minx: true, clock: true,
   mirror_333: true, ivy: true, '133': true, '223': true, '233': true, '334': true, '335': true, '336': true, '337': true, '8p': true, '15p': true, sfl: true, ufo: true, cm2: true, cm3: true, heli: true, helicv: true, ctico: true, dmd: true, gear: true, mpyrso: true, dino: true, crz3a: true, sq2: true, ssq1: true, bsq: true, bic: true, sia123: true, sia222: true,
+  // group-theoretic baked nets (see _svg/_baked_nets) — keep in sync with BAKED_NET_EVENTS
+  fto: true, baby_fto: true, master_tetraminx: true, kilominx: true, redi_cube: true,
 };
 
 export function eventHasScramblePreview(event: string): boolean {
@@ -148,6 +151,8 @@ export function ScramblePreview2D({
       if (eff === 'bic') return renderBicScrambleSvg(scramble);
       if (eff === 'sia123') return renderSia123ScrambleSvg(scramble);
       if (eff === 'sia222') return renderSia222ScrambleSvg(scramble);
+      const baked = renderBakedNet(eff, scramble);
+      if (baked) return baked;
       if (eventToCubeSize(eff)) return renderUnfoldedSvgForEvent(eff, scramble);
       return null;
     } catch (err) {
