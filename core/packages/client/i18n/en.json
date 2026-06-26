@@ -247,6 +247,9 @@
           "zbll": "No ZBLL alg in algdb for this case",
           "zbls": "No ZBLS alg in algdb for this case"
         }
+      },
+      "firststage": {
+        "failed": "Couldn't compute an optimal cross for this scramble"
       }
     }
   },
