@@ -412,6 +412,9 @@ export default class Twister {
 
   setup(exp: string, reverse = false, times = 1): void {
     const TBENCH0 = performance.now();
+    // 放弃待播放队列:setup 紧接着 reset 再整体重应用,逐步 replay 这些 move 纯属浪费 —— 而且
+    // 高阶宽转 replay 会逐层 hold()(每层建/刷扇形),450 步打乱能卡死整页。清空后 finish 只收尾活动补间。
+    this.queue.length = 0;
     this.finish();
     const T1 = performance.now();
     this.cube.reset(true);
@@ -598,6 +601,7 @@ export default class Twister {
    */
   async setupAsync(exp: string, reverse = false, times = 1): Promise<void> {
     const TBENCH0 = performance.now();
+    this.queue.length = 0;  // 同 setup():放弃待播队列,避免高阶宽转 replay 卡死(详见 setup 注释)
     this.finish();
     const T1 = performance.now();
     const node = new TwistNode(exp, reverse, times);
