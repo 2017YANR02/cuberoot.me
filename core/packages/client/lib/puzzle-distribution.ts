@@ -29,6 +29,15 @@ export interface PuzzleDistEntry {
   dist: PuzzleHistEntry;
   alt?: PuzzleAltDist;    // 备选口径(sq1: wca 主 + slash 备,前端可切)
   wcaOptSlash?: PuzzleHistEntry; // sq1 2×2 格3:WCA 最优解的 slash 含量分布(数 opt 解里的 /;≥ slash 最优)
+  cubeshape?: PuzzleCubeshapeDist; // sq1 复形:到 cube shape(顶底两层 square)的最少 slash 数(0..7,God 7)
+}
+
+// sq1 复形(cubeshape)分布:把顶底两层还原成正方形(立方体形状)所需的最少 slash 数,中层不计。
+// 与 WCA/slash 同一打乱池,但即时确定性查表(170 态,最多 7 刀),不依赖整解 solver。
+export interface PuzzleCubeshapeDist {
+  metric: string;        // 恒 'slash'
+  sample_count: number;  // 该口径自带样本数(通常 = 整池,无 solver 滞后)
+  dist: PuzzleHistEntry;
 }
 
 export interface PuzzleDistributionJson {
@@ -37,7 +46,7 @@ export interface PuzzleDistributionJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260619sq1slashproven';
+const V = '20260626sq1cubeshape';
 
 export async function fetchPuzzleDistribution(): Promise<PuzzleDistributionJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_distribution.json') + `?v=${V}`);

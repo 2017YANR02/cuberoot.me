@@ -116,6 +116,7 @@ cd core/packages/scramble-stats-build; pnpm exec tsx src/build_puzzle_examples.t
     - 可续(启动先合并上轮残留 + 跳已解);实时 `Get-Content sq1/_monster_progress.log -Wait -Tail 20`;>30min 单条报 `[STUCK]`(真·brutal,需 Tier 2:紧凑 open-addressing TT 2-3× / 更大耦合 PDB 抬 h)。报本轮**最深 WCA**(= D_WCA 经验下界候选)。
     - **啃完后必跑** `update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1` 重建+发布(把真值搬上线,最右尾补齐)。
   - **发布**:`update_cross_stats.ps1 -Jobs puzzles`(或 all)跑完即一并 scp(build 带上当前已完成的精确块 + 怪物略过)。改 exact dist shape 须 bump `lib/puzzle-distribution.ts` / `lib/puzzle-examples.ts` 的 `V`。
+  - **SQ1 复形(cubeshape)= 自动随 puzzles 作业产(2026-06-26)**:`build_puzzle_dist.ts` / `build_puzzle_examples.ts` 对 sq1 额外算「到 cube shape(顶底两层 square)最少 slash 数」(0..7,God 7,中层不计;`src/sq1_cubeshape.ts` 170 态 BFS 查表,从 `sq1/scrambles.txt` 即时算、**不依赖 13GB 整解 solver**)→ `puzzle_distribution.json` 的 `sq1.cubeshape` + `puzzle_examples.json` 的 `binsCubeshape`。前端 `PuzzleDistView` 顶部「目标:完整魔方 / 复形」下拉切换(复形时隐藏 WCA/slash 度量钮)。**无新管道步骤**,跟 sq1 整解口径同走 puzzles 作业;改 shape 须 bump `lib/puzzle-{distribution,examples}.ts` 的 `V`。
 - **想更准**(deferred):双阶段迭代总长 / 更紧剪枝可逼近最优,代价回到长尾;见 `solver/SOLVER_LOOP.md` P5d。
 - **发布**:走一条龙共享发布(`update_cross_stats.ps1 -Jobs puzzles` 跑完即一并 scp);单独手跑这两步则需手 scp。改 shape 须 bump `lib/puzzle-distribution.ts` / `lib/puzzle-examples.ts` 的 `V`。
 - 加新 puzzle(如 SQ1)的全链路范式:`solver/VARIANT_PLAYBOOK.md` §8。
