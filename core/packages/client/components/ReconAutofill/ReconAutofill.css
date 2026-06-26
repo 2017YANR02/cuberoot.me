@@ -88,6 +88,19 @@
   color: var(--muted-foreground);
   font-size: 12px;
 }
+.recon-autofill-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.recon-autofill-spin {
+  animation: recon-autofill-spin 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+@keyframes recon-autofill-spin {
+  to { transform: rotate(360deg); }
+}
 
 /* ✕ 按钮——手机端占用第一行 Tab hint 的槽位(桌面 Tab hint 与之互斥) */
 .recon-autofill-close {

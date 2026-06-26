@@ -31,12 +31,13 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { getCaretRect } from '@/lib/textarea_caret';
-import { patternFromAlg, countMoves } from '@/lib/cube3';
+import { patternFromAlg, countMoves, isAlgPrefix } from '@/lib/cube3';
 import { buildCommentSuggestions } from '@/lib/popup_suggest';
 import { detectStage } from '@/lib/stage_detect';
 import { suggestAlg, movesOnly, lineRange, resolveEffectivePrev } from '@/lib/recon_autofill_core';
+import { computeFirstStage, getCachedFirstStage, type FirstStageResult, type FirstStageSet } from '@/lib/recon_first_stage';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
 import './ReconAutofill.css';
 import { tr } from '@/i18n/tr';
@@ -78,13 +79,17 @@ interface CommentPopup {
 interface AlgPopup {
   kind: 'alg';
   pos: AnchorPos;
-  entries: { text: string; category: Alg3x3Set; caseName: string }[];
+  entries: { text: string; category: Alg3x3Set | FirstStageSet; caseName: string }[];
   /** Insertion point: where the chosen alg goes (caret position). */
   insertAt: number;
   /** When entries is empty, render a single non-clickable info row with this i18n key. */
   emptyReasonKey?: string;
   /** 行号——光标移到不同行时关闭 popup(避免显示陈旧候选)。 */
   lineIdx: number;
+  /** 首阶段(cross/xcross/xxcross)候选:走 WASM 引擎、按已缓存集做前缀过滤,不再问 suggestAlg。 */
+  firstStage?: boolean;
+  /** 首阶段引擎首次计算(含 27MB 表加载)期间显示加载行。 */
+  loading?: boolean;
 }
 
 type Popup = CommentPopup | AlgPopup | null;
@@ -102,6 +107,8 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   // 移到别的行才允许自动重开;同行继续输入也不再骚扰。
   const dismissedLineIdxRef = useRef<number | null>(null);
   const lastAutoOpenKeyRef = useRef<string>('');
+  // 首阶段(cross/xcross/xxcross)引擎异步求解的代次令牌:加载期间用户继续操作时丢弃过期结果。
+  const firstStageTokenRef = useRef(0);
 
   const close = useCallback(() => {
     setPopup(null);
@@ -201,6 +208,54 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     };
   }, [textareaRef, value, scramble]);
 
+  /** Build a first-stage (cross/xcross/xxcross) AlgPopup from an engine result,
+   *  prefix-filtered by whatever moves the user already typed on the line. */
+  const buildFirstStagePopup = useCallback((caret: number, res: FirstStageResult): AlgPopup => {
+    const ta = textareaRef.current!;
+    const rect = getCaretRect(ta, caret);
+    const lineIdx = (value.substring(0, caret).match(/\n/g) ?? []).length;
+    if (res.kind === 'empty') {
+      return { kind: 'alg', pos: rect, entries: [], insertAt: caret, emptyReasonKey: res.reasonKey, lineIdx, firstStage: true };
+    }
+    const { start } = lineRange(value, caret);
+    const typed = movesOnly(value.substring(start, caret));
+    const entries = res.suggestions
+      .filter(s => isAlgPrefix(typed, s.text))
+      .map(s => ({ text: s.text, category: s.category, caseName: s.caseName }));
+    return { kind: 'alg', pos: rect, entries, insertAt: caret, lineIdx, firstStage: true };
+  }, [textareaRef, value]);
+
+  /** Explicit-Tab entry to first-stage suggestions: instant from cache, else
+   *  show a loading row while the engine (and its ~27MB tables) spin up. */
+  const openFirstStage = useCallback(async (caret: number) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const { start } = lineRange(value, caret);
+    const prevMoves = movesOnly(value.substring(0, start));
+    const cached = getCachedFirstStage(scramble, prevMoves);
+    if (cached) {
+      setPopup(buildFirstStagePopup(caret, cached));
+      setSelected(0);
+      return;
+    }
+    const rect = getCaretRect(ta, caret);
+    const lineIdx = (value.substring(0, caret).match(/\n/g) ?? []).length;
+    setPopup({ kind: 'alg', pos: rect, entries: [], insertAt: caret, lineIdx, firstStage: true, loading: true });
+    setSelected(0);
+    const myToken = ++firstStageTokenRef.current;
+    const res = await computeFirstStage(scramble, prevMoves);
+    if (firstStageTokenRef.current !== myToken) return; // superseded by a newer action
+    const ta2 = textareaRef.current;
+    if (!ta2 || document.activeElement !== ta2) return;
+    const caret2 = ta2.selectionStart;
+    // Still on the same (no-cross) line with no comment? show results.
+    const { start: s2, end: e2 } = lineRange(ta2.value, caret2);
+    if (ta2.value.substring(s2, caret2).includes('//')) return;
+    if (!/^\s*$/.test(ta2.value.substring(caret2, e2))) return;
+    setPopup(buildFirstStagePopup(caret2, res));
+    setSelected(0);
+  }, [textareaRef, value, scramble, buildFirstStagePopup]);
+
   /** Open popup based on current caret state. Called from Tab handler. */
   const openPopup = useCallback(async () => {
     if (!enabled) return;
@@ -237,6 +292,14 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     // Otherwise try alg popup (fresh blank line after labeled line)
     if (movesLineText.length === 0 || !lineUpToCaret.includes('//')) {
       const p = await buildAlgPopup(caret);
+      // No cross yet → there's no OLL/PLL/F2L to match; fall back to the
+      // analyzer engine for optimal cross / xcross / xxcross suggestions.
+      if (p && p.kind === 'alg' && p.entries.length === 0
+        && (p.emptyReasonKey === 'recon.autofill.empty.no_cross'
+          || p.emptyReasonKey === 'recon.autofill.empty.pscross')) {
+        await openFirstStage(caret);
+        return;
+      }
       if (p) {
         setPopup(p);
         setSelected(0);
@@ -246,7 +309,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
 
     // Nothing to suggest — leave popup closed but DO NOT let Tab escape the textarea.
     close();
-  }, [enabled, textareaRef, value, buildCommentPopup, buildAlgPopup, close]);
+  }, [enabled, textareaRef, value, buildCommentPopup, buildAlgPopup, openFirstStage, close]);
 
   /**
    * Auto-open popup as user types — matches cubedb.net behavior.
@@ -319,6 +382,20 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
 
     let cancelled = false;
     (async () => {
+      // 首阶段 popup:用已缓存的引擎结果按新前缀即时重过滤,绝不重跑 WASM 求解。
+      if (popup.kind === 'alg' && popup.firstStage) {
+        if (popup.loading) return; // 仍在首次计算,等 openFirstStage 收尾
+        const { start } = lineRange(value, caret);
+        const prevMoves = movesOnly(value.substring(0, start));
+        const cached = getCachedFirstStage(scramble, prevMoves);
+        if (cancelled) return;
+        if (!cached) { close(); return; }
+        const rebuilt = buildFirstStagePopup(caret, cached);
+        if (rebuilt.entries.length === 0) { close(); return; }
+        setPopup(rebuilt);
+        setSelected(s => Math.min(s, rebuilt.entries.length - 1));
+        return;
+      }
       const next = popup.kind === 'comment'
         ? await buildCommentPopup(caret, popup.explicit)
         : await buildAlgPopup(caret);
@@ -334,7 +411,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       }
     })();
     return () => { cancelled = true; };
-  }, [value, popup, textareaRef, buildCommentPopup, buildAlgPopup, close]);
+  }, [value, scramble, popup, textareaRef, buildCommentPopup, buildAlgPopup, buildFirstStagePopup, close]);
 
   // Tab interception: ALWAYS preventDefault while focus is in textarea
   useEffect(() => {
@@ -504,6 +581,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const top = taRect.top + popup.pos.top - ta.offsetTop + popup.pos.lineHeight + 4;
 
   const emptyReasonKey = popup.kind === 'alg' ? popup.emptyReasonKey : undefined;
+  const loading = popup.kind === 'alg' && popup.loading;
 
   return createPortal(
     <div
@@ -511,7 +589,13 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       data-recon-autofill="1"
       style={{ position: 'fixed', left, top, width: 'max-content', maxWidth, maxHeight: 280 }}
     >
-      {popup.entries.length === 0 && emptyReasonKey && (
+      {loading && (
+        <div className="recon-autofill-empty recon-autofill-loading">
+          <Loader2 size={13} className="recon-autofill-spin" />
+          {tr({ zh: '正在计算最优十字…', en: 'Solving optimal cross…' })}
+        </div>
+      )}
+      {!loading && popup.entries.length === 0 && emptyReasonKey && (
         <div className="recon-autofill-empty">
           {t(emptyReasonKey)}
         </div>

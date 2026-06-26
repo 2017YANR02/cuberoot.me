@@ -393,6 +393,41 @@ export async function defaultCentersRotation(pattern: KPattern): Promise<string>
   return '';
 }
 
+/** Deep sticker-level equality of two patterns (pieces + orientation across all orbits). */
+function sameCells(a: KPattern, b: KPattern): boolean {
+  const pa = a.patternData, pb = b.patternData;
+  for (const orbit of ['EDGES', 'CORNERS', 'CENTERS'] as const) {
+    const oa = pa[orbit], ob = pb[orbit];
+    const n = oa.pieces.length;
+    for (let i = 0; i < n; i++) {
+      if (oa.pieces[i] !== ob.pieces[i]) return false;
+      if ((oa.orientation?.[i] ?? 0) !== (ob.orientation?.[i] ?? 0)) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Find the cube rotation alg (one of the 24 `ORIENTATION_ALGS`) `g` such that
+ * `from.applyAlg(g)` is sticker-identical to `to`. Returns `''` when they're
+ * already identical, or `null` if no single rotation relates them (i.e. they
+ * differ by more than a whole-cube reorientation).
+ *
+ * Used by first-stage autofill: the rust-cross engine solves in a normalized
+ * (white-top/green-front) frame, but the recon textarea applies moves after the
+ * RAW scramble. Raw and normalized states differ by exactly one rotation `g`
+ * (raw = norm·g), so a normalized-frame solution `S` maps to the recon frame as
+ * `g⁻¹·S`.
+ */
+export async function rotationBetween(from: KPattern, to: KPattern): Promise<string | null> {
+  await getCube3();
+  for (const rot of ORIENTATION_ALGS) {
+    const t = rot ? from.applyAlg(rot) : from;
+    if (sameCells(t, to)) return rot;
+  }
+  return null;
+}
+
 /**
  * Like `bestOrientationAlg` but returns ONLY the x/z rotation part — the y
  * (AUF-axis) rotation is left for the caller to absorb via per-AUF lookup
