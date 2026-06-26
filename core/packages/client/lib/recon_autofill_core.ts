@@ -7,7 +7,7 @@
 import type { KPattern } from 'cubing/kpuzzle';
 import { patternFromAlg, isAlgPrefix, simplifyAlg } from './cube3';
 import {
-  detectStage, defaultCentersRotation, crossOnDRotation,
+  detectStage, crossOnDRotation,
   evaluateCanonical, F2L_SLOT_DEFS, topEdgesOriented,
 } from './stage_detect';
 import { lookupF2lAlgs } from './f2l_lookup';
@@ -177,13 +177,13 @@ export async function suggestAlg(
 
   const scored: AlgSuggestion[] = [];
 
-  // F2L / ZBLL fingerprints are geometric and only require cross-on-D
-  // (color-neutral safe). OLL/PLL fingerprints use absolute face indices, so
-  // they still need default centers (limits OLL/PLL suggestions to yellow-
-  // cross solves for now). ZBLS uses the same geometric path as F2L.
-  const canonRot = (category === 'f2l' || category === 'zbll')
-    ? await crossOnDRotation(startState)
-    : await defaultCentersRotation(startState);
+  // Every fingerprint is geometric / center-relative, so a cross-on-D frame is
+  // sufficient AND color-neutral for all stages: F2L/ZBLS are positional, OLL's
+  // mask is relative to the U-center, PLL/ZBLL encode side stickers relative to
+  // the centers. None require default (yellow-cross-on-D) centers, so we use the
+  // same `crossOnDRotation` everywhere — a non-yellow cross (e.g. white-cross
+  // solve) no longer flips the solved cross onto U and loses every OLL/PLL match.
+  const canonRot = await crossOnDRotation(startState);
   const startCanonical = canonRot ? startState.applyAlg(canonRot) : startState;
 
   // Track WHY no candidates are produced so we can return a useful reason.
