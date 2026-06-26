@@ -20,6 +20,7 @@ interface WcaComp {
   name: string;
   date_range?: string;
   start_date?: string;
+  end_date?: string;
   city?: string;
   country_iso2?: string;
   event_ids?: string[];
@@ -61,16 +62,29 @@ async function queryCompetitions(): Promise<WcaComp[]> {
   return [];
 }
 
+/** ISO `yyyy-mm-dd` 紧凑区间(同站点 lib/wca-date.ts 逻辑;server 独立包不能 import client)。 */
+function formatDateRangeIso(startISO: string, endISO?: string | null): string {
+  const end = endISO || startISO;
+  if (!startISO || startISO === end) return startISO;
+  const [sy, sm] = startISO.split('-');
+  const [ey, em, ed] = end.split('-');
+  if (sy === ey && sm === em) return `${startISO}~${ed}`;
+  if (sy === ey) return `${startISO}~${em}-${ed}`;
+  return `${startISO}~${end}`;
+}
+
 function formatCompMessage(comp: WcaComp): { title: string; body: string; url: string } {
-  const dateRange = comp.date_range ?? comp.start_date ?? '';
+  const dateStr = comp.start_date
+    ? formatDateRangeIso(comp.start_date, comp.end_date)
+    : comp.date_range ?? '';
   const city = comp.city ?? '';
   const flag = countryFlag(comp.country_iso2 ?? '');
   const eventCount = (comp.event_ids ?? []).length;
   const limit = comp.competitor_limit;
-  const limitStr = limit ? ` | 👥 上限${limit}` : '';
+  const limitStr = limit ? ` | 上限${limit}` : '';
   return {
-    title: `🌍WCA新赛! ${comp.name}`,
-    body: `📅 ${dateRange} | 📍 ${city} ${flag} | 🏷️ ${eventCount}个项目${limitStr}`,
+    title: `比赛公示快讯! ${comp.name}`,
+    body: `${dateStr} | ${city} ${flag} | ${eventCount}个项目${limitStr}`,
     // 比赛链接指向自有站(comp.id 即 WCA 比赛 id);中国比赛落 /zh;缺失时回退 WCA 官网。
     url:
       siteCompUrl(comp.id, undefined, undefined, isChineseRegion(comp.country_iso2))
