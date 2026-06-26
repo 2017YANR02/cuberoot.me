@@ -50,6 +50,14 @@ function sq1Note(unit: 'wca' | 'slash', provisional: boolean, residual: number):
       };
 }
 
+// sq1 复形(cubeshape)口径说明:把顶底两层还原成正方形(立方体形状)的最少 slash 数,中层不计。
+function cubeshapeNote(): { zh: string; en: string } {
+  return {
+    zh: '复形:把顶底两层还原成正方形(立方体形状)所需的最少 slash(/)数,不含中层;slash 之间转层免费、不计步(God 7)',
+    en: 'Cube shape: fewest slashes (/) to make both layers square (cube shape), equator ignored; top/bottom turns between slashes are free (God\'s number 7)',
+  };
+}
+
 // 度量说明(顶点等口径)。sq1 = 可证 WCA 12c4 最优(近最优档已退役);按选中口径 wca / slash 给说明。
 function metricNote(key: string, metric: string): { zh: string; en: string; } {
   if (key === 'pyraminx') {
@@ -99,7 +107,10 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
   const [examples, setExamples] = useState<Record<string, PuzzleExamplesEntry> | null>(null);
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
-  // sq1 双口径(单 toggle):'wca'(WCA 12c4,官方计步)/ 'slash'(twist,God 13)。仅 sq1 有 alt。
+  // sq1 求解目标(下拉):'full'(完整魔方,= 现有 WCA/slash 整解口径)/ 'cubeshape'(复形,到 cube
+  // shape 最少 slash 数)。仅 sq1 且有 cubeshape 数据时露出下拉。
+  const [target, setTarget] = useState<'full' | 'cubeshape'>('full');
+  // sq1 双口径(单 toggle):'wca'(WCA 12c4,官方计步)/ 'slash'(twist,God 13)。仅 sq1 + 完整魔方有 alt。
   const [sq1Unit, setSq1Unit] = useState<'wca' | 'slash'>('wca');
   // 示例:原始比赛打乱 vs 最优(最短)等价打乱(同状态)。仅当样例带最优数据时露切换。
   const [exView, setExView] = useState<'orig' | 'opt'>('orig');
@@ -119,16 +130,22 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const exEntry = examples?.[puzzleKey];
 
   const hasAlt = !!entry?.alt;
+  const hasCubeshape = puzzleKey === 'sq1' && !!entry?.cubeshape; // 复形下拉门控(数据在才露)
+  const isCube = hasCubeshape && target === 'cubeshape';
   const slashProvisional = entry?.alt?.provisional ?? true;
   const slashResidual = entry?.alt?.residual ?? 0;
   const slashResolved = entry?.alt?.resolved ?? 0;
   const slashAmbiguous = entry?.alt?.ambiguous ?? 0;
-  // sq1 双口径(单 toggle):unit=wca → dist(W,WCA 12c4 最优);unit=slash → alt.dist(t,真 slash 最优,God 13)。
+  // 目标 = 复形 → cubeshape.dist;否则 sq1 双口径:unit=wca → dist(W,WCA 12c4 最优);unit=slash → alt.dist(t,真 slash 最优,God 13)。
   const unit = sq1Unit;
-  const activeDist: PuzzleHistEntry | undefined = unit === 'wca' ? entry?.dist : entry?.alt?.dist;
-  const activeMetricKey: string = unit === 'wca' ? (entry?.metric ?? 'wca') : (entry?.alt?.metric ?? 'slash');
-  // 示例分桶:W→bins;t→binsAlt。
-  const activeBins: PuzzleExamplesEntry['bins'] | undefined = unit === 'wca' ? exEntry?.bins : exEntry?.binsAlt;
+  const activeDist: PuzzleHistEntry | undefined = isCube
+    ? entry?.cubeshape?.dist
+    : unit === 'wca' ? entry?.dist : entry?.alt?.dist;
+  const activeMetricKey: string = isCube ? 'slash' : unit === 'wca' ? (entry?.metric ?? 'wca') : (entry?.alt?.metric ?? 'slash');
+  // 示例分桶:复形→binsCubeshape;W→bins;t→binsAlt。
+  const activeBins: PuzzleExamplesEntry['bins'] | undefined = isCube
+    ? exEntry?.binsCubeshape
+    : unit === 'wca' ? exEntry?.bins : exEntry?.binsAlt;
 
   const series = useMemo<HistSeries[]>(() => {
     if (!entry || !activeDist) return [];
@@ -144,8 +161,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     [activeBins],
   );
   useEffect(() => {
-    setSelectedBin(null); // 切 puzzle / 口径时清空,等下个 effect 按新数据重选
-  }, [puzzleKey, sq1Unit]);
+    setSelectedBin(null); // 切 puzzle / 口径 / 目标时清空,等下个 effect 按新数据重选
+  }, [puzzleKey, sq1Unit, target]);
   useEffect(() => {
     if (exampleBins.length === 0) return;
     setSelectedBin((prev) => {
@@ -169,10 +186,12 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     );
   }
 
-  const note = (puzzleKey === 'sq1' && hasAlt)
-    ? sq1Note(unit, slashProvisional, slashResidual)
-    : metricNote(puzzleKey, activeMetricKey);
-  const total = entry.sample_count;
+  const note = isCube
+    ? cubeshapeNote()
+    : (puzzleKey === 'sq1' && hasAlt)
+      ? sq1Note(unit, slashProvisional, slashResidual)
+      : metricNote(puzzleKey, activeMetricKey);
+  const total = isCube ? (entry.cubeshape?.sample_count ?? entry.sample_count) : entry.sample_count;
   const sampleLine = tr({ zh: '{n} 条样本', en: '{n} samples' }).replace('{n}', total.toLocaleString());
 
   return (
@@ -182,7 +201,16 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           <span>{sampleLine}</span>
           <span className="scramble-stats-puzzle-metric">{tr(note)}</span>
         </div>
-        {hasAlt && (
+        {hasCubeshape && (
+          <label className="scramble-stats-puzzle-target">
+            <span>{tr({ zh: '目标', en: 'Goal' })}</span>
+            <select value={target} onChange={(e) => setTarget(e.target.value as 'full' | 'cubeshape')}>
+              <option value="full">{tr({ zh: '完整魔方', en: 'Full cube' })}</option>
+              <option value="cubeshape">{tr({ zh: '复形', en: 'Cube shape' })}</option>
+            </select>
+          </label>
+        )}
+        {hasAlt && !isCube && (
           <div className="scramble-stats-puzzle-toggle">
             <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '度量', en: 'Metric' })}</span>
             <PillToggle
@@ -196,7 +224,7 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
         )}
       </div>
 
-      {puzzleKey === 'sq1' && hasAlt && unit === 'slash' && slashProvisional && (
+      {puzzleKey === 'sq1' && hasAlt && !isCube && unit === 'slash' && slashProvisional && (
         <p className="scramble-stats-provisional">
           {tr({
             zh: `slash 数为紧上界:已穷尽判定的 ${slashResolved.toLocaleString()} 条最深歧义态(W=2s-1)全部等于此上界、没有一条能再省刀;仅余 ${slashResidual} 条(占全部 ${((slashResidual / total) * 100).toFixed(3)}%,最深 s=12–13)在现求解器下穷尽证明超时不可行,暂取上界。`,
@@ -252,7 +280,12 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           {tr({ zh: '生成时间', en: 'Generated' })}: {json.meta.generated_at}
         </span>
         <span>
-          {puzzleKey === 'sq1' && hasAlt
+          {isCube
+            ? tr({
+              zh: '复形(cubeshape)= 把顶底两层各自还原成正方形(即立方体形状),不管中层(equator)的朝向。度量 = 最少 slash(/)数;两刀之间任意转动顶层 / 底层都免费、不计步。任意打乱最多 7 刀复形(Jaap Scherphuis 给出的 cube-shape God\'s number;全 170 个双层 shape 查表即得)。这是 SQ1 解法的第一步。',
+              en: 'Cube shape (cubeshape) = make both the top and bottom layers square (i.e. restore the cube shape), ignoring the middle (equator) orientation. Metric = fewest slashes (/); any top/bottom turns between slashes are free. Any scramble reaches cube shape in at most 7 slashes (the cube-shape God\'s number per Jaap Scherphuis; a lookup over all 170 two-layer shapes). This is the first step of solving a Square-1.',
+            })
+            : puzzleKey === 'sq1' && hasAlt
             ? tr(slashProvisional ? {
               zh: `两种度量:WCA 12c4 步数((X,Y) 计 1、/ 计 1,官方计步)与 slash 最优解的 / 数(twist 度量,God 13)。为什么不分「WCA 最优解 / slash 最优解」:SQ1 的 WCA 最优解恰好也用最少刀(t = s,即同一个解同时是 WCA 最优与 slash 最优,两个目标从不冲突)。其中 95.71% 由省算定理(W=2s 或 2s+1 ⇒ t=s)免搜索证明;余 4.29%(${slashAmbiguous.toLocaleString()} 条)歧义态(W=2s−1)精确判定,${slashResolved.toLocaleString()} 条证得 t=s、${slashResidual} 条最深态(s=12–13)穷尽证明不可行而取紧上界。`,
               en: `Two metrics: WCA 12c4 length ((X,Y)=1, /=1, official) and the slash count of the slash-optimal solution (twist, God's number 13). Why there's no "WCA-optimal vs slash-optimal" choice: an SQ1 WCA-optimal solution already uses the fewest slashes (t = s — the very same solution is both WCA- and slash-optimal, so the two objectives never conflict). 95.71% follow from the parity theorem (W=2s or 2s+1 ⇒ t=s); of the remaining 4.29% (${slashAmbiguous.toLocaleString()}) ambiguous states (W=2s−1), ${slashResolved.toLocaleString()} are proven t=s and ${slashResidual} deepest states (s=12–13) take the tight upper bound.`,

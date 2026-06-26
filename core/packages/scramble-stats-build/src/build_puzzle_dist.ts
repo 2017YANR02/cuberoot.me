@@ -3,6 +3,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { buildCubeshapeTable, cubeshapeSlashes } from './sq1_cubeshape';
 
 // 非 3x3 puzzle 整解最优步数分布(EPIC 3 新管线;2x2x2 pocket 先行,后续 puzzle 照搬)。
 //
@@ -138,6 +139,27 @@ async function aggregateExactSq1(exCsvPath: string, wcaCol: string, slashCsvPath
   return { sampleCount, wcaHist, wcaOptSlashHist, slashOptHist };
 }
 
+// SQ1「复形 / cubeshape」聚合:对原始打乱语料(scrambles.txt,id,scramble)逐条算到 cube shape
+// 的最少 slash 数(0..7),按值直方图。每条都是确定性即时查表,不依赖昂贵的整解 solver,故 sample_count
+// = 全部可解析打乱(通常 ≥ WCA/slash 口径,后者全量灌注期间可能滞后)。
+async function aggregateCubeshape(txtPath: string): Promise<{ sampleCount: number; hist: Hist }> {
+  const table = buildCubeshapeTable();
+  const hist: Hist = { min: Infinity, max: -Infinity, counts: new Map() };
+  let sampleCount = 0;
+  const rl = readline.createInterface({ input: fs.createReadStream(txtPath, 'utf-8'), crlfDelay: Infinity });
+  for await (const line of rl) {
+    if (!line) continue;
+    const i = line.indexOf(',');
+    if (i <= 0) continue;
+    const scr = line.slice(i + 1).trim();
+    const d = cubeshapeSlashes(table, scr);
+    if (d < 0) continue; // 理论不应发生(任意 SQ1 shape 都在 170 态表里)
+    bump(hist, d);
+    sampleCount++;
+  }
+  return { sampleCount, hist };
+}
+
 async function aggregate(csvPath: string, valueCol: string): Promise<{ sampleCount: number; hist: Hist }> {
   const hist: Hist = { min: Infinity, max: -Infinity, counts: new Map() };
   const rl = readline.createInterface({
@@ -215,6 +237,16 @@ async function main() {
       }
       if (ex.wcaOptSlashHist.counts.size > 0) {
         entry.wcaOptSlash = histToJson(ex.wcaOptSlashHist);
+      }
+      // 复形(cubeshape):从原始打乱语料即时算「到 cube shape 最少 slash 数」(0..7),与 WCA/slash
+      // 同一池但不依赖整解 solver(每条确定性查表)。前端「目标:完整魔方 / 复形」下拉切换。
+      const txtPath = path.join(dataRoot, spec.key, 'scrambles.txt');
+      if (fs.existsSync(txtPath)) {
+        const cs = await aggregateCubeshape(txtPath);
+        if (cs.hist.counts.size > 0) {
+          entry.cubeshape = { metric: 'slash', sample_count: cs.sampleCount, dist: histToJson(cs.hist) };
+          console.log(`  [${spec.key}] cubeshape ${cs.sampleCount} rows; ${cs.hist.min}..${cs.hist.max} slashes`);
+        }
       }
       puzzlesOut[spec.key] = entry;
       keys.push(spec.key);
