@@ -29,17 +29,32 @@ export interface PllAlgEntry {
 
 const AUFS = ['', 'U', 'U2', "U'"] as const;
 
-/** 12-char fingerprint: side-color (face index) of each U-layer side sticker. */
+/**
+ * 12-char fingerprint of the 12 U-layer side stickers, encoded RELATIVE to the
+ * centers: each sticker becomes the face index whose center currently shows
+ * that color (not the raw color). This makes the fingerprint color-neutral — it
+ * matches the same PLL case regardless of cross color or side-center
+ * permutation, so the caller can canonicalise with `crossOnDRotation` (cross on
+ * D, any side-center cyclic order) instead of forcing default centers.
+ *
+ * In a default-centers frame `colorToFace` is the identity, so this stays
+ * byte-identical to the historical absolute fingerprints the yellow-cross
+ * entries were built with.
+ */
 function pllFingerprint(p: KPattern): string {
+  const centers = p.patternData.CENTERS.pieces;
+  const colorToFace = new Array<number>(6);
+  for (let f = 0; f < 6; f++) colorToFace[centers[f]] = f;
+  const enc = (c: number | null) => (c == null ? '?' : String(colorToFace[c] ?? '?'));
   let out = '';
   for (let s = 0; s < 4; s++) {
     const sideFace = EDGE_STICKERS[s][1];
-    out += String(edgeStickerOnFace(p, s, sideFace) ?? '?');
+    out += enc(edgeStickerOnFace(p, s, sideFace));
   }
   for (let s = 0; s < 4; s++) {
     const [, sideA, sideB] = CORNER_STICKERS[s];
-    out += String(cornerStickerOnFace(p, s, sideA) ?? '?');
-    out += String(cornerStickerOnFace(p, s, sideB) ?? '?');
+    out += enc(cornerStickerOnFace(p, s, sideA));
+    out += enc(cornerStickerOnFace(p, s, sideB));
   }
   return out;
 }

@@ -19,7 +19,7 @@
  */
 import type { KPattern } from 'cubing/kpuzzle';
 import type { F2lSlotId, StageInfo } from './stage_detect';
-import { detectStage, F2L_SLOT_DEFS, topEdgesOriented, defaultCentersRotation } from './stage_detect';
+import { detectStage, F2L_SLOT_DEFS, topEdgesOriented, crossOnDRotation } from './stage_detect';
 import { EDGE_STICKERS } from './sticker_tables';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
@@ -27,11 +27,11 @@ import { ollCommentName, pllCommentLabel, isEpll } from './alg_case_display';
 
 /**
  * 识别一个 OLL 待解状态(F2L 完、顶层未朝向)的 DB case 名,如 "OLL 27"。
- * 走 oll_lookup 的指纹表(需黄顶/默认中心,非黄顶 solve 识别不出 → null)。
+ * 走 oll_lookup 的指纹表(指纹相对 U 中心,任意十字颜色都识别得出)。
  */
 async function recognizeOllCase(pattern: KPattern): Promise<string | null> {
   try {
-    const rot = await defaultCentersRotation(pattern);
+    const rot = await crossOnDRotation(pattern);
     const canonical = rot ? pattern.applyAlg(rot) : pattern;
     return (await lookupOllAlgs(canonical))[0]?.caseName ?? null;
   } catch { return null; }
@@ -40,7 +40,7 @@ async function recognizeOllCase(pattern: KPattern): Promise<string | null> {
 /** 识别一个 PLL 待解状态(OLL 完、顶层已朝向)的 DB case 名,如 "Gd"。 */
 async function recognizePllCase(pattern: KPattern): Promise<string | null> {
   try {
-    const rot = await defaultCentersRotation(pattern);
+    const rot = await crossOnDRotation(pattern);
     const canonical = rot ? pattern.applyAlg(rot) : pattern;
     return (await lookupPllAlgs(canonical))[0]?.caseName ?? null;
   } catch { return null; }
