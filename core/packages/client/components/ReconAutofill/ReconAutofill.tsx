@@ -451,6 +451,11 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       ta.focus();
       ta.setSelectionRange(newCaret, newCaret);
     });
+    // 接受注释后本行视为「已读完」——记成 dismissed,否则 auto-open 会立刻拿同一条注释
+    // 再弹一次(尤其最后一行 solved:caret 不前进,会无限重弹同一条 // PLL-Xx)。
+    // 用注释所在行的行号:非 solved 时 caret 已前进到下一行,auto-open 检到行号不同会
+    // 自动清掉该标记并照常给下一行的 alg 建议。
+    dismissedLineIdxRef.current = (value.substring(0, p.caret).match(/\n/g) ?? []).length;
     close();
   }, [value, setValue, textareaRef, close]);
 
