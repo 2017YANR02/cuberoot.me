@@ -309,6 +309,15 @@ export const CATALOG: UtilEntry[] = [
     zh: '3x3 面转序列的 QTM 计数(180°=2),整体旋转 x/y/z 不计 — 打乱与求解解法通用的单一来源。HTM 相同时给解法排序的二级键就用它。',
     en: 'QTM count of a 3x3 face-turn sequence (180°=2; whole-cube rotations count 0). Single source for both scrambles and solver solutions.',
   },
+  {
+    name: 'applyScramble (puzzle-group)',
+    sig: 'applyScramble(g: PuzzleGroup, scramble: string): PuzzleState',
+    imp: "import { applyScramble, solvedState, type PuzzleGroup } from '@/lib/puzzle-group';",
+    usage: "applyScramble(FTO_GROUP, 'R U F') // → per-orbit { pieces[], orient[] }",
+    category: 'cube',
+    zh: '把任意扭转魔方当置换群:轨道(块数+朝向)+ 生成元用循环记号定义,token 解析成生成元幂(X\'=逆/X2=平方/X--=(X++)⁻¹)作用到还原态。/scramble/gen 的非 WCA 打乱图(fto/baby_fto/master_tetraminx/kilominx/redi_cube)的渲染内核,群源在 _svg/_nets/*.ts,由 scripts/gen-net.mts 从 cubing.js 派生+校验。',
+    en: 'Treats any twisty puzzle as an oriented permutation group (orbits + cycle-notation generators); resolves scramble tokens to generator powers and applies them. Renders the non-WCA 2D scramble nets; group sources in _svg/_nets/*.ts, derived from cubing.js by scripts/gen-net.mts.',
+  },
 
   // ── util ──────────────────────────────────
   {
