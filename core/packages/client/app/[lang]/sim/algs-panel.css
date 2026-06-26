@@ -7,28 +7,6 @@
   min-height: 200px;
 }
 
-.sim-algs-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 8px 12px 4px;
-}
-.sim-algs-tabs button {
-  min-width: 36px;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--foreground);
-  font-size: 12px;
-  cursor: pointer;
-}
-.sim-algs-tabs button.active {
-  background: var(--accent);
-  color: var(--accent-foreground);
-  border-color: var(--accent);
-}
-
 .sim-algs-sets {
   padding: 4px 12px 8px;
   display: flex;
@@ -100,7 +78,7 @@
   color: var(--muted-foreground);
 }
 .sim-algs-alg {
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   color: var(--foreground);
   white-space: nowrap;

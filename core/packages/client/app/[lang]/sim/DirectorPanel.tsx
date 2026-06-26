@@ -15,7 +15,6 @@ import World from './engine/world';
 import { exportSimVideo, type ExportProgress } from './sim_export';
 import './director-panel.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 interface Props {
@@ -95,22 +94,27 @@ export default function DirectorPanel({ getCanvas, getWorld, getRenderer, setup,
 
   return (
     <div className="sim-director">
-      <button className="sim-director-btn" onClick={snapshot}>
+      {/* 纯图标按钮(用户要求去掉栏内所有文字):截图 = Camera,导出 mp4 = Film。
+          功能靠 title / aria-label 悬浮提示,无可见文案。 */}
+      <button
+        className="sim-director-btn"
+        onClick={snapshot}
+        title={t('截图 PNG', 'Snapshot PNG')}
+        aria-label={t('截图 PNG', 'Snapshot PNG')}
+      >
         <Camera size={14} />
-        {t('截图 PNG', 'Snapshot PNG')}
       </button>
       <button
         className="sim-director-btn"
         onClick={startExport}
         disabled={!canExport || exporting}
-        title={!canExport ? t('解法为空, 无可导出动画', 'Alg is empty — nothing to record') : ''}
+        title={!canExport
+          ? t('解法为空, 无可导出动画', 'Alg is empty — nothing to record')
+          : t('导出 mp4 1080p:离线渲染当前解法动画', 'Export mp4 1080p: offline render of the solution animation')}
+        aria-label={t('导出 mp4 1080p', 'Export mp4 1080p')}
       >
         <Film size={14} />
-        {t('导出 mp4 1080p', 'Export mp4 1080p')}
       </button>
-      <span className="sim-director-hint">
-        {t('1080p 离线渲染当前打乱+解法的动画', 'Offline 1080p render of current scramble+solution')}
-      </span>
 
       {exporting && progress && (
         <div className="sim-export-overlay">
