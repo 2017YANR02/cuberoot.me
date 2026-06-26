@@ -9,6 +9,7 @@ export type PuzzleExampleCompMeta = [string, string, number, string, string, (0 
 export interface PuzzleExamplesEntry {
   bins?: Record<string, PuzzleExampleSample[]>;   // 主口径步数 -> 示例(每 bin K 条;sq1 = 可证 WCA 12c4 最优分桶)
   binsAlt?: Record<string, PuzzleExampleSample[]>; // 备选口径分桶(sq1 = slash)
+  binsCubeshape?: Record<string, PuzzleExampleSample[]>; // sq1 复形:到 cube shape 最少 slash 数分桶(只原始打乱)
   comps: Record<string, [string, string]>;       // compId -> [比赛名, 日期串]
   idMeta: Record<string, PuzzleExampleCompMeta>;  // id -> 比赛元数据
 }
@@ -19,7 +20,7 @@ export interface PuzzleExamplesJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260618sq1slashopt';
+const V = '20260626sq1cubeshape';
 
 export async function fetchPuzzleExamples(): Promise<PuzzleExamplesJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_examples.json') + `?v=${V}`);

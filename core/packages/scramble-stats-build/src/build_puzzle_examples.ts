@@ -4,6 +4,7 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { dateDisplay } from './comp_date';
+import { buildCubeshapeTable, cubeshapeSlashes } from './sq1_cubeshape';
 
 // 非 3x3 puzzle 难度分布页的「点某步数 → 看该步数真实比赛打乱」示例(EPIC 3 配套)。
 // 与 3x3 难度 tab 的 ExamplesPanel 对等,但 puzzle 无底色概念,故每 bin 只蓄 K 条 [id, scramble]。
@@ -181,6 +182,25 @@ async function bucketSlashSq1(dataDir: string): Promise<{ slash: Map<number, str
   return { slash, optOf };
 }
 
+// sq1「复形 / cubeshape」分桶:读 scrambles.txt(id,scramble),逐条即时算到 cube shape 的最少 slash
+// 数(0..7),按值分桶 id。复形是 shape 约简、无「整解」概念 → 不产最优等价打乱,前端只显原始打乱。
+async function bucketCubeshapeSq1(txtPath: string): Promise<Map<number, string[]>> {
+  const table = buildCubeshapeTable();
+  const buckets = new Map<number, string[]>();
+  const rl = readline.createInterface({ input: fs.createReadStream(txtPath, 'utf-8'), crlfDelay: Infinity });
+  for await (const line of rl) {
+    if (!line) continue;
+    const i = line.indexOf(',');
+    if (i <= 0) continue;
+    const id = line.slice(0, i);
+    const scr = line.slice(i + 1).trim();
+    const d = cubeshapeSlashes(table, scr);
+    if (d < 0) continue;
+    let a = buckets.get(d); if (!a) { a = []; buckets.set(d, a); } a.push(id);
+  }
+  return buckets;
+}
+
 // 每 bin 确定性均匀步长取 K 条(可复现,不依赖 Math.random)。
 // n≤K 全取;否则按 floor(i*(n-1)/(K-1)) 均匀采样,首尾两端都覆盖,中间均布。
 function pickUniform(ids: string[], k: number): string[] {
@@ -312,6 +332,7 @@ async function main() {
     // (binsAlt,exactSlashOpt=slash 最优打乱)。slash 最优档缺则回退 bucketExactSq1 的 slash(紧上界 + WCA 打乱)。
     let exactWca: Map<number, string[]> | null = null;
     let exactSlash: Map<number, string[]> | null = null;
+    let exactCubeshape: Map<number, string[]> | null = null;
     let exactOpt = new Map<string, string>();
     let exactSlashOpt = new Map<string, string>();
     if (spec.exact) {
@@ -322,6 +343,8 @@ async function main() {
       } else console.warn(`  [${spec.key}] 无精确档数据(sq1_wca_exact.csv + 完成块都缺)`);
       const sl = await bucketSlashSq1(path.join(dataRoot, spec.key));
       if (sl) { exactSlash = sampleFrom(sl.slash); exactSlashOpt = sl.optOf; } // 真 slash 最优覆盖
+      // 复形:从原始语料即时分桶(slash 数 0..7),示例只显原始打乱(无整解 → 无最优等价打乱)。
+      if (fs.existsSync(txtPath)) exactCubeshape = sampleFrom(await bucketCubeshapeSq1(txtPath));
     }
 
     // 2. 流式读 scrambles.txt 仅取被采样 id 的原始打乱(标准 (x,y) 记号)。
@@ -374,6 +397,8 @@ async function main() {
       // bins = WCA 12c4 最优(打乱 = WCA 最优解逆);binsAlt = 真 slash 最优(打乱 = slash 最优解逆)。
       setBins('bins', exactWca, exactOpt);
       setBins('binsAlt', exactSlash, exactSlashOpt);
+      setBins('binsCubeshape', exactCubeshape, new Map()); // 复形:只原始打乱
+
     } else {
       setBins('bins', sampledByBin, nearOpt);
       setBins('binsAlt', sampledAlt, nearOpt);
