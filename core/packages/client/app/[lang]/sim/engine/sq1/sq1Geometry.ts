@@ -193,6 +193,7 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
   topSticker.position.z = STICKER_Z;
   topSticker.userData.simRole = 'sticker'; // 立体贴片: flatten via mesh.scale.z (stickerThickness.ts)
   topSticker.userData.simFlatten = 'scaleZ';
+  topSticker.userData.simStickerNormal = new THREE.Vector3(0, 0, 1); // 原核: body +z cap (rawBody.ts)
   group.add(topSticker);
 
   if (corner) {
@@ -202,17 +203,20 @@ export function buildPieceMesh(piece: number, isTopLayer: boolean): PieceBuild {
     const wallA = mkRaisedRectSticker(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
     wallA.position.set(CORNER_FACE_CENTER, W + SIDE_OFFSET, LAYER_HEIGHT / 2);
     wallA.rotation.set(-Math.PI / 2, 0, 0);
+    wallA.userData.simStickerNormal = new THREE.Vector3(0, 1, 0); // 原核: body +y face (rawBody.ts)
     group.add(wallA);
 
     const wallB = mkRaisedRectSticker(TILE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matB);
     wallB.position.set(W + SIDE_OFFSET, CORNER_FACE_CENTER, LAYER_HEIGHT / 2);
     wallB.rotation.set(0, Math.PI / 2, Math.PI / 2);
+    wallB.userData.simStickerNormal = new THREE.Vector3(1, 0, 0); // 原核: body +x face
     group.add(wallB);
   } else {
     const matA = mkStickerMat(SQ1_COLORS[faces.sideA]);
     const wallA = mkRaisedRectSticker(WEDGE_FACE_W - 2 * SIDE_INSET_H, LAYER_HEIGHT - 2 * SIDE_INSET_V, matA);
     wallA.position.set(W + SIDE_OFFSET, 0, LAYER_HEIGHT / 2);
     wallA.rotation.set(0, Math.PI / 2, Math.PI / 2);
+    wallA.userData.simStickerNormal = new THREE.Vector3(1, 0, 0); // 原核: body +x face (rawBody.ts)
     group.add(wallA);
   }
 
@@ -286,6 +290,12 @@ export function buildMiddlePair(): MiddlePair {
       const mesh = mkRaisedRectSticker(w, stickerH, mkStickerMat(color));
       mesh.position.set(posX, 0, posZ);
       mesh.rotation.set(0, rotY, 0);
+      // 原核: body wall normal in the (rotateX-baked) middle frame (rawBody.ts).
+      mesh.userData.simStickerNormal = new THREE.Vector3(
+        axisFace === 'R' ? 1 : axisFace === 'L' ? -1 : 0,
+        0,
+        axisFace === 'F' ? 1 : axisFace === 'B' ? -1 : 0,
+      );
       pivot.add(mesh);
     };
 
