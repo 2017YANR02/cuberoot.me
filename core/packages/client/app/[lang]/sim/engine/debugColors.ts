@@ -30,6 +30,7 @@
  * touches) — so restore stays correct even if `hollow` is toggled mid-overlay.
  */
 import * as THREE from 'three';
+import { deriveRawFaces, makeRawBodyMaterial } from './rawBody';
 
 /** Bright debug materials, one per structural role. Lit (Lambert) so curved
  *  shells / spheres still read as 3D; DoubleSide so shell interiors show. Shared
@@ -59,22 +60,43 @@ export const HOLLOW_MAT = new THREE.MeshBasicMaterial({
  *
  * The genuine build material is captured ONCE per mesh into `userData.simBaseMat`
  * — this function is the only thing that ever sets these materials, so the first
- * read is always the real base (never HOLLOW_MAT / DEBUG_*). Every call then
+ * read is always the real base (never HOLLOW_MAT / DEBUG_* / raw). Every call then
  * derives the effective material purely from that base + the current flags, in
- * priority debug > hollow > base. Idempotent; call on every applySettings.
+ * priority raw > debug > hollow > base. Idempotent; call on every applySettings.
  *
- * (NxN is NOT routed here: its thickness/hollow/hint/faceColors live on the
+ * 原核 (raw, stickerless body): when on, each 'body' mesh shows a per-piece raw
+ * material (built once from its sibling stickers, cached on `userData.simRawMat`)
+ * that paints the plastic like a stickerless puzzle, and the raised sticker tiles
+ * are hidden. See rawBody.ts. Raw wins over debug/hollow; a body with no derivable
+ * colored faces (no sibling stickers) falls through to the normal priority.
+ *
+ * (NxN is NOT routed here: its thickness/hollow/hint/faceColors/raw live on the
  * InstancedRenderer, and its debug overlay runs via applyDebugStructureColors
  * after the NxN block — see SettingDrawer.applySettings.)
  */
-export function applyEngineBodyOverlay(root: THREE.Object3D, hollow: boolean, debug: boolean): void {
+export function applyEngineBodyOverlay(root: THREE.Object3D, hollow: boolean, debug: boolean, raw: boolean): void {
   root.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
     if (!mesh.isMesh) return;
     const role = mesh.userData.simRole as string | undefined;
+    if (role === 'sticker') {
+      // 原核 paints the body itself → hide the raised sticker tiles. Idempotent; a
+      // carved (hidden) parent still hides its children regardless of this flag.
+      mesh.visible = !raw;
+      return;
+    }
     if (role !== 'body' && role !== 'core') return;
     if (mesh.userData.simBaseMat === undefined) mesh.userData.simBaseMat = mesh.material;
     const base = mesh.userData.simBaseMat as THREE.Material | THREE.Material[];
+    if (raw && role === 'body') {
+      let rawMat = mesh.userData.simRawMat as THREE.Material | null | undefined;
+      if (rawMat === undefined) {
+        const faces = deriveRawFaces(mesh);
+        rawMat = faces.length > 0 ? makeRawBodyMaterial(base, faces) : null;
+        mesh.userData.simRawMat = rawMat; // cache null too: skip re-deriving every call
+      }
+      if (rawMat) { mesh.material = rawMat; return; }
+    }
     mesh.material = debug ? ROLE_MAT[role] : hollow ? HOLLOW_MAT : base;
   });
 }
