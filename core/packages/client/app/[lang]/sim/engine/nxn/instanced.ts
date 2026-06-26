@@ -19,6 +19,7 @@ import Cubelet from "./cubelet";
 import Cube from "./cube";
 import CubeGroup from "./group";
 import { FACE, COLORS } from "../define";
+import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, type RawAttrs } from "./rawCore";
 
 const HALF = Cubelet.SIZE / 2;
 const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -111,6 +112,12 @@ export default class InstancedRenderer extends THREE.Group {
   private _thickness = true;
   private _arrow = false;
   private _hint = false;
+  private _hollow = false;
+  /** 原核 (raw/stickerless body) 状态 + 资源。仅 order < superOrderThreshold 生效。 */
+  private _rawCore = false;
+  private _rawAttrs: RawAttrs | null = null;
+  private _rawFrameGeo: THREE.BufferGeometry | null = null;
+  private _rawInnerGeo: THREE.BufferGeometry | null = null;
 
   // active slices (支持并发,例如 x/y/z 整 cube 旋转 = N 个 group 同时跑)。
   // 同轴异步并发 (user 拖了 A 还在 tween,又 drag 平行 B) 也要正确 — 每个 slice
@@ -727,6 +734,9 @@ export default class InstancedRenderer extends THREE.Group {
   get thickness(): boolean { return this._thickness; }
 
   set hollow(value: boolean) {
+    this._hollow = value;
+    // 原核激活时块身材质由 setRawCore 接管(applySettings 在 hollow 之后调 setRawCore,
+    // 会覆盖回 raw 材质);这里照常写,raw-off 时即恢复正确的 CORE/TRANS。
     const mat = value ? Cubelet.TRANS : Cubelet.CORE;
     this.staticFrame.material = mat;
     this.movingFrame.material = mat;
@@ -736,6 +746,62 @@ export default class InstancedRenderer extends THREE.Group {
     }
     this.cube.dirty = true;
   }
+
+  /** 原核 (raw / stickerless body):on=true 时给 frame(+inner,若有)换克隆几何(带 per-instance
+   *  面色属性)+ raw 材质(最近可见面取色,棱对角双色/角三色);off 恢复默认几何 + CORE(_BASIC)/TRANS。
+   *  低/中阶用带光照的 Phong raw + 圆角 _FRAME + inner;超高阶(N≥superOrderThreshold)用 unlit Basic
+   *  raw + _FRAME_LOW(无 inner) —— 块身染成各面色后,贴片缝隙的深色网格消失成纯色面。
+   *  faceColors 改变时 setFaceColors 会回调重建属性值。 */
+  setRawCore(on: boolean, faceColors: { U: string; D: string; L: string; R: string; F: string; B: string }): void {
+    const isSuper = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
+    if (on) {
+      // 懒建克隆几何 + 属性(超高阶克隆 _FRAME_LOW box,其余克隆圆角 _FRAME)
+      if (!this._rawFrameGeo) this._rawFrameGeo = (isSuper ? Cubelet._FRAME_LOW : Cubelet._FRAME).clone();
+      this._rawAttrs = buildRawAttributes(
+        this.instanceToInitial.length, this.cubeletFaceSlot, faceColors, this._rawAttrs ?? undefined,
+      );
+      attachRawAttributes(this._rawFrameGeo, this._rawAttrs);
+      const mat = isSuper ? rawMaterialBasic() : rawMaterial();
+      this.staticFrame.geometry = this._rawFrameGeo;
+      this.movingFrame.geometry = this._rawFrameGeo;
+      this.staticFrame.material = mat;
+      this.movingFrame.material = mat;
+      if (this.hasInner) {
+        if (!this._rawInnerGeo) this._rawInnerGeo = INNER_BOX.clone();
+        attachRawAttributes(this._rawInnerGeo, this._rawAttrs);
+        this.staticInner.geometry = this._rawInnerGeo;
+        this.movingInner.geometry = this._rawInnerGeo;
+        this.staticInner.material = mat;
+        this.movingInner.material = mat;
+      }
+    } else if (this._rawCore) {
+      // 恢复默认几何 + 材质(尊重当前 hollow;超高阶 unlit Basic,其余 Phong)
+      const frameGeo = isSuper ? Cubelet._FRAME_LOW : Cubelet._FRAME;
+      const mat = this._hollow ? Cubelet.TRANS : (isSuper ? Cubelet.CORE_BASIC : Cubelet.CORE);
+      this.staticFrame.geometry = frameGeo;
+      this.movingFrame.geometry = frameGeo;
+      this.staticFrame.material = mat;
+      this.movingFrame.material = mat;
+      if (this.hasInner) {
+        this.staticInner.geometry = INNER_BOX;
+        this.movingInner.geometry = INNER_BOX;
+        this.staticInner.material = mat;
+        this.movingInner.material = mat;
+      }
+    }
+    // 占位板/扇形横截面材质统一走白基色 + vertexColors + 双面(实际色全由几何顶点色定)。
+    // 运行时强制纠正:dev HMR 可能保留旧 _PANEL_MAT 实例(Core 基色/单面),否则顶点色被乘暗。
+    const pm = Cubelet._PANEL_MAT;
+    if (!pm.vertexColors || pm.side !== THREE.DoubleSide) { pm.vertexColors = true; pm.side = THREE.DoubleSide; pm.needsUpdate = true; }
+    pm.color.setRGB(1, 1, 1);
+    this._rawCore = on;
+    this.cube.dirty = true;
+  }
+
+  /** group.hold 读它:超高阶原核时挂扇形彩色横截面(panelFan),否则用 Cubelet._PANEL 深色盒。 */
+  get rawCore(): boolean { return this._rawCore; }
+  /** 超高阶(无 inner、只造表面 cubelet)= 转层会露中空,需要 panel 填。 */
+  get superOrder(): boolean { return !this.hasInner; }
 
   set arrow(value: boolean) {
     if (value === this._arrow) return;
@@ -797,6 +863,13 @@ export default class InstancedRenderer extends THREE.Group {
       if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
       if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
     }
+    // 原核激活时块身颜色与贴片同源,面色变了同步重建 raw per-instance 属性。
+    // (扇形横截面 panelFan 的颜色在每次 group.hold 时按当前态重刷,自动跟上新面色,无需在此处理。)
+    if (this._rawCore && this._rawAttrs) {
+      buildRawAttributes(this.instanceToInitial.length, this.cubeletFaceSlot, {
+        U: COLORS.U, D: COLORS.D, L: COLORS.L, R: COLORS.R, F: COLORS.F, B: COLORS.B,
+      }, this._rawAttrs);
+    }
     this.cube.dirty = true;
   }
 
@@ -852,5 +925,7 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingStickerMaterial.dispose();
     this.hintMaterial.dispose();
     this.movingHintMaterial.dispose();
+    this._rawFrameGeo?.dispose();
+    this._rawInnerGeo?.dispose();
   }
 }

@@ -93,11 +93,13 @@ import {
   type SimSettings, type SimBoardBg,
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
+import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { WheelPicker } from '@/components/WheelPicker';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
+import { eventDisplayName } from '@/lib/wca-events';
 import './player-controls.css';
 import i18n from '@/i18n/i18n-client';
 
@@ -112,15 +114,17 @@ function convertSq1Text(text: string, convert: (s: string) => string): string {
   }).join('\n');
 }
 
+// WCA-standard event names reuse the site-wide single source (lib/wca-events
+// eventDisplayName — same labels the /wca/records page renders: 三阶/3×3, SQ1,
+// 金字塔/Pyra, 斜转/Skewb, 五魔/Mega...). Non-WCA puzzles below keep bespoke names.
 const PUZZLE_TYPE_OPTIONS = [
   { value: 'nxn',      iconClass: 'event-333', labelZh: 'NxN',    labelEn: 'NxN' },
-  { value: 'sq1',      iconClass: 'event-sq1', labelZh: 'Square-1', labelEn: 'Square-1' },
-  { value: 'ivy',      iconClass: 'unofficial-ivy', labelZh: '枫叶魔方', labelEn: 'Ivy Cube' },
-  { value: 'pyraminx', iconClass: 'event-pyram', labelZh: '金字塔', labelEn: 'Pyraminx' },
-  { value: 'skewb',    iconClass: 'event-skewb', labelZh: '斜转',  labelEn: 'Skewb'
-},
-  { value: 'megaminx', iconClass: 'event-minx',  labelZh: '五魔',  labelEn: 'Megaminx' },
-  { value: 'fto',      iconClass: 'unofficial-fto', labelZh: 'FTO', labelEn: 'FTO' },
+  { value: 'sq1',      iconClass: 'event-sq1', labelZh: eventDisplayName('sq1', true), labelEn: eventDisplayName('sq1', false) },
+  { value: 'ivy',      iconClass: 'unofficial-ivy', labelZh: '枫叶', labelEn: 'Ivy' },
+  { value: 'pyraminx', iconClass: 'event-pyram', labelZh: eventDisplayName('pyram', true), labelEn: eventDisplayName('pyram', false) },
+  { value: 'skewb',    iconClass: 'event-skewb', labelZh: eventDisplayName('skewb', true), labelEn: eventDisplayName('skewb', false) },
+  { value: 'megaminx', iconClass: 'event-minx',  labelZh: eventDisplayName('minx', true), labelEn: eventDisplayName('minx', false) },
+  { value: 'fto',      iconClass: 'unofficial-fto', labelZh: eventDisplayName('fto', true), labelEn: eventDisplayName('fto', false) },
   { value: 'dino',     iconClass: 'unofficial-dino', labelZh: '恐龙', labelEn: 'Dino' },
   { value: 'redi',     iconClass: 'unofficial-redi', labelZh: 'Redi', labelEn: 'Redi' },
   { value: 'rex',      iconClass: 'unofficial-rex', labelZh: 'Rex', labelEn: 'Rex Cube' },
@@ -1045,6 +1049,40 @@ export default function PlayerControls({
     onSetupChange(scramble);
   }, [world, order, isSq1, isIvy, corner, isTwistyMode, puzzleKind, settings.animateScramble, onSetupChange, onAlgChange, twistyPlayerRef]);
 
+  // ▶ Play button: animate the CURRENT scramble (the text already in the box) from
+  // solved, on demand. Reuses the same animation paths as the auto-animate scramble:
+  // cuber world → twister.setup('') + push; twisty (cubing.js) → move scramble to the
+  // alg track and jumpToStart + play.
+  const handlePlayScramble = useCallback(async () => {
+    const scramble = setupDraft.trim();
+    if (!scramble) return;
+    if (isTwistyMode) {
+      if (setupElRef.current) { setupElRef.current.value = ''; autosize(setupElRef.current); }
+      setSetupDraft('');
+      onSetupChange('');
+      if (algElRef.current) { algElRef.current.value = scramble; autosize(algElRef.current); }
+      skipAutoResetRef.current = true;
+      setAlgDraft(scramble);
+      onAlgChange(scramble);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const p = twistyPlayerRef?.current as unknown as { jumpToStart?: (opts?: unknown) => void; play?: () => void } | null;
+          try { p?.jumpToStart?.({ flash: false }); } catch { /* */ }
+          try { p?.play?.(); } catch { /* */ }
+        });
+      });
+      return;
+    }
+    if (!world) return;
+    // Animate from solved: reset the cube instantly, then queue the scramble moves
+    // via push() (the engine's tweened playback — the same primitive the auto-animate
+    // scramble uses). setupDraft is unchanged, so the setup-sync effect never fires
+    // and won't snap the cube mid-animation — no animatingScrambleRef needed here.
+    world.controller.clearFrozen();
+    world.cube.twister.setup('');
+    world.cube.twister.push(scramble);
+  }, [setupDraft, isTwistyMode, world, onSetupChange, onAlgChange, twistyPlayerRef]);
+
   // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
   // recover the clean rotation-free scramble it solves, drop it into the
   // scramble box, and flip to forward (Moves) playback so the cube shows the
@@ -1107,6 +1145,25 @@ export default function PlayerControls({
             }}
           />
         </div>
+        <button
+          type="button"
+          className="sim-player-scramble"
+          onClick={handleScramble}
+          title={t('随机打乱', 'Random scramble')}
+          aria-label={t('随机打乱', 'Random scramble')}
+        >
+          <Shuffle size={14} />
+        </button>
+        <button
+          type="button"
+          className="sim-player-scramble"
+          onClick={handlePlayScramble}
+          disabled={!setupDraft.trim()}
+          title={t('动画展示打乱', 'Animate scramble')}
+          aria-label={t('动画展示打乱', 'Animate scramble')}
+        >
+          <Play size={14} />
+        </button>
         {is3x3 && (
           <button
             type="button"
@@ -1119,15 +1176,6 @@ export default function PlayerControls({
             {derivingScramble ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
           </button>
         )}
-        <button
-          type="button"
-          className="sim-player-scramble"
-          onClick={handleScramble}
-          title={t('随机打乱', 'Random scramble')}
-          aria-label={t('随机打乱', 'Random scramble')}
-        >
-          <Shuffle size={14} />
-        </button>
       </div>
 
       <div className="sim-player-row">
@@ -1325,36 +1373,28 @@ function SwatchCell({
 }
 
 function ColorRow({
-  label, children, action,
+  label, children, action, trailing,
 }: {
   label: string;
   children: ReactNode;
   action?: { label: string; title?: string; onClick: () => void };
+  /** 色块右侧附加控件(如内核色行的「原核」开关)。 */
+  trailing?: ReactNode;
 }) {
   return (
     <div className="sim-color-row">
       <span className="sim-color-row-label">{label}</span>
-      <div className="sim-swatch-list">{children}</div>
+      {/* trailing(如「原核」开关)紧贴标签右侧,再到色块 */}
+      {trailing}
       {action && (
         <button type="button" className="sim-face-color-reset" onClick={action.onClick} title={action.title}>
           {action.label}
         </button>
       )}
+      <div className="sim-swatch-list">{children}</div>
     </div>
   );
 }
-
-const STYLE_PRESETS: { id: string; zh: string; en: string; s: Pick<SimSettings, 'thickness' | 'hollow' | 'arrow' | 'hint'>
- }[] = [
-  { id: 'std', zh: '标准', en: 'Standard', s: { thickness: true, hollow: false, arrow: false, hint: false }
-},
-  { id: 'hollow', zh: '镂空', en: 'Hollow', s: { thickness: true, hollow: true, arrow: false, hint: false }
-},
-  { id: 'hint', zh: '提示', en: 'Hint', s: { thickness: true, hollow: false, arrow: false, hint: true } },
-  { id: 'arrow', zh: '箭头', en: 'Arrows', s: { thickness: true, hollow: false, arrow: true, hint: false }
-},
-  { id: 'flat', zh: '平面', en: 'Flat', s: { thickness: false, hollow: false, arrow: false, hint: false } },
-];
 
 function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
@@ -1379,17 +1419,14 @@ function PuzzleSettings({
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   // Per-puzzle UI capabilities come from the single registry in simCaps — no per-kind
-  // boolean chains here. `caps.engineActive` gates the engine-only toggles, `caps.carveCorner`
-  // the 挖角 toggle, `caps.hasRendererChoice` the cubing.js ↔ 群论内核 dropdown. Adding a
-  // puzzle's controls = one simCaps entry, never an edit to the toggle JSX below.
+  // boolean chains here. The settings panel itself is intentionally identical for every
+  // puzzle (engine-only toggles always render, no-op where the engine isn't driving); the
+  // only per-puzzle bits left are `caps.carve` (挖角/挖面/挖棱 — the moving group differs
+  // by puzzle, absent on NxN/SQ1) and `caps.hasRendererChoice` (cubing.js ↔ 群论内核
+  // dropdown). Adding a puzzle's controls = one simCaps entry, never an edit to the JSX.
   const caps = resolveCaps(puzzleKind, renderer);
   const isNxNLocal = typeof puzzleKind === 'number';
   const [keymapOpen, setKeymapOpen] = useState(false);
-
-  const activePreset = STYLE_PRESETS.find(
-    (p) => p.s.thickness === settings.thickness && p.s.hollow === settings.hollow
-      && p.s.arrow === settings.arrow && p.s.hint === settings.hint,
-  )?.id ?? '';
 
   const renderOrderSlot = useCallback((v: number) => (v >= 1 && v <= 400 ? String(v) : ''), []);
   const [orderDraft, setOrderDraft] = useState<string>(String(order));
@@ -1442,12 +1479,23 @@ function PuzzleSettings({
     onSettingsChange({ ...settings, [key]: value });
   };
 
+  // 顶面 logo 自定义上传:选「自定义」即开文件选择器,选好降采样存进 customLogo 并切到 'custom'。
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const handleLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // 允许再次选同一文件
+    if (!file) return;
+    try {
+      const url = await fileToLogoDataUrl(file);
+      onSettingsChange({ ...settings, customLogo: url, logo: 'custom' });
+    } catch { /* 坏图忽略 */ }
+  };
+
   return (
     <section className="sim-puzzle">
         <div className="sim-puzzle-body">
           <div className="sim-puzzle-row">
             <div className="sim-puzzle-section">
-              <div className="sim-puzzle-section-title">{t('类型', 'Puzzle')}</div>
               <PuzzleTypeSelect
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
@@ -1458,27 +1506,8 @@ function PuzzleSettings({
                 }}
               />
             </div>
-            {/* Renderer choice: cubing.js ↔ 群论内核 (= the in-house engine + a live group
-                panel). The standalone 自有引擎 (engine without panel) option was retired —
-                群论内核 is its strict superset. Only puzzles with a cubing.js renderer get a
-                toggle; pure-engine PG puzzles (dino/heli) have no alternative, so no select. */}
-            {caps.hasRendererChoice && onRendererChange && (
-              <div className="sim-puzzle-section">
-                <div className="sim-puzzle-section-title">{t('渲染', 'Renderer')}</div>
-                <select
-                  className="sim-puzzle-select"
-                  value={renderer === 'cubing' ? 'cubing' : 'group'}
-                  onChange={(e) => onRendererChange(e.target.value as 'cubing' | 'engine' | 'group')}
-                  title={t('cubing.js 官方渲染 / 群论内核(本站引擎:圆润外观 + 拖拽转动 + 群结构面板)', 'cubing.js renderer / group-theory kernel (in-house engine: rounded look + drag + group panel)')}
-                >
-                  <option value="group">{t('群论内核', 'Group theory')}</option>
-                  <option value="cubing">cubing.js</option>
-                </select>
-              </div>
-            )}
             {isNxNLocal && (
               <div className="sim-puzzle-section">
-                <div className="sim-puzzle-section-title">{t('阶数', 'Order')}</div>
                 <div className="sim-puzzle-order-control" ref={wheelRootRef}>
                   <WheelPicker
                     value={order}
@@ -1511,27 +1540,26 @@ function PuzzleSettings({
                 </div>
               </div>
             )}
-            {isNxNLocal && (
+            {/* Renderer choice: cubing.js ↔ 群论内核 (= the in-house engine + a live group
+                panel). The standalone 自有引擎 (engine without panel) option was retired —
+                群论内核 is its strict superset. Only puzzles with a cubing.js renderer get a
+                toggle; pure-engine PG puzzles (dino/heli) have no alternative, so no select. */}
+            {caps.hasRendererChoice && onRendererChange && (
               <div className="sim-puzzle-section">
-                <div className="sim-puzzle-section-title">{t('视觉风格', 'Style')}</div>
+                <div className="sim-puzzle-section-title">{t('渲染', 'Renderer')}</div>
                 <select
                   className="sim-puzzle-select"
-                  value={activePreset}
-                  onChange={(e) => {
-                    const p = STYLE_PRESETS.find((x) => x.id === e.target.value);
-                    if (p) onSettingsChange({ ...settings, ...p.s });
-                  }}
+                  value={renderer === 'cubing' ? 'cubing' : 'group'}
+                  onChange={(e) => onRendererChange(e.target.value as 'cubing' | 'engine' | 'group')}
+                  title={t('cubing.js 官方渲染 / 群论内核(本站引擎:圆润外观 + 拖拽转动 + 群结构面板)', 'cubing.js renderer / group-theory kernel (in-house engine: rounded look + drag + group panel)')}
                 >
-                  {activePreset === '' && <option value="">{t('自定义', 'Custom')}</option>}
-                  {STYLE_PRESETS.map((p) => (
-                    <option key={p.id} value={p.id}>{t(p.zh, p.en)}</option>
-                  ))}
+                  <option value="group">{t('群论内核', 'Group theory')}</option>
+                  <option value="cubing">cubing.js</option>
                 </select>
               </div>
             )}
             {isNxNLocal && (
               <div className="sim-puzzle-section">
-                <div className="sim-puzzle-section-title">{t('视图', 'View')}</div>
                 <select
                   className="sim-puzzle-select"
                   value={settings.viewMode}
@@ -1578,7 +1606,6 @@ function PuzzleSettings({
                 <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
               </select>
             </label>
-            <Toggle label={t('动画展示打乱', 'Animate scramble')} value={settings.animateScramble} onChange={(v) => set('animateScramble', v)} />
             <label className="sim-toggle">
               <span>{t('背景', 'Background')}</span>
               <select
@@ -1592,44 +1619,77 @@ function PuzzleSettings({
                 <option value="checkerLight">{t('浅色棋盘', 'Light grid')}</option>
               </select>
             </label>
+            {/* 顶面 U 中心 logo:无 / 网站 / 自定义上传。仅 NxN 奇数阶有正中心块时实际显示
+                (偶数阶 / 非 NxN 引擎里 setLogo 自动隐藏)。选「自定义」开文件选择器。 */}
+            <label className="sim-toggle">
+              <span>logo</span>
+              <select
+                value={settings.logo}
+                onChange={(e) => {
+                  const v = e.target.value as SimSettings['logo'];
+                  if (v === 'custom') logoFileRef.current?.click();
+                  else set('logo', v);
+                }}
+              >
+                <option value="none">{t('无', 'None')}</option>
+                <option value="site">{t('网站', 'Site')}</option>
+                <option value="custom">{t('自定义', 'Custom')}</option>
+              </select>
+              <input
+                ref={logoFileRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleLogoFile}
+              />
+            </label>
             <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} />
-            <Toggle label={t('背面视图', 'Back view')} value={settings.backView} onChange={(v) => set('backView', v)} />
-            {/* 立体贴片 / 镂空 are rendered by the in-house engine (NxN + SQ1/Ivy/Dino/
-                Redi/Rex/Heli/engine-Skewb), not by cubing.js — hide for twisty puzzles. */}
-            {caps.engineActive && (
-              <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
-            )}
-            {caps.engineActive && (
-              <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
-            )}
-            <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
-            <Toggle label={t('提示贴片 (背面)', 'Hint facelets (back faces)')} value={settings.hint} onChange={(v) => set('hint', v)} />
-            {caps.engineActive && (
-              <Toggle
-                label={t('调试:半转停住', 'Debug: hold partial turn')}
-                value={settings.holdPartialTurn}
-                onChange={(v) => set('holdPartialTurn', v)}
-              />
-            )}
-            {caps.engineActive && (
-              <Toggle
-                label={t('调试:结构着色', 'Debug: structure colors')}
-                value={settings.debugStructureColor}
-                onChange={(v) => set('debugStructureColor', v)}
-              />
-            )}
-            {caps.carve && (
-              <Toggle
-                label={t(
-                  caps.carve === 'corner' ? '调试:挖角' : caps.carve === 'face' ? '调试:挖面' : '调试:挖棱',
-                  caps.carve === 'corner' ? 'Debug: carve corner' : caps.carve === 'face' ? 'Debug: carve face' : 'Debug: carve edge',
-                )}
-                value={settings.debugCarve}
-                onChange={(v) => set('debugCarve', v)}
-              />
+            <Toggle label={t('小窗', 'Mini view')} value={settings.backView} onChange={(v) => set('backView', v)} />
+            {/* The panel is kept identical across every puzzle by request: 立体贴片 / 镂空 are
+                in-house-engine features and no-op on cubing.js-rendered puzzles (the setting is
+                just stored, applySettings only drives them where the engine exists), but they
+                always render so the control surface never changes shape per puzzle. */}
+            <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
+            <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
+            <Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} />
+            {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
+                用户指定的唯一例外。 */}
+            {isNxNLocal && (
+              <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
             )}
           </div>
-          <ColorRow label={t('内核色', 'Core color')}>
+          {/* 调试控件单独成行(用户要求):半转停 / 结构着色 / 挖块。组前缀「调试」标一次,各控件
+              去掉重复的「调试:」前缀。半转停 / 结构着色 为本站引擎特性,在 cubing.js 渲染的拼图上
+              为 no-op(仅存设置);挖块为统一三选一占位(见 applySettings)。 */}
+          <div className="sim-puzzle-debug">
+            <div className="sim-puzzle-section-title">{t('调试', 'Debug')}</div>
+            <div className="sim-puzzle-debug-toggles">
+              <Toggle label={t('半转停', 'Hold partial turn')} value={settings.holdPartialTurn} onChange={(v) => set('holdPartialTurn', v)} />
+              <Toggle label={t('结构着色', 'Structure colors')} value={settings.debugStructureColor} onChange={(v) => set('debugStructureColor', v)} />
+              <label className="sim-toggle">
+                <span>{t('挖块', 'Carve')}</span>
+                <select
+                  value={settings.debugCarve}
+                  onChange={(e) => set('debugCarve', e.target.value as SimSettings['debugCarve'])}
+                >
+                  <option value="off">{t('关', 'Off')}</option>
+                  <option value="corner">{t('挖角', 'Corner')}</option>
+                  <option value="face">{t('挖面', 'Face')}</option>
+                  <option value="edge">{t('挖棱', 'Edge')}</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <ColorRow
+            label={t('内核色', 'Core color')}
+            trailing={
+              <Toggle
+                label={t('原核', 'Raw body')}
+                value={settings.coreStyle === 'raw'}
+                onChange={(v) => set('coreStyle', v ? 'raw' : 'normal')}
+              />
+            }
+          >
             <SwatchCell
               color={settings.coreColor}
               title={t('自定义', 'Custom')}

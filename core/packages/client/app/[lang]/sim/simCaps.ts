@@ -64,7 +64,10 @@ export interface ResolvedCaps {
   engineActive: boolean;
   /** The carve element to show a 挖角 / 挖面 / 挖棱 toggle for, or null (no carve). */
   carve: CarveElement | null;
-  /** Show the cubing.js ↔ 群论内核 renderer dropdown. */
+  /** Show the cubing.js ↔ 群论内核 renderer dropdown. Always true: every puzzle exposes
+   *  the dropdown so 群论内核 is offered everywhere — even on puzzles whose group kernel
+   *  isn't built yet (a forward placeholder; selecting an unimplemented renderer is a safe
+   *  no-op, the rendering pipeline keeps the puzzle's only working path). */
   hasRendererChoice: boolean;
 }
 
@@ -75,6 +78,6 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
   return {
     engineActive,
     carve: engineActive ? (c.carve ?? null) : null,
-    hasRendererChoice: c.engine === 'engineMode',
+    hasRendererChoice: true,
   };
 }

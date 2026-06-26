@@ -9,11 +9,13 @@ import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import World from './engine/world';
+import { puzzleCaps } from './simCaps';
 import { timing } from './engine/tweenTiming';
 import Cubelet from './engine/nxn/cubelet';
 import { applyDebugStructureColors, applyEngineBodyOverlay } from './engine/debugColors';
 import { applyStickerThickness } from './engine/stickerThickness';
 import { applyHintFacelets } from './engine/hintFacelets';
+import { loadLogoTexture, SITE_LOGO_SRC } from './engine/nxn/logo';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
 import i18n from '@/i18n/i18n-client';
@@ -67,14 +69,29 @@ export interface SimSettings {
    *  核心(球核 / 内填充箱)染品红,色贴片不动。转动开口时一眼看清露出的是实体结构
    *  还是 void/bug。见 cuber/debugColors.ts。 */
   debugStructureColor: boolean;
-  /** 开发者调试(角转/转面/转棱魔方):挖块 —— 隐藏一次转动的会动块组,露出核心与相邻块
-   *  内壁。标签按魔方转动的元素自适应:角转=挖角、转面=挖面(五魔)、转棱=挖棱(直升机)。
-   *  各 Cube 统一实现 `setCarve(on)`;显隐 + 元素在 simCaps 的 `carve` capability 声明。 */
-  debugCarve: boolean;
+  /** 开发者调试(所有魔方):挖块 —— 隐藏一次转动的会动块组,露出核心与相邻块内壁。
+   *  统一的三选一(挖角/挖面/挖棱)选择器,每个魔方都显示。引擎目前只实现各魔方的"原生"
+   *  转动元素(`setCarve(on)` 布尔),所以选了非原生元素时是占位空操作,等引擎补上按元素挖块;
+   *  NxN/SQ1 无可掀起的转动块组 → 任何选项都空操作。 */
+  debugCarve: 'off' | 'corner' | 'face' | 'edge';
   /** 内核色 (frame + 内层 slice 填充板的颜色) */
   coreColor: string;
   /** 6 面色 (WCA 默认) */
   faceColors: { U: string; D: string; L: string; R: string; F: string; B: string };
+  /** 原核 (raw / stickerless body):
+   *  - 'normal' = 默认。黑色内核 + 平面贴片。
+   *  - 'raw'    = 整块实色,去黑核 —— 每块塑料本身即颜色,棱块沿对角线劈成双色、
+   *               角块三色(取每个 fragment 最近可见面的颜色),还原真实无贴纸魔方。
+   *  仅 NxN 实现(用户指定先做 NxN);其他魔方为占位空操作,以后按需扩展。 */
+  coreStyle: 'normal' | 'raw';
+  /** 顶面 U 中心 logo:
+   *  - 'none'   = 无(默认)
+   *  - 'site'   = 本站 logo(public/favicon.svg)
+   *  - 'custom' = 用户上传(见 customLogo)
+   *  仅 NxN 奇数阶有正中心块时显示;偶数阶 / 非 NxN 无中心 → 不显示。 */
+  logo: 'none' | 'site' | 'custom';
+  /** logo='custom' 时用户上传图的 data URL(已降采样压缩,空串=未上传)。 */
+  customLogo: string;
 }
 
 /** WCA 标准 6 面色 — 取自全站单一来源 lib/cube-colors */
@@ -107,9 +124,12 @@ export const DEFAULT_SETTINGS: SimSettings = {
   dragEmpty: 'view',
   holdPartialTurn: false,
   debugStructureColor: false,
-  debugCarve: false,
+  debugCarve: 'off',
   coreColor: '#202020',
   faceColors: { ...DEFAULT_FACE_COLORS },
+  coreStyle: 'normal',
+  logo: 'none',
+  customLogo: '',
 };
 
 const STORAGE_KEY = 'sim.settings';
@@ -125,6 +145,13 @@ export function loadSettings(): SimSettings {
     // false stays the theme-following solid, i.e. 'auto').
     if (!('boardBg' in parsed) && parsed.checkeredBg) merged.boardBg = 'checkerDark';
     delete (merged as { checkeredBg?: boolean }).checkeredBg;
+    // debugCarve was a boolean (carve the puzzle's native element on/off); it's now a
+    // 3-way element pick. Old boolean values → reset to 'off'.
+    if (typeof merged.debugCarve !== 'string') merged.debugCarve = 'off';
+    // 原核 / logo: 旧版本无此键 → spread 已给默认值;非法值兜回默认。
+    if (merged.coreStyle !== 'raw' && merged.coreStyle !== 'normal') merged.coreStyle = 'normal';
+    if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
+    if (typeof merged.customLogo !== 'string') merged.customLogo = '';
     return merged;
   } catch {
     return DEFAULT_SETTINGS;
@@ -208,6 +235,17 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // unconditionally), so applying here captures the fresh base + restores it
     // correctly. No-op when off.
     applyDebugStructureColors(world.cube, s.debugStructureColor);
+    // 原核 (raw/stickerless body). Applied LAST so it overrides the frame/inner material
+    // that hollow + structure-color just set (raw wins when on). Off-state restores the
+    // hollow-appropriate material. Super-order cubes no-op inside setRawCore.
+    cube.instancedRenderer.setRawCore(s.coreStyle === 'raw', s.faceColors);
+    // 顶面 U 中心 logo(仅 NxN 奇数阶有正中心块;偶数阶在 setLogo 内部隐藏)。
+    const logoTex = s.logo === 'site'
+      ? loadLogoTexture(SITE_LOGO_SRC, () => { world.dirty = true; })
+      : (s.logo === 'custom' && s.customLogo)
+        ? loadLogoTexture(s.customLogo, () => { world.dirty = true; })
+        : null;
+    cube.setLogo(logoTex);
   } else {
     // In-house engine puzzles (SQ1 / Ivy / Dino / Redi / Rex / Heli / Skewb): their
     // sticker thickness + body materials are baked at construction (no InstancedRenderer),
@@ -216,12 +254,15 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor);
     applyHintFacelets(world.cube, s.hint, hintBg);
   }
-  // Carve: hide one move's moving group — corner / face / edge, whatever the puzzle
-  // turns — to inspect the core + neighbours' inner walls. Any cube that implements
-  // setCarve opts in (corner-turners + ivy, megaminx, helicopter); NxN / SQ1 lack it
-  // → no-op. Which element (label 挖角/挖面/挖棱) is declared once in simCaps (caps.carve);
-  // this duck-typed call needs no per-puzzle chain.
-  (world.cube as { setCarve?: (on: boolean) => void }).setCarve?.(s.debugCarve);
+  // Carve: hide one move's moving group to inspect the core + neighbours' inner walls.
+  // The UI offers a uniform 挖角/挖面/挖棱 pick on every puzzle, but the engine carves
+  // only the puzzle's NATIVE turning element today (setCarve is a boolean; the element
+  // is intrinsic). So we carve iff the picked element matches the native one — a
+  // non-native pick is a placeholder until per-element carving lands. NxN / SQ1 declare
+  // no carve element → always off. Native element is the single source in simCaps.
+  const nativeCarve = puzzleCaps(world.puzzleKind).carve ?? null;
+  (world.cube as { setCarve?: (on: boolean) => void })
+    .setCarve?.(s.debugCarve !== 'off' && s.debugCarve === nativeCarve);
   world.dirty = true;
   world.cube.dirty = true;
   world.resize();

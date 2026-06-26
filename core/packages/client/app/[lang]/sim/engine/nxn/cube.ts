@@ -23,6 +23,8 @@ export default class Cube extends THREE.Group {
   public history: History;
   public twister: Twister = new Twister(this);
   public instancedRenderer: InstancedRenderer;
+  /** 顶面 U 中心 logo mesh(仅奇数阶;偶数阶 / 无 logo 时 visible=false 或不建)。 */
+  private logoMesh: THREE.Mesh | null = null;
 
   constructor(order: number) {
     super();
@@ -113,6 +115,31 @@ export default class Cube extends THREE.Group {
     }
   }
 
+  /** 顶面 U 中心 logo。texture=null 或偶数阶(无正中心块)→ 隐藏;否则在 U 中心块顶面贴图。
+   *  贴片随整方朝向(scene.rotation)旋转;暂不跟随转层动画里中心块的自旋(v1 取舍)。 */
+  setLogo(texture: THREE.Texture | null): void {
+    const odd = this.order % 2 === 1;
+    if (!texture || !odd) {
+      if (this.logoMesh) this.logoMesh.visible = false;
+      return;
+    }
+    if (!this.logoMesh) {
+      const geo = new THREE.PlaneGeometry(54, 54);
+      const mat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.rotation.x = -Math.PI / 2;             // 默认朝 +z,转成朝 +y(向上)
+      mesh.renderOrder = 2;                        // 画在贴片之后,贴片上方
+      this.add(mesh);
+      this.logoMesh = mesh;
+    }
+    // U 面 = order*32(中心块中心 (order-1)*32 + 半块 32),略抬越过贴片厚度避免 z-fight
+    this.logoMesh.position.set(0, this.order * 32 + 4, 0);
+    const mat = this.logoMesh.material as THREE.MeshBasicMaterial;
+    if (mat.map !== texture) { mat.map = texture; mat.needsUpdate = true; }
+    this.logoMesh.visible = true;
+    this.dirty = true;
+  }
+
   /** True while any layer is mid-twist (a lock is held). Cleared on drop().
    *  Playback uses this to serialize moves — a new turn waits until the current
    *  one fully finishes, including same-axis / same-face turns that lock() would
@@ -200,10 +227,10 @@ export default class Cube extends THREE.Group {
     this.initials.clear();
     this.locks.clear();
     this.callbacks.length = 0;
-    // 断 group ↔ cube 循环引用 (groups[axis][layer].cube 指回来)
+    // 断 group ↔ cube 循环引用 (groups[axis][layer].cube 指回来) + 释放各 group 惰性扇形横截面几何
     for (const axis of ['x', 'y', 'z']) {
       const arr = this.table.groups[axis];
-      if (arr) for (const g of arr) (g as unknown as { cube: Cube | null }).cube = null;
+      if (arr) for (const g of arr) { g.disposeFan(); (g as unknown as { cube: Cube | null }).cube = null; }
     }
   }
 
