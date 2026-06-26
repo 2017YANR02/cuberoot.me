@@ -19,6 +19,7 @@ import { applySq1Move, moveToString, snapValidLayerTurn, type Sq1Move } from './
 import type Sq1Cube from './Sq1Cube';
 import tweener from '../tweener';
 import { tweenDuration } from '../tweenTiming';
+import { applyAnimFrame, type PieceAnim } from '../pieceAnim';
 
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const TOP_Y = HALF_MID + LAYER_HEIGHT;
@@ -219,4 +220,46 @@ export function sq1DragCommit(
   cube.dirty = true;
   for (const cb of cube.callbacks) cb();
   return move;
+}
+
+// ─── live slice drag (debug "hold partial turn") ──────────────────────────────
+//
+// Unlike a layer turn (a continuous Y-rotation), the slice is a 180° flip of the
+// east half. To freeze it mid-flip (inspect the internal vertical cut, e.g. for
+// raw-core dev) we drive the same `beginMove({kind:'slice'})` anim plan directly
+// off the finger instead of running it as a one-shot tween: vertical drag maps to
+// flip progress v∈[0,1] via `applyAnimFrame`. Only used when holdPartialTurn is
+// on; normal mode keeps the snappy one-shot slice. State is never committed — the
+// frozen pivots are restored by sq1SliceLiveSnapBack on release/clear.
+
+/** px of vertical finger travel for a full 180° flip. Fixed (not sensitivity-
+ *  scaled): this is a debug inspect gesture, so predictable travel beats coupling
+ *  to the turn slider — and the turn slider scales an *angle*, not pixels. ~240px
+ *  ≈ a third of the canvas → a half-drag (~120px) lands near 90° (cut fully open). */
+const SLICE_FLIP_PX = 240;
+
+export interface Sq1SliceLive {
+  kind: 'sliceLive';
+  anims: PieceAnim[];
+  /** pointer-down Y (canvas-local) — the v=0 reference. */
+  downY: number;
+  /** +1 = drag down, -1 = drag up; baked into the anim arc + the v sign. */
+  dir: 1 | -1;
+}
+
+/** Capture the flip anim plan for the current state; v starts at 0. */
+export function sq1SliceLiveStart(cube: Sq1Cube, dir: 1 | -1, downY: number): Sq1SliceLive {
+  return { kind: 'sliceLive', anims: cube.beginMove({ kind: 'slice' }, dir), downY, dir };
+}
+
+/** Map vertical finger travel → flip progress and apply it live. */
+export function sq1SliceLiveApply(live: Sq1SliceLive, localY: number): void {
+  const v = (localY - live.downY) * live.dir / SLICE_FLIP_PX;
+  applyAnimFrame(live.anims, Math.min(1, Math.max(0, v)));
+}
+
+/** Cancel a frozen partial slice: snap the flipped pivots back to v=0 (no state
+ *  change; state was never committed). */
+export function sq1SliceLiveSnapBack(live: Sq1SliceLive): void {
+  applyAnimFrame(live.anims, 0);
 }

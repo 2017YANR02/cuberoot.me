@@ -38,9 +38,10 @@ import DinoCube from './engine/dino/DinoCube';
 import tweener, { type Tween } from './engine/tweener';
 import {
   sq1DragStart, sq1DragDelta, sq1DragApply, sq1DragCommit, sq1DragSnapBack,
-  type Sq1DragStart, type Sq1TurnDrag,
+  sq1SliceLiveStart, sq1SliceLiveApply, sq1SliceLiveSnapBack,
+  type Sq1DragStart, type Sq1TurnDrag, type Sq1SliceLive,
 } from './engine/sq1/sq1Drag';
-import { moveToString as sq1MoveToString } from './engine/sq1/sq1State';
+import { moveToString as sq1MoveToString, isSlashValid as sq1SlashValid } from './engine/sq1/sq1State';
 import IvyCube, { type IvyAnim } from './engine/ivy/IvyCube';
 import {
   ivyPickHit, ivyResolveMove, ivyResolveLive, ivyApplyPartial, ivySnapBack, type IvyHit,
@@ -569,6 +570,10 @@ export default function SimPage() {
     let sq1LastY = 0;
     let sq1Drag: Sq1DragStart | null = null;
     let sq1DragLastDelta = 0;
+    // Debug hold-partial: live-tracked SQ1 slice flip. While set, pointermove maps
+    // vertical drag → v∈[0,1] and flips the east half live; pointerup freezes it
+    // (no commit). Only the slice needs this — turns ride sq1Drag (sq1DragApply).
+    let sq1Slice: Sq1SliceLive | null = null;
     const SQ1_DRAG_THRESHOLD_PX = 4;
     let sq1Pending = false;
     let sq1DownX = 0;
@@ -713,6 +718,7 @@ export default function SimPage() {
           sq1Pending = true;
           sq1MovedPastThreshold = false;
           sq1Drag = null;
+          sq1Slice = null;
           sq1DragLastDelta = 0;
           sq1Rotating = false;
           sq1LastX = e.clientX;
@@ -722,6 +728,7 @@ export default function SimPage() {
         if (e.pointerType === 'touch') {
           activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
           if (activePointers.size === 2) {
+            if (sq1Slice) { sq1SliceLiveSnapBack(sq1Slice); sq1Slice = null; } // pinch cancels a live slice
             sq1Drag = null;
             sq1Rotating = false;
             sq1Pending = false;
@@ -821,6 +828,11 @@ export default function SimPage() {
         const rmove = renderer.domElement.getBoundingClientRect();
         const localX = e.clientX - rmove.left;
         const localY = e.clientY - rmove.top;
+        if (sq1Slice) {
+          sq1SliceLiveApply(sq1Slice, localY);
+          worldRef.current.dirty = true;
+          return;
+        }
         if (sq1Drag && sq1Drag.kind === 'turn') {
           const w = worldRef.current;
           const d = sq1DragDelta(sq1Drag, w.scene, w.camera, localX, localY, w.width, w.height);
@@ -864,15 +876,26 @@ export default function SimPage() {
             if (sq1Drag?.kind === 'slice') {
               const c2 = w.cube as Sq1Cube;
               const sliceDir: 1 | -1 = (localY < sq1DownY) ? -1 : 1;
-              const ok = c2.twister.twist({ kind: 'slice' }, false, true, sliceDir);
-              if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
+              if (settingsRef.current.holdPartialTurn && sq1SlashValid(c2.state)) {
+                clearPartialFreeze();
+                sq1Slice = sq1SliceLiveStart(c2, sliceDir, sq1DownY);
+              } else {
+                const ok = c2.twister.twist({ kind: 'slice' }, false, true, sliceDir);
+                if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
+              }
               sq1Drag = null;
             } else if (sq1Drag) {
               if (sq1Drag.startEastHalf && Math.abs(dy) > Math.abs(dx) * 1.5) {
                 const c2 = w.cube as Sq1Cube;
                 const sliceDir: 1 | -1 = (dy < 0) ? -1 : 1;
-                const ok = c2.twister.twist({ kind: 'slice' }, false, true, sliceDir);
-                if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
+                if (settingsRef.current.holdPartialTurn && sq1SlashValid(c2.state)) {
+                  sq1DragSnapBack(sq1Drag); // undo the small cap rotation before flipping
+                  clearPartialFreeze();
+                  sq1Slice = sq1SliceLiveStart(c2, sliceDir, sq1DownY);
+                } else {
+                  const ok = c2.twister.twist({ kind: 'slice' }, false, true, sliceDir);
+                  if (ok) userMoveRef.current?.(new TwistAction('/', false, 1));
+                }
                 sq1Drag = null;
                 return;
               }
@@ -940,6 +963,16 @@ export default function SimPage() {
         }
         sq1Drag = null;
         sq1DragLastDelta = 0;
+        sq1MovedPastThreshold = false;
+        sq1Pending = false;
+        try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
+      if (sq1Slice) {
+        // Hold-partial: freeze the flip where released — keep the live pivots,
+        // register a snap-back (next gesture / toggle-off restores them), no commit.
+        const frozen = sq1Slice;
+        partialSnapBackRef.current = () => sq1SliceLiveSnapBack(frozen);
+        sq1Slice = null;
         sq1MovedPastThreshold = false;
         sq1Pending = false;
         try { renderer.domElement.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
