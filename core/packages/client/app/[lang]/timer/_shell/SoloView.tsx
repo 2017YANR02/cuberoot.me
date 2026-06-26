@@ -981,7 +981,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       if (ph === 'running' && bldMemoActive && e.code === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
         e.preventDefault(); bldMemoRef.current?.markMemo(); return;
       }
-      if (ph === 'holding' || ph === 'ready' || ph === 'running' || ph === 'inspecting') return;
+      // 计时进行中按任意键停止(stage 标记 / BLD memo 等功能键已在上面 return)。
+      if (ph === 'running') { e.preventDefault(); onPressDown(); return; }
+      if (ph === 'holding' || ph === 'ready' || ph === 'inspecting') return;
       const cur = solvesRef.current;
       const last = cur[cur.length - 1];
       if (e.code === 'KeyZ' && !e.ctrlKey && !e.metaKey) {
@@ -1398,7 +1400,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           phase={timer.phase}
           colorClass={colorClass}
           fontSize={fontSize}
-          digits={digitsText}
+          digits={digitsText.split(':').map((part, i) => (
+            <span key={i}>{i > 0 && <span className="timer-colon" aria-hidden="true" />}{part}</span>
+          ))}
           digitsRef={digitsRef}
           surfaceRef={surfaceRef}
           className={`${isOvershot ? 'target-overshot' : ''} ${stopPulse ? `target-pulse-${stopPulse}` : ''}`.trim()}
