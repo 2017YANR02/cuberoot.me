@@ -459,6 +459,55 @@
 }
 .sim-puzzle-toggles .sim-toggle {
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sim-puzzle-toggles .sim-toggle > span {
+  min-width: 0;
+}
+/* Checkbox renders BEFORE its label (☑ 立体贴片) so every checkbox lines up at
+   the cell's left edge — aligned per grid column on mobile (2 cols) and desktop
+   (4 cols), and unmistakably attached to its own label rather than the next
+   column's. Dropdowns keep label-first (they carry a caret). */
+.sim-puzzle-toggles .sim-toggle input[type=checkbox] {
+  order: -1;
+  flex: none;
+}
+.sim-puzzle-toggles .sim-toggle select {
+  flex: none;
+}
+
+/* 调试区:「调试」标题单独占一行(复用 .sim-puzzle-section-title),下方一行排
+   半转停 / 结构着色 / 挖块,窄屏内部换行。复刻 .sim-puzzle-toggles 的复选框先于
+   标签(order:-1)规则,保持与上方网格一致。 */
+.sim-puzzle-debug {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sim-puzzle-debug-toggles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px 12px;
+}
+@media (max-width: 640px) {
+  .sim-puzzle-debug-toggles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.sim-puzzle-debug .sim-toggle {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sim-puzzle-debug .sim-toggle input[type=checkbox] {
+  order: -1;
+  flex: none;
+}
+.sim-puzzle-debug .sim-toggle select {
+  flex: none;
 }
 
 .sim-color-row {
@@ -470,7 +519,15 @@
   margin-top: 4px;
 }
 .sim-color-row-label {
-  align-self: center;
+  align-self: flex-end;
+  line-height: 22px;
+}
+/* 内核色行尾的「原核」开关:复选框在标签左(先打勾再内容),底边对齐色块行 */
+.sim-color-row .sim-toggle {
+  align-self: flex-end;
+}
+.sim-color-row .sim-toggle input[type=checkbox] {
+  order: -1;
 }
 .sim-swatch-list {
   display: flex;
@@ -517,13 +574,17 @@
 }
 .sim-face-color-reset {
   font-size: 11px;
-  padding: 4px 8px;
+  /* 高度对齐色块(.sim-swatch-box 22px),底边与色块行齐平,不再比色块高出一截 */
+  height: 22px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
   border: 1px solid var(--border);
   border-radius: 4px;
   background: var(--background);
   color: var(--foreground);
   cursor: pointer;
-  align-self: center;
+  align-self: flex-end;
 }
 .sim-face-color-reset:hover {
   background: var(--accent);

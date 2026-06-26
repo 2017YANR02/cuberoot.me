@@ -1374,8 +1374,7 @@ export default function SimPage() {
           >
             <AlgsPanel
               onSelect={(setup, alg) => { onAlgPick(setup, alg); }}
-              onOrderChange={handleOrder}
-              disabled={twisty}
+              activePuzzle={puzzleParam}
             />
           </CollapsibleSection>
           <PlayerControls

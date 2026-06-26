@@ -1,40 +1,43 @@
 /**
  * AlgsPanel — 公式库浏览面板。
- * 选 puzzle (2x2~5x5) → set (OLL/PLL/F2L/...) → case → setup + auto-play。
+ * puzzle 跟随主设置「类型/阶数」(2x2~5x5) → 选 set (OLL/PLL/F2L/...) → case → setup + auto-play。
  * 数据走 shared loadAlg → /api/alg/sets/:p/:s。
  */
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { ALG_CATALOG, loadAlg, type AlgPuzzle, type AlgFile, type AlgCase } from '@cuberoot/shared';
 import './algs-panel.css';
-import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 
 interface Props {
   onSelect: (setup: string, alg: string, caseName: string) => void;
-  onOrderChange?: (order: number) => void;
-  /** Active puzzle isn't NxN/sq1 — show a placeholder instead of the picker. */
-  disabled?: boolean;
+  /** Active puzzle from the main 类型/阶数 (SimPuzzle: an NxN order number, or a puzzle id
+   *  string like 'skewb'). Resolved to an AlgPuzzle; puzzles without sets show a placeholder. */
+  activePuzzle: number | string;
 }
 
-const PUZZLE_TO_ORDER: Partial<Record<AlgPuzzle, number>> = {
-  '2x2': 2,
-  '3x3': 3,
-  '4x4': 4,
-  '5x5': 5,
+const ORDER_TO_PUZZLE: Record<number, AlgPuzzle> = {
+  2: '2x2',
+  3: '3x3',
+  4: '4x4',
+  5: '5x5',
 };
 
-const PUZZLES_SUPPORTED: AlgPuzzle[] = ['2x2', '3x3', '4x4', '5x5'];
+/** SimPuzzle (NxN order, or puzzle id) → AlgPuzzle in ALG_CATALOG, else undefined (no sets).
+ *  Non-NxN ids ('skewb'/'pyraminx'/'megaminx'/'sq1') match their AlgPuzzle key 1:1. */
+function resolveAlgPuzzle(p: number | string): AlgPuzzle | undefined {
+  if (typeof p === 'number') return ORDER_TO_PUZZLE[p];
+  return p in ALG_CATALOG ? (p as AlgPuzzle) : undefined;
+}
 
-export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }: Props) {
-  const { i18n } = useTranslation();
+export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
   const t = useT();
 
-  const [puzzle, setPuzzle] = useState<AlgPuzzle>('3x3');
-  const sets = ALG_CATALOG[puzzle] ?? [];
+  // The alg set follows the main 类型/阶数; puzzles without sets → placeholder.
+  const puzzle = resolveAlgPuzzle(activePuzzle);
+  const sets = puzzle ? (ALG_CATALOG[puzzle] ?? []) : [];
   const [setSlug, setSetSlug] = useState<string>(sets[0]?.slug ?? '');
   const [data, setData] = useState<AlgFile | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,7 +51,7 @@ export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }:
   }, [puzzle, sets, setSlug]);
 
   useEffect(() => {
-    if (!setSlug) return;
+    if (!puzzle || !setSlug) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -78,13 +81,7 @@ export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }:
     onSelect(c.setup, algEntry.alg, c.name);
   };
 
-  const handlePuzzle = (p: AlgPuzzle) => {
-    setPuzzle(p);
-    const targetOrder = PUZZLE_TO_ORDER[p];
-    if (targetOrder && onOrderChange) onOrderChange(targetOrder);
-  };
-
-  if (disabled) {
+  if (!puzzle) {
     return (
       <div className="sim-algs">
         <div className="sim-algs-msg">{t('该魔方暂无公式集', 'No algs for this puzzle yet')}</div>
@@ -94,17 +91,6 @@ export default function AlgsPanel({ onSelect, onOrderChange, disabled = false }:
 
   return (
     <div className="sim-algs">
-      <div className="sim-algs-tabs">
-        {PUZZLES_SUPPORTED.map((p) => (
-          <button
-            key={p}
-            className={p === puzzle ? 'active' : ''}
-            onClick={() => handlePuzzle(p)}
-          >
-            {p}
-          </button>
-        ))}
-      </div>
       <div className="sim-algs-sets">
         <select
           value={setSlug}

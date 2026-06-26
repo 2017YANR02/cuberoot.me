@@ -5,6 +5,7 @@ import Cube from "./cube";
 import * as THREE from "three";
 import tweener, { Tween } from "../tweener";
 import { timing } from "../tweenTiming";
+import { buildPanelFan, colorPanelFan } from "./panelFan";
 
 export default class CubeGroup extends THREE.Group {
   public static readonly AXIS_VECTOR: { [key: string]: THREE.Vector3 } = {
@@ -58,6 +59,10 @@ export default class CubeGroup extends THREE.Group {
   private holding = false;
   private tween: Tween | undefined = undefined;
   private panel: THREE.Mesh | undefined = undefined;
+  /** 超高阶原核专用的扇形彩色横截面几何(惰性建,每层一份);非原核走 Cubelet._PANEL 深色盒。 */
+  private fanGeo: THREE.BufferGeometry | undefined = undefined;
+  private boxScale = new THREE.Vector3(1, 1, 1);
+  private axisIdx = 0;
 
   _angle: number;
   set angle(angle) {
@@ -89,6 +94,7 @@ export default class CubeGroup extends THREE.Group {
     // outer layer (layer 0 / N-1) 已是 full plane 不需要。
     // 默认隐藏,只在 hold()→drop() 之间 (该 group 实际在转) 才显示;
     // 静止时 panel 一直藏着,避免 xyz 整体转时另外两轴的静止 panel 戳穿外表面。
+    this.axisIdx = axis === "x" ? 0 : axis === "y" ? 1 : 2;
     const N = this.cube.order;
     if (layer > 0 && layer < N - 1) {
       const S = Cubelet.SIZE;
@@ -99,6 +105,7 @@ export default class CubeGroup extends THREE.Group {
       if (axis === "x") { panel.scale.set(thick, span, span); panel.position.x = offset; }
       else if (axis === "y") { panel.scale.set(span, thick, span); panel.position.y = offset; }
       else { panel.scale.set(span, span, thick); panel.position.z = offset; }
+      this.boxScale.copy(panel.scale);  // 深色盒用的 scale;切扇形横截面时 scale=1(几何已 bake 真实尺寸)
       panel.frustumCulled = false;
       panel.visible = false;
       this.panel = panel;
@@ -170,7 +177,19 @@ export default class CubeGroup extends THREE.Group {
       // 渲染走 instancedRenderer; 不再 reparent THREE 节点
     }
     this.cube.instancedRenderer.beginSlice(this);
-    if (this.panel) this.panel.visible = true;
+    // 占位板挡中空。超高阶原核 → 切到扇形彩色横截面(按该层四周块当前色刷,跟打乱态);
+    // 否则用 Cubelet._PANEL 深色盒(普通阶看不见、超高阶非原核为深色)。
+    if (this.panel) {
+      const ir = this.cube.instancedRenderer;
+      if (ir.superOrder && ir.rawCore) {
+        if (!this.fanGeo) this.fanGeo = buildPanelFan(this.cube.order, this.axisIdx);
+        colorPanelFan(this.fanGeo, this.cube, this.axisIdx, this.layer);
+        if (this.panel.geometry !== this.fanGeo) { this.panel.geometry = this.fanGeo; this.panel.scale.set(1, 1, 1); }
+      } else if (this.panel.geometry !== Cubelet._PANEL) {
+        this.panel.geometry = Cubelet._PANEL; this.panel.scale.copy(this.boxScale);
+      }
+      this.panel.visible = true;
+    }
     return true;
   }
 
@@ -237,6 +256,12 @@ export default class CubeGroup extends THREE.Group {
     cubelet.rotateOnWorldAxis(CubeGroup.AXIS_VECTOR[this.axis], this.angle);
     cubelet.vector = cubelet.vector.applyAxisAngle(CubeGroup.AXIS_VECTOR[this.axis], this.angle);
     cubelet.updateMatrix();
+  }
+
+  /** 释放本 group 惰性建的扇形横截面几何(cube.dispose 时调,防切阶累积 GPU 内存)。 */
+  disposeFan(): void {
+    this.fanGeo?.dispose();
+    this.fanGeo = undefined;
   }
 }
 
