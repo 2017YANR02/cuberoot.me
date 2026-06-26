@@ -15,7 +15,7 @@
  * Build cost: ~6000 simulations on first use (lazy, cached). Lookup: O(1).
  */
 
-import type { KPattern } from 'cubing/kpuzzle';
+import type { KPattern, KTransformation } from 'cubing/kpuzzle';
 import { F2L_SLOT_DEFS } from './stage_detect';
 import { getCube3, simplifyAlg, invertAlg } from './cube3';
 import {
@@ -256,20 +256,60 @@ const PRE_ROTS = [
   "y' x", "y' x'",
 ] as const;
 
-/** Brute-force ZBLS fallback. Iterates every alg in the DB × 16 (auf × y)
+/** Precomputed transformations for the brute-force fallback, built once and
+ *  cached (the alg DB and the rot/auf modifier set are both fixed). Lets the
+ *  hot loop compose pure KTransformations instead of re-parsing + simplifying
+ *  ~30k alg strings per query (the simplify-in-loop was a ~10s main-thread
+ *  stall at xxxcross). */
+interface ZblsBrutePrecomp {
+  algTs: { t: KTransformation; alg: string; caseName: string }[];
+  /** rot∘auf composed transformations, in PRE_ROTS×PRE_AUFS order. */
+  preTs: { rot: string; auf: string; t: KTransformation }[];
+}
+let _brutePrecomp: Promise<ZblsBrutePrecomp> | null = null;
+async function getBrutePrecomp(): Promise<ZblsBrutePrecomp> {
+  if (_brutePrecomp) return _brutePrecomp;
+  _brutePrecomp = (async () => {
+    const kp = await getCube3();
+    const algs = await getFlatAlgs();
+    const algTs: ZblsBrutePrecomp['algTs'] = [];
+    for (const { alg, caseName } of algs) {
+      try { algTs.push({ t: kp.algToTransformation(alg), alg, caseName }); }
+      catch { /* unparseable DB alg — drop, matching applyAlg's catch path */ }
+    }
+    const preTs: ZblsBrutePrecomp['preTs'] = [];
+    for (const rot of PRE_ROTS) {
+      for (const auf of PRE_AUFS) {
+        const mod = [rot, auf].filter(Boolean).join(' ');
+        preTs.push({ rot, auf, t: kp.algToTransformation(mod) });
+      }
+    }
+    return { algTs, preTs };
+  })();
+  return _brutePrecomp;
+}
+
+/** Brute-force ZBLS fallback. Tests every alg in the DB × (25 rot × 4 auf)
  *  pre-modifiers and verifies each yields a state where:
  *  (1) the queried slot's E-slice piece is in its home with orient=0
  *  (2) all 4 LL edges have U-color on U face (EO done)
  *  (3) all previously solved slots are still solved
  *
- *  Cost: ~324 algs × 16 mods = ~5000 KPattern.applyAlg calls per query.
- *  Worst case ~150ms on a modern machine; fine for an interactive autofill.
+ *  Implemented as pure transformation composition off precomputed parts:
+ *  per query we build 100 base patterns (canonical ∘ rot ∘ auf) and reuse the
+ *  cached per-alg transformations, so the inner loop is one applyTransformation
+ *  each. simplifyAlg only runs on the handful of survivors. Output is identical
+ *  to the naive simplify-every-combo version (same order + dedup), just ~100×
+ *  faster (was ~10s of Alg parsing per call at xxxcross).
  *  Use ONLY when the fingerprint lookup returns empty — it does.
  */
 export async function lookupZblsAlgsBrute(canonical: KPattern, slotIdx: number, _prevSolvedEdgeSlots: number[]): Promise<ZblsAlgEntry[]> {
-  const algs = await getFlatAlgs();
+  const { algTs, preTs } = await getBrutePrecomp();
   const out: ZblsAlgEntry[] = [];
   const seen = new Set<string>();
+
+  // Base patterns: canonical with each rot∘auf pre-modifier already applied.
+  const bases = preTs.map(p => ({ rot: p.rot, auf: p.auf, pattern: canonical.applyTransformation(p.t) }));
 
   function checkSolveAndEo(post: KPattern): boolean {
     // After the alg + pre-rotation, the cube may be in a different orientation
@@ -291,18 +331,16 @@ export async function lookupZblsAlgsBrute(canonical: KPattern, slotIdx: number, 
     return true;
   }
 
-  for (const { alg, caseName } of algs) {
-    for (const rot of PRE_ROTS) {
-      for (const auf of PRE_AUFS) {
-        const composed = simplifyAlg([rot, auf, alg].filter(Boolean).join(' '));
-        if (!composed) continue;
-        if (seen.has(composed)) continue;
-        let post: KPattern;
-        try { post = canonical.applyAlg(composed); } catch { continue; }
-        if (!checkSolveAndEo(post)) continue;
-        seen.add(composed);
-        out.push({ alg: composed, caseName, oriIdx: slotIdx });
-      }
+  for (const { t: algT, alg, caseName } of algTs) {
+    for (const base of bases) {
+      let post: KPattern;
+      try { post = base.pattern.applyTransformation(algT); } catch { continue; }
+      if (!checkSolveAndEo(post)) continue;
+      // Survivor — now (and only now) pay for the simplify + dedup.
+      const composed = simplifyAlg([base.rot, base.auf, alg].filter(Boolean).join(' '));
+      if (!composed || seen.has(composed)) continue;
+      seen.add(composed);
+      out.push({ alg: composed, caseName, oriIdx: slotIdx });
     }
   }
   return out;
