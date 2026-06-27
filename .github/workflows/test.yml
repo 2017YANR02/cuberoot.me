@@ -66,3 +66,9 @@ jobs:
       - name: Test
         working-directory: core
         run: pnpm --filter @cuberoot/client test
+
+      # 死代码棘轮:只卡已清零的类别(unused files / deps / unlisted / binaries),
+      # 不卡 unused exports/types(649/221,过度导出噪声,另行收敛)。配置见 core/knip.json。
+      - name: Knip dead-code guard
+        working-directory: core
+        run: pnpm exec knip --include files,dependencies,unlisted,binaries --no-config-hints
