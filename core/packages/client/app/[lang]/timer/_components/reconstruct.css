@@ -297,7 +297,7 @@
   gap: 6px;
 }
 
-.reconstruct-playback-buttons button {
+.reconstruct-playback-buttons .reconstruct-pb-btn {
   background: var(--secondary);
   border: 1px solid var(--border-default);
   color: var(--foreground);
@@ -310,11 +310,11 @@
   cursor: pointer;
   padding: 0;
 }
-.reconstruct-playback-buttons button:hover:not(:disabled) {
+.reconstruct-playback-buttons .reconstruct-pb-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--foreground) 10%, transparent);
   color: var(--foreground);
 }
-.reconstruct-playback-buttons button:disabled {
+.reconstruct-playback-buttons .reconstruct-pb-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }

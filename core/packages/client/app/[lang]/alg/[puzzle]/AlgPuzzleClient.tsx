@@ -18,7 +18,6 @@ import { CaseThumb } from '@/components/CaseThumb';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../alg.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
 const LEGACY_3X3_SLUGS = new Set(['f2l', 'adv-f2l', 'oll', 'pll']);

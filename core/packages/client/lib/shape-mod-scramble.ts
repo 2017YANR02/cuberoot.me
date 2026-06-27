@@ -9,7 +9,6 @@
  * 2x2 scramble — kept here for the 3x3 cubing-icons glyph but routed
  * carefully. We skip the 2x2 mod for now since it's rarely demanded.)
  */
-import i18n from "@/i18n/i18n-client";
 
 export interface ShapeModEvent {
   id: string;

@@ -688,7 +688,6 @@ function GroupRow({
   elementary,
   invariant,
   displayMode,
-  lang,
   n,
 }: {
   index: number;
@@ -779,7 +778,6 @@ function YoungDiagramRow({ partitions, color }: { partitions: number[][]; color:
 function CRTRingsSVG({
   n,
   factors,
-  lang,
 }: {
   n: number;
   factors: Array<{ p: number; pk: number }>;
@@ -842,7 +840,6 @@ function CRTRingsSVG({
 function AlignmentMatrixSVG({
   factors,
   invariant,
-  lang,
   colors,
 }: {
   factors: Array<{ p: number; e: number }>;

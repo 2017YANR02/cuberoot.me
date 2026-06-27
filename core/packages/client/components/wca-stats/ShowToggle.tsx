@@ -13,12 +13,12 @@ interface Props {
   isZh: boolean;
 }
 
-export default function ShowToggle({ value, onChange, isZh }: Props) {
+export default function ShowToggle({ value, onChange }: Props) {
   return (
     <div className="wse-show-toggle">
       <button
         type="button"
-        className={value === 'persons' ? 'active' : ''}
+        className={`wse-show-btn${value === 'persons' ? ' active' : ''}`}
         onClick={() => onChange('persons')}
       >
         {tr({ zh: '选手', en: 'Persons'
@@ -26,7 +26,7 @@ export default function ShowToggle({ value, onChange, isZh }: Props) {
       </button>
       <button
         type="button"
-        className={value === 'results' ? 'active' : ''}
+        className={`wse-show-btn${value === 'results' ? ' active' : ''}`}
         onClick={() => onChange('results')}
       >
         {tr({ zh: '成绩', en: 'Results'

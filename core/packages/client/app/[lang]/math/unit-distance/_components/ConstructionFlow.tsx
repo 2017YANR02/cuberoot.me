@@ -12,7 +12,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { TeX, TeXBlock } from '@/components/math/Tex';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 type StageId = 'F' | 'tower' | 'K' | 'lattice' | 'project';
@@ -264,7 +263,7 @@ const STAGES: Stage[] = [
 ];
 
 export default function ConstructionFlow() {
-  const { i18n } = useTranslation();
+  useTranslation();
   const [open, setOpen] = useState<StageId | null>('F');
 
   return (

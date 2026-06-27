@@ -1,24 +1,6 @@
 /* AnnouncedComps —「公示」tab 内容:最近 48h 公示的 WCA 比赛卡片(渲染在 OngoingComps
    的滚动面板里,无独立 header/expander)。双主题走 :root token。 */
 
-/* 卡片自适应平铺:窄屏单列,宽屏多列(随 OngoingComps 面板宽度) */
-/* 顶部留 2px:外层滚动面板 overflow-y:auto 会裁剪,卡片 hover 上抬 1px 否则会切掉 1px 上边框 */
-.tac-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 0.6rem;
-  padding-top: 2px;
-}
-
-/* 关注星标(.follow-star--corner)绝对定位的上下文;卡片本身仍是整块 Link */
-.tac-card-wrap {
-  position: relative;
-  display: flex;
-}
-.tac-card-wrap .tac-card { flex: 1; min-width: 0; }
-/* 登录时给标题右侧留白,长名不钻到角标下面 */
-.tac-card-wrap.is-followable .tac-title { padding-right: 1.7rem; }
-
 .tac-card {
   display: flex;
   flex-direction: column;
@@ -34,68 +16,4 @@
 .tac-card:hover {
   border-color: var(--accent);
   transform: translateY(-1px);
-}
-
-.tac-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-.tac-name {
-  font-weight: 600;
-  font-size: 0.95rem;
-  line-height: 1.25;
-  color: var(--foreground);
-  min-width: 0;
-}
-
-.tac-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.2rem 0.7rem;
-  font-size: 0.82rem;
-  color: var(--muted-foreground);
-  text-transform: none;
-  letter-spacing: normal;
-}
-.tac-date { font-variant-numeric: tabular-nums; }
-.tac-limit {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-variant-numeric: tabular-nums;
-}
-.tac-limit svg { opacity: 0.8; flex: none; }
-
-.tac-events {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.55rem;
-  margin-top: 0.1rem;
-  color: var(--muted-foreground);
-}
-.tac-event-item {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1;
-  gap: 2px;
-}
-.tac-event {
-  font-size: 1.1rem;
-  line-height: 1;
-}
-.tac-event-rounds {
-  font-size: 0.65rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  color: var(--muted-foreground);
-}
-.tac-event-rounds--placeholder { opacity: 0.3; }
-
-@media (max-width: 560px) {
-  .tac-grid { grid-template-columns: 1fr; }
 }

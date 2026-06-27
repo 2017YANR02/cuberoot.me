@@ -78,7 +78,7 @@ function parseAddString(state: AppState, s: string): [FavCase[], boolean] {
 
 export default function FavListView(props: { state: AppState; dispatch: React.Dispatch<Action> }) {
   const { state, dispatch } = props;
-  const { t, isZh } = useRT();
+  const { t } = useRT();
   const favList = state.favList.filter((c) => c.mode === state.mode);
 
   const play = (i: number) => {

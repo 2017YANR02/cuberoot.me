@@ -256,14 +256,14 @@ let Min2PhaseSolver : () => SolverT = function() {
     // polyfill for min2phase
 
     min2phase_init();
-    function solve(cube : CubieCube, l : number, r : number, c : number) {
+    function solve(cube : CubieCube, _l : number, _r : number, _c : number) {
         console.assert(arrayEqual(cube.tp, new CubieCube().tp), "Cube center is not solved: " + cube.tp)
         const transformed_cube = cube.to_cstimer_cube()
         console.assert( transformed_cube.is_solveable(), "Cube must be solveable")
         let solution = min2phase_solve(transformed_cube);
         return [ new MoveSeq(solution).inv() ]
     }
-    function is_solved(cube: CubieCube) {
+    function is_solved(_cube: CubieCube) {
         return true
     }
     function getPruners() {

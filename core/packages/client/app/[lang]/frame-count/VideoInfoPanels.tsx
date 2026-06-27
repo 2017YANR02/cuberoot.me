@@ -282,6 +282,7 @@ export function DecodeErrorCard({
       {codec && <div className="fc-decode-error-codec">Codec: <code>{codec}</code></div>}
       <label className="fc-decode-error-toggle">
         <input
+          className="fc-decode-error-toggle-input"
           type="checkbox"
           checked={gpuDecode}
           onChange={(e) => toggleGpu(e.target.checked)}

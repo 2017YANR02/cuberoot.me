@@ -28,7 +28,6 @@ import { CrossSportSection } from './_components/components/CrossSport';
 import { MilestoneTableSection } from './_components/components/MilestoneTable';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './_components/prediction.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 /** 取最后一行 (物理下界单次) 的 T 值 — 优先用显式 t_phys_single, 其次 decomp 末行计算 */
@@ -868,7 +867,7 @@ function RegionalSection({ eventSummaries, isZh }: { eventSummaries: any[]; isZh
 // ─────────────────────────────────────────────
 // Caveats
 // ─────────────────────────────────────────────
-function CaveatsSection({ isZh }: { isZh: boolean }) {
+function CaveatsSection({}: { isZh: boolean }) {
   return (
     <section className="pred-section" id="caveats">
       <h2>{tr({ zh: '局限与陷阱', en: 'Caveats & Pitfalls'

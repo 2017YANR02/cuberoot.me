@@ -72,7 +72,6 @@ function loadCstimerCtico(): CstimerCtico | null {
     };
   };
   const puz = poly3d.makePuzzle(20, [], [], [-5, 0]);
-  const N = 80;
   const faceOf: number[] = [];
   puz.enumFacesPolys((face, _p, _poly, idx) => { faceOf[idx] = face; });
   // SHALLOW (layer-1) generators — the bare-token parse target. The layer-0 deep move only generates the

@@ -10,7 +10,6 @@ import { ClearButton } from '@/components/ClearButton';
 import { useBldConfigStore } from '../_store/bld-config-store';
 import { ORIENTATION_LABELS_ZH } from '../_lib/scheme-presets';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 // 8 corner buffer letters / 12 edge buffer letters (upstream chichu buffers).
 const CORNER_BUFFERS = ['J', 'A', 'G', 'D', 'W', 'O', 'R', 'X'];

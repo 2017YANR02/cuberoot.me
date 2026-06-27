@@ -154,7 +154,7 @@ export default function Inspector() {
                   <button
                     key={c}
                     type="button"
-                    className={common(sel, (s) => s.strokeLinecap ?? 'butt') === c ? 'is-on' : ''}
+                    className={`paint-seg-btn${common(sel, (s) => s.strokeLinecap ?? 'butt') === c ? ' is-on' : ''}`}
                     onClick={() => update({ strokeLinecap: c }, true)}
                   >
                     {c === 'butt' ? t('平', 'Butt') : c === 'round' ? t('圆', 'Round') : t('方', 'Sq')}
@@ -169,7 +169,7 @@ export default function Inspector() {
                   <button
                     key={j}
                     type="button"
-                    className={common(sel, (s) => s.strokeLinejoin ?? 'miter') === j ? 'is-on' : ''}
+                    className={`paint-seg-btn${common(sel, (s) => s.strokeLinejoin ?? 'miter') === j ? ' is-on' : ''}`}
                     onClick={() => update({ strokeLinejoin: j }, true)}
                   >
                     {j === 'miter' ? t('尖', 'Miter') : j === 'round' ? t('圆', 'Round') : t('斜', 'Bevel')}
@@ -528,7 +528,7 @@ function TextSection({
             <button
               key={a}
               type="button"
-              className={text.textAlign === a ? 'is-on' : ''}
+              className={`paint-seg-btn${text.textAlign === a ? ' is-on' : ''}`}
               title={
                 a === 'left'
                   ? t('左对齐', 'Left')

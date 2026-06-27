@@ -114,13 +114,6 @@
   font-weight: 600;
 }
 .pred-toc-event { padding: 4px 8px; }
-.pred-toc-event-id {
-  font-size: 10px;
-  color: var(--faint-foreground);
-  font-variant-numeric: tabular-nums;
-  font-family: Menlo, monospace;
-}
-.pred-toc-item.is-active .pred-toc-event-id { color: var(--accent); }
 
 /* ── Article ──────────────────────────────────────────── */
 .pred-article {
@@ -393,8 +386,7 @@
   .pred-event-summary { padding: 10px 10px 10px 26px; }
   .pred-event-summary::before { margin-left: -18px; }
   .pred-event-summary-hint { display: none; }
-}
-.pred-event-title-zh, .pred-event-title-en { font-weight: 600; }
+}.pred-event-title-zh { font-weight: 600; }
 .pred-event-title-id {
   font-family: Menlo, monospace;
   font-size: 13px;
@@ -437,13 +429,6 @@
   color: var(--muted-foreground);
   margin-top: 3px;
   font-variant-numeric: tabular-nums;
-}
-
-.pred-caption {
-  color: var(--muted-foreground);
-  font-size: 12.5px;
-  margin: 8px 0 0;
-  font-style: italic;
 }
 
 /* ── Charts ───────────────────────────────────────────── */
@@ -559,37 +544,6 @@
   margin-bottom: 6px;
   border-bottom: 1px dashed var(--border-default);
   padding-bottom: 5px;
-}
-.pred-ov-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 12px;
-  margin: 1px 0;
-  font-variant-numeric: tabular-nums;
-}
-.pred-ov-label { color: var(--faint-foreground); }
-.pred-ov-val { font-weight: 600; color: var(--foreground); }
-.pred-ov-pct { color: var(--accent); }
-.pred-ov-accent { color: var(--signal-success); }
-.pred-ov-section-label {
-  font-size: 10.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--faint-foreground);
-  margin-top: 6px;
-  padding-bottom: 2px;
-  border-bottom: 1px solid var(--border-default);
-}
-.pred-ov-section-label:first-of-type { margin-top: 4px; }
-.pred-ov-holder {
-  margin-top: 4px;
-  padding-top: 6px;
-  border-top: 1px dashed var(--border-default);
-  font-size: 10.5px;
-  color: var(--muted-foreground);
-  line-height: 1.4;
 }
 
 .pred-method ul code, .pred-method ol code { font-size: 12px; }

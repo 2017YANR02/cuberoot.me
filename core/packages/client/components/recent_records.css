@@ -9,32 +9,6 @@
   gap: 0.5rem;
 }
 
-.recent-records-header {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--muted-foreground);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.recent-records-header > svg {
-  color: var(--accent);
-}
-
-.recent-records-count {
-  font-size: 0.7rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--accent);
-  background: var(--accent-soft);
-  padding: 1px 6px;
-  border-radius: 8px;
-  letter-spacing: 0;
-}
-
 .recent-records-list {
   list-style: none;
   margin: 0;
@@ -99,12 +73,6 @@
   background: var(--accent-soft);
 }
 
-.recent-records-badge {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-}
-
 .recent-records-body {
   display: block;
   color: var(--foreground);
@@ -112,23 +80,6 @@
   font-size: 0.88rem;
   line-height: 1.3;
   font-variant-numeric: tabular-nums;
-}
-
-.recent-records-value {
-  font-variant-numeric: tabular-nums;
-  color: var(--foreground);
-}
-
-.recent-records-event,
-.recent-records-type,
-.recent-records-person {
-  color: var(--foreground);
-}
-
-.recent-records-flag {
-  width: 1.05em !important;
-  flex-shrink: 0;
-  align-self: center;
 }
 
 /* 行内国旗 — 替换 emoji RI 后注入 */

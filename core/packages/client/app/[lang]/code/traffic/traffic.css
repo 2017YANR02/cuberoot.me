@@ -139,7 +139,6 @@
   font-variant-numeric: tabular-nums;
 }
 .tr-rank-row:nth-child(odd) { background: color-mix(in srgb, var(--muted) 50%, transparent); }
-.tr-rank-row.tr-rank-row--no-dwell { grid-template-columns: minmax(0, 1.8fr) minmax(80px, 2fr) 60px 64px; }
 
 .tr-rank-label {
   overflow: hidden;

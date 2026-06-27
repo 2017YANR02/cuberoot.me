@@ -31,7 +31,7 @@ export function AlgsetView({ post }: AlgsetViewProps) {
         <div className="algset-groups">
           <button
             className={
-              'algset-group-chip' + (activeGroup === 'all' ? ' is-active' : '')
+              'algset-group-chip tutorial-btn' + (activeGroup === 'all' ? ' is-active' : '')
             }
             onClick={() => setActiveGroup('all')}
           >
@@ -41,7 +41,7 @@ export function AlgsetView({ post }: AlgsetViewProps) {
             <button
               key={g.id}
               className={
-                'algset-group-chip' + (activeGroup === g.id ? ' is-active' : '')
+                'algset-group-chip tutorial-btn' + (activeGroup === g.id ? ' is-active' : '')
               }
               onClick={() => setActiveGroup(g.id)}
             >

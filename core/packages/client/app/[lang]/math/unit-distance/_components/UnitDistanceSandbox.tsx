@@ -11,7 +11,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shuffle, Grid3x3, Hexagon, Triangle } from 'lucide-react';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 import { T } from '@/i18n/tr';
 
@@ -102,7 +101,7 @@ function findUnitPairs(pts: Pt[]): Pair[] {
 }
 
 export default function UnitDistanceSandbox() {
-  const { i18n } = useTranslation();
+  useTranslation();
   const t = useT();
 
   const [n, setN] = useState(13);
@@ -160,16 +159,16 @@ export default function UnitDistanceSandbox() {
     <div className="ud-sandbox">
       <div className="ud-sandbox-controls">
         <div className="ud-sandbox-presets">
-          <button className={preset === 'random' ? 'is-on' : ''} onClick={() => setPreset('random')}>
+          <button className={`ud-sandbox-preset-btn${preset === 'random' ? ' is-on' : ''}`} onClick={() => setPreset('random')}>
             <Shuffle size={14} /> {t('随机', 'Random')}
           </button>
-          <button className={preset === 'square' ? 'is-on' : ''} onClick={() => setPreset('square')}>
+          <button className={`ud-sandbox-preset-btn${preset === 'square' ? ' is-on' : ''}`} onClick={() => setPreset('square')}>
             <Grid3x3 size={14} /> {t('方格', 'Square')}
           </button>
-          <button className={preset === 'triangular' ? 'is-on' : ''} onClick={() => setPreset('triangular')}>
+          <button className={`ud-sandbox-preset-btn${preset === 'triangular' ? ' is-on' : ''}`} onClick={() => setPreset('triangular')}>
             <Triangle size={14} /> {t('三角', 'Triangular')}
           </button>
-          <button className={preset === 'hexagonal' ? 'is-on' : ''} onClick={() => setPreset('hexagonal')}>
+          <button className={`ud-sandbox-preset-btn${preset === 'hexagonal' ? ' is-on' : ''}`} onClick={() => setPreset('hexagonal')}>
             <Hexagon size={14} /> {t('六角', 'Hexagonal')}
           </button>
         </div>
@@ -183,6 +182,7 @@ export default function UnitDistanceSandbox() {
         </div>
         <label className="ud-sandbox-toggle">
           <input
+            className="ud-sandbox-toggle-input"
             type="checkbox" checked={showCircles}
             onChange={e => setShowCircles(e.target.checked)}
           />

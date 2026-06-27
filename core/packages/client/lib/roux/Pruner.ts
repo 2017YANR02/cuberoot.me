@@ -30,7 +30,6 @@ export type PrunerT = {
 enum PrunerPiece {
     S, O, I, X
 }; // Solved, Oriented, Ignore, Exclude
-const { S, I } = PrunerPiece
 
 export type PrunerDef = {
     corner: PrunerPiece[],
@@ -62,7 +61,7 @@ let xyz = ["x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"]
 
 export function Pruner(config: PrunerConfig) : PrunerT {
     let dist: Uint8Array;
-    let { size, encode, solved_states, max_depth, moveset: moveset_str, name} = config
+    let { size, encode, solved_states, max_depth, moveset: moveset_str} = config
     let moveset = moveset_str.map(x => Move.all[x])
     let initialized = false
     let level_states = [[...solved_states]]
@@ -509,26 +508,6 @@ let sbPrunerConfig = function(){
     }
 }()
 
-let lpSbPrunerConfigsAuto = (lp_front: boolean) => [
-    prunerFactory({
-        corner: lp_front ? [I,I,I,I,S,I,I,S] : [I,I,I,I,I,S,S,I],
-        edge:   lp_front ? [I,I,I,I,I,I,I,S,S,I,I,S] : [I,I,I,I,I,I,I,S,I,S,S,I],
-        center: [I,I,I,I,I,I],
-        solved_states: ["id"],
-        moveset: lp_front ? rrwmu_f : rrwmu_b,
-        max_depth: 5,
-        name: "FBLP+SSdiag"
-    }),
-    prunerFactory({ // SB
-        corner: [I,I,I,I,I,I,S,S],
-        edge:   [I,I,I,I,I,I,I,S,I,I,S,S],
-        center: [I,I,I,I,I,I],
-        solved_states: ["id"],
-        moveset: lp_front ? rrwmu_f : rrwmu_b,
-        max_depth: 5,
-        name: "SB with LP"
-    }),
-];
 
 let lpSbSbPrunerConfigGen = (lp_front: boolean, max_depth: number) : PrunerConfig => {
     const esize = Math.pow(24, 3)

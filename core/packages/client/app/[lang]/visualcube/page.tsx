@@ -29,7 +29,6 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryStates, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { Copy, Check, Download, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import {
   renderCubeSVG,
@@ -64,7 +63,6 @@ import {
 } from '@/app/[lang]/scramble/gen/_svg/skewb_svg';
 import { renderUnfoldedSvg } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -721,7 +719,6 @@ function CopyButton({ getValue, label }: { getValue: () => string; label: string
 // ── Main page ────────────────────────────────────────────────────────────────
 
 function VisualCubeEditorPageInner() {
-  const { i18n } = useTranslation();
   useDocumentTitle('魔方可视化', 'VisualCube');
   const t = useT();
 

@@ -18,7 +18,6 @@ import { TutorialCard } from './_components/TutorialCard';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './tutorial.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 type Tier = 'hero' | 'hero-side' | 'medium' | 'standard' | 'utility';
 
@@ -190,7 +189,7 @@ function TutorialIndexPageInner() {
                                     ? `找到 ${searchResults.length} 个结果`
                                     : `${searchResults.length} result${searchResults.length === 1 ? '' : 's'}`)}
             {' · '}
-            <button className="tutorial-link-btn" onClick={() => setQuery('')}>
+            <button className="tutorial-link-btn tutorial-btn" onClick={() => setQuery('')}>
               {tr({ zh: '清空搜索', en: 'clear search'
             })}
             </button>

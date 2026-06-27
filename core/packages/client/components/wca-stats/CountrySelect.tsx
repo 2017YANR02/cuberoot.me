@@ -57,7 +57,7 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
       <label>{tr({ zh: '国家', en: 'Country'
     })}</label>
       <div className="wse-country-trigger">
-        <button type="button" onClick={() => setOpen(o => !o)}>
+        <button type="button" className="wse-country-trigger-btn" onClick={() => setOpen(o => !o)}>
           {selected ? (
             <>
               {selected.iso2 && <Flag iso2={selected.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
@@ -67,13 +67,14 @@ export default function CountrySelect({ countries, value, isZh, onChange }: Prop
             <span>{tr({ zh: '全球', en: 'Worldwide' })}</span>
           )}
         </button>
-        {value && <ClearButton onClick={() => onChange('')} isZh={isZh} preserveFocus />}
+        {value && <ClearButton variant="standalone" onClick={() => onChange('')} isZh={isZh} preserveFocus />}
       </div>
       {open && (
         <div className="wse-country-popup">
           <div className="wse-country-search">
             <Search size={14} />
             <input
+              className="wse-country-search-input"
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}

@@ -49,11 +49,6 @@
     -webkit-backdrop-filter: blur(6px);
     min-height: 24px;
 }
-.globe-page .globe-statusbar-credit {
-    color: rgba(200, 205, 215, 0.55);
-    text-decoration: none;
-}
-.globe-page .globe-statusbar-credit:hover { color: rgba(255, 255, 255, 0.9); }
 .globe-page .globe-statusbar-left {
     display: inline-flex;
     align-items: center;
@@ -396,124 +391,6 @@
     color: #FFFFFF;
 }
 
-/* ── 已保存形状：左下角入口按钮 + 列表 panel ── */
-.globe-page .shapes-toggle-floating {
-    position: absolute;
-    left: 60px;
-    bottom: 38px;
-    z-index: 6;
-    height: 36px;
-    padding: 0 10px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 8px;
-    border: 1px solid #2F3540;
-    background: rgba(28, 33, 41, 0.78);
-    color: #ECEAE3;
-    cursor: pointer;
-    transition: all 0.15s;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    font-family: inherit;
-    font-size: 0.74rem;
-}
-.globe-page .shapes-toggle-floating:hover {
-    color: #E07752;
-    border-color: #E07752;
-}
-.globe-page .shapes-count {
-    font-variant-numeric: tabular-nums;
-    color: #E07752;
-    font-weight: 600;
-}
-.globe-page .shapes-panel {
-    position: absolute;
-    left: 14px;
-    bottom: 84px;
-    z-index: 7;
-    width: 280px;
-    max-height: 50vh;
-    background: rgba(28, 33, 41, 0.96);
-    border: 1px solid #2F3540;
-    border-radius: 10px;
-    color: #ECEAE3;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
-    display: flex;
-    flex-direction: column;
-}
-.globe-page .shapes-panel-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border-bottom: 1px solid #2F3540;
-    font-size: 0.78rem;
-}
-.globe-page .shapes-panel-header > span { flex: 1; }
-.globe-page .shapes-panel-clear {
-    background: transparent;
-    border: 1px solid #3A4150;
-    border-radius: 4px;
-    color: #C9CDD4;
-    padding: 3px 8px;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-.globe-page .shapes-panel-clear:hover { color: #E07752; border-color: #E07752; }
-.globe-page .shapes-panel-close {
-    background: transparent;
-    border: none;
-    color: #9CA0A8;
-    cursor: pointer;
-    padding: 2px;
-    display: inline-flex;
-}
-.globe-page .shapes-panel-close:hover { color: #FFFFFF; }
-.globe-page .shapes-list {
-    list-style: none;
-    margin: 0;
-    padding: 4px 0;
-    overflow-y: auto;
-}
-.globe-page .shapes-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    transition: background 0.12s;
-}
-.globe-page .shapes-item:hover { background: rgba(255, 255, 255, 0.04); }
-.globe-page .shapes-item-main { flex: 1; min-width: 0; }
-.globe-page .shapes-item-name {
-    font-size: 0.78rem;
-    color: #ECEAE3;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.globe-page .shapes-item-stats {
-    font-size: 0.7rem;
-    color: #9CA0A8;
-    font-family: ui-monospace, monospace;
-}
-.globe-page .shapes-item-fly,
-.globe-page .shapes-item-delete {
-    background: transparent;
-    border: 1px solid transparent;
-    color: #9CA0A8;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    display: inline-flex;
-    transition: all 0.12s;
-}
-.globe-page .shapes-item-fly:hover { color: #E07752; border-color: #E07752; }
-.globe-page .shapes-item-delete:hover { color: #ff6b6b; border-color: #ff6b6b; }
-
 /* ── 朝向 / 俯仰 popover（参考谷歌地球） ── */
 .globe-page .nav-popover {
     position: absolute;
@@ -554,24 +431,6 @@
     color: #ECEAE3;
     text-align: right;
 }
-.globe-page .nav-popover-reset {
-    width: 100%;
-    margin-top: 4px;
-    padding: 6px 10px;
-    background: transparent;
-    border: 1px solid #2F3540;
-    border-radius: 6px;
-    color: #E07752;
-    font-family: inherit;
-    font-size: 0.78rem;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-}
-.globe-page .nav-popover-reset:hover {
-    background: rgba(224, 119, 82, 0.12);
-    border-color: #E07752;
-}
-
 
 /* ── 左下角浮动主题切换按钮 ── */
 .globe-page .theme-toggle-floating {
@@ -779,30 +638,6 @@
     background: var(--accent-soft);
     border-color: var(--accent);
 }
-
-/* topbar 内的语言切换按钮：覆盖 lang_toggle.css 的硬编码深色 */
-.globe-page .topbar-lang.lang-toggle-inline {
-    padding: 0.3rem 0.55rem;
-    font-size: 0.78rem;
-    border-color: var(--border);
-    color: var(--text-sub);
-    background: transparent;
-}
-.globe-page .topbar-lang.lang-toggle-inline:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-
-.globe-page .range-toggle {
-    display: inline-flex;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 2px;
-    gap: 2px;
-    align-items: center;
-}
 .globe-page .range-btn {
     padding: 0.3rem 0.65rem;
     border: none;
@@ -892,24 +727,6 @@
 .globe-page .reset-btn:hover {
     border-color: var(--accent);
     color: var(--accent);
-}
-
-.globe-page .globe-stats {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.82rem;
-    color: var(--text-sub);
-}
-.globe-page .globe-stats-inline {
-    margin: 0;
-    gap: 0.4rem;
-    padding: 0.3rem 0.55rem;
-    background: var(--accent-soft);
-    border-radius: 6px;
-    color: var(--text-sub);
-    font-size: 0.76rem;
-    font-variant-numeric: tabular-nums;
 }
 
 /* ── WcaPersonPicker 搜索框 —— 强制黑字 ── */
@@ -1023,23 +840,6 @@
     border-color: rgba(255,255,255,0.18);
 }
 
-.globe-page .cuber-select-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0.4rem 0.9rem;
-    background: var(--accent);
-    color: #FFF;
-    border: none;
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 0.82rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.globe-page .cuber-select-btn:hover { background: #AE5434; }
-
 .globe-page .cuber-change-btn {
     padding: 0.3rem 0.7rem;
     background: transparent;
@@ -1069,25 +869,6 @@
     border-radius: 2px;
     flex-shrink: 0;
 }
-.globe-page .cuber-id {
-    font-family: ui-monospace, 'Menlo', monospace;
-    font-size: 0.72rem;
-    color: var(--text-sub);
-    background: var(--surface);
-    padding: 2px 6px;
-    border-radius: 4px;
-}
-.globe-page .cuber-clear {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px;
-    border: none;
-    background: transparent;
-    color: var(--text-sub);
-    cursor: pointer;
-    border-radius: 4px;
-}
-.globe-page .cuber-clear:hover { color: var(--accent); background: #FFF; }
 
 .globe-page .cuber-empty {
     flex: 1;
@@ -1190,12 +971,6 @@
     cursor: pointer;
     border: 2px solid #FFF;
     box-shadow: 0 0 0 1px var(--accent);
-}
-
-.globe-page .cuber-step-label {
-    min-width: 200px;
-    max-width: 280px;
-    line-height: 1.35;
 }
 .globe-page .cuber-step-count {
     font-size: 0.7rem;
@@ -1441,7 +1216,6 @@
         min-width: 100%;
         flex-wrap: wrap;
     }
-    .globe-page .cuber-step-label { max-width: 100%; }
 }
 
 .globe-page .globe-loading,
@@ -1531,15 +1305,6 @@
     border-radius: 2px;
     vertical-align: -1px;
 }
-
-.globe-page .bin-panel-link {
-    display: inline-block;
-    margin-top: 0.5rem;
-    color: var(--accent);
-    text-decoration: none;
-    font-size: 0.85rem;
-}
-.globe-page .bin-panel-link:hover { text-decoration: underline; }
 
 /* ── Click Panel ── */
 .globe-page .bin-panel-overlay {

@@ -12,7 +12,6 @@ import {
   type NemPersonRow,
 } from '../_data/nemesizerApi';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface Props { isZh: boolean; }
 
@@ -148,7 +147,7 @@ export default function StandardMode({ isZh }: Props) {
   );
 }
 
-function ViewPicker({ view, onChange, isZh }: { view: RelationView; onChange: (v: RelationView) => void; isZh: boolean }) {
+function ViewPicker({ view, onChange }: { view: RelationView; onChange: (v: RelationView) => void; isZh: boolean }) {
   return (
     <div className="nemesizer-view-group">
       {VIEWS.map(v => (
@@ -174,14 +173,14 @@ function ScopePicker({ scope, onChange, isZh }: { scope: Scope; onChange: (s: Sc
   );
 }
 
-function SortPicker({ order, direction, onOrder, onDirection, isZh }: {
+function SortPicker({ order, direction, onOrder, onDirection }: {
   order: Order; direction: Direction;
   onOrder: (o: Order) => void; onDirection: (d: Direction) => void; isZh: boolean;
 }) {
   return (
     <div className="nemesizer-sort">
       <strong>{tr({ zh: '排序：', en: 'Sort by:' })}</strong>
-      <select value={order} onChange={e => onOrder(e.target.value as Order)}>
+      <select className="nemesizer-sort-select" value={order} onChange={e => onOrder(e.target.value as Order)}>
         <option value="id">WCA ID</option>
         <option value="name">{tr({ zh: '姓名', en: 'Name' })}</option>
         <option value="nemeses">{tr({ zh: '宿敌数', en: 'Nemeses'
@@ -195,7 +194,7 @@ function SortPicker({ order, direction, onOrder, onDirection, isZh }: {
   );
 }
 
-function ShowPicker({ mode, onChange, isZh }: { mode: ShowMode; onChange: (m: ShowMode) => void; isZh: boolean }) {
+function ShowPicker({ mode, onChange }: { mode: ShowMode; onChange: (m: ShowMode) => void; isZh: boolean }) {
   return (
     <div className="nemesizer-show-section">
       <strong>{tr({ zh: '显示：', en: 'Show:'
@@ -288,7 +287,7 @@ function PeopleTable({ data, isZh, order, direction }: {
   );
 }
 
-function CountriesTable({ data, isZh }: { data: NemesesResponse; isZh: boolean }) {
+function CountriesTable({ data }: { data: NemesesResponse; isZh: boolean }) {
   const sorted = Object.entries(data.countryTally).sort((a, b) => b[1] - a[1]);
   return (
     <div className="nemesizer-table-wrap">

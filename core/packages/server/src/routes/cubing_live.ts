@@ -650,10 +650,11 @@ async function enrichPersonalRecords(data: CompData): Promise<void> {
   const dateClause = compDate ? 'AND comp_date < ?' : 'AND comp_date < CURRENT_DATE';
   const params: unknown[] = compDate ? [...wcaIds, compDate] : [...wcaIds];
 
-  let priorRows: { wca_id: string; event_id: string; is_avg: boolean; value: number }[] = [];
+  let priorRows: { wca_id: string; event_id: string; is_avg: boolean; value: number; attempts: number[] | null }[] = [];
   try {
-    priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; value: number }>(
-      `SELECT DISTINCT wca_id, event_id, is_avg, value
+    // attempts:单次池要计入平均里的每一把(非最佳把),与选手页 PR 名次同口径.
+    priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; value: number; attempts: number[] | null }>(
+      `SELECT DISTINCT wca_id, event_id, is_avg, value, attempts
        FROM wca_results_flat
        WHERE wca_id IN (${idQs})
          AND value > 0
@@ -694,6 +695,11 @@ async function enrichPersonalRecords(data: CompData): Promise<void> {
     let set = seenValues.get(k);
     if (!set) { set = new Set(); seenValues.set(k, set); }
     set.add(pr.value);
+    // 单次池(is_avg=false)额外计入该次平均里的每一把:一把更早更快的非最佳把会压低后来更慢单次名次.
+    if (!pr.is_avg && Array.isArray(pr.attempts)) {
+      for (const v of pr.attempts) if (v > 0) set.add(v);
+    }
+    // personalRecords 仍用官方单次 value(== 该轮最佳把),不受非最佳把影响.
     const curBest = bestValueByKey.get(k);
     if (curBest === undefined || pr.value < curBest) bestValueByKey.set(k, pr.value);
   }
@@ -747,6 +753,8 @@ async function enrichPersonalRecords(data: CompData): Promise<void> {
       if (lr.b > 0) {
         lr.pS = rankFor(lr.b, singleSeen);
         singleSeen.add(lr.b);
+        // 本轮其余把并入单次池,供本场后续轮次的单次名次参考(口径同选手页).
+        if (Array.isArray(lr.v)) for (const v of lr.v) if (v > 0) singleSeen.add(v);
       }
       if (lr.a > 0) {
         lr.pA = rankFor(lr.a, avgSeen);
@@ -1038,8 +1046,9 @@ export async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): 
   if (compDate && wcaIdsInComp.length > 0 && eventIdsInComp.length > 0) {
     const idQs = wcaIdsInComp.map(() => '?').join(',');
     const evQs = eventIdsInComp.map(() => '?').join(',');
-    const priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; value: number }>(
-      `SELECT DISTINCT wca_id, event_id, is_avg, value
+    // attempts:单次池要计入平均里的每一把(非最佳把),与选手页 PR 名次同口径.
+    const priorRows = await query<{ wca_id: string; event_id: string; is_avg: boolean; value: number; attempts: number[] | null }>(
+      `SELECT DISTINCT wca_id, event_id, is_avg, value, attempts
        FROM wca_results_flat
        WHERE wca_id IN (${idQs})
          AND event_id IN (${evQs})
@@ -1055,6 +1064,11 @@ export async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): 
       let set = seenValues.get(k);
       if (!set) { set = new Set(); seenValues.set(k, set); }
       set.add(pr.value);
+      // 单次池(is_avg=false)额外计入该次平均里的每一把:更早更快的非最佳把会压低后来更慢单次名次.
+      if (!pr.is_avg && Array.isArray(pr.attempts)) {
+        for (const v of pr.attempts) if (v > 0) set.add(v);
+      }
+      // personalRecords 仍用官方单次 value(== 该轮最佳把),不受非最佳把影响.
       const curBest = bestValueByKey.get(k);
       if (curBest === undefined || pr.value < curBest) bestValueByKey.set(k, pr.value);
     }
@@ -1122,6 +1136,8 @@ export async function tryLoadFromWcaDb(wcaId: string, onProgress?: ProgressFn): 
         if (lr.b > 0) {
           lr.pS = rankFor(lr.b, singleSeen);
           singleSeen.add(lr.b);
+          // 本轮其余把并入单次池,供本场后续轮次的单次名次参考(口径同选手页).
+          if (Array.isArray(lr.v)) for (const v of lr.v) if (v > 0) singleSeen.add(v);
         }
         if (lr.a > 0) {
           lr.pA = rankFor(lr.a, avgSeen);

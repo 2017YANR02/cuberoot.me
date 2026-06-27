@@ -11,7 +11,6 @@ import { TutorialCard } from '../../_components/TutorialCard';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../tutorial.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 function TutorialCategoryPageInner() {
   const { catalog, loading, error } = useTutorialCatalog();
@@ -104,7 +103,7 @@ function TutorialCategoryPageInner() {
       {subcategories.length > 0 && (
         <div className="tutorial-category-bar">
           <button
-            className={'tutorial-category-chip' + (activeSub === 'all' ? ' is-active' : '')}
+            className={'tutorial-category-chip tutorial-btn' + (activeSub === 'all' ? ' is-active' : '')}
             onClick={() => setActiveSub('all')}
           >
             {tr({ zh: '全部', en: 'All' })}
@@ -113,7 +112,7 @@ function TutorialCategoryPageInner() {
           {subcategories.map(({ sc, count }) => (
             <button
               key={sc || '__none__'}
-              className={'tutorial-category-chip' + (activeSub === sc ? ' is-active' : '')}
+              className={'tutorial-category-chip tutorial-btn' + (activeSub === sc ? ' is-active' : '')}
               onClick={() => setActiveSub(sc)}
             >
               {sc || tr({ zh: '未分类', en: 'Uncategorized'

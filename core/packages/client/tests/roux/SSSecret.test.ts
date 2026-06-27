@@ -1,4 +1,4 @@
-import { it, expect } from 'vitest';
+import { it } from 'vitest';
 import { SolverT } from '@/lib/roux/Solver'
 import { CubieCube, MoveSeq } from '@/lib/roux/CubeLib'
 import { CachedSolver } from '@/lib/roux/CachedSolver'

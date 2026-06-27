@@ -13,7 +13,7 @@
 .settings-row-label { flex: 1; color: #ccc; }
 .settings-row-control { display: flex; align-items: center; gap: 8px; }
 .settings-row-control input[type="number"],
-.settings-row-control select {
+.settings-row-control .settings-row-control-select {
   background: #0e0e10;
   color: #ededed;
   border: 1px solid #333;
@@ -90,14 +90,6 @@
 /* 按难度出题:配色 + 方法 + 阶段 选择器一行,步数 chip 多选一行。 */
 .wca-src-diff { margin: 4px 0 2px; display: flex; flex-direction: column; gap: 8px; }
 .wca-src-diff-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.wca-src-diff-row select {
-  background: #0e0e10;
-  color: #ededed;
-  border: 1px solid #333;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 13px;
-}
 /* 步数范围:双圆点滑块 + 选中区间读数 */
 .wca-src-steps-range { display: flex; flex-direction: column; gap: 2px; padding: 0 9px 18px; }
 .wca-src-steps-readout {
@@ -112,9 +104,6 @@
   --rs-thumb-ring: #0e0e10;
   --rs-thumb-shadow: rgba(0, 0, 0, 0.4);
   --rs-mark-fg: #888;
-}
-:root[data-timer-theme="light"] .wca-src-diff-row select {
-  background: #fff; color: #1d1d1f; border-color: #ccc;
 }
 :root[data-timer-theme="light"] .wca-src-steps-range .range-slider {
   --rs-rail-bg: #ccc;

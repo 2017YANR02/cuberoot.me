@@ -92,28 +92,6 @@
   color: var(--faint-foreground);
   font-family: var(--font-mono);
 }
-
-/* coverage rows */
-.solv-rows { display: flex; flex-direction: column; gap: 14px; }
-.solv-row, .solv-perf {
-  padding: 13px 15px;
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--card) 55%, transparent);
-}
-.solv-row-head { display: flex; align-items: center; gap: 10px; }
-.solv-row-name {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  font-weight: 650;
-  color: var(--foreground);
-}
-.solv-row-stages {
-  margin-left: auto;
-  font-size: 11.5px;
-  color: var(--faint-foreground);
-  font-family: var(--font-mono);
-}
 .solv-badge {
   display: inline-flex;
   align-items: center;
@@ -139,33 +117,7 @@
 .solv-fill-partial { background: linear-gradient(90deg, var(--signal-warning), color-mix(in srgb, var(--signal-warning) 70%, var(--foreground))); }
 .solv-fill-seed { background: color-mix(in srgb, var(--faint-foreground) 70%, transparent); }
 .solv-fill-rate { background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 65%, var(--foreground))); }
-
-.solv-row-foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-}
-.solv-row-rows { color: var(--foreground); }
 .solv-dim { color: var(--faint-foreground); }
-.solv-row-pct { color: var(--muted-foreground); font-weight: 700; }
-
-/* throughput */
-.solv-perf-top { display: flex; align-items: baseline; justify-content: space-between; }
-.solv-perf-rate { font-family: var(--font-mono); font-size: 16px; font-weight: 700; color: var(--foreground); }
-.solv-perf-rate small { font-size: 11px; color: var(--faint-foreground); font-weight: 500; }
-.solv-perf-why { margin: 8px 0 0; font-size: 12.5px; color: var(--muted-foreground); line-height: 1.5; }
-
-/* memory */
-.solv-mem { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.solv-mem-card {
-  padding: 15px 16px;
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--card) 55%, transparent);
-}
-.solv-mem-wide { grid-column: 1 / -1; }
 .solv-mem-tier {
   display: inline-flex;
   align-items: center;
@@ -182,28 +134,6 @@
   font-size: 12.5px;
   color: var(--muted-foreground);
 }
-.solv-mem-card p { margin: 0; font-size: 13px; color: var(--muted-foreground); line-height: 1.6; }
-
-/* browser */
-.solv-browser {
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  overflow: hidden;
-}
-.solv-brow-row {
-  display: grid;
-  grid-template-columns: 1.1fr 1.4fr auto;
-  gap: 14px;
-  align-items: center;
-  padding: 11px 15px;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-}
-.solv-brow-row:not(:last-child) { border-bottom: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent); }
-.solv-brow-row:nth-child(odd) { background: color-mix(in srgb, var(--muted) 35%, transparent); }
-.solv-brow-name { color: var(--foreground); font-weight: 650; }
-.solv-brow-engine { color: var(--muted-foreground); }
-.solv-brow-lat { color: var(--accent); text-align: right; }
 .solv-browser-note { margin: 14px 0 0; font-size: 13px; color: var(--muted-foreground); line-height: 1.6; }
 
 /* footer */
@@ -223,36 +153,6 @@
 
 /* per-analyzer tables */
 .solv-tbl-intro { margin: 0 0 16px; font-size: 13px; color: var(--muted-foreground); line-height: 1.6; max-width: 64ch; }
-.solv-tbl {
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--card) 55%, transparent);
-  overflow: hidden;
-}
-.solv-tbl-sum {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 15px;
-  cursor: pointer;
-  list-style: none;
-  font-family: var(--font-mono);
-}
-.solv-tbl-sum::-webkit-details-marker { display: none; }
-.solv-tbl-sum::after {
-  content: '+';
-  width: 12px;
-  text-align: center;
-  color: var(--faint-foreground);
-  font-size: 15px;
-}
-.solv-tbl[open] .solv-tbl-sum::after { content: '\2212'; }
-.solv-tbl-tier { font-size: 11px; letter-spacing: 0.04em; color: var(--faint-foreground); }
-.solv-tbl-total { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--muted-foreground); }
-.solv-tbl-body {
-  padding: 2px 15px 15px;
-  border-top: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
-}
 .solv-tbl-grp { margin-top: 13px; }
 .solv-tbl-grp-h {
   font-family: var(--font-mono);
@@ -279,29 +179,10 @@
 /* pure-TS non-WCA solver fleet */
 .solv-ts-link { text-decoration: none; }
 .solv-ts-link:hover { color: var(--accent); }
-.solv-ts-tier {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.03em;
-  color: var(--faint-foreground);
-}
 /* quality buckets: optimal (success) / near-optimal (info) / valid+bounded (warning) */
 .solv-q-optimal { color: var(--signal-success); background: color-mix(in srgb, var(--signal-success) 14%, transparent); }
 .solv-q-near { color: var(--signal-info); background: color-mix(in srgb, var(--signal-info) 15%, transparent); }
 .solv-q-bounded { color: var(--signal-warning); background: color-mix(in srgb, var(--signal-warning) 16%, transparent); }
-.solv-ts-meta {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin: 9px 0 0;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-}
-.solv-ts-states { min-width: 0; }
-.solv-ts-statesn { color: var(--foreground); font-weight: 650; word-break: break-all; }
-.solv-ts-gods { color: var(--muted-foreground); white-space: nowrap; flex-shrink: 0; }
 .solv-ts-planned {
   margin: 16px 0 0;
   font-size: 12px;
@@ -469,15 +350,9 @@ a.solv-mx-nm:hover { color: var(--accent); }
 .solv-modal-bar { margin: 10px 0; }
 
 @media (max-width: 600px) {
-  .solv-ts-tier { margin-left: 0; }
-  .solv-ts-meta { flex-direction: column; gap: 3px; }
   .solv-page { padding: 22px 14px 64px; }
   .solv-sec-head { flex-wrap: wrap; }
   .solv-sec-note { margin-left: 24px; width: 100%; }
-  .solv-mem { grid-template-columns: 1fr; }
-  .solv-mem-wide { grid-column: 1; }
-  .solv-brow-row { grid-template-columns: 1fr auto; gap: 4px 12px; }
-  .solv-brow-engine { grid-column: 1 / -1; order: 3; color: var(--faint-foreground); font-size: 11.5px; }
   .solv-modal-backdrop { padding: 0; align-items: flex-end; }
   .solv-modal { width: 100%; max-height: 88vh; border-radius: 14px 14px 0 0; }
 }

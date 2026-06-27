@@ -358,7 +358,7 @@ function banks(): Banks { if (!BANKS) BANKS = buildBanks(); return BANKS; }
 // helper with a gadget always exists. Returns true on success (state field becomes identity), false if a
 // needed gadget is missing. The fixed `skip` position (face-center) never participates.
 function solveField(
-  B: Banks, st: { vp: number[]; vo: number[]; fp: number[] }, field: 'vp' | 'fp', n: number, skip: number,
+  _B: Banks, st: { vp: number[]; vo: number[]; fp: number[] }, field: 'vp' | 'fp', n: number, skip: number,
   bank: Map<string, number[]>, push: (wd: ReadonlyArray<number>) => void,
 ): boolean {
   let guard = 0;

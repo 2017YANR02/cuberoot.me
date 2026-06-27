@@ -79,7 +79,7 @@ export class CubieCube {
         }
         return [o_new, p_new]
     }
-    _apply_partial_perm(p: Array<number>, pc: Array<PermChg>, mod: number) {
+    _apply_partial_perm(p: Array<number>, pc: Array<PermChg>, _mod: number) {
         let p_new = [...p];
 
         for (let i = 0; i < pc.length; i++) {
@@ -98,7 +98,7 @@ export class CubieCube {
         return new CubieCube({ co, cp, eo, ep, tp })
     }
 
-    static generate_apply_partial_func_perm(pc: Array<PermChg>, mod: number, p: string) {
+    static generate_apply_partial_func_perm(pc: Array<PermChg>, _mod: number, p: string) {
         return `
         let ${p}_new = [...${p}];
         src = 0, dst = 0;

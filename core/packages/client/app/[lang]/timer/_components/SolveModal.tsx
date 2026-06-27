@@ -8,7 +8,7 @@ import CubePreview from '../_lib/cube/CubePreview';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 
-function BldSplits({ bld, isZh, totalMs }: { bld: NonNullable<Solve['bld']>; isZh: boolean; totalMs: number }) {
+function BldSplits({ bld, totalMs }: { bld: NonNullable<Solve['bld']>; isZh: boolean; totalMs: number }) {
   const memo = bld.memoMs;
   const exec = totalMs - memo;
   return (
@@ -35,7 +35,7 @@ function BldSplits({ bld, isZh, totalMs }: { bld: NonNullable<Solve['bld']>; isZ
   );
 }
 
-function StageSplits({ stages, isZh, totalMs }: { stages: NonNullable<Solve['stages']>; isZh: boolean; totalMs: number }) {
+function StageSplits({ stages, totalMs }: { stages: NonNullable<Solve['stages']>; isZh: boolean; totalMs: number }) {
   const cross = stages.cross;
   const f2l = stages.f2l;
   const oll = stages.oll;
@@ -205,37 +205,37 @@ export default function SolveModal({ solve, index, isZh, onClose, onChangePenalt
         <div className="modal-actions" style={actionsStyle}>
           <button
             ref={firstButtonRef}
-            className={solve.penalty === 'ok' ? 'primary' : ''}
+            className={solve.penalty === 'ok' ? 'modal-action-btn primary' : 'modal-action-btn'}
             style={actionBtnStyle}
             onClick={() => onChangePenalty('ok')}
           >
             OK
           </button>
           <button
-            className={solve.penalty === '+2' ? 'primary' : ''}
+            className={solve.penalty === '+2' ? 'modal-action-btn primary' : 'modal-action-btn'}
             style={actionBtnStyle}
             onClick={() => onChangePenalty('+2')}
           >
             +2
           </button>
           <button
-            className={solve.penalty === 'DNF' ? 'primary' : ''}
+            className={solve.penalty === 'DNF' ? 'modal-action-btn primary' : 'modal-action-btn'}
             style={actionBtnStyle}
             onClick={() => onChangePenalty('DNF')}
           >
             DNF
           </button>
           {solve.moves && solve.moves.length > 0 && onOpenReconstruct && (
-            <button style={actionBtnStyle} onClick={onOpenReconstruct}>
+            <button className="modal-action-btn" style={actionBtnStyle} onClick={onOpenReconstruct}>
               {tr({ zh: '查看复盘', en: 'View reconstruct'
             })}
             </button>
           )}
-          <button className="danger" style={actionBtnStyle} onClick={onDelete}>
+          <button className="danger modal-action-btn" style={actionBtnStyle} onClick={onDelete}>
             {tr({ zh: '删除', en: 'Delete'
             })}
           </button>
-          <button style={actionBtnStyle} onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
+          <button className="modal-action-btn" style={actionBtnStyle} onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

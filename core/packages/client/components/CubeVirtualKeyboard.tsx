@@ -817,44 +817,44 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
         {/* 第 0 页——魔方公式符号 */}
         <div className="vkb-page" style={{ display: activePage === 0 ? undefined : 'none' }}>
           <div className="vkb-row">
-            <button type="button" data-key="U">U</button>
-            <button type="button" data-key="D">D</button>
-            <button type="button" data-key="F">F</button>
-            <button type="button" data-key="B">B</button>
-            <button type="button" data-key="R">R</button>
-            <button type="button" data-key="L">L</button>
+            <button type="button" className="vkb-key-btn" data-key="U">U</button>
+            <button type="button" className="vkb-key-btn" data-key="D">D</button>
+            <button type="button" className="vkb-key-btn" data-key="F">F</button>
+            <button type="button" className="vkb-key-btn" data-key="B">B</button>
+            <button type="button" className="vkb-key-btn" data-key="R">R</button>
+            <button type="button" className="vkb-key-btn" data-key="L">L</button>
           </div>
           <div className="vkb-row">
-            <button type="button" data-key="' " className={modifierDisabled ? 'vkb-disabled' : ''}>{'\''}
+            <button type="button" data-key="' " className={`vkb-key-btn${modifierDisabled ? ' vkb-disabled' : ''}`}>{'\''}
             </button>
-            <button type="button" data-key="2">2</button>
-            <button type="button" data-key="w " className={modifierDisabled ? 'vkb-disabled' : ''}>w</button>
-            <button type="button" data-key="/">/</button>
-            <button type="button" data-key="()">()</button>
-            <button type="button" data-key="[]">[]</button>
+            <button type="button" className="vkb-key-btn" data-key="2">2</button>
+            <button type="button" data-key="w " className={`vkb-key-btn${modifierDisabled ? ' vkb-disabled' : ''}`}>w</button>
+            <button type="button" className="vkb-key-btn" data-key="/">/</button>
+            <button type="button" className="vkb-key-btn" data-key="()">()</button>
+            <button type="button" className="vkb-key-btn" data-key="[]">[]</button>
           </div>
           <div className="vkb-row">
-            <button type="button" data-key="x">x</button>
-            <button type="button" data-key="y">y</button>
-            <button type="button" data-key="z">z</button>
-            <button type="button" data-key="M">M</button>
-            <button type="button" data-key="E">E</button>
-            <button type="button" data-key="S">S</button>
-            <button type="button" data-key="+">+</button>
-            <button type="button" data-key="-">-</button>
+            <button type="button" className="vkb-key-btn" data-key="x">x</button>
+            <button type="button" className="vkb-key-btn" data-key="y">y</button>
+            <button type="button" className="vkb-key-btn" data-key="z">z</button>
+            <button type="button" className="vkb-key-btn" data-key="M">M</button>
+            <button type="button" className="vkb-key-btn" data-key="E">E</button>
+            <button type="button" className="vkb-key-btn" data-key="S">S</button>
+            <button type="button" className="vkb-key-btn" data-key="+">+</button>
+            <button type="button" className="vkb-key-btn" data-key="-">-</button>
           </div>
           <div className="vkb-row vkb-row-bottom">
-            <button type="button" data-key="switch" className="vkb-fn">🌐</button>
+            <button type="button" data-key="switch" className="vkb-fn vkb-key-btn">🌐</button>
             {enableMarks && (
-              <button type="button" data-key="marks-trigger" className="vkb-fn vkb-marks-trigger"
+              <button type="button" data-key="marks-trigger" className="vkb-fn vkb-marks-trigger vkb-key-btn"
                 title="tap = underline · hold = more">
                 <u>U</u>
               </button>
             )}
-            <button type="button" data-key="tab" className="vkb-fn vkb-tab">Tab</button>
-            <button type="button" data-key=" " className="vkb-space">space</button>
-            <button type="button" data-key="enter" className="vkb-return">return</button>
-            <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del">
+            <button type="button" data-key="tab" className="vkb-fn vkb-tab vkb-key-btn">Tab</button>
+            <button type="button" data-key=" " className="vkb-space vkb-key-btn">space</button>
+            <button type="button" data-key="enter" className="vkb-return vkb-key-btn">return</button>
+            <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del vkb-key-btn">
               <svg width="24" height="16" viewBox="0 0 33 22">
                 <path d="M12.5 1h17A2.5 2.5 0 0 1 32 3.5v15a2.5 2.5 0 0 1-2.5 2.5h-17a2.5 2.5 0 0 1-1.77-.73l-9.5-9.5a1 1 0 0 1 0-1.41l9.5-9.5A2.5 2.5 0 0 1 12.5 1Z" fill="none" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M17 7l8 8M25 7l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -874,13 +874,13 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
         <div className="vkb-page" style={{ display: activePage === 1 ? undefined : 'none' }}>
           <div className="vkb-row">
             {['q','w','e','r','t','y','u','i','o','p'].map(k => (
-              <button key={k} type="button" data-key={qwertyKey(k)}>{qwertyKey(k)}</button>
+              <button key={k} type="button" className="vkb-key-btn" data-key={qwertyKey(k)}>{qwertyKey(k)}</button>
             ))}
           </div>
           <div className="vkb-row">
             <div className="vkb-spacer" style={{ flex: 0.5 }} />
             {['a','s','d','f','g','h','j','k','l'].map(k => (
-              <button key={k} type="button" data-key={qwertyKey(k)}>{qwertyKey(k)}</button>
+              <button key={k} type="button" className="vkb-key-btn" data-key={qwertyKey(k)}>{qwertyKey(k)}</button>
             ))}
             <div className="vkb-spacer" style={{ flex: 0.5 }} />
           </div>
@@ -888,7 +888,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
             <button
               type="button"
               data-key="shift"
-              className={`vkb-fn vkb-shift ${shiftState === 'single' ? 'vkb-shift-on' : ''} ${shiftState === 'capslock' ? 'vkb-shift-on vkb-capslock' : ''}`}
+              className={`vkb-fn vkb-shift vkb-key-btn ${shiftState === 'single' ? 'vkb-shift-on' : ''} ${shiftState === 'capslock' ? 'vkb-shift-on vkb-capslock' : ''}`}
             >
               {/* NOTE: Shift 图标用简单 SVG 代替外部引用 */}
               <svg width="20" height="20" viewBox={shiftState === 'capslock' ? '0 0 24 28' : '0 0 24 24'}>
@@ -901,9 +901,9 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
               </svg>
             </button>
             {['z','x','c','v','b','n','m'].map(k => (
-              <button key={k} type="button" data-key={qwertyKey(k)}>{qwertyKey(k)}</button>
+              <button key={k} type="button" className="vkb-key-btn" data-key={qwertyKey(k)}>{qwertyKey(k)}</button>
             ))}
-            <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del">
+            <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del vkb-key-btn">
               <svg width="24" height="16" viewBox="0 0 33 22">
                 <path d="M12.5 1h17A2.5 2.5 0 0 1 32 3.5v15a2.5 2.5 0 0 1-2.5 2.5h-17a2.5 2.5 0 0 1-1.77-.73l-9.5-9.5a1 1 0 0 1 0-1.41l9.5-9.5A2.5 2.5 0 0 1 12.5 1Z" fill="none" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M17 7l8 8M25 7l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -911,9 +911,9 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
             </button>
           </div>
           <div className="vkb-row vkb-row-bottom">
-            <button type="button" data-key="switch" className="vkb-fn">🌐</button>
-            <button type="button" data-key=" " className="vkb-space">space</button>
-            <button type="button" data-key="enter" className="vkb-return">return</button>
+            <button type="button" data-key="switch" className="vkb-fn vkb-key-btn">🌐</button>
+            <button type="button" data-key=" " className="vkb-space vkb-key-btn">space</button>
+            <button type="button" data-key="enter" className="vkb-return vkb-key-btn">return</button>
           </div>
         </div>
       </div>

@@ -65,7 +65,6 @@ import {
 } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import './scramble_stats.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface HistEntry {
   min: number;
@@ -1518,6 +1517,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         )}
         <label>
           <VariantSelect
+            className="scramble-stats-select"
             value={isBlockUi ? 'block' : variant}
             options={methodOptions}
             onChange={(val) => {
@@ -1534,6 +1534,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         </label>
         <label>
           <VariantSelect
+            className="scramble-stats-select"
             value={stage}
             options={isBlockUi ? blockStages : currentStages}
             onChange={(s) => {

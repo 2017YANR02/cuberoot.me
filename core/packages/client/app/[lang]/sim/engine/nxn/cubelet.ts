@@ -1,7 +1,7 @@
 // Ported from huazhechen/cuber (MIT) — src/cuber/cubelet.ts
 // 重构:不再每 cubelet 起 Mesh 子物,只保留 logical state(position/quaternion/colors[])。
 // 渲染交给 cube.instancedRenderer (2 个 InstancedMesh)。
-import { FACE, COLORS, SIZE } from "../define";
+import { FACE, COLORS, SIZE, STICKER_BORDER_WIDTH, STICKER_EDGE_WIDTH, STICKER_CORNER_RADIUS } from "../define";
 import * as THREE from "three";
 
 class Frame extends THREE.BufferGeometry {
@@ -94,7 +94,7 @@ function makeStickerShape(size: number, arrow: boolean): THREE.Shape {
   const bottom = size;
   const top = -size;
   const right = size;
-  const radius = size / 4;
+  const radius = STICKER_CORNER_RADIUS; // = size/4 at the canonical sticker size; shared with 原核黑缝 SDF
   const shape = new THREE.Shape();
   shape.moveTo(left, top + radius);
   shape.lineTo(left, bottom - radius);
@@ -150,8 +150,8 @@ const FACE_LABELS: Record<number, string> = {
 export default class Cubelet extends THREE.Group {
   /** Re-export of the shared unit scale (see define.SIZE). */
   public static readonly SIZE: number = SIZE;
-  private static readonly _BORDER_WIDTH: number = 3;
-  private static readonly _EDGE_WIDTH: number = 2;
+  private static readonly _BORDER_WIDTH: number = STICKER_BORDER_WIDTH;
+  private static readonly _EDGE_WIDTH: number = STICKER_EDGE_WIDTH;
   private static readonly _STICKER_DEPTH: number = 0.1;
   public static readonly _FRAME: Frame = new Frame(Cubelet.SIZE, Cubelet._BORDER_WIDTH);
   public static readonly _STICKER: Sticker = new Sticker(

@@ -33,7 +33,6 @@
 }
 
 .cmt-title { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
-.cmt-title-icon { color: var(--cmt-accent); flex-shrink: 0; }
 
 .cmt-bracket-icon {
     color: var(--cmt-accent);
@@ -407,40 +406,6 @@
     color: var(--cmt-text);
     font-size: 0.95rem;
     line-height: 1.7;
-}
-
-/* ── Source tab ── */
-
-.cmt-source-pane {
-    padding: 0;
-    overflow: hidden;
-}
-
-.cmt-source-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--cmt-border);
-    background: #F4F2EC;
-    gap: 10px;
-}
-.cmt-source-toolbar span {
-    font-family: var(--cmt-mono);
-    font-size: 0.82rem;
-    color: var(--cmt-text-sub);
-}
-
-.cmt-source-pre {
-    margin: 0;
-    padding: 14px 18px;
-    overflow: auto;
-    max-height: 70vh;
-    font-family: var(--cmt-mono);
-    font-size: 0.78rem;
-    line-height: 1.5;
-    color: var(--cmt-text);
-    background: var(--cmt-surface);
 }
 
 /* ── About tab ── */

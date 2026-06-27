@@ -1,7 +1,4 @@
 /* Sum-of-Ranks 个人最优组合工具 (.sor-tool / .sor-pb) — 排名页(/wca/results)与选手页共用 */
-.sor-tool { display: flex; flex-direction: column; gap: 8px; margin: 0 0 12px; }
-.sor-tool-label { font-size: 13px; color: var(--muted-foreground); }
-.sor-tool-picker { max-width: 360px; }
 .sor-tool-hint { font-size: 13px; color: var(--faint-foreground); }
 
 .sor-pb {
@@ -10,10 +7,6 @@
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
   border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
 }
-.sor-pb-head { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.sor-pb-head a { color: var(--foreground); text-decoration: none; }
-.sor-pb-head a:hover { color: var(--accent); }
-.sor-pb-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .sor-pb-type { font-size: 12px; color: var(--muted-foreground); min-width: 30px; }
 .sor-pb-rank { font-weight: 700; font-variant-numeric: tabular-nums; }
 .sor-pb-events { display: inline-flex; align-items: center; gap: 2px; }

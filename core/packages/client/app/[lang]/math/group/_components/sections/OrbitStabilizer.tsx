@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // ── Rotation matrices for the cube rotation group (order 24) ──────────────────
 // Each rotation is a 3×3 signed-permutation matrix with det = +1.
@@ -525,7 +524,7 @@ function typeNameEn(type: ObjectType): string {
 // Panel 1: Cube Explorer — pick an object type, see orbit on isometric SVG
 // ══════════════════════════════════════════════════════════════════════════════
 
-function CubeExplorerPanel({ lang }: { lang: Lang }) {
+function CubeExplorerPanel({}: { lang: Lang }) {
   const [type, setType] = useState<ObjectType>('face');
 
   const result = useMemo(() => computeOrbitAndStab(type), [type]);

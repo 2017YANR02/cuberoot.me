@@ -15,7 +15,6 @@ import { loadLlmTool } from '../llm/_lib/llm_data';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../stack/ts_intro.css';
 import '../stack/stack_intro.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 // One shell, two sections: /code/stack and /code/llm share this intro renderer.

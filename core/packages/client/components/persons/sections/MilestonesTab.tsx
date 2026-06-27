@@ -12,7 +12,6 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 interface Props {

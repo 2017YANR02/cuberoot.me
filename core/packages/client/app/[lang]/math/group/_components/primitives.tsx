@@ -13,7 +13,6 @@ import { useMemo, createContext, useContext, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
-import i18n from '@/i18n/i18n-client';
 
 // ── LaTeX rendering via KaTeX ───────────────────────────────────────────────
 export function TeX({ src }: { src: string }) {

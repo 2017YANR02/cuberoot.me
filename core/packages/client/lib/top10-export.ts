@@ -8,7 +8,6 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { axisFor, tickLabel, type Metric } from '@/lib/top10-axis';
 import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { COUNTRY_TO_CONTINENT, type Continent } from '@/lib/country-continents';
-import i18n from "@/i18n/i18n-client";
 
 export type { Metric };
 
@@ -471,7 +470,7 @@ export interface ExportOptions {
 
 export async function exportTop10Video(opts: ExportOptions): Promise<void> {
   const { events, eventId, metric, persons, comps, startMs, endMs, mode, speed,
-    rankChangeDates, isZh, abortRef, onProgress, previewCanvas, metricLabel, countryName } = opts;
+    rankChangeDates, isZh, abortRef, onProgress, previewCanvas, metricLabel } = opts;
   const raceMode: RaceMode = opts.raceMode ?? 'persons';
 
   // 预览 ctx(每 N 帧 drawImage 到外部 canvas,UX + 调试用)

@@ -138,19 +138,19 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
           <label className="sponsor-editor-row">
             <span>{tr({ zh: '头像链接', en: 'Avatar URL'
             })}</span>
-            <input value={draft.avatarUrl} onChange={e => set('avatarUrl', e.target.value)} placeholder="https://…" />
+            <input className="sponsor-editor-input" value={draft.avatarUrl} onChange={e => set('avatarUrl', e.target.value)} placeholder="https://…" />
           </label>
 
           <div className="sponsor-editor-row-2">
             <label>
               <span>{tr({ zh: '金额', en: 'Amount'
             })} *</span>
-              <input type="number" min="0" step="0.01" value={draft.amount} onChange={e => set('amount', e.target.value)} />
+              <input className="sponsor-editor-input" type="number" min="0" step="0.01" value={draft.amount} onChange={e => set('amount', e.target.value)} />
             </label>
             <label>
               <span>{tr({ zh: '货币', en: 'Currency'
             })}</span>
-              <select value={draft.currency} onChange={e => set('currency', e.target.value)}>
+              <select className="sponsor-editor-select" value={draft.currency} onChange={e => set('currency', e.target.value)}>
                 <option value="CNY">CNY ¥</option>
                 <option value="USD">USD $</option>
                 <option value="EUR">EUR €</option>
@@ -160,7 +160,7 @@ export default function SponsorEditor({ initial, onClose, onSaved }: Props) {
 
           <label className="sponsor-editor-row">
             <span>{tr({ zh: '留言', en: 'Message' })}</span>
-            <textarea rows={2} value={draft.message} onChange={e => set('message', e.target.value)} />
+            <textarea className="sponsor-editor-textarea" rows={2} value={draft.message} onChange={e => set('message', e.target.value)} />
           </label>
 
           {err && <div className="sponsor-editor-err">{err}</div>}

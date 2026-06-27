@@ -155,7 +155,6 @@ function AllResultsPageInner() {
     if (query.events === '__none__') return new Set();
     return new Set(query.events.split(',').filter(Boolean));
   }, [query.events]);
-  const selectedCount = RANK_EVENTS.filter(e => selectedSet.has(e)).length;
   const mode: 'single' | 'sor' | 'empty' =
     selectedSet.size === 0 ? 'empty' : selectedSet.size === 1 ? 'single' : 'sor';
   const singleEvent = mode === 'single' ? [...selectedSet][0]! : '333';
@@ -235,9 +234,13 @@ function AllResultsPageInner() {
     if (on) CANCELLED_EVENTS.forEach(e => cur.add(e)); else CANCELLED_EVENTS.forEach(e => cur.delete(e));
     setEventsSet([...cur]);
   };
-  const activeCategory = EVENT_CATEGORIES.find(
-    c => c.events.length === selectedSet.size && c.events.every(e => selectedSet.has(e)),
-  )?.key;
+  const toggleCategory = (cat: typeof EVENT_CATEGORIES[0]) => {
+    const cur = new Set(selectedSet);
+    const allIn = cat.events.every(e => cur.has(e));
+    if (allIn) cat.events.forEach(e => cur.delete(e)); else cat.events.forEach(e => cur.add(e));
+    setQuery({ events: serializeEvents(cur), page: null });
+  };
+  const isCatActive = (cat: typeof EVENT_CATEGORIES[0]) => cat.events.every(e => selectedSet.has(e));
 
   // 单项控件
   const update = (k: string, v: string, resetPage = true) => {
@@ -462,19 +465,6 @@ function AllResultsPageInner() {
     },
   }), [timeline]);
 
-  const subtitle = mode === 'empty'
-    ? tr({ zh: '未选择项目:全体选手 — 姓名分布(词数 / 字符长度)或按首字母 / 名字长度浏览名录', en: 'No event selected: all competitors — name distribution (word count / length), or browse the A–Z directory by name / length' })
-    : mode === 'sor'
-      ? tr({ zh: '把所选项目的(世界 / 国家)排名相加;缺项以该项目「参赛人数+1」(比倒数第一再差一名)计入。「未登领奖台」按比赛决赛(final round)实际名次过滤', en: 'Sum of (world / country) ranks across selected events; missing events default to "participants+1" (one worse than last). "No podium" filters by actual final-round position' })
-      : (show === 'persons'
-          ? (basis === 'cumulative'
-              ? tr({ zh: '截至所选年末的累积最佳排名(全球 / 单国家)', en: 'Ranking by best up to end of the selected year (worldwide / by country)' })
-              : tr({ zh: '仅所选年(或月)内取得的最佳排名(全球 / 单国家)', en: 'Ranking by best within the selected year (or month)' }))
-          : (basis === 'cumulative'
-              ? tr({ zh: '截至所选年末的全部 valid 成绩,按值升序', en: 'All valid results up to end of the selected year, sorted by value' })
-              : tr({ zh: '所选年 / 月内的全部 valid 成绩,按值升序;可叠加国家 / 选手或比赛搜索', en: 'All valid results within the selected year / month, sorted by value' })));
-
-  const eventsLabel = isZh ? `项目(已选 ${selectedCount} / ${RANK_EVENTS.length})` : `Events (${selectedCount}/${RANK_EVENTS.length} selected)`;
 
   // 顶层「类型」下拉(单次 / 平均 = 排名口径;其余派生指标 = 嵌入 wr_metric 对应指标视图)。
   // 同时是 排名 ↔ 指标 的切换入口,故各模式(单项 / 名次和 / 空态 / 指标视图)都渲染一份,保证哪都能切。
@@ -482,7 +472,7 @@ function AllResultsPageInner() {
   const typeSelect = (
     <div className="wse-filter wse-filter-show">
       <label htmlFor="wse-type-view">{tr({ zh: '类型', en: 'Type' })}</label>
-      <select id="wse-type-view" value={typeView} onChange={(e) => onTypeViewChange(e.target.value)}>
+      <select id="wse-type-view" className="wse-filter-select" value={typeView} onChange={(e) => onTypeViewChange(e.target.value)}>
         {WR_METRICS.map(m => (
           <option key={m.id} value={m.id}>{tr({ zh: m.zh, en: m.en })}</option>
         ))}
@@ -495,7 +485,7 @@ function AllResultsPageInner() {
   const genderSelect = (
     <div className="wse-filter wse-filter-show">
       <label htmlFor="wse-gender">{tr({ zh: '性别', en: 'Gender' })}</label>
-      <select id="wse-gender" value={gender} onChange={(e) => update('gender', e.target.value === 'all' ? '' : e.target.value)}>
+      <select id="wse-gender" className="wse-filter-select" value={gender} onChange={(e) => update('gender', e.target.value === 'all' ? '' : e.target.value)}>
         <option value="all">{tr({ zh: '所有', en: 'All' })}</option>
         <option value="m">{tr({ zh: '男', en: 'Male' })}</option>
         <option value="f">{tr({ zh: '女', en: 'Female' })}</option>
@@ -522,7 +512,6 @@ function AllResultsPageInner() {
             </Link>
           )}
         </h1>
-        {view === 'rank' && <p className="wse-subtitle">{subtitle}</p>}
       </header>
 
       {/* ============ 指标视图:嵌入退役的 wr_metric;指标由「类型」下拉受控(隐藏其内置选择器)。
@@ -550,16 +539,16 @@ function AllResultsPageInner() {
       {/* 项目选择(共用):分类快选 + 多选事件条 */}
       <div className="wse-filters">
         <div className="wse-filter" style={{ minWidth: '100%' }}>
-          <label>{eventsLabel}</label>
+          <label>{tr({ zh: '项目', en: 'Events' })}</label>
           <div className="wse-events-bar">
-            <button type="button" onClick={selectAll}>{tr({ zh: '全选', en: 'All' })}</button>
-            <button type="button" onClick={clearAll}>{tr({ zh: '清除', en: 'None' })}</button>
+            <button type="button" className="wse-cat-btn" onClick={selectAll}>{tr({ zh: '全选', en: 'All' })}</button>
+            <ClearButton variant="standalone" onClick={clearAll} isZh={isZh} />
             {EVENT_CATEGORIES.map(cat => (
               <button
                 key={cat.key}
                 type="button"
-                onClick={() => setEventsSet(cat.events)}
-                className={activeCategory === cat.key ? 'wse-cat-on' : undefined}
+                onClick={() => toggleCategory(cat)}
+                className={isCatActive(cat) ? 'wse-cat-btn wse-cat-on' : 'wse-cat-btn'}
               >
                 {tr(cat)}
               </button>
@@ -617,10 +606,10 @@ function AllResultsPageInner() {
             <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '排序', en: 'Sort' })}</label>
               <div className="wse-show-toggle">
-                <button type="button" className={psort === 'name' ? 'active' : ''} onClick={() => setSort('name')}>
+                <button type="button" className={`wse-show-btn${psort === 'name' ? ' active' : ''}`} onClick={() => setSort('name')}>
                   {tr({ zh: '首字母', en: 'A–Z' })}
                 </button>
-                <button type="button" className={psort === 'len' ? 'active' : ''} onClick={() => setSort('len')}>
+                <button type="button" className={`wse-show-btn${psort === 'len' ? ' active' : ''}`} onClick={() => setSort('len')}>
                   {tr({ zh: '名字长度', en: 'Name length' })}
                 </button>
               </div>
@@ -718,7 +707,7 @@ function AllResultsPageInner() {
             </div>
             <div className="wse-filter">
               <label>{tr({ zh: '年份', en: 'Year' })}</label>
-              <select value={year} onChange={e => update('year', e.target.value === '0' ? '' : e.target.value)}>
+              <select className="wse-filter-select" value={year} onChange={e => update('year', e.target.value === '0' ? '' : e.target.value)}>
                 {show === 'results' && <option value={0}>{tr({ zh: '全部年份', en: 'All years' })}</option>}
                 {years.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
@@ -726,6 +715,7 @@ function AllResultsPageInner() {
             <div className="wse-filter">
               <label>{tr({ zh: '月份', en: 'Month' })}</label>
               <select
+                className="wse-filter-select"
                 value={basis === 'cumulative' ? 0 : month}
                 disabled={basis === 'cumulative'}
                 title={basis === 'cumulative' ? tr({ zh: '截至口径按年末,不分月', en: 'Cumulative basis is year-end; month not applicable' }) : undefined}
@@ -739,7 +729,7 @@ function AllResultsPageInner() {
               <div className="wse-filter wse-filter-q">
                 <label>{tr({ zh: '搜索', en: 'Search' })}</label>
                 <div className="wse-q-wrap">
-                  <input type="search" value={qInput} onChange={e => setQInput(e.target.value)} placeholder={tr({ zh: '选手或比赛名', en: 'Person or competition' })} />
+                  <input type="search" className="wse-q-input" value={qInput} onChange={e => setQInput(e.target.value)} placeholder={tr({ zh: '选手或比赛名', en: 'Person or competition' })} />
                   {qInput && <ClearButton onClick={() => { setQInput(''); update('q', ''); }} isZh={isZh} preserveFocus />}
                 </div>
               </div>
@@ -883,7 +873,7 @@ function AllResultsPageInner() {
                   {census && (census.years?.length ?? 0) > 1 && census.year != null && (
                     <label className="sor-census-year">
                       {tr({ zh: '截至', en: 'As of' })}
-                      <select value={census.year} onChange={e => setCensusYear(parseInt(e.target.value, 10))}>
+                      <select className="sor-census-year-select" value={census.year} onChange={e => setCensusYear(parseInt(e.target.value, 10))}>
                         {[...census.years].reverse().map(y => <option key={y} value={y}>{y}</option>)}
                       </select>
                     </label>

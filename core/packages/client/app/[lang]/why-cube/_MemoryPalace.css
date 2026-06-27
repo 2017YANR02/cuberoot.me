@@ -195,10 +195,7 @@
     opacity: 1;
     transform: none;
   }
-}
-
-.mp-reduced .mp-anim,
-.mp-reduced .mp-fade,
+}.mp-reduced .mp-anim,
 .mp-reduced .mp-stop {
   animation: none !important;
   opacity: 1 !important;

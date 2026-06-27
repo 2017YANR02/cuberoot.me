@@ -9,7 +9,6 @@ import ArchNav from '../_components/ArchNav';
 import { MobilePipelineSVG } from '../_components/ArchSvgs';
 import { DECISIONS, DETAILS } from '../_lib/arch-data';
 import '../architecture.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 export default function ArchDecisionsPage() {

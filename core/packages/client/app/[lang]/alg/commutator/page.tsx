@@ -11,13 +11,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { ExternalLink, HelpCircle, Copy, Check } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { search as cmtSearch, expand as cmtExpand } from './engine';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './commutator.css';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 type Tab = 'home' | 'decompose' | 'excel' | 'intro' | 'about';
@@ -91,7 +89,6 @@ function buildExpandOpts(s: Settings, algorithm: string) {
 }
 
 export default function CommutatorPage() {
-    const { i18n } = useTranslation();
     useDocumentTitle('交换子', 'Commutator');
     const t = useT();
 

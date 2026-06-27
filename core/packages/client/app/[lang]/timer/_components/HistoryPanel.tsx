@@ -11,7 +11,6 @@ import type { TagId } from '../_lib/storage/auto_tag';
 import { ClearButton } from '@/components/ClearButton';
 import { RecordBadge } from '@/components/RecordBadge';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   solves: Solve[];
@@ -704,6 +703,7 @@ export default function HistoryPanel({
       <div className="history-search">
         <div className="history-search-input-wrap">
           <input
+            className="history-search-input"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

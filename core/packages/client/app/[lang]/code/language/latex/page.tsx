@@ -8,7 +8,6 @@ import 'katex/dist/katex.min.css';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './latex_intro.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 function TeX({ src }: { src: string }) {

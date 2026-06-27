@@ -11,7 +11,6 @@ import { CONTINENT_NAMES, CONTINENT_TO_ISO2S, ISO2_TO_CONTINENT, isContinentCode
 import { ClearButton } from '../ClearButton';
 import './country_input.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface SharedProps {
   placeholder?: string;

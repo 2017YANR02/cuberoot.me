@@ -281,21 +281,22 @@ export default function Sq1ReconPlayer({
         {backView && <div ref={backFrameRef} className="sq1-recon-backview" aria-hidden />}
       </div>
       <div className="sq1-recon-controls">
-        <button type="button" onClick={() => jumpToStep(0)} disabled={step === 0} aria-label="Reset">
+        <button type="button" className="sq1-recon-ctrl-btn" onClick={() => jumpToStep(0)} disabled={step === 0} aria-label="Reset">
           <RotateCcw size={14} />
         </button>
-        <button type="button" onClick={() => jumpToStep(step - 1)} disabled={step === 0} aria-label="Step back">
+        <button type="button" className="sq1-recon-ctrl-btn" onClick={() => jumpToStep(step - 1)} disabled={step === 0} aria-label="Step back">
           <SkipBack size={14} />
         </button>
         <button
           type="button"
+          className="sq1-recon-ctrl-btn"
           onClick={() => { if (atEnd) jumpToStep(0); setPlaying(p => !p); }}
           disabled={total === 0}
           aria-label={playing ? 'Pause' : 'Play'}
         >
           {playing ? <Pause size={14} /> : <Play size={14} />}
         </button>
-        <button type="button" onClick={() => jumpToStep(step + 1)} disabled={atEnd} aria-label="Step forward">
+        <button type="button" className="sq1-recon-ctrl-btn" onClick={() => jumpToStep(step + 1)} disabled={atEnd} aria-label="Step forward">
           <SkipForward size={14} />
         </button>
         <input

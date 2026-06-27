@@ -8,7 +8,6 @@
  */
 import { useMemo, useState } from 'react';
 import { TeX } from '../../god/_components/Tex';
-import i18n from "@/i18n/i18n-client";
 
 // 论文 Figure 5 精确数字。Bin d=11..20。
 // d=11 -> 1, d=12 -> 0, d=13 -> 7, d=14 -> 67, d=15 -> 956,
@@ -130,9 +129,9 @@ export default function DistanceHistogram({
         <div className="dg-ctrl">
           <div className="dg-ctrl-label"><span>{t('Y 轴', 'Y axis')}</span></div>
           <div className="dg-radio-row">
-            <button type="button" className={yScale === 'linear' ? 'is-active' : ''}
+            <button type="button" className={`dg-radio-btn${yScale === 'linear' ? ' is-active' : ''}`}
                     onClick={() => setYScale('linear')}>{t('线性', 'Linear')}</button>
-            <button type="button" className={yScale === 'log' ? 'is-active' : ''}
+            <button type="button" className={`dg-radio-btn${yScale === 'log' ? ' is-active' : ''}`}
                     onClick={() => setYScale('log')}>Log</button>
           </div>
         </div>

@@ -20,7 +20,6 @@ import { Pencil, Trash2, Flag } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { deleteArticle, reportArticle } from '@/lib/article-api';
-import i18n from '@/i18n/i18n-client';
 
 interface ArticleActionsProps {
   slug: string;
@@ -28,7 +27,7 @@ interface ArticleActionsProps {
   lang: string;
 }
 
-export default function ArticleActions({ slug, authorWcaId, lang }: ArticleActionsProps) {
+export default function ArticleActions({ slug, authorWcaId }: ArticleActionsProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);

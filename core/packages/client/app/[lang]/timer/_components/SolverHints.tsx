@@ -141,6 +141,7 @@ function SmallPuzzleHints({ scramble, isZh, event }: SmallProps) {
       <div className="solver-hints" style={hintsStyle}>
         <button
           type="button"
+          className="solver-hint-btn"
           onClick={() => setOpen(o => !o)}
           style={toggleBtnStyle}
           aria-expanded={open}
@@ -247,6 +248,7 @@ function Sq1Hints({ scramble, isZh }: Sq1Props) {
       <div className="solver-hints" style={hintsStyle}>
         <button
           type="button"
+          className="solver-hint-btn"
           onClick={() => setOpen(o => !o)}
           style={toggleBtnStyle}
           aria-expanded={open}
@@ -348,6 +350,7 @@ function MegaHints({ scramble, isZh }: MegaProps) {
       <div className="solver-hints" style={hintsStyle}>
         <button
           type="button"
+          className="solver-hint-btn"
           onClick={() => setOpen(o => !o)}
           style={toggleBtnStyle}
           aria-expanded={open}

@@ -16,7 +16,6 @@ import { Bld3Hub } from '../3bld/_components/Bld3Hub';
 import { PUZZLE_EVENT, segToEvent } from '../_events';
 import '../trainer.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 const TRAINABLE_SETS: Record<AlgPuzzle, string[]> = Object.fromEntries(
   ALG_PUZZLES.map(p => [p, ALG_CATALOG[p].map(s => s.slug)])

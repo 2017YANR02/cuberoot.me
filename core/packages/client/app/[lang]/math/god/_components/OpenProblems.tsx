@@ -5,7 +5,6 @@
  * 每个 panel 给出 gap + 收紧方向 + 可能的"赏金"工作量。
  */
 import { MathText } from './Tex';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 interface Problem {

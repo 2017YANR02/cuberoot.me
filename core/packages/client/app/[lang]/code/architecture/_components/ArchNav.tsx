@@ -2,8 +2,6 @@
 
 import Link from '@/components/AppLink';
 import { usePathname } from 'next/navigation';
-import { useLang } from '../../_lib/Lang';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 const TABS = [
@@ -14,7 +12,6 @@ const TABS = [
 ] as const;
 
 export default function ArchNav() {
-  const lang = useLang();
   const pathname = usePathname();
   // strip /zh or /en prefix
   const base = pathname.replace(/^\/(zh|en)/, '');

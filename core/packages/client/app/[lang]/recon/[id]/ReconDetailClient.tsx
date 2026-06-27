@@ -807,6 +807,7 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
         <div className="same-round-paste-wrap">
           <div className="same-round-paste-box">
             <textarea
+              className="same-round-paste-textarea"
               autoFocus
               value={pasteRaw}
               onChange={e => handlePasteChange(e.target.value)}

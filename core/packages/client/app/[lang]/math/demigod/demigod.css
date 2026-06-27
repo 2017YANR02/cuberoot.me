@@ -47,7 +47,6 @@
   color: var(--dg-text-sub); text-decoration: none; font-size: 0.92rem;
 }
 .dg-back:hover { color: var(--dg-text); }
-.dg-header-right { display: flex; gap: 0.5rem; align-items: center; }
 
 .dg-main {
   max-width: 980px;
@@ -144,11 +143,6 @@
   font-size: 0.95rem; font-weight: 600;
   margin: 1.2rem 0 0.5rem; color: var(--dg-text-sub);
   letter-spacing: 0.02em; text-transform: uppercase;
-}
-.dg-sec-lead {
-  font-size: 1rem; line-height: 1.7;
-  color: var(--dg-text-sub); margin: 0.5rem 0 1.25rem;
-  max-width: 760px;
 }
 .dg-section p { line-height: 1.75; margin: 0.85rem 0; }
 .dg-section ul, .dg-section ol { line-height: 1.75; padding-left: 1.4rem; }
@@ -317,9 +311,6 @@
   width: 100%; accent-color: var(--dg-accent);
   margin: 0; cursor: pointer;
 }
-.dg-ctrl-pair {
-  display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;
-}
 .dg-radio-row {
   display: inline-flex; gap: 2px;
   background: var(--dg-surface-2);
@@ -327,18 +318,18 @@
   border-radius: 6px;
   padding: 2px;
 }
-.dg-radio-row button {
+.dg-radio-row .dg-radio-btn {
   background: transparent; border: 0; color: var(--dg-text-sub);
   padding: 4px 10px; border-radius: 4px;
   font-size: 0.82rem; font-family: inherit;
   cursor: pointer;
   font-variant-numeric: tabular-nums;
 }
-.dg-radio-row button.is-active {
+.dg-radio-row .dg-radio-btn.is-active {
   background: var(--dg-accent);
   color: var(--background);
 }
-.dg-radio-row button:hover:not(.is-active) {
+.dg-radio-row .dg-radio-btn:hover:not(.is-active) {
   color: var(--dg-text);
   background: color-mix(in srgb, var(--dg-accent) 12%, transparent);
 }
@@ -544,22 +535,6 @@
   color: var(--dg-text-sub);
 }
 
-/* ─── pseudo-code ──────────────────────────────────────────────────── */
-
-.dg-code {
-  font-family: var(--dg-mono);
-  font-size: 0.85rem;
-  background: var(--dg-surface-2);
-  border: 1px solid var(--dg-border);
-  border-radius: 8px;
-  padding: 0.85rem 1rem;
-  overflow-x: auto;
-  line-height: 1.55;
-  white-space: pre;
-  margin: 1rem 0;
-  color: var(--dg-text);
-}
-
 /* ─── refs ─────────────────────────────────────────────────────────── */
 
 .dg-refs {
@@ -575,10 +550,6 @@
 }
 .dg-refs a { color: var(--dg-accent); text-decoration: none; }
 .dg-refs a:hover { text-decoration: underline; }
-
-/* katex sizing in inline runs */
-.dg-tex { font-size: 1em; }
-.dg-tex-block { display: block; margin: 0.8rem 0; }
 
 /* tweaks for narrow screens */
 @media (max-width: 560px) {

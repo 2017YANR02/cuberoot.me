@@ -41,7 +41,6 @@ import { ClearButton } from '@/components/ClearButton';
 // Preview reuses the reader's .article-page / .article-content typography so preview == reader.
 import '@/app/[lang]/article/article.css';
 import '@/app/[lang]/article/editor.css';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 // CodeMirror chunk stays out of the server / SSG bundle. ssr:false → only mounts client-side.

@@ -16,7 +16,6 @@ interface ClearButtonProps {
 
 export function ClearButton({
   onClick,
-  isZh,
   variant = 'inline',
   preserveFocus,
   className,

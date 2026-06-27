@@ -10,7 +10,6 @@ import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { createCommand, updateCommand, deleteCommand, listCommands, type OpsCommandInput } from '@/lib/ops-api';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './ops.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 type Lang = 'zh' | 'en';
@@ -361,7 +360,7 @@ function toInput(op: OpCommand): OpsCommandInput {
   };
 }
 
-function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
+function OpsEditor({ mode, initial, onClose, onSaved }: {
   mode: 'add' | 'edit';
   initial?: OpCommand;
   lang: Lang;
@@ -432,40 +431,40 @@ function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
             <label className="ops-field">
               <span>id <em>{tr({ zh: '(小写 kebab,创建后不可改)', en: '(lowercase kebab, immutable after create)'
             })}</em></span>
-              <input value={form.id ?? ''} onChange={(e) => set('id', e.target.value)} placeholder="my-new-command" />
+              <input className="ops-field-input" value={form.id ?? ''} onChange={(e) => set('id', e.target.value)} placeholder="my-new-command" />
             </label>
           )}
           <div className="ops-field-row">
             <label className="ops-field">
               <span>category {isEdit && <em>{tr({ zh: '(改分类要删后重建)', en: '(to change, delete + re-create)'
             })}</em>}</span>
-              <select value={form.category} onChange={(e) => set('category', e.target.value)} disabled={isEdit}>
+              <select className="ops-field-select" value={form.category} onChange={(e) => set('category', e.target.value)} disabled={isEdit}>
                 {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.en} ({c.zh})</option>)}
               </select>
             </label>
             <label className="ops-field">
               <span>cwd <em>(optional)</em></span>
-              <input value={form.cwd ?? ''} onChange={(e) => set('cwd', e.target.value)} placeholder="core/" />
+              <input className="ops-field-input" value={form.cwd ?? ''} onChange={(e) => set('cwd', e.target.value)} placeholder="core/" />
             </label>
           </div>
           <div className="ops-field-row">
             <label className="ops-field">
               <span>title_zh</span>
-              <input value={form.title_zh} onChange={(e) => set('title_zh', e.target.value)} />
+              <input className="ops-field-input" value={form.title_zh} onChange={(e) => set('title_zh', e.target.value)} />
             </label>
             <label className="ops-field">
               <span>title_en</span>
-              <input value={form.title_en} onChange={(e) => set('title_en', e.target.value)} />
+              <input className="ops-field-input" value={form.title_en} onChange={(e) => set('title_en', e.target.value)} />
             </label>
           </div>
           <div className="ops-field-row">
             <label className="ops-field">
               <span>desc_zh</span>
-              <textarea value={form.desc_zh} onChange={(e) => set('desc_zh', e.target.value)} rows={3} />
+              <textarea className="ops-field-textarea" value={form.desc_zh} onChange={(e) => set('desc_zh', e.target.value)} rows={3} />
             </label>
             <label className="ops-field">
               <span>desc_en</span>
-              <textarea value={form.desc_en} onChange={(e) => set('desc_en', e.target.value)} rows={3} />
+              <textarea className="ops-field-textarea" value={form.desc_en} onChange={(e) => set('desc_en', e.target.value)} rows={3} />
             </label>
           </div>
           <label className="ops-field">
@@ -473,8 +472,8 @@ function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
             <div className="ops-chip-edit">
               {form.chips.map((c, i) => (
                 <div key={i} className="ops-chip-row">
-                  <input placeholder="zh" value={c.zh} onChange={(e) => onChipChange(i, 'zh', e.target.value)} />
-                  <input placeholder="en" value={c.en} onChange={(e) => onChipChange(i, 'en', e.target.value)} />
+                  <input className="ops-field-input ops-chip-row-input" placeholder="zh" value={c.zh} onChange={(e) => onChipChange(i, 'zh', e.target.value)} />
+                  <input className="ops-field-input ops-chip-row-input" placeholder="en" value={c.en} onChange={(e) => onChipChange(i, 'en', e.target.value)} />
                   <button type="button" className="ops-chip-del" onClick={() => onChipDel(i)} aria-label="remove"><X size={12} /></button>
                 </div>
               ))}
@@ -484,12 +483,12 @@ function OpsEditor({ mode, initial, lang, onClose, onSaved }: {
           <label className="ops-field">
             <span>cmd <em>{form.category === 'prompt' ? tr({ zh: '(提示词正文)', en: '(prompt body)'
                                   }) : tr({ zh: '(shell 命令,多行 \\n)', en: '(shell command, multi-line ok)' })}</em></span>
-            <textarea className="ops-field-mono" value={form.cmd} onChange={(e) => set('cmd', e.target.value)} rows={6} />
+            <textarea className="ops-field-mono ops-field-textarea" value={form.cmd} onChange={(e) => set('cmd', e.target.value)} rows={6} />
           </label>
           <label className="ops-field">
             <span>variants <em>{tr({ zh: '(JSON 数组,留空即无)', en: '(JSON array, leave empty for none)'
             })}</em></span>
-            <textarea className="ops-field-mono" value={variantsJson} onChange={(e) => setVariantsJson(e.target.value)} rows={5} spellCheck={false} />
+            <textarea className="ops-field-mono ops-field-textarea" value={variantsJson} onChange={(e) => setVariantsJson(e.target.value)} rows={5} spellCheck={false} />
           </label>
           {error && <div className="ops-modal-error">{error}</div>}
         </div>

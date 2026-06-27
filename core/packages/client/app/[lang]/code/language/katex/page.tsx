@@ -8,7 +8,6 @@ import 'katex/dist/katex.min.css';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './katex_intro.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 function TeX({ src }: { src: string }) {
@@ -942,10 +941,11 @@ export default function KatexIntroPage() {
                   <div className="kx-playground-input">
                     <div className="kx-presets">
                       {PRESETS.map((p) => (
-                        <button key={p.label} onClick={() => setPlaygroundSrc(p.src)} type="button">{p.label}</button>
+                        <button key={p.label} className="kx-preset-btn" onClick={() => setPlaygroundSrc(p.src)} type="button">{p.label}</button>
                       ))}
                     </div>
                     <textarea
+                      className="kx-playground-textarea"
                       value={playgroundSrc}
                       onChange={(e) => setPlaygroundSrc(e.target.value)}
                       spellCheck={false}

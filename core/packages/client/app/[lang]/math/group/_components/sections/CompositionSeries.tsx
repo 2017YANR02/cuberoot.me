@@ -509,7 +509,7 @@ function SeriesBuilderPanel({ lang }: { lang: 'zh' | 'en' }) {
 }
 
 function SeriesLadderSVG({
-  rungs, factorOrders, lang,
+  rungs, factorOrders,
 }: {
   rungs: RungDef[];
   factorOrders: number[];

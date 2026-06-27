@@ -10,7 +10,6 @@ import { RequestLifecycleSVG, StatsPipelineSVG } from '../_components/ArchSvgs';
 import RequestTracer from '../_components/RequestTracer';
 import PageLoadFlow from '../_components/PageLoadFlow';
 import '../architecture.css';
-import i18n from '@/i18n/i18n-client';
 
 export default function ArchFlowPage() {
   const { i18n } = useTranslation();

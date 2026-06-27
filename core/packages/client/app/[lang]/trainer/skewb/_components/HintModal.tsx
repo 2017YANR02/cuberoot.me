@@ -15,7 +15,7 @@ interface Props {
   isZh: boolean;
 }
 
-export default function HintModal({ open, onClose, id, setup, solutions, isZh }: Props) {
+export default function HintModal({ open, onClose, id, setup, solutions }: Props) {
   const titleId = useId();
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
 

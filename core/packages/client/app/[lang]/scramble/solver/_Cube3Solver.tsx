@@ -20,7 +20,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { useTranslation } from 'react-i18next';
 import { Loader2, Trash2, Upload, Download, Sparkles, Shuffle, X } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { streamApiUrl } from '@/lib/api-base';
@@ -38,7 +37,6 @@ import {
 } from './_kociemba/cube';
 import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from './_InteractiveCubeNet';
 import Interactive3DCube from './_Interactive3DCube';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 import SolveTabs from "../_components/SolveTabs";
 
@@ -89,7 +87,6 @@ function spawnKociembaWorker(): Worker {
 }
 
 export default function Cube3Solver() {
-  const { i18n } = useTranslation();
   useDocumentTitle('求解器', 'Solver');
   const t = useT();
 

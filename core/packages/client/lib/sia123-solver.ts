@@ -72,9 +72,6 @@ const EDGE_GROUPS: ReadonlyArray<ReadonlyArray<number>> = [
 ];
 const EDGE_DEFS: EdgePdbDef[] = EDGE_GROUPS.map((g) => makeEdgePdbDef(MODEL_A, g));
 const EDGE_DEFS_B: EdgePdbDef[] = EDGE_GROUPS.map((g) => makeEdgePdbDef(MODEL_B, g));
-/** Back-compat single-model alias (cube A) for the builder/test helpers below. */
-const MODEL = MODEL_A;
-
 /** Reachable corner-orbit size of one half (BFS-saturated). */
 export const SIA123_CORNER_ORBIT = 29160;
 /** Reachable edge-orbit size of one half (BFS-saturated). */

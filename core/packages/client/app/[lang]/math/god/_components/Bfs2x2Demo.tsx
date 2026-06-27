@@ -10,7 +10,6 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { MathText } from './Tex';
-import i18n from "@/i18n/i18n-client";
 
 interface Props { isZh: boolean; }
 

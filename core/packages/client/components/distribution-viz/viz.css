@@ -53,21 +53,6 @@
   margin-bottom: 28px;
 }
 
-.viz-page .back-link {
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
-  white-space: nowrap;
-}
-.viz-page .back-link:hover {
-  color: var(--accent-cyan);
-}
-
-.viz-page .title-block {
-  flex: 1;
-}
-
 .viz-page h1 {
   font-size: 22px;
   font-weight: 600;
@@ -81,16 +66,6 @@
   align-items: center;
   gap: 8px;
 }
-.viz-page .viz-title-help {
-  display: inline-flex;
-  align-items: center;
-  -webkit-text-fill-color: unset;
-  color: var(--text-secondary);
-  opacity: 0.55;
-  text-decoration: none;
-  transition: opacity 0.15s, color 0.15s;
-}
-.viz-page .viz-title-help:hover { opacity: 1; color: var(--accent-cyan); }
 
 .viz-page .subtitle {
   font-size: 13px;
@@ -497,21 +472,6 @@
   padding: 7px;
 }
 
-.viz-page .toolbar-select {
-  padding: 6px 10px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  background: rgba(20, 20, 40, 0.8);
-  color: var(--text-primary);
-  font-size: 13px;
-  font-family: 'Inter', sans-serif;
-  cursor: pointer;
-  outline: none;
-}
-.viz-page .toolbar-select:focus {
-  border-color: var(--accent-cyan);
-}
-
 .viz-page .toolbar-search {
   flex: 1;
   min-width: 120px;
@@ -560,14 +520,6 @@
   vertical-align: middle;
   margin-right: 4px;
   border-radius: 2px;
-}
-.viz-page .viz-title-flag {
-  display: inline-block;
-  width: 24px;
-  height: 18px;
-  vertical-align: middle;
-  margin-right: 6px;
-  border-radius: 3px;
 }
 
 .viz-page .player-chip .chip-remove {
@@ -716,9 +668,6 @@
   width: 22px;
   transform: translateX(12px);
 }
-.viz-page .legend-diamond { color: #00e6ff; }
-.viz-page .legend-circle  { color: rgba(0,230,255,0.7); }
-.viz-page .legend-ghost   { color: rgba(0,230,255,0.3); }
 
 /* ─── 同步模式切换 ─── */
 .viz-page .sync-group {

@@ -61,8 +61,8 @@ function SponsorCard({ sponsor, isZh, admin, onEdit, onDelete }: {
       {sponsor.message && <span className="sponsor-message">{sponsor.message}</span>}
       {admin && (
         <div className="sponsor-admin">
-          <button onClick={() => onEdit(sponsor)} aria-label="edit"><Pencil size={13} /></button>
-          <button className="sponsor-admin-del" onClick={() => onDelete(sponsor)} aria-label="delete"><Trash2 size={13} /></button>
+          <button className="sponsor-admin-btn" onClick={() => onEdit(sponsor)} aria-label="edit"><Pencil size={13} /></button>
+          <button className="sponsor-admin-del sponsor-admin-btn" onClick={() => onDelete(sponsor)} aria-label="delete"><Trash2 size={13} /></button>
         </div>
       )}
     </div>

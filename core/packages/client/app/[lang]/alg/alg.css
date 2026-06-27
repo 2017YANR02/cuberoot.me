@@ -670,7 +670,7 @@ html[data-theme=dark] .alg-root {
 }
 
 /* setup label 里的 textarea 强制看起来像普通 input(单行、不可拉伸、跟 input 同字体字号) */
-.alg-admin-setup-label textarea {
+.alg-admin-setup-label .alg-admin-setup-textarea {
   resize: none;
   overflow: hidden;
   font-family: inherit !important;
@@ -850,9 +850,9 @@ a.alg-community-author:hover {
   gap: 2px;
   margin-left: auto;
 }
-.alg-community-actions button,
-.alg-community-edit button,
-.alg-community-add button {
+.alg-community-actions .alg-community-action-btn,
+.alg-community-edit .alg-community-edit-btn,
+.alg-community-add .alg-community-add-icon-btn {
   background: transparent;
   border: none;
   padding: 2px 4px;
@@ -862,9 +862,9 @@ a.alg-community-author:hover {
   display: inline-flex;
   align-items: center;
 }
-.alg-community-actions button:hover,
-.alg-community-edit button:hover,
-.alg-community-add button:hover {
+.alg-community-actions .alg-community-action-btn:hover,
+.alg-community-edit .alg-community-edit-btn:hover,
+.alg-community-add .alg-community-add-icon-btn:hover {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
   color: var(--foreground);
 }
@@ -1029,7 +1029,7 @@ a.alg-community-author:hover {
   padding: 12px 16px; border-bottom: 1px solid var(--border-default);
 }
 .alg-admin-modal-head h2 { margin: 0; font-size: 1rem; }
-.alg-admin-modal-head button { background: none; border: none; cursor: pointer; color: inherit; }
+.alg-admin-modal-head .alg-admin-modal-head-btn { background: none; border: none; cursor: pointer; color: inherit; }
 .alg-admin-modal-body {
   padding: 12px 16px; overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px;
@@ -1040,15 +1040,15 @@ a.alg-community-author:hover {
 .alg-admin-modal-body label > span {
   font-size: 0.78rem; color: var(--muted-foreground);
 }
-.alg-admin-modal-body input,
-.alg-admin-modal-body textarea {
+.alg-admin-modal-body .alg-admin-modal-input,
+.alg-admin-modal-body .alg-admin-modal-textarea {
   background: var(--input);
   border: 1px solid var(--border-default);
   border-radius: 6px;
   color: inherit; padding: 6px 8px;
   font-family: inherit; font-size: 0.85rem;
 }
-.alg-admin-modal-body textarea {
+.alg-admin-modal-body .alg-admin-modal-textarea {
   font-family: ui-monospace, "Consolas", monospace;
   font-size: 0.78rem;
 }
@@ -1065,15 +1065,15 @@ a.alg-community-author:hover {
   border-top: 1px solid var(--border-default);
 }
 .alg-admin-modal-foot-spacer { flex: 1; }
-.alg-admin-modal-foot button {
+.alg-admin-modal-foot .alg-admin-modal-foot-btn {
   display: inline-flex; align-items: center; gap: 4px;
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--foreground) 20%, transparent);
   color: inherit; padding: 6px 12px; border-radius: 6px;
   cursor: pointer; font-size: 0.85rem;
 }
-.alg-admin-modal-foot button:hover { background: color-mix(in srgb, var(--foreground) 18%, transparent); }
-.alg-admin-modal-foot button:disabled { opacity: 0.5; cursor: not-allowed; }
+.alg-admin-modal-foot .alg-admin-modal-foot-btn:hover { background: color-mix(in srgb, var(--foreground) 18%, transparent); }
+.alg-admin-modal-foot .alg-admin-modal-foot-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .alg-admin-modal-save {
   background: color-mix(in srgb, var(--accent) 20%, transparent) !important;
   border-color: color-mix(in srgb, var(--accent) 50%, transparent) !important;

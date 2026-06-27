@@ -7,7 +7,6 @@ import { generateScramble } from '../_lib/scramble';
 import { warmup333 } from '../_lib/scramble/kociemba/random_state';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   defaultEvent: EventId;
@@ -125,6 +124,7 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
             {tr({ zh: '项目', en: 'Event'
             })}
             <select
+              className="bulk-controls-select"
               ref={firstSelectRef}
               value={event}
               onChange={(e) => setEvent(e.target.value as EventId)}
@@ -177,18 +177,18 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
         <div className="modal-actions" style={actionsStyle}>
           {scrambles.length > 0 && (
             <>
-              <button onClick={onCopy} style={actionBtnStyle}>
+              <button className="modal-action-btn" onClick={onCopy} style={actionBtnStyle}>
                 {copied ? tr({ zh: '已复制', en: 'Copied'
                                               }) : tr({ zh: '全部复制', en: 'Copy all'
                                                   })}
               </button>
-              <button onClick={onDownload} style={actionBtnStyle}>
+              <button className="modal-action-btn" onClick={onDownload} style={actionBtnStyle}>
                 {tr({ zh: '下载 .txt', en: 'Download .txt'
                 })}
               </button>
             </>
           )}
-          <button onClick={onClose} style={actionBtnStyle}>{tr({ zh: '关闭', en: 'Close'
+          <button className="modal-action-btn" onClick={onClose} style={actionBtnStyle}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

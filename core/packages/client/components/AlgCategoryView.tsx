@@ -35,7 +35,6 @@ import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { displayAlgCaseName } from '@/lib/alg_case_display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 const ORI_SUFFIX = ['', 'y', 'y2', "y'"];
 function oriAdjustSetup(setup: string, oriIdx: number): string {
@@ -135,7 +134,7 @@ function SortableCaseCard({ id, draggable, children }: { id: number; draggable: 
 }
 
 function SubgroupIndex({
-  puzzle, set, cases, isZh,
+  puzzle, set, cases,
 }: {
   puzzle: AlgPuzzle;
   set: string;

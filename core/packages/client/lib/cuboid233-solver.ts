@@ -78,7 +78,6 @@ const BASE_B2 = permFromTransform((x, y, z) => (z !== 0 ? [x, y, z] : [2 - x, 1 
 
 // ── move set (7 scramble tokens) ──────────────────────────────────────────────────
 interface Cuboid233Move { name: string; base: number[]; pow: number; }
-const BASES = [BASE_U, BASE_R2, BASE_L2, BASE_F2, BASE_B2];
 const MOVES: ReadonlyArray<Cuboid233Move> = [
   { name: 'U', base: BASE_U, pow: 1 },
   { name: "U'", base: BASE_U, pow: 3 },

@@ -18,7 +18,6 @@ import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { statsUrl } from '@/lib/stats-base';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface GluedScramble { ci: string; cn: string; r: string; g: string; n: number; tok: string }
 interface ScrambleAnomaly { ci: string; cn: string; lens: number[]; n: number }
@@ -142,7 +141,7 @@ function summarize(counts: Record<string, number>) {
 }
 
 const eventName = (id: string, isZh: boolean) => (isZh ? EVENT_ZH[id] : EVENT_EN[id]) || id;
-const unitLabel = (unit: string, isZh: boolean) =>
+const unitLabel = (unit: string, _isZh: boolean) =>
   unit === 'twists' ? tr({ zh: '拧次', en: 'twists'
     }) : tr({ zh: '步', en: 'moves' });
 

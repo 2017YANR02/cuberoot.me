@@ -71,7 +71,7 @@
   gap: 4px;
   align-items: stretch;
 }
-.colpi-search input {
+.colpi-search .colpi-search-input {
   width: 56px;
   text-align: center;
   text-transform: uppercase;
@@ -83,7 +83,7 @@
   background: #fff;
   color: var(--c-text);
 }
-.colpi-search button {
+.colpi-search .colpi-search-btn {
   padding: 4px 10px;
   border: 1px solid var(--c-border);
   background: var(--c-grey);
@@ -92,22 +92,9 @@
   display: flex;
   align-items: center;
 }
-.colpi-search button:hover { background: #dde4ec; }
+.colpi-search .colpi-search-btn:hover { background: #dde4ec; }
 
 .colpi-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-
-/* Compact select used for the language filter in the top bar. */
-.colpi-mini-select {
-  padding: 6px 8px;
-  border: 1px solid var(--c-border);
-  background: #fff;
-  color: var(--c-text);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: inherit;
-}
-.colpi-mini-select:hover { border-color: var(--c-active); }
 
 /* Segmented pill toggle (e.g. 全部 / 我的). */
 .colpi-pill-group {
@@ -117,7 +104,7 @@
   background: #fff;
   overflow: hidden;
 }
-.colpi-pill-group button {
+.colpi-pill-group .colpi-pill-btn {
   border: none;
   background: transparent;
   padding: 6px 10px;
@@ -127,18 +114,15 @@
   font-family: inherit;
   border-right: 1px solid var(--c-border);
 }
-.colpi-pill-group button:last-child { border-right: none; }
-.colpi-pill-group button.on {
+.colpi-pill-group .colpi-pill-btn:last-child { border-right: none; }
+.colpi-pill-group .colpi-pill-btn.on {
   background: var(--c-active);
   color: var(--accent-foreground);
 }
-.colpi-pill-group button:disabled {
+.colpi-pill-group .colpi-pill-btn:disabled {
   color: var(--c-faded);
   cursor: not-allowed;
-}
-
-.colpi-toggle-btn,
-.colpi-login-btn {
+}.colpi-toggle-btn {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -155,8 +139,6 @@
   border-color: var(--c-active);
   color: var(--accent-foreground);
 }
-.colpi-login-btn { background: var(--c-primary); color: var(--primary-foreground); border-color: var(--c-primary); }
-.colpi-login-btn:hover { background: #1A1916; }
 
 /* === Language picker (popup, used in topbar filter + submit form) === */
 .colpi-langpicker { position: relative; display: inline-block; }
@@ -203,7 +185,7 @@
   border-bottom: 1px solid var(--c-border);
   margin-bottom: 8px;
 }
-.colpi-langpicker-popup-head button {
+.colpi-langpicker-popup-head .colpi-langpicker-close {
   background: none;
   border: none;
   cursor: pointer;
@@ -212,7 +194,7 @@
   align-items: center;
   padding: 2px;
 }
-.colpi-langpicker-popup-head button:hover { color: var(--c-text); }
+.colpi-langpicker-popup-head .colpi-langpicker-close:hover { color: var(--c-text); }
 .colpi-langpicker-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -443,14 +425,6 @@
   padding: 4px 14px;
   border-radius: 4px;
 }
-.colpi-detail-close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--c-muted);
-  padding: 4px;
-  display: flex;
-}
 .colpi-detail-empty { color: var(--c-muted); font-style: italic; }
 .colpi-detail-list {
   list-style: none;
@@ -506,8 +480,8 @@
   max-width: 80px;
   opacity: 1;
 }
-.colpi-detail-vote button,
-.colpi-recent-vote button,
+.colpi-detail-vote .colpi-vote-btn,
+.colpi-recent-vote .colpi-recent-vote-btn,
 .colpi-flag-btn {
   border: 1px solid var(--c-border);
   background: #fff;
@@ -518,17 +492,17 @@
   align-items: center;
   color: var(--c-muted);
 }
-.colpi-detail-vote button:hover,
-.colpi-recent-vote button:hover { background: var(--c-grey); color: var(--c-text); }
+.colpi-detail-vote .colpi-vote-btn:hover,
+.colpi-recent-vote .colpi-recent-vote-btn:hover { background: var(--c-grey); color: var(--c-text); }
 
-.colpi-detail-vote button.is-voted-up,
-.colpi-recent-vote button.is-voted-up {
+.colpi-detail-vote .colpi-vote-btn.is-voted-up,
+.colpi-recent-vote .colpi-recent-vote-btn.is-voted-up {
   background: var(--c-active);
   border-color: var(--c-active);
   color: var(--accent-foreground);
 }
-.colpi-detail-vote button.is-voted-down,
-.colpi-recent-vote button.is-voted-down {
+.colpi-detail-vote .colpi-vote-btn.is-voted-down,
+.colpi-recent-vote .colpi-recent-vote-btn.is-voted-down {
   background: var(--c-text);
   border-color: var(--c-text);
   color: var(--background);
@@ -552,7 +526,7 @@
   align-items: center;
   gap: 6px;
 }
-.colpi-detail-submit input {
+.colpi-detail-submit .colpi-submit-input {
   flex: 1 1 200px;
   min-width: 0;
   padding: 6px 10px;
@@ -564,8 +538,8 @@
   font-family: inherit;
   text-transform: uppercase;
 }
-.colpi-detail-submit input:focus { outline: 2px solid var(--c-active); outline-offset: -1px; }
-.colpi-detail-submit select {
+.colpi-detail-submit .colpi-submit-input:focus { outline: 2px solid var(--c-active); outline-offset: -1px; }
+.colpi-detail-submit .colpi-submit-select {
   padding: 6px 8px;
   border: 1px solid var(--c-border);
   border-radius: 4px;
@@ -635,7 +609,7 @@
 
 /* === Owner / admin edit-delete buttons === */
 .colpi-owner-actions { display: inline-flex; gap: 2px; margin-left: 2px; }
-.colpi-owner-actions button {
+.colpi-owner-actions .colpi-owner-btn {
   border: 1px solid var(--c-border);
   background: #fff;
   border-radius: 3px;
@@ -645,7 +619,7 @@
   align-items: center;
   color: var(--c-muted);
 }
-.colpi-owner-actions button:hover { background: var(--c-grey); color: var(--c-text); }
+.colpi-owner-actions .colpi-owner-btn:hover { background: var(--c-grey); color: var(--c-text); }
 
 /* === Inline edit form (replaces a word row) === */
 .colpi-detail-edit-row {
@@ -687,26 +661,6 @@
 .colpi-flag-btn { padding: 2px 4px; }
 .colpi-recent-vote { display: flex; gap: 4px; justify-content: flex-end; }
 
-/* === Leaderboard === */
-.colpi-leaders { margin-top: 12px; background: var(--c-panel); border: 1px solid var(--c-border); border-radius: 6px; padding: 10px 14px; }
-.colpi-leaders-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.colpi-leaders-table th, .colpi-leaders-table td {
-  padding: 6px 8px;
-  text-align: left;
-  border-bottom: 1px solid var(--c-border);
-}
-.colpi-leaders-table th { color: var(--c-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; }
-.colpi-leaders-table tr:last-child td { border-bottom: none; }
-.colpi-leaders-flag {
-  width: 18px;
-  height: 13px;
-  vertical-align: middle;
-  margin-right: 6px;
-  display: inline-block;
-}
-.colpi-leaders-flag img { width: 100%; height: 100%; object-fit: cover; }
-.colpi-valuability { font-weight: 700; color: var(--c-primary); }
-
 /* === Footer === */
 .colpi-footer {
   margin-top: 16px;
@@ -718,7 +672,6 @@
 }
 .colpi-footer a { color: var(--c-primary); text-decoration: none; }
 .colpi-footer a:hover { text-decoration: underline; }
-.colpi-footer-stats { margin-top: 4px; }
 
 /* === Toast === */
 .colpi-toast {
@@ -750,34 +703,30 @@ html[data-theme=dark] .colpi-page {
   --c-empty:  color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
-@media (prefers-color-scheme: dark) {
-  html:not([data-theme=light]) .colpi-page .colpi-search input,
-  html:not([data-theme=light]) .colpi-page .colpi-pill-group,
-  html:not([data-theme=light]) .colpi-page .colpi-toggle-btn:not(.on),
-  html:not([data-theme=light]) .colpi-page .colpi-langpicker-trigger,
-  html:not([data-theme=light]) .colpi-page .colpi-detail-submit input,
-  html:not([data-theme=light]) .colpi-page .colpi-detail-submit select,
-  html:not([data-theme=light]) .colpi-page .colpi-detail-cancel,
-  html:not([data-theme=light]) .colpi-page .colpi-owner-actions button,
-  html:not([data-theme=light]) .colpi-page .colpi-detail-vote button:not(.is-voted-up):not(.is-voted-down),
-  html:not([data-theme=light]) .colpi-page .colpi-recent-vote button:not(.is-voted-up):not(.is-voted-down),
-  html:not([data-theme=light]) .colpi-page .colpi-flag-btn,
-  html:not([data-theme=light]) .colpi-page .colpi-mini-select {
+@media (prefers-color-scheme: dark) {html:not([data-theme=light]) .colpi-page .colpi-search .colpi-search-input,
+html:not([data-theme=light]) .colpi-page .colpi-pill-group,
+html:not([data-theme=light]) .colpi-page .colpi-toggle-btn:not(.on),
+html:not([data-theme=light]) .colpi-page .colpi-langpicker-trigger,
+html:not([data-theme=light]) .colpi-page .colpi-detail-submit .colpi-submit-input,
+html:not([data-theme=light]) .colpi-page .colpi-detail-submit .colpi-submit-select,
+html:not([data-theme=light]) .colpi-page .colpi-detail-cancel,
+html:not([data-theme=light]) .colpi-page .colpi-owner-actions .colpi-owner-btn,
+html:not([data-theme=light]) .colpi-page .colpi-detail-vote .colpi-vote-btn:not(.is-voted-up):not(.is-voted-down),
+html:not([data-theme=light]) .colpi-page .colpi-recent-vote .colpi-recent-vote-btn:not(.is-voted-up):not(.is-voted-down),
+html:not([data-theme=light]) .colpi-page .colpi-flag-btn {
     background: var(--card);
   }
-}
-html[data-theme=dark] .colpi-page .colpi-search input,
+}html[data-theme=dark] .colpi-page .colpi-search .colpi-search-input,
 html[data-theme=dark] .colpi-page .colpi-pill-group,
 html[data-theme=dark] .colpi-page .colpi-toggle-btn:not(.on),
 html[data-theme=dark] .colpi-page .colpi-langpicker-trigger,
-html[data-theme=dark] .colpi-page .colpi-detail-submit input,
-html[data-theme=dark] .colpi-page .colpi-detail-submit select,
+html[data-theme=dark] .colpi-page .colpi-detail-submit .colpi-submit-input,
+html[data-theme=dark] .colpi-page .colpi-detail-submit .colpi-submit-select,
 html[data-theme=dark] .colpi-page .colpi-detail-cancel,
-html[data-theme=dark] .colpi-page .colpi-owner-actions button,
-html[data-theme=dark] .colpi-page .colpi-detail-vote button:not(.is-voted-up):not(.is-voted-down),
-html[data-theme=dark] .colpi-page .colpi-recent-vote button:not(.is-voted-up):not(.is-voted-down),
-html[data-theme=dark] .colpi-page .colpi-flag-btn,
-html[data-theme=dark] .colpi-page .colpi-mini-select {
+html[data-theme=dark] .colpi-page .colpi-owner-actions .colpi-owner-btn,
+html[data-theme=dark] .colpi-page .colpi-detail-vote .colpi-vote-btn:not(.is-voted-up):not(.is-voted-down),
+html[data-theme=dark] .colpi-page .colpi-recent-vote .colpi-recent-vote-btn:not(.is-voted-up):not(.is-voted-down),
+html[data-theme=dark] .colpi-page .colpi-flag-btn {
   background: var(--card);
 }
 
@@ -787,7 +736,7 @@ html[data-theme=dark] .colpi-page .colpi-mini-select {
   .colpi-topbar { gap: 8px; padding: 8px; }
   .colpi-brand { flex: 1 1 100%; }
   .colpi-search { flex: 1 1 auto; }
-  .colpi-search input { flex: 1; }
+  .colpi-search .colpi-search-input { flex: 1; }
   .colpi-actions { flex: 1 1 100%; justify-content: flex-end; }
   .colpi-grid th, .colpi-grid td { width: 22px; height: 20px; font-size: 9px; }
   .colpi-detail-pair { font-size: 22px; }

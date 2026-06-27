@@ -26,7 +26,6 @@ import {
 } from '@/lib/wiki-api';
 import './wiki.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 const LETTERS = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
 

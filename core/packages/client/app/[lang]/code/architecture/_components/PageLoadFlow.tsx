@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useLang } from '../../_lib/Lang';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 type Variant = 'fork' | 'swimlane';
 
@@ -44,7 +43,6 @@ const SHARED_BOT: ForkStep[] = [
 ];
 
 function ForkStep({ step }: { step: ForkStep }) {
-  const lang = useLang();
   const label = tr(step);
   return (
     <div className={`plf-step${step.color ? ` plf-step-${step.color}` : ''}`}>
@@ -197,7 +195,6 @@ function SwimlaneCell({ tone, zh, en }: { tone?: string; zh: string; en: string
 }
 
 function SwimlaneDiagram() {
-  const lang = useLang();
   return (
     <div className="plf-swimlane-wrap">
       <div className="plf-swimlane">
@@ -228,7 +225,6 @@ function SwimlaneDiagram() {
 // ── Public component ────────────────────────────
 
 export default function PageLoadFlow() {
-  const lang = useLang();
   const [variant, setVariant] = useState<Variant>('fork');
 
   return (

@@ -25,7 +25,6 @@ import {
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../3bld.css';
 import { tr, T } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface ModuleDoc {
   n: number;

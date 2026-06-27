@@ -46,7 +46,7 @@ export function EventSelector() {
   const renderBtn = (id: string) => (
     <button
       key={id}
-      className={`event-btn ${event === id ? 'active' : ''}`}
+      className={`event-btn calc-btn ${event === id ? 'active' : ''}`}
       data-tooltip={eventDisplayName(id, isZh)}
       onClick={() => handleSelect(id)}
     >
@@ -60,7 +60,7 @@ export function EventSelector() {
       {!hasSelectedCancelled && (
         <button
           type="button"
-          className="event-btn event-btn-more"
+          className="event-btn event-btn-more calc-btn"
           data-tooltip={tr({ zh: '已废止项目', en: 'Former events'
         })}
           onClick={() => setExpanded(v => !v)}

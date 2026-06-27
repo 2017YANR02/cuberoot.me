@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './zig_intro.css';
-import i18n from '@/i18n/i18n-client';
 
 const ZIG_LOGO_SVG = (
   <svg viewBox="0 0 256 256">

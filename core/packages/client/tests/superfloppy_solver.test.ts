@@ -42,9 +42,6 @@ const CORNER_SLOTS: ReadonlyArray<Pt> = [
   [1, 0, 1], [1, 0, -1], [-1, 0, 1], [-1, 0, -1],   // R-up R-down L-up L-down
   [0, 1, 1], [0, 1, -1], [0, -1, 1], [0, -1, -1],   // U-up U-down D-up D-down
 ];
-const EDGE_SLOTS: ReadonlyArray<Pt> = [
-  [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0],     // R L U D
-];
 const k3 = (p: Pt) => p.join(',');
 const cornerIdx = new Map(CORNER_SLOTS.map((p, i) => [k3(p), i]));
 

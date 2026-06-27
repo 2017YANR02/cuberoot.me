@@ -643,7 +643,6 @@ function IsometryClassifier() {
 // ── Widget 3: Rotation = two reflections (non-uniqueness) ────────────────────
 
 function RotationTwoReflections() {
-  const lang = useLang();
   const [phi, setPhi] = useState(90); // target rotation angle in degrees
   const [beta, setBeta] = useState(20); // base orientation of mirror pair
 
@@ -790,7 +789,6 @@ function RotationTwoReflections() {
 
 // ── Main section export ──────────────────────────────────────────────────────
 export default function PlaneIsometries() {
-  const lang = useLang();
   return (
     <GTSec id="plane-isometries" className="gt-sec">
       <div className="gt-sec-num">§47</div>

@@ -35,19 +35,6 @@
   font-size: 0.9rem; color: var(--muted-foreground); text-decoration: none;
 }
 .trainer-topbar .trainer-back:hover { color: var(--foreground); }
-.trainer-topbar .trainer-spacer { flex: 1; }
-
-.trainer-puzzle-select,
-.trainer-set-select {
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
-  color: var(--foreground);
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  cursor: pointer;
-  min-width: 130px;
-}
 .trainer-start-btn {
   display: inline-flex; align-items: center; gap: 8px;
   background: color-mix(in srgb, var(--accent) 20%, transparent);
@@ -119,9 +106,6 @@
   user-select: none;
 }
 .trainer-set-header .trainer-checkbox { width: 16px; height: 16px; }
-.trainer-set-header .trainer-set-title-thumb {
-  display: inline-flex; align-items: center;
-}
 .trainer-subgroup {
   margin: 12px 0;
   background: color-mix(in srgb, var(--foreground) 2%, transparent);

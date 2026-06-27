@@ -63,7 +63,6 @@ function buildBuckets(times: number[], bucketCount: number): Bucket[] {
 
 export default function HistogramChart({
   solves,
-  isZh,
   width = 320,
   height = 140,
   bucketCount = 12,

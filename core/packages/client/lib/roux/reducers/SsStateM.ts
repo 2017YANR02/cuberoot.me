@@ -40,7 +40,7 @@ export class SsStateM extends BlockTrainerStateM {
         //["UF", "FU", "UL", "LU", "UB", "BU", "UR", "RU", "DF", "FD", "DB", "BD",
         //"DR", "RD", "BR", "RB", "FR", "RF"],
         let allowed_dr_eo_ep_patterns = this.state.config.ssPosSelector.flags.map((value, i) => [value, i])
-            .filter(([value, i]) => value).map(([value, i]) => drOPPositionMap[i]);
+            .filter(([value]) => value).map(([, i]) => drOPPositionMap[i]);
         let cube = this._get_random_fb(allowed_dr_eo_ep_patterns);
         let solvers, ssolver;
         let solverMode = this.state.config.ssPairOnlySelector.getActiveName();
@@ -98,7 +98,7 @@ export class SsDPairStateM extends BlockTrainerStateM {
             [0, 11], [1, 11]
         ];
         let allowed_dr_eo_ep_patterns = this.state.config.ssPosSelector.flags.map((value, i) => [value, i])
-            .filter(([value, i]) => value).map(([value, i]) => drPositionMap[i]);
+            .filter(([value]) => value).map(([, i]) => drPositionMap[i]);
         let cube = this._get_random_fb(allowed_dr_eo_ep_patterns);
         let solvers, ssolver;
         if (active === "Front SS") {

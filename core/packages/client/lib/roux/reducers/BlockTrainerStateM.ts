@@ -2,7 +2,7 @@ import { AppState, FavCase, SliderOpt } from "../Types";
 import { alg_generator_from_group, CaseDesc } from "../Algs";
 import { Face, Typ, FBpairPosBackFS, FBpairPosFrontFS } from "../Defs";
 import { CubieCube, CubeUtil, Mask, FaceletCube, MoveSeq } from '../CubeLib';
-import { Evaluator, SeqEvaluator, getEvaluator } from "../Evaluator";
+import { Evaluator, SeqEvaluator } from "../Evaluator";
 import { CachedSolver } from "../CachedSolver";
 import { rand_choice, arrayEqual } from '../Math';
 import { AbstractStateM, StateFactory } from "./AbstractStateM";
@@ -357,9 +357,9 @@ export class FbdrStateM extends BlockTrainerStateM {
         let active = this.state.config.fbdrSelector.getActiveNames()[0];
         //console.log("active", active)
         this.allowed_pedge = this.state.config.fbdrPosSelector1.flags.map( (value, i) => [value, i])
-            .filter( ([value, i]) => value ).map( ([value, i]) => this.edgePositionMap[i] )
+            .filter( ([value]) => value ).map( ([, i]) => this.edgePositionMap[i] )
         this.allowed_dr = this.state.config.fbdrPosSelector3.flags.map( (value, i) => [value, i])
-            .filter( ([value, i]) => value ).map( ([value, i]) => this.edgePositionMap[i] )
+            .filter( ([value]) => value ).map( ([, i]) => this.edgePositionMap[i] )
 
         this.solverL = (pairSolved) ? (fbOnly ? 5 : 7) : (fbOnly ? 7 : 8)
         if (pairSolved) {
@@ -441,7 +441,6 @@ export class FbStateM extends BlockTrainerStateM {
         if (active !== hard_str && active !== g_hard_str) {
             return [cube, solver];
         }
-        let n = 0;
         let is_l_only = active === hard_str
         while (true) {
             let pairs = CubeUtil.find_pairs(cube);

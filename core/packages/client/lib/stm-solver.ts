@@ -266,12 +266,6 @@ export function buildEdge6Pdb(tracked: number[], opts?: { onProgress?: (depth: n
   }
   return { dist, size: N_EDGE6, maxDepth };
 }
-function oriOf(flip: ArrayLike<number>): number { let r = 0; for (let i = 0; i < 6; i++) r = r * 2 + flip[i]; return r; }
-function unrankEdge6(idx: number, pos: Int8Array, flip: Int8Array): void {
-  let ori = idx % N_EDGE6_ORI;
-  for (let i = 5; i >= 0; i--) { flip[i] = ori % 2; ori = Math.floor(ori / 2); }
-  unrankEdge6Pos(Math.floor(idx / N_EDGE6_ORI), pos);
-}
 // edge6PosRank builds r MSB-first with ascending step radices (12-i): r=((s0)*11+s1)*10+...  where each
 // "digit" is the count of smaller UNUSED slots. Invert with descending radices and reconstruct the
 // chosen slot from the (count-of-smaller-unused) digit.
@@ -460,7 +454,6 @@ export function solveStmBruteBFS(scramble: string | CubieState, limit = 6, maxNo
         if (isSolvedState(ns)) {
           // reconstruct
           const moves: number[] = [];
-          let cur: { k: string; mi: number } | null = { k, mi };
           // walk back: ns came from k via mi; then k's parent etc.
           let stepKey = nk;
           while (true) {

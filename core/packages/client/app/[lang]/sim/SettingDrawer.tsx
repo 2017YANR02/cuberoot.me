@@ -256,7 +256,17 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // 原核 (raw/stickerless body). Applied LAST so it overrides the frame/inner material
     // that hollow + structure-color just set (raw wins when on). Off-state restores the
     // hollow-appropriate material. Super-order cubes no-op inside setRawCore.
-    cube.instancedRenderer.setRawCore(cube.isMirror ? mirrorSingle : (s.coreStyle === 'raw'), faces);
+    //
+    // Mirror cube grooves are gated by coreStyle:
+    //  - 普通: raw gold/colour body + independent 内核色 grooves (border=1, gold + dark gaps).
+    //  - 原核: grooves follow the body colour (border=0, seamless) — 内核色跟随镜面配色;
+    //          the faceless centre cubie falls back to the mirror colour too.
+    // Single mode is always raw; 原核 also switches six-colour mode to a seamless raw body.
+    const mirrorRaw = cube.isMirror && s.coreStyle === 'raw';
+    const rawOn = cube.isMirror ? (mirrorSingle || s.coreStyle === 'raw') : (s.coreStyle === 'raw');
+    const rawBorder = cube.isMirror && s.coreStyle === 'normal';
+    const rawCoreColor = mirrorRaw ? (s.mirrorColor ?? MIRROR_DEFAULT_COLOR) : s.coreColor;
+    cube.instancedRenderer.setRawCore(rawOn, faces, rawCoreColor, rawBorder);
     // 顶面 U 中心 logo(仅 NxN 奇数阶有正中心块;偶数阶在 setLogo 内部隐藏)。
     const logoTex = s.logo === 'site'
       ? loadLogoTexture(SITE_LOGO_SRC, () => { world.dirty = true; })

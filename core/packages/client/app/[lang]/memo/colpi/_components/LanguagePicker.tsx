@@ -13,12 +13,10 @@ import { Flag } from '@/components/Flag';
 import { LANGS, LANG_MAP, langDisplay } from '../_lib/langs';
 import { ChevronDown, X, Globe } from 'lucide-react';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface PopupProps {
   value: string;
   onChange: (code: string) => void;
-  isZh: boolean;
   includeAll?: boolean;
   onClose: () => void;
   popupClassName?: string;
@@ -26,7 +24,7 @@ interface PopupProps {
 }
 
 export function LangPopup({
-  value, onChange, isZh, includeAll = false, onClose, popupClassName, title,
+  value, onChange, includeAll = false, onClose, popupClassName, title,
 }: PopupProps) {
   return (
     <div
@@ -38,7 +36,7 @@ export function LangPopup({
       <div className="colpi-langpicker-popup-head">
         <span>{title ?? tr({ zh: '选择语言', en: 'Select words language'
                       })}</span>
-        <button type="button" onClick={onClose} aria-label="Close">
+        <button type="button" className="colpi-langpicker-close" onClick={onClose} aria-label="Close">
           <X size={14} />
         </button>
       </div>
@@ -126,7 +124,6 @@ export default function LanguagePicker({
         <LangPopup
           value={value}
           onChange={onChange}
-          isZh={isZh}
           includeAll={includeAll}
           onClose={() => setOpen(false)}
         />

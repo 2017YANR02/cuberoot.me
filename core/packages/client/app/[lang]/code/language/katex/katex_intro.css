@@ -1130,7 +1130,7 @@ main { position: relative; z-index: 1; }
   min-width: 0;
 }
 .kx-playground-input { border-right: 1px solid var(--line); }
-.kx-playground-input textarea {
+.kx-playground-input .kx-playground-textarea {
   width: 100%;
   min-height: 200px;
   background: var(--code-bg);
@@ -1145,11 +1145,11 @@ main { position: relative; z-index: 1; }
   outline: none;
   transition: border-color .2s;
 }
-.kx-playground-input textarea:focus { border-color: var(--katex); }
+.kx-playground-input .kx-playground-textarea:focus { border-color: var(--katex); }
 .kx-presets {
   display: flex; flex-wrap: wrap; gap: 6px;
 }
-.kx-presets button {
+.kx-presets .kx-preset-btn {
   font-family: var(--mono);
   font-size: 11.5px;
   background: rgba(72,224,200,.08);
@@ -1160,7 +1160,7 @@ main { position: relative; z-index: 1; }
   cursor: pointer;
   transition: background .15s, color .15s;
 }
-.kx-presets button:hover {
+.kx-presets .kx-preset-btn:hover {
   background: rgba(72,224,200,.18);
   color: #fff;
 }

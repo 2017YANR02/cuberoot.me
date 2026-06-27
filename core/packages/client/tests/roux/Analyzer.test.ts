@@ -1,5 +1,5 @@
 import { it, expect } from 'vitest';
-import { CubeUtil, CubieCube, Move, MoveSeq } from '@/lib/roux/CubeLib';
+import { CubieCube, MoveSeq } from '@/lib/roux/CubeLib';
 import { analyze_roux_solve } from '@/lib/roux/Analyzer';
 it('analyzes a roux solve', () => {
     let scramble = "L2 D2 R2 B2 F' D2 U2 L2 B2 F L B' U2 F' D U B L D2"

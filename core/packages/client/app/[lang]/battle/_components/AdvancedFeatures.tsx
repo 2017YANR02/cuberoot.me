@@ -101,7 +101,7 @@ export function checkMilestoneMessages(history: SolveEntry[]): string[] {
 }
 
 // NOTE: 疲劳检测 — 1:1 翻译自 battle.js checkFatigue()（行 2812~2834）
-export function checkFatigueMessage(history: SolveEntry[], locale: string): string | null {
+export function checkFatigueMessage(history: SolveEntry[], _locale: string): string | null {
   if (history.length < 15) return null;
 
   const times = history.slice(-10).map(getEffectiveTimeFromEntry).filter(t => t !== Infinity);
@@ -211,7 +211,6 @@ function parseTimeInput(str: string): number | null {
 
 export function ManualInputDialog({ onClose }: { onClose: () => void }) {
   const store = useBattleStore();
-  const locale = store.locale;
   const [timeStr, setTimeStr] = useState('');
   const [penalty, setPenalty] = useState('ok');
   const [error, setError] = useState(false);
@@ -308,7 +307,6 @@ function simulateCompetition(validTimes: number[], iterations: number = 1000) {
 export function SimulationPopup({ onClose }: { onClose: () => void }) {
   const history = useBattleStore(s => s.players[0].solveHistory);
   const precision = useBattleStore(s => s.timerPrecision);
-  const locale = useBattleStore(s => s.locale);
   const ftp = (ms: number) => formatTimePlain(ms, precision);
 
   const validTimes = history.map(getEffectiveTimeFromEntry).filter(t => t !== Infinity);
@@ -354,7 +352,7 @@ export function SimulationPopup({ onClose }: { onClose: () => void }) {
 // ===== 热力图日历 =====
 // 1:1 翻译自 battle.js renderHeatmapCalendar()（行 3390~3447）
 
-export function HeatmapCalendar({ history, locale }: { history: SolveEntry[]; locale: string }) {
+export function HeatmapCalendar({ history }: { history: SolveEntry[]; locale: string }) {
   if (history.length === 0) return null;
 
   // NOTE: 按日期聚合

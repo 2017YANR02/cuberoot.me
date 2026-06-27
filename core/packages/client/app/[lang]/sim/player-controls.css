@@ -522,12 +522,54 @@
   align-self: flex-end;
   line-height: 22px;
 }
-/* 内核色行尾的「原核」开关:复选框在标签左(先打勾再内容),底边对齐色块行 */
-.sim-color-row .sim-toggle {
+/* 色块下拉(镜面配色 / 内核色 / 面色:当前色 / 特殊项图标 + caret,点开展开特殊项 + 预设色板) */
+.sim-color-select {
+  position: relative;
   align-self: flex-end;
 }
-.sim-color-row .sim-toggle input[type=checkbox] {
-  order: -1;
+/* 面色:6 个面各一个取色下拉,标签(U/L/F/R/B/D)在上、下拉在下,纵向居中 */
+.sim-face-pick {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.sim-face-pick .sim-color-select {
+  align-self: center;
+}
+/* 触发器 = 裸按钮,边框直接描在色块上(.sim-swatch-box 自带 border),不再套外框 */
+.sim-color-select-trigger {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+}
+.sim-color-select-trigger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.sim-color-select-panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: max-content;
+  max-width: 200px;
+  padding: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--popover);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--foreground) 14%, transparent);
 }
 .sim-swatch-list {
   display: flex;
@@ -556,6 +598,41 @@
   height: 22px;
   border: 1px solid var(--border);
   border-radius: 4px;
+}
+/* 自定义取色格:Pipette 角标(自包含小圆片,token 配色,不依赖跟任意用户色对比) */
+.sim-swatch-box-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.sim-swatch-custom-badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--popover);
+  border: 1px solid var(--border-strong);
+  color: var(--foreground);
+  pointer-events: none;
+}
+/* 「六色」格:立方体六面色六等分楔形,作镜面六色模式的图标(物理魔方色,非主题灰阶) */
+.sim-swatch-six-box {
+  background: conic-gradient(
+    #EE0000 0deg 60deg,
+    #FFA100 60deg 120deg,
+    #FEFE00 120deg 180deg,
+    #00D800 180deg 240deg,
+    #0000F2 240deg 300deg,
+    #FFFFFF 300deg 360deg
+  );
+}
+/* 「原核」格:对角双色硬分割,evoke 无贴纸棱块的斜分实色(物理魔方色,非主题灰阶) */
+.sim-swatch-raw-box {
+  background: linear-gradient(135deg, #00D800 0 50%, #FFA100 50% 100%);
 }
 .sim-swatch:hover .sim-swatch-box {
   border-color: var(--accent-foreground);

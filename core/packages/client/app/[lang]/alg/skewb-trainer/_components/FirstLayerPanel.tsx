@@ -18,7 +18,6 @@ interface Props {
 }
 
 export default function FirstLayerPanel({
-  isZh,
   flt,
   scramble,
   colour,

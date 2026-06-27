@@ -55,7 +55,7 @@ html:not([data-palette-scheme=dark]) .t10h-page {
   overflow: hidden;
   background: var(--card);
 }
-.t10h-metric-toggle button {
+.t10h-metric-toggle .t10h-metric-btn {
   border: none;
   background: transparent;
   padding: 6px 14px;
@@ -64,12 +64,12 @@ html:not([data-palette-scheme=dark]) .t10h-page {
   color: var(--muted-foreground);
   transition: background 0.15s, color 0.15s;
 }
-.t10h-metric-toggle button.active {
+.t10h-metric-toggle .t10h-metric-btn.active {
   background: var(--muted);
   color: var(--foreground);
 }
-.t10h-metric-toggle button:not(.active):hover { background: var(--secondary); color: var(--foreground); }
-.t10h-metric-toggle button:disabled { opacity: 0.35; cursor: not-allowed; }
+.t10h-metric-toggle .t10h-metric-btn:not(.active):hover { background: var(--secondary); color: var(--foreground); }
+.t10h-metric-toggle .t10h-metric-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
 /* ── Event bar(舞台之外) ── */
 .t10h-event-bar {
@@ -365,7 +365,7 @@ html:not([data-palette-scheme=dark]) .t10h-page {
   overflow: hidden;
   background: var(--secondary);
 }
-.t10h-speed button {
+.t10h-speed .t10h-speed-btn {
   border: none;
   background: transparent;
   padding: 6px 10px;
@@ -375,8 +375,8 @@ html:not([data-palette-scheme=dark]) .t10h-page {
   font-variant-numeric: tabular-nums;
   transition: background 0.15s, color 0.15s;
 }
-.t10h-speed button.active { background: var(--muted); color: var(--foreground); }
-.t10h-speed button:not(.active):hover { background: var(--popover); color: var(--foreground); }
+.t10h-speed .t10h-speed-btn.active { background: var(--muted); color: var(--foreground); }
+.t10h-speed .t10h-speed-btn:not(.active):hover { background: var(--popover); color: var(--foreground); }
 
 .t10h-note {
   margin-top: 12px;
@@ -532,7 +532,7 @@ html:not([data-palette-scheme=dark]) .t10h-page {
   .t10h-comp-flag { width: 14px; height: 10px; }
 
   .t10h-controls { gap: 8px; padding: 8px; }
-  .t10h-speed button { padding: 5px 6px; font-size: 11px; }
+  .t10h-speed .t10h-speed-btn { padding: 5px 6px; font-size: 11px; }
 }
 
 /* ── 480..768 ── */

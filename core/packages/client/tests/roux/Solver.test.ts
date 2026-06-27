@@ -1,6 +1,6 @@
 import { it, expect } from 'vitest';
-import { FbdrSolver, FbSolver, solverFactory2, CenterSolver } from '@/lib/roux/Solver'
-import { CubeUtil, CubieCube, FaceletCube, Move } from '@/lib/roux/CubeLib'
+import { FbdrSolver, CenterSolver } from '@/lib/roux/Solver'
+import { CubieCube } from '@/lib/roux/CubeLib'
 import { SeqEvaluator } from "@/lib/roux/Evaluator"
 import { CachedSolver } from '@/lib/roux/CachedSolver'
 import { cartesianProduct } from '@/lib/roux/Math'
@@ -35,7 +35,6 @@ it('solves fbdr case', () => {
     //let cube = CubeUtil.get_random_fs()
     let cube = new CubieCube().apply("F")
     let solver = FbdrSolver()
-    let pruner = solver.getPruners()[0]
     //console.log("Pruner estimate = ", pruner.query(cube))
 
     //console.log("here")
@@ -45,8 +44,6 @@ it('solves fbdr case', () => {
     console.assert(solutions[0].moves.length === 5)
 
     let solved_cube = cube.apply(solutions[0])
-
-    let fCube = FaceletCube.from_cubie(cube)
 
     //console.log(FaceletCube.to_unfolded_cube_str(fCube))
 

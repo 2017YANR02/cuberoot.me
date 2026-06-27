@@ -495,7 +495,7 @@ function MultiplicationSVG({
 // Panel 2: Dihedral Cayley wheel
 // ═════════════════════════════════════════════════════════════════════════════
 
-function DihedralWheelPanel({ lang }: { lang: 'zh' | 'en' }) {
+function DihedralWheelPanel({}: { lang: 'zh' | 'en' }) {
   const [n, setN] = useState(6);
   // Selected element: (i, j) where i in 0..n-1, j in {0,1}
   const [selI, setSelI] = useState(0);
@@ -867,7 +867,7 @@ function SplitExtensionPanel({ lang }: { lang: 'zh' | 'en' }) {
 }
 
 function ExtensionDiagramSVG({
-  cosets, gLabels, cosetLabels, s0, s1, sectionIsHom, checked, lang,
+  cosets, gLabels, cosetLabels, s0, s1, sectionIsHom, checked,
 }: {
   cosets: number[][];
   gLabels: string[];

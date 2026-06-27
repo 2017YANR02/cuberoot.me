@@ -11,7 +11,6 @@
  */
 import { useMemo, useState } from 'react';
 import { MathText } from './Tex';
-import i18n from "@/i18n/i18n-client";
 
 interface Row {
   d: number;

@@ -68,7 +68,7 @@ const FACELETS: Facelet[] = (() => {
   return out;
 })();
 function colorOf(st: St, fl: Facelet): string {
-  const here = fl.cubie; const p = st.perm[here]; const o = st.ori[here];
+  const here = fl.cubie; const o = st.ori[here];
   const dir = matVec(transpose(ROTS[o]), fl.normal).map((v) => Math.round(v));
   const f = FACES.find((F) => eqv(F.n, dir));
   return f ? f.name : 'U';

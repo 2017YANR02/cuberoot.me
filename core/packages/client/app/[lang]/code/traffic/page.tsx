@@ -18,7 +18,6 @@ import { useAuthStore } from '@/lib/auth-store';
 import { apiUrl } from '@/lib/api-base';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './traffic.css';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 // echarts-for-react needs to be client-only (no SSR).
@@ -186,7 +185,7 @@ export default function TrafficPage() {
 
 // ── 子组件 ──────────────────────────────────────────────
 
-function TrafficTimeSeries({ data, isZh }: { data: DailyRow[]; isZh: boolean }) {
+function TrafficTimeSeries({ data }: { data: DailyRow[]; isZh: boolean }) {
   const T = useT();
   // 数据少时强制画端点 + 实心,免得 1 天数据完全看不见.
   const sparse = data.length <= 2;
@@ -252,7 +251,7 @@ function TrafficTimeSeries({ data, isZh }: { data: DailyRow[]; isZh: boolean }) 
   );
 }
 
-function TopPaths({ rows, isZh }: { rows: PathRow[]; isZh: boolean }) {
+function TopPaths({ rows }: { rows: PathRow[]; isZh: boolean }) {
   const T = useT();
   if (rows.length === 0) {
     return (
@@ -283,7 +282,7 @@ function TopPaths({ rows, isZh }: { rows: PathRow[]; isZh: boolean }) {
   );
 }
 
-function TopRefs({ rows, isZh }: { rows: RefRow[]; isZh: boolean }) {
+function TopRefs({ rows }: { rows: RefRow[]; isZh: boolean }) {
   const T = useT();
   if (rows.length === 0) {
     return (
