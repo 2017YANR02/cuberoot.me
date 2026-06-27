@@ -20,7 +20,7 @@ import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_
  *  Heli (edge-turning Helicopter Cube), Skewb (deep-cut corner-turning), or Pyraminx
  *  (vertex-turning tetrahedron). Skewb + Pyraminx are the in-house engine alternatives
  *  to the cubing.js TwistyPlayer renders (chosen via the `renderer` toggle). */
-export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto';
+export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror';
 
 export default class World {
   public width = 1;
@@ -51,6 +51,9 @@ export default class World {
   private pyraCube: PyraCube | null = null;
   private megaCube: MegaminxCube | null = null;
   private ftoCube: FtoCube | null = null;
+  /** Mirror Cube (Bump Cube) — an order-3 Cube with non-uniform geometry; separate
+   *  cache so it never collides with the plain 3x3 in cubes[3]. */
+  private mirrorCube: Cube | null = null;
   /** Current puzzle kind, mirrors what was last passed to setPuzzle. */
   public puzzleKind: PuzzleKind = 3;
   public callbacks: (() => void)[] = [];
@@ -263,6 +266,18 @@ export default class World {
       // the SQ1 rim-light rig (51 solid wedge cells, many oblique facets).
       this.controller.disable = true;
       this._ensureSq1Lights();
+    } else if (kind === 'mirror') {
+      if (this.mirrorCube == null) {
+        this.mirrorCube = new Cube(3, true);
+        this.mirrorCube.callbacks.push(this.callback);
+        this.mirrorCube.instancedRenderer.thickness = true;
+      }
+      this.cube = this.mirrorCube;
+      // Mirror Cube IS a 3x3 — the NxN Controller applies unchanged (logical layer is
+      // uniform; only the geometry is non-uniform), so no dedicated drag handler and
+      // no rim-light rig (it's a full cube like NxN, not a small oblique solid).
+      this.controller.disable = false;
+      this._removeSq1Lights();
     } else {
       if (this.cubes[kind] == undefined) {
         this.cubes[kind] = new Cube(kind);
