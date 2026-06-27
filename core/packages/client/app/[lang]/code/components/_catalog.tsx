@@ -904,22 +904,6 @@ export const CATALOG: ComponentEntry[] = [
     en: `One-click EN/ZH locale flip (English bare URL, Chinese /zh) with Pattern B path rewrite; soft mode swaps language in place without navigating.`,
   },
   {
-    name: 'ThemeToggle',
-    import: "import ThemeToggle from '@/components/ThemeToggle';",
-    category: 'toggle',
-    zh: `浅色 / 深色两态切换按钮,未选时跟随系统,点击在两个具体主题间翻转并退出配色。`,
-    en: `Two-state Light/Dark toggle button; follows OS until clicked, then flips between the two concrete themes and clears any palette.`,
-    note: { zh: `新代码优先用 AppearanceToggle(已合并明暗 + 配色);单用此件仅限只要明暗的场景。`, en: `Prefer AppearanceToggle (merges theme + palette) in new code; use this only for theme-only spots.` },
-  },
-  {
-    name: 'PaletteToggle',
-    import: "import PaletteToggle from '@/components/PaletteToggle';",
-    category: 'toggle',
-    zh: `中国传统色配色主题下拉选择器,第一项「经典」清掉配色回原赭陶明暗,其余切到各套中国色。`,
-    en: `Dropdown picker for Chinese-color palette themes; the first 'Classic' item clears the palette back to default light/dark.`,
-    note: { zh: `新代码优先用 AppearanceToggle;单用此件仅限只要配色的场景。`, en: `Prefer AppearanceToggle in new code; use this only for palette-only spots.` },
-  },
-  {
     name: 'LiquidGlassChips',
     import: "import LiquidGlassChips from '@/components/LiquidGlassChips';",
     category: 'toggle',
@@ -1136,13 +1120,6 @@ export const CATALOG: ComponentEntry[] = [
     category: 'display',
     zh: `品牌 logo + 主页链接,随明暗主题切换深浅版本,用在 timer / battle 等顶栏。`,
     en: `Brand logo wrapped in a home link that swaps light/dark variants with the theme; use in top bars like timer/battle.`,
-  },
-  {
-    name: 'NormalizedCrossBlock',
-    import: "import NormalizedCrossBlock from '@/components/NormalizedCrossBlock';",
-    category: 'display',
-    zh: `复盘里检测到十字段含宽层转动时,展示一块标准化后的十字记号并带复制按钮;无宽层则不渲染。`,
-    en: `In a recon, shows a normalized cross notation block with a copy button when the cross section contains wide moves; renders nothing otherwise.`,
   },
   {
     name: 'SolutionView',
