@@ -984,6 +984,20 @@ export default function CompDetailPage() {
 
   useEffect(() => {
     if (!data || !defaultRoundKey) return;
+    // 深链带了项目但没带轮次(如 Bark 推送 ?event=444):只补该项目的默认轮次
+    // (最后一个有成绩的轮次,否则末轮),保留指定项目,不要回退到 333 默认轮。
+    if (eventParam && !roundParam) {
+      const ev = data.events.find(e => e.i === eventParam);
+      if (ev && ev.rs.length) {
+        const has = (k: string) => (data.resultsByRound[k] || []).length > 0;
+        let target = ev.rs[ev.rs.length - 1];
+        for (let i = ev.rs.length - 1; i >= 0; i--) {
+          if (has(roundKey(ev.i, ev.rs[i].i))) { target = ev.rs[i]; break; }
+        }
+        setRoundUrlParam(String(roundTypeIdToNum(data, ev.i, target.i)), { history: 'replace' });
+        return;
+      }
+    }
     if (!eventParam || !roundParam) {
       const [e, r] = defaultRoundKey.split(':');
       // 默认填充走 replace,不在历史里留一条空→默认的中间态。
@@ -1307,6 +1321,11 @@ export default function CompDetailPage() {
               const cubingSlug = data.cubingSlug || wcaIdToCubingSlug(data.slug);
               const cubingUrl = `https://cubing.com/competition/${cubingSlug}`;
               const wcaUrl = `https://www.worldcubeassociation.org/competitions/${data.slug}`;
+              // WCA Live 链接用内部数字 id(不含比赛名):有比赛 id 时深链到当前选中的轮次
+              // (/competitions/<compLiveId>/rounds/<roundLiveId>),否则回退首页。
+              const wcaLiveUrl = data.wcaLiveId
+                ? `https://live.worldcubeassociation.org/competitions/${data.wcaLiveId}${currentRound?.rd.liveId ? `/rounds/${currentRound.rd.liveId}` : ''}`
+                : 'https://live.worldcubeassociation.org/';
               return (
                 <>
                   {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
@@ -1326,7 +1345,7 @@ export default function CompDetailPage() {
                   {/* WCA Live 没有独立 logo(与 WCA 主站几乎一致),用 lucide Radio 表「实时成绩」。
                       中国比赛走 cubing.com 直播,没有 WCA Live 页面,故 CN 不显示此图标。 */}
                   {iso2 !== 'cn' && (
-                    <a href="https://live.worldcubeassociation.org/" target="_blank" rel="noopener noreferrer" className="comp-title-icon comp-title-icon-lucide" title="WCA Live">
+                    <a href={wcaLiveUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon comp-title-icon-lucide" title="WCA Live">
                       <Radio size={18} />
                     </a>
                   )}
