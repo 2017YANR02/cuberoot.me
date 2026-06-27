@@ -20,10 +20,13 @@ jobs:
     timeout-minutes: 10
     steps:
       # 只需 core/(根有 stats/ 709MB + tools/ 等 ~1GB 静态残留);blob:none partial clone 跳过下载.
+      # 例外:tools/cstimer-scramble(519K)是非 WCA 求解器测试的打乱 oracle,必须拉进来,
+      # 否则 bic/cm3/heli/helicv/ctico/sia222 的 "≥200 real cstimer scrambles" 全 0 条变红.
       - uses: actions/checkout@v6
         with:
           sparse-checkout: |
             core
+            tools/cstimer-scramble
           filter: blob:none
 
       - uses: pnpm/action-setup@v6
