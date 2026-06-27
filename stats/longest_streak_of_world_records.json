@@ -48,7 +48,7 @@
   ],
   "rows": [
     [
-      "8.41",
+      "8.42",
       9,
       "6x6x6 Cube",
       "Single",
@@ -57,7 +57,7 @@
       "Still active"
     ],
     [
-      "8.20",
+      "8.21",
       9,
       "7x7x7 Cube",
       "Average",
@@ -391,21 +391,21 @@
     ],
     [
       "2.70",
-      2,
-      "Rubik's Clock",
-      "Average",
-      "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
-      "[Czech Open 2007](https://www.worldcubeassociation.org/competitions/CzechOpen2007)",
-      "[Japan Open 2010](https://www.worldcubeassociation.org/competitions/JapanOpen2010)"
-    ],
-    [
-      "2.70",
       5,
       "5x5x5 Blindfolded",
       "Single",
       "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
       "[Square-1 Madison Square 2023](https://www.worldcubeassociation.org/competitions/Square1onaMadisonSquare2023)",
       "Still active"
+    ],
+    [
+      "2.70",
+      2,
+      "Rubik's Clock",
+      "Average",
+      "[Mátyás Kuti](https://www.worldcubeassociation.org/persons/2006KUTI01)",
+      "[Czech Open 2007](https://www.worldcubeassociation.org/competitions/CzechOpen2007)",
+      "[Japan Open 2010](https://www.worldcubeassociation.org/competitions/JapanOpen2010)"
     ],
     [
       "2.68",
@@ -732,7 +732,7 @@
       "[Tianjin Winter 2012](https://www.worldcubeassociation.org/competitions/TianjinWinter2012)"
     ],
     [
-      "1.74",
+      "1.75",
       3,
       "5x5x5 Cube",
       "Single",
@@ -932,6 +932,15 @@
     [
       "1.46",
       2,
+      "Square-1",
+      "Average",
+      "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
+      "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
+      "Still active"
+    ],
+    [
+      "1.46",
+      2,
       "4x4x4 Cube",
       "Single",
       "[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02)",
@@ -964,15 +973,6 @@
       "[Stefan Pochmann](https://www.worldcubeassociation.org/persons/2003POCH01)",
       "[German Open 2006](https://www.worldcubeassociation.org/competitions/GermanOpen2006)",
       "[World Championship 2007](https://www.worldcubeassociation.org/competitions/WC2007)"
-    ],
-    [
-      "1.46",
-      2,
-      "Square-1",
-      "Average",
-      "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
-      "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
-      "Still active"
     ],
     [
       "1.44",
@@ -1245,7 +1245,7 @@
       "[Danish Open 2011](https://www.worldcubeassociation.org/competitions/DanishOpen2011)"
     ],
     [
-      "0.98",
+      "0.99",
       2,
       "5x5x5 Cube",
       "Average",
