@@ -15,7 +15,6 @@ import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelec
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 const EVENTS = [
   '333bf','444bf','555bf','333mbf','333fm','333',

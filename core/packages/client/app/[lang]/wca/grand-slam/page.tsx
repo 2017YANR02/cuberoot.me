@@ -22,7 +22,6 @@ import { apiUrl } from '@/lib/api-base';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 const EVENTS = [
   '333','222','444','555','666','777',
