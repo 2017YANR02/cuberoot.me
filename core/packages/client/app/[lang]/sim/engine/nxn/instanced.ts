@@ -24,6 +24,7 @@ import { mirrorTables } from "../mirror/mirrorGeometry";
 
 const HALF = Cubelet.SIZE / 2;
 const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
+const ONE_SCALE = new THREE.Vector3(1, 1, 1);
 // 内填充 box: 比 cubelet frame 小 1 单位防 z-fight (frame outer face 在 ±SIZE/2)。
 // 任何方向上 frame 的"洞"(slice 旋转 / 邻居被搬走暴露的内表面) 露出来后,
 // 看到的就是这个 dark box 而不是穿透到背景或别的 sticker。
@@ -149,6 +150,11 @@ export default class InstancedRenderer extends THREE.Group {
   // (R_slice × origMatrix) is automatically a valid render matrix of the new state.
   private _mirrorCenters: Float32Array | null = null;
   private _mirrorScales: Float32Array | null = null;
+  // Mirror cube: the 3 turn axes pass through the CENTER cubie (the core), which is
+  // offset from the bounding-box origin because the layers are non-uniform. A face
+  // turn must rotate about that core axis, not the origin — else the face center
+  // (a fixed 1x1 piece) would translate. Null for uniform NxN (rotate about origin).
+  private _mirrorPivot: THREE.Vector3 | null = null;
   private tmpMirrorMat = new THREE.Matrix4();
   private tmpMirrorV1 = new THREE.Vector3();
   private tmpMirrorV2 = new THREE.Vector3();
@@ -434,6 +440,7 @@ export default class InstancedRenderer extends THREE.Group {
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
       this.movingHint.quaternion.identity();
+      this.resetMovingPivot();
       this.movingFrame.count = this.instanceToInitial.length;
       this.movingSticker.count = this.stickerSlots.length;
       this.movingHint.count = this.stickerSlots.length;
@@ -467,7 +474,9 @@ export default class InstancedRenderer extends THREE.Group {
     if (!group) return;
     const state = this.activeSlices.get(group);
     if (!state) { this.singleSliceGroup = null; return; }
-    this.tmpRotMat.makeRotationFromQuaternion(this.movingFrame.quaternion);
+    // Bake the FULL moving-mesh transform (T(position)·R) so the mirror pivot offset
+    // carried in movingFrame.position is preserved; for uniform NxN position=0 → pure R.
+    this.tmpRotMat.compose(this.movingFrame.position, this.movingFrame.quaternion, ONE_SCALE);
     if (this.hasInner) {
       for (let i = 0; i < state.instances.length; i++) {
         this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
@@ -494,7 +503,39 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingFrame.quaternion.identity();
     this.movingSticker.quaternion.identity();
     this.movingHint.quaternion.identity();
+    this.resetMovingPivot(); // offset is baked into per-instance matrices now
     this.singleSliceGroup = null;
+  }
+
+  /** Mirror cube: set each moving mesh's position so that T(position)·R(quaternion)
+   *  equals the rotation about the core axis, T(C)·R·T(-C) = T(C - R·C)·R. No-op for
+   *  uniform NxN (pivot null → mesh stays at origin). */
+  private applyMovingPivot(q: THREE.Quaternion): void {
+    if (!this._mirrorPivot) return;
+    this.tmpMirrorV1.copy(this._mirrorPivot).applyQuaternion(q);          // R·C
+    this.tmpMirrorV2.copy(this._mirrorPivot).sub(this.tmpMirrorV1);       // C - R·C
+    this.movingFrame.position.copy(this.tmpMirrorV2);
+    this.movingSticker.position.copy(this.tmpMirrorV2);
+    this.movingHint.position.copy(this.tmpMirrorV2);
+    if (this.hasInner) this.movingInner.position.copy(this.tmpMirrorV2);
+  }
+
+  /** Multi-slice path: fold the same core-axis pivot offset into this.tmpRotMat's
+   *  translation column (the matrix is then multiplied per-instance). No-op for NxN. */
+  private applyPivotToRotMat(q: THREE.Quaternion): void {
+    if (!this._mirrorPivot) return;
+    this.tmpMirrorV1.copy(this._mirrorPivot).applyQuaternion(q);          // R·C
+    this.tmpMirrorV2.copy(this._mirrorPivot).sub(this.tmpMirrorV1);       // C - R·C
+    this.tmpRotMat.setPosition(this.tmpMirrorV2);
+  }
+
+  /** Reset moving meshes back to the origin (mirror only); paired with quaternion reset. */
+  private resetMovingPivot(): void {
+    if (!this._mirrorPivot) return;
+    this.movingFrame.position.set(0, 0, 0);
+    this.movingSticker.position.set(0, 0, 0);
+    this.movingHint.position.set(0, 0, 0);
+    if (this.hasInner) this.movingInner.position.set(0, 0, 0);
   }
 
   /** group.angle setter 调。
@@ -514,11 +555,13 @@ export default class InstancedRenderer extends THREE.Group {
       this.movingSticker.quaternion.copy(this.tmpQuat);
       this.movingHint.quaternion.copy(this.tmpQuat);
       if (this.hasInner) this.movingInner.quaternion.copy(this.tmpQuat);
+      this.applyMovingPivot(this.tmpQuat); // mirror: turn about the core axis, not origin
       this.cube.dirty = true;
       return;
     }
 
     this.tmpRotMat.makeRotationFromQuaternion(this.tmpQuat);
+    this.applyPivotToRotMat(this.tmpQuat); // mirror: shift translation so rotation is about the core axis
     if (this.hasInner) {
       for (let i = 0; i < state.instances.length; i++) {
         this.tmpMat.multiplyMatrices(this.tmpRotMat, state.origCubeletMats[i]);
@@ -588,6 +631,7 @@ export default class InstancedRenderer extends THREE.Group {
       this.movingFrame.quaternion.identity();
       this.movingSticker.quaternion.identity();
       this.movingHint.quaternion.identity();
+      this.resetMovingPivot();
       this.movingFrame.count = 0;
       this.movingSticker.count = 0;
       this.movingHint.count = 0;
@@ -620,6 +664,7 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingFrame.quaternion.copy(this.tmpQuat);
     this.movingSticker.quaternion.copy(this.tmpQuat);
     this.movingHint.quaternion.copy(this.tmpQuat);
+    this.resetMovingPivot();
     if (this.hasInner) {
       this.movingInner.count = 0;
       this.movingInner.quaternion.copy(this.tmpQuat);
@@ -960,6 +1005,14 @@ export default class InstancedRenderer extends THREE.Group {
     }
     this._mirrorCenters = centers;
     this._mirrorScales = scales;
+    // Core-cubie center = the point all 3 turn axes pass through. For an odd order it is
+    // the dead-center cubie (lx=ly=lz=(order-1)/2); the layers being non-uniform puts it
+    // off the bounding-box origin, so face turns must pivot here (see _mirrorPivot).
+    const order = this.cube.order;
+    const c = (order - 1) / 2;
+    const centerInit = c * order * order + c * order + c;
+    const pc = tables.center(centerInit);
+    this._mirrorPivot = new THREE.Vector3(pc[0], pc[1], pc[2]);
     this.rebuildAll();
   }
 

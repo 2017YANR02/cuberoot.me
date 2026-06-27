@@ -233,12 +233,14 @@ export default function SimPage() {
   // experimentalPuzzleDescription — twisty-class, no in-house engine. FTO is a promoted
   // engine-twisty whose cubing.js render also needs a description (it's not a built-in id).
   // Custom Puzzle Cuts: the editor writes query.cuts immediately (slider stays
-  // responsive), but the heavy TwistyPlayer rebuild (keyed on puzzleDescription) is
-  // debounced so dragging a slider doesn't rebuild the puzzle every frame.
+  // responsive). TwistySection now updates the puzzle IN PLACE via the player's
+  // experimentalPuzzleDescription setter (no element teardown / flash — see
+  // TwistySection), so this only needs a short coalescing window to batch the
+  // rapid input events of a slider drag, not the old anti-rebuild debounce.
   const customCuts = query.cuts && query.cuts.trim() ? query.cuts : DEFAULT_CUSTOM_CUTS;
   const [debouncedCuts, setDebouncedCuts] = useState(customCuts);
   useEffect(() => {
-    const id = window.setTimeout(() => setDebouncedCuts(customCuts), 220);
+    const id = window.setTimeout(() => setDebouncedCuts(customCuts), 60);
     return () => window.clearTimeout(id);
   }, [customCuts]);
 

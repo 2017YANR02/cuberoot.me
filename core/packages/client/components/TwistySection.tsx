@@ -285,9 +285,31 @@ export default function TwistySection({
       };
     }
     // 故意只在结构性 prop 变 (puzzle / Ctor / fillPane / twistOnClick) 时重建。
-    // scramble/alg 走下面的 setter 路径,不触发重建。
+    // scramble/alg/puzzleDescription 走下面的 setter 路径,不触发重建。
+    // puzzleDescription 不入 deps:改 cut 深度时原地 set(见下方 effect),不重建 player。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Ctor, puzzle, puzzleDescription, fillPane, twistOnClick]);
+  }, [Ctor, puzzle, fillPane, twistOnClick]);
+
+  // puzzleDescription 原地同步 — 改 cut 深度(Puzzle Cuts 编辑器)时不重建 player,
+  // 对齐 alpha.twizzle.net/explore 的丝滑切割:只把新 description set 到已存在的 player。
+  // experimentalPuzzleDescription 是 write-only setter(getter 抛错,同 cameraDistance),
+  // cubing.js 原地重建 3D 模型、保留 canvas/scene → 无空屏闪烁。
+  // 新建 player 时创建 effect 已用当前 description 构造,prevNonce 守卫跳过二次重建。
+  const prevDescRef = useRef<string | undefined>(undefined);
+  const prevDescNonceRef = useRef<number>(-1);
+  useEffect(() => {
+    const player = playerInstRef.current;
+    if (!player) return;
+    if (prevDescNonceRef.current !== playerNonce) {
+      prevDescNonceRef.current = playerNonce;
+      prevDescRef.current = puzzleDescription;
+      return;
+    }
+    if (puzzleDescription === prevDescRef.current) return;
+    prevDescRef.current = puzzleDescription;
+    if (!puzzleDescription) return;
+    try { player.experimentalPuzzleDescription = puzzleDescription; } catch { /* parser 拒绝就忽略 */ }
+  }, [puzzleDescription, playerNonce]);
 
   // backView prop 强制接管 cubing.js 原生背面视图(recon 用)。undefined 时不碰,
   // 让 settings.backView 那条路径(/sim)负责。
