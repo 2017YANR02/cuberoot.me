@@ -1,0 +1,42 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": ["cube555-daemon/**", "**/pkg/*_bg.wasm.d.ts"],
+  "ignoreBinaries": ["netstat", "wasm-pack"],
+  "ignoreDependencies": ["tsx"],
+  "workspaces": {
+    "packages/client": {
+      "entry": [
+        "postcss.config.{js,mjs}",
+        "app/**/{page,layout,template,loading,error,not-found,route,default,global-error,sitemap,robots,manifest,opengraph-image,twitter-image,icon,apple-icon}.{ts,tsx}",
+        "scripts/**/*.{mjs,cjs,mts,ts}",
+        "tests/**/*.{ts,tsx,cjs,mjs}",
+        "**/gen-*.{mjs,ts}"
+      ],
+      "ignore": [
+        "public/**",
+        "**/sim/**"
+      ],
+      "ignoreDependencies": ["playwright"]
+    },
+    "packages/server": {
+      "entry": [
+        "scripts/**/*.{ts,mjs}",
+        "src/tools/**/*.ts",
+        "src/monitors/**/*.ts",
+        "src/**/*-daemon.{ts,mjs}"
+      ]
+    },
+    "packages/alg-build": {
+      "entry": ["*.{mjs,ts}", "src/**/*.{mjs,ts}"]
+    },
+    "packages/scramble-stats-build": {
+      "entry": ["*.{mjs,ts}", "src/**/*.{mjs,ts}"]
+    },
+    "packages/wb-build": {
+      "entry": ["src/**/*.{mjs,ts}"]
+    },
+    "packages/stats-build": {
+      "entry": ["src/**/*.{mjs,ts}", "scripts/**/*.{mjs,ts}"]
+    }
+  }
+}
