@@ -84,6 +84,11 @@ export interface SimSettings {
    *               角块三色(取每个 fragment 最近可见面的颜色),还原真实无贴纸魔方。
    *  仅 NxN 实现(用户指定先做 NxN);其他魔方为占位空操作,以后按需扩展。 */
   coreStyle: 'normal' | 'raw';
+  /** Mirror Cube colour mode: 'single' (raw body, one colour — solve by shape) or
+   *  'six' (standard sticker scheme). Mirror-only; ignored by other puzzles. */
+  mirrorColorMode?: 'single' | 'six';
+  /** Mirror Cube single colour (used when mirrorColorMode==='single'). */
+  mirrorColor?: string;
   /** 顶面 U 中心 logo:
    *  - 'none'   = 无(默认)
    *  - 'site'   = 本站 logo(public/favicon.svg)
@@ -103,6 +108,12 @@ export const DEFAULT_FACE_COLORS: { U: string; D: string; L: string; R: string; 
   F: CUBE_FILL.F,
   B: CUBE_FILL.B,
 };
+
+/** Mirror Cube default single colour (classic gold — you solve by shape, not colour). */
+export const MIRROR_DEFAULT_COLOR = '#E3B23C';
+function mirrorFaces(c: string): { U: string; D: string; L: string; R: string; F: string; B: string } {
+  return { U: c, D: c, L: c, R: c, F: c, B: c };
+}
 
 export const DEFAULT_SETTINGS: SimSettings = {
   sensitivity: 50,
@@ -128,6 +139,8 @@ export const DEFAULT_SETTINGS: SimSettings = {
   coreColor: '#202020',
   faceColors: { ...DEFAULT_FACE_COLORS },
   coreStyle: 'normal',
+  mirrorColorMode: 'single',
+  mirrorColor: MIRROR_DEFAULT_COLOR,
   logo: 'none',
   customLogo: '',
 };
@@ -229,7 +242,12 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     Cubelet.CORE.color.set(s.coreColor);
     Cubelet.CORE_BASIC.color.set(s.coreColor);
     Cubelet._PANEL_MAT.color.set(s.coreColor);
-    cube.instancedRenderer.setFaceColors(s.faceColors);
+    // Mirror Cube colours: 'single' = one raw-body colour (solve by shape), 'six' =
+    // standard sticker scheme. Kept separate from the NxN coreStyle/faceColors so
+    // switching back to a normal cube restores the user's NxN scheme.
+    const mirrorSingle = cube.isMirror && (s.mirrorColorMode ?? 'single') === 'single';
+    const faces = mirrorSingle ? mirrorFaces(s.mirrorColor ?? MIRROR_DEFAULT_COLOR) : s.faceColors;
+    cube.instancedRenderer.setFaceColors(faces);
     // Structure-coloring overlay (NxN path). MUST run after the block above — it
     // re-sets frame/inner materials every call (the `hollow` setter writes
     // unconditionally), so applying here captures the fresh base + restores it
@@ -238,7 +256,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // 原核 (raw/stickerless body). Applied LAST so it overrides the frame/inner material
     // that hollow + structure-color just set (raw wins when on). Off-state restores the
     // hollow-appropriate material. Super-order cubes no-op inside setRawCore.
-    cube.instancedRenderer.setRawCore(s.coreStyle === 'raw', s.faceColors);
+    cube.instancedRenderer.setRawCore(cube.isMirror ? mirrorSingle : (s.coreStyle === 'raw'), faces);
     // 顶面 U 中心 logo(仅 NxN 奇数阶有正中心块;偶数阶在 setLogo 内部隐藏)。
     const logoTex = s.logo === 'site'
       ? loadLogoTexture(SITE_LOGO_SRC, () => { world.dirty = true; })

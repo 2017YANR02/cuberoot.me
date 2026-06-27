@@ -20,6 +20,7 @@ import Cube from "./cube";
 import CubeGroup from "./group";
 import { FACE, COLORS } from "../define";
 import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, type RawAttrs } from "./rawCore";
+import { mirrorTables } from "../mirror/mirrorGeometry";
 
 const HALF = Cubelet.SIZE / 2;
 const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -140,6 +141,17 @@ export default class InstancedRenderer extends THREE.Group {
   private tmpRotMat = new THREE.Matrix4();
   private tmpColor = new THREE.Color();
   private tmpQuat = new THREE.Quaternion();
+
+  // Mirror Cube: per-instance non-uniform cuboid center (×3) + scale (×3), indexed by
+  // instance idx. null = standard NxN (uniform — the static/sticker matrices come
+  // straight from cubelet.matrix, byte-identical to before). When set, every static
+  // matrix is recomposed as compose(R·center0, R, scale0); the slice-turn animation
+  // (R_slice × origMatrix) is automatically a valid render matrix of the new state.
+  private _mirrorCenters: Float32Array | null = null;
+  private _mirrorScales: Float32Array | null = null;
+  private tmpMirrorMat = new THREE.Matrix4();
+  private tmpMirrorV1 = new THREE.Vector3();
+  private tmpMirrorV2 = new THREE.Vector3();
 
   constructor(cube: Cube) {
     super();
@@ -540,10 +552,11 @@ export default class InstancedRenderer extends THREE.Group {
       const cubeletInitial = this.instanceToInitial[instIdx];
       const cubelet = this.cube.initials.get(cubeletInitial);
       if (!cubelet) continue;
-      this.staticFrame.setMatrixAt(instIdx, cubelet.matrix);
+      const cmat = this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix;
+      this.staticFrame.setMatrixAt(instIdx, cmat);
       this.movingFrame.setMatrixAt(instIdx, HIDE_MAT);
       if (this.hasInner) {
-        this.staticInner.setMatrixAt(instIdx, cubelet.matrix);
+        this.staticInner.setMatrixAt(instIdx, cmat);
         this.movingInner.setMatrixAt(instIdx, HIDE_MAT);
       }
 
@@ -559,10 +572,10 @@ export default class InstancedRenderer extends THREE.Group {
           this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
           continue;
         }
-        this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+        this.tmpMat.multiplyMatrices(cmat, slot.localMat);
         this.staticSticker.setMatrixAt(slotIdx, this.tmpMat);
         this.movingSticker.setMatrixAt(slotIdx, HIDE_MAT);
-        this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[slotIdx]);
+        this.tmpMat.multiplyMatrices(cmat, this.hintLocalMats[slotIdx]);
         this.staticHint.setMatrixAt(slotIdx, this.tmpMat);
         this.movingHint.setMatrixAt(slotIdx, HIDE_MAT);
       }
@@ -616,10 +629,11 @@ export default class InstancedRenderer extends THREE.Group {
       const cubeletInitial = this.instanceToInitial[i];
       const cubelet = this.cube.initials.get(cubeletInitial);
       if (!cubelet) continue;
-      this.staticFrame.setMatrixAt(i, cubelet.matrix);
+      const cmat = this._mirrorCenters ? this.mirrorMat(i, cubelet, this.tmpMirrorMat) : cubelet.matrix;
+      this.staticFrame.setMatrixAt(i, cmat);
       this.movingFrame.setMatrixAt(i, HIDE_MAT);
       if (this.hasInner) {
-        this.staticInner.setMatrixAt(i, cubelet.matrix);
+        this.staticInner.setMatrixAt(i, cmat);
         this.movingInner.setMatrixAt(i, HIDE_MAT);
       }
     }
@@ -633,10 +647,11 @@ export default class InstancedRenderer extends THREE.Group {
         this.movingHint.setMatrixAt(i, HIDE_MAT);
         continue;
       }
-      this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+      const smat = this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix;
+      this.tmpMat.multiplyMatrices(smat, slot.localMat);
       this.staticSticker.setMatrixAt(i, this.tmpMat);
       this.movingSticker.setMatrixAt(i, HIDE_MAT);
-      this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[i]);
+      this.tmpMat.multiplyMatrices(smat, this.hintLocalMats[i]);
       this.staticHint.setMatrixAt(i, this.tmpMat);
       this.movingHint.setMatrixAt(i, HIDE_MAT);
     }
@@ -675,9 +690,10 @@ export default class InstancedRenderer extends THREE.Group {
     if (!slotData.visible) {
       // re-show
       slotData.visible = true;
-      this.tmpMat.multiplyMatrices(cubelet.matrix, slotData.localMat);
+      const smat = this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix;
+      this.tmpMat.multiplyMatrices(smat, slotData.localMat);
       this.staticSticker.setMatrixAt(slot, this.tmpMat);
-      this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[slot]);
+      this.tmpMat.multiplyMatrices(smat, this.hintLocalMats[slot]);
       this.staticHint.setMatrixAt(slot, this.tmpMat);
       this.staticSticker.instanceMatrix.needsUpdate = true;
       this.staticHint.instanceMatrix.needsUpdate = true;
@@ -722,9 +738,10 @@ export default class InstancedRenderer extends THREE.Group {
         this.staticHint.setMatrixAt(i, HIDE_MAT);
         continue;
       }
-      this.tmpMat.multiplyMatrices(cubelet.matrix, slot.localMat);
+      const smat = this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix;
+      this.tmpMat.multiplyMatrices(smat, slot.localMat);
       this.staticSticker.setMatrixAt(i, this.tmpMat);
-      this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[i]);
+      this.tmpMat.multiplyMatrices(smat, this.hintLocalMats[i]);
       this.staticHint.setMatrixAt(i, this.tmpMat);
     }
     this.staticSticker.instanceMatrix.needsUpdate = true;
@@ -901,7 +918,7 @@ export default class InstancedRenderer extends THREE.Group {
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
       const cubelet = cube.initials.get(slot.cubeletInitial)!;
-      this.tmpMat.multiplyMatrices(cubelet.matrix, this.hintLocalMats[i]);
+      this.tmpMat.multiplyMatrices(this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix, this.hintLocalMats[i]);
       this.staticHint.setMatrixAt(i, this.tmpMat);
       this.movingHint.setMatrixAt(i, HIDE_MAT);
       this.computeHintColor(cubelet.colors[slot.face]);
@@ -912,6 +929,38 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingHint.instanceMatrix.needsUpdate = true;
     if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
     if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
+  }
+
+  /** Mirror-cube render matrix for a cubie: compose(R·center0, R, scale0), with
+   *  R = cubelet.quaternion (logical accumulated rotation) and center0/scale0 from the
+   *  cubie's original slot. Only called in mirror mode (callers guard on _mirrorCenters). */
+  private mirrorMat(instIdx: number, cubelet: Cubelet, out: THREE.Matrix4): THREE.Matrix4 {
+    const o = instIdx * 3;
+    this.tmpMirrorV1.set(this._mirrorCenters![o], this._mirrorCenters![o + 1], this._mirrorCenters![o + 2]);
+    this.tmpMirrorV1.applyQuaternion(cubelet.quaternion);
+    this.tmpMirrorV2.set(this._mirrorScales![o], this._mirrorScales![o + 1], this._mirrorScales![o + 2]);
+    out.compose(this.tmpMirrorV1, cubelet.quaternion, this.tmpMirrorV2);
+    return out;
+  }
+
+  /** Switch this renderer to mirror-cube geometry: build per-instance center/scale from
+   *  the layer-thickness tables, then rebuild every matrix. Called once right after
+   *  construction by the mirror Cube (order 3). */
+  enableMirror(): void {
+    const tables = mirrorTables(this.cube.order);
+    const n = this.instanceToInitial.length;
+    const centers = new Float32Array(n * 3);
+    const scales = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const init = this.instanceToInitial[i];
+      const c = tables.center(init);
+      const s = tables.scale(init);
+      centers[i * 3] = c[0]; centers[i * 3 + 1] = c[1]; centers[i * 3 + 2] = c[2];
+      scales[i * 3] = s[0]; scales[i * 3 + 1] = s[1]; scales[i * 3 + 2] = s[2];
+    }
+    this._mirrorCenters = centers;
+    this._mirrorScales = scales;
+    this.rebuildAll();
   }
 
   dispose(): void {

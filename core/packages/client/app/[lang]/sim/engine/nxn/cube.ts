@@ -19,6 +19,9 @@ export default class Cube extends THREE.Group {
   public initials: Map<number, Cubelet> = new Map();
   public table: GroupTable;
   public order: number;
+  /** Mirror Cube (Bump Cube): order-3 logic with non-uniform cuboid geometry. The
+   *  logical layer stays uniform; only InstancedRenderer renders non-uniform. */
+  public readonly isMirror: boolean;
   public callbacks: (() => void)[] = [];
   public history: History;
   public twister: Twister = new Twister(this);
@@ -26,10 +29,11 @@ export default class Cube extends THREE.Group {
   /** 顶面 U 中心 logo mesh(仅奇数阶;偶数阶 / 无 logo 时 visible=false 或不建)。 */
   private logoMesh: THREE.Mesh | null = null;
 
-  constructor(order: number) {
+  constructor(order: number, mirror = false) {
     super();
     const t0 = performance.now();
     this.order = order;
+    this.isMirror = mirror;
     this.scale.set(3 / order, 3 / order, 3 / order);
     // surfacePositions inline,直接展开循环避免 closure / generator 开销
     // N≥50 用 Cubelet.createLite (跳过 THREE.Object3D ctor 重活,~600ms 节省)
@@ -97,6 +101,7 @@ export default class Cube extends THREE.Group {
     this.updateMatrix();
     const t2 = performance.now();
     this.instancedRenderer = new InstancedRenderer(this);
+    if (mirror) this.instancedRenderer.enableMirror();
     const t3 = performance.now();
     this.add(this.instancedRenderer);
     if (order >= 50) {

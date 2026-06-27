@@ -1,0 +1,126 @@
+/* Puzzle Cuts editor — lives in the sim side panel (custom-cut mode only). The
+   panel container already provides background; this stays flat (no card). */
+.cut-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cut-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cut-editor-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.cut-shape {
+  appearance: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.cut-shape:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+
+.cut-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cut-group-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.cut-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cut-range {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.cut-num {
+  width: 62px;
+  flex: none;
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  padding: 3px 6px;
+  text-align: right;
+}
+.cut-num:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+
+.cut-del,
+.cut-add {
+  appearance: none;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.cut-del {
+  flex: none;
+  color: var(--muted-foreground);
+}
+.cut-del:hover { color: var(--destructive); }
+
+.cut-add {
+  align-self: flex-start;
+  font-size: 12px;
+  color: var(--accent);
+  padding: 2px 4px;
+}
+.cut-add:hover { color: color-mix(in srgb, var(--accent) 80%, var(--foreground)); }
+
+.cut-desc-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.cut-desc {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.cut-desc:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; color: var(--foreground); }
+
+@media (max-width: 480px) {
+  .cut-num { width: 54px; }
+  .cut-row { gap: 8px; }
+}
