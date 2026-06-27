@@ -20,6 +20,8 @@ import { AttemptsInline } from './RecordsTab';
 interface Props {
   profile: WcaPersonProfile;
   isZh: boolean;
+  /** 数据加载后回报是否为空(供 PersonTabs 给「领奖台」tab 置灰)。 */
+  onEmpty?: (empty: boolean) => void;
 }
 
 const CONTINENT_NAME: Record<string, [string, string]> = {
@@ -37,7 +39,7 @@ function scopeRank(level: string): number {
   return 2;
 }
 
-export default function ChampionshipPodiumsTab({ profile, isZh }: Props) {
+export default function ChampionshipPodiumsTab({ profile, isZh, onEmpty }: Props) {
   const t = useT();
   const lang = (['en', 'zh'] as const)[Number(isZh)];
   const wcaId = profile.person.wca_id;
@@ -83,6 +85,12 @@ export default function ChampionshipPodiumsTab({ profile, isZh }: Props) {
     out.sort((a, b) => scopeRank(a.level) - scopeRank(b.level) || b.latest.localeCompare(a.latest));
     return out;
   }, [rows]);
+
+  // 数据加载完成后回报是否为空(加载中 / 出错不回报,保持「未知」不置灰)。
+  useEffect(() => {
+    if (rows === null) return;
+    onEmpty?.(sections.length === 0);
+  }, [rows, sections.length, onEmpty]);
 
   if (err) return <div className="wp-empty">{t('加载失败', 'Failed to load')}</div>;
   if (!rows) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;

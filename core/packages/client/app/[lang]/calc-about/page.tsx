@@ -126,10 +126,6 @@ export default function CalcAboutPage() {
         <h2 className="calca-section-title">{t('相关页面', 'See also')}</h2>
         <ul className="calca-refs">
           <li>
-            <Link href="/wca/viz">{t('成绩分布', 'Distribution')}</Link>
-            {t(' — 单选手成绩 KDE 分布的详细可视化。', ' — detailed KDE visualisation for a single cuber\'s results.')}
-          </li>
-          <li>
             <Link href="/nemesizer">{t('宿敌', 'Nemesizer')}</Link>
             {t(' — 找到和你成绩最接近的 WCA 对手。', ' — find your closest WCA rival by result proximity.')}
           </li>

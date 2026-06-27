@@ -1109,7 +1109,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           type="button" role="radio" aria-checked={reconEngine === 'cuber'}
           className={`submit-engine-opt${reconEngine === 'cuber' ? ' active' : ''}`}
           onClick={() => pickEngine('cuber')}
-        >{tr({ zh: '立体', en: 'Solid' })}</button>
+        >cuberoot</button>
         <button
           type="button" role="radio" aria-checked={reconEngine === 'cubing'}
           className={`submit-engine-opt${reconEngine === 'cubing' ? ' active' : ''}`}

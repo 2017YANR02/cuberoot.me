@@ -65,8 +65,6 @@ export const TOOL_ITEMS: ToolItem[] = [
   { path: '/wca/comp',       zh: '比赛',   en: 'Comp'
 },
   { path: '/wca/comp?view=globe', zh: '地球', en: 'Globe' },
-  { path: '/wca/viz',        zh: '分布',   en: 'Distribution'
-},
   { path: '/wca/prediction', zh: '预测',   en: 'Prediction'
 },
   { path: '/nemesizer',      zh: '宿敌',   en: 'Nemesizer'

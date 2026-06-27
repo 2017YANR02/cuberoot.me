@@ -1,5 +1,6 @@
-/* TodayRecon —「今日复盘」首页 WCA 入口上方:/recon 最新一条预览卡。
-   双主题,走 :root token。 */
+/* TodayRecon —「今日复盘」首页 WCA 入口上方:/recon 最新一天的预览卡。
+   单卡复用 components/ReconCard(.recon-card,样式在 recon_card.css);
+   这里只管区块容器 + 标题 + 卡片网格。双主题,走 :root token。 */
 
 .today-recon {
   width: 100%;
@@ -37,107 +38,8 @@
   gap: 0.75rem;
 }
 /* 只有一条复盘时撑满整行,避免孤卡半宽留白 */
-.tr-cards > .tr-card:only-child { grid-column: 1 / -1; }
-
-/* 预览卡 */
-.tr-card {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--border-default);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--foreground) 3%, transparent);
-  text-decoration: none;
-  transition: border-color 0.15s, transform 0.15s;
-}
-.tr-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-1px);
-}
-
-.tr-cube {
-  flex-shrink: 0;
-  line-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.tr-cube img { display: block; }
-.tr-evt-big {
-  font-size: 3.4rem;
-  color: var(--muted-foreground);
-}
-/* 无打乱展开图时,左格直接放大号成绩 */
-.tr-time-big {
-  font-size: 2.1rem;
-  font-weight: 700;
-  line-height: 1.05;
-  color: var(--foreground);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.tr-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  min-width: 0;
-  flex: 1;
-}
-.tr-line {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-.tr-line-main { gap: 0.5rem; }
-.tr-time {
-  font-size: 1.45rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--foreground);
-  font-variant-numeric: tabular-nums;
-}
-.tr-evt { width: 1.15em; height: 1.15em; color: var(--foreground); }
-.tr-person {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--foreground);
-}
-.tr-person-one { display: inline-flex; align-items: center; }
-.tr-cuber-sep { opacity: 0.5; font-weight: 400; }
-
-.tr-meta {
-  gap: 0.7rem;
-  font-size: 0.8rem;
-  color: var(--muted-foreground);
-  font-variant-numeric: tabular-nums;
-}
-
-.tr-comp {
-  font-size: 0.82rem;
-  color: var(--muted-foreground);
-}
-.tr-comp-name {
-  color: var(--foreground);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-.tr-round {
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
+.tr-cards > .recon-card:only-child { grid-column: 1 / -1; }
 
 @media (max-width: 560px) {
   .tr-cards { grid-template-columns: 1fr; }
-  .tr-card { gap: 0.85rem; padding: 0.8rem 0.85rem; }
-  .tr-time { font-size: 1.3rem; }
-  .tr-time-big { font-size: 1.85rem; }
 }

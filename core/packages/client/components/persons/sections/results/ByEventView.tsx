@@ -1,9 +1,8 @@
 'use client';
-// 按项目:单项目详情.四块:
-//   1. 最佳成绩 折线 (single + average,X = comp index)
-//   2. 单次成绩分布 直方图
-//   3. 历史成绩排名曲线 (年度 NR / WR × single / avg)
-//   4. 全部成绩 (按比赛倒序的轮次表,attempts 列)
+// 按项目:单项目详情.三块:
+//   1. 成绩 (按比赛倒序的轮次表,attempts 列)
+//   2. 趋势 (成绩趋势折线 + 排名历史曲线,两图叠放)
+//   3. 分布 动态分布可视化 (DistributionViz)
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from '@/components/AppLink';
@@ -11,6 +10,8 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 // echarts-for-react needs to be client-only.
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
+// 「动态分布」可视化 —— 重引擎(canvas + zustand),只在该子 tab 激活时按需加载。
+const DistributionViz = dynamic(() => import('@/components/distribution-viz/DistributionViz'), { ssr: false });
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -37,7 +38,6 @@ import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEdito
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
 import { Pencil, ArrowUp, ArrowDown } from 'lucide-react';
-import i18n from "@/i18n/i18n-client";
 import { tr } from '@/i18n/tr';
 
 // MBLD 无官方平均 → 用非官方 Mo3(从该轮 attempts 现算);其它项目用官方 average。
@@ -60,14 +60,16 @@ interface Props {
   onToggleAttemptRanks?: () => void;
 }
 
-type SubSub = 'best' | 'dist' | 'rank';
+type SubSub = 'all' | 'trend' | 'distviz';
 
 export default function ByEventView({ profile, results, comps, reconLookup, eventId, isZh, editMode, onToggleEditMode, showAttemptRanks = true, onToggleAttemptRanks }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const myWcaId = useAuthStore((s) => s.user?.wcaId);
   const admin = isAdminWcaId(myWcaId);
   const canEdit = !!myWcaId;  // 任何登录用户都能编辑 / 提议(管理员即时,其余待审核)
-  const [view, setView] = useState<SubSub>('best');
+  // 3 选一:成绩(轮次表)/ 趋势(成绩+排名两图)/ 分布。
+  // 默认落「成绩」—— 打开项目即见结果表,且 #r- 深链锚点所在的表默认已挂载。
+  const [view, setView] = useState<SubSub>('all');
   const [hist, setHist] = useState<PersonRankHistoryResponse | null>(null);
   const [histLoading, setHistLoading] = useState(false);
 
@@ -96,66 +98,70 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
     <div className="wp-byevent">
       <div className="wp-subsubtab-bar">
         <button
-          className={`wp-subsubtab-btn ${view === 'best' ? 'is-active' : ''}`}
-          onClick={() => setView('best')}
-        >{t('最佳成绩', 'Best Times')}</button>
+          className={`wp-subsubtab-btn ${view === 'all' ? 'is-active' : ''}`}
+          onClick={() => setView('all')}
+        >{t('成绩', 'Results')}</button>
+        {view === 'all' && (
+          <span className="wp-section-h-tools">
+            {onToggleAttemptRanks && <AttemptRanksToggle active={showAttemptRanks} onToggle={onToggleAttemptRanks} />}
+            {canEdit && onToggleEditMode && <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} propose={!admin} />}
+          </span>
+        )}
         <button
-          className={`wp-subsubtab-btn ${view === 'dist' ? 'is-active' : ''}`}
-          onClick={() => setView('dist')}
-        >{t('单次成绩分布', 'Single Distribution')}</button>
+          className={`wp-subsubtab-btn ${view === 'trend' ? 'is-active' : ''}`}
+          onClick={() => setView('trend')}
+        >{t('趋势', 'Trend')}</button>
         <button
-          className={`wp-subsubtab-btn wp-subsubtab-btn-end ${view === 'rank' ? 'is-active' : ''}`}
-          onClick={() => setView('rank')}
-        >{t('历史成绩排名曲线', 'Rank History')}</button>
+          className={`wp-subsubtab-btn ${view === 'distviz' ? 'is-active' : ''}`}
+          onClick={() => setView('distviz')}
+        >{t('分布', 'Distribution')}</button>
       </div>
 
-      {view === 'best' && (
-        <BestChart
-          eventId={eventId}
-          rows={eventResults}
-          compById={compById}
-          isZh={isZh}
-        />
-      )}
-      {view === 'dist' && (
-        <DistChart eventId={eventId} rows={eventResults} isZh={isZh} />
-      )}
-      {view === 'rank' && (
+      {view === 'trend' && (
         <>
-          {histLoading && <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>}
-          {!histLoading && hist && hist.rows.length > 0 && (
-            <RankChart hist={hist} isZh={isZh} />
-          )}
-          {!histLoading && hist && hist.rows.length === 0 && (
-            <div className="wp-empty">{t('暂无年度排名数据', 'No yearly rank data')}</div>
-          )}
-          {!histLoading && !hist && (
-            <div className="wp-empty wp-text-mute">{t('排名数据暂未生成(服务端 stats-build 数据未就绪)', 'Rank history not yet built on server')}</div>
-          )}
+          <div className="wp-trend-block">
+            <div className="wp-trend-h">{t('成绩趋势', 'Times Trend')}</div>
+            <BestChart
+              eventId={eventId}
+              rows={eventResults}
+              compById={compById}
+              isZh={isZh}
+            />
+          </div>
+          <div className="wp-trend-block">
+            <div className="wp-trend-h">{t('排名趋势', 'Rank Trend')}</div>
+            {histLoading && <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>}
+            {!histLoading && hist && hist.rows.length > 0 && (
+              <RankChart hist={hist} isZh={isZh} />
+            )}
+            {!histLoading && hist && hist.rows.length === 0 && (
+              <div className="wp-empty">{t('暂无年度排名数据', 'No yearly rank data')}</div>
+            )}
+            {!histLoading && !hist && (
+              <div className="wp-empty wp-text-mute">{t('排名数据暂未生成(服务端 stats-build 数据未就绪)', 'Rank history not yet built on server')}</div>
+            )}
+          </div>
         </>
       )}
-
-      <div className="wp-section-h-row">
-        <h3 className="wp-section-h">{t('全部成绩', 'All Results')}</h3>
-        <span className="wp-section-h-tools">
-          {onToggleAttemptRanks && <AttemptRanksToggle active={showAttemptRanks} onToggle={onToggleAttemptRanks} />}
-          {canEdit && onToggleEditMode && <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} propose={!admin} />}
-        </span>
-      </div>
-      <EventRoundsList
-        wcaId={profile.person.wca_id}
-        personName={profile.person.name}
-        personCountry={profile.person.country_iso2}
-        rows={eventResults}
-        compById={compById}
-        results={results}
-        comps={comps}
-        eventId={eventId}
-        reconLookup={reconLookup}
-        isZh={isZh}
-        editMode={editMode}
-        showAttemptRanks={showAttemptRanks}
-      />
+      {view === 'distviz' && (
+        <DistributionViz wcaId={profile.person.wca_id} eventId={eventId} />
+      )}
+      {view === 'all' && (
+        <EventRoundsList
+          wcaId={profile.person.wca_id}
+          personName={profile.person.name}
+          personCountry={profile.person.country_iso2}
+          rows={eventResults}
+          compById={compById}
+          results={results}
+          comps={comps}
+          eventId={eventId}
+          reconLookup={reconLookup}
+          isZh={isZh}
+          editMode={editMode}
+          showAttemptRanks={showAttemptRanks}
+        />
+      )}
     </div>
   );
 }
@@ -229,7 +235,14 @@ function EventRoundsList({
   }, []);
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与
   const prRank = useMemo(() => computePrRank(results.filter((r) => !r.live), comps), [results, comps]);
-  // 直播行的 PR/PRn 单独从 cubing-live 源取(与 /wca/comp 领奖台同口径)。
+  // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一 dense-rank
+  // 口径且彼此自洽(最好那把 == 单次列)。只取直播行用,不读官方行 → 不污染官方 PR 标记。
+  const prRankLive = useMemo(() =>
+    results.some((r) => r.live) ? computePrRank(results, comps) : null,
+    [results, comps],
+  );
+  // 直播行的区域纪录标志(WR/CR/NR)单独从 cubing-live 源取(与 /wca/comp 领奖台同口径);
+  // 名次数字优先用本地 prRankLive,cubing pS/pA 仅作兜底(本地无效时)。
   const livePrRanks = useLivePrRanks(rows, wcaId);
 
   // /wca/regulations 风格的 hash 锚点:#r-{comp}-{event}-{round}
@@ -346,7 +359,7 @@ function EventRoundsList({
         <tbody>
           {displayRows.map((r) => {
             const cmp = compById.get(r.competition_id);
-            const rank = prRank.get(r.id);
+            const rank = r.live ? prRankLive?.get(r.id) : prRank.get(r.id);
             const liveRank = r.live ? livePrRanks.get(r.id) : null;
             const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
             const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
@@ -447,7 +460,7 @@ function EventRoundsList({
                     note={chain?.[chain.length - 1]?.note}
                   />
                 </td>
-                <td className="wp-cell-attempts">
+                <td className={`wp-cell-attempts ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
                   <AttemptsList
                     attempts={effAttempts}
                     best={effBest}
@@ -663,62 +676,6 @@ function formatTime(sec: number): string {
     return `${m}:${s.toFixed(2).padStart(5, '0')}`;
   }
   return sec.toFixed(2);
-}
-
-// ─── 单次成绩分布 直方图 ──────────────────────────────────────────────
-function DistChart({ eventId, rows, isZh }: { eventId: string; rows: WcaResultRow[]; isZh: boolean }) {
-  const t = (zh: string, en: string) => (isZh ? zh : en);
-  const W = 760, H = 220, P = { l: 36, r: 12, t: 12, b: 28 };
-
-  const samples: number[] = [];
-  for (const r of rows) {
-    for (const a of r.attempts) {
-      if (a > 0) samples.push(toAxisValue(a, eventId, 'single'));
-    }
-  }
-  if (samples.length === 0) return <div className="wp-empty">{t('暂无样本', 'No samples')}</div>;
-
-  const min = Math.min(...samples), max = Math.max(...samples);
-  const nBins = Math.min(20, Math.max(6, Math.round(Math.sqrt(samples.length))));
-  const bw = (max - min) / nBins || 1;
-  const bins = Array.from({ length: nBins }, () => 0);
-  for (const v of samples) {
-    let i = Math.floor((v - min) / bw);
-    if (i >= nBins) i = nBins - 1;
-    if (i < 0) i = 0;
-    bins[i]!++;
-  }
-  const peak = Math.max(...bins);
-  const xScale = (i: number) => P.l + (i / nBins) * (W - P.l - P.r);
-  const yScale = (n: number) => P.t + (1 - n / peak) * (H - P.t - P.b);
-
-  return (
-    <div className="wp-chart-wrap">
-      <svg viewBox={`0 0 ${W} ${H}`} className="wp-chart-svg">
-        <line x1={P.l} y1={H - P.b} x2={W - P.r} y2={H - P.b} className="wp-chart-grid" />
-        {bins.map((n, i) => {
-          const x = xScale(i);
-          const x2 = xScale(i + 1);
-          const y = yScale(n);
-          return n > 0 ? (
-            <g key={i}>
-              <rect x={x + 1} y={y} width={Math.max(1, x2 - x - 2)} height={(H - P.b) - y} className="wp-dist-bar" />
-              {peak <= 30 && <text x={(x + x2) / 2} y={y - 3} className="wp-chart-axis" textAnchor="middle">{n}</text>}
-            </g>
-          ) : null;
-        })}
-        {/* x ticks: 5 labels */}
-        {[0, 1, 2, 3, 4].map((k) => {
-          const v = min + (max - min) * (k / 4);
-          return (
-            <text key={k} x={xScale((nBins * k) / 4)} y={H - P.b + 14} className="wp-chart-axis" textAnchor="middle">
-              {eventId === '333fm' || eventId === '333mbf' ? v.toFixed(0) : formatTime(v)}
-            </text>
-          );
-        })}
-      </svg>
-    </div>
-  );
 }
 
 // ─── 历史成绩排名 折线图 ──────────────────────────────────────────────

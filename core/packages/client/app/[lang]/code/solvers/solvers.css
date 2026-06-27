@@ -310,6 +310,164 @@
 }
 .solv-ts-planned-h { font-family: var(--font-mono); letter-spacing: 0.03em; }
 
+/* ── matrix (rows = solvers, cols = dimensions, click → modal) ── */
+.solv-mx-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--card) 55%, transparent);
+  -webkit-overflow-scrolling: touch;
+}
+.solv-mx {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.solv-mx thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-align: left;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--card) 92%, var(--background));
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+.solv-mx-corner {
+  position: sticky;
+  left: 0;
+  z-index: 3 !important;
+  padding: 9px 13px;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--card) 96%, var(--background)) !important;
+}
+.solv-mx-hbtn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 9px 13px;
+  background: none;
+  border: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.solv-mx-hbtn:hover { color: var(--foreground); background: color-mix(in srgb, var(--accent) 9%, transparent); }
+.solv-mx-hbtn svg { opacity: 0.85; flex-shrink: 0; }
+
+.solv-mx tbody tr:not(:last-child) th,
+.solv-mx tbody tr:not(:last-child) td { border-bottom: 1px solid color-mix(in srgb, var(--border-default) 55%, transparent); }
+.solv-mx tbody tr:hover td,
+.solv-mx tbody tr:hover .solv-mx-name { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+
+.solv-mx-name {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  text-align: left;
+  padding: 8px 13px;
+  background: color-mix(in srgb, var(--card) 96%, var(--background));
+  border-right: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent);
+  white-space: nowrap;
+}
+.solv-mx-nm { display: block; font-weight: 650; color: var(--foreground); }
+a.solv-mx-nm { text-decoration: none; }
+a.solv-mx-nm:hover { color: var(--accent); }
+.solv-mx-sub { display: block; margin-top: 1px; font-size: 10.5px; color: var(--faint-foreground); }
+
+.solv-mx-cell { padding: 0; }
+.solv-mx-btn {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 13px;
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--muted-foreground);
+}
+.solv-mx-btn:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.solv-mx-val { color: var(--foreground); white-space: nowrap; }
+.solv-mx-val small { color: var(--faint-foreground); font-size: 10px; }
+.solv-mx-eng { overflow: hidden; text-overflow: ellipsis; max-width: 16ch; }
+.solv-mx-states { display: inline-block; max-width: 20ch; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+.solv-mx-more { color: var(--faint-foreground); font-size: 10px; flex-shrink: 0; }
+.solv-mx-pad { padding: 6px 13px; display: inline-block; }
+.solv-tone-ok { color: var(--signal-success); }
+.solv-tone-warn { color: var(--signal-warning); }
+.solv-tone-dim { color: var(--faint-foreground); }
+.solv-tone-accent { color: var(--accent); }
+
+/* ── modal ── */
+.solv-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--background) 72%, #000 28%);
+  backdrop-filter: blur(2px);
+}
+.solv-modal {
+  width: min(560px, 100%);
+  max-height: 84vh;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px color-mix(in srgb, #000 32%, transparent);
+}
+.solv-modal-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 12px;
+  background: var(--card);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+}
+.solv-modal-title { margin: 0; font-family: var(--font-mono); font-size: 15px; font-weight: 650; color: var(--foreground); }
+.solv-modal-sub { margin: 4px 0 0; font-size: 11.5px; color: var(--faint-foreground); font-family: var(--font-mono); }
+.solv-modal-x {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.solv-modal-x:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); color: var(--foreground); }
+.solv-modal-body { padding: 14px 18px 20px; }
+.solv-modal-body .solv-badge { margin-bottom: 4px; }
+.solv-modal-p { margin: 10px 0 0; font-size: 13px; line-height: 1.6; color: var(--muted-foreground); }
+.solv-modal-p.solv-dim { color: var(--faint-foreground); font-size: 12px; }
+.solv-modal-p.solv-accent { color: var(--accent); }
+.solv-modal-big { margin: 6px 0 2px; font-family: var(--font-mono); font-size: 26px; font-weight: 700; color: var(--foreground); }
+.solv-modal-big small { font-size: 12px; color: var(--faint-foreground); font-weight: 500; }
+.solv-modal-bar { margin: 10px 0; }
+
 @media (max-width: 600px) {
   .solv-ts-tier { margin-left: 0; }
   .solv-ts-meta { flex-direction: column; gap: 3px; }
@@ -320,4 +478,6 @@
   .solv-mem-wide { grid-column: 1; }
   .solv-brow-row { grid-template-columns: 1fr auto; gap: 4px 12px; }
   .solv-brow-engine { grid-column: 1 / -1; order: 3; color: var(--faint-foreground); font-size: 11.5px; }
+  .solv-modal-backdrop { padding: 0; align-items: flex-end; }
+  .solv-modal { width: 100%; max-height: 88vh; border-radius: 14px 14px 0 0; }
 }

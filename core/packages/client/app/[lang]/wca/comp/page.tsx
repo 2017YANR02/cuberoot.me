@@ -15,7 +15,7 @@ import type { CSSProperties } from 'react';
 import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString, parseAsArrayOf, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, BarChart3, CalendarDays, CalendarRange, Ban, LayoutGrid, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, Ban, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon } from 'lucide-react';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
   fetchAllUpcomingCompsJson,
@@ -57,8 +57,10 @@ import { fetchUserUpcoming, type WcaPersonLite } from '@/lib/wca-api';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { CompCuberPicker } from '@/components/CompCuberPicker';
+import { CompCard } from '@/components/CompCard';
 import OnThisDayModal from './_components/OnThisDayModal';
 import MonthGrid from '@/components/MonthGrid';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
 import { useAuthStore } from '@/lib/auth-store';
 import './calendar_page.css';
@@ -747,8 +749,13 @@ function readQFromUrl(): string {
   return p.get('q') ?? '';
 }
 
-type ViewMode = 'calendar' | 'compact' | 'list' | 'globe';
-const VIEW_MODES: ViewMode[] = ['calendar', 'compact', 'list', 'globe'];
+type ViewMode = 'calendar' | 'card' | 'list' | 'globe';
+const VIEW_MODES: ViewMode[] = ['calendar', 'card', 'list', 'globe'];
+
+// 日历视图的两种排布:'comp' = 每场比赛一条 event-bar(原 calendar);'country' = 同国当天聚成一面国旗(原 compact)。
+// 由 month-bar 的 PillToggle 切换,取代原先独立的「紧凑」视图图标。
+type CalLayout = 'comp' | 'country';
+const CAL_LAYOUTS: CalLayout[] = ['comp', 'country'];
 
 // 列表视图每个项目格子显示什么。rounds/regs 走静态字段；其余 4 个走 round-1 WCIF meta（仅 upcoming）。
 type EventMetric = 'rounds' | 'regs' | 'timeLimit' | 'cutoff' | 'advancement' | 'qualification';
@@ -1487,6 +1494,11 @@ function CalendarPageInner() {
     'view',
     parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('calendar').withOptions({ history: 'push' }),
   );
+  // 日历布局子开关:比赛(event-bar) / 国家(国旗聚合)。仅日历视图有意义;replace 不堆历史(子开关)。
+  const [calLayout, setCalLayout] = useQueryState(
+    'clayout',
+    parseAsStringEnum<CalLayout>(CAL_LAYOUTS).withDefault('comp').withOptions({ history: 'replace', scroll: false }),
+  );
   // list 视图每个项目格子显示什么：rounds=轮次数(默认) / regs=报名(参赛)人数。replace 不堆历史。
   const [eventMetric, setEventMetric] = useQueryState(
     'metric',
@@ -1798,6 +1810,18 @@ function CalendarPageInner() {
     [activeComps, isMatch, cnRegCount],
   );
 
+  // 卡片视图:与日历同样按当前月(start_date 落在 viewDate 当月)展示,按开始日期升序排,场数天然有界。
+  const cardComps = useMemo(() => {
+    if (viewMode !== 'card') return [];
+    const y = viewDate.getFullYear(), m = viewDate.getMonth();
+    return displayedComps
+      .filter((c) => {
+        const s = parseLocalDate(c.start_date);
+        return s.getFullYear() === y && s.getMonth() === m;
+      })
+      .sort((a, b) => a.start_date.localeCompare(b.start_date) || a.id.localeCompare(b.id));
+  }, [viewMode, displayedComps, viewDate]);
+
   // .calendar-page 根 ref — 用来由 CompList 按视口可视行实时设 --cl-name-width / --cl-city-width
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -1806,7 +1830,7 @@ function CalendarPageInner() {
   }, [displayedComps, viewDate, countryFilterSet]);
 
   const compactWeeks = useMemo(() => {
-    if (viewMode !== 'compact') return null;
+    if (viewMode !== 'calendar' || calLayout !== 'country') return null;
     return computeCompactWeeks(
       viewDate.getFullYear(),
       viewDate.getMonth(),
@@ -1814,7 +1838,7 @@ function CalendarPageInner() {
       countryFilterSet,
       cancelledCutoffIso,
     );
-  }, [viewMode, displayedComps, viewDate, countryFilterSet, cancelledCutoffIso]);
+  }, [viewMode, calLayout, displayedComps, viewDate, countryFilterSet, cancelledCutoffIso]);
 
   /** 紧凑模式列宽：取每列(周一~周日)月内最大场数,sqrt 软化后作 fr。
    * 周末扎堆(20+)/工作日 0~2 → sqrt 把 20:1 拉到 ~4.5:1,周末更宽但工作日不至于消失。
@@ -1917,7 +1941,7 @@ function CalendarPageInner() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (viewMode !== 'calendar' && viewMode !== 'compact') return;
+      if (viewMode !== 'calendar') return;
       if (selectedComp || dayListDate || onThisDayDate || pickerOpen != null) return;
       const tag = (e.target as HTMLElement | null)?.tagName;
       const editable = (e.target as HTMLElement | null)?.isContentEditable;
@@ -1979,6 +2003,7 @@ function CalendarPageInner() {
   }
 
   const today = new Date();
+  const cardTodayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const monthYear = String(viewDate.getFullYear());
   const monthMm = String(viewDate.getMonth() + 1).padStart(2, '0');
   const weekdays = (isZh ? WEEKDAY_ZH : WEEKDAY_EN);
@@ -1986,7 +2011,7 @@ function CalendarPageInner() {
   return (
     <div
       ref={pageRef}
-      className={`calendar-page${viewMode === 'list' ? ' calendar-page--list' : ''}${viewMode === 'compact' ? ' calendar-page--compact' : ''}${viewMode === 'globe' ? ' calendar-page--globe' : ''}`}
+      className={`calendar-page${viewMode === 'list' ? ' calendar-page--list' : ''}${viewMode === 'calendar' && calLayout === 'country' ? ' calendar-page--compact' : ''}${viewMode === 'globe' ? ' calendar-page--globe' : ''}`}
       data-wide-metric={viewMode === 'list' && WIDE_METRICS.has(eventMetric) ? '' : undefined}
       data-comp-2col={viewMode === 'list' && (compMetric === 'latlng' || compMetric === 'peopleLimit') ? '' : undefined}
       data-comp-peoplelimit={viewMode === 'list' && compMetric === 'peopleLimit' ? '' : undefined}
@@ -2059,7 +2084,7 @@ function CalendarPageInner() {
           <DebutIcon size={14} strokeWidth={1.75} />
           <span>{tr({ zh: '各国首秀', en: 'Debuts' })}</span>
         </button>
-        {viewMode === 'calendar' && (
+        {(viewMode === 'calendar' || viewMode === 'card') && (
           <div className="mode-toggle" role="tablist">
             <button
               role="tab"
@@ -2100,13 +2125,11 @@ function CalendarPageInner() {
           </button>
           <button
             role="tab"
-            aria-selected={viewMode === 'compact'}
-            className={`view-btn ${viewMode === 'compact' ? 'is-active' : ''}`}
-            onClick={() => setViewMode('compact')}
-            aria-label={tr({ zh: '紧凑日历(国旗)', en: 'Compact (flags)'
-            })}
-            title={tr({ zh: '紧凑日历(国旗)', en: 'Compact (flags)'
-            })}
+            aria-selected={viewMode === 'card'}
+            className={`view-btn ${viewMode === 'card' ? 'is-active' : ''}`}
+            onClick={() => setViewMode('card')}
+            aria-label={tr({ zh: '卡片', en: 'Cards' })}
+            title={tr({ zh: '卡片', en: 'Cards' })}
           >
             <LayoutGrid size={16} strokeWidth={1.75} />
           </button>
@@ -2131,7 +2154,17 @@ function CalendarPageInner() {
             <GlobeIcon size={16} strokeWidth={1.75} />
           </button>
         </div>
-        {(viewMode === 'calendar' || viewMode === 'compact') && (
+        {viewMode === 'calendar' && (
+          <PillToggle
+            className="cal-layout-toggle"
+            value={calLayout === 'country'}
+            onChange={(v) => setCalLayout(v ? 'country' : 'comp')}
+            offLabel={tr({ zh: '比赛', en: 'Comps' })}
+            onLabel={tr({ zh: '国家', en: 'Countries' })}
+            ariaLabel={tr({ zh: '日历布局:按比赛或按国家', en: 'Calendar layout: by competition or by country' })}
+          />
+        )}
+        {(viewMode === 'calendar' || viewMode === 'card') && (
           <div className="month-nav">
             <button className="nav-btn" onClick={() => gotoMonth(-1)} aria-label="Previous month">
               <ChevronLeft size={16} strokeWidth={1.75} />
@@ -2477,7 +2510,35 @@ function CalendarPageInner() {
         />
       )}
 
-      {viewMode === 'calendar' && (
+      {viewMode === 'card' && (
+        <div className="comp-card-view">
+          {cardComps.length === 0 ? (
+            <div className="comp-card-empty">{tr({ zh: '本月没有比赛', en: 'No competitions this month' })}</div>
+          ) : (
+            <div className="reg-cards">
+              {cardComps.map((c) => {
+                // 已过比赛即便没有报名字段也补「报名已截止」灰胶囊,避免卡片裸着没胶囊(与首页报名卡片视觉一致)。
+                const startPast = parseLocalDate(c.start_date) < cardTodayStart;
+                const reg = regMilestone(c.registration_open, c.registration_close, c.event_change_deadline, undefined)
+                  ?? (startPast ? { when: '', word: tr({ zh: '报名已截止', en: 'Closed' }), tone: 'closed' as const } : null);
+                return (
+                  <CompCard
+                    key={c.id}
+                    comp={c}
+                    isZh={isZh}
+                    lang={isZh ? 'zh' : 'en'}
+                    pill={reg ? { when: reg.when, word: reg.word, tone: reg.tone } : null}
+                    dimmed={isCancelledComp(c, cancelledCutoffIso)}
+                    follow={{ followed: follows.has(c.id), onToggle: toggleFollow, loggedIn: followLoggedIn, onRequireLogin: login }}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {viewMode === 'calendar' && calLayout === 'comp' && (
         <MonthGrid
           key={`cal-${viewDate.getFullYear()}-${viewDate.getMonth()}`}
           year={viewDate.getFullYear()}
@@ -2565,7 +2626,7 @@ function CalendarPageInner() {
         />
       )}
 
-      {viewMode === 'compact' && compactWeeks && (
+      {viewMode === 'calendar' && calLayout === 'country' && compactWeeks && (
         <MonthGrid
           key={`compact-${viewDate.getFullYear()}-${viewDate.getMonth()}`}
           year={viewDate.getFullYear()}
@@ -2755,9 +2816,9 @@ function CalendarPageInner() {
         />
       )}
 
-      {(viewMode === 'calendar' || viewMode === 'compact') && (
+      {(viewMode === 'calendar' || viewMode === 'card') && (
         <div className="legend">
-          {viewMode === 'calendar' && (
+          {viewMode === 'calendar' && calLayout === 'comp' && (
             <>
               <span className="legend-item"><span className="legend-swatch swatch-reg-open" /> {tr({ zh: '报名中', en: 'Reg open' })}</span>
               <span className="legend-item"><span className="legend-swatch swatch-reg-full" /> {tr({ zh: '满员', en: 'Full' })}</span>
@@ -2766,7 +2827,7 @@ function CalendarPageInner() {
               <span className="legend-item"><span className="legend-swatch swatch-reg-closed" /> {tr({ zh: '已截止', en: 'Closed' })}</span>
             </>
           )}
-          {viewMode === 'calendar' && (
+          {viewMode === 'calendar' && calLayout === 'comp' && (
             <>
               <span className="legend-item"><span className="wr-swatch wr-current" /> {t('upcoming.wrCurrent')}</span>
               <span className="legend-item"><span className="wr-swatch wr-former" /> {t('upcoming.wrFormer')}</span>

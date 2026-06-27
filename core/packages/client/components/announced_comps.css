@@ -69,11 +69,6 @@
 }
 .tac-limit svg { opacity: 0.8; flex: none; }
 
-.tac-reg {
-  font-size: 0.8rem;
-  color: var(--muted-foreground);
-}
-
 .tac-events {
   display: flex;
   flex-wrap: wrap;

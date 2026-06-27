@@ -18,3 +18,14 @@
 .wp-att::after  { content: ")"; opacity: 0; }
 .wp-att-trimmed::before,
 .wp-att-trimmed::after { opacity: 1; }
+
+/* 详细成绩「真表格列」单元(records / results 共用,见 AttemptHeaderCells / AttemptCells):
+   表头数字列内居中,数据右对齐(同 comp 页 .td-attempt)——所有成绩 2 位小数 + 等宽透明括号占位,
+   右对齐即让小数点跨行对齐(居中会因整数位数不同 4.54 / 10.26 错开小数点)。
+   同列由 <table> 列布局保证表头与数据等宽,数字居中落在该列上方。 */
+.wse-att-th { text-align: center; font-variant-numeric: tabular-nums; }
+.wse-att-td { text-align: right; font-variant-numeric: tabular-nums; }
+.wse-att-td::before { content: "("; opacity: 0; }
+.wse-att-td::after  { content: ")"; opacity: 0; }
+.wse-att-td.is-trimmed::before,
+.wse-att-td.is-trimmed::after { opacity: 1; }

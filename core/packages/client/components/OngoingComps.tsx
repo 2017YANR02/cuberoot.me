@@ -15,7 +15,7 @@ import { countryName } from '@/lib/country-name';
 import { useRecentRecords, RecentRecordsList } from '@/components/RecentRecords';
 import { useAnnouncedComps, AnnouncedCard } from '@/components/AnnouncedComps';
 import { RegistrationView } from '@/components/RegistrationComps';
-import { useCompFollows, FollowStar } from '@/components/CompFollow';
+import { useCompFollows } from '@/components/CompFollow';
 import { countActionableReg } from '@/lib/comp-registration';
 import './ongoing_comps.css';
 import i18n from '@/i18n/i18n-client';
@@ -64,6 +64,18 @@ function compLocalDate(nowMs: number, lon: number | undefined): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 }
 
+// 多地比赛(跨国 / 跨洲 / 全球,如 FMC World)的 WCA「国家」用 X 系码表示 —— 永远排最前。
+// 注意 xk = 科索沃是真国家,不属多地。
+const MULTI_LOCATION_ISO2 = new Set(['xa', 'xe', 'xf', 'xn', 'xo', 'xs', 'xm', 'xw']);
+// 国家优先级:多地 → 中国 → 美国 → 其余(其余之间再按国家英文名字母序)。当前 / 未来 / 往期共用。
+function countryRank(iso2: string): number {
+  const k = iso2.toLowerCase();
+  if (MULTI_LOCATION_ISO2.has(k)) return 0;
+  if (k === 'cn') return 1;
+  if (k === 'us') return 2;
+  return 3;
+}
+
 function groupByCountry(comps: Comp[]): Group[] {
   const byIso = new Map<string, Comp[]>();
   for (const c of comps) {
@@ -76,10 +88,9 @@ function groupByCountry(comps: Comp[]): Group[] {
     arr.sort((a, b) => a.start_date.localeCompare(b.start_date) || a.id.localeCompare(b.id));
   }
   const list: Group[] = [...byIso.entries()].map(([iso2, comps]) => ({ kind: 'country', iso2, comps }));
-  const rank = (iso2: string) => iso2 === 'cn' ? 0 : iso2 === 'us' ? 1 : 2;
   list.sort((a, b) => {
     if (a.kind !== 'country' || b.kind !== 'country') return 0;
-    const ra = rank(a.iso2), rb = rank(b.iso2);
+    const ra = countryRank(a.iso2), rb = countryRank(b.iso2);
     if (ra !== rb) return ra - rb;
     if (a.comps.length !== b.comps.length) return b.comps.length - a.comps.length;
     return countryName(a.iso2, false).localeCompare(countryName(b.iso2, false));
@@ -95,8 +106,15 @@ function groupByDate(comps: Comp[], keyField: 'start_date' | 'end_date', asc: bo
     arr.push(c);
     byDate.set(k, arr);
   }
+  // 同一天内:按国家(中国 → 美国 → 其余国家英文名字母序),同国再按 id 兜底稳定。
   for (const arr of byDate.values()) {
-    arr.sort((a, b) => a.id.localeCompare(b.id));
+    arr.sort((a, b) => {
+      const ca = (a.country || '').toLowerCase(), cb = (b.country || '').toLowerCase();
+      const ra = countryRank(ca), rb = countryRank(cb);
+      if (ra !== rb) return ra - rb;
+      if (ca !== cb) return countryName(ca, false).localeCompare(countryName(cb, false));
+      return a.id.localeCompare(b.id);
+    });
   }
   const list: Group[] = [...byDate.entries()].map(([date, comps]) => ({ kind: 'date', date, comps }));
   list.sort((a, b) => {
@@ -108,16 +126,13 @@ function groupByDate(comps: Comp[], keyField: 'start_date' | 'end_date', asc: bo
 
 // 当前 / 未来 / 往期 的比赛 chip(国家分组无内联旗、日期分组带旗)。登录用户在尾部加一颗
 // 轻量关注星(在 Link 之外,避免锚点嵌按钮);未登录则保持原样,零新增杂物。
-function CompChip({ comp, lang, isZh, showFlag, loggedIn, followed, onToggle }: {
+function CompChip({ comp, lang, isZh, showFlag }: {
   comp: Comp;
   lang: 'zh' | 'en';
   isZh: boolean;
   showFlag: boolean;
-  loggedIn: boolean;
-  followed: boolean;
-  onToggle: (id: string) => void;
 }) {
-  const link = (
+  return (
     <Link
       {...compLinkProps(comp.id, undefined, lang)}
       className="ongoing-comps-chip"
@@ -126,13 +141,6 @@ function CompChip({ comp, lang, isZh, showFlag, loggedIn, followed, onToggle }: 
       {showFlag && <Flag iso2={(comp.country || '').toLowerCase()} className="ongoing-comps-chip-flag" />}
       <span>{stripTrailingYear(localizeCompName(comp.id, comp.name, isZh))}</span>
     </Link>
-  );
-  if (!loggedIn) return link;
-  return (
-    <span className="ongoing-comps-chip-wrap">
-      {link}
-      <FollowStar variant="chip" compId={comp.id} followed={followed} onToggle={onToggle} />
-    </span>
   );
 }
 
@@ -275,13 +283,15 @@ export default function OngoingComps({ lang }: Props) {
       </div>
       <div className="ongoing-comps-groups">
         {active === 'announced' ? (
-          <div className="tac-grid">
-            {announcedList.map((c) => (
-              <AnnouncedCard
-                key={c.id} comp={c} isZh={isZh} lang={lang}
-                loggedIn={loggedIn} followed={follows.has(c.id)} onToggle={toggle}
-              />
-            ))}
+          <div className="reg-comps">
+            <div className="reg-cards">
+              {announcedList.map((c) => (
+                <AnnouncedCard
+                  key={c.id} comp={c} isZh={isZh} lang={lang}
+                  loggedIn={loggedIn} followed={follows.has(c.id)} onToggle={toggle}
+                />
+              ))}
+            </div>
           </div>
         ) : active === 'registration' ? (
           <RegistrationView comps={comps ?? []} isZh={isZh} lang={lang} loggedIn={loggedIn} follows={follows} toggle={toggle} />
@@ -292,10 +302,7 @@ export default function OngoingComps({ lang }: Props) {
             <Flag iso2={g.iso2} className="ongoing-comps-flag" />
             <div className="ongoing-comps-list">
               {g.comps.map(c => (
-                <CompChip
-                  key={c.id} comp={c} lang={lang} isZh={isZh} showFlag={false}
-                  loggedIn={loggedIn} followed={follows.has(c.id)} onToggle={toggle}
-                />
+                <CompChip key={c.id} comp={c} lang={lang} isZh={isZh} showFlag={false} />
               ))}
             </div>
           </div>
@@ -304,10 +311,7 @@ export default function OngoingComps({ lang }: Props) {
             <span className="ongoing-comps-date">{g.date.slice(5)}</span>
             <div className="ongoing-comps-list">
               {g.comps.map(c => (
-                <CompChip
-                  key={c.id} comp={c} lang={lang} isZh={isZh} showFlag
-                  loggedIn={loggedIn} followed={follows.has(c.id)} onToggle={toggle}
-                />
+                <CompChip key={c.id} comp={c} lang={lang} isZh={isZh} showFlag />
               ))}
             </div>
           </div>
