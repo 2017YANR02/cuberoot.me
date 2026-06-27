@@ -204,6 +204,23 @@ const CARDS: Card[] = [
     },
   },
   {
+    href: '/code/dead-code',
+    glyph: '∅',
+    accent: '#34D399',
+    zh: {
+      title: '死代码守卫',
+      sub: 'Dead Code Guard',
+      tagline: '没人调用的文件、装了不用的依赖、导出却无人 import 的函数:用 knip 扫干净,再用三层守卫(编译期 + CI 棘轮)把它挡在门外',
+      meta: 'knip 6.21 · 3 层守卫 · CI 棘轮',
+    },
+    en: {
+      title: 'Dead Code',
+      sub: 'Dead Code Guard',
+      tagline: 'Files nobody calls, deps nobody uses, exports nobody imports: swept with knip, then kept out by a three-layer guard (compile-time + CI ratchet)',
+      meta: 'knip 6.21 · 3-layer guard · CI ratchet',
+    },
+  },
+  {
     href: '/code/ops',
     glyph: '~$',
     accent: '#A78BFA',

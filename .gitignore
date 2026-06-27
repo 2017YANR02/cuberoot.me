@@ -86,3 +86,22 @@ fmc/target/
 fmc/**/target/
 
 .vercel
+
+# AI / 调试产出的图片禁落仓库:一律去 .tmp/png/(上面已 ignore)。
+# 仓库根 + core/ 根这两个最常被乱放的位置直接挡掉 raster,防 git add 误提交;
+# 合法图片资产都在各 public/ 下(更深路径),不受这些 depth-1 模式影响。
+# CI 兜底见 core/packages/client/tests/no-stray-images.test.ts。
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+/*.gif
+/*.bmp
+/*.avif
+/core/*.png
+/core/*.jpg
+/core/*.jpeg
+/core/*.webp
+/core/*.gif
+/core/*.bmp
+/core/*.avif
