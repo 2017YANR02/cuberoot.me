@@ -28,6 +28,12 @@ const VALID_EVENTS = new Set<string>([
 const MAX_PAGE_SIZE = 200;
 const DEFAULT_PAGE_SIZE = 100;
 
+// 大洲筛选:country 入参以 _ 开头 = WCA continent_id。无预算的「大洲名次」,改按世界名次序(走 hrs_*_wr 偏索引)
+// 过滤该大洲国家后取行位置当大洲名次(实测毫秒级,见 EXPLAIN)。
+const CONTINENT_IDS = new Set([
+  '_Africa', '_Asia', '_Europe', '_North America', '_Oceania', '_South America',
+]);
+
 // GET /v1/wca/historical-ranks
 historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
   const event = String(c.req.query('event') ?? '333').toLowerCase();
@@ -56,10 +62,16 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
     return c.json({ error: 'No average for 333mbf' }, 400);
   }
 
-  // ── 国家归一化:支持 ISO2('CN') 和 country.id('China')
+  // ── 国家归一化:支持 ISO2('CN')、country.id('China')、WCA continent_id('_Asia' 以 _ 开头 = 大洲)
   let countryId = '';
+  let continentId = '';
   if (country) {
-    if (country.length === 2) {
+    if (country.startsWith('_')) {
+      if (!CONTINENT_IDS.has(country)) {
+        return c.json({ error: 'Continent not found' }, 400);
+      }
+      continentId = country;
+    } else if (country.length === 2) {
       const rows = await query<{ id: string }>(
         `SELECT id FROM wca_countries WHERE iso2 = ? LIMIT 1`,
         [country.toUpperCase()],
@@ -101,7 +113,55 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
   }[];
   let total: number;
 
-  if (gender === 'all') {
+  if (continentId) {
+    // 大洲口径:快照无「大洲名次」预算列。按世界名次序(走 hrs_*_wr 偏索引)过滤该大洲国家,
+    // 行位置 = 大洲名次(offset+i+1);可叠加性别(同子集内位置即名次)。实测 5–80ms。
+    const genderClause = gender !== 'all' ? 'AND p.gender = ?' : '';
+    const params: unknown[] = [event, year, continentId];
+    if (gender !== 'all') params.push(gender);
+    params.push(size, offset);
+
+    rows = await query(
+      `
+      SELECT
+        s.wca_id          AS wca_id,
+        p.name            AS name,
+        ${valCol}         AS val,
+        s.country_id      AS country_id,
+        co.iso2           AS iso2,
+        ${wrCol}          AS world_rank,
+        0                 AS country_rank,
+        ${compIdCol}      AS comp_id,
+        c.name            AS comp_name,
+        ${dateCol}        AS comp_date,
+        ${attsCol}        AS attempts
+      FROM historical_ranks_snapshot s
+      JOIN wca_persons p ON p.wca_id = s.wca_id
+      LEFT JOIN wca_countries co ON co.id = s.country_id
+      LEFT JOIN wca_competitions c ON c.id = ${compIdCol}
+      WHERE s.event_id = ? AND s.year = ? AND ${wrCol} > 0
+        AND s.country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?)
+        ${genderClause}
+      ORDER BY ${wrCol} ASC, s.wca_id ASC
+      LIMIT ? OFFSET ?
+      `,
+      params,
+    );
+    const countParams: unknown[] = [event, year, continentId];
+    if (gender !== 'all') countParams.push(gender);
+    const totalRow = await query<{ n: string }>(
+      `
+      SELECT COUNT(*) AS n
+      FROM historical_ranks_snapshot s
+      ${gender !== 'all' ? 'JOIN wca_persons p ON p.wca_id = s.wca_id' : ''}
+      WHERE s.event_id = ? AND s.year = ? AND ${wrCol} > 0
+        AND s.country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?)
+        ${genderClause}
+      `,
+      countParams,
+    );
+    total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
+  } else if (gender === 'all') {
     // 默认快路径:用快照里预算好的全球/国家名次,走索引排序。
     const whereExtra = countryId
       ? `AND ${crCol} > 0 AND s.country_id = ?`
@@ -202,14 +262,15 @@ historicalRanksRoutes.get('/wca/historical-ranks', async (c) => {
   return c.json({
     event,
     year,
-    country: countryId,
+    country: continentId || countryId,
     type,
     gender,
     page,
     size,
     total,
-    rows: rows.map(r => ({
-      rank: countryId ? r.country_rank : r.world_rank,
+    rows: rows.map((r, i) => ({
+      // 大洲口径:行位置即大洲名次(已按世界名次序);国家口径:用预算的国家名次;否则世界名次。
+      rank: continentId ? offset + i + 1 : countryId ? r.country_rank : r.world_rank,
       wcaId: r.wca_id,
       name: r.name,
       value: r.val,

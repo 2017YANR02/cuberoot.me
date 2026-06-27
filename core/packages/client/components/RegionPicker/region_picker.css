@@ -1,17 +1,18 @@
 /* RegionPicker — 提取自原 records.css .records-region-*
- * 颜色用本地命名空间变量 --rp-* 驱动,默认 light theme;
- * 深色场景由消费方在外层 scope 覆盖(如 .records-page 在 records.css 里). */
+ * 颜色直接走全站 shadcn 风 token(globals.css),自动跟随 light/dark 与暗锁页(/wca/*)。
+ * 取值与 wse 筛选栏控件(_wca_stats_extra.css 的 .wse-country-*)对齐,保证视觉一致。
+ * 注:旧版用 --surface/--text 等已退役 token,在 Next 站点未定义 → 回退 #fff,暗主题下浮层发白。 */
 
 .region-picker {
-  --rp-bg: var(--surface, #fff);
-  --rp-bg-hover: var(--surface-alt, #f5f5f5);
-  --rp-bg-active: var(--border, #e5e5e5);
-  --rp-text: var(--text, #171717);
-  --rp-text-sub: var(--text-sub, #737373);
-  --rp-border: var(--border, #e5e5e5);
-  --rp-border-hover: var(--border-strong, #ccc);
-  --rp-popup-bg: var(--surface, #fff);
-  --rp-popup-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  --rp-bg: color-mix(in srgb, var(--foreground) 4%, transparent);
+  --rp-bg-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
+  --rp-bg-active: var(--accent-soft);
+  --rp-text: var(--foreground);
+  --rp-text-sub: var(--muted-foreground);
+  --rp-border: color-mix(in srgb, var(--foreground) 12%, transparent);
+  --rp-border-hover: color-mix(in srgb, var(--foreground) 25%, transparent);
+  --rp-popup-bg: var(--popover);
+  --rp-popup-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 
   position: relative;
   width: 220px;
