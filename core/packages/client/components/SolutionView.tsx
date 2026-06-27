@@ -77,6 +77,13 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
       player.jumpToMoveCount?.(parseSq1Tokens(textBefore).length);
       return;
     }
+    // cuber NxN engine (CuberReconPlayer) scrubs by whitespace move count, same
+    // as the submit form's caret handler — it has no cubing.js indexer.
+    if (player.__kind === 'nxn-cuber') {
+      const moves = extractAlgFromText(textBefore).trim().split(/\s+/).filter(Boolean);
+      player.jumpToMoveCount?.(moves.length);
+      return;
+    }
     syncPlayerToMoveCount(player, countMovesExpanded(extractAlgFromText(textBefore)));
   }, [playerRef]);
 

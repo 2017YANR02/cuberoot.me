@@ -37,6 +37,8 @@
   align-items: center;
   row-gap: 4px;
 }
+/* 成绩数字 + 右上角纪录标志成一项,不被换行拆开 */
+.detail-result { white-space: nowrap; }
 
 /* --- 元数据标签栏 --- */
 .detail-meta-bar {
@@ -96,6 +98,7 @@
 .detail-player-pane {
   /* grow to absorb ultrawide slack so the content pane stays flush to the right
      edge instead of leaving a dead gap; 600px is the floor */
+  position: relative;
   flex: 1 1 600px;
   display: flex;
   align-items: center;
@@ -103,6 +106,14 @@
   overflow: hidden;
   border-right: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   background: rgba(0, 0, 0, 0.15);
+}
+
+/* 渲染引擎切换(cuberoot / cubing.js)— 浮在动画区左上,NxN 才出现 */
+.detail-engine-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 5;
 }
 
 /* TwistySection fillPane 撑满左栏 */

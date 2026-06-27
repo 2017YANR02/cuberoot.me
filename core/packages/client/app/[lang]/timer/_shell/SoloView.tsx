@@ -1025,6 +1025,19 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     };
   }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, prevScramble, toggleFullscreen, multiStageActive, bldMemoActive]);
 
+  // 计时进行中:点屏幕任何地方都停表。计时面板内由 useGestureWheel(surfaceRef)处理,
+  // 这里只补面板之外的区域,并跳过面板内目标避免双触发(双触发会停表后立即重新进入 hold/观察)。
+  useEffect(() => {
+    const onDocDown = (e: PointerEvent) => {
+      if (phaseSnapshotRef.current !== 'running') return;
+      const t = e.target as Node | null;
+      if (surfaceRef.current && t && surfaceRef.current.contains(t)) return;
+      onPressDown();
+    };
+    document.addEventListener('pointerdown', onDocDown);
+    return () => document.removeEventListener('pointerdown', onDocDown);
+  }, [onPressDown]);
+
   // ── Import / export ─────────────────────────────────────────────
   const handleExport = useCallback(() => {
     const json = exportJson();

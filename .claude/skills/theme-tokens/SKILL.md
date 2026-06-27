@@ -29,6 +29,7 @@ token 定义在 `core/packages/client/app/globals.css :root`。完整色值表 +
 | 成功 | `var(--signal-success)` |
 | 警告 | `var(--signal-warning)` |
 | 信息 | `var(--signal-info)` |
+| 开关「开启态」(iOS 绿,PillToggle/switch) | `var(--toggle-on)` |
 
 ## 衍生色:一律 color-mix
 

@@ -65,6 +65,8 @@ body {
   --signal-warning: #d4a259;
   --signal-info: #4a9eff;
   --signal-danger: #e05c5c;
+  /* iOS 风开关「开启态」色(PillToggle 等);全站开关统一走它,新开关直接 var(--toggle-on) 别再挑色 */
+  --toggle-on: #34c759;
   --border-default: #e5e5e5;
   --border-strong: #d4d4d4;
   --input: #e5e5e5;
@@ -119,6 +121,7 @@ body {
     --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
     --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
     --input: color-mix(in srgb, var(--foreground) 10%, transparent);
+    --toggle-on: #30d158;
 
     /* /article inline highlights (dark) — lightened bases for contrast on dark bg. */
     --article-red: #e87a86;
@@ -191,6 +194,7 @@ html[data-theme=dark] {
   --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
   --border-strong: color-mix(in srgb, var(--foreground) 20%, transparent);
   --input: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --toggle-on: #30d158;
 
   /* /article inline highlights (dark) — lightened bases for contrast on dark bg. */
   --article-red: #e87a86;

@@ -131,6 +131,10 @@ html[data-theme=dark] .wp-page {
 /* 「全部成绩」标题右侧工具组(PR 名次开关 + 编辑模式开关) */
 .wp-section-h-tools { display: inline-flex; align-items: center; gap: 8px; }
 
+/* 「详细成绩 PR 名次」开关:# 图标 + iOS 风 PillToggle */
+.wp-attempt-ranks-toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--wp-text-sub); }
+.wp-attempt-ranks-toggle.is-active { color: var(--wp-blue); }
+
 /* ── 最优项目组合(复用全局 .sor-pb / .sor-tool-hint,见 components/wca-stats/best-combos.css)── */
 .wp-combos-card {
     padding: 18px 20px;
@@ -291,9 +295,6 @@ html[data-theme=dark] .wp-page {
     font-weight: 600;
     font-variant-numeric: tabular-nums;
 }
-.wp-pill-green  { color: #4DAF50; }
-.wp-pill-blue   { color: #2A6BB0; }
-.wp-pill-orange { color: #E07F3C; }
 .wp-pill-sep    { color: var(--wp-text-mute); }
 
 /* ── PR table ──────────────────────────────────────────────────────── */
@@ -484,25 +485,13 @@ html[data-theme=dark] .wp-page {
     border-bottom-color: var(--wp-blue);
     font-weight: 600;
 }
+/* 内容为空的 tab:置灰 + 禁用点击(disabled);激活时连下划线一起置灰、不加粗 */
+.wp-tab-btn.wp-tab-btn--empty { color: var(--wp-text-mute); font-weight: 500; cursor: not-allowed; }
+.wp-tab-btn.wp-tab-btn--empty.is-active { border-bottom-color: var(--wp-text-mute); }
 .wp-tab-body { padding: 16px 24px 24px; }
 
-/* ── Sub-tabs (按比赛/按项目) ─────────────────────────────────────── */
-.wp-subtab-bar {
-    display: flex; gap: 16px;
-    border-bottom: 1px solid var(--wp-border);
-    margin-bottom: 16px;
-}
-.wp-subtab-btn {
-    background: transparent; border: none;
-    padding: 8px 4px; margin-bottom: -1px;
-    color: var(--wp-text-sub); font-size: 0.88rem;
-    cursor: pointer; border-bottom: 2px solid transparent;
-}
-.wp-subtab-btn:hover { color: var(--wp-text); }
-.wp-subtab-btn.is-active {
-    color: var(--wp-blue); border-bottom-color: var(--wp-blue);
-    font-weight: 600;
-}
+/* 「成绩」=按项目视图;右侧「比赛」(sub=comp)直接复用 .wp-tab-btn 主 tab 样式,无额外 CSS */
+
 /* 管理员「编辑模式」开关:紧贴「全部成绩」标题右侧的纯图标按钮 */
 .wp-editmode-toggle {
     display: inline-flex; align-items: center; justify-content: center;
@@ -533,18 +522,20 @@ html[data-theme=dark] .wp-page {
     cursor: pointer;
     color: var(--wp-text-sub);
 }
-.wp-event-tab:hover { color: var(--wp-text); }
-.wp-event-tab.is-active {
-    color: var(--wp-blue);
-    border-color: var(--wp-blue);
-    background: var(--wp-blue-soft);
-}
+.wp-event-tab .wp-event-icon-md { color: var(--wp-text-sub); }
+.wp-event-tab:hover .wp-event-icon-md { color: var(--wp-text); }
+/* 选中项目 = 图标变绿(同 PR 表选中行的 .wp-row-selected 绿),不再用蓝框圈起来 */
+.wp-event-tab.is-active .wp-event-icon-md { color: #4ade80; }
 
 .wp-subsubtab-bar {
     display: flex; gap: 16px;
     border-bottom: 1px solid var(--wp-border);
     margin-bottom: 12px;
 }
+/* 5 选一子 tab 栏:全部成绩(+ # / ✏ 工具)及 4 个图表视图全部左对齐顺排。
+   工具 .wp-section-h-tools 居中对齐于栏内,不撑破 tab 下划线基线。 */
+.wp-subsubtab-bar { flex-wrap: wrap; align-items: stretch; }
+.wp-subsubtab-bar .wp-section-h-tools { align-self: center; }
 .wp-subsubtab-btn {
     background: transparent; border: none;
     padding: 6px 4px; margin-bottom: -1px;
@@ -557,8 +548,9 @@ html[data-theme=dark] .wp-page {
     color: var(--wp-blue); border-bottom-color: var(--wp-blue);
     font-weight: 600;
 }
-/* 历史成绩排名曲线 标签靠右,与左侧两个「成绩视图」标签分组 */
-.wp-subsubtab-btn-end { margin-left: auto; }
+
+/* 「比赛」视图工具行:成绩/赛事 PillToggle + (# PR 名次 / 编辑)同一行,左对齐 + 与下方表格留白 */
+.wp-comp-subtoggle { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
 
 /* ── 按比赛 (ByCompList) ─────────────────────────────────────────── */
 .wp-bycomp { display: flex; flex-direction: column; gap: 16px; }
@@ -714,6 +706,9 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 }
 /* 详细成绩单元格颜色 token;网格布局 + 括号占位见共享 components/wca-results/attempts-grid.css(与 /recon 同场表共用) */
 .wp-cell-attempts { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
+/* # 关(无 PR 角标)时成绩很窄,右对齐会落在 10ch 列右侧、与居中的表头序号错开 →
+   这种状态改居中,正好落在居中表头(1..5)正下方;# 开时成绩接近 10ch 填满列,保持右对齐(小数点跨行对齐)。 */
+.wp-cell-attempts--center .wp-att { text-align: center; }
 /* 详细成绩里的旧值(被改的那一次)压缩,尽量少撑宽 */
 .wp-cell-attempts .wp-old-result { font-size: 0.72em; margin-right: 3px; }
 /* 「详细成绩」表头压在下方 attempts 网格正上方:同列模板 + 同字号 + 同列下限(10ch)→ 表头序号与下方成绩同列对齐。
@@ -742,21 +737,18 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
     transition: color 0.12s;
 }
 .wp-sort-th:hover { color: var(--wp-text); }
-.wp-sort-th.is-active { color: var(--wp-blue); font-weight: 600; }
+.wp-sort-th.is-active { color: var(--wp-accent); font-weight: 600; }
 /* 「详细成绩」表头下方的把序号(1..5)排序触发 */
 /* display:contents → 5 个序号直接成为 .wp-att-head 网格项,落到第 2 行各列、与下方成绩同列对齐 */
 .wp-th-attempts .wp-att-head > span.wp-att-sort { display: contents; }
 .wp-att-sort-i {
-    appearance: none; background: none; border: 1px solid transparent; font: inherit;
+    appearance: none; background: none; border: none; font: inherit;
     display: inline-flex; align-items: center; gap: 1px; justify-self: center;
-    padding: 1px 5px; border-radius: 5px; cursor: pointer; line-height: 1.4;
-    color: var(--wp-text-sub); transition: color 0.12s, border-color 0.12s, background 0.12s;
+    padding: 1px 5px; cursor: pointer; line-height: 1.4;
+    color: var(--wp-text-sub); transition: color 0.12s;
 }
-.wp-att-sort-i:hover { color: var(--wp-text); border-color: var(--wp-border); }
-.wp-att-sort-i.is-active {
-    color: var(--wp-blue); border-color: var(--wp-blue);
-    background: color-mix(in srgb, var(--wp-blue) 12%, transparent);
-}
+.wp-att-sort-i:hover { color: var(--wp-text); }
+.wp-att-sort-i.is-active { color: var(--wp-accent); font-weight: 600; }
 /* 表头带 InfoTooltip 的布局 wrapper:横向 flex + 间距,实际触发 / 弹层走组件 */
 .wp-th-info {
     display: inline-flex;
@@ -841,6 +833,14 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 }
 
 /* ── Charts ─────────────────────────────────────────────────────── */
+/* 趋势子 tab:成绩趋势 + 排名趋势 两图叠放,各带小标题 */
+.wp-trend-block + .wp-trend-block { margin-top: 20px; }
+.wp-trend-h {
+    font-size: 0.85rem; font-weight: 600;
+    color: var(--wp-text-sub);
+    margin-bottom: 8px;
+}
+
 .wp-chart-wrap {
     position: relative;
     width: 100%; max-width: 100%;

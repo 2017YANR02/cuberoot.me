@@ -69,7 +69,15 @@ export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLab
         if (e.detail === 0) onChange(!value);
       }}
     >
-      {!isSwitch && <span className="pill-toggle-label">{value ? onLabel : offLabel}</span>}
+      {!isSwitch && (
+        <span className="pill-toggle-label">
+          {/* 两个隐形 ghost 把标签区撑到「较长那个标签」的宽度,可见的 cur 叠在其上:
+              宽度贴合文字、且切换 on/off 不跳变 —— 各页直接用,无需再写死/覆盖 min-width。 */}
+          <span className="pill-toggle-label-ghost" aria-hidden="true">{onLabel}</span>
+          <span className="pill-toggle-label-ghost" aria-hidden="true">{offLabel}</span>
+          <span className="pill-toggle-label-cur">{value ? onLabel : offLabel}</span>
+        </span>
+      )}
       <span className="pill-toggle-dot" />
     </button>
   );

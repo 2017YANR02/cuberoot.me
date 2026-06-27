@@ -39,6 +39,20 @@ export function siteCompUrl(
 }
 
 /**
+ * ISO `yyyy-mm-dd` 紧凑区间(同站点 client lib/wca-date.ts 逻辑;server 独立包不能 import client)。
+ * 同天→单日;同月→`start~dd`;同年跨月→`start~mm-dd`;跨年→`start~end`。
+ */
+export function formatDateRangeIso(startISO: string, endISO?: string | null): string {
+  const end = endISO || startISO;
+  if (!startISO || startISO === end) return startISO;
+  const [sy, sm] = startISO.split('-');
+  const [ey, em, ed] = end.split('-');
+  if (sy === ey && sm === em) return `${startISO}~${ed}`;
+  if (sy === ey) return `${startISO}~${em}-${ed}`;
+  return `${startISO}~${end}`;
+}
+
+/**
  * cubing.com 的 alias 是「插了横杠的 WCA 比赛 id」(HuanggangOpen2026 → Huanggang-Open-2026)。
  * 去横杠还原成 WCA id 再建自有站链接(WCA id 本身从不含横杠)。alias 缺失 → null,回退原链。
  */

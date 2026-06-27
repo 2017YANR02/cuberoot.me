@@ -4,12 +4,12 @@
  * /wca/comp/[slug] — full port of packages/client-vite/src/pages/comp/CompDetailPage.tsx.
  * Live WS (cubing.com + WCA Live) + Psych Sheet + record badges + round/cuber modals.
  */
-import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Pencil, Radio } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Pencil, Radio, ArrowUp, ArrowDown } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -1578,6 +1578,7 @@ export default function CompDetailPage() {
                 isZh={isZh}
                 pbMap={pbMap}
                 advancers={advancers}
+                sortable
                 compIso2={compFlagIso2(slug)}
                 changeMap={changeMap}
                 compId={slug}
@@ -1785,6 +1786,23 @@ function PastRowsPopover({
   );
 }
 
+// 详情列表头:每把一个数字列头 (1..count),与 /wca/persons 成绩表一致(取代单个「详情」合并表头)。
+// 右对齐对齐其下右对齐的成绩值。
+function attemptNumHeaders(count: number) {
+  return Array.from({ length: count }, (_, i) => (
+    <th key={`att-${i}`} className="th-detail th-attempt-n">{i + 1}</th>
+  ));
+}
+
+// 可排序列头按钮(成绩表 / 预排名共用):无方框纯文字 + 方向箭头。
+function CompSortBtn({ active, dir, onClick, children }: { active: boolean; dir: 'asc' | 'desc'; onClick: () => void; children: ReactNode }) {
+  return (
+    <button type="button" className={`comp-sort-btn${active ? ' is-active' : ''}`} onClick={onClick}>
+      {children}{active ? (dir === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />) : null}
+    </button>
+  );
+}
+
 interface ResultsTableProps {
   results: LiveResult[];
   users: Record<string, User>;
@@ -1801,9 +1819,33 @@ interface ResultsTableProps {
   admin?: boolean;
   onEdit?: (t: ResultChangeTarget) => void;
   onRefresh?: () => void;
+  // 列头可点排序(平均 / 单次 / 第 N 把)。默认关:领奖台等复用场景保持名次序。
+  sortable?: boolean;
 }
 
-function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, onEdit, onRefresh }: ResultsTableProps) {
+function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, onEdit, onRefresh, sortable }: ResultsTableProps) {
+  // 排序:点列头(平均/单次/第 N 把)升→降→取消;无效成绩(DNF/DNS/空)恒垫底,默认 null=按名次序。
+  const [sort, setSort] = useState<{ key: string | null; dir: 'asc' | 'desc' }>({ key: null, dir: 'asc' });
+  const toggleSort = useCallback((key: string) => {
+    setSort(prev => prev.key !== key ? { key, dir: 'asc' } : prev.dir === 'asc' ? { key, dir: 'desc' } : { key: null, dir: 'asc' });
+  }, []);
+  // 切项目 / 轮次重置排序(把数 / 量纲不同)。
+  useEffect(() => { setSort({ key: null, dir: 'asc' }); }, [round?.e, round?.i]);
+  const displayResults = useMemo(() => {
+    if (!sort.key) return results;
+    const k = sort.key, dir = sort.dir;
+    const valOf = (r: LiveResult): number =>
+      k === 'average' ? effectiveAvg(r) : k === 'single' ? r.b : (r.v[Number(k.slice(3))] ?? 0);
+    return results.slice().sort((a, b) => {
+      const va = valOf(a), vb = valOf(b);
+      const ia = !(va > 0), ib = !(vb > 0);   // DNF/DNS/空 = 无效
+      if (ia && ib) return 0;
+      if (ia) return 1;
+      if (ib) return -1;
+      return dir === 'asc' ? va - vb : vb - va;
+    });
+  }, [results, sort]);
+
   if (!round) return null;
   const isAverageFormat = isAvgRankedFormat(round.f);
   // 多盲 Bo3 显示非官方 Mo3 平均(WCA 不追踪);Bo1/Bo2 无平均不显示
@@ -1815,6 +1857,13 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
   const attemptCount = Math.max(formatAttempts, maxRowAttempts);
   // 竞赛名次 (并列同名次,Reg 9f15);领奖台奖牌色按名次而非行序染 (并列第一 → 两金,无银)。
   const places = computePlaces(results, isAverageFormat);
+  // 名次按选手号索引:排序打散行序后,名次列仍显示竞赛名次(而非当前行号)。
+  const placeByN = new Map<number, number | null>();
+  results.forEach((r, i) => placeByN.set(r.n, places[i] ?? null));
+  // 列头排序按钮(仅 sortable 时)。
+  const sortBtn = (key: string, label: ReactNode): ReactNode => !sortable ? label : (
+    <CompSortBtn active={sort.key === key} dir={sort.dir} onClick={() => toggleSort(key)}>{label}</CompSortBtn>
+  );
 
   return (
     <div className="comp-table-wrap">
@@ -1827,22 +1876,24 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             {(() => {
               const avgTh = showAvg ? (
                 <th key="avg" className={`th-avg${!singleFirst ? ' is-rank-col' : ''}`}>
-                  {tr({ zh: '平均', en: 'Average' })}
-                  {isMbldMo3 && <UnofficialMark />}
+                  {sortBtn('average', <>{tr({ zh: '平均', en: 'Average' })}{isMbldMo3 && <UnofficialMark />}</>)}
                 </th>
               ) : null;
-              const bestTh = <th key="best" className={`th-best${singleFirst ? ' is-rank-col' : ''}`}>{tr({ zh: '单次', en: 'Best'
-            })}</th>;
+              const bestTh = <th key="best" className={`th-best${singleFirst ? ' is-rank-col' : ''}`}>{sortBtn('single', tr({ zh: '单次', en: 'Best' }))}</th>;
               return singleFirst ? [bestTh, avgTh] : [avgTh, bestTh];
             })()}
-            <th className="th-detail" colSpan={attemptCount}>{tr({ zh: '详情', en: 'Detail'
-            })}</th>
+            {sortable
+              ? Array.from({ length: attemptCount }, (_, i) => (
+                  <th key={`att-${i}`} className="th-detail th-attempt-n">{sortBtn(`att${i}`, i + 1)}</th>
+                ))
+              : attemptNumHeaders(attemptCount)}
           </tr>
         </thead>
         <tbody>
-          {results.map((r, idx) => {
+          {displayResults.map((r, idx) => {
             const u = users[String(r.n)];
             if (!u) return null;
+            const place = placeByN.get(r.n) ?? null;
             const pb = pbMap[u.wcaid];
             const { singleRank, averageRank } = classifyPr(r, pb);
             const singleBadge = prBadgeFor(singleRank);
@@ -1863,7 +1914,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                 className={`${cls} comp-row-clickable`}
                 onClick={() => onClickCuber(r.n)}
               >
-                <td className={`td-place${places[idx] === 1 ? ' is-gold' : places[idx] === 2 ? ' is-silver' : places[idx] === 3 ? ' is-bronze' : ''}`}>{places[idx] ?? '-'}</td>
+                <td className={`td-place${place === 1 ? ' is-gold' : place === 2 ? ' is-silver' : place === 3 ? ' is-bronze' : ''}`}>{place ?? '-'}</td>
                 <td className="td-person">
                   <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
                   <span
@@ -2067,8 +2118,7 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
                     <th className="th-best">{tr({ zh: '单次', en: 'Best'
                     })}</th>
                     <th className="th-avg">{tr({ zh: '平均', en: 'Average' })}</th>
-                    <th className="th-detail" colSpan={attemptCount}>{tr({ zh: '详情', en: 'Detail'
-                    })}</th>
+                    {attemptNumHeaders(attemptCount)}
                   </tr>
                 </thead>
                 <tbody>
@@ -2173,8 +2223,7 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
             })}</th>;
               return singleFirst ? [bestTh, avgTh] : [avgTh, bestTh];
             })()}
-            <th className="th-detail" colSpan={attemptCount}>{tr({ zh: '详情', en: 'Detail'
-            })}</th>
+            {attemptNumHeaders(attemptCount)}
           </tr>
         </thead>
         <tbody>
@@ -2435,6 +2484,26 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
     return rows;
   }, [data, eventIds, pbMap]);
 
+  // 单项预排名:点「平均 / 单次」列头排序(升→降→取消);无成绩(无 PB)恒垫底,默认 null=按预排名序。
+  const [sort, setSort] = useState<{ key: 'average' | 'single' | null; dir: 'asc' | 'desc' }>({ key: null, dir: 'asc' });
+  const toggleSort = useCallback((key: 'average' | 'single') => {
+    setSort(prev => prev.key !== key ? { key, dir: 'asc' } : prev.dir === 'asc' ? { key, dir: 'desc' } : { key: null, dir: 'asc' });
+  }, []);
+  useEffect(() => { setSort({ key: null, dir: 'asc' }); }, [eventId]);
+  const displayRows = useMemo(() => {
+    if (!sort.key) return psychRows;
+    const k = sort.key, dir = sort.dir;
+    return psychRows.slice().sort((a, b) => {
+      const va = (k === 'average' ? a.average : a.single) ?? 0;
+      const vb = (k === 'average' ? b.average : b.single) ?? 0;
+      const ia = !(va > 0), ib = !(vb > 0);
+      if (ia && ib) return 0;
+      if (ia) return 1;
+      if (ib) return -1;
+      return dir === 'asc' ? va - vb : vb - va;
+    });
+  }, [psychRows, sort]);
+
   if (eventIds.length >= 2) {
     return (
       <div className="comp-table-wrap">
@@ -2490,6 +2559,9 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
     );
   }
 
+  // 预排名名次按选手号索引:点列头排序打散后,名次列仍显示预排名位次(而非当前行号)。
+  const rankByN = new Map<number, number>(psychRows.map((r, i) => [r.n, i + 1]));
+
   return (
     <div className="comp-table-wrap">
       <table className="comp-table">
@@ -2501,15 +2573,22 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                 <th className="th-person">{tr({ zh: '选手', en: 'Person'
                 })}</th>
                 {(() => {
-                  const avgTh = <th key="avg" className={`th-avg${!singleRanked ? ' is-rank-col' : ''}`}>{tr({ zh: '平均', en: 'Average' })}</th>;
-                  const singleTh = <th key="single" className={`th-best${singleRanked ? ' is-rank-col' : ''}`}>{tr({ zh: '单次', en: 'Single'
-                })}</th>;
+                  const avgTh = (
+                    <th key="avg" className={`th-avg${!singleRanked ? ' is-rank-col' : ''}`}>
+                      <CompSortBtn active={sort.key === 'average'} dir={sort.dir} onClick={() => toggleSort('average')}>{tr({ zh: '平均', en: 'Average' })}</CompSortBtn>
+                    </th>
+                  );
+                  const singleTh = (
+                    <th key="single" className={`th-best${singleRanked ? ' is-rank-col' : ''}`}>
+                      <CompSortBtn active={sort.key === 'single'} dir={sort.dir} onClick={() => toggleSort('single')}>{tr({ zh: '单次', en: 'Single' })}</CompSortBtn>
+                    </th>
+                  );
                   return singleRanked ? [singleTh, avgTh] : [avgTh, singleTh];
                 })()}
               </tr>
             </thead>
             <tbody>
-              {psychRows.map((row, idx) => {
+              {displayRows.map((row, idx) => {
                 const isOdd = idx % 2 === 1;
                 return (
                   <tr
@@ -2517,7 +2596,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
                     className={`${isOdd ? 'row-odd' : ''} comp-row-clickable`}
                     onClick={() => onRowClick(row.u)}
                   >
-                    <td className="td-place">{idx + 1}</td>
+                    <td className="td-place">{rankByN.get(row.n) ?? idx + 1}</td>
                     <td className="td-person">
                       <Flag iso2={regionToIso2(row.u.region)} className="comp-flag" />
                       <CuberNameLink u={row.u} isZh={isZh} />
@@ -2686,8 +2765,7 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
                       <th>{tr({ zh: '单次', en: 'Best'
                     })}</th>
                       <th>{tr({ zh: '平均', en: 'Average' })}</th>
-                      <th colSpan={5}>{tr({ zh: '详情', en: 'Detail'
-                    })}</th>
+                      {attemptNumHeaders(5)}
                     </tr>
                   </thead>
                   <tbody>

@@ -5,7 +5,7 @@
  */
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
-import { POLL_INTERVAL_MS, siteCompUrl, isChineseRegion } from './config.js';
+import { POLL_INTERVAL_MS, siteCompUrl, isChineseRegion, formatDateRangeIso } from './config.js';
 import { startPoller } from './poll.js';
 
 const MONITOR: MonitorId = 'wca_comp';
@@ -60,17 +60,6 @@ async function queryCompetitions(): Promise<WcaComp[]> {
     await sleep(3000);
   }
   return [];
-}
-
-/** ISO `yyyy-mm-dd` 紧凑区间(同站点 lib/wca-date.ts 逻辑;server 独立包不能 import client)。 */
-function formatDateRangeIso(startISO: string, endISO?: string | null): string {
-  const end = endISO || startISO;
-  if (!startISO || startISO === end) return startISO;
-  const [sy, sm] = startISO.split('-');
-  const [ey, em, ed] = end.split('-');
-  if (sy === ey && sm === em) return `${startISO}~${ed}`;
-  if (sy === ey) return `${startISO}~${em}-${ed}`;
-  return `${startISO}~${end}`;
 }
 
 function formatCompMessage(comp: WcaComp): { title: string; body: string; url: string } {

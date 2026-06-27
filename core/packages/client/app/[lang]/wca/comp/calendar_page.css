@@ -130,6 +130,15 @@
 /* 日历下方的「最近浏览」与日历主体留间距 */
 .comp-recent-calendar { margin-top: 32px; }
 
+/* 卡片视图 — 复用首页「报名」卡片(.reg-cards / .rc-*,registration_comps.css) */
+.comp-card-view { margin-top: 0.5rem; }
+.comp-card-empty {
+    padding: 2rem 0;
+    text-align: center;
+    color: var(--muted-foreground);
+    font-size: 0.9rem;
+}
+
 /* ── view=globe:沉浸全屏地球(复用 /wca/globe 的 MapLibre 组件,dark-locked 配色) ── */
 .comp-globe-view { position: fixed; inset: 0; z-index: 50; }
 .comp-globe-loading {
@@ -416,6 +425,10 @@
     align-items: center;
     gap: 0.75rem;
     margin: 0.5rem 0 0.75rem;
+}
+/* 比赛/国家 布局切换 PillToggle:宽度走 base 默认(贴合文字),这里只把高度对齐工具栏图标行 */
+.calendar-page .cal-layout-toggle {
+    height: 30px;
 }
 .calendar-page .month-nav {
     display: flex;

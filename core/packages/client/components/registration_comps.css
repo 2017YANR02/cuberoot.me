@@ -99,6 +99,24 @@
   color: var(--muted-foreground);
 }
 .rc-date { font-variant-numeric: tabular-nums; }
+/* pill 与日期同一行时垂直居中(覆盖 .rc-pill 的 flex-start,那是列布局下用的) */
+.rc-meta .rc-pill { align-self: center; }
+/* 比赛城市 国家(+ 可选报名人数上限)单独一行 */
+.rc-place {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.rc-limit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-variant-numeric: tabular-nums;
+}
+.rc-limit svg { opacity: 0.8; flex: none; }
 
 /* 报名状态 pill — 自适应内容宽度,左对齐 */
 .rc-pill {
@@ -141,6 +159,22 @@
   font-size: 1rem;
   line-height: 1;
 }
+/* 公示卡片:每个项目图标下显示轮次数 */
+.rc-event-item {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  gap: 2px;
+}
+.rc-event-rounds {
+  font-size: 0.65rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--muted-foreground);
+}
+.rc-event-rounds--placeholder { opacity: 0.3; }
 
 .reg-login-hint {
   align-self: flex-start;

@@ -42,6 +42,7 @@ export const GROUPS: Group[] = [
       { name: '--signal-warning', kind: 'signal', light: { css: '#d4a259', txt: '#d4a259' }, dark: { css: '#d4a259', txt: '#d4a259' }, zh: '警告', en: 'Warning' },
       { name: '--signal-info', kind: 'signal', light: { css: '#4a9eff', txt: '#4a9eff' }, dark: { css: '#4a9eff', txt: '#4a9eff' }, zh: '信息', en: 'Info' },
       { name: '--destructive', kind: 'signal', light: { css: '#e05c5c', txt: '#e05c5c' }, dark: { css: '#e05c5c', txt: '#e05c5c' }, zh: '危险 / 删除', en: 'Danger / destructive' },
+      { name: '--toggle-on', kind: 'signal', light: { css: '#34c759', txt: '#34c759' }, dark: { css: '#30d158', txt: '#30d158' }, zh: '开关开启态 (iOS 绿 / PillToggle)', en: 'Toggle on (iOS green / PillToggle)' },
     ],
   },
   {

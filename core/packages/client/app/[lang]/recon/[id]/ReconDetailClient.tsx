@@ -52,6 +52,8 @@ import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { RecordBadge } from '@/components/RecordBadge';
 import TwistySection from '@/components/TwistySection';
 import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
+import CuberReconPlayer from '@/components/CuberReconPlayer';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import SolutionView from '@/components/SolutionView';
 import { canonicalSq1Alg } from '@/lib/sq1-svg';
 import {
@@ -166,8 +168,12 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
       <div className="detail-header-block">
         <div className="detail-header">
           <h1 className="detail-title">
-            {solve.value || (solve.rawTime != null ? formatTime(solve.rawTime) : null)}
-            <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
+            {/* 成绩 + 纪录标志同处一个 inline 项,标志才能 vertical-align:super 成右上角标
+                (.detail-title 是 flex 容器,直接子项的 vertical-align 会被忽略) */}
+            <span className="detail-result">
+              {solve.value || (solve.rawTime != null ? formatTime(solve.rawTime) : null)}
+              <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
+            </span>
             {solve.event && (
               <>{' '}<EventIcon event={solve.event} />{' '}{eventDisplayName(solve.event, isZh)}</>
             )}
@@ -263,6 +269,22 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   const isSq1 = solve.event === 'sq1';
   const playerScramble = isSq1 ? canonicalSq1Alg(scramble) : scramble;
 
+  // NxN puzzles can render with either engine (cuberoot = in-house cuber WebGL,
+  // the /sim look; or cubing.js). User-selectable + persisted, shared with the
+  // submit page via the same localStorage key. Other puzzles ignore it.
+  const puzzleId = getPuzzleId(solve.event);
+  const isNxnPuzzle = /^[2-7]x[2-7]x[2-7]$/.test(puzzleId);
+  const nxnOrder = isNxnPuzzle ? parseInt(puzzleId, 10) : 3;
+  const [reconEngine, setReconEngine] = useState<'cuber' | 'cubing'>(() => {
+    if (typeof window === 'undefined') return 'cuber';
+    try { return localStorage.getItem('recon.player.engine') === 'cubing' ? 'cubing' : 'cuber'; }
+    catch { return 'cuber'; }
+  });
+  const pickEngine = useCallback((e: 'cuber' | 'cubing') => {
+    setReconEngine(e);
+    try { localStorage.setItem('recon.player.engine', e); } catch { /* private */ }
+  }, []);
+
   return (
     <div className="detail-layout">
       <div className="detail-player-pane">
@@ -276,15 +298,35 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
               playerRef={playerRef}
               fillPane
             />
+          ) : isNxnPuzzle && reconEngine === 'cuber' ? (
+            <CuberReconPlayer
+              scramble={playerScramble}
+              alg={cleanForPlayer(displayText)}
+              order={nxnOrder}
+              playerRef={playerRef}
+              fillPane
+            />
           ) : (
             <TwistySection
-              puzzle={getPuzzleId(solve.event)}
+              puzzle={puzzleId}
               scramble={playerScramble}
               alg={cleanForPlayer(displayText)}
               playerRef={playerRef}
               fillPane
             />
           )
+        )}
+        {scramble && isNxnPuzzle && (
+          // 渲染引擎切换 — 浮在动画区左上(背面小窗在右上,不撞)。cuberoot / cubing.js 二选一。
+          <div className="detail-engine-toggle">
+            <PillToggle
+              value={reconEngine === 'cubing'}
+              onChange={(v) => pickEngine(v ? 'cubing' : 'cuber')}
+              offLabel="cuberoot"
+              onLabel="cubing.js"
+              ariaLabel={tr({ zh: '渲染引擎', en: 'Render engine' })}
+            />
+          </div>
         )}
       </div>
 

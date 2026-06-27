@@ -636,7 +636,7 @@ export const CATALOG: ComponentEntry[] = [
     en: 'iOS-style two-choice toggle (the primary use in this project, NOT a plain boolean switch): pass onLabel/offLabel as the two mutually-exclusive option labels (e.g. Single/Average, Cumulative/Period) — only the selected one shows, highlighted. Click it, or drag the knob past the midline; omit both labels for a plain track switch. Prefer it for any two-option toggle on new pages instead of rolling a new segmented control.',
     usage: '<PillToggle value={type === "average"} onChange={v => setType(v ? "average" : "single")} onLabel="平均" offLabel="单次" />',
     Demo: PillToggleDemo,
-    note: { zh: 'page-scope 默认 min-width:0 贴合文字;两标签字数差很多才保留 min-width。当过滤器跟 select 同行时给它跟 select 同高(看 /wca/results 的 .wse-filter pill,34px 上下居中)。', en: 'Page-scope min-width:0 hugs the text by default; keep min-width only when the two labels differ a lot in length. When used as a filter alongside selects, match the select height (see /wca/results .wse-filter pill — 34px, vertically centered).' },
+    note: { zh: '默认就贴合文字、并自动按较长标签预留宽度(切换 on/off 不跳变),无需再 page-scope 覆盖 min-width。当过滤器跟 select 同行时给它跟 select 同高(看 /wca/results 的 .wse-filter pill,34px 上下居中)。锁:tests/pilltoggle-default-fit.test.ts。', en: 'Hugs the text by default and auto-reserves the longer label’s width (no jump on toggle) — no page-scope min-width override needed. When used as a filter alongside selects, match the select height (see /wca/results .wse-filter pill — 34px, vertically centered). Locked by tests/pilltoggle-default-fit.test.ts.' },
   },
   {
     name: 'HeaderToggles',
@@ -796,6 +796,13 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: 'WCA 比赛搜索 / 选择输入框。任何输入或搜索比赛的 UI 必须用它。',
     en: 'WCA competition search / picker input. Required for any comp-input or comp-search UI.',
+  },
+  {
+    name: 'CompCard',
+    import: "import { CompCard } from '@/components/CompCard';",
+    category: 'more',
+    zh: '比赛卡片(旗 + 比赛名 + 日期/城市 + 报名状态 pill + 项目图标)。首页「报名」tab 与 /wca/comp 卡片视图共用同一份视觉。纯展示:报名 pill 由调用方按各自里程碑口径算好传入,卡片本身不碰时间逻辑。',
+    en: 'Competition card (flag + name + date/city + registration-status pill + event icons). Shared by the landing "Registration" tab and the /wca/comp card view. Presentational only — the caller computes the reg pill (milestone semantics differ per page) and passes it in.',
   },
   {
     name: 'WcaPersonPicker',

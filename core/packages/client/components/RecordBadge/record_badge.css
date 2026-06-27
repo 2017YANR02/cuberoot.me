@@ -2,6 +2,8 @@
     display: inline-block;
     padding: 0 3px;
     border-radius: 3px;
+    /* 不继承外层 .mono(卡片视图把成绩包在 mono 里),纪录标志统一无衬线 */
+    font-family: var(--font-sans);
     font-size: 0.6rem;
     font-weight: 600;
     color: #fff;
@@ -38,6 +40,7 @@
 /* PR<N> (N≥2) 选手历史第 N 快 — 裸文字, 无外框, 跟 .record-badge 同字号同字重.
    .record-num-cell 内继承 .record-badge--inline 的绝对定位, 跟 PR(=PR1) 占同一位置. */
 .record-pr-rank {
+    font-family: var(--font-sans);
     font-size: 0.6rem;
     font-weight: 600;
     color: var(--muted-foreground);
