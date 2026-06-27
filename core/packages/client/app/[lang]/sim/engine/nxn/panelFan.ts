@@ -13,7 +13,7 @@
  * 盖掉 inner box 露出的深色中心,所有 nxn 切面都是连续斜向彩色条纹。非原核才走 Cubelet._PANEL 深色盒。
  */
 import * as THREE from "three";
-import { FACE, COLORS, SIZE } from "../define";
+import { FACE, COLORS, SIZE, STICKER_INNER } from "../define";
 import type Cube from "./cube";
 
 /** (轴, 符号) → WCA 面(FACE enum 值)。0=x:R/L,1=y:U/D,2=z:F/B。 */
@@ -27,7 +27,10 @@ function faceFor(axis: number, sign: number): FACE {
 export function buildPanelFan(order: number, axis: number): THREE.BufferGeometry {
   const N = order;
   const p = (axis + 1) % 3, q = (axis + 2) % 3;
-  const HALF = (N * SIZE) / 2;   // in-plane 满宽半径(到外表面);扇面铺满整个切面(含周边块那一圈)
+  // 切面外缘内缩 GAP(= 贴片到块边的黑边宽,与六色贴片同源 define.STICKER_INNER),露出周边块的
+  // 深色 frame 当黑边框 → 彩色不铺到块外缘(否则边沿冒一条细色线/绿线),与块顶贴片黑缝一致。
+  const GAP = (SIZE - STICKER_INNER) / 2;
+  const HALF = (N * SIZE) / 2 - GAP;   // in-plane 半宽(已内缩 GAP)
   const TH = SIZE / 2;           // 沿轴半厚 = 半个块高,扇面齐平到切面;与周边块的方形块顶共面,
                                  // 靠 _PANEL_MAT 的 polygonOffset 盖过它 → 出连续斜条纹而非方块台阶
   const mk = (aSign: number, pu: number, qu: number): [number, number, number] => {

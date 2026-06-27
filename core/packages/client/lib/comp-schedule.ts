@@ -11,7 +11,6 @@ import {
   parseActivityCode, trimWcif,
   type RawWcif, type ScheduleData, type ScheduleActivity, type RoundInfo,
 } from '@cuberoot/shared/comp-schedule';
-import i18n from "@/i18n/i18n-client";
 
 // Re-export the shared shapes so existing local imports keep working unchanged.
 export type {

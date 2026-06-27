@@ -56,7 +56,7 @@ export function ScrambleHeader({ scramble, label }: { scramble: string; label: s
 }
 
 export function SolveCard({
-  puzzle, set, solve, c, isZh, onDelete, header,
+  puzzle, set, solve, c, onDelete, header,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -114,7 +114,7 @@ export function SolveCard({
 }
 
 export function StatsList({
-  solves, observingIdx, isZh, onPick, onClear,
+  solves, observingIdx, onPick, onClear,
 }: {
   solves: TrainerSolve[];
   observingIdx: number;
@@ -173,7 +173,7 @@ interface TopGroup {
 }
 
 export function CaseTreePicker({
-  puzzle, set, cases, selected, onChange, isZh,
+  puzzle, set, cases, selected, onChange,
 }: {
   puzzle: AlgPuzzle;
   set: string;

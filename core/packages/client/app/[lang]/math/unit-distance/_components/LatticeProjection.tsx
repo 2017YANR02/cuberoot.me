@@ -13,7 +13,6 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 import { T } from '@/i18n/tr';
 
@@ -55,7 +54,7 @@ function projectAndCount(pts: Pt[]): { proj: number[]; pairs: [number, number][]
 }
 
 export default function LatticeProjection() {
-  const { i18n } = useTranslation();
+  useTranslation();
   const t = useT();
 
   const [R, setR] = useState(3.5);

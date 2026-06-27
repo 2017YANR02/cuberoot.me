@@ -23,7 +23,6 @@ import type { WcaFormat } from './_wca-round';
 import type { Metric } from './CompCrossAnalysis';
 import ScrambleLines from './ScrambleLines';
 import { CUBE_FILL, BADGE_FACE_ORDER } from '@/lib/cube-colors';
-import i18n from "@/i18n/i18n-client";
 
 // StageSolver 拉 ~27MB WASM 表 + TwistyPlayer 3D,首屏没必要打进 gen 包;
 // 行内展开第一次点开时才按需加载(ssr:false,纯 client 组件)。

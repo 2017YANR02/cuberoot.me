@@ -20,7 +20,6 @@ import type { StageSegments } from '../_lib/reconstruct/stage_segments';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import './reconstruct.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   solveA: Solve;
@@ -60,7 +59,7 @@ function fmtTps(ms: number | null, htm: number | null): string {
   return (htm / (ms / 1000)).toFixed(2);
 }
 
-function renderMsDelta(a: number | null, b: number | null, isZh: boolean): JSX.Element {
+function renderMsDelta(a: number | null, b: number | null, _isZh: boolean): JSX.Element {
   if (a === null || b === null) return <span style={{ color: '#666' }}>—</span>;
   const d = b - a;
   if (Math.abs(d) < 5) return <span style={{ color: '#888' }}>{tr({ zh: '持平', en: 'tie' })}</span>;
@@ -430,7 +429,7 @@ export default function CompareSolvesModal({ solveA, solveB, isZh, onClose }: Pr
         </div>
 
         <div className="modal-actions">
-          <button ref={closeBtnRef} onClick={onClose}>
+          <button className="modal-action-btn" ref={closeBtnRef} onClick={onClose}>
             {tr({ zh: '关闭', en: 'Close'
             })}
           </button>

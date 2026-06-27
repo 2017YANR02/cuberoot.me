@@ -18,7 +18,6 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchArticles, type ArticleListItem } from '@/lib/article-api';
 import './article-list.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 function formatDate(iso: string | null): string {
   if (!iso) return '';

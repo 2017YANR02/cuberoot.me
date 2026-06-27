@@ -247,7 +247,6 @@ export function _setSia222PdbsForTest(p: Sia222Pdbs | null): void { PDBS = p; PD
 
 // ── scramble parsing + A/B split ────────────────────────────────────────────────────────────────
 const HALF_TOKEN_RE = /^[URF](2|')?$/;
-const TOKEN_IDX = new Map<string, number>(MODEL.tokens.map((t, i) => [t, i]));
 
 export interface Sia222Split { aTokens: string[]; bTokens: string[]; }
 

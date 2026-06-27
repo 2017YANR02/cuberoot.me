@@ -25,7 +25,7 @@ export function CaseModal({ caseData, onClose, onPrev, onNext }: CaseModalProps)
       <div className="case-modal" onClick={e => e.stopPropagation()}>
         <div className="case-modal-header">
           <h2 className="case-modal-title">{caseData.label}</h2>
-          <button className="case-modal-close" onClick={onClose} aria-label="Close">×</button>
+          <button className="case-modal-close tutorial-btn" onClick={onClose} aria-label="Close">×</button>
         </div>
         <div className="case-modal-body">
           <div className="case-modal-img">

@@ -4,11 +4,9 @@
  * /wca/comp-about — WCA 比赛直播说明页
  */
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './comp_about.css';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 interface StepProps { step: number; title: string; body: string; highlight?: boolean; }
@@ -26,7 +24,6 @@ function Step({ step, title, body, highlight }: StepProps) {
 function Arrow() { return <span className="ca-arrow" aria-hidden="true">↓</span>; }
 
 export default function CompAboutPage() {
-  const { i18n } = useTranslation();
   const t = useT();
   useDocumentTitle('加载任意比赛', 'Load any competition');
 

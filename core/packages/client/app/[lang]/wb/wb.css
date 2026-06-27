@@ -40,23 +40,6 @@
     background: color-mix(in srgb, var(--card) 85%, transparent);
 }
 
-.wb-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 12px 6px 8px;
-    border-radius: 8px;
-    color: var(--wb-text-sub);
-    text-decoration: none;
-    font-size: 0.85rem;
-    transition: all 0.15s;
-}
-
-.wb-back:hover {
-    color: var(--wb-text);
-    background: var(--wb-accent-soft);
-}
-
 .wb-title {
     flex: 1;
     display: flex;
@@ -146,7 +129,7 @@
     box-shadow: 0 0 0 3px var(--wb-accent-soft);
 }
 
-.wb-search input {
+.wb-search .wb-search-input {
     flex: 1;
     border: none;
     outline: none;
@@ -156,21 +139,8 @@
     font-size: 0.9rem;
 }
 
-.wb-search input::placeholder {
+.wb-search .wb-search-input::placeholder {
     color: var(--wb-text-mute);
-}
-
-.wb-search-clear {
-    border: none;
-    background: transparent;
-    color: var(--wb-text-mute);
-    cursor: pointer;
-    font-size: 0.9rem;
-    padding: 0 2px;
-}
-
-.wb-search-clear:hover {
-    color: var(--wb-text);
 }
 
 .wb-tabs {

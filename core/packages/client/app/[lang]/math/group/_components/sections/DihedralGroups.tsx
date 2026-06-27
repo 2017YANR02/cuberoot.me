@@ -660,7 +660,7 @@ function CayleyTablePanel({ lang }: { lang: 'zh' | 'en' }) {
 // Panel 3: Axis explorer (odd vs even) + conjugation verifier
 // ═════════════════════════════════════════════════════════════════════════════
 
-function AxisAndConjugationPanel({ lang }: { lang: 'zh' | 'en' }) {
+function AxisAndConjugationPanel({}: { lang: 'zh' | 'en' }) {
   const [n, setN] = useState(6);
   const [selectedAxis, setSelectedAxis] = useState<number | null>(null);
   const [colorByClass, setColorByClass] = useState(true);
@@ -988,7 +988,7 @@ function AxisAndConjugationPanel({ lang }: { lang: 'zh' | 'en' }) {
 // Facts table: live-computed for any n
 // ═════════════════════════════════════════════════════════════════════════════
 
-function FactsTable({ lang }: { lang: 'zh' | 'en' }) {
+function FactsTable({}: { lang: 'zh' | 'en' }) {
   const [n, setN] = useState(6);
   const isEven = n % 2 === 0;
 

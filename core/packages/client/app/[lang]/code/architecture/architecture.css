@@ -67,14 +67,6 @@
   border-bottom-color: var(--accent);
 }
 
-.arch-nav-end {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: 12px;
-  flex-shrink: 0;
-}
-
 @media (max-width: 720px) {
   .arch-nav {
     margin-top: -36px;
@@ -417,20 +409,6 @@ html[data-theme=dark] .arch-page { --accent: #6B8FCE; }
   max-width: 780px;
   margin: 0 auto 88px;
 }
-.arch-topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 56px;
-}
-.arch-back {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--ink-mute);
-  text-decoration: none;
-  transition: color .15s;
-}
-.arch-back:hover { color: var(--accent); }
 
 .arch-hero-meta {
   font-family: var(--mono);
@@ -548,18 +526,6 @@ html[data-theme=dark] .arch-page { --accent: #6B8FCE; }
   height: auto;
   max-width: 100%;
 }
-.arch-diagram-caption {
-  margin: 16px 0 0;
-  font-size: 13px;
-  line-height: 1.55;
-  color: var(--ink-mute);
-}
-.arch-diagram-caption code {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--ink-dim);
-}
-.arch-diagram-caption em { font-style: italic; color: var(--ink); }
 
 /* SVG common */
 .d-title {

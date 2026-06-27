@@ -160,7 +160,6 @@ const redraw_cube = function (cube: FaceletCubeT, config: ConfigT ) {
     const angle = 50
     const camera = new THREE.PerspectiveCamera(angle, width / height, 0.1, 1000)
 
-    const mag = 1.0
     const alpha = 0.5
     const enableBorder = true
 

@@ -139,7 +139,7 @@ export function CfopTutorialView({ post }: { post: ArticlePostContent }) {
             {/* 移动端粘性目录条 */}
             <div className="cfop-toc-mobilebar">
               <button
-                className="cfop-toc-mobilebtn"
+                className="cfop-toc-mobilebtn tutorial-btn"
                 onClick={() => setTocOpen(o => !o)}
                 aria-expanded={tocOpen}
               >

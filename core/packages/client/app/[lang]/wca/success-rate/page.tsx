@@ -112,7 +112,7 @@ function SuccessRatePageInner() {
         <div className="wse-filter">
           <label>{tr({ zh: '最小尝试数', en: 'Min attempts'
         })}</label>
-          <select value={minAttempted} onChange={e => update('minAttempted', e.target.value)}>
+          <select className="wse-filter-select" value={minAttempted} onChange={e => update('minAttempted', e.target.value)}>
             {MIN_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>

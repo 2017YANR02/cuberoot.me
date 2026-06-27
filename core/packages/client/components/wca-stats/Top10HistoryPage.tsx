@@ -504,7 +504,7 @@ export default function Top10HistoryPage({
                 type="button"
                 role="tab"
                 aria-selected={metric === 'single'}
-                className={metric === 'single' ? 'active' : ''}
+                className={`t10h-metric-btn${metric === 'single' ? ' active' : ''}`}
                 onClick={() => setMetric('single')}
               >{tr({ zh: '单次', en: 'Single'
             })}</button>
@@ -512,7 +512,7 @@ export default function Top10HistoryPage({
                 type="button"
                 role="tab"
                 aria-selected={metric === 'average'}
-                className={metric === 'average' ? 'active' : ''}
+                className={`t10h-metric-btn${metric === 'average' ? ' active' : ''}`}
                 onClick={() => hasAverage && setMetric('average')}
                 disabled={!hasAverage}
                 title={!hasAverage ? tr({ zh: '该项目没有平均成绩', en: 'No average for this event'
@@ -649,14 +649,14 @@ export default function Top10HistoryPage({
         <div className="t10h-speed" role="group" aria-label={tr({ zh: '播放模式', en: 'Play mode' })}>
           <button
             type="button"
-            className={playMode === 'time' ? 'active' : ''}
+            className={`t10h-speed-btn${playMode === 'time' ? ' active' : ''}`}
             onClick={() => { setPlayMode('time'); setSpeed(DEFAULT_SPEED); }}
             title={tr({ zh: '按时间均匀(每秒推进固定天数)', en: 'Uniform by time'
             })}
           >{tr({ zh: '按天', en: 'Time' })}</button>
           <button
             type="button"
-            className={playMode === 'pb' ? 'active' : ''}
+            className={`t10h-speed-btn${playMode === 'pb' ? ' active' : ''}`}
             onClick={() => { setPlayMode('pb'); setSpeed(1); }}
             title={tr({ zh: '按 PB 事件均匀(每秒推进 1 个 PB)', en: 'Uniform by PB (1/s)'
             })}
@@ -667,7 +667,7 @@ export default function Top10HistoryPage({
             <button
               key={s}
               type="button"
-              className={s === speed ? 'active' : ''}
+              className={`t10h-speed-btn${s === speed ? ' active' : ''}`}
               onClick={() => setSpeed(s)}
               title={
                 playMode === 'time'

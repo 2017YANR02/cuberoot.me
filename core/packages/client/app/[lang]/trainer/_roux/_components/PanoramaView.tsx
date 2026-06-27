@@ -9,7 +9,7 @@
 // (the available cube renderer — same stage as upstream's stage="f2b"). MUI
 // ImageList/ImageListItem → div + CSS grid. props: { state, dispatch }.
 
-import React, { Dispatch } from 'react';
+import { Dispatch } from 'react';
 
 import CubeSim from './CubeSim';
 import { CaseDesc } from '@/lib/roux/Algs';

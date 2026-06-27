@@ -267,16 +267,7 @@
   color: var(--muted);
   margin-bottom: 4px;
   min-height: 26px;
-}
-
-.cs-line-hint {
-  opacity: 0.7;
-  flex: 1;
-}
-
-.cs-line-play,
-.cs-line-stop,
-.cs-line-reset {
+}.cs-line-reset {
   background: rgba(91, 157, 217, 0.18);
   color: #bbdaf3;
   border: none;
@@ -286,44 +277,8 @@
   cursor: pointer;
   transition: background 0.12s;
   font-family: inherit;
-}
-
-.cs-line-play {
-  width: 28px;
-  height: 22px;
-  padding: 0;
-  font-size: 0.85rem;
-  line-height: 1;
-}
-
-.cs-line-stop {
-  width: 22px;
-  height: 22px;
-  padding: 0;
-}
-
-.cs-line-play:hover,
-.cs-line-stop:hover,
-.cs-line-reset:hover {
+}.cs-line-reset:hover {
   background: rgba(91, 157, 217, 0.3);
-}
-
-.cs-line-path-dim {
-  stroke: rgba(91, 157, 217, 0.35);
-}
-
-.cs-line-playhead {
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 3;
-  pointer-events: none;
-}
-
-.cs-line-dot-head {
-  fill: var(--accent);
-  stroke: color-mix(in srgb, var(--accent) 40%, transparent);
-  stroke-width: 4;
-  paint-order: stroke;
 }
 
 .cs-line-svg {
@@ -412,10 +367,6 @@
   border-radius: 2px;
 }
 
-.cs-bar-label-text {
-  padding-left: 4px;
-}
-
 .cs-bar-name {
   white-space: nowrap;
   overflow: hidden;
@@ -449,7 +400,6 @@
   .cs-toolbar { gap: 8px; }
   .cs-filter { min-width: 0; flex: 1 1 calc(50% - 8px); }
   .cs-line-header { flex-wrap: wrap; }
-  .cs-line-hint { font-size: 0.68rem; }
 }
 
 @media (max-width: 480px) {

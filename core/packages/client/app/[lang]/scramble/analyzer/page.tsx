@@ -619,6 +619,7 @@ function AnalyzePageInner() {
         </button>
         <label className="analyze-control">
           <select
+            className="analyze-control-select"
             value={variant}
             aria-label={t('变体', 'Variant')}
             onChange={(e) => setVariant(e.target.value as Variant)}
@@ -631,6 +632,7 @@ function AnalyzePageInner() {
         </label>
         <label className="analyze-control">
           <select
+            className="analyze-control-select"
             value={stage}
             aria-label={t('阶段', 'Stage')}
             onChange={(e) => setStage(e.target.value as Stage)}

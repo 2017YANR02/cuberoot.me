@@ -5,11 +5,9 @@
 // 功能：🎯 A/🎯 B 单选手模拟 + ⚔️ Race 对决 + rand-fill + Clear + ⓘ 弹窗
 
 import { useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useCalcStore } from '../stores/calc_store';
 import { sampleOneSolve, simulateForPlayer, simulateRace, type SimResult } from '../engine/sim_engine';
 import { tr, T } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 // NOTE: 格式化计数徽章文本
 // 'geo' 模式：×N (p=X%)
@@ -29,7 +27,6 @@ function formatBadge(count: number, mode: 'geo' | 'winrate', prob?: number): str
 }
 
 export function SimButtons() {
-  const { i18n } = useTranslation();
   const state = useCalcStore();
   const sc = state.solveCount();
 
@@ -127,14 +124,14 @@ export function SimButtons() {
     <>
       <div className="controls">
         {/* NOTE: 隐藏 rand-fill 按钮 — numpad Rand 和此处都触发 */}
-        <button id="rand-fill" style={{ display: 'none' }} onClick={handleRandFill}>{tr({ zh: '随机', en: 'Rand'
+        <button id="rand-fill" className="controls-btn calc-btn" style={{ display: 'none' }} onClick={handleRandFill}>{tr({ zh: '随机', en: 'Rand'
         })}</button>
         {/* NOTE: 隐藏 clear-all 按钮 — Numpad 长按 ⌫ 联动触发 */}
-        <button id="clear-all" style={{ display: 'none' }} onClick={clearAll}>{tr({ zh: '清空', en: 'Clear' })}</button>
+        <button id="clear-all" className="controls-btn calc-btn" style={{ display: 'none' }} onClick={clearAll}>{tr({ zh: '清空', en: 'Clear' })}</button>
 
         {state.playerEnabled[0] && (
           <>
-            <button className="sim-btn sim-a" onClick={() => handleSimPlayer(0)}>
+            <button className="sim-btn sim-a controls-btn calc-btn" onClick={() => handleSimPlayer(0)}>
               🎯 A
             </button>
             {badgeA && (
@@ -145,7 +142,7 @@ export function SimButtons() {
 
         {state.playerEnabled[1] && (
           <>
-            <button className="sim-btn sim-b" onClick={() => handleSimPlayer(1)}>
+            <button className="sim-btn sim-b controls-btn calc-btn" onClick={() => handleSimPlayer(1)}>
               🎯 B
             </button>
             {badgeB && (
@@ -156,7 +153,7 @@ export function SimButtons() {
 
         {state.playerEnabled[0] && state.playerEnabled[1] && (
           <>
-            <button className="sim-btn sim-race" onClick={handleRace}>
+            <button className="sim-btn sim-race controls-btn calc-btn" onClick={handleRace}>
               ⚔️ Race
             </button>
             {badgeRace && (
@@ -176,7 +173,7 @@ export function SimButtons() {
           onClick={(e) => { if (e.target === e.currentTarget) setShowInfo(false); }}
         >
           <div className="info-modal">
-            <button className="info-modal-close" onClick={() => setShowInfo(false)}>&times;</button>
+            <button className="info-modal-close calc-btn" onClick={() => setShowInfo(false)}>&times;</button>
             <div className="info-modal-body">
               {<T zh={<>
                                                                                                                           <p><strong>📊 PA 竖条（右侧）</strong> — 右侧竖条显示从最好可能平均（BPA，底部）到最差可能平均（WPA，顶部）的范围。拖动顶端或底端可反推缺失把数需要达到什么成绩。</p>

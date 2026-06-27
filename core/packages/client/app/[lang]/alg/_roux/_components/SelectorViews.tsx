@@ -124,6 +124,7 @@ function SingleSelect(props: {
         {sel.names.map((name) => (
           <label key={name} className="roux-sel-radio">
             <input
+              className="roux-sel-radio-input"
               type="radio"
               name={'roux-' + select}
               value={name}
@@ -170,6 +171,7 @@ function MultiSelectContent(props: {
   const makeBox = (name: string, checked: boolean) => (
     <label key={name} className="roux-sel-check">
       <input
+        className="roux-sel-check-input"
         type="checkbox"
         checked={checked}
         value={name}
@@ -196,6 +198,7 @@ function MultiSelectContent(props: {
     return (
       <label key={name} className="roux-sel-check">
         <input
+          className="roux-sel-check-input"
           type="checkbox"
           checked={!!manipChecked[name]}
           value={name}

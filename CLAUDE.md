@@ -127,7 +127,8 @@ pnpm --filter @cuberoot/client lint
 - 筛选 / 排序 / 搜索词 / 子开关 → 默认 replace(不堆历史,后退跳过)
 - 默认值 `.withDefault(x)` 自动从 URL 省略(clearOnDefault v2 默认开);枚举用 `parseAsStringEnum`
 - 沉浸浮层的返回件用 `history.back()`,`history.length<=1`(深链直进)时 fallback 硬导航父路由
-- `NuqsAdapter` 已挂 root layout;`useQueryState` 只在页级 client 组件用,禁进全局 chrome(同 useSearchParams 的 SSG 约束)
+- `NuqsAdapter` 已挂 root layout(经 `components/AppNuqsAdapter.tsx` client 包装);`useQueryState` 只在页级 client 组件用,禁进全局 chrome(同 useSearchParams 的 SSG 约束)
+- 想重排 query key 顺序(把某 key 钉最前等):nuqs `set()` 只原地更新/末尾追加,**别裸 `history`**,走 `AppNuqsAdapter` 的 `processUrlSearchParams`(每次写 URL 前后处理 searchParams,已用它把 `puzzle` 钉首)
 - 范本:`app/[lang]/wca/comp/page.tsx` 的 `viewMode`
 - CI 守卫:`tests/url-state-no-raw-history.test.ts`(vitest,CI 跑 vitest 不跑 eslint)禁裸 history.*/popstate;确属特殊(zustand data-blob / 自定义编码 / 全局 infra)才豁免:加进该测试 ALLOWLIST + 文件内 `// eslint-disable-next-line no-restricted-syntax, no-restricted-globals` + 理由
 

@@ -129,7 +129,7 @@ export default function ValidationReportModal({
       <div className="alg-admin-modal alg-validation-modal" onClick={e => e.stopPropagation()}>
         <div className="alg-admin-modal-head">
           <h2>{title}</h2>
-          <button type="button" onClick={onClose} title={tr({ zh: '关闭', en: 'Close' })}>
+          <button type="button" className="alg-admin-modal-head-btn" onClick={onClose} title={tr({ zh: '关闭', en: 'Close' })}>
             <X size={16} />
           </button>
         </div>
@@ -170,11 +170,11 @@ export default function ValidationReportModal({
         </div>
 
         <div className="alg-admin-modal-foot">
-          <button type="button" onClick={() => void run()} disabled={running}>
+          <button type="button" className="alg-admin-modal-foot-btn" onClick={() => void run()} disabled={running}>
             <Play size={14} /> {tr({ zh: '重跑', en: 'Re-run' })}
           </button>
           <div className="alg-admin-modal-foot-spacer" />
-          <button type="button" onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button>
+          <button type="button" className="alg-admin-modal-foot-btn" onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button>
         </div>
       </div>
     </div>

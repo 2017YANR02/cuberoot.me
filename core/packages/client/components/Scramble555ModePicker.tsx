@@ -6,7 +6,6 @@
  */
 import { use555Mode } from '@/lib/scramble-555-mode';
 import ScrambleModePickerRow from './ScrambleModePickerRow';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   active555: boolean;

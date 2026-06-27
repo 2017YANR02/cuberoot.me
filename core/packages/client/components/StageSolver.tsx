@@ -820,13 +820,13 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         </div>
         <label className="stsv-control">
           <span>{t('方法', 'Method')}</span>
-          <select value={method} onChange={(e) => setMethod(e.target.value as Method)}>
+          <select className="stsv-control-select" value={method} onChange={(e) => setMethod(e.target.value as Method)}>
             {METHOD_KEYS.map((k) => <option key={k} value={k}>{variantLabel(k, lang === 'zh')}</option>)}
           </select>
         </label>
         <label className="stsv-control">
           <span>{t('阶段', 'Stage')}</span>
-          <select value={stage} onChange={(e) => setStage(Number(e.target.value))}>
+          <select className="stsv-control-select" value={stage} onChange={(e) => setStage(Number(e.target.value))}>
             {stages.map((k, i) => <option key={k} value={i}>{stageLabel(k, lang === 'zh')}</option>)}
           </select>
         </label>
@@ -835,7 +835,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         {slotCombos.length >= 2 && (
           <label className="stsv-control">
             <span>{t('槽位', 'Slot')}</span>
-            <select value={selSlot} onChange={(e) => changeSlot(e.target.value)}>
+            <select className="stsv-control-select" value={selSlot} onChange={(e) => changeSlot(e.target.value)}>
               <option value="">{t('自动(最优)', 'Auto (best)')}</option>
               {slotCombos.map((c) => {
                 const v = c.join(',');
@@ -848,7 +848,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         {hasBase(method) && (
           <label className="stsv-control">
             <span>{t('基态', 'Free Pair')}</span>
-            <select value={selBase} onChange={(e) => changeBase(e.target.value)}>
+            <select className="stsv-control-select" value={selBase} onChange={(e) => changeBase(e.target.value)}>
               <option value="">{t('自动(最优)', 'Auto (best)')}</option>
               {baseOptions.map((i) => (
                 <option key={i} value={String(i)}>{SLOT_LABELS[i]}</option>
@@ -859,7 +859,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         {/* 最大步数 = 比该面最优多几步(相对最优,跨面一致;cross 阶段也不会因绝对大值爆炸)。 */}
         <label className="stsv-control">
           <span>{t('最大步数', 'Max len')}</span>
-          <select value={slack} onChange={(e) => setSlack(Number(e.target.value))}>
+          <select className="stsv-control-select" value={slack} onChange={(e) => setSlack(Number(e.target.value))}>
             {SLACK_OPTIONS.map((k) => (
               <option key={k} value={k}>{k === 0 ? t('最优', 'Opt') : `${t('最优', 'Opt')}+${k}`}</option>
             ))}
@@ -867,7 +867,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         </label>
         <label className="stsv-control">
           <span>{t('最大数量', 'Max')}</span>
-          <select value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
+          <select className="stsv-control-select" value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
             {LIMIT_OPTIONS.map((n) => (
               <option key={n} value={n}>{n === 0 ? t('无上限', '∞') : n}</option>
             ))}

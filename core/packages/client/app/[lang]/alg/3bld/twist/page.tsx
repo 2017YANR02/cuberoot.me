@@ -28,7 +28,6 @@ import {
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 // Upstream twist.js: 16 corner stickers (8 top-layer + 8 bottom-layer) used to
 // enumerate twist pairs. Index < 8 = top layer, >= 8 = bottom layer.

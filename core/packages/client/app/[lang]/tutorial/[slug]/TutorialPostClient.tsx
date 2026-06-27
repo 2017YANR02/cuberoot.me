@@ -77,13 +77,13 @@ export default function TutorialPostClient() {
         {isCfop ? (
           <div className="tutorial-lang-switch" role="tablist" aria-label={tr({ zh: '版式', en: 'Layout' })}>
             <button
-              className={'tutorial-lang-chip' + (view === 'pretty' ? ' is-active' : '')}
+              className={'tutorial-lang-chip tutorial-btn' + (view === 'pretty' ? ' is-active' : '')}
               onClick={() => setView('pretty')}
             >
               {tr({ zh: '精美版', en: 'Polished' })}
             </button>
             <button
-              className={'tutorial-lang-chip' + (view === 'raw' ? ' is-active' : '')}
+              className={'tutorial-lang-chip tutorial-btn' + (view === 'raw' ? ' is-active' : '')}
               onClick={() => setView('raw')}
             >
               {tr({ zh: '原始版', en: 'Original' })}
@@ -92,7 +92,7 @@ export default function TutorialPostClient() {
         ) : (
           <div className="tutorial-lang-switch">
             <button
-              className={'tutorial-lang-chip' + (lang === 'zh' ? ' is-active' : '')}
+              className={'tutorial-lang-chip tutorial-btn' + (lang === 'zh' ? ' is-active' : '')}
               onClick={() => setLang('zh')}
               disabled={!hasZh}
               title={!hasZh ? tr({ zh: '无中文版', en: 'No Chinese version'
@@ -101,7 +101,7 @@ export default function TutorialPostClient() {
               中
             </button>
             <button
-              className={'tutorial-lang-chip' + (lang === 'en' ? ' is-active' : '')}
+              className={'tutorial-lang-chip tutorial-btn' + (lang === 'en' ? ' is-active' : '')}
               onClick={() => setLang('en')}
               disabled={!hasEn}
               title={!hasEn ? tr({ zh: '无英文版', en: 'No English version'

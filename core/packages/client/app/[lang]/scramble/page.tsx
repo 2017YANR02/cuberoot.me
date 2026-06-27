@@ -12,10 +12,8 @@
  * 1:1 port from packages/client-vite/src/pages/scramble/ScrambleHubPage.tsx (Vite SPA).
  */
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { Dices, Sparkles, Wand2 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 
@@ -48,7 +46,6 @@ const CARDS: Card[] = [
 ];
 
 export default function ScrambleHubPage() {
-  const { i18n } = useTranslation();
   const t = useT();
   useDocumentTitle('打乱', 'Scramble');
 

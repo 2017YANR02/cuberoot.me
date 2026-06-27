@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
   applyMoveState, solvedState, isSolvedState, parseStmScramble, stmApply,
-  STM_MOVE_NAMES, NUM_MOVES, INVERSE_MOVE, SUPERFLIP_ALG, MOVE_BASE,
+  STM_MOVE_NAMES, NUM_MOVES, INVERSE_MOVE, MOVE_BASE,
 } from '@/lib/stm-cube';
 import {
   solveStmBruteBFS, solveStmOptimal, buildCornerPdb, buildEdge6Pdb, EDGE_GROUP_A, EDGE_GROUP_B,
@@ -57,18 +57,6 @@ const REF_SPEC: Record<string, ['x' | 'y' | 'z', number, number]> = {
 const REF_BASE: Record<string, number[]> = {};
 for (const [n, [a, l, d]] of Object.entries(REF_SPEC)) { const sel = (s: RS) => (a === 'y' ? s.y : a === 'x' ? s.x : s.z) === l; REF_BASE[n] = refPerm(sel, rrot(a, d)); }
 function refPow(P: number[], pow: number): number[] { let cur = Array.from({ length: RN }, (_, i) => i); for (let k = 0; k < pow; k++) { const o = new Array<number>(RN); for (let i = 0; i < RN; i++) o[i] = cur[P[i]]; cur = o; } return cur; }
-const FACE_CODE: Record<RFace, number> = { U: 0, D: 1, R: 2, L: 3, F: 4, B: 5 };
-const REF_SOLVED = REF_STK.map((s) => FACE_CODE[s.face]);
-function refApplyTokens(tokens: string[]): number[] {
-  let s = [...REF_SOLVED];
-  for (const t of tokens) {
-    const m = /^([UDRLFBMES])('|2)?$/.exec(t); if (!m) throw new Error('ref bad ' + t);
-    const pow = m[2] === '2' ? 2 : m[2] === "'" ? 3 : 1;
-    const P = refPow(REF_BASE[m[1]], pow);
-    const o = new Array<number>(RN); for (let i = 0; i < RN; i++) o[i] = s[P[i]]; s = o;
-  }
-  return s;
-}
 
 // Build our solver's facelet coloring from a cubie state, to compare to the geometry reference. We map
 // each cubie slot's home stickers to the destination slot's stickers using the move ops indirectly —

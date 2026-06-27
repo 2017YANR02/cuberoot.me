@@ -7,7 +7,7 @@
  * 保证 cube / city / group_id 等列表精简列没带的字段也能完整复用。
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { X, Search, Loader2, Film } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listPersonRecons, getRecon } from '@/lib/recon-api';
@@ -117,6 +117,7 @@ export default function ReconReuseModal({ wcaId, isZh, onClose, onPick }: Props)
         <div className="rr-search">
           <Search size={16} />
           <input
+            className="rr-search-input"
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder={tr({ zh: '搜索你的复盘', en: 'Search your reconstructions'

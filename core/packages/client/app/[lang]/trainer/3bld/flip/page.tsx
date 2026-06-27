@@ -24,7 +24,6 @@ import { posChichu, eglobalState, globalState } from '../_lib/lettering';
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 // 12 non-buffer-default edge stickers, one per edge piece (upstream inputCodeStr).
 const INPUT_CODE_STR = 'bdfhjlnprtxz';

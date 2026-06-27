@@ -5,11 +5,9 @@
  * 后台预生成 pool 的工作方式。从 GenPage 标题的 HelpCircle 入口进入。
  */
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './gen_about.css';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 interface StepProps {
@@ -34,7 +32,6 @@ function Arrow() {
 }
 
 export default function GenAboutPage() {
-  const { i18n } = useTranslation();
   const t = useT();
   useDocumentTitle('打乱生成器说明', 'Scramble Generator Guide');
 

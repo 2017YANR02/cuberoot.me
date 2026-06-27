@@ -294,7 +294,6 @@ const GEN_CONFIGS: { id: GeneratorConfig; zh: string; en: string
 ];
 
 function AbelianSpectrumPanel() {
-  const lang = useLang();
   const [n, setN] = useState(20);
   const [cfg, setCfg] = useState<GeneratorConfig>('±1,±2');
 
@@ -508,7 +507,6 @@ const RACE_PRESETS: { id: string; zhLabel: string; enLabel: string; genFn: (n: n
 const COLORS_RACE = ['#8B2E3C', '#2A4D69', '#3F7050'];
 
 function MixingRacePanel() {
-  const lang = useLang();
   const [n, setN] = useState(24);
   const [tMax] = useState(120);
   const [activePresets, setActivePresets] = useState<Set<string>>(new Set(['cycle', 'dense']));

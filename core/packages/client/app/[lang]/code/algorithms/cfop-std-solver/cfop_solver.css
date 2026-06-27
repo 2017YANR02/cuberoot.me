@@ -37,21 +37,6 @@
   overflow-x: auto;
 }
 
-.algo-page .algo-kv {
-  display: grid;
-  grid-template-columns: max-content 1fr;
-  gap: 6px 18px;
-  margin: 12px 0 18px;
-  font-size: 14.5px;
-  color: var(--text-dim);
-}
-.algo-page .algo-kv > dt {
-  font-family: var(--mono);
-  color: var(--text);
-  font-size: 13px;
-}
-.algo-page .algo-kv > dd { margin: 0; }
-
 .algo-page .algo-subsection-title {
   font-family: var(--mono);
   font-size: 16px;
@@ -73,7 +58,4 @@
     overflow-wrap: anywhere;
     word-break: break-word;
   }
-  /* Collapse the term/value grid so a long term can't force horizontal scroll. */
-  .algo-page .algo-kv { grid-template-columns: 1fr; gap: 4px 0; }
-  .algo-page .algo-kv > dd { margin-bottom: 8px; }
 }

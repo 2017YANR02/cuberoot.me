@@ -22,7 +22,6 @@ import { useState } from 'react';
 import type { EventId, Solve } from '../_lib/types';
 import { formatMs } from '../_lib/stats';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   event: EventId;

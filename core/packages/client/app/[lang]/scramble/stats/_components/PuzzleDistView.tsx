@@ -204,7 +204,7 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
         {hasCubeshape && (
           <label className="scramble-stats-puzzle-target">
             <span>{tr({ zh: '目标', en: 'Goal' })}</span>
-            <select value={target} onChange={(e) => setTarget(e.target.value as 'full' | 'cubeshape')}>
+            <select className="scramble-stats-select" value={target} onChange={(e) => setTarget(e.target.value as 'full' | 'cubeshape')}>
               <option value="full">{tr({ zh: '完整魔方', en: 'Full cube' })}</option>
               <option value="cubeshape">{tr({ zh: '复形', en: 'Cube shape' })}</option>
             </select>

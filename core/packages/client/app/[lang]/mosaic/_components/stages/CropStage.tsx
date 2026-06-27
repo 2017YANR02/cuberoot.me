@@ -88,6 +88,7 @@ export default function CropStage() {
 
         <label style={{ marginLeft: 12 }}>{t('mosaic.crop.cubeSize')}</label>
         <select
+          className="mosaic-crop-select"
           value={cropConfig.cubeDimen}
           onChange={e => setCropConfig({ cubeDimen: Number(e.target.value) })}
         >

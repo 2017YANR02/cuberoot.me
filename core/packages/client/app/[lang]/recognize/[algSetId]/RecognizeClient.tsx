@@ -20,7 +20,6 @@ import ollMap from '@cuberoot/shared/data/oll.json';
 import { VisualCube } from '@/components/VisualCube';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 const typedOllMap = ollMap as Record<string, { name: string; alg: string; alg2: string; group: string }>;
 

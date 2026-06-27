@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './compare.css';
-import i18n from '@/i18n/i18n-client';
 
 interface Snippet {
   slug: string;

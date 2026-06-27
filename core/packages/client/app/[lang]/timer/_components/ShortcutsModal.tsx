@@ -3,7 +3,6 @@
 import { useEffect, useId, useRef } from 'react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface Props {
   isZh: boolean;
@@ -151,7 +150,7 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
         })} rows={GESTURES} isZh={isZh} isMobile={isMobile} />
 
         <div className="modal-actions" style={actionsStyle}>
-          <button ref={closeBtnRef} className="primary" style={closeBtnStyle} onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
+          <button ref={closeBtnRef} className="primary modal-action-btn" style={closeBtnStyle} onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>
@@ -159,7 +158,7 @@ export default function ShortcutsModal({ isZh, onClose }: Props) {
   );
 }
 
-function Section({ title, rows, isZh, isMobile }: { title: string; rows: ShortcutRow[]; isZh: boolean; isMobile: boolean }) {
+function Section({ title, rows, isMobile }: { title: string; rows: ShortcutRow[]; isZh: boolean; isMobile: boolean }) {
   const sectionStyle = isMobile ? { marginBottom: 10 } : undefined;
   const rowStyle = isMobile
     ? ({ display: 'flex', flexDirection: 'column' as const, gap: 2, padding: '6px 0', borderBottom: '1px solid #1f1f23' })

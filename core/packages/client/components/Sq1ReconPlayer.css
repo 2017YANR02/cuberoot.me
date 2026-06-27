@@ -45,7 +45,7 @@
   flex-wrap: nowrap;
 }
 
-.sq1-recon-controls button {
+.sq1-recon-controls .sq1-recon-ctrl-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -60,11 +60,11 @@
   transition: background 0.15s;
 }
 
-.sq1-recon-controls button:hover:not(:disabled) {
+.sq1-recon-controls .sq1-recon-ctrl-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--foreground) 16%, transparent);
 }
 
-.sq1-recon-controls button:disabled {
+.sq1-recon-controls .sq1-recon-ctrl-btn:disabled {
   opacity: 0.4;
   cursor: default;
 }

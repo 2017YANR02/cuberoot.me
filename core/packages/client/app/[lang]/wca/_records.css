@@ -53,11 +53,6 @@
   margin: 16px 0 8px;
   color: var(--foreground);
 }
-.records-event-count {
-  font-size: 12px;
-  color: var(--faint-foreground);
-  font-weight: 400;
-}
 
 /* 移动端 */
 @media (max-width: 720px) {

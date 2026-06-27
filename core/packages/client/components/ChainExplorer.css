@@ -250,7 +250,7 @@
   border-radius: 8px;
   box-shadow: 0 4px 14px color-mix(in srgb, var(--foreground) 18%, transparent);
 }
-.chx-axis-menu button {
+.chx-axis-menu .chx-axis-menu-btn {
   font: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -262,7 +262,7 @@
   color: var(--foreground);
   cursor: pointer;
 }
-.chx-axis-menu button:hover {
+.chx-axis-menu .chx-axis-menu-btn:hover {
   background: var(--accent-soft);
 }
 
@@ -280,12 +280,6 @@
 }
 .chx-niss-row.is-pending {
   cursor: default;
-}
-.chx-pending {
-  margin-left: 6px;
-  font-size: 11px;
-  font-style: normal;
-  color: var(--faint-foreground);
 }
 
 /* PillToggle 在本组件内的配色覆盖(原组件 on 硬编码蓝 + off 白 overlay,这里走 token)。 */
@@ -460,12 +454,6 @@
 .chx-step-ban:hover {
   color: var(--accent);
 }
-.chx-step-empty {
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 13px;
-  color: var(--muted-foreground);
-  padding: 1px 4px;
-}
 .chx-solution {
   margin-top: 5px;
   padding: 4px 6px 1px;
@@ -585,7 +573,7 @@
   align-items: center;
   gap: 2px;
 }
-.chx-inline-add input {
+.chx-inline-add .chx-inline-add-input {
   width: 7em;
   padding: 3px 8px;
   font: inherit;
@@ -595,11 +583,11 @@
   border: 1px solid var(--input);
   border-radius: 7px;
 }
-.chx-inline-add input:focus {
+.chx-inline-add .chx-inline-add-input:focus {
   outline: 2px solid var(--ring);
   outline-offset: 1px;
 }
-.chx-inline-add > button {
+.chx-inline-add > .chx-inline-add-btn {
   display: inline-flex;
   align-items: center;
   padding: 4px;
@@ -609,7 +597,7 @@
   color: var(--muted-foreground);
   cursor: pointer;
 }
-.chx-inline-add > button:hover {
+.chx-inline-add > .chx-inline-add-btn:hover {
   color: var(--foreground);
   border-style: solid;
 }

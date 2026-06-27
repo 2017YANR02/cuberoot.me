@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './css_intro.css';
-import i18n from '@/i18n/i18n-client';
 
 /* CSS3 shield logo — pentagon similar to HTML5 but blue + "3" */
 const CSS_LOGO_SVG = (
@@ -945,9 +944,9 @@ export default function CssIntroPage() {
                 <div className="demo-h"><span className="dot dot-ok" /><span className="filename">has.css</span><span className="lang-tag ts">:has()</span></div>
                 <div className="demo-stage">
                   <div className="demo-has-list">
-                    <label><input type="checkbox" /> <L zh="选我 — 整行会变蓝" en="Tick me — the whole row turns blue" /></label>
-                    <label><input type="checkbox" /> <L zh="也可以选我" en="Or me" /></label>
-                    <label><input type="checkbox" /> <L zh="想选几个就选几个" en="As many as you like" /></label>
+                    <label><input type="checkbox" className="demo-has-list-input" /> <L zh="选我 — 整行会变蓝" en="Tick me — the whole row turns blue" /></label>
+                    <label><input type="checkbox" className="demo-has-list-input" /> <L zh="也可以选我" en="Or me" /></label>
+                    <label><input type="checkbox" className="demo-has-list-input" /> <L zh="想选几个就选几个" en="As many as you like" /></label>
                   </div>
                 </div>
                 <pre className="demo-code">

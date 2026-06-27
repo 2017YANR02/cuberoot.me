@@ -59,7 +59,7 @@ export default class CubeGroup extends THREE.Group {
   private holding = false;
   private tween: Tween | undefined = undefined;
   private panel: THREE.Mesh | undefined = undefined;
-  /** 超高阶原核专用的扇形彩色横截面几何(惰性建,每层一份);非原核走 Cubelet._PANEL 深色盒。 */
+  /** 原核专用的扇形彩色横截面几何(惰性建,每层一份);非原核走 Cubelet._PANEL 深色盒。 */
   private fanGeo: THREE.BufferGeometry | undefined = undefined;
   private boxScale = new THREE.Vector3(1, 1, 1);
   private axisIdx = 0;
@@ -96,7 +96,10 @@ export default class CubeGroup extends THREE.Group {
     // 静止时 panel 一直藏着,避免 xyz 整体转时另外两轴的静止 panel 戳穿外表面。
     this.axisIdx = axis === "x" ? 0 : axis === "y" ? 1 : 2;
     const N = this.cube.order;
-    if (layer > 0 && layer < N - 1) {
+    // Mirror cube fills the central cavity with a real center cubie (see cube.ts), so it
+    // needs no panel. The uniform panelFan/_PANEL would not match the non-uniform layer
+    // (it pokes out as thin wedges in raw/single-colour mode), so skip it entirely here.
+    if (layer > 0 && layer < N - 1 && !this.cube.isMirror) {
       const S = Cubelet.SIZE;
       const span = (N - 2) * S - 1;  // 留 0.5 防 z-fight 撞 perimeter cubelet
       const thick = S - 1;

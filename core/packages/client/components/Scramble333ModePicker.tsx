@@ -6,7 +6,6 @@
  */
 import { use333Mode } from '@/lib/scramble-333-mode';
 import ScrambleModePickerRow from './ScrambleModePickerRow';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   active333: boolean;

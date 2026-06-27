@@ -10,7 +10,6 @@ import { loadPersonsIndex, searchLocalPersons, isPersonsIndexReady } from '@cube
 import { ClearButton } from './ClearButton';
 import './wca-person-picker.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   value: WcaPersonLite | null;
@@ -169,7 +168,7 @@ export function WcaPersonPicker({
       <input
         ref={inputRef}
         type="text"
-        className={`search-box${query ? ' cuber-search-input--with-clear' : ''}`}
+        className={`search-box cuber-search-input${query ? ' cuber-search-input--with-clear' : ''}`}
         value={query}
         onChange={e => { setQuery(e.target.value); setOpen(true); onQueryChange?.(e.target.value); }}
         onFocus={() => setOpen(true)}

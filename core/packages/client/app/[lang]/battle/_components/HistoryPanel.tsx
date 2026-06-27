@@ -119,7 +119,7 @@ function TrendChart({ history }: { history: SolveEntry[] }) {
 }
 
 // NOTE: 格式化相对日期
-function formatRelativeDate(isoDate: string, locale: string): string {
+function formatRelativeDate(isoDate: string, _locale: string): string {
   if (!isoDate) return '';
   const d = new Date(isoDate);
   const now = new Date();

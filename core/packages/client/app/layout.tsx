@@ -4,7 +4,7 @@ import DeskPet from "@/components/DeskPet";
 import ThemeColorSync from "@/components/ThemeColorSync";
 import AuthTokenRefresher from "@/components/AuthTokenRefresher";
 import MembershipReminder from "@/components/MembershipReminder";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
+import AppNuqsAdapter from "@/components/AppNuqsAdapter";
 import "./fonts.css";
 import "./globals.css";
 
@@ -47,13 +47,13 @@ export default function RootLayout({
             Must be at <body> start — document.body exists here; head is too early. */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: `(function(){if(!location.pathname.startsWith('/auth/'))return;try{var u=sessionStorage.getItem('wca_return_url');if(u){var f=document.createElement('iframe');f.src=u;f.scrolling='no';f.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;border:none;z-index:0;overflow:hidden';f.setAttribute('aria-hidden','true');f.setAttribute('tabindex','-1');document.body.appendChild(f);}}catch(e){}})();` }} />
-        <NuqsAdapter>
+        <AppNuqsAdapter>
           {children}
           <MembershipReminder />
           <DeskPet />
           <ThemeColorSync />
           <AuthTokenRefresher />
-        </NuqsAdapter>
+        </AppNuqsAdapter>
       </body>
     </html>
   );

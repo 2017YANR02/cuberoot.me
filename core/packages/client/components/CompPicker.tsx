@@ -92,7 +92,7 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
     <div ref={wrapRef} className={`comp-picker ${className ?? ''}`.trim()}>
       <input
         type="text"
-        className={value ? 'comp-picker-input--with-clear' : ''}
+        className={`comp-picker-input${value ? ' comp-picker-input--with-clear' : ''}`}
         value={displayValue}
         onChange={e => {
           const v = e.target.value;

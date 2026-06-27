@@ -98,8 +98,6 @@ function RangeFilter({ min, max, onChange }: RangeFilterProps) {
   //   `12~`    → ≥ 12
   //   `~13`    → ≤ 13
   //   空       → 无过滤
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
   const placeholder = tr({ zh: '12.71 或 12~13', en: '12.71 or 12~13' });
   const closePopover = useContext(ColFilterCloseContext);
   const display = (() => {
@@ -148,6 +146,7 @@ function RangeFilter({ min, max, onChange }: RangeFilterProps) {
     <div className="recon-range-filter">
       <input
         ref={inputRef}
+        className="recon-range-input"
         type="text"
         inputMode="decimal"
         placeholder={placeholder}
@@ -183,9 +182,9 @@ interface DateRangeFilterProps {
 function DateRangeFilter({ min, max, onChange }: DateRangeFilterProps) {
   return (
     <div className="recon-range-filter">
-      <input type="date" value={min} onChange={(e) => onChange(e.target.value, max)} />
+      <input className="recon-range-input" type="date" value={min} onChange={(e) => onChange(e.target.value, max)} />
       <span className="recon-range-sep">~</span>
-      <input type="date" value={max} onChange={(e) => onChange(min, e.target.value)} />
+      <input className="recon-range-input" type="date" value={max} onChange={(e) => onChange(min, e.target.value)} />
     </div>
   );
 }

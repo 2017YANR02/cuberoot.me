@@ -10,7 +10,6 @@ import {
 } from '../_lib/scramble/kociemba/cube';
 import { warmup333, solve333 } from '../_lib/scramble/kociemba/random_state';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   isZh: boolean;
@@ -179,18 +178,18 @@ export default function SolverModal({ isZh, onClose }: Props) {
 
         <div className="modal-actions">
           <button
-            className="primary"
+            className="primary modal-action-btn"
             disabled={solving || !ready}
             onClick={handleSolve}
           >
             {solving ? tr({ zh: '求解中…', en: 'Solving…' }) : tr({ zh: '求解', en: 'Solve' })}
           </button>
           {solution && (
-            <button onClick={onCopy}>{copied ? tr({ zh: '已复制', en: 'Copied'
+            <button className="modal-action-btn" onClick={onCopy}>{copied ? tr({ zh: '已复制', en: 'Copied'
                                   }) : tr({ zh: '复制', en: 'Copy'
                                       })}</button>
           )}
-          <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
+          <button className="modal-action-btn" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

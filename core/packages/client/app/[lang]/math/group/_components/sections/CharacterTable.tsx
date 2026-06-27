@@ -663,7 +663,7 @@ function CharTableSVG({
   group, r, c,
   isRowSel, isColSel,
   onRowClick, onColClick,
-  entryColor, fmtEntry, lang,
+  entryColor, fmtEntry,
 }: {
   group: GroupDef; r: number; c: number;
   isRowSel: (i: number) => boolean;

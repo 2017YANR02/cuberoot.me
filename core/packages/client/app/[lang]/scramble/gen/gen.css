@@ -19,7 +19,6 @@
     font-display: block;
 }
 
-
 .gen-page {
     --gen-bg: #fafafa;
     --gen-surface: #FFFFFF;
@@ -70,7 +69,6 @@
     transition: opacity 0.15s, color 0.15s;
 }
 .gen-title-help:hover { opacity: 1; color: var(--gen-accent); }
-.gen-title-sub { color: var(--gen-text-mute); font-size: 0.8rem; letter-spacing: 0.02em; }
 
 /* 比赛 chip 激活时,GenPage header 弹出的 slot,TNoodleMode 通过 portal 注入
    CompPicker / 已加载 comp chip / 已 generated readonly 标题。flex: 1 把它推开
@@ -98,9 +96,7 @@
 }
 .gen-comp-header-slot .gen-control-actions .gen-btn:hover:not(:disabled) {
     background: var(--gen-accent-soft);
-}
-.gen-comp-header-slot .gen-tn-comp-picker,
-.gen-comp-header-slot .gen-tn-comp-input,
+}.gen-comp-header-slot .gen-tn-comp-picker,
 .gen-comp-header-slot .gen-tn-comp-display {
     width: 100%;
 }
@@ -109,26 +105,6 @@
     max-width: 980px;
     margin: 0 auto;
     padding: 0.25rem 1.5rem 3rem;
-}
-
-
-/* 非 WCA 项目已合并进 WcaEventSelector(appendEvents prop),同一行 flex-wrap。 */
-
-.gen-controls {
-    background: var(--gen-surface);
-    border: 1px solid var(--gen-border);
-    border-radius: 12px;
-    padding: 14px 16px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 16px;
-    align-items: end;
-    margin-bottom: 1.25rem;
-}
-
-@media (max-width: 700px) {
-    .gen-controls { grid-template-columns: 1fr; }
 }
 
 .gen-control-group {
@@ -143,14 +119,6 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-}
-
-.gen-label {
-    font-size: 0.74rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--gen-text-mute);
-    font-weight: 600;
 }
 
 .gen-count-row {
@@ -371,14 +339,6 @@
     font-variant-numeric: tabular-nums;
 }
 
-.gen-loading {
-    text-align: center;
-    color: var(--gen-text-mute);
-    padding: 2rem 0;
-    font-size: 0.9rem;
-    letter-spacing: 0.02em;
-}
-
 .gen-spin {
     animation: gen-spin 0.9s linear infinite;
 }
@@ -386,122 +346,11 @@
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
 }
-
-.gen-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    border-top: 1px solid var(--gen-border);
-}
-
-.gen-item {
-    background: transparent;
-    border: 0;
-    border-bottom: 1px solid var(--gen-border);
-    border-radius: 0;
-    padding: 14px 12px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-.gen-item .gen-num { width: 28px; flex-shrink: 0; }
-.gen-item .gen-scramble {
-    flex: 0 1 auto;   /* 不抢空间;太长时允许收缩→换行 */
-    min-width: 0;     /* flex 收缩时让 word-break 真正生效 */
-}
-.gen-item .gen-preview { flex-shrink: 0; }
-
-.gen-item-clickable { cursor: pointer; transition: background-color 0.15s; }
-.gen-item-clickable:hover { background-color: color-mix(in srgb, var(--gen-text) 4%, transparent); }
-/* 复制后:行号变成强调色,持续 ~1.2s 内提示;不再用浮层避免压住魔方图 */
-.gen-item-clickable.is-copied .gen-num {
-    color: var(--gen-accent);
-    font-weight: 700;
-}
-
-.gen-num {
-    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-    font-size: 0.8rem;
-    color: var(--gen-text-mute);
-    text-align: right;
-}
-
-.gen-preview {
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
-}
-
-.gen-scramble {
-    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-    font-size: 0.92rem;
-    color: var(--gen-text);
-    word-break: break-word;
-    line-height: 1.45;
-    user-select: text;
-    /* Preserve injected '\n' for megaminx 7-line layout; spaces still wrap on narrow screens. */
-    white-space: pre-wrap;
-}
 /* Per-line spans for multi-line scrambles (mega / sq1). 不再隔行灰底:
    隔行 highlighting 是 tnoodle PDF 的视觉,web 上跟用户预期不符,统一拿掉。 */
 .gen-scramble-line, .gen-tn-attempt-line .gen-scramble-line {
     display: block;
     padding: 0 4px;
-}
-
-.gen-copy-btn {
-    padding: 6px;
-    border-radius: 6px;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--gen-text-mute);
-    cursor: pointer;
-    transition: all 0.15s;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.gen-copy-btn:hover {
-    background: var(--gen-accent-soft);
-    color: var(--gen-accent);
-    border-color: var(--gen-border);
-}
-
-@media (max-width: 480px) {
-    .gen-item { gap: 8px; padding: 10px 8px; }
-    .gen-item .gen-num { width: 24px; }
-    .gen-scramble { font-size: 0.84rem; }
-    .gen-controls { padding: 10px 12px; }
-}
-
-/* 顶端 selector + "清空" 按钮一行 */
-.gen-tn-event-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.gen-tn-event-row .wca-stats-event-selector { flex: 1; }
-.gen-tn-clear-all {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 10px;
-    border: 1px solid var(--gen-border);
-    border-radius: 7px;
-    background: var(--gen-surface);
-    color: var(--gen-text-mute);
-    font-size: 0.82rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    flex-shrink: 0;
-}
-.gen-tn-clear-all:hover {
-    border-color: var(--gen-accent);
-    color: var(--gen-accent);
-    background: var(--gen-accent-soft);
 }
 
 /* WcaEventSelector 在 /scramble/gen 奶白底上的主题:只调变量,active 绿色锁死不动 */
@@ -623,10 +472,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-}
-
-.gen-tn-comp-input,
-.gen-tn-comp-picker > input {
+}.gen-tn-comp-picker > .comp-picker-input {
     width: 100%;
     height: 38px;
     box-sizing: border-box;
@@ -643,19 +489,7 @@
 .gen-tn-controls .gen-btn-primary {
     height: 38px;
     box-sizing: border-box;
-}
-.gen-tn-comp-input:focus,
-.gen-tn-comp-picker > input:focus { border-color: var(--gen-accent); }
-.gen-tn-comp-input:read-only {
-    background: transparent;
-    border-color: transparent;
-    color: var(--gen-text);
-    cursor: default;
-    padding: 0;
-    font-size: 1.05rem;
-    font-weight: 600;
-    text-align: center;
-}
+}.gen-tn-comp-picker > .comp-picker-input:focus { border-color: var(--gen-accent); }
 /* Import / Comp loaded 状态:比赛名展示块(国旗 + 本地化名),沿用 readonly input 的字号/粗细/居中 */
 .gen-tn-comp-display {
     height: 38px;
@@ -680,14 +514,6 @@
     text-decoration: underline;
     text-underline-offset: 3px;
     text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
-}
-
-/* Import → 从文本子模式 */
-.gen-tn-paste-hint {
-    color: var(--gen-text-mute);
-    font-size: 0.88rem;
-    line-height: 1.5;
-    padding: 8px 0;
 }
 .gen-tn-paste-blocks {
     display: flex;
@@ -822,7 +648,7 @@
     font-size: 0.78rem;
     color: var(--gen-text-mute);
 }
-.gen-tn-mini-num input {
+.gen-tn-mini-num .gen-tn-mini-num-input {
     width: 48px;
     padding: 3px 6px;
     border: 1px solid var(--gen-border);
@@ -1036,15 +862,6 @@
     justify-content: center;
     gap: 1.25rem;
     margin-top: 1.5rem;
-}
-
-.gen-tn-sheet-title {
-    font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
-    font-size: 1.25rem;
-    font-weight: 600;
-    text-align: center;
-    color: var(--gen-text);
-    margin: 0 0 0.5rem;
 }
 .gen-tn-sheet {
     /* grid item:撑满列宽,从而和同 event 其它 sheet 同宽。 */
@@ -1271,9 +1088,6 @@ html[data-theme=dark] .gen-page {
         border-color: rgba(255, 255, 255, 0.25);
     }
 }
-html[data-theme=dark] .gen-page .gen-controls {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
 html[data-theme=dark] .gen-page .event-select-popup {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
@@ -1379,9 +1193,6 @@ html[data-theme=dark] .gen-page {
     flex-wrap: wrap;
     margin: 0.25rem 0 0.75rem;
 }
-/* 变体 / 阶段 下拉:label 文字 + select(select 复用 .gen-cx-modesel 样式) */
-.gen-cx-sel { display: inline-flex; align-items: center; gap: 6px; }
-.gen-cx-sel > span { font-size: 0.8rem; color: var(--gen-text-sub); white-space: nowrap; }
 
 /* 底色选择:模式下拉(六/四/双/单)+ swatch 选择器(单色 6 选 1 等) */
 .gen-cx-colorsel { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }

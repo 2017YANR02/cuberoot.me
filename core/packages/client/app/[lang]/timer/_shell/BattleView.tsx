@@ -58,7 +58,6 @@ import { compSourceLine } from '@/lib/comp-schedule';
 import '@/app/[lang]/battle/battle.css';
 import './shell.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // NOTE: 根据打乱字符串长度自动计算字号缩放因子
 // ≤100 字符（2x2~3x3）= 1.0，更长则 sqrt 曲线平滑缩小，最小 0.7
@@ -745,7 +744,6 @@ function EventPickerOverlay({ playerId }: { playerId: number }) {
 // ===== BattleEventButton — middle-bar / cell 控制条上的 trigger 图标 =====
 function BattleEventButton({ playerId }: { playerId: number }) {
   const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
   const value = useBattleStore(s => s.puzzleIds[playerId]);
   const isOpen = useBattleStore(s => s.eventPickerOpen[playerId]);
   const setOpen = useBattleStore(s => s.setEventPickerOpen);
@@ -1068,6 +1066,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             })}</span>
             <label className="switch">
               <input
+                className="switch-input"
                 type="checkbox"
                 checked={store.voice}
                 onChange={e => store.setVoice(e.target.checked)}
@@ -1084,6 +1083,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             })}</span>
             <label className="switch">
               <input
+                className="switch-input"
                 type="checkbox"
                 checked={store.showImage}
                 onChange={e => store.setShowImage(e.target.checked)}

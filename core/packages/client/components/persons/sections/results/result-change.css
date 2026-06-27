@@ -28,12 +28,6 @@
 /* 行内可点编辑的某一次成绩(管理员):点击就地变输入框,自动重算单次/平均 */
 .wp-att-editable { cursor: pointer; border-radius: 4px; transition: background 0.12s, box-shadow 0.12s; }
 .wp-att-editable:hover { background: var(--accent-soft); box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--accent) 55%, transparent); }
-.wp-att-input {
-    width: 4.5em; padding: 1px 4px; font-size: inherit; font-variant-numeric: tabular-nums;
-    background: var(--background); color: var(--foreground);
-    border: 1px solid var(--accent); border-radius: 5px;
-}
-.wp-att-input:focus { outline: none; }
 
 /* 罚时角标(1.00⁺²):成绩值正确,展开为 base + 罚时。 */
 .wp-att-pen {
@@ -99,12 +93,12 @@
 .wp-rce-field-wide { grid-column: 1 / -1; }
 .wp-rce-pair { display: flex; align-items: center; gap: 6px; }
 .wp-rce-pair > span { color: var(--faint-foreground); }
-.wp-rce-field input {
+.wp-rce-field .wp-rce-field-input {
     width: 100%; min-width: 0; padding: 6px 8px; font-size: 0.84rem;
     background: var(--background); color: var(--foreground);
     border: 1px solid var(--border-strong); border-radius: 7px;
 }
-.wp-rce-field input:focus { outline: none; border-color: var(--accent); }
+.wp-rce-field .wp-rce-field-input:focus { outline: none; border-color: var(--accent); }
 .wp-rce-derived {
     font-size: 0.78rem; color: var(--muted-foreground); line-height: 1.5;
     padding: 8px 10px; border: 1px dashed var(--border-default); border-radius: 9px;

@@ -214,8 +214,8 @@
    跟 div pill / 自定义 trigger 对不齐，必须 explicit height + border-box */
 
 /* 标准行：40px */
-.submit-row .submit-field > input,
-.submit-row .submit-field > select,
+.submit-row .submit-field > .submit-field-input,
+.submit-row .submit-field > .submit-field-select,
 .submit-row .record-select-trigger,
 .submit-row .event-select-trigger,
 .submit-row .submit-solver-pill,
@@ -237,8 +237,8 @@
 }
 
 /* Hero 行：48px */
-.submit-hero .submit-field > input,
-.submit-hero .submit-field > select,
+.submit-hero .submit-field > .submit-field-input,
+.submit-hero .submit-field > .submit-field-select,
 .submit-hero .record-select-trigger,
 .submit-hero .event-select-trigger,
 .submit-hero .submit-solver-pill,
@@ -292,7 +292,6 @@
   color: var(--foreground);
 }
 .submit-section-body { padding: 8px 0 16px 0; }
-
 
 .submit-field {
   display: flex;
@@ -399,7 +398,7 @@
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
-.rr-search input {
+.rr-search .rr-search-input {
   flex: 1;
   min-width: 0;
   border: none;
@@ -409,7 +408,7 @@
   font-size: 0.95rem;
   font-family: 'Inter', Arial, sans-serif;
 }
-.rr-search input::placeholder { color: var(--faint-foreground); }
+.rr-search .rr-search-input::placeholder { color: var(--faint-foreground); }
 .rr-body {
   flex: 1;
   overflow-y: auto;
@@ -635,38 +634,9 @@
 }
 .sp-sentinel { height: 1px; }
 
-.submit-label-with-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.submit-label-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  background: transparent;
-  border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
-  border-radius: 5px;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.submit-label-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  color: var(--foreground);
-  border-color: color-mix(in srgb, var(--foreground) 30%, transparent);
-}
-.submit-label-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.submit-field input,
-.submit-field select,
-.submit-field textarea {
+.submit-field .submit-field-input,
+.submit-field .submit-field-select,
+.submit-field .submit-field-textarea {
   padding: 9px 12px;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
@@ -678,9 +648,9 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.submit-field input:focus,
-.submit-field select:focus,
-.submit-field textarea:focus {
+.submit-field .submit-field-input:focus,
+.submit-field .submit-field-select:focus,
+.submit-field .submit-field-textarea:focus {
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
@@ -718,22 +688,6 @@
 .submit-field textarea.submit-input-locked:focus {
   border-color: transparent;
   box-shadow: none;
-}
-
-/* 锁定字段以纯文本展示(替代 select / 不存在原生只读对应):无框,跟 .submit-input-locked 同色 */
-.submit-readonly-text {
-  padding: 9px 0;
-  color: var(--muted-foreground);
-  font-size: 0.98rem;
-  font-family: 'Inter', Arial, sans-serif;
-  line-height: 1.2;
-}
-
-/* 标准化视图: 只读态 — 视觉变灰提示用户当前不可编辑 */
-.submit-solution-textarea--readonly {
-  background: color-mix(in srgb, var(--foreground) 2%, transparent) !important;
-  color: var(--muted-foreground) !important;
-  cursor: default;
 }
 
 /* 解法 label 行: 文字 + toggle 图标横排 */
@@ -820,34 +774,6 @@
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
-/* --- 搜索下拉 --- */
-.submit-dropdown {
-  list-style: none;
-  margin: 4px 0 0;
-  padding: 0;
-  background: var(--popover);
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  border-radius: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-  position: absolute;
-  z-index: 10;
-  width: 100%;
-}
-
-.submit-dropdown li {
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: var(--muted-foreground);
-  transition: background 0.15s;
-}
-
-.submit-dropdown li:hover {
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
-  color: var(--foreground);
-}
-
 .submit-hint {
   font-size: 0.75rem;
   color: var(--faint-foreground);
@@ -903,24 +829,6 @@
   font-size: 0.85em;
   color: var(--muted-foreground);
   font-family: 'Roboto Mono', monospace;
-}
-/* legacy class kept for AltViewPage (read-only display) — no border */
-.submit-stats-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 4px 0;
-  margin-bottom: 8px;
-  font-size: 0.82rem;
-  color: var(--muted-foreground);
-  font-family: 'Roboto Mono', monospace;
-}
-.alt-submit-form .submit-stats-preview {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 6px 0;
-  margin-bottom: 8px;
 }
 
 /* --- 提交按钮 --- */
@@ -1083,37 +991,4 @@
 .submit-danger-zone-hint {
   color: var(--faint-foreground);
   font-size: 0.82rem;
-}
-
-/* 身份字段锁定态:无框 — 放在最末尾覆盖 hero/row 的 height + background + border */
-.submit-solver-pill.submit-solver-pill--locked,
-.submit-comp-pill.submit-comp-pill--locked,
-.submit-hero .submit-solver-pill.submit-solver-pill--locked,
-.submit-hero .submit-comp-pill.submit-comp-pill--locked,
-.submit-row .submit-solver-pill.submit-solver-pill--locked,
-.submit-row .submit-comp-pill.submit-comp-pill--locked {
-  background: transparent;
-  border-color: transparent;
-  padding-left: 0;
-  padding-right: 0;
-}
-/* hero 行控件统一 48px,锁定 pill 撑满 + 内容垂直居中,跟 <input> 对齐 */
-.submit-hero .submit-solver-pill.submit-solver-pill--locked,
-.submit-hero .submit-comp-pill.submit-comp-pill--locked,
-.submit-hero .submit-readonly-text {
-  height: 48px;
-  display: inline-flex;
-  align-items: center;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-/* submit-row 行同理,40px */
-.submit-row .submit-solver-pill.submit-solver-pill--locked,
-.submit-row .submit-comp-pill.submit-comp-pill--locked,
-.submit-row .submit-readonly-text {
-  height: 40px;
-  display: inline-flex;
-  align-items: center;
-  padding-top: 0;
-  padding-bottom: 0;
 }

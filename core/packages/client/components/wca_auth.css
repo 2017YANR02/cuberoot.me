@@ -26,12 +26,6 @@
   border-color: color-mix(in srgb, currentColor 50%, transparent);
 }
 
-.wca-auth-menu {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
 .wca-auth-avatar {
   width: 100%;
   height: 100%;
@@ -61,33 +55,4 @@
   padding: 8px 0;
   z-index: 100;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-}
-
-.wca-auth-id {
-  padding: 6px 14px;
-  font-size: 0.75rem;
-  opacity: 0.7;
-  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-  margin-bottom: 4px;
-  white-space: nowrap;
-}
-
-.wca-auth-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 8px 14px;
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 0.85rem;
-  cursor: pointer;
-  text-align: left;
-  text-decoration: none;
-  transition: background 0.15s;
-}
-
-.wca-auth-item:hover {
-  background: color-mix(in srgb, currentColor 8%, transparent);
 }

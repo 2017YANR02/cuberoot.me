@@ -10,11 +10,10 @@
 // clsx is not installed: class composition uses template strings / filter+join.
 
 import React from 'react';
-import { Edit, Search } from 'lucide-react';
 import { wrap, releaseProxy, type Remote } from 'comlink';
 
 import CubeSim from './CubeSim';
-import { CubeUtil, CubieCube, FaceletCube, Mask, MoveSeq, ColorScheme } from '@/lib/roux/CubeLib';
+import { CubeUtil, CubieCube, FaceletCube, Mask, ColorScheme } from '@/lib/roux/CubeLib';
 import { CachedSolver } from '@/lib/roux/CachedSolver';
 import { Face } from '@/lib/roux/Defs';
 import { AppState, Action } from '@/lib/roux/Types';
@@ -22,7 +21,6 @@ import {
   AnalyzerState,
   SolutionDesc,
   initialState,
-  analyze_roux_solve,
   analyze as analyzeMain,
   fbStageT,
 } from '@/lib/roux/Analyzer';
@@ -30,7 +28,7 @@ import { get_shortened_rotation, get_orientation_fb_colors } from '@/lib/roux/Ro
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useEffectiveTheme } from '@/lib/theme';
 
-import { Modal, FieldLabel } from './ui';
+import { FieldLabel } from './ui';
 import { useRT } from '../i18n';
 import type { AnalyzerWorker } from './analyzer.worker';
 import './AnalyzerView.css';
@@ -183,71 +181,6 @@ function ConfigView(props: { state: AnalyzerState; setState: (newState: Analyzer
   );
 }
 
-// ---- SolutionInputView ---------------------------------------------------
-function SolutionInputView(props: {
-  state: AnalyzerState;
-  setState: (newState: AnalyzerState) => void;
-}) {
-  const { t } = useRT();
-  const [editing, setEditing] = React.useState(false);
-  const [value, setValue] = React.useState('');
-
-  const onChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setValue(event.target.value);
-    event.stopPropagation();
-  };
-  const toggleEdit = () => {
-    setEditing(true);
-  };
-  const handleClose = () => {
-    setEditing(false);
-    const full_solution = analyze_roux_solve(
-      new CubieCube().apply(props.state.scramble),
-      new MoveSeq(value),
-    );
-    if (
-      full_solution.length > 1 ||
-      (full_solution.length === 1 && full_solution[0].solution.moves.length > 0)
-    ) {
-      props.setState({ ...props.state, full_solution });
-    }
-  };
-
-  return (
-    <div>
-      <div>
-        <button
-          type="button"
-          className={'roux-btn ' + (editing ? 'roux-btn-primary' : 'roux-btn-outline')}
-          onClick={toggleEdit}
-        >
-          <Edit size={15} />
-          {t('Input Your Solution')}
-        </button>
-      </div>
-
-      <Modal
-        open={editing}
-        onClose={handleClose}
-        title={t('Input your reconstructed solution')}
-        maxWidth={520}
-        actions={
-          <button type="button" className="roux-btn roux-btn-outline" onClick={handleClose}>
-            {t('Confirm')}
-          </button>
-        }
-      >
-        <textarea
-          className="roux-analyzer-solution-input"
-          rows={5}
-          value={value}
-          onChange={onChange}
-        />
-      </Modal>
-    </div>
-  );
-}
-
 // ---- ColorPair -----------------------------------------------------------
 const colorMap: { [key: string]: string } = ColorScheme.default_colors;
 
@@ -390,60 +323,6 @@ function StageSolutionListView(props: {
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-// ---- FullSolutionView ----------------------------------------------------
-function FullSolutionView(props: {
-  state: AnalyzerState;
-  setState: (newState: AnalyzerState) => void;
-}) {
-  const { state, setState } = props;
-
-  const setStage = (i: number) => () => {
-    setState({
-      ...state,
-      stage: state.full_solution[i].stage,
-      post_scramble: state.full_solution
-        .slice(0, i)
-        .map((x) => x.premove + x.solution.toString())
-        .join(' '),
-    });
-  };
-  const [show, setShow] = React.useState(-1);
-  const stageView = (sol: SolutionDesc, i: number) => {
-    return (
-      <div
-        className="roux-analyzer-stage"
-        key={i}
-        onMouseLeave={() => setShow(-1)}
-        onMouseEnter={() => setShow(i)}
-        onClick={() => setShow(show === i ? -1 : i)}
-      >
-        <button
-          type="button"
-          className={
-            'roux-analyzer-stage-btn' + (show === i ? ' roux-analyzer-stage-btn-active' : '')
-          }
-          onClick={setStage(i)}
-        >
-          <span className="roux-analyzer-stage-text">
-            {sol.solution.toString()} {'//'} {sol.stage}
-          </span>
-          <Search size={14} />
-        </button>
-      </div>
-    );
-  };
-  return (
-    <div className="roux-analyzer-full-solution">
-      <div>
-        <SolutionInputView state={state} setState={setState} />
-      </div>
-      <div className="roux-analyzer-stage-list">
-        {props.state.full_solution.map((desc, i) => stageView(desc, i))}
-      </div>
     </div>
   );
 }

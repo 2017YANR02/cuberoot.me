@@ -39,6 +39,8 @@ export function createBackView(
   const up = new THREE.Vector3();
   const quat = new THREE.Quaternion();
   const target = new THREE.Vector3();
+  const offset = new THREE.Vector3();
+  const box = new THREE.Box3();
 
   return {
     domElement: renderer.domElement,
@@ -56,13 +58,28 @@ export function createBackView(
       camera.aspect = 1;
       camera.near = distance - cubeletSize * (isSq1 ? 5 : 4);
       camera.far = distance + cubeletSize * 8;
+      // Target + orbit pivot = the cube's own world-space centre, recomputed each
+      // frame so a scrambled / bumpy cube (mirror cube pieces bulge off-centre)
+      // stays pinned to the window centre. InstancedMesh caches its boundingBox and
+      // won't refresh it when instance matrices change, so clear it to force a
+      // per-instance recompute. The camera offset is pan-free (0,0,distance), so
+      // panning the main view no longer drifts the mini cube.
+      if (world.cube) {
+        world.cube.traverse((o) => {
+          const im = o as THREE_NS.InstancedMesh;
+          if (im.isInstancedMesh) im.boundingBox = null;
+        });
+        box.setFromObject(world.cube);
+        box.getCenter(target);
+      } else {
+        target.set(0, 0, 0);
+      }
       // Orbit the main camera 180° about the cube's up axis (model +Y after the
-      // scene tilt), pivoting on the look-at target — keeps the same downward
-      // tilt (U stays on top) while swinging round to the opposite face.
+      // scene tilt), pivoting on the target — keeps the same downward tilt (U stays
+      // on top) while swinging round to the opposite face.
       up.set(0, 1, 0).applyQuaternion(world.scene.quaternion).normalize();
       quat.setFromAxisAngle(up, Math.PI);
-      target.set(world.panX, world.panY, 0);
-      camera.position.set(world.panX, world.panY, distance).sub(target).applyQuaternion(quat).add(target);
+      camera.position.copy(offset.set(0, 0, distance).applyQuaternion(quat)).add(target);
       camera.up.set(0, 1, 0).applyQuaternion(quat);
       camera.lookAt(target);
       camera.updateProjectionMatrix();

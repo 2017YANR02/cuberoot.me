@@ -25,7 +25,6 @@ import PlaybackPanel from './PlaybackPanel';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import './reconstruct.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   solve: Solve;
@@ -404,6 +403,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
 
         <div className="modal-actions">
           <button
+            className="modal-action-btn"
             type="button"
             onClick={handleCopyShare}
             disabled={!canShare}
@@ -420,7 +420,7 @@ export default function ReconstructModal({ solve, isZh, onClose, history, onMemo
               : tr({ zh: '复制分享链接', en: 'Copy share link'
                                       })}
           </button>
-          <button ref={closeBtnRef} onClick={onClose}>
+          <button className="modal-action-btn" ref={closeBtnRef} onClick={onClose}>
             {tr({ zh: '关闭', en: 'Close'
             })}
           </button>

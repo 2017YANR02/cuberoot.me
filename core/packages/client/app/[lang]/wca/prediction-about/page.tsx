@@ -4,11 +4,9 @@
  * /wca/prediction-about — 速拧极限预测说明页
  */
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './prediction_about.css';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 interface StepProps { step: number; title: string; body: string; highlight?: boolean; }
@@ -26,7 +24,6 @@ function Step({ step, title, body, highlight }: StepProps) {
 function Arrow() { return <span className="pa-arrow" aria-hidden="true">↓</span>; }
 
 export default function PredictionAboutPage() {
-  const { i18n } = useTranslation();
   const t = useT();
   useDocumentTitle('速拧极限预测说明', 'Speedcubing Prediction Guide');
 

@@ -36,17 +36,6 @@
   overflow-y: auto;
 }
 
-.sites-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--sites-text-muted);
-  text-decoration: none;
-  font-size: 13px;
-  padding: 2px 0;
-}
-.sites-back:hover { color: var(--sites-accent); }
-
 .sites-title {
   font-size: 18px;
   font-weight: 600;
@@ -111,24 +100,6 @@
   font-variant-numeric: tabular-nums;
 }
 .sites-nav-item.is-active .sites-nav-count { color: var(--sites-accent); }
-
-/* LangToggle 复用：保留位置(底部)与本页配色,覆盖共享组件的暗色默认 */
-.sites-sidebar .sites-lang {
-  margin-top: auto;
-  margin-bottom: 4px;
-  padding: 6px 10px;
-  border: 1px solid var(--sites-border);
-  background: var(--sites-bg);
-  border-radius: 5px;
-  font-size: 12px;
-  color: var(--sites-text-muted);
-  justify-content: center;
-}
-.sites-sidebar .sites-lang:hover {
-  background: var(--sites-bg);
-  border-color: var(--sites-accent);
-  color: var(--sites-accent);
-}
 
 /* ── Main ────────────────────────────────────────────── */
 .sites-main {
@@ -423,10 +394,10 @@
   font-size: 12px;
   color: var(--sites-text-muted);
 }
-.site-editor-row > input,
-.site-editor-row > select,
-.site-editor-row > textarea,
-.site-editor-row-2 input {
+.site-editor-row > .site-editor-input,
+.site-editor-row > .site-editor-select,
+.site-editor-row > .site-editor-textarea,
+.site-editor-row-2 .site-editor-input {
   border: 1px solid var(--sites-border);
   border-radius: 4px;
   padding: 6px 8px;
@@ -435,7 +406,7 @@
   color: var(--sites-text);
   background: var(--sites-bg);
 }
-.site-editor-row > textarea { resize: vertical; min-height: 50px; }
+.site-editor-row > .site-editor-textarea { resize: vertical; min-height: 50px; }
 .site-editor-row-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

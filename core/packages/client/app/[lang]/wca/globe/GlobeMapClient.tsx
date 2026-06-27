@@ -54,7 +54,6 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { exportTrailVideo, isVideoExportSupported } from './_lib/trail_video';
 import './globe.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 type Mode = 'upcoming' | 'cuber' | 'wr';
 type Speed = 0.5 | 1 | 2;

@@ -1,14 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useLang } from '../../_lib/Lang';
 import { TRACER_PATTERNS, TRACER_STAGES } from '../_lib/arch-data';
 import type { StageId } from '../_lib/arch-data';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 export default function RequestTracer() {
-  const lang = useLang();
   const [pid, setPid] = useState<string>(TRACER_PATTERNS[0].id);
   const p = TRACER_PATTERNS.find(x => x.id === pid)!;
   const lit = new Set<StageId>(p.lit);

@@ -220,11 +220,11 @@ export default function SorRace() {
         />
         <div className="t10h-metric-toggle" role="tablist" style={{ marginLeft: 'auto' }}>
           <button type="button" role="tab" aria-selected={metric === 'single'}
-            className={metric === 'single' ? 'active' : ''} onClick={() => setMetric('single')}>
+            className={`t10h-metric-btn${metric === 'single' ? ' active' : ''}`} onClick={() => setMetric('single')}>
             {tr({ zh: '单次', en: 'Single' })}
           </button>
           <button type="button" role="tab" aria-selected={metric === 'average'}
-            className={metric === 'average' ? 'active' : ''} onClick={() => setMetric('average')}>
+            className={`t10h-metric-btn${metric === 'average' ? ' active' : ''}`} onClick={() => setMetric('average')}>
             {tr({ zh: '平均', en: 'Average' })}
           </button>
         </div>
@@ -300,7 +300,7 @@ export default function SorRace() {
           aria-label={tr({ zh: '年份', en: 'Year' })} />
         <div className="t10h-speed" role="group" aria-label={tr({ zh: '速度', en: 'Speed' })}>
           {SPEEDS.map(s => (
-            <button key={s.ms} type="button" className={s.ms === speed ? 'active' : ''} onClick={() => setSpeed(s.ms)}>
+            <button key={s.ms} type="button" className={`t10h-speed-btn${s.ms === speed ? ' active' : ''}`} onClick={() => setSpeed(s.ms)}>
               {tr({ zh: s.zh, en: s.en })}
             </button>
           ))}

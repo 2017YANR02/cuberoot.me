@@ -103,7 +103,7 @@ function AllEventsDonePageInner() {
         <div className="wse-filter">
           <label>{tr({ zh: '视图', en: 'View'
         })}</label>
-          <select value={onlyDone ? '1' : '0'} onChange={e => update('onlyDone', e.target.value)}>
+          <select className="wse-filter-select" value={onlyDone ? '1' : '0'} onChange={e => update('onlyDone', e.target.value)}>
             <option value="1">{tr({ zh: '全达成', en: 'Completed'
             })}</option>
             <option value="0">{tr({ zh: '全部', en: 'All' })}</option>

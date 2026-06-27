@@ -19,7 +19,6 @@ import type { AboutEntry, AboutStep, AboutStat, AboutFormula, AboutCode, AboutRe
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './wca_about.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 function pickLang<T extends string | string[] | undefined>(zh: T, en: T, isZh: boolean): T {
   return (isZh ? zh : en) as T;

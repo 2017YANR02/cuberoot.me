@@ -6,7 +6,6 @@ import { LangCtx, L, type Lang } from '../../_lib/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithm_intro.css';
 import './cfop_solver.css';
-import i18n from '@/i18n/i18n-client';
 
 const ACCENT = '#E879A6';
 

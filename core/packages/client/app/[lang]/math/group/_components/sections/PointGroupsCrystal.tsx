@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -188,7 +187,6 @@ const MOLECULE_EXAMPLES: { name: string; symbol: string; path: string[]; answers
 // ── Widget 1: Crystallographic Restriction Visualizer ─────────────────────────
 
 function RestrictionVisualizer() {
-  const lang = useLang();
   const [n, setN] = useState(6);
 
   const trace = useMemo(() => 2 * Math.cos((2 * Math.PI) / n), [n]);
@@ -522,7 +520,6 @@ function DecisionTreeWalker() {
 // ── Widget 3: 32 Crystal Classes Census Table ─────────────────────────────────
 
 function CrystalClassesCensus() {
-  const lang = useLang();
   const [activeSystem, setActiveSystem] = useState<CrystalSystem | null>(null);
   const [notation, setNotation] = useState<'schoenflies' | 'hm'>('schoenflies');
   const [hoveredSystem, setHoveredSystem] = useState<CrystalSystem | null>(null);

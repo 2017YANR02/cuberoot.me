@@ -15,7 +15,6 @@ import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge';
 import { useDayMatches, type DayMatch } from './use_calendar_data';
 import './on_this_day.css';
-import i18n from "@/i18n/i18n-client";
 
 type TierKey = 'WR' | 'CR' | 'NR';
 const TIER_KEYS: TierKey[] = ['WR', 'CR', 'NR'];

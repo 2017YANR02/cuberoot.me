@@ -24,7 +24,6 @@ import { apiUrl } from '@/lib/api-base';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './fun_stats.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
 
 const ACTIVE_EVENTS = [

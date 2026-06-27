@@ -212,6 +212,7 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
         <span className="settings-row-label">{tr({ zh: '选源方式', en: 'Draw by' })}</span>
         <span className="settings-row-control">
           <select
+            className="settings-row-control-select"
             value={mode}
             onChange={(e) => updateSettings({ wcaScrambleMode: e.target.value as 'date' | 'comp' })}
           >
@@ -347,6 +348,7 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
                 <span className="settings-row-label">{tr({ zh: '轮次', en: 'Round' })}</span>
                 <span className="settings-row-control">
                   <select
+                    className="settings-row-control-select"
                     value={settings.wcaRound}
                     onChange={(e) => updateSettings({ wcaRound: e.target.value, wcaGroup: '' })}
                   >
@@ -361,6 +363,7 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
                 <span className="settings-row-label">{tr({ zh: '组别', en: 'Group' })}</span>
                 <span className="settings-row-control">
                   <select
+                    className="settings-row-control-select"
                     value={settings.wcaGroup}
                     onChange={(e) => updateSettings({ wcaGroup: e.target.value })}
                     disabled={groups.length === 0}

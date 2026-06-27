@@ -234,7 +234,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
       <div className="alg-admin-modal alg-admin-modal-fullscreen" onClick={e => e.stopPropagation()}>
         <div className="alg-admin-modal-head">
           <h2>{title}</h2>
-          <button type="button" onClick={onClose} title={tr({ zh: '关闭', en: 'Close' })}>
+          <button type="button" className="alg-admin-modal-head-btn" onClick={onClose} title={tr({ zh: '关闭', en: 'Close' })}>
             <X size={16} />
           </button>
         </div>
@@ -253,16 +253,17 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
           <div className="alg-admin-modal-body">
           <label>
             <span>{tr({ zh: 'Case 名', en: 'Case Name' })} *</span>
-            <input value={caseName} onChange={e => setCaseName(e.target.value)} maxLength={128} autoFocus />
+            <input className="alg-admin-modal-input" value={caseName} onChange={e => setCaseName(e.target.value)} maxLength={128} autoFocus />
           </label>
           <label>
             <span>{tr({ zh: '子分组', en: 'Subgroup' })}</span>
-            <input value={subgroup} onChange={e => setSubgroup(e.target.value)} maxLength={64}
+            <input className="alg-admin-modal-input" value={subgroup} onChange={e => setSubgroup(e.target.value)} maxLength={64}
               placeholder={tr({ zh: '例如 Geng / U / Adj Swap', en: 'e.g. Geng / U / Adj Swap' })} />
           </label>
           <label className="alg-admin-setup-label">
             <span>{tr({ zh: '打乱 (Setup)', en: 'Setup' })}</span>
             <AlgInput
+              className="alg-admin-setup-textarea"
               elementRef={setupElRef}
               initialText={initial.setup}
               autoSpace
@@ -309,25 +310,25 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
               <div className="alg-admin-advanced-body">
                 <label>
                   <span>{tr({ zh: 'Standard 公式 (可选,展示给 trainer)', en: 'Standard alg (optional)' })}</span>
-                  <input value={standard} onChange={e => setStandard(e.target.value)} />
+                  <input className="alg-admin-modal-input" value={standard} onChange={e => setStandard(e.target.value)} />
                 </label>
                 <label>
                   <span>{tr({ zh: 'Algs 2D JSON (覆盖上方编辑器,空则忽略)', en: 'Algs 2D JSON (overrides editor when filled)' })}</span>
-                  <textarea value={algsJson} onChange={e => setAlgsJson(e.target.value)} rows={6} spellCheck={false}
+                  <textarea className="alg-admin-modal-textarea" value={algsJson} onChange={e => setAlgsJson(e.target.value)} rows={6} spellCheck={false}
                     placeholder={JSON.stringify(initial.algs, null, 2)} />
                 </label>
                 <label>
                   <span>{tr({ zh: 'Sticker JSON (魔方图渲染数据)', en: 'Sticker JSON (cube preview data)' })}</span>
-                  <textarea value={stickerJson} onChange={e => setStickerJson(e.target.value)} rows={4} spellCheck={false} />
+                  <textarea className="alg-admin-modal-textarea" value={stickerJson} onChange={e => setStickerJson(e.target.value)} rows={4} spellCheck={false} />
                 </label>
                 <label>
                   <span>{tr({ zh: 'oriNames (F2L 4 个朝向名,JSON 数组)', en: 'oriNames (F2L 4-orientation labels, JSON)' })}</span>
-                  <textarea value={oriNamesJson} onChange={e => setOriNamesJson(e.target.value)} rows={2} spellCheck={false}
+                  <textarea className="alg-admin-modal-textarea" value={oriNamesJson} onChange={e => setOriNamesJson(e.target.value)} rows={2} spellCheck={false}
                     placeholder='["Front Right","Front Left","Back Left","Back Right"]' />
                 </label>
                 <label>
                   <span>{tr({ zh: 'trainerKey (ZBLS 才用)', en: 'trainerKey (ZBLS only)' })}</span>
-                  <input value={trainerKey} onChange={e => setTrainerKey(e.target.value)} maxLength={32} />
+                  <input className="alg-admin-modal-input" value={trainerKey} onChange={e => setTrainerKey(e.target.value)} maxLength={32} />
                 </label>
               </div>
             )}
@@ -339,13 +340,13 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
 
         <div className="alg-admin-modal-foot">
           {state.mode === 'edit' && (
-            <button type="button" className="alg-admin-modal-delete" disabled={busy} onClick={handleDelete}>
+            <button type="button" className="alg-admin-modal-delete alg-admin-modal-foot-btn" disabled={busy} onClick={handleDelete}>
               <Trash2 size={14} /> {tr({ zh: '删除', en: 'Delete' })}
             </button>
           )}
           <div className="alg-admin-modal-foot-spacer" />
-          <button type="button" disabled={busy} onClick={onClose}>{tr({ zh: '取消', en: 'Cancel' })}</button>
-          <button type="button" className="alg-admin-modal-save" disabled={busy} onClick={handleSave}>
+          <button type="button" className="alg-admin-modal-foot-btn" disabled={busy} onClick={onClose}>{tr({ zh: '取消', en: 'Cancel' })}</button>
+          <button type="button" className="alg-admin-modal-save alg-admin-modal-foot-btn" disabled={busy} onClick={handleSave}>
             <Save size={14} /> {tr({ zh: '保存', en: 'Save' })}
           </button>
         </div>

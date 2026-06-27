@@ -13,7 +13,6 @@ import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
 import type { DrillType } from '../_lib/scramble/drill';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   isZh: boolean;
@@ -192,7 +191,7 @@ export default function DrillModal({
         </div>
 
         <div className="modal-actions">
-          <button type="button" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
+          <button className="modal-action-btn" type="button" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

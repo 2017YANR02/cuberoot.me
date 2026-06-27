@@ -7,7 +7,6 @@ import HintModal from './HintModal';
 import { CATEGORIES, ALL_ALGS, type SkewbAlgCase } from '../_lib/algs';
 import type { AlgSelectView } from '../_lib/useSkewbTrainer';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface Props {
   isZh: boolean;
@@ -148,6 +147,7 @@ export default function AlgPanel({
                     className={on ? 'sk-cell is-selected' : 'sk-cell'}
                   >
                     <input
+                      className="sk-cell-input"
                       type="checkbox"
                       checked={on}
                       onChange={() => onToggleCategory(cat.key)}
@@ -166,6 +166,7 @@ export default function AlgPanel({
                 return (
                   <label key={c.id} className={on ? 'sk-cell is-selected' : 'sk-cell'}>
                     <input
+                      className="sk-cell-input"
                       type="checkbox"
                       checked={on}
                       onChange={() => onToggleId(c.id)}

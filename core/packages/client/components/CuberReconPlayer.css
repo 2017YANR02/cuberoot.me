@@ -46,7 +46,7 @@
   flex-wrap: nowrap;
 }
 
-.cuber-recon-controls button {
+.cuber-recon-controls .cuber-recon-ctrl-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -61,11 +61,11 @@
   transition: background 0.15s;
 }
 
-.cuber-recon-controls button:hover:not(:disabled) {
+.cuber-recon-controls .cuber-recon-ctrl-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--foreground) 16%, transparent);
 }
 
-.cuber-recon-controls button:disabled {
+.cuber-recon-controls .cuber-recon-ctrl-btn:disabled {
   opacity: 0.4;
   cursor: default;
 }

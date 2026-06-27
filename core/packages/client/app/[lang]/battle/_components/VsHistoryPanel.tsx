@@ -16,7 +16,6 @@ import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent } from '@/lib/wca-events';
 import type { SolveEntry } from './engine/types';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // NOTE: yyyy-mm-dd —— 列表用
 function formatDateOnly(isoDate: string): string {

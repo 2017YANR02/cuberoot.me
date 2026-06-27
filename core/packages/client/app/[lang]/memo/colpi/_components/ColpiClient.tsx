@@ -89,7 +89,7 @@ function normalizeWord(raw: string, alphabet: readonly string[]): string {
   return shouldUppercase(alphabet) ? raw.trim().toUpperCase() : raw.trim();
 }
 
-function validateWordInput(word: string, isZh: boolean): string | null {
+function validateWordInput(word: string): string | null {
   if (!word) return tr({ zh: '请输入一个词', en: 'Enter a word'
 });
   if (word.length > 40) return tr({ zh: '词太长了', en: 'Word too long'
@@ -338,7 +338,7 @@ export default function ColpiClient() {
   const handleSubmitConfirm = async () => {
     if (!user || !activePair) return;
     const word = normalizeWord(formWord, getAlphabet(formLang));
-    const err = validateWordInput(word, isZh);
+    const err = validateWordInput(word);
     if (err) { showToast(err); return; }
     if (activeWords.some(w => w.word === word)) {
       showToast(tr({ zh: '这个词已存在', en: 'Word already exists'
@@ -374,7 +374,7 @@ export default function ColpiClient() {
   const handleEditConfirm = async () => {
     if (editingId === null) return;
     const word = normalizeWord(formWord, getAlphabet(formLang));
-    const err = validateWordInput(word, isZh);
+    const err = validateWordInput(word);
     if (err) { showToast(err); return; }
     try {
       const updated = await patchWord(editingId, {
@@ -449,6 +449,7 @@ export default function ColpiClient() {
 
         <div className="colpi-search">
           <input
+            className="colpi-search-input"
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -458,7 +459,7 @@ export default function ColpiClient() {
             aria-label={tr({ zh: '搜索字母对', en: 'Search letter pair'
             })}
           />
-          <button onClick={onSearch} title={tr({ zh: '搜索', en: 'Search'
+          <button className="colpi-search-btn" onClick={onSearch} title={tr({ zh: '搜索', en: 'Search'
         })}><Search size={14} /></button>
         </div>
 
@@ -469,14 +470,14 @@ export default function ColpiClient() {
               type="button"
               role="tab"
               aria-selected={viewMode === 'all'}
-              className={viewMode === 'all' ? 'on' : ''}
+              className={`colpi-pill-btn ${viewMode === 'all' ? 'on' : ''}`}
               onClick={() => setViewMode('all')}
             >{tr({ zh: '全部', en: 'All' })}</button>
             <button
               type="button"
               role="tab"
               aria-selected={viewMode === 'mine'}
-              className={viewMode === 'mine' ? 'on' : ''}
+              className={`colpi-pill-btn ${viewMode === 'mine' ? 'on' : ''}`}
               disabled={!user}
               onClick={() => setViewMode('mine')}
               title={user ? '' : tr({ zh: '需要登录', en: 'Login required'
@@ -571,7 +572,6 @@ export default function ColpiClient() {
           <LangPopup
             value={langFilter}
             onChange={(v) => setLangFilter(v)}
-            isZh={isZh}
             onClose={() => setLangPickerOpen(false)}
             popupClassName="colpi-langpicker-popup--corner"
           />
@@ -647,12 +647,12 @@ export default function ColpiClient() {
                   )}
                   <span className="colpi-detail-vote">
                     <button
-                      className={w.myVote === 1 ? 'is-voted-up' : ''}
+                      className={`colpi-vote-btn ${w.myVote === 1 ? 'is-voted-up' : ''}`}
                       onClick={() => handleVote(w, 1)}
                       title={tr({ zh: '有用', en: 'Useful' })}
                     ><ThumbsUp size={12} /></button>
                     <button
-                      className={w.myVote === -1 ? 'is-voted-down' : ''}
+                      className={`colpi-vote-btn ${w.myVote === -1 ? 'is-voted-down' : ''}`}
                       onClick={() => handleVote(w, -1)}
                       title={tr({ zh: '不合适', en: 'Misused'
                     })}
@@ -660,11 +660,11 @@ export default function ColpiClient() {
                   </span>
                   {canEdit(w) && (
                     <span className="colpi-owner-actions">
-                      <button onClick={() => handleEditClick(w)} title={tr({ zh: '编辑', en: 'Edit'
+                      <button className="colpi-owner-btn" onClick={() => handleEditClick(w)} title={tr({ zh: '编辑', en: 'Edit'
                     })}>
                         <Pencil size={12} />
                       </button>
-                      <button onClick={() => handleDelete(w)} title={tr({ zh: '删除', en: 'Delete'
+                      <button className="colpi-owner-btn" onClick={() => handleDelete(w)} title={tr({ zh: '删除', en: 'Delete'
                     })}>
                         <Trash2 size={12} />
                       </button>
@@ -748,14 +748,14 @@ export default function ColpiClient() {
                   </td>
                   <td className="colpi-recent-vote">
                     <button
-                      className={w.myVote === 1 ? 'is-voted-up' : ''}
+                      className={`colpi-recent-vote-btn ${w.myVote === 1 ? 'is-voted-up' : ''}`}
                       onClick={() => handleVote(w, 1)}
                       title={tr({ zh: '有用', en: 'Useful' })}
                     >
                       <ThumbsUp size={12} />
                     </button>
                     <button
-                      className={w.myVote === -1 ? 'is-voted-down' : ''}
+                      className={`colpi-recent-vote-btn ${w.myVote === -1 ? 'is-voted-down' : ''}`}
                       onClick={() => handleVote(w, -1)}
                       title={tr({ zh: '不合适', en: 'Misused'
                     })}
@@ -813,6 +813,7 @@ function FormFields({
   return (
     <>
       <input
+        className="colpi-submit-input"
         type="text"
         value={word}
         onChange={(e) => setWord(e.target.value)}
@@ -836,9 +837,10 @@ function FormFields({
         placeholder={tr({ zh: '备注 (可选,例如 APPLE)', en: 'Note (optional, e.g. APPLE)'
         })}
         maxLength={500}
-        className="colpi-form-note"
+        className="colpi-form-note colpi-submit-input"
       />
       <select
+        className="colpi-submit-select"
         value={category}
         onChange={(e) => setCategory(e.target.value as Category)}
         aria-label={tr({ zh: '类别', en: 'Category'

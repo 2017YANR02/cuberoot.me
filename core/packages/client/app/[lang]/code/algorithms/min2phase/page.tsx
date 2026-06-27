@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../../_lib/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './algorithm_intro.css';
-import i18n from '@/i18n/i18n-client';
 
 const ACCENT = '#F0A04B';
 

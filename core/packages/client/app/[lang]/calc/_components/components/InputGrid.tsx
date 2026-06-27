@@ -15,7 +15,6 @@ import {
 import { isWR } from '../engine/wr_data';
 import { recordAndUpdate, nextCell, prevCell, navigateToCell, tryAutoAdvance, shouldAutoAdvance } from './Numpad';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 // NOTE: 头像按钮状态 — 由 CalcPage 管理，通过 props 传入
 export interface AvatarState {
@@ -303,14 +302,14 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
             {/* 选手启用 checkbox — 原版 input_grid.js#109-116 两行都有 */}
             <input
               type="checkbox"
-              className="player-toggle"
+              className="player-toggle calc-input"
               checked={enabled}
               onChange={() => state.togglePlayer(p)}
             />
 
             {/* 头像按钮 — 原版 input_grid.js#118-136 */}
             <button
-              className={`me-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
+              className={`me-btn calc-btn${avatarState?.[p]?.active ? ' me-active' : ''}`}
               title={avatarState?.[p]?.active
                 ? ((isZh ? `切换回世界第 ${p + 1} 名` : `Switch back to World #${p + 1}`))
                 : tr({ zh: '搜索选手', en: 'Search for a player'
@@ -337,7 +336,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
             <div className="time-cell-wrapper">
               <span className="tavg-emoji">{getGhostEmoji(p)}</span>
               <input
-                className="time-cell tavg-cell"
+                className="time-cell tavg-cell calc-input"
                 type="text"
                 inputMode="none"
                 disabled={!enabled}
@@ -400,7 +399,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
                       inputRefs.current[p][t] = el;
                       bindWheel(el, p, t);
                     }}
-                    className="time-cell"
+                    className="time-cell calc-input"
                     type="text"
                     inputMode="none"
                     disabled={!enabled}

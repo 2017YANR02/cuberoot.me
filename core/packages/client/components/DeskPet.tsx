@@ -446,7 +446,6 @@ export default function DeskPet() {
     let mini = false;
     let miniEdge: 'left' | 'right' = 'right';
     let miniTransitioning = false; // during enter/crabwalk — external state changes wait
-    let miniPeeked = false;        // hover-nudged on screen
     let mouseOverPet = false;
     let preMiniRight = 0, preMiniBottom = 0; // normal anchor to restore on exit
     let miniTimer: ReturnType<typeof setTimeout> | undefined;
@@ -500,7 +499,7 @@ export default function DeskPet() {
     // mini rest pose — staying nudged-in if the cursor is still over the pet.
     const onMiniAutoReturn = (from: string) => {
       if (!mini) return;
-      if (from === 'mini-peek') { miniPeeked = true; setState('mini-idle', true); return; }
+      if (from === 'mini-peek') { setState('mini-idle', true); return; }
       setState(dnd ? 'mini-sleep' : (mouseOverPet ? 'mini-peek' : 'mini-idle'), true);
     };
 
@@ -559,7 +558,7 @@ export default function DeskPet() {
       const r = root.getBoundingClientRect();
       preMiniRight = vpW() - r.right;
       preMiniBottom = vpH() - r.bottom;
-      mini = true; miniEdge = edge; miniPeeked = false; miniTransitioning = true;
+      mini = true; miniEdge = edge; miniTransitioning = true;
       syncMiniRef();
       clearTimeout(idleTimer); clearTimeout(autoTimer); clearTimeout(miniTimer);
       root.classList.add('mini-mode');
@@ -591,7 +590,7 @@ export default function DeskPet() {
 
     // Pull out of cling back into normal mode, keeping the on-screen position.
     const liftFromMini = (pose?: string) => {
-      mini = false; miniTransitioning = false; miniPeeked = false; mouseOverPet = false;
+      mini = false; miniTransitioning = false; mouseOverPet = false;
       syncMiniRef();
       clearTimeout(miniTimer);
       root.classList.remove('mini-mode', 'mini-left');
@@ -601,8 +600,8 @@ export default function DeskPet() {
     };
 
     // Cursor over the clinging pet → nudge it on-screen and peek (mouse only).
-    const peekIn = () => { if (!mini || dnd || miniTransitioning) return; miniPeeked = true; root.style.transition = 'right .18s ease-out'; root.style.right = miniRight(true) + 'px'; };
-    const peekOut = () => { if (!mini) return; miniPeeked = false; root.style.transition = 'right .18s ease-out'; root.style.right = miniRight(false) + 'px'; };
+    const peekIn = () => { if (!mini || dnd || miniTransitioning) return; root.style.transition = 'right .18s ease-out'; root.style.right = miniRight(true) + 'px'; };
+    const peekOut = () => { if (!mini) return; root.style.transition = 'right .18s ease-out'; root.style.right = miniRight(false) + 'px'; };
 
     // On drop: cling if the visual center landed within MINI_SNAP_FRAC of an edge.
     const snapEdge = (): 'left' | 'right' | null => {
@@ -819,7 +818,7 @@ export default function DeskPet() {
     try {
       const m = JSON.parse(localStorage.getItem(MINI_KEY) || 'null');
       if (m && (m.edge === 'left' || m.edge === 'right')) {
-        mini = true; miniEdge = m.edge; miniPeeked = false;
+        mini = true; miniEdge = m.edge;
         preMiniRight = typeof m.preRight === 'number' ? m.preRight : 0;
         preMiniBottom = typeof m.preBottom === 'number' ? m.preBottom : 0;
         syncMiniRef();

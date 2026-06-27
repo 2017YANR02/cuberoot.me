@@ -297,7 +297,7 @@ export default function QuaternionGroup() {
 // Panel 1: Quaternion multiplier + live Cayley table
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function CayleyPanel({ lang }: { lang: 'zh' | 'en' }) {
+function CayleyPanel({}: { lang: 'zh' | 'en' }) {
   const [leftIdx, setLeftIdx] = useState<number>(2);   // default: i
   const [rightIdx, setRightIdx] = useState<number>(4);  // default: j
   const [showFull, setShowFull] = useState(false);
@@ -829,7 +829,7 @@ function LatticePanel({ lang }: { lang: 'zh' | 'en' }) {
 // Panel 3: Character table comparator + involution counter
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function CharTablePanel({ lang }: { lang: 'zh' | 'en' }) {
+function CharTablePanel({}: { lang: 'zh' | 'en' }) {
   const [mode, setMode] = useState<'side' | 'Q8' | 'D4'>('side');
   const [scanning, setScanning] = useState(false);
   const [scanStep, setScanStep] = useState<number>(-1);

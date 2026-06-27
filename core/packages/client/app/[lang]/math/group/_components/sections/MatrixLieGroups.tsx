@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // ── 3×3 matrix math helpers ──────────────────────────────────────────────────
 
@@ -423,7 +422,7 @@ function RotationComposerPanel({ lang }: { lang: 'zh' | 'en' }) {
 
 // ── Panel 2: SU(2) → SO(3) double cover ──────────────────────────────────────
 
-function DoubleCoverPanel({ lang }: { lang: 'zh' | 'en' }) {
+function DoubleCoverPanel({}: { lang: 'zh' | 'en' }) {
   // Axis: polar angle φ_axis ∈ [0°,180°], azimuth λ ∈ [0°,360°]
   const [polarDeg, setPolarDeg] = useState(90);
   const [azimDeg, setAzimDeg] = useState(0);

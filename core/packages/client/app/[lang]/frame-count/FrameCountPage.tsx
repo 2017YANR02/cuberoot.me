@@ -2420,7 +2420,7 @@ export default function FrameCountPage() {
                 </button>
               </div>
             )}
-            <input ref={fileInputRef} type="file" accept="video/*" className="fc-file-input" onChange={handleFileSelect} />
+            <input ref={fileInputRef} type="file" accept="video/*" className="fc-file-input fc-page-input" onChange={handleFileSelect} />
           </div>
 
           {/* ── 控制栏 ── 总是渲染; 无视频时交互按钮 disabled */}
@@ -2595,7 +2595,7 @@ export default function FrameCountPage() {
               <button className="fc-solve-btn" title={t('frameCount.solves.add')} onClick={addSolve}>+</button>
               <button className="fc-solve-btn" title={t('frameCount.solves.remove')} onClick={removeSolve}>−</button>
               <select
-                className="fc-solve-select"
+                className="fc-solve-select fc-page-select"
                 value={activeSolveIdx}
                 onChange={(e) => { setActiveSolveIdx(parseInt(e.target.value)); setSelectedMarkIdx(null); }}
                 // 移动端 Chrome 的表单/自动填充解析器会在 hydration 前往表单控件注入 __gcruniqueid 属性,
@@ -2606,7 +2606,7 @@ export default function FrameCountPage() {
               </select>
               <div className="fc-input-unit-wrap">
                 <input
-                  className="fc-tab-input fc-toolbar-time"
+                  className="fc-tab-input fc-toolbar-time fc-page-input"
                   type="number" step="0.01" min={0} placeholder={t('frameCount.solves.timePlaceholder')}
                   inputMode="decimal"
                   suppressHydrationWarning /* 同上:移动端 Chrome 注入 __gcruniqueid 致 hydration 不匹配 */

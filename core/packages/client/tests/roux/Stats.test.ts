@@ -1,4 +1,4 @@
-import { it, expect } from 'vitest';
+import { it } from 'vitest';
 import { solverFactory2, SolverT } from '@/lib/roux/Solver'
 import { CubieCube } from '@/lib/roux/CubeLib'
 import { CachedSolver } from '@/lib/roux/CachedSolver'
@@ -21,7 +21,6 @@ let edge_desc = (eo:number, ep:number) => {
 
 
 const avg = (x: number[]) => x.reduce((x, y) => x + y) / x.length
-const cnt_avg = (x: number[]) => [x.length, avg(x)]
 const report = (s: string, result: any[]) => {
     let cnt : {[k: number]: number}= {}
     result.forEach(x => cnt[x] = (cnt[x] === undefined) ? 1 : cnt[x] + 1)

@@ -16,17 +16,6 @@
   justify-content: space-between;
 }
 
-.detail-back {
-  color: var(--accent);
-  text-decoration: none;
-  font-size: 0.9rem;
-  white-space: nowrap;
-}
-
-.detail-back:hover {
-  color: var(--foreground);
-}
-
 .detail-title {
   flex: 1;
   font-size: 1.3rem;
@@ -46,28 +35,6 @@
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 20px;
-}
-
-.detail-meta-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
-  border-radius: 6px;
-  font-size: 0.82rem;
-  color: var(--muted-foreground);
-  text-decoration: none;
-}
-
-.detail-meta-tag a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.detail-meta-tag a:hover {
-  text-decoration: underline;
 }
 
 /* ── 详情页全屏分栏(与 Submit 页同款) ────────────────────────── */
@@ -183,20 +150,6 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 6px;
-}
-
-/* --- 解法文本: 见 components/solution_view.css(.detail-solution-text 等) --- */
-
-.detail-scramble-text {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: var(--muted-foreground);
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
-  padding: 10px 14px;
-  border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
-  word-break: break-all;
 }
 
 /* ── 打乱 + 解法 合并框 ─────────────────────────────────────── */
@@ -322,20 +275,6 @@
   object-fit: cover;
 }
 
-.detail-video-play-yt {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 68px; height: 48px;
-  opacity: 0.85;
-  transition: opacity 0.2s;
-  pointer-events: none;
-}
-
-.detail-video-facade:hover .detail-video-play-yt {
-  opacity: 1;
-}
-
 .detail-video-link {
   color: var(--accent);
   font-size: 0.85rem;
@@ -361,51 +300,6 @@
   white-space: pre-wrap;
 }
 
-/* --- 评论区 --- */
-.detail-comments {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.detail-comment {
-  background: color-mix(in srgb, var(--foreground) 3%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
-  border-radius: 6px;
-  padding: 10px 14px;
-}
-
-.detail-comment-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.detail-comment-header strong {
-  color: var(--foreground);
-  font-size: 0.85rem;
-}
-
-.detail-comment-time {
-  color: var(--faint-foreground);
-  font-size: 0.75rem;
-}
-
-.detail-comment-body {
-  color: var(--muted-foreground);
-  font-size: 0.85rem;
-  line-height: 1.5;
-  white-space: pre-wrap;
-}
-
-/* --- 评论 CRUD --- */
-.detail-comment-actions {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
 .recon-btn-sm {
   font-size: 0.72rem;
   padding: 2px 8px;
@@ -428,54 +322,6 @@
 
 .recon-btn-danger-sm:hover {
   background: color-mix(in srgb, var(--destructive) 12%, transparent) !important;
-}
-
-.detail-comment-edit textarea {
-  width: 100%;
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  border-radius: 4px;
-  color: var(--foreground);
-  font-size: 0.85rem;
-  padding: 6px 10px;
-  resize: vertical;
-}
-
-.detail-comment-edit-actions {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.detail-comment-add {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-
-.detail-comment-add textarea {
-  flex: 1;
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  border-radius: 6px;
-  color: var(--foreground);
-  font-size: 0.85rem;
-  padding: 8px 12px;
-  resize: vertical;
-}
-
-.detail-comment-add textarea::placeholder {
-  color: var(--faint-foreground);
-}
-
-/* --- 盲拧时间 --- */
-.detail-bld-times {
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-  font-size: 0.85rem;
-  color: var(--muted-foreground);
 }
 
 /* --- 外部链接 --- */
@@ -533,13 +379,6 @@
   text-decoration: underline;
 }
 
-/* --- 操作按钮 --- */
-.detail-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-
 /* 标题后的编辑按钮——图标按钮,跟标题在一行 */
 .detail-title-edit {
   padding: 4px 6px !important;
@@ -591,20 +430,6 @@
   resize: none;
 }
 
-.alt-submit-parent-ref {
-  font-size: 0.7em;
-  color: var(--faint-foreground);
-  font-weight: normal;
-}
-
-.alt-submit-parent-link {
-  color: var(--faint-foreground);
-  text-decoration: none;
-}
-
-.alt-submit-parent-link:hover { color: var(--accent); }
-
-
 /* 另解卡片右侧:三点菜单 */
 .alt-card-actions {
   display: flex;
@@ -639,71 +464,6 @@
 
 .recon-btn-danger:hover {
   background: color-mix(in srgb, var(--destructive) 15%, transparent) !important;
-}
-
-/* --- 编辑历史 --- */
-.detail-history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.detail-history-item {
-  background: color-mix(in srgb, var(--foreground) 3%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
-  border-radius: 6px;
-  padding: 8px 12px;
-}
-
-.detail-history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.82rem;
-  color: var(--muted-foreground);
-  margin-bottom: 6px;
-}
-
-.detail-history-diff {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.detail-history-field {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 0.75rem;
-  font-family: 'Roboto Mono', monospace;
-}
-
-.detail-history-key {
-  color: var(--accent);
-  min-width: 80px;
-}
-
-.detail-history-before {
-  color: var(--destructive);
-  text-decoration: line-through;
-  opacity: 0.7;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.detail-history-arrow {
-  color: var(--faint-foreground);
-}
-
-.detail-history-after {
-  color: var(--signal-success);
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* --- 同轮次成绩导航 --- */
@@ -943,7 +703,7 @@
   align-items: stretch;
 }
 
-.same-round-paste-box textarea {
+.same-round-paste-box .same-round-paste-textarea {
   flex: 1;
   min-width: 0;
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
@@ -1200,7 +960,7 @@
   z-index: 10;
 }
 
-.yt-comment-menu button {
+.yt-comment-menu .yt-comment-menu-item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1215,7 +975,7 @@
   font-family: inherit;
 }
 
-.yt-comment-menu button:hover {
+.yt-comment-menu .yt-comment-menu-item:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 

@@ -9,7 +9,6 @@ import { X } from 'lucide-react';
 import { apiUrl } from '@/lib/api-base';
 import { persistAuthItem, useAuthStore } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 const ME_URL = 'https://www.worldcubeassociation.org/api/v0/me';
 

@@ -1363,6 +1363,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                       <label className="gen-tn-mini-num">
                         <span>{t('组', 'Sets')}</span>
                         <NumberCommitInput
+                          className="gen-tn-mini-num-input"
                           min={1} max={20}
                           value={r.scrambleSets}
                           onCommit={(n) => updateRound(ev, ri, { scrambleSets: n })}
@@ -1371,6 +1372,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                       <label className="gen-tn-mini-num">
                         <span>{t('份', 'Copies')}</span>
                         <NumberCommitInput
+                          className="gen-tn-mini-num-input"
                           min={1} max={50}
                           value={r.copies}
                           onCommit={(n) => updateRound(ev, ri, { copies: n })}

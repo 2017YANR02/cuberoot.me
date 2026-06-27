@@ -49,7 +49,6 @@ import {
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 function isAlphabet(ch: string): boolean {
   return /^[a-zA-Z]$/.test(ch);

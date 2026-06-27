@@ -28,7 +28,6 @@ import { Modal } from './_components/ui';
 import { rt } from './i18n';
 
 import './roux.css';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 // [mode key, long label, short label] — ported from AppView.tab_modes.

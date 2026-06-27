@@ -25,7 +25,6 @@ import {
 import { useSettings, updateSettings, MAX_AO_WINDOWS } from '../_lib/settings';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   solves: Solve[];
@@ -193,6 +192,7 @@ export default function StatsPanel({ solves, isZh }: Props) {
               </div>
               <div className="stats-ao-custom">
                 <input
+                  className="stats-ao-custom-input"
                   type="number"
                   min={MIN_AO}
                   max={MAX_AO}

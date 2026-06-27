@@ -18,7 +18,6 @@ import { RegistrationView } from '@/components/RegistrationComps';
 import { useCompFollows } from '@/components/CompFollow';
 import { countActionableReg } from '@/lib/comp-registration';
 import './ongoing_comps.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 interface Props { lang: 'zh' | 'en' }

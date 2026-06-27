@@ -430,7 +430,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   white-space: nowrap;
   cursor: pointer;
 }
-.rank-pill--top { color: var(--signal-success); }
 .rank-pill--loading { color: var(--muted-foreground); opacity: 0.6; cursor: default; }
 /* WR12/AsR9/NR9 segments: center-align text + any inline RecordBadge, even gaps
    around the "/" separators. 字体继承 .rank-pill 的 Inter(已非 mono). */
@@ -562,7 +561,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    (imported by components/GestureWheel.tsx, shared with /trainer). */
 
 /* Solver-hint pills (de-boxed in SolverHints.tsx) brighten on hover. */
-.shell-undersurface .solver-hints button:hover { color: var(--foreground); }
+.shell-undersurface .solver-hints .solver-hint-btn:hover { color: var(--foreground); }
 
 /* ── 解法提示 panel (333) — desktop right rail / mobile inline-below-scramble ──
    A persistent, collapsible StageSolver host (replaces the old modal). Lives as
@@ -1044,7 +1043,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   padding: 2px;
 }
 .session-rename-input-wrap { position: relative; flex: 1; min-width: 0; }
-.session-rename-input-wrap input {
+.session-rename-input-wrap .session-rename-input {
   width: 100%;
   box-sizing: border-box;
   padding: 6px 28px 6px 8px;
@@ -1055,7 +1054,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   font-size: 13px;
   font-family: inherit;
 }
-.session-rename-input-wrap input:focus {
+.session-rename-input-wrap .session-rename-input:focus {
   outline: none;
   border-color: var(--accent);
 }
@@ -1215,24 +1214,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
      (成绩 / Times) isn't under it; symmetric so the 3 flex:1 buttons stay centered. */
   .timer-shell .shell-bottombar { padding-left: 56px; padding-right: 56px; }
 }
-
-/* Hide the slim desktop-only Bluetooth status button label on small screens
-   handled by tb-btn rules in timer.css. */
-
-/* ── Misc shell-only widgets ────────────────────────────── */
-.shell-battle-notice {
-  position: fixed;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 80;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 12px;
-  pointer-events: none;
-}
 .shell-info-toast {
   position: fixed;
   left: 50%;
@@ -1250,7 +1231,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   box-shadow: 0 4px 18px color-mix(in srgb, var(--foreground) 18%, transparent);
   font-size: 13px;
 }
-.shell-info-toast button {
+.shell-info-toast .shell-info-toast-btn {
   border: 0;
   background: transparent;
   color: var(--accent);
@@ -1258,40 +1239,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   font-weight: 600;
   cursor: pointer;
 }
-
-/* Penalty action sheet (swipe-up) */
-.shell-penalty-sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 62;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  background: var(--card);
-  border-top: 1px solid var(--border-default);
-  animation: shell-sheet-up 200ms ease;
-}
-.shell-penalty-sheet .qa-btn {
-  flex: 1;
-  min-width: 70px;
-  padding: 12px;
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  background: var(--shell-chip);
-  color: var(--foreground);
-  font-size: 15px;
-  cursor: pointer;
-}
-.shell-penalty-sheet .qa-btn.active { border-color: var(--accent); color: var(--accent); }
-.shell-penalty-sheet .qa-btn.danger { color: var(--destructive); }
-@media (prefers-reduced-motion: reduce) {
-  .shell-panel--sheet, .shell-penalty-sheet { animation: none; }
+@media (prefers-reduced-motion: reduce) {.shell-panel--sheet { animation: none; }
 }
 
 /* tb-btn used in topbar — token-clean override (legacy timer.css has hex). */
@@ -1318,7 +1266,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .shell-corner-net .cube-preview-toggle:focus-visible,
 .shell-bottombar-btn:focus-visible,
 .shell-panel-tab:focus-visible,
-.shell-undersurface .solver-hints button:focus-visible {
+.shell-undersurface .solver-hints .solver-hint-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: inherit;

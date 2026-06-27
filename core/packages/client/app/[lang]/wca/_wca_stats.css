@@ -22,37 +22,6 @@
   margin-bottom: 24px;
 }
 
-/* NOTE: back 链接 + LangToggle 这一行：左 back，右 toggle */
-.wca-stats-header-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-/* WcaStatsIndex 标题行：h1 靠左，toggle 靠右 */
-.wca-stats-index-header {
-  margin-bottom: 28px;
-}
-
-.wca-stats-index-header h1 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--foreground);
-}
-
-.wca-stats-back {
-  color: var(--accent);
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.2s;
-}
-
-.wca-stats-back:hover {
-  color: color-mix(in srgb, var(--accent) 85%, black);
-}
-
 .wca-stats-header h1 {
   margin: 12px 0 8px;
   font-size: 28px;
@@ -128,11 +97,7 @@ input:checked + .wca-stats-toggle-pill {
 input:checked + .wca-stats-toggle-pill::after {
   width: 22px;
   transform: translateX(12px);
-}
-
-/* 通用分段按钮基础样式 */
-.wca-stats-tab,
-.wca-stats-metric-btn {
+}.wca-stats-tab {
   padding: 8px 20px;
   border: 1px solid var(--border-default);
   background: transparent;
@@ -143,28 +108,13 @@ input:checked + .wca-stats-toggle-pill::after {
   line-height: 1.2;
   transition: all 0.2s;
   border-radius: 0;
-}
-
-/* 首尾圆角 */
-.wca-stats-tab:first-child,
-.wca-stats-metric-btn:first-child {
+}.wca-stats-tab:first-child {
   border-radius: 6px 0 0 6px;
-}
-
-.wca-stats-tab:last-of-type,
-.wca-stats-metric-btn:last-of-type {
+}.wca-stats-tab:last-of-type {
   border-radius: 0 6px 6px 0;
-}
-
-/* NOTE: 相邻按钮消除重复边框 */
-.wca-stats-tab + .wca-stats-tab,
-.wca-stats-metric-btn + .wca-stats-metric-btn {
+}.wca-stats-tab + .wca-stats-tab {
   border-left: none;
-}
-
-/* active 状态 */
-.wca-stats-tab.active,
-.wca-stats-metric-btn.active {
+}.wca-stats-tab.active {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-foreground);
@@ -175,11 +125,7 @@ input:checked + .wca-stats-toggle-pill::after {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-foreground);
-}
-
-/* hover 状态 */
-.wca-stats-tab:hover:not(.active):not(.disabled),
-.wca-stats-metric-btn:hover:not(.active):not(.disabled) {
+}.wca-stats-tab:hover:not(.active):not(.disabled) {
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
@@ -260,109 +206,6 @@ input:checked + .wca-stats-toggle-pill::after {
 .wca-stats-metric-option.disabled {
   color: var(--faint-foreground);
   cursor: not-allowed;
-}
-
-/* Metric Groups 下拉面板样式（metricPanels 分组模式）*/
-
-.wca-stats-metric-groups {
-  margin: 12px 0;
-  padding: 12px;
-  background: color-mix(in srgb, var(--foreground) 2%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
-  border-radius: 8px;
-}
-
-.wca-stats-metric-group {
-  margin-bottom: 8px;
-}
-
-.wca-stats-metric-group:last-child {
-  margin-bottom: 0;
-}
-
-.wca-stats-metric-group-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-}
-
-.wca-stats-metric-group-items {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.wca-stats-metric-group-items .wca-stats-metric-btn {
-  padding: 6px 14px;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.15s;
-}
-
-.wca-stats-metric-group-items .wca-stats-metric-btn:first-child {
-  border-radius: 6px;
-}
-
-.wca-stats-metric-group-items .wca-stats-metric-btn:last-child {
-  border-radius: 6px;
-}
-
-.wca-stats-metric-group-items .wca-stats-metric-btn + .wca-stats-metric-btn {
-  border-left: 1px solid transparent;
-}
-
-.wca-stats-metric-group-items .wca-stats-metric-btn:hover:not(.active):not(.disabled) {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-  color: var(--foreground);
-}
-
-.wca-stats-metric-group-items .wca-stats-metric-btn.active {
-  background: color-mix(in srgb, var(--foreground) 12%, transparent);
-  border-color: color-mix(in srgb, var(--foreground) 20%, transparent);
-  color: var(--foreground);
-}
-
-/* 工具栏 */
-.wca-stats-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.wca-stats-search {
-  flex: 1;
-  max-width: 400px;
-  padding: 8px 14px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: var(--card);
-  color: var(--foreground);
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.wca-stats-search:focus {
-  border-color: var(--accent);
-}
-
-.wca-stats-search::placeholder {
-  color: var(--faint-foreground);
-}
-
-.wca-stats-count {
-  font-size: 13px;
-  color: var(--muted-foreground);
-  white-space: nowrap;
 }
 
 /* fit-content:窄表贴内容,不留右侧大空白;max-width 兜底防溢出。 */
@@ -656,20 +499,6 @@ input:checked + .wca-stats-toggle-pill::after {
   margin: 0 0 0.6rem;
 }
 
-.wca-stats-index-sub {
-  font-size: 0.92rem;
-  color: var(--muted-foreground);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.wca-stats-index-hero-right {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 /* ── Toolbar：搜索 + tabs ───────────────────────────────── */
 
 .wca-stats-index-toolbar {
@@ -684,54 +513,6 @@ input:checked + .wca-stats-toggle-pill::after {
   gap: 0.9rem;
   background: var(--background);
   border-bottom: 1px solid var(--border-default);
-}
-
-.wca-stats-index-search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.7rem 2.4rem 0.7rem 0.9rem; /* 右侧空 2.4rem 给 inline × 让位 */
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.wca-stats-index-search:focus-within {
-  border-color: var(--border-strong);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-.wca-stats-index-search > svg {
-  color: var(--faint-foreground);
-  flex-shrink: 0;
-}
-
-.wca-stats-index-search input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--foreground);
-  font-size: 0.95rem;
-  font-family: inherit;
-  padding: 0;
-  min-width: 0;
-}
-
-.wca-stats-index-search input::placeholder {
-  color: var(--faint-foreground);
-}
-
-.wca-stats-index-search-count {
-  flex-shrink: 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--accent);
-  background: var(--accent-soft);
-  padding: 2px 8px;
-  border-radius: 10px;
 }
 
 /* Tabs */
@@ -771,13 +552,6 @@ input:checked + .wca-stats-toggle-pill::after {
 
 .wca-stats-index-tab.active svg {
   color: var(--background);
-}
-
-.wca-stats-index-tab-count {
-  font-size: 0.72rem;
-  font-weight: 600;
-  opacity: 0.7;
-  padding: 0 3px;
 }
 
 /* ── Body：分类 sections ────────────────────────────────── */
@@ -840,119 +614,10 @@ input:checked + .wca-stats-toggle-pill::after {
   color: var(--foreground);
 }
 
-.wca-stats-index-section-count {
-  margin-left: auto;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--faint-foreground);
-  font-variant-numeric: tabular-nums;
-}
-
 .wca-stats-index-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 0.55rem;
-}
-
-.wca-stats-index-card {
-  display: block;
-  padding: 0.75rem 0.95rem;
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  color: var(--foreground);
-  text-decoration: none;
-  font-size: 0.86rem;
-  font-weight: 450;
-  line-height: 1.35;
-  transition: all 0.15s;
-}
-
-.wca-stats-index-card:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(24, 23, 22, 0.04);
-}
-
-/* 富信息卡片(选手 / 比赛搜索结果):国旗 + 主名 + 副文本 */
-.wca-stats-index-card--rich {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.6rem 0.75rem;
-}
-
-.wca-stats-index-card--rich .country-flag {
-  flex-shrink: 0;
-  width: 1.4em !important;
-  margin-right: 0;
-}
-
-.wca-stats-index-card-main {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-
-.wca-stats-index-card-name {
-  font-size: 0.86rem;
-  font-weight: 500;
-  line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.wca-stats-index-card-meta {
-  font-size: 0.72rem;
-  color: var(--faint-foreground);
-  font-variant-numeric: tabular-nums;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.wca-stats-index-card--rich:hover .wca-stats-index-card-meta {
-  color: var(--muted-foreground);
-}
-
-/* 空搜索结果 */
-.wca-stats-index-empty {
-  padding: 3rem 0;
-  text-align: center;
-  color: var(--faint-foreground);
-  font-size: 0.95rem;
-}
-
-.wca-stats-index-more {
-  display: block;
-  width: 100%;
-  margin-top: 0.5rem;
-  padding: 0.55rem 0.9rem;
-  background: transparent;
-  border: 1px dashed var(--border-default);
-  border-radius: 10px;
-  color: var(--muted-foreground);
-  font-family: inherit;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.12s;
-}
-
-.wca-stats-index-event-icon {
-  flex-shrink: 0;
-  width: 1.2em;
-  height: 1.2em;
-  opacity: 0.85;
-}
-
-.wca-stats-index-more:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
 }
 
 /* 加载 / 错误 */
@@ -1068,10 +733,6 @@ input:checked + .wca-stats-toggle-pill::after {
     grid-template-columns: 1fr 1fr;
     gap: 0.4rem;
   }
-  .wca-stats-index-card {
-    padding: 0.6rem 0.7rem;
-    font-size: 0.8rem;
-  }
   .wca-stat-card {
     align-items: flex-start;
     gap: 0.45rem;
@@ -1087,18 +748,6 @@ input:checked + .wca-stats-toggle-pill::after {
     padding: 1rem 0.6rem;
     font-size: 0.85rem;
   }
-}
-
-/* 项目选择器样式全部在 components/WcaEventSelector.css,这里不再重复 */
-
-/* ==========================================================================
-   Metric 按钮 disabled 状态（metricPanels 模式下项目无数据时）
-   ========================================================================== */
-
-.wca-stats-metric-btn.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  color: var(--faint-foreground);
 }
 
 .wca-stats-tab.disabled {
@@ -1176,38 +825,6 @@ input:checked + .wca-stats-toggle-pill::after {
   display: none;
   white-space: nowrap;
   z-index: 10;
-}
-
-/* ==========================================================================
-   国旗图标（对标 Legacy i18n.js _injectFlagStyles）
-   ========================================================================== */
-
-/* .country-flag / .country-flag-ct 统一规则在 app/globals.css(全局唯一来源,直角无圆角)。
-   此处不再重复定义 —— 裸类名重复会静默覆盖全局改动,改一处不生效。 */
-
-/* ==========================================================================
-   语言切换按钮（固定右下角，对标 Legacy i18n.js toggle）
-   ========================================================================== */
-
-.wca-stats-lang-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1000;
-  padding: 8px 16px;
-  border: 1px solid var(--border-default);
-  border-radius: 20px;
-  background: var(--popover);
-  color: var(--foreground);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.wca-stats-lang-toggle:hover {
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-  border-color: var(--accent);
 }
 
 /* ==========================================================================

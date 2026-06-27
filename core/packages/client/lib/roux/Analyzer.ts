@@ -59,7 +59,6 @@ function is_fb_solved(cube: CubieCube, oris: MoveSeq[]) {
 export function analyze_roux_solve(cube: CubieCube, solve: MoveSeq) {
     //todo: break up half turns to detect cancellation in between stages
     let oris = get_oris("cn").map(m => new MoveSeq(m))
-    let pres = ["", "x", "x'", "x2"].map(m => new MoveSeq(m))
     const defaultSolution = {
         solution: [], premove: "", orientation: "", stage: "", score: 0
     }
@@ -177,7 +176,6 @@ function analyze_fb(state: AnalyzerState, cube: CubieCube): SolutionDesc[] {
             "felinep1": ["felinep1-front", "felinep1-back"],
             "fs-combo": ["fs-front", "fs-back", "fs-pseudo-front", "fs-pseudo-back", "felinep1-front", "felinep1-back"],
         }
-        const needs_fb_tag = state.fb_stage === "fs-combo"
         // label the fb_tag if we are in fs-combo mode
         const fb_tag : Record<string, string> = {
             "fs-pseudo-front": "Ps",

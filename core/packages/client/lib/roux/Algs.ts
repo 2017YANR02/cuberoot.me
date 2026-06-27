@@ -2,16 +2,6 @@
 import Selector from "./Selector";
 import { rand_choice } from "./Math";
 
-const get_active_names = (sel : Selector) => {
-    let res = []
-    for (let i = 0; i < sel.names.length; i++) {
-        if (sel.flags[i]) {
-            res.push(sel.names[i]);
-        }
-    }
-    return res
-}
-
 export type CaseDesc = {
     id: string,
     algs: string[],

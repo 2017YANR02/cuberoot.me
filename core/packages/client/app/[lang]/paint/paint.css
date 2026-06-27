@@ -104,9 +104,6 @@
 .paint-btn--accent:hover:not(:disabled) {
   background: var(--accent-hover);
 }
-.paint-btn--ghost {
-  color: var(--muted);
-}
 .paint-zoom-label {
   min-width: 50px;
   font-variant-numeric: tabular-nums;
@@ -621,7 +618,7 @@
   overflow: hidden;
   flex: 1;
 }
-.paint-seg button {
+.paint-seg .paint-seg-btn {
   flex: 1;
   border: none;
   background: var(--bg);
@@ -634,10 +631,10 @@
   font-size: 12px;
   border-right: 1px solid var(--border);
 }
-.paint-seg button:last-child {
+.paint-seg .paint-seg-btn:last-child {
   border-right: none;
 }
-.paint-seg button.is-on {
+.paint-seg .paint-seg-btn.is-on {
   background: var(--accent);
   color: #fff;
 }
@@ -989,7 +986,7 @@
   color: var(--fg);
   cursor: pointer;
 }
-.paint-sh-toggle input {
+.paint-sh-toggle .paint-sh-toggle-input {
   width: 15px;
   height: 15px;
   accent-color: var(--accent);
@@ -1153,7 +1150,7 @@
   /* fatter inspector controls for fingers */
   .paint-field,
   .paint-select,
-  .paint-seg button {
+  .paint-seg .paint-seg-btn {
     height: 34px;
   }
   .paint-swatch {

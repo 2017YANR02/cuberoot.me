@@ -30,7 +30,6 @@ import {
 import { m2pSolve, prewarm } from '../_lib/m2p-bridge';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 function isAlphabet(ch: string): boolean {
   return /^[a-zA-Z]$/.test(ch);
@@ -54,7 +53,7 @@ export default function ParityTrainerPage(): JSX.Element {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [codesText, setCodesText] = useState('');
-  const [newCodes, setNewCodes] = useState<string[]>([]);
+  const [, setNewCodes] = useState<string[]>([]);
   const [modalMsg, setModalMsg] = useState<{ text: string; kind?: 'error' | 'ok' } | undefined>();
   const [inputSummary, setInputSummary] = useState('');
 

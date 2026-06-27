@@ -9,7 +9,6 @@ import { countryName } from '@/lib/country-name';
 import { isContinentCode, type ContinentCode } from '@/lib/continent';
 import './region_picker.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface ContinentInfo {
   slug: ContinentSlug;
@@ -205,6 +204,7 @@ export function RegionPicker(props: RegionPickerProps) {
             <Search size={14} />
             <input
               autoFocus
+              className="region-picker-search-input"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               onKeyDown={handleSearchKeyDown}

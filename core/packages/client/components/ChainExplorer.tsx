@@ -548,7 +548,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
             {axisMenu === key && (
               <div className="chx-axis-menu">
                 {addable.map((a) => (
-                  <button key={a} onClick={() => addAxis(key, a)}>{AXIS_LABEL[a]}</button>
+                  <button key={a} className="chx-axis-menu-btn" onClick={() => addAxis(key, a)}>{AXIS_LABEL[a]}</button>
                 ))}
               </div>
             )}
@@ -643,12 +643,13 @@ export default function ChainExplorer({ scramble, lang }: Props) {
                 ))}
                 <span className="chx-inline-add">
                   <input
+                    className="chx-inline-add-input"
                     value={triggerInput}
                     placeholder={t('如 R U R', "e.g. R U R")}
                     onChange={(e) => setTriggerInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') addTrigger(); }}
                   />
-                  <button onClick={addTrigger} aria-label={t('添加 trigger', 'add trigger')}><Plus size={12} /></button>
+                  <button className="chx-inline-add-btn" onClick={addTrigger} aria-label={t('添加 trigger', 'add trigger')}><Plus size={12} /></button>
                 </span>
               </div>
             </div>
@@ -669,12 +670,13 @@ export default function ChainExplorer({ scramble, lang }: Props) {
                 ))}
                 <span className="chx-inline-add">
                   <input
+                    className="chx-inline-add-input"
                     value={subsetInput}
                     placeholder={t('如 4a1', 'e.g. 4a1')}
                     onChange={(e) => setSubsetInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') addSubset(); }}
                   />
-                  <button onClick={addSubset} aria-label={t('添加子集', 'add subset')}><Plus size={12} /></button>
+                  <button className="chx-inline-add-btn" onClick={addSubset} aria-label={t('添加子集', 'add subset')}><Plus size={12} /></button>
                 </span>
               </div>
             </div>

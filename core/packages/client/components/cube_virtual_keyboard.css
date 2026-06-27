@@ -100,7 +100,7 @@
 }
 
 /* NOTE: 通用按键样式——圆角深灰方块，白色文字 */
-.vkb-row button {
+.vkb-row .vkb-key-btn {
     flex: 1;
     min-width: 0;
     height: 44px;
@@ -120,7 +120,7 @@
 }
 
 /* NOTE: 触摸反馈——放大 + 阴影 */
-.vkb-row button:active {
+.vkb-row .vkb-key-btn:active {
     background: #555558;
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);

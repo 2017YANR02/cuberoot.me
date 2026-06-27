@@ -49,7 +49,7 @@ function recordRow(opts: {
   isZh: boolean;
   gapLabel: string;
 }) {
-  const { label, yourLabel, wrMs, wrText, holder, date, userMs, isZh, gapLabel } = opts;
+  const { label, yourLabel, wrMs, wrText, holder, date, userMs, gapLabel } = opts;
   if (wrMs === undefined && !wrText) return null;
 
   const wrDisplay = wrText !== undefined ? wrText : formatMs(wrMs ?? null);

@@ -12,7 +12,6 @@
  */
 import { useMemo, useState } from 'react';
 import { TeX } from './Tex';
-import i18n from "@/i18n/i18n-client";
 
 interface Row {
   n: number;

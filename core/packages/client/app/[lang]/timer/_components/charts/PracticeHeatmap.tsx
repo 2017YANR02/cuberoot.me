@@ -28,7 +28,6 @@ import type { Solve } from '../../_lib/types';
 import { formatMs } from '../../_lib/stats';
 import './practice_heatmap.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface PracticeHeatmapProps {
   /** All solves across all events (or already-filtered by event — caller's choice). */

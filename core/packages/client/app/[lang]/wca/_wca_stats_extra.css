@@ -39,7 +39,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
 .wse-type-standalone { margin: 0 0 16px; }
 /* 不被全宽容器拉满:filter 收到内容宽,select 也别 stretch 成整页宽,给个合理定宽 */
 .wse-type-standalone .wse-filter { width: fit-content; min-width: 0; }
-.wse-type-standalone .wse-filter select { width: auto; min-width: 160px; }
+.wse-type-standalone .wse-filter .wse-filter-select { width: auto; min-width: 160px; }
 /* 嵌入「指标」视图时,wr_metric 的 note 段贴着类型下拉下方,留点呼吸 */
 .wca-stats-embedded-note { margin: 4px 0 16px; }
 /* 单项视图:排名表上方常显的「纪录走势」bar race 容器,留点上下间距 */
@@ -84,11 +84,8 @@ html:not([data-palette-scheme=dark]) .wse-page {
   color: var(--muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-.wse-filter select,
-.wse-filter > input,
-/* 排除 PillToggle:它是 <button> 但要保持自己的胶囊外形(999px),别被方框控件样式套住 */
-.wse-filter > button:not(.pill-toggle) {
+}.wse-filter .wse-filter-select,
+.wse-filter > .wse-filter-input {
   padding: 6px 10px;
   border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
@@ -97,8 +94,8 @@ html:not([data-palette-scheme=dark]) .wse-page {
   font-size: 14px;
   height: 34px;
 }
-.wse-filter select:hover,
-.wse-filter > input:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
+.wse-filter .wse-filter-select:hover,
+.wse-filter > .wse-filter-input:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
 
 /* 名录长度区间筛选(最小–最大,按当前名字口径的字符数) */
 .wse-len-range {
@@ -137,33 +134,23 @@ html:not([data-palette-scheme=dark]) .wse-page {
   overflow: hidden;
 }
 .wse-country-trigger:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
-.wse-country-trigger > button {
+.wse-country-trigger-btn {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
   text-align: left;
-  border: none !important;
-  background: transparent !important;
-  height: auto !important;
-  padding: 6px 10px !important;
-  border-radius: 0 !important;
+  border: none;
+  background: transparent;
+  height: auto;
+  padding: 6px 10px;
+  border-radius: 0;
   color: inherit;
   font-size: 14px;
 }
-.wse-country-clear {
-  width: 28px !important;
-  padding: 0 !important;
-  font-size: 16px;
-  cursor: pointer;
-  color: var(--faint-foreground);
-  border: none !important;
-  background: transparent !important;
-  border-radius: 0 !important;
-  height: auto !important;
-}
-.wse-country-clear:hover { color: var(--foreground); }
+/* ClearButton(共享组件)间距;用 class 选择器,不会穿透/误伤其他组件 */
+.wse-country-trigger .clear-btn { margin-right: 6px; }
 .wse-country-popup {
   position: absolute;
   top: calc(100% + 4px);
@@ -187,7 +174,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
   border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   color: var(--muted-foreground);
 }
-.wse-country-search input {
+.wse-country-search .wse-country-search-input {
   flex: 1;
   border: none;
   background: transparent;
@@ -217,18 +204,6 @@ html:not([data-palette-scheme=dark]) .wse-page {
 }
 .wse-country-item:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent) !important; }
 .wse-country-item.active { background: var(--accent-soft) !important; }
-
-/* Toggle (chip) */
-.wse-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  user-select: none;
-  font-size: 13px;
-  color: var(--muted-foreground);
-}
-.wse-toggle input { accent-color: var(--accent); }
 
 /* Table */
 .wse-table-wrapper {
@@ -355,7 +330,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
   font-size: 13px;
   color: var(--muted-foreground);
 }
-.wse-pagination button {
+.wse-pagination .wse-page-btn {
   width: 32px;
   height: 32px;
   display: inline-flex;
@@ -367,8 +342,8 @@ html:not([data-palette-scheme=dark]) .wse-page {
   border-radius: 6px;
   cursor: pointer;
 }
-.wse-pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
-.wse-pagination select,
+.wse-pagination .wse-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.wse-pagination .wse-page-select,
 .wse-pagination .paginator-input {
   padding: 4px 8px;
   border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
@@ -394,13 +369,14 @@ html:not([data-palette-scheme=dark]) .wse-page {
   gap: 6px;
   margin-bottom: 6px;
 }
-/* 排除 pill-toggle:它自带滑钮 padding(0 14 0 32),被 3px 8px !important 压扁会让滑钮压住文字 */
-.wse-events-bar button:not(.pill-toggle) {
+/* 只命中分类/全选小按钮的专属 class,不用裸 `button` 选择器:
+   否则塞进同容器的共享组件(ClearButton/PillToggle)会被 !important 误伤变形 */
+.wse-events-bar .wse-cat-btn {
   font-size: 12px;
   padding: 3px 8px !important;
   height: auto !important;
 }
-.wse-events-bar button.wse-cat-on {
+.wse-events-bar .wse-cat-btn.wse-cat-on {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-foreground);
@@ -447,7 +423,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
   height: 34px;
 }
-.wse-show-toggle button {
+.wse-show-toggle .wse-show-btn {
   appearance: none;
   border: none;
   background: transparent;
@@ -457,8 +433,8 @@ html:not([data-palette-scheme=dark]) .wse-page {
   cursor: pointer;
   line-height: 1;
 }
-.wse-show-toggle button:hover { color: var(--foreground); }
-.wse-show-toggle button.active {
+.wse-show-toggle .wse-show-btn:hover { color: var(--foreground); }
+.wse-show-toggle .wse-show-btn.active {
   background: var(--accent-soft);
   color: var(--foreground);
   font-weight: 500;
@@ -471,7 +447,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
   display: flex;
   align-items: center;
 }
-.wse-q-wrap input {
+.wse-q-wrap .wse-q-input {
   flex: 1;
   width: 100%;
   padding: 6px 28px 6px 10px;
@@ -482,7 +458,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
   font-size: 14px;
   height: 34px;
 }
-.wse-q-wrap input:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
+.wse-q-wrap .wse-q-input:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
 
 /* Mobile */
 @media (max-width: 600px) {
@@ -508,7 +484,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
 .sor-census-body { margin-top: 4px; }
 .sor-census-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 18px; margin: 6px 0 10px; }
 .sor-census-year { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted-foreground); }
-.sor-census-year select {
+.sor-census-year .sor-census-year-select {
   background: var(--card); color: var(--foreground);
   border: 1px solid var(--input); border-radius: 6px; padding: 3px 8px; font-size: 13px;
   font-variant-numeric: tabular-nums; cursor: pointer;

@@ -7,7 +7,6 @@
  */
 import { useMemo, useState } from 'react';
 import { TeX } from '../../god/_components/Tex';
-import i18n from "@/i18n/i18n-client";
 
 interface Props { isZh: boolean }
 

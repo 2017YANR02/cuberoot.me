@@ -21,31 +21,6 @@
     padding: 1.5rem 1.25rem 3rem;
 }
 
-.analyze-header-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 0 0 0.25rem 0;
-}
-
-.analyze-header h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-}
-
-.analyze-lang-toggle {
-    margin-left: auto;
-}
-
-.analyze-sub {
-    margin: 0 0 1.25rem 0;
-    color: var(--az-text-sub);
-    font-size: 0.9rem;
-    line-height: 1.4;
-}
-
 /* ── Input row ── */
 
 .analyze-input-row {
@@ -163,7 +138,7 @@
     color: var(--az-text-sub);
 }
 
-.analyze-control select {
+.analyze-control .analyze-control-select {
     background: var(--az-surface);
     border: 1px solid var(--az-border-strong);
     border-radius: 5px;
@@ -174,7 +149,7 @@
     min-width: 130px;
 }
 
-.analyze-control select:focus {
+.analyze-control .analyze-control-select:focus {
     outline: none;
     border-color: var(--az-accent);
 }
@@ -235,13 +210,6 @@
     padding-top: 0.65rem;
     border-top: 1px solid var(--az-border);
     font-size: 0.82rem;
-}
-
-.analyze-wca-label {
-    color: var(--az-text-mute);
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
 }
 
 .analyze-wca-color {
@@ -334,11 +302,6 @@
 
 .analyze-scr-meta {
     color: var(--az-text-mute);
-}
-
-.analyze-scr-srctag {
-    color: var(--az-text-mute);
-    font-size: 0.8rem;
 }
 
 .analyze-scr-cross {
@@ -582,36 +545,6 @@ html[data-theme=dark] .analyze-page {
     --az-accent: var(--accent);
     --az-accent-soft: var(--accent-soft);
     --az-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-/* ── 顶部三选一:逐阶段最优解 / CFOP 枚举 / FMC 链(选中谁渲染谁) ── */
-.analyze-tool-tabs {
-  display: flex;
-  gap: 1.4rem;
-  flex-wrap: wrap;
-  margin: 1.5rem 0 1.1rem;
-  border-bottom: 1px solid var(--az-border);
-}
-.analyze-tool-tab {
-  appearance: none;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  padding: 0.4rem 0.1rem;
-  font: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--az-text-sub);
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-.analyze-tool-tab:hover {
-  color: var(--az-accent);
-}
-.analyze-tool-tab.is-active {
-  color: var(--az-accent);
-  border-bottom-color: var(--az-accent);
 }
 
 .analyze-primary,

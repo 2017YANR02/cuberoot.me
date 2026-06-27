@@ -72,14 +72,6 @@ export const BIC_SOLVED: ReadonlyArray<number> = [
   1, 1, 2, 3, 3, 2, 4, 4, 0, 5, 6, 7, 8, 9, 10, 10, 5, 6, 7, 8, 9, 11, 11,
 ];
 
-/** The 19 positions that ever move (everything except the 4 face centres 4,10,12,14). Compact-key positions. */
-const MOVING_POS: ReadonlyArray<number> = (() => {
-  const fixed = new Set<number>([4, 10, 12, 14]);
-  const out: number[] = [];
-  for (let i = 0; i < STATE_LEN; i++) if (!fixed.has(i)) out.push(i);
-  return out;
-})();
-
 /** Apply ONE quarter turn of `face` to a sticker array in place (cstimer's exact 8-cycle). */
 function quarterTurnInPlace(s: number[], face: number): void {
   const di = D[face];

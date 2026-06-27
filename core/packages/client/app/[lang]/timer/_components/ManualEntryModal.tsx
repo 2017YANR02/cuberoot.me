@@ -51,7 +51,7 @@ function parseTimeStr(input: string): { ms: number; penalty: Penalty } | null {
   return { ms: total, penalty };
 }
 
-export default function ManualEntryModal({ event, currentScramble, isZh, onClose, onSubmit }: Props) {
+export default function ManualEntryModal({ event, currentScramble, onClose, onSubmit }: Props) {
   const [timeStr, setTimeStr] = useState('');
   const [scramble, setScramble] = useState('');
   const [penalty, setPenalty] = useState<Penalty>('ok');
@@ -198,6 +198,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
               {(['ok', '+2', 'DNF'] as Penalty[]).map(p => (
                 <label key={p} className="manual-radio" style={radioStyle}>
                   <input
+                    className="manual-radio-input"
                     type="radio"
                     name="manual-penalty"
                     value={p}
@@ -244,7 +245,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
 
         <div className="modal-actions" style={actionsStyle}>
           <button
-            className="primary"
+            className="primary modal-action-btn"
             disabled={!canSave}
             onClick={handleSave}
             style={actionBtnStyle}
@@ -252,7 +253,7 @@ export default function ManualEntryModal({ event, currentScramble, isZh, onClose
             {tr({ zh: '保存', en: 'Save'
             })}
           </button>
-          <button onClick={onClose} style={actionBtnStyle}>{tr({ zh: '取消', en: 'Cancel' })}</button>
+          <button className="modal-action-btn" onClick={onClose} style={actionBtnStyle}>{tr({ zh: '取消', en: 'Cancel' })}</button>
         </div>
       </div>
     </div>

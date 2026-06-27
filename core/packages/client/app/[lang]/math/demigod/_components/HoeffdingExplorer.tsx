@@ -10,7 +10,6 @@
 import { useMemo } from 'react';
 import { TeX } from '../../god/_components/Tex';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 type CMode = 'human' | 'close';
 
@@ -36,7 +35,7 @@ function fmtInt(n: number): string {
   return Math.round(n).toLocaleString('en-US');
 }
 
-function fmtTime(sec: number, isZh: boolean): string {
+function fmtTime(sec: number, _isZh: boolean): string {
   if (sec < 60) return `${sec.toFixed(1)} ${tr({ zh: '秒', en: 's' })}`;
   if (sec < 3600) return `${(sec / 60).toFixed(1)} ${tr({ zh: '分', en: 'min' })}`;
   if (sec < 86400) return `${(sec / 3600).toFixed(1)} ${tr({ zh: '小时', en: 'h'
@@ -152,12 +151,12 @@ export default function HoeffdingExplorer({
           <div className="dg-radio-row" role="tablist">
             <button
               type="button"
-              className={cMode === 'human' ? 'is-active' : ''}
+              className={`dg-radio-btn${cMode === 'human' ? ' is-active' : ''}`}
               onClick={() => onCMode('human')}
             >C = 205</button>
             <button
               type="button"
-              className={cMode === 'close' ? 'is-active' : ''}
+              className={`dg-radio-btn${cMode === 'close' ? ' is-active' : ''}`}
               onClick={() => onCMode('close')}
             >C = 20</button>
           </div>

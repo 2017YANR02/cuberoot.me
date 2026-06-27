@@ -5,7 +5,6 @@ import { useQueryState, parseAsStringEnum } from 'nuqs';
 import PersonCell from '../_components/PersonCell';
 import { fetchStats, type StatsResponse } from '../_data/nemesizerApi';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface Props { isZh: boolean; }
 
@@ -50,7 +49,7 @@ export default function StatsMode({ isZh }: Props) {
         {TABS.map(t => (
           <button
             key={t.id}
-            className={tab === t.id ? 'active' : ''}
+            className={`nemesizer-stats-tab-btn ${tab === t.id ? 'active' : ''}`}
             onClick={() => setTab(t.id)}
           >
             {tr(t)}
@@ -144,7 +143,7 @@ function PeopleTable({ persons, isZh }: {
   );
 }
 
-function CountriesTable({ rows, isZh }: {
+function CountriesTable({ rows }: {
   rows: { iso2: string; peopleCount: number; sumNemesis: number; sumNemesized: number }[];
   isZh: boolean;
 }) {

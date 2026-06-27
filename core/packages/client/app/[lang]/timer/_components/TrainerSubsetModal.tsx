@@ -19,7 +19,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
+export default function TrainerSubsetModal({ kind, onClose }: Props) {
   const all = kind === 'oll' ? OLL_CASES : PLL_CASES;
   const allIds = useMemo(() => all.map(c => c.id), [all]);
 
@@ -104,11 +104,11 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
         </h2>
 
         <div className="trainer-subset-toolbar">
-          <button ref={firstButtonRef} type="button" onClick={selectAll}>{tr({ zh: '全选', en: 'Select all'
+          <button ref={firstButtonRef} className="trainer-subset-toolbar-btn" type="button" onClick={selectAll}>{tr({ zh: '全选', en: 'Select all'
         })}</button>
-          <button type="button" onClick={selectNone}>{tr({ zh: '全不选', en: 'Clear'
+          <button className="trainer-subset-toolbar-btn" type="button" onClick={selectNone}>{tr({ zh: '全不选', en: 'Clear'
         })}</button>
-          <button type="button" onClick={disableSubset}>
+          <button className="trainer-subset-toolbar-btn" type="button" onClick={disableSubset}>
             {tr({ zh: '关闭子集（随机所有）', en: 'Disable subset (random all)'
             })}
           </button>
@@ -127,6 +127,7 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
                       className={`trainer-case-chip ${checked ? 'checked' : ''}`}
                     >
                       <input
+                        className="trainer-case-chip-input"
                         type="checkbox"
                         checked={checked}
                         onChange={() => toggle(c.id)}
@@ -143,8 +144,8 @@ export default function TrainerSubsetModal({ kind, isZh, onClose }: Props) {
         </div>
 
         <div className="modal-actions">
-          <button type="button" onClick={onClose}>{tr({ zh: '取消', en: 'Cancel' })}</button>
-          <button type="button" className="primary" onClick={save}>{tr({ zh: '保存', en: 'Save'
+          <button className="modal-action-btn" type="button" onClick={onClose}>{tr({ zh: '取消', en: 'Cancel' })}</button>
+          <button type="button" className="primary modal-action-btn" onClick={save}>{tr({ zh: '保存', en: 'Save'
         })}</button>
         </div>
       </div>

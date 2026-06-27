@@ -11,7 +11,6 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Infinity as InfinityIcon, Sigma, Dices, Ruler } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 
@@ -50,7 +49,7 @@ const CARDS: Card[] = [
 ];
 
 export default function MathLandingPage() {
-  const { i18n } = useTranslation();
+  useTranslation();
   useDocumentTitle('数学', 'Math');
   const t = useT();
 

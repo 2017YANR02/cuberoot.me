@@ -11,7 +11,6 @@
  */
 import { useState } from 'react';
 import { MathText } from './Tex';
-import i18n from "@/i18n/i18n-client";
 
 type Metric = 'HTM' | 'QTM' | 'STM';
 

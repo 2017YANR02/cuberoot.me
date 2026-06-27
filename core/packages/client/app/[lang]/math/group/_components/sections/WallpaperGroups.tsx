@@ -397,7 +397,6 @@ function RotMarker({ x, y, order, size = 7 }: { x: number; y: number; order: num
 
 // ── Group Tiler Widget ─────────────────────────────────────────────────────
 function GroupTiler() {
-  const lang = useLang();
   const [groupIdx, setGroupIdx] = useState(10); // p4m default
   const [asymmetry, setAsymmetry] = useState(0.65);
   const [showRot, setShowRot] = useState(true);
@@ -943,7 +942,6 @@ function OrbifoldCalculator() {
 // ── Main Section ──────────────────────────────────────────────────────────────
 
 export default function WallpaperGroups() {
-  const lang = useLang();
 
   // Verify all 17 orbifold signatures sum to exactly 2 (self-check in render)
   const allCostsOk = useMemo(() =>

@@ -19,7 +19,7 @@ import Cubelet from "./cubelet";
 import Cube from "./cube";
 import CubeGroup from "./group";
 import { FACE, COLORS } from "../define";
-import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, type RawAttrs } from "./rawCore";
+import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, setRawCoreBorder, type RawAttrs } from "./rawCore";
 import { mirrorTables } from "../mirror/mirrorGeometry";
 
 const HALF = Cubelet.SIZE / 2;
@@ -814,7 +814,7 @@ export default class InstancedRenderer extends THREE.Group {
    *  低/中阶用带光照的 Phong raw + 圆角 _FRAME + inner;超高阶(N≥superOrderThreshold)用 unlit Basic
    *  raw + _FRAME_LOW(无 inner) —— 块身染成各面色后,贴片缝隙的深色网格消失成纯色面。
    *  faceColors 改变时 setFaceColors 会回调重建属性值。 */
-  setRawCore(on: boolean, faceColors: { U: string; D: string; L: string; R: string; F: string; B: string }): void {
+  setRawCore(on: boolean, faceColors: { U: string; D: string; L: string; R: string; F: string; B: string }, coreColor: string, border: boolean): void {
     const isSuper = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
     if (on) {
       // 懒建克隆几何 + 属性(超高阶克隆 _FRAME_LOW box,其余克隆圆角 _FRAME)
@@ -824,6 +824,11 @@ export default class InstancedRenderer extends THREE.Group {
       );
       attachRawAttributes(this._rawFrameGeo, this._rawAttrs);
       const mat = isSuper ? rawMaterialBasic() : rawMaterial();
+      // 内核色:Phong raw 着色器把内壁/中心块 fragment 落到 diffuse(=材质 color);设它即内核色生效。
+      mat.color.set(coreColor);
+      // border=1:贴片圆角外缘走独立内核色缝(镜面普通 = 金块 + 暗缝);
+      // border=0:缝跟随本体面色,连续实色无黑线(普通原核 / 镜面原核 = 内核色跟随镜面配色)。
+      setRawCoreBorder(border);
       this.staticFrame.geometry = this._rawFrameGeo;
       this.movingFrame.geometry = this._rawFrameGeo;
       this.staticFrame.material = mat;
@@ -976,13 +981,23 @@ export default class InstancedRenderer extends THREE.Group {
     if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
   }
 
-  /** Mirror-cube render matrix for a cubie: compose(R·center0, R, scale0), with
-   *  R = cubelet.quaternion (logical accumulated rotation) and center0/scale0 from the
-   *  cubie's original slot. Only called in mirror mode (callers guard on _mirrorCenters). */
+  /** Mirror-cube render matrix for a cubie: the home shape rotated about the CORE axis,
+   *  compose(C + R·(center0 - C), R, scale0), with R = cubelet.quaternion (logical
+   *  accumulated rotation), center0/scale0 from the cubie's original slot, and C the
+   *  core-cubie center (_mirrorPivot). Rotating the home center about C (not the origin)
+   *  makes a baked turn match the core-pivoted slice animation exactly — no pop on
+   *  release, the face center stays put, the layer goes bumpy. Only called in mirror mode
+   *  (callers guard on _mirrorCenters; _mirrorPivot is set alongside it). */
   private mirrorMat(instIdx: number, cubelet: Cubelet, out: THREE.Matrix4): THREE.Matrix4 {
     const o = instIdx * 3;
-    this.tmpMirrorV1.set(this._mirrorCenters![o], this._mirrorCenters![o + 1], this._mirrorCenters![o + 2]);
-    this.tmpMirrorV1.applyQuaternion(cubelet.quaternion);
+    const p = this._mirrorPivot!;
+    this.tmpMirrorV1.set(
+      this._mirrorCenters![o] - p.x,
+      this._mirrorCenters![o + 1] - p.y,
+      this._mirrorCenters![o + 2] - p.z,
+    );
+    this.tmpMirrorV1.applyQuaternion(cubelet.quaternion); // R·(center0 - C)
+    this.tmpMirrorV1.add(p);                              // + C
     this.tmpMirrorV2.set(this._mirrorScales![o], this._mirrorScales![o + 1], this._mirrorScales![o + 2]);
     out.compose(this.tmpMirrorV1, cubelet.quaternion, this.tmpMirrorV2);
     return out;

@@ -19,7 +19,6 @@ import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calendar_stats.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 const EVENT_LIST = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
 
@@ -413,7 +412,7 @@ function useAnimator(viewIdx: { i0: number; i1: number }, granularity: 'month' |
   };
 }
 
-function SectionPlayControls({ anim, isZh }: { anim: Animator; isZh: boolean }) {
+function SectionPlayControls({ anim }: { anim: Animator; isZh: boolean }) {
   return (
     <span className="cs-sec-controls">
       <button

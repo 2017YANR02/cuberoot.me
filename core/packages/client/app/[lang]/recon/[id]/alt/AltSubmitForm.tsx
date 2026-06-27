@@ -190,7 +190,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
                 rows={1}
                 value={scramble}
                 readOnly
-                className="submit-input-locked alt-submit-scramble"
+                className="submit-field-textarea submit-input-locked alt-submit-scramble"
                 title={tr({ zh: '继承自原 solve,不可编辑', en: 'Inherited from original, read-only'
                 })}
               />
@@ -229,7 +229,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
                 onClick={e => handleCursorSync(e.target as HTMLTextAreaElement)}
                 onKeyUp={e => handleCursorSync(e.target as HTMLTextAreaElement)}
                 placeholder={t('recon.writeAlternative')}
-                className="submit-solution-textarea"
+                className="submit-field-textarea submit-solution-textarea"
                 rows={6}
                 autoFocus
               />

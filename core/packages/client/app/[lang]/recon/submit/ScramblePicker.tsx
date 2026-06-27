@@ -122,6 +122,7 @@ export default function ScramblePicker({ isZh, event, onClose, onPick }: Props) 
         <div className="rr-search">
           <Search size={16} />
           <input
+            className="rr-search-input"
             value={q}
             onChange={e => setQ(e.target.value)}
             placeholder={tr({ zh: '搜索打乱 / 选手 / 比赛', en: 'Search scramble / cuber / comp' })}

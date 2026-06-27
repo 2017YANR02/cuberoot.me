@@ -37,7 +37,6 @@ interface Point {
 
 export default function ScatterChart({
   solves,
-  isZh,
   windowSize = 200,
   width = 320,
   height = 160,

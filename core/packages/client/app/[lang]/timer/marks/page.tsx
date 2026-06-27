@@ -155,7 +155,7 @@ function MarksFeed() {
         {wcaIdFilter && !mineOnly && (
           <span className="scrmarks-filter-tag">
             {wcaIdFilter}
-            <button type="button" onClick={() => void setQuery({ wcaId: null })} aria-label="clear">×</button>
+            <button type="button" className="scrmarks-filter-tag-btn" onClick={() => void setQuery({ wcaId: null })} aria-label="clear">×</button>
           </span>
         )}
       </div>

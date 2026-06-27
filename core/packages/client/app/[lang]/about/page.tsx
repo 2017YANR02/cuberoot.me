@@ -2,17 +2,14 @@
 
 // /about — port of packages/client-vite/src/pages/AboutPage.tsx.
 
-import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CREDITS from './credits_data.json';
 import './about.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 export default function AboutPage() {
-  const { i18n } = useTranslation();
   useDocumentTitle('关于', 'About');
 
   return (

@@ -1,7 +1,6 @@
 // 跨运动 / 跨技能 极限对比
 import { CROSS_SPORT_TABLE } from '../theory_data';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props { isZh: boolean }
 

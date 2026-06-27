@@ -13,7 +13,15 @@
  * 仅 NxN(order < superOrderThreshold)。超高阶用 unlit Basic + 无 inner,原核占位跳过。
  */
 import * as THREE from 'three';
-import { FACE } from '../define';
+import { FACE, STICKER_INNER, STICKER_CORNER_RADIUS } from '../define';
+
+const STICKER_HALF = STICKER_INNER / 2;
+
+/** 内核色缝门控 uniform(材质单例共享,setRawCore 每次按 isMirror 设):
+ *  1 = 镜面 —— 贴片圆角外缘(grooves)+ 内壁落 diffuse(=内核色)→ 金块 + 黑内核机芯,内核色可调;
+ *  0 = 普通原核 —— 不染缝,连续实色无黑线(还原真实 stickerless 魔方,见图参考)。 */
+const rawCoreBorder = { value: 0 };
+export function setRawCoreBorder(on: boolean): void { rawCoreBorder.value = on ? 1 : 0; }
 
 /** 每个面在 cubelet 本地坐标系的外法向(与 makeStickerLocalMatrix 一致)。 */
 const FACE_NORMAL: Record<number, [number, number, number]> = {
@@ -66,6 +74,9 @@ export function buildRawAttributes(
       C[slot][o] = col.r; C[slot][o + 1] = col.g; C[slot][o + 2] = col.b;
       slot++;
     }
+    // Interior cubie with no stickered faces (the mirror cube's hole-filling center piece)
+    // keeps all 3 slots empty → every fragment falls through to diffuse = coreColor (the
+    // 内核色), so the revealed core matches the inner walls instead of the gold body.
   }
   if (existing) {
     existing.n0.needsUpdate = existing.n1.needsUpdate = existing.n2.needsUpdate = true;
@@ -83,8 +94,17 @@ export function attachRawAttributes(geo: THREE.BufferGeometry, attrs: RawAttrs):
 }
 
 /** 共享的「最近可见面取色」着色器注入 —— Phong / Basic 的 chunk include 点相同
- *  (<common> / <begin_vertex> / <color_fragment> 都有),所以同一份注入两种材质通用。 */
-function injectRawShader(shader: { vertexShader: string; fragmentShader: string }): void {
+ *  (<common> / <begin_vertex> / <color_fragment> 都有),同一份注入两种材质通用。
+ *  fragment 取「localPos·面法向 最大的可见面」色(= 离该 fragment 最近的可见面):外壳=自己面色,
+ *  棱对角双色、角体对角线三色,内壁/切面=最近面色(转层露出彩色横截面);无任何贴片面的
+ *  (镜面中心块/深核)落 diffuse=内核色。**原核 = 连续实色块身、无黑缝/黑线** —— 块间分隔靠
+ *  `_FRAME` 几何 pocket + Phong 光照(同色凹槽明暗),不靠换色;黑线只属于「六色」贴纸模式。 */
+function injectRawShader(shader: {
+  vertexShader: string;
+  fragmentShader: string;
+  uniforms: { [k: string]: { value: unknown } };
+}): void {
+  shader.uniforms.uCoreBorder = rawCoreBorder;
   shader.vertexShader = shader.vertexShader
     .replace(
       '#include <common>',
@@ -106,6 +126,7 @@ function injectRawShader(shader: { vertexShader: string; fragmentShader: string 
     .replace(
       '#include <common>',
       `#include <common>
+      uniform float uCoreBorder;
       varying vec3 vRawPos;
       varying vec3 vRawN0; varying vec3 vRawN1; varying vec3 vRawN2;
       varying vec3 vRawC0; varying vec3 vRawC1; varying vec3 vRawC2;`,
@@ -116,9 +137,18 @@ function injectRawShader(shader: { vertexShader: string; fragmentShader: string 
       {
         float best = -1e30;
         vec3 rawCol = diffuse;
-        if (dot(vRawN0, vRawN0) > 0.25) { float d = dot(vRawPos, vRawN0); if (d > best) { best = d; rawCol = vRawC0; } }
-        if (dot(vRawN1, vRawN1) > 0.25) { float d = dot(vRawPos, vRawN1); if (d > best) { best = d; rawCol = vRawC1; } }
-        if (dot(vRawN2, vRawN2) > 0.25) { float d = dot(vRawPos, vRawN2); if (d > best) { best = d; rawCol = vRawC2; } }
+        vec3 bestN = vec3(0.0);
+        if (dot(vRawN0, vRawN0) > 0.25) { float d = dot(vRawPos, vRawN0); if (d > best) { best = d; rawCol = vRawC0; bestN = vRawN0; } }
+        if (dot(vRawN1, vRawN1) > 0.25) { float d = dot(vRawPos, vRawN1); if (d > best) { best = d; rawCol = vRawC1; bestN = vRawN1; } }
+        if (dot(vRawN2, vRawN2) > 0.25) { float d = dot(vRawPos, vRawN2); if (d > best) { best = d; rawCol = vRawC2; bestN = vRawN2; } }
+        // 镜面(uCoreBorder=1):贴片圆角外缘(grooves)+ 内壁落 diffuse(=内核色)→ 金块 + 黑内核;
+        // 普通原核(=0):整片连续面色、无黑线。SDF:面内点到圆角矩形(半宽/圆角同源 _STICKER)。
+        if (uCoreBorder > 0.5 && dot(bestN, bestN) > 0.5) {
+          vec3 ip = vRawPos - bestN * dot(vRawPos, bestN);
+          vec3 q = abs(ip) - vec3(${(STICKER_HALF - STICKER_CORNER_RADIUS).toFixed(1)});
+          float sdf = min(max(q.x, max(q.y, q.z)), 0.0) + length(max(q, vec3(0.0))) - ${STICKER_CORNER_RADIUS.toFixed(1)};
+          if (sdf > 0.0) rawCol = diffuse;
+        }
         diffuseColor.rgb = rawCol;
       }`,
     );

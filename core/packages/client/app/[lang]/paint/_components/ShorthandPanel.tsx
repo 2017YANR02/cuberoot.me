@@ -121,7 +121,7 @@ export default function ShorthandPanel({ open, onClose, viewport }: Props) {
             <span className="paint-range-val">{size}</span>
           </div>
           <label className="paint-sh-toggle">
-            <input type="checkbox" checked={labels} onChange={(e) => setLabels(e.target.checked)} />
+            <input className="paint-sh-toggle-input" type="checkbox" checked={labels} onChange={(e) => setLabels(e.target.checked)} />
             <span>{t('标签', 'Labels')}</span>
           </label>
         </div>

@@ -145,33 +145,6 @@
 }
 .algo-callout p { margin: 0; color: var(--text); font-size: 14.5px; line-height: 1.75; }
 
-.algo-soon {
-  margin-top: 56px;
-  padding: 40px 32px;
-  border: 1px dashed var(--line-2);
-  border-radius: 12px;
-  text-align: center;
-}
-.algo-soon-glyph {
-  font-family: var(--mono);
-  font-size: 36px;
-  color: var(--accent, #5BA8FF);
-  opacity: .6;
-  margin-bottom: 12px;
-}
-.algo-soon-title {
-  font-family: var(--mono);
-  font-size: 17px;
-  color: var(--text);
-  margin-bottom: 6px;
-}
-.algo-soon-sub {
-  font-size: 14px;
-  color: var(--text-dim);
-  line-height: 1.7;
-  margin: 0;
-}
-
 .algo-page-foot {
   margin-top: 72px;
   padding-top: 24px;

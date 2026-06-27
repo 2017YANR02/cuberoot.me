@@ -21,7 +21,6 @@ import {
   type SessionMeta,
 } from '../_lib/storage/db';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   isZh: boolean;
@@ -170,6 +169,7 @@ export default function SessionSwitcher({ isZh, onSessionsChanged }: Props) {
                       <div className="session-rename-input-wrap">
                         <input
                           ref={inputRef}
+                          className="session-rename-input"
                           type="text"
                           value={draft}
                           onChange={(e) => setDraft(e.target.value)}

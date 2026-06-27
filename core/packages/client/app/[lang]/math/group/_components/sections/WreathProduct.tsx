@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { permSign } from '../cube_state';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // ── BigInt helpers (all math done in BigInt to avoid precision loss) ──────────
 function bigFactorial(n: number): bigint {
@@ -304,7 +303,6 @@ function WreathBuilder() {
 const W_ORDER = 519024039293878272000n;
 
 function IndexSieve() {
-  const lang = useLang();
   const [cornerTwists, setCornerTwists] = useState<number[]>([0,0,0,0,0,0,0,0]);
   const [edgeFlips, setEdgeFlips] = useState<number[]>([0,0,0,0,0,0,0,0,0,0,0,0]);
   const [cornerParity, setCornerParity] = useState<1|-1>(1);
@@ -542,7 +540,6 @@ function IndexSieve() {
 
 // ── Widget 3: Element order explorer ──────────────────────────────────────────
 function OrderExplorer() {
-  const lang = useLang();
   const [mod, setMod] = useState<number>(3);
   const [vals, setVals] = useState<number[]>([1,0,0,0,0,0,0,0]);
 

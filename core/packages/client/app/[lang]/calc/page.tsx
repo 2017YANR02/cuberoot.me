@@ -28,7 +28,6 @@ import AverageMode from './_components/average_mode/AverageMode';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './calc.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 type CalcTab = 'compare' | 'average';
 
@@ -378,7 +377,7 @@ export function CalcPage() {
             <EventSelector />
             <button
               type="button"
-              className="calc-mode-toggle calc-mode-toggle-active"
+              className="calc-mode-toggle calc-mode-toggle-active calc-btn"
               onClick={() => setTab('compare')}
               title={tr({ zh: '切到对比版', en: 'Switch to Compare'
             })}
@@ -423,7 +422,7 @@ export function CalcPage() {
             <EventSelector />
             <button
               type="button"
-              className="calc-mode-toggle"
+              className="calc-mode-toggle calc-btn"
               onClick={() => setTab('average')}
               title={tr({ zh: '切到简易版', en: 'Switch to Simple'
             })}

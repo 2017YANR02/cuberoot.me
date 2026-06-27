@@ -8,8 +8,8 @@
  */
 import * as THREE from 'three';
 
-/** 本站 logo 资源(public/favicon.svg,紫色 ∛ 透明底)。 */
-export const SITE_LOGO_SRC = '/favicon.svg';
+/** 本站 logo 资源(public/icons/CubeRoot.png,∛ + 红蓝 3×3 格,透明底深色符号,贴白色中心块清晰)。 */
+export const SITE_LOGO_SRC = '/icons/CubeRoot.png';
 
 const _cache = new Map<string, THREE.Texture>();
 

@@ -15,7 +15,6 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import './recent_records.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface RecentRecord {
   id: string;
