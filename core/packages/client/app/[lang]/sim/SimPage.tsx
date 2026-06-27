@@ -14,7 +14,6 @@ import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
-import { useTranslation } from 'react-i18next';
 import HomeLink from '@/components/HomeLink';
 // THREE is type-only at module scope — runtime instance is dynamically imported
 // inside the world-init effect so the ~1.2MB three bundle doesn't ship with
@@ -92,7 +91,6 @@ import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
 import './sim.css';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 /** Gap (px) between the back-view window / fullscreen button and the canvas
@@ -176,7 +174,6 @@ interface SimCubeMin {
 }
 
 export default function SimPage() {
-  const { i18n } = useTranslation();
   const t = useT();
   useDocumentTitle('模拟器', 'Sim');
 
