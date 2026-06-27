@@ -76,6 +76,7 @@ import {
 import { FACE } from './engine/define';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import TwistySection from '@/components/TwistySection';
+import CutEditor from './CutEditor';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
   loadSettings, saveSettings, applySettings,
@@ -115,6 +116,10 @@ export const ENGINE_TWISTY = new Set<string>(['skewb', 'pyraminx', 'megaminx', '
  *  PuzzleGeometry octahedron). Fed to TwistySection so the cubing.js renderer still works.
  *  Copied verbatim from the vendored puzzle-geometry `FTO` entry. */
 const ENGINE_TWISTY_DEF: Record<string, string> = { fto: 'o f 0.333333333333333' };
+
+// Default description for the Puzzle Cuts editor (puzzle=custom) — matches the
+// alpha.twizzle.net/explore landing example `c f 0.255`.
+const DEFAULT_CUSTOM_CUTS = 'c f 0.255';
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
@@ -181,6 +186,8 @@ export default function SimPage() {
   const [query, setQuery] = useQueryStates(
     {
       puzzle: parseAsString.withDefault('3'),
+      // Custom-cut PuzzleGeometry description for the Puzzle Cuts editor (e.g. "c f 0.255").
+      cuts: parseAsString,
       alg: parseAsString,
       setup: parseAsString,
       // Which renderer for an ENGINE_TWISTY puzzle: 'group' = the in-house Three.js engine
@@ -208,6 +215,8 @@ export default function SimPage() {
     if (raw === 'heli') return 'heli';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
     if (raw === 'fto') return 'fto';
+    if (raw === 'custom') return 'custom';
+    if (raw === 'mirror') return 'mirror';
     if (isPgPuzzleId(raw)) return raw as SimPuzzle;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
@@ -223,9 +232,21 @@ export default function SimPage() {
   // A PuzzleGeometry puzzle (explore set) renders via cubing.js TwistyPlayer's
   // experimentalPuzzleDescription — twisty-class, no in-house engine. FTO is a promoted
   // engine-twisty whose cubing.js render also needs a description (it's not a built-in id).
-  const pgDef = typeof puzzleParam === 'string'
-    ? (PG_DEF_BY_ID[puzzleParam] ?? ENGINE_TWISTY_DEF[puzzleParam])
-    : undefined;
+  // Custom Puzzle Cuts: the editor writes query.cuts immediately (slider stays
+  // responsive), but the heavy TwistyPlayer rebuild (keyed on puzzleDescription) is
+  // debounced so dragging a slider doesn't rebuild the puzzle every frame.
+  const customCuts = query.cuts && query.cuts.trim() ? query.cuts : DEFAULT_CUSTOM_CUTS;
+  const [debouncedCuts, setDebouncedCuts] = useState(customCuts);
+  useEffect(() => {
+    const id = window.setTimeout(() => setDebouncedCuts(customCuts), 220);
+    return () => window.clearTimeout(id);
+  }, [customCuts]);
+
+  const pgDef = puzzleParam === 'custom'
+    ? debouncedCuts
+    : typeof puzzleParam === 'string'
+      ? (PG_DEF_BY_ID[puzzleParam] ?? ENGINE_TWISTY_DEF[puzzleParam])
+      : undefined;
   const twisty = (isTwistyPuzzle(puzzleParam) || pgDef !== undefined) && !useEngine;
   const useEngineRef = useRef(useEngine);
   useEffect(() => { useEngineRef.current = useEngine; }, [useEngine]);
@@ -1128,6 +1149,9 @@ export default function SimPage() {
   const handlePuzzle = useCallback((kind: SimPuzzle) => {
     setPuzzleKind(kind);
     if (typeof kind === 'number') setOrder(kind);
+    // Mirror Cube is an order-3 NxN under the hood — pin order to 3 so the NxN
+    // scramble/play path (which reads `order`) drives a standard 3x3.
+    else if (kind === 'mirror') setOrder(3);
     const world = worldRef.current;
     // kind === 3 → null clears `puzzle` (it's the default, auto-omitted anyway).
     const writeUrl = () => setQuery({ puzzle: kind === 3 ? null : String(kind) });
@@ -1410,6 +1434,11 @@ export default function SimPage() {
               activePuzzle={puzzleParam}
             />
           </CollapsibleSection>
+          {puzzleParam === 'custom' && (
+            <div className="sim-cut-editor-wrap">
+              <CutEditor value={customCuts} onChange={(d) => setQuery({ cuts: d })} />
+            </div>
+          )}
           <PlayerControls
             world={worldRef.current}
             alg={algParam}

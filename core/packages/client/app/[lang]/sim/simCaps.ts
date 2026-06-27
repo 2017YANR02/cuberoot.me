@@ -50,6 +50,9 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   pyraminx: { engine: 'engineMode', carve: 'corner' },
   megaminx: { engine: 'engineMode', carve: 'face' },
   fto: { engine: 'engineMode', carve: 'face' },
+  // Mirror Cube — order-3 NxN engine (uniform logic, non-uniform geometry). Like NxN
+  // it has no single moving group to lift off, so no carve.
+  mirror: { engine: 'always' },
 };
 
 /** Static capabilities for a puzzle kind (independent of the active renderer). */

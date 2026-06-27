@@ -89,7 +89,7 @@ import {
 import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import {
   Slider, Toggle, KeymapModal,
-  DEFAULT_SETTINGS, DEFAULT_FACE_COLORS,
+  DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR,
   type SimSettings, type SimBoardBg,
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
@@ -129,6 +129,8 @@ const PUZZLE_TYPE_OPTIONS = [
   { value: 'redi',     iconClass: 'unofficial-redi', labelZh: 'Redi', labelEn: 'Redi' },
   { value: 'rex',      iconClass: 'unofficial-rex', labelZh: 'Rex', labelEn: 'Rex Cube' },
   { value: 'heli',     iconClass: 'unofficial-helicopter', labelZh: '直升机', labelEn: 'Helicopter' },
+  { value: 'mirror',   iconClass: 'event-333', labelZh: '镜面', labelEn: 'Mirror' },
+  { value: 'custom',   iconClass: 'event-333', labelZh: '自定义切割', labelEn: 'Puzzle Cuts' },
 ] as const;
 
 // Engine puzzles above + cubing.js PuzzleGeometry puzzles (explore set, rendered
@@ -223,7 +225,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'custom' | PgPuzzleId;
 
 function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' | 'fto' {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx' || p === 'fto';
@@ -531,7 +533,9 @@ export default function PlayerControls({
   const isEngineTwisty = isSkewbEngine || isPyraEngine || isMegaEngine || isFtoEngine;
   // PuzzleGeometry explore puzzle (cubing.js TwistyPlayer, world-less) — twisty-class,
   // so it shares every twisty branch below (scramble / simplify / no-world guards).
-  const isPgMode = typeof puzzleKind === 'string' && isPgPuzzleId(puzzleKind);
+  // Custom-cut puzzle (Puzzle Cuts editor) — a runtime PuzzleGeometry description, so
+  // it shares every twisty/PG branch (random-move scramble off the live player, etc.).
+  const isPgMode = (typeof puzzleKind === 'string' && isPgPuzzleId(puzzleKind)) || puzzleKind === 'custom';
   const isTwistyMode = (isTwistyPuzzle(puzzleKind) || isPgMode) && !isEngineTwisty;
   // Corner/edge-turn engine puzzle descriptor (Dino/Redi/Rex/Heli/Skewb/Pyraminx), or
   // null for everything else. One mapping line per puzzle; every player branch below
@@ -958,7 +962,7 @@ export default function PlayerControls({
       try {
         // PuzzleGeometry explore puzzles have no tnoodle event — generate a random
         // move sequence from the live player's own move set instead.
-        twistyScramble = isPgPuzzleId(puzzleKind as string)
+        twistyScramble = (isPgPuzzleId(puzzleKind as string) || puzzleKind === 'custom')
           ? await pgRandomScramble(twistyPlayerRef?.current)
           : ((await tnoodleRandomScramble(puzzleKind as string)) ?? '');
       } catch (err) {
@@ -1347,6 +1351,11 @@ const CORE_COLOR_PRESETS: string[] = [
   '#202020', '#EE0000', '#FFA100', '#FFFFFF', '#FEFE00', '#00D800', '#0000F2',
 ];
 
+// Mirror Cube single-colour presets — classic gold / silver first, then a few tints.
+const MIRROR_COLOR_PRESETS: string[] = [
+  '#E3B23C', '#C0C0C0', '#EE0000', '#00A0E0', '#00C060', '#B060E0',
+];
+
 const FACE_ORDER = ['U', 'L', 'F', 'R', 'B', 'D'] as const;
 const FACE_LABELS_ZH: Record<typeof FACE_ORDER[number], string> = {
   U: '顶', D: '底', L: '左', R: '右', F: '前', B: '后',
@@ -1441,6 +1450,7 @@ function PuzzleSettings({
   // dropdown). Adding a puzzle's controls = one simCaps entry, never an edit to the JSX.
   const caps = resolveCaps(puzzleKind, renderer);
   const isNxNLocal = typeof puzzleKind === 'number';
+  const isMirror = puzzleKind === 'mirror';
   const [keymapOpen, setKeymapOpen] = useState(false);
 
   const renderOrderSlot = useCallback((v: number) => (v >= 1 && v <= 400 ? String(v) : ''), []);
@@ -1515,7 +1525,7 @@ function PuzzleSettings({
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'custom') onPuzzleChange(v);
                   else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}
@@ -1695,6 +1705,39 @@ function PuzzleSettings({
               </label>
             </div>
           </div>
+          {isMirror && (
+            <ColorRow
+              label={t('镜面配色', 'Mirror colour')}
+              trailing={
+                <Toggle
+                  label={t('六色', 'Six colours')}
+                  value={(settings.mirrorColorMode ?? 'single') === 'six'}
+                  onChange={(v) => set('mirrorColorMode', v ? 'six' : 'single')}
+                />
+              }
+            >
+              {(settings.mirrorColorMode ?? 'single') === 'single' ? (
+                <>
+                  <SwatchCell
+                    color={settings.mirrorColor ?? MIRROR_DEFAULT_COLOR}
+                    title={t('自定义', 'Custom')}
+                    onPick={(c) => set('mirrorColor', c)}
+                  />
+                  {MIRROR_COLOR_PRESETS.map((c) => (
+                    <SwatchCell
+                      key={c}
+                      color={c}
+                      title={c}
+                      active={c.toLowerCase() === (settings.mirrorColor ?? MIRROR_DEFAULT_COLOR).toLowerCase()}
+                      onClick={() => set('mirrorColor', c)}
+                    />
+                  ))}
+                </>
+              ) : (
+                <span className="sim-mirror-six-note">{t('用下方「面色」', 'Uses Face colors below')}</span>
+              )}
+            </ColorRow>
+          )}
           <ColorRow
             label={t('内核色', 'Core color')}
             trailing={
