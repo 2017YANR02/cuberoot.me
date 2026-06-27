@@ -30,7 +30,8 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
-import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
+import { useCountries } from '@/components/wca-stats/CountrySelect';
+import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { countryName } from '@/lib/country-name';
 import { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { EventIcon } from '@/components/EventIcon';
@@ -179,7 +180,8 @@ function AllResultsPageInner() {
   };
   const country = query.country ?? '';
   const gender: 'all' | 'm' | 'f' = query.gender === 'm' || query.gender === 'f' ? query.gender : 'all';
-  const show: ShowMode = (query.show === 'persons') ? 'persons' : 'results';
+  // 默认显示「选手」(每选手年末累积最佳),而非「成绩」(每条成绩);仅显式 show=results 才回成绩视图。
+  const show: ShowMode = (query.show === 'results') ? 'results' : 'persons';
   const currentYear = new Date().getUTCFullYear();
   const yearRaw = parseInt(query.year ?? '0', 10);
   const year = show === 'persons' && yearRaw === 0 ? currentYear : yearRaw;
@@ -264,6 +266,25 @@ function AllResultsPageInner() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qInput, qFromUrl, show, mode]);
+
+  // 全参数常驻 URL:把 Image#1 筛选栏(显示/类型/国家/性别/口径/年份/月份/搜索)的有效值补进 URL,
+  // 含默认值 —— 让 URL 永远反映完整筛选状态、可分享/强制显示。只「补缺」(参数为 null 时填有效值),
+  // 绝不覆盖已有值,避免与用户改动竞态(否则会把刚选的国家/大洲又刷回默认)。仅「排名」视图(rank)生效。
+  useEffect(() => {
+    if (view !== 'rank') return;
+    const patch: Record<string, string> = {};
+    if (query.show == null) patch.show = show;
+    if (query.type == null) patch.type = type === 'average' ? 'average' : 'single';
+    if (query.country == null) patch.country = country;
+    if (query.gender == null) patch.gender = gender;
+    if (query.basis == null) patch.basis = basis;
+    if (query.year == null) patch.year = String(year);
+    if (query.month == null) patch.month = String(month);
+    if (query.q == null) patch.q = qFromUrl;
+    if (Object.keys(patch).length > 0) setQuery(patch as Parameters<typeof setQuery>[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, query.show, query.type, query.country, query.gender, query.basis, query.year, query.month, query.q,
+      show, type, country, gender, basis, year, month, qFromUrl]);
 
   const years = useMemo(() => {
     const ys: number[] = [];
@@ -591,7 +612,7 @@ function AllResultsPageInner() {
           {/* ── 名录 A–Z ── */}
           <h2 className="wse-section-title">{tr({ zh: '名录 A–Z', en: 'Directory A–Z' })}</h2>
           <div className="wse-filters">
-            <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+            <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
             {genderSelect}
             <div className="wse-filter wse-filter-show">
               <label>{tr({ zh: '排序', en: 'Sort' })}</label>
@@ -681,7 +702,7 @@ function AllResultsPageInner() {
               />
             </div>
             {typeSelect}
-            <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+            <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
             {genderSelect}
             <div className="wse-filter wse-filter-show"
               title={mbfAvgPeriodOnly ? tr({ zh: '多盲非官方平均仅支持「当期」口径', en: 'Multi-Blind unofficial average supports the period basis only' }) : undefined}>
@@ -831,7 +852,7 @@ function AllResultsPageInner() {
         <>
           <div className="wse-filters">
             {typeSelect}
-            <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+            <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
             {/* 单次 / 平均 由「类型」下拉统一控制(单次 / 平均 → 排名,派生指标 → 指标视图);此处仅保留「多盲平均不计入名次和」提示 */}
             {type === 'average' && selectedSet.has('333mbf') && (
               <div className="wse-filter wse-filter-show">

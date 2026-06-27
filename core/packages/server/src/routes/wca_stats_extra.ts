@@ -57,8 +57,18 @@ function intParam(raw: string | undefined, dflt: number): number {
 }
 
 // 国家 ISO2/id 归一化
-export async function resolveCountry(input: string): Promise<{ ok: true; id: string } | { ok: false; err: string }> {
+// 排名页国家筛选支持「大洲」:country 入参以 _ 开头 = WCA continent_id(_Asia / _Europe / …),
+// 解析为 { id:'', continentId }。各端点据此用 person_country_id IN (该大洲全部国家) 过滤(走值序索引,实测毫秒级)。
+const CONTINENT_IDS = new Set([
+  '_Africa', '_Asia', '_Europe', '_North America', '_Oceania', '_South America',
+]);
+
+export async function resolveCountry(input: string): Promise<{ ok: true; id: string; continentId?: string } | { ok: false; err: string }> {
   if (!input) return { ok: true, id: '' };
+  if (input.startsWith('_')) {
+    if (!CONTINENT_IDS.has(input)) return { ok: false, err: 'Continent not found' };
+    return { ok: true, id: '', continentId: input };
+  }
   if (input.length === 2) {
     const rows = await query<{ id: string }>(
       `SELECT id FROM wca_countries WHERE iso2 = ? LIMIT 1`,
@@ -175,7 +185,12 @@ wcaStatsExtraRoutes.get('/wca/all-results', async (c) => {
   const where: string[] = [`t.event_id = ?`, `t.is_avg = ?`];
   const params: unknown[] = [event, type === 'average'];
 
-  if (cn.id) { where.push(`t.person_country_id = ?`); params.push(cn.id); }
+  if (cn.continentId) {
+    where.push(`t.person_country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?)`);
+    params.push(cn.continentId);
+  } else if (cn.id) {
+    where.push(`t.person_country_id = ?`); params.push(cn.id);
+  }
   if (year) {
     if (basis === 'cumulative') {
       // 截至:到该年末为止(月份在截至口径下无意义,前端置灰,这里忽略)
@@ -390,7 +405,12 @@ wcaStatsExtraRoutes.get('/wca/persons-directory', async (c) => {
 
   const where: string[] = [];
   const params: unknown[] = [];
-  if (cn.id) { where.push(`p.country_id = ?`); params.push(cn.id); }
+  if (cn.continentId) {
+    where.push(`p.country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?)`);
+    params.push(cn.continentId);
+  } else if (cn.id) {
+    where.push(`p.country_id = ?`); params.push(cn.id);
+  }
   if (gender !== 'all') { where.push(`p.gender = ?`); params.push(gender); }
   // 本地名口径只列真有本地名的选手
   if (nameMode === 'local') where.push(`p.name ~ '\\([^)]+\\)\\s*$'`);
@@ -1031,15 +1051,19 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
     if (!isDefaultAll) eventIdxs = idxs;
   }
 
+  // scope:大洲(continent_id 过滤,total_continent_rank / ranks_continent 已由 builder 预算入 wca_person_ranks)
+  //      / 国家(country_id) / 世界。大洲优先(country='' 时 continentId 才有值)。
+  const isContinentMode = !!cn.continentId;
   const isCountryMode = !!cn.id;
-  const orderCol = eventIdxs ? null : (isCountryMode ? 'pr.total_country_rank' : 'pr.total_world_rank');
-  const ranksCol = isCountryMode ? 'ranks_country' : 'ranks_world';
+  const orderCol = eventIdxs ? null : (isContinentMode ? 'pr.total_continent_rank' : isCountryMode ? 'pr.total_country_rank' : 'pr.total_world_rank');
+  const ranksCol = isContinentMode ? 'ranks_continent' : isCountryMode ? 'ranks_country' : 'ranks_world';
   const isAvg = type === 'average';
 
   // 构造 WHERE(主查询)
   const where: string[] = [`pr.is_avg = ?`];
   const params: unknown[] = [isAvg];
-  if (isCountryMode) { where.push(`pr.country_id = ?`); params.push(cn.id); }
+  if (isContinentMode) { where.push(`pr.continent_id = ?`); params.push(cn.continentId); }
+  else if (isCountryMode) { where.push(`pr.country_id = ?`); params.push(cn.id); }
   if (hidePodium) {
     where.push(`(pr.best_final_pos = 0 OR pr.best_final_pos > 3)`);
   }
@@ -1050,22 +1074,22 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
     const totalParams = [...params];
     // 历史最高 SOR 名次徽标:LEFT JOIN sor_historical_best(同 scope 同 is_avg).
     // JOIN 在 WHERE 之前 → 其 ? 占位排在 where 参数前.表未灌数据时返回 NULL,不报错.
-    const bestScope = isCountryMode ? 'country' : 'world';
+    const bestScope = isContinentMode ? 'continent' : isCountryMode ? 'country' : 'world';
     const dataParams = [isAvg, bestScope, ...params, size, offset];
 
     const rows = await query<{
       wca_id: string; country_id: string;
       iso2: string | null;
-      events_done: number; total_world_rank: number; total_country_rank: number;
-      ranks_world: number[]; ranks_country: number[];
+      events_done: number; total_world_rank: number; total_country_rank: number; total_continent_rank: number;
+      ranks_world: number[]; ranks_country: number[]; ranks_continent: number[];
       person_name: string;
       best_rank: number | null; best_year: number | null; best_total: number | null;
     }>(
       `
       SELECT pr.wca_id, pr.country_id,
              co.iso2 AS iso2,
-             pr.events_done, pr.total_world_rank, pr.total_country_rank,
-             pr.ranks_world, pr.ranks_country,
+             pr.events_done, pr.total_world_rank, pr.total_country_rank, pr.total_continent_rank,
+             pr.ranks_world, pr.ranks_country, pr.ranks_continent,
              p.name AS person_name,
              shb.best_rank AS best_rank, shb.best_year AS best_year, shb.best_total AS best_total
       FROM wca_person_ranks pr
@@ -1087,15 +1111,16 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 
     c.header('Cache-Control', CACHE_HEADER);
     return c.json({
-      type, country: cn.id, hidePodium, page, size, total,
+      type, country: cn.continentId ?? cn.id, hidePodium, page, size, total,
       events: RANK_EVENTS,
       rows: rows.map(r => ({
         wcaId: r.wca_id, name: r.person_name,
         countryId: r.country_id, iso2: r.iso2,
         eventsDone: r.events_done,
         totalWorldRank: r.total_world_rank,
-        totalCountryRank: r.total_country_rank,
-        ranks: isCountryMode ? r.ranks_country : r.ranks_world,
+        // 大洲口径下,客户端按 isCountryMode(country 非空)读 totalCountryRank,故大洲名次回填到该字段。
+        totalCountryRank: isContinentMode ? r.total_continent_rank : r.total_country_rank,
+        ranks: isContinentMode ? r.ranks_continent : isCountryMode ? r.ranks_country : r.ranks_world,
         bestRank: r.best_rank ?? null,
         bestYear: r.best_year ?? null,
         bestTotal: r.best_total ?? null,
@@ -1108,7 +1133,8 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
   // 注意 ep CTE 不应用 hidePodium 过滤(参赛人数是项目固有属性,跟当前显示过滤无关).
   const cteWhere: string[] = [`is_avg = ?`];
   const cteParams: unknown[] = [isAvg];
-  if (isCountryMode) { cteWhere.push(`country_id = ?`); cteParams.push(cn.id); }
+  if (isContinentMode) { cteWhere.push(`continent_id = ?`); cteParams.push(cn.continentId); }
+  else if (isCountryMode) { cteWhere.push(`country_id = ?`); cteParams.push(cn.id); }
 
   const epSelect = eventIdxs!.map(i =>
     `SUM(CASE WHEN ${ranksCol}[${i + 1}] > 0 THEN 1 ELSE 0 END)::INTEGER AS p${i}`
@@ -1125,7 +1151,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
     wca_id: string; country_id: string;
     iso2: string | null;
     events_done: number; subset_total: number;
-    ranks_world: number[]; ranks_country: number[];
+    ranks_world: number[]; ranks_country: number[]; ranks_continent: number[];
     person_name: string;
   }>(
     `
@@ -1138,7 +1164,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
            co.iso2 AS iso2,
            pr.events_done,
            (${sumExpr}) AS subset_total,
-           pr.ranks_world, pr.ranks_country,
+           pr.ranks_world, pr.ranks_country, pr.ranks_continent,
            p.name AS person_name
     FROM wca_person_ranks pr
     CROSS JOIN ep
@@ -1158,7 +1184,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    type, country: cn.id, hidePodium, page, size, total,
+    type, country: cn.continentId ?? cn.id, hidePodium, page, size, total,
     events: RANK_EVENTS,
     selectedEvents: eventIdxs!.map(i => RANK_EVENTS[i]),
     rows: rows.map(r => ({
@@ -1166,7 +1192,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
       countryId: r.country_id, iso2: r.iso2,
       eventsDone: r.events_done,
       subsetTotal: r.subset_total,
-      ranks: isCountryMode ? r.ranks_country : r.ranks_world,
+      ranks: isContinentMode ? r.ranks_continent : isCountryMode ? r.ranks_country : r.ranks_world,
     })),
   });
 });
