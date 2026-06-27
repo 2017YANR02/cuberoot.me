@@ -4,7 +4,6 @@
  */
 'use client';
 
-import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
@@ -18,7 +17,6 @@ import { applyHintFacelets } from './engine/hintFacelets';
 import { loadLogoTexture, SITE_LOGO_SRC } from './engine/nxn/logo';
 import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import './setting-drawer.css';
-import i18n from '@/i18n/i18n-client';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 
@@ -360,7 +358,6 @@ interface KeymapModalProps {
 }
 
 export function KeymapModal({ open, onClose, keymap, onKeymapChange, onResetKeymap }: KeymapModalProps) {
-  const { i18n } = useTranslation();
   const t = useT();
   const [editingCode, setEditingCode] = useState<string | null>(null);
 

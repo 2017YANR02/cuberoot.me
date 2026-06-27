@@ -102,7 +102,6 @@ import { WheelPicker } from '@/components/WheelPicker';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import './player-controls.css';
-import i18n from '@/i18n/i18n-client';
 
 /** Convert SQ1 text while preserving per-line `// comments` and newlines. */
 function convertSq1Text(text: string, convert: (s: string) => string): string {
@@ -1523,7 +1522,7 @@ function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   renderer, onRendererChange,
   settings, onSettingsChange, t,
-  applyMove, keymap, onKeymapChange, onResetKeymap,
+  keymap, onKeymapChange, onResetKeymap,
 }: {
   order: number;
   onOrderChange: (n: number) => void;

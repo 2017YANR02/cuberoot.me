@@ -14,7 +14,6 @@ import World from './engine/world';
 import { timing } from './engine/tweenTiming';
 import tweener from './engine/tweener';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
-import i18n from "@/i18n/i18n-client";
 
 const W = 1920;
 const H = 1080;
