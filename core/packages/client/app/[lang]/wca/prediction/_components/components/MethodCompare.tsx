@@ -1,7 +1,6 @@
 // 方法对比段 (CFOP / Roux / ZZ / ...)
 import { METHOD_TABLE } from '../theory_data';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props { isZh: boolean }
 

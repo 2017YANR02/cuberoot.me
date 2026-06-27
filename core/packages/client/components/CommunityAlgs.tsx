@@ -155,10 +155,10 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
                   onChange={e => setEditNotes(e.target.value)}
                   placeholder={tr({ zh: '注释 (可选)', en: 'Notes (optional)' })}
                 />
-                <button type="button" disabled={busy} onClick={() => handleSaveEdit(s.id)} title={tr({ zh: '保存', en: 'Save' })}>
+                <button type="button" className="alg-community-edit-btn" disabled={busy} onClick={() => handleSaveEdit(s.id)} title={tr({ zh: '保存', en: 'Save' })}>
                   <Check size={14} />
                 </button>
-                <button type="button" disabled={busy} onClick={() => setEditingId(null)} title={tr({ zh: '取消', en: 'Cancel' })}>
+                <button type="button" className="alg-community-edit-btn" disabled={busy} onClick={() => setEditingId(null)} title={tr({ zh: '取消', en: 'Cancel' })}>
                   <X size={14} />
                 </button>
               </div>
@@ -175,10 +175,10 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
                 </Link>
                 {canEdit && (
                   <span className="alg-community-actions">
-                    <button type="button" onClick={() => startEdit(s)} title={tr({ zh: '编辑', en: 'Edit' })}>
+                    <button type="button" className="alg-community-action-btn" onClick={() => startEdit(s)} title={tr({ zh: '编辑', en: 'Edit' })}>
                       <Pencil size={12} />
                     </button>
-                    <button type="button" onClick={() => handleDelete(s.id)} title={tr({ zh: '删除', en: 'Delete' })}>
+                    <button type="button" className="alg-community-action-btn" onClick={() => handleDelete(s.id)} title={tr({ zh: '删除', en: 'Delete' })}>
                       <Trash2 size={12} />
                     </button>
                   </span>
@@ -205,10 +205,10 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
             onChange={e => setDraftNotes(e.target.value)}
             placeholder={tr({ zh: '注释 (可选)', en: 'Notes (optional)' })}
           />
-          <button type="button" disabled={busy || !draftAlg.trim()} onClick={handleSubmit} title={tr({ zh: '提交', en: 'Submit' })}>
+          <button type="button" className="alg-community-add-icon-btn" disabled={busy || !draftAlg.trim()} onClick={handleSubmit} title={tr({ zh: '提交', en: 'Submit' })}>
             <Check size={14} />
           </button>
-          <button type="button" disabled={busy} onClick={() => { setAdding(false); setDraftAlg(''); setDraftNotes(''); }} title={tr({ zh: '取消', en: 'Cancel' })}>
+          <button type="button" className="alg-community-add-icon-btn" disabled={busy} onClick={() => { setAdding(false); setDraftAlg(''); setDraftNotes(''); }} title={tr({ zh: '取消', en: 'Cancel' })}>
             <X size={14} />
           </button>
         </div>

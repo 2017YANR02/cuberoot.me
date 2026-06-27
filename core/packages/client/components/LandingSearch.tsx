@@ -316,6 +316,7 @@ export default function LandingSearch({ cards, lang }: Props) {
         <input
           ref={textInputRef}
           type="text"
+          className="landing-search-field"
           value={query}
           onChange={e => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
@@ -345,7 +346,7 @@ export default function LandingSearch({ cards, lang }: Props) {
         )}
         {plusMenuOpen && (
           <div className="landing-search-plus-menu" role="menu">
-            <button type="button" role="menuitem" onClick={onSmartPaste}>
+            <button type="button" className="landing-search-plus-menu-btn" role="menuitem" onClick={onSmartPaste}>
               <Clipboard size={14} strokeWidth={1.75} />
               <div className="landing-search-plus-menu-text">
                 <span className="landing-search-plus-menu-title">{tr({ zh: '智能粘贴', en: 'Smart paste'

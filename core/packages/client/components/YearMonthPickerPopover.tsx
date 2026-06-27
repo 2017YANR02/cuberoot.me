@@ -9,7 +9,7 @@ import { WheelPicker } from './WheelPicker';
 import './year-month-picker.css';
 import { tr } from '@/i18n/tr';
 
-export function YearMonthPickerPopover({ year, month, yearMonthsMap, anchor, onCommit, isZh }: {
+export function YearMonthPickerPopover({ year, month, yearMonthsMap, anchor, onCommit }: {
   year: number;
   month: number; // 1..12
   /** 年 → 该年有数据的月份集;滚筒按此表跳过空年/空月 */

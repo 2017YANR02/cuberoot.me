@@ -821,7 +821,6 @@ function RandomWalkPanel() {
 // ── Main section component ────────────────────────────────────────────────────
 
 export default function FourierOnGroups() {
-  const lang = useLang();
 
   return (
     <GTSec id="fourier-on-groups" className="gt-sec">

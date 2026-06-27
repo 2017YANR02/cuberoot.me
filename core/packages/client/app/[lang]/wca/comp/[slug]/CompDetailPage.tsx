@@ -3135,7 +3135,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
   );
 }
 
-function LiveIndicator({ status, isZh }: { status: WsStatus; isZh: boolean }) {
+function LiveIndicator({ status }: { status: WsStatus; isZh: boolean }) {
   const label = (() => {
     switch (status) {
       case 'open':       return tr({ zh: '实时', en: 'Live'

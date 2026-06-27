@@ -13,7 +13,6 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 import { T } from '@/i18n/tr';
 
@@ -54,7 +53,7 @@ function countUnitPairs(s: number, k: number): Edge[] {
 }
 
 export default function GridConstruction() {
-  const { i18n } = useTranslation();
+  useTranslation();
   const t = useT();
 
   const [s, setS] = useState(7);

@@ -531,7 +531,7 @@ export function Numpad({ onEnsureWrTop2Loaded }: NumpadProps = {}) {
           {buttons.map((btn, i) => (
             <button
               key={i}
-              className={`np-btn ${btn.cls}`}
+              className={`np-btn calc-btn ${btn.cls}`}
               onMouseDown={preventFocusSteal}
               onClick={btn.isBackspace ? undefined : btn.action}
               onPointerDown={btn.isBackspace ? (e) => { e.preventDefault(); startLongPress(); } : undefined}

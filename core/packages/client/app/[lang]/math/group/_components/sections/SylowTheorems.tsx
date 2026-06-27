@@ -1038,7 +1038,7 @@ function RealizabilityQuiz({ lang }: { lang: Lang }) {
   );
 }
 
-function SylowGauges({ passCongruence, passDivides, np, p, m, lang }: {
+function SylowGauges({ passCongruence, passDivides, np, p, m }: {
   passCongruence: boolean;
   passDivides: boolean;
   np: number;

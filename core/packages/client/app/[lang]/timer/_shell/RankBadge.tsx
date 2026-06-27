@@ -27,7 +27,6 @@ import { useAuthStore } from '@/lib/auth-store';
 import { ISO2_TO_CONTINENT, CONTINENT_RECORD_ABBR } from '@/lib/continent';
 import { RecordBadge } from '@/components/RecordBadge';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 export interface RankBadgeProps {
   /** 计时器内部 EventId */

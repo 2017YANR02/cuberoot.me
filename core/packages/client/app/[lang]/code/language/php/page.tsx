@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './php_intro.css';
-import i18n from '@/i18n/i18n-client';
 
 /* Stylised <?php glyph — official PHP purple square + open-tag wordmark.
  * Elephant felt too cute for the comeback-story tone; the open tag is the

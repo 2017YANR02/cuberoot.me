@@ -187,7 +187,7 @@
   transition: opacity 0.15s;
 }
 .sponsor-card:hover .sponsor-admin { opacity: 1; }
-.sponsor-admin button {
+.sponsor-admin .sponsor-admin-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -200,7 +200,7 @@
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
-.sponsor-admin button:hover { color: var(--foreground); border-color: var(--border-strong); }
+.sponsor-admin .sponsor-admin-btn:hover { color: var(--foreground); border-color: var(--border-strong); }
 .sponsor-admin-del:hover { color: var(--destructive) !important; border-color: var(--destructive) !important; }
 
 .support-more {
@@ -275,9 +275,9 @@
 .sponsor-editor-row-2 label { display: grid; gap: 5px; }
 .sponsor-editor-row-2 span { font-size: 0.78rem; color: var(--muted-foreground); }
 
-.sponsor-editor input,
-.sponsor-editor select,
-.sponsor-editor textarea {
+.sponsor-editor .sponsor-editor-input,
+.sponsor-editor .sponsor-editor-select,
+.sponsor-editor .sponsor-editor-textarea {
   width: 100%;
   padding: 7px 9px;
   border: 1px solid var(--input);
@@ -287,14 +287,14 @@
   font-size: 0.85rem;
   font-family: inherit;
 }
-.sponsor-editor input:focus,
-.sponsor-editor select:focus,
-.sponsor-editor textarea:focus {
+.sponsor-editor .sponsor-editor-input:focus,
+.sponsor-editor .sponsor-editor-select:focus,
+.sponsor-editor .sponsor-editor-textarea:focus {
   outline: none;
   border-color: var(--ring);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 35%, transparent);
 }
-.sponsor-editor textarea { resize: vertical; }
+.sponsor-editor .sponsor-editor-textarea { resize: vertical; }
 
 /* 选手搜索框撑满弹窗宽度(组件默认 max-width:320px) */
 .sponsor-editor .sponsor-editor-picker { max-width: none; min-width: 0; }

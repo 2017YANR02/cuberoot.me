@@ -1,5 +1,5 @@
-import { it, expect } from 'vitest';
-import { DPEvaluator, Evaluator, getEvaluator } from "@/lib/roux/Evaluator";
+import { it } from 'vitest';
+import { DPEvaluator } from "@/lib/roux/Evaluator";
 import { MoveSeq } from "@/lib/roux/CubeLib";
 it('evalutes basic regripless case right', () => {
     let dp_ev = new DPEvaluator()

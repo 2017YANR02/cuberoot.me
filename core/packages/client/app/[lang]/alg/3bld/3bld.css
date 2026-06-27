@@ -781,12 +781,6 @@
   line-height: 1.5;
   word-break: break-word;
 }
-.bld-comm-focus-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 2px;
-}
 
 /* grid of pair thumbnails */
 .bld-comm-grid {

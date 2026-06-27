@@ -92,18 +92,7 @@
     background: var(--wcaa-accent-soft);
     color: var(--wcaa-accent);
     text-transform: uppercase;
-}
-
-.wcaa-intro {
-    color: var(--wcaa-text-sub);
-    line-height: 1.7;
-    margin: 0 0 1.5rem;
-    font-size: 0.97rem;
-}
-.wcaa-intro + .wcaa-intro { margin-top: -1rem; }
-
-.wcaa-intro code,
-.wcaa-prose code {
+}.wcaa-prose code {
     font-family: 'LiberationMono', ui-monospace, monospace;
     font-size: 0.86em;
     background: var(--wcaa-accent-soft);
@@ -221,13 +210,6 @@
     color: var(--wcaa-text);
     padding: 1px 5px;
     border-radius: 3px;
-}
-.wcaa-arrow {
-    align-self: center;
-    color: var(--wcaa-text-mute);
-    font-size: 16px;
-    margin: 3px 0;
-    user-select: none;
 }
 
 /* ──── Formula card ──── */
@@ -366,20 +348,4 @@
     color: var(--wcaa-text-mute);
     text-align: center;
     line-height: 1.65;
-}
-
-/* ──── 详情页 help icon(标题旁) ──── */
-.wca-stats-title-help {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 10px;
-    color: var(--muted-foreground, #95938E);
-    opacity: 0.65;
-    text-decoration: none;
-    transition: opacity 0.15s, color 0.15s;
-    vertical-align: middle;
-}
-.wca-stats-title-help:hover {
-    opacity: 1;
-    color: #e8a27a;
 }

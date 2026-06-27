@@ -1715,7 +1715,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
         <div className="shell-info-toast" role="status">
           <span>{infoToast.msg}</span>
           {infoToast.undo && (
-            <button type="button" onClick={() => { infoToast.undo?.(); setInfoToast(null); }}>{tr({ zh: '撤销', en: 'Undo'
+            <button type="button" className="shell-info-toast-btn" onClick={() => { infoToast.undo?.(); setInfoToast(null); }}>{tr({ zh: '撤销', en: 'Undo'
             })}</button>
           )}
         </div>

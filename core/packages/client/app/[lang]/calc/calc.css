@@ -1,13 +1,6 @@
 /* NOTE: HTH Grapher 全局样式
-   从原 index.html <style> 提取 + 新增 DOM/SVG 布局样式 */
-
-/* ── Tailwind preflight override ── */
-/* NOTE: Tailwind v4 的 @import "tailwindcss" 会 reset 所有 button/input 的
-   background/border/color。calc 页面有独立视觉体系（白色背景 + 深色文字），
-   必须在此覆盖 Tailwind 的全局 reset */
-.calc-page input,
-.calc-page button,
-.calc-page select {
+   从原 index.html <style> 提取 + 新增 DOM/SVG 布局样式 */.calc-page .calc-input,
+.calc-page .calc-btn {
     color: inherit;
 }
 
@@ -125,7 +118,6 @@ body {
     }
 }
 
-
 /* ── 语言切换按钮 ── */
 /* NOTE: 设计参考 i18n/i18n.js 的 .lang-toggle-fixed，浅色主题适配，定位改为右上角 */
 
@@ -154,11 +146,6 @@ body {
     color: #333333;
     border-color: #8a7a6a;
     background: rgba(255, 255, 255, 0.95);
-}
-
-.lang-toggle .globe-icon {
-    font-size: 0.95rem;
-    line-height: 1;
 }
 
 /* ── 项目选择器（浅色主题适配） ── */
@@ -412,7 +399,7 @@ body {
     flex-wrap: wrap;
 }
 
-.controls button {
+.controls .controls-btn {
     padding: 6px 14px;
     font-size: 14px;
     font-weight: 600;
@@ -424,11 +411,11 @@ body {
     transition: background 0.2s;
 }
 
-.controls button:hover {
+.controls .controls-btn:hover {
     background: #4a8a9c;
 }
 
-.controls button:disabled {
+.controls .controls-btn:disabled {
     background: #808080;
     cursor: not-allowed;
 }
@@ -662,19 +649,13 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     z-index: 10;
     transition: none;
-}
-
-.np-digit:active,
+}.np-digit:active,
 .np-op:active,
-.np-action:active,
-.np-action-alt:active {
+.np-action:active {
     background: #7a7a7e;
-}
-
-.calc-page .np-digit,
+}.calc-page .np-digit,
 .calc-page .np-op,
-.calc-page .np-action,
-.calc-page .np-action-alt {
+.calc-page .np-action {
     background: #636366;
     color: #ededed;
 }
@@ -683,11 +664,8 @@ body {
 .np-btn svg {
     display: block;
     margin: 0 auto;
-}
-
-.np-op,
-.np-action,
-.np-action-alt {
+}.np-op,
+.np-action {
     font-size: 22px;
 }
 
@@ -806,18 +784,6 @@ body {
     font-style: italic;
 }
 
-.tavg-input {
-    width: 80px;
-    padding: 4px 8px;
-    font-size: 16px;
-    text-align: center;
-    border: 1px solid #999;
-    border-radius: 4px;
-    background: #fff;
-}
-
-
-
 /* ── 隐藏媒体元素 ── */
 
 audio,
@@ -877,7 +843,7 @@ video {
         height: 16px;
     }
 
-    .controls button {
+    .controls .controls-btn {
         padding: 6px 12px;
         font-size: 14px;
     }
@@ -1006,8 +972,6 @@ video {
     color: #171717;
 }
 
-
-
 /* ── 柱子拖动交互 ── */
 
 /* NOTE: 拖动时标签可能超出 viewBox 上边界，需要可见；禁止文字选中；禁止触摸滚动 */
@@ -1017,8 +981,6 @@ video {
     -webkit-user-select: none;
     touch-action: none;
 }
-
-
 
 /* NOTE: 选中态 — SVG 根加 .bar-selected 后，非活跃柱子和标签降暗 */
 .hth-chart.bar-selected .chart-bar:not(.bar-active),
@@ -1081,7 +1043,6 @@ video {
     height: 0;
     border-top: 1px solid rgba(255, 255, 255, 0.6);
 }
-
 
 @keyframes handleBounce {
     0% {
@@ -1156,85 +1117,6 @@ video {
     background: #f0f0f0;
     font-size: 16px;
     border-radius: 50%;
-}
-
-/* ── 选手搜索模态框 ── */
-
-.person-search-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    background: rgba(0, 0, 0, 0.6);
-}
-
-.person-search-modal {
-    position: absolute;
-    background: #1a1a2e;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 380px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-}
-
-.person-search-input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px 16px;
-    border: none;
-    border-bottom: 1px solid #333333;
-    background: #16213e;
-    color: #eee;
-    font-size: 15px;
-    outline: none;
-}
-.person-search-input::placeholder { color: #6e6050; }
-
-.person-search-results {
-    max-height: 320px;
-    overflow-y: auto;
-}
-
-.person-search-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.person-search-item:hover { background: #0f3460; }
-
-/* NOTE: WCA ID 用等宽字体，便于视觉对齐 */
-.person-search-item .ps-wcaid {
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 12px;
-    color: #8899aa;
-    min-width: 90px;
-}
-.person-search-item .ps-name {
-    color: #eee;
-    font-size: 14px;
-}
-
-.person-search-empty,
-.person-search-loading {
-    padding: 16px;
-    text-align: center;
-    color: #6e6050;
-    font-size: 14px;
-}
-
-.person-search-loading .ps-spinner {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid #444;
-    border-top-color: #eee;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    margin-right: 6px;
-    vertical-align: middle;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }

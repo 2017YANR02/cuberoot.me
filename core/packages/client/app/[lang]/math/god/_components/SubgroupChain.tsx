@@ -8,7 +8,6 @@
  */
 import { useState } from 'react';
 import { TeX, MathText } from './Tex';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 type AlgoKey = 'thistlethwaite' | 'kociemba';

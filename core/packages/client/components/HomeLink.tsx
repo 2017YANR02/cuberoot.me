@@ -9,7 +9,6 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import type { ReactNode, AnchorHTMLAttributes } from 'react';
-import i18n from '@/i18n/i18n-client';
 
 type Props = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   children?: ReactNode;

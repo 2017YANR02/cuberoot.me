@@ -1170,7 +1170,7 @@ main { position: relative; z-index: 1; }
   color: #fff;
   box-shadow: 0 0 16px rgba(51,169,220,.25);
 }
-.demo-has-list input { accent-color: var(--css-bright); }
+.demo-has-list .demo-has-list-input { accent-color: var(--css-bright); }
 
 /* animation demo */
 .demo-anim-stage {

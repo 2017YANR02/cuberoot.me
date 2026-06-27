@@ -25,7 +25,6 @@ import HourChart from './charts/HourChart';
 import RecordsOverlay from './RecordsOverlay';
 import CfopCaseStatsPanel from './CfopCaseStatsPanel';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   event: EventId;
@@ -448,12 +447,12 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose }: 
         </div>
 
         <div className="modal-actions">
-          <button onClick={onCopy} className="primary">
+          <button onClick={onCopy} className="primary modal-action-btn">
             {copied ? tr({ zh: '已复制', en: 'Copied'
                                   }) : tr({ zh: '复制文本', en: 'Copy text'
                                       })}
           </button>
-          <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
+          <button className="modal-action-btn" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

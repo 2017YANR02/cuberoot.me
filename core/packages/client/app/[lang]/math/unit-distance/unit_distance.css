@@ -61,7 +61,6 @@
   color: var(--ud-text-sub); text-decoration: none; font-size: 0.92rem;
 }
 .ud-back:hover { color: var(--ud-text); }
-.ud-header-right { display: flex; gap: 0.5rem; align-items: center; }
 
 .ud-main {
   max-width: 1080px;
@@ -650,7 +649,7 @@
   margin-bottom: 0.8rem;
 }
 .ud-sandbox-presets { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-.ud-sandbox-presets button,
+.ud-sandbox-presets .ud-sandbox-preset-btn,
 .ud-grid-k-btn {
   display: inline-flex; align-items: center; gap: 0.3rem;
   padding: 0.32rem 0.65rem;
@@ -663,9 +662,9 @@
   font-family: var(--ud-mono);
   transition: border-color 0.12s ease, color 0.12s ease;
 }
-.ud-sandbox-presets button:hover,
+.ud-sandbox-presets .ud-sandbox-preset-btn:hover,
 .ud-grid-k-btn:hover { border-color: var(--ud-accent); color: var(--ud-text); }
-.ud-sandbox-presets button.is-on,
+.ud-sandbox-presets .ud-sandbox-preset-btn.is-on,
 .ud-grid-k-btn.is-on {
   border-color: var(--ud-accent);
   background: var(--ud-accent-soft);
@@ -690,7 +689,7 @@
   font-size: 0.85rem; color: var(--ud-text-sub);
   cursor: pointer;
 }
-.ud-sandbox-toggle input { accent-color: var(--ud-accent); }
+.ud-sandbox-toggle .ud-sandbox-toggle-input { accent-color: var(--ud-accent); }
 
 .ud-sandbox-stage {
   display: grid;

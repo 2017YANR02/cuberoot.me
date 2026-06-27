@@ -1,4 +1,3 @@
-import i18n from "@/i18n/i18n-client";
 
 /**
  * 41 个上游 colpi 词汇语言（外加 'other' 兜底）。

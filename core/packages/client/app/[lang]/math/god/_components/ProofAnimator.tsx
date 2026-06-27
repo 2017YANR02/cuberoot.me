@@ -15,7 +15,6 @@
 import { useState, type ReactElement } from 'react';
 import { TeX, MathText } from './Tex';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 type ProofId = 'reid' | 'rokicki';

@@ -202,7 +202,7 @@ export abstract class CmllStateM extends AbstractStateM {
             throw new Error("Unrecognized control code");
         }
     }
-    onConfig(conf: Config): AppState {
+    onConfig(_conf: Config): AppState {
         return this.state;
     }
 }
@@ -232,7 +232,7 @@ export class CmllSolvingStateM extends CmllStateM {
     }
 }
 export class CmllSolvedStateM extends CmllStateM {
-    onMove(move: string): AppState {
+    onMove(_move: string): AppState {
         return this.state;
     }
 }
@@ -263,9 +263,8 @@ export abstract class OllcpStateM extends AbstractStateM {
     _generateCase(): AppState {
         let state = this.state;
         let { config } = state;
-        let { cmllCaseSelector, triggerSelector, cmllAufSelector, orientationSelector, nmcllSelector, hyperOriSelector } = config;
+        let { cmllCaseSelector, triggerSelector, cmllAufSelector, orientationSelector, hyperOriSelector } = config;
 
-        const isHyperOri = hyperOriSelector.getActiveName() !== "off" ;
         const isHyperOriFB = hyperOriSelector.getActiveName() !== "F/B" ;
         let generator = alg_generator_from_cases(cmllCaseSelector.kind, cmllCaseSelector.getActiveNames());
         let trig_generator = alg_generator_from_group(triggerSelector);
@@ -334,7 +333,7 @@ export abstract class OllcpStateM extends AbstractStateM {
             throw new Error("Unrecognized control code");
         }
     }
-    onConfig(conf: Config): AppState {
+    onConfig(_conf: Config): AppState {
         return this.state;
     }
 }
@@ -366,7 +365,7 @@ export class OllcpSolvingStateM extends OllcpStateM {
     }
 }
 export class OllcpSolvedStateM extends OllcpStateM {
-    onMove(move: string): AppState {
+    onMove(_move: string): AppState {
         return this.state;
     }
 }

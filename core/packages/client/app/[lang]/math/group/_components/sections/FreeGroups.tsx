@@ -210,7 +210,7 @@ function layoutTree(nodes: Map<NodeKey, TreeNode>, svgW: number, svgH: number): 
 
 // ── Word Reducer Widget ───────────────────────────────────────────────────────
 
-function WordReducerWidget({ lang, onWordChange }: { lang: Lang; onWordChange: (w: Letter[]) => void }) {
+function WordReducerWidget({ onWordChange }: { lang: Lang; onWordChange: (w: Letter[]) => void }) {
   const [raw, setRaw] = useState<Letter[]>([]);
 
   const { reduced, cancelledPairs } = useMemo(() => reduceWord(raw), [raw]);

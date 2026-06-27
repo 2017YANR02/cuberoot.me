@@ -27,7 +27,7 @@ export function ProgressSliders() {
         <span className="progress-label">A</span>
         <input
           type="range"
-          className="progress-slider slider-a"
+          className="progress-slider slider-a calc-input"
           min="-20"
           max="100"
           value={valA}
@@ -42,7 +42,7 @@ export function ProgressSliders() {
         <span className="progress-label">B</span>
         <input
           type="range"
-          className="progress-slider slider-b"
+          className="progress-slider slider-b calc-input"
           min="-20"
           max="100"
           value={valB}

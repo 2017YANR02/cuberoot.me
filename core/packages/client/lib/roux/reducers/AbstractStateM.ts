@@ -19,7 +19,7 @@ export abstract class AbstractStateM {
     /* when user clicks a button or presses a key */
     abstract onControl(s: string): AppState;
     /* when user replays an item from the favlist */
-    onReplay(case_: FavCase): AppState {
+    onReplay(_case_: FavCase): AppState {
         return this.state;
     }
 }

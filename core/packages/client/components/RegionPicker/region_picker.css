@@ -120,7 +120,7 @@
   color: var(--rp-text-sub);
   background: var(--rp-bg-hover);
 }
-.region-picker-search input {
+.region-picker-search .region-picker-search-input {
   flex: 1;
   border: 0;
   background: transparent;

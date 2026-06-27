@@ -17,7 +17,7 @@ interface Props {
 }
 
 export default function Paginator({
-  page, totalPages, size, pageSizeOptions, isZh,
+  page, totalPages, size, pageSizeOptions,
   className = 'wse-pagination', onPageChange, onSizeChange,
 }: Props) {
   const [draft, setDraft] = useState(String(page));
@@ -33,7 +33,7 @@ export default function Paginator({
 
   return (
     <div className={className}>
-      <button disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
+      <button className="wse-page-btn" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
         <ChevronLeft size={14} />
       </button>
       <span className="paginator-text">
@@ -52,10 +52,10 @@ export default function Paginator({
         />
         {' / ' + totalPages}
       </span>
-      <button disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
+      <button className="wse-page-btn" disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
         <ChevronRight size={14} />
       </button>
-      <select value={size} onChange={e => onSizeChange(parseInt(e.target.value, 10))}>
+      <select className="wse-page-select" value={size} onChange={e => onSizeChange(parseInt(e.target.value, 10))}>
         {pageSizeOptions.map(s => <option key={s} value={s}>{s}/{tr({ zh: '页', en: 'pg'
         })}</option>)}
       </select>

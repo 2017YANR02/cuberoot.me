@@ -13,7 +13,6 @@
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { exportJson, importJson } from './db';
-import i18n from "@/i18n/i18n-client";
 
 const ENDPOINT = '/v1/timer/backup';
 

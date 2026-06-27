@@ -288,8 +288,8 @@
   cursor: pointer;
   user-select: none;
 }
-.roux-sel-radio input,
-.roux-sel-check input {
+.roux-sel-radio .roux-sel-radio-input,
+.roux-sel-check .roux-sel-check-input {
   accent-color: var(--accent);
   cursor: pointer;
   width: 16px;

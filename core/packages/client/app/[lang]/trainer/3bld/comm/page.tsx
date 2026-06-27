@@ -31,7 +31,6 @@ import { ClearButton } from '@/components/ClearButton';
 import CubingPreview from '@/components/CubingPreview';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 // TwistySection pulls in cubing.js (heavy) — load only on the client, lazily.
 const TwistySection = dynamic(() => import('@/components/TwistySection'), {

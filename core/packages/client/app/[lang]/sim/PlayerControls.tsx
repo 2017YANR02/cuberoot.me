@@ -29,7 +29,7 @@ import {
   Play, Pause, SkipBack, SkipForward, RotateCcw,
   FlipHorizontal2, FlipVertical2, Eraser, Sparkles, RotateCw,
   Shuffle, Link2, Check, Upload,
-  Search, Loader2,
+  Search, Loader2, Pipette,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -93,6 +93,7 @@ import {
   type SimSettings, type SimBoardBg,
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
+import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
@@ -1347,14 +1348,31 @@ export default function PlayerControls({
   );
 }
 
-const CORE_COLOR_PRESETS: string[] = [
-  '#202020', '#EE0000', '#FFA100', '#FFFFFF', '#FEFE00', '#00D800', '#0000F2',
-];
+// 五魔方 12 面色 —— 复用 vendored puzzle-geometry 的十二面体配色(单一源,不另造)。
+const MEGAMINX_COLORS = Object.values(defaultPlatonicColorSchemes()[12]) as string[];
+/** 按小写去重,保序;让各调色板拼接预设 + 12 色时不出现重复格。 */
+function dedupeColors(cs: string[]): string[] {
+  const seen = new Set<string>();
+  return cs.filter((c) => { const k = c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+}
 
-// Mirror Cube single-colour presets — classic gold / silver first, then a few tints.
-const MIRROR_COLOR_PRESETS: string[] = [
+const CORE_COLOR_PRESETS: string[] = dedupeColors([
+  '#202020', '#EE0000', '#FFA100', '#FFFFFF', '#FEFE00', '#00D800', '#0000F2',
+  ...MEGAMINX_COLORS,
+]);
+
+// Mirror Cube single-colour presets — classic gold / silver first, then tints + the 12 Megaminx colours.
+const MIRROR_COLOR_PRESETS: string[] = dedupeColors([
   '#E3B23C', '#C0C0C0', '#EE0000', '#00A0E0', '#00C060', '#B060E0',
-];
+  ...MEGAMINX_COLORS,
+]);
+
+// Face-colour presets — the WCA 6 then the 12 Megaminx colours, for a rich per-face palette.
+const FACE_COLOR_PRESETS: string[] = dedupeColors([
+  DEFAULT_FACE_COLORS.U, DEFAULT_FACE_COLORS.L, DEFAULT_FACE_COLORS.F,
+  DEFAULT_FACE_COLORS.R, DEFAULT_FACE_COLORS.B, DEFAULT_FACE_COLORS.D,
+  ...MEGAMINX_COLORS,
+]);
 
 const FACE_ORDER = ['U', 'L', 'F', 'R', 'B', 'D'] as const;
 const FACE_LABELS_ZH: Record<typeof FACE_ORDER[number], string> = {
@@ -1362,7 +1380,7 @@ const FACE_LABELS_ZH: Record<typeof FACE_ORDER[number], string> = {
 };
 
 function SwatchCell({
-  color, label, title, active, onPick, onClick,
+  color, label, title, active, onPick, onClick, custom,
 }: {
   color: string;
   label?: string;
@@ -1370,9 +1388,18 @@ function SwatchCell({
   active?: boolean;
   onPick?: (c: string) => void;
   onClick?: () => void;
+  /** 自定义取色格:角标 Pipette + 区别于预设色块,明示「点这里自选」。 */
+  custom?: boolean;
 }) {
   const labelEl = label ? <span className="sim-swatch-label">{label}</span> : null;
-  const boxEl = <span className="sim-swatch-box" style={{ background: color }} />;
+  const boxEl = custom ? (
+    <span className="sim-swatch-box-wrap">
+      <span className="sim-swatch-box" style={{ background: color }} />
+      <span className="sim-swatch-custom-badge" aria-hidden><Pipette size={9} /></span>
+    </span>
+  ) : (
+    <span className="sim-swatch-box" style={{ background: color }} />
+  );
   const cls = 'sim-swatch' + (active ? ' active' : '');
   if (onPick) {
     return (
@@ -1393,6 +1420,78 @@ function SwatchCell({
       {labelEl}
       {boxEl}
     </button>
+  );
+}
+
+/** 模式 + 取色合并下拉:把一个「特殊模式」(镜面六色 / 内核原核)与单色取色收进一个菜单。
+ *  trigger 普通态显当前色块、特殊态显特殊图标格;面板顶部一个特殊项 + 自定义取色 + 预设色板。
+ *  选色 = 退出特殊模式并用该色;选特殊项 = 进特殊模式。 */
+function ModeColorSelect({
+  special = false, color, presets, specialTitle, specialSwatchClass,
+  onPickColor, onPickSpecial, title, t,
+}: {
+  /** 特殊模式(镜面六色 / 内核原核)。不传 special 系列即退化成普通取色下拉(面色用)。 */
+  special?: boolean;
+  color: string;
+  presets: string[];
+  specialTitle?: string;
+  specialSwatchClass?: string;
+  onPickColor: (c: string) => void;
+  onPickSpecial?: () => void;
+  title: string;
+  t: (zh: string, en: string) => string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', onDoc);
+    return () => document.removeEventListener('pointerdown', onDoc);
+  }, [open]);
+  const specialSwatch = specialSwatchClass ? <span className={'sim-swatch-box ' + specialSwatchClass} /> : null;
+  return (
+    <div className="sim-color-select" ref={ref}>
+      <button
+        type="button"
+        className="sim-color-select-trigger"
+        title={title}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {special && specialSwatch ? specialSwatch : <span className="sim-swatch-box" style={{ background: color }} />}
+      </button>
+      {open && (
+        <div className="sim-color-select-panel">
+          {onPickSpecial && specialSwatch && (
+            <button
+              type="button"
+              className={'sim-swatch' + (special ? ' active' : '')}
+              title={specialTitle}
+              onClick={() => { onPickSpecial(); setOpen(false); }}
+            >
+              {specialSwatch}
+            </button>
+          )}
+          <SwatchCell
+            color={color}
+            title={t('自定义', 'Custom')}
+            custom
+            onPick={onPickColor}
+          />
+          {presets.map((c) => (
+            <SwatchCell
+              key={c}
+              color={c}
+              title={c}
+              active={!special && c.toLowerCase() === color.toLowerCase()}
+              onClick={() => { onPickColor(c); setOpen(false); }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1706,62 +1805,32 @@ function PuzzleSettings({
             </div>
           </div>
           {isMirror && (
-            <ColorRow
-              label={t('镜面配色', 'Mirror colour')}
-              trailing={
-                <Toggle
-                  label={t('六色', 'Six colours')}
-                  value={(settings.mirrorColorMode ?? 'single') === 'six'}
-                  onChange={(v) => set('mirrorColorMode', v ? 'six' : 'single')}
-                />
-              }
-            >
-              {(settings.mirrorColorMode ?? 'single') === 'single' ? (
-                <>
-                  <SwatchCell
-                    color={settings.mirrorColor ?? MIRROR_DEFAULT_COLOR}
-                    title={t('自定义', 'Custom')}
-                    onPick={(c) => set('mirrorColor', c)}
-                  />
-                  {MIRROR_COLOR_PRESETS.map((c) => (
-                    <SwatchCell
-                      key={c}
-                      color={c}
-                      title={c}
-                      active={c.toLowerCase() === (settings.mirrorColor ?? MIRROR_DEFAULT_COLOR).toLowerCase()}
-                      onClick={() => set('mirrorColor', c)}
-                    />
-                  ))}
-                </>
-              ) : (
-                <span className="sim-mirror-six-note">{t('用下方「面色」', 'Uses Face colors below')}</span>
-              )}
+            <ColorRow label={t('镜面配色', 'Mirror colour')}>
+              <ModeColorSelect
+                special={(settings.mirrorColorMode ?? 'single') === 'six'}
+                color={settings.mirrorColor ?? MIRROR_DEFAULT_COLOR}
+                presets={MIRROR_COLOR_PRESETS}
+                specialTitle={t('六色', 'Six colours')}
+                specialSwatchClass="sim-swatch-six-box"
+                onPickColor={(c) => onSettingsChange({ ...settings, mirrorColorMode: 'single', mirrorColor: c })}
+                onPickSpecial={() => set('mirrorColorMode', 'six')}
+                title={t('镜面配色', 'Mirror colour')}
+                t={t}
+              />
             </ColorRow>
           )}
-          <ColorRow
-            label={t('内核色', 'Core color')}
-            trailing={
-              <Toggle
-                label={t('原核', 'Raw body')}
-                value={settings.coreStyle === 'raw'}
-                onChange={(v) => set('coreStyle', v ? 'raw' : 'normal')}
-              />
-            }
-          >
-            <SwatchCell
+          <ColorRow label={t('内核色', 'Core color')}>
+            <ModeColorSelect
+              special={settings.coreStyle === 'raw'}
               color={settings.coreColor}
-              title={t('自定义', 'Custom')}
-              onPick={(c) => set('coreColor', c)}
+              presets={CORE_COLOR_PRESETS}
+              specialTitle={t('原核', 'Raw body')}
+              specialSwatchClass="sim-swatch-raw-box"
+              onPickColor={(c) => onSettingsChange({ ...settings, coreStyle: 'normal', coreColor: c })}
+              onPickSpecial={() => set('coreStyle', 'raw')}
+              title={t('内核色', 'Core color')}
+              t={t}
             />
-            {CORE_COLOR_PRESETS.map((c) => (
-              <SwatchCell
-                key={c}
-                color={c}
-                title={c}
-                active={c.toLowerCase() === settings.coreColor.toLowerCase()}
-                onClick={() => set('coreColor', c)}
-              />
-            ))}
           </ColorRow>
           <ColorRow
             label={t('面色', 'Face colors')}
@@ -1772,13 +1841,16 @@ function PuzzleSettings({
             }}
           >
             {FACE_ORDER.map((f) => (
-              <SwatchCell
-                key={f}
-                color={settings.faceColors[f]}
-                label={f}
-                title={t(FACE_LABELS_ZH[f], f)}
-                onPick={(c) => set('faceColors', { ...settings.faceColors, [f]: c })}
-              />
+              <span key={f} className="sim-face-pick">
+                <span className="sim-swatch-label">{f}</span>
+                <ModeColorSelect
+                  color={settings.faceColors[f]}
+                  presets={FACE_COLOR_PRESETS}
+                  onPickColor={(c) => set('faceColors', { ...settings.faceColors, [f]: c })}
+                  title={t(FACE_LABELS_ZH[f], f)}
+                  t={t}
+                />
+              </span>
             ))}
           </ColorRow>
         </div>

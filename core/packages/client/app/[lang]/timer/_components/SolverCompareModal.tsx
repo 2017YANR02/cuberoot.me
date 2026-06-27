@@ -15,7 +15,6 @@ import {
 } from '../_lib/solver/methods';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   scramble: string;
@@ -145,7 +144,7 @@ export default function SolverCompareModal({ scramble, isZh, onClose }: Props) {
         </div>
 
         <div className="modal-actions">
-          <button ref={closeBtnRef} className="primary" onClick={onClose}>
+          <button ref={closeBtnRef} className="primary modal-action-btn" onClick={onClose}>
             {tr({ zh: '关闭', en: 'Close'
             })}
           </button>

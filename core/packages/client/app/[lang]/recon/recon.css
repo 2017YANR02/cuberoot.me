@@ -76,7 +76,7 @@
   flex-wrap: wrap;
 }
 
-.recon-filters select {
+.recon-filters .recon-filter-select {
   padding: 7px 12px;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
@@ -89,7 +89,7 @@
   transition: border-color 0.2s;
 }
 
-.recon-filters select:focus {
+.recon-filters .recon-filter-select:focus {
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
@@ -135,7 +135,7 @@
   }
   /* .recon-filters 透传：3 个 select 直接作为网格项 */
   .recon-filters { display: contents; }
-  .recon-filters select,
+  .recon-filters .recon-filter-select,
   .recon-filters .recon-event-filter,
   .recon-filters .recon-solver-filter,
   .recon-comp-filter,
@@ -220,7 +220,7 @@
   font-size: 0.82rem;
 }
 
-.recon-range-filter input {
+.recon-range-filter .recon-range-input {
   flex: 1;
   width: 0;
   min-width: 60px;
@@ -232,7 +232,7 @@
   font-family: 'Roboto Mono', monospace;
 }
 
-.recon-range-filter input:focus {
+.recon-range-filter .recon-range-input:focus {
   outline: none;
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
@@ -296,7 +296,6 @@
 
 .col-avg, .col-dsingle { font-weight: 600; }
 .col-round { text-align: center; }
-.col-official { text-align: center; }
 .recon-table .col-dsingle,
 .recon-table .col-avg,
 .recon-table .col-aoxr,
@@ -345,15 +344,6 @@ img.recon-inline-flag {
 }
 @media (max-width: 480px) {
   .col-comp { max-width: 140px; }
-}
-
-.col-recon-preview {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--faint-foreground);
-  font-size: 0.8rem;
 }
 
 /* --- Mono 列样式 --- */
@@ -554,30 +544,6 @@ td[data-tip-show]:hover::after {
   border: 1px solid color-mix(in srgb, var(--destructive) 20%, transparent);
 }
 
-/* --- WCA 登录区域 --- */
-.wca-auth-area {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-}
-
-.wca-login-btn {
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-  color: var(--accent);
-  padding: 7px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  white-space: nowrap;
-  font-size: 0.85rem;
-  transition: all 0.2s;
-}
-
-.wca-login-btn:hover {
-  background: color-mix(in srgb, var(--accent) 30%, transparent);
-  color: var(--foreground);
-}
-
 /* --- 空状态 --- */
 .recon-empty {
   text-align: center;
@@ -654,8 +620,4 @@ td[data-tip-show]:hover::after {
   line-height: 1.6;
   color: var(--foreground);
   word-break: break-word;
-}
-
-.normalized-cross-comment {
-  color: var(--faint-foreground);
 }

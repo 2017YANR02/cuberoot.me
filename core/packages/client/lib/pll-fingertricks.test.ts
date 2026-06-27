@@ -166,9 +166,6 @@ describe('every move family in all 21 PLL mainAlgs resolves to a trick', () => {
 
   it('exercises the expected family coverage (R L U F D M + x/y rotations)', () => {
     // PLLs use these; B/z/wide are in the table for completeness even if no PLL hits them.
-    for (const f of ['R', 'L', 'U', 'F', 'D', 'M', 'x', 'y'] as MoveFamily[]) {
-      // L appears via none directly? assert at least R U F M present.
-    }
     expect(seen.has('R')).toBe(true);
     expect(seen.has('U')).toBe(true);
     expect(seen.has('F')).toBe(true);

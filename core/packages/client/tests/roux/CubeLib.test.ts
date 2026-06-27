@@ -1,7 +1,6 @@
 import { it, expect } from 'vitest';
 import { CubieCube, Move, MoveSeq } from '@/lib/roux/CubeLib';
 import { CubeUtil } from "@/lib/roux/CubeLib";
-import { centers_coord, corners_coord, edges_coord, Face } from '@/lib/roux/Defs';
 
 it('loads and prints cube state successfully', () => {
     let cubie = new CubieCube().apply("R U R")
@@ -35,10 +34,6 @@ it('should change basis on a solved cube', () => {
 
 it('should change basis on an unsolved cube', () => {
     let cube = new CubieCube().apply("R")
-    let pp = (cube: CubieCube) => cube._to_facelet_mapping(corners_coord, edges_coord, centers_coord).map(
-        (x: Face[][]) => x.map(
-            (y: Face[]) => y?.map(
-                (z: Face) => Face[z])))
     //console.log(pp(cube))
     let cube_y = cube.changeBasis(new MoveSeq('y'))
     //console.log(pp(cube_y))

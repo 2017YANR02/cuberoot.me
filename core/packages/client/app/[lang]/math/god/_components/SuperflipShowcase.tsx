@@ -12,7 +12,6 @@
 import { useState } from 'react';
 import { VisualCube } from '@/components/VisualCube';
 import { MathText } from './Tex';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 const SUPERFLIP_REID_16 = "M' U M' U M' U2 M U M U M U2";

@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './powershell_intro.css';
-import i18n from '@/i18n/i18n-client';
 
 // Inline SVG: PowerShell-blue terminal with ">_" prompt
 const PWSH_LOGO_SVG = (

@@ -15,7 +15,6 @@ interface Props {
 }
 
 export default function OneLookPanel({
-  isZh,
   ol,
   scramble,
   onGenerate,

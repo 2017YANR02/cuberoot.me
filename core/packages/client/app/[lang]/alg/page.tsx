@@ -16,7 +16,6 @@ import { eventDisplayName } from '@/lib/wca-events';
 import { Eye, Blocks, Box, type LucideIcon } from 'lucide-react';
 import './alg.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 /** Standalone method trainers (not per-set timing drills) — surfaced on the landing. */
 const LANDING_TRAINERS: { href: string; zh: string; en: string; descZh: string; descEn: string; Icon: LucideIcon }[] = [

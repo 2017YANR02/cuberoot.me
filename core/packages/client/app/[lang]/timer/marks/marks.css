@@ -81,7 +81,7 @@
   border: 1px solid var(--border-default);
   color: var(--muted-foreground);
 }
-.scrmarks-filter-tag button {
+.scrmarks-filter-tag .scrmarks-filter-tag-btn {
   border: none;
   background: none;
   color: var(--muted-foreground);
@@ -90,7 +90,7 @@
   line-height: 1;
   padding: 0;
 }
-.scrmarks-filter-tag button:hover { color: var(--foreground); }
+.scrmarks-filter-tag .scrmarks-filter-tag-btn:hover { color: var(--foreground); }
 
 .scrmarks-empty {
   color: var(--muted-foreground);

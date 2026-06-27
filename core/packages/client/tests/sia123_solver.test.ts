@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   parseSia123Scramble, randomSia123Scramble,
   sia123Model, sia123ModelB, sia123SolvedVec, sia123ApplyToken, sia123IsSolved,
-  sia123CornerRank, sia123CenterRank,
+  sia123CenterRank,
   SIA123_CORNER_ORBIT, SIA123_CENTER_ORBIT,
 } from '@/lib/sia123-solver';
 import { buildCornerPdb, buildCenterPdb, idaSolve } from '@/lib/restricted-cube-solver';

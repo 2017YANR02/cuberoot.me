@@ -83,7 +83,7 @@ function niceAxisTicks(min: number, max: number, targetCount: number): number[] 
   return ticks;
 }
 
-export default function DistributionChart({ datasets, isZh }: Props) {
+export default function DistributionChart({ datasets }: Props) {
   const [mode, setMode] = useState<Mode>('histogram');
   const [tooltipInfo, setTooltipInfo] = useState<{ text: string; x: number; y: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);

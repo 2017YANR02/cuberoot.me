@@ -15,7 +15,6 @@ import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './wb.css';
-import i18n from '@/i18n/i18n-client';
 
 const SOURCE_URL = 'https://www.speedsolving.com/wiki/index.php?title=List_of_Unofficial_World_Records';
 
@@ -71,6 +70,7 @@ export default function WbPage() {
         <div className="wb-search">
           <Search size={16} />
           <input
+            className="wb-search-input"
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}

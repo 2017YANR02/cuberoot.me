@@ -25,7 +25,7 @@ interface Props {
   isZh: boolean;
 }
 
-export default function MoreMenu({ items, isZh }: Props) {
+export default function MoreMenu({ items }: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 

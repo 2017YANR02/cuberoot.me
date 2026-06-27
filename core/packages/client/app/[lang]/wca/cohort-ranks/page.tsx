@@ -122,7 +122,7 @@ function CohortRanksPageInner() {
         <div className="wse-filter">
           <label>{tr({ zh: '届别(首参赛年)', en: 'Cohort year'
         })}</label>
-          <select value={cohort} onChange={e => update('cohort', e.target.value)}>
+          <select className="wse-filter-select" value={cohort} onChange={e => update('cohort', e.target.value)}>
             {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
@@ -130,7 +130,7 @@ function CohortRanksPageInner() {
         <div className="wse-filter">
           <label>{tr({ zh: '类型', en: 'Type'
         })}</label>
-          <select value={type} onChange={e => update('type', e.target.value)}>
+          <select className="wse-filter-select" value={type} onChange={e => update('type', e.target.value)}>
             <option value="single">{tr({ zh: '单次', en: 'Single'
             })}</option>
             {allowAvg && <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>}

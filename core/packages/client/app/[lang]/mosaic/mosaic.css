@@ -102,7 +102,7 @@
 }
 .mosaic-crop-controls label { font-size: 14px; color: var(--muted); }
 .mosaic-crop-controls input[type="number"],
-.mosaic-crop-controls select {
+.mosaic-crop-controls .mosaic-crop-select {
   width: 80px;
   padding: 6px 8px;
   font-size: 14px;
@@ -111,7 +111,7 @@
   background: var(--surface);
   color: var(--fg);
 }
-.mosaic-crop-controls select { width: auto; }
+.mosaic-crop-controls .mosaic-crop-select { width: auto; }
 .mosaic-crop-wrap {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -317,7 +317,7 @@
 
 /* FAQ list */
 .mosaic-checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
-.mosaic-checkbox-row input { cursor: pointer; }
+.mosaic-checkbox-row .mosaic-checkbox-input { cursor: pointer; }
 
 .mosaic-cropper-note {
   font-size: 12px;

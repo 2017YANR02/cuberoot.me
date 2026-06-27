@@ -17,75 +17,6 @@
   font-display: block;
 }
 
-.timer-root {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #0b0b0c;
-  color: #ededed;
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  touch-action: none;
-  overscroll-behavior: none;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-}
-
-/* --- Top bar ------------------------------------------------- */
-.timer-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 16px;
-  border-bottom: 1px solid #222;
-  background: #111;
-  flex: 0 0 auto;
-}
-
-.timer-topbar .left,
-.timer-topbar .right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.timer-topbar select,
-.timer-topbar button.tb-btn {
-  background: #1a1a1d;
-  color: #ededed;
-  border: 1px solid #333;
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.timer-topbar select:hover,
-.timer-topbar button.tb-btn:hover {
-  background: #25252a;
-  border-color: #555;
-}
-
-.timer-topbar button.tb-btn.danger:hover {
-  background: #4a1f1f;
-  border-color: #c44;
-}
-
-.timer-topbar button.tb-btn.connected {
-  background: #1f3d2a;
-  border-color: #4d995a;
-  color: #9fd9ad;
-}
-.timer-topbar button.tb-btn.connected:hover {
-  background: #2a5236;
-  border-color: #6acc7a;
-}
-
 /* --- More menu (collapsed toolbar overflow) --- */
 .more-menu {
   position: relative;
@@ -154,19 +85,6 @@
   flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.timer-topbar .home-link {
-  color: #999;
-  text-decoration: none;
-  font-size: 14px;
-  padding: 6px 10px;
-  border-radius: 6px;
-}
-
-.timer-topbar .home-link:hover {
-  background: #1a1a1d;
-  color: #fff;
 }
 
 /* --- Scramble strip ----------------------------------------- */
@@ -306,19 +224,6 @@
 :root[data-timer-theme="light"] .scramble-marks-all { color: #888; }
 :root[data-timer-theme="light"] .scramble-marks-all:hover { color: #111; }
 
-/* --- Center timer ------------------------------------------- */
-.timer-center {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  touch-action: none;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
 .timer-display {
   font-family: 'Segment7Standard', 'SF Mono', Menlo, Consolas, 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-weight: 700;
@@ -409,15 +314,6 @@
   color: #aaa;
 }
 
-.timer-quick-actions {
-  position: absolute;
-  bottom: 16px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
 .timer-stage-splits {
   margin-top: 12px;
   display: flex;
@@ -472,7 +368,6 @@
   letter-spacing: 0.02em;
 }
 .timer-target-indicator svg { flex-shrink: 0; opacity: 0.85; }
-.timer-target-indicator .target-sep { color: #555; }
 .timer-target-indicator .target-delta { color: #cde; }
 .timer-target-indicator.overshot {
   background: rgba(239, 83, 80, 0.1);
@@ -480,13 +375,6 @@
   color: #ef9a9a;
 }
 .timer-target-indicator.overshot .target-delta { color: #ffb1ad; }
-
-/* Live-time turns red the instant we cross the target. Override only the
-   running-phase color so inspection / holding / ready hues are untouched. */
-.timer-center.target-overshot .timer-display.running {
-  color: #ef5350;
-  text-shadow: 0 0 30px rgba(239, 83, 80, 0.4);
-}
 
 /* Post-stop pulse: 1s subtle flash. Green if final <= target, red otherwise. */
 @keyframes target-pulse-good {
@@ -497,12 +385,6 @@
   0%, 100% { color: inherit; text-shadow: none; }
   40%      { color: #ef5350; text-shadow: 0 0 36px rgba(239, 83, 80, 0.55); }
 }
-.timer-center.target-pulse-good .timer-display {
-  animation: target-pulse-good 1s ease-out 1;
-}
-.timer-center.target-pulse-bad .timer-display {
-  animation: target-pulse-bad 1s ease-out 1;
-}
 
 /* Light-theme tweaks for the indicator. */
 :root[data-timer-theme="light"] .timer-target-indicator {
@@ -510,7 +392,6 @@
   border-color: rgba(47, 111, 176, 0.35);
   color: #2f6fb0;
 }
-:root[data-timer-theme="light"] .timer-target-indicator .target-sep { color: #999; }
 :root[data-timer-theme="light"] .timer-target-indicator .target-delta { color: #1d4d80; }
 :root[data-timer-theme="light"] .timer-target-indicator.overshot {
   background: rgba(211, 47, 47, 0.08);
@@ -518,50 +399,6 @@
   color: #c33;
 }
 :root[data-timer-theme="light"] .timer-target-indicator.overshot .target-delta { color: #b71c1c; }
-
-/* Hide-all-UI mode: while running, hide everything except .timer-center. */
-.timer-root.ui-hidden .timer-topbar,
-.timer-root.ui-hidden .scramble-strip,
-.timer-root.ui-hidden .timer-cube-preview,
-.timer-root.ui-hidden .timer-cube-preview-wrap,
-.timer-root.ui-hidden .trainer-subset-row,
-.timer-root.ui-hidden .timer-bottom,
-.timer-root.ui-hidden .timer-heatmap-row,
-.timer-root.ui-hidden .solver-hints,
-.timer-root.ui-hidden .timer-stage-splits {
-  visibility: hidden !important;
-}
-
-.qa-btn {
-  background: #1a1a1d;
-  color: #ccc;
-  border: 1px solid #333;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-.qa-btn:hover { background: #25252a; border-color: #555; color: #fff; }
-.qa-btn.danger:hover { background: #4a1f1f; border-color: #c44; color: #faa; }
-.qa-btn.active { background: #2a3d4d; border-color: #4d7a99; color: #cde; }
-
-/* --- Bottom panels ------------------------------------------
-   Each section (Stats / Distribution / History) is wrapped in a
-   CollapseSection on all breakpoints. The container is a flex column —
-   sections stack vertically and the user toggles each independently.
-   Default-expanded state is seeded from breakpoint + localStorage by the
-   page; CSS doesn't gate visibility per breakpoint. */
-.timer-bottom {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border-top: 1px solid #1f1f23;
-  background: #0e0e10;
-  flex: 0 0 auto;
-  max-height: 50dvh;
-  overflow-y: auto;
-}
 
 /* Stats summary */
 .stats-panel {
@@ -689,7 +526,7 @@
   border-color: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .stats-ao-custom { display: flex; gap: 6px; }
-.stats-ao-custom input {
+.stats-ao-custom .stats-ao-custom-input {
   flex: 1;
   min-width: 0;
   width: 5em;
@@ -711,7 +548,7 @@
 }
 .stats-ao-custom-add:hover { background: var(--shell-hover); }
 .stats-ao-chip:disabled,
-.stats-ao-custom input:disabled,
+.stats-ao-custom .stats-ao-custom-input:disabled,
 .stats-ao-custom-add:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -883,19 +720,6 @@
   gap: 4px;
 }
 .history-row:hover .actions { display: flex; }
-.history-row .actions button {
-  background: transparent;
-  border: 1px solid #333;
-  color: #aaa;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 11px;
-  cursor: pointer;
-}
-.history-row .actions button:hover {
-  background: #25252a;
-  color: #fff;
-}
 
 /* cstimer-style rolling-average columns (序号 | 时间 | ao5 | ao12). The grid
    template itself is set inline (column count tracks the configured windows). */
@@ -943,7 +767,7 @@
   display: flex;
   align-items: center;
 }
-.history-search input {
+.history-search .history-search-input {
   flex: 1;
   min-width: 0;
   padding: 6px 26px 6px 10px;
@@ -955,8 +779,8 @@
   font-size: 12px;
   box-sizing: border-box;
 }
-.history-search input::placeholder { color: #555; }
-.history-search input:focus {
+.history-search .history-search-input::placeholder { color: #555; }
+.history-search .history-search-input:focus {
   outline: none;
   border-color: #4d7a99;
 }
@@ -968,19 +792,13 @@
   white-space: nowrap;
 }
 :root[data-timer-theme="light"] .history-search { border-bottom-color: #eee; }
-:root[data-timer-theme="light"] .history-search input {
+:root[data-timer-theme="light"] .history-search .history-search-input {
   background: #fff;
   color: #1d1d1f;
   border-color: #d0d0d4;
 }
-:root[data-timer-theme="light"] .history-search input::placeholder { color: #999; }
+:root[data-timer-theme="light"] .history-search .history-search-input::placeholder { color: #999; }
 :root[data-timer-theme="light"] .history-search-count { color: #888; }
-
-.history-row .pb-badge {
-  color: #ffd54f;
-  margin-right: 6px;
-  font-size: 12px;
-}
 .history-row .comment-flag {
   margin-left: 6px;
   color: #5b9dd9;
@@ -1081,7 +899,7 @@
   justify-content: flex-end;
   flex-wrap: wrap;
 }
-.timer-modal .modal-actions button {
+.timer-modal .modal-actions .modal-action-btn {
   background: #25252a;
   color: #ededed;
   border: 1px solid #444;
@@ -1090,37 +908,11 @@
   font-size: 13px;
   cursor: pointer;
 }
-.timer-modal .modal-actions button:hover { background: #2f2f35; }
-.timer-modal .modal-actions button.danger { color: #f88; border-color: #633; }
-.timer-modal .modal-actions button.danger:hover { background: #4a1f1f; }
-.timer-modal .modal-actions button.primary { background: #2a3d4d; border-color: #4d7a99; color: #cde; }
-.timer-modal .modal-actions button.primary:hover { background: #345169; }
-
-/* Solver-hints modal — wider than the default 480px so StageSolver's 6-angle
-   grid + solution list + 3D player fit (mobile override below clamps to 100%). */
-.timer-modal--solver { max-width: 860px; }
-
-/* The timer modal is hardcoded-dark (#1a1a1d) on every page theme, but
-   StageSolver colours follow the page theme (--sv-* + a few globals). On a
-   light-mode page that paints dark text on the dark modal → invisible. Lock the
-   standard dark palette here (same values as globals.css / StageSolver.css dark
-   block) so it stays legible regardless of the page's light/dark state. */
-.timer-modal--solver {
-  --foreground: #ededed;
-  --card: #1f1f1f;
-  --muted-foreground: #a3a3a3;
-  --border-default: color-mix(in srgb, var(--foreground) 10%, transparent);
-}
-.timer-modal--solver .stsv {
-  --sv-surface: #1f1f1f;
-  --sv-text: #ededed;
-  --sv-text-sub: #a3a3a3;
-  --sv-text-mute: #737373;
-  --sv-border: color-mix(in srgb, #f0ebe3 10%, transparent);
-  --sv-border-strong: color-mix(in srgb, #f0ebe3 20%, transparent);
-  --sv-accent: var(--accent);
-  --sv-accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
-}
+.timer-modal .modal-actions .modal-action-btn:hover { background: #2f2f35; }
+.timer-modal .modal-actions .modal-action-btn.danger { color: #f88; border-color: #633; }
+.timer-modal .modal-actions .modal-action-btn.danger:hover { background: #4a1f1f; }
+.timer-modal .modal-actions .modal-action-btn.primary { background: #2a3d4d; border-color: #4d7a99; color: #cde; }
+.timer-modal .modal-actions .modal-action-btn.primary:hover { background: #345169; }
 .solver-modal-head {
   display: flex;
   align-items: center;
@@ -1143,13 +935,6 @@
   cursor: pointer;
 }
 .solver-modal-x:hover { background: var(--shell-hover); color: var(--foreground); }
-.solver-modal-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 120px;
-  color: var(--muted-foreground);
-}
 .solver-modal-spin { animation: solver-modal-spin 0.8s linear infinite; }
 @keyframes solver-modal-spin { to { transform: rotate(360deg); } }
 
@@ -1216,42 +1001,10 @@
   font-size: 12px;
   color: #888;
 }
-/* .settings-row* + .wca-src-* moved to _components/wca-source.css (self-contained
- * so they also reach the duo BattleView settings panel, which doesn't load timer.css). */
-
-/* PB celebration toast */
-.pb-toast {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: linear-gradient(135deg, #2a3d4d 0%, #345169 100%);
-  border: 1px solid #4d7a99;
-  border-radius: 6px;
-  color: #cde;
-  font-size: 14px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  cursor: pointer;
-  animation: pb-toast-in 220ms ease-out;
-}
-.pb-toast-icon { color: #ffd66b; flex-shrink: 0; }
-.pb-toast-title { font-weight: 600; color: #fff; }
-.pb-toast-value { font-variant-numeric: tabular-nums; color: #ffd66b; }
 @keyframes pb-toast-in {
   from { opacity: 0; transform: translateX(40px); }
   to   { opacity: 1; transform: translateX(0); }
 }
-:root[data-timer-theme="light"] .pb-toast {
-  background: linear-gradient(135deg, #4f7baa 0%, #6a98c5 100%);
-  border-color: #3d5d80;
-  color: #fff;
-}
-:root[data-timer-theme="light"] .pb-toast-icon { color: #fff3a0; }
-:root[data-timer-theme="light"] .pb-toast-value { color: #fff3a0; }
 
 /* csTimer per-session import list */
 .cstimer-import-list {
@@ -1374,21 +1127,6 @@
 :root[data-timer-theme="light"] .shortcut-row kbd {
   background: #fff; border-color: #d0d0d4; color: #1d1d1f;
 }
-
-/* --- Cube preview placement on main page --- */
-.timer-cube-preview-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #131316;
-  border-bottom: 1px solid #1f1f23;
-  flex: 0 0 auto;
-}
-.timer-cube-preview-wrap.hidden {
-  /* Header (toggle button) still shows; body is unmounted. Keep border so
-     the section divider stays visually anchored. */
-  padding: 2px 0;
-}
 .cube-preview-toggle {
   /* Visible on every breakpoint — actual `display: inline-flex` is set by
      the universal rule below the CollapseSection block. */
@@ -1405,18 +1143,6 @@
 .cube-preview-toggle:hover { color: #ccc; }
 :root[data-timer-theme="light"] .cube-preview-toggle { color: #888; }
 :root[data-timer-theme="light"] .cube-preview-toggle:hover { color: #333; }
-:root[data-timer-theme="light"] .timer-cube-preview-wrap {
-  background: #fafafb;
-  border-bottom-color: #e0e0e3;
-}
-
-.timer-cube-preview {
-  display: flex;
-  justify-content: center;
-  padding: 4px 0 8px;
-  flex: 0 0 auto;
-}
-.timer-cube-preview svg { max-width: 100%; height: auto; max-height: 16dvh; }
 
 /* Desktop (>480px): cap the unfolded "+"-shape net so it doesn't dominate
    the page. The inner SVG already scales — the wrapper enforces the ceiling. */
@@ -1501,53 +1227,6 @@
   color: #1d1d1f;
   border-color: #aab;
 }
-
-/* --- Charts in bottom panel --- */
-.charts-panel {
-  padding: 14px 18px;
-  overflow-y: auto;
-  border-right: 1px solid #1f1f23;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.charts-panel h3 {
-  font-size: 12px;
-  color: #888;
-  margin: 0;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-/* .with-charts adds a Distribution section between Stats and History.
-   Layout is identical to the no-charts case (flex column) — the modifier
-   stays for any future per-state styling hooks. */
-.timer-bottom.with-charts {
-  /* Slightly taller cap when charts are present so the user can see at
-     least the Distribution section header along with adjacent ones. */
-  max-height: 60dvh;
-}
-
-/* --- Light theme --- */
-:root[data-timer-theme="light"] .timer-root {
-  background: #f5f5f7;
-  color: #1d1d1f;
-}
-:root[data-timer-theme="light"] .timer-topbar {
-  background: #fff;
-  border-bottom-color: #e0e0e3;
-}
-:root[data-timer-theme="light"] .timer-topbar select,
-:root[data-timer-theme="light"] .timer-topbar button.tb-btn {
-  background: #f5f5f7;
-  color: #1d1d1f;
-  border-color: #d0d0d4;
-}
-:root[data-timer-theme="light"] .timer-topbar select:hover,
-:root[data-timer-theme="light"] .timer-topbar button.tb-btn:hover {
-  background: #e8e8eb;
-  border-color: #aab;
-}
 :root[data-timer-theme="light"] .more-menu-btn.open {
   background: #e8e8eb;
   border-color: #aab;
@@ -1575,17 +1254,7 @@
   color: #333;
   border-bottom-color: #e0e0e3;
 }
-:root[data-timer-theme="light"] .timer-display { color: #1d1d1f; text-shadow: none; }
-:root[data-timer-theme="light"] .timer-cube-preview {
-  background: #fafafb;
-  border-bottom-color: #e0e0e3;
-}
-:root[data-timer-theme="light"] .timer-bottom {
-  background: #fff;
-  border-top-color: #e0e0e3;
-}
-:root[data-timer-theme="light"] .stats-panel,
-:root[data-timer-theme="light"] .charts-panel {
+:root[data-timer-theme="light"] .timer-display { color: #1d1d1f; text-shadow: none; }:root[data-timer-theme="light"] .stats-panel {
   border-right-color: #e0e0e3;
 }
 :root[data-timer-theme="light"] .history-row { border-bottom-color: #eee; }
@@ -1625,7 +1294,7 @@
 @media (max-width: 540px) {
   .timer-topbar { padding: 4px 6px; flex-wrap: wrap; gap: 4px; }
   .timer-topbar .left, .timer-topbar .right { gap: 4px; flex-wrap: wrap; }
-  .timer-topbar select { max-width: 110px; padding: 8px 10px; }
+  .timer-topbar .timer-topbar-select { max-width: 110px; padding: 8px 10px; }
   /* iOS HIG / Material recommend ≥44px tap targets. */
   .timer-topbar button.tb-btn { min-width: 40px; min-height: 36px; padding: 8px 10px; }
   .scramble-strip { padding: 10px 12px; font-size: 14px; }
@@ -1648,93 +1317,13 @@
   .history-row { padding: 10px 14px; }
 }
 
-/* --- Phone (≤480px): aggressive overlay reduction.
-   Hide non-essential elements entirely, shrink the rest. Goal of "less
-   crowded" — keep only safety-critical (inspection warn, target overshot,
-   BT pill) and primary inputs (event select, BT, mic, stats, settings, more).
-   Drill / shortcuts / fullscreen relocate into the More menu when not active.
-   Live cube mirror is dropped — at this width it's noise, not signal. */
-/* --- Universal CollapseSection — applies on ALL breakpoints.
-   Each bottom section (Stats / Distribution / History / Heatmap) is wrapped
-   in this accordion. Header is always tappable (≥44px tap target), always
-   shows chevron + title + optional badge. Default-expand state is seeded
-   per-breakpoint by the page; user toggles persist via localStorage. */
-.timer-collapse {
-  border-bottom: 1px solid #1f1f23;
-}
-.timer-collapse:last-child { border-bottom: 0; }
-.timer-collapse-header {
-  width: 100%;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  border: 0;
-  padding: 10px 14px;
-  color: #aaa;
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  text-align: left;
-}
-.timer-collapse-header:hover { background: #161619; }
-.timer-collapse-title { flex: 1; }
-.timer-collapse-badge {
-  background: #1a1a1d;
-  border: 1px solid #2a2a2e;
-  border-radius: 999px;
-  padding: 1px 8px;
-  color: #ccc;
-  font-size: 11px;
-  letter-spacing: 0;
-  text-transform: none;
-  font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
-}
-.timer-collapse-body {
-  /* Cap each expanded section so a single open section can't dominate the
-     page. The container .timer-bottom adds its own scroll anyway. */
-  max-height: 50dvh;
-  overflow-y: auto;
-}
-.timer-collapse-body .stats-panel,
-.timer-collapse-body .case-stats-panel,
-.timer-collapse-body .charts-panel,
-.timer-collapse-body .history-panel {
-  border-right: 0;
-}
-:root[data-timer-theme="light"] .timer-collapse {
-  border-bottom-color: #e0e0e3;
-}
-:root[data-timer-theme="light"] .timer-collapse-header { color: #555; }
-:root[data-timer-theme="light"] .timer-collapse-header:hover { background: #f0f0f3; }
-:root[data-timer-theme="light"] .timer-collapse-badge {
-  background: #fff;
-  border-color: #d0d0d4;
-  color: #444;
-}
-
 /* Cube preview Eye toggle: visible on every breakpoint. */
 .cube-preview-toggle { display: inline-flex; min-height: 28px; }
 
 @media (max-width: 480px) {
-  /* Drop secondary toolbar buttons that are also exposed via More menu. */
-  .timer-topbar .tb-mobile-hide { display: none !important; }
   /* Live smart-cube state: hide entirely on phones. The user can still see
      cube state via the main scramble-driven CubePreview above the timer. */
   .timer-live-cube { display: none; }
-
-  /* Cube preview: shrink the SVG. Eye toggle is already shown on every
-     breakpoint (above) — no need to special-case here. */
-  .timer-cube-preview { padding: 2px 0 6px; }
-  .timer-cube-preview svg {
-    max-height: 11dvh;
-    max-width: 60vw;
-  }
-  /* Goal pill row: tighten padding so it doesn't push the cube preview
-     further down. The pill itself stays — it's small and motivational. */
-  .timer-goal-row { padding: 0 6px !important; }
   /* Target indicator: shrink padding/font so it doesn't push into the
      timer display. Stay visible — it's the whole point of the running phase
      when a target is set. */
@@ -1748,14 +1337,6 @@
     padding: 3px 8px;
     font-size: 11px;
     margin-top: 6px;
-  }
-  /* PB toast: shrink so it doesn't overlap the topbar BT/stats buttons. */
-  .pb-toast {
-    top: 8px;
-    right: 8px;
-    padding: 6px 10px;
-    font-size: 12px;
-    gap: 6px;
   }
 }
 
@@ -1800,45 +1381,6 @@
 }
 .bluetooth-modal .bt-install-btn:hover,
 .bluetooth-modal .bt-connect-btn:hover { background: #345169; }
-
-/* --- Practice heatmap row ---
-   Now hosts a CollapseSection; outer row only provides the divider+bg.
-   Inner padding is supplied by .timer-collapse-body so collapsed-state
-   shows just the header strip. */
-.timer-heatmap-row {
-  flex: 0 0 auto;
-  border-top: 1px solid #1f1f23;
-  background: #0e0e10;
-  overflow-x: auto;
-}
-.timer-heatmap-row .timer-collapse-body {
-  padding: 12px 16px;
-  /* Heatmap can be tall when expanded — let it grow rather than scroll
-     internally; the page already scrolls when needed. */
-  max-height: none;
-  overflow-y: visible;
-}
-:root[data-timer-theme="light"] .timer-heatmap-row {
-  background: #fff;
-  border-top-color: #e0e0e3;
-}
-
-/* --- Fullscreen mode --- */
-.timer-root.fullscreen .timer-topbar,
-.timer-root.fullscreen .timer-bottom {
-  display: none;
-}
-.timer-root.fullscreen .scramble-strip {
-  font-size: clamp(16px, 2.5vw, 22px);
-  padding: 18px 24px;
-}
-
-/* --- Trainer subset (OLL / PLL) --- */
-.trainer-subset-row {
-  display: flex;
-  justify-content: center;
-  padding: 4px 16px 0;
-}
 .trainer-subset-btn {
   background: #1a1a1d;
   color: #cde;
@@ -1867,7 +1409,7 @@
   flex-wrap: wrap;
   margin-bottom: 12px;
 }
-.trainer-subset-modal .trainer-subset-toolbar button {
+.trainer-subset-modal .trainer-subset-toolbar .trainer-subset-toolbar-btn {
   background: #25252a;
   color: #ededed;
   border: 1px solid #444;
@@ -1876,7 +1418,7 @@
   font-size: 12px;
   cursor: pointer;
 }
-.trainer-subset-modal .trainer-subset-toolbar button:hover {
+.trainer-subset-modal .trainer-subset-toolbar .trainer-subset-toolbar-btn:hover {
   background: #2f2f35;
   border-color: #666;
 }
@@ -1912,7 +1454,7 @@
   cursor: pointer;
   user-select: none;
 }
-.trainer-case-chip input {
+.trainer-case-chip .trainer-case-chip-input {
   margin: 0;
   cursor: pointer;
 }
@@ -2023,7 +1565,7 @@
   cursor: pointer;
 }
 .manual-radio.disabled { color: #666; cursor: not-allowed; }
-.manual-radio input { cursor: inherit; }
+.manual-radio .manual-radio-input { cursor: inherit; }
 
 .manual-entry-modal { max-width: 480px; }
 
@@ -2052,7 +1594,7 @@
   align-items: end;
   flex-wrap: wrap;
 }
-.bulk-controls select,
+.bulk-controls .bulk-controls-select,
 .bulk-controls input[type="number"] {
   background: #0e0e10;
   color: #ededed;
@@ -2098,7 +1640,7 @@
 :root[data-timer-theme="light"] .manual-input,
 :root[data-timer-theme="light"] .manual-textarea,
 :root[data-timer-theme="light"] .bulk-list,
-:root[data-timer-theme="light"] .bulk-controls select,
+:root[data-timer-theme="light"] .bulk-controls .bulk-controls-select,
 :root[data-timer-theme="light"] .bulk-controls input[type="number"] {
   background: #fff;
   color: #1d1d1f;

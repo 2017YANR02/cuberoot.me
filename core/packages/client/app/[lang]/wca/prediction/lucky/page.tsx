@@ -49,7 +49,6 @@ import { LineChart, type Series } from '../_components/charts';
 import '../_components/prediction.css';
 import '../_components/lucky.css';
 import { tr, T } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface Row {
   ev: typeof EVENTS[number];

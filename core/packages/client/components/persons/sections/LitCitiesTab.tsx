@@ -10,7 +10,6 @@ import { countryName } from '@/lib/country-name';
 import { localizeCityName } from '@/lib/cn-city-name';
 import { buildLitFromComps } from '../logic/lit_cities';
 import type { WcaCompetition, WcaPersonProfile } from '@/lib/wca-person-api';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   profile: WcaPersonProfile;

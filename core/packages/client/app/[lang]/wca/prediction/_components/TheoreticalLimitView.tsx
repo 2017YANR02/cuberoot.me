@@ -4,7 +4,6 @@ import type * as React from 'react';
 import { type TheoreticalLimit } from './theoretical_limits';
 import { formatVal, type EventMeta } from './events';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 /** 轻量 inline markdown: **bold** + `code` + escape HTML */
 function renderInline(s: string): string {

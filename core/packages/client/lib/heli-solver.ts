@@ -184,7 +184,6 @@ interface Banks {
 let BANKS: Banks | null = null;
 function buildBanks(): Banks {
   const BASE_C3 = toWord('UF UR UF UL UF UR UF UL');
-  const BASE_W3 = toWord('UF UR UF FR UF UR UF FR');
   const set5 = buildSetups(5), set3 = buildSetups(3);
 
   // corner 3-cycle bank, indexed by (src,dst,helper): word makes cp[dst]=src.

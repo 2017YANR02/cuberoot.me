@@ -61,10 +61,12 @@ export function singleIsValid(v: number): boolean {
 export interface RankFlag {
   /** 该成绩发生当时,在本 person 此 (event, metric) 历史已有成绩中的名次 (dense rank).
    *  1 = 当时是 PR (含并列), 2 = 当时第 2 快, ... null = 无效 (DNF/DNS/0)
-   *  rank 一经赋值即冻结,后续更好成绩不会"挤掉"它. */
+   *  rank 一经赋值即冻结,后续更好成绩不会"挤掉"它.
+   *  单次名次口径 = 该单次发生前本人此项目的「所有 solve」(含平均里非最佳的把)中严格更快的
+   *  不同值数 + 1 —— 非最佳把也参与,故更晚更慢的单次必然名次更靠后. */
   singleRank: number | null;
   averageRank: number | null;
-  /** 每把单次的时间序 dense rank,口径同 singleRank(在该轮开始前、本人各轮最佳单次集合里).
+  /** 每把单次的时间序 dense rank,口径同 singleRank(在该轮开始前、本人此项目全部 solve 集合里).
    *  下标对齐 result.attempts;最好那把 == singleRank(同值同名次,与单次列一致).无效次 = null. */
   attemptRanks: (number | null)[];
 }
@@ -77,6 +79,8 @@ const CHRONO_ROUND_ORDER: Record<string, number> = {
 
 /** 时间序 PR rank: 按 (comp.start_date, round, result.id) 时间序遍历本 person 全部成绩,
  *  每条新成绩 v 的 rank = (已见过的、严格优于 v 的不同值数 + 1) (dense rank, 并列同 rank).
+ *  单次维度的「已见过」集合 = 此前所有 solve(含平均里非最佳的把),不是只算各轮最佳单次;
+ *  这样一把更早更快的非最佳把(如某次平均里的 43.66)会压低后来更慢单次(如 43.88)的名次.
  *  旧成绩 rank 在它发生时就被冻结,后续更好成绩不影响.
  *  无效成绩 (DNF/DNS/0) rank = null,渲染时不出 badge. */
 export function computePrRank(
@@ -97,8 +101,8 @@ export function computePrRank(
   });
 
   const out = new Map<number, RankFlag>();
-  // 每个 (event, metric) 各维护一个 "已见过的值" 集合 (用于算 dense rank)
-  const singlesSeen = new Map<string, Set<number>>();
+  // 单次维度:维护「此前所有 solve 值」集合(含平均里非最佳的把);平均维度单独一个集合.
+  const solvesSeen = new Map<string, Set<number>>();
   const averagesSeen = new Map<string, Set<number>>();
 
   const rankFor = (v: number, seen: Set<number>): number => {
@@ -111,23 +115,28 @@ export function computePrRank(
     const eid = r.event_id;
     let singleRank: number | null = null;
     let averageRank: number | null = null;
-    // 每把单次都按「该轮开始前的 seen 集合」算名次(口径同单次列).先全部算完再把 r.best 并入,
-    // 这样最好那把(== r.best)与单次列的 singleRank 取自同一 seen、值相同 → 名次必然相等.
-    const seen = singlesSeen.get(eid) ?? new Set<number>();
-    // 逐把名次:在「该轮开始前的 round-best 集合 + 同轮更早的把」里算 dense rank.
-    //   - 用 temp(seen 的副本)逐把累积,不污染持久 round-best 集合(列口径只认各轮最佳).
-    //   - 同轮更早更快的把会压低后面把的名次(如 30.67 在前 → 38.75 不再是 PR).
-    //   - 最好那把 = 全轮最小,同轮更早的把都 ≥ 它、不影响其名次 → 仍等于单次列 singleRank.
+    // 「该轮开始前」本人此项目见过的所有 solve(含历史平均里非最佳的把).
+    const seen = solvesSeen.get(eid) ?? new Set<number>();
+    // 逐把名次:在「该轮开始前的所有 solve + 同轮更早的把」里算 dense rank.
+    //   - 用 temp(seen 的副本)逐把累积,同轮更早更快的把会压低后面把的名次.
     //   - DNF/DNS(v<0)视作 +∞:名次 = 已见 distinct 数 + 1(不加入集合).v===0(空位)不出名次.
     const temp = new Set(seen);
     const attemptRanks = (r.attempts ?? []).map(v => {
       if (isValidValue(v)) { const rk = rankFor(v, temp); temp.add(v); return rk; }
       return v < 0 ? temp.size + 1 : null;
     });
+    // 单次列名次:r.best = 本轮最快把,在「该轮开始前的所有 solve」里算 dense rank.
+    // (r.best 是本轮最小值,同轮其它把都 ≥ 它 → 与最好那把的 attemptRank 必然相等.)
     if (isValidValue(r.best)) {
       singleRank = rankFor(r.best, seen);
-      seen.add(r.best);
-      singlesSeen.set(eid, seen);
+    }
+    // 本轮所有有效把并入「已见 solve」集合(关键:非最佳的把也算,供后续单次/把名次参考).
+    // 无逐把明细时(只有 best)退化为单值,保证单次维度仍能累积.
+    const roundSolves = (r.attempts ?? []).filter(isValidValue);
+    if (roundSolves.length === 0 && isValidValue(r.best)) roundSolves.push(r.best);
+    if (roundSolves.length > 0) {
+      for (const v of roundSolves) seen.add(v);
+      solvesSeen.set(eid, seen);
     }
     if (isValidValue(r.average)) {
       const seenA = averagesSeen.get(eid) ?? new Set<number>();

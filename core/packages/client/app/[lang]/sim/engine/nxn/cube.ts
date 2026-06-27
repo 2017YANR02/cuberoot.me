@@ -89,6 +89,20 @@ export default class Cube extends THREE.Group {
         initialsMap.set(positionIdx, cubelet);
       }
     }
+    // Mirror cube only: the engine omits interior cubies, but the mirror needs the dead-
+    // center cubie to fill the central cavity that an inner-layer (E/M/S) turn exposes.
+    // A normal cube hides that cavity behind a CubeGroup panel (see group.ts); the mirror
+    // drops the panel and lets this real cubie fill it through the shared mirrorMat path,
+    // so the fill is non-uniform + core-pivoted like every other piece. It stays static
+    // (d-check leaves exist=false → GroupTable skips it), which is what we want: a box at
+    // the core, axis-aligned, never poking out.
+    if (mirror) {
+      const c = (N - 1) / 2;
+      const centerIdx = c + c * N + c * N2;
+      const center = make(centerIdx);
+      cubeletsMap.set(centerIdx, center);
+      initialsMap.set(centerIdx, center);
+    }
     const t1 = performance.now();
     this.locks = new Map();
     this.locks.set("x", new Set());
@@ -129,7 +143,7 @@ export default class Cube extends THREE.Group {
       return;
     }
     if (!this.logoMesh) {
-      const geo = new THREE.PlaneGeometry(54, 54);
+      const geo = new THREE.PlaneGeometry(48, 48);
       const mat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.rotation.x = -Math.PI / 2;             // 默认朝 +z,转成朝 +y(向上)
@@ -137,8 +151,11 @@ export default class Cube extends THREE.Group {
       this.add(mesh);
       this.logoMesh = mesh;
     }
-    // U 面 = order*32(中心块中心 (order-1)*32 + 半块 32),略抬越过贴片厚度避免 z-fight
-    this.logoMesh.position.set(0, this.order * 32 + 4, 0);
+    // U 面 = order*32(中心块中心 (order-1)*32 + 半块 32),抬到贴片顶面上方避免 z-fight。
+    // 贴片顶面高度随立体贴片开关变:厚 zScale=32 → pop-out ~3.2;平 zScale=1 → ~0.1。
+    // 跟着降 logo,否则关掉立体贴片后 logo 悬浮在平贴片上方(见反馈 #59)。
+    const lift = this.instancedRenderer.thickness ? 4 : 1;
+    this.logoMesh.position.set(0, this.order * 32 + lift, 0);
     const mat = this.logoMesh.material as THREE.MeshBasicMaterial;
     if (mat.map !== texture) { mat.map = texture; mat.needsUpdate = true; }
     this.logoMesh.visible = true;

@@ -9,7 +9,6 @@ import ArchNav from '../_components/ArchNav';
 import HistoryView from '../_components/HistoryView';
 import { TIMELINE } from '../_lib/arch-data';
 import '../architecture.css';
-import i18n from '@/i18n/i18n-client';
 
 export default function ArchHistoryPage() {
   const { i18n } = useTranslation();

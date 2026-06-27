@@ -14,7 +14,6 @@ import { CheckCircle2, Flame } from 'lucide-react';
 import type { Solve } from '../_lib/types';
 import { countSolvesToday, consecutiveGoalDays } from '../_lib/storage/goals';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   solves: Solve[];

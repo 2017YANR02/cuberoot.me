@@ -12,7 +12,6 @@ import { summarize, rollingStats, DNF } from './stats';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { shouldAutoAdvance } from '../engine/auto_advance';
 import './average_mode.css';
-import i18n from '@/i18n/i18n-client';
 
 interface Props {
   event?: string;
@@ -106,7 +105,7 @@ export default function AverageMode({ event }: Props) {
             <div className="avg-input-actions">
               <button
                 type="button"
-                className="avg-btn avg-btn-ghost"
+                className="avg-btn avg-btn-ghost calc-btn"
                 onClick={() => setRaw(PRESET_DEMO)}
                 title={t('载入示例', 'Load demo')}
               >
@@ -115,7 +114,7 @@ export default function AverageMode({ event }: Props) {
               </button>
               <button
                 type="button"
-                className="avg-btn avg-btn-ghost"
+                className="avg-btn avg-btn-ghost calc-btn"
                 onClick={() => setRaw('')}
                 disabled={!raw}
                 title={t('清空', 'Clear')}

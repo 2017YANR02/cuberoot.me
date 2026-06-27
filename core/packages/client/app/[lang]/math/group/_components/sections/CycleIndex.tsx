@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import type { Lang } from '../primitives';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // ── Categorical palette ────────────────────────────────────────────────────────
 const PALETTE = ['#8B2E3C','#2A4D69','#3F7050','#B8860B','#6B4E9C','#C2410C','#5C7CA0','#9C4E6B'];
@@ -892,7 +891,7 @@ function monomialPlain(exponents: number[]): string {
 // Widget 2: Necklace / Bracelet Visualiser
 // ══════════════════════════════════════════════════════════════════════════════
 
-function NecklaceVisualiser({ lang }: { lang: Lang }) {
+function NecklaceVisualiser({}: { lang: Lang }) {
   const [n, setN] = useState(5);
   const [gType, setGType] = useState<'Cn' | 'Dn'>('Cn');
   const k = 2;

@@ -626,7 +626,7 @@ function RootsPermutationPanel({ lang }: { lang: Lang }) {
   );
 }
 
-function ComplexPlaneSVG({ roots, perm, lang }: { roots: RootDef[]; perm: number[]; lang: Lang }) {
+function ComplexPlaneSVG({ roots, perm }: { roots: RootDef[]; perm: number[]; lang: Lang }) {
   const W = 340, H = 300;
   const cx = W / 2, cy = H / 2;
 
@@ -839,7 +839,7 @@ function LatticeAndVerdictPanel({ lang }: { lang: Lang }) {
 // Left column: subgroup Hasse diagram (top=G, bottom={e})
 // Right column: fixed field lattice, flipped (top=K, bottom=L) — mirrors the reversal
 function LatticeSVG({
-  subgroups, edges, hoveredId, setHoveredId, showNormal, lang,
+  subgroups, edges, hoveredId, setHoveredId, showNormal,
 }: {
   subgroups: SubgroupNode[];
   edges: SubgroupEdge[];
@@ -1002,7 +1002,7 @@ function LatticeSVG({
   );
 }
 
-function SolvabilityChainSVG({ solv, step, lang }: { solv: SolvabilitySeries; step: number; lang: Lang }) {
+function SolvabilityChainSVG({ solv, step }: { solv: SolvabilitySeries; step: number; lang: Lang }) {
   const chain = solv.chain.slice(0).reverse(); // bottom-up: {e}, ..., G
   const revealed = chain.slice(0, step + 1);
   const BOX_W = 120, BOX_H = 44, ARROW_H = 36;
@@ -1146,7 +1146,7 @@ function CubeDisambiguatorPanel({ lang }: { lang: Lang }) {
   );
 }
 
-function PuzzleSolvableView({ lang }: { lang: Lang }) {
+function PuzzleSolvableView({}: { lang: Lang }) {
   return (
     <div>
       <svg viewBox="0 0 340 140" width="100%" style={{ display: 'block', margin: '12px 0', maxWidth: 340 }}>

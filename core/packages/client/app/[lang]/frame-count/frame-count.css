@@ -24,8 +24,8 @@
 }
 
 /* 输入框仍允许选中 */
-.frame-count-page input,
-.frame-count-page textarea {
+.frame-count-page .fc-page-input,
+.frame-count-page .fc-page-textarea {
   -webkit-user-select: text;
   user-select: text;
   -webkit-touch-callout: default;
@@ -1504,7 +1504,7 @@
   cursor: pointer;
   user-select: none;
 }
-.fc-decode-error-toggle input {
+.fc-decode-error-toggle .fc-decode-error-toggle-input {
   accent-color: #d77757;
   cursor: pointer;
 }
@@ -1620,11 +1620,9 @@
     display: none;
   }
   /* iOS Safari: input font-size < 16px 会触发自动放大整页. 强制 16px 防止 zoom. */
-  .frame-count-page input,
-  .frame-count-page input[type="text"],
-  .frame-count-page input[type="number"],
-  .frame-count-page select,
-  .frame-count-page textarea,
+  .frame-count-page .fc-page-input,
+  .frame-count-page .fc-page-select,
+  .frame-count-page .fc-page-textarea,
   .fc-toolbar-time,
   .fc-tab-input {
     font-size: 16px !important;

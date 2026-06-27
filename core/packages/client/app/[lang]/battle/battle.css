@@ -110,34 +110,6 @@
 }
 
 /* ==========================================================
-   返回按钮（左上角）
-   ========================================================== */
-
-.back-btn {
-    position: fixed;
-    top: 8px;
-    left: 8px;
-    z-index: 100;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--foreground) 10%, transparent);
-    border: none;
-    color: var(--foreground);
-    font-size: 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background 0.2s;
-}
-
-.back-btn:hover {
-    background: color-mix(in srgb, var(--foreground) 20%, transparent);
-}
-
-/* ==========================================================
    打乱公式显示
    ========================================================== */
 
@@ -296,12 +268,6 @@
 
 .time-display.penalty-dnf {
     color: var(--timer-dnf);
-}
-
-.trophy-icon {
-    font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
-    font-size: 0.55em;
-    vertical-align: middle;
 }
 
 /* ==========================================================
@@ -736,36 +702,6 @@
     color: var(--destructive);
 }
 
-/* NOTE: 模式分段选择器 */
-.mode-seg {
-    display: inline-flex;
-    border: 1px solid var(--border-strong);
-    border-radius: 8px;
-    overflow: hidden;
-    background: transparent;
-}
-
-.mode-seg-btn {
-    padding: 8px 24px;
-    background: transparent;
-    border: none;
-    color: var(--muted-foreground);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    white-space: nowrap;
-}
-
-.mode-seg-btn.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-}
-
-.mode-seg-btn:hover:not(.active) {
-    background: color-mix(in srgb, var(--foreground) 5%, transparent);
-}
-
 .settings-group {
     margin-bottom: 24px;
 }
@@ -894,7 +830,7 @@
     height: 24px;
 }
 
-.switch input {
+.switch .switch-input {
     opacity: 0;
     width: 0;
     height: 0;
@@ -962,28 +898,6 @@ body.solo .key-hint {
 }
 
 /* ==========================================================
-   Solo 统计面板
-   ========================================================== */
-
-.solo-stats-display {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: clamp(0.65rem, 2.2vw, 0.85rem);
-    color: var(--muted-foreground);
-    text-align: center;
-    min-height: 1.2em;
-    letter-spacing: 0.02em;
-    line-height: 1.6;
-}
-
-/* NOTE: memo 显示 */
-.memo-display {
-    font-family: Inter, sans-serif;
-    font-size: 0.85rem;
-    color: var(--signal-info);
-    margin-top: 4px;
-}
-
-/* ==========================================================
    底部导航栏（Solo 模式）
    ========================================================== */
 
@@ -1042,55 +956,6 @@ body.solo .player-area {
 /* NOTE: Solo 模式下打乱图往上推 */
 body.solo .scramble-img {
     bottom: 64px;
-}
-
-/* ==========================================================
-   Goal 进度条
-   ========================================================== */
-
-.goal-progress {
-    position: relative;
-    height: 18px;
-    background: color-mix(in srgb, var(--foreground) 6%, transparent);
-    border-radius: 9px;
-    margin-top: 6px;
-    overflow: hidden;
-}
-
-.goal-bar {
-    height: 100%;
-    border-radius: 9px;
-    transition: width 0.5s ease;
-}
-
-.goal-label {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 11px;
-    line-height: 18px;
-    color: var(--foreground);
-    text-shadow: 0 1px 2px color-mix(in srgb, var(--background) 70%, transparent);
-}
-
-/* ==========================================================
-   统计行可点击 ao 标签
-   ========================================================== */
-
-.stat-ao {
-    cursor: pointer;
-    transition: color 0.15s;
-}
-
-.stat-ao:hover {
-    color: var(--accent);
-    text-decoration: underline;
-}
-
-.stat-sep {
-    color: var(--faint-foreground);
 }
 
 /* ==========================================================
@@ -1198,34 +1063,6 @@ body.solo .scramble-img {
 .vs-separator {
     font-size: 0.7rem;
     color: var(--faint-foreground);
-    text-align: center;
-}
-
-/* NOTE: 双方项目不同时,各自一行 scramble */
-.vs-scrambles {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    white-space: normal;
-    word-break: break-word;
-}
-
-.vs-scramble-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    line-height: 1.3;
-}
-
-.vs-scramble-tag {
-    flex-shrink: 0;
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: var(--muted-foreground);
-    background: color-mix(in srgb, var(--foreground) 6%, transparent);
-    padding: 1px 4px;
-    border-radius: 3px;
-    min-width: 18px;
     text-align: center;
 }
 
@@ -1419,7 +1256,6 @@ body.solo .scramble-img {
     }
 }
 
-
 .history-header {
     display: flex;
     align-items: center;
@@ -1449,27 +1285,6 @@ body.solo .scramble-img {
     color: var(--muted-foreground);
     text-align: right;
     font-family: 'Inter', sans-serif;
-}
-
-.history-close-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    border: 1px solid var(--border-strong);
-    background: transparent;
-    color: var(--muted-foreground);
-    font-size: 0.85rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s ease;
-    flex-shrink: 0;
-}
-
-.history-close-btn:hover {
-    border-color: var(--destructive);
-    color: var(--destructive);
 }
 
 .history-list {
@@ -1552,22 +1367,6 @@ body.solo .scramble-img {
     font-size: 0.85rem;
 }
 
-.history-action-btn {
-    background: none;
-    border: 1px solid var(--border-strong);
-    border-radius: 6px;
-    color: var(--foreground);
-    font-size: 0.85rem;
-    padding: 2px 8px;
-    cursor: pointer;
-    margin-left: 4px;
-}
-
-.history-action-btn:hover {
-    background: color-mix(in srgb, var(--foreground) 8%, transparent);
-    border-color: var(--muted-foreground);
-}
-
 .h-delete {
     background: none;
     border: none;
@@ -1645,36 +1444,6 @@ body.solo .scramble-img {
     display: flex;
     align-items: center;
     gap: 3px;
-}
-
-/* NOTE: Ao 选择器 chip 按钮 */
-.ao-chip-bar {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    padding: 8px 8px 4px;
-    flex-wrap: wrap;
-}
-
-.ao-chip {
-    background: transparent;
-    border: 1px solid var(--border-strong);
-    border-radius: 12px;
-    color: var(--muted-foreground);
-    font-size: 0.7rem;
-    padding: 2px 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.ao-chip.active {
-    border-color: var(--chip-color);
-    color: var(--chip-color);
-    background: color-mix(in srgb, var(--foreground) 5%, transparent);
-}
-
-.ao-chip:hover {
-    background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 /* ==========================================================
@@ -1990,30 +1759,6 @@ body.solo .scramble-img {
     font-size: 12px;
     margin-bottom: 8px;
     text-align: center;
-}
-
-.session-overview-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-
-.session-overview-table th {
-    color: var(--accent);
-    font-weight: 600;
-    padding: 6px 8px;
-    border-bottom: 1px solid var(--border-default);
-    text-align: left;
-}
-
-.session-overview-table td {
-    padding: 6px 8px;
-    color: var(--muted-foreground);
-    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 5%, transparent);
-}
-
-.session-overview-table tr:hover td {
-    background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 
 .load-more-wrapper {

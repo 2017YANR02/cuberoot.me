@@ -50,7 +50,7 @@ function cellClass(role: LetterCell['role']): string {
 
 // Render LetterCell[] grouped in pairs (e.g. "UF DR | KP"), colour-coding the
 // cycle start/end stickers. Falls back to a muted "无 / none" when empty.
-function Letters({ cells, isZh }: { cells: LetterCell[]; isZh: boolean }): JSX.Element {
+function Letters({ cells }: { cells: LetterCell[]; isZh: boolean }): JSX.Element {
   if (cells.length === 0) {
     return <span className="bld-helper-empty">{tr({ zh: '无', en: 'none'
     })}</span>;
@@ -126,6 +126,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
                 <label htmlFor="bldh-cbuf">{tr({ zh: '角缓冲', en: 'Corner buffer'
                 })}</label>
                 <select
+                  className="bld-helper-cfg-select"
                   id="bldh-cbuf"
                   value={config.cBuf}
                   onChange={(e) => setConfig({ cBuf: e.target.value })}
@@ -137,6 +138,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
                 <label htmlFor="bldh-ebuf">{tr({ zh: '棱缓冲', en: 'Edge buffer'
                 })}</label>
                 <select
+                  className="bld-helper-cfg-select"
                   id="bldh-ebuf"
                   value={config.eBuf}
                   onChange={(e) => setConfig({ eBuf: e.target.value })}
@@ -163,6 +165,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
                 })}</label>
                   <div className="bld-helper-input-wrap">
                     <input
+                      className="bld-helper-input"
                       id="bldh-corder"
                       value={config.cOrder}
                       onChange={(e) => setConfig({ cOrder: upper(e.target.value) })}
@@ -177,6 +180,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
                 })}</label>
                   <div className="bld-helper-input-wrap">
                     <input
+                      className="bld-helper-input"
                       id="bldh-eorder"
                       value={config.eOrder}
                       onChange={(e) => setConfig({ eOrder: upper(e.target.value) })}
@@ -265,7 +269,7 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
         )}
 
         <div className="modal-actions">
-          <button className="primary" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
+          <button className="primary modal-action-btn" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
       </div>

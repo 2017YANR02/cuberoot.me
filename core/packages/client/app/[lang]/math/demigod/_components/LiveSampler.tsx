@@ -18,7 +18,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { randomScrambleForEvent } from 'cubing/scramble';
 import { TeX } from '../../god/_components/Tex';
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   isZh: boolean;
@@ -138,7 +137,7 @@ export default function LiveSampler({ isZh, onSamples }: Props) {
           {[100, 500, 2000].map((n) => (
             <button key={n}
                     type="button"
-                    className={target === n ? 'is-active' : ''}
+                    className={`dg-radio-btn${target === n ? ' is-active' : ''}`}
                     onClick={() => setTarget(n)}>
               +{n}
             </button>

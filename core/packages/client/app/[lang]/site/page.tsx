@@ -20,7 +20,6 @@ import { isAdmin } from '@/lib/auth-store';
 import { listSites, deleteSite, reorderGroup } from './nav_sites_api';
 import SiteEditor from './SiteEditor';
 import './sites.css';
-import i18n from '@/i18n/i18n-client';
 
 function YouTubeBadge() {
   return (

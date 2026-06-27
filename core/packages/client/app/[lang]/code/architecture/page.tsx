@@ -9,7 +9,6 @@ import ArchNav from './_components/ArchNav';
 import { SystemTopoSVG, PackageDepsSVG } from './_components/ArchSvgs';
 import { LAYERS, PACKAGES, MODULES } from './_lib/arch-data';
 import './architecture.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 export default function ArchitecturePage() {

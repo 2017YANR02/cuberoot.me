@@ -21,7 +21,6 @@ import { loadPersonsIndex, searchLocalPersons, isPersonsIndexReady } from '@cube
 import './comp-picker.css';
 import './wca-person-picker.css';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 const DEBOUNCE_MS = 300;
 const MAX_COMPS = 12;
@@ -193,7 +192,7 @@ export function CompCuberPicker({
       <input
         ref={inputRef}
         type="text"
-        className={query ? 'comp-picker-input--with-clear' : ''}
+        className={`comp-picker-input${query ? ' comp-picker-input--with-clear' : ''}`}
         value={query}
         onChange={e => {
           const v = e.target.value;

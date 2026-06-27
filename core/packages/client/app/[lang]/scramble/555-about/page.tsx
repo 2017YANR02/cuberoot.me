@@ -9,11 +9,9 @@
  * 流程图用 CSS box + Unicode 箭头。
  */
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './scramble_555_about.css';
-import i18n from "@/i18n/i18n-client";
 import { useT } from "@/hooks/useT";
 
 interface StepProps {
@@ -77,7 +75,6 @@ function Stat({ value, label, hint }: StatProps) {
 }
 
 export default function Scramble555AboutPage() {
-  const { i18n } = useTranslation();
   useDocumentTitle('5×5 打乱方法', '5×5 Scramble Methods');
   const t = useT();
 

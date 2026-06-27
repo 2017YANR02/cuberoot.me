@@ -33,28 +33,12 @@
     max-width: none;
 }
 
-/* ── Back + Header ── */
-.calendar-page .back-link {
-    display: inline-flex;
-    align-items: center;
-    color: var(--text-sub);
-    text-decoration: none;
-    font-size: 0.85rem;
-    margin-bottom: 1rem;
-    transition: color 0.15s;
-}
-.calendar-page .back-link:hover { color: var(--accent); }
-
 .calendar-page .upcoming-header {
     margin-bottom: 1.25rem;
     display: grid;
     grid-template-columns: 1fr auto;
     column-gap: 1rem;
     align-items: start;
-}
-.calendar-page .upcoming-header-right {
-    grid-column: 2;
-    grid-row: 1 / span 2;
 }
 .calendar-page .upcoming-title {
     font-family: var(--font-serif);
@@ -109,7 +93,7 @@
     min-width: 180px;
     max-width: 320px;
 }
-.calendar-page .toolbar .search-box-comp input {
+.calendar-page .toolbar .search-box-comp .comp-picker-input {
     width: 100%;
     box-sizing: border-box;
     background: var(--surface);
@@ -123,7 +107,7 @@
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
 }
-.calendar-page .toolbar .search-box-comp input:focus {
+.calendar-page .toolbar .search-box-comp .comp-picker-input:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
 }
@@ -180,20 +164,6 @@
 .calendar-page .search-box:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px var(--accent-soft);
-}
-/* 比赛搜索框 + 一键清空 ×（遵循全局规则：选择/搜索型输入有非空值时必出 ×） */
-.calendar-page .search-box-wrap {
-    position: relative;
-    display: flex;
-    flex: 1;
-    min-width: 180px;
-    max-width: 320px;
-}
-.calendar-page .search-box-wrap .search-box {
-    flex: 1;
-    min-width: 0;
-    max-width: none;
-    padding-right: 28px;
 }
 /* NOTE: RegionPicker 默认 width:220px,这里在 calendar 工具栏下让它走 min-width + flex */
 .calendar-page .country-filter { width: auto; min-width: 200px; }
@@ -1013,19 +983,6 @@
 
 .calendar-page .wr-current { color: var(--wr-current); }
 .calendar-page .wr-former { color: var(--wr-former); }
-
-.calendar-page .wr-legend {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.7rem;
-    color: var(--text-sub);
-    margin-bottom: 0.6rem;
-}
-.calendar-page .wr-legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
 .calendar-page .wr-swatch {
     display: inline-block;
     width: 10px;
@@ -1345,8 +1302,6 @@
     overflow: hidden;
 }
 .calendar-page .cl-limit-cell { color: var(--text-sub); font-weight: 500; }
-/* 满员率列：实际/上限 百分比，弱色次值 */
-.calendar-page .cl-ratio-cell { color: var(--text-sub); font-weight: 500; }
 /* 列表表头里人数 / 上限列头(可点击排序)：右对齐，压在下方右对齐数字上方；弱色 */
 .calendar-page .cl-col-icon {
     display: inline-flex;

@@ -545,7 +545,6 @@ function DerivedSeriesSVG({
   lcTerms,
   stabilized,
   showLC,
-  lang,
 }: {
   derivedTerms: SeriesTerm[];
   lcTerms: SeriesTerm[];

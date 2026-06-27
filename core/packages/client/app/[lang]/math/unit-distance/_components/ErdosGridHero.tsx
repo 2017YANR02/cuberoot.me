@@ -14,7 +14,6 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import i18n from '@/i18n/i18n-client';
 import { tr, T } from '@/i18n/tr';
 
 const S = 20;                 // 20 × 20 grid → 400 points
@@ -52,7 +51,7 @@ function buildEdges(k: number): Edge[] {
 }
 
 export default function ErdosGridHero() {
-  const { i18n } = useTranslation();
+  useTranslation();
   const [k, setK] = useState(65);
 
   const pts = useMemo(() => {

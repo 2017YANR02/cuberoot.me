@@ -25,7 +25,6 @@ const CONTINENT_NAME: Record<string, { zh: string; en: string; }> = {
   '_Oceania': { zh: '大洋洲', en: 'Oceania' },
   '_South America': { zh: '南美', en: 'S. America' },
 };
-import i18n from "@/i18n/i18n-client";
 
 interface Props {
   profile: WcaPersonProfile;

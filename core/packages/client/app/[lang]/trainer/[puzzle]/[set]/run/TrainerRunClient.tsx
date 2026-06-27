@@ -19,7 +19,6 @@ import { resolveAlgPuzzle } from '../../../_events';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../../trainer.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 const TIMER_DELAY_MS = 0;
 

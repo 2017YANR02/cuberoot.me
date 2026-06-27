@@ -252,6 +252,7 @@ export default function AdjustStage() {
             </div>
             <label className="mosaic-checkbox-row">
               <input
+                className="mosaic-checkbox-input"
                 type="checkbox"
                 checked={pdfConfig.bottomToTop}
                 onChange={e => setPdfConfig({ bottomToTop: e.target.checked })}
@@ -260,6 +261,7 @@ export default function AdjustStage() {
             </label>
             <label className="mosaic-checkbox-row">
               <input
+                className="mosaic-checkbox-input"
                 type="checkbox"
                 checked={pdfConfig.drawLetters}
                 onChange={e => {
@@ -271,6 +273,7 @@ export default function AdjustStage() {
             </label>
             <label className="mosaic-checkbox-row">
               <input
+                className="mosaic-checkbox-input"
                 type="checkbox"
                 checked={pdfConfig.bwPrinter}
                 onChange={e => {

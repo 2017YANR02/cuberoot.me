@@ -3,7 +3,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // ─── Geometry helpers ────────────────────────────────────────────────────────
 
@@ -404,7 +403,6 @@ function vertexPermutation(R: Mat3, verts: Vec3[]): number[] {
 // ─── Component: Widget 1 — Cube body-diagonal S4 explorer ───────────────────
 
 function CubeS4Widget() {
-  const lang = useLang();
   const [rotMat, setRotMat] = useState<Mat3>(ID);
   const [seenKeys, setSeenKeys] = useState<Set<string>>(() => new Set([matKey(ID)]));
   const [lastPerm, setLastPerm] = useState<number[]>([0, 1, 2, 3]);

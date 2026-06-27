@@ -23,7 +23,6 @@ import { BatchSolvePanel, SolveModeToggle, type BatchSpec } from '../_components
 import '../_components/puzzle_optimal_solver.css';
 import './ivy_solver.css';
 
-const SIA222_NOTE = "U R F (+ '/2) … z2 y … U R F";
 // quick batch validation: tokens are U/R/F·{"","2","'"} or the literal z2 / y separator pieces.
 function badTokenIn(line: string): string | null {
   for (const tok of line.trim().split(/\s+/)) {

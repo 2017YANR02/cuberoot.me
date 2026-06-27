@@ -18,7 +18,7 @@ interface Props {
   children?: ReactNode;
 }
 
-export default function HighOrderNxNInput({ isZh, onAdd, children }: Props) {
+export default function HighOrderNxNInput({ onAdd, children }: Props) {
   const [input, setInput] = useState<string>('');
   const commit = () => {
     const n = parseInt(input, 10);

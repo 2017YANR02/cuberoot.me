@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { LangCtx, L, type Lang } from '../_intro/Lang';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './sql_intro.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 // Stylized cylinder DB logo — three stacked ellipses with a SELECT wordmark

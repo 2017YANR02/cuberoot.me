@@ -16,12 +16,6 @@
   justify-content: space-between;
 }
 
-.wiki-header-right {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
 .wiki-back {
   display: inline-flex;
   align-items: center;
@@ -101,24 +95,6 @@
 
 .wiki-search-input:focus {
   border-color: var(--accent);
-}
-
-.wiki-search-clear {
-  position: absolute;
-  right: 8px;
-  border: none;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  padding: 4px;
-  display: inline-flex;
-  align-items: center;
-  border-radius: 4px;
-}
-
-.wiki-search-clear:hover {
-  color: var(--foreground);
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
 .wiki-search-meta {

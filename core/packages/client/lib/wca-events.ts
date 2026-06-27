@@ -2,7 +2,6 @@
 
 import { cstimerEventDisplayName } from './cstimer-scramble';
 import { shapeModDisplayName } from './shape-mod-scramble';
-import i18n from "@/i18n/i18n-client";
 
 // NOTE: 仓库里历史上有 3 套短名约定，全部归一化到 WCA 标准 id（333 / 222 / 333oh ...）
 //   - recon 数据：3x3 / 2x2 / 3bld / oh / mbld / pyra / mega / fmc ...

@@ -228,7 +228,7 @@ export function ItemMenu({ items }: { items: Array<{ icon: ReactNode; label: str
       {open && (
         <div className="yt-comment-menu">
           {items.map((it, i) => (
-            <button key={i} type="button" onClick={() => { setOpen(false); it.onClick(); }}>
+            <button key={i} type="button" className="yt-comment-menu-item" onClick={() => { setOpen(false); it.onClick(); }}>
               {it.icon} {it.label}
             </button>
           ))}

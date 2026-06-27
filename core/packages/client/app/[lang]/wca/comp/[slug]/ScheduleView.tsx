@@ -13,7 +13,6 @@ import {
   type ScheduleData, type DayColumn,
 } from '@/lib/comp-schedule';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 const WCA_REGS = 'https://www.worldcubeassociation.org/regulations';
 
@@ -124,13 +123,14 @@ export function ScheduleControls({ view, onViewChange, detailsExpanded, onToggle
   );
 }
 
-function DetailsToggle({ expanded, onToggle, isZh }: {
+function DetailsToggle({ expanded, onToggle }: {
   expanded: boolean; onToggle: () => void; isZh: boolean;
 }) {
   return (
     <label className="sched-details-toggle">
       <span className={`sched-switch${expanded ? ' is-on' : ''}`}>
         <input
+          className="sched-switch-input"
           type="checkbox"
           checked={expanded}
           onChange={onToggle}
@@ -145,7 +145,7 @@ function DetailsToggle({ expanded, onToggle, isZh }: {
   );
 }
 
-function ScheduleToolbar({ view, onChange, isZh }: {
+function ScheduleToolbar({ view, onChange }: {
   view: View; onChange: (v: View) => void; isZh: boolean;
 }) {
   return (

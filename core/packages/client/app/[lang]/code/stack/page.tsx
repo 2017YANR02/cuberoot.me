@@ -5,7 +5,6 @@ import { useTranslation } from 'react-i18next';
 import { STACK_TOOLS_META, type StackToolMeta } from './_lib/stack_meta';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './stack_landing.css';
-import i18n from '@/i18n/i18n-client';
 import { tr } from '@/i18n/tr';
 
 const GROUPS: { id: 'frontend' | 'backend' | 'edge' | 'dev'; zh: { title: string; sub: string }; en: { title: string; sub: string } }[] = [

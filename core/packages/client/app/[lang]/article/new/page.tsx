@@ -18,7 +18,6 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore } from '@/lib/auth-store';
 import '../article-list.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // ArticleEditor pulls in CodeMirror; keep it out of any server / SSG path.
 const ArticleEditor = dynamic(() => import('@/components/article/ArticleEditor'), {

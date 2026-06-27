@@ -171,7 +171,7 @@ a.schema-trilogy-node:hover {
   max-width: 360px;
   margin-bottom: 0.85rem;
 }
-.schema-search input {
+.schema-search .schema-search-input {
   width: 100%;
   box-sizing: border-box;
   padding: 0.55rem 2.2rem 0.55rem 0.85rem;
@@ -182,7 +182,7 @@ a.schema-trilogy-node:hover {
   font-size: 0.9rem;
   font-family: var(--font-mono, monospace);
 }
-.schema-search input:focus {
+.schema-search .schema-search-input:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);

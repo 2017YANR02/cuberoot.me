@@ -22,7 +22,6 @@ import OneLookPanel from './_components/OneLookPanel';
 import '../trainer.css';
 import './skewb.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // Same selector vocabulary as the [puzzle] hub: every alg-set puzzle with ≥1
 // catalog set, plus 333bf (3BLD). SkewbSkills shadows the skewb hub, so we

@@ -20,7 +20,6 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchArticleReports, deleteArticle, type ArticleReportRow } from '@/lib/article-api';
 import './reports.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 export default function ArticleReportsPage() {
   const { t, i18n } = useTranslation();

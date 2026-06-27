@@ -56,7 +56,6 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
   transition: color .15s;
 }
 .gt-back:hover { color: var(--accent); }
-.gt-topbar-right { display: flex; gap: 8px; align-items: center; }
 
 /* ── Hero ───────────────────────────────────────────────────────────────── */
 .gt-hero {
@@ -102,53 +101,6 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
   border-top: 1px solid var(--rule);
   padding-top: 16px;
   margin-top: 32px;
-}
-
-/* ── TOC ────────────────────────────────────────────────────────────────── */
-.gt-toc {
-  max-width: 880px;
-  margin: 0 auto 72px;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  background: var(--bg-elev);
-  padding: 28px 36px;
-}
-.gt-toc-title {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  margin: 0 0 16px;
-}
-.gt-toc-list {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px 28px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.gt-toc-list a {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  color: var(--ink-dim);
-  text-decoration: none;
-  font-size: 15px;
-  font-family: var(--serif);
-  padding: 4px 0;
-  transition: color .15s;
-}
-.gt-toc-list a:hover { color: var(--accent); }
-.gt-toc-num {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--ink-faint);
-  flex-shrink: 0;
-}
-@media (max-width: 640px) {
-  .gt-toc-list { grid-template-columns: 1fr; }
 }
 
 /* ── Index landing panels (only on /math/group) ────────────────────────── */
@@ -573,13 +525,6 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
   color: var(--ink);
   padding: 8px 16px;
   line-height: 1.8;
-}
-.gt-math-display .gt-eq-num {
-  float: right;
-  color: var(--ink-faint);
-  font-family: var(--mono);
-  font-style: normal;
-  font-size: .8em;
 }
 .gt-mono {
   font-family: var(--mono);
@@ -1224,7 +1169,6 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
 }
 .gt-recipe:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--bg-elev)); }
 .gt-recipe-title { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-bottom: 4px; letter-spacing: .04em; }
-.gt-recipe-body { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); }
 
 /* ── End mark ──────────────────────────────────────────────────────────── */
 .gt-end-mark {
@@ -1445,31 +1389,6 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
   background: var(--bg-elev);
   border-radius: 6px;
 }
-.gt-scale-bar {
-  display: flex;
-  align-items: stretch;
-  height: 48px;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  overflow: hidden;
-  margin: 16px 0;
-}
-.gt-scale-seg {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--mono);
-  font-size: 10px;
-  border-right: 1px solid var(--bg);
-  text-align: center;
-  padding: 4px 6px;
-  color: white;
-  line-height: 1.2;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.gt-scale-seg:last-child { border-right: 0; }
 
 /* ── Proof box ─────────────────────────────────────────────────────────── */
 .gt-proof {
@@ -1866,7 +1785,6 @@ html[data-theme=dark] .gt-page { --accent: #D97082; --accent-2: #6B8FCE; --gold:
   stroke-width: 3;
 }
 .gt-symgroup-cube-edge { stroke: var(--ink); stroke-width: 1; fill: none; }
-.gt-symgroup-cube-face { fill: color-mix(in srgb, var(--accent) 6%, transparent); stroke: var(--ink-faint); stroke-width: .8; }
 .gt-symgroup-vertex { fill: var(--ink); }
 .gt-symgroup-legend {
   display: flex;
@@ -3578,25 +3496,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   max-width: 640px;
 }
 
-/* Petersen graph */
-.gt-petersen {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 24px;
-  align-items: center;
-}
-.gt-petersen-side {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.gt-petersen-note {
-  font-size: 14px;
-  color: var(--ink-dim);
-  line-height: 1.7;
-  max-width: 420px;
-}
-
 /* §30 Möbius playground */
 .gt-mobius {
   display: grid;
@@ -4071,8 +3970,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
 
 ---
 
-
-
 /* ═══════════════════════════════════════════════════════════════════════ */
 /* §28  Expansion CSS additions */
 /* ═══════════════════════════════════════════════════════════════════════ */
@@ -4264,8 +4161,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   .gt-peg-eu-cell         { width: 30px; height: 30px; font-size: 11px; }
   .gt-peg-eu-cell.even-shell { width: 25px; height: 25px; border-width: 2px; }
 }
-
-
 
 /* ═══════════════════════════════════════════════════════════════════════ */
 /* §29  Expansion CSS additions */
@@ -4479,8 +4374,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   .gt-ham-gray-family-row { grid-template-columns: 24px 1fr 50px; }
 }
 
-
-
 /* ═══════════════════════════════════════════════════════════════════════ */
 /* §30  Expansion CSS additions */
 /* ═══════════════════════════════════════════════════════════════════════ */
@@ -4510,7 +4403,7 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   font-family: var(--mono);
   font-size: 14px;
 }
-.gt-pgl-cross-pick select {
+.gt-pgl-cross-pick .gt-cross-select {
   font-family: var(--mono);
   font-size: 16px;
   padding: 4px 8px;
@@ -4812,8 +4705,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
 
 ---
 
-
-
 /* ═══════════════════════════════════════════════════════════════════════ */
 /* §31  Expansion CSS additions */
 /* ═══════════════════════════════════════════════════════════════════════ */
@@ -4847,7 +4738,7 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   gap: 6px;
   margin-top: 6px;
 }
-.gt-rot-turner-btns button {
+.gt-rot-turner-btns .gt-turner-btn {
   padding: 4px 12px;
   background: var(--bg-muted);
   border: 1px solid var(--rule);
@@ -4858,10 +4749,10 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   cursor: pointer;
   transition: background 120ms;
 }
-.gt-rot-turner-btns button:hover:not(:disabled) {
+.gt-rot-turner-btns .gt-turner-btn:hover:not(:disabled) {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
-.gt-rot-turner-btns button:disabled {
+.gt-rot-turner-btns .gt-turner-btn:disabled {
   opacity: .4;
   cursor: not-allowed;
 }
@@ -5007,7 +4898,7 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   gap: 6px;
   margin-left: auto;
 }
-.gt-rot-ss-btns button {
+.gt-rot-ss-btns .gt-ss-btn {
   padding: 4px 12px;
   background: var(--bg-muted);
   border: 1px solid var(--rule);
@@ -5017,7 +4908,7 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   color: var(--ink);
   cursor: pointer;
 }
-.gt-rot-ss-btns button:hover {
+.gt-rot-ss-btns .gt-ss-btn:hover {
   background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .gt-rot-ss-btns .gt-rot-reset { color: var(--ink-dim); }
@@ -5078,7 +4969,7 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   display: flex;
   gap: 6px;
 }
-.gt-rot-wilson-tabs button {
+.gt-rot-wilson-tabs .gt-wilson-tab {
   padding: 5px 14px;
   background: var(--bg-muted);
   border: 1px solid var(--rule);
@@ -5088,7 +4979,7 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
   color: var(--ink);
   cursor: pointer;
 }
-.gt-rot-wilson-tabs button.is-active {
+.gt-rot-wilson-tabs .gt-wilson-tab.is-active {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
@@ -5117,8 +5008,6 @@ html[data-theme=dark] .gt-coset-cell { --coset-l: 40%; }
 }
 
 ---
-
-
 
 /* ═══════════════════════════════════════════════════════════════════════ */
 /* §32  Expansion CSS additions */

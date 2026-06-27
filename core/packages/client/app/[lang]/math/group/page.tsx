@@ -27,7 +27,6 @@ import {
 } from './_components/cube_state';
 import './group_theory.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // ── Extended sections §33–§62 (self-contained files, lazy-loaded per slug so the
 //    base page chunk stays lean — only the active section's code is fetched) ──
@@ -323,7 +322,7 @@ function CubeStateInspector() {
   );
 }
 
-function formatCycle(cycles: number[], lang: Lang): string {
+function formatCycle(cycles: number[], _lang: Lang): string {
   if (cycles.length === 0) return tr({ zh: '恒等 (无循环)', en: 'identity (no cycles)'
 });
   return cycles.map(c => `${c}-cycle`).join(' × ');
@@ -331,7 +330,6 @@ function formatCycle(cycles: number[], lang: Lang): string {
 
 // ── §6 InvariantInspector ──────────────────────────────────────────────────
 function InvariantInspector() {
-  const lang = useLang();
   const [alg, setAlg] = useState("R U R' U'");
   const [breakCo, setBreakCo] = useState(false);
   const [breakEo, setBreakEo] = useState(false);
@@ -411,7 +409,6 @@ function InvariantInspector() {
 
 // ── §7 PeriodExplorer ──────────────────────────────────────────────────────
 function PeriodExplorer() {
-  const lang = useLang();
   const [alg, setAlg] = useState('R U');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
@@ -571,7 +568,6 @@ function composeS(a: CubieState, b: CubieState): CubieState {
 
 // ── §8 ConjugateViewer ─────────────────────────────────────────────────────
 function ConjugateViewer() {
-  const lang = useLang();
   const [a, setA] = useState('U');
   const [b, setB] = useState('R E R');
   // For visualization clarity, we let user choose. Show the full alg A B A'.
@@ -857,7 +853,6 @@ function ConjugacyClassTable() {
 
 // ── §17 HomomorphismPanel — parity sgn: G → ℤ/2 ────────────────────────────
 function HomomorphismPanel() {
-  const lang = useLang();
   const [g, setG] = useState("R U R' U'");
   const [h, setH] = useState("F R U' R' F'");
   const result = useMemo(() => {
@@ -1382,7 +1377,6 @@ const GOD_DIST: { d: number; count: bigint }[] = [
 ];
 
 function GodsNumberChart() {
-  const lang = useLang();
   // Use log scale because counts span 20 orders of magnitude.
   const max = Math.log10(Number(GOD_DIST[18].count));
   return (
@@ -1413,7 +1407,6 @@ function GodsNumberChart() {
 
 // ── Group examples table (§1) ──────────────────────────────────────────────
 function GroupExamplesTable() {
-  const lang = useLang();
   type Example = {
     name: string;
     op: string;
@@ -1516,7 +1509,6 @@ function UnfoldedCubeMap() {
 
 // ── |G| scale comparison (§4) ─────────────────────────────────────────────
 function ScaleComparison() {
-  const lang = useLang();
   // log10 values
   const items: { label: string; zh: string; en: string; log10: number; colour: string
  }[] = [
@@ -1556,7 +1548,6 @@ function ScaleComparison() {
 
 // ── Quotient chart (§10) ──────────────────────────────────────────────────
 function QuotientChart() {
-  const lang = useLang();
   // [G:G₁] = 2^11 = 2048
   // [G₁:G₂] = 3^7 · (12 choose 4) = 2187 · 495 = 1,082,565
   // [G₂:G₃] = 8C4 · 4! · 4! / 2 = 70 · 24 · 24 / 2 ... actually = 29400 from references
@@ -1907,7 +1898,6 @@ const CAYLEY_SPHERE: { d: number; count: bigint; exact: boolean }[] = [
 ];
 
 function CayleyBFSTable() {
-  const lang = useLang();
   const maxLog = Math.log10(Number(CAYLEY_SPHERE[18].count));
   return (
     <div className="gt-cayley-bfs">
@@ -1943,7 +1933,6 @@ function CayleyBFSTable() {
 // render the identity, its first neighbours, and a few second-layer nodes —
 // enough to convey the geometric idea.
 function CayleyMini() {
-  const lang = useLang();
   // Pre-computed positions of nodes at depths 0, 1, 2 in a layout-friendly form.
   // Layer 0: e
   // Layer 1: R, R', R2, U, U', U2
@@ -2007,7 +1996,6 @@ function CayleyMini() {
 // Interactive log-scale plot of |S_d| for d = 0..20. Hover any bar to see
 // the count, percentage of |G|, and instantaneous branching factor.
 function SphereLogPlot() {
-  const lang = useLang();
   const [hover, setHover] = useState<number | null>(null);
   const W = 740, H = 320, ML = 56, MR = 24, MT = 18, MB = 38;
   const plotW = W - ML - MR;
@@ -2388,7 +2376,6 @@ function elementLabel(perm: number[]): string {
 
 // ── Component: SmallGroupCayleyExplorer (§14.x) ───────────────────────────
 function SmallGroupCayleyExplorer() {
-  const lang = useLang();
   const [groupId, setGroupId] = useState('d4');
   const [hover, setHover] = useState<number | null>(null);
   const [target, setTarget] = useState<number | null>(null);
@@ -2991,7 +2978,6 @@ function PuzzleComparison() {
 
 // ── Order distribution table (§7 supplement) ──────────────────────────────
 function OrderDistribution() {
-  const lang = useLang();
   // Known orders that occur in the cube group with at least one element.
   // Source: enumerated from conjugacy classes; the orders that exist are the
   // divisors of 1260, but not ALL divisors — exact attainable set:
@@ -3213,7 +3199,6 @@ function QuotientGroupBuilder() {
 
 // ── §21 ParityCalculator — apply an alg, see sgn(cp), sgn(ep), product ────
 function ParityCalculator() {
-  const lang = useLang();
   const [alg, setAlg] = useState('R U2 D B D');
   const state = useMemo(() => applyAlg(identity(), alg), [alg]);
   const sgnCp = permSign(state.cp);
@@ -3285,7 +3270,6 @@ function ParityCalculator() {
 
 // ── §22 AlgorithmCompareTable — IDA*/Thistlethwaite/Kociemba/Korf ─────────
 function AlgorithmCompareTable() {
-  const lang = useLang();
   const rows = [
     {
       name: 'Thistlethwaite (1981)',
@@ -3372,7 +3356,6 @@ function AlgorithmCompareTable() {
 
 // ── §22 ThistlethwaitePhaseChart — depths per stage ────────────────────────
 function ThistlethwaitePhaseChart() {
-  const lang = useLang();
   // Known stage maxima (HTM) from Thistlethwaite, Reid, et al. (1981–95).
   const stages = [
     { name: 'G₀ → G₁',  zh: '修 EO',                    en: 'fix edge orientation',     maxDepth: 7,  bound: 'EO = 0' },
@@ -3433,7 +3416,6 @@ const DIST_DATA_HTM = [
 ];
 
 function DistanceDistributionChart() {
-  const lang = useLang();
   const [hover, setHover] = useState<number | null>(null);
   const maxLog = useMemo(() => {
     return Math.max(...DIST_DATA_HTM.map(d => d.count > 0n ? Math.log10(Number(d.count)) : 0));
@@ -3751,7 +3733,6 @@ function lightsMatrix(rows: number, cols: number): number[][] {
 }
 
 function LightsOutBoard({ size }: { size: number }) {
-  const lang = useLang();
   const n = size * size;
   const matrix = useMemo(() => lightsMatrix(size, size), [size]);
   const [state, setState] = useState<number[]>(() => new Array(n).fill(0));
@@ -3894,7 +3875,6 @@ const LIGHTS5_Q2 = [
 ];
 
 function QuietPatternViewer() {
-  const lang = useLang();
   const [board, setBoard] = useState<number[]>(() => new Array(25).fill(0));
   const toggle = (i: number) => setBoard(b => b.map((v, j) => j === i ? (v ^ 1) : v));
   const random = () => {
@@ -4043,7 +4023,6 @@ function buildEnglishBoard(): { cells: { r: number; c: number; key: string }[]; 
 }
 
 function PegSolitaireBoard() {
-  const lang = useLang();
   const { cells } = useMemo(buildEnglishBoard, []);
   // peg[i] = 1 if peg present. Initial: all pegs except centre.
   const initial = useMemo(() => {
@@ -4165,7 +4144,6 @@ function PegSolitaireBoard() {
 
 // 15-peg triangle with SAX live counter
 function PegTriangleSAX() {
-  const lang = useLang();
   // Cells indexed top-down, left-right: rows 1..5, count i pegs per row.
   type T = { r: number; c: number; central: boolean };
   const cells: T[] = useMemo(() => {
@@ -4376,7 +4354,6 @@ function modInv(a: number, p: number): number | null {
 }
 
 function MobiusPlayground() {
-  const lang = useLang();
   const [a, setA] = useState(1);
   const [b, setB] = useState(2);
   const [c, setC] = useState(1);
@@ -5151,7 +5128,6 @@ const SIGMA_GRAPHS: GraphSpec[] = [
 ];
 
 function SigmaGameOnGraph() {
-  const lang = useLang();
   const [gIdx, setGIdx] = useState(0);
   const G = SIGMA_GRAPHS[gIdx];
 
@@ -5363,7 +5339,6 @@ type BoardName = keyof typeof BOARD_ASCII;
 
 // ── PegBoardChoose — switchable parametric board with colour overlays ────
 function PegBoardChoose() {
-  const lang = useLang();
   const [name, setName] = useState<BoardName>('english');
   const board = useMemo(() => parsePegBoard([...BOARD_ASCII[name]]), [name]);
   const { cells } = board;
@@ -5644,7 +5619,6 @@ const BERGHOLT_18: Macro[] = [
 ];
 
 function PegMoveReplay() {
-  const lang = useLang();
   const { cells, idx } = useMemo(buildEnglishBoard, []);
   const fileToCol = (f: string) => f.charCodeAt(0) - 'a'.charCodeAt(0);
   const rankToRow = (r: string) => 7 - parseInt(r, 10);
@@ -6450,7 +6424,6 @@ function crossRatioF5(
 
 // ── 30.5  Cross-ratio calculator ──────────────────────────────────────────
 function CrossRatioCalc() {
-  const lang = useLang();
   const opts: (number | 'inf')[] = [0, 1, 2, 3, 4, 'inf'];
   const [a, setA] = useState<number | 'inf'>(0);
   const [b, setB] = useState<number | 'inf'>(1);
@@ -6482,6 +6455,7 @@ function CrossRatioCalc() {
             <label key={k} className="gt-pgl-cross-pick">
               <span className="gt-pgl-cross-sub">{k}</span>
               <select
+                className="gt-cross-select"
                 value={String(v)}
                 onChange={e => setV(e.target.value === 'inf' ? 'inf' : Number(e.target.value))}
               >
@@ -6746,7 +6720,6 @@ function SynthemeTotalsViewer() {
 // vertex realises  z ↦ z + 1  (translation), and one rotation by π through an
 // edge midpoint realises  z ↦ -1/z  (inversion).
 function IcosahedronP1F5() {
-  const lang = useLang();
   const [rot, setRot] = useState<'id' | 'T' | 'S' | 'TS'>('id');
   // 12 vertex positions on a 2D-ish projection of icosahedron, paired antipodally.
   // Pairs: (top, bottom) get label ∞; top-ring of 5 / bottom-ring of 5 get labels 0..4.
@@ -6874,7 +6847,6 @@ function IcosahedronP1F5() {
 
 // ── 30.11  Order histogram of random ⟨R, U⟩ words ─────────────────────────
 function OrderHistogramTwoFace() {
-  const lang = useLang();
   const [maxLen, setMaxLen] = useState(20);
   const [N, setN] = useState(2000);
   const [seed, setSeed] = useState(1);
@@ -6992,7 +6964,6 @@ function OrderHistogramTwoFace() {
 
 // Two-face turner: animates one rotation of either face, shows cycle structure
 function TwoFaceTurner() {
-  const lang = useLang();
   const [x, setX] = useState(2);
   const [y, setY] = useState(1);
   const [z, setZ] = useState(2);
@@ -7076,9 +7047,9 @@ function TwoFaceTurner() {
         <label>y = {y}<input type="range" min={1} max={4} value={y} onChange={e => setY(parseInt(e.target.value, 10))} /></label>
         <label>z = {z}<input type="range" min={0} max={4} value={z} onChange={e => setZ(parseInt(e.target.value, 10))} /></label>
         <div className="gt-rot-turner-btns">
-          <button type="button" onClick={applyFace1} disabled={f1 < 2}>L<sup>+</sup></button>
-          <button type="button" onClick={applyFace2} disabled={f2 < 2}>R<sup>+</sup></button>
-          <button type="button" onClick={reset} className="gt-rot-reset">{tr({ zh: '复位', en: 'reset'
+          <button type="button" className="gt-turner-btn" onClick={applyFace1} disabled={f1 < 2}>L<sup>+</sup></button>
+          <button type="button" className="gt-turner-btn" onClick={applyFace2} disabled={f2 < 2}>R<sup>+</sup></button>
+          <button type="button" onClick={reset} className="gt-rot-reset gt-turner-btn">{tr({ zh: '复位', en: 'reset'
         })}</button>
         </div>
       </div>
@@ -7369,9 +7340,9 @@ function SchreierSimsDemo() {
       <div className="gt-rot-ss-head">
         <div className="gt-rot-ss-step">{lang === 'zh' ? `第 ${step} / ${trace.length - 1} 步` : `step ${step} / ${trace.length - 1}`}</div>
         <div className="gt-rot-ss-btns">
-          <button type="button" onClick={() => setStep(s => Math.max(0, s - 1))}>{tr({ zh: '上一步', en: 'prev' })}</button>
-          <button type="button" onClick={() => setStep(s => Math.min(trace.length - 1, s + 1))}>{tr({ zh: '下一步', en: 'next' })}</button>
-          <button type="button" onClick={() => setStep(0)} className="gt-rot-reset">{tr({ zh: '复位', en: 'reset'
+          <button type="button" className="gt-ss-btn" onClick={() => setStep(s => Math.max(0, s - 1))}>{tr({ zh: '上一步', en: 'prev' })}</button>
+          <button type="button" className="gt-ss-btn" onClick={() => setStep(s => Math.min(trace.length - 1, s + 1))}>{tr({ zh: '下一步', en: 'next' })}</button>
+          <button type="button" onClick={() => setStep(0)} className="gt-rot-reset gt-ss-btn">{tr({ zh: '复位', en: 'reset'
         })}</button>
         </div>
       </div>
@@ -7399,21 +7370,20 @@ function SchreierSimsDemo() {
 
 // Wilson sliding: side-by-side 15-puzzle vs Wilson's theta-0 exception
 function WilsonSliding() {
-  const lang = useLang();
   const [mode, setMode] = useState<'cycle' | 'theta' | 'fifteen'>('theta');
 
   return (
     <div className="gt-rot-wilson">
       <div className="gt-rot-wilson-tabs">
-        <button type="button" className={mode === 'cycle' ? 'is-active' : ''} onClick={() => setMode('cycle')}>
+        <button type="button" className={`gt-wilson-tab${mode === 'cycle' ? ' is-active' : ''}`} onClick={() => setMode('cycle')}>
           {tr({ zh: '环 C_n', en: 'cycle C_n'
         })}
         </button>
-        <button type="button" className={mode === 'theta' ? 'is-active' : ''} onClick={() => setMode('theta')}>
+        <button type="button" className={`gt-wilson-tab${mode === 'theta' ? ' is-active' : ''}`} onClick={() => setMode('theta')}>
           {tr({ zh: 'θ₀ (7 点例外)', en: 'θ₀ (7-point exception)'
         })}
         </button>
-        <button type="button" className={mode === 'fifteen' ? 'is-active' : ''} onClick={() => setMode('fifteen')}>
+        <button type="button" className={`gt-wilson-tab${mode === 'fifteen' ? ' is-active' : ''}`} onClick={() => setMode('fifteen')}>
           {tr({ zh: '15-滑块 (4×4 grid)', en: '15-puzzle (4×4 grid)'
         })}
         </button>
@@ -7607,7 +7577,6 @@ function permParitySign(perm: number[]): 1 | -1 {
 
 // ── 32.3 widget: TwoLineNotationDemo ────────────────────────────────────────
 function TwoLineNotationDemo() {
-  const lang = useLang();
   const [input, setInput] = useState('3 1 4 5 2');
   const [showCycle, setShowCycle] = useState(false);
   const parsed = useMemo(() => parsePerm(input), [input]);
@@ -7655,7 +7624,6 @@ function TwoLineNotationDemo() {
 
 // ── 32.4 widget: CycleDecomposer (with animated trace) ──────────────────────
 function CycleDecomposer() {
-  const lang = useLang();
   const [input, setInput] = useState('4 5 2 1 3 7 6');
   const [step, setStep] = useState(0);
   const parsed = useMemo(() => parsePerm(input), [input]);
@@ -7703,7 +7671,6 @@ function CycleDecomposer() {
 
 // ── 32.5 widget: ComposeConventions ────────────────────────────────────────
 function ComposeConventions() {
-  const lang = useLang();
   const [aInput, setAInput] = useState('(1 2)(3 4)');
   const [bInput, setBInput] = useState('(1 3)');
   const N = 4;
@@ -7802,7 +7769,6 @@ function ParityFromTranspositions() {
 
 // ── 32.7 widget: OrderCalculator ────────────────────────────────────────────
 function OrderCalculator() {
-  const lang = useLang();
   const [input, setInput] = useState('(1 2 3)(4 5)(6 7 8 9 10 11)');
   const parsed = useMemo(() => parsePerm(input), [input]);
   if (parsed.error) {
@@ -7831,7 +7797,6 @@ function OrderCalculator() {
 
 // ── 32.7b widget: LandauTable ──────────────────────────────────────────────
 function LandauTable() {
-  const lang = useLang();
   // Landau's function g(n) for n = 1..20.
   const g: { n: number; gn: number; example: string }[] = [
     { n: 1, gn: 1, example: '(1)' },
@@ -7880,7 +7845,6 @@ function LandauTable() {
 
 // ── 32.8 widget: ConjugationVisualiser ──────────────────────────────────────
 function ConjugationVisualiser() {
-  const lang = useLang();
   const [sigmaInput, setSigmaInput] = useState('(1 2 3 4 5)');
   const [tauInput, setTauInput] = useState('(1 2)(3 4)');
   const sP = parsePerm(sigmaInput);
@@ -7928,7 +7892,6 @@ function ConjugationVisualiser() {
 
 // ── 32.9 widget: CommutatorComputer ─────────────────────────────────────────
 function CommutatorComputer() {
-  const lang = useLang();
   const [aInput, setAInput] = useState('(1 2 3 4 5)');
   const [bInput, setBInput] = useState('(3 4 5 6 7)');
   const aP = parsePerm(aInput);
@@ -7972,7 +7935,6 @@ function CommutatorComputer() {
 
 // ── 32.10 widget: PowerSlider ───────────────────────────────────────────────
 function PowerSlider() {
-  const lang = useLang();
   const [input, setInput] = useState('(1 2 3)(4 5)');
   const parsed = useMemo(() => parsePerm(input), [input]);
   const ord = useMemo(() => parsed.error ? 1 : permOrder(parsed.perm), [parsed]);
@@ -8070,7 +8032,6 @@ function SubgroupGenerator() {
 
 // ── 32.12 widget: CycleIndexPoly ────────────────────────────────────────────
 function CycleIndexPoly() {
-  const lang = useLang();
   // D_4 acting on 4 vertices. 8 elements: 4 rotations (id, 90, 180, 270),
   // 4 reflections (2 through edge midpoints, 2 through vertices).
   // Cycle structures on the 4 vertices:
@@ -8122,7 +8083,6 @@ function CycleIndexPoly() {
 
 // ── Index landing panels (only rendered on /math/group, not sub-slugs) ─────
 function IndexStatsStrip() {
-  const lang = useLang();
   return (
     <div className="gt-index-stats">
       <div className="gt-index-stat">
@@ -8150,7 +8110,6 @@ function IndexStatsStrip() {
 }
 
 function IndexOrderBlock() {
-  const lang = useLang();
   return (
     <div className="gt-index-order">
       <div className="gt-index-section-head">{tr({ zh: '本文核心定理 · |G| 的封闭式', en: "core theorem · closed form for |G|"
@@ -16386,7 +16345,7 @@ Membership(g):
 }
 
 // ── Section-page navigation footer (prev / next / back to TOC) ────────────
-function SectionNav({ slug, lang }: { slug: string; lang: Lang }) {
+function SectionNav({ slug }: { slug: string; lang: Lang }) {
   const all = TOC;
   const idx = all.findIndex(s => s.id === slug);
   if (idx < 0) return null;

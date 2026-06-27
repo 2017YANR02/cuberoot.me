@@ -24,7 +24,6 @@ import { CountryInput } from '@/components/CountryInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import WcaSourceConfig from './WcaSourceConfig';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 /** 布尔设置统一用 PillToggle 无文字 iOS 风开关,替代裸 checkbox。 */
 function BoolToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
@@ -525,6 +524,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '来源', en: 'Source'
         })}>
             <select
+              className="settings-row-control-select"
               value={s.scrambleSource}
               onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
             >
@@ -569,6 +569,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '观察启动方式', en: 'Inspection trigger'
         })}>
             <select
+              className="settings-row-control-select"
               value={s.inspectionTrigger}
               onChange={(e) => updateSettings({ inspectionTrigger: e.target.value as 'down' | 'up' })}
             >
@@ -582,6 +583,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '蓝牙自动 ready', en: 'Bluetooth auto-ready'
         })}>
             <select
+              className="settings-row-control-select"
               value={s.bluetoothAutoReady}
               onChange={(e) => updateSettings({ bluetoothAutoReady: e.target.value as 'off' | 'still' | 'double-flick' })}
             >
@@ -651,6 +653,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '计时途中', en: 'Live'
         })}>
             <select
+              className="settings-row-control-select"
               value={s.runningPrecision}
               onChange={(e) => updateSettings({ runningPrecision: Number(e.target.value) as 0 | 1 | 2 | 3 })}
             >
@@ -663,6 +666,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '最终成绩', en: 'Final'
         })}>
             <select
+              className="settings-row-control-select"
               value={s.precision}
               onChange={(e) => updateSettings({ precision: Number(e.target.value) as 2 | 3 })}
             >
@@ -673,6 +677,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '颜色中立', en: 'Color neutral'
         })}>
             <select
+              className="settings-row-control-select"
               value={s.cnMode}
               onChange={(e) => updateSettings({ cnMode: e.target.value as 'none' | 'single' | 'dual' | 'six' })}
             >
@@ -718,6 +723,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '语音观察', en: 'Voice inspection'
         })}>
             <select
+              className="settings-row-control-select"
               value={s.voiceInspection}
               onChange={(e) => {
                 updateSettings({ voiceInspection: e.target.value as 'none' | 'en-male' | 'en-female' | 'zh-male' | 'zh-female' });
@@ -1117,6 +1123,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '主题', en: 'Theme'
         })}>
             <select
+              className="settings-row-control-select"
               value={s.theme}
               onChange={(e) => updateSettings({ theme: e.target.value as 'dark' | 'light' | 'auto' })}
             >
@@ -1170,6 +1177,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '点击打乱条', en: 'Scramble click action'
         })}>
             <select
+              className="settings-row-control-select"
               value={s.scrambleClickAction}
               onChange={(e) => updateSettings({ scrambleClickAction: e.target.value as 'none' | 'next' | 'copy' })}
             >
@@ -1233,7 +1241,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         </AccordionSection>
 
         <div className="modal-actions">
-          <button className="danger" onClick={() => {
+          <button className="danger modal-action-btn" onClick={() => {
             if (confirm(tr({ zh: '把所有设置恢复为默认值？', en: 'Reset all settings to defaults?'
             }))) {
               resetSettings();
@@ -1241,7 +1249,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           }}>
             {tr({ zh: '全部重置', en: 'Reset all' })}
           </button>
-          <button className="primary" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
+          <button className="primary modal-action-btn" onClick={onClose}>{tr({ zh: '关闭', en: 'Close'
         })}</button>
         </div>
 

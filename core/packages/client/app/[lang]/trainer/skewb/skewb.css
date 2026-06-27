@@ -131,10 +131,6 @@
   cursor: pointer;
   flex-shrink: 0;
 }
-.sk-check-hint {
-  font-size: 0.78rem;
-  color: var(--faint-foreground);
-}
 
 /* labeled stepper group */
 .sk-field-label {
@@ -464,7 +460,7 @@
   font-weight: 600;
 }
 /* hidden native checkbox; whole cell click toggles */
-.sk-cell input {
+.sk-cell .sk-cell-input {
   display: none;
 }
 
@@ -524,25 +520,8 @@
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
   color: var(--foreground);
 }
-.sk-modal-body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px 16px;
-}
-.sk-modal-body svg {
-  width: 100%;
-  max-width: 240px;
-  height: auto;
-  display: block;
-}
 .sk-modal-footer {
   padding: 0 16px 18px;
-}
-.sk-modal-solutions-label {
-  font-size: 0.8rem;
-  color: var(--muted-foreground);
-  margin-bottom: 8px;
 }
 .sk-modal-solutions {
   display: flex;

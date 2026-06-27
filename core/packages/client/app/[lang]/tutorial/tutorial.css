@@ -50,7 +50,7 @@
   text-underline-offset: 2px;
 }
 
-.tutorial-root button {
+.tutorial-root .tutorial-btn {
   font-family: inherit;
   cursor: pointer;
 }
@@ -446,22 +446,6 @@
 .tutorial-chip:hover .tutorial-chip-icon {
   opacity: 1;
 }
-
-/* ─── Toast ─── */
-.tutorial-toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--tutorial-bg);
-  border: 1px solid var(--tutorial-border);
-  border-left: 3px solid var(--tutorial-accent);
-  padding: 10px 16px;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.12);
-  font-size: 14px;
-  z-index: 1000;
-  animation: tutorial-toast-in 150ms ease forwards;
-}
 @keyframes tutorial-toast-in {
   from {
     opacity: 0;
@@ -755,11 +739,6 @@
 .tutorial-landing .tutorial-bento-card:hover .tutorial-bento-name {
   color: var(--tutorial-accent);
 }
-.tutorial-landing .tutorial-bento-count {
-  font-size: 0.8rem;
-  color: var(--tutorial-text-muted);
-  font-variant-numeric: tabular-nums;
-}
 /* Tier 分配 */
 .tutorial-landing .tutorial-bento-card.tier-hero {
   grid-column: span 6;
@@ -794,9 +773,6 @@
 }
 .tutorial-landing .tutorial-bento-card.tier-utility .tutorial-bento-name {
   font-size: 0.9rem;
-}
-.tutorial-landing .tutorial-bento-card.tier-utility .tutorial-bento-count {
-  margin-left: auto;
 }
 
 /* 搜索结果页(query 非空时) */
@@ -869,10 +845,6 @@
     padding: 12px 16px;
     gap: 12px;
     justify-content: flex-start;
-  }
-  .tutorial-landing .tutorial-bento-card.tier-medium .tutorial-bento-count,
-  .tutorial-landing .tutorial-bento-card.tier-standard .tutorial-bento-count {
-    margin-left: auto;
   }
 }
 

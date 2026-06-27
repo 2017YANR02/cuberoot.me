@@ -19,7 +19,7 @@ interface Props {
 }
 
 export default function NemesizerPersonPicker({
-  isZh, initialQuery, onPick, placeholder, autoConfirmExact = true,
+  initialQuery, onPick, placeholder, autoConfirmExact = true,
 }: Props) {
   const searchFn = useCallback(async (query: string): Promise<WcaPerson[]> => {
     await loadPersonsIndex();

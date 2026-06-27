@@ -75,44 +75,6 @@
   font-weight: 600;
 }
 
-.nemesizer-search {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  margin: 20px auto;
-  max-width: 520px;
-}
-.nemesizer-search input {
-  flex: 1;
-  padding: 10px 14px;
-  font-size: 15px;
-  background: var(--muted);
-  border: 1px solid var(--border-default);
-  border-bottom: 2px solid var(--faint-foreground);
-  color: var(--foreground);
-  outline: none;
-  border-radius: 0;
-}
-.nemesizer-search input:focus { border-bottom-color: #5b6dd9; }
-.nemesizer-btn-pink {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: #e91e63;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  transition: background 0.15s;
-  flex-shrink: 0;
-}
-.nemesizer-btn-pink:hover { background: #c2185b; }
-.nemesizer-btn-pink:disabled { opacity: 0.4; cursor: default; }
-
 .nemesizer-btn-blue {
   padding: 8px 14px;
   background: #3f51b5;
@@ -177,13 +139,6 @@
   font-size: 14px;
 }
 
-.nemesizer-summary {
-  text-align: center;
-  margin: 16px 0 12px;
-  font-size: 14px;
-  color: var(--muted-foreground);
-}
-
 .nemesizer-table-wrap {
   max-width: 1000px;
   margin: 16px auto;
@@ -216,19 +171,6 @@
 .nemesizer-table tr:last-child td { border-bottom: none; }
 .nemesizer-table tr:hover td { background: var(--muted); }
 
-.nemesizer-link-btn {
-  color: #5b6dd9;
-  text-decoration: none;
-  font-size: 14px;
-}
-.nemesizer-link-btn:hover { text-decoration: underline; }
-
-.nemesizer-row-actions {
-  display: inline-flex;
-  gap: 6px;
-  align-items: center;
-}
-
 .nemesizer-h2h-cell-better { background: color-mix(in srgb, var(--signal-success) 20%, transparent); color: var(--signal-success); font-weight: 600; }
 .nemesizer-h2h-cell-worse  { background: color-mix(in srgb, var(--destructive) 20%, transparent); color: var(--destructive); }
 .nemesizer-h2h-cell-none   { color: var(--faint-foreground); font-style: italic; }
@@ -240,7 +182,7 @@
   margin-bottom: 16px;
   border-bottom: 1px solid var(--border-default);
 }
-.nemesizer-stats-tabs button {
+.nemesizer-stats-tabs .nemesizer-stats-tab-btn {
   padding: 10px 18px;
   background: transparent;
   border: none;
@@ -251,7 +193,7 @@
   border-bottom: 2px solid transparent;
   text-transform: uppercase;
 }
-.nemesizer-stats-tabs button.active {
+.nemesizer-stats-tabs .nemesizer-stats-tab-btn.active {
   color: var(--foreground);
   border-bottom-color: #e91e63;
 }
@@ -268,7 +210,7 @@
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-default);
 }
-.nemesizer-whatif-row input {
+.nemesizer-whatif-row .nemesizer-whatif-input {
   padding: 6px 10px;
   background: var(--muted);
   border: 1px solid var(--border-default);
@@ -307,7 +249,7 @@
   font-size: 14px;
   flex-wrap: wrap;
 }
-.nemesizer-sort select {
+.nemesizer-sort .nemesizer-sort-select {
   background: var(--card);
   color: var(--foreground);
   border: 1px solid var(--border-default);

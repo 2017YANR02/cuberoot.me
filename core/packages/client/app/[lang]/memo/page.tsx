@@ -6,12 +6,10 @@
  * 1:1 port from packages/client-vite/src/pages/memo/MemoLandingPage.tsx (Vite SPA).
  */
 import Link from '@/components/AppLink';
-import { useTranslation } from 'react-i18next';
 import { Brain, type LucideIcon } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../landing.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface MemoCard {
   id: string;
@@ -27,7 +25,6 @@ const CARDS: MemoCard[] = [
 ];
 
 export default function MemoLandingPage() {
-  const { i18n } = useTranslation();
   useDocumentTitle('记忆', 'Memo');
 
   return (

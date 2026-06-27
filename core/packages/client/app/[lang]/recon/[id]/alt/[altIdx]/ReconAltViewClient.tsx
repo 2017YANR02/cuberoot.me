@@ -111,7 +111,7 @@ export default function ReconAltViewClient() {
                 rows={1}
                 value={scramble}
                 readOnly
-                className="submit-input-locked alt-submit-scramble"
+                className="submit-field-textarea submit-input-locked alt-submit-scramble"
               />
             </label>
 

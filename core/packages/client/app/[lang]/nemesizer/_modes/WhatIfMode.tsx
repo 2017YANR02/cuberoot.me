@@ -13,7 +13,6 @@ import {
   type WhatIfResponse,
 } from '../_data/nemesizerApi';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface Props { isZh: boolean; }
 
@@ -158,6 +157,7 @@ export default function WhatIfMode({ isZh }: Props) {
                 <div>{real ?? '—'}</div>
                 <div>
                   <input
+                    className="nemesizer-whatif-input"
                     type="number"
                     min="1"
                     value={overrides.get(ek) ?? ''}

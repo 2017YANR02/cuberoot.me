@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { isFMC, isMBLD } from '../_engine/data_fetch';
 import { useVizStore } from '../_stores/viz_store';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface StatsBarProps {
   mean: string;

@@ -60,35 +60,6 @@ html[data-theme=dark] .wp-page {
     --wp-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-/* ── Header / Loading ────────────────────────────────────────────────── */
-.wp-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: calc(14px + var(--sat)) max(24px, var(--sar)) 14px max(24px, var(--sal));
-    border-bottom: 1px solid var(--wp-border);
-    background: color-mix(in srgb, var(--wp-surface) 85%, transparent);
-    backdrop-filter: blur(8px);
-    position: sticky; top: 0; z-index: 10;
-}
-.wp-back {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 6px 12px 6px 8px; border-radius: 8px;
-    color: var(--wp-text-sub); text-decoration: none; font-size: 0.85rem;
-}
-.wp-back:hover { color: var(--wp-text); background: var(--wp-accent-soft); }
-.wp-header-right {
-    margin-left: auto;
-    display: inline-flex; align-items: center; gap: 8px;
-}
-.wp-source-link {
-    padding: 4px 10px; border-radius: 6px;
-    border: 1px solid var(--wp-border);
-    color: var(--wp-text-sub); text-decoration: none;
-    font-size: 0.78rem;
-}
-.wp-source-link:hover { color: var(--wp-accent); border-color: var(--wp-accent); }
-
 .wp-main {
     /* 数据页:表格自适应内容(.wp-bycomp-table width:auto),最宽一张 ~1130px;容器贴着内容封顶,
        宽屏不撑满(满屏超宽行难追),窄屏自适应。1240 = 最宽表 + 余量,既不挤换行也不留大空白。 */
@@ -113,11 +84,6 @@ html[data-theme=dark] .wp-page {
     box-shadow: var(--wp-shadow);
     overflow: hidden;
 }
-.wp-section-h {
-    margin: 24px 0 12px;
-    font-size: 0.95rem; font-weight: 600;
-    color: var(--wp-text);
-}
 /* 「全部成绩」标题行:编辑模式图标紧贴标题右侧。
    竖直间距移到行容器,h3 自身清零 margin,否则 h3 的不对称 margin 会让文字与图标错位 */
 .wp-section-h-row {
@@ -125,7 +91,6 @@ html[data-theme=dark] .wp-page {
     flex-wrap: wrap;
     margin: 24px 0 12px;
 }
-.wp-section-h-row .wp-section-h { margin: 0; }
 /* 按比赛视图无标题:图标单独留点上下边距,左对齐 */
 .wp-section-h-row-bare { margin: 4px 0 12px; }
 /* 「全部成绩」标题右侧工具组(PR 名次开关 + 编辑模式开关) */
@@ -284,7 +249,6 @@ html[data-theme=dark] .wp-page {
 }
 .wp-hero-id-link { color: inherit; text-decoration: none; }
 .wp-hero-id-link:hover { color: var(--wp-accent); text-decoration: underline; }
-.wp-hero-id-favicon { display: inline-block; vertical-align: middle; }
 
 .wp-flag { width: 24px; height: 18px; border-radius: 2px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1); display: inline-block; flex-shrink: 0; }
 .wp-flag-sm { width: 18px; height: 13px; border-radius: 2px; box-shadow: 0 0 0 0.5px rgba(0,0,0,0.1); display: inline-block; flex-shrink: 0; }
@@ -349,15 +313,6 @@ html[data-theme=dark] .wp-page {
 }
 /* 项目列收缩到内容宽 (图标 / SoWR / 自选), 不吃 width:100% 的余量 — 否则 项目↔NR 间距过大 */
 .wp-pr-table .wp-th-event { text-align: left; padding-left: 16px; width: 1px; white-space: nowrap; }
-.wp-pr-table .wp-th-group {
-    border-bottom: 1px solid var(--wp-border);
-    color: var(--wp-text);
-    font-size: 0.78rem;
-    text-transform: none;
-    letter-spacing: 0;
-    font-weight: 600;
-}
-.wp-pr-table .wp-th-podium { text-align: center; }
 .wp-pr-table tbody th, .wp-pr-table tbody td {
     padding: 10px 12px;
     border-bottom: 1px solid var(--wp-border);
@@ -687,7 +642,6 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 
 .wp-cell-pos { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 .wp-pos-first { color: var(--wp-pink); font-weight: 700; }
-.wp-cell-attempt { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
 /* 排名右对齐;单次 / 平均 居中(表头压在 成绩+badge 整体正中);详细成绩内每次成绩各自右对齐 */
 .wp-bycomp-table thead th:nth-child(4),
 .wp-bycomp-table thead th:nth-child(5) { text-align: center; }
@@ -841,54 +795,6 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
     margin-bottom: 8px;
 }
 
-.wp-chart-wrap {
-    position: relative;
-    width: 100%; max-width: 100%;
-    border: 1px solid var(--wp-border);
-    border-radius: 10px;
-    background: var(--wp-surface);
-    padding: 8px;
-    margin-bottom: 16px;
-}
-.wp-chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
-.wp-chart-grid { stroke: var(--wp-border); stroke-width: 1; }
-.wp-chart-axis { fill: var(--wp-text-mute); font-size: 11px; font-family: var(--font-mono); }
-.wp-chart-line { fill: none; stroke-width: 1.5; }
-.wp-chart-line-single { stroke: var(--wp-blue); }
-.wp-chart-line-avg    { stroke: var(--wp-green); }
-.wp-chart-dot         { stroke: white; stroke-width: 1; }
-.wp-chart-dot-single  { fill: var(--wp-blue); }
-.wp-chart-dot-avg     { fill: var(--wp-green); }
-.wp-chart-hover-line  { stroke: var(--wp-text-mute); stroke-width: 1; stroke-dasharray: 3 3; }
-.wp-chart-legend      { fill: var(--wp-text-sub); font-size: 11px; }
-
-.wp-chart-tip {
-    position: absolute;
-    top: 16px;
-    background: rgba(24,23,22,0.92); color: white;
-    padding: 8px 10px; border-radius: 6px;
-    font-size: 0.78rem;
-    pointer-events: none;
-    max-width: 240px;
-}
-.wp-chart-tip-title { font-weight: 600; margin-bottom: 4px; }
-.wp-chart-tip-k { color: rgba(255,255,255,0.7); }
-.wp-chart-tip-left  { transform: translateX(-100%); margin-left: -8px; }
-.wp-chart-tip-right { margin-left: 8px; }
-
-.wp-dist-bar { fill: var(--wp-blue); opacity: 0.85; }
-
-/* 同时设 stroke (path / rect 用) + fill (circle dot / legend rect 用) */
-.wp-rank-line-snr { stroke: #1f3f78; fill: #1f3f78; }
-.wp-rank-line-scr { stroke: #6ab15a; fill: #6ab15a; }
-.wp-rank-line-swr { stroke: #c39316; fill: #c39316; }
-.wp-rank-line-anr { stroke: #b71234; fill: #b71234; }
-.wp-rank-line-acr { stroke: #5fa3c7; fill: #5fa3c7; }
-.wp-rank-line-awr { stroke: #2c7a4b; fill: #2c7a4b; }
-/* path 强制 fill: none — selector specificity (0,2,0) 高于上面单一 class (0,1,0),
-   覆盖 .wp-rank-line-* 的 fill,防止曲线下方被填色变成大色块 */
-.wp-chart-svg .wp-chart-line { fill: none; }
-
 /* ── Milestones ─────────────────────────────────────────────────── */
 .wp-milestones { display: flex; flex-direction: column; gap: 16px; }
 .wp-ms-toolbar {
@@ -1002,69 +908,6 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
     padding: 0 4px;
 }
 .wp-lit-stats strong { color: var(--wp-text); font-weight: 600; }
-
-/* ── Search page ────────────────────────────────────────────────── */
-.wp-search-card {
-    max-width: 520px;
-    margin: 56px auto 0;
-    background: var(--wp-surface);
-    border: 1px solid var(--wp-border);
-    border-radius: 16px;
-    box-shadow: var(--wp-shadow);
-    padding: 36px 32px 28px;
-    text-align: center;
-}
-.wp-search-icon {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 56px; height: 56px; border-radius: 50%;
-    background: var(--wp-accent-soft);
-    color: var(--wp-accent);
-    margin-bottom: 12px;
-}
-.wp-search-title {
-    margin: 0 0 6px;
-    font-family: var(--font-serif);
-    font-size: 1.5rem; font-weight: 500;
-    letter-spacing: -0.01em;
-    color: var(--wp-text);
-}
-.wp-search-hint {
-    margin: 0 0 20px;
-    color: var(--wp-text-sub); font-size: 0.88rem;
-}
-/* WcaPersonPicker inline 模式 panel 是 absolute → 撑不开父高度.
- * 给容器 min-height 保证 absolute 浮层下面的 examples 不会被压上去. */
-.wp-search-picker {
-    position: relative;
-    min-height: 64px;
-    margin-bottom: 18px;
-}
-.wp-search-picker .wca-pp-panel {
-    width: 100% !important;
-    left: 0 !important;
-}
-.wp-search-examples {
-    display: flex; flex-wrap: wrap; gap: 6px;
-    justify-content: center; align-items: center;
-    font-size: 0.78rem;
-    margin-top: 4px;
-}
-.wp-search-examples-label { color: var(--wp-text-mute); margin-right: 4px; }
-.wp-search-example {
-    padding: 4px 10px; border-radius: 999px;
-    border: 1px solid var(--wp-border);
-    background: var(--wp-bg);
-    color: var(--wp-text-sub);
-    font-family: var(--font-mono);
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-.wp-search-example:hover {
-    border-color: var(--wp-accent);
-    color: var(--wp-accent);
-    background: var(--wp-accent-soft);
-}
 
 /* ── Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 720px) {

@@ -11,7 +11,6 @@
 
 import { useEffect } from 'react';
 import { Trophy } from 'lucide-react';
-import i18n from "@/i18n/i18n-client";
 
 export type PbKind = 'single' | 'ao5' | 'ao12';
 

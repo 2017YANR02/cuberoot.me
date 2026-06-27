@@ -1400,6 +1400,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className="submit-field">
                   <span className="submit-label">{tr({ zh: '原始成绩(千分位)', en: 'Original time (0.001s)' })}</span>
                   <input
+                    className="submit-field-input"
                     type="text"
                     value={timeInput}
                     onChange={e => {
@@ -1421,7 +1422,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         type="text"
                         value={form.memoTime != null ? formatTimeInput(form.memoTime) : ''}
                         readOnly
-                        className="submit-input-locked"
+                        className="submit-field-input submit-input-locked"
                         title={tr({ zh: '自动派生 = 成绩 − 操作', en: 'auto-derived = result − exec'
                         })}
                       />
@@ -1429,6 +1430,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     <label className="submit-field">
                       <span className="submit-label">{t('recon.exec')}</span>
                       <input
+                        className="submit-field-input"
                         type="text"
                         value={execInput}
                         onChange={e => setExecInput(e.target.value)}
@@ -1473,7 +1475,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               <div className="submit-row">
                 <label className={`submit-field submit-field-narrow${reusedCls('official')}`}>
                   <span className="submit-label">WCA</span>
-                  <select value={form.official ? '1' : '0'} onChange={e => {
+                  <select className="submit-field-select" value={form.official ? '1' : '0'} onChange={e => {
                     const isOfficial = e.target.value === '1';
                     setField('official', isOfficial);
                     // 切到「非 WCA」且国家还没填 → 默认填登录用户(WCA ID)所在国家。
@@ -1526,6 +1528,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <label className="submit-field">
                     <span className="submit-label">{tr({ zh: '城市', en: 'City' })}</span>
                     <input
+                      className="submit-field-input"
                       type="text"
                       value={form.city || ''}
                       onChange={(e) => setField('city', e.target.value)}
@@ -1538,7 +1541,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               <div className="submit-row">
                 <label className={`submit-field${reusedCls('round')}`}>
                   <span className="submit-label">{t('recon.round')}</span>
-                  <select value={form.round || ''} onChange={e => setField('round', e.target.value)}>
+                  <select className="submit-field-select" value={form.round || ''} onChange={e => setField('round', e.target.value)}>
                       <option value="">{tr({ zh: '请选择', en: 'Select…'
                     })}</option>
                       {roundOptions.map(r => <option key={r} value={r}>{localizeRound(r, t)}</option>)}
@@ -1548,6 +1551,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <span className="submit-label">#</span>
                   {/* 下拉给常用第几把,也允许手填任意正整数 */}
                   <input
+                    className="submit-field-input"
                     type="text"
                     inputMode="numeric"
                     list="recon-solvenum-options"
@@ -1581,7 +1585,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         <select
                           value={form.groupId || ''}
                           onChange={e => setField('groupId', e.target.value)}
-                          className={needPick ? 'submit-input-invalid' : undefined}
+                          className={`submit-field-select${needPick ? ' submit-input-invalid' : ''}`}
                         >
                           {withPlaceholder && <option value="">{tr({ zh: '请选择', en: 'Select…' })}</option>}
                           {opts.map(g => <option key={g} value={g}>{g}</option>)}
@@ -1594,7 +1598,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
                 <label className={`submit-field${reusedCls('date')}`}>
                   <span className="submit-label">{t('recon.date')}</span>
-                  <input type="text" value={form.date || ''} onChange={e => setField('date', e.target.value)}
+                  <input className="submit-field-input" type="text" value={form.date || ''} onChange={e => setField('date', e.target.value)}
                     placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
                 </label>
               </div>
@@ -1612,7 +1616,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       singleAutoFilledRef.current = false;
                     }}
                     readOnly={!!singleAutoSource}
-                    className={singleAutoSource ? 'submit-input-locked' : undefined}
+                    className={`submit-field-input${singleAutoSource ? ' submit-input-locked' : ''}`}
                     title={singleAutoSource ? tr({ zh: '自动填充值不可编辑;改 选手/比赛/项目/轮次/第几把 以重新获取', en: 'auto-filled, read-only; change person/comp/event/round/# to refetch'
                                         }) : undefined}
                   />
@@ -1645,7 +1649,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       avgAutoFilledRef.current = false;
                     }}
                     readOnly={!!avgAutoSource}
-                    className={avgAutoSource ? 'submit-input-locked' : undefined}
+                    className={`submit-field-input${avgAutoSource ? ' submit-input-locked' : ''}`}
                     title={avgAutoSource ? tr({ zh: '自动填充值不可编辑;改选手/比赛/项目/轮次以重新获取', en: 'auto-filled, read-only; change person/comp/event/round to refetch'
                                         })
                       : undefined}
@@ -1687,7 +1691,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 ref={wcaScrambleRef}
                 value={form.wcaScramble || ''}
                 readOnly={!!scrambleAutoSource}
-                className={scrambleAutoSource ? 'submit-input-locked' : undefined}
+                className={`submit-field-textarea${scrambleAutoSource ? ' submit-input-locked' : ''}`}
                 title={scrambleAutoSource
                   ? tr({ zh: '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取', en: 'auto-filled, read-only; change comp/event/round/group/# to refetch'
                                     })
@@ -1721,6 +1725,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </button>
               </span>
               <textarea
+                className="submit-field-textarea"
                 rows={1}
                 value={form.optimalScramble || ''}
                 onChange={e => {
@@ -1777,7 +1782,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   // Cast is safe because we always render textarea here.
                   elementRef={solutionRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
                   initialText={form.solution || ''}
-                  className="submit-solution-textarea"
+                  className="submit-field-textarea submit-solution-textarea"
                   rows={6}
                   spellCheck={false}
                   autoSpace
@@ -1846,6 +1851,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>
                   <span className="submit-label">{t('recon.videoUrl')}</span>
                   <textarea
+                    className="submit-field-textarea"
                     value={form.videoUrl || ''}
                     onChange={e => setField('videoUrl', e.target.value)}
                     onBlur={async () => {
@@ -1878,6 +1884,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <label className={`submit-field${reusedCls('method')}`}>
                   <span className="submit-label">{t('recon.method')}</span>
                   <input
+                    className="submit-field-input"
                     type="text"
                     list="recon-method-options"
                     value={form.method || ''}
@@ -1889,11 +1896,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </label>
                 <label className={`submit-field${reusedCls('cube')}`}>
                   <span className="submit-label">{t('recon.cube')}</span>
-                  <input type="text" value={form.cube || ''} onChange={e => setField('cube', e.target.value)} />
+                  <input className="submit-field-input" type="text" value={form.cube || ''} onChange={e => setField('cube', e.target.value)} />
                 </label>
                 <label className={`submit-field submit-field-wide${reusedCls('note')}`}>
                   <span className="submit-label">{t('recon.note')}</span>
                   <textarea
+                    className="submit-field-textarea"
                     value={form.note || ''}
                     onChange={e => { setField('note', e.target.value); autoResize(e.target); }}
                     ref={el => { if (el) autoResize(el); }}
@@ -1924,7 +1932,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </div>
                 <label className={`submit-field${reusedCls('reconDate')}`}>
                   <span className="submit-label">{t('recon.reconDate')}</span>
-                  <input type="text" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)}
+                  <input className="submit-field-input" type="text" value={form.reconDate || ''} onChange={e => setField('reconDate', e.target.value)}
                     placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
                 </label>
               </div>

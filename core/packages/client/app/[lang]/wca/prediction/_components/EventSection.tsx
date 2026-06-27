@@ -7,7 +7,6 @@ import TheoreticalLimitView from './TheoreticalLimitView';
 import Link from '@/components/AppLink';
 import { ArrowRight } from 'lucide-react';
 import { tr } from '@/i18n/tr';
-import i18n from "@/i18n/i18n-client";
 
 interface EventData {
   wr_by_year: Array<{ year: number; wr_single: number | null; wr_avg: number | null; solves: number }>;

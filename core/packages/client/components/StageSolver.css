@@ -119,7 +119,7 @@ html[data-theme='dark'] .stsv {
 .stsv-control { display: flex; flex-direction: column; gap: 4px; }
 .stsv-control > span { font-size: 12px; color: var(--sv-text-sub); }
 /* 直接子 select 才套工具栏外观;嵌套的「底色」picker(孙级 .subset-picker-mode)保留自带样式。 */
-.stsv-control > select {
+.stsv-control > .stsv-control-select {
   font: inherit;
   padding: 6px 8px;
   min-width: 150px;
@@ -128,7 +128,7 @@ html[data-theme='dark'] .stsv {
   border: 1px solid var(--sv-border-strong);
   border-radius: 6px;
 }
-.stsv-control > select:focus { outline: none; border-color: var(--sv-accent); }
+.stsv-control > .stsv-control-select:focus { outline: none; border-color: var(--sv-accent); }
 /* 底色 picker 嵌进工具栏:下拉与色块整行靠左,高度与相邻 select 对齐 */
 .stsv-control-subset .subset-picker { gap: 8px; min-height: 33px; }
 .stsv-control-subset .subset-picker-mode { color: var(--sv-text); }
@@ -327,7 +327,6 @@ html[data-theme='dark'] .stsv {
   border-radius: 4px;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sv-text) 28%, transparent);
 }
-.stsv-combo { color: var(--sv-text-mute); font-size: 12px; }
 .stsv-len { margin-left: auto; color: var(--sv-accent); font-weight: 600; font-size: 13px; }
 .stsv-sols-count { color: var(--sv-text-mute); font-size: 12px; margin-bottom: 6px; }
 .stsv-sols-more { color: var(--sv-accent); }
@@ -433,6 +432,6 @@ html[data-theme='dark'] .stsv {
 }
 @media (max-width: 480px) {
   .stsv-controls { gap: 10px; }
-  .stsv-control select { min-width: 120px; }
+  .stsv-control .stsv-control-select { min-width: 120px; }
   .stsv-angle { min-width: 48px; padding: 6px 8px 8px; }
 }

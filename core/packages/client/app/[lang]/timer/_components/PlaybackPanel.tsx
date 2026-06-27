@@ -36,7 +36,7 @@ function formatSec(ms: number, digits = 3): string {
   return (ms / 1000).toFixed(digits) + 's';
 }
 
-export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }: Props) {
+export default function PlaybackPanel({ event, scramble, moves, totalMs }: Props) {
   const total = moves.length;
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -118,6 +118,7 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
         <div className="reconstruct-playback-buttons">
           <button
             type="button"
+            className="reconstruct-pb-btn"
             onClick={handleStepBack}
             disabled={idx === 0}
             title={tr({ zh: '上一步', en: 'Step back' })}
@@ -127,6 +128,7 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
           </button>
           <button
             type="button"
+            className="reconstruct-pb-btn"
             onClick={handleTogglePlay}
             disabled={total === 0}
             title={playLabel}
@@ -138,6 +140,7 @@ export default function PlaybackPanel({ event, scramble, moves, totalMs, isZh }:
           </button>
           <button
             type="button"
+            className="reconstruct-pb-btn"
             onClick={handleStepForward}
             disabled={idx >= total}
             title={tr({ zh: '下一步', en: 'Step forward' })}

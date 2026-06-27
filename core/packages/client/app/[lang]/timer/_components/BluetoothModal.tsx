@@ -17,7 +17,6 @@ import { normalizeMac } from '../_lib/bluetooth/mac';
 import { Bluetooth, Battery, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface Props {
   isZh: boolean;
@@ -157,8 +156,8 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
               </p>
             )}
             <div className="modal-actions" style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}>
-              <button className="primary" onClick={submitMac}>{tr({ zh: '确定', en: 'Confirm' })}</button>
-              <button onClick={() => onCancelMac?.()}>{tr({ zh: '取消', en: 'Cancel' })}</button>
+              <button className="primary modal-action-btn" onClick={submitMac}>{tr({ zh: '确定', en: 'Confirm' })}</button>
+              <button className="modal-action-btn" onClick={() => onCancelMac?.()}>{tr({ zh: '取消', en: 'Cancel' })}</button>
             </div>
           </div>
         )}
@@ -276,12 +275,12 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
         >
           {supported && connected && (
             <>
-              <button style={actionBtnStyle} onClick={() => cube.resetState()}>
+              <button className="modal-action-btn" style={actionBtnStyle} onClick={() => cube.resetState()}>
                 <RotateCcw size={14} /> {tr({ zh: '重置状态', en: 'Reset state'
                 })}
               </button>
               <button
-                className="danger"
+                className="danger modal-action-btn"
                 style={actionBtnStyle}
                 onClick={() => { cube.disconnect(); onClose(); }}
               >
@@ -290,7 +289,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, macProm
               </button>
             </>
           )}
-          <button className="primary" style={actionBtnStyle} onClick={onClose}>
+          <button className="primary modal-action-btn" style={actionBtnStyle} onClick={onClose}>
             {tr({ zh: '关闭', en: 'Close'
             })}
           </button>

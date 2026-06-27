@@ -75,7 +75,7 @@ interface PanelProps {
   height: number;
 }
 
-function Panel({ buckets, isZh, title, width, height }: PanelProps) {
+function Panel({ buckets, title, width, height }: PanelProps) {
   const padL = 32;
   const padR = 32;
   const padT = 20;

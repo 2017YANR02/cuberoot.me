@@ -24,7 +24,6 @@ import parityIcon from '../_icons/parity.svg';
 
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 type StaticImg = { src: string };
 
@@ -117,7 +116,7 @@ const GROUPS: BldGroup[] = [
 },
 ];
 
-function TimerLink({ isZh }: { isZh: boolean }) {
+function TimerLink({}: { isZh: boolean }) {
   return (
     <Link href="/trainer/3bld/timer" className="bld-hub-secondary">
       <TimerIcon size={15} />

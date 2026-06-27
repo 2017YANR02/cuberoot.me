@@ -36,11 +36,6 @@
 .wp-misc-region { display: inline-flex; align-items: center; gap: 6px; }
 .wp-misc-total td { font-weight: 600; border-top: 1px solid var(--wp-border); border-bottom: none; }
 
-/* ── 纪录 tab(历史世界/洲际/国家纪录)+ 锦标赛领奖台 ───────────────────────
-   表沿用 .wp-bycomp-table 的基础样式;此处只补项目分组列与列对齐覆盖。 */
-.wp-records-sec { margin-bottom: 28px; }
-.wp-records-sec:last-child { margin-bottom: 0; }
-
 /* ── sticky 单表工具:列头只出现一次并吸顶,分组标题作表内整行 —— 纪录 / 领奖台 / 按比赛 共用 ──
    用法:外层 <div class="wp-sticky-scroll"> 包一张 <table class="wp-sticky-table">(thead 写一次)。
    新表要这套效果只加这两个类,不必再来这里登记选择器。 */
@@ -81,7 +76,6 @@
 }
 /* 项目分组:同项目仅首行显示图标+名,后续行留空;新项目起加上边线 */
 .wp-records-table .wp-rec-event { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
-.wp-records-table .wp-rec-event-name { font-weight: 600; color: var(--wp-text); }
 .wp-records-table tbody tr.wp-rec-event-first:not(:first-child) td,
 .wp-records-table tbody tr.wp-rec-event-first:not(:first-child) th { border-top: 2px solid var(--wp-border); }
 /* 列对齐:覆盖 bycomp-table 的 nth-child(4/5) 居中(那是给排名/单次列的)。

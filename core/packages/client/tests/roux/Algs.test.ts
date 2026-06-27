@@ -11,7 +11,7 @@ it('marks all nmcmll parity correctly', () => {
     const cases = nmcll_to_cmll_mapping.map(group => group[1]).flat()
     const auf_seen = new Map()
     const auf_cnt = new Map()
-    const algs = cases.forEach(([name, auf]) => {
+    cases.forEach(([name]) => {
         if (auf_cnt.has(name)) {
             auf_cnt.set(name, auf_cnt.get(name) + 1)
         } else {
@@ -25,7 +25,7 @@ it('marks all nmcmll parity correctly', () => {
     }
 
 
-    const algs_ = cases.forEach(([name, auf]) => {
+    cases.forEach(([name, auf]) => {
         if (auf_seen.has(name)) {
             if (auf_seen.get(name) === auf) {
                 console.log("duplicate for ", name)

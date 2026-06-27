@@ -20,7 +20,6 @@ import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { fetchArticleBySlug, type Article } from '@/lib/article-api';
 import '../../article-list.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 const ArticleEditor = dynamic(() => import('@/components/article/ArticleEditor'), {
   ssr: false,

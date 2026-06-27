@@ -49,7 +49,6 @@ import { scramble333 } from '@/app/[lang]/timer/_lib/scramble/nxnxn';
 import type { LetterCell } from '../_lib/types';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 type Phase = 'idle' | 'memorize' | 'delay' | 'recall' | 'score';
 type PieceSet = 'both' | 'corner' | 'edge';

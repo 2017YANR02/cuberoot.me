@@ -34,7 +34,6 @@
 .pat-title { flex: 1; display: flex; align-items: center; gap: 10px; }
 .pat-title-icon { color: var(--pat-accent); }
 .pat-title h1 { font-size: 1.15rem; margin: 0; font-weight: 600; }
-.pat-title-sub { color: var(--pat-text-mute); font-size: 0.8rem; letter-spacing: 0.02em; }
 
 .pat-main {
     max-width: 1200px;
@@ -72,24 +71,6 @@
     letter-spacing: 0.05em;
     font-weight: 600;
 }
-
-.pat-puzzle-select {
-    appearance: none;
-    -webkit-appearance: none;
-    padding: 6px 28px 6px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--pat-border);
-    background: var(--pat-surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%236F6E6B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>") no-repeat right 10px center;
-    color: var(--pat-text);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: border-color 0.15s;
-}
-
-.pat-puzzle-select:hover { border-color: var(--pat-border-strong); }
-.pat-puzzle-select:focus-visible { outline: 2px solid var(--pat-accent); outline-offset: 1px; }
 
 .pat-filters {
     display: flex;
@@ -224,15 +205,6 @@ html[data-theme=dark] .pat-card:hover {
 }
 html[data-theme=dark] .pat-modal {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
-}
-
-@media (prefers-color-scheme: dark) {
-    html:not([data-theme=light]) .pat-puzzle-select {
-        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%239c8c7e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-    }
-}
-html[data-theme=dark] .pat-puzzle-select {
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%239c8c7e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
 }
 
 /* Modal */

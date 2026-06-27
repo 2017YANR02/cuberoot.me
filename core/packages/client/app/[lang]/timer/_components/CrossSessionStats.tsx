@@ -43,7 +43,7 @@ function metricsOf(solves: Solve[]) {
   };
 }
 
-export default function CrossSessionStats({ event, isZh }: Props) {
+export default function CrossSessionStats({ event }: Props) {
   const { rows, all } = useMemo(() => {
     const data = loadAllSessionData();
     const activeId = getActiveSessionId();

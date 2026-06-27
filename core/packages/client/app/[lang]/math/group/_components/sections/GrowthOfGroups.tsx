@@ -660,7 +660,7 @@ const CUBE_SIGMA_EST: Record<number, number> = {
   20: 4.9e8,    // ~490 million (estimate)
 };
 
-function CubeDistributionPanel({ lang }: { lang: Lang }) {
+function CubeDistributionPanel({}: { lang: Lang }) {
   const [logBarScale, setLogBarScale] = useState(true);
   const [showEst, setShowEst] = useState(false);
   const [hoveredR, setHoveredR] = useState<number | null>(null);
@@ -970,7 +970,7 @@ function GeometricExplorerPanel({ lang }: { lang: Lang }) {
 
 // ── Z² diamond SVG ────────────────────────────────────────────────────────────
 
-function Z2DiamondSVG({ r, lang }: { r: number; lang: Lang }) {
+function Z2DiamondSVG({ r }: { r: number; lang: Lang }) {
   const W = 340;
   const H = 280;
   const cx = W / 2;
