@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import {
   solveCtico,
@@ -44,6 +45,7 @@ function vmSandbox(): Record<string, unknown> {
 }
 function cstimerRoot(file: string): string | null {
   const candidates = [
+    path.resolve(fileURLToPath(import.meta.url), '..', '..', '..', '..', '..', 'tools', 'cstimer-scramble'),
     path.resolve(process.cwd(), '..', '..', 'tools', 'cstimer-scramble'),
     path.resolve(process.cwd(), '..', '..', '..', 'tools', 'cstimer-scramble'),
     'D:/cube/cuberoot.me/tools/cstimer-scramble',

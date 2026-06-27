@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
+import { fileURLToPath } from 'node:url';
 import {
   solveSia222WithPdbs, parseSia222Scramble, sia222BuildPdbs,
   serializeSia222Pdbs, deserializeSia222Pdbs,
@@ -137,6 +138,7 @@ function applyBondedSolution(st0: St, aSol: string[], bSol: string[]): St {
 // ── real cstimer sia222 scrambles via node:vm (same pattern as bic_solver.test) ─────────────────
 function loadCstimerSia222(count: number): string[] {
   const candidates = [
+    path.resolve(fileURLToPath(import.meta.url), '..', '..', '..', '..', '..', 'tools', 'cstimer-scramble'),
     path.resolve(process.cwd(), '..', '..', 'tools', 'cstimer-scramble'),
     path.resolve(process.cwd(), '..', '..', '..', 'tools', 'cstimer-scramble'),
     'D:/cube/cuberoot.me/tools/cstimer-scramble',
