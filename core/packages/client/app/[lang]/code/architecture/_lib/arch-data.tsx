@@ -62,36 +62,22 @@ export interface Mod {
   zh: string;
   en: string;
   origin: 'own' | 'port' | 'fork';
-  zhDesc: string;
-  enDesc: string;
+  upstream?: string; // owner/repo slug — port / fork only
 }
 export const MODULES: Mod[] = [
-  { route: '/recon',          zh: '复盘',        en: 'Recon',        origin: 'own',  zhDesc: '比赛复盘 + 同轮自动带入',       enDesc: 'Result review + same-round autofill'
-},
-  { route: '/trainer',        zh: '公式训练',    en: 'Trainer',      origin: 'own',  zhDesc: '41 套公式计时训练',              enDesc: '41 algorithm sets with timing'
-},
-  { route: '/frame-count',    zh: '逐帧',        en: 'Frame Count',  origin: 'own',  zhDesc: 'WebCodecs + mp4box.js',          enDesc: 'WebCodecs + mp4box.js'
-},
-  { route: '/wca/viz',            zh: '成绩分布',    en: 'Distribution', origin: 'own',  zhDesc: '成绩分布可视化',                 enDesc: 'Result distribution viz'
-},
-  { route: '/wca/calendar',       zh: '比赛日历',    en: 'Calendar',     origin: 'own',  zhDesc: '全球比赛日历',                   enDesc: 'Global comp calendar'
-},
-  { route: '/scramble-stats', zh: '打乱难度',    en: 'Scramble',     origin: 'own',  zhDesc: '打乱难度分布',                   enDesc: 'Scramble difficulty'
-},
-  { route: '/wca',      zh: 'WCA 统计',    en: 'WCA Stats',    origin: 'own',  zhDesc: '80+ 统计页, 周更',               enDesc: '80+ pages, weekly'
-},
-  { route: '/recognize/pll',  zh: 'PLL 识别',    en: 'Recognize',    origin: 'own',  zhDesc: '看图答字母训练',                 enDesc: 'Image-to-letter drill'
-},
-  { route: '/calc',           zh: 'HTH 计算',    en: 'HTH Calc',     origin: 'port', zhDesc: 'port: carykh/hthgrapher',        enDesc: 'port: carykh/hthgrapher'
-},
-  { route: '/timer?players=2', zh: '1v1',         en: 'Battle',       origin: 'port', zhDesc: 'port: MatteoColombo',            enDesc: 'port: MatteoColombo' },
-  { route: '/mosaic',         zh: '马赛克',      en: 'Mosaic',       origin: 'port', zhDesc: 'port: Roman-/mosaic',            enDesc: 'port: Roman-/mosaic'
-},
-  { route: '/cstimer',        zh: 'csTimer',     en: 'csTimer',      origin: 'fork', zhDesc: 'fork: cs0x7f/cstimer',           enDesc: 'fork: cs0x7f/cstimer' },
-  { route: '/solver',         zh: '复原器',      en: 'Solver',       origin: 'fork', zhDesc: 'fork: or18/RubiksSolverDemo',    enDesc: 'fork: or18/RubiksSolverDemo'
-},
-  { route: '/alg-trainers',   zh: '公式训练器',  en: 'Alg Trainers', origin: 'fork', zhDesc: 'fork: mihlefeld/Alg-Trainers',   enDesc: 'fork: mihlefeld/Alg-Trainers'
-},
+  { route: '/recon',           zh: '复盘',        en: 'Recon',        origin: 'own' },
+  { route: '/trainer',         zh: '公式训练',    en: 'Trainer',      origin: 'own' },
+  { route: '/frame-count',     zh: '逐帧',        en: 'Frame Count',  origin: 'own' },
+  { route: '/wca/calendar',    zh: '比赛日历',    en: 'Calendar',     origin: 'own' },
+  { route: '/scramble-stats',  zh: '打乱难度',    en: 'Scramble',     origin: 'own' },
+  { route: '/wca',             zh: 'WCA 统计',    en: 'WCA Stats',    origin: 'own' },
+  { route: '/recognize/pll',   zh: 'PLL 识别',    en: 'Recognize',    origin: 'own' },
+  { route: '/calc',            zh: 'HTH 计算',    en: 'HTH Calc',     origin: 'port', upstream: 'carykh/hthgrapher' },
+  { route: '/timer?players=2', zh: '1v1',         en: 'Battle',       origin: 'port', upstream: 'MatteoColombo/cube_challenge_timer' },
+  { route: '/mosaic',          zh: '马赛克',      en: 'Mosaic',       origin: 'port', upstream: 'Roman-/mosaic' },
+  { route: '/cstimer',         zh: 'csTimer',     en: 'csTimer',      origin: 'fork', upstream: 'cs0x7f/cstimer' },
+  { route: '/solver',          zh: '复原器',      en: 'Solver',       origin: 'fork', upstream: 'or18/RubiksSolverDemo' },
+  { route: '/alg-trainers',    zh: '公式训练器',  en: 'Alg Trainers', origin: 'fork', upstream: 'mihlefeld/Alg-Trainers' },
 ];
 
 export interface Decision {
@@ -413,7 +399,7 @@ export const TIMELINE: TLEntry[] = [
     zh: {
       title: '手机、电脑、外网三端同时热重载；架构页从纯文字改成图文',
       body: '电脑、同 WiFi 手机、外网手机三端都能实时看到代码改动（热重载）。这个架构介绍页也在同一天从纯文字改成图文长版。',
-      expand: '三端走不同反向代理但共用一份开发服务，本页第 9 节有完整推导。',
+      expand: '三端走不同反向代理但共用一份开发服务，概览页「开发环境」一节有说明。',
     },
     en: {
       title: 'Hot-reload on phone, desktop, and remote at once; architecture page goes illustrated',

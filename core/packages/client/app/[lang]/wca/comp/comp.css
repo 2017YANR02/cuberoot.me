@@ -646,6 +646,14 @@
 /* 排序所依据的那一列 (单次 or 平均) 加粗 */
 .comp-table td.is-rank-col,
 .comp-table thead th.is-rank-col { font-weight: 700; }
+/* 可排序列头:无方框纯文字按钮(点击 升→降→取消),激活 = accent 色 + 加粗 + 方向箭头 */
+.comp-sort-btn {
+  appearance: none; background: none; border: none; padding: 0; font: inherit;
+  display: inline-flex; align-items: center; gap: 2px; cursor: pointer;
+  color: inherit; transition: color 0.12s;
+}
+.comp-sort-btn:hover { color: var(--accent); }
+.comp-sort-btn.is-active { color: var(--accent); font-weight: 700; }
 .td-attempt {
   font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);
@@ -658,6 +666,14 @@
 .td-attempt::after  { content: ")"; opacity: 0; }
 .td-attempt-trimmed::before,
 .td-attempt-trimmed::after { opacity: 1; }
+
+/* 详情列数字表头 (1..N):在各自把数列内居中。
+   选择器须带 .comp-table/.comp-modal-table thead th 前缀,否则被 `.comp-table thead th{text-align:left}` 按特异性盖掉。 */
+.comp-table thead th.th-attempt-n,
+.comp-modal-table thead th.th-attempt-n {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
 
 .td-best.is-pr,
 .td-avg.is-pr,

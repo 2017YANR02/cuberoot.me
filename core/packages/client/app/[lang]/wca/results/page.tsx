@@ -24,7 +24,7 @@ import { Flag } from '@/components/Flag';
 import { loadFlagData } from '@/lib/country-flags';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { ClearButton } from '@/components/ClearButton';
-import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';
+import { AttemptHeaderCells, AttemptCells } from '@/components/wca-results/AttemptsGrid';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge';
@@ -756,7 +756,7 @@ function AllResultsPageInner() {
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
-                      <th className="wse-attempts-col">{tr({ zh: '详细成绩', en: 'Solves' })}</th>
+                      <AttemptHeaderCells count={Math.min(5, data.rows.reduce((m, r) => Math.max(m, r.attempts?.length ?? 0), 0))} />
                     </tr>
                   </thead>
                   <tbody>
@@ -775,7 +775,7 @@ function AllResultsPageInner() {
                         </td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                         <td><Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} /></Link></td>
-                        <td className="wse-attempts-col"><AttemptsGrid attempts={r.attempts} eventId={singleEvent} /></td>
+                        <AttemptCells attempts={r.attempts} eventId={singleEvent} count={Math.min(5, data.rows.reduce((m, r) => Math.max(m, r.attempts?.length ?? 0), 0))} />
                       </tr>
                     ))}
                   </tbody>
@@ -798,7 +798,7 @@ function AllResultsPageInner() {
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
-                      <th className="wse-attempts-col">{tr({ zh: '详细成绩', en: 'Solves' })}</th>
+                      <AttemptHeaderCells count={Math.min(5, data.rows.reduce((m, r) => Math.max(m, r.attempts?.length ?? 0), 0))} />
                     </tr>
                   </thead>
                   <tbody>
@@ -812,7 +812,7 @@ function AllResultsPageInner() {
                         <td className="wse-value-col">{r.value != null ? formatWcaResult(r.value, singleEvent, effType) : '—'}</td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                         <td>{r.compId ? <Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} /></Link> : ''}</td>
-                        <td className="wse-attempts-col">{r.value != null ? <AttemptsGrid attempts={r.attempts} eventId={singleEvent} /> : ''}</td>
+                        <AttemptCells attempts={r.value != null ? r.attempts : []} eventId={singleEvent} count={Math.min(5, data.rows.reduce((m, r) => Math.max(m, r.attempts?.length ?? 0), 0))} />
                       </tr>
                     ))}
                   </tbody>

@@ -119,10 +119,6 @@ export default function PredictionAboutPage() {
             {t(' — 单项目更深入的分节分析。', ' — deeper per-section analysis for 3×3.')}
           </li>
           <li>
-            <Link href="/wca/viz">{t('成绩分布', 'Distribution')}</Link>
-            {t(' — 单选手成绩分布 KDE 可视化。', ' — per-cuber result distribution KDE visualisation.')}
-          </li>
-          <li>
             <Link href="/wca/results">{t('全成绩排名', 'All Results')}</Link>
             {t(' — 查看任意项目的历史 WR 排列。', ' — browse historical WR progressions per event.')}
           </li>

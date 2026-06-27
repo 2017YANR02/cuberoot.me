@@ -29,7 +29,6 @@ import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEdito
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
 import { Pencil } from 'lucide-react';
-import i18n from "@/i18n/i18n-client";
 import { tr } from '@/i18n/tr';
 
 // hash 形如 #r-{compId}-{eventId}-{round}.按 ROUND_VARIANTS 反查 cutoff 子型 ('d'/'g'/'b' etc).
@@ -94,7 +93,14 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
     results && comps ? computePrRank(results.filter((r) => !r.live), comps) : new Map(),
     [results, comps],
   );
-  // 直播行的 PR/PRn 单独从 cubing-live 源取(与 /wca/comp 领奖台同口径)。
+  // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一 dense-rank
+  // 口径且彼此自洽(最好那把 == 单次列)。只取直播行用,不读官方行 → 不污染官方 PR 标记。
+  const prRankLive = useMemo(() =>
+    results && comps && results.some((r) => r.live) ? computePrRank(results, comps) : null,
+    [results, comps],
+  );
+  // 直播行的区域纪录标志(WR/CR/NR)单独从 cubing-live 源取(与 /wca/comp 领奖台同口径);
+  // 名次数字优先用本地 prRankLive,cubing pS/pA 仅作兜底(本地无效时,如缺把数)。
   const livePrRanks = useLivePrRanks(results, wcaId);
 
   const grouped = useMemo(() => {
@@ -199,7 +205,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                   </th>
                 </tr>
                 {rows.map((r) => {
-                    const rank = prRank.get(r.id);
+                    const rank = r.live ? prRankLive?.get(r.id) : prRank.get(r.id);
                     const liveRank = r.live ? livePrRanks.get(r.id) : null;
                     const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
                     const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
@@ -291,7 +297,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             note={chain?.[chain.length - 1]?.note}
                           />
                         </td>
-                        <td className="wp-cell-attempts">
+                        <td className={`wp-cell-attempts ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
                           <AttemptsList
                             attempts={effAttempts}
                             best={effBest}

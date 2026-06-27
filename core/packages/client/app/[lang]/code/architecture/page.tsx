@@ -18,6 +18,11 @@ export default function ArchitecturePage() {
 
   useDocumentTitle('站点架构', 'Site Architecture');
 
+  const ownN = MODULES.filter((m) => m.origin === 'own').length;
+  const portN = MODULES.filter((m) => m.origin === 'port').length;
+  const forkN = MODULES.filter((m) => m.origin === 'fork').length;
+  const borrowed = MODULES.filter((m) => m.origin !== 'own');
+
   return (
     <LangCtx.Provider value={lang}>
       <div className="arch-page">
@@ -115,31 +120,40 @@ export default function ArchitecturePage() {
         <section className="arch-sec">
           <div className="arch-sec-head">
             <span className="arch-sec-num">03</span>
-            <h2 className="arch-sec-title"><L zh="14 个模块, 三种治理" en="14 modules, three flavors" /></h2>
+            <h2 className="arch-sec-title"><L zh={`${MODULES.length} 个模块, 三种治理`} en={`${MODULES.length} modules, three flavors`} /></h2>
           </div>
           <p className="arch-sec-lede">
             <L
-              zh={<>不是所有路由都是我写的。<strong>own</strong> = 自己设计 + 实现;<strong>port</strong> = 把别人的 React / HTML 重写进本仓库;<strong>fork</strong> = upstream 静态资源原样托管。点卡片去看实际模块。</>}
-              en={<>Not every route was built from scratch. <strong>own</strong> = designed and built here; <strong>port</strong> = someone else's React/HTML rewritten in-repo; <strong>fork</strong> = upstream assets hosted as-is. Click a card to visit the module.</>}
+              zh={<>不是所有路由都是我写的。<strong>own</strong> = 自己设计 + 实现({ownN} 个, 就是首页那些主力工具);<strong>port</strong> = 把别人的 React / HTML 重写进本仓库;<strong>fork</strong> = upstream 静态资源原样托管。自研的首页都有, 这里不赘列 —— 只点出 {borrowed.length} 个借来的 + 各自上游。</>}
+              en={<>Not every route was built from scratch. <strong>own</strong> = designed and built here ({ownN} of them — the main tools on the homepage); <strong>port</strong> = someone else's React/HTML rewritten in-repo; <strong>fork</strong> = upstream assets hosted as-is. The own ones are all on the homepage and aren't re-listed here — below are just the {borrowed.length} borrowed ones and their upstreams.</>}
             />
           </p>
           <div className="arch-mod-legend">
-            <span className="arch-tag arch-tag-own">own · 8</span>
-            <span className="arch-tag arch-tag-port">port · 3</span>
-            <span className="arch-tag arch-tag-fork">fork · 3</span>
+            <span className="arch-tag arch-tag-own">own · {ownN}</span>
+            <span className="arch-tag arch-tag-port">port · {portN}</span>
+            <span className="arch-tag arch-tag-fork">fork · {forkN}</span>
           </div>
-          <div className="arch-mods">
-            {MODULES.map((m) => (
-              <Link key={m.route} href={m.route} className={`arch-mod arch-mod-${m.origin}`}>
-                <div className="arch-mod-top">
-                  <span className="arch-mod-route">{m.route}</span>
-                  <span className={`arch-tag arch-tag-${m.origin}`}>{m.origin}</span>
-                </div>
-                <div className="arch-mod-name">{tr(m)}</div>
-                <div className="arch-mod-desc">{lang === 'zh' ? m.zhDesc : m.enDesc}</div>
-              </Link>
-            ))}
-          </div>
+          <table className="arch-tbl">
+            <thead><tr>
+              <th><L zh="借来的模块" en="Borrowed module" /></th>
+              <th><L zh="类型" en="Type" /></th>
+              <th><L zh="上游" en="Upstream" /></th>
+            </tr></thead>
+            <tbody>
+              {borrowed.map((m) => (
+                <tr key={m.route}>
+                  <td>
+                    <Link href={m.route} className="arch-mod-link" prefetch={false}>{m.route}</Link>
+                    <span className="arch-mod-cn">{tr(m)}</span>
+                  </td>
+                  <td><span className={`arch-tag arch-tag-${m.origin}`}>{m.origin}</span></td>
+                  <td>
+                    <a href={`https://github.com/${m.upstream}`} target="_blank" rel="noreferrer" className="arch-up-link">{m.upstream}</a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </section>
 
         {/* 04 Deploy hosts */}
@@ -160,6 +174,31 @@ export default function ArchitecturePage() {
               <tr><td><code>next.cuberoot.me</code></td><td><L zh="同 systemd cuberoot-next :3002 (别名)" en="Same systemd cuberoot-next :3002 (alias)" /></td><td><L zh="Staging 别名 / 直连 self-hosted Next 不绕 DNS" en="Staging alias / direct to self-hosted Next, bypassing DNS routing" /></td></tr>
               <tr><td><code>static.cuberoot.me</code></td><td><L zh="同台 nginx 独立 vhost,仅服 /tools/ + /stats/ (CORS:*)" en="Same nginx, dedicated vhost serving only /tools/ + /stats/ (CORS:*)" /></td><td><L zh="给 Vercel function fallback 拉静态资源" en="Static-asset origin for Vercel function fallback" /></td></tr>
               <tr><td><code>cuberoot.me/blog/</code><br/><code>blog.cuberoot.me</code></td><td><L zh="双轨 DNS 分线路:同台 nginx alias / GH Pages" en="Dual via split-horizon DNS: same-VM nginx alias / GH Pages" /></td><td><L zh="WordPress 静态归档 (2026-05 phase 2 freeze)" en="WordPress static archive (frozen 2026-05)" /></td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        {/* 05 Dev environment */}
+        <section className="arch-sec">
+          <div className="arch-sec-head">
+            <span className="arch-sec-num">05</span>
+            <h2 className="arch-sec-title"><L zh="开发环境:一份 dev server, 三端热重载" en="Dev environment: one dev server, hot-reload on three ends" /></h2>
+          </div>
+          <p className="arch-sec-lede">
+            <L
+              zh={<>开发时只跑一份 Next dev server (本机 <code>:3000</code>)。本机直连最快;手机和任意外网设备走 <code>dev.cuberoot.me</code> —— 一条 frp 隧道把本机 dev server 经云服务器 nginx (TLS 终止) 暴出去, 改一行代码三端同时热重载 (HMR 走 WSS)。这是唯一一个 <strong>不在</strong> 上面六域部署表里的子域:它是 dev-only 隧道, 不参与线上拓扑, 也从不缓存 (HMR 缓存会中毒)。</>}
+              en={<>Development runs a single Next dev server (local <code>:3000</code>). The local machine connects directly (fastest); phones and any off-network device go through <code>dev.cuberoot.me</code> — an frp tunnel exposing the local dev server via cloud-VM nginx (TLS termination), so editing one line hot-reloads all three ends at once (HMR over WSS). It is the one subdomain <strong>not</strong> in the six-host deploy table above: a dev-only tunnel, outside the production topology, and never cached (HMR caching poisons it).</>}
+            />
+          </p>
+          <table className="arch-tbl">
+            <thead><tr>
+              <th><L zh="场景" en="Scenario" /></th>
+              <th><L zh="入口" en="Entry" /></th>
+              <th><L zh="链路" en="Path" /></th>
+            </tr></thead>
+            <tbody>
+              <tr><td><L zh="本机开发" en="Local dev" /></td><td><code>127.0.0.1:3000</code></td><td><L zh="same-origin, 直连 Next dev, 最快" en="Same-origin, direct to Next dev, fastest" /></td></tr>
+              <tr><td><L zh="手机 / 外网" en="Phone / off-network" /></td><td><code>dev.cuberoot.me</code></td><td><L zh="frp 隧道 → 云服务器 nginx (TLS) → 本机 :3000, HMR over WSS" en="frp tunnel → cloud-VM nginx (TLS) → local :3000, HMR over WSS" /></td></tr>
             </tbody>
           </table>
         </section>

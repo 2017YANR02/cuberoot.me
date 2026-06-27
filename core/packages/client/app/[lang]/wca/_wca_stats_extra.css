@@ -245,8 +245,25 @@ html:not([data-palette-scheme=dark]) .wse-page {
    横向滚动兜底。`:has(.wse-attempts-col)` 仅在该列存在(单项数据视图)时生效,其他模式维持常规宽度。 */
 .wse-page:has(.wse-attempts-col) { width: fit-content; max-width: 100%; }
 .wse-page:has(.wse-attempts-col) .wse-table-wrapper { width: fit-content; max-width: 100%; }
-/* 「详细成绩」表头居中,压在下方 5 列 attempts 网格正上方 */
-.wse-table th.wse-attempts-col { text-align: center; }
+/* 详细成绩:每把一列(真表格列,见 AttemptHeaderCells / AttemptCells)。表头数字 th 去掉通用表头的
+   uppercase / letter-spacing / 12px,跟数据列同字号,数字与成绩同列居中对齐。 */
+.wse-table th.wse-attempts-col {
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: normal;
+  text-transform: none;
+}
+/* 数据列右对齐(同 comp .td-attempt):成绩皆 2 位小数 + 等宽透明括号占位,右对齐即让小数点跨行对齐
+   (居中/左对齐会因整数位数不同 0.86 / 20.27 错开)。须带 .wse-table td 前缀压过通用
+   `.wse-table td{text-align:left}`(特异性 0,1,1),否则 .wse-att-td(0,1,0)被盖掉。 */
+.wse-table td.wse-attempts-col { text-align: right; }
+/* 多项目纪录表(records?show=current 不筛项目)列宽被超宽项目(盲拧 "59/60 59:46")撑大,
+   窄项目成绩右对齐缩在列右,居中表头会飘在空列左半。成绩必须右对齐(保小数点跨行对齐),
+   故此表表头也右对齐贴到成绩上方;补一个透明右括号占位(成绩末位数字右侧本就有透明 ")" 占位),
+   让表头数字正好落在成绩末位数字上方。单项目表(results / 筛项目 / history 分组)列贴合,
+   居中表头本就压在成绩上,保持居中。 */
+.wse-table.wse-multi-event th.wse-attempts-col { text-align: right; }
+.wse-table.wse-multi-event th.wse-attempts-col::after { content: ")"; opacity: 0; }
 .wse-state {
   padding: 40px;
   text-align: center;

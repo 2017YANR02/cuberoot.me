@@ -15,7 +15,7 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,
-  LineChart, TrendingDown, Target, Calculator, Search,
+  TrendingDown, Target, Calculator, Search,
   Users, Percent, LayoutGrid, Crown, Sparkles, BellRing,
   type LucideIcon,
 } from 'lucide-react';
@@ -43,8 +43,7 @@ const LOOKUP = '__lookup__';
 const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon
  }[] = [
   // 比赛 / 纪录 / 排名 已上移到首页直达卡,这里不再重复
-  { path: '/wca/viz',        zh: '分布',     en: 'Distribution', Icon: LineChart
-},
+  // 成绩分布(原 /wca/viz)已退役,移入选手页「动态分布」子 tab
   { path: '/wca/prediction', zh: '预测',     en: 'Prediction',   Icon: TrendingDown
 },
   { path: '/nemesizer',      zh: '宿敌',     en: 'Nemesizer',    Icon: Target

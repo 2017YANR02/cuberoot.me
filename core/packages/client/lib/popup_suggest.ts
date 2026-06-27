@@ -75,7 +75,7 @@ type Transition =
   | { kind: 'xcross' }
   | { kind: 'xxcross' }
   | { kind: 'xxxcross' }
-  | { kind: 'pair'; slots: F2lSlotId[]; ordinalIndex: number; eoDone: boolean }
+  | { kind: 'pair'; slots: F2lSlotId[]; ordinalIndex: number; eoDone: boolean; ollSkip: boolean }
   | { kind: 'oll' }
   | { kind: 'pll' }
   | null;
@@ -114,29 +114,32 @@ function classifyTransition(
   const nowCrossOk = curr.stage !== 'none' && curr.stage !== 'pscross';
   if (!nowCrossOk) return null;
 
-  // Pair stage transitions
-  if (curr.stage === 'oll' && prev.stage !== 'oll' && prev.stage !== 'pll' && prev.stage !== 'solved') {
-    // OLL just got solved (along the way to OLL)
-    return { kind: 'oll' };
-  }
-  if (curr.stage === 'oll') {
-    // already in OLL; line probably just permuted top — treat as PLL? No, OLL
-    // stage means top is oriented. If prev was oll and curr still oll, no
-    // progress.
-    return null;
-  }
-  if (curr.stage === 'solved' && (prev.stage === 'oll' || prev.stage === 'pll')) {
-    return { kind: 'pll' };
-  }
-  if (curr.stage === 'solved' && prev.stage === 'f2l') {
-    // Skipped OLL → went directly to solved. Treat as OLL+PLL combined,
-    // or PLL skip after OLL... cubedb shows OLL labels typically. Use OLL.
-    return { kind: 'oll' };
+  // F2L pairs newly solved on this line (frame-invariant cubie identity).
+  const newSlots = newlySolvedSlots(prev, curr);
+  const totalSlotsAfter = curr.solvedSlots.length;
+
+  // Pure last-layer transitions ONLY apply when this line solved no new F2L
+  // pair. A line that completes a pair AND lands on an oriented LL is an
+  // OLL-skip F2L pair (handled by the pair branch with ollSkip), not a pure OLL.
+  if (newSlots.length === 0) {
+    if (curr.stage === 'oll' && prev.stage !== 'oll' && prev.stage !== 'pll' && prev.stage !== 'solved') {
+      // OLL just got solved (along the way to OLL)
+      return { kind: 'oll' };
+    }
+    if (curr.stage === 'oll') {
+      // already in OLL; line probably just permuted top. No progress.
+      return null;
+    }
+    if (curr.stage === 'solved' && (prev.stage === 'oll' || prev.stage === 'pll')) {
+      return { kind: 'pll' };
+    }
+    if (curr.stage === 'solved' && prev.stage === 'f2l') {
+      // Skipped OLL → went directly to solved (OLL line that also skips PLL).
+      return { kind: 'oll' };
+    }
   }
 
   // Cross-only transitions
-  const newSlots = newlySolvedSlots(prev, curr);
-  const totalSlotsAfter = curr.solvedSlots.length;
 
   if (curr.stage === 'cross' && prev.stage !== 'cross') {
     return { kind: 'cross' };
@@ -157,7 +160,11 @@ function classifyTransition(
     // If this line completes F2L AND leaves LL EO done, the user effectively
     // did ZBLS (or EOLS) — surface that as an additional label option.
     const eoDone = curr.stage === 'f2l' && topEdgesOriented(curr.canonicalPattern);
-    return { kind: 'pair', slots: newSlots, ordinalIndex, eoDone };
+    // If the completing pair ALSO leaves LL fully oriented, OLL was skipped —
+    // the pair label carries a `/OLL Skip` suffix. (curr.stage === 'oll' implies
+    // F2L is complete, so this is always the last pair.)
+    const ollSkip = curr.stage === 'oll';
+    return { kind: 'pair', slots: newSlots, ordinalIndex, eoDone, ollSkip };
   }
 
   return null;
@@ -355,7 +362,14 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
   if (t.kind === 'oll') {
     // 精确 case 名(识别不出回退泛标签 // OLL),不再给中间那条泛 // OLL。
     const ollRaw = await recognizeOllCase(prevPattern);
-    const ollLabel = ollRaw ? `// OLL-${ollCommentName(ollRaw)}` : '// OLL';
+    const ollName = ollRaw ? ollCommentName(ollRaw) : null;
+    // 这把 OLL 之后魔方已整解 → PLL 被跳过(同一行 OLL + PLL skip),注释合并成
+    // `// OLL-K2/PLL Skip`(识别不出 case 名时回退 `// OLL/PLL Skip`)。
+    if (curr.stage === 'solved') {
+      out.push(ollName ? `// OLL-${ollName}/PLL Skip` : '// OLL/PLL Skip');
+      return out;
+    }
+    const ollLabel = ollName ? `// OLL-${ollName}` : '// OLL';
     // 仅当这把 OLL 之后只剩 EPLL(角已归位)时,它才是 OLL(CP) → 加该选项并置顶;
     // 否则(后面是普通 PLL)根本不显示 OLL(CP)。
     const pllNext = await recognizePllCase(currPattern);
@@ -372,10 +386,12 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
   if (t.kind === 'pair') {
     // Two label variants only: F2L<N> ordinal and 2-letter color-pair.
     // (Full-name, "1st pair", and "Pair" suffix variants were dropped.)
+    // OLL skipped on the completing pair → suffix every label with `/OLL Skip`.
+    const sfx = t.ollSkip ? '/OLL Skip' : '';
     if (t.slots.length === 1) {
       const colors = slotColors(curr.canonicalPattern, t.slots[0]);
-      pushPair(colors.pair);
-      pushPair(`F2L${t.ordinalIndex}`);
+      pushPair(`${colors.pair}${sfx}`);
+      pushPair(`F2L${t.ordinalIndex}${sfx}`);
       // Last F2L slot (ordinal 4) AND EO done — user did ZBLS / EOLS. Surface
       // it as an extra label so the recon log records the technique used.
       if (t.eoDone && t.ordinalIndex === 4) {
@@ -388,8 +404,8 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
       const i2 = t.ordinalIndex + 1;
       const c1 = slotColors(curr.canonicalPattern, t.slots[0]);
       const c2 = slotColors(curr.canonicalPattern, t.slots[1]);
-      pushPair(`${c1.pair} & ${c2.pair}`);
-      pushPair(`F2L${i1} & F2L${i2}`);
+      pushPair(`${c1.pair} & ${c2.pair}${sfx}`);
+      pushPair(`F2L${i1} & F2L${i2}${sfx}`);
       if (t.eoDone && i2 === 4) {
         pushPair('ZBLS');
       }

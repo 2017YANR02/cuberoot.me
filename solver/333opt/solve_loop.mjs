@@ -19,6 +19,8 @@ const OUT = resolve(__dirname, 'out.0.csv');
 // 别再硬编码: master 池随新比赛增长(曾固定 1297444, 池涨到 1304126 后会提前 break 漏掉尾部)。
 const CORPUS = process.env.CORPUS ? resolve(process.env.CORPUS) : 'D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt';
 const TOTAL = existsSync(CORPUS) ? readFileSync(CORPUS, 'utf8').split('\n').filter((l) => l.indexOf(',') > 0).length : 1297444;
+// 线程数: env THREADS 覆盖(默认 12); 全局上限 14, 别再高(留 2 核给 OS/其它)。
+const THREADS = String(process.env.THREADS || '12');
 const lines = () => (existsSync(OUT) ? readFileSync(OUT, 'utf8').split('\n').filter(Boolean).length : 0);
 
 let stuck = 0, run = 0;
@@ -26,8 +28,8 @@ for (;;) {
   const before = lines();
   if (before >= TOTAL) { console.log(`[loop] corpus complete: ${before}/${TOTAL}`); break; }
   run++;
-  console.log(`[loop] run #${run} start · ${before}/${TOTAL} done · launching solve.mjs 12`);
-  const r = spawnSync('node', ['solve.mjs', '12'], { cwd: __dirname, stdio: 'inherit' });
+  console.log(`[loop] run #${run} start · ${before}/${TOTAL} done · launching solve.mjs ${THREADS}`);
+  const r = spawnSync('node', ['solve.mjs', THREADS], { cwd: __dirname, stdio: 'inherit' });
   const after = lines();
   console.log(`[loop] run #${run} exit code=${r.status ?? 'null'} · ${after}/${TOTAL} (+${after - before})`);
   if (after >= TOTAL) { console.log('[loop] corpus complete'); break; }

@@ -82,15 +82,15 @@ export default function PersonHero({ profile, results, former, isZh }: Props) {
         <div className="wp-hero-cell">
           <div className="wp-hero-cell-label">{t('比赛次数', 'Competitions')}</div>
           <div className="wp-hero-cell-value">
-            <span className="wp-pill wp-pill-green">{profile.competition_count}</span>
+            <span className="wp-pill">{profile.competition_count}</span>
           </div>
         </div>
         <div className="wp-hero-cell">
           <div className="wp-hero-cell-label">{t('复原次数 / 尝试次数', 'Solves / Attempts')}</div>
           <div className="wp-hero-cell-value">
-            <span className="wp-pill wp-pill-blue">{solves}</span>
+            <span className="wp-pill">{solves}</span>
             <span className="wp-pill-sep">/</span>
-            <span className="wp-pill wp-pill-orange">{attempts}</span>
+            <span className="wp-pill">{attempts}</span>
           </div>
         </div>
       </div>

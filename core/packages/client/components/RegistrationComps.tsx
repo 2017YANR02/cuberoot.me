@@ -5,9 +5,7 @@
 // 比赛,置顶为「已关注」组,跨设备同步(server PG comp_follows)。
 // 取数 + 分组纯逻辑在 lib/comp-registration.ts;关注 API 在 lib/comp-follows.ts。
 import { useMemo, useState } from 'react';
-import Link from '@/components/AppLink';
 import { Star, LogIn } from 'lucide-react';
-import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import type { Comp } from '@/lib/comp-search';
 import {
   buildRegView,
@@ -15,20 +13,11 @@ import {
   type RegItem,
   type RegBucketKey,
 } from '@/lib/comp-registration';
-import { FollowStar, type CompFollowState } from '@/components/CompFollow';
+import { type CompFollowState } from '@/components/CompFollow';
 import { useAuthStore } from '@/lib/auth-store';
-import { compLinkProps } from '@/lib/comp-link';
-import { localizeCompName } from '@/lib/comp-localize';
-import { localizeCity } from '@/lib/city-localize';
-import { countryName } from '@/lib/country-name';
-import { toWcaEventId } from '@/lib/wca-events';
-import { Flag } from '@/components/Flag';
-import { CubingIcon } from '@/components/EventIcon';
-import { formatDateRangeIso } from '@/lib/wca-date';
+import { CompCard, type CompCardTone } from '@/components/CompCard';
 import { tr } from '@/i18n/tr';
 import './registration_comps.css';
-
-const EVENT_RANK = new Map<string, number>(WCA_EVENT_ORDER.map((e, i) => [e, i]));
 
 // ── 文案 ────────────────────────────────────────────────────────────────────
 function pad2(n: number): string { return n < 10 ? `0${n}` : `${n}`; }
@@ -79,7 +68,7 @@ function whenLabel(item: RegItem, now: number, isZh: boolean, mode: 'day' | 'fol
 }
 
 /** 报名状态 pill 的色调:已截止灰;开放 accent;截止默认 amber,24h 内 urgent(红)。 */
-function pillTone(item: RegItem, now: number): 'closed' | 'open' | 'close' | 'urgent' {
+function pillTone(item: RegItem, now: number): CompCardTone {
   if (item.kind === 'closed') return 'closed';
   if (item.kind === 'open') return 'open';
   return item.at - now <= 86_400_000 ? 'urgent' : 'close';
@@ -96,47 +85,15 @@ function RegistrationCard({ item, isZh, lang, now, mode, followed, onToggle, sho
   onToggle: (id: string) => void;
   showFollow: boolean;
 }) {
-  const c = item.comp;
-  const name = localizeCompName(c.id, c.name, isZh).replace(/\s*20\d\d\s*$/, '');
-  const city = c.city ? (isZh ? localizeCity(c.city, true, c.country) : c.city) : '';
-  const country = countryName(c.country, isZh);
-  const dateStr = formatDateRangeIso(c.start_date, c.end_date).replace(/20\d\d-/g, '');
-  const when = whenLabel(item, now, isZh, mode);
-  const tone = pillTone(item, now);
-  const action = actionWord(item.kind);
-  const events = useMemo(
-    () => [...new Set((c.events ?? []).map(toWcaEventId).filter(Boolean))]
-      .sort((a, b) => (EVENT_RANK.get(a) ?? 99) - (EVENT_RANK.get(b) ?? 99)),
-    [c.events],
-  );
-
   return (
-    <div className={`rc-card${item.kind === 'closed' ? ' is-closed' : ''}`}>
-      {showFollow && (
-        <FollowStar variant="corner" compId={c.id} followed={followed} onToggle={onToggle} />
-      )}
-      <Link {...compLinkProps(c.id, undefined, lang)} className="rc-main">
-        <div className="rc-title">
-          <Flag iso2={c.country} spanClassName="rc-flag" imgClassName="rc-flag-img" />
-          <span className="rc-name">{name}</span>
-        </div>
-        <div className="rc-meta">
-          <span className="rc-date">{dateStr}</span>
-          <span>{city ? `${city}${isZh ? '，' : ', '}${country}` : country}</span>
-        </div>
-        <span className={`rc-pill rc-pill--${tone}`}>
-          {when && <span className="rc-when">{when}</span>}
-          <span className="rc-action">{action}</span>
-        </span>
-        {events.length > 0 && (
-          <div className="rc-events">
-            {events.map((eid) => (
-              <CubingIcon key={eid} icon={`event-${eid}`} className="rc-event" />
-            ))}
-          </div>
-        )}
-      </Link>
-    </div>
+    <CompCard
+      comp={item.comp}
+      isZh={isZh}
+      lang={lang}
+      pill={{ when: whenLabel(item, now, isZh, mode), word: actionWord(item.kind), tone: pillTone(item, now) }}
+      dimmed={item.kind === 'closed'}
+      follow={showFollow ? { followed, onToggle } : null}
+    />
   );
 }
 

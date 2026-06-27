@@ -21,7 +21,7 @@ import { RecordBadge } from '@/components/RecordBadge';
 import { RegionPicker } from '@/components/RegionPicker';
 import { ListSelect } from '@/components/ListSelect';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';
+import { AttemptHeaderCells, AttemptCells } from '@/components/wca-results/AttemptsGrid';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import '../_records.css';
@@ -302,9 +302,11 @@ function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
     }
     return out;
   }, [rows]);
+  // 详细成绩列数字表头的列数 = 各行 attempts 最长(夹到 5);混合项目时取最宽的。
+  const attemptCols = useMemo(() => Math.min(5, rows.reduce((m, r) => Math.max(m, r.a?.length ?? 0), 0)), [rows]);
 
   return (
-    <table className="wse-table records-table">
+    <table className={`wse-table records-table${showEvent ? ' wse-multi-event' : ''}`}>
       <thead>
         <tr>
           <th>{tr({ zh: '类型', en: 'Type'
@@ -319,8 +321,7 @@ function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
           <th>{tr({ zh: '比赛', en: 'Competition'
         })}</th>
           <th>{tr({ zh: '日期', en: 'Date' })}</th>
-          <th className="wse-attempts-col">{tr({ zh: '详细成绩', en: 'Solves'
-        })}</th>
+          <AttemptHeaderCells count={attemptCols} />
         </tr>
       </thead>
       <tbody>
@@ -351,9 +352,7 @@ function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
               </Link>
             </td>
             <td className="wse-detail-cell">{r.d}</td>
-            <td className="wse-attempts-col">
-              {r.a && r.a.length > 0 ? <AttemptsGrid attempts={r.a} eventId={r.e} /> : ''}
-            </td>
+            <AttemptCells attempts={r.a} eventId={r.e} count={attemptCols} />
           </tr>
         ))}
       </tbody>
