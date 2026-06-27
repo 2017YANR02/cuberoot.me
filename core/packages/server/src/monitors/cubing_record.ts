@@ -76,6 +76,7 @@ interface InternalEvent {
   attemptResult: number;
   eventId: string;
   roundId: string;
+  roundNumber?: number; // 本站 1-based 轮次序号(深链 ?round=N);缺失时链接只带 event
   personName: string;
   personRegion: string;
   compIso2: string;
@@ -150,6 +151,9 @@ interface LiveRounds {
   rounds: [string, string][]; // [eventId, roundId]
   cnTitle: string;
   enTitle: string;
+  // `${eventId}|${roundId}` → 本站 1-based 轮次序号(data-events 里 rs 的位置 +1)。
+  // cubing 的 roundId 非序号,本站深链 ?round=N 走 N→rs[N-1],故推送链接要带这个序号。
+  roundNumByKey: Map<string, number>;
 }
 
 /** 从 live 页 HTML 拿 (cid, rounds, cnTitle, enTitle)。跑两次 HTTP:默认中文 + ?lang=en。
@@ -174,6 +178,8 @@ async function fetchLiveRounds(slug: string): Promise<LiveRounds> {
   const cid = Number(mC[1]);
   const events = JSON.parse(decodeHtmlEntities(mEv[1])) as { i: string; rs: { i: string }[] }[];
   const rounds: [string, string][] = events.flatMap((ev) => ev.rs.map((rd) => [ev.i, rd.i] as [string, string]));
+  const roundNumByKey = new Map<string, number>();
+  for (const ev of events) ev.rs.forEach((rd, idx) => roundNumByKey.set(`${ev.i}|${rd.i}`, idx + 1));
   const cnTitle = extractTitle(bodyCn, slug);
 
   // 再拿一次英文 title(EN 推送用),失败回退 slug 去横杠。
@@ -193,7 +199,7 @@ async function fetchLiveRounds(slug: string): Promise<LiveRounds> {
     enTitle = slug.replace(/-/g, ' ');
   }
 
-  return { cid, rounds, cnTitle, enTitle };
+  return { cid, rounds, cnTitle, enTitle, roundNumByKey };
 }
 
 // ─── WS fetch ──────────────────────────────────────────────────────────────
@@ -346,7 +352,7 @@ async function fetchCompResults(
 
 /** 遍历一场比赛的所有 result row,产出可推送的内部 event。
  *  每条 sr / ar 标记一个 event;同 row 的两条共享 groupKey,后续可合并推送。 */
-function iterRecordEvents(rows: LiveRow[], users: Record<number, WsUser>, comp: CubingComp): InternalEvent[] {
+function iterRecordEvents(rows: LiveRow[], users: Record<number, WsUser>, comp: CubingComp, roundNumByKey: Map<string, number>): InternalEvent[] {
   const cIso2 = compIso2(comp);
   const compName = comp.name || comp.alias || '';
   const compNameEn = comp.name_en || comp.name || comp.alias || '';
@@ -374,6 +380,7 @@ function iterRecordEvents(rows: LiveRow[], users: Record<number, WsUser>, comp: 
         attemptResult: value,
         eventId: row.e,
         roundId: row.r,
+        roundNumber: roundNumByKey.get(`${row.e}|${row.r}`),
         personName: user.name || '',
         personRegion: user.region || '',
         compIso2: cIso2,
@@ -388,7 +395,7 @@ function iterRecordEvents(rows: LiveRow[], users: Record<number, WsUser>, comp: 
 
 /** result.user 的 nb/na rows → PR 内部 event(对应 Python iter_pr_events)。
  *  按 (wcaid, eventId, recType) 去重取最快;同选手同事件 single+avg 共享 groupKey 合并推送。 */
-function iterPrEvents(prRows: PrRow[], comp: CubingComp): InternalEvent[] {
+function iterPrEvents(prRows: PrRow[], comp: CubingComp, roundNumByKey: Map<string, number>): InternalEvent[] {
   const cIso2 = compIso2(comp);
   const compName = comp.name || comp.alias || '';
   const compNameEn = comp.name_en || comp.name || comp.alias || '';
@@ -426,6 +433,7 @@ function iterPrEvents(prRows: PrRow[], comp: CubingComp): InternalEvent[] {
       attemptResult: value,
       eventId,
       roundId: row.r || '',
+      roundNumber: roundNumByKey.get(`${eventId}|${row.r || ''}`),
       personName: row._name || '',
       personRegion: row._region || 'China',
       compIso2: cIso2,
@@ -471,8 +479,8 @@ async function scanComp(comp: CubingComp, watchedKeys: Set<string>): Promise<Int
     if (u) pr._region = u.region;
   }
 
-  const events = iterRecordEvents(results.rows, results.users, enriched);
-  events.push(...iterPrEvents(results.prRows, enriched));
+  const events = iterRecordEvents(results.rows, results.users, enriched, live.roundNumByKey);
+  events.push(...iterPrEvents(results.prRows, enriched, live.roundNumByKey));
   return events;
 }
 
@@ -492,10 +500,11 @@ function toRecordEvent(ev: InternalEvent): RecordEvent {
     comp_name: ev.compName,
     comp_name_en: ev.compNameEn,
     comp_iso2: ev.compIso2,
-    // 比赛链接指向自有站(alias 去横杠=WCA id;cubing 的 round 值非本站轮次序号,故只带 event)。
+    // 比赛链接指向自有站(alias 去横杠=WCA id),带 event + 本站轮次序号深链。
+    // roundNumber 由 data-events 里 rs 的位置推出(cubing 的 roundId 非序号);
     // 中国比赛落 /zh;alias 缺失时回退 cubing.com live 页。
     url:
-      siteCompUrlFromCubingAlias(ev.slug, ev.eventId, undefined, isChineseRegion(ev.compIso2))
+      siteCompUrlFromCubingAlias(ev.slug, ev.eventId, ev.roundNumber ?? null, isChineseRegion(ev.compIso2))
       ?? `https://cubing.com/live/${ev.slug}?event=${ev.eventId}&round=${ev.roundId}`,
   };
 }
