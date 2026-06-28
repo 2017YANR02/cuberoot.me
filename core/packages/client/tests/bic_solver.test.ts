@@ -410,7 +410,8 @@ describe('bicExamplesByLengthFromTable', () => {
     }
     expect(nonTrivial).toBe(1108799); // all states minus the identity
     expect(seen.size).toBe(1108799); // every non-trivial state exactly once
-  });
+  }, 300_000); // full 1.1M-state enumeration: ~104s local, rides past the 120s
+  // global default on slower CI runners — give ample headroom (cf. analyzer_worker).
 
   it('bicScramblesForLengthFromTable yields the right count per depth, all valid + optimal', () => {
     for (const d of [1, 5, 14, 28]) {
