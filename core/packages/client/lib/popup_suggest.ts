@@ -23,7 +23,8 @@ import { detectStage, F2L_SLOT_DEFS, topEdgesOriented, crossOnDRotation } from '
 import { EDGE_STICKERS } from './sticker_tables';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
-import { ollCommentName, pllCommentLabel, isEpll } from './alg_case_display';
+import { lookupZbllAlgs } from './zbll_lookup';
+import { ollCommentName, pllCommentLabel, isEpll, zbllCommentLabel } from './alg_case_display';
 
 /**
  * 识别一个 OLL 待解状态(F2L 完、顶层未朝向)的 DB case 名,如 "OLL 27"。
@@ -43,6 +44,18 @@ async function recognizePllCase(pattern: KPattern): Promise<string | null> {
     const rot = await crossOnDRotation(pattern);
     const canonical = rot ? pattern.applyAlg(rot) : pattern;
     return (await lookupPllAlgs(canonical))[0]?.caseName ?? null;
+  } catch { return null; }
+}
+
+/**
+ * 识别一个 ZBLL 待解状态(F2L 完 + 顶层棱已朝向 = 顶面十字已成,角可能拧错)的 DB case 名,
+ * 如 "ZBLL AS 13"。仅当一条公式整解时用来给精确 ZBLL 标签。
+ */
+async function recognizeZbllCase(pattern: KPattern): Promise<string | null> {
+  try {
+    const rot = await crossOnDRotation(pattern);
+    const canonical = rot ? pattern.applyAlg(rot) : pattern;
+    return (await lookupZbllAlgs(canonical))[0]?.caseName ?? null;
   } catch { return null; }
 }
 
@@ -96,10 +109,14 @@ function classifyTransition(
   prev: StageInfo,
   curr: StageInfo,
   lineMovesText: string,
+  hasMovesBefore: boolean,
 ): Transition {
   // Ordinal index = which F2L pair (1..4) the user just solved.
   const totalSolveCountBeforeLine = prev.solvedSlots.length;
-  if (isInspectionMoves(lineMovesText)) return { kind: 'inspection' };
+  // Inspection = pure rotation(s) BEFORE any other turn. A rotation-only line
+  // in the middle of a solve (AUF / regrip adjustment) is not inspection, so
+  // require an empty pre-line move history.
+  if (!hasMovesBefore && isInspectionMoves(lineMovesText)) return { kind: 'inspection' };
 
   // Pscross: cube is one D move away from cross. Only meaningful when prev
   // wasn't already at this state or further along.
@@ -297,6 +314,9 @@ export interface SuggestArgs {
   currPattern: KPattern;
   /** Move text on the current line (used to detect pure-rotation inspection). */
   lineMovesText: string;
+  /** Moves-only text of ALL lines before the current one. Empty ⇒ this is the
+   *  first turn, so a pure-rotation line counts as inspection. */
+  prevMovesText?: string;
   /** Move count to display in `(N)` suffix. */
   moveCount: number;
   /**
@@ -307,10 +327,11 @@ export interface SuggestArgs {
 }
 
 export async function buildCommentSuggestions(args: SuggestArgs): Promise<string[]> {
-  const { prevPattern, currPattern, lineMovesText, moveCount, explicit } = args;
+  const { prevPattern, currPattern, lineMovesText, prevMovesText, moveCount, explicit } = args;
   const prev = await detectStage(prevPattern);
   const curr = await detectStage(currPattern);
-  const t = classifyTransition(prev, curr, lineMovesText);
+  const hasMovesBefore = (prevMovesText ?? '').trim().length > 0;
+  const t = classifyTransition(prev, curr, lineMovesText, hasMovesBefore);
   if (!t) {
     // 没真正解出东西。仅在用户主动按 Tab 时,试「cancel into」前瞻:某 pair 差 ≤2 步补完。
     if (!explicit) return [];
@@ -331,7 +352,7 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
   };
 
   if (t.kind === 'inspection') {
-    out.push('// inspection');
+    out.push('// insp');
     return out;
   }
 
@@ -366,6 +387,13 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     // 这把 OLL 之后魔方已整解 → PLL 被跳过(同一行 OLL + PLL skip),注释合并成
     // `// OLL-K2/PLL Skip`(识别不出 case 名时回退 `// OLL/PLL Skip`)。
     if (curr.stage === 'solved') {
+      // 整解之前顶层棱已朝向(F2L 完即出顶面十字)→ 这一条其实是 ZBLL(EO 已做),
+      // 多给一个精确 ZBLL 标签并置顶(如 `// ZBLL-S-13`);后面仍保留 OLL/PLL Skip 解读。
+      if (topEdgesOriented(prev.canonicalPattern)) {
+        const zbllRaw = await recognizeZbllCase(prevPattern);
+        const zbllLabel = zbllRaw ? zbllCommentLabel(zbllRaw) : null;
+        if (zbllLabel) out.push(`// ${zbllLabel}`);
+      }
       out.push(ollName ? `// OLL-${ollName}/PLL Skip` : '// OLL/PLL Skip');
       return out;
     }
@@ -386,17 +414,15 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
   if (t.kind === 'pair') {
     // Two label variants only: F2L<N> ordinal and 2-letter color-pair.
     // (Full-name, "1st pair", and "Pair" suffix variants were dropped.)
-    // OLL skipped on the completing pair → suffix every label with `/OLL Skip`.
-    const sfx = t.ollSkip ? '/OLL Skip' : '';
+    // Suffix convention (mutually exclusive — curr 是 oll 还是 f2l 二选一):
+    //   - OLL skipped on the completing pair → `/OLL Skip`.
+    //   - 最后一把同时把 LL 棱朝向(EO 完)= ZBLS/EOLS → 合并成 `/ZBLS`(如 `OB/ZBLS`),
+    //     不再单列一条 `// ZBLS`。
+    const sfx = t.ollSkip ? '/OLL Skip' : t.eoDone ? '/ZBLS' : '';
     if (t.slots.length === 1) {
       const colors = slotColors(curr.canonicalPattern, t.slots[0]);
       pushPair(`${colors.pair}${sfx}`);
       pushPair(`F2L${t.ordinalIndex}${sfx}`);
-      // Last F2L slot (ordinal 4) AND EO done — user did ZBLS / EOLS. Surface
-      // it as an extra label so the recon log records the technique used.
-      if (t.eoDone && t.ordinalIndex === 4) {
-        pushPair('ZBLS');
-      }
       return out;
     }
     if (t.slots.length === 2) {
@@ -406,9 +432,6 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
       const c2 = slotColors(curr.canonicalPattern, t.slots[1]);
       pushPair(`${c1.pair} & ${c2.pair}${sfx}`);
       pushPair(`F2L${i1} & F2L${i2}${sfx}`);
-      if (t.eoDone && i2 === 4) {
-        pushPair('ZBLS');
-      }
       return out;
     }
   }
