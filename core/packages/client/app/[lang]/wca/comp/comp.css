@@ -468,6 +468,45 @@
   text-decoration: none;
 }
 .comp-view-tab--link svg { opacity: 0.7; flex: none; }
+
+/* 编辑模式铅笔(管理员):贴 tab 行右端。关→灰框;开→赭陶强调,提示「点成绩去改」。 */
+.comp-editmode-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  margin-left: auto;
+  align-self: center;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.comp-editmode-toggle:hover {
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--foreground);
+}
+.comp-editmode-toggle.is-active {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* 成绩单元命中复盘 → 跳复盘详情;保留原成绩配色(被淘汰把的括号/暗色),hover 才下划线提示可点。 */
+.comp-att-recon {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.comp-att-recon:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
 .comp-event-bar {
   margin-bottom: 12px;
 }

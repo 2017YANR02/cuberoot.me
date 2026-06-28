@@ -46,6 +46,14 @@ export async function listRecons(wcaId?: string): Promise<ReconSolve[]> {
   return apiGet<ReconSolve[]>('/list', wcaId ? { wcaId } : {});
 }
 
+// 某场比赛的全部 recon(/wca/comp 逐把成绩→复盘跳转用)。
+// 服务端按 comp_wca_id 过滤;旧后端(尚未部署 comp 参数)会忽略它返回全量,
+// 故客户端再防御性按 compWcaId 过滤,保证部署前后都只拿本场数据。
+export async function listReconsByComp(compWcaId: string): Promise<ReconSolve[]> {
+  const rows = await apiGet<ReconSolve[]>('/list', { comp: compWcaId });
+  return rows.filter(r => r.compWcaId === compWcaId);
+}
+
 export async function getRecon(id: number): Promise<ReconSolve> {
   return apiGet<ReconSolve>(`/${id}`);
 }
