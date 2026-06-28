@@ -90,6 +90,11 @@ const REUSE_KEYS: (keyof ReconSolve)[] = [
   'cube', 'videoUrl', 'note', 'caption',
   'reconer', 'reconerId', 'reconDate',
 ];
+// 同选手 + 同打乱重复提交时,必须二选一说明原因(值入 recons.dup_reason);占位打乱 '?' 已豁免不判重。
+const DUP_REASON_OPTIONS = [
+  { value: 'repeat_scramble', label: { zh: '重复打乱', en: 'Repeat scramble' } },
+  { value: 'different_comp', label: { zh: '不同比赛(极小概率)', en: 'Different competition (rare)' } },
+] as const;
 // 其中带可见高亮标记的字段(纯值 / 自动获取字段不标)
 const REUSE_MARK_KEYS = [
   'person', 'event', 'official', 'comp', 'coPersons',
@@ -1221,11 +1226,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       alert(notationError);
       return;
     }
-    // 同选手 + 同打乱 → 重复提交,客户端先拦(后端 409 兜底,见 addRecon catch)。
-    if (dupId != null) {
+    // 同选手 + 同打乱:允许提交,但必须二选一说明原因(打乱下方选择器);未选 → 拦下(后端 409 兜底)。
+    if (dupId != null && !form.dupReason) {
       alert(tr({
-        zh: `已存在相同选手 + 相同打乱的复盘 (#${dupId}),不能重复提交。`,
-        en: `A reconstruction with the same player + scramble already exists (#${dupId}); duplicate submission is not allowed.`,
+        zh: `检测到相同选手 + 相同打乱的复盘 (#${dupId})。请在「打乱」下方二选一说明原因后再提交。`,
+        en: `Same player + scramble as reconstruction #${dupId}. Pick a reason below the scramble fields before submitting.`,
       }));
       return;
     }
@@ -1235,6 +1240,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         ...form,
         date: toDateInput(form.date),
         reconDate: toDateInput(form.reconDate),
+        // 非重复提交不落原因(选择器仅在 dupId 命中时出现,残留值在此清掉)
+        dupReason: dupId != null ? form.dupReason : undefined,
       };
       if (stats) {
         data.stm = stats.stm;
@@ -1355,14 +1362,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             </Link>
           )}
         </div>
-        {dupId != null && (
-          <div className="submit-warning">
-            <AlertTriangle size={14} />
-            <Link href={`${langPrefix}/recon/${dupId}`} className="submit-warning-link">
-              {tr({ zh: `已存在复盘 (#${dupId}),点击查看`, en: `Duplicate found (#${dupId}) — view` })}
-            </Link>
-          </div>
-        )}
       </div>
 
       <div className="submit-layout">
@@ -1786,6 +1785,34 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…' })}</span>
                 : optimalAutoSource ? <span className="submit-hint">{optimalAutoSource}</span> : null}
             </div>
+
+            {/* 同选手 + 同打乱:不硬拒,要求二选一说明原因(值入 dupReason)。占位打乱 '?' 已豁免不会触发。 */}
+            {dupId != null && (
+              <div className="submit-block submit-dup-reason">
+                <div className="submit-dup-reason-head">
+                  <AlertTriangle size={14} />
+                  <span>
+                    {tr({ zh: '已存在相同选手 + 相同打乱的复盘 ', en: 'Same player + scramble already exists ' })}
+                    <Link href={`${langPrefix}/recon/${dupId}`} target="_blank" rel="noopener" className="submit-warning-link">#{dupId}</Link>
+                    {tr({ zh: '。若确属有意,请选择原因:', en: '. If intentional, pick a reason:' })}
+                  </span>
+                </div>
+                <div className="dup-reason-options" role="radiogroup">
+                  {DUP_REASON_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={form.dupReason === opt.value}
+                      className={`dup-reason-chip${form.dupReason === opt.value ? ' active' : ''}`}
+                      onClick={() => setField('dupReason', opt.value)}
+                    >
+                      {tr(opt.label)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Mobile: inline player between scramble and solution */}
             {isMobile && form.event && (

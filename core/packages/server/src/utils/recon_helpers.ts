@@ -49,6 +49,7 @@ const FIELD_MAP_JSON_TO_SQL: Record<string, string> = {
   personCountry: 'person_country',
   coPersons: 'co_persons',
   videoUrl: 'video_url',
+  dupReason: 'dup_reason',
 };
 
 // NOTE: 反向映射（运行时自动生成）
@@ -68,8 +69,12 @@ const ALLOWED_COLUMNS = new Set([
   'cross_type', 'cross_stm', 'f2l', 'll', 's_move', 'cross_color',
   'cube', 'reconer', 'reconer_id', 'group_id', 'recon_date', 'created_at',
   'added_by', 'added_by_id', 'comp_wca_id', 'person_country', 'co_persons',
-  'video_url', 'alternatives',
+  'video_url', 'alternatives', 'dup_reason',
 ]);
+
+// 同选手+同打乱重复提交时,用户必须二选一说明原因(否则后端拒收)。空=非重复提交。
+export const DUP_REASONS = ['repeat_scramble', 'different_comp'] as const;
+export type DupReason = (typeof DUP_REASONS)[number];
 
 // ── 数据转换 ──
 
@@ -223,6 +228,12 @@ export function validateRow(row: Record<string, unknown>): string[] {
   // CHAR(1): cross_color
   if (row.cross_color !== undefined && row.cross_color !== null && String(row.cross_color).length > 1) {
     errors.push('cross_color must be a single character');
+  }
+
+  // dup_reason: 仅允许两个枚举值(或空)
+  if (row.dup_reason !== undefined && row.dup_reason !== null
+      && !(DUP_REASONS as readonly string[]).includes(String(row.dup_reason))) {
+    errors.push(`dup_reason must be one of: ${DUP_REASONS.join(', ')}`);
   }
 
   // co_persons: JSON 数组 [{name, id?, country?}],各字段长度对齐 person 列
@@ -419,12 +430,24 @@ export function buildUpdate(table: string, row: Record<string, unknown>, whereCo
   };
 }
 
+// 打乱占位符:不是真打乱(未知 / 待补),不参与判重。`?` 这类常用于「打乱未知」的复盘,
+// 同一选手可合法地有多条占位打乱的复盘(各为不同的把),不能当重复。
+const SCRAMBLE_PLACEHOLDERS = new Set(['?', '??', '???', '-', '--', '.', 'n/a', 'na', 'tbd', 'none', 'unknown']);
+
+/** 是否真打乱(够长 + 非占位符)。真打乱才参与「同选手 + 同打乱」判重。 */
+export function isRealScramble(s: unknown): boolean {
+  if (typeof s !== 'string') return false;
+  const t = s.trim().toLowerCase();
+  // 真 WCA 打乱总是 ≥ 多个 token;< 5 字符的一律视作占位 / 空
+  return t.length >= 5 && !SCRAMBLE_PLACEHOLDERS.has(t);
+}
+
 /**
  * 构建「同选手 + 同打乱」去重查询(命中即重复)。
  * 同一打乱所有选手共用,所以选手 + 打乱必须同时相同才算重复(光打乱相同是同组不同人)。
  *   选手 = person_id(优先 WCA ID)否则 person 名;
  *   打乱 = wca_scramble(优先官方打乱)否则 optimal_scramble。
- * 打乱或选手任一为空 → 无法判重(返回 null,直接放行;避免空打乱把不同 recon 误判成重复)。
+ * 打乱为占位/空(isRealScramble=false)或选手为空 → 无法判重(返回 null,直接放行)。
  * @param excludeId 编辑模式排除自身
  * @returns {sql, params} 查到行即重复,null = 不判重
  */
@@ -437,9 +460,11 @@ export function buildDuplicateQuery(
   const wcaScramble = typeof row.wca_scramble === 'string' ? row.wca_scramble : '';
   const optScramble = typeof row.optimal_scramble === 'string' ? row.optimal_scramble : '';
 
-  // 打乱:优先官方打乱,空则退回最优打乱;两者都空 → 不判重
-  const scrambleCol = wcaScramble.trim() ? 'wca_scramble' : (optScramble.trim() ? 'optimal_scramble' : '');
-  const scrambleVal = wcaScramble.trim() ? wcaScramble : optScramble;
+  // 打乱:优先官方打乱,占位/空则退回最优打乱;都不是真打乱 → 不判重
+  let scrambleCol = '';
+  let scrambleVal = '';
+  if (isRealScramble(wcaScramble)) { scrambleCol = 'wca_scramble'; scrambleVal = wcaScramble; }
+  else if (isRealScramble(optScramble)) { scrambleCol = 'optimal_scramble'; scrambleVal = optScramble; }
   if (!scrambleCol || (!personId && !person)) return null;
 
   const params: unknown[] = [];

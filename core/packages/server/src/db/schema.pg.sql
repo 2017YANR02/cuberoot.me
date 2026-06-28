@@ -65,7 +65,9 @@ CREATE TABLE recons (
   group_id        VARCHAR(10),
   recon_date      DATE,
   video_url       TEXT,
-  alternatives    TEXT
+  alternatives    TEXT,
+  -- 同选手+同打乱重复提交时,用户必须二选一说明原因:'repeat_scramble'(重复打乱)/ 'different_comp'(不同比赛)。见 migrations/0063。
+  dup_reason      VARCHAR(20)
 );
 CREATE INDEX idx_date ON recons(date);
 CREATE INDEX idx_comp ON recons(comp);
