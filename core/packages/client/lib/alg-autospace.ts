@@ -39,6 +39,18 @@ export function normalizePunctuationCE(root: HTMLElement): void {
   }
 }
 
+// 零宽字符(U+200B/200C/200D、U+FEFF):不可见,多半是从别处粘贴带进来的垃圾,没有保留价值。
+// 跟可见的 regrip 标注 ↑↓·⅓⅔ 不同 —— 这些一输入就直接删掉,不进数据(也就不必靠校验放行)。
+const ZERO_WIDTH_RE = /[​‌‍﻿]/g;
+
+/** 删掉零宽字符,并按删掉的(光标前的)个数回退光标。无零宽时原样返回。 */
+export function stripZeroWidth(value: string, cursor: number): { value: string; cursor: number } {
+  const cleaned = value.replace(ZERO_WIDTH_RE, '');
+  if (cleaned === value) return { value, cursor };
+  const cleanedBefore = value.slice(0, cursor).replace(ZERO_WIDTH_RE, '');
+  return { value: cleaned, cursor: cleanedBefore.length };
+}
+
 export function inComment(text: string, pos: number): boolean {
   const lineStart = text.lastIndexOf('\n', pos - 1) + 1;
   return text.slice(lineStart, pos).includes('//');
@@ -52,13 +64,15 @@ function moveBaseFaceBack(value: string, endIdx: number): string {
 }
 
 /**
- * 同轴对面「连写」对:U 后接 D、F 后接 B 不加空格(用户记号,如 U'D / U2D / U2'D / F'B' / F2B)。
- * R 后接 L 等仍照常加空格 —— 仅这两个有序对例外。大小写均按同一面处理。
+ * 同轴对面「连写」对:U/D 轴(UD / DU)、F/B 轴(FB / BF)两个方向都不加空格
+ * (用户记号,如 U'D / U2D / U2'D / F'B' / F2B,以及反向 DU / D2U / BF / B'F)。
+ * R/L 轴仍照常加空格 —— 只有 U-D、F-B 两条轴例外。大小写均按同一面处理。
  */
 function isGluedOppositePair(firstBase: string, secondBase: string): boolean {
   const a = firstBase.toUpperCase();
   const b = secondBase.toUpperCase();
-  return (a === 'U' && b === 'D') || (a === 'F' && b === 'B');
+  return (a === 'U' && b === 'D') || (a === 'D' && b === 'U')
+    || (a === 'F' && b === 'B') || (a === 'B' && b === 'F');
 }
 
 const OPEN_TO_CLOSE: Record<string, string> = { '(': ')', '[': ']', '{': '}' };
@@ -92,10 +106,16 @@ export function autoCloseBracket(
 ): { value: string; cursor: number } {
   if (inputType !== 'insertText' || cursor < 1) return { value, cursor };
   const close = OPEN_TO_CLOSE[value[cursor - 1]];
-  if (close) {
-    value = value.slice(0, cursor) + close + value.slice(cursor);
-    // cursor 不变 → 停在左括号右侧
+  if (!close) return { value, cursor };
+  // 左括号前若紧贴非空白内容(且不是另一个左括号)→ 先补一个空格,把括号组跟前文分开。
+  // 注释里也生效:`// BO(` → `// BO (`(再补右括号成 `// BO ()`)。
+  const before = cursor >= 2 ? value[cursor - 2] : '';
+  if (before && before !== ' ' && before !== '\n' && !OPEN_TO_CLOSE[before]) {
+    value = value.slice(0, cursor - 1) + ' ' + value.slice(cursor - 1);
+    cursor += 1; // 光标跟着左括号右移
   }
+  value = value.slice(0, cursor) + close + value.slice(cursor);
+  // cursor 不变 → 停在左括号右侧(两括号之间)
   return { value, cursor };
 }
 
@@ -109,8 +129,11 @@ export function autoSpaceMoves(
   if (cursor >= 2) {
     const newChar = value[cursor - 1];
     const prevChar = value[cursor - 2];
-    if (MOVE_START_RE.test(newChar) && MOVE_END_RE.test(prevChar) && !inComment(value, cursor - 1)
-      && !isGluedOppositePair(moveBaseFaceBack(value, cursor - 2), newChar)) {
+    // 新输入的是一步转动,而前一个字符是「转动结尾」或「右括号」(如 (U U') 后接 R)→ 补空格。
+    const afterMove = MOVE_END_RE.test(prevChar)
+      && !isGluedOppositePair(moveBaseFaceBack(value, cursor - 2), newChar);
+    const afterCloseParen = prevChar === ')';
+    if (MOVE_START_RE.test(newChar) && (afterMove || afterCloseParen) && !inComment(value, cursor - 1)) {
       value = value.slice(0, cursor - 1) + ' ' + value.slice(cursor - 1);
       cursor += 1;
     }
@@ -161,13 +184,15 @@ export function autoSpaceMovesCE(el: HTMLElement, inputType: string): void {
   const prevChar = before.length >= 2 ? before.slice(-2, -1) : '';
   const nextChar = after.slice(0, 1);
 
+  const afterMove = MOVE_END_RE.test(prevChar)
+    && !isGluedOppositePair(moveBaseFaceBack(before, before.length - 2), newChar);
+  const afterCloseParen = prevChar === ')';
   if (
     newChar &&
     MOVE_START_RE.test(newChar) &&
     prevChar &&
-    MOVE_END_RE.test(prevChar) &&
-    !inComment(before, before.length - 1) &&
-    !isGluedOppositePair(moveBaseFaceBack(before, before.length - 2), newChar)
+    (afterMove || afterCloseParen) &&
+    !inComment(before, before.length - 1)
   ) {
     document.execCommand('delete', false);
     document.execCommand('insertText', false, ' ' + newChar);

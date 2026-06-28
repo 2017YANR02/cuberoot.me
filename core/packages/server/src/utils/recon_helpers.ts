@@ -10,6 +10,12 @@ export { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
+// 装饰性标注字符:`·`(间隔)、`↑↓`(regrip 方向记号)、分数 `⅓⅔`、ASCII `.`、各类零宽字符。
+// 这些不是真转动,记号区校验前先剥掉(与客户端 lib/recon-alg-utils.ts 的 COSMETIC_ANNOTATION_CHARS
+// 一一对应;改一处必须改另一处,CI tests/recon-server-validation.test.ts 守卫两端一致)。
+// 含 ASCII `.`、`·↑↓⅓⅔` 与四个零宽字符(U+200B/200C/200D/FEFF)。
+const COSMETIC_ANNOTATION_RE = /[.·↑↓⅓⅔​‌‍﻿]/g;
+
 // ── JSON camelCase ↔ SQL snake_case 映射 ──
 
 // NOTE: 只列出名称不同的字段，同名字段（如 id, event, method）无需映射
@@ -250,13 +256,17 @@ export function validateRow(row: Record<string, unknown>): string[] {
   // 记号列(解法 / 打乱):每行 `//` 注释之外只能用 ASCII(英文字母+符号)。
   // 中文等文字会被播放器当成转动 → 复盘无法播放,要写说明请放进 `//` 注释。
   // (客户端表单已拦,这里是权威后端兜底。)
+  // 例外:装饰性标注字符(`·↑↓⅓⅔` + 零宽)放行 —— 播放器(cleanForPlayer)喂播放器前会静默剥掉,
+  // 不影响复盘。必须与客户端 lib/recon-alg-utils.ts 的 COSMETIC_ANNOTATION_CHARS 同步,否则带
+  // regrip 箭头(↑↓)的解法过得了前端校验却被后端拒("Validation failed")。
   for (const col of ['solution', 'wca_scramble', 'optimal_scramble']) {
     const v = row[col];
     if (v === undefined || v === null) continue;
     const lines = String(v).split(/\r?\n/);
     for (let i = 0; i < lines.length; i++) {
       const idx = lines[i].indexOf('//');
-      const instr = idx >= 0 ? lines[i].slice(0, idx) : lines[i];
+      const raw = idx >= 0 ? lines[i].slice(0, idx) : lines[i];
+      const instr = raw.replace(COSMETIC_ANNOTATION_RE, '');
       // eslint-disable-next-line no-control-regex
       if (/[^\x00-\x7F]/.test(instr)) {
         errors.push(`${col} line ${i + 1} has non-ASCII characters outside // comments`);
