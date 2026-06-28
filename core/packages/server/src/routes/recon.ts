@@ -54,10 +54,14 @@ const PERSON_COLUMNS = LIST_COLUMNS + ', added_by, added_by_id, video_url, capti
 reconRoutes.get('/recon/list', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const wcaId = c.req.query('wcaId');
+  const comp = c.req.query('comp');
 
   let rows: Record<string, unknown>[];
   if (wcaId) {
     rows = await query(`SELECT ${LIST_COLUMNS} FROM recons WHERE person_id = ? ORDER BY id DESC`, [wcaId]);
+  } else if (comp) {
+    // 比赛页(/wca/comp)逐把成绩 → 复盘的跳转映射:只拉本场的复盘(comp_wca_id 命中)。
+    rows = await query(`SELECT ${LIST_COLUMNS} FROM recons WHERE comp_wca_id = ? ORDER BY id DESC`, [comp]);
   } else {
     rows = await query(`SELECT ${LIST_COLUMNS} FROM recons ORDER BY id DESC`);
   }

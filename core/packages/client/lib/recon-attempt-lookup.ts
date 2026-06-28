@@ -32,6 +32,38 @@ export function findReconForAttempt(
   return undefined;
 }
 
+// Person-aware variant: keyed by personId too, so a comp results table (many people
+// sharing the same comp/event/round/solveNum) doesn't collide — each person's solve N
+// maps to that person's own recon. The person-less map above is fine on /wca/persons
+// (already scoped to one person) but WRONG for a whole-comp table.
+export function buildReconPersonAttemptMap(recons: ReconSolve[]): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const r of recons) {
+    if (!r.compWcaId || !r.personId || !r.event || !r.round || r.solveNum == null) continue;
+    const wcaEid = toWcaEventId(r.event);
+    m.set(`${r.compWcaId}|${r.personId}|${wcaEid}|${r.round}|${r.solveNum}`, r.id);
+  }
+  return m;
+}
+
+export function findReconForPersonAttempt(
+  map: Map<string, number> | null | undefined,
+  compId: string,
+  personId: string,
+  wcaEventId: string,
+  wcaRoundTypeId: string,
+  attemptNum: number,
+): number | undefined {
+  if (!map || !personId) return undefined;
+  for (const reconRound of ['1', '2', '3', 'f']) {
+    if (matchRoundType(reconRound, wcaRoundTypeId)) {
+      const id = map.get(`${compId}|${personId}|${wcaEventId}|${reconRound}|${attemptNum}`);
+      if (id) return id;
+    }
+  }
+  return undefined;
+}
+
 /** WCA roundTypeId → recon 轮次('1'/'2'/'3'/'f');无法归类返回 undefined。 */
 export function wcaRoundToReconRound(wcaRoundTypeId: string): string | undefined {
   for (const reconRound of ['1', '2', '3', 'f']) {

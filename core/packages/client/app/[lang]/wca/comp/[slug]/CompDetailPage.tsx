@@ -46,6 +46,8 @@ import { useCompFollows, FollowStar } from '@/components/CompFollow';
 import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, splitChainByStatus } from '@/lib/result-watch-api';
 import { AttemptEditPopover } from '@/components/persons/sections/results/AttemptEditPopover';
 import { SolveValue } from '@/components/persons/sections/results/SolveValue';
+import { listReconsByComp } from '@/lib/recon-api';
+import { buildReconPersonAttemptMap, findReconForPersonAttempt } from '@/lib/recon-attempt-lookup';
 import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
 import { ResultChangeEditor, type ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
@@ -567,6 +569,19 @@ export default function CompDetailPage() {
   // 行内在当前值前划掉历次旧值,管理员可经铅笔编辑变更链。compId 即 WCA 比赛 id(规整后 slug)。
   const { map: changeMap, refresh: refreshChanges } = useCompRowChangeMap(slug);
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
+  // 「编辑模式」铅笔开关(管理员):关(默认)→ 点有复盘的成绩跳复盘详情;开 → 点成绩行内改。
+  const [editMode, setEditMode] = useState(false);
+  // 本场逐把成绩 → 复盘 id 映射((compWcaId|event|round|solveNum) → reconId),成绩/领奖台单元据此变可点链接。
+  const [reconMap, setReconMap] = useState<Map<string, number> | null>(null);
+  useEffect(() => {
+    let alive = true;
+    setReconMap(null);
+    if (!slug) return;
+    listReconsByComp(slug)
+      .then(rs => { if (alive) setReconMap(buildReconPersonAttemptMap(rs)); })
+      .catch(() => { if (alive) setReconMap(null); });
+    return () => { alive = false; };
+  }, [slug]);
   // 比赛关注「盯一下」— 与首页 / 比赛列表共用同一份 server 关注集合
   const { loggedIn: followLoggedIn, follows, toggle: toggleFollow } = useCompFollows();
 
@@ -1494,6 +1509,22 @@ export default function CompDetailPage() {
               isZh={isZh}
             />
           )}
+          {/* 编辑模式铅笔(管理员):成绩/领奖台视图右侧。关→点有复盘的成绩跳复盘;开→行内改成绩。 */}
+          {isAdmin && (isPodium || (!isPsych && !isSchedule)) && (
+            <button
+              type="button"
+              className={`comp-editmode-toggle${editMode ? ' is-active' : ''}`}
+              onClick={() => setEditMode(v => !v)}
+              aria-pressed={editMode}
+              aria-label={tr({ zh: '编辑模式', en: 'Edit mode' })}
+              title={tr({
+                zh: '编辑模式 — 开:点成绩行内改这一把;关:点有复盘的成绩跳复盘详情',
+                en: 'Edit mode — On: click a solve to edit it; Off: click a solve with a reconstruction to view it',
+              })}
+            >
+              <Pencil size={14} />
+            </button>
+          )}
         </div>
 
         {!isPodium && (
@@ -1548,6 +1579,8 @@ export default function CompDetailPage() {
               compId={slug}
               compName={compNameTitle}
               admin={isAdmin}
+              reconMap={reconMap}
+              editMode={editMode}
               onEdit={setEditTarget}
               onRefresh={refreshChanges}
               onClickCuber={(n, eventId, roundId) => setModal({ kind: 'round', number: n, eventId, roundId })}
@@ -1607,6 +1640,8 @@ export default function CompDetailPage() {
                 compId={slug}
                 compName={compNameTitle}
                 admin={isAdmin}
+                reconMap={reconMap}
+                editMode={editMode}
                 onEdit={setEditTarget}
                 onRefresh={refreshChanges}
                 onClickCuber={n => {
@@ -1840,13 +1875,17 @@ interface ResultsTableProps {
   compId?: string;
   compName?: string;
   admin?: boolean;
+  // 逐把成绩 → 复盘 id 映射:命中则该把成绩变成跳复盘详情的链接(所有人,编辑模式关时)。
+  reconMap?: Map<string, number> | null;
+  // 「编辑模式」:开 + 管理员 → 点成绩行内改;关(默认)→ 有复盘的成绩跳复盘详情。
+  editMode?: boolean;
   onEdit?: (t: ResultChangeTarget) => void;
   onRefresh?: () => void;
   // 列头可点排序(平均 / 单次 / 第 N 把)。默认关:领奖台等复用场景保持名次序。
   sortable?: boolean;
 }
 
-function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, onEdit, onRefresh, sortable }: ResultsTableProps) {
+function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, reconMap, editMode, onEdit, onRefresh, sortable }: ResultsTableProps) {
   // 排序:点列头(平均/单次/第 N 把)升→降→取消;无效成绩(DNF/DNS/空)恒垫底,默认 null=按名次序。
   const [sort, setSort] = useState<{ key: string | null; dir: 'asc' | 'desc' }>({ key: null, dir: 'asc' });
   const toggleSort = useCallback((key: string) => {
@@ -2000,9 +2039,15 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                 })()}
                 {Array.from({ length: attemptCount }).map((_, i) => {
                   const pen = effectiveAttemptPenalties(chain)[i] ?? 0;
+                  // 编辑模式(管理员开铅笔)→ 行内改;否则有复盘的这把变成跳复盘详情的链接(所有人)。
+                  const showEdit = admin && editMode && wcaid && i < effAttempts.length;
+                  const reconId = !showEdit && i < effAttempts.length
+                    ? findReconForPersonAttempt(reconMap, compId ?? '', wcaid ?? '', r.e, r.r, i + 1)
+                    : undefined;
+                  const solveCell = <SolveValue value={effAttempts[i] ?? 0} penalty={pen} format={(v) => formatLive(v, r.e, false)} />;
                   return (
                   <td key={i} className={`td-attempt ${isAo5Bracketed(effAttempts, i) ? 'td-attempt-trimmed' : ''}`}>
-                    {admin && wcaid && i < effAttempts.length ? (
+                    {showEdit ? (
                       <AttemptEditPopover
                         value={effAttempts[i] ?? 0}
                         eventId={r.e}
@@ -2032,8 +2077,17 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                           }).then(() => onRefresh?.())
                         }
                       />
+                    ) : reconId ? (
+                      <Link
+                        href={`/recon/${reconId}${isZh ? '?lang=zh' : ''}`}
+                        className="comp-att-recon"
+                        onClick={(e) => e.stopPropagation()}
+                        title={tr({ zh: '查看这把的复盘', en: 'View reconstruction' })}
+                      >
+                        {solveCell}
+                      </Link>
                     ) : (
-                      <SolveValue value={effAttempts[i] ?? 0} penalty={pen} format={(v) => formatLive(v, r.e, false)} />
+                      solveCell
                     )}
                   </td>
                   );
@@ -2062,12 +2116,14 @@ interface PodiumViewProps {
   compId?: string;
   compName?: string;
   admin?: boolean;
+  reconMap?: Map<string, number> | null;
+  editMode?: boolean;
   onEdit?: (t: ResultChangeTarget) => void;
   onRefresh?: () => void;
 }
 
 // 领奖台:逐项目列出决赛前三,复用 ResultsTable 的列结构/记录标志/成绩格式化。
-function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber, changeMap, compId, compName, admin, onEdit, onRefresh }: PodiumViewProps) {
+function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber, changeMap, compId, compName, admin, reconMap, editMode, onEdit, onRefresh }: PodiumViewProps) {
   if (groups.length === 0) {
     return <div className="comp-empty">{tr({ zh: '暂无领奖台', en: 'No podiums yet'
     })}</div>;
@@ -2091,6 +2147,8 @@ function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber, change
             compId={compId}
             compName={compName}
             admin={admin}
+            reconMap={reconMap}
+            editMode={editMode}
             onEdit={onEdit}
             onRefresh={onRefresh}
             onClickCuber={n => onClickCuber(n, g.ev.i, g.rd.i)}
