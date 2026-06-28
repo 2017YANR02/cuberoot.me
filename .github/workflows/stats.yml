@@ -164,9 +164,11 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=8192'
         run: npx tsx src/bin/records_gender_build.ts
 
-      - name: Fetch upcoming comps
-        working-directory: core/packages/stats-build
-        run: npx tsx src/bin/fetch_upcoming_comps.ts --refresh
+      # upcoming comps 抓取已交给独立的 update_upcoming.yml(每天 20:00 同跑,专属 owner):
+      # 它产 upcoming_comps.json / all_upcoming_comps.json / cn_upcoming_registrations.json + comp_names_zh.json
+      # 并触发 sync_toolkit。曾经这里也跑一遍 fetch_upcoming_comps,与之撞车(同分钟提交同一批文件 →
+      # rebase 冲突),且依赖 WCA 代理:WCA 封 runner IP 时脚本 process.exit(1) 会在下面 historical_ranks /
+      # sor / wca_stats_extra 之前就 abort 掉整个 2h 关键管道。故从 stats.yml 移除,只留 update_upcoming.yml。
 
       # ── 历史排名 snapshot:复用上面已经导入的 MySQL,算完 scp + ssh 灌进 prod PG ──
       - name: Build historical ranks snapshot
@@ -280,8 +282,8 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "chore: update WCA statistics [skip ci]"
-            # NOTE: rebase 可能因 upcoming_comps.json 等文件冲突而失败
-            # CI 刚生成的数据是最新的，冲突时直接用我们的版本（rebase 中 --theirs 指被 rebase 的 commit）
+            # NOTE: 本 workflow 不再产 upcoming_comps.json(已归 update_upcoming.yml),但 rebase 仍可能
+            # 撞到别的并发自动 commit 而冲突;CI 刚生成的数据是最新的，冲突时直接用我们的版本（rebase 中 --theirs 指被 rebase 的 commit）
             # GIT_EDITOR=true 让 rebase --continue 不弹编辑器，否则 CI 上会失败导致整个 commit 被 --skip 丢弃
             if ! git pull --rebase origin main; then
               echo "Rebase conflict detected, resolving with ours..."
