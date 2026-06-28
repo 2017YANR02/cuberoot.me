@@ -1,10 +1,10 @@
-# 每 5 分钟 curl api.cuberoot.me/v1/health, 失败两次连续则 Bark 推送 iPhone
+# 每 6 小时 curl api.cuberoot.me/v1/health, 失败两次连续则 Bark 推送 iPhone
 # Bark device key 在 GitHub Secrets BARK_KEY
 name: Healthcheck
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch:
     inputs:
       test_bark:
