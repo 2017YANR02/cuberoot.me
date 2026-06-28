@@ -1610,28 +1610,31 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
   // wca_competitions 没收录的(刚宣布、dump 还没更新) fall through 到 probe 兜底.
   if (choice === 'auto') {
     try {
-      const known = await query<{ id: string }>(
-        `SELECT id FROM wca_competitions WHERE id = ? LIMIT 1`,
+      const known = await query<{ id: string; end_date: string | null }>(
+        `SELECT id, end_date FROM wca_competitions WHERE id = ? LIMIT 1`,
         [wcaId],
       );
       if (known.length > 0) {
         const fastKey = `${wcaId}:wca`;
-        // 上次 fallback 到 cubing 的决策还在缓存窗内 → 秒返回,跳过 WCA + probe.
-        // 全 round finished 的成绩不再变,放宽到 wca TTL(1h);否则正常 60s 兜底.
-        // (WCA REST 公示成绩前的几天/几周内反复打开就走这条.)
+        // 上次 fallback 到 cubing / wca_live 的决策还在缓存窗内 → 秒返回,跳过 WCA + probe.
+        // 只有真正结束(end_date < 今天 UTC)的比赛成绩才不再变,放宽到 wca TTL(1h);
+        // 进行中 / 当天的比赛必须走短 TTL(60s)实时刷新.
+        // ⚠️ 别用 rd.s===1 判 "全部 finished":wca_live 加载器对每个 round 恒设 s=1
+        //    (它的 meta GraphQL 不返回 round 状态),会把直播中的国外比赛误判成全部完成
+        //    → 缓存 1h 不刷新,连带 fastPrewarmOngoing(65s)也只拿到旧缓存空转、永不回源.
+        const endDate = known[0].end_date;
+        const compOver = !!endDate && endDate < new Date().toISOString().slice(0, 10);
         const cubingCacheKey = `${wcaId}:cubing`;
         const cubingCached = cache.get(cubingCacheKey);
         if (cubingCached && Object.values(cubingCached.resultsByRound).some(arr => arr.length > 0)) {
-          const allFinished = cubingCached.events.every(ev => ev.rs.every(rd => rd.s === 1));
-          const ttl = allFinished ? ttlFor('wca') : ttlFor('cubing');
+          const ttl = compOver ? ttlFor('wca') : ttlFor('cubing');
           if (Date.now() - cubingCached.fetchedAt < ttl) return cubingCached;
         }
         // wca_live 兜底:非中国比赛 cubing.com 无收录,进行中走过 wca_live → 缓存命中秒返回.
         const wcaLiveCacheKey = `${wcaId}:wca_live`;
         const wcaLiveCached = cache.get(wcaLiveCacheKey);
         if (wcaLiveCached && Object.values(wcaLiveCached.resultsByRound).some(arr => arr.length > 0)) {
-          const allFinished = wcaLiveCached.events.every(ev => ev.rs.every(rd => rd.s === 1));
-          const ttl = allFinished ? ttlFor('wca') : ttlFor('wca_live');
+          const ttl = compOver ? ttlFor('wca') : ttlFor('wca_live');
           if (Date.now() - wcaLiveCached.fetchedAt < ttl) return wcaLiveCached;
         }
         const cachedFast = cache.get(fastKey);
