@@ -5,7 +5,9 @@
 # (wca_results_flat / historical_* / wca_fs_* / sor_* 等),备它们纯浪费盘
 # (旧实现每天 874M,4 天就 3.3G,直接把盘顶爆 → historical_ranks 灌库 ENOSPC)。
 # 这里用 --exclude-table-data 只丢这些表的「数据」,保留「schema」:
-# 恢复时结构在,CI 下一轮自动重灌 → dump 缩到 ~9M。
+# 恢复时结构在,CI 下一轮自动重灌 → dump 缩到 ~5M。
+# (2026-06-28:补全漏掉的 wca_scrambles 810M / wca_scramble_optimal 483M / *_dump_state 等,
+#  此前因列表残缺实际仍 ~156M/天,非注释所说的 9M。)
 # 真正不可重建的(recons / 公式库 alg_* / 社区 article*/wiki_* / 用户成绩 timer_*/train_results /
 # 账号+OAuth token wca_users / 监控 watched_*/monitor_* / 运维 ops_commands / nav_sites /
 # 分析历史 pageviews/traffic_daily / 管道状态 *_dump_state / 迁移账本 _schema_migrations)
@@ -21,10 +23,15 @@ mkdir -p "$ARCHIVE"
 PGPASSWORD=314159 pg_dump -U recon_user -h 127.0.0.1 -d cuberoot_db \
   --exclude-table-data='wca_results_flat' \
   --exclude-table-data='wca_results_cache' \
+  --exclude-table-data='wca_scrambles' \
   --exclude-table-data='wca_scrambles_cache' \
+  --exclude-table-data='wca_scramble_steps' \
+  --exclude-table-data='wca_scramble_steps_meta' \
+  --exclude-table-data='wca_scramble_optimal' \
   --exclude-table-data='wca_competitions' \
   --exclude-table-data='wca_comp_updated_at' \
   --exclude-table-data='wca_persons' \
+  --exclude-table-data='wca_person_results_snapshot' \
   --exclude-table-data='wca_countries' \
   --exclude-table-data='wca_continents' \
   --exclude-table-data='wca_person_ranks' \
@@ -32,6 +39,7 @@ PGPASSWORD=314159 pg_dump -U recon_user -h 127.0.0.1 -d cuberoot_db \
   --exclude-table-data='wca_success_rate' \
   --exclude-table-data='wca_all_events_done' \
   --exclude-table-data='wca_grand_slam' \
+  --exclude-table-data='wca_championship_podiums' \
   --exclude-table-data='wca_fs_*' \
   --exclude-table-data='historical_*' \
   --exclude-table-data='sor_*' \
@@ -39,6 +47,8 @@ PGPASSWORD=314159 pg_dump -U recon_user -h 127.0.0.1 -d cuberoot_db \
   --exclude-table-data='comp_schedule_cache' \
   --exclude-table-data='cubing_attempts_cache' \
   --exclude-table-data='meta_historical' \
+  --exclude-table-data='person_dump_state' \
+  --exclude-table-data='comp_dump_state' \
   | gzip -9 > "$ARCHIVE/pg-recon-$DATE.sql.gz.tmp"
 
 # 验证 dump 不为空 (gzip 后 < 1KB 则 fail)
