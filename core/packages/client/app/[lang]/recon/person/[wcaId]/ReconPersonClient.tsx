@@ -13,7 +13,7 @@ import { LogOut, TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listPersonRecons } from '@/lib/recon-api';
 import {
-  formatTime, formatAvg, formatRound,
+  formatTime, formatAvg, formatRound, padReconSingle,
 } from '@/lib/recon-utils';
 import { compLinkProps } from '@/lib/comp-link';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -291,7 +291,7 @@ export default function ReconPersonClient() {
                         </td>
                         <td className="col-single">
                           <span className="record-num-cell">
-                            {s.value || formatTime(s.rawTime)}
+                            {padReconSingle(s.value) || formatTime(s.rawTime)}
                             {s.regionalSingleRecord && (
                               <RecordBadge record={s.regionalSingleRecord} variant="inline" iso2={s.personCountry} />
                             )}
