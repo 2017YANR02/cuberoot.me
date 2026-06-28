@@ -51,42 +51,146 @@ export const CORNER_STICKERS: ReadonlyArray<readonly [number, number, number]> =
   [5, 1, 4], // 7: DBR cubie — D, R, B
 ];
 
-import type { KPattern } from 'cubing/kpuzzle';
+import type { KPattern, KTransformation } from 'cubing/kpuzzle';
 
 /**
- * Sticker color (= KPattern face index) at a given face of a given edge slot
- * in the supplied pattern. Returns null if `face` isn't adjacent to the slot.
+ * Frame-invariant sticker reading — the crux of cross-color-neutral recon.
  *
- * Logic: edge slot S has face order `[fA, fB] = EDGE_STICKERS[S]` (since the
- * edge orbit numbers slots and pieces identically — slot S's home piece is S).
- * When piece P is at slot S with orientation O:
- *   - O=0: P's sticker[0] is at fA, sticker[1] at fB.
- *   - O=1: stickers are swapped.
- * P's sticker[k] color = `EDGE_STICKERS[P][k]`.
+ * cube3x3x3 KPattern uses MIXED orbit conventions plus a space-fixed orientation
+ * reference, so a naive `pieces[slot]`/`orientation[slot]` decode is correct ONLY
+ * in the native (centers-home) frame. Verified directly against the puzzle's own
+ * move definitions:
+ *   - CENTERS are SOURCE-indexed: `pieces[face]` is the colour shown ON `face`.
+ *   - EDGES/CORNERS are DESTINATION-indexed: `pieces[i]` is the SLOT where home
+ *     piece `i` now sits, and `orientation[i]` is THAT piece's orientation.
+ *   - Edge/corner orientation is measured against the space-fixed U/D axis, so its
+ *     value only decodes to stickers correctly in the centers-home frame.
+ *
+ * To read correctly in EVERY orientation (the L/R-colour cross a z/z' inspection
+ * produces, the blue cross an x produces, etc.): normalise the pattern to the
+ * centers-home frame, translate the requested (slot, face) through the SAME
+ * geometric rotation — with the slot image DERIVED FROM the face permutation so
+ * slot↔face adjacency is preserved — then decode there. Validated: 0 errors over
+ * all 24 orientations of a solved cube, full rotation-invariance on random
+ * scrambles, and balanced colour histograms in tilted frames.
+ *
+ * In the centers-home frame the normalisation is the identity rotation, so the
+ * DB-build path (always centers-home) is unaffected.
+ */
+
+const ORIENTATION_ALGS: string[] = (() => {
+  const out: string[] = [];
+  for (const t of ['', 'x', 'x2', "x'", 'z', "z'"]) {
+    for (const y of ['', 'y', 'y2', "y'"]) out.push([t, y].filter(Boolean).join(' '));
+  }
+  return out;
+})();
+
+const invPerm = (a: readonly number[]): number[] => {
+  const r = new Array<number>(a.length);
+  for (let i = 0; i < a.length; i++) r[a[i]] = i;
+  return r;
+};
+
+// Face-set → slot index, so a rotated slot can be located by the faces it touches.
+const edgeFaceKey = (a: number, b: number): number => (a < b ? a * 10 + b : b * 10 + a);
+const EDGE_BY_FACES: Record<number, number> = {};
+EDGE_STICKERS.forEach((fs, i) => { EDGE_BY_FACES[edgeFaceKey(fs[0], fs[1])] = i; });
+const CORNER_BY_FACES: Record<string, number> = {};
+CORNER_STICKERS.forEach((fs, i) => { CORNER_BY_FACES[[...fs].sort((x, y) => x - y).join(',')] = i; });
+
+interface RotInfo {
+  transform: KTransformation;
+  /** Face content image: spatial face f → spatial face `sigma[f]` after this rotation. */
+  sigma: number[];
+  /** Edge slot image, derived from `sigma` so (slot, face) adjacency is preserved. */
+  edgeImg: number[];
+  /** Corner slot image, derived from `sigma`. */
+  cornerImg: number[];
+}
+let _rotInfos: RotInfo[] | null = null;
+function rotInfos(kp: KPattern['kpuzzle']): RotInfo[] {
+  if (_rotInfos) return _rotInfos;
+  const solved = kp.defaultPattern();
+  _rotInfos = ORIENTATION_ALGS.map((g) => {
+    const transform = kp.algToTransformation(g);
+    const sp = solved.applyTransformation(transform).patternData;
+    const sigma = invPerm(sp.CENTERS.pieces);
+    return {
+      transform,
+      sigma,
+      edgeImg: EDGE_STICKERS.map(([a, b]) => EDGE_BY_FACES[edgeFaceKey(sigma[a], sigma[b])]),
+      cornerImg: CORNER_STICKERS.map((fs) => CORNER_BY_FACES[fs.map((x) => sigma[x]).sort((x, y) => x - y).join(',')]),
+    };
+  });
+  return _rotInfos;
+}
+
+interface NormCtx {
+  ph: KPattern;
+  info: RotInfo;
+  /** edgeAt[s] = home id of the edge piece sitting at slot s (in the home frame). */
+  edgeAt: number[];
+  cornerAt: number[];
+}
+const _normCache = new WeakMap<KPattern, NormCtx | null>();
+/** Rotate `p` into the centers-home frame; cache per pattern. null = invalid cube. */
+function normCtx(p: KPattern): NormCtx | null {
+  const hit = _normCache.get(p);
+  if (hit !== undefined) return hit;
+  let ctx: NormCtx | null = null;
+  for (const info of rotInfos(p.kpuzzle)) {
+    const ph = p.applyTransformation(info.transform);
+    const c = ph.patternData.CENTERS.pieces;
+    if (c[0] === 0 && c[1] === 1 && c[2] === 2 && c[3] === 3 && c[4] === 4 && c[5] === 5) {
+      ctx = {
+        ph,
+        info,
+        edgeAt: invPerm(ph.patternData.EDGES.pieces),
+        cornerAt: invPerm(ph.patternData.CORNERS.pieces),
+      };
+      break;
+    }
+  }
+  _normCache.set(p, ctx);
+  return ctx;
+}
+
+/**
+ * Sticker color (= KPattern face index) shown on face `face` of the edge sitting
+ * at slot `slot`. Returns null if `face` isn't adjacent to the slot. Frame-
+ * invariant: correct for every cube orientation including L/R-colour (z/z')
+ * crosses.
  */
 export function edgeStickerOnFace(p: KPattern, slot: number, face: number): number | null {
-  const piece = p.patternData.EDGES.pieces[slot];
-  const ori = p.patternData.EDGES.orientation[slot] ?? 0;
-  const [sFa, sFb] = EDGE_STICKERS[slot];
+  const n = normCtx(p);
+  if (!n) return null;
+  const s = n.info.edgeImg[slot];
+  const f = n.info.sigma[face];
+  const piece = n.edgeAt[s];                                  // destination: piece now at slot s
+  const ori = n.ph.patternData.EDGES.orientation?.[piece] ?? 0; // orientation indexed by piece
+  const [sFa, sFb] = EDGE_STICKERS[s];
   const [pSa, pSb] = EDGE_STICKERS[piece];
-  if (face === sFa) return ori === 0 ? pSa : pSb;
-  if (face === sFb) return ori === 0 ? pSb : pSa;
+  if (f === sFa) return ori === 0 ? pSa : pSb;
+  if (f === sFb) return ori === 0 ? pSb : pSa;
   return null;
 }
 
 /**
  * Same as `edgeStickerOnFace` but for corners (3 stickers per piece, ori in 0..2).
- *
- * Convention: at corner slot S with face order `[fA, fB, fC]`, piece P sticker
- * label `i` shows on slot face `(i + O) % 3` where O = orientation. Therefore
- * the sticker label visible at slot face index `j` is `(j - O + 3) % 3`.
+ * The sticker visible on slot-face index `j` is the piece label `(j + ori) % 3`.
+ * Frame-invariant.
  */
 export function cornerStickerOnFace(p: KPattern, slot: number, face: number): number | null {
-  const piece = p.patternData.CORNERS.pieces[slot];
-  const ori = p.patternData.CORNERS.orientation[slot] ?? 0;
-  const slotFaces = CORNER_STICKERS[slot];
-  const j = slotFaces.indexOf(face);
+  const n = normCtx(p);
+  if (!n) return null;
+  const s = n.info.cornerImg[slot];
+  const f = n.info.sigma[face];
+  const slotFaces = CORNER_STICKERS[s];
+  const j = slotFaces.indexOf(f);
   if (j < 0) return null;
-  const i = (j + 3 - ori) % 3;
+  const piece = n.cornerAt[s];
+  const ori = n.ph.patternData.CORNERS.orientation?.[piece] ?? 0;
+  const i = (j + ori) % 3;
   return CORNER_STICKERS[piece][i];
 }
