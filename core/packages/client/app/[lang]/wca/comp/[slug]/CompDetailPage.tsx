@@ -305,16 +305,19 @@ function computePlaces(results: LiveResult[], byAvg: boolean): (number | null)[]
   return places;
 }
 
-// 各项目决赛(最后一个有成绩的轮次)前三名 — 比赛结束后的领奖台。
+// 各项目决赛前三名 — 仅当该项目「决赛已结束」时才出领奖台。
+// 决赛 = 结构上的最后一轮 (ev.rs 末项);只有它 s===1(已结束)才算数,避免:
+//   ① 比赛进行中只有初赛有成绩时拿初赛当"决赛"误出领奖台;
+//   ② 决赛只跑了一半(s===2 进行中)就拿部分成绩当最终领奖台。
+// s 口径 0=未开始/1=已结束/2=进行中:wca_live 由 round.finished 灌(见 server cubing_live.ts),
+//   cubing.com(data-events 原生)/wca_db/wca(有成绩轮恒 1)各源已正确。按项目独立判,
+//   所以一场比赛里已结束的项目可先出领奖台,未结束的项目不出。
 // 排名口径镜像 live 视图的 filteredResults;并列第三名一并带上 (Reg 9f15,并列铜牌)。
 function computePodiumGroups(data: CompData): PodiumGroup[] {
   const out: PodiumGroup[] = [];
   for (const ev of data.events) {
-    let finalRd: RoundMeta | null = null;
-    for (let i = ev.rs.length - 1; i >= 0; i--) {
-      if ((data.resultsByRound[roundKey(ev.i, ev.rs[i].i)] || []).length > 0) { finalRd = ev.rs[i]; break; }
-    }
-    if (!finalRd) continue;
+    const finalRd = ev.rs[ev.rs.length - 1];
+    if (!finalRd || finalRd.s !== 1) continue;
     const cmpRank = rankComparator(isAvgRankedFormat(finalRd.f));
     const ranked = (data.resultsByRound[roundKey(ev.i, finalRd.i)] || []).slice()
       .filter(r => r.b !== 0)
@@ -708,11 +711,12 @@ export default function CompDetailPage() {
   const podiumGroups = useMemo(() => (data ? computePodiumGroups(data) : []), [data]);
   const compRecords = useMemo(() => (data ? computeCompRecords(data) : []), [data]);
   const hasPodiumTab = podiumGroups.length > 0 || compRecords.length > 0;
+  // 全场结束 = 每个项目的决赛(末轮)都 s===1。比「末轮有成绩」严格:决赛进行中(s===2)不算结束。
   const compFinished = useMemo(() => {
     if (!data || data.events.length === 0) return false;
     return data.events.every(ev => {
       const last = ev.rs[ev.rs.length - 1];
-      return !!last && (data.resultsByRound[roundKey(ev.i, last.i)] || []).length > 0;
+      return !!last && last.s === 1;
     });
   }, [data]);
   const beforeRegOpen = useMemo(() => {
@@ -722,7 +726,7 @@ export default function CompDetailPage() {
   const viewParam: 'result' | 'psych' | 'schedule' | 'podium' =
     explicitView === 'psych' ? 'psych'
       : explicitView === 'schedule' ? 'schedule'
-        : explicitView === 'podium' ? 'podium'
+        : (explicitView === 'podium' && hasPodiumTab) ? 'podium'
           : explicitView === 'result' ? 'result'
             : (data && !hasResults) ? (beforeRegOpen ? 'schedule' : 'psych')
               : (compFinished && podiumGroups.length > 0) ? 'podium'

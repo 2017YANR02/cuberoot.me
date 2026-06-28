@@ -1223,7 +1223,7 @@ interface WcaLiveResult {
   single_record_tag: string | null;
   average_record_tag: string | null;
   attempts: WcaLiveAttempt[];
-  person: { name: string; wcaId: string; country: { iso2: string } };
+  person: { id: string; name: string; wcaId: string; country: { iso2: string } };
 }
 
 async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetchedInternalId?: string): Promise<CompData> {
@@ -1259,7 +1259,9 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
       const roundTypeId = isFinal ? 'f' : String(r.number);
       rs.push({
         i: roundTypeId, e: ce.event.id, f: r.format.id,
-        co: 0, tl: 0, n: 0, s: 1, rn: 0, tt: 0,
+        // s 默认 0(未开始);下面逐轮查 round.finished/active 再灌真实状态.
+        // ⚠️ 别再硬编码 s:1:它会让"决赛结束才出领奖台"等按轮状态判断的逻辑全部误判.
+        co: 0, tl: 0, n: 0, s: 0, rn: 0, tt: 0,
         name: r.name,
         liveId: r.id,
       });
@@ -1269,7 +1271,10 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
   }
 
   const users: Record<string, User> = {};
-  const numByWcaId = new Map<string, number>();
+  // 选手号映射:有 wcaId 用 wcaId,新人(wcaId 为空)用 WCA Live 稳定 person.id 兜底(`p:<id>`).
+  // 关键:每个人(含新人)都必须入 map,num 才能用 size+1 单调递增 —— 否则新人不入 map、
+  // size 不增,下一个新人/选手会拿到相同 num 撞号(同号被后写者覆盖 → 同名多行/张冠李戴).
+  const numByPerson = new Map<string, number>();
   const resultsByRound: Record<string, LiveResult[]> = {};
 
   onProgress?.({ step: 'wca_live.results', done: 0, total: roundLinks.length });
@@ -1277,14 +1282,15 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
   for (let i = 0; i < roundLinks.length; i++) {
     const link = roundLinks[i];
     try {
-      const data = await gql<{ round: { results: WcaLiveResult[] } }>(
+      const data = await gql<{ round: { finished: boolean; active: boolean; results: WcaLiveResult[] } }>(
         `query Q($id: ID!) {
           round(id: $id) {
+            finished active
             results {
               id ranking best average
               singleRecordTag averageRecordTag
               attempts { result }
-              person { name wcaId country { iso2 } }
+              person { id name wcaId country { iso2 } }
             }
           }
         }`,
@@ -1293,13 +1299,14 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
       const list = data.round.results;
       const liveResults: LiveResult[] = [];
       for (const r of list) {
-        const wid = r.person.wcaId;
-        let num = wid ? numByWcaId.get(wid) : undefined;
-        if (!num) {
-          num = numByWcaId.size + 1;
-          if (wid) numByWcaId.set(wid, num);
+        const wid = r.person.wcaId || '';
+        const pkey = wid || `p:${r.person.id}`;
+        let num = numByPerson.get(pkey);
+        if (num === undefined) {
+          num = numByPerson.size + 1;
+          numByPerson.set(pkey, num);
           users[String(num)] = {
-            number: num, name: r.person.name, wcaid: wid || '',
+            number: num, name: r.person.name, wcaid: wid,
             region: (r.person.country.iso2 || '').toLowerCase(),
           };
         }
@@ -1314,7 +1321,12 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
       }
       resultsByRound[`${link.eventId}:${link.roundTypeId}`] = liveResults;
       const rd = events.find(e => e.i === link.eventId)?.rs.find(x => x.i === link.roundTypeId);
-      if (rd) { rd.rn = liveResults.length; rd.tt = liveResults.length; }
+      if (rd) {
+        rd.rn = liveResults.length; rd.tt = liveResults.length;
+        // 真实轮状态:finished=已结束(1) / active=进行中(2) / 否则未开始(0).
+        // 决赛 finished 才会让 client 出该项目领奖台.
+        rd.s = data.round.finished ? 1 : (data.round.active ? 2 : 0);
+      }
     } catch { /* 单个 round 失败不致命,继续 */ }
     onProgress?.({ step: 'wca_live.results', done: i + 1, total: roundLinks.length });
   }
