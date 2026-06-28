@@ -80,9 +80,45 @@ export function pllCommentLabel(name: string): string {
   return (EPLL_NAMES.has(display) ? 'EPLL-' : 'PLL-') + display;
 }
 
-/** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL 展示变换。 */
+/**
+ * ZBLL 组改名(展示层):Sune "S" → "S+",Antisune "AS" → "S-"。其余组(U/T/L/H/Pi)不变。
+ * 仅作展示 / recon 注释用;DB 里的 subgroup / name / URL slug 仍是 S / AS —— 因为 "+"
+ * 进 URL path 会被当成空格、破坏 /alg/3x3/zbll/s+2 这类链接,且 zbll_lookup 等按原名建表。
+ */
+export const ZBLL_GROUP_RENAME: Record<string, string> = { S: 'S+', AS: 'S-' };
+
+/** 改 ZBLL 组 token 的组前缀:"S" → "S+","AS3" → "S-3";非 S/AS 原样。 */
+export function renameZbllGroupToken(token: string): string {
+  const m = /^(AS|S)(\d*)$/.exec(token.trim()); // AS 必须先匹配,否则 "AS" 会被当成 "A"+"S"
+  if (!m) return token;
+  const renamed = ZBLL_GROUP_RENAME[m[1]];
+  return renamed ? renamed + m[2] : token;
+}
+
+/** ZBLL 案例名展示:"ZBLL AS 13" → "ZBLL S- 13","ZBLL S 13" → "ZBLL S+ 13";其余原样。 */
+export function displayZbllName(name: string): string {
+  const m = /^ZBLL\s+(AS|S)\s+(\d+)$/.exec(name.trim());
+  if (!m) return name;
+  const renamed = ZBLL_GROUP_RENAME[m[1]];
+  return renamed ? `ZBLL ${renamed} ${m[2]}` : name;
+}
+
+/**
+ * recon 注释用的 ZBLL 标签:"ZBLL AS 13" → "ZBLL-S-13","ZBLL S 13" → "ZBLL-S+13",
+ * "ZBLL U 13" → "ZBLL-U13"(组按改名表,编号紧跟,匹配用户给的 `ZBLL-S-XX` 格式)。
+ * 非 ZBLL case 名返回 null。
+ */
+export function zbllCommentLabel(name: string): string | null {
+  const m = /^ZBLL\s+(AS|S|U|T|L|H|Pi)\s+(\d+)$/.exec(name.trim());
+  if (!m) return null;
+  const group = ZBLL_GROUP_RENAME[m[1]] ?? m[1];
+  return `ZBLL-${group}${m[2]}`;
+}
+
+/** /alg 列表用:按 (puzzle, set) 决定是否套 OLL/PLL/ZBLL 展示变换。 */
 export function displayAlgCaseName(puzzle: string, set: string, name: string): string {
   if (puzzle === '3x3' && set === 'oll') return displayOllName(name);
   if (puzzle === '3x3' && set === 'pll') return displayPllName(name);
+  if (puzzle === '3x3' && set === 'zbll') return displayZbllName(name);
   return name;
 }

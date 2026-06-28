@@ -172,11 +172,13 @@ export async function fetchScrambleGroups(
   return groups;
 }
 
-export async function fetchScrambles(
+/** 取某 comp/event/round/group 的逐 scramble_num(1..5)字段值。`pick` 选原始打乱还是最优打乱。 */
+async function fetchScramblesField(
   compId: string,
   reconEvent: string,
   round: string,
-  groupId?: string,
+  groupId: string | undefined,
+  pick: (s: WcaScrambleRow) => string | null | undefined,
 ): Promise<(string | null)[] | null> {
   const wcaEventId = toWcaEventId(reconEvent);
   const all = await fetchWcaScrambles(compId);
@@ -193,10 +195,33 @@ export async function fetchScrambles(
   const result: (string | null)[] = Array(5).fill(null);
   for (const s of inGroup) {
     if (s.scramble_num >= 1 && s.scramble_num <= 5) {
-      result[s.scramble_num - 1] = s.scramble;
+      result[s.scramble_num - 1] = pick(s) ?? null;
     }
   }
   return result;
+}
+
+export function fetchScrambles(
+  compId: string,
+  reconEvent: string,
+  round: string,
+  groupId?: string,
+): Promise<(string | null)[] | null> {
+  return fetchScramblesField(compId, reconEvent, round, groupId, s => s.scramble);
+}
+
+/**
+ * 同 fetchScrambles,但取每条真题的「最优等价打乱」(= invert(整解最优解),本地 333opt/puzzles
+ * 管道预计算后入 PG `wca_scramble_optimal`,见 /v1/wca/scrambles 的 LEFT JOIN)。只有同态项目
+ * (333/oh/ft/fm + 222/pyram/skewb)且该比赛已被求解管道覆盖的真题才有,其余槽位为 null。
+ */
+export function fetchOptimalScrambles(
+  compId: string,
+  reconEvent: string,
+  round: string,
+  groupId?: string,
+): Promise<(string | null)[] | null> {
+  return fetchScramblesField(compId, reconEvent, round, groupId, s => s.optimal_scramble);
 }
 
 export async function fetchCubingAttempts(

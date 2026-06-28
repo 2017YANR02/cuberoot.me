@@ -48,7 +48,8 @@ import {
 } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
 import { revalidateRecon } from '../revalidate-action';
-import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles, fetchScrambleGroups } from '@/lib/wca-results-api';
+import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups } from '@/lib/wca-results-api';
+import { fetchAttemptPrRank } from '@/lib/recon-attempt-pr-rank';
 import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
 import {
   cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, normalizeSolutionSlashes,
@@ -242,6 +243,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [scrambleLoading, setScrambleLoading] = useState(false);
   const loadedScrambleKeySnapshot = useRef<string | null>(null);
   const scrambleAutoFilledRef = useRef(false);
+  // 最优打乱(同态项目本地 333opt/puzzles 管道预计算入 PG)随 WCA 打乱一起自动填充。
+  const [optimalUserTouched, setOptimalUserTouched] = useState(false);
+  const [optimalAutoSource, setOptimalAutoSource] = useState<string | null>(null);
+  const optimalAutoFilledRef = useRef(false);
   const wcaScrambleRef = useRef<HTMLTextAreaElement>(null);
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
   // WCA scramble groups (A/B/C…) for the current comp/event/round.
@@ -826,12 +831,31 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
           setScrambleAutoSource(null);
           scrambleAutoFilledRef.current = false;
         }
+        // 最优等价打乱(= invert(整解最优解),同态项目由本地 333opt/puzzles 管道预计算入
+        // PG wca_scramble_optimal,见 /v1/wca/scrambles LEFT JOIN):随 WCA 打乱一起自动填充。
+        // 用户手改过(optimalUserTouched)则不覆盖;该比赛/项目还没被求解管道覆盖 → 留空。
+        if (!optimalUserTouched) {
+          const optArr = await fetchOptimalScrambles(form.compWcaId!, form.event!, form.round!, form.groupId || undefined);
+          if (!cancelled) {
+            const optRaw = optArr && idx >= 0 && idx < optArr.length ? optArr[idx] : null;
+            const optScr = optRaw ? formatScrambleForEvent(form.event!, optRaw) : null;
+            if (optScr) {
+              setField('optimalScramble', optScr);
+              setOptimalAutoSource(tr({ zh: '自动:最优(整解)', en: 'auto: optimal' }));
+              optimalAutoFilledRef.current = true;
+            } else if (optimalAutoFilledRef.current) {
+              setField('optimalScramble', '');
+              setOptimalAutoSource(null);
+              optimalAutoFilledRef.current = false;
+            }
+          }
+        }
       } finally {
         if (!cancelled) setScrambleLoading(false);
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setScrambleLoading(false); };
-  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, scrambleUserTouched, setField, isZh]);
+  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, scrambleUserTouched, optimalUserTouched, setField, isZh]);
 
   // Resize the WCA scramble textarea when its value changes programmatically.
   useEffect(() => {
@@ -900,6 +924,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         }
         if (!singleRecordUserTouched) {
           let v = (isBestSolve && row.singleRecord) ? row.singleRecord : '';
+          // 逐把单次的时间序 PR 名次(口径同选手页角标),适用于任意 solveNum,不只最佳那把。
+          if (!v) {
+            const attRank = await fetchAttemptPrRank(
+              form.personId!, form.event!, form.round!, form.compWcaId!, form.solveNum ?? 0,
+            );
+            if (cancelled) return;
+            if (attRank != null) v = prTag(attRank);
+          }
+          // 回退(取不到逐把名次时,仅最佳那把):cubing-live 的 pS / WCA PB API。
           if (!v && isBestSolve) {
             if (ranks?.pS != null) v = prTag(ranks.pS);
             else if (pbEvent?.single?.best != null && bestCs != null && bestCs <= pbEvent.single.best) v = 'PR';
@@ -1361,6 +1394,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     scrambleAutoFilledRef.current = false;
                     setField('wcaScramble', scramble);
                   } else {
+                    setOptimalUserTouched(true);
+                    setOptimalAutoSource(null);
+                    optimalAutoFilledRef.current = false;
                     setField('optimalScramble', scramble);
                   }
                   setScramblePickerFor(null);
@@ -1729,6 +1765,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 rows={1}
                 value={form.optimalScramble || ''}
                 onChange={e => {
+                  setOptimalUserTouched(true);
+                  setOptimalAutoSource(null);
+                  optimalAutoFilledRef.current = false;
                   setField('optimalScramble', e.target.value);
                   autoResize(e.target);
                 }}
@@ -1736,6 +1775,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 ref={el => { if (el) autoResize(el); }}
                 style={{ overflow: 'hidden', resize: 'none' }}
               />
+              {scrambleLoading
+                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…' })}</span>
+                : optimalAutoSource ? <span className="submit-hint">{optimalAutoSource}</span> : null}
             </div>
 
             {/* Mobile: inline player between scramble and solution */}

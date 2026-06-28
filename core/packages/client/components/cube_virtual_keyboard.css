@@ -184,6 +184,13 @@
     color: var(--accent);
 }
 
+/* NOTE: space 左侧 `·` 小键——短按插 ·,长按出 ↑↓;字号略大让点居中可见 */
+.vkb-dot-mark {
+    font-size: 1.5rem !important;
+    line-height: 1 !important;
+    color: #8e8e93 !important;
+}
+
 /* NOTE: 记号入口按钮——space 左侧 ✎ 图标,iOS 蓝 */
 .vkb-marks-trigger {
     color: #007AFF !important;
