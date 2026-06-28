@@ -66,14 +66,14 @@
       null
     ],
     [
-      74,
+      75,
       "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
       "Hungary",
       "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
       null
     ],
     [
-      74,
+      75,
       "[Dániel Varga](https://www.worldcubeassociation.org/persons/2008VARG01)",
       "Hungary",
       "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
@@ -88,16 +88,16 @@
     ],
     [
       64,
-      "[Tobias Peter](https://www.worldcubeassociation.org/persons/2014PETE03)",
-      "Switzerland",
-      "[Swiss Science Open 2014](https://www.worldcubeassociation.org/competitions/SwissScienceOpen2014)",
-      null
-    ],
-    [
-      63,
       "[Szabolcs Szántai](https://www.worldcubeassociation.org/persons/2016SZAN01)",
       "Hungary",
       "[Hungarian Nationals 2016](https://www.worldcubeassociation.org/competitions/HungarianNationals2016)",
+      null
+    ],
+    [
+      64,
+      "[Tobias Peter](https://www.worldcubeassociation.org/persons/2014PETE03)",
+      "Switzerland",
+      "[Swiss Science Open 2014](https://www.worldcubeassociation.org/competitions/SwissScienceOpen2014)",
       null
     ],
     [
@@ -165,16 +165,16 @@
     ],
     [
       45,
-      "[Przemysław Rogalski](https://www.worldcubeassociation.org/persons/2013ROGA02)",
-      "Poland",
-      "[GLS Gdynia 2020](https://www.worldcubeassociation.org/competitions/GLSGdynia2020)",
-      null
-    ],
-    [
-      45,
       "[Robert Yau](https://www.worldcubeassociation.org/persons/2009YAUR01)",
       "United Kingdom",
       "[Nottingham Summer 2014](https://www.worldcubeassociation.org/competitions/NottinghamSummer2014)",
+      null
+    ],
+    [
+      44,
+      "[Przemysław Rogalski](https://www.worldcubeassociation.org/persons/2013ROGA02)",
+      "Poland",
+      "[PST Biłgoraj 2020](https://www.worldcubeassociation.org/competitions/PSTBilgoraj2020)",
       null
     ],
     [
@@ -473,9 +473,23 @@
     ],
     [
       29,
+      "[Igor Aipkin](https://www.worldcubeassociation.org/persons/2017AIPK01)",
+      "Uzbekistan",
+      "[Uzbekistan Open 2017](https://www.worldcubeassociation.org/competitions/UzbekistanOpen2017)",
+      null
+    ],
+    [
+      29,
       "[Todor Enikov](https://www.worldcubeassociation.org/persons/2012ENIK01)",
       "Bulgaria",
       "[Bulgarian Open 2018](https://www.worldcubeassociation.org/competitions/BulgarianOpen2018)",
+      null
+    ],
+    [
+      28,
+      "[Balázs Polyák](https://www.worldcubeassociation.org/persons/2017POLY02)",
+      "Hungary",
+      "[Budapest FMClvester 2024](https://www.worldcubeassociation.org/competitions/BudapestFMClvester2024)",
       null
     ],
     [
@@ -504,20 +518,6 @@
       "[Elias Miguel Acosta Acosta](https://www.worldcubeassociation.org/persons/2016ACOS08)",
       "Paraguay",
       "[Paraguay Nationals 2016](https://www.worldcubeassociation.org/competitions/Paraguay2016)",
-      null
-    ],
-    [
-      28,
-      "[Igor Aipkin](https://www.worldcubeassociation.org/persons/2017AIPK01)",
-      "Uzbekistan",
-      "[Uzbekistan Open 2017](https://www.worldcubeassociation.org/competitions/UzbekistanOpen2017)",
-      null
-    ],
-    [
-      27,
-      "[Balázs Polyák](https://www.worldcubeassociation.org/persons/2017POLY02)",
-      "Hungary",
-      "[Budapest FMClvester 2024](https://www.worldcubeassociation.org/competitions/BudapestFMClvester2024)",
       null
     ],
     [
@@ -620,6 +620,13 @@
     ],
     [
       26,
+      "[Jānis Zirnis](https://www.worldcubeassociation.org/persons/2013ZIRN01)",
+      "Latvia",
+      "[Sigulda Open 2023](https://www.worldcubeassociation.org/competitions/SiguldaOpen2023)",
+      null
+    ],
+    [
+      26,
       "[Kasparas Lienys](https://www.worldcubeassociation.org/persons/2018LIEN01)",
       "Lithuania",
       "[Kaunas Open 2018](https://www.worldcubeassociation.org/competitions/KaunasOpen2018)",
@@ -637,13 +644,6 @@
       "[Fabio Bini Graciose](https://www.worldcubeassociation.org/persons/2010GRAC02)",
       "Brazil",
       "[Mogi Open 2014](https://www.worldcubeassociation.org/competitions/MogiOpen2014)",
-      null
-    ],
-    [
-      25,
-      "[Jānis Zirnis](https://www.worldcubeassociation.org/persons/2013ZIRN01)",
-      "Latvia",
-      "[Sigulda Open 2023](https://www.worldcubeassociation.org/competitions/SiguldaOpen2023)",
       null
     ],
     [
@@ -725,16 +725,16 @@
     ],
     [
       24,
-      "[Uku Kruusamägi](https://www.worldcubeassociation.org/persons/2009KRUU01)",
-      "Estonia",
-      "[Estonian Open 2009](https://www.worldcubeassociation.org/competitions/EstonianOpen2009)",
+      "[Claudio Matias Cancino Bruna](https://www.worldcubeassociation.org/persons/2019BRUN02)",
+      "Chile",
+      "[Curicó al Cubo 2024](https://www.worldcubeassociation.org/competitions/CuricoalCubo2024)",
       null
     ],
     [
       24,
-      "[Jan Erik Soosaar](https://www.worldcubeassociation.org/persons/2016SOOS01)",
+      "[Uku Kruusamägi](https://www.worldcubeassociation.org/persons/2009KRUU01)",
       "Estonia",
-      "[Estonian Open 2016](https://www.worldcubeassociation.org/competitions/EstonianOpen2016)",
+      "[Estonian Open 2009](https://www.worldcubeassociation.org/competitions/EstonianOpen2009)",
       null
     ]
   ]

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-27T22:10:15.405Z",
+  "generated_at": "2026-06-28T22:09:12.466Z",
   "notes": "Centiseconds (cs): divide by 100 for seconds. Moves: integer.",
   "events": {
     "222": {
@@ -140,7 +140,7 @@
           "year": 2026,
           "wr_single": 41,
           "wr_avg": 87,
-          "solves": 65149
+          "solves": 65867
         }
       ],
       "topN_single": [
@@ -348,8 +348,8 @@
           "top10": 54,
           "top100": 78,
           "top1000": 142,
-          "top10000": 387,
-          "active_cubers": 24895
+          "top10000": 385,
+          "active_cubers": 25040
         }
       ],
       "topN_avg": [
@@ -535,7 +535,7 @@
           "top10": 106,
           "top100": 144,
           "top1000": 245,
-          "top10000": 550
+          "top10000": 549
         }
       ],
       "subX_single": [
@@ -781,23 +781,23 @@
         },
         {
           "year": 2026,
-          "sub_1000": 143129,
-          "sub_500": 72237,
-          "sub_300": 26196,
-          "sub_200": 8753,
-          "sub_150": 3989,
-          "sub_100": 1045,
-          "sub_80": 442
+          "sub_1000": 143185,
+          "sub_500": 72271,
+          "sub_300": 26209,
+          "sub_200": 8760,
+          "sub_150": 3992,
+          "sub_100": 1046,
+          "sub_80": 443
         },
         {
           "year": 2027,
-          "sub_1000": 143129,
-          "sub_500": 72237,
-          "sub_300": 26196,
-          "sub_200": 8753,
-          "sub_150": 3989,
-          "sub_100": 1045,
-          "sub_80": 442
+          "sub_1000": 143185,
+          "sub_500": 72271,
+          "sub_300": 26209,
+          "sub_200": 8760,
+          "sub_150": 3992,
+          "sub_100": 1046,
+          "sub_80": 443
         }
       ],
       "activity": [
@@ -913,8 +913,8 @@
         },
         {
           "year": 2026,
-          "cubers": 24929,
-          "solves": 65149
+          "cubers": 25073,
+          "solves": 65867
         }
       ],
       "wr_single_progression": [
@@ -4940,7 +4940,7 @@
         {
           "year": 2026,
           "country_id": "China",
-          "cubers": 1426
+          "cubers": 1427
         },
         {
           "year": 2026,
@@ -4950,7 +4950,7 @@
         {
           "year": 2026,
           "country_id": "India",
-          "cubers": 1140
+          "cubers": 1164
         },
         {
           "year": 2026,
@@ -4970,17 +4970,17 @@
         {
           "year": 2026,
           "country_id": "Spain",
-          "cubers": 699
+          "cubers": 703
+        },
+        {
+          "year": 2026,
+          "country_id": "France",
+          "cubers": 661
         },
         {
           "year": 2026,
           "country_id": "Brazil",
           "cubers": 659
-        },
-        {
-          "year": 2026,
-          "country_id": "France",
-          "cubers": 658
         },
         {
           "year": 2026,
@@ -4990,17 +4990,17 @@
         {
           "year": 2026,
           "country_id": "Colombia",
-          "cubers": 576
+          "cubers": 577
         },
         {
           "year": 2026,
           "country_id": "Mongolia",
-          "cubers": 548
+          "cubers": 565
         },
         {
           "year": 2026,
           "country_id": "Philippines",
-          "cubers": 533
+          "cubers": 541
         },
         {
           "year": 2026,
@@ -5010,17 +5010,17 @@
         {
           "year": 2026,
           "country_id": "Sweden",
-          "cubers": 393
+          "cubers": 398
         },
         {
           "year": 2026,
           "country_id": "Italy",
-          "cubers": 366
+          "cubers": 375
         },
         {
           "year": 2026,
           "country_id": "Korea",
-          "cubers": 354
+          "cubers": 355
         },
         {
           "year": 2026,
@@ -5034,18 +5034,23 @@
         },
         {
           "year": 2026,
+          "country_id": "New Zealand",
+          "cubers": 278
+        },
+        {
+          "year": 2026,
           "country_id": "Turkey",
           "cubers": 259
         },
         {
           "year": 2026,
-          "country_id": "New Zealand",
-          "cubers": 255
+          "country_id": "Peru",
+          "cubers": 244
         },
         {
           "year": 2026,
-          "country_id": "Peru",
-          "cubers": 244
+          "country_id": "Indonesia",
+          "cubers": 238
         },
         {
           "year": 2026,
@@ -5055,17 +5060,12 @@
         {
           "year": 2026,
           "country_id": "Norway",
-          "cubers": 221
+          "cubers": 222
         },
         {
           "year": 2026,
           "country_id": "Ireland",
           "cubers": 217
-        },
-        {
-          "year": 2026,
-          "country_id": "Indonesia",
-          "cubers": 215
         },
         {
           "year": 2026,
@@ -5075,7 +5075,7 @@
         {
           "year": 2026,
           "country_id": "Switzerland",
-          "cubers": 192
+          "cubers": 196
         },
         {
           "year": 2026,
@@ -5099,6 +5099,11 @@
         },
         {
           "year": 2026,
+          "country_id": "Belgium",
+          "cubers": 142
+        },
+        {
+          "year": 2026,
           "country_id": "Singapore",
           "cubers": 142
         },
@@ -5106,11 +5111,6 @@
           "year": 2026,
           "country_id": "Thailand",
           "cubers": 142
-        },
-        {
-          "year": 2026,
-          "country_id": "Belgium",
-          "cubers": 141
         },
         {
           "year": 2026,
@@ -5155,7 +5155,7 @@
         {
           "year": 2026,
           "country_id": "Portugal",
-          "cubers": 103
+          "cubers": 104
         },
         {
           "year": 2026,
@@ -5194,18 +5194,18 @@
         },
         {
           "year": 2026,
+          "country_id": "Russia",
+          "cubers": 75
+        },
+        {
+          "year": 2026,
           "country_id": "Slovenia",
           "cubers": 75
         },
         {
           "year": 2026,
-          "country_id": "Russia",
-          "cubers": 73
-        },
-        {
-          "year": 2026,
           "country_id": "Bangladesh",
-          "cubers": 70
+          "cubers": 71
         },
         {
           "year": 2026,
@@ -5389,7 +5389,7 @@
           "year": 2026,
           "wr_single": 276,
           "wr_avg": 351,
-          "solves": 118147
+          "solves": 119400
         }
       ],
       "topN_single": [
@@ -5615,8 +5615,8 @@
           "top10": 356,
           "top100": 480,
           "top1000": 643,
-          "top10000": 1127,
-          "active_cubers": 35659
+          "top10000": 1124,
+          "active_cubers": 35931
         }
       ],
       "topN_avg": [
@@ -5810,7 +5810,7 @@
           "top10": 473,
           "top100": 618,
           "top1000": 792,
-          "top10000": 1342
+          "top10000": 1338
         }
       ],
       "subX_single": [
@@ -6104,26 +6104,26 @@
         },
         {
           "year": 2026,
-          "sub_1500": 67903,
-          "sub_1200": 38570,
-          "sub_1000": 20584,
-          "sub_800": 7686,
-          "sub_700": 3670,
-          "sub_600": 1329,
+          "sub_1500": 67940,
+          "sub_1200": 38589,
+          "sub_1000": 20601,
+          "sub_800": 7691,
+          "sub_700": 3673,
+          "sub_600": 1330,
           "sub_500": 320,
-          "sub_400": 34,
+          "sub_400": 35,
           "sub_300": 2
         },
         {
           "year": 2027,
-          "sub_1500": 67903,
-          "sub_1200": 38570,
-          "sub_1000": 20584,
-          "sub_800": 7686,
-          "sub_700": 3670,
-          "sub_600": 1329,
+          "sub_1500": 67940,
+          "sub_1200": 38589,
+          "sub_1000": 20601,
+          "sub_800": 7691,
+          "sub_700": 3673,
+          "sub_600": 1330,
           "sub_500": 320,
-          "sub_400": 34,
+          "sub_400": 35,
           "sub_300": 2
         }
       ],
@@ -6250,8 +6250,8 @@
         },
         {
           "year": 2026,
-          "cubers": 35697,
-          "solves": 118147
+          "cubers": 35969,
+          "solves": 119400
         }
       ],
       "wr_single_progression": [
@@ -11132,21 +11132,21 @@
         {
           "year": 2026,
           "country_id": "USA",
-          "cubers": 8724
+          "cubers": 8765
         },
         {
           "year": 2026,
           "country_id": "China",
-          "cubers": 2886
-        },
-        {
-          "year": 2026,
-          "country_id": "Australia",
-          "cubers": 1533
+          "cubers": 2894
         },
         {
           "year": 2026,
           "country_id": "India",
+          "cubers": 1572
+        },
+        {
+          "year": 2026,
+          "country_id": "Australia",
           "cubers": 1533
         },
         {
@@ -11167,7 +11167,7 @@
         {
           "year": 2026,
           "country_id": "France",
-          "cubers": 962
+          "cubers": 966
         },
         {
           "year": 2026,
@@ -11177,17 +11177,17 @@
         {
           "year": 2026,
           "country_id": "Spain",
-          "cubers": 868
+          "cubers": 870
         },
         {
           "year": 2026,
           "country_id": "Philippines",
-          "cubers": 830
+          "cubers": 842
         },
         {
           "year": 2026,
           "country_id": "Colombia",
-          "cubers": 744
+          "cubers": 745
         },
         {
           "year": 2026,
@@ -11197,12 +11197,12 @@
         {
           "year": 2026,
           "country_id": "Korea",
-          "cubers": 643
+          "cubers": 644
         },
         {
           "year": 2026,
           "country_id": "Mongolia",
-          "cubers": 549
+          "cubers": 576
         },
         {
           "year": 2026,
@@ -11212,12 +11212,12 @@
         {
           "year": 2026,
           "country_id": "Italy",
-          "cubers": 445
+          "cubers": 458
         },
         {
           "year": 2026,
           "country_id": "Sweden",
-          "cubers": 444
+          "cubers": 451
         },
         {
           "year": 2026,
@@ -11241,18 +11241,18 @@
         },
         {
           "year": 2026,
+          "country_id": "Indonesia",
+          "cubers": 365
+        },
+        {
+          "year": 2026,
           "country_id": "New Zealand",
-          "cubers": 318
+          "cubers": 350
         },
         {
           "year": 2026,
           "country_id": "Turkey",
           "cubers": 317
-        },
-        {
-          "year": 2026,
-          "country_id": "Indonesia",
-          "cubers": 310
         },
         {
           "year": 2026,
@@ -11277,7 +11277,7 @@
         {
           "year": 2026,
           "country_id": "Norway",
-          "cubers": 272
+          "cubers": 273
         },
         {
           "year": 2026,
@@ -11291,13 +11291,13 @@
         },
         {
           "year": 2026,
-          "country_id": "Ukraine",
+          "country_id": "Switzerland",
           "cubers": 242
         },
         {
           "year": 2026,
-          "country_id": "Switzerland",
-          "cubers": 240
+          "country_id": "Ukraine",
+          "cubers": 242
         },
         {
           "year": 2026,
@@ -11317,7 +11317,7 @@
         {
           "year": 2026,
           "country_id": "Belgium",
-          "cubers": 190
+          "cubers": 191
         },
         {
           "year": 2026,
@@ -11397,12 +11397,12 @@
         {
           "year": 2026,
           "country_id": "Bangladesh",
-          "cubers": 102
+          "cubers": 103
         },
         {
           "year": 2026,
           "country_id": "Russia",
-          "cubers": 95
+          "cubers": 97
         },
         {
           "year": 2026,
@@ -11610,7 +11610,7 @@
           "year": 2026,
           "wr_single": 1609,
           "wr_avg": 1856,
-          "solves": 38343
+          "solves": 38669
         }
       ],
       "topN_single": [
@@ -11827,8 +11827,8 @@
           "top10": 1849,
           "top100": 2241,
           "top1000": 2937,
-          "top10000": 7028,
-          "active_cubers": 14731
+          "top10000": 7000,
+          "active_cubers": 14800
         }
       ],
       "topN_avg": [
@@ -12021,8 +12021,8 @@
           "top1": 1856,
           "top10": 2221,
           "top100": 2601,
-          "top1000": 3356,
-          "top10000": 8552
+          "top1000": 3351,
+          "top10000": 8478
         }
       ],
       "subX_single": [
@@ -12292,22 +12292,22 @@
         },
         {
           "year": 2026,
-          "sub_6000": 29956,
-          "sub_4500": 14976,
-          "sub_3500": 5424,
+          "sub_6000": 29967,
+          "sub_4500": 14979,
+          "sub_3500": 5427,
           "sub_3000": 2290,
-          "sub_2500": 559,
+          "sub_2500": 561,
           "sub_2000": 42,
           "sub_1700": 6,
           "sub_1500": 0
         },
         {
           "year": 2027,
-          "sub_6000": 29956,
-          "sub_4500": 14976,
-          "sub_3500": 5424,
+          "sub_6000": 29967,
+          "sub_4500": 14979,
+          "sub_3500": 5427,
           "sub_3000": 2290,
-          "sub_2500": 559,
+          "sub_2500": 561,
           "sub_2000": 42,
           "sub_1700": 6,
           "sub_1500": 0
@@ -12431,8 +12431,8 @@
         },
         {
           "year": 2026,
-          "cubers": 15101,
-          "solves": 38343
+          "cubers": 15173,
+          "solves": 38669
         }
       ],
       "wr_single_progression": [
@@ -15862,7 +15862,7 @@
         {
           "year": 2026,
           "country_id": "USA",
-          "cubers": 3701
+          "cubers": 3716
         },
         {
           "year": 2026,
@@ -15882,7 +15882,7 @@
         {
           "year": 2026,
           "country_id": "France",
-          "cubers": 526
+          "cubers": 527
         },
         {
           "year": 2026,
@@ -15892,7 +15892,7 @@
         {
           "year": 2026,
           "country_id": "India",
-          "cubers": 502
+          "cubers": 503
         },
         {
           "year": 2026,
@@ -15902,7 +15902,7 @@
         {
           "year": 2026,
           "country_id": "Spain",
-          "cubers": 432
+          "cubers": 435
         },
         {
           "year": 2026,
@@ -15922,7 +15922,7 @@
         {
           "year": 2026,
           "country_id": "Philippines",
-          "cubers": 299
+          "cubers": 304
         },
         {
           "year": 2026,
@@ -15931,18 +15931,18 @@
         },
         {
           "year": 2026,
+          "country_id": "Italy",
+          "cubers": 254
+        },
+        {
+          "year": 2026,
           "country_id": "Korea",
           "cubers": 252
         },
         {
           "year": 2026,
-          "country_id": "Italy",
-          "cubers": 246
-        },
-        {
-          "year": 2026,
           "country_id": "Sweden",
-          "cubers": 230
+          "cubers": 237
         },
         {
           "year": 2026,
@@ -15971,13 +15971,13 @@
         },
         {
           "year": 2026,
-          "country_id": "Norway",
-          "cubers": 142
+          "country_id": "Indonesia",
+          "cubers": 145
         },
         {
           "year": 2026,
-          "country_id": "Indonesia",
-          "cubers": 136
+          "country_id": "Norway",
+          "cubers": 141
         },
         {
           "year": 2026,
@@ -15992,7 +15992,7 @@
         {
           "year": 2026,
           "country_id": "Switzerland",
-          "cubers": 119
+          "cubers": 121
         },
         {
           "year": 2026,
@@ -16007,7 +16007,7 @@
         {
           "year": 2026,
           "country_id": "Belgium",
-          "cubers": 101
+          "cubers": 102
         },
         {
           "year": 2026,
@@ -16041,6 +16041,11 @@
         },
         {
           "year": 2026,
+          "country_id": "Mongolia",
+          "cubers": 86
+        },
+        {
+          "year": 2026,
           "country_id": "Romania",
           "cubers": 86
         },
@@ -16062,11 +16067,6 @@
         {
           "year": 2026,
           "country_id": "Hong Kong",
-          "cubers": 76
-        },
-        {
-          "year": 2026,
-          "country_id": "Mongolia",
           "cubers": 76
         },
         {
@@ -16265,7 +16265,7 @@
           "year": 2026,
           "wr_single": 2949,
           "wr_avg": 3373,
-          "solves": 22332
+          "solves": 22558
         }
       ],
       "topN_single": [
@@ -16480,10 +16480,10 @@
           "year": 2026,
           "top1": 2949,
           "top10": 3618,
-          "top100": 4328,
-          "top1000": 5773,
+          "top100": 4326,
+          "top1000": 5767,
           "top10000": null,
-          "active_cubers": 8701
+          "active_cubers": 8731
         }
       ],
       "topN_avg": [
@@ -16675,8 +16675,8 @@
           "year": 2026,
           "top1": 3373,
           "top10": 4059,
-          "top100": 4832,
-          "top1000": 6404,
+          "top100": 4825,
+          "top1000": 6397,
           "top10000": null
         }
       ],
@@ -16947,22 +16947,22 @@
         },
         {
           "year": 2026,
-          "sub_12000": 19680,
-          "sub_9000": 10841,
-          "sub_7000": 4556,
+          "sub_12000": 19690,
+          "sub_9000": 10847,
+          "sub_7000": 4557,
           "sub_6000": 2156,
-          "sub_5000": 664,
+          "sub_5000": 666,
           "sub_4000": 61,
           "sub_3500": 9,
           "sub_3000": 1
         },
         {
           "year": 2027,
-          "sub_12000": 19680,
-          "sub_9000": 10841,
-          "sub_7000": 4556,
+          "sub_12000": 19690,
+          "sub_9000": 10847,
+          "sub_7000": 4557,
           "sub_6000": 2156,
-          "sub_5000": 664,
+          "sub_5000": 666,
           "sub_4000": 61,
           "sub_3500": 9,
           "sub_3000": 1
@@ -17086,8 +17086,8 @@
         },
         {
           "year": 2026,
-          "cubers": 9006,
-          "solves": 22332
+          "cubers": 9040,
+          "solves": 22558
         }
       ],
       "wr_single_progression": [
@@ -19545,7 +19545,7 @@
         {
           "year": 2026,
           "country_id": "USA",
-          "cubers": 2242
+          "cubers": 2247
         },
         {
           "year": 2026,
@@ -19570,7 +19570,7 @@
         {
           "year": 2026,
           "country_id": "France",
-          "cubers": 299
+          "cubers": 300
         },
         {
           "year": 2026,
@@ -19615,7 +19615,7 @@
         {
           "year": 2026,
           "country_id": "Italy",
-          "cubers": 173
+          "cubers": 176
         },
         {
           "year": 2026,
@@ -19655,7 +19655,7 @@
         {
           "year": 2026,
           "country_id": "Norway",
-          "cubers": 84
+          "cubers": 83
         },
         {
           "year": 2026,
@@ -19665,7 +19665,12 @@
         {
           "year": 2026,
           "country_id": "Indonesia",
-          "cubers": 73
+          "cubers": 78
+        },
+        {
+          "year": 2026,
+          "country_id": "Switzerland",
+          "cubers": 71
         },
         {
           "year": 2026,
@@ -19674,13 +19679,8 @@
         },
         {
           "year": 2026,
-          "country_id": "Switzerland",
-          "cubers": 69
-        },
-        {
-          "year": 2026,
           "country_id": "Belgium",
-          "cubers": 68
+          "cubers": 69
         },
         {
           "year": 2026,
@@ -19857,7 +19857,7 @@
           "year": 2026,
           "wr_single": 6040,
           "wr_avg": 6494,
-          "solves": 12136
+          "solves": 12189
         }
       ],
       "topN_single": [
@@ -20018,10 +20018,10 @@
           "year": 2026,
           "top1": 6040,
           "top10": 6619,
-          "top100": 8389,
-          "top1000": 11895,
+          "top100": 8377,
+          "top1000": 11884,
           "top10000": null,
-          "active_cubers": 4790
+          "active_cubers": 4802
         }
       ],
       "topN_avg": [
@@ -20165,8 +20165,8 @@
           "year": 2026,
           "top1": 6494,
           "top10": 7291,
-          "top100": 9031,
-          "top1000": 12767,
+          "top100": 9023,
+          "top1000": 12756,
           "top10000": null
         }
       ],
@@ -20413,21 +20413,21 @@
         },
         {
           "year": 2026,
-          "sub_25000": 11768,
-          "sub_18000": 6973,
+          "sub_25000": 11773,
+          "sub_18000": 6975,
           "sub_12000": 1838,
-          "sub_10000": 679,
-          "sub_8000": 91,
+          "sub_10000": 680,
+          "sub_8000": 92,
           "sub_7000": 20,
           "sub_6000": 1
         },
         {
           "year": 2027,
-          "sub_25000": 11768,
-          "sub_18000": 6973,
+          "sub_25000": 11773,
+          "sub_18000": 6975,
           "sub_12000": 1838,
-          "sub_10000": 679,
-          "sub_8000": 91,
+          "sub_10000": 680,
+          "sub_8000": 92,
           "sub_7000": 20,
           "sub_6000": 1
         }
@@ -20520,8 +20520,8 @@
         },
         {
           "year": 2026,
-          "cubers": 5054,
-          "solves": 12136
+          "cubers": 5068,
+          "solves": 12189
         }
       ],
       "wr_single_progression": [
@@ -21737,7 +21737,7 @@
         {
           "year": 2026,
           "country_id": "USA",
-          "cubers": 1235
+          "cubers": 1243
         },
         {
           "year": 2026,
@@ -21954,7 +21954,7 @@
           "year": 2026,
           "wr_single": 9207,
           "wr_avg": 9797,
-          "solves": 10867
+          "solves": 10915
         }
       ],
       "topN_single": [
@@ -22116,9 +22116,9 @@
           "top1": 9207,
           "top10": 10175,
           "top100": 12831,
-          "top1000": 19090,
+          "top1000": 19086,
           "top10000": null,
-          "active_cubers": 4086
+          "active_cubers": 4100
         }
       ],
       "topN_avg": [
@@ -22262,8 +22262,8 @@
           "year": 2026,
           "top1": 9797,
           "top10": 10670,
-          "top100": 13572,
-          "top1000": 20235,
+          "top100": 13565,
+          "top1000": 20196,
           "top10000": null
         }
       ],
@@ -22510,20 +22510,20 @@
         },
         {
           "year": 2026,
-          "sub_40000": 10624,
-          "sub_30000": 7015,
+          "sub_40000": 10629,
+          "sub_30000": 7019,
           "sub_20000": 2240,
-          "sub_15000": 495,
+          "sub_15000": 496,
           "sub_12000": 77,
           "sub_10000": 10,
           "sub_9000": 0
         },
         {
           "year": 2027,
-          "sub_40000": 10624,
-          "sub_30000": 7015,
+          "sub_40000": 10629,
+          "sub_30000": 7019,
           "sub_20000": 2240,
-          "sub_15000": 495,
+          "sub_15000": 496,
           "sub_12000": 77,
           "sub_10000": 10,
           "sub_9000": 0
@@ -22617,8 +22617,8 @@
         },
         {
           "year": 2026,
-          "cubers": 4459,
-          "solves": 10867
+          "cubers": 4476,
+          "solves": 10915
         }
       ],
       "wr_single_progression": [
@@ -23761,7 +23761,7 @@
         {
           "year": 2026,
           "country_id": "USA",
-          "cubers": 1075
+          "cubers": 1084
         },
         {
           "year": 2026,
@@ -24009,7 +24009,7 @@
           "year": 2026,
           "wr_single": 629,
           "wr_avg": 801,
-          "solves": 30205
+          "solves": 30565
         }
       ],
       "topN_single": [
@@ -24226,8 +24226,8 @@
           "top10": 700,
           "top100": 871,
           "top1000": 1248,
-          "top10000": 4229,
-          "active_cubers": 12293
+          "top10000": 4160,
+          "active_cubers": 12394
         }
       ],
       "topN_avg": [
@@ -24413,7 +24413,7 @@
           "top10": 864,
           "top100": 1085,
           "top1000": 1524,
-          "top10000": 6092
+          "top10000": 5820
         }
       ],
       "subX_single": [
@@ -24683,10 +24683,10 @@
         },
         {
           "year": 2026,
-          "sub_3000": 33659,
-          "sub_2000": 14687,
-          "sub_1500": 5780,
-          "sub_1200": 2119,
+          "sub_3000": 33678,
+          "sub_2000": 14694,
+          "sub_1500": 5785,
+          "sub_1200": 2120,
           "sub_1000": 732,
           "sub_800": 134,
           "sub_700": 46,
@@ -24694,10 +24694,10 @@
         },
         {
           "year": 2027,
-          "sub_3000": 33659,
-          "sub_2000": 14687,
-          "sub_1500": 5780,
-          "sub_1200": 2119,
+          "sub_3000": 33678,
+          "sub_2000": 14694,
+          "sub_1500": 5785,
+          "sub_1200": 2120,
           "sub_1000": 732,
           "sub_800": 134,
           "sub_700": 46,
@@ -24822,8 +24822,8 @@
         },
         {
           "year": 2026,
-          "cubers": 12499,
-          "solves": 30205
+          "cubers": 12603,
+          "solves": 30565
         }
       ],
       "wr_single_progression": [
@@ -27952,7 +27952,7 @@
         {
           "year": 2026,
           "country_id": "USA",
-          "cubers": 2850
+          "cubers": 2867
         },
         {
           "year": 2026,
@@ -27961,13 +27961,13 @@
         },
         {
           "year": 2026,
-          "country_id": "Australia",
-          "cubers": 568
+          "country_id": "India",
+          "cubers": 573
         },
         {
           "year": 2026,
-          "country_id": "India",
-          "cubers": 555
+          "country_id": "Australia",
+          "cubers": 568
         },
         {
           "year": 2026,
@@ -27987,12 +27987,12 @@
         {
           "year": 2026,
           "country_id": "France",
-          "cubers": 391
+          "cubers": 392
         },
         {
           "year": 2026,
           "country_id": "Spain",
-          "cubers": 319
+          "cubers": 321
         },
         {
           "year": 2026,
@@ -28022,17 +28022,17 @@
         {
           "year": 2026,
           "country_id": "Sweden",
-          "cubers": 200
+          "cubers": 207
+        },
+        {
+          "year": 2026,
+          "country_id": "Italy",
+          "cubers": 175
         },
         {
           "year": 2026,
           "country_id": "Malaysia",
           "cubers": 171
-        },
-        {
-          "year": 2026,
-          "country_id": "Italy",
-          "cubers": 167
         },
         {
           "year": 2026,
@@ -28048,6 +28048,11 @@
           "year": 2026,
           "country_id": "Korea",
           "cubers": 154
+        },
+        {
+          "year": 2026,
+          "country_id": "Indonesia",
+          "cubers": 132
         },
         {
           "year": 2026,
@@ -28071,18 +28076,13 @@
         },
         {
           "year": 2026,
-          "country_id": "Indonesia",
-          "cubers": 119
-        },
-        {
-          "year": 2026,
           "country_id": "Taiwan",
           "cubers": 119
         },
         {
           "year": 2026,
           "country_id": "Norway",
-          "cubers": 115
+          "cubers": 114
         },
         {
           "year": 2026,
@@ -28107,7 +28107,7 @@
         {
           "year": 2026,
           "country_id": "Switzerland",
-          "cubers": 96
+          "cubers": 98
         },
         {
           "year": 2026,
@@ -28126,18 +28126,23 @@
         },
         {
           "year": 2026,
+          "country_id": "Belgium",
+          "cubers": 69
+        },
+        {
+          "year": 2026,
           "country_id": "Chile",
           "cubers": 69
         },
         {
           "year": 2026,
-          "country_id": "Belgium",
+          "country_id": "South Africa",
           "cubers": 68
         },
         {
           "year": 2026,
-          "country_id": "South Africa",
-          "cubers": 68
+          "country_id": "Hungary",
+          "cubers": 63
         },
         {
           "year": 2026,
@@ -28152,11 +28157,6 @@
         {
           "year": 2026,
           "country_id": "Finland",
-          "cubers": 58
-        },
-        {
-          "year": 2026,
-          "country_id": "Hungary",
           "cubers": 58
         },
         {
@@ -28330,7 +28330,7 @@
           "year": 2026,
           "wr_single": 1167,
           "wr_avg": 1405,
-          "solves": 12099
+          "solves": 12220
         }
       ],
       "topN_single": [
@@ -28545,10 +28545,10 @@
           "year": 2026,
           "top1": 1167,
           "top10": 1485,
-          "top100": 2014,
-          "top1000": 8033,
+          "top100": 2006,
+          "top1000": 8022,
           "top10000": null,
-          "active_cubers": 2787
+          "active_cubers": 2805
         }
       ],
       "topN_avg": [
@@ -28996,10 +28996,10 @@
         },
         {
           "year": 2026,
-          "sub_12000": 3970,
-          "sub_6000": 1529,
-          "sub_3000": 476,
-          "sub_2000": 155,
+          "sub_12000": 3971,
+          "sub_6000": 1530,
+          "sub_3000": 477,
+          "sub_2000": 156,
           "sub_1500": 19,
           "sub_1200": 2,
           "sub_1000": 0,
@@ -29007,10 +29007,10 @@
         },
         {
           "year": 2027,
-          "sub_12000": 3970,
-          "sub_6000": 1529,
-          "sub_3000": 476,
-          "sub_2000": 155,
+          "sub_12000": 3971,
+          "sub_6000": 1530,
+          "sub_3000": 477,
+          "sub_2000": 156,
           "sub_1500": 19,
           "sub_1200": 2,
           "sub_1000": 0,
@@ -29135,8 +29135,8 @@
         },
         {
           "year": 2026,
-          "cubers": 3970,
-          "solves": 12099
+          "cubers": 4001,
+          "solves": 12220
         }
       ],
       "wr_single_progression": [
@@ -30736,7 +30736,7 @@
         {
           "year": 2026,
           "country_id": "India",
-          "cubers": 132
+          "cubers": 140
         },
         {
           "year": 2026,
@@ -30776,7 +30776,7 @@
         {
           "year": 2026,
           "country_id": "Sweden",
-          "cubers": 65
+          "cubers": 67
         },
         {
           "year": 2026,
@@ -30944,7 +30944,7 @@
           "year": 2026,
           "wr_single": 6104,
           "wr_avg": 8299,
-          "solves": 2095
+          "solves": 2113
         }
       ],
       "topN_single": [
@@ -31289,7 +31289,7 @@
           "year": 2026,
           "top1": 8299,
           "top10": 15273,
-          "top100": null,
+          "top100": 119500,
           "top1000": null,
           "top10000": null
         }
@@ -31538,7 +31538,7 @@
         {
           "year": 2026,
           "sub_60000": 1228,
-          "sub_30000": 458,
+          "sub_30000": 459,
           "sub_15000": 104,
           "sub_12000": 53,
           "sub_9000": 13,
@@ -31548,7 +31548,7 @@
         {
           "year": 2027,
           "sub_60000": 1228,
-          "sub_30000": 458,
+          "sub_30000": 459,
           "sub_15000": 104,
           "sub_12000": 53,
           "sub_9000": 13,
@@ -31674,8 +31674,8 @@
         },
         {
           "year": 2026,
-          "cubers": 978,
-          "solves": 2095
+          "cubers": 980,
+          "solves": 2113
         }
       ],
       "wr_single_progression": [
@@ -32167,7 +32167,7 @@
           "year": 2026,
           "wr_single": 11859,
           "wr_avg": 17940,
-          "solves": 1366
+          "solves": 1381
         }
       ],
       "topN_single": [
@@ -32864,8 +32864,8 @@
         },
         {
           "year": 2026,
-          "cubers": 644,
-          "solves": 1366
+          "cubers": 645,
+          "solves": 1381
         }
       ],
       "wr_single_progression": [
@@ -33378,7 +33378,7 @@
           "year": 2026,
           "wr_single": 79,
           "wr_avg": 124,
-          "solves": 43406
+          "solves": 43863
         }
       ],
       "topN_single": [
@@ -33586,8 +33586,8 @@
           "top10": 97,
           "top100": 130,
           "top1000": 245,
-          "top10000": 860,
-          "active_cubers": 17467
+          "top10000": 855,
+          "active_cubers": 17593
         }
       ],
       "topN_avg": [
@@ -33764,8 +33764,8 @@
           "top1": 124,
           "top10": 150,
           "top100": 207,
-          "top1000": 384,
-          "top10000": 1233
+          "top1000": 383,
+          "top10000": 1226
         }
       ],
       "subX_single": [
@@ -34035,9 +34035,9 @@
         },
         {
           "year": 2026,
-          "sub_500": 16692,
-          "sub_300": 4617,
-          "sub_250": 2799,
+          "sub_500": 16700,
+          "sub_300": 4618,
+          "sub_250": 2800,
           "sub_200": 1450,
           "sub_150": 537,
           "sub_120": 182,
@@ -34046,9 +34046,9 @@
         },
         {
           "year": 2027,
-          "sub_500": 16692,
-          "sub_300": 4617,
-          "sub_250": 2799,
+          "sub_500": 16700,
+          "sub_300": 4618,
+          "sub_250": 2800,
           "sub_200": 1450,
           "sub_150": 537,
           "sub_120": 182,
@@ -34169,8 +34169,8 @@
         },
         {
           "year": 2026,
-          "cubers": 17491,
-          "solves": 43406
+          "cubers": 17617,
+          "solves": 43863
         }
       ],
       "wr_single_progression": [
@@ -37352,7 +37352,7 @@
         {
           "year": 2026,
           "country_id": "USA",
-          "cubers": 4187
+          "cubers": 4188
         },
         {
           "year": 2026,
@@ -37362,7 +37362,7 @@
         {
           "year": 2026,
           "country_id": "India",
-          "cubers": 814
+          "cubers": 840
         },
         {
           "year": 2026,
@@ -37382,7 +37382,7 @@
         {
           "year": 2026,
           "country_id": "Spain",
-          "cubers": 546
+          "cubers": 548
         },
         {
           "year": 2026,
@@ -37392,12 +37392,12 @@
         {
           "year": 2026,
           "country_id": "Mongolia",
-          "cubers": 498
+          "cubers": 512
         },
         {
           "year": 2026,
           "country_id": "France",
-          "cubers": 491
+          "cubers": 495
         },
         {
           "year": 2026,
@@ -37416,28 +37416,28 @@
         },
         {
           "year": 2026,
+          "country_id": "Philippines",
+          "cubers": 343
+        },
+        {
+          "year": 2026,
           "country_id": "Mexico",
           "cubers": 339
         },
         {
           "year": 2026,
-          "country_id": "Philippines",
-          "cubers": 337
-        },
-        {
-          "year": 2026,
           "country_id": "Sweden",
-          "cubers": 314
+          "cubers": 323
         },
         {
           "year": 2026,
           "country_id": "Italy",
-          "cubers": 269
+          "cubers": 279
         },
         {
           "year": 2026,
           "country_id": "Korea",
-          "cubers": 226
+          "cubers": 227
         },
         {
           "year": 2026,
@@ -37446,13 +37446,13 @@
         },
         {
           "year": 2026,
-          "country_id": "Netherlands",
-          "cubers": 199
+          "country_id": "New Zealand",
+          "cubers": 214
         },
         {
           "year": 2026,
-          "country_id": "New Zealand",
-          "cubers": 196
+          "country_id": "Netherlands",
+          "cubers": 199
         },
         {
           "year": 2026,
@@ -37467,7 +37467,7 @@
         {
           "year": 2026,
           "country_id": "Norway",
-          "cubers": 165
+          "cubers": 164
         },
         {
           "year": 2026,
@@ -37491,13 +37491,13 @@
         },
         {
           "year": 2026,
-          "country_id": "South Africa",
-          "cubers": 131
+          "country_id": "Indonesia",
+          "cubers": 139
         },
         {
           "year": 2026,
-          "country_id": "Indonesia",
-          "cubers": 127
+          "country_id": "South Africa",
+          "cubers": 131
         },
         {
           "year": 2026,
@@ -37507,7 +37507,7 @@
         {
           "year": 2026,
           "country_id": "Switzerland",
-          "cubers": 114
+          "cubers": 119
         },
         {
           "year": 2026,
@@ -37552,22 +37552,22 @@
         {
           "year": 2026,
           "country_id": "Belgium",
-          "cubers": 78
+          "cubers": 79
         },
         {
           "year": 2026,
           "country_id": "Portugal",
-          "cubers": 77
+          "cubers": 78
+        },
+        {
+          "year": 2026,
+          "country_id": "Hungary",
+          "cubers": 75
         },
         {
           "year": 2026,
           "country_id": "Venezuela",
           "cubers": 73
-        },
-        {
-          "year": 2026,
-          "country_id": "Hungary",
-          "cubers": 71
         },
         {
           "year": 2026,
@@ -37621,12 +37621,12 @@
         },
         {
           "year": 2026,
-          "country_id": "Bangladesh",
-          "cubers": 52
+          "country_id": "Russia",
+          "cubers": 54
         },
         {
           "year": 2026,
-          "country_id": "Russia",
+          "country_id": "Bangladesh",
           "cubers": 52
         },
         {
@@ -37780,7 +37780,7 @@
           "year": 2026,
           "wr_single": 2104,
           "wr_avg": 2461,
-          "solves": 18824
+          "solves": 18936
         }
       ],
       "topN_single": [
@@ -37995,10 +37995,10 @@
           "year": 2026,
           "top1": 2104,
           "top10": 2687,
-          "top100": 3390,
-          "top1000": 5169,
+          "top100": 3380,
+          "top1000": 5164,
           "top10000": null,
-          "active_cubers": 7315
+          "active_cubers": 7348
         }
       ],
       "topN_avg": [
@@ -38166,8 +38166,8 @@
           "year": 2026,
           "top1": 2461,
           "top10": 2914,
-          "top100": 3809,
-          "top1000": 5791,
+          "top100": 3806,
+          "top1000": 5785,
           "top10000": null
         }
       ],
@@ -38438,22 +38438,22 @@
         },
         {
           "year": 2026,
-          "sub_10000": 11744,
+          "sub_10000": 11748,
           "sub_6000": 3369,
-          "sub_4500": 1012,
-          "sub_3500": 215,
-          "sub_3000": 67,
+          "sub_4500": 1013,
+          "sub_3500": 216,
+          "sub_3000": 68,
           "sub_2700": 19,
           "sub_2500": 8,
           "sub_2300": 5
         },
         {
           "year": 2027,
-          "sub_10000": 11744,
+          "sub_10000": 11748,
           "sub_6000": 3369,
-          "sub_4500": 1012,
-          "sub_3500": 215,
-          "sub_3000": 67,
+          "sub_4500": 1013,
+          "sub_3500": 216,
+          "sub_3000": 68,
           "sub_2700": 19,
           "sub_2500": 8,
           "sub_2300": 5
@@ -38577,8 +38577,8 @@
         },
         {
           "year": 2026,
-          "cubers": 7701,
-          "solves": 18824
+          "cubers": 7739,
+          "solves": 18936
         }
       ],
       "wr_single_progression": [
@@ -40502,7 +40502,7 @@
         {
           "year": 2026,
           "country_id": "USA",
-          "cubers": 1863
+          "cubers": 1871
         },
         {
           "year": 2026,
@@ -40531,12 +40531,12 @@
         },
         {
           "year": 2026,
-          "country_id": "Canada",
-          "cubers": 254
+          "country_id": "France",
+          "cubers": 255
         },
         {
           "year": 2026,
-          "country_id": "France",
+          "country_id": "Canada",
           "cubers": 254
         },
         {
@@ -40562,12 +40562,12 @@
         {
           "year": 2026,
           "country_id": "India",
-          "cubers": 191
+          "cubers": 192
         },
         {
           "year": 2026,
           "country_id": "Sweden",
-          "cubers": 165
+          "cubers": 172
         },
         {
           "year": 2026,
@@ -40631,13 +40631,13 @@
         },
         {
           "year": 2026,
-          "country_id": "Switzerland",
+          "country_id": "Belgium",
           "cubers": 64
         },
         {
           "year": 2026,
-          "country_id": "Belgium",
-          "cubers": 63
+          "country_id": "Switzerland",
+          "cubers": 64
         },
         {
           "year": 2026,
@@ -40652,7 +40652,7 @@
         {
           "year": 2026,
           "country_id": "Norway",
-          "cubers": 61
+          "cubers": 60
         },
         {
           "year": 2026,
@@ -40810,7 +40810,7 @@
           "year": 2026,
           "wr_single": 285,
           "wr_avg": 469,
-          "solves": 13636
+          "solves": 13789
         }
       ],
       "topN_single": [
@@ -41026,9 +41026,9 @@
           "top1": 285,
           "top10": 465,
           "top100": 628,
-          "top1000": 1202,
+          "top1000": 1201,
           "top10000": null,
-          "active_cubers": 5274
+          "active_cubers": 5327
         }
       ],
       "topN_avg": [
@@ -41213,7 +41213,7 @@
           "top1": 469,
           "top10": 629,
           "top100": 833,
-          "top1000": 1621,
+          "top1000": 1618,
           "top10000": null
         }
       ],
@@ -41484,8 +41484,8 @@
         },
         {
           "year": 2026,
-          "sub_3000": 12186,
-          "sub_1500": 4049,
+          "sub_3000": 12193,
+          "sub_1500": 4051,
           "sub_1000": 1496,
           "sub_800": 737,
           "sub_600": 198,
@@ -41495,8 +41495,8 @@
         },
         {
           "year": 2027,
-          "sub_3000": 12186,
-          "sub_1500": 4049,
+          "sub_3000": 12193,
+          "sub_1500": 4051,
           "sub_1000": 1496,
           "sub_800": 737,
           "sub_600": 198,
@@ -41623,8 +41623,8 @@
         },
         {
           "year": 2026,
-          "cubers": 5427,
-          "solves": 13636
+          "cubers": 5480,
+          "solves": 13789
         }
       ],
       "wr_single_progression": [
@@ -43119,7 +43119,7 @@
         {
           "year": 2026,
           "country_id": "USA",
-          "cubers": 1469
+          "cubers": 1480
         },
         {
           "year": 2026,
@@ -43139,12 +43139,12 @@
         {
           "year": 2026,
           "country_id": "France",
-          "cubers": 195
+          "cubers": 196
         },
         {
           "year": 2026,
           "country_id": "Spain",
-          "cubers": 191
+          "cubers": 192
         },
         {
           "year": 2026,
@@ -43163,13 +43163,13 @@
         },
         {
           "year": 2026,
-          "country_id": "Germany",
-          "cubers": 133
+          "country_id": "India",
+          "cubers": 136
         },
         {
           "year": 2026,
-          "country_id": "India",
-          "cubers": 125
+          "country_id": "Germany",
+          "cubers": 133
         },
         {
           "year": 2026,
@@ -43203,18 +43203,18 @@
         },
         {
           "year": 2026,
+          "country_id": "Indonesia",
+          "cubers": 67
+        },
+        {
+          "year": 2026,
           "country_id": "Philippines",
           "cubers": 63
         },
         {
           "year": 2026,
-          "country_id": "Indonesia",
-          "cubers": 60
-        },
-        {
-          "year": 2026,
           "country_id": "Switzerland",
-          "cubers": 60
+          "cubers": 63
         },
         {
           "year": 2026,
@@ -43316,7 +43316,7 @@
           "year": 2026,
           "wr_single": 73,
           "wr_avg": 151,
-          "solves": 31042
+          "solves": 31406
         }
       ],
       "topN_single": [
@@ -43434,8 +43434,8 @@
           "top10": 103,
           "top100": 156,
           "top1000": 298,
-          "top10000": 1383,
-          "active_cubers": 11829
+          "top10000": 1362,
+          "active_cubers": 11921
         }
       ],
       "topN_avg": [
@@ -43540,8 +43540,8 @@
           "top1": 151,
           "top10": 172,
           "top100": 267,
-          "top1000": 468,
-          "top10000": 2001
+          "top1000": 467,
+          "top10000": 1965
         }
       ],
       "subX_single": [
@@ -43811,10 +43811,10 @@
         },
         {
           "year": 2026,
-          "sub_800": 29636,
-          "sub_500": 13017,
-          "sub_300": 3549,
-          "sub_200": 980,
+          "sub_800": 29657,
+          "sub_500": 13021,
+          "sub_300": 3551,
+          "sub_200": 983,
           "sub_150": 326,
           "sub_120": 98,
           "sub_100": 38,
@@ -43822,10 +43822,10 @@
         },
         {
           "year": 2027,
-          "sub_800": 29636,
-          "sub_500": 13017,
-          "sub_300": 3549,
-          "sub_200": 980,
+          "sub_800": 29657,
+          "sub_500": 13021,
+          "sub_300": 3551,
+          "sub_200": 983,
           "sub_150": 326,
           "sub_120": 98,
           "sub_100": 38,
@@ -43895,8 +43895,8 @@
         },
         {
           "year": 2026,
-          "cubers": 11850,
-          "solves": 31042
+          "cubers": 11941,
+          "solves": 31406
         }
       ],
       "wr_single_progression": [
@@ -46200,7 +46200,7 @@
         {
           "year": 2026,
           "country_id": "USA",
-          "cubers": 3049
+          "cubers": 3069
         },
         {
           "year": 2026,
@@ -46210,7 +46210,7 @@
         {
           "year": 2026,
           "country_id": "Australia",
-          "cubers": 553
+          "cubers": 554
         },
         {
           "year": 2026,
@@ -46220,7 +46220,7 @@
         {
           "year": 2026,
           "country_id": "Spain",
-          "cubers": 424
+          "cubers": 428
         },
         {
           "year": 2026,
@@ -46235,7 +46235,7 @@
         {
           "year": 2026,
           "country_id": "India",
-          "cubers": 371
+          "cubers": 372
         },
         {
           "year": 2026,
@@ -46249,6 +46249,11 @@
         },
         {
           "year": 2026,
+          "country_id": "Sweden",
+          "cubers": 255
+        },
+        {
+          "year": 2026,
           "country_id": "Mexico",
           "cubers": 251
         },
@@ -46259,18 +46264,13 @@
         },
         {
           "year": 2026,
-          "country_id": "Sweden",
-          "cubers": 249
-        },
-        {
-          "year": 2026,
           "country_id": "Colombia",
           "cubers": 219
         },
         {
           "year": 2026,
           "country_id": "Philippines",
-          "cubers": 216
+          "cubers": 219
         },
         {
           "year": 2026,
@@ -46285,7 +46285,7 @@
         {
           "year": 2026,
           "country_id": "Malaysia",
-          "cubers": 162
+          "cubers": 163
         },
         {
           "year": 2026,
@@ -46299,13 +46299,18 @@
         },
         {
           "year": 2026,
+          "country_id": "New Zealand",
+          "cubers": 124
+        },
+        {
+          "year": 2026,
           "country_id": "Turkey",
           "cubers": 118
         },
         {
           "year": 2026,
           "country_id": "Norway",
-          "cubers": 114
+          "cubers": 113
         },
         {
           "year": 2026,
@@ -46319,8 +46324,8 @@
         },
         {
           "year": 2026,
-          "country_id": "New Zealand",
-          "cubers": 110
+          "country_id": "Mongolia",
+          "cubers": 103
         },
         {
           "year": 2026,
@@ -46329,18 +46334,13 @@
         },
         {
           "year": 2026,
-          "country_id": "Mongolia",
-          "cubers": 94
+          "country_id": "Indonesia",
+          "cubers": 95
         },
         {
           "year": 2026,
           "country_id": "Switzerland",
           "cubers": 89
-        },
-        {
-          "year": 2026,
-          "country_id": "Indonesia",
-          "cubers": 82
         },
         {
           "year": 2026,
@@ -46379,6 +46379,11 @@
         },
         {
           "year": 2026,
+          "country_id": "Hungary",
+          "cubers": 67
+        },
+        {
+          "year": 2026,
           "country_id": "Peru",
           "cubers": 65
         },
@@ -46389,13 +46394,8 @@
         },
         {
           "year": 2026,
-          "country_id": "Hungary",
-          "cubers": 63
-        },
-        {
-          "year": 2026,
           "country_id": "Belgium",
-          "cubers": 57
+          "cubers": 58
         },
         {
           "year": 2026,
@@ -46563,7 +46563,7 @@
           "year": 2026,
           "wr_single": 160,
           "wr_avg": 226,
-          "solves": 26189
+          "solves": 26447
         }
       ],
       "topN_single": [
@@ -46779,9 +46779,9 @@
           "top1": 160,
           "top10": 197,
           "top100": 276,
-          "top1000": 536,
+          "top1000": 535,
           "top10000": null,
-          "active_cubers": 9438
+          "active_cubers": 9497
         }
       ],
       "topN_avg": [
@@ -46965,7 +46965,7 @@
           "year": 2026,
           "top1": 226,
           "top10": 266,
-          "top100": 363,
+          "top100": 362,
           "top1000": 668,
           "top10000": null
         }
@@ -47237,23 +47237,23 @@
         },
         {
           "year": 2026,
-          "sub_1500": 14933,
-          "sub_1000": 7873,
-          "sub_700": 3401,
-          "sub_500": 1384,
-          "sub_400": 728,
-          "sub_300": 232,
+          "sub_1500": 14949,
+          "sub_1000": 7879,
+          "sub_700": 3405,
+          "sub_500": 1385,
+          "sub_400": 729,
+          "sub_300": 233,
           "sub_250": 76,
           "sub_200": 16
         },
         {
           "year": 2027,
-          "sub_1500": 14933,
-          "sub_1000": 7873,
-          "sub_700": 3401,
-          "sub_500": 1384,
-          "sub_400": 728,
-          "sub_300": 232,
+          "sub_1500": 14949,
+          "sub_1000": 7879,
+          "sub_700": 3405,
+          "sub_500": 1385,
+          "sub_400": 729,
+          "sub_300": 233,
           "sub_250": 76,
           "sub_200": 16
         }
@@ -47376,8 +47376,8 @@
         },
         {
           "year": 2026,
-          "cubers": 9619,
-          "solves": 26189
+          "cubers": 9679,
+          "solves": 26447
         }
       ],
       "wr_single_progression": [
@@ -48853,12 +48853,12 @@
         {
           "year": 2026,
           "country_id": "France",
-          "cubers": 326
+          "cubers": 328
         },
         {
           "year": 2026,
           "country_id": "India",
-          "cubers": 320
+          "cubers": 328
         },
         {
           "year": 2026,
@@ -48893,7 +48893,7 @@
         {
           "year": 2026,
           "country_id": "Italy",
-          "cubers": 166
+          "cubers": 170
         },
         {
           "year": 2026,
@@ -48917,22 +48917,27 @@
         },
         {
           "year": 2026,
-          "country_id": "Malaysia",
-          "cubers": 106
-        },
-        {
-          "year": 2026,
           "country_id": "New Zealand",
-          "cubers": 97
+          "cubers": 108
         },
         {
           "year": 2026,
-          "country_id": "Norway",
-          "cubers": 91
+          "country_id": "Malaysia",
+          "cubers": 107
         },
         {
           "year": 2026,
           "country_id": "Switzerland",
+          "cubers": 95
+        },
+        {
+          "year": 2026,
+          "country_id": "Indonesia",
+          "cubers": 94
+        },
+        {
+          "year": 2026,
+          "country_id": "Norway",
           "cubers": 91
         },
         {
@@ -48947,23 +48952,18 @@
         },
         {
           "year": 2026,
-          "country_id": "Indonesia",
-          "cubers": 86
-        },
-        {
-          "year": 2026,
           "country_id": "Argentina",
           "cubers": 81
         },
         {
           "year": 2026,
-          "country_id": "Ukraine",
-          "cubers": 79
+          "country_id": "Mongolia",
+          "cubers": 80
         },
         {
           "year": 2026,
-          "country_id": "Mongolia",
-          "cubers": 73
+          "country_id": "Ukraine",
+          "cubers": 79
         },
         {
           "year": 2026,
@@ -49151,7 +49151,7 @@
           "year": 2026,
           "wr_single": 17,
           "wr_avg": 1900,
-          "solves": 4428
+          "solves": 4439
         }
       ],
       "topN_single": [
@@ -49369,7 +49369,7 @@
           "top100": 20,
           "top1000": 36,
           "top10000": null,
-          "active_cubers": 1981
+          "active_cubers": 1986
         }
       ],
       "topN_avg": [
@@ -49761,7 +49761,7 @@
         },
         {
           "year": 2026,
-          "sub_40": 6256,
+          "sub_40": 6257,
           "sub_30": 2104,
           "sub_25": 747,
           "sub_22": 357,
@@ -49771,7 +49771,7 @@
         },
         {
           "year": 2027,
-          "sub_40": 6256,
+          "sub_40": 6257,
           "sub_30": 2104,
           "sub_25": 747,
           "sub_22": 357,
@@ -49898,8 +49898,8 @@
         },
         {
           "year": 2026,
-          "cubers": 2237,
-          "solves": 4428
+          "cubers": 2244,
+          "solves": 4439
         }
       ],
       "wr_single_progression": [
