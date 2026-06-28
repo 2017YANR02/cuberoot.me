@@ -10,7 +10,7 @@ import { query } from '../db/connection.js';
 import {
   rowToJson, jsonToRow, validateRow,
   requireAuth, requireAdmin, checkRateLimit,
-  buildInsert, buildUpdate, buildDuplicateQuery, ADMIN_WCA_IDS,
+  buildInsert, buildUpdate, buildDuplicateQuery, DUP_REASONS, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
 
@@ -863,15 +863,17 @@ reconRoutes.post('/recon', async (c) => {
     return c.json({ error: 'Validation failed', fields: errors }, 400);
   }
 
-  // 拒绝重复提交:同选手 + 同打乱(权威兜底,前端 check-duplicate 同口径预警)
+  // 同选手 + 同打乱:允许提交,但必须带合法 dup_reason 说明原因(重复打乱 / 不同比赛),
+  // 否则拒收(前端 check-duplicate 同口径预警 + 弹出二选一选择器)。占位打乱已在 buildDuplicateQuery 豁免。
   const dup = buildDuplicateQuery(row);
   if (dup) {
     const existing = await query<{ id: number }>(dup.sql, dup.params);
-    if (existing.length > 0) {
+    if (existing.length > 0 && !(DUP_REASONS as readonly string[]).includes(String(row.dup_reason ?? ''))) {
       const dupId = Number(existing[0].id);
       return c.json({
-        error: `Duplicate: a reconstruction with the same player + scramble already exists (#${dupId})`,
+        error: `Duplicate: same player + scramble as reconstruction #${dupId}. Pick a reason to confirm.`,
         existingId: dupId,
+        needsReason: true,
       }, 409);
     }
   }
@@ -911,16 +913,17 @@ reconRoutes.put('/recon/:id', async (c) => {
     return c.json({ error: 'Validation failed', fields: errs }, 400);
   }
 
-  // 拒绝编辑成与别的复盘重复(同选手 + 同打乱);排除自身。
-  // NOTE: 仅当本次 PUT 同时带了选手与打乱字段时才判(buildDuplicateQuery 缺字段返回 null)。
+  // 编辑成与别的复盘同选手 + 同打乱:同样允许,但需合法 dup_reason;排除自身。
+  // NOTE: 仅当本次 PUT 带了选手与打乱字段时才判(buildDuplicateQuery 缺字段返回 null)。
   const dup = buildDuplicateQuery(row, Number(id));
   if (dup) {
     const existing = await query<{ id: number }>(dup.sql, dup.params);
-    if (existing.length > 0) {
+    if (existing.length > 0 && !(DUP_REASONS as readonly string[]).includes(String(row.dup_reason ?? ''))) {
       const dupId = Number(existing[0].id);
       return c.json({
-        error: `Duplicate: a reconstruction with the same player + scramble already exists (#${dupId})`,
+        error: `Duplicate: same player + scramble as reconstruction #${dupId}. Pick a reason to confirm.`,
         existingId: dupId,
+        needsReason: true,
       }, 409);
     }
   }

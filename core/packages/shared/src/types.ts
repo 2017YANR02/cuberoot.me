@@ -172,6 +172,8 @@ export interface ReconSolve {
   caption?: string;
   /** 备注 */
   note?: string;
+  /** 同选手+同打乱重复提交时的原因(必选其一):'repeat_scramble' 重复打乱 / 'different_comp' 不同比赛。非重复=空 */
+  dupReason?: 'repeat_scramble' | 'different_comp';
   /** STM 步数 */
   stm?: number;
   /** TPS (Turns Per Second) */
