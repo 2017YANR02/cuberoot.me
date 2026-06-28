@@ -17,7 +17,7 @@ import {
 import {
   autoSpaceMoves, autoSpaceMovesCE, getTextBeforeCaret,
   normalizePunctuationTA, normalizePunctuationCE,
-  autoSpaceAfterComment, autoCloseBracket,
+  autoSpaceAfterComment, autoCloseBracket, stripZeroWidth,
 } from '@/lib/alg-autospace';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -169,6 +169,14 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
           const el = e.target as HTMLTextAreaElement;
           const native = e.nativeEvent as InputEvent;
           normalizePunctuationTA(el);
+          // 零宽字符(粘贴常带入的不可见垃圾)输入即删,不进数据。
+          {
+            const z = stripZeroWidth(el.value, el.selectionStart ?? 0);
+            if (z.value !== el.value) {
+              el.value = z.value;
+              el.setSelectionRange(z.cursor, z.cursor);
+            }
+          }
           if (autoSpace) {
             const inputType = native.inputType ?? '';
             let adj = autoSpaceMoves(el.value, el.selectionStart ?? 0, inputType);
