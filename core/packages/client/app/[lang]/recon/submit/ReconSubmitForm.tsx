@@ -949,29 +949,28 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return () => { cancelled = true; clearTimeout(timer); setRecordLoading(false); };
   }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, singleRecordUserTouched, averageRecordUserTouched, setField, isZh]);
 
-  // ── Duplicate detection ──
+  // ── Duplicate detection(同选手 + 同打乱;与后端拒绝口径一致)──
   useEffect(() => {
-    if (!form.comp || !form.event || !form.round || form.solveNum == null) {
+    const scramble = form.wcaScramble || form.optimalScramble;
+    const personKey = form.personId || form.person;
+    if (!scramble || !personKey) {
       setDupId(null);
       return;
     }
     const timer = setTimeout(async () => {
       try {
         const result = await checkDuplicate({
-          comp: form.comp!,
-          event: form.event!,
-          round: form.round!,
-          solveNum: String(form.solveNum!),
           personId: form.personId,
           person: form.person,
+          wcaScramble: form.wcaScramble,
+          optimalScramble: form.optimalScramble,
           excludeId: isEditing && editId ? Number(editId) : undefined,
         });
-        if (result.exists) setDupId(result.id ?? null);
-        else setDupId(null);
+        setDupId(result.exists ? (result.id ?? null) : null);
       } catch { setDupId(null); }
     }, 500);
     return () => clearTimeout(timer);
-  }, [form.comp, form.event, form.round, form.solveNum, form.personId, form.person, isEditing, editId]);
+  }, [form.wcaScramble, form.optimalScramble, form.personId, form.person, isEditing, editId]);
 
   // ── Person picker handlers ──
   const handleSolverPick = useCallback((p: WcaPersonLite | null) => {
@@ -1220,6 +1219,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     const notationError = validateNotationFields();
     if (notationError) {
       alert(notationError);
+      return;
+    }
+    // 同选手 + 同打乱 → 重复提交,客户端先拦(后端 409 兜底,见 addRecon catch)。
+    if (dupId != null) {
+      alert(tr({
+        zh: `已存在相同选手 + 相同打乱的复盘 (#${dupId}),不能重复提交。`,
+        en: `A reconstruction with the same player + scramble already exists (#${dupId}); duplicate submission is not allowed.`,
+      }));
       return;
     }
     setSaving(true);

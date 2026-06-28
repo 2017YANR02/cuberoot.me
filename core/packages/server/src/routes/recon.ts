@@ -10,7 +10,7 @@ import { query } from '../db/connection.js';
 import {
   rowToJson, jsonToRow, validateRow,
   requireAuth, requireAdmin, checkRateLimit,
-  buildInsert, buildUpdate, ADMIN_WCA_IDS,
+  buildInsert, buildUpdate, buildDuplicateQuery, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
 
@@ -169,39 +169,19 @@ reconRoutes.get('/recon/today', async (c) => {
 // NOTE: 放在 /:id 之前，否则 'check-duplicate' 会被当作 :id 参数
 
 reconRoutes.get('/recon/check-duplicate', async (c) => {
-  const comp = c.req.query('comp');
-  const event = c.req.query('event');
-  const personId = c.req.query('personId');
-  const person = c.req.query('person');
-  const round = c.req.query('round');
-  const solveNum = c.req.query('solveNum');
+  // 判重口径 = 同选手 + 同打乱(见 buildDuplicateQuery);与 POST/PUT 的拒绝逻辑同源,
+  // 保证前端「已存在」提示和后端实际拒绝完全一致。
   const excludeId = c.req.query('excludeId');
+  const dup = buildDuplicateQuery({
+    person_id: c.req.query('personId'),
+    person: c.req.query('person'),
+    wca_scramble: c.req.query('wcaScramble'),
+    optimal_scramble: c.req.query('optimalScramble'),
+  }, excludeId ? Number(excludeId) : undefined);
 
-  if (!comp || !event || !round || !solveNum || (!personId && !person)) {
-    return c.json({ exists: false });
-  }
+  if (!dup) return c.json({ exists: false });
 
-  let sql: string;
-  const params: unknown[] = [];
-
-  // NOTE: 优先用 person_id（WCA ID）匹配
-  if (personId) {
-    sql = 'SELECT id FROM recons WHERE comp = ? AND event = ? AND person_id = ? AND "round" = ? AND solve_num = ?';
-    params.push(comp, event, personId, round, Number(solveNum));
-  } else {
-    sql = 'SELECT id FROM recons WHERE comp = ? AND event = ? AND person = ? AND "round" = ? AND solve_num = ?';
-    params.push(comp, event, person, round, Number(solveNum));
-  }
-
-  // NOTE: 编辑模式排除自身
-  if (excludeId) {
-    sql += ' AND id != ?';
-    params.push(Number(excludeId));
-  }
-
-  sql += ' LIMIT 1';
-  const rows = await query<{ id: number }>(sql, params);
-
+  const rows = await query<{ id: number }>(dup.sql, dup.params);
   if (rows.length > 0) {
     return c.json({ exists: true, id: Number(rows[0].id) });
   }
@@ -883,6 +863,19 @@ reconRoutes.post('/recon', async (c) => {
     return c.json({ error: 'Validation failed', fields: errors }, 400);
   }
 
+  // 拒绝重复提交:同选手 + 同打乱(权威兜底,前端 check-duplicate 同口径预警)
+  const dup = buildDuplicateQuery(row);
+  if (dup) {
+    const existing = await query<{ id: number }>(dup.sql, dup.params);
+    if (existing.length > 0) {
+      const dupId = Number(existing[0].id);
+      return c.json({
+        error: `Duplicate: a reconstruction with the same player + scramble already exists (#${dupId})`,
+        existingId: dupId,
+      }, 409);
+    }
+  }
+
   const { sql, values } = buildInsert('recons', row);
   const inserted = await query<{ id: number }>(sql + ' RETURNING id', values);
   body.id = Number(inserted[0].id);
@@ -916,6 +909,20 @@ reconRoutes.put('/recon/:id', async (c) => {
   const errs = validateRow(row);
   if (errs.length > 0) {
     return c.json({ error: 'Validation failed', fields: errs }, 400);
+  }
+
+  // 拒绝编辑成与别的复盘重复(同选手 + 同打乱);排除自身。
+  // NOTE: 仅当本次 PUT 同时带了选手与打乱字段时才判(buildDuplicateQuery 缺字段返回 null)。
+  const dup = buildDuplicateQuery(row, Number(id));
+  if (dup) {
+    const existing = await query<{ id: number }>(dup.sql, dup.params);
+    if (existing.length > 0) {
+      const dupId = Number(existing[0].id);
+      return c.json({
+        error: `Duplicate: a reconstruction with the same player + scramble already exists (#${dupId})`,
+        existingId: dupId,
+      }, 409);
+    }
   }
 
   const { sql, values } = buildUpdate('recons', row, 'id', id);
