@@ -394,10 +394,9 @@ describe('bicExamplesByLengthFromTable', () => {
     }
   });
 
-  // 穷举证明(110 万状态、~104s):求解器表不变结果就恒定,没必要每次 push 都跑。
-  // 默认跳过,改求解器(lib/bicube-solver.ts)时按需用 `BIC_FULL_ENUM=1` 触发。
-  // 文件里其余快测试照常每次跑;这条只在需要重验全表正确性时开。
-  it.runIf(process.env.BIC_FULL_ENUM === '1')('full enumeration covers every non-trivial state exactly once (counts == distribution)', () => {
+  // 穷举证明(110 万状态、~104s)。整族 *_solver.test.ts 已由 vitest.config 按 RUN_SOLVER_TESTS
+  // 排除出 CI(见该文件注释),只本地按需跑(pnpm -F client test:solvers bic),故直接跑全量穷举。
+  it('full enumeration covers every non-trivial state exactly once (counts == distribution)', () => {
     // stream every state as (depth, scramble); reconstruct via the independent reference and count per depth.
     const perDepth = new Map<number, number>();
     const seen = new Set<string>();
