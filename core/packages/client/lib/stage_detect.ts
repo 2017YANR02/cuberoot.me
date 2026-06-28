@@ -51,6 +51,47 @@ const COLOR_LETTER_BY_PIECE: Record<number, string> = {
   0: 'W', 1: 'R', 2: 'G', 3: 'O', 4: 'B', 5: 'Y',
 };
 
+// ── Geometry derived purely from the sticker tables (frame-independent) ──────
+/** The 4 cross edges adjacent to each face (face index = CENTERS slot 0..5). */
+const CROSS_EDGES_BY_FACE: number[][] = (() => {
+  const out: number[][] = [];
+  for (let f = 0; f < 6; f++) out.push(EDGE_STICKERS.flatMap((faces, e) => (faces.includes(f) ? [e] : [])));
+  return out;
+})();
+
+interface SlotGeom { corner: number; edge: number; sides: [number, number]; }
+/** For each face F: its 4 F2L slots (corner+edge home-piece ids) and the slot's
+ *  two lateral faces (the non-F faces it touches). */
+const F2L_SLOTS_BY_FACE: SlotGeom[][] = (() => {
+  const out: SlotGeom[][] = [];
+  for (let f = 0; f < 6; f++) {
+    const slots: SlotGeom[] = [];
+    for (let c = 0; c < 8; c++) {
+      const cf = CORNER_STICKERS[c];
+      if (!cf.includes(f)) continue;
+      const sides = cf.filter(x => x !== f);
+      const edge = EDGE_STICKERS.findIndex(ef => ef.includes(sides[0]) && ef.includes(sides[1]));
+      slots.push({ corner: c, edge, sides: [sides[0], sides[1]] });
+    }
+    out.push(slots);
+  }
+  return out;
+})();
+
+/** Whole-cube rotation that brings each face onto D (face order U,R,F,L,B,D).
+ *  Verified against cubing.js center tracking: R needs z' (not z) and L needs z
+ *  (not z') — cubing.js's z sends R→U, so the naive z/z' assignment was swapped,
+ *  which broke every R/L-colour (z/z' inspection) cross. */
+const FACE_TO_D_ROT = ['x2', "z'", "x'", 'z', 'x', ''] as const;
+/** Same-face quarter turn per face (for pseudo-cross alignment test). */
+const FACE_MOVE = ['U', 'R', 'F', 'L', 'B', 'D'] as const;
+/** Canonical lateral face-pair (sorted) → F2L slot id (F=2,R=1,B=4,L=3). */
+const SIDES_TO_SLOT_ID: Record<string, F2lSlotId> = {
+  '1,2': 'FR', '2,3': 'FL', '3,4': 'BL', '1,4': 'BR',
+};
+const slotIdForCanonicalSides = (a: number, b: number): F2lSlotId | null =>
+  SIDES_TO_SLOT_ID[a < b ? `${a},${b}` : `${b},${a}`] ?? null;
+
 export type Stage =
   | 'pscross'
   | 'cross'
@@ -177,16 +218,36 @@ function pscrossSolved(p: KPattern): boolean {
  * still get a sensible canonical pattern for stage='none' states).
  */
 export async function crossOnDRotation(pattern: KPattern): Promise<string> {
-  await getCube3();
-  for (const rot of ORIENTATION_ALGS) {
-    const t = rot ? pattern.applyAlg(rot) : pattern;
-    if (crossSolved(t)) return rot;
+  const r0 = await defaultCentersRotation(pattern);
+  const home = r0 ? pattern.applyAlg(r0) : pattern;
+  // Deterministic canonical frame: bring centers home, then rotate the cross
+  // face onto D via the fixed FACE_TO_D_ROT. Piece-identity cross detection is
+  // frame-invariant (works for every cross colour incl. L/R that z/z' produces),
+  // and a fixed y alignment keeps per-AUF fingerprint lookups in step with the
+  // DB. (The old "first frame whose sticker-cross looks solved" relied on the
+  // sticker checker REJECTING tilted frames — it couldn't see L/R crosses at all
+  // and let a y-rotated frame slip through, breaking the lookups.)
+  let raw = r0;
+  let found = false;
+  for (let f = 0; f < 6; f++) {
+    if (crossEdgesSolved(home, f)) { raw = [r0, FACE_TO_D_ROT[f]].filter(Boolean).join(' '); found = true; break; }
   }
-  for (const rot of ORIENTATION_ALGS) {
-    const t = rot ? pattern.applyAlg(rot) : pattern;
-    if (pscrossSolved(t)) return rot;
+  if (!found) {
+    for (let f = 0; f < 6; f++) {
+      const m = FACE_MOVE[f];
+      if ([m, `${m}2`, `${m}'`].some(mv => crossEdgesSolved(home.applyAlg(mv), f))) {
+        raw = [r0, FACE_TO_D_ROT[f]].filter(Boolean).join(' ');
+        break;
+      }
+    }
   }
-  return defaultCentersRotation(pattern);
+  // Canonicalise to the minimal equivalent rotation so suggestions don't carry
+  // ugly compound prefixes (e.g. `x2 y x2`, which is just `y'` written long).
+  if (!raw) return '';
+  const kp = await getCube3();
+  const solved = kp.defaultPattern();
+  const min = await rotationBetween(solved, solved.applyAlg(raw));
+  return min ?? raw;
 }
 
 /** F2L slot solved = its edge AND corner both look solved (sticker-wise). */
@@ -213,19 +274,16 @@ export function topEdgesOriented(p: KPattern): boolean {
   return true;
 }
 
-/** Whole cube solved = every slot's stickers match its adjacent center colors. */
-function fullySolved(p: KPattern): boolean {
-  for (let i = 0; i < 12; i++) if (!edgeFaceSolved(p, i)) return false;
-  for (let i = 0; i < 8; i++) if (!cornerFaceSolved(p, i)) return false;
-  return true;
-}
-
 function colorsForSlot(p: KPattern, slotId: F2lSlotId): { pair: string; full: string } {
   // The slot's two visible side-face colors come from the centers it touches.
   // FR = R + F sides, FL = F + L, BL = L + B, BR = B + R. Use side center colors.
   const c = p.patternData.CENTERS.pieces;
   // Side center slots: 1=R, 2=F, 3=L, 4=B
   const sideColor = (slot: number) => {
+    // Colour shown on physical face `slot`. cube3x3x3 CENTERS are SOURCE-indexed
+    // (`pieces[k]` is the centre sitting at face k), so the colour on face `slot`
+    // is `pieces[slot]` directly — correct in every orientation (centres are a
+    // rigid rotation).
     const piece = c[slot];
     return { letter: COLOR_LETTER_BY_PIECE[piece] ?? '?', name: COLOR_BY_PIECE[piece] ?? '?' };
   };
@@ -244,73 +302,99 @@ function colorsForSlot(p: KPattern, slotId: F2lSlotId): { pair: string; full: st
   };
 }
 
+// ── Frame-invariant (piece-identity) detection ──────────────────────────────
+// In the centers-solved frame a cubie is solved iff it's in its home slot with
+// orientation 0 — pure piece+orientation equality, no sticker-orientation
+// geometry. This reads correctly in ALL 24 orientations, unlike the sticker
+// checkers above which only work in ~8 frames and can't see an L/R-colour cross
+// (the red/orange cross a z/z' inspection produces).
+const edgeHome = (p: KPattern, i: number): boolean =>
+  p.patternData.EDGES.pieces[i] === i && (p.patternData.EDGES.orientation?.[i] ?? 0) === 0;
+const cornerHome = (p: KPattern, i: number): boolean =>
+  p.patternData.CORNERS.pieces[i] === i && (p.patternData.CORNERS.orientation?.[i] ?? 0) === 0;
+const crossEdgesSolved = (p: KPattern, f: number): boolean =>
+  CROSS_EDGES_BY_FACE[f].every(e => edgeHome(p, e));
+const colorInfo = (face: number) => ({
+  name: COLOR_BY_PIECE[face] ?? '?', letter: COLOR_LETTER_BY_PIECE[face] ?? '?',
+});
+/** Physical face → where it lands after a whole-cube rotation alg. */
+async function facePermAfter(rotAlg: string): Promise<number[]> {
+  if (!rotAlg) return [0, 1, 2, 3, 4, 5];
+  const kp = await getCube3();
+  const c = kp.defaultPattern().applyAlg(rotAlg).patternData.CENTERS.pieces;
+  return [c[0], c[1], c[2], c[3], c[4], c[5]];
+}
+
 /**
  * Detect the highest-completion stage of the given pattern (the alg-applied
  * state). Returns stage + slot details + cross color name.
  *
- * Stages are computed in order: solved > pll > oll > f2l > xxxcross > xxcross
- *  > xcross > cross > none.
+ * Stages are computed in order: solved > oll > f2l > xxxcross > xxcross
+ *  > xcross > cross > pscross > none. (PLL is classified downstream from the
+ *  prev→curr stage transition, not here.)
+ *
+ * Detection runs in the centers-solved frame via pure piece identity, so it is
+ * correct for every cube orientation and every cross colour. OLL reuses the
+ * sticker checker in the cross-on-D canonical frame; now that the sticker
+ * readers are frame-invariant it is accurate for every cross colour too
+ * (including the L/R-colour cross a z/z' inspection produces).
  */
 export async function detectStage(pattern: KPattern): Promise<StageInfo> {
-  // Canonicalise to a cross-on-D frame so F2L slot definitions apply directly.
-  // For color-neutral solves the centers won't be in default order, but
-  // EDGE/CORNER STICKERS lookups are geometric — they work as long as cross
-  // sits on D.
-  const rot = await crossOnDRotation(pattern);
-  const p = rot ? pattern.applyAlg(rot) : pattern;
+  const r0 = await defaultCentersRotation(pattern);
+  const home = r0 ? pattern.applyAlg(r0) : pattern;
 
-  if (fullySolved(p)) {
-    const cp = p.patternData.CENTERS.pieces[5];
-    const crossColor = { name: COLOR_BY_PIECE[cp] ?? '?', letter: COLOR_LETTER_BY_PIECE[cp] ?? '?' };
-    const allPairs: Array<[number, number]> = F2L_SLOT_DEFS.map(s => [
-      p.patternData.CORNERS.pieces[s.cornerSlot],
-      p.patternData.EDGES.pieces[s.edgeSlot],
-    ]);
-    return { stage: 'solved', solvedSlots: ['FR', 'FL', 'BL', 'BR'], solvedPairs: allPairs, crossColor, canonicalPattern: p };
+  const allEdges = CROSS_EDGES_BY_FACE.length > 0
+    && [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].every(i => edgeHome(home, i));
+  const allCorners = [0, 1, 2, 3, 4, 5, 6, 7].every(i => cornerHome(home, i));
+  if (allEdges && allCorners) {
+    const allPairs = F2L_SLOT_DEFS.map(s => [s.cornerSlot, s.edgeSlot] as [number, number]);
+    return { stage: 'solved', solvedSlots: ['FR', 'FL', 'BL', 'BR'], solvedPairs: allPairs, crossColor: colorInfo(5), canonicalPattern: home };
   }
 
-  // Cross color = the D-face center after rotation (cross piece).
-  const piece = p.patternData.CENTERS.pieces[5];
-  const crossColor = { name: COLOR_BY_PIECE[piece] ?? '?', letter: COLOR_LETTER_BY_PIECE[piece] ?? '?' };
+  // Pick the face whose cross is solved (preferring the one with the most F2L
+  // pairs). For any partial solve exactly one face carries the working cross.
+  let bestF = -1;
+  let bestSlots: SlotGeom[] = [];
+  for (let f = 0; f < 6; f++) {
+    if (!crossEdgesSolved(home, f)) continue;
+    const slots = F2L_SLOTS_BY_FACE[f].filter(sl => cornerHome(home, sl.corner) && edgeHome(home, sl.edge));
+    if (bestF < 0 || slots.length > bestSlots.length) { bestF = f; bestSlots = slots; }
+  }
 
-  if (!crossSolved(p)) {
-    if (pscrossSolved(p)) {
-      return { stage: 'pscross', solvedSlots: [], solvedPairs: [], crossColor, canonicalPattern: p };
+  if (bestF < 0) {
+    // Pseudo-cross: cross forms after a single same-face turn (mis-aligned to centers).
+    for (let f = 0; f < 6; f++) {
+      const m = FACE_MOVE[f];
+      if ([m, `${m}2`, `${m}'`].some(mv => crossEdgesSolved(home.applyAlg(mv), f))) {
+        const canonical = FACE_TO_D_ROT[f] ? home.applyAlg(FACE_TO_D_ROT[f]) : home;
+        return { stage: 'pscross', solvedSlots: [], solvedPairs: [], crossColor: colorInfo(f), canonicalPattern: canonical };
+      }
     }
-    return { stage: 'none', solvedSlots: [], solvedPairs: [], crossColor, canonicalPattern: p };
+    return { stage: 'none', solvedSlots: [], solvedPairs: [], crossColor: colorInfo(5), canonicalPattern: home };
   }
 
+  const rotToD = FACE_TO_D_ROT[bestF];
+  const canonical = rotToD ? home.applyAlg(rotToD) : home;
+  const crossColor = colorInfo(bestF);
+  const pi = await facePermAfter(rotToD);
   const solvedSlots: F2lSlotId[] = [];
   const solvedPairs: Array<[number, number]> = [];
-  for (const s of F2L_SLOT_DEFS) {
-    if (slotSolved(p, s)) {
-      solvedSlots.push(s.id);
-      solvedPairs.push([
-        p.patternData.CORNERS.pieces[s.cornerSlot],
-        p.patternData.EDGES.pieces[s.edgeSlot],
-      ]);
-    }
+  for (const sl of bestSlots) {
+    const id = slotIdForCanonicalSides(pi[sl.sides[0]], pi[sl.sides[1]]);
+    if (id) solvedSlots.push(id);
+    solvedPairs.push([sl.corner, sl.edge]);
   }
 
-  // F2L done → check OLL/PLL
-  if (solvedSlots.length === 4) {
-    const orientedTop = ollSolved(p);
-    if (orientedTop) {
-      for (let i = 0; i < 4; i++) {
-        const test = i === 0 ? p : p.applyAlg(`U${i === 1 ? '' : i}`.replace('U3', "U'"));
-        if (fullySolved(test)) {
-          return { stage: 'oll', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
-        }
-      }
-      return { stage: 'oll', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
+  if (bestSlots.length === 4) {
+    if (ollSolved(canonical)) {
+      return { stage: 'oll', solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
     }
-    return { stage: 'f2l', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
+    return { stage: 'f2l', solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
   }
-
-  if (solvedSlots.length === 3) return { stage: 'xxxcross', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
-  if (solvedSlots.length === 2) return { stage: 'xxcross', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
-  if (solvedSlots.length === 1) return { stage: 'xcross', solvedSlots, solvedPairs, crossColor, canonicalPattern: p };
-  return { stage: 'cross', solvedSlots: [], solvedPairs: [], crossColor, canonicalPattern: p };
+  const stage: Stage = bestSlots.length === 3 ? 'xxxcross'
+    : bestSlots.length === 2 ? 'xxcross'
+    : bestSlots.length === 1 ? 'xcross' : 'cross';
+  return { stage, solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
 }
 
 /**

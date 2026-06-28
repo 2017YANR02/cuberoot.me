@@ -13,8 +13,8 @@
  * canonRot to execute correctly in the user's raw frame.
  */
 
-import type { KPattern } from 'cubing/kpuzzle';
-import { F2L_SLOT_DEFS } from './stage_detect';
+import type { KPattern, KTransformation } from 'cubing/kpuzzle';
+import { F2L_SLOT_DEFS, evaluateCanonical } from './stage_detect';
 import { getCube3, simplifyAlg, invertAlg } from './cube3';
 import {
   CORNER_STICKERS, EDGE_STICKERS,
@@ -183,4 +183,77 @@ export async function lookupF2lAlgs(canonical: KPattern, slotIdx: number): Promi
 /** Eagerly build the table. Useful for warmup if the page expects Tab presses soon. */
 export function warmupF2lTable(): Promise<void> {
   return buildTable().then(() => undefined);
+}
+
+// ── Brute-force fallback ────────────────────────────────────────────────────
+// The fingerprint lookup is a fast O(1) path but is incomplete: it misses algs
+// whose setup moves the centres (wide moves f/d/l/M, whole-cube y rotations) —
+// their DB fingerprint is captured in a rotated frame the AUF-only query can't
+// reach — and it only matches the default (yellow-cross-on-D) colour frame. A
+// real solve on a white (or any non-yellow) cross sits in a frame whose centres
+// aren't home, so the fingerprint never matches. Recolouring the query is not a
+// clean option (a true colour-relabel that preserves orientation isn't a simple
+// transformation compose). So we fall back to brute force: try every DB alg
+// (× AUF) against the cross-on-D canonical pattern and verify with the
+// frame-invariant `evaluateCanonical`. This is colour-neutral and complete.
+
+const PRE_AUFS = ['', 'U', 'U2', "U'"] as const;
+
+interface F2lBruteItem { t: KTransformation; alg: string; caseName: string; }
+let _f2lBruteItems: Promise<F2lBruteItem[]> | null = null;
+/** Every DB alg × AUF as a precomputed transformation, built once and cached —
+ *  so the hot loop is one `applyTransformation` per candidate (no re-parsing). */
+async function getF2lBruteItems(): Promise<F2lBruteItem[]> {
+  if (_f2lBruteItems) return _f2lBruteItems;
+  _f2lBruteItems = (async () => {
+    const [f2l, advF2l] = await Promise.all([loadAlg('3x3', 'f2l'), loadAlg('3x3', 'adv-f2l')]);
+    const kp = await getCube3();
+    const items: F2lBruteItem[] = [];
+    const seen = new Set<string>();
+    for (const c of [...f2l.cases, ...advF2l.cases]) {
+      for (let o = 0; o < 4; o++) {
+        for (const v of c.algs[o] ?? []) {
+          if (!v.alg) continue;
+          for (const auf of PRE_AUFS) {
+            const full = simplifyAlg(auf ? `${auf} ${v.alg}` : v.alg);
+            if (!full || seen.has(full)) continue;
+            seen.add(full);
+            try { items.push({ t: kp.algToTransformation(full), alg: full, caseName: c.name }); }
+            catch { /* unparseable DB alg — drop, matching applyAlg's catch path */ }
+          }
+        }
+      }
+    }
+    return items;
+  })();
+  return _f2lBruteItems;
+}
+
+/**
+ * Brute-force F2L lookup: returns every DB alg (in canonical frame, AUF folded
+ * in) that solves `slotIdx` while keeping the cross and the already-solved slots
+ * (`prevSolvedSlots`) intact. Verified with `evaluateCanonical`, so it is
+ * cross-colour neutral. Use as a fallback when `lookupF2lAlgs` returns nothing.
+ */
+export async function lookupF2lAlgsBrute(
+  canonical: KPattern,
+  slotIdx: number,
+  prevSolvedSlots: readonly string[],
+): Promise<F2lAlgEntry[]> {
+  const items = await getF2lBruteItems();
+  const slotId = F2L_SLOT_DEFS[slotIdx].id;
+  const out: F2lAlgEntry[] = [];
+  for (const { t, alg, caseName } of items) {
+    let post: KPattern;
+    try { post = canonical.applyTransformation(t); } catch { continue; }
+    const ev = evaluateCanonical(post);
+    if (!ev.crossOk || !ev.solvedSlots.includes(slotId)) continue;
+    let preserved = true;
+    for (const ps of prevSolvedSlots) {
+      if (!ev.solvedSlots.includes(ps as typeof ev.solvedSlots[number])) { preserved = false; break; }
+    }
+    if (!preserved) continue;
+    out.push({ alg, caseName, oriIdx: slotIdx });
+  }
+  return out;
 }
