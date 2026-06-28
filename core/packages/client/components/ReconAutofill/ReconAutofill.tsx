@@ -141,6 +141,10 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const lastAutoOpenKeyRef = useRef<string>('');
   // 首阶段(cross/xcross/xxcross)引擎异步求解的代次令牌:加载期间用户继续操作时丢弃过期结果。
   const firstStageTokenRef = useRef(0);
+  // 光标位置版本号:caret 移动本身不改 value(parent 的 onCaretChange 只 sync 播放器),
+  // 而 auto-open effect 的依赖里没有 caret,所以「单纯移动光标到某行行尾」原本不触发自动弹窗
+  // (典型:回车把一行拆成两行后,把光标移回上一行行尾)。把 caret 变化提成版本号喂给 auto-open。
+  const [caretVersion, setCaretVersion] = useState(0);
 
   const close = useCallback(() => {
     setPopup(null);
@@ -192,6 +196,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       prevPattern,
       currPattern,
       lineMovesText: thisLineMovesText,
+      prevMovesText: prevMoves,
       moveCount,
       explicit,
     });
@@ -343,6 +348,19 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     close();
   }, [enabled, textareaRef, value, buildCommentPopup, buildAlgPopup, openFirstStage, close]);
 
+  // 监听光标移动:value 不变时(方向键 / 点击 / 拆行后移回上一行行尾)也能驱动下面的
+  // auto-open effect 重新求值。仅在 textarea 聚焦时记数,避免无关 selection 触发渲染。
+  useEffect(() => {
+    if (!enabled) return;
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const onSel = () => {
+      if (document.activeElement === ta) setCaretVersion(v => v + 1);
+    };
+    document.addEventListener('selectionchange', onSel);
+    return () => document.removeEventListener('selectionchange', onSel);
+  }, [enabled, textareaRef]);
+
   /**
    * Auto-open popup as user types — matches cubedb.net behavior.
    * - Comment popup: line has moves (or already has `//`).
@@ -400,7 +418,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       }
     })();
     return () => { cancelled = true; };
-  }, [enabled, value, scramble, popup, textareaRef, buildCommentPopup, buildAlgPopup]);
+  }, [enabled, value, scramble, popup, caretVersion, textareaRef, buildCommentPopup, buildAlgPopup]);
 
   /** Live-update popup as user types (after it's open). */
   useEffect(() => {

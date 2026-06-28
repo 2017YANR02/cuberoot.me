@@ -12,6 +12,7 @@
  * - iOS Shift 三态(off / single / capslock)
  * - () 三态(点击→(),下滑→[],上滑→{})
  * - 修饰键自动禁用(光标前无字母时 ' 和 w 灰显)
+ * - space 左侧 `·` 小键(仅 !enableMarks,即 textarea 场景):短按插 `·`,长按出 ↑↓
  * - 公式联想(前缀匹配 8 条触发器公式)
  * - enableMarks: 在 space 左侧露出"记号"入口,弹出 6 项(下划/波浪/删除/↑/↓/·);
  *   下划/波浪/删除把 caret 前最后一个 token 包成 inline 标签,toggle;
@@ -47,6 +48,8 @@ const LONG_PRESS_VARIANTS: Record<string, string[]> = {
   B: ["B'", 'B2', 'b'],
   R: ["R'", 'R2', 'r'],
   L: ["L'", 'L2', 'l'],
+  // NOTE: space 左侧的 `·` 小键——短按插 `·`,长按出 ↑↓(走变体 popup 通道,选中插 `↑ ` / `↓ `)
+  'dot-mark': ['↑', '↓'],
 };
 
 // NOTE: 可双击的按键集合
@@ -852,6 +855,10 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
               </button>
             )}
             <button type="button" data-key="tab" className="vkb-fn vkb-tab vkb-key-btn">Tab</button>
+            {!enableMarks && (
+              <button type="button" data-key="dot-mark" data-val="·"
+                className="vkb-fn vkb-dot-mark vkb-key-btn" title="hold for ↑↓">·</button>
+            )}
             <button type="button" data-key=" " className="vkb-space vkb-key-btn">space</button>
             <button type="button" data-key="enter" className="vkb-return vkb-key-btn">return</button>
             <button type="button" data-key="backspace" className="vkb-fn vkb-fn-del vkb-key-btn">

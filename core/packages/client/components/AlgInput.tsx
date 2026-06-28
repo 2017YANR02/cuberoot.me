@@ -17,6 +17,7 @@ import {
 import {
   autoSpaceMoves, autoSpaceMovesCE, getTextBeforeCaret,
   normalizePunctuationTA, normalizePunctuationCE,
+  autoSpaceAfterComment, autoCloseBracket,
 } from '@/lib/alg-autospace';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -169,7 +170,10 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
           const native = e.nativeEvent as InputEvent;
           normalizePunctuationTA(el);
           if (autoSpace) {
-            const adj = autoSpaceMoves(el.value, el.selectionStart ?? 0, native.inputType ?? '');
+            const inputType = native.inputType ?? '';
+            let adj = autoSpaceMoves(el.value, el.selectionStart ?? 0, inputType);
+            adj = autoSpaceAfterComment(adj.value, adj.cursor, inputType);
+            adj = autoCloseBracket(adj.value, adj.cursor, inputType);
             if (adj.value !== el.value) {
               el.value = adj.value;
               el.setSelectionRange(adj.cursor, adj.cursor);

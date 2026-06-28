@@ -10,6 +10,14 @@ const STRIP_TOKENS = new Set([
 
 const COMMENT_LINE_RE = /^\/\/.*/;
 
+/**
+ * 装饰性标注字符:`·`(间隔)、`↑↓`(方向 / regrip 记号)、分数 `⅓⅔`、ASCII `.`、各类零宽字符。
+ * 这些都不是真转动 —— cleanForPlayer 喂播放器前会静默剥掉,findIllegalNotationChars 校验也
+ * 据此放行(否则「非 ASCII = 非法」会把它们拦下、提交被拒)。两处共用同一来源,改一处即可。
+ */
+const COSMETIC_ANNOTATION_CHARS = '.·↑↓⅓⅔​‌‍﻿';
+const COSMETIC_ANNOTATION_STRIP_RE = new RegExp(`[${COSMETIC_ANNOTATION_CHARS}]`, 'g');
+
 export function cleanForPlayer(text: string): string {
   if (!text) return '';
   const lines = text.split(/\r?\n/);
@@ -26,7 +34,7 @@ export function cleanForPlayer(text: string): string {
     }
   }
   let alg = cleaned.join('\n');
-  alg = alg.replace(/[.·↑↓⅓⅔​‌‍﻿]/g, '');
+  alg = alg.replace(COSMETIC_ANNOTATION_STRIP_RE, '');
   alg = alg.replace(/\(([^)]*)\)(?!\d)/g, '$1');
   alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESruldfbmesxyz])/g, '$1 ');
   return alg;
@@ -163,6 +171,7 @@ export function extractAlgFromText(text: string): string {
  * 校验记号文本(解法 / 打乱)里的非法字符。
  * cube 记号区(每行 `//` 注释之外)只能用英文字母和符号(ASCII);中文等任何文字
  * 必须写在 `//` 之后当注释,否则播放器会把它当成转动 → 复盘无法播放。
+ * 例外:装饰性标注字符(`↑↓·` 等 COSMETIC_ANNOTATION_CHARS)放行 —— 播放器会静默剥掉,不影响复盘。
  * 返回有问题的行(行号从 1 起 + 去注释后的记号片段 + 命中的非 ASCII 字符,去重),
  * 全部合法时返回空数组。
  */
@@ -181,7 +190,7 @@ export function findIllegalNotationChars(text: string): NotationViolation[] {
     const instr = commentIdx >= 0 ? lines[i].slice(0, commentIdx) : lines[i];
     const bad = new Set<string>();
     for (const ch of instr) {
-      if ((ch.codePointAt(0) ?? 0) > 0x7f) bad.add(ch);
+      if ((ch.codePointAt(0) ?? 0) > 0x7f && !COSMETIC_ANNOTATION_CHARS.includes(ch)) bad.add(ch);
     }
     if (bad.size > 0) {
       out.push({ line: i + 1, snippet: instr.trim(), chars: [...bad].join(' ') });

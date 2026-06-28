@@ -32,7 +32,7 @@ import { listSubmissions } from '@/lib/alg_api';
 import { reorderCases } from '@/lib/alg_sets_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
-import { displayAlgCaseName } from '@/lib/alg_case_display';
+import { displayAlgCaseName, renameZbllGroupToken } from '@/lib/alg_case_display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 
@@ -158,7 +158,8 @@ function SubgroupIndex({
     <div className={`alg-subgroup-grid${useF2lThumb ? ' is-f2l-thumb' : ''}`}>
       {groups.map(([topLabel, { sample, count }]) => {
         const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
-        const slug = encodeURIComponent(topLabel.toLowerCase()) || '_';
+        const slug = encodeURIComponent(topLabel.toLowerCase()) || '_'; // slug 用原名(避免 "+" 进 URL)
+        const dispTop = set === 'zbll' ? renameZbllGroupToken(topLabel) : topLabel; // 展示名:ZBLL S→S+, AS→S-
         return (
           <Link
             key={topLabel || '_root_'}
@@ -170,7 +171,7 @@ function SubgroupIndex({
                 ? <CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} />
                 : <VisualCube algorithm={firstAlg} view="oll" size={120} />}
             </div>
-            <div className="alg-subgroup-card-title">{useF2lThumb ? (topLabel || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${topLabel || tr({ zh: '其他', en: 'Other' })}`}</div>
+            <div className="alg-subgroup-card-title">{useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`}</div>
             <div className="alg-subgroup-card-count">{count} {tr({ zh: '个', en: 'cases'
             })}</div>
           </Link>
@@ -336,11 +337,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
       ? `/alg/${puzzleParam}/${set}`
       : `/alg/${puzzleParam}`;
 
+  const dispToken = (slug: string) => set === 'zbll' ? renameZbllGroupToken(slug.toUpperCase()) : slug.toUpperCase();
   const subgroupDisplay = (
     slugLevel === 'sub' && subParentSlug && subgroupSlug
-      ? `${subParentSlug.toUpperCase()} · ${subgroupSlug.toUpperCase()}`
+      ? `${dispToken(subParentSlug)} · ${dispToken(subgroupSlug)}`
       : subgroupSlug
-        ? subgroupSlug.toUpperCase()
+        ? dispToken(subgroupSlug)
         : ''
   );
 
@@ -447,7 +449,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                       mask={pickerMask}
                     />
                   </div>
-                  <div className="alg-subgroup-card-title">{subLabel}</div>
+                  <div className="alg-subgroup-card-title">{set === 'zbll' ? renameZbllGroupToken(subLabel) : subLabel}</div>
                   <div className="alg-subgroup-card-count">{count} {tr({ zh: '个', en: 'cases'
                 })}</div>
                 </Link>

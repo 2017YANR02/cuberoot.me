@@ -42,4 +42,11 @@ describe('findIllegalNotationChars', () => {
   it('returns [] for empty input', () => {
     expect(findIllegalNotationChars('')).toEqual([]);
   });
+
+  it('allows cosmetic annotation chars ↑↓· outside comments (player strips them)', () => {
+    expect(findIllegalNotationChars("D2 r R' F' ↑↓·")).toEqual([]);
+    expect(findIllegalNotationChars('↑↓·')).toEqual([]);
+    // 真正的中文仍被拦下
+    expect(findIllegalNotationChars('↑ 中文 ↓').length).toBe(1);
+  });
 });

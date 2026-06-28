@@ -314,8 +314,9 @@ function EventRoundsList({
     sort.key === key ? (sort.dir === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />) : null;
 
   return (
-    <div className="wp-table-scroll">
-      <table className="wp-bycomp-table">
+    // sticky 列头吸顶:复用「按比赛」/纪录表同一套(wp-sticky-scroll + wp-sticky-table),不另写 CSS。
+    <div className="wp-sticky-scroll">
+      <table className="wp-bycomp-table wp-sticky-table">
         <thead>
           <tr>
             <th>{t('比赛', 'Competition')}</th>
