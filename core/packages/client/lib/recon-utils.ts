@@ -16,6 +16,19 @@ export function formatTime(seconds: number | undefined | null): string {
   return truncated.toFixed(2);
 }
 
+// Normalize a stored 单次 `value` override (canonical headline single string).
+// Pads the fractional part of any decimal time token to ≥2 digits so "5.4" → "5.40"
+// / "1:23.4" → "1:23.40", while leaving integers (FMC moves "29"), "DNF", and
+// MBLD points ("11/13 58:00") untouched. Returns '' for empty so `|| formatTime(...)`
+// fallbacks at call sites still kick in.
+export function padReconSingle(value: string | undefined | null): string {
+  const v = (value ?? '').trim();
+  if (!v) return '';
+  return v.replace(/(\d+)\.(\d+)/g, (_m, int: string, frac: string) =>
+    frac.length >= 2 ? `${int}.${frac}` : `${int}.${frac.padEnd(2, '0')}`,
+  );
+}
+
 export function formatResult(val: number | undefined | null): string {
   if (val == null) return '';
   if (val >= 9999) return 'DNF';

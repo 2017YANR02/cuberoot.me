@@ -15,7 +15,7 @@ import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import { localizeCompName } from '@/lib/comp-localize';
 import { displayCuberName } from '@/lib/name-utils';
-import { formatRound, formatTime } from '@/lib/recon-utils';
+import { formatRound, formatTime, padReconSingle } from '@/lib/recon-utils';
 import { tr } from '@/i18n/tr';
 
 interface Props {
@@ -143,7 +143,7 @@ export default function ReconReuseModal({ wcaId, isZh, onClose, onPick }: Props)
               {shown.map(r => {
                 const thumb = ytThumb(r.videoUrl);
                 // 单次:复盘列表的主标识(value 优先,否则用 rawTime 格式化;都没有才省略)
-                const single = (r.value || '').trim() || (r.rawTime != null ? formatTime(r.rawTime) : '');
+                const single = padReconSingle(r.value) || (r.rawTime != null ? formatTime(r.rawTime) : '');
                 const compName = r.comp ? localizeCompName(r.compWcaId ?? '', r.comp, isZh) : '';
                 const title = r.caption?.trim()
                   || compName

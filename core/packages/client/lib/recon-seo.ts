@@ -16,7 +16,7 @@ import type { ReconSolve } from '@cuberoot/shared';
 import { apiUrl } from './api-base';
 import { displayCuberName } from './cuber-name-display';
 import { localizeCompName } from './comp-localize';
-import { formatTime } from './recon-utils';
+import { formatTime, padReconSingle } from './recon-utils';
 
 const REVALIDATE = 86400; // 24h
 
@@ -81,7 +81,7 @@ export function eventNameForSeo(event: string | undefined, isZh: boolean): strin
 
 /** Single-time display: prefer the stored truncated value, else format rawTime. */
 export function reconTimeText(solve: ReconSolve): string {
-  if (solve.value) return solve.value;
+  if (solve.value) return padReconSingle(solve.value);
   if (solve.rawTime != null) return formatTime(solve.rawTime);
   return '';
 }
