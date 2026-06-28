@@ -366,7 +366,9 @@ function ttlFor(source: SourceId): number {
 // 命中即秒返回.每个 schema_version 一行,enrich 逻辑改时 bump 整体失效.
 
 // v2: 同场比赛内纪录推进式判定(初赛破纪录后,后置轮较慢成绩不再误标 WR/CR/NR).
-const SCHEMA_VERSION = 2;
+// v3: 单次 PR 名次(pS)计入历史平均里的每一把(非最佳把),更晚更慢单次不再误标 PR2;
+//     语义变更但响应 shape 不变 → 必须 bump 整体失效,否则旧 payload 顶 7 天 TTL.
+const SCHEMA_VERSION = 3;
 
 const startDateCache = new Map<string, { d: string | null; at: number }>();
 const START_DATE_CACHE_TTL = 60 * 60_000;
