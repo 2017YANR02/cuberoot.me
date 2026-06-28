@@ -1012,6 +1012,8 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                         best={r.best}
                         eventId={eventId}
                         roundTypeId={r.round_type_id}
+                        attemptRanks={rank?.attemptRanks ?? null}
+                        singleRecord={r.regional_single_record ?? null}
                         currentReconId={solve.id}
                         findReconForCell={findReconForCell}
                         submitCtx={solve.personId && effectiveCompWcaId ? {
@@ -1037,11 +1039,15 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
   );
 }
 
-function RoundAttempts({ attempts, best, eventId, roundTypeId, currentReconId, findReconForCell, langQuery, submitCtx }: {
+function RoundAttempts({ attempts, best, eventId, roundTypeId, attemptRanks, singleRecord, currentReconId, findReconForCell, langQuery, submitCtx }: {
   attempts: number[];
   best: number;
   eventId: string;
   roundTypeId: string;
+  // 每把单次的时间序 PR 名次(下标对齐 attempts);与 /wca/persons 详细成绩同一来源(computePrRank)。
+  attemptRanks?: (number | null)[] | null;
+  // 该轮最佳单次的区域纪录(WR/CR/NR):最好那把优先显示它(与单次列同优先级)。
+  singleRecord?: string | null;
   currentReconId: number;
   findReconForCell: (roundTypeId: string, attemptNum: number) => number | undefined;
   langQuery: string;
@@ -1054,19 +1060,27 @@ function RoundAttempts({ attempts, best, eventId, roundTypeId, currentReconId, f
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
   const validNums = attempts.filter(x => x > 0);
   const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
+  // 每把的 PR 角标:最好那把优先区域纪录(同单次列),否则用时间序名次(1→PR,n→PRn)。
+  const rankBadge = (i: number, isBestAtt: boolean) => {
+    const tag = isBestAtt && singleRecord
+      ? singleRecord
+      : (() => { const rk = attemptRanks?.[i] ?? null; return rk ? (rk === 1 ? 'PR' : `PR${rk}`) : undefined; })();
+    return tag ? <RecordBadge record={tag} variant="inline" /> : null;
+  };
   return (
     <span className="wp-attempts-flow">
       {attempts.map((a, i) => {
         if (a === undefined) return null;
         const formatted = formatWcaResult(a, eventId, 'single');
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
+        const badge = rankBadge(i, isBest);
         const reconId = findReconForCell(roundTypeId, i + 1);
         const isCurrent = reconId === currentReconId;
         const cls = `wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''} ${isCurrent ? 'same-comp-event-att-current' : ''}`;
         if (reconId && !isCurrent) {
           return (
             <Link key={i} href={`/recon/${reconId}${langQuery}`} className={`${cls} same-comp-event-att-link`}>
-              {formatted}
+              {formatted}{badge}
             </Link>
           );
         }
@@ -1085,11 +1099,11 @@ function RoundAttempts({ attempts, best, eventId, roundTypeId, currentReconId, f
               className={`${cls} same-comp-event-att-tonew`}
               title={tr({ zh: '还没有复盘 — 点击去复盘这一把', en: 'No reconstruction yet — click to reconstruct' })}
             >
-              {formatted}
+              {formatted}{badge}
             </Link>
           );
         }
-        return <span key={i} className={cls}>{formatted}</span>;
+        return <span key={i} className={cls}>{formatted}{badge}</span>;
       })}
     </span>
   );
