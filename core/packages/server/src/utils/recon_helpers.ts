@@ -418,3 +418,39 @@ export function buildUpdate(table: string, row: Record<string, unknown>, whereCo
     values,
   };
 }
+
+/**
+ * 构建「同选手 + 同打乱」去重查询(命中即重复)。
+ * 同一打乱所有选手共用,所以选手 + 打乱必须同时相同才算重复(光打乱相同是同组不同人)。
+ *   选手 = person_id(优先 WCA ID)否则 person 名;
+ *   打乱 = wca_scramble(优先官方打乱)否则 optimal_scramble。
+ * 打乱或选手任一为空 → 无法判重(返回 null,直接放行;避免空打乱把不同 recon 误判成重复)。
+ * @param excludeId 编辑模式排除自身
+ * @returns {sql, params} 查到行即重复,null = 不判重
+ */
+export function buildDuplicateQuery(
+  row: Record<string, unknown>,
+  excludeId?: number,
+): { sql: string; params: unknown[] } | null {
+  const personId = typeof row.person_id === 'string' ? row.person_id.trim() : '';
+  const person = typeof row.person === 'string' ? row.person.trim() : '';
+  const wcaScramble = typeof row.wca_scramble === 'string' ? row.wca_scramble : '';
+  const optScramble = typeof row.optimal_scramble === 'string' ? row.optimal_scramble : '';
+
+  // 打乱:优先官方打乱,空则退回最优打乱;两者都空 → 不判重
+  const scrambleCol = wcaScramble.trim() ? 'wca_scramble' : (optScramble.trim() ? 'optimal_scramble' : '');
+  const scrambleVal = wcaScramble.trim() ? wcaScramble : optScramble;
+  if (!scrambleCol || (!personId && !person)) return null;
+
+  const params: unknown[] = [];
+  const personClause = personId ? 'person_id = ?' : 'person = ?';
+  params.push(personId || person);
+  let sql = `SELECT id FROM recons WHERE ${personClause} AND "${scrambleCol}" = ?`;
+  params.push(scrambleVal);
+  if (excludeId != null && Number.isFinite(Number(excludeId))) {
+    sql += ' AND id != ?';
+    params.push(Number(excludeId));
+  }
+  sql += ' LIMIT 1';
+  return { sql, params };
+}
