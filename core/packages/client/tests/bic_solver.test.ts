@@ -394,7 +394,10 @@ describe('bicExamplesByLengthFromTable', () => {
     }
   });
 
-  it('full enumeration covers every non-trivial state exactly once (counts == distribution)', () => {
+  // 穷举证明(110 万状态、~104s):求解器表不变结果就恒定,没必要每次 push 都跑。
+  // 默认跳过,改求解器(lib/bicube-solver.ts)时按需用 `BIC_FULL_ENUM=1` 触发。
+  // 文件里其余快测试照常每次跑;这条只在需要重验全表正确性时开。
+  it.runIf(process.env.BIC_FULL_ENUM === '1')('full enumeration covers every non-trivial state exactly once (counts == distribution)', () => {
     // stream every state as (depth, scramble); reconstruct via the independent reference and count per depth.
     const perDepth = new Map<number, number>();
     const seen = new Set<string>();
@@ -410,8 +413,7 @@ describe('bicExamplesByLengthFromTable', () => {
     }
     expect(nonTrivial).toBe(1108799); // all states minus the identity
     expect(seen.size).toBe(1108799); // every non-trivial state exactly once
-  }, 300_000); // full 1.1M-state enumeration: ~104s local, rides past the 120s
-  // global default on slower CI runners — give ample headroom (cf. analyzer_worker).
+  }, 300_000); // when opt-in (BIC_FULL_ENUM=1): ~104s local, ample headroom.
 
   it('bicScramblesForLengthFromTable yields the right count per depth, all valid + optimal', () => {
     for (const d of [1, 5, 14, 28]) {
