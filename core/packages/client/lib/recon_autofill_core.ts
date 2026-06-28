@@ -10,7 +10,7 @@ import {
   detectStage, crossOnDRotation,
   evaluateCanonical, F2L_SLOT_DEFS, topEdgesOriented,
 } from './stage_detect';
-import { lookupF2lAlgs } from './f2l_lookup';
+import { lookupF2lAlgs, lookupF2lAlgsBrute } from './f2l_lookup';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
 import { lookupZbllAlgs } from './zbll_lookup';
@@ -202,7 +202,13 @@ export async function suggestAlg(
     for (let slotIdx = 0; slotIdx < F2L_SLOT_DEFS.length; slotIdx++) {
       const slotId = F2L_SLOT_DEFS[slotIdx].id;
       if (solvedSet.has(slotId)) continue;
-      const f2lEntries = await lookupF2lAlgs(startCanonical, slotIdx);
+      // Fast O(1) fingerprint path first; fall back to brute force when it
+      // misses (non-yellow cross, or algs whose setup moves the centres). The
+      // brute path is colour-neutral and complete — see f2l_lookup.ts.
+      let f2lEntries = await lookupF2lAlgs(startCanonical, slotIdx);
+      if (f2lEntries.length === 0) {
+        f2lEntries = await lookupF2lAlgsBrute(startCanonical, slotIdx, preEval.solvedSlots);
+      }
       let zblsEntries = tryZbls ? await lookupZblsAlgs(startCanonical, slotIdx) : [];
       // Brute-force fallback: when the fingerprint lookup misses (most cases
       // where EO isn't already done), iterate the whole ZBLS DB and verify
@@ -227,13 +233,17 @@ export async function suggestAlg(
           if (!rawAlg) continue;
           if (!isAlgPrefix(lineMovesUpToCaret, rawAlg)) continue;
           prefixFilteredOutAll = false;
+          // Verify in the canonical (cross-on-D) frame so slot naming stays in
+          // step with preEval. detectStage(post) would re-run crossOnDRotation
+          // and could land on a different y-alignment, renaming FR/FL/BL/BR and
+          // spuriously rejecting valid algs (the non-yellow-cross failure mode).
           let post: KPattern;
-          try { post = startState.applyAlg(rawAlg); } catch { continue; }
-          const postInfo = await detectStage(post);
-          if (!postInfo.solvedSlots.includes(slotId)) continue;
+          try { post = startCanonical.applyAlg(e.alg); } catch { continue; }
+          const ev = evaluateCanonical(post);
+          if (!ev.solvedSlots.includes(slotId)) continue;
           let preserved = true;
           for (const prevSlot of preEval.solvedSlots) {
-            if (!postInfo.solvedSlots.includes(prevSlot)) { preserved = false; break; }
+            if (!ev.solvedSlots.includes(prevSlot)) { preserved = false; break; }
           }
           if (!preserved) continue;
           // ZBLS labeling: at xxxcross, if the alg produces a state where all 4
