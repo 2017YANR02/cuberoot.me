@@ -470,8 +470,11 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  /* 标签紧贴自己的控件成一组(flex-start),不再 space-between 把控件甩到格右沿 ——
+     多列网格里右沿控件会紧挨「下一格」的标签,造成「这个开关属于哪个标签」歧义
+     (灰掉的「挖块」旁边正好是隔壁「结构着色」可点的开关;空尾格旁边是孤零零没标签的开关)。 */
+  justify-content: flex-start;
+  gap: 8px;
 }
 .sim-puzzle-toggles .sim-toggle > span {
   min-width: 0;
@@ -479,7 +482,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 标签在左、控件(PillToggle 开关 / 下拉)贴右,每格右沿对齐;开关固定尺寸不被网格挤压 */
+/* 控件(PillToggle 开关 / 下拉)固定尺寸不被网格挤压,紧跟标签后 */
 .sim-puzzle-toggles .sim-toggle .pill-toggle,
 .sim-puzzle-toggles .sim-toggle select {
   flex: none;
@@ -522,8 +525,8 @@
 }
 
 /* 调试区:「调试」标题单独占一行(复用 .sim-puzzle-section-title),下方一行排
-   半转停 / 结构着色 / 挖块,窄屏内部换行。复刻 .sim-puzzle-toggles 的标签左、
-   控件右(space-between)布局,保持与上方网格一致。 */
+   半转停 / 结构着色 / 挖块,窄屏内部换行。复刻 .sim-puzzle-toggles 的「标签紧贴
+   控件成一组」布局,保持与上方网格一致。 */
 .sim-puzzle-debug {
   display: flex;
   flex-direction: column;
@@ -543,8 +546,9 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  /* 同上方网格:标签紧贴自己的控件,别 space-between 甩到格右沿造成跨格歧义。 */
+  justify-content: flex-start;
+  gap: 8px;
 }
 .sim-puzzle-debug .sim-toggle > span {
   min-width: 0;
