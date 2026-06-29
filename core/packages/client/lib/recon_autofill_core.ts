@@ -13,7 +13,7 @@ import {
 import { lookupF2lAlgsRobust } from './f2l_lookup';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
-import { lookupZbllAlgs } from './zbll_lookup';
+import { lookupZbllAlgsRobust } from './zbll_lookup';
 import { lookupZblsAlgs, lookupZblsAlgsBrute } from './zbls_lookup';
 import { F2L_SLOT_DEFS as _SLOTS_FOR_BRUTE } from './stage_detect';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
@@ -254,14 +254,27 @@ export async function suggestAlg(
         }
       }
     }
+  } else if (category === 'zbll') {
+    // ZBLL: the fingerprint lookup was per-cross-colour (slow ~9.5s build) AND
+    // missed non-yellow / tilted crosses entirely. Use the frame-invariant robust
+    // search, which returns RAW-frame algs that actually solve the cube (verified
+    // by piece identity) regardless of cross colour. crossFaceHome is only a hint
+    // — it can be wrong for ambiguous LL states, so the search falls back to the
+    // colour that genuinely solves.
+    const robust = await lookupZbllAlgsRobust(startState, stageInfo.crossFaceHome);
+    if (robust.length > 0) lookupHadEntries = true;
+    for (const e of robust) {
+      if (!e.alg) continue;
+      if (!isAlgPrefix(lineMovesUpToCaret, e.alg)) continue;
+      prefixFilteredOutAll = false;
+      scored.push({ text: e.alg, category, caseName: e.caseName, score: 100 - e.alg.length * 0.01 });
+    }
   } else {
     const entries = category === 'oll'
       ? await lookupOllAlgs(startCanonical)
-      : category === 'pll'
-        ? await lookupPllAlgs(startCanonical)
-        : await lookupZbllAlgs(startCanonical);
+      : await lookupPllAlgs(startCanonical);
     if (entries.length > 0) lookupHadEntries = true;
-    const goalSolved = category === 'pll' || category === 'zbll';
+    const goalSolved = category === 'pll';
     for (const e of entries) {
       const rawAlg = canonRot ? simplifyAlg(`${canonRot} ${e.alg}`) : e.alg;
       if (!rawAlg) continue;

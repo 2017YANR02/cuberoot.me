@@ -1,201 +1,144 @@
 /**
- * Pre-built fingerprint → algs lookup for ZBLL recon autofill.
+ * ZBLL lookup for recon autofill (recognition + alg suggestion).
  *
- * ZBLL applies when F2L is done AND all 4 last-layer edges are oriented (i.e.
- * each top edge's U-face sticker is U-color). It then solves the cube in one
- * alg, similar to PLL but with corners possibly twisted.
+ * ZBLL applies when F2L is done AND all 4 last-layer edges are oriented; it then
+ * solves the cube in one alg (like PLL but with corners possibly twisted).
  *
- * **Per-cross-color tables**: one table per cross color (0..5). Built lazily
- * the first time a user with that cross color is encountered. For each table,
- * the "solved" base cube is rotated so the matching color sits on D, then
- * algs are applied to that base. This way the fingerprints are well-defined
- * for any cross color — the cubie identity at each slot is determined by the
- * user's chosen cross-color frame, not cubing.js's default white-up frame.
- *
- * Within each table, after applying `solved.applyAlg(invert(composed))`, we
- * also normalize centers to a canonical position (the cross-color's default
- * frame) by appending the inverse rotation to the alg. This handles the
- * common case of algs containing `y'`/`y2`/`x` whole-cube rotations.
- *
- * 16-char fingerprint: raw color codes for 4 corner-tops + 4 edge-sides + 8
- * corner-sides. Caller should pass a state in the cross-color's canonical
- * frame (cross color on D, side centers in cross-color's default order).
- *
- * Build cost: ~30k simulations per cross color on first use.
+ * This is a frame-invariant brute search, NOT a fingerprint table. The earlier
+ * per-cross-colour fingerprint tables were both slow (~30k sims / ~9.5s to build
+ * on the first Tab of each colour) AND fragile — the raw-colour fingerprint +
+ * centre-alignment missed non-yellow / tilted crosses entirely (an `x z`
+ * inspection white-cross solve returned zero matches). Instead, mirroring the
+ * F2L robust fix: try every DB alg under every cross-on-D rotation (×pre-AUF
+ * ×post-AUF) on the user's RAW state, and keep those that FULLY SOLVE the cube,
+ * verified by pure piece identity in the centres-home frame. Colour-neutral,
+ * complete for every orientation, no per-colour table, no warmup.
  */
 
-import type { KPattern } from 'cubing/kpuzzle';
-import { getCube3, simplifyAlg, invertAlg } from './cube3';
-import {
-  CORNER_STICKERS, EDGE_STICKERS,
-  cornerStickerOnFace, edgeStickerOnFace,
-} from './sticker_tables';
+import type { KPattern, KTransformation } from 'cubing/kpuzzle';
+import { getCube3, simplifyAlg } from './cube3';
+import { defaultCentersTransform, edgeHome, cornerHome } from './stage_detect';
+import { getPreMods } from './f2l_lookup';
 import { loadAlg } from '@cuberoot/shared/alg';
 
-export interface ZbllAlgEntry {
-  /** Alg in the cross-color's canonical frame. Apply directly to the user's
-   *  state once the user's state has been canonicalized via
-   *  `canonicalRotationForCross`. */
+const POST_AUFS = ['', 'U', 'U2', "U'"] as const;
+let _postAufTs: Promise<KTransformation[]> | null = null;
+/** The 4 post-AUF (trailing U-turn) transformations, precomputed + cached. */
+async function getPostAufTs(): Promise<KTransformation[]> {
+  if (_postAufTs) return _postAufTs;
+  _postAufTs = (async () => {
+    const kp = await getCube3();
+    return POST_AUFS.map(a => (a ? kp.algToTransformation(a) : kp.identityTransformation()));
+  })();
+  return _postAufTs;
+}
+
+interface FlatZbll { t: KTransformation; alg: string; caseName: string; }
+let _flatZbll: Promise<FlatZbll[]> | null = null;
+/** Every distinct ZBLL DB alg as a precomputed transformation (cached). */
+async function getFlatZbll(): Promise<FlatZbll[]> {
+  if (_flatZbll) return _flatZbll;
+  _flatZbll = (async () => {
+    const db = await loadAlg('3x3', 'zbll');
+    const kp = await getCube3();
+    const items: FlatZbll[] = [];
+    const seen = new Set<string>();
+    for (const c of db.cases) {
+      for (const v of c.algs[0] ?? []) {
+        if (!v.alg || seen.has(v.alg)) continue;
+        seen.add(v.alg);
+        try { items.push({ t: kp.algToTransformation(v.alg), alg: v.alg, caseName: c.name }); }
+        catch { /* unparseable DB alg — drop, matching applyAlg's catch path */ }
+      }
+    }
+    return items;
+  })();
+  return _flatZbll;
+}
+
+/** Cube fully solved in the centres-home frame: every edge + corner home. */
+function allPiecesHome(home: KPattern): boolean {
+  for (let e = 0; e < 12; e++) if (!edgeHome(home, e)) return false;
+  for (let c = 0; c < 8; c++) if (!cornerHome(home, c)) return false;
+  return true;
+}
+
+export interface ZbllRobustEntry {
+  /** Alg in the user's RAW frame — ready to insert as-is (no canonRot prefix). */
   alg: string;
   caseName: string;
 }
 
-const AUFS = ['', 'U', 'U2', "U'"] as const;
-
-const ORIENTATION_ALGS: string[] = (() => {
-  const out: string[] = [];
-  for (const t of ['', 'x', 'x2', "x'", 'z', "z'"]) {
-    for (const y of ['', 'y', 'y2', "y'"]) {
-      out.push([t, y].filter(Boolean).join(' '));
-    }
-  }
-  return out;
-})();
-
-/** Find a rotation that sits the given color on D (slot 5) in the solved cube.
- *  Returns the canonical frame for that cross color. Used as the base for
- *  building per-cross-color lookup tables. */
-function rotationForCross(solved: KPattern, crossColor: number): string {
-  for (const rot of ORIENTATION_ALGS) {
-    const t = rot ? solved.applyAlg(rot) : solved;
-    if (t.patternData.CENTERS.pieces[5] === crossColor) return rot;
-  }
-  return '';
-}
-
-/** For a given cross-color frame, find the rotation that takes `state` to
- *  default centers OF THAT FRAME. Used to absorb the rotations that ZBLL algs
- *  introduce, so fingerprints stay in the canonical centers configuration. */
-function alignCentersToFrame(state: KPattern, frameCenters: ReadonlyArray<number>): string {
-  for (const rot of ORIENTATION_ALGS) {
-    const t = rot ? state.applyAlg(rot) : state;
-    const c = t.patternData.CENTERS.pieces;
-    let ok = true;
-    for (let i = 0; i < 6; i++) {
-      if (c[i] !== frameCenters[i]) { ok = false; break; }
-    }
-    if (ok) return rot;
-  }
-  return '';
-}
-
-/** 16-char fingerprint using raw color codes. State must be in the canonical
- *  frame for its cross color (centers in that cross color's default order). */
-function zbllFingerprint(p: KPattern): string {
-  let out = '';
-  for (let s = 0; s < 4; s++) {
-    out += String(cornerStickerOnFace(p, s, 0) ?? '?');
-  }
-  for (let s = 0; s < 4; s++) {
-    const sideFace = EDGE_STICKERS[s][1];
-    out += String(edgeStickerOnFace(p, s, sideFace) ?? '?');
-  }
-  for (let s = 0; s < 4; s++) {
-    const [, sideA, sideB] = CORNER_STICKERS[s];
-    out += String(cornerStickerOnFace(p, s, sideA) ?? '?');
-    out += String(cornerStickerOnFace(p, s, sideB) ?? '?');
-  }
-  return out;
-}
-
-const _tables = new Map<number, Promise<Map<string, ZbllAlgEntry[]>>>();
-
-async function buildTableForCross(crossColor: number): Promise<Map<string, ZbllAlgEntry[]>> {
-  const cached = _tables.get(crossColor);
-  if (cached) return cached;
-  const promise = (async () => {
-    const db = await loadAlg('3x3', 'zbll');
-    const kp = await getCube3();
-    const defaultSolved = kp.defaultPattern();
-    const baseRot = rotationForCross(defaultSolved, crossColor);
-    const baseSolved = baseRot ? defaultSolved.applyAlg(baseRot) : defaultSolved;
-    const frameCenters = Array.from(baseSolved.patternData.CENTERS.pieces);
-    const t = new Map<string, ZbllAlgEntry[]>();
-
-    for (const c of db.cases) {
-      const variants = c.algs[0] ?? [];
-      for (const variant of variants) {
-        const a = variant.alg;
-        if (!a) continue;
-        for (const preAuf of AUFS) {
-          for (const postAuf of AUFS) {
-            const composed = simplifyAlg([preAuf, a, postAuf].filter(Boolean).join(' '));
-            if (!composed) continue;
-            const inv = invertAlg(composed);
-            if (!inv) continue;
-            let state: KPattern;
-            try { state = baseSolved.applyAlg(inv); } catch { continue; }
-            // Whole-cube rotations in the alg may have shifted centers off
-            // the cross-color's default frame — undo that, prepending the
-            // inverse rotation onto the stored alg.
-            const revertRot = alignCentersToFrame(state, frameCenters);
-            if (revertRot) {
-              state = state.applyAlg(revertRot);
-            }
-            const finalAlg = revertRot
-              ? simplifyAlg(`${invertAlg(revertRot)} ${composed}`)
-              : composed;
-            if (!finalAlg) continue;
-            const fp = zbllFingerprint(state);
-            const arr = t.get(fp) ?? [];
-            if (!arr.some(e => e.alg === finalAlg)) {
-              arr.push({ alg: finalAlg, caseName: c.name });
-              t.set(fp, arr);
-            }
-          }
-        }
+/** Inner pass: all DB algs under the 4 rotations (×AUF×postAUF) that put colour
+ *  `crossFace` on D, keeping those that fully solve the cube. */
+async function searchAtCrossFace(
+  rawStart: KPattern,
+  crossFace: number,
+  algs: FlatZbll[],
+  preMods: { alg: string; t: KTransformation }[],
+  postAufTs: KTransformation[],
+): Promise<ZbllRobustEntry[]> {
+  const out: ZbllRobustEntry[] = [];
+  const seen = new Set<string>();
+  for (const pre of preMods) {
+    let base: KPattern;
+    try { base = rawStart.applyTransformation(pre.t); } catch { continue; }
+    // LL algs only apply when the last layer is on U, i.e. the cross colour on D.
+    if (base.patternData.CENTERS.pieces[5] !== crossFace) continue;
+    for (const { t, alg, caseName } of algs) {
+      let mid: KPattern;
+      try { mid = base.applyTransformation(t); } catch { continue; }
+      // DB ZBLL algs may solve only up to AUF (trailing U-turn implied), so try
+      // each post-AUF — without this, whole cases whose algs leave the U layer
+      // rotated never verify as solved.
+      for (let a = 0; a < postAufTs.length; a++) {
+        const post = mid.applyTransformation(postAufTs[a]);
+        const homeT = await defaultCentersTransform(post);
+        if (!homeT) continue;
+        const home = post.applyTransformation(homeT);
+        if (!allPiecesHome(home)) continue;
+        const full = simplifyAlg([pre.alg, alg, POST_AUFS[a]].filter(Boolean).join(' '));
+        if (!full || seen.has(full)) continue;
+        seen.add(full);
+        out.push({ alg: full, caseName });
       }
     }
-    return t;
-  })();
-  _tables.set(crossColor, promise);
-  return promise;
+  }
+  return out;
 }
 
 /**
- * Look up ZBLL algs that solve the given canonical-frame state.
+ * Frame-invariant ZBLL finder for the user's RAW state (F2L done + LL edges
+ * oriented). Tries every DB alg under every cross-on-D rotation (×AUF), keeping
+ * those that FULLY SOLVE the cube — verified by pure piece identity in the
+ * centres-home frame, so it works for every cross colour and inspection rotation.
+ * Returns RAW-frame algs (insert directly, no prefix).
  *
- * `canonical` must already be in cross-on-D form (use `crossOnDRotation`).
- * Cross color is read from D-center; side centers may be in any cyclic
- * permutation — the lookup picks a table by cross color and accepts any side
- * permutation (since alg suggestions are verified by the caller's goal-check).
+ * The on-D cross colour cannot be trusted from `detectStage`/`crossOnDRotation`:
+ * for an ambiguous last-layer state several faces can LOOK like a solved cross +
+ * oriented LL (both the piece-identity `edgeHome` orientation check and the
+ * sticker `crossSolved` check give false positives off the real bottom face), yet
+ * the cube only genuinely solves with ONE colour on D. So we don't restrict to a
+ * single detected face — we try `crossFaceHint` first (fast, right in the common
+ * case) and fall back to the other colours, returning the first that ACTUALLY
+ * solves. "Does a DB alg solve it" is the only reliable signal.
  */
-export async function lookupZbllAlgs(canonical: KPattern): Promise<ZbllAlgEntry[]> {
-  const crossColor = canonical.patternData.CENTERS.pieces[5];
-  const t = await buildTableForCross(crossColor);
-  // Fingerprint requires centers in the cross-color's default order. If the
-  // user's state has side centers in a different cyclic position, rotate to
-  // match before fingerprinting.
-  const kp = await getCube3();
-  const defaultSolved = kp.defaultPattern();
-  const baseRot = rotationForCross(defaultSolved, crossColor);
-  const baseSolved = baseRot ? defaultSolved.applyAlg(baseRot) : defaultSolved;
-  const frameCenters = Array.from(baseSolved.patternData.CENTERS.pieces);
-  const yRots = ['', 'y', 'y2', "y'"];
-  for (const yRot of yRots) {
-    const rotated = yRot ? canonical.applyAlg(yRot) : canonical;
-    const c = rotated.patternData.CENTERS.pieces;
-    let ok = true;
-    for (let i = 0; i < 6; i++) {
-      if (c[i] !== frameCenters[i]) { ok = false; break; }
-    }
-    if (!ok) continue;
-    const fp = zbllFingerprint(rotated);
-    const entries = t.get(fp);
-    if (!entries) continue;
-    // Prepend the y-rotation so the alg, applied to user's pre-rotation
-    // state, hits the correct slot orientation.
-    if (!yRot) return entries;
-    return entries.map(e => ({
-      alg: simplifyAlg(`${yRot} ${e.alg}`),
-      caseName: e.caseName,
-    }));
+export async function lookupZbllAlgsRobust(
+  rawStart: KPattern,
+  crossFaceHint?: number,
+): Promise<ZbllRobustEntry[]> {
+  const [algs, preMods, postAufTs] = await Promise.all([getFlatZbll(), getPreMods(), getPostAufTs()]);
+  // Try the hint first, then its OPPOSITE face: when the hint is wrong it's
+  // almost always the cross/LL mix-up (the real cross is the face opposite the
+  // detected one), so this resolves the ambiguous case in 2 searches not 6.
+  const OPP = [5, 3, 4, 1, 2, 0];
+  const order: number[] = [];
+  const push = (f: number) => { if (f != null && f >= 0 && !order.includes(f)) order.push(f); };
+  if (crossFaceHint != null) { push(crossFaceHint); push(OPP[crossFaceHint]); }
+  for (let f = 0; f < 6; f++) push(f);
+  for (const cf of order) {
+    const r = await searchAtCrossFace(rawStart, cf, algs, preMods, postAufTs);
+    if (r.length > 0) return r;
   }
   return [];
 }
-
-export function warmupZbllTable(crossColor = 5): Promise<void> {
-  return buildTableForCross(crossColor).then(() => undefined);
-}
-
-export { zbllFingerprint };
