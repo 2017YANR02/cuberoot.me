@@ -284,8 +284,8 @@ function StatsTable({ header, rows, searchTerm, isZh }: {
   const remaining = filtered.length - shown.length;
 
   return (
-    <div className="wca-stats-table-wrapper">
-      <table className="wca-stats-table">
+    <div className="wca-stats-table-wrapper sticky-scroll">
+      <table className="wca-stats-table sticky-thead">
         <thead>
           <tr>
             {header.map(h => shouldHideCountryCol(h.key, header) ? null : (
@@ -570,8 +570,8 @@ function AoxRankingSection({ header, rows, isZh }: {
 
   return (
     <>
-      <div className="wca-stats-table-wrapper">
-        <table className="wca-stats-table">
+      <div className="wca-stats-table-wrapper sticky-scroll">
+        <table className="wca-stats-table sticky-thead">
           <thead>
             <tr>
               {hasSolves && (

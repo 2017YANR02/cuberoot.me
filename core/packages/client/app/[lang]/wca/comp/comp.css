@@ -507,6 +507,13 @@
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
+/* 数字 <a> 只包住成绩文本,括号(.td-attempt::before/::after)和单元内边距都在 <td> 上;
+   用拉伸覆盖层把整格变成可点链接,免得点到括号/留白落到行点击(打开选手浮层)而非跳复盘。 */
+.comp-att-recon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
 .comp-event-bar {
   margin-bottom: 12px;
 }
@@ -596,6 +603,7 @@
 .comp-sort-btn:hover { color: var(--accent); }
 .comp-sort-btn.is-active { color: var(--accent); font-weight: 700; }
 .td-attempt {
+  position: relative;
   font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);
   font-size: 0.85rem;
@@ -607,6 +615,8 @@
 .td-attempt::after  { content: ")"; opacity: 0; }
 .td-attempt-trimmed::before,
 .td-attempt-trimmed::after { opacity: 1; }
+/* 有复盘的把 → 整格(数字 + 括号)染赭陶色,提示可点跳复盘(::before/::after 继承 color)。 */
+.td-attempt.td-attempt-has-recon { color: var(--accent); }
 
 /* 详情列数字表头 (1..N):在各自把数列内居中。
    选择器须带 .comp-table/.comp-modal-table thead th 前缀,否则被 `.comp-table thead th{text-align:left}` 按特异性盖掉。 */

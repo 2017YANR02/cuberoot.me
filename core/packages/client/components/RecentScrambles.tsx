@@ -8,7 +8,6 @@
 //    stats/scramble/recent_scrambles_events.json (RecentEventBody).
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import MoreToggle from '@/components/MoreToggle';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
@@ -23,6 +22,7 @@ import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
 import './recent_scrambles.css';
+import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
 
 interface Props { lang: 'zh' | 'en' }
@@ -153,6 +153,31 @@ function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: stri
   );
 }
 
+// 统一打乱小卡(2 列网格单元):魔方图 + 打乱记号 + 比赛来源,可选左上角底色点。
+// 整卡非单一 <a>(内部「大图 / analyzer / gen」三个并列链接,禁嵌套),与原 hero 同结构。
+function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color }: {
+  event: string;
+  scramble: string;
+  m?: RecentScrMeta | ScrMeta;
+  lp: string;
+  isZh: boolean;
+  ssTarget?: { method: string; stage: number } | null;
+  color?: ColorLetter;
+}) {
+  return (
+    <div className="rs-scard">
+      <div className="rs-scard-cube">
+        <ScramblePreview2D event={event} scramble={scramble} size={58} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
+        {color && <span className="rs-scard-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>}
+      </div>
+      <div className="rs-scard-body">
+        <Link href={analyzerHref(lp, scramble, ssTarget, color)} prefetch={false} className="rs-scard-scramble">{scramble}</Link>
+        {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
+      </div>
+    </div>
+  );
+}
+
 export default function RecentScrambles({ lang }: Props) {
   const isZh = lang === 'zh';
   const lp = langPrefix(lang);
@@ -248,9 +273,8 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
   const [metric, setMetric] = useState('cross');
   const [step, setStep] = useState<number | null>(null);
   const sel = useSubsetSelection('dual');
-  const [expanded, setExpanded] = useState(false);
 
-  // 首屏一次性把 hero 定位到本批全局概率最低(最稀有)的那一格;用户手动改过任一选择器即不再覆盖。
+  // 首屏一次性把默认选择定位到本批全局概率最低(最稀有)的那一格;用户手动改过任一选择器即不再覆盖。
   const pickedRef = useRef(false);
   const touchedRef = useRef(false);
   useEffect(() => {
@@ -332,9 +356,6 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
 
   if (!data || variants.length === 0) return null;
 
-  const hero = entries[0];
-  const rest = entries.slice(1);
-
   return (
     <>
       <div className="rs-head">
@@ -348,59 +369,21 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
             {steps.map((s) => (<option key={s} value={s}>{stepOptionLabel(s)}</option>))}
           </select>
         )}
+        {prob && probHref && (
+          <Link href={probHref} prefetch={false} className="rs-prob" title={tr({ zh: '随机打乱出现此难度的概率,点查看完整分布', en: 'How often a random scramble is this easy — click for the full distribution' })}>
+            ≈ {prob.text}
+          </Link>
+        )}
       </div>
 
-      {hero ? (() => {
-        const [id, color] = hero;
-        const scramble = data.scr[id] ?? '';
-        const m = data.meta[id];
-        return (
-          <div className="rs-hero">
-            <div className="rs-hero-cube">
-              <ScramblePreview2D event="333" scramble={scramble} size={78} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
-            </div>
-            <div className="rs-hero-body">
-              <div className="rs-hero-steps">
-                <span className="rs-hero-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>
-                <b>{curStep}</b>
-                <span className="rs-hero-unit">{tr({ zh: '步', en: curStep === 1 ? 'move' : 'moves' })}</span>
-                {prob && probHref && (
-                  <Link href={probHref} prefetch={false} className="rs-hero-prob" title={tr({ zh: '随机打乱出现此难度的概率,点查看完整分布', en: 'How often a random scramble is this easy — click for the full distribution' })}>
-                    ≈ {prob.text}
-                  </Link>
-                )}
-              </div>
-              <Link href={analyzerHref(lp, scramble, ssTarget, color)} prefetch={false} className="rs-hero-scramble">{scramble}</Link>
-              {m && <CompSource m={m} lp={lp} isZh={isZh} />}
-            </div>
-          </div>
-        );
-      })() : (
+      {entries.length > 0 ? (
+        <div className="rs-cards scroll-panel">
+          {entries.slice(0, 12).map(([id, color]) => (
+            <ScrambleCard key={id} event="333" scramble={data.scr[id] ?? ''} m={data.meta[id]} lp={lp} isZh={isZh} ssTarget={ssTarget} color={color} />
+          ))}
+        </div>
+      ) : (
         <div className="rs-empty">{tr({ zh: '该组合本批暂无数据', en: 'No data for this combination' })}</div>
-      )}
-
-      {rest.length > 0 && (
-        <>
-          {expanded && (
-            <ol className="rs-list">
-              {rest.map(([id, color], i) => {
-                const m = data.meta[id];
-                const scramble = data.scr[id] ?? '';
-                return (
-                  <li key={id} className="rs-row">
-                    <span className="rs-row-rank">{i + 2}</span>
-                    <span className="rs-row-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>
-                    <div className="rs-row-main">
-                      <Link href={analyzerHref(lp, scramble, ssTarget, color)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
-                      {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-          <MoreToggle expanded={expanded} onToggle={() => setExpanded(!expanded)} />
-        </>
       )}
     </>
   );
@@ -412,7 +395,6 @@ function RecentEventBody({ event, json, isZh, lp }: { event: string; json: Recen
   const hasDifficulty = !!(buckets?.difficulty && DIFFICULTY_EVENTS.has(event) && Object.keys(buckets.difficulty.byStep).length > 0);
   const [mode, setMode] = useState<'difficulty' | 'length'>('difficulty');
   const [value, setValue] = useState<number | null>(null);
-  const [expanded, setExpanded] = useState(false);
 
   const curMode: 'difficulty' | 'length' = hasDifficulty ? mode : 'length';
   const bucketMap = curMode === 'difficulty' ? (buckets?.difficulty?.byStep ?? {}) : (buckets?.length ?? {});
@@ -424,13 +406,6 @@ function RecentEventBody({ event, json, isZh, lp }: { event: string; json: Recen
     return <div className="rs-empty">{tr({ zh: '该项目本批暂无数据', en: 'No recent scrambles for this event' })}</div>;
   }
 
-  // 单位:难度=整解步数(zh '步' / en move(s));长度=打乱长度(sq1 用 twist(s))。
-  const enUnit = (v: number | null) => (curMode === 'length' && event === 'sq1')
-    ? (v === 1 ? 'twist' : 'twists')
-    : (v === 1 ? 'move' : 'moves');
-
-  const hero = ids[0];
-  const rest = ids.slice(1);
   const scrOf = (id: string) => json?.scr?.[id] ?? '';
   const metaOf = (id: string) => json?.meta?.[id];
 
@@ -451,48 +426,13 @@ function RecentEventBody({ event, json, isZh, lp }: { event: string; json: Recen
         </select>
       </div>
 
-      {hero ? (() => {
-        const scramble = scrOf(hero);
-        const m = metaOf(hero);
-        return (
-          <div className="rs-hero">
-            <div className="rs-hero-cube">
-              <ScramblePreview2D event={event} scramble={scramble} size={78} fullSizeLink linkTitle={tr({ zh: '查看大图', en: 'View full size' })} />
-            </div>
-            <div className="rs-hero-body">
-              <div className="rs-hero-steps">
-                <b>{curValue}</b>
-                <span className="rs-hero-unit">{tr({ zh: '步', en: enUnit(curValue) })}</span>
-              </div>
-              <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-hero-scramble">{scramble}</Link>
-              {m && <CompSource m={m} lp={lp} isZh={isZh} />}
-            </div>
-          </div>
-        );
-      })() : null}
-
-      {rest.length > 0 && (
-        <>
-          {expanded && (
-            <ol className="rs-list">
-              {rest.slice(0, 4).map((id, i) => {
-                const m = metaOf(id);
-                const scramble = scrOf(id);
-                return (
-                  <li key={id} className="rs-row rs-row--nodot">
-                    <span className="rs-row-rank">{i + 2}</span>
-                    <div className="rs-row-main">
-                      <Link href={analyzerHref(lp, scramble)} prefetch={false} className="rs-row-scramble">{scramble}</Link>
-                      {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-          <MoreToggle expanded={expanded} onToggle={() => setExpanded(!expanded)} />
-        </>
-      )}
+      {ids.length > 0 ? (
+        <div className="rs-cards scroll-panel">
+          {ids.slice(0, 12).map((id) => (
+            <ScrambleCard key={id} event={event} scramble={scrOf(id)} m={metaOf(id)} lp={lp} isZh={isZh} />
+          ))}
+        </div>
+      ) : null}
     </>
   );
 }

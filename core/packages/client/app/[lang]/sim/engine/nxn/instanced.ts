@@ -142,6 +142,8 @@ export default class InstancedRenderer extends THREE.Group {
   private tmpRotMat = new THREE.Matrix4();
   private tmpColor = new THREE.Color();
   private tmpQuat = new THREE.Quaternion();
+  /** 独立临时矩阵,给 getCubeletRenderMatrix 读 moving 实例用(不与 tmpMat 抢)。 */
+  private _logoInstMat = new THREE.Matrix4();
 
   // Mirror Cube: per-instance non-uniform cuboid center (×3) + scale (×3), indexed by
   // instance idx. null = standard NxN (uniform — the static/sticker matrices come
@@ -651,6 +653,27 @@ export default class InstancedRenderer extends THREE.Group {
       this.movingInner.instanceMatrix.needsUpdate = true;
     }
     this.cube.dirty = true;
+  }
+
+  /** 取「原始槽位 = initialIdx 的那块实体 cubie」当前的渲染矩阵(cube 本地坐标系):
+   *  转层动画进行中(该块在 moving 切片里)返回带瞬时旋转的矩阵,否则返回 static 矩阵。
+   *  给 U 面中心 logo 贴片用,使其牢牢贴在它所在的中心块上随转动。返回 `out`(块未渲染则 null)。 */
+  getCubeletRenderMatrix(initialIdx: number, out: THREE.Matrix4): THREE.Matrix4 | null {
+    const cubelet = this.cube.initials.get(initialIdx);
+    if (!cubelet || cubelet._instIdx < 0) return null;
+    const instIdx = cubelet._instIdx;
+    this.staticFrame.getMatrixAt(instIdx, out);
+    // static 槽被隐藏(HIDE_MAT = scale 0 → 第一列长度为 0)⇒ 该块正在某个 moving 切片里。
+    // movingFrame.matrix 携带单切片快路径的 quaternion(+镜面 pivot 平移);多切片模式下旋转
+    // 已 bake 进 per-instance、mesh.matrix 为单位阵 —— 故 movingFrame.matrix · 实例矩阵 两种
+    // 模式都给出正确渲染矩阵。(纯 90° 旋转的合法 static 矩阵第一列必为单位轴,长度 1,不会误判。)
+    const e = out.elements;
+    if (e[0] * e[0] + e[1] * e[1] + e[2] * e[2] === 0) {
+      this.movingFrame.updateMatrix();
+      this.movingFrame.getMatrixAt(instIdx, this._logoInstMat);
+      out.multiplyMatrices(this.movingFrame.matrix, this._logoInstMat);
+    }
+    return out;
   }
 
   /** cube.reset() 后调:全部 cubelet 在初始位置,重建所有 static 矩阵。 */

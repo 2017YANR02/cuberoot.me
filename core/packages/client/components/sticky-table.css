@@ -1,0 +1,22 @@
+/* 统计表「列头吸顶」共用工具 —— 原选手页 wp-sticky-* 抽出,全站统计表复用,别再各页另写一套。
+   用法:外层滚动容器加 .sticky-scroll,<table> 加 .sticky-thead(thead 只写一次,列头自动吸顶)。
+   机制:thead th position:sticky top:0 吸到视口顶端(全站无固定顶栏,只有右下角浮钮 → top:0)。
+        桌面让容器 overflow:visible,使 thead 以页面为滚动上下文吸顶;窄屏容器横滚 → 关吸顶。
+   契约(每张表自备,本工具不管):
+     ① th 必须有不透明背景,否则下方行会透出;各表按自己的表面色设 thead th { background } 。
+     ② border-collapse 下吸顶会丢 th 下边框 → 本工具用 box-shadow 补一条下划线,
+        颜色取 --sticky-thead-border(各页/各表可设成自己的边框色,默认取通用前景描边)。*/
+.sticky-scroll { overflow: visible; }
+
+.sticky-thead thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  box-shadow: inset 0 -1px 0 var(--sticky-thead-border, color-mix(in srgb, var(--foreground) 12%, transparent));
+}
+
+/* 窄屏:表宽常超屏 → 容器横向滚动;横滚容器会破坏「相对视口」吸顶,移动端索性不吸顶。 */
+@media (max-width: 767px) {
+  .sticky-scroll { overflow-x: auto; }
+  .sticky-thead thead th { position: static; box-shadow: none; }
+}

@@ -211,8 +211,10 @@ html:not([data-palette-scheme=dark]) .wse-page {
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
   padding: 12px;
-  overflow-x: auto;
 }
+/* 默认横向滚动兜底;但当容器同时是 sticky 列头容器(.sticky-scroll)时不能自身横滚 —— 横滚容器会破坏
+   thead「相对视口」吸顶,改交给共用工具 .sticky-scroll(桌面 overflow:visible / 窄屏 overflow-x:auto)。 */
+.wse-table-wrapper:not(.sticky-scroll) { overflow-x: auto; }
 
 /* 含「详细成绩」attempts 网格的统计页(/wca/records、/wca/results 单项视图)表很宽:
    1180px 上限会裁掉右侧列(5 把成绩只显示 4 把)。整页按内容自适应宽度并居中(.wse-page 自带
@@ -220,6 +222,9 @@ html:not([data-palette-scheme=dark]) .wse-page {
    横向滚动兜底。`:has(.wse-attempts-col)` 仅在该列存在(单项数据视图)时生效,其他模式维持常规宽度。 */
 .wse-page:has(.wse-attempts-col) { width: fit-content; max-width: 100%; }
 .wse-page:has(.wse-attempts-col) .wse-table-wrapper { width: fit-content; max-width: 100%; }
+/* 名次和(SOR)表列多(项目逐列)同样会超 1180:页面按内容自适应并居中,sticky 列头随横向滚动对齐。 */
+.wse-page:has(.wse-sor-evcell) { width: fit-content; max-width: 100%; }
+.wse-page:has(.wse-sor-evcell) .wse-table-wrapper { width: fit-content; max-width: 100%; }
 /* 详细成绩:每把一列(真表格列,见 AttemptHeaderCells / AttemptCells)。表头数字 th 去掉通用表头的
    uppercase / letter-spacing / 12px,跟数据列同字号,数字与成绩同列居中对齐。 */
 .wse-table th.wse-attempts-col {
@@ -270,6 +275,10 @@ html:not([data-palette-scheme=dark]) .wse-page {
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
+/* sticky 列头(.sticky-thead,见 components/sticky-table.css):列头须不透明背景盖住下方滚动行,
+   取外层 wrapper 同款表面色(2% 前景叠在页面 --card 上);--sticky-thead-border 供共用工具画吸顶下划线。 */
+.wse-table thead th { background: color-mix(in srgb, var(--foreground) 2%, var(--card)); }
+.wse-table { --sticky-thead-border: color-mix(in srgb, var(--foreground) 10%, transparent); }
 .wse-table tbody tr:hover { background: color-mix(in srgb, var(--foreground) 3%, transparent); }
 /* 可排序表头(空态名录):按钮形态但继承 th 字体外观 */
 .wse-th-sort {

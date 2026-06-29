@@ -67,8 +67,8 @@ export default function RecordsTab({ results, comps, isZh }: Props) {
   }
 
   return (
-    <div className="wp-records wp-sticky-scroll">
-      <table className="wp-bycomp-table wp-records-table wp-sticky-table">
+    <div className="wp-records sticky-scroll">
+      <table className="wp-bycomp-table wp-records-table sticky-thead">
         <thead>
           <tr>
             <th>{t('项目', 'Event')}</th>

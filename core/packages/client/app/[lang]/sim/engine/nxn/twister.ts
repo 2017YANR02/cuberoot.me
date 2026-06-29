@@ -405,6 +405,10 @@ export default class Twister {
     tweener.finish();
   }
 
+  /** true = 设置面板「动画」关:撤销 / 重做也瞬切(fast),不播放转动动画。手动转 / 拖层 / 单击
+   *  各自路径已单独走 fast;这条只管 undo/redo(它们在 twister 内部硬编了 fast=false)。 */
+  public instantTurns = false;
+
   /** 上一次 setup() 同步 CPU 耗时,DEV bench 用。0 = 还没跑过。 */
   public lastSetupCpuMs = 0;
   /** sub-bench: 各阶段耗时,DEV 用。{finish,reset,parse,loop,rebuild,total} ms */
@@ -808,7 +812,7 @@ export default class Twister {
     this.cube.history.redoStack.push(original);
     const reverse = new TwistAction(last.sign, !last.reverse, 1);
     this.suppressRedoClear = true;
-    this.twist(reverse, false, true);
+    this.twist(reverse, this.instantTurns, true);
     this.suppressRedoClear = false;
   }
 
@@ -818,7 +822,7 @@ export default class Twister {
       return;
     }
     this.suppressRedoClear = true;
-    this.twist(action, false, true);
+    this.twist(action, this.instantTurns, true);
     this.suppressRedoClear = false;
   }
 }

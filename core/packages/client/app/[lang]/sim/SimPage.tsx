@@ -465,6 +465,8 @@ export default function SimPage() {
       if (face === null) return;
       const cube = asNxN(world);
       if (!cube) return;
+      // 「动画」关 → 单击表面转动也瞬切(fast=true),与拖层 / 键盘一致。
+      const fast = settingsRef.current.animatePlayback === false;
       const N = cube.order;
       const x = idx % N;
       const y = Math.floor((idx % (N * N)) / N);
@@ -475,7 +477,7 @@ export default function SimPage() {
         const rule = CLICK_RULES_3X3[`${face}_${x}_${y}_${z}`];
         if (rule) {
           const action = new TwistAction(rule.sign, rule.reverse !== modInvert, 1);
-          cube.twister.twist(action, false, true);
+          cube.twister.twist(action, fast, true);
           userMoveRef.current?.(action);
           return;
         }
@@ -500,7 +502,7 @@ export default function SimPage() {
         sign = opts.alt ? CubeGroup.wideFromClick(axis, layer, N).sign : group.name;
       }
       const action = new TwistAction(sign, reverse, 1);
-      cube.twister.twist(action, false, true);
+      cube.twister.twist(action, fast, true);
       userMoveRef.current?.(action);
     });
 
@@ -1070,16 +1072,7 @@ export default function SimPage() {
       lastFrameAt = now;
       // Corner-turners (Ivy/Dino/Redi) surface their own twist-axis labels at the
       // corners instead of the 6-face U/D/L/R/F/B letters (those don't describe a
-      // corner turn — skill pitfall #10). Each puzzle reveals its set on its own
-      // drag-rotate flag; NxN via the controller.
-      const loopCg = cornerGestureFor(world.puzzleKind);
-      const viewing = world.puzzleKind === 'sq1'
-        ? sq1Rotating
-        : world.puzzleKind === 'ivy'
-          ? ivyRotating
-          : loopCg
-            ? loopCg.isOrbiting()
-            : world.controller.isViewRotating;
+      // corner turn — skill pitfall #10); each puzzle picks its set by puzzleKind.
       const activeHints = world.puzzleKind === 'ivy' ? world.ivyHints
         : world.puzzleKind === 'dino' ? world.dinoHints
           : world.puzzleKind === 'redi' ? world.rediHints
@@ -1091,12 +1084,18 @@ export default function SimPage() {
                       : world.puzzleKind === 'fto' ? world.ftoHints
                         : world.faceHints;
       const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints, world.pyraHints, world.megaHints, world.ftoHints];
-      if (viewing) activeHints.show(); else activeHints.hide();
+      // 方位字母完全由设置面板「字母」开关控制:开=该拼图的方位标签常驻,关=完全不显示
+      // (拖视角 / 拖层时也不再浮现 —— 这个开关是字母的唯一开关,用户明确要求)。
+      const showLabels = settingsRef.current.faceLabels === true;
+      if (showLabels) activeHints.show(); else activeHints.hide();
       for (const h of allHints) if (h !== activeHints) h.hide();
       let hintsAnimating = false;
       for (const h of allHints) if (h.tick(dt)) hintsAnimating = true;
       if (hintsAnimating) world.dirty = true;
       if (world.dirty || world.cube.dirty) {
+        // 让 U 面中心 logo 贴片跟住它所贴的实体中心块(转层动画 + 整方旋转都跟手)。
+        // 仅 NxN/镜面 Cube 有此方法,duck-type 调用,其它拼图自动跳过。
+        (world.cube as { updateLogoTransform?: () => void }).updateLogoTransform?.();
         renderer.clear();
         renderer.render(world.scene, world.camera);
         renderBackView(world);

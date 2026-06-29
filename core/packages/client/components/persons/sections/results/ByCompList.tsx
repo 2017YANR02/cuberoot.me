@@ -168,8 +168,8 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
       )}
       {/* 合并成单表:列头只在表顶出现一次并 sticky 悬浮(仿纪录 tab);每场比赛 = 一个 <tbody> 组,
           组头行(比赛名 + 日期)跨整行,列头不再每场重复 */}
-      <div className="wp-sticky-scroll">
-        <table className="wp-bycomp-table wp-sticky-table">
+      <div className="sticky-scroll">
+        <table className="wp-bycomp-table sticky-thead">
           <thead>
             <tr>
               <th>{t('项目', 'Event')}</th>
