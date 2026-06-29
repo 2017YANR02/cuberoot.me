@@ -356,8 +356,8 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
     const penalties = resp.penalties ?? [];
     const hideEv = (ev: string) => stat.fixed?.type === 'average' && NO_AVERAGE.has(ev);  // 平均榜下无平均项目不成列
     return (
-      <div className="fun-stats-table-scroll">
-        <table className="fun-stats-table fun-stats-matrix">
+      <div className="fun-stats-table-scroll sticky-scroll">
+        <table className="fun-stats-table fun-stats-matrix sticky-thead">
           <thead>
             <tr>
               <th>{t('名次', 'Rank')}</th>
@@ -502,8 +502,8 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
       return formatWcaResult(Math.round(v / 3), event, bestType ? 'single' : 'average');
     };
     return (
-      <div className="fun-stats-table-scroll">
-        <table className="fun-stats-table">
+      <div className="fun-stats-table-scroll sticky-scroll">
+        <table className="fun-stats-table sticky-thead">
           <thead>
             <tr>
               <th>#</th><th>{t('比赛', 'Competition')}</th><th>{t('日期', 'Date')}</th>
@@ -534,8 +534,8 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
 
   const rowKey = (r: any) => r.wcaId ?? r.compId ?? r.countryId ?? String(r.rank);
   return (
-    <div className="fun-stats-table-scroll">
-      <table className="fun-stats-table">
+    <div className="fun-stats-table-scroll sticky-scroll">
+      <table className="fun-stats-table sticky-thead">
         <thead><tr>{cols.map((c, i) => <th key={i}>{c.h}</th>)}</tr></thead>
         <tbody>
           {rows.map((r: any, ri: number) => (

@@ -241,7 +241,7 @@ function RecordsPageInner() {
         />
       </div>
 
-      <div className="wse-table-wrapper">
+      <div className="wse-table-wrapper sticky-scroll">
         {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
@@ -306,7 +306,7 @@ function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
   const attemptCols = useMemo(() => Math.min(5, rows.reduce((m, r) => Math.max(m, r.a?.length ?? 0), 0)), [rows]);
 
   return (
-    <table className={`wse-table records-table${showEvent ? ' wse-multi-event' : ''}`}>
+    <table className={`wse-table records-table sticky-thead${showEvent ? ' wse-multi-event' : ''}`}>
       <thead>
         <tr>
           <th>{tr({ zh: '类型', en: 'Type'

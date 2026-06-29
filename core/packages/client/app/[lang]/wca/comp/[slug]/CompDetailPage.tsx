@@ -2046,7 +2046,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                     : undefined;
                   const solveCell = <SolveValue value={effAttempts[i] ?? 0} penalty={pen} format={(v) => formatLive(v, r.e, false)} />;
                   return (
-                  <td key={i} className={`td-attempt ${isAo5Bracketed(effAttempts, i) ? 'td-attempt-trimmed' : ''}`}>
+                  <td key={i} className={`td-attempt ${isAo5Bracketed(effAttempts, i) ? 'td-attempt-trimmed' : ''} ${reconId ? 'td-attempt-has-recon' : ''}`}>
                     {showEdit ? (
                       <AttemptEditPopover
                         value={effAttempts[i] ?? 0}

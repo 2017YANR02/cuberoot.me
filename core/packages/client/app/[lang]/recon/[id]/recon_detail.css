@@ -601,37 +601,38 @@
   font-weight: 400;
 }
 
-/* attempts 单元格内每把支持单点跳转(有对应复盘时,渲染为 Link)
-   不用 background — 7ch 列宽 + text-align:right 会让方块比内容大得突兀;用颜色 + 下划线 */
+/* attempts 单元格内每把:有复盘 → Link 跳转,当前把 → 实色下划线标注。
+   统一用 border-bottom 当下划线 —— text-decoration 在带 vertical-align:super 的 PR 角标处
+   会随角标抬升断成两段(当前把 hover 都中招),border 画在盒子下沿连续不受内联子元素影响。
+   每格预留 2px 透明下边框 + justify-self:end 收缩贴住内容(数字 + 角标),hover/当前只切边框色,
+   不增减边框 → 无布局跳动、线一整条。 */
+.same-comp-event-table .wp-att {
+  justify-self: end;
+  border-bottom: 2px solid transparent;
+}
 .same-comp-event-att-link {
   text-decoration: none;
   color: var(--accent);
-  transition: color 0.12s, text-decoration-color 0.12s;
+  transition: color 0.12s, border-color 0.12s;
 }
-.same-comp-event-att-link:hover {
+.same-comp-event-table .same-comp-event-att-link:hover {
   color: var(--foreground);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
+  border-bottom-color: currentColor;
 }
-.same-comp-event-att-current {
+.same-comp-event-table .same-comp-event-att-current {
   color: var(--accent);
   font-weight: 700;
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
+  border-bottom-color: currentColor;
 }
-/* 没复盘的成绩:静态白色,只悬停才提示可点(去复盘);区别于有复盘的橙色链接 */
+/* 没复盘的成绩:静态白色,只悬停才提示可点(去复盘),虚线区别于有复盘的实线 */
 .same-comp-event-att-tonew {
   text-decoration: none;
   color: var(--foreground);
-  transition: color 0.12s, text-decoration-color 0.12s;
+  transition: color 0.12s, border-color 0.12s;
 }
-.same-comp-event-att-tonew:hover {
+.same-comp-event-table .same-comp-event-att-tonew:hover {
   color: var(--accent);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
+  border-bottom: 2px dotted currentColor;
 }
 
 /* 表格基础布局 — 复制自 persons.css .wp-bycomp-table */

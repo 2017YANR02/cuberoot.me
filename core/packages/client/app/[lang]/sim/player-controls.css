@@ -478,6 +478,41 @@
   flex: none;
 }
 
+/* 背景选择器:复用 .sim-color-select 弹层 + .sim-swatch-box 色块,只追加各档背景外观。
+   前导 Wallpaper 图标作标签(无文字)。color-select 在此居中(默认 flex-end 是给面色行的)。
+   色值 1:1 对齐 sim.css 的 .sim-canvas-wrap 固定背景。 */
+.sim-bg-toggle {
+  gap: 6px;
+}
+.sim-bg-toggle .sim-color-select {
+  align-self: center;
+}
+.sim-bg-icon {
+  flex: none;
+  color: var(--muted-foreground);
+}
+.sim-bg-box--auto {
+  background-image: linear-gradient(135deg, #ffffff 0 50%, #1c1917 50% 100%);
+}
+.sim-bg-box--white { background-color: #ffffff; }
+.sim-bg-box--dark { background-color: #1c1917; }
+.sim-bg-box--checkerDark {
+  background-color: #1c1917;
+  --sw-grid: color-mix(in srgb, #f0ebe3 18%, transparent);
+}
+.sim-bg-box--checkerLight {
+  background-color: #ffffff;
+  --sw-grid: color-mix(in srgb, #181716 14%, transparent);
+}
+.sim-bg-box--checkerDark,
+.sim-bg-box--checkerLight {
+  background-image:
+    linear-gradient(45deg, var(--sw-grid) 25%, transparent 25%, transparent 75%, var(--sw-grid) 75%),
+    linear-gradient(45deg, var(--sw-grid) 25%, transparent 25%, transparent 75%, var(--sw-grid) 75%);
+  background-position: 0 0, 5px 5px;
+  background-size: 10px 10px;
+}
+
 /* 调试区:「调试」标题单独占一行(复用 .sim-puzzle-section-title),下方一行排
    半转停 / 结构着色 / 挖块,窄屏内部换行。复刻 .sim-puzzle-toggles 的复选框先于
    标签(order:-1)规则,保持与上方网格一致。 */

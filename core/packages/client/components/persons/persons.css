@@ -510,7 +510,7 @@ html[data-theme=dark] .wp-page {
 /* ── 按比赛 (ByCompList) ─────────────────────────────────────────── */
 .wp-bycomp { display: flex; flex-direction: column; gap: 16px; }
 /* 每场比赛 = 一个 <tbody> 组;组头行(比赛名 + 日期)跨整行,替代原先每场一张卡片的卡头.
-   列头只在表顶出现一次并 sticky 悬浮(共用 .wp-sticky-scroll / .wp-sticky-table,见 persons-misc.css). */
+   列头只在表顶出现一次并 sticky 悬浮(共用 .sticky-scroll / .sticky-thead,见 components/sticky-table.css). */
 .wp-bycomp-group-row > th {
     padding: 0; text-align: left; font-weight: 400;
     background: var(--wp-bg);

@@ -216,6 +216,7 @@
 /* 标准行：40px */
 .submit-row .submit-field > .submit-field-input,
 .submit-row .submit-field > .submit-field-select,
+.submit-row .submit-field .comp-picker-input,
 .submit-row .record-select-trigger,
 .submit-row .event-select-trigger,
 .submit-row .submit-solver-pill,
@@ -636,7 +637,8 @@
 
 .submit-field .submit-field-input,
 .submit-field .submit-field-select,
-.submit-field .submit-field-textarea {
+.submit-field .submit-field-textarea,
+.submit-field .comp-picker-input {
   padding: 9px 12px;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
@@ -650,7 +652,8 @@
 
 .submit-field .submit-field-input:focus,
 .submit-field .submit-field-select:focus,
-.submit-field .submit-field-textarea:focus {
+.submit-field .submit-field-textarea:focus,
+.submit-field .comp-picker-input:focus {
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
