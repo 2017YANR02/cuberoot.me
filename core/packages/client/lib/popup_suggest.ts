@@ -23,7 +23,7 @@ import { detectStage, F2L_SLOT_DEFS, topEdgesOriented, crossOnDRotation } from '
 import { EDGE_STICKERS } from './sticker_tables';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
-import { lookupZbllAlgs } from './zbll_lookup';
+import { lookupZbllAlgsRobust } from './zbll_lookup';
 import { ollCommentName, pllCommentLabel, isEpll, zbllCommentLabel } from './alg_case_display';
 
 /**
@@ -53,9 +53,12 @@ async function recognizePllCase(pattern: KPattern): Promise<string | null> {
  */
 async function recognizeZbllCase(pattern: KPattern): Promise<string | null> {
   try {
-    const rot = await crossOnDRotation(pattern);
-    const canonical = rot ? pattern.applyAlg(rot) : pattern;
-    return (await lookupZbllAlgs(canonical))[0]?.caseName ?? null;
+    // Frame-invariant robust lookup: works for every cross colour (the old
+    // per-cross-colour fingerprint table missed non-yellow / tilted crosses and
+    // cost ~9.5s to build). crossFaceHome is only a hint — it can be wrong for
+    // ambiguous LL states, so the search falls back to the colour that solves.
+    const info = await detectStage(pattern);
+    return (await lookupZbllAlgsRobust(pattern, info.crossFaceHome))[0]?.caseName ?? null;
   } catch { return null; }
 }
 

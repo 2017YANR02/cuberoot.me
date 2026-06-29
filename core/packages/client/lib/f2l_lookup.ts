@@ -202,11 +202,18 @@ export function warmupF2lTable(): Promise<void> {
 // in the centres-home frame (cross edges home + target pair home + previously
 // solved pairs untouched). Colour-neutral and complete for every orientation.
 
-const PRE_ROTS = [
-  '', 'x', 'x2', "x'", 'y', 'y2', "y'", 'z', 'z2', "z'",
-  'x y', 'x y2', "x y'", "x' y", "x' y2", "x' y'", 'x2 y', 'x2 y2', "x2 y'",
-  'y x', 'y x2', "y x'", "y' x", "y' x'",
-] as const;
+// All 24 cube orientations = (face-on-top) × (y spin), the SAME construction as
+// stage_detect's ORIENTATION_ALGS. The earlier hand-written list was malformed
+// (only 22 distinct orientations: 2 duplicated, 2 missing), which silently
+// dropped two whole orientations from every robust search — e.g. a real ZBLL
+// state whose only solving orientation was one of the missing two returned zero.
+const PRE_ROTS: readonly string[] = (() => {
+  const out: string[] = [];
+  for (const top of ['', 'x', 'x2', "x'", 'z', "z'"]) {
+    for (const y of ['', 'y', 'y2', "y'"]) out.push([top, y].filter(Boolean).join(' '));
+  }
+  return out;
+})();
 const PRE_AUFS = ['', 'U', 'U2', "U'"] as const;
 /** F2L slot face opposite each face (U↔D, R↔L, F↔B) — for the last-layer face. */
 const OPP_FACE = [5, 3, 4, 1, 2, 0] as const;
@@ -236,10 +243,11 @@ async function getFlatF2l(): Promise<FlatAlg[]> {
   return _flatF2l;
 }
 
-interface PreMod { alg: string; t: KTransformation; }
+export interface PreMod { alg: string; t: KTransformation; }
 let _preMods: Promise<PreMod[]> | null = null;
-/** 24 cube rotations × 4 AUF as precomputed (rotation∘AUF) transformations. */
-async function getPreMods(): Promise<PreMod[]> {
+/** 24 cube rotations × 4 AUF as precomputed (rotation∘AUF) transformations.
+ *  Shared by the F2L and last-layer (ZBLL) robust frame-invariant searches. */
+export async function getPreMods(): Promise<PreMod[]> {
   if (_preMods) return _preMods;
   _preMods = (async () => {
     const kp = await getCube3();
