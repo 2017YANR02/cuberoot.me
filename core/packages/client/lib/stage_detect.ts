@@ -27,7 +27,7 @@
  * pattern: piece 1=R, 2=F, 3=L, 4=B (the four side-face colors). Default WCA
  * scheme: R=red, F=green, L=orange, B=blue.
  */
-import type { KPattern } from 'cubing/kpuzzle';
+import type { KPattern, KTransformation } from 'cubing/kpuzzle';
 import { getCube3 } from './cube3';
 import {
   EDGE_STICKERS, CORNER_STICKERS,
@@ -107,6 +107,12 @@ export type Stage =
 export interface StageInfo {
   /** Highest-completion stage the cube currently sits at. */
   stage: Stage;
+  /**
+   * Home-frame face index (0..5) of the working cross — equivalently the cross
+   * COLOUR code (colour c's centre homes to face c). Frame-invariant. `5`
+   * (yellow/D) for `solved`; the pscross/cross face otherwise.
+   */
+  crossFaceHome: number;
   /**
    * F2L slots that are solved. For cross/xcross/xxcross/xxxcross stages this
    * tells the caller WHICH slots got included beyond the bare cross.
@@ -348,7 +354,7 @@ export async function detectStage(pattern: KPattern): Promise<StageInfo> {
   const allCorners = [0, 1, 2, 3, 4, 5, 6, 7].every(i => cornerHome(home, i));
   if (allEdges && allCorners) {
     const allPairs = F2L_SLOT_DEFS.map(s => [s.cornerSlot, s.edgeSlot] as [number, number]);
-    return { stage: 'solved', solvedSlots: ['FR', 'FL', 'BL', 'BR'], solvedPairs: allPairs, crossColor: colorInfo(5), canonicalPattern: home };
+    return { stage: 'solved', crossFaceHome: 5, solvedSlots: ['FR', 'FL', 'BL', 'BR'], solvedPairs: allPairs, crossColor: colorInfo(5), canonicalPattern: home };
   }
 
   // Pick the face whose cross is solved (preferring the one with the most F2L
@@ -367,10 +373,10 @@ export async function detectStage(pattern: KPattern): Promise<StageInfo> {
       const m = FACE_MOVE[f];
       if ([m, `${m}2`, `${m}'`].some(mv => crossEdgesSolved(home.applyAlg(mv), f))) {
         const canonical = FACE_TO_D_ROT[f] ? home.applyAlg(FACE_TO_D_ROT[f]) : home;
-        return { stage: 'pscross', solvedSlots: [], solvedPairs: [], crossColor: colorInfo(f), canonicalPattern: canonical };
+        return { stage: 'pscross', crossFaceHome: f, solvedSlots: [], solvedPairs: [], crossColor: colorInfo(f), canonicalPattern: canonical };
       }
     }
-    return { stage: 'none', solvedSlots: [], solvedPairs: [], crossColor: colorInfo(5), canonicalPattern: home };
+    return { stage: 'none', crossFaceHome: 5, solvedSlots: [], solvedPairs: [], crossColor: colorInfo(5), canonicalPattern: home };
   }
 
   const rotToD = FACE_TO_D_ROT[bestF];
@@ -387,14 +393,14 @@ export async function detectStage(pattern: KPattern): Promise<StageInfo> {
 
   if (bestSlots.length === 4) {
     if (ollSolved(canonical)) {
-      return { stage: 'oll', solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
+      return { stage: 'oll', crossFaceHome: bestF, solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
     }
-    return { stage: 'f2l', solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
+    return { stage: 'f2l', crossFaceHome: bestF, solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
   }
   const stage: Stage = bestSlots.length === 3 ? 'xxxcross'
     : bestSlots.length === 2 ? 'xxcross'
     : bestSlots.length === 1 ? 'xcross' : 'cross';
-  return { stage, solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
+  return { stage, crossFaceHome: bestF, solvedSlots, solvedPairs, crossColor, canonicalPattern: canonical };
 }
 
 /**
@@ -476,6 +482,44 @@ export async function defaultCentersRotation(pattern: KPattern): Promise<string>
   }
   return '';
 }
+
+// ── Fast frame-invariant primitives (for tight brute-force loops) ────────────
+// The 24 orientation rotations as KTransformations (no per-call alg parsing).
+let _orientTransforms: KTransformation[] | null = null;
+async function orientTransforms(): Promise<KTransformation[]> {
+  if (_orientTransforms) return _orientTransforms;
+  const kp = await getCube3();
+  _orientTransforms = ORIENTATION_ALGS.map(a => a ? kp.algToTransformation(a) : kp.identityTransformation());
+  return _orientTransforms;
+}
+
+// Centers-arrangement → the rotation transformation that brings centers home.
+// There are only 24 distinct arrangements, so this fills in O(1) after warmup.
+const _centersTransformCache = new Map<string, KTransformation | null>();
+/**
+ * Like `defaultCentersRotation` but returns a cached KTransformation, so callers
+ * normalising thousands of post-move patterns to the centres-home frame pay one
+ * `applyTransformation` each (no alg re-parse, no 24-search). Returns null for
+ * invalid/unreachable centre arrangements.
+ */
+export async function defaultCentersTransform(pattern: KPattern): Promise<KTransformation | null> {
+  const key = pattern.patternData.CENTERS.pieces.join(',');
+  const hit = _centersTransformCache.get(key);
+  if (hit !== undefined) return hit;
+  const ts = await orientTransforms();
+  let found: KTransformation | null = null;
+  for (const t of ts) {
+    const c = pattern.applyTransformation(t).patternData.CENTERS.pieces;
+    if (c[0] === 0 && c[1] === 1 && c[2] === 2 && c[3] === 3 && c[4] === 4 && c[5] === 5) { found = t; break; }
+  }
+  _centersTransformCache.set(key, found);
+  return found;
+}
+
+/** Frame-invariant: home id of the cubie sitting at each F2L slot of cross face
+ *  `f`, plus the slot's two lateral faces — re-exported geometry for callers. */
+export { CROSS_EDGES_BY_FACE, F2L_SLOTS_BY_FACE, edgeHome, cornerHome };
+export type { SlotGeom };
 
 /** Deep sticker-level equality of two patterns (pieces + orientation across all orbits). */
 function sameCells(a: KPattern, b: KPattern): boolean {

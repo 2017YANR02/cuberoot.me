@@ -8,9 +8,9 @@ import type { KPattern } from 'cubing/kpuzzle';
 import { patternFromAlg, isAlgPrefix, simplifyAlg } from './cube3';
 import {
   detectStage, crossOnDRotation,
-  evaluateCanonical, F2L_SLOT_DEFS, topEdgesOriented,
+  evaluateCanonical, F2L_SLOT_DEFS, F2L_SLOTS_BY_FACE, topEdgesOriented,
 } from './stage_detect';
-import { lookupF2lAlgs, lookupF2lAlgsBrute } from './f2l_lookup';
+import { lookupF2lAlgsRobust } from './f2l_lookup';
 import { lookupOllAlgs } from './oll_lookup';
 import { lookupPllAlgs } from './pll_lookup';
 import { lookupZbllAlgs } from './zbll_lookup';
@@ -191,69 +191,66 @@ export async function suggestAlg(
   let prefixFilteredOutAll = true;
 
   if (category === 'f2l') {
-    const preEval = evaluateCanonical(startCanonical);
-    if (!preEval.crossOk) return { kind: 'empty', reasonKey: 'recon.autofill.empty.no_cross' };
-    const solvedSet = new Set(preEval.solvedSlots);
-    // At xxxcross (3 pairs done), the 4th pair may be solved with a normal F2L
-    // alg OR with a ZBLS alg that ALSO orients the LL edges. Query both DBs
-    // and tag each suggestion with the category that produced it — the badge
-    // labels the row "F2L" vs "ZBLS" so the user knows which they're choosing.
-    const tryZbls = stageInfo.stage === 'xxxcross';
-    for (let slotIdx = 0; slotIdx < F2L_SLOT_DEFS.length; slotIdx++) {
-      const slotId = F2L_SLOT_DEFS[slotIdx].id;
-      if (solvedSet.has(slotId)) continue;
-      // Fast O(1) fingerprint path first; fall back to brute force when it
-      // misses (non-yellow cross, or algs whose setup moves the centres). The
-      // brute path is colour-neutral and complete — see f2l_lookup.ts.
-      let f2lEntries = await lookupF2lAlgs(startCanonical, slotIdx);
-      if (f2lEntries.length === 0) {
-        f2lEntries = await lookupF2lAlgsBrute(startCanonical, slotIdx, preEval.solvedSlots);
-      }
-      let zblsEntries = tryZbls ? await lookupZblsAlgs(startCanonical, slotIdx) : [];
-      // Brute-force fallback: when the fingerprint lookup misses (most cases
-      // where EO isn't already done), iterate the whole ZBLS DB and verify
-      // each alg actually solves slot+EO from the user's state. This catches
-      // EOLS-style algs that the fingerprint table doesn't index.
-      if (tryZbls && zblsEntries.length === 0) {
-        const prevSolvedEdgeSlots: number[] = [];
-        for (const id of preEval.solvedSlots) {
-          const def = _SLOTS_FOR_BRUTE.find(d => d.id === id);
-          if (def) prevSolvedEdgeSlots.push(def.edgeSlot);
+    // Identify the cross + already-solved pairs frame-invariantly via detectStage
+    // (NOT crossOnDRotation): for a tilted / non-yellow solve two faces can both
+    // momentarily look like a cross, and crossOnDRotation may pick the wrong one,
+    // landing the lookup in a frame where the cross-on-D DB algs don't apply at
+    // all — which is exactly what broke non-yellow F2L autofill. detectStage's
+    // piece-identity choice matches the user's actual solve.
+    const sInfo = await detectStage(startState);
+    if (!crossDone(sInfo.stage)) return { kind: 'empty', reasonKey: 'recon.autofill.empty.no_cross' };
+    const crossFace = sInfo.crossFaceHome;
+    const solvedKeys = new Set(sInfo.solvedPairs.map(([c, e]) => `${c}.${e}`));
+    const targets = F2L_SLOTS_BY_FACE[crossFace]
+      .filter(p => !solvedKeys.has(`${p.corner}.${p.edge}`))
+      .map(p => [p.corner, p.edge] as [number, number]);
+
+    // Robust, color-neutral, rotation-aware F2L search in the user's RAW frame.
+    // Returns ready-to-insert raw algs and flags those that also finish LL EO
+    // (effectively a ZBLS / EOLS — tagged 'zbls' for the badge + score boost).
+    const robust = await lookupF2lAlgsRobust(startState, {
+      crossFace, prevPairs: sInfo.solvedPairs, targets,
+    });
+    if (robust.length > 0) lookupHadEntries = true;
+    for (const e of robust) {
+      if (!e.alg) continue;
+      if (!isAlgPrefix(lineMovesUpToCaret, e.alg)) continue;
+      prefixFilteredOutAll = false;
+      const cat: Alg3x3Set = e.eoDone ? 'zbls' : 'f2l';
+      const bonus = e.eoDone ? 5 : 0;
+      scored.push({ text: e.alg, category: cat, caseName: e.caseName, score: 100 + bonus - e.alg.length * 0.01 });
+    }
+
+    // At xxxcross also query the dedicated ZBLS DB (EOLS-style algs that solve
+    // the last slot AND orient LL edges but aren't in the F2L DB). These come
+    // back in the cross-on-D canonical frame, so prefix canonRot for execution.
+    if (sInfo.stage === 'xxxcross') {
+      const preEval = evaluateCanonical(startCanonical);
+      for (let slotIdx = 0; slotIdx < F2L_SLOT_DEFS.length; slotIdx++) {
+        const slotId = F2L_SLOT_DEFS[slotIdx].id;
+        if (preEval.solvedSlots.includes(slotId)) continue;
+        let zblsEntries = await lookupZblsAlgs(startCanonical, slotIdx);
+        if (zblsEntries.length === 0) {
+          const prevSolvedEdgeSlots: number[] = [];
+          for (const id of preEval.solvedSlots) {
+            const def = _SLOTS_FOR_BRUTE.find(d => d.id === id);
+            if (def) prevSolvedEdgeSlots.push(def.edgeSlot);
+          }
+          zblsEntries = await lookupZblsAlgsBrute(startCanonical, slotIdx, prevSolvedEdgeSlots);
         }
-        zblsEntries = await lookupZblsAlgsBrute(startCanonical, slotIdx, prevSolvedEdgeSlots);
-      }
-      const sources: Array<{ entries: typeof f2lEntries; cat: Alg3x3Set }> = [
-        { entries: f2lEntries, cat: 'f2l' as const },
-        { entries: zblsEntries, cat: 'zbls' as const },
-      ];
-      for (const { entries, cat } of sources) {
-        if (entries.length > 0) lookupHadEntries = true;
-        for (const e of entries) {
+        if (zblsEntries.length > 0) lookupHadEntries = true;
+        for (const e of zblsEntries) {
           const rawAlg = canonRot ? simplifyAlg(`${canonRot} ${e.alg}`) : e.alg;
           if (!rawAlg) continue;
           if (!isAlgPrefix(lineMovesUpToCaret, rawAlg)) continue;
           prefixFilteredOutAll = false;
-          // Verify in the canonical (cross-on-D) frame so slot naming stays in
-          // step with preEval. detectStage(post) would re-run crossOnDRotation
-          // and could land on a different y-alignment, renaming FR/FL/BL/BR and
-          // spuriously rejecting valid algs (the non-yellow-cross failure mode).
           let post: KPattern;
           try { post = startCanonical.applyAlg(e.alg); } catch { continue; }
           const ev = evaluateCanonical(post);
           if (!ev.solvedSlots.includes(slotId)) continue;
-          let preserved = true;
-          for (const prevSlot of preEval.solvedSlots) {
-            if (!ev.solvedSlots.includes(prevSlot)) { preserved = false; break; }
-          }
-          if (!preserved) continue;
-          // ZBLS labeling: at xxxcross, if the alg produces a state where all 4
-          // LL edges are oriented, it's effectively a ZBLS solve regardless of
-          // which DB it came from. Re-tag as 'zbls' so the badge reflects what
-          // the alg actually accomplishes, and give it a score boost (saves a
-          // future OLL — user can go straight to ZBLL).
-          const isZbls = stageInfo.stage === 'xxxcross' && topEdgesOriented(post);
-          const bonus = isZbls ? 5 : 0;
-          scored.push({ text: rawAlg, category: isZbls ? 'zbls' : cat, caseName: e.caseName, score: 100 + bonus - rawAlg.length * 0.01 });
+          if (!preEval.solvedSlots.every(s => ev.solvedSlots.includes(s))) continue;
+          if (!topEdgesOriented(post)) continue;
+          scored.push({ text: rawAlg, category: 'zbls', caseName: e.caseName, score: 105 - rawAlg.length * 0.01 });
         }
       }
     }
