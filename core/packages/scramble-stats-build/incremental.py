@@ -161,6 +161,21 @@ def _download_with_progress(url: str, dest: str) -> None:
             print(f"    {done/1e6:.0f} MB (无 Content-Length)", flush=True)
 
 
+def _prune_cache(keep_path: str) -> None:
+    """cache/ 恒只留当前 export zip(用户要求"永远只有一个"), 删其余 WCA_export_*.tsv.zip。"""
+    keep = os.path.abspath(keep_path)
+    removed = 0
+    for p in glob.glob(os.path.join(CACHE_DIR, "WCA_export_*.tsv.zip")):
+        if os.path.abspath(p) != keep:
+            try:
+                os.remove(p)
+                removed += 1
+            except OSError:
+                pass
+    if removed:
+        print(f"  cache 清理: 删 {removed} 个旧 export zip(只留 {os.path.basename(keep)})")
+
+
 def fetch_export(args) -> tuple[str, dict]:
     """返回 (tsv_dir 含 Scrambles.tsv/Competitions.tsv, meta)。"""
     os.makedirs(CACHE_DIR, exist_ok=True)
@@ -202,15 +217,34 @@ def fetch_export(args) -> tuple[str, dict]:
                 raise SystemExit(f"下载的 export 不是合法 zip: {zip_path}")
             print(f"  下好 {os.path.getsize(zip_path)/1e6:.0f} MB")
 
+    if not args.export_zip:  # 手动 --export-zip(可能在 cache 外)不清理;正常/缓存/--use-cached 路径恒留一个
+        _prune_cache(zip_path)
+
     out_dir = os.path.join(INCR_DIR, "tsv")
     os.makedirs(out_dir, exist_ok=True)
+    scr_tsv, comp_tsv = os.path.join(out_dir, "Scrambles.tsv"), os.path.join(out_dir, "Competitions.tsv")
+    # 同版 export 且 TSV 已在 -> 跳过重新解压(下游只读这俩, 没人改, 可跨次复用; 省 ~30s 本地 I/O)。
+    # 标记仅在解压成功后落盘, 故被打断的半截解压(标记缺/旧)下次必重解, 不会复用残文件。
+    marker = os.path.join(out_dir, ".export_date")
+    ed = str(meta.get("export_date", "") or "")
+    prev = ""
+    if os.path.exists(marker):
+        with open(marker, "r", encoding="utf-8") as f:
+            prev = f.read().strip()
+    if (not args.export_zip and ed and ed not in ("manual", "cached", "source-csv")
+            and prev == ed and os.path.exists(scr_tsv) and os.path.exists(comp_tsv)):
+        print(f"  tsv/ 已是 {ed} 的解压结果, 跳过重新解压")
+        return out_dir, meta
     with zipfile.ZipFile(zip_path) as z:
         for name in z.namelist():
             low = name.lower()
             if "scramble" in low and low.endswith(".tsv"):
-                _extract_to(z, name, os.path.join(out_dir, "Scrambles.tsv"))
+                _extract_to(z, name, scr_tsv)
             elif "competition" in low and low.endswith(".tsv"):
-                _extract_to(z, name, os.path.join(out_dir, "Competitions.tsv"))
+                _extract_to(z, name, comp_tsv)
+    if ed and ed not in ("manual", "cached", "source-csv"):
+        with open(marker, "w", encoding="utf-8") as f:
+            f.write(ed)
     return out_dir, meta
 
 
