@@ -130,8 +130,9 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       // 面色: only the NxN InstancedRenderer (and Mirror, which IS the NxN engine) re-applies
       // face colors live; other engine-body puzzles bake their sticker colors at construction.
       faceColors: isNxN || isMirror,
-      // 顶面 U 中心 logo: NxN-only feature (odd-order center cubie).
-      logo: isNxN,
+      // 顶面 U 中心 logo: NxN InstancedRenderer 特性 —— 含镜面(它是 order-3 NxN 引擎,
+      // 走同一条 cube.setLogo() 路径,有正中心块)。其它 engine-body 拼图无中心贴片不支持。
+      logo: isNxN || isMirror,
       carve: carve !== null,
     },
   };
