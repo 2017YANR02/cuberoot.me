@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / B / bin 13
-# Population in this bin: 214
+# Population in this bin: 215
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 23650001,D F2 R2 U2 R2 U F2 U2 R2 B' U' L' U F' U L2 B' F' L' D2,B,San Diego Summer Splash 2014 (2014-05-24),333 R1 B E2
@@ -191,7 +191,7 @@
 4754627001,R U F2 U' R2 D2 F' L2 U2 F' L2 U2 B L' D F2 L' R B' D',B,Saint-Augustin B 2025 (2025-05-25),333 R1 B E1
 4789800001,L2 B2 D2 L R2 D2 R F2 D2 F R2 F2 D F R' U' L2 F' U2,B,Quixeramobim Open 2025 (2025-06-08),333 R1 A #4
 4794293011,B2 U2 L2 F2 U2 R' U2 L B2 R2 D R2 B' L' F' D' F R' F2 U' B R,B,Please Be Quiet Nashville 2025 (2025-05-17),333mbf Final A #2
-4858514001,U L2 F' U2 D' F R B L' R2 F2 U B2 U R2 L2 D' L2 U L2 D2 B R,B,Hungarian All-Rounder 7 2025 (2025-07-12),333bf Final B #1
+5723200011,L' U' B2 D L2 U B2 R2 F2 B D2 F U2 R' D L2 D' F U2 B R',B,Hannover Mental Breakdown 2026 (2026-06-27),333mbf Final A #1
 5383935001,F2 L2 U2 R F2 R2 U2 F2 L D2 R' B F U' L D B' L2 R B' L2 U,B,Velilla Open 2026 (2026-02-14~15),333bf Final B E1
 5352818001,D' U2 R2 B' R2 D2 F' L2 U2 B' D2 L' D' R' U' F' D2 R D B',B,Pickering NxNxN Winter 2026 (2026-01-31),333 Final A #3
 4875481001,L2 U2 L2 F2 U2 F' R2 U2 R2 F D2 F' D' F R' B' U' L B F2,B,Calgary Summer B 2025 (2025-07-20),333 Final D E2

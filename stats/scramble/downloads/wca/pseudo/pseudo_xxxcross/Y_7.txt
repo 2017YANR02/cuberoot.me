@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / Y / bin 7
-# Population in this bin: 852
+# Population in this bin: 857
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4187118001,D L2 R2 D2 L B2 R F L' D2 R2 D' L B2 R F,Y,Tarazona de la Mancha Open 2024 (2024-10-12~13),333 R2 A E1
@@ -201,7 +201,7 @@
 791450017,L2 F' D2 R2 D2 R2 F' D2 U2 L' D L U F L2 B' F D2 B L' F',Y,Palmerston North 2018 (2018-05-27),333mbf Final A #1
 792695001,U' F2 D F2 D F2 L2 F2 L2 D R B2 R2 D' B D B2 D' R,Y,Bayou Bash 2018 (2018-06-02),333oh R1 A E1
 3806296001,U' B2 D U2 B' L2 B' U2 F' U2 L2 R' U' R' F2 U2 B D2,Y,The New School Medellín 2024 (2024-05-25~26),333 R1 C E1
-803201001,B R' F' R B2 L' U R2 F' R2 L2 D2 F2 U' R2 D' F2 B2,Y,Venice of the East Open 2018 (2018-06-09),333 R2 A #1
+5719308001,F2 R2 D U B2 D' F' R2 F' U' F R2 U F D B2 L' U',Y,Ulaanbaatar Summer 2026 (2026-06-22),333oh Final B E1
 803933001,L2 F2 L2 U' L2 R2 B2 D' L' D2 U2 R' F' L' B F2 R2 D' L',Y,Indian Nationals 2018 (2018-05-25~27),333oh R1 I #5
 806285001,R' L2 D F R' B2 L U D B2 D' R' F2 U2 F2 R D2 L F2 R2,Y,New Hope Open Spring 2018 (2018-06-16),333 R1 C E1
 810544001,D2 R2 D' B2 R2 U' R2 U R2 F' L B' L' D F2 D' B' U L2,Y,Cajun Cube Clash 2018 (2018-06-23),333 R2 B #4

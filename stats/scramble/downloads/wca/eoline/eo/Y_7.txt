@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eo / Y / bin 7
-# Population in this bin: 106
-# Samples listed: 106 (all entries in this bin)
+# Population in this bin: 107
+# Samples listed: 107 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 1252001,D' B R2 U L' B' R F L' D R L2 U2 R' B2 U2 F2 U2 R2 D2,Y,Shepparton Autumn 2014 (2014-03-22),333 R1 B E2
@@ -111,3 +111,4 @@
 5634516001,U' L' B2 L2 F B2 D B' F2 D2 F2 B2 L' U2 L B2 U' R F L2,Y,Tomelloso Open 2026 (2026-05-16~17),333bf R1 A E1
 5662528001,F U2 R2 F' L2 B F2 L2 F2 D R U' F L2 D' L' B R' B2 U,Y,Liérganes Open 2026 (2026-05-23~24),333 R2 A #3
 5665301001,D L2 R F2 U' B2 D2 F2 R2 D' R2 U F R' B U L' D F U2,Y,Hangzhou Open 2026 (2026-05-23),333 R2 B #3
+5720700001,L2 F2 R' F B L D' R' L2 F2 R2 U2 D' L2 D L2 B L2 D,Y,GAN Warm Up Iloilo 2026 (2026-06-20),333 R2 A #3

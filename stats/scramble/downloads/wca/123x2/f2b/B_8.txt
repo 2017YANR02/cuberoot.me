@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / B / bin 8
-# Population in this bin: 416
+# Population in this bin: 417
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 11598001,B2 U2 B2 F2 L' F2 D2 L' U R2 F2 L2 R B2 D' B2 F L B',B,Coliseo de Tovar 2014 (2014-04-19),333bf Final A E1

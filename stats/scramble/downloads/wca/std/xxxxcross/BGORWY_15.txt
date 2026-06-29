@@ -2,7 +2,7 @@
 # Population in this bin: 1
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 954512001,U L2 D2 B2 U B2 D' R2 U' B L' R' D B' R2 U' F' U' B F2,B,Nacionales Argentinas 2018 (2018-12-08~09),333 R2 A #4

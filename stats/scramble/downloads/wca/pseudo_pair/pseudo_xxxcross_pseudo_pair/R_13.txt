@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / R / bin 13
-# Population in this bin: 215
+# Population in this bin: 217
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 18553001,R' D F' R2 B L' U' D' F L U2 F2 U L2 D R2 F2 R2 F2 D,R,Oficina Open 2014 (2014-05-03~04),333oh R1 A #5
@@ -78,7 +78,7 @@
 1255362029,R2 B L2 F' U2 F' D2 F2 R2 D2 B D B L' U' L R' D' L2 U B' L2,R,Jönköping Side Events 2019 (2019-08-10~11),333mbf Final A E1
 1262828001,R2 D2 R2 B2 U2 F' D2 R2 B' U' F' R' B D' L F' L F L' F2,R,Gaston Toe Twiddling 2019 (2019-08-17),333ft R1 A #3
 1291032002,L2 D' F2 R2 U L2 R2 U R2 F U B L2 U B D2 U' L R D' L' F2,R,Big n Blind in Bangalore 2019 (2019-08-31~09-02),333mbf Final A #3
-1299535001,F2 U2 L2 B2 R2 U L2 F' U2 F L' F2 R' U L D2 L' R' B',R,Polish Open 2019 (2019-09-13~15),333mbf Final A #1
+5718673001,F2 U2 L2 D' R2 B2 R2 D R' B2 F2 U2 B' U' B' D L B U2,R,Lavey-Vous les Mains 2026 (2026-06-20~21),333oh R1 A #1
 1328103001,D2 F2 D' L2 F2 U2 L2 F2 R2 D' F D F2 U R D L B U F,R,Hyderabad Cube Open 2019 (2019-09-28~29),333 R1 B #4
 1334523001,F2 U2 L2 B L2 R2 B2 R2 B L' R' U L' B' F' D R' D2 R2 U2,R,Friki Festival Valledupar 2019 (2019-10-05),333oh R1 A E2
 1366191001,U' D B' L D' L2 F B R' D' R2 L U2 R' F2 L' B2 R D2 L,R,Paraguay Nationals 2019 (2019-10-19~20),333 R1 B #1
@@ -113,7 +113,7 @@
 2398105001,U2 D2 B U' R' D2 B L2 D' F' U2 D2 B' L2 U',R,Taiwan Championship 2022 (2022-12-16~18),333 R1 E E1
 2461342001,B U' R B2 D2 B2 U' L2 D U2 R2 B D' L' D' R B' U2 L2,R,Cozy Cubing Poway 2023 (2023-01-29),333oh R1 A #2
 2485819001,B2 D2 F2 D R2 D2 U L2 B2 R F' L2 B D' B' L2 B' L' R D L2 U',R,Herrljunga Open 2023 (2023-02-11~12),333bf R1 A #1
-2525446001,U F2 U' B U2 L2 D B2 D R2 B2 R2 L B U2 R' B2 D' R,R,Vienna Fasching 2023 (2023-02-25~26),333 R1 C #2
+5727165001,R B' U R2 D F2 D2 R2 D B2 U2 L' F R F2 U L2 U R2 D2,R,BL&D BLD Liestal 2026 (2026-06-27~28),333bf Final A #1
 5554249001,U2 F R2 B' L2 B2 F' L2 B' L D F D' R F2 R D R' F,R,Restart Caracas 2026 (2026-04-12),333 R1 A #5
 2704272001,L B' R' D R2 B2 F2 D2 U' R2 D R' B2 L' B R2 F D' L,R,Macedonia Open 2023 (2023-05-06),333oh R1 B E2
 2714646001,B' L' R2 B2 U L2 D L2 F2 D' R2 F' R U' R2 F2 D R2 U2,R,Never Stop Turning AZ 2023 (2023-05-13),333 Final A E1

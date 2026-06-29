@@ -2,7 +2,7 @@
 # Population in this bin: 689
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3493156001,R F2 U2 R2 F2 U2 R2 B U2 B' U R' U2 B2 U2 F2 R2 U' R2,O,Hiroshima Winter 2024 (2024-02-10),333 R1 D E2

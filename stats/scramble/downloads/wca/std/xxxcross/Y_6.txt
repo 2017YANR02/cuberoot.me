@@ -2,7 +2,7 @@
 # Population in this bin: 6
 # Samples listed: 6 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 448341001,F D2 B' D2 R2 F' R2 D2 L' B' R B D2 L D2 F2 D' R,Y,Altasierra 2017 (2017-02-18),333oh Final B #4

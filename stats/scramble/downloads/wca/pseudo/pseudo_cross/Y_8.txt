@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / Y / bin 8
-# Population in this bin: 97
-# Samples listed: 97 (all entries in this bin)
+# Population in this bin: 98
+# Samples listed: 98 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 130067001,D B2 U' L2 D' U2 B2 L2 R2 U' B' R U F L D2 R2 U2 B2 F R,Y,German Open 2015 (2015-04-18~19),333 R1 C E2
@@ -102,3 +102,4 @@
 5110059001,L' F' L' U R2 D2 B2 R2 D F2 R2 D2 R' U F' D U R U' L,Y,Ensuès Open 2025 (2025-10-18~19),333 R1 E E2
 5175347001,F' D' B R U' L B R2 F B L D' L2 U2 R2 D' B2 D B2,Y,Shin Kong Cube Open - New Taipei 2025 (2025-11-09),333 R1 K E1
 5252019001,U B' R' L2 D' R2 B' L U2 F' B' U2 R2 U2 L2 F2 D R2 U2,Y,Harly Open 2025 (2025-11-29),333 Final B #2
+5724451002,B2 R2 U' F2 D' U F2 U B2 L' F2 D' L U R F' L' R2 D' R2 B R',Y,Ljubljana Blind & Big 2026 (2026-06-27~28),333mbf Final B #2

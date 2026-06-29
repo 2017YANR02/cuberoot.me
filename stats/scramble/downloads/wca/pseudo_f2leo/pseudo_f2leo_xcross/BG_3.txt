@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BG / bin 3
-# Population in this bin: 688
+# Population in this bin: 691
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -71,7 +71,7 @@
 1641771001,F B D2 L' U' L' F' D L D R2 U' F2 B2 D' R2 F2 R2 B',B,Shenzhen Nanshan Afternoon 2021 (2021-03-28),333 R1 C E1
 344010001,D2 B2 D2 L2 B2 F L2 D' F D F' D' F2 D' U2 F R' D2,B,CEIC Masterda Open 2016 (2016-08-06~07),333 R1 E #4
 344431001,D2 B2 D2 L2 R D2 R' B' L' B L D' L' D2 U' R F' L2,G,CEIC Masterda Open 2016 (2016-08-06~07),333oh Final B #5
-5289942001,F' L2 R2 F2 U' R2 U L2 F2 B' U2 F' D F2 L B2 L' R2 B' L2,G,San Jose del Monte Speedcubing Open III 2025 (2025-12-20),333bf Final B E1
+5717995001,F2 D2 L' F2 R B2 F2 L' R F' D2 R F L U F' U B' R',G,UVG Cubing 2026 (2026-06-20),333 Final B #3
 1112435001,F' D L' U D2 R D' L' B' R F2 B2 D B2 U2 R2 D' L2 D',G,Speedcuber Perú Otoño 2019 (2019-04-20~21),333 R2 B #1
 352696001,U2 B' D L U2 D2 B U D2 L F2 U' D' F2 D B2 U L2 B2 U',G,Singapore 333 Cube Competition 2016 (2016-08-27),333 R1 A E1
 2661522001,L2 D2 B R F2 U F' B' R' U B2 D2 L2 U2 D' L2 B D',B,Conquiste o Cubo II 2023 (2023-04-22~23),333 R1 B #3

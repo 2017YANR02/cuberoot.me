@@ -2,7 +2,7 @@
 # Population in this bin: 919
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2624052001,D' B F2 U2 F2 R B2 U2 R U2 F D' F2 D2 B L U B' R,B,Eretum 2: Easter Boogaloo 2023 (2023-04-08),333 R1 A #5

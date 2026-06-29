@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGWY / bin 8
-# Population in this bin: 471
+# Population in this bin: 473
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5149956021,U R2 B2 U F2 U F2 U' B D F2 U' R2 U2 F2 U' L' U B L,G,Furesø 3x3 Frenzy 2025 (2025-11-01~02),333mbf Final A #1
@@ -155,7 +155,7 @@
 4413237001,R F2 U' R' F2 U2 B2 R' F2 U2 D' B' L' D2 F' R' U' B,W,Gem City Ohio Showdown 2025 (2025-01-11),333 Final A #1
 1211103001,L' B2 D R L B' L D' F' R' L2 U F2 U2 L2 D' B2 U R2 U2,B,Warm Up Sydney 2019 (2019-07-06~07),333 R2 F #1
 1211325001,D2 F2 D R2 D' R2 U F2 U' B2 R2 B' U2 B F' D U' R U L2 F,Y,ACA League I 2019 (2019-07-07),333 R1 C #3
-2176448001,B U' L D L2 D2 U2 F2 D U2 F' D L2 D2 L D L2 R2,W,Delhi Big Cube Open 2022 (2022-09-17~18),333oh Final A #2
+5719308001,F2 R2 D U B2 D' F' R2 F' U' F R2 U F D B2 L' U',Y,Ulaanbaatar Summer 2026 (2026-06-22),333oh Final B E1
 3017221001,U2 L2 B D' F2 R F2 D' L' U2 L2 U2 F' L2 F B2 U2 D' L,B,WA Open 2023 (2023-08-26~27),333bf Final B E1
 2660392001,D R2 U2 L2 U F2 D2 L2 B D B2 L' F' D2 F D2 U B,G,Squockholm Open 2023 (2023-04-22),333 R1 A E1
 3700100001,D L2 U' F2 U2 L2 F2 L2 U' F' L2 D F U F R B2 D2,Y,Miami Spring 2024 (2024-04-20),333 R2 A #1

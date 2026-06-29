@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / O / bin 6
-# Population in this bin: 561
+# Population in this bin: 563
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2769423001,U2 B2 D2 B2 F L2 U2 F' R D' B' R2 D2 F2 U' L U F2 D2,O,Singapore AMK CC Cubing A 2023 (2023-06-03),333 R1 F #1
@@ -86,7 +86,7 @@
 447022001,B2 L D2 L' D2 F2 L B2 F2 R2 B2 D B' F2 L' R2 U,O,Virginia Open Winter 2017 (2017-02-18),333oh Final D E1
 447747001,U2 R D2 R' F2 R U2 F L2 B' L' B' R U2 R' U2,O,PSU Winter 2017 (2017-02-18~19),333oh Final A #4
 2518955001,U' D L B U R B' R2 D2 F R2 F2 L U2 B2 R' U2 R F2,O,Oak Valley Winter A 2023 (2023-02-25),333 R2 B #2
-473549001,D R2 D B R' F2 L2 B R2 B2 D B2 D' L2 U L2 D2 L2 B2,O,CatoRubik 2017 (2017-03-24~25),333 R2 A #2
+5722474001,R' U' R2 F' D2 F2 R D2 B D2 B' D2 L2 F2 D F D2 R,O,Alameda County Fair 2026 (2026-06-27),333oh Final H #2
 3815606039,F D2 R2 B' L D F' B2 D B R U2 R2 U R2 B2 U' F2 U' L B,O,Glasgow Summer - Scottish Blind Off 2024 (2024-06-01~02),333mbf Final B #1
 1350990001,L2 R2 B2 R2 U' L2 U' F2 U R U B2 R F2 L U L2 D2,O,Daegu Autumn Open 2019 (2019-10-13),333oh Final C #1
 5312470001,R2 B2 L R2 F2 U2 R2 U2 R' B2 U2 R F D2 U' R2 B U',O,OKC Winter 2026 (2026-01-10),333 R2 C #1
@@ -197,7 +197,7 @@
 1197519001,F R F2 B D R2 D' B R L' F2 R2 L2 U' R2 U B2 L2,O,Newmarket Open 2019 (2019-06-22),333oh R1 B #4
 1820924001,B2 R' D2 R2 U' B' L' U L' U2 L2 U2 F' L2 D2 F' R2 U2 D2,O,Back To Cubing Chiriquí 2022 (2022-03-05),333oh Final A #5
 1201787001,F L2 U2 L2 B' D2 B' D2 B2 D2 F R' B2 F U F D' B2 D,O,Juan Manuel Zafra Open 2019 (2019-06-29~30),333 R1 C #2
-1204836001,B2 U2 L B2 L2 R' F2 U2 B' U' L B2 D' B' L' D' B L' U,O,Cube Fiesta Surat 2019 (2019-06-30),333 R2 A #4
+5719834001,B2 L' B2 F2 L' U2 L' F2 L R2 F2 U L' F R2 B' D',O,Shenyang Cubing League 3x3 II 2026 (2026-06-24),333 R2 B #5
 4942522017,F U' L F2 D' R2 F U2 R D2 R2 L F2 L2 B2 R U B R B' L',O,Rubik's Irish Championship 2025 (2025-08-15~17),333mbf Final A #2
 1226520001,D2 B2 R2 B2 U' R2 F2 D' B2 D2 R B L' F2 R D2 U' B2 F,O,CCC Qualification Voronezh 2019 (2019-07-20~21),333 Final A E1
 3077056001,U2 R2 U2 R B2 F2 L' B2 D2 U R U' B2 D R D' R U,O,Banja Luka Cube Day 2023 (2023-09-16),333oh Final A #1

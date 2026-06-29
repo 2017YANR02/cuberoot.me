@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / Y / bin 6
-# Population in this bin: 612
+# Population in this bin: 614
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5415001,B2 D U L2 F2 U' B2 F2 R U2 F2 R' U L F2 L2 U2 R F L' F',Y,Fénix 2014 (2014-03-29~30),333bf R2 A E1
@@ -73,7 +73,7 @@
 4599649001,L2 D2 F2 R2 B2 L D' B2 D L2 U' B2 D B2 R' D',Y,New to Edmonton A 2025 (2025-03-29),333 Final C E2
 438510001,D B2 D F' L' B L F' B R' B' D2 B2 R2 U' D R2 D2,Y,Rubik Soletta Concepción 2017 (2017-01-29),333 R1 D E1
 4830478001,F R2 L2 D R' U' D' R' D' F2 D' F2 L2 U' D R' F',Y,Osan Summer 2025 (2025-06-29),333 R1 H #1
-5019172001,U2 R2 D2 L2 U L2 D B2 L2 R2 D B' D2 U' L' U' L2 F2,Y,Friheden Open 2025 (2025-09-14),333 R1 B #3
+5725017001,L2 U' B2 D2 L' B' D U R D R' F U2 L F' U,Y,Westport Summer 2026 (2026-06-27),333 Final A #2
 466802001,U' R2 B2 U F2 U F2 L2 B2 R2 B' D F' D' U2 B' F2,Y,Shanghai Spring 2017 (2017-03-18~19),333 R1 A #4
 468128001,L' D2 R' B2 L2 D2 F2 D2 R2 U2 L' B' D' F2 R2 B2 U F2 L2 U2,Y,Fiorano Open 2017 (2017-03-19),333bf Final A #3
 1806935038,R' F' D' R2 U D R' D2 B2 U' R2 U' B2 L2 B2 L' F U2 L' F2,Y,PoliMi Mental Breakdown 2022 (2022-02-12~13),333mbf Final A #1

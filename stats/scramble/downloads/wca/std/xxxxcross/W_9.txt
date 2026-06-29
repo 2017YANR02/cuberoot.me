@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / W / bin 9
-# Population in this bin: 21
-# Samples listed: 21 (all entries in this bin)
+# Population in this bin: 22
+# Samples listed: 22 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 76631001,B2 D2 R2 B L2 F U B' L' D' U2 R' F' D2 U L' F,W,Beit Dan Open 2014 (2014-11-09),333 Final A #2
@@ -26,3 +26,4 @@
 5043151032,L D2 L2 F2 U2 B2 F2 U2 L' D B R2 F' D R2 B' D2 B2 D2 B R,W,Nittedal Mental Breakdown Fall 2025 (2025-09-20~21),333mbf Final A #2
 5227389001,F2 R2 L F' L B2 L2 D' L2 D2 R2 U2 F2 U2 F' B2 L' F2,W,Rahn Education Advent Open 2025 (2025-11-29~30),333oh R1 A E1
 5645801001,D2 F2 D2 B' F2 L2 B R D R B2 U' F' L' B2 D2 R F,W,Las Palmas Ahome 2026 (2026-05-16~17),333oh R2 A E2
+5723889001,D2 F' U2 L2 U' F2 R2 U2 L B R D' L2 D' L D,W,Summer Cubing Szczecin 2026 (2026-06-27~28),333 Final A #1

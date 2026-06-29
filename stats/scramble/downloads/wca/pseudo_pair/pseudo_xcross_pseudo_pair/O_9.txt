@@ -2,7 +2,7 @@
 # Population in this bin: 11
 # Samples listed: 11 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 660562015,B2 F' D2 B' R2 F L2 R2 F L2 D2 L B2 R' F2 D L' D2 L U L' F,O,Cuthberts Open 2014 (2014-10-11~12),333mbf Final A #1

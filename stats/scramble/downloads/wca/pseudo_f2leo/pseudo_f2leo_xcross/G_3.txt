@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / G / bin 3
-# Population in this bin: 344
+# Population in this bin: 346
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 11096001,F2 R2 U2 R' B2 U' R U2 B U' B2 R' B2 D B' U,G,Slovenian Open 2014 (2014-04-12~13),333 R2 B #4
@@ -102,7 +102,7 @@
 936676001,L2 B U2 D' L2 B2 D' F' R2 F' U' R2 B2 D2 B2 L F2 B2,G,Brugge Open 2018 (2018-11-17~18),333 R2 B E2
 943244001,R2 L' U D' B R' U2 L B L2 U R2 F2 U' D L2 F2 L2,G,Malaysia Cube Championship 2018 (2018-11-23~25),333 R3 A #5
 944946001,B' L' U' F2 B' U2 R U' R' B U2 R' B2 U2 L' D2 R B2 L',G,Oakville Autumn Limited 2018 (2018-12-01),333 R1 C #3
-4324779001,D' B' F2 D2 L' D2 R' U2 B2 F' L2 U2 F L D2 R' U,G,Centro Suba Bogotá IV 2024 (2024-12-01),333 Final B #3
+5727210003,L U' B' U2 F' D2 B' R2 F2 R2 D2 F2 U' B L F2 U2 F U2 B R2,G,BL&D BLD Liestal 2026 (2026-06-27~28),333mbf Final B #1
 952278001,B L2 B R2 B2 D2 B' L2 R' U' B' U' R' B L D2 B2 R2 D,G,Cali Cube 2018 (2018-12-08),333 R2 A #4
 968871001,F2 D' B2 U F2 U' F2 L' B' D B2 R' B2 L D' R' D B',G,VJTI Mumbai Cube Open 2018 (2018-12-28~29),333oh R1 E #3
 985184001,B R' B' R B' D' R' D2 R B U2 F2 U' R2 D' R2 D L2 D2,G,D-City Cubing 2019 (2019-01-19~20),333 R1 B #4

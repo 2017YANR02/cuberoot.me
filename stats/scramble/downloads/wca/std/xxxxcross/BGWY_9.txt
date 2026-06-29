@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / BGWY / bin 9
-# Population in this bin: 89
-# Samples listed: 89 (all entries in this bin)
+# Population in this bin: 90
+# Samples listed: 90 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 76631001,B2 D2 R2 B L2 F U B' L' D' U2 R' F' D2 U L' F,W,Beit Dan Open 2014 (2014-11-09),333 Final A #2
@@ -94,3 +94,4 @@
 5582461001,L B' R2 B U L U2 R2 U D2 R2 B R2 F U2 B L',Y,Jakarta Mini K-ubing 2026 (2026-04-26),333 R1 G #4
 5623637001,L2 B2 F' D2 F' D2 R B L2 U2 R2 F U L D L D',G,Nittedal Mental Breakdown Spring 2026 (2026-05-09~10),333bf R1 B #2
 5645801001,D2 F2 D2 B' F2 L2 B R D R B2 U' F' L' B2 D2 R F,W,Las Palmas Ahome 2026 (2026-05-16~17),333oh R2 A E2
+5723889001,D2 F' U2 L2 U' F2 R2 U2 L B R D' L2 D' L D,W,Summer Cubing Szczecin 2026 (2026-06-27~28),333 Final A #1

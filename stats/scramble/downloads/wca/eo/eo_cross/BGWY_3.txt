@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BGWY / bin 3
-# Population in this bin: 816
+# Population in this bin: 817
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 1706763001,D' B2 F2 U L2 D2 L2 B2 D' R U L' D2 L2 D' B L D' L',Y,Kharkiv Cubefall 2021 (2021-10-23~24),333 R2 B #4
@@ -120,7 +120,7 @@
 5057435001,R2 B' R2 B2 D' F2 U F2 D' F' U2 B' D2 R F' R2 U2 B',Y,Colombo CubeCon 2025 (2025-09-27~28),333oh R1 D #2
 4251428001,D2 F' U2 F2 U2 L R2 U2 L' D B2 U L D2 L2 U B R',B,Canadian Prairie Championship 2024 (2024-11-02~03),333 R1 J #4
 640926001,R' L F' D F' R2 L' D' B' R F2 U' B2 U2 F2 L2 U' R2 F2 U,Y,CubeHub Open 2017 (2017-11-11~12),333 R1 G #1
-3605251001,D L' U2 L' R2 B2 D' L2 R2 B2 U2 F D' F' L2 D2 L2 B L B2,B,Brilliant Ballarat 2024 (2024-03-16~17),333bf R1 A E2
+5727137001,L2 U2 L2 F R2 U2 F2 L2 F U2 R B R D2 R' F R' D' R',G,BL&D BLD Liestal 2026 (2026-06-27~28),333oh R1 A #4
 5492768062,D F' R D U F2 L2 D' B2 L2 U F U2 L2 F2 D F D2 R B R,W,New York Multimate PBQ IV 2026 (2026-03-27~29),333mbf Final A #3
 651935001,D B2 L2 R2 D2 U' R2 U B' D' B2 R2 F L2 D2 B U B2,Y,Tuscany Open 2017 (2017-11-25),333 R2 C #3
 3559321001,D' F D2 R2 B' D2 F R2 L B D2 B2 L2 F' U' L B' F L2,B,Potablava Open 2024 (2024-03-02~03),333bf R2 A #1

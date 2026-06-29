@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BGORWY / bin 8
-# Population in this bin: 938
+# Population in this bin: 939
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2775066004,F R B2 R2 U2 R' F2 D2 U2 B' R U' F D B F2 R F2 U' B',B,BrizZon Side Open III 2023 (2023-06-03~04),333mbf Final A #1

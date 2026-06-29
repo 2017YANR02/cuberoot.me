@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / Y / bin 5
-# Population in this bin: 830
+# Population in this bin: 832
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4898928030,D F' B2 R2 B2 F2 D' F2 R2 U R2 U2 L' F U B F' D F' L B,Y,Swedish Blind Marathon 2025 (2025-08-02),333mbf R1 A #1
@@ -155,7 +155,7 @@
 4533877049,F' D' L F2 D2 B' L2 F L2 D2 F R' D R' D B D B2 D2 L2 U2,Y,Glasgow Spring - Scottish Blind Off 2025 (2025-03-01~02),333mbf Final A #3
 660660034,U2 L2 D2 U2 F2 U2 L' F2 R' F' L B' U L F D B L B R B R2,Y,Grudziadz Open 2015 (2015-03-07~08),333mbf Final A #1
 660662010,R2 U' L2 U F2 D2 L2 B2 R2 D' B' D2 B2 R F D R D L U2 B' L',Y,Abrakadabra Magic 2015 (2015-03-14~15),333mbf Final A #1
-3670499001,L2 F R2 F D2 B D2 L2 D2 L2 B' D L' F U' B2 R2 U2 R' F',Y,Nebraska Championship 2024 (2024-04-12~14),333 R1 B #4
+5723102001,U R' L2 F2 U' F U L U2 F2 U2 F2 U2 L' F2 U2 D2,Y,Défi à l'Alliance Française El Salvador 2026 (2026-06-27),333oh Final A E2
 5513190001,B D2 R2 U2 R' F D2 L2 B' L D F2 B2 R2 U D2 F2,Y,Karnataka Cube Open April 2026 (2026-04-05),333 R1 G #3
 1752587001,B2 L2 B' D2 B2 R2 F L2 D2 R2 D' F' R2 U' L' U L' D,Y,Rocky Top 2021 (2021-12-04~05),333oh R2 C #5
 5035191001,U F R L U L B R D' B D U2 R2 L' U2 R2 L',Y,Fitchburg Fall 2025 (2025-09-20),333 R2 B #4

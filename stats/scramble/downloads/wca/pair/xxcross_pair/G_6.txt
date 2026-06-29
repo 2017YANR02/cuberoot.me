@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / G / bin 6
-# Population in this bin: 307
+# Population in this bin: 308
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 55145001,L2 B' F' R2 F2 L2 B' U' L2 B' U2 L' F U' F R2,G,360 Degree Wellness Open 2014 (2014-08-30),333 R1 B #4
@@ -40,7 +40,7 @@
 503433001,B2 U2 R' U2 R2 F2 D2 F2 R F' U R' D B U' F2 R' U' R2 D L B2,G,Murcia 10th Anniversary 2017 (2017-05-06~07),333bf R1 B E2
 507292001,L2 D' R2 F2 D' L2 F2 L2 B2 U B' D2 L B D' F2 U' B' F' R2,G,El Escorial Open 2017 (2017-05-13~14),333oh Final A #2
 512097001,D' L2 F2 U2 R2 D' L2 R2 D R U B L F U L' R B2 F' L2 B R,G,Bintaro Open 2017 (2017-05-21),333bf Final A #1
-528192001,R2 B2 L2 D2 B' L2 D2 B' D' B U2 R' D L2 U2 L2 D B' R,G,Berlin Summer Cube Days 2017 (2017-06-10~11),333 R1 D #1
+5721837036,L B R F U2 F2 R' B2 L B2 L2 D2 B' U R D2 L' R B L B,G,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333mbf Final A #1
 528625001,L' U2 L' R2 D2 R' B2 U2 F' D2 U' B L' U' R U2 B' U2 F',G,Pulmapelipäivät 2017 (2017-06-09~11),333oh Final A #1
 530676001,F' D' R2 D2 R B' R' U' D' B' L2 U2 F2 D L2 F2 U' F2 U2,G,SCC Summer 2017 (2017-06-10),333 R1 B #1
 535961001,U' B' R' F2 U L F U L2 F R F2 U2 D R2 U2 R2 F2 D2 B2,G,Latin America Cubing Tour - Cochabamba 2017 (2017-06-17~18),333 R1 F #3

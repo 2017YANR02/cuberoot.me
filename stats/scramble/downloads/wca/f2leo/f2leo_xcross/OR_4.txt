@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / OR / bin 4
-# Population in this bin: 879
+# Population in this bin: 880
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2658293001,L2 B' D' L2 D' F2 R2 B2 U B L' R' U2 B' F2 L2 U' L2,R,Cube Ta Liwat Iloilo 2023 (2023-04-23),333 R2 B E2

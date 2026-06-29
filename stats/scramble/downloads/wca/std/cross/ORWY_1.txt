@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / ORWY / bin 1
-# Population in this bin: 414
+# Population in this bin: 415
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5040001,F2 D2 L2 U R B2 R F L2 D2 F2 B' L2 F L2 D2 R2 F,O,Tula Open 2014 (2014-03-28~30),333 Final A E1

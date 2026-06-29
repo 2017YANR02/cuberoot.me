@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / BGOR / bin 7
-# Population in this bin: 287
+# Population in this bin: 288
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -201,7 +201,7 @@
 3767508001,U2 F2 D' F2 R2 U' L2 D' B2 D2 F2 B R2 U2 F' U' B2 R U2 R2,O,Bucharest Cubing May B 2024 (2024-05-19),333oh R2 A #3
 3998524025,B' U' F2 R2 D2 B' F2 D2 B2 U2 R2 F' L' F U F D' F U B' L',O,Blind Till Nine in Vietnam 2024 (2024-08-10),333mbf Final A #1
 5423734001,B2 L' B' L2 D U R2 D' L2 B2 L2 R' U2 R B' U F' L,R,Moura Lacerda Open 2026 (2026-02-28~03-01),333 R1 A #3
-5704660001,L' D' U R2 F2 D R2 U2 L B2 R D2 L B R' D' R D2,R,Saint John's Summer 2026 (2026-06-13),333 R2 A #5
+5721837036,L B R F U2 F2 R' B2 L B2 L2 D2 B' U R D2 L' R B L B,R,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333mbf Final A #1
 3897619001,U' B' D2 L2 B' R' L2 B R U' D R2 F R2 U2 F' B2,G,Cecil Singapore Playoffs 2024 (2024-06-30),333oh R2 A E1
 3931875001,U2 R' B D2 U2 R D2 R' D2 F2 L2 D2 F' D L R' B2 D B,G,DC Open July Hyderabad Saturday 2024 (2024-07-13),333 R1 D E2
 3961814001,L' F' U F2 L2 D F2 R2 F2 U B F' R' U F2 D2 B' R U',G,Vintage Cubing La Paz 2024 (2024-07-20),333 R1 D E1

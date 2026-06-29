@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / G / bin 14
-# Population in this bin: 108
-# Samples listed: 108 (all entries in this bin)
+# Population in this bin: 109
+# Samples listed: 109 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 14231001,U R2 B2 D R2 D' L2 B' F2 D' L U' B L' D2 U B D',G,Israel Championship 2014 (2014-04-16~17),333 R1 C E1
@@ -113,3 +113,4 @@
 5607140001,L2 F' L' D F2 D U R2 B2 R2 D' F2 R U R F2 L R2 F,G,Zhongshan Open 2026 (2026-05-02),333 R2 D #1
 5608135001,D L' R2 B2 R2 D2 F2 D2 U R2 D' B L F R' F2 L2 F' L2,G,Rubisian Spring Cubing Iasi 2026 (2026-05-02),333 R1 E #2
 5680667001,F2 L' F2 D2 F2 U2 L' F2 L D2 F' L' B' D U F D R' D R',G,Oruro Open 10th Anniversary 2026 (2026-05-30~31),333oh Final B #2
+5723214001,R' D F' R F2 L' U2 L2 U2 R' D' L' R2 U L B2 F2 U2 L2 U,G,Hannover Mental Breakdown 2026 (2026-06-27),333bf R2 A #4

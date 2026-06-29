@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGOR / bin 8
-# Population in this bin: 321
+# Population in this bin: 323
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 7959001,U D' F' U2 L' U2 R' U2 B U L2 F' U2 L2 B' L2 B' U2 F2,B,Welwyn Garden City Open 2014 (2014-04-05~06),333 R1 C E1
@@ -186,7 +186,7 @@
 5240414034,D' R' D B' D F' R U' F B2 L B2 R2 U B2 R2 U2 D2 L B2,B,Please Be Quiet Dhaka 2025 (2025-12-05),333mbf Final A #1
 4874332003,D U2 B2 D2 R2 D2 R D2 U2 F D2 F' D' B D U F U L2 B' L,B,Campeonato Brasileiro de Cubo Mágico 2025 (2025-07-18~20),333mbf Final A #2
 3373451001,L' D B2 D' B L2 U' R' D' R2 U2 B2 D2 B2 R' U2 F2 B' U2,B,Bucharest Winter Cubing A 2023 (2023-12-16),333 R1 B #1
-3406277001,U' D R2 L U2 F' L' U' R F B2 L2 F' R2 F' L2 U2 B D2,B,Mega Cube Masters Bogotá 2024 (2024-01-08),333oh Final B #3
+5720843001,B' L2 F2 U2 L U D L' B U D2 F2 U' R2 U' D2 L2 U' F2 L,B,Sumgait Summer Open 2026 (2026-06-26),333 R1 A E1
 3421821001,R D2 B2 L' R2 U2 R2 U2 B2 L' B L2 F R' D' F U R2 B' D2,B,Tassie Summer 2024 (2024-01-13~14),333oh Final B #3
 3445135001,U' F2 L2 R2 D L2 D2 F2 R2 F2 R2 B F' D' L' F R' F L2 D' R2,B,A New Year in Auckland 2024 (2024-01-20~21),333 R2 C #3
 3450813001,D R U' L D' R D B D F R2 F2 U R2 B2 D2 B2 U R2 U,B,Southern Solves Invercargill 2024 (2024-01-27~28),333oh Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / Y / bin 8
-# Population in this bin: 670
+# Population in this bin: 672
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 561001,B U L2 F' U' F R' B D' L F U2 B' R2 F U2 D2 F',Y,Hessen Open 2014 (2014-03-15~16),333 R2 A #2
@@ -61,7 +61,7 @@
 1173052001,D' B2 U B2 U' L2 U R B L' R2 U B' L2 F L R2 F' U',Y,Breda Open 2019 (2019-06-08~09),333oh Final B E2
 2435970001,F' R B2 R' B' U R D L F' D B2 U2 D L2 D B2 D2 R',Y,Ikast Winter Cubing 2023 (2023-01-21~22),333 Final A #1
 5559384001,L' B2 U2 R2 D' F2 D F' R2 U D B2 D R2 D' B' R' D2,Y,BQHS Spring Open 2026 (2026-04-18~19),333 R1 D E2
-4471269027,D F2 R D' R F U' B2 D2 R' U2 D2 B2 R' D2 L' U2 R2 D L2 U2,Y,DFW Mega Mental Breakdown 2025 (2025-02-01~02),333mbf Final B #1
+5724160001,F2 R' F R' D R D2 B' U2 F B2 U2 L2 B2 D2 L2 U' L' B,Y,Zhangzhou Open 2026 (2026-06-27),333 R1 B E1
 5477145001,D R2 F' D F L' F B2 L2 U2 R2 D R2 U F2 D2 L F2,Y,Roskilde by Night 2026 (2026-03-28),333oh Final A #4
 4385805001,D' B' L' U F' D2 F2 D2 R2 U2 L2 U2 B' L B2 F2 D L' B L',Y,Viradão do Cubo em Araruama 2024 (2024-12-28),333 R1 A E2
 5089261001,R L2 U2 F R2 U2 B' R2 B' R' U L' R F2 D2 U' B F2 L,Y,Bangalore Mini Oct A 2025 (2025-10-12),333oh R1 A #3

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / Y / bin 5
-# Population in this bin: 698
+# Population in this bin: 699
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5047582001,U R2 F D2 B U2 L' R B' L2 B' L' R' B' F2 R',Y,Ephrata Fall 2025 (2025-09-27),333 R2 B E2
@@ -68,7 +68,7 @@
 4002490001,U' L B2 R' D2 L2 R' B2 D' U' R' F D' L' B' D2 L2 D2,Y,Ontario Championship 2024 (2024-08-09~11),333oh R1 B #3
 332178001,B2 D2 F2 U' B2 L2 U' F2 D F' U' L D2 F2 L U' B2 U2 F',Y,National Cubing Region Open 2016 (2016-07-23~24),333oh R1 A #1
 340362001,B2 U2 F2 L2 F D2 R2 F2 U' R2 U' F R' U' L' D2 U L,Y,Macclesfield Open 2016 (2016-07-30~31),333 R1 C #1
-2259786045,B D F L2 U F' B2 L2 F2 U B' U2 D2 F2 R U2 R' U2 R D2,Y,CubingUSA Texas Quiet Championship 2022 (2022-10-22),333mbf Final A #2
+5719596001,F' L2 D' B' D' F2 L2 B2 D' F2 D U2 B' L R F' R D2 F,Y,Cape May Summer A 2026 (2026-06-20),333 Final A E2
 5181904001,B' F2 R2 D' B2 D' U' L2 D' U2 L2 B2 R' B F' R B L U,Y,NxNebraska 2025 (2025-11-15),333 Final A #2
 4041280001,U' L B F2 L2 D' L2 U F2 D U' L B D' R2 U' L B' L2,Y,Slovenian Nationals 2024 (2024-08-23~25),333oh R1 B #2
 350437001,U R2 B D F R U2 F D2 B' R2 B2 D2 L2 F2 R' B2 R',Y,Toronto Limited Summer 2016 (2016-08-20),333oh R1 A #5

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / BGWY / bin 10
-# Population in this bin: 164
-# Samples listed: 164 (all entries in this bin)
+# Population in this bin: 165
+# Samples listed: 165 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 17388001,R B R2 U2 D' B2 D2 R' L' D B D2 F' U2 D2 F' L2 B U2 B2,Y,Apollo Open 2014 (2014-05-04),333oh Final A #4
@@ -169,3 +169,4 @@
 5645057001,U2 L' D' B' U' R' F U F2 U2 B2 D2 L D2 R' D2 B2 L,G,Instituto Apontar Rio 2026 (2026-05-16),333 R2 A E2
 5710305001,L2 F R' F D2 R2 D F R D2 F2 R F2 R' F2 L' F' L2,Y,Wakefield Summer 2026 (2026-06-20~21),333 Final A #5
 5711015001,R L' F D2 F2 R D2 B D2 L2 U2 D F2 D' B2 R B2,B,Oldham County Summer 2026 (2026-06-20),333 R1 E E2
+5721779001,R' B2 D2 B2 D R2 U2 R2 B2 R D F' D' U L2 B' L2 F2 U2 B R2,B,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333bf R1 A #2

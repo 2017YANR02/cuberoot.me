@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BG / bin 8
-# Population in this bin: 217
+# Population in this bin: 220
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2210001,U' R2 F2 D2 L2 D F2 U L2 D' F L2 U L' R2 U F2 D U' L B',G,IIT Roorkee Open 2014 (2014-03-21),333bf Final A E1
@@ -55,7 +55,7 @@
 733248011,B2 D' R2 D2 F2 D B2 D' F2 L2 F2 L F R U' F L D F L D,G,Nacionales Uruguayas UCHI 2018 (2018-03-24~25),333mbf Final B #1
 736513001,R2 D2 R2 D F2 D' U2 R2 D R2 F' D2 F2 D B' L2 B F2 L F',G,Eugene Spring 2018 (2018-03-31),333 R2 C #3
 767861001,F2 R B' U' R B L U F2 L D2 F L2 F' R2 D2 L2 D2 B',G,Wolfpack Quiet Qualifier 2018 (2018-04-29),333 R1 F #4
-778670023,D2 F2 R2 B2 U B2 F D2 F' D R2 D2 B2 U2 R B L2 U' L B',B,Finnish Championship 2018 (2018-05-11~13),333mbf Final A #2
+5721779001,R' B2 D2 B2 D R2 U2 R2 B2 R D F' D' U L2 B' L2 F2 U2 B R2,B,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333bf R1 A #2
 791576001,F2 U2 L2 U' F2 R2 D L2 F' U B L D2 B' R' U' B2 D2,G,Cubing Sa Nia Ra Jud Open 2018 (2018-05-26),333 R1 A E1
 792326001,R2 U L2 D U2 B2 D' L2 R' D B F' U' F' L' U' L U' L,G,Colorado Qualifier 2018 (2018-05-26~27),333 R2 B E1
 5514017001,R' U2 F2 L D' L' F B2 D F2 B2 D' R2 U2 R2 U2 B R' F,G,Otsu Biwako Spring 2026 (2026-04-11),333 R1 B #4
@@ -104,7 +104,7 @@
 2204009001,D' B' D F2 D F2 L2 U' L2 U R2 D B' L R2 D2 L' B2 L,G,Varsha Ritu Cube Open 2022 (2022-09-24~25),333oh R1 C #4
 2204503048,D' F2 D' F U' R' D U2 R2 B' R2 U2 B' R2 L2 F B' R B D2 B R2,B,Finnish Championship 2022 (2022-09-24~25),333mbf Final A #1
 2262467001,B2 R2 D U' L2 F2 U2 F' R' D' U L2 D2 R' F U' F' R2,G,U24 Open October 2022 (2022-10-23),333oh Final A E2
-2286907001,U' B' L' R2 U F2 D U R2 B2 F2 R2 F' U' R' U2 F2 D2 F' D' L' F',G,Etec Cubatão 2022 (2022-11-05~06),333bf Final C #1
+5727210003,L U' B' U2 F' D2 B' R2 F2 R2 D2 F2 U' B L F2 U2 F U2 B R2,G,BL&D BLD Liestal 2026 (2026-06-27~28),333mbf Final B #1
 2312089001,B F U2 B L2 B2 F2 D2 L2 R' B2 L' D' F2 D2 L' F2 D2 B',G,Weston-super-Mare Autumn 2022 (2022-11-19~20),333 R1 A #3
 2349578001,F' U' L2 D F2 D B R' D2 F2 D2 R' B' L D' F2,B,TCG Power Up 2022 (2022-12-03~04),333oh R1 A #4
 2364461001,F2 R' U2 R2 F' R2 B D2 L2 F2 L2 F' L' B2 D2 F D2 B' D,G,LoCo Cubing PM 2022 (2022-12-10),333 Final A #5
@@ -134,7 +134,7 @@
 3020054001,B R B D2 B' U2 B' L2 R2 F2 U B' R B2 U2 L' B R,G,Pangasinan Speedcubing Open 2023 (2023-08-13),333 R1 C #1
 3024779001,L B2 U L2 B D2 F2 D2 B2 D' R U2 L2 B2 R2 F U2 L2 U2,G,Singapore Silent September 2023 (2023-09-02),333bf R1 B E2
 3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,G,BMME 3x3 Day 2023 (2023-09-23),333mbf Final B #1
-3115838001,B U' F R' D' B L' U2 L2 U' B2 L2 D2 R2 F L2 U2 F R',G,SSN Cube Sunday 2023 (2023-09-24),333 R1 D #1
+5722683001,D2 L2 U2 L2 R2 B' R2 B' R B L' D' F2 R' B D' B D' U2,B,Yukon Solve It Whitehorse 2026 (2026-06-27),333 Final B #1
 3142148001,U R2 D' F2 U' F2 D' L' B2 D2 F D F' L' U2 L' F2 L',G,T-Town Showdown 2023 (2023-10-07),333 R1 A E2
 3179024001,F' R2 F' L' U2 B' L2 U' L' U F2 D2 R2 B2 R2 U F2 U2 R',G,PIB Itaim Open 2023 (2023-10-21),333 Final A #3
 3212702001,F' L B D L B2 R' U2 R2 U2 B2 U2 B2 U' R' U2 R D' L' B,B,Davis Fall 2023 (2023-10-29),333 R1 A #1

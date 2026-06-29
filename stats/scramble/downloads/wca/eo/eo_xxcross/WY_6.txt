@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / WY / bin 6
-# Population in this bin: 210
+# Population in this bin: 211
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,Y,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -101,7 +101,7 @@
 5550210001,R' F R D2 R B' R B D' B R2 U' B2 U2 F2 U' R2 D2,W,Cube Factory League Jeżów 2026 (2026-04-18~19),333 R1 A #3
 2005776001,R2 F2 L D2 L D2 U2 L' D F' D L2 R2 B2 U2 R' D U2 F,Y,Prienai Open 2022 (2022-07-09),333oh Final A E2
 2018336001,R' D F2 R L2 B2 U F L' D2 L U2 R' F2 L U2 L' F2 U2,W,Rubik's WCA European Championship 2022 (2022-07-14~17),333oh R1 C E2
-2046926039,L' U2 R U' R D2 L' F' L2 D2 F U2 B2 L2 U2 B2 U R' B R',Y,Rubik's WCA South American Championship 2022 (2022-07-22~24),333mbf Final A #1
+5721796001,U2 B U2 B2 L2 D' B2 F2 U L2 U R U2 B' L2 B' D U' F L2 U2,Y,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333bf Final A #5
 2072365001,F2 U L2 D' L2 D2 L D B D' U2 R D2 R' D' U F2,W,CubingUSA Southern Championship 2022 (2022-07-29~31),333oh R1 B #1
 2092014001,L F R U2 B' R2 U2 F2 D2 B2 L2 F2 L F2 R D B' D U',Y,Pingtung Summer Open 2022 (2022-08-13),333 R2 B E2
 2100898001,D B2 R' U F2 D' B2 U B2 L2 D' L' B R2 B2 R2 U2 R2,W,Abierto del Mirador 2022 (2022-08-13~14),333 R1 B #3

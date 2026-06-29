@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / B / bin 9
-# Population in this bin: 378
+# Population in this bin: 379
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4190940001,U L D' R2 F' U2 F' L' F U F2 D2 F2 U R2 D F2 L2 U' R',B,CubingUSA Mid-Atlantic Championship 2024 (2024-10-12~14),333 R1 C E2
@@ -67,7 +67,7 @@
 3507716001,F R D2 L2 U2 B2 D L2 B' U F B2 U2 L F2 U2 R2 L' U2,B,Stevenage February 2024 (2024-02-10~11),333 R1 B #1
 5346032001,D2 U2 L2 U2 B R2 F' D2 L D2 F U R2 D2 L R2 D' B F,B,Battle for Belgrade 2026 (2026-01-24~25),333oh Final C #2
 657743001,D F U B' L' D' R D B2 D F' U2 R2 B U2 B2 R2 U2 R2,B,Dalian Winter 2017 (2017-12-03),333 R1 D #4
-5708062001,D' F' D2 R F' U L' B' D' F2 R' B2 R L' B2 L D2 L' F,B,Agoura Summer 2026 (2026-06-20),333 R1 B #4
+5720062001,D2 U2 B' L2 B' L2 F2 R2 F2 R' B U R' B D' L B2 F' U2 R2,B,Auckland Winter Open 2026 (2026-06-20),333 R1 A #2
 660846019,B2 L2 U2 L2 D2 B D2 F' U2 B R' U B' R' D' B2 D' L B U2 F' D,B,Brasilia Spring 2015 (2015-10-24~25),333mbf Final A #1
 3460844001,B R B L D' R U R D2 R F U2 B2 L2 F2 L2 U' F2 D2 R2,B,Gort-a Go Fast 2024 (2024-01-27~28),333 R1 D #4
 661093023,R' F2 L2 R' B2 D2 B2 D2 R' D' L' B' U F D R2 D F2 U2 L' F',B,Lima Rubik 2016 (2016-08-27~28),333mbf Final A #2

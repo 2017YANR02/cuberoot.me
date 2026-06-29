@@ -2,7 +2,7 @@
 # Population in this bin: 124
 # Samples listed: 124 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 80106001,D2 R' B2 D2 B2 R2 D2 R D R2 B2 L' F L2 U B' L R2 U2,O,Brain Studio Cube Open 2014 (2014-11-15~16),333 R1 M E2

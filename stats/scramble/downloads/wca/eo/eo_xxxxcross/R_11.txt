@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / R / bin 11
-# Population in this bin: 507
+# Population in this bin: 508
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2

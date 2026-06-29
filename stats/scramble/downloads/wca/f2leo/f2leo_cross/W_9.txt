@@ -2,7 +2,7 @@
 # Population in this bin: 10
 # Samples listed: 10 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 364083001,B2 U' B2 D R2 B2 U2 R2 D U' F U' L F R' U2 B2 D2 B' U,W,Sandnes Open 2016 (2016-09-17~18),333oh R1 B #1

@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / O / bin 2
-# Population in this bin: 185
-# Samples listed: 185 (all entries in this bin)
+# Population in this bin: 186
+# Samples listed: 186 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 10406001,D2 B U2 F' D2 F L2 U2 F' U' R F2 L2 U B' D U' R2 U',O,Marikina City 2 Open 2014 (2014-04-05),333 R2 A E2
@@ -190,3 +190,4 @@
 5568569001,B U D B2 L' F' D L2 D2 F' L2 B2 L' D2 F2 R U2 D2 R,O,King's College Open 2026 (2026-04-18),333 R1 C E2
 5584944001,D2 R2 F D2 B2 L' F' B2 U' D2 R' U L2 D L2 U' L2 U',O,Stockholmsligan 6: Blandat - 2026 (2026-04-28),333 Final A E1
 5688683001,L' D2 F2 L' U2 R2 U2 B2 F2 U R2 U' B D2 R F U2 R2 D2,O,UC3M Leganés Open 2026 (2026-06-06),333 R2 B #4
+5724766001,U' F2 D' U B2 F2 U' B D' R D R2 F' R' F' L D2 L,O,Questem'paire 2026 (2026-06-27~28),333 R2 A #3

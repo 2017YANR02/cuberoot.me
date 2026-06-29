@@ -2,7 +2,7 @@
 # Population in this bin: 114
 # Samples listed: 114 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 22689001,B' U2 R2 U2 B2 F' R2 B R2 F' U R' B' L' F D' F U' F,G,Berlin Open 2014 (2014-05-24~25),333 R2 B #5

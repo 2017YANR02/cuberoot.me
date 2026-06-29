@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / R / bin 6
-# Population in this bin: 253
+# Population in this bin: 254
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5416933013,D' F' D2 B D2 B2 F' U2 R2 D U L' R D' R' B' L2 D' R2 B R,R,Hämeenlinna 2026 (2026-02-28~03-01),333mbf Final A #2
@@ -21,7 +21,7 @@
 188184001,B U D' F' D2 F L2 B2 R2 L F2 B2 U2 L2 U' L2 D' R2 B2 U,R,Manhattan Gdańsk Open 2015 (2015-09-12~13),333 R2 A E2
 208743001,U2 B2 F D2 F2 L2 R' B U2 B' R F' R' F U B D,R,Athens Fall 2015 (2015-10-24),333 Final A #3
 215252001,R' L B L2 F' D L' D F' D' F2 R2 L2 F' R2 F2 R2 F' R2,R,Kansas City Cubing 2015 (2015-11-07),333 R1 A #2
-5574024001,B' D' B' R D F U D2 B2 R2 L U2 R' B2 U2 F L' U2,R,Trondheim Spring 2026 (2026-04-25),333 Final A #4
+5724594001,B' D F' U2 B2 F2 R2 U B2 U' B2 L' U L D' B' U' B,R,VERK XVI 2026 (2026-06-27~28),333oh R1 B E1
 257431001,D R2 U' R2 B2 D R2 B2 D U' F2 L U F' R B2 L2 D2 F2 R U2,R,Uchi Montevideo 2016 (2016-02-12~14),333oh R2 C #1
 287124001,R F2 R U2 L' F2 L' D2 R B D' B U2 B R D2 F' L D F,R,Shenyang Open 2016 (2016-04-23~24),333oh R1 A #4
 322515001,L2 F2 D' R2 F2 D2 U2 R2 U' F D F2 U2 B2 L F2 R' B D' R,R,Changchun Open 2016 (2016-07-03),333 R1 B #1

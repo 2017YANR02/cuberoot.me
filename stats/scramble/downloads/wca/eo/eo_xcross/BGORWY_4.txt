@@ -2,7 +2,7 @@
 # Population in this bin: 312
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3594698001,R2 B L2 B2 R2 U2 F L2 F' R B L2 B2 L2 B L' U2,R,Delta County Cubing 2024 (2024-03-16),333 Final A #2

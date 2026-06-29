@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / ORWY / bin 7
-# Population in this bin: 293
+# Population in this bin: 295
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R,Telangana Cube Championship 2024 (2024-08-23~25),333oh R1 E E1
@@ -91,7 +91,7 @@
 5186792060,U R2 D2 U L2 B2 D R2 L D2 B' L B F2 L B2 R2 U',R,Polish Championship 2025 (2025-11-13~16),333mbf Final A #1
 961313001,D2 L2 F2 D2 L2 B2 U R2 U2 B' R D2 U' L2 U2 R' B2 F,O,WCA South American Championship 2018 (2018-12-15~16),333oh R1 C E1
 4922202001,D' R B L F2 L B2 D2 R' F2 R2 U B D2 R2 F2 D2 B' L2 U,W,Bucks County Cubing PM 2025 (2025-08-09),333bf Final A E1
-5284150023,D' B L2 U R2 F2 U2 B2 U2 L2 B2 L F' D B' U F D U' B' L',O,Ogunquit Winter 2025 (2025-12-20),333mbf Final A #1
+5721837036,L B R F U2 F2 R' B2 L B2 L2 D2 B' U R D2 L' R B L B,R,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333mbf Final A #1
 4869018027,B' D' R2 F' U' D' F' D L F2 D2 B2 U2 D2 L' U2 D' B2 D2 L2,R,NZ North Island Championship 2025 (2025-07-11~13),333mbf Final A #2
 1015089001,B2 R' F2 R2 B2 D2 L B2 F' L' D2 B' U' B2 D2 F L2 B' L' B',W,Medan Lunar New Year 2019 (2019-02-09~10),333bf Final B E1
 1017548001,D' U2 R2 D2 U' B2 L2 R2 U' R B' R B U R D R' F,W,Izhevsk Winter Cube 2019 (2019-02-09~10),333 R1 D E2

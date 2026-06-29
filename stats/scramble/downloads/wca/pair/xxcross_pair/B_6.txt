@@ -2,7 +2,7 @@
 # Population in this bin: 302
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4715653001,B D2 F2 L2 D2 B' F U2 F2 R' U' B' L2 D U' F L B2 U',B,German Open 2025 (2025-05-10~11),333oh Final A E2
@@ -152,7 +152,7 @@
 4045041001,D2 L F R F U' R' L2 U L2 D' B2 U L2 F2 B' R2 D,B,Back to School Colorado 2024 (2024-08-24),333 R1 A E1
 5027360001,U' D2 B2 U2 L2 R U2 D R F2 U L U2 R2 D2 F L',B,La Montagne Open 2025 (2025-09-13~14),333 R2 B E2
 2478292021,L U L2 R2 D2 B2 F' L2 B L2 U' F U2 L U L D' L2 B',B,Empire State Winter Warmup 2023 (2023-02-04),333mbf Final A #1
-2479998001,R D2 L2 F L2 B F' L' U' F U2 F2 U' R2 U L' R',B,Chennai Cubing Club Meetup 2023 (2023-02-04),333oh R2 A #2
+2479998001,R D2 L2 F L2 B F' L' U' F U2 F2 U' R2 U L' R',B,Chennai Cubing Club Meetup 2023 (2023-02-04~05),333oh R2 A #2
 2499598001,U2 F B2 R2 D' B2 L2 D' L2 F2 D R U L U' L' U' L2 F2,B,Lat Krabang Cubing 2023 (2023-02-18~19),333 R1 L E2
 5030703001,L2 R B' F2 D2 B' U2 R2 B2 L2 U2 R D F2 R2 B' U' F2,B,Regionales Santander 2025 (2025-09-13~14),333 R1 B #3
 2547694022,B2 D' U' B2 U2 B2 L2 R2 B D F' U' F D B2 R2 F L' D' B' L',B,Q8speedcubing in K.S.E 2023 (2023-03-10~11),333mbf Final B #1

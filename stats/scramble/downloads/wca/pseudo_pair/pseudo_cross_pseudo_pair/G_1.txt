@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / G / bin 1
-# Population in this bin: 167
-# Samples listed: 167 (all entries in this bin)
+# Population in this bin: 168
+# Samples listed: 168 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 25223001,D2 L2 R2 B2 F' L2 D2 F2 U2 L U2 F R2 U R F2 D2 F' R',G,National Cubing Region Open 2014 (2014-05-31~06-01),333 R1 O #1
@@ -172,3 +172,4 @@
 5609478001,D2 F R2 B' L2 D2 L2 R2 U B' R' U L2 F2 L F2 U B2 F',G,Balam Cubes Jakarta Cube Feast 2026 (2026-05-02~03),333 R1 C #2
 5620757001,L2 R2 B' R2 D2 B R2 U2 F2 R D' U2 F2 R F R' U2 B D,G,Welcome Back Hamilton 2026 (2026-05-09~10),333oh R1 B #5
 5707689015,L2 B' L2 F2 R2 U2 F' R B' R2 B2 L2 R B' U2 L' F U' B',G,No Veas Ocaña 2026 (2026-06-20),333mbf Final A #1
+5726809001,L B2 L R' F2 R2 B2 R' U2 R U2 B R' D B2 D',G,Re-Laois the Cubers 2026 (2026-06-27~28),333 R2 A #3

@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / W / bin 6
-# Population in this bin: 612
+# Population in this bin: 614
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5415001,B2 D U L2 F2 U' B2 F2 R U2 F2 R' U L F2 L2 U2 R F L' F',W,Fénix 2014 (2014-03-29~30),333bf R2 A E1
@@ -93,7 +93,7 @@
 1845066001,D' F2 R2 U2 F2 D F2 R2 D' L R' U2 R F' L' B' R' D',W,Montpellier Open 2022 (2022-03-26~27),333 Final A #4
 599105001,L B2 L U F' B2 L' B' U B D' R2 F2 U' B2 R2 U F2 D2,W,Dutch Nationals 2017 (2017-09-23),333 R2 A #4
 3177523001,R' U F U F R' U' B2 U2 D2 R2 F' U2 F2 B R2 F L',W,Tulcan Open 2023 (2023-10-21),333oh R1 A #4
-5285865052,L2 U2 F2 D2 F2 L' F2 U2 R2 U R U2 R2 U2 B' L' D' L D L B2,W,Please Be Quiet Hefei 2025 (2025-12-21),333mbf Final A #1
+5725017001,L2 U' B2 D2 L' B' D U R D R' F U2 L F' U,W,Westport Summer 2026 (2026-06-27),333 Final A #2
 3590553001,U' L2 U R2 D' U2 B2 L2 U2 L2 F' D2 L2 R B' R2 F2,W,Tenjo Open 2024 (2024-03-16),333 R2 A E1
 1158045001,L2 R2 D2 B2 F2 U B2 U2 B2 U2 R2 B U' B' L2 F2 R' B2 D,W,SacCubing VII 2019 (2019-05-25),333 R2 A E1
 3307831026,B2 R2 U' R2 U' R2 U F2 U' L2 U2 F2 B R B2 R' F D,W,Texas Championship 2023 (2023-12-02~03),333mbf Final A #1

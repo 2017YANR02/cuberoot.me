@@ -2,7 +2,7 @@
 # Population in this bin: 57
 # Samples listed: 57 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 36657001,U' L2 B2 L2 R2 D R2 D B2 D' F' D F2 L2 F2 L' F R D' F U' B R2,W,Czech Open 2014 (2014-07-11~13),333bf R1 B E1

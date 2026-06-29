@@ -2,7 +2,7 @@
 # Population in this bin: 801
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4486321001,B2 D2 L2 D L2 F2 U' R' B2 D L' U F2 D L' R' D2 B,O,NxNs at Finprov 2025 (2025-02-16),333 R1 B E2

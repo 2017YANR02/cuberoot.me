@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / W / bin 7
-# Population in this bin: 819
+# Population in this bin: 821
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3483929001,D B' D F' U2 B U L F2 R F' L2 U2 B2 U' L2 D' F2 L2,W,Empire State Winter 2024 (2024-02-03~04),333 R1 C #2
@@ -137,7 +137,7 @@
 620436001,F' L2 F2 L2 D2 U2 B2 D2 L' B2 D' F' U B' F U' F2 U2 F,W,Dnepr Skips 2017 (2017-10-14~15),333oh Final A #5
 4718488001,L2 U' D2 L' F' L' U' R2 D' B U2 F' B2 L2 F' B2 R' F,W,It's Sarzana O'Clock 2025 (2025-05-03~04),333oh Final A #3
 791248001,F' U L' F' B2 R2 L' F' U B L' U2 D F2 R2 F2 B2 U',W,Cube Factory League Domaniewice 2018 (2018-05-27),333 R1 D #2
-3460533001,F D2 R2 U F2 D' U' F' L B R B D R' D B2 L2,W,Edinburgh Winter 2024 (2024-01-27~28),333 R1 B #3
+5721208001,D' F L' D L2 B2 L D' F' U' D' L U2 R' L' U2 B2 L,W,Kublördag Landvetter IV: 2026 (2026-06-27),333 R1 B #1
 3820398001,L2 F2 U2 F2 U2 F2 L2 D2 U' L2 U' L F L' U L' D' F' U2 R,W,Side Events Bangalore June 2024 (2024-06-01~02),333oh R1 B #2
 2571449001,D L' B' R2 F' B2 D' R' F2 U2 D' F2 R2 U' D2 B' L D' L B',W,Speedcubing at Seaworks 2023 (2023-03-18~19),333bf R1 B #1
 636926001,F2 R2 F' U2 F R2 F2 U2 F' R2 D' R D2 B R' B' D R U B2,W,Villanueva Open 2017 (2017-11-04~05),333 Final A E2

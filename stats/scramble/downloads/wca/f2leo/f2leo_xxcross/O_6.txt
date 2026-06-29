@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / O / bin 6
-# Population in this bin: 715
+# Population in this bin: 716
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2497001,L' D2 R' D2 R' U2 L B U2 L F' U L' D2 U' B U2,O,CMI Fiesta Open 2014 (2014-03-21~23),333 R1 B #5

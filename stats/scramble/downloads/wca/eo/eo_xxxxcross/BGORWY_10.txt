@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / BGORWY / bin 10
-# Population in this bin: 238
+# Population in this bin: 239
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 17388001,R B R2 U2 D' B2 D2 R' L' D B D2 F' U2 D2 F' L2 B U2 B2,Y,Apollo Open 2014 (2014-05-04),333oh Final A #4
@@ -185,7 +185,7 @@
 4218551001,F U' R2 B' D2 F2 B D2 F2 R2 D2 L' U2 R2 D2 L B2 F',B,Avenida Chile XVI 2024 (2024-10-20),333 R1 D E1
 4248094001,R2 D F2 R F2 R' D2 R' F2 R U2 B L2 B' D2 R2 B R U,W,Idaho Championship 2024 (2024-11-02~03),333oh R1 B #4
 4250830001,B U L U2 B2 R' L B' R2 F2 D' L2 D' F2 B2 U' F2 D,G,Rubik's UK Championship 2024 (2024-11-01~03),333 R2 A E2
-4252551001,U2 D' R L B D2 B D2 R' U2 B2 U2 F B L2 B' D2 F',W,TCG Spring Arequipa 2024 (2024-11-02),333 Final A #5
+5721779001,R' B2 D2 B2 D R2 U2 R2 B2 R D F' D' U L2 B' L2 F2 U2 B R2,B,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333bf R1 A #2
 5710305001,L2 F R' F D2 R2 D F R D2 F2 R F2 R' F2 L' F' L2,Y,Wakefield Summer 2026 (2026-06-20~21),333 Final A #5
 4294171006,B' U' B2 F2 L2 U B2 F2 D U' F R D' R D L R B' D2 F' L B2,G,Reno Fall 2024 (2024-11-16~17),333mbf Final A #2
 4361280032,R2 U2 F2 R2 U' L2 R B2 D2 F2 U R U F2 D' F2 U2 L2 U',O,Goiânia Xiu 2024 (2024-12-14~15),333mbf Final A #2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / B / bin 3
-# Population in this bin: 344
+# Population in this bin: 345
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
