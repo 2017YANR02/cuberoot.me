@@ -1,17 +1,20 @@
 #!/usr/bin/env node
-// Build the per-article "full clauses" data for /regulation from the official
+// Build the verbatim "full document" data for /regulation/full from the official
 // WCA sources, aligned by clause id (4a / 12a1a / A3b2 / 10f1 ...).
 //
-//   English : the committed snapshot (_data/reg-source.snapshot.md, April 2026)
+//   English : the committed snapshot (_data/reg-source.snapshot.md)
 //   中文(简): official translation thewca/wca-regulations-translations chinese/
-//   繁体     : OpenCC s2twp from 简体 at build time (same converter as conv.mjs)
 //
-// Emits one JSON per article to _data/reg-clauses/<id>.json so each chapter page
-// statically imports only its own clauses (SSG-friendly, correct for all 3 langs).
+// Emits one combined _data/reg-clauses/_full.json (version + intro notes + every
+// article heading + all clauses, in official order) consumed by the full-text
+// mirror page. EN + 简体 only — the site no longer serves 繁体, and the per-article
+// JSON / FullClauses layer was retired (each chapter now deep-links the mirror).
 //
-//   node scripts/build-reg-clauses.mjs
+//   node scripts/build-reg-clauses.mjs            (fetch 中文 from GitHub raw)
+//   node scripts/build-reg-clauses.mjs --zh FILE  (use a local 中文 source)
 //
-// Re-run after the regs change (alongside reg:check --write).
+// Zero deps (node builtins + fetch). Re-run after the regs change (alongside
+// reg:check --write); the regulation_drift workflow does this automatically.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -142,13 +145,6 @@ async function main() {
       return { id: c.id, depth: c.depth, en: c.text, zh };
     });
     totalClauses += clauses.length;
-    const payload = {
-      articleId: a.id,
-      version: { en: enVer, zh: zhVer },
-      title: { en: a.title, zh: zhArt ? zhArt.title : a.title },
-      clauses,
-    };
-    fs.writeFileSync(path.join(OUT_DIR, `${a.id}.json`), JSON.stringify(payload, null, 2) + '\n');
     summary.push(`${a.id}:${clauses.length}`);
     articlesOut.push({
       id: a.id,

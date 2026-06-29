@@ -11,8 +11,6 @@ import { Palette, BadgeCheck, Wrench, EyeOff, Tag } from 'lucide-react';
 import { useT } from '../../../../hooks/useT';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/3.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import './puzzles.css';
 
@@ -176,7 +174,6 @@ export default function PuzzlesChapter() {
           )}
         </Callout>
       </RegSection>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }

@@ -15,8 +15,6 @@ import { Sparkles } from 'lucide-react';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
 import { RegSection, Callout, RegList } from '../_components/primitives';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/12.json';
 import NotationMove from './NotationMove';
 import './notation.css';
 import { T } from '@/i18n/tr';
@@ -306,7 +304,6 @@ export default function NotationPage() {
         </Callout>
       </RegSection>
 
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }
