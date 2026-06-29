@@ -1,0 +1,219 @@
+/* /regulation/full — verbatim full-document mirror of the WCA Regulations.
+   Builds on regulation.css; only the .reg-doc-* document shell lives here. Clause
+   rows reuse .reg-cl / .reg-cl-id / .reg-cl-text from regulation.css. Colours are
+   theme tokens only (no hardcoded greys); tints via color-mix. */
+
+.reg-doc-version {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  color: var(--ink-faint);
+  margin: 2px 0 18px;
+}
+.reg-doc-attr {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ink-faint);
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--rule);
+}
+.reg-doc-attr a {
+  color: var(--blue);
+  text-decoration: none;
+}
+.reg-doc-attr a:hover {
+  text-decoration: underline;
+}
+
+/* Intro notes */
+.reg-doc-notes {
+  margin: 36px 0 8px;
+  padding: 22px 24px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+  display: grid;
+  gap: 18px;
+}
+.reg-doc-note-h {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.reg-doc-note p {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--ink-dim);
+  margin: 0 0 6px;
+}
+.reg-doc-note p:last-child {
+  margin-bottom: 0;
+}
+.reg-doc-note a {
+  color: var(--blue);
+  text-decoration: none;
+}
+.reg-doc-note a:hover {
+  text-decoration: underline;
+}
+.reg-doc-note-list {
+  margin: 6px 0 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+.reg-doc-note-list li {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-dim);
+  padding-left: 15px;
+  position: relative;
+}
+.reg-doc-note-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+}
+
+/* Contents */
+.reg-doc-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 34px 0 8px;
+}
+.reg-doc-toc-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  padding: 7px 13px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-dim);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.reg-doc-toc-item svg {
+  color: var(--blue);
+  flex: none;
+}
+.reg-doc-toc-item:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: color-mix(in srgb, var(--blue) 8%, transparent);
+}
+
+/* Articles */
+.reg-doc-art {
+  margin-top: 56px;
+  scroll-margin-top: 80px;
+}
+.reg-doc-art-h {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(21px, 3vw, 27px);
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 22px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--rule);
+}
+.reg-doc-art-icon {
+  display: inline-flex;
+  color: var(--blue);
+  flex: none;
+}
+.reg-doc-art-anchor {
+  color: inherit;
+  text-decoration: none;
+}
+.reg-doc-art-anchor:hover {
+  color: var(--blue);
+}
+
+.reg-doc-clauses {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 13px;
+}
+.reg-doc-clauses .reg-cl {
+  scroll-margin-top: 80px;
+}
+.reg-doc-clauses .reg-cl-id {
+  text-decoration: none;
+}
+.reg-doc-clauses .reg-cl-id:hover {
+  text-decoration: underline;
+}
+/* The clause text is a deep-link to itself: read it as plain text, but clicking
+   anywhere jumps to (and shareable-links) the clause. Cross-refs keep their own
+   blue link styling; text stays selectable by dragging. */
+.reg-doc-clauses .reg-cl-self {
+  color: inherit;
+  text-decoration: none;
+}
+.reg-doc-clauses .reg-cl:hover .reg-cl-id {
+  text-decoration: underline;
+}
+/* Guideline-style clauses (id ends with "+") read as supplementary notes. */
+.reg-doc-clauses .reg-cl[data-guide] .reg-cl-text {
+  color: var(--ink-faint);
+  border-left: 2px solid color-mix(in srgb, var(--blue) 35%, var(--rule));
+  padding-left: 12px;
+}
+/* Deep-link highlight when the row is the URL :target. */
+.reg-doc-clauses .reg-cl:target .reg-cl-text {
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+  border-radius: 6px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--blue) 12%, transparent);
+}
+
+/* Inline pieces */
+.reg-doc-xref {
+  color: var(--blue);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.reg-doc-xref:hover {
+  text-decoration: underline;
+}
+.reg-doc-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--blue);
+  text-decoration: none;
+  vertical-align: 1px;
+  padding: 1px 6px;
+  margin-right: 7px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--blue) 12%, transparent);
+}
+
+@media (max-width: 720px) {
+  .reg-doc-notes {
+    padding: 18px 16px;
+  }
+  .reg-doc-art {
+    margin-top: 44px;
+    scroll-margin-top: 64px;
+  }
+  .reg-doc-clauses .reg-cl {
+    scroll-margin-top: 64px;
+  }
+}
