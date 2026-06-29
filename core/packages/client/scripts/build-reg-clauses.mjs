@@ -16,7 +16,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as OpenCC from 'opencc-js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, '../app/[lang]/regulation/_data');
@@ -24,9 +23,6 @@ const EN_SNAPSHOT = path.join(DATA_DIR, 'reg-source.snapshot.md');
 const OUT_DIR = path.join(DATA_DIR, 'reg-clauses');
 const ZH_URL =
   'https://raw.githubusercontent.com/thewca/wca-regulations-translations/main/chinese/wca-regulations.md';
-
-const s2t = OpenCC.Converter({ from: 'cn', to: 'twp' });
-const toHant = (s) => (s ? s2t(s).replace(/專案/g, '項目').replace(/開源項目/g, '開源專案') : '');
 
 async function fetchText(url) {
   for (let i = 0; i < 3; i++) {
@@ -40,7 +36,13 @@ async function fetchText(url) {
   }
 }
 
-// Split a doc into articles, returning [{ id, title, body }] in order.
+// Drop inline angle-bracket markers (<label>, <article-…>, <version>, …) — these
+// are compiler hints in the source, not displayed content.
+const stripMarkers = (s) => (s || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+
+// Split a doc into articles, returning [{ id, title, heading, body }] in order.
+// `heading` keeps the full printed heading ("Article 1: Officials" / "第一章：工作人员")
+// so a faithful full-document view can show the official wording verbatim.
 function splitArticles(text) {
   const md = text.replace(/\r\n/g, '\n');
   const re = /^## <article-([^>]+)>.*$/gm;
@@ -48,13 +50,45 @@ function splitArticles(text) {
   let m;
   while ((m = re.exec(md))) {
     const titleM = m[0].match(/(?:Article|第[^：:]*[章则]|附则[A-Z])[^：:]*[：:]\s*(.+?)\s*$/) || m[0].match(/:\s*(.+?)\s*$/);
-    heads.push({ id: m[1], title: titleM ? titleM[1].trim() : m[1], start: m.index });
+    heads.push({
+      id: m[1],
+      title: titleM ? titleM[1].trim() : m[1],
+      heading: stripMarkers(m[0].replace(/^##\s*/, '')),
+      start: m.index,
+    });
   }
   return heads.map((h, i) => ({
     id: h.id,
     title: h.title,
+    heading: h.heading,
     body: md.slice(h.start, i + 1 < heads.length ? heads[i + 1].start : md.length),
   }));
+}
+
+// Parse the pre-article "Notes" region (### sub-sections before Article 1) into
+// [{ heading, body }]. `body` keeps newlines so list items survive.
+function parseNotes(text) {
+  const md = text.replace(/\r\n/g, '\n');
+  const artIdx = md.search(/^## <article-/m);
+  const head = artIdx >= 0 ? md.slice(0, artIdx) : md;
+  const re = /^### (.+)$/gm;
+  const segs = [];
+  let m;
+  while ((m = re.exec(head))) segs.push({ heading: stripMarkers(m[1]), start: m.index, hlen: m[0].length });
+  return segs
+    .map((s, i) => {
+      const bodyStart = s.start + s.hlen;
+      const bodyEnd = i + 1 < segs.length ? segs[i + 1].start : head.length;
+      const body = head
+        .slice(bodyStart, bodyEnd)
+        .split('\n')
+        .map((l) => stripMarkers(l))
+        .filter((l, idx, arr) => l || (idx > 0 && idx < arr.length - 1)) // keep interior blanks as paragraph breaks
+        .join('\n')
+        .trim();
+      return { heading: s.heading, body };
+    })
+    .filter((s) => s.heading);
 }
 
 // Parse a clause list out of one article body. Lines like `    - 12a1a) text`.
@@ -96,6 +130,7 @@ async function main() {
   let totalClauses = 0;
   let missingZh = 0;
   const summary = [];
+  const articlesOut = []; // ordered, for the combined full-document mirror
 
   for (const a of enArts) {
     const enClauses = parseClauses(a.body);
@@ -104,20 +139,41 @@ async function main() {
     const clauses = enClauses.map((c) => {
       const zh = zhMap.get(c.id) || '';
       if (!zh) missingZh++;
-      return { id: c.id, depth: c.depth, en: c.text, zh, zhHant: toHant(zh) };
+      return { id: c.id, depth: c.depth, en: c.text, zh };
     });
     totalClauses += clauses.length;
     const payload = {
       articleId: a.id,
       version: { en: enVer, zh: zhVer },
-      title: { en: a.title, zh: zhArt ? zhArt.title : a.title, zhHant: toHant(zhArt ? zhArt.title : '') || a.title },
+      title: { en: a.title, zh: zhArt ? zhArt.title : a.title },
       clauses,
     };
     fs.writeFileSync(path.join(OUT_DIR, `${a.id}.json`), JSON.stringify(payload, null, 2) + '\n');
     summary.push(`${a.id}:${clauses.length}`);
+    articlesOut.push({
+      id: a.id,
+      heading: { en: a.heading, zh: zhArt ? zhArt.heading : a.heading },
+      title: { en: a.title, zh: zhArt ? zhArt.title : a.title },
+      clauses: clauses.map(({ id, depth, en, zh }) => ({ id, depth, en, zh })),
+    });
   }
 
+  // Combined full-document payload for /regulation/full (verbatim mirror): intro
+  // notes + every article in order. Built from the same official sources, so it
+  // can be regenerated/auto-synced with zero human paraphrase.
+  const enNotes = parseNotes(enText);
+  const zhNotes = parseNotes(zhText);
+  const notes = enNotes.map((n, i) => ({
+    en: n,
+    zh: zhNotes[i] && zhNotes[i].heading ? zhNotes[i] : n,
+  }));
+  fs.writeFileSync(
+    path.join(OUT_DIR, '_full.json'),
+    JSON.stringify({ version: { en: enVer, zh: zhVer }, notes, articles: articlesOut }, null, 2) + '\n',
+  );
+
   console.log(`[reg:clauses] EN ${enVer} / ZH ${zhVer}`);
+  console.log(`[reg:clauses] _full.json: ${notes.length} notes, ${articlesOut.length} articles`);
   console.log(`[reg:clauses] ${enArts.length} articles, ${totalClauses} clauses, ${missingZh} without 中文`);
   console.log('[reg:clauses] ' + summary.join('  '));
 }
