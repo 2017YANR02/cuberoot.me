@@ -13,8 +13,6 @@
 // RegArticleLayout. Visual-guide example classes live in ../regulation.css.
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/5.json';
 import {
   RegSection, Callout, RegQuote, RegList, VerdictBadge, type Verdict,
 } from '../_components/primitives';
@@ -235,7 +233,6 @@ export default function DefectsChapter() {
           )}
         </p>
       </section>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }

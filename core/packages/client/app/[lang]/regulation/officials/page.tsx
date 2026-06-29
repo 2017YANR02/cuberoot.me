@@ -16,8 +16,6 @@ import type { LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/1.json';
 import { RegSection, Callout, RegList } from '../_components/primitives';
 import './officials.css';
 
@@ -210,7 +208,6 @@ export default function OfficialsChapter() {
           ]}
         />
       </RegSection>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }

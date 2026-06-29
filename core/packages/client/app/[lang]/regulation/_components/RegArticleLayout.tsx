@@ -10,7 +10,7 @@
 
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ArrowRight, LibraryBig } from 'lucide-react';
+import { ArrowLeft, ArrowRight, LibraryBig, ScrollText } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -73,6 +73,15 @@ export default function RegArticleLayout({ slug, children }: { slug: string; chi
         </header>
 
         {children}
+
+        {/* The verbatim official clauses for this chapter live on the full-text mirror */}
+        <Link href={`/regulation/full#article-${a.num}`} className="reg-fulllink">
+          <ScrollText size={18} />
+          <span className="reg-fulllink-text">
+            {t('查看本章完整官方条款（逐字全文）', 'Read this chapter’s full official regulations')}
+          </span>
+          <ArrowRight size={16} className="reg-fulllink-arrow" />
+        </Link>
 
         {/* Prev / next chapter */}
         <nav className="reg-prevnext" aria-label={t('章节导航', 'Chapter navigation')}>

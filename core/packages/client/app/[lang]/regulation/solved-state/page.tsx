@@ -15,8 +15,6 @@ import { EventIcon } from '@/components/EventIcon';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/10.json';
 import { RegSection, Callout, RegQuote, RegList, AngleFigure } from '../_components/primitives';
 
 // Per-puzzle misalignment limits. Source: WCA Regulations 10f1–10f4.
@@ -234,7 +232,6 @@ export default function SolvedStateChapter() {
           )}
         </Callout>
       </RegSection>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }

@@ -14,8 +14,6 @@ import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import { EventIcon } from '@/components/EventIcon';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/9.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import './events.css';
 
@@ -620,7 +618,6 @@ export default function EventsChapter() {
           {t('。', '.')}
         </p>
       </RegSection>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }

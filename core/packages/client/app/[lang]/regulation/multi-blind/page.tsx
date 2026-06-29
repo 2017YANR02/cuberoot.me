@@ -12,8 +12,6 @@ import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import { EventIcon } from '@/components/EventIcon';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/H.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import './multi-blind.css';
 
@@ -166,7 +164,6 @@ export default function MultiBlindChapter() {
           {t('。', '.')}
         </p>
       </RegSection>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }

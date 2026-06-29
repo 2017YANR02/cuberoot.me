@@ -13,8 +13,6 @@ import { useT } from '../../../../hooks/useT';
 import { EventIcon } from '@/components/EventIcon';
 import CubingPreview from '@/components/CubingPreview';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/4.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import './scrambling.css';
 
@@ -258,7 +256,6 @@ export default function ScramblingChapter() {
           )}
         </Callout>
       </RegSection>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }

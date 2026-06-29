@@ -15,8 +15,6 @@ import { Clock, Cuboid, Ban, ListChecks } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/E.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import { FM_SCRAMBLE, FM_SOLUTION, FM_COUNT } from './_example';
 import './fewest-moves.css';
@@ -230,7 +228,6 @@ export default function FewestMovesChapter() {
           ]}
         />
       </RegSection>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }
