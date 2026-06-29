@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / O / bin 8
-# Population in this bin: 451
+# Population in this bin: 454
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 39342001,L U F' R2 F' D2 B' R D' F' U2 B2 D2 R2 F2 B D2 B L2,O,Gernika Open 2014 (2014-07-12~13),333oh R1 B #5
@@ -204,4 +204,4 @@
 1717867001,B2 L B' L U2 L' B2 R' D2 L2 U2 F' U L2 F L F2 U',O,German Mini Open A 2021 (2021-11-06),333 Final B #2
 1748472031,R' U B2 D2 L2 D' L2 D' F2 L' F D' L' B' L B D R' F2 D,O,Stockholm VRG 2021 (2021-11-27~28),333mbf Final B #1
 2785109001,B2 L' B2 R D2 R2 D' B F' R U2 F2 L' R' B R F',O,Oruro Winter 2023 (2023-06-03),333 R2 A #3
-1764249001,F U' B2 F2 U R2 D F2 D2 R F U' B' R F2 L2 R2 U L,O,Welcome Back Taipei 2021 (2021-12-19),333 R2 C E2
+5724198001,F' D2 R D2 B2 R F2 D2 F2 U' R F' D2 L' D' L' B,O,Zhangzhou Open 2026 (2026-06-27),333 Final A #2

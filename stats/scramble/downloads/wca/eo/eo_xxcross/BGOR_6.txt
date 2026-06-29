@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGOR / bin 6
-# Population in this bin: 422
+# Population in this bin: 423
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -12,7 +12,7 @@
 2629052001,D2 L U2 F R2 D2 B R2 D B2 D2 L2 D' L2 F2 D' F2 D B2,O,Stockholmsligan Easter Special: The Toffees - 2023 (2023-04-10),333 R1 A #1
 36653001,D L2 F2 D R2 U2 L2 F2 D2 B' U2 F R2 F2 L2 R B2 U L U L,O,Czech Open 2014 (2014-07-11~13),333bf R1 A E2
 3520111001,L' D2 L U D L' D R' U2 D2 R U2 B2 D2 R U',R,Chelles Open 2024 (2024-02-17~18),333 R2 B #2
-63266001,U2 L F2 D2 B2 L2 U2 L' D2 U2 L F' U' R' B' D' F D2 R' F',R,VIT Rubiks Cube Challenge 2014 (2014-09-26~28),333 R1 J E1
+5725009001,R2 L' B2 D' B D B U' D2 B2 L2 F U2 B2 L2 B R' D2,R,Westport Summer 2026 (2026-06-27),333 R2 B #1
 102171001,D2 R2 U L2 B2 U' L2 B2 F2 L' U B U2 L2 R' D U2 F2 R2,O,Speed Cubing Mumbai Unlimited 2015 (2015-01-16~18),333 R1 T E1
 105912001,L' U' F' R2 L' D R D2 L2 U R' B2 U2 D2 R' B2 L' D2,B,Winter West Ukraine 2015 (2015-01-31~02-01),333 R2 A #4
 4450191001,R2 F' U F U2 B2 U2 B2 R2 U2 B' R2 U R2 B2 L' B' U' R2,G,Eretum I 2025 (2025-01-25~26),333 R2 C #4

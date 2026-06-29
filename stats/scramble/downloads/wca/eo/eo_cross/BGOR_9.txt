@@ -2,7 +2,7 @@
 # Population in this bin: 2
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 220248001,F2 L2 D2 U2 R B2 R B2 U' F L B' D R' U2 L' U' L R2,B,River Hill Fall 2015 (2015-11-21),333 R1 E #3

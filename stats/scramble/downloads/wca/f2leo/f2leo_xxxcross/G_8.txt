@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / G / bin 8
-# Population in this bin: 931
+# Population in this bin: 933
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3888175073,D2 R2 F' D2 L2 R D2 F2 L D2 U L' D L' D U' L F' L,G,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final B #1
@@ -146,7 +146,7 @@
 1904926001,D' R2 B D' B' D2 B R B2 L F B' L2 F' D2 F2 U2 B L2,G,Bulldog Spring 2022 (2022-04-30),333 R1 B #2
 3020054001,B R B D2 B' U2 B' L2 R2 F2 U B' R B2 U2 L' B R,G,Pangasinan Speedcubing Open 2023 (2023-08-13),333 R1 C #1
 4953968001,L2 F2 L2 F' D2 R2 D2 B2 U2 F D R D' B' D' F2 U' B' D,G,South India Cube Championship 2025 (2025-08-14~17),333 R1 A #3
-1100662001,D2 L2 F2 D2 B2 R2 D' R2 D2 B' L D' B' R2 D B' U' B U2,G,Novosibirsk Planetarium Open 2019 (2019-04-13~14),333 R1 C #2
+5727210003,L U' B' U2 F' D2 B' R2 F2 R2 D2 F2 U' B L F2 U2 F U2 B R2,G,BL&D BLD Liestal 2026 (2026-06-27~28),333mbf Final B #1
 621132001,D2 B' D2 B2 U2 R2 F' L2 B' L2 F' D' F' L B F D L F' R2,G,Zhanjiang Open 2017 (2017-10-22),333oh Final A #3
 5346156001,R' F D2 B L U2 B2 L2 R' B' R' B2 F2 R F' D2,G,Istres Open 2026 (2026-01-24~25),333 R1 B E2
 1221351001,B2 D' B2 D2 F B2 D2 L F R' D R2 B2 D L2 B2 D L2 U',G,WCA World Championship 2019 (2019-07-11~14),333 R1 A E2

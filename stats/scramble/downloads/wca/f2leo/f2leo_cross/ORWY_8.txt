@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / ORWY / bin 8
-# Population in this bin: 144
-# Samples listed: 144 (all entries in this bin)
+# Population in this bin: 145
+# Samples listed: 145 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2680001,R2 B' D2 B' F U2 F2 L2 R2 D2 L F' R2 F D' F' U F R B2 F,O,CMI Fiesta Open 2014 (2014-03-21~23),333 Final A E1
@@ -149,3 +149,4 @@
 5610278001,B2 R' B D2 L2 R2 F2 L2 F' L2 D' U' B' L' R F2 U',O,Puzzles in Pittsford 2026 (2026-05-09),333 Final B #2
 5677612042,F' U' F' L2 B' F2 R2 F D2 F2 D L' R B' L2 D' L2 D L2 U,O,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf R1 B #3
 5694149001,B' D R' B' R2 D2 U2 B L2 D2 B' F U' B' L F2 R U2 L',O,Solve N Cruise at Serene Alleppey 2026 (2026-06-06),333 R1 B #4
+5719564001,D2 L2 B F2 R2 D2 B U' B' U R2 D R' F' D L D2 U',O,Cape May Summer A 2026 (2026-06-20),333 R1 D #3

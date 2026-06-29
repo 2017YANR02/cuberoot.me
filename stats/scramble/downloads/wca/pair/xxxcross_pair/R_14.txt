@@ -2,7 +2,7 @@
 # Population in this bin: 116
 # Samples listed: 116 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 79091001,F' D R2 B2 L' D R' F R' B' U B' R2 F2 B D2 F' U2 L2 F2,R,II Aracaju Open 2014 (2014-11-15~16),333 R2 B E2

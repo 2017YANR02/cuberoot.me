@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / BG / bin 16
-# Population in this bin: 41
-# Samples listed: 41 (all entries in this bin)
+# Population in this bin: 42
+# Samples listed: 42 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 313862001,R' D2 L' U2 L D2 R' U2 B2 L U' F' U' B' D' R U B' L2 F,B,Newmarket Open 2016 (2016-06-18),333 R1 F #2
@@ -46,3 +46,4 @@
 5507365001,D F' R' U2 R2 D2 B2 R2 U2 F R2 U' L R2 D L F U' R2,B,Cubing Mada 2026 (2026-03-28~29),333oh R1 A #2
 5512722001,F R2 B' R' F2 U D F L B R2 B2 U2 L2 B2 D F2 U' F2 D2 R2,B,Round Rock Splash & Solve 2026 (2026-04-04),333 R2 B #4
 5600887001,U' B F R2 F L2 B U2 R2 D2 L' U2 B' R' U' F2 U2 R2 U F2,B,CubiKonce 2026 (2026-05-02~03),333 R1 C E2
+5724451052,R L' F2 D2 B D R U' F2 D2 R2 L2 B' R2 F' B2 L2 B U2 B' D L2 U,B,Ljubljana Blind & Big 2026 (2026-06-27~28),333mbf Final B #2

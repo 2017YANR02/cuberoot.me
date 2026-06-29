@@ -2,7 +2,7 @@
 # Population in this bin: 339
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5640748001,U2 R' U L F B2 R L2 U' F2 R2 L2 D2 R2 L2 F2 B L D,Y,Perth Puzzle Party 2026 (2026-05-16),333 Final A #1

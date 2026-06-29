@@ -2,7 +2,7 @@
 # Population in this bin: 27
 # Samples listed: 27 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 57759001,B' D2 L2 R2 F' R2 B' L2 B D' R U2 R2 B D' L' U2 F' U,O,Desio Rubik's Ace 2014 (2014-09-14),333oh R1 A #2

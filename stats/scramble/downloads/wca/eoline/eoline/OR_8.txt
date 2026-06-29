@@ -2,7 +2,7 @@
 # Population in this bin: 1
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5218567001,F2 D' F U2 R B2 U2 R2 D2 L2 B2 D' F2 L' U F' R' D2 B' D2,O,Beijing Only 3x3 2025 (2025-11-23),333 R2 A #2

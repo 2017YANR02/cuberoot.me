@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / OR / bin 6
-# Population in this bin: 561
+# Population in this bin: 563
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 10957001,U2 L' F2 D2 R2 F2 L' F2 D2 R F L' F2 L2 R' F' R D,O,Lexington Spring 2014 (2014-04-12),333oh R1 B #2
@@ -37,7 +37,7 @@
 3340462001,U2 F R' D' L' B2 U D F D' B D2 F2 U' B2 R2 B2 L2 U',O,Master Cube Salvador 2023 (2023-12-15~16),333 R1 A E1
 199035001,U2 B' L2 F U2 B F R' U2 B2 R D2 U L B' U' R,O,San Martin Open 2015 (2015-10-10),333 R1 C #4
 4524060001,U2 B2 R U2 L2 F2 L D' F U2 B2 U2 L' F2 D U B2,O,See Georgia: Cloudland Canyon A 2025 (2025-02-22),333 Final B #1
-5106525013,F' U2 F D2 R2 D2 B2 R' F L R' F' U R F L' D2 U2 L,O,Cehegín Mental Breakdown 2025 (2025-10-18),333mbf Final A #2
+5719834001,B2 L' B2 F2 L' U2 L' F2 L R2 F2 U L' F R2 B' D',O,Shenyang Cubing League 3x3 II 2026 (2026-06-24),333 R2 B #5
 4746458001,R' D2 F2 D2 L B2 F2 R D2 R' D2 U2 B L2 R B D' B',O,Entre Ríos Cubea 2025 (2025-05-24~25),333 R1 B E1
 220274001,D2 B2 F R2 U2 B R D' L' U2 L' D' B' L' D2 B2 L,O,River Hill Fall 2015 (2015-11-21),333 R2 A #1
 3886871001,D2 L F2 L' F2 D2 R U2 F2 L' B2 L2 B' R2 F' D' L2 U,O,Burjassot Mini 2024 (2024-06-22),333 Final A #1

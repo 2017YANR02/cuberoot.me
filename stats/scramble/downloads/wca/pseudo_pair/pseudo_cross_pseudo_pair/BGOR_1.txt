@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BGOR / bin 1
-# Population in this bin: 677
+# Population in this bin: 679
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3220764001,F L F' R2 B D2 R2 D2 R2 B2 L2 B U L' U L2 D2 L2 B2,R,Broome Open 2023 (2023-11-04),333 Final A #3
@@ -20,7 +20,7 @@
 62935001,F2 D2 R2 B2 R' D2 U2 B2 D2 R B F2 U R U L2 U F' D F L B',G,VIT Rubiks Cube Challenge 2014 (2014-09-26~28),333bf R1 B #1
 1557801001,B2 U L2 B2 D2 R2 D2 R2 F2 U' R2 F' R' B2 D B2 F' D' U2 R2,O,Kanazawa Open 2020 (2020-02-23),333 Final A E1
 3794593001,F' R B' U B' U2 R2 B2 R2 B2 F L' D2 B2 D B' R' D2,O,X-Madrid Open 2024 (2024-05-25~26),333 R2 A #3
-81750001,D' L2 R2 U2 B2 U' R2 D2 B' L F R2 B F2 D' B' F L' B,G,Coimbra Open 2014 (2014-11-22),333 R1 B E2
+5726809001,L B2 L R' F2 R2 B2 R' U2 R U2 B R' D B2 D',G,Re-Laois the Cubers 2026 (2026-06-27~28),333 R2 A #3
 104512001,B' L2 F' L2 F2 D2 B D F R D R B R' F D' B' U2,G,Belgian Winter 2015 (2015-01-31~02-01),333 R2 A #2
 1223155001,R2 U R2 D' L2 F2 U2 L2 F2 L' B R2 D2 L' R B' F2 D' F2 D2,R,Cubing Heredia 2019 (2019-07-13~14),333bf Final B E1
 5033618001,B' D F U2 L' U2 L D2 L F2 L2 F2 L F' R B2 U B2 R' D2,B,El Tormes Open 2025 (2025-09-20~21),333 R2 B #1

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGWY / bin 2
-# Population in this bin: 578
+# Population in this bin: 579
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5392183001,R F' L U F2 U' R2 B2 U B2 U F' L' B2 D' F D2,G,Melbourne Summer 2026 (2026-01-24~26),333 R1 E E1
@@ -16,7 +16,7 @@
 1850766001,B U L2 U2 L F R2 F B2 U2 F2 B2 R2 U2 L' D2 R B2 R,G,Cube4fun League III Lubartów 2022 (2022-03-26~27),333 R1 C #2
 137365001,F2 L B2 R2 F2 R D2 R2 U2 R' B D R2 U' F D2 U' B D F2,B,Mega Rubik 2015 (2015-05-02~03),333oh Final A #3
 5198631001,F L' F' U2 L R U2 L2 R U2 B L U' F' U2 B',B,Bowling Green Fall 2025 (2025-11-16),333 R1 D #2
-172055001,F L2 R2 F2 L2 R2 U2 F D F U2 F' L' D U2 R F D2 B2 L2 U2,G,US Nationals 2015 (2015-07-31~08-02),333bf R1 H #2
+5721512029,B2 D' F2 R D2 L2 D' R F' D2 B' L2 D2 F2 L2 F' U2 F' D2 B',B,Blind League Dobřejovice III: Brightscript 2026 (2026-06-27),333mbf Final A #2
 172752001,R' U2 F2 R2 D2 U2 L' F2 D F L' B2 D2 U2 L' R2 B' L R',G,US Nationals 2015 (2015-07-31~08-02),333 R2 B #2
 4938578001,D' R2 D F D' B2 D2 F' R' U2 L2 U2 L2 F2 B' L2 B L2 D2,G,East Cobb Summer 2025 (2025-08-16),333 R1 B #4
 187549001,B2 D2 B2 U2 L2 U2 R B2 R' D2 F D2 B' L U F' D2 U' B',Y,Music City Speedsolving 2015 (2015-09-12),333 R1 A #3

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / BG / bin 1
-# Population in this bin: 659
+# Population in this bin: 660
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4635102044,D' L' F2 L2 D2 F' B D' L F2 B2 D2 F U2 L2 U2 B' D2 F L2,B,Tip of Skåne 2025 (2025-04-12),333mbf Final A #1
@@ -50,7 +50,7 @@
 260937001,D2 R2 B U2 B' F2 R2 F2 R2 U' B L R2 U' R' F' R2 F2 U,B,Big Apple Cube Clash 2016 (2016-02-27),333oh R2 B #1
 3865924001,U2 B2 L R D2 L B2 L' B D' B' D L' D2 B L' B U2 B2,B,Agoura Cubing Returns 2024 (2024-06-15),333 R1 E E1
 268400001,B2 D R2 D2 F2 R2 D R2 F L2 R D L2 R' D2 L F L' R2,B,Cubing Classic 2016 (2016-03-19~20),333 R2 B #1
-1904440001,R D2 B D2 L2 B2 L2 R' D2 F2 L B2 R B D R2 B L2 U R2,B,Popular 'n Blind Flen 2022 (2022-04-29~05-01),333 R1 A E2
+5726809001,L B2 L R' F2 R2 B2 R' U2 R U2 B R' D B2 D',G,Re-Laois the Cubers 2026 (2026-06-27~28),333 R2 A #3
 3810395001,U2 R2 U2 F' U2 F2 U2 B2 L B' L' U2 R U' F R' D' U L2,B,Solve Well In Wellington 2024 (2024-06-01),333 Final A #2
 3605149001,F' U2 D B R F D' L U2 B D' F2 U L2 U' F2 U D' F2,B,Brilliant Ballarat 2024 (2024-03-16~17),333 R2 B #1
 992535001,F' B' L' D B2 R2 F L' U D' F R2 B' D2 F U2 F D2 B' D2,G,Kubkvarna Winter 2019 (2019-01-26~27),333oh R1 A E1

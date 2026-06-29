@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / Y / bin 7
-# Population in this bin: 70
-# Samples listed: 70 (all entries in this bin)
+# Population in this bin: 71
+# Samples listed: 71 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 16764001,F2 R B' U' L F2 U2 L F R D' L B2 L2 U2 R' U2 R',Y,Castellon Open 2014 (2014-05-02~03),333 Final A #1
@@ -75,3 +75,4 @@
 5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y,Adelaide Autumn 2026 (2026-04-12),333 R1 A #2
 5562447001,R B' D2 B2 U2 L2 B U2 D' F2 U F' D' R F,Y,Xi'an Cherry Blossom 2026 (2026-04-04~05),333 Final E #2
 5575666026,L' U2 R2 D' L2 R2 B2 U2 F' U F U2 B L' R' U2 F' U F' L2 U',Y,WCC Western PBQ Championship - Santa Clara 2026 (2026-04-25),333mbf Final A #2
+5723200008,B2 D' R F' D L2 U2 R2 D L2 B2 D2 B' F L2 F R' B' F2 L2 U',Y,Hannover Mental Breakdown 2026 (2026-06-27),333mbf Final A #1

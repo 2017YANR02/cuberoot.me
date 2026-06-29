@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGOR / bin 8
-# Population in this bin: 439
+# Population in this bin: 442
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -76,7 +76,7 @@
 5478522001,B2 U B2 L2 U2 L2 B' L2 U2 F2 U' B' R B L F L2 U',R,Potsdam Puzzling 2026 (2026-03-28),333 R1 B #3
 5347562001,R2 L F2 R' D F' R2 F' U' L' F R2 B2 D' R2 D' F2 R2 U2,R,Viña Summer 2026 (2026-01-24~25),333 Final A #1
 3875185001,R' F2 D2 R2 B2 D2 R2 B2 U L' D' R D2 R' U L' D2 B F',G,Chilling in Canberra Saturday 2024 (2024-06-22),333 R2 A #3
-2240292001,F2 L' B2 R' F2 D2 F2 U2 B' L2 F L R2 F' D F2 L' D L2,R,Santiago UV Open 2022 (2022-10-15~16),333bf Final B #1
+5722683001,D2 L2 U2 L2 R2 B' R2 B' R B L' D' F2 R' B D' B D' U2,B,Yukon Solve It Whitehorse 2026 (2026-06-27),333 Final B #1
 3329794010,U' B D' R2 D2 L2 R F2 L R' B' L' F' R B2 L' B R B R',B,5x5 on Madison Ice 2023 (2023-12-09~10),333mbf Final A #1
 3128748001,F U2 B D' R' U2 F2 D2 F R F2 U2 B2 D2 L2 B2 L' D2,R,Cubing for Yuval 2023 (2023-10-01~02),333 R2 C E2
 3581509001,D' F2 R' F U2 L D' R2 D2 R B2 L' D2 F2 D' F2 U' R,O,Northampton Newcomers D 2024 (2024-03-10),333 R2 B #3

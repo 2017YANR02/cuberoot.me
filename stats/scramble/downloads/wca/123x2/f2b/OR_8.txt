@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / OR / bin 8
-# Population in this bin: 849
+# Population in this bin: 854
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2308611044,R' U R2 F' D L' D L' B R B2 D' F2 U D2 F2 L2 D' F L2 U2,R,Colorado Sensory Shutdown 2022 (2022-11-19),333mbf Final B #2

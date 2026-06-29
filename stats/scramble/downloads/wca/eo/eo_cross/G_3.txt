@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / G / bin 3
-# Population in this bin: 198
-# Samples listed: 198 (all entries in this bin)
+# Population in this bin: 199
+# Samples listed: 199 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 28514001,F U2 F2 R2 F2 D2 B U L2 B' U2 D2 L2 B U2 F R2 U2 B',G,Bucharest Rubik Summer 2014 (2014-06-15),333 R2 B E2
@@ -203,3 +203,4 @@
 5602708001,F' D2 F' R2 B D2 L2 F2 D2 L B' L R' B2 F' L' D' U2,G,7x7 Off I-70 MO 2026 (2026-05-02),333 Final A #5
 5606190001,R' U2 R' F' U L F' L2 U' L2 U' B2 U2 L' F2 D',G,Speedcubing Huánuco 2026 (2026-05-03),333oh Final B #1
 5703769001,D2 L2 F' L2 B R' F2 B U2 B U2 D2 R2 B2 R' L2 D2,G,GAN Southern Championship 2026 (2026-06-11~14),333 R1 E #5
+5727137001,L2 U2 L2 F R2 U2 F2 L2 F U2 R B R D2 R' F R' D' R',G,BL&D BLD Liestal 2026 (2026-06-27~28),333oh R1 A #4

@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BG / bin 9
-# Population in this bin: 359
+# Population in this bin: 361
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3749098035,D F' B2 U R2 B' L' U' R' B' L' D2 B2 R' L D2 B R',B,Kensington May Upstairs 2024 (2024-05-11~12),333mbf Final A #1
@@ -41,7 +41,7 @@
 498979001,U2 B2 R2 U F2 L2 U2 R2 U L2 B R' D' R' U L' B2 R U B2,B,Rubik Ec Open 2017 (2017-04-29~30),333 R1 E #4
 501165001,U B D R D2 L2 U2 B U' R2 L' U2 D2 B2 R2 B U2 F' B2 R2 D2,B,KKR Open 2017 (2017-04-29),333 Final A #3
 3258254001,U' R' B D' R' L' U R' B' L2 D' R2 U' B2 U D' B2 R2 D' B2,B,Torelló Open 2023 (2023-11-11~12),333 R1 C E1
-5284053001,R' D B2 R2 U2 F R2 F2 D2 L B L' R B D' L' B L2,B,Ogunquit Winter 2025 (2025-12-20),333 R1 A #2
+5720585001,B' L' U2 F2 L2 U' B2 R2 B2 R2 D' F' L2 R D L2 D2 F,B,Jawa Timur Open 2026 (2026-06-20~21),333oh R1 B E2
 513557001,D' L2 D R2 D' R2 U' L2 B2 R2 U2 B' R2 D F U2 L' U' R D' F,B,Metro Speedcubing Open II 2017 (2017-05-19~21),333 Final A E1
 5560112001,B2 D' R L D2 R2 U' L' F' R' B' L' D2 L' U2 L U2 D2 F2,B,Michigan Mini 40 2026 (2026-04-16),333 R2 B #2
 536174001,F2 D' B2 D' B2 L2 U2 L2 U2 B U R' B2 R' F2 U B' F2 R B2 U',B,Latin America Cubing Tour - Montevideo 2017 (2017-06-14),333 R1 C #2
@@ -180,7 +180,7 @@
 2215608001,U L2 D' L2 U' B2 D2 B2 L2 U2 B L' R' U L U2 F' L D' R,B,TEC Open 2022 (2022-10-08),333 R1 A E2
 2286818001,L2 D2 L2 U F2 U F2 R2 B2 R' B D L' D2 R2 U' F' R2 F2 D2,B,Etec Cubatão 2022 (2022-11-05~06),333 R1 D #5
 2313362001,B F2 L2 D2 L2 U B2 U' R2 D' F2 L' B R D' U' L' B D B2,B,Grande Prairie Open 2022 (2022-11-19),333 Final C #4
-3602286001,L2 U2 R' F L2 D' L' B2 U B2 U2 R' B2 D2 B2 L2 D2 L U2 L,B,Opentrópolis CEFET 2024 (2024-03-16~17),333 R2 C E1
+5720843001,B' L2 F2 U2 L U D L' B U D2 F2 U' R2 U' D2 L2 U' F2 L,B,Sumgait Summer Open 2026 (2026-06-26),333 R1 A E1
 2425335001,U R L2 U2 R2 D2 B U2 B2 R2 F' U' L D' L2 B' L R2 D2 R2,B,DSK Cube Open 2023 (2023-01-14~15),333 R2 A #4
 5035283001,U2 R' F2 U L2 B' L2 F' R2 B' L2 D2 U' B U' F R U' L',B,Fitchburg Fall 2025 (2025-09-20),333oh Final B #5
 3380653001,B2 R D' R' U L' B' U D2 F2 R U2 B2 R' L' D2 R2 U2 F2 B,B,Changsha Open 2023 (2023-12-23),333 R2 D #2

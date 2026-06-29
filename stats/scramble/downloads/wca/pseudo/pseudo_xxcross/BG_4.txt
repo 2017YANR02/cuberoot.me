@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / BG / bin 4
-# Population in this bin: 341
+# Population in this bin: 342
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4883556001,R' F2 R D2 F2 R' U B' U F L' F2 U2 L2 U2 B' L,G,Harbin Open 2025 (2025-07-20),333 R1 B E2
@@ -137,7 +137,7 @@
 1603235016,B2 D2 R2 F2 D' B2 F2 R2 U R' U' B2 R D R2 F L U' F' D,B,Pi Berkeley Quiet 2020 (2020-03-14),333mbf Final B #1
 1625517001,L2 F' D F2 D2 B' L' D B2 R2 B2 L U' D2 F L',B,Darwin Open 2020 (2020-12-05),333bf Final A E1
 1656522001,B' U' L' B' D2 F2 R2 D' R' B' U2 F2 D2 L2 U2 R2 F U,B,Guilin Open 2021 (2021-05-16),333 R1 H #1
-1682961001,F2 U L2 U2 L2 F' U2 B D2 L' D B2 L2 B U2 F2 U2 R2,G,Empire State Summer A 2021 (2021-07-31),333 R1 D E2
+5727133059,R L2 F2 R2 U2 B2 D2 U R2 U B2 F2 L F' D2 R F R D2 L2,G,BL&D BLD Liestal 2026 (2026-06-27~28),333mbf Final A #2
 4799143001,U' L' F' B' R B2 D2 R' L U F U2 B L2 F' U2 B' U2 L',G,Kansai Odd and BLD 2025 (2025-06-15),333 Final A #2
 1761589001,F2 R2 U' B2 L2 D' L2 D2 L F D F2 L D' F' L2 F2 D',B,Richmond Open A 2021 (2021-12-11),333oh R1 A #5
 3216033001,D' F R U F' D2 L D' F U2 R' D2 R' B2 R' U',B,Sambil Valencia 2023 (2023-10-29),333 R2 B #3

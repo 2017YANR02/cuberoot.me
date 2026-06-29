@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / BGOR / bin 5
-# Population in this bin: 110
-# Samples listed: 110 (all entries in this bin)
+# Population in this bin: 111
+# Samples listed: 111 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 66157001,L2 U2 B2 L2 F R2 F U2 B L D2 L2 B R2 D2 U2 R2,B,Montreal Fall 2014 (2014-10-11~12),333 Final A #1
@@ -115,3 +115,4 @@
 5597316001,R' U' F U R' B U2 B2 D U' R2 F2 U' B2 U F' U2 L2 D B2 R' F2 U R' U' F,O,Nordic & Swedish Championship 2026 (2026-05-01~03),333fm Final A #3
 5634397018,B' D2 B2 U L2 D R2 D2 F2 R2 L U' B U R U F' R F' U' B' L,O,Please Don't DNF Beijing 2026 (2026-05-16~17),333mbf Final A #1
 5693049001,R2 D2 R2 F2 U B2 D' F2 D' U' B' U F2 R' D2 F L2 R U' L2 U2,O,Pickering Blindfolded 2026 (2026-06-06),333bf R1 B #1
+5726809001,L B2 L R' F2 R2 B2 R' U2 R U2 B R' D B2 D',O,Re-Laois the Cubers 2026 (2026-06-27~28),333 R2 A #3

@@ -2,7 +2,7 @@
 # Population in this bin: 349
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 37618001,U' B2 D' L F' D' R' U R U' F2 U F2 D L2 F2 U B2 L2 D,W,Welcome To Cambridge 2014 (2014-07-12~13),333oh R1 B #3

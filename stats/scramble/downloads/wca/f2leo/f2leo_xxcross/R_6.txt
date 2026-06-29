@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / R / bin 6
-# Population in this bin: 739
+# Population in this bin: 742
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5437765001,D2 R B R2 B F2 D2 F' R2 U' L' U' B' D2 L' F2 R' F,R,Dobeles Pavasaris 2026 (2026-03-07~08),333oh Final A #4
@@ -58,7 +58,7 @@
 251726001,U' F2 D' U2 B2 U B2 F2 U' L2 F' R F' R' F' D2 B D,R,UiO Open 2016 (2016-02-07),333oh R1 B E2
 254415001,D2 L' B2 U2 L' B2 R U2 R F2 U' B' L2 D2 U' R2 U' F,R,Big 'n Weird Pretoria 2016 (2016-02-13),333 R1 A #2
 2031780001,B' U' L2 F2 D U2 L2 U R' U2 L2 D' L D' B' L2 F' R2,R,Ho Chi Minh City Warm Up 2022 (2022-07-17),333 R1 G #2
-258479001,D2 R2 U2 F U2 F2 R2 F' L F' D U R2 D2 F2 R2 B U' F2,R,Caltech Winter 2016 (2016-02-20),333 R1 B #2
+5724594001,B' D F' U2 B2 F2 R2 U B2 U' B2 L' U L D' B' U' B,R,VERK XVI 2026 (2026-06-27~28),333oh R1 B E1
 4280205001,B R' D F' D' R' F D B2 R2 D F2 R2 B' U2 R B,R,Kubing in Kapiti 2024 (2024-11-09),333 Final A E2
 4133126001,L F2 U2 D' R B L F2 L2 U2 R2 D2 F2 U' F2 U' B2 U2,R,Xuzhou Autumn 2024 (2024-09-21),333 R1 A E1
 1035840001,R U2 L R2 U2 L' B2 R2 D L' D F' D R2 B U2 R F,R,Los Próceres 2019 (2019-02-24),333 R1 F #1

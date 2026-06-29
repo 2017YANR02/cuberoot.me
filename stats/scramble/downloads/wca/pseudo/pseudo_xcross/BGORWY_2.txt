@@ -2,7 +2,7 @@
 # Population in this bin: 811
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2261741080,B' L F' B D2 B L' F2 R D B2 D' R2 U2 F2 L' F L',Y,Mini Mental Breakdown San Diego 2022 (2022-10-23),333mbf Final B #1

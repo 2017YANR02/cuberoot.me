@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / WY / bin 10
-# Population in this bin: 616
+# Population in this bin: 618
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 1258630001,D' L2 R2 F2 D' R2 B2 F' R D' B L D B2 D U2 F L' U,W,Baoji Open 2019 (2019-08-11),333 R2 D #4
@@ -188,7 +188,7 @@
 3509211001,F' R U2 L' F' R U' R L' D2 R2 F2 R2 D' R2 U' D' L2 R,W,Hurlubiks Cube Mouscron 2024 (2024-02-10~11),333 Final B #4
 3263360001,L B L2 B R2 F R2 D2 B2 R D' L B2 D' U' F' L2 B' R,W,Green Bay 2023 (2023-11-12),333 R1 A E1
 1576945001,R U2 L' R' B2 R' F2 D2 L' B' U' L' F' R D' B2 D B2 L2 D,W,Saraswati Open 2020 (2020-02-23),333 R1 C #3
-1964987001,U R U B D F U F2 R2 D2 F2 R' B2 L F2 L' U2 D F',W,NSW Open 2022 (2022-06-11~12),333 R1 E #3
+5724879001,F2 R2 D B U F2 R U2 L2 U F' D2 F2 U2 F R2 D2 B' U B' L,W,Questem'paire 2026 (2026-06-27~28),333bf R1 A #4
 952727001,U2 L' F2 L' U2 R' F2 L2 D2 F' L B R2 F' L B2 D F' U' B',W,The Battle of Lexington 2018 (2018-12-01),333 R2 B #5
 3202213001,R' F' U B2 U R2 D U L2 D' F2 L' D F' U2 F2 R U' R2 B',W,Mikołajki Open 2023 (2023-10-21~22),333 R2 B E1
 5706565003,R D' L2 D2 B' D2 R2 F' D2 B U B D' L2 F U' L U2 L',W,Quiet Prep in Palisades 2026 (2026-06-19),333mbf Final B #1

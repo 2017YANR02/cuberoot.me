@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / R / bin 5
-# Population in this bin: 874
+# Population in this bin: 875
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3626799001,B U2 F2 D2 L2 U R2 U' F2 R2 U' B2 L B2 D2 F' L B R2 D,R,Red Stick Spring 2024 (2024-03-30),333 R2 B #3
@@ -156,7 +156,7 @@
 1968204026,F' L R2 U L2 D U2 R2 D L' F R D' R2 B2 L U2 L2 R' B',R,Kidderminster Summer - British Blind Off 2022 (2022-06-11~12),333mbf Final B #2
 1491120001,F2 D' F2 D2 B2 L2 U' R' D B2 F2 U' F' L B' U2 B' U',R,Ha Noi Cube Day 2020 (2020-01-05),333 R1 J E2
 4655913001,F R' D2 F2 U' B2 F2 D B2 F' R D2 B R2 B F L' F2,R,Bethlehem 2025 (2025-04-17~18),333 R2 B #4
-2828657001,R' B' R2 U' L2 D2 R2 F' R' L F' U L2 D' B2 R2 U2 L2,R,Kosovo Open 2023 (2023-06-25),333oh R1 A #1
+5724594001,B' D F' U2 B2 F2 R2 U B2 U' B2 L' U L D' B' U' B,R,VERK XVI 2026 (2026-06-27~28),333oh R1 B E1
 2634434062,R' B2 R U2 R D F D2 F' R F2 B2 L' F2 R2 U2 B2 U2 L' D,R,Solving in Sale 2023 (2023-04-15~16),333mbf Final A #1
 1274040019,F2 U' R2 B2 F2 R2 U2 R2 D' F2 U' B U B U' L2 B R' B' L B R',R,Bucharest Blind and Stuff 2019 (2019-08-24~25),333mbf Final A #3
 5372236001,U F' L F' U' D2 L2 B2 R' D F2 B2 D B2 R2 F2 L2 F R2 B R',R,Curitiba Contra o Tempo 2026 (2026-02-07~08),333bf Final A #4

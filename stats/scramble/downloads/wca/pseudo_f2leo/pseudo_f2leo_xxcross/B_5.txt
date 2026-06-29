@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / B / bin 5
-# Population in this bin: 932
+# Population in this bin: 933
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2679777001,L2 D R2 U' F2 U B2 D2 U' F' L2 D' F2 R' U' R' B' U2 R',B,Welcome to Olympia 2023 (2023-04-29),333 R1 B E2

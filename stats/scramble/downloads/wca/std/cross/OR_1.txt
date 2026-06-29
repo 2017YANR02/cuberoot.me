@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / OR / bin 1
-# Population in this bin: 217
+# Population in this bin: 218
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5040001,F2 D2 L2 U R B2 R F L2 D2 F2 B' L2 F L2 D2 R2 F,O,Tula Open 2014 (2014-03-28~30),333 Final A E1
@@ -173,7 +173,7 @@
 4136279001,R' B' L' U2 R2 U' L2 U F R2 F' L2 F2 L2 F' U2 B R2 L,R,Mauritian Odyssey 2024 (2024-09-28),333 Final B #1
 4299572001,B2 U' B2 U R2 U B2 F2 U' L D2 F2 R2 U2 R' D F' D2 B2 L' F,R,Olsztyn Squared 2024 (2024-11-16),333bf Final B #1
 4382921001,L2 D' R' B2 L' B2 L2 B2 L' B D2 B2 D L D L' B2 R,R,Franconia Christmas A 2024 (2024-12-20~22),333 Final A #1
-4405365001,B2 R' D2 B2 R' D2 L' F2 B R' F U' L2 F2 U2 L R2 B2,R,Imagination Station A 2025 (2025-01-04),333 R2 A #4
+5722367001,U' B' D F' D2 F L2 F' R2 F' L2 U' F L B' F2 L D2 F2,R,Alameda County Fair 2026 (2026-06-27),333 Final A E2
 5508209017,D2 B2 R U2 R' U2 L' D' R B' D2 F2 L' D' R2 D2 B U2 B' L,O,Johnshhhtown 2026 (2026-04-04),333mbf Final A #1
 4443431001,U R L' D2 B2 D2 B' U' D B2 U R2 B2 D' L U2 L,O,Piła Open 2025 (2025-01-25~26),333 R1 A E2
 4472376026,L2 F R' U' L2 U F' D' L B U D' F2 D F2 B2 U' B2 R B' L,O,Hungarian All-Rounder 2: Frozen 2025 (2025-02-08),333mbf Final A #1

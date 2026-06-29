@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BG / bin 3
-# Population in this bin: 412
+# Population in this bin: 413
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
@@ -142,7 +142,7 @@
 1240497001,F U2 R2 D2 L U2 D' B2 L' U' R2 B2 D2 F2 R U2 B2 L U2,B,Ecuador Nationals 2019 (2019-07-27~28),333oh R1 C E2
 1248363001,F B L B' R' D2 B' L' B U2 F2 L' D2 L' U2 B2 L D2,B,Horse City 2019 (2019-08-03~04),333 R2 B #3
 5222084001,F B2 L2 U2 R2 U2 F2 U' B2 L2 U F D' U2 L D2 B' D2 U,G,Desafío Rubik's Guatemala 2025 (2025-11-22),333 R1 F #2
-1264720001,B2 R F2 R2 D2 R B2 R2 D L F2 D U2 B D L F L D,G,Tchê Math Cube 2019 (2019-08-17),333oh Final C E1
+5727137001,L2 U2 L2 F R2 U2 F2 L2 F U2 R B R D2 R' F R' D' R',G,BL&D BLD Liestal 2026 (2026-06-27~28),333oh R1 A #4
 3258246001,B2 U2 F2 R' D2 U2 L' B2 L R B2 F L R2 B R' D2 F2 L,G,Torelló Open 2023 (2023-11-11~12),333 R1 B #5
 1304075001,B2 D2 B' U2 L2 R2 B' L U2 B2 F L F' L2 D2 F2 U2,G,Republica Dominicana Nationals 2019 (2019-09-14),333 Final C #3
 1305078001,U2 R B2 U2 R' F2 U2 L2 F L' F' D2 U2 L F2 U B' F',G,Singapore MentalMatrix Open 2019 (2019-09-21),333oh R1 B #1

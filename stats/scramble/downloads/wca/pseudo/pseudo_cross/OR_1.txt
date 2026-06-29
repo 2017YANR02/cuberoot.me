@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / OR / bin 1
-# Population in this bin: 696
+# Population in this bin: 698
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4859789001,D R' B2 L2 U' F2 D' U F2 U' R F2 L2 D' B' L' B R' B2,O,Santo Domingo Summer 2025 (2025-07-05~06),333oh R1 B #2
@@ -112,7 +112,7 @@
 611621001,D2 F2 L2 D2 B2 L2 D F2 D R' D F U2 L2 D' U2 B' L2 R2 F',O,Maryland 2017 (2017-10-07~08),333oh R1 D E2
 3783258001,F' B2 L' F2 L' D2 F2 R2 F D' U2 F2 D' F' U' L' U' R',R,Barby Cube 2024 (2024-05-18~20),333oh Final B #5
 1255692001,F' R F2 D2 F2 L' U D2 B' L B D2 F D2 B2 L2 F2 L2 D2,O,Cube Camp in Kanazawa 2019 (2019-08-10~12),333 R1 B #4
-630475001,R B2 U2 B2 F2 R2 F2 U2 L R2 U' L U' B' D R D' B2 R' F2,O,Villa Open 2017 (2017-10-28~29),333 R2 A E2
+5720860001,F2 L U R' U2 F' U' D L F2 U R2 U F2 R2 U' D2 R2 U2,R,Sumgait Summer Open 2026 (2026-06-26),333 Final A #2
 3761541001,L' D R2 B2 F2 D2 R2 U2 L' U R B' U L2 U B' D2 R,O,Prenacionales Colombia 2024 (2024-05-12~13),333 R1 B #1
 5354073001,B2 R' B' D2 F D R' D L2 F2 B2 D2 B2 D' R2 B' D' B,O,Otsu Biwako Winter 2026 (2026-02-01),333 R1 A #3
 635093001,D' U2 L2 D B2 D2 F2 L2 B2 R D2 R B L U L2 B' U F',O,Kjeller Open 2017 (2017-11-04~05),333oh R2 A E2
@@ -149,7 +149,7 @@
 709727001,B2 D2 R D2 R2 D2 R D2 F R D' U2 L' F2 U2 R' F' D B,O,Croissy Open 2018 (2018-02-17~18),333bf R1 A E2
 4484383001,F2 L B2 F' D2 F' D2 U2 F2 D' L D' F L2 B2 F2 U2 L,O,Gdańsk Cubing Day 2025 (2025-02-15),333 Final A #2
 712892041,F R2 F L2 R2 U2 B' F D F' U2 L U B' R' U B2 L2 D L2 U2,O,Singapore Cube Championship 2018 (2018-02-24~25),333mbf Final A #1
-712893007,R B2 D2 L2 D2 U2 L' F2 D2 R2 D U' B' R' D2 F L' R2 F2 D R' B' L,O,Singapore Cube Championship 2018 (2018-02-24~25),333mbf Final A #2
+5722367001,U' B' D F' D2 F L2 F' R2 F' L2 U' F L B' F2 L D2 F2,R,Alameda County Fair 2026 (2026-06-27),333 Final A E2
 718663021,R2 D B2 D L2 U' B2 F2 D2 B2 R U' L' D2 L' U' B U B2 R' D2,O,Mental Breakdown Germany 2018 (2018-03-03~04),333mbf Final A #2
 5186821001,F2 L2 D F2 R2 D' R2 D L B' L' D2 B2 F2 D' L' F D2,R,Cottbus Cubing 2025 (2025-11-15~16),333 R2 A E2
 724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018 (2018-03-10),333oh R1 A #4

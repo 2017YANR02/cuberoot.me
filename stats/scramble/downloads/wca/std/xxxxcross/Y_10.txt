@@ -2,7 +2,7 @@
 # Population in this bin: 336
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 16592001,D2 L2 D' F2 R2 F2 R2 D' U' L2 F' D2 R2 D' F2 L' B2 L' D2 F' R D2,Y,Atlantic Open 2014 (2014-05-03),333bf Final A E2

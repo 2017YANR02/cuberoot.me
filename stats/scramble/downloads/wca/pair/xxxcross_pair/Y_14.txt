@@ -2,7 +2,7 @@
 # Population in this bin: 108
 # Samples listed: 108 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 22559001,U2 B2 U B2 U2 B2 D2 L' B' D2 F2 D2 B2 L2 R B' D' F' U,Y,Brasilia Open 2014 (2014-05-17~18),333fm Final A #1

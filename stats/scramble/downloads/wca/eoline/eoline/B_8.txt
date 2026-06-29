@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / B / bin 8
-# Population in this bin: 71
-# Samples listed: 71 (all entries in this bin)
+# Population in this bin: 72
+# Samples listed: 72 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 56437001,D2 F U2 F2 L2 B2 R2 F' R2 D R B U F2 D2 U R' D F2 U,B,IGA Rubik 2014 (2014-09-07),333 Final B #5
@@ -76,3 +76,4 @@
 5696209006,L F' B2 D2 B2 L' R2 U2 R' B2 F D' B2 U L2 R2 F2 D2 F L B,B,Manchester Cubing League - Third 2026 (2026-06-13),333mbf Final B #1
 5700996024,F2 L2 B' R2 D2 F2 D2 R2 F L2 U L2 U B2 F' R' B' U' F' R D,B,Redhawk Slow Summer OH 2026 (2026-06-13~14),333mbf Final A #1
 5708453001,L D2 R F2 R D2 R' U2 L' F L2 U' L2 B' D' B' F' L' B',B,Cubing in the Park Reno 2026 (2026-06-20),333 Final A #5
+5720832001,R' L2 D' U' L2 D' B2 L2 F2 L2 U2 B D L F U' R D F2 U,B,GAN Warm Up Iloilo 2026 (2026-06-20),333 R2 E #2

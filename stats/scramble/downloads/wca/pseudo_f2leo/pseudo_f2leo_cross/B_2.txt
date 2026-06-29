@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / B / bin 2
-# Population in this bin: 410
+# Population in this bin: 411
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3752773001,R2 D2 B' U2 R2 B' R2 B L B U' L2 U' L' F U2 B' L2 R,B,North Jersey Speedsolving B 2024 (2024-05-12),333 R1 A #2
@@ -28,7 +28,7 @@
 5529812001,R F2 L2 U' D B2 U' B U2 L2 D2 R2 D2 B U2 B U' R,B,Tri Cities Spring 2026 (2026-04-11),333 R1 B E2
 209899001,L2 B F2 L2 F U2 F' U2 F U' F2 U2 L2 D L' D U B2 U',B,Avenues CUBELELO Open 2015 (2015-10-31~11-01),333 R1 B #4
 238312001,U2 L2 R2 F L2 B' R2 U' F' U L' U B2 U L F R' D2,B,Cubers East India Open 2016 (2016-01-09),333 R1 A #3
-5637004001,D' R2 U' B2 D' L F' U2 L D' B2 L2 B L2 D2 F2 B' U2,B,Weston-super-Mare Spring 2026 (2026-05-16~17),333oh R2 B #3
+5721512029,B2 D' F2 R D2 L2 D' R F' D2 B' L2 D2 F2 L2 F' U2 F' D2 B',B,Blind League Dobřejovice III: Brightscript 2026 (2026-06-27),333mbf Final A #2
 247160001,U2 B2 L2 U B' D R' D' B' L2 F2 R U2 R' B2 D2 L' F2 B2 D2,B,Dongguan Open 2016 (2016-01-31),333 Final A #5
 248842001,U2 L2 R2 B' L2 D2 L2 D2 F R D2 B2 D' B2 L2 R U2 L' U2,B,Frankfurt Cube Days 2016 (2016-01-30~31),333oh Final B #4
 4634477043,F2 R2 F' U F' U' F' L' F2 U' D' F2 U2 F2 L2 D L' U',B,Nacionales Chilenas 2025 (2025-02-07~09),333mbf Final A #1

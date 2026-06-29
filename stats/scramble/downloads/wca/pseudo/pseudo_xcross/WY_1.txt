@@ -2,7 +2,7 @@
 # Population in this bin: 27
 # Samples listed: 27 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 135333001,L' D2 L' R2 F2 L B2 F2 U2 F L' F' L' R U' R' U' B2 R2,W,Doylestown Spring 2015 (2015-04-25),333 R3 A #2

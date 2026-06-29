@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGOR / bin 8
-# Population in this bin: 481
+# Population in this bin: 483
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4910305001,D' F2 D L2 D2 B2 L2 F' D' L2 B L2 D B' L' D R',G,Silesian Minx Fest 2025 (2025-08-02~05),333oh R1 B #3
@@ -102,7 +102,7 @@
 2425314001,R' L B L F' D2 B' L' F2 R F2 D2 L F2 D2 R B2,R,DSK Cube Open 2023 (2023-01-14~15),333 R1 F #4
 833531001,L2 U R2 U' R2 B2 D' F2 U B D U2 R' B' F' U2 F2 U' L R2,B,SnoCo Summer 2018 (2018-07-20~21),333oh R1 A #5
 837328001,D2 B2 L2 B2 D' B2 R2 U' B2 U B U2 R' D' U F' D' R' B R',B,Chekaad Summer 2018 (2018-07-20),333 R1 A E2
-838284001,F2 B' L' D' B' R U' F U F R2 U' D' R2 F2 U2 F2 U,O,Bengaluru Championship 2018 (2018-07-27~29),333 R1 G E2
+5724594001,B' D F' U2 B2 F2 R2 U B2 U' B2 L' U L D' B' U' B,R,VERK XVI 2026 (2026-06-27~28),333oh R1 B E1
 3278556001,R2 D2 R' F' U2 L' B' D' R2 D2 R B2 R L' B R D2,G,Berkeley Fall 2023 (2023-11-18),333oh R1 D #1
 5135339007,D L D' R' D F2 D2 B L D' R2 L2 B' R2 B2 D2 B2 U2 B R',G,Avenida Chile XXVII Prenacionales 2025 (2025-10-25~26),333mbf Final A #1
 846370001,U R2 B2 U' B2 D L2 D2 B2 R F' D2 L' B2 D2 L2 B' U2 L D,B,Franconia Open 2018 (2018-08-04~05),333bf R1 A E1
@@ -196,7 +196,7 @@
 5457080001,U B2 U2 B' R' B2 D2 F2 D2 R U2 B' D L' F R U' L,R,Sausalito NxN Open 2026 (2026-03-14),333 R1 A E1
 1806936066,R D B2 R D2 B2 U2 R2 B2 L2 B2 U L' U' B' L' F' L B L' F',G,PoliMi Mental Breakdown 2022 (2022-02-12~13),333mbf Final A #2
 1940173001,B2 R2 U2 L D2 U2 B2 U2 R2 U2 L2 R D' B2 L F L2 D R',O,3x3x3 Only Hamilton B 2022 (2022-05-29),333 R1 E #1
-1836767001,F2 D2 B2 R2 B U2 F' R2 U' F2 U L2 R2 F' D' B2 L F2,B,Dåstrup Sleepover 2022 (2022-03-19~20),333 R1 A #3
+5721779001,R' B2 D2 B2 D R2 U2 R2 B2 R D F' D' U L2 B' L2 F2 U2 B R2,B,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333bf R1 A #2
 1838403001,R2 B2 D2 B2 D2 R2 B2 L F L D' R2 F R2 U2 L' F,B,Cubing Day Żuromin 2022 (2022-03-19),333 R2 C E2
 5016301001,U' L2 B R' L' D' L2 D R' F2 R2 D' F2,R,Willimiehen Kuutiopäivät 2025 (2025-09-13~14),333 R2 A #2
 1853943001,U' L2 U' F2 R2 B2 L2 U F U' L2 D' F2 L F2 L R2 F',O,Ohio State Expo Open 2022 (2022-04-01~03),333 R1 A E2

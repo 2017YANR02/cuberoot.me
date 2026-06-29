@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / Y / bin 8
-# Population in this bin: 117
-# Samples listed: 117 (all entries in this bin)
+# Population in this bin: 118
+# Samples listed: 118 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 13215001,B2 L2 D' B2 D F2 D R2 F2 R U L2 U R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333 R2 B #5
@@ -122,3 +122,4 @@
 5709268001,L' U F' R2 L2 D' B2 R2 U B2 R2 D2 R2 D2 L' U2 F2 D2,Y,B-Game - Bastardo Open 2026 (2026-06-13~14),333 R2 B E2
 5709375001,R' B2 D2 F2 D2 L2 R' U2 B U R2 D L U L2 F R2 F2,Y,B-Game - Bastardo Open 2026 (2026-06-13~14),333 R2 C #2
 5710305001,L2 F R' F D2 R2 D F R D2 F2 R F2 R' F2 L' F' L2,Y,Wakefield Summer 2026 (2026-06-20~21),333 Final A #5
+5719308001,F2 R2 D U B2 D' F' R2 F' U' F R2 U F D B2 L' U',Y,Ulaanbaatar Summer 2026 (2026-06-22),333oh Final B E1

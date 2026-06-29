@@ -2,7 +2,7 @@
 # Population in this bin: 17
 # Samples listed: 17 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 450031001,B U2 F U D F L' U2 L F2 B2 D' R2 U2 L2 U L2 F2,G,Piedra del Sol Santander 2017 (2017-02-18),333oh Final B #3

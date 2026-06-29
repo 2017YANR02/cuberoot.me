@@ -2,7 +2,7 @@
 # Population in this bin: 10
 # Samples listed: 10 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 784436001,U B2 U2 B2 F2 L2 F2 U B2 D2 U' L B F2 U2 B R' U2 B U2 B2,R,Fecap Open 2018 (2018-05-20),333 R1 B #1

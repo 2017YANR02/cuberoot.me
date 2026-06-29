@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / R / bin 8
-# Population in this bin: 843
+# Population in this bin: 845
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4503402001,L' R2 U2 R2 B' U2 F' L2 U2 B2 U2 D B' U2 F' D' L F L2,R,Avenida Chile XX 2025 (2025-02-15~16),333oh R1 A #5
@@ -115,7 +115,7 @@
 5307095001,F L2 F2 R' L U L D' L' D2 L R2 F2 D2 B' U2 L2 F' U2,R,Edmonton Winter 2026 (2026-01-03),333oh R1 C #1
 5358169001,B2 L' D' R2 F' L2 B R' F R' F2 D L2 F2 D2 F2 D' R2,R,New Braunfels Comal Cubing Classic 2026 (2026-02-01),333 R1 C #3
 5525232001,U' R2 D L2 R2 F2 U' F2 R2 B' D2 F2 R' B' R2 F D2 F2 L',R,Cubestuff Centurion Q2 2026 (2026-04-11~12),333 R2 A #4
-889238001,U2 F' L2 F' D2 B' L2 B R2 F' U' L' B F L U2 L2 R' F2 D',R,Philippine Championship 2018 (2018-09-28~30),333ft Final A #2
+5718915001,U2 L2 F U' L2 B' R F2 U' L2 D L2 U' B2 R B2 D2 B',R,Lavey-Vous les Mains 2026 (2026-06-20~21),333 R2 C #5
 2723338046,F2 L B2 L' F2 U2 B' D' B2 L2 D L D' F D B' F' L B',R,Cambridge Spring Challenge 2023 (2023-05-20),333mbf Final B #1
 5099154001,U' B2 D F2 R' F2 D F R2 B U2 F2 B' D2 F U2 D L2 D2 B,R,Thailand Championship 2025 (2025-10-11~13),333bf R1 B #1
 2074528001,R' U' B2 R2 U2 L' F2 L' R2 U2 F U' R F2 U2 R' F2 D2,R,George Washington LP 2022 (2022-08-06~07),333 R1 A E2

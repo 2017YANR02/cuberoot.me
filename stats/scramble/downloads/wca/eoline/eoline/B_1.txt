@@ -2,7 +2,7 @@
 # Population in this bin: 98
 # Samples listed: 98 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 29322001,F L U2 B' R F U2 L' B' U2 F2 D2 L' F2 B2 L' B2 D2 L,B,No Parity Open 2014 (2014-06-21),333 R1 C E2

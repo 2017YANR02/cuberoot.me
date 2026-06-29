@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BG / bin 8
-# Population in this bin: 254
+# Population in this bin: 255
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 23678001,D R2 U2 R2 D2 F2 U B2 F2 R U F' D F U' F' D,B,San Diego Summer Splash 2014 (2014-05-24),333oh R1 A E2
@@ -167,7 +167,7 @@
 3655466001,F' D' B' U2 B2 D2 F2 R2 F' U2 L2 R2 U L2 F L' F L2 U2 F L' F,G,Deep South Solving Cape Town 2024 (2024-04-06~07),333bf Final B #1
 3662956001,F2 R2 B' R2 D F2 R' U F' B2 R2 F2 U F2 R2 D2 L2 F2 D B2 D',B,UCD Cube Days 2024 (2024-04-13~14),333 R1 C #4
 3676517001,L2 U' F U L2 U L2 D2 F2 U R2 U2 L F D' B' F2 D' F2,G,Thornhill Spring 2024 (2024-04-20),333 R2 B #4
-3814908001,L' B' R F R2 F B' R F' D2 L2 U2 D2 F' B2 R' F',B,Teublitz Open 2024 (2024-06-01~02),333 R1 C E2
+5721779001,R' B2 D2 B2 D R2 U2 R2 B2 R D F' D' U L2 B' L2 F2 U2 B R2,B,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333bf R1 A #2
 3820290036,R2 F' L2 F2 L D2 U2 F2 U2 L' B' R2 D' L2 B' F2 L' B2 R2 B,G,Please Be Quiet Xi'an 2024 (2024-06-01),333mbf Final A #1
 5423388001,F' R U B D L' U D2 L R2 F L2 F B' L2 D2 F' D2 L',B,Vegas Cubing Winter 2026 (2026-02-28),333 Final A #2
 3863616001,D2 L U' R B' D F R' F' B2 R2 B2 L2 D' L2 U' R2 U' R',G,Santpedor Open 2024 (2024-06-15~16),333oh Final B #2

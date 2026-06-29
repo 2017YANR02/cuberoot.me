@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / B / bin 8
-# Population in this bin: 896
+# Population in this bin: 898
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2652480001,D2 F2 U F2 U' F2 D' F2 U' R' D' R' U R2 U B U' L' R,B,Palmerston North 2023 (2023-04-16),333 R1 B #2
@@ -11,7 +11,7 @@
 23678001,D R2 U2 R2 D2 F2 U B2 F2 R U F' D F U' F' D,B,San Diego Summer Splash 2014 (2014-05-24),333oh R1 A E2
 4854239001,B2 L2 U2 L2 D' B D B' F2 R2 B2 U' F2 L2 D F2 L2,B,İstanbul Mid Summer 2025 (2025-07-05~06),333 R1 C #1
 26092001,R F' U D L2 D' L F' R' D' L' F2 B2 D2 R B2 U2 F2,B,Maribor Open 2014 (2014-06-07~08),333oh R1 A #5
-2020902001,R B D2 B2 R2 B2 U B2 U' L' F U' F L U2 R F' D2,B,Idaho French Fried 2022 (2022-07-16),333 R1 C #5
+5721779001,R' B2 D2 B2 D R2 U2 R2 B2 R D F' D' U L2 B' L2 F2 U2 B R2,B,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333bf R1 A #2
 4426531001,F2 U2 F B2 R F2 R' D2 R F2 L D' L' F L R' B2 L2,B,Pocos Cupos Bogotá XII 2025 (2025-01-18),333oh Final A #2
 4151708001,B' R2 U2 F' L2 U L' B D' F' U' F2 U L2 B' D2,B,Rubik's WCA African Championship 2024 (2024-09-21~24),333oh R1 C E1
 789982001,D' L2 D2 L' F D' F' L' F' D F2 B2 L2 D' L2 U' L2 U R2 U',B,Clock N' Cats 2018 (2018-05-26),333 R1 A #4

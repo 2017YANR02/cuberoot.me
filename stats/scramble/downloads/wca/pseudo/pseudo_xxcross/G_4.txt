@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / G / bin 4
-# Population in this bin: 185
-# Samples listed: 185 (all entries in this bin)
+# Population in this bin: 186
+# Samples listed: 186 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 27263001,R' F' B L D R2 L D F' L' F2 B' D2 B' L2 U2 L2 U2 F' L2,G,Polish Nationals 2014 (2014-05-31~06-01),333 R2 B #3
@@ -190,3 +190,4 @@
 5675972001,D2 R D R' D2 F' R U L F2 D2 R2 D2 R' B2 D2 L' F2 R,G,Franconia Cube Days 2026 (2026-05-30~31),333oh Final A E2
 5691926001,B2 F2 U2 F2 L D2 R D' F D2 L2 D F' L2 F2 L U2 B,G,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final B #2
 5693041049,F2 L2 F U2 B L2 R2 F2 R2 L U B' R2 F D U F U R2 B' L2,G,Brilliant Big & Blind Bravo Orlando 2026 (2026-06-06~07),333mbf Final B #1
+5727133059,R L2 F2 R2 U2 B2 D2 U R2 U B2 F2 L F' D2 R F R D2 L2,G,BL&D BLD Liestal 2026 (2026-06-27~28),333mbf Final A #2

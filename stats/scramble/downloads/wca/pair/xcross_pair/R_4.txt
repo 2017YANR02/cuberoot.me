@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / R / bin 4
-# Population in this bin: 302
+# Population in this bin: 303
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3938051001,U D R' B2 U' F R F2 L' U' R2 B2 U2 D' R2 U D L,R,Varna Open 2024 (2024-07-13),333 Final A #2
@@ -190,7 +190,7 @@
 3298247079,U R2 D' B2 D F2 D L2 F2 U' F L' U' L R' U2 F U2 R2 B',R,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 B #1
 3302918079,L' U D2 B L2 B2 L' B L2 F2 B2 L D2 L' B2 L' U2 D R' D',R,NaticubeBLD 2023 (2023-12-02),333mbf Final A #1
 3333168015,D F' U2 L B2 U2 B2 L2 D2 L2 U2 D F' U L2 R F' D' L' D2,R,Rhein-Neckar Mental Breakdown 2023 (2023-12-09~10),333mbf Final A #2
-5706827001,L' F L D R2 B R' D2 B' R F2 B R2 U2 F D2 F B,R,Nacionales Honduras 2026 (2026-06-13~14),333 Final A #3
+5725009001,R2 L' B2 D' B D B U' D2 B2 L2 F U2 B2 L2 B R' D2,R,Westport Summer 2026 (2026-06-27),333 R2 B #1
 3443256001,L2 D R2 D' R2 U' R2 U' R2 L' D L' U2 F L' R B F2 L',R,Partage Summer 2024 (2024-01-20~21),333oh R1 A #1
 3443731001,L' U' B' R2 B2 D L2 F2 U B2 L2 B R2 D' R' F2 R' U2 B,R,Melbourne Summer 2024 (2024-01-19~21),333 R3 A E2
 4254658001,F' D F L2 F' L' D L D L' B L2 U2 R2 B2 R2 B',R,Cool Down Berkeley 2024 (2024-11-03),333oh R1 A #2

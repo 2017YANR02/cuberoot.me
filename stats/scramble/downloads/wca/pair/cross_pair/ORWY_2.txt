@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / ORWY / bin 2
-# Population in this bin: 779
+# Population in this bin: 780
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 4772900001,R U B' L2 D2 F' D2 U2 R2 F R2 F R D' L' F L F R2 B R2,W,Kewbz Scottish Championship 2025 (2025-05-30~06-01),333bf Final B #2
@@ -58,7 +58,7 @@
 4814456001,B L2 F2 D L2 D' U R2 U B2 L D' B D U' R' D2 R' D' B R',Y,Hungarian All-Rounder 6 2025 (2025-06-21),333bf Final B #3
 5063041001,B' D U2 F2 L2 U2 L2 D2 R' D B' R' B2 R' B L' B2 L2,W,Beveren Sunday Open 2025 (2025-09-28),333 R1 A #4
 3910727038,B' U2 F' L' B2 R2 F U' D2 B2 R2 D2 L B2 U2 R' B R' B R',W,CubingUSA Northwest Championship 2024 (2024-06-28~30),333mbf Final B #2
-5451891001,L2 D' F2 U2 F2 U F2 U' L2 B2 U F' D' R' F' L B' L2 F2 D2 L' F',R,Nanterre 2 Folie 2026 (2026-03-14~15),333bf Final A #5
+5724766001,U' F2 D' U B2 F2 U' B D' R D R2 F' R' F' L D2 L,O,Questem'paire 2026 (2026-06-27~28),333 R2 A #3
 4993400001,F2 R' B2 D2 U2 L' D2 B2 L2 D L2 U2 B' D' F' R F2 R D,O,Bilbao Open 2025 (2025-08-30~31),333 R1 C E1
 2334045001,D2 B2 D' R2 F2 U F2 R F2 L U2 R F' D2 L2 R2 D' F,R,Oakville Fall B 2022 (2022-11-27),333 R1 D #1
 2571317001,B2 R' B2 L' B2 D2 L' R D2 B L D' B' L' B D2 L2 B U',W,Speedcubing at Seaworks 2023 (2023-03-18~19),333 R2 B E2

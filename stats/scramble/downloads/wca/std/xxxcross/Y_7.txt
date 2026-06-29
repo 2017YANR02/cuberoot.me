@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / Y / bin 7
-# Population in this bin: 78
-# Samples listed: 78 (all entries in this bin)
+# Population in this bin: 79
+# Samples listed: 79 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 14858001,U' L2 B2 L D R B' R2 B2 R' U' B2 R2 B2 L D2 L' F2 R,Y,Didas Brest 2014 (2014-04-26~27),333 R2 A #1
@@ -83,3 +83,4 @@
 5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y,Adelaide Autumn 2026 (2026-04-12),333 R1 A #2
 5562447001,R B' D2 B2 U2 L2 B U2 D' F2 U F' D' R F,Y,Xi'an Cherry Blossom 2026 (2026-04-04~05),333 Final E #2
 5575666026,L' U2 R2 D' L2 R2 B2 U2 F' U F U2 B L' R' U2 F' U F' L2 U',Y,WCC Western PBQ Championship - Santa Clara 2026 (2026-04-25),333mbf Final A #2
+5723200008,B2 D' R F' D L2 U2 R2 D L2 B2 D2 B' F L2 F R' B' F2 L2 U',Y,Hannover Mental Breakdown 2026 (2026-06-27),333mbf Final A #1

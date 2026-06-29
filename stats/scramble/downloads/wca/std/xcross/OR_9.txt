@@ -2,7 +2,7 @@
 # Population in this bin: 288
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5055001,B2 U' R' U2 D' F' B U L' D F2 U2 D2 R' B2 U2 R L2 F2 U2,O,Tula Open 2014 (2014-03-28~30),333oh R1 B E2

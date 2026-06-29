@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / O / bin 5
-# Population in this bin: 859
+# Population in this bin: 860
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 5428457001,F D2 F' U' F2 D2 F2 R2 U' B2 D' R U B2 L2 U' R D R,O,Megaminx Madness AZ 2026 (2026-03-07),333 Final D E2

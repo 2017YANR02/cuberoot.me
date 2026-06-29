@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BGOR / bin 3
-# Population in this bin: 789
+# Population in this bin: 790
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 3222001,U' R2 U L2 R2 F2 L2 U' R B2 U L' F2 D' F2 L2 F L,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 L E1
@@ -40,7 +40,7 @@
 203278001,F2 D R2 F D' B' D' F2 R' F' R' D2 R D2 R F2 L',B,Delhi Autumn Open 2015 (2015-10-17~18),333 Final B #4
 205616001,R2 F2 R2 U R2 D F2 D R2 F L R2 F R D2 U' R B D,R,Lexington Fall 2015 (2015-10-24),333oh Final B #5
 3675592001,R B' L' U D L B2 U L2 D2 F' L2 F2 U2 L D R2,O,Slow N Steady Spring 2024 (2024-04-13~14),333 Final B #2
-1919617001,R2 F2 R2 F2 U' R2 F' U2 R2 L2 U R2 U L2 B L,B,Hyderabad Summer Open 2022 (2022-05-15),333oh Final A #4
+5727137001,L2 U2 L2 F R2 U2 F2 L2 F U2 R B R D2 R' F R' D' R',G,BL&D BLD Liestal 2026 (2026-06-27~28),333oh R1 A #4
 1405022001,F2 D2 B' U2 R2 F2 R2 F' L2 B L2 R B' L2 F2 R2 B R U2,B,Ljubljana Open 2019 (2019-11-09~10),333 R1 C #1
 4122341001,D' U' F2 D' L2 D L' R U B2 D' L2 R' D2 B2 U' R',O,II Teresina Bright Cube 2024 (2024-09-21),333 R2 A E2
 3743980001,D2 L B2 L' B2 R' D2 L U2 R2 F' R F D2 L' D' U2 F' D2,B,Cubing at Carson 2024 (2024-05-04),333 Final A #4

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / G / bin 8
-# Population in this bin: 115
-# Samples listed: 115 (all entries in this bin)
+# Population in this bin: 116
+# Samples listed: 116 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 2210001,U' R2 F2 D2 L2 D F2 U L2 D' F L2 U L' R2 U F2 D U' L B',G,IIT Roorkee Open 2014 (2014-03-21),333bf Final A E1
@@ -120,3 +120,4 @@
 5667886001,R L2 F2 D B R2 L U2 F R2 B L2 U2 F' D2 L2 B U' F',G,Cherry Hill Mini May 2026 (2026-05-28),333oh R1 B #2
 5694430016,D' F L2 B L' B2 L F2 R B2 F2 R B' U' B' F L F' U L,G,GLS Side Challenge Gdańsk 2026 (2026-06-06~07),333mbf Final A #1
 5696208042,F B2 R D L2 D F' U' R U2 B2 R F2 R2 B2 U F L' B R,G,Manchester Cubing League - Third 2026 (2026-06-13),333mbf Final A #1
+5727210003,L U' B' U2 F' D2 B' R2 F2 R2 D2 F2 U' B L F2 U2 F U2 B R2,G,BL&D BLD Liestal 2026 (2026-06-27~28),333mbf Final B #1

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / W / bin 4
-# Population in this bin: 294
+# Population in this bin: 295
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 739001,U L2 F2 D' R2 D' F2 U2 R2 F2 R F L2 D L R' F' L2 U' L' R' D',W,Bogotá Cúbico 2014 (2014-03-15),333bf Final A E1
@@ -137,7 +137,7 @@
 5159867001,F U2 L2 B' D2 R2 B2 D U' F2 U L' D L D' L' F L2,W,Malaysia Cube Championship 2025 (2025-11-01~02),333 R2 C #3
 1562923001,L2 U' F B2 D' L2 U L' U F2 R2 D L2 U2 B2 D' L2 B2 U',W,Hernando Summer 2020 (2020-02-22~23),333oh R1 A #2
 1586445012,L F2 R B2 U2 R2 D2 U2 F' U L2 B2 U' R2 B D' B2 R2 F2 L2 U,W,Auckland Summer Open 2020 (2020-02-29~03-01),333mbf Final A #1
-1682873001,F2 D L' D2 B' U2 D2 F' R2 F2 U2 L2 D2 B' D' L',W,Empire State Summer B 2021 (2021-08-01),333oh R2 B #3
+5723035001,R' F2 L U' D2 B U' L D2 B' U B2 U' D2 B2 U' R2 D,W,Défi à l'Alliance Française El Salvador 2026 (2026-06-27),333 R2 B #3
 1743879001,R' D' R D' B2 U2 L2 U' F2 U2 R2 B2 U2 F' D2 F R' F D' U B',W,Happy Cubing Acton Fall 2021 (2021-11-27~28),333bf Final A #1
 4935724029,B U' L2 U F2 U' R2 U2 B2 R2 U' R U2 B' R F2 D2 B' D' L',W,Kooyong Clock Clash 2025 (2025-08-16~17),333mbf Final A #1
 1828147001,R2 F2 L D' F D2 R2 U B2 D' L' D2 B D F' U' F2 L B,W,Kidderminster - British Blind Off 2022 (2022-03-12~13),333bf R1 B #3

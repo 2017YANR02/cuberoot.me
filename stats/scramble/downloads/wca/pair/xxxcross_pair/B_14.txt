@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / B / bin 14
-# Population in this bin: 106
-# Samples listed: 106 (all entries in this bin)
+# Population in this bin: 107
+# Samples listed: 107 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-24
+# Generated: 2026-06-29
 # Columns: id,scramble,bottom_color,competition,round
 
 21298001,D' L' B' U R B2 L' F' B L' D' F2 R2 L2 F' R2 D2 F2 D2 B',B,HEM MariCubik Open 2014 (2014-05-18),333 R1 C #5
@@ -111,3 +111,4 @@
 5605529001,R' U B' R2 D2 L2 R2 B' L2 D2 F2 R' F' D L F U B2 F D2,B,Minerva Zapopan 2026 (2026-05-01~03),333 Final A E2
 5630378001,F' R' U' F L B' U' B2 D F2 D2 R' U2 R' B2 R L2 F D,B,Mysłowice Cubing Spring 2026 (2026-05-16),333 Final A #1
 5635505043,R2 D2 L F' D R B L' D2 L U' R2 U2 F2 U2 L2 F2 R2 F2 D2 L' F2,B,Zagreb Cubing Series I. 2026 (2026-05-17),333mbf Final A #2
+5724966001,R' U' F U F' D' R D2 R2 B2 D B2 L2 B2 R2 B D2 F' U2 R2 B R F2 R' U' F,B,FMC på GKV II 2026 (2026-06-28),333fm Final A #3
