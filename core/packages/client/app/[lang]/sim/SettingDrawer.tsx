@@ -101,6 +101,9 @@ export interface SimSettings {
   logo: 'none' | 'site' | 'custom';
   /** logo='custom' 时用户上传图的 data URL(已降采样压缩,空串=未上传)。 */
   customLogo: string;
+  /** 实时消步:手势 / 键盘转动追加到解法框时,自动 fold/抵消重复转动
+   *  (做了 R 再做 R' → 框里 R 出现后又消失)。默认开。 */
+  liveReduce: boolean;
 }
 
 /** WCA 标准 6 面色 — 取自全站单一来源 lib/cube-colors */
@@ -138,7 +141,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   backView: false,
   viewMode: 'cube',
   playbackMode: 'moves',
-  dragEmpty: 'view',
+  dragEmpty: 'rotate',
   holdPartialTurn: false,
   debugStructureColor: false,
   debugCarve: 'off',
@@ -149,6 +152,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   mirrorColor: MIRROR_DEFAULT_COLOR,
   logo: 'none',
   customLogo: '',
+  liveReduce: true,
 };
 
 const STORAGE_KEY = 'sim.settings';
