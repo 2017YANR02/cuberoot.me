@@ -2084,28 +2084,6 @@ function CalendarPageInner() {
           <DebutIcon size={14} strokeWidth={1.75} />
           <span>{tr({ zh: '各国首秀', en: 'Debuts' })}</span>
         </button>
-        {(viewMode === 'calendar' || viewMode === 'card') && (
-          <div className="mode-toggle" role="tablist">
-            <button
-              role="tab"
-              aria-selected={mode === 'all'}
-              className={`mode-btn ${mode === 'all' ? 'is-active' : ''}`}
-              onClick={() => setMode('all')}
-            >
-              <GlobeIcon size={14} strokeWidth={1.75} />
-              <span>{t('upcoming.modeAll')}</span>
-            </button>
-            <button
-              role="tab"
-              aria-selected={mode === 'top'}
-              className={`mode-btn ${mode === 'top' ? 'is-active' : ''}`}
-              onClick={() => setMode('top')}
-            >
-              <Star size={14} strokeWidth={1.75} />
-              <span>{t('upcoming.modeTop')}</span>
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="month-bar">
