@@ -185,12 +185,10 @@
   align-items: center;
   gap: 8px;
 }
-/* 消步开关在工具行里:套同款药丸边框,与「逆 / 清空 / 复制链接」等按钮视觉对齐 */
+/* 消步开关在工具行里:无外框,标签 + PillToggle 滑钮直接排在按钮间(开 / 关状态由滑钮表达) */
 .sim-player-tools .sim-toggle {
   height: 34px;
-  padding: 0 14px;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
+  gap: 8px;
   font-size: 14px;
 }
 .sim-player-tools button {
