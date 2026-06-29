@@ -27,7 +27,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter, useParams } from 'next/navigation';
 import {
   Play, Pause, SkipBack, SkipForward, RotateCcw,
-  FlipHorizontal2, FlipVertical2, Eraser, Sparkles, RotateCw,
+  FlipHorizontal2, FlipVertical2, Eraser, RotateCw,
   Shuffle, Link2, Check, Upload,
   Search, Loader2, Pipette, Wallpaper,
 } from 'lucide-react';
@@ -78,6 +78,7 @@ function randomIvyScramble(): string {
   return out.join(' ');
 }
 import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg, countMoves } from '@/lib/cube3';
+import { get_shortened_rotation } from '@/lib/roux/RotationHelp';
 import { cleanForPlayer, extractAlgFromText } from '@/lib/recon-alg-utils';
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
@@ -480,6 +481,103 @@ function autosize(el: HTMLTextAreaElement | null): void {
   el.style.height = el.scrollHeight + 'px';
 }
 
+// 整体转体的「消步」:cubing.js 的 simplifyAlg 只抵消相邻同轴,不会把一串
+// x/y/z 折成最短等价转体。复用 recon/roux 的 get_shortened_rotation(整 24 朝向
+// 解最短转体串),按面转切段、只对纯转体的连续段求最短,面转原样保留。仅 NxN。
+const ROT_TOKEN_RE = /^[xyz][2']?$/;
+function shortenRotations(alg: string): string {
+  const toks = alg.trim().split(/\s+/).filter(Boolean);
+  if (toks.length < 2) return alg.trim();
+  const out: string[] = [];
+  let run: string[] = [];
+  const flush = () => {
+    if (!run.length) return;
+    if (run.length === 1) { out.push(run[0]); run = []; return; }
+    let short = run.join(' ');
+    try { short = get_shortened_rotation(run.join(' ')).trim(); } catch { /* keep raw */ }
+    if (short) out.push(short);
+    run = [];
+  };
+  for (const t of toks) {
+    if (ROT_TOKEN_RE.test(t)) run.push(t);
+    else { flush(); out.push(t); }
+  }
+  flush();
+  return out.join(' ');
+}
+
+// 面转 + 相邻中层 = 宽层转,合成小写宽层记号(M' R → r,L M → l, U E' → u …)。
+// 仅对 3x3 成立(M/E/S 是与外层相邻的唯一中层;4x4+ 上 r≠R+中心层)。两块互不
+// 影响相邻顺序任意,故两种排列都试。合并后再 simplifyAlg 把可能相邻的同宽层并掉
+// (r r → r2)。slice 量需 ≡ 符号×face 量 (mod 4):r=R·M' / l=L·M / u=U·E' /
+// d=D·E / f=F·S / b=B·S'。
+const SLICE_FOR: Record<string, string> = { R: 'M', L: 'M', U: 'E', D: 'E', F: 'S', B: 'S' };
+const SLICE_SIGN: Record<string, number> = { R: -1, L: 1, U: -1, D: 1, F: 1, B: -1 };
+const WIDE_FOR: Record<string, string> = { R: 'r', L: 'l', U: 'u', D: 'd', F: 'f', B: 'b' };
+function mergeSliceFaceToWide(alg: string): string {
+  if (!alg.trim()) return alg.trim();
+  let moves: Move[];
+  try { moves = [...new Alg(alg).experimentalLeafMoves()]; } catch { return alg; }
+  const m4 = (n: number) => ((n % 4) + 4) % 4;
+  const tryMerge = (face: Move, slice: Move): Move | null => {
+    const fam = face.family;
+    if (!(fam in SLICE_FOR) || slice.family !== SLICE_FOR[fam]) return null;
+    if (m4(slice.amount) !== m4(SLICE_SIGN[fam] * face.amount)) return null;
+    const wrapped = m4(face.amount);
+    if (wrapped === 0) return null;
+    return new Move(WIDE_FOR[fam], wrapped === 3 ? -1 : wrapped);
+  };
+  const out: string[] = [];
+  let i = 0;
+  while (i < moves.length) {
+    const a = moves[i], b = moves[i + 1];
+    const merged = b && (tryMerge(a, b) ?? tryMerge(b, a));
+    if (merged) { out.push(merged.toString()); i += 2; }
+    else { out.push(a.toString()); i += 1; }
+  }
+  return out.join(' ');
+}
+
+// 同轴消步:同一轴上的所有转动(面 / 中层 / 宽层)两两可交换,故一段连续的同轴
+// 转动可重排后按 family 求和折叠 —— cubing.js 只并相邻同 family,U D U D 不会变。
+// 这里把极大同轴连续段按 family 求和 (mod 4),空操作丢弃,U D U D → U2 D2。
+// 旋转 x/y/z 与大魔方编号层(2R/3Rw 等)不在表里 → 视作分隔,不跨段误并。
+const MOVE_AXIS: Record<string, 'x' | 'y' | 'z'> = {
+  R: 'x', L: 'x', M: 'x', r: 'x', l: 'x', Rw: 'x', Lw: 'x',
+  U: 'y', D: 'y', E: 'y', u: 'y', d: 'y', Uw: 'y', Dw: 'y',
+  F: 'z', B: 'z', S: 'z', f: 'z', b: 'z', Fw: 'z', Bw: 'z',
+};
+const AXIS_FAMILY_ORDER: Record<'x' | 'y' | 'z', string[]> = {
+  x: ['R', 'L', 'M', 'r', 'l', 'Rw', 'Lw'],
+  y: ['U', 'D', 'E', 'u', 'd', 'Uw', 'Dw'],
+  z: ['F', 'B', 'S', 'f', 'b', 'Fw', 'Bw'],
+};
+function collapseSameAxis(alg: string): string {
+  if (!alg.trim()) return alg.trim();
+  let moves: Move[];
+  try { moves = [...new Alg(alg).experimentalLeafMoves()]; } catch { return alg; }
+  const m4 = (n: number) => ((n % 4) + 4) % 4;
+  const out: string[] = [];
+  let i = 0;
+  while (i < moves.length) {
+    const ax = MOVE_AXIS[moves[i].family];
+    if (!ax) { out.push(moves[i].toString()); i += 1; continue; }
+    const sums = new Map<string, number>();
+    let j = i;
+    while (j < moves.length && MOVE_AXIS[moves[j].family] === ax) {
+      const fam = moves[j].family;
+      sums.set(fam, (sums.get(fam) ?? 0) + moves[j].amount);
+      j += 1;
+    }
+    for (const fam of AXIS_FAMILY_ORDER[ax]) {
+      const w = m4(sums.get(fam) ?? 0);
+      if (sums.has(fam) && w !== 0) out.push(new Move(fam, w === 3 ? -1 : w).toString());
+    }
+    i = j;
+  }
+  return out.join(' ');
+}
+
 interface Props {
   world: World | null;
   alg: string;
@@ -876,8 +974,11 @@ export default function PlayerControls({
     if (isIvy) return s; // ivy R R = R' (not R2) — NxN fold doesn't apply
     if (corner) return corner.reduce(s);
     if (isTwistyMode) return simplifyTwistyAlg(s);
-    return simplifyAlg(s);
-  }, [isSq1, isIvy, corner, isTwistyMode, sq1Format]);
+    // 同轴折叠(U D U D → U2 D2)+ 旋转串最短化,二者作用 token 不交。
+    const folded = collapseSameAxis(shortenRotations(simplifyAlg(s)));
+    // 3x3:把 面+相邻中层 合成宽层(小写 r/l/u/d/f/b),再 fold 一次并掉相邻同宽层。
+    return order === 3 ? collapseSameAxis(mergeSliceFaceToWide(folded)) : folded;
+  }, [isSq1, isIvy, corner, isTwistyMode, sq1Format, order]);
 
   const invertForPuzzle = useCallback((s: string): string => {
     if (corner) return corner.toString(corner.invert(corner.parse(s)));
@@ -932,14 +1033,20 @@ export default function PlayerControls({
     const endsSlash = current.trimEnd().endsWith('/');
     const glue = isSq1 && (moveText === '/' || endsSlash) && !(moveText === '/' && endsSlash);
     const sep = current.trim() ? (glue ? '' : ' ') : '';
-    const next = current.trimEnd() + sep + moveText + ' ';
+    let next = current.trimEnd() + sep + moveText + ' ';
+    // 实时消步:追加后立即 fold/抵消重复转动(R 后做 R' → 框里清空)。魔方本身已被
+    // 手势转过去,这里只改文本,故必须 skipAutoReset 不让文本变更触发回放重置。
+    if (settings.liveReduce !== false && !isIvy) {
+      const reduced = simplifyForPuzzle(next.trim());
+      next = reduced ? reduced + ' ' : '';
+    }
     algEl.value = next;
     algEl.selectionStart = algEl.selectionEnd = next.length;
     autosize(algEl);
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
-  }, [onAlgChange, isSq1, isTwistyMode, world]);
+  }, [onAlgChange, isSq1, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle]);
 
   useEffect(() => {
     if (!userMoveRef) return;
@@ -1338,7 +1445,7 @@ export default function PlayerControls({
           onClick={tool(simplifyForPuzzle)}
           disabled={!canSimplify}
           title={t('消步:合并 / 抵消重复转动', 'Reduce: cancel redundant moves')}
-        ><Sparkles size={13} />{t('消步', 'Reduce')}</button>
+        >{t('消步', 'Reduce')}</button>
         {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
         {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
         <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
@@ -1781,15 +1888,17 @@ function PuzzleSettings({
             <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
             {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
             <Toggle label={t('字母', 'Letters')} value={settings.faceLabels === true} onChange={(v) => set('faceLabels', v)} />
+            {/* 实时消步:手势 / 键盘转动追加进解法框时自动抵消重复转动(R 后做 R' → 框里清空)。 */}
+            {puzzleKind !== 'ivy' && <Toggle label={t('消步', 'Reduce')} value={settings.liveReduce !== false} onChange={(v) => set('liveReduce', v)} />}
             <label className="sim-toggle">
               <span>{t('拖空白', 'Drag empty')}</span>
               <select
                 value={settings.dragEmpty}
                 onChange={(e) => set('dragEmpty', e.target.value as 'orbit' | 'rotate' | 'view')}
               >
+                <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
                 <option value="view">{t('视角', 'View')}</option>
                 <option value="orbit">{t('自动转体', 'Auto rotate')}</option>
-                <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
               </select>
             </label>
             {/* 背景:复用内核色那套弹出色块选择器(SwatchPopup),trigger 显当前背景,
@@ -1837,7 +1946,7 @@ function PuzzleSettings({
                 }}
               >
                 <option value="none">{t('无', 'None')}</option>
-                <option value="site">{t('网站', 'Site')}</option>
+                <option value="site">{t('魔方根', 'CubeRoot')}</option>
                 <option value="custom">{t('自定义', 'Custom')}</option>
               </select>
               <input
