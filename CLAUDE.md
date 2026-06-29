@@ -110,6 +110,7 @@ pnpm --filter @cuberoot/client lint
 - 按钮式交互（选择/开关/点击单元）必须真 `<button>`（剥 UA 样式 `appearance:none;background:none;border:none;font:inherit`）或 `AppLink`，禁 `<div/span onClick>` 当按钮：iOS Safari 不可靠把 tap 合成 click，`cursor:pointer` 也救不了（点不动 + `:hover` 灰色伪装选中）。例外 div 须加 `role="button"`+`tabIndex`+`onKeyDown`。双守卫：写入即拦 hook `block-static-onclick-button.ps1` + CI `tests/no-static-element-onclick-button.test.ts`（ratchet，只降不升）；豁免加行内注释 `allow-static-onclick`
 - 选择型 / 搜索型输入框非空时必须显示 `×` 清除按钮：统一用 `components/ClearButton.tsx`（`variant='inline'` 浮在 input 内，`'standalone'` 流式独立圆），别再写一份局部 `.xxx-clear` CSS
 - 切换器默认下拉，不堆 chip / tab；chip 仅当选项 ≤ 4 且需要左右对比时才用
+- 大型 / 可滚动统计表的列头吸顶(滚动时表头悬浮)走共用 `components/sticky-table.css`：外层容器加 `.sticky-scroll` + `<table>` 加 `.sticky-thead`,禁各页手写 `position:sticky` thead;契约见文件头注(th 须不透明背景 + wrapper 原 `overflow-x:auto` 改 `:not(.sticky-scroll)` + 下划线色用 `--sticky-thead-border`)
 - 新建可复用组件后，在 `/code/components` 组件库登记一条（改 `app/[lang]/code/components/_catalog.tsx`，自包含的顺手写个实时 Demo）；新建可复用 hook / 工具函数同理登记到 `/code/utils`（改 `app/[lang]/code/utils/_catalog.tsx`），方便人 / AI 查阅复用。CI 守卫：`tests/code-catalog-sync.test.ts`（hooks 必登记 + catalog import 路径必须真实存在）、`tests/code-tokens-drift.test.ts`（设计令牌页 `tokens/_tokens.ts` 必须跟 `globals.css` 一致），漏登记 / 改了不同步直接红
 - 全局固定按钮 (theme/lang/auth toggle) 跟内容容器右沿对齐,不贴视口:`right: max(16px, calc((100vw - <content-max-width>) / 2))`
 - chip / tab / 下拉项上不显示数量计数（`(25)` / badge 之类一律不要）

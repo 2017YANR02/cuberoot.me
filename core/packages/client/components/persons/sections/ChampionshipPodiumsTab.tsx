@@ -109,8 +109,8 @@ export default function ChampionshipPodiumsTab({ profile, isZh, onEmpty }: Props
 
   // 合并成单表:列头只出现一次且 sticky 悬浮;各档标题(世界/洲际/国家)作表内分组行(同纪录表)。
   return (
-    <div className="wp-records wp-sticky-scroll">
-      <table className="wp-bycomp-table wp-podium-table wp-sticky-table">
+    <div className="wp-records sticky-scroll">
+      <table className="wp-bycomp-table wp-podium-table sticky-thead">
         <thead>
           <tr>
             <th>{t('项目', 'Event')}</th>

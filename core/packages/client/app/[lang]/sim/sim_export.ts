@@ -144,6 +144,8 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
   };
 
   const renderOnce = (): void => {
+    // 离线导出也让 U 面 logo 跟住中心块(转层动画里同步旋转)。
+    (world.cube as { updateLogoTransform?: () => void }).updateLogoTransform?.();
     renderer.clear();
     renderer.render(world.scene, world.camera);
   };

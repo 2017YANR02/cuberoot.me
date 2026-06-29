@@ -120,6 +120,9 @@ export default class Controller {
   private orbitLastY = 0;
   /** true = 用户在背景拖 orbit 模式自由视角。FaceHints 等外部模块观察方位变化时用。 */
   public orbiting = false;
+  /** true = 转动不出动画(设置面板「动画」关):拖层时不实时跟手(update 不缓动),
+   *  松手直接 fast 吸附到 90°(handleUp 走 fast=true);避免拖动留「转到一半」的中间态。 */
+  public instantTurns = false;
   /** 用户正在做整体旋转视角的拖动 (orbit 模式 OR rotate 模式的 background drag);
    *  sticker 单层拖不算 — FaceHints 用它决定要不要显示 U/D/L/R/F/B 字母。 */
   get isViewRotating(): boolean {
@@ -144,6 +147,9 @@ export default class Controller {
 
   update(): void {
     const angle = this.contingle + this.angle;
+    // 动画关:拖动期间不让层/整体实时跟手转(保持在 rest),松手时由 handleUp fast 吸附到 90°,
+    // 全程无中间角度。holdPartial(半转停调试)是另一套语义,走它自己的冻结分支,不受此影响。
+    if (this.instantTurns && !this.holdPartial) return;
     if (this.rotating) {
       if (this.group) {
         if (this.group.angle != angle) {
@@ -461,9 +467,9 @@ export default class Controller {
         angle = 0;
       }
       if (this.group) {
-        this.group.twist(angle, false);
+        this.group.twist(angle, this.instantTurns);
         // 宽层:extras 同步 twist (snap 到 90° 倍数动画)
-        for (const g of this.wideExtras) g.twist(angle, false);
+        for (const g of this.wideExtras) g.twist(angle, this.instantTurns);
         if (angle != 0) {
           let times = Math.round(angle / (Math.PI / 2));
           const reverse = times < 0;
@@ -477,7 +483,7 @@ export default class Controller {
       } else {
         const groups = (this.world.cube as import('./cube').default).table.groups[this.axis[0]];
         for (const group of groups) {
-          group.twist(angle, false);
+          group.twist(angle, this.instantTurns);
         }
         if (angle != 0) {
           let times = Math.round(angle / (Math.PI / 2));

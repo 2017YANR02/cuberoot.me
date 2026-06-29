@@ -10,6 +10,9 @@ import History from "./history";
 import tweener from "../tweener";
 import InstancedRenderer from "./instanced";
 
+const ONE = new THREE.Vector3(1, 1, 1);
+const HALF = 32; // Cubelet.SIZE / 2
+
 export default class Cube extends THREE.Group {
   public dirty = true;
   public locks: Map<string, Set<number>>;
@@ -28,6 +31,17 @@ export default class Cube extends THREE.Group {
   public instancedRenderer: InstancedRenderer;
   /** 顶面 U 中心 logo mesh(仅奇数阶;偶数阶 / 无 logo 时 visible=false 或不建)。 */
   private logoMesh: THREE.Mesh | null = null;
+  /** logo 所贴的 U 面正中心块的 initial 索引(随转动跟随这块实体)。 */
+  private logoInitialIdx = -1;
+  /** logo 贴片相对该中心块本地坐标系的偏移(U 面 +HALF、抬 lift、绕 x -90° 朝上)。 */
+  private logoLocalMat = new THREE.Matrix4();
+  /** 防 z-fight 的抬升量(立体贴片 4 / 平贴片 1)。updateLogoTransform 每帧叠到块的实际半高上。 */
+  private logoLift = 1;
+  private _logoCubieMat = new THREE.Matrix4();
+  private _logoPos = new THREE.Vector3();
+  private _logoQuat = new THREE.Quaternion();
+  private _logoScl = new THREE.Vector3();
+  private _logoRT = new THREE.Matrix4();
 
   constructor(order: number, mirror = false) {
     super();
@@ -134,8 +148,9 @@ export default class Cube extends THREE.Group {
     }
   }
 
-  /** 顶面 U 中心 logo。texture=null 或偶数阶(无正中心块)→ 隐藏;否则在 U 中心块顶面贴图。
-   *  贴片随整方朝向(scene.rotation)旋转;暂不跟随转层动画里中心块的自旋(v1 取舍)。 */
+  /** 顶面 U 中心 logo。texture=null 或偶数阶(无正中心块)→ 隐藏;否则贴在 U 面正中心块上。
+   *  贴片牢牢跟随它所在的实体中心块:整方旋转、转层动画里该块的自旋都跟手(每帧由
+   *  updateLogoTransform 用块的实时渲染矩阵复合定位)。 */
   setLogo(texture: THREE.Texture | null): void {
     const odd = this.order % 2 === 1;
     if (!texture || !odd) {
@@ -146,20 +161,45 @@ export default class Cube extends THREE.Group {
       const geo = new THREE.PlaneGeometry(48, 48);
       const mat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false });
       const mesh = new THREE.Mesh(geo, mat);
-      mesh.rotation.x = -Math.PI / 2;             // 默认朝 +z,转成朝 +y(向上)
       mesh.renderOrder = 2;                        // 画在贴片之后,贴片上方
+      mesh.matrixAutoUpdate = false;               // matrix 由 updateLogoTransform 每帧驱动
       this.add(mesh);
       this.logoMesh = mesh;
     }
-    // U 面 = order*32(中心块中心 (order-1)*32 + 半块 32),抬到贴片顶面上方避免 z-fight。
-    // 贴片顶面高度随立体贴片开关变:厚 zScale=32 → pop-out ~3.2;平 zScale=1 → ~0.1。
-    // 跟着降 logo,否则关掉立体贴片后 logo 悬浮在平贴片上方(见反馈 #59)。
-    const lift = this.instancedRenderer.thickness ? 4 : 1;
-    this.logoMesh.position.set(0, this.order * 32 + lift, 0);
+    // logo 贴的是 U 面正中心块(x=z=中,y=order-1)。记下它的 initial 索引,以及贴片在该块
+    // 本地坐标系里的偏移:U 面在 +HALF,再抬 lift 防 z-fight(立体贴片厚 → 顶面更高,抬 4;
+    // 平贴片抬 1,见反馈 #59),绕 x 转 -90° 让平面朝上(+y)。
+    const N = this.order;
+    const c = (N - 1) / 2;
+    this.logoInitialIdx = c + (N - 1) * N + c * N * N;
+    this.logoLift = this.instancedRenderer.thickness ? 4 : 1;
+    this.logoLocalMat.compose(
+      this._logoPos.set(0, HALF + this.logoLift, 0),
+      this._logoQuat.setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0)),
+      ONE,
+    );
     const mat = this.logoMesh.material as THREE.MeshBasicMaterial;
     if (mat.map !== texture) { mat.map = texture; mat.needsUpdate = true; }
     this.logoMesh.visible = true;
+    this.updateLogoTransform();
     this.dirty = true;
+  }
+
+  /** 把 U 面中心 logo 贴片对齐到它所贴的实体中心块的当前渲染矩阵(含转层动画的瞬时旋转 +
+   *  整方旋转后的新朝向)。SimPage 每帧渲染前调;非奇数阶 / 无 logo 时空操作。 */
+  updateLogoTransform(): void {
+    const mesh = this.logoMesh;
+    if (!mesh || !mesh.visible) return;
+    const m = this.instancedRenderer.getCubeletRenderMatrix(this.logoInitialIdx, this._logoCubieMat);
+    if (!m) return;
+    // 丢弃块矩阵里的缩放(镜面块非均匀缩放会拉歪 logo plane),只取位置 + 朝向 —— 但顶面
+    // 高度必须用块的实际 y 向缩放:镜面 U 中心块矮于标准块,顶面在 HALF·scaleY 处而非 HALF,
+    // 否则 logo 悬空在标准块高度上。普通方 scaleY=1 → 退化回 HALF + lift,行为不变。
+    m.decompose(this._logoPos, this._logoQuat, this._logoScl);
+    this.logoLocalMat.elements[13] = HALF * Math.abs(this._logoScl.y) + this.logoLift;
+    this._logoRT.compose(this._logoPos, this._logoQuat, ONE);
+    mesh.matrix.multiplyMatrices(this._logoRT, this.logoLocalMat);
+    mesh.matrixWorldNeedsUpdate = true;
   }
 
   /** True while any layer is mid-twist (a lock is held). Cleared on drop().

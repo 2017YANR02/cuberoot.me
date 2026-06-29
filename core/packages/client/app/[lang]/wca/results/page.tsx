@@ -633,13 +633,13 @@ function AllResultsPageInner() {
               </div>
             </div>
           </div>
-          <div className="wse-table-wrapper">
+          <div className="wse-table-wrapper sticky-scroll">
             {loading && !dirData && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...' })}</div>}
             {error && !dirData && <div className="wse-state wse-state-error">Error: {error}</div>}
             {dirData && (
               <>
                 <div className="wse-result-meta">{tr({ zh: `共 ${dirData.total.toLocaleString()} 人`, en: `${dirData.total.toLocaleString()} cubers` })}</div>
-                <table className="wse-table">
+                <table className="wse-table sticky-thead">
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>
@@ -751,7 +751,7 @@ function AllResultsPageInner() {
             />
           </div>
 
-          <div className="wse-table-wrapper">
+          <div className="wse-table-wrapper sticky-scroll">
             {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...' })}</div>}
             {error && <div className="wse-state wse-state-error">Error: {error}</div>}
             {data && !loading && data.mode === 'results' && (
@@ -759,7 +759,7 @@ function AllResultsPageInner() {
                 <div className="wse-result-meta">
                   {isZh ? `共 ${data.total.toLocaleString()} 条,显示 ${data.rows.length}` : `${data.total.toLocaleString()} results, showing ${data.rows.length}`}
                 </div>
-                <table className="wse-table">
+                <table className="wse-table sticky-thead">
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>
@@ -801,7 +801,7 @@ function AllResultsPageInner() {
                 <div className="wse-result-meta">
                   {isZh ? `共 ${data.total.toLocaleString()} 人,${data.rows.length} 条` : `${data.total.toLocaleString()} cubers, showing ${data.rows.length}`}
                 </div>
-                <table className="wse-table">
+                <table className="wse-table sticky-thead">
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>
@@ -915,13 +915,13 @@ function AllResultsPageInner() {
             )}
           </div>
 
-          <div className="wse-table-wrapper">
+          <div className="wse-table-wrapper sticky-scroll">
             {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...' })}</div>}
             {error && <div className="wse-state wse-state-error">{error}</div>}
             {sorData && !loading && (
               <>
                 <div className="wse-result-meta">{isZh ? `共 ${sorData.total.toLocaleString()} 人` : `${sorData.total.toLocaleString()} cubers`}</div>
-                <table className="wse-table">
+                <table className="wse-table sticky-thead">
                   <thead>
                     <tr>
                       <th className="wse-rank-col">#</th>

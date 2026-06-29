@@ -40,6 +40,12 @@ export interface SimSettings {
   hint: boolean;
   /** 点打乱按钮:false=instant 应用,true=慢动画逐 move 播放 */
   animateScramble: boolean;
+  /** 播放解法时是否逐步转动动画:true=每步平滑转动(默认),false=瞬切到下一步(无转动动画)。
+   *  仅影响连续「播放」;单步前进/后退/光标定位本就瞬切。 */
+  animatePlayback: boolean;
+  /** 是否常显方位字母(NxN/SQ1 为 U/D/L/R/F/B 六面;角/棱/面转拼图显对应角/棱/面标签):
+   *  true=一直显示(等同拖动视角时浮现的方位标签,但常驻),false=仅拖动时浮现(默认)。 */
+  faceLabels: boolean;
   /** 画布背景。见 SimBoardBg。 */
   boardBg: SimBoardBg;
   /** 锁定大小+位置:禁滚轮/捏合缩放 + 中右键/双指平移;旋转视角和转动仍可用 */
@@ -125,6 +131,8 @@ export const DEFAULT_SETTINGS: SimSettings = {
   arrow: false,
   hint: false,
   animateScramble: false,
+  animatePlayback: true,
+  faceLabels: true,
   boardBg: 'auto',
   lockView: false,
   backView: false,
@@ -204,6 +212,8 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
   world.controller.holdPartial = s.holdPartialTurn;
+  // 「动画」关 → 手动拖层瞬间吸附(无中间角度);见 Controller.instantTurns。
+  world.controller.instantTurns = !s.animatePlayback;
   // scale 由滚轮直接改 world.scale + 防抖反算 settings (round 损失 ≤0.005),
   // 这里如果差距在 round 误差内就别回写,避免滚动途中突跳
   const targetScale = mapScale(s.scale);
@@ -232,6 +242,8 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // NxN: sticker thickness / hollow / hint / face colors live on the InstancedRenderer.
     const cube = world.cube as import('./engine/nxn/cube').default;
     cube.arrow = s.arrow;
+    // 「动画」关 → 撤销/重做也瞬切(手动转/拖/单击各自路径已 fast)。
+    cube.twister.instantTurns = !s.animatePlayback;
     cube.instancedRenderer.thickness = s.thickness;
     cube.instancedRenderer.hollow = s.hollow;
     cube.instancedRenderer.hint = s.hint;
@@ -293,6 +305,21 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     .setCarve?.(s.debugCarve !== 'off' && s.debugCarve === nativeCarve);
   world.dirty = true;
   world.cube.dirty = true;
+  world.resize();
+}
+
+/** 把视角姿态(整体朝向 / 平移 / 缩放 / 透视)硬复位到 `s` 对应值,无视 applySettings 的
+ *  prev-diff 保留逻辑。「恢复默认」要连用户拖出来的朝向 / 平移 / 缩放一起清掉 —— 这些
+ *  直接写在 world.scene.rotation / panX/Y / scale 上(不进 settings),光把 settings 重置
+ *  成默认值时若 viewAngle/viewGradient 已等于默认,applySettings 会跳过、留住旧姿态。 */
+export function resetWorldView(world: World, s: SimSettings): void {
+  world.scene.rotation.set(mapPitch(s.viewGradient), mapYaw(s.viewAngle), 0);
+  world.scene.updateMatrix();
+  world.panX = 0;
+  world.panY = 0;
+  world.scale = mapScale(s.scale);
+  world.perspective = mapPerspective(s.perspective);
+  world.dirty = true;
   world.resize();
 }
 

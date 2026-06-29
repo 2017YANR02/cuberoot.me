@@ -84,11 +84,14 @@
 .fun-stats-loading, .fun-stats-empty { color: var(--muted-foreground); font-size: 0.9rem; padding: 24px 0; }
 
 /* ── 表格 ── */
-.fun-stats-table-scroll { overflow-x: auto; margin-top: 6px; }
+/* 默认横滚兜底;作 sticky 列头容器(.sticky-scroll)时交给共用工具(桌面 overflow:visible / 窄屏 overflow-x:auto)。 */
+.fun-stats-table-scroll { margin-top: 6px; }
+.fun-stats-table-scroll:not(.sticky-scroll) { overflow-x: auto; }
 .fun-stats-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.88rem;
+  --sticky-thead-border: var(--border-default); /* 共用工具吸顶下划线色,对齐 th 下边框 */
 }
 .fun-stats-table th {
   text-align: left;
@@ -98,6 +101,8 @@
   white-space: nowrap;
   border-bottom: 1px solid var(--border-default);
 }
+/* sticky 列头(.sticky-thead)须不透明背景盖住下方滚动行;fun-stats 表无 wrapper 背景,取页面底色。 */
+.fun-stats-table thead th { background: var(--background); }
 .fun-stats-table td {
   padding: 8px 12px;
   border-bottom: 1px solid color-mix(in srgb, var(--foreground) 7%, transparent);

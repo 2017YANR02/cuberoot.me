@@ -117,14 +117,14 @@ function SuccessRatePageInner() {
         </div>
       </div>
 
-      <div className="wse-table-wrapper">
+      <div className="wse-table-wrapper sticky-scroll">
         {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
           <>
             <div className="wse-result-meta">{isZh ? `共 ${data.total.toLocaleString()} 人` : `${data.total.toLocaleString()} cubers`}</div>
-            <table className="wse-table">
+            <table className="wse-table sticky-thead">
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>

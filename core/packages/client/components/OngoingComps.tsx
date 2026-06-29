@@ -18,6 +18,7 @@ import { RegistrationView } from '@/components/RegistrationComps';
 import { useCompFollows } from '@/components/CompFollow';
 import { countActionableReg } from '@/lib/comp-registration';
 import './ongoing_comps.css';
+import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
 
 interface Props { lang: 'zh' | 'en' }
@@ -280,7 +281,7 @@ export default function OngoingComps({ lang }: Props) {
         </div>
         <span className="ongoing-comps-scope">{pickScope(active)}</span>
       </div>
-      <div className="ongoing-comps-groups">
+      <div className="ongoing-comps-groups scroll-panel">
         {active === 'announced' ? (
           <div className="reg-comps">
             <div className="reg-cards">

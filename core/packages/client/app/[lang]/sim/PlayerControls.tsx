@@ -29,7 +29,7 @@ import {
   Play, Pause, SkipBack, SkipForward, RotateCcw,
   FlipHorizontal2, FlipVertical2, Eraser, Sparkles, RotateCw,
   Shuffle, Link2, Check, Upload,
-  Search, Loader2, Pipette,
+  Search, Loader2, Pipette, Wallpaper,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -88,7 +88,7 @@ import {
 } from '@/lib/sq1-svg';
 import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import {
-  Slider, Toggle, KeymapModal,
+  Slider, Toggle, KeymapModal, resetWorldView,
   DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR,
   type SimSettings, type SimBoardBg,
 } from './SettingDrawer';
@@ -803,10 +803,32 @@ export default function PlayerControls({
     // old 600ms interval — hit on the slightest frame-rate jank.) Speed scales the
     // animation length via CubeGroup.frames (separate effect), not the poll rate.
     const total = isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : corner ? cornerActions.length : actions.length;
+    // 动画开关(设置面板「动画」):关 → 不逐步转动,瞬切到下一步。瞬切没有动画完成可等,
+    // 故节拍由 interval 周期给:timing.frames 帧 @60fps ≈ 该步本应播放的时长,瞬切后等同节拍
+    // (否则一帧就冲到底,看不到逐步)。开 → 16ms 高频轮询,按动画完成逐步推进(原行为)。
+    const animatePlayback = settings.animatePlayback !== false;
+    const stepDelayMs = Math.max(80, Math.round((timing.frames / 60) * 1000));
     playTimerRef.current = window.setInterval(() => {
       const s = stepRef.current;
       if (s >= total) { setPlaying(false); return; }
       if (!world) return;
+      if (!animatePlayback) {
+        // 瞬切:走跟「下一步」按钮同一条 instant 落子路径(fast+force / applyMoveInstant),
+        // 不产生 tween;节拍由 interval 周期 stepDelayMs 控制。
+        if (isSq1) {
+          (world.cube as unknown as import('./engine/sq1/Sq1Cube').default).applyMoveInstant(sq1Actions[s]);
+        } else if (isIvy) {
+          (world.cube as unknown as import('./engine/ivy/IvyCube').default).applyMoveInstant(ivyActions[s]);
+        } else if (corner) {
+          (world.cube as unknown as CornerCube).applyMoveInstant(cornerActions[s]);
+        } else {
+          (world.cube as import('./engine/nxn/cube').default).twister.twist(actions[s], true, true);
+        }
+        world.dirty = true;
+        stepRef.current = s + 1;
+        setStep(s + 1);
+        return;
+      }
       let started = false;
       if (isSq1) {
         const sq1Cube = world.cube as unknown as import('./engine/sq1/Sq1Cube').default;
@@ -829,11 +851,11 @@ export default function PlayerControls({
       if (!started) return;
       stepRef.current = s + 1;
       setStep(s + 1);
-    }, 16);
+    }, animatePlayback ? 16 : stepDelayMs);
     return () => {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
     };
-  }, [playing, actions, sq1Actions, ivyActions, cornerActions, corner, world, speed, isSq1, isIvy]);
+  }, [playing, actions, sq1Actions, ivyActions, cornerActions, corner, world, speed, isSq1, isIvy, settings.animatePlayback, settings.speed]);
 
   const tool = (transform: (s: string) => string) => () => {
     const combined = (setupDraft + ' ' + algDraft).trim();
@@ -937,7 +959,8 @@ export default function PlayerControls({
     }
     if (world) {
       const cube = world.cube as import('./engine/nxn/cube').default;
-      cube.twister.twist(action, false, true);
+      // 「动画」关 → fast=true 瞬切(键盘 / 屏幕键转动也无动画),与拖层一致。
+      cube.twister.twist(action, settings.animatePlayback === false, true);
     }
     const algEl = algElRef.current;
     if (!algEl) return;
@@ -949,7 +972,7 @@ export default function PlayerControls({
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
-  }, [world, isSq1, isIvy, corner, isTwistyMode, onAlgChange]);
+  }, [world, isSq1, isIvy, corner, isTwistyMode, onAlgChange, settings.animatePlayback]);
 
   const handleScramble = useCallback(async () => {
     const reqId = ++scrambleReqIdRef.current;
@@ -1269,7 +1292,16 @@ export default function PlayerControls({
         <button onClick={() => jumpToStep(0)} title={t('回到起点', 'Reset')}><RotateCcw size={14} /></button>
         <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')}><SkipBack size={14} /></button>
         <button
-          onClick={() => setPlaying((p) => !p)}
+          onClick={async () => {
+            if (playing) { setPlaying(false); return; }
+            // 已在末尾时再点播放 = 从头重播:先把魔方复位到第 0 步(并同步 stepRef,
+            // 否则播放轮询读到 step≥total 会立刻停),复位完成后再开播。
+            if (step >= totalSteps) {
+              await jumpToStep(0);
+              stepRef.current = 0;
+            }
+            setPlaying(true);
+          }}
           disabled={totalSteps === 0}
           title={playing ? t('暂停', 'Pause') : t('播放', 'Play')}
         >
@@ -1337,6 +1369,7 @@ export default function PlayerControls({
         onRendererChange={onRendererChange}
         settings={settings}
         onSettingsChange={onSettingsChange}
+        onResetView={() => { if (world) resetWorldView(world, DEFAULT_SETTINGS); }}
         t={t}
         applyMove={applyMove}
         keymap={keymap}
@@ -1422,6 +1455,45 @@ function SwatchCell({
   );
 }
 
+/** 弹出色块选择器外壳:trigger 显当前格,点开弹出 panel 列 children(各 .sim-swatch)。
+ *  内核色 / 镜面 / 面色(ModeColorSelect)与背景共用同一套交互 + 样式,避免每处重写
+ *  open / 点外关闭 / trigger / panel。children 是 render prop,收一个 close() 关弹层。 */
+function SwatchPopup({
+  trigger, title, children,
+}: {
+  trigger: ReactNode;
+  title: string;
+  children: (close: () => void) => ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', onDoc);
+    return () => document.removeEventListener('pointerdown', onDoc);
+  }, [open]);
+  return (
+    <div className="sim-color-select" ref={ref}>
+      <button
+        type="button"
+        className="sim-color-select-trigger"
+        title={title}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {trigger}
+      </button>
+      {open && (
+        <div className="sim-color-select-panel">
+          {children(() => setOpen(false))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** 模式 + 取色合并下拉:把一个「特殊模式」(镜面六色 / 内核原核)与单色取色收进一个菜单。
  *  trigger 普通态显当前色块、特殊态显特殊图标格;面板顶部一个特殊项 + 自定义取色 + 预设色板。
  *  选色 = 退出特殊模式并用该色;选特殊项 = 进特殊模式。 */
@@ -1440,35 +1512,20 @@ function ModeColorSelect({
   title: string;
   t: (zh: string, en: string) => string;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('pointerdown', onDoc);
-    return () => document.removeEventListener('pointerdown', onDoc);
-  }, [open]);
   const specialSwatch = specialSwatchClass ? <span className={'sim-swatch-box ' + specialSwatchClass} /> : null;
   return (
-    <div className="sim-color-select" ref={ref}>
-      <button
-        type="button"
-        className="sim-color-select-trigger"
-        title={title}
-        onClick={() => setOpen((o) => !o)}
-      >
-        {special && specialSwatch ? specialSwatch : <span className="sim-swatch-box" style={{ background: color }} />}
-      </button>
-      {open && (
-        <div className="sim-color-select-panel">
+    <SwatchPopup
+      title={title}
+      trigger={special && specialSwatch ? specialSwatch : <span className="sim-swatch-box" style={{ background: color }} />}
+    >
+      {(close) => (
+        <>
           {onPickSpecial && specialSwatch && (
             <button
               type="button"
               className={'sim-swatch' + (special ? ' active' : '')}
               title={specialTitle}
-              onClick={() => { onPickSpecial(); setOpen(false); }}
+              onClick={() => { onPickSpecial(); close(); }}
             >
               {specialSwatch}
             </button>
@@ -1485,12 +1542,12 @@ function ModeColorSelect({
               color={c}
               title={c}
               active={!special && c.toLowerCase() === color.toLowerCase()}
-              onClick={() => { onPickColor(c); setOpen(false); }}
+              onClick={() => { onPickColor(c); close(); }}
             />
           ))}
-        </div>
+        </>
       )}
-    </div>
+    </SwatchPopup>
   );
 }
 
@@ -1521,7 +1578,7 @@ function ColorRow({
 function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   renderer, onRendererChange,
-  settings, onSettingsChange, t,
+  settings, onSettingsChange, onResetView, t,
   keymap, onKeymapChange, onResetKeymap,
 }: {
   order: number;
@@ -1532,6 +1589,8 @@ function PuzzleSettings({
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
+  /** 「恢复默认」附带的视角硬复位(整体朝向 / 平移 / 缩放),见 resetWorldView。 */
+  onResetView: () => void;
   t: (zh: string, en: string) => string;
   applyMove: (m: KeyMove) => void;
   keymap: Record<string, KeyMove>;
@@ -1703,7 +1762,7 @@ function PuzzleSettings({
             <button
               type="button"
               className="sim-drawer-reset"
-              onClick={() => onSettingsChange(DEFAULT_SETTINGS)}
+              onClick={() => { onSettingsChange(DEFAULT_SETTINGS); onResetView(); }}
             >
               {t('恢复默认', 'Reset to defaults')}
             </button>
@@ -1718,6 +1777,10 @@ function PuzzleSettings({
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
           </div>
           <div className="sim-puzzle-toggles">
+            {/* 播放动画开关:关 → 「播放」时瞬切每一步(不逐格转动);单步前进/后退本就瞬切。 */}
+            <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
+            {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
+            <Toggle label={t('字母', 'Letters')} value={settings.faceLabels === true} onChange={(v) => set('faceLabels', v)} />
             <label className="sim-toggle">
               <span>{t('拖空白', 'Drag empty')}</span>
               <select
@@ -1729,19 +1792,38 @@ function PuzzleSettings({
                 <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
               </select>
             </label>
-            <label className="sim-toggle">
-              <span>{t('背景', 'Background')}</span>
-              <select
-                value={settings.boardBg}
-                onChange={(e) => set('boardBg', e.target.value as SimBoardBg)}
+            {/* 背景:复用内核色那套弹出色块选择器(SwatchPopup),trigger 显当前背景,
+                点开弹出 5 个可视色块(直接预览各档外观),整控件无文字。
+                色值对齐 sim.css 里 .sim-canvas-wrap 的固定背景。 */}
+            <div className="sim-toggle sim-bg-toggle">
+              <Wallpaper size={15} className="sim-bg-icon" aria-hidden="true" />
+              <SwatchPopup
+                title={t('背景', 'Background')}
+                trigger={<span className={`sim-swatch-box sim-bg-box--${settings.boardBg}`} />}
               >
-                <option value="auto">{t('跟随主题', 'Theme')}</option>
-                <option value="white">{t('纯白', 'White')}</option>
-                <option value="dark">{t('深灰', 'Dark')}</option>
-                <option value="checkerDark">{t('深色棋盘', 'Dark grid')}</option>
-                <option value="checkerLight">{t('浅色棋盘', 'Light grid')}</option>
-              </select>
-            </label>
+                {(close) =>
+                  ([
+                    ['auto', t('跟随主题', 'Theme')],
+                    ['white', t('纯白', 'White')],
+                    ['dark', t('深灰', 'Dark')],
+                    ['checkerDark', t('深色棋盘', 'Dark grid')],
+                    ['checkerLight', t('浅色棋盘', 'Light grid')],
+                  ] as [SimBoardBg, string][]).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      className={'sim-swatch' + (settings.boardBg === value ? ' active' : '')}
+                      title={label}
+                      aria-label={label}
+                      aria-pressed={settings.boardBg === value}
+                      onClick={() => { set('boardBg', value); close(); }}
+                    >
+                      <span className={`sim-swatch-box sim-bg-box--${value}`} />
+                    </button>
+                  ))
+                }
+              </SwatchPopup>
+            </div>
             {/* 顶面 U 中心 logo:无 / 网站 / 自定义上传。仅 NxN 奇数阶有正中心块时实际显示
                 (偶数阶 / 非 NxN 引擎里 setLogo 自动隐藏)。选「自定义」开文件选择器。 */}
             <label className="sim-toggle">

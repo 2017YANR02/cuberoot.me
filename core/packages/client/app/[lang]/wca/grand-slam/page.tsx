@@ -143,7 +143,7 @@ function GrandSlamPageInner() {
         </div>
       </div>
 
-      <div className="wse-table-wrapper">
+      <div className="wse-table-wrapper sticky-scroll">
         {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
         })}</div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
@@ -152,7 +152,7 @@ function GrandSlamPageInner() {
             <div className="wse-result-meta">
               {(isZh ? `共 ${rows.length} 项达成` : `${rows.length} achievements`)}
             </div>
-            <table className="wse-table">
+            <table className="wse-table sticky-thead">
               <thead>
                 <tr>
                   <th className="wse-rank-col">#</th>

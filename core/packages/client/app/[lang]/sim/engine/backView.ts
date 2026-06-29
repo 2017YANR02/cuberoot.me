@@ -41,6 +41,8 @@ export function createBackView(
   const target = new THREE.Vector3();
   const offset = new THREE.Vector3();
   const box = new THREE.Box3();
+  const sceneSavedMat = new THREE.Matrix4();
+  const sceneSavedQuat = new THREE.Quaternion();
 
   return {
     domElement: renderer.domElement,
@@ -58,19 +60,34 @@ export function createBackView(
       camera.aspect = 1;
       camera.near = distance - cubeletSize * (isSq1 ? 5 : 4);
       camera.far = distance + cubeletSize * 8;
-      // Target + orbit pivot = the cube's own world-space centre, recomputed each
-      // frame so a scrambled / bumpy cube (mirror cube pieces bulge off-centre)
-      // stays pinned to the window centre. InstancedMesh caches its boundingBox and
-      // won't refresh it when instance matrices change, so clear it to force a
-      // per-instance recompute. The camera offset is pan-free (0,0,distance), so
-      // panning the main view no longer drifts the mini cube.
+      // Target + orbit pivot = the cube's own centre, so a scrambled / bumpy cube
+      // (mirror cube pieces bulge off-centre) stays pinned to the window centre. A
+      // *world-space* AABB of the scene-tilted cube has its extremes jump between
+      // corners as a layer sweeps mid-turn → the centre wobbles → the mini cube
+      // "蹦来蹦去". So compute the AABB in the scene's *untilted* frame instead (the
+      // cube is axis-aligned there: a symmetric cube's centre stays put during a turn,
+      // a bumpy cube's moves smoothly), then map the centre back through the real
+      // scene transform. The camera offset is pan-free (0,0,distance), so panning the
+      // main view doesn't drift the mini cube either.
       if (world.cube) {
+        const scene = world.scene;
+        sceneSavedMat.copy(scene.matrix);
+        sceneSavedQuat.copy(scene.quaternion);
+        scene.quaternion.identity();
+        scene.updateMatrix();
+        scene.updateMatrixWorld(true);
+        // InstancedMesh caches its boundingBox and won't refresh it when instance
+        // matrices change, so clear it to force a per-instance recompute.
         world.cube.traverse((o) => {
           const im = o as THREE_NS.InstancedMesh;
           if (im.isInstancedMesh) im.boundingBox = null;
         });
         box.setFromObject(world.cube);
         box.getCenter(target);
+        scene.quaternion.copy(sceneSavedQuat);
+        scene.updateMatrix();
+        scene.updateMatrixWorld(true);
+        target.applyMatrix4(sceneSavedMat);
       } else {
         target.set(0, 0, 0);
       }

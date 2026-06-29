@@ -209,8 +209,10 @@ input:checked + .wca-stats-toggle-pill::after {
 }
 
 /* fit-content:窄表贴内容,不留右侧大空白;max-width 兜底防溢出。 */
+/* 默认横滚兜底;但作 sticky 列头容器(.sticky-scroll)时不能自身横滚(横滚容器会困住相对视口吸顶),
+   交给共用工具 .sticky-scroll(桌面 overflow:visible / 窄屏 overflow-x:auto)。 */
+.wca-stats-table-wrapper:not(.sticky-scroll) { overflow-x: auto; }
 .wca-stats-table-wrapper {
-  overflow-x: auto;
   border-radius: 12px;
   border: 1px solid var(--border-default);
   background: var(--card);
@@ -258,11 +260,9 @@ input:checked + .wca-stats-toggle-pill::after {
   font-size: 14px;
 }
 
-.wca-stats-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
+/* 列头吸顶改用全站共用工具(.sticky-thead,见 components/sticky-table.css):表加 .sticky-thead、
+   外层 wrapper 加 .sticky-scroll;th 已有 background:var(--muted) 不透明。这里只把吸顶下划线色对齐 th 下边框。 */
+.wca-stats-table { --sticky-thead-border: var(--border-strong); }
 
 .wca-stats-table th {
   padding: 12px 16px;

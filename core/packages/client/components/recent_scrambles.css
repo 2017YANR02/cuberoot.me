@@ -3,7 +3,7 @@
 
 .recent-scrambles {
   width: 100%;
-  max-width: 760px;
+  max-width: 1100px;
   margin: 0 auto 2.5rem;
   display: flex;
   flex-direction: column;
@@ -53,75 +53,85 @@
 .rs-select:hover { border-color: var(--border-strong); }
 .rs-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
 
-/* hero 卡 */
-.rs-hero {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--border-default);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--foreground) 3%, transparent);
-}
-.rs-hero-cube {
-  flex-shrink: 0;
-  line-height: 0;
-}
-.rs-hero-cube img { display: block; }
-.rs-hero-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  min-width: 0;
-  flex: 1;
-}
-.rs-hero-steps {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-}
-/* hero 底色标识:直接复用 picker swatch 的圆角方块视觉(非圆形) */
-.rs-hero-dot {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 5px;
-  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
-  align-self: center;
-  overflow: hidden;
-}
-.rs-hero-steps b {
-  font-size: 1.8rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--foreground);
-  font-variant-numeric: tabular-nums;
-}
-.rs-hero-unit { font-size: 0.85rem; color: var(--muted-foreground); }
-/* 概率提示:跟在「N 步」后,展示该难度在全部 WCA 三阶打乱里的出现频率(链到 /scramble/stats) */
-.rs-hero-prob {
+/* 概率提示:跟在头部「N 步」选择器后,展示该难度在全部 WCA 三阶打乱里的出现频率
+   (链到 /scramble/stats)。同一桶里所有卡片步数/概率都相同,故只在头部显示一次。 */
+.rs-prob {
   margin-left: 0.15rem;
-  padding: 0.05rem 0.4rem;
+  padding: 0.1rem 0.5rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--foreground) 7%, transparent);
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   font-variant-numeric: tabular-nums;
   color: var(--muted-foreground);
   text-decoration: none;
   white-space: nowrap;
   transition: color 0.12s, background-color 0.12s;
 }
-.rs-hero-prob:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.rs-hero-scramble {
-  display: block;
+.rs-prob:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
+/* 卡片网格:一行两卡;单卡时撑满整行(避免半宽留白)。固定高度 + 右侧滚动条走
+   .scroll-panel(scroll_panel.css)。minmax(0,…) 让列缩到容器、不被卡内容顶宽。 */
+.rs-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.rs-cards > .rs-scard:only-child { grid-column: 1 / -1; }
+
+.rs-scard {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  min-width: 0;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.rs-scard:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default));
+  transform: translateY(-2px);
+}
+.rs-scard-cube {
+  position: relative;
+  flex-shrink: 0;
+  line-height: 0;
+}
+.rs-scard-cube img { display: block; }
+/* 卡内底色标识:复用 picker swatch 的圆角方块,贴在魔方图左上角 */
+.rs-scard-dot {
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: var(--card);
+  overflow: hidden;
+  line-height: 0;
+}
+.rs-scard-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  flex: 1;
+}
+.rs-scard-scramble {
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   line-height: 1.45;
   color: var(--foreground);
   word-break: break-word;
   text-decoration: none;
   transition: color 0.12s;
 }
-.rs-hero-scramble:hover { color: var(--accent); }
+.rs-scard-scramble:hover { color: var(--accent); }
+
+/* 比赛来源行(CompSource row 变体)走 .rs-row-* / .rs-evt;non-row 变体保留备用 */
+.rs-evt { width: 1.05em; height: 1.05em; flex-shrink: 0; }
 .rs-hero-src {
   display: flex;
   align-items: center;
@@ -132,7 +142,6 @@
   margin-top: 0.1rem;
 }
 .rs-hero-src:hover .rs-src-comp { color: var(--accent); }
-.rs-evt { width: 1.05em; height: 1.05em; flex-shrink: 0; }
 .rs-src-comp { font-size: 0.85rem; font-weight: 600; }
 .rs-src-meta { font-size: 0.78rem; color: var(--muted-foreground); }
 
@@ -145,58 +154,6 @@
   border-radius: 14px;
 }
 
-/* Top-5 列表 */
-.rs-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-.rs-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.7rem;
-  padding: 0.5rem 0.3rem;
-  border-top: 1px solid var(--border-default);
-}
-.rs-row-main {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-  flex: 1;
-}
-.rs-row-scramble {
-  display: block;
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
-  line-height: 1.4;
-  color: var(--foreground);
-  word-break: break-word;
-  text-decoration: none;
-  transition: color 0.12s;
-}
-.rs-row-scramble:hover { color: var(--accent); }
-.rs-row-rank {
-  font-size: 0.78rem;
-  color: var(--faint-foreground);
-  font-variant-numeric: tabular-nums;
-  width: 1.1rem;
-  text-align: center;
-  flex-shrink: 0;
-}
-/* 行内底色标识:与 hero 圆点同视觉,尺寸缩小贴合两行行高 */
-.rs-row-dot {
-  width: 0.95rem;
-  height: 0.95rem;
-  border-radius: 4px;
-  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
-  overflow: hidden;
-  flex-shrink: 0;
-  margin-top: 0.05rem;
-  line-height: 0;
-}
 .rs-row-comp {
   display: flex;
   align-items: center;
@@ -222,8 +179,9 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 640px) {
+  .rs-cards { grid-template-columns: 1fr; }
+}
 @media (max-width: 560px) {
-  .rs-hero { flex-direction: column; align-items: stretch; text-align: left; }
-  .rs-hero-cube { align-self: center; }
   .rs-row-sub { display: none; }
 }

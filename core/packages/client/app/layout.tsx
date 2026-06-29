@@ -7,6 +7,8 @@ import MembershipReminder from "@/components/MembershipReminder";
 import AppNuqsAdapter from "@/components/AppNuqsAdapter";
 import "./fonts.css";
 import "./globals.css";
+// 统计表「列头吸顶」共用工具(.sticky-scroll + .sticky-thead),全站可用,免各页重复 import。
+import "@/components/sticky-table.css";
 
 // Title is owned by pages via the useDocumentTitle hook (bilingual zh/en).
 // Setting `title` in layout metadata re-emits <title> into <head> on every

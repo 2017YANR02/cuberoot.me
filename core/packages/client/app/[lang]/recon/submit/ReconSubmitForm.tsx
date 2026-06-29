@@ -1884,8 +1884,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       autoResize(el);
                     }
                   }}
-                  placeholder={tr({ zh: 'cross / F2L / OLL / PLL 每段一行,// 后面写注释', en: 'cross / F2L / OLL / PLL one stage per line; // for comments'
-                })}
                 />
               )}
               {!normalized && (
