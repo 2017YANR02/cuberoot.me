@@ -54,10 +54,19 @@ export type FirstStageResult =
   | { kind: 'ok'; suggestions: FirstStageSuggestion[] }
   | { kind: 'empty'; reasonKey: string };
 
-// Engine FACES view rotation per faceIdx (0 D · 1 U · 2 L · 3 R · 4 F · 5 B),
-// matching StageSolver's table. Used only to derive which faceIdx solves which
-// bottom colour *in cubing.js's rotation sense* — see colorToFaceIdx().
-const FACES_ROT = ['', 'z2', "z'", 'z', "x'", 'x'] as const;
+// Engine faceIdx → the cross COLOUR it solves, in the engine's normalized
+// (white-top / green-front) frame. faceIdx is a FACE-NAME index in the order
+// [D, U, L, R, F, B] (matching StageSolver's FACES table); each face's colour is
+// its home centre, with home codes U=0 R=1 F=2 L=3 B=4 D=5:
+//   0 D→yellow(5) · 1 U→white(0) · 2 L→orange(3) · 3 R→red(1) · 4 F→green(2) · 5 B→blue(4)
+//
+// This MUST be derived from the face-name order, NOT from "which colour does
+// rotation r bring to D". The old code built the map from a FACES_ROT rotation
+// list (… "x'", "x") assuming x'/x bring F/B to D — but in cubing.js x'/x bring
+// B/F (blue/green) down, so green↔blue silently swapped and every green- or
+// blue-bottom cross got solved for the wrong colour (red/orange/white/yellow
+// happened to line up, hiding the bug).
+const ENGINE_FACE_COLOUR = [5, 0, 3, 1, 2, 4] as const;
 
 // Optimal-only (slack 0), complete enumeration (effectively no cap). The optimal
 // set per stage is naturally small; the popup scrolls if needed.
@@ -96,23 +105,15 @@ export function computeFirstStage(scramble: string, prevMoves: string): Promise<
 const bodyLen = (alg: string): number =>
   alg.replace(/^(?:[xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
 
-/** Colour (= centre piece id) currently shown on the D face, under cubing.js's
- *  position-of-piece convention: the centre piece AT position 5. */
+/** Colour (= centre home id) currently shown on the D face. cubing.js's CENTERS
+ *  orbit is SOURCE-indexed: pieces[piece] = the position that piece moved to. So
+ *  the colour on D (position 5) is the piece whose value is 5 → indexOf(5), NOT
+ *  pieces[5] (which is where the yellow centre went). Verified against z→red-on-D. */
 const dColorOf = (p: KPattern): number =>
   p.patternData.CENTERS.pieces.findIndex((pos) => pos === 5);
 
-// Lazy map: bottom colour → engine faceIdx whose view rotation lands that colour
-// on D (computed from cubing.js itself, so it can't drift from the real convention).
-let _colorToFace: Record<number, number> | null = null;
-async function colorToFaceIdx(): Promise<Record<number, number>> {
-  if (_colorToFace) return _colorToFace;
-  const m: Record<number, number> = {};
-  for (let f = 0; f < FACES_ROT.length; f++) {
-    m[dColorOf(await patternFromAlg(FACES_ROT[f]))] = f;
-  }
-  _colorToFace = m;
-  return m;
-}
+// Bottom colour → engine faceIdx that solves that colour's cross (-1 if absent).
+const colorToFaceIdx = (colour: number): number => (ENGINE_FACE_COLOUR as readonly number[]).indexOf(colour);
 
 // Strip leading whole-cube rotations → the pure face-move body.
 function splitBody(alg: string): string {
@@ -140,10 +141,10 @@ async function doCompute(scramble: string, prevMoves: string): Promise<FirstStag
   if (!eff || !isAnalysableScramble(eff)) return { kind: 'empty', reasonKey: FAILED };
 
   const raw = await patternFromAlg(eff);
-  const bottom = dColorOf(raw); // colour ON the D face (NOT pieces[5])
+  const bottom = dColorOf(raw); // colour ON the D face = indexOf(5) (CENTERS is source-indexed)
   if (bottom < 0) return { kind: 'empty', reasonKey: FAILED };
-  const faceIdx = (await colorToFaceIdx())[bottom];
-  if (faceIdx == null) return { kind: 'empty', reasonKey: FAILED };
+  const faceIdx = colorToFaceIdx(bottom);
+  if (faceIdx < 0) return { kind: 'empty', reasonKey: FAILED };
 
   const normStr = normalizeScramble(eff);
   if (normStr == null) return { kind: 'empty', reasonKey: FAILED };
