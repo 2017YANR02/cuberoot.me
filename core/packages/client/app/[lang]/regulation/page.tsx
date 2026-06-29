@@ -14,9 +14,6 @@ import { CORE_ARTICLES, EVENT_ARTICLES, type RegArticle } from './_data/articles
 import { useRegText } from './_components/reg-text';
 import './regulation.css';
 
-const WCA_REG_FULL = 'https://www.worldcubeassociation.org/regulations/full/';
-const WCA_REG_ZH = 'https://www.worldcubeassociation.org/regulations/translations/chinese/';
-
 function ChapterCard({ a }: { a: RegArticle }) {
   const { badge, title, tagline } = useRegText();
   const Icon = a.Icon;
@@ -116,17 +113,13 @@ export default function RegulationHub() {
 
         <footer className="reg-footer">
           <p>
+            <Link href="/regulation/full">{t('本站规则全文', 'Full text on this site')}</Link>
+          </p>
+          <p style={{ marginTop: 12 }}>
             {t(
               '本站内容整理自 WCA 官方《竞赛规则与指南》,为图文介绍与翻译,仅供学习参考;一切判定以官方现行版本为准。',
               'Compiled from the official WCA Regulations & Guidelines as an illustrated guide and translation, for educational reference only. Judging always follows the current official version.'
             )}
-          </p>
-          <p style={{ marginTop: 12 }}>
-            <Link href="/regulation/full">{t('本站规则全文', 'Full text on this site')}</Link>
-            {' · '}
-            <a href={WCA_REG_FULL} target="_blank" rel="noopener noreferrer">{t('官方规则全文', 'Official Regulations (full)')}</a>
-            {' · '}
-            <a href={WCA_REG_ZH} target="_blank" rel="noopener noreferrer">{t('官方中文翻译', 'Official Chinese translation')}</a>
           </p>
         </footer>
       </div>

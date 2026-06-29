@@ -121,12 +121,6 @@ export default function RegulationFull() {
             WCA <span className="reg-code">{t('竞赛规则', 'Regulations')}</span>
           </h1>
           <p className="reg-doc-version">{t(`版本：${version}`, `Version: ${version}`)}</p>
-          <p className="reg-lede">
-            {t(
-              '这是 WCA《竞赛规则》官方全文在本站的一字不差镜像（英文原文与官方简体中文翻译）。每一条都带锚点,所有条款交叉引用都跳转到本页对应位置 —— 本站其它页面可直接引用这里的规则,无需跳出到 WCA 官网。',
-              'A verbatim, self-hosted mirror of the complete WCA Regulations — the official English text alongside the official Chinese translation. Every clause is anchored and every cross-reference resolves in-page, so the rest of this site can link to the rules without leaving for the WCA website.',
-            )}
-          </p>
           <p className="reg-doc-attr">
             {t('依据 ', 'Per the ')}
             <a href="https://www.worldcubeassociation.org/regulations/full/" target="_blank" rel="noopener noreferrer">
