@@ -15,7 +15,7 @@ import type { CSSProperties } from 'react';
 import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString, parseAsArrayOf, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, Ban, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, Ban, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon, Layers as DualIcon } from 'lucide-react';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
   fetchAllUpcomingCompsJson,
@@ -163,6 +163,8 @@ interface Competition {
   events: string[];
   /** event 短码 → 该项目轮次数；过去比赛由 all_past_comps.json 静态字段提供，未来比赛打开 modal 时走 WCIF runtime 拉 */
   rounds?: Record<string, number>;
+  /** 含双轮赛制（WCA Reg 9v，2026+）的 event 短码列表：首轮全员晋级（advancement=percent/100）。无双轮项目时缺省 */
+  dual_events?: string[];
   /** event 短码 → 该项目报名/参赛人数（upcoming=WCIF 报名聚合，past=results 实际参赛）；缺省时格子留空 */
   event_regs?: Record<string, number>;
   /** event 短码 → round-1 WCIF 紧凑配置（限时/及格/晋级/资格）。未来比赛内联自 JSON；过去比赛由懒加载 meta 文件补；缺时运行时 WCIF 兜底 */
@@ -693,6 +695,7 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     end_date: w.end_date,
     events: w.events,
     rounds: w.rounds,
+    dual_events: w.dual_events,
     event_regs: w.event_regs,
     roundMeta: w.round_meta,
     competitor_limit: w.competitor_limit,
@@ -718,6 +721,7 @@ function adaptPastComp(w: PastCompRecord): Competition {
     end_date: w.end_date,
     events: w.events,
     rounds: w.rounds,
+    dual_events: w.dual_events,
     event_regs: w.event_regs,
     competitor_limit: w.competitor_limit ?? 0,
     competitors: w.competitors,
@@ -1421,10 +1425,16 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
               {EVENT_ORDER.map((eid) => {
                 const shortEid = WCA_EVENT_ID_TO_SHORT[eid] ?? eid;
                 const has = events.includes(shortEid);
+                const isDual = c.dual_events?.includes(shortEid) ?? false;
                 const { text, title } = eventCellContent(eventMetric, eid, shortEid, c, cMeta?.[shortEid], isZh);
+                const content = text !== '' ? text : (has ? '·' : '');
                 return (
-                  <span key={eid} className="cl-event-cell" title={title}>
-                    {text !== '' ? text : (has ? '·' : '')}
+                  <span
+                    key={eid}
+                    className="cl-event-cell"
+                    title={isDual ? tr({ zh: '双轮赛制 · 前两轮合并排名', en: 'Dual rounds · first two rounds combined' }) : title}
+                  >
+                    {isDual ? <span className="cl-event-dual">{content}</span> : content}
                   </span>
                 );
               })}
@@ -1547,6 +1557,11 @@ function CalendarPageInner() {
   // 各国首秀：只保留每个国家最早的那一场比赛（一国一条）。走 nuqs，可分享深链。
   const [debutsOnly, setDebutsOnly] = useQueryState(
     'debuts',
+    parseAsBoolean.withDefault(false).withOptions({ history: 'replace', scroll: false }),
+  );
+  // 双轮赛制（WCA Reg 9v，2026+）：只保留含≥1 个双轮项目的比赛。走 nuqs，可分享深链。
+  const [dualOnly, setDualOnly] = useQueryState(
+    'dual',
     parseAsBoolean.withDefault(false).withOptions({ history: 'replace', scroll: false }),
   );
   // 三个 popover 共用一份 state：'month' = 日历模式月份选择；'from'/'to' = 列表模式年月范围
@@ -1789,9 +1804,10 @@ function CalendarPageInner() {
       }
       if (cancelledFilter === 'only' && !isCancelledComp(comp, cancelledCutoffIso)) return false;
       if (debutIds && !debutIds.has(comp.id)) return false;
+      if (dualOnly && !(comp.dual_events && comp.dual_events.length > 0)) return false;
       return true;
     },
-    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, daysFilter, dateFrom, dateTo, cancelledFilter, cancelledCutoffIso, debutIds],
+    [compQuery, selectedCuber, selectedCuberCompIds, countryFilterSet, eventFilters, daysFilter, dateFrom, dateTo, cancelledFilter, cancelledCutoffIso, debutIds, dualOnly],
   );
 
   // 中国内地比赛 WCA WCIF 多无报名数据(报名走 cubing.com),用 cn_upcoming_registrations(compId→WCA ID 列表)
@@ -2045,7 +2061,6 @@ function CalendarPageInner() {
           query={compQuery}
           onQueryChange={setCompQuery}
           onUrlPaste={(id) => router.push(`/wca/comp/${id}`)}
-          onPickComp={(c) => router.push(`/wca/comp/${c.id}`)}
           cuber={selectedCuber}
           onCuberChange={setSelectedCuber}
           staticCubers={staticCubers}
@@ -2083,6 +2098,16 @@ function CalendarPageInner() {
         >
           <DebutIcon size={14} strokeWidth={1.75} />
           <span>{tr({ zh: '各国首秀', en: 'Debuts' })}</span>
+        </button>
+        <button
+          type="button"
+          className={`dual-toggle${dualOnly ? ' is-active' : ''}`}
+          onClick={() => setDualOnly((v) => !v)}
+          aria-pressed={dualOnly}
+          title={tr({ zh: '双轮赛制：只显示含双轮项目的比赛（WCA Reg 9v，2026 新规，前两轮合并排名、不淘汰）。含双轮的项目在下方列表里带强调色圈', en: 'Dual rounds: show only competitions with a dual-round event (WCA Reg 9v, new in 2026 — first two rounds combined, no elimination). Dual events are ringed in the list below' })}
+        >
+          <DualIcon size={14} strokeWidth={1.75} />
+          <span>{tr({ zh: '双轮', en: 'Dual rounds' })}</span>
         </button>
       </div>
 

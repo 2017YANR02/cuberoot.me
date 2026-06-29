@@ -648,6 +648,22 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-bycomp-table thead th.wp-th-narrow { text-align: right !important; }
 .wp-bycomp-table .wp-cell-pos { text-align: right; }
 .wp-bycomp-table .wp-cell-result { text-align: center; }
+/* 有划线旧值时:当前值在第一行、被划旧值在「第二行」流内堆其下方(单次 / 平均 / 名次同口径),
+   按列居中。DOM 顺序 [旧值, 当前值],column-reverse 翻成 当前值在上、旧值在下;整行 vertical-align:top
+   (见 .wp-row-changed td)使各单元当前值都贴第一行 → 彼此水平对齐,旧值各自落到第二行不挤压。 */
+.wp-bycomp-table .wp-cell-changed .record-num-cell {
+    display: inline-flex;
+    flex-direction: column-reverse;
+    align-items: center;
+}
+.wp-bycomp-table .wp-cell-changed .record-num-cell .wp-old-result {
+    margin: 1px 0 0;
+}
+/* 名次列(text-align:right):变更行当前名次 + 旧名次都右对齐,与其它行的名次个位同列。
+   单次/平均列居中(表头压正中)不动,故只 override 名次列为 flex-end;旧值红胶囊 -4px 右外边距
+   抵消其 4px 内边距 → 划线数字(非胶囊边缘)右缘对齐当前名次。 */
+.wp-bycomp-table .wp-cell-pos.wp-cell-changed .record-num-cell { align-items: flex-end; }
+.wp-bycomp-table .wp-cell-pos.wp-cell-changed .record-num-cell .wp-old-result { margin: 1px -4px 0 0; }
 /* 非官方平均(head-to-head 决赛等 WCA 不记平均的轮次):值居中,右侧上下角标 —— Ao{N} 在右上、非官方在右下 */
 .wp-unof-avg-cell { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .wp-unof-avg-corner {
@@ -660,11 +676,44 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 }
 /* 详细成绩单元格颜色 token;网格布局 + 括号占位见共享 components/wca-results/attempts-grid.css(与 /recon 同场表共用) */
 .wp-cell-attempts { font-variant-numeric: tabular-nums; color: var(--wp-text-sub); }
+/* 罚时 ⁺² 角标:绝对定位移到 ) 右外侧(脱离列内流、不占列宽)→ 带罚成绩的 base(如 4.43)
+   右缘 = 同列干净成绩(如 6.72)右缘,小数点跨行对齐(硬性要求)。.wp-att 已 position:relative,
+   left:100% = 单元格右内缘(= ) 之后)。带罚时 PR 角标右移让位,避免压在 ⁺² 上。 */
+.wp-bycomp-table .wp-att-pen {
+    position: absolute;
+    left: 100%;
+    top: auto;
+    bottom: 0.15em;         /* 右下角标:底缘约在基线处,不像之前 -0.1em 掉到字下面;成绩已含罚,+ 仅记号 */
+    margin-left: 1px;
+    white-space: nowrap;
+}
+/* + 在右下、PR 角标在右上,高度错开不重叠 → PR 紧贴 ) 右侧,不为 + 留横向空位 */
+/* # 开时末列(第 5 把)的 PR 角标绝对定位会溢出单元格右侧;留出右内边距让行背景 / 行高亮
+   覆盖到角标,否则末列 PR 被甩在高亮框外、看着右侧变短。# 关无角标则不需要。 */
+.wp-cell-attempts:not(.wp-cell-attempts--center) { padding-right: 2.4em; }
 /* # 关(无 PR 角标)时成绩很窄,右对齐会落在 10ch 列右侧、与居中的表头序号错开 →
    这种状态改居中,正好落在居中表头(1..5)正下方;# 开时成绩接近 10ch 填满列,保持右对齐(小数点跨行对齐)。 */
 .wp-cell-attempts--center .wp-att { text-align: center; }
-/* 详细成绩里的旧值(被改的那一次)压缩,尽量少撑宽 */
-.wp-cell-attempts .wp-old-result { font-size: 0.72em; margin-right: 3px; }
+/* 详细成绩里被改那把的「旧值 + 判罚原因」堆到当前把成绩「下方」。
+   把数格带 ( ) 括号(::before/::after 伪元素),旧值若进 inline 流会打断括号 → 整块用绝对定位
+   脱离网格流(不撑列宽、括号保持完整);有变更的行给把数单元留出底部空间容纳它。
+   旧值 ~~4.43~~ 与当前 4.43⁺² 小数点对齐:旧值同字号 + 补透明 ⁺² 占位(.wp-att-pen-ghost)
+   + 透明右括号(::after)→ 与当前值尾部等宽,右对齐即小数点跨行对齐。 */
+.wp-att-below {
+    position: absolute; top: 100%; right: 0; left: 0;
+    display: flex; flex-direction: column; align-items: flex-end;
+    margin-top: 1px; line-height: 1.25;
+}
+/* 旧值用与 单次 / 平均 / 名次 完全相同的 .wp-old-result 胶囊(红底划线),不另造样式 →
+   红框只套在 4.43 本身。右侧透明占位(.wp-att-old-pad,⁺² + ))单独成元素、不带底色,
+   只撑宽度;负右外边距抵消 pill 的 4px 右内边距 → 4.43 右缘对齐当前值,小数点跨行对齐。 */
+.wp-att-old-line { display: inline-flex; align-items: center; }
+.wp-att-below .wp-old-result { margin: 0 -4px 0 0; white-space: nowrap; }
+.wp-att-old-pad { visibility: hidden; white-space: nowrap; }
+/* 变更行:整行单元顶对齐 → 各当前值都贴第一行、彼此水平对齐(4.31=4.87);旧值落第二行。
+   单次/平均/名次的旧值在流内撑高本行;详细成绩旧值是绝对定位,靠把数单元 padding-bottom 留出第二行。 */
+.wp-bycomp-table tbody tr.wp-row-changed td { vertical-align: top; }
+.wp-row-changed .wp-cell-attempts { padding-bottom: 1.3em; }
 /* 「详细成绩」表头压在下方 attempts 网格正上方:同列模板 + 同字号 + 同列下限(10ch)→ 表头序号与下方成绩同列对齐。
    下限提到 10ch:容下「值 + PR 角标」(如 (4.61 PR119)≈9ch),使表头与各行该列都贴 10ch 下限 → 列宽一致不漂移。 */
 .wp-bycomp-table thead th.wp-th-attempts { text-align: left; }
@@ -715,6 +764,8 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
   text-decoration: none;
   cursor: pointer;
 }
+/* 有复盘的把(橙)→ 其 PRn 名次角标也跟橙(默认写死 muted 灰,与橙色成绩不搭) */
+.wp-att-recon .record-pr-rank { color: var(--wp-accent); }
 .wp-att-recon:hover {
   text-decoration: underline;
   text-decoration-thickness: 2px;

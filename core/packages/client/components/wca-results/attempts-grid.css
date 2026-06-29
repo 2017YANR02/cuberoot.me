@@ -10,7 +10,16 @@
     gap: 4px 12px;
     justify-content: start;
 }
-.wp-att { text-align: right; font-variant-numeric: tabular-nums; }
+.wp-att { text-align: right; font-variant-numeric: tabular-nums; position: relative; }
+/* PR / 区域纪录角标:绝对定位脱离行内流(不计入列宽)→ 数字右缘恒定、跨行小数点对齐,
+   无论「#」开关。角标左缘锚到数字右侧(left:100%),向右溢出到 12px 列间距,不挤数字。 */
+.wp-att > .record-badge--inline {
+    position: absolute;
+    left: 100%;
+    top: -0.15em;
+    margin-left: 1px;
+    white-space: nowrap;
+}
 /* 每个 .wp-att 用 ::before/::after 预留括号宽度(opacity:0 不显示),.wp-att-trimmed 翻 1 显出;
    所有格子等宽括号占位 → 小数点跨行对齐;伪元素内容不进剪贴板,复制粘出来是干净数字。
    参考 WCA wca.scss .solve { &::before/::after / &.trimmed }. */
