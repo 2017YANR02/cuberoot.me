@@ -96,6 +96,9 @@ export interface TwistySettings {
   backView?: boolean;
   /** 'moves' (默认) = cubing.js setupAnchor 'start';'algorithm' = 'end' (从 setup·alg⁻¹ 播到 setup) */
   playbackMode?: 'moves' | 'algorithm';
+  /** 锁定大小位置:true → 禁滚轮 / 双指捏合缩放(cubing.js 无平移,旋转视角 / 转动仍可用)。
+   *  对齐 NxN/engine 路径(SimPage onWheel 的 lockView 提前 return)。 */
+  lockView?: boolean;
 }
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
@@ -151,6 +154,9 @@ export default function TwistySection({
   // Last-applied camera distance. cubing's `cameraDistance` is WRITE-ONLY (its getter
   // throws), so we mirror every write here to read the current zoom for wheel/pinch.
   const liveDistRef = useRef<number>(6);
+  // 锁定大小位置 → 禁 wheel / pinch 缩放。用 ref 让 lockView 一变不必重挂监听(deps 只 player/puzzle)。
+  const lockViewRef = useRef(false);
+  useEffect(() => { lockViewRef.current = !!settings?.lockView; }, [settings?.lockView]);
 
   // NOTE: 自动加载 cubing 库——import 完成后 setCtor 触发重渲染
   useEffect(() => {
@@ -847,6 +853,8 @@ export default function TwistySection({
     };
 
     const onWheel = (e: WheelEvent): void => {
+      // 锁定:不缩放,也不拦默认(让页面照常滚动,对齐 NxN/engine 路径的 lockView 提前 return)。
+      if (lockViewRef.current) return;
       e.preventDefault();
       setDist(liveDistRef.current * (e.deltaY > 0 ? 1.08 : 0.92));
       syncScale(liveDistRef.current);
@@ -861,6 +869,9 @@ export default function TwistySection({
     };
     const onDown = (e: PointerEvent): void => {
       if (e.pointerType !== 'touch') return;
+      // 锁定:不进捏合缩放(不追踪手指 → onMove/onUp 自然 no-op,pinchingRef 不置位;
+      // 双指落到 cubing.js orbit,旋转视角仍可用)。
+      if (lockViewRef.current) return;
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pts.size === 2) {
         pinchingRef.current = true;
