@@ -99,6 +99,9 @@ export interface TwistySettings {
   /** 锁定大小位置:true → 禁滚轮 / 双指捏合缩放(cubing.js 无平移,旋转视角 / 转动仍可用)。
    *  对齐 NxN/engine 路径(SimPage onWheel 的 lockView 提前 return)。 */
   lockView?: boolean;
+  /** 常显方位字母:true → FaceOverlay 字母常驻,false → 完全不显示(拖动也不浮现)。
+   *  字母的唯一开关,对齐引擎路径。仅有 FACE_TABLES 的拼图(skewb / pyraminx / megaminx)生效。 */
+  faceLabels?: boolean;
 }
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
@@ -157,6 +160,9 @@ export default function TwistySection({
   // 锁定大小位置 → 禁 wheel / pinch 缩放。用 ref 让 lockView 一变不必重挂监听(deps 只 player/puzzle)。
   const lockViewRef = useRef(false);
   useEffect(() => { lockViewRef.current = !!settings?.lockView; }, [settings?.lockView]);
+  // 常显方位字母 → FaceOverlay 初始可见性(live 切换走下方独立 effect)。
+  const faceLabelsRef = useRef(false);
+  useEffect(() => { faceLabelsRef.current = !!settings?.faceLabels; }, [settings?.faceLabels]);
 
   // NOTE: 自动加载 cubing 库——import 完成后 setCtor 触发重渲染
   useEffect(() => {
@@ -650,29 +656,12 @@ export default function TwistySection({
     });
     overlay.setCubeOrientation(algToOrientation(currentAlgRef.current, ROTATE_CONFIG[puzzle] ?? { thresholdDeg: 0, axes: [] }));
     faceOverlayRef.current = overlay;
-    // cubing.js 的 drag-to-orbit 在 closed shadow DOM 内捕获 pointer event,
-    // host 监听不到。改用 orbitCoordinates listener 间接判断:
-    // - 第一次 fresh 值不算"变化"
-    // - 后续每次 lat/lon 变 → show(),并启 idle 计时
-    // - idle 500ms 不变 → hide()
-    let lastLat: number | null = null;
-    let lastLon: number | null = null;
-    let hideTimer: number | null = null;
-    const HIDE_AFTER_MS = 500;
+    // 字母可见性完全由「字母」(faceLabels) 开关控制 —— 对齐引擎路径(SimPage 渲染循环):
+    // 这是字母的唯一开关,开=常驻,关=完全不显示(拖动不再浮现 / 不再 idle 隐藏)。
+    // 初始按当前设置;后续 live 切换见下方独立 effect。onOrbit 只随相机重定位字母。
+    if (faceLabelsRef.current) overlay.show(); else overlay.hide();
     const onOrbit = (o: { latitude: number; longitude: number; distance: number }) => {
       overlay.setOrbit(o);
-      if (lastLat === null) {
-        lastLat = o.latitude;
-        lastLon = o.longitude;
-        return;
-      }
-      if (o.latitude !== lastLat || o.longitude !== lastLon) {
-        lastLat = o.latitude;
-        lastLon = o.longitude;
-        overlay.show();
-        if (hideTimer != null) window.clearTimeout(hideTimer);
-        hideTimer = window.setTimeout(() => { overlay.hide(); hideTimer = null; }, HIDE_AFTER_MS);
-      }
     };
     model.addFreshListener(onOrbit);
 
@@ -688,12 +677,19 @@ export default function TwistySection({
 
     return () => {
       cancelAnimationFrame(raf);
-      if (hideTimer != null) window.clearTimeout(hideTimer);
       try { model.removeFreshListener(onOrbit); } catch { /* ignore */ }
       overlay.dispose();
       if (faceOverlayRef.current === overlay) faceOverlayRef.current = null;
     };
   }, [playerNonce, puzzle]);
+
+  // 「字母」开关 live 切换 → 常显 / 隐藏。overlay 实例在上面的 effect 内创建,
+  // 经 faceOverlayRef 触达;依赖 playerNonce 让 puzzle 重建后重新套用当前开关。
+  useEffect(() => {
+    const ov = faceOverlayRef.current;
+    if (!ov) return;
+    if (settings?.faceLabels) ov.show(); else ov.hide();
+  }, [settings?.faceLabels, playerNonce]);
 
   // skewb 拖动直接 commit x/y:横拖 80px/y/y'、纵拖 80px/x/x'。
   // cubing.js 同时收到 pointer events (overlay 默认 pointer-events:none) → 想改 lat/lon。
