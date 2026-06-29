@@ -115,13 +115,6 @@
   gap: 6px;
   font-size: 13px;
   color: var(--foreground);
-  cursor: pointer;
-}
-.sim-toggle input[type=checkbox] {
-  accent-color: var(--accent);
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
 }
 
 .sim-drawer-reset {
