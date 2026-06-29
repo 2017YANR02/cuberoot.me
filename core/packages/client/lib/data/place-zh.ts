@@ -5,6 +5,11 @@
 //   (committed: scripts/place-tail-zh.json)。大中华区(CN/HK/MO/TW)不在此,走 cn-region。
 // 重新生成:见 scripts/gen-place-zh.mjs 顶部。
 export const PLACE_CITY_ZH: Record<string, string> = {
+  // 手补(重跑 gen 需离线 GeoNames dump,本机暂缺;源已入 scripts/place-tail-zh.json,重跑会归位重排):
+  "FR:marigot": "马里戈特",
+  "ZA:secunda": "塞孔达",
+  "NL:philipsburg": "菲利普斯堡",
+  "LS:maseru": "马塞卢",
   "AD:andorralavella": "安道尔城",
   "AD:arinsal": "阿里恩萨尔",
   "AD:lamassana": "马萨纳",
@@ -3738,6 +3743,10 @@ export const PLACE_CITY_ZH: Record<string, string> = {
   "ZM:lusaka": "路沙卡",
 };
 export const PLACE_ADMIN_ZH: Record<string, string> = {
+  // 手补(同上,源在 scripts/place-tail-zh.json):
+  "FR:saintmartin": "圣马丁",
+  "ZA:mpumalanga": "普马兰加",
+  "NL:sintmaarten": "圣马丁",
   "AR:chaco": "查科省",
   "AR:chubut": "丘布特省",
   "AR:cordoba": "科尔多瓦省",
