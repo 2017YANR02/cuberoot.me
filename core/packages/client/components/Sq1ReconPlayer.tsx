@@ -31,13 +31,15 @@ import './Sq1ReconPlayer.css';
 const PLAY_INTERVAL_MS = 520;
 
 export default function Sq1ReconPlayer({
-  scramble, alg, fillPane = false, playerRef, backView = false,
+  scramble, alg, fillPane = false, playerRef, backView = false, hideControls = false,
 }: {
   scramble: string;
   alg: string;
   fillPane?: boolean;
   /** Show an always-on back-view mini window (recon submit forces it). */
   backView?: boolean;
+  /** 隐藏底部播放/步进/scrubber 控制条(嵌成绩弹窗预览时用)。 */
+  hideControls?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
 }) {
@@ -280,6 +282,7 @@ export default function Sq1ReconPlayer({
       <div ref={hostRef} className="sq1-recon-canvas">
         {backView && <div ref={backFrameRef} className="sq1-recon-backview" aria-hidden />}
       </div>
+      {!hideControls && (
       <div className="sq1-recon-controls">
         <button type="button" className="sq1-recon-ctrl-btn" onClick={() => jumpToStep(0)} disabled={step === 0} aria-label="Reset">
           <RotateCcw size={14} />
@@ -311,6 +314,7 @@ export default function Sq1ReconPlayer({
         />
         <span className="sq1-recon-progress">{step} / {total}</span>
       </div>
+      )}
     </div>
   );
 }

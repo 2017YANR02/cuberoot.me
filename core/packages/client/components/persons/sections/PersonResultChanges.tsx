@@ -47,6 +47,15 @@ export default function PersonResultChanges({ wcaId, isZh }: { wcaId: string; is
   );
 }
 
+// 摘要里展开的字段及其标签(可读顺序:成绩 → 名次 → 纪录标记)。
+const SUMMARY_FIELDS = [
+  { field: 'best', zh: '单次', en: 'Single' },
+  { field: 'average', zh: '平均', en: 'Average' },
+  { field: 'pos', zh: '名次', en: 'Place' },
+  { field: 'regional_single_record', zh: '单次纪录', en: 'Single record' },
+  { field: 'regional_average_record', zh: '平均纪录', en: 'Average record' },
+] as const;
+
 function roundLabel(roundTypeId: string | null): string {
   switch (canonicalRound(roundTypeId)) {
     case 'f': return tr({ zh: '决赛', en: 'Final'
@@ -66,8 +75,15 @@ function ChangeRow({ c, isZh }: { c: ResultChange; isZh: boolean }) {
   const eventId = c.eventId || '333';
   const round = roundLabel(c.roundTypeId);
   const comp = c.compName ? localizeCompName(c.competitionId ?? '', c.compName, isZh) : (c.competitionId ?? '');
-  const valueFields = (c.fields ?? []).filter((f) => f.field === 'best' || f.field === 'average');
-  const onlyMeta = !removed && valueFields.length === 0;
+  // 标量字段(成绩 / 名次 / 纪录标记)展开成「标签 + 旧→新」。
+  const scalar = SUMMARY_FIELDS
+    .map((cfg) => ({ cfg, f: (c.fields ?? []).find((x) => x.field === cfg.field) }))
+    .filter((x): x is { cfg: typeof SUMMARY_FIELDS[number]; f: NonNullable<typeof x.f> } => !!x.f);
+  // 罚时标注(第N把 +M)+ 纯把数改判(罕见,成绩/罚时未覆盖时才单列)。
+  const penF = (c.fields ?? []).find((x) => x.field === 'attempt_penalties');
+  const attF = (c.fields ?? []).find((x) => x.field === 'attempts');
+  const showAttempts = !!attF && scalar.length === 0 && !penF;
+  const onlyMeta = !removed && scalar.length === 0 && !penF && !showAttempts;
 
   return (
     <li className={`wp-rc-row wp-rc-row-${c.changeType}`}>
@@ -93,20 +109,33 @@ function ChangeRow({ c, isZh }: { c: ResultChange; isZh: boolean }) {
             <span className="wp-rc-gone">{tr({ zh: '已移除', en: 'removed' })}</span>
           </>
         ) : onlyMeta ? (
-          <span className="wp-rc-meta">{tr({ zh: '名次 / 纪录标记变动', en: 'place / record marker changed'
+          <span className="wp-rc-meta">{tr({ zh: '成绩明细修正', en: 'result details corrected'
         })}</span>
         ) : (
-          valueFields.map((f, i) => (
-            <span key={i} className="wp-rc-pair">
-              <span className="wp-rc-flabel">
-                {f.field === 'best' ? tr({ zh: '单次', en: 'Single'
-                }) : tr({ zh: '平均', en: 'Average' })}
+          <>
+            {scalar.map(({ cfg, f }, i) => (
+              <span key={`s${i}`} className="wp-rc-pair">
+                <span className="wp-rc-flabel">{tr({ zh: cfg.zh, en: cfg.en })}</span>
+                <span className="wp-rc-old">{formatChangeFieldValue(cfg.field, f.old, eventId)}</span>
+                <span className="wp-rc-arrow">→</span>
+                <span className="wp-rc-new">{formatChangeFieldValue(cfg.field, f.new, eventId)}</span>
               </span>
-              <span className="wp-rc-old">{formatChangeFieldValue(f.field, f.old, eventId)}</span>
-              <span className="wp-rc-arrow">→</span>
-              <span className="wp-rc-new">{formatChangeFieldValue(f.field, f.new, eventId)}</span>
-            </span>
-          ))
+            ))}
+            {penF && (
+              <span className="wp-rc-pair">
+                <span className="wp-rc-flabel">{tr({ zh: '罚时', en: 'Penalty' })}</span>
+                <span className="wp-rc-new">{formatChangeFieldValue('attempt_penalties', penF.new, eventId)}</span>
+              </span>
+            )}
+            {showAttempts && attF && (
+              <span className="wp-rc-pair">
+                <span className="wp-rc-flabel">{tr({ zh: '把数', en: 'Solves' })}</span>
+                <span className="wp-rc-old">{formatChangeFieldValue('attempts', attF.old, eventId)}</span>
+                <span className="wp-rc-arrow">→</span>
+                <span className="wp-rc-new">{formatChangeFieldValue('attempts', attF.new, eventId)}</span>
+              </span>
+            )}
+          </>
         )}
       </span>
       {c.note && <span className="wp-rc-note">{c.note}</span>}

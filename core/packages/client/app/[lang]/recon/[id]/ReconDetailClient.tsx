@@ -23,7 +23,7 @@ import {
 } from '@/lib/recon-api';
 import { revalidateRecon } from '../revalidate-action';
 import {
-  formatTime, isBldEvent, getPuzzleId, wcaPersonUrl,
+  formatTime, isBldEvent, wcaPersonUrl,
   buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
   padReconSingle,
 } from '@/lib/recon-utils';
@@ -51,10 +51,7 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { RecordBadge } from '@/components/RecordBadge';
-import TwistySection from '@/components/TwistySection';
-import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
-import CuberReconPlayer from '@/components/CuberReconPlayer';
-import PillToggle from '@/components/PillToggle/PillToggle';
+import ReconPlayerCanvas, { type ReconEngine, loadReconEngine, saveReconEngine } from '@/components/recon/ReconPlayerCanvas';
 import SolutionView from '@/components/SolutionView';
 import { canonicalSq1Alg } from '@/lib/sq1-svg';
 import {
@@ -272,63 +269,29 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 
   // NxN puzzles can render with either engine (cuberoot = in-house cuber WebGL,
   // the /sim look; or cubing.js). User-selectable + persisted, shared with the
-  // submit page via the same localStorage key. Other puzzles ignore it.
-  const puzzleId = getPuzzleId(solve.event);
-  const isNxnPuzzle = /^[2-7]x[2-7]x[2-7]$/.test(puzzleId);
-  const nxnOrder = isNxnPuzzle ? parseInt(puzzleId, 10) : 3;
-  const [reconEngine, setReconEngine] = useState<'cuber' | 'cubing'>(() => {
-    if (typeof window === 'undefined') return 'cuber';
-    try { return localStorage.getItem('recon.player.engine') === 'cubing' ? 'cubing' : 'cuber'; }
-    catch { return 'cuber'; }
-  });
-  const pickEngine = useCallback((e: 'cuber' | 'cubing') => {
+  // submit page + AttemptPopover via the same localStorage key (ReconPlayerCanvas
+  // owns the key). Other puzzles ignore it.
+  const [reconEngine, setReconEngine] = useState<ReconEngine>(() => loadReconEngine());
+  const pickEngine = useCallback((e: ReconEngine) => {
     setReconEngine(e);
-    try { localStorage.setItem('recon.player.engine', e); } catch { /* private */ }
+    saveReconEngine(e);
   }, []);
 
   return (
     <div className="detail-layout">
       <div className="detail-player-pane">
-        {scramble && (
-          // 有解法 → 播放复盘;无解法(只录了 WCA 成绩 + 打乱)→ alg 为空,
-          // player 停在 setup(打乱)后的 3D 状态,至少能看到这个打乱。
-          isSq1 ? (
-            <Sq1ReconPlayer
-              scramble={scramble}
-              alg={displayText}
-              playerRef={playerRef}
-              fillPane
-            />
-          ) : isNxnPuzzle && reconEngine === 'cuber' ? (
-            <CuberReconPlayer
-              scramble={playerScramble}
-              alg={cleanForPlayer(displayText)}
-              order={nxnOrder}
-              playerRef={playerRef}
-              fillPane
-            />
-          ) : (
-            <TwistySection
-              puzzle={puzzleId}
-              scramble={playerScramble}
-              alg={cleanForPlayer(displayText)}
-              playerRef={playerRef}
-              fillPane
-            />
-          )
-        )}
-        {scramble && isNxnPuzzle && (
-          // 渲染引擎切换 — 浮在动画区左上(背面小窗在右上,不撞)。cuberoot / cubing.js 二选一。
-          <div className="detail-engine-toggle">
-            <PillToggle
-              value={reconEngine === 'cubing'}
-              onChange={(v) => pickEngine(v ? 'cubing' : 'cuber')}
-              offLabel="cuberoot"
-              onLabel="cubing.js"
-              ariaLabel={tr({ zh: '渲染引擎', en: 'Render engine' })}
-            />
-          </div>
-        )}
+        {/* 有解法 → 播放复盘;无解法(只录了 WCA 成绩 + 打乱)→ alg 为空,
+            player 停在 setup(打乱)后的 3D 状态,至少能看到这个打乱。 */}
+        <ReconPlayerCanvas
+          event={solve.event}
+          scramble={scramble}
+          displayText={displayText}
+          playerRef={playerRef}
+          engine={reconEngine}
+          onPickEngine={pickEngine}
+          fillPane
+          showEngineToggle
+        />
       </div>
 
       <div className="detail-content-pane">

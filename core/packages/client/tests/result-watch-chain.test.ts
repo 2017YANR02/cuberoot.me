@@ -14,9 +14,13 @@ import {
   buildOriginalBackfillFields,
   splitChainByStatus,
   isApprovedChange,
+  effectiveAttemptVideos,
+  pendingAttemptVideos,
+  formatChangeFieldValue,
   type ResultChange,
 } from '@/lib/result-watch-api';
 import { computeWcaBestAverage } from '@/lib/wca-compute';
+import { videoCoverInfo, pickReconCover } from '@/lib/recon-video-cover';
 
 // 最小 ResultChange 工厂(只填测试关心的字段)
 function mk(p: Partial<ResultChange>): ResultChange {
@@ -315,5 +319,66 @@ describe('effectiveAttemptPenalties', () => {
     ]);
     const displayedValue = 300; // 3.00 厘秒(含罚时)
     expect(displayedValue - (penalties[0] ?? 0)).toBe(100); // base = 1.00
+  });
+});
+
+// 比赛视频:逐把链接(index 对齐 attempts),纯展示。approved 进有效值;pending 单独并集。
+describe('effectiveAttemptVideos / pendingAttemptVideos', () => {
+  const yt = 'https://youtu.be/abc123';
+  const bili = 'https://www.bilibili.com/video/BV1xx411c7mu';
+  it('returns the latest approved attempt_videos array', () => {
+    const chain = [
+      mk({ id: 1, fields: [{ field: 'attempt_videos', old: null, new: ['', yt, '', '', ''] }] }),
+      mk({ id: 2, fields: [{ field: 'attempt_videos', old: null, new: ['', yt, bili, '', ''] }] }),
+    ];
+    expect(effectiveAttemptVideos(chain)).toEqual(['', yt, bili, '', '']);
+  });
+  it('approved reader ignores pending proposals', () => {
+    const chain = [
+      mk({ id: 1, status: 'approved', fields: [{ field: 'attempt_videos', old: null, new: [yt, '', ''] }] }),
+      mk({ id: 2, status: 'pending', fields: [{ field: 'attempt_videos', old: null, new: [yt, bili, ''] }] }),
+    ];
+    expect(effectiveAttemptVideos(chain)).toEqual([yt, '', '']);
+  });
+  it('empty when no video field / undefined', () => {
+    expect(effectiveAttemptVideos(undefined)).toEqual([]);
+    expect(effectiveAttemptVideos([mk({ fields: [{ field: 'best', old: 1, new: 2 }] })])).toEqual([]);
+  });
+  it('pendingAttemptVideos unions multiple pending proposals per index (multi-line)', () => {
+    const chain = [
+      mk({ id: 1, status: 'approved', fields: [{ field: 'attempt_videos', old: null, new: ['', '', ''] }] }),
+      mk({ id: 2, status: 'pending', fields: [{ field: 'attempt_videos', old: null, new: [yt, '', ''] }] }),
+      mk({ id: 3, status: 'pending', fields: [{ field: 'attempt_videos', old: null, new: [bili, '', ''] }] }),
+    ];
+    expect(pendingAttemptVideos(chain)).toEqual([`${yt}\n${bili}`]);
+  });
+  it('formatChangeFieldValue summarizes which solves have a video', () => {
+    expect(formatChangeFieldValue('attempt_videos', [yt, '', bili, '', ''], '333')).toBe('#1 ▶  #3 ▶');
+    expect(formatChangeFieldValue('attempt_videos', ['', '', ''], '333')).toBe('—');
+  });
+});
+
+// 视频封面解析(与复盘卡片共用 lib/recon-video-cover)
+describe('videoCoverInfo / pickReconCover', () => {
+  it('parses YouTube id from various URL shapes', () => {
+    expect(videoCoverInfo('https://youtu.be/abc123XYZ')).toEqual({ kind: 'yt', id: 'abc123XYZ' });
+    expect(videoCoverInfo('https://www.youtube.com/watch?v=abc123XYZ&t=5s')).toEqual({ kind: 'yt', id: 'abc123XYZ' });
+  });
+  it('parses Bilibili BV id', () => {
+    expect(videoCoverInfo('https://www.bilibili.com/video/BV1xx411c7mu')).toEqual({ kind: 'bili', id: 'BV1xx411c7mu' });
+  });
+  it('keeps full URL for douyin (server resolves cover)', () => {
+    expect(videoCoverInfo('https://www.douyin.com/video/7300000000000000000')?.kind).toBe('douyin');
+  });
+  it('no cover for b23 short links / unknown / blank', () => {
+    expect(videoCoverInfo('https://b23.tv/abcd')).toBeNull();
+    expect(videoCoverInfo('')).toBeNull();
+    expect(videoCoverInfo('https://example.com/x')).toBeNull();
+  });
+  it('pickReconCover honours language preference (zh→bili first, en→yt first)', () => {
+    const multi = 'https://youtu.be/yt99999\nhttps://www.bilibili.com/video/BV1aa411c7mu';
+    expect(pickReconCover(multi, true)).toEqual({ kind: 'bili', id: 'BV1aa411c7mu' });
+    expect(pickReconCover(multi, false)).toEqual({ kind: 'yt', id: 'yt99999' });
+    expect(pickReconCover(undefined, true)).toBeNull();
   });
 });

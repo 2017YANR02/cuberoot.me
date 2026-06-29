@@ -7,9 +7,6 @@ import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
-import { EditModeToggle } from './EditModeToggle';
-import { useAuthStore } from '@/lib/auth-store';
-import { isAdminWcaId } from '@cuberoot/shared/admin';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { mergePersonLive } from '@/lib/person-live-merge';
 
@@ -31,18 +28,12 @@ type Sub = 'event' | 'comp';
 
 export default function ResultsTab({ profile, results, comps, liveResults, liveComps, reconLookup, isZh }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
-  // 管理员「编辑模式」:开 → 点无复盘成绩进行内编辑;关(默认)→ 和访客一样点击跳 /recon/submit 复盘。
-  // (开关 UI 在各视图「全部成绩」标题右侧;admin 判定在子视图内做)
-  const [editMode, setEditMode] = useState(false);
   // 「详细成绩」逐把 PR 名次角标的显示开关(默认开;开关 UI 在各视图「全部成绩」标题右侧)。
   const [showAttemptRanks, setShowAttemptRanks] = useState(true);
   // 「按比赛」视图内的子 tab:成绩(逐场详细成绩,默认)/ 赛事(紧凑比赛列表,原赛事 tab 合并进来)。
   const [compView, setCompView] = useState<'results' | 'list'>('results');
-  // 比赛视图的工具(# PR 名次 / 编辑模式)由本组件统一渲染,与上方 PillToggle 同一行;
-  // ByCompList 自带的工具行不再渲染(不传 onToggle* 回调即隐藏)。
-  const myWcaId = useAuthStore((s) => s.user?.wcaId);
-  const admin = isAdminWcaId(myWcaId);
-  const canEdit = !!myWcaId;
+  // 比赛视图的工具(# PR 名次)由本组件统一渲染,与上方 PillToggle 同一行;ByCompList 自带的工具行不再
+  // 渲染(不传 onToggle* 回调即隐藏)。编辑改由点成绩弹窗内做(无全局编辑模式 / 铅笔)。
   // 子 tab(按项目 / 按比赛)+ 选中项目均为页内瞬时态 → replace,不堆历史
   const [q, setQ] = useQueryStates(
     { sub: parseAsString, event: parseAsString },
@@ -102,7 +93,6 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
           {compView === 'results' && (
             <span className="wp-section-h-tools">
               <AttemptRanksToggle active={showAttemptRanks} onToggle={() => setShowAttemptRanks((v) => !v)} />
-              {canEdit && <EditModeToggle active={editMode} onToggle={() => setEditMode((v) => !v)} propose={!admin} />}
             </span>
           )}
         </div>
@@ -117,14 +107,12 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
             reconLookup={reconLookup}
             eventId={activeEvent}
             isZh={isZh}
-            editMode={editMode}
-            onToggleEditMode={() => setEditMode((v) => !v)}
             showAttemptRanks={showAttemptRanks}
             onToggleAttemptRanks={() => setShowAttemptRanks((v) => !v)}
           />
         )}
         {sub === 'comp' && compView === 'results' && (
-          <ByCompList wcaId={profile.person.wca_id} personName={profile.person.name} personCountry={profile.person.country_iso2} results={mResults} comps={mComps} reconLookup={reconLookup} isZh={isZh} editMode={editMode} showAttemptRanks={showAttemptRanks} />
+          <ByCompList wcaId={profile.person.wca_id} personName={profile.person.name} personCountry={profile.person.country_iso2} results={mResults} comps={mComps} reconLookup={reconLookup} isZh={isZh} showAttemptRanks={showAttemptRanks} />
         )}
         {sub === 'comp' && compView === 'list' && (
           <CompsTab profile={profile} results={mResults} comps={mComps} isZh={isZh} />

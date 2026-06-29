@@ -469,51 +469,8 @@
 }
 .comp-view-tab--link svg { opacity: 0.7; flex: none; }
 
-/* 编辑模式铅笔(管理员):贴 tab 行右端。关→灰框;开→赭陶强调,提示「点成绩去改」。 */
-.comp-editmode-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  margin-left: auto;
-  align-self: center;
-  background: transparent;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.comp-editmode-toggle:hover {
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
-  color: var(--foreground);
-}
-.comp-editmode-toggle.is-active {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-/* 成绩单元命中复盘 → 跳复盘详情;保留原成绩配色(被淘汰把的括号/暗色),hover 才下划线提示可点。 */
-.comp-att-recon {
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-}
-.comp-att-recon:hover {
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-}
-/* 数字 <a> 只包住成绩文本,括号(.td-attempt::before/::after)和单元内边距都在 <td> 上;
-   用拉伸覆盖层把整格变成可点链接,免得点到括号/留白落到行点击(打开选手浮层)而非跳复盘。 */
-.comp-att-recon::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-}
+/* 编辑模式铅笔 + .comp-att-recon 链接已退役:点成绩统一走 AttemptPopover(复盘/判罚/编辑/视频),
+   触发件提示类改用共享 .att-trig-recon / .att-trig-plain(见 result-change.css)。 */
 .comp-event-bar {
   margin-bottom: 12px;
 }

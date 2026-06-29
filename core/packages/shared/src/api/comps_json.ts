@@ -45,6 +45,8 @@ export interface UpcomingCompRecord {
   registered?: number;
   /** event 短码 → round-1 WCIF 配置（限时/及格/晋级/资格）；未来比赛内联（量小）；老 dump 缺省 */
   round_meta?: Record<string, RoundMeta>;
+  /** 含双轮赛制（WCA Reg 9v，2026+）的 event 短码列表：首轮 advancement=percent/100（全员晋级=无淘汰）。无双轮项目时缺省 */
+  dual_events?: string[];
 }
 
 export interface PastCompRecord {
@@ -66,6 +68,8 @@ export interface PastCompRecord {
   competitor_limit?: number;
   /** event 短码 → 该项目实际参赛人数（results 按 event DISTINCT person_id）；老 dump 缺省 */
   event_regs?: Record<string, number>;
+  /** 含双轮赛制（WCA Reg 9v，2026+）的 event 短码列表：首轮 advancement=percent/100（全员晋级=无淘汰）。无双轮项目时缺省 */
+  dual_events?: string[];
 }
 
 export async function fetchAllUpcomingCompsJson(): Promise<UpcomingCompRecord[]> {

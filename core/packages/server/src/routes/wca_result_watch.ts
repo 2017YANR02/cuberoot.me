@@ -10,9 +10,10 @@
  *   DELETE /wca/result-watch/changes/:id            管理员删除
  *
  * 写权限分两档(见 authorizeWrite):
- *   - 管理员 / X-Admin-Key:全权(任意选手、任意字段)。
- *   - 普通登录用户:只能给「自己」(user.wcaId === wca_id)标「纯罚时」(fields 仅 attempt_penalties)。
- *     罚时纯展示不重算单次/平均/排名,故自助标注影响有界。
+ *   - 管理员 / X-Admin-Key:全权(任意选手、任意字段),即时生效(approved)。
+ *   - 普通登录用户:
+ *       · 给「自己」(user.wcaId === wca_id)标「纯罚时」(fields 仅 attempt_penalties)→ 即时(纯展示,影响有界)。
+ *       · 其余 modified 提议(改成绩 / 挂比赛视频 attempt_videos 等)→ 待审核(pending),管理员批准后才生效。
  * 读端点属可变数据:浏览器短缓存;写端点 no-store。
  */
 import { Hono } from 'hono';
@@ -31,6 +32,8 @@ const NOTE_MAX = 1000;
 const ALLOWED_FIELDS = new Set([
   'best', 'average', 'pos', 'attempts', 'attempt_penalties',
   'regional_single_record', 'regional_average_record',
+  // 比赛视频(逐把链接,纯展示、不重算成绩):任何登录用户可提议(→ pending),管理员即时。
+  'attempt_videos',
 ]);
 
 interface ChangeField { field: string; old: unknown; new: unknown }

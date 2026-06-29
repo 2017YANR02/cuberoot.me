@@ -16,18 +16,20 @@ WCA 官方规则会改版(近年不按 1.1 走:有 2025-07-17 合并版、2026-0
 - **官方机器可读源**:`https://raw.githubusercontent.com/thewca/wca-regulations/official/wca-regulations.md`。顶部 `<version>Version: …`,每章是 `## <article-ID>...` 标题(附则也在同文件,标成 `Article A/B/...`),ID 正好对应我们注册表的 `num`。
 - **快照基线**:`_data/reg-source.snapshot.md`(官方全文)+ `_data/reg-source.hashes.json`(版本 + 每章 sha)。= 我们「照着哪一版做的」。
 - **检测**:`pnpm -F @cuberoot/client reg:check` —— 拉线上比基线,报告版本/哪些章改了(带 diff)+ 映射到具体 `page.tsx`;exit 0 同步 / 3 漂移 / 2 无基线 / 1 出错。
-- **自动报警**:CI `.github/workflows/regulation_drift.yml` 每月 1 号跑检测,有漂移就开/更新一个 `regulation-drift` 标签的 GitHub issue,正文带 diff。**用户收到这个 issue(或主动说「更新规则」)= 本 skill 的入口。**
+- **自动报警 + 自动同步全文**:CI `.github/workflows/regulation_drift.yml` 每月 1 号跑检测,漂移时**分两条**:① 逐字层(快照 + `reg-clauses/*.json` + `_full.json`)机器生成无版权改写,workflow 自动 `reg:check --write` + `build-reg-clauses` 重建,经 `peter-evans/create-pull-request` 开/更新 `regulation-sync` PR(合并即上线最新全文镜像;**需仓库设置勾 Settings→Actions→General→"Allow GitHub Actions to create and approve pull requests"**,否则 PR 创建 403);② 图文转述层(`/regulation/<slug>` 有版权改写)仍开/更新 `regulation-drift` issue 等人重写。**用户收到这个 issue(或主动说「更新规则」)= 本 skill 的入口;那个 sync PR 一般直接 merge 即可。**
 
 **收到漂移 issue / 「更新规则」时的流程**:① 先 `reg:check`(或读 issue)拿到改动清单 → ② 对每个改动章 WebFetch 官方对应 article 重新转述、重写该 `<slug>/page.tsx`(可视化照旧)→ ③ 跑下面的繁体生成 + typecheck + 浏览器验 → ④ **重新基线 + 刷新完整条款**:`pnpm -F @cuberoot/client reg:check --write` 再 `pnpm -F @cuberoot/client reg:clauses`,把更新后的 `reg-source.snapshot.md` / `reg-source.hashes.json` / `_data/reg-clauses/*.json` 一起 commit(否则下次还报同样的漂移)。新增/删除整章见末节。
 
-## 完整条款数据层(每章可折叠全文)
+## 完整条款数据层(每章可折叠全文 + 全文镜像页)
 
-每章页讲解之下有一块**「完整条款」**折叠区,逐条列官方全文(EN + 简体 + 繁體),给"查工具书"用。这层是**数据驱动、自动生成,不手写**:
+两处复用同一份数据,都是**数据驱动、自动生成、逐字照搬官方(不转述),不手写**(WCA 规则 CC BY 3.0,可逐字转载,带署名即可):
 
-- 数据源:`scripts/build-reg-clauses.mjs`(`pnpm reg:clauses`)从官方英文(本地快照)+ 官方简体翻译(`thewca/wca-regulations-translations` 的 `chinese/wca-regulations.md`,版本同步)按条款号(`4a`/`12a1a`/`A3b2`)对齐,繁體 build 时 OpenCC s2twp 生成,产出 `_data/reg-clauses/<articleId>.json`(每章一个,字段 `{id,depth,en,zh,zhHant}`)。
-- 渲染:`_components/FullClauses.tsx`(原生 `<details>`,SSG/SEO 友好);每章页 `import clauses from '../_data/reg-clauses/<num>.json'` + 末尾 `<FullClauses data={clauses} />`。新建章节照此加两行。
+1. **每章可折叠「完整条款」** —— 每章页讲解之下逐条列该章官方全文(EN + 简体),`_components/FullClauses.tsx`(原生 `<details>`,SSG/SEO 友好);每章页 `import clauses from '../_data/reg-clauses/<num>.json'` + 末尾 `<FullClauses data={clauses} />`。新建章节照此加两行。
+2. **全文镜像页 `/regulation/full`**(2026-06-29 加)—— 官方全文一字不差的站内镜像(intro notes + 16 章 + 762 条),每条带锚点(`#4d`/`#A4d1`)、所有交叉引用(`regulations:regulation:X`/`regulations:article:X`)就近跳转、条款正文本身是 self-link,站内别处可深链规则不必跳出 WCA 官网。页面 `full/page.tsx` 读 `_data/reg-clauses/_full.json`;hub + 每章 FullClauses 已链到它。
+
+- 数据源:`scripts/build-reg-clauses.mjs`(`pnpm reg:clauses`)从官方英文(本地快照)+ 官方简体翻译(`thewca/wca-regulations-translations` 的 `chinese/wca-regulations.md`,版本同步)按条款号(`4a`/`12a1a`/`A3b2`)对齐,产出**两类**:`_data/reg-clauses/<articleId>.json`(每章一个,`{id,depth,en,zh}`)+ `_data/reg-clauses/_full.json`(合并全文:`{version,notes,articles:[{id,heading,title,clauses}]}`,给镜像页)。
 - 中文直接来自官方翻译(不是我们逐条翻),`0 条缺中文` 即完全对齐;若官方翻译滞后会有缺口(脚本会打印 `N without 中文`)。
-- 注意:`reg:clauses` 要 opencc-js(需 `pnpm install` 过),不像 `reg:check` 零依赖;本机直连 GitHub raw 偶尔超时,可 `--zh <本地文件>`(用 `gh api repos/thewca/wca-regulations-translations/contents/chinese/wca-regulations.md?ref=main -H "Accept: application/vnd.github.raw"` 拉)。
+- **零依赖**:`reg:clauses` 现在只用 node 内置 + fetch(不再 OpenCC/zhHant —— 全站已退繁体,该字段废弃删了),和 `reg:check` 一样无需 `pnpm install`,CI 可直接 `node scripts/build-reg-clauses.mjs` 跑。本机直连 GitHub raw 偶尔超时,可 `--zh <本地文件>`(用 `gh api repos/thewca/wca-regulations-translations/contents/chinese/wca-regulations.md?ref=main -H "Accept: application/vnd.github.raw"` 拉)。
 
 ## 目录与 slug(章节名 → 路由)
 

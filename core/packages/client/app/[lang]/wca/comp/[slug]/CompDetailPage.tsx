@@ -9,7 +9,7 @@ import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Pencil, Radio, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Radio, ArrowUp, ArrowDown } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -43,11 +43,10 @@ import ScheduleView, { ScheduleControls } from './ScheduleView';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
-import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, splitChainByStatus } from '@/lib/result-watch-api';
-import { AttemptEditPopover } from '@/components/persons/sections/results/AttemptEditPopover';
-import { SolveValue } from '@/components/persons/sections/results/SolveValue';
+import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
+import { AttemptPopover } from '@/components/persons/sections/results/AttemptPopover';
 import { listReconsByComp } from '@/lib/recon-api';
-import { buildReconPersonAttemptMap, findReconForPersonAttempt } from '@/lib/recon-attempt-lookup';
+import { buildReconPersonAttemptMap, findReconForPersonAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
 import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
 import { ResultChangeEditor, type ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
@@ -588,13 +587,13 @@ export default function CompDetailPage() {
   const isZh = i18n.language.startsWith('zh');
   const user = useAuthStore(s => s.user);
   const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
+  const loggedIn = user !== null;          // 任何登录用户都能在成绩弹窗里展开「提议修改」。
+  const meWcaId = user?.wcaId ?? null;      // 本人页面:罚时即时生效(其余仍待审核)。
   const login = useAuthStore(s => s.login);
   // 成绩变更(取消 / 修正,可多次):整场比赛一次拉取,按 (wcaId|event|轮) 索引;
-  // 行内在当前值前划掉历次旧值,管理员可经铅笔编辑变更链。compId 即 WCA 比赛 id(规整后 slug)。
+  // 行内在当前值前划掉历次旧值,编辑/提议全在点成绩弹窗内做。compId 即 WCA 比赛 id(规整后 slug)。
   const { map: changeMap, refresh: refreshChanges } = useCompRowChangeMap(slug);
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
-  // 「编辑模式」铅笔开关(管理员):关(默认)→ 点有复盘的成绩跳复盘详情;开 → 点成绩行内改。
-  const [editMode, setEditMode] = useState(false);
   // 本场逐把成绩 → 复盘 id 映射((compWcaId|event|round|solveNum) → reconId),成绩/领奖台单元据此变可点链接。
   const [reconMap, setReconMap] = useState<Map<string, number> | null>(null);
   useEffect(() => {
@@ -1533,22 +1532,7 @@ export default function CompDetailPage() {
               isZh={isZh}
             />
           )}
-          {/* 编辑模式铅笔(管理员):成绩/领奖台视图右侧。关→点有复盘的成绩跳复盘;开→行内改成绩。 */}
-          {isAdmin && (isPodium || (!isPsych && !isSchedule)) && (
-            <button
-              type="button"
-              className={`comp-editmode-toggle${editMode ? ' is-active' : ''}`}
-              onClick={() => setEditMode(v => !v)}
-              aria-pressed={editMode}
-              aria-label={tr({ zh: '编辑模式', en: 'Edit mode' })}
-              title={tr({
-                zh: '编辑模式 — 开:点成绩行内改这一把;关:点有复盘的成绩跳复盘详情',
-                en: 'Edit mode — On: click a solve to edit it; Off: click a solve with a reconstruction to view it',
-              })}
-            >
-              <Pencil size={14} />
-            </button>
-          )}
+          {/* 编辑模式铅笔已移除:编辑 / 提议 / 复盘 / 视频全收进点成绩弹窗(AttemptPopover),与选手页一致。 */}
         </div>
 
         {!isPodium && (
@@ -1603,8 +1587,9 @@ export default function CompDetailPage() {
               compId={slug}
               compName={compNameTitle}
               admin={isAdmin}
+              loggedIn={loggedIn}
+              meWcaId={meWcaId}
               reconMap={reconMap}
-              editMode={editMode}
               onEdit={setEditTarget}
               onRefresh={refreshChanges}
               onClickCuber={(n, eventId, roundId) => setModal({ kind: 'round', number: n, eventId, roundId })}
@@ -1664,8 +1649,9 @@ export default function CompDetailPage() {
                 compId={slug}
                 compName={compNameTitle}
                 admin={isAdmin}
+                loggedIn={loggedIn}
+                meWcaId={meWcaId}
                 reconMap={reconMap}
-                editMode={editMode}
                 onEdit={setEditTarget}
                 onRefresh={refreshChanges}
                 onClickCuber={n => {
@@ -1698,6 +1684,7 @@ export default function CompDetailPage() {
           compName={compNameTitle}
           isZh={isZh}
           pbMap={pbMap}
+          changeMap={changeMap}
           onShowAll={() => setModal({ kind: 'all', number: modal.number })}
           onClose={() => setModal(null)}
         />
@@ -1708,6 +1695,7 @@ export default function CompDetailPage() {
           data={data}
           isZh={isZh}
           pbMap={pbMap}
+          changeMap={changeMap}
           onSelectRound={(eventId, roundId) => {
             onChangeRound(roundKey(eventId, roundId)); // 同步 event/round 进 URL → 页面背景也切到该轮
             setModal({ kind: 'round', number: modal.number, eventId, roundId });
@@ -1899,17 +1887,17 @@ interface ResultsTableProps {
   compId?: string;
   compName?: string;
   admin?: boolean;
-  // 逐把成绩 → 复盘 id 映射:命中则该把成绩变成跳复盘详情的链接(所有人,编辑模式关时)。
+  loggedIn?: boolean;            // 任何登录用户:可在成绩弹窗里展开「提议修改」。
+  meWcaId?: string | null;       // 当前登录用户的 wcaId:本人页面罚时即时。
+  // 逐把成绩 → 复盘 id 映射:命中则该把成绩弹窗显示「查看复盘」,否则「去复盘」(预填 submit)。
   reconMap?: Map<string, number> | null;
-  // 「编辑模式」:开 + 管理员 → 点成绩行内改;关(默认)→ 有复盘的成绩跳复盘详情。
-  editMode?: boolean;
   onEdit?: (t: ResultChangeTarget) => void;
   onRefresh?: () => void;
   // 列头可点排序(平均 / 单次 / 第 N 把)。默认关:领奖台等复用场景保持名次序。
   sortable?: boolean;
 }
 
-function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, reconMap, editMode, onEdit, onRefresh, sortable }: ResultsTableProps) {
+function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, loggedIn, meWcaId, reconMap, onEdit, onRefresh, sortable }: ResultsTableProps) {
   // 排序:点列头(平均/单次/第 N 把)升→降→取消;无效成绩(DNF/DNS/空)恒垫底,默认 null=按名次序。
   const [sort, setSort] = useState<{ key: string | null; dir: 'asc' | 'desc' }>({ key: null, dir: 'asc' });
   const toggleSort = useCallback((key: string) => {
@@ -2011,32 +1999,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                   >
                     {displayCuberName(u.name, isZh)}
                   </span>
-                  {admin && wcaid && (
-                    <button
-                      type="button"
-                      className="wp-change-edit"
-                      title={tr({ zh: '编辑成绩变更', en: 'Edit result changes' })}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit?.({
-                          wcaId: wcaid,
-                          competitionId: compId ?? '',
-                          eventId: r.e,
-                          roundTypeId: r.r,
-                          resultId: r.i,
-                          currentAttempts: effAttempts,
-                          currentBest: effBest,
-                          currentAverage: effAvg,
-                          currentSingleRecord: typeof r.sr === 'string' ? r.sr : null,
-                          currentAverageRecord: typeof r.ar === 'string' ? r.ar : null,
-                          personName: u.name ?? null,
-                          compName: compName ?? null,
-                        });
-                      }}
-                    >
-                      <Pencil size={13} />
-                    </button>
-                  )}
+                  {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
                 </td>
                 {(() => {
                   const avgCell = showAvg ? (
@@ -2064,24 +2027,53 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                   return singleFirst ? [bestCell, avgCell] : [avgCell, bestCell];
                 })()}
                 {Array.from({ length: attemptCount }).map((_, i) => {
+                  const hasSlot = i < effAttempts.length;            // 该轮赛制下这把存在(空位/DNF 也算);超出=空格不可点
+                  const av = effAttempts[i] ?? 0;
                   const pen = effectiveAttemptPenalties(chain)[i] ?? 0;
-                  // 编辑模式(管理员开铅笔)→ 行内改;否则有复盘的这把变成跳复盘详情的链接(所有人)。
-                  const showEdit = admin && editMode && wcaid && i < effAttempts.length;
-                  const reconId = !showEdit && i < effAttempts.length
+                  const reconId = hasSlot
                     ? findReconForPersonAttempt(reconMap, compId ?? '', wcaid ?? '', r.e, r.r, i + 1)
                     : undefined;
-                  const solveCell = <SolveValue value={effAttempts[i] ?? 0} penalty={pen} format={(v) => formatLive(v, r.e, false)} />;
+                  // 复盘目标:有复盘→详情(所有人可看);没复盘→/recon/submit 预填身份字段。
+                  const reconHref = reconId
+                    ? `/recon/${reconId}${isZh ? '?lang=zh' : ''}`
+                    : buildReconSubmitHref({
+                        wcaEventId: r.e, roundTypeId: r.r, solveNum: i + 1,
+                        personId: wcaid ?? '', personName: u.name ?? '', personCountry: regionToIso2(u.region),
+                        compId: compId ?? '', compName: compName ?? '', compCountry: compIso2,
+                        rawTimeSec: pen > 0 && av > 0 ? (av - pen) / 100 : undefined,
+                      });
+                  const isOwner = !!meWcaId && meWcaId === wcaid;
                   return (
                   <td key={i} className={`td-attempt ${isAo5Bracketed(effAttempts, i) ? 'td-attempt-trimmed' : ''} ${reconId ? 'td-attempt-has-recon' : ''}`}>
-                    {showEdit ? (
-                      <AttemptEditPopover
-                        value={effAttempts[i] ?? 0}
+                    {hasSlot && (
+                      // 选手页同款统一弹窗:复盘 / 判罚原因 / 编辑提议 / 管理员变更记录(全站一致)。
+                      <AttemptPopover
+                        value={av}
                         eventId={r.e}
-                        oldValues={attemptOldValues(chain, i)}
-                        format={(v) => formatLive(v, r.e, false)}
                         penalty={pen}
-                        isAdmin
-                        onCorrect={(newValue, note) =>
+                        penaltyNote={effectiveAttemptPenaltyNote(chain)}
+                        format={(v) => formatLive(v, r.e, false)}
+                        oldValues={attemptOldValues(chain, i)}
+                        showOldBelow={false}
+                        reconHref={reconHref}
+                        hasRecon={!!reconId}
+                        reconId={reconId}
+                        reconClassName="att-trig-recon"
+                        plainClassName="att-trig-plain"
+                        canEdit={loggedIn}
+                        isAdmin={admin}
+                        isOwner={isOwner}
+                        video={{
+                          approved: effectiveAttemptVideos(chain)[i],
+                          pending: pendingAttemptVideos(chain)[i],
+                          onAdd: loggedIn ? (url) =>
+                            recordAttemptVideos({
+                              target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                              currentAttempts: effAttempts,
+                              index: i, videoUrl: url, existingChain: chain, propose: !admin,
+                            }).then(() => onRefresh?.()) : undefined,
+                        }}
+                        onEdit={(newValue, note) =>
                           recordAttemptEdit({
                             target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
                             currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
@@ -2092,28 +2084,31 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
                           recordAttemptOriginal({
                             target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
                             currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                            index: i, originalValue, note, existingChain: chain,
+                            index: i, originalValue, note, existingChain: chain, propose: !admin,
                           }).then(() => onRefresh?.())
                         }
                         onSetPenalty={(penaltyCs, note) =>
                           recordAttemptPenalty({
                             target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
                             currentAttempts: effAttempts,
-                            index: i, penaltyCs, note, existingChain: chain,
+                            index: i, penaltyCs, note, existingChain: chain, propose: !admin && !isOwner,
                           }).then(() => onRefresh?.())
                         }
+                        onEditRecord={admin && wcaid ? () => onEdit?.({
+                          wcaId: wcaid,
+                          competitionId: compId ?? '',
+                          eventId: r.e,
+                          roundTypeId: r.r,
+                          resultId: r.i,
+                          currentAttempts: effAttempts,
+                          currentBest: effBest,
+                          currentAverage: effAvg,
+                          currentSingleRecord: typeof r.sr === 'string' ? r.sr : null,
+                          currentAverageRecord: typeof r.ar === 'string' ? r.ar : null,
+                          personName: u.name ?? null,
+                          compName: compName ?? null,
+                        }) : undefined}
                       />
-                    ) : reconId ? (
-                      <Link
-                        href={`/recon/${reconId}${isZh ? '?lang=zh' : ''}`}
-                        className="comp-att-recon"
-                        onClick={(e) => e.stopPropagation()}
-                        title={tr({ zh: '查看这把的复盘', en: 'View reconstruction' })}
-                      >
-                        {solveCell}
-                      </Link>
-                    ) : (
-                      solveCell
                     )}
                   </td>
                   );
@@ -2142,14 +2137,15 @@ interface PodiumViewProps {
   compId?: string;
   compName?: string;
   admin?: boolean;
+  loggedIn?: boolean;
+  meWcaId?: string | null;
   reconMap?: Map<string, number> | null;
-  editMode?: boolean;
   onEdit?: (t: ResultChangeTarget) => void;
   onRefresh?: () => void;
 }
 
 // 领奖台:逐项目列出决赛前三,复用 ResultsTable 的列结构/记录标志/成绩格式化。
-function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber, changeMap, compId, compName, admin, reconMap, editMode, onEdit, onRefresh }: PodiumViewProps) {
+function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber, changeMap, compId, compName, admin, loggedIn, meWcaId, reconMap, onEdit, onRefresh }: PodiumViewProps) {
   if (groups.length === 0) {
     return <div className="comp-empty">{tr({ zh: '暂无领奖台', en: 'No podiums yet'
     })}</div>;
@@ -2173,8 +2169,9 @@ function PodiumView({ groups, users, isZh, pbMap, compIso2, onClickCuber, change
             compId={compId}
             compName={compName}
             admin={admin}
+            loggedIn={loggedIn}
+            meWcaId={meWcaId}
             reconMap={reconMap}
-            editMode={editMode}
             onEdit={onEdit}
             onRefresh={onRefresh}
             onClickCuber={n => onClickCuber(n, g.ev.i, g.rd.i)}
@@ -2791,11 +2788,12 @@ interface CuberModalProps {
   data: CompData;
   isZh: boolean;
   pbMap: Record<string, PbByEvent | null>;
+  changeMap?: Map<string, ResultChange[]>;
   onSelectRound: (eventId: string, roundId: string) => void;
   onClose: () => void;
 }
 
-function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: CuberModalProps) {
+function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClose }: CuberModalProps) {
   const u = data.users[String(number)];
   const rows = useMemo(() => {
     if (!u) return [];
@@ -2884,8 +2882,13 @@ function CuberModal({ number, data, isZh, pbMap, onSelectRound, onClose }: Cuber
                       const singleBadge = prBadgeFor(singleRank);
                       const averageBadge = prBadgeFor(averageRank);
                       const arr = data.resultsByRound[roundKey(en.ev.i, en.rd.i)] || [];
-                      const idx = arr.findIndex(rr => rr.n === number);
-                      const place = idx >= 0 && result.b !== 0 ? idx + 1 : '-';
+                      // 名次与成绩表同口径:按成绩变更覆盖层订正后的值重排再取竞赛名次。
+                      const rankEff = makeEffRank(data.users, changeMap);
+                      const rankedArr = arr.slice().sort(rankComparator(isAverageFormat, rankEff));
+                      const rIdx = rankedArr.findIndex(rr => rr.n === number);
+                      const place = rIdx >= 0 && result.b !== 0
+                        ? (computePlaces(rankedArr, isAverageFormat, rankEff)[rIdx] ?? '-')
+                        : '-';
                       return (
                         <tr
                           key={`${en.ev.i}:${en.rd.i}`}
@@ -2933,11 +2936,12 @@ interface RoundResultModalProps {
   compName: string;
   isZh: boolean;
   pbMap: Record<string, PbByEvent | null>;
+  changeMap?: Map<string, ResultChange[]>;
   onShowAll: () => void;
   onClose: () => void;
 }
 
-function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMap, onShowAll, onClose }: RoundResultModalProps) {
+function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMap, changeMap, onShowAll, onClose }: RoundResultModalProps) {
   const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done' | 'nothing' | 'error'>('idle');
   // 破 PR 时显示「这成绩在 WCA 历史能排第几」(NR/WR)。渲染期同步读 rank-client 模块缓存 →
   // 比赛页已预热则秒出;未命中才在 effect 里单查,回来 bump tick 重渲染。
@@ -3041,7 +3045,6 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
   const rd = ev?.rs.find(r => r.i === roundId);
   const arr = data.resultsByRound[roundKey(eventId, roundId)] || [];
   const result = arr.find(rr => rr.n === number);
-  const idx = arr.findIndex(rr => rr.n === number);
 
   if (!u || !ev || !rd || !result) return null;
 
@@ -3052,7 +3055,12 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
   const isAverageFormat = isAvgRankedFormat(rd.f) || isBlindAvgEvent(eventId);
   // 多盲 Bo3 也展示非官方 Mo3(不参与排名,仅附加显示)
   const showAvgSection = isAverageFormat || (isMbldEvent(eventId) && rd.f === '3');
-  const place = idx >= 0 && result.b !== 0 ? idx + 1 : null;
+  // 名次与成绩表同口径:按成绩变更覆盖层订正后的值重排再取竞赛名次(并列同名次)。
+  const rankEff = makeEffRank(data.users, changeMap);
+  const rankedArr = arr.slice().sort(rankComparator(isAverageFormat, rankEff));
+  const rankedPlaces = computePlaces(rankedArr, isAverageFormat, rankEff);
+  const rIdx = rankedArr.findIndex(rr => rr.n === number);
+  const place = rIdx >= 0 && result.b !== 0 ? rankedPlaces[rIdx] : null;
   const iso2 = regionToIso2(u.region);
   const attempts = result.v.filter(v => v !== 0);
 
