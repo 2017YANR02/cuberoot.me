@@ -191,7 +191,9 @@
   gap: 8px;
   font-size: 14px;
 }
-.sim-player-tools button {
+/* 只命中工具行的直接子按钮(逆 / 清空 / 复制链接 / 镜像);消步的 PillToggle 是
+   .sim-toggle 的孙级,用 `>` 排除掉,否则方框/边框会把圆滑钮压扁。 */
+.sim-player-tools > button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -204,11 +206,11 @@
   font-size: 14px;
   cursor: pointer;
 }
-.sim-player-tools button:hover {
+.sim-player-tools > button:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
-.sim-player-tools button.sim-link-copied,
-.sim-player-tools button.sim-link-copied:hover {
+.sim-player-tools > button.sim-link-copied,
+.sim-player-tools > button.sim-link-copied:hover {
   border-color: var(--signal-success);
   color: var(--signal-success);
   background: color-mix(in srgb, var(--signal-success) 12%, transparent);
