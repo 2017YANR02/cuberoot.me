@@ -486,7 +486,7 @@
 }
 
 /* 背景选择器:复用 .sim-color-select 弹层 + .sim-swatch-box 色块,只追加各档背景外观。
-   前导 Wallpaper 图标作标签(无文字)。color-select 在此居中(默认 flex-end 是给面色行的)。
+   左侧「背景 / BG」文字标签,与其它开关行对齐。color-select 在此居中。
    色值 1:1 对齐 sim.css 的 .sim-canvas-wrap 固定背景。 */
 .sim-bg-toggle {
   gap: 6px;
@@ -494,9 +494,10 @@
 .sim-bg-toggle .sim-color-select {
   align-self: center;
 }
-.sim-bg-icon {
-  flex: none;
-  color: var(--muted-foreground);
+/* 背景档在网格最右列,弹层默认 left:0 向右展开会溢出屏幕 → 改为靠右对齐(向左展开) */
+.sim-bg-toggle .sim-color-select-panel {
+  left: auto;
+  right: 0;
 }
 .sim-bg-box--auto {
   background-image: linear-gradient(135deg, #ffffff 0 50%, #1c1917 50% 100%);
@@ -568,6 +569,10 @@
   align-self: flex-end;
   line-height: 22px;
 }
+/* 该拼图暂不支持此配色 → 整行灰化 + 屏蔽所有色块按钮交互(pointer-events 兜住弹层触发) */
+.sim-color-row--disabled { opacity: 0.5; cursor: not-allowed; }
+.sim-color-row--disabled .sim-swatch-list,
+.sim-color-row--disabled .sim-face-color-reset { pointer-events: none; }
 /* 色块下拉(镜面配色 / 内核色 / 面色:当前色 / 特殊项图标 + caret,点开展开特殊项 + 预设色板) */
 .sim-color-select {
   position: relative;
