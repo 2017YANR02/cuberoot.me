@@ -175,6 +175,31 @@ export function isAnalysableScramble(scramble: string): boolean {
   return parseScramble(scramble) !== null;
 }
 
+// Physical face → home colour index (0=White 1=Red 2=Green 3=Orange 4=Blue 5=Yellow).
+const PHYS_FACE_TO_COLOR: Record<Face, number> = { U: 0, R: 1, F: 2, L: 3, B: 4, D: 5 };
+
+/**
+ * Home colour index on the D (bottom) face after a scramble's whole-cube
+ * rotations / wide moves — the colour a solver SEES on the bottom after
+ * inspection. Plain face moves never move centres, so only rotations matter.
+ *
+ * This uses the SAME rotation convention as the analyzer engine + the cube
+ * renderer (cubing.js composes rotations the other way and disagrees for
+ * x-tilted inspections like `x z`, so reading the bottom colour off a cubing.js
+ * KPattern gives the wrong answer there). Returns -1 if unparseable.
+ */
+export function bottomColorIdx(scramble: string): number {
+  let cur: Record<Face, Face> = { U: 'U', D: 'D', F: 'F', B: 'B', R: 'R', L: 'L' };
+  for (const tok of scramble.trim().split(/\s+/)) {
+    if (!tok) continue;
+    if (ROT_FACE_PERM[tok]) { cur = rotateOrientation(cur, tok); continue; }   // x / y / z (±)
+    const wide = WIDE_DECOMP[tok];
+    if (wide) { cur = rotateOrientation(cur, wide[1]); continue; }              // wide move's rotation part
+    // plain face move: centres unchanged (unparseable tokens ignored; gate with isAnalysableScramble).
+  }
+  return PHYS_FACE_TO_COLOR[cur.D] ?? -1;
+}
+
 /**
  * Re-orient a scramble to white-top/green-front: cancel wide moves & rotations,
  * returning an equivalent pure face-move (HTM) string for analysis engines that
