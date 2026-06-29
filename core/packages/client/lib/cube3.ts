@@ -121,7 +121,8 @@ export function simplifyAlg(alg: string): string {
       const wrapped = ((m.amount % 4) + 4) % 4;
       if (wrapped === 0) continue;
       const newAmount = wrapped === 3 ? -1 : wrapped;
-      const newMove = m.amount === newAmount ? m : new Move(m.family, newAmount);
+      // modified() 保留宽层 / 层号(new Move(m.family, n) 会把 3r 退成 r)。
+      const newMove = m.amount === newAmount ? m : m.modified({ amount: newAmount });
       out.push(newMove.toString());
     }
     return out.join(' ');
