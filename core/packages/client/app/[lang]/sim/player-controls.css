@@ -182,7 +182,16 @@
 .sim-player-tools {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+}
+/* 消步开关在工具行里:套同款药丸边框,与「逆 / 清空 / 复制链接」等按钮视觉对齐 */
+.sim-player-tools .sim-toggle {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  font-size: 14px;
 }
 .sim-player-tools button {
   display: inline-flex;
@@ -585,6 +594,11 @@
   font: inherit;
   cursor: pointer;
 }
+/* 当前色块用强边框:深色当前色(内核色默认 #202020 / 深色背景档)在 dark theme 下
+   才不至于和暗背景糊成一片隐身。--border-strong 随主题翻(浅主题描深、暗主题描亮)。 */
+.sim-color-select-trigger .sim-swatch-box {
+  border-color: var(--border-strong);
+}
 .sim-color-select-trigger:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
@@ -631,7 +645,7 @@
   display: block;
   width: 22px;
   height: 22px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-default);
   border-radius: 4px;
 }
 /* 自定义取色格:Pipette 角标(自包含小圆片,token 配色,不依赖跟任意用户色对比) */

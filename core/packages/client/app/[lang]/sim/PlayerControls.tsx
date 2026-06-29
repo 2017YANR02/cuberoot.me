@@ -77,7 +77,7 @@ function randomIvyScramble(): string {
   }
   return out.join(' ');
 }
-import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg, countMoves } from '@/lib/cube3';
+import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg } from '@/lib/cube3';
 import { get_shortened_rotation } from '@/lib/roux/RotationHelp';
 import { cleanForPlayer, extractAlgFromText } from '@/lib/recon-alg-utils';
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
@@ -85,7 +85,7 @@ import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
 import {
   formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg,
-  simplifySq1Alg, invertSq1Alg, parseSq1Tokens,
+  simplifySq1Alg, invertSq1Alg,
 } from '@/lib/sq1-svg';
 import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import {
@@ -1064,14 +1064,18 @@ export default function PlayerControls({
     return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
   }, [isSq1, corner, sq1Format]);
 
-  // Whether 消步 would actually shorten the sequence — drives the button's
-  // enabled state so it doubles as a "可以消步" hint.
-  const canSimplify = useMemo(() => {
-    const combined = (setupDraft + ' ' + algDraft).trim();
-    if (!combined) return false;
-    const count = (s: string) => (isSq1 ? parseSq1Tokens(s).length : corner ? corner.parse(s).length : countMoves(s));
-    return count(simplifyForPuzzle(combined)) < count(combined);
-  }, [setupDraft, algDraft, isSq1, corner, simplifyForPuzzle]);
+  // 消步 = 实时消步开关(settings.liveReduce);开启时手势 / 键盘追加自动消步。
+  // 拨到开还顺手把当前解法消一次步(兼顾原一次性按钮:手敲 / 粘贴后开开关即整理)。
+  const setLiveReduce = useCallback((v: boolean) => {
+    onSettingsChange({ ...settings, liveReduce: v });
+    if (!v) return;
+    const reduced = simplifyForPuzzle(algDraft.trim());
+    if (reduced === algDraft.trim()) return;
+    setAlgDraft(reduced);
+    onAlgChange(reduced);
+    const el = algElRef.current;
+    if (el) { el.value = reduced; autosize(el); }
+  }, [settings, onSettingsChange, algDraft, simplifyForPuzzle, onAlgChange]);
 
   // Copy the current page URL (puzzle + scramble + solution params) so the exact
   // sim state can be shared. Works for any puzzle — the URL always carries state.
@@ -1518,11 +1522,15 @@ export default function PlayerControls({
 
       <div className="sim-player-tools">
         <button onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
-        <button
-          onClick={tool(simplifyForPuzzle)}
-          disabled={!canSimplify}
-          title={t('消步:合并 / 抵消重复转动', 'Reduce: cancel redundant moves')}
-        >{t('消步', 'Reduce')}</button>
+        {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
+            并对当前解法消一次步;关 = 原样保留。取代原一次性「消步」按钮。 */}
+        {!isIvy && (
+          <Toggle
+            label={t('消步', 'Reduce')}
+            value={settings.liveReduce !== false}
+            onChange={setLiveReduce}
+          />
+        )}
         {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
         {!isSq1 && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
         <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
@@ -1965,8 +1973,7 @@ function PuzzleSettings({
             <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
             {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
             <Toggle label={t('字母', 'Letters')} value={settings.faceLabels === true} onChange={(v) => set('faceLabels', v)} />
-            {/* 实时消步:手势 / 键盘转动追加进解法框时自动抵消重复转动(R 后做 R' → 框里清空)。 */}
-            {puzzleKind !== 'ivy' && <Toggle label={t('消步', 'Reduce')} value={settings.liveReduce !== false} onChange={(v) => set('liveReduce', v)} />}
+            {/* 「消步」开关已移到播放器工具行(逆 旁),此处不再重复。 */}
             <label className="sim-toggle">
               <span>{t('拖空白', 'Drag empty')}</span>
               <select
