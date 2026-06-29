@@ -538,6 +538,49 @@ function mergeSliceFaceToWide(alg: string): string {
   return out.join(' ');
 }
 
+// 宽层(覆盖 order-1 层,即除对面外层外的所有层)+ 对面单层 = 整体转体。
+// (N-1)Rw[a]·L[-a] = x[a];(N-1)Lw[a]·R[-a] = x[-a];Uw/Dw→y,Fw/Bw→z。
+// 3x3:L' r → x;4x4:L' 3r → x;5x5:L' 4r → x …。两 token 同轴可交换,两序都试。
+// 仅整阶魔方;宽层深度须恰为 order-1(4x4 上 r 只 2 层、留中层 → 不是转体,不并)。
+const WIDE_ROT: Record<string, { rot: string; opp: string; sign: number }> = {
+  Rw: { rot: 'x', opp: 'L', sign: 1 }, r: { rot: 'x', opp: 'L', sign: 1 },
+  Lw: { rot: 'x', opp: 'R', sign: -1 }, l: { rot: 'x', opp: 'R', sign: -1 },
+  Uw: { rot: 'y', opp: 'D', sign: 1 }, u: { rot: 'y', opp: 'D', sign: 1 },
+  Dw: { rot: 'y', opp: 'U', sign: -1 }, d: { rot: 'y', opp: 'U', sign: -1 },
+  Fw: { rot: 'z', opp: 'B', sign: 1 }, f: { rot: 'z', opp: 'B', sign: 1 },
+  Bw: { rot: 'z', opp: 'F', sign: -1 }, b: { rot: 'z', opp: 'F', sign: -1 },
+};
+function mergeWideFaceToRotation(alg: string, order: number): string {
+  if (order < 3 || !alg.trim()) return alg.trim();
+  let moves: Move[];
+  try { moves = [...new Alg(alg).experimentalLeafMoves()]; } catch { return alg; }
+  const m4 = (n: number) => ((n % 4) + 4) % 4;
+  // 覆盖最外 order-1 层的宽层(无 outer 范围,inner 深度 = order-1;r/Rw 缺省 = 2)
+  const isFullWide = (m: Move) =>
+    m.family in WIDE_ROT && m.outerLayer == null && (m.innerLayer ?? 2) === order - 1;
+  // 对面单一外层(无层号前缀 / 范围)
+  const isSingleFace = (m: Move, fam: string) =>
+    m.family === fam && m.innerLayer == null && m.outerLayer == null;
+  const tryMerge = (wide: Move, face: Move): string | null => {
+    if (!isFullWide(wide)) return null;
+    const info = WIDE_ROT[wide.family];
+    if (!isSingleFace(face, info.opp)) return null;
+    if (m4(face.amount) !== m4(-wide.amount)) return null;
+    const amt = m4(info.sign * wide.amount);
+    if (amt === 0) return null;
+    return new Move(info.rot, amt === 3 ? -1 : amt).toString();
+  };
+  const out: string[] = [];
+  let i = 0;
+  while (i < moves.length) {
+    const a = moves[i], b = moves[i + 1];
+    const merged = b && (tryMerge(a, b) ?? tryMerge(b, a));
+    if (merged) { out.push(merged); i += 2; }
+    else { out.push(a.toString()); i += 1; }
+  }
+  return out.join(' ');
+}
+
 // 同轴消步:同一轴上的所有转动(面 / 中层 / 宽层)两两可交换,故一段连续的同轴
 // 转动可重排后按 family 求和折叠 —— cubing.js 只并相邻同 family,U D U D 不会变。
 // 这里把极大同轴连续段按 family 求和 (mod 4),空操作丢弃,U D U D → U2 D2。
@@ -557,21 +600,35 @@ function collapseSameAxis(alg: string): string {
   let moves: Move[];
   try { moves = [...new Alg(alg).experimentalLeafMoves()]; } catch { return alg; }
   const m4 = (n: number) => ((n % 4) + 4) % 4;
+  // 按 family + 层号(inner/outer)归并:4x4+ 上 3r 与 r 是不同层,绝不能并掉编号
+  // (否则 3r → r 把宽层吃没)。输出顺序仍按 family 表,同 family 再按内层号。
+  const keyOf = (m: Move) => `${m.family}|${m.outerLayer ?? ''}|${m.innerLayer ?? ''}`;
   const out: string[] = [];
   let i = 0;
   while (i < moves.length) {
     const ax = MOVE_AXIS[moves[i].family];
     if (!ax) { out.push(moves[i].toString()); i += 1; continue; }
     const sums = new Map<string, number>();
+    const rep = new Map<string, Move>();
+    const keys: string[] = [];
     let j = i;
     while (j < moves.length && MOVE_AXIS[moves[j].family] === ax) {
-      const fam = moves[j].family;
-      sums.set(fam, (sums.get(fam) ?? 0) + moves[j].amount);
+      const k = keyOf(moves[j]);
+      if (!sums.has(k)) { keys.push(k); rep.set(k, moves[j]); }
+      sums.set(k, (sums.get(k) ?? 0) + moves[j].amount);
       j += 1;
     }
-    for (const fam of AXIS_FAMILY_ORDER[ax]) {
-      const w = m4(sums.get(fam) ?? 0);
-      if (sums.has(fam) && w !== 0) out.push(new Move(fam, w === 3 ? -1 : w).toString());
+    keys.sort((a, b) => {
+      const ma = rep.get(a)!, mb = rep.get(b)!;
+      const fa = AXIS_FAMILY_ORDER[ax].indexOf(ma.family);
+      const fb = AXIS_FAMILY_ORDER[ax].indexOf(mb.family);
+      if (fa !== fb) return fa - fb;
+      return (ma.innerLayer ?? 0) - (mb.innerLayer ?? 0);
+    });
+    for (const k of keys) {
+      const w = m4(sums.get(k) ?? 0);
+      if (w === 0) continue;
+      out.push(rep.get(k)!.modified({ amount: w === 3 ? -1 : w }).toString());
     }
     i = j;
   }
@@ -974,10 +1031,14 @@ export default function PlayerControls({
     if (isIvy) return s; // ivy R R = R' (not R2) — NxN fold doesn't apply
     if (corner) return corner.reduce(s);
     if (isTwistyMode) return simplifyTwistyAlg(s);
-    // 同轴折叠(U D U D → U2 D2)+ 旋转串最短化,二者作用 token 不交。
-    const folded = collapseSameAxis(shortenRotations(simplifyAlg(s)));
-    // 3x3:把 面+相邻中层 合成宽层(小写 r/l/u/d/f/b),再 fold 一次并掉相邻同宽层。
-    return order === 3 ? collapseSameAxis(mergeSliceFaceToWide(folded)) : folded;
+    // 同轴折叠(U D U D → U2 D2)。旋转串最短化放最后,兼并合并新产生的转体。
+    let r = collapseSameAxis(simplifyAlg(s));
+    // 3x3:面+相邻中层 → 宽层(M' R → r),再折叠一次并掉相邻同宽层。
+    if (order === 3) r = collapseSameAxis(mergeSliceFaceToWide(r));
+    // 宽层(覆盖 order-1 层)+ 对面外层 → 整体转体(L' r → x,4x4 L' 3r → x …)。
+    r = mergeWideFaceToRotation(r, order);
+    // 旋转串最短化(含上一步新产生的转体)+ 再折叠一次同轴。
+    return collapseSameAxis(shortenRotations(r));
   }, [isSq1, isIvy, corner, isTwistyMode, sq1Format, order]);
 
   const invertForPuzzle = useCallback((s: string): string => {
