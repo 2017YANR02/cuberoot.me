@@ -328,7 +328,7 @@ export function resetWorldView(world: World, s: SimSettings): void {
   world.resize();
 }
 
-export function Slider({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+export function Slider({ label, value, onChange, disabled, title }: { label: string; value: number; onChange: (v: number) => void; disabled?: boolean; title?: string }) {
   const [draft, setDraft] = useState<string>(String(value));
   useEffect(() => { setDraft(String(value)); }, [value]);
   const commit = () => {
@@ -339,7 +339,7 @@ export function Slider({ label, value, onChange }: { label: string; value: numbe
     if (clamped !== value) onChange(clamped);
   };
   return (
-    <label className="sim-slider">
+    <label className={'sim-slider' + (disabled ? ' sim-slider--disabled' : '')} aria-disabled={disabled || undefined} title={title}>
       <div className="sim-slider-row">
         <span>{label}</span>
         <input
@@ -349,6 +349,7 @@ export function Slider({ label, value, onChange }: { label: string; value: numbe
           max={100}
           step={1}
           value={draft}
+          disabled={disabled}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={(e) => {
@@ -362,18 +363,20 @@ export function Slider({ label, value, onChange }: { label: string; value: numbe
         min={0}
         max={100}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </label>
   );
 }
 
-export function Toggle({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+export function Toggle({ label, value, onChange, disabled, title }: { label: string; value: boolean; onChange: (v: boolean) => void; disabled?: boolean; title?: string }) {
   // 复用全站 PillToggle(iOS 风滑钮开关),取代原生复选框 —— 开 / 关一眼可辨。
+  // disabled = 该拼图暂不支持此功能 → 变灰 + 不可点(滑钮自身 :disabled 已置灰,这里只灰标签)。
   return (
-    <span className="sim-toggle">
+    <span className={'sim-toggle' + (disabled ? ' sim-toggle--disabled' : '')} title={title}>
       <span>{label}</span>
-      <PillToggle value={value} onChange={onChange} ariaLabel={label} />
+      <PillToggle value={value} onChange={onChange} ariaLabel={label} disabled={disabled} />
     </span>
   );
 }

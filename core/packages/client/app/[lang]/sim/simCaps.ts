@@ -61,6 +61,34 @@ export function puzzleCaps(kind: SimPuzzle): SimPuzzleCaps {
   return CAPS[kind] ?? TWISTY_CAPS;
 }
 
+/** Which settings actually DO something for the current (kind, renderer). A `false`
+ *  control still renders (the panel shape stays identical per puzzle) but is grayed out
+ *  and non-interactive — "feature not built for this puzzle yet". Grounded in the two
+ *  apply paths, NOT guessed:
+ *   - in-house engine (SettingDrawer.applySettings, runs only when a `world` exists):
+ *     drives sensitivity / perspective / face-label常显 / lockView / 立体贴片 / 镂空 /
+ *     半转停 / 结构着色 / 内核色, plus NxN-InstancedRenderer-only 面色 / logo / 箭头.
+ *   - cubing.js TwistyPlayer (components/TwistySection, world-less): honors only
+ *     scale / yaw / pitch / speed / 提示贴片(hint) / 小窗(backView) — the rest no-op.
+ *   - shared by both paths regardless of engine: 动画(play loop) / 背景(CSS data-attr) /
+ *     拖空白(twisty honors 'rotate'), so those are never disabled here.
+ *  So everything below keys off `engineActive`, except 面色/logo which need the NxN
+ *  InstancedRenderer specifically. */
+export interface ControlSupport {
+  sensitivity: boolean;
+  perspective: boolean;
+  faceLabels: boolean;
+  lockView: boolean;
+  thickness: boolean;
+  hollow: boolean;
+  holdPartialTurn: boolean;
+  structureColor: boolean;
+  coreColor: boolean;
+  faceColors: boolean;
+  logo: boolean;
+  carve: boolean;
+}
+
 export interface ResolvedCaps {
   /** Rendered by the in-house engine right now → engine-only toggles apply
    *  (立体贴片 / 镂空 / 调试:半转停住 / 调试:结构着色). */
@@ -72,15 +100,39 @@ export interface ResolvedCaps {
    *  isn't built yet (a forward placeholder; selecting an unimplemented renderer is a safe
    *  no-op, the rendering pipeline keeps the puzzle's only working path). */
   hasRendererChoice: boolean;
+  /** Per-control support — false → gray the control out (see ControlSupport). */
+  supports: ControlSupport;
 }
 
 /** Capabilities resolved against the active renderer. */
 export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCaps {
   const c = puzzleCaps(kind);
   const engineActive = c.engine === 'always' || (c.engine === 'engineMode' && renderer !== 'cubing');
+  const carve = engineActive ? (c.carve ?? null) : null;
+  const isNxN = typeof kind === 'number';
+  const isMirror = kind === 'mirror';
   return {
     engineActive,
-    carve: engineActive ? (c.carve ?? null) : null,
+    carve,
     hasRendererChoice: true,
+    supports: {
+      sensitivity: engineActive,
+      perspective: engineActive,
+      faceLabels: engineActive,
+      lockView: engineActive,
+      thickness: engineActive,
+      hollow: engineActive,
+      holdPartialTurn: engineActive,
+      structureColor: engineActive,
+      // 内核色 / 原核: NxN sets frame材质, engine-body puzzles paint raw bodies — both need
+      // the in-house engine; cubing.js has no equivalent. Mirror (engine='always') 走 grooves.
+      coreColor: engineActive,
+      // 面色: only the NxN InstancedRenderer (and Mirror, which IS the NxN engine) re-applies
+      // face colors live; other engine-body puzzles bake their sticker colors at construction.
+      faceColors: isNxN || isMirror,
+      // 顶面 U 中心 logo: NxN-only feature (odd-order center cubie).
+      logo: isNxN,
+      carve: carve !== null,
+    },
   };
 }
