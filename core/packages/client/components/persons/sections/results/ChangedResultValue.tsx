@@ -24,16 +24,19 @@ export function ChangedResultValue({ oldValue, eventId, kind }: {
 export function ResultChangeChain({ oldValues, eventId, kind, note }: {
   oldValues: number[];
   eventId: string;
-  kind: 'single' | 'average';
+  kind: 'single' | 'average' | 'pos';
   note?: string | null;
 }) {
   if (!oldValues.length) return null;
-  const title = note || tr({ zh: '此前成绩(已变更)', en: 'previous mark (changed)' });
+  const title = note || (kind === 'pos'
+    ? tr({ zh: '此前名次(已变更)', en: 'previous place (changed)' })
+    : tr({ zh: '此前成绩(已变更)', en: 'previous mark (changed)' }));
+  const fmt = (v: number) => (kind === 'pos' ? `${v}` : formatWcaResult(v, eventId, kind));
   return (
     <>
       {oldValues.map((v, i) => (
         <s key={i} className="wp-old-result" title={title}>
-          {formatWcaResult(v, eventId, kind)}
+          {fmt(v)}
         </s>
       ))}
     </>

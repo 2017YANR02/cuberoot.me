@@ -62,6 +62,11 @@ interface QualRow extends RowDataPacket {
   event_id: string;
   qualification: string | null;
 }
+interface DualRow extends RowDataPacket {
+  competition_id: string;
+  event_id: string;
+  advancement_condition: string | null;
+}
 
 // 紧凑 round-1 meta（与 shared RoundMeta 一致，键省略即无）
 interface RoundMeta {
@@ -148,6 +153,30 @@ async function main() {
     g[short] = Number(rr.person_count);
   }
 
+  // ── 双轮赛制 (WCA Reg 9v, 2026+) → 每场含双轮的 event 短码列表 ───────────────────────
+  // 双轮 = 某项目首轮 advancement = percent/100（全员晋级=无淘汰，9v5），且该项目 ≥2 轮。
+  // 只有 2026 起的比赛可能有（新规），SQL 已按年份收口（只扫几十场，开销可忽略）。
+  // 数据同 comp_round_meta 一源（rounds.advancement_condition = WCIF 那份），是详情页双轮判定的权威信号。
+  const dualRows = await query<DualRow[]>(`
+    SELECT ce.competition_id, ce.event_id, r.advancement_condition
+    FROM rounds r
+    JOIN competition_events ce ON ce.id = r.competition_event_id
+    JOIN competitions c ON c.id = ce.competition_id
+    WHERE r.number = 1 AND c.end_date < CURDATE() AND YEAR(c.start_date) >= 2026
+  `);
+  const dualByComp = new Map<string, string[]>();
+  for (const dr of dualRows) {
+    if (encodeAdv(safeParse(dr.advancement_condition)) !== 'p100') continue;
+    const short = EVENT_SHORT[dr.event_id] ?? dr.event_id;
+    if ((roundsByComp.get(dr.competition_id)?.[short] ?? 0) < 2) continue; // 须有次轮可合并
+    let arr = dualByComp.get(dr.competition_id);
+    if (!arr) { arr = []; dualByComp.set(dr.competition_id, arr); }
+    arr.push(short);
+  }
+  for (const arr of dualByComp.values()) {
+    arr.sort((a, b) => (EVENT_RANK[a] ?? 999) - (EVENT_RANK[b] ?? 999));
+  }
+
   const out = rows
     .filter((r) => {
       // 多地代码（XW/XA/...）通常 lat/lng = 0 没有意义，但 calendar / list 视图照样要展示，
@@ -179,6 +208,7 @@ async function main() {
         end_date: fmtDate(r.end_date),
         events: shortEvents,
         ...(rounds && Object.keys(rounds).length > 0 ? { rounds } : {}),
+        ...(dualByComp.get(r.id)?.length ? { dual_events: dualByComp.get(r.id) } : {}),
         ...(eventRegs && Object.keys(eventRegs).length > 0 ? { event_regs: eventRegs } : {}),
         ...(Number(r.competitors_count) > 0 ? { competitors: Number(r.competitors_count) } : {}),
         ...(Number(r.competitor_limit) > 0 ? { competitor_limit: Number(r.competitor_limit) } : {}),

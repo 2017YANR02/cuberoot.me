@@ -154,6 +154,7 @@ interface CompEntry {
   /** 已接受报名人数（WCIF accepted persons 总数）；满员判定 = registered >= competitor_limit */
   registered?: number;
   round_meta?: Record<string, RoundMeta>;
+  dual_events?: string[];
 }
 
 // ---------- small helpers ----------
@@ -689,6 +690,18 @@ interface AllComp {
   /** 已接受报名人数（WCIF accepted persons 总数）；满员判定 = registered >= competitor_limit */
   registered?: number;
   round_meta?: Record<string, RoundMeta>;
+  /** 含双轮赛制（Reg 9v，2026+）的 event 短码：首轮 advancement=percent/100。无则缺省 */
+  dual_events?: string[];
+}
+
+/** 含双轮赛制的 event 短码：首轮 advancement=percent/100（全员晋级=无淘汰，Reg 9v）+ 该项目 ≥2 轮 + 2026+。 */
+function dualEventsOf(entry: WcifEntry | undefined, startDate: string): string[] {
+  if (!entry || Number(startDate.slice(0, 4)) < 2026) return [];
+  const out: string[] = [];
+  for (const [short, m] of Object.entries(entry.roundMeta)) {
+    if (m.adv === 'p100' && (entry.rounds[short] ?? 0) >= 2) out.push(short);
+  }
+  return out;
 }
 
 async function buildUpcomingCompsFromWcif(
@@ -1185,6 +1198,8 @@ async function main(): Promise<void> {
     c.event_regs = wcifMap[c.id!]?.eventRegs ?? {};
     c.registered = regOf(c.id);
     c.round_meta = wcifMap[c.id!]?.roundMeta ?? {};
+    const de = dualEventsOf(wcifMap[c.id!], c.start_date);
+    if (de.length) c.dual_events = de;
   }
   if (allComps) {
     for (const c of allComps) {
@@ -1192,6 +1207,8 @@ async function main(): Promise<void> {
       c.event_regs = wcifMap[c.id]?.eventRegs ?? {};
       c.registered = regOf(c.id);
       c.round_meta = wcifMap[c.id]?.roundMeta ?? {};
+      const de = dualEventsOf(wcifMap[c.id], c.start_date);
+      if (de.length) c.dual_events = de;
     }
   }
 

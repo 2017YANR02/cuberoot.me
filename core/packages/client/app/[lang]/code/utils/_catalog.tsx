@@ -255,6 +255,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Event id → display name.',
   },
   {
+    name: 'pickReconCover',
+    sig: 'videoCoverInfo(url): CoverRef | null;  pickReconCover(videoUrl, isZh): CoverRef | null;  loadBiliCover/loadDouyinCover(id): Promise<string|null>',
+    imp: "import { videoCoverInfo, pickReconCover, coverSyncSrc, loadBiliCover, loadDouyinCover } from '@/lib/recon-video-cover';",
+    usage: "videoCoverInfo('https://youtu.be/abc') // { kind: 'yt', id: 'abc' }",
+    category: 'wca',
+    zh: '视频链接 → 封面引用(yt 直链 / bili BV / 抖音原 URL);YouTube 走直链、B 站/抖音走后端代理(模块级缓存)。复盘卡片 ReconCard 与成绩弹窗 VideoCoverThumb 共用,b23 短链等无封面返回 null。',
+    en: 'Video link → cover reference (YouTube direct / Bilibili BV / Douyin URL); YouTube uses a direct image, Bilibili/Douyin go through a cached backend proxy. Shared by the recon card and the solve-popup VideoCoverThumb; no-cover links (e.g. b23 short links) return null.',
+  },
+  {
     name: 'roundLabel',
     sig: 'roundLabel(rt: string): string',
     imp: "import { roundLabel } from '@/lib/wca-round-meta';",

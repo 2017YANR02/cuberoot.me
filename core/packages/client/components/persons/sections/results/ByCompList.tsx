@@ -16,11 +16,10 @@ import { computePrRank } from '../../logic/progress';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
-import { EditModeToggle } from './EditModeToggle';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
-import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, splitChainByStatus } from '@/lib/result-watch-api';
+import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
 import { useLivePrRanks } from '../../logic/use-live-pr-ranks';
 import { ResultChangeChain } from './ChangedResultValue';
@@ -28,8 +27,6 @@ import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
-import { Pencil } from 'lucide-react';
-import { tr } from '@/i18n/tr';
 
 // hash 形如 #r-{compId}-{eventId}-{round}.按 ROUND_VARIANTS 反查 cutoff 子型 ('d'/'g'/'b' etc).
 function resolveHashRow(hash: string): HTMLElement | null {
@@ -58,22 +55,19 @@ interface Props {
   comps: WcaCompetition[] | null;
   reconLookup: Map<string, number> | null;
   isZh: boolean;
-  editMode?: boolean;
-  onToggleEditMode?: () => void;
   showAttemptRanks?: boolean;
   onToggleAttemptRanks?: () => void;
 }
 
 // 轮次显示元数据走 utils/wca_round_meta (ByEventView / 复盘页同场比赛表也用)
 
-export default function ByCompList({ wcaId, personName, personCountry, results, comps, reconLookup, isZh, editMode, onToggleEditMode, showAttemptRanks = true, onToggleAttemptRanks }: Props) {
+export default function ByCompList({ wcaId, personName, personCountry, results, comps, reconLookup, isZh, showAttemptRanks = true, onToggleAttemptRanks }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);
   const { map: changeMap, refresh: refreshChanges } = useRowChangeMap(wcaId);
   const myWcaId = useAuthStore((s) => s.user?.wcaId);
   const admin = isAdminWcaId(myWcaId);
   const isOwner = !!myWcaId && myWcaId === wcaId;
   const loggedIn = !!myWcaId;
-  const canEdit = loggedIn;  // 任何登录用户都能编辑 / 提议
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -88,10 +82,22 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
   }, []);
   const search = searchParams ? `?${searchParams.toString()}` : '';
 
+  // PR / 名次时间序口径用「订正后」有效值(同 ByEventView):某把被加 +2(4.43→6.43)后,它的名次
+  // 要按 6.43 算,后续成绩也不被那个其实没发生的 4.43 压名次 → 先叠加变更链再喂 computePrRank。
+  const effResultsForRank = useMemo(() => (results ?? []).map((r) => {
+    const chain = splitChainByStatus(changeMap.get(rowChangeKey(r.competition_id, r.event_id, r.round_type_id))).approved;
+    if (chain.length === 0) return r;
+    return {
+      ...r,
+      attempts: effectiveAttempts(chain, r.attempts),
+      best: effectiveFieldValue(chain, 'best', r.best),
+      average: effectiveFieldValue(chain, 'average', r.average),
+    };
+  }), [results, changeMap]);
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与,也不挤掉官方 PR 标记
   const prRank = useMemo(() =>
-    results && comps ? computePrRank(results.filter((r) => !r.live), comps) : new Map(),
-    [results, comps],
+    comps ? computePrRank(effResultsForRank.filter((r) => !r.live), comps) : new Map(),
+    [effResultsForRank, comps],
   );
   // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一 dense-rank
   // 口径且彼此自洽(最好那把 == 单次列)。只取直播行用,不读官方行 → 不污染官方 PR 标记。
@@ -158,11 +164,10 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
 
   return (
     <div className="wp-bycomp">
-      {(onToggleAttemptRanks || (canEdit && onToggleEditMode)) && (
+      {onToggleAttemptRanks && (
         <div className="wp-section-h-row wp-section-h-row-bare">
           <span className="wp-section-h-tools">
-            {onToggleAttemptRanks && <AttemptRanksToggle active={showAttemptRanks} onToggle={onToggleAttemptRanks} />}
-            {canEdit && onToggleEditMode && <EditModeToggle active={!!editMode} onToggle={onToggleEditMode} propose={!admin} />}
+            <AttemptRanksToggle active={showAttemptRanks} onToggle={onToggleAttemptRanks} />
           </span>
         </div>
       )}
@@ -218,6 +223,8 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                     const { approved: chain, pending } = splitChainByStatus(changeMap.get(rowChangeKey(comp.id, r.event_id, r.round_type_id)));
                     const oldBest = changeChainOldValues(chain, 'best');
                     const oldAvg = changeChainOldValues(chain, 'average');
+                    const oldPos = changeChainOldValues(chain, 'pos');
+                    const effPos = effectiveFieldValue(chain, 'pos', r.pos);
                     const hasChange = chain.length > 0;
                     // 当前有效值 = WCA 值叠加变更链最新(行内改某次后即时反映)
                     const effBest = effectiveFieldValue(chain, 'best', r.best);
@@ -232,27 +239,6 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                       >
                         <td className="wp-cell-event">
                           {showEvent && <EventIcon event={r.event_id} className="wp-event-icon-sm" />}
-                          {admin && editMode && (
-                            <button
-                              type="button"
-                              className="wp-change-edit"
-                              title={tr({ zh: '编辑成绩变更', en: 'Edit result changes' })}
-                              onClick={() => setEditTarget({
-                                wcaId,
-                                competitionId: comp.id,
-                                eventId: r.event_id,
-                                roundTypeId: r.round_type_id,
-                                resultId: r.id ?? null,
-                                currentAttempts: effAttempts,
-                                currentBest: effBest,
-                                currentAverage: effAvg,
-                                currentSingleRecord: r.regional_single_record ?? null,
-                                currentAverageRecord: r.regional_average_record ?? null,
-                                personName: personName ?? null,
-                                compName: comp.name ?? null,
-                              })}
-                            ><Pencil size={13} /></button>
-                          )}
                         </td>
                         <td>
                           <Link
@@ -272,8 +258,11 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                           )}
                           <PendingProposals pending={pending} eventId={r.event_id} isAdmin={admin} onModerated={refreshChanges} />
                         </td>
-                        <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
-                          {r.pos > 0 ? r.pos : '—'}
+                        <td className={`wp-cell-pos ${effPos === 1 ? 'wp-pos-first' : ''} ${oldPos.length > 0 ? 'wp-cell-changed' : ''}`}>
+                          <span className="record-num-cell">
+                            <ResultChangeChain oldValues={oldPos} eventId={r.event_id} kind="pos" note={chain?.[chain.length - 1]?.note} />
+                            {effPos > 0 ? effPos : '—'}
+                          </span>
                         </td>
                         <td className={`wp-cell-result ${oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
                           <span className="record-num-cell">
@@ -309,7 +298,20 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             admin={admin}
                             isOwner={isOwner}
                             canEdit={loggedIn}
-                            editMode={editMode}
+                            onEditRecord={admin ? () => setEditTarget({
+                              wcaId,
+                              competitionId: comp.id,
+                              eventId: r.event_id,
+                              roundTypeId: r.round_type_id,
+                              resultId: r.id ?? null,
+                              currentAttempts: effAttempts,
+                              currentBest: effBest,
+                              currentAverage: effAvg,
+                              currentSingleRecord: r.regional_single_record ?? null,
+                              currentAverageRecord: r.regional_average_record ?? null,
+                              personName: personName ?? null,
+                              compName: comp.name ?? null,
+                            }) : undefined}
                             personId={wcaId}
                             personName={personName ?? ''}
                             personCountry={personCountry}
@@ -318,6 +320,16 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             compDate={comp.start_date}
                             attemptOlds={effAttempts.map((_, i) => attemptOldValues(chain, i))}
                             penalties={effectiveAttemptPenalties(chain)}
+                            penaltyNote={effectiveAttemptPenaltyNote(chain)}
+                            attemptVideos={effectiveAttemptVideos(chain)}
+                            pendingVideos={pendingAttemptVideos(chain)}
+                            onAddVideo={(index, url) =>
+                              recordAttemptVideos({
+                                target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },
+                                currentAttempts: effAttempts,
+                                index, videoUrl: url, existingChain: chain, propose: !admin,
+                              }).then(refreshChanges)
+                            }
                             attemptRanks={showAttemptRanks ? (rank?.attemptRanks ?? null) : null}
                             singleRecord={showAttemptRanks ? singleRecord : null}
                             onEdit={(index, newValue, note) =>

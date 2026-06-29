@@ -10,8 +10,10 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Flag } from './Flag';
 import { ClearButton } from './ClearButton';
+import AppLink from './AppLink';
 import { extractWcaIdFromUrl } from './CompPicker';
 import { loadComps, searchComps, isCancelledComp, type Comp } from '@/lib/comp-search';
+import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';
 import { localizeCity } from '@/lib/city-localize';
 import { formatDateRangeIso } from '@/lib/wca-date';
@@ -43,8 +45,6 @@ interface Props {
   /** Comp-name live filter (mirror of the page's compQuery). */
   query: string;
   onQueryChange: (val: string) => void;
-  /** Pick a competition from the dropdown → open it. */
-  onPickComp: (comp: Comp) => void;
   /** A pasted WCA / cubing.com URL resolves to a bare id → open it. */
   onUrlPaste?: (wcaId: string) => void;
   /** Selected cuber (filters the calendar to their comps); shown as a chip. */
@@ -60,7 +60,7 @@ interface Props {
 }
 
 export function CompCuberPicker({
-  query, onQueryChange, onPickComp, onUrlPaste,
+  query, onQueryChange, onUrlPaste,
   cuber, onCuberChange, staticCubers = [], cuberMatchCount,
   isZh, className, placeholder,
 }: Props) {
@@ -157,7 +157,6 @@ export function CompCuberPicker({
     return [...staticMatches, ...cuberApi.filter(c => !ids.has(c.id))];
   }, [staticMatches, cuberApi]);
 
-  const pickComp = (c: Comp) => { onPickComp(c); setOpen(false); };
   const pickCuber = (p: WcaPersonLite) => {
     onCuberChange(p);
     onQueryChange('');
@@ -240,11 +239,11 @@ export function CompCuberPicker({
                 const displayName = localizeCompName(c.id, c.name, !!isZh);
                 const cancelled = isCancelledComp(c);
                 return (
-                  <button
+                  <AppLink
                     key={`c-${c.id}`}
-                    type="button"
+                    {...compLinkProps(c.id)}
                     className={`comp-picker-item${cancelled ? ' is-cancelled' : ''}`}
-                    onClick={() => pickComp(c)}
+                    onClick={() => setOpen(false)}
                   >
                     <Flag iso2={c.country} />
                     <span className="comp-picker-main">
@@ -255,7 +254,7 @@ export function CompCuberPicker({
                         {' · '}{formatDateRangeIso(c.start_date, c.end_date)}
                       </span>
                     </span>
-                  </button>
+                  </AppLink>
                 );
               })}
             </div>

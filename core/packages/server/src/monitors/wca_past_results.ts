@@ -20,6 +20,7 @@ import { getWatchedPersons } from './watched.js';
 import { sendBark } from './bark.js';
 import { startPoller } from './poll.js';
 import { isChineseRegion, SITE_BASE } from './config.js';
+import { formatTime } from '../utils/record_format.js';
 
 const WCA_API = 'https://www.worldcubeassociation.org/api/v0';
 const FETCH_TIMEOUT_MS = 20_000;
@@ -286,6 +287,46 @@ async function insertChanges(wcaId: string, changes: DetectedChange[]): Promise<
 
 // ── Bark 汇总 ─────────────────────────────────────────────────────────────────
 
+const FIELD_LABEL_ZH: Record<string, string> = {
+  best: '单次', average: '平均', pos: '名次',
+  regional_single_record: '单次纪录', regional_average_record: '平均纪录',
+};
+// 推送里展开的字段顺序(成绩 → 名次 → 纪录标记);attempts/罚时属明细,不堆进推送。
+const FIELD_PUSH_ORDER = ['best', 'average', 'pos', 'regional_single_record', 'regional_average_record'];
+
+function roundShortZh(roundTypeId: string): string {
+  switch (roundTypeId) {
+    case 'f': case 'c': return '决赛';
+    case '1': case 'd': return '一轮';
+    case '2': case 'e': return '二轮';
+    case '3': case 'g': return '三轮';
+    default: return roundTypeId;
+  }
+}
+
+function fmtFieldVal(field: string, value: unknown, eventId: string): string {
+  if (field === 'pos') return Number(value) > 0 ? `#${value}` : '—';
+  if (field === 'regional_single_record' || field === 'regional_average_record') {
+    return value ? String(value) : '—';
+  }
+  return formatTime(Number(value), eventId); // best/average:百分秒 / FMC / MBLD
+}
+
+// 一条变更的具体描述:`333 二轮 @ Comp: 平均 4.52→4.87, 名次 #1→#2`。
+function describeChange(c: DetectedChange): string {
+  const ctx = `${c.eventId} ${roundShortZh(c.roundTypeId)} @ ${c.competitionId}`;
+  if (c.changeType === 'removed') {
+    const b = c.before;
+    const v = b ? formatTime(b.b, c.eventId) + (b.a > 0 ? ` / ${formatTime(b.a, c.eventId)}` : '') : '';
+    return `移除 ${ctx}${v ? `(${v})` : ''}`;
+  }
+  const segs = FIELD_PUSH_ORDER
+    .map((field) => (c.fields ?? []).find((f) => f.field === field))
+    .filter((f): f is ChangeField => !!f)
+    .map((f) => `${FIELD_LABEL_ZH[f.field]} ${fmtFieldVal(f.field, f.old, c.eventId)}→${fmtFieldVal(f.field, f.new, c.eventId)}`);
+  return segs.length ? `${ctx}: ${segs.join(', ')}` : `修改 ${ctx}`;
+}
+
 async function pushSummary(
   wcaId: string,
   displayName: string,
@@ -298,11 +339,8 @@ async function pushSummary(
   if (removed) parts.push(`${removed} 条移除`);
   if (modified) parts.push(`${modified} 条修改`);
   const title = `往期成绩变更:${displayName}`;
-  // 列前几条受影响项目/比赛,驱动点进页面看详情。
-  const lines = changes.slice(0, 6).map((c) => {
-    const verb = c.changeType === 'removed' ? '移除' : '修改';
-    return `${verb} ${c.eventId} @ ${c.competitionId}`;
-  });
+  // 列前几条具体变化(字段 + 旧→新),驱动点进页面看详情。
+  const lines = changes.slice(0, 6).map(describeChange);
   if (changes.length > 6) lines.push(`… 共 ${changes.length} 条`);
   const body = `${parts.join(',')}\n${lines.join('\n')}`;
   const zh = isChineseRegion(iso2);

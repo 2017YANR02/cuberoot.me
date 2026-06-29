@@ -34,13 +34,15 @@ function tokenize(alg: string): string[] {
 }
 
 export default function CuberReconPlayer({
-  scramble, alg, order, fillPane = false, playerRef,
+  scramble, alg, order, fillPane = false, playerRef, hideControls = false,
 }: {
   scramble: string;
   alg: string;
   /** NxN order (2..7). */
   order: number;
   fillPane?: boolean;
+  /** 隐藏底部播放/步进/scrubber 控制条(嵌成绩弹窗预览时用)。 */
+  hideControls?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
 }) {
@@ -292,6 +294,7 @@ export default function CuberReconPlayer({
       <div ref={hostRef} className="cuber-recon-canvas">
         <div ref={backFrameRef} className="cuber-recon-backview" aria-hidden />
       </div>
+      {!hideControls && (
       <div className="cuber-recon-controls">
         <button type="button" className="cuber-recon-ctrl-btn" onClick={() => jumpToStep(0)} disabled={step === 0} aria-label="Reset">
           <RotateCcw size={14} />
@@ -323,6 +326,7 @@ export default function CuberReconPlayer({
         />
         <span className="cuber-recon-progress">{step} / {total}</span>
       </div>
+      )}
     </div>
   );
 }

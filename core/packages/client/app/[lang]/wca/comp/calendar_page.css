@@ -246,6 +246,30 @@
     border-color: var(--accent);
     color: var(--accent);
 }
+.calendar-page .dual-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-sub);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.calendar-page .dual-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.calendar-page .dual-toggle.is-active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+}
 
 .calendar-page .mode-status {
     padding: 0.5rem 0.75rem;
@@ -1281,6 +1305,17 @@
     color: var(--text);
     font-variant-numeric: tabular-nums;
     line-height: 1;
+}
+/* 双轮赛制（WCA Reg 9v）：该项目格子的值套强调色圈（列首图标即该项目，圈=此场此项目为双轮） */
+.calendar-page .cl-event-dual {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.3em;
+    height: 1.3em;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1.5px var(--accent);
+    color: var(--accent);
 }
 /* 天数 / 人数 / 上限列：数字右对齐，多位数按个位对齐 */
 .calendar-page .cl-days-cell {

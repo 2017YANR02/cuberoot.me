@@ -297,7 +297,7 @@ export function buildPersonRoundChangeListMap(changes: ResultChange[]): Map<stri
  */
 export function changeChainOldValues(
   changes: ResultChange[] | undefined,
-  field: 'best' | 'average',
+  field: 'best' | 'average' | 'pos',
 ): number[] {
   const out: number[] = [];
   for (const c of (changes ?? []).filter(isApprovedChange)) {
@@ -313,7 +313,7 @@ export function changeChainOldValues(
 /** 数值字段的当前有效值 = 变更链最新一条的 new(若有),否则 WCA 原值。 */
 export function effectiveFieldValue(
   changes: ResultChange[] | undefined,
-  field: 'best' | 'average',
+  field: 'best' | 'average' | 'pos',
   fallback: number,
 ): number {
   const approved = (changes ?? []).filter(isApprovedChange);
@@ -479,6 +479,15 @@ export async function recordAttemptOriginal(p: {
 
 // ── 罚时标注:成绩值本身正确(已含 +2),仅展开为 base + 罚时(纯展示,不重算单次/平均) ──
 
+/** 罚时记录的原因(note):变更链里最新一条含 attempt_penalties 字段的记录的 note。 */
+export function effectiveAttemptPenaltyNote(changes: ResultChange[] | undefined): string | null {
+  const approved = (changes ?? []).filter(isApprovedChange);
+  for (let i = approved.length - 1; i >= 0; i--) {
+    if ((approved[i].fields ?? []).some((x) => x.field === 'attempt_penalties')) return approved[i].note ?? null;
+  }
+  return null;
+}
+
 /** 各次成绩的有效罚时数组(厘秒,index 对齐 attempts)= 变更链最新 attempt_penalties。 */
 export function effectiveAttemptPenalties(changes: ResultChange[] | undefined): number[] {
   const approved = (changes ?? []).filter(isApprovedChange);
@@ -526,6 +535,72 @@ export async function recordAttemptPenalty(p: {
   else await createResultChange(input);
 }
 
+// ── 比赛视频:每把成绩挂视频链接(逐把,index 对齐 attempts)。纯链接,不重算任何成绩。 ──
+// 任何登录用户可提议(→ pending),管理员即时(→ approved)。与 recon 双向联动:
+// 复盘已有 videoUrl 在弹窗里以封面展示;在弹窗里填的链接 → /recon/submit 预填。
+
+/** 各把的有效视频(已批准)= 变更链最新 attempt_videos 的 new(逐把字符串,可多行)。 */
+export function effectiveAttemptVideos(changes: ResultChange[] | undefined): string[] {
+  const approved = (changes ?? []).filter(isApprovedChange);
+  for (let i = approved.length - 1; i >= 0; i--) {
+    const f = (approved[i].fields ?? []).find((x) => x.field === 'attempt_videos');
+    if (f && Array.isArray(f.new)) return (f.new as unknown[]).map((v) => String(v ?? ''));
+  }
+  return [];
+}
+
+/** 各把的待审核视频(pending 提议,跨多条提议按 index 取并集,多行合并)。 */
+export function pendingAttemptVideos(changes: ResultChange[] | undefined): string[] {
+  const out: string[] = [];
+  for (const c of changes ?? []) {
+    if (c.status !== 'pending') continue;
+    const f = (c.fields ?? []).find((x) => x.field === 'attempt_videos');
+    if (!f || !Array.isArray(f.new)) continue;
+    (f.new as unknown[]).forEach((v, i) => {
+      const s = String(v ?? '').trim();
+      if (!s) return;
+      out[i] = out[i] ? `${out[i]}\n${s}` : s;
+    });
+  }
+  return out;
+}
+
+/**
+ * 给某一把成绩挂视频链接 → 记一条变更(fields 含 attempt_videos,逐把数组)。
+ * 基底取当前已批准视频(保留他把),把第 index 把设为给定链接(空串=清除)。
+ * propose=true(非管理员)始终新建 pending;否则折进既有 approved 记录。
+ */
+export async function recordAttemptVideos(p: {
+  target: AttemptEditTarget;
+  currentAttempts: number[];
+  index: number;
+  videoUrl: string;
+  existingChain?: ResultChange[];
+  note?: string | null;
+  propose?: boolean;
+}): Promise<void> {
+  const { target, currentAttempts, index, videoUrl, existingChain, note } = p;
+  const arr = effectiveAttemptVideos(existingChain).slice();
+  while (arr.length < currentAttempts.length) arr.push('');
+  arr[index] = videoUrl.trim();
+  const existing = p.propose ? undefined : (existingChain ?? []).find(
+    (c) => c.changeType === 'modified' && isApprovedChange(c)
+      && (c.fields ?? []).some((f) => f.field === 'attempt_videos'),
+  );
+  const input: ResultChangeInput = {
+    wcaId: target.wcaId,
+    competitionId: target.competitionId,
+    eventId: target.eventId,
+    roundTypeId: target.roundTypeId,
+    resultId: target.resultId ?? null,
+    changeType: 'modified',
+    fields: [{ field: 'attempt_videos', old: null, new: arr }],
+    note: note ?? (existing?.note ?? null),
+  };
+  if (existing) await updateResultChange(existing.id, input);
+  else await createResultChange(input);
+}
+
 /** WCA round_type_id 归一到 4 个轮次桶('1'/'2'/'3'/'f'),含 combined / cutoff 变体。 */
 export function canonicalRound(id: string | null | undefined): '1' | '2' | '3' | 'f' | null {
   switch (id) {
@@ -549,6 +624,13 @@ export function formatChangeFieldValue(field: string, value: unknown, eventId: s
   if (field === 'attempt_penalties') {
     const arr = Array.isArray(value) ? (value as number[]) : [];
     const parts = arr.map((p, i) => (Number(p) > 0 ? `#${i + 1} +${Math.round(Number(p) / 100)}` : null)).filter(Boolean);
+    return parts.length ? parts.join('  ') : '—';
+  }
+  if (field === 'attempt_videos') {
+    const arr = Array.isArray(value) ? (value as unknown[]) : [];
+    const parts = arr
+      .map((v, i) => (String(v ?? '').trim() ? `#${i + 1} ▶` : null))
+      .filter(Boolean);
     return parts.length ? parts.join('  ') : '—';
   }
   if (field === 'pos') {

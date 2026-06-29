@@ -106,7 +106,7 @@ export interface TwistySettings {
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, puzzleDescription, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView,
+  puzzle, puzzleDescription, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, hideControls = false,
 }: {
   puzzle: string;
   /** cubing.js PuzzleGeometry description string (e.g. "c e 0"). When set, the
@@ -121,6 +121,9 @@ export default function TwistySection({
   /** 强制 cubing.js 原生 backView ('top-right' / 'none')，独立于 settings。
    *  undefined = 不接管(走 settings.backView,如 /sim);true/false = 强制开关(recon)。 */
   backView?: boolean;
+  /** 隐藏 cubing.js 原生底部控制条(controlPanel:'none')。嵌成绩弹窗预览时用,
+   *  详情/提交页默认 false(保留 scrubber/play)。 */
+  hideControls?: boolean;
   /** 启用 tap-to-twist:cubing.js 默认 movePressInput="auto" 实际关闭点击转面;
    *  传 true 改成 "basic",DragTracker → raycastMove → experimentalAddMove 链路接通。
    *  对齐 alpha.twizzle.net/explore 行为。 */
@@ -184,7 +187,7 @@ export default function TwistySection({
     const playerInit: Record<string, unknown> = {
       experimentalSetupAlg: scramble,
       alg,
-      controlPanel: 'bottom-row',
+      controlPanel: hideControls ? 'none' : 'bottom-row',
     };
     // PuzzleGeometry puzzle (explore set) → set the description and omit `puzzle`
     // entirely (mirrors alpha.twizzle.net/explore's `delete config.puzzle`).
@@ -300,7 +303,7 @@ export default function TwistySection({
     // scramble/alg/puzzleDescription 走下面的 setter 路径,不触发重建。
     // puzzleDescription 不入 deps:改 cut 深度时原地 set(见下方 effect),不重建 player。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Ctor, puzzle, fillPane, twistOnClick]);
+  }, [Ctor, puzzle, fillPane, twistOnClick, hideControls]);
 
   // puzzleDescription 原地同步 — 改 cut 深度(Puzzle Cuts 编辑器)时不重建 player,
   // 对齐 alpha.twizzle.net/explore 的丝滑切割:只把新 description set 到已存在的 player。
