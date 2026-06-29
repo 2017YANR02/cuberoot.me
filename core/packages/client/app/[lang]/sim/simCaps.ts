@@ -71,9 +71,10 @@ export function puzzleCaps(kind: SimPuzzle): SimPuzzleCaps {
  *   - cubing.js TwistyPlayer (components/TwistySection, world-less): honors only
  *     scale / yaw / pitch / speed / 提示贴片(hint) / 小窗(backView) — the rest no-op.
  *   - shared by both paths regardless of engine: 动画(play loop) / 背景(CSS data-attr) /
- *     拖空白(twisty honors 'rotate'), so those are never disabled here.
- *  So everything below keys off `engineActive`, except 面色/logo which need the NxN
- *  InstancedRenderer specifically. */
+ *     拖空白(twisty honors 'rotate') / 锁定大小位置(both wire a lockView guard into their
+ *     zoom handlers), so those are never disabled here.
+ *  So everything below keys off `engineActive`, except 锁定大小位置(both paths honor it) and
+ *  面色/logo which need the NxN InstancedRenderer specifically. */
 export interface ControlSupport {
   sensitivity: boolean;
   perspective: boolean;
@@ -119,7 +120,9 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       sensitivity: engineActive,
       perspective: engineActive,
       faceLabels: engineActive,
-      lockView: engineActive,
+      // 锁定大小位置:两条路径都接了 —— 引擎走 SimPage onWheel/pan/pinch 的 lockView 提前 return,
+      // cubing.js 走 TwistySection wheel/pinch effect 的 lockViewRef 守卫。每个拼图都有缩放可锁 → 恒真。
+      lockView: true,
       thickness: engineActive,
       hollow: engineActive,
       holdPartialTurn: engineActive,
