@@ -29,7 +29,7 @@ import {
   Play, Pause, SkipBack, SkipForward, RotateCcw,
   FlipHorizontal2, FlipVertical2, Eraser, RotateCw,
   Shuffle, Link2, Check, Upload,
-  Search, Loader2, Pipette, Wallpaper,
+  Search, Loader2, Pipette,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -1744,16 +1744,19 @@ function ModeColorSelect({
 }
 
 function ColorRow({
-  label, children, action, trailing,
+  label, children, action, trailing, disabled, title,
 }: {
   label: string;
   children: ReactNode;
   action?: { label: string; title?: string; onClick: () => void };
   /** 色块右侧附加控件(如内核色行的「原核」开关)。 */
   trailing?: ReactNode;
+  /** 该拼图暂不支持此配色 → 变灰 + 不可点(pointer-events:none 兜住所有色块按钮)。 */
+  disabled?: boolean;
+  title?: string;
 }) {
   return (
-    <div className="sim-color-row">
+    <div className={'sim-color-row' + (disabled ? ' sim-color-row--disabled' : '')} aria-disabled={disabled || undefined} title={title}>
       <span className="sim-color-row-label">{label}</span>
       {/* trailing(如「原核」开关)紧贴标签右侧,再到色块 */}
       {trailing}
@@ -1800,6 +1803,14 @@ function PuzzleSettings({
   const caps = resolveCaps(puzzleKind, renderer);
   const isNxNLocal = typeof puzzleKind === 'number';
   const isMirror = puzzleKind === 'mirror';
+  // 灰掉「该拼图暂不支持」的控件时,hover 给出统一说明。engineMode 拼图(斜转/金字塔/五魔/FTO)
+  // 在 cubing.js 渲染下引擎特性不生效,但切到「群论内核」即点亮 → 附一句提示往哪切;PG 探索
+  // 拼图切渲染也不会启用(引擎未建),只给通用说明。
+  const switchEnables = !caps.engineActive && resolveCaps(puzzleKind, 'engine').engineActive;
+  const naHint = switchEnables
+    ? t('该拼图暂不支持此功能(切到「群论内核」渲染可启用)', 'Not available for this puzzle (switch the renderer to "Group theory" to enable)')
+    : t('该拼图暂不支持此功能', 'Not available for this puzzle');
+  const hint = (ok: boolean) => (ok ? undefined : naHint);
   const [keymapOpen, setKeymapOpen] = useState(false);
 
   const renderOrderSlot = useCallback((v: number) => (v >= 1 && v <= 400 ? String(v) : ''), []);
@@ -1961,9 +1972,9 @@ function PuzzleSettings({
           </div>
 
           <div className="sim-puzzle-sliders">
-            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} />
+            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} disabled={!caps.supports.sensitivity} title={hint(caps.supports.sensitivity)} />
             <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} />
-            <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} />
+            <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} title={hint(caps.supports.perspective)} />
             <Slider label={t('左右', 'Yaw')} value={settings.viewAngle} onChange={(v) => set('viewAngle', v)} />
             <Slider label={t('上下', 'Pitch')} value={settings.viewGradient} onChange={(v) => set('viewGradient', v)} />
             <Slider label={t('转动速度', 'Turn speed')} value={settings.speed} onChange={(v) => set('speed', v)} />
@@ -1972,7 +1983,7 @@ function PuzzleSettings({
             {/* 播放动画开关:关 → 「播放」时瞬切每一步(不逐格转动);单步前进/后退本就瞬切。 */}
             <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
             {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
-            <Toggle label={t('字母', 'Letters')} value={settings.faceLabels === true} onChange={(v) => set('faceLabels', v)} />
+            <Toggle label={t('字母', 'Letters')} value={settings.faceLabels === true} onChange={(v) => set('faceLabels', v)} disabled={!caps.supports.faceLabels} title={hint(caps.supports.faceLabels)} />
             {/* 「消步」开关已移到播放器工具行(逆 旁),此处不再重复。 */}
             <label className="sim-toggle">
               <span>{t('拖空白', 'Drag empty')}</span>
@@ -1986,10 +1997,10 @@ function PuzzleSettings({
               </select>
             </label>
             {/* 背景:复用内核色那套弹出色块选择器(SwatchPopup),trigger 显当前背景,
-                点开弹出 5 个可视色块(直接预览各档外观),整控件无文字。
-                色值对齐 sim.css 里 .sim-canvas-wrap 的固定背景。 */}
+                点开弹出 5 个可视色块(直接预览各档外观)。左侧「背景 / BG」文字标签,
+                与其它开关行对齐。色值对齐 sim.css 里 .sim-canvas-wrap 的固定背景。 */}
             <div className="sim-toggle sim-bg-toggle">
-              <Wallpaper size={15} className="sim-bg-icon" aria-hidden="true" />
+              <span>{t('背景', 'BG')}</span>
               <SwatchPopup
                 title={t('背景', 'Background')}
                 trigger={<span className={`sim-swatch-box sim-bg-box--${settings.boardBg}`} />}
@@ -2019,10 +2030,11 @@ function PuzzleSettings({
             </div>
             {/* 顶面 U 中心 logo:无 / 网站 / 自定义上传。仅 NxN 奇数阶有正中心块时实际显示
                 (偶数阶 / 非 NxN 引擎里 setLogo 自动隐藏)。选「自定义」开文件选择器。 */}
-            <label className="sim-toggle">
+            <label className={'sim-toggle' + (caps.supports.logo ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.logo)}>
               <span>logo</span>
               <select
                 value={settings.logo}
+                disabled={!caps.supports.logo}
                 onChange={(e) => {
                   const v = e.target.value as SimSettings['logo'];
                   if (v === 'custom') logoFileRef.current?.click();
@@ -2041,14 +2053,15 @@ function PuzzleSettings({
                 onChange={handleLogoFile}
               />
             </label>
-            <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} />
+            {/* 锁定大小位置 锁的是引擎滚轮/捏合缩放,cubing.js 拼图自管缩放 → 引擎未驱动时灰掉。 */}
+            <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} disabled={!caps.supports.lockView} title={hint(caps.supports.lockView)} />
+            {/* 小窗(背面视图)两条渲染路径都支持(引擎自有第二相机 / cubing.js 原生 backView)→ 不灰。 */}
             <Toggle label={t('小窗', 'Mini view')} value={settings.backView} onChange={(v) => set('backView', v)} />
-            {/* The panel is kept identical across every puzzle by request: 立体贴片 / 镂空 are
-                in-house-engine features and no-op on cubing.js-rendered puzzles (the setting is
-                just stored, applySettings only drives them where the engine exists), but they
-                always render so the control surface never changes shape per puzzle. */}
-            <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} />
-            <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} />
+            {/* 立体贴片 / 镂空 是本站引擎特性,cubing.js 渲染的拼图上无此能力 → 引擎未驱动时灰掉
+                (面板形状仍保持每拼图一致:控件常显,只是不可点)。 */}
+            <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} disabled={!caps.supports.thickness} title={hint(caps.supports.thickness)} />
+            <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} disabled={!caps.supports.hollow} title={hint(caps.supports.hollow)} />
+            {/* 提示贴片(hint)两条路径都支持(引擎 hint / cubing.js hintFacelets)→ 不灰。 */}
             <Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} />
             {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
                 用户指定的唯一例外。 */}
@@ -2062,12 +2075,15 @@ function PuzzleSettings({
           <div className="sim-puzzle-debug">
             <div className="sim-puzzle-section-title">{t('调试', 'Debug')}</div>
             <div className="sim-puzzle-debug-toggles">
-              <Toggle label={t('半转停', 'Hold partial turn')} value={settings.holdPartialTurn} onChange={(v) => set('holdPartialTurn', v)} />
-              <Toggle label={t('结构着色', 'Structure colors')} value={settings.debugStructureColor} onChange={(v) => set('debugStructureColor', v)} />
-              <label className="sim-toggle">
+              <Toggle label={t('半转停', 'Hold partial turn')} value={settings.holdPartialTurn} onChange={(v) => set('holdPartialTurn', v)} disabled={!caps.supports.holdPartialTurn} title={hint(caps.supports.holdPartialTurn)} />
+              <Toggle label={t('结构着色', 'Structure colors')} value={settings.debugStructureColor} onChange={(v) => set('debugStructureColor', v)} disabled={!caps.supports.structureColor} title={hint(caps.supports.structureColor)} />
+              {/* 挖块:仅当该拼图有「原生转动元素」(角/面/棱)可掀起时可选;NxN/SQ1 无单一会动块组,
+                  cubing.js 拼图引擎未驱动 → 灰掉。 */}
+              <label className={'sim-toggle' + (caps.supports.carve ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.carve)}>
                 <span>{t('挖块', 'Carve')}</span>
                 <select
                   value={settings.debugCarve}
+                  disabled={!caps.supports.carve}
                   onChange={(e) => set('debugCarve', e.target.value as SimSettings['debugCarve'])}
                 >
                   <option value="off">{t('关', 'Off')}</option>
@@ -2093,7 +2109,7 @@ function PuzzleSettings({
               />
             </ColorRow>
           )}
-          <ColorRow label={t('内核色', 'Core color')}>
+          <ColorRow label={t('内核色', 'Core color')} disabled={!caps.supports.coreColor} title={hint(caps.supports.coreColor)}>
             <ModeColorSelect
               special={settings.coreStyle === 'raw'}
               color={settings.coreColor}
@@ -2108,6 +2124,8 @@ function PuzzleSettings({
           </ColorRow>
           <ColorRow
             label={t('面色', 'Face colors')}
+            disabled={!caps.supports.faceColors}
+            title={hint(caps.supports.faceColors)}
             action={{
               label: 'WCA',
               title: t('恢复 WCA 默认', 'Reset to WCA defaults'),

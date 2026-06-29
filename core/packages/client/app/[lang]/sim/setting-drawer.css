@@ -117,6 +117,16 @@
   color: var(--foreground);
 }
 
+/* 该拼图暂不支持此功能 → 灰标签 + 不可点。滑钮自身 :disabled 已置灰(不再叠 opacity,
+   避免双重变淡);select 行用原生 disabled + 灰化。 */
+.sim-toggle--disabled { cursor: not-allowed; }
+.sim-toggle--disabled > span { opacity: 0.5; }
+.sim-toggle--disabled select { opacity: 0.5; cursor: not-allowed; }
+
+/* slider 整条灰化(无嵌套滑钮,单层 opacity 即可) */
+.sim-slider--disabled { opacity: 0.5; cursor: not-allowed; }
+.sim-slider--disabled input { cursor: not-allowed; }
+
 .sim-drawer-reset {
   margin-top: 8px;
   padding: 8px 12px;

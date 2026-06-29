@@ -32,6 +32,10 @@
   justify-content: flex-start;
 }
 
+/* disabled = 功能对当前上下文不可用 → 置灰 + 不可点(hover 不再加深边框)。 */
+.pill-toggle:disabled { opacity: 0.4; cursor: not-allowed; }
+.pill-toggle:disabled:hover { border-color: color-mix(in srgb, var(--foreground) 12%, transparent); }
+
 .pill-toggle:hover { border-color: color-mix(in srgb, var(--foreground) 24%, transparent); }
 .pill-toggle.is-on:hover {
   background: color-mix(in srgb, var(--toggle-on) 64%, black);
