@@ -470,19 +470,17 @@
   min-width: 0;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
 }
 .sim-puzzle-toggles .sim-toggle > span {
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-/* Checkbox renders BEFORE its label (☑ 立体贴片) so every checkbox lines up at
-   the cell's left edge — aligned per grid column on mobile (2 cols) and desktop
-   (4 cols), and unmistakably attached to its own label rather than the next
-   column's. Dropdowns keep label-first (they carry a caret). */
-.sim-puzzle-toggles .sim-toggle input[type=checkbox] {
-  order: -1;
-  flex: none;
-}
+/* 标签在左、控件(PillToggle 开关 / 下拉)贴右,每格右沿对齐;开关固定尺寸不被网格挤压 */
+.sim-puzzle-toggles .sim-toggle .pill-toggle,
 .sim-puzzle-toggles .sim-toggle select {
   flex: none;
 }
@@ -523,8 +521,8 @@
 }
 
 /* 调试区:「调试」标题单独占一行(复用 .sim-puzzle-section-title),下方一行排
-   半转停 / 结构着色 / 挖块,窄屏内部换行。复刻 .sim-puzzle-toggles 的复选框先于
-   标签(order:-1)规则,保持与上方网格一致。 */
+   半转停 / 结构着色 / 挖块,窄屏内部换行。复刻 .sim-puzzle-toggles 的标签左、
+   控件右(space-between)布局,保持与上方网格一致。 */
 .sim-puzzle-debug {
   display: flex;
   flex-direction: column;
@@ -544,12 +542,16 @@
   min-width: 0;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
 }
-.sim-puzzle-debug .sim-toggle input[type=checkbox] {
-  order: -1;
-  flex: none;
+.sim-puzzle-debug .sim-toggle > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+.sim-puzzle-debug .sim-toggle .pill-toggle,
 .sim-puzzle-debug .sim-toggle select {
   flex: none;
 }

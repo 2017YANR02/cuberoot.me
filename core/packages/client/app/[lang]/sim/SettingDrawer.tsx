@@ -7,6 +7,7 @@
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import World from './engine/world';
 import { puzzleCaps } from './simCaps';
 import { timing } from './engine/tweenTiming';
@@ -368,15 +369,12 @@ export function Slider({ label, value, onChange }: { label: string; value: numbe
 }
 
 export function Toggle({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  // 复用全站 PillToggle(iOS 风滑钮开关),取代原生复选框 —— 开 / 关一眼可辨。
   return (
-    <label className="sim-toggle">
+    <span className="sim-toggle">
       <span>{label}</span>
-      <input
-        type="checkbox"
-        checked={value}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-    </label>
+      <PillToggle value={value} onChange={onChange} ariaLabel={label} />
+    </span>
   );
 }
 
