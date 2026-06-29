@@ -6,7 +6,7 @@
 // <slug>/page.tsx; shared scaffolding is in _components/ and _data/.
 
 import { useTranslation } from 'react-i18next';
-import { Newspaper, ArrowRight } from 'lucide-react';
+import { Newspaper, ArrowRight, ScrollText } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useT } from '../../../hooks/useT';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -84,6 +84,22 @@ export default function RegulationHub() {
           <ArrowRight size={20} className="reg-hub-news-arrow" />
         </Link>
 
+        <Link href="/regulation/full" className="reg-hub-news">
+          <span className="reg-hub-news-icon"><ScrollText size={22} /></span>
+          <span className="reg-hub-news-body">
+            <span className="reg-hub-news-title">
+              {t('规则全文 · 中英对照', 'Full regulations text')}
+            </span>
+            <span className="reg-hub-news-sub">
+              {t(
+                'WCA《竞赛规则》官方全文的本站镜像 —— 762 条逐条可锚点,交叉引用就近跳转,不必跳出到官网',
+                'A verbatim mirror of the complete WCA Regulations — every clause anchored, every cross-reference resolved in-page',
+              )}
+            </span>
+          </span>
+          <ArrowRight size={20} className="reg-hub-news-arrow" />
+        </Link>
+
         <section className="reg-hub-group">
           <h2 className="reg-hub-group-title">{t('核心条款', 'Core articles')}</h2>
           <div className="reg-hub-grid">
@@ -106,6 +122,8 @@ export default function RegulationHub() {
             )}
           </p>
           <p style={{ marginTop: 12 }}>
+            <Link href="/regulation/full">{t('本站规则全文', 'Full text on this site')}</Link>
+            {' · '}
             <a href={WCA_REG_FULL} target="_blank" rel="noopener noreferrer">{t('官方规则全文', 'Official Regulations (full)')}</a>
             {' · '}
             <a href={WCA_REG_ZH} target="_blank" rel="noopener noreferrer">{t('官方中文翻译', 'Official Chinese translation')}</a>

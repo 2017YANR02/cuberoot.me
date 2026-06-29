@@ -1,7 +1,8 @@
-# 月度检测 WCA 官方规则是否变化(thewca/wca-regulations official 分支)。
-# 我们的 /regulation 是图文转述版,不能自动替换文字;此 workflow 只负责"发现 + 报警":
-# 有漂移就开/更新一个带 diff 的 GitHub issue,人/AI 再用 update-regulation skill 重写受影响章节。
-# 注意:官方发布不按 1.1 走(近年有 2025-07-17 合并版、2026-04-01),故按月检查而非盯日期。
+# 月度检测 WCA 官方规则是否变化(thewca/wca-regulations official 分支),并分两条处理:
+#   1) 逐字全文镜像 /regulation/full —— 机器逐字生成,无需人工转述,所以**自动重建并发 PR**
+#      (合并即上线最新版;reg-check / build-reg-clauses 只用 node 内置 + fetch,无需 install)。
+#   2) 图文转述版章节 /regulation/<slug> —— 有版权改写成分,只能人工重写 → 仍开/更新带 diff 的 issue。
+# 官方发布不按固定节奏(近年有 2025-07-17 合并版、2026-04-01),故按月检查而非盯日期。
 name: WCA Regulation Drift
 
 on:
@@ -10,16 +11,21 @@ on:
     - cron: '0 8 1 * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
 jobs:
   check:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      issues: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: core
+          filter: blob:none
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: '22'
 
@@ -29,7 +35,7 @@ jobs:
         working-directory: core
         run: |
           set +e
-          node packages/client/scripts/reg-check.mjs --report reg-drift-report.md
+          node packages/client/scripts/reg-check.mjs --report "$RUNNER_TEMP/reg-drift-report.md"
           echo "code=$?" >> "$GITHUB_OUTPUT"
 
       - name: Fail on detector error
@@ -38,7 +44,30 @@ jobs:
           echo "::error::reg:check failed (exit ${{ steps.check.outputs.code }}) — 检测器或基线坏了"
           exit 1
 
-      - name: Open / update drift issue
+      # ---- 漂移(exit 3):重建逐字全文镜像数据,并开/更新一个同步 PR ----
+      # reg-check --write 重设快照基线,build-reg-clauses 重建 reg-clauses/*.json + _full.json。
+      # 二者都零依赖(node 内置 + fetch),CI 直接 node 跑,无需 pnpm install。
+      - name: Regenerate verbatim regulation text
+        if: steps.check.outputs.code == '3'
+        working-directory: core
+        run: |
+          node packages/client/scripts/reg-check.mjs --write
+          node packages/client/scripts/build-reg-clauses.mjs
+
+      - name: Open / update verbatim-sync PR
+        if: steps.check.outputs.code == '3'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: regulation-sync
+          base: main
+          title: 'chore(regulation): 同步规则全文镜像到 WCA 最新官方版本'
+          body-path: ${{ runner.temp }}/reg-drift-report.md
+          commit-message: 'chore(regulation): sync verbatim regulation text to latest official version'
+          labels: regulation-drift
+          delete-branch: true
+
+      # 图文转述版章节(/regulation/<slug>)需人工重写 → 仍开/更新 issue 跟踪(用 update-regulation skill)。
+      - name: Open / update drift issue (illustrated chapters need a human rewrite)
         if: steps.check.outputs.code == '3'
         working-directory: core
         env:
@@ -47,12 +76,12 @@ jobs:
           gh label create regulation-drift --color B60205 --description "WCA 规则官方源出现变化" --force || true
           existing=$(gh issue list --label regulation-drift --state open --json number --jq '.[0].number')
           if [ -n "$existing" ]; then
-            gh issue comment "$existing" --body-file reg-drift-report.md
+            gh issue comment "$existing" --body-file "$RUNNER_TEMP/reg-drift-report.md"
             echo "commented drift report on #$existing"
           else
             gh issue create \
               --label regulation-drift \
               --assignee RuiminYan \
               --title "WCA 规则更新检测 ($(date -u +%Y-%m-%d))" \
-              --body-file reg-drift-report.md
+              --body-file "$RUNNER_TEMP/reg-drift-report.md"
           fi
