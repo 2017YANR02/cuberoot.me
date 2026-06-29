@@ -277,22 +277,45 @@ function buildLiveCompEntries(
 
 interface PodiumGroup { ev: EventMeta; rd: RoundMeta; rows: LiveResult[]; }
 
+// 排名/名次用的「有效值」:把已批准的成绩变更覆盖层 (best/average) 叠加到 live 值上,
+// 使名次按订正后的成绩排序。否则订正后变慢的成绩仍挂旧名次 (显示 4.87 却排在 4.78 前)。
+// 按「订正后的值」重排,而非套用变更里的 pos 字段 —— pos 仅对被关注选手存在,按值排才全局自洽。
+type EffRank = (r: LiveResult) => { b: number; a: number };
+function makeEffRank(
+  users: Record<string, User>,
+  changeMap?: Map<string, ResultChange[]>,
+): EffRank {
+  return (r) => {
+    const wcaid = users[String(r.n)]?.wcaid;
+    const { approved } = splitChainByStatus(
+      wcaid ? changeMap?.get(personRoundChangeKey(wcaid, r.e, r.r)) : undefined,
+    );
+    return {
+      b: effectiveFieldValue(approved, 'best', r.b),
+      a: effectiveFieldValue(approved, 'average', effectiveAvg(r)),
+    };
+  };
+}
+
 // WCA 名次比较 (Reg 9f13/9f14):先比排名成绩 (平均赛制按平均、否则按单次),平均并列再比
 // 更好的单次;两者全等才返回 0 (= 并列同名次,Reg 9f15)。live 表 / 领奖台 / 名次计算共用同一口径。
-function rankComparator(byAvg: boolean): (x: LiveResult, y: LiveResult) => number {
+// eff 给定时按「成绩变更覆盖层」订正后的值排名 (best/average),否则用 live 原值。
+function rankComparator(byAvg: boolean, eff?: EffRank): (x: LiveResult, y: LiveResult) => number {
   const rankKey = (v: number) => (v > 0 ? v : Infinity);
   const cmp = (a: number, b: number) => (a < b ? -1 : a > b ? 1 : 0);
+  const bOf = (r: LiveResult) => (eff ? eff(r).b : r.b);
+  const aOf = (r: LiveResult) => (eff ? eff(r).a : effectiveAvg(r));
   return (x, y) => {
     const primary = byAvg
-      ? cmp(rankKey(effectiveAvg(x)), rankKey(effectiveAvg(y)))
-      : cmp(rankKey(x.b), rankKey(y.b));
-    return primary !== 0 ? primary : cmp(rankKey(x.b), rankKey(y.b));
+      ? cmp(rankKey(aOf(x)), rankKey(aOf(y)))
+      : cmp(rankKey(bOf(x)), rankKey(bOf(y)));
+    return primary !== 0 ? primary : cmp(rankKey(bOf(x)), rankKey(bOf(y)));
   };
 }
 
 // 已排序结果 → 每行竞赛名次 (并列同名次、跳号,Reg 9f15);无成绩 (b===0) → null (显示 '-')。
-function computePlaces(results: LiveResult[], byAvg: boolean): (number | null)[] {
-  const cmpRank = rankComparator(byAvg);
+function computePlaces(results: LiveResult[], byAvg: boolean, eff?: EffRank): (number | null)[] {
+  const cmpRank = rankComparator(byAvg, eff);
   const places: (number | null)[] = [];
   let prevPlace = 0;
   results.forEach((r, idx) => {
@@ -315,12 +338,13 @@ function computePlaces(results: LiveResult[], byAvg: boolean): (number | null)[]
 //   cubing.com(data-events 原生)/wca_db/wca(有成绩轮恒 1)各源已正确。按项目独立判,
 //   所以一场比赛里已结束的项目可先出领奖台,未结束的项目不出。
 // 排名口径镜像 live 视图的 filteredResults;并列第三名一并带上 (Reg 9f15,并列铜牌)。
-function computePodiumGroups(data: CompData): PodiumGroup[] {
+function computePodiumGroups(data: CompData, changeMap?: Map<string, ResultChange[]>): PodiumGroup[] {
   const out: PodiumGroup[] = [];
+  const eff = makeEffRank(data.users, changeMap);
   for (const ev of data.events) {
     const finalRd = ev.rs[ev.rs.length - 1];
     if (!finalRd || finalRd.s !== 1) continue;
-    const cmpRank = rankComparator(isAvgRankedFormat(finalRd.f));
+    const cmpRank = rankComparator(isAvgRankedFormat(finalRd.f), eff);
     const ranked = (data.resultsByRound[roundKey(ev.i, finalRd.i)] || []).slice()
       .filter(r => r.b !== 0)
       .sort(cmpRank);
@@ -723,7 +747,7 @@ export default function CompDetailPage() {
   }, [hasResults, slug]);
   const showScramblesTab = scramblesPublished;
   // 领奖台:各项目决赛前三。比赛结束(所有项目末轮都有成绩)且有领奖台时默认展示。
-  const podiumGroups = useMemo(() => (data ? computePodiumGroups(data) : []), [data]);
+  const podiumGroups = useMemo(() => (data ? computePodiumGroups(data, changeMap) : []), [data, changeMap]);
   const compRecords = useMemo(() => (data ? computeCompRecords(data) : []), [data]);
   const hasPodiumTab = podiumGroups.length > 0 || compRecords.length > 0;
   // 全场结束 = 每个项目的决赛(末轮)都 s===1。比「末轮有成绩」严格:决赛进行中(s===2)不算结束。
@@ -1064,8 +1088,8 @@ export default function CompDetailPage() {
         arr = all.filter(r => set.has(r.n));
       }
     }
-    return arr.slice().sort(rankComparator(isAvgRankedFormat(currentRound.rd.f)));
-  }, [data, currentRound, filterParam]);
+    return arr.slice().sort(rankComparator(isAvgRankedFormat(currentRound.rd.f), makeEffRank(data.users, changeMap)));
+  }, [data, currentRound, filterParam, changeMap]);
 
   const advancers = useMemo(() => {
     if (!data || !currentRound) return new Set<number>();
@@ -1893,11 +1917,13 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
   }, []);
   // 切项目 / 轮次重置排序(把数 / 量纲不同)。
   useEffect(() => { setSort({ key: null, dir: 'asc' }); }, [round?.e, round?.i]);
+  // 成绩变更覆盖层感知的有效值(订正后的 best/average),供名次 + 列头排序按订正值排。
+  const eff = useMemo(() => makeEffRank(users, changeMap), [users, changeMap]);
   const displayResults = useMemo(() => {
     if (!sort.key) return results;
     const k = sort.key, dir = sort.dir;
     const valOf = (r: LiveResult): number =>
-      k === 'average' ? effectiveAvg(r) : k === 'single' ? r.b : (r.v[Number(k.slice(3))] ?? 0);
+      k === 'average' ? eff(r).a : k === 'single' ? eff(r).b : (r.v[Number(k.slice(3))] ?? 0);
     return results.slice().sort((a, b) => {
       const va = valOf(a), vb = valOf(b);
       const ia = !(va > 0), ib = !(vb > 0);   // DNF/DNS/空 = 无效
@@ -1906,7 +1932,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
       if (ib) return -1;
       return dir === 'asc' ? va - vb : vb - va;
     });
-  }, [results, sort]);
+  }, [results, sort, eff]);
 
   if (!round) return null;
   const isAverageFormat = isAvgRankedFormat(round.f);
@@ -1918,7 +1944,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
   const maxRowAttempts = results.reduce((m, r) => Math.max(m, r.v.length), 0);
   const attemptCount = Math.max(formatAttempts, maxRowAttempts);
   // 竞赛名次 (并列同名次,Reg 9f15);领奖台奖牌色按名次而非行序染 (并列第一 → 两金,无银)。
-  const places = computePlaces(results, isAverageFormat);
+  const places = computePlaces(results, isAverageFormat, eff);
   // 名次按选手号索引:排序打散行序后,名次列仍显示竞赛名次(而非当前行号)。
   const placeByN = new Map<number, number | null>();
   results.forEach((r, i) => placeByN.set(r.n, places[i] ?? null));
