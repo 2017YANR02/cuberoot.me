@@ -68,6 +68,18 @@ async function recognizeZbllCase(pattern: KPattern): Promise<string | null> {
  * which are home-slot-based and therefore frame-invariant) instead of slot IDs.
  */
 function newlySolvedSlots(prev: StageInfo, curr: StageInfo): F2lSlotId[] {
+  // A fully solved cube has every F2L pair done, but detectStage reports its
+  // solvedPairs in the DEFAULT (yellow-on-D) frame (corners 4..7). A colored-
+  // cross prev identifies its pairs by the cross color's own cubies (e.g. a
+  // white cross uses corners 0..3), so the piece-id sets never overlap and the
+  // diff below would falsely flag all 4 pairs as "newly solved" — turning a
+  // pure last-layer line (OLL/PLL/ZBLL) into a bogus 4-slot pair transition.
+  // When curr is solved, the pairs genuinely completed on this line are exactly
+  // the ones prev was still missing.
+  if (curr.stage === 'solved') {
+    const ALL: F2lSlotId[] = ['FR', 'FL', 'BL', 'BR'];
+    return ALL.filter(s => !prev.solvedSlots.includes(s));
+  }
   const prevKeys = new Set(prev.solvedPairs.map(([c, e]) => `${c}.${e}`));
   const out: F2lSlotId[] = [];
   for (let i = 0; i < curr.solvedSlots.length; i++) {
@@ -430,8 +442,8 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
       const i2 = t.ordinalIndex + 1;
       const c1 = slotColors(curr.canonicalPattern, t.slots[0]);
       const c2 = slotColors(curr.canonicalPattern, t.slots[1]);
-      pushPair(`${c1.pair} & ${c2.pair}${sfx}`);
-      pushPair(`F2L${i1} & F2L${i2}${sfx}`);
+      pushPair(`${c1.pair}+${c2.pair}${sfx}`);
+      pushPair(`F2L${i1}+F2L${i2}${sfx}`);
       return out;
     }
   }

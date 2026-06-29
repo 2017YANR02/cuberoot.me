@@ -14,7 +14,11 @@
  */
 
 import type { KPattern, KTransformation } from 'cubing/kpuzzle';
-import { F2L_SLOT_DEFS, evaluateCanonical } from './stage_detect';
+import {
+  F2L_SLOT_DEFS,
+  CROSS_EDGES_BY_FACE, defaultCentersTransform,
+  edgeHome, cornerHome,
+} from './stage_detect';
 import { getCube3, simplifyAlg, invertAlg } from './cube3';
 import {
   CORNER_STICKERS, EDGE_STICKERS,
@@ -185,75 +189,145 @@ export function warmupF2lTable(): Promise<void> {
   return buildTable().then(() => undefined);
 }
 
-// ── Brute-force fallback ────────────────────────────────────────────────────
-// The fingerprint lookup is a fast O(1) path but is incomplete: it misses algs
-// whose setup moves the centres (wide moves f/d/l/M, whole-cube y rotations) —
-// their DB fingerprint is captured in a rotated frame the AUF-only query can't
-// reach — and it only matches the default (yellow-cross-on-D) colour frame. A
-// real solve on a white (or any non-yellow) cross sits in a frame whose centres
-// aren't home, so the fingerprint never matches. Recolouring the query is not a
-// clean option (a true colour-relabel that preserves orientation isn't a simple
-// transformation compose). So we fall back to brute force: try every DB alg
-// (× AUF) against the cross-on-D canonical pattern and verify with the
-// frame-invariant `evaluateCanonical`. This is colour-neutral and complete.
+// ── Robust frame-invariant fallback ─────────────────────────────────────────
+// The fingerprint lookup is a fast O(1) path but is fragile for non-yellow /
+// tilted crosses: a real solve on a white (or L/R/etc.) cross sits in a frame
+// whose centres aren't home, and `crossOnDRotation` can even pick a DIFFERENT
+// cross face than the user's actual solve when two faces momentarily look like
+// crosses — landing the lookup in a frame where the cross-on-D DB algs don't
+// apply at all. The previous AUF-only brute (verified with `evaluateCanonical`,
+// which assumes the cross is on D) inherited the same blind spot. So we fall
+// back to a fully frame-invariant search: try every DB alg under every cube
+// rotation (×AUF) applied to the user's RAW state, and verify by PIECE IDENTITY
+// in the centres-home frame (cross edges home + target pair home + previously
+// solved pairs untouched). Colour-neutral and complete for every orientation.
 
+const PRE_ROTS = [
+  '', 'x', 'x2', "x'", 'y', 'y2', "y'", 'z', 'z2', "z'",
+  'x y', 'x y2', "x y'", "x' y", "x' y2", "x' y'", 'x2 y', 'x2 y2', "x2 y'",
+  'y x', 'y x2', "y x'", "y' x", "y' x'",
+] as const;
 const PRE_AUFS = ['', 'U', 'U2', "U'"] as const;
+/** F2L slot face opposite each face (U↔D, R↔L, F↔B) — for the last-layer face. */
+const OPP_FACE = [5, 3, 4, 1, 2, 0] as const;
 
-interface F2lBruteItem { t: KTransformation; alg: string; caseName: string; }
-let _f2lBruteItems: Promise<F2lBruteItem[]> | null = null;
-/** Every DB alg × AUF as a precomputed transformation, built once and cached —
- *  so the hot loop is one `applyTransformation` per candidate (no re-parsing). */
-async function getF2lBruteItems(): Promise<F2lBruteItem[]> {
-  if (_f2lBruteItems) return _f2lBruteItems;
-  _f2lBruteItems = (async () => {
+interface FlatAlg { t: KTransformation; alg: string; caseName: string; }
+let _flatF2l: Promise<FlatAlg[]> | null = null;
+/** Every distinct F2L (+ adv-F2L) DB alg as a precomputed transformation. */
+async function getFlatF2l(): Promise<FlatAlg[]> {
+  if (_flatF2l) return _flatF2l;
+  _flatF2l = (async () => {
     const [f2l, advF2l] = await Promise.all([loadAlg('3x3', 'f2l'), loadAlg('3x3', 'adv-f2l')]);
     const kp = await getCube3();
-    const items: F2lBruteItem[] = [];
+    const items: FlatAlg[] = [];
     const seen = new Set<string>();
     for (const c of [...f2l.cases, ...advF2l.cases]) {
       for (let o = 0; o < 4; o++) {
         for (const v of c.algs[o] ?? []) {
-          if (!v.alg) continue;
-          for (const auf of PRE_AUFS) {
-            const full = simplifyAlg(auf ? `${auf} ${v.alg}` : v.alg);
-            if (!full || seen.has(full)) continue;
-            seen.add(full);
-            try { items.push({ t: kp.algToTransformation(full), alg: full, caseName: c.name }); }
-            catch { /* unparseable DB alg — drop, matching applyAlg's catch path */ }
-          }
+          if (!v.alg || seen.has(v.alg)) continue;
+          seen.add(v.alg);
+          try { items.push({ t: kp.algToTransformation(v.alg), alg: v.alg, caseName: c.name }); }
+          catch { /* unparseable DB alg — drop, matching applyAlg's catch path */ }
         }
       }
     }
     return items;
   })();
-  return _f2lBruteItems;
+  return _flatF2l;
+}
+
+interface PreMod { alg: string; t: KTransformation; }
+let _preMods: Promise<PreMod[]> | null = null;
+/** 24 cube rotations × 4 AUF as precomputed (rotation∘AUF) transformations. */
+async function getPreMods(): Promise<PreMod[]> {
+  if (_preMods) return _preMods;
+  _preMods = (async () => {
+    const kp = await getCube3();
+    const out: PreMod[] = [];
+    for (const rot of PRE_ROTS) {
+      for (const auf of PRE_AUFS) {
+        const alg = [rot, auf].filter(Boolean).join(' ');
+        out.push({ alg, t: alg ? kp.algToTransformation(alg) : kp.identityTransformation() });
+      }
+    }
+    return out;
+  })();
+  return _preMods;
+}
+
+export interface F2lRobustCtx {
+  /** Home-frame cross face / colour code (from `detectStage().crossFaceHome`). */
+  crossFace: number;
+  /** Already-solved (cornerHomeId, edgeHomeId) pairs — must stay solved. */
+  prevPairs: ReadonlyArray<readonly [number, number]>;
+  /** Unsolved (cornerHomeId, edgeHomeId) pairs we want to solve this step. */
+  targets: ReadonlyArray<readonly [number, number]>;
+}
+export interface F2lRobustEntry {
+  /** Alg in the user's RAW frame — ready to insert as-is (no canonRot prefix). */
+  alg: string;
+  caseName: string;
+  /** The (corner,edge) pair this alg solves. */
+  pair: readonly [number, number];
+  /** True iff after the alg ALL four F2L pairs are solved AND the last-layer
+   *  edges are oriented — i.e. the move doubled as a ZBLS / EOLS finish. */
+  eoDone: boolean;
+}
+
+/** Last-layer EO done in the centres-home frame: every LL-face edge shows an
+ *  axis colour (cross or last-layer colour) on the LL face. */
+function llEdgesOriented(home: KPattern, crossFace: number): boolean {
+  const ll = OPP_FACE[crossFace];
+  for (const e of CROSS_EDGES_BY_FACE[ll]) {
+    const s = edgeStickerOnFace(home, e, ll);
+    if (s !== crossFace && s !== ll) return false;
+  }
+  return true;
 }
 
 /**
- * Brute-force F2L lookup: returns every DB alg (in canonical frame, AUF folded
- * in) that solves `slotIdx` while keeping the cross and the already-solved slots
- * (`prevSolvedSlots`) intact. Verified with `evaluateCanonical`, so it is
- * cross-colour neutral. Use as a fallback when `lookupF2lAlgs` returns nothing.
+ * Frame-invariant F2L finder for the user's RAW state. Tries every DB alg under
+ * every cube rotation (×AUF), keeping only those that solve one of `targets`
+ * while preserving the cross and `prevPairs`. Verification is pure piece
+ * identity in the centres-home frame, so it works for every cross colour and
+ * every inspection rotation. Returns RAW-frame algs (insert directly).
+ *
+ * Cost: ~96 pre-modifiers × DB size, each one `applyTransformation` + an O(1)
+ * cached centres-home normalisation. simplify runs only on the few survivors.
  */
-export async function lookupF2lAlgsBrute(
-  canonical: KPattern,
-  slotIdx: number,
-  prevSolvedSlots: readonly string[],
-): Promise<F2lAlgEntry[]> {
-  const items = await getF2lBruteItems();
-  const slotId = F2L_SLOT_DEFS[slotIdx].id;
-  const out: F2lAlgEntry[] = [];
-  for (const { t, alg, caseName } of items) {
-    let post: KPattern;
-    try { post = canonical.applyTransformation(t); } catch { continue; }
-    const ev = evaluateCanonical(post);
-    if (!ev.crossOk || !ev.solvedSlots.includes(slotId)) continue;
-    let preserved = true;
-    for (const ps of prevSolvedSlots) {
-      if (!ev.solvedSlots.includes(ps as typeof ev.solvedSlots[number])) { preserved = false; break; }
+export async function lookupF2lAlgsRobust(
+  rawStart: KPattern,
+  ctx: F2lRobustCtx,
+): Promise<F2lRobustEntry[]> {
+  if (ctx.targets.length === 0) return [];
+  const [algs, preMods] = await Promise.all([getFlatF2l(), getPreMods()]);
+  const crossEdges = CROSS_EDGES_BY_FACE[ctx.crossFace];
+  const out: F2lRobustEntry[] = [];
+  const seen = new Set<string>();
+
+  for (const pre of preMods) {
+    let base: KPattern;
+    try { base = rawStart.applyTransformation(pre.t); } catch { continue; }
+    for (const { t, alg, caseName } of algs) {
+      let post: KPattern;
+      try { post = base.applyTransformation(t); } catch { continue; }
+      const homeT = await defaultCentersTransform(post);
+      if (!homeT) continue;
+      const home = post.applyTransformation(homeT);
+      // Cross must survive.
+      if (!crossEdges.every(e => edgeHome(home, e))) continue;
+      // Previously solved pairs must survive.
+      if (!ctx.prevPairs.every(([c, e]) => cornerHome(home, c) && edgeHome(home, e))) continue;
+      // At least one target pair must now be solved.
+      const solved = ctx.targets.find(([c, e]) => cornerHome(home, c) && edgeHome(home, e));
+      if (!solved) continue;
+      const full = simplifyAlg([pre.alg, alg].filter(Boolean).join(' '));
+      if (!full || seen.has(full)) continue;
+      seen.add(full);
+      const allDone = ctx.targets.every(([c, e]) => cornerHome(home, c) && edgeHome(home, e));
+      const eoDone = allDone && llEdgesOriented(home, ctx.crossFace);
+      out.push({ alg: full, caseName, pair: solved, eoDone });
     }
-    if (!preserved) continue;
-    out.push({ alg, caseName, oriIdx: slotIdx });
   }
   return out;
 }
