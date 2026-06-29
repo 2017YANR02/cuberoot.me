@@ -16,8 +16,6 @@ import {
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/I.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import './head-to-head.css';
 import { T } from '@/i18n/tr';
@@ -221,7 +219,6 @@ export default function HeadToHeadChapter() {
           {<T zh={<>对决中出现意外时,代表给一方额外机会,则两人都要给;若意外不影响「谁赢这一分」,则不给。比赛一旦结束,意外的处理即为最终结果(作弊除外)。完整说明见 <Link href="/regulation/incidents" className="h2h-link">第 11 章(意外事件)</Link>。</>} en={<>If an incident occurs in a match and the Delegate grants one competitor an extra, both must receive one; if it does not affect who wins the point, none is given. Once the match is completed the resolution is final (cheating excepted). See <Link href="/regulation/incidents" className="h2h-link">Article 11 (Incidents)</Link>.</>} />}
         </Callout>
       </RegSection>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }

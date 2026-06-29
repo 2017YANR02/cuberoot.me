@@ -14,8 +14,6 @@ import {
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/A.json';
 import {
   RegSection, Callout, InspectionTimeline,
 } from '../_components/primitives';
@@ -203,7 +201,6 @@ export default function SpeedSolvingChapter() {
           {t('。', '.')}
         </p>
       </RegSection>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }

@@ -13,8 +13,6 @@ import { Hand, Eye, Wrench, Timer } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { useT } from '../../../../hooks/useT';
 import RegArticleLayout from '../_components/RegArticleLayout';
-import FullClauses from '../_components/FullClauses';
-import clauses from '../_data/reg-clauses/C.json';
 import { RegSection, Callout, RegQuote, RegList } from '../_components/primitives';
 import './one-handed.css';
 import { T } from '@/i18n/tr';
@@ -157,7 +155,6 @@ export default function OneHandedChapter() {
                                                                                     </>} />}
         </Callout>
       </RegSection>
-      <FullClauses data={clauses} />
     </RegArticleLayout>
   );
 }
