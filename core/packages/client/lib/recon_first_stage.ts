@@ -10,33 +10,31 @@
  * OPTIMAL cross / xcross / xxcross solution for whatever color currently sits on
  * the bottom (D-center) of the scrambled cube.
  *
- * Frame handling — the crux (and the source of the old red/orange bug):
- *   - cubing.js KPattern orbits are POSITION-of-piece indexed: `pieces[i]` is the
- *     slot piece `i` now occupies, NOT the piece sitting in slot `i`. So the colour
- *     ON the D face is the centre piece AT position 5 (`pieces.indexOf(5)`), not
- *     `pieces[5]` (which is merely where the yellow centre went). Reading it wrong
- *     fed the engine the wrong cross colour for any z/x/y quarter-turn inspection.
- *   - The engine normalizes its input to a white-top frame and returns each
- *     solution prefixed with a rotation (its FACES view) that brings the target
- *     face to D. We pick the engine face whose view puts the REAL bottom colour on
- *     D *in cubing.js terms* (derived live in `colorToFaceIdx`, so no convention is
- *     hand-coded). Then `g⁻¹·engineSol` (g = raw↔normalized rotation) cancels that
- *     view down to pure face moves, save for a whole-cube y-regrip.
- *   - That regrip is folded away by relabelling the body through the single y-power
- *     `yk` that reproduces the engine's exact cross state (checked with
- *     `rotationBetween`, which compares patterns directly — unlike the sticker
- *     cross checker, which mis-reads z-rotated frames). Result: clean face-move
- *     cross solutions with no stray leading rotation.
+ * Frame handling — the crux (and the source of repeated red/green/orange bugs):
+ *   - Everything user-facing (the cube renderer + this Rust engine, which both go
+ *     through `cross-solver`'s rotation tables) shares ONE rotation convention.
+ *     cubing.js composes whole-cube rotations the other way, so reading the bottom
+ *     colour off a cubing.js KPattern disagrees with the render for x-tilted
+ *     inspections (`x z` shows RED on the bottom, cubing.js computes green/orange).
+ *     So the bottom colour comes from `bottomColorIdx` (cross-solver convention),
+ *     NOT from a cubing.js pattern.
+ *   - The engine normalizes its input to white-top and returns each solution with
+ *     a leading view rotation. We drop that rotation (`splitBody`) — the engine's
+ *     face moves solve the cross with the bottom colour on D, and the inspection
+ *     frame ALSO has it on D, so the two frames differ only by a whole-cube y.
+ *   - We find the single y-power `yk` that makes the relabelled body actually solve
+ *     the bottom cross (verified with `crossLength` — the cross-solver, same
+ *     convention as the render — so it can't be fooled by a frame mismatch), then
+ *     reuse it for every solution. Result: clean pure-face-move cross solutions
+ *     with no stray leading rotation, for every inspection / cross colour.
  *
  * Cost: the 'cross' table set is ~27 MB download / ~70 MB worker memory, loaded
  * lazily on the FIRST Tab only (never on page load). Results are cached per
  * scramble+prefix so repeat Tabs / live filtering are instant.
  */
 
-import type { KPattern } from 'cubing/kpuzzle';
-import { patternFromAlg, simplifyAlg, invertAlg } from './cube3';
-import { normalizeScramble, isAnalysableScramble } from './cross-solver';
-import { rotationBetween } from './stage_detect';
+import { simplifyAlg } from './cube3';
+import { bottomColorIdx, crossLength, isAnalysableScramble, type CrossColor } from './cross-solver';
 import { normalize } from './recon-norm-cross';
 import { getRustCrossPool, poolSizeForDevice } from './rust-cross-pool';
 
@@ -105,15 +103,11 @@ export function computeFirstStage(scramble: string, prevMoves: string): Promise<
 const bodyLen = (alg: string): number =>
   alg.replace(/^(?:[xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
 
-/** Colour (= centre home id) currently shown on the D face. cubing.js's CENTERS
- *  orbit is SOURCE-indexed: pieces[piece] = the position that piece moved to. So
- *  the colour on D (position 5) is the piece whose value is 5 → indexOf(5), NOT
- *  pieces[5] (which is where the yellow centre went). Verified against z→red-on-D. */
-const dColorOf = (p: KPattern): number =>
-  p.patternData.CENTERS.pieces.findIndex((pos) => pos === 5);
-
 // Bottom colour → engine faceIdx that solves that colour's cross (-1 if absent).
 const colorToFaceIdx = (colour: number): number => (ENGINE_FACE_COLOUR as readonly number[]).indexOf(colour);
+
+// Home colour index → cross-solver CrossColor name (for crossLength verification).
+const COLOR_NAME: readonly CrossColor[] = ['White', 'Red', 'Green', 'Orange', 'Blue', 'Yellow'];
 
 // Strip leading whole-cube rotations → the pure face-move body.
 function splitBody(alg: string): string {
@@ -140,19 +134,12 @@ async function doCompute(scramble: string, prevMoves: string): Promise<FirstStag
   const eff = [scramble, prevMoves].filter(Boolean).join(' ').trim();
   if (!eff || !isAnalysableScramble(eff)) return { kind: 'empty', reasonKey: FAILED };
 
-  const raw = await patternFromAlg(eff);
-  const bottom = dColorOf(raw); // colour ON the D face = indexOf(5) (CENTERS is source-indexed)
+  // Bottom colour in the render / engine convention (NOT cubing.js — see header).
+  const bottom = bottomColorIdx(eff);
   if (bottom < 0) return { kind: 'empty', reasonKey: FAILED };
   const faceIdx = colorToFaceIdx(bottom);
   if (faceIdx < 0) return { kind: 'empty', reasonKey: FAILED };
-
-  const normStr = normalizeScramble(eff);
-  if (normStr == null) return { kind: 'empty', reasonKey: FAILED };
-  const norm = await patternFromAlg(normStr);
-  // g maps normalized → raw (raw = norm·g); recon solution = g⁻¹ · engineSol.
-  const g = await rotationBetween(norm, raw);
-  if (g == null) return { kind: 'empty', reasonKey: FAILED };
-  const gInv = invertAlg(g);
+  const bottomName = COLOR_NAME[bottom];
 
   const pool = getRustCrossPool('cross', poolSizeForDevice());
   await pool.ready;
@@ -167,19 +154,20 @@ async function doCompute(scramble: string, prevMoves: string): Promise<FirstStag
       res = await pool.solveMoves(eff, stage, faceIdx, { extra: 0, cap: FIRST_STAGE_CAP, combo: '' });
     } catch { continue; }
     for (const sol of res.sols) {
-      const simp = simplifyAlg(gInv ? `${gInv} ${sol.m}` : sol.m);
-      if (!simp) continue;
-      const body = splitBody(simp);
-      // Resolve the y-regrip once: simp is the correct cross (raw·simp = norm·eng),
-      // but may carry a whole-cube rotation. Find the y-power whose relabel of the
-      // body reproduces simp's exact cross state, then reuse it for all solutions.
+      // Engine returns "viewRotation + face moves" in white-top; drop the rotation.
+      // Its face moves solve the cross with the bottom colour on D; the inspection
+      // frame also has it on D, so the two differ only by a whole-cube y.
+      const body = splitBody(sol.m);
+      if (!body) continue;
+      // Resolve that y-regrip once: pick the y-power whose relabelled body actually
+      // solves the bottom cross from the user's real state (crossLength == 0, same
+      // rotation convention as the engine/render — immune to frame mismatch).
       if (yk == null) {
-        const target = raw.applyAlg(simp);
         for (let k = 0; k < 4; k++) {
-          if ((await rotationBetween(raw.applyAlg(relabelY(body, k)), target)) != null) { yk = k; break; }
+          if (crossLength(`${eff} ${relabelY(body, k)}`, bottomName) === 0) { yk = k; break; }
         }
       }
-      const S = yk == null ? simp : relabelY(body, yk);
+      const S = simplifyAlg(yk == null ? sol.m : relabelY(body, yk));
       if (!S || seen.has(S)) continue;
       seen.add(S);
       out.push({ text: S, category, caseName: category, len: bodyLen(S) });
