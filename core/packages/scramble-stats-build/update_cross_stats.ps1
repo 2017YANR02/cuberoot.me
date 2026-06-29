@@ -311,6 +311,82 @@ SELECT 'wca_scramble_steps_total='||count(*) FROM wca_scramble_steps;
   Remove-Item $d.DeltaCsv,$d.DeletedTxt -Force -EA SilentlyContinue
   Write-Host "  [steps] 完成 (manifest 已更新, 全量 $rows 行)。" -ForegroundColor Green
 }
+# 镜像 wca_scrambles 增量灌库(comp 级 DELETE+INSERT)+ wca_competitions upsert(幂等兜底)。
+# 真相源 = prod 现有 (competition_id -> 行数);不维护本地 manifest -> 首跑即正确、自愈、与 prod 永不漂移。
+# 数据来自 incremental.py 解出的 incremental/tsv/{Scrambles,Competitions}.tsv(全项目, 非仅 333 系)。
+# wca_scrambles 无 6 列自然键 UNIQUE(且 WCA dump 同场偶有两套 scramble)-> 不能 ON CONFLICT, 按场 DELETE+INSERT。
+# 返回 $true 表示镜像有变(新场)。服务器密码从其自身 /root/core-api/.env 读, 不入(进 git 的)脚本。
+function Load-MirrorToPg {
+  $scrTsv  = Join-Path $IncrDir 'tsv\Scrambles.tsv'
+  $compTsv = Join-Path $IncrDir 'tsv\Competitions.tsv'
+  if(-not (Test-Path $scrTsv)){ Write-Host '  [mirror] 缺 tsv/Scrambles.tsv (incremental.py 没解出?), 跳过' -ForegroundColor Yellow; return $false }
+  $pwExpr   = '$(grep -oP ''DB_PASS=\K.*'' /root/core-api/.env | tr -d ''[:space:]'')'
+  $psqlBase = "PGPASSWORD=$pwExpr psql -U recon_user -h 127.0.0.1 -d cuberoot_db"
+  # 1. prod 现有 (comp -> 行数) 作真相源(chr(9)=tab 分隔)
+  $prodCounts = Join-Path $IncrDir 'prod_comp_counts.tsv'
+  ssh $StaticHost "$psqlBase -t -A -c 'SELECT competition_id||chr(9)||count(*) FROM wca_scrambles GROUP BY competition_id'" |
+    Set-Content -LiteralPath $prodCounts -Encoding utf8
+  if($LASTEXITCODE -ne 0){ Write-Host '  [mirror] 拉 prod comp 行数失败, 跳过' -ForegroundColor Yellow; return $false }
+  # 2. comp 级 diff -> delta(镜像列序)+ competitions upsert CSV
+  $delta    = Join-Path $IncrDir 'mirror_delta.csv'
+  $comps    = Join-Path $IncrDir 'mirror_comps.txt'
+  $compsCsv = Join-Path $IncrDir 'wca_competitions_upsert.csv'
+  $argv = @((Join-Path $PSScriptRoot 'build_mirror_delta.mjs'),'--scrambles',$scrTsv,'--prod-counts',$prodCounts,'--out-delta',$delta,'--out-comps',$comps)
+  if(Test-Path $compTsv){ $argv += @('--competitions',$compTsv,'--out-comps-csv',$compsCsv) }
+  $json = & node @argv
+  if($LASTEXITCODE -ne 0){ throw '[mirror] build_mirror_delta.mjs 失败' }
+  $st = ($json | Select-Object -Last 1 | ConvertFrom-Json)
+  Write-Host ("  [mirror] export {0} 场 / prod {1} 场 -> 待灌 {2} 场 ({3} 行) + competitions {4} 行" -f $st.exportComps,$st.prodComps,$st.toLoadComps,$st.deltaRows,$st.compsRows) -ForegroundColor DarkCyan
+  $changed = $false
+  # 3. 镜像 delta: staging -> 按场 DELETE+INSERT
+  if($st.toLoadComps -gt 0){
+    $sql = @"
+\set ON_ERROR_STOP on
+BEGIN;
+CREATE TEMP TABLE _scr_stage (competition_id varchar(32), event_id varchar(6), round_type_id varchar(1), group_id varchar(3), is_extra smallint, scramble_num int, scramble text) ON COMMIT DROP;
+\copy _scr_stage (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,scramble) FROM '/root/_mirror_delta.csv' WITH (FORMAT csv, HEADER true)
+DELETE FROM wca_scrambles WHERE competition_id IN (SELECT DISTINCT competition_id FROM _scr_stage);
+INSERT INTO wca_scrambles (competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,scramble)
+  SELECT competition_id,event_id,round_type_id,group_id,is_extra,scramble_num,scramble FROM _scr_stage;
+COMMIT;
+SELECT 'wca_scrambles_total='||count(*) FROM wca_scrambles;
+"@
+    $localSql = Join-Path $env:TEMP '_mirror_load.sql'
+    [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
+    scp $delta "${StaticHost}:/root/_mirror_delta.csv"; if($LASTEXITCODE -ne 0){ throw '[mirror] delta scp 失败' }
+    scp $localSql "${StaticHost}:/root/_mirror_load.sql"; if($LASTEXITCODE -ne 0){ throw '[mirror] SQL scp 失败' }
+    ssh $StaticHost "$psqlBase -v ON_ERROR_STOP=1 -f /root/_mirror_load.sql; rc=`$?; rm -f /root/_mirror_delta.csv /root/_mirror_load.sql; exit `$rc"
+    if($LASTEXITCODE -ne 0){ throw '[mirror] 镜像灌库失败' }
+    Remove-Item $localSql -Force -EA SilentlyContinue
+    $changed = $true
+    Write-Host "  [mirror] 镜像增量灌库完成 ($($st.toLoadComps) 场 / $($st.deltaRows) 行)。" -ForegroundColor Green
+  } else { Write-Host '  [mirror] 镜像无新场, 跳过。' -ForegroundColor DarkGray }
+  # 4. competitions upsert(幂等;保过去赛 name/date/country 齐全, 不把已有真值覆成 unknown)
+  if((Test-Path $compsCsv) -and $st.compsRows -gt 0){
+    $sql = @"
+\set ON_ERROR_STOP on
+BEGIN;
+CREATE TEMP TABLE _comp_stage (id text, name text, country_id text, start_date text, end_date text) ON COMMIT DROP;
+\copy _comp_stage (id,name,country_id,start_date,end_date) FROM '/root/_comps_upsert.csv' WITH (FORMAT csv, HEADER true)
+INSERT INTO wca_competitions (id,name,country_id,start_date,end_date)
+  SELECT id, name, COALESCE(NULLIF(country_id,''),'unknown'), NULLIF(start_date,'')::date, NULLIF(end_date,'')::date FROM _comp_stage
+  ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,
+    country_id = CASE WHEN EXCLUDED.country_id <> 'unknown' THEN EXCLUDED.country_id ELSE wca_competitions.country_id END,
+    start_date=EXCLUDED.start_date, end_date=EXCLUDED.end_date;
+COMMIT;
+SELECT 'wca_competitions_total='||count(*) FROM wca_competitions;
+"@
+    $localSql = Join-Path $env:TEMP '_comps_upsert.sql'
+    [IO.File]::WriteAllText($localSql, ($sql -replace "`r`n","`n"), [Text.UTF8Encoding]::new($false))
+    scp $compsCsv "${StaticHost}:/root/_comps_upsert.csv"; if($LASTEXITCODE -ne 0){ throw '[mirror] comps scp 失败' }
+    scp $localSql "${StaticHost}:/root/_comps_upsert.sql"; if($LASTEXITCODE -ne 0){ throw '[mirror] comps SQL scp 失败' }
+    ssh $StaticHost "$psqlBase -v ON_ERROR_STOP=1 -f /root/_comps_upsert.sql; rc=`$?; rm -f /root/_comps_upsert.csv /root/_comps_upsert.sql; exit `$rc"
+    if($LASTEXITCODE -ne 0){ throw '[mirror] competitions upsert 失败' }
+    Remove-Item $localSql -Force -EA SilentlyContinue
+    Write-Host "  [mirror] competitions upsert 完成 ($($st.compsRows) 行)。" -ForegroundColor Green
+  }
+  return $changed
+}
 function AppendData($master,$src,$skipHeader){
   # LF 安全追加: 先确保 master 末尾有换行, 再逐行 append (跳过源 header)
   $needNL=$false
@@ -616,7 +692,7 @@ if($Wizard){
 Write-Host ("作业: {0}" -f ((@(if($runStages){'stages'}; if($run333opt){'333opt'}; if($runPuzzles){'puzzles'})) -join ' + ')) -ForegroundColor Cyan
 
 # ===== JOB: stages (3x3 阶段难度: 取数 + std + 变体) =====
-$nNew = 0; $stdChanged = $false; $variantChanged = $false
+$nNew = 0; $stdChanged = $false; $variantChanged = $false; $mirrorChanged = $false
 if($runStages){
 # ---- 1. 增量取数 ----
 if($PublishOnly){
@@ -696,6 +772,14 @@ if($DryRun){
   return
 }
 
+# ---- 1b. 镜像 wca_scrambles + competitions 增量灌库 ----
+# 独立于 std/变体/333opt: 覆盖全项目新赛(连只有 2x2/金字塔的比赛也进镜像), 让 recon/timer 的「最优打乱」
+# join 路径(只在 fromMirror 命中时 LEFT JOIN wca_scramble_optimal)对新赛也走得通。prod 行数为真相源, comp 级。
+if((-not $SkipSolve) -and (-not $SourceCsv) -and (-not $NoPublish)){
+  Step '1b 镜像 wca_scrambles + competitions 增量灌库 (prod 行数为真相源, comp 级 DELETE+INSERT)'
+  if(Load-MirrorToPg){ $mirrorChanged = $true }
+}
+
 # ---- 2/3. std solver + 追加 master (只在有新打乱时) ----
 $stdChanged = $false
 if($nNew -gt 0){
@@ -705,8 +789,15 @@ if($nNew -gt 0){
     $env:CUBE_TABLE_DIR        = Join-Path $SolverDir 'tables'
     $env:CUBE_ALLOW_HUGE_TABLES = '1'
     $env:CUBE_RUN_FULL_STD      = '1'
-    $newTxt | & $StdAnalyzer    # stdin=文件名; [PROG] N/total 直接打到终端
-    if($LASTEXITCODE -ne 0){ throw 'std_analyzer 失败' }
+    # stdin=文件名; analyzer 是交互程序(有 banner + "Enter file (or exit):" 提示), 管道喂文件名时这些会漏到终端。
+    # 同变体步骤(Sync-Variant)做法: 只放行 [PROG] 进度行, 其余(banner/提示/杂项)转存日志, 终端干净。
+    $stdLog = Join-Path $IncrDir 'std_analyzer.log'
+    if(Test-Path $stdLog){ Remove-Item $stdLog -Force }
+    $newTxt | & $StdAnalyzer 2>&1 | ForEach-Object {
+      $s = "$_"
+      if($s -match '\[PROG\]'){ Write-Host $s } else { Add-Content -LiteralPath $stdLog -Value $s }
+    }
+    if($LASTEXITCODE -ne 0){ throw "std_analyzer 失败 (详见 $stdLog)" }
   }
   if(-not (Test-Path $stdOut)){ throw "solver 没产出 $stdOut" }
   $gotRows = (Lc $stdOut) - 1
@@ -782,7 +873,7 @@ if($runStages -or $runPuzzles){
 $optChanged = $false
 $willInject = $run333opt -or ($runStages -and ($stdChanged -or $variantChanged))
 
-if(-not $stdChanged -and -not $variantChanged -and -not $willInject -and -not $puzzleChanged -and -not $eventsChanged){
+if(-not $stdChanged -and -not $variantChanged -and -not $willInject -and -not $puzzleChanged -and -not $eventsChanged -and -not $mirrorChanged){
   Step '无任何数据变化, 结束。'
   return
 }
