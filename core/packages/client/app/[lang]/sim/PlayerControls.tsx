@@ -571,7 +571,7 @@ function emitRun(lo: number, hi: number, g: number, axis: AxisKey, N: number): s
     const pIdx = lo, qIdx = N + 1 - lo;
     return pIdx <= qIdx ? `${pIdx}${c.P.face}` + amtSuffix(g) : `${qIdx}${c.Q.face}` + amtSuffix(m4n(-g));
   }
-  return `${lo}-${hi}${c.P.face}w` + amtSuffix(g);                 // 内部连续段:范围宽层 2-3Rw
+  return `${lo}-${hi}${c.P.wide}` + amtSuffix(g);                  // 内部连续段:范围宽层 2-3u(小写;2-3Uw 也照样解析)
 }
 
 // 逐层向量 → 最短 token 串。枚举抽出的整体转体量 r∈0..3,各取残差按极大等量连续段成串;
@@ -1053,7 +1053,8 @@ export default function PlayerControls({
     // 把 shortenRotations 可能造出的相邻同轴并掉。
     let r = collapseSameAxis(simplifyAlg(s), order);
     r = collapseSameAxis(shortenRotations(r), order);
-    return r;
+    // 宽层输出统一小写记号(Rw→r、3Rw→3r、2-3Uw→2-3u);大小写两种写法输入都解析。
+    return r.replace(/([RLUDFB])w/g, (_, c: string) => c.toLowerCase());
   }, [isSq1, isIvy, corner, isTwistyMode, sq1Format, order]);
 
   const invertForPuzzle = useCallback((s: string): string => {
