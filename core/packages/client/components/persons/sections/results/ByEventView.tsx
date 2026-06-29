@@ -290,6 +290,7 @@ function EventRoundsList({
     if (!sort.key) return baseSorted;
     const key = sort.key, dir = sort.dir;
     const valOf = (r: WcaResultRow): number => {
+      if (key === 'pos') return r.pos;            // 名次:数字越小越好,与单次/平均同向(≤0 垫底)
       if (key === 'single') return r.best;
       if (key === 'average') return effectiveAverage(r, eventId);
       return r.attempts?.[Number(key.slice(3))] ?? 0;
@@ -326,7 +327,12 @@ function EventRoundsList({
                 <InfoTooltip content={t(ROUND_HINT_ZH, ROUND_HINT_EN)} />
               </span>
             </th>
-            <th className="wp-th-narrow">{t('排名', 'Pos')}</th>
+            <th className="wp-th-narrow">
+              <button type="button" className={`wp-sort-th ${sort.key === 'pos' ? 'is-active' : ''}`}
+                onClick={() => toggleSort('pos')} title={t('按排名排序', 'Sort by placement')}>
+                {t('排名', 'Pos')}{sortArrow('pos')}
+              </button>
+            </th>
             <th>
               <button type="button" className={`wp-sort-th ${sort.key === 'single' ? 'is-active' : ''}`}
                 onClick={() => toggleSort('single')} title={t('按单次排序', 'Sort by single')}>
