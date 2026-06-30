@@ -1029,51 +1029,19 @@
 
 /* ── Day List Panel ── */
 .calendar-page .day-list-panel {
-    max-width: 440px;
+    max-width: 600px;
     max-height: calc(100vh - 10vh);
     display: flex;
     flex-direction: column;
 }
-.calendar-page .day-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+/* 当日比赛 — 复用首页「报名」卡片网格(.reg-cards / .rc-*),只加滚动容器 */
+.calendar-page .day-list-cards {
     overflow-y: auto;
     min-height: 0;
     flex: 1 1 auto;
-}
-.calendar-page .day-list-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.15s;
-    color: var(--text);
-    text-align: left;
-}
-.calendar-page .day-list-item:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-.calendar-page .day-list-item .day-list-item-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-}
-.calendar-page .day-list-count {
-    font-size: 0.75rem;
-    color: var(--text-sub);
-    background: var(--surface-alt);
-    padding: 2px 7px;
-    border-radius: 10px;
+    /* 卡片角标星 / hover translateY 不被裁切 */
+    padding: 2px;
+    margin: -2px;
 }
 
 /* ── View toggle (Calendar / List) ── */
@@ -1366,7 +1334,7 @@
 .calendar-page .cl-col-sort:hover { color: var(--text); }
 .calendar-page .cl-col-sort.is-active { color: #4ade80; }
 
-/* ── 已取消比赛 — 列表 / 日历 / day-list / modal 共享样式 ── */
+/* ── 已取消比赛 — 列表 / 日历 / modal 共享样式 ── */
 .calendar-page .comp-list-row.is-cancelled {
     opacity: 0.55;
 }
@@ -1379,12 +1347,6 @@
     opacity: 0.55;
 }
 .calendar-page .event-bar.is-cancelled .event-bar-name {
-    text-decoration: line-through;
-}
-.calendar-page .day-list-item.is-cancelled {
-    opacity: 0.6;
-}
-.calendar-page .day-list-item.is-cancelled .day-list-item-name {
     text-decoration: line-through;
 }
 .calendar-page .modal-title-name.is-cancelled {
