@@ -231,7 +231,17 @@ function effectiveAvg(r: LiveResult): number {
 }
 
 // WCA ID (PleaseBeQuietXian2025) → cubing.com dash slug (Please-Be-Quiet-Xian-2025)。
-// 镜像 server cubing_live.ts 的 wcaIdToCubingSlug;data.name 带撇号/标点会 404,必须从无标点的 slug 推导。
+// cubing.com slug 优先用真实比赛名(有空格=词边界明确):按空格/连字符分段,每段剥非字母数字
+// (撇号等,与 WCA ID 同口径,Xi'an→Xian 不会 404),再用 '-' 连。无横杠的 WCA ID 反推会丢词边界,
+// 把内部大写词 "GraDUAL" 误拆成 "Gra-DUAL"(GuangzhouGraDUAL3x3I2026)。镜像 server cubing_live.ts。
+function nameToCubingSlug(name: string): string {
+  return name
+    .split(/[\s-]+/)
+    .map(t => t.replace(/[^A-Za-z0-9]/g, ''))
+    .filter(Boolean)
+    .join('-');
+}
+// 旧 ID 启发式:仅当没有比赛名时兜底(正常 data.name 必有)。
 function wcaIdToCubingSlug(wcaId: string): string {
   return wcaId
     .replace(/([a-z])([A-Z])/g, '$1-$2')
@@ -1386,7 +1396,7 @@ export default function CompDetailPage() {
               // 国家旗:compInfo(权威,来自比赛详情)优先,回退 slug 推断 —— 当天刚公示的比赛
               // compFlagIso2 还没数据,会丢旗 + 丢 cubing.com 图标,故用 compInfo 兜底。
               const iso2 = compInfo?.country_iso2?.toLowerCase() || compFlagIso2(slug);
-              const cubingSlug = data.cubingSlug || wcaIdToCubingSlug(data.slug);
+              const cubingSlug = data.cubingSlug || nameToCubingSlug(data.name) || wcaIdToCubingSlug(data.slug);
               const cubingUrl = `https://cubing.com/competition/${cubingSlug}`;
               const wcaUrl = `https://www.worldcubeassociation.org/competitions/${data.slug}`;
               // WCA Live 链接用内部数字 id(不含比赛名):有比赛 id 时深链到当前选中的轮次

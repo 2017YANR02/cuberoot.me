@@ -132,6 +132,7 @@ interface ScrapedMeta {
   name: string;
   type: string;
   events: EventMeta[];
+  slug?: string; // 成功抓到本 meta 的 cubing.com slug(下游复用,避免再从无横杠 ID 反推)
 }
 
 async function scrapeMeta(slug: string): Promise<ScrapedMeta> {
@@ -180,7 +181,7 @@ async function scrapeMeta(slug: string): Promise<ScrapedMeta> {
   // "Xi'an Cherry Blossom 2026 - Live - Cubing China" → "Xi'an Cherry Blossom 2026"
   name = name.replace(/\s*-\s*Live\s*-\s*Cubing China\s*$/i, '');
 
-  return { compId, name, type: typeRaw || 'WCA', events };
+  return { compId, name, type: typeRaw || 'WCA', events, slug };
 }
 
 // ─── WS fetch ──────────────────────────────────────────────────────────────
@@ -561,6 +562,18 @@ function wcaIdToCubingSlug(wcaId: string): string {
     .replace(/(\d)([A-Z])/g, '$1-$2')           // digit→UC: 3IV → 3-IV
     .replace(/([A-Z])(\d)/g, '$1-$2')           // UC→digit: IV2026 → IV-2026
     .replace(/(?<!\d)([a-z])(\d)/g, '$1-$2');   // lc→digit (前面不是 digit):League3 → League-3,但 NxN 里 x3 保留
+}
+
+/** 真实比赛名 → cubing.com slug:按词边界(空格/连字符)分段,每段剥非字母数字(撇号等,与 WCA ID 同口径),
+ *  再用 '-' 连。比 wcaIdToCubingSlug 更准 —— 无横杠的 WCA ID 丢了词边界,无法判断 "GraDUAL" 是一个词,
+ *  会误拆成 "Gra-DUAL"(GuangzhouGraDUAL3x3I2026)。name 有真实空格,直接给出正确边界;
+ *  撇号按 WCA 口径剥掉(Xi'an→Xian)不会 404。round-trip 与 announced_comps 的 aliasToWcaIdCandidates 一致。 */
+function nameToCubingSlug(name: string): string {
+  return name
+    .split(/[\s-]+/)
+    .map(t => t.replace(/[^A-Za-z0-9]/g, ''))
+    .filter(Boolean)
+    .join('-');
 }
 
 // ─── WCA API fallback (non-cubing.com comps) ──────────────────────────────
@@ -1350,16 +1363,17 @@ async function loadFromWcaLive(wcaId: string, onProgress?: ProgressFn, prefetche
 }
 
 async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetchedMeta?: ScrapedMeta): Promise<CompData> {
-  const cubingSlug = wcaIdToCubingSlug(wcaId);
   let meta: ScrapedMeta;
   if (prefetchedMeta) {
     meta = prefetchedMeta;
     onProgress?.({ step: 'meta', done: 1, total: 1 });
   } else {
     onProgress?.({ step: 'meta', done: 0, total: 1 });
-    meta = await scrapeMeta(cubingSlug);
+    meta = await scrapeMeta(wcaIdToCubingSlug(wcaId));
     onProgress?.({ step: 'meta', done: 1, total: 1 });
   }
+  // 用「成功抓到 meta 的那个 slug」(probe 已按真实比赛名校正,避免 GraDUAL→Gra-DUAL),不再从无横杠 ID 反推.
+  const cubingSlug = meta.slug ?? wcaIdToCubingSlug(wcaId);
 
   // 没开始的比赛所有 round rn=0 && s!=2 ⇒ WS subscribe 后只回个空 users,
   // 接着 runPhase('all') 等不到任何 result.all 响应,挂到 25s overallTimeout 才返回.
@@ -1535,13 +1549,25 @@ const probeCache = new Map<string, ProbeResult>();
 async function probeSources(wcaId: string): Promise<ProbeResult> {
   const hit = probeCache.get(wcaId);
   if (hit && Date.now() - hit.at < PROBE_TTL_MS) return hit;
-  const [wca, cubingMeta, wcaLiveId] = await Promise.all([
-    fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`, { method: 'HEAD' })
-      .then(r => r.ok).catch(() => false),
-    scrapeMeta(wcaIdToCubingSlug(wcaId)).catch(() => null),
+  const heuristicSlug = wcaIdToCubingSlug(wcaId);
+  const [wcaInfo, heuristicMeta, wcaLiveId] = await Promise.all([
+    // GET(非 HEAD)顺带拿 name,用于校正 cubing slug —— 无横杠 WCA ID 反推会把内部大写词误拆(GraDUAL→Gra-DUAL).
+    fetch(`${WCA_API_BASE}/competitions/${encodeURIComponent(wcaId)}`)
+      .then(async r => {
+        if (!r.ok) return { ok: false, name: undefined as string | undefined };
+        return { ok: true, name: (await r.json() as { name?: string }).name };
+      })
+      .catch(() => ({ ok: false, name: undefined as string | undefined })),
+    scrapeMeta(heuristicSlug).catch(() => null),
     probeWcaLive(wcaId),
   ]);
-  const result: ProbeResult = { wca, cubingMeta, wcaLiveId, at: Date.now() };
+  let cubingMeta = heuristicMeta;
+  // 启发式 slug 404 但按真实比赛名推出的 slug 不同(仅内部大写词比赛会出现)→ 用比赛名再抓一次.
+  if (!cubingMeta && wcaInfo.name) {
+    const nameSlug = nameToCubingSlug(wcaInfo.name);
+    if (nameSlug && nameSlug !== heuristicSlug) cubingMeta = await scrapeMeta(nameSlug).catch(() => null);
+  }
+  const result: ProbeResult = { wca: wcaInfo.ok, cubingMeta, wcaLiveId, at: Date.now() };
   probeCache.set(wcaId, result);
   return result;
 }
@@ -1777,7 +1803,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     // → 用 WCA cell_name 推 cubing slug 直抓 /competitors 补报名表.源仍记 'wca'.
     // /competitors HTML 只给英文名,在 server 端 JOIN wca_persons 拼"English (中文)"全名.
     if (choice === 'auto' && data.source === 'wca' && Object.keys(data.users).length === 0) {
-      const cubingSlug = data.name.replace(/\s+/g, '-');
+      const cubingSlug = nameToCubingSlug(data.name);
       try {
         const competitorUsers = await scrapeCompetitors(cubingSlug, onProgress);
         if (Object.keys(competitorUsers).length > 0) {
