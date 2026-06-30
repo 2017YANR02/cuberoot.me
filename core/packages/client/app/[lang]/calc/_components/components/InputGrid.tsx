@@ -299,7 +299,7 @@ export function InputGrid({ avatarState, onPlayerOverride }: InputGridProps) {
             className={`input-row ${playerClass}${!enabled ? ' disabled' : ''}`}
             style={!enabled ? { opacity: 0.3 } : undefined}
           >
-            {/* 选手启用 checkbox — 原版 input_grid.js#109-116 两行都有 */}
+            {/* allow-checkbox: 每位选手一列的启用网格(原版 input_grid.js#109-116) */}
             <input
               type="checkbox"
               className="player-toggle calc-input"

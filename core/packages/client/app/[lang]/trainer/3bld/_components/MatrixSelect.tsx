@@ -66,6 +66,7 @@ export function MatrixSelect({ pieceType, value, onChange }: MatrixSelectProps):
           const on = selected.has(letter);
           return (
             <label key={letter} className={`bld-matrix-cell${on ? ' is-on' : ''}`}>
+              {/* allow-checkbox: 24 字母多选网格(2C2C/2E2E 目标编码),非布尔开关 */}
               <input
                 type="checkbox"
                 checked={on}

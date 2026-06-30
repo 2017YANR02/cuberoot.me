@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 
 // ── Categorical palette ──────────────────────────────────────────────────────
@@ -102,11 +103,11 @@ function DihedralWidget() {
           style={{ flex: 1, accentColor: 'var(--accent)' }}
         />
         <span style={{ fontFamily: 'var(--mono)', fontSize: 15, color: 'var(--ink)', minWidth: 18 }}>{m}</span>
-        <label style={{ marginLeft: 8 }}>
-          <input type="checkbox" checked={showLabels} onChange={e => setShowLabels(e.target.checked)}
-            style={{ marginRight: 5 }} />
-          <L zh="显示生成元" en="labels" />
-        </label>
+        <BoolToggle
+          value={showLabels}
+          onChange={setShowLabels}
+          label={<span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)' }}><L zh="显示生成元" en="labels" /></span>}
+        />
       </div>
 
       <svg
@@ -531,10 +532,11 @@ function RootSystemWidget() {
             {rs2.name}
           </button>
         ))}
-        <label style={{ marginLeft: 8, fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)', display: 'flex', alignItems: 'center', gap: 4 }}>
-          <input type="checkbox" checked={showMirrors} onChange={e => setShowMirrors(e.target.checked)} />
-          <L zh="显示镜像线" en="mirrors" />
-        </label>
+        <BoolToggle
+          value={showMirrors}
+          onChange={setShowMirrors}
+          label={<span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--ink-dim)' }}><L zh="显示镜像线" en="mirrors" /></span>}
+        />
         {clickedRoot !== null && (
           <button className="gt-chip" onClick={() => setClickedRoot(null)}>
             <L zh="复位根系" en="reset roots" />

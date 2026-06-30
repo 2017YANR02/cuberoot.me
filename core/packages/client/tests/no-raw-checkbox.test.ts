@@ -13,8 +13,9 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/cl
 const SCAN_DIRS = ['app', 'components'];
 
 // 当前存量(本测试口径:.tsx 里的 type="checkbox" / type='checkbox',allow-checkbox 豁免不计)。
-// 转一个 → BoolToggle 就把 BASELINE 减 1。起点 115;已转 /wca 去重 + 豁免逐行多选 → 113。
-const BASELINE = 113;
+// 全站布尔开关已清零(issue #2 彻查):剩余 type="checkbox" 均为多选网格/列表 / 原生 demo,
+// 一律行内 allow-checkbox 豁免。此后任何新写的裸 ☑ → 直接红。
+const BASELINE = 0;
 
 const CHECKBOX_RE = /type=["']checkbox["']/g;
 

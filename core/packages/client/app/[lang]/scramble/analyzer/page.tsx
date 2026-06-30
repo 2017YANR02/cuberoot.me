@@ -656,6 +656,7 @@ function AnalyzePageInner() {
         </select>
         {CROSS_COLORS.map((c) => (
           <label key={c} className={`analyze-color analyze-color-${c.toLowerCase()}`}>
+            {/* allow-checkbox: 十字颜色多选过滤网格 */}
             <input
               type="checkbox"
               checked={colors[c]}

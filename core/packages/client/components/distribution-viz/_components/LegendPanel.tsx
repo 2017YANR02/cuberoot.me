@@ -104,6 +104,7 @@ export default function LegendPanel() {
           {LAYER_ITEMS.map(item => (
             <label key={item.key} className="legend-toggle">
               <span style={item.iconStyle}>{item.icon}</span> {item.label}
+              {/* allow-checkbox: 图层可见性多选列表 */}
               <input
                 type="checkbox"
                 checked={showLayers[item.key]}

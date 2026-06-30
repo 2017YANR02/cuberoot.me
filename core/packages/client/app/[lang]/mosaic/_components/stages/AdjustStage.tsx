@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import BoolToggle from '@/components/BoolToggle';
 import { useMosaicStore } from '../state/store';
 import { applyEffects } from '../engine/effects';
 import { applyMethod, drawMosaicToCanvas } from '../engine/render';
@@ -250,39 +251,24 @@ export default function AdjustStage() {
                 onChange={e => setPdfConfig({ blockHeightCubes: Math.max(1, Math.min(20, Number(e.target.value) || 1)) })}
               />
             </div>
-            <label className="mosaic-checkbox-row">
-              <input
-                className="mosaic-checkbox-input"
-                type="checkbox"
-                checked={pdfConfig.bottomToTop}
-                onChange={e => setPdfConfig({ bottomToTop: e.target.checked })}
-              />
-              {t('mosaic.adjust.bottomToTop')}
-            </label>
-            <label className="mosaic-checkbox-row">
-              <input
-                className="mosaic-checkbox-input"
-                type="checkbox"
-                checked={pdfConfig.drawLetters}
-                onChange={e => {
-                  const v = e.target.checked;
-                  setPdfConfig({ drawLetters: v, ...(v ? {} : { bwPrinter: false }) });
-                }}
-              />
-              {t('mosaic.adjust.drawLetters')}
-            </label>
-            <label className="mosaic-checkbox-row">
-              <input
-                className="mosaic-checkbox-input"
-                type="checkbox"
-                checked={pdfConfig.bwPrinter}
-                onChange={e => {
-                  const v = e.target.checked;
-                  setPdfConfig({ bwPrinter: v, ...(v ? { drawLetters: true } : {}) });
-                }}
-              />
-              {t('mosaic.adjust.bwPrinter')}
-            </label>
+            <BoolToggle
+              className="mosaic-checkbox-row"
+              value={pdfConfig.bottomToTop}
+              onChange={v => setPdfConfig({ bottomToTop: v })}
+              label={t('mosaic.adjust.bottomToTop')}
+            />
+            <BoolToggle
+              className="mosaic-checkbox-row"
+              value={pdfConfig.drawLetters}
+              onChange={v => setPdfConfig({ drawLetters: v, ...(v ? {} : { bwPrinter: false }) })}
+              label={t('mosaic.adjust.drawLetters')}
+            />
+            <BoolToggle
+              className="mosaic-checkbox-row"
+              value={pdfConfig.bwPrinter}
+              onChange={v => setPdfConfig({ bwPrinter: v, ...(v ? { drawLetters: true } : {}) })}
+              label={t('mosaic.adjust.bwPrinter')}
+            />
           </div>
         )}
 

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { tr } from '@/i18n/tr';
+import BoolToggle from '@/components/BoolToggle';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -590,15 +591,11 @@ function ConjugacyExplorer({ lang }: { lang: 'zh' | 'en' }) {
       </div>
 
       <div className="gt-panel-input-row">
-        <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input
-            type="checkbox"
-            checked={showMembers}
-            onChange={e => setShowMembers(e.target.checked)}
-            style={{ cursor: 'pointer' }}
-          />
-          <L zh="显示类成员" en="Show class members" />
-        </label>
+        <BoolToggle
+          value={showMembers}
+          onChange={setShowMembers}
+          label={<L zh="显示类成员" en="Show class members" />}
+        />
       </div>
 
       {/* Stacked bar SVG */}
@@ -977,15 +974,11 @@ function D4Q8ContrastPanel({ lang }: { lang: 'zh' | 'en' }) {
                                 })}
           </button>
         ))}
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13 }}>
-          <input
-            type="checkbox"
-            checked={showOrderNote}
-            onChange={e => setShowOrderNote(e.target.checked)}
-            style={{ cursor: 'pointer' }}
-          />
-          <L zh="显示说明" en="Show note" />
-        </label>
+        <BoolToggle
+          value={showOrderNote}
+          onChange={setShowOrderNote}
+          label={<span style={{ fontSize: 13 }}><L zh="显示说明" en="Show note" /></span>}
+        />
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'flex-start' }}>

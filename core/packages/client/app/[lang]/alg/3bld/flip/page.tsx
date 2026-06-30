@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play } from 'lucide-react';
+import BoolToggle from '@/components/BoolToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import { ScrambleOutput } from '../_components/ScrambleOutput';
@@ -123,15 +124,12 @@ export default function FlipTrainerPage(): JSX.Element {
 
       <div className="bld-section">
         <div className="bld-check-row">
-          <label className="bld-check">
-            <input
-              type="checkbox"
-              checked={cornerScramble}
-              onChange={(e) => setCornerScramble(e.target.checked)}
-            />
-            {tr({ zh: '打乱角块', en: 'Scramble corners'
-            })}
-          </label>
+          <BoolToggle
+            className="bld-check"
+            value={cornerScramble}
+            onChange={setCornerScramble}
+            label={tr({ zh: '打乱角块', en: 'Scramble corners' })}
+          />
         </div>
       </div>
 

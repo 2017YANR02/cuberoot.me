@@ -7,6 +7,7 @@ import { useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Settings2, ChevronDown, ChevronUp } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
+import BoolToggle from '@/components/BoolToggle';
 import { useBldConfigStore } from '../_store/bld-config-store';
 import { ORIENTATION_LABELS_ZH } from '../_lib/scheme-presets';
 import { tr } from '@/i18n/tr';
@@ -196,43 +197,32 @@ export function BldConfigBar({ show }: BldConfigBarProps): JSX.Element {
               <span className="bld-config-group-title">{tr({ zh: '高级', en: 'Advanced'
             })}</span>
               <div className="bld-check-row">
-                <label className="bld-check">
-                  <input
-                    type="checkbox"
-                    checked={config.keepHueC}
-                    onChange={(e) => setConfig({ keepHueC: e.target.checked })}
-                  />
-                  {tr({ zh: '角保持色相借位', en: 'Corner keep hue' })}
-                </label>
-                <label className="bld-check">
-                  <input
-                    type="checkbox"
-                    checked={config.keepHueE}
-                    onChange={(e) => setConfig({ keepHueE: e.target.checked })}
-                  />
-                  {tr({ zh: '棱保持色相借位', en: 'Edge keep hue'
-                })}
-                </label>
+                <BoolToggle
+                  className="bld-check"
+                  value={config.keepHueC}
+                  onChange={(v) => setConfig({ keepHueC: v })}
+                  label={tr({ zh: '角保持色相借位', en: 'Corner keep hue' })}
+                />
+                <BoolToggle
+                  className="bld-check"
+                  value={config.keepHueE}
+                  onChange={(v) => setConfig({ keepHueE: v })}
+                  label={tr({ zh: '棱保持色相借位', en: 'Edge keep hue' })}
+                />
               </div>
               <div className="bld-check-row">
-                <label className="bld-check">
-                  <input
-                    type="checkbox"
-                    checked={config.skipC === 1}
-                    onChange={(e) => setConfig({ skipC: e.target.checked ? 1 : 0 })}
-                  />
-                  {tr({ zh: '角跳编法', en: 'Corner fixed-buffer'
-                })}
-                </label>
-                <label className="bld-check">
-                  <input
-                    type="checkbox"
-                    checked={config.skipE === 1}
-                    onChange={(e) => setConfig({ skipE: e.target.checked ? 1 : 0 })}
-                  />
-                  {tr({ zh: '棱跳编法', en: 'Edge fixed-buffer'
-                })}
-                </label>
+                <BoolToggle
+                  className="bld-check"
+                  value={config.skipC === 1}
+                  onChange={(v) => setConfig({ skipC: v ? 1 : 0 })}
+                  label={tr({ zh: '角跳编法', en: 'Corner fixed-buffer' })}
+                />
+                <BoolToggle
+                  className="bld-check"
+                  value={config.skipE === 1}
+                  onChange={(v) => setConfig({ skipE: v ? 1 : 0 })}
+                  label={tr({ zh: '棱跳编法', en: 'Edge fixed-buffer' })}
+                />
               </div>
             </div>
           )}

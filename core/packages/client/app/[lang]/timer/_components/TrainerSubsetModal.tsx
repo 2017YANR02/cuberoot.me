@@ -126,6 +126,7 @@ export default function TrainerSubsetModal({ kind, onClose }: Props) {
                       key={c.id}
                       className={`trainer-case-chip ${checked ? 'checked' : ''}`}
                     >
+                      {/* allow-checkbox: 公式 case 多选 chip 网格 */}
                       <input
                         className="trainer-case-chip-input"
                         type="checkbox"

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 
 // ── 2D geometry helpers ──────────────────────────────────────────────────────
@@ -241,10 +242,11 @@ function TwoMirrorComposer() {
         />
       </p>
       <div className="gt-panel-input-row">
-        <label style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--ink-dim)' }}>
-          <input type="checkbox" checked={showGhost} onChange={e => setShowGhost(e.target.checked)} style={{ marginRight: 6 }} />
-          <L zh="显示中间像（经 L₁ 后）" en="Show ghost (after L₁ only)" />
-        </label>
+        <BoolToggle
+          value={showGhost}
+          onChange={setShowGhost}
+          label={<span style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--ink-dim)' }}><L zh="显示中间像（经 L₁ 后）" en="Show ghost (after L₁ only)" /></span>}
+        />
       </div>
 
       <svg

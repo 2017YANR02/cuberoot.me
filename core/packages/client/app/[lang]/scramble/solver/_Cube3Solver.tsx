@@ -38,6 +38,7 @@ import {
 import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from './_InteractiveCubeNet';
 import Interactive3DCube from './_Interactive3DCube';
 import { useT } from "@/hooks/useT";
+import BoolToggle from '@/components/BoolToggle';
 import SolveTabs from "../_components/SolveTabs";
 
 interface SolverInfo {
@@ -1011,10 +1012,12 @@ export default function Cube3Solver() {
             <div className="row">
               <span className="lbl">{t('Prun 表', 'Prun Table')}</span>
               <span className="table-name">{solverInfo?.table_name ?? t('未就绪', 'Not Ready')}</span>
-              <label className="auto-dl">
-                <input type="checkbox" checked={autoDownloadTable} onChange={(e) => setAutoDownloadTable(e.target.checked)} />
-                <span>{t('生成后自动下载', 'Auto-download after gen')}</span>
-              </label>
+              <BoolToggle
+                className="auto-dl"
+                value={autoDownloadTable}
+                onChange={setAutoDownloadTable}
+                label={t('生成后自动下载', 'Auto-download after gen')}
+              />
               {saveDirName && (
                 <span className="save-dir">
                   {t('保存到', 'Save to')}: <code>{saveDirName}</code>

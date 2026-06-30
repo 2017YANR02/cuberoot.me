@@ -170,6 +170,7 @@ function MultiSelectContent(props: {
 
   const makeBox = (name: string, checked: boolean) => (
     <label key={name} className="roux-sel-check">
+      {/* allow-checkbox: 公式 case 多选列表 */}
       <input
         className="roux-sel-check-input"
         type="checkbox"
@@ -197,6 +198,7 @@ function MultiSelectContent(props: {
     };
     return (
       <label key={name} className="roux-sel-check">
+        {/* allow-checkbox: 批量操作多选列表 */}
         <input
           className="roux-sel-check-input"
           type="checkbox"
