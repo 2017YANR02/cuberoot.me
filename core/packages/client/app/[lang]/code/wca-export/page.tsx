@@ -42,7 +42,7 @@ export default function WcaExportPage() {
   useDocumentTitle('WST 数据导出', 'WST Export');
 
   return (
-    <div className="wcif-page">
+    <div className="wcif-page wcif-page-wide">
       <div className="wcif-topbar">
         <HomeLink className="wcif-back">← {tr({ zh: '回首页', en: 'Home'
         })}</HomeLink>

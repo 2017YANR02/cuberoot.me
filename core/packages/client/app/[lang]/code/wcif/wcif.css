@@ -162,6 +162,15 @@
 .wcif-foot a { color: var(--accent); text-decoration: none; }
 .wcif-foot a:hover { text-decoration: underline; }
 
+/* Reusable wide variant of .wcif-page: opt in when a page has lots of wide
+   tables (e.g. wca-export 3-col dumps). Prose stays capped so paragraph lines
+   don't stretch unreadably long. */
+.wcif-page-wide { max-width: 72rem; }
+.wcif-page-wide .wcif-section > p,
+.wcif-page-wide .wcif-list {
+    max-width: 50rem;
+}
+
 @media (max-width: 720px) {
     /* responsive-table: the table scrolls horizontally instead of clipping
        its nowrap columns past the viewport edge. */
