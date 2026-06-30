@@ -119,6 +119,35 @@
   min-width: 0;
   flex: 1;
 }
+
+/* 稀有汇总卡:顶部「变体 类型 步数」标签 + 概率徽章。 */
+.rs-scard-rarity {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.rs-scard-rtag {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.rs-scard-rprob {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* 稀有汇总超出渲染上限时的提示行 */
+.rs-rare-more {
+  margin-top: 0.5rem;
+  font-size: 0.76rem;
+  color: var(--faint-foreground);
+  text-align: center;
+}
 .rs-scard-scramble {
   font-family: var(--font-mono);
   font-size: 0.8rem;

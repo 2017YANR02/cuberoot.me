@@ -17,7 +17,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
-import { VARIANT_ORDER, stageLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, isBlockVariant, VARIANT_STAGES } from '@/lib/scramble-variants';
+import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, isBlockVariant, VARIANT_STAGES } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
@@ -105,6 +105,69 @@ function findRarestSelection(
   return best ? { variant: best.variant, metric: best.metric, subsetKey: best.subsetKey, step: best.step } : null;
 }
 
+// 稀有汇总:概率阈值下拉的候选(p < 选中值)。默认 1/10k。
+const RARE_THRESHOLDS = [
+  { v: 1e-3, label: '1/1k' },
+  { v: 1e-4, label: '1/10k' },
+  { v: 1e-5, label: '1/100k' },
+];
+const RARE_DEFAULT = 1e-4;
+const RARE_CAP = 60; // 渲染上限(每张卡含 SVG 预览 + ObjectURL,过多伤性能);超出给提示
+
+interface RareEntry { id: string; uiVariant: string; metric: string; step: number; color: ColorLetter; p: number }
+
+// 横扫本批 rank 的每个 (变体 × 类型 × 底色子集 × 步数) 桶,用 distribution 算概率,收集 p < threshold
+// 的全部样例。同一打乱(id)可在多个桶里稀有,按 id 去重,只保留概率最低(最稀有)的那次,
+// 结果按概率升序(最稀有在前)。返回 UI 层的 variant(块族归并为 'block')。
+function collectRareScrambles(data: RecentScramblesJson, dist: DistributionJson, threshold: number): RareEntry[] {
+  const wcaVars = dist.sets?.wca?.variants;
+  if (!wcaVars || !data.rank) return [];
+  const best = new Map<string, RareEntry>();
+  for (const dataVariant in data.rank) {
+    const distVar = wcaVars[dataVariant];
+    if (!distVar) continue;
+    const uiVariant = isBlockVariant(dataVariant) ? 'block' : dataVariant;
+    const byMetric = data.rank[dataVariant];
+    for (const metric in byMetric) {
+      const target = stageLabel(metric, false);
+      const distStageKey = Object.keys(distVar.data).find((s) => stageLabel(s, false) === target);
+      if (!distStageKey) continue;
+      const stageData = distVar.data[distStageKey];
+      const bySubset = byMetric[metric];
+      for (const subsetKey in bySubset) {
+        const counts = stageData?.[subsetKey]?.counts;
+        if (!counts) continue;
+        let total = 0;
+        for (const k in counts) total += counts[k];
+        if (total <= 0) continue;
+        const byStep = bySubset[subsetKey];
+        for (const stepStr in byStep) {
+          const entries = byStep[stepStr];
+          if (!entries?.length) continue;
+          const c = counts[stepStr] ?? 0;
+          if (c <= 0) continue;
+          const p = c / total;
+          if (p >= threshold) continue;
+          const step = Number(stepStr);
+          for (const [id, color] of entries) {
+            const prev = best.get(id);
+            if (!prev || p < prev.p) best.set(id, { id, uiVariant, metric, step, color, p });
+          }
+        }
+      }
+    }
+  }
+  return [...best.values()].sort((a, b) => a.p - b.p);
+}
+
+// 稀有卡顶标签:变体 + 类型(相同则合一)+ 步数,与下钻视图两个下拉口径一致。
+function rarityTag(uiVariant: string, metric: string, step: number, isZh: boolean): string {
+  const vl = variantLabel(uiVariant, isZh);
+  const sl = stageLabel(metric, isZh);
+  const head = vl === sl ? vl : `${vl} ${sl}`;
+  return `${head} ${tr({ zh: `${step}步`, en: `${step}f` })}`;
+}
+
 // 步数下拉选项标签(zh「N 步」/ en「N」)。tr 包住避免内联 isZh 文案三元。
 const stepOptionLabel = (n: number) => tr({ zh: `${n} 步`, en: String(n) });
 
@@ -155,7 +218,7 @@ function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: stri
 
 // 统一打乱小卡(2 列网格单元):魔方图 + 打乱记号 + 比赛来源,可选左上角底色点。
 // 整卡非单一 <a>(内部「大图 / analyzer / gen」三个并列链接,禁嵌套),与原 hero 同结构。
-function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color }: {
+function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, rarity }: {
   event: string;
   scramble: string;
   m?: RecentScrMeta | ScrMeta;
@@ -163,6 +226,8 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color }: {
   isZh: boolean;
   ssTarget?: { method: string; stage: number } | null;
   color?: ColorLetter;
+  // 稀有汇总卡专用:顶部「变体 类型 步数」标签 + 概率徽章(下钻视图不传,概率在头部统一显示)。
+  rarity?: { tag: string; prob: string };
 }) {
   return (
     <div className="rs-scard">
@@ -171,6 +236,12 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color }: {
         {color && <span className="rs-scard-dot" aria-hidden="true"><SubsetSwatch colors={[color]} /></span>}
       </div>
       <div className="rs-scard-body">
+        {rarity && (
+          <div className="rs-scard-rarity">
+            <span className="rs-scard-rtag">{rarity.tag}</span>
+            <span className="rs-scard-rprob">≈ {rarity.prob}</span>
+          </div>
+        )}
         <Link href={analyzerHref(lp, scramble, ssTarget, color)} prefetch={false} className="rs-scard-scramble">{scramble}</Link>
         {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
       </div>
@@ -273,6 +344,9 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
   const [metric, setMetric] = useState('cross');
   const [step, setStep] = useState<number | null>(null);
   const sel = useSubsetSelection('dual');
+  // 视图:'type' 按 变体/类型/底色/步数 下钻单桶;'rare' 横扫全部组合,列出概率 < threshold 的稀有打乱。
+  const [mode, setMode] = useState<'type' | 'rare'>('type');
+  const [threshold, setThreshold] = useState(RARE_DEFAULT);
 
   // 首屏一次性把默认选择定位到本批全局概率最低(最稀有)的那一格;用户手动改过任一选择器即不再覆盖。
   const pickedRef = useRef(false);
@@ -354,11 +428,37 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
     return `${lp}/scramble/stats${qs ? `?${qs}` : ''}`;
   }, [prob, dataVariant, sel.subsetKey, lp]);
 
+  // 稀有汇总:横扫全部组合,概率 < threshold 的去重打乱(最稀有在前)。仅 rare 模式计算。
+  const rare = useMemo(
+    () => (mode === 'rare' && data && dist ? collectRareScrambles(data, dist, threshold) : []),
+    [mode, data, dist, threshold],
+  );
+
   if (!data || variants.length === 0) return null;
 
   return (
     <>
       <div className="rs-head">
+        <PillToggle
+          value={mode === 'rare'}
+          onChange={(v) => setMode(v ? 'rare' : 'type')}
+          offLabel={tr({ zh: '按类型', en: 'By type' })}
+          onLabel={tr({ zh: '稀有', en: 'Rare' })}
+          ariaLabel={tr({ zh: '视图', en: 'View' })}
+        />
+        {mode === 'rare' ? (
+          <select
+            className="rs-select"
+            value={threshold}
+            onChange={(e) => setThreshold(Number(e.target.value))}
+            aria-label={tr({ zh: '概率阈值', en: 'Probability threshold' })}
+            title={tr({ zh: '列出概率低于此值的近期打乱', en: 'List recent scrambles rarer than this' })}
+          >
+            {RARE_THRESHOLDS.map((t) => (
+              <option key={t.label} value={t.v}>{`< ${t.label}`}</option>
+            ))}
+          </select>
+        ) : (<>
         <SubsetColorPicker sel={pickerSel} isZh={isZh} />
         <VariantSelect className="rs-select" value={curVariant} options={variants} onChange={(v) => { markTouched(); setVariant(v); }} isZh={isZh} ariaLabel={tr({ zh: '变体', en: 'Variant' })} />
         {metrics.length > 0 && (
@@ -374,9 +474,35 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
             ≈ {prob.text}
           </Link>
         )}
+        </>)}
       </div>
 
-      {entries.length > 0 ? (
+      {mode === 'rare' ? (
+        rare.length > 0 ? (
+          <>
+            <div className="rs-cards scroll-panel">
+              {rare.slice(0, RARE_CAP).map((r) => (
+                <ScrambleCard
+                  key={r.id}
+                  event="333"
+                  scramble={data.scr[r.id] ?? ''}
+                  m={data.meta[r.id]}
+                  lp={lp}
+                  isZh={isZh}
+                  ssTarget={stageSolverTarget(r.uiVariant, r.metric)}
+                  color={r.color}
+                  rarity={{ tag: rarityTag(r.uiVariant, r.metric, r.step, isZh), prob: formatProb(r.p) ?? '' }}
+                />
+              ))}
+            </div>
+            {rare.length > RARE_CAP && (
+              <div className="rs-rare-more">{tr({ zh: `仅显示最稀有的 ${RARE_CAP} 条(共 ${rare.length} 条)`, en: `Showing the ${RARE_CAP} rarest of ${rare.length}` })}</div>
+            )}
+          </>
+        ) : (
+          <div className="rs-empty">{tr({ zh: '本批暂无低于该概率的打乱', en: 'No scrambles below this probability in this batch' })}</div>
+        )
+      ) : entries.length > 0 ? (
         <div className="rs-cards scroll-panel">
           {entries.slice(0, 12).map(([id, color]) => (
             <ScrambleCard key={id} event="333" scramble={data.scr[id] ?? ''} m={data.meta[id]} lp={lp} isZh={isZh} ssTarget={ssTarget} color={color} />
