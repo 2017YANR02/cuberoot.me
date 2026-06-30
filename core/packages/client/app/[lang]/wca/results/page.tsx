@@ -66,10 +66,10 @@ const PAGE_SIZE_OPTIONS = [50, 100, 200];
 // 项目快速分类(点一个 = 直接替换当前选中项,进入名次和)
 const EVENT_CATEGORIES: { key: string; zh: string; en: string; events: string[]; }[] = [
   { key: 'speed', zh: '速拧', en: 'Speed', events: ['333','222','444','555','666','777','333oh','clock','minx','pyram','skewb','sq1'] },
-  { key: 'quiet', zh: '安静', en: 'Quiet', events: ['333bf','333fm','444bf','555bf','333mbf'] },
-  { key: 'blind', zh: '盲拧', en: 'Blind', events: ['333bf','444bf','555bf','333mbf'] },
   { key: 'cubic', zh: '正阶', en: 'Cubic', events: ['333','222','444','555','666','777','333oh'] },
   { key: 'sub25', zh: '二至五阶', en: '2-5', events: ['222','333','444','555'] },
+  { key: 'quiet', zh: '安静', en: 'Quiet', events: ['333bf','333fm','444bf','555bf','333mbf'] },
+  { key: 'blind', zh: '盲拧', en: 'Blind', events: ['333bf','444bf','555bf','333mbf'] },
   { key: 'shape', zh: '异形', en: 'Other', events: ['clock','minx','pyram','skewb','sq1'] },
 ];
 
@@ -541,8 +541,8 @@ function AllResultsPageInner() {
         <div className="wse-filter" style={{ minWidth: '100%' }}>
           <label>{tr({ zh: '项目', en: 'Events' })}</label>
           <div className="wse-events-bar">
-            <button type="button" className="wse-cat-btn" onClick={selectAll}>{tr({ zh: '全选', en: 'All' })}</button>
             <ClearButton variant="standalone" onClick={clearAll} isZh={isZh} />
+            <button type="button" className="wse-cat-btn" onClick={selectAll}>{tr({ zh: '全选', en: 'All' })}</button>
             {EVENT_CATEGORIES.map(cat => (
               <button
                 key={cat.key}
@@ -712,19 +712,20 @@ function AllResultsPageInner() {
                 {years.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
-            <div className="wse-filter">
-              <label>{tr({ zh: '月份', en: 'Month' })}</label>
-              <select
-                className="wse-filter-select"
-                value={basis === 'cumulative' ? 0 : month}
-                disabled={basis === 'cumulative'}
-                title={basis === 'cumulative' ? tr({ zh: '截至口径按年末,不分月', en: 'Cumulative basis is year-end; month not applicable' }) : undefined}
-                onChange={e => update('month', e.target.value === '0' ? '' : e.target.value)}
-              >
-                <option value={0}>{tr({ zh: '全年', en: 'All months' })}</option>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
+            {/* 截至口径按年末、不分月 → 直接隐藏月份框(不再灰显占位) */}
+            {basis !== 'cumulative' && (
+              <div className="wse-filter">
+                <label>{tr({ zh: '月份', en: 'Month' })}</label>
+                <select
+                  className="wse-filter-select"
+                  value={month}
+                  onChange={e => update('month', e.target.value === '0' ? '' : e.target.value)}
+                >
+                  <option value={0}>{tr({ zh: '全年', en: 'All months' })}</option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+            )}
             {show === 'results' && (
               <div className="wse-filter wse-filter-q">
                 <label>{tr({ zh: '搜索', en: 'Search' })}</label>
@@ -865,7 +866,7 @@ function AllResultsPageInner() {
           <div className="sor-census">
             <button type="button" className="sor-census-toggle" onClick={() => setCensusOpen(o => !o)} aria-expanded={censusOpen}>
               {censusOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              {tr({ zh: '名人堂:谁当过名次和第一?', en: 'Hall of fame: who has ever been #1?' })}
+              {tr({ zh: '谁当过 SoWR?', en: "Who's ever topped the SoWR?" })}
             </button>
             {censusOpen && (
               <div className="sor-census-body">

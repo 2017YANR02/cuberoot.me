@@ -3,8 +3,9 @@
 // URL 通过 ?tab= 持久化.
 
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Suspense, lazy, Fragment, useState, useMemo, useCallback, useEffect } from 'react';
+import { Suspense, lazy, Fragment, useState, useMemo, useEffect } from 'react';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import { fetchWcaPersonChampionshipPodiums, type ChampionshipPodiumRow } from '@/lib/wca-person-api';
 
 const ResultsTab = lazy(() => import('./results/ResultsTab'));
 const RecordsTab = lazy(() => import('./RecordsTab'));
@@ -42,23 +43,38 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
     parseAsStringEnum(['event', 'comp']).withDefault('event').withOptions({ history: 'replace', scroll: false }),
   );
 
-  // 内容为空的 tab 置灰提示。纪录从 results 的区域纪录标记直接判定(无需进 tab,可前置置灰);
-  // 领奖台数据后端预计算(资格内重排)、客户端拿不到也无可靠代理(profile.medals 口径不同),
-  // 故由该 tab 加载后经 onEmpty 回报(访问过一次即置灰)。
+  // 内容为空的 tab 置灰提示。纪录从 results 的区域纪录标记直接判定(无需进 tab,可前置置灰)。
   const recordsEmpty = useMemo(
     () => !!results && !results.some((r) => !r.live && (r.regional_single_record || r.regional_average_record)),
     [results],
   );
-  const [podiumsEmpty, setPodiumsEmpty] = useState<boolean | null>(null);
-  useEffect(() => { setPodiumsEmpty(null); }, [profile.person.wca_id]);
-  const onPodiumsEmpty = useCallback((empty: boolean) => setPodiumsEmpty(empty), []);
-  const tabEmpty = (k: TabKey): boolean =>
-    k === 'records' ? recordsEmpty : k === 'podiums' ? podiumsEmpty === true : false;
+
+  // 锦标赛领奖台数据后端预计算(资格内重排)、客户端拿不到可靠代理(profile.medals 口径不同),
+  // 故在容器层预取一次:无领奖台 → 整个 tab 不出现(不是置灰);有则把 rows 直接喂给 tab,免二次请求。
+  const [podiumRows, setPodiumRows] = useState<ChampionshipPodiumRow[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setPodiumRows(null);
+    fetchWcaPersonChampionshipPodiums(profile.person.wca_id)
+      .then((r) => { if (!cancelled) setPodiumRows(r); })
+      .catch(() => { if (!cancelled) setPodiumRows([]); });
+    return () => { cancelled = true; };
+  }, [profile.person.wca_id]);
+  const hasPodiums = (podiumRows?.length ?? 0) > 0;
+
+  // 领奖台未加载完(null)前先不显示按钮;加载完无数据则永久隐藏。其余 tab 恒显。
+  const visibleTabs = useMemo<TabKey[]>(
+    () => TAB_KEYS.filter((k) => k !== 'podiums' || hasPodiums),
+    [hasPodiums],
+  );
+  // URL 指向已隐藏的 tab(深链 ?tab=podiums 但无数据,或加载中)→ 回退到成绩。
+  const effectiveActive: TabKey = visibleTabs.includes(active) ? active : 'results';
+  const tabEmpty = (k: TabKey): boolean => k === 'records' && recordsEmpty;
 
   const labels: Record<TabKey, string> = {
     results: t('成绩', 'Results'),
     records: t('纪录', 'Records'),
-    podiums: t('领奖台', 'Podiums'),
+    podiums: t('锦标赛领奖台', 'Championship Podiums'),
     events: t('项目统计', 'Event Stats'),
     milestones: t('里程碑', 'Milestones'),
     cities: t('点亮城市', 'Cities'),
@@ -68,10 +84,10 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
   return (
     <section className="wp-card wp-tabs-card">
       <div className="wp-tabs-bar">
-        {TAB_KEYS.map((k) => (
+        {visibleTabs.map((k) => (
           <Fragment key={k}>
             <button
-              className={`wp-tab-btn ${k === active && !(k === 'results' && sub === 'comp') ? 'is-active' : ''} ${tabEmpty(k) ? 'wp-tab-btn--empty' : ''}`}
+              className={`wp-tab-btn ${k === effectiveActive && !(k === 'results' && sub === 'comp') ? 'is-active' : ''} ${tabEmpty(k) ? 'wp-tab-btn--empty' : ''}`}
               disabled={tabEmpty(k)}
               onClick={() => { setActive(k); if (k === 'results') setSub('event'); }}
             >
@@ -80,7 +96,7 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
             {k === 'results' && (
               <button
                 type="button"
-                className={`wp-tab-btn ${active === 'results' && sub === 'comp' ? 'is-active' : ''}`}
+                className={`wp-tab-btn ${effectiveActive === 'results' && sub === 'comp' ? 'is-active' : ''}`}
                 onClick={() => { setActive('results'); setSub('comp'); }}
               >{t('比赛', 'Comp')}</button>
             )}
@@ -89,13 +105,13 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
       </div>
       <div className="wp-tab-body">
         <Suspense fallback={<div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>}>
-          {active === 'results' && <ResultsTab profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />}
-          {active === 'records' && <RecordsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
-          {active === 'podiums' && <ChampionshipPodiumsTab profile={profile} isZh={isZh} onEmpty={onPodiumsEmpty} />}
-          {active === 'events' && <EventStatsTab results={results} comps={comps} isZh={isZh} />}
-          {active === 'milestones' && <MilestonesTab profile={profile} results={results} comps={comps} isZh={isZh} />}
-          {active === 'cities' && <LitCitiesTab profile={profile} comps={comps} isZh={isZh} />}
-          {active === 'misc' && <MiscTab profile={profile} comps={comps} isZh={isZh} />}
+          {effectiveActive === 'results' && <ResultsTab profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} />}
+          {effectiveActive === 'records' && <RecordsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
+          {effectiveActive === 'podiums' && hasPodiums && <ChampionshipPodiumsTab rows={podiumRows!} isZh={isZh} />}
+          {effectiveActive === 'events' && <EventStatsTab results={results} comps={comps} isZh={isZh} />}
+          {effectiveActive === 'milestones' && <MilestonesTab profile={profile} results={results} comps={comps} isZh={isZh} />}
+          {effectiveActive === 'cities' && <LitCitiesTab profile={profile} comps={comps} isZh={isZh} />}
+          {effectiveActive === 'misc' && <MiscTab profile={profile} comps={comps} isZh={isZh} />}
         </Suspense>
       </div>
     </section>

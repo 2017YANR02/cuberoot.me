@@ -375,6 +375,7 @@ html:not([data-palette-scheme=dark]) .wse-page {
 .wse-events-bar {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;  /* clear / 全选 / 分类按钮 / pill 上下居中对齐 */
   gap: 6px;
   margin-bottom: 6px;
 }

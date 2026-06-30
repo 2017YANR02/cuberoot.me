@@ -3,7 +3,7 @@
 // 数据走后端预计算表(资格内重排名次,见 server person-championship-podiums)。
 // 分区顺序:世界 → 各大洲 → 国家;区内按比赛日期倒序分组,组内按项目顺序。
 
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useMemo } from 'react';
 import Link from '@/components/AppLink';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
@@ -14,14 +14,13 @@ import { formatDateRangeIso } from '@/lib/wca-date';
 import { eventDisplayName } from '@/lib/wca-events';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { useT } from '@/hooks/useT';
-import { fetchWcaPersonChampionshipPodiums, type ChampionshipPodiumRow, type WcaPersonProfile } from '@/lib/wca-person-api';
+import { type ChampionshipPodiumRow } from '@/lib/wca-person-api';
 import { AttemptsInline } from './RecordsTab';
 
 interface Props {
-  profile: WcaPersonProfile;
+  /** 由 PersonTabs 预取并保证非空(无领奖台时整个 tab 不渲染)。 */
+  rows: ChampionshipPodiumRow[];
   isZh: boolean;
-  /** 数据加载后回报是否为空(供 PersonTabs 给「领奖台」tab 置灰)。 */
-  onEmpty?: (empty: boolean) => void;
 }
 
 const CONTINENT_NAME: Record<string, [string, string]> = {
@@ -39,26 +38,12 @@ function scopeRank(level: string): number {
   return 2;
 }
 
-export default function ChampionshipPodiumsTab({ profile, isZh, onEmpty }: Props) {
+export default function ChampionshipPodiumsTab({ rows, isZh }: Props) {
   const t = useT();
   const lang = (['en', 'zh'] as const)[Number(isZh)];
-  const wcaId = profile.person.wca_id;
-  const [rows, setRows] = useState<ChampionshipPodiumRow[] | null>(null);
-  const [err, setErr] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    setRows(null);
-    setErr(false);
-    fetchWcaPersonChampionshipPodiums(wcaId)
-      .then((r) => { if (!cancelled) setRows(r); })
-      .catch(() => { if (!cancelled) setErr(true); });
-    return () => { cancelled = true; };
-  }, [wcaId]);
 
   // 区(level)→ 比赛(日期倒序)→ 该比赛各项目(项目顺序)。
   const sections = useMemo(() => {
-    if (!rows) return [];
     const byLevel = new Map<string, ChampionshipPodiumRow[]>();
     for (const r of rows) {
       const a = byLevel.get(r.level) ?? [];
@@ -86,15 +71,7 @@ export default function ChampionshipPodiumsTab({ profile, isZh, onEmpty }: Props
     return out;
   }, [rows]);
 
-  // 数据加载完成后回报是否为空(加载中 / 出错不回报,保持「未知」不置灰)。
-  useEffect(() => {
-    if (rows === null) return;
-    onEmpty?.(sections.length === 0);
-  }, [rows, sections.length, onEmpty]);
-
-  if (err) return <div className="wp-empty">{t('加载失败', 'Failed to load')}</div>;
-  if (!rows) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
-  if (sections.length === 0) return <div className="wp-empty">{t('暂无锦标赛领奖台', 'No championship podiums')}</div>;
+  if (sections.length === 0) return null;
 
   const levelLabel = (level: string): string => {
     if (level === 'world') return t('世界', 'World');

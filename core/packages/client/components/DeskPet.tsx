@@ -318,7 +318,8 @@ export default function DeskPet() {
       if (sz === 's' || sz === 'l') setSize(sz);
       const ch = localStorage.getItem(CHAR_KEY);
       if (ch === 'calico' || ch === 'cloudling') setCharacter(ch);
-      if (localStorage.getItem('clawd-deskpet-mode') !== 'default') setRandomMode(true);
+      // 动画(随机播放)默认关闭:仅显式存为 'random' 才开,空/未设(新用户)→ 关。
+      if (localStorage.getItem('clawd-deskpet-mode') === 'random') setRandomMode(true);
     } catch {}
     // Warm the search overlay chunk so the first tap mounts it without an async
     // gap — on touch that gap drops focus out of the gesture and the mobile
