@@ -1029,7 +1029,9 @@
 
 /* ── Day List Panel ── */
 .calendar-page .day-list-panel {
-    max-width: 600px;
+    /* 桌面端最多每行 4 张卡片(.reg-cards minmax(258px,1fr)):4×258 + 3 gap + 内边距 ≈ 1120px。
+       窄屏由 .reg-cards 的 auto-fill 自动降列,<560px 退单列。 */
+    max-width: 1120px;
     max-height: calc(100vh - 10vh);
     display: flex;
     flex-direction: column;
