@@ -427,6 +427,8 @@ html:not([data-palette-scheme=dark]) .wse-page {
 .wse-sor-evcell.podium-2 { color: #c0c0c0; font-weight: 600; }
 .wse-sor-evcell.podium-3 { color: #cd7f32; font-weight: 600; }
 .wse-sor-evcell.empty { color: var(--faint-foreground); }
+th.wse-sor-evcell { padding: 4px 2px !important; }
+.wse-th-sort-ev { justify-content: center; width: 100%; }
 
 /* Show toggle 所在 filter 不强制 140px min-width,让 toggle 后紧贴下一项 filter */
 .wse-filter.wse-filter-show { min-width: 0; }
