@@ -18,3 +18,15 @@ export function isAo5Bracketed(attempts: number[], idx: number): boolean {
   const bestIdx = attempts.indexOf(Math.min(...valid.map((x) => x.v)));
   return idx === worstIdx || idx === bestIdx;
 }
+
+/**
+ * 去掉末尾「未进行的把」(value===0)。WCA 成绩按 value1..value5 全列存,Bo3 / Bo1 / Mo3
+ * (多盲 / 旧多盲 / 三四五盲 / 最少步 / 六七阶)及未过晋级线的轮次,尾部补 0 占位。显示时砍掉这些
+ * 0,使把数反映真实尝试次数(3 把项目显示 1-3 而非 1-5),且 length≠5 时 isAo5Bracketed 不再误括号。
+ * DNF/DNS(-1/-2)是真把,保留。
+ */
+export function trimEmptyAttempts(attempts: number[]): number[] {
+  let end = attempts.length;
+  while (end > 0 && attempts[end - 1] === 0) end--;
+  return end === attempts.length ? attempts : attempts.slice(0, end);
+}

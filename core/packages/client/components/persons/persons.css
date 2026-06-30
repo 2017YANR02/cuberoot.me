@@ -527,6 +527,8 @@ html[data-theme=dark] .wp-page {
     color: var(--wp-text); text-decoration: none; font-weight: 600; font-size: 0.92rem;
 }
 .wp-bycomp-name:hover { color: var(--wp-accent); }
+/* 分组视图比赛名也单行(用户要求):日期仍可换到下一行 */
+.wp-bycomp-grouphead .comp-cell > span { white-space: nowrap; }
 .wp-bycomp-date {
     font-family: var(--font-mono);
     font-size: 0.78rem; color: var(--wp-text-mute);
@@ -565,24 +567,13 @@ html[data-theme=dark] .wp-page {
     display: table-cell; min-width: 0;
     vertical-align: top;
     padding-top: 10px;
-    /* 长比赛名换行 + 限宽,否则单行撑宽这一列,把右侧「详细成绩」挤出可视区 */
-    white-space: normal;
+    /* 比赛名强制单行(用户要求);超长名整张表在 .sticky-scroll 里横向滚动 */
+    white-space: nowrap;
 }
 .wp-bycomp-table .wp-cell-comp .comp-cell {
     display: inline-flex; align-items: baseline; column-gap: 4px;
-    max-width: 16rem;
 }
-.wp-bycomp-table .wp-cell-comp .comp-cell > span { overflow-wrap: anywhere; }
-/* 桌面(容器已加宽)放宽比赛名单元,让常见赛事名落一行;移动端保持 16rem,2 行换行更省横滑 */
-@media (min-width: 768px) {
-    .wp-bycomp-table .wp-cell-comp .comp-cell { max-width: 26rem; }
-}
-/* 移动端:表格在 .wp-table-scroll / .wp-records-scroll 里横向滚动,auto 表格会把
-   overflow-wrap:anywhere 的比赛名列压成逐字换行(min-content≈1ch)。给一个可读最小宽度,
-   让赛事名按词换行(常见名 ~2 行),日期不再被挤断行。 */
-@media (max-width: 767px) {
-    .wp-bycomp-table .wp-cell-comp { min-width: 12rem; }
-}
+.wp-bycomp-table .wp-cell-comp .comp-cell > span { white-space: nowrap; }
 .wp-bycomp-table .wp-cell-comp-date {
     margin-top: 2px;
     font-family: var(--font-mono);
@@ -722,20 +713,21 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-bycomp-table thead th.wp-th-attempts { text-align: left; }
 .wp-th-attempts .wp-att-head {
     display: inline-grid;
-    grid-template-columns: repeat(5, minmax(10ch, max-content));
+    /* 列数由 --att-cols 驱动(ByEventView 传 maxAttempts):3 把项目只出 1-3,默认 5 */
+    grid-template-columns: repeat(var(--att-cols, 5), minmax(10ch, max-content));
     gap: 4px 12px;
     justify-content: start;
     font-size: 0.85rem;            /* 对齐 tbody 单元格字号,使 10ch 与下方网格同宽 */
 }
 /* tbody 详细成绩网格同步提到 10ch(仅 /wca/persons,recon 同场表仍走共享 8.5ch) */
 .wp-cell-attempts .wp-attempts-flow {
-    grid-template-columns: repeat(5, minmax(10ch, max-content));
+    grid-template-columns: repeat(var(--att-cols, 5), minmax(10ch, max-content));
 }
 /* MBLD(多盲)详细成绩 = 「(点数 时:分:秒)」复合值,各行内容宽度不一(10ch 容不下 → max-content
    逐行涨,冒号错位)。把列下限提到能容纳最宽 MBLD 值(≈12.3ch)的 13ch,使每列宽度跨行恒定
    (max-content 仅作超长兜底)→ 右对齐即冒号逐行对齐(同单次列)。 */
 .wp-cell-attempts--mbld .wp-attempts-flow {
-    grid-template-columns: repeat(5, minmax(13ch, max-content));
+    grid-template-columns: repeat(var(--att-cols, 5), minmax(13ch, max-content));
 }
 /* 「#」关(居中模式)下 MBLD 仍右对齐,维持冒号跨行对齐 */
 .wp-cell-attempts--mbld.wp-cell-attempts--center .wp-att { text-align: right; }

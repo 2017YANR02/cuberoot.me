@@ -24,9 +24,10 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
+import { trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
-import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
+import { isMbldEvent, effectiveMbldAverage as effectiveAverage } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
@@ -37,13 +38,6 @@ import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEdito
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
 import { SortArrow } from '@/components/SortArrow';
-
-// MBLD 无官方平均 → 用非官方 Mo3(从该轮 attempts 现算);其它项目用官方 average。
-function effectiveAverage(r: WcaResultRow, eventId: string): number {
-  if (r.average && r.average !== 0) return r.average;
-  if (isMbldEvent(eventId)) return computeMbfMo3(r.attempts);
-  return r.average;
-}
 
 interface Props {
   profile: WcaPersonProfile;
@@ -210,8 +204,10 @@ function EventRoundsList({
   }, []);
   // 切项目时重置排序(不同项目把数 / 量纲不同)。
   useEffect(() => { setSort({ key: null, dir: 'asc' }); }, [eventId]);
-  // 排序把序号只给前 5 把(head-to-head 等可能有 1~23 把,但只关心前 5).
-  const maxAttempts = useMemo(() => Math.min(5, rows.reduce((m, r) => Math.max(m, r.attempts?.length ?? 0), 0)), [rows]);
+  // 排序把序号只给前 5 把(head-to-head 等可能有 1~23 把,但只关心前 5)。
+  // 用 trimEmptyAttempts 砍掉尾部 0 占位后再量:3 把项目(多盲 / 三四五盲 / 最少步 / 六七阶)
+  // 只出 1-3,不再出 4 5 空列。
+  const maxAttempts = useMemo(() => Math.min(5, rows.reduce((m, r) => Math.max(m, trimEmptyAttempts(r.attempts ?? []).length), 0)), [rows]);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -228,12 +224,15 @@ function EventRoundsList({
   // 的 attempts/best/average 上,再喂 computePrRank。无变更链的结果原样返回(绝大多数)。
   const effResultsForRank = useMemo(() => results.map((r) => {
     const chain = splitChainByStatus(changeMap.get(rowChangeKey(r.competition_id, r.event_id, r.round_type_id))).approved;
-    if (chain.length === 0) return r;
+    // MBLD 无官方平均 → 用非官方 Mo3 当 average 喂 computePrRank,否则平均列拿不到 PR 名次。
+    // 非 MBLD 时 effectiveAverage===r.average,无变更链则原样返回(零拷贝)。
+    const baseAvg = effectiveAverage(r, r.event_id);
+    if (chain.length === 0) return baseAvg === r.average ? r : { ...r, average: baseAvg };
     return {
       ...r,
       attempts: effectiveAttempts(chain, r.attempts),
       best: effectiveFieldValue(chain, 'best', r.best),
-      average: effectiveFieldValue(chain, 'average', effectiveAverage(r, r.event_id)),
+      average: effectiveFieldValue(chain, 'average', baseAvg),
     };
   }), [results, changeMap]);
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与
@@ -349,7 +348,7 @@ function EventRoundsList({
               </button>
             </th>
             <th className="wp-th-attempts">
-              <span className="wp-att-head">
+              <span className="wp-att-head" style={{ '--att-cols': maxAttempts } as React.CSSProperties}>
                 {maxAttempts > 0 && (
                   <span className="wp-att-sort">
                     {Array.from({ length: maxAttempts }, (_, i) => (
@@ -500,6 +499,7 @@ function EventRoundsList({
                     }
                     attemptRanks={showAttemptRanks ? (rank?.attemptRanks ?? null) : null}
                     singleRecord={showAttemptRanks ? singleRecord : null}
+                    cols={maxAttempts}
                     onEdit={(index, newValue, note) =>
                       recordAttemptEdit({
                         target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },

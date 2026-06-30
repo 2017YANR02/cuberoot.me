@@ -17,7 +17,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
-import { isMbldEvent } from '@/lib/mbf-average';
+import { isMbldEvent, effectiveMbldAverage } from '@/lib/mbf-average';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
@@ -87,12 +87,14 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
   // 要按 6.43 算,后续成绩也不被那个其实没发生的 4.43 压名次 → 先叠加变更链再喂 computePrRank。
   const effResultsForRank = useMemo(() => (results ?? []).map((r) => {
     const chain = splitChainByStatus(changeMap.get(rowChangeKey(r.competition_id, r.event_id, r.round_type_id))).approved;
-    if (chain.length === 0) return r;
+    // MBLD 无官方平均 → 用非官方 Mo3 当 average 喂 computePrRank,否则平均列拿不到 PR 名次。
+    const baseAvg = effectiveMbldAverage(r, r.event_id);
+    if (chain.length === 0) return baseAvg === r.average ? r : { ...r, average: baseAvg };
     return {
       ...r,
       attempts: effectiveAttempts(chain, r.attempts),
       best: effectiveFieldValue(chain, 'best', r.best),
-      average: effectiveFieldValue(chain, 'average', r.average),
+      average: effectiveFieldValue(chain, 'average', baseAvg),
     };
   }), [results, changeMap]);
   // PR / 名次染色只算官方成绩:直播(非官方)行不参与,也不挤掉官方 PR 标记
