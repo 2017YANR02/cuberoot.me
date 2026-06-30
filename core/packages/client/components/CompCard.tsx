@@ -3,7 +3,7 @@
 // 共享比赛卡片 — 旗 + 比赛名 + 日期/城市 + 报名状态 pill + 项目图标。
 // 首页「报名」tab(RegistrationComps)与 /wca/comp 卡片视图复用同一份视觉(registration_comps.css 的 .rc-* 类)。
 // 纯展示组件:报名状态 pill 由调用方算好(各页里程碑口径不同)传进来,卡片本身不碰时间逻辑。
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Users } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
@@ -16,6 +16,8 @@ import { toWcaEventId } from '@/lib/wca-events';
 import { Flag } from '@/components/Flag';
 import { CubingIcon } from '@/components/EventIcon';
 import { formatDateRangeIso } from '@/lib/wca-date';
+import { displayCuberName } from '@/lib/name-utils';
+import { personFlagIso2 } from '@/lib/country-flags';
 import { tr } from '@/i18n/tr';
 import './registration_comps.css';
 
@@ -40,6 +42,10 @@ export interface CompCardPill {
   tone: CompCardTone;
 }
 
+/** 顶尖选手芯片(卡片底部「顶尖选手」区)。events 带 wr 标注用来给项目图标上色。 */
+export interface CompCardCuberEvent { id: string; wr?: 'current' | 'former' | null }
+export interface CompCardCuber { id: string; name: string; events?: CompCardCuberEvent[] }
+
 /** 报名状态彩色胶囊 — 首页「报名」tab / 「公示」tab / 比赛卡片视图共用同一视觉。
  *  纯展示:状态由调用方算好({ when, word, tone })传入。 */
 export function RegPill({ pill }: { pill: CompCardPill }) {
@@ -58,7 +64,7 @@ export interface CompCardFollow {
   onRequireLogin?: () => void;
 }
 
-export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLimit, eventRounds }: {
+export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLimit, eventRounds, topCubers, children }: {
   comp: CompCardComp;
   isZh: boolean;
   lang: 'zh' | 'en';
@@ -72,6 +78,10 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
   competitorLimit?: number | null;
   /** 各项目轮次数(项目 id → 轮次);传入(含空对象)即在每个项目图标下显示轮次,未知补「·」。缺省只显示图标。 */
   eventRounds?: Record<string, number> | null;
+  /** 顶尖选手列表(项目 top_cubers);传入则在卡片底部渲染「顶尖选手 (N)」芯片区。person 链接是主卡链接的兄弟节点(非嵌套 a)。 */
+  topCubers?: CompCardCuber[] | null;
+  /** 额外区块(如单场弹窗的纪录列表),渲染在卡片内、主链接与顶尖选手之后(同样不嵌在主 a 里)。 */
+  children?: ReactNode;
 }) {
   const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh ?? undefined }).replace(/\s*20\d\d\s*$/, '');
   const city = comp.city ? (isZh ? localizeCity(comp.city, true, comp.country) : comp.city) : '';
@@ -128,6 +138,28 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
           </div>
         )}
       </Link>
+      {topCubers && topCubers.length > 0 && (
+        <div className="rc-cubers">
+          <div className="rc-cubers-title">{tr({ zh: `顶尖选手 (${topCubers.length})`, en: `Top cubers (${topCubers.length})` })}</div>
+          <div className="rc-cuber-list">
+            {topCubers.map((c) => (
+              <Link key={c.id} href={`/wca/persons/${c.id}`} prefetch={false} className="rc-cuber-tag">
+                <Flag iso2={personFlagIso2(c.id)} spanClassName="rc-cuber-flag" imgClassName="rc-cuber-flag-img" />
+                <span>{displayCuberName(c.name, isZh)}</span>
+                {c.events && c.events.length > 0 && (
+                  <span className="rc-cuber-events">
+                    {c.events.map((evt) => {
+                      const wrClass = evt.wr === 'current' ? ' wr-current' : evt.wr === 'former' ? ' wr-former' : '';
+                      return <CubingIcon key={evt.id} icon={`event-${toWcaEventId(evt.id)}`} className={wrClass.trim() || undefined} />;
+                    })}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+      {children}
     </div>
   );
 }

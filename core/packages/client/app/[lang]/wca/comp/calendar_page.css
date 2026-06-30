@@ -226,20 +226,14 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 0.35rem 0.7rem;
-    border: 1px solid var(--border);
-    background: var(--surface);
+    padding: 0.35rem 0.2rem;
     color: var(--text-sub);
-    border-radius: 8px;
-    transition: all 0.15s;
+    transition: color 0.15s;
 }
 .calendar-page .debuts-select-wrap:hover {
-    border-color: var(--accent);
     color: var(--accent);
 }
 .calendar-page .debuts-select-wrap.is-active {
-    background: var(--accent-soft);
-    border-color: var(--accent);
     color: var(--accent);
 }
 .calendar-page .debuts-select {
@@ -1045,6 +1039,45 @@
     padding: 2px;
     margin: -2px;
 }
+/* 当日弹窗标题:日期在左,顶尖选手开关靠右 */
+.calendar-page .day-list-title { display: flex; align-items: center; gap: 10px; }
+.calendar-page .day-list-cubers-toggle {
+    margin-left: auto;
+    /* 标题是 Fraunces 大字号 serif,开关文字还原成正文小字 */
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 0.82rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    color: var(--text-sub);
+}
+
+/* 单场弹窗 = 一张卡片:面板透明,内嵌 .rc-card 自带边框/阴影;关闭按钮浮在卡片右上角之外 */
+.calendar-page .comp-card-modal {
+    max-width: 380px;
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    overflow: visible;
+}
+.calendar-page .comp-card-modal .rc-card {
+    /* 浮层卡片必须不透明(默认 .rc-card 背景近透明,会透出日历) */
+    background: var(--surface);
+    box-shadow: 0 20px 50px rgba(24, 23, 22, 0.2);
+}
+.calendar-page .comp-card-modal .rc-card:hover { transform: none; }
+.calendar-page .comp-card-modal > .modal-close {
+    top: -2.4rem;
+    right: 0;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.3);
+}
+.calendar-page .comp-card-modal > .modal-close:hover {
+    color: #fff;
+    background: rgba(0, 0, 0, 0.5);
+}
+/* 单场弹窗的纪录区(卡片 children)— 对齐卡片内容左缘 */
+.calendar-page .rc-records { padding: 0 0.85rem 0.7rem; }
 
 /* ── View toggle (Calendar / List) ── */
 .calendar-page .view-toggle {
