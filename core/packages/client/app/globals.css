@@ -616,6 +616,8 @@ a {
   margin-right: 5px;
   width: 1.25em !important;
   line-height: 1em !important;
+  /* 国旗是定宽图标,放进 flex 行(如 .comp-cell inline-flex)时禁被长比赛名挤窄 */
+  flex-shrink: 0;
 }
 
 .country-flag-ct {
@@ -624,6 +626,7 @@ a {
   margin-right: 5px;
   width: 1.25em !important;
   height: 0.9em !important;
+  flex-shrink: 0;
 }
 
 /* 源头兜底:TW(中华台北)是唯一渲染成真 <img> 的国旗(SVG,无 flag-icons 内禀尺寸)。
@@ -637,6 +640,7 @@ a {
   height: auto;
   object-fit: cover;
   vertical-align: middle;
+  flex-shrink: 0;
 }
 
 /* 通用清空 ×(components/ClearButton.tsx 共享样式)—— Vite index.css 漏移植,补回。
