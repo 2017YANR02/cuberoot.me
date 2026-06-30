@@ -15,7 +15,8 @@ import {
 } from '@/lib/comp-registration';
 import { type CompFollowState } from '@/components/CompFollow';
 import { useAuthStore } from '@/lib/auth-store';
-import { CompCard, type CompCardTone } from '@/components/CompCard';
+import { type CompCardTone } from '@/components/CompCard';
+import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRounds';
 import { tr } from '@/i18n/tr';
 import './registration_comps.css';
 
@@ -86,13 +87,14 @@ function RegistrationCard({ item, isZh, lang, now, mode, followed, onToggle, sho
   showFollow: boolean;
 }) {
   return (
-    <CompCard
+    <CompCardWithRounds
       comp={item.comp}
       isZh={isZh}
       lang={lang}
       pill={{ when: whenLabel(item, now, isZh, mode), word: actionWord(item.kind), tone: pillTone(item, now) }}
       dimmed={item.kind === 'closed'}
       follow={showFollow ? { followed, onToggle } : null}
+      roundsSeed={wcaRoundsSeed(item.comp.rounds)}
     />
   );
 }
