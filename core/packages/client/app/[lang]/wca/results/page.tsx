@@ -210,8 +210,9 @@ function AllResultsPageInner() {
     if (psort === key) setQuery({ pdir: pdir === 'asc' ? 'desc' : 'asc', page: null });
     else setQuery({ psort: key, pdir: 'asc', page: null });
   };
-  // 多盲平均 = 非官方 Mo3(builder 现算进 wca_results_flat,有 is_avg 行),单项可排;名次和不计入
-  const isMbldAvg = singleEvent === '333mbf';
+  // 多盲平均 = 非官方 Mo3(builder 现算进 wca_results_flat,有 is_avg 行),单项可排;名次和不计入。
+  // 333mbf(新)+ 333mbo(旧,仅极少数完成过 3 轮)同口径。
+  const isMbldAvg = singleEvent === '333mbf' || singleEvent === '333mbo';
   const effType: 'single' | 'average' = type === 'average' ? 'average' : 'single';
   // 单项 bar race 的指标标签(single/average 必在 WR_METRICS 内);复用同一份口径表,免再写语言三元
   const effMetricMeta = WR_METRICS.find(m => m.id === effType)!;
