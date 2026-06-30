@@ -17,6 +17,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
+import { isMbldEvent } from '@/lib/mbf-average';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
@@ -264,7 +265,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             {effPos > 0 ? effPos : '—'}
                           </span>
                         </td>
-                        <td className={`wp-cell-result ${oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
+                        <td className={`wp-cell-result ${isMbldEvent(r.event_id) ? 'wp-cell-result--mbld' : ''} ${oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
                           <span className="record-num-cell">
                             <ResultChangeChain oldValues={oldBest} eventId={r.event_id} kind="single" note={chain?.[chain.length - 1]?.note} />
                             {formatWcaResult(effBest, r.event_id, 'single')}
@@ -286,7 +287,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             note={chain?.[chain.length - 1]?.note}
                           />
                         </td>
-                        <td className={`wp-cell-attempts ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
+                        <td className={`wp-cell-attempts ${isMbldEvent(r.event_id) ? 'wp-cell-attempts--mbld' : ''} ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
                           <AttemptsList
                             attempts={effAttempts}
                             best={effBest}
