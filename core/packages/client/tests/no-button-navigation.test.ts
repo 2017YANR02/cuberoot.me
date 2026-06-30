@@ -9,6 +9,7 @@
 // 当导航 → CI 直接挂。
 // 限制:只抓字面量 onClick={ ... router.push/replace( ... };经由命名函数间接调
 // router.push 抓不到(与 tests/url-state-no-raw-history.test.ts 同限)。
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

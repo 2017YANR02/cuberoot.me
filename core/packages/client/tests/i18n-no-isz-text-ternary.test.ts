@@ -25,6 +25,7 @@
 //   - 其它 dynamic 逻辑三元(isZh ? 16 : 12 字号之类)。
 // CI 跑 vitest(不跑 eslint),故约定靠本测试守。配套:写入即拦 PreToolUse hook
 // scripts/hook-detect-traditional.mjs;文案规范见 skill i18n。
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { Project, SyntaxKind, Node } from 'ts-morph';
 import { fileURLToPath } from 'node:url';

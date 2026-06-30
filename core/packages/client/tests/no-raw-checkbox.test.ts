@@ -4,6 +4,7 @@
 // 这是 ratchet:BASELINE 锁住当前存量,只许降不许升 —— 新写的 ☑ → CI 直接红。
 // 转一个 checkbox → BoolToggle 就把 BASELINE 减 1(改 baseline 当 review 信号)。清零后改成 toBe(0)。
 // 配套写入即拦 hook:.claude/hooks/block-raw-checkbox.ps1 → hook-detect-raw-checkbox.mjs。
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
