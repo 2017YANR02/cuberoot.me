@@ -19,8 +19,9 @@ formatWcaResultK(value, eventId, 0 | 1, opts?)   // kind 是 0/1 的 caller (ran
 - DNF=`-1` / DNS=`-2` / no result=`0`(不是 `null`)
 - 时间项:**centiseconds**,8653 = 1:26.53
 - **FMC single = 整数 moves(不是 cs!)**,FMC average = `moves × 100`
-- MBLD 新格式 `333mbf` = `0DDTTTTTMM`(10 位带前导 0),padStart(10) 后 **`slice(1,3)` 取 DD**(不是 slice(0,2)!),`solved - missed = 99 - DD`
-- MBLD 旧格式 `333mbo` = `1SSAATTTTT`,solved=99-SS
+- MBLD 两种编码,**按数值大小分流**(≥1e9=旧、<1e9=新),**不是按 event id**!`333mbo` 历史里两种都有(同一行 attempts 都能混),按 event 强解旧格式 → `24/8` 这种 solved>attempted 的鬼值。`333mbf` 也走同一磁分流。逻辑见 `formatMbld`,与 `stats-build/src/core/solve_time.ts` 一致
+  - 新格式 `DDTTTTTMM`(<1e9):missed=末2、TTTTT=中5、diff=99-DD,solved=diff+missed,attempted=solved+missed
+  - 旧格式 `1SSAATTTTT`(≥1e9):solved=99-SS、attempted=AA、TTTTT=秒(99999=未知)
 
 ## Top10 图表轴刻度走另一个
 

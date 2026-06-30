@@ -62,6 +62,23 @@ describe('formatWcaResult — 333mbf (multi-blind)', () => {
   });
 });
 
+describe('formatWcaResult — 333mbo (old-style multi-blind, mixed encodings)', () => {
+  // 333mbo stores BOTH encodings, discriminated by magnitude (old ≥ 1e9), never by event id.
+  // Regression: Tim Habermaas GermanOpen2008 WR = 750815700 (< 1e9 → NEW format).
+  // Forcing old-format decode produced the impossible "24/8 261:40" (solved > attempted).
+  it('new-format value (< 1e9): 750815700 → 24/24 in 2:15:57', () => {
+    expect(formatWcaResult(750815700, '333mbo', 'single')).toBe('24/24 2:15:57');
+  });
+  it('old-format value (≥ 1e9): 1960706900 → 3/7 in 1:55:00', () => {
+    // 1SSAATTTTT: SS=96 → solved=99-96=3, AA=07 → attempted=7, TTTTT=06900 → 6900s
+    expect(formatWcaResult(1960706900, '333mbo', 'single')).toBe('3/7 1:55:00');
+  });
+  it('old-format unknown time (TTTTT=99999) → ?:??', () => {
+    // SS=90 → solved=9, AA=12 → attempted=12, time unknown
+    expect(formatWcaResult(1901299999, '333mbo', 'single')).toBe('9/12 ?:??');
+  });
+});
+
 describe('formatWcaResultK — index variant', () => {
   it('0 → single', () => {
     expect(formatWcaResultK(8653, '333', 0)).toBe('1:26.53');
