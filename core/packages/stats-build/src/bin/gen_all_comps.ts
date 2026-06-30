@@ -65,7 +65,6 @@ interface QualRow extends RowDataPacket {
 interface DualRow extends RowDataPacket {
   competition_id: string;
   event_id: string;
-  advancement_condition: string | null;
 }
 
 // 紧凑 round-1 meta（与 shared RoundMeta 一致，键省略即无）
@@ -154,21 +153,22 @@ async function main() {
   }
 
   // ── 双轮赛制 (WCA Reg 9v, 2026+) → 每场含双轮的 event 短码列表 ───────────────────────
-  // 双轮 = 某项目首轮 advancement = percent/100（全员晋级=无淘汰，9v5），且该项目 ≥2 轮。
-  // 只有 2026 起的比赛可能有（新规），SQL 已按年份收口（只扫几十场，开销可忽略）。
-  // 数据同 comp_round_meta 一源（rounds.advancement_condition = WCIF 那份），是详情页双轮判定的权威信号。
+  // 双轮 = 某项目的两轮被「链接」(rounds.linked_round_id 非空)：全员可打两轮、取较好成绩、
+  // 不淘汰。权威信号是 linked_round_id —— 公开 WCIF 不暴露它，advancement_condition 只是
+  // 「若 dual 临时取消则回退」的后备值(常见 percent/75)，开发者 dump 的 rounds 表才带 linked_round_id。
+  // 旧实现用 advancement==percent/100 启发式，两个方向都错：漏掉后备写 75% 的真 dual(如 Evanston)，
+  // 又误报残留 100% 但实际改成淘汰制的非 dual(如 Shanghai)。linked_round_id 已隐含 ≥2 轮，无需再 gate。
+  // 只有 2026 起的比赛可能有(新规)，SQL 已按年份收口(只扫几十场，开销可忽略)。
   const dualRows = await query<DualRow[]>(`
-    SELECT ce.competition_id, ce.event_id, r.advancement_condition
+    SELECT DISTINCT ce.competition_id, ce.event_id
     FROM rounds r
     JOIN competition_events ce ON ce.id = r.competition_event_id
     JOIN competitions c ON c.id = ce.competition_id
-    WHERE r.number = 1 AND c.end_date < CURDATE() AND YEAR(c.start_date) >= 2026
+    WHERE r.linked_round_id IS NOT NULL AND c.end_date < CURDATE() AND YEAR(c.start_date) >= 2026
   `);
   const dualByComp = new Map<string, string[]>();
   for (const dr of dualRows) {
-    if (encodeAdv(safeParse(dr.advancement_condition)) !== 'p100') continue;
     const short = EVENT_SHORT[dr.event_id] ?? dr.event_id;
-    if ((roundsByComp.get(dr.competition_id)?.[short] ?? 0) < 2) continue; // 须有次轮可合并
     let arr = dualByComp.get(dr.competition_id);
     if (!arr) { arr = []; dualByComp.set(dr.competition_id, arr); }
     arr.push(short);
