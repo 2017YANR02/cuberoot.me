@@ -12,6 +12,7 @@ import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { BarChart3, Play, Pause, ChevronRight, ChevronDown } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
+import BoolToggle from '@/components/BoolToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { EVENT_NAME_TO_ID, ALL_EVENT_IDS } from '@/lib/event-constants';
 import {
@@ -594,6 +595,7 @@ function AoxRankingSection({ header, rows, isZh }: {
               <tr key={i}>
                 {hasSolves && (
                   <td style={{ textAlign: 'center' }}>
+                    {/* allow-checkbox: 逐行多选(挑成绩对比),非布尔开关,保留原生 checkbox */}
                     <input type="checkbox"
                       checked={checkedRows.has(i)}
                       onChange={() => toggleRow(i)}
@@ -737,11 +739,12 @@ function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSe
           </button>
         ))}
         {showDedup && (
-          <label className="wca-stats-dedup-toggle">
-            <span>{tr({ zh: '日期去重', en: 'Dedup' })}</span>
-            <input type="checkbox" checked={dedup} onChange={() => setDedup(!dedup)} />
-            <span className="wca-stats-toggle-pill" />
-          </label>
+          <BoolToggle
+            className="wca-stats-dedup-toggle"
+            value={dedup}
+            onChange={setDedup}
+            label={tr({ zh: '日期去重', en: 'Dedup' })}
+          />
         )}
       </div>
       {belowTabs}
