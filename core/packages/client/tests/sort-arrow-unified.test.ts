@@ -4,6 +4,7 @@
 //
 // 注:ChevronUp / ChevronDown 仍可用于「展开/折叠」三角(census toggle 等),故不一刀切禁;
 // 只禁 ChevronsUpDown 这个「双向排序图标」的 JSX 渲染。要排序箭头 → import { SortArrow }。
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

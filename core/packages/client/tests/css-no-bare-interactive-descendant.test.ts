@@ -9,6 +9,7 @@
 // 例外两种:
 //  1) 整文件待清(有并发/外部约束)→ 加进 ALLOWLIST_FILES 并写理由;
 //  2) 单条选择器确属封闭容器、绝不会塞共享组件 → 加进 ALLOWLIST(`文件 → 选择器`)并写理由。
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

@@ -7,6 +7,7 @@
 //
 // 用短语级(非逐字)检测:逐字会误伤简繁同形字(著名 / 显著 的「著」、什么的「么」),
 // 短语级 OpenCC 对纯简体文本是恒等变换,只有真繁体才被改写。
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import * as OpenCC from 'opencc-js';
 import { readFileSync, readdirSync, statSync } from 'node:fs';

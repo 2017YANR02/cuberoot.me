@@ -9,6 +9,7 @@
 // 空/暂态 payload 发 `no-store`;改响应 shape 必须 bump URL `v=` 参数。
 //
 // CI 跑 vitest(server 包无测试集),故跨包扫源码当红灯;新端点想长缓存 → 进 allowlist 留下 review 信号。
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

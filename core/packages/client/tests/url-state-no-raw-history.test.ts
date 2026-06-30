@@ -6,6 +6,7 @@
 // 各文件内已带 `// eslint-disable-next-line no-restricted-syntax, no-restricted-globals` + 理由注释。
 //
 // CI 跑 vitest(不跑 eslint,且无 TS eslint parser),故约定靠本测试当红灯:新页面想退回旧写法 → CI 直接挂。
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

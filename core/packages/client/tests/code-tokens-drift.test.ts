@@ -6,6 +6,7 @@
 //
 // Fix when red: open app/[lang]/code/tokens/_tokens.ts and update the light/dark
 // value(s) to match app/globals.css.
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
