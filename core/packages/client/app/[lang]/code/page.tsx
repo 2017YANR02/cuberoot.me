@@ -221,6 +221,23 @@ const CARDS: Card[] = [
     },
   },
   {
+    href: '/code/guards',
+    glyph: '⛔',
+    accent: '#FB7185',
+    zh: {
+      title: '约束守卫',
+      sub: 'Guards',
+      tagline: '散落仓库各处的"写入即拦"PreToolUse hook 与 CI 棘轮测试一览:哪些反模式落盘前就被拦,哪些靠 CI 兜底,各自基线还剩多少',
+      meta: '6 对双层守卫 · 8 条 CI 棘轮 · 5 条进程级',
+    },
+    en: {
+      title: 'Guards',
+      sub: 'Constraint Layers',
+      tagline: 'A map of the repo’s "blocked at write time" PreToolUse hooks and CI ratchet tests — what’s stopped before it lands, what CI catches instead, and how far each baseline has left',
+      meta: '6 paired guards · 8 CI ratchets · 5 process-level',
+    },
+  },
+  {
     href: '/code/ops',
     glyph: '~$',
     accent: '#A78BFA',
