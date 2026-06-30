@@ -614,9 +614,11 @@ async function main() {
           allTopCount++;
         }
       }
-      // 333mbf 无官方平均:补一行 is_avg=true(value=非官方 Mo3),供 all-results 单项平均排名。
+      // 333mbf / 333mbo 无官方平均:补一行 is_avg=true(value=非官方 Mo3),供 all-results 单项平均排名。
       // 仅 3 次全成功才有效;tag 留空(无官方纪录)。名次和走 sor 表,不取此行。
-      if (eventId === '333mbf') {
+      // ⚠️ 新增 333mbo Mo3 行 = 改 fullTopTotal 口径,历史比赛(Euro2006/DutchOpen2006)需先一次性
+      //   backfill 进 wca_results_flat 才能 push,否则增量行数守卫必红;backfill 见 sql/backfill_mbo_mo3.sql。
+      if (eventId === '333mbf' || eventId === '333mbo') {
         const mo3 = computeMbfMo3(r.attempts.map(v => v ?? 0));
         if (mo3 > 0) {
           fullTopTotal++;
