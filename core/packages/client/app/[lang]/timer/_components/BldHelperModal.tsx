@@ -17,6 +17,7 @@
 import { useEffect, useId, useMemo, useState, type JSX } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
+import BoolToggle from '@/components/BoolToggle';
 import { codereader } from '@/app/[lang]/trainer/3bld/_lib/read-engine';
 import { useBldConfigStore, useBldConfigHydrated } from '@/app/[lang]/trainer/3bld/_store/bld-config-store';
 import type { LetterCell, CodeReadResult } from '@/app/[lang]/trainer/3bld/_lib/types';
@@ -190,25 +191,30 @@ export default function BldHelperModal({ scramble, event, isZh, onClose }: Props
                     {config.eOrder && <ClearButton isZh={isZh} onClick={() => setConfig({ eOrder: '' })} preserveFocus />}
                   </div>
                 </div>
-                <label className="bld-helper-check">
-                  <input type="checkbox" checked={config.keepHueC} onChange={(e) => setConfig({ keepHueC: e.target.checked })} />
-                  {tr({ zh: '角保持色相', en: 'Corner keep hue' })}
-                </label>
-                <label className="bld-helper-check">
-                  <input type="checkbox" checked={config.keepHueE} onChange={(e) => setConfig({ keepHueE: e.target.checked })} />
-                  {tr({ zh: '棱保持色相', en: 'Edge keep hue'
-                })}
-                </label>
-                <label className="bld-helper-check">
-                  <input type="checkbox" checked={config.skipC === 1} onChange={(e) => setConfig({ skipC: e.target.checked ? 1 : 0 })} />
-                  {tr({ zh: '角跳编法', en: 'Corner fixed-buffer'
-                })}
-                </label>
-                <label className="bld-helper-check">
-                  <input type="checkbox" checked={config.skipE === 1} onChange={(e) => setConfig({ skipE: e.target.checked ? 1 : 0 })} />
-                  {tr({ zh: '棱跳编法', en: 'Edge fixed-buffer'
-                })}
-                </label>
+                <BoolToggle
+                  className="bld-helper-check"
+                  value={config.keepHueC}
+                  onChange={(v) => setConfig({ keepHueC: v })}
+                  label={tr({ zh: '角保持色相', en: 'Corner keep hue' })}
+                />
+                <BoolToggle
+                  className="bld-helper-check"
+                  value={config.keepHueE}
+                  onChange={(v) => setConfig({ keepHueE: v })}
+                  label={tr({ zh: '棱保持色相', en: 'Edge keep hue' })}
+                />
+                <BoolToggle
+                  className="bld-helper-check"
+                  value={config.skipC === 1}
+                  onChange={(v) => setConfig({ skipC: v ? 1 : 0 })}
+                  label={tr({ zh: '角跳编法', en: 'Corner fixed-buffer' })}
+                />
+                <BoolToggle
+                  className="bld-helper-check"
+                  value={config.skipE === 1}
+                  onChange={(v) => setConfig({ skipE: v ? 1 : 0 })}
+                  label={tr({ zh: '棱跳编法', en: 'Edge fixed-buffer' })}
+                />
               </div>
             )}
 

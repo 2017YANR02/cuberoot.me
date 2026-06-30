@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Play, X } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import BoolToggle from '@/components/BoolToggle';
 import { BldConfigBar } from './BldConfigBar';
 import { ScrambleOutput } from './ScrambleOutput';
 import { MatrixSelect } from './MatrixSelect';
@@ -247,19 +248,24 @@ export function TwoTwoTrainer({ piece }: TwoTwoTrainerProps): JSX.Element | null
         <p className="bld-input-summary" style={{ marginTop: 12 }}>{inputSummary}</p>
 
         <div className="bld-options">
-          <label className="bld-check">
-            <input type="checkbox" checked={otherScramble} onChange={(e) => setOtherScramble(e.target.checked)} />
-            {(isZh ? spec.otherScrambleZh : spec.otherScrambleEn)}
-          </label>
-          <label className="bld-check">
-            <input type="checkbox" checked={twist} onChange={(e) => setTwist(e.target.checked)} />
-            {(isZh ? spec.twiststateZh : spec.twiststateEn)}
-          </label>
-          <label className="bld-check">
-            <input type="checkbox" checked={excludeTop} onChange={(e) => setExcludeTop(e.target.checked)} />
-            {tr({ zh: '是否排除顶层', en: 'Exclude top layer'
-            })}
-          </label>
+          <BoolToggle
+            className="bld-check"
+            value={otherScramble}
+            onChange={setOtherScramble}
+            label={isZh ? spec.otherScrambleZh : spec.otherScrambleEn}
+          />
+          <BoolToggle
+            className="bld-check"
+            value={twist}
+            onChange={setTwist}
+            label={isZh ? spec.twiststateZh : spec.twiststateEn}
+          />
+          <BoolToggle
+            className="bld-check"
+            value={excludeTop}
+            onChange={setExcludeTop}
+            label={tr({ zh: '是否排除顶层', en: 'Exclude top layer' })}
+          />
         </div>
 
         <div className="bld-generate-row">

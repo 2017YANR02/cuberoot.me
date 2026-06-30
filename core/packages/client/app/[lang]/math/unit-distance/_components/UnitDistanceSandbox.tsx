@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Shuffle, Grid3x3, Hexagon, Triangle } from 'lucide-react';
 import { useT } from "@/hooks/useT";
+import BoolToggle from '@/components/BoolToggle';
 import { T } from '@/i18n/tr';
 
 type Preset = 'random' | 'square' | 'triangular' | 'hexagonal';
@@ -180,14 +181,12 @@ export default function UnitDistanceSandbox() {
             onChange={e => setN(parseInt(e.target.value))}
           />
         </div>
-        <label className="ud-sandbox-toggle">
-          <input
-            className="ud-sandbox-toggle-input"
-            type="checkbox" checked={showCircles}
-            onChange={e => setShowCircles(e.target.checked)}
-          />
-          <span>{t('单位圆提示', 'Unit-circle hints')}</span>
-        </label>
+        <BoolToggle
+          className="ud-sandbox-toggle"
+          value={showCircles}
+          onChange={setShowCircles}
+          label={t('单位圆提示', 'Unit-circle hints')}
+        />
       </div>
 
       <div className="ud-sandbox-stage">

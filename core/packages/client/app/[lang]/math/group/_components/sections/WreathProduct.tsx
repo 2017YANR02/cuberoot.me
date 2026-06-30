@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { permSign } from '../cube_state';
 import { tr } from '@/i18n/tr';
+import BoolToggle from '@/components/BoolToggle';
 
 // ── BigInt helpers (all math done in BigInt to avoid precision loss) ──────────
 function bigFactorial(n: number): bigint {
@@ -443,12 +444,13 @@ function IndexSieve() {
           { zh: '启用约束 3: 奇偶匹配',  en: 'Enforce: parity match'
         },
         ].map((c, i) => (
-          <label key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, cursor: 'pointer' }}>
-            <input type="checkbox" checked={enforceAll[i]}
-              onChange={() => setEnforceAll(prev => { const n = [...prev]; n[i] = !n[i]; return n; })}
-            />
-            {tr(c)}
-          </label>
+          <BoolToggle
+            key={i}
+            value={enforceAll[i]}
+            onChange={() => setEnforceAll(prev => { const n = [...prev]; n[i] = !n[i]; return n; })}
+            label={<span style={{ fontSize: 13 }}>{tr(c)}</span>}
+            ariaLabel={tr(c)}
+          />
         ))}
       </div>
       {/* Funnel SVG */}

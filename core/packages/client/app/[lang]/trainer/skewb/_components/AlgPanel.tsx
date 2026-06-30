@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { HelpCircle, RefreshCw } from 'lucide-react';
+import BoolToggle from '@/components/BoolToggle';
 import SkewbImage from './SkewbImage';
 import HintModal from './HintModal';
 import { CATEGORIES, ALL_ALGS, type SkewbAlgCase } from '../_lib/algs';
@@ -146,6 +147,7 @@ export default function AlgPanel({
                     key={cat.key}
                     className={on ? 'sk-cell is-selected' : 'sk-cell'}
                   >
+                    {/* allow-checkbox: 类别多选网格 */}
                     <input
                       className="sk-cell-input"
                       type="checkbox"
@@ -165,6 +167,7 @@ export default function AlgPanel({
                 const on = selectedIds.has(c.id);
                 return (
                   <label key={c.id} className={on ? 'sk-cell is-selected' : 'sk-cell'}>
+                    {/* allow-checkbox: 公式 ID 多选网格 */}
                     <input
                       className="sk-cell-input"
                       type="checkbox"
@@ -181,15 +184,12 @@ export default function AlgPanel({
 
         <hr className="sk-settings-hr" />
 
-        <label className="sk-check">
-          <input
-            type="checkbox"
-            checked={showImg}
-            onChange={(e) => onShowImg(e.target.checked)}
-          />
-          {tr({ zh: '显示打乱图', en: 'Show scramble image'
-        })}
-        </label>
+        <BoolToggle
+          className="sk-check"
+          value={showImg}
+          onChange={onShowImg}
+          label={tr({ zh: '显示打乱图', en: 'Show scramble image' })}
+        />
       </div>
 
       {currentCase ? (

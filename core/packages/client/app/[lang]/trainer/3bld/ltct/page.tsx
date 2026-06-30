@@ -29,6 +29,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, FileText } from 'lucide-react';
+import BoolToggle from '@/components/BoolToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import { ScrambleOutput } from '../_components/ScrambleOutput';
@@ -243,24 +244,18 @@ export default function LtctTrainerPage(): JSX.Element {
 
       <div className="bld-section">
         <div className="bld-options">
-          <label className="bld-check">
-            <input
-              type="checkbox"
-              checked={edgeScramble}
-              onChange={(e) => setEdgeScramble(e.target.checked)}
-            />
-            {tr({ zh: '打乱棱块', en: 'Scramble edges'
-            })}
-          </label>
-          <label className="bld-check">
-            <input
-              type="checkbox"
-              checked={cornerScramble}
-              onChange={(e) => setCornerScramble(e.target.checked)}
-            />
-            {tr({ zh: '打乱其他角块', en: 'Scramble other corners'
-            })}
-          </label>
+          <BoolToggle
+            className="bld-check"
+            value={edgeScramble}
+            onChange={setEdgeScramble}
+            label={tr({ zh: '打乱棱块', en: 'Scramble edges' })}
+          />
+          <BoolToggle
+            className="bld-check"
+            value={cornerScramble}
+            onChange={setCornerScramble}
+            label={tr({ zh: '打乱其他角块', en: 'Scramble other corners' })}
+          />
         </div>
 
         <button

@@ -13,6 +13,7 @@ import {
   type ScheduleData, type DayColumn,
 } from '@/lib/comp-schedule';
 import { tr } from '@/i18n/tr';
+import BoolToggle from '@/components/BoolToggle';
 
 const WCA_REGS = 'https://www.worldcubeassociation.org/regulations';
 
@@ -127,21 +128,12 @@ function DetailsToggle({ expanded, onToggle }: {
   expanded: boolean; onToggle: () => void; isZh: boolean;
 }) {
   return (
-    <label className="sched-details-toggle">
-      <span className={`sched-switch${expanded ? ' is-on' : ''}`}>
-        <input
-          className="sched-switch-input"
-          type="checkbox"
-          checked={expanded}
-          onChange={onToggle}
-          aria-label={tr({ zh: '显示轮次详情', en: 'Show Round Details'
-        })}
-        />
-        <span className="sched-switch-knob" />
-      </span>
-      <span className="sched-switch-label">{tr({ zh: '显示轮次详情', en: 'Show Round Details'
-    })}</span>
-    </label>
+    <BoolToggle
+      className="sched-details-toggle"
+      value={expanded}
+      onChange={onToggle}
+      label={tr({ zh: '显示轮次详情', en: 'Show Round Details' })}
+    />
   );
 }
 
