@@ -15,7 +15,7 @@ import { writeFileSync, mkdirSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { query, closePool } from '../core/database.js';
-import { MbfAverage } from '../statistics/mbf_average.js';
+import { MbfAverage, type BestMo3Raw } from '../statistics/mbf_average.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_ROOT = resolve(__dirname, '../../../../../stats/records/history');
@@ -46,12 +46,11 @@ interface Row {
 
 interface CountryMeta { id: string; iso2: string; continent_id: string }
 
-// 333mbf 非官方 Mo3「当前世界纪录」—— WCA 不追踪多盲平均,results 表无 regional_average_record 标记,
-// 故上面的查询拿不到这一行。复用 stats-build 现成的 MbfAverage 引擎(bestMo3Raw 给出历史最佳 Mo3 的
-// 编码值 + 原始 id/三把成绩,口径与 wr_average_history 完全一致),映射成一条合成 average 行注入
-// world.json,使 /wca/records 当前视图(world)显示该非官方多盲平均纪录(原 wr_current 页同款行)。
-async function bestMbfMo3Row(countryById: Map<string, CountryMeta>): Promise<Row | null> {
-  const best = await new MbfAverage().bestMo3Raw();
+// 333mbf / 333mbo 非官方 Mo3「当前世界纪录」—— WCA 不追踪多盲平均,results 表无 regional_average_record 标记,
+// 故上面的查询拿不到这些行。复用 stats-build 现成的 MbfAverage 引擎(bestMo3Raw / bestMboMo3Raw 给出历史
+// 最佳 Mo3 的编码值 + 原始 id/三把成绩,口径与 wr_average_history 完全一致),映射成合成 average 行注入
+// world.json,使 /wca/records 当前视图(world)显示这两条非官方多盲平均纪录。
+function mo3RowFrom(best: BestMo3Raw | null, eventId: string, countryById: Map<string, CountryMeta>): Row | null {
   if (!best) return null;
   const pc = countryById.get(best.countryId);
   const cc = countryById.get(best.compCountry);
@@ -59,7 +58,7 @@ async function bestMbfMo3Row(countryById: Map<string, CountryMeta>): Promise<Row
   const dt = new Date(best.startDate);
   const d = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
   return {
-    e: '333mbf', t: 'a', v: best.value, l: 'WR',
+    e: eventId, t: 'a', v: best.value, l: 'WR',
     p: best.personId, pn: best.personName, pc: pc.iso2,
     c: best.compId, cn: best.compCell, cc: cc.iso2,
     d, a: best.attempts,
@@ -182,9 +181,15 @@ async function main() {
 
   // 1) World
   const worldRows = all.filter(r => r.l === 'WR');
-  const mbfMo3Row = await bestMbfMo3Row(countryById);
-  if (mbfMo3Row) {
-    worldRows.push(mbfMo3Row);
+  // 注入 333mbf + 333mbo 非官方 Mo3 平均纪录(同一 MbfAverage 实例,computeData 幂等不重复查询)
+  const mbf = new MbfAverage();
+  const mbfMo3Row = mo3RowFrom(await mbf.bestMo3Raw(), '333mbf', countryById);
+  const mboMo3Row = mo3RowFrom(await mbf.bestMboMo3Raw(), '333mbo', countryById);
+  let injectedMo3 = false;
+  for (const row of [mbfMo3Row, mboMo3Row]) {
+    if (row) { worldRows.push(row); injectedMo3 = true; }
+  }
+  if (injectedMo3) {
     worldRows.sort((a, b) => (a.d !== b.d ? (a.d < b.d ? 1 : -1) : a.v - b.v));
   }
   writeJson(resolve(OUTPUT_ROOT, 'world.json'), { updated: today, rows: worldRows });
