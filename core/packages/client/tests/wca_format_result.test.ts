@@ -73,9 +73,9 @@ describe('formatWcaResult — 333mbo (old-style multi-blind, mixed encodings)', 
     // 1SSAATTTTT: SS=96 → solved=99-96=3, AA=07 → attempted=7, TTTTT=06900 → 6900s
     expect(formatWcaResult(1960706900, '333mbo', 'single')).toBe('3/7 1:55:00');
   });
-  it('old-format unknown time (TTTTT=99999) → ?:??', () => {
+  it('old-format unknown time (TTTTT=99999) → ?:??:??', () => {
     // SS=90 → solved=9, AA=12 → attempted=12, time unknown
-    expect(formatWcaResult(1901299999, '333mbo', 'single')).toBe('9/12 ?:??');
+    expect(formatWcaResult(1901299999, '333mbo', 'single')).toBe('9/12 ?:??:??');
   });
 });
 

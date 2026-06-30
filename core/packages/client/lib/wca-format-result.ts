@@ -77,7 +77,7 @@ function formatMbld(value: number): string {
     solved = diff + missed;
     attempted = solved + missed;
   }
-  const time = seconds === 99_999 ? '?:??' : formatMbldTime(seconds);
+  const time = seconds === 99_999 ? '?:??:??' : formatMbldTime(seconds);
   return `${solved}/${attempted} ${time}`;
 }
 
