@@ -158,6 +158,12 @@ jobs:
         working-directory: core/packages/stats-build
         run: npx tsx src/bin/records_build.ts
 
+      # 非官方多盲平均(333mbf/333mbo Mo3)的区域纪录标签 → stats/records/mbld_avg_records.json
+      # (WCA 不追踪多盲平均;选手页平均列用它上 WR/大洲/NR 角标)。随下面 git add -A stats/ 一起提交+同步。
+      - name: Build unofficial MBLD-average records JSON
+        working-directory: core/packages/stats-build
+        run: npx tsx src/bin/mbld_avg_records_build.ts
+
       # 性别(女子/男子)历史纪录进程 — /wca/records 性别下拉数据源(world + 6 大洲)
       - name: Build gendered historical records JSON (women/men)
         working-directory: core/packages/stats-build

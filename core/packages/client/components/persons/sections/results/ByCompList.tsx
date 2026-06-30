@@ -18,6 +18,7 @@ import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
 import { isMbldEvent, effectiveMbldAverage } from '@/lib/mbf-average';
+import { useMbldAvgRecords, mbldAvgRecordKey } from '@/lib/mbld-avg-records';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
@@ -69,6 +70,8 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
   const admin = isAdminWcaId(myWcaId);
   const isOwner = !!myWcaId && myWcaId === wcaId;
   const loggedIn = !!myWcaId;
+  // 多盲非官方平均的区域纪录(WR/大洲/NR)查表;仅有多盲行时拉取。
+  const mbldAvgRecords = useMbldAvgRecords(!!results?.some((r) => isMbldEvent(r.event_id)));
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -219,7 +222,11 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                     const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
                     // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
                     const singleRecord = r.regional_single_record || (liveRank?.singleTag || null);
-                    const averageRecord = r.regional_average_record || (liveRank?.averageTag || null);
+                    // 多盲非官方平均:查站内自算的 WR/大洲/NR 标签(WCA 不记多盲平均纪录)。
+                    const mbldAvgRec = isMbldEvent(r.event_id)
+                      ? mbldAvgRecords?.get(mbldAvgRecordKey(wcaId, comp.id, r.event_id, r.round_type_id)) ?? null
+                      : null;
+                    const averageRecord = r.regional_average_record || mbldAvgRec || (liveRank?.averageTag || null);
                     const showEvent = r.event_id !== lastEvent;
                     lastEvent = r.event_id;
                     // 拆 status:approved 进有效值;pending 仅作「待审核」标记。
