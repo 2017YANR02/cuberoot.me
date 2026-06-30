@@ -65,6 +65,16 @@
     "en": "Recon gains animation playback, algorithm links, speed metrics"
   },
   {
+    "date": "2026-03-01",
+    "zh": "刷新近期比赛数据",
+    "en": "Refresh upcoming-competition data"
+  },
+  {
+    "date": "2026-03-02",
+    "zh": "刷新近期比赛数据",
+    "en": "Refresh upcoming-competition data"
+  },
+  {
     "date": "2026-03-03",
     "zh": "复盘加单次成绩列、无限滚动",
     "en": "Recon gains a single-result column and infinite scroll"
@@ -190,6 +200,11 @@
     "en": "Flags on cuber/competition links; icons localized"
   },
   {
+    "date": "2026-03-28",
+    "zh": "刷新近期比赛数据与中文赛名",
+    "en": "Refresh upcoming-competition data and Chinese names"
+  },
+  {
     "date": "2026-03-29",
     "zh": "统计页持续打磨",
     "en": "Continued stats-page polish"
@@ -220,6 +235,11 @@
     "en": "Old build system removed; blog card added to the homepage"
   },
   {
+    "date": "2026-04-04",
+    "zh": "刷新近期比赛数据与中文赛名",
+    "en": "Refresh upcoming-competition data and Chinese names"
+  },
+  {
     "date": "2026-04-05",
     "zh": "清理旧脚本 + 计算器组件重写",
     "en": "Old scripts cleaned up; calculator components rewritten"
@@ -238,6 +258,26 @@
     "date": "2026-04-08",
     "zh": "数帧工具修丢帧（两层渲染）",
     "en": "Frame-counter frame-loss fix (two-tier render)"
+  },
+  {
+    "date": "2026-04-09",
+    "zh": "刷新近期比赛数据与中文赛名",
+    "en": "Refresh upcoming-competition data and Chinese names"
+  },
+  {
+    "date": "2026-04-10",
+    "zh": "刷新近期比赛数据与中文赛名",
+    "en": "Refresh upcoming-competition data and Chinese names"
+  },
+  {
+    "date": "2026-04-11",
+    "zh": "刷新近期比赛数据与中文赛名",
+    "en": "Refresh upcoming-competition data and Chinese names"
+  },
+  {
+    "date": "2026-04-12",
+    "zh": "刷新近期比赛数据与中文赛名",
+    "en": "Refresh upcoming-competition data and Chinese names"
   },
   {
     "date": "2026-04-13",
@@ -268,6 +308,11 @@
     "date": "2026-04-18",
     "zh": "地球加银河背景、比赛聚合、搜索",
     "en": "Globe gains a Milky Way background, marker clustering, and search"
+  },
+  {
+    "date": "2026-04-19",
+    "zh": "刷新 WCA 统计、近期比赛数据与中文赛名",
+    "en": "Refresh WCA statistics, upcoming-competition data and Chinese names"
   },
   {
     "date": "2026-04-20",
@@ -345,6 +390,11 @@
     "en": "On-this-day popup; patterns library supports bigger cubes"
   },
   {
+    "date": "2026-05-05",
+    "zh": "刷新近期比赛数据与中文赛名",
+    "en": "Refresh upcoming-competition data and Chinese names"
+  },
+  {
     "date": "2026-05-06",
     "zh": "数据库迁 PostgreSQL + 公式进库 + 卸掉 WordPress 同日完成",
     "en": "Database moved to PostgreSQL, algorithms into the DB, WordPress dropped — same day"
@@ -368,6 +418,11 @@
     "date": "2026-05-10",
     "zh": "换位公式分解器上线",
     "en": "Commutator decomposition tool launched"
+  },
+  {
+    "date": "2026-05-11",
+    "zh": "刷新近期比赛数据与中文赛名",
+    "en": "Refresh upcoming-competition data and Chinese names"
   },
   {
     "date": "2026-05-12",
@@ -405,9 +460,29 @@
     "en": "Virtual cube expands to every WCA event"
   },
   {
+    "date": "2026-05-19",
+    "zh": "/sim 斜方与 SQ1 拖拽转动 + 打乱生成器支持非 WCA 项目与后台预生成",
+    "en": "/sim drag-to-turn for Skewb and Square-1 + scramble generator adds non-WCA events with background pre-generation"
+  },
+  {
+    "date": "2026-05-20",
+    "zh": "比赛中文名兜底缓存进数据库 + 生日 PR 新统计 + 镜面魔方打乱图与共享 NxN 仿真支持到 300 阶",
+    "en": "Chinese competition names cached through the database + birthday-PB stat + mirror-puzzle scramble images and a shared NxN sim up to order 300"
+  },
+  {
     "date": "2026-05-21",
     "zh": "手机 App 脚手架搭起（iOS / Android 套壳）",
     "en": "Mobile app scaffold (iOS / Android shells)"
+  },
+  {
+    "date": "2026-05-22",
+    "zh": "全站统一搜索（比赛 / 选手 / 复盘 / 公式集，分块加载）+ 比赛个人纪录服务端计算 + 复盘与选手双向跳转",
+    "en": "Unified site-wide search (comps / persons / recon / alg sets, chunked loading) + server-side personal records for comps + bidirectional recon-person linking"
+  },
+  {
+    "date": "2026-05-23",
+    "zh": "首页进行中比赛条与智能粘贴、语音输入 + 比赛弹窗复制按钮",
+    "en": "Landing ongoing-comps strip with smart paste and voice input + competition copy buttons"
   },
   {
     "date": "2026-05-24",
@@ -415,14 +490,34 @@
     "en": "Mobile app gains WCA login deep-link and automated tests"
   },
   {
+    "date": "2026-05-25",
+    "zh": "已结束比赛走静态快照快速通道 + 多盲 / 最少步成绩格式修正 + 部署与初始化脚本跨平台修正",
+    "en": "Static-snapshot fast path for finished competitions + Multi-Blind / Fewest-Moves formatting fixes + cross-platform deploy and seed scripts"
+  },
+  {
+    "date": "2026-05-26",
+    "zh": "Phase 4 整体迁移：全部页面从单页应用移植到 Next.js 16（App Router）+ Vercel 与自有服务器双部署配置",
+    "en": "Phase 4 migration: all pages ported from the SPA to Next.js 16 (App Router) + dual Vercel / self-hosted deploy config"
+  },
+  {
     "date": "2026-05-27",
-    "zh": "主域正式切到 Next.js（Phase 4）",
-    "en": "Main domain officially switched to Next.js (Phase 4)"
+    "zh": "主域切到 Next.js（Phase 4）",
+    "en": "Main domain switched to Next.js (Phase 4)"
   },
   {
     "date": "2026-05-28",
     "zh": "全站桌宠 + 网页版交叉步求解器上线",
     "en": "Site-wide desk pet and a browser cross-step solver launched"
+  },
+  {
+    "date": "2026-05-29",
+    "zh": "分析器输出变体解法（Rust WASM）+ F2LEO 与伪 F2LEO 上线比赛十字分析 + 打乱按比赛统计十字步数与每周管道",
+    "en": "Analyzer emits variant solutions (Rust WASM) + F2LEO and Pseudo-F2LEO live in competition cross analysis + per-competition cross-step distribution with a weekly pipeline"
+  },
+  {
+    "date": "2026-05-30",
+    "zh": "首页纪录快讯纳入 cubing.com 推断的中国纪录 + 比赛内纪录渐进标注",
+    "en": "Homepage record feed includes inferred China records from cubing.com + progressive within-competition record tagging"
   },
   {
     "date": "2026-05-31",
@@ -435,14 +530,34 @@
     "en": "Timer redesign: Solo and Battle unified; live ranks"
   },
   {
+    "date": "2026-06-02",
+    "zh": "历史名人堂年度普查（Sum of Ranks）+ 比赛日历可读化与跨夜比赛 + 桌宠 PLL 表演",
+    "en": "Historical hall-of-fame census (Sum of Ranks) + readable competition calendar with overnight comps + deskpet PLL performer"
+  },
+  {
+    "date": "2026-06-03",
+    "zh": "首页「今日神打」每日最易打乱展示 + 训练器项目进 URL + 选手页旗帜与领奖台名次细节",
+    "en": "Landing Daily-God easiest-scramble-of-the-day showcase + trainer event in the URL + person-page flag and podium polish"
+  },
+  {
     "date": "2026-06-04",
     "zh": "Python 彻底退出项目",
     "en": "Python fully retired from the project"
   },
   {
+    "date": "2026-06-05",
+    "zh": "首页今日复盘大字卡片与近期打乱双栏默认",
+    "en": "Landing today-recon big-time card and recent-scrambles dual default"
+  },
+  {
     "date": "2026-06-06",
     "zh": "社区投稿系统 + 23 个趣味榜单 + 多人复盘",
     "en": "Community publishing; 23 fun leaderboards; multi-cuber recon"
+  },
+  {
+    "date": "2026-06-07",
+    "zh": "比赛结果弹窗点击复制赛名与个人纪录的国家 / 世界排名 + 监控推送链接改指向站内比赛页",
+    "en": "Result modal copies competition name and shows national / world rank for PRs + monitor push links point to the in-site competition page"
   },
   {
     "date": "2026-06-08",
@@ -453,6 +568,11 @@
     "date": "2026-06-09",
     "zh": "名次和加深度工具 + 计时器接入真实 WCA 打乱",
     "en": "Sum-of-Ranks deep tools; real WCA scrambles in the timer"
+  },
+  {
+    "date": "2026-06-10",
+    "zh": "求解器扩充（Roux FB / Petrus 2x2x3 / EOLine / DR / F2B）+ 计时器公开打乱打卡与精度设置 + 打乱按项目分难度 + /code 新增设计令牌与 hooks/utils 索引",
+    "en": "Solver fleet grows (Roux FB / Petrus 2x2x3 / EOLine / DR / F2B) + public timer scramble-marks with precision settings + per-event scramble difficulty + /code design-token and hooks/utils reference pages"
   },
   {
     "date": "2026-06-11",
