@@ -34,6 +34,8 @@
      宽,挤出横向溢出(窄屏卡片被顶到 423px、整个面板横滑)。允许列缩到 0 即贴合容器。 */
   grid-template-columns: repeat(auto-fill, minmax(258px, 1fr));
   gap: 0.55rem;
+  /* 顶尖选手区使各卡高度不一 → 顶端对齐,不拉伸填满行高 */
+  align-items: start;
 }
 
 .rc-card {
@@ -175,6 +177,53 @@
   color: var(--muted-foreground);
 }
 .rc-event-rounds--placeholder { opacity: 0.3; }
+
+/* 顶尖选手区 — 在主卡链接之外(兄弟节点),避免 person <a> 嵌进比赛 <a>。padding 对齐卡片内容。 */
+.rc-cubers {
+  padding: 0 0.85rem 0.7rem;
+  margin-top: 0.05rem;
+}
+.rc-cubers-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-bottom: 0.4rem;
+}
+.rc-cuber-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.rc-cuber-tag {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 0.85rem;
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--foreground);
+  font-size: 0.76rem;
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.rc-cuber-tag:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.rc-cuber-flag, .rc-cuber-flag-img { width: 16px; height: 12px; flex: none; }
+.rc-cuber-events {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 2px;
+  color: var(--muted-foreground);
+}
+.rc-cuber-events .cubing-icon { font-size: 13px; }
+.rc-cuber-events .wr-current { color: var(--wr-current, #DC2626); }
+.rc-cuber-events .wr-former { color: var(--wr-former, #D69755); }
 
 .reg-login-hint {
   align-self: flex-start;

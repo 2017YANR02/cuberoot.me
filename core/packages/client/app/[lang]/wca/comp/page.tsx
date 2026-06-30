@@ -46,7 +46,6 @@ import { loadFlagData, personFlagIso2, compNameZh, countryToIso2, compFlagIso2 }
 import { localizeCompName } from '@/lib/comp-localize';
 import { compLinkProps } from '@/lib/comp-link';
 import { defaultCancelledCutoffIso, isCancelledComp, compNameMatches } from '@/lib/comp-search';
-import { formatRegStatus } from '@/lib/comp-reg-status';
 import { localizeCity } from '@/lib/city-localize';
 import { countryName } from '@/lib/country-name';
 import { expandCountrySelection } from '@/lib/continent';
@@ -62,12 +61,12 @@ import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRoun
 import OnThisDayModal from './_components/OnThisDayModal';
 import MonthGrid from '@/components/MonthGrid';
 import PillToggle from '@/components/PillToggle/PillToggle';
-import { useCompFollows, FollowStar } from '@/components/CompFollow';
+import BoolToggle from '@/components/BoolToggle';
+import { useCompFollows } from '@/components/CompFollow';
 import { useAuthStore } from '@/lib/auth-store';
 import './calendar_page.css';
 import './comp.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 // view=globe 视图:复用 /wca/globe 的 MapLibre 地球,dynamic + ssr:false 懒加载,
 // ~550KB maplibre 仅在切到地球视图时下载,不进日历首屏 bundle。
@@ -552,133 +551,51 @@ function CompModal({ comp, isZh, onClose, t, cancelled, loggedIn, followed, onTo
     });
   }, [comp.id]);
 
-  // 轮次数：过去比赛走 all_past_comps.json 的静态 rounds 字段（key 用短码 '3'/'2'/...）；
-  // 未来比赛该字段缺省，回落 WCIF runtime 拉取（key 是 WCA eventId '333'/'222'/...）。
-  // 渲染处统一按短码读取。
-  const [rounds, setRounds] = useState<Record<string, number>>(() => comp.rounds ?? {});
-  useEffect(() => {
-    if (comp.rounds && Object.keys(comp.rounds).length > 0) {
-      setRounds(comp.rounds);
-      return;
-    }
-    let cancelled = false;
-    fetchCompRounds(comp.id).then((wcifRounds) => {
-      if (cancelled) return;
-      // WCIF 返回 WCA eventId（'333'）→ 转成前端短码（'3'）以对齐 comp.events / 渲染查找
-      const mapped: Record<string, number> = {};
-      for (const [eid, formats] of Object.entries(wcifRounds)) {
-        mapped[WCA_EVENT_ID_TO_SHORT[eid] ?? eid] = formats.length;
-      }
-      setRounds(mapped);
-    });
-    return () => { cancelled = true; };
-  }, [comp.id, comp.rounds]);
+  const lang = isZh ? 'zh' : 'en';
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startPast = parseLocalDate(comp.start_date) < todayStart;
+  // 报名状态 pill — 与卡片视图同口径(下一个里程碑;已过且无字段补「报名已截止」)
+  const reg = regMilestone(comp.registration_open, comp.registration_close, comp.event_change_deadline, undefined)
+    ?? (startPast ? { when: '', word: tr({ zh: '报名已截止', en: 'Closed' }), tone: 'closed' as const } : null);
 
-  const displayName = localizeNameNoYear(comp, isZh);
-  const displayCity = isZh ? (comp.city_zh || localizeCity(comp.city, true, comp.country)) : comp.city;
-  const displayCountry = countryName(comp.country, isZh);
-
-  const dateStr = formatDateRangeIso(comp.start_date, comp.end_date || comp.start_date);
-
+  // 单场弹窗 = 一张卡片(CompCard 同款),底部嵌纪录区(过去比赛才有);轮次缺省时单场可懒拉 WCIF。
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className={`modal-panel${cancelled ? ' is-cancelled' : ''}`} onClick={(ev) => ev.stopPropagation()}>
+      <div className="modal-panel comp-card-modal" onClick={(ev) => ev.stopPropagation()}>
         <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
-        <h2 className="modal-title">
-          <Link {...compLinkProps(comp.id)}>
-            <Flag iso2={comp.country} />
-            <span className={cancelled ? 'modal-title-name is-cancelled' : 'modal-title-name'}>{displayName}</span>
-          </Link>
-          {cancelled && <span className="modal-cancelled-tag">{tr({ zh: '已取消', en: 'Cancelled' })}</span>}
-          <FollowStar
-            variant="inline"
-            compId={comp.id}
-            followed={followed}
-            onToggle={onToggleFollow}
-            loggedIn={loggedIn}
-            onRequireLogin={onRequireLogin}
-          />
-        </h2>
-        <div className="modal-meta">
-          {dateStr} · {displayCity}{(i18n.language.startsWith('zh') ? '，' : ', ')}{displayCountry}
-          {comp.competitor_limit > 0 && <span> · {t('upcoming.competitorLimit', { count: comp.competitor_limit })}</span>}
-        </div>
-        {(() => {
-          const reg = formatRegStatus(comp.registration_open, comp.registration_close, isZh);
-          return reg ? <div className="modal-meta">{reg}</div> : null;
-        })()}
-        {comp.events && comp.events.length > 0 && (
-          <div className="modal-events">
-            {comp.events.map((ev) => {
-              const eid = SHORT_TO_EVENT_ID[ev] || ev;
-              const r = rounds[ev];
-              return (
-                <div key={ev} className="modal-event">
-                  <CubingIcon icon={`event-${eid}`} />
-                  {r ? <span className="modal-event-rounds">{r}</span> : <span className="modal-event-rounds modal-event-rounds--placeholder">·</span>}
-                </div>
-              );
-            })}
-          </div>
-        )}
-        {recordEntries.length > 0 && (
-          <div className="modal-records">
-            <div className="modal-records-title">{t('upcoming.records', { count: recordEntries.length })}</div>
-            <ul className="modal-record-list">
-              {recordEntries.map((r, idx) => (
-                <li key={idx} className="modal-record-item">
-                  <RecordBadge record={r.t} />
-                  <CubingIcon icon={`event-${r.e}`} />
-                  <span className="record-kind">{r.k === 's' ? t('upcoming.single') : t('upcoming.average')}</span>
-                  <span className="record-value mono">{formatWcaResult(r.v, r.e, r.k === 's' ? 'single' : 'average')}</span>
-                  <Link
-                    prefetch={false}
-                    href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.p}`}
-                    className="record-person"
-                  >
-                    <SharedFlag iso2={personFlagIso2(r.p)} />
-                    <span>{displayCuberName(r.n, isZh)}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {comp.top_cubers.length > 0 && (
-          <div className="modal-cubers">
-            <div className="modal-cubers-title">{t('upcoming.topCubers', { count: comp.top_cubers.length })}</div>
-            <div className="modal-cuber-list">
-              {comp.top_cubers.map((c) => (
-                <Link
-                  key={c.id}
-                  prefetch={false}
-                  href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${c.id}`}
-                  className="cuber-tag"
-                >
-                  <SharedFlag iso2={personFlagIso2(c.id)} />
-                  <span>{displayCuberName(c.name, isZh)}</span>
-                  {c.events && c.events.length > 0 && (
-                    <span className="event-label">
-                      {c.events.map((evt) => {
-                        const eid = SHORT_TO_EVENT_ID[evt.id] || evt.id;
-                        const wrClass = evt.wr === 'current' ? ' wr-current' : evt.wr === 'former' ? ' wr-former' : '';
-                        const wrTitle = evt.wr === 'current' ? t('upcoming.wrCurrent') : evt.wr === 'former' ? t('upcoming.wrFormer') : '';
-                        return (
-                          <CubingIcon
-                            key={evt.id}
-                            icon={`event-${eid}`}
-                            className={wrClass.trim() || undefined}
-                            title={wrTitle || undefined}
-                          />
-                        );
-                      })}
-                    </span>
-                  )}
-                </Link>
-              ))}
+        <CompCardWithRounds
+          comp={comp}
+          isZh={isZh}
+          lang={lang}
+          pill={reg}
+          dimmed={cancelled}
+          competitorLimit={comp.competitor_limit || null}
+          follow={{ followed, onToggle: onToggleFollow, loggedIn, onRequireLogin }}
+          roundsSeed={wcaRoundsSeed(comp.rounds)}
+          fetchIfMissing
+          topCubers={comp.top_cubers}
+        >
+          {recordEntries.length > 0 && (
+            <div className="rc-records">
+              <div className="rc-cubers-title">{t('upcoming.records', { count: recordEntries.length })}</div>
+              <ul className="modal-record-list">
+                {recordEntries.map((r, idx) => (
+                  <li key={idx} className="modal-record-item">
+                    <RecordBadge record={r.t} />
+                    <CubingIcon icon={`event-${r.e}`} />
+                    <span className="record-kind">{r.k === 's' ? t('upcoming.single') : t('upcoming.average')}</span>
+                    <span className="record-value mono">{formatWcaResult(r.v, r.e, r.k === 's' ? 'single' : 'average')}</span>
+                    <Link prefetch={false} href={`/wca/persons/${r.p}`} className="record-person">
+                      <SharedFlag iso2={personFlagIso2(r.p)} />
+                      <span>{displayCuberName(r.n, isZh)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-        )}
+          )}
+        </CompCardWithRounds>
       </div>
     </div>
   );
@@ -1488,6 +1405,8 @@ function CalendarPageInner() {
   const [viewDate, setViewDate] = useState<Date>(() => readMonthFromUrl() ?? new Date());
   const [selectedComp, setSelectedComp] = useState<Competition | null>(null);
   const [dayListDate, setDayListDate] = useState<Date | null>(null);
+  /** 当日弹窗是否展示每张卡片的顶尖选手(默认不展示,头部 BoolToggle 控制)。 */
+  const [dayListShowCubers, setDayListShowCubers] = useState(false);
   /** 紧凑模式下点击国旗 tile 时,把 modal 限定到该国家(iso2 小写)。其他场景为 null。 */
   const [dayListCountry, setDayListCountry] = useState<string | null>(null);
   // 点日历格子日期数字 → 打开"历年此日"模态(查跨年 MM-DD 比赛历史)
@@ -2109,14 +2028,21 @@ function CalendarPageInner() {
           <DebutIcon size={14} strokeWidth={1.75} />
           <select
             className="debuts-select"
-            value={debutMode}
+            value={debutMode === 'off' ? '' : debutMode}
             onChange={(e) => setDebutMode(e.target.value as DebutMode)}
             aria-label={tr({ zh: '首秀', en: 'Debuts' })}
           >
-            <option value="off">{tr({ zh: '首秀', en: 'Debuts' })}</option>
+            <option value="" disabled hidden>{tr({ zh: '首秀', en: 'Debuts' })}</option>
             <option value="country">{tr({ zh: '国家首秀', en: 'Country debuts' })}</option>
             <option value="event">{tr({ zh: '项目首秀', en: 'Event debuts' })}</option>
           </select>
+          {debutMode !== 'off' && (
+            <ClearButton
+              onClick={() => setDebutMode('off')}
+              isZh={isZh}
+              variant="standalone"
+            />
+          )}
         </div>
         <button
           type="button"
@@ -2776,7 +2702,7 @@ function CalendarPageInner() {
         <div className="modal-overlay" onClick={() => { setDayListDate(null); setDayListCountry(null); }}>
           <div className="modal-panel day-list-panel" onClick={(ev) => ev.stopPropagation()}>
             <button className="modal-close" onClick={() => { setDayListDate(null); setDayListCountry(null); }} aria-label="Close">×</button>
-            <h2 className="modal-title">
+            <h2 className="modal-title day-list-title">
               {dayListCountry && (
                 <Flag iso2={dayListCountry} />
               )}
@@ -2784,6 +2710,12 @@ function CalendarPageInner() {
               {dayListCountry && (
                 <span className="day-list-country-name">{countryName(dayListCountry, isZh)}</span>
               )}
+              <BoolToggle
+                className="day-list-cubers-toggle"
+                value={dayListShowCubers}
+                onChange={setDayListShowCubers}
+                label={tr({ zh: '顶尖选手', en: 'Top cubers' })}
+              />
             </h2>
             <div className="reg-cards day-list-cards">
               {displayedComps
@@ -2812,6 +2744,7 @@ function CalendarPageInner() {
                       dimmed={isCancelledComp(c, cancelledCutoffIso)}
                       follow={{ followed: follows.has(c.id), onToggle: toggleFollow, loggedIn: followLoggedIn, onRequireLogin: login }}
                       roundsSeed={wcaRoundsSeed(c.rounds)}
+                      topCubers={dayListShowCubers ? c.top_cubers : null}
                     />
                   );
                 })}
