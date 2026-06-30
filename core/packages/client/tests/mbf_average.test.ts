@@ -13,9 +13,9 @@ describe('computeMbfMo3 — old-format / mixed 333mbo (was decoding to garbage)'
     expect(fmtMo3([1940503600, 1960706900, 1970605100])).toBe('4/7 1:26:40');
   });
 
-  it('Euro 2006 (all times unknown): 3/3 ?:??, 4/5 ?:??, 2/4 ?:?? → Mo3 3/4 ?:??', () => {
+  it('Euro 2006 (all times unknown): 3/3 ?:??:??, 4/5 ?:??:??, 2/4 ?:??:?? → Mo3 3/4 ?:??:??', () => {
     // 1_96_03_99999, 1_95_05_99999, 1_97_04_99999  (matches the old hardcoded MBO_MO3)
-    expect(fmtMo3([1960399999, 1950599999, 1970499999])).toBe('3/4 ?:??');
+    expect(fmtMo3([1960399999, 1950599999, 1970499999])).toBe('3/4 ?:??:??');
   });
 
   it('mixed old+new encodings in one round average sensibly (solved ≤ attempted)', () => {
