@@ -21,6 +21,7 @@ import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankRes
 import { adjustRankWithLiveComp, type LiveCompEntry } from '@/lib/comp-live-rank';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiUrl } from '@/lib/api-base';
+import { statsUrl } from '@/lib/stats-base';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { fetchPb, prefetchPbs, type PbByEvent } from '@/lib/wca-pb';
@@ -449,15 +450,31 @@ function compYearFromSlug(slug: string): number {
   return m ? parseInt(m[1], 10) : 0;
 }
 
+// 权威双轮标记:WCA 开发者 dump 的 rounds.linked_round_id 经 gen_all_comps 落到 stats/comp_dual.json
+// ({compId: [完整 WCA event id]})。cubing.com 源(ev.dual)只覆盖部分比赛,且计数兜底对进行中/即将
+// 开始的双轮赛失效(第二轮还没成绩,n2=0)。这里按 compId 查权威标记补上。文件极小(几十场),整取 + memoize。
+let compDualPromise: Promise<Record<string, string[]>> | null = null;
+function loadCompDual(): Promise<Record<string, string[]>> {
+  if (!compDualPromise) {
+    compDualPromise = fetch(statsUrl('/stats/comp_dual.json'))
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({}));
+  }
+  return compDualPromise;
+}
+
 function dualPairFor(
   ev: EventMeta | undefined,
   resultsByRound: Record<string, LiveResult[]>,
   compYear: number,
+  authoritativeDual?: Set<string>,
 ): { r1: RoundMeta; r2: RoundMeta } | null {
   if (!ev || ev.rs.length < 2) return null;
   const r1 = ev.rs[0];
   const r2 = ev.rs[1];
-  if (ev.dual === true) return { r1, r2 }; // cubing.com data-events 显式标记 (权威)
+  // 权威:cubing.com data-events 显式标记,或 dump linked_round_id (comp_dual.json)。两者都直接信任,
+  // 不再走同赛制/计数兜底(对刚开赛、第二轮无成绩的双轮赛尤其关键)。
+  if (ev.dual === true || authoritativeDual?.has(ev.i)) return { r1, r2 };
   // 兜底推断仅对 2026 起的比赛生效:双轮是 2026 新规,老比赛即便高晋级率也绝非双轮
   // (如某 2023 多盲第二轮 10/12=83% 只是宽松晋级,不是合并双轮)。
   if (compYear < DUAL_ROUND_FIRST_YEAR) return null;
@@ -1125,9 +1142,18 @@ export default function CompDetailPage() {
 
   // 双轮赛制:当前项目的双轮对 (前两轮) + 当前轮是否属于双轮 + 合并开关 (默认开)。
   const compYear = useMemo(() => compYearFromSlug(slug), [slug]);
+  // 权威双轮标记(dump linked_round_id):按本场 compId(=slug)取出含双轮的 event id 集合。
+  const [authoritativeDual, setAuthoritativeDual] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    let alive = true;
+    loadCompDual().then((m) => { if (alive) setAuthoritativeDual(new Set(m[slug] ?? [])); });
+    return () => { alive = false; };
+  }, [slug]);
   const dualPair = useMemo(
-    () => (data && currentRound ? dualPairFor(currentRound.ev, data.resultsByRound, compYear) : null),
-    [data, currentRound, compYear],
+    () => (data && currentRound
+      ? dualPairFor(currentRound.ev, data.resultsByRound, compYear, authoritativeDual ?? undefined)
+      : null),
+    [data, currentRound, compYear, authoritativeDual],
   );
   const currentIsDual = !!(dualPair && currentRound
     && (currentRound.rd.i === dualPair.r1.i || currentRound.rd.i === dualPair.r2.i));
