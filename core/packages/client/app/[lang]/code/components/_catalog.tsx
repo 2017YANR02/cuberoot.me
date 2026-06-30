@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import BoolToggle from '@/components/BoolToggle';
 import { SortArrow } from '@/components/SortArrow';
 import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
@@ -155,14 +156,24 @@ function useIsZh() {
 /* ── demos (self-contained, render on a neutral stage) ──────────────────── */
 
 function PillToggleDemo() {
-  const [a, setA] = useState(true);
-  const [b, setB] = useState(false);
+  // 二选一:主/默认项放 onLabel → 默认绿(滑钮在右)。单次=主项 → 默认绿。
+  const [b, setB] = useState(true);
   return (
     <div className="cg-row">
-      <PillToggle value={a} onChange={setA} ariaLabel="switch" />
-      <PillToggle value={b} onChange={setB} onLabel={tr({ zh: '平均', en: 'Average'
-    })} offLabel={tr({ zh: '单次', en: 'Single'
-    })} />
+      <PillToggle value={b} onChange={setB}
+        onLabel={tr({ zh: '单次', en: 'Single' })}
+        offLabel={tr({ zh: '平均', en: 'Average' })} />
+    </div>
+  );
+}
+
+function BoolToggleDemo() {
+  const [on, setOn] = useState(true);
+  const [off, setOff] = useState(false);
+  return (
+    <div className="cg-row">
+      <BoolToggle value={on} onChange={setOn} label={tr({ zh: '废止项', en: 'Cancelled' })} />
+      <BoolToggle value={off} onChange={setOff} label={tr({ zh: '未登领奖台', en: 'No podium' })} />
     </div>
   );
 }
@@ -650,11 +661,20 @@ export const CATALOG: ComponentEntry[] = [
     name: 'PillToggle',
     import: "import PillToggle from '@/components/PillToggle/PillToggle';",
     category: 'toggle',
-    zh: 'iOS 风格二选一开关(本项目主力用法,不是普通布尔开关):传 onLabel/offLabel = 两个互斥选项的标签(如 单次/平均、截至/当期),只显示并高亮当前选中那个。可点击,也能拖动滑钮横滑过中线切换;两个标签都不传 = 纯滑轨开关。新页面凡二选一切换优先用它,别另造 segmented 控件。',
-    en: 'iOS-style two-choice toggle (the primary use in this project, NOT a plain boolean switch): pass onLabel/offLabel as the two mutually-exclusive option labels (e.g. Single/Average, Cumulative/Period) — only the selected one shows, highlighted. Click it, or drag the knob past the midline; omit both labels for a plain track switch. Prefer it for any two-option toggle on new pages instead of rolling a new segmented control.',
-    usage: '<PillToggle value={type === "average"} onChange={v => setType(v ? "average" : "single")} onLabel="平均" offLabel="单次" />',
+    zh: 'iOS 风格二选一开关(本项目主力用法):传 onLabel/offLabel = 两个互斥选项的标签(如 单次/平均、截至/当期),文字内嵌、只显示并高亮当前选中那个。约定:把「主/默认」那个选项放 onLabel —— 默认态即绿色(滑钮在右),另一项为灰(滑钮在左)。可点击,也能拖动滑钮横滑过中线切换。「开/关单个东西」的布尔场景(显示废止项 / 只看未登领奖台…)不要用它,用 BoolToggle(滑钮在左、文字在右)。',
+    en: 'iOS-style two-choice toggle (the primary use in this project): pass onLabel/offLabel as the two mutually-exclusive option labels (e.g. Single/Average, Cumulative/Period) — text is inside, only the selected one shows, highlighted. Convention: put the primary/default option as onLabel, so the default state reads green (knob right) and the other is grey (knob left). Click it, or drag the knob past the midline. For boolean on/off of a single thing, use BoolToggle (knob left, label right) — not this.',
+    usage: '<PillToggle value={type === "single"} onChange={v => setType(v ? "single" : "average")} onLabel="单次" offLabel="平均" />',
     Demo: PillToggleDemo,
     note: { zh: '默认就贴合文字、并自动按较长标签预留宽度(切换 on/off 不跳变),无需再 page-scope 覆盖 min-width。当过滤器跟 select 同行时给它跟 select 同高(看 /wca/results 的 .wse-filter pill,34px 上下居中)。锁:tests/pilltoggle-default-fit.test.ts。', en: 'Hugs the text by default and auto-reserves the longer label’s width (no jump on toggle) — no page-scope min-width override needed. When used as a filter alongside selects, match the select height (see /wca/results .wse-filter pill — 34px, vertically centered). Locked by tests/pilltoggle-default-fit.test.ts.' },
+  },
+  {
+    name: 'BoolToggle',
+    import: "import BoolToggle from '@/components/BoolToggle';",
+    category: 'toggle',
+    zh: '布尔开关:左边 iOS 风滑钮 + 右边文字标签(文字也可点)。用于「开/关单个东西」(显示废止项 / 只看未登领奖台 / 开启动画…)。全站复选框(☑)一律换成它。二选一(A/B 各有含义)请用 PillToggle 的文字内嵌形态,别用本组件。',
+    en: 'Boolean switch: an iOS-style knob on the left + a label on the right (the label is clickable too). For toggling a single thing on/off (show cancelled events / only un-podiumed / enable animation…). Replace all checkboxes (☑) site-wide with it. For a genuine two-choice (A/B each meaningful), use PillToggle’s inline-label form instead.',
+    usage: '<BoolToggle value={on} onChange={setOn} label="废止项" />',
+    Demo: BoolToggleDemo,
   },
   {
     name: 'HeaderToggles',
