@@ -1028,6 +1028,10 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
   const hidePodium = c.req.query('hidePodium') === '1' || c.req.query('hidePodium') === 'true';
   const page = Math.max(1, intParam(c.req.query('page'), 1));
   const size = Math.min(MAX_SIZE, Math.max(1, intParam(c.req.query('size'), DEFAULT_SIZE)));
+  // 表头排序:total=名次总和(默认,服务端聚合好的 total) / best=历史最佳名次(仅全 17 项有);
+  // dir=asc 最佳在前(名次越小越好)。白名单化后直接拼进 ORDER BY,无注入面。
+  const sortKey = (c.req.query('sort') ?? 'total').toLowerCase() === 'best' ? 'best' : 'total';
+  const dir = (c.req.query('dir') ?? 'asc').toLowerCase() === 'desc' ? 'DESC' : 'ASC';
 
   if (type !== 'single' && type !== 'average') return c.json({ error: 'Invalid type' }, 400);
   const cn = await resolveCountry(country);
@@ -1098,7 +1102,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
       LEFT JOIN sor_historical_best shb
         ON shb.wca_id = pr.wca_id AND shb.is_avg = ? AND shb.scope = ?
       WHERE ${where.join(' AND ')}
-      ORDER BY ${orderCol} ASC, pr.wca_id ASC
+      ORDER BY ${sortKey === 'best' ? 'shb.best_rank' : orderCol} ${dir} NULLS LAST, pr.wca_id ASC
       LIMIT ? OFFSET ?
       `,
       dataParams,
@@ -1171,7 +1175,7 @@ wcaStatsExtraRoutes.get('/wca/sum-of-ranks', async (c) => {
     JOIN wca_persons p ON p.wca_id = pr.wca_id
     LEFT JOIN wca_countries co ON co.id = pr.country_id
     WHERE ${where.join(' AND ')}
-    ORDER BY subset_total ASC, pr.wca_id ASC
+    ORDER BY subset_total ${dir}, pr.wca_id ASC
     LIMIT ? OFFSET ?
     `,
     dataParams,

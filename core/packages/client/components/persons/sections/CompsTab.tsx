@@ -10,7 +10,7 @@ import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
-import { ChevronsUpDown } from 'lucide-react';
+import { SortArrow } from '@/components/SortArrow';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 
 interface Props {
@@ -68,9 +68,6 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
     if (sortBy === col) setDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     else { setSortBy(col); setDir(col === 'date' ? 'desc' : 'asc'); }
   };
-  const SortArrow = ({ col }: { col: SortBy }) =>
-    <ChevronsUpDown size={12} className={`wp-sort-ic ${sortBy === col ? 'wp-sort-active' : 'wp-sort-idle'}`} />;
-
   return (
     <div className="wp-table-scroll">
       <table className="wp-comps-table">
@@ -78,10 +75,10 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
           <tr>
             <th className="wp-th-narrow">{t('序号', '#')}</th>
             <th className="wp-th-sortable" onClick={() => toggleSort('date')}>
-              {t('时间', 'Date')} <SortArrow col="date" />
+              {t('时间', 'Date')} <SortArrow active={sortBy === 'date'} dir={dir} />
             </th>
             <th className="wp-th-sortable" onClick={() => toggleSort('name')}>
-              {t('比赛名称', 'Competition')} <SortArrow col="name" />
+              {t('比赛名称', 'Competition')} <SortArrow active={sortBy === 'name'} dir={dir} />
             </th>
             <th>{t('项目', 'Events')}</th>
           </tr>

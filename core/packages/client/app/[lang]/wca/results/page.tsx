@@ -14,7 +14,7 @@ import { UnofficialMark } from '@/components/UnofficialMark';
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
+import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
 import NameStatsView, { type NameStatsData } from '@/components/wca-stats/NameStatsView';
 import { type NameMode, NAME_MODES, nameByMode, FormerNames } from '@/components/wca-stats/nameMode';
@@ -35,6 +35,7 @@ import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { countryName } from '@/lib/country-name';
 import { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { EventIcon } from '@/components/EventIcon';
+import { SortArrow } from '@/components/SortArrow';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { WcaStatView } from '@/components/wca-stats/WcaStatView';
 import { WR_METRICS, RANK_TYPE_IDS, DEFAULT_METRIC_ID } from '@/lib/wr-metrics';
@@ -132,6 +133,8 @@ function AllResultsPageInner() {
       q: parseAsString,
       basis: parseAsString,
       hidePodium: parseAsString, // 名次和:未登领奖台
+      ssort: parseAsString,      // 名次和表头排序:'total'(默认) | 'best'(历史最佳名次)
+      sdir: parseAsString,       // 名次和排序方向:'asc'(默认) | 'desc'
       psort: parseAsString,      // 名录排序:'name'(首字母) | 'len'(名字长度)
       pdir: parseAsString,       // 'asc' | 'desc'
       pname: parseAsString,      // 名录名字口径:latin | full | local | aka
@@ -189,6 +192,13 @@ function AllResultsPageInner() {
   const page = parseInt(query.page ?? '1', 10);
   const size = parseInt(query.size ?? '100', 10);
   const hidePodium = query.hidePodium === '1';
+  // 名次和表头排序(服务端分页 → 排序也走服务端;default total / asc)
+  const ssort: 'total' | 'best' = query.ssort === 'best' ? 'best' : 'total';
+  const sdir: 'asc' | 'desc' = query.sdir === 'desc' ? 'desc' : 'asc';
+  const setSorSort = (key: 'total' | 'best') => {
+    if (ssort === key) setQuery({ sdir: sdir === 'asc' ? 'desc' : null, page: null });
+    else setQuery({ ssort: key === 'total' ? null : 'best', sdir: null, page: null });
+  };
   // 空态:姓名分布 + 名录(A-Z 平铺列表)同页共存(分布在上、名录在下)
   const psort: 'name' | 'len' = query.psort === 'len' ? 'len' : 'name';
   const pdir: 'asc' | 'desc' = query.pdir === 'desc' ? 'desc' : 'asc';
@@ -386,11 +396,13 @@ function AllResultsPageInner() {
     if (country) qs.set('country', country);
     if (sorEventsParam) qs.set('events', sorEventsParam);
     if (hidePodium) qs.set('hidePodium', '1');
+    if (ssort !== 'total') qs.set('sort', ssort);
+    if (sdir !== 'asc') qs.set('dir', sdir);
     qs.set('v', '3');
     fetch(apiUrl(`/v1/wca/sum-of-ranks?${qs.toString()}`))
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(setSorData).catch(e => setError(e.message)).finally(() => setLoading(false));
-  }, [view, mode, type, country, sorEventsParam, hidePodium, page, size]);
+  }, [view, mode, type, country, sorEventsParam, hidePodium, ssort, sdir, page, size]);
 
   // ---- 名次和工具:名人堂 + 排名演化 ----
   const [raceOpen, setRaceOpen] = useState(false);
@@ -647,7 +659,7 @@ function AllResultsPageInner() {
                         {/* 列头箭头 = 当前排序方向(首字母 / 名字长度都排这一列),点一下翻方向;排序键由上方切换器选 */}
                         <button type="button" className="wse-th-sort" onClick={() => setQuery({ pdir: pdir === 'asc' ? 'desc' : 'asc', page: null })}>
                           {tr({ zh: '选手', en: 'Person' })}
-                          {pdir === 'asc' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                          <SortArrow active dir={pdir} />
                         </button>
                       </th>
                     </tr>
@@ -927,8 +939,21 @@ function AllResultsPageInner() {
                     <tr>
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person' })}</th>
-                      <th className="wse-value-col">{tr({ zh: '名次总和', en: 'Total' })}</th>
-                      {showBest && <th className="wse-value-col">{tr({ zh: '历史最佳', en: 'Best ever' })}</th>}
+                      <th className="wse-value-col">
+                        <button type="button" className="wse-th-sort" onClick={() => setSorSort('total')}>
+                          {tr({ zh: '名次总和', en: 'Total' })}
+                          <SortArrow active={ssort === 'total'} dir={sdir} />
+                        </button>
+                      </th>
+                      {showBest && (
+                        <th className="wse-value-col">
+                          <button type="button" className="wse-th-sort" onClick={() => setSorSort('best')}
+                            title={tr({ zh: '历史最佳名次(及达成年份)', en: 'Best-ever placement (and year)' })}>
+                            {tr({ zh: '历史最佳', en: 'Best ever' })}
+                            <SortArrow active={ssort === 'best'} dir={sdir} />
+                          </button>
+                        </th>
+                      )}
                       {RANK_EVENTS.map(ev => (
                         <th key={ev} className="wse-sor-evcell" style={{ opacity: selectedSet.has(ev) ? 1 : 0.3 }}><EventIcon event={ev} /></th>
                       ))}
@@ -946,10 +971,10 @@ function AllResultsPageInner() {
                         </td>
                         <td className="wse-value-col">{r.subsetTotal != null ? r.subsetTotal : isCountryMode ? r.totalCountryRank : r.totalWorldRank}</td>
                         {showBest && (
-                          <td className="wse-value-col">
+                          <td className="wse-value-col"
+                            title={r.bestTotal != null ? tr({ zh: `最佳名次总和 ${r.bestTotal}`, en: `Best sum-of-ranks total ${r.bestTotal}` }) : undefined}>
                             {r.bestRank != null ? (
                               <span className="wse-best">
-                                <span className="wse-best-total">{r.bestTotal ?? ''}</span>
                                 <span className="wse-best-rank">#{r.bestRank}</span>
                                 <span className="wse-best-year">{r.bestYear}</span>
                               </span>
