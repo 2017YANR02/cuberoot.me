@@ -13,7 +13,7 @@ import {
   buildInsert, buildUpdate, buildDuplicateQuery, DUP_REASONS, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
-import { wcaIdToCubingSlug, nameToCubingSlug } from '../utils/cubing_slug.js';
+import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 
 export const reconRoutes = new Hono();
 

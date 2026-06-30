@@ -17,7 +17,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
 import { localizeCompName, resolveCompName } from '@/lib/comp-localize';
-import { nameToCubingSlug, wcaIdToCubingSlug } from '@/lib/cubing-slug';
+import { nameToCubingSlug, wcaIdToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
 import { adjustRankWithLiveComp, type LiveCompEntry } from '@/lib/comp-live-rank';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

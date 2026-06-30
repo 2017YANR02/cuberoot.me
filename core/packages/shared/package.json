@@ -40,6 +40,10 @@
       "node": "./dist/result_penalty.js",
       "default": "./src/result_penalty.ts"
     },
+    "./cubing-slug": {
+      "node": "./dist/cubing_slug.js",
+      "default": "./src/cubing_slug.ts"
+    },
     "./payment": {
       "node": "./dist/payment.js",
       "default": "./src/payment.ts"

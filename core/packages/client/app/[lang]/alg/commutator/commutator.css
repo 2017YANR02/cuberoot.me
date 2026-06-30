@@ -145,14 +145,6 @@
     font-size: 0.92rem;
 }
 
-.cmt-setting-row label.cmt-check-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    user-select: none;
-}
-
 .cmt-num-input {
     width: 3.5em;
     padding: 4px 6px;
@@ -176,13 +168,6 @@
     cursor: help;
 }
 .cmt-help:hover { color: var(--cmt-accent); }
-
-.cmt-checkbox {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--cmt-accent);
-    cursor: pointer;
-}
 
 /* ── Input / Output ── */
 

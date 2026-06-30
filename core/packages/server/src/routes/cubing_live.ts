@@ -16,7 +16,7 @@ import { query } from '../db/connection.js';
 import { enrichComp, resolvePersonIso2, type CompRecordsSnapshot } from '../utils/current_records.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
-import { wcaIdToCubingSlug, nameToCubingSlug } from '../utils/cubing_slug.js';
+import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 
 export const cubingLiveRoutes = new Hono();
 
