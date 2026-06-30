@@ -129,12 +129,6 @@
   cursor: pointer;
   user-select: none;
 }
-.bld-check input[type=checkbox] {
-  width: 15px;
-  height: 15px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
 
 /* ─── letter readout ─── */
 .bld-readout {

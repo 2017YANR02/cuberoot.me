@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { nameToCubingSlug, wcaIdToCubingSlug } from '@/lib/cubing-slug';
+import { nameToCubingSlug, wcaIdToCubingSlug } from '@cuberoot/shared/cubing-slug';
 
 describe('nameToCubingSlug', () => {
   it('keeps internal-caps words intact (the GraDUAL bug)', () => {

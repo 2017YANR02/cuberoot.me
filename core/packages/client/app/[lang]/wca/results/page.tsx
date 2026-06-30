@@ -567,7 +567,6 @@ function AllResultsPageInner() {
               </button>
             ))}
             <BoolToggle
-              className="wse-bool"
               value={includeCancelled}
               onChange={onToggleCancelled}
               label={tr({ zh: '废止项', en: 'Cancelled' })}

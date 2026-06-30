@@ -288,7 +288,6 @@ function CheckRow({ label, checked, onChange, help }: {
     return (
         <div className="cmt-setting-row">
             <BoolToggle
-                className="cmt-check-label"
                 value={checked}
                 onChange={onChange}
                 label={label}

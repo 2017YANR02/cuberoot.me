@@ -1,6 +1,7 @@
-/** WCA ID / 比赛名 → cubing.com slug 推导。两条路:
- *  - wcaIdToCubingSlug:从无横杠的 WCA ID 反推(启发式,丢了词边界,内部大写词会误拆)。
- *  - nameToCubingSlug:从真实比赛名推(有空格=词边界明确,更准)。优先用它。 */
+// WCA ID / 比赛名 → cubing.com slug 推导 —— 全栈共享单一来源(client + server 同一份逻辑)。
+// 两条路:
+//  - wcaIdToCubingSlug:从无横杠的 WCA ID 反推(启发式,丢了词边界,内部大写词会误拆)。
+//  - nameToCubingSlug:从真实比赛名推(有空格=词边界明确,更准)。优先用它。
 
 /** WCA ID (e.g. XuzhouZenith2026) → cubing.com slug (Xuzhou-Zenith-2026)。
  *  在 小写↔大写 / 数字↔大写 / 小写↔数字 边界插横杠;
