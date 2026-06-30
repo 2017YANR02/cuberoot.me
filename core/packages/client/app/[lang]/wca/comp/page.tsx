@@ -15,7 +15,8 @@ import type { CSSProperties } from 'react';
 import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString, parseAsArrayOf, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, Ban, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon, Layers as DualIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, Ban, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon, Layers as DualIcon } from 'lucide-react';
+import { SortArrow } from '@/components/SortArrow';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
   fetchAllUpcomingCompsJson,
@@ -2344,9 +2345,7 @@ function CalendarPageInner() {
                     onClick={() => cycleSort('reg')}
                   >
                     <span className="cl-reg-head-text">{tr({ zh: '报名', en: 'Reg' })}</span>
-                    {regOn && (listSort?.dir === 'desc'
-                      ? <ChevronDown size={11} strokeWidth={2.25} />
-                      : <ChevronUp size={11} strokeWidth={2.25} />)}
+                    <SortArrow active={regOn} dir={listSort?.dir ?? 'asc'} size={11} />
                   </button>
                 );
               })()}
@@ -2354,7 +2353,6 @@ function CalendarPageInner() {
                 // 日期列头：点击在「默认最新在前」与「最早在前」之间切换。
                 // 选某国家 + 切到「最早在前」→ 顶部即该国首场比赛。
                 const dateActive = listSort?.col === 'date';
-                const DateChevron = dateActive && listSort?.dir === 'asc' ? ChevronUp : ChevronDown;
                 return (
                   <button
                     type="button"
@@ -2364,8 +2362,9 @@ function CalendarPageInner() {
                     title={tr({ zh: '按日期排序（默认最新在前，点击切到最早在前）', en: 'Sort by date (newest first; click for oldest first)' })}
                     onClick={() => setListSort((s) => (s?.col === 'date' && s.dir === 'asc' ? null : { col: 'date', dir: 'asc' }))}
                   >
-                    <DateChevron className="cl-date-chevron" size={12} strokeWidth={2.25} />
                     {currentYear && <span className="cl-year-num">{currentYear.year}</span>}
+                    {/* 日期是默认排序轴 → 箭头恒显:升序(最早在前)=↑,否则=↓ */}
+                    <SortArrow active dir={dateActive && listSort?.dir === 'asc' ? 'asc' : 'desc'} />
                   </button>
                 );
               })()}
@@ -2435,10 +2434,8 @@ function CalendarPageInner() {
                       aria-pressed={on}
                       onClick={() => cycleSort('comp', k)}
                     >
-                      {on && (listSort?.dir === 'desc'
-                        ? <ChevronDown size={11} strokeWidth={2.25} />
-                        : <ChevronUp size={11} strokeWidth={2.25} />)}
                       <Icon size={15} strokeWidth={1.75} />
+                      <SortArrow active={on} dir={listSort?.dir ?? 'asc'} size={11} />
                     </button>
                   );
                 })
@@ -2456,10 +2453,8 @@ function CalendarPageInner() {
                       aria-pressed={on}
                       onClick={() => cycleSort('comp', k)}
                     >
-                      {on && (listSort?.dir === 'desc'
-                        ? <ChevronDown size={11} strokeWidth={2.25} />
-                        : <ChevronUp size={11} strokeWidth={2.25} />)}
                       <Icon size={15} strokeWidth={1.75} />
+                      <SortArrow active={on} dir={listSort?.dir ?? 'asc'} size={11} />
                     </button>
                   );
                 })
@@ -2475,10 +2470,8 @@ function CalendarPageInner() {
                     aria-pressed={on}
                     onClick={() => cycleSort('comp')}
                   >
-                    {on && (listSort?.dir === 'desc'
-                      ? <ChevronDown size={11} strokeWidth={2.25} />
-                      : <ChevronUp size={11} strokeWidth={2.25} />)}
                     <CompIcon size={15} strokeWidth={1.75} />
+                    <SortArrow active={on} dir={listSort?.dir ?? 'asc'} size={11} />
                   </button>
                 );
               })()}

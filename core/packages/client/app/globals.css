@@ -723,6 +723,14 @@ a {
   border-radius: 3px;
 }
 
+/* 全站统一表头排序箭头(components/SortArrow.tsx):跟在表头文字右侧,继承色。 */
+.sort-arrow {
+  display: inline-block;
+  margin-left: 3px;
+  vertical-align: -2px;
+  flex-shrink: 0;
+}
+
 /* 非官方指标小标记(多盲平均 Mo3 等):弱化超标,跟在「平均」标签后。 */
 .unofficial-mark {
   margin-left: 4px;

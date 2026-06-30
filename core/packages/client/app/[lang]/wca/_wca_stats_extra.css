@@ -311,17 +311,15 @@ html:not([data-palette-scheme=dark]) .wse-page {
   font-weight: 500;
 }
 
-/* 历史最佳:名次总和 / #名次 / 年份 三栏右对齐,后两栏定宽 ch → 跨行对齐 */
+/* 历史最佳:#名次(主) + 年份(弱),右对齐贴在「历史最佳」表头下(最佳名次总和走 title 提示)。 */
 .wse-best {
-  display: inline-grid;
-  grid-template-columns: auto 4.5ch 4ch;
+  display: inline-flex;
+  justify-content: flex-end;
   gap: 6px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.wse-best > span { text-align: right; }
-.wse-best-total { font-weight: 600; }
-.wse-best-rank { opacity: 0.7; }
+.wse-best-rank { font-weight: 600; }
 .wse-best-year { opacity: 0.5; }
 .wse-attempts-col {
   font-variant-numeric: tabular-nums;

@@ -36,7 +36,7 @@ import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { SortArrow } from '@/components/SortArrow';
 
 // MBLD 无官方平均 → 用非官方 Mo3(从该轮 attempts 现算);其它项目用官方 average。
 function effectiveAverage(r: WcaResultRow, eventId: string): number {
@@ -313,9 +313,9 @@ function EventRoundsList({
   const grouped = !sort.key;
   // 分组视图:同一比赛只在首行展示比赛名 + 日期;排序视图:逐行都展示(已打散).
   let lastCompId = '';
-  // 列头排序按钮的方向箭头.
+  // 列头排序按钮的方向箭头(全站统一 components/SortArrow)。
   const sortArrow = (key: string) =>
-    sort.key === key ? (sort.dir === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />) : null;
+    <SortArrow active={sort.key === key} dir={sort.dir} size={11} />;
 
   return (
     // sticky 列头吸顶:复用全站共用工具(sticky-scroll + sticky-thead,见 components/sticky-table.css)。
@@ -357,7 +357,7 @@ function EventRoundsList({
                         className={`wp-att-sort-i ${sort.key === `att${i}` ? 'is-active' : ''}`}
                         onClick={() => toggleSort(`att${i}`)}
                         title={t(`按第 ${i + 1} 把排序`, `Sort by attempt ${i + 1}`)}>
-                        {i + 1}{sort.key === `att${i}` ? (sort.dir === 'asc' ? <ArrowUp size={9} /> : <ArrowDown size={9} />) : null}
+                        {i + 1}<SortArrow active={sort.key === `att${i}`} dir={sort.dir} size={9} />
                       </button>
                     ))}
                   </span>
