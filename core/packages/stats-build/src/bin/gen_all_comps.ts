@@ -15,6 +15,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = resolve(__dirname, '../../../../../stats/all_past_comps.json');
 // round-1 WCIF 配置（限时/及格/晋级/资格）大文件，列表视图按需懒加载（不内联进 all_past_comps，避免它再涨 ~5MB）
 const META_OUTPUT_PATH = resolve(__dirname, '../../../../../stats/comp_round_meta.json');
+// 双轮权威标记小文件:{compId: [完整 WCA event id]},含未结束比赛(详情页对进行中/即将开始的双轮赛要它，
+// 此时第二轮无成绩、计数兜底失效)。键用完整 event id(333fm)直接配详情页 ev.i。
+const COMP_DUAL_OUTPUT_PATH = resolve(__dirname, '../../../../../stats/comp_dual.json');
 
 // NOTE: WCA 内部 event_id → 前端短名（与 fetch_upcoming_comps.ts EVENT_DISPLAY_ORDER 保持一致）
 const EVENT_SHORT: Record<string, string> = {
@@ -159,22 +162,32 @@ async function main() {
   // 旧实现用 advancement==percent/100 启发式，两个方向都错：漏掉后备写 75% 的真 dual(如 Evanston)，
   // 又误报残留 100% 但实际改成淘汰制的非 dual(如 Shanghai)。linked_round_id 已隐含 ≥2 轮，无需再 gate。
   // 只有 2026 起的比赛可能有(新规)，SQL 已按年份收口(只扫几十场，开销可忽略)。
+  // 不按 end_date 收口:all_past_comps 的 rows 本就只含已结束比赛(短码 dualByComp 自然只命中它们)，
+  // 而 comp_dual.json 要含进行中/即将开始的比赛(完整 id dualFullByComp)。
   const dualRows = await query<DualRow[]>(`
     SELECT DISTINCT ce.competition_id, ce.event_id
     FROM rounds r
     JOIN competition_events ce ON ce.id = r.competition_event_id
     JOIN competitions c ON c.id = ce.competition_id
-    WHERE r.linked_round_id IS NOT NULL AND c.end_date < CURDATE() AND YEAR(c.start_date) >= 2026
+    WHERE r.linked_round_id IS NOT NULL AND YEAR(c.start_date) >= 2026
   `);
-  const dualByComp = new Map<string, string[]>();
+  const dualByComp = new Map<string, string[]>();      // 短码 → all_past_comps.dual_events(列表层)
+  const dualFullByComp = new Map<string, string[]>();  // 完整 WCA event id → comp_dual.json(详情层)
   for (const dr of dualRows) {
     const short = EVENT_SHORT[dr.event_id] ?? dr.event_id;
     let arr = dualByComp.get(dr.competition_id);
     if (!arr) { arr = []; dualByComp.set(dr.competition_id, arr); }
     arr.push(short);
+    let full = dualFullByComp.get(dr.competition_id);
+    if (!full) { full = []; dualFullByComp.set(dr.competition_id, full); }
+    full.push(dr.event_id);
   }
   for (const arr of dualByComp.values()) {
     arr.sort((a, b) => (EVENT_RANK[a] ?? 999) - (EVENT_RANK[b] ?? 999));
+  }
+  const fullRank = (e: string) => EVENT_RANK[EVENT_SHORT[e] ?? e] ?? 999;
+  for (const arr of dualFullByComp.values()) {
+    arr.sort((a, b) => fullRank(a) - fullRank(b));
   }
 
   const out = rows
@@ -221,6 +234,12 @@ async function main() {
   const kb = Math.round((Buffer.byteLength(JSON.stringify(out)) / 1024));
   const dur = ((Date.now() - start) / 1000).toFixed(2);
   console.log(`Generated ${OUTPUT_PATH}: ${out.length} comps, ${kb} KB, ${dur}s`);
+
+  // ── 双轮权威标记 → comp_dual.json (含未结束比赛) ──────────────────────────────
+  const dualObj: Record<string, string[]> = {};
+  for (const [cid, evs] of dualFullByComp) dualObj[cid] = evs;
+  writeFileSync(COMP_DUAL_OUTPUT_PATH, JSON.stringify(dualObj), 'utf-8');
+  console.log(`Generated ${COMP_DUAL_OUTPUT_PATH}: ${dualFullByComp.size} dual comps`);
 
   // ── round-1 WCIF 配置（过去比赛）→ comp_round_meta.json ──────────────────
   // rounds.time_limit / cutoff / advancement_condition 与 competition_events.qualification 都是 WCIF 形状的 JSON，
