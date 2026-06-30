@@ -106,6 +106,7 @@ export default function PaletteStage() {
           {palette.map((c, i) => (
             <tr key={i} className={c.available ? '' : 'disabled'}>
               <td style={{ width: 40 }}>
+                {/* allow-checkbox: 调色板表格每行的「启用/渐变/抖动」勾选列 */}
                 <input
                   type="checkbox"
                   checked={c.available}
@@ -145,6 +146,7 @@ export default function PaletteStage() {
               )}
               {advanced && (
                 <td style={{ width: 40, textAlign: 'center' }}>
+                  {/* allow-checkbox: 表格行内列 */}
                   <input
                     type="checkbox"
                     checked={c.grad}
@@ -154,6 +156,7 @@ export default function PaletteStage() {
               )}
               {advanced && (
                 <td style={{ width: 40, textAlign: 'center' }}>
+                  {/* allow-checkbox: 表格行内列 */}
                   <input
                     type="checkbox"
                     checked={c.tryDitherWo}

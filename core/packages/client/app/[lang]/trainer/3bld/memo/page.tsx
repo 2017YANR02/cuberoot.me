@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import CubingPreview from '@/components/CubingPreview';
+import BoolToggle from '@/components/BoolToggle';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import {
   useBldConfigStore,
@@ -413,27 +414,21 @@ export default function MemoRecallPage(): JSX.Element {
                 </select>
               </div>
 
-              <label className="bld-check">
-                <input
-                  type="checkbox"
-                  checked={showAssoc}
-                  onChange={(e) => setShowAssoc(e.target.checked)}
-                />
-                <Lightbulb size={15} />
-                {tr({ zh: '显示联想词', en: 'Association words'
-                })}
-              </label>
+              <BoolToggle
+                className="bld-check"
+                value={showAssoc}
+                onChange={setShowAssoc}
+                label={<><Lightbulb size={15} />{tr({ zh: '显示联想词', en: 'Association words' })}</>}
+                ariaLabel={tr({ zh: '显示联想词', en: 'Association words' })}
+              />
 
-              <label className="bld-check">
-                <input
-                  type="checkbox"
-                  checked={useDistractor}
-                  onChange={(e) => setUseDistractor(e.target.checked)}
-                />
-                <Calculator size={15} />
-                {tr({ zh: '记忆后做算术（延迟干扰）', en: 'Math distractor (delay)'
-                })}
-              </label>
+              <BoolToggle
+                className="bld-check"
+                value={useDistractor}
+                onChange={setUseDistractor}
+                label={<><Calculator size={15} />{tr({ zh: '记忆后做算术（延迟干扰）', en: 'Math distractor (delay)' })}</>}
+                ariaLabel={tr({ zh: '记忆后做算术（延迟干扰）', en: 'Math distractor (delay)' })}
+              />
             </div>
 
             {showAssoc && !isZh && (

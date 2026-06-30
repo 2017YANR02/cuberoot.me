@@ -8,6 +8,7 @@
 import { useEffect, useState, useCallback, type JSX } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Wand2 } from 'lucide-react';
+import BoolToggle from '@/components/BoolToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import { ScrambleOutput } from '../_components/ScrambleOutput';
@@ -176,24 +177,18 @@ export default function TwistTrainerPage(): JSX.Element {
           <span className="bld-config-group-title">{tr({ zh: '方向分类', en: 'Orientation class'
         })}</span>
           <div className="bld-check-row">
-            <label className="bld-check">
-              <input
-                type="checkbox"
-                checked={opts.twotwist}
-                onChange={(e) => setOpt('twotwist', e.target.checked)}
-              />
-              {tr({ zh: '缓冲外二角翻', en: '2 corners twisted (no buffer)'
-            })}
-            </label>
-            <label className="bld-check">
-              <input
-                type="checkbox"
-                checked={opts.threetwist}
-                onChange={(e) => setOpt('threetwist', e.target.checked)}
-              />
-              {tr({ zh: '带缓冲三角翻', en: '3 corners twisted (with buffer)'
-            })}
-            </label>
+            <BoolToggle
+              className="bld-check"
+              value={opts.twotwist}
+              onChange={(v) => setOpt('twotwist', v)}
+              label={tr({ zh: '缓冲外二角翻', en: '2 corners twisted (no buffer)' })}
+            />
+            <BoolToggle
+              className="bld-check"
+              value={opts.threetwist}
+              onChange={(v) => setOpt('threetwist', v)}
+              label={tr({ zh: '带缓冲三角翻', en: '3 corners twisted (with buffer)' })}
+            />
           </div>
         </div>
 
@@ -201,48 +196,36 @@ export default function TwistTrainerPage(): JSX.Element {
           <span className="bld-config-group-title">{tr({ zh: '位置分类', en: 'Position class'
         })}</span>
           <div className="bld-check-row">
-            <label className="bld-check">
-              <input
-                type="checkbox"
-                checked={opts.allup}
-                onChange={(e) => setOpt('allup', e.target.checked)}
-              />
-              {tr({ zh: '纯顶层', en: 'Top layer only'
-            })}
-            </label>
-            <label className="bld-check">
-              <input
-                type="checkbox"
-                checked={opts.alldown}
-                onChange={(e) => setOpt('alldown', e.target.checked)}
-              />
-              {tr({ zh: '纯底层', en: 'Bottom layer only'
-            })}
-            </label>
-            <label className="bld-check">
-              <input
-                type="checkbox"
-                checked={opts.updown}
-                onChange={(e) => setOpt('updown', e.target.checked)}
-              />
-              {tr({ zh: '顶层 + 底层', en: 'Top + bottom'
-            })}
-            </label>
+            <BoolToggle
+              className="bld-check"
+              value={opts.allup}
+              onChange={(v) => setOpt('allup', v)}
+              label={tr({ zh: '纯顶层', en: 'Top layer only' })}
+            />
+            <BoolToggle
+              className="bld-check"
+              value={opts.alldown}
+              onChange={(v) => setOpt('alldown', v)}
+              label={tr({ zh: '纯底层', en: 'Bottom layer only' })}
+            />
+            <BoolToggle
+              className="bld-check"
+              value={opts.updown}
+              onChange={(v) => setOpt('updown', v)}
+              label={tr({ zh: '顶层 + 底层', en: 'Top + bottom' })}
+            />
           </div>
         </div>
 
         <div className="bld-config-group">
           <span className="bld-config-group-title">{tr({ zh: '其他', en: 'Other' })}</span>
           <div className="bld-check-row">
-            <label className="bld-check">
-              <input
-                type="checkbox"
-                checked={opts.edgescramble}
-                onChange={(e) => setOpt('edgescramble', e.target.checked)}
-              />
-              {tr({ zh: '打乱棱块', en: 'Scramble edges'
-            })}
-            </label>
+            <BoolToggle
+              className="bld-check"
+              value={opts.edgescramble}
+              onChange={(v) => setOpt('edgescramble', v)}
+              label={tr({ zh: '打乱棱块', en: 'Scramble edges' })}
+            />
           </div>
         </div>
 

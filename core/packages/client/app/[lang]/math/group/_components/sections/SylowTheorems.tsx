@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import BoolToggle from '@/components/BoolToggle';
 import type { Lang } from '../primitives';
 import { tr } from '@/i18n/tr';
 
@@ -520,16 +521,11 @@ function SylowConstraintExplorer({ lang }: { lang: Lang }) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
-            <input
-              type="checkbox"
-              id="show-forced"
-              checked={showOnlyForced}
-              onChange={e => setShowOnlyForced(e.target.checked)}
-              style={{ cursor: 'pointer' }}
+            <BoolToggle
+              value={showOnlyForced}
+              onChange={setShowOnlyForced}
+              label={<span style={{ fontSize: 13, color: 'var(--ink-dim)' }}><L zh="仅显示 n_p 被确定为 1 的行" en="Show only rows where n_p is forced to 1" /></span>}
             />
-            <label htmlFor="show-forced" style={{ fontSize: 13, cursor: 'pointer', color: 'var(--ink-dim)' }}>
-              <L zh="仅显示 n_p 被确定为 1 的行" en="Show only rows where n_p is forced to 1" />
-            </label>
           </div>
 
           {allForced && (

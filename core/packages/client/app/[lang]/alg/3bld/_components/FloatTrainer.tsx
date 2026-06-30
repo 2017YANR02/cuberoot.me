@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 import { Play, Timer, X } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { ClearButton } from '@/components/ClearButton';
+import BoolToggle from '@/components/BoolToggle';
 import { BldConfigBar } from './BldConfigBar';
 import { ScrambleOutput } from './ScrambleOutput';
 import { useBldConfigHydrated } from '../_store/bld-config-store';
@@ -405,18 +406,12 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
         </div>
 
         <div className="bld-options" style={{ marginTop: 14, marginBottom: 0 }}>
-          <label className="bld-check">
-            <input
-              type="checkbox"
-              checked={oppScramble}
-              onChange={(e) => setOppScramble(e.target.checked)}
-            />
-            {isEdge
-              ? tr({ zh: '打乱角块', en: 'Scramble corners'
-            })
-              : tr({ zh: '打乱棱块', en: 'Scramble edges'
-            })}
-          </label>
+          <BoolToggle
+            className="bld-check"
+            value={oppScramble}
+            onChange={setOppScramble}
+            label={isEdge ? tr({ zh: '打乱角块', en: 'Scramble corners' }) : tr({ zh: '打乱棱块', en: 'Scramble edges' })}
+          />
         </div>
         <p className="bld-input-summary" style={{ marginTop: 8, marginBottom: 0 }}>
           {floatOrder.trim() === ''
@@ -510,16 +505,18 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
             </div>
 
             <div className="bld-options" style={{ marginBottom: 4 }}>
-              <label className="bld-check">
-                <input type="checkbox" checked={jumpCorner} onChange={(e) => setJumpCorner(e.target.checked)} />
-                {tr({ zh: '其他打乱含角块', en: 'Pad scrambles include corners'
-                })}
-              </label>
-              <label className="bld-check">
-                <input type="checkbox" checked={jumpEdge} onChange={(e) => setJumpEdge(e.target.checked)} />
-                {tr({ zh: '其他打乱含棱块', en: 'Pad scrambles include edges'
-                })}
-              </label>
+              <BoolToggle
+                className="bld-check"
+                value={jumpCorner}
+                onChange={setJumpCorner}
+                label={tr({ zh: '其他打乱含角块', en: 'Pad scrambles include corners' })}
+              />
+              <BoolToggle
+                className="bld-check"
+                value={jumpEdge}
+                onChange={setJumpEdge}
+                label={tr({ zh: '其他打乱含棱块', en: 'Pad scrambles include edges' })}
+              />
             </div>
 
             <div className="bld-field" style={{ maxWidth: 220 }}>

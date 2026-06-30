@@ -18,6 +18,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, FileText } from 'lucide-react';
+import BoolToggle from '@/components/BoolToggle';
 import { BldConfigBar } from './BldConfigBar';
 import { ScrambleOutput } from './ScrambleOutput';
 import { CodeInputModal } from './CodeInputModal';
@@ -404,27 +405,18 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
         <>
           <div className="bld-section">
             <div className="bld-options">
-              <label className="bld-check">
-                <input
-                  type="checkbox"
-                  checked={otherCodeMode}
-                  onChange={(e) => setOtherCodeMode(e.target.checked)}
-                />
-                {tr({ zh: '允许出现其他编码', en: 'Allow other codes'
-                })}
-              </label>
-              <label className="bld-check">
-                <input
-                  type="checkbox"
-                  checked={oppScramble}
-                  onChange={(e) => setOppScramble(e.target.checked)}
-                />
-                {isEdge
-                  ? tr({ zh: '打乱角块', en: 'Scramble corners'
-                })
-                  : tr({ zh: '打乱棱块', en: 'Scramble edges'
-                })}
-              </label>
+              <BoolToggle
+                className="bld-check"
+                value={otherCodeMode}
+                onChange={setOtherCodeMode}
+                label={tr({ zh: '允许出现其他编码', en: 'Allow other codes' })}
+              />
+              <BoolToggle
+                className="bld-check"
+                value={oppScramble}
+                onChange={setOppScramble}
+                label={isEdge ? tr({ zh: '打乱角块', en: 'Scramble corners' }) : tr({ zh: '打乱棱块', en: 'Scramble edges' })}
+              />
             </div>
 
             <button
@@ -446,30 +438,18 @@ export function CodeTrainer({ pieceType }: CodeTrainerProps): JSX.Element {
       ) : (
         <div className="bld-section">
           <div className="bld-options">
-            <label className="bld-check">
-              <input
-                type="checkbox"
-                checked={randKeepHue}
-                onChange={(e) => setRandKeepHue(e.target.checked)}
-              />
-              {isEdge
-                ? tr({ zh: '棱块保持色相借位', en: 'Edge keep hue'
-                })
-                : tr({ zh: '角块保持色相借位', en: 'Corner keep hue'
-                })}
-            </label>
-            <label className="bld-check">
-              <input
-                type="checkbox"
-                checked={randSkipCycle}
-                onChange={(e) => setRandSkipCycle(e.target.checked)}
-              />
-              {isEdge
-                ? tr({ zh: '棱块跳编法', en: 'Edge fixed-buffer'
-                })
-                : tr({ zh: '角块跳编法', en: 'Corner fixed-buffer'
-                })}
-            </label>
+            <BoolToggle
+              className="bld-check"
+              value={randKeepHue}
+              onChange={setRandKeepHue}
+              label={isEdge ? tr({ zh: '棱块保持色相借位', en: 'Edge keep hue' }) : tr({ zh: '角块保持色相借位', en: 'Corner keep hue' })}
+            />
+            <BoolToggle
+              className="bld-check"
+              value={randSkipCycle}
+              onChange={setRandSkipCycle}
+              label={isEdge ? tr({ zh: '棱块跳编法', en: 'Edge fixed-buffer' }) : tr({ zh: '角块跳编法', en: 'Corner fixed-buffer' })}
+            />
           </div>
           {mode === 1 && newCodes.length < 5 && (
             <p className="bld-input-summary">

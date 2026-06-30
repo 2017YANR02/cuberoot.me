@@ -13,6 +13,7 @@
  */
 import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import Link from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2, HelpCircle, Download } from 'lucide-react';
@@ -3229,11 +3230,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           </div>
         )}
         {mode === 'upcoming' && (
-          <label className="include-past-toggle" title={tr({ zh: '在地图上叠加显示往期比赛（蓝色）', en: 'Overlay past competitions (blue)'
-        })}>
-            <input type="checkbox" checked={includePast} onChange={(e) => setIncludePast(e.target.checked)} />
-            <span>{t('globe.includePast')}</span>
-          </label>
+          <span className="include-past-toggle" title={tr({ zh: '在地图上叠加显示往期比赛（蓝色）', en: 'Overlay past competitions (blue)' })}>
+            <BoolToggle value={includePast} onChange={setIncludePast} label={t('globe.includePast')} />
+          </span>
         )}
         {mode === 'upcoming' && includePast && (
           <div className="month-range" title={tr({ zh: '按年月过滤比赛', en: 'Filter competitions by month'

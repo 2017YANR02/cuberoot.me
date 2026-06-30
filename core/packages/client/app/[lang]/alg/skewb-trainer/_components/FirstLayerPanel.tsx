@@ -1,6 +1,7 @@
 'use client';
 
 import { Minus, Plus, RefreshCw } from 'lucide-react';
+import BoolToggle from '@/components/BoolToggle';
 import SkewbImage from './SkewbImage';
 import type { FltSettings } from '../_lib/useSkewbTrainer';
 import { tr } from '@/i18n/tr';
@@ -64,25 +65,19 @@ export default function FirstLayerPanel({
         <h2 className="sk-settings-title">{tr({ zh: '设置', en: 'Settings'
         })}</h2>
 
-        <label className="sk-check">
-          <input
-            type="checkbox"
-            checked={flt.shuffle}
-            onChange={(e) => onShuffle(e.target.checked)}
-          />
-          {tr({ zh: '打乱顺序', en: 'Shuffle scrambles'
-        })}
-        </label>
+        <BoolToggle
+          className="sk-check"
+          value={flt.shuffle}
+          onChange={onShuffle}
+          label={tr({ zh: '打乱顺序', en: 'Shuffle scrambles' })}
+        />
 
-        <label className="sk-check">
-          <input
-            type="checkbox"
-            checked={flt.anyColour}
-            onChange={(e) => onAnyColour(e.target.checked)}
-          />
-          {tr({ zh: '使用全部颜色', en: 'Use all colours'
-        })}
-        </label>
+        <BoolToggle
+          className="sk-check"
+          value={flt.anyColour}
+          onChange={onAnyColour}
+          label={tr({ zh: '使用全部颜色', en: 'Use all colours' })}
+        />
 
         <hr className="sk-settings-hr" />
 
@@ -115,15 +110,12 @@ export default function FirstLayerPanel({
 
         <hr className="sk-settings-hr" />
 
-        <label className="sk-check">
-          <input
-            type="checkbox"
-            checked={flt.showImg}
-            onChange={(e) => onShowImg(e.target.checked)}
-          />
-          {tr({ zh: '显示打乱图', en: 'Show scramble image'
-        })}
-        </label>
+        <BoolToggle
+          className="sk-check"
+          value={flt.showImg}
+          onChange={onShowImg}
+          label={tr({ zh: '显示打乱图', en: 'Show scramble image' })}
+        />
       </div>
     </>
   );

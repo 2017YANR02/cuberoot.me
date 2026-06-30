@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Boxes, AlertTriangle } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
+import BoolToggle from '@/components/BoolToggle';
 import CubeShorthand from '@/components/CubeShorthand';
 import { usePaint } from '../_lib/store';
 import { shorthandToShapes } from '../_lib/shorthand-shapes';
@@ -120,10 +121,12 @@ export default function ShorthandPanel({ open, onClose, viewport }: Props) {
             />
             <span className="paint-range-val">{size}</span>
           </div>
-          <label className="paint-sh-toggle">
-            <input className="paint-sh-toggle-input" type="checkbox" checked={labels} onChange={(e) => setLabels(e.target.checked)} />
-            <span>{t('标签', 'Labels')}</span>
-          </label>
+          <BoolToggle
+            className="paint-sh-toggle"
+            value={labels}
+            onChange={setLabels}
+            label={t('标签', 'Labels')}
+          />
         </div>
 
         <button type="button" className="paint-btn paint-btn--accent paint-sh-insert" onClick={insert}>

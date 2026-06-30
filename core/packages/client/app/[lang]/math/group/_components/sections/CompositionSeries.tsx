@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
+import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 
 // ── Data model ────────────────────────────────────────────────────────────────
@@ -1273,15 +1274,11 @@ function A4RefinementPanel({ lang }: { lang: 'zh' | 'en' }) {
 
       {/* Normal-in-G checkbox */}
       <div className="gt-panel-input-row" style={{ gap: 8 }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
-          <input
-            type="checkbox"
-            checked={showNormalInG}
-            onChange={e => setShowNormalInG(e.target.checked)}
-            style={{ accentColor: 'var(--accent)' }}
-          />
-          <L zh="标注哪些子群对 A₄ 正规" en="Mark which subgroups are normal in A₄" />
-        </label>
+        <BoolToggle
+          value={showNormalInG}
+          onChange={setShowNormalInG}
+          label={<span style={{ fontSize: 13 }}><L zh="标注哪些子群对 A₄ 正规" en="Mark which subgroups are normal in A₄" /></span>}
+        />
       </div>
 
       {/* SVG ladder for A4 */}

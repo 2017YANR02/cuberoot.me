@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { tr } from '@/i18n/tr';
+import BoolToggle from '@/components/BoolToggle';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -465,13 +466,13 @@ function BuildYourOwnFrieze({ lang }: { lang: 'zh' | 'en' }) {
           { key: 'g', label: tr({ zh: '滑动反射 g', en: 'Glide reflection g'
         }),  val: wantEG, set: setWantEG },
         ] as const).map(item => (
-          <label key={item.key}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-              fontSize: 13, color: 'var(--ink)', fontFamily: 'var(--mono)' }}>
-            <input type="checkbox" checked={item.val}
-              onChange={e => item.set(e.target.checked)} style={{ cursor: 'pointer' }} />
-            {item.label}
-          </label>
+          <BoolToggle
+            key={item.key}
+            value={item.val}
+            onChange={item.set}
+            label={<span style={{ fontSize: 13, color: 'var(--ink)', fontFamily: 'var(--mono)' }}>{item.label}</span>}
+            ariaLabel={item.label}
+          />
         ))}
       </div>
 
@@ -564,20 +565,18 @@ function GlideVsMirrorAnimator({ lang }: { lang: 'zh' | 'en' }) {
 
       {/* Options */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-          fontSize: 12, color: 'var(--ink-dim)' }}>
-          <input type="checkbox" checked={showMirrorGhost}
-            onChange={e => setShowMirrorGhost(e.target.checked)} />
-          {tr({ zh: '显示纯镜像（p11m 对比）', en: 'Show mirror ghost (p11m)'
-        })}
-        </label>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-          fontSize: 12, color: 'var(--ink-dim)' }}>
-          <input type="checkbox" checked={showSquared}
-            onChange={e => setShowSquared(e.target.checked)} />
-          {tr({ zh: '显示 g² = T（第二步）', en: 'Show g² = T (second step)'
-        })}
-        </label>
+        <BoolToggle
+          value={showMirrorGhost}
+          onChange={setShowMirrorGhost}
+          label={<span style={{ fontSize: 12, color: 'var(--ink-dim)' }}>{tr({ zh: '显示纯镜像（p11m 对比）', en: 'Show mirror ghost (p11m)' })}</span>}
+          ariaLabel={tr({ zh: '显示纯镜像（p11m 对比）', en: 'Show mirror ghost (p11m)' })}
+        />
+        <BoolToggle
+          value={showSquared}
+          onChange={setShowSquared}
+          label={<span style={{ fontSize: 12, color: 'var(--ink-dim)' }}>{tr({ zh: '显示 g² = T（第二步）', en: 'Show g² = T (second step)' })}</span>}
+          ariaLabel={tr({ zh: '显示 g² = T（第二步）', en: 'Show g² = T (second step)' })}
+        />
       </div>
 
       {/* SVG */}

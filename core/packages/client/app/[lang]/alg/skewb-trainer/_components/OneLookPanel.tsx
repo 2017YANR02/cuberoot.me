@@ -1,6 +1,7 @@
 'use client';
 
 import { Minus, Plus, RefreshCw } from 'lucide-react';
+import BoolToggle from '@/components/BoolToggle';
 import SkewbImage from './SkewbImage';
 import type { OlSettings } from '../_lib/useSkewbTrainer';
 import { tr } from '@/i18n/tr';
@@ -77,15 +78,12 @@ export default function OneLookPanel({
 
         <hr className="sk-settings-hr" />
 
-        <label className="sk-check">
-          <input
-            type="checkbox"
-            checked={ol.showImg}
-            onChange={(e) => onShowImg(e.target.checked)}
-          />
-          {tr({ zh: '显示打乱图', en: 'Show scramble image'
-        })}
-        </label>
+        <BoolToggle
+          className="sk-check"
+          value={ol.showImg}
+          onChange={onShowImg}
+          label={tr({ zh: '显示打乱图', en: 'Show scramble image' })}
+        />
       </div>
     </>
   );

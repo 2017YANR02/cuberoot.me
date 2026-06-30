@@ -58,6 +58,7 @@ import { compSourceLine } from '@/lib/comp-schedule';
 import '@/app/[lang]/battle/battle.css';
 import './shell.css';
 import { tr } from '@/i18n/tr';
+import BoolToggle from '@/components/BoolToggle';
 
 // NOTE: 根据打乱字符串长度自动计算字号缩放因子
 // ≤100 字符（2x2~3x3）= 1.0，更长则 sqrt 曲线平滑缩小，最小 0.7
@@ -1062,34 +1063,22 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
         {/* Voice */}
         <div className="settings-group solo-setting">
           <div className="setting-item">
-            <span data-i18n="voice">{tr({ zh: '语音提示', en: 'Voice Alert'
-            })}</span>
-            <label className="switch">
-              <input
-                className="switch-input"
-                type="checkbox"
-                checked={store.voice}
-                onChange={e => store.setVoice(e.target.checked)}
-              />
-              <span className="slider"></span>
-            </label>
+            <BoolToggle
+              value={store.voice}
+              onChange={store.setVoice}
+              label={tr({ zh: '语音提示', en: 'Voice Alert' })}
+            />
           </div>
         </div>
 
         {/* Show Image */}
         <div className="settings-group">
           <div className="setting-item">
-            <span data-i18n="show_image">{tr({ zh: '显示打乱图', en: 'Show Image'
-            })}</span>
-            <label className="switch">
-              <input
-                className="switch-input"
-                type="checkbox"
-                checked={store.showImage}
-                onChange={e => store.setShowImage(e.target.checked)}
-              />
-              <span className="slider"></span>
-            </label>
+            <BoolToggle
+              value={store.showImage}
+              onChange={store.setShowImage}
+              label={tr({ zh: '显示打乱图', en: 'Show Image' })}
+            />
           </div>
         </div>
 

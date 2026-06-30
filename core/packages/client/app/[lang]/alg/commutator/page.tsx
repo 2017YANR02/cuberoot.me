@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
 import { ExternalLink, HelpCircle, Copy, Check } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { search as cmtSearch, expand as cmtExpand } from './engine';
@@ -286,15 +287,12 @@ function CheckRow({ label, checked, onChange, help }: {
 }) {
     return (
         <div className="cmt-setting-row">
-            <label className="cmt-check-label">
-                <input
-                    type="checkbox"
-                    className="cmt-checkbox"
-                    checked={checked}
-                    onChange={(e) => onChange(e.target.checked)}
-                />
-                {label}
-            </label>
+            <BoolToggle
+                className="cmt-check-label"
+                value={checked}
+                onChange={onChange}
+                label={label}
+            />
             {help && <Help title={help} />}
         </div>
     );

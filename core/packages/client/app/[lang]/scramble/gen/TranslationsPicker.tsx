@@ -140,6 +140,7 @@ export default function TranslationsPicker({ selected, onChange, isZh }: Props) 
                   key={locale}
                   className={`gen-tn-translations-cell${isSel ? ' is-selected' : ''}${hasFlag ? '' : ' no-flag'}`}
                 >
+                  {/* allow-checkbox: 多语言多选网格 */}
                   <input
                     type="checkbox"
                     className="gen-tn-translations-input"

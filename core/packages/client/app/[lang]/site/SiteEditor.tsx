@@ -8,6 +8,7 @@
  */
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
+import BoolToggle from '@/components/BoolToggle';
 import { GROUPS } from './data/categories';
 import type { GroupId, Site } from './data/types';
 import { createSite, updateSite, type SiteInput } from './nav_sites_api';
@@ -193,10 +194,12 @@ export default function SiteEditor({ initial, defaultGroup, lang, onClose, onSav
             <input className="site-editor-input" value={draft.tags_text} onChange={(e) => set('tags_text', e.target.value)} />
           </label>
 
-          <label className="site-editor-row site-editor-row-inline">
-            <input className="site-editor-input" type="checkbox" checked={draft.dead} onChange={(e) => set('dead', e.target.checked)} />
-            <span>{TXT.status[lang]}</span>
-          </label>
+          <BoolToggle
+            className="site-editor-row site-editor-row-inline"
+            value={draft.dead}
+            onChange={(v) => set('dead', v)}
+            label={TXT.status[lang]}
+          />
 
           {err && <div className="site-editor-err">{err}</div>}
         </div>

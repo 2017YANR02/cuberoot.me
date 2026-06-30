@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import BoolToggle from '@/components/BoolToggle';
 
 interface VideoInfo {
   videoFile: File;
@@ -280,15 +281,12 @@ export function DecodeErrorCard({
         {t('frameCount.decode.errorBody', { family, suffix })}
       </div>
       {codec && <div className="fc-decode-error-codec">Codec: <code>{codec}</code></div>}
-      <label className="fc-decode-error-toggle">
-        <input
-          className="fc-decode-error-toggle-input"
-          type="checkbox"
-          checked={gpuDecode}
-          onChange={(e) => toggleGpu(e.target.checked)}
-        />
-        <span>{t('frameCount.decode.gpuToggle')}</span>
-      </label>
+      <BoolToggle
+        className="fc-decode-error-toggle"
+        value={gpuDecode}
+        onChange={toggleGpu}
+        label={t('frameCount.decode.gpuToggle')}
+      />
       <div className="fc-decode-error-hint">{t('frameCount.decode.hint')}</div>
       <div className="fc-decode-error-cmds">
         {commands.map((c, i) => (

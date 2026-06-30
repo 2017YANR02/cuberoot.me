@@ -943,10 +943,11 @@ export default function CssIntroPage() {
               <div className="demo">
                 <div className="demo-h"><span className="dot dot-ok" /><span className="filename">has.css</span><span className="lang-tag ts">:has()</span></div>
                 <div className="demo-stage">
+                  {/* allow-checkbox: :has(:checked) 选择器的活体演示,必须是真实 checkbox */}
                   <div className="demo-has-list">
-                    <label><input type="checkbox" className="demo-has-list-input" /> <L zh="选我 — 整行会变蓝" en="Tick me — the whole row turns blue" /></label>
-                    <label><input type="checkbox" className="demo-has-list-input" /> <L zh="也可以选我" en="Or me" /></label>
-                    <label><input type="checkbox" className="demo-has-list-input" /> <L zh="想选几个就选几个" en="As many as you like" /></label>
+                    <label>{/* allow-checkbox */}<input type="checkbox" className="demo-has-list-input" /> <L zh="选我 — 整行会变蓝" en="Tick me — the whole row turns blue" /></label>
+                    <label>{/* allow-checkbox */}<input type="checkbox" className="demo-has-list-input" /> <L zh="也可以选我" en="Or me" /></label>
+                    <label>{/* allow-checkbox */}<input type="checkbox" className="demo-has-list-input" /> <L zh="想选几个就选几个" en="As many as you like" /></label>
                   </div>
                 </div>
                 <pre className="demo-code">
