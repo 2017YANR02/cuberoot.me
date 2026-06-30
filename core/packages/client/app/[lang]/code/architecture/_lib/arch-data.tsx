@@ -481,12 +481,12 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-05-27',
     tag: 'migration',
     zh: {
-      title: '主域正式从单页应用切换到 Next.js（Phase 4）',
+      title: '主域从单页应用切换到 Next.js（Phase 4）',
       body: '主域 cuberoot.me 换了底层框架：从单页应用整体切到 Next.js，两条线路（自有服务器 + Vercel）跑同一份代码。旧站同期下线，全程零中断。',
       expand: '后端不变，只换前端框架。同一份代码自动部署到两处。',
     },
     en: {
-      title: 'Main domain officially switched from SPA to Next.js (Phase 4)',
+      title: 'Main domain switched from SPA to Next.js (Phase 4)',
       body: 'The main domain cuberoot.me changed its underlying framework: it cut over from a single-page app to Next.js, with two lines (self-hosted server + Vercel) running the same code. The old site was retired at the same time, with zero downtime.',
       expand: 'The backend was unchanged — only the frontend framework. One codebase auto-deploys to both places.',
     }
@@ -720,12 +720,12 @@ export const TIMELINE: TLEntry[] = [
     tag: 'migration',
     zh: {
       title: '后端 API 框架一天内从 Fastify 换成 Hono',
-      body: '前一天刚把 Fastify 接好，第二天就整体换成了 Hono，22 个接口全部转过去。',
-      expand: '那半个月后端换得很频繁：先从云数据库换成自建（3-04），再上 Fastify（3-23），隔天又换成 Hono（3-24）。',
+      body: '接入 Fastify 当天即整体改用 Hono，22 个接口全部迁移过去。',
+      expand: '那半个月后端调整频繁：先从云数据库迁到自建（3-04），再接入 Fastify（3-23），隔天改用 Hono（3-24）。',
     },
     en: {
       title: 'The backend API framework went from Fastify to Hono in a day',
-      body: 'Fastify was wired up one day and replaced wholesale by Hono the next, with all 22 endpoints converted.',
+      body: 'Fastify was wired up and replaced wholesale by Hono the same day, with all 22 endpoints migrated.',
       expand: 'The backend changed often that fortnight: from the cloud database to self-hosted (3-04), then Fastify (3-23), then Hono the next day (3-24).',
     }
 },
