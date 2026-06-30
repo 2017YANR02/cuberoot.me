@@ -222,7 +222,7 @@
     color: #A04A2E;
 }
 
-.calendar-page .debuts-toggle {
+.calendar-page .debuts-select-wrap {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -230,21 +230,31 @@
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--text-sub);
-    font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 500;
     border-radius: 8px;
-    cursor: pointer;
     transition: all 0.15s;
 }
-.calendar-page .debuts-toggle:hover {
+.calendar-page .debuts-select-wrap:hover {
     border-color: var(--accent);
     color: var(--accent);
 }
-.calendar-page .debuts-toggle.is-active {
+.calendar-page .debuts-select-wrap.is-active {
     background: var(--accent-soft);
     border-color: var(--accent);
     color: var(--accent);
+}
+.calendar-page .debuts-select {
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+}
+.calendar-page .debuts-select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
 }
 .calendar-page .dual-toggle {
     display: inline-flex;

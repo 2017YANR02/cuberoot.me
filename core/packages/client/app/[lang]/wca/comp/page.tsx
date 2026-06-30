@@ -767,6 +767,10 @@ type EventMetric = 'rounds' | 'regs' | 'timeLimit' | 'cutoff' | 'advancement' | 
 const EVENT_METRICS: EventMetric[] = ['rounds', 'regs', 'timeLimit', 'cutoff', 'advancement', 'qualification'];
 // 需要运行时 WCIF round-1 meta 的 metric（rounds/regs 不需要）
 const WCIF_META_METRICS = new Set<EventMetric>(['timeLimit', 'cutoff', 'advancement', 'qualification']);
+
+// 首秀过滤维度：'off' = 不过滤；'country' = 每个国家的第一场比赛；'event' = 每个项目首次出现的那场比赛
+type DebutMode = 'off' | 'country' | 'event';
+const DEBUT_MODES: DebutMode[] = ['off', 'country', 'event'];
 // 值较宽（时间 / 及格线 / 晋级）的 metric — 列表事件列要加宽，避免 1.3rem 挤不下 "10:00"
 const WIDE_METRICS = new Set<EventMetric>(['timeLimit', 'cutoff', 'advancement']);
 
@@ -1555,10 +1559,10 @@ function CalendarPageInner() {
   }, [viewMode, eventMetric]);
   // 已取消过滤：'all' = 默认包含；'only' = 仅展示已取消
   const [cancelledFilter, setCancelledFilter] = useState<'all' | 'only'>('all');
-  // 各国首秀：只保留每个国家最早的那一场比赛（一国一条）。走 nuqs，可分享深链。
-  const [debutsOnly, setDebutsOnly] = useQueryState(
+  // 首秀过滤：'country' 只保留每个国家最早的那一场比赛；'event' 只保留每个项目首次出现的那场比赛。走 nuqs，可分享深链。
+  const [debutMode, setDebutMode] = useQueryState(
     'debuts',
-    parseAsBoolean.withDefault(false).withOptions({ history: 'replace', scroll: false }),
+    parseAsStringEnum<DebutMode>(DEBUT_MODES).withDefault('off').withOptions({ history: 'replace', scroll: false }),
   );
   // 双轮赛制（WCA Reg 9v，2026+）：只保留含≥1 个双轮项目的比赛。走 nuqs，可分享深链。
   const [dualOnly, setDualOnly] = useQueryState(
@@ -1756,20 +1760,28 @@ function CalendarPageInner() {
     return () => { cancelled = true; };
   }, [selectedCuber, personCompIndex]);
 
-  // 各国首秀 id 集合：activeComps 里每个国家 start_date 最早那场（同日取 id 最小，稳定）。
-  // 仅开关打开时计算；用全量 activeComps 求"真正第一场",其他筛选(国家/项目/年月)再在其上叠加。
+  // 首秀 id 集合：'country' 模式下 activeComps 里每个国家 start_date 最早那场；'event' 模式下每个项目
+  // 首次出现的那场（一场比赛可能同时是多个项目的首秀,只算一条）。同日取 id 最小,稳定。
+  // 仅模式非 off 时计算；用全量 activeComps 求"真正第一场",其他筛选(国家/项目/年月)再在其上叠加。
   const debutIds = useMemo(() => {
-    if (!debutsOnly) return null;
+    if (debutMode === 'off') return null;
     const first = new Map<string, Competition>();
+    const isEarlier = (c: Competition, ex: Competition | undefined) =>
+      !ex || c.start_date < ex.start_date || (c.start_date === ex.start_date && c.id < ex.id);
     for (const c of activeComps) {
-      const k = c.country.toUpperCase();
-      const ex = first.get(k);
-      if (!ex || c.start_date < ex.start_date || (c.start_date === ex.start_date && c.id < ex.id)) first.set(k, c);
+      if (debutMode === 'country') {
+        const k = c.country.toUpperCase();
+        if (isEarlier(c, first.get(k))) first.set(k, c);
+      } else {
+        for (const eid of c.events) {
+          if (isEarlier(c, first.get(eid))) first.set(eid, c);
+        }
+      }
     }
     const ids = new Set<string>();
     for (const c of first.values()) ids.add(c.id);
     return ids;
-  }, [debutsOnly, activeComps]);
+  }, [debutMode, activeComps]);
 
   // NOTE: 不匹配的比赛直接从日历中消失（不再"变淡"），所以 displayedComps 走完整过滤链
   const isMatch = useCallback(
@@ -2090,16 +2102,22 @@ function CalendarPageInner() {
           <Ban size={14} strokeWidth={1.75} />
           <span>{tr({ zh: '已取消', en: 'Cancelled' })}</span>
         </button>
-        <button
-          type="button"
-          className={`debuts-toggle${debutsOnly ? ' is-active' : ''}`}
-          onClick={() => setDebutsOnly((v) => !v)}
-          aria-pressed={debutsOnly}
-          title={tr({ zh: '各国首秀：只显示每个国家有史以来的第一场 WCA 比赛（配合左侧国家筛选可锁定某国，日期列点「最早在前」按时间看各国登场）', en: 'Country debuts: show only each country’s first-ever WCA competition (pick a country at left to focus one; click the date header for oldest-first)' })}
+        <div
+          className={`debuts-select-wrap${debutMode !== 'off' ? ' is-active' : ''}`}
+          title={tr({ zh: '首秀：国家＝只显示每个国家有史以来的第一场 WCA 比赛；项目＝只显示每个项目有史以来第一次出现的那场比赛（配合左侧国家 / 下方项目筛选可锁定某国或某项目，日期列点「最早在前」按时间看登场顺序）', en: 'Debuts: Country = each country’s first-ever WCA competition; Event = each event’s first-ever appearance (combine with the country filter or event chips to focus one, click the date header for oldest-first)' })}
         >
           <DebutIcon size={14} strokeWidth={1.75} />
-          <span>{tr({ zh: '各国首秀', en: 'Debuts' })}</span>
-        </button>
+          <select
+            className="debuts-select"
+            value={debutMode}
+            onChange={(e) => setDebutMode(e.target.value as DebutMode)}
+            aria-label={tr({ zh: '首秀', en: 'Debuts' })}
+          >
+            <option value="off">{tr({ zh: '首秀', en: 'Debuts' })}</option>
+            <option value="country">{tr({ zh: '国家首秀', en: 'Country debuts' })}</option>
+            <option value="event">{tr({ zh: '项目首秀', en: 'Event debuts' })}</option>
+          </select>
+        </div>
         <button
           type="button"
           className={`dual-toggle${dualOnly ? ' is-active' : ''}`}
