@@ -843,6 +843,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Competition card (flag + name + date/city + registration-status pill + event icons). Shared by the landing "Registration" tab and the /wca/comp card view. Presentational only — the caller computes the reg pill (milestone semantics differ per page) and passes it in.',
   },
   {
+    name: 'CompCardWithRounds',
+    import: "import { CompCardWithRounds } from '@/components/CompCardWithRounds';",
+    category: 'more',
+    zh: 'CompCard + 每个项目图标下的轮次数。轮次走 WCIF public 懒拉(24h localStorage 缓存 + inflight 去重),映射成 eventRounds(WCA-id keyed)。首页「报名」/「公示」tab、/wca/comp 卡片视图与当日弹窗共用,免每处各写一遍 fetch。已有静态轮次时传 roundsSeed(WCA-id keyed)即时显示并跳过拉取。',
+    en: 'CompCard plus per-event round counts under each event icon. Rounds are lazy-fetched from WCIF public (24h localStorage cache + inflight dedup) and mapped to eventRounds (WCA-id keyed). Shared by the landing Registration/Announced tabs, the /wca/comp card view and the day popup so the fetch isn’t re-written per call site. Pass roundsSeed (WCA-id keyed) for comps with static rounds to display instantly and skip the fetch.',
+  },
+  {
     name: 'WcaPersonPicker',
     import: 'components/WcaPersonPicker.tsx',
     category: 'more',

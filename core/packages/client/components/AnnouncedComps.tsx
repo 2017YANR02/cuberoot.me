@@ -6,8 +6,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { loadFlagData } from '@/lib/country-flags';
 import { regStatusPill } from '@/lib/comp-reg-status';
-import { CompCard } from '@/components/CompCard';
-import { fetchCompRounds } from '@/lib/comp-wcif';
+import { CompCardWithRounds } from '@/components/CompCardWithRounds';
 import { apiUrl } from '@/lib/api-base';
 
 export interface AnnouncedComp {
@@ -76,30 +75,17 @@ export function AnnouncedCard({ comp, isZh, lang, loggedIn = false, followed = f
   // (CompCard 内部已对比赛日期 + 比赛名尾部年份做同样剥离)。
   const reg0 = regStatusPill(comp.registration_open, comp.registration_close);
   const reg = reg0 ? { ...reg0, when: reg0.when ? reg0.when.replace(/20\d\d-/g, '') : reg0.when } : null;
-  // 每个项目的轮次数走 WCIF 懒拉(公示比赛后端只给 event_ids,无轮次)。fetchCompRounds 自带
-  // 24h localStorage 缓存 + inflight 去重;仅当「公示」tab 展示这些卡片时才会跑。
-  // 空对象({})也传给 CompCard,使其在轮次到达前先用「·」占位(区别于报名/卡片视图的纯图标)。
-  const [rounds, setRounds] = useState<Record<string, number>>({});
-  useEffect(() => {
-    let cancelled = false;
-    fetchCompRounds(comp.id).then((wcifRounds) => {
-      if (cancelled) return;
-      const mapped: Record<string, number> = {};
-      for (const [eid, formats] of Object.entries(wcifRounds)) mapped[eid] = formats.length;
-      setRounds(mapped);
-    }).catch(() => { /* WCIF 缺失 → 不显示轮次,降级为纯图标 */ });
-    return () => { cancelled = true; };
-  }, [comp.id]);
 
+  // 公示数据源只给 event_ids、无静态轮次,且 48h 窗口比赛少 → 开 fetchIfMissing 走 WCIF 懒拉。
   return (
-    <CompCard
+    <CompCardWithRounds
       comp={comp}
       isZh={isZh}
       lang={lang}
       pill={reg}
       competitorLimit={comp.competitor_limit}
-      eventRounds={rounds}
       follow={loggedIn && onToggle ? { followed, onToggle } : null}
+      fetchIfMissing
     />
   );
 }

@@ -18,6 +18,8 @@ export interface Comp {
   registration_close?: string | null;
   /** 人数上限（0/缺省=无上限）— upcoming JSON 有。 */
   competitor_limit?: number;
+  /** event 短码 → 该项目轮次数（all_past_comps / all_upcoming_comps 静态字段，~90% 覆盖）。卡片项目图标下显示。 */
+  rounds?: Record<string, number>;
 }
 
 export const CANCELLED_BUFFER_DAYS = 60;
