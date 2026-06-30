@@ -1,0 +1,369 @@
+'use client';
+
+// /code/guards — 汇总散落仓库各处的「写入即拦」PreToolUse hook + CI 棘轮测试。
+// 自包含静态内容,跟 /code 系其他页独立设计(art-directed dark,guard-red 主题)。
+
+import Link from '@/components/AppLink';
+import { ShieldAlert, Hand, FlaskConical, Terminal, GitCompare } from 'lucide-react';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import './guards.css';
+import { tr, useLang } from '@/i18n/tr';
+
+interface PairedGuard {
+  id: string;
+  hook: string;
+  test: string;
+  baseline: string;
+  zh: { title: string; desc: string };
+  en: { title: string; desc: string };
+}
+
+const PAIRED_GUARDS: PairedGuard[] = [
+  {
+    id: 'checkbox',
+    hook: 'block-raw-checkbox.ps1',
+    test: 'no-raw-checkbox.test.ts',
+    baseline: '0（113→0）',
+    zh: { title: '裸 checkbox', desc: '禁 <input type="checkbox">,布尔开关统一走 BoolToggle（左滑钮 + 右文字）。多选网格/列表例外,行内 allow-checkbox 豁免。' },
+    en: { title: 'Raw checkbox', desc: 'No bare <input type="checkbox"> — boolean toggles go through BoolToggle (left switch + right label). Multi-select grids are exempt via inline allow-checkbox.' },
+  },
+  {
+    id: 'static-onclick',
+    hook: 'block-static-onclick-button.ps1',
+    test: 'no-static-element-onclick-button.test.ts',
+    baseline: '45 ↓',
+    zh: { title: '假按钮（静态元素 onClick）', desc: '<div>/<span> 挂 onClick 当按钮 —— iOS Safari（实测 iOS 26）不可靠把 tap 合成 click,选择器点不动,:hover 还伪装成"已选中"。必须真 <button> 或 role="button" + tabIndex + onKeyDown。' },
+    en: { title: 'Fake buttons (onClick on static tags)', desc: '<div>/<span> with onClick as a button — iOS Safari (tested on iOS 26) doesn’t reliably synthesize tap→click, leaving pickers untappable while :hover fakes "selected". Must be a real <button> or role="button" + tabIndex + onKeyDown.' },
+  },
+  {
+    id: 'button-nav',
+    hook: 'block-button-navigation.ps1',
+    test: 'no-button-navigation.test.ts',
+    baseline: '0',
+    zh: { title: '按钮当链接', desc: 'onClick 里直接 router.push/replace 当导航 —— 中键/Ctrl 点开新标签页失效,复制链接、SEO、爬虫可达全丢。站内跳转一律真 <a> / AppLink。' },
+    en: { title: 'Buttons as links', desc: 'onClick calling router.push/replace as navigation breaks middle-click/Ctrl-click new-tab, copy-link, SEO and crawlers. Internal navigation must be a real <a> / AppLink.' },
+  },
+  {
+    id: 'raw-history',
+    hook: 'block-raw-history-url-state.ps1',
+    test: 'url-state-no-raw-history.test.ts',
+    baseline: '0',
+    zh: { title: '裸 history.pushState / popstate', desc: '页内 URL 状态一律走 nuqs（useQueryState）,禁手写 history.pushState/replaceState + popstate 监听。maplibre / canvas / zustand 等重组件走 ALLOWLIST 豁免。' },
+    en: { title: 'Raw history.pushState / popstate', desc: 'Page-level URL state goes through nuqs (useQueryState) — no hand-rolled history.pushState/replaceState + popstate listeners. Heavy components (maplibre, canvas, zustand stores) are exempted via an ALLOWLIST.' },
+  },
+  {
+    id: 'ime-input',
+    hook: 'block-nuqs-ime-input.mjs',
+    test: 'ime-safe-search-input.test.ts',
+    baseline: '0',
+    zh: { title: 'IME 不安全的搜索框', desc: '<input>/<textarea> 的 value 直接绑 nuqs 状态,每次按键写回 URL 会打断中文/日文输入法合成。统一走 <SearchInput>(已内置 composition 处理)。' },
+    en: { title: 'IME-unsafe search input', desc: 'An <input>/<textarea> with its value bound directly to a nuqs state writes back to the URL on every keystroke, breaking CJK input-method composition. Use <SearchInput> (composition handling built in).' },
+  },
+  {
+    id: 'traditional',
+    hook: 'block-handwritten-trad.ps1 → hook-detect-traditional.mjs',
+    test: 'i18n-removal-guard.test.ts + i18n-no-isz-text-ternary.test.ts',
+    baseline: '0（419→0）',
+    zh: { title: '手写繁体 / 内联语言三元', desc: '全站只服 en + 简体。禁手敲繁体字（繁体走 OpenCC 生成器）,禁残留 zhHant 标识符,禁新写 isZh 驱动的内联中英文案三元(一边中文一边英文那种写法)—— 一律 tr() / <T> / useT() / t() 收口。' },
+    en: { title: 'Handwritten Traditional / inline language ternary', desc: 'The site serves only en + Simplified. No hand-typed Traditional characters (generated via OpenCC), no leftover zhHant identifiers, no new isZh-driven inline ternary that branches directly between a CJK string and an English string — all text funnels through tr() / <T> / useT() / t().' },
+  },
+];
+
+interface CiGuard {
+  id: string;
+  test: string;
+  zh: { title: string; desc: string };
+  en: { title: string; desc: string };
+}
+
+const CI_GUARDS_UI: CiGuard[] = [
+  {
+    id: 'sort-arrow',
+    test: 'sort-arrow-unified.test.ts',
+    zh: { title: '自造排序箭头', desc: '禁 JSX 渲染 <ChevronsUpDown>(双向 ^v),表头排序指示统一走 SortArrow(↑/↓ 贴文字右侧,仅当前排序列显示)。' },
+    en: { title: 'Hand-rolled sort glyph', desc: 'No JSX rendering of <ChevronsUpDown> (the bidirectional ^v) — table header sort indicators go through SortArrow (↑/↓ beside the label, shown only on the active column).' },
+  },
+  {
+    id: 'css-bare-interactive',
+    test: 'css-no-bare-interactive-descendant.test.ts',
+    zh: { title: '容器后代裸交互选择器', desc: '禁 .容器 button/input/select/textarea {} 这类选择器 —— 特异性 0-1-1 压过共享组件自身的 0-1-0,塞进 ClearButton / PillToggle / Picker 会被无声压变形(本仓两次实际踩坑)。目标元素须加专属角色 class。' },
+    en: { title: 'Bare-interactive descendant selectors', desc: 'No `.container button/input/select/textarea {}` selectors — specificity 0-1-1 silently crushes a shared component’s own 0-1-0 class the moment one is dropped inside (hit twice for real here). Target elements need a dedicated role class instead.' },
+  },
+  {
+    id: 'pilltoggle-fit',
+    test: 'pilltoggle-default-fit.test.ts',
+    zh: { title: 'PillToggle 默认宽度', desc: '锁住 PillToggle 两根支柱:基类 min-width:0(默认贴合文字)+ 两个隐形 ghost span(按更长标签预留宽度,切换不跳变),防止哪天被悄悄改回固定宽度。' },
+    en: { title: 'PillToggle default width', desc: 'Locks two pillars of PillToggle: the base class keeps min-width:0 (hugs its label by default) and renders two invisible ghost spans that reserve the longer label’s width so toggling never jumps — guards against either silently regressing.' },
+  },
+];
+
+const CI_GUARDS_DRIFT: CiGuard[] = [
+  {
+    id: 'catalog-sync',
+    test: 'code-catalog-sync.test.ts',
+    zh: { title: '/code/components + /code/utils 登记表漂移', desc: 'hooks/ 里每个导出的 use* hook 必须在 /code/utils 登记表里出现;两个登记表写的 import 路径必须在磁盘上真实存在。漏登记或路径改名各自直接红。' },
+    en: { title: '/code/components + /code/utils registry drift', desc: 'Every exported use* hook in hooks/ must appear in the /code/utils catalog; every import path either catalog references must resolve on disk. Forgetting to register or a stale renamed path both turn CI red.' },
+  },
+  {
+    id: 'tokens-drift',
+    test: 'code-tokens-drift.test.ts',
+    zh: { title: '/code/tokens 数值漂移', desc: '/code/tokens 页面手工抄了 globals.css 的颜色值做展示,这条测试逐条重新对比 —— globals.css 改了令牌却忘了同步页面,直接红。' },
+    en: { title: '/code/tokens value drift', desc: '/code/tokens hand-mirrors color values from globals.css for display. This re-diffs every value — change a token in globals.css without updating the page and CI goes red.' },
+  },
+  {
+    id: 'schema-api-drift',
+    test: 'code-schema-api-drift.test.ts',
+    zh: { title: '/code/schema + /code/api 快照漂移', desc: '/code/schema 的迁移台账须列全 packages/server/migrations 下每个文件;/code/api 的路由清单须等于 server/src/index.ts 里 app.route(‘/v1’, …) 实际挂载的路由。各自漏一条都红。' },
+    en: { title: '/code/schema + /code/api snapshot drift', desc: '/code/schema’s migration ledger must list every file in packages/server/migrations; /code/api’s manifest must equal the routes actually mounted via app.route(‘/v1’, …) in server/src/index.ts. Missing either turns CI red.' },
+  },
+  {
+    id: 'solvers-fleet-sync',
+    test: 'code-solvers-fleet-sync.test.ts',
+    zh: { title: '/code/solvers 舰队表漂移', desc: '/code/solvers 的 NONWCA_TS 表必须与 CSTIMER_SOLVABLE_IDS(真实“已可解”集合)完全一致;还没做的 PLANNED 列表不能跟已可解的撞车。' },
+    en: { title: '/code/solvers fleet table drift', desc: '/code/solvers’ NONWCA_TS table must exactly equal CSTIMER_SOLVABLE_IDS (the real "already solvable" set); the not-yet-built PLANNED list must be disjoint from it.' },
+  },
+];
+
+const CI_GUARDS_API: CiGuard[] = [
+  {
+    id: 'cache-headers',
+    test: 'server-cache-headers.test.ts',
+    zh: { title: 'API 缓存头分层', desc: '可变数据端点禁止给浏览器层发 > 600s 的 max-age(2026-06-10 真撞过:重灌窗口的暂态 null 被浏览器钉了一天)。要长缓存只能走 s-maxage(nginx 共享层),例外须进 IMMUTABLE_ALLOWLIST。' },
+    en: { title: 'API cache header layering', desc: 'Mutable-data endpoints can’t ship a browser-layer max-age > 600s (hit for real on 2026-06-10: a transient null during a reload window got pinned by the browser for a day). Long caching only via s-maxage (the nginx shared layer); exceptions must join IMMUTABLE_ALLOWLIST.' },
+  },
+];
+
+interface ProcessGuard {
+  id: string;
+  hook: string;
+  matcher: string;
+  zh: { title: string; desc: string };
+  en: { title: string; desc: string };
+}
+
+const PROCESS_GUARDS: ProcessGuard[] = [
+  {
+    id: 'browser-launch',
+    hook: 'guard-browser-launch.mjs',
+    matcher: 'Bash | PowerShell',
+    zh: { title: 'Ad-hoc Playwright 起浏览器', desc: 'AI 自起的 WebKit/Firefox/Chromium 脚本(不走 MCP)起浏览器前必须先禁 WebRTC,没禁直接拦。' },
+    en: { title: 'Ad-hoc Playwright browser launch', desc: 'AI-launched WebKit/Firefox/Chromium scripts (not via MCP) must disable WebRTC before launching — blocked if they don’t.' },
+  },
+  {
+    id: 'webkit-webrtc',
+    hook: 'block-webkit-no-webrtc.ps1',
+    matcher: 'Edit | Write | MultiEdit',
+    zh: { title: '写入态 WebRTC 检测', desc: '写入 .launch( 调用时静态扫描,没带 WebRTC 禁用同样拦 —— 与上面的运行态检测同一份 kill,双保险。' },
+    en: { title: 'Write-time WebRTC check', desc: 'Statically scans a written .launch( call — missing the WebRTC kill is blocked the same way, a belt-and-suspenders pair with the runtime check above.' },
+  },
+  {
+    id: 'next-build-dev',
+    hook: 'block-next-build-while-dev.ps1',
+    matcher: 'Bash | PowerShell',
+    zh: { title: 'dev 时禁 next build', desc: 'dev server 在跑时 build 和 dev 共用 .next/,并发写会撕裂 manifest JSON → 全站 500。dev 活着就拦 build。' },
+    en: { title: 'No next build while dev runs', desc: 'build and dev share .next/ — concurrent writes tear the manifest JSON and 500 the whole site. Blocked whenever dev is alive.' },
+  },
+  {
+    id: 'repo-image-write',
+    hook: 'block-repo-image-write.ps1',
+    matcher: 'Bash | PowerShell',
+    zh: { title: 'AI 产物落仓库根', desc: 'AI 自己生成的截图 / 调试图 / 对比图写进仓库根或其他工作区路径直接拦,必须落 .tmp/png/。' },
+    en: { title: 'AI artifacts landing in the repo', desc: 'AI-generated screenshots / debug images / comparisons written to the repo root or other workspace paths are blocked — they must land in .tmp/png/.' },
+  },
+  {
+    id: 'redirect-screenshot',
+    hook: 'redirect-screenshot.ps1',
+    matcher: 'mcp__playwright__browser_take_screenshot',
+    zh: { title: 'Playwright MCP 截图重定向', desc: '不是拦,是改:playwright MCP 的截图调用自动重写输出路径到 .tmp/png/,不用等写入态规则去抓。' },
+    en: { title: 'Playwright MCP screenshot redirect', desc: 'Not a block — a rewrite: playwright MCP screenshot calls have their output path silently redirected to .tmp/png/ before the write-time rule would even need to catch it.' },
+  },
+];
+
+export default function GuardsPage() {
+  const lang = useLang();
+
+  useDocumentTitle('约束守卫', 'Guards');
+
+  return (
+    <div className="gd-page">
+      <div className="gd-bg" aria-hidden="true" />
+      <div className="gd-bg-glow" aria-hidden="true" />
+
+      <div className="gd-shell">
+        <div className="gd-topbar">
+          <Link href="/code" className="gd-back">← /code</Link>
+        </div>
+
+        <header className="gd-hero">
+          <div className="gd-hero-tag">// {tr({ zh: '立约束分层', en: 'layered constraints' })} · PreToolUse + CI</div>
+          <h1 className="gd-hero-title">
+            guards<span className="gd-hero-cursor">_</span>
+          </h1>
+          <p className="gd-hero-sub">
+            {tr({
+              zh: '多 AI 并行写这个仓库,反模式靠记忆口头约定挡不住。每条规则先问"最早能卡在哪":能在落盘那一刻拦的写进 PreToolUse hook,拦不住的(跨文件 / 需要全仓上下文)退到 CI 棘轮兜底,两层一起铺,不只做事后那层。',
+              en: 'Multiple AIs write to this repo in parallel — verbal conventions don’t hold. Every rule starts with "where’s the earliest gate": what can be caught the instant it’s written goes into a PreToolUse hook; what can’t (cross-file, needs whole-repo context) falls back to a CI ratchet. Both layers stack — never just the after-the-fact one.',
+            })}
+          </p>
+          <div className="gd-hero-stats">
+            <div className="gd-stat"><span className="gd-stat-num">6</span><span className="gd-stat-label">{tr({ zh: '对双层守卫', en: 'paired guards' })}</span></div>
+            <div className="gd-stat"><span className="gd-stat-num">8</span><span className="gd-stat-label">{tr({ zh: '条纯 CI 棘轮', en: 'CI-only ratchets' })}</span></div>
+            <div className="gd-stat"><span className="gd-stat-num">5</span><span className="gd-stat-label">{tr({ zh: '条进程级守卫', en: 'process-level guards' })}</span></div>
+          </div>
+        </header>
+
+        {/* 01 — paired guards */}
+        <section className="gd-section">
+          <header className="gd-sec-head">
+            <span className="gd-sec-num">01</span>
+            <h2 className="gd-sec-title">{tr({ zh: '双层守卫', en: 'Paired guards' })}</h2>
+            <p className="gd-sec-desc">
+              {tr({
+                zh: '能从单文件文本里机械判定的反模式:写入即拦(matcher Edit|Write|MultiEdit)挡在最前,CI 棘轮兜逃逸的存量。BASELINE 只许降不许升,改 baseline 本身就是一种 review 信号。',
+                en: 'Anti-patterns that are mechanically detectable from a single file’s text: a write-time hook (matcher Edit|Write|MultiEdit) blocks first, a CI ratchet catches what slips through against the remaining baseline. BASELINE only ever goes down — lowering it is itself a review signal.',
+              })}
+            </p>
+          </header>
+          <div className="gd-pair-list">
+            {PAIRED_GUARDS.map((g) => {
+              const t = g[lang];
+              return (
+                <div className="gd-pair-card" key={g.id}>
+                  <div className="gd-pair-head">
+                    <Hand size={15} strokeWidth={2} />
+                    <h3 className="gd-pair-title">{t.title}</h3>
+                    <span className="gd-pair-baseline">{g.baseline}</span>
+                  </div>
+                  <p className="gd-pair-desc">{t.desc}</p>
+                  <div className="gd-pair-files">
+                    <span className="gd-pair-file is-hook"><code>{g.hook}</code></span>
+                    <span className="gd-pair-file is-test"><code>{g.test}</code></span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* 02 — CI-only ratchets */}
+        <section className="gd-section">
+          <header className="gd-sec-head">
+            <span className="gd-sec-num">02</span>
+            <h2 className="gd-sec-title">{tr({ zh: '纯 CI 棘轮', en: 'CI-only ratchets' })}</h2>
+            <p className="gd-sec-desc">
+              {tr({
+                zh: '判定需要跨文件对账(漂移检测)或整段 CSS 选择器解析,写入态单文件 hook 做不到,只挂 CI。',
+                en: 'Detection needs cross-file reconciliation (drift checks) or full CSS-selector parsing — beyond what a single-file write-time hook can do, so these run in CI only.',
+              })}
+            </p>
+          </header>
+
+          <h3 className="gd-ci-group-title">{tr({ zh: 'UI 模式一致性', en: 'UI pattern consistency' })}</h3>
+          <div className="gd-ci-list">
+            {CI_GUARDS_UI.map((g) => {
+              const t = g[lang];
+              return (
+                <div className="gd-ci-card" key={g.id}>
+                  <div className="gd-ci-head">
+                    <FlaskConical size={14} strokeWidth={2} />
+                    <h4 className="gd-ci-title">{t.title}</h4>
+                  </div>
+                  <p className="gd-ci-desc">{t.desc}</p>
+                  <code className="gd-ci-file">{g.test}</code>
+                </div>
+              );
+            })}
+          </div>
+
+          <h3 className="gd-ci-group-title">{tr({ zh: '引用页对账(漂移守卫)', en: 'Reference page reconciliation (drift guards)' })}</h3>
+          <p className="gd-ci-group-note">
+            {tr({
+              zh: '/code 下好几页是手工镜像真实源码状态的快照(这页本身也是一个)—— 这组测试逐条重新对比,源码改了快照忘同步就直接红。',
+              en: 'Several /code pages are hand-maintained mirrors of real source state (this page is one too) — these tests re-diff every claim and turn red the moment the source moves but the snapshot doesn’t.',
+            })}
+          </p>
+          <div className="gd-ci-list">
+            {CI_GUARDS_DRIFT.map((g) => {
+              const t = g[lang];
+              return (
+                <div className="gd-ci-card" key={g.id}>
+                  <div className="gd-ci-head">
+                    <GitCompare size={14} strokeWidth={2} />
+                    <h4 className="gd-ci-title">{t.title}</h4>
+                  </div>
+                  <p className="gd-ci-desc">{t.desc}</p>
+                  <code className="gd-ci-file">{g.test}</code>
+                </div>
+              );
+            })}
+          </div>
+
+          <h3 className="gd-ci-group-title">{tr({ zh: 'API 契约', en: 'API contracts' })}</h3>
+          <div className="gd-ci-list">
+            {CI_GUARDS_API.map((g) => {
+              const t = g[lang];
+              return (
+                <div className="gd-ci-card" key={g.id}>
+                  <div className="gd-ci-head">
+                    <FlaskConical size={14} strokeWidth={2} />
+                    <h4 className="gd-ci-title">{t.title}</h4>
+                  </div>
+                  <p className="gd-ci-desc">{t.desc}</p>
+                  <code className="gd-ci-file">{g.test}</code>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="gd-ci-aside">
+            {tr({
+              zh: '死代码(knip,文件 / 依赖 / 幽灵命令)走独立的三层守卫,详见 ',
+              en: 'Dead code (knip — files / deps / phantom binaries) has its own three-layer guard, see ',
+            })}
+            <Link href="/code/dead-code">/code/dead-code</Link>。
+          </p>
+        </section>
+
+        {/* 03 — process-level guards */}
+        <section className="gd-section">
+          <header className="gd-sec-head">
+            <span className="gd-sec-num">03</span>
+            <h2 className="gd-sec-title">{tr({ zh: '进程级守卫', en: 'Process-level guards' })}</h2>
+            <p className="gd-sec-desc">
+              {tr({
+                zh: '管的不是 commit 进仓库的源码模式,而是 Agent 工具调用本身的行为(起浏览器 / 跑 build / 写文件位置)。CI 不跑 Agent,这层没有对应的 CI 兜底。',
+                en: 'These don’t gate the source pattern landing in a commit — they gate the agent’s tool calls themselves (launching a browser, running a build, where a file lands). CI doesn’t run an agent, so this layer has no CI counterpart.',
+              })}
+            </p>
+          </header>
+          <div className="gd-proc-list">
+            {PROCESS_GUARDS.map((g) => {
+              const t = g[lang];
+              return (
+                <div className="gd-proc-card" key={g.id}>
+                  <Terminal size={15} strokeWidth={2} className="gd-proc-icon" />
+                  <div className="gd-proc-body">
+                    <div className="gd-proc-head">
+                      <h3 className="gd-proc-title">{t.title}</h3>
+                      <span className="gd-proc-matcher">{g.matcher}</span>
+                    </div>
+                    <p className="gd-proc-desc">{t.desc}</p>
+                    <code className="gd-proc-file">{g.hook}</code>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <footer className="gd-foot">
+          <span className="gd-foot-text">
+            <ShieldAlert size={13} strokeWidth={2} />
+            {tr({ zh: '问"最早能卡在哪",写入即拦 + CI 兜底一起铺', en: 'ask "earliest gate" — write-time block + CI backstop, stacked' })}
+          </span>
+          <Link href="/code" className="gd-foot-link">/code</Link>
+        </footer>
+      </div>
+    </div>
+  );
+}
