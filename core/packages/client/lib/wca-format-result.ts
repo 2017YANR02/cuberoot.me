@@ -26,23 +26,8 @@ export function formatWcaResult(
       : (value / 100).toFixed(2);
   }
 
-  if (eventId === '333mbf') {
-    const s = String(value).padStart(10, '0');
-    const dd = parseInt(s.slice(1, 3), 10);
-    const seconds = parseInt(s.slice(3, 8), 10);
-    const missed = parseInt(s.slice(8, 10), 10);
-    const diff = 99 - dd;
-    const solved = diff + missed;
-    const attempted = solved + missed;
-    return `${solved}/${attempted} ${formatMbldTime(seconds)}`;
-  }
-
-  if (eventId === '333mbo') {
-    const seconds = value % 100000;
-    const rest = Math.floor(value / 100000);
-    const attempted = rest % 100;
-    const solved = 99 - (Math.floor(rest / 100) % 100);
-    return `${solved}/${attempted} ${formatMbldTime(seconds)}`;
+  if (eventId === '333mbf' || eventId === '333mbo') {
+    return formatMbld(value);
   }
 
   return formatTimeCs(value);
@@ -68,9 +53,39 @@ function formatTimeCs(cs: number): string {
   return s.toFixed(2);
 }
 
+// WCA MBLD has two value encodings, discriminated by magnitude (old style ≥ 1e9).
+// Both 333mbf (new event) and 333mbo (old-style event) can carry either — 333mbo
+// notably mixes both across its history — so decode by value, never by event id.
+//   old: 1SSAATTTTT → solved = 99 - SS, attempted = AA, time = TTTTT seconds
+//   new:  DDTTTTTMM → diff = 99 - DD, missed = MM, solved = diff + missed, attempted = solved + missed
+// Mirrors packages/stats-build/src/core/solve_time.ts SolveTime.decode.
+function formatMbld(value: number): string {
+  let v = value;
+  let solved: number;
+  let attempted: number;
+  let seconds: number;
+  if (v >= 1_000_000_000) {
+    seconds = v % 100_000;
+    v = Math.floor(v / 100_000);
+    attempted = v % 100;
+    solved = 99 - (Math.floor(v / 100) % 100);
+  } else {
+    const missed = v % 100;
+    v = Math.floor(v / 100);
+    seconds = v % 100_000;
+    const diff = 99 - (Math.floor(v / 100_000) % 100);
+    solved = diff + missed;
+    attempted = solved + missed;
+  }
+  const time = seconds === 99_999 ? '?:??' : formatMbldTime(seconds);
+  return `${solved}/${attempted} ${time}`;
+}
+
 function formatMbldTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
