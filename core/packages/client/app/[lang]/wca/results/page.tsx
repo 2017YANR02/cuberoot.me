@@ -35,6 +35,7 @@ import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { countryName } from '@/lib/country-name';
 import { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { EventIcon } from '@/components/EventIcon';
+import { eventDisplayName } from '@/lib/wca-events';
 import { SortArrow } from '@/components/SortArrow';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
@@ -134,7 +135,7 @@ function AllResultsPageInner() {
       q: parseAsString,
       basis: parseAsString,
       hidePodium: parseAsString, // 名次和:未登领奖台
-      ssort: parseAsString,      // 名次和表头排序:'total'(默认) | 'best'(历史最佳名次)
+      ssort: parseAsString,      // 名次和表头排序:'total'(默认) | 'best'(历史最佳名次) | 项目 id(单项名次列)
       sdir: parseAsString,       // 名次和排序方向:'asc'(默认) | 'desc'
       psort: parseAsString,      // 名录排序:'name'(首字母) | 'len'(名字长度)
       pdir: parseAsString,       // 'asc' | 'desc'
@@ -193,12 +194,13 @@ function AllResultsPageInner() {
   const page = parseInt(query.page ?? '1', 10);
   const size = parseInt(query.size ?? '100', 10);
   const hidePodium = query.hidePodium === '1';
-  // 名次和表头排序(服务端分页 → 排序也走服务端;default total / asc)
-  const ssort: 'total' | 'best' = query.ssort === 'best' ? 'best' : 'total';
+  // 名次和表头排序(服务端分页 → 排序也走服务端;default total / asc)。
+  // ssort 除 'total'/'best' 外还接受单个项目 id(RANK_EVENT_SET 白名单)→ 按该项目名次列排.
+  const ssort: string = query.ssort === 'best' ? 'best' : query.ssort && RANK_EVENT_SET.has(query.ssort) ? query.ssort : 'total';
   const sdir: 'asc' | 'desc' = query.sdir === 'desc' ? 'desc' : 'asc';
-  const setSorSort = (key: 'total' | 'best') => {
+  const setSorSort = (key: string) => {
     if (ssort === key) setQuery({ sdir: sdir === 'asc' ? 'desc' : null, page: null });
-    else setQuery({ ssort: key === 'total' ? null : 'best', sdir: null, page: null });
+    else setQuery({ ssort: key === 'total' ? null : key, sdir: null, page: null });
   };
   // 空态:姓名分布 + 名录(A-Z 平铺列表)同页共存(分布在上、名录在下)
   const psort: 'name' | 'len' = query.psort === 'len' ? 'len' : 'name';
@@ -951,7 +953,13 @@ function AllResultsPageInner() {
                         </th>
                       )}
                       {RANK_EVENTS.map(ev => (
-                        <th key={ev} className="wse-sor-evcell" style={{ opacity: selectedSet.has(ev) ? 1 : 0.3 }}><EventIcon event={ev} /></th>
+                        <th key={ev} className="wse-sor-evcell" style={{ opacity: selectedSet.has(ev) ? 1 : 0.3 }}>
+                          <button type="button" className="wse-th-sort wse-th-sort-ev" onClick={() => setSorSort(ev)}
+                            title={eventDisplayName(ev, isZh)}>
+                            <EventIcon event={ev} />
+                            <SortArrow active={ssort === ev} dir={sdir} size={10} />
+                          </button>
+                        </th>
                       ))}
                     </tr>
                   </thead>
