@@ -432,7 +432,7 @@ function EventRoundsList({
                     {effPos > 0 ? effPos : '—'}
                   </span>
                 </td>
-                <td className={`wp-cell-result ${oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
+                <td className={`wp-cell-result ${isMbldEvent(eventId) ? 'wp-cell-result--mbld' : ''} ${oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
                   <span className="record-num-cell">
                     <ResultChangeChain oldValues={oldBest} eventId={eventId} kind="single" note={chain?.[chain.length - 1]?.note} />
                     {formatWcaResult(effBest, eventId, 'single')}
@@ -454,7 +454,7 @@ function EventRoundsList({
                     note={chain?.[chain.length - 1]?.note}
                   />
                 </td>
-                <td className={`wp-cell-attempts ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
+                <td className={`wp-cell-attempts ${isMbldEvent(eventId) ? 'wp-cell-attempts--mbld' : ''} ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
                   <AttemptsList
                     attempts={effAttempts}
                     best={effBest}
