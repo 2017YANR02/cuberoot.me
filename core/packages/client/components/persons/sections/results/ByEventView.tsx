@@ -28,6 +28,7 @@ import { trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
 import { isMbldEvent, effectiveMbldAverage as effectiveAverage } from '@/lib/mbf-average';
+import { useMbldAvgRecords, mbldAvgRecordKey } from '@/lib/mbld-avg-records';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
@@ -195,6 +196,8 @@ function EventRoundsList({
   const admin = isAdminWcaId(myWcaId);
   const isOwner = !!myWcaId && myWcaId === wcaId;
   const loggedIn = !!myWcaId;
+  // 多盲非官方平均的区域纪录(WR/大洲/NR)查表;仅本项目是多盲时拉取。
+  const mbldAvgRecords = useMbldAvgRecords(isMbldEvent(eventId));
   const [editTarget, setEditTarget] = useState<ResultChangeTarget | null>(null);
   // 排序:点列头(单次/平均/第 N 把)切 升序→降序→取消;无效成绩(DNF/DNS/空位)永远垫底。
   // key=null → 默认按比赛日期倒序分组;key 非空 → 拉平本项目所有轮次重排,逐行显示比赛名。
@@ -374,7 +377,11 @@ function EventRoundsList({
             const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
             // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
             const singleRecord = r.regional_single_record || (liveRank?.singleTag || null);
-            const averageRecord = r.regional_average_record || (liveRank?.averageTag || null);
+            // 多盲非官方平均:WCA 无 regional_average_record,改查站内自算的 WR/大洲/NR 标签。
+            const mbldAvgRec = isMbldEvent(eventId)
+              ? mbldAvgRecords?.get(mbldAvgRecordKey(wcaId, r.competition_id, eventId, r.round_type_id)) ?? null
+              : null;
+            const averageRecord = r.regional_average_record || mbldAvgRec || (liveRank?.averageTag || null);
             const showComp = !grouped || r.competition_id !== lastCompId;
             lastCompId = r.competition_id;
             // 拆 status:approved 进有效值显示;pending 仅作「待审核」标记(不改官方值)。
