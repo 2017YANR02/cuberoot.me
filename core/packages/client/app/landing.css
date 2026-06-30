@@ -381,14 +381,17 @@
 .landing-page .beian {
     margin-top: 0.5rem;
     margin-bottom: 0.75rem;
-    font-size: 0.75rem;
+    /* clamp 让窄屏(尤其微信内置浏览器 CJK 偏宽)缩字保单行,桌面仍 0.75rem */
+    font-size: clamp(0.6rem, 3vw, 0.75rem);
     color: var(--text-sub);
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    padding: 0 1rem;
+    gap: clamp(0.4rem, 2vw, 0.75rem);
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    padding: 0 0.75rem;
+    max-width: 100%;
 }
 
 .landing-page .beian a {
