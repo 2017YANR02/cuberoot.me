@@ -13,6 +13,7 @@ import {
   buildInsert, buildUpdate, buildDuplicateQuery, DUP_REASONS, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
+import { wcaIdToCubingSlug, nameToCubingSlug } from '../utils/cubing_slug.js';
 
 export const reconRoutes = new Hono();
 
@@ -539,15 +540,35 @@ reconRoutes.get('/recon/wca-attempts', async (c) => {
 const CUBING_CACHE_TTL_DAYS = 7;
 
 reconRoutes.get('/recon/cubing-attempts', async (c) => {
-  const slug = c.req.query('slug') ?? '';
+  // 优先 compId(WCA 比赛 ID,无横杠):服务端按真实比赛名推 cubing slug,避免无横杠 ID 反推
+  // 把内部大写词误拆(GuangzhouGraDUAL3x3I2026 → Guangzhou-Gra-DUAL-... → cubing.com 404)。
+  // 仍接受 legacy slug 参数(部署滚动期内未刷新的旧客户端兜底)。
+  const compId = c.req.query('compId') ?? '';
+  const slugParam = c.req.query('slug') ?? '';
   const event = c.req.query('event') ?? '';
   const round = c.req.query('round') ?? '';
   const personId = c.req.query('personId') ?? '';
-  if (!slug || !event || !round || !personId) {
-    return c.json({ error: 'slug/event/round/personId required' }, 400);
+  if ((!compId && !slugParam) || !event || !round || !personId) {
+    return c.json({ error: 'compId|slug/event/round/personId required' }, 400);
   }
-  if (!/^[A-Za-z0-9-]+$/.test(slug) || !/^[A-Za-z0-9]+$/.test(event) || !/^[A-Za-z0-9]+$/.test(round) || !/^[0-9]{4}[A-Z]{4}\d{2}$/.test(personId)) {
+  if ((compId && !/^[A-Za-z0-9]+$/.test(compId)) || (slugParam && !/^[A-Za-z0-9-]+$/.test(slugParam))
+      || !/^[A-Za-z0-9]+$/.test(event) || !/^[A-Za-z0-9]+$/.test(round) || !/^[0-9]{4}[A-Z]{4}\d{2}$/.test(personId)) {
     return c.json({ error: 'invalid param format' }, 400);
+  }
+
+  // compId → 真实比赛名(本地 WCA dump)→ slug;拿不到名退回启发式;无 compId 用 legacy slug。
+  let slug = slugParam;
+  if (compId) {
+    let name: string | undefined;
+    try {
+      const rows = await query<{ name: string }>(
+        `SELECT name FROM wca_competitions WHERE id = ? LIMIT 1`, [compId],
+      );
+      name = rows[0]?.name;
+    } catch (err) {
+      console.error('[cubing-attempts] comp name lookup failed:', err);
+    }
+    slug = name ? nameToCubingSlug(name) : wcaIdToCubingSlug(compId);
   }
 
   // 1. 查缓存
