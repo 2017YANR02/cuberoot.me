@@ -48,6 +48,7 @@ jobs:
       LANG: en_US.UTF-8
     permissions:
       contents: write
+      actions: write
     steps:
       # NOTE: 删除 runner 上不需要的预装软件，腾出 ~10GB 磁盘
       # 防止 MySQL 临时文件撑满 /tmp (errno 28: No space left on device)
@@ -265,6 +266,8 @@ jobs:
         run: ssh -T -n -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/hr_id "$DEPLOY_USER@$DEPLOY_HOST" 'rm -rf /var/cache/nginx/api/* && nginx -s reload'
 
       - name: Commit and push
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
@@ -294,4 +297,8 @@ jobs:
               GIT_EDITOR=true git rebase --continue
             fi
             git push
+            # commit 带 [skip ci](避开 deploy_next/test 等重 workflow),但这样也掐死了靠 push+stats/**
+            # 触发的 sync_toolkit → 日更 stats 永远上不了 static(过去比赛双轮等数据隔天才同步)。
+            # 故 push 后显式触发一次 sync_toolkit,把新 stats/*.json rsync 到静态服务器(同 update_upcoming.yml)。
+            gh workflow run sync_toolkit.yml
           fi
