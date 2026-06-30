@@ -58,7 +58,7 @@ import { fetchUserUpcoming, type WcaPersonLite } from '@/lib/wca-api';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { CompCuberPicker } from '@/components/CompCuberPicker';
-import { CompCard } from '@/components/CompCard';
+import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRounds';
 import OnThisDayModal from './_components/OnThisDayModal';
 import MonthGrid from '@/components/MonthGrid';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -2536,7 +2536,7 @@ function CalendarPageInner() {
                 const reg = regMilestone(c.registration_open, c.registration_close, c.event_change_deadline, undefined)
                   ?? (startPast ? { when: '', word: tr({ zh: '报名已截止', en: 'Closed' }), tone: 'closed' as const } : null);
                 return (
-                  <CompCard
+                  <CompCardWithRounds
                     key={c.id}
                     comp={c}
                     isZh={isZh}
@@ -2544,6 +2544,7 @@ function CalendarPageInner() {
                     pill={reg ? { when: reg.when, word: reg.word, tone: reg.tone } : null}
                     dimmed={isCancelledComp(c, cancelledCutoffIso)}
                     follow={{ followed: follows.has(c.id), onToggle: toggleFollow, loggedIn: followLoggedIn, onRequireLogin: login }}
+                    roundsSeed={wcaRoundsSeed(c.rounds)}
                   />
                 );
               })}
@@ -2802,7 +2803,7 @@ function CalendarPageInner() {
                   const reg = regMilestone(c.registration_open, c.registration_close, c.event_change_deadline, undefined)
                     ?? (startPast ? { when: '', word: tr({ zh: '报名已截止', en: 'Closed' }), tone: 'closed' as const } : null);
                   return (
-                    <CompCard
+                    <CompCardWithRounds
                       key={c.id}
                       comp={c}
                       isZh={isZh}
@@ -2810,6 +2811,7 @@ function CalendarPageInner() {
                       pill={reg ? { when: reg.when, word: reg.word, tone: reg.tone } : null}
                       dimmed={isCancelledComp(c, cancelledCutoffIso)}
                       follow={{ followed: follows.has(c.id), onToggle: toggleFollow, loggedIn: followLoggedIn, onRequireLogin: login }}
+                      roundsSeed={wcaRoundsSeed(c.rounds)}
                     />
                   );
                 })}
