@@ -115,13 +115,6 @@ export async function fetchResultRow(
   };
 }
 
-export function wcaIdToCubingSlug(wcaId: string): string {
-  return wcaId
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
-    .replace(/([a-zA-Z])(\d)/g, '$1-$2');
-}
-
 export interface WcaScrambleRow {
   event_id: string;
   round_type_id: string;
@@ -230,9 +223,10 @@ export async function fetchCubingAttempts(
   round: string,
   personId: string,
 ): Promise<(number | null)[] | null> {
-  const slug = wcaIdToCubingSlug(compWcaId);
   const wcaEventId = toWcaEventId(reconEvent);
-  const url = apiUrl(`/v1/recon/cubing-attempts?slug=${encodeURIComponent(slug)}&event=${encodeURIComponent(wcaEventId)}&round=${encodeURIComponent(round)}&personId=${encodeURIComponent(personId)}`);
+  // 传 compId(无横杠 WCA ID),cubing.com slug 由服务端按真实比赛名推导 —— 客户端从 ID 反推
+  // 会把内部大写词误拆(GuangzhouGraDUAL3x3I2026 → Guangzhou-Gra-DUAL-…)导致 404。见 /recon/cubing-attempts。
+  const url = apiUrl(`/v1/recon/cubing-attempts?compId=${encodeURIComponent(compWcaId)}&event=${encodeURIComponent(wcaEventId)}&round=${encodeURIComponent(round)}&personId=${encodeURIComponent(personId)}`);
   try {
     const res = await fetch(url);
     if (!res.ok) return null;

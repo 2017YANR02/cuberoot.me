@@ -16,6 +16,7 @@ import { query } from '../db/connection.js';
 import { enrichComp, resolvePersonIso2, type CompRecordsSnapshot } from '../utils/current_records.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
+import { wcaIdToCubingSlug, nameToCubingSlug } from '../utils/cubing_slug.js';
 
 export const cubingLiveRoutes = new Hono();
 
@@ -551,29 +552,6 @@ async function syncPersonLiveResults(data: CompData): Promise<void> {
   } catch (e) {
     console.warn(`[person-live] sync failed for ${compId}:`, (e as Error).message);
   }
-}
-
-/** WCA ID (e.g. XuzhouZenith2026) → cubing.com slug (Xuzhou-Zenith-2026)。
- *  在 小写↔大写 / 数字↔大写 / 小写↔数字 边界插横杠;
- *  但 NxN (3x3 / 4x4 / 5x5) 里 x 前是数字时不拆 — 否则 "League3x3IV" → "3-x-3-IV" 错的. */
-function wcaIdToCubingSlug(wcaId: string): string {
-  return wcaId
-    .replace(/([a-z])([A-Z])/g, '$1-$2')       // lc→UC: HefeiCubing → Hefei-Cubing
-    .replace(/(\d)([A-Z])/g, '$1-$2')           // digit→UC: 3IV → 3-IV
-    .replace(/([A-Z])(\d)/g, '$1-$2')           // UC→digit: IV2026 → IV-2026
-    .replace(/(?<!\d)([a-z])(\d)/g, '$1-$2');   // lc→digit (前面不是 digit):League3 → League-3,但 NxN 里 x3 保留
-}
-
-/** 真实比赛名 → cubing.com slug:按词边界(空格/连字符)分段,每段剥非字母数字(撇号等,与 WCA ID 同口径),
- *  再用 '-' 连。比 wcaIdToCubingSlug 更准 —— 无横杠的 WCA ID 丢了词边界,无法判断 "GraDUAL" 是一个词,
- *  会误拆成 "Gra-DUAL"(GuangzhouGraDUAL3x3I2026)。name 有真实空格,直接给出正确边界;
- *  撇号按 WCA 口径剥掉(Xi'an→Xian)不会 404。round-trip 与 announced_comps 的 aliasToWcaIdCandidates 一致。 */
-function nameToCubingSlug(name: string): string {
-  return name
-    .split(/[\s-]+/)
-    .map(t => t.replace(/[^A-Za-z0-9]/g, ''))
-    .filter(Boolean)
-    .join('-');
 }
 
 // ─── WCA API fallback (non-cubing.com comps) ──────────────────────────────
