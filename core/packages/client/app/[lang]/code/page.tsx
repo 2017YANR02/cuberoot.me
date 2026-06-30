@@ -322,6 +322,23 @@ const CARDS: Card[] = [
       meta: 'Official spec v1.1 · dev / AI reference',
     },
   },
+  {
+    href: '/code/wca-rest-api',
+    glyph: '❖',
+    accent: '#42A893',
+    zh: {
+      title: 'WCA REST API',
+      sub: '非官方 WCA 数据接口',
+      tagline: 'Robin Ingelbrecht 把 WCA 导出预烘焙成每实体一个静态 JSON 的只读 REST API:选手/比赛/排名/成绩,开箱即用、零基建。本页给人也给 AI 速查端点、响应与调用',
+      meta: '静态 JSON · 每日 · 9 类资源',
+    },
+    en: {
+      title: 'WCA REST API',
+      sub: 'Unofficial WCA API',
+      tagline: 'Robin Ingelbrecht’s read-only REST API that pre-bakes the WCA export into one static JSON per entity — persons / comps / ranks / results, zero infra. Endpoints, responses and usage for humans and AI',
+      meta: 'Static JSON · daily · 9 resources',
+    },
+  },
 ];
 
 export default function CodeIndexPage() {

@@ -1,0 +1,132 @@
+/* /code/wca-rest-api — co-located visuals only.
+   Prose / tables / code blocks reuse ../wcif/wcif.css; this file adds the 图:
+   the build-flow diagram + the endpoint-card grid. Teal identity via --api,
+   scoped to .api-accent so the global --accent token is untouched. */
+
+.api-accent { --api: #42A893; }
+
+/* ── GET pill + base-url chip ── */
+.api-get {
+    display: inline-block;
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--api);
+    border: 1px solid color-mix(in srgb, var(--api) 50%, var(--border-default));
+    border-radius: 5px;
+    padding: 0.05rem 0.4rem;
+    letter-spacing: 0.06em;
+    vertical-align: middle;
+}
+.api-base {
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    color: var(--api);
+    font-weight: 600;
+    word-break: break-all;
+}
+
+/* ── build-flow diagram ── */
+.api-flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.55rem;
+    margin: 1.3rem 0;
+}
+.api-flow-step {
+    flex: 1 1 9rem;
+    min-width: 8.5rem;
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    padding: 0.75rem 0.85rem;
+    background: color-mix(in srgb, var(--foreground) 3%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+}
+.api-flow-step.is-out {
+    border-color: color-mix(in srgb, var(--api) 55%, var(--border-default));
+    background: color-mix(in srgb, var(--api) 9%, transparent);
+}
+.api-flow-glyph {
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    font-size: 1.15rem;
+    color: var(--api);
+    line-height: 1;
+}
+.api-flow-t { font-size: 0.84rem; font-weight: 650; }
+.api-flow-d { font-size: 0.73rem; color: var(--muted-foreground); line-height: 1.45; }
+.api-flow-arrow {
+    align-self: center;
+    color: var(--api);
+    font-size: 1.15rem;
+    flex: 0 0 auto;
+    opacity: 0.8;
+}
+@media (max-width: 640px) {
+    .api-flow { flex-direction: column; }
+    .api-flow-arrow { transform: rotate(90deg); }
+}
+
+/* ── endpoint-card grid ── */
+.api-ep-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+    gap: 0.7rem;
+    margin: 1.1rem 0;
+}
+.api-ep {
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    padding: 0.7rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.32rem;
+}
+.api-ep-top { display: flex; align-items: center; gap: 0.5rem; }
+.api-ep-glyph {
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    color: var(--api);
+    font-size: 0.95rem;
+    width: 1.2rem;
+    text-align: center;
+}
+.api-ep-name { font-size: 0.84rem; font-weight: 650; }
+.api-ep-path {
+    font-family: 'Roboto Mono', ui-monospace, monospace;
+    font-size: 0.72rem;
+    color: var(--muted-foreground);
+    word-break: break-all;
+    line-height: 1.45;
+}
+.api-ep-d { font-size: 0.76rem; color: var(--muted-foreground); line-height: 1.5; }
+
+/* compare row: this API vs the export pipeline cuberoot.me runs */
+.api-vs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+    margin: 1.1rem 0;
+}
+.api-vs-col {
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    padding: 0.85rem 0.95rem;
+}
+.api-vs-col.is-api { border-color: color-mix(in srgb, var(--api) 45%, var(--border-default)); }
+.api-vs-h {
+    font-size: 0.86rem;
+    font-weight: 650;
+    margin: 0 0 0.4rem;
+}
+.api-vs-col.is-api .api-vs-h { color: var(--api); }
+.api-vs ul { margin: 0; padding-left: 1.05rem; }
+.api-vs li {
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--muted-foreground);
+    margin: 0.25rem 0;
+}
+@media (max-width: 600px) {
+    .api-vs { grid-template-columns: 1fr; }
+}
