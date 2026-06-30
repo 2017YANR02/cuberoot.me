@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
-import { ChevronsUpDown } from 'lucide-react';
+import { SortArrow } from '@/components/SortArrow';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 
 interface Props {
@@ -99,7 +99,7 @@ export default function EventStatsTab({ results, comps, isZh }: Props) {
       : { col, dir: col === 'event' ? 'asc' : 'desc' });
 
   const Arrow = ({ col }: { col: Col }) =>
-    <ChevronsUpDown size={12} className={`wp-sort-ic ${sort.col === col ? 'wp-sort-active' : 'wp-sort-idle'}`} />;
+    <SortArrow active={sort.col === col} dir={sort.dir} />;
 
   return (
     <div className="wp-table-scroll">

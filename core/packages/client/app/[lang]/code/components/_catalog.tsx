@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import { SortArrow } from '@/components/SortArrow';
 import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
 import { ListSelect } from '@/components/ListSelect';
@@ -162,6 +163,23 @@ function PillToggleDemo() {
       <PillToggle value={b} onChange={setB} onLabel={tr({ zh: '平均', en: 'Average'
     })} offLabel={tr({ zh: '单次', en: 'Single'
     })} />
+    </div>
+  );
+}
+
+function SortArrowDemo() {
+  const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' }>({ key: 'rank', dir: 'asc' });
+  const toggle = (key: string) =>
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' }));
+  const cols: [string, string][] = [['rank', tr({ zh: '名次', en: 'Rank' })], ['single', tr({ zh: '单次', en: 'Single' })]];
+  return (
+    <div className="cg-row">
+      {cols.map(([k, label]) => (
+        <button key={k} type="button" onClick={() => toggle(k)}
+          style={{ font: 'inherit', background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', display: 'inline-flex', alignItems: 'center' }}>
+          {label}<SortArrow active={sort.key === k} dir={sort.dir} />
+        </button>
+      ))}
     </div>
   );
 }
@@ -1065,6 +1083,15 @@ export const CATALOG: ComponentEntry[] = [
   },
 
   // ── 徽章与图标 ──────────────────────────────────────────────────────────
+  {
+    name: 'SortArrow',
+    import: "import { SortArrow } from '@/components/SortArrow';",
+    category: 'display',
+    zh: `全站统一的表头排序箭头(↑/↓):仅当前排序列显示、方向跟随 dir、放表头文字右侧。新表格表头排序一律用它,禁再用 ChevronUp/ChevronDown(^ 形)或 ChevronsUpDown 自造。`,
+    en: `The site-wide table-header sort arrow (↑/↓): shown only on the active column, direction follows dir, placed to the right of the header text. Use it for all sortable headers — never hand-roll with ChevronUp/ChevronDown or ChevronsUpDown.`,
+    usage: "<th><button onClick={() => toggle('rank')}>名次 <SortArrow active={sort.key === 'rank'} dir={sort.dir} /></button></th>",
+    Demo: SortArrowDemo,
+  },
   {
     name: 'UnofficialMark',
     import: "import { UnofficialMark } from '@/components/UnofficialMark';",
