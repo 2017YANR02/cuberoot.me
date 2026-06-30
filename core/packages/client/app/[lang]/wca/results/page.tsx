@@ -37,6 +37,7 @@ import { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { EventIcon } from '@/components/EventIcon';
 import { SortArrow } from '@/components/SortArrow';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import BoolToggle from '@/components/BoolToggle';
 import { WcaStatView } from '@/components/wca-stats/WcaStatView';
 import { WR_METRICS, RANK_TYPE_IDS, DEFAULT_METRIC_ID } from '@/lib/wr-metrics';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -551,7 +552,6 @@ function AllResultsPageInner() {
       {/* 项目选择(共用):分类快选 + 多选事件条 */}
       <div className="wse-filters">
         <div className="wse-filter" style={{ minWidth: '100%' }}>
-          <label>{tr({ zh: '项目', en: 'Events' })}</label>
           <div className="wse-events-bar">
             <ClearButton variant="standalone" onClick={clearAll} isZh={isZh} />
             <button type="button" className="wse-cat-btn" onClick={selectAll}>{tr({ zh: '全选', en: 'All' })}</button>
@@ -565,12 +565,11 @@ function AllResultsPageInner() {
                 {tr(cat)}
               </button>
             ))}
-            <PillToggle
-              className="wse-pill"
+            <BoolToggle
+              className="wse-bool"
               value={includeCancelled}
               onChange={onToggleCancelled}
-              onLabel={tr({ zh: '废止项', en: 'Cancelled' })}
-              offLabel={tr({ zh: '废止项', en: 'Cancelled' })}
+              label={tr({ zh: '废止项', en: 'Cancelled' })}
             />
           </div>
           <WcaEventSelector
@@ -862,14 +861,11 @@ function AllResultsPageInner() {
                 <span className="wse-sor-note">{tr({ zh: '多盲平均(非官方 Mo3)不计入名次和', en: 'Multi-Blind average (unofficial Mo3) is not counted in the sum of ranks' })}</span>
               </div>
             )}
-            <div className="wse-filter">
-              <label>{tr({ zh: '过滤', en: 'Filter' })}</label>
-              <PillToggle
-                className="wse-pill"
+            <div className="wse-filter wse-filter-show">
+              <BoolToggle
                 value={hidePodium}
                 onChange={v => { setQuery({ hidePodium: v ? '1' : null, page: null }); }}
-                onLabel={tr({ zh: '未登领奖台', en: 'No podium' })}
-                offLabel={tr({ zh: '未登领奖台', en: 'No podium' })}
+                label={tr({ zh: '未登领奖台', en: 'No podium' })}
               />
             </div>
           </div>
