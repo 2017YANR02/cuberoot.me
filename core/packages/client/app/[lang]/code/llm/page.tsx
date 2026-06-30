@@ -53,6 +53,23 @@ const CARDS: Card[] = [
     },
   },
   {
+    href: '/code/llm/sonnet-5',
+    glyph: '◐',
+    accent: '#D97757',
+    zh: {
+      title: 'Claude Sonnet 5',
+      sub: 'Agentic Sonnet',
+      tagline: '迄今最具自主智能体能力的 Sonnet 模型。代理式编码、工具调用、终端自主操作全面逼近 Opus 4.8,价格却只是零头。',
+      meta: 'Anthropic · 2026-06-30',
+    },
+    en: {
+      title: 'Claude Sonnet 5',
+      sub: 'Agentic Sonnet',
+      tagline: 'The most agentic Sonnet model yet. Agentic coding, tool use and terminal autonomy close in on Opus 4.8, at a fraction of the price.',
+      meta: 'Anthropic · 2026-06-30',
+    },
+  },
+  {
     href: '/code/llm/fable',
     glyph: '✶',
     accent: '#D97757',
@@ -93,8 +110,8 @@ export default function CodeLlmPage() {
         </h1>
         <p className="code-index-sub">
           {tr({
-            zh: '驱动 cuberoot.me 日常开发的大语言模型。从对话模型 Claude,到官方 CLI agent Claude Code,再到 Anthropic 最强的 Claude Fable 5 —— 这套站点几乎每一行新代码都由它们合写。',
-            en: 'The large language models behind cuberoot.me’s day-to-day development. From the Claude chat model, to the official CLI agent Claude Code, to Anthropic’s most capable Claude Fable 5 — nearly every new line of code on this site is co-written by them.'
+            zh: '驱动 cuberoot.me 日常开发的大语言模型。从对话模型 Claude、官方 CLI agent Claude Code、高性价比的代理式模型 Claude Sonnet 5,到 Anthropic 最强的 Claude Fable 5 —— 这套站点几乎每一行新代码都由它们合写。',
+            en: 'The large language models behind cuberoot.me’s day-to-day development. From the Claude chat model, the official CLI agent Claude Code, and the cost-efficient agentic Claude Sonnet 5, to Anthropic’s most capable Claude Fable 5 — nearly every new line of code on this site is co-written by them.'
           })}
         </p>
       </header>
