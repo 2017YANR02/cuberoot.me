@@ -291,8 +291,8 @@
   },
   {
     "date": "2026-04-24",
-    "zh": "四个新页同天：站点导航、马赛克、克星、公式分类",
-    "en": "Four pages the same day: navigation, mosaic, nemesis, algorithm categories"
+    "zh": "站点导航 + 马赛克 + 克星查询 + 公式分类页上线",
+    "en": "Site navigation, mosaic, nemesis lookup, and algorithm categories launched"
   },
   {
     "date": "2026-04-25",
@@ -306,8 +306,8 @@
   },
   {
     "date": "2026-04-27",
-    "zh": "计时器一天 116 个提交：盲拧、蓝牙、3D、观察时间……",
-    "en": "Timer: 116 commits in a day — blindfold, Bluetooth, 3D, inspection…"
+    "zh": "计时器补盲拧、智能魔方蓝牙、3D 预览、观察时间",
+    "en": "Timer gains blindfold, smartcube Bluetooth, 3D preview, inspection"
   },
   {
     "date": "2026-04-28",
@@ -336,8 +336,8 @@
   },
   {
     "date": "2026-05-03",
-    "zh": "六个新页同天 + 魔方状态图改服务器渲染",
-    "en": "Six pages the same day; cube state images move to server rendering"
+    "zh": "图片编辑器 + 图样库 + 平均成绩等工具页上线 + 魔方状态图改服务器渲染",
+    "en": "Image editor, patterns library, average and more tool pages; cube state images move to server rendering"
   },
   {
     "date": "2026-05-04",
@@ -346,8 +346,8 @@
   },
   {
     "date": "2026-05-06",
-    "zh": "三件迁移同天：换数据库、公式进库、卸掉 WordPress",
-    "en": "Three migrations the same day: database switch, algorithms into the DB, WordPress dropped"
+    "zh": "数据库迁 PostgreSQL + 公式进库 + 卸掉 WordPress 同日完成",
+    "en": "Database moved to PostgreSQL, algorithms into the DB, WordPress dropped — same day"
   },
   {
     "date": "2026-05-07",
@@ -356,8 +356,8 @@
   },
   {
     "date": "2026-05-08",
-    "zh": "单日七项：记忆训练、打乱工具、7 张历史统计页……",
-    "en": "Seven things in a day: memory training, scramble tools, 7 history-stat pages…"
+    "zh": "记忆训练 + 打乱工具 + 7 张历史统计页 + 公式识别路由上线",
+    "en": "Memory training, scramble tools, 7 history-stat pages, recognition route launched"
   },
   {
     "date": "2026-05-09",
@@ -446,8 +446,8 @@
   },
   {
     "date": "2026-06-08",
-    "zh": "一天六件大事（英文网址、繁体全覆盖、桥式训练器……）",
-    "en": "Six big things in a day (bare English URLs, full Traditional Chinese, Roux trainer…)"
+    "zh": "英文网址去前缀 + 繁体中文全覆盖 + 桥式训练器上线 + 日历地球合并",
+    "en": "Bare English URLs, full Traditional Chinese, Roux trainer, calendar/globe merged"
   },
   {
     "date": "2026-06-09",
@@ -458,5 +458,100 @@
     "date": "2026-06-11",
     "zh": "HTR 求解器完成，主流解法每个阶段都能分析",
     "en": "HTR solver complete — every major method step can be analysed"
+  },
+  {
+    "date": "2026-06-12",
+    "zh": "赞助墙 /support 上线（捐赠 + 后台管理）+ 首页报名卡显示各项目轮次",
+    "en": "Sponsor wall /support launches (donation + admin); announced-comp cards show per-event rounds"
+  },
+  {
+    "date": "2026-06-13",
+    "zh": "关注选手的成绩变更监控 + 选手页变更面板 + 比赛页打乱移到独立标签",
+    "en": "Result-change monitor for watched cubers + person-page panel; comp scrambles move to a tab"
+  },
+  {
+    "date": "2026-06-14",
+    "zh": "移除繁体中文（只留简体 + 英文）+ 退役 Vite / Capacitor 旧前端 + 桌宠加反馈入口",
+    "en": "Traditional Chinese removed (Simplified + English only); Vite / Capacitor frontend retired; feedback entry on the desk pet"
+  },
+  {
+    "date": "2026-06-15",
+    "zh": "矢量绘图编辑器 /paint 上线 + 打乱页加云端最优求解 + 成绩变更内联编辑",
+    "en": "Vector drawing editor /paint launches; cloud optimal solve on the scramble page; inline result-change editor"
+  },
+  {
+    "date": "2026-06-16",
+    "zh": "SQ1 整解最优求解器起步 + 公式库恢复社区投稿与 3D 播放 + 难度筛选 WCA 打乱",
+    "en": "SQ1 WCA-optimal solver begins; community alg submissions restored with 3D playback; difficulty-filtered WCA scrambles"
+  },
+  {
+    "date": "2026-06-17",
+    "zh": "SQ1 精确难度注入管道（步数 + 最优解）+ 比赛详情与选手成绩视图改进",
+    "en": "SQ1 exact difficulty injection pipeline (counts + optimal solutions); comp-detail and person-result views improved"
+  },
+  {
+    "date": "2026-06-18",
+    "zh": "SQ1 全部 278 个难解打乱算出最优 + 难度页改用精确最优 + 会员到期提醒",
+    "en": "SQ1 — all 278 hardest scrambles solved optimally; difficulty page switches to exact optimal; membership expiry reminder"
+  },
+  {
+    "date": "2026-06-19",
+    "zh": "WCA 比赛城市名全站中文化 + 选手主页加纪录 / 领奖台 / 杂项标签 + SQ1 slash 计步最优",
+    "en": "WCA competition cities localized to Chinese site-wide; person pages gain records / podium / misc tabs; SQ1 slash-metric optimal"
+  },
+  {
+    "date": "2026-06-20",
+    "zh": "非 WCA 异形魔方求解器批量起步（地板 / 二三阶塔 / 八数码 / UFO / 魔表 / 钻石 / 齿轮 / 15 数码）",
+    "en": "Non-WCA puzzle solver fleet begins (Floppy / 2x2x3 / 8-puzzle / UFO / Cmetrick / Diamond / Gear / 15-puzzle)"
+  },
+  {
+    "date": "2026-06-21",
+    "zh": "立方体魔方 233 / 334 / 335 / 336 / 337 求解器 + 打乱求解与分布合并到一页 + 裸域名定为规范域",
+    "en": "Cuboid solvers 233 / 334 / 335 / 336 / 337; solve + distribution merged onto one page; bare domain set canonical"
+  },
+  {
+    "date": "2026-06-22",
+    "zh": "WCA 统计入口拆成四张卡 + 新增 4 个 /code 开发页 + 纯 TS 三阶 STM 整解 + 更多异形求解器",
+    "en": "WCA hub split into four cards; four new /code dev pages; pure-TS 3x3 STM optimal solver; more non-WCA solvers"
+  },
+  {
+    "date": "2026-06-23",
+    "zh": "阶段求解器加步法限制与色中性筛选 + /sim 加 Redi / Dino 魔方 + 排名加性别筛选",
+    "en": "Stage solver gains move restriction + color-neutral filter; /sim adds Redi / Dino cubes; rankings gain gender filter"
+  },
+  {
+    "date": "2026-06-24",
+    "zh": "/sim 引入群论内核渲染引擎 + 自有引擎金字塔 / 五魔方 / 斜转 + 规则页加更新动态",
+    "en": "/sim gains a group-theory rendering kernel + in-house Pyraminx / Megaminx / Skewb; regulation 'What's New' hub"
+  },
+  {
+    "date": "2026-06-25",
+    "zh": "/sim 加 FTO（面转八面体）引擎 + 打乱统计改 sha1 增量发布 + 计时器冒号改点",
+    "en": "/sim adds an FTO engine; scramble stats switch to sha1 incremental publishing; timer colon-as-dots"
+  },
+  {
+    "date": "2026-06-26",
+    "zh": "/sim 加原色裸核 + 超阶切面 + 复盘 Tab 一键补全最优十字 + SQ1 复形分布",
+    "en": "/sim adds a stickerless raw core + super-order cross-section; recon Tab autofills optimal cross; SQ1 cubeshape distribution"
+  },
+  {
+    "date": "2026-06-27",
+    "zh": "/sim 加镜面魔方 + Puzzle Cuts 编辑器 + 接入 knip 死代码检测清理 19 文件 + 排名默认选手视图",
+    "en": "/sim adds a Mirror Cube + Puzzle Cuts editor; knip dead-code detection removes 19 files; /wca/results defaults to persons view"
+  },
+  {
+    "date": "2026-06-28",
+    "zh": "复盘自动补全支持任意底色十字 + 同选手同打乱需填理由才可重复 + 成绩格点链到复盘",
+    "en": "Recon autofill works for any cross colour; duplicate player+scramble requires a reason; comp result cells link to reconstructions"
+  },
+  {
+    "date": "2026-06-29",
+    "zh": "规则页加官方全文逐字镜像 /regulation/full + 全站统一成绩弹窗 + /sim 设置面板用开关",
+    "en": "Regulation full-text verbatim mirror /regulation/full; unified solve popup site-wide; /sim settings use toggles"
+  },
+  {
+    "date": "2026-06-30",
+    "zh": "新建 /code/guards 约束守卫索引页 + 全站复选框统一为开关 + 多盲成绩按数值解码",
+    "en": "New /code/guards constraint-guard index page; checkboxes unified to toggles site-wide; MBLD decoded by value magnitude"
   }
 ]

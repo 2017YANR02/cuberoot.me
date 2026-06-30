@@ -240,6 +240,132 @@ export interface TLEntry {
 }
 export const TIMELINE: TLEntry[] = [
   {
+    date: '2026-06-23 ~ 06-29',
+    tag: 'feature',
+    zh: {
+      title: '/sim 重做渲染：群论内核驱动，新增镜面魔方等多种类型',
+      body: '虚拟魔方 /sim 引入通用的群论渲染内核，在原有基础上新增自有引擎的金字塔、五魔方、斜转、直升机、Dino、Redi、FTO（面转八面体）和镜面魔方，并配一个可自定义切割面的 Puzzle Cuts 编辑器。',
+      expand: '群论内核把魔方定义成轨道加生成元，渲染、转动和打乱推导通用化；镜面魔方按非均匀块建模、绕中心轴转动，可单色金属或贴标准配色。',
+    },
+    en: {
+      title: '/sim rendering reworked: a group-theory kernel, new puzzle types including the Mirror Cube',
+      body: 'The virtual cube /sim gained a general group-theory rendering kernel and, on top of the existing puzzles, in-house engines for Pyraminx, Megaminx, Skewb, Helicopter, Dino, Redi, FTO (face-turning octahedron), and the Mirror Cube — plus a Puzzle Cuts editor for defining custom cut planes.',
+      expand: 'The kernel models a puzzle as orbits plus generators, generalising rendering, turning, and scramble derivation; the Mirror Cube is modelled as non-uniform blocks turning about the core axis, in monochrome metal or standard colours.',
+    }
+},
+  {
+    date: '2026-06-24 ~ 06-29',
+    tag: 'feature',
+    zh: {
+      title: 'WCA 规则页加官方全文逐字镜像和更新动态',
+      body: '在图解版 WCA 规则的基础上，新增按官方原文逐字镜像的全文页 /regulation/full，以及一个汇总官方规则改动的「更新动态」页。',
+      expand: '全文页覆盖 762 条规则、中英对照，按 CC BY 3.0 镜像；官方规则一变，自动开 PR 同步。',
+    },
+    en: {
+      title: 'Regulation pages gain a verbatim official full-text mirror and a What\'s New view',
+      body: 'On top of the illustrated WCA Regulations, a verbatim full-text mirror /regulation/full was added, along with a "What\'s New" page summarising changes to the official regulations.',
+      expand: 'The full-text page covers 762 clauses bilingually under CC BY 3.0; when the official regulations change, a sync PR opens automatically.',
+    }
+},
+  {
+    date: '2026-06-20 ~ 06-23',
+    tag: 'feature',
+    zh: {
+      title: '非 WCA 异形魔方求解器批量上线',
+      body: '一批非 WCA 异形魔方接入了求解器和打乱难度分布：地板、二三阶塔、八数码 / 15 数码、UFO、魔表、钻石、齿轮、立方体魔方（3x3x4 到 3x3x7）、Square-2 等。能整解到最优就给最优，否则给近最优。',
+      expand: '全部纯 TypeScript：小状态空间用整图 BFS、中等用单实例 IDA*、大的用离线预算表。同期还上线了纯 TS 的三阶 STM（含中层转）整解引擎。',
+    },
+    en: {
+      title: 'A fleet of non-WCA puzzle solvers launches',
+      body: 'A batch of non-WCA puzzles gained solvers and scramble-difficulty distributions: Floppy, 2x2x3 tower, 8- and 15-puzzle, UFO, Cmetrick, Diamond, Gear, the cuboids (3x3x4 through 3x3x7), Square-2, and more. Where a puzzle can be solved optimally it is; otherwise it is near-optimal.',
+      expand: 'All in pure TypeScript: full-graph BFS for small state spaces, single-instance IDA* for medium ones, offline budget tables for large ones. A pure-TS 3x3 STM (slice-turn) optimal engine landed in the same window.',
+    }
+},
+  {
+    date: '2026-06-22 ~ 06-30',
+    tag: 'dx',
+    zh: {
+      title: '开发者板块 /code 扩充：协议、API、数据库、约束守卫',
+      body: '开发者板块新增多页：智能魔方蓝牙协议（GAN BLE + AES）、WebCodecs、后端 API 参考、数据库 schema，以及索引项目全部约束守卫的 /code/guards 和死代码看板。',
+      expand: '这些页带 CI 漂移检测，源码改了不同步就报红；约束守卫页把写入即拦的 hook 和 CI 棘轮统一列出来。',
+    },
+    en: {
+      title: 'The /code developer section expands: protocols, API, database, guardrails',
+      body: 'The developer section added several pages: the smartcube Bluetooth protocol (GAN BLE + AES), WebCodecs, a backend API reference, the database schema, plus a /code/guards page indexing every project guardrail and a dead-code dashboard.',
+      expand: 'These pages carry CI drift detection — change the source without updating them and the build goes red; the guards page lists the write-time hooks and CI ratchets together.',
+    }
+},
+  {
+    date: '2026-06-22',
+    tag: 'feature',
+    zh: {
+      title: 'WCA 统计入口拆成四张卡；排名加名字分布和筛选',
+      body: '首页把原来单张「WCA 统计」入口拆成比赛、排名、纪录、统计四张直达卡。排名页加了选手名字的分布与 A-Z 名录、性别筛选、大洲筛选和各国柱状竞速。',
+      expand: '原 /wca/historical 并入 /wca/results；名字分布可按词数或字符长度切换，点开能看各区间的国家构成。',
+    },
+    en: {
+      title: 'The WCA hub splits into four entry cards; rankings gain name distribution and filters',
+      body: 'The homepage split the single "WCA Stats" entry into four direct cards: competitions, rankings, records, and stats. The rankings page added a distribution of cuber names with an A-Z directory, gender and continent filters, and a per-country bar chart race.',
+      expand: 'The former /wca/historical was merged into /wca/results; the name distribution toggles between word count and character length, and each bin opens to show its country breakdown.',
+    }
+},
+  {
+    date: '2026-06-16 ~ 06-19',
+    tag: 'feature',
+    zh: {
+      title: 'Square-1 接入按 WCA 计步的整解最优求解器',
+      body: 'Square-1 接入了按 WCA 计步（12c4）的整解最优求解器，把每条打乱算到最优步数；打乱难度页随之改用精确最优分布。选手主页同期加了纪录、锦标赛领奖台、杂项三个标签。',
+      expand: '求解器用 IDA* 加两阶段查表，对最难的一批打乱（278 条）做并行搜索全部算出最优。',
+    },
+    en: {
+      title: 'Square-1 gains a WCA-metric optimal solver',
+      body: 'Square-1 gained an optimal solver under the WCA move metric (12c4), computing the optimal length for every scramble; the difficulty page switched to the exact-optimal distribution. Person pages added records, championship-podium, and misc tabs around the same time.',
+      expand: 'The solver uses IDA* with two-phase lookup tables, solving even the hardest batch (278 scrambles) optimally via parallel search.',
+    }
+},
+  {
+    date: '2026-06-15',
+    tag: 'feature',
+    zh: {
+      title: '矢量绘图编辑器 /paint 上线',
+      body: '上线一个类 Illustrator 的矢量绘图编辑器，支持画布、图层、撤销快照，登录后可把作品存进云端图库。同期打乱页加了云端最优求解，免去下载大剪枝表。',
+      expand: '编辑器自写，工具栏带键盘快捷键；云端求解走服务端常驻进程，带内存保护和排队。',
+    },
+    en: {
+      title: 'A vector drawing editor /paint launches',
+      body: 'An Illustrator-style vector drawing editor launched, with a canvas, layers, and undo snapshots, plus a cloud library for saved work once signed in. The scramble page also gained a cloud-side optimal solve, removing the need to download a large pruning table.',
+      expand: 'The editor is hand-written with keyboard shortcuts; the cloud solve runs as a resident server process with memory protection and queueing.',
+    }
+},
+  {
+    date: '2026-06-14',
+    tag: 'migration',
+    zh: {
+      title: '移除繁体中文（只留简体 + 英文）；退役 Vite / Capacitor 旧前端',
+      body: '全站移除繁体中文，只服简体中文和英文；同时彻底删除已退役的 Vite 前端和 Capacitor 手机壳。',
+      expand: '文案统一走翻译入口，并加写入即拦的守卫，禁止再手敲繁体或在组件里内联语言三元。',
+    },
+    en: {
+      title: 'Traditional Chinese removed (Simplified + English only); the Vite / Capacitor frontend retired',
+      body: 'Traditional Chinese was removed site-wide, leaving Simplified Chinese and English; the retired Vite frontend and Capacitor mobile shell were deleted at the same time.',
+      expand: 'Text now goes through one translation entry point, with a write-time guard banning hand-typed Traditional characters and inline language ternaries in components.',
+    }
+},
+  {
+    date: '2026-06-12 ~ 06-13',
+    tag: 'feature',
+    zh: {
+      title: '赞助墙 /support 和会员订阅 /membership 上线',
+      body: '上线赞助墙 /support（展示赞助者、捐赠入口、后台增删改）和会员订阅 /membership。同期加了关注选手成绩变更的监控页。',
+      expand: 'support 和 membership 的数据都进数据库、后台可编辑；成绩变更监控定时比对官方数据，并在选手页展示改动。',
+    },
+    en: {
+      title: 'A sponsor wall /support and a membership subscription /membership launch',
+      body: 'A sponsor wall /support (sponsor list, donation entry, admin CRUD) and a membership subscription /membership launched. A monitor page for watched cubers\' result changes was added around the same time.',
+      expand: 'Both support and membership are database-backed and admin-editable; the result-change monitor periodically diffs the official data and surfaces changes on person pages.',
+    }
+},
+  {
     date: '2026-06-11',
     tag: 'feature',
     zh: {
@@ -257,8 +383,8 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-06-09 ~ 06-10',
     tag: 'feature',
     zh: {
-      title: '名次和玩出花：可以分解项目组合；计时器接入真实 WCA 打乱',
-      body: '名次和现在能拆开看哪些项目是你的强项、哪些拖后腿，还能自选项目现算总分。计时器新增「用真实 WCA 打乱」练习，做完会自动标记，别人能看到这条打乱有多少人做过。',
+      title: '名次和可拆分到各项目；计时器接入真实 WCA 打乱',
+      body: '名次和现在能拆开看哪些项目是强项、哪些落后，并可自选项目实时计算总分。计时器新增「用真实 WCA 打乱」练习模式，完成后自动标记，他人可看到这条打乱被多少人做过。',
       expand: '求解器这两天又补了 EOLine、DR、桥式第一步、Petrus 等阶段。三阶多盲的非官方平均成绩也接入了全站排名。',
     },
     en: {
@@ -271,13 +397,13 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-06-08',
     tag: 'migration',
     zh: {
-      title: '一天六件大事：英文网址去前缀、繁体中文全覆盖、桥式训练器上线',
-      body: '同天六件事：(1) 英文网址去掉 /en 前缀；(2) 繁体中文全站补齐；(3) 当前标签 / 筛选 / 搜索都写进网址，刷新和分享能还原；(4) 比赛日历和 3D 地球合并成一页；(5) 桥式（Roux）训练器上线；(6) 名次和加「历史最高排名」。',
+      title: '英文网址去前缀、繁体中文全覆盖、桥式训练器上线',
+      body: '英文网址去掉 /en 前缀 + 繁体中文全站补齐 + 当前标签 / 筛选 / 搜索写进网址(刷新和分享可还原)+ 比赛日历与 3D 地球合并成一页 + 桥式(Roux)训练器上线 + 名次和加「历史最高排名」。',
       expand: '繁体由简体自动转换生成、不再手敲。桥式训练器从开源项目完整移植，带 3D 渲染和中英双语。',
     },
     en: {
-      title: 'Six big things in one day: bare English URLs, full Traditional Chinese, Roux trainer',
-      body: 'Six things the same day: (1) English URLs drop the /en prefix; (2) Traditional Chinese is complete site-wide; (3) the current tab / filter / search now lives in the URL, so refresh and sharing restore state; (4) the competition calendar and 3D globe merged into one page; (5) the Roux trainer launched; (6) Sum-of-Ranks gained an all-time-best view.',
+      title: 'Bare English URLs, full Traditional Chinese, Roux trainer',
+      body: 'English URLs drop the /en prefix; Traditional Chinese is complete site-wide; the current tab / filter / search now lives in the URL, so refresh and sharing restore state; the competition calendar and 3D globe merged into one page; the Roux trainer launched; Sum-of-Ranks gained an all-time-best view.',
       expand: 'Traditional Chinese is auto-generated from Simplified rather than hand-typed. The Roux trainer is a full port of an open-source project, with 3D rendering and a bilingual UI.',
     }
 },
@@ -369,13 +495,13 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-05-14',
     tag: 'feature',
     zh: {
-      title: '同天五件事：虚拟魔方、比赛实时直播、深浅色切换、博客子域、克星查询搬上服务器',
-      body: '同天五件：(1) 虚拟魔方 Playground（自由转动、回放、练公式、录制）；(2) 比赛实时直播页；(3) 全站深色 / 浅色 / 跟随系统主题切换；(4) 博客独立成子域；(5) 克星查询改到服务器端计算。',
+      title: '虚拟魔方、比赛实时直播、深浅色切换、博客子域、克星查询搬上服务器',
+      body: '虚拟魔方 Playground(自由转动、回放、练公式、录制)+ 比赛实时直播页 + 全站深色 / 浅色 / 跟随系统主题切换 + 博客独立成子域 + 克星查询改到服务器端计算。',
       expand: '虚拟魔方移植自开源项目 cuber，用 three.js 渲染真立体魔方，配标准配色和键盘 / 触屏操作。',
     },
     en: {
-      title: 'Five things one day: virtual cube, live results, light/dark themes, blog subdomain, nemesis goes server-side',
-      body: 'Five things the same day: (1) a virtual cube Playground (turn freely, replay, drill algorithms, record); (2) a live competition results page; (3) site-wide dark / light / follow-system themes; (4) the blog split into its own subdomain; (5) the nemesis lookup moved to server-side computation.',
+      title: 'Virtual cube, live results, light/dark themes, blog subdomain, nemesis goes server-side',
+      body: 'A virtual cube Playground (turn freely, replay, drill algorithms, record); a live competition results page; site-wide dark / light / follow-system themes; the blog split into its own subdomain; the nemesis lookup moved to server-side computation.',
       expand: 'The virtual cube is ported from the open-source cuber, rendering a true 3D cube with three.js, with standard colors and keyboard / touch controls.',
     }
 },
@@ -383,13 +509,13 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-05-15 ~ 05-24',
     tag: 'feature',
     zh: {
-      title: '10 天密集冲刺：比赛实时直播、深度预测长文、全魔方种类、手机 App',
-      body: '十天连上多块功能：(1) 比赛页接入官方实时直播和赛前心理表；(2) 一篇约 30 万字的三阶深度预测；(3) 虚拟魔方扩展到所有 WCA 项目；(4) 套壳成 iOS / Android App；(5) 全站搜索、百科、群论入门。',
+      title: '比赛实时直播、深度预测长文、虚拟魔方覆盖全项目、手机 App',
+      body: '比赛页接入官方实时直播和赛前心理表 + 一篇约 30 万字的三阶深度预测 + 虚拟魔方扩展到所有 WCA 项目 + 套壳成 iOS / Android App + 全站搜索、百科、群论入门。',
       expand: '全站搜索覆盖比赛 / 选手 / 公式 / 文章 / 工具等十一类，用自带索引、不依赖外部服务。',
     },
     en: {
-      title: '10-day burst: live results, a deep prediction essay, all puzzle types, mobile app',
-      body: 'Ten days, several blocks of features: (1) the competition page gained official live results and a psych sheet; (2) a ~300,000-word deep 3×3 prediction; (3) the virtual cube expanded to every WCA event; (4) wrapped into iOS / Android apps; (5) site-wide search, an encyclopedia, a group-theory intro.',
+      title: 'Live results, a deep prediction essay, all puzzle types, mobile app',
+      body: 'The competition page gained official live results and a psych sheet; a ~300,000-word deep 3×3 prediction; the virtual cube expanded to every WCA event; wrapped into iOS / Android apps; site-wide search, an encyclopedia, a group-theory intro.',
       expand: 'Site-wide search covers eleven categories (comps / cubers / algorithms / articles / tools / etc.) using a built-in index with no external dependency.',
     }
 },
@@ -425,13 +551,13 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-05-08',
     tag: 'feature',
     zh: {
-      title: '单日上线七项：记忆训练、打乱工具、7 张历史统计页、公式识别路由',
-      body: '一天七项：(1) 记忆训练中心 + 配色记忆训练；(2) 打乱工具中心 + 网页版求解器；(3) 七张历史统计页（大满贯 / 全部 / 当年 / 届别 / 成功率 / 全达成 / 名次和）；(4) 通用公式识别路由；(5) 编程入门站再加三种语言。',
+      title: '记忆训练、打乱工具、7 张历史统计页、公式识别路由上线',
+      body: '记忆训练中心 + 配色记忆训练 + 打乱工具中心 + 网页版求解器 + 七张历史统计页(大满贯 / 全部 / 当年 / 届别 / 成功率 / 全达成 / 名次和)+ 通用公式识别路由 + 编程入门站再加三种语言。',
       expand: '七张统计页背后是六张新数据库表，初次灌入五百多万行。',
     },
     en: {
-      title: 'Seven things in one day: memory training, scramble tools, 7 history-stat pages, recognition route',
-      body: 'Seven things in a day: (1) a memory-training hub + color-memory drill; (2) a scramble-tools hub + browser solver; (3) seven history-stat pages (grand slam / all / current year / by edition / success rate / all events done / sum of ranks); (4) a generic algorithm-recognition route; (5) three more languages in the programming hub.',
+      title: 'Memory training, scramble tools, 7 history-stat pages, recognition route',
+      body: 'A memory-training hub + color-memory drill; a scramble-tools hub + browser solver; seven history-stat pages (grand slam / all / current year / by edition / success rate / all events done / sum of ranks); a generic algorithm-recognition route; three more languages in the programming hub.',
       expand: 'The seven stat pages are backed by six new database tables, with an initial load of over five million rows.',
     }
 },
@@ -453,13 +579,13 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-05-06',
     tag: 'migration',
     zh: {
-      title: '同一天完成三件迁移：换数据库、公式进库、卸掉 WordPress',
-      body: '同一天三件迁移：数据库从 MariaDB 迁到 PostgreSQL、41 套公式从文件搬进数据库、卸掉 WordPress 和面板。服务器从此只剩 nginx、Node 和 PostgreSQL。',
+      title: '数据库迁 PostgreSQL、公式进库、卸掉 WordPress 同日完成',
+      body: '数据库从 MariaDB 迁到 PostgreSQL + 41 套公式从文件搬进数据库 + 卸掉 WordPress 和面板。服务器从此只剩 nginx、Node 和 PostgreSQL。',
       expand: '换库后公式可以直接在网页编辑，不用改代码重新部署。',
     },
     en: {
-      title: 'Three migrations in one day: switch databases, move algorithms into the DB, drop WordPress',
-      body: 'Three migrations the same day: the database moved from MariaDB to PostgreSQL, all 41 algorithm sets moved from files into the database, and WordPress and the control panel were removed. The server now runs only nginx, Node, and PostgreSQL.',
+      title: 'Database moved to PostgreSQL, algorithms into the DB, WordPress dropped — same day',
+      body: 'The database moved from MariaDB to PostgreSQL; all 41 algorithm sets moved from files into the database; WordPress and the control panel were removed. The server now runs only nginx, Node, and PostgreSQL.',
       expand: 'After the switch, algorithms can be edited right in the browser — no code change and redeploy needed.',
     }
 },
@@ -467,13 +593,13 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-05-03',
     tag: 'feature',
     zh: {
-      title: '魔方图片编辑器等五个页面同日上线；魔方状态图改为服务器渲染',
-      body: '同一天五个新页面：魔方状态图编辑器、花式图样库，以及平均成绩、打乱生成、今日等工具页。魔方状态图也改成由服务器统一渲染。',
+      title: '魔方图片编辑器、图样库、平均成绩等工具页上线；魔方状态图改为服务器渲染',
+      body: '同日上线魔方状态图编辑器、花式图样库，以及平均成绩、打乱生成、今日等工具页。魔方状态图也改成由服务器统一渲染。',
       expand: '状态图改服务器渲染后，浏览器不用再现场计算贴片位置，统一生成并缓存。异形魔方也接入了统一的图片生成库。',
     },
     en: {
-      title: 'A cube-image editor and four more pages the same day; cube state images move to server rendering',
-      body: 'Five new pages the same day: a cube-state image editor, a fancy-patterns library, plus average, scramble-generator, and "today" tool pages. Cube state images also switched to unified server-side rendering.',
+      title: 'Cube-image editor, patterns library, average and more tool pages; cube state images move to server rendering',
+      body: 'Launched the same day: a cube-state image editor, a fancy-patterns library, plus average, scramble-generator, and "today" tool pages. Cube state images also switched to unified server-side rendering.',
       expand: 'With server-side rendering, browsers no longer compute sticker positions live — everything is generated and cached. The odd-shaped puzzles were wired into the unified image library too.',
     }
 },
@@ -495,13 +621,13 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-04-26 ~ 27',
     tag: 'feature',
     zh: {
-      title: '速拧计时器正式上线（TS 重写），第二天一天打了 116 个提交',
-      body: '4-26 把计时器用 TypeScript 从零重写（打乱生成、2D 预览、直方图、跟 csTimer 互导、覆盖所有项目）。4-27 一天打了 116 个提交，加上盲拧、分阶段计时、智能魔方蓝牙、3D 预览、观察时间、分享链接、手机适配。',
+      title: '速拧计时器重写上线（TypeScript），次日补齐盲拧 / 蓝牙 / 3D',
+      body: '4-26 把计时器用 TypeScript 从零重写（打乱生成、2D 预览、直方图、跟 csTimer 互导、覆盖所有项目）。4-27 补上盲拧、分阶段计时、智能魔方蓝牙、3D 预览、观察时间、分享链接、手机适配。',
       expand: '支持五种主流智能魔方的蓝牙连接。csTimer 嵌入仍保留。',
     },
     en: {
-      title: 'The speedsolving timer launches (TS rewrite); 116 commits the next day',
-      body: '4-26: the timer was rewritten from scratch in TypeScript (scramble generation, 2D preview, histogram, csTimer import/export, all events). 4-27: 116 commits in a day added blindfold, stage timing, smartcube Bluetooth, 3D preview, inspection, share links, and mobile adaptation.',
+      title: 'The speedsolving timer relaunches (TS rewrite); blindfold / Bluetooth / 3D added next day',
+      body: '4-26: the timer was rewritten from scratch in TypeScript (scramble generation, 2D preview, histogram, csTimer import/export, all events). 4-27 added blindfold, stage timing, smartcube Bluetooth, 3D preview, inspection, share links, and mobile adaptation.',
       expand: 'It supports Bluetooth for five mainstream smartcubes. The csTimer embed is still kept.',
     }
 },
@@ -509,12 +635,12 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-04-24 ~ 25',
     tag: 'feature',
     zh: {
-      title: '克星查询、马赛克生成器、WCA 选手主页等五页两天上线',
+      title: '克星查询、马赛克生成器、WCA 选手主页上线',
       body: '4-24 上线站点导航、魔方马赛克生成器、克星查询初版。4-25 克星查询完工，加上 WCA 选手主页查询和全球非官方纪录排名。',
       expand: '「克星」= 在某个项目、某片地区里，名次紧追你、还没超过你的那个人。选手主页查询带 28 万选手本地索引，20 毫秒出结果。',
     },
     en: {
-      title: 'Nemesis lookup, mosaic generator, WCA person pages — five pages over two days',
+      title: 'Nemesis lookup, mosaic generator, WCA person pages',
       body: '4-24 launched site navigation, a cube-mosaic generator, and a first cut of the nemesis lookup. 4-25 completed the nemesis lookup and added WCA person-profile lookup and world unofficial-record rankings.',
       expand: 'The "nemesis" is the cuber ranked just behind you in an event and region who hasn\'t passed you yet. The profile lookup uses a 280k-cuber local index returning results in under 20 ms.',
     }
@@ -607,14 +733,14 @@ export const TIMELINE: TLEntry[] = [
     date: '2026-03-23',
     tag: 'migration',
     zh: {
-      title: '项目最大跃变：jQuery 工具全部迁到 React + TypeScript monorepo',
-      body: '把一堆 jQuery / 静态 HTML 的小工具整体迁到 React 19 + Vite + pnpm/Turbo 的 monorepo，同一天接入了魔方动画库 cubing.js。',
-      expand: '前端一开始迁了 12 个工具页，后续半年涨到 24 个以上。接入 cubing.js 后所有动画统一交给它播放，不再手写魔方 SVG。这是项目结构最大的一次跃变。',
+      title: 'jQuery 工具整体迁到 React + TypeScript monorepo',
+      body: '把一批 jQuery / 静态 HTML 的小工具整体迁到 React 19 + Vite + pnpm/Turbo 的 monorepo，同一天接入了魔方动画库 cubing.js。',
+      expand: '前端一开始迁了 12 个工具页，后续半年涨到 24 个以上。接入 cubing.js 后所有动画统一交给它播放，不再手写魔方 SVG。这是项目结构变动最大的一次。',
     },
     en: {
-      title: 'The project\'s biggest leap: jQuery tools all migrated to a React + TypeScript monorepo',
-      body: 'A pile of jQuery / static-HTML tools migrated wholesale onto a React 19 + Vite + pnpm/Turbo monorepo, and the cube-animation library cubing.js was adopted the same day.',
-      expand: 'The frontend started with 12 tool pages and grew past 24 over six months. Once cubing.js landed, all animations went through it and hand-written cube SVG was retired — the biggest structural leap in the project.',
+      title: 'jQuery tools migrated wholesale to a React + TypeScript monorepo',
+      body: 'A set of jQuery / static-HTML tools migrated wholesale onto a React 19 + Vite + pnpm/Turbo monorepo, and the cube-animation library cubing.js was adopted the same day.',
+      expand: 'The frontend started with 12 tool pages and grew past 24 over six months. Once cubing.js landed, all animations went through it and hand-written cube SVG was retired — the largest structural change in the project.',
     }
 },
   {
