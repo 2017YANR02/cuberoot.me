@@ -124,13 +124,6 @@
   cursor: pointer;
   user-select: none;
 }
-.sk-check input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
-  cursor: pointer;
-  flex-shrink: 0;
-}
 
 /* labeled stepper group */
 .sk-field-label {

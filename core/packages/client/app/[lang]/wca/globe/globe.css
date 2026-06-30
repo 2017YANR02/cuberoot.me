@@ -671,11 +671,6 @@
     transition: color 0.15s, border-color 0.15s;
 }
 .globe-page .include-past-toggle:hover { color: var(--text); border-color: var(--border-strong, var(--border)); }
-.globe-page .include-past-toggle input[type="checkbox"] {
-    margin: 0;
-    accent-color: var(--accent);
-    cursor: pointer;
-}
 .globe-page .month-range {
     display: inline-flex;
     align-items: center;
