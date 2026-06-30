@@ -397,6 +397,11 @@ html:not([data-palette-scheme=dark]) .wse-page {
    → 与相邻控件上下居中对齐;events-bar 里的「废止项」不是 .wse-filter 直接子,仍 26px 不受影响 */
 .wse-filter > .pill-toggle.wse-pill { height: 34px; font-size: 13px; }
 
+/* 布尔开关(BoolToggle:左滑钮 + 右文字)。events-bar 里跟分类按钮同字号;
+   作 .wse-filter 直接子(无 label)时纵向居中,跟相邻「label+控件」filter 对齐。 */
+.wse-events-bar .bool-toggle { font-size: 12px; }
+.wse-filter:has(> .bool-toggle) { justify-content: center; }
+
 /* 数据细节列 */
 .wse-detail-cell {
   font-size: 12px;
