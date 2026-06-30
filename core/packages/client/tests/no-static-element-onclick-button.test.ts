@@ -9,6 +9,7 @@
 // 这是 ratchet:BASELINE 锁住当前存量,只许降不许升 —— 新写的"假按钮" → CI 直接红。
 // 修一个就把 BASELINE 减 1(改 baseline 当 review 信号)。彻底清零后可改成 toBe(0)。
 // 豁免:违规处附近写注释 allow-static-onclick: <理由>,或把文件加进 ALLOWLIST。
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

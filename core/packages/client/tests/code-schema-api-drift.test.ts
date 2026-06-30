@@ -13,6 +13,7 @@
 //                   new route without documenting it → red.
 //                   Fix: add the endpoints + the file stem to the manifest in
 //                   app/[lang]/code/api/page.tsx.
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

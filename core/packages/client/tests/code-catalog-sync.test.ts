@@ -11,6 +11,7 @@
 //
 // Fix when red: register the missing hook in app/[lang]/code/utils/_catalog.tsx,
 // or update the stale import path in the relevant _catalog.tsx.
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

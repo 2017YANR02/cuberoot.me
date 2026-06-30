@@ -14,6 +14,7 @@
 // Fix when red: don't re-add a fixed `min-width` to the base `.pill-toggle` rule
 // (put fixed width on a per-instance className if one page truly needs it), and
 // keep the two `pill-toggle-label-ghost` spans in PillToggle.tsx.
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

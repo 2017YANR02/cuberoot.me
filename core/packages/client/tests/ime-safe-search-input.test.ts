@@ -5,6 +5,7 @@
 //
 // 本测试只盯「value 直接绑 nuqs 值」这一精确信号:用本地 state 承接 + 防抖/合成的写法
 // (value 不是 nuqs 值)不会误报。CI 跑 vitest 当红灯,新代码裸写即挂。
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';

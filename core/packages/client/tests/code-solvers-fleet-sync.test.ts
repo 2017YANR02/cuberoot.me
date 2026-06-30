@@ -12,6 +12,7 @@
 // Fix when red: wiring a non-WCA solver INCLUDES adding its row to NONWCA_TS in
 // app/[lang]/code/solvers/_fleet.ts (data from the solver's file header +
 // solver/NONWCA_PUZZLE_LOOP.md §1/§2); and drop it from NONWCA_TS_PLANNED.
+// guard-registry: tracked at /code/guards (app/[lang]/code/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { NONWCA_TS, NONWCA_TS_PLANNED } from '@/app/[lang]/code/solvers/_fleet';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
