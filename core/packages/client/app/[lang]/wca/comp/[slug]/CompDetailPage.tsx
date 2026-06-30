@@ -17,6 +17,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
 import { localizeCompName, resolveCompName } from '@/lib/comp-localize';
+import { nameToCubingSlug, wcaIdToCubingSlug } from '@/lib/cubing-slug';
 import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
 import { adjustRankWithLiveComp, type LiveCompEntry } from '@/lib/comp-live-rank';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -228,26 +229,6 @@ function effectiveAvg(r: LiveResult): number {
   if (isBlindAvgEvent(r.e)) return computeWcaAverage(r.v);
   const computed = computeWcaAverage(r.v);
   return computed < 0 ? computed : r.a;
-}
-
-// WCA ID (PleaseBeQuietXian2025) → cubing.com dash slug (Please-Be-Quiet-Xian-2025)。
-// cubing.com slug 优先用真实比赛名(有空格=词边界明确):按空格/连字符分段,每段剥非字母数字
-// (撇号等,与 WCA ID 同口径,Xi'an→Xian 不会 404),再用 '-' 连。无横杠的 WCA ID 反推会丢词边界,
-// 把内部大写词 "GraDUAL" 误拆成 "Gra-DUAL"(GuangzhouGraDUAL3x3I2026)。镜像 server cubing_live.ts。
-function nameToCubingSlug(name: string): string {
-  return name
-    .split(/[\s-]+/)
-    .map(t => t.replace(/[^A-Za-z0-9]/g, ''))
-    .filter(Boolean)
-    .join('-');
-}
-// 旧 ID 启发式:仅当没有比赛名时兜底(正常 data.name 必有)。
-function wcaIdToCubingSlug(wcaId: string): string {
-  return wcaId
-    .replace(/([a-z])([A-Z])/g, '$1-$2')
-    .replace(/(\d)([A-Z])/g, '$1-$2')
-    .replace(/([A-Z])(\d)/g, '$1-$2')
-    .replace(/(?<!\d)([a-z])(\d)/g, '$1-$2');
 }
 
 function roundKey(e: string, r: string): string { return `${e}:${r}`; }
