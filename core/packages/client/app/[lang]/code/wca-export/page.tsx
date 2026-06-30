@@ -245,6 +245,9 @@ WHERE ce.competition_id = ? AND r.linked_round_id IS NOT NULL;`}</code></pre>
         <AppLink href="/code/wcif">{tr({ zh: 'WCIF（未来比赛实时格式）', en: 'WCIF (live upcoming format)'
         })}</AppLink>
         <span className="wcif-meta-sep">·</span>
+        <AppLink href="/code/wca-rest-api">{tr({ zh: 'WCA REST API（同源的现成接口）', en: 'WCA REST API (off-the-shelf over the same data)'
+        })}</AppLink>
+        <span className="wcif-meta-sep">·</span>
         <span>{tr({ zh: '数据归 WCA，遵守其使用条款', en: 'Data © WCA, used under their terms'
         })}</span>
       </footer>
