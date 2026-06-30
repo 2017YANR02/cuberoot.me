@@ -3,8 +3,9 @@
 // 每一把成绩点击 → 统一弹窗 AttemptPopover(复盘 + 判罚原因 + 编辑/提议 + 管理员变更记录),
 // 不再分「有复盘直接跳 / 编辑模式行内改 / 没复盘跳 submit」三条路 —— 全收进弹窗。
 
+import type { CSSProperties } from 'react';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
+import { isAo5Bracketed, trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { findReconForAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { AttemptPopover } from './AttemptPopover';
@@ -37,6 +38,9 @@ export interface AttemptsListProps {
   attemptRanks?: (number | null)[] | null;
   // 该轮最佳单次的区域纪录(WR/CR/NR):最好那把优先显示它(与单次列同优先级)。
   singleRecord?: string | null;
+  // 详细成绩网格列数(--att-cols):ByEventView 传统一的 maxAttempts(与表头序号同列对齐);
+  // ByCompList 不传 → 按本行真实把数,避免尾部空列占宽。
+  cols?: number;
   onEdit?: (index: number, newValue: number, note?: string) => Promise<void> | void;
   onSetOriginal?: (index: number, originalValue: number, note?: string) => Promise<void> | void;
   onSetPenalty?: (index: number, penaltyCs: number, note?: string) => Promise<void> | void;
@@ -47,10 +51,14 @@ export function AttemptsList({
   attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, isOwner, canEdit,
   personId, personName, personCountry, compName, compCountry, compDate,
   attemptOlds, penalties, penaltyNote, attemptVideos, pendingVideos, onAddVideo,
-  attemptRanks, singleRecord, onEdit, onSetOriginal, onSetPenalty, onEditRecord,
+  attemptRanks, singleRecord, cols, onEdit, onSetOriginal, onSetPenalty, onEditRecord,
 }: AttemptsListProps) {
-  if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
-  const validNums = attempts.filter((x) => x > 0);
+  // 砍掉尾部「未进行的把」(0 占位):3 把项目(多盲 / 三四五盲 / 最少步 / 六七阶)及未过晋级线
+  // 的行不再拖 2 个空 —;length≠5 后 isAo5Bracketed 也不会给非 Ao5 误加括号。
+  const atts = trimEmptyAttempts(attempts);
+  if (atts.length === 0) return <span className="wp-text-mute">—</span>;
+  const colCount = cols ?? Math.max(atts.length, 1);
+  const validNums = atts.filter((x) => x > 0);
   const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
   const langQuery = (isZh && '?lang=zh') || '';   // recon 详情页读 ?lang;AppLink 另管 /zh 前缀
   const fmt = (v: number) => formatWcaResult(v, eventId, 'single');
@@ -65,12 +73,12 @@ export function AttemptsList({
     return tag ? <RecordBadge record={tag} variant="inline" /> : null;
   };
   return (
-    <span className="wp-attempts-flow">
-      {attempts.map((a, i) => {
+    <span className="wp-attempts-flow" style={{ '--att-cols': colCount } as CSSProperties}>
+      {atts.map((a, i) => {
         if (a === undefined) return null;
         const pen = penalties?.[i] ?? 0;
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
-        const cls = `wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''} ${pen > 0 ? 'wp-att-haspen' : ''}`;
+        const cls = `wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(atts, i) ? 'wp-att-trimmed' : ''} ${pen > 0 ? 'wp-att-haspen' : ''}`;
         const reconId = findReconForAttempt(reconLookup, compId, eventId, roundTypeId, i + 1);
         // 复盘目标:有复盘→详情页(所有人可看);没复盘→/recon/submit 预填好身份字段。
         const reconHref = reconId

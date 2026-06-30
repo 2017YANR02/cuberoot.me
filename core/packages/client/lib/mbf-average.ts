@@ -56,3 +56,11 @@ export function computeMbfMo3(attempts: number[]): number {
   if (vals.some(v => v < 0)) return -1;
   return mbfMo3Raw(vals[0], vals[1], vals[2]);
 }
+
+// 选手页「有效平均」:有官方平均直接用;MBLD 无官方平均 → 用本轮 attempts 现算的非官方 Mo3。
+// ByEventView / ByCompList 共用(排序、PR 名次、平均列展示都走它)。
+export function effectiveMbldAverage(r: { average: number; attempts: number[] }, eventId: string): number {
+  if (r.average && r.average !== 0) return r.average;
+  if (isMbldEvent(eventId)) return computeMbfMo3(r.attempts);
+  return r.average;
+}
