@@ -2784,7 +2784,7 @@ function CalendarPageInner() {
                 <span className="day-list-country-name">{countryName(dayListCountry, isZh)}</span>
               )}
             </h2>
-            <div className="day-list">
+            <div className="reg-cards day-list-cards">
               {displayedComps
                 .filter((c) => {
                   if (dayListCountry) {
@@ -2797,24 +2797,20 @@ function CalendarPageInner() {
                   return s <= dayListDate && dayListDate <= e;
                 })
                 .map((c) => {
-                  const displayName = localizeNameNoYear(c, isZh);
-                  const top = getCompRecordTop(c.id);
-                  const cancelled = isCancelledComp(c, cancelledCutoffIso);
-                  const prefetchRounds = c.rounds ? undefined : () => { void fetchCompRounds(c.id); };
+                  // 与卡片视图同口径:已过比赛补「报名已截止」灰胶囊,避免卡片裸着没胶囊
+                  const startPast = parseLocalDate(c.start_date) < cardTodayStart;
+                  const reg = regMilestone(c.registration_open, c.registration_close, c.event_change_deadline, undefined)
+                    ?? (startPast ? { when: '', word: tr({ zh: '报名已截止', en: 'Closed' }), tone: 'closed' as const } : null);
                   return (
-                    <button
+                    <CompCard
                       key={c.id}
-                      className={`day-list-item${cancelled ? ' is-cancelled' : ''}`}
-                      onClick={() => { setSelectedComp(c); setDayListDate(null); setDayListCountry(null); }}
-                      onMouseEnter={prefetchRounds}
-                      onFocus={prefetchRounds}
-                    >
-                      {top && <RecordBadge record={top} />}
-                      <Flag iso2={c.country} />
-                      {follows.has(c.id) && <FollowMark />}
-                      <span className="day-list-item-name">{displayName}</span>
-                      <span className="day-list-count">{c.top_cubers.length}</span>
-                    </button>
+                      comp={c}
+                      isZh={isZh}
+                      lang={isZh ? 'zh' : 'en'}
+                      pill={reg ? { when: reg.when, word: reg.word, tone: reg.tone } : null}
+                      dimmed={isCancelledComp(c, cancelledCutoffIso)}
+                      follow={{ followed: follows.has(c.id), onToggle: toggleFollow, loggedIn: followLoggedIn, onRequireLogin: login }}
+                    />
                   );
                 })}
             </div>
