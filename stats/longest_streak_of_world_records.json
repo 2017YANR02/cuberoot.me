@@ -48,7 +48,7 @@
   ],
   "rows": [
     [
-      "8.42",
+      "8.43",
       9,
       "6x6x6 Cube",
       "Single",
@@ -57,7 +57,7 @@
       "Still active"
     ],
     [
-      "8.21",
+      "8.22",
       9,
       "7x7x7 Cube",
       "Average",
@@ -111,7 +111,7 @@
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
     ],
     [
-      "6.97",
+      "6.98",
       7,
       "4x4x4 Blindfolded",
       "Average",
@@ -390,7 +390,7 @@
       "[Beijing Winter 2026](https://www.worldcubeassociation.org/competitions/BeijingWinter2026)"
     ],
     [
-      "2.71",
+      "2.72",
       5,
       "5x5x5 Blindfolded",
       "Single",
@@ -732,7 +732,7 @@
       "[Tianjin Winter 2012](https://www.worldcubeassociation.org/competitions/TianjinWinter2012)"
     ],
     [
-      "1.75",
+      "1.76",
       3,
       "5x5x5 Cube",
       "Single",
@@ -930,7 +930,7 @@
       "[Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)"
     ],
     [
-      "1.46",
+      "1.47",
       2,
       "Square-1",
       "Average",
@@ -1236,6 +1236,15 @@
       "[Caltech Dallas 2005](https://www.worldcubeassociation.org/competitions/CaltechDallas2005)"
     ],
     [
+      "1.00",
+      2,
+      "5x5x5 Cube",
+      "Average",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
+      "Still active"
+    ],
+    [
       "0.99",
       2,
       "Megaminx",
@@ -1243,15 +1252,6 @@
       "[Bálint Bodor](https://www.worldcubeassociation.org/persons/2008BODO01)",
       "[Slovenian Open 2010](https://www.worldcubeassociation.org/competitions/SlovenianOpen2010)",
       "[Danish Open 2011](https://www.worldcubeassociation.org/competitions/DanishOpen2011)"
-    ],
-    [
-      "0.99",
-      2,
-      "5x5x5 Cube",
-      "Average",
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
-      "Still active"
     ],
     [
       "0.96",
