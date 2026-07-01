@@ -199,8 +199,11 @@ function AllResultsPageInner() {
   const ssort: string = query.ssort === 'best' ? 'best' : query.ssort && RANK_EVENT_SET.has(query.ssort) ? query.ssort : 'total';
   const sdir: 'asc' | 'desc' = query.sdir === 'desc' ? 'desc' : 'asc';
   const setSorSort = (key: string) => {
-    if (ssort === key) setQuery({ sdir: sdir === 'asc' ? 'desc' : null, page: null });
-    else setQuery({ ssort: key === 'total' ? null : key, sdir: null, page: null });
+    if (ssort !== key) { setQuery({ ssort: key === 'total' ? null : key, sdir: null, page: null }); return; }
+    if (key === 'total') { setQuery({ sdir: sdir === 'asc' ? 'desc' : null, page: null }); return; }
+    // 非默认列(historical/单项):asc → desc → 恢复默认(名次总和),三态循环
+    if (sdir === 'asc') setQuery({ sdir: 'desc', page: null });
+    else setQuery({ ssort: null, sdir: null, page: null });
   };
   // 空态:姓名分布 + 名录(A-Z 平铺列表)同页共存(分布在上、名录在下)
   const psort: 'name' | 'len' = query.psort === 'len' ? 'len' : 'name';
