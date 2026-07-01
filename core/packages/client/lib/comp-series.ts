@@ -21,10 +21,20 @@ export async function loadCompSeries(): Promise<CompSeriesIndex> {
   return inflight;
 }
 
-/** compId 所在系列里的其它比赛(不含自己),按开始日期新→旧。无相似比赛时返回 []。 */
+/** compId 所有相似组里的其它比赛(并集,不含自己),按开始日期新→旧。无相似比赛时返回 []。 */
 export async function getSimilarComps(compId: string): Promise<SeriesComp[]> {
   const idx = await loadCompSeries();
-  const gi = idx.byId[compId];
-  if (gi == null) return [];
-  return idx.series[gi].filter(c => c.id !== compId);
+  const gis = idx.byId[compId];
+  if (!gis || gis.length === 0) return [];
+  const seen = new Set<string>([compId]);
+  const out: SeriesComp[] = [];
+  for (const gi of gis) {
+    for (const c of idx.series[gi] ?? []) {
+      if (seen.has(c.id)) continue;
+      seen.add(c.id);
+      out.push(c);
+    }
+  }
+  out.sort((a, b) => (a.start < b.start ? 1 : a.start > b.start ? -1 : a.id < b.id ? -1 : 1));
+  return out;
 }
