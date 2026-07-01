@@ -86,6 +86,7 @@ import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
 import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
+import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import SimCubeNet from './_SimCubeNet';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
@@ -1469,9 +1470,9 @@ export default function SimPage() {
             />
           )}
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
-              PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli) have
-              no cubing.js option at all → the panel is always on for them. */}
-          {PG_BOUND_KINDS.has(String(puzzleParam))
+              PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)
+              have no cubing.js option at all → the panel is always on for them. */}
+          {(PG_BOUND_KINDS.has(String(puzzleParam)) || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam)))
             && (query.renderer !== 'cubing' || !ENGINE_TWISTY.has(String(puzzleParam))) && (
             <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />
           )}

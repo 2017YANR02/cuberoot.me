@@ -19,14 +19,24 @@ import { useTranslation } from 'react-i18next';
 import { Sigma, Shuffle, Wand2 } from 'lucide-react';
 import type { PgGroupFacts } from './engine/pgBackbone';
 import type { PgEngineBinding } from './engine/pgBinding';
+import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import './group-theory-panel.css';
 
-/** Minimal structural view of an engine cube (PyraCube …) the panel drives. */
+/** Minimal structural view of an engine cube (PyraCube …, or the NxN Cube) the panel
+ *  drives. The fixed-puzzle engines expose `history.moves: string[]`; the NxN engine
+ *  instead exposes `history.exp: string` (its `moves` is a count) — both carry `init`. */
 export interface SimEngineCube {
-  history: { init: string; moves: string[] };
+  history: { init: string; moves?: string[]; exp?: string };
   callbacks: (() => void)[];
   complete: boolean;
   twister: { setup(s: string): void; push(s: string): void };
+}
+
+/** Full move string from either history shape (fixed puzzles: moves[]; NxN: exp). */
+function historyString(c: SimEngineCube): string {
+  const init = c.history.init ?? '';
+  const body = Array.isArray(c.history.moves) ? c.history.moves.join(' ') : (c.history.exp ?? '');
+  return `${init} ${body}`.trim();
 }
 /** Minimal view of the sim World the panel reads (to confirm the active cube is the
  *  expected engine puzzle before driving it). */
@@ -35,8 +45,10 @@ export interface SimWorldView {
   cube: SimEngineCube;
 }
 
-/** Engine puzzle kinds wired to a PG kernel (kept in sync with pgBindings). */
+/** Fixed engine puzzle kinds wired to a PG kernel (kept in sync with pgBindings). NxN
+ *  cubes (numeric puzzle string) are detected via nxnHasPgKernel. */
 const PG_BOUND: Record<string, true> = { pyraminx: true, dino: true, skewb: true, heli: true, megaminx: true, fto: true };
+const isBound = (puzzle: string): boolean => !!PG_BOUND[puzzle] || nxnHasPgKernel(parseInt(puzzle, 10));
 
 const SUBS = '₀₁₂₃₄₅₆₇₈₉';
 const sub = (n: number): string => String(n).split('').map((d) => SUBS[+d]).join('');
@@ -54,10 +66,9 @@ export default function GroupTheoryPanel({
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string): string => (isZh ? zh : en);
 
-  const bound = !!PG_BOUND[puzzle];
+  const bound = isBound(puzzle);
   const bindingRef = useRef<PgEngineBinding<unknown> | null>(null);
   const [facts, setFacts] = useState<PgGroupFacts | null>(null);
-  const [ms, setMs] = useState(0);
   const [live, setLive] = useState<LiveState | null>(null);
   // Whether the BSGS solve/scramble are available (false for groups too large to
   // factor in-browser, e.g. the helicopter cube — facts + live state still show).
@@ -68,9 +79,11 @@ export default function GroupTheoryPanel({
   // the brief window before setPuzzle runs).
   const activeCube = useCallback((): SimEngineCube | null => {
     const w = getWorld();
-    if (!w || w.puzzleKind !== puzzle) return null;
+    if (!w || String(w.puzzleKind) !== puzzle) return null;
     const c = w.cube;
-    return c && Array.isArray(c.history?.moves) ? c : null;
+    const h = c?.history;
+    // Accept either history shape: fixed puzzles (moves[]) or NxN (exp string) — both init.
+    return h && typeof h.init === 'string' && (Array.isArray(h.moves) || typeof h.exp === 'string') ? c : null;
   }, [getWorld, puzzle]);
 
   useEffect(() => {
@@ -88,15 +101,13 @@ export default function GroupTheoryPanel({
       if (!binding) return;
       bindingRef.current = binding;
       setSolvable(binding.solvable);
-      const t0 = performance.now();
       const f = binding.facts();
       if (!alive) return;
       setFacts(f);
-      setMs(performance.now() - t0);
 
       const refresh = () => {
         if (!cube) return;
-        binding.rebuildFromString(`${cube.history.init} ${cube.history.moves.join(' ')}`.trim());
+        binding.rebuildFromString(historyString(cube));
         // The badge follows the engine's own geometry (faithful to what's on screen);
         // PG's fixed-in-space group can be a multiple of the engine's, so state==id is
         // stricter than visually-solved — use cube.complete instead.
@@ -146,7 +157,7 @@ export default function GroupTheoryPanel({
     const c = activeCube();
     const b = bindingRef.current;
     if (!c || !b) return;
-    b.rebuildFromString(`${c.history.init} ${c.history.moves.join(' ')}`.trim());
+    b.rebuildFromString(historyString(c));
     const s = b.solveString();
     if (s) c.twister.push(s); // animate the BSGS solution
   }, [activeCube]);
@@ -271,7 +282,7 @@ export default function GroupTheoryPanel({
           </dl>
 
           <footer className="gt-foot">
-            {t('Schreier-Sims 实时计算', 'computed live by Schreier-Sims')} · {ms.toFixed(0)}ms
+            {t('Schreier-Sims 预计算(离线烘焙)', 'precomputed via Schreier-Sims (baked offline)')}
           </footer>
         </>
       )}
