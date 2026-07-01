@@ -51,7 +51,31 @@ export interface MoveBridge<M> {
   readonly factsMoveNames?: readonly string[];
 }
 
-export class PgEngineBinding<M> {
+/**
+ * The surface the GroupTheoryPanel drives, shared by the PG binding and the
+ * permutation binding (`permBinding.ts`). Lets the panel treat a cubing.js-backed
+ * puzzle and an engine-model-backed puzzle identically.
+ */
+export interface GroupKernel {
+  /** Whether solve/scramble (the constructive BSGS) are available. */
+  readonly solvable: boolean;
+  /** Group-theoretic solved test (state === identity). */
+  readonly solved: boolean;
+  /** The exact group facts (precomputed table at runtime). */
+  facts(): PgGroupFacts;
+  /** Live-computed facts, bypassing the table — offline generator only. */
+  computeFactsLive(): PgGroupFacts;
+  /** Rebuild the maintained state from a scramble/alg string. */
+  rebuildFromString(text: string): void;
+  /** Order of the current element (1 = solved). */
+  currentOrder(): number;
+  /** A BSGS solution as a replayable string ('' when unsolvable/solved). */
+  solveString(): string;
+  /** A uniform random-state scramble as a replayable string ('' when unsolvable). */
+  scrambleString(): string;
+}
+
+export class PgEngineBinding<M> implements GroupKernel {
   readonly backbone: PgBackbone;
   /** The constructive BSGS — null when the bridge opts out (group too large to factor
    *  in-browser); live mirroring + facts still work, solve/scramble don't. */

@@ -122,7 +122,7 @@ const DEFAULT_CUSTOM_CUTS = 'c f 0.255';
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
-const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto']);
+const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror']);
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle. */
 function asNxN(world: World): Cube | null {

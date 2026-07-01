@@ -18,7 +18,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sigma, Shuffle, Wand2 } from 'lucide-react';
 import type { PgGroupFacts } from './engine/pgBackbone';
-import type { PgEngineBinding } from './engine/pgBinding';
+import type { GroupKernel } from './engine/pgBinding';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import './group-theory-panel.css';
 
@@ -47,7 +47,7 @@ export interface SimWorldView {
 
 /** Fixed engine puzzle kinds wired to a PG kernel (kept in sync with pgBindings). NxN
  *  cubes (numeric puzzle string) are detected via nxnHasPgKernel. */
-const PG_BOUND: Record<string, true> = { pyraminx: true, dino: true, skewb: true, heli: true, megaminx: true, fto: true };
+const PG_BOUND: Record<string, true> = { pyraminx: true, dino: true, skewb: true, heli: true, megaminx: true, fto: true, redi: true, ivy: true, rex: true, mirror: true };
 const isBound = (puzzle: string): boolean => !!PG_BOUND[puzzle] || nxnHasPgKernel(parseInt(puzzle, 10));
 
 const SUBS = '₀₁₂₃₄₅₆₇₈₉';
@@ -67,7 +67,7 @@ export default function GroupTheoryPanel({
   const t = (zh: string, en: string): string => (isZh ? zh : en);
 
   const bound = isBound(puzzle);
-  const bindingRef = useRef<PgEngineBinding<unknown> | null>(null);
+  const bindingRef = useRef<GroupKernel | null>(null);
   const [facts, setFacts] = useState<PgGroupFacts | null>(null);
   const [live, setLive] = useState<LiveState | null>(null);
   // Whether the BSGS solve/scramble are available (false for groups too large to
@@ -97,7 +97,7 @@ export default function GroupTheoryPanel({
 
     void import('./engine/pgBindings').then(({ createBinding }) => {
       if (!alive) return;
-      const binding = createBinding(puzzle) as PgEngineBinding<unknown> | null;
+      const binding = createBinding(puzzle);
       if (!binding) return;
       bindingRef.current = binding;
       setSolvable(binding.solvable);
