@@ -5,11 +5,12 @@
 // 成本：一次 SQL ~1s + 序列化 ~0.5s，整个脚本 < 2s
 //
 // 用法：npx tsx src/bin/gen_all_comps.ts
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { query, closePool } from '../core/database.js';
 import type { RowDataPacket } from 'mysql2';
+import { buildCompSeriesIndex, type SeriesComp } from '@cuberoot/shared/comp-series';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = resolve(__dirname, '../../../../../stats/all_past_comps.json');
@@ -18,6 +19,10 @@ const META_OUTPUT_PATH = resolve(__dirname, '../../../../../stats/comp_round_met
 // 双轮权威标记小文件:{compId: [完整 WCA event id]},含未结束比赛(详情页对进行中/即将开始的双轮赛要它，
 // 此时第二轮无成绩、计数兜底失效)。键用完整 event id(333fm)直接配详情页 ev.i。
 const COMP_DUAL_OUTPUT_PATH = resolve(__dirname, '../../../../../stats/comp_dual.json');
+// 「相似比赛」索引:名字只差版本号/年份的比赛归为一类({series, byId}),比赛详情页读它。
+// 覆盖 past(本次刚生成的 out) + upcoming(读已提交的 all_upcoming_comps.json,比周更 dump 新)。
+const UPCOMING_INPUT_PATH = resolve(__dirname, '../../../../../stats/all_upcoming_comps.json');
+const COMP_SERIES_OUTPUT_PATH = resolve(__dirname, '../../../../../stats/comp_series.json');
 
 // NOTE: WCA 内部 event_id → 前端短名（与 fetch_upcoming_comps.ts EVENT_DISPLAY_ORDER 保持一致）
 const EVENT_SHORT: Record<string, string> = {
@@ -234,6 +239,29 @@ async function main() {
   const kb = Math.round((Buffer.byteLength(JSON.stringify(out)) / 1024));
   const dur = ((Date.now() - start) / 1000).toFixed(2);
   console.log(`Generated ${OUTPUT_PATH}: ${out.length} comps, ${kb} KB, ${dur}s`);
+
+  // ── 「相似比赛」索引 → comp_series.json ────────────────────────────────────
+  // upcoming 排在 past 前(同 id 取较新一份);buildCompSeriesIndex 按系列键分组、只留 ≥2 场的组。
+  interface RawComp { id: string; name: string; country: string; city?: string; start_date: string; end_date?: string; events?: string[] }
+  const toSeries = (c: RawComp): SeriesComp => ({
+    id: c.id,
+    name: c.name,
+    country: c.country,
+    start: c.start_date,
+    end: c.end_date || c.start_date,
+    ...(c.city ? { city: c.city } : {}),
+    ...(c.events?.length ? { events: c.events } : {}),
+  });
+  let upcoming: RawComp[] = [];
+  try { upcoming = JSON.parse(readFileSync(UPCOMING_INPUT_PATH, 'utf-8')) as RawComp[]; }
+  catch { console.warn(`[comp_series] ${UPCOMING_INPUT_PATH} 读不到,仅用 past 建索引`); }
+  const seriesIdx = buildCompSeriesIndex([
+    ...upcoming.map(toSeries),
+    ...(out as RawComp[]).map(toSeries),
+  ]);
+  const seriesJson = JSON.stringify(seriesIdx);
+  writeFileSync(COMP_SERIES_OUTPUT_PATH, seriesJson, 'utf-8');
+  console.log(`Generated ${COMP_SERIES_OUTPUT_PATH}: ${seriesIdx.series.length} series, ${Object.keys(seriesIdx.byId).length} comps, ${Math.round(Buffer.byteLength(seriesJson) / 1024)} KB`);
 
   // ── 双轮权威标记 → comp_dual.json (含未结束比赛) ──────────────────────────────
   const dualObj: Record<string, string[]> = {};

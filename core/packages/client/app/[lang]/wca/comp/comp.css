@@ -1600,3 +1600,41 @@ td.is-pr {
   background: transparent;
   margin-top: 4px;
 }
+
+/* ── 相似比赛列表(/wca/comp/[slug] 的「相似比赛」tab) ──
+   一行一场同系列比赛:旗 + 全名(带年份/版本号) + 日期 + 地点,点进对应比赛页。 */
+.comp-similar-list {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.comp-similar-list li { margin: 0; }
+.comp-similar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  color: var(--foreground);
+  text-decoration: none;
+  transition: background-color 0.12s ease;
+}
+.comp-similar-item:hover {
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+.comp-similar-flag { flex: none; }
+.comp-similar-name { flex: 1 1 auto; min-width: 0; font-weight: 500; }
+.comp-similar-date {
+  flex: none;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.comp-similar-place { flex: none; color: var(--muted-foreground); font-size: 0.85em; }
+@media (max-width: 480px) {
+  .comp-similar-item { flex-wrap: wrap; gap: 0.25rem 0.55rem; }
+  .comp-similar-name { flex-basis: 100%; }
+}
