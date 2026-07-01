@@ -1164,26 +1164,22 @@ html[data-theme=dark] .gen-page {
     flex-direction: column;
     gap: 0.9rem;
 }
-/* PillToggle(共享组件)在 gen 浅色双主题页的适配:组件原样式是给暗色锁定页的
-   硬编码 iOS 蓝 + 半透明白,这里换成主题 token + terracotta accent。 */
+/* PillToggle(共享组件)off 态在 gen 浅色双主题页的适配:用页面自有 token 而非
+   --foreground,贴合「纸感」配色。on 态不覆盖 —— 全站开关开启色统一走组件自带的
+   var(--toggle-on)(绿),别在单页面另挑 accent 色。 */
 .gen-page .pill-toggle {
     height: 26px;
     /* 宽度贴合文字 + 滑钮,不再写死 min-width 拉成长条 */
     min-width: 0;
+}
+/* :not(.is-on) 防止跟 PillToggle.css 的 .pill-toggle.is-on 同特异度(两个类选择器)
+   平局时按源码顺序(后导入的 gen.css)抢赢,把 on 态背景吃掉变回 off 灰。 */
+.gen-page .pill-toggle:not(.is-on) {
     background: color-mix(in srgb, var(--gen-text) 8%, transparent);
     border-color: var(--gen-border);
     color: var(--gen-text-sub);
 }
 .gen-page .pill-toggle:hover { border-color: var(--gen-border-strong); }
-.gen-page .pill-toggle.is-on {
-    background: var(--gen-accent);
-    border-color: var(--gen-accent);
-    color: #fff;
-}
-.gen-page .pill-toggle.is-on:hover {
-    background: color-mix(in srgb, var(--gen-accent) 90%, black);
-    border-color: color-mix(in srgb, var(--gen-accent) 90%, black);
-}
 
 /* 控制行:分析/本轮/备打 toggles + 指标 tabs + 底色选择,一行排开,窄屏自动 wrap */
 .gen-cx-switchrow {

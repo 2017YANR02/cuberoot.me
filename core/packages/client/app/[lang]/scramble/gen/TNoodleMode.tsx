@@ -121,6 +121,10 @@ interface Props {
   /** SQ1 打乱记号:true=简写(默认),false=WCA 官方完整 (x, y) /。涉及 sq1 才显开关。 */
   sq1Compact: boolean;
   onSq1CompactChange: (v: boolean) => void;
+  /** 内嵌模式:固定加载某场 WCA 比赛(如 /wca/comp/[slug] 的「打乱」页)。设了它就:
+   *  自动加载该比赛、不写 ?comp、隐藏比赛选择器 + 整套配置/生成 UI,只渲染已加载的打乱视图。
+   *  其余行为(event/round 深链、十字分析、PDF)与普通 comp 模式一致。 */
+  forcedCompId?: string;
 }
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -265,7 +269,7 @@ function buildSheetsFromWca(rows: WcaScrambleRow[]): RoundSheet[] {
   return sheets;
 }
 
-export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, compHeaderSlot, sq1Compact, onSq1CompactChange }: Props) {
+export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, compHeaderSlot, sq1Compact, onSq1CompactChange, forcedCompId }: Props) {
   // URL 同步走 nuqs(全 replace,不堆历史):comp = 已加载比赛 id;event/round/group/attempt
   // = 深链选中态。其它键(mode 等,由 GenPage 持有)互不干扰。?mode= 等保留。
   const [urlQuery, setUrlQuery] = useQueryStates(
@@ -458,7 +462,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   // 后台预生成:用户在 configure 模式下调整时,按当前配置算出每种 scramble type
   // 需要的数量,默默 top up cache。WCA 加载路径 / 已生成视图 都跳过。
   useEffect(() => {
-    if (loadedCompId || sheets) return;
+    if (forcedCompId || loadedCompId || sheets) return;
     const need = new Map<string, number>();
     for (const ev of enabledEvents) {
       const cfg = events[ev];
@@ -497,7 +501,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         }
       })();
     }
-  }, [enabledEvents, events, loadedCompId, sheets]);
+  }, [enabledEvents, events, loadedCompId, sheets, forcedCompId]);
 
   // ── mock 生成 ─────────────────────────────────────────────────
   const generate = async () => {
@@ -631,7 +635,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       setViewedRoundIdx(null);
       setLoadedCompId(compId);
       setLoadedCompName(name);
-      setUrlQuery({ comp: compId });
+      // 内嵌模式(forcedCompId)不往 URL 写 ?comp —— 比赛页自己的 slug 已在路径里。
+      if (!forcedCompId) setUrlQuery({ comp: compId });
     } catch (err) {
       setError(t('网络错误', 'Network error') + ': ' + (err instanceof Error ? err.message : String(err)));
     } finally {
@@ -671,6 +676,14 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     loadWca(urlComp);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [urlComp]);
+
+  // 内嵌模式:forcedCompId → mount/变更时自动加载一次(同 urlComp 路径,只是数据源是 prop)。
+  useEffect(() => {
+    if (!forcedCompId || forcedCompId === loadedCompId || forcedCompId === autoLoadedRef.current || loading) return;
+    autoLoadedRef.current = forcedCompId;
+    loadWca(forcedCompId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forcedCompId]);
 
   // 切 event 时清掉旧的 round 选择,让默认落回新 event 的第一个轮次
   useEffect(() => {
@@ -1235,7 +1248,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
   // 比赛已加载:操作图标(打乱图开关 / 下载 PDF)挪到 header 输入框右侧,与比赛名同一行;
   // 配置态仍把操作(生成按钮等)留在正文 controls 行。无 header slot 时整体回落正文。
-  const controlsNode = !compHeaderSlot ? (
+  // 内嵌模式(forcedCompId):没有比赛选择器 / 生成按钮,只在已加载后留打乱图开关 + 下载 PDF。
+  const controlsNode = forcedCompId ? (
+    loaded ? <div className="gen-tn-controls is-loaded">{actionsNode}</div> : null
+  ) : !compHeaderSlot ? (
     <div className={`gen-tn-controls${loaded ? ' is-loaded' : ''}`}>
       {compPickerNode}
       {actionsNode}
@@ -1269,6 +1285,9 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
           onlyAvailable
           isZh={isZh}
         />
+      ) : forcedCompId ? (
+        // 内嵌模式未加载完:不渲染配置选择器(占位/加载提示在下方 event-list 槽)。
+        null
       ) : (
         // ── 配置模式:多选 toggle + 点击循环轮数(只有 mock 路径走到这里) ──
         <WcaEventSelector
@@ -1295,7 +1314,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       )}
 
       {/* 配置条:高阶 NxN(随「其他」展开) + 5x5 打乱模式(选了 5x5 才显),view 模式隐藏整块 */}
-      {!loaded && (
+      {!loaded && !forcedCompId && (
         <div className="gen-tn-config-row">
           {otherExpanded && (
             <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN} />
@@ -1322,7 +1341,14 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         </div>
       )}
 
-      {loaded ? null : enabledEvents.length === 0 ? (
+      {loaded ? null : forcedCompId ? (
+        // 内嵌模式:加载中 / 加载失败(error 已在上方渲染)的占位。
+        !error ? (
+          <div className="gen-tn-empty">
+            <RefreshCw size={14} className="gen-spin" /> {t('加载打乱中…', 'Loading scrambles…')}
+          </div>
+        ) : null
+      ) : enabledEvents.length === 0 ? (
         <div className="gen-tn-empty">{t('点击上方图标添加项目', 'Tap an event icon above to add it')}</div>
       ) : (
         <div className="gen-tn-event-list">

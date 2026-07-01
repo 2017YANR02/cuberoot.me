@@ -1006,7 +1006,7 @@ function measureNameCityCols(comps: Competition[], isZh: boolean): { namePx: num
 
 interface RowItem { comp: Competition; key: string }
 
-function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, compMetric, listSort, eventMetric, pastMeta, followedIds }: {
+function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCutoffIso, pageRef, compMetric, listSort, eventMetric, pastMeta, followedIds, debutEventsByComp }: {
   comps: Competition[];
   isZh: boolean;
   onSelect: (c: Competition) => void;
@@ -1016,6 +1016,8 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
   eventMetric: EventMetric;
   /** 过去比赛 round-1 meta 懒加载表（comp id → short → RoundMeta）；未加载 / 未来比赛为 null */
   pastMeta: CompRoundMetaMap | null;
+  /** 「项目首秀」筛选下：比赛 id → 在该场首次出现的项目短名列表；非该模式为 null,行内不标记 */
+  debutEventsByComp?: Map<string, string[]> | null;
   /** 整场列显示哪个 metric：实际人数 / 上限 / 满员率 / 不显示 */
   compMetric: CompMetric;
   /** 列表统一排序状态；null = 按日期倒序 */
@@ -1348,15 +1350,22 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
                 const shortEid = WCA_EVENT_ID_TO_SHORT[eid] ?? eid;
                 const has = events.includes(shortEid);
                 const isDual = c.dual_events?.includes(shortEid) ?? false;
+                const isDebutEvent = debutEventsByComp?.get(c.id)?.includes(shortEid) ?? false;
                 const { text, title } = eventCellContent(eventMetric, eid, shortEid, c, cMeta?.[shortEid], isZh);
                 const content = text !== '' ? text : (has ? '·' : '');
+                const markClass = isDebutEvent ? 'cl-event-debut' : isDual ? 'cl-event-dual' : '';
+                const markTitle = isDebutEvent
+                  ? tr({ zh: '该项目首秀 · 在此场首次出现于 WCA 比赛', en: "Event debut · this event's first-ever WCA appearance" })
+                  : isDual
+                    ? tr({ zh: '双轮赛制 · 前两轮合并排名', en: 'Dual rounds · first two rounds combined' })
+                    : title;
                 return (
                   <span
                     key={eid}
                     className="cl-event-cell"
-                    title={isDual ? tr({ zh: '双轮赛制 · 前两轮合并排名', en: 'Dual rounds · first two rounds combined' }) : title}
+                    title={markTitle}
                   >
-                    {isDual ? <span className="cl-event-dual">{content}</span> : content}
+                    {markClass ? <span className={markClass}>{content}</span> : content}
                   </span>
                 );
               })}
@@ -1682,8 +1691,9 @@ function CalendarPageInner() {
   // 首秀 id 集合：'country' 模式下 activeComps 里每个国家 start_date 最早那场；'event' 模式下每个项目
   // 首次出现的那场（一场比赛可能同时是多个项目的首秀,只算一条）。同日取 id 最小,稳定。
   // 仅模式非 off 时计算；用全量 activeComps 求"真正第一场",其他筛选(国家/项目/年月)再在其上叠加。
-  const debutIds = useMemo(() => {
-    if (debutMode === 'off') return null;
+  // 'event' 模式下顺带记下每场比赛具体是哪些项目的首秀(debutEventsByComp)，供列表行给对应项目格子标记。
+  const { debutIds, debutEventsByComp } = useMemo(() => {
+    if (debutMode === 'off') return { debutIds: null, debutEventsByComp: null };
     const first = new Map<string, Competition>();
     const isEarlier = (c: Competition, ex: Competition | undefined) =>
       !ex || c.start_date < ex.start_date || (c.start_date === ex.start_date && c.id < ex.id);
@@ -1698,8 +1708,16 @@ function CalendarPageInner() {
       }
     }
     const ids = new Set<string>();
-    for (const c of first.values()) ids.add(c.id);
-    return ids;
+    const byComp = debutMode === 'event' ? new Map<string, string[]>() : null;
+    for (const [key, c] of first) {
+      ids.add(c.id);
+      if (byComp) {
+        const arr = byComp.get(c.id) ?? [];
+        arr.push(key);
+        byComp.set(c.id, arr);
+      }
+    }
+    return { debutIds: ids, debutEventsByComp: byComp };
   }, [debutMode, activeComps]);
 
   // NOTE: 不匹配的比赛直接从日历中消失（不再"变淡"），所以 displayedComps 走完整过滤链
@@ -2443,6 +2461,7 @@ function CalendarPageInner() {
           listSort={listSort}
           eventMetric={eventMetric}
           pastMeta={pastMeta}
+          debutEventsByComp={debutEventsByComp}
           outerRef={listScrollRef}
           cancelledCutoffIso={cancelledCutoffIso}
           pageRef={pageRef}
