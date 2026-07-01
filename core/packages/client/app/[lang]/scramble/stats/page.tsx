@@ -160,6 +160,10 @@ function eventLabel(e: string): string {
 // 暂无难度数据,选中显示占位(用户后续会逐个加入)。
 const DIFFICULTY_EVENTS = new Set(['333', '333oh', '333bf', '333fm', '333ft', '333mbf', '333mbo']);
 
+// 长度 tab「合并/分开」只对属于某 MERGE_GROUP 的项目有意义(333↔单手、三盲↔多盲);
+// 其余项目(4x4/5x5/魔表 等)无可合并对象,不显示该钮。
+const LENGTH_MERGE_EVENTS = new Set(MERGE_GROUPS.flatMap((g) => g.members));
+
 // 非 3x3 puzzle:WCA event_id → puzzle_distribution.json 的 key。选中这些项目时,
 // 难度 tab 显示该 puzzle 的整解步数分布(数据来自独立 native solver 管线)。
 // sq1 是近最优(双阶段上界),其余三个是精确最优 —— 口径差异在 PuzzleDistView 里标注。
@@ -529,9 +533,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
-  // 非 WCA 求解项目(ivy / 133 / 223 / 8p / sfl …):难度=整解最优步数分布(A/B 档全空间精确,15p 是 TIER C
-  // 采样);均无打乱长度数据、无合并/数据集/度量开关 → 走 isIvy 早返回那套。
-  const isIvy = event === 'ivy' || event === '133' || event === '223' || event === '233' || event === '334' || event === '335' || event === '336' || event === '337' || event === '8p' || event === '15p' || event === 'sfl' || event === 'ufo' || event === 'cm2' || event === 'cm3' || event === 'heli' || event === 'helicv' || event === 'ctico' || event === 'dmd' || event === 'gear' || event === 'mpyrso' || event === 'dino' || event === 'crz3a' || event === 'sq2' || event === 'ssq1' || event === 'bsq' || event === 'bic' || event === 'sia123';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -734,6 +735,12 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     );
   })() : null;
 
+  // 合并/分开 钮只在「合并」真正有对象处出现:难度 tab = 三阶族(六个三阶项目共池,且限 wca 数据集);
+  // 长度 tab = 属于某 MERGE_GROUP 的项目(333↔单手、三盲↔多盲)。4x4/5x5/魔表/各盲(非 mbf)等无可合并对象,隐藏。
+  const showMergeToggle = tab === 'length'
+    ? LENGTH_MERGE_EVENTS.has(event)
+    : (DIFFICULTY_EVENTS.has(event) && dataset === 'wca');
+
   // 统一「求解」中心:项目行高亮按当前 event 推(3x3 族都算 3×3)。
   const distPuzzle: SolvePuzzle | null =
     DIFFICULTY_EVENTS.has(event) ? '3x3'
@@ -807,7 +814,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         <div className="scramble-stats-tabrow">
           {tabsBar}
           {datasetToggle}
-        {(tab === 'length' || (dataset === 'wca' && !isPuzzleEvent)) && !isIvy && (
+        {showMergeToggle && (
           <div className="scramble-len-merge">
             <PillToggle
               value={merged}
