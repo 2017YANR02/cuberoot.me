@@ -89,6 +89,12 @@ export const CI_GUARDS_UI: CiGuard[] = [
     zh: { title: 'PillToggle 默认宽度', desc: '锁住 PillToggle 两根支柱:基类 min-width:0(默认贴合文字)+ 两个隐形 ghost span(按更长标签预留宽度,切换不跳变),防止哪天被悄悄改回固定宽度。' },
     en: { title: 'PillToggle default width', desc: 'Locks two pillars of PillToggle: the base class keeps min-width:0 (hugs its label by default) and renders two invisible ghost spans that reserve the longer label’s width so toggling never jumps — guards against either silently regressing.' },
   },
+  {
+    id: 'fixed-width-dropdown',
+    test: 'no-fixed-width-dropdown-root.test.ts',
+    zh: { title: '下拉 root 死宽无 max-width', desc: '下拉 / 选择器 / 触发器的 root(类名以 -picker / -trigger / -dropdown / -combobox 结尾)禁写死宽 width ≥ 120px 而不配 max-width —— 塞进能被压窄的筛选栏 flex 列会窄屏溢出、压到相邻控件(国家框 .region-picker 220px 实测踩过)。root 应 width:100% / fit-content,或同规则块补 max-width:100%;真定尺小部件行内 allow-fixed-width 豁免。全机制经验式检查走 pnpm audit:overflow。' },
+    en: { title: 'Fixed-width dropdown root without max-width', desc: 'A dropdown/picker/trigger root (class ending in -picker / -trigger / -dropdown / -combobox) can’t set a fixed width ≥ 120px without max-width — dropped into a squeezable filter-bar flex column it overflows on mobile and overlaps the next control (hit for real with the 220px .region-picker country box). Use width:100% / fit-content, or add max-width:100% in the same rule; genuinely fixed-size widgets exempt via inline allow-fixed-width. The full-mechanism empirical check is pnpm audit:overflow.' },
+  },
 ];
 
 export const CI_GUARDS_DRIFT: CiGuard[] = [
