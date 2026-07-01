@@ -29,6 +29,11 @@ const OUT = resolve(__dirname, '../../../../../stats/scramble/event_lengths.json
 const OUT_EX = resolve(__dirname, '../../../../../stats/scramble/event_length_examples.json');
 // 「首次出现」时间线:每 (event, metric, length) 最早出现的那条打乱(按比赛开始日期排序)。
 const OUT_FIRST = resolve(__dirname, '../../../../../stats/scramble/event_length_first_appearance.json');
+// 「组平均」长度分布:每场比赛每轮每组的一组打乱(三阶 5 条、多盲一组几十条)长度取平均(moX / 不去尾),
+// 再对这些组平均做直方图。由 /scramble/stats 长度 tab 的「单个 / 组平均」PillToggle 切换,懒加载。
+const OUT_AVG = resolve(__dirname, '../../../../../stats/scramble/event_lengths_avg.json');
+// 组平均量化网格:round(avg × 5) → 整数键(0.2 网格,对 5 条一组精确);前端显示时 ÷ 5。
+const AVG_DENOM = 5;
 
 const K = 12; // examples kept per (event, length) bin
 
@@ -97,6 +102,11 @@ async function main() {
   let rows = 0;
   let samples = 0;
 
+  // 组平均累加器:key = `comp|event|round|group`(event 之后从 key 解析出来路由)。
+  // 值 = [sumH_ne, cntH_ne, sumH_we, cntH_we, sumQ_ne, cntQ_ne, sumQ_we, cntQ_we]
+  //   H = HTM 长度,Q = QTM(仅 3x3-family / sq1 有);ne = 不含备打,we = 含备打(全部)。
+  const groupAcc = new Map<string, number[]>();
+
   // Megaminx scrambles whose raw text glues two moves with a missing space
   // (e.g. "R--D--") — surfaced on the page so the 77-vs-76 quirk is explained.
   const MINX_MOVE = /R\+\+|R--|D\+\+|D--|U'|U/g;
@@ -163,8 +173,17 @@ async function main() {
       rows++;
       const extra: 0 | 1 = row.is_extra ? 1 : 0;
       const dateInt = compMeta.get(row.competition_id)?.dateInt ?? Infinity;
+      const gkey = `${row.competition_id}|${row.event_id}|${row.round_type_id}|${row.group_id}`;
+      let acc = groupAcc.get(gkey);
+      if (!acc) { acc = [0, 0, 0, 0, 0, 0, 0, 0]; groupAcc.set(gkey, acc); }
       for (const s of scrambleMoveSamples(row.event_id, row.scramble)) {
         bump(row.event_id, s, [row.competition_id, row.round_type_id, row.group_id, row.scramble_num, s.text, extra], dateInt);
+        acc[2] += s.len; acc[3]++;                        // HTM we(含备打)
+        if (!extra) { acc[0] += s.len; acc[1]++; }         // HTM ne(不含备打)
+        if (s.qtm !== undefined) {
+          acc[6] += s.qtm; acc[7]++;
+          if (!extra) { acc[4] += s.qtm; acc[5]++; }
+        }
       }
       if (row.event_id === 'minx') {
         const glued = (row.scramble ?? '').trim().split(/\s+/).filter(Boolean)
@@ -292,6 +311,31 @@ async function main() {
     comps: firstComps,
     events: firstEvents,
   }));
+
+  // 「组平均」长度直方图:遍历每组累加器 → ne/we 的 HTM/QTM 平均 → 量化 ×AVG_DENOM → 按项目分桶。
+  interface AvgAcc { h_ne: Map<number, number>; h_we: Map<number, number>; q_ne: Map<number, number>; q_we: Map<number, number>; groups: number; }
+  const avgEvents = new Map<string, AvgAcc>();
+  const bumpAvg = (m: Map<number, number>, k: number) => m.set(k, (m.get(k) ?? 0) + 1);
+  for (const [gkey, a] of groupAcc) {
+    const ev = gkey.split('|', 2)[1] ?? '';
+    let ae = avgEvents.get(ev);
+    if (!ae) { ae = { h_ne: new Map(), h_we: new Map(), q_ne: new Map(), q_we: new Map(), groups: 0 }; avgEvents.set(ev, ae); }
+    if (a[3] > 0) { bumpAvg(ae.h_we, Math.round((a[2] / a[3]) * AVG_DENOM)); ae.groups++; }
+    if (a[1] > 0) bumpAvg(ae.h_ne, Math.round((a[0] / a[1]) * AVG_DENOM));
+    if (a[7] > 0) bumpAvg(ae.q_we, Math.round((a[6] / a[7]) * AVG_DENOM));
+    if (a[5] > 0) bumpAvg(ae.q_ne, Math.round((a[4] / a[5]) * AVG_DENOM));
+  }
+  const avgEventsOut: Record<string, unknown> = {};
+  for (const ev of [...avgEvents.keys()].sort((a, b) => orderIdx(a) - orderIdx(b))) {
+    const ae = avgEvents.get(ev)!;
+    const ne: { counts: Record<string, number>; counts_qtm?: Record<string, number> } = { counts: sortedCounts(ae.h_ne) };
+    const we: { counts: Record<string, number>; counts_qtm?: Record<string, number> } = { counts: sortedCounts(ae.h_we) };
+    if (ae.q_ne.size) ne.counts_qtm = sortedCounts(ae.q_ne);
+    if (ae.q_we.size) we.counts_qtm = sortedCounts(ae.q_we);
+    avgEventsOut[ev] = { unit: scrambleLengthUnit(ev), groups: ae.groups, ne, we };
+  }
+  writeFileSync(OUT_AVG, JSON.stringify({ meta: { generated_at, avg_denom: AVG_DENOM }, events: avgEventsOut }));
+  console.log(`Wrote ${OUT_AVG} (${Object.keys(avgEventsOut).length} events)`);
 
   console.log(`Wrote ${OUT}`);
   console.log(`Wrote ${OUT_EX} (${Object.keys(comps).length} comps referenced)`);
