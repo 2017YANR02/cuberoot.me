@@ -16,6 +16,7 @@
 
   position: relative;
   width: 220px;
+  max-width: 100%;  /* 被压窄的父列(如排名页 .wse-country 手机端半屏)里收缩,不溢出 */
 }
 .region-picker-trigger {
   width: 100%;
