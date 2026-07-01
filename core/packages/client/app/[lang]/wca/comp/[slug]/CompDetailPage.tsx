@@ -1434,16 +1434,19 @@ export default function CompDetailPage() {
                 : 'https://live.worldcubeassociation.org/';
               return (
                 <>
-                  {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
-                  <button
-                    type="button"
-                    onClick={copyCompName}
-                    className="comp-detail-title-name"
-                    title={tr({ zh: '点击复制比赛名', en: 'Click to copy name'
-                    })}
-                  >
-                    {localizeCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh })}
-                  </button>
+                  {/* 旗+比赛名成组:窄屏 h1 flex-wrap 时整组占满第一行、图标落第二行,旗不与名分家 */}
+                  <span className="comp-title-main">
+                    {iso2 && <Flag iso2={iso2} className="comp-flag comp-title-flag" />}
+                    <button
+                      type="button"
+                      onClick={copyCompName}
+                      className="comp-detail-title-name"
+                      title={tr({ zh: '点击复制比赛名', en: 'Click to copy name'
+                      })}
+                    >
+                      {localizeCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh })}
+                    </button>
+                  </span>
                   <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="WCA">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/icons/upstream/wca.svg" alt="WCA" />
