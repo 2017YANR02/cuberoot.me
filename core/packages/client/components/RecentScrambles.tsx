@@ -21,6 +21,7 @@ import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STA
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
+import { formatDateRangeIso } from '@/lib/wca-date';
 import './recent_scrambles.css';
 import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
@@ -47,6 +48,40 @@ const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'fbsquare', 'rouxs1
 
 // 难度模式的项目(整解最优步数);其余项目只按打乱长度。
 const DIFFICULTY_EVENTS = new Set(['222', 'pyram', 'skewb']);
+
+// meta.cd 是比赛起讫日的紧凑串(2026-06-20 / 2026-06-20~21 / 2026-06-20~07-05),
+// 还原出结束日的完整 ISO,用于跨全批求最晚日期。
+function cdEndIso(cd: string): string {
+  const start = cd.slice(0, 10);
+  const i = cd.indexOf('~');
+  if (i < 0) return start;
+  const tail = cd.slice(i + 1);
+  const [sy, sm] = start.split('-');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(tail)) return tail;
+  if (/^\d{2}-\d{2}$/.test(tail)) return `${sy}-${tail}`;
+  if (/^\d{2}$/.test(tail)) return `${sy}-${sm}-${tail}`;
+  return start;
+}
+
+// 本批全部打乱来源比赛的日期跨度:最早开始日 ~ 最晚结束日(跨 333 与其它项目两份 meta)。
+function batchDateRange(
+  data: RecentScramblesJson | null,
+  eventsJson: RecentScramblesEventsJson | null,
+): string | null {
+  let minStart = '';
+  let maxEnd = '';
+  const consider = (cd?: string) => {
+    if (!cd) return;
+    const start = cd.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return;
+    if (!minStart || start < minStart) minStart = start;
+    const end = cdEndIso(cd);
+    if (!maxEnd || end > maxEnd) maxEnd = end;
+  };
+  if (data?.meta) for (const k in data.meta) consider(data.meta[k].cd);
+  if (eventsJson?.meta) for (const k in eventsJson.meta) consider(eventsJson.meta[k].cd);
+  return minStart ? formatDateRangeIso(minStart, maxEnd) : null;
+}
 
 // 紧凑数字(960000→960k)。
 function compactNum(n: number): string {
@@ -212,7 +247,6 @@ function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: stri
       <span className={row ? 'rs-row-name' : 'rs-src-comp'}>{localizeCompName(m.ci, m.cn, isZh)}</span>
       <EventIcon event={m.e} className="rs-evt" />
       <span className={row ? 'rs-row-sub' : 'rs-src-meta'}>{compSourceLine(m.r, m.g, m.n, isZh, !!m.x)}</span>
-      {m.cd && <span className={row ? 'rs-row-date' : 'rs-src-date'}>{m.cd}</span>}
     </Link>
   );
 }
@@ -314,6 +348,8 @@ export default function RecentScrambles({ lang }: Props) {
     return s;
   }, [has333, eventsJson]);
 
+  const dateRange = batchDateRange(data, eventsJson);
+
   // 数据未到齐 / 无任何可展示项目时不渲染(保持原行为)。
   if (data === null && eventsJson === null) return null;
   if (availableEvents.size === 0) return null;
@@ -324,6 +360,7 @@ export default function RecentScrambles({ lang }: Props) {
     <div className="recent-scrambles">
       <div className="rs-topbar">
         <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
+        {dateRange && <span className="rs-date-range">{dateRange}</span>}
       </div>
       <WcaEventSelector
         availableEvents={availableEvents}
