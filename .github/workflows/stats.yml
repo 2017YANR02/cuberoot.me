@@ -184,13 +184,23 @@ jobs:
           NODE_OPTIONS: '--expose-gc --max-old-space-size=12288'
         run: npx tsx src/bin/historical_ranks_build.ts
 
-      # SOR(名次和)随时间演化:读上一步落盘的 snapshot TSV → stats/sor_over_time/*.json(commit)
-      # + sor_historical_best.copy.tsv(追加进 load.sql,随 historical_ranks 同一 scp+apply 灌库).
-      - name: Build SOR over-time JSON + best-rank
+      # SOR best-rank(徽标 + 选手页 Σ 行):读上一步落盘的 snapshot TSV → sor_historical_best.copy.tsv
+      # (追加进 load.sql,随 historical_ranks 同一 scp+apply 灌库).逐日 race 帧改由下一步 daily builder
+      # 产出,故 SKIP_RACE_FILES=1 跳过年级 race/index 写盘(避免撞路径).
+      - name: Build SOR best-rank (yearly; race files skipped)
         working-directory: core/packages/stats-build
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
+          SKIP_RACE_FILES: '1'
         run: npx tsx src/bin/sor_over_time_build.ts
+
+      # SOR 逐日排名演化 race:直接重放 MySQL 17 现役项目结果(historical_ranks 已加载同一 dump)→
+      # stats/sor_over_time/*.json + sor_over_time.json 索引(逐比赛日帧,order 去重,commit).~15-20min.
+      - name: Build SOR over-time DAILY race JSON
+        working-directory: core/packages/stats-build
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+        run: npx tsx src/bin/sor_over_time_daily_build.ts
 
       - name: Setup SSH for historical ranks deploy
         env:

@@ -24,6 +24,15 @@
   --rp-popup-bg: var(--popover);
 }
 
+/* 大标题日期:年份大、月-日小挂在右侧 */
+.sor-race .t10h-bigdate .sor-race-md {
+  font-size: 0.4em;
+  margin-left: 0.35em;
+  color: var(--muted-foreground);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
 @media (max-width: 480px) {
   .sor-race .sor-race-bar { gap: 8px; padding: 8px; }
 }

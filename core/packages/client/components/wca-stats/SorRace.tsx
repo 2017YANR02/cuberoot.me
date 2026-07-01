@@ -3,7 +3,7 @@
 // NOTE: SOR(名次和)排名演化 — bar chart race
 //   展示完全复用 wr_metric:横条/坐标轴/网格走共享 <BarRaceChart>(0 锚定 + 真实值长度),
 //   scope 选择走共享 <RegionPicker>(世界/大洲/国家三态 + 国旗 + 双语)。本组件只负责
-//   取数(年帧)+ 播放控制 + banner/note。数据源:stats/sor_over_time.json(索引)
+//   取数(逐比赛日帧)+ 播放控制 + banner/note。数据源:stats/sor_over_time.json(索引)
 //   + stats/sor_over_time/{scope}.json(per-scope lazy)。
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,11 +28,11 @@ import './top10_history.css';
 import './sor-race.css';
 
 interface FrameRow { p: string; v: number; r: number; c?: string }
-interface YearFrame { y: number; rows: FrameRow[] }
-interface ScopeData { single: YearFrame[]; average: YearFrame[] }
+interface DayFrame { d: string; rows: FrameRow[] }   // d = 'YYYY-MM-DD'(逐比赛日帧)
+interface ScopeData { single: DayFrame[]; average: DayFrame[] }
 interface PersonInfo { name: string; country: string; iso2: string | null }
 interface SorIndex {
-  years: number[];
+  granularity?: string;   // 'day'
   storeK: number;
   showN: number;
   scopes: {
@@ -47,11 +47,12 @@ interface SorIndex {
 type Metric = 'single' | 'average';
 
 const SHOW_N = 10;
-const DEFAULT_SPEED = 850;
+// 日帧数量多(世界 ~800 帧),默认放快些;逐比赛日推进
+const DEFAULT_SPEED = 300;
 const SPEEDS = [
-  { ms: 1400, zh: '慢', en: 'Slow' },
-  { ms: 850, zh: '标准', en: 'Normal' },
-  { ms: 450, zh: '快', en: 'Fast' },
+  { ms: 600, zh: '慢', en: 'Slow' },
+  { ms: 300, zh: '标准', en: 'Normal' },
+  { ms: 130, zh: '快', en: 'Fast' },
 ] as const;
 
 // RegionPicker 的大洲 value 是 slug;SOR 数据/文件按大洲全名。
@@ -101,7 +102,7 @@ export default function SorRace() {
   }, []);
 
   useEffect(() => {
-    fetch(statsUrl('/stats/sor_over_time.json'))
+    fetch(statsUrl('/stats/sor_over_time.json?v=day1'))
       .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
       .then((j: SorIndex) => setIndex(j))
       .catch(e => setError(String(e?.message || e)));
@@ -118,14 +119,14 @@ export default function SorRace() {
     if (!index) return;
     if (cache.has(scopeKey)) return;
     setLoading(true);
-    fetch(statsUrl(`/stats/sor_over_time/${scopeKey}.json`))
+    fetch(statsUrl(`/stats/sor_over_time/${scopeKey}.json?v=day1`))
       .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
       .then((d: ScopeData) => { cache.set(scopeKey, d); setLoading(false); setCacheTick(t => t + 1); })
       .catch(e => { setLoading(false); console.error('sor scope fetch failed:', e); });
   }, [scopeKey, index, cache]);
 
   const data = cache.get(scopeKey);
-  const frames: YearFrame[] = useMemo(() => data?.[metric] ?? [], [data, metric]);
+  const frames: DayFrame[] = useMemo(() => data?.[metric] ?? [], [data, metric]);
 
   const prevKeyRef = useRef('');
   useEffect(() => {
@@ -168,14 +169,12 @@ export default function SorRace() {
   const leader = top[0];
   const leaderInfo = leader ? persons[leader.p] : undefined;
 
-  // 当前 #1 蝉联年数
-  const streak = useMemo(() => {
-    if (!leader || !frames.length) return 0;
-    let n = 1;
-    for (let i = yearIdx - 1; i >= 0; i--) {
-      if (frames[i]?.rows[0]?.p === leader.p) n++; else break;
-    }
-    return n;
+  // 当前 #1 连续在位的起始帧日期(日粒度;往回走到不再是同一人)
+  const streakStart = useMemo(() => {
+    if (!leader || !frames.length) return null;
+    let i = Math.min(yearIdx, frames.length - 1);
+    while (i > 0 && frames[i - 1]?.rows[0]?.p === leader.p) i--;
+    return frames[i]?.d ?? null;
   }, [leader, frames, yearIdx]);
 
   const togglePlay = useCallback(() => {
@@ -200,7 +199,11 @@ export default function SorRace() {
     return <div className="t10h-status">{tr({ zh: '加载中...', en: 'Loading...' })}</div>;
   }
 
-  const curYear = curFrame?.y ?? index.years[0];
+  const curDate = curFrame?.d ?? '';
+  const curYear = curDate.slice(0, 4);
+  const curMd = curDate.slice(5);
+  const streakYear = streakStart ? streakStart.slice(0, 4) : '';
+  const held = !!streakYear && streakYear !== curYear;
   const metricLabel = metric === 'single'
     ? tr({ zh: '单次', en: 'Single' })
     : tr({ zh: '平均', en: 'Average' });
@@ -239,9 +242,10 @@ export default function SorRace() {
                 {leaderInfo ? displayCuberName(leaderInfo.name, isZh) : (loading ? tr({ zh: '加载中…', en: 'Loading…' }) : '')}
               </div>
               <div className="t10h-holder-sub">
-                {leader && (isZh
-                  ? `${scopeLabel} SOR 第一${streak > 1 ? ` 蝉联 ${streak} 年` : ''}`
-                  : `${scopeLabel} SOR #1${streak > 1 ? ` · ${streak} yrs` : ''}`)}
+                {leader && tr({
+                  zh: `${scopeLabel} SOR 第一${held ? ` 自 ${streakYear} 起` : ''}`,
+                  en: `${scopeLabel} SOR #1${held ? ` since ${streakYear}` : ''}`,
+                })}
               </div>
             </div>
           </div>
@@ -249,7 +253,7 @@ export default function SorRace() {
             <div className="t10h-bigtitle-pre">
               <span>{scopeLabel} {metricLabel} SOR</span>
             </div>
-            <div className="t10h-bigdate">{curYear}</div>
+            <div className="t10h-bigdate">{curYear}{curMd && <span className="sor-race-md">{curMd}</span>}</div>
           </div>
         </div>
 
@@ -296,7 +300,7 @@ export default function SorRace() {
         <input className="t10h-scrub" type="range" min={0} max={Math.max(0, frames.length - 1)} step={1}
           value={Math.min(yearIdx, Math.max(0, frames.length - 1))}
           onChange={e => { setPlaying(false); setYearIdx(Number(e.target.value)); }}
-          aria-label={tr({ zh: '年份', en: 'Year' })} />
+          aria-label={tr({ zh: '日期', en: 'Date' })} />
         <div className="t10h-speed" role="group" aria-label={tr({ zh: '速度', en: 'Speed' })}>
           {SPEEDS.map(s => (
             <button key={s.ms} type="button" className={`t10h-speed-btn${s.ms === speed ? ' active' : ''}`} onClick={() => setSpeed(s.ms)}>
