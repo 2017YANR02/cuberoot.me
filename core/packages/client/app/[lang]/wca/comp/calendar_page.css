@@ -1330,6 +1330,18 @@
     box-shadow: inset 0 0 0 1.5px var(--accent);
     color: var(--accent);
 }
+/* 「项目首秀」筛选：该项目格子=此场首次出现该项目，填色圈跟双轮的纯描边圈区分开，一眼可辨 */
+.calendar-page .cl-event-debut {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.3em;
+    height: 1.3em;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--signal-info) 18%, transparent);
+    box-shadow: inset 0 0 0 1.5px var(--signal-info);
+    color: var(--signal-info);
+}
 /* 天数 / 人数 / 上限列：数字右对齐，多位数按个位对齐 */
 .calendar-page .cl-days-cell {
     text-align: right;
