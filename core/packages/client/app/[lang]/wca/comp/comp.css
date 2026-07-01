@@ -198,6 +198,14 @@
 .comp-title-flag {
   width: 30px;
   height: 22px;
+  flex-shrink: 0;
+}
+/* 旗 + 比赛名成组:桌面观感不变(gap 与 h1 一致),窄屏作为一个可换行的整体 */
+.comp-title-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
 }
 .comp-detail-title-name {
   color: inherit;
@@ -209,6 +217,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  text-align: left;
 }
 /* 复制比赛名按钮:复用 comp-title-icon-lucide(与 WCA / cubing.com 图标同款),复制成功转绿。 */
 .comp-title-copy-btn.is-copied { color: var(--signal-success); }
@@ -1074,7 +1084,9 @@ td.is-pr {
     padding: 20px 12px 80px;
   }
   .comp-page-title { font-size: 1.4rem; }
-  .comp-detail-title { font-size: 1.25rem; }
+  /* 窄屏:比赛名尽量占一行 —— 图标换到第二行、名字随视口缩放不被挤成多行 */
+  .comp-detail-title { font-size: 1.25rem; flex-wrap: wrap; row-gap: 6px; }
+  .comp-detail-title-name { font-size: clamp(0.9rem, 4vw, 1.25rem); }
   .comp-input-row { flex-direction: column; }
   .comp-go-btn { justify-content: center; }
   .comp-table-wrap { font-size: 0.82rem; }
