@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsx src/build.ts",
+    "build:group-avg": "tsx src/build_group_avg.ts",
     "build:first-appearance": "tsx src/build_first_appearance.ts",
     "build:puzzle-first-appearance": "tsx src/build_puzzle_first_appearance.ts",
     "build:wca-cross": "tsx src/build_wca_cross.ts",

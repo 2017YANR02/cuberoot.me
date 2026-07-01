@@ -36,7 +36,7 @@ import BicDistView from './_components/BicDistView';
 import Sia123DistView from './_components/Sia123DistView';
 import Sia222DistView from './_components/Sia222DistView';
 import ScrambleLengthView, {
-  type EventLengthsJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
+  type EventLengthsJson, type EventLengthsAvgJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
 import FirstAppearanceTimeline, { type TimelineEntry } from './_components/FirstAppearanceTimeline';
 import FullScrambleList from './_components/FullScrambleList';
@@ -92,6 +92,14 @@ interface DistributionJson {
   meta: { generated_at: string; subset_keys: string[] };
   sets: Record<string, SetData>;
 }
+
+// 组平均分布(build_group_avg.ts):sets → variants → data → stage → subset → {ne,we}。
+// 键 = round(组平均 × avg_denom) 的整数;显示时 ÷ avg_denom。ne = 不含备打,we = 含备打。
+interface AvgHistEntry { min: number; max: number; counts: Record<string, number>; }
+interface AvgSubHist { ne: AvgHistEntry; we: AvgHistEntry; }
+interface AvgVariantData { stages: string[]; data: Record<string, Record<string, AvgSubHist>>; }
+interface AvgSetData { label: string; label_zh: string | null; event?: string; sample_count: number; variants: Record<string, AvgVariantData>; }
+interface DistributionAvgJson { meta: { generated_at: string; avg_denom: number; subset_keys: string[] }; sets: Record<string, AvgSetData>; }
 
 type ExampleSample = [string, string, string, string?]; // [id, scramble, bottomColor, optScramble?]
 type ExampleCompMeta = [string, string, number, string, string, (0 | 1)?]; // [compId, eventId, scrambleNum, roundType, group, isExtra?]
@@ -267,6 +275,12 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 图表显示口径也进 URL:y 轴(百分比/数量,?y)、曲线(pdf/cdf,?chart)。
   const [yMode, setYMode] = useQueryState(k('y'), parseAsStringEnum<YMode>(['percent', 'count']).withDefault('percent'));
   const [chartMode, setChartMode] = useQueryState(k('chart'), parseAsStringEnum<ChartMode>(['pdf', 'cdf']).withDefault('pdf'));
+  // 组平均(?avg):观测单位 = 一组打乱的平均(某场某轮某组);备打开关(?avgx)仅 avg 时露。
+  // filter 性质 → replace。数据懒加载(默认页不拉,省流量)。
+  const [avgMode, setAvgMode] = useQueryState(k('avg'), parseAsBoolean.withDefault(false));
+  const [avgExtras, setAvgExtras] = useQueryState(k('avgx'), parseAsBoolean.withDefault(false));
+  const [avgData, setAvgData] = useState<DistributionAvgJson | null>(null);
+  const [avgLen, setAvgLen] = useState<EventLengthsAvgJson | null>(null);
   // 整解(stage '333')专属:HTM(默认,真实数据)/ QTM(占位,数据后续用 15G 表生成)。
   const [optMetric, setOptMetric] = useState<'htm' | 'qtm'>('htm');
   // 长度 tab 第二计步口径(钮在顶栏):3x3-family HTM/QTM、sq1 WCA/slash;sq1 默认 slash。
@@ -342,6 +356,18 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     fetch(statsUrl('/stats/scramble/puzzle_first_appearance.json'))
       .then((r) => (r.ok ? r.json() : null)).then(setFaPuzzle).catch(() => setFaPuzzle(null));
   }, []);
+
+  // 组平均数据懒加载:仅首次切到「组平均」时拉(默认页不加载,省流量;缺失静默)。
+  useEffect(() => {
+    if (!avgMode || avgData) return;
+    fetch(statsUrl('/stats/scramble/distribution_avg.json') + '?v=20260701avg')
+      .then((r) => (r.ok ? r.json() : null)).then(setAvgData).catch(() => setAvgData(null));
+  }, [avgMode]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!avgMode || avgLen) return;
+    fetch(statsUrl('/stats/scramble/event_lengths_avg.json') + '?v=20260701avg')
+      .then((r) => (r.ok ? r.json() : null)).then(setAvgLen).catch(() => setAvgLen(null));
+  }, [avgMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 长度 tab 切项目:sq1 默认 slash,其余默认 HTM。
   useEffect(() => { setLenMetric(event === 'sq1' ? 'qtm' : 'htm'); }, [event]);
@@ -428,6 +454,12 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 数据存在单一伪子集 'ALL',口径走 HTM/QTM 而非颜色选择器。
   const is333 = variant === '333';
   const effectiveSubset = is333 ? 'ALL' : subsetKey;
+  // 组平均可用性:难度族(限 wca 数据集、非整解 333 变体)或有分组元数据的长度项目;
+  // 其余(非 WCA puzzle / 合成集 / 整解)隐藏钮并退回单条。avgOn = 已开且当前选择支持。
+  const avgAvailable = tab === 'difficulty'
+    ? (dataset === 'wca' && DIFFICULTY_EVENTS.has(event) && !is333)
+    : !!lengthsData?.events[event];
+  const avgOn = avgMode && avgAvailable;
   // 当前直方图计数:整解 + QTM → counts_qtm(暂空);其余一律 counts。
   const activeCounts = useMemo<Record<string, number>>(() => {
     if (!currentSet) return {};
@@ -511,6 +543,22 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     if (series.length !== 1) return null;
     return computeStats(series[0].counts);
   }, [series]);
+
+  // 组平均(难度 tab):从 avgData 取当前 (set,variant,stage,subset) 的 ne/we 直方图。
+  // 键为 round(平均 × avg_denom),故摘要统计需 ÷ avgDenom 还原成步数。
+  const avgDenom = avgData?.meta.avg_denom ?? 5;
+  const avgActiveCounts = useMemo<Record<string, number>>(() => {
+    if (!avgOn || tab !== 'difficulty' || !avgData) return {};
+    const sh = avgData.sets[scrambleSet]?.variants[variant]?.data[stage]?.[effectiveSubset];
+    if (!sh) return {};
+    return (avgExtras ? sh.we : sh.ne).counts;
+  }, [avgOn, tab, avgData, scrambleSet, variant, stage, effectiveSubset, avgExtras]);
+  const avgSeries = useMemo<HistSeries[]>(() => {
+    if (Object.keys(avgActiveCounts).length === 0) return [];
+    return [{ name: modeLabel, fillColors: fillColorsForSubset(selectedColors), counts: avgActiveCounts }];
+  }, [avgActiveCounts, modeLabel, selectedColors]);
+  const avgStats = useMemo(() => computeStats(avgActiveCounts), [avgActiveCounts]);
+  const avgGroups = avgOn && avgData ? (avgData.sets[scrambleSet]?.sample_count ?? 0) : 0;
 
   const cnBenefit = useMemo(() => {
     if (!currentSet) return null;
@@ -639,7 +687,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     : isPuzzleEvent
       ? !!faPuzzle?.puzzles[PUZZLE_EVENT_MAP[event]]
       : DIFFICULTY_EVENTS.has(event);
-  const timelineActive = viewMode === 'timeline' && canTimeline;
+  const timelineActive = viewMode === 'timeline' && canTimeline && !avgOn;
   const timelineEntries = tab === 'length'
     ? lengthTimeline
     : isPuzzleEvent ? puzzleTimeline : difficultyTimeline;
@@ -652,8 +700,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 333 整解 QTM:首现数据未生成(同图表 counts_qtm 占位),时间线给「QTM 即将加入」而非「生成中」。
   const timeline333Qtm = tab === 'difficulty' && is333 && optMetric === 'qtm';
 
-  // 图表 / 时间线视图开关(难度 + 长度共用);仅当当前选择支持时间线时出现。
-  const viewToggle = canTimeline ? (
+  // 图表 / 时间线视图开关(难度 + 长度共用);仅当当前选择支持时间线时出现。组平均模式下时间线不适用,隐藏。
+  const viewToggle = canTimeline && !avgOn ? (
     <div className="scramble-stats-view-toggle">
       <PillToggle
         value={viewMode === 'timeline'}
@@ -669,6 +717,35 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           en: 'Timeline: which competition each step-count / length first appeared at (earliest by date)',
         })}
       />
+    </div>
+  ) : null;
+
+  // 单个 / 组平均 切换(+ 备打子开关):仅当前选择有比赛分组时出现(难度族 / 有分组的长度项目)。
+  const avgToggle = avgAvailable ? (
+    <div className="scramble-stats-avg-toggle">
+      <PillToggle
+        value={avgMode}
+        onChange={setAvgMode}
+        offLabel={tr({ zh: '单个', en: 'Single' })}
+        onLabel={tr({ zh: '组平均', en: 'Group avg' })}
+        ariaLabel={tr({ zh: '单个打乱或按比赛组求平均', en: 'Per single scramble or per competition-group average' })}
+      />
+      <InfoTooltip
+        icon={HelpCircle}
+        content={tr({
+          zh: '组平均:把每场比赛每轮每组的一组打乱(三阶 5 条、多盲一组几十条)各项统计取平均(不去尾),再看这些组平均的分布',
+          en: 'Group average: for each competition round-group (5 scrambles for 3×3, dozens for MBLD), average the stat over the whole group (no trim), then show the distribution of those group means',
+        })}
+      />
+      {avgMode && (
+        <PillToggle
+          value={avgExtras}
+          onChange={setAvgExtras}
+          offLabel={tr({ zh: '不含备打', en: 'No extras' })}
+          onLabel={tr({ zh: '含备打', en: 'With extras' })}
+          ariaLabel={tr({ zh: '组平均是否包含备用打乱', en: 'Include extra scrambles in the group average' })}
+        />
+      )}
     </div>
   ) : null;
 
@@ -854,6 +931,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             }).replace('{n}', lenTotal.toLocaleString())}
           </span>
         )}
+        {avgToggle}
         {viewToggle}
         </div>
       </div>
@@ -1430,7 +1508,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         })}: {lengthsError}</div>
           : timelineActive
             ? timelineBlock
-            : <ScrambleLengthView isZh={isZh} data={lengthsData} event={event} merged={merged} metric={lenMetric} />}
+            : <ScrambleLengthView isZh={isZh} data={lengthsData} event={event} merged={merged} metric={lenMetric} avgData={avgLen} avgMode={avgOn} avgExtras={avgExtras} />}
       </div>
     );
   }
@@ -1572,9 +1650,13 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             </span>
           </div>
         )}
-        <span className="scramble-stats-count">{sampleCount}</span>
-        {/* 下载全部:该阶段全量语料(每条打乱 + 比赛信息 + 各底色十字步数)gz CSV;仅 std 变体有。 */}
-        {dataset === 'wca' && variant === 'std' && bundleStages?.includes(stage) && (
+        <span className="scramble-stats-count">
+          {avgOn
+            ? tr({ zh: '{n} 组', en: '{n} groups' }).replace('{n}', avgGroups.toLocaleString())
+            : sampleCount}
+        </span>
+        {/* 下载全部:该阶段全量语料(每条打乱 + 比赛信息 + 各底色十字步数)gz CSV;仅 std 变体有。组平均模式无对应下载。 */}
+        {!avgOn && dataset === 'wca' && variant === 'std' && bundleStages?.includes(stage) && (
           <a
             className="scramble-stats-download-all"
             href={statsUrl(`/stats/scramble/bundles/wca/std/all_${stage}.csv.gz`)}
@@ -1587,7 +1669,37 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         )}
       </div>
 
-      {timelineActive ? timelineBlock : (
+      {timelineActive ? timelineBlock : avgOn ? (
+      <>
+      <div className="scramble-stats-chart-wrapper">
+        <DiscreteHistogram
+          series={avgSeries}
+          isZh={isZh}
+          yMode={yMode}
+          chartMode={chartMode}
+          hideLegendColors
+          gapAware
+          showBarLabels={false}
+          formatBin={(v) => (v / avgDenom).toFixed(1)}
+          onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
+          onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count' })}
+        />
+      </div>
+      {avgStats && (
+        <div className="scramble-stats-panel">
+          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计(组平均)', en: 'Summary stats (group avg)' })}</div>
+          <div className="scramble-stats-stat-grid">
+            <StatCell label={tr({ zh: '均值', en: 'mean' })} value={(avgStats.mean / avgDenom).toFixed(2)} />
+            <StatCell label={tr({ zh: '中位数', en: 'median' })} value={(avgStats.median / avgDenom).toFixed(1)} />
+            <StatCell label="p10" value={(avgStats.p10 / avgDenom).toFixed(1)} />
+            <StatCell label="p90" value={(avgStats.p90 / avgDenom).toFixed(1)} />
+            <StatCell label="p99" value={(avgStats.p99 / avgDenom).toFixed(1)} />
+          </div>
+        </div>
+      )}
+      </>
+      ) : (
       <>
       <div className="scramble-stats-chart-wrapper">
         <DiscreteHistogram

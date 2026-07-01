@@ -34,6 +34,14 @@ export interface EventLengthsJson {
   events: Record<string, EventLen>;
 }
 
+// 组平均长度分布(build_scramble_lengths.ts 追加产出):每项目 ne(不含备打)/ we(含备打),
+// 各带 counts(HTM / 长度)与可选 counts_qtm。键 = round(组平均 × avg_denom);显示时 ÷ avg_denom。
+export interface EventLenAvgSide { counts: Record<string, number>; counts_qtm?: Record<string, number>; }
+export interface EventLengthsAvgJson {
+  meta: { generated_at: string; avg_denom: number };
+  events: Record<string, { unit: 'moves' | 'twists'; groups: number; ne: EventLenAvgSide; we: EventLenAvgSide }>;
+}
+
 type LenExample = [string, string, string, number, string, (0 | 1)?]; // [compId, round, group, num, text, isExtra?]
 interface ExamplesJson {
   meta: { generated_at: string; per_bin: number };
@@ -86,6 +94,25 @@ export function resolveEventLen(data: EventLengthsJson | null, event: string, me
     return { unit: 'moves', samples, counts, ...(Object.keys(countsQtm).length ? { counts_qtm: countsQtm } : {}) };
   }
   return data.events[event] ?? null;
+}
+
+// 组平均:合并态跨成员项目 sum 各自的组平均直方图;选备打 → we,否则 ne;metric qtm → counts_qtm。
+export function resolveEventLenAvg(
+  data: EventLengthsAvgJson | null, event: string, merged: boolean, extras: boolean, metric: 'htm' | 'qtm',
+): { counts: Record<string, number>; groups: number; unit: string } | null {
+  if (!data) return null;
+  const members = merged ? (groupForRep(event)?.members ?? [event]) : [event];
+  const counts: Record<string, number> = {};
+  let groups = 0, unit = 'moves', any = false;
+  for (const m of members) {
+    const ev = data.events[m];
+    if (!ev) continue;
+    any = true; unit = ev.unit; groups += ev.groups;
+    const side = extras ? ev.we : ev.ne;
+    const src = metric === 'qtm' && side.counts_qtm ? side.counts_qtm : side.counts;
+    for (const [k, v] of Object.entries(src)) counts[k] = (counts[k] ?? 0) + v;
+  }
+  return any ? { counts, groups, unit } : null;
 }
 
 // Second move-metric toggle metadata (shown when an event carries counts_qtm):
@@ -145,13 +172,17 @@ const unitLabel = (unit: string, _isZh: boolean) =>
   unit === 'twists' ? tr({ zh: '拧次', en: 'twists'
     }) : tr({ zh: '步', en: 'moves' });
 
-export default function ScrambleLengthView({ isZh, data, event, merged, metric }: {
+export default function ScrambleLengthView({ isZh, data, event, merged, metric, avgData, avgMode, avgExtras }: {
   isZh: boolean;
   data: EventLengthsJson | null;
   event: string;
   merged: boolean;
   // 度量(由父级控制,钮提到顶栏):3x3-family HTM/QTM、sq1 WCA/slash。
   metric: 'htm' | 'qtm';
+  // 组平均模式(父级 ?avg / ?avgx):开时整段换成组平均直方图,懒加载的 avgData。
+  avgData?: EventLengthsAvgJson | null;
+  avgMode?: boolean;
+  avgExtras?: boolean;
 }) {
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
   const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
@@ -245,6 +276,50 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric }
   if (!data) {
     return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…'
     })}</div>;
+  }
+
+  // 组平均模式:整段用「组平均」直方图替换(无示例交互 / 无脚注),度量沿用父级 metric。
+  if (avgMode) {
+    const a = resolveEventLenAvg(avgData ?? null, event, merged, !!avgExtras, metric);
+    const denom = avgData?.meta.avg_denom ?? 5;
+    if (!a) {
+      return <div className="scramble-stats-loading">{tr({ zh: '组平均数据生成中,稍后再来', en: 'Group-average data is being generated, check back soon' })}</div>;
+    }
+    const avgStats = summarize(a.counts);
+    const avgSeries: HistSeries[] = [{ name: curName, fillColors: [BAR], counts: a.counts }];
+    return (
+      <>
+        <div className="scramble-stats-chart-wrapper">
+          <DiscreteHistogram
+            series={avgSeries}
+            isZh={isZh}
+            yMode={yMode}
+            chartMode={chartMode}
+            hideLegendColors
+            gapAware
+            showBarLabels={false}
+            formatBin={(v) => (v / denom).toFixed(1)}
+            onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
+            onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+            yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count' })}
+          />
+        </div>
+        {avgStats && (
+          <div className="scramble-stats-panel">
+            <div className="scramble-stats-panel-title">
+              {curName}
+              {curSub && <span className="scramble-len-sub">{curSub}</span>} {tr({ zh: '摘要统计(组平均)', en: 'Summary stats (group avg)' })}
+              <span className="scramble-len-unit">({curUnit})</span>
+            </div>
+            <div className="scramble-stats-stat-grid">
+              <Cell label={tr({ zh: '均值', en: 'mean' })} value={(avgStats.mean / denom).toFixed(2)} />
+              <Cell label={tr({ zh: '中位数', en: 'median' })} value={(avgStats.median / denom).toFixed(1)} />
+              <Cell label={tr({ zh: '组数', en: 'groups' })} value={a.groups.toLocaleString()} />
+            </div>
+          </div>
+        )}
+      </>
+    );
   }
 
   return (

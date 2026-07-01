@@ -490,6 +490,13 @@
   gap: 0.6rem;
   flex-wrap: wrap;
 }
+/* 单个 / 组平均 切换(+ 备打子开关);随 tabrow 流式排布,窄屏折行 */
+.scramble-stats-avg-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
 /* 长度 tab:计步口径钮提到顶栏,紧挨合并左侧(覆盖 puzzle-toggle 的 top margin) */
 .scramble-len-metric-head {
   margin-top: 0;
