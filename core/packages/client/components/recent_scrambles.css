@@ -28,7 +28,14 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--foreground);
+}
+
+/* 标题右侧:本批打乱来源比赛的日期跨度(最早~最晚,紧凑 ISO)。margin-right:auto 让标题+日期靠左抱团 */
+.rs-date-range {
   margin-right: auto;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
 }
 
 /* 项目选择器在窄首页里收紧一点 icon 间距,横向可滚动不撑破布局 */
@@ -173,7 +180,6 @@
 .rs-hero-src:hover .rs-src-comp { color: var(--accent); }
 .rs-src-comp { font-size: 0.85rem; font-weight: 600; }
 .rs-src-meta { font-size: 0.78rem; color: var(--muted-foreground); }
-.rs-src-date { font-size: 0.78rem; color: var(--faint-foreground); font-variant-numeric: tabular-nums; }
 
 .rs-empty {
   padding: 1.2rem;
@@ -205,14 +211,6 @@
 .rs-row-sub {
   font-size: 0.76rem;
   color: var(--muted-foreground);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-/* 该打乱来自比赛的日期(cd = 起讫日紧凑串,如 2026-06-20 / 2026-06-20~21);移动端也保留可见 */
-.rs-row-date {
-  font-size: 0.76rem;
-  color: var(--faint-foreground);
-  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   flex-shrink: 0;
 }
