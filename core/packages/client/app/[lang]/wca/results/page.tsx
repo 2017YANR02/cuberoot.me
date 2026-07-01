@@ -8,7 +8,8 @@
  * 交互(累加):点事件 = 加入/取消对比(留 1 项回单项);分类快选替换整组;清除 → 空。
  * 合并自原 /wca/sum-of-ranks(已整页并入,旧路由弃用)。
  */
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import type { EChartsType } from 'echarts';
 import Link from '@/components/AppLink';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import dynamic from 'next/dynamic';
@@ -478,11 +479,17 @@ function AllResultsPageInner() {
       }],
     };
   }, [timeline, selYear]);
-  const onChartEvents = useMemo(() => ({
-    click: (p: { dataIndex?: number }) => {
-      if (timeline && p.dataIndex != null) setCensusYear(timeline[p.dataIndex]!.year);
-    },
-  }), [timeline]);
+  // 折线图的 symbol 点太小、精确点击命中率低 → 用 zrender 原始 click + convertFromPixel
+  // 把整根 grid 竖列都算作"点这一年"(跟 tooltip 的 axis trigger 手感一致),而非只认小圆点本身。
+  const onChartReady = useCallback((chart: EChartsType) => {
+    chart.getZr().on('click', (p: { offsetX: number; offsetY: number }) => {
+      if (!chart.containPixel('grid', [p.offsetX, p.offsetY])) return;
+      const idx = Math.round(chart.convertFromPixel({ xAxisIndex: 0 }, p.offsetX));
+      const years = (chart.getOption().xAxis as Array<{ data: number[] }>)[0]!.data;
+      const year = years[idx];
+      if (year != null) setCensusYear(year);
+    });
+  }, []);
 
 
   // 顶层「类型」下拉(单次 / 平均 = 排名口径;其余派生指标 = 嵌入 wr_metric 对应指标视图)。
@@ -895,7 +902,7 @@ function AllResultsPageInner() {
                 </div>
                 {chartOption && (
                   <div className="sor-census-chart">
-                    <ReactECharts option={chartOption} style={{ height: 190, width: '100%' }} opts={{ renderer: 'canvas' }} onEvents={onChartEvents} />
+                    <ReactECharts option={chartOption} style={{ height: 190, width: '100%', cursor: 'pointer' }} opts={{ renderer: 'canvas' }} onChartReady={onChartReady} />
                     <div className="sor-census-chart-hint">{tr({ zh: '历年“名次和第一”不同人数 — 点某年看名单', en: 'Distinct #1-holders by year — click a year' })}</div>
                   </div>
                 )}
