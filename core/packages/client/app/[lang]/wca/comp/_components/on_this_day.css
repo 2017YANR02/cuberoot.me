@@ -2,12 +2,13 @@
    外壳 .modal-overlay / .modal-panel / .modal-close 复用 upcoming_comps.css。 */
 
 .otd-panel {
-    --otd-text: #171717;
-    --otd-text-sub: #737373;
-    --otd-text-mute: #95938E;
-    --otd-border: #e5e5e5;
-    --otd-border-strong: #d4d4d4;
-    --otd-surface: #FBF8F3;
+    /* 走 :root 通用 token,自动 light/dark 反盖(comp 页非 dark-locked)。 */
+    --otd-text: var(--foreground);
+    --otd-text-sub: var(--muted-foreground);
+    --otd-text-mute: var(--faint-foreground);
+    --otd-border: var(--border-default);
+    --otd-border-strong: var(--border-strong);
+    --otd-surface: var(--muted);
     --otd-accent: var(--accent);
     --otd-accent-soft: color-mix(in srgb, var(--accent) 8%, transparent);
 
@@ -76,7 +77,7 @@
     padding: 5px 10px;
     border-radius: 999px;
     border: 1px solid var(--otd-border);
-    background: #fff;
+    background: var(--card);
     color: var(--otd-text-mute);
     font-size: 0.78rem;
     font-weight: 600;
@@ -119,10 +120,10 @@
     font-size: 0.92rem;
 }
 
-.otd-error { color: #B23838; }
+.otd-error { color: var(--destructive); }
 
 .otd-year-block {
-    background: #fff;
+    background: var(--card);
     border: 1px solid var(--otd-border);
     border-radius: 10px;
     margin-bottom: 10px;
