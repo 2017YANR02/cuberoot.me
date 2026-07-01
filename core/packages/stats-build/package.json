@@ -8,6 +8,7 @@
     "validate-queries": "tsx src/bin/validate_queries.ts",
     "nemesizer": "tsx src/bin/nemesizer.ts",
     "gen-persons-search": "tsx src/bin/gen_persons_search.ts",
+    "build:scramble-lengths": "tsx src/bin/build_scramble_lengths.ts",
     "typecheck": "tsgo --noEmit"
   },
   "dependencies": {
