@@ -13,7 +13,7 @@
 
 import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { parseHumanResult } from '@/lib/result-watch-api';
@@ -69,6 +69,18 @@ const boxStyle: CSSProperties = {
   background: 'var(--popover)', border: '1px solid var(--border-default)', borderRadius: 12,
   boxShadow: '0 12px 32px rgba(0, 0, 0, 0.34)', textAlign: 'left', whiteSpace: 'normal', cursor: 'default',
   maxHeight: 'calc(100vh - 16px)', overflowY: 'auto',
+};
+// 关闭条:sticky 顶到弹窗内滚动容器顶,负边距铺满内边距、popover 背景遮住下滚内容;× 靠右。
+const closeBarStyle: CSSProperties = {
+  position: 'sticky', top: 0, zIndex: 3,
+  display: 'flex', justifyContent: 'flex-end',
+  margin: '-6px -6px 0', padding: '2px 2px 0',
+  background: 'var(--popover)',
+};
+const closeBtnStyle: CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  width: 26, height: 26, padding: 0, flexShrink: 0, cursor: 'pointer',
+  background: 'none', border: 'none', color: 'var(--muted-foreground)', borderRadius: 6,
 };
 const actionStyle: CSSProperties = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
@@ -334,6 +346,11 @@ export function AttemptPopover({
         <>
           <div style={backdropStyle} onClick={close} />
           <div ref={popRef} style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
+            <div style={closeBarStyle}>
+              <button type="button" style={closeBtnStyle} onClick={close} aria-label={tr({ zh: '关闭', en: 'Close' })}>
+                <X size={16} />
+              </button>
+            </div>
             {/* ① 复盘 + 动画演示(内嵌播放器 + 解法);没复盘 → 去复盘 */}
             {showReconSection ? (
               <div style={reconSectionStyle}>
