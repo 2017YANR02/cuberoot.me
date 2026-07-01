@@ -18,6 +18,7 @@
  */
 import { PgBackbone, type PgGroupFacts } from './pgBackbone';
 import { PgGroup, type WordStep } from './pgGroup';
+import { precomputedFacts } from './pgFacts';
 import type { PGOrbitsDef, PGTransform, PuzzleName } from '@/lib/puzzle-geometry';
 
 export interface MoveBridge<M> {
@@ -139,13 +140,32 @@ export class PgEngineBinding<M> {
     return this.movesToString(this.scrambleMoves());
   }
 
+  /** The exact group facts. Served from the PRECOMPUTED table (deterministic per puzzle —
+   *  see pgFacts) so the runtime never runs Schreier-Sims and never freezes; falls back to
+   *  a live computation only if a puzzle wasn't baked (regenerate pgFacts.generated then). */
   facts(): PgGroupFacts {
     if (!this.cachedFacts) {
-      this.cachedFacts = this.bridge.factsOverEngineGens
-        ? this.backbone.factsOver(this.gens, this.bridge.factsMoveNames)
-        : this.backbone.facts();
+      const pre = precomputedFacts(String(this.bridge.pgName));
+      if (pre) {
+        this.cachedFacts = pre;
+      } else {
+        if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
+          console.warn(`[pgFacts] no precomputed facts for "${this.bridge.pgName}" — computing live (freezes UI). Regenerate tests/gen_pg_facts.gen.test.ts`);
+        }
+        this.cachedFacts = this.bridge.factsOverEngineGens
+          ? this.backbone.factsOver(this.gens, this.bridge.factsMoveNames)
+          : this.backbone.facts();
+      }
     }
     return this.cachedFacts;
+  }
+
+  /** Live-computed facts, bypassing the precomputed table — used by the offline generator
+   *  to (re)build the baked table. Do not call from UI (may freeze). */
+  computeFactsLive(): PgGroupFacts {
+    return this.bridge.factsOverEngineGens
+      ? this.backbone.factsOver(this.gens, this.bridge.factsMoveNames)
+      : this.backbone.facts();
   }
 
   private wordToMoves(word: WordStep[]): M[] {
