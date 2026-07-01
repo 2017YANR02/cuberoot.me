@@ -32,6 +32,8 @@ import { loadNoScrambleIds } from '@/lib/comp-no-scrambles';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
 import { localizeCity } from '@/lib/city-localize';
+import { getSimilarComps, type SeriesComp } from '@/lib/comp-series';
+import { compLinkProps } from '@/lib/comp-link';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
@@ -591,6 +593,31 @@ function decodeEntities(s: string): string {
     .replace(/&amp;/g, '&');
 }
 
+// 「相似比赛」列表 —— 每行一场同系列比赛(旗 + 全名带年份 + 日期 + 地点),点进对应比赛页。
+// 用全名(保留年份/版本号)而非精简名:年份/版本号正是区分同系列各场的关键。
+function SimilarCompsView({ comps, isZh, lang }: { comps: SeriesComp[]; isZh: boolean; lang: 'zh' | 'en' }) {
+  return (
+    <ul className="comp-similar-list">
+      {comps.map(c => {
+        const name = localizeCompName(c.id, decodeEntities(c.name), isZh);
+        const date = formatDateRangeIso(c.start, c.end || c.start);
+        const city = c.city ? (isZh ? localizeCity(c.city, true, c.country) : c.city) : '';
+        const place = city ? `${city}${tr({ zh: '，', en: ', ' })}${countryName(c.country, isZh)}` : countryName(c.country, isZh);
+        return (
+          <li key={c.id}>
+            <Link {...compLinkProps(c.id, undefined, lang)} className="comp-similar-item">
+              <Flag iso2={c.country} className="comp-similar-flag" />
+              <span className="comp-similar-name">{name}</span>
+              <span className="comp-similar-date">{date}</span>
+              <span className="comp-similar-place">{place}</span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export default function CompDetailPage() {
   const params = useParams<{ slug: string }>();
   const rawSlug = (Array.isArray(params?.slug) ? params.slug[0] : params?.slug) ?? '';
@@ -634,7 +661,7 @@ export default function CompDetailPage() {
   );
   const [explicitView, setExplicitView] = useQueryState(
     'view',
-    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium' | 'scramble'>(['result', 'psych', 'schedule', 'podium', 'scramble']).withOptions({ history: 'push', scroll: false }),
+    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar'>(['result', 'psych', 'schedule', 'podium', 'scramble', 'similar']).withOptions({ history: 'push', scroll: false }),
   );
   const [psychEventParam, setPsychEventParam] = useQueryState(
     'psychEvent',
@@ -758,6 +785,17 @@ export default function CompDetailPage() {
     return () => { cancel = true; };
   }, [hasResults, slug]);
   const showScramblesTab = scramblesPublished;
+  // 「相似比赛」:名字只差版本号(I/II/III…)或年份的同系列比赛。读预算好的 stats/comp_series.json
+  // (整取一次 memoize),延迟到首屏后不阻塞;有 ≥1 场才亮 tab(同 showScramblesTab 的懒亮法)。
+  const [similarComps, setSimilarComps] = useState<SeriesComp[]>([]);
+  useEffect(() => {
+    setSimilarComps([]);
+    if (!slug) return;
+    let alive = true;
+    getSimilarComps(slug).then(list => { if (alive) setSimilarComps(list); }).catch(() => {});
+    return () => { alive = false; };
+  }, [slug]);
+  const showSimilarTab = similarComps.length > 0;
   // 领奖台:各项目决赛前三。比赛结束(所有项目末轮都有成绩)且有领奖台时默认展示。
   const podiumGroups = useMemo(() => (data ? computePodiumGroups(data, changeMap) : []), [data, changeMap]);
   const compRecords = useMemo(() => (data ? computeCompRecords(data) : []), [data]);
@@ -774,19 +812,21 @@ export default function CompDetailPage() {
     const t = compInfo?.registration_open ? Date.parse(compInfo.registration_open) : NaN;
     return Number.isFinite(t) && Date.now() < t;
   }, [compInfo]);
-  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' =
+  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar' =
     explicitView === 'psych' ? 'psych'
       : explicitView === 'schedule' ? 'schedule'
         : explicitView === 'scramble' ? 'scramble'
-          : (explicitView === 'podium' && hasPodiumTab) ? 'podium'
-            : explicitView === 'result' ? 'result'
-              : (data && !hasResults) ? (beforeRegOpen ? 'schedule' : 'psych')
-                : (compFinished && podiumGroups.length > 0) ? 'podium'
-                  : 'result';
+          : (explicitView === 'similar' && showSimilarTab) ? 'similar'
+            : (explicitView === 'podium' && hasPodiumTab) ? 'podium'
+              : explicitView === 'result' ? 'result'
+                : (data && !hasResults) ? (beforeRegOpen ? 'schedule' : 'psych')
+                  : (compFinished && podiumGroups.length > 0) ? 'podium'
+                    : 'result';
   const isPsych = viewParam === 'psych';
   const isSchedule = viewParam === 'schedule';
   const isPodium = viewParam === 'podium';
   const isScramble = viewParam === 'scramble';
+  const isSimilar = viewParam === 'similar';
   // 把当前生效的视图固化进 URL(强制带上 ?view=…),分享/收藏直接命中 active tab。
   // 仅在用户未显式选 tab 且默认视图依赖的数据已就位时写一次:有成绩=纯 data 驱动,无成绩需
   // 等 compInfo settle 才能定 schedule/psych。history:replace 不污染后退栈,避免回退到裸 URL。
@@ -1241,7 +1281,7 @@ export default function CompDetailPage() {
     setFilterParam(value || null);
   };
 
-  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble') => {
+  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' | 'similar') => {
     setExplicitView(value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
   };
 
@@ -1519,6 +1559,17 @@ export default function CompDetailPage() {
             {tr({ zh: '赛程', en: 'Schedule'
             })}
           </button>
+          {/* 相似比赛:名字只差版本号(I/II/III…)或年份的同系列比赛。有 ≥1 场才显示入口。 */}
+          {showSimilarTab && (
+            <button
+              type="button"
+              className={`comp-view-tab${isSimilar ? ' is-active' : ''}`}
+              onClick={() => onChangeView('similar')}
+            >
+              {tr({ zh: '相似比赛', en: 'Similar'
+              })}
+            </button>
+          )}
           {/* 打乱:页内视图(与成绩/预排名/赛程同级),把 /scramble/gen 的比赛模式整套内嵌进来,
               不再跳出本页。WCA 未公布打乱的比赛(未来赛 / 老赛无 scrambles)隐藏入口。 */}
           {showScramblesTab && (
@@ -1546,7 +1597,7 @@ export default function CompDetailPage() {
           {/* 编辑模式铅笔已移除:编辑 / 提议 / 复盘 / 视频全收进点成绩弹窗(AttemptPopover),与选手页一致。 */}
         </div>
 
-        {!isPodium && !isScramble && (
+        {!isPodium && !isScramble && !isSimilar && (
           <div className="comp-event-bar">
             <WcaEventSelector
               availableEvents={availableEventIds}
@@ -1564,6 +1615,8 @@ export default function CompDetailPage() {
 
         {isScramble ? (
           <CompScramblesTab slug={slug} />
+        ) : isSimilar ? (
+          <SimilarCompsView comps={similarComps} isZh={isZh} lang={isZh ? 'zh' : 'en'} />
         ) : isSchedule ? (
           <ScheduleView
             slug={slug}
