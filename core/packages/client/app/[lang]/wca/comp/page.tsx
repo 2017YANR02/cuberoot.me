@@ -1424,6 +1424,11 @@ function CalendarPageInner() {
   const [allComps, setAllComps] = useState<Competition[] | null>(null);
   const [allLoading, setAllLoading] = useState(false);
   const [allError, setAllError] = useState<string | null>(null);
+  // 权威双轮标记（dump rounds.linked_round_id → stats/comp_dual.json，键=完整 WCA event id）。
+  // 列表的 dual 筛选/标记本吃 all_past_comps.json 烘焙的 dual_events，但那份由每日 stats CI 重生成、
+  // 可能滞后于 linked_round_id 逻辑上线（且不含未结束比赛）。这里整取权威源叠加到 activeComps，
+  // 与详情页 loadCompDual 同源。文件极小（几十场），一次拉取。
+  const [compDual, setCompDual] = useState<Record<string, string[]>>({});
   // 每个项目独立的轮次约束。1..max = 精确匹配；'any' = 项目存在即过（不检查轮次）；
   // 缺 key = 不过滤此项目。chip 单击循环：undefined → 1 → ... → max → 'any' → undefined。
   // 'any' 状态在 UI 上仅通过 is-active 边框体现（badge 空），不显式写"≥1"等文字。
@@ -1559,6 +1564,14 @@ function CalendarPageInner() {
       .catch(() => setError(t('upcoming.loadError')));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 权威双轮标记：一次性拉 comp_dual.json（{compId: [完整 event id]}）叠加到 activeComps
+  useEffect(() => {
+    fetch(statsUrl('/stats/comp_dual.json'))
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((d: Record<string, string[]>) => setCompDual(d))
+      .catch(() => {});
+  }, []);
+
   // NOTE: All 模式懒加载 — 切到 All 且还没数据时读预生成 JSON（upcoming + past 合并，按 id 去重以 upcoming 为准）
   useEffect(() => {
     if (mode !== 'all' || allComps || allLoading || !data) return;
@@ -1580,9 +1593,15 @@ function CalendarPageInner() {
 
   // NOTE: 当前激活的比赛列表——All 模式下数据未到时暂用 Top 数据
   const activeComps: Competition[] = useMemo(() => {
-    if (mode === 'all' && allComps) return allComps;
-    return data?.competitions ?? [];
-  }, [mode, allComps, data]);
+    const base = mode === 'all' && allComps ? allComps : (data?.competitions ?? []);
+    if (Object.keys(compDual).length === 0) return base;
+    // 权威 comp_dual.json（完整 event id）→ 短码，覆盖 dual_events（含未结束比赛、不受 stats CI 滞后影响）
+    return base.map((c) => {
+      const full = compDual[c.id];
+      if (!full) return c;
+      return { ...c, dual_events: full.map((e) => WCA_EVENT_ID_TO_SHORT[e] ?? e) };
+    });
+  }, [mode, allComps, data, compDual]);
 
   // NOTE: 选中国家时整段隐藏其他国家（不是变淡）；country picker / yearMonthsMap 仍用 activeComps
   // 多选 token: 国家 iso2(小写) 或大洲 code(大写)。expandCountrySelection 把大洲展开为下属国家。
