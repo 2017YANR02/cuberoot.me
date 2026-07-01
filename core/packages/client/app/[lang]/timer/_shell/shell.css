@@ -568,7 +568,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    the last child of .shell-main: on phones it flows in-place under the scramble
    chrome; on desktop it's lifted to an absolute right rail and .shell-main is
    given matching right padding so the centered timer never sits under it. */
-.timer-shell { --solver-rail-w: clamp(380px, 31vw, 520px); }
+.timer-shell { --solver-rail-w: clamp(380px, 31vw, 520px); --solver-open-surface-h: 62dvh; }
 .solver-panel {
   width: 100%;
   display: flex;
@@ -716,7 +716,17 @@ html[data-theme=dark] { --scramble-fg: #fff; }
     height: auto;
   }
   .timer-shell:has(.solver-panel[data-open='true']) .shell-main { flex: 0 0 auto; }
-  .timer-shell:has(.solver-panel[data-open='true']) .timing-surface { min-height: 62dvh; }
+  .timer-shell:has(.solver-panel[data-open='true']) .timing-surface { min-height: var(--solver-open-surface-h); }
+  /* Opening the panel re-flows the page (shell-main grows to fit the solver
+     below), so the bottom-of-shell-main anchored stat rail would otherwise drop
+     to the very page bottom, under the solver. Re-anchor it to the bottom-left
+     of the timing surface (its min-height above) so the 次数/成功/… readout
+     stays put by the timer instead of moving. */
+  .timer-shell:has(.solver-panel[data-open='true']) .shell-stat-rail {
+    top: var(--solver-open-surface-h);
+    bottom: auto;
+    transform: translateY(calc(-100% - 8px));
+  }
 }
 
 /* Desktop: lift to an absolute right rail inside .shell-main; reserve room via
