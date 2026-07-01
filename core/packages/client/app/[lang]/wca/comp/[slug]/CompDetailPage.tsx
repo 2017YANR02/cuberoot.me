@@ -5,6 +5,7 @@
  * Live WS (cubing.com + WCA Live) + Psych Sheet + record badges + round/cuber modals.
  */
 import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -56,6 +57,10 @@ import type { ResultChange } from '@/lib/result-watch-api';
 import '../comp.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
+
+// 「打乱」tab:把 /scramble/gen 的比赛模式整套内嵌进来。重(WASM 求解器 + 打乱引擎),
+// 懒加载 —— 只有用户点开「打乱」才拉这部分 JS,不拖累比赛页首屏。
+const CompScramblesTab = dynamic(() => import('./CompScramblesTab'), { ssr: false });
 
 interface User {
   number: number;
@@ -629,7 +634,7 @@ export default function CompDetailPage() {
   );
   const [explicitView, setExplicitView] = useQueryState(
     'view',
-    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium'>(['result', 'psych', 'schedule', 'podium']).withOptions({ history: 'push', scroll: false }),
+    parseAsStringEnum<'result' | 'psych' | 'schedule' | 'podium' | 'scramble'>(['result', 'psych', 'schedule', 'podium', 'scramble']).withOptions({ history: 'push', scroll: false }),
   );
   const [psychEventParam, setPsychEventParam] = useQueryState(
     'psychEvent',
@@ -769,17 +774,19 @@ export default function CompDetailPage() {
     const t = compInfo?.registration_open ? Date.parse(compInfo.registration_open) : NaN;
     return Number.isFinite(t) && Date.now() < t;
   }, [compInfo]);
-  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' =
+  const viewParam: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble' =
     explicitView === 'psych' ? 'psych'
       : explicitView === 'schedule' ? 'schedule'
-        : (explicitView === 'podium' && hasPodiumTab) ? 'podium'
-          : explicitView === 'result' ? 'result'
-            : (data && !hasResults) ? (beforeRegOpen ? 'schedule' : 'psych')
-              : (compFinished && podiumGroups.length > 0) ? 'podium'
-                : 'result';
+        : explicitView === 'scramble' ? 'scramble'
+          : (explicitView === 'podium' && hasPodiumTab) ? 'podium'
+            : explicitView === 'result' ? 'result'
+              : (data && !hasResults) ? (beforeRegOpen ? 'schedule' : 'psych')
+                : (compFinished && podiumGroups.length > 0) ? 'podium'
+                  : 'result';
   const isPsych = viewParam === 'psych';
   const isSchedule = viewParam === 'schedule';
   const isPodium = viewParam === 'podium';
+  const isScramble = viewParam === 'scramble';
   // 把当前生效的视图固化进 URL(强制带上 ?view=…),分享/收藏直接命中 active tab。
   // 仅在用户未显式选 tab 且默认视图依赖的数据已就位时写一次:有成绩=纯 data 驱动,无成绩需
   // 等 compInfo settle 才能定 schedule/psych。history:replace 不污染后退栈,避免回退到裸 URL。
@@ -1234,7 +1241,7 @@ export default function CompDetailPage() {
     setFilterParam(value || null);
   };
 
-  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium') => {
+  const onChangeView = (value: 'result' | 'psych' | 'schedule' | 'podium' | 'scramble') => {
     setExplicitView(value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
   };
 
@@ -1512,33 +1519,20 @@ export default function CompDetailPage() {
             {tr({ zh: '赛程', en: 'Schedule'
             })}
           </button>
-          {/* 打乱:不是页内视图,而是带当前项目/轮次跳到打乱生成器的比赛模式(AppLink 真 <a>,
-              支持中键新开)。故无 is-active,用 ⇄ 图标暗示「会离开本页」。WCA 未公布打乱的比赛
-              (未来赛 / 老赛无 scrambles)隐藏入口,点进去也只会是空。 */}
+          {/* 打乱:页内视图(与成绩/预排名/赛程同级),把 /scramble/gen 的比赛模式整套内嵌进来,
+              不再跳出本页。WCA 未公布打乱的比赛(未来赛 / 老赛无 scrambles)隐藏入口。 */}
           {showScramblesTab && (
-          <Link
-            href={(() => {
-              const q = new URLSearchParams({ comp: slug });
-              if (eventParam && eventParam !== 'all') {
-                q.set('event', eventParam);
-                if (roundParam) q.set('round', String(roundTypeIdToNum(data, eventParam, roundParam)));
-              }
-              return `/scramble/gen?${q.toString()}`;
-            })()}
-            // Reactive href (changes on every event/round switch) + leaves this
-            // page → Next would re-prefetch a new /scramble/gen RSC payload on each
-            // switch. That prefetch storm was ~85% of all /scramble/gen edge hits
-            // (13.5k _rsc requests from 791 real users) with near-zero click-through.
-            // Disable prefetch: clicking still navigates normally, page load unaffected.
-            prefetch={false}
-            className="comp-view-tab comp-view-tab--link"
+          <button
+            type="button"
+            className={`comp-view-tab comp-view-tab--icon${isScramble ? ' is-active' : ''}`}
+            onClick={() => onChangeView('scramble')}
             title={tr({ zh: '查看本场打乱', en: 'View scrambles'
             })}
           >
             <Shuffle size={14} strokeWidth={1.75} />
             {tr({ zh: '打乱', en: 'Scrambles'
             })}
-          </Link>
+          </button>
           )}
           {isSchedule && (
             <ScheduleControls
@@ -1552,7 +1546,7 @@ export default function CompDetailPage() {
           {/* 编辑模式铅笔已移除:编辑 / 提议 / 复盘 / 视频全收进点成绩弹窗(AttemptPopover),与选手页一致。 */}
         </div>
 
-        {!isPodium && (
+        {!isPodium && !isScramble && (
           <div className="comp-event-bar">
             <WcaEventSelector
               availableEvents={availableEventIds}
@@ -1568,7 +1562,9 @@ export default function CompDetailPage() {
           </div>
         )}
 
-        {isSchedule ? (
+        {isScramble ? (
+          <CompScramblesTab slug={slug} />
+        ) : isSchedule ? (
           <ScheduleView
             slug={slug}
             isZh={isZh}

@@ -460,14 +460,13 @@
   color: var(--foreground);
   border-bottom-color: var(--accent);
 }
-/* 打乱 tab 是跳转件(AppLink <a>),不是页内视图:图标 + 文字,无下划线/无 is-active。 */
-.comp-view-tab--link {
+/* 打乱 tab:页内视图,但带个前导图标(Shuffle),给它 inline-flex 让图标 + 文字垂直居中。 */
+.comp-view-tab--icon {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  text-decoration: none;
 }
-.comp-view-tab--link svg { opacity: 0.7; flex: none; }
+.comp-view-tab--icon svg { opacity: 0.7; flex: none; }
 
 /* 编辑模式铅笔 + .comp-att-recon 链接已退役:点成绩统一走 AttemptPopover(复盘/判罚/编辑/视频),
    触发件提示类改用共享 .att-trig-recon / .att-trig-plain(见 result-change.css)。 */
@@ -1591,4 +1590,13 @@ td.is-pr {
   .sched-day-title { font-size: 1.2rem; }
   .sched-day { margin-bottom: 22px; }
   .sched-legend h4 { font-size: 1rem; }
+}
+
+/* ── 内嵌打乱页(/wca/comp/[slug] 的「打乱」tab,复用 /scramble/gen 的 .gen-page) ──
+   .gen-page 默认是整页容器(min-height:100vh + 自带背景),内嵌时去掉,让它当普通区块,
+   背景 / 主题跟随比赛页;顶部留点间距对齐其它 tab。 */
+.comp-scrambles-embed.gen-page {
+  min-height: 0;
+  background: transparent;
+  margin-top: 4px;
 }
