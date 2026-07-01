@@ -11,7 +11,8 @@
 import { describe, it, expect } from 'vitest';
 import { writeFileSync } from 'node:fs';
 import { PgEngineBinding } from '@/app/[lang]/sim/engine/pgBinding';
-import { allBridges } from '@/app/[lang]/sim/engine/pgBindings';
+import { PermEngineBinding } from '@/app/[lang]/sim/engine/permBinding';
+import { allBridges, permBridges } from '@/app/[lang]/sim/engine/pgBindings';
 import { serializePgFacts, type SerializedPgFacts } from '@/app/[lang]/sim/engine/pgFacts';
 
 const RUN = !!process.env.GEN_PG_FACTS;
@@ -26,6 +27,13 @@ describe('generate pgFacts.generated.ts', () => {
       table[String(bridge.pgName)] = serializePgFacts(facts);
       // eslint-disable-next-line no-console
       console.log(`  ${bridge.pgName}: |G| = ${facts.order}`);
+    }
+    // Perm-backbone puzzles (ivy, rex) — baked under bridge.key, not a PG name.
+    for (const bridge of permBridges()) {
+      const facts = new PermEngineBinding(bridge).computeFactsLive();
+      table[bridge.key] = serializePgFacts(facts);
+      // eslint-disable-next-line no-console
+      console.log(`  ${bridge.key}: |G| = ${facts.order}`);
     }
     const body = Object.entries(table)
       .map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`)
