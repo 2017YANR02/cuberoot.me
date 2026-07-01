@@ -341,56 +341,61 @@ async function main() {
   await processMetric(true, countries);
 
   // ── 写 scope 文件 ──
-  writeFileSync(resolve(SOR_DIR, 'world.json'), JSON.stringify(worldOut));
-  for (const [cont, out] of continentOut) {
-    writeFileSync(resolve(SOR_DIR, 'continent', `${cont.replace(/\s+/g, '_')}.json`), JSON.stringify(out));
-  }
+  // daily builder (sor_over_time_daily_build.ts) 接管逐日 race 帧后,CI 用 SKIP_RACE_FILES=1 跳过
+  // 年级 race/index 写盘(避免与 daily 输出撞路径),本 builder 只保留 sor_historical_best(徽标)。
+  const SKIP_RACE = !!process.env.SKIP_RACE_FILES;
   let countryFiles = 0, countryDropped = 0;
-  const countryList: Array<{ iso2: string; id: string; name: string }> = [];
-  for (const [iso2, out] of countryOut) {
-    // 找回 country_id(以 iso2 反查 meta)
-    let meta: { iso2: string; name: string } | undefined;
-    let cid = '';
-    for (const [id, m] of countryMeta) if (m.iso2 === iso2) { meta = m; cid = id; break; }
-    if (!meta) continue;
-    if ((maxCountryCount.get(cid) || 0) < MIN_COUNTRY_CUBERS) { countryDropped++; continue; }
-    writeFileSync(resolve(SOR_DIR, 'country', `${iso2}.json`), JSON.stringify(out));
-    countryList.push({ iso2, id: cid, name: meta.name });
-    countryFiles++;
-  }
+  if (!SKIP_RACE) {
+    writeFileSync(resolve(SOR_DIR, 'world.json'), JSON.stringify(worldOut));
+    for (const [cont, out] of continentOut) {
+      writeFileSync(resolve(SOR_DIR, 'continent', `${cont.replace(/\s+/g, '_')}.json`), JSON.stringify(out));
+    }
+    const countryList: Array<{ iso2: string; id: string; name: string }> = [];
+    for (const [iso2, out] of countryOut) {
+      // 找回 country_id(以 iso2 反查 meta)
+      let meta: { iso2: string; name: string } | undefined;
+      let cid = '';
+      for (const [id, m] of countryMeta) if (m.iso2 === iso2) { meta = m; cid = id; break; }
+      if (!meta) continue;
+      if ((maxCountryCount.get(cid) || 0) < MIN_COUNTRY_CUBERS) { countryDropped++; continue; }
+      writeFileSync(resolve(SOR_DIR, 'country', `${iso2}.json`), JSON.stringify(out));
+      countryList.push({ iso2, id: cid, name: meta.name });
+      countryFiles++;
+    }
 
-  // ── index ──
-  const persons: Record<string, { name: string; country: string; iso2: string | null }> = {};
-  for (const id of personsInFrames) {
-    const ctry = personCountryInFrames.get(id) || '';
-    persons[id] = {
-      name: personNames.get(id) || id,
-      country: ctry,
-      iso2: countries.get(ctry)?.iso2 || null,
+    // ── index ──
+    const persons: Record<string, { name: string; country: string; iso2: string | null }> = {};
+    for (const id of personsInFrames) {
+      const ctry = personCountryInFrames.get(id) || '';
+      persons[id] = {
+        name: personNames.get(id) || id,
+        country: ctry,
+        iso2: countries.get(ctry)?.iso2 || null,
+      };
+    }
+    const continentList = [...continentSeen].sort();
+    countryList.sort((a, b) => a.name.localeCompare(b.name));
+    // 被引用到的"最后贡献比赛" → id→name(缺名的省略,前端回退 id)
+    const comps: Record<string, string> = {};
+    let compMiss = 0;
+    for (const id of referencedComps) {
+      const n = compNames.get(id);
+      if (n) comps[id] = n; else compMiss++;
+    }
+    const allYears = new Set<number>();
+    for (const f of worldOut.single) allYears.add(f.y);
+    const index = {
+      id: 'sor_over_time',
+      years: [...allYears].sort((a, b) => a - b),
+      storeK: STORE_K,
+      showN: 10,
+      scopes: { world: true, continents: continentList, countries: countryList },
+      comps,
+      persons,
     };
+    writeFileSync(resolve(STATS_DIR, 'sor_over_time.json'), JSON.stringify(index));
+    console.log(`[sor] comps referenced=${referencedComps.size} named=${Object.keys(comps).length} missing=${compMiss}`);
   }
-  const continentList = [...continentSeen].sort();
-  countryList.sort((a, b) => a.name.localeCompare(b.name));
-  // 被引用到的"最后贡献比赛" → id→name(缺名的省略,前端回退 id)
-  const comps: Record<string, string> = {};
-  let compMiss = 0;
-  for (const id of referencedComps) {
-    const n = compNames.get(id);
-    if (n) comps[id] = n; else compMiss++;
-  }
-  const allYears = new Set<number>();
-  for (const f of worldOut.single) allYears.add(f.y);
-  const index = {
-    id: 'sor_over_time',
-    years: [...allYears].sort((a, b) => a - b),
-    storeK: STORE_K,
-    showN: 10,
-    scopes: { world: true, continents: continentList, countries: countryList },
-    comps,
-    persons,
-  };
-  writeFileSync(resolve(STATS_DIR, 'sor_over_time.json'), JSON.stringify(index));
-  console.log(`[sor] comps referenced=${referencedComps.size} named=${Object.keys(comps).length} missing=${compMiss}`);
 
   // ── best-rank TSV(world + continent + country)→ PG ──
   // 列:wca_id, is_avg, scope('world'|'continent'|'country'), best_rank, best_year, best_total
@@ -431,10 +436,14 @@ async function main() {
     console.log('[sor] WARN: load.sql not found in OUT_DIR — run historical_ranks_build first (best-rank not loaded)');
   }
 
-  const idxMb = (statSync(resolve(STATS_DIR, 'sor_over_time.json')).size / 1024 / 1024).toFixed(2);
   console.log(`\n=== Done in ${((Date.now() - t0) / 1000).toFixed(1)}s ===`);
-  console.log(`world + ${continentOut.size} continents + ${countryFiles} countries (dropped ${countryDropped} < ${MIN_COUNTRY_CUBERS} cubers)`);
-  console.log(`index persons=${personsInFrames.size}  index=${idxMb}MB`);
+  if (!SKIP_RACE) {
+    const idxMb = (statSync(resolve(STATS_DIR, 'sor_over_time.json')).size / 1024 / 1024).toFixed(2);
+    console.log(`world + ${continentOut.size} continents + ${countryFiles} countries (dropped ${countryDropped} < ${MIN_COUNTRY_CUBERS} cubers)`);
+    console.log(`index persons=${personsInFrames.size}  index=${idxMb}MB`);
+  } else {
+    console.log(`[sor] SKIP_RACE_FILES=1 — race JSON/index 由 daily builder 产出,本 run 只灌 best-rank`);
+  }
   console.log(`best-rank rows=${bestRows.toLocaleString()}  → ${bestPath}`);
 }
 
