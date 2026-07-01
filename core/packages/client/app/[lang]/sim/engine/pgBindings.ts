@@ -15,9 +15,11 @@ import { skewbPgBridge } from './skewb/skewbPgBridge';
 import { heliPgBridge } from './heli/heliPgBridge';
 import { megaPgBridge } from './mega/megaPgBridge';
 import { ftoPgBridge } from './fto/ftoPgBridge';
+import { nxnPgBridge, nxnHasPgKernel, NXN_PG_MIN, NXN_PG_MAX } from './nxn/nxnPgBridge';
 
 // Keyed by the ENGINE puzzle kind (the World.puzzleKind / SimPuzzle), not the PG name —
-// e.g. engine 'heli' → bridge.pgName 'helicopter'.
+// e.g. engine 'heli' → bridge.pgName 'helicopter'. NxN cubes are handled separately: the
+// engine kind is the numeric order, so `createBinding('3')` → nxnPgBridge(3).
 const BRIDGES: Record<string, MoveBridge<any>> = {
   pyraminx: pyraPgBridge,
   dino: dinoPgBridge,
@@ -27,14 +29,29 @@ const BRIDGES: Record<string, MoveBridge<any>> = {
   fto: ftoPgBridge,
 };
 
-/** Engine puzzle kinds that have a PG group-theory binding (for the render toggle). */
+/** Fixed (non-NxN) engine puzzle kinds that have a PG group-theory binding. */
 export const PG_BOUND_PUZZLES = Object.keys(BRIDGES);
 
-export function hasPgBinding(puzzle: string): boolean {
-  return puzzle in BRIDGES;
+/** All bridges as a flat list (fixed + NxN 2..N), for the offline facts generator. */
+export function allBridges(): MoveBridge<any>[] {
+  const list: MoveBridge<any>[] = Object.values(BRIDGES);
+  for (let n = NXN_PG_MIN; n <= NXN_PG_MAX; n++) list.push(nxnPgBridge(n));
+  return list;
 }
 
-export function createBinding(puzzle: string): PgEngineBinding<any> | null {
-  const bridge = BRIDGES[puzzle];
+/** Parse an NxN engine kind ("3", or the number 3) to its order, or null. */
+function nxnOrder(puzzle: string | number): number | null {
+  const n = typeof puzzle === 'number' ? puzzle : parseInt(puzzle, 10);
+  return nxnHasPgKernel(n) ? n : null;
+}
+
+export function hasPgBinding(puzzle: string | number): boolean {
+  return (typeof puzzle === 'string' && puzzle in BRIDGES) || nxnOrder(puzzle) !== null;
+}
+
+export function createBinding(puzzle: string | number): PgEngineBinding<any> | null {
+  const n = nxnOrder(puzzle);
+  if (n !== null) return new PgEngineBinding(nxnPgBridge(n));
+  const bridge = typeof puzzle === 'string' ? BRIDGES[puzzle] : undefined;
   return bridge ? new PgEngineBinding(bridge) : null;
 }
