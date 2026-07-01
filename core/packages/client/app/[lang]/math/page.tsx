@@ -9,7 +9,7 @@
  */
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { Infinity as InfinityIcon, Sigma, Dices, Ruler } from 'lucide-react';
+import { Infinity as InfinityIcon, Sigma, Dices, Ruler, Boxes } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
@@ -39,6 +39,12 @@ const CARDS: Card[] = [
     Icon: Sigma,
     zh: { title: '魔方与群', desc: '群论长文 62 节,100+ 互动可视化面板,KaTeX 渲染' },
     en: { title: 'Cube as a group', desc: '62-section group-theory essay, 100+ interactive visual panels, KaTeX-rendered' }
+},
+  {
+    to: '/math/kernel',
+    Icon: Boxes,
+    zh: { title: '群论内核', desc: '模拟器怎么把每个魔方变成真实的群 G:PG 与置换两条路、BSGS、忠实的 |G|,14 个魔方实时数据' },
+    en: { title: 'Group-theory kernel', desc: 'How the simulator turns each puzzle into its real group G: the PG & permutation paths, BSGS, faithful |G|, live data for 14 puzzles' }
 },
   {
     to: '/math/unit-distance',
