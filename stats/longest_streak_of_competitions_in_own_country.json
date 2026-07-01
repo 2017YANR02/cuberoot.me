@@ -165,16 +165,16 @@
     ],
     [
       45,
-      "[Robert Yau](https://www.worldcubeassociation.org/persons/2009YAUR01)",
-      "United Kingdom",
-      "[Nottingham Summer 2014](https://www.worldcubeassociation.org/competitions/NottinghamSummer2014)",
+      "[Przemysław Rogalski](https://www.worldcubeassociation.org/persons/2013ROGA02)",
+      "Poland",
+      "[GLS Gdynia 2020](https://www.worldcubeassociation.org/competitions/GLSGdynia2020)",
       null
     ],
     [
-      44,
-      "[Przemysław Rogalski](https://www.worldcubeassociation.org/persons/2013ROGA02)",
-      "Poland",
-      "[PST Biłgoraj 2020](https://www.worldcubeassociation.org/competitions/PSTBilgoraj2020)",
+      45,
+      "[Robert Yau](https://www.worldcubeassociation.org/persons/2009YAUR01)",
+      "United Kingdom",
+      "[Nottingham Summer 2014](https://www.worldcubeassociation.org/competitions/NottinghamSummer2014)",
       null
     ],
     [
@@ -192,14 +192,14 @@
       null
     ],
     [
-      42,
+      43,
       "[Jernej Omulec](https://www.worldcubeassociation.org/persons/2010OMUL01)",
       "Slovenia",
       "[Slovenian Open 2010](https://www.worldcubeassociation.org/competitions/SlovenianOpen2010)",
       null
     ],
     [
-      42,
+      43,
       "[Matic Omulec](https://www.worldcubeassociation.org/persons/2010OMUL02)",
       "Slovenia",
       "[Slovenian Open 2010](https://www.worldcubeassociation.org/competitions/SlovenianOpen2010)",
@@ -255,24 +255,24 @@
       null
     ],
     [
-      38,
-      "[Oliver Pällo](https://www.worldcubeassociation.org/persons/2020PALL01)",
-      "Estonia",
-      "[Estonian Open 2020](https://www.worldcubeassociation.org/competitions/EstonianOpen2020)",
-      null
-    ],
-    [
-      38,
+      39,
       "[Ben Timmons](https://www.worldcubeassociation.org/persons/2017TIMM01)",
       "Ireland",
       "[Dublin Summer Solving 2024](https://www.worldcubeassociation.org/competitions/DublinSummerSolving2024)",
       null
     ],
     [
-      38,
+      39,
       "[Joel Hernández](https://www.worldcubeassociation.org/persons/2007HERN02)",
       "El Salvador",
       "[Sivar Open 2015](https://www.worldcubeassociation.org/competitions/SivarOpen2015)",
+      null
+    ],
+    [
+      38,
+      "[Oliver Pällo](https://www.worldcubeassociation.org/persons/2020PALL01)",
+      "Estonia",
+      "[Estonian Open 2020](https://www.worldcubeassociation.org/competitions/EstonianOpen2020)",
       null
     ],
     [
@@ -346,6 +346,13 @@
       null
     ],
     [
+      33,
+      "[Kevin Timmons](https://www.worldcubeassociation.org/persons/2019TIMM01)",
+      "Ireland",
+      "[Dublin Winter Solving 2025](https://www.worldcubeassociation.org/competitions/DublinWinterSolving2025)",
+      null
+    ],
+    [
       32,
       "[Natthaphat Mahtani (ณัฐภัทร จี มาทานี)](https://www.worldcubeassociation.org/persons/2011MAHT02)",
       "Thailand",
@@ -364,13 +371,6 @@
       "[Amitai Ziv](https://www.worldcubeassociation.org/persons/2022ZIVA01)",
       "Israel",
       "[6 by Road 6 Israel 2024](https://www.worldcubeassociation.org/competitions/6byRoad6Israel2024)",
-      null
-    ],
-    [
-      32,
-      "[Kevin Timmons](https://www.worldcubeassociation.org/persons/2019TIMM01)",
-      "Ireland",
-      "[Dublin Winter Solving 2025](https://www.worldcubeassociation.org/competitions/DublinWinterSolving2025)",
       null
     ],
     [
@@ -501,6 +501,13 @@
     ],
     [
       28,
+      "[Anukun Supcharoenkun (อนุกูล ทรัพย์เจริญกุล)](https://www.worldcubeassociation.org/persons/2009SUPC01)",
+      "Thailand",
+      "[MYHM Zeer Rangsit Cubing 2025](https://www.worldcubeassociation.org/competitions/MYHMZeerRangsitCubing2025)",
+      null
+    ],
+    [
+      28,
       "[Ana Marchilashvili (ანა მარჩილაშვილი)](https://www.worldcubeassociation.org/persons/2022MARC10)",
       "Georgia",
       "[Georgia Open 2022](https://www.worldcubeassociation.org/competitions/GeorgiaOpen2022)",
@@ -560,13 +567,6 @@
       "[Lorenzo Vigani Poli](https://www.worldcubeassociation.org/persons/2007POLI01)",
       "Italy",
       "[Italian Championship 2017](https://www.worldcubeassociation.org/competitions/ItalianChampionship2017)",
-      null
-    ],
-    [
-      27,
-      "[Anukun Supcharoenkun (อนุกูล ทรัพย์เจริญกุล)](https://www.worldcubeassociation.org/persons/2009SUPC01)",
-      "Thailand",
-      "[MYHM Zeer Rangsit Cubing 2025](https://www.worldcubeassociation.org/competitions/MYHMZeerRangsitCubing2025)",
       null
     ],
     [
@@ -648,6 +648,13 @@
     ],
     [
       25,
+      "[Aris Raksamani (อริศม์ รักษมณี)](https://www.worldcubeassociation.org/persons/2017RAKS01)",
+      "Thailand",
+      "[Robinson Latkrabang Cubing 2025](https://www.worldcubeassociation.org/competitions/RobinsonLatkrabangCubing2025)",
+      null
+    ],
+    [
+      25,
       "[Ilya Tsiareshka](https://www.worldcubeassociation.org/persons/2012TERE01)",
       "Belarus",
       "[Minsk Open 2013](https://www.worldcubeassociation.org/competitions/MinskOpen2013)",
@@ -714,13 +721,6 @@
       "[Tsang Hon Pong (曾漢邦)](https://www.worldcubeassociation.org/persons/2014PONG01)",
       "Hong Kong, China",
       "[Back To Cubing Hong Kong 2015](https://www.worldcubeassociation.org/competitions/BackToCubingHongKong2015)",
-      null
-    ],
-    [
-      24,
-      "[Aris Raksamani (อริศม์ รักษมณี)](https://www.worldcubeassociation.org/persons/2017RAKS01)",
-      "Thailand",
-      "[Robinson Latkrabang Cubing 2025](https://www.worldcubeassociation.org/competitions/RobinsonLatkrabangCubing2025)",
       null
     ],
     [

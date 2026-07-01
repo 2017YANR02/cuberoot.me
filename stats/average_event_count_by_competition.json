@@ -158,16 +158,16 @@
       "Sweden"
     ],
     [
-      "[Mahalo iā Maui 2025](https://www.worldcubeassociation.org/competitions/MahaloiaMaui2025)",
-      "10.00",
-      9,
-      "United States"
-    ],
-    [
       "[Porfyrkuben 2024](https://www.worldcubeassociation.org/competitions/Porfyrkuben2024)",
       "10.00",
       17,
       "Sweden"
+    ],
+    [
+      "[Mahalo iā Maui 2025](https://www.worldcubeassociation.org/competitions/MahaloiaMaui2025)",
+      "10.00",
+      9,
+      "United States"
     ],
     [
       "[Bristol Spring 2010](https://www.worldcubeassociation.org/competitions/BristolSpring2010)",
@@ -216,6 +216,12 @@
       "9.82",
       55,
       "Czech Republic"
+    ],
+    [
+      "[VERK XVI 2026](https://www.worldcubeassociation.org/competitions/VERKXVI2026)",
+      "9.80",
+      15,
+      "Finland"
     ],
     [
       "[Cyprus Nationals 2025](https://www.worldcubeassociation.org/competitions/CyprusNationals2025)",
@@ -356,16 +362,16 @@
       "Sweden"
     ],
     [
-      "[Lyon Winter Open 2012](https://www.worldcubeassociation.org/competitions/LyonWinterOpen2012)",
-      "9.36",
-      25,
-      "France"
-    ],
-    [
       "[GA Cubers Mashed Potatoes 2022](https://www.worldcubeassociation.org/competitions/GACubersMashedPotatoes2022)",
       "9.36",
       25,
       "United States"
+    ],
+    [
+      "[Lyon Winter Open 2012](https://www.worldcubeassociation.org/competitions/LyonWinterOpen2012)",
+      "9.36",
+      25,
+      "France"
     ],
     [
       "[Solving in Sayre 2025](https://www.worldcubeassociation.org/competitions/SolvinginSayre2025)",
@@ -396,6 +402,12 @@
       "9.30",
       43,
       "Slovakia"
+    ],
+    [
+      "[Farewell Strathclyde 2026](https://www.worldcubeassociation.org/competitions/FarewellStrathclyde2026)",
+      "9.30",
+      81,
+      "United Kingdom"
     ],
     [
       "[Kvissel Fall 2018](https://www.worldcubeassociation.org/competitions/KvisselFall2018)",
@@ -518,16 +530,16 @@
       "Philippines"
     ],
     [
-      "[NZ South Island Champs 2025](https://www.worldcubeassociation.org/competitions/NZSouthIslandChampionship2025)",
-      "9.00",
-      34,
-      "New Zealand"
-    ],
-    [
       "[Sint Michielsgestel 2019](https://www.worldcubeassociation.org/competitions/CubeWeekendStMichielsgestel2019)",
       "9.00",
       45,
       "Netherlands"
+    ],
+    [
+      "[NZ South Island Champs 2025](https://www.worldcubeassociation.org/competitions/NZSouthIslandChampionship2025)",
+      "9.00",
+      34,
+      "New Zealand"
     ],
     [
       "[Danish Open 2014](https://www.worldcubeassociation.org/competitions/DanishOpen2014)",
@@ -618,18 +630,6 @@
       "8.83",
       29,
       "Finland"
-    ],
-    [
-      "[EatSleepCubeRepeat Leersum 2025](https://www.worldcubeassociation.org/competitions/EatSleepCubeRepeatLeersum2025)",
-      "8.82",
-      96,
-      "Netherlands"
-    ],
-    [
-      "[Rebild Open 2014](https://www.worldcubeassociation.org/competitions/RebildOpen2014)",
-      "8.82",
-      22,
-      "Denmark"
     ]
   ]
 }

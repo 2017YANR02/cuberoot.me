@@ -78,13 +78,13 @@
       null
     ],
     [
-      70,
+      71,
       "[Roman Sokolovskyi](https://www.worldcubeassociation.org/persons/2021SOKO03)",
       "[Cubes Masters Zhytomyr 2021](https://www.worldcubeassociation.org/competitions/CubesMastersZhytomyr2021)",
       null
     ],
     [
-      70,
+      71,
       "[Leo Alanen](https://www.worldcubeassociation.org/persons/2022ALAN02)",
       "[Pulmapelipäivät 2022](https://www.worldcubeassociation.org/competitions/Pulmapelipaivat2022)",
       null
@@ -211,14 +211,20 @@
     ],
     [
       61,
+      "[Silvan Venzin](https://www.worldcubeassociation.org/persons/2021VENZ01)",
+      "[Offline Schwyz Saturday 2021](https://www.worldcubeassociation.org/competitions/OfflineSchwyzSaturday2021)",
+      null
+    ],
+    [
+      61,
       "[Quinn Maloney](https://www.worldcubeassociation.org/persons/2023MALO01)",
       "[Pioneer Valley Cubing B 2023](https://www.worldcubeassociation.org/competitions/PioneerValleyCubingB2023)",
       null
     ],
     [
-      60,
-      "[Silvan Venzin](https://www.worldcubeassociation.org/persons/2021VENZ01)",
-      "[Offline Schwyz Saturday 2021](https://www.worldcubeassociation.org/competitions/OfflineSchwyzSaturday2021)",
+      59,
+      "[Evan Wright](https://www.worldcubeassociation.org/persons/2017WRIG03)",
+      "[Howland High Fall 2017](https://www.worldcubeassociation.org/competitions/HowlandHighFall2017)",
       null
     ],
     [
@@ -255,12 +261,6 @@
       58,
       "[Arnau Tous Mateu](https://www.worldcubeassociation.org/persons/2016MATE04)",
       "[FME & Cubo y Calla 2016](https://www.worldcubeassociation.org/competitions/FMECuboyCalla2016)",
-      null
-    ],
-    [
-      58,
-      "[Evan Wright](https://www.worldcubeassociation.org/persons/2017WRIG03)",
-      "[Howland High Fall 2017](https://www.worldcubeassociation.org/competitions/HowlandHighFall2017)",
       null
     ],
     [
@@ -426,6 +426,12 @@
       null
     ],
     [
+      53,
+      "[Yili Yi](https://www.worldcubeassociation.org/persons/2024YIYI01)",
+      "[Flushing Open PM 2024](https://www.worldcubeassociation.org/competitions/FlushingOpenPM2024)",
+      null
+    ],
+    [
       52,
       "[Tristan Paulussen](https://www.worldcubeassociation.org/persons/2009PAUL01)",
       "[Dutch Open 2009](https://www.worldcubeassociation.org/competitions/DutchOpen2009)",
@@ -453,12 +459,6 @@
       52,
       "[Dante Videfrost](https://www.worldcubeassociation.org/persons/2022VIDE02)",
       "[Fyris Cubing 2022](https://www.worldcubeassociation.org/competitions/FyrisCubing2022)",
-      null
-    ],
-    [
-      52,
-      "[Yili Yi](https://www.worldcubeassociation.org/persons/2024YIYI01)",
-      "[Flushing Open PM 2024](https://www.worldcubeassociation.org/competitions/FlushingOpenPM2024)",
       null
     ],
     [
@@ -505,6 +505,12 @@
     ],
     [
       51,
+      "[Marko Obradović](https://www.worldcubeassociation.org/persons/2022OBRA01)",
+      "[Petrinja Cube Day 2022](https://www.worldcubeassociation.org/competitions/PetrinjaCubeDay2022)",
+      null
+    ],
+    [
+      51,
       "[Ian Yazid Zavala](https://www.worldcubeassociation.org/persons/2023LOPE06)",
       "[Agoura Cubing Again 2023](https://www.worldcubeassociation.org/competitions/AgouraCubingAgain2023)",
       null
@@ -543,12 +549,6 @@
       50,
       "[John Wanger II](https://www.worldcubeassociation.org/persons/2022WANG39)",
       "[CubingUSA Southern Champ... 2022](https://www.worldcubeassociation.org/competitions/CubingUSASouthernChampionshi2022)",
-      null
-    ],
-    [
-      50,
-      "[Marko Obradović](https://www.worldcubeassociation.org/persons/2022OBRA01)",
-      "[Petrinja Cube Day 2022](https://www.worldcubeassociation.org/competitions/PetrinjaCubeDay2022)",
       null
     ],
     [
@@ -625,8 +625,8 @@
     ],
     [
       49,
-      "[Emil Henry Huber](https://www.worldcubeassociation.org/persons/2022HUBE02)",
-      "[Kostelec Summer 2022](https://www.worldcubeassociation.org/competitions/KostelecSummer2022)",
+      "[Krystian Fiołek](https://www.worldcubeassociation.org/persons/2022FIOL01)",
+      "[Cube4fun Jasło 2022](https://www.worldcubeassociation.org/competitions/Cube4funJaslo2022)",
       null
     ]
   ]
