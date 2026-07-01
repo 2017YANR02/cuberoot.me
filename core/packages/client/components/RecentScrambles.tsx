@@ -212,6 +212,7 @@ function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: stri
       <span className={row ? 'rs-row-name' : 'rs-src-comp'}>{localizeCompName(m.ci, m.cn, isZh)}</span>
       <EventIcon event={m.e} className="rs-evt" />
       <span className={row ? 'rs-row-sub' : 'rs-src-meta'}>{compSourceLine(m.r, m.g, m.n, isZh, !!m.x)}</span>
+      {m.cd && <span className={row ? 'rs-row-date' : 'rs-src-date'}>{m.cd}</span>}
     </Link>
   );
 }
