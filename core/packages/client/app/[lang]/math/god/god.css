@@ -745,11 +745,13 @@
 }
 .god-chain-tabs {
   display: flex;
+  flex-wrap: wrap;  /* 窄屏两标签(如 Thistlethwaite)超出卡片内容宽时换行,不撑破卡片 */
   gap: 4px;
   background: var(--god-surface-2);
   padding: 4px;
   border-radius: 8px;
   width: max-content;
+  max-width: 100%;  /* 上限贴合卡片,配合 wrap 收缩 */
   margin-bottom: 14px;
 }
 .god-chain-meta {

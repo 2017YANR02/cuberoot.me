@@ -276,6 +276,10 @@
   font-size: 13px;
   margin: 0 0 14px;
 }
+/* 窄屏:表最小内容宽超出视口时,让表自身横向滚动(不撑破页面) */
+@media (max-width: 600px) {
+  .pred-tlimit-table { display: block; overflow-x: auto; }
+}
 .pred-tlimit-table th,
 .pred-tlimit-table td {
   text-align: left;
