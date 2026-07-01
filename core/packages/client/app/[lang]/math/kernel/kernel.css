@@ -1,0 +1,115 @@
+/* /math/kernel — group-theory kernel explainer. Theme-token driven (no hard-coded
+ * greys); mirrors the scaffolding of /math/unit-distance. */
+
+.kernel-page {
+  --kn-text: var(--foreground);
+  --kn-sub: var(--muted-foreground);
+  --kn-mute: var(--faint-foreground);
+  --kn-border: var(--border-default);
+  --kn-surface: var(--card);
+  --kn-surface-2: color-mix(in srgb, var(--card) 88%, var(--foreground) 12%);
+  --kn-accent: var(--accent);
+  --kn-accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --kn-ok: var(--signal-success);
+  --kn-info: var(--signal-info);
+  --kn-mono: 'SF Mono', Menlo, Consolas, monospace;
+
+  background: var(--background);
+  color: var(--kn-text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.kn-header {
+  display: flex; align-items: center;
+  padding: 1rem max(1rem, calc((100vw - 900px) / 2));
+  border-bottom: 1px solid var(--kn-border);
+}
+.kn-back { display: inline-flex; align-items: center; gap: 6px; color: var(--kn-sub); text-decoration: none; font-size: 0.92rem; }
+.kn-back:hover { color: var(--kn-text); }
+
+.kn-main { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+/* hero */
+.kn-hero { margin-bottom: 2.5rem; }
+.kn-eyebrow { font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--kn-accent); font-weight: 600; margin-bottom: 0.6rem; }
+.kn-title { font-size: 2.1rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 0.4rem; display: flex; flex-direction: column; gap: 0.55rem; }
+.kn-title-sub { font-size: 1.02rem; font-weight: 400; color: var(--kn-sub); line-height: 1.5; letter-spacing: 0; }
+.kn-lede { font-size: 1.05rem; line-height: 1.7; color: var(--kn-text); margin: 1rem 0 1.2rem; }
+.kn-links { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.kn-chip { display: inline-flex; align-items: center; gap: 6px; padding: 0.4rem 0.8rem; border: 1px solid var(--kn-border); border-radius: 999px; color: var(--kn-text); text-decoration: none; font-size: 0.88rem; }
+.kn-chip:hover { border-color: var(--kn-accent); color: var(--kn-accent); }
+
+/* sections */
+.kn-sec { margin: 2.4rem 0; }
+.kn-sec > h2 { display: flex; align-items: center; gap: 0.55rem; font-size: 1.35rem; font-weight: 650; margin: 0 0 0.9rem; letter-spacing: -0.01em; }
+.kn-num { display: inline-flex; align-items: center; justify-content: center; width: 1.6rem; height: 1.6rem; border-radius: 8px; background: var(--kn-accent-soft); color: var(--kn-accent); font-size: 0.9rem; font-weight: 700; flex: none; }
+.kn-h-ic { color: var(--kn-accent); }
+.kn-sec p { font-size: 0.98rem; line-height: 1.72; color: var(--kn-text); margin: 0.7rem 0; }
+.kn-aside { font-size: 0.9rem !important; color: var(--kn-sub) !important; line-height: 1.65 !important; border-left: 2px solid var(--kn-border); padding-left: 0.85rem; }
+.kn-list { margin: 0.6rem 0; padding-left: 1.1rem; }
+.kn-list li { font-size: 0.98rem; line-height: 1.7; margin: 0.4rem 0; }
+
+/* two-column cards */
+.kn-two { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.8rem; }
+.kn-card { background: var(--kn-surface); border: 1px solid var(--kn-border); border-radius: 12px; padding: 1.1rem 1.15rem; }
+.kn-card-h { display: flex; align-items: center; gap: 0.5rem; font-weight: 650; font-size: 1rem; margin-bottom: 0.55rem; color: var(--kn-accent); }
+.kn-card p { font-size: 0.92rem; line-height: 1.65; margin: 0.5rem 0; }
+.kn-card-note { color: var(--kn-sub) !important; font-size: 0.86rem !important; }
+
+/* capabilities */
+.kn-caps { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; margin-top: 0.6rem; }
+.kn-cap { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.9rem 1rem; border: 1px solid var(--kn-border); border-radius: 10px; background: var(--kn-surface); }
+.kn-cap svg { color: var(--kn-accent); }
+.kn-cap b { font-size: 0.95rem; }
+.kn-cap span { font-size: 0.86rem; color: var(--kn-sub); line-height: 1.55; }
+
+/* worked examples */
+.kn-worked { margin: 0.9rem 0; padding: 0.95rem 1.1rem; border: 1px solid var(--kn-border); border-left: 3px solid var(--kn-accent); border-radius: 10px; background: var(--kn-surface); }
+.kn-worked-h { font-weight: 650; font-size: 0.98rem; margin-bottom: 0.35rem; }
+.kn-worked p { font-size: 0.93rem; line-height: 1.65; }
+
+.kn-mono { font-family: var(--kn-mono); font-size: 0.92em; }
+.kn-break { word-break: break-all; }
+
+/* coverage table */
+.kn-table-wrap { overflow-x: auto; border: 1px solid var(--kn-border); border-radius: 12px; margin-top: 0.8rem; }
+.kn-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.kn-table th, .kn-table td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid var(--kn-border); }
+.kn-table thead th { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--kn-sub); font-weight: 600; background: var(--kn-surface-2); }
+.kn-table tbody tr:last-child td { border-bottom: none; }
+.kn-r { text-align: right !important; white-space: nowrap; }
+.kn-c { text-align: center !important; }
+.kn-row-btn { display: inline-flex; align-items: center; gap: 0.35rem; appearance: none; background: none; border: none; font: inherit; color: var(--kn-text); cursor: pointer; padding: 0; text-align: left; }
+.kn-row-btn:hover { color: var(--kn-accent); }
+.kn-caret { transition: transform 0.15s ease; flex: none; color: var(--kn-sub); }
+.kn-caret-open { transform: rotate(90deg); color: var(--kn-accent); }
+.kn-row-note { color: var(--kn-mute); font-size: 0.82rem; margin-left: 0.4rem; }
+.kn-row-open td { background: var(--kn-accent-soft); }
+.kn-tag { font-size: 0.78rem; padding: 0.15rem 0.5rem; border-radius: 6px; white-space: nowrap; }
+.kn-tag-pg { background: color-mix(in srgb, var(--kn-info) 15%, transparent); color: var(--kn-info); }
+.kn-tag-perm { background: var(--kn-accent-soft); color: var(--kn-accent); }
+.kn-yes { color: var(--kn-ok); font-weight: 600; }
+.kn-no { color: var(--kn-mute); }
+
+.kn-detail-row td { background: var(--kn-surface); }
+.kn-detail { display: flex; flex-direction: column; gap: 0.55rem; padding: 0.4rem 0.2rem; }
+.kn-detail-row-item { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; font-size: 0.9rem; }
+.kn-detail-lbl { color: var(--kn-sub); min-width: 6.5rem; font-size: 0.85rem; }
+.kn-detail-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.kn-orbit { font-size: 0.84rem; padding: 0.2rem 0.55rem; border: 1px solid var(--kn-border); border-radius: 6px; }
+.kn-dim { color: var(--kn-sub); }
+.kn-try { display: inline-flex; align-items: center; gap: 5px; align-self: flex-start; font-size: 0.86rem; color: var(--kn-accent); text-decoration: none; margin-top: 0.15rem; }
+.kn-try:hover { text-decoration: underline; }
+
+.kn-foot { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--kn-border); font-size: 0.85rem; color: var(--kn-sub); line-height: 1.7; }
+
+@media (max-width: 640px) {
+  .kn-two, .kn-caps { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .kn-title { font-size: 1.55rem; }
+  .kn-main { padding: 1.5rem 0.9rem 3rem; }
+  .kn-detail-lbl { min-width: auto; }
+}
