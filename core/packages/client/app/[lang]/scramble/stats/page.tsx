@@ -715,9 +715,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   // Dataset toggle (difficulty tab only): the two top-level sets (WCA / xcross)
   // become a PillToggle sitting just left of the merge toggle. Rendered only when
-  // exactly two top-level datasets exist.
+  // exactly two top-level datasets exist. xcross(双色底 10f)是纯三阶概念,只在三阶族项目
+  // (DIFFICULTY_EVENTS)出现 —— 4x4/5x5/魔表/各盲 等非三阶项目难度 tab 只是占位,不给这个切换。
   const topSets = data ? Object.entries(data.sets).filter(([, s]) => !s.event) : [];
-  const datasetToggle = (tab === 'difficulty' && !isPuzzleEvent && !isIvy && topSets.length === 2) ? (() => {
+  const datasetToggle = (tab === 'difficulty' && DIFFICULTY_EVENTS.has(event) && topSets.length === 2) ? (() => {
     const [k0, s0] = topSets[0];
     const [k1, s1] = topSets[1];
     const lab = (s: SetData) => (isZh && s.label_zh) ? s.label_zh : s.label;
