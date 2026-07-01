@@ -246,6 +246,36 @@
   font-size: 0.85rem;
   color: var(--muted-foreground);
 }
+/* 已取消比赛横幅 — 详情页顶部显著提示(权威源:WCA competitions API 的 cancelled_at) */
+.comp-cancelled-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--destructive) 38%, transparent);
+  color: var(--destructive);
+}
+.comp-cancelled-icon {
+  flex-shrink: 0;
+}
+.comp-cancelled-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.comp-cancelled-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.comp-cancelled-date {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--destructive) 68%, var(--muted-foreground));
+}
+
 .comp-info-panel {
   display: grid;
   grid-template-columns: max-content 1fr;
