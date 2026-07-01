@@ -74,6 +74,10 @@ interface DualRow extends RowDataPacket {
   competition_id: string;
   event_id: string;
 }
+interface ChampRow extends RowDataPacket {
+  competition_id: string;
+  championship_type: string;
+}
 
 // 紧凑 round-1 meta（与 shared RoundMeta 一致，键省略即无）
 interface RoundMeta {
@@ -241,8 +245,10 @@ async function main() {
   console.log(`Generated ${OUTPUT_PATH}: ${out.length} comps, ${kb} KB, ${dur}s`);
 
   // ── 「相似比赛」索引 → comp_series.json ────────────────────────────────────
-  // upcoming 排在 past 前(同 id 取较新一份);buildCompSeriesIndex 按系列键分组、只留 ≥2 场的组。
-  interface RawComp { id: string; name: string; country: string; city?: string; start_date: string; end_date?: string; events?: string[] }
+  // 两条判据:① 名字只差版本号/年份(seriesKey);② WCA 官方 championship_type(world / _大洲 /
+  // greater_china / 国家 ISO2 —— 权威把历年改名的世锦赛/洲锦赛/国锦赛归为一类)。
+  // upcoming 排在 past 前(同 id 取较新一份);buildCompSeriesIndex 只留 ≥2 场的组、去子集冗余。
+  interface RawComp { id: string; name: string; country: string; city?: string; start_date: string; end_date?: string }
   const toSeries = (c: RawComp): SeriesComp => ({
     id: c.id,
     name: c.name,
@@ -250,15 +256,20 @@ async function main() {
     start: c.start_date,
     end: c.end_date || c.start_date,
     ...(c.city ? { city: c.city } : {}),
-    ...(c.events?.length ? { events: c.events } : {}),
   });
   let upcoming: RawComp[] = [];
   try { upcoming = JSON.parse(readFileSync(UPCOMING_INPUT_PATH, 'utf-8')) as RawComp[]; }
   catch { console.warn(`[comp_series] ${UPCOMING_INPUT_PATH} 读不到,仅用 past 建索引`); }
+  // championship_type 权威分组(含 upcoming:如 WC2025 / NAC2026,建表时即已标注)。
+  const champRows = await query<ChampRow[]>(`SELECT competition_id, championship_type FROM championships`);
+  const champByComp: Record<string, string[]> = {};
+  for (const cr of champRows) {
+    (champByComp[cr.competition_id] ??= []).push(cr.championship_type);
+  }
   const seriesIdx = buildCompSeriesIndex([
     ...upcoming.map(toSeries),
     ...(out as RawComp[]).map(toSeries),
-  ]);
+  ], champByComp);
   const seriesJson = JSON.stringify(seriesIdx);
   writeFileSync(COMP_SERIES_OUTPUT_PATH, seriesJson, 'utf-8');
   console.log(`Generated ${COMP_SERIES_OUTPUT_PATH}: ${seriesIdx.series.length} series, ${Object.keys(seriesIdx.byId).length} comps, ${Math.round(Buffer.byteLength(seriesJson) / 1024)} KB`);
