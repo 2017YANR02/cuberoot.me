@@ -10,7 +10,7 @@ import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Radio, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Radio, ArrowUp, ArrowDown, Ban } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -1519,6 +1519,23 @@ export default function CompDetailPage() {
             )}
           </div>
         </header>
+
+        {compInfo?.cancelled_at && (
+          <div className="comp-cancelled-banner" role="alert">
+            <Ban size={18} strokeWidth={2} className="comp-cancelled-icon" />
+            <span className="comp-cancelled-text">
+              <span className="comp-cancelled-title">
+                {tr({ zh: '此比赛已取消,未曾举办。', en: 'This competition was cancelled and never took place.' })}
+              </span>
+              <span className="comp-cancelled-date">
+                {tr({
+                  zh: `取消于 ${compInfo.cancelled_at.slice(0, 10)}`,
+                  en: `Cancelled on ${compInfo.cancelled_at.slice(0, 10)}`,
+                })}
+              </span>
+            </span>
+          </div>
+        )}
 
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
 
