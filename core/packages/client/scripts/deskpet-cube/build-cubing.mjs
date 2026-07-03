@@ -9,24 +9,34 @@
 //   node scripts/deskpet-cube/build-cubing.mjs            # build all
 //   node scripts/deskpet-cube/build-cubing.mjs a02        # build files matching "a02"
 
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   spin, spinSnap, sway, twoFaceSpin, flip, roll, snapFrames,
-  layerTurn, solve, flicker, beat, wrapSvg, assertClear, clawHoldFromStats,
+  layerTurn, moveDemo, solve, flicker, beat, wrapSvg, assertClear, clawHoldFromStats,
 } from './cube-engine.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(HERE, '..', '..', 'public', 'deskpet', 'cubing');
 
-const MOTIONS = { spin, spinSnap, sway, twoFaceSpin, flip, roll, snapFrames, layerTurn, solve, flicker, beat };
+const MOTIONS = { spin, spinSnap, sway, twoFaceSpin, flip, roll, snapFrames, layerTurn, moveDemo, solve, flicker, beat };
 
-// move helpers for solves/turns: axis x=±R/L, y=±U/D, z=±F/B; layer ±1; dir ±1
+// Move constants in TRUE WCA directions (clockwise as seen looking at the named
+// face). In this engine's right-handed frame (x=R, y=U, z=F) a WCA-clockwise
+// turn of a +axis face is a NEGATIVE rotation about that axis (U = rotY(-90°)),
+// and of a −axis face a positive one. Slices follow their WCA reference face:
+// M follows L, E follows D, S follows F.
 const m = (axis, layer, dir) => ({ axis, layer, dir });
-const R = m('x', 1, 1), Ri = m('x', 1, -1);
-const U = m('y', 1, 1), Ui = m('y', 1, -1);
-const F = m('z', 1, 1), Fi = m('z', 1, -1);
+const R = m('x', 1, -1), Ri = m('x', 1, 1);
+const U = m('y', 1, -1), Ui = m('y', 1, 1);
+const F = m('z', 1, -1), Fi = m('z', 1, 1);
+const WCA_MOVES = {
+  U, D: m('y', -1, 1),
+  L: m('x', -1, 1), R,
+  F, B: m('z', -1, 1),
+  E: m('y', 0, 1), M: m('x', 0, 1), S: m('z', 0, -1),
+};
 
 // file → { motion, opts, label, mood }. Every gallery cubing file is generated
 // here; motions are picked to match each label's intent.
@@ -82,10 +92,24 @@ const ANIMATIONS = [
   { file: 'a10-pb-sparkle-dance.svg', motion: 'beat', label: 'PB dance', mood: 'dance', opts: { dur: '6s', motion: 'spin', turns: 1 } },
 ];
 
+// Notation demo sheet ("转动演示"): every face turn and slice, in all four
+// variants (X, X', X2, X2'), each looping seamlessly back to solved. Files land
+// in the moves/ subdir and are listed by the 'moves' gallery group.
+const MOVE_DEMOS = Object.entries(WCA_MOVES).flatMap(([name, mvBase]) => {
+  const inv = { ...mvBase, dir: -mvBase.dir };
+  return [
+    { file: `moves/${name.toLowerCase()}.svg`, motion: 'moveDemo', label: name, opts: { move: mvBase } },
+    { file: `moves/${name.toLowerCase()}-prime.svg`, motion: 'moveDemo', label: `${name}'`, opts: { move: inv } },
+    { file: `moves/${name.toLowerCase()}2.svg`, motion: 'moveDemo', label: `${name}2`, opts: { move: mvBase, q: 2 } },
+    { file: `moves/${name.toLowerCase()}2-prime.svg`, motion: 'moveDemo', label: `${name}2'`, opts: { move: inv, q: 2 } },
+  ];
+});
+
+mkdirSync(join(OUT, 'moves'), { recursive: true });
 const filter = process.argv[2];
 let built = 0;
 const fails = [];
-for (const a of ANIMATIONS) {
+for (const a of [...ANIMATIONS, ...MOVE_DEMOS]) {
   if (filter && !a.file.includes(filter)) continue;
   const build = MOTIONS[a.motion];
   if (!build) throw new Error(`unknown motion "${a.motion}" for ${a.file}`);

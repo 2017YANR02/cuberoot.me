@@ -34,7 +34,7 @@ export interface PetGalleryGroup {
 
 export const PET_GALLERY: PetGalleryGroup[] = [
   {
-    id: 'cubing', zh: '魔方秀 Cube Show', en: 'Cube Show', base: '/deskpet/cubing/', v: '2', scale: 1.85, scaleOrigin: 'center 82%',
+    id: 'cubing', zh: '魔方秀 Cube Show', en: 'Cube Show', base: '/deskpet/cubing/', v: '3', scale: 1.85, scaleOrigin: 'center 82%',
     anims: [
       { file: 'a01-iso-sexy-solve.svg', zh: '等距解魔方', en: 'Sexy-move solve' },
       { file: 'a01-iso-crank-solve.svg', zh: '转角解魔方', en: 'Corner crank'
@@ -93,6 +93,49 @@ export const PET_GALLERY: PetGalleryGroup[] = [
     },
       { file: 'a10-pb-sparkle-dance.svg', zh: '新纪录舞', en: 'PB dance'
     },
+    ],
+  },
+  {
+    // Notation demo sheet: every WCA face turn + slice in all four variants,
+    // performed by Clawd on a solved cube (each loops seamlessly back to solved).
+    id: 'moves', zh: '转动记号演示', en: 'Move Notation', base: '/deskpet/cubing/moves/', v: '1', scale: 1.85, scaleOrigin: 'center 82%',
+    anims: [
+      { file: 'u.svg', zh: 'U', en: 'U' },
+      { file: 'u-prime.svg', zh: "U'", en: "U'" },
+      { file: 'u2.svg', zh: 'U2', en: 'U2' },
+      { file: 'u2-prime.svg', zh: "U2'", en: "U2'" },
+      { file: 'd.svg', zh: 'D', en: 'D' },
+      { file: 'd-prime.svg', zh: "D'", en: "D'" },
+      { file: 'd2.svg', zh: 'D2', en: 'D2' },
+      { file: 'd2-prime.svg', zh: "D2'", en: "D2'" },
+      { file: 'l.svg', zh: 'L', en: 'L' },
+      { file: 'l-prime.svg', zh: "L'", en: "L'" },
+      { file: 'l2.svg', zh: 'L2', en: 'L2' },
+      { file: 'l2-prime.svg', zh: "L2'", en: "L2'" },
+      { file: 'r.svg', zh: 'R', en: 'R' },
+      { file: 'r-prime.svg', zh: "R'", en: "R'" },
+      { file: 'r2.svg', zh: 'R2', en: 'R2' },
+      { file: 'r2-prime.svg', zh: "R2'", en: "R2'" },
+      { file: 'f.svg', zh: 'F', en: 'F' },
+      { file: 'f-prime.svg', zh: "F'", en: "F'" },
+      { file: 'f2.svg', zh: 'F2', en: 'F2' },
+      { file: 'f2-prime.svg', zh: "F2'", en: "F2'" },
+      { file: 'b.svg', zh: 'B', en: 'B' },
+      { file: 'b-prime.svg', zh: "B'", en: "B'" },
+      { file: 'b2.svg', zh: 'B2', en: 'B2' },
+      { file: 'b2-prime.svg', zh: "B2'", en: "B2'" },
+      { file: 'e.svg', zh: 'E (随D)', en: 'E (as D)' },
+      { file: 'e-prime.svg', zh: "E'", en: "E'" },
+      { file: 'e2.svg', zh: 'E2', en: 'E2' },
+      { file: 'e2-prime.svg', zh: "E2'", en: "E2'" },
+      { file: 'm.svg', zh: 'M (随L)', en: 'M (as L)' },
+      { file: 'm-prime.svg', zh: "M'", en: "M'" },
+      { file: 'm2.svg', zh: 'M2', en: 'M2' },
+      { file: 'm2-prime.svg', zh: "M2'", en: "M2'" },
+      { file: 's.svg', zh: 'S (随F)', en: 'S (as F)' },
+      { file: 's-prime.svg', zh: "S'", en: "S'" },
+      { file: 's2.svg', zh: 'S2', en: 'S2' },
+      { file: 's2-prime.svg', zh: "S2'", en: "S2'" },
     ],
   },
   {
