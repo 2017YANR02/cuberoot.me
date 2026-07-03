@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 仓库布局
 
-仓库 `RuiminYan/cuberoot.me`(自定义域名 `cuberoot.me`),同时托管：
+仓库 `2017YANR02/cuberoot.me`(自定义域名 `cuberoot.me`),同时托管：
 
 1. **根目录** —— static.cuberoot.me 服的共享静态(`tools/` forks + `stats/` WCA JSON)+ 顶层 `solver/`/`fmc/`(Rust)+ 仓库基建(`ops/` `docs/` workflows)。早期 Vite build 残留 + GH Pages 镜像已于 2026-06-14 全部清除(GH Pages 站已禁用,DNS 本就不走它)。
 2. **`core/`** — pnpm + Turbo monorepo，所有新开发都在这里：
@@ -35,7 +35,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Comp (比赛中心:搜索/日历/地球/实时成绩) | `/wca/comp` | `core/packages/client/app/[lang]/wca/comp/` | 自有 | ✅ |
 | Scramble（打乱难度 / 长度分布） | `/scramble/stats` | `core/packages/client/app/[lang]/scramble/stats/` + 数据 `stats/scramble/*.json`（长度走 CI 日更 `build_scramble_lengths.ts`） | 自有 | ✅ |
 | Mosaic（魔方马赛克生成） | `/mosaic` | `core/packages/client/app/[lang]/mosaic/` | ported from [Roman-/mosaic](https://github.com/Roman-/mosaic) | ✅ |
-| Blog | `blog.cuberoot.me`(`/blog` redirect 过去) | 独立 repo `RuiminYan/cuberoot-blog` | 外部托管 | — |
+| Blog | `blog.cuberoot.me`(`/blog` redirect 过去) | 独立 repo `2017YANR02/cuberoot-blog` | 外部托管 | — |
 
 改 upstream 模块前先问用户；要改就只改 fork 后新增/包装的部分。**前端只有 client 一个工作区**。
 
@@ -50,7 +50,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`next.cuberoot.me`** — 同一套 systemd `cuberoot-next` 反代 :3002,作 staging 子域 / 别名。
 - **systemd Next standalone 部署**:`deploy_next.yml`(push `core/packages/{client,shared,visualcube}/**` 触发) CI build → tar `.next/standalone/`(自带 node_modules) → scp → 服务器原子换 `/www/wwwroot/toolkit-next/` + 健康检查 :3002,挂了自动回滚 .bak。`start.sh` 包装定位 standalone entry,systemd unit 在 `ops/systemd/cuberoot-next.service`。
 - **Vercel build 特殊处理**:`next.config.ts` 用 `VERCEL=1` env gate,Vercel 上跳过 `output: standalone` + `outputFileTracingRoot`(否则 vercel/next.js#88579 撞 manifest ENOENT)。`app/stats/[...slug]/route.ts` 和 `app/tools/[...slug]/route.ts` 在 Vercel 上 fallback 拉 `static.cuberoot.me/{stats,tools}/*`(stats 数据 + forks 没打进 Vercel bundle,CORS 已开)。
-- **Vercel CLI 已装本机**(`ruiminyan` 登录态):`vercel logs https://www.cuberoot.me` 拉最近 100 条 function log,`| grep ' 5[0-9]{2} '` 过 5xx。用户报"vercel 报错"直接 CLI 自查,免截图。详见 memory `project_vercel_deployment`。
+- **Vercel CLI 已装本机**(`2017YANR02` 登录态):`vercel logs https://www.cuberoot.me` 拉最近 100 条 function log,`| grep ' 5[0-9]{2} '` 过 5xx。用户报"vercel 报错"直接 CLI 自查,免截图。详见 memory `project_vercel_deployment`。
 - **CORS allowlist** 在 `core/packages/server/src/index.ts`,函数形式放行 `*.vercel.app`(Vercel preview 每 PR 一个 URL)+ 主域 + `next.cuberoot.me`。
 - **后端 API**:Hono 服 `api.cuberoot.me`(同一台自有服务器,nginx 反代到 127.0.0.1:3001)。
 - **Blog (`/blog/` + `blog.cuberoot.me`)**:独立 `cuberoot-blog` repo 静态归档,blog.cuberoot.me 双轨(自有 nginx alias / GH Pages)按 DNS 分线路。主域 `/blog` 走 next.config.ts redirect → blog.cuberoot.me。详 memory `reference_blog_subdomain`。

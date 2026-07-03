@@ -12,7 +12,7 @@
 | **OS** | Linux 3.2104 U10(基于 CentOS/RHEL,包管理用 `dnf`) |
 | **Web 服务器** | Nginx 1.26.2(原宝塔装的二进制 `/www/server/nginx/`,vhost 走 git) |
 | **HTTPS** | certbot Let's Encrypt(`certbot-renew.timer` systemd 自动续期,expires 2026-06-30) |
-| **磁盘** | 40GB 总量,约 19GB 可用 |
+| **磁盘** | 50GB 总量 |
 | **Node.js** | v24.14.0(nvm,`~/.nvm/versions/node/v24.14.0/`) |
 | **npm** | v11.9.0 |
 | **pm2** | v6.0.14(`pm2 startup` 已配置开机自启) |
@@ -130,7 +130,7 @@ rsync -rltz --delete --exclude='.user.ini' --chmod=D755,F644 ...
 ## 故障排除
 
 ### 镜像未更新?
-1. 检查 [Actions 页面](https://github.com/RuiminYan/cuberoot.me/actions) 对应 workflow 是否全绿
+1. 检查 Actions 页面对应 workflow 是否全绿
 2. 红叉看日志(SSH 连接 / rsync / nginx -t 失败)
 
 ### nginx 配置回滚?
