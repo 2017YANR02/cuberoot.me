@@ -71,7 +71,7 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
         </button>
         <h2 className="deskpet-gallery-title">{zh ? '桌宠动画图鉴' : 'Desk-pet Animations'}</h2>
         <p className="deskpet-gallery-sub">
-          {zh ? '魔方秀 30 连 加 三个形象的全部动画' : '30 cube animations plus every character animation'}
+          {zh ? '魔方秀 30 连、全套转动记号演示,加三个形象的全部动画' : '30 cube animations, the full move-notation demo, plus every character animation'}
         </p>
         {PET_GALLERY.map((g) => (
           <section key={g.id}>

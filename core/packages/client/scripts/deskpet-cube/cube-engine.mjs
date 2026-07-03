@@ -283,22 +283,23 @@ function poseFrames(poseAt, frames, { offAt } = {}) {
 }
 
 // layer-turn track. moveScript = [{ axis,'x'|'y'|'z', layer:-1|0|1, dir:±1,
-// frames:n, hold:n }]. Whole cubies rotate and settle permanently, so multi-move
-// sequences (solves) stay correct, and a turning layer is always a solid slab.
+// frames:n, hold:n, q:1|2 (quarter turns — q:2 is a 180° double move) }]. Whole
+// cubies rotate and settle permanently, so multi-move sequences (solves) stay
+// correct, and a turning layer is always a solid slab.
 export function turnFrames(moveScript, pose, { restFrames = 0 } = {}) {
   let cur = buildCubies();
   const frames = [];
   const push = (cubies) => frames.push({ elems: cubieElems(cubies), pose, off: null, centers: cubies.map((cb) => cb.center) });
   for (let r = 0; r < restFrames; r++) push(cur);
   for (const m of moveScript) {
-    const { axis, layer, dir, frames: mf = 6, hold = 0 } = m;
+    const { axis, layer, dir, frames: mf = 6, hold = 0, q = 1 } = m;
     const ai = AXIS_IDX[axis];
     const inLayer = (cb) => Math.round(cb.center[ai] / STEP) === layer;
     for (let f = 1; f <= mf; f++) {
-      const Mx = ROT_AXIS[axis](dir * (Math.PI / 2) * easeInOut(f / mf));
+      const Mx = ROT_AXIS[axis](dir * q * (Math.PI / 2) * easeInOut(f / mf));
       push(cur.map((cb) => (inLayer(cb) ? rotCubie(cb, Mx) : cb)));
     }
-    const M90 = ROT_AXIS[axis]((dir * Math.PI) / 2);
+    const M90 = ROT_AXIS[axis]((dir * q * Math.PI) / 2);
     cur = cur.map((cb) => (inLayer(cb) ? rotCubie(cb, M90) : cb));
     for (let h = 0; h < hold; h++) push(cur);
   }
@@ -413,6 +414,19 @@ export function layerTurn({
   const view = makeView(vo);
   const r = renderFlip(turnFrames(script, pose, { restFrames: rest }), view, { dur });
   return addClaws(r, clawGripEvents(script, pose, view, { restFrames: rest }), dur);
+}
+
+// Notation demo: repeat one WCA move until the cube returns to solved so the
+// loop is seamless — 4 reps for a quarter turn, 2 for a half turn (q:2). Same
+// flipbook + claw-grip treatment as layerTurn; the claw re-grips each rep.
+export function moveDemo({ dur, move, q = 1, frames, hold = 4, rest = 3, pose = POSE_3Q, view: vo = {} } = {}) {
+  const reps = q === 2 ? 2 : 4;
+  const mf = frames ?? (q === 2 ? 13 : 9);
+  const d = dur ?? (q === 2 ? '6s' : '8s');
+  const script = Array.from({ length: reps }, () => ({ ...move, q, frames: mf, hold }));
+  const view = makeView(vo);
+  const r = renderFlip(turnFrames(script, pose, { restFrames: rest }), view, { dur: d });
+  return addClaws(r, clawGripEvents(script, pose, view, { restFrames: rest, followFrac: q === 2 ? 0.6 : 0.75 }), d);
 }
 
 // scramble then solve (a move sequence then its inverse) — loops solved.
@@ -801,7 +815,7 @@ function clawGripEvents(script, pose, view, { restFrames = 0, followFrac = 0.75 
   let slot = restFrames;
   const events = [];
   for (const m of script) {
-    const { axis, layer, dir, frames: mf = 6, hold = 0 } = m;
+    const { axis, layer, dir, frames: mf = 6, hold = 0, q = 1 } = m;
     const ai = AXIS_IDX[axis];
     const inLayer = (cb) => Math.round(cb.center[ai] / STEP) === layer;
     // best front-facing sticker: outboard toward a claw, near the camera, and
@@ -826,12 +840,12 @@ function clawGripEvents(script, pose, view, { restFrames = 0, followFrac = 0.75 
       // contact just before the first turn frame shows, then ride the point
       const samples = [[(slot - 0.2) / total, ...view.project(best.fc, pose, null)]];
       for (let f = 1; f <= nf; f++) {
-        const M = ROT_AXIS[axis](dir * (Math.PI / 2) * easeInOut(f / mf));
+        const M = ROT_AXIS[axis](dir * q * (Math.PI / 2) * easeInOut(f / mf));
         samples.push([(slot + f - 0.5) / total, ...view.project(mv(M, best.fc), pose, null)]);
       }
       events.push({ claw, samples });
     }
-    const M90 = ROT_AXIS[axis]((dir * Math.PI) / 2);
+    const M90 = ROT_AXIS[axis]((dir * q * Math.PI) / 2);
     cur = cur.map((cb) => (inLayer(cb) ? rotCubie(cb, M90) : cb));
     slot += mf + hold;
   }
@@ -958,6 +972,14 @@ const MOODS = {
 //    inner .arm-* run a constant alternating wrist waggle (rotation about the
 //    body-side edge — the "wrist"). SMIL animates sit in a trailing <g>. An
 //    optional `mood` adds a body-wide CSS beat for the a09/a10 characters. ──
+// The claws are the same salmon as the torso, and the holding pose overlaps it —
+// invisible tone-on-tone. Recolouring the WHOLE claw reads as a plank across the
+// body, so only the pincer TIP segment gets a deeper shade + a 0.25 dark outline
+// (like a real crab's dark pincer tips): the visible element is a small dark tip
+// gripping the cube's lower corner, while the arm segment stays body-salmon and
+// melts into the torso exactly like the native side nubs.
+const CLAW_FILL = '#C96A47';
+const CLAW_EDGE = '#8A4630';
 const HOLD_DEFAULT = { l: [1.4, 0.5], r: [-1.4, 0.5] };
 export function wrapSvg({ polys, anims, label = 'cube', mood = null, clawHold = HOLD_DEFAULT }) {
   const m = mood && MOODS[mood];
@@ -999,8 +1021,8 @@ export function wrapSvg({ polys, anims, label = 'cube', mood = null, clawHold = 
 ${polys}
     </g>
 
-    <g transform="${hold('l')}"><g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g></g>
-    <g transform="${hold('r')}"><g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g></g>
+    <g transform="${hold('l')}"><g id="claw-l"><g class="arm-l"><rect x="0" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="1.35" y="10.35" width="2.5" height="1.8" fill="${CLAW_EDGE}"/><rect x="1.6" y="10.6" width="2" height="1.3" fill="${CLAW_FILL}"/></g></g></g>
+    <g transform="${hold('r')}"><g id="claw-r"><g class="arm-r"><rect x="13" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="11.15" y="10.35" width="2.5" height="1.8" fill="${CLAW_EDGE}"/><rect x="11.4" y="10.6" width="2" height="1.3" fill="${CLAW_FILL}"/></g></g></g>
     <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
     <g class="eyes" fill="#000">
       <rect x="4" y="8" width="1" height="2"/>

@@ -2,15 +2,21 @@
 <html lang="en"><head><meta charset="utf-8"><title>cubing sheet</title>
 <style>
   html,body{margin:0;background:#15151a;color:#cfcfd6;font:12px ui-monospace,monospace;}
+  h2{margin:12px 8px 0;font-size:13px;color:#9a9aa2;}
   .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:8px;}
   .cell{display:flex;flex-direction:column;align-items:center;background:#101014;border-radius:6px;padding:4px;}
   .cell img{width:150px;height:150px;image-rendering:auto;}
   .cell span{margin-top:2px;font-size:10px;color:#9a9aa2;text-align:center;}
 </style></head>
-<body><div class="grid" id="g"></div>
+<body>
+<h2>Cube Show</h2><div class="grid" id="g"></div>
+<h2>Move Notation</h2><div class="grid" id="m"></div>
 <script>
 const files=["a01-front-turn-solve","a01-iso-crank-solve","a01-iso-sexy-solve","a02-faceturn-showcase","a02-spin-lean","a02-spin-snap","a03-frame-solve","a03-lcd-spin","a03-lcd-twist","a04-one-claw-r-turn","a04-show-off-spin","a04-snap-frames","a05-fidget-flip","a05-fidget-roll","a05-fidget-twist","a06-01-layer-solve","a06-02-slide-shuffle","a06-03-flicker-reveal","a07-lcd-speedstack","a07-speedsolve-pb","a07-two-face-spin","a08-side-roll","a08-top-u-turn","a08-turntable-spin","a09-peek-double-take","a09-shy-peek-frames","a09-startle-spin-peek","a10-cube-raise-cheer","a10-pb-sparkle-dance","a10-victory-jump"];
-const g=document.getElementById('g');
-files.forEach((f,i)=>{const c=document.createElement('div');c.className='cell';c.innerHTML='<img src="/deskpet/cubing/'+f+'.svg" alt=""><span>'+(i+1)+' '+f+'</span>';g.appendChild(c);});
+// keep ?v= in sync with lib/deskpet-gallery.ts — /deskpet/* ships immutable caching
+const fill=(el,list,v)=>list.forEach((f,i)=>{const c=document.createElement('div');c.className='cell';c.innerHTML='<img src="/deskpet/cubing/'+f+'.svg?v='+v+'" alt=""><span>'+(i+1)+' '+f+'</span>';el.appendChild(c);});
+fill(document.getElementById('g'),files,3);
+const moves=["u","d","l","r","f","b","e","m","s"].flatMap(k=>["moves/"+k,"moves/"+k+"-prime","moves/"+k+"2","moves/"+k+"2-prime"]);
+fill(document.getElementById('m'),moves,1);
 </script>
 </body></html>
