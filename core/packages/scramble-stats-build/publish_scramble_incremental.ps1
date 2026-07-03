@@ -32,7 +32,8 @@ $bLocal = BashPath $Local
 $cur = Join-Path $env:TEMP '_scramble_cur_manifest.sha1'
 $curB = BashPath $cur
 Write-Host "[1/4] 算当前 sha1 清单 (find + sha1sum, 196k 文件约 2-3min) ..." -ForegroundColor Cyan
-& $bash -c "cd '$bLocal' && find . -type f | LC_ALL=C sort | xargs -d '\n' sha1sum > '$curB'"
+# steps/wca_scramble_steps.csv (~600MB) 是本地灌 PG 的中间产物, 远端无消费方(layout json 才被前端拉), 不发布
+& $bash -c "cd '$bLocal' && find . -type f ! -path './steps/wca_scramble_steps.csv' | LC_ALL=C sort | xargs -d '\n' sha1sum > '$curB'"
 if($LASTEXITCODE -ne 0){ throw 'sha1 清单生成失败' }
 $curCount = @([IO.File]::ReadLines($cur)).Count
 Write-Host "      $curCount 文件" -ForegroundColor DarkGray
@@ -51,7 +52,7 @@ if(-not (Test-Path $Manifest)){
   $tgz = Join-Path $env:TEMP '_scramble_full.tgz'
   $tgzB = BashPath $tgz
   $statsB = BashPath 'D:\cube\cuberoot.me\stats'
-  & $bash -c "cd '$statsB' && tar -czf '$tgzB' scramble"
+  & $bash -c "cd '$statsB' && tar --exclude='scramble/steps/wca_scramble_steps.csv' -czf '$tgzB' scramble"
   if($LASTEXITCODE -ne 0){ throw '首次全量 tar 失败' }
   $fmb = [math]::Round((Get-Item $tgz).Length/1MB,1)
   Write-Host "      tar $fmb MB -> scp -> 远端原子替换 ..." -ForegroundColor DarkGray
