@@ -7,13 +7,13 @@
     <style>
       #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: sh1 8s infinite ease-in-out; }
       .breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: br1 8s infinite ease-in-out; }
-      .arm-l { transform-box: fill-box; transform-origin: 100% 50%; animation: arml1 8s infinite ease-in-out; }
-      .arm-r { transform-box: fill-box; transform-origin: 0% 50%; animation: armr1 8s infinite ease-in-out; }
+      .arm-l { transform-box: fill-box; transform-origin: 0% 50%; animation: arml1 2.4s infinite ease-in-out; }
+      .arm-r { transform-box: fill-box; transform-origin: 100% 50%; animation: armr1 2.4s infinite ease-in-out -1.2s; }
       .eyes { transform-box: view-box; transform-origin: 7.5px 9px; animation: ey1 8s infinite ease-in-out; }
       @keyframes sh1 { 0%,100%{opacity:.5;transform:scaleX(1);} 50%{opacity:.46;transform:scaleX(.97);} }
       @keyframes br1 { 0%,100%{transform:scale(1,1) translateY(0);} 50%{transform:scale(1.008,.992) translateY(.12px);} }
-      @keyframes arml1 { 0%,100%{transform:rotate(8deg) translateY(-.1px);} 50%{transform:rotate(11deg) translateY(.05px);} }
-      @keyframes armr1 { 0%,100%{transform:rotate(-8deg) translateY(-.1px);} 50%{transform:rotate(-11deg) translateY(.05px);} }
+      @keyframes arml1 { 0%,100%{transform:rotate(11deg);} 50%{transform:rotate(-11deg);} }
+      @keyframes armr1 { 0%,100%{transform:rotate(-11deg);} 50%{transform:rotate(11deg);} }
       @keyframes ey1 { 0%,100%{transform:translateX(.18px);} 25%{transform:translateX(.05px);} 50%{transform:translateX(-.18px);} 75%{transform:translateX(.05px);} }
       @keyframes beatStartle { 0%,12%{transform:translateY(0) scale(1);} 18%{transform:translateY(-2px) scale(1.05);} 26%{transform:translateY(0) scale(1);} 60%,100%{transform:translateY(0) scale(1);} }
       .beat { transform-box: view-box; transform-origin: 7.5px 12px; animation: beatStartle 2.4s infinite ease-out; }
@@ -83,8 +83,8 @@
       <polygon id="p26" points="8.141,9.904 8.958,9.904 8.958,10.638 8.141,10.638" fill="#00d200" opacity="1"/>
     </g>
 
-    <g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g>
-    <g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g>
+    <g transform="translate(3.00,0.66)"><g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g></g>
+    <g transform="translate(-2.80,0.66)"><g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g></g>
     <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
     <g class="eyes" fill="#000">
       <rect x="4" y="8" width="1" height="2"/>

@@ -7,13 +7,13 @@
     <style>
       #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: sh1 8s infinite ease-in-out; }
       .breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: br1 8s infinite ease-in-out; }
-      .arm-l { transform-box: fill-box; transform-origin: 100% 50%; animation: arml1 8s infinite ease-in-out; }
-      .arm-r { transform-box: fill-box; transform-origin: 0% 50%; animation: armr1 8s infinite ease-in-out; }
+      .arm-l { transform-box: fill-box; transform-origin: 0% 50%; animation: arml1 2.4s infinite ease-in-out; }
+      .arm-r { transform-box: fill-box; transform-origin: 100% 50%; animation: armr1 2.4s infinite ease-in-out -1.2s; }
       .eyes { transform-box: view-box; transform-origin: 7.5px 9px; animation: ey1 8s infinite ease-in-out; }
       @keyframes sh1 { 0%,100%{opacity:.5;transform:scaleX(1);} 50%{opacity:.46;transform:scaleX(.97);} }
       @keyframes br1 { 0%,100%{transform:scale(1,1) translateY(0);} 50%{transform:scale(1.008,.992) translateY(.12px);} }
-      @keyframes arml1 { 0%,100%{transform:rotate(8deg) translateY(-.1px);} 50%{transform:rotate(11deg) translateY(.05px);} }
-      @keyframes armr1 { 0%,100%{transform:rotate(-8deg) translateY(-.1px);} 50%{transform:rotate(-11deg) translateY(.05px);} }
+      @keyframes arml1 { 0%,100%{transform:rotate(11deg);} 50%{transform:rotate(-11deg);} }
+      @keyframes armr1 { 0%,100%{transform:rotate(-11deg);} 50%{transform:rotate(11deg);} }
       @keyframes ey1 { 0%,100%{transform:translateX(.18px);} 25%{transform:translateX(.05px);} 50%{transform:translateX(-.18px);} 75%{transform:translateX(.05px);} }
     </style>
   </defs>
@@ -3063,8 +3063,8 @@
     </g>
     </g>
 
-    <g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g>
-    <g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g>
+    <g transform="translate(3.00,0.63)"><g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g></g>
+    <g transform="translate(-2.51,0.63)"><g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g></g>
     <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
     <g class="eyes" fill="#000">
       <rect x="4" y="8" width="1" height="2"/>
@@ -3122,7 +3122,7 @@
       <animate xlink:href="#f46" attributeName="opacity" dur="9s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.88235;0.89706;1.00000" values="0;1;0;0"/>
       <animate xlink:href="#f47" attributeName="opacity" dur="9s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.89706;0.91176;1.00000" values="0;1;0;0"/>
       <animate xlink:href="#f48" attributeName="opacity" dur="9s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.91176;1.00000" values="0;1;0"/>
-      <animateTransform xlink:href="#claw-l" attributeName="transform" type="translate" dur="9s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0794;0.1294;0.1397;0.1544;0.2100;0.2265;0.2765;0.2868;0.3015;0.3570;0.3735;0.4235;0.4338;0.4971;0.5074;0.5221;0.5776;0.5941;0.6441;0.6544;0.6691;0.7247;0.7412;0.7912;0.8015;0.8162;0.8717;1" values="0.00 0.00;0.00 0.00;3.57 -0.89;3.90 -0.86;4.87 -0.94;0.00 0.00;0.00 0.00;3.57 -0.89;3.26 -0.95;2.58 -1.27;0.00 0.00;0.00 0.00;3.57 -0.89;3.90 -0.86;3.57 -0.89;3.26 -0.95;2.58 -1.27;0.00 0.00;0.00 0.00;3.57 -0.89;3.90 -0.86;4.87 -0.94;0.00 0.00;0.00 0.00;3.57 -0.89;3.26 -0.95;2.58 -1.27;0.00 0.00;0.00 0.00"/>
-      <animateTransform xlink:href="#claw-r" attributeName="transform" type="translate" dur="9s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0059;0.0559;0.0662;0.0809;0.1364;0.1529;0.2029;0.2132;0.2279;0.2835;0.3000;0.3500;0.3603;0.3750;0.4306;0.5206;0.5706;0.5809;0.5956;0.6511;0.6676;0.7176;0.7279;0.7426;0.7982;0.8147;0.8647;0.8750;0.8897;0.9453;1" values="0.00 0.00;0.00 0.00;-2.28 -1.37;-2.18 -1.05;-2.12 -0.13;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.41 -1.68;-2.95 -2.40;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.18 -1.05;-2.12 -0.13;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.41 -1.68;-2.95 -2.40;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.18 -1.05;-2.12 -0.13;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.41 -1.68;-2.95 -2.40;0.00 0.00;0.00 0.00"/>
+      <animateTransform xlink:href="#claw-l" attributeName="transform" type="translate" dur="9s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0794;0.1294;0.1397;0.1544;0.1691;0.2247;0.2265;0.2765;0.2868;0.3015;0.3162;0.3717;0.3735;0.4235;0.4338;0.4971;0.5074;0.5221;0.5368;0.5923;0.5941;0.6441;0.6544;0.6691;0.6838;0.7394;0.7412;0.7912;0.8015;0.8162;0.8309;0.8864;1" values="0.00 0.00;0.00 0.00;0.57 -1.53;0.90 -1.50;1.87 -1.57;2.59 -1.87;0.00 0.00;0.00 0.00;0.57 -1.53;0.26 -1.59;-0.42 -1.90;-0.59 -2.33;0.00 0.00;0.00 0.00;0.57 -1.53;0.90 -1.50;0.57 -1.53;0.26 -1.59;-0.42 -1.90;-0.59 -2.33;0.00 0.00;0.00 0.00;0.57 -1.53;0.90 -1.50;1.87 -1.57;2.59 -1.87;0.00 0.00;0.00 0.00;0.57 -1.53;0.26 -1.59;-0.42 -1.90;-0.59 -2.33;0.00 0.00;0.00 0.00"/>
+      <animateTransform xlink:href="#claw-r" attributeName="transform" type="translate" dur="9s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0059;0.0559;0.0662;0.0809;0.0956;0.1511;0.1529;0.2029;0.2132;0.2279;0.2426;0.2982;0.3000;0.3500;0.3603;0.3750;0.3897;0.4453;0.5206;0.5706;0.5809;0.5956;0.6103;0.6658;0.6676;0.7176;0.7279;0.7426;0.7574;0.8129;0.8147;0.8647;0.8750;0.8897;0.9044;0.9600;1" values="0.00 0.00;0.00 0.00;0.23 -2.01;0.33 -1.69;0.39 -0.77;0.10 -0.14;0.00 0.00;0.00 0.00;0.23 -2.01;0.10 -2.31;-0.44 -3.03;-1.04 -3.28;0.00 0.00;0.00 0.00;0.23 -2.01;0.33 -1.69;0.39 -0.77;0.10 -0.14;0.00 0.00;0.00 0.00;0.23 -2.01;0.10 -2.31;-0.44 -3.03;-1.04 -3.28;0.00 0.00;0.00 0.00;0.23 -2.01;0.33 -1.69;0.39 -0.77;0.10 -0.14;0.00 0.00;0.00 0.00;0.23 -2.01;0.10 -2.31;-0.44 -3.03;-1.04 -3.28;0.00 0.00;0.00 0.00"/>
   </g>
 </svg>
