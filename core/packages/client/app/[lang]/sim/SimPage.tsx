@@ -83,6 +83,7 @@ import {
 } from './SettingDrawer';
 import PlayerControls, { type SimPuzzle } from './PlayerControls';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
+import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
 import DirectorPanel from './DirectorPanel';
 import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
@@ -1472,8 +1473,11 @@ export default function SimPage() {
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
               PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)
               have no cubing.js option at all → the panel is always on for them. */}
-          {(PG_BOUND_KINDS.has(String(puzzleParam)) || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam)))
-            && (query.renderer !== 'cubing' || !ENGINE_TWISTY.has(String(puzzleParam))) && (
+          {(((PG_BOUND_KINDS.has(String(puzzleParam)) || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam)))
+            && (query.renderer !== 'cubing' || !ENGINE_TWISTY.has(String(puzzleParam))))
+            // cubing.js "explore" puzzles: facts-only kernel, shown unless the user picks the
+            // plain cubing.js renderer (default renderer is 'group', so on by default).
+            || (EXPLORE_BOUND.has(String(puzzleParam)) && query.renderer !== 'cubing')) && (
             <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />
           )}
         </aside>

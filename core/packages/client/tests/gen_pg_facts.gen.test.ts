@@ -12,7 +12,8 @@ import { describe, it, expect } from 'vitest';
 import { writeFileSync } from 'node:fs';
 import { PgEngineBinding } from '@/app/[lang]/sim/engine/pgBinding';
 import { PermEngineBinding } from '@/app/[lang]/sim/engine/permBinding';
-import { allBridges, permBridges } from '@/app/[lang]/sim/engine/pgBindings';
+import { ExploreFactsBinding } from '@/app/[lang]/sim/engine/exploreBinding';
+import { allBridges, permBridges, exploreBridges } from '@/app/[lang]/sim/engine/pgBindings';
 import { serializePgFacts, type SerializedPgFacts } from '@/app/[lang]/sim/engine/pgFacts';
 
 const RUN = !!process.env.GEN_PG_FACTS;
@@ -34,6 +35,14 @@ describe('generate pgFacts.generated.ts', () => {
       table[bridge.key] = serializePgFacts(facts);
       // eslint-disable-next-line no-console
       console.log(`  ${bridge.key}: |G| = ${facts.order}`);
+    }
+    // cubing.js "explore" doctrinaire puzzles — facts-only, baked under the explore id.
+    // |G| over the OUTER generators (allMoves:false — the faithful, non-inflated move set).
+    for (const { key, def } of exploreBridges()) {
+      const facts = new ExploreFactsBinding(key, def).computeFactsLive();
+      table[key] = serializePgFacts(facts);
+      // eslint-disable-next-line no-console
+      console.log(`  ${key}: |G| = ${facts.order}`);
     }
     const body = Object.entries(table)
       .map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)},`)
