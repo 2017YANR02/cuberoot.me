@@ -23,6 +23,11 @@ import { VARIANTS, SUBSET_KEYS, buildStagePlans, type StagePlan } from './varian
 // 其余组大小(bo3=3、多盲不定)按 0.2 网格量化。前端 formatBin 显示 v/5。
 const AVG_DENOM = 5;
 
+// 组平均至少要 2 条打乱才有意义:size-1「组」(主要是 333fm 单次成绩 bo1 决赛)只是单条原始值,
+// 不是平均,还会在低端造出「六色十字平均 1.0」这种不可能的整数尾巴(单条 CN 十字=1 极罕见但真实)。
+// 单条值本就在「单个」视图里能看,组平均视图只收 ≥2 条的真实分组。
+const MIN_GROUP = 2;
+
 interface RawConfig {
   csv_dir?: string;
   sets?: Array<{ key: string; label: string; label_zh?: string; csv_dir: string; scrambles_txt?: string }>;
@@ -176,7 +181,7 @@ async function processSet(setSpec: SetSpec, metaCsv: string, outSets: Record<str
         const mergedSub = mv.data[stage][subKey];
         for (let gi = 0; gi < numGroups; gi++) {
           const ev = groupEvent[gi];
-          if (cWE[gi] > 0) {
+          if (cWE[gi] >= MIN_GROUP) {
             const key = Math.round((sWE[gi] / cWE[gi]) * AVG_DENOM);
             bumpHist(mergedSub.we, key);
             let evStore = eventVariants.get(ev); if (!evStore) { evStore = {}; eventVariants.set(ev, evStore); }
@@ -184,7 +189,7 @@ async function processSet(setSpec: SetSpec, metaCsv: string, outSets: Record<str
             mergedGroupsSeen.add(gi);
             let egs = eventGroupsSeen.get(ev); if (!egs) { egs = new Set(); eventGroupsSeen.set(ev, egs); } egs.add(gi);
           }
-          if (cNE[gi] > 0) {
+          if (cNE[gi] >= MIN_GROUP) {
             const key = Math.round((sNE[gi] / cNE[gi]) * AVG_DENOM);
             bumpHist(mergedSub.ne, key);
             const evStore = eventVariants.get(ev)!;
