@@ -354,6 +354,18 @@ const inflight = new Map<string, Promise<CompData>>();
 // wca_db 路径需独立去重 map — 因 tryLoadFromWcaDb 可能 resolve null(本地 dump 没此 comp).
 const inflightWcaDb = new Map<string, Promise<CompData | null>>();
 
+// L1 上界。此前无淘汰:prewarm 每 10min 扫 ~700 场 hot comps,全量 CompData(JSONB 解码后
+// 单场可达 MB 级)常驻 Map → 堆 ~50MB/h 涨到 1GB 上限,OOM 每 12-16h 一崩(2026-06-26 起实测)。
+// 超界按插入序淘汰最旧;溢出的下次访问走 L2 (PG, ~100ms) 兜底再回填,不影响正确性。
+const L1_MAX_ENTRIES = 150;
+function l1Set(key: string, data: CompData): void {
+  if (cache.has(key)) cache.delete(key);   // 重插保新鲜(Map 迭代序 = 插入序)
+  cache.set(key, data);
+  while (cache.size > L1_MAX_ENTRIES) {
+    cache.delete(cache.keys().next().value as string);
+  }
+}
+
 function ttlFor(source: SourceId): number {
   // wca_db 每周 CI 重灌,内存缓存可放心拉长到 12h.
   // wca REST 数据稳定,1h.
@@ -448,7 +460,7 @@ function writeSnapshotL2(data: CompData): void {
 }
 
 function setL1AndL2(key: string, data: CompData): void {
-  cache.set(key, data);
+  l1Set(key, data);
   writeSnapshotL2(data);
 }
 
@@ -1594,7 +1606,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
     // L2: pm2 重启后 L1 空,从 PG 兜底.比 tryLoadFromWcaDb 全跑省 ~100-200ms (TOAST decompress + serialize).
     const l2 = await readSnapshotL2(wcaId, 'wca_db');
     if (l2) {
-      cache.set(cacheKey, l2);
+      l1Set(cacheKey, l2);
       return { ...l2, availableSources: ['wca_db'] };
     }
     // 去重:大比赛 tryLoadFromWcaDb 的 prior-PR 查询 5+ 分钟,并发刷新会堆爆 PG 连接池 (max=10).
@@ -1662,17 +1674,17 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
         // L2: PG snapshot 兜底. fastKey 是 wca 源;cubing 兜底走前一个分支已查过的 cubingCached.
         const l2Fast = await readSnapshotL2(wcaId, 'wca');
         if (l2Fast) {
-          cache.set(fastKey, l2Fast);
+          l1Set(fastKey, l2Fast);
           return { ...l2Fast, availableSources: l2Fast.availableSources ?? ['wca'] };
         }
         const l2Cubing = await readSnapshotL2(wcaId, 'cubing');
         if (l2Cubing) {
-          cache.set(cubingCacheKey, l2Cubing);
+          l1Set(cubingCacheKey, l2Cubing);
           return { ...l2Cubing, availableSources: l2Cubing.availableSources ?? ['cubing', 'wca'] };
         }
         const l2WcaLive = await readSnapshotL2(wcaId, 'wca_live');
         if (l2WcaLive) {
-          cache.set(wcaLiveCacheKey, l2WcaLive);
+          l1Set(wcaLiveCacheKey, l2WcaLive);
           return { ...l2WcaLive, availableSources: l2WcaLive.availableSources ?? ['wca_live', 'wca'] };
         }
         const pendingFast = inflight.get(fastKey);
@@ -1752,7 +1764,7 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
   // L2: PG snapshot 兜底.pm2 重启 / 新部署后第一个用户秒返回,不再走 cubing.com scrape.
   const l2 = await readSnapshotL2(wcaId, useSource);
   if (l2) {
-    cache.set(cacheKey, l2);
+    l1Set(cacheKey, l2);
     return { ...l2, availableSources };
   }
 
