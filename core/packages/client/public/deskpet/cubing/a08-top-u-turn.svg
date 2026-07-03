@@ -7,13 +7,13 @@
     <style>
       #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: sh1 8s infinite ease-in-out; }
       .breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: br1 8s infinite ease-in-out; }
-      .arm-l { transform-box: fill-box; transform-origin: 100% 50%; animation: arml1 8s infinite ease-in-out; }
-      .arm-r { transform-box: fill-box; transform-origin: 0% 50%; animation: armr1 8s infinite ease-in-out; }
+      .arm-l { transform-box: fill-box; transform-origin: 0% 50%; animation: arml1 2.4s infinite ease-in-out; }
+      .arm-r { transform-box: fill-box; transform-origin: 100% 50%; animation: armr1 2.4s infinite ease-in-out -1.2s; }
       .eyes { transform-box: view-box; transform-origin: 7.5px 9px; animation: ey1 8s infinite ease-in-out; }
       @keyframes sh1 { 0%,100%{opacity:.5;transform:scaleX(1);} 50%{opacity:.46;transform:scaleX(.97);} }
       @keyframes br1 { 0%,100%{transform:scale(1,1) translateY(0);} 50%{transform:scale(1.008,.992) translateY(.12px);} }
-      @keyframes arml1 { 0%,100%{transform:rotate(8deg) translateY(-.1px);} 50%{transform:rotate(11deg) translateY(.05px);} }
-      @keyframes armr1 { 0%,100%{transform:rotate(-8deg) translateY(-.1px);} 50%{transform:rotate(-11deg) translateY(.05px);} }
+      @keyframes arml1 { 0%,100%{transform:rotate(11deg);} 50%{transform:rotate(-11deg);} }
+      @keyframes armr1 { 0%,100%{transform:rotate(-11deg);} 50%{transform:rotate(11deg);} }
       @keyframes ey1 { 0%,100%{transform:translateX(.18px);} 25%{transform:translateX(.05px);} 50%{transform:translateX(-.18px);} 75%{transform:translateX(.05px);} }
     </style>
   </defs>
@@ -1179,8 +1179,8 @@
     </g>
     </g>
 
-    <g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g>
-    <g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g>
+    <g transform="translate(3.00,0.70)"><g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g></g>
+    <g transform="translate(-2.80,0.70)"><g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g></g>
     <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
     <g class="eyes" fill="#000">
       <rect x="4" y="8" width="1" height="2"/>
@@ -1208,6 +1208,6 @@
       <animate xlink:href="#f16" attributeName="opacity" dur="5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.68750;0.71875;1.00000" values="0;1;0;0"/>
       <animate xlink:href="#f17" attributeName="opacity" dur="5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.71875;0.75000;1.00000" values="0;1;0;0"/>
       <animate xlink:href="#f18" attributeName="opacity" dur="5s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.75000;1.00000" values="0;1;0"/>
-      <animateTransform xlink:href="#claw-r" attributeName="transform" type="translate" dur="5s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0287;0.1187;0.1406;0.1719;0.2031;0.2344;0.2656;0.3656;0.4038;0.4938;0.5156;0.5469;0.5781;0.6094;0.6406;0.7406;1" values="0.00 0.00;0.00 0.00;-2.28 -0.77;-2.26 -0.82;-2.22 -0.99;-2.20 -1.27;-2.27 -1.67;-2.53 -2.10;0.00 0.00;0.00 0.00;-2.28 -0.77;-2.30 -0.71;-2.38 -0.55;-2.56 -0.31;-2.89 -0.04;-3.39 0.18;0.00 0.00;0.00 0.00"/>
+      <animateTransform xlink:href="#claw-r" attributeName="transform" type="translate" dur="5s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0287;0.1187;0.1406;0.1719;0.2031;0.2344;0.2656;0.2969;0.3281;0.4938;0.5156;0.5469;0.5781;0.6094;0.6406;0.6719;0.7031;0.8031;1" values="0.00 0.00;0.00 0.00;0.52 -1.47;0.54 -1.52;0.58 -1.69;0.60 -1.97;0.53 -2.37;0.27 -2.80;-0.05 -3.09;-0.33 -3.24;0.52 -1.47;0.50 -1.41;0.42 -1.25;0.24 -1.01;-0.09 -0.74;-0.59 -0.52;-1.04 -0.45;-1.37 -0.47;0.00 0.00;0.00 0.00"/>
   </g>
 </svg>

@@ -14,7 +14,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   spin, spinSnap, sway, twoFaceSpin, flip, roll, snapFrames,
-  layerTurn, solve, flicker, beat, wrapSvg, assertClear,
+  layerTurn, solve, flicker, beat, wrapSvg, assertClear, clawHoldFromStats,
 } from './cube-engine.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -92,7 +92,10 @@ for (const a of ANIMATIONS) {
   try {
     const cube = build(a.opts || {});
     assertClear(cube.stats, a.file); // guard: never ship a cube that covers eyes/legs
-    const svg = wrapSvg({ polys: cube.polys, anims: cube.anims, label: a.label, mood: a.mood || null });
+    const svg = wrapSvg({
+      polys: cube.polys, anims: cube.anims, label: a.label, mood: a.mood || null,
+      clawHold: cube.clawHold || clawHoldFromStats(cube.stats),
+    });
     writeFileSync(join(OUT, a.file), svg);
     const s = cube.stats;
     const kb = Math.round(svg.length / 1024);
