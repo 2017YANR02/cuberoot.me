@@ -317,9 +317,23 @@ async function fetchWcaCompDetail(wcaId: string): Promise<CompInfo | null> {
   }
 
   const url = `${WCA_API_BASE}/competitions/${wcaId}`;
-  const resp = (await fetchUrl(url)) as
+  let resp:
     | { name?: string; short_name?: string; start_date?: string }
     | null;
+  try {
+    resp = (await fetchUrl(url)) as
+      | { name?: string; short_name?: string; start_date?: string }
+      | null;
+  } catch (e) {
+    // NOTE: 单条 override detail 拉取失败（代理 429/500 重试耗尽）优雅降级为"未匹配"，
+    //       不让一条老比赛（best-effort 中文名）崩掉整个 upcoming workflow。
+    //       与 fetchWcaCnComps 的降级一致：只吞 FetchError，损坏缓存等其它错照常上抛。
+    if (e instanceof FetchError) {
+      console.log(`  [WARN] override 比赛 ${wcaId} detail 拉取失败（${e.message}），跳过`);
+      return null;
+    }
+    throw e;
+  }
   if (!resp) return null;
   const info: CompInfo = {
     name: resp.name || resp.short_name || '',
