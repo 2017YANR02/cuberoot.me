@@ -17,6 +17,7 @@
  */
 import {
   getPuzzleGeometryByName,
+  getPuzzleGeometryByDesc,
   schreierSims,
 } from '@/lib/puzzle-geometry';
 import type {
@@ -68,8 +69,25 @@ export class PgBackbone {
   private state: VisibleState;
   private cachedFacts?: PgGroupFacts;
 
-  constructor(public readonly puzzleName: PuzzleName) {
-    this.pg = getPuzzleGeometryByName(puzzleName, {});
+  /** Identifier for this backbone: the PG puzzle name, or (for a raw description) the desc
+   *  string itself. Never a real `pgPuzzle` key in the desc case — kept only for debugging. */
+  readonly puzzleName: PuzzleName;
+
+  /**
+   * Construct from either a vendored `pgPuzzle` name, or a raw PG description string
+   * (`{ desc }`, e.g. the cubing.js "explore" defs like `'d f 0'`). For a desc we default
+   * to `allMoves:false` so the generators are the puzzle's CANONICAL outer-layer turns —
+   * the faithful move set (getPuzzleGeometryByDesc otherwise forces allMoves:true, which
+   * adds deep slices that inflate |G|).
+   */
+  constructor(spec: PuzzleName | { desc: string; allMoves?: boolean }) {
+    if (typeof spec === 'object') {
+      this.puzzleName = spec.desc as PuzzleName;
+      this.pg = getPuzzleGeometryByDesc(spec.desc, { allMoves: spec.allMoves ?? false });
+    } else {
+      this.puzzleName = spec;
+      this.pg = getPuzzleGeometryByName(spec, {});
+    }
     this.od = this.pg.getOrbitsDef(false);
     this.solvedState = this.od.solved;
     this.state = this.od.solved;

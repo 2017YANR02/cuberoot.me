@@ -59,6 +59,10 @@ export interface MoveBridge<M> {
 export interface GroupKernel {
   /** Whether solve/scramble (the constructive BSGS) are available. */
   readonly solvable: boolean;
+  /** Whether the binding mirrors a live engine state. False for facts-only bindings
+   *  (cubing.js "explore" puzzles with no in-house engine cube) — the panel then shows
+   *  |G| + orbit structure only, no live badge / order / solve / scramble. Default true. */
+  readonly hasLiveState?: boolean;
   /** Group-theoretic solved test (state === identity). */
   readonly solved: boolean;
   /** The exact group facts (precomputed table at runtime). */
