@@ -40,6 +40,7 @@ import ScrambleLengthView, {
 } from './_components/ScrambleLengthView';
 import FirstAppearanceTimeline, { type TimelineEntry } from './_components/FirstAppearanceTimeline';
 import FullScrambleList from './_components/FullScrambleList';
+import AvgExamplesPanel, { type AvgGroupCase } from './_components/AvgExamplesPanel';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import NonWcaPuzzlePicker from '@/components/NonWcaPuzzlePicker/NonWcaPuzzlePicker';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
@@ -101,6 +102,16 @@ interface AvgVariantData { stages: string[]; data: Record<string, Record<string,
 interface AvgSetData { label: string; label_zh: string | null; event?: string; sample_count: number; variants: Record<string, AvgVariantData>; }
 interface DistributionAvgJson { meta: { generated_at: string; avg_denom: number; subset_keys: string[] }; sets: Record<string, AvgSetData>; }
 
+// 组平均「示例组」(build_group_avg_examples.ts):基底 = 抽样组骨架 + comp meta + 变体→stages 布局;
+// 每变体值文件 = 抽样组每成员的每 stage 6 色步数([B,G,O,R,W,Y] 序)。点柱后客户端按成员步数重算平均。
+type AvgExMember = [string, number, 0 | 1]; // [scramble, num, extra]
+interface AvgExamplesBase {
+  meta: { generated_at: string; avg_denom: number; min_group: number; color_order: string; variants: Record<string, string[]> };
+  comps: Record<string, [string, string]>;
+  groups: Array<{ c: string; e: string; r: string; g: string; m: AvgExMember[] }>;
+}
+interface AvgExValsFile { variant: string; stages: string[]; vals: number[][][] }
+
 type ExampleSample = [string, string, string, string?]; // [id, scramble, bottomColor, optScramble?]
 type ExampleCompMeta = [string, string, number, string, string, (0 | 1)?]; // [compId, eventId, scrambleNum, roundType, group, isExtra?]
 interface ExamplesSet {
@@ -161,6 +172,10 @@ const EVENT_LABEL: Record<string, { zh: string; en: string
 function eventLabel(e: string): string {
   const m = EVENT_LABEL[e];
   return m ? tr(m) : e;
+}
+// i18next 语言码 → 路由 lang 段('zh' / 'en'),供 AppLink/href 前缀用。
+function uiLangOf(l: string): 'zh' | 'en' {
+  return l.startsWith('zh') ? 'zh' : 'en';
 }
 
 // 难度 tab 目前只有三阶有数据 —— 这 6 个 WCA 项目全是三阶魔方、全用 TNoodle 三阶随机态打乱,
@@ -291,6 +306,11 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const [examplesLoading, setExamplesLoading] = useState(false);
   const [examplesError, setExamplesError] = useState<string | null>(null);
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
+  // 组平均示例:基底(一次)+ 每变体值文件(按需);点柱后重算匹配组。
+  const [avgExBase, setAvgExBase] = useState<AvgExamplesBase | null>(null);
+  const [avgExVals, setAvgExVals] = useState<Record<string, AvgExValsFile | null>>({});
+  const [avgExLoading, setAvgExLoading] = useState(false);
+  const [avgExError, setAvgExError] = useState<string | null>(null);
   // 整解(333)示例:原始 WCA 打乱 vs 最优(最短)等价打乱(同状态)。
   const [exView, setExView] = useState<'orig' | 'opt'>('orig');
   // 「下载全部」可用阶段(std 变体全量语料 gz);manifest 缺失则不显示按钮。
@@ -512,7 +532,34 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     ensureExamplesLoaded();
   };
 
+  // 组平均示例:点柱时按需拉基底(一次)+ 当前变体值文件(每变体一次)。
+  const ensureAvgExamplesLoaded = (v: string) => {
+    const needBase = !avgExBase;
+    const needVals = !(v in avgExVals);
+    if (!needBase && !needVals) return;
+    setAvgExLoading(true);
+    const jobs: Promise<unknown>[] = [];
+    if (needBase) {
+      jobs.push(fetch(statsUrl('/stats/scramble/examples_avg.json?v=20260701avg'), { cache: 'no-store' })
+        .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then((j) => setAvgExBase(j)));
+    }
+    if (needVals) {
+      setAvgExVals((m) => ({ ...m, [v]: null }));
+      jobs.push(fetch(statsUrl(`/stats/scramble/examples_avg_v_${v}.json?v=20260701avg`), { cache: 'no-store' })
+        .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+        .then((j) => setAvgExVals((m) => ({ ...m, [v]: j }))));
+    }
+    Promise.all(jobs).then(() => setAvgExLoading(false)).catch((e) => { setAvgExError(String(e)); setAvgExLoading(false); });
+  };
+  const handleAvgBarClick = (bin: number) => {
+    setSelectedBin(bin);
+    ensureAvgExamplesLoaded(variant);
+  };
+
   useEffect(() => {
+    // 组平均模式:重置选中(单条 bin 值在平均空间无意义),等用户点柱触发按需加载。
+    if (avgOn) { setSelectedBin(null); return; }
     if (previewBins.length > 0) {
       setSelectedBin(previewBins[0]);
       ensureExamplesLoaded();
@@ -520,7 +567,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       setSelectedBin(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scrambleSet, variant, stage, effectiveSubset, optMetric, previewBins.length]);
+  }, [scrambleSet, variant, stage, effectiveSubset, optMetric, previewBins.length, avgOn]);
 
   // 当前示例来源:per-event 选择 → 该项目的分片;否则 examples.json 的顶级 set。
   const exSet = isPerEvent ? (evExamples[scrambleSet] ?? null) : (examples?.sets[dataset] ?? null);
@@ -559,6 +606,55 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   }, [avgActiveCounts, modeLabel, selectedColors]);
   const avgStats = useMemo(() => computeStats(avgActiveCounts), [avgActiveCounts]);
   const avgGroups = avgOn && avgData ? (avgData.sets[scrambleSet]?.sample_count ?? 0) : 0;
+  const avgPreviewBins = useMemo<number[]>(
+    () => Object.keys(avgActiveCounts).map(Number).sort((a, b) => a - b),
+    [avgActiveCounts],
+  );
+
+  // 点柱后的「示例组」:遍历抽样组,按当前 (variant,stage,subset,备打) 从成员步数重算平均,
+  // 命中所选 bin 且(per-event 时)项目匹配者收下(每成员带该阶段步数 + 底色 argmin)。
+  const AVG_CASES_CAP = 12;
+  const avgMatchingGroups = useMemo<AvgGroupCase[] | null>(() => {
+    if (!avgOn || tab !== 'difficulty' || selectedBin === null) return null;
+    const base = avgExBase;
+    const vf = avgExVals[variant];
+    if (!base || !vf) return null; // 尚未加载完成
+    const order = base.meta.color_order;
+    const letters = [...effectiveSubset] as ColorLetter[];
+    const colorIdxs = letters.map((c) => order.indexOf(c));
+    const si = vf.stages.indexOf(stage);
+    if (si < 0 || colorIdxs.some((i) => i < 0)) return [];
+    const denom = base.meta.avg_denom;
+    const wantEvent = isPerEvent ? event : null;
+    const out: AvgGroupCase[] = [];
+    for (let gi = 0; gi < base.groups.length; gi++) {
+      const g = base.groups[gi];
+      if (wantEvent && g.e !== wantEvent) continue;
+      const rows = vf.vals[gi];
+      let sum = 0, cnt = 0;
+      const members: AvgGroupCase['members'] = [];
+      for (let mi = 0; mi < g.m.length; mi++) {
+        const [scr, num, extra] = g.m[mi];
+        if (!avgExtras && extra === 1) continue;
+        const flat = rows[mi];
+        let mn = Infinity;
+        let bc: ColorLetter = letters[0];
+        for (let k = 0; k < colorIdxs.length; k++) {
+          const val = flat[si * 6 + colorIdxs[k]];
+          if (val >= 0 && val < mn) { mn = val; bc = letters[k]; }
+        }
+        if (mn === Infinity) continue;
+        sum += mn; cnt++;
+        members.push({ scr, num, extra: extra === 1, val: mn, bottomColor: bc });
+      }
+      if (cnt < 2) continue;
+      const mean = sum / cnt;
+      if (Math.round(mean * denom) !== selectedBin) continue;
+      out.push({ comp: g.c, event: g.e, round: g.r, group: g.g, mean, cnt, members });
+      if (out.length >= AVG_CASES_CAP) break;
+    }
+    return out;
+  }, [avgOn, tab, selectedBin, avgExBase, avgExVals, variant, stage, effectiveSubset, avgExtras, isPerEvent, event]);
 
   const cnBenefit = useMemo(() => {
     if (!currentSet) return null;
@@ -1677,6 +1773,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           isZh={isZh}
           yMode={yMode}
           chartMode={chartMode}
+          clickableBins={avgPreviewBins}
+          selectedBin={selectedBin}
+          onBarClick={handleAvgBarClick}
           hideLegendColors
           gapAware
           showBarLabels={false}
@@ -1698,6 +1797,17 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           </div>
         </div>
       )}
+      <AvgExamplesPanel
+        cases={avgMatchingGroups}
+        comps={avgExBase?.comps}
+        lang={uiLangOf(i18n.language)}
+        isZh={isZh}
+        selectedBin={selectedBin}
+        loading={avgExLoading}
+        errorText={avgExError}
+        avgDenom={avgDenom}
+        eventLabel={eventLabel}
+      />
       </>
       ) : (
       <>

@@ -497,6 +497,87 @@
   gap: 0.6rem;
   flex-wrap: wrap;
 }
+
+/* 组平均「示例组」:每组 = 比赛头 + 组平均徽标 + 成员打乱行(复用 examples 的 chip/cube/scramble/comp 样式) */
+.scramble-stats-avg-cases {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+.scramble-stats-avg-case {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.scramble-stats-avg-case + .scramble-stats-avg-case {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+.scramble-stats-avg-case-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.scramble-stats-avg-case-mean {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.scramble-stats-avg-case-cnt {
+  font-weight: 400;
+  color: var(--text-sub);
+}
+.scramble-stats-avg-members {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.scramble-stats-avg-members li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.55rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.scramble-stats-avg-mscr {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.76rem;
+}
+.scramble-stats-avg-mval {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.4em;
+  text-align: right;
+}
+.scramble-stats-avg-mnum {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  font-variant-numeric: tabular-nums;
+  min-width: 2.2em;
+  text-align: right;
+}
+.scramble-stats-avg-members li.scramble-stats-avg-more {
+  border: none;
+  background: none;
+  padding: 0.1rem 0.2rem;
+  font-size: 0.74rem;
+  color: var(--text-sub);
+}
 /* 长度 tab:计步口径钮提到顶栏,紧挨合并左侧(覆盖 puzzle-toggle 的 top margin) */
 .scramble-len-metric-head {
   margin-top: 0;
