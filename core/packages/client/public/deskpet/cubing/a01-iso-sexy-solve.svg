@@ -27,13 +27,6 @@
 
   <g class="breathe">
     <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
-    <g class="eyes" fill="#000">
-      <rect x="4" y="8" width="1" height="2"/>
-      <rect x="10" y="8" width="1" height="2"/>
-    </g>
-    <g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g>
-    <g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g>
-
     <!-- ===== standard 3x3 cube ===== -->
     <g id="cube">
     <g id="f0" opacity="1">
@@ -3069,6 +3062,14 @@
       <polygon points="7.390,10.884 8.055,10.657 8.055,9.899 7.390,10.126" fill="#00d200"/>
     </g>
     </g>
+
+    <g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g>
+    <g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g>
+    <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
+    <g class="eyes" fill="#000">
+      <rect x="4" y="8" width="1" height="2"/>
+      <rect x="10" y="8" width="1" height="2"/>
+    </g>
   </g>
 
   <g>
@@ -3121,5 +3122,7 @@
       <animate xlink:href="#f46" attributeName="opacity" dur="9s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.88235;0.89706;1.00000" values="0;1;0;0"/>
       <animate xlink:href="#f47" attributeName="opacity" dur="9s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.89706;0.91176;1.00000" values="0;1;0;0"/>
       <animate xlink:href="#f48" attributeName="opacity" dur="9s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.91176;1.00000" values="0;1;0"/>
+      <animateTransform xlink:href="#claw-l" attributeName="transform" type="translate" dur="9s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0794;0.1294;0.1397;0.1544;0.2100;0.2265;0.2765;0.2868;0.3015;0.3570;0.3735;0.4235;0.4338;0.4971;0.5074;0.5221;0.5776;0.5941;0.6441;0.6544;0.6691;0.7247;0.7412;0.7912;0.8015;0.8162;0.8717;1" values="0.00 0.00;0.00 0.00;3.57 -0.89;3.90 -0.86;4.87 -0.94;0.00 0.00;0.00 0.00;3.57 -0.89;3.26 -0.95;2.58 -1.27;0.00 0.00;0.00 0.00;3.57 -0.89;3.90 -0.86;3.57 -0.89;3.26 -0.95;2.58 -1.27;0.00 0.00;0.00 0.00;3.57 -0.89;3.90 -0.86;4.87 -0.94;0.00 0.00;0.00 0.00;3.57 -0.89;3.26 -0.95;2.58 -1.27;0.00 0.00;0.00 0.00"/>
+      <animateTransform xlink:href="#claw-r" attributeName="transform" type="translate" dur="9s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0059;0.0559;0.0662;0.0809;0.1364;0.1529;0.2029;0.2132;0.2279;0.2835;0.3000;0.3500;0.3603;0.3750;0.4306;0.5206;0.5706;0.5809;0.5956;0.6511;0.6676;0.7176;0.7279;0.7426;0.7982;0.8147;0.8647;0.8750;0.8897;0.9453;1" values="0.00 0.00;0.00 0.00;-2.28 -1.37;-2.18 -1.05;-2.12 -0.13;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.41 -1.68;-2.95 -2.40;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.18 -1.05;-2.12 -0.13;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.41 -1.68;-2.95 -2.40;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.18 -1.05;-2.12 -0.13;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.41 -1.68;-2.95 -2.40;0.00 0.00;0.00 0.00"/>
   </g>
 </svg>

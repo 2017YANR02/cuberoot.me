@@ -326,7 +326,10 @@ function flickerFrames(stages, pose, framesPerStage = 1) {
 // =====================================================================
 
 export function spin({ dur = '9s', frames = 36, turns = 1, dir = 1, view: vo = {} } = {}) {
-  return renderTrack(poseFrames((t) => rotY(dir * TAU * turns * t), frames), makeView(vo), { dur });
+  const view = makeView(vo);
+  const poseAt = (t) => rotY(dir * TAU * turns * t);
+  const r = renderTrack(poseFrames(poseAt, frames), view, { dur });
+  return addClaws(r, clawSwipeEvents(poseAt, view, { pushes: Math.max(2, 2 * turns), durS: parseFloat(dur) }), dur);
 }
 export const spinShowcase = spin; // alias for the existing a02-faceturn row
 
@@ -339,23 +342,39 @@ export function spinSnap({ dur = '8s', steps = 8, framesPerStep = 5, view: vo = 
     frames.push({ elems, pose: rotY((TAU * (s + local)) / steps), off: null });
   }
   frames.push({ elems, pose: rotY(TAU), off: null });
-  return renderTrack(frames, makeView(vo), { dur });
+  const view = makeView(vo);
+  const total = steps * framesPerStep + 1;
+  const events = clawSwipeEvents((t) => rotY(TAU * t), view, {
+    times: Array.from({ length: steps }, (_, s) => (s * framesPerStep) / total),
+    winFrac: (framesPerStep - 2) / total, durS: parseFloat(dur),
+  });
+  return addClaws(renderTrack(frames, view, { dur }), events, dur);
 }
 
 // gentle small-angle oscillation about vertical (lazy idle)
 export function sway({ dur = '7s', frames = 48, amp = 22, view: vo = {} } = {}) {
-  return renderTrack(poseFrames((t) => mul(POSE_3Q, rotY(amp * DEG * Math.sin(TAU * t))), frames), makeView(vo), { dur });
+  const view = makeView(vo);
+  const poseAt = (t) => mul(POSE_3Q, rotY(amp * DEG * Math.sin(TAU * t)));
+  const r = renderTrack(poseFrames(poseAt, frames), view, { dur });
+  // pushes at the two velocity maxima (t≈0 and t≈0.5), one claw each way
+  return addClaws(r, clawSwipeEvents(poseAt, view, { times: [0.03, 0.53], durS: parseFloat(dur) }), dur);
 }
 
 // oscillate between two faces
 export function twoFaceSpin({ dur = '6s', frames = 48, a = -50, b = 50, view: vo = {} } = {}) {
   const mid = (a + b) / 2, half = (b - a) / 2;
-  return renderTrack(poseFrames((t) => rotY((mid + half * Math.sin(TAU * t)) * DEG), frames), makeView(vo), { dur });
+  const view = makeView(vo);
+  const poseAt = (t) => rotY((mid + half * Math.sin(TAU * t)) * DEG);
+  const r = renderTrack(poseFrames(poseAt, frames), view, { dur });
+  return addClaws(r, clawSwipeEvents(poseAt, view, { times: [0.02, 0.52], durS: parseFloat(dur) }), dur);
 }
 
 // flip about a horizontal axis (top tumbles over)
 export function flip({ dur = '6s', frames = 40, axis = 'x', turns = 1, dir = 1, base = POSE_3Q, view: vo = {} } = {}) {
-  return renderTrack(poseFrames((t) => mul(ROT_AXIS[axis](dir * TAU * turns * t), base), frames), makeView({ scale: 0.8, ...vo }), { dur });
+  const view = makeView({ scale: 0.8, ...vo });
+  const poseAt = (t) => mul(ROT_AXIS[axis](dir * TAU * turns * t), base);
+  const r = renderTrack(poseFrames(poseAt, frames), view, { dur });
+  return addClaws(r, clawSwipeEvents(poseAt, view, { pushes: 2 * turns, durS: parseFloat(dur) }), dur);
 }
 
 // sideways tumble across the table: roll about Z while translating in screen x
@@ -380,17 +399,20 @@ export function snapFrames({ dur = '6s', angles = [0, 35, 90, 145, 200, 270, 325
 // as its own correctly depth-sorted set (correct by construction).
 // Frame track for a layerTurn config (exported so the verifier rebuilds the
 // EXACT same frames the renderer consumes — no drift between build and verify).
+const layerScript = (move, frames, mode) => mode === 'oscillate'
+  ? [{ ...move, frames, hold: 3 }, { ...move, dir: -move.dir, frames, hold: 3 }]
+  : [{ ...move, frames, hold: 3 }];
 export function layerTurnFrames({ move = { axis: 'y', layer: 1, dir: 1 }, frames = 9, mode = 'oscillate', pose = POSE_3Q, rest = 4 } = {}) {
-  const script = mode === 'oscillate'
-    ? [{ ...move, frames, hold: 3 }, { ...move, dir: -move.dir, frames, hold: 3 }]
-    : [{ ...move, frames, hold: 3 }];
-  return turnFrames(script, pose, { restFrames: rest });
+  return turnFrames(layerScript(move, frames, mode), pose, { restFrames: rest });
 }
 export function layerTurn({
   dur = '5s', move = { axis: 'y', layer: 1, dir: 1 }, frames = 9,
   mode = 'oscillate', pose = POSE_3Q, rest = 4, view: vo = {},
 } = {}) {
-  return renderFlip(layerTurnFrames({ move, frames, mode, pose, rest }), makeView(vo), { dur });
+  const script = layerScript(move, frames, mode);
+  const view = makeView(vo);
+  const r = renderFlip(turnFrames(script, pose, { restFrames: rest }), view, { dur });
+  return addClaws(r, clawGripEvents(script, pose, view, { restFrames: rest }), dur);
 }
 
 // scramble then solve (a move sequence then its inverse) — loops solved.
@@ -399,7 +421,9 @@ export function solve({ dur = '11s', moves, framesPerMove = 4, pose = POSE_3Q, v
   const seq = moves || DEFAULT_SCRAMBLE;
   const script = seq.map((m) => ({ ...m, frames: framesPerMove, hold: 1 }))
     .concat(invert(seq).map((m) => ({ ...m, frames: framesPerMove, hold: 1 })));
-  return renderFlip(turnFrames(script, pose, { restFrames: 4 }), makeView(vo), { dur });
+  const view = makeView(vo);
+  const r = renderFlip(turnFrames(script, pose, { restFrames: 4 }), view, { dur });
+  return addClaws(r, clawGripEvents(script, pose, view, { restFrames: 4 }), dur);
 }
 
 // =====================================================================
@@ -724,6 +748,173 @@ export function beat({ dur = '6s', frames = 36, motion = 'sway', amp = 14, turns
   return renderTrack(poseFrames(poseAt, frames), makeView(vo), { dur });
 }
 
+// =====================================================================
+// Claw gestures — Clawd actually turns the cube with its own claws.
+//
+// Hard constraint (user 2026-06-02): Clawd has NO arms and NO fingers. The
+// "hands" are the two native 2×2 claw nubs on the body sides; interaction is
+// limited to simple translates of those nubs (reach in, touch, retreat). No
+// articulated limbs, no grafted digits. The nubs are painted AFTER the cube
+// (identical at rest — nothing overlaps — but a reaching claw draws over the
+// cube and reads as gripping it).
+//
+// Two gesture builders produce per-claw SMIL translate tracks on the same dur
+// as the cube's own animation, so claw and cube stay frame-locked:
+//   clawGripEvents  — replays the exact turnFrames cubie sim; per move it picks
+//                     a front-facing sticker on the turning layer (biased to
+//                     the claw's side, away from the eye band) and rides that
+//                     point's projected path for the first ~half of the 90°.
+//   clawSwipeEvents — for rigid whole-cube motions: computes the true projected
+//                     surface velocity at a near-surface marker and sweeps a
+//                     claw along it (spinning-a-globe pushes).
+// =====================================================================
+
+const IDENT = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+const transpose = (M) => M[0].map((_, j) => M.map((r) => r[j]));
+const quadCenter3 = (q) => [
+  (q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4,
+  (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4,
+  (q[0][2] + q[1][2] + q[2][2] + q[3][2]) / 4,
+];
+// reach point of each native claw nub at rest (inner edge of the small rect)
+const CLAW_TIP = { l: [3.5, 11.25], r: [11.5, 11.25] };
+
+// Per move: choose a grip sticker on the turning layer and sample its projected
+// path while the layer rotates. Returns [{ claw:'l'|'r', samples:[[t,x,y],…] }]
+// with t as fractions of the loop, aligned to turnFrames' slot timeline.
+function clawGripEvents(script, pose, view, { restFrames = 0, followFrac = 0.55 } = {}) {
+  const total = 2 * restFrames + script.reduce((s, m) => s + (m.frames ?? 6) + (m.hold ?? 0), 0);
+  const [CX] = view.project([0, 0, 0], IDENT, null);
+  let cur = buildCubies();
+  let slot = restFrames;
+  const events = [];
+  for (const m of script) {
+    const { axis, layer, dir, frames: mf = 6, hold = 0 } = m;
+    const ai = AXIS_IDX[axis];
+    const inLayer = (cb) => Math.round(cb.center[ai] / STEP) === layer;
+    // best front-facing sticker: outboard toward a claw, near the camera, and
+    // penalised hard above y≈10 so a reaching claw stays out of the eye band.
+    let best = null;
+    for (const cb of cur) {
+      if (!inLayer(cb)) continue;
+      for (const fa of cb.faces) {
+        if (fa.black || !view.normalVisible(fa.normal, pose)) continue;
+        const fc = quadCenter3(fa.quad);
+        const [px, py] = view.project(fc, pose, null);
+        const depth = view.depth(fc, pose);
+        for (const side of [1, -1]) {
+          const score = side * (px - CX) + 1.2 * depth - 1.5 * Math.max(0, 10.1 - py);
+          if (!best || score > best.score) best = { score, side, fc };
+        }
+      }
+    }
+    if (best) {
+      const claw = best.side > 0 ? 'r' : 'l';
+      const nf = Math.max(2, Math.round(mf * followFrac));
+      // contact just before the first turn frame shows, then ride the point
+      const samples = [[(slot - 0.2) / total, ...view.project(best.fc, pose, null)]];
+      for (let f = 1; f <= nf; f++) {
+        const M = ROT_AXIS[axis](dir * (Math.PI / 2) * easeInOut(f / mf));
+        samples.push([(slot + f - 0.5) / total, ...view.project(mv(M, best.fc), pose, null)]);
+      }
+      events.push({ claw, samples });
+    }
+    const M90 = ROT_AXIS[axis]((dir * Math.PI) / 2);
+    cur = cur.map((cb) => (inLayer(cb) ? rotCubie(cb, M90) : cb));
+    slot += mf + hold;
+  }
+  return events;
+}
+
+// Rigid-motion pushes: at each push time, project a fixed near-surface marker a
+// hair apart in time to get the true on-screen surface velocity, then sweep a
+// claw along it through the cube's lower half (below the eye band).
+function clawSwipeEvents(poseAt, view, { times, pushes = 2, phase = 0.02, winFrac, durS = 8 } = {}) {
+  const w = winFrac ?? Math.max(0.05, 0.55 / durS);
+  const tcs = times || Array.from({ length: pushes }, (_, i) => i / pushes + phase);
+  const clampY = (y) => Math.min(12.4, Math.max(10.3, y));
+  const events = [];
+  for (const tc of tcs) {
+    const R = poseAt(tc), Rt = transpose(R);
+    const vel = (Q) => {
+      const P = mv(Rt, Q); // marker fixed in posed (screen-facing) space
+      const p0 = view.project(P, R, null);
+      const p1 = view.project(P, poseAt(tc + 0.008), null);
+      return { p0, vx: p1[0] - p0[0], vy: p1[1] - p0[1] };
+    };
+    let { p0, vx, vy } = vel([0, -0.7, 1.35]); // front face, below centre
+    let len = Math.hypot(vx, vy);
+    if (len < 1e-4) continue;
+    vx /= len; vy /= len;
+    let claw, L;
+    if (Math.abs(vx) >= 0.55) {
+      claw = vx > 0 ? 'l' : 'r'; // push from behind the motion
+      L = 2.4;
+    } else {
+      // mostly vertical (tumbles): flick the near-right shoulder of the cube
+      ({ p0, vx, vy } = vel([1.05, -0.4, 1.05]));
+      len = Math.hypot(vx, vy);
+      if (len < 1e-4) continue;
+      vx /= len; vy /= len;
+      claw = 'r';
+      L = 1.7;
+    }
+    const cy0 = clampY(p0[1]);
+    events.push({ claw, samples: [
+      [tc, p0[0] - vx * L / 2, clampY(cy0 - vy * L / 2)],
+      [tc + w, p0[0] + vx * L / 2, clampY(cy0 + vy * L / 2)],
+    ] });
+  }
+  return events;
+}
+
+// Merge one claw's gestures into a single SMIL translate track: rest → approach
+// → contact/follow → retreat → rest. Overlapping gestures chain directly (the
+// claw flows from one grip point to the next instead of returning to rest).
+function clawSmil(events, dur) {
+  const durS = parseFloat(dur) || 8;
+  const aF = 0.45 / durS, rF = 0.5 / durS; // approach / retreat, in loop fractions
+  const parts = [];
+  for (const claw of ['l', 'r']) {
+    const evs = events.filter((e) => e.claw === claw).sort((a, b) => a.samples[0][0] - b.samples[0][0]);
+    if (!evs.length) continue;
+    const tip = CLAW_TIP[claw];
+    const keys = [[0, 0, 0]];
+    for (const ev of evs) {
+      const t0 = Math.max(ev.samples[0][0], 0.015);
+      const tA = t0 - aF;
+      // the approach swallows any retreat/hold keys it overlaps
+      while (keys.length > 1 && keys[keys.length - 1][0] >= tA - 1e-4) keys.pop();
+      const last = keys[keys.length - 1];
+      if (last[1] === 0 && last[2] === 0 && tA > last[0] + 1e-4) keys.push([tA, 0, 0]);
+      for (const [t, x, y] of ev.samples) {
+        const ct = Math.max(t, keys[keys.length - 1][0] + 1e-4);
+        if (ct >= 0.995) break;
+        keys.push([ct, x - tip[0], y - tip[1]]);
+      }
+      keys.push([Math.min(keys[keys.length - 1][0] + rF, 0.998), 0, 0]);
+    }
+    if (keys[keys.length - 1][0] < 1) keys.push([1, 0, 0]);
+    const kts = [], vals = [];
+    let prev = -1;
+    for (const [t, x, y] of keys) {
+      const rt = Math.min(1, Math.max(0, t));
+      if (+rt.toFixed(4) <= prev) continue;
+      prev = +rt.toFixed(4);
+      kts.push(rt.toFixed(4)); vals.push(`${x.toFixed(2)} ${y.toFixed(2)}`);
+    }
+    // keyTimes must end exactly at 1 (last kept key is always the rest pose)
+    kts[kts.length - 1] = '1'; vals[vals.length - 1] = '0.00 0.00';
+    parts.push(`      <animateTransform xlink:href="#claw-${claw}" attributeName="transform" type="translate" dur="${dur}" repeatCount="indefinite" calcMode="linear" keyTimes="${kts.join(';')}" values="${vals.join(';')}"/>`);
+  }
+  return parts.join('\n');
+}
+
+function addClaws(r, events, dur) {
+  const smil = clawSmil(events, dur);
+  return smil ? { ...r, anims: `${r.anims}\n${smil}` } : r;
+}
+
 // ── Bounds guard: keep the cube off Clawd's eyes (x ~4.5–10.5) and legs (y≥13). ──
 export function assertClear(stats, label = 'cube') {
   const problems = [];
@@ -746,9 +937,12 @@ const MOODS = {
 };
 
 // ── Clawd body shell: torso/eyes/legs/arms copied verbatim from the original
-//    native art (one pixel unchanged). Cube polys go inside .breathe (after the
-//    arms → reads as held in front); SMIL animates sit in a trailing <g>. An
-//    optional `mood` adds a body-wide CSS beat for the a09/a10 characters. ──
+//    native art (one pixel unchanged). The claw nubs are painted AFTER the cube:
+//    identical at rest (nothing overlaps), but a claw translated onto the cube
+//    by a gesture track draws over it and reads as gripping. #claw-l/#claw-r
+//    are the SMIL translate targets; the inner .arm-* keep the CSS idle sway.
+//    SMIL animates sit in a trailing <g>. An optional `mood` adds a body-wide
+//    CSS beat for the a09/a10 characters. ──
 export function wrapSvg({ polys, anims, label = 'cube', mood = null }) {
   const m = mood && MOODS[mood];
   const moodCss = m ? `\n      ${m.css}\n      .beat { transform-box: view-box; transform-origin: 7.5px 12px; animation: ${m.anim}; }` : '';
@@ -783,16 +977,17 @@ export function wrapSvg({ polys, anims, label = 'cube', mood = null }) {
 
   <g class="breathe">
     <rect x="2" y="6" width="11" height="7" fill="#DE886D"/>
-    <g class="eyes" fill="#000">
-      <rect x="4" y="8" width="1" height="2"/>
-      <rect x="10" y="8" width="1" height="2"/>
-    </g>
-    <g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g>
-    <g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g>
-
     <!-- ===== standard 3x3 cube ===== -->
     <g id="cube">
 ${polys}
+    </g>
+
+    <g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g>
+    <g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g>
+    <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
+    <g class="eyes" fill="#000">
+      <rect x="4" y="8" width="1" height="2"/>
+      <rect x="10" y="8" width="1" height="2"/>
     </g>
   </g>${closeBeat}
 
