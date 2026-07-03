@@ -7,13 +7,13 @@
     <style>
       #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: sh1 8s infinite ease-in-out; }
       .breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: br1 8s infinite ease-in-out; }
-      .arm-l { transform-box: fill-box; transform-origin: 100% 50%; animation: arml1 8s infinite ease-in-out; }
-      .arm-r { transform-box: fill-box; transform-origin: 0% 50%; animation: armr1 8s infinite ease-in-out; }
+      .arm-l { transform-box: fill-box; transform-origin: 0% 50%; animation: arml1 2.4s infinite ease-in-out; }
+      .arm-r { transform-box: fill-box; transform-origin: 100% 50%; animation: armr1 2.4s infinite ease-in-out -1.2s; }
       .eyes { transform-box: view-box; transform-origin: 7.5px 9px; animation: ey1 8s infinite ease-in-out; }
       @keyframes sh1 { 0%,100%{opacity:.5;transform:scaleX(1);} 50%{opacity:.46;transform:scaleX(.97);} }
       @keyframes br1 { 0%,100%{transform:scale(1,1) translateY(0);} 50%{transform:scale(1.008,.992) translateY(.12px);} }
-      @keyframes arml1 { 0%,100%{transform:rotate(8deg) translateY(-.1px);} 50%{transform:rotate(11deg) translateY(.05px);} }
-      @keyframes armr1 { 0%,100%{transform:rotate(-8deg) translateY(-.1px);} 50%{transform:rotate(-11deg) translateY(.05px);} }
+      @keyframes arml1 { 0%,100%{transform:rotate(11deg);} 50%{transform:rotate(-11deg);} }
+      @keyframes armr1 { 0%,100%{transform:rotate(-11deg);} 50%{transform:rotate(11deg);} }
       @keyframes ey1 { 0%,100%{transform:translateX(.18px);} 25%{transform:translateX(.05px);} 50%{transform:translateX(-.18px);} 75%{transform:translateX(.05px);} }
     </style>
   </defs>
@@ -3063,8 +3063,8 @@
     </g>
     </g>
 
-    <g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g>
-    <g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g>
+    <g transform="translate(3.00,0.70)"><g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g></g>
+    <g transform="translate(-2.41,0.70)"><g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g></g>
     <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
     <g class="eyes" fill="#000">
       <rect x="4" y="8" width="1" height="2"/>
@@ -3122,7 +3122,7 @@
       <animate xlink:href="#f46" attributeName="opacity" dur="11s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.88235;0.89706;1.00000" values="0;1;0;0"/>
       <animate xlink:href="#f47" attributeName="opacity" dur="11s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.89706;0.91176;1.00000" values="0;1;0;0"/>
       <animate xlink:href="#f48" attributeName="opacity" dur="11s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.91176;1.00000" values="0;1;0"/>
-      <animateTransform xlink:href="#claw-l" attributeName="transform" type="translate" dur="11s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0885;0.1294;0.1397;0.1544;0.1999;0.2356;0.2765;0.2868;0.3015;0.3500;0.3603;0.3750;0.4205;0.5297;0.5706;0.5809;0.5956;0.6441;0.6544;0.6691;0.7146;0.7503;0.7912;0.8015;0.8162;0.8616;1" values="0.00 0.00;0.00 0.00;3.57 -0.89;3.74 -1.18;4.43 -1.84;0.00 0.00;0.00 0.00;3.57 -0.89;3.44 -0.59;3.37 0.33;3.57 -0.89;3.90 -0.86;4.87 -0.94;0.00 0.00;0.00 0.00;3.57 -0.89;3.26 -0.95;2.58 -1.27;3.57 -0.89;3.74 -1.18;4.43 -1.84;0.00 0.00;0.00 0.00;3.57 -0.89;3.44 -0.59;3.37 0.33;0.00 0.00;0.00 0.00"/>
-      <animateTransform xlink:href="#claw-r" attributeName="transform" type="translate" dur="11s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0150;0.0559;0.0662;0.0809;0.1263;0.1620;0.2029;0.2132;0.2279;0.2734;0.3826;0.4235;0.4338;0.4485;0.4971;0.5074;0.5221;0.5675;0.6767;0.7176;0.7279;0.7426;0.7881;0.8238;0.8647;0.8750;0.8897;0.9352;1" values="0.00 0.00;0.00 0.00;-2.28 -1.37;-2.18 -1.05;-2.12 -0.13;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.41 -1.68;-2.95 -2.40;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.41 -1.68;-2.95 -2.40;-2.28 -1.37;-2.18 -1.05;-2.12 -0.13;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.18 -1.05;-2.12 -0.13;0.00 0.00;0.00 0.00;-2.28 -1.37;-2.41 -1.68;-2.95 -2.40;0.00 0.00;0.00 0.00"/>
+      <animateTransform xlink:href="#claw-l" attributeName="transform" type="translate" dur="11s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0885;0.1294;0.1397;0.1544;0.1691;0.2146;0.2356;0.2765;0.2868;0.3015;0.3500;0.3603;0.3750;0.3897;0.4352;0.5297;0.5706;0.5809;0.5956;0.6441;0.6544;0.6691;0.6838;0.7293;0.7503;0.7912;0.8015;0.8162;0.8309;0.8763;1" values="0.00 0.00;0.00 0.00;0.57 -1.59;0.74 -1.88;1.43 -2.54;2.20 -2.71;0.00 0.00;0.00 0.00;0.57 -1.59;0.44 -1.29;0.37 -0.37;0.57 -1.59;0.90 -1.56;1.87 -1.64;2.59 -1.94;0.00 0.00;0.00 0.00;0.57 -1.59;0.26 -1.65;-0.42 -1.97;0.57 -1.59;0.74 -1.88;1.43 -2.54;2.20 -2.71;0.00 0.00;0.00 0.00;0.57 -1.59;0.44 -1.29;0.37 -0.37;0.73 0.29;0.00 0.00;0.00 0.00"/>
+      <animateTransform xlink:href="#claw-r" attributeName="transform" type="translate" dur="11s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0150;0.0559;0.0662;0.0809;0.0956;0.1410;0.1620;0.2029;0.2132;0.2279;0.2426;0.2881;0.3826;0.4235;0.4338;0.4485;0.4971;0.5074;0.5221;0.5368;0.5822;0.6767;0.7176;0.7279;0.7426;0.7574;0.8028;0.8238;0.8647;0.8750;0.8897;0.9044;0.9499;1" values="0.00 0.00;0.00 0.00;0.13 -2.07;0.23 -1.75;0.29 -0.83;0.00 -0.21;0.00 0.00;0.00 0.00;0.13 -2.07;0.00 -2.38;-0.54 -3.10;-1.14 -3.35;0.00 0.00;0.00 0.00;0.13 -2.07;0.00 -2.38;-0.54 -3.10;0.13 -2.07;0.23 -1.75;0.29 -0.83;0.00 -0.21;0.00 0.00;0.00 0.00;0.13 -2.07;0.23 -1.75;0.29 -0.83;0.00 -0.21;0.00 0.00;0.00 0.00;0.13 -2.07;0.00 -2.38;-0.54 -3.10;-1.14 -3.35;0.00 0.00;0.00 0.00"/>
   </g>
 </svg>

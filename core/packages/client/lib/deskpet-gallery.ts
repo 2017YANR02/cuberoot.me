@@ -19,6 +19,10 @@ export interface PetGalleryGroup {
   // don't run inside <img>, so these must render via <object> or they show a
   // blank/initial frame. CSS-keyframe SVGs (cubing/clawd) and .png animate in <img>.
   scripted?: boolean;
+  // Cache-buster appended as ?v= to each file URL. /deskpet/* ships a 1-year
+  // immutable Cache-Control (next.config.ts), so regenerated files MUST bump
+  // this or returning visitors keep the stale cached animation forever.
+  v?: string;
   // Optional CSS zoom: several characters are authored small inside a large canvas
   // (cloud centered with float headroom; pixel crab/pig sitting low with jump
   // headroom above), so they read tiny at native scale — bump to match the cats.
@@ -30,7 +34,7 @@ export interface PetGalleryGroup {
 
 export const PET_GALLERY: PetGalleryGroup[] = [
   {
-    id: 'cubing', zh: '魔方秀 Cube Show', en: 'Cube Show', base: '/deskpet/cubing/', scale: 1.85, scaleOrigin: 'center 82%',
+    id: 'cubing', zh: '魔方秀 Cube Show', en: 'Cube Show', base: '/deskpet/cubing/', v: '2', scale: 1.85, scaleOrigin: 'center 82%',
     anims: [
       { file: 'a01-iso-sexy-solve.svg', zh: '等距解魔方', en: 'Sexy-move solve' },
       { file: 'a01-iso-crank-solve.svg', zh: '转角解魔方', en: 'Corner crank'

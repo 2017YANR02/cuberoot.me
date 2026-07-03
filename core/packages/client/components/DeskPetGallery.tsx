@@ -99,14 +99,15 @@ export default function DeskPetGallery({ lang, onClose }: { lang: 'zh' | 'en'; o
                 const zoom = g.scale
                   ? { transform: `scale(${g.scale})`, transformOrigin: g.scaleOrigin || 'center' }
                   : undefined;
+                const src = g.base + a.file + (g.v ? `?v=${g.v}` : '');
                 return (
                   <figure key={a.file}>
                     <div className="deskpet-gallery-media">
                       {g.scripted ? (
                         // script-driven SVG: <object> runs its animation; <img> would stay blank
-                        <object type="image/svg+xml" data={g.base + a.file} aria-label={zh ? a.zh : a.en} style={zoom} />
+                        <object type="image/svg+xml" data={src} aria-label={zh ? a.zh : a.en} style={zoom} />
                       ) : (
-                        <img src={g.base + a.file} alt={zh ? a.zh : a.en} loading="lazy" style={zoom} />
+                        <img src={src} alt={zh ? a.zh : a.en} loading="lazy" style={zoom} />
                       )}
                     </div>
                     <figcaption>{zh ? a.zh : a.en}</figcaption>

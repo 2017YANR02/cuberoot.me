@@ -776,13 +776,25 @@ const quadCenter3 = (q) => [
   (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4,
   (q[0][2] + q[1][2] + q[2][2] + q[3][2]) / 4,
 ];
-// reach point of each native claw nub at rest (inner edge of the small rect)
+// reach point of each native claw nub at its authored position (inner edge)
 const CLAW_TIP = { l: [3.5, 11.25], r: [11.5, 11.25] };
+
+// Holding pose: the claws REST ON the cube (tips overlapping its lower-left /
+// lower-right), not parked at the shoulders — Clawd visibly holds the cube at
+// all times; gestures swing out from and return to this grip. Derived from the
+// rendered track's screen bbox so it adapts to each file's view/scale, clamped
+// below the eye band and above the legs.
+export function clawHoldFromStats(stats) {
+  const tipY = Math.max(10.9, Math.min(11.95, stats.maxY - 0.75));
+  const lx = Math.min(stats.minX + 0.95, 6.5);
+  const rx = Math.max(stats.maxX - 0.95, 8.7);
+  return { l: [lx - CLAW_TIP.l[0], tipY - CLAW_TIP.l[1]], r: [rx - CLAW_TIP.r[0], tipY - CLAW_TIP.r[1]] };
+}
 
 // Per move: choose a grip sticker on the turning layer and sample its projected
 // path while the layer rotates. Returns [{ claw:'l'|'r', samples:[[t,x,y],…] }]
 // with t as fractions of the loop, aligned to turnFrames' slot timeline.
-function clawGripEvents(script, pose, view, { restFrames = 0, followFrac = 0.55 } = {}) {
+function clawGripEvents(script, pose, view, { restFrames = 0, followFrac = 0.75 } = {}) {
   const total = 2 * restFrames + script.reduce((s, m) => s + (m.frames ?? 6) + (m.hold ?? 0), 0);
   const [CX] = view.project([0, 0, 0], IDENT, null);
   let cur = buildCubies();
@@ -868,17 +880,18 @@ function clawSwipeEvents(poseAt, view, { times, pushes = 2, phase = 0.02, winFra
   return events;
 }
 
-// Merge one claw's gestures into a single SMIL translate track: rest → approach
-// → contact/follow → retreat → rest. Overlapping gestures chain directly (the
-// claw flows from one grip point to the next instead of returning to rest).
-function clawSmil(events, dur) {
+// Merge one claw's gestures into a single SMIL translate track: hold → approach
+// → contact/follow → retreat → hold. Rest value 0,0 = the HOLDING pose (claws
+// on the cube), so between gestures the claw keeps gripping. Overlapping
+// gestures chain directly (the claw flows from one grip point to the next).
+function clawSmil(events, dur, hold) {
   const durS = parseFloat(dur) || 8;
   const aF = 0.45 / durS, rF = 0.5 / durS; // approach / retreat, in loop fractions
   const parts = [];
   for (const claw of ['l', 'r']) {
     const evs = events.filter((e) => e.claw === claw).sort((a, b) => a.samples[0][0] - b.samples[0][0]);
     if (!evs.length) continue;
-    const tip = CLAW_TIP[claw];
+    const tip = [CLAW_TIP[claw][0] + hold[claw][0], CLAW_TIP[claw][1] + hold[claw][1]];
     const keys = [[0, 0, 0]];
     for (const ev of evs) {
       const t0 = Math.max(ev.samples[0][0], 0.015);
@@ -911,8 +924,9 @@ function clawSmil(events, dur) {
 }
 
 function addClaws(r, events, dur) {
-  const smil = clawSmil(events, dur);
-  return smil ? { ...r, anims: `${r.anims}\n${smil}` } : r;
+  const hold = clawHoldFromStats(r.stats);
+  const smil = clawSmil(events, dur, hold);
+  return { ...r, clawHold: hold, anims: smil ? `${r.anims}\n${smil}` : r.anims };
 }
 
 // ── Bounds guard: keep the cube off Clawd's eyes (x ~4.5–10.5) and legs (y≥13). ──
@@ -936,15 +950,18 @@ const MOODS = {
   shy: { css: `@keyframes beatShy { 0%,100%{transform:translateX(0) rotate(0);} 40%,60%{transform:translateX(-1.6px) rotate(-3deg);} }`, anim: 'beatShy 3.4s infinite ease-in-out' },
 };
 
-// ── Clawd body shell: torso/eyes/legs/arms copied verbatim from the original
-//    native art (one pixel unchanged). The claw nubs are painted AFTER the cube:
-//    identical at rest (nothing overlaps), but a claw translated onto the cube
-//    by a gesture track draws over it and reads as gripping. #claw-l/#claw-r
-//    are the SMIL translate targets; the inner .arm-* keep the CSS idle sway.
-//    SMIL animates sit in a trailing <g>. An optional `mood` adds a body-wide
-//    CSS beat for the a09/a10 characters. ──
-export function wrapSvg({ polys, anims, label = 'cube', mood = null }) {
+// ── Clawd body shell: torso/eyes/legs copied verbatim from the original native
+//    art. The claw nubs are painted AFTER the cube and REST IN A HOLDING POSE:
+//    a static per-file translate (clawHold) puts each tip on the cube's lower
+//    corners, so Clawd is always holding the cube. On top of that, #claw-l/-r
+//    are the SMIL gesture targets (translate relative to the hold) and the
+//    inner .arm-* run a constant alternating wrist waggle (rotation about the
+//    body-side edge — the "wrist"). SMIL animates sit in a trailing <g>. An
+//    optional `mood` adds a body-wide CSS beat for the a09/a10 characters. ──
+const HOLD_DEFAULT = { l: [1.4, 0.5], r: [-1.4, 0.5] };
+export function wrapSvg({ polys, anims, label = 'cube', mood = null, clawHold = HOLD_DEFAULT }) {
   const m = mood && MOODS[mood];
+  const hold = (c) => `translate(${clawHold[c][0].toFixed(2)},${clawHold[c][1].toFixed(2)})`;
   const moodCss = m ? `\n      ${m.css}\n      .beat { transform-box: view-box; transform-origin: 7.5px 12px; animation: ${m.anim}; }` : '';
   const openBeat = m ? '<g class="beat">' : '';
   const closeBeat = m ? '</g>' : '';
@@ -957,13 +974,13 @@ export function wrapSvg({ polys, anims, label = 'cube', mood = null }) {
     <style>
       #ground-shadow { transform-box: view-box; transform-origin: 7.5px 15.5px; animation: sh1 8s infinite ease-in-out; }
       .breathe { transform-box: view-box; transform-origin: 7.5px 13px; animation: br1 8s infinite ease-in-out; }
-      .arm-l { transform-box: fill-box; transform-origin: 100% 50%; animation: arml1 8s infinite ease-in-out; }
-      .arm-r { transform-box: fill-box; transform-origin: 0% 50%; animation: armr1 8s infinite ease-in-out; }
+      .arm-l { transform-box: fill-box; transform-origin: 0% 50%; animation: arml1 2.4s infinite ease-in-out; }
+      .arm-r { transform-box: fill-box; transform-origin: 100% 50%; animation: armr1 2.4s infinite ease-in-out -1.2s; }
       .eyes { transform-box: view-box; transform-origin: 7.5px 9px; animation: ey1 8s infinite ease-in-out; }
       @keyframes sh1 { 0%,100%{opacity:.5;transform:scaleX(1);} 50%{opacity:.46;transform:scaleX(.97);} }
       @keyframes br1 { 0%,100%{transform:scale(1,1) translateY(0);} 50%{transform:scale(1.008,.992) translateY(.12px);} }
-      @keyframes arml1 { 0%,100%{transform:rotate(8deg) translateY(-.1px);} 50%{transform:rotate(11deg) translateY(.05px);} }
-      @keyframes armr1 { 0%,100%{transform:rotate(-8deg) translateY(-.1px);} 50%{transform:rotate(-11deg) translateY(.05px);} }
+      @keyframes arml1 { 0%,100%{transform:rotate(11deg);} 50%{transform:rotate(-11deg);} }
+      @keyframes armr1 { 0%,100%{transform:rotate(-11deg);} 50%{transform:rotate(11deg);} }
       @keyframes ey1 { 0%,100%{transform:translateX(.18px);} 25%{transform:translateX(.05px);} 50%{transform:translateX(-.18px);} 75%{transform:translateX(.05px);} }${moodCss}
     </style>
   </defs>
@@ -982,8 +999,8 @@ export function wrapSvg({ polys, anims, label = 'cube', mood = null }) {
 ${polys}
     </g>
 
-    <g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g>
-    <g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g>
+    <g transform="${hold('l')}"><g id="claw-l"><g class="arm-l" fill="#DE886D"><rect x="0" y="10.2" width="2" height="2"/><rect x="1.6" y="10.6" width="2" height="1.3"/></g></g></g>
+    <g transform="${hold('r')}"><g id="claw-r"><g class="arm-r" fill="#DE886D"><rect x="13" y="10.2" width="2" height="2"/><rect x="11.4" y="10.6" width="2" height="1.3"/></g></g></g>
     <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
     <g class="eyes" fill="#000">
       <rect x="4" y="8" width="1" height="2"/>
