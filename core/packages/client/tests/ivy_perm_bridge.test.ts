@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { PermEngineBinding } from '@/app/[lang]/sim/engine/permBinding';
 import { ivyPermBridge, type IvyMove } from '@/app/[lang]/sim/engine/ivy/ivyPermBridge';
 import { MOVE_CENTERS, solveIvy } from '@/lib/ivy-solver';
 
-const SCRATCH =
-  'C:/Users/CubeRoot/AppData/Local/Temp/claude/D--cube-cuberoot-me-core/8cfc6cbc-9406-42db-a3f9-539c5f8a1922/scratchpad/ivy_result.json';
+const SCRATCH = join(tmpdir(), 'ivy_result.json');
 const AXIS_LETTER = 'RLDB';
 
 /** THREE-free port of IvyCube's discrete state (pivotAtFace + cornerTwist + complete). */

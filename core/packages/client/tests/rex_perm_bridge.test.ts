@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { writeFileSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { PermEngineBinding } from '@/app/[lang]/sim/engine/permBinding';
 import { permFacts } from '@/app/[lang]/sim/engine/permBridge';
 import { rexPermBridge } from '@/app/[lang]/sim/engine/rex/rexPermBridge';
@@ -10,7 +12,7 @@ import { permOrder, isIdPerm } from '@/app/[lang]/sim/engine/permGroup';
 import { schreierSims } from '@/lib/puzzle-geometry/SchreierSims';
 import { Perm } from '@/lib/puzzle-geometry/Perm';
 
-const SCRATCH = 'C:/Users/CubeRoot/AppData/Local/Temp/claude/D--cube-cuberoot-me-core/8cfc6cbc-9406-42db-a3f9-539c5f8a1922/scratchpad/rex_result.json';
+const SCRATCH = join(tmpdir(), 'rex_result.json');
 
 const fact = (n: number): bigint => { let f = 1n; for (let k = 2n; k <= BigInt(n); k++) f *= k; return f; };
 

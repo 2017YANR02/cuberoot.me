@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { PgEngineBinding } from '@/app/[lang]/sim/engine/pgBinding';
 import { rediPgBridge } from '@/app/[lang]/sim/engine/redi/rediPgBridge';
 import {
   solvedRedi, applyRediMove, isSolved, type RediMove, type RediState,
 } from '@/app/[lang]/sim/engine/redi/rediState';
 
-const OUT = 'C:/Users/CubeRoot/AppData/Local/Temp/claude/D--cube-cuberoot-me-core/8cfc6cbc-9406-42db-a3f9-539c5f8a1922/scratchpad/redi_result.json';
+const OUT = join(tmpdir(), 'redi_result.json');
 
 // Deterministic LCG (Numerical Recipes constants) — reproducible, never Math.random.
 function lcg(seed: number): () => number {
