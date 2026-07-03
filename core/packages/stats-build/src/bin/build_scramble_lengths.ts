@@ -34,6 +34,8 @@ const OUT_FIRST = resolve(__dirname, '../../../../../stats/scramble/event_length
 const OUT_AVG = resolve(__dirname, '../../../../../stats/scramble/event_lengths_avg.json');
 // 组平均量化网格:round(avg × 5) → 整数键(0.2 网格,对 5 条一组精确);前端显示时 ÷ 5。
 const AVG_DENOM = 5;
+// 组平均至少 2 条打乱才算(size-1「组」多为 333fm 单次成绩,只是单条原始值,不是平均)。
+const MIN_GROUP = 2;
 
 const K = 12; // examples kept per (event, length) bin
 
@@ -320,10 +322,10 @@ async function main() {
     const ev = gkey.split('|', 2)[1] ?? '';
     let ae = avgEvents.get(ev);
     if (!ae) { ae = { h_ne: new Map(), h_we: new Map(), q_ne: new Map(), q_we: new Map(), groups: 0 }; avgEvents.set(ev, ae); }
-    if (a[3] > 0) { bumpAvg(ae.h_we, Math.round((a[2] / a[3]) * AVG_DENOM)); ae.groups++; }
-    if (a[1] > 0) bumpAvg(ae.h_ne, Math.round((a[0] / a[1]) * AVG_DENOM));
-    if (a[7] > 0) bumpAvg(ae.q_we, Math.round((a[6] / a[7]) * AVG_DENOM));
-    if (a[5] > 0) bumpAvg(ae.q_ne, Math.round((a[4] / a[5]) * AVG_DENOM));
+    if (a[3] >= MIN_GROUP) { bumpAvg(ae.h_we, Math.round((a[2] / a[3]) * AVG_DENOM)); ae.groups++; }
+    if (a[1] >= MIN_GROUP) bumpAvg(ae.h_ne, Math.round((a[0] / a[1]) * AVG_DENOM));
+    if (a[7] >= MIN_GROUP) bumpAvg(ae.q_we, Math.round((a[6] / a[7]) * AVG_DENOM));
+    if (a[5] >= MIN_GROUP) bumpAvg(ae.q_ne, Math.round((a[4] / a[5]) * AVG_DENOM));
   }
   const avgEventsOut: Record<string, unknown> = {};
   for (const ev of [...avgEvents.keys()].sort((a, b) => orderIdx(a) - orderIdx(b))) {
