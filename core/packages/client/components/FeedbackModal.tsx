@@ -195,10 +195,10 @@ export default function FeedbackModal({ lang, onClose }: Props) {
         ) : !user ? (
           <div className="fb-login">
             <h2 className="fb-title">{t('反馈', 'Feedback')}</h2>
-            <p className="fb-login-hint">{t('登录 WCA 账号后即可提需求 / 报 Bug,方便我回复你。',
-              'Sign in with WCA to send ideas / report bugs so I can follow up with you.')}</p>
+            <p className="fb-login-hint">{t('登录后即可提需求 / 报 Bug,方便我回复你。',
+              'Sign in to send ideas / report bugs so I can follow up with you.')}</p>
             <button className="fb-login-btn" onClick={login}>
-              <LogIn size={ICON} /> {t('用 WCA 登录', 'Sign in with WCA')}
+              <LogIn size={ICON} /> {t('登录', 'Sign in')}
             </button>
           </div>
         ) : (
