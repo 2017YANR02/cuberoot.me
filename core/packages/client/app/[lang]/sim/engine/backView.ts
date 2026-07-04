@@ -36,6 +36,7 @@ export function createBackView(
   renderer.domElement.style.display = 'block';
 
   const camera = new THREE.PerspectiveCamera(50, 1, 1, cubeletSize * 32);
+  camera.layers.enable(1); // 手部补光层(无手时该层为空,零开销)
   const up = new THREE.Vector3();
   const quat = new THREE.Quaternion();
   const target = new THREE.Vector3();
@@ -52,14 +53,17 @@ export function createBackView(
     render(world: World) {
       // Mirror the main resize() framing for a square aspect.
       const isSq1 = world.puzzleKind === 'sq1';
-      const refHalf = cubeletSize * (isSq1 ? 4.6 : 3);
+      // 手开着时:取景对齐主视图 3.9,near/far 包络放宽到 ±8/9(手臂半径 ≈7.6×cubelet,
+      // 紧包络会在小窗里把手切成几截 —— 主视图 resize() 同款修法)。
+      const handsOn = world.hands?.isEnabled === true && world.puzzleKind === 3;
+      const refHalf = cubeletSize * (isSq1 ? 4.6 : handsOn ? 3.9 : 3);
       const persp = world.perspective;
       const minv = 1 / (world.scale * persp);
       const distance = refHalf * persp;
       camera.fov = (2 * Math.atan(minv) * 180) / Math.PI;
       camera.aspect = 1;
-      camera.near = distance - cubeletSize * (isSq1 ? 5 : 4);
-      camera.far = distance + cubeletSize * 8;
+      camera.near = distance - cubeletSize * (handsOn ? 8 : isSq1 ? 5 : 4);
+      camera.far = distance + cubeletSize * (handsOn ? 9 : 8);
       // Target + orbit pivot = the cube's own centre, so a scrambled / bumpy cube
       // (mirror cube pieces bulge off-centre) stays pinned to the window centre. A
       // *world-space* AABB of the scene-tilted cube has its extremes jump between

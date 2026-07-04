@@ -58,8 +58,9 @@ export function classifyHandGesture(axis: Axis, cls: LayerClass, dir: 1 | -1): H
     if (cls === "high") return { kind: "flick", hand: dir > 0 ? "R" : "L", finger: "index" }; // U 族
     return { kind: "flick", hand: dir < 0 ? "L" : "R", finger: "ring" }; // D / E 族
   }
-  // z 轴
-  if (cls === "high") return { kind: "flick", hand: dir > 0 ? "R" : "L", finger: "thumb" }; // F 族
+  // z 轴。F 族分手依据:拇指伸展 = 沿 F 面向上扫,F(dir>0)使左列上行 → 左拇指,
+  // F' 使右列上行 → 右拇指(冻结层角实测过,反着配会出现「层往下、指往上」)。
+  if (cls === "high") return { kind: "flick", hand: dir > 0 ? "L" : "R", finger: "thumb" }; // F 族
   return { kind: "flick", hand: dir < 0 ? "L" : "R", finger: "middle" }; // B / S 族
 }
 
@@ -102,6 +103,7 @@ interface HandState {
   recoverT: number; // 0..1,1=已回位
   /** flick 残留(手指偏移随时间衰减)。 */
   flickFinger: FingerName | null;
+  flickAxis: Axis | null; // 弹指所属轴(决定扫法:y=伸展横扫,x/z=竖扫);decay 期间保留
   flickAmount: number; // 当前手指扫角(rad,随层角)
   flickDecay: number;  // drop 后残留衰减
 }
@@ -129,8 +131,12 @@ export default class HandsRig extends THREE.Group {
     this.nailMat = new THREE.MeshStandardMaterial({ color: 0xf0d6c4, roughness: 0.4, metalness: 0 });
     this.cuffMat = new THREE.MeshStandardMaterial({ color: 0x3a4148, roughness: 0.85, metalness: 0 });
 
-    const right = buildHand(1, this.skinMat, this.nailMat);
-    const left = buildHand(-1, this.skinMat, this.nailMat);
+    // 手性对调:魔方右侧的手用 side=-1 几何。家位规格(食指压 BUR 顶、无名指压
+    // BDR 底、掌心朝魔方 -x、指列朝后 -z)对「指列方向 × 食指侧 × 掌心法向」的
+    // 手性有硬约束 —— side=+1 几何摆成该姿态时掌心必然朝外(差一个镜像,纯旋转
+    // 无解),side=-1 恰好满足。左手镜像同理用 side=+1。
+    const right = buildHand(-1, this.skinMat, this.nailMat);
+    const left = buildHand(1, this.skinMat, this.nailMat);
     this.add(right.group, left.group);
     const rArm = buildForearm(this.skinMat, this.cuffMat);
     const lArm = buildForearm(this.skinMat, this.cuffMat);
@@ -171,6 +177,7 @@ export default class HandsRig extends THREE.Group {
       recoverQuat: new THREE.Quaternion(),
       recoverT: 1,
       flickFinger: null,
+      flickAxis: null,
       flickAmount: 0,
       flickDecay: 0,
     };
@@ -297,7 +304,7 @@ export default class HandsRig extends THREE.Group {
       }
       if (h.flickDecay > 0) {
         h.flickDecay = Math.max(0, h.flickDecay - dt / RECOVER_MS);
-        if (h.flickDecay === 0) h.flickFinger = null;
+        if (h.flickDecay === 0) { h.flickFinger = null; h.flickAxis = null; }
         animating = true;
       }
       this.applyHand(side, keepalive);
@@ -309,7 +316,6 @@ export default class HandsRig extends THREE.Group {
   // ================= 手势生命周期 =================
 
   private beginGesture(g: HandGesture, axis: Axis): void {
-    void axis;
     if (g.kind === "weld") {
       for (const s of g.hands) {
         const h = this.hands[s];
@@ -320,6 +326,7 @@ export default class HandsRig extends THREE.Group {
     } else {
       const h = this.hands[g.hand];
       h.flickFinger = g.finger;
+      h.flickAxis = axis;
       h.flickAmount = 0;
       h.flickDecay = 0;
     }
@@ -411,12 +418,32 @@ export default class HandsRig extends THREE.Group {
       let c3 = pose.curl[2];
       let splay = pose.splay * sideSign;
       if (h.flickFinger === name && flickA !== 0) {
-        // 弹指:指根横扫跟层角,同时末端两节展开(伸直去推棱)。
-        splay += flickA * 0.55 * (side === "R" ? 1 : -1) * sideSign;
-        const open = Math.min(1, Math.abs(flickA) / 1.2);
-        c1 -= open * 0.35;
-        c2 -= open * 0.45;
-        c3 -= open * 0.25;
+        // 弹指(前后钳形握姿)分三种扫法,匹配接触点处层面的真实运动方向:
+        //  拇指(F 族):折叠的中节展开 → 沿 F 面向上大扫幅;
+        //  y 轴(U/D/E,食指/无名指):层动是水平的 → 伸展横扫(钩握弹直);
+        //  x/z 轴中指(M/B/S 族):接触立柱处层动是竖直的 → splay 竖扫为主。
+        const open = Math.min(1, Math.abs(flickA) / 1.3);
+        if (name === "thumb") {
+          c1 -= open * 0.25;
+          c2 -= open * 0.9;
+          c3 -= open * 0.35;
+        } else if (h.flickAxis === "y") {
+          c1 -= open * 0.28;
+          c2 -= open * 0.5;
+          c3 -= open * 0.55;
+          splay += flickA * 0.22 * (side === "R" ? 1 : -1) * sideSign;
+        } else {
+          // x/z 族竖扫。世界系扫向:z 族(B/S)两手各推自己那根立柱,方向随
+          // dir 与手绑定(右列 down=dir 正);x 族(M/E' 同轴)绕 x 转时整个
+          // B 面同向竖移,与手无关 —— 先算世界竖向 vy,再按「右手 splay 正
+          // = 世界向下 / 左手相反」换算符号(不能用镜像对称公式:绕 x 的旋转
+          // 在 x=0 镜像下不变,两手需求会打架,推导见 memory)。
+          c1 -= open * 0.15;
+          c2 -= open * 0.25;
+          c3 -= open * 0.3;
+          const vy = (h.flickAxis === "z" && side === "L" ? 1 : -1) * Math.sign(flickA);
+          splay += (side === "R" ? -1 : 1) * vy * 0.45 * Math.abs(flickA);
+        }
       }
       // 指根 = 基座朝向 ∘ (curl/splay)。四指基座为 identity;拇指基座是对掌位
       // 四元数 —— 直接写 rotation 会抹掉它(踩过),必须叠加。
