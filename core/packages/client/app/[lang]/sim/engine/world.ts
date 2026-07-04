@@ -411,9 +411,13 @@ export default class World {
     this.camera.position.y = this.panY;
     this.camera.position.z = distance;
     // near/far margins: SQ1/Dino/Redi/Rex/Heli/Skewb/Mega/FTO solids are deeper along view, so widen the near cut.
-    // 手开着时前臂/肘锚半径 ≈7.6×SIZE(远超魔方),±4/8 的紧包络会在场景倾斜时把手切开 —— 放宽到 ±8/9。
-    this.camera.near = distance - SIZE * (handsOn ? 8 : isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto ? 5 : 4);
-    this.camera.far = distance + SIZE * (handsOn ? 9 : 8);
+    // 手开着时按手部几何真包络放宽:腕半径 166U + 前臂 170U + 圆帽 30U ≈ 5.8×SIZE,取 6
+    //(肘锚 6.95×SIZE 处无几何,别拿它当包络)。near 必须钳正 —— 视角滑杆低段
+    // (mapPerspective 下限 2)distance 仅 7.8×SIZE,旧「distance − 8×SIZE」为负,
+    // 透视投影 near≤0 = 投影矩阵损坏,大图小图在任意角度出现乱切面(2026-07-04 实测根因)。
+    const nearMargin = handsOn ? 6 : isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto ? 5 : 4;
+    this.camera.near = Math.max(distance - SIZE * nearMargin, SIZE * 0.4);
+    this.camera.far = distance + SIZE * 8;
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);
     this.camera.updateProjectionMatrix();

@@ -67,7 +67,12 @@ function capsuleAlongX(r: number, len: number): THREE.CapsuleGeometry {
   return g;
 }
 
-/** 建一段指骨:joint Group(原点=关节)+ 内含胶囊网格,返回下一关节挂点。 */
+/** 建一段指骨:骨段网格挂在 parent(当前关节)自己的坐标系里跨 [0,len],
+ *  返回位于 x=len 的下一关节挂点 Group。
+ *  ⚠️ 网格必须挂 parent 而非返回的下一关节组 —— v1 把网格塞进下一关节组
+ *  (它再被挪到 x=len),骨段实际渲染在 [len,1.5len]:掌指关节到第一节之间
+ *  一段真空(「手指与手心断开」),前两节骨挤进指尖区(碎块感)。关节链
+ *  数学一直正确,只有网格错位,故指尖接触点从未露馅(2026-07-04 定位)。 */
 function buildSegment(
   parent: THREE.Object3D,
   len: number,
@@ -75,13 +80,14 @@ function buildSegment(
   mat: THREE.Material,
   meshes: THREE.Mesh[],
 ): THREE.Group {
-  const joint = new THREE.Group();
-  parent.add(joint);
   const mesh = new THREE.Mesh(capsuleAlongX(r, len), mat);
   mesh.position.x = len / 2;
   mesh.raycast = noRaycast;
-  joint.add(mesh);
+  parent.add(mesh);
   meshes.push(mesh);
+  const joint = new THREE.Group();
+  joint.position.x = len;
+  parent.add(joint);
   return joint;
 }
 
@@ -110,11 +116,10 @@ function buildFinger(
   const r1 = dims.r * U * SEG_TAPER[0];
   const r2 = dims.r * U * SEG_TAPER[1];
   const r3 = dims.r * U * SEG_TAPER[2];
-  // root 组本身是 MCP 关节;段网格挂它下面,mid/tip 链式挂接。
+  // root 组本身是 MCP 关节;段网格挂它下面,mid/tip 链式挂接(挂点位置由
+  // buildSegment 设定,勿在外面再挪 —— 见其头注的错位坑)。
   const seg1End = buildSegment(root, l1, r1, skinMat, meshes);
-  seg1End.position.x = l1;
   const seg2End = buildSegment(seg1End, l2, r2, skinMat, meshes);
-  seg2End.position.x = l2;
   // 末节:胶囊即指尖(圆帽自然收尾)。
   const tipMesh = new THREE.Mesh(capsuleAlongX(r3, l3), skinMat);
   tipMesh.position.x = l3 / 2;
@@ -151,9 +156,7 @@ function buildThumb(
   const r2 = THUMB_DIMS.r * U * 0.9;
   const r3 = THUMB_DIMS.r * U * 0.82;
   const seg1End = buildSegment(root, l1, r1, skinMat, meshes);
-  seg1End.position.x = l1;
   const seg2End = buildSegment(seg1End, l2, r2, skinMat, meshes);
-  seg2End.position.x = l2;
   const tipMesh = new THREE.Mesh(capsuleAlongX(r3, l3), skinMat);
   tipMesh.position.x = l3 / 2;
   tipMesh.raycast = noRaycast;
