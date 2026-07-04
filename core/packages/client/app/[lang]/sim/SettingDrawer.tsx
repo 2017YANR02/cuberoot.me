@@ -105,6 +105,9 @@ export interface SimSettings {
   /** 实时消步:手势 / 键盘转动追加到解法框时,自动 fold/抵消重复转动
    *  (做了 R 再做 R' → 框里 R 出现后又消失)。默认开。 */
   liveReduce: boolean;
+  /** 手指(指法演示):双手握持魔方,转层时腕转 / 弹指跟动画。仅 3x3 生效
+   *  (其它拼图上开关灰禁;设置保留,切回 3x3 自动恢复)。默认关。 */
+  hands: boolean;
 }
 
 /** WCA 标准 6 面色 — 取自全站单一来源 lib/cube-colors */
@@ -154,6 +157,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   logo: 'none',
   customLogo: '',
   liveReduce: true,
+  hands: false,
 };
 
 const STORAGE_KEY = 'sim.settings';
@@ -176,6 +180,7 @@ export function loadSettings(): SimSettings {
     if (merged.coreStyle !== 'raw' && merged.coreStyle !== 'normal') merged.coreStyle = 'normal';
     if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
     if (typeof merged.customLogo !== 'string') merged.customLogo = '';
+    if (typeof merged.hands !== 'boolean') merged.hands = false;
     return merged;
   } catch {
     return DEFAULT_SETTINGS;
@@ -214,6 +219,9 @@ function mapFrames(v: number): number { return Math.max(3, Math.round(60 - (v / 
 const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'ivy', 'dino', 'redi', 'rex', 'heli', 'skewb', 'pyraminx', 'megaminx', 'fto']);
 
 export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
+  // 手指(指法演示):意愿写进 world,实际显隐由 world.syncHands 按拼图门控
+  // (仅 3x3);内部已含 resize,所以放最前,后面的 resize 拿到的取景已是最终值。
+  world.setHandsWanted(s.hands === true);
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
   world.controller.holdPartial = s.holdPartialTurn;
