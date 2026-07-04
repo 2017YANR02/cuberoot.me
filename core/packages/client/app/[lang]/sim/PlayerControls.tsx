@@ -99,10 +99,41 @@ import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
+import { simulateGrips, type GripName, type GripSimStep } from './engine/hands/handsRig';
 import { WheelPicker } from '@/components/WheelPicker';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import './player-controls.css';
+
+/**
+ * 换握记号(仅 NxN 解法框):↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握。
+ * 记号是播放步(占一步、驱动手部换握动画),对魔方状态零作用;手没开时照常跳过。
+ */
+const GRIP_MARKS: Record<string, GripName> = { '↑': 'up', '↓': 'down', '·': 'home' };
+const GRIP_MARK_SPLIT = /([↑↓·])/;
+const stripGripMarks = (s: string): string => s.replace(/[↑↓·]/g, ' ');
+
+type NxnPlayItem = { kind: 'move'; action: TwistAction } | { kind: 'grip'; grip: GripName };
+
+/** NxN 解法串 → 播放项(move + 换握记号)。坏 token 由 Alg 抛错,调用方 catch。
+ *  注释先剥(cleanForPlayer 在记号切分之后才跑,注释里的 ↑/↓/· 不能算步)。 */
+function parseNxnItems(text: string): NxnPlayItem[] {
+  const noComments = text
+    .split(/\r?\n/)
+    .map((l) => { const i = l.indexOf('//'); return i >= 0 ? l.slice(0, i) : l; })
+    .join('\n');
+  const items: NxnPlayItem[] = [];
+  for (const seg of noComments.split(GRIP_MARK_SPLIT)) {
+    const grip = GRIP_MARKS[seg];
+    if (grip) { items.push({ kind: 'grip', grip }); continue; }
+    if (!seg.trim()) continue;
+    const cleaned = cleanForPlayer(seg);
+    for (const node of new Alg(cleaned).expand().childAlgNodes()) {
+      if (node instanceof Move) items.push({ kind: 'move', action: new TwistAction(node.toString()) });
+    }
+  }
+  return items;
+}
 
 /** Convert SQ1 text while preserving per-line `// comments` and newlines. */
 function convertSq1Text(text: string, convert: (s: string) => string): string {
@@ -805,16 +836,12 @@ export default function PlayerControls({
     return () => ro.disconnect();
   }, []);
 
-  const actions = useMemo<TwistAction[]>(() => {
+  // NxN 播放项 = move + 换握记号(↑/↓/·,占一步驱动手部,不动魔方)。
+  const nxnItems = useMemo<NxnPlayItem[]>(() => {
     if (isSq1 || isIvy || corner) return [];
     if (!algDraft.trim()) return [];
     try {
-      const cleaned = cleanForPlayer(algDraft);
-      const out: TwistAction[] = [];
-      for (const node of new Alg(cleaned).expand().childAlgNodes()) {
-        if (node instanceof Move) out.push(new TwistAction(node.toString()));
-      }
-      return out;
+      return parseNxnItems(algDraft);
     } catch {
       return [];
     }
@@ -850,7 +877,7 @@ export default function PlayerControls({
       ? (ivyCanPlay ? ivyActions.length : 0)
       : corner
         ? cornerActions.length
-        : actions.length;
+        : nxnItems.length;
 
   const jumpToStep = useCallback(async (n: number) => {
     if (!world) return;
@@ -905,15 +932,35 @@ export default function PlayerControls({
     }
     const cube = world.cube as import('./engine/nxn/cube').default;
     const effectiveSetup = settings.playbackMode === 'algorithm'
-      ? (setupDraft + ' ' + invertAlg(algDraft)).trim()
+      ? (setupDraft + ' ' + invertAlg(stripGripMarks(algDraft))).trim()
       : setupDraft;
     await cube.twister.setupAsync(effectiveSetup);
-    const target = Math.max(0, Math.min(n, actions.length));
+    const target = Math.max(0, Math.min(n, nxnItems.length));
     for (let i = 0; i < target; i++) {
-      cube.twister.twist(actions[i], true, true);
+      const it = nxnItems[i];
+      if (it.kind === 'move') cube.twister.twist(it.action, true, true);
+    }
+    // 手部握姿:静态推演前 target 项(weld 提交烘入 + 换握记号),瞬时摆到位 ——
+    // 与逐步 live 播放的落点一致(跳步是瞬切,rig 轮询不到层角,不会自己烘)。
+    const hands = world.hands;
+    if (hands?.isEnabled) {
+      const sim: GripSimStep[] = [];
+      for (let i = 0; i < target; i++) {
+        const it = nxnItems[i];
+        if (it.kind === 'grip') { sim.push({ grip: it.grip }); continue; }
+        const rotates = cube.table.convert(it.action);
+        if (!rotates.length) continue;
+        sim.push({
+          axis: rotates[0].group.axis as 'x' | 'y' | 'z',
+          layers: rotates.map((r) => r.group.layer),
+          quarters: rotates[0].twist,
+        });
+      }
+      const g = simulateGrips(sim, cube.order);
+      hands.setGrips(g.R, g.L);
     }
     setStep(target);
-  }, [world, setupDraft, algDraft, actions, sq1Actions, ivyActions, cornerActions, corner, isSq1, isIvy, ivyCanPlay, settings.playbackMode]);
+  }, [world, setupDraft, algDraft, nxnItems, sq1Actions, ivyActions, cornerActions, corner, isSq1, isIvy, ivyCanPlay, settings.playbackMode]);
 
   const skipAutoResetRef = useRef(false);
   const animatingScrambleRef = useRef(false);
@@ -922,7 +969,7 @@ export default function PlayerControls({
   useEffect(() => {
     if (skipAutoResetRef.current) {
       skipAutoResetRef.current = false;
-      setStep(isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : corner ? cornerActions.length : actions.length);
+      setStep(isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : corner ? cornerActions.length : nxnItems.length);
       return;
     }
     if (animatingScrambleRef.current) {
@@ -932,10 +979,16 @@ export default function PlayerControls({
     }
     jumpToStep(stepRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setupDraft, actions, sq1Actions, ivyActions, cornerActions, settings.playbackMode]);
+  }, [setupDraft, nxnItems, sq1Actions, ivyActions, cornerActions, settings.playbackMode]);
 
   const handleCaretSync = useCallback((text: string, caretIndex: number) => {
     const before = text.slice(0, caretIndex);
+    if (!isSq1 && !isIvy && !corner) {
+      // NxN 直接喂原文(parseNxnItems 自己剥注释):extractAlgFromText 会把
+      // ↑/↓/· 当装饰剥掉,经它一遍换握步就数丢了。
+      try { jumpToStep(parseNxnItems(before).length); } catch { /* ignore */ }
+      return;
+    }
     const algBefore = extractAlgFromText(before);
     if (isSq1) {
       jumpToStep(parseSq1Scramble(algBefore).length);
@@ -947,19 +1000,61 @@ export default function PlayerControls({
     }
     if (corner) {
       jumpToStep(corner.parse(algBefore).length);
-      return;
     }
-    try {
-      let n = 0;
-      for (const node of new Alg(algBefore).expand().childAlgNodes()) {
-        if (node instanceof Move) n++;
-      }
-      jumpToStep(n);
-    } catch { /* ignore */ }
   }, [jumpToStep, isSq1, isIvy, corner]);
 
-  const stepForward = useCallback(() => { jumpToStep(step + 1); }, [jumpToStep, step]);
-  const stepBack = useCallback(() => { jumpToStep(step - 1); }, [jumpToStep, step]);
+  // 「动画」开着时,上一步/下一步在当前状态上顺播/倒播这一步(与播放循环同一
+  // 转动动画路径),而不是 jumpToStep 的整段重放瞬切;关着时保持瞬切。
+  // 目前只走 NxN(SQ1/Ivy/角转引擎仍瞬切):cube 状态恒等于 setup+前 step 项,
+  // 正向 twist 第 step 项 / 反向 twist 第 step-1 项的逆,状态保持一致。
+  const stepForward = useCallback(() => {
+    const animate = settings.animatePlayback !== false;
+    if (animate && !isSq1 && !isIvy && !corner && world && step < nxnItems.length) {
+      const cube = world.cube as import('./engine/nxn/cube').default;
+      const it = nxnItems[step];
+      if (it.kind === 'grip') {
+        world.hands?.regrip(it.grip);
+      } else {
+        if (cube.busy || world.hands?.isRegripping) return;
+        if (!cube.twister.twist(it.action, false, false)) return;
+      }
+      stepRef.current = step + 1;
+      setStep(step + 1);
+      return;
+    }
+    jumpToStep(step + 1);
+  }, [jumpToStep, step, settings.animatePlayback, isSq1, isIvy, corner, world, nxnItems]);
+
+  const stepBack = useCallback(() => {
+    const animate = settings.animatePlayback !== false;
+    if (animate && !isSq1 && !isIvy && !corner && world && step > 0 && step <= nxnItems.length) {
+      const cube = world.cube as import('./engine/nxn/cube').default;
+      const it = nxnItems[step - 1];
+      if (it.kind === 'grip') {
+        // 回退换握:前一握姿是任意累积四元数(可能含 weld 烘入),静态推演后瞬时摆回。
+        const hands = world.hands;
+        if (hands?.isEnabled) {
+          const sim: GripSimStep[] = [];
+          for (let i = 0; i < step - 1; i++) {
+            const p = nxnItems[i];
+            if (p.kind === 'grip') { sim.push({ grip: p.grip }); continue; }
+            const rotates = cube.table.convert(p.action);
+            if (rotates.length) sim.push({ axis: rotates[0].group.axis as 'x' | 'y' | 'z', layers: rotates.map((r) => r.group.layer), quarters: rotates[0].twist });
+          }
+          const g = simulateGrips(sim, cube.order);
+          hands.setGrips(g.R, g.L);
+        }
+      } else {
+        if (cube.busy || world.hands?.isRegripping) return;
+        const inv = new TwistAction(it.action.sign, !it.action.reverse, it.action.times);
+        if (!cube.twister.twist(inv, false, false)) return;
+      }
+      stepRef.current = step - 1;
+      setStep(step - 1);
+      return;
+    }
+    jumpToStep(step - 1);
+  }, [jumpToStep, step, settings.animatePlayback, isSq1, isIvy, corner, world, nxnItems]);
 
   useEffect(() => {
     if (!playing) {
@@ -974,7 +1069,7 @@ export default function PlayerControls({
     // the eased animation, which 120° corner turns — Redi/Dino/Ivy ≈567ms vs the
     // old 600ms interval — hit on the slightest frame-rate jank.) Speed scales the
     // animation length via CubeGroup.frames (separate effect), not the poll rate.
-    const total = isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : corner ? cornerActions.length : actions.length;
+    const total = isSq1 ? sq1Actions.length : isIvy ? ivyActions.length : corner ? cornerActions.length : nxnItems.length;
     // 动画开关(设置面板「动画」):关 → 不逐步转动,瞬切到下一步。瞬切没有动画完成可等,
     // 故节拍由 interval 周期给:timing.frames 帧 @60fps ≈ 该步本应播放的时长,瞬切后等同节拍
     // (否则一帧就冲到底,看不到逐步)。开 → 16ms 高频轮询,按动画完成逐步推进(原行为)。
@@ -994,7 +1089,9 @@ export default function PlayerControls({
         } else if (corner) {
           (world.cube as unknown as CornerCube).applyMoveInstant(cornerActions[s]);
         } else {
-          (world.cube as import('./engine/nxn/cube').default).twister.twist(actions[s], true, true);
+          const it = nxnItems[s];
+          if (it.kind === 'move') (world.cube as import('./engine/nxn/cube').default).twister.twist(it.action, true, true);
+          else world.hands?.regrip(it.grip);
         }
         world.dirty = true;
         stepRef.current = s + 1;
@@ -1013,11 +1110,19 @@ export default function PlayerControls({
         started = cube.twister.twist(cornerActions[s], false, false);
       } else {
         const cube = world.cube as import('./engine/nxn/cube').default;
-        // NxN twist(force=false) returns true even for a same-axis/same-face turn
-        // (it runs in parallel or cancel+restarts), so gate on the cube's own lock
-        // state to keep playback strictly one-turn-at-a-time.
-        if (cube.busy) return;
-        started = cube.twister.twist(actions[s], false, false);
+        // 换握动画播完才接下一步(镜像「转动动画完成才接下一步」的节拍约定)。
+        if (world.hands?.isRegripping) return;
+        const it = nxnItems[s];
+        if (it.kind === 'grip') {
+          world.hands?.regrip(it.grip);
+          started = true;
+        } else {
+          // NxN twist(force=false) returns true even for a same-axis/same-face turn
+          // (it runs in parallel or cancel+restarts), so gate on the cube's own lock
+          // state to keep playback strictly one-turn-at-a-time.
+          if (cube.busy) return;
+          started = cube.twister.twist(it.action, false, false);
+        }
       }
       // Busy (previous turn still animating) → wait for the next poll, keep step.
       if (!started) return;
@@ -1027,10 +1132,11 @@ export default function PlayerControls({
     return () => {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
     };
-  }, [playing, actions, sq1Actions, ivyActions, cornerActions, corner, world, speed, isSq1, isIvy, settings.animatePlayback, settings.speed]);
+  }, [playing, nxnItems, sq1Actions, ivyActions, cornerActions, corner, world, speed, isSq1, isIvy, settings.animatePlayback, settings.speed]);
 
   const tool = (transform: (s: string) => string) => () => {
-    const combined = (setupDraft + ' ' + algDraft).trim();
+    // 镜像/转体变换先剥换握记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
+    const combined = stripGripMarks(setupDraft + ' ' + algDraft).trim();
     const next = transform(combined);
     setSetupDraft('');
     onSetupChange('');
@@ -1051,15 +1157,25 @@ export default function PlayerControls({
     // 逐层向量法同轴消步:吃掉一切等价写法并抽出整体转体(M' R → r、L' r → x、
     // L' 3r → x、R 2R L' 2L' → x …)。再跨轴最短化转体串(整 24 朝向),最后回炉一遍
     // 把 shortenRotations 可能造出的相邻同轴并掉。
-    let r = collapseSameAxis(simplifyAlg(s), order);
-    r = collapseSameAxis(shortenRotations(r), order);
-    // 宽层输出统一小写记号(Rw→r、3Rw→3r、2-3Uw→2-3u);大小写两种写法输入都解析。
-    return r.replace(/([RLUDFB])w/g, (_, c: string) => c.toLowerCase());
+    const fold = (seg: string): string => {
+      let r = collapseSameAxis(simplifyAlg(seg), order);
+      r = collapseSameAxis(shortenRotations(r), order);
+      // 宽层输出统一小写记号(Rw→r、3Rw→3r、2-3Uw→2-3u);大小写两种写法输入都解析。
+      return r.replace(/([RLUDFB])w/g, (_, c: string) => c.toLowerCase());
+    };
+    // 换握记号是分段边界:各段独立消步(跨记号抵消 = 手都换了,不该并),记号原位保留。
+    if (GRIP_MARK_SPLIT.test(s)) {
+      return s.split(GRIP_MARK_SPLIT)
+        .map((seg) => (GRIP_MARKS[seg] ? seg : seg.trim() ? fold(seg) : ''))
+        .filter((seg) => seg !== '')
+        .join(' ');
+    }
+    return fold(s);
   }, [isSq1, isIvy, corner, isTwistyMode, sq1Format, order]);
 
   const invertForPuzzle = useCallback((s: string): string => {
     if (corner) return corner.toString(corner.invert(corner.parse(s)));
-    if (!isSq1) return invertAlg(s);
+    if (!isSq1) return invertAlg(stripGripMarks(s)); // 倒序后换握位点失义,直接剥
     const inv = invertSq1Alg(s);
     return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
   }, [isSq1, corner, sq1Format]);
@@ -1093,7 +1209,7 @@ export default function PlayerControls({
   // Hand off the current scramble + solution to /recon/submit (matching event).
   const handlePublishRecon = useCallback(() => {
     if (!reconEvent) return;
-    const qs = buildReconSubmitQuery(reconEvent, setupDraft, algDraft);
+    const qs = buildReconSubmitQuery(reconEvent, setupDraft, stripGripMarks(algDraft));
     router.push(`${langPrefix}/recon/submit?${qs}`);
   }, [reconEvent, setupDraft, algDraft, router, langPrefix]);
 
@@ -1320,7 +1436,7 @@ export default function PlayerControls({
     if (!is3x3 || !world || !algDraft.trim()) return;
     setDerivingScramble(true);
     try {
-      const scramble = await deriveScrambleFromSolution(algDraft);
+      const scramble = await deriveScrambleFromSolution(stripGripMarks(algDraft));
       if (!scramble) return;
       if (settings.playbackMode !== 'moves') {
         onSettingsChange({ ...settings, playbackMode: 'moves' });
@@ -1423,6 +1539,7 @@ export default function PlayerControls({
             spellCheck={false}
             className={ivyAlgSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
             placeholder={t('解法', 'Solution')}
+            title={is3x3 ? t('支持换握记号:↑ 上手(拇指起手 U 面)、↓ 下手(D 面)、· 回 home 握', 'Grip marks supported: ↑ thumb-up grip, ↓ thumb-down grip, · back to home grip') : undefined}
             onFocus={flushPendingScramble}
             onInput={(e) => {
               const el = e.currentTarget;
