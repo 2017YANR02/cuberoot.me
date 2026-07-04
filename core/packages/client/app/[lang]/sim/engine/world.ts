@@ -101,6 +101,8 @@ export default class World {
     this.scene.updateMatrix();
 
     this.camera = new THREE.PerspectiveCamera(50, 1, 1, SIZE * 32);
+    // 手部补光在 layer 1(只照手);相机不 enable 该 layer 的话 three 连灯都不收集。
+    this.camera.layers.enable(1);
     this.camera.position.x = 0;
     this.camera.position.y = 0;
     this.camera.position.z = 0;
@@ -409,8 +411,9 @@ export default class World {
     this.camera.position.y = this.panY;
     this.camera.position.z = distance;
     // near/far margins: SQ1/Dino/Redi/Rex/Heli/Skewb/Mega/FTO solids are deeper along view, so widen the near cut.
-    this.camera.near = distance - SIZE * (isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto ? 5 : 4);
-    this.camera.far = distance + SIZE * 8;
+    // 手开着时前臂/肘锚半径 ≈7.6×SIZE(远超魔方),±4/8 的紧包络会在场景倾斜时把手切开 —— 放宽到 ±8/9。
+    this.camera.near = distance - SIZE * (handsOn ? 8 : isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto ? 5 : 4);
+    this.camera.far = distance + SIZE * (handsOn ? 9 : 8);
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);
     this.camera.updateProjectionMatrix();

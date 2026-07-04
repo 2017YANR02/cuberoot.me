@@ -1,13 +1,16 @@
 /**
  * /sim 手部模型 — 参数化程序生成(纯 three 原生几何,无外部模型资产)。
- * 右手 side=+1,左手 side=-1:所有横向坐标与横向旋转 ×side 镜像构建,
+ * side=±1 是几何手性参数:所有横向坐标与横向旋转 ×side 镜像构建,
  * 不用 scale=-1(那会翻三角绕序、坏背面剔除)。
+ * 注意:魔方右侧的手用 side=-1、左侧用 side=+1(家位指位规格对手性有硬约束,
+ * 见 handsRig 构造注释);拇指刻意造在小指侧(艺术自由,参考站同款 —— 换来
+ * 拇指压 F 面时不被掌体遮挡)。
  *
- * 局部坐标系(单手作者系):
+ * 局部坐标系(单手作者系,side=+1 时):
  *   +x = 腕 → 指尖方向
  *   +z = 掌心朝向(握持面法向)
- *   +y = 拇指侧(右手;左手构建时横向取反)
- * 手指弯曲(curl)= 关节 rotation.y 负向(指尖朝 +z 掌心卷);
+ *   +y = 食指侧(side=-1 时食指在 -y)
+ * 手指弯曲(curl)= 关节 rotation.y 负向(指尖朝 +z 掌心卷,两种 side 同向);
  * 张开(splay)= 指根 rotation.z(×side 由 rig 处理)。
  */
 import * as THREE from "three";
@@ -132,14 +135,15 @@ function buildThumb(
   const [l1, l2, l3] = THUMB_DIMS.segs.map((v) => v * U) as [number, number, number];
   const root = new THREE.Group();
   root.position.set(-38 * U, -20 * U * side, 14 * U);
-  // 拇指基座朝向:Rz(α)·Ry(β),α≈-171° 让掌骨从掌根前下角向「腕反向+前」伸,
-  // β 把它抬离掌面;随 curl 卷向握持面 —— 手摆成握魔方姿态后,拇指从底前角
-  // 绕过来按在魔方前面下部(不穿模,Playwright 逐帧校准过)。
-  // 镜像:α ×side;β 绕 y 不随镜像翻(M_y·Ry(β)·M_y = Ry(β))。
+  // 拇指基座朝向:Rz(α)·Ry(β)·Rx(γ)(α,γ 随镜像取反:M_y·Rz·Ry·Rx·M_y =
+  // Rz(-α)·Ry(β)·Rx(-γ))。数值由浏览器内求解器对魔方右侧手(side=-1)标定:
+  // 掌骨从掌根前下折回,末节沿 F 面朝左上、指腹压 FR 棱 F 面;γ 是绕掌骨的
+  // 滚转,决定指腹(而非侧面)贴向面。
   // 基座存 rootBase,由 rig 与 curl/splay 叠加(直接写 rotation 会抹掉基座)。
   const base = new THREE.Quaternion()
-    .setFromAxisAngle(new THREE.Vector3(0, 0, 1), -2.98 * side)
-    .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -0.24));
+    .setFromAxisAngle(new THREE.Vector3(0, 0, 1), 2.38 * -side)
+    .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.55))
+    .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -0.71 * -side));
   root.quaternion.copy(base);
   hand.add(root);
 
