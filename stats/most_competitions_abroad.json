@@ -18,7 +18,7 @@
   ],
   "rows": [
     [
-      232,
+      233,
       "[Callum James Goodyear-Jørgensen](https://www.worldcubeassociation.org/persons/2012GOOD02)"
     ],
     [
@@ -26,7 +26,7 @@
       "[Maria Oey](https://www.worldcubeassociation.org/persons/2007OEYM01)"
     ],
     [
-      188,
+      189,
       "[Glen Goh Wee Zhuan (吴洧全)](https://www.worldcubeassociation.org/persons/2015ZHUA01)"
     ],
     [
@@ -46,7 +46,7 @@
       "[Ton Dennenbroek](https://www.worldcubeassociation.org/persons/2003DENN01)"
     ],
     [
-      153,
+      154,
       "[Clément Cherblanc](https://www.worldcubeassociation.org/persons/2014CHER05)"
     ],
     [
@@ -106,7 +106,7 @@
       "[Sebastian Weyer](https://www.worldcubeassociation.org/persons/2010WEYE02)"
     ],
     [
-      119,
+      120,
       "[Chan Tak Chuen (陳德泉)](https://www.worldcubeassociation.org/persons/2007CHUE01)"
     ],
     [
@@ -131,19 +131,19 @@
     ],
     [
       111,
-      "[Abdullah Gulab](https://www.worldcubeassociation.org/persons/2014GULA02)"
-    ],
-    [
-      111,
       "[Finn Ickler](https://www.worldcubeassociation.org/persons/2012ICKL01)"
     ],
     [
-      110,
-      "[Joseph Daniel Blas Sanchez](https://www.worldcubeassociation.org/persons/2016SANC08)"
+      111,
+      "[Abdullah Gulab](https://www.worldcubeassociation.org/persons/2014GULA02)"
     ],
     [
       110,
       "[François Courtès](https://www.worldcubeassociation.org/persons/2008COUR01)"
+    ],
+    [
+      110,
+      "[Joseph Daniel Blas Sanchez](https://www.worldcubeassociation.org/persons/2016SANC08)"
     ],
     [
       108,
@@ -171,11 +171,11 @@
     ],
     [
       101,
-      "[Tobias Peter](https://www.worldcubeassociation.org/persons/2014PETE03)"
+      "[Ng Jia Quan (黄佳铨)](https://www.worldcubeassociation.org/persons/2015QUAN03)"
     ],
     [
       101,
-      "[Ng Jia Quan (黄佳铨)](https://www.worldcubeassociation.org/persons/2015QUAN03)"
+      "[Tobias Peter](https://www.worldcubeassociation.org/persons/2014PETE03)"
     ],
     [
       100,
@@ -211,14 +211,6 @@
     ],
     [
       90,
-      "[Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01)"
-    ],
-    [
-      90,
-      "[Yi-Fan Wu (吳亦凡)](https://www.worldcubeassociation.org/persons/2010WUIF01)"
-    ],
-    [
-      90,
       "[Igor Tarasov](https://www.worldcubeassociation.org/persons/2016TARA04)"
     ],
     [
@@ -226,8 +218,20 @@
       "[Yuyang Zhen (甄禹扬)](https://www.worldcubeassociation.org/persons/2013ZHEN11)"
     ],
     [
+      90,
+      "[Yi-Fan Wu (吳亦凡)](https://www.worldcubeassociation.org/persons/2010WUIF01)"
+    ],
+    [
+      90,
+      "[Andrey Che](https://www.worldcubeassociation.org/persons/2015CHEA01)"
+    ],
+    [
       89,
       "[Saransh Grover](https://www.worldcubeassociation.org/persons/2014GROV01)"
+    ],
+    [
+      87,
+      "[Filip Åström](https://www.worldcubeassociation.org/persons/2023ASTR01)"
     ],
     [
       87,
@@ -239,19 +243,15 @@
     ],
     [
       87,
-      "[Filip Åström](https://www.worldcubeassociation.org/persons/2023ASTR01)"
-    ],
-    [
-      87,
       "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)"
     ],
     [
       86,
-      "[Peter Hugosson-Miller](https://www.worldcubeassociation.org/persons/2021HUGO01)"
+      "[Mats Valk](https://www.worldcubeassociation.org/persons/2007VALK01)"
     ],
     [
       86,
-      "[Mats Valk](https://www.worldcubeassociation.org/persons/2007VALK01)"
+      "[Peter Hugosson-Miller](https://www.worldcubeassociation.org/persons/2021HUGO01)"
     ],
     [
       86,
@@ -303,10 +303,6 @@
     ],
     [
       74,
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)"
-    ],
-    [
-      74,
       "[Nox Clémenceau](https://www.worldcubeassociation.org/persons/2015CLEM03)"
     ],
     [
@@ -314,16 +310,12 @@
       "[Samuel Simko](https://www.worldcubeassociation.org/persons/2016SIMK01)"
     ],
     [
-      73,
-      "[Kevin Matthews](https://www.worldcubeassociation.org/persons/2010MATT02)"
+      74,
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)"
     ],
     [
       73,
       "[Bowen Deng (邓博文)](https://www.worldcubeassociation.org/persons/2009DENG01)"
-    ],
-    [
-      73,
-      "[Wilfrid Py](https://www.worldcubeassociation.org/persons/2016PYWI01)"
     ],
     [
       73,
@@ -332,6 +324,14 @@
     [
       73,
       "[Pablo Nicolás Oshiro Mondoñedo](https://www.worldcubeassociation.org/persons/2010MOND01)"
+    ],
+    [
+      73,
+      "[Wilfrid Py](https://www.worldcubeassociation.org/persons/2016PYWI01)"
+    ],
+    [
+      73,
+      "[Kevin Matthews](https://www.worldcubeassociation.org/persons/2010MATT02)"
     ],
     [
       72,
@@ -347,11 +347,11 @@
     ],
     [
       71,
-      "[Sebastiano Tronto](https://www.worldcubeassociation.org/persons/2011TRON02)"
+      "[Niki Placskó](https://www.worldcubeassociation.org/persons/2008PLAC01)"
     ],
     [
       71,
-      "[Niki Placskó](https://www.worldcubeassociation.org/persons/2008PLAC01)"
+      "[Sebastiano Tronto](https://www.worldcubeassociation.org/persons/2011TRON02)"
     ],
     [
       70,
@@ -383,7 +383,7 @@
     ],
     [
       68,
-      "[Elias Malomgré](https://www.worldcubeassociation.org/persons/2017MALO02)"
+      "[Burno Li Chak Kwan (李澤堃)](https://www.worldcubeassociation.org/persons/2017KWAN05)"
     ],
     [
       68,
@@ -391,7 +391,7 @@
     ],
     [
       68,
-      "[Burno Li Chak Kwan (李澤堃)](https://www.worldcubeassociation.org/persons/2017KWAN05)"
+      "[Muhtasim Al-Farabi](https://www.worldcubeassociation.org/persons/2017FARA06)"
     ],
     [
       68,
@@ -399,7 +399,7 @@
     ],
     [
       68,
-      "[Muhtasim Al-Farabi](https://www.worldcubeassociation.org/persons/2017FARA06)"
+      "[Elias Malomgré](https://www.worldcubeassociation.org/persons/2017MALO02)"
     ],
     [
       68,
@@ -407,11 +407,11 @@
     ],
     [
       68,
-      "[Jernej Omulec](https://www.worldcubeassociation.org/persons/2010OMUL01)"
+      "[Mengfei Shen (沈梦非)](https://www.worldcubeassociation.org/persons/2018SHEN07)"
     ],
     [
       68,
-      "[Mengfei Shen (沈梦非)](https://www.worldcubeassociation.org/persons/2018SHEN07)"
+      "[Jernej Omulec](https://www.worldcubeassociation.org/persons/2010OMUL01)"
     ],
     [
       67,
