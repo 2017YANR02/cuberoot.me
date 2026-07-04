@@ -975,6 +975,16 @@ export default function Cube3Solver() {
                 <option value="local">{t('本地(下载表,无限制)', 'Local (download table, unlimited)')}</option>
                 <option value="cloud">{t('云端(opt6,免下载,需登录)', 'Cloud (opt6, no download, login)')}</option>
               </select>
+              {!cloudMode && (<>
+                <span className="lbl">Solver</span>
+                <select className="ctl" value={solverName} disabled={readyState === 'busy'}
+                  onChange={(e) => setSolverName(e.target.value)}>
+                  {SOLVER_OPTIONS.map(o => (
+                    <option key={o.value} value={o.value}>{o.value} ({o.size})</option>
+                  ))}
+                </select>
+                <span className="size-badge">{SOLVER_OPTIONS.find(o => o.value === solverName)?.size}</span>
+              </>)}
             </div>
             {cloudMode && (
               <p className="cloud-note">
@@ -995,18 +1005,6 @@ export default function Cube3Solver() {
                   </button>
                 )}
               </div>
-            )}
-            {!cloudMode && (
-            <div className="row">
-              <span className="lbl">Solver</span>
-              <select className="ctl" value={solverName} disabled={readyState === 'busy'}
-                onChange={(e) => setSolverName(e.target.value)}>
-                {SOLVER_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.value} ({o.size})</option>
-                ))}
-              </select>
-              <span className="size-badge">{SOLVER_OPTIONS.find(o => o.value === solverName)?.size}</span>
-            </div>
             )}
             {!cloudMode && (<>
             <div className="row">
@@ -1033,13 +1031,6 @@ export default function Cube3Solver() {
                 <button className="btn" onClick={downloadTable}><Download size={14} /> {t('下载表', 'Download Table')}</button>
               )}
               <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={onUploadFile} />
-            </div>
-            {progress >= 0 && (
-              <div className="progress">
-                <div className="progress-bar" style={{ width: `${Math.round(progress * 100)}%` }} />
-              </div>
-            )}
-            <div className="row">
               <span className="lbl">{t('线程', 'Threads')}</span>
               <select className="ctl-sm" value={nThreads} onChange={(e) => setNThreads(parseInt(e.target.value, 10))}>
                 {Array.from({ length: typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency || 4) : 4 }, (_, i) => i + 1).map(n => (
@@ -1051,6 +1042,11 @@ export default function Cube3Solver() {
                 {nGroupOptions.map(n => <option key={n} value={n}>{n}</option>)}
               </select>
             </div>
+            {progress >= 0 && (
+              <div className="progress">
+                <div className="progress-bar" style={{ width: `${Math.round(progress * 100)}%` }} />
+              </div>
+            )}
             </>)}
           </>
       </section>
@@ -1088,7 +1084,6 @@ const INLINE_CSS = `
   margin-bottom: 0.25rem;
 }
 .cubeopt-header h1 { margin: 0; font-size: 1.6rem; font-weight: 600; }
-.scramble-gen .ctl-sm { flex: 0 1 auto; min-width: 4.5rem; }
 .row-spacer { flex: 1; }
 .advanced-head {
   display: flex; align-items: center; gap: 0.4rem;
@@ -1140,8 +1135,8 @@ const INLINE_CSS = `
   color: var(--text); padding: 0.3rem 0.5rem; border-radius: 5px; font-size: 0.9rem;
   max-width: 100%; box-sizing: border-box;
 }
-.ctl { flex: 1; min-width: 0; }
-.ctl-sm { min-width: 0; flex: 1 1 6rem; }
+.ctl { flex: 0 1 auto; width: fit-content; min-width: 0; }
+.ctl-sm { flex: 0 1 auto; min-width: 4.5rem; }
 .size-badge {
   background: var(--panel-sub, #2a2a2a); padding: 0.3rem 0.6rem;
   border-radius: 5px; font-size: 0.85rem; color: var(--text-muted, #aaa);
@@ -1150,7 +1145,6 @@ const INLINE_CSS = `
 .table-name {
   font-family: ui-monospace, Menlo, Consolas, monospace;
   font-size: 0.85rem; color: var(--text-muted, #aaa);
-  flex: 1; min-width: 8rem;
 }
 .btn, .btn-primary, .btn-icon {
   background: var(--panel-sub, #2a2a2a); border: 1px solid var(--border, #444);
