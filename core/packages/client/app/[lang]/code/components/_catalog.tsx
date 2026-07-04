@@ -1546,6 +1546,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `需传 lang 与 onClose;未登录显示 WCA 登录引导。`, en: `Takes lang and onClose props; shows a WCA sign-in prompt when logged out.` },
   },
   {
+    name: 'LoginModal',
+    import: "import LoginModal from '@/components/LoginModal';",
+    category: 'more',
+    zh: `全站登录 / 账号弹层,由 auth store 的 loginOpen 控制(全局挂 layout)。未登录展示邮箱 / 手机 / WCA 三种登录方式;已登录展示账号面板:已绑定身份列表、绑定新方式、解绑、登出。`,
+    en: `Global login / account modal driven by the auth store's loginOpen flag (mounted once in layout). Logged out: Email / Phone / WCA sign-in; logged in: an account panel listing linked identities with link/unlink and sign-out.`,
+    note: { zh: `无 props,读全局 store;各处「登录」入口统一调 useAuthStore().login() 打开它。`, en: `No props; reads the global store. Every "sign in" entry point opens it via useAuthStore().login().` },
+  },
+  {
     name: 'ValidationReportModal',
     import: "import ValidationReportModal from '@/components/ValidationReportModal';",
     category: 'more',

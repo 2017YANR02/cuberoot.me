@@ -7,7 +7,6 @@
  *            logout lives in the recon page's header.
  */
 import { useEffect, useState } from 'react';
-import Link from '@/components/AppLink';
 import { Key } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/lib/auth-store';
@@ -38,11 +37,12 @@ export default function WcaAuth() {
   }
 
   return (
-    <Link
-      href={`/person/${user.wcaId}`}
+    <button
+      type="button"
       className="wca-auth-trigger"
-      title={user.name || user.wcaId}
-      aria-label={user.name || user.wcaId}
+      onClick={login}
+      title={user.name || user.wcaId || t('recon.wcaLogin')}
+      aria-label={user.name || user.wcaId || t('recon.wcaLogin')}
     >
       {user.avatar ? (
         <img src={user.avatar} alt="" className="wca-auth-avatar" />
@@ -51,6 +51,6 @@ export default function WcaAuth() {
           {(user.name || '?').charAt(0).toUpperCase()}
         </span>
       )}
-    </Link>
+    </button>
   );
 }

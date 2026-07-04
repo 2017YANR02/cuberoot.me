@@ -12,18 +12,28 @@ import { apiUrl } from './api-base';
 export { ADMIN_WCA_IDS };
 
 export interface WcaUser {
+  /** 真实 WCA id;纯邮箱/手机账号为空串(用 uid 区分身份)。 */
   wcaId: string;
   name: string;
   avatar: string;
   country: string;
+  /** 内部账号 id(邮箱/手机账号必有;老的纯 WCA 会话可能没有,续签后补上)。 */
+  uid?: number;
 }
 
 interface AuthState {
   user: WcaUser | null;
+  /** 登录 / 账号弹层是否打开。 */
+  loginOpen: boolean;
 }
 
 interface AuthActions {
+  /** 打开登录 / 账号弹层(全站 9 处「登录」入口都走这里)。 */
   login: () => void;
+  openLogin: () => void;
+  closeLogin: () => void;
+  /** 直接跳 WCA OAuth(弹层里「用 WCA 登录」按钮用)。 */
+  loginWithWca: () => void;
   logout: () => void;
   refresh: () => void;
 }
@@ -100,8 +110,14 @@ export function persistAuthItem(key: string, value: string): boolean {
 
 export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
   user: readUser(),
+  loginOpen: false,
 
-  login: () => {
+  // 「登录」入口统一打开弹层(邮箱 / 手机 / WCA 多方式选择);已登录则打开账号面板。
+  login: () => set({ loginOpen: true }),
+  openLogin: () => set({ loginOpen: true }),
+  closeLogin: () => set({ loginOpen: false }),
+
+  loginWithWca: () => {
     if (typeof window === 'undefined') return;
     const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
     sessionStorage.setItem(STATE_KEY, state);
@@ -124,13 +140,40 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem('cuberoot_jwt');
-    set({ user: null });
+    set({ user: null, loginOpen: false });
   },
 
   refresh: () => {
     set({ user: readUser() });
   },
 }));
+
+/**
+ * 把「邮箱/手机验证码」或「绑定后重签」返回的 { token, user } 落地为登录态:
+ * 写 cuberoot_jwt + wca_user(复用同一 key,全站据此判定已登录),再刷新内存 store。
+ */
+export function applySession(
+  token: string,
+  user: { uid?: number; wcaId: string | null; name: string; avatar?: string },
+): void {
+  if (typeof window === 'undefined') return;
+  persistAuthItem('cuberoot_jwt', token);
+  const wu: WcaUser = {
+    wcaId: user.wcaId ?? '',
+    name: user.name,
+    avatar: user.avatar ?? '',
+    country: '',
+    uid: user.uid,
+  };
+  persistAuthItem(SESSION_KEY, JSON.stringify(wu));
+  useAuthStore.getState().refresh();
+}
+
+/** 当前会话的 cuberoot_jwt(账号 API 的 Bearer)。 */
+export function getSessionToken(): string {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('cuberoot_jwt') || '';
+}
 
 if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {

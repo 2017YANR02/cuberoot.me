@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { apiUrl } from '@/lib/api-base';
-import { persistAuthItem, useAuthStore } from '@/lib/auth-store';
+import { persistAuthItem, useAuthStore, applySession } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 
 const ME_URL = 'https://www.worldcubeassociation.org/api/v0/me';
@@ -18,7 +18,6 @@ let callbackProcessed = false;
 export default function AuthCallbackPage() {
   const router = useRouter();
   const [errorMsg, setErrorMsg] = useState('');
-  const isZh = typeof navigator !== 'undefined' && navigator.language.startsWith('zh');
 
   // This page is a full-screen overlay over a background iframe — the outer
   // document must not scroll. Restore on unmount (client-nav back to return URL).
@@ -43,8 +42,18 @@ export default function AuthCallbackPage() {
     const state = params.get('state');
     const error = params.get('error');
 
+    // 一次性读取并清空所有 OAuth 会话标记 —— 无论走哪条早退分支(error / 无 token / state
+    // 不匹配)都不残留脏 intent。否则一次中断的绑定会把 intent='link' 卡在 sessionStorage,
+    // 误导下一次普通 WCA 登录走 link 路径、无 jwt 时静默失败(用户走完授权却仍是登出态)。
+    const savedState = sessionStorage.getItem('wca_oauth_state');
+    const intent = sessionStorage.getItem('wca_oauth_intent');
+    const returnUrl = sessionStorage.getItem('wca_return_url');
+    sessionStorage.removeItem('wca_oauth_state');
+    sessionStorage.removeItem('wca_oauth_intent');
+    sessionStorage.removeItem('wca_return_url');
+
     if (error) {
-      setErrorMsg((isZh ? `授权被拒绝: ${error}` : `Authorization denied: ${error}`));
+      setErrorMsg(tr({ zh: `授权被拒绝: ${error}`, en: `Authorization denied: ${error}` }));
       return;
     }
     if (!accessToken) {
@@ -52,14 +61,17 @@ export default function AuthCallbackPage() {
     }));
       return;
     }
-
-    const savedState = sessionStorage.getItem('wca_oauth_state');
     if (!savedState || savedState !== state) {
       setErrorMsg(tr({ zh: 'OAuth state 不匹配，请重试', en: 'OAuth state mismatch, please retry'
     }));
       return;
     }
-    sessionStorage.removeItem('wca_oauth_state');
+
+    // 「绑定 WCA」意图:当前已登录(邮箱/手机账号),把 WCA 加为身份而非重新登录。
+    if (intent === 'link') {
+      await handleWcaLink(accessToken, returnUrl);
+      return;
+    }
 
     try {
       const res = await fetch(ME_URL, {
@@ -108,16 +120,41 @@ export default function AuthCallbackPage() {
         // Non-fatal — fall back to raw WCA token (2h).
       }
 
-      const returnUrl = sessionStorage.getItem('wca_return_url') || '/recon';
-      sessionStorage.removeItem('wca_return_url');
+      const target = returnUrl || '/recon';
       try {
-        const u = new URL(returnUrl, window.location.href);
+        const u = new URL(target, window.location.href);
         router.replace(u.pathname + u.search + u.hash);
       } catch {
         router.replace('/recon');
       }
     } catch (err) {
-      setErrorMsg((isZh ? `登录失败: ${(err as Error).message}` : `Login failed: ${(err as Error).message}`));
+      setErrorMsg(tr({ zh: `登录失败: ${(err as Error).message}`, en: `Login failed: ${(err as Error).message}` }));
+    }
+  }
+
+  async function handleWcaLink(accessToken: string, returnUrl: string | null) {
+    try {
+      const jwt = localStorage.getItem('cuberoot_jwt');
+      if (jwt) {
+        const r = await fetch(apiUrl('/v1/auth/link/wca'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
+          body: JSON.stringify({ accessToken }),
+        });
+        if (r.ok) {
+          const d = await r.json();
+          if (d.token && d.user) applySession(d.token, d.user);
+        } else {
+          const d = await r.json().catch(() => ({}));
+          setErrorMsg(tr({ zh: `绑定失败:${d.error ?? r.status}`, en: `Link failed: ${d.error ?? r.status}` }));
+          return;
+        }
+      }
+      const target = returnUrl || '/';
+      const u = new URL(target, window.location.href);
+      router.replace(u.pathname + u.search + u.hash);
+    } catch {
+      setErrorMsg(tr({ zh: '绑定失败,请重试', en: 'Link failed, please retry' }));
     }
   }
 

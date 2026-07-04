@@ -227,6 +227,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 61, slug: 'wss_difficulty_indexes', desc: { zh: '打乱难度子集查询补索引', en: 'Indexes for difficulty subset queries' } },
   { n: 62, slug: 'wca_persons_gender', desc: { zh: 'wca_persons 加 gender 列,支撑 /wca 排名页性别筛选', en: 'Add gender column to wca_persons for the rankings gender filter' } },
   { n: 63, slug: 'recons_dup_reason', desc: { zh: 'recons 加 dup_reason 列,支撑同选手+同打乱有理由重复提交', en: 'Add dup_reason column to recons for intentional duplicate submissions' } },
+  { n: 64, slug: 'user_accounts', desc: { zh: '内部账号体系:app_users + auth_identities(多身份绑定)+ auth_codes(邮箱/手机验证码),从 wca_users 回填', en: 'Internal accounts: app_users + auth_identities (multi-provider) + auth_codes (email/phone), backfilled from wca_users' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

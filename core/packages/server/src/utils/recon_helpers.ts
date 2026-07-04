@@ -7,8 +7,8 @@ import type { Context } from 'hono';
 import jwt from 'jsonwebtoken';
 import { ADMIN_WCA_IDS, BANNED_WCA_IDS } from '@cuberoot/shared/admin';
 export { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
+import { JWT_SECRET } from './session.js';
+import { ownerKey } from './account.js';
 
 // 装饰性标注字符:`·`(间隔)、`↑↓`(regrip 方向记号)、分数 `⅓⅔`、ASCII `.`、各类零宽字符。
 // 这些不是真转动,记号区校验前先剥掉(与客户端 lib/recon-alg-utils.ts 的 COSMETIC_ANNOTATION_CHARS
@@ -291,9 +291,14 @@ export function validateRow(row: Record<string, unknown>): string[] {
 
 // ── WCA 认证 ──
 
-interface WcaUser {
+export interface WcaUser {
+  /** 归属键:绑了 WCA = 真实 wca_id;没绑 = 合成 `u<uid>`。业务表主键 / 所有权判定都用它。 */
   wcaId: string;
   name: string;
+  /** 内部账号 id(带 uid 的新 token 才有;老 wca-only token 为 undefined)。 */
+  uid?: number;
+  /** 真实 WCA id(仅绑定了 WCA 时非空;/person 链接、WCA 数据 join 用它,合成键不可用)。 */
+  realWcaId?: string;
 }
 
 // NOTE: 内存缓存——token → user（永不过期，与 PHP 行为一致）
@@ -308,10 +313,16 @@ export async function authenticateUser(authHeader: string | undefined): Promise<
   const token = authHeader.slice(7);
 
   // NOTE: 优先尝试 JWT 验证（自签令牌，365 天有效期，无需网络调用）
+  // 载荷三种:{ wcaId }(老 token)/ { uid }(纯邮箱手机账号)/ { uid, wcaId }(绑了 WCA)。
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { wcaId: string; name: string };
-    if (payload.wcaId) {
-      return { wcaId: payload.wcaId, name: payload.name ?? '' };
+    const payload = jwt.verify(token, JWT_SECRET) as { uid?: number; wcaId?: string; name?: string };
+    if (payload.uid != null || payload.wcaId) {
+      return {
+        wcaId: ownerKey(payload.uid, payload.wcaId),
+        name: payload.name ?? '',
+        uid: payload.uid,
+        realWcaId: payload.wcaId,
+      };
     }
   } catch {
     // NOTE: 不是有效 JWT，继续尝试 WCA token
