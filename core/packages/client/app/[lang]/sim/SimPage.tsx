@@ -1094,6 +1094,8 @@ export default function SimPage() {
       let hintsAnimating = false;
       for (const h of allHints) if (h.tick(dt)) hintsAnimating = true;
       if (hintsAnimating) world.dirty = true;
+      // 手部指法 rig(3x3 + 设置开启时才存在):轮询转层角度驱动手势,动着就重渲。
+      if (world.hands && world.hands.tick(dt)) world.dirty = true;
       if (world.dirty || world.cube.dirty) {
         // 让 U 面中心 logo 贴片跟住它所贴的实体中心块(转层动画 + 整方旋转都跟手)。
         // 仅 NxN/镜面 Cube 有此方法,duck-type 调用,其它拼图自动跳过。
