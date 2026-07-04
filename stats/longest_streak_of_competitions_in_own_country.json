@@ -45,7 +45,7 @@
       null
     ],
     [
-      106,
+      107,
       "[Chia-Leo Lin (林珈樂)](https://www.worldcubeassociation.org/persons/2006LINC01)",
       "Chinese Taipei",
       "[Maru Cube Day 2016](https://www.worldcubeassociation.org/competitions/MaruCubeDay2016)",
@@ -382,6 +382,13 @@
     ],
     [
       31,
+      "[Hideki Niina (新名秀樹)](https://www.worldcubeassociation.org/persons/2008NIIN01)",
+      "Japan",
+      "[Waseda Brain 2012](https://www.worldcubeassociation.org/competitions/WasedaBrainChallenge2012)",
+      null
+    ],
+    [
+      31,
       "[Kacper Paweł Dworak](https://www.worldcubeassociation.org/persons/2020DWOR01)",
       "Poland",
       "[Rzeszów Open 2024](https://www.worldcubeassociation.org/competitions/RzeszowOpen2024)",
@@ -413,13 +420,6 @@
       "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)",
       "Sweden",
       "[SSL 3 Kungsbacka 2017](https://www.worldcubeassociation.org/competitions/SSL3Kungsbacka2017)",
-      null
-    ],
-    [
-      30,
-      "[Hideki Niina (新名秀樹)](https://www.worldcubeassociation.org/persons/2008NIIN01)",
-      "Japan",
-      "[Waseda Brain 2012](https://www.worldcubeassociation.org/competitions/WasedaBrainChallenge2012)",
       null
     ],
     [
@@ -725,16 +725,16 @@
     ],
     [
       24,
-      "[Claudio Matias Cancino Bruna](https://www.worldcubeassociation.org/persons/2019BRUN02)",
-      "Chile",
-      "[Curicó al Cubo 2024](https://www.worldcubeassociation.org/competitions/CuricoalCubo2024)",
+      "[Uku Kruusamägi](https://www.worldcubeassociation.org/persons/2009KRUU01)",
+      "Estonia",
+      "[Estonian Open 2009](https://www.worldcubeassociation.org/competitions/EstonianOpen2009)",
       null
     ],
     [
       24,
-      "[Uku Kruusamägi](https://www.worldcubeassociation.org/persons/2009KRUU01)",
+      "[Jan Erik Soosaar](https://www.worldcubeassociation.org/persons/2016SOOS01)",
       "Estonia",
-      "[Estonian Open 2009](https://www.worldcubeassociation.org/competitions/EstonianOpen2009)",
+      "[Estonian Open 2016](https://www.worldcubeassociation.org/competitions/EstonianOpen2016)",
       null
     ]
   ]

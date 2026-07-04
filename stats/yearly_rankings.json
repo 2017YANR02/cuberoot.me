@@ -160,6 +160,13 @@
           "5.36 4.86 3.84 3.94 4.43"
         ],
         [
+          "[Yi Shen (沈懿)](https://www.worldcubeassociation.org/persons/2026SHEN01)",
+          "**4.61**",
+          "China",
+          "[Hefei Cubing League 3x3 IV 2026](https://www.worldcubeassociation.org/competitions/HefeiCubingLeague3x3IV2026)",
+          "4.86 4.59 4.22 4.69 4.54"
+        ],
+        [
           "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
           "**4.62**",
           "Poland",
@@ -172,13 +179,6 @@
           "China",
           "[Start of Summer Beijing 2026](https://www.worldcubeassociation.org/competitions/StartofSummerBeijing2026)",
           "5.41 4.57 4.31 4.63 4.84"
-        ],
-        [
-          "[Yi Shen (沈懿)](https://www.worldcubeassociation.org/persons/2026SHEN01)",
-          "**4.68**",
-          "China",
-          "[Hefei Cubing League 3x3 III 2026](https://www.worldcubeassociation.org/competitions/HefeiCubingLeague3x3III2026)",
-          "4.40 4.86 6.51 4.79 4.08"
         ],
         [
           "[Yize Dong (董一泽)](https://www.worldcubeassociation.org/persons/2023DONG20)",
@@ -954,6 +954,13 @@
       "titleZh": "3x3x3 Blindfolded - Single",
       "rows": [
         [
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "**11.56**",
+          "United States",
+          "[Mid-Atlantic Quiet Champs 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticQuietChampionship2026)",
+          "15.98 14.26 11.56 14.95 DNF"
+        ],
+        [
           "[Charlie Eggins](https://www.worldcubeassociation.org/persons/2019EGGI02)",
           "**11.67**",
           "Australia",
@@ -980,13 +987,6 @@
           "France",
           "[Stenay Que le Début 2026](https://www.worldcubeassociation.org/competitions/StenayQueleDebut2026)",
           "13.22 DNF DNF DNF 16.69"
-        ],
-        [
-          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
-          "**13.46**",
-          "United States",
-          "[Quiet Prep in Palisades 2026](https://www.worldcubeassociation.org/competitions/QuietPrepinPalisades2026)",
-          "15.68 15.00 16.19 13.46 DNF"
         ],
         [
           "[Manuel Gutman](https://www.worldcubeassociation.org/persons/2017GUTM01)",
@@ -1037,6 +1037,13 @@
           "14.34 DNF 13.95 13.85 11.67"
         ],
         [
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "**15.06**",
+          "United States",
+          "[Mid-Atlantic Quiet Champs 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticQuietChampionship2026)",
+          "15.98 14.26 11.56 14.95 DNF"
+        ],
+        [
           "[Charles Daloz-Baltenberger](https://www.worldcubeassociation.org/persons/2018DALO01)",
           "**15.06**",
           "France",
@@ -1044,11 +1051,11 @@
           "14.65 15.12 15.20 DNF 14.85"
         ],
         [
-          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
-          "**15.62**",
-          "United States",
-          "[Quiet Prep in Palisades 2026](https://www.worldcubeassociation.org/competitions/QuietPrepinPalisades2026)",
-          "15.68 15.00 16.19 13.46 DNF"
+          "[Yifan Wang (王逸帆)](https://www.worldcubeassociation.org/persons/2017WANY29)",
+          "**15.86**",
+          "China",
+          "[Shenyang 3x3 L3 2026](https://www.worldcubeassociation.org/competitions/ShenyangCubingLeague3x3III2026)",
+          "14.19 15.04 DNF 15.47 17.06"
         ],
         [
           "[Jeff Park](https://www.worldcubeassociation.org/persons/2015PARK08)",
@@ -1056,13 +1063,6 @@
           "United States",
           "[Richardshhhon 2026](https://www.worldcubeassociation.org/competitions/Richardshhhon2026)",
           "15.51 15.47 15.12 DNF 17.12"
-        ],
-        [
-          "[Yifan Wang (王逸帆)](https://www.worldcubeassociation.org/persons/2017WANY29)",
-          "**16.25**",
-          "China",
-          "[Xianju Bayberry 2026](https://www.worldcubeassociation.org/competitions/XianjuBayberry2026)",
-          "DNF 16.39 16.60 14.16 15.75"
         ],
         [
           "[Simon Praschl](https://www.worldcubeassociation.org/persons/2021PRAS02)",
@@ -1093,11 +1093,11 @@
           "DNF 15.30 15.97 17.48 17.44"
         ],
         [
-          "[Jens Haber](https://www.worldcubeassociation.org/persons/2018HABE02)",
-          "**17.65**",
-          "Germany",
-          "[Phalsbourg Saint Antoine 2026](https://www.worldcubeassociation.org/competitions/PhalsbourgSaintAntoine2026)",
-          "17.08 17.96 16.64 22.57 17.90"
+          "[Liam Chen](https://www.worldcubeassociation.org/persons/2014CHEN37)",
+          "**17.56**",
+          "United States",
+          "[Mid-Atlantic Quiet Champs 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticQuietChampionship2026)",
+          "16.09 19.06 16.61 DNF 17.01"
         ]
       ]
     },
@@ -2205,6 +2205,20 @@
           "2:34.12 1:44.80 1:15.76"
         ],
         [
+          "[Liam Chen](https://www.worldcubeassociation.org/persons/2014CHEN37)",
+          "**1:20.64**",
+          "United States",
+          "[Mid-Atlantic Quiet Champs 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticQuietChampionship2026)",
+          "DNF 1:20.64 DNF"
+        ],
+        [
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "**1:23.87**",
+          "United States",
+          "[Mid-Atlantic Quiet Champs 2026](https://www.worldcubeassociation.org/competitions/MidAtlanticQuietChampionship2026)",
+          "DNF 1:23.87 DNF"
+        ],
+        [
           "[Michael Tripodi](https://www.worldcubeassociation.org/persons/2021TRIP01)",
           "**1:24.28**",
           "Australia",
@@ -2224,20 +2238,6 @@
           "United States",
           "[Riverside PBQ 2026](https://www.worldcubeassociation.org/competitions/RiversidePBQ2026)",
           "1:49.07 1:29.55 DNF"
-        ],
-        [
-          "[Keita Hayakawa (早川慶太)](https://www.worldcubeassociation.org/persons/2022HAYA03)",
-          "**1:30.12**",
-          "Japan",
-          "[Tokyo BLD Spring 2026](https://www.worldcubeassociation.org/competitions/TokyoBLDSpring2026)",
-          "1:30.12 DNF DNF"
-        ],
-        [
-          "[Bálint Csengő](https://www.worldcubeassociation.org/persons/2019CSEN01)",
-          "**1:30.20**",
-          "Hungary",
-          "[Langenstein City Blind Open 2026](https://www.worldcubeassociation.org/competitions/LangensteinCityBlindOpen2026)",
-          "3:11.22 1:30.20 5:12.47"
         ]
       ]
     },
