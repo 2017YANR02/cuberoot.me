@@ -15,6 +15,7 @@ import MegaminxCube from "./mega/MegaminxCube";
 import FtoCube from "./fto/FtoCube";
 import { APEX_UP_QUAT } from "./pyra/pyraGeometry";
 import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS, MEGA_FACE_HINTS, FTO_FACE_HINTS } from "./face_hints";
+import HandsRig, { type HandsCubeLike } from "./hands/handsRig";
 
 /** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, Dino, Redi, Rex (corner-turning),
  *  Heli (edge-turning Helicopter Cube), Skewb (deep-cut corner-turning), or Pyraminx
@@ -57,6 +58,11 @@ export default class World {
   /** Current puzzle kind, mirrors what was last passed to setPuzzle. */
   public puzzleKind: PuzzleKind = 3;
   public callbacks: (() => void)[] = [];
+
+  /** 手部指法 rig(3x3 专属)。惰性建:设置面板首次打开「手指」才实例化。 */
+  public hands: HandsRig | null = null;
+  /** 设置里的「手指」意愿;是否实际显示还要 && puzzleKind === 3(见 syncHands)。 */
+  private handsWanted = false;
 
   public controller: Controller;
 
@@ -290,6 +296,7 @@ export default class World {
     }
     this.puzzleKind = kind;
     this.scene.add(this.cube);
+    this.syncHands();
     // Camera framing is a pure function of puzzleKind (per-puzzle refHalf in resize()),
     // so it MUST re-frame the moment the kind changes — otherwise a puzzle switched in
     // after init keeps the previous puzzle's frame (e.g. FTO, which needs a wider
@@ -343,6 +350,28 @@ export default class World {
     this.sq1RimLights.length = 0;
   }
 
+  /** 设置面板「手指」开关(applySettings 驱动)。实际显隐还看当前拼图。 */
+  setHandsWanted(want: boolean): void {
+    if (this.handsWanted === want) return;
+    this.handsWanted = want;
+    this.syncHands();
+    this.resize(); // refHalf 随手显隐变化(见 resize)
+  }
+
+  /** 手 rig 显隐 = 「想要」 && 3x3(镜面/其它阶/非 NxN 都不上手)。 */
+  private syncHands(): void {
+    const active = this.handsWanted && this.puzzleKind === 3;
+    if (active && this.hands == null) {
+      this.hands = new HandsRig();
+      this.scene.add(this.hands);
+    }
+    if (this.hands) {
+      this.hands.setEnabled(active);
+      this.hands.attachCube(active ? (this.cube as unknown as HandsCubeLike) : null);
+      this.dirty = true;
+    }
+  }
+
   scale = 1;
   perspective = 5;
   /** 视图平移 (世界单位)。camera + lookAt 同时偏移,保持视线方向不变。 */
@@ -361,6 +390,7 @@ export default class World {
     // stacked layers ≈SIZE*2.2 in y, bounding-sphere radius ≈250 (> NxN-3's
     // ~166) — so at the NxN reference it overflows the viewport. SIZE*4.6 pulls
     // it back to the same ~0.85 fill the NxN view has. NxN path unchanged.
+    const handsOn = this.hands?.isEnabled === true && this.puzzleKind === 3;
     const isSq1 = this.puzzleKind === 'sq1';
     const isDino = this.puzzleKind === 'dino';
     const isRedi = this.puzzleKind === 'redi';
@@ -372,7 +402,8 @@ export default class World {
     // Dino/Redi/Rex/Heli/Skewb cubes span [-2,2]·SIZE (corners at ~3.5·SIZE); the megaminx
     // dodecahedron reaches ~3.0·SIZE at its vertices; the FTO octahedron ~3.2·SIZE; ~4.0
     // frames them to the NxN-3 fill.
-    const refHalf = isSq1 ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto) ? SIZE * 4.0 : SIZE * 3;
+    // 手开着时把 3x3 取景拉宽(手/前臂环在魔方外围,SIZE*3 会顶出画框)。
+    const refHalf = isSq1 ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
     const distance = refHalf * this.perspective;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;

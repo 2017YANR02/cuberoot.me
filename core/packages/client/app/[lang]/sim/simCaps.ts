@@ -90,6 +90,9 @@ export interface ControlSupport {
   faceColors: boolean;
   logo: boolean;
   carve: boolean;
+  /** 手指(指法演示):双手握持 + 腕转/弹指跟层动画。仅 3x3(手势姿态按
+   *  order-3 的几何标定;镜面块形不均不贴手)。 */
+  hands: boolean;
 }
 
 export interface ResolvedCaps {
@@ -143,6 +146,9 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       // 走同一条 cube.setLogo() 路径,有正中心块)。其它 engine-body 拼图无中心贴片不支持。
       logo: isNxN || isMirror,
       carve: carve !== null,
+      // 手指(指法演示): rig 的握持/手势按 order-3 标定,且要求 NxN 引擎的
+      // table.groups 逐层 angle 可轮询 → 仅 3x3(镜面走 'mirror' kind,不含)。
+      hands: kind === 3,
     },
   };
 }
