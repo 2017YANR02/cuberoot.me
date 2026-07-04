@@ -95,13 +95,18 @@ const ANIMATIONS = [
 // Notation demo sheet ("转动演示"): every face turn and slice, in all four
 // variants (X, X', X2, X2'), each looping seamlessly back to solved. Files land
 // in the moves/ subdir and are listed by the 'moves' gallery group.
+// Exactly ONE claw per notation moves for the whole demo (the other holds the
+// cube dead still): right claw turns R/U/F, left claw turns L/D/B; a slice uses
+// its WCA reference face's claw (M follows L, E follows D, S follows F).
+const HAND = { U: 'r', D: 'l', L: 'l', R: 'r', F: 'r', B: 'l', E: 'l', M: 'l', S: 'r' };
 const MOVE_DEMOS = Object.entries(WCA_MOVES).flatMap(([name, mvBase]) => {
   const inv = { ...mvBase, dir: -mvBase.dir };
+  const claw = HAND[name];
   return [
-    { file: `moves/${name.toLowerCase()}.svg`, motion: 'moveDemo', label: name, opts: { move: mvBase } },
-    { file: `moves/${name.toLowerCase()}-prime.svg`, motion: 'moveDemo', label: `${name}'`, opts: { move: inv } },
-    { file: `moves/${name.toLowerCase()}2.svg`, motion: 'moveDemo', label: `${name}2`, opts: { move: mvBase, q: 2 } },
-    { file: `moves/${name.toLowerCase()}2-prime.svg`, motion: 'moveDemo', label: `${name}2'`, opts: { move: inv, q: 2 } },
+    { file: `moves/${name.toLowerCase()}.svg`, motion: 'moveDemo', label: name, opts: { move: mvBase, claw } },
+    { file: `moves/${name.toLowerCase()}-prime.svg`, motion: 'moveDemo', label: `${name}'`, opts: { move: inv, claw } },
+    { file: `moves/${name.toLowerCase()}2.svg`, motion: 'moveDemo', label: `${name}2`, opts: { move: mvBase, q: 2, claw } },
+    { file: `moves/${name.toLowerCase()}2-prime.svg`, motion: 'moveDemo', label: `${name}2'`, opts: { move: inv, q: 2, claw } },
   ];
 });
 
@@ -119,6 +124,7 @@ for (const a of [...ANIMATIONS, ...MOVE_DEMOS]) {
     const svg = wrapSvg({
       polys: cube.polys, anims: cube.anims, label: a.label, mood: a.mood || null,
       clawHold: cube.clawHold || clawHoldFromStats(cube.stats),
+      stillClaw: cube.stillClaw || null,
     });
     writeFileSync(join(OUT, a.file), svg);
     const s = cube.stats;

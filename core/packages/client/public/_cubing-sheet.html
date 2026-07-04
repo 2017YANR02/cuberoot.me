@@ -17,6 +17,6 @@ const files=["a01-front-turn-solve","a01-iso-crank-solve","a01-iso-sexy-solve","
 const fill=(el,list,v)=>list.forEach((f,i)=>{const c=document.createElement('div');c.className='cell';c.innerHTML='<img src="/deskpet/cubing/'+f+'.svg?v='+v+'" alt=""><span>'+(i+1)+' '+f+'</span>';el.appendChild(c);});
 fill(document.getElementById('g'),files,3);
 const moves=["u","d","l","r","f","b","e","m","s"].flatMap(k=>["moves/"+k,"moves/"+k+"-prime","moves/"+k+"2","moves/"+k+"2-prime"]);
-fill(document.getElementById('m'),moves,1);
+fill(document.getElementById('m'),moves,2);
 </script>
 </body></html>

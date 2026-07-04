@@ -1691,7 +1691,7 @@
     </g>
     </g>
 
-    <g transform="translate(3.00,0.63)"><g id="claw-l"><g class="arm-l"><rect x="0" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="1.35" y="10.35" width="2.5" height="1.8" fill="#8A4630"/><rect x="1.6" y="10.6" width="2" height="1.3" fill="#C96A47"/></g></g></g>
+    <g transform="translate(3.00,0.63)"><g id="claw-l"><g><rect x="0" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="1.35" y="10.35" width="2.5" height="1.8" fill="#8A4630"/><rect x="1.6" y="10.6" width="2" height="1.3" fill="#C96A47"/></g></g></g>
     <g transform="translate(-2.80,0.63)"><g id="claw-r"><g class="arm-r"><rect x="13" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="11.15" y="10.35" width="2.5" height="1.8" fill="#8A4630"/><rect x="11.4" y="10.6" width="2" height="1.3" fill="#C96A47"/></g></g></g>
     <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
     <g class="eyes" fill="#000">
@@ -1728,6 +1728,6 @@
       <animate xlink:href="#f24" attributeName="opacity" dur="6s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.75000;0.77500;1.00000" values="0;1;0;0"/>
       <animate xlink:href="#f25" attributeName="opacity" dur="6s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.77500;0.80000;1.00000" values="0;1;0;0"/>
       <animate xlink:href="#f26" attributeName="opacity" dur="6s" repeatCount="indefinite" calcMode="discrete" keyTimes="0.00000;0.80000;1.00000" values="0;1;0"/>
-      <animateTransform xlink:href="#claw-l" attributeName="transform" type="translate" dur="6s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0700;0.0875;0.1125;0.1375;0.1625;0.1875;0.2125;0.2375;0.2625;0.3458;0.4200;0.4950;0.5125;0.5375;0.5625;0.5875;0.6125;0.6375;0.6625;0.6875;0.7708;1" values="0.00 0.00;0.57 -1.53;0.51 -1.54;0.34 -1.57;0.07 -1.64;-0.25 -1.78;-0.52 -2.00;-0.60 -2.30;-0.35 -2.63;0.12 -2.85;0.00 0.00;0.00 0.00;0.57 -1.53;0.51 -1.54;0.34 -1.57;0.07 -1.64;-0.25 -1.78;-0.52 -2.00;-0.60 -2.30;-0.35 -2.63;0.12 -2.85;0.00 0.00;0.00 0.00"/>
+      <animateTransform xlink:href="#claw-r" attributeName="transform" type="translate" dur="6s" repeatCount="indefinite" calcMode="linear" keyTimes="0.0000;0.0700;0.0875;0.1125;0.1375;0.1625;0.1875;0.2125;0.2375;0.2625;0.3458;0.4200;0.4950;0.5125;0.5375;0.5625;0.5875;0.6125;0.6375;0.6625;0.6875;0.7708;1" values="0.00 0.00;-0.23 -1.75;-0.27 -1.74;-0.40 -1.70;-0.64 -1.65;-1.00 -1.62;-1.47 -1.64;-1.98 -1.75;-2.39 -1.98;-2.52 -2.22;0.00 0.00;0.00 0.00;-0.23 -1.75;-0.27 -1.74;-0.40 -1.70;-0.64 -1.65;-1.00 -1.62;-1.47 -1.64;-1.98 -1.75;-2.39 -1.98;-2.52 -2.22;0.00 0.00;0.00 0.00"/>
   </g>
 </svg>
