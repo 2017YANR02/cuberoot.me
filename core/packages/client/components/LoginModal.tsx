@@ -19,6 +19,21 @@ import './login-modal.css';
 const ICON = 16;
 type Channel = 'email' | 'phone';
 
+/** 把后端英文错误串 / HTTP 码翻成给用户看的本地化文案;未识别的原样回退。 */
+function authErrorText(raw: string, t: (zh: string, en: string) => string): string {
+  const m = raw.toLowerCase();
+  if (m.includes('too frequent')) return t('操作太频繁,请 60 秒后再试', 'Too many requests — please wait a minute');
+  if (m.includes('wrong or expired')) return t('验证码错误或已过期', 'Wrong or expired code');
+  if (m.includes('not configured')) return t('该登录方式暂未开放', "This sign-in method isn't available yet");
+  if (m.includes('already linked')) return t('该方式已绑定到另一个账号', 'Already linked to another account');
+  if (m.includes('invalid email')) return t('邮箱格式不正确', 'Invalid email address');
+  if (m.includes('invalid phone')) return t('手机号格式不正确', 'Invalid phone number');
+  if (m.includes('invalid input')) return t('输入有误,请检查', 'Invalid input');
+  if (m.includes('send failed')) return t('发送失败,请稍后重试', 'Send failed — please try again');
+  if (m.includes('http 404') || /http 5\d\d/.test(m)) return t('服务暂时不可用,请稍后重试', 'Service temporarily unavailable — please try again');
+  return raw;
+}
+
 /** 邮箱/手机验证码流程(发码 → 输码 → 校验)。login 模式登录;link 模式绑到当前账号。 */
 function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link'; onDone: () => void }) {
   const lang = useLang();
@@ -43,7 +58,7 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
       }
       setStep('code');
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
     } finally {
       setBusy(false);
     }
@@ -62,7 +77,7 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
         onDone();
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
     } finally {
       setBusy(false);
     }
@@ -197,7 +212,7 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
       await unlinkIdentity(provider, providerUid);
       await reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
     }
   };
 
