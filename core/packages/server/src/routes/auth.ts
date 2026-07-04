@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
-import jwt from 'jsonwebtoken';
 import { query } from '../db/connection.js';
+import { signSession, verifySession } from '../utils/session.js';
+import { loginWithIdentity, findUserByWcaId, getUserById, publicUser } from '../utils/account.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 const WCA_CLIENT_ID = process.env.WCA_CLIENT_ID || '';
 const WCA_CLIENT_SECRET = process.env.WCA_CLIENT_SECRET || '';
 const WCA_REDIRECT_URI = process.env.WCA_REDIRECT_URI || 'http://localhost:3000/auth/callback';
@@ -83,12 +83,13 @@ authRoutes.get('/auth/callback', async (c) => {
     [wcaId, user.name, user.avatar?.url, tokenData.access_token, tokenData.refresh_token, tokenData.expires_in],
   );
 
-  // 签发 JWT（有效期 7 天）
-  const jwtToken = jwt.sign(
-    { wcaId, name: user.name },
-    JWT_SECRET,
-    { expiresIn: '7d' },
-  );
+  // 建/取内部账号 + wca 身份,签发会话 JWT（365 天）
+  const account = await loginWithIdentity('wca', wcaId, {
+    name: user.name,
+    avatar: user.avatar?.url ?? null,
+    wcaId,
+  });
+  const jwtToken = signSession({ uid: account.id, wcaId: account.wca_id, name: account.display_name });
 
   // 重定向回前端，带上 JWT
   return c.redirect(
@@ -104,11 +105,8 @@ authRoutes.get('/auth/me', async (c) => {
   }
 
   try {
-    const payload = jwt.verify(authHeader.slice(7), JWT_SECRET) as {
-      wcaId: string;
-      name: string;
-    };
-    return c.json({ user: payload });
+    const payload = verifySession(authHeader.slice(7));
+    return c.json({ user: { uid: payload.uid, wcaId: payload.wcaId ?? null, name: payload.name ?? '' } });
   } catch {
     return c.json({ error: 'Invalid token' }, 401);
   }
@@ -155,14 +153,15 @@ authRoutes.post('/auth/exchange', async (c) => {
       [user.wca_id, user.name, user.avatar?.url, accessToken],
     );
 
-    // 签发 JWT（365 天有效期）
-    const jwtToken = jwt.sign(
-      { wcaId: user.wca_id, name: user.name },
-      JWT_SECRET,
-      { expiresIn: '365d' },
-    );
+    // 建/取内部账号 + wca 身份,签发会话 JWT（365 天）
+    const account = await loginWithIdentity('wca', user.wca_id, {
+      name: user.name,
+      avatar: user.avatar?.url ?? null,
+      wcaId: user.wca_id,
+    });
+    const jwtToken = signSession({ uid: account.id, wcaId: account.wca_id, name: account.display_name });
 
-    return c.json({ token: jwtToken });
+    return c.json({ token: jwtToken, user: publicUser(account) });
   } catch {
     return c.json({ error: 'WCA API unavailable' }, 502);
   }
@@ -178,16 +177,21 @@ authRoutes.post('/auth/refresh', async (c) => {
   }
   const token = authHeader.slice(7);
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { wcaId?: string; name?: string };
-    if (!payload.wcaId) return c.json({ error: 'unauthorized' }, 401);
-    const fresh = jwt.sign(
-      { wcaId: payload.wcaId, name: payload.name ?? '' },
-      JWT_SECRET,
-      { expiresIn: '365d' },
-    );
+    const payload = verifySession(token);
+    // uid token 直接续;老 wca-only token 借机升级(按真实 wcaId 查库补 uid)。
+    let uid = payload.uid ?? null;
+    if (uid == null && payload.wcaId) {
+      const u = await findUserByWcaId(payload.wcaId);
+      if (u) uid = u.id;
+    }
+    if (uid == null) return c.json({ error: 'unauthorized' }, 401);
+    // 按账号最新态续签(可能刚绑了新的 wca / 改了名)。查不到账号 → 强制重登。
+    const u = await getUserById(uid);
+    if (!u) return c.json({ error: 'unauthorized' }, 401);
+    const fresh = signSession({ uid: u.id, wcaId: u.wca_id, name: u.display_name || (payload.name ?? '') });
     return c.json({ token: fresh });
   } catch {
-    // 过期或非法 JWT — 不续签,前端回退到重新 WCA 登录。
+    // 过期或非法 JWT — 不续签,前端回退到重新登录。
     return c.json({ error: 'unauthorized' }, 401);
   }
 });

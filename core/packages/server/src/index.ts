@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { authRoutes } from './routes/auth.js';
+import { accountAuthRoutes } from './routes/account_auth.js';
 import { progressRoutes } from './routes/progress.js';
 import { healthRoutes } from './routes/health.js';
 import { reconRoutes } from './routes/recon.js';
@@ -88,6 +89,7 @@ app.onError((err, c) => {
 
 // 注册路由 — 全部挂在 /v1 下，对外即 https://api.cuberoot.me/v1/*
 app.route('/v1', authRoutes);
+app.route('/v1', accountAuthRoutes);
 app.route('/v1', progressRoutes);
 app.route('/v1', healthRoutes);
 app.route('/v1', reconRoutes);

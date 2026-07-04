@@ -36,6 +36,10 @@
       "node": "./dist/admin.js",
       "default": "./src/admin.ts"
     },
+    "./account": {
+      "node": "./dist/account.js",
+      "default": "./src/account.ts"
+    },
     "./result-penalty": {
       "node": "./dist/result_penalty.js",
       "default": "./src/result_penalty.ts"
