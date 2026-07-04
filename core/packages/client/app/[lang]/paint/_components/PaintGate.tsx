@@ -22,7 +22,7 @@ export default function PaintGate() {
         </p>
         <button type="button" className="paint-btn paint-btn--accent paint-gate-login" onClick={login}>
           <LogIn size={16} />
-          <span>{t('用 WCA 账号登录', 'Sign in with WCA')}</span>
+          <span>{t('登录', 'Sign in')}</span>
         </button>
       </div>
     </div>

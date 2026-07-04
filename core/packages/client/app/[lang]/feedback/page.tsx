@@ -82,10 +82,10 @@ export default function MyFeedbackPage() {
 
       {!user ? (
         <div className="fbm-login">
-          <p className="fbm-login-hint">{t('登录 WCA 账号后即可查看你的反馈和我的回复。',
-            'Sign in with WCA to see your feedback and my replies.')}</p>
+          <p className="fbm-login-hint">{t('登录后即可查看你的反馈和我的回复。',
+            'Sign in to see your feedback and my replies.')}</p>
           <button type="button" className="fbm-login-btn" onClick={login}>
-            <LogIn size={15} /> {t('用 WCA 登录', 'Sign in with WCA')}
+            <LogIn size={15} /> {t('登录', 'Sign in')}
           </button>
         </div>
       ) : (

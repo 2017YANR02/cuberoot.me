@@ -146,7 +146,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
           <p style={{ marginBottom: 16 }}>{tr({ zh: '需要登录才能提交另解。', en: 'Login required to submit an alternative.'
         })}</p>
           <button type="button" className="recon-btn" onClick={() => login()}>
-            <LogIn size={14} /> {tr({ zh: '登录 WCA', en: 'Sign in with WCA'
+            <LogIn size={14} /> {tr({ zh: '登录', en: 'Sign in'
             })}
           </button>
         </div>

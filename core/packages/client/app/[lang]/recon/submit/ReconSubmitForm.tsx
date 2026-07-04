@@ -1320,11 +1320,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         </div>
         <div style={{ padding: 24, textAlign: 'center' }}>
           <p style={{ marginBottom: 16 }}>
-            {tr({ zh: '提交复盘需要登录 WCA 账号。', en: 'Submitting reconstructions requires a WCA account.'
+            {tr({ zh: '提交复盘需要先登录。', en: 'Submitting reconstructions requires signing in.'
             })}
           </p>
           <button type="button" className="recon-btn" onClick={() => login()}>
-            <LogIn size={14} /> {tr({ zh: '登录 WCA', en: 'Sign in with WCA'
+            <LogIn size={14} /> {tr({ zh: '登录', en: 'Sign in'
             })}
           </button>
         </div>
