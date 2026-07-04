@@ -11,14 +11,15 @@
  * 手/指的选择依转向(angle 符号)分配左右,映射见 classifyHandGesture(纯函数,
  * tests/hands_gestures.test.ts 锁定)。
  *
- * 握姿持久化:weld 提交(层角走满 ±90° 倍数后 drop)把该旋转烘进 per-hand 的
- * grip 基座 —— 手停在转完的位置,不自动回家(真实指法如此)。回 home / 换握由
+ * 握姿持久化:x 轴 weld 提交(层角走满 ±90° 倍数后 drop)把该旋转烘进 per-hand
+ * 的 grip 基座 —— 手停在转完的位置,不自动回家(真实指法如此);y/z 整体转体
+ * 提交后手回弹到原握姿(转体要松手换握,手不悬在拧转位)。回 home / 换握由
  * 解法框记号驱动:↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握,
  * 见 regrip() / simulateGrips()。
  */
 import * as THREE from "three";
 import { SIZE } from "../define";
-import { buildHand, buildForearm, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
+import { buildHand, buildForearm, makeSkinDetailTexture, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
 import { homeLeft, homeRight, type HandPose } from "./handPoses";
 
 /** 只读 duck-type,避免运行时 import NxN Cube(rig 只碰 groups 的 angle)。 */
@@ -121,6 +122,7 @@ export function simulateGrips(steps: GripSimStep[], order: number): { R: THREE.Q
       continue;
     }
     if (s.quarters === 0 || s.layers.length === 0) continue;
+    if (s.axis !== "x") continue; // 只有 x 轴 weld 烘入;y/z 整体转体提交即回弹(与 live endGesture 一致)
     const cls = classifyLayers(s.layers, order);
     const g = classifyHandGesture(s.axis, cls, s.quarters > 0 ? 1 : -1);
     if (g.kind !== "weld") continue;
@@ -180,8 +182,25 @@ export default class HandsRig extends THREE.Group {
   constructor() {
     super();
     this.name = "handsRig";
-    this.skinMat = new THREE.MeshStandardMaterial({ color: 0xe0ac86, roughness: 0.58, metalness: 0 });
-    this.nailMat = new THREE.MeshStandardMaterial({ color: 0xf0d6c4, roughness: 0.4, metalness: 0 });
+    // 皮肤:物理材质 + 顶点血色(关节微红,几何侧烘)+ 程序噪声 bump/roughness
+    // (毛孔颗粒,高光散成肤质);sheen 给轮廓一圈软绒光(皮肤次表面近似)。
+    const detail = makeSkinDetailTexture();
+    const skin = new THREE.MeshPhysicalMaterial({
+      color: 0xe0ac86,
+      roughness: 0.85, // 有 roughnessMap 时为乘数:0.85 × 贴图(均值 ~0.66)≈ 实效 0.56
+      metalness: 0,
+      vertexColors: true,
+      // sheen 别高:每个体块的轮廓缘光会把拼球结构一个个勾出来(「葡萄串」)。
+      sheen: 0.15,
+      sheenRoughness: 0.6,
+      sheenColor: new THREE.Color(0xffdfca),
+    });
+    skin.bumpMap = detail;
+    skin.bumpScale = 0.55;
+    skin.roughnessMap = detail;
+    this.skinMat = skin;
+    // 指甲:清漆层给角质光泽(高光锐于皮肤,辨识度来源)。
+    this.nailMat = new THREE.MeshPhysicalMaterial({ color: 0xeccab4, roughness: 0.32, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.28 });
     this.cuffMat = new THREE.MeshStandardMaterial({ color: 0x3a4148, roughness: 0.85, metalness: 0 });
 
     // 手性对调:魔方右侧的手用 side=-1 几何。家位规格(食指压 BUR 顶、无名指压
@@ -203,7 +222,7 @@ export default class HandsRig extends THREE.Group {
 
     // 手专属补光:layer 1(魔方在默认 layer 0,不受影响;手网格同时在 0+1,
     // 场景主光照到手,补光只照手)。左前暖 + 右下冷,把背光侧从死黑里捞出来。
-    const fillA = new THREE.DirectionalLight(0xfff0e2, Math.PI * 0.28);
+    const fillA = new THREE.DirectionalLight(0xfff0e2, Math.PI * 0.22);
     fillA.position.set(-SIZE * 3, SIZE * 1.5, SIZE * 3);
     fillA.layers.set(1);
     const fillB = new THREE.DirectionalLight(0xdfe8f5, Math.PI * 0.16);
@@ -491,11 +510,13 @@ export default class HandsRig extends THREE.Group {
     for (const side of ["R", "L"] as const) {
       const h = this.hands[side];
       if (h.weldAxis) {
-        // weld 提交(未压缩层角走满 ±90° 倍数)→ 把该旋转烘进持久握姿基座,手停在
-        // 转完的位置不回家;残余(压缩差/采样差)折进回位四元数抹平。未提交(拖拽
-        // 回弹,snap=0)→ 维持旧行为:整段 weld 姿态 slerp 回当前握姿。
+        // weld 提交(未压缩层角走满 ±90° 倍数)→ 只有 x 轴(R/L 腕转、整体 x)把
+        // 该旋转烘进持久握姿基座 —— 腕上下翻是自然持姿。y/z 整体转体提交后手
+        // 回弹到原握姿(真实指法:y/z 转体松手换握,手不跟着拧 90° 悬着)。
+        // 残余(压缩差/采样差)折进回位四元数抹平;未提交(拖拽回弹,snap=0)
+        // 整段 weld 姿态 slerp 回当前握姿。
         const snap = Math.round(h.weldRawAngle / HALF_PI);
-        if (snap !== 0) {
+        if (snap !== 0 && h.weldAxis === "x") {
           h.grip.premultiply(HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC[h.weldAxis], snap * HALF_PI));
           h.recoverQuat.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle - snap * HALF_PI);
         } else {
@@ -609,6 +630,7 @@ export default class HandsRig extends THREE.Group {
     for (const side of ["R", "L"] as const) {
       for (const m of this.hands[side].model.meshes) m.geometry.dispose();
     }
+    this.skinMat.bumpMap?.dispose();
     this.skinMat.dispose();
     this.nailMat.dispose();
     this.cuffMat.dispose();

@@ -77,11 +77,15 @@ describe('simulateGrips(握姿持久化静态推演,quarters 符号 = 引擎 con
     expect(near(g.R, gripQuat('home'))).toBe(true);
   });
 
-  it('整体 y = 双手同烘(绕 AXIS_VEC.y = (0,-1,0))', () => {
-    const g = simulateGrips([{ axis: 'y', layers: [0, 1, 2], quarters: 1 }], 3);
-    const expected = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, -1, 0), Math.PI / 2);
-    expect(near(g.R, expected)).toBe(true);
-    expect(near(g.L, expected)).toBe(true);
+  it('整体 x = 双手同烘;整体 y/z 不烘(转体松手换握,手回弹原握姿)', () => {
+    const gx = simulateGrips([{ axis: 'x', layers: [0, 1, 2], quarters: 1 }], 3);
+    expect(near(gx.R, gripQuat('up'))).toBe(true);
+    expect(near(gx.L, gripQuat('up'))).toBe(true);
+    for (const axis of ['y', 'z'] as const) {
+      const g = simulateGrips([{ axis, layers: [0, 1, 2], quarters: 1 }], 3);
+      expect(near(g.R, gripQuat('home'))).toBe(true);
+      expect(near(g.L, gripQuat('home'))).toBe(true);
+    }
   });
 
   it('flick(U/M)不改握;换握记号覆盖两手', () => {
