@@ -38,8 +38,9 @@ describe('classifyHandGesture', () => {
   });
 
   it('F 族 = 拇指弹,B/S 族 / M 族 = 中指弹', () => {
-    expect(classifyHandGesture('z', 'high', 1)).toEqual({ kind: 'flick', hand: 'R', finger: 'thumb' });  // F
-    expect(classifyHandGesture('z', 'high', -1)).toEqual({ kind: 'flick', hand: 'L', finger: 'thumb' }); // F'
+    // F 使左列上行 → 左拇指沿 F 面上扫;F' 右列上行 → 右拇指(2026-07-04 新握姿实测定向)
+    expect(classifyHandGesture('z', 'high', 1)).toEqual({ kind: 'flick', hand: 'L', finger: 'thumb' });  // F
+    expect(classifyHandGesture('z', 'high', -1)).toEqual({ kind: 'flick', hand: 'R', finger: 'thumb' }); // F'
     expect(classifyHandGesture('z', 'mid', 1)).toEqual({ kind: 'flick', hand: 'R', finger: 'middle' });  // S
     expect(classifyHandGesture('z', 'low', -1)).toEqual({ kind: 'flick', hand: 'L', finger: 'middle' }); // B
     expect(classifyHandGesture('x', 'mid', -1)).toEqual({ kind: 'flick', hand: 'L', finger: 'middle' }); // M
