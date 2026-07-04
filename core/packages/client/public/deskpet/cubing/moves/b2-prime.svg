@@ -1692,7 +1692,7 @@
     </g>
 
     <g transform="translate(2.63,0.63)"><g id="claw-l"><g class="arm-l"><rect x="0" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="1.35" y="10.35" width="2.5" height="1.8" fill="#8A4630"/><rect x="1.6" y="10.6" width="2" height="1.3" fill="#C96A47"/></g></g></g>
-    <g transform="translate(-2.80,0.63)"><g id="claw-r"><g class="arm-r"><rect x="13" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="11.15" y="10.35" width="2.5" height="1.8" fill="#8A4630"/><rect x="11.4" y="10.6" width="2" height="1.3" fill="#C96A47"/></g></g></g>
+    <g transform="translate(-2.80,0.63)"><g id="claw-r"><g><rect x="13" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="11.15" y="10.35" width="2.5" height="1.8" fill="#8A4630"/><rect x="11.4" y="10.6" width="2" height="1.3" fill="#C96A47"/></g></g></g>
     <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
     <g class="eyes" fill="#000">
       <rect x="4" y="8" width="1" height="2"/>

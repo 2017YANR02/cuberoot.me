@@ -419,14 +419,18 @@ export function layerTurn({
 // Notation demo: repeat one WCA move until the cube returns to solved so the
 // loop is seamless — 4 reps for a quarter turn, 2 for a half turn (q:2). Same
 // flipbook + claw-grip treatment as layerTurn; the claw re-grips each rep.
-export function moveDemo({ dur, move, q = 1, frames, hold = 4, rest = 3, pose = POSE_3Q, view: vo = {} } = {}) {
+// `claw` assigns the move to ONE claw: it alone approaches/follows every rep,
+// while the other claw holds the cube perfectly still (no waggle, no gestures —
+// wrapSvg drops its .arm-* class via the returned stillClaw).
+export function moveDemo({ dur, move, q = 1, frames, hold = 4, rest = 3, claw = null, pose = POSE_3Q, view: vo = {} } = {}) {
   const reps = q === 2 ? 2 : 4;
   const mf = frames ?? (q === 2 ? 13 : 9);
   const d = dur ?? (q === 2 ? '6s' : '8s');
   const script = Array.from({ length: reps }, () => ({ ...move, q, frames: mf, hold }));
   const view = makeView(vo);
   const r = renderFlip(turnFrames(script, pose, { restFrames: rest }), view, { dur: d });
-  return addClaws(r, clawGripEvents(script, pose, view, { restFrames: rest, followFrac: q === 2 ? 0.6 : 0.75 }), d);
+  const out = addClaws(r, clawGripEvents(script, pose, view, { restFrames: rest, followFrac: q === 2 ? 0.6 : 0.75, forceClaw: claw }), d);
+  return claw ? { ...out, stillClaw: claw === 'l' ? 'r' : 'l' } : out;
 }
 
 // scramble then solve (a move sequence then its inverse) — loops solved.
@@ -808,7 +812,7 @@ export function clawHoldFromStats(stats) {
 // Per move: choose a grip sticker on the turning layer and sample its projected
 // path while the layer rotates. Returns [{ claw:'l'|'r', samples:[[t,x,y],…] }]
 // with t as fractions of the loop, aligned to turnFrames' slot timeline.
-function clawGripEvents(script, pose, view, { restFrames = 0, followFrac = 0.75 } = {}) {
+function clawGripEvents(script, pose, view, { restFrames = 0, followFrac = 0.75, forceClaw = null } = {}) {
   const total = 2 * restFrames + script.reduce((s, m) => s + (m.frames ?? 6) + (m.hold ?? 0), 0);
   const [CX] = view.project([0, 0, 0], IDENT, null);
   let cur = buildCubies();
@@ -828,7 +832,7 @@ function clawGripEvents(script, pose, view, { restFrames = 0, followFrac = 0.75 
         const fc = quadCenter3(fa.quad);
         const [px, py] = view.project(fc, pose, null);
         const depth = view.depth(fc, pose);
-        for (const side of [1, -1]) {
+        for (const side of forceClaw ? [forceClaw === 'r' ? 1 : -1] : [1, -1]) {
           const score = side * (px - CX) + 1.2 * depth - 1.5 * Math.max(0, 10.1 - py);
           if (!best || score > best.score) best = { score, side, fc };
         }
@@ -981,9 +985,12 @@ const MOODS = {
 const CLAW_FILL = '#C96A47';
 const CLAW_EDGE = '#8A4630';
 const HOLD_DEFAULT = { l: [1.4, 0.5], r: [-1.4, 0.5] };
-export function wrapSvg({ polys, anims, label = 'cube', mood = null, clawHold = HOLD_DEFAULT }) {
+export function wrapSvg({ polys, anims, label = 'cube', mood = null, clawHold = HOLD_DEFAULT, stillClaw = null }) {
   const m = mood && MOODS[mood];
   const hold = (c) => `translate(${clawHold[c][0].toFixed(2)},${clawHold[c][1].toFixed(2)})`;
+  // stillClaw (notation demos): that claw just holds — no wrist waggle class, and
+  // moveDemo routes all grip gestures to the other claw, so it never moves at all.
+  const armCls = (c) => (stillClaw === c ? '' : ` class="arm-${c}"`);
   const moodCss = m ? `\n      ${m.css}\n      .beat { transform-box: view-box; transform-origin: 7.5px 12px; animation: ${m.anim}; }` : '';
   const openBeat = m ? '<g class="beat">' : '';
   const closeBeat = m ? '</g>' : '';
@@ -1021,8 +1028,8 @@ export function wrapSvg({ polys, anims, label = 'cube', mood = null, clawHold = 
 ${polys}
     </g>
 
-    <g transform="${hold('l')}"><g id="claw-l"><g class="arm-l"><rect x="0" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="1.35" y="10.35" width="2.5" height="1.8" fill="${CLAW_EDGE}"/><rect x="1.6" y="10.6" width="2" height="1.3" fill="${CLAW_FILL}"/></g></g></g>
-    <g transform="${hold('r')}"><g id="claw-r"><g class="arm-r"><rect x="13" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="11.15" y="10.35" width="2.5" height="1.8" fill="${CLAW_EDGE}"/><rect x="11.4" y="10.6" width="2" height="1.3" fill="${CLAW_FILL}"/></g></g></g>
+    <g transform="${hold('l')}"><g id="claw-l"><g${armCls('l')}><rect x="0" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="1.35" y="10.35" width="2.5" height="1.8" fill="${CLAW_EDGE}"/><rect x="1.6" y="10.6" width="2" height="1.3" fill="${CLAW_FILL}"/></g></g></g>
+    <g transform="${hold('r')}"><g id="claw-r"><g${armCls('r')}><rect x="13" y="10.2" width="2" height="2" fill="#DE886D"/><rect x="11.15" y="10.35" width="2.5" height="1.8" fill="${CLAW_EDGE}"/><rect x="11.4" y="10.6" width="2" height="1.3" fill="${CLAW_FILL}"/></g></g></g>
     <!-- eyes stay topmost: a same-colour claw crossing the face must never blank one out -->
     <g class="eyes" fill="#000">
       <rect x="4" y="8" width="1" height="2"/>

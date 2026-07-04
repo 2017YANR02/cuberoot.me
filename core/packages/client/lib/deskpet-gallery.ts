@@ -98,7 +98,7 @@ export const PET_GALLERY: PetGalleryGroup[] = [
   {
     // Notation demo sheet: every WCA face turn + slice in all four variants,
     // performed by Clawd on a solved cube (each loops seamlessly back to solved).
-    id: 'moves', zh: '转动记号演示', en: 'Move Notation', base: '/deskpet/cubing/moves/', v: '1', scale: 1.85, scaleOrigin: 'center 82%',
+    id: 'moves', zh: '转动记号演示', en: 'Move Notation', base: '/deskpet/cubing/moves/', v: '2', scale: 1.85, scaleOrigin: 'center 82%',
     anims: [
       { file: 'u.svg', zh: 'U', en: 'U' },
       { file: 'u-prime.svg', zh: "U'", en: "U'" },
