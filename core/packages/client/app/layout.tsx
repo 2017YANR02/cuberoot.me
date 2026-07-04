@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import DeskPet from "@/components/DeskPet";
+import LoginModal from "@/components/LoginModal";
 import ThemeColorSync from "@/components/ThemeColorSync";
 import AuthTokenRefresher from "@/components/AuthTokenRefresher";
 import MembershipReminder from "@/components/MembershipReminder";
@@ -53,6 +54,7 @@ export default function RootLayout({
           {children}
           <MembershipReminder />
           <DeskPet />
+          <LoginModal />
           <ThemeColorSync />
           <AuthTokenRefresher />
         </AppNuqsAdapter>

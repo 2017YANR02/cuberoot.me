@@ -53,7 +53,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in packages/server/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   alg alg_sets analytics announced_comps article auth cn_comp_names colpi
+//   account_auth alg alg_sets analytics announced_comps article auth cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback health historical_ranks
 //   membership nav_sites nemesizer ops paint progress recon scramble_555
 //   scramble_marks sponsors timer_backups wca_format wca_fun_stats wca_proxy
@@ -66,6 +66,19 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/auth/exchange', g: 'public', zh: '用授权码换取 JWT', en: 'Exchange auth code for JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/refresh', g: 'login', zh: '刷新 JWT', en: 'Refresh JWT' },
   { d: 'auth', m: 'GET', p: '/v1/auth/me', g: 'login', zh: '当前登录用户信息', en: 'Current signed-in user' },
+
+  // ---- account (邮箱 / 手机验证码登录 + 多身份绑定) ----
+  { d: 'auth', m: 'POST', p: '/v1/auth/email/send', g: 'public', zh: '发邮箱验证码(登录/注册)', en: 'Send email login code' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/email/verify', g: 'public', zh: '校验邮箱验证码,签发 JWT', en: 'Verify email code, issue JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/phone/send', g: 'public', zh: '发手机验证码(仅 +86)', en: 'Send phone login code (+86 only)' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/phone/verify', g: 'public', zh: '校验手机验证码,签发 JWT', en: 'Verify phone code, issue JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/link/email/send', g: 'login', zh: '给当前账号发绑定邮箱验证码', en: 'Send code to link an email' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/link/email/verify', g: 'login', zh: '绑定邮箱到当前账号', en: 'Link email to current account' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/link/phone/send', g: 'login', zh: '给当前账号发绑定手机验证码', en: 'Send code to link a phone' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/link/phone/verify', g: 'login', zh: '绑定手机到当前账号', en: 'Link phone to current account' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/link/wca', g: 'login', zh: '用 WCA token 绑定 WCA 身份', en: 'Link WCA identity via access token' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/unlink', g: 'login', zh: '解绑一个登录方式(拒绝最后一个)', en: 'Unlink a login method (not the last)' },
+  { d: 'auth', m: 'GET', p: '/v1/auth/identities', g: 'login', zh: '当前账号已绑定的身份列表', en: 'Linked identities of current account' },
 
   // ---- wca-stats ----
   { d: 'wca-stats', m: 'GET', p: '/v1/wca/grand-slam', g: 'public', c: 'cdn', zh: '大满贯榜', en: 'Grand-slam leaderboard' },
