@@ -19,6 +19,7 @@ import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
   fetchWikiTerms, createTerm, updateTerm, deleteTerm,
   createAddition, updateAddition, deleteAddition,
@@ -67,6 +68,8 @@ export default function WikiPage() {
   const user = useAuthStore(s => s.user);
   const isLoggedIn = !!user;
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+  // 所有权键(与服务端一致):非 WCA 账号也能判定自己的词条。admin 判定仍用真实 wcaId。
+  const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
 
   const [data, setData] = useState<WikiList | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
@@ -275,7 +278,7 @@ export default function WikiPage() {
                       <>
                         <div className="wiki-entry-head-row">
                           <h3 className="wiki-entry-head">{e.head}</h3>
-                          {(isAdmin || (isLoggedIn && user?.wcaId === e.ownerWcaId)) && (
+                          {(isAdmin || (isLoggedIn && myKey === e.ownerWcaId)) && (
                             <button
                               type="button"
                               className="wiki-action-btn"
@@ -323,7 +326,7 @@ export default function WikiPage() {
                                 <div className="wiki-addition-body">{renderBodyLines(a.body)}</div>
                                 <div className="wiki-addition-meta">
                                   <span>+ {a.ownerName || a.ownerWcaId}</span>
-                                  {(isAdmin || user?.wcaId === a.ownerWcaId) && (
+                                  {(isAdmin || myKey === a.ownerWcaId) && (
                                     <>
                                       <button
                                         type="button"

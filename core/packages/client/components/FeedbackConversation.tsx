@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, CornerDownRight, Trash2 } from 'lucide-react';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { getWcaId, isAdmin } from '@/lib/auth-store';
+import { getOwnerKey, isAdmin } from '@/lib/auth-store';
 import { fetchFeedbackThread, replyToFeedback, deleteFeedbackMessage, type FeedbackMessage } from '@/lib/feedback-api';
 import { refreshFeedbackUnread } from '@/lib/feedback-unread';
 import './feedback-conversation.css';
@@ -35,7 +35,7 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState<number | null>(null);
 
-  const myId = getWcaId();
+  const myId = getOwnerKey();
   const admin = isAdmin();
   const canDelete = (m: FeedbackMessage) => admin || m.wcaId === myId;
 

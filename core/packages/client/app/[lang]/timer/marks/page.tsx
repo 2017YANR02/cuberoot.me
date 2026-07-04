@@ -17,6 +17,7 @@ import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
+import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { displayCuberName } from '@/lib/name-utils';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
@@ -37,6 +38,8 @@ function MarksFeed() {
   const isZh = i18n.language.startsWith('zh');
   useDocumentTitle('打乱足迹', 'Scramble Marks');
   const user = useAuthStore((st) => st.user);
+  // 所有权键(与服务端一致):非 WCA 账号也能筛「只看我的」/ 删自己的标记。展示链接仍用真实 wcaId。
+  const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
   // SSR/首帧统一为未登录,挂载后再放开,避免 hydration mismatch。
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -95,11 +98,11 @@ function MarksFeed() {
       .finally(() => setLoadingMore(false));
   }, [marks, loadingMore, wcaIdFilter, q]);
 
-  const mineOnly = mounted && !!user && wcaIdFilter === user.wcaId;
-  const canDelete = (m: RecentMark) => mounted && !!user && (m.wcaId === user.wcaId || admin);
+  const mineOnly = mounted && !!user && wcaIdFilter === myKey;
+  const canDelete = (m: RecentMark) => mounted && !!user && (m.wcaId === myKey || admin);
 
   const onDelete = useCallback(async (m: RecentMark) => {
-    const isOwn = !!user && m.wcaId === user.wcaId;
+    const isOwn = !!user && m.wcaId === myKey;
     const msg = isOwn
       ? tr({ zh: '删除这条标记?', en: 'Delete this mark?' })
       : tr({ zh: `以管理员身份删除 ${displayCuberName(m.name, isZh) || m.wcaId} 的这条标记?`,
@@ -147,7 +150,7 @@ function MarksFeed() {
           <button
             type="button"
             className={`scrmarks-mine${mineOnly ? ' on' : ''}`}
-            onClick={() => void setQuery({ wcaId: mineOnly ? null : user.wcaId })}
+            onClick={() => void setQuery({ wcaId: mineOnly ? null : myKey })}
           >
             {tr({ zh: '只看我的', en: 'Mine only' })}
           </button>
@@ -190,7 +193,7 @@ function MarksFeed() {
                       className="scrmarks-del"
                       disabled={deleting === m.id}
                       onClick={() => void onDelete(m)}
-                      title={m.wcaId === user?.wcaId
+                      title={m.wcaId === myKey
                         ? tr({ zh: '删除', en: 'Delete' })
                         : tr({ zh: '管理员删除', en: 'Delete (admin)' })}
                     >

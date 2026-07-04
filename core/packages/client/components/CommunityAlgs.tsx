@@ -14,6 +14,7 @@ import Link from '@/components/AppLink';
 import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api';
 import { validateAlgCase } from '@/lib/alg_validation';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { tr } from '@/i18n/tr';
 
@@ -42,6 +43,8 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
   const user = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);
   const isAdmin = user !== null && ADMIN_WCA_IDS.includes(user.wcaId);
+  // 所有权键(与服务端一致):非 WCA 账号也能认出自己提交的公式。
+  const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
 
   /** Run cubing.js validation; if it fails, let the user override via confirm.
    *  Returns true to proceed with the write, false to abort. */
@@ -127,7 +130,7 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
   return (
     <div className="alg-community">
       {submissions.map(s => {
-        const isMine = user?.wcaId === s.authorId;
+        const isMine = !!myKey && myKey === s.authorId;
         const canEdit = isMine || isAdmin;
         const editing = editingId === s.id;
         return (

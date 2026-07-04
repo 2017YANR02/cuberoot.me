@@ -7,6 +7,7 @@
 import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
+import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { apiUrl } from './api-base';
 
 export { ADMIN_WCA_IDS };
@@ -192,6 +193,17 @@ export function getWcaId(): string {
   return useAuthStore.getState().user?.wcaId || '';
 }
 
+/**
+ * 当前会话的「所有权键」——与服务端 requireAuth 的 ownerKey 完全同源:绑了 WCA = 真实
+ * wca_id,纯邮箱/手机账号 = 合成 u<uid>,未登录 = ''。业务内容「是不是我的 / 能不能管」
+ * 一律用它比对(非 WCA 用户 wcaId 为空,用 wcaId 会全判 false)。链接 /person、admin
+ * 判定、WCA 选手页 isSelf 仍用 wcaId(那些语义就是真实 WCA id)。
+ */
+export function getOwnerKey(): string {
+  const u = useAuthStore.getState().user;
+  return computeOwnerKey(u?.uid, u?.wcaId);
+}
+
 export function isAdmin(): boolean {
   return isAdminWcaId(useAuthStore.getState().user?.wcaId);
 }
@@ -210,6 +222,12 @@ export function useAuthUser(): WcaUser | null {
 
 export function useIsAdmin(): boolean {
   return isAdminWcaId(useAuthUser()?.wcaId);
+}
+
+/** Hydration-safe 版 getOwnerKey(SSG 页按登录态分叉渲染必用,理由同 useAuthUser)。 */
+export function useOwnerKey(): string {
+  const user = useAuthUser();
+  return computeOwnerKey(user?.uid, user?.wcaId);
 }
 
 // ── 长效 JWT 滑动续签 ──

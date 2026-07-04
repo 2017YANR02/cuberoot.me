@@ -41,6 +41,7 @@ import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { useAuthStore } from '@/lib/auth-store';
+import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { displayCuberName } from '@/lib/name-utils';
 import { fetchMarks, addMark, markKey, type ScrambleMark } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
@@ -428,7 +429,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const marksBoxRef = useRef<HTMLSpanElement | null>(null);
   const curMarkKey = wcaSource ? markKey(wcaSource) : null;
   const curMarks = curMarkKey ? marksCache[curMarkKey] : undefined;
-  const myMark = !!(authUser && curMarks?.marks.some((m) => m.wcaId === authUser.wcaId));
+  // 所有权键(与服务端一致):非 WCA 账号的标记也能正确认出「已标记」,避免重复标记。
+  const myKey = authUser ? computeOwnerKey(authUser.uid, authUser.wcaId) : '';
+  const myMark = !!(myKey && curMarks?.marks.some((m) => m.wcaId === myKey));
 
   useEffect(() => {
     setMarksOpen(false);
@@ -472,7 +475,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     const meta = wcaMetaFor(s.scramble);
     if (!meta) return;
     const key = markKey(meta);
-    const alreadyMine = marksCache[key]?.marks.some((m) => m.wcaId === authUser.wcaId);
+    const alreadyMine = marksCache[key]?.marks.some((m) => m.wcaId === myKey);
     if (!settings.autoMarkWcaScramble && !alreadyMine) return; // 关:不自动新建公开记录
     const timeCs = Math.round((s.timeMs + (s.penalty === '+2' ? 2000 : 0)) / 10);
     addMark(meta, timeCs, authUser.country || '')
