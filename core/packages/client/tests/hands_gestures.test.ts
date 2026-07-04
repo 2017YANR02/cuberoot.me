@@ -4,7 +4,8 @@
  * 顺手更新这里的 baseline(参照 CLAUDE.md「主动改 baseline 当 review 信号」)。
  */
 import { describe, expect, it } from 'vitest';
-import { classifyHandGesture, classifyLayers } from '@/app/[lang]/sim/engine/hands/handsRig';
+import * as THREE from 'three';
+import { classifyHandGesture, classifyLayers, gripQuat, simulateGrips } from '@/app/[lang]/sim/engine/hands/handsRig';
 
 describe('classifyLayers', () => {
   it('外层 / 中层 / 宽层 / 整体', () => {
@@ -53,5 +54,48 @@ describe('classifyHandGesture', () => {
         expect(classifyHandGesture(axis, 'whole', dir)).toEqual({ kind: 'weld', hands: ['L', 'R'] });
       }
     }
+  });
+});
+
+describe('simulateGrips(握姿持久化静态推演,quarters 符号 = 引擎 convert 的 twist)', () => {
+  const near = (a: THREE.Quaternion, b: THREE.Quaternion) => a.angleTo(b) < 1e-9;
+
+  it("R 提交 → 右手上手、左手不动;R R' 抵消回 home", () => {
+    const g1 = simulateGrips([{ axis: 'x', layers: [2], quarters: 1 }], 3);
+    expect(near(g1.R, gripQuat('up'))).toBe(true);
+    expect(near(g1.L, gripQuat('home'))).toBe(true);
+    const g2 = simulateGrips([
+      { axis: 'x', layers: [2], quarters: 1 },
+      { axis: 'x', layers: [2], quarters: -1 },
+    ], 3);
+    expect(near(g2.R, gripQuat('home'))).toBe(true);
+  });
+
+  it("L'(x 轴 layer0 quarters+1)→ 左手上手(两手 up 同为绕 x +90°)", () => {
+    const g = simulateGrips([{ axis: 'x', layers: [0], quarters: 1 }], 3);
+    expect(near(g.L, gripQuat('up'))).toBe(true);
+    expect(near(g.R, gripQuat('home'))).toBe(true);
+  });
+
+  it('整体 y = 双手同烘(绕 AXIS_VEC.y = (0,-1,0))', () => {
+    const g = simulateGrips([{ axis: 'y', layers: [0, 1, 2], quarters: 1 }], 3);
+    const expected = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, -1, 0), Math.PI / 2);
+    expect(near(g.R, expected)).toBe(true);
+    expect(near(g.L, expected)).toBe(true);
+  });
+
+  it('flick(U/M)不改握;换握记号覆盖两手', () => {
+    const g = simulateGrips([
+      { axis: 'y', layers: [2], quarters: 1 },  // U → flick
+      { axis: 'x', layers: [1], quarters: -1 }, // M → flick
+    ], 3);
+    expect(near(g.R, gripQuat('home'))).toBe(true);
+    expect(near(g.L, gripQuat('home'))).toBe(true);
+    const g2 = simulateGrips([
+      { axis: 'x', layers: [2], quarters: 1 }, // R → 右手 up
+      { grip: 'down' },                        // ↓ 两手压到下手
+    ], 3);
+    expect(near(g2.R, gripQuat('down'))).toBe(true);
+    expect(near(g2.L, gripQuat('down'))).toBe(true);
   });
 });

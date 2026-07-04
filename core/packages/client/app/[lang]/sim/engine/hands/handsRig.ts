@@ -10,6 +10,11 @@
  *  - flick 指弹:出一根手指沿转向扫(U/D 食指/无名指、F/B 拇指/中指、M/E/S)。
  * 手/指的选择依转向(angle 符号)分配左右,映射见 classifyHandGesture(纯函数,
  * tests/hands_gestures.test.ts 锁定)。
+ *
+ * 握姿持久化:weld 提交(层角走满 ±90° 倍数后 drop)把该旋转烘进 per-hand 的
+ * grip 基座 —— 手停在转完的位置,不自动回家(真实指法如此)。回 home / 换握由
+ * 解法框记号驱动:↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握,
+ * 见 regrip() / simulateGrips()。
  */
 import * as THREE from "three";
 import { SIZE } from "../define";
@@ -82,6 +87,49 @@ function softClampAngle(a: number): number {
   return Math.sign(a) * (LIMIT + (abs - LIMIT) * 0.28);
 }
 
+const HALF_PI = Math.PI / 2;
+
+/** 换握目标 */
+export type GripName = "home" | "up" | "down";
+
+/**
+ * 换握基座四元数:up=上手(拇指起手在 U 面,恰等于 home 被 R/L' 提交后的腕姿),
+ * down=下手(D 面)。两手同为绕 x 轴 ±90°(绕 x 的旋转在 x=0 镜像下不变,左右共用)。
+ */
+export function gripQuat(name: GripName): THREE.Quaternion {
+  const q = new THREE.Quaternion();
+  if (name === "up") q.setFromAxisAngle(AXIS_VEC.x, HALF_PI);
+  else if (name === "down") q.setFromAxisAngle(AXIS_VEC.x, -HALF_PI);
+  return q;
+}
+
+export type GripSimStep =
+  | { grip: GripName }
+  | { axis: Axis; layers: number[]; quarters: number };
+
+/**
+ * 静态推演一串(转动 / 换握记号)后的两手握姿基座 — 跳步 / 拖进度条用,
+ * 结果与逐步 live 播放的 weld 烘入一致(flick 不改握,weld 按层转烘入)。
+ */
+export function simulateGrips(steps: GripSimStep[], order: number): { R: THREE.Quaternion; L: THREE.Quaternion } {
+  const grips = { R: new THREE.Quaternion(), L: new THREE.Quaternion() };
+  const q = new THREE.Quaternion();
+  for (const s of steps) {
+    if ("grip" in s) {
+      grips.R.copy(gripQuat(s.grip));
+      grips.L.copy(gripQuat(s.grip));
+      continue;
+    }
+    if (s.quarters === 0 || s.layers.length === 0) continue;
+    const cls = classifyLayers(s.layers, order);
+    const g = classifyHandGesture(s.axis, cls, s.quarters > 0 ? 1 : -1);
+    if (g.kind !== "weld") continue;
+    q.setFromAxisAngle(AXIS_VEC[s.axis], s.quarters * HALF_PI);
+    for (const h of g.hands) grips[h].premultiply(q);
+  }
+  return grips;
+}
+
 const FADE_MS = 240;
 const RECOVER_MS = 300;
 const IDLE_KEEPALIVE_MS = 6000;
@@ -95,9 +143,13 @@ interface HandState {
   forearm: THREE.Group;
   /** 肘锚点(rig 局部,画面外下方)。 */
   elbow: THREE.Vector3;
+  /** 持久握姿基座(weld 提交烘入 / 换握记号设定);identity = home 握。 */
+  grip: THREE.Quaternion;
   /** weld 进行中:跟随的轴;null = 未 weld。 */
   weldAxis: Axis | null;
   weldAngle: number;
+  /** weld 的未压缩层角(提交烘入判定用;flick 借力通道恒 0,不烘)。 */
+  weldRawAngle: number;
   /** drop 后的回位:从该四元数 slerp 回 identity。 */
   recoverQuat: THREE.Quaternion;
   recoverT: number; // 0..1,1=已回位
@@ -119,6 +171,7 @@ export default class HandsRig extends THREE.Group {
   private fade = 0; // 0 隐 → 1 显
   private lastActivityAt = 0;
   private idleClock = 0;
+  private regripFlag = false;
 
   /** 当前手势(某一轴上活动层的手势);null = 静止。dir=0 表示方向未提交;
    *  lastAngle 用于识别「同轴同类连发」(U 接 U:角度从 ~π/2 跳回 ~0)。 */
@@ -172,8 +225,10 @@ export default class HandsRig extends THREE.Group {
       home,
       forearm,
       elbow,
+      grip: new THREE.Quaternion(),
       weldAxis: null,
       weldAngle: 0,
+      weldRawAngle: 0,
       recoverQuat: new THREE.Quaternion(),
       recoverT: 1,
       flickFinger: null,
@@ -188,6 +243,84 @@ export default class HandsRig extends THREE.Group {
     if (this.cube === cube) return;
     this.cube = cube;
     this.active = null;
+    this.resetGrips();
+  }
+
+  /** 握姿全清回 home(挂/摘 cube 或瞬时跳步前的硬复位)。 */
+  private resetGrips(): void {
+    for (const side of ["R", "L"] as const) {
+      const h = this.hands[side];
+      h.grip.identity();
+      h.recoverT = 1;
+      h.weldAxis = null;
+      h.weldAngle = 0;
+      h.weldRawAngle = 0;
+      h.flickFinger = null;
+      h.flickAxis = null;
+      h.flickAmount = 0;
+      h.flickDecay = 0;
+    }
+    this.regripFlag = false;
+  }
+
+  /**
+   * 换握(动画):两手 slerp 到指定握姿基座 —— 解法框记号 ↑/↓/· 驱动。
+   * 把「当前显示偏移 ∘ 旧 grip」折算成相对新 grip 的回位余量,切换瞬间画面连续。
+   */
+  regrip(name: GripName): void {
+    const target = gripQuat(name);
+    const q = HandsRig._qTmp;
+    let any = false;
+    for (const side of ["R", "L"] as const) {
+      const h = this.hands[side];
+      if (h.weldAxis) {
+        q.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
+      } else if (h.recoverT < 1) {
+        const t = 1 - Math.pow(1 - h.recoverT, 3);
+        q.copy(h.recoverQuat).slerp(HandsRig._qIdent, t);
+      } else {
+        q.identity();
+      }
+      q.multiply(h.grip).multiply(HandsRig._qTmp2.copy(target).invert());
+      h.grip.copy(target);
+      h.weldAxis = null;
+      h.weldAngle = 0;
+      h.weldRawAngle = 0;
+      if (q.angleTo(HandsRig._qIdent) < 0.01) {
+        h.recoverT = 1; // 已在目标握姿,免 300ms 空转(播放循环靠 isRegripping 闸步)
+        continue;
+      }
+      h.recoverQuat.copy(q);
+      h.recoverT = 0;
+      any = true;
+    }
+    if (any) {
+      this.regripFlag = true;
+      this.lastActivityAt = performance.now();
+    }
+  }
+
+  /** 瞬时设定两手握姿基座(跳步 / 拖进度条的静态摆位,配 simulateGrips)。 */
+  setGrips(qR: THREE.Quaternion, qL: THREE.Quaternion): void {
+    this.hands.R.grip.copy(qR);
+    this.hands.L.grip.copy(qL);
+    for (const side of ["R", "L"] as const) {
+      const h = this.hands[side];
+      h.recoverT = 1;
+      h.weldAxis = null;
+      h.weldAngle = 0;
+      h.weldRawAngle = 0;
+      h.flickFinger = null;
+      h.flickAxis = null;
+      h.flickAmount = 0;
+      h.flickDecay = 0;
+    }
+    this.regripFlag = false;
+  }
+
+  /** 换握动画进行中(播放循环用它闸住下一步;普通 weld 回位不算)。 */
+  get isRegripping(): boolean {
+    return this.regripFlag;
   }
 
   setEnabled(on: boolean): void {
@@ -309,6 +442,9 @@ export default class HandsRig extends THREE.Group {
       }
       this.applyHand(side, keepalive);
     }
+    if (this.regripFlag && this.hands.R.recoverT >= 1 && this.hands.L.recoverT >= 1) {
+      this.regripFlag = false;
+    }
     if (keepalive) animating = true;
     return animating;
   }
@@ -321,6 +457,7 @@ export default class HandsRig extends THREE.Group {
         const h = this.hands[s];
         h.weldAxis = null; // driveGesture 里设,先清残留
         h.weldAngle = 0;
+        h.weldRawAngle = 0;
         h.recoverT = 1; // weld 直接接管,丢弃未完的回位
       }
     } else {
@@ -338,6 +475,7 @@ export default class HandsRig extends THREE.Group {
         const h = this.hands[s];
         h.weldAxis = axis;
         h.weldAngle = softClampAngle(angle);
+        h.weldRawAngle = angle;
       }
     } else {
       const h = this.hands[g.hand];
@@ -345,6 +483,7 @@ export default class HandsRig extends THREE.Group {
       // 弹指时手腕轻微借力(跟 1/6 角度),applyHand 里通过 weld 通道叠加。
       h.weldAxis = axis;
       h.weldAngle = softClampAngle(angle) * 0.16;
+      h.weldRawAngle = 0; // 借力不烘入握姿
     }
   }
 
@@ -352,11 +491,20 @@ export default class HandsRig extends THREE.Group {
     for (const side of ["R", "L"] as const) {
       const h = this.hands[side];
       if (h.weldAxis) {
-        // 把 weld 姿态折进回位四元数,slerp 回 identity(回家 regrip)。
-        h.recoverQuat.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
+        // weld 提交(未压缩层角走满 ±90° 倍数)→ 把该旋转烘进持久握姿基座,手停在
+        // 转完的位置不回家;残余(压缩差/采样差)折进回位四元数抹平。未提交(拖拽
+        // 回弹,snap=0)→ 维持旧行为:整段 weld 姿态 slerp 回当前握姿。
+        const snap = Math.round(h.weldRawAngle / HALF_PI);
+        if (snap !== 0) {
+          h.grip.premultiply(HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC[h.weldAxis], snap * HALF_PI));
+          h.recoverQuat.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle - snap * HALF_PI);
+        } else {
+          h.recoverQuat.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
+        }
         h.recoverT = 0;
         h.weldAxis = null;
         h.weldAngle = 0;
+        h.weldRawAngle = 0;
       }
       if (h.flickFinger) {
         h.flickDecay = 1;
@@ -368,6 +516,7 @@ export default class HandsRig extends THREE.Group {
   // ================= 每帧姿态合成 =================
 
   private static _qTmp = new THREE.Quaternion();
+  private static _qTmp2 = new THREE.Quaternion();
   private static _qIdent = new THREE.Quaternion();
   private static _eTmp = new THREE.Euler();
   private static _vTmp = new THREE.Vector3();
@@ -380,7 +529,7 @@ export default class HandsRig extends THREE.Group {
     const sideSign = h.model.side;
     const q = HandsRig._qTmp;
 
-    // 手根变换 = 偏移旋转(weld 实时 / 回位余量) ∘ home。
+    // 手根变换 = 偏移旋转(weld 实时 / 回位余量) ∘ 持久握姿基座 ∘ home。
     if (h.weldAxis) {
       q.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
     } else if (h.recoverT < 1) {
@@ -390,6 +539,7 @@ export default class HandsRig extends THREE.Group {
     } else {
       q.identity();
     }
+    q.multiply(h.grip);
     g.quaternion.copy(q).multiply(h.home.quat);
     g.position.copy(h.home.pos).applyQuaternion(q);
 
