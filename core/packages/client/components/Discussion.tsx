@@ -46,12 +46,11 @@ export function DiscussionComposer({
 }) {
   const { t } = useTranslation();
   const user = useAuthUser();
-  const currentWcaId = user?.wcaId || '';
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const expanded = open || !!value;
 
-  if (!currentWcaId) {
+  if (!user) {
     return (
       <div
         className="detail-comment-login-hint"

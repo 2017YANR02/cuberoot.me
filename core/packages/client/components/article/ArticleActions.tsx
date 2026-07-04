@@ -6,7 +6,7 @@
  * SERVER 阅读页是 SSG/ISR、纯渲染;owner/admin 的 Edit/Delete 与登录用户的 Report
  * 依赖 auth store(localStorage)+ 写接口,必须在 client 跑,故抽成这一座岛。
  *
- *   - owner(user.wcaId === authorWcaId)或 admin → Edit 链接 + Delete 按钮。
+ *   - owner(ownerKey === authorWcaId)或 admin → Edit 链接 + Delete 按钮。
  *   - 已登录但非 owner → Report 控件(内联面板,可选 reason)。
  *   - 未登录 → 渲染 null。
  *
@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { Pencil, Trash2, Flag } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
+import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { deleteArticle, reportArticle } from '@/lib/article-api';
 
 interface ArticleActionsProps {
@@ -53,7 +54,7 @@ export default function ArticleActions({ slug, authorWcaId }: ArticleActionsProp
   if (!mounted || !user) return null;
 
   const langPrefix = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  const canManage = user.wcaId === authorWcaId || isAdminWcaId(user.wcaId);
+  const canManage = computeOwnerKey(user.uid, user.wcaId) === authorWcaId || isAdminWcaId(user.wcaId);
 
   async function onDelete() {
     if (busy) return;

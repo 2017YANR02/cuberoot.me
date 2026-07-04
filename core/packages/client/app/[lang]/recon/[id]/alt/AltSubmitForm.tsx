@@ -37,7 +37,6 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
   useDocumentTitle('提交替代解', 'Submit Alternative');
   const user = useAuthStore(s => s.user);
   const login = useAuthStore(s => s.login);
-  const currentWcaId = user?.wcaId || '';
 
   const [parent, setParent] = useState<ReconSolve | null>(null);
   const [loading, setLoading] = useState(true);
@@ -131,7 +130,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
       </div>
     );
   }
-  if (!currentWcaId) {
+  if (!user) {
     return (
       <div className="recon-page">
         <div className="recon-page-header">

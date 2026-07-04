@@ -50,6 +50,7 @@ import { buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
+import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { RecordBadge } from '@/components/RecordBadge';
 import ReconPlayerCanvas, { type ReconEngine, loadReconEngine, saveReconEngine } from '@/components/recon/ReconPlayerCanvas';
 import SolutionView from '@/components/SolutionView';
@@ -1157,7 +1158,9 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
   solveTime?: number;
 }) {
   const user = useAuthUser();
-  const currentWcaId = user?.wcaId || '';
+  // 所有权键(与服务端一致):绑 WCA=真实 id,纯邮箱/手机账号=u<uid>,未登录=''。
+  // 非空即已登录,故同时兼作「是否登录」门控与「是不是我的评论/另解」判定。
+  const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
   const isAdminUser = useIsAdmin();
   const { t } = useTranslation();
   const router = useRouter();
@@ -1180,7 +1183,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
         <GitFork size={14} /> {t('recon.alternatives')} ({alts.length})
       </div>
 
-      {currentWcaId ? (
+      {myKey ? (
         <div className="alt-add-bar">
           <Link href={`/recon/${reconId}/alt`} className="recon-btn recon-btn-edit" title={t('recon.addAlternative')}>
             <Plus size={14} /> {t('recon.alternatives')}
@@ -1197,7 +1200,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
       ) : (
         <div className="yt-comment-list">
           {alts.map((alt, idx) => {
-            const isOwn = !!currentWcaId && currentWcaId === alt.addedById;
+            const isOwn = !!myKey && myKey === alt.addedById;
             const canEdit = isOwn;
             const canDelete = isOwn || isAdminUser;
             const stats = computeAllStats(alt.solution, solveTime ?? 0);
@@ -1268,7 +1271,9 @@ function CommentsView({
   const [expandedReplies, setExpandedReplies] = useState<Set<number>>(new Set());
 
   const user = useAuthUser();
-  const currentWcaId = user?.wcaId || '';
+  // 所有权键(与服务端一致):绑 WCA=真实 id,纯邮箱/手机账号=u<uid>,未登录=''。
+  // 非空即已登录,故同时兼作「是否登录」门控与「是不是我的评论/另解」判定。
+  const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
   const isAdminUser = useIsAdmin();
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -1364,12 +1369,12 @@ function CommentsView({
   };
 
   function renderCommentItem(comment: ReconComment, isReply: boolean) {
-    const isOwn = !!currentWcaId && currentWcaId === comment.authorId;
+    const isOwn = !!myKey && myKey === comment.authorId;
     const admin = isAdminUser;
     const canEdit = isOwn;
     const canDelete = isOwn || admin;
     const canPin = admin && !isReply;
-    const canReply = !isReply && !!currentWcaId;
+    const canReply = !isReply && !!myKey;
     const ownAvatar = isOwn && user?.avatar ? user.avatar : null;
     return (
       <div className="yt-comment">
@@ -1467,7 +1472,7 @@ function CommentsView({
                       {renderCommentItem(r, true)}
                     </div>
                   ))}
-                  {replyingToId === comment.id && currentWcaId && (
+                  {replyingToId === comment.id && myKey && (
                     <div className="yt-reply-composer">
                       <DiscussionComposer
                         value={replyText}

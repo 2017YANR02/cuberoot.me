@@ -22,6 +22,7 @@ import WcaAuth from '@/components/WcaAuth';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/name-utils';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
   fetchWords, fetchRecent, submitWord, patchWord, deleteWord, setVote, clearVote,
   type ColpiWord, type Category, type Language,
@@ -105,6 +106,8 @@ export default function ColpiClient() {
   useDocumentTitle('Colpi 训练', 'Colpi');
   const user = useAuthStore(s => s.user);
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
+  // 所有权键(与服务端一致):非 WCA 账号也能认出自己提交的词。admin 判定仍用真实 wcaId。
+  const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams<{ pair?: string | string[] }>();
@@ -153,7 +156,7 @@ export default function ColpiClient() {
     }
   }, [langFilter]);
 
-  useEffect(() => { void refetchAll(); }, [refetchAll, user?.wcaId]);
+  useEffect(() => { void refetchAll(); }, [refetchAll, myKey]);
 
   // ── ui state ──
   const [search, setSearch] = useState('');
@@ -268,13 +271,12 @@ export default function ColpiClient() {
   // active-pair list, totals) reads from this so filters stay in sync.
   const filteredByPair: Record<string, ColpiWord[]> = (() => {
     const out: Record<string, ColpiWord[]> = {};
-    const wcaId = user?.wcaId;
     for (const pair of Object.keys(wordsByPair)) {
       let arr = wordsByPair[pair];
       if (hideOffensive) arr = arr.filter(w => !w.offensive);
       arr = arr.filter(w => w.language === langFilter);
-      if (viewMode === 'mine' && wcaId) {
-        arr = arr.filter(w => w.myVote === 1 || w.submitter?.wcaId === wcaId);
+      if (viewMode === 'mine' && myKey) {
+        arr = arr.filter(w => w.myVote === 1 || w.submitter?.wcaId === myKey);
       }
       if (arr.length > 0) out[pair] = arr;
     }
@@ -362,7 +364,7 @@ export default function ColpiClient() {
   };
 
   // ── edit (existing word) ──
-  const canEdit = (w: ColpiWord) => isAdmin || (!!user && w.submitter?.wcaId === user.wcaId);
+  const canEdit = (w: ColpiWord) => isAdmin || (!!myKey && w.submitter?.wcaId === myKey);
   const handleEditClick = (w: ColpiWord) => {
     setSubmitOpen(false);
     setEditingId(w.id);
