@@ -68,6 +68,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'GET', p: '/v1/auth/me', g: 'login', zh: '当前登录用户信息', en: 'Current signed-in user' },
 
   // ---- account (邮箱 / 手机验证码登录 + 多身份绑定) ----
+  { d: 'auth', m: 'GET', p: '/v1/auth/providers', g: 'public', zh: '已配置的登录方式(前端隐藏未开放 tab)', en: 'Configured login methods (client hides unavailable tabs)' },
   { d: 'auth', m: 'POST', p: '/v1/auth/email/send', g: 'public', zh: '发邮箱验证码(登录/注册)', en: 'Send email login code' },
   { d: 'auth', m: 'POST', p: '/v1/auth/email/verify', g: 'public', zh: '校验邮箱验证码,签发 JWT', en: 'Verify email code, issue JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/phone/send', g: 'public', zh: '发手机验证码(仅 +86)', en: 'Send phone login code (+86 only)' },
