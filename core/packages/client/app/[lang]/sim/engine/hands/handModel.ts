@@ -20,7 +20,6 @@
  * V 形凹陷)。
  */
 import * as THREE from "three";
-import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { SIZE } from "../define";
 
 export type FingerName = "thumb" | "index" | "middle" | "ring" | "pinky";
@@ -293,12 +292,16 @@ function buildPalm(
     meshes.push(m);
   };
 
-  // 主掌体 = 两片圆角盒斜合(横弓):外缘(±y)朝掌心侧(+z)倾,掌面中央
-  // 凹 ~11U、手背中央拱起 —— 真手掌的杯状。
+  // 主掌体 = 两片「双椭球叠合」斜合(横弓):外缘(±y)朝掌心侧(+z)倾,
+  // 掌面中央凹、手背中央拱 —— 真手掌的杯状。每片 = 腕侧大椭球 + 指节侧钝
+  // 椭球,任何视角(尤其俯视)轮廓都是圆弧;禁 RoundedBox 当掌体:它的长
+  // 直棱在俯视里是一条 114U 直线「板缘」(2026-07-05 用户报障)。
   const CUP = 0.2;
-  add(new RoundedBoxGeometry(114 * U, 58 * U, 40 * U, 5, 15 * U), skinMat, -9, 24, 1, 1, 1, 1, CUP);
-  add(new RoundedBoxGeometry(114 * U, 58 * U, 40 * U, 5, 15 * U), skinMat, -9, -24, 1, 1, 1, 1, -CUP);
-  // 手背拱:压扁椭球盖住两片盒的背侧中脊,平滑鼓起(禁 RoundedBox 凸台)。
+  for (const s of [1, -1] as const) {
+    add(new THREE.SphereGeometry(30 * U, 28, 20), skinMat, -22, 24 * s, 1, 1.7, 1.05, 0.7, CUP * s);
+    add(new THREE.SphereGeometry(26 * U, 24, 18), skinMat, 20, 24 * s, 0, 1.25, 1.06, 0.68, CUP * s);
+  }
+  // 手背拱:压扁椭球盖住两片掌椭球的背侧中脊,平滑鼓起(禁 RoundedBox 凸台)。
   add(new THREE.SphereGeometry(44 * U, 24, 18), skinMat, -4, 0, -7, 1.15, 0.95, 0.42);
   // 掌心肉垫层(V 凹底部微鼓,别填平横弓)。
   add(new THREE.SphereGeometry(40 * U, 24, 18), skinMat, -12, 0, 4, 1.1, 0.9, 0.35);
