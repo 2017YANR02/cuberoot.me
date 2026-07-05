@@ -70,18 +70,32 @@ export function homeRight(): HandPose {
     fingers: fingerPose(
       // 数值 = 坐标下降求解(指尖圆帽心落面外一半径处 + 指腹朝按压向 +
       // 指链不进 96+r 立方包络 + 解剖正则),见 memory project_sim_hands_rig。
-      // 圆拱约束(2026-07-05 用户定「俯视空腔必须 C 形」):中节弯钳 ≤1.1、
-      // 加 (c1−c2)²/(c2−c3)² 圆拱正则 —— 弯曲摊到三关节,指链侧影成圆弧而非
-      // 中节尖折的 ∧ 拱;末节勾弯加大 = 指尖钩住后棱(C 形角部的钩)。接触
-      // 点与旧解一致(err<0.4U 零穿模)。
-      fc(1.01, 1.1, 0.92, 0.13),    // 拇指:圆弧绕过掌根前下,末节沿 F 面压 FR 棱外端
-      fc(0.9, 1.1, 0.81, -0.12),    // 食指:圆拱,指尖钩压 BUR 角后棱沿
-      fc(0.9, 1.06, 0.94, -0.12),   // 中指:圆拱钩压 BR 棱 B 面
-      fc(0.9, 1.07, 0.92, -0.16),   // 无名指:圆拱钩压 BDR 角后棱沿
-      fc(0.5, 1.05, 0.6, -0.5),     // 小指:随无名指并拢弯收,悬空不接触(同样圆拱化)
+      // 圆拱约束:中节弯钳 ≤1.1,弯曲摊到三关节,指链侧影成圆弧而非中节尖折的 ∧ 拱。
+      // 2026-07-05 手模几何大改(锥形扁截面指骨 + 掌指关节弓 rootX + 末节缩短)
+      // 移动了指尖落点,故用浏览器内坐标下降对新几何重解 curl(指尖圆帽切立方
+      // 面,残差 |gap|<2.5U)—— 改指长/rootX/半径系数必须重跑(方法同 memory)。
+      fc(1.088, 1.117, 1.074, 0.13),  // 拇指:圆弧绕过掌根前下,末节沿 F 面压 FR 棱外端
+      fc(1.047, 1.053, 0.806, -0.12), // 食指:圆拱,指尖钩压 BUR 角后棱沿
+      fc(1.077, 1.047, 0.895, -0.12), // 中指:圆拱钩压 BR 棱 B 面
+      fc(0.995, 1.075, 0.832, -0.16), // 无名指:圆拱钩压 BDR 角后棱沿
+      fc(0.62, 1.08, 0.72, -0.3),     // 小指:随无名指并拢弯收,悬空不接触;splay 收敛
+                                      // 到 -0.3(-0.5 会横倒进无名指穿插,评审 #9),
+                                      // 靠加大 curl 补收拢
+
     ),
   };
 }
+
+/** 左手相对右手的每指弯曲固定微偏(rad)—— 打破双手逐帧完美镜像同步的 CG 感
+ *  (评审 #9);量级 ≲0.03,指尖偏移 ≲3U,不破坏接触观感。写死常量,禁随机
+ *  (每次刷新长相变)。 */
+const LEFT_CURL_OFFSET: Record<FingerName, [number, number, number]> = {
+  thumb: [0.02, -0.02, 0.03],
+  index: [-0.03, 0.02, -0.02],
+  middle: [0.02, 0.03, -0.03],
+  ring: [-0.02, -0.03, 0.02],
+  pinky: [0.04, -0.02, 0.04],
+};
 
 export function homeLeft(): HandPose {
   const r = homeRight();
@@ -89,9 +103,18 @@ export function homeLeft(): HandPose {
   // 镜像:M_x·R·M_y = mirrorQuatX(R) ∘ Rz(π)(M_x·M_y = diag(-1,-1,1) = 绕 z 转 π)。
   // 少乘这个局部 Rz(π) 手指会指向正下方(v1 实测踩过)。
   const qz = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI);
+  const fingers = {} as HandFingerPose;
+  for (const name of Object.keys(r.fingers) as FingerName[]) {
+    const f = r.fingers[name];
+    const off = LEFT_CURL_OFFSET[name];
+    fingers[name] = {
+      curl: [f.curl[0] + off[0], f.curl[1] + off[1], f.curl[2] + off[2]],
+      splay: f.splay, // splay 由 rig ×side 镜像
+    };
+  }
   return {
     pos: new THREE.Vector3(-r.pos.x, r.pos.y, r.pos.z),
     quat: mirrorQuatX(r.quat).multiply(qz),
-    fingers: r.fingers, // splay 由 rig ×side 镜像
+    fingers,
   };
 }

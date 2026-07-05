@@ -56,18 +56,41 @@ export const HAND_SCALE = 2.2;
 /** 设计基准:常量按 SIZE=64(3x3 棱长 192)标定,U 做整体缩放钩子。 */
 const U = (SIZE / 64) * HAND_SCALE;
 
-/** 手指几何参数:三段骨长 + 根部半径 + 指根 z(横弓:中指根最靠背侧,
- *  食指/小指根渐移向掌心侧 —— 指根连线不再共面,掌不是平板)。 */
-const FINGER_DIMS: Record<Exclude<FingerName, "thumb">, { segs: [number, number, number]; r: number; y: number; rz: number }> = {
-  index: { segs: [50, 32, 26], r: 13, y: 36, rz: -5 },
-  middle: { segs: [55, 36, 28], r: 13.6, y: 12, rz: -8 },
-  ring: { segs: [50, 33, 26], r: 12.5, y: -12, rz: -4 },
-  pinky: { segs: [38, 25, 21], r: 11, y: -36, rz: 0 },
+/** 手指几何参数:三段骨长(近/中/末,近节最长、~2/3 递减,末节短)+ 根部半径
+ *  + 指根 y(横向排布)/ rz(横弓:中指根最靠背侧,食指/小指渐移向掌心侧)
+ *  + rootX(掌指关节弓:中指根最靠指端、小指根最缩,指根连线成弓非直线)
+ *  + roll(绕指轴微滚转,指列向拇指侧自然内旋 —— 打破五指克隆感;绕 x 的
+ *  旋转在 y 镜像下反号,应用时 ×side)。
+ *  长度序:中 > 无名 ≈ 食 > 小(小指明显短且后缩)。 */
+const FINGER_DIMS: Record<Exclude<FingerName, "thumb">, { segs: [number, number, number]; r: number; y: number; rz: number; rootX: number; roll: number }> = {
+  index: { segs: [50, 31, 22], r: 12.4, y: 37, rz: -5, rootX: 2, roll: 0.06 },
+  middle: { segs: [56, 35, 24], r: 13.0, y: 12, rz: -8, rootX: 6, roll: 0.02 },
+  ring: { segs: [49, 32, 22], r: 12.0, y: -13, rz: -4, rootX: 0, roll: -0.03 },
+  pinky: { segs: [37, 24, 17], r: 10.4, y: -37, rz: 0, rootX: -9, roll: -0.1 },
 };
-const THUMB_DIMS = { segs: [42, 38, 30] as [number, number, number], r: 15.6 };
+/** 拇指:整体明显粗于四指但几乎不收锥(真拇指近节到指腹等宽、指腹宽扁),
+ *  故单独一套半径表 + 更扁的截面;r 别超食指 10%(等粗肉肠 tell)。 */
+const THUMB_DIMS = { segs: [44, 34, 25] as [number, number, number], r: 13.4 };
+const THUMB_RADII: [number, number][] = [
+  [1.0, 0.92],
+  [0.95, 0.82],
+  [0.88, 0.62],
+];
+const THUMB_FLATTEN = 0.66;
 
-/** 逐段半径衰减 — 指根粗、指尖细,轮廓自然。 */
-const SEG_TAPER = [1.0, 0.9, 0.82];
+/** 整指锥度:每节 [根端, 尖端] 半径系数 × MCP 半径。后一节根端只比前一节尖端
+ *  大 2~5%(隆起量小,不成串珠;跳变大了弯指时外侧现台阶环)。末节尖端收到
+ *  0.62 —— 真指尖宽 ≈ 根部 70~80%,收到一半以下会成「胡萝卜爪」尖头
+ *  (对抗性评审 #2);「末节短」是长度上的,不是把直径掐一半。 */
+const SEG_RADII: [number, number][] = [
+  [1.0, 0.86], // 近节
+  [0.88, 0.74], // 中节
+  [0.78, 0.62], // 末节(尖端圆帽 = 指尖)
+];
+/** 末节指腹微鼓系数(向尖端前的轮廓先升后收,肉垫感)。 */
+const TIP_PAD_BULGE = 0.1;
+/** 掌背向(局部 z)压扁系数 —— 手指截面是扁椭圆,不是正圆管。 */
+const CROSS_FLATTEN = 0.72;
 
 const noRaycast = (): void => { /* 手不可拾取 — 拖拽/点击穿透到魔方 */ };
 
@@ -95,22 +118,51 @@ function paintVerts(
   return geo;
 }
 
-/** 指段两端(关节处)微红 — 真手指节血色。len = 关节距(网格 x 跨 ±len/2)。 */
-function jointTint(len: number): (p: THREE.Vector3, out: THREE.Color) => void {
-  const half = len / 2;
+/** 锥形指骨两端(关节处)微红 — 真手指节血色。骨轴 x 跨 [0,len],两关节在
+ *  x≈0 与 x≈len。 */
+function boneTint(len: number): (p: THREE.Vector3, out: THREE.Color) => void {
   return (p, c) => {
-    const f = Math.min(1, Math.max(0, (Math.abs(p.x) - half * 0.45) / (half * 0.85)));
-    c.setRGB(1, 1 - 0.1 * f, 1 - 0.15 * f);
+    // 血色向远端集中(指尖/甲床最红,根端只留淡淡关节色)—— 均匀的关节环带
+    // 是「均色蜡手」tell;远端偏红配 rim 背光 = 廉价次表面散射。
+    const fTip = Math.max(0, 1 - Math.abs(p.x - len) / (len * 0.55));
+    const fRoot = Math.max(0, 1 - Math.abs(p.x) / (len * 0.5));
+    const f = Math.min(1, fTip * 1.35 + fRoot * 0.5);
+    c.setRGB(1, 1 - 0.09 * f, 1 - 0.14 * f);
   };
 }
 
-function capsuleAlongX(r: number, len: number): THREE.CapsuleGeometry {
-  // CapsuleGeometry 默认沿 Y;旋到 X。len = 关节距,圆帽在两端各溢出 r,
-  // 相邻段圆帽在关节处互相嵌套 → 无缝圆润指节(参考站的断裂方块感就输在这)。
-  const g = new THREE.CapsuleGeometry(r, len, 10, 28);
-  g.rotateZ(-Math.PI / 2);
-  paintVerts(g, jointTint(len));
-  return g;
+/**
+ * 扁椭圆截面的锥形指骨:沿 +x 从 rBase(根端)收到 rTip(尖端),两端圆帽。
+ * 截面在掌背向(局部 z)压扁 flattenZ —— 真手指截面是扁椭圆而非正圆管,这一步
+ * 是去「香肠感」的关键。相邻段在关节处让 rBase 略大于上一段 rTip → 指节轻微
+ * 隆起、蒙皮连续(消除等粗圆管 + 雪人串珠两种假手 tell)。
+ * lathe 绕 Y 生成后转到 X 轴,非等比缩放后重算法线保证光照正确。
+ */
+function taperedBoneAlongX(rBase: number, rTip: number, len: number, flattenZ: number, padBulge = 0): THREE.BufferGeometry {
+  const pts: THREE.Vector2[] = [];
+  const CAP = 6;
+  // Vector2(radius, axisPos):根端半球(x 从 −rBase 到 0,略探进上一节接缝)
+  for (let i = 0; i <= CAP; i++) {
+    const a = -Math.PI / 2 + (Math.PI / 2) * (i / CAP);
+    pts.push(new THREE.Vector2(rBase * Math.cos(a), rBase * Math.sin(a)));
+  }
+  // 末节指腹微鼓:尖端半球前插两个 profile 点,轮廓先微升再收 —— 指尖是
+  // 带肉垫的扁圆,不是直线收尖的锥。
+  if (padBulge > 0) {
+    pts.push(new THREE.Vector2((rBase + rTip) / 2 * 1.02, len * 0.42));
+    pts.push(new THREE.Vector2(rTip * (1 + padBulge), len * 0.74));
+  }
+  // 尖端半球(x 从 len 到 len+rTip);lathe 在 profile 点间线性连出骨干。
+  for (let i = 0; i <= CAP; i++) {
+    const a = (Math.PI / 2) * (i / CAP);
+    pts.push(new THREE.Vector2(rTip * Math.cos(a), len + rTip * Math.sin(a)));
+  }
+  const geo = new THREE.LatheGeometry(pts, 24);
+  geo.rotateZ(-Math.PI / 2); // lathe 轴 Y → 手指轴 X
+  geo.scale(1, 1, flattenZ); // 掌背向压扁成椭圆截面
+  geo.computeVertexNormals();
+  paintVerts(geo, boneTint(len));
+  return geo;
 }
 
 /** 程序皮肤细节纹理(平铺值噪声,3 倍频:大尺度肤色斑驳 + 细颗粒毛孔)。
@@ -170,11 +222,14 @@ export function makeSkinDetailTexture(): THREE.CanvasTexture {
  *  凸圆片,随指尖肩部弧度前倾、前缘略探过指尖。
  *  ⚠️ 别用扁盒:旧 RoundedBox 版中段沉进胶囊皮下、只露两翼 + 盒尖,远看成
  *  指尖上一道 V 形「凹陷」(2026-07-04 用户报障)。 */
-function addNail(tipJoint: THREE.Group, segLen: number, r: number, nailMat: THREE.Material, meshes: THREE.Mesh[]): void {
+function addNail(tipJoint: THREE.Group, segLen: number, r: number, flattenZ: number, nailMat: THREE.Material, meshes: THREE.Mesh[]): void {
   const nail = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), nailMat);
-  nail.scale.set(r * 0.8, r * 0.72, r * 0.4);
-  nail.position.set(segLen * 0.8, 0, -r * 0.66);
-  nail.rotation.y = 0.32; // 正向 = 根部沉进「甲床」、弧形游离缘鼓向指尖;负角方向反(圆弧鼓向指根,2026-07-05 用户报障)
+  // 屋瓦形薄片:沿指长(x)拉长、宽占指宽 ~80%(y)、很薄(z,0.2r)——
+  // 厚了会鼓成半球顶,配高光成「乒乓球贴片」(评审 #7);大半沉进背侧表面
+  // (z≈−r·flatten·0.95),只露一层弧面。前缘几乎不翘(0.08),别探出指尖轮廓。
+  nail.scale.set(segLen * 0.4, r * 0.78, r * 0.2);
+  nail.position.set(segLen * 0.55, 0, -r * flattenZ * 0.95);
+  nail.rotation.y = 0.08;
   nail.raycast = noRaycast;
   tipJoint.add(nail);
   meshes.push(nail);
@@ -183,30 +238,35 @@ function addNail(tipJoint: THREE.Group, segLen: number, r: number, nailMat: THRE
 function buildFinger(
   hand: THREE.Group,
   side: 1 | -1,
-  dims: { segs: [number, number, number]; r: number; y: number; rz: number },
+  dims: { segs: [number, number, number]; r: number; y: number; rz: number; rootX?: number; roll?: number },
   skinMat: THREE.Material,
   nailMat: THREE.Material,
   meshes: THREE.Mesh[],
 ): FingerJoints {
   const [l1, l2, l3] = dims.segs.map((v) => v * U) as [number, number, number];
   const root = new THREE.Group();
-  root.position.set(46 * U, dims.y * U * side, dims.rz * U);
+  // 掌指关节弓形:rootX 让各指根前后错落(中指最前,食/无名后缩,小指最后),
+  // 指根连线成弓而非直线(直排是最典型的假手 tell)。
+  root.position.set((46 + (dims.rootX ?? 0)) * U, dims.y * U * side, dims.rz * U);
   hand.add(root);
-  const r1 = dims.r * U * SEG_TAPER[0];
-  const r2 = dims.r * U * SEG_TAPER[1];
-  const r3 = dims.r * U * SEG_TAPER[2];
+  const rM = dims.r * U;
+  const rad = (i: number): [number, number] => [SEG_RADII[i][0] * rM, SEG_RADII[i][1] * rM];
+  const [b1, t1] = rad(0);
+  const [b2, t2] = rad(1);
+  const [b3, t3] = rad(2);
   // root 组本身是 MCP 关节;段网格挂它下面,mid/tip 链式挂接(挂点位置由
   // buildSegment 设定,勿在外面再挪 —— 见其头注的错位坑)。
-  const seg1End = buildSegment(root, l1, r1, skinMat, meshes);
-  const seg2End = buildSegment(seg1End, l2, r2, skinMat, meshes);
-  // 末节:胶囊即指尖(圆帽自然收尾)。
-  const tipMesh = new THREE.Mesh(capsuleAlongX(r3, l3), skinMat);
-  tipMesh.position.x = l3 / 2;
+  const seg1End = buildSegment(root, l1, b1, t1, CROSS_FLATTEN, b2, skinMat, meshes);
+  const seg2End = buildSegment(seg1End, l2, b2, t2, CROSS_FLATTEN, b3, skinMat, meshes);
+  // 末节锥形骨挂 DIP 关节,带指腹微鼓,尖端圆帽即指尖。
+  const tipMesh = new THREE.Mesh(taperedBoneAlongX(b3, t3, l3, CROSS_FLATTEN, TIP_PAD_BULGE), skinMat);
   tipMesh.raycast = noRaycast;
   seg2End.add(tipMesh);
   meshes.push(tipMesh);
-  addNail(seg2End, l3, r3, nailMat, meshes);
-  return { root, mid: seg1End, tip: seg2End, segLens: [l1, l2, l3], rootBase: new THREE.Quaternion() };
+  addNail(seg2End, l3, b3, CROSS_FLATTEN, nailMat, meshes);
+  // 指轴微滚转烘进 rootBase(rig 摆姿态时叠加),绕 x 镜像反号 ×side。
+  const rootBase = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), (dims.roll ?? 0) * side);
+  return { root, mid: seg1End, tip: seg2End, segLens: [l1, l2, l3], rootBase };
 }
 
 /** 建一段指骨:骨段网格挂在 parent(当前关节)自己的坐标系里跨 [0,len],
@@ -218,18 +278,30 @@ function buildFinger(
 function buildSegment(
   parent: THREE.Object3D,
   len: number,
-  r: number,
+  rBase: number,
+  rTip: number,
+  flatten: number,
+  nextRBase: number,
   mat: THREE.Material,
   meshes: THREE.Mesh[],
 ): THREE.Group {
-  const mesh = new THREE.Mesh(capsuleAlongX(r, len), mat);
-  mesh.position.x = len / 2;
+  // 锥形骨跨 [0,len],x=0 即本关节;网格挂 parent 自身系(勿挂返回的下一关节组)。
+  const mesh = new THREE.Mesh(taperedBoneAlongX(rBase, rTip, len, flatten), mat);
   mesh.raycast = noRaycast;
   parent.add(mesh);
   meshes.push(mesh);
   const joint = new THREE.Group();
   joint.position.x = len;
   parent.add(joint);
+  // 关节填缝球:两节骨的端帽同心于关节点,但各自 z 压扁在自己的局部系 ——
+  // 大弯(~1rad)时压扁轴错开,外侧现台阶环(评审 #6)。填一颗略圆的球
+  // (flatten 取中)盖住错位楔,直伸时藏在端帽相交区内不可见,背侧微凸恰是
+  // 关节鼓包。
+  const filler = new THREE.Mesh(paintVerts(new THREE.SphereGeometry(nextRBase * 0.95, 18, 14)), mat);
+  filler.scale.z = Math.min(1, flatten + 0.1);
+  filler.raycast = noRaycast;
+  joint.add(filler);
+  meshes.push(filler);
   return joint;
 }
 
@@ -255,26 +327,25 @@ function buildThumb(
   root.quaternion.copy(base);
   hand.add(root);
 
-  const r1 = THUMB_DIMS.r * U;
-  const r2 = THUMB_DIMS.r * U * 0.9;
-  const r3 = THUMB_DIMS.r * U * 0.82;
-  const seg1End = buildSegment(root, l1, r1, skinMat, meshes);
-  const seg2End = buildSegment(seg1End, l2, r2, skinMat, meshes);
-  const tipMesh = new THREE.Mesh(capsuleAlongX(r3, l3), skinMat);
-  tipMesh.position.x = l3 / 2;
+  const rM = THUMB_DIMS.r * U;
+  const rad = (i: number): [number, number] => [THUMB_RADII[i][0] * rM, THUMB_RADII[i][1] * rM];
+  const [b1, t1] = rad(0);
+  const [b2, t2] = rad(1);
+  const [b3, t3] = rad(2);
+  const seg1End = buildSegment(root, l1, b1, t1, THUMB_FLATTEN, b2, skinMat, meshes);
+  const seg2End = buildSegment(seg1End, l2, b2, t2, THUMB_FLATTEN, b3, skinMat, meshes);
+  const tipMesh = new THREE.Mesh(taperedBoneAlongX(b3, t3, l3, THUMB_FLATTEN, TIP_PAD_BULGE), skinMat);
   tipMesh.raycast = noRaycast;
   seg2End.add(tipMesh);
   meshes.push(tipMesh);
-  addNail(seg2End, l3, r3, nailMat, meshes);
+  addNail(seg2End, l3, b3, THUMB_FLATTEN, nailMat, meshes);
   return { root, mid: seg1End, tip: seg2End, segLens: [l1, l2, l3], rootBase: base };
 }
 
-/** 掌体 + 肉垫 + 指节鼓包 + 腕臂 — 手根 Group 下的静态部分。
- *  加大原则(2026-07-04「手掌太小」报障):指根挂点(x=46)与指尖接触点都
- *  不能动,掌体只朝腕侧(-x)加长、y/z 向加厚;掌心侧鼓包顶点必须留在
- *  cube 面之内(local z 上限 = home pos.x − 96;掌心与面之间刻意留空腔)。
- *  横弓(2026-07-05「掌不是平面」报障):主掌体拆成两片圆角盒绕 x 各倾
- *  ±CUP,掌面成浅 V 凹、手背中脊由背拱椭球盖圆 —— 侧看/正看都不再是平板。 */
+/** 掌部静态件:单件掌体网格(buildPalmMesh)+ 大/小鱼际肉垫 + MCP 背侧骨点 +
+ *  指蹼 + 腕段。加大原则(2026-07-04「手掌太小」报障):指根挂点(x≈46)与
+ *  指尖接触点都不能动,掌体只朝腕侧(-x)加长、y/z 向加厚;掌心侧顶点必须留
+ *  在 cube 面之内(local z 上限 = home pos.x − 96;掌心与面之间刻意留空腔)。 */
 function buildPalm(
   hand: THREE.Group,
   side: 1 | -1,
@@ -292,34 +363,82 @@ function buildPalm(
     meshes.push(m);
   };
 
-  // 主掌体 = 两片「双椭球叠合」斜合(横弓):外缘(±y)朝掌心侧(+z)倾,
-  // 掌面中央凹、手背中央拱 —— 真手掌的杯状。每片 = 腕侧大椭球 + 指节侧钝
-  // 椭球,任何视角(尤其俯视)轮廓都是圆弧;禁 RoundedBox 当掌体:它的长
-  // 直棱在俯视里是一条 114U 直线「板缘」(2026-07-05 用户报障)。
-  const CUP = 0.2;
-  for (const s of [1, -1] as const) {
-    add(new THREE.SphereGeometry(30 * U, 28, 20), skinMat, -22, 24 * s, 1, 1.7, 1.05, 0.7, CUP * s);
-    add(new THREE.SphereGeometry(26 * U, 24, 18), skinMat, 20, 24 * s, 0, 1.25, 1.06, 0.68, CUP * s);
-  }
-  // 手背拱:压扁椭球盖住两片掌椭球的背侧中脊,平滑鼓起(禁 RoundedBox 凸台)。
-  add(new THREE.SphereGeometry(44 * U, 24, 18), skinMat, -4, 0, -7, 1.15, 0.95, 0.42);
-  // 掌心肉垫层(V 凹底部微鼓,别填平横弓)。
-  add(new THREE.SphereGeometry(40 * U, 24, 18), skinMat, -12, 0, 4, 1.1, 0.9, 0.35);
-  // 大鱼际(拇指根肉垫)/ 小鱼际(小指侧肉垫):压扁球,贴外缘斜面上鼓。
-  // y 向必须收在掌缘内侧:椭球超出掌缘会在手轮廓上鼓出独立圆球
-  // (2026-07-04 三轮实拍,上下缘各一颗「球」的真凶)。
-  add(new THREE.SphereGeometry(30 * U, 20, 16), skinMat, -14, 30, 8, 1.15, 0.7, 0.55);
-  add(new THREE.SphereGeometry(26 * U, 20, 16), skinMat, -18, -32, 8, 1.2, 0.7, 0.58);
-  // 四个指节鼓包(MCP 背侧):压扁贴掌沿、z 随各指根横弓偏移,只留隐约起伏
-  // —— 球太凸手背会结成一串「葡萄」(2026-07-04 二轮实拍)。
+  // 主掌体:单件光滑网格,楔形(指端宽腕端窄)+ 真横弓(掌心中央浅槽、两缘高)
+  // + 腕厚指薄 + 掌亮背深的顶点色 —— 全在 buildPalmMesh 顶点循环里。
+  const body = new THREE.Mesh(buildPalmMesh(side), skinMat);
+  body.raycast = noRaycast;
+  hand.add(body);
+  meshes.push(body);
+  // 大鱼际(拇指根肉垫):沿拇指基座向腕侧拉长加大,让拇指近节前半「从肉里
+  // 长出来」而非焊在掌角(评审 #1③)。y 别超掌缘太多(独立球 tell)。
+  add(new THREE.SphereGeometry(22 * U, 20, 16), skinMat, -24, -23, 10, 1.6, 0.78, 0.62);
+  // 小鱼际(掌根另一侧肉垫,本模型无拇指的 +y 缘):低平长条(评审 #3)。
+  add(new THREE.SphereGeometry(20 * U, 20, 16), skinMat, -24, 22, 8, 1.5, 0.55, 0.5);
+  // 掌指关节(MCP)背侧骨点:握拳时手背最显眼的解剖标志,缺了整只手读成
+  // 充气手套(评审 #5)。挂掌体(静态),指大弯时指根自然「顶」在骨点前方。
   for (const f of ["index", "middle", "ring", "pinky"] as const) {
     const d = FINGER_DIMS[f];
-    add(new THREE.SphereGeometry(d.r * 1.05 * U, 18, 14), skinMat, 45, d.y, d.rz - 10, 1, 1, 0.55);
+    add(new THREE.SphereGeometry(d.r * 0.8 * U, 18, 14), skinMat, 46 + d.rootX + 2, d.y, d.rz - 13, 1.1, 0.9, 0.55);
   }
-  // 腕(短段,随手转)。前臂不在这里 —— 它是 rig 里的独立件,每帧从固定
-  // 肘锚点 IK 指向手腕(腕转/回位时肘不跟着绕魔方公转,见 handsRig)。
+  // 指蹼:相邻指根之间的低软蹼 —— 分叉止于蹼而非切到掌根。沿指长拉长(x)、
+  // 压浅(z)沉进掌体表面,抹平不成独立球(评审 #4)。
+  const webOrder = ["index", "middle", "ring", "pinky"] as const;
+  for (let i = 0; i < 3; i++) {
+    const a = FINGER_DIMS[webOrder[i]];
+    const b = FINGER_DIMS[webOrder[i + 1]];
+    const mx = (46 + a.rootX + 46 + b.rootX) / 2 - 2;
+    const my = (a.y + b.y) / 2;
+    const mz = (a.rz + b.rz) / 2 + 7;
+    const half = Math.abs(a.y - b.y) / 2;
+    const web = new THREE.Mesh(paintVerts(new THREE.SphereGeometry(1, 16, 12)), skinMat);
+    web.position.set(mx * U, my * U * side, mz * U);
+    web.scale.set(13 * U, half * 0.82 * U, 3 * U);
+    web.raycast = noRaycast;
+    hand.add(web);
+    meshes.push(web);
+  }
+  // 腕(短段,随手转)。前臂是 rig 独立件,每帧从固定肘锚 IK 指向手腕。
   // z 压扁到掌厚以内,别在手背再冒一个球帽。
-  add(new THREE.CapsuleGeometry(29 * U, 42 * U, 8, 20).rotateZ(-Math.PI / 2), skinMat, -76, -1, 0, 1, 1, 0.72);
+  add(new THREE.CapsuleGeometry(27 * U, 42 * U, 8, 20).rotateZ(-Math.PI / 2), skinMat, -76, -1, 0, 1, 1, 0.72);
+}
+
+/**
+ * 掌体主块几何:把高分辨率球逐顶点形变成「楔形 + 横弓」的单一光滑网格。
+ * 指端(+x)宽、腕端(−x)窄 → 梯形楔;厚度腕端厚指端薄;手背(−z)拱、
+ * 掌面(+z)中央浅槽两缘高(真横弓,不是凸气球 —— 评审 #3);顶点色掌侧
+ * 偏亮暖、背侧偏深 —— 单件网格,无叠球拼缝。
+ */
+function buildPalmMesh(side: 1 | -1): THREE.BufferGeometry {
+  const geo = new THREE.SphereGeometry(1, 48, 32);
+  const pos = geo.getAttribute("position");
+  const HALF_LEN = 56 * U; // 腕—指方向半长
+  const CX = -10 * U; // 掌心中心 x(偏腕侧)
+  const KNUCKLE_HW = 50 * U; // 指端半宽
+  const WRIST_HW = 30 * U; // 腕端半宽
+  const HALF_THICK = 19 * U; // 半厚(z)
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const t = (v.x + 1) / 2; // 0 腕 .. 1 指
+    const tw = t * t * (3 - 2 * t); // smoothstep 楔形收宽
+    const hw = WRIST_HW + (KNUCKLE_HW - WRIST_HW) * tw;
+    const px = CX + v.x * HALF_LEN;
+    const py = v.y * hw * side;
+    // 厚度 = 半厚 × 楔(腕厚指薄)× 前后不对称:背侧鼓(1.08);掌侧中央
+    // 浅槽 —— 两缘 0.84、y=0 处 0.69,横截面掌面呈浅凹(横弓)。
+    const wedge = 1.06 - 0.18 * t;
+    const zf = v.z < 0 ? 1.08 : 0.84 - 0.15 * (1 - v.y * v.y);
+    const pz = v.z * HALF_THICK * zf * wedge;
+    pos.setXYZ(i, px, py, pz);
+  }
+  pos.needsUpdate = true;
+  geo.computeVertexNormals();
+  // 顶点色:掌侧亮暖、背侧深(真手掌心偏粉亮、手背偏深黄)。
+  paintVerts(geo, (p, c) => {
+    const f = Math.min(1, Math.max(0, p.z / (12 * U) + 0.5)); // 0 背 .. 1 掌
+    c.setRGB(0.95 + 0.05 * f, 0.93 + 0.06 * f, 0.915 + 0.055 * f);
+  });
+  return geo;
 }
 
 /** 前臂与手腕的接驳点(手局部坐标)。rig 每帧把它变换到世界系,作为前臂 IK 的
@@ -335,8 +454,12 @@ export function buildForearm(
   const group = new THREE.Group();
   const meshes: THREE.Mesh[] = [];
   const LEN = 152 * U;
-  const arm = new THREE.Mesh(paintVerts(new THREE.CapsuleGeometry(31 * U, LEN, 8, 20).rotateZ(-Math.PI / 2)), skinMat);
-  arm.position.x = -LEN / 2 + 10 * U; // +x 圆帽稍微探进腕里,接缝圆润
+  // 锥形前臂:腕端细(27U,与腕段同径)、肘端粗(34U),z 微扁(0.8)与腕的
+  // 0.72 扁截面接顺 —— 正圆等粗管接扁腕会现一圈错位缝(评审 #10)。
+  // taperedBoneAlongX 的 base 端(x=0)朝 +x,绕 z 转 π 后指向 −x 肘端。
+  const arm = new THREE.Mesh(taperedBoneAlongX(27 * U, 34 * U, LEN, 0.8), skinMat);
+  arm.rotation.z = Math.PI;
+  arm.position.x = 11 * U; // 腕端圆帽探进腕里 ~38U,接缝圆润
   arm.raycast = noRaycast;
   group.add(arm);
   meshes.push(arm);

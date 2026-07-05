@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { buildHand } from '@/app/[lang]/sim/engine/hands/handModel';
 
 describe('buildHand 指骨网格挂点', () => {
-  it('伸直手指时,三段胶囊网格中心依次位于 l1/2、l1+l2/2、l1+l2+l3/2(root 系)', () => {
+  it('伸直手指时,三段锥形骨(LatheGeometry)分别挂在 root/mid/tip 关节原点、跨 [0,len]', () => {
     const skin = new THREE.MeshStandardMaterial();
     const nail = new THREE.MeshStandardMaterial();
     const hand = buildHand(1, skin, nail);
@@ -21,23 +21,25 @@ describe('buildHand 指骨网格挂点', () => {
       f.mid.rotation.set(0, 0, 0);
       f.tip.rotation.set(0, 0, 0);
       f.root.updateMatrixWorld(true);
-      const [l1, l2, l3] = f.segLens;
-      const expected = [l1 / 2, l1 + l2 / 2, l1 + l2 + l3 / 2];
-      const centers: number[] = [];
+      const [l1, l2] = f.segLens;
+      // 每节骨挂在其起点关节的原点(骨几何自身跨 [0,len]);故挂点 x 依次 =
+      // 0(root)、l1(mid)、l1+l2(tip)。v1 bug 会把骨塞进下一关节 → 各偏移 +len。
+      const expected = [0, l1, l1 + l2];
+      const anchors: number[] = [];
       const rootInv = f.root.matrixWorld.clone().invert();
       f.root.traverse((o) => {
-        if ((o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry.type === 'CapsuleGeometry') {
+        if ((o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry.type === 'LatheGeometry') {
           const p = new THREE.Vector3().setFromMatrixPosition((o as THREE.Mesh).matrixWorld).applyMatrix4(rootInv);
-          centers.push(p.x);
-          // 骨段轴线上,无侧向偏移
+          anchors.push(p.x);
+          // 骨轴线上,无侧向偏移
           expect(Math.abs(p.y)).toBeLessThan(1e-6);
           expect(Math.abs(p.z)).toBeLessThan(1e-6);
         }
       });
-      expect(centers.length).toBe(3);
-      centers.sort((a, b) => a - b);
+      expect(anchors.length).toBe(3);
+      anchors.sort((a, b) => a - b);
       for (let i = 0; i < 3; i++) {
-        expect(Math.abs(centers[i] - expected[i])).toBeLessThan(1e-6);
+        expect(Math.abs(anchors[i] - expected[i])).toBeLessThan(1e-4);
       }
       // 相邻段首尾相接:关节原点间距 = 骨长(链条不散)
       const rootW = new THREE.Vector3().setFromMatrixPosition(f.root.matrixWorld);

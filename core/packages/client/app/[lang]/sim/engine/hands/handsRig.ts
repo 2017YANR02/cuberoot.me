@@ -189,7 +189,7 @@ export default class HandsRig extends THREE.Group {
     // (毛孔颗粒,高光散成肤质);sheen 给轮廓一圈软绒光(皮肤次表面近似)。
     const detail = makeSkinDetailTexture();
     const skin = new THREE.MeshPhysicalMaterial({
-      color: 0xe0ac86,
+      color: 0xd9af94, // 降饱和肤色 —— 偏橘的高饱和基色是「橘蜡假人」主因(评审 #8)
       roughness: 0.85, // 有 roughnessMap 时为乘数:0.85 × 贴图(均值 ~0.66)≈ 实效 0.56
       metalness: 0,
       vertexColors: true,
@@ -202,8 +202,9 @@ export default class HandsRig extends THREE.Group {
     skin.bumpScale = 0.55;
     skin.roughnessMap = detail;
     this.skinMat = skin;
-    // 指甲:清漆层给角质光泽(高光锐于皮肤,辨识度来源)。
-    this.nailMat = new THREE.MeshPhysicalMaterial({ color: 0xeccab4, roughness: 0.32, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.28 });
+    // 指甲:哑光角质 —— 高清漆 + 低粗糙会把甲片高光收成一个亮点,读成
+    // 「乒乓球贴片」(评审 #7);甲比皮肤略光即可,辨识靠形和色。
+    this.nailMat = new THREE.MeshPhysicalMaterial({ color: 0xeccab4, roughness: 0.42, metalness: 0, clearcoat: 0.15, clearcoatRoughness: 0.4 });
     this.cuffMat = new THREE.MeshStandardMaterial({ color: 0x3a4148, roughness: 0.85, metalness: 0 });
 
     // 手性对调:魔方右侧的手用 side=-1 几何。家位规格(食指压 BUR 顶、无名指压
@@ -236,10 +237,21 @@ export default class HandsRig extends THREE.Group {
     const fillA = new THREE.DirectionalLight(0xfff0e2, Math.PI * 0.22);
     fillA.position.set(-SIZE * 3, SIZE * 1.5, SIZE * 3);
     fillA.layers.set(1);
-    const fillB = new THREE.DirectionalLight(0xdfe8f5, Math.PI * 0.16);
+    // 下方冷补光压低(0.16→0.08):拉开明暗比,减少「均匀照亮」的蜡感(评审 #10)。
+    const fillB = new THREE.DirectionalLight(0xdfe8f5, Math.PI * 0.08);
     fillB.position.set(SIZE * 2, -SIZE * 3, SIZE * 2);
     fillB.layers.set(1);
-    this.add(fillA, fillB);
+    // 暖背光轮廓(rim):从手后上方掠射,勾亮指缘/指尖 —— 皮肤薄处透红是次表面
+    // 散射最强的「肉感」信号,一盏背光比任何贴图都廉价有效(craft 研究首推)。
+    const rim = new THREE.DirectionalLight(0xffcaa6, Math.PI * 0.3);
+    rim.position.set(SIZE * 1.2, SIZE * 2.6, -SIZE * 3.2);
+    rim.layers.set(1);
+    // 前侧低强度暖 rim:产品主视角(正面)吃不到后上 rim,补一盏让正面握持
+    // 视角的指缘也有暖轮廓(评审 #10②)。
+    const rimFront = new THREE.DirectionalLight(0xffcaa6, Math.PI * 0.12);
+    rimFront.position.set(-SIZE * 2, SIZE * 1.2, SIZE * 3);
+    rimFront.layers.set(1);
+    this.add(fillA, fillB, rim, rimFront);
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);
     }
