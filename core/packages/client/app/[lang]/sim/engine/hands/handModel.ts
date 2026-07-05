@@ -266,7 +266,7 @@ function buildThumb(
 /** 掌体 + 肉垫 + 指节鼓包 + 腕臂 — 手根 Group 下的静态部分。
  *  加大原则(2026-07-04「手掌太小」报障):指根挂点(x=46)与指尖接触点都
  *  不能动,掌体只朝腕侧(-x)加长、y/z 向加厚;掌心侧鼓包顶点必须留在
- *  cube 面(local z ≤ 26,即 home pos 122−96)之内。 */
+ *  cube 面(local z ≤ 40,即 home pos 136−96;掌心与面之间刻意留空腔)之内。 */
 function buildPalm(
   hand: THREE.Group,
   side: 1 | -1,
