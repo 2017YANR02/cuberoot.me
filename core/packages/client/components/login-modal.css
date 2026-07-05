@@ -234,18 +234,56 @@
 .lm-unlink {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  appearance: none;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid var(--border-default);
   border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.lm-unlink:not(:disabled):hover {
+  color: var(--destructive);
+  border-color: color-mix(in srgb, var(--destructive) 40%, transparent);
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+}
+.lm-unlink:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.lm-unlink-confirm { display: flex; align-items: center; gap: 6px; }
+.lm-unlink-confirm-text { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
+.lm-unlink-yes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--destructive-foreground);
+  appearance: none;
+  background: var(--destructive);
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.lm-unlink-yes:disabled { opacity: 0.55; cursor: not-allowed; }
+.lm-unlink-no {
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12px;
   color: var(--muted-foreground);
   appearance: none;
   background: none;
-  border: none;
+  border: 1px solid var(--border-default);
+  border-radius: 7px;
   cursor: pointer;
 }
-.lm-unlink:not(:disabled):hover { color: var(--destructive); background: color-mix(in srgb, var(--destructive) 12%, transparent); }
-.lm-unlink:disabled { opacity: 0.35; cursor: not-allowed; }
+.lm-unlink-no:not(:disabled):hover { color: var(--foreground); border-color: var(--border-strong); }
+.lm-unlink-no:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .lm-linkrow { margin-top: 16px; }
 .lm-linktitle { font-size: 12px; color: var(--muted-foreground); }
