@@ -12,7 +12,8 @@ import { useLang } from '@/i18n/tr';
 import {
   sendEmailCode, verifyEmailCode, sendPhoneCode, verifyPhoneCode,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
-  unlinkIdentity, fetchIdentities, type Identity,
+  unlinkIdentity, fetchIdentities, fetchAuthProviders,
+  type Identity, type AuthProviders,
 } from '@/lib/account-api';
 import './login-modal.css';
 
@@ -135,33 +136,46 @@ function LoginTabs({ onClose }: { onClose: () => void }) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
   const [method, setMethod] = useState<'email' | 'phone' | 'wca'>('email');
+  // 服务端已配置的登录方式:未配的(email/sms env 缺)tab 隐藏,现在只亮 WCA;
+  // 配好 env 一 reload 即自动亮,不用改代码。拿不到默认全开(退化成旧行为)。
+  const [providers, setProviders] = useState<AuthProviders | null>(null);
+  useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
+  const avail = providers ?? { email: true, phone: true, wca: true };
 
-  const tabs: { key: 'email' | 'phone' | 'wca'; icon: React.ReactNode; label: string }[] = [
+  const tabs = ([
     { key: 'email', icon: <Mail size={ICON} />, label: t('邮箱', 'Email') },
     { key: 'phone', icon: <Smartphone size={ICON} />, label: t('手机', 'Phone') },
     { key: 'wca', icon: <Key size={ICON} />, label: 'WCA' },
-  ];
+  ] as const).filter((tb) => avail[tb.key]);
+
+  // 当前选中的方式若被隐藏(如默认 email 但未开放),落到第一个可用 tab。
+  useEffect(() => {
+    if (providers && !avail[method]) setMethod(tabs[0]?.key ?? 'wca');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providers]);
 
   return (
     <>
       <h2 className="lm-title">{t('登录 / 注册', 'Sign in / up')}</h2>
-      <div className="lm-tabs" role="tablist">
-        {tabs.map((tb) => (
-          <button
-            key={tb.key}
-            type="button"
-            role="tab"
-            aria-selected={method === tb.key}
-            className={`lm-tab${method === tb.key ? ' is-active' : ''}`}
-            onClick={() => setMethod(tb.key)}
-          >
-            {tb.icon}<span>{tb.label}</span>
-          </button>
-        ))}
-      </div>
+      {tabs.length > 1 && (
+        <div className="lm-tabs" role="tablist">
+          {tabs.map((tb) => (
+            <button
+              key={tb.key}
+              type="button"
+              role="tab"
+              aria-selected={method === tb.key}
+              className={`lm-tab${method === tb.key ? ' is-active' : ''}`}
+              onClick={() => setMethod(tb.key)}
+            >
+              {tb.icon}<span>{tb.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
-      {method === 'email' && <CodeFlow channel="email" mode="login" onDone={onClose} />}
-      {method === 'phone' && (
+      {method === 'email' && avail.email && <CodeFlow channel="email" mode="login" onDone={onClose} />}
+      {method === 'phone' && avail.phone && (
         <>
           <CodeFlow channel="phone" mode="login" onDone={onClose} />
           <p className="lm-hint">{t('目前仅支持中国大陆手机号(+86)。', 'Mainland China (+86) numbers only for now.')}</p>
@@ -198,6 +212,10 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [linking, setLinking] = useState<'email' | 'phone' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // 未配置的登录方式不给「绑定」入口(绑定同样会 503)。默认全开,退化成旧行为。
+  const [providers, setProviders] = useState<AuthProviders | null>(null);
+  useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
+  const avail = providers ?? { email: true, phone: true, wca: true };
 
   const reload = useCallback(async () => {
     setIdentities(await fetchIdentities());
@@ -261,22 +279,28 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
 
       {error && <p className="lm-error">{error}</p>}
 
-      <div className="lm-linkrow">
-        <span className="lm-linktitle">{t('绑定新方式', 'Link a method')}</span>
-        <div className="lm-linkbtns">
-          <button type="button" className="lm-chip" onClick={() => setLinking(linking === 'email' ? null : 'email')}>
-            <Mail size={14} /> {t('邮箱', 'Email')}
-          </button>
-          <button type="button" className="lm-chip" onClick={() => setLinking(linking === 'phone' ? null : 'phone')}>
-            <Smartphone size={14} /> {t('手机', 'Phone')}
-          </button>
-          {!hasWca && (
-            <button type="button" className="lm-chip" onClick={linkWcaStart}>
-              <Link2 size={14} /> WCA
-            </button>
-          )}
+      {(avail.email || avail.phone || !hasWca) && (
+        <div className="lm-linkrow">
+          <span className="lm-linktitle">{t('绑定新方式', 'Link a method')}</span>
+          <div className="lm-linkbtns">
+            {avail.email && (
+              <button type="button" className="lm-chip" onClick={() => setLinking(linking === 'email' ? null : 'email')}>
+                <Mail size={14} /> {t('邮箱', 'Email')}
+              </button>
+            )}
+            {avail.phone && (
+              <button type="button" className="lm-chip" onClick={() => setLinking(linking === 'phone' ? null : 'phone')}>
+                <Smartphone size={14} /> {t('手机', 'Phone')}
+              </button>
+            )}
+            {!hasWca && (
+              <button type="button" className="lm-chip" onClick={linkWcaStart}>
+                <Link2 size={14} /> WCA
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {linking && (
         <CodeFlow channel={linking} mode="link" onDone={() => { setLinking(null); void reload(); }} />

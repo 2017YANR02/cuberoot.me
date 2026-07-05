@@ -43,6 +43,12 @@ async function requireUserId(c: Context): Promise<number> {
   throw new Error('Authentication required'); // → 401
 }
 
+// ── 可用登录方式(供前端隐藏未配置的 tab;env 未配 email/sms 时对应值 false)──
+accountAuthRoutes.get('/auth/providers', (c) => {
+  c.header('Cache-Control', 'no-store');
+  return c.json({ email: emailConfigured(), phone: smsConfigured(), wca: true });
+});
+
 // ── 发码(登录/注册)──
 accountAuthRoutes.post('/auth/email/send', async (c) => {
   c.header('Cache-Control', 'no-store');

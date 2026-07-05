@@ -46,6 +46,23 @@ export const linkPhoneVerify = (phone: string, code: string) => post<{ ok: true;
 export const linkWca = (accessToken: string) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/link/wca', { accessToken }, true);
 export const unlinkIdentity = (provider: string, providerUid?: string) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/unlink', { provider, providerUid }, true);
 
+export interface AuthProviders { email: boolean; phone: boolean; wca: boolean }
+let providersCache: AuthProviders | null = null;
+/** 服务端已配置的登录方式(env 未配 email/sms 则对应 false)。成功结果进模块缓存;
+ *  拿不到就乐观全开(退化成旧行为:点未配的方式走 503 + 友好文案),不误伤已配的。 */
+export async function fetchAuthProviders(): Promise<AuthProviders> {
+  if (providersCache) return providersCache;
+  try {
+    const res = await fetch(apiUrl('/v1/auth/providers'));
+    if (res.ok) {
+      const d = (await res.json()) as Partial<AuthProviders>;
+      providersCache = { email: !!d.email, phone: !!d.phone, wca: d.wca !== false };
+      return providersCache;
+    }
+  } catch { /* ignore */ }
+  return { email: true, phone: true, wca: true };
+}
+
 export async function fetchIdentities(): Promise<Identity[]> {
   const res = await fetch(apiUrl('/v1/auth/identities'), {
     headers: { Authorization: `Bearer ${getSessionToken()}` },
