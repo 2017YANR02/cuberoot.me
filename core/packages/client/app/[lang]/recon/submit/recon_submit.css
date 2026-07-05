@@ -267,35 +267,6 @@
   font-size: 1.1rem;
 }
 
-/* ── 折叠区段（GitHub 设置式）──────────────────────────────── */
-.submit-section {
-  border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
-  margin-top: 4px;
-}
-
-.submit-section-header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  padding: 10px 4px;
-  background: transparent;
-  border: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.submit-section-header:hover { background: color-mix(in srgb, var(--foreground) 2%, transparent); }
-
-.submit-section-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--foreground);
-}
-.submit-section-body { padding: 8px 0 16px 0; }
-
 .submit-field {
   display: flex;
   flex-direction: column;
