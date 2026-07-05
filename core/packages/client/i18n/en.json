@@ -230,7 +230,7 @@
       "numbered": "Round {{n}}"
     },
     "badge": {
-      "nonWca": "Non-WCA",
+      "practice": "Practice",
       "singleRecord": "Single Record",
       "averageRecord": "Average Record"
     },
