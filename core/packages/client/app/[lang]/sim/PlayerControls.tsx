@@ -89,7 +89,7 @@ import {
 } from '@/lib/sq1-svg';
 import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import {
-  Slider, Toggle, KeymapModal, resetWorldView,
+  Slider, Toggle, KeymapModal, resetWorldView, mapFrames,
   DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR,
   type SimSettings, type SimBoardBg,
 } from './SettingDrawer';
@@ -777,9 +777,11 @@ export default function PlayerControls({
   const [linkCopied, setLinkCopied] = useState(false);
   const [derivingScramble, setDerivingScramble] = useState(false);
 
-  useEffect(() => {
-    timing.frames = Math.max(2, Math.round(30 / speed));
-  }, [speed]);
+  // 播放/单步转速(帧/90°):1.00× = 120 帧 ≈ 2s,整体为旧 30 帧基准的 1/4
+  // (2026-07-05 用户要求)。timing.frames 是与抽屉「转动速度」共用的全局,
+  // 禁在 mount/slider 时裸写抢顺序 —— 播放与单步路径显式 set,用完立刻
+  // restore 回抽屉值(tween 在 twist() 调用瞬间捕获帧数,同步恢复安全)。
+  const playbackFrames = Math.max(2, Math.round(120 / speed));
 
   const playTimerRef = useRef<number | null>(null);
   const stepRef = useRef(0);
@@ -1016,14 +1018,18 @@ export default function PlayerControls({
         world.hands?.regrip(it.grip);
       } else {
         if (cube.busy || world.hands?.isRegripping) return;
-        if (!cube.twister.twist(it.action, false, false)) return;
+        // 单步与播放同速:tween 在 twist() 同步捕获帧数,随即恢复抽屉值。
+        timing.frames = playbackFrames;
+        const ok = cube.twister.twist(it.action, false, false);
+        timing.frames = mapFrames(settings.speed);
+        if (!ok) return;
       }
       stepRef.current = step + 1;
       setStep(step + 1);
       return;
     }
     jumpToStep(step + 1);
-  }, [jumpToStep, step, settings.animatePlayback, isSq1, isIvy, corner, world, nxnItems]);
+  }, [jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSq1, isIvy, corner, world, nxnItems]);
 
   const stepBack = useCallback(() => {
     const animate = settings.animatePlayback !== false;
@@ -1047,14 +1053,17 @@ export default function PlayerControls({
       } else {
         if (cube.busy || world.hands?.isRegripping) return;
         const inv = new TwistAction(it.action.sign, !it.action.reverse, it.action.times);
-        if (!cube.twister.twist(inv, false, false)) return;
+        timing.frames = playbackFrames;
+        const ok = cube.twister.twist(inv, false, false);
+        timing.frames = mapFrames(settings.speed);
+        if (!ok) return;
       }
       stepRef.current = step - 1;
       setStep(step - 1);
       return;
     }
     jumpToStep(step - 1);
-  }, [jumpToStep, step, settings.animatePlayback, isSq1, isIvy, corner, world, nxnItems]);
+  }, [jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSq1, isIvy, corner, world, nxnItems]);
 
   useEffect(() => {
     if (!playing) {
@@ -1074,7 +1083,9 @@ export default function PlayerControls({
     // 故节拍由 interval 周期给:timing.frames 帧 @60fps ≈ 该步本应播放的时长,瞬切后等同节拍
     // (否则一帧就冲到底,看不到逐步)。开 → 16ms 高频轮询,按动画完成逐步推进(原行为)。
     const animatePlayback = settings.animatePlayback !== false;
-    const stepDelayMs = Math.max(80, Math.round((timing.frames / 60) * 1000));
+    // 播放期间全局帧数切到播放速度,停止(cleanup)恢复抽屉「转动速度」值。
+    timing.frames = playbackFrames;
+    const stepDelayMs = Math.max(80, Math.round((playbackFrames / 60) * 1000));
     playTimerRef.current = window.setInterval(() => {
       const s = stepRef.current;
       if (s >= total) { setPlaying(false); return; }
@@ -1131,8 +1142,9 @@ export default function PlayerControls({
     }, animatePlayback ? 16 : stepDelayMs);
     return () => {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
+      timing.frames = mapFrames(settings.speed);
     };
-  }, [playing, nxnItems, sq1Actions, ivyActions, cornerActions, corner, world, speed, isSq1, isIvy, settings.animatePlayback, settings.speed]);
+  }, [playing, nxnItems, sq1Actions, ivyActions, cornerActions, corner, world, playbackFrames, isSq1, isIvy, settings.animatePlayback, settings.speed]);
 
   const tool = (transform: (s: string) => string) => () => {
     // 镜像/转体变换先剥换握记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
