@@ -199,7 +199,7 @@
 /* ── Hero 行：选手 / 项目 / 成绩 — 大字号、重视觉权重 ─────── */
 .submit-hero {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr;
+  grid-template-columns: 1.4fr 1fr;
   gap: 12px;
   margin-bottom: 12px;
 }
