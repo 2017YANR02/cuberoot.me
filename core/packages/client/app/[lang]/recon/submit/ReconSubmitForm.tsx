@@ -253,6 +253,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [optimalAutoSource, setOptimalAutoSource] = useState<string | null>(null);
   const optimalAutoFilledRef = useRef(false);
   const wcaScrambleRef = useRef<HTMLTextAreaElement>(null);
+  const optimalScrambleRef = useRef<HTMLTextAreaElement>(null);
+  // 移动端虚拟键盘跟随焦点:WCA 打乱 / 最优打乱 / 解法 三框中当前激活的那个,
+  // 决定键盘的显示 + 输入目标;非三框之一(或都未聚焦)时不显示。
+  const [activeVkbField, setActiveVkbField] = useState<'wca' | 'optimal' | 'solution' | null>(null);
   const [compRounds, setCompRounds] = useState<Record<string, RoundFormat[]> | null>(null);
   // WCA scramble groups (A/B/C…) for the current comp/event/round.
   // null = 未解析(等加载 / 非 WCA 赛);[] = 无打乱数据;否则是分组列表。
@@ -1735,6 +1739,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 ref={wcaScrambleRef}
                 value={form.wcaScramble || ''}
                 readOnly={!!scrambleAutoSource}
+                inputMode={isMobile ? 'none' : undefined}
                 className={`submit-field-textarea${scrambleAutoSource ? ' submit-input-locked' : ''}`}
                 title={scrambleAutoSource
                   ? tr({ zh: '自动填充值不可编辑;改 比赛/项目/轮次/分组/第几把 以重新获取', en: 'auto-filled, read-only; change comp/event/round/group/# to refetch'
@@ -1748,8 +1753,25 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   autoResize(e.target);
                 }}
                 onInput={e => autoResize(e.target as HTMLTextAreaElement)}
+                onFocus={() => { if (!scrambleAutoSource) setActiveVkbField('wca'); }}
+                onBlur={() => setActiveVkbField(f => f === 'wca' ? null : f)}
                 style={{ overflow: 'hidden', resize: 'none' }}
               />
+              {isMobile && (
+                <CubeKeyboardSection
+                  target={wcaScrambleRef}
+                  mobileVisible={activeVkbField === 'wca'}
+                  onInput={() => {
+                    if (wcaScrambleRef.current) {
+                      setScrambleUserTouched(true);
+                      setScrambleAutoSource(null);
+                      scrambleAutoFilledRef.current = false;
+                      setField('wcaScramble', wcaScrambleRef.current.value);
+                      autoResize(wcaScrambleRef.current);
+                    }
+                  }}
+                />
+              )}
               {scrambleLoading
                 ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                 })}</span>
@@ -1772,6 +1794,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 className="submit-field-textarea"
                 rows={1}
                 value={form.optimalScramble || ''}
+                inputMode={isMobile ? 'none' : undefined}
                 onChange={e => {
                   setOptimalUserTouched(true);
                   setOptimalAutoSource(null);
@@ -1780,9 +1803,26 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   autoResize(e.target);
                 }}
                 onInput={e => autoResize(e.target as HTMLTextAreaElement)}
-                ref={el => { if (el) autoResize(el); }}
+                onFocus={() => setActiveVkbField('optimal')}
+                onBlur={() => setActiveVkbField(f => f === 'optimal' ? null : f)}
+                ref={el => { optimalScrambleRef.current = el; if (el) autoResize(el); }}
                 style={{ overflow: 'hidden', resize: 'none' }}
               />
+              {isMobile && (
+                <CubeKeyboardSection
+                  target={optimalScrambleRef}
+                  mobileVisible={activeVkbField === 'optimal'}
+                  onInput={() => {
+                    if (optimalScrambleRef.current) {
+                      setOptimalUserTouched(true);
+                      setOptimalAutoSource(null);
+                      optimalAutoFilledRef.current = false;
+                      setField('optimalScramble', optimalScrambleRef.current.value);
+                      autoResize(optimalScrambleRef.current);
+                    }
+                  }}
+                />
+              )}
               {scrambleLoading
                 ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…' })}</span>
                 : optimalAutoSource ? <span className="submit-hint">{optimalAutoSource}</span> : null}
@@ -1876,7 +1916,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   onClick={() => {
                     if (solutionRef.current) handleCursorSync(solutionRef.current);
                   }}
+                  onFocus={() => setActiveVkbField('solution')}
                   onBlur={() => {
+                    setActiveVkbField(f => f === 'solution' ? null : f);
                     const el = solutionRef.current;
                     if (!el) return;
                     const next = normalizeSolutionSlashes(el.value);
@@ -1906,10 +1948,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               )}
             </div>
 
-            {/* Virtual keyboard (mobile force-on, desktop toggleable) */}
+            {/* Virtual keyboard (mobile: follows focus among wca/optimal/solution; desktop toggleable) */}
             {!normalized && (
               <CubeKeyboardSection
                 target={solutionRef}
+                mobileVisible={activeVkbField === 'solution'}
                 onInput={() => {
                   if (solutionRef.current) {
                     setField('solution', solutionRef.current.value);
