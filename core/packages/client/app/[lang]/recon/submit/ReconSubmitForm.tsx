@@ -1419,13 +1419,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     />
                   )}
                 </div>
-                <label className={`submit-field${reusedCls('event')}`}>
+                <label className={`submit-field submit-field-fit${reusedCls('event')}`}>
                   <span className="submit-label">{t('recon.event')} *</span>
                   <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
                 </label>
                 {isBldEvent(form.event ?? '') && (
                   <>
-                    <label className="submit-field">
+                    <label className="submit-field submit-field-narrow">
                       <span className="submit-label">{t('recon.memo')}</span>
                       <input
                         type="text"
@@ -1436,7 +1436,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         })}
                       />
                     </label>
-                    <label className="submit-field">
+                    <label className="submit-field submit-field-narrow">
                       <span className="submit-label">{t('recon.exec')}</span>
                       <input
                         className="submit-field-input"
@@ -1447,42 +1447,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     </label>
                   </>
                 )}
-              </div>
-
-              {solverLite && (
-                <div className="submit-row">
-                  <div className={`submit-field${reusedCls('coPersons')}`}>
-                    <span className="submit-label">{tr({ zh: '共同完成者', en: 'Co-solvers' })}</span>
-                    <div className="submit-cosolvers">
-                      {(form.coPersons ?? []).map((c, i) => (
-                        <div key={`${c.id || c.name}-${i}`} className="submit-solver-pill submit-cosolver-pill">
-                          <Flag iso2={c.country || ''} />
-                          <span className="submit-solver-name">{displayCuberName(c.name, isZh)}</span>
-                          <ClearButton onClick={() => removeCoPerson(i)} isZh={isZh} variant="standalone" preserveFocus />
-                        </div>
-                      ))}
-                      {addingCo ? (
-                        <WcaPersonPicker
-                          value={null}
-                          onChange={addCoPerson}
-                          isZh={isZh}
-                          placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID'
-                        })}
-                          className="submit-cosolver-picker"
-                        />
-                      ) : (
-                        <button type="button" className="submit-add-cosolver" onClick={() => setAddingCo(true)}>
-                          <UserPlus size={14} /> {tr({ zh: '添加选手', en: 'Add solver'
-                        })}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="submit-row">
-                <label className={`submit-field submit-field-narrow${reusedCls('official')}`}>
+                <label className={`submit-field submit-field-fit${reusedCls('official')}`}>
                   <span className="submit-label">WCA</span>
                   <select className="submit-field-select" value={form.official ? '1' : '0'} onChange={e => {
                     const isOfficial = e.target.value === '1';
@@ -1521,6 +1486,38 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   )}
                 </div>
               </div>
+
+              {solverLite && (
+                <div className="submit-row">
+                  <div className={`submit-field${reusedCls('coPersons')}`}>
+                    <span className="submit-label">{tr({ zh: '共同完成者', en: 'Co-solvers' })}</span>
+                    <div className="submit-cosolvers">
+                      {(form.coPersons ?? []).map((c, i) => (
+                        <div key={`${c.id || c.name}-${i}`} className="submit-solver-pill submit-cosolver-pill">
+                          <Flag iso2={c.country || ''} />
+                          <span className="submit-solver-name">{displayCuberName(c.name, isZh)}</span>
+                          <ClearButton onClick={() => removeCoPerson(i)} isZh={isZh} variant="standalone" preserveFocus />
+                        </div>
+                      ))}
+                      {addingCo ? (
+                        <WcaPersonPicker
+                          value={null}
+                          onChange={addCoPerson}
+                          isZh={isZh}
+                          placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID'
+                        })}
+                          className="submit-cosolver-picker"
+                        />
+                      ) : (
+                        <button type="button" className="submit-add-cosolver" onClick={() => setAddingCo(true)}>
+                          <UserPlus size={14} /> {tr({ zh: '添加选手', en: 'Add solver'
+                        })}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* 非 WCA 比赛:补国家(选完显示国旗) + 城市,WCA 比赛由所选比赛自动带出 */}
               {!form.official && (
