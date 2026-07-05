@@ -3,7 +3,10 @@
 .lm-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  /* 登录/账号弹层是主阻塞弹层,必须在所有浮层之上 —— 尤其桌宠搜索 backdrop
+     (.deskpet-search-backdrop z-index:100010 + backdrop-filter blur),从桌宠
+     工具栏头像打开时,否则会被它的模糊灰罩盖住,面板看起来一片灰。 */
+  z-index: 100100;
   display: flex;
   align-items: center;
   justify-content: center;
