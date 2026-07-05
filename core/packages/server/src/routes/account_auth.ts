@@ -20,6 +20,7 @@ import {
 } from '../utils/account.js';
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
+import { googleConfigured, googleClientId, fetchGoogleUser } from '../utils/google.js';
 
 export const accountAuthRoutes = new Hono();
 
@@ -46,7 +47,7 @@ async function requireUserId(c: Context): Promise<number> {
 // ── 可用登录方式(供前端隐藏未配置的 tab;env 未配 email/sms 时对应值 false)──
 accountAuthRoutes.get('/auth/providers', (c) => {
   c.header('Cache-Control', 'no-store');
-  return c.json({ email: emailConfigured(), phone: smsConfigured(), wca: true });
+  return c.json({ email: emailConfigured(), phone: smsConfigured(), wca: true, googleClientId: googleClientId() });
 });
 
 // ── 发码(登录/注册)──
@@ -212,6 +213,45 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
   // 绑定后重签 token,让新的 wcaId 立即进入会话。
   const token = user ? signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name }) : undefined;
   return c.json({ ok: true, token, user: user ? publicUser(user) : undefined, identities: await getIdentities(uid) });
+});
+
+// ── Google(客户端隐式授权拿到的 access_token,服务端转发 Google userinfo 验真)──
+accountAuthRoutes.post('/auth/google', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  if (!googleConfigured()) return c.json({ error: 'google not configured' }, 503);
+  const { accessToken } = await c.req.json<{ accessToken?: string }>().catch(() => ({ accessToken: undefined }));
+  if (!accessToken) return c.json({ error: 'accessToken required' }, 400);
+  let g: { sub: string; email?: string; name?: string; picture?: string };
+  try {
+    g = await fetchGoogleUser(accessToken);
+  } catch {
+    return c.json({ error: 'invalid Google token' }, 401);
+  }
+  const user = await loginWithIdentity('google', g.sub, {
+    name: g.name || g.email?.split('@')[0] || '',
+    avatar: g.picture ?? null,
+  });
+  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+  return c.json({ token, user: publicUser(user) });
+});
+
+accountAuthRoutes.post('/auth/link/google', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const uid = await requireUserId(c);
+  if (!googleConfigured()) return c.json({ error: 'google not configured' }, 503);
+  const { accessToken } = await c.req.json<{ accessToken?: string }>().catch(() => ({ accessToken: undefined }));
+  if (!accessToken) return c.json({ error: 'accessToken required' }, 400);
+  let g: { sub: string };
+  try {
+    g = await fetchGoogleUser(accessToken);
+  } catch {
+    return c.json({ error: 'invalid Google token' }, 401);
+  }
+  const r = await addIdentity(uid, 'google', g.sub);
+  if (r === 'conflict') return c.json({ error: 'Google account already linked to another account' }, 409);
+  return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
 // ── 解绑 ──
