@@ -20,6 +20,7 @@
 import * as THREE from "three";
 import { SIZE } from "../define";
 import { buildHand, buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
+import { addHandSkeleton, makeHandSkeletonMats } from "./handSkeleton";
 import { homeLeft, homeRight, type HandPose } from "./handPoses";
 
 /** 只读 duck-type,避免运行时 import NxN Cube(rig 只碰 groups 的 angle)。 */
@@ -166,6 +167,8 @@ export default class HandsRig extends THREE.Group {
   private readonly skinMat: THREE.MeshStandardMaterial;
   private readonly nailMat: THREE.MeshStandardMaterial;
   private readonly cuffMat: THREE.MeshStandardMaterial;
+  /** MediaPipe 风格骨架叠加层材质(透明常开,fade 只驱动 opacity)。 */
+  private readonly skelMats: THREE.MeshBasicMaterial[];
   private readonly hands: Record<HandSide, HandState>;
   private cube: HandsCubeLike | null = null;
 
@@ -215,6 +218,12 @@ export default class HandsRig extends THREE.Group {
     this.add(rArm.group, lArm.group);
     right.meshes.push(...rArm.meshes);
     left.meshes.push(...lArm.meshes);
+    // 21 关键点骨架叠加(MediaPipe Hands 默认画风)—— 静态几何挂关节组,
+    // 姿态自动跟随;网格进 model.meshes 复用补光层 / dispose。
+    const skel = makeHandSkeletonMats();
+    this.skelMats = Object.values(skel);
+    addHandSkeleton(right, skel);
+    addHandSkeleton(left, skel);
     this.hands = {
       // 肘锚随 HAND_SCALE 等比外推:手/前臂变大后锚点太近会让前臂几何越过肘
       // 悬在半空(几何长 152U·scale,锚点必须比腕远至少这么多)。
@@ -372,7 +381,7 @@ export default class HandsRig extends THREE.Group {
       const step = dt / FADE_MS;
       this.fade = fadeTarget > this.fade ? Math.min(1, this.fade + step) : Math.max(0, this.fade - step);
       const eased = this.fade * this.fade * (3 - 2 * this.fade);
-      for (const mat of [this.skinMat, this.nailMat, this.cuffMat]) mat.opacity = eased;
+      for (const mat of [this.skinMat, this.nailMat, this.cuffMat, ...this.skelMats]) mat.opacity = eased;
       // 只在「淡出完成」隐藏 —— 淡入起点 fade=0 碰上 dt=0 帧不能误藏。
       if (this.fade === 0 && !this.enabled) this.visible = false;
       if (this.fade === 1) for (const mat of [this.skinMat, this.nailMat, this.cuffMat]) mat.transparent = false;
@@ -636,5 +645,6 @@ export default class HandsRig extends THREE.Group {
     this.skinMat.dispose();
     this.nailMat.dispose();
     this.cuffMat.dispose();
+    for (const m of this.skelMats) m.dispose();
   }
 }
