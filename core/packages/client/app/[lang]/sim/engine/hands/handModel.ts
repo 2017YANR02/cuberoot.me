@@ -48,15 +48,22 @@ export interface HandModel {
   meshes: THREE.Mesh[];
 }
 
-/** 设计基准:常量按 SIZE=64(3x3 棱长 192)标定,U 做整体缩放钩子。 */
-const U = SIZE / 64;
+/** 整手相对魔方的比例(2026-07-05 用户定真实比例:食指/中指/无名指宽 ≈0.9 个
+ *  棱块 = 0.9·SIZE,即 2r̄·scale/64 ≈ 0.9 → 2.2;真人手对 57mm 三阶就是这么大)。
+ *  改它必须同步:① handPoses 重标定(指根/指长全变,curl 要重解);② world/
+ *  backView 手部 near/far 包络余量;③ handsRig 肘锚(×HAND_SCALE)。 */
+export const HAND_SCALE = 2.2;
 
-/** 手指几何参数:三段骨长 + 根部半径。中指最长,小指明显短。 */
-const FINGER_DIMS: Record<Exclude<FingerName, "thumb">, { segs: [number, number, number]; r: number; y: number }> = {
-  index: { segs: [50, 32, 26], r: 13, y: 36 },
-  middle: { segs: [55, 36, 28], r: 13.6, y: 12 },
-  ring: { segs: [50, 33, 26], r: 12.5, y: -12 },
-  pinky: { segs: [38, 25, 21], r: 11, y: -36 },
+/** 设计基准:常量按 SIZE=64(3x3 棱长 192)标定,U 做整体缩放钩子。 */
+const U = (SIZE / 64) * HAND_SCALE;
+
+/** 手指几何参数:三段骨长 + 根部半径 + 指根 z(横弓:中指根最靠背侧,
+ *  食指/小指根渐移向掌心侧 —— 指根连线不再共面,掌不是平板)。 */
+const FINGER_DIMS: Record<Exclude<FingerName, "thumb">, { segs: [number, number, number]; r: number; y: number; rz: number }> = {
+  index: { segs: [50, 32, 26], r: 13, y: 36, rz: -5 },
+  middle: { segs: [55, 36, 28], r: 13.6, y: 12, rz: -8 },
+  ring: { segs: [50, 33, 26], r: 12.5, y: -12, rz: -4 },
+  pinky: { segs: [38, 25, 21], r: 11, y: -36, rz: 0 },
 };
 const THUMB_DIMS = { segs: [42, 38, 30] as [number, number, number], r: 15.6 };
 
@@ -177,14 +184,14 @@ function addNail(tipJoint: THREE.Group, segLen: number, r: number, nailMat: THRE
 function buildFinger(
   hand: THREE.Group,
   side: 1 | -1,
-  dims: { segs: [number, number, number]; r: number; y: number },
+  dims: { segs: [number, number, number]; r: number; y: number; rz: number },
   skinMat: THREE.Material,
   nailMat: THREE.Material,
   meshes: THREE.Mesh[],
 ): FingerJoints {
   const [l1, l2, l3] = dims.segs.map((v) => v * U) as [number, number, number];
   const root = new THREE.Group();
-  root.position.set(46 * U, dims.y * U * side, -3 * U);
+  root.position.set(46 * U, dims.y * U * side, dims.rz * U);
   hand.add(root);
   const r1 = dims.r * U * SEG_TAPER[0];
   const r2 = dims.r * U * SEG_TAPER[1];
@@ -266,38 +273,45 @@ function buildThumb(
 /** 掌体 + 肉垫 + 指节鼓包 + 腕臂 — 手根 Group 下的静态部分。
  *  加大原则(2026-07-04「手掌太小」报障):指根挂点(x=46)与指尖接触点都
  *  不能动,掌体只朝腕侧(-x)加长、y/z 向加厚;掌心侧鼓包顶点必须留在
- *  cube 面(local z ≤ 40,即 home pos 136−96;掌心与面之间刻意留空腔)之内。 */
+ *  cube 面之内(local z 上限 = home pos.x − 96;掌心与面之间刻意留空腔)。
+ *  横弓(2026-07-05「掌不是平面」报障):主掌体拆成两片圆角盒绕 x 各倾
+ *  ±CUP,掌面成浅 V 凹、手背中脊由背拱椭球盖圆 —— 侧看/正看都不再是平板。 */
 function buildPalm(
   hand: THREE.Group,
   side: 1 | -1,
   skinMat: THREE.Material,
   meshes: THREE.Mesh[],
 ): void {
-  const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, sx = 1, sy = 1, sz = 1): void => {
+  const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, sx = 1, sy = 1, sz = 1, rx = 0): void => {
     const m = new THREE.Mesh(paintVerts(geo), mat);
     m.position.set(x * U, y * U * side, z * U);
     m.scale.set(sx, sy, sz);
+    // 绕 x 的旋转在 y 镜像下反号(M_y·Rx(θ)·M_y = Rx(−θ))
+    m.rotation.x = rx * side;
     m.raycast = noRaycast;
     hand.add(m);
     meshes.push(m);
   };
 
-  // 主掌体:大圆角盒(圆角 16 → 侧缘饱满不见棱),向腕侧加长 + 加厚。
-  add(new RoundedBoxGeometry(114 * U, 98 * U, 42 * U, 5, 16 * U), skinMat, -9, 0, 0);
-  // 手背拱:压扁椭球平滑鼓起(旧 RoundedBox 凸台在手背印出方形高台)。
-  add(new THREE.SphereGeometry(44 * U, 24, 18), skinMat, -4, 0, -7, 1.15, 0.95, 0.36);
-  // 掌心肉垫层(握持面中央微鼓)。
-  add(new THREE.SphereGeometry(40 * U, 24, 18), skinMat, -12, 0, 8, 1.1, 0.95, 0.4);
-  // 大鱼际(拇指根肉垫)/ 小鱼际(小指侧肉垫):压扁球,掌心侧饱满。
-  // y 向必须收在掌宽(±49)内侧 ≤2U:椭球超出掌缘会在手轮廓上鼓出独立圆球
+  // 主掌体 = 两片圆角盒斜合(横弓):外缘(±y)朝掌心侧(+z)倾,掌面中央
+  // 凹 ~11U、手背中央拱起 —— 真手掌的杯状。
+  const CUP = 0.2;
+  add(new RoundedBoxGeometry(114 * U, 58 * U, 40 * U, 5, 15 * U), skinMat, -9, 24, 1, 1, 1, 1, CUP);
+  add(new RoundedBoxGeometry(114 * U, 58 * U, 40 * U, 5, 15 * U), skinMat, -9, -24, 1, 1, 1, 1, -CUP);
+  // 手背拱:压扁椭球盖住两片盒的背侧中脊,平滑鼓起(禁 RoundedBox 凸台)。
+  add(new THREE.SphereGeometry(44 * U, 24, 18), skinMat, -4, 0, -7, 1.15, 0.95, 0.42);
+  // 掌心肉垫层(V 凹底部微鼓,别填平横弓)。
+  add(new THREE.SphereGeometry(40 * U, 24, 18), skinMat, -12, 0, 4, 1.1, 0.9, 0.35);
+  // 大鱼际(拇指根肉垫)/ 小鱼际(小指侧肉垫):压扁球,贴外缘斜面上鼓。
+  // y 向必须收在掌缘内侧:椭球超出掌缘会在手轮廓上鼓出独立圆球
   // (2026-07-04 三轮实拍,上下缘各一颗「球」的真凶)。
-  add(new THREE.SphereGeometry(30 * U, 20, 16), skinMat, -14, 30, 7, 1.15, 0.7, 0.55);
-  add(new THREE.SphereGeometry(26 * U, 20, 16), skinMat, -18, -32, 6, 1.2, 0.7, 0.58);
-  // 四个指节鼓包(MCP 背侧):压扁贴掌沿,只留隐约起伏 —— 球太凸手背会
-  // 结成一串「葡萄」(2026-07-04 二轮实拍)。
+  add(new THREE.SphereGeometry(30 * U, 20, 16), skinMat, -14, 30, 8, 1.15, 0.7, 0.55);
+  add(new THREE.SphereGeometry(26 * U, 20, 16), skinMat, -18, -32, 8, 1.2, 0.7, 0.58);
+  // 四个指节鼓包(MCP 背侧):压扁贴掌沿、z 随各指根横弓偏移,只留隐约起伏
+  // —— 球太凸手背会结成一串「葡萄」(2026-07-04 二轮实拍)。
   for (const f of ["index", "middle", "ring", "pinky"] as const) {
     const d = FINGER_DIMS[f];
-    add(new THREE.SphereGeometry(d.r * 1.05 * U, 18, 14), skinMat, 45, d.y, -13, 1, 1, 0.55);
+    add(new THREE.SphereGeometry(d.r * 1.05 * U, 18, 14), skinMat, 45, d.y, d.rz - 10, 1, 1, 0.55);
   }
   // 腕(短段,随手转)。前臂不在这里 —— 它是 rig 里的独立件,每帧从固定
   // 肘锚点 IK 指向手腕(腕转/回位时肘不跟着绕魔方公转,见 handsRig)。

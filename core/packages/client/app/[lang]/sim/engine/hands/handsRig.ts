@@ -19,7 +19,7 @@
  */
 import * as THREE from "three";
 import { SIZE } from "../define";
-import { buildHand, buildForearm, makeSkinDetailTexture, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
+import { buildHand, buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
 import { homeLeft, homeRight, type HandPose } from "./handPoses";
 
 /** 只读 duck-type,避免运行时 import NxN Cube(rig 只碰 groups 的 angle)。 */
@@ -216,8 +216,10 @@ export default class HandsRig extends THREE.Group {
     right.meshes.push(...rArm.meshes);
     left.meshes.push(...lArm.meshes);
     this.hands = {
-      R: this.initHandState(right, homeRight(), rArm.group, new THREE.Vector3(SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4)),
-      L: this.initHandState(left, homeLeft(), lArm.group, new THREE.Vector3(-SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4)),
+      // 肘锚随 HAND_SCALE 等比外推:手/前臂变大后锚点太近会让前臂几何越过肘
+      // 悬在半空(几何长 152U·scale,锚点必须比腕远至少这么多)。
+      R: this.initHandState(right, homeRight(), rArm.group, new THREE.Vector3(SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
+      L: this.initHandState(left, homeLeft(), lArm.group, new THREE.Vector3(-SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
     };
 
     // 手专属补光:layer 1(魔方在默认 layer 0,不受影响;手网格同时在 0+1,
@@ -568,8 +570,8 @@ export default class HandsRig extends THREE.Group {
     if (idle && !h.weldAxis) {
       const t = this.idleClock / 1000;
       const ph = side === "R" ? 0 : 1.7;
-      g.position.y += Math.sin(t * 1.1 + ph) * 1.2;
-      g.position.z += Math.cos(t * 0.9 + ph) * 0.8;
+      g.position.y += Math.sin(t * 1.1 + ph) * 1.2 * HAND_SCALE;
+      g.position.z += Math.cos(t * 0.9 + ph) * 0.8 * HAND_SCALE;
     }
 
     // 前臂 IK:origin 贴到手腕接驳点,+x 指向「肘 → 腕」方向 —— 肘锚固定,
