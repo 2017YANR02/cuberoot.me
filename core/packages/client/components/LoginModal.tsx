@@ -4,7 +4,7 @@
 // (已绑定身份列表 + 绑定新方式 + 解绑 + 登出)。结构镜像 FeedbackModal(自包含 + 本地 t + 背景点击关闭)。
 // 由 store 的 loginOpen 控制,全局挂在 app/layout.tsx。
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { X, Mail, Smartphone, Key, Loader2, LogOut, Link2, Unlink, UserRound } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { useAuthStore, applySession } from '@/lib/auth-store';
@@ -18,7 +18,45 @@ import {
 import './login-modal.css';
 
 const ICON = 16;
+const CODE_LEN = 6;
 type Channel = 'email' | 'phone';
+
+/** Apple 风格分格验证码输入:6 个格子 + 高亮当前格 + 跳动光标。一个透明原生 input 承接
+ *  键盘/粘贴/iOS 短信自动填充(autocomplete=one-time-code),格子只做展示、始终左到右填。 */
+function CodeCells({ value, onChange, disabled }: {
+  value: string; onChange: (v: string) => void; disabled?: boolean;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [focused, setFocused] = useState(false);
+  const toEnd = () => { const el = ref.current; if (el) el.setSelectionRange(el.value.length, el.value.length); };
+  return (
+    <div className="lm-otp" onMouseDown={(e) => { e.preventDefault(); ref.current?.focus(); toEnd(); }}>
+      <input
+        ref={ref}
+        className="lm-otp-native"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        pattern="\d*"
+        maxLength={CODE_LEN}
+        value={value}
+        autoFocus
+        disabled={disabled}
+        aria-label="verification code"
+        onFocus={() => { setFocused(true); toEnd(); }}
+        onBlur={() => setFocused(false)}
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, CODE_LEN))}
+      />
+      {Array.from({ length: CODE_LEN }).map((_, i) => {
+        const active = focused && (i === value.length || (value.length === CODE_LEN && i === CODE_LEN - 1));
+        return (
+          <div key={i} className={`lm-otp-cell${active ? ' is-active' : ''}${value[i] ? ' is-filled' : ''}`}>
+            {value[i] ? <span>{value[i]}</span> : active ? <span className="lm-otp-caret" /> : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 /** 把后端英文错误串 / HTTP 码翻成给用户看的本地化文案;未识别的原样回退。 */
 function authErrorText(raw: string, t: (zh: string, en: string) => string): string {
@@ -84,6 +122,12 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
     }
   }, [channel, mode, target, code, onDone]);
 
+  // 满 6 位自动提交(Apple 风格,免点按钮);验证失败后 code 不变不会重复触发。
+  useEffect(() => {
+    if (step === 'code' && code.length === CODE_LEN && !busy) void verify();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, step]);
+
   return (
     <div className="lm-flow">
       {step === 'input' ? (
@@ -107,18 +151,9 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
       ) : (
         <>
           <label className="lm-label">{t('验证码', 'Verification code')} · {target}</label>
-          <input
-            className="lm-input lm-code"
-            inputMode="numeric"
-            maxLength={6}
-            value={code}
-            autoFocus
-            placeholder="______"
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            onKeyDown={(e) => { if (e.key === 'Enter' && code.length === 6 && !busy) void verify(); }}
-          />
+          <CodeCells value={code} onChange={setCode} disabled={busy} />
           {error && <p className="lm-error">{error}</p>}
-          <button className="lm-primary" disabled={code.length !== 6 || busy} onClick={() => void verify()}>
+          <button className="lm-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
             {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
             {mode === 'link' ? t('绑定', 'Link') : t('登录', 'Sign in')}
           </button>
