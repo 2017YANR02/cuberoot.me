@@ -167,8 +167,8 @@ export function makeSkinDetailTexture(): THREE.CanvasTexture {
 function addNail(tipJoint: THREE.Group, segLen: number, r: number, nailMat: THREE.Material, meshes: THREE.Mesh[]): void {
   const nail = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), nailMat);
   nail.scale.set(r * 0.8, r * 0.72, r * 0.4);
-  nail.position.set(segLen * 0.72, 0, -r * 0.66);
-  nail.rotation.y = -0.32; // 顺指尖肩部弧度(负向 = 前缘随背面弧线落向指尖)
+  nail.position.set(segLen * 0.8, 0, -r * 0.66);
+  nail.rotation.y = 0.32; // 正向 = 根部沉进「甲床」、弧形游离缘鼓向指尖;负角方向反(圆弧鼓向指根,2026-07-05 用户报障)
   nail.raycast = noRaycast;
   tipJoint.add(nail);
   meshes.push(nail);
