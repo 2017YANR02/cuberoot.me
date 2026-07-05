@@ -196,18 +196,14 @@
   align-items: flex-start;
 }
 
-/* ── Hero 行：选手 / 项目 / 成绩 — 大字号、重视觉权重 ─────── */
+/* ── Hero 行：选手 / 项目 / WCA / 比赛 — 大字号、重视觉权重 ─────── */
 .submit-hero {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 12px;
+  align-items: flex-start;
 }
-@media (max-width: 640px) {
-  .submit-hero { grid-template-columns: 1fr; }
-}
-/* grid item 默认 min-width: auto, 长选手名会撑爆列;允许收缩 */
-.submit-hero > .submit-field { min-width: 0; }
 
 /* ── 统一控件高度 ──
    光统一 padding+font 不够：<select>/<input> 的 UA 默认渲染高度
@@ -279,6 +275,8 @@
 .submit-field-narrow { flex: 0 0 120px; min-width: 0; }
 /* pill 模式收缩到内容宽度，避免 flex:1 把已选 pill 撑满整列 */
 .submit-field-shrink { flex: 0 0 auto; min-width: 0; }
+/* 下拉类控件（项目 / WCA）按内容宽度收紧，不跟文本框一样铺满 */
+.submit-field-fit { flex: 0 0 auto; width: fit-content; min-width: 0; }
 .submit-block { width: 100%; margin-bottom: 12px; }
 
 /* —— 复用上次填写 —— */
