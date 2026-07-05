@@ -5,21 +5,34 @@
 // 由 store 的 loginOpen 控制,全局挂在 app/layout.tsx。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { X, Mail, Smartphone, Key, Loader2, LogOut, Link2, Unlink, UserRound } from 'lucide-react';
+import { X, Mail, Smartphone, Key, Loader2, LogOut, Link2, UserRound } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
 import {
   sendEmailCode, verifyEmailCode, sendPhoneCode, verifyPhoneCode,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
-  unlinkIdentity, fetchIdentities, fetchAuthProviders,
+  unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle,
   type Identity, type AuthProviders,
 } from '@/lib/account-api';
+import { requestGoogleAccessToken } from '@/lib/google-auth';
 import './login-modal.css';
 
 const ICON = 16;
 const CODE_LEN = 6;
 type Channel = 'email' | 'phone';
+
+/** Google 官方四色 "G" 标(内嵌 SVG,自包含,不依赖外部图标 CDN)。 */
+function GoogleGlyph({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z" />
+      <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z" />
+      <path fill="#FBBC05" d="M11.69 28.18A13.98 13.98 0 0 1 10.94 24c0-1.45.25-2.86.7-4.18v-5.7H4.34A21.99 21.99 0 0 0 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z" />
+      <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z" />
+    </svg>
+  );
+}
 
 /** Apple 风格分格验证码输入:6 个格子 + 高亮当前格 + 跳动光标。一个透明原生 input 承接
  *  键盘/粘贴/iOS 短信自动填充(autocomplete=one-time-code),格子只做展示、始终左到右填。 */
@@ -69,6 +82,8 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   if (m.includes('invalid phone')) return t('手机号格式不正确', 'Invalid phone number');
   if (m.includes('invalid input')) return t('输入有误,请检查', 'Invalid input');
   if (m.includes('send failed')) return t('发送失败,请稍后重试', 'Send failed — please try again');
+  if (m.includes('popup_closed')) return t('登录窗口已关闭', 'Sign-in window closed');
+  if (m.includes('popup_failed_to_open')) return t('无法打开登录窗口,请检查浏览器弹窗拦截', 'Could not open sign-in window — check your popup blocker');
   if (m.includes('http 404') || /http 5\d\d/.test(m)) return t('服务暂时不可用,请稍后重试', 'Service temporarily unavailable — please try again');
   return raw;
 }
@@ -170,24 +185,45 @@ function LoginTabs({ onClose }: { onClose: () => void }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
-  const [method, setMethod] = useState<'email' | 'phone' | 'wca'>('email');
-  // 服务端已配置的登录方式:未配的(email/sms env 缺)tab 隐藏,现在只亮 WCA;
-  // 配好 env 一 reload 即自动亮,不用改代码。拿不到默认全开(退化成旧行为)。
+  const [method, setMethod] = useState<'email' | 'phone' | 'wca' | 'google'>('email');
+  // 服务端已配置的登录方式:未配的(email/sms env 缺、google 没配 client id)tab 隐藏,现在只亮 WCA;
+  // 配好 env 一 reload 即自动亮,不用改代码。拿不到默认全开 email/phone/wca(退化成旧行为),
+  // google 拿不到 clientId 没法弹窗,不能乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
-  const avail = providers ?? { email: true, phone: true, wca: true };
+  const avail = providers ?? { email: true, phone: true, wca: true, googleClientId: null };
+  const [gBusy, setGBusy] = useState(false);
+  const [gError, setGError] = useState<string | null>(null);
 
   const tabs = ([
-    { key: 'email', icon: <Mail size={ICON} />, label: t('邮箱', 'Email') },
-    { key: 'phone', icon: <Smartphone size={ICON} />, label: t('手机', 'Phone') },
-    { key: 'wca', icon: <Key size={ICON} />, label: 'WCA' },
-  ] as const).filter((tb) => avail[tb.key]);
+    { key: 'email' as const, icon: <Mail size={ICON} />, label: t('邮箱', 'Email'), on: avail.email },
+    { key: 'phone' as const, icon: <Smartphone size={ICON} />, label: t('手机', 'Phone'), on: avail.phone },
+    { key: 'wca' as const, icon: <Key size={ICON} />, label: 'WCA', on: true },
+    { key: 'google' as const, icon: <GoogleGlyph size={ICON} />, label: 'Google', on: !!avail.googleClientId },
+  ]).filter((tb) => tb.on);
 
   // 当前选中的方式若被隐藏(如默认 email 但未开放),落到第一个可用 tab。
   useEffect(() => {
-    if (providers && !avail[method]) setMethod(tabs[0]?.key ?? 'wca');
+    if (providers && !tabs.some((tb) => tb.key === method)) setMethod(tabs[0]?.key ?? 'wca');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providers]);
+
+  const handleGoogleLogin = async () => {
+    const clientId = avail.googleClientId;
+    if (!clientId) return;
+    setGError(null);
+    setGBusy(true);
+    try {
+      const accessToken = await requestGoogleAccessToken(clientId);
+      const r = await loginGoogle(accessToken);
+      applySession(r.token, r.user);
+      onClose();
+    } catch (e) {
+      setGError(authErrorText(e instanceof Error ? e.message : String(e), t));
+    } finally {
+      setGBusy(false);
+    }
+  };
 
   return (
     <>
@@ -224,6 +260,16 @@ function LoginTabs({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       )}
+      {method === 'google' && avail.googleClientId && (
+        <div className="lm-flow">
+          <p className="lm-hint">{t('用 Google 账号登录。', 'Sign in with your Google account.')}</p>
+          {gError && <p className="lm-error">{gError}</p>}
+          <button className="lm-primary" disabled={gBusy} onClick={() => void handleGoogleLogin()}>
+            {gBusy ? <Loader2 size={ICON} className="lm-spin" /> : <GoogleGlyph size={ICON} />}
+            {t('用 Google 登录', 'Continue with Google')}
+          </button>
+        </div>
+      )}
     </>
   );
 }
@@ -247,10 +293,15 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [linking, setLinking] = useState<'email' | 'phone' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // 未配置的登录方式不给「绑定」入口(绑定同样会 503)。默认全开,退化成旧行为。
+  // 解绑二次确认:先点「解绑」进入待确认态,再点「确定」才真正调用。
+  const [confirmKey, setConfirmKey] = useState<string | null>(null);
+  const [unlinking, setUnlinking] = useState(false);
+  // 未配置的登录方式不给「绑定」入口(绑定同样会 503)。默认全开 email/phone/wca,退化成旧行为;
+  // googleClientId 拿不到没法弹窗,不能乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
-  const avail = providers ?? { email: true, phone: true, wca: true };
+  const avail = providers ?? { email: true, phone: true, wca: true, googleClientId: null };
+  const [linkingGoogle, setLinkingGoogle] = useState(false);
 
   const reload = useCallback(async () => {
     setIdentities(await fetchIdentities());
@@ -258,14 +309,19 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
   useEffect(() => { void reload(); }, [reload]);
 
   const hasWca = (identities ?? []).some((i) => i.provider === 'wca');
+  const hasGoogle = (identities ?? []).some((i) => i.provider === 'google');
 
   const doUnlink = async (provider: string, providerUid: string) => {
     setError(null);
+    setUnlinking(true);
     try {
       await unlinkIdentity(provider, providerUid);
+      setConfirmKey(null);
       await reload();
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+    } finally {
+      setUnlinking(false);
     }
   };
 
@@ -273,6 +329,22 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
     // 告诉 callback 页这次是「绑定」而非「登录」。
     try { sessionStorage.setItem('wca_oauth_intent', 'link'); } catch { /* ignore */ }
     loginWithWca();
+  };
+
+  const linkGoogleStart = async () => {
+    const clientId = avail.googleClientId;
+    if (!clientId) return;
+    setError(null);
+    setLinkingGoogle(true);
+    try {
+      const accessToken = await requestGoogleAccessToken(clientId);
+      await linkGoogle(accessToken);
+      await reload();
+    } catch (e) {
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+    } finally {
+      setLinkingGoogle(false);
+    }
   };
 
   return (
@@ -293,19 +365,43 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
         ) : (
           identities.map((i) => {
             const lab = PROVIDER_LABEL[i.provider] ?? { zh: i.provider, en: i.provider };
+            const key = `${i.provider}:${i.providerUid}`;
+            const onlyOne = identities.length <= 1;
             return (
-              <div key={`${i.provider}:${i.providerUid}`} className="lm-idrow">
+              <div key={key} className="lm-idrow">
                 <span className="lm-idprov">{lang === 'zh' ? lab.zh : lab.en}</span>
                 <span className="lm-iduid">{i.providerUid}</span>
-                <button
-                  type="button"
-                  className="lm-unlink"
-                  disabled={identities.length <= 1}
-                  title={identities.length <= 1 ? t('不能解绑唯一的登录方式', 'Cannot unlink your only method') : t('解绑', 'Unlink')}
-                  onClick={() => void doUnlink(i.provider, i.providerUid)}
-                >
-                  <Unlink size={14} />
-                </button>
+                {confirmKey === key ? (
+                  <div className="lm-unlink-confirm">
+                    <span className="lm-unlink-confirm-text">{t('确定解绑?', 'Unlink?')}</span>
+                    <button
+                      type="button"
+                      className="lm-unlink-yes"
+                      disabled={unlinking}
+                      onClick={() => void doUnlink(i.provider, i.providerUid)}
+                    >
+                      {unlinking ? <Loader2 size={12} className="lm-spin" /> : t('确定', 'Yes')}
+                    </button>
+                    <button
+                      type="button"
+                      className="lm-unlink-no"
+                      disabled={unlinking}
+                      onClick={() => setConfirmKey(null)}
+                    >
+                      {t('取消', 'Cancel')}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="lm-unlink"
+                    disabled={onlyOne}
+                    title={onlyOne ? t('不能解绑唯一的登录方式', 'Cannot unlink your only method') : undefined}
+                    onClick={() => setConfirmKey(key)}
+                  >
+                    {t('解绑', 'Unlink')}
+                  </button>
+                )}
               </div>
             );
           })
@@ -314,7 +410,7 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
 
       {error && <p className="lm-error">{error}</p>}
 
-      {(avail.email || avail.phone || !hasWca) && (
+      {(avail.email || avail.phone || !hasWca || (avail.googleClientId && !hasGoogle)) && (
         <div className="lm-linkrow">
           <span className="lm-linktitle">{t('绑定新方式', 'Link a method')}</span>
           <div className="lm-linkbtns">
@@ -331,6 +427,11 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
             {!hasWca && (
               <button type="button" className="lm-chip" onClick={linkWcaStart}>
                 <Link2 size={14} /> WCA
+              </button>
+            )}
+            {avail.googleClientId && !hasGoogle && (
+              <button type="button" className="lm-chip" disabled={linkingGoogle} onClick={() => void linkGoogleStart()}>
+                {linkingGoogle ? <Loader2 size={14} className="lm-spin" /> : <GoogleGlyph size={14} />} Google
               </button>
             )}
           </div>

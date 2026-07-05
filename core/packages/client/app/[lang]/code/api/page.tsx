@@ -78,6 +78,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/auth/link/phone/send', g: 'login', zh: '给当前账号发绑定手机验证码', en: 'Send code to link a phone' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/phone/verify', g: 'login', zh: '绑定手机到当前账号', en: 'Link phone to current account' },
   { d: 'auth', m: 'POST', p: '/v1/auth/link/wca', g: 'login', zh: '用 WCA token 绑定 WCA 身份', en: 'Link WCA identity via access token' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/google', g: 'public', zh: '用 Google access_token 登录/注册', en: 'Sign in/up via Google access token' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/link/google', g: 'login', zh: '用 Google access_token 绑定当前账号', en: 'Link Google identity via access token' },
   { d: 'auth', m: 'POST', p: '/v1/auth/unlink', g: 'login', zh: '解绑一个登录方式(拒绝最后一个)', en: 'Unlink a login method (not the last)' },
   { d: 'auth', m: 'GET', p: '/v1/auth/identities', g: 'login', zh: '当前账号已绑定的身份列表', en: 'Linked identities of current account' },
 
