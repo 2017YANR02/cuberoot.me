@@ -109,6 +109,6 @@ export function buildReconSubmitHref(p: ReconSubmitPrefill): string {
   if (p.compDate) params.set('date', p.compDate);
   if (p.rawTimeSec != null) params.set('rawTime', String(p.rawTimeSec));
   if (p.singleRecordTag) params.set('singleRecord', p.singleRecordTag);
-  params.set('official', '1');
+  params.set('official', 'wca');
   return `/recon/submit?${params.toString()}`;
 }

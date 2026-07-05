@@ -13,7 +13,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import type { ReconSolve } from '@cuberoot/shared';
+import type { ReconSolve, ReconOfficial } from '@cuberoot/shared';
 import {
   getRecon, addRecon, updateRecon, deleteRecon,
   checkDuplicate, listRecons, resolveShortUrl,
@@ -175,7 +175,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const solutionRef = useRef<HTMLTextAreaElement>(null);
 
   const [form, setForm] = useState<Partial<ReconSolve>>({
-    official: true,
+    official: 'wca',
     event: '3x3',
     method: 'CFOP',
     person: '',
@@ -399,9 +399,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     const solveNumRaw = searchParams?.get('solveNum');
     const sn = solveNumRaw ? Number(solveNumRaw) : NaN;
     const dateRaw = searchParams?.get('date') || '';
+    // official 兼容新枚举与旧书签 (?official=1)。
+    const offParam = searchParams?.get('official');
+    const seededOfficial: ReconOfficial | undefined =
+      offParam === 'wca' || offParam === '1' ? 'wca'
+      : offParam === 'non_wca' ? 'non_wca'
+      : offParam === 'practice' || offParam === '0' ? 'practice'
+      : undefined;
     setForm(prev => ({
       ...prev,
-      official: searchParams?.get('official') === '1' ? true : prev.official,
+      official: seededOfficial ?? prev.official,
       event: EVENTS.includes(ev) ? ev : prev.event,
       person: searchParams?.get('person') || prev.person,
       personId,
@@ -1449,17 +1456,18 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 )}
                 <label className={`submit-field submit-field-fit${reusedCls('official')}`}>
                   <span className="submit-label">WCA</span>
-                  <select className="submit-field-select" value={form.official ? '1' : '0'} onChange={e => {
-                    const isOfficial = e.target.value === '1';
-                    setField('official', isOfficial);
-                    // 切到「非 WCA」且国家还没填 → 默认填登录用户(WCA ID)所在国家。
-                    if (!isOfficial && !form.country) {
+                  <select className="submit-field-select" value={form.official ?? 'wca'} onChange={e => {
+                    const next = e.target.value as ReconOfficial;
+                    setField('official', next);
+                    // 切到非 WCA(非WCA比赛 / 练习)且国家还没填 → 默认填登录用户所在国家。
+                    if (next !== 'wca' && !form.country) {
                       const iso2 = (authUser?.country || personFlagIso2(authUser?.wcaId ?? '')).toLowerCase();
                       if (iso2) setField('country', iso2);
                     }
                   }}>
-                    <option value="1">WCA</option>
-                    <option value="0">{t('recon.badge.practice')}</option>
+                    <option value="wca">{tr({ zh: 'WCA比赛', en: 'WCA' })}</option>
+                    <option value="non_wca">{tr({ zh: '非WCA比赛', en: 'Non-WCA' })}</option>
+                    <option value="practice">{t('recon.badge.practice')}</option>
                   </select>
                 </label>
                 <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}${reusedCls('comp')}`}>
@@ -1478,8 +1486,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       onPick={applyPickedComp}
                       isZh={isZh}
                       hideFuture
-                      disableSuggestions={!form.official}
-                      presets={!form.official ? [
+                      disableSuggestions={form.official !== 'wca'}
+                      presets={form.official === 'practice' ? [
                         { icon: <Home size={14} />, label: tr({ zh: '家', en: 'Home' }), value: tr({ zh: '家', en: 'Home' }) },
                       ] : undefined}
                     />
@@ -1519,8 +1527,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </div>
               )}
 
-              {/* 非 WCA 比赛:补国家(选完显示国旗) + 城市,WCA 比赛由所选比赛自动带出 */}
-              {!form.official && (
+              {/* 非 WCA(非WCA比赛 / 练习):补国家(选完显示国旗) + 城市,WCA 比赛由所选比赛自动带出 */}
+              {form.official !== 'wca' && (
                 <div className="submit-row">
                   <label className="submit-field">
                     <span className="submit-label">{tr({ zh: '国家 / 地区', en: 'Country'

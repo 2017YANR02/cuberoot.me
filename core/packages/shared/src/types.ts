@@ -112,10 +112,13 @@ export interface CompPersonalRecordSlot {
  * 复盘记录主体——对齐数据库 recons 表（40+ 列）
  * NOTE: 字段名 camelCase，与后端 rowToJson 输出一致
  */
+/** 复盘性质:wca=WCA 官方比赛, non_wca=非 WCA 比赛, practice=练习(个人/家用还原) */
+export type ReconOfficial = 'wca' | 'non_wca' | 'practice';
+
 export interface ReconSolve {
   id: number;
-  /** 是否 WCA 官方比赛 */
-  official: boolean;
+  /** 比赛性质(见 ReconOfficial);旧布尔 official=1 迁移为 'wca',=0 为 'practice' */
+  official: ReconOfficial;
   /** 项目（如 "3x3", "2x2", "3bld"） */
   event: string;
   /** 解法方法（如 "CFOP", "Roux", "ZB"） */
