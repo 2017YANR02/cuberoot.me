@@ -1,10 +1,11 @@
 'use client';
 
 /**
- * Shared paint toolbar for the 3×3 state painters (2D net + 3D cube).
- * Color swatches + Empty / Clean / Random / Solve, plus the validity error and
- * the transient per-piece reject flash. Both painter views render this below
- * their canvas so the controls stay identical.
+ * Shared paint controls for the 3×3 state painters (2D net + 3D cube).
+ * Split in two so callers can place the color palette beside the canvas and
+ * the action buttons (Empty/Clean/Random/Solve) below, spanning both:
+ *   - PaintPalette: color swatches, stacked one per row.
+ *   - PaintActions: Empty/Clean/Random/Solve + the validity error / reject flash.
  */
 
 import { useMemo } from 'react';
@@ -14,14 +15,52 @@ import { Eraser, RotateCcw, Shuffle, Sparkles } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { validateFacelet } from './facelet';
 import {
-  FACES, COLOR_HEX, EMPTY_COLOR_HEX, EMPTY_FACELET, SOLVED_FACELET,
-  friendlyValidErr, randomLegalFacelet, type PaintColor,
+  COLOR_HEX, EMPTY_COLOR_HEX, EMPTY_FACELET, SOLVED_FACELET,
+  friendlyValidErr, randomLegalFacelet, type PaintColor, type FaceLetter,
 } from './_paint-shared';
 
-export interface PaintToolbarProps {
-  facelet: string;
+// Palette display order (top→bottom): gray, white, yellow, green, blue, red, orange.
+const PALETTE_ORDER: FaceLetter[] = ['U', 'D', 'F', 'B', 'R', 'L'];
+
+export interface PaintPaletteProps {
   activeColor: PaintColor;
   onActiveColorChange: (c: PaintColor) => void;
+}
+
+export function PaintPalette({ activeColor, onActiveColorChange }: PaintPaletteProps) {
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  const t = (zh: string, en: string) => (isZh ? zh : en);
+
+  return (
+    <div className="vc-paint-palette">
+      <style>{PALETTE_CSS}</style>
+      <button
+        key="X"
+        type="button"
+        className={`vc-paint-swatch vc-paint-swatch-empty${activeColor === 'X' ? ' is-active' : ''}`}
+        style={{ background: EMPTY_COLOR_HEX }}
+        onClick={() => onActiveColorChange('X')}
+        title={t('空缺(灰)', 'Empty (gray)')}
+        aria-label="empty"
+      />
+      {PALETTE_ORDER.map((f) => (
+        <button
+          key={f}
+          type="button"
+          className={`vc-paint-swatch${activeColor === f ? ' is-active' : ''}`}
+          style={{ background: COLOR_HEX[f] }}
+          onClick={() => onActiveColorChange(f)}
+          title={f}
+          aria-label={`color ${f}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+export interface PaintActionsProps {
+  facelet: string;
   onChange: (next: string) => void;
   onSolve?: (facelet: string) => void;
   solveLabel?: { zh: string; en: string };
@@ -31,9 +70,9 @@ export interface PaintToolbarProps {
   hideSolve?: boolean;
 }
 
-export default function PaintToolbar({
-  facelet, activeColor, onActiveColorChange, onChange, onSolve, solveLabel, rejectMsg, hideSolve,
-}: PaintToolbarProps) {
+export function PaintActions({
+  facelet, onChange, onSolve, solveLabel, rejectMsg, hideSolve,
+}: PaintActionsProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -55,33 +94,8 @@ export default function PaintToolbar({
 
   return (
     <div className="vc-paint-controls">
-      <style>{INLINE_CSS}</style>
-      <div className="vc-paint-toolbar">
-        <span className="vc-paint-toolbar-label">{t('涂色', 'Paint')}:</span>
-        {FACES.map((f) => (
-          <button
-            key={f}
-            type="button"
-            className={`vc-paint-swatch${activeColor === f ? ' is-active' : ''}`}
-            style={{ background: COLOR_HEX[f] }}
-            onClick={() => onActiveColorChange(f)}
-            title={f}
-            aria-label={`color ${f}`}
-          >
-            <span className="vc-paint-swatch-letter">{f}</span>
-          </button>
-        ))}
-        <button
-          key="X"
-          type="button"
-          className={`vc-paint-swatch vc-paint-swatch-empty${activeColor === 'X' ? ' is-active' : ''}`}
-          style={{ background: EMPTY_COLOR_HEX }}
-          onClick={() => onActiveColorChange('X')}
-          title={t('空缺(灰)', 'Empty (gray)')}
-          aria-label="empty"
-        >
-          <span className="vc-paint-swatch-letter vc-paint-swatch-letter-empty">?</span>
-        </button>
+      <style>{ACTIONS_CSS}</style>
+      <div className="vc-paint-actions">
         <button type="button" className="vc-paint-btn" onClick={() => onChange(EMPTY_FACELET)} title={t('全部置灰(保留中心)', 'Clear all stickers (centers preserved)')}>
           <Eraser size={14} />
           <span>{t('清空', 'Empty')}</span>
@@ -121,16 +135,9 @@ export default function PaintToolbar({
   );
 }
 
-const INLINE_CSS = `
-.vc-paint-controls {
-  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
-  width: 100%;
-}
-.vc-paint-toolbar {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.4rem;
-}
-.vc-paint-toolbar-label {
-  font-size: 0.85rem; color: var(--text-muted, #aaa);
+const PALETTE_CSS = `
+.vc-paint-palette {
+  display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
 }
 .vc-paint-swatch {
   width: 30px; height: 30px;
@@ -145,13 +152,15 @@ const INLINE_CSS = `
   border-color: var(--accent, #ff8800);
   box-shadow: 0 0 0 2px rgba(255,136,0,0.3);
 }
-.vc-paint-swatch-letter {
-  font-size: 0.75rem; font-weight: 700;
-  color: rgba(0,0,0,0.85);
-  pointer-events: none;
+`;
+
+const ACTIONS_CSS = `
+.vc-paint-controls {
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  width: 100%;
 }
-.vc-paint-swatch-letter-empty {
-  color: rgba(255,255,255,0.85);
+.vc-paint-actions {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.4rem;
 }
 .vc-paint-btn {
   display: inline-flex; align-items: center; gap: 0.3rem;

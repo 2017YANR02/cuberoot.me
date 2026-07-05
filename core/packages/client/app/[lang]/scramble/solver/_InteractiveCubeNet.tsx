@@ -15,7 +15,7 @@ import {
   FACES, COLOR_HEX, EMPTY_COLOR_HEX, faceletIdx, usePainter,
   type FaceLetter, type PaintColor,
 } from './_paint-shared';
-import PaintToolbar from './_PaintToolbar';
+import { PaintPalette, PaintActions } from './_PaintToolbar';
 
 // Re-exported for back-compat with existing importers.
 export { EMPTY_FACELET } from './_paint-shared';
@@ -66,36 +66,38 @@ export default function InteractiveCubeNet({
   return (
     <div className="vc-net-paint">
       <style>{INLINE_CSS}</style>
-      <div className="vc-net-canvas" style={{ width: totalW, height: totalH }}>
-        {stickers.map(({ idx, face, r, c }) => {
-          const [baseR, baseC] = FACE_BASE[face];
-          const px = 8 + (baseC * 3 + c) * ss;
-          const py = 8 + (baseR * 3 + r) * ss;
-          const ch = facelet[idx] as PaintColor;
-          const color = ch === 'X' ? EMPTY_COLOR_HEX : (COLOR_HEX[ch as FaceLetter] ?? '#404040');
-          const isCenter = r === 1 && c === 1;
-          return (
-            <button
-              key={idx}
-              type="button"
-              className={`vc-net-sticker${isCenter ? ' is-center' : ''}`}
-              style={{
-                left: px, top: py, width: ss - 1, height: ss - 1,
-                background: color,
-              }}
-              onClick={() => !isCenter && paint(idx)}
-              disabled={isCenter}
-              title={`${face}${r * 3 + c + 1}`}
-              aria-label={`Sticker ${face}${r * 3 + c + 1} = ${ch}`}
-            />
-          );
-        })}
+      <div className="vc-net-body">
+        <div className="vc-net-canvas" style={{ width: totalW, height: totalH }}>
+          {stickers.map(({ idx, face, r, c }) => {
+            const [baseR, baseC] = FACE_BASE[face];
+            const px = 8 + (baseC * 3 + c) * ss;
+            const py = 8 + (baseR * 3 + r) * ss;
+            const ch = facelet[idx] as PaintColor;
+            const color = ch === 'X' ? EMPTY_COLOR_HEX : (COLOR_HEX[ch as FaceLetter] ?? '#404040');
+            const isCenter = r === 1 && c === 1;
+            return (
+              <button
+                key={idx}
+                type="button"
+                className={`vc-net-sticker${isCenter ? ' is-center' : ''}`}
+                style={{
+                  left: px, top: py, width: ss - 1, height: ss - 1,
+                  background: color,
+                }}
+                onClick={() => !isCenter && paint(idx)}
+                disabled={isCenter}
+                title={`${face}${r * 3 + c + 1}`}
+                aria-label={`Sticker ${face}${r * 3 + c + 1} = ${ch}`}
+              />
+            );
+          })}
+        </div>
+
+        <PaintPalette activeColor={activeColor} onActiveColorChange={onActiveColorChange} />
       </div>
 
-      <PaintToolbar
+      <PaintActions
         facelet={facelet}
-        activeColor={activeColor}
-        onActiveColorChange={onActiveColorChange}
         onChange={onChange}
         onSolve={onSolve}
         solveLabel={solveLabel}
@@ -109,6 +111,10 @@ export default function InteractiveCubeNet({
 const INLINE_CSS = `
 .vc-net-paint {
   display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+}
+.vc-net-body {
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center;
+  gap: 1rem;
 }
 .vc-net-canvas {
   position: relative;

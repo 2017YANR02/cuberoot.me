@@ -26,7 +26,7 @@ import type World from '@/app/[lang]/sim/engine/world';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Toucher from '@/app/[lang]/sim/Toucher';
 import { usePainter, type PaintColor } from './_paint-shared';
-import PaintToolbar from './_PaintToolbar';
+import { PaintPalette, PaintActions } from './_PaintToolbar';
 
 // cuber FACE enum: L0 R1 D2 U3 B4 F5
 const FACE = { L: 0, R: 1, D: 2, U: 3, B: 4, F: 5 } as const;
@@ -210,28 +210,32 @@ export default function Interactive3DCube({
   return (
     <div className="vc-cube3d">
       <style>{INLINE_CSS}</style>
-      <div className="vc-cube3d-stage">
-        <div
-          ref={containerRef}
-          className="vc-cube3d-canvas"
-          style={{ width: pixelSize, height: pixelSize }}
-        />
-        <button
-          type="button"
-          className="vc-cube3d-reset"
-          onClick={resetView}
-          title={t('重置视角', 'Reset view')}
-          aria-label={t('重置视角', 'Reset view')}
-        >
-          <RotateCcw size={14} />
-        </button>
-      </div>
-      <span className="vc-cube3d-hint">{t('拖动旋转 · 点击贴纸涂色', 'Drag to rotate · tap a sticker to paint')}</span>
+      <div className="vc-cube3d-body">
+        <div className="vc-cube3d-stage-wrap">
+          <div className="vc-cube3d-stage">
+            <div
+              ref={containerRef}
+              className="vc-cube3d-canvas"
+              style={{ width: pixelSize, height: pixelSize }}
+            />
+            <button
+              type="button"
+              className="vc-cube3d-reset"
+              onClick={resetView}
+              title={t('重置视角', 'Reset view')}
+              aria-label={t('重置视角', 'Reset view')}
+            >
+              <RotateCcw size={14} />
+            </button>
+          </div>
+          <span className="vc-cube3d-hint">{t('拖动旋转 · 点击贴纸涂色', 'Drag to rotate · tap a sticker to paint')}</span>
+        </div>
 
-      <PaintToolbar
+        <PaintPalette activeColor={activeColor} onActiveColorChange={onActiveColorChange} />
+      </div>
+
+      <PaintActions
         facelet={facelet}
-        activeColor={activeColor}
-        onActiveColorChange={onActiveColorChange}
         onChange={onChange}
         onSolve={onSolve}
         solveLabel={solveLabel}
@@ -246,6 +250,13 @@ const INLINE_CSS = `
 .vc-cube3d {
   display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
   width: 100%;
+}
+.vc-cube3d-body {
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center;
+  gap: 1rem;
+}
+.vc-cube3d-stage-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
 }
 .vc-cube3d-stage { position: relative; line-height: 0; }
 .vc-cube3d-canvas {

@@ -20,7 +20,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Loader2, Trash2, Upload, Download, Sparkles, Shuffle, X } from 'lucide-react';
+import { Loader2, Trash2, Upload, Download, Sparkles, Shuffle, X, HelpCircle } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { streamApiUrl } from '@/lib/api-base';
 import { authHeaders } from '@/lib/admin-api';
@@ -39,6 +39,8 @@ import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from './_Interacti
 import Interactive3DCube from './_Interactive3DCube';
 import { useT } from "@/hooks/useT";
 import BoolToggle from '@/components/BoolToggle';
+import PillToggle from '@/components/PillToggle/PillToggle';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import SolveTabs from "../_components/SolveTabs";
 
 interface SolverInfo {
@@ -188,7 +190,7 @@ export default function Cube3Solver() {
   // server-side opt6 table (no download, login-gated). Same optimal solution.
   const [solveSource, setSolveSource] = useQueryState(
     'via',
-    parseAsStringEnum<'local' | 'cloud'>(['local', 'cloud']).withDefault('local'),
+    parseAsStringEnum<'local' | 'cloud'>(['local', 'cloud']).withDefault('cloud'),
   );
   const [cloudBusy, setCloudBusy] = useState(false);
   const [cloudStatus, setCloudStatus] = useState<string | null>(null);
@@ -864,37 +866,6 @@ export default function Cube3Solver() {
           >
             <Sparkles size={14} /> {t('求打乱', 'Derive scramble')}
           </button>
-          {busy ? (
-            <button className="btn-cancel" onClick={cloudMode ? cancelCloud : cancelCubeopt} title={cloudMode
-              ? t('中止云端请求。', 'Abort the cloud request.')
-              : t('终止当前任务。会重建 wasm,prun 表会丢失需重新生成或上传。',
-                  'Abort current task. Wasm will be reset; prun table is lost and must be re-generated or uploaded.')}>
-              <X size={14} /> {t('取消', 'Cancel')}
-            </button>
-          ) : cloudMode ? (
-            <button
-              className="btn-primary"
-              disabled={solveDisabled}
-              onClick={cloudSolve}
-              title={t('用云服务器求 HTM 最少步解(opt6,免下载表)', 'Solve optimally on the server (opt6, no download)')}
-            >
-              {t('云端求解', 'Solve on server')}
-            </button>
-          ) : (
-            <button
-              className="btn-primary"
-              disabled={solveDisabled}
-              onClick={startSolve}
-              title={readyState === 'need-init' ? t(
-                '会先自动生成 prun 表(几十秒)再求最优解',
-                'Will auto-generate the prun table (tens of seconds) then solve'
-              ) : t('用 cubeopt 求 HTM 最少步解', 'Solve optimally with cubeopt')}
-            >
-              {readyState === 'need-init'
-                ? <><Sparkles size={14} /> {t('生成表+求最优', 'Gen Table + Solve')}</>
-                : <>Solve</>}
-            </button>
-          )}
         </div>
         <div className="row scramble-gen">
           <span className="lbl">{t('随机', 'Random')}</span>
@@ -920,61 +891,38 @@ export default function Cube3Solver() {
         />
       </section>
 
-      {solveResults.size > 0 && (
-        <section className="cubeopt-card">
-          <div className="row">
-            <span className="lbl">{t('解 (按输入顺序)', 'Solutions (input order)')}</span>
-            <span className="paint-hint">
-              {t(
-                'cubeopt 是按完成顺序输出的;此处按输入序号 1..N 排好,并标注步数。',
-                'cubeopt outputs in finish order; this panel re-sorts by input index 1..N with move counts.'
-              )}
-            </span>
-            <button className="btn-icon" onClick={() => {
-              const txt = Array.from(solveResults.entries()).sort((a, b) => a[0] - b[0])
-                .map(([n, alg]) => `${n}. ${alg}`).join('\n');
-              navigator.clipboard?.writeText(txt);
-            }} title={t('复制全部', 'Copy all')}>
-              <Sparkles size={14} />
-            </button>
-          </div>
-          <ol className="solutions-list">
-            {Array.from(solveResults.entries()).sort((a, b) => a[0] - b[0]).map(([n, alg]) => {
-              const moveCount = alg.split(/\s+/).filter(Boolean).length;
-              return (
-                <li key={n}>
-                  <span className="sol-idx">{n}.</span>
-                  <code className="sol-alg">{alg}</code>
-                  <span className="sol-count">({moveCount})</span>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-      )}
-
       <section className="cubeopt-card cubeopt-advanced">
         <div className="advanced-head">
           <span>{t('高级设置', 'Advanced')}</span>
-          <span className="advanced-summary">
-            {cloudMode
-              ? <>{t('云端 opt6', 'Cloud opt6')}{cloudBusy && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}</>
-              : <>
-                  {solverName} · {nThreads}{t('线程', 'threads')}
-                  {readyState === 'ready' && <> · {t('就绪', 'ready')}</>}
-                  {readyState === 'need-init' && <> · {t('表未生成', 'table not built')}</>}
-                  {readyState === 'busy' && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}
-                </>}
-          </span>
+          {!cloudMode && (
+            <span className="advanced-summary">
+              {solverName} · {nThreads}{t('线程', 'threads')}
+              {readyState === 'ready' && <> · {t('就绪', 'ready')}</>}
+              {readyState === 'need-init' && <> · {t('表未生成', 'table not built')}</>}
+              {readyState === 'busy' && <> · <Loader2 size={12} className="spinning" /> {t('忙', 'busy')}</>}
+            </span>
+          )}
         </div>
         <>
             <div className="row">
-              <span className="lbl">{t('求解来源', 'Solve via')}</span>
-              <select className="ctl" value={solveSource} disabled={busy}
-                onChange={(e) => setSolveSource(e.target.value as 'local' | 'cloud')}>
-                <option value="local">{t('本地(下载表,无限制)', 'Local (download table, unlimited)')}</option>
-                <option value="cloud">{t('云端(opt6,免下载,需登录)', 'Cloud (opt6, no download, login)')}</option>
-              </select>
+              <PillToggle
+                value={cloudMode}
+                onChange={(v) => setSolveSource(v ? 'cloud' : 'local')}
+                onLabel={t('云端', 'Cloud')}
+                offLabel={t('本地', 'Local')}
+                ariaLabel={t('求解来源', 'Solve via')}
+                disabled={busy}
+              />
+              <InfoTooltip
+                icon={HelpCircle}
+                content={cloudMode ? t(
+                  '云端用服务器的 opt6 表(1.9G)求最优解,解和本地各档完全一样,只是免你下载多 GB 的表。一次最多 5 条;多数几秒出解,最难的打乱(19-20 步最优)在 2 核服务器上可能要 1 分钟左右,串行排队。每个 IP 每 5 分钟最多 30 次,管理员不限。',
+                  'The server solves with its opt6 table (1.9G). The solution is identical to every local table — this just saves you the multi-GB download. Up to 5 scrambles at once; most finish in seconds, but the hardest scrambles (19-20 move optimal) can take ~1 min on the 2-core server, processed in a serial queue. Each IP gets up to 30 requests per 5 min; admins are exempt.'
+                ) : t(
+                  '本地在浏览器里生成或下载一份求解表(30M~15G,存到本机,视下面 Solver 档位而定),不用登录、条数不限;下次打开可直接上传复用,免重新生成。',
+                  'Local generates or downloads a solver table in your browser (30M~15G depending on the Solver tier below), stored on your machine — no login, no scramble-count limit; re-upload it next time to skip regenerating.'
+                )}
+              />
               {!cloudMode && (<>
                 <span className="lbl">Solver</span>
                 <select className="ctl" value={solverName} disabled={readyState === 'busy'}
@@ -983,19 +931,41 @@ export default function Cube3Solver() {
                     <option key={o.value} value={o.value}>{o.value} ({o.size})</option>
                   ))}
                 </select>
-                <span className="size-badge">{SOLVER_OPTIONS.find(o => o.value === solverName)?.size}</span>
               </>)}
+              {busy ? (
+                <button className="btn-cancel" onClick={cloudMode ? cancelCloud : cancelCubeopt} title={cloudMode
+                  ? t('中止云端请求。', 'Abort the cloud request.')
+                  : t('终止当前任务。会重建 wasm,prun 表会丢失需重新生成或上传。',
+                      'Abort current task. Wasm will be reset; prun table is lost and must be re-generated or uploaded.')}>
+                  <X size={14} /> {t('取消', 'Cancel')}
+                </button>
+              ) : cloudMode ? (
+                <button
+                  className="btn-primary"
+                  disabled={solveDisabled}
+                  onClick={cloudSolve}
+                  title={t('用云服务器求 HTM 最少步解(opt6,免下载表)', 'Solve optimally on the server (opt6, no download)')}
+                >
+                  {t('求解', 'Solve')}
+                </button>
+              ) : (
+                <button
+                  className="btn-primary"
+                  disabled={solveDisabled}
+                  onClick={startSolve}
+                  title={readyState === 'need-init' ? t(
+                    '会先自动生成 prun 表(几十秒)再求最优解',
+                    'Will auto-generate the prun table (tens of seconds) then solve'
+                  ) : t('用 cubeopt 求 HTM 最少步解', 'Solve optimally with cubeopt')}
+                >
+                  {readyState === 'need-init'
+                    ? <><Sparkles size={14} /> {t('求解', 'Solve')}</>
+                    : t('求解', 'Solve')}
+                </button>
+              )}
             </div>
-            {cloudMode && (
-              <p className="cloud-note">
-                {t(
-                  '云端用服务器的 opt6 表(1.9G)求最优解,解和本地各档完全一样,只是免你下载多 GB 的表。一次最多 5 条;多数几秒出解,最难的打乱(19-20 步最优)在 2 核服务器上可能要 1 分钟左右,串行排队。每个 IP 每 5 分钟最多 30 次,管理员不限。',
-                  'The server solves with its opt6 table (1.9G). The solution is identical to every local table — this just saves you the multi-GB download. Up to 5 scrambles at once; most finish in seconds, but the hardest scrambles (19-20 move optimal) can take ~1 min on the 2-core server, processed in a serial queue. Each IP gets up to 30 requests per 5 min; admins are exempt.'
-                )}
-              </p>
-            )}
             {cloudMode && cloudStatus && (
-              <div className="cubeopt-info">
+              <div className="cubeopt-info cubeopt-info-fit">
                 {cloudBusy && <Loader2 size={14} className="spinning" />}
                 <span>{cloudStatus}</span>
                 {cloudBusy && <span className="cloud-timer">{Math.floor(cloudLiveMs / 1000)}s</span>}
@@ -1008,8 +978,6 @@ export default function Cube3Solver() {
             )}
             {!cloudMode && (<>
             <div className="row">
-              <span className="lbl">{t('Prun 表', 'Prun Table')}</span>
-              <span className="table-name">{solverInfo?.table_name ?? t('未就绪', 'Not Ready')}</span>
               <BoolToggle
                 className="auto-dl"
                 value={autoDownloadTable}
@@ -1037,7 +1005,14 @@ export default function Cube3Solver() {
                   <option key={n} value={n}>{n}</option>
                 ))}
               </select>
-              <span className="lbl">{t('并发块', 'Concurrent')}</span>
+              <span className="lbl">{t('同时求解', 'Parallel solves')}</span>
+              <InfoTooltip
+                icon={HelpCircle}
+                content={t(
+                  '同时求解几个打乱;每个打乱能分到的线程数=线程数÷此值。设为 1 表示所有线程一起攻一个打乱,速度最快但一次只出一个解;调大可以同时出多个解,但单个打乱会变慢。',
+                  'How many scrambles to solve at once; each cube gets (threads ÷ this value) threads. 1 = all threads attack one cube at a time (fastest per cube); raising it solves several cubes in parallel but each one is slower.'
+                )}
+              />
               <select className="ctl-sm" value={nGroup} onChange={(e) => setNGroup(parseInt(e.target.value, 10))}>
                 {nGroupOptions.map(n => <option key={n} value={n}>{n}</option>)}
               </select>
@@ -1051,17 +1026,52 @@ export default function Cube3Solver() {
           </>
       </section>
 
-      <section className="cubeopt-card">
-        <div className="row">
-          <span className="lbl">Logs</span>
-          {logs && <span className="advanced-summary">{logs.split('\n').length - 1}</span>}
-          <span className="row-spacer" />
-          <button className="btn-icon" onClick={() => setLogs('')} title={t('清空日志', 'Clear logs')}>
-            <Trash2 size={14} />
-          </button>
-        </div>
-        <textarea ref={logsRef} className="logs-area" rows={10} value={logs} readOnly />
-      </section>
+      {cloudMode && solveResults.size > 0 && (
+        <section className="cubeopt-card">
+          <div className="row">
+            <span className="lbl">{t('解 (按输入顺序)', 'Solutions (input order)')}</span>
+            <span className="paint-hint">
+              {t(
+                '服务器返回顺序不一定和输入一致;此处按输入序号 1..N 排好,并标注步数。',
+                'Results may arrive out of input order; this panel re-sorts by input index 1..N with move counts.'
+              )}
+            </span>
+            <button className="btn-icon" onClick={() => {
+              const txt = Array.from(solveResults.entries()).sort((a, b) => a[0] - b[0])
+                .map(([n, alg]) => `${n}. ${alg}`).join('\n');
+              navigator.clipboard?.writeText(txt);
+            }} title={t('复制全部', 'Copy all')}>
+              <Sparkles size={14} />
+            </button>
+          </div>
+          <ol className="solutions-list">
+            {Array.from(solveResults.entries()).sort((a, b) => a[0] - b[0]).map(([n, alg]) => {
+              const moveCount = alg.split(/\s+/).filter(Boolean).length;
+              return (
+                <li key={n}>
+                  <span className="sol-idx">{n}.</span>
+                  <code className="sol-alg">{alg}</code>
+                  <span className="sol-count">({moveCount})</span>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
+
+      {!cloudMode && (
+        <section className="cubeopt-card">
+          <div className="row">
+            <span className="lbl">Logs</span>
+            {logs && <span className="advanced-summary">{logs.split('\n').length - 1}</span>}
+            <span className="row-spacer" />
+            <button className="btn-icon" onClick={() => setLogs('')} title={t('清空日志', 'Clear logs')}>
+              <Trash2 size={14} />
+            </button>
+          </div>
+          <textarea ref={logsRef} className="logs-area" rows={10} value={logs} readOnly />
+        </section>
+      )}
 
       <p className="cubeopt-foot">
         Inspired by <a href="https://github.com/cs0x7f/cubeopt-wasm" target="_blank" rel="noopener noreferrer">cs0x7f/cubeopt-wasm</a> (BSD-3),
@@ -1107,6 +1117,8 @@ const INLINE_CSS = `
   display: flex; align-items: center; gap: 0.5rem;
 }
 .cubeopt-info > span { flex: 1; }
+.cubeopt-info-fit { width: fit-content; max-width: 100%; }
+.cubeopt-info-fit > span { flex: 0 1 auto; }
 .btn-cancel, .btn-cancel-sm {
   display: inline-flex; align-items: center; gap: 0.3rem;
   background: #4a1f1f; border: 1px solid #8a3a3a; color: #ffaaaa;
@@ -1128,7 +1140,7 @@ const INLINE_CSS = `
   margin-bottom: 0.5rem;
 }
 .lbl {
-  min-width: 5rem; font-size: 0.85rem; color: var(--text-muted, #999);
+  width: fit-content; font-size: 0.85rem; color: var(--text-muted, #999);
 }
 .ctl, .ctl-sm {
   background: var(--panel-sub, #2a2a2a); border: 1px solid var(--border, #444);
@@ -1137,15 +1149,6 @@ const INLINE_CSS = `
 }
 .ctl { flex: 0 1 auto; width: fit-content; min-width: 0; }
 .ctl-sm { flex: 0 1 auto; min-width: 4.5rem; }
-.size-badge {
-  background: var(--panel-sub, #2a2a2a); padding: 0.3rem 0.6rem;
-  border-radius: 5px; font-size: 0.85rem; color: var(--text-muted, #aaa);
-  border: 1px solid var(--border, #444);
-}
-.table-name {
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 0.85rem; color: var(--text-muted, #aaa);
-}
 .btn, .btn-primary, .btn-icon {
   background: var(--panel-sub, #2a2a2a); border: 1px solid var(--border, #444);
   color: var(--text); padding: 0.35rem 0.7rem; border-radius: 5px; font-size: 0.85rem;
@@ -1211,12 +1214,6 @@ const INLINE_CSS = `
   font-size: 0.85rem; resize: vertical;
 }
 .logs-area { white-space: pre; overflow-x: auto; }
-.cloud-note {
-  margin: 0 0 0.5rem; padding: 0.5rem 0.6rem;
-  background: var(--panel-sub, #181818); border: 1px dashed var(--border, #333);
-  border-radius: 5px; color: var(--text-muted, #aaa);
-  font-size: 0.8rem; line-height: 1.5;
-}
 .cloud-timer {
   flex: 0 0 auto;
   font-family: var(--font-mono, ui-monospace, monospace);
@@ -1269,9 +1266,9 @@ const INLINE_CSS = `
 @media (max-width: 480px) {
   .cubeopt-page { padding: 0.75rem 0.5rem 2rem; }
   .cubeopt-header h1 { font-size: 1.2rem; flex: 1; min-width: 0; }
-  .lbl { min-width: 3.5rem; font-size: 0.78rem; }
+  .lbl { font-size: 0.78rem; }
   .ctl, .ctl-sm { font-size: 0.8rem; padding: 0.25rem 0.35rem; }
-  .size-badge, .table-name, .auto-dl { font-size: 0.75rem; }
+  .auto-dl { font-size: 0.75rem; }
   .auto-dl span { white-space: nowrap; }
   .btn, .btn-primary, .btn-cancel { font-size: 0.78rem; padding: 0.3rem 0.5rem; }
   .row { gap: 0.35rem; }
