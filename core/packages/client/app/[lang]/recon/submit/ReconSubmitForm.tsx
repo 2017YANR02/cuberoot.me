@@ -1459,7 +1459,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     }
                   }}>
                     <option value="1">WCA</option>
-                    <option value="0">{t('recon.badge.nonWca')}</option>
+                    <option value="0">{t('recon.badge.practice')}</option>
                   </select>
                 </label>
                 <div className={`submit-field ${form.compWcaId ? 'submit-field-shrink' : ''}${reusedCls('comp')}`}>
