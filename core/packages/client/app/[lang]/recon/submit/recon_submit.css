@@ -217,6 +217,7 @@
 .submit-row .submit-field > .submit-field-input,
 .submit-row .submit-field > .submit-field-select,
 .submit-row .submit-field .comp-picker-input,
+.submit-row .submit-field .cuber-search-input,
 .submit-row .record-select-trigger,
 .submit-row .event-select-trigger,
 .submit-row .submit-solver-pill,
@@ -240,6 +241,7 @@
 /* Hero 行：48px */
 .submit-hero .submit-field > .submit-field-input,
 .submit-hero .submit-field > .submit-field-select,
+.submit-hero .submit-field .cuber-search-input,
 .submit-hero .record-select-trigger,
 .submit-hero .event-select-trigger,
 .submit-hero .submit-solver-pill,
@@ -635,10 +637,18 @@
 }
 .sp-sentinel { height: 1px; }
 
+/* WcaPersonPicker (cuber-search) 默认 max-width:320px 是给独立行内场景用的;
+   recon 表单里要跟同行其他字段一样铺满所在列 */
+.submit-field .cuber-search {
+  max-width: none;
+  width: 100%;
+}
+
 .submit-field .submit-field-input,
 .submit-field .submit-field-select,
 .submit-field .submit-field-textarea,
-.submit-field .comp-picker-input {
+.submit-field .comp-picker-input,
+.submit-field .cuber-search-input {
   padding: 9px 12px;
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
@@ -653,7 +663,8 @@
 .submit-field .submit-field-input:focus,
 .submit-field .submit-field-select:focus,
 .submit-field .submit-field-textarea:focus,
-.submit-field .comp-picker-input:focus {
+.submit-field .comp-picker-input:focus,
+.submit-field .cuber-search-input:focus {
   border-color: color-mix(in srgb, var(--accent) 50%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
