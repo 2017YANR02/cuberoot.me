@@ -61,7 +61,7 @@ import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { parseSq1Tokens, formatScrambleForEvent } from '@/lib/sq1-svg';
 import type { Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, Box, ChevronDown, ChevronRight, History, Home, Loader2, LogIn, UserPlus, ListPlus, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, Box, History, Home, Loader2, LogIn, UserPlus, ListPlus, AlertTriangle } from 'lucide-react';
 import '../recon.css';
 import './recon_submit.css';
 import { tr } from '@/i18n/tr';
@@ -136,22 +136,6 @@ function toDateInput(val: string | null | undefined): string {
   const d = new Date(val);
   if (isNaN(d.getTime())) return '';
   return d.toISOString().slice(0, 10);
-}
-
-/** Collapsible section — GitHub settings style */
-function CollapsibleSection({ title, defaultOpen = false, children }: {
-  title: string; defaultOpen?: boolean; children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="submit-section">
-      <button type="button" className="submit-section-header" aria-expanded={open} onClick={() => setOpen(o => !o)}>
-        {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        <span className="submit-section-title">{title}</span>
-      </button>
-      {open && <div className="submit-section-body">{children}</div>}
-    </div>
-  );
 }
 
 export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
@@ -1415,13 +1399,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 }}
               />
             )}
-            {/* === Competition info — default open === */}
-            <CollapsibleSection
-              title={tr({ zh: '比赛信息', en: 'Competition'
-            })}
-              defaultOpen
-            >
-              {/* Hero row: solver / event / time */}
+            {/* Hero row: solver / event / time */}
               <div className="submit-hero">
                 <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}${reusedCls('person')}`}>
                   <span className="submit-label">{t('recon.solver')} *</span>
@@ -1720,7 +1698,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     : (!averageRecordUserTouched && form.regionalAverageRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
                 </label>
               </div>
-            </CollapsibleSection>
 
             {/* WCA scramble (用 div 而非 label:label 会把空白处点击转发给首个可聚焦后代「选已有」按钮) */}
             <div className="submit-field submit-block">
@@ -1963,10 +1940,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               />
             )}
 
-            {/* === Metadata — default collapsed === */}
-            <CollapsibleSection title={tr({ zh: '元数据', en: 'Metadata'
-            })}>
-              <div className="submit-row">
+            <div className="submit-row">
                 <label className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>
                   <span className="submit-label">{tr({ zh: '视频链接(每一个链接占一行)', en: 'Video URL (one link per line)' })}</span>
                   <textarea
@@ -2054,7 +2028,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" />
                 </label>
               </div>
-            </CollapsibleSection>
 
             {/* Submit buttons */}
             <div className="submit-actions">
