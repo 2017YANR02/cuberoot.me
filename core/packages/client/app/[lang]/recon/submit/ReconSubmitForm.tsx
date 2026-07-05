@@ -1445,23 +1445,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <span className="submit-label">{t('recon.event')} *</span>
                   <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
                 </label>
-                <label className="submit-field">
-                  <span className="submit-label">{tr({ zh: '原始成绩(千分位)', en: 'Original time (0.001s)' })}</span>
-                  <input
-                    className="submit-field-input"
-                    type="text"
-                    value={timeInput}
-                    onChange={e => {
-                      setTimeInput(e.target.value);
-                      setTimeUserTouched(true);
-                      setTimeAutoSource(null);
-                      timeAutoFilledRef.current = false;
-                    }}
-                    title={tr({ zh: '精确到千分位的成绩;自动填充后仍可手动改', en: 'Result to the thousandth; still editable after auto-fill'
-                    })}
-                  />
-                  {timeAutoSource ? <span className="submit-hint">{timeAutoSource}</span> : null}
-                </label>
                 {isBldEvent(form.event ?? '') && (
                   <>
                     <label className="submit-field">
@@ -1653,6 +1636,23 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
               <div className="submit-row">
                 <label className="submit-field">
+                  <span className="submit-label">{tr({ zh: '原始成绩(千分位)', en: 'Original time (0.001s)' })}</span>
+                  <input
+                    className="submit-field-input"
+                    type="text"
+                    value={timeInput}
+                    onChange={e => {
+                      setTimeInput(e.target.value);
+                      setTimeUserTouched(true);
+                      setTimeAutoSource(null);
+                      timeAutoFilledRef.current = false;
+                    }}
+                    title={tr({ zh: '精确到千分位的成绩;自动填充后仍可手动改', en: 'Result to the thousandth; still editable after auto-fill'
+                    })}
+                  />
+                  {timeAutoSource ? <span className="submit-hint">{timeAutoSource}</span> : null}
+                </label>
+                <label className="submit-field">
                   <span className="submit-label">{t('recon.single')}</span>
                   <input
                     type="text"
@@ -1673,7 +1673,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     })}</span>
                     : singleAutoSource ? <span className="submit-hint">{singleAutoSource}</span> : null}
                 </label>
-                <label className="submit-field">
+                <label className="submit-field submit-field-narrow">
                   <span className="submit-label">{t('recon.badge.singleRecord')}</span>
                   <RecordSelect
                     value={form.regionalSingleRecord || ''}
@@ -1707,7 +1707,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     })}</span>
                     : avgAutoSource ? <span className="submit-hint">{avgAutoSource}</span> : null}
                 </label>
-                <label className="submit-field">
+                <label className="submit-field submit-field-narrow">
                   <span className="submit-label">{t('recon.badge.averageRecord')}</span>
                   <RecordSelect
                     value={form.regionalAverageRecord || ''}
