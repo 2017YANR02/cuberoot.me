@@ -1968,7 +1968,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             })}>
               <div className="submit-row">
                 <label className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>
-                  <span className="submit-label">{t('recon.videoUrl')}</span>
+                  <span className="submit-label">{tr({ zh: '视频链接(每一个链接占一行)', en: 'Video URL (one link per line)' })}</span>
                   <textarea
                     className="submit-field-textarea"
                     value={form.videoUrl || ''}
@@ -1993,7 +1993,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       }));
                       if (changed) setField('videoUrl', resolved.join('\n'));
                     }}
-                    placeholder="https://www.youtube.com/watch?v=...&#10;https://www.bilibili.com/video/BV..."
                     rows={2}
                   />
                 </label>
