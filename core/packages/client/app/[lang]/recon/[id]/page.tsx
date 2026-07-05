@@ -40,8 +40,8 @@ export async function generateMetadata({ params }: {
   const canonical = reconCanonical(id, lang, reconPathSeg(solve));
   const title = buildReconTitle(solve, isZh);
   const description = buildReconDescription(solve, isZh);
-  // Non-official (personal/home) solves are thin content → don't index, but follow.
-  const robots = solve.official ? undefined : { index: false, follow: true };
+  // Non-WCA / practice solves are thin content → don't index, but follow.
+  const robots = solve.official === 'wca' ? undefined : { index: false, follow: true };
 
   return {
     title,

@@ -22,7 +22,7 @@ export type SortDir = 'asc' | 'desc';
 export interface ReconFilters {
   event: string;       // '' = 全部
   method: string;      // '' = 全部
-  official: string;    // '' = 全部, '1' = WCA, '0' = non-WCA
+  official: string;    // '' = 全部, '1' = 仅 WCA(official==='wca'), '0' = 非 WCA(non_wca + practice)
   solver: string;      // '' = 全部, '__NO_PERSON__' = 无选手名
   reconer: string;     // '' = 全部, '__NO_RECONER__' = 无复盘者
   comp: string;        // '' = 全部, '__NO_COMP__' = 无比赛
@@ -192,9 +192,9 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
       result = result.filter(s => s.reconer === filters.reconer);
     }
     if (filters.official === '1') {
-      result = result.filter(s => s.official);
+      result = result.filter(s => s.official === 'wca');
     } else if (filters.official === '0') {
-      result = result.filter(s => !s.official);
+      result = result.filter(s => s.official !== 'wca');
     }
 
     if (filters.comp === '__NO_COMP__') {

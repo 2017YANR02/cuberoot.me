@@ -76,6 +76,20 @@ const ALLOWED_COLUMNS = new Set([
 export const DUP_REASONS = ['repeat_scramble', 'different_comp'] as const;
 export type DupReason = (typeof DUP_REASONS)[number];
 
+// 复盘性质三值枚举(2026-07,原 0/1 布尔迁移而来:1→wca,0→practice)。
+export const RECON_OFFICIAL = ['wca', 'non_wca', 'practice'] as const;
+export type ReconOfficial = (typeof RECON_OFFICIAL)[number];
+
+/**
+ * 归一化 official 到三值枚举字符串,兼容:新枚举串 / 旧布尔(0|1) / 旧数字串('0'|'1')/ boolean。
+ * 未知值兜底 'wca'(与旧默认 official=1 一致)。
+ */
+export function normalizeOfficial(v: unknown): ReconOfficial {
+  if (v === 'non_wca') return 'non_wca';
+  if (v === 'practice' || v === 0 || v === '0' || v === false) return 'practice';
+  return 'wca'; // 'wca' | 1 | '1' | true | 其它
+}
+
 // ── 数据转换 ──
 
 // NOTE: rowToJson 中需要强转类型的字段集合
@@ -96,8 +110,8 @@ export function rowToJson(row: Record<string, unknown>): Record<string, unknown>
     json[key] = val;
   }
 
-  // NOTE: 类型修正——MariaDB 驱动可能返回字符串
-  if (json.official !== undefined) json.official = Boolean(json.official);
+  // NOTE: 类型修正——official 归一化为三值枚举串(兼容旧 0/1 数据)
+  if (json.official !== undefined) json.official = normalizeOfficial(json.official);
   for (const k of INT_FIELDS) {
     if (json[k] !== undefined && json[k] !== null) json[k] = Number(json[k]);
   }
@@ -134,9 +148,9 @@ export function jsonToRow(json: Record<string, unknown>): Record<string, unknown
     // NOTE: 空字符串转 null（与 PHP 行为一致）
     row[col] = val === '' ? null : val;
   }
-  // NOTE: 布尔值转换（MySQL TINYINT）
-  if (row.official !== undefined) {
-    row.official = row.official ? 1 : 0;
+  // NOTE: official 归一化为三值枚举串(兼容前端传旧布尔 / 新枚举)
+  if (row.official !== undefined && row.official !== null) {
+    row.official = normalizeOfficial(row.official);
   }
   // NOTE: co_persons 是 TEXT 存 JSON 串——数组直接 stringify(空数组存 null),
   //       已是字符串则原样透传(防 driver 把数组当 PG array literal 写坏)
@@ -234,6 +248,12 @@ export function validateRow(row: Record<string, unknown>): string[] {
   if (row.dup_reason !== undefined && row.dup_reason !== null
       && !(DUP_REASONS as readonly string[]).includes(String(row.dup_reason))) {
     errors.push(`dup_reason must be one of: ${DUP_REASONS.join(', ')}`);
+  }
+
+  // official: 三值枚举(jsonToRow 已归一化,此处兜底防绕过)
+  if (row.official !== undefined && row.official !== null
+      && !(RECON_OFFICIAL as readonly string[]).includes(String(row.official))) {
+    errors.push(`official must be one of: ${RECON_OFFICIAL.join(', ')}`);
   }
 
   // co_persons: JSON 数组 [{name, id?, country?}],各字段长度对齐 person 列

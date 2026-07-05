@@ -58,7 +58,7 @@ async function reconEntries(): Promise<MetadataRoute.Sitemap> {
     const list = (await res.json()) as ReconSolve[];
     if (!Array.isArray(list)) return [];
     return list
-      .filter((r) => r.official === true)
+      .filter((r) => r.official === 'wca')
       .map((r) => {
         const id = String(r.id);
         // Slugged segment (`<id>-<slug>`); reconPathSeg falls back to bare id if
