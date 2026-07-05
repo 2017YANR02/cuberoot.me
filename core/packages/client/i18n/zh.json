@@ -230,7 +230,7 @@
       "numbered": "第{{n}}轮"
     },
     "badge": {
-      "nonWca": "非 WCA",
+      "practice": "练习",
       "singleRecord": "单次纪录",
       "averageRecord": "平均纪录"
     },
