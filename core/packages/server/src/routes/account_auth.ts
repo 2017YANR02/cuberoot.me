@@ -20,7 +20,7 @@ import {
 } from '../utils/account.js';
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
-import { googleConfigured, googleClientId, fetchGoogleUser } from '../utils/google.js';
+import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
 
 export const accountAuthRoutes = new Hono();
 
@@ -47,7 +47,7 @@ async function requireUserId(c: Context): Promise<number> {
 // ── 可用登录方式(供前端隐藏未配置的 tab;env 未配 email/sms 时对应值 false)──
 accountAuthRoutes.get('/auth/providers', (c) => {
   c.header('Cache-Control', 'no-store');
-  return c.json({ email: emailConfigured(), phone: smsConfigured(), wca: true, googleClientId: googleClientId() });
+  return c.json({ email: emailConfigured(), phone: smsConfigured(), wca: true, googleClientId: googleClientId(), googleRelayUrl: googleRelayUrl() });
 });
 
 // ── 发码(登录/注册)──
@@ -215,16 +215,17 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
   return c.json({ ok: true, token, user: user ? publicUser(user) : undefined, identities: await getIdentities(uid) });
 });
 
-// ── Google(客户端隐式授权拿到的 access_token,服务端转发 Google userinfo 验真)──
+// ── Google(浏览器拿 access_token → 墙外 Vercel 中继验真并签断言 → 此处只验断言 HMAC)──
+// 本服务器出网到 Google 被墙,故不自己回调 Google;中继地址/密钥见 utils/google.ts 顶注。
 accountAuthRoutes.post('/auth/google', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   if (!googleConfigured()) return c.json({ error: 'google not configured' }, 503);
-  const { accessToken } = await c.req.json<{ accessToken?: string }>().catch(() => ({ accessToken: undefined }));
-  if (!accessToken) return c.json({ error: 'accessToken required' }, 400);
+  const { assertion } = await c.req.json<{ assertion?: string }>().catch(() => ({ assertion: undefined }));
+  if (!assertion) return c.json({ error: 'assertion required' }, 400);
   let g: { sub: string; email?: string; name?: string; picture?: string };
   try {
-    g = await fetchGoogleUser(accessToken);
+    g = verifyGoogleAssertion(assertion);
   } catch {
     return c.json({ error: 'invalid Google token' }, 401);
   }
@@ -241,11 +242,11 @@ accountAuthRoutes.post('/auth/link/google', async (c) => {
   checkRateLimit(getIp(c));
   const uid = await requireUserId(c);
   if (!googleConfigured()) return c.json({ error: 'google not configured' }, 503);
-  const { accessToken } = await c.req.json<{ accessToken?: string }>().catch(() => ({ accessToken: undefined }));
-  if (!accessToken) return c.json({ error: 'accessToken required' }, 400);
+  const { assertion } = await c.req.json<{ assertion?: string }>().catch(() => ({ assertion: undefined }));
+  if (!assertion) return c.json({ error: 'assertion required' }, 400);
   let g: { sub: string };
   try {
-    g = await fetchGoogleUser(accessToken);
+    g = verifyGoogleAssertion(assertion);
   } catch {
     return c.json({ error: 'invalid Google token' }, 401);
   }

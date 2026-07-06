@@ -1,8 +1,11 @@
 'use client';
 
 // Google 登录/绑定的浏览器端授权 —— Google Identity Services(GIS)的隐式 token client:
-// 弹窗走 Google 官方同意页,直接在浏览器拿到 access_token(不涉及 client secret),
-// 拿到的 token 交给服务端 /v1/auth/google 或 /v1/auth/link/google 转发校验。
+// 弹窗走 Google 官方同意页,直接在浏览器拿到 access_token(不涉及 client secret)。
+//
+// 自有云服务器出网到 Google 被墙,不能自己验 access_token,故浏览器再把 access_token POST 到
+// 墙外 Vercel 中继(relayUrl,GET /v1/auth/providers 下发)换一个「后端可离线验签的短期断言」,
+// 最终交给 /v1/auth/google | /link/google。见 app/api/google-verify/route.ts。
 // 脚本按需懒加载(只有真去点「用 Google 登录/绑定」才拉,不拖慢首屏)。
 
 interface GoogleTokenResponse {
@@ -46,7 +49,7 @@ function loadGis(): Promise<void> {
 }
 
 /** 弹 Google 授权窗,返回 access_token。用户关闭弹窗 / 拒绝授权时 reject。 */
-export async function requestGoogleAccessToken(clientId: string): Promise<string> {
+async function requestGoogleAccessToken(clientId: string): Promise<string> {
   await loadGis();
   const accounts = window.google?.accounts;
   if (!accounts) throw new Error('Google sign-in unavailable');
@@ -62,4 +65,20 @@ export async function requestGoogleAccessToken(clientId: string): Promise<string
     });
     client.requestAccessToken();
   });
+}
+
+/**
+ * 完整浏览器端流程:弹 Google 窗拿 access_token → POST 墙外中继换后端可离线验签的断言。
+ * 返回断言字符串,交给 /v1/auth/google | /link/google。中途任一步失败即 reject。
+ */
+export async function requestGoogleAssertion(clientId: string, relayUrl: string): Promise<string> {
+  const accessToken = await requestGoogleAccessToken(clientId);
+  const res = await fetch(relayUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accessToken }),
+  });
+  const data = (await res.json().catch(() => ({}))) as { assertion?: string; error?: string };
+  if (!res.ok || !data.assertion) throw new Error(data.error || 'Google sign-in failed');
+  return data.assertion;
 }
