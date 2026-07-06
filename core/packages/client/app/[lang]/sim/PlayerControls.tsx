@@ -113,20 +113,34 @@ const GRIP_MARKS: Record<string, GripName> = { '↑': 'up', '↓': 'down', '·':
 const GRIP_MARK_SPLIT = /([↑↓·])/;
 const stripGripMarks = (s: string): string => s.replace(/[↑↓·]/g, ' ');
 
-type NxnPlayItem = { kind: 'move'; action: TwistAction } | { kind: 'grip'; grip: GripName };
+/** 指法后缀 `p`(推法,FINGERING.md §2):空白分隔的单招 token 尾接 p,如
+ *  `U'p` = 右食指推 U'。喂 cubing.js / 变换工具前必须剥(Alg 解析不了)。 */
+const PUSH_TOKEN = /^([A-Za-z]w?[2']{0,2})p$/;
+const stripPushMarks = (s: string): string =>
+  s.split(/(\s+)/).map((tok) => { const m = PUSH_TOKEN.exec(tok); return m ? m[1] : tok; }).join('');
+/** 变换/导出前剥全部手部记号(换握 ↑↓· + 推法 p 后缀)。 */
+const stripHandMarks = (s: string): string => stripPushMarks(stripGripMarks(s));
 
-/** F 族「食指越顶」前置伸指闸(与 isRegripping 同款节拍):该步若需先把食指
- *  伸到 UFR/UFL 贴纸(双手 home 握的 F/F'),启动/等待伸指动画并返回 true
- *  —— 调用方本轮不发 twist,下轮再问;false = 无需前置或已到位。 */
-function gateTopPushReach(world: World | null, cube: import('./engine/nxn/cube').default, action: TwistAction): boolean {
+type NxnPlayItem = { kind: 'move'; action: TwistAction; push?: boolean } | { kind: 'grip'; grip: GripName };
+
+/** 手部转前闸(与 isRegripping 同款节拍):登记 quarters/push 提示(连拨、
+ *  推法分类用,FINGERING.md),该步若需前置就位(F 族越顶 / U'p / D2' 小指)
+ *  则启动/等待伸指动画并返回 true —— 调用方本轮不发 twist,下轮再问;
+ *  false = 无需前置或已到位。 */
+function gateHandsReach(world: World | null, cube: import('./engine/nxn/cube').default, action: TwistAction, push = false): boolean {
   const hands = world?.hands;
   if (!hands?.isEnabled) return false;
+  // 上一步 reach 式手势(topPush/U'p/D2' 小指)收指未完先等:weld 会把伸在
+  // 魔方上方的指链烘着整手转进方块(oracle 实证 −11U)。
+  if (hands.isReachRetreating) return true;
   const rotates = cube.table.convert(action);
   if (!rotates.length) return false;
   return hands.prepareTwist(
     rotates[0].group.axis as 'x' | 'y' | 'z',
     rotates.map((r) => r.group.layer),
     rotates[0].twist > 0 ? 1 : -1,
+    Math.abs(rotates[0].twist),
+    push,
   );
 }
 
@@ -142,10 +156,34 @@ function parseNxnItems(text: string): NxnPlayItem[] {
     const grip = GRIP_MARKS[seg];
     if (grip) { items.push({ kind: 'grip', grip }); continue; }
     if (!seg.trim()) continue;
-    const cleaned = cleanForPlayer(seg);
-    for (const node of new Alg(cleaned).expand().childAlgNodes()) {
-      if (node instanceof Move) items.push({ kind: 'move', action: new TwistAction(node.toString()) });
+    // p 后缀(推法记号):只认空白分隔的单招 token;无 p 记号时整段一次性
+    // 走原路径(行为零变化)。缓冲分段解析保持步序。
+    let buf = '';
+    const flush = (): void => {
+      if (!buf.trim()) { buf = ''; return; }
+      const cleaned = cleanForPlayer(buf);
+      buf = '';
+      for (const node of new Alg(cleaned).expand().childAlgNodes()) {
+        if (node instanceof Move) items.push({ kind: 'move', action: new TwistAction(node.toString()) });
+      }
+    };
+    for (const chunk of seg.split(/(\s+)/)) {
+      const m = PUSH_TOKEN.exec(chunk);
+      if (m) {
+        let mv: Move | null = null;
+        try {
+          const nodes = [...new Alg(m[1]).expand().childAlgNodes()];
+          if (nodes.length === 1 && nodes[0] instanceof Move) mv = nodes[0];
+        } catch { /* 非法招式:当普通文本落回缓冲 */ }
+        if (mv) {
+          flush();
+          items.push({ kind: 'move', action: new TwistAction(mv.toString()), push: true });
+          continue;
+        }
+      }
+      buf += chunk;
     }
+    flush();
   }
   return items;
 }
@@ -949,7 +987,7 @@ export default function PlayerControls({
     }
     const cube = world.cube as import('./engine/nxn/cube').default;
     const effectiveSetup = settings.playbackMode === 'algorithm'
-      ? (setupDraft + ' ' + invertAlg(stripGripMarks(algDraft))).trim()
+      ? (setupDraft + ' ' + invertAlg(stripHandMarks(algDraft))).trim()
       : setupDraft;
     await cube.twister.setupAsync(effectiveSetup);
     const target = Math.max(0, Math.min(n, nxnItems.length));
@@ -1033,8 +1071,8 @@ export default function PlayerControls({
         world.hands?.regrip(it.grip);
       } else {
         if (cube.busy || world.hands?.isRegripping) return;
-        // 食指越顶前置:伸指在途时本次点击只推进伸指,到位后再点才转。
-        if (gateTopPushReach(world, cube, it.action)) return;
+        // 前置就位:伸指在途时本次点击只推进伸指,到位后再点才转。
+        if (gateHandsReach(world, cube, it.action, it.push)) return;
         // 单步与播放同速:tween 在 twist() 同步捕获帧数,随即恢复抽屉值。
         timing.frames = playbackFrames;
         const ok = cube.twister.twist(it.action, false, false);
@@ -1070,8 +1108,8 @@ export default function PlayerControls({
       } else {
         if (cube.busy || world.hands?.isRegripping) return;
         const inv = new TwistAction(it.action.sign, !it.action.reverse, it.action.times);
-        // 倒播的 F' 同样先伸指到位再转。
-        if (gateTopPushReach(world, cube, inv)) return;
+        // 倒播的 F' 同样先伸指到位再转(push 提示随逆招失义,分类自会回落)。
+        if (gateHandsReach(world, cube, inv, it.push)) return;
         timing.frames = playbackFrames;
         const ok = cube.twister.twist(inv, false, false);
         timing.frames = mapFrames(settings.speed);
@@ -1151,8 +1189,8 @@ export default function PlayerControls({
           // (it runs in parallel or cancel+restarts), so gate on the cube's own lock
           // state to keep playback strictly one-turn-at-a-time.
           if (cube.busy) return;
-          // 食指越顶前置:F 转动开始前指尖先到 UFR 贴纸(16ms 轮询幂等重入)。
-          if (gateTopPushReach(world, cube, it.action)) return;
+          // 前置就位:转动开始前指尖先到位(16ms 轮询幂等重入)。
+          if (gateHandsReach(world, cube, it.action, it.push)) return;
           started = cube.twister.twist(it.action, false, false);
         }
       }
@@ -1168,8 +1206,8 @@ export default function PlayerControls({
   }, [playing, nxnItems, sq1Actions, ivyActions, cornerActions, corner, world, playbackFrames, isSq1, isIvy, settings.animatePlayback, settings.speed]);
 
   const tool = (transform: (s: string) => string) => () => {
-    // 镜像/转体变换先剥换握记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
-    const combined = stripGripMarks(setupDraft + ' ' + algDraft).trim();
+    // 镜像/转体变换先剥手部记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
+    const combined = stripHandMarks(setupDraft + ' ' + algDraft).trim();
     const next = transform(combined);
     setSetupDraft('');
     onSetupChange('');
@@ -1208,7 +1246,7 @@ export default function PlayerControls({
 
   const invertForPuzzle = useCallback((s: string): string => {
     if (corner) return corner.toString(corner.invert(corner.parse(s)));
-    if (!isSq1) return invertAlg(stripGripMarks(s)); // 倒序后换握位点失义,直接剥
+    if (!isSq1) return invertAlg(stripHandMarks(s)); // 倒序后换握/推法位点失义,直接剥
     const inv = invertSq1Alg(s);
     return sq1Format === 'wca' ? canonicalSq1Alg(inv) : compactSq1Alg(inv);
   }, [isSq1, corner, sq1Format]);
@@ -1242,7 +1280,7 @@ export default function PlayerControls({
   // Hand off the current scramble + solution to /recon/submit (matching event).
   const handlePublishRecon = useCallback(() => {
     if (!reconEvent) return;
-    const qs = buildReconSubmitQuery(reconEvent, setupDraft, stripGripMarks(algDraft));
+    const qs = buildReconSubmitQuery(reconEvent, setupDraft, stripHandMarks(algDraft));
     router.push(`${langPrefix}/recon/submit?${qs}`);
   }, [reconEvent, setupDraft, algDraft, router, langPrefix]);
 
@@ -1469,7 +1507,7 @@ export default function PlayerControls({
     if (!is3x3 || !world || !algDraft.trim()) return;
     setDerivingScramble(true);
     try {
-      const scramble = await deriveScrambleFromSolution(stripGripMarks(algDraft));
+      const scramble = await deriveScrambleFromSolution(stripHandMarks(algDraft));
       if (!scramble) return;
       if (settings.playbackMode !== 'moves') {
         onSettingsChange({ ...settings, playbackMode: 'moves' });
