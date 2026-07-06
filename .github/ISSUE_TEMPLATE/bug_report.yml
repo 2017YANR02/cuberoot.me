@@ -1,0 +1,30 @@
+name: Bug 报告 / Bug report
+description: 报告一个功能异常 / Report something not working
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 问题描述 / What happened
+      description: 发生了什么?期望的行为是什么? / What went wrong, and what did you expect?
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: 页面 URL / Page URL
+      placeholder: https://cuberoot.me/zh/...
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      placeholder: |
+        1. 打开 …
+        2. 点击 …
+        3. 看到 …
+  - type: input
+    id: env
+    attributes:
+      label: 设备 / 浏览器 (Device / browser)
+      placeholder: 如 iPhone Safari / Windows Chrome
