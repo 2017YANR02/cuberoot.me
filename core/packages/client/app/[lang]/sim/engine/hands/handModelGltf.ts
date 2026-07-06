@@ -27,13 +27,15 @@ const U = (SIZE / 64) * HAND_SCALE;
 /** 拇指弯曲平面 roll(绕拇指根代理 +x,rad):资产绑定姿态的拇指弯曲平面偏
  *  「扫掌面」方向,压不到 F 面 —— 向掌心侧倾斜后 curl 才朝魔方收(2026-07-06
  *  浏览器内多起点坐标下降与 curl 联合解出)。左右手系镜像(y 反),绕 x 的旋转
- *  共轭反号 → ×side。 */
-const THUMB_CURL_PLANE_ROLL = 1.524;
+ *  共轭反号 → ×side。导出给 bakeHandTexture 定拇指甲背方向(甲背 = 滚转后
+ *  弯曲平面的 −z,与指腹压面方向相反)。 */
+export const THUMB_CURL_PLANE_ROLL = 1.524;
 
 /** WebXR 25 关节命名(https://www.w3.org/TR/webxr-hand-input-1/)。
  *  四指 FK 链 = proximal/intermediate/distal(metacarpal 静止在掌内);
- *  拇指链 = metacarpal/proximal/distal(拇指的可动基节就是掌骨)。 */
-const JOINT_CHAINS: Record<FingerName, { drive: [string, string, string]; end: string; static?: string }> = {
+ *  拇指链 = metacarpal/proximal/distal(拇指的可动基节就是掌骨)。
+ *  导出给 bakeHandTexture 取骨名(关节皱纹环带 / 指甲落位)。 */
+export const JOINT_CHAINS: Record<FingerName, { drive: [string, string, string]; end: string; static?: string }> = {
   thumb: { drive: ["thumb-metacarpal", "thumb-phalanx-proximal", "thumb-phalanx-distal"], end: "thumb-tip" },
   index: { drive: ["index-finger-phalanx-proximal", "index-finger-phalanx-intermediate", "index-finger-phalanx-distal"], end: "index-finger-tip", static: "index-finger-metacarpal" },
   middle: { drive: ["middle-finger-phalanx-proximal", "middle-finger-phalanx-intermediate", "middle-finger-phalanx-distal"], end: "middle-finger-tip", static: "middle-finger-metacarpal" },
