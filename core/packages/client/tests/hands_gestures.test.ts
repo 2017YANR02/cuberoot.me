@@ -5,7 +5,10 @@
  */
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { classifyHandGesture, classifyLayers, gripQuat, simulateGrips } from '@/app/[lang]/sim/engine/hands/handsRig';
+import { classifyHandGesture, classifyLayers, gripQuat, simulateGrips, type HandGripNames } from '@/app/[lang]/sim/engine/hands/handsRig';
+
+const BOTH_HOME: HandGripNames = { R: 'home', L: 'home' };
+const R_DOWN: HandGripNames = { R: 'down', L: 'home' };
 
 describe('classifyLayers', () => {
   it('外层 / 中层 / 宽层 / 整体', () => {
@@ -49,12 +52,47 @@ describe('classifyHandGesture', () => {
   });
 
   it('双手 home 握时 F 族 = 食指越顶(F 右食指→UFR,F\' 左食指→UFL)', () => {
-    expect(classifyHandGesture('z', 'high', 1, true)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'topPush' });  // F
-    expect(classifyHandGesture('z', 'high', -1, true)).toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'topPush' }); // F'
-    // bothHome 只影响 F 族;其余映射不变
-    expect(classifyHandGesture('z', 'low', -1, true)).toEqual({ kind: 'flick', hand: 'L', finger: 'middle' }); // B
-    expect(classifyHandGesture('y', 'high', 1, true)).toEqual({ kind: 'flick', hand: 'R', finger: 'index' });  // U
-    expect(classifyHandGesture('x', 'high', 1, true)).toEqual({ kind: 'weld', hands: ['R'] });                 // R
+    expect(classifyHandGesture('z', 'high', 1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'topPush' });  // F
+    expect(classifyHandGesture('z', 'high', -1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'topPush' }); // F'
+    expect(classifyHandGesture('x', 'high', 1, BOTH_HOME)).toEqual({ kind: 'weld', hands: ['R'] }); // R 不受影响
+  });
+
+  it('双中手 y 族 = 接触勾拨 hook;180° 提示连拨(FINGERING §4.2)', () => {
+    expect(classifyHandGesture('y', 'high', 1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'hook' });  // U
+    expect(classifyHandGesture('y', 'high', -1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'hook' }); // U'
+    expect(classifyHandGesture('y', 'low', 1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'R', finger: 'ring', style: 'hook' });    // D'
+    // U2 连拨:先食指后中指;D2' 连拨:先小指后无名指(用户口述顺序)
+    expect(classifyHandGesture('y', 'high', 1, BOTH_HOME, { quarters: 2 }))
+      .toEqual({ kind: 'flick', hand: 'R', finger: 'index', finger2: 'middle', style: 'hook' }); // U2
+    expect(classifyHandGesture('y', 'low', 1, BOTH_HOME, { quarters: 2 }))
+      .toEqual({ kind: 'flick', hand: 'R', finger: 'pinky', finger2: 'ring', style: 'hook' });   // D2'
+    // 镜像连拨(U2'/D2)缺 L 侧标定 → 回落单指 hook(FINGERING §6)
+    expect(classifyHandGesture('y', 'low', -1, BOTH_HOME, { quarters: 2 }))
+      .toEqual({ kind: 'flick', hand: 'L', finger: 'ring', style: 'hook' });                     // D2 回落
+    expect(classifyHandGesture('y', 'high', -1, BOTH_HOME, { quarters: 2 }))
+      .toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'hook' });                    // U2' 回落
+    // E 族 / 非标准握不受影响
+    expect(classifyHandGesture('y', 'mid', -1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'L', finger: 'ring' }); // E
+    expect(classifyHandGesture('y', 'high', 1)).toEqual({ kind: 'flick', hand: 'R', finger: 'index' });           // U(非标准握)
+    expect(classifyHandGesture('y', 'high', 1, undefined, { quarters: 2 })).toEqual({ kind: 'flick', hand: 'R', finger: 'index' }); // U2 非标准握不连拨
+  });
+
+  it('双中手 B\'/B = 食指背钩;U\'p 推法(FINGERING §4.2/§4.5)', () => {
+    expect(classifyHandGesture('z', 'low', 1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'backHook' });  // B'
+    expect(classifyHandGesture('z', 'low', -1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'backHook' }); // B(镜像)
+    expect(classifyHandGesture('y', 'high', -1, BOTH_HOME, { push: true }))
+      .toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'upPush' }); // U'p
+    expect(classifyHandGesture('y', 'high', 1, BOTH_HOME, { push: true }))
+      .toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'hook' });   // Up 未编排 → 回落 U 默认
+    expect(classifyHandGesture('z', 'low', 1)).toEqual({ kind: 'flick', hand: 'R', finger: 'middle' }); // B' 非标准握回落中指
+  });
+
+  it('左中右下:F = 右食指下拨,F2 连拨食指→中指(FINGERING §4.3)', () => {
+    expect(classifyHandGesture('z', 'high', 1, R_DOWN)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'downPush' }); // F
+    expect(classifyHandGesture('z', 'high', 1, R_DOWN, { quarters: 2 }))
+      .toEqual({ kind: 'flick', hand: 'R', finger: 'index', finger2: 'middle', style: 'downPush' }); // F2
+    expect(classifyHandGesture('z', 'high', -1, R_DOWN)).toEqual({ kind: 'flick', hand: 'R', finger: 'thumb' }); // F' 未定义 → 回落拇指
+    expect(classifyHandGesture('z', 'high', 1, { R: 'down', L: 'down' })).toEqual({ kind: 'flick', hand: 'L', finger: 'thumb' }); // 双下手未定义 → 回落
   });
 
   it('整体 x/y/z = 双手抱转 weld', () => {
