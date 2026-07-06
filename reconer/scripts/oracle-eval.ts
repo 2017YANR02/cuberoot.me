@@ -23,7 +23,13 @@ import {
   type RawFaceObs,
   type SegObservations,
 } from "../src/anchored-search.ts";
-import { IDENTITY_PERM, invertPerm, permKey, physicalPerm } from "../src/rotation-perms.ts";
+import {
+  IDENTITY_PERM,
+  ORIENTATION_PERMS,
+  invertPerm,
+  permKey,
+  physicalPerm,
+} from "../src/rotation-perms.ts";
 
 function argOf(name: string, dflt: number): number {
   const i = process.argv.indexOf(`--${name}`);
@@ -58,13 +64,17 @@ function applyTo(sc: readonly number[], perm: readonly number[]): number[] {
   return next;
 }
 
-/** 面身份未知的原始观测仿真: 随机可见面 (B 60% / U 40%) + 随机 in-plane 旋转 + 噪声 */
-function simulateRawObs(sc: readonly number[], cells: number): RawFaceObs {
+/**
+ * 面身份未知的原始观测仿真: 随机持握朝向 (相机所见 B 60% / U 40%, 含 4 in-plane)
+ * + 每视频常数颜色重标 κ=ω (相机系 = κ∘GT 系, 共轭外侧半; 搜索由 24 朝向初始 beam
+ * + 左复合锚集吸收) + 噪声
+ */
+function simulateRawObs(sc: readonly number[], cells: number, omega: readonly number[]): RawFaceObs {
   const face = rng() < 0.6 ? 5 : 0; // B=5, U=0
-  const rot = Math.floor(rng() * 4);
-  let assign = Array.from({ length: 9 }, (_, i) => face * 9 + i);
-  const rot90 = (m: number[]) => [m[6], m[3], m[0], m[7], m[4], m[1], m[8], m[5], m[2]];
-  for (let r = 0; r < rot; r++) assign = rot90(assign);
+  // 物理合法视图 = 朝向 ρ 的 B 窗口回拉 (勿用下标网格 rot90 硬造, 布局有镜像约定)
+  const choices = ORIENTATION_PERMS.filter((rho) => Math.floor(rho[49] / 9) === face);
+  const rho = choices[Math.floor(rng() * choices.length)];
+  const assign = Array.from({ length: 9 }, (_, i) => rho[45 + i]);
   const colors: (typeof COLOR_NAMES[number] | null)[] = new Array(9).fill(null);
   const idxs = [...Array(9).keys()];
   if (cells < 9) {
@@ -75,7 +85,7 @@ function simulateRawObs(sc: readonly number[], cells: number): RawFaceObs {
     idxs.length = cells;
   }
   for (const i of idxs) {
-    const trueColor = COLOR_NAMES[Math.floor(sc[assign[i]] / 9)];
+    const trueColor = COLOR_NAMES[Math.floor(omega[sc[assign[i]]] / 9)];
     if (rng() < NOISE) {
       const others = COLOR_NAMES.filter((c) => c !== trueColor);
       colors[i] = others[Math.floor(rng() * others.length)];
@@ -193,10 +203,12 @@ for (const splitsPath of files) {
     observations = nonRotIdx.map((j) => (rng() < DROPOUT ? null : simulateObs(startState[j], CELLS)));
     finalObservation = simulateObs(IDENTITY_PERM, CELLS);
   } else if (MODE === "visface") {
+    // 每视频一个常数 κ (真实拍摄: GT 记谱系 vs 相机系的固定色重标)
+    const omega = ORIENTATION_PERMS[Math.floor(rng() * 24)];
     rawObservations = nonRotIdx.map((j) =>
-      rng() < DROPOUT ? null : simulateRawObs(startState[j], CELLS),
+      rng() < DROPOUT ? null : simulateRawObs(startState[j], CELLS, omega),
     );
-    finalRawObservation = simulateRawObs(IDENTITY_PERM, CELLS);
+    finalRawObservation = simulateRawObs(IDENTITY_PERM, CELLS, omega);
   }
 
   const t0 = performance.now();
