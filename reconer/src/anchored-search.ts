@@ -109,19 +109,16 @@ export interface RawFaceObs {
 
 const COLOR_CODE: Record<ColorName, number> = { W: 0, R: 1, G: 2, Y: 3, O: 4, B: 5 };
 
-/** 24 种指派: assign[a][cell] = 该相机格对应的 facelet 下标 */
-const FACE_ROT_ASSIGN: readonly (readonly number[])[] = (() => {
-  const rot = (m: number[]) => [m[6], m[3], m[0], m[7], m[4], m[1], m[8], m[5], m[2]];
-  const out: number[][] = [];
-  for (let f = 0; f < 6; f++) {
-    let base = Array.from({ length: 9 }, (_, i) => f * 9 + i);
-    for (let r = 0; r < 4; r++) {
-      out.push(base);
-      base = rot(base);
-    }
-  }
-  return out;
-})();
+/**
+ * 24 种指派: assign[a][cell] = 该相机格对应的 facelet 下标。
+ * 相机行主序 ↔ B 面 45..53 直接同序 (金标验证)。持握朝向 ρ 下相机看到的是
+ * applyTo(S,ρ) 的 B 窗口 = S[ρ[45+i]], 故合法指派集 = 24 朝向的 B 窗口回拉。
+ * 勿用「facelet 下标网格 rot90」硬造 — 各面下标布局从外侧看未必是行主序
+ * (镜像/错旋约定), 硬造会让真匹配落在指派集之外 (真实数据得分≈随机)。
+ */
+const FACE_ROT_ASSIGN: readonly (readonly number[])[] = ORIENTATION_PERMS.map((rho) =>
+  Array.from({ length: 9 }, (_, i) => rho[45 + i]),
+);
 
 /** 面身份边缘化的观测对数似然: 对指派集取 max (默认全 24; 可限面收紧证据) */
 export function logRawObs(
@@ -336,8 +333,10 @@ export function anchoredBeamSearch(
     beam = [...expanded.values()].sort((a, b) => b.score - a.score).slice(0, beamWidth);
   }
 
-  // 锚定: 起点态 ∈ 打乱态的 24 个整体旋转变体
-  const anchorKeys = new Set(ORIENTATION_PERMS.map((o) => permKey(seqCompose(scrambleSc, o))));
+  // 锚定: 起点态 ∈ {ω∘打乱态}。相机系 = GT 系差常数颜色重标 κ (共轭的外侧半):
+  // 真路径从初始朝向 ω=κ 出发, 回推到 ω∘R₀ — 必须左复合。右复合 {R₀∘o} 仅在
+  // κ=id (纯仿真) 时与之相交于 o=id, 真实数据下不含真路径终点。
+  const anchorKeys = new Set(ORIENTATION_PERMS.map((o) => permKey(seqCompose(o, scrambleSc))));
   const best = beam.find((n) => anchorKeys.has(permKey(n.state))) ?? null;
   const bestAny = beam[0] ?? null;
 
