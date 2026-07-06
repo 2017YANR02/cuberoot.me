@@ -35,6 +35,7 @@ import BsqDistView from './_components/BsqDistView';
 import BicDistView from './_components/BicDistView';
 import Sia123DistView from './_components/Sia123DistView';
 import Sia222DistView from './_components/Sia222DistView';
+import Essential2x2View from './_components/Essential2x2View';
 import ScrambleLengthView, {
   type EventLengthsJson, type EventLengthsAvgJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
@@ -290,6 +291,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 图表显示口径也进 URL:y 轴(百分比/数量,?y)、曲线(pdf/cdf,?chart)。
   const [yMode, setYMode] = useQueryState(k('y'), parseAsStringEnum<YMode>(['percent', 'count']).withDefault('percent'));
   const [chartMode, setChartMode] = useQueryState(k('chart'), parseAsStringEnum<ChartMode>(['pdf', 'cdf']).withDefault('pdf'));
+  // 2×2 难度数据源:WCA 真题采样(默认)/ 所有本质状态(全 3,674,160 态精确统计)。仅 event=222 有意义。
+  const [essSrc, setEssSrc] = useQueryState(k('src'), parseAsStringEnum<'wca' | 'all'>(['wca', 'all']).withDefault('wca'));
   // 组平均(?avg):观测单位 = 一组打乱的平均(某场某轮某组);备打开关(?avgx)仅 avg 时露。
   // filter 性质 → replace。数据懒加载(默认页不拉,省流量)。
   const [avgMode, setAvgMode] = useQueryState(k('avg'), parseAsBoolean.withDefault(false));
@@ -677,6 +680,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
+  // 2×2「所有本质状态」视图激活:仅 event=222 + 难度 tab + 数据源切到 all。
+  const isEssential = tab === 'difficulty' && event === '222' && essSrc === 'all';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -797,7 +802,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const timeline333Qtm = tab === 'difficulty' && is333 && optMetric === 'qtm';
 
   // 图表 / 时间线视图开关(难度 + 长度共用);仅当当前选择支持时间线时出现。组平均模式下时间线不适用,隐藏。
-  const viewToggle = canTimeline && !avgOn ? (
+  // 2×2「所有本质状态」是理论全空间统计,无「首次出现」时间线概念,隐藏该开关。
+  const viewToggle = canTimeline && !avgOn && !isEssential ? (
     <div className="scramble-stats-view-toggle">
       <PillToggle
         value={viewMode === 'timeline'}
@@ -1613,10 +1619,34 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   if (!DIFFICULTY_EVENTS.has(event)) {
     const puzzleKey = PUZZLE_EVENT_MAP[event];
     if (puzzleKey) {
+      // 2×2 独有:数据源切换(WCA 真题采样 / 所有本质状态)。参照 analyzer 的来源切换 pill。
+      const srcToggle = event === '222' ? (
+        <div className="scramble-stats-controls scramble-stats-src-toggle">
+          <PillToggle
+            value={essSrc === 'wca'}
+            onChange={(v) => setEssSrc(v ? 'wca' : 'all')}
+            onLabel={tr({ zh: 'WCA 真题', en: 'WCA' })}
+            offLabel={tr({ zh: '所有本质状态', en: 'All states' })}
+            ariaLabel={tr({ zh: '数据源:WCA 真题或所有本质状态', en: 'Data source: WCA scrambles or all essential states' })}
+          />
+          <InfoTooltip
+            icon={HelpCircle}
+            content={tr({
+              zh: 'WCA 真题:真实比赛打乱的采样分布;所有本质状态:2×2 全部 3,674,160 个本质状态的精确统计',
+              en: 'WCA: sampled from real competition scrambles; All states: exact statistics over all 3,674,160 essential 2×2 states',
+            })}
+          />
+        </div>
+      ) : null;
       return (
         <div className="scramble-stats-page">
           {header}
-          {timelineActive ? timelineBlock : <PuzzleDistView isZh={isZh} puzzleKey={puzzleKey} />}
+          {srcToggle}
+          {isEssential
+            ? <Essential2x2View isZh={isZh} />
+            : timelineActive
+              ? timelineBlock
+              : <PuzzleDistView isZh={isZh} puzzleKey={puzzleKey} />}
         </div>
       );
     }
