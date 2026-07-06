@@ -15,8 +15,11 @@
   box-shadow: inset 0 -1px 0 var(--sticky-thead-border, color-mix(in srgb, var(--foreground) 12%, transparent));
 }
 
-/* 窄屏:表宽常超屏 → 容器横向滚动;横滚容器会破坏「相对视口」吸顶,移动端索性不吸顶。 */
+/* 窄屏:表宽常超屏 → 容器横向滚动;横滚容器会破坏「相对视口」吸顶,移动端索性不吸顶。
+   max-width:100% 卡在这个断点里(而非各表自己的 CSS)——容器自滚动时才需要卡住视口宽度,
+   跟"何时切自滚动"是同一个条件,别在消费者那边另抄一份 767px。桌面 overflow:visible 时
+   若同时卡 max-width,内容不裁切照样溢出,会把外框边线顶到表格中间(看着像断竖线)。 */
 @media (max-width: 767px) {
-  .sticky-scroll { overflow-x: auto; }
+  .sticky-scroll { overflow-x: auto; max-width: 100%; }
   .sticky-thead thead th { position: static; box-shadow: none; }
 }
