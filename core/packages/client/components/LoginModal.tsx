@@ -15,7 +15,7 @@ import {
   unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle,
   type Identity, type AuthProviders,
 } from '@/lib/account-api';
-import { requestGoogleAccessToken } from '@/lib/google-auth';
+import { requestGoogleAssertion } from '@/lib/google-auth';
 import './login-modal.css';
 
 const ICON = 16;
@@ -191,7 +191,8 @@ function LoginTabs({ onClose }: { onClose: () => void }) {
   // google 拿不到 clientId 没法弹窗,不能乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
-  const avail = providers ?? { email: true, phone: true, wca: true, googleClientId: null };
+  const avail = providers ?? { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null };
+  const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
   const [gBusy, setGBusy] = useState(false);
   const [gError, setGError] = useState<string | null>(null);
 
@@ -199,7 +200,7 @@ function LoginTabs({ onClose }: { onClose: () => void }) {
     { key: 'email' as const, icon: <Mail size={ICON} />, label: t('邮箱', 'Email'), on: avail.email },
     { key: 'phone' as const, icon: <Smartphone size={ICON} />, label: t('手机', 'Phone'), on: avail.phone },
     { key: 'wca' as const, icon: <Key size={ICON} />, label: 'WCA', on: true },
-    { key: 'google' as const, icon: <GoogleGlyph size={ICON} />, label: 'Google', on: !!avail.googleClientId },
+    { key: 'google' as const, icon: <GoogleGlyph size={ICON} />, label: 'Google', on: googleOn },
   ]).filter((tb) => tb.on);
 
   // 当前选中的方式若被隐藏(如默认 email 但未开放),落到第一个可用 tab。
@@ -209,13 +210,13 @@ function LoginTabs({ onClose }: { onClose: () => void }) {
   }, [providers]);
 
   const handleGoogleLogin = async () => {
-    const clientId = avail.googleClientId;
-    if (!clientId) return;
+    const { googleClientId: clientId, googleRelayUrl: relayUrl } = avail;
+    if (!clientId || !relayUrl) return;
     setGError(null);
     setGBusy(true);
     try {
-      const accessToken = await requestGoogleAccessToken(clientId);
-      const r = await loginGoogle(accessToken);
+      const assertion = await requestGoogleAssertion(clientId, relayUrl);
+      const r = await loginGoogle(assertion);
       applySession(r.token, r.user);
       onClose();
     } catch (e) {
@@ -260,7 +261,7 @@ function LoginTabs({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       )}
-      {method === 'google' && avail.googleClientId && (
+      {method === 'google' && googleOn && (
         <div className="lm-flow">
           <p className="lm-hint">{t('用 Google 账号登录。', 'Sign in with your Google account.')}</p>
           {gError && <p className="lm-error">{gError}</p>}
@@ -300,7 +301,8 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
   // googleClientId 拿不到没法弹窗,不能乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
-  const avail = providers ?? { email: true, phone: true, wca: true, googleClientId: null };
+  const avail = providers ?? { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null };
+  const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
   const [linkingGoogle, setLinkingGoogle] = useState(false);
 
   const reload = useCallback(async () => {
@@ -332,13 +334,13 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
   };
 
   const linkGoogleStart = async () => {
-    const clientId = avail.googleClientId;
-    if (!clientId) return;
+    const { googleClientId: clientId, googleRelayUrl: relayUrl } = avail;
+    if (!clientId || !relayUrl) return;
     setError(null);
     setLinkingGoogle(true);
     try {
-      const accessToken = await requestGoogleAccessToken(clientId);
-      await linkGoogle(accessToken);
+      const assertion = await requestGoogleAssertion(clientId, relayUrl);
+      await linkGoogle(assertion);
       await reload();
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
@@ -410,7 +412,7 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
 
       {error && <p className="lm-error">{error}</p>}
 
-      {(avail.email || avail.phone || !hasWca || (avail.googleClientId && !hasGoogle)) && (
+      {(avail.email || avail.phone || !hasWca || (googleOn && !hasGoogle)) && (
         <div className="lm-linkrow">
           <span className="lm-linktitle">{t('绑定新方式', 'Link a method')}</span>
           <div className="lm-linkbtns">
@@ -429,7 +431,7 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
                 <Link2 size={14} /> WCA
               </button>
             )}
-            {avail.googleClientId && !hasGoogle && (
+            {googleOn && !hasGoogle && (
               <button type="button" className="lm-chip" disabled={linkingGoogle} onClick={() => void linkGoogleStart()}>
                 {linkingGoogle ? <Loader2 size={14} className="lm-spin" /> : <GoogleGlyph size={14} />} Google
               </button>

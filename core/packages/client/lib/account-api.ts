@@ -46,26 +46,26 @@ export const linkPhoneVerify = (phone: string, code: string) => post<{ ok: true;
 export const linkWca = (accessToken: string) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/link/wca', { accessToken }, true);
 export const unlinkIdentity = (provider: string, providerUid?: string) => post<{ ok: true; token?: string; user?: SessionUser; identities: Identity[] }>('/v1/auth/unlink', { provider, providerUid }, true);
 
-// Google(客户端拿到 access_token 后转发校验;登录/绑定各一条,同 email/phone 的两段式)
-export const loginGoogle = (accessToken: string) => post<SessionResp>('/v1/auth/google', { accessToken });
-export const linkGoogle = (accessToken: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/google', { accessToken }, true);
+// Google(浏览器经墙外中继换来的断言 → 后端离线验签;登录/绑定各一条,同 email/phone 的两段式)
+export const loginGoogle = (assertion: string) => post<SessionResp>('/v1/auth/google', { assertion });
+export const linkGoogle = (assertion: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/google', { assertion }, true);
 
-export interface AuthProviders { email: boolean; phone: boolean; wca: boolean; googleClientId: string | null }
+export interface AuthProviders { email: boolean; phone: boolean; wca: boolean; googleClientId: string | null; googleRelayUrl: string | null }
 let providersCache: AuthProviders | null = null;
 /** 服务端已配置的登录方式(env 未配 email/sms/google 则对应关闭)。成功结果进模块缓存;
  *  拿不到就乐观全开 email/phone/wca(退化成旧行为:点未配的方式走 503 + 友好文案),
- *  但 googleClientId 拿不到就是 null(没有 ID 也没法发起 Google 弹窗,不能乐观)。 */
+ *  但 google 拿不到 clientId/relayUrl 就是 null(没有它俩发不起弹窗/验不了真,不能乐观)。 */
 export async function fetchAuthProviders(): Promise<AuthProviders> {
   if (providersCache) return providersCache;
   try {
     const res = await fetch(apiUrl('/v1/auth/providers'));
     if (res.ok) {
       const d = (await res.json()) as Partial<AuthProviders>;
-      providersCache = { email: !!d.email, phone: !!d.phone, wca: d.wca !== false, googleClientId: d.googleClientId ?? null };
+      providersCache = { email: !!d.email, phone: !!d.phone, wca: d.wca !== false, googleClientId: d.googleClientId ?? null, googleRelayUrl: d.googleRelayUrl ?? null };
       return providersCache;
     }
   } catch { /* ignore */ }
-  return { email: true, phone: true, wca: true, googleClientId: null };
+  return { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null };
 }
 
 export async function fetchIdentities(): Promise<Identity[]> {
