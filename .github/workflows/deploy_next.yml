@@ -109,13 +109,26 @@ jobs:
           chmod 600 ~/.ssh/id
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: scp tarball + systemd unit
+      # US runner → CN server 的国际链路在国内晚高峰会把大文件传到 ~80MB 就 stall。
+      # plain scp 无法续传 → 每次从头传又卡死同一处。rsync --partial 保留已传的半截,
+      # --timeout 检测 stall 后返回非零,由重试循环续传剩余字节,直到整包传完。
+      - name: rsync tarball + systemd unit (resumable — tolerates link stalls)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          scp -i ~/.ssh/id /tmp/cuberoot-next.tar.gz \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-next.tar.gz"
+          RSH="ssh -i ~/.ssh/id -o StrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
+          ok=0
+          for i in $(seq 1 40); do
+            rsync -a --partial --inplace --timeout=60 -e "$RSH" \
+              /tmp/cuberoot-next.tar.gz \
+              "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-next.tar.gz" \
+              && { ok=1; echo "tarball transferred on attempt $i"; break; }
+            echo "attempt $i stalled/failed — resuming remaining bytes in 5s..."
+            sleep 5
+          done
+          [ "$ok" = 1 ] || { echo "rsync failed after 40 attempts"; exit 1; }
+          # unit file is tiny — plain scp is fine
           scp -i ~/.ssh/id ops/systemd/cuberoot-next.service \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-next.service"
 
