@@ -1,0 +1,17 @@
+name: 改进建议 / Enhancement
+description: 提一个新功能或改进 / Suggest a feature or improvement
+title: "[Enhancement] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: 建议内容 / Your suggestion
+      description: 想要什么?它解决什么问题? / What would you like, and what problem does it solve?
+    validations:
+      required: true
+  - type: input
+    id: page
+    attributes:
+      label: 相关页面 / Related page（可选 optional）
+      placeholder: https://cuberoot.me/zh/...
