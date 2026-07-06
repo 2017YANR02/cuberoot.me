@@ -39,14 +39,22 @@ export interface InteractiveCubeNetProps {
   pixelSize: number;
   onSolve?: (facelet: string) => void;
   solveLabel?: { zh: string; en: string };
+  onSecondaryAction?: (facelet: string) => void;
+  secondaryActionLabel?: { zh: string; en: string };
+  secondaryActionTitle?: { zh: string; en: string };
+  secondaryBusy?: boolean;
+  optimalToggle?: { value: boolean; onChange: (v: boolean) => void };
   hideSolve?: boolean;
+  plainSolve?: boolean;
 }
 
 export default function InteractiveCubeNet({
-  facelet, onChange, activeColor, onActiveColorChange, pixelSize, onSolve, solveLabel, hideSolve,
+  facelet, onChange, activeColor, onActiveColorChange, pixelSize, onSolve, solveLabel,
+  onSecondaryAction, secondaryActionLabel, secondaryActionTitle, secondaryBusy, optimalToggle, hideSolve, plainSolve,
 }: InteractiveCubeNetProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
+  const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const { paint, rejectMsg } = usePainter({ facelet, onChange, activeColor, isZh });
 
@@ -84,10 +92,13 @@ export default function InteractiveCubeNet({
                   left: px, top: py, width: ss - 1, height: ss - 1,
                   background: color,
                 }}
-                onClick={() => !isCenter && paint(idx)}
-                disabled={isCenter}
-                title={`${face}${r * 3 + c + 1}`}
-                aria-label={`Sticker ${face}${r * 3 + c + 1} = ${ch}`}
+                onClick={() => (isCenter ? onActiveColorChange(face) : paint(idx))}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  if (!isCenter) paint(idx, 'X');
+                }}
+                title={isCenter ? t('点击取色', 'Pick this color') : `${face}${r * 3 + c + 1}${t('(右键置灰)', ' (right-click to erase)')}`}
+                aria-label={isCenter ? `Pick color ${face}` : `Sticker ${face}${r * 3 + c + 1} = ${ch}`}
               />
             );
           })}
@@ -101,8 +112,14 @@ export default function InteractiveCubeNet({
         onChange={onChange}
         onSolve={onSolve}
         solveLabel={solveLabel}
+        onSecondaryAction={onSecondaryAction}
+        secondaryActionLabel={secondaryActionLabel}
+        secondaryActionTitle={secondaryActionTitle}
+        secondaryBusy={secondaryBusy}
+        optimalToggle={optimalToggle}
         rejectMsg={rejectMsg}
         hideSolve={hideSolve}
+        plainSolve={plainSolve}
       />
     </div>
   );
@@ -135,7 +152,7 @@ const INLINE_CSS = `
   z-index: 1;
 }
 .vc-net-sticker.is-center {
-  cursor: default;
+  cursor: pointer;
   border-color: rgba(0,0,0,0.7);
 }
 `;
