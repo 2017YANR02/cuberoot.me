@@ -27,7 +27,8 @@ const ALL_MERGED = new Set([
 // NOTE: RETIRED——统计的 JSON 仍生成(被别处消费),但其单独页面/路由已退役、索引页不再列卡。
 //   wr_metric → 整体迁进 /wca/results 的「指标」视图(?view=metric);wr_metric.json 仍被
 //   /wca/results 嵌入 + fetch_upcoming_comps / gen_wr_ids 消费,故留在 REGISTRY,只是不列卡。
-const RETIRED = new Set(['wr_metric']);
+//   name_stats → 姓名统计已并入选手页,索引页不再单列卡(移除唯一撑起「其他」分类的项)。
+const RETIRED = new Set(['wr_metric', 'name_stats']);
 
 // NOTE: iconName 字段是 lucide-react 组件名，前端映射为 <Icon>。不再用 emoji。
 const STAT_CATEGORIES = [
@@ -39,7 +40,7 @@ const STAT_CATEGORIES = [
     // NOTE: wr_current(当前世界纪录)已退役 2026-06-22 —— 移植进 /wca/records 的「当前」视图(支持全部区域)
     // NOTE: wr_metric(指标)已退役 2026-06-22 —— 移植进 /wca/results 的「指标」视图(?view=metric);
     //   wr_metric.json 仍照常生成(被 /wca/results 嵌入 + fetch_upcoming_comps / gen_wr_ids 消费),只是不再单独成页/列卡。
-    ids: ['wr_aoxr', 'wr_dominance', 'wr_non_pr', 'wr_newcomer',
+    ids: ['wr_aoxr', 'wr_dominance', 'round_top3_sum', 'wr_non_pr', 'wr_newcomer',
           'average_of', 'consecutive_sub_5_average'],
   },
   {

@@ -103,6 +103,7 @@ export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = 
   // NOTE: 阶段 D-3 — 多维面板统计
   'wr_non_pr': () => import('../statistics/wr_non_pr.js'),
   'wr_dominance': () => import('../statistics/wr_dominance.js'),
+  'round_top3_sum': () => import('../statistics/round_top3_sum.js'),
   'wr_newcomer': () => import('../statistics/wr_newcomer.js'),
   // NOTE: 阶段 D-4 — 聚合页面
   'wr_metric': () => import('../statistics/wr_metric.js'),
