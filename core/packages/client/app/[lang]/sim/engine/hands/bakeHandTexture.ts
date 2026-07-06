@@ -214,14 +214,14 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
     // 甲背 = −pad 投影到 ⊥ 末节轴
     const dorsal = pad.clone().negate().addScaledVector(axis, pad.dot(axis)).normalize();
     const lat = new THREE.Vector3().crossVectors(axis, dorsal).normalize();
-    const reach = len * 1.35;
+    const reach = len * 1.7; // 甲拉长到 1.30·len,eligibility 半径同步放宽兜住前沿肉垫像素
     nails.push({
       finger: name,
       dx: p3.x, dy: p3.y, dz: p3.z,
       ax: axis.x, ay: axis.y, az: axis.z,
       ox: dorsal.x, oy: dorsal.y, oz: dorsal.z,
       lx: lat.x, ly: lat.y, lz: lat.z,
-      len, halfW: rDist * 0.68, reach2: reach * reach,
+      len, halfW: rDist * 0.72, reach2: reach * reach,
     });
   }
 
@@ -237,8 +237,10 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
   const fMottle = 1 / (9.5 * U);
   const fMottle2 = 1 / (4.8 * U);
 
-  // 甲形轴向范围(末节段分数):甲根 ~40% 处起,盖到指尖。
-  const NAIL_T0 = 0.38, NAIL_T1 = 1.02;
+  // 甲形轴向范围(末节段分数):甲根 ~40% 处起,盖过骨端(1.0)到指尖肉垫最前沿
+  // —— 骨端(p4)不是手指最前点,指腹肉垫还前凸一截;越界的正面盖不上靠 ndot 门
+  // (指尖圆帽法线转成 +轴向、非甲背)天然拦住,所以拉长只让甲盖满背侧、不糊到指腹。
+  const NAIL_T0 = 0.36, NAIL_T1 = 1.30;
   const nailTc = (NAIL_T0 + NAIL_T1) / 2, nailTh = (NAIL_T1 - NAIL_T0) / 2;
 
   const index = geo.getIndex();
@@ -339,14 +341,16 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
           const dxn = hx - nd.dx, dyn = hy - nd.dy, dzn = hz - nd.dz;
           if (dxn * dxn + dyn * dyn + dzn * dzn > nd.reach2) continue;
           const ndot = nx * nd.ox + ny * nd.oy + nz * nd.oz;
-          if (ndot < 0.15) continue; // 只画甲背面
+          // 甲背门 0.12:留在明确朝背的面上,不卷过指尖 curve(卷过去甲缘会在指尖
+          // 描一圈亮沟,读成「指尖另接一截」;下调过 0.02 出过此坑)。
+          if (ndot < 0.12) continue;
           const tt = (dxn * nd.ax + dyn * nd.ay + dzn * nd.az) / nd.len;
           if (tt < NAIL_T0 - 0.25 || tt > NAIL_T1 + 0.25) continue;
           const uu = (dxn * nd.lx + dyn * nd.ly + dzn * nd.lz) / nd.halfW;
           const q = (tt - nailTc) / nailTh;
           const m = q * q + Math.pow(Math.abs(uu), 2.6);
           if (m > 1.45) continue;
-          const ndm = clamp01((ndot - 0.15) / 0.35);
+          const ndm = clamp01((ndot - 0.12) / 0.35);
           const e = sstep(1.06, 0.88, m) * ndm; // 甲面(内 1 → 外 0)
           const fold = sstep(1.0, 1.12, m) * (1 - sstep(1.15, 1.45, m)) * ndm; // 甲缘沟
           if (e > 0.5) nailPx[nd.finger]++;
@@ -354,16 +358,23 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
             const lun = sstep(-0.35, -0.75, q);  // 半月(甲根侧)
             const free = sstep(0.55, 0.85, q);   // 游离缘(白)
             const ridge = Math.sin(uu * 9 + (pores - 0.5) * 2) * 0.5 + 0.5; // 纵向细棱
-            // 甲色已按指尖顶点血色补偿(顶点色在 tip 处 g×~0.89、b×~0.86 与贴图
-            // 相乘,不补偿甲片会被乘成潮红、和周围充血皮肤收敛隐形)。
-            let nr = 0.93, ng = 0.78, nb = 0.72;                               // 甲床透粉
-            nr += (0.94 - nr) * lun; ng += (0.88 - ng) * lun; nb += (0.83 - nb) * lun;   // 半月
-            nr += (0.97 - nr) * free; ng += (0.95 - ng) * free; nb += (0.90 - nb) * free; // 游离缘
+            // 甲色比肤色明显更浅更粉,甲片才「读」得出 —— 旧值(0.93/0.78/0.72)与
+            // 肤色太近,再经指尖顶点血色相乘(g×~0.89、b×~0.86)后几乎隐形(看着扁如平皮)。
+            // 提亮 + 提粉压出与皮肤的对比,补偿仍隐含在偏白基调里。
+            let nr = 0.95, ng = 0.82, nb = 0.77;                               // 甲床透粉
+            nr += (0.97 - nr) * lun; ng += (0.90 - ng) * lun; nb += (0.86 - nb) * lun;   // 半月
+            nr += (0.98 - nr) * free; ng += (0.95 - ng) * free; nb += (0.91 - nb) * free; // 游离缘
 
             const rm = 1 + (ridge - 0.5) * 0.03;
             r += (nr * rm - r) * e; g += (ng * rm - g) * e; b += (nb * rm - b) * e;
-            bmp += (0.68 + (ridge - 0.5) * 0.035 - bmp) * e;
-            rgh += (0.34 + lun * 0.06 - rgh) * e;
+            // 甲面凸起:横向半圆穹顶(中央高两侧低)× 纵向微拱(根/游离缘略薄),读成
+            // 弯曲甲片而非贴花平片 —— 旧版常值平台(0.68)内部零梯度 = 无明暗起伏 =
+            // 「太扁」根因;穹顶给出的法线斜率让光扫出甲面弧度。
+            const dome = Math.sqrt(clamp01(1 - uu * uu));   // 横向凸(⊥指轴)
+            const arch = clamp01(1 - q * q * 0.5);          // 纵向微拱(mid 最厚)
+            const nailBump = 0.6 + dome * arch * 0.2 + (ridge - 0.5) * 0.03;
+            bmp += (nailBump - bmp) * e;
+            rgh += (0.32 + lun * 0.06 - rgh) * e; // 甲面略光(≈0.32)催出微高光,区别于哑光皮肤
           }
           if (fold > 0.003) {
             bmp -= fold * 0.10;
@@ -383,15 +394,20 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
     }
   }
 
-  // ---- BFS 泛洪外扩:空像素从最近的已覆盖像素复制(多源 BFS ≈ 最近传播),
-  // 填满全图 —— mipmap 任意缩级都采不到黑边。 ----
+  const coverage = floodFillMaps(S, mask, [albedo, bump, rough]);
+
+  return { size: S, albedo, bump, rough, coverage, nailPx };
+}
+
+/** BFS 泛洪外扩:空像素从最近的已覆盖像素复制(多源 BFS ≈ 最近传播),填满
+ *  全图 —— mipmap 任意缩级都采不到黑边。返回外扩前覆盖率。 */
+function floodFillMaps(S: number, mask: Uint8Array, arrs: Uint8ClampedArray[]): number {
   let seedCount = 0;
   const queue = new Int32Array(S * S);
   let head = 0, tail = 0;
   for (let i = 0; i < S * S; i++) {
     if (mask[i]) { queue[tail++] = i; seedCount++; }
   }
-  const coverage = seedCount / (S * S);
   while (head < tail) {
     const cur = queue[head++];
     const cx = cur % S, cy = (cur / S) | 0;
@@ -404,17 +420,92 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
         if (mask[ni]) continue;
         mask[ni] = 1;
         const src = cur * 4, dst = ni * 4;
-        for (let k = 0; k < 4; k++) {
-          albedo[dst + k] = albedo[src + k];
-          bump[dst + k] = bump[src + k];
-          rough[dst + k] = rough[src + k];
+        for (const arr of arrs) {
+          for (let k = 0; k < 4; k++) arr[dst + k] = arr[src + k];
         }
         queue[tail++] = ni;
       }
     }
   }
+  return seedCount / (S * S);
+}
 
-  return { size: S, albedo, bump, rough, coverage, nailPx };
+/** 非蒙皮肢体件(前臂)皮肤烘焙纯计算核:同款基础肤色 / 斑驳 / 毛孔公式在
+ *  几何局部系求值(无皱纹 / 指甲特征)。几何与手同按 U 建模,噪声频率一致,
+ *  腕缝两侧肤质颗粒 / 色斑统计连续。 */
+export function computeLimbMaps(geo: THREE.BufferGeometry, size: number): {
+  albedo: Uint8ClampedArray<ArrayBuffer>;
+  bump: Uint8ClampedArray<ArrayBuffer>;
+  rough: Uint8ClampedArray<ArrayBuffer>;
+} {
+  const posA = geo.getAttribute("position");
+  const uvA = geo.getAttribute("uv");
+  const S = size;
+  const albedo = new Uint8ClampedArray(S * S * 4);
+  const bump = new Uint8ClampedArray(S * S * 4);
+  const rough = new Uint8ClampedArray(S * S * 4);
+  const mask = new Uint8Array(S * S);
+
+  const fPore = 1 / (1.7 * U);
+  const fMottle = 1 / (9.5 * U);
+  const fMottle2 = 1 / (4.8 * U);
+
+  const index = geo.getIndex();
+  const triCount = (index ? index.count : posA.count) / 3;
+  const vIdx = (t: number, k: number): number => (index ? index.getX(t * 3 + k) : t * 3 + k);
+
+  for (let t = 0; t < triCount; t++) {
+    const ia = vIdx(t, 0), ib = vIdx(t, 1), ic = vIdx(t, 2);
+    const xa = uvA.getX(ia) * S, ya = uvA.getY(ia) * S;
+    const xb = uvA.getX(ib) * S, yb = uvA.getY(ib) * S;
+    const xc = uvA.getX(ic) * S, yc = uvA.getY(ic) * S;
+    const area = (xb - xa) * (yc - ya) - (xc - xa) * (yb - ya);
+    if (Math.abs(area) < 1e-9) continue;
+    const x0 = Math.max(0, Math.floor(Math.min(xa, xb, xc)));
+    const x1 = Math.min(S - 1, Math.ceil(Math.max(xa, xb, xc)));
+    const y0 = Math.max(0, Math.floor(Math.min(ya, yb, yc)));
+    const y1 = Math.min(S - 1, Math.ceil(Math.max(ya, yb, yc)));
+    const inv = 1 / area;
+
+    for (let py = y0; py <= y1; py++) {
+      for (let px = x0; px <= x1; px++) {
+        const cx = px + 0.5, cy = py + 0.5;
+        let w0 = ((xb - cx) * (yc - cy) - (xc - cx) * (yb - cy)) * inv;
+        let w1 = ((xc - cx) * (ya - cy) - (xa - cx) * (yc - cy)) * inv;
+        let w2 = 1 - w0 - w1;
+        if (w0 < -0.03 || w1 < -0.03 || w2 < -0.03) continue;
+        w0 = clamp01(w0); w1 = clamp01(w1); w2 = clamp01(w2);
+        const wsum = w0 + w1 + w2;
+        w0 /= wsum; w1 /= wsum; w2 /= wsum;
+
+        const hx = posA.getX(ia) * w0 + posA.getX(ib) * w1 + posA.getX(ic) * w2;
+        const hy = posA.getY(ia) * w0 + posA.getY(ib) * w1 + posA.getY(ic) * w2;
+        const hz = posA.getZ(ia) * w0 + posA.getZ(ib) * w1 + posA.getZ(ic) * w2;
+
+        const pores = fbm2(hx, hy, hz, fPore);
+        const mottle = fbm2(hx, hy, hz, fMottle);
+        const mott2 = vnoise3(hx * fMottle2 + 71.3, hy * fMottle2 + 13.9, hz * fMottle2 + 47.1);
+
+        const mv = 1 + (mottle - 0.5) * 0.11;
+        const r = 0.851 * mv * (1 + (mott2 - 0.5) * 0.03);
+        const g = 0.686 * mv * (1 - (mott2 - 0.5) * 0.06);
+        const b = 0.580 * mv * (1 - (mott2 - 0.5) * 0.10);
+        const bmp = 0.5 + (pores - 0.5) * 0.22;
+        const rgh = 0.585 + (pores - 0.5) * 0.13 + (mottle - 0.5) * 0.07;
+
+        const o = (py * S + px) * 4;
+        albedo[o] = clamp01(r) * 255; albedo[o + 1] = clamp01(g) * 255; albedo[o + 2] = clamp01(b) * 255; albedo[o + 3] = 255;
+        const bb = clamp01(bmp) * 255;
+        bump[o] = bb; bump[o + 1] = bb; bump[o + 2] = bb; bump[o + 3] = 255;
+        const rr = clamp01(rgh) * 255;
+        rough[o] = rr; rough[o + 1] = rr; rough[o + 2] = rr; rough[o + 3] = 255;
+        mask[py * S + px] = 1;
+      }
+    }
+  }
+
+  floodFillMaps(S, mask, [albedo, bump, rough]);
+  return { albedo, bump, rough };
 }
 
 export interface HandBakedMaps {
@@ -423,20 +514,27 @@ export interface HandBakedMaps {
   rough: THREE.CanvasTexture;
 }
 
+function dataToTexture(arr: Uint8ClampedArray<ArrayBuffer>, size: number, srgb: boolean): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("hand bake: 2d context unavailable");
+  ctx.putImageData(new ImageData(arr, size, size), 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.flipY = false;
+  if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 /** 浏览器包装:计算 → canvas → CanvasTexture(flipY=false 对齐 GLB UV 约定)。 */
 export async function bakeHandTextures(model: HandModel, size = 1024): Promise<HandBakedMaps> {
   // 实测 1024² 全手 ~0.9s:120 tris/片 ≈ 45ms,让出事件循环不卡长任务。
   const data = await computeHandMaps(model, size, 120);
-  const mk = (arr: Uint8ClampedArray<ArrayBuffer>, srgb: boolean): THREE.CanvasTexture => {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("hand bake: 2d context unavailable");
-    ctx.putImageData(new ImageData(arr, size, size), 0, 0);
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.flipY = false;
-    if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
-    return tex;
-  };
-  return { albedo: mk(data.albedo, true), bump: mk(data.bump, false), rough: mk(data.rough, false) };
+  return { albedo: dataToTexture(data.albedo, size, true), bump: dataToTexture(data.bump, size, false), rough: dataToTexture(data.rough, size, false) };
+}
+
+/** 前臂浏览器包装:几何轻(lathe 48 tris)特征轻(无皱纹/甲),同步烘完。 */
+export function bakeLimbTextures(geo: THREE.BufferGeometry, size = 512): HandBakedMaps {
+  const data = computeLimbMaps(geo, size);
+  return { albedo: dataToTexture(data.albedo, size, true), bump: dataToTexture(data.bump, size, false), rough: dataToTexture(data.rough, size, false) };
 }

@@ -33,7 +33,7 @@ import * as THREE from "three";
 import { SIZE } from "../define";
 import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
 import { loadGltfHand } from "./handModelGltf";
-import { bakeHandTextures } from "./bakeHandTexture";
+import { bakeHandTextures, bakeLimbTextures, type HandBakedMaps } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
 import { homeLeft, homeRight, type HandPose } from "./handPoses";
 
@@ -249,7 +249,8 @@ export default class HandsRig extends THREE.Group {
     skin.bumpScale = 0.55;
     skin.roughnessMap = detail;
     this.skinMat = skin;
-    this.cuffMat = new THREE.MeshStandardMaterial({ color: 0x3a4148, roughness: 0.85, metalness: 0 });
+    // DoubleSide:相机顺臂轴看进袖筒开口时,单面袖壁会被背面剔除露白看穿。
+    this.cuffMat = new THREE.MeshStandardMaterial({ color: 0x3a4148, roughness: 0.85, metalness: 0, side: THREE.DoubleSide });
 
     // 骨架叠加层材质先建(setSkeletonVisible 在加载完成前就可调),几何在
     // initAsync 里挂到加载好的骨骼上。默认隐藏 —— 由设置「骨架线条」开关驱动。
@@ -301,22 +302,22 @@ export default class HandsRig extends THREE.Group {
     // 程序化皮肤贴图烘焙(albedo/bump/roughness + 指甲)。必须在入场景 / 摆
     // home 姿态之前(烘焙契约:绑定姿态 + group 无父级)。UV 布局左右手不一致
     // (实测 max diff 0.042),两手各烘各的。失败非致命:退回平色 skinMat。
+    const mkBakedMat = (maps: HandBakedMaps): THREE.MeshPhysicalMaterial => new THREE.MeshPhysicalMaterial({
+      color: 0xffffff, // 基础肤色已画进 albedo(0xd9af94 × 斑驳),别再乘一层
+      roughness: 1.0,  // roughnessMap 画的是物理值,权威;皮肤 ~0.6 / 甲面 ~0.34
+      metalness: 0,
+      vertexColors: true, // 血色/掌背明暗仍走顶点色(低频),与贴图相乘复合
+      sheen: 0.15,
+      sheenRoughness: 0.6,
+      sheenColor: new THREE.Color(0xffdfca),
+      map: maps.albedo,
+      bumpMap: maps.bump,
+      bumpScale: 0.7,
+      roughnessMap: maps.rough,
+    });
     try {
       for (const model of [right, left]) {
-        const maps = await bakeHandTextures(model);
-        const mat = new THREE.MeshPhysicalMaterial({
-          color: 0xffffff, // 基础肤色已画进 albedo(0xd9af94 × 斑驳),别再乘一层
-          roughness: 1.0,  // roughnessMap 画的是物理值,权威;皮肤 ~0.6 / 甲面 ~0.34
-          metalness: 0,
-          vertexColors: true, // 血色/掌背明暗仍走顶点色(低频),与贴图相乘复合
-          sheen: 0.15,
-          sheenRoughness: 0.6,
-          sheenColor: new THREE.Color(0xffdfca),
-          map: maps.albedo,
-          bumpMap: maps.bump,
-          bumpScale: 0.7,
-          roughnessMap: maps.rough,
-        });
+        const mat = mkBakedMat(await bakeHandTextures(model));
         model.meshes[0].material = mat;
         this.handMats.push(mat);
       }
@@ -326,6 +327,17 @@ export default class HandsRig extends THREE.Group {
     this.add(right.group, left.group);
     const rArm = buildForearm(this.skinMat, this.cuffMat);
     const lArm = buildForearm(this.skinMat, this.cuffMat);
+    // 前臂烘同款皮肤贴图(同公式/同材质参数,腕缝两侧肤质细节连续 —— 平色
+    // 管子接烘焙手的材质断层比几何台阶还显眼)。两臂几何相同,烘一次共享;
+    // 失败非致命:退回平色 skinMat。
+    try {
+      const mat = mkBakedMat(bakeLimbTextures(rArm.meshes[0].geometry));
+      rArm.meshes[0].material = mat;
+      lArm.meshes[0].material = mat;
+      this.handMats.push(mat);
+    } catch (e) {
+      console.error("[sim hands] forearm texture bake failed:", e);
+    }
     this.add(rArm.group, lArm.group);
     right.meshes.push(...rArm.meshes);
     left.meshes.push(...lArm.meshes);
@@ -742,7 +754,9 @@ export default class HandsRig extends THREE.Group {
   private static _eTmp = new THREE.Euler();
   private static _vTmp = new THREE.Vector3();
   private static _vTmp2 = new THREE.Vector3();
-  private static _xAxis = new THREE.Vector3(1, 0, 0);
+  private static _vTmp3 = new THREE.Vector3();
+  private static _vTmp4 = new THREE.Vector3();
+  private static _mTmp = new THREE.Matrix4();
 
   private applyHand(side: HandSide, idle: boolean): void {
     const hands = this.hands;
@@ -807,11 +821,18 @@ export default class HandsRig extends THREE.Group {
     }
 
     // 前臂 IK:origin 贴到手腕接驳点,+x 指向「肘 → 腕」方向 —— 肘锚固定,
-    // 腕转/弹指/回位时前臂自然摆动而不是整条手臂绕魔方公转。
+    // 腕转/弹指/回位时前臂自然摆动而不是整条手臂绕魔方公转。滚转对齐掌平面:
+    // setFromUnitVectors 最小旋转的滚转随肘-腕方位漂,扁截面会转离腕背压扁向
+    // 现台阶;改正交基 +x=肘→腕、+z≈手系掌法向,截面扁向永远接续手背/掌面。
     const wrist = HandsRig._vTmp.copy(WRIST_LOCAL).applyQuaternion(g.quaternion).add(g.position);
     h.forearm.position.copy(wrist);
     const dir = HandsRig._vTmp2.copy(wrist).sub(h.elbow).normalize();
-    h.forearm.quaternion.setFromUnitVectors(HandsRig._xAxis, dir);
+    const zF = HandsRig._vTmp3.set(0, 0, 1).applyQuaternion(g.quaternion);
+    zF.addScaledVector(dir, -zF.dot(dir));
+    if (zF.lengthSq() < 1e-6) zF.set(0, 0, 1); // 臂轴撞上掌法向的退化兜底
+    zF.normalize();
+    const yF = HandsRig._vTmp4.crossVectors(zF, dir);
+    h.forearm.quaternion.setFromRotationMatrix(HandsRig._mTmp.makeBasis(dir, yF, zF));
 
     // 手指姿态 = home 弯曲 + flick 偏移。
     const flickA = h.flickFinger ? h.flickAmount * (h.flickDecay > 0 ? h.flickDecay : 1) : 0;
