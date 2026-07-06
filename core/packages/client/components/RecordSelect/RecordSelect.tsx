@@ -6,6 +6,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, X } from 'lucide-react';
+import type { ReconOfficial } from '@cuberoot/shared';
 import { RECORD_OPTIONS, isRecordCodeAllowedFor } from '@/lib/recon-utils';
 import { tr } from '@/i18n/tr';
 import { RecordBadge } from '../RecordBadge';
@@ -20,9 +21,16 @@ interface RecordSelectProps {
   placeholder?: string;
   /** Solver iso2 — used to filter out continent codes outside that continent. */
   personIso2?: string | null;
+  /**
+   * WCA solves only ever get official R-suffixed codes (WR/NR/…); non-WCA
+   * comps and practice solves can't hold an official record, only the
+   * unofficial B-suffixed "best" counterpart (WB/NB/…) — so scope the
+   * option list accordingly. Omit when `records` is passed (already scoped).
+   */
+  official?: ReconOfficial;
 }
 
-export function RecordSelect({ value, onChange, className, records, placeholder, personIso2 }: RecordSelectProps) {
+export function RecordSelect({ value, onChange, className, records, placeholder, personIso2, official }: RecordSelectProps) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState('');
@@ -32,6 +40,7 @@ export function RecordSelect({ value, onChange, className, records, placeholder,
   const items: { code: string; count?: number }[] = records
     ?? RECORD_OPTIONS
       .filter(c => isRecordCodeAllowedFor(c, personIso2))
+      .filter(c => !official || (official === 'wca' ? c.endsWith('R') : c.endsWith('B')))
       .map(c => ({ code: c }));
   const current = records?.find(r => r.code === value);
   const emptyLabel = placeholder ?? '';
