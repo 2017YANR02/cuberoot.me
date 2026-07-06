@@ -1,0 +1,22 @@
+# 视频和图片文件
+*.MP4
+*.mp4
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# 特征缓存 (可从视频重建)
+*.npz
+
+# 调试输出目录
+debug_splits/
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# Node / TS
+node_modules/
+dist/
+.tmp/
