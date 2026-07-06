@@ -12,6 +12,7 @@
  * 1:1 port from packages/client-vite/src/pages/scramble/ScrambleHubPage.tsx (Vite SPA).
  */
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { Dices, Sparkles, Wand2 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from "@/hooks/useT";
@@ -51,6 +52,7 @@ export default function ScrambleHubPage() {
 
   return (
     <div className="scramble-hub-page">
+      <BackHome />
       <style>{INLINE_CSS}</style>
       <header className="hub-header">
         <h1>{t('打乱', 'Scramble')}</h1>

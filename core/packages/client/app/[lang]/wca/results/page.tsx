@@ -11,6 +11,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import type { EChartsType } from 'echarts';
 import Link from '@/components/AppLink';
+import HomeLink from '@/components/HomeLink';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString } from 'nuqs';
@@ -523,7 +524,7 @@ function AllResultsPageInner() {
     <div className="wse-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
+          <HomeLink className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '首页', en: 'Home' })}</HomeLink>
         </div>
         <h1 className="wse-title-row">
           {tr({ zh: '排名', en: 'Rankings' })}

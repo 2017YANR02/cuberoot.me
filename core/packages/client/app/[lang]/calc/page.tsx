@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { useTranslation } from 'react-i18next';
 import { Sigma, HelpCircle } from 'lucide-react';
 import { useCalcStore, isMbfForEvent, solveCountForEvent } from './_components/stores/calc_store';
@@ -370,6 +371,7 @@ export function CalcPage() {
 
   return (
     <div className="hth-app calc-page">
+      <BackHome />
       {tab === 'average' ? (
         <>
           {/* 简易版顶部一行: 项目选择器 + 切回对比版 toggle */}

@@ -64,6 +64,10 @@
 .calendar-page .upcoming-meta {
     font-size: 0.8rem;
     color: var(--text-sub);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
 }
 
 /* ── Toolbar ── */
