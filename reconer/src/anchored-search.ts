@@ -123,15 +123,16 @@ const FACE_ROT_ASSIGN: readonly (readonly number[])[] = (() => {
   return out;
 })();
 
-/** 面身份边缘化的观测对数似然: 对 24 指派取 max */
+/** 面身份边缘化的观测对数似然: 对指派集取 max (默认全 24; 可限面收紧证据) */
 export function logRawObs(
   sc: readonly number[],
   codes: readonly number[], // 相机 9 格颜色码 (-1 = 不可读)
   logHit: number,
   logMiss: number,
+  assigns: readonly (readonly number[])[] = FACE_ROT_ASSIGN,
 ): number {
   let best = -Infinity;
-  for (const assign of FACE_ROT_ASSIGN) {
+  for (const assign of assigns) {
     let s = 0;
     for (let cell = 0; cell < 9; cell++) {
       const code = codes[cell];
@@ -141,6 +142,13 @@ export function logRawObs(
     if (s > best) best = s;
   }
   return best;
+}
+
+/** 按可见面过滤指派集 (面序 U R F D L B; 如 ["U","B"] = 相机只可能看到这两面) */
+export function assignsForFaces(faces: readonly ("U" | "R" | "F" | "D" | "L" | "B")[]): readonly (readonly number[])[] {
+  const FACE_IDX: Record<string, number> = { U: 0, R: 1, F: 2, D: 3, L: 4, B: 5 };
+  const allowed = new Set(faces.map((f) => FACE_IDX[f]));
+  return FACE_ROT_ASSIGN.filter((a) => allowed.has(Math.floor(a[0] / 9)));
 }
 
 /** RawFaceObs → 颜色码数组 (评分热路径用) */
@@ -166,6 +174,8 @@ export interface AnchoredOptions {
   /** 原始观测的单格命中/漏概率 (默认 0.85 / 0.03) */
   rawHitProb?: number;
   rawMissProb?: number;
+  /** 原始观测允许的可见面 (默认全 6 面; 限面收紧证据强度) */
+  rawFaces?: readonly ("U" | "R" | "F" | "D" | "L" | "B")[];
   /** 视觉对数似然权重, 默认 1 */
   visualWeight?: number;
 }
@@ -243,6 +253,7 @@ export function anchoredBeamSearch(
 
   const logHit = Math.log(opts.rawHitProb ?? 0.85);
   const logMiss = Math.log(opts.rawMissProb ?? 0.03);
+  const rawAssigns = opts.rawFaces ? assignsForFaces(opts.rawFaces) : undefined;
   const rawCodes = opts.rawObservations?.map((o) => (o ? rawObsCodes(o) : null));
   const finalRawCodes = opts.finalRawObservation ? rawObsCodes(opts.finalRawObservation) : null;
 
@@ -252,7 +263,7 @@ export function anchoredBeamSearch(
     score: opts.finalObservation
       ? vw * logObs(o, opts.finalObservation)
       : finalRawCodes
-        ? vw * logRawObs(o, finalRawCodes, logHit, logMiss)
+        ? vw * logRawObs(o, finalRawCodes, logHit, logMiss, rawAssigns)
         : 0,
     move: null,
     isInsert: false,
@@ -276,7 +287,7 @@ export function anchoredBeamSearch(
     const obs = opts.observations?.[t] ?? null;
     const raw = rawCodes?.[t] ?? null;
     const visOf = (sc: readonly number[]): number =>
-      obs ? vw * logObs(sc, obs) : raw ? vw * logRawObs(sc, raw, logHit, logMiss) : 0;
+      obs ? vw * logObs(sc, obs) : raw ? vw * logRawObs(sc, raw, logHit, logMiss, rawAssigns) : 0;
 
     for (const path of beam) {
       // 1) 直接消费段 t

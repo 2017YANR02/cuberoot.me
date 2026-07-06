@@ -12,7 +12,10 @@ import {
   buildVocabulary,
   invertMove,
   invertToken,
+  logRawObs,
   normalizeToken,
+  rawObsCodes,
+  type RawFaceObs,
 } from "../src/anchored-search.ts";
 
 describe("invertToken", () => {
@@ -136,5 +139,50 @@ describe("anchoredBeamSearch (物理语义)", () => {
     const r = anchoredBeamSearch([{ F: 1.0 }], scramble, { beamWidth: 64, maxRotInserts: 0 });
     expect(r.anchored).toBe(false);
     expect(r.bestUnanchored).toBeDefined();
+  });
+});
+
+describe("面身份边缘化观测 (RawFaceObs)", () => {
+  const LOG_HIT = Math.log(0.9);
+  const LOG_MISS = Math.log(0.03);
+
+  it("solved 态: 任一面任意 in-plane 旋转的观测都拿满分", () => {
+    // U 面 (全 W) 旋转无关; 用 F 面全 G 且带 null 遮挡
+    const obs: RawFaceObs = { colors: ["G", "G", null, "G", "G", "G", null, "G", "G"] };
+    const s = logRawObs(IDENTITY_PERM, rawObsCodes(obs), LOG_HIT, LOG_MISS);
+    expect(s).toBeCloseTo(7 * LOG_HIT, 6);
+  });
+
+  it("与状态无关的乱色观测: 得分显著低于真面观测", () => {
+    const junk: RawFaceObs = { colors: ["W", "R", "G", "Y", "O", "B", "W", "R", "G"] };
+    const good: RawFaceObs = { colors: ["B", "B", "B", "B", "B", "B", "B", "B", "B"] };
+    const sJunk = logRawObs(IDENTITY_PERM, rawObsCodes(junk), LOG_HIT, LOG_MISS);
+    const sGood = logRawObs(IDENTITY_PERM, rawObsCodes(good), LOG_HIT, LOG_MISS);
+    expect(sGood).toBeGreaterThan(sJunk + 10);
+  });
+
+  it("端到端: 面身份未知观测下锚定并还原 (真面随段漂移 B/U)", () => {
+    const gt = ["R", "U'", "F2", "L", "U2"];
+    const scramble = scrambleFromSolution(gt);
+    // 正向回放, 交替给 B 面 / U 面观测 (模拟持握漂移), 不带面标注
+    const faces = [45, 0, 45, 0, 45];
+    let cur: Perm = scramble;
+    const rawObservations: (RawFaceObs | null)[] = [];
+    for (let t = 0; t < gt.length; t++) {
+      const base = faces[t];
+      rawObservations.push({
+        colors: Array.from({ length: 9 }, (_, i) => COLOR_NAMES[Math.floor(cur[base + i] / 9)]),
+      });
+      cur = seqCompose(cur, physicalPerm(gt[t]));
+    }
+    const probs = gt.map((m) => ({ [m[0].toUpperCase()]: 0.8 }));
+    const r = anchoredBeamSearch(probs, scramble, {
+      beamWidth: 2048,
+      maxRotInserts: 0,
+      rawObservations,
+      rawHitProb: 0.9,
+    });
+    expect(r.anchored).toBe(true);
+    expect(r.segTokens.map(normalizeToken)).toEqual(gt.map(normalizeToken));
   });
 });

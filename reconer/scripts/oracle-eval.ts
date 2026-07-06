@@ -209,6 +209,8 @@ for (const splitsPath of files) {
     rawObservations,
     finalRawObservation,
     rawHitProb: 1 - NOISE,
+    // 仿真只出 B/U 两面 → 限面评分 (--allfaces 关闭, 对照边缘化代价)
+    rawFaces: MODE === "visface" && !process.argv.includes("--allfaces") ? ["B", "U"] : undefined,
   });
   const ms = Math.round(performance.now() - t0);
 
