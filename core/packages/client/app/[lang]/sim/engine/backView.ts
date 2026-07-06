@@ -53,9 +53,10 @@ export function createBackView(
     render(world: World) {
       // Mirror the main resize() framing for a square aspect.
       const isSq1 = world.puzzleKind === 'sq1';
-      // 手开着时:取景对齐主视图 3.9,near/far 按手部真包络 10/11×cubelet 放宽
-      // (HAND_SCALE 2.2 真人手比例),且 near 钳正 —— perspective 滑杆低段 distance 仅
-      // 7.8×cubelet,「distance − 8」为负 = 投影矩阵损坏乱切面(与主视图同款修法)。
+      // 手开着时:取景对齐主视图 3.9,near/far 按手部真包络 13/13.5×cubelet 放宽
+      // (腕+前臂/袖 188U+袖半径 ≈ 12×cubelet,整体转动会把臂甩向相机,包络不足
+      // near 切进臂里出「管状开口」假象),且 near 钳正 —— perspective 滑杆低段
+      // distance 仅 7.8×cubelet,margin 一减为负 = 投影矩阵损坏乱切面(与主视图同款修法)。
       const handsOn = world.hands?.isEnabled === true && world.puzzleKind === 3;
       const refHalf = cubeletSize * (isSq1 ? 4.6 : handsOn ? 3.9 : 3);
       const persp = world.perspective;
@@ -63,8 +64,8 @@ export function createBackView(
       const distance = refHalf * persp;
       camera.fov = (2 * Math.atan(minv) * 180) / Math.PI;
       camera.aspect = 1;
-      camera.near = Math.max(distance - cubeletSize * (handsOn ? 10 : isSq1 ? 5 : 4), cubeletSize * 0.4);
-      camera.far = distance + cubeletSize * (handsOn ? 11 : 8);
+      camera.near = Math.max(distance - cubeletSize * (handsOn ? 13 : isSq1 ? 5 : 4), cubeletSize * 0.4);
+      camera.far = distance + cubeletSize * (handsOn ? 13.5 : 8);
       // Target + orbit pivot = the cube's own centre, so a scrambled / bumpy cube
       // (mirror cube pieces bulge off-centre) stays pinned to the window centre. A
       // *world-space* AABB of the scene-tilted cube has its extremes jump between

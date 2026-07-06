@@ -183,18 +183,30 @@ export function buildForearm(
   const group = new THREE.Group();
   const meshes: THREE.Mesh[] = [];
   const LEN = 152 * U;
-  // 锥形前臂:腕端细(27U)、肘端粗(34U),z 微扁(0.8)与腕背接顺 ——
-  // 正圆等粗管接扁腕会现一圈错位缝(评审 #10)。
-  // taperedBoneAlongX 的 base 端(x=0)朝 +x,绕 z 转 π 后指向 −x 肘端。
-  const arm = new THREE.Mesh(taperedBoneAlongX(27 * U, 34 * U, LEN, 0.8), skinMat);
+  // 锥形前臂:截面对齐 GLB 手模自带的前臂残端(实测:残端从腕点伸向肘 ~29U
+  // 处开口斜切,断面 y 半宽 ~34U、z 半高 ~22-24U,中心 y≈+0.5 z≈-2 手系)。
+  // 旧值 27U 比残端细 7U:残端边缘外挑一圈台阶,开口斜切面角度一偏直接看穿
+  // 内腔(「手和手臂断了」)。腕端 34.5U/扁 0.7 略盖过开口,残端整段埋进前臂,
+  // 接缝只剩同肤质浅折。taperedBoneAlongX base 端(x=0)朝 +x,绕 z 转 π 后
+  // 指向 −x 肘端。
+  const arm = new THREE.Mesh(taperedBoneAlongX(34.5 * U, 38 * U, LEN, 0.7), skinMat);
   arm.rotation.z = Math.PI;
-  arm.position.x = 11 * U; // 腕端圆帽探进腕里 ~38U,接缝圆润
+  // 腕端圆帽探进腕里 ~38U 填满残端内腔;y/z 微移对中残端断面中心。
+  arm.position.set(4 * U, 1.5 * U, 1 * U);
   arm.raycast = noRaycast;
   group.add(arm);
   meshes.push(arm);
-  const cuffGeo = new THREE.CylinderGeometry(36 * U, 38 * U, 26 * U, 22).rotateZ(-Math.PI / 2);
+  // 袖口:椭圆截面贴臂(圆环套扁臂会在 z 向留 ~15U 空隙,仰视看穿悬空环),
+  // 加长盖过臂端圆帽(旧 26U 短环,肘端裸皮圆帽从袖里伸出来一截)。腕侧开口
+  // 收到几乎贴臂(臂该处 y37.3/z26.1,开口 38.5/27):留缝会看进袖筒内腔,
+  // 顺臂轴视角读成「靶心」环。
+  const cuffGeo = new THREE.CylinderGeometry(38.5 * U, 44 * U, 64 * U, 22)
+    .rotateZ(-Math.PI / 2)
+    .scale(1, 1, 0.7);
   const cuff = new THREE.Mesh(cuffGeo, cuffMat);
-  cuff.position.x = -LEN + 18 * U;
+  // 覆盖 [-188U,-124U],臂尖(≈-186U)埋进袖内;y/z 随臂同偏对中,否则贴臂
+  // 开口会被偏心的臂戳穿。
+  cuff.position.set(-LEN - 4 * U, 1.5 * U, 1 * U);
   cuff.raycast = noRaycast;
   group.add(cuff);
   meshes.push(cuff);
