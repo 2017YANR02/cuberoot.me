@@ -168,7 +168,7 @@
   cursor: not-allowed;
 }
 
-/* fit-content:窄表贴内容,不留右侧大空白;max-width 兜底防溢出。 */
+/* fit-content:窄表贴内容,不留右侧大空白。 */
 /* 默认横滚兜底;但作 sticky 列头容器(.sticky-scroll)时不能自身横滚(横滚容器会困住相对视口吸顶),
    交给共用工具 .sticky-scroll(桌面 overflow:visible / 窄屏 overflow-x:auto)。 */
 .wca-stats-table-wrapper:not(.sticky-scroll) { overflow-x: auto; }
@@ -177,11 +177,17 @@
   border: 1px solid var(--border-default);
   background: var(--card);
   width: fit-content;
-  max-width: 100%;
 
   /* Firefox: 细滚动条，默认透明 */
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
+}
+
+/* max-width:100% 只在窄屏(.sticky-scroll 自身 overflow-x:auto,见 sticky-table.css 767px 断点)生效——
+   该模式下容器自行横滚,需要卡住视口宽度。桌面态 .sticky-scroll 是 overflow:visible(表头相对整页吸顶),
+   若这里也卡 max-width:100%,表格内容会顶开这个不裁切的容器,视觉上像卡片边框在表格中间断掉一条竖线。 */
+@media (max-width: 767px) {
+  .wca-stats-table-wrapper { max-width: 100%; }
 }
 
 /* wr_metric 嵌入 top10 bar chart race 时,表格撑满让右沿与黑色舞台对齐;
