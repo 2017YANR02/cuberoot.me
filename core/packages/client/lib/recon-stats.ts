@@ -5,6 +5,7 @@
  */
 import type { ReconStatsResult } from '@cuberoot/shared';
 import { formatTime } from './recon-utils';
+import { sq1MoveCounts } from './sq1-metrics';
 
 /** 删除每行 `//` 之后的注释，去掉空行 */
 function deleteComment(recon: string): string {
@@ -169,9 +170,12 @@ function countStmFromTokens(recon: string): number {
   return htm(expanded);
 }
 
-function computeStm(recon: string): number {
+function computeStm(recon: string, event?: string): number {
   const fromHeader = parseStmFromHeader(recon);
   if (fromHeader != null) return fromHeader;
+  // SQ1 记号("(a,b)/"式)不适用 3x3 字符剥离法;按"/"切片计(即求解器页的
+  // "slash"度量,层转免费),对应 lib/sq1-metrics.ts 的 twist 口径。
+  if (event === 'sq1') return sq1MoveCounts(recon).twist;
   return countStmFromTokens(recon);
 }
 
@@ -380,9 +384,10 @@ function pllShortFrom(full: string): string {
 export function computeAllStats(
   solutionText: string,
   rawTimeSec: number,
+  event?: string,
 ): ReconStatsResult {
   const recon = solutionText || '';
-  const stm = computeStm(recon);
+  const stm = computeStm(recon, event);
   const tps = computeTps(stm, rawTimeSec);
   const ll = computeLl(recon);
   // NOTE: F2L = STM - LL（含 cross 步数；与 Python 参考一致）
@@ -414,21 +419,29 @@ export function computeAllStats(
 const ROTATION_LINE_RE = /^(?:[xyz][2']?\s*)+$/;
 
 /**
+ * `48STM/ 8.56=5.61TPS` 摘要行,caption 首行与详情页解法上方共用。
+ * SQ1 按"/"切片计 STM(见 computeStm),速度单位相应改叫 SPS。
+ */
+export function buildCaptionHeader(solutionText: string, single: number, event?: string): string {
+  const stm = computeStm(solutionText, event);
+  const tps = computeTps(stm, single);
+  const unit = event === 'sq1' ? 'SPS' : 'TPS';
+  return `${stm}STM/ ${formatTime(single)}=${tps.toFixed(2)}${unit}`;
+}
+
+/**
  * 生成可复制的「caption」:首行 `48STM/ 8.56=5.61TPS` 摘要,其后每步去掉
  * `// 注释`,并丢弃纯旋转(inspection)行。纯前端格式化,不依赖数据库字段。
  */
-export function buildCaption(solutionText: string, single: number): string {
+export function buildCaption(solutionText: string, single: number, event?: string): string {
   if (!solutionText) return '';
-  const stm = computeStm(solutionText);
-  const tps = computeTps(stm, single);
   const body: string[] = [];
   for (const raw of solutionText.split(/\r?\n/)) {
     const stripped = raw.replace(/\/\/.*/, '').trim();
     if (!stripped || ROTATION_LINE_RE.test(stripped)) continue;
     body.push(stripped);
   }
-  const header = `${stm}STM/ ${formatTime(single)}=${tps.toFixed(2)}TPS`;
-  return [header, ...body].join('\n');
+  return [buildCaptionHeader(solutionText, single, event), ...body].join('\n');
 }
 
 // NOTE: 兼容旧用法保留 ANNOTATIONS / ROTATIONS 引用避免 unused 报错

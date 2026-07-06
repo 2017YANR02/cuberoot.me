@@ -19,6 +19,7 @@ import TwistySection from '@/components/TwistySection';
 import SolutionView from '@/components/SolutionView';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import { computeAllStats } from '@/lib/recon-stats';
+import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { parseReconId } from '@/lib/recon-seo';
 import '../../../recon.css';
@@ -52,11 +53,12 @@ export default function ReconAltViewClient() {
   const idx = altIdxStr ? Number(altIdxStr) : -1;
   const alt = parent?.alternatives?.[idx];
   const scramble = parent?.optimalScramble || parent?.wcaScramble || '';
+  const displayScramble = parent?.event === 'sq1' ? formatScrambleForEvent('sq1', scramble) : scramble;
   const puzzle = parent ? getPuzzleId(parent.event) : '3x3x3';
 
   const stats = useMemo(
-    () => alt ? computeAllStats(alt.solution, parent?.rawTime ?? 0) : null,
-    [alt, parent?.rawTime],
+    () => alt ? computeAllStats(alt.solution, parent?.rawTime ?? 0, parent?.event) : null,
+    [alt, parent?.rawTime, parent?.event],
   );
 
   if (loading) {
@@ -109,7 +111,7 @@ export default function ReconAltViewClient() {
               <span className="submit-label">{t('recon.scramble')}</span>
               <textarea
                 rows={1}
-                value={scramble}
+                value={displayScramble}
                 readOnly
                 className="submit-field-textarea submit-input-locked alt-submit-scramble"
               />

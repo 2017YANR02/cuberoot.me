@@ -14,7 +14,7 @@ import {
   ChartColumn, Video, MessageCircle, TriangleAlert,
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   Globe, Radio, ClipboardPaste, ChevronDown, ChevronUp,
-  GitFork,
+  GitFork, ArrowLeft,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import {
@@ -54,11 +54,11 @@ import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { RecordBadge } from '@/components/RecordBadge';
 import ReconPlayerCanvas, { type ReconEngine, loadReconEngine, saveReconEngine } from '@/components/recon/ReconPlayerCanvas';
 import SolutionView from '@/components/SolutionView';
-import { canonicalSq1Alg } from '@/lib/sq1-svg';
+import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@/lib/sq1-svg';
 import {
   buildNormalizedSolution, findCrossLineIndex, hasWideMoveInCrossSection,
 } from '@/lib/recon-norm-cross-extract';
-import { computeAllStats, buildCaption } from '@/lib/recon-stats';
+import { computeAllStats, buildCaption, buildCaptionHeader } from '@/lib/recon-stats';
 import {
   DiscussionComposer, DiscussionEditBox, UserHeadline, ItemMenu, UserAvatarFallback,
 } from '@/components/Discussion';
@@ -165,6 +165,11 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   return (
     <div className="recon-page detail-page">
       <div className="detail-header-block">
+        <div className="detail-header-nav">
+          <Link href="/recon" className="recon-back-link">
+            <ArrowLeft size={14} /> {tr({ zh: '返回列表', en: 'Back to list' })}
+          </Link>
+        </div>
         <div className="detail-header">
           <h1 className="detail-title">
             {/* 成绩 + 纪录标志同处一个 inline 项,标志才能 vertical-align:super 成右上角标
@@ -254,10 +259,20 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
     () => canToggle ? buildNormalizedSolution(solutionText) : null,
     [solutionText, canToggle],
   );
-  const displayText = crossNormalized && normalizedText ? normalizedText : solutionText;
+  const isSq1 = solve.event === 'sq1';
+  const rawDisplayText = crossNormalized && normalizedText ? normalizedText : solutionText;
+  // 展示层转 compact 简写(保留每行 // 注释),旧数据 / 手输可能存量为 canonical 记号。
+  const displayText = useMemo(
+    () => isSq1 ? compactSq1Solution(rawDisplayText) : rawDisplayText,
+    [isSq1, rawDisplayText],
+  );
   const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
   const caption = useMemo(
-    () => buildCaption(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0),
+    () => buildCaption(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0, solve.event),
+    [solutionText, solve.event, solve.execTime, solve.rawTime],
+  );
+  const captionHeader = useMemo(
+    () => solutionText ? buildCaptionHeader(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0, solve.event) : '',
     [solutionText, solve.event, solve.execTime, solve.rawTime],
   );
 
@@ -265,8 +280,11 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   // the submit page); cubing.js draws it poorly. Its parseSq1Tokens accepts the
   // stored compact `1/06/…` form directly. The cubedb external link still needs
   // canonical `(1, 0) / …` notation; the on-page scramble text stays compact.
-  const isSq1 = solve.event === 'sq1';
   const playerScramble = isSq1 ? canonicalSq1Alg(scramble) : scramble;
+  // 打乱可能以官方 canonical 记号("(4,0)/ (0,6)/…")存量入库(旧数据 / 手输);
+  // 页面展示统一转成 compact 简写("4/6/3/…",与 /scramble/solver?event=sq1 一致)。
+  const displayScramble = isSq1 ? formatScrambleForEvent('sq1', scramble) : scramble;
+  const displayWcaScramble = isSq1 && solve.wcaScramble ? formatScrambleForEvent('sq1', solve.wcaScramble) : solve.wcaScramble;
 
   // NxN puzzles can render with either engine (cuberoot = in-house cuber WebGL,
   // the /sim look; or cubing.js). User-selectable + persisted, shared with the
@@ -302,7 +320,10 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 
         {(scramble || solutionText) && (
           <div className="detail-section detail-scramble-solution">
-            {scramble && <div className="detail-scramble-line">{scramble}</div>}
+            {captionHeader && (
+              <div className="detail-caption-header">{captionHeader}</div>
+            )}
+            {scramble && <div className="detail-scramble-line">{displayScramble}</div>}
             {solutionText && (
               <SolutionView
                 text={displayText}
@@ -318,7 +339,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
         {solve.optimalScramble && solve.wcaScramble && (
           <div className="detail-other-scramble">
             <span className="detail-other-scramble-label">{t('recon.wcaScramble')}</span>
-            <span className="detail-other-scramble-value">{solve.wcaScramble}</span>
+            <span className="detail-other-scramble-value">{displayWcaScramble}</span>
           </div>
         )}
 
@@ -389,6 +410,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           alts={alts}
           setAlts={setAlts}
           solveTime={(isBldEvent(solve.event) ? solve.execTime : solve.rawTime)}
+          event={solve.event}
         />
 
         <CommentsView comments={comments} reconId={solve.id} onUpdate={onUpdate} />
@@ -434,10 +456,8 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
     const text = solve.solution || solve.recon || '';
     if (!text) return null;
     const time = (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0;
-    return computeAllStats(text, time);
+    return computeAllStats(text, time, solve.event);
   }, [solve.solution, solve.recon, solve.rawTime, solve.execTime, solve.event]);
-  const stm = computed ? computed.stm : solve.stm;
-  const tps = computed ? computed.tps : solve.tps;
   const crossStm = computed ? computed.crossStm : solve.crossStm;
   const f2l = computed ? computed.f2l : solve.f2l;
   const ll = computed ? computed.ll : solve.ll;
@@ -452,28 +472,28 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   const pllShort = computed?.pllShort || solve.pllShort || solve.pll;
 
   const isBld = isBldEvent(solve.event);
+  // SQ1 没有 CFOP 分步概念(Cross/F2L/顶层/OLL/PLL 等),这些字段对它没有意义,全隐藏。
+  const isSq1 = solve.event === 'sq1';
   const items: [string, React.ReactNode | undefined][] = [
     [t('recon.method'), solve.method],
-    [t('recon.stm'), stm],
-    [t('recon.tps'), tps],
     [t('recon.memo'), isBld && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
     [t('recon.exec'), isBld && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
-    ['Cross', !isBld && crossStm != null ? `${crossStm}` : undefined],
-    ['F2L', !isBld && f2l != null ? `${f2l}` : undefined],
-    [t('recon.ll'), !isBld && ll != null ? `${ll}` : undefined],
-    ['?x', !isBld && crossType != null ? (CROSS_LABELS[crossType as number] || String(crossType)) : undefined],
-    [t('recon.freePair'), isBld ? undefined : freePair],
-    [t('recon.yRot'), isBld ? undefined : yRot],
-    [t('recon.regrip'), regrip],
-    [t('recon.lockup'), lockup],
-    [t('recon.sMove'), sMove],
-    [t('recon.crossColor'), !isBld && crossColor ? (
+    ['Cross', !isBld && !isSq1 && crossStm != null ? `${crossStm}` : undefined],
+    ['F2L', !isBld && !isSq1 && f2l != null ? `${f2l}` : undefined],
+    [t('recon.ll'), !isBld && !isSq1 && ll != null ? `${ll}` : undefined],
+    ['?x', !isBld && !isSq1 && crossType != null ? (CROSS_LABELS[crossType as number] || String(crossType)) : undefined],
+    [t('recon.freePair'), isBld || isSq1 ? undefined : freePair],
+    [t('recon.yRot'), isBld || isSq1 ? undefined : yRot],
+    [t('recon.regrip'), isSq1 ? undefined : regrip],
+    [t('recon.lockup'), isSq1 ? undefined : lockup],
+    [t('recon.sMove'), isSq1 ? undefined : sMove],
+    [t('recon.crossColor'), !isBld && !isSq1 && crossColor ? (
       FACE_COLORS[crossColor as string]
         ? <span style={{ color: FACE_COLORS[crossColor as string], fontWeight: 600 }}>{String(crossColor)}</span>
         : String(crossColor)
     ) : undefined],
-    ['OLL', isBld ? undefined : ollShort],
-    ['PLL', isBld ? undefined : pllShort],
+    ['OLL', isBld || isSq1 ? undefined : ollShort],
+    ['PLL', isBld || isSq1 ? undefined : pllShort],
   ];
 
   const validItems = items.filter(([, v]) => v != null && v !== '' && v !== 0);
@@ -1151,11 +1171,12 @@ function DouyinFacade({ url }: { url: string }) {
   );
 }
 
-function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
+function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
   reconId: number;
   alts: ReconAlternative[];
   setAlts: (alts: ReconAlternative[]) => void;
   solveTime?: number;
+  event?: string;
 }) {
   const user = useAuthUser();
   // 所有权键(与服务端一致):绑 WCA=真实 id,纯邮箱/手机账号=u<uid>,未登录=''。
@@ -1203,7 +1224,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
             const isOwn = !!myKey && myKey === alt.addedById;
             const canEdit = isOwn;
             const canDelete = isOwn || isAdminUser;
-            const stats = computeAllStats(alt.solution, solveTime ?? 0);
+            const stats = computeAllStats(alt.solution, solveTime ?? 0, event);
             return (
               <div key={`${alt.addedById}-${alt.createdAt}-${idx}`} className="yt-comment">
                 <UserAvatarFallback name={alt.addedBy} avatar={isOwn ? user?.avatar : null} />
@@ -1212,7 +1233,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime }: {
                   {stats.stm > 0 && (
                     <div className="alt-stats-line">
                       <span>{stats.stm} STM</span>
-                      {stats.tps > 0 && <span>{stats.tps} TPS</span>}
+                      {stats.tps > 0 && <span>{stats.tps} {event === 'sq1' ? 'SPS' : 'TPS'}</span>}
                     </div>
                   )}
                   <Link
