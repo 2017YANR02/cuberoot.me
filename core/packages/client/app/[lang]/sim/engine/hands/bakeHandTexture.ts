@@ -24,7 +24,7 @@
 import * as THREE from "three";
 import { SIZE } from "../define";
 import { HAND_SCALE, type FingerName, type HandModel } from "./handModel";
-import { JOINT_CHAINS, THUMB_CURL_PLANE_ROLL } from "./handModelGltf";
+import { JOINT_CHAINS, nailFrame } from "./handModelGltf";
 
 const U = (SIZE / 64) * HAND_SCALE;
 const FINGERS: FingerName[] = ["thumb", "index", "middle", "ring", "pinky"];
@@ -196,24 +196,11 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
       wrinkles.push(mkWrinkle(p3, p4.clone().sub(p2).normalize(), 3.6 * U, 1.9 * U, 0.75, rDist * 1.5, [0]));
     }
 
-    // ---- 指甲:末节段(p3→p4)。甲背 = 功能性指腹方向的反向 —— rig 弯指把
-    // 指腹(弯曲平面 +z',拇指为 THUMB_CURL_PLANE_ROLL 滚转后)压向魔方,甲背
-    // 必须与之相反;网格无甲片起伏几何,按功能方向画即视觉正确。别用末节顶点
-    // 法线「提纯」:法线簇平均会被指尖前向面拽偏,踩过(甲画到指腹侧,压在
-    // 贴纸上看不见)。
-    const axis = p4.clone().sub(p3);
-    const len = axis.length();
-    axis.normalize();
-    // 弯曲平面 pad 方向:与 handModelGltf 建 rootBase 同款(+z 投影 ⊥ 根段轴,
-    // 拇指再绕根段轴滚 THUMB_CURL_PLANE_ROLL×side)。
-    const xf = p2.clone().sub(p1).normalize();
-    const pad = new THREE.Vector3(0, 0, 1).addScaledVector(xf, -xf.z).normalize();
-    if (name === "thumb") {
-      pad.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(xf, THUMB_CURL_PLANE_ROLL * model.side));
-    }
-    // 甲背 = −pad 投影到 ⊥ 末节轴
-    const dorsal = pad.clone().negate().addScaledVector(axis, pad.dot(axis)).normalize();
-    const lat = new THREE.Vector3().crossVectors(axis, dorsal).normalize();
+    // ---- 指甲:末节段(p3→p4)。甲面框架走共享 nailFrame(与立体甲片
+    // 单一数学源):甲背 = 功能性指腹方向的反向 —— rig 弯指把指腹压向魔方,
+    // 甲背必须与之相反。别用末节顶点法线「提纯」:法线簇平均会被指尖前向面
+    // 拽偏,踩过(甲画到指腹侧,压在贴纸上看不见)。
+    const { axis, dorsal, lat, len } = nailFrame(p1, p2, p3, p4, name === "thumb", model.side);
     const reach = len * 1.7; // 甲拉长到 1.30·len,eligibility 半径同步放宽兜住前沿肉垫像素
     nails.push({
       finger: name,
