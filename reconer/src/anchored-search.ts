@@ -165,8 +165,13 @@ export interface AnchoredOptions {
   observations?: readonly SegObservations[];
   /** 末段结束后 (复原态) 的观测, 用于收敛末尾朝向 */
   finalObservation?: SegObservations;
-  /** 面身份未知的原始观测 (与 observations 二选一; 24 指派边缘化评分) */
-  rawObservations?: readonly (RawFaceObs | null)[];
+  /**
+   * 面身份未知的原始观测 (与 observations 二选一; 指派边缘化评分)。
+   * 每段一个或多个网格 (静止链共识/跟踪帧); 多网格按双端点语义评分:
+   * 段内任意时刻读数必属段起点态或终点态之一 (拧转前/后; 拧转中非转动层两者皆合),
+   * 每网格取 max(起点, 终点), 段内求和 — 标注滞后的 ±1 归属歧义自动消解。
+   */
+  rawObservations?: readonly (RawFaceObs | readonly RawFaceObs[] | null)[];
   finalRawObservation?: RawFaceObs | null;
   /** 原始观测的单格命中/漏概率 (默认 0.85 / 0.03) */
   rawHitProb?: number;
@@ -251,7 +256,9 @@ export function anchoredBeamSearch(
   const logHit = Math.log(opts.rawHitProb ?? 0.85);
   const logMiss = Math.log(opts.rawMissProb ?? 0.03);
   const rawAssigns = opts.rawFaces ? assignsForFaces(opts.rawFaces) : undefined;
-  const rawCodes = opts.rawObservations?.map((o) => (o ? rawObsCodes(o) : null));
+  const rawCodes = opts.rawObservations?.map((o) =>
+    o ? (Array.isArray(o) ? (o as readonly RawFaceObs[]) : [o as RawFaceObs]).map(rawObsCodes) : null,
+  );
   const finalRawCodes = opts.finalRawObservation ? rawObsCodes(opts.finalRawObservation) : null;
 
   // 初始 beam: 24 个 solved 朝向 (末帧观测可收敛)
@@ -283,15 +290,25 @@ export function anchoredBeamSearch(
 
     const obs = opts.observations?.[t] ?? null;
     const raw = rawCodes?.[t] ?? null;
-    const visOf = (sc: readonly number[]): number =>
-      obs ? vw * logObs(sc, obs) : raw ? vw * logRawObs(sc, raw, logHit, logMiss, rawAssigns) : 0;
+    /** 段观测似然: startSc = 段起点态, endSc = 段终点态 (双端点语义, 见 rawObservations 注释) */
+    const visOf = (startSc: readonly number[], endSc: readonly number[]): number => {
+      if (obs) return vw * logObs(startSc, obs);
+      if (!raw) return 0;
+      let s = 0;
+      for (const codes of raw) {
+        const a = logRawObs(startSc, codes, logHit, logMiss, rawAssigns);
+        const b = logRawObs(endSc, codes, logHit, logMiss, rawAssigns);
+        s += a >= b ? a : b;
+      }
+      return vw * s;
+    };
 
     for (const path of beam) {
       // 1) 直接消费段 t
       for (const cand of segVocab) {
         const p = cand.face === null ? noopProb : (dist[cand.face] ?? floorProb) * cand.prior;
         const nextState = applyPermTo(path.state, cand.invPerm);
-        const vis = visOf(nextState);
+        const vis = visOf(nextState, path.state);
         push({
           state: nextState,
           score: path.score + Math.log(p) + vis,
@@ -316,7 +333,8 @@ export function anchoredBeamSearch(
             if (cand.face === null) continue; // y 后紧跟空段无意义
             const p = (dist[cand.face] ?? floorProb) * cand.prior;
             const nextState = applyPermTo(rotNode.state, cand.invPerm);
-            const vis = visOf(nextState);
+            // 段 t 的终点 = y 之前的态 (y 段帧在 real-eval 侧已单独丢弃)
+            const vis = visOf(nextState, rotNode.state);
             push({
               state: nextState,
               score: rotNode.score + Math.log(p) + vis,

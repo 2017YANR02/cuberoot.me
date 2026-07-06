@@ -549,6 +549,66 @@ export function extractFaceObservations(
   return out;
 }
 
+/**
+ * 时间连续性跟踪: 用上一帧的晶格作先验, 预测格位 → 小范围平移搜索 →
+ * 直接按格位采样像素。完全不依赖色块/聚类/拟合成功 — 冷检测在遮挡/模糊/
+ * 斜持帧上 ~75% 失败, 但魔方不瞬移, 基向量在帧间基本不变, 只有原点漂移。
+ * 转动中的层模糊 → 该格采样 null (天然部分观测); 非转动层照常可读。
+ *
+ * 返回 null = 平移搜索内无 ≥minCells 可读格 (魔方移出/全遮挡, 调用方计连败)。
+ */
+export function trackFaceGrid(
+  rgb: Uint8Array,
+  w: number,
+  h: number,
+  prior: FaceGrid,
+  priorColors: readonly (ColorName | null)[] | null = null,
+  opts: { range?: number; step?: number; minCells?: number } = {},
+): FaceObservation | null {
+  const range = opts.range ?? 16;
+  const step = opts.step ?? 4;
+  const minCells = opts.minCells ?? 4;
+  const radius = prior.pitch * 0.22;
+
+  let bestScore = -1;
+  let bestDx = 0, bestDy = 0;
+  let bestColors: (ColorName | null)[] | null = null;
+  for (let dy = -range; dy <= range; dy += step) {
+    for (let dx = -range; dx <= range; dx += step) {
+      const colors: (ColorName | null)[] = new Array(9).fill(null);
+      let readable = 0, agreePrior = 0;
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const { x, y } = cellCenter(prior, r, c);
+          const col = sampleCell(rgb, w, h, x + dx, y + dy, radius);
+          colors[r * 3 + c] = col;
+          if (col) {
+            readable++;
+            if (priorColors && priorColors[r * 3 + c] === col) agreePrior++;
+          }
+        }
+      }
+      // 可读格数为主, 与上帧同色为辅 (防锁到相邻杂物/别的面)
+      const score = readable + 0.3 * agreePrior;
+      if (score > bestScore) {
+        bestScore = score;
+        bestDx = dx;
+        bestDy = dy;
+        bestColors = colors;
+      }
+    }
+  }
+  if (!bestColors || bestColors.filter(Boolean).length < minCells) return null;
+  const grid: FaceGrid = {
+    ...prior,
+    cells: new Array(9).fill(null),
+    inlierBlobs: [],
+    origin: { x: prior.origin.x + bestDx, y: prior.origin.y + bestDy },
+    filled: bestColors.filter(Boolean).length,
+  };
+  return { colors: bestColors, grid, blobCount: 0 };
+}
+
 /** 单面兼容封装: 只取主导面 */
 export function extractFaceObservation(
   rgb: Uint8Array,
