@@ -15,7 +15,7 @@ export {
   ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone,
 } from '@cuberoot/shared/account';
 
-export type Provider = 'email' | 'phone' | 'wca' | 'apple' | 'google' | 'wechat' | 'alipay';
+export type Provider = 'email' | 'phone' | 'wca' | 'apple' | 'google' | 'wechat' | 'alipay' | 'qq';
 export type Channel = 'email' | 'phone';
 export type CodePurpose = 'login' | 'link';
 

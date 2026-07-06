@@ -50,22 +50,46 @@ export const unlinkIdentity = (provider: string, providerUid?: string) => post<{
 export const loginGoogle = (assertion: string) => post<SessionResp>('/v1/auth/google', { assertion });
 export const linkGoogle = (assertion: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/google', { assertion }, true);
 
-export interface AuthProviders { email: boolean; phone: boolean; wca: boolean; googleClientId: string | null; googleRelayUrl: string | null }
+// 国内三方(微信/QQ/支付宝):授权码重定向流。浏览器跳授权页 → 回调拿 code → 交后端换身份。
+export type SocialProvider = 'wechat' | 'qq' | 'alipay';
+export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay'];
+export const loginSocial = (provider: SocialProvider, code: string) => post<SessionResp>(`/v1/auth/social/${provider}`, { code });
+export const linkSocial = (provider: SocialProvider, code: string) => post<{ ok: true; identities: Identity[] }>(`/v1/auth/link/social/${provider}`, { code }, true);
+/** 服务端下发的授权页 URL(redirect_uri 由服务端固定,保证与换 code 时一致)。 */
+export async function fetchSocialAuthorizeUrl(provider: SocialProvider, state: string): Promise<string> {
+  const res = await fetch(apiUrl(`/v1/auth/social/authorize?provider=${provider}&state=${encodeURIComponent(state)}`));
+  const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+  if (!res.ok || !data.url) throw new Error(data.error || `HTTP ${res.status}`);
+  return data.url;
+}
+
+export interface AuthProviders {
+  email: boolean; phone: boolean; wca: boolean;
+  googleClientId: string | null; googleRelayUrl: string | null;
+  social: Record<SocialProvider, string | null>;
+}
 let providersCache: AuthProviders | null = null;
 /** 服务端已配置的登录方式(env 未配 email/sms/google 则对应关闭)。成功结果进模块缓存;
  *  拿不到就乐观全开 email/phone/wca(退化成旧行为:点未配的方式走 503 + 友好文案),
  *  但 google 拿不到 clientId/relayUrl 就是 null(没有它俩发不起弹窗/验不了真,不能乐观)。 */
+const NO_SOCIAL: Record<SocialProvider, string | null> = { wechat: null, qq: null, alipay: null };
+function normSocial(raw: unknown): Record<SocialProvider, string | null> {
+  const s = (raw ?? {}) as Record<string, unknown>;
+  const out = { ...NO_SOCIAL };
+  for (const p of SOCIAL_PROVIDERS) out[p] = typeof s[p] === 'string' && s[p] ? (s[p] as string) : null;
+  return out;
+}
 export async function fetchAuthProviders(): Promise<AuthProviders> {
   if (providersCache) return providersCache;
   try {
     const res = await fetch(apiUrl('/v1/auth/providers'));
     if (res.ok) {
       const d = (await res.json()) as Partial<AuthProviders>;
-      providersCache = { email: !!d.email, phone: !!d.phone, wca: d.wca !== false, googleClientId: d.googleClientId ?? null, googleRelayUrl: d.googleRelayUrl ?? null };
+      providersCache = { email: !!d.email, phone: !!d.phone, wca: d.wca !== false, googleClientId: d.googleClientId ?? null, googleRelayUrl: d.googleRelayUrl ?? null, social: normSocial(d.social) };
       return providersCache;
     }
   } catch { /* ignore */ }
-  return { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null };
+  return { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null, social: { ...NO_SOCIAL } };
 }
 
 export async function fetchIdentities(): Promise<Identity[]> {
