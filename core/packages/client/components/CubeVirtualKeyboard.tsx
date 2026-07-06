@@ -31,6 +31,8 @@ interface Props {
   onInput?: () => void;
   /** 启用 space 左侧的"记号"弹层 */
   enableMarks?: boolean;
+  /** 键盘展开时挪进来的收起按钮(CubeKeyboardSection 传入),挤在触发器行最右侧省一行空间 */
+  toggleButton?: ReactNode;
 }
 
 // ── 常量 ──
@@ -284,7 +286,7 @@ const MARK_ITEMS: Array<{ key: string; label: ReactNode; tip: string }> = [
   { key: 'mark-mid',   label: '·',   tip: 'middle dot' },
 ];
 
-export default function CubeVirtualKeyboard({ target, onInput, enableMarks = false }: Props) {
+export default function CubeVirtualKeyboard({ target, onInput, enableMarks = false, toggleButton }: Props) {
   const { t } = useTranslation();
   const [activePage, setActivePage] = useState(0);
   const [shiftState, setShiftState] = useState<ShiftState>('off');
@@ -874,6 +876,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
             <button type="button" className="vkb-trigger-btn" data-key="trigger-unsexy" data-val="R U' R' U ">unsexy</button>
             <button type="button" className="vkb-trigger-btn" data-key="trigger-sledge" data-val="R' F R F' ">sledge</button>
             <button type="button" className="vkb-trigger-btn" data-key="trigger-hedge" data-val="F R' F' R ">hedge</button>
+            {toggleButton}
           </div>
         </div>
 
@@ -921,6 +924,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
             <button type="button" data-key="switch" className="vkb-fn vkb-key-btn">🌐</button>
             <button type="button" data-key=" " className="vkb-space vkb-key-btn">space</button>
             <button type="button" data-key="enter" className="vkb-return vkb-key-btn">return</button>
+            {toggleButton}
           </div>
         </div>
       </div>
