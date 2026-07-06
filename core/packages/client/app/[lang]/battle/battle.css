@@ -1903,11 +1903,16 @@ body.solo .scramble-img {
     grid-template-columns: 1fr 1fr;
 }
 
-/* 竖向分隔线:画在左列格的右缘。
+/* 竖向分隔线:画在左列格的内缘(= 屏幕中线)。
    不用「整格铺底色 + column-gap 露缝」方案——那样 1fr 行高取整时会在行缝渗出
-   一条横线(旋转的共享打乱行边界尤其明显)。改成只给左列格加右边框,行方向不留底色。 */
-.grid-players > .player-area.grid-col-left {
+   一条横线(旋转的共享打乱行边界尤其明显)。改成只给左列格加边框,行方向不留底色。
+   下排左格未旋转:右缘 = 屏幕中线 → border-right。
+   上排左格随整格翻转 180°,local 左缘才是屏幕中线 → border-left(否则线跑到屏幕最左)。 */
+.grid-players > .player-area.grid-col-left:not(.rotated) {
     border-right: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+}
+.grid-players > .player-area.grid-col-left.rotated {
+    border-left: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
 }
 
 /* 3 人:上排单区(1fr) / middle-bar / 下排两格(1fr) / 下排共享打乱行(auto) */
