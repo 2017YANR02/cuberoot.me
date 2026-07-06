@@ -10,6 +10,7 @@ import { getAlgSetMeta, loadAlg } from '@cuberoot/shared';
 import { useTrainerStore, TimerState } from '@/lib/trainer-store';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { useGestureWheel } from '@/hooks/useGestureWheel';
+import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import GestureWheel from '@/components/GestureWheel';
 import { findCaseByKey } from '@/lib/trainer-case-key';
 import {
@@ -110,6 +111,8 @@ export default function TrainerRunClient() {
   const { wheelRef } = useGestureWheel({
     surfaceRef: stageRef,
     active: stageMounted,
+    // 「换一个」等按钮在计时面板内 — 按它们不应触发按压计时(否则点了直接开始计时)。
+    ignoreTarget: shouldIgnoreTimerTarget,
     canGesture: () => {
       const st = useTrainerStore.getState().timerState;
       return st === TimerState.NOT_RUNNING || st === TimerState.STOPPING;
