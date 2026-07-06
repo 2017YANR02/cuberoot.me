@@ -21,6 +21,10 @@ import {
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
 import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
+import {
+  socialLoginConfigured, socialAppId, socialAuthorizeUrl, exchangeSocialCode,
+  isSocialProvider, SOCIAL_PROVIDERS, type SocialProvider, type SocialUser,
+} from '../utils/social_login.js';
 
 export const accountAuthRoutes = new Hono();
 
@@ -47,7 +51,70 @@ async function requireUserId(c: Context): Promise<number> {
 // ── 可用登录方式(供前端隐藏未配置的 tab;env 未配 email/sms 时对应值 false)──
 accountAuthRoutes.get('/auth/providers', (c) => {
   c.header('Cache-Control', 'no-store');
-  return c.json({ email: emailConfigured(), phone: smsConfigured(), wca: true, googleClientId: googleClientId(), googleRelayUrl: googleRelayUrl() });
+  // 国内三方(微信/QQ/支付宝):配了凭据才亮 appId(公开值),没配为 null → 前端隐藏入口。
+  const social: Record<string, string | null> = {};
+  for (const p of SOCIAL_PROVIDERS) social[p] = socialAppId(p);
+  return c.json({
+    email: emailConfigured(), phone: smsConfigured(), wca: true,
+    googleClientId: googleClientId(), googleRelayUrl: googleRelayUrl(),
+    social,
+  });
+});
+
+// ── 国内三方授权页 URL(服务端下发,redirect_uri 由服务端固定,与换 code 时逐字一致)──
+// state 由前端生成并存 sessionStorage 做 CSRF 校验,这里只嵌进 URL。
+accountAuthRoutes.get('/auth/social/authorize', (c) => {
+  c.header('Cache-Control', 'no-store');
+  const provider = c.req.query('provider') ?? '';
+  const state = c.req.query('state') ?? '';
+  if (!isSocialProvider(provider)) return c.json({ error: 'invalid provider' }, 400);
+  if (!state || state.length > 128) return c.json({ error: 'invalid state' }, 400);
+  const url = socialAuthorizeUrl(provider, state);
+  if (!url) return c.json({ error: `${provider} not configured` }, 503);
+  return c.json({ url });
+});
+
+// ── 国内三方登录(浏览器回调拿到 code → 此处服务端换 code → 建/取账号)──
+accountAuthRoutes.post('/auth/social/:provider', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const provider = c.req.param('provider');
+  if (!isSocialProvider(provider)) return c.json({ error: 'invalid provider' }, 400);
+  if (!socialLoginConfigured(provider)) return c.json({ error: `${provider} not configured` }, 503);
+  const { code } = await c.req.json<{ code?: string }>().catch(() => ({ code: undefined }));
+  if (!code) return c.json({ error: 'code required' }, 400);
+  let g: SocialUser;
+  try {
+    g = await exchangeSocialCode(provider, code);
+  } catch {
+    return c.json({ error: `invalid ${provider} code` }, 401);
+  }
+  const user = await loginWithIdentity(provider as SocialProvider, g.sub, {
+    name: g.name || '', avatar: g.avatar ?? null,
+  });
+  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+  return c.json({ token, user: publicUser(user) });
+});
+
+// ── 国内三方绑定(登录态,把该身份加到当前账号)──
+accountAuthRoutes.post('/auth/link/social/:provider', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const uid = await requireUserId(c);
+  const provider = c.req.param('provider');
+  if (!isSocialProvider(provider)) return c.json({ error: 'invalid provider' }, 400);
+  if (!socialLoginConfigured(provider)) return c.json({ error: `${provider} not configured` }, 503);
+  const { code } = await c.req.json<{ code?: string }>().catch(() => ({ code: undefined }));
+  if (!code) return c.json({ error: 'code required' }, 400);
+  let g: SocialUser;
+  try {
+    g = await exchangeSocialCode(provider, code);
+  } catch {
+    return c.json({ error: `invalid ${provider} code` }, 401);
+  }
+  const r = await addIdentity(uid, provider as SocialProvider, g.sub);
+  if (r === 'conflict') return c.json({ error: `${provider} account already linked to another account` }, 409);
+  return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
 // ── 发码(登录/注册)──
@@ -261,7 +328,7 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   checkRateLimit(getIp(c));
   const uid = await requireUserId(c);
   const { provider, providerUid } = await c.req.json<{ provider?: string; providerUid?: string }>().catch(() => ({ provider: undefined, providerUid: undefined }));
-  const allowed: Provider[] = ['email', 'phone', 'wca', 'apple', 'google', 'wechat', 'alipay'];
+  const allowed: Provider[] = ['email', 'phone', 'wca', 'apple', 'google', 'wechat', 'alipay', 'qq'];
   if (!allowed.includes(provider as Provider)) return c.json({ error: 'invalid provider' }, 400);
   const r = await removeIdentity(uid, provider as Provider, providerUid);
   if (r === 'last') return c.json({ error: 'cannot unlink your only login method' }, 409);
