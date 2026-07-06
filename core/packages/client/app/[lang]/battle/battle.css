@@ -1976,6 +1976,17 @@ body.solo .scramble-img {
     max-height: clamp(120px, 22.5vh, 270px);
 }
 
+/* 多人田字格:来源行(国旗 + 比赛名 · 轮次/组别)同打乱一起放大约 1.5x */
+.grid-layout .battle-scramble-src {
+    font-size: 16.5px;
+    gap: 9px;
+    margin-top: 8px;
+}
+.grid-layout .battle-src-flag {
+    width: 27px;
+    height: 18px;
+}
+
 /* cell 底部控制条:比分 + 项目 + 罚时(随 cell 旋转朝向各自玩家) */
 .cell-controls {
     position: absolute;
