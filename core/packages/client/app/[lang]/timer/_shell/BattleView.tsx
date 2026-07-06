@@ -498,7 +498,7 @@ function ScramblePanel({ ids }: { ids: number[] }) {
 // ===== TimerArea 组件 =====
 // 1:1 翻译自 battle/index.html player-area 结构
 
-function TimerArea({ playerId, rotated, hideScramble, cellClass }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string }) {
+function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center' }) {
   const player = useBattleStore(s => s.players[playerId]);
   const store = useBattleStore();
   const areaRef = useRef<HTMLDivElement>(null);
@@ -666,7 +666,7 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass }: { playerId: n
 
       {/* 多人田字格:比分/项目/罚时归各自区域(2 人模式这些在 middle-bar) */}
       {store.mode === '1v1' && store.playerCount > 2 && (
-        <CellControls playerId={playerId} />
+        <CellControls playerId={playerId} corner={controlsCorner ?? 'center'} />
       )}
 
       {/* Event picker 全区域覆盖 — 由项目图标按钮触发,改用 WcaEventSelector */}
@@ -678,9 +678,10 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass }: { playerId: n
 }
 
 // ===== CellControls — 多人田字格 cell 内控制条 =====
-// 比分 + 项目 + 罚时,随 cell 旋转朝向各自玩家;pointer 停止冒泡防误触发计时
-
-function CellControls({ playerId }: { playerId: number }) {
+// 比分 + 项目 + 罚时,随 cell 旋转朝向各自玩家;pointer 停止冒泡防误触发计时。
+// corner = 控制条落在本格「玩家视角」的哪个上角(left/right 外侧角,center 单格居中);
+// 因整格随 rotated 翻转,local 坐标即玩家坐标,旋转自动把上排镜像到对面玩家的对应角。
+function CellControls({ playerId, corner }: { playerId: number; corner: 'left' | 'right' | 'center' }) {
   const points = useBattleStore(s => s.players[playerId].points);
   const isWin = useBattleStore(s => s.winners.includes(playerId));
   const ref = useRef<HTMLDivElement>(null);
@@ -700,7 +701,7 @@ function CellControls({ playerId }: { playerId: number }) {
   }, []);
 
   return (
-    <div className="cell-controls" ref={ref} data-no-timer>
+    <div className={`cell-controls corner-${corner}`} ref={ref} data-no-timer>
       <span className="score-value">
         {points}
         {isWin && <Trophy className="score-trophy" size={14} />}
@@ -1342,11 +1343,11 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
               {topSame && <ScramblePanel ids={[2, 3]} />}
             </div>
           )}
-          <TimerArea playerId={2} rotated hideScramble={playerCount === 4 && topSame} cellClass={playerCount === 4 ? 'grid-col-left' : ''} />
-          {playerCount === 4 && <TimerArea playerId={3} rotated hideScramble={topSame} />}
+          <TimerArea playerId={2} rotated hideScramble={playerCount === 4 && topSame} cellClass={playerCount === 4 ? 'grid-col-left' : ''} controlsCorner={playerCount === 4 ? 'right' : 'center'} />
+          {playerCount === 4 && <TimerArea playerId={3} rotated hideScramble={topSame} controlsCorner="left" />}
           {middleBar}
-          <TimerArea playerId={0} hideScramble={bottomSame} cellClass="grid-col-left" />
-          <TimerArea playerId={1} hideScramble={bottomSame} />
+          <TimerArea playerId={0} hideScramble={bottomSame} cellClass="grid-col-left" controlsCorner="left" />
+          <TimerArea playerId={1} hideScramble={bottomSame} controlsCorner="right" />
           {/* 下排两格共享一条打乱(3/4 人皆有) */}
           <div className="grid-scramble-row">
             {bottomSame && <ScramblePanel ids={[0, 1]} />}

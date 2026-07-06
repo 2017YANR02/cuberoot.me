@@ -1952,8 +1952,8 @@ body.solo .scramble-img {
     min-width: 0;
     min-height: 0;
     background: var(--background);
-    /* cell-controls(absolute 底部)让位 */
-    padding-bottom: 48px;
+    /* cell-controls(absolute 顶部)让位 */
+    padding-top: 48px;
 }
 
 .grid-players > .middle-bar {
@@ -1991,22 +1991,34 @@ body.solo .scramble-img {
     height: 18px;
 }
 
-/* cell 底部控制条:比分 + 项目 + 罚时(随 cell 旋转朝向各自玩家) */
+/* cell 控制条:比分 + 项目 + 罚时(随 cell 旋转朝向各自玩家)。
+   落在本格「玩家视角」的上角:成对格靠外侧上角(corner-left/right),
+   3 人上排单格居中(corner-center)。旋转格的 local 上角即对面玩家的上角。 */
 .cell-controls {
     position: absolute;
-    bottom: 6px;
-    left: 0;
-    right: 0;
+    top: 6px;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 10px;
     z-index: 2;
+}
+.cell-controls.corner-left {
+    left: 10px;
+    right: auto;
+}
+.cell-controls.corner-right {
+    right: 10px;
+    left: auto;
+}
+.cell-controls.corner-center {
+    left: 0;
+    right: 0;
+    justify-content: center;
 }
 
 @media (max-width: 480px) {
     .grid-players > .player-area {
-        padding-bottom: 44px;
+        padding-top: 44px;
     }
     .grid-layout .time-display {
         font-size: clamp(1.6rem, 10vw, 3rem);
