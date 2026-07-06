@@ -48,6 +48,15 @@ describe('classifyHandGesture', () => {
     expect(classifyHandGesture('x', 'mid', 1)).toEqual({ kind: 'flick', hand: 'R', finger: 'middle' });  // M'
   });
 
+  it('双手 home 握时 F 族 = 食指越顶(F 右食指→UFR,F\' 左食指→UFL)', () => {
+    expect(classifyHandGesture('z', 'high', 1, true)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'topPush' });  // F
+    expect(classifyHandGesture('z', 'high', -1, true)).toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'topPush' }); // F'
+    // bothHome 只影响 F 族;其余映射不变
+    expect(classifyHandGesture('z', 'low', -1, true)).toEqual({ kind: 'flick', hand: 'L', finger: 'middle' }); // B
+    expect(classifyHandGesture('y', 'high', 1, true)).toEqual({ kind: 'flick', hand: 'R', finger: 'index' });  // U
+    expect(classifyHandGesture('x', 'high', 1, true)).toEqual({ kind: 'weld', hands: ['R'] });                 // R
+  });
+
   it('整体 x/y/z = 双手抱转 weld', () => {
     for (const axis of ['x', 'y', 'z'] as const) {
       for (const dir of [1, -1] as const) {
