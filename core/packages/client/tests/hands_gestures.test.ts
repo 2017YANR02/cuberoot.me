@@ -77,11 +77,8 @@ describe('simulateGrips(握姿持久化静态推演,quarters 符号 = 引擎 con
     expect(near(g.R, gripQuat('home'))).toBe(true);
   });
 
-  it('整体 x = 双手同烘;整体 y/z 不烘(转体松手换握,手回弹原握姿)', () => {
-    const gx = simulateGrips([{ axis: 'x', layers: [0, 1, 2], quarters: 1 }], 3);
-    expect(near(gx.R, gripQuat('up'))).toBe(true);
-    expect(near(gx.L, gripQuat('up'))).toBe(true);
-    for (const axis of ['y', 'z'] as const) {
+  it('整体 x/y/z 均不烘(手黏着转+90° 踏移,提交即在 home 频段,#20)', () => {
+    for (const axis of ['x', 'y', 'z'] as const) {
       const g = simulateGrips([{ axis, layers: [0, 1, 2], quarters: 1 }], 3);
       expect(near(g.R, gripQuat('home'))).toBe(true);
       expect(near(g.L, gripQuat('home'))).toBe(true);
