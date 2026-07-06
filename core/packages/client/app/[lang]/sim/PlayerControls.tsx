@@ -115,6 +115,21 @@ const stripGripMarks = (s: string): string => s.replace(/[↑↓·]/g, ' ');
 
 type NxnPlayItem = { kind: 'move'; action: TwistAction } | { kind: 'grip'; grip: GripName };
 
+/** F 族「食指越顶」前置伸指闸(与 isRegripping 同款节拍):该步若需先把食指
+ *  伸到 UFR/UFL 贴纸(双手 home 握的 F/F'),启动/等待伸指动画并返回 true
+ *  —— 调用方本轮不发 twist,下轮再问;false = 无需前置或已到位。 */
+function gateTopPushReach(world: World | null, cube: import('./engine/nxn/cube').default, action: TwistAction): boolean {
+  const hands = world?.hands;
+  if (!hands?.isEnabled) return false;
+  const rotates = cube.table.convert(action);
+  if (!rotates.length) return false;
+  return hands.prepareTwist(
+    rotates[0].group.axis as 'x' | 'y' | 'z',
+    rotates.map((r) => r.group.layer),
+    rotates[0].twist > 0 ? 1 : -1,
+  );
+}
+
 /** NxN 解法串 → 播放项(move + 换握记号)。坏 token 由 Alg 抛错,调用方 catch。
  *  注释先剥(cleanForPlayer 在记号切分之后才跑,注释里的 ↑/↓/· 不能算步)。 */
 function parseNxnItems(text: string): NxnPlayItem[] {
@@ -1018,6 +1033,8 @@ export default function PlayerControls({
         world.hands?.regrip(it.grip);
       } else {
         if (cube.busy || world.hands?.isRegripping) return;
+        // 食指越顶前置:伸指在途时本次点击只推进伸指,到位后再点才转。
+        if (gateTopPushReach(world, cube, it.action)) return;
         // 单步与播放同速:tween 在 twist() 同步捕获帧数,随即恢复抽屉值。
         timing.frames = playbackFrames;
         const ok = cube.twister.twist(it.action, false, false);
@@ -1053,6 +1070,8 @@ export default function PlayerControls({
       } else {
         if (cube.busy || world.hands?.isRegripping) return;
         const inv = new TwistAction(it.action.sign, !it.action.reverse, it.action.times);
+        // 倒播的 F' 同样先伸指到位再转。
+        if (gateTopPushReach(world, cube, inv)) return;
         timing.frames = playbackFrames;
         const ok = cube.twister.twist(inv, false, false);
         timing.frames = mapFrames(settings.speed);
@@ -1132,6 +1151,8 @@ export default function PlayerControls({
           // (it runs in parallel or cancel+restarts), so gate on the cube's own lock
           // state to keep playback strictly one-turn-at-a-time.
           if (cube.busy) return;
+          // 食指越顶前置:F 转动开始前指尖先到 UFR 贴纸(16ms 轮询幂等重入)。
+          if (gateTopPushReach(world, cube, it.action)) return;
           started = cube.twister.twist(it.action, false, false);
         }
       }
