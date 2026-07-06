@@ -629,6 +629,11 @@
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+/* 全都靠 JS autoResize 撑高度,禁用户手拖(与解法框一致,右下角别留 resize 抓手) */
+.submit-field .submit-field-textarea {
+  resize: none;
+}
+
 .submit-field .submit-field-input:focus,
 .submit-field .submit-field-select:focus,
 .submit-field .submit-field-textarea:focus,

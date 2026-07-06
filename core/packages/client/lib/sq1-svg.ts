@@ -73,6 +73,22 @@ export function compactSq1Alg(alg: string): string {
   }).join('');
 }
 
+/**
+ * Compact a multi-line annotated SQ1 reconstruction (e.g. recon solution text)
+ * to shorthand per line, preserving `// comment` suffixes and line breaks —
+ * unlike compactSq1Alg, which drops comments and joins everything into one line.
+ */
+export function compactSq1Solution(text: string): string {
+  return text.split(/\r?\n/).map((line) => {
+    const idx = line.indexOf('//');
+    const movePart = idx >= 0 ? line.slice(0, idx) : line;
+    const comment = idx >= 0 ? line.slice(idx) : '';
+    const compact = compactSq1Alg(movePart);
+    if (!compact) return comment;
+    return comment ? `${compact} ${comment}` : compact;
+  }).join('\n');
+}
+
 /** Normalize a layer-turn amount to (-6, 6] (mod 12; 12 units = a full turn). */
 function normSq1Turn(x: number): number {
   let v = ((x % 12) + 12) % 12;

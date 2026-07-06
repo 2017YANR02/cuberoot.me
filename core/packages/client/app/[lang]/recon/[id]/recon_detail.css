@@ -170,6 +170,12 @@
   border-radius: 0;
   padding: 0;
 }
+.detail-caption-header {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  margin: 0 0 6px;
+}
 
 /* --- 另一种打乱（player 默认用 optimal,这里露出 wca） --- */
 .detail-other-scramble {

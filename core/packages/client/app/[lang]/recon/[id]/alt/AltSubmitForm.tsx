@@ -13,6 +13,7 @@ import { getRecon, addAlternative, updateAlternative } from '@/lib/recon-api';
 import { revalidateRecon } from '../../revalidate-action';
 import { getPuzzleId } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
+import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import TwistySection from '@/components/TwistySection';
@@ -64,6 +65,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
   }, [parentId, isEditing, editIdx, t]);
 
   const scramble = parent?.optimalScramble || parent?.wcaScramble || '';
+  const displayScramble = parent?.event === 'sq1' ? formatScrambleForEvent('sq1', scramble) : scramble;
   const puzzle = parent ? getPuzzleId(parent.event) : '3x3x3';
 
   const [debouncedSolution, setDebouncedSolution] = useState('');
@@ -73,8 +75,8 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
   }, [solution]);
 
   const stats = useMemo(
-    () => computeAllStats(debouncedSolution, parent?.rawTime ?? 0),
-    [debouncedSolution, parent?.rawTime],
+    () => computeAllStats(debouncedSolution, parent?.rawTime ?? 0, parent?.event),
+    [debouncedSolution, parent?.rawTime, parent?.event],
   );
 
   const handleCursorSync = useCallback((el: HTMLTextAreaElement) => {
@@ -187,7 +189,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
               <span className="submit-label">{t('recon.scramble')}</span>
               <textarea
                 rows={1}
-                value={scramble}
+                value={displayScramble}
                 readOnly
                 className="submit-field-textarea submit-input-locked alt-submit-scramble"
                 title={tr({ zh: '继承自原 solve,不可编辑', en: 'Inherited from original, read-only'
