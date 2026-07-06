@@ -8,11 +8,17 @@
  */
 import { readFileSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
-import { CubeState } from "../src/cube-state.ts";
 import { parseGT } from "../src/splits.ts";
 import { ROTATION_TOKENS, getMoveFace } from "../src/notation.ts";
 import type { ProbDist } from "../src/reconstruct.ts";
-import { invertMove, normalizeToken } from "../src/anchored-search.ts";
+import { normalizeToken } from "../src/anchored-search.ts";
+import { IDENTITY_PERM, invertPerm, permKey, physicalPerm } from "../src/rotation-perms.ts";
+
+function applyTo(sc: readonly number[], perm: readonly number[]): number[] {
+  const next = new Array<number>(54);
+  for (let i = 0; i < 54; i++) next[i] = sc[perm[i]];
+  return next;
+}
 
 const FLOOR = 0.03;
 
@@ -40,20 +46,22 @@ for (const splitsPath of files) {
   const { tokens, tailRotations } = parseGT(content);
   const gtNoRot = tokens.filter((t) => !ROTATION_TOKENS.has(t));
 
-  // 打乱态 (锚点)
-  const scramble = new CubeState();
+  // 打乱态 (锚点) — 物理回放逆推
   const fullSeq = [...tokens, ...tailRotations];
-  for (let i = fullSeq.length - 1; i >= 0; i--) scramble.apply(invertMove(fullSeq[i]));
+  let scramble: number[] = [...IDENTITY_PERM];
+  for (let i = fullSeq.length - 1; i >= 0; i--) {
+    scramble = applyTo(scramble, invertPerm(physicalPerm(fullSeq[i])));
+  }
 
-  // GT 回放: 从 solved (undo tail) 倒推
-  const state = new CubeState();
-  for (let i = tailRotations.length - 1; i >= 0; i--) state.apply(invertMove(tailRotations[i]));
-
+  // GT 回放 (物理): 从 solved 倒推全 token (含中途 y), 只对非转体段计分
+  let state: number[] = [...IDENTITY_PERM];
   let score = 0;
   const rankCount = [0, 0, 0, 0, 0]; // top1/2/3/更后/未列出
-  for (let t = gtNoRot.length - 1; t >= 0; t--) {
-    const tok = gtNoRot[t];
-    state.apply(invertMove(tok));
+  let t = gtNoRot.length - 1;
+  for (let i = fullSeq.length - 1; i >= 0; i--) {
+    const tok = fullSeq[i];
+    state = applyTo(state, invertPerm(physicalPerm(tok)));
+    if (ROTATION_TOKENS.has(tok)) continue;
     const face = getMoveFace(tok);
     const dist = probDists[t] ?? {};
     const keys = Object.keys(dist);
@@ -61,9 +69,10 @@ for (const splitsPath of files) {
     rankCount[rank === -1 ? 4 : Math.min(rank, 3)]++;
     const p = (face && dist[face] ? dist[face] : FLOOR) * priorOf(tok);
     score += Math.log(p);
+    t--;
   }
 
-  const anchorOk = state.sc.join(",") === scramble.sc.join(",");
+  const anchorOk = permKey(state) === permKey(scramble);
   const name = basename(splitsPath).replace(/\.(MP4|mp4)\.splits\.txt$/, "");
   console.log(
     `${name} | 锚点可达=${anchorOk} | GT score=${score.toFixed(1)} | GT面排名 top1=${rankCount[0]} top2=${rankCount[1]} top3=${rankCount[2]} 更后=${rankCount[3]} 未列=${rankCount[4]} / ${gtNoRot.length}`,
