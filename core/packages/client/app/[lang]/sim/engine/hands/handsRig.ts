@@ -19,8 +19,9 @@
  */
 import * as THREE from "three";
 import { SIZE } from "../define";
-import { buildHand, buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
-import { addHandSkeleton, makeHandSkeletonMats } from "./handSkeleton";
+import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
+import { loadGltfHand } from "./handModelGltf";
+import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
 import { homeLeft, homeRight, type HandPose } from "./handPoses";
 
 /** 只读 duck-type,避免运行时 import NxN Cube(rig 只碰 groups 的 angle)。 */
@@ -169,7 +170,10 @@ export default class HandsRig extends THREE.Group {
   private readonly cuffMat: THREE.MeshStandardMaterial;
   /** MediaPipe 风格骨架叠加层材质(透明常开,fade 只驱动 opacity)。 */
   private readonly skelMats: THREE.MeshBasicMaterial[];
-  private readonly hands: Record<HandSide, HandState>;
+  private readonly skelMatMap: Record<SkeletonMatKey, THREE.MeshBasicMaterial>;
+  /** GLTF 手模异步加载,完成前为 null —— 所有姿态/手势入口 null 守卫 no-op,
+   *  加载完成后若开关已开则从 fade=0 淡入。 */
+  private hands: Record<HandSide, HandState> | null = null;
   private cube: HandsCubeLike | null = null;
 
   private enabled = false;
@@ -207,30 +211,14 @@ export default class HandsRig extends THREE.Group {
     this.nailMat = new THREE.MeshPhysicalMaterial({ color: 0xeccab4, roughness: 0.42, metalness: 0, clearcoat: 0.15, clearcoatRoughness: 0.4 });
     this.cuffMat = new THREE.MeshStandardMaterial({ color: 0x3a4148, roughness: 0.85, metalness: 0 });
 
-    // 手性对调:魔方右侧的手用 side=-1 几何。家位规格(食指压 BUR 顶、无名指压
-    // BDR 底、掌心朝魔方 -x、指列朝后 -z)对「指列方向 × 食指侧 × 掌心法向」的
-    // 手性有硬约束 —— side=+1 几何摆成该姿态时掌心必然朝外(差一个镜像,纯旋转
-    // 无解),side=-1 恰好满足。左手镜像同理用 side=+1。
-    const right = buildHand(-1, this.skinMat, this.nailMat);
-    const left = buildHand(1, this.skinMat, this.nailMat);
-    this.add(right.group, left.group);
-    const rArm = buildForearm(this.skinMat, this.cuffMat);
-    const lArm = buildForearm(this.skinMat, this.cuffMat);
-    this.add(rArm.group, lArm.group);
-    right.meshes.push(...rArm.meshes);
-    left.meshes.push(...lArm.meshes);
-    // 21 关键点骨架叠加(MediaPipe Hands 默认画风)—— 静态几何挂关节组,
-    // 姿态自动跟随;网格进 model.meshes 复用补光层 / dispose。
-    const skel = makeHandSkeletonMats();
-    this.skelMats = Object.values(skel);
-    addHandSkeleton(right, skel);
-    addHandSkeleton(left, skel);
-    this.hands = {
-      // 肘锚随 HAND_SCALE 等比外推:手/前臂变大后锚点太近会让前臂几何越过肘
-      // 悬在半空(几何长 152U·scale,锚点必须比腕远至少这么多)。
-      R: this.initHandState(right, homeRight(), rArm.group, new THREE.Vector3(SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
-      L: this.initHandState(left, homeLeft(), lArm.group, new THREE.Vector3(-SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
-    };
+    // 骨架叠加层材质先建(setSkeletonVisible 在加载完成前就可调),几何在
+    // initAsync 里挂到加载好的骨骼上。默认隐藏 —— 由设置「骨架线条」开关驱动。
+    this.skelMatMap = makeHandSkeletonMats();
+    this.skelMats = Object.values(this.skelMatMap);
+    this.setSkeletonVisible(false);
+    // GLTF 手模异步加载(本地 /sim/hands/*.glb,~94KB/只)。失败打日志,
+    // 手指开关成为空操作(本地资产失败即 bug,不做程序化回退)。
+    void this.initAsync();
 
     // 手专属补光:layer 1(魔方在默认 layer 0,不受影响;手网格同时在 0+1,
     // 场景主光照到手,补光只照手)。左前暖 + 右下冷,把背光侧从死黑里捞出来。
@@ -252,11 +240,54 @@ export default class HandsRig extends THREE.Group {
     rimFront.position.set(-SIZE * 2, SIZE * 1.2, SIZE * 3);
     rimFront.layers.set(1);
     this.add(fillA, fillB, rim, rimFront);
+
+    this.visible = false;
+  }
+
+  /** 加载两只 GLTF 手 → 建前臂 / 骨架叠加 / HandState。魔方右侧 = 解剖学右手
+   *  (right.glb,side=-1 语义只剩 splay 镜像);左侧 = left.glb 真镜像资产。 */
+  private async initAsync(): Promise<void> {
+    let right: HandModel, left: HandModel;
+    try {
+      [right, left] = await Promise.all([
+        loadGltfHand(-1, this.skinMat),
+        loadGltfHand(1, this.skinMat),
+      ]);
+    } catch (e) {
+      console.error("[sim hands] GLTF hand load failed:", e);
+      return;
+    }
+    this.add(right.group, left.group);
+    const rArm = buildForearm(this.skinMat, this.cuffMat);
+    const lArm = buildForearm(this.skinMat, this.cuffMat);
+    this.add(rArm.group, lArm.group);
+    right.meshes.push(...rArm.meshes);
+    left.meshes.push(...lArm.meshes);
+    // 21 关键点骨架叠加(MediaPipe Hands 默认画风)—— 静态几何挂关节组,
+    // 姿态自动跟随;网格进 model.meshes 复用补光层 / dispose。
+    addHandSkeleton(right, this.skelMatMap);
+    addHandSkeleton(left, this.skelMatMap);
+    this.hands = {
+      // 肘锚随 HAND_SCALE 等比外推:手/前臂变大后锚点太近会让前臂几何越过肘
+      // 悬在半空(几何长 152U·scale,锚点必须比腕远至少这么多)。
+      R: this.initHandState(right, homeRight(), rArm.group, new THREE.Vector3(SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
+      L: this.initHandState(left, homeLeft(), lArm.group, new THREE.Vector3(-SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
+    };
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);
     }
+    // 加载期间开关已开 → 从 0 重新淡入(否则 fade 早到 1,手会瞬间蹦出来)。
+    if (this.enabled) {
+      this.fade = 0;
+      for (const mat of [this.skinMat, this.nailMat, this.cuffMat]) mat.transparent = true;
+    }
+  }
 
-    this.visible = false;
+  /** 调试开关(SimSettings.handsSkeleton 驱动):显隐 MediaPipe 风格骨架叠加线
+   *  (关节点 + 连线)。两只手共享同一批材质实例,一次性切全部。与 fade 驱动的
+   *  opacity 相互独立 —— 直接控 visible,不影响手部皮肤/指甲的淡入淡出。 */
+  setSkeletonVisible(v: boolean): void {
+    for (const mat of this.skelMats) mat.visible = v;
   }
 
   private initHandState(model: HandModel, home: HandPose, forearm: THREE.Group, elbow: THREE.Vector3): HandState {
@@ -290,8 +321,10 @@ export default class HandsRig extends THREE.Group {
 
   /** 握姿全清回 home(挂/摘 cube 或瞬时跳步前的硬复位)。 */
   private resetGrips(): void {
+    const hands = this.hands;
+    if (!hands) return;
     for (const side of ["R", "L"] as const) {
-      const h = this.hands[side];
+      const h = hands[side];
       h.grip.identity();
       h.recoverT = 1;
       h.weldAxis = null;
@@ -310,11 +343,13 @@ export default class HandsRig extends THREE.Group {
    * 把「当前显示偏移 ∘ 旧 grip」折算成相对新 grip 的回位余量,切换瞬间画面连续。
    */
   regrip(name: GripName): void {
+    const hands = this.hands;
+    if (!hands) return;
     const target = gripQuat(name);
     const q = HandsRig._qTmp;
     let any = false;
     for (const side of ["R", "L"] as const) {
-      const h = this.hands[side];
+      const h = hands[side];
       if (h.weldAxis) {
         q.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
       } else if (h.recoverT < 1) {
@@ -344,10 +379,12 @@ export default class HandsRig extends THREE.Group {
 
   /** 瞬时设定两手握姿基座(跳步 / 拖进度条的静态摆位,配 simulateGrips)。 */
   setGrips(qR: THREE.Quaternion, qL: THREE.Quaternion): void {
-    this.hands.R.grip.copy(qR);
-    this.hands.L.grip.copy(qL);
+    const hands = this.hands;
+    if (!hands) return;
+    hands.R.grip.copy(qR);
+    hands.L.grip.copy(qL);
     for (const side of ["R", "L"] as const) {
-      const h = this.hands[side];
+      const h = hands[side];
       h.recoverT = 1;
       h.weldAxis = null;
       h.weldAngle = 0;
@@ -401,6 +438,8 @@ export default class HandsRig extends THREE.Group {
       this.lastActivityAt = performance.now();
     }
     if (!this.visible) return true;
+    const hands = this.hands;
+    if (!hands) return animating; // GLTF 加载中:fade 照走,姿态等模型
 
     // —— 轮询当前转动层 ——
     const now = performance.now();
@@ -472,7 +511,7 @@ export default class HandsRig extends THREE.Group {
     this.idleClock += dt;
     const keepalive = now - this.lastActivityAt < IDLE_KEEPALIVE_MS;
     for (const side of ["R", "L"] as const) {
-      const h = this.hands[side];
+      const h = hands[side];
       if (h.recoverT < 1) {
         h.recoverT = Math.min(1, h.recoverT + dt / RECOVER_MS);
         animating = true;
@@ -484,7 +523,7 @@ export default class HandsRig extends THREE.Group {
       }
       this.applyHand(side, keepalive);
     }
-    if (this.regripFlag && this.hands.R.recoverT >= 1 && this.hands.L.recoverT >= 1) {
+    if (this.regripFlag && hands.R.recoverT >= 1 && hands.L.recoverT >= 1) {
       this.regripFlag = false;
     }
     if (keepalive) animating = true;
@@ -494,16 +533,18 @@ export default class HandsRig extends THREE.Group {
   // ================= 手势生命周期 =================
 
   private beginGesture(g: HandGesture, axis: Axis): void {
+    const hands = this.hands;
+    if (!hands) return;
     if (g.kind === "weld") {
       for (const s of g.hands) {
-        const h = this.hands[s];
+        const h = hands[s];
         h.weldAxis = null; // driveGesture 里设,先清残留
         h.weldAngle = 0;
         h.weldRawAngle = 0;
         h.recoverT = 1; // weld 直接接管,丢弃未完的回位
       }
     } else {
-      const h = this.hands[g.hand];
+      const h = hands[g.hand];
       h.flickFinger = g.finger;
       h.flickAxis = axis;
       h.flickAmount = 0;
@@ -512,15 +553,17 @@ export default class HandsRig extends THREE.Group {
   }
 
   private driveGesture(g: HandGesture, axis: Axis, angle: number): void {
+    const hands = this.hands;
+    if (!hands) return;
     if (g.kind === "weld") {
       for (const s of g.hands) {
-        const h = this.hands[s];
+        const h = hands[s];
         h.weldAxis = axis;
         h.weldAngle = softClampAngle(angle);
         h.weldRawAngle = angle;
       }
     } else {
-      const h = this.hands[g.hand];
+      const h = hands[g.hand];
       h.flickAmount = softClampAngle(angle);
       // 弹指时手腕轻微借力(跟 1/6 角度),applyHand 里通过 weld 通道叠加。
       h.weldAxis = axis;
@@ -530,8 +573,10 @@ export default class HandsRig extends THREE.Group {
   }
 
   private endGesture(): void {
+    const hands = this.hands;
+    if (!hands) return;
     for (const side of ["R", "L"] as const) {
-      const h = this.hands[side];
+      const h = hands[side];
       if (h.weldAxis) {
         // weld 提交(未压缩层角走满 ±90° 倍数)→ 只有 x 轴(R/L 腕转、整体 x)把
         // 该旋转烘进持久握姿基座 —— 腕上下翻是自然持姿。y/z 整体转体提交后手
@@ -568,7 +613,9 @@ export default class HandsRig extends THREE.Group {
   private static _xAxis = new THREE.Vector3(1, 0, 0);
 
   private applyHand(side: HandSide, idle: boolean): void {
-    const h = this.hands[side];
+    const hands = this.hands;
+    if (!hands) return;
+    const h = hands[side];
     const g = h.model.group;
     const sideSign = h.model.side;
     const q = HandsRig._qTmp;
@@ -650,8 +697,10 @@ export default class HandsRig extends THREE.Group {
 
   /** 释放几何/材质(rig 与 world 同生命周期,当前无人调用;备完整性)。 */
   dispose(): void {
-    for (const side of ["R", "L"] as const) {
-      for (const m of this.hands[side].model.meshes) m.geometry.dispose();
+    if (this.hands) {
+      for (const side of ["R", "L"] as const) {
+        for (const m of this.hands[side].model.meshes) m.geometry.dispose();
+      }
     }
     this.skinMat.bumpMap?.dispose();
     this.skinMat.dispose();
