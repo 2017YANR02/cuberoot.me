@@ -1,0 +1,227 @@
+/* 「所有本质状态」视图(Essential2x2View + Essential2x2CaseTable)。全部走主题 token,双主题自适应。 */
+
+.ess2-view {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ess2-overview .scramble-stats-puzzle-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ess2-note {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+/* 控件行:数据集 / 度量 选择器 + 摘要 */
+.ess2-stat-controls,
+.ess2-cases-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.ess2-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.ess2-filter > span { white-space: nowrap; }
+
+/* ── 联合 HTM×QTM 热力表 ── */
+.ess2-joint-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.ess2-joint {
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  margin: 0 auto;
+}
+.ess2-joint th,
+.ess2-joint td {
+  padding: 3px 7px;
+  text-align: center;
+  min-width: 34px;
+  white-space: nowrap;
+}
+.ess2-joint thead th,
+.ess2-joint .ess2-joint-qhead {
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+.ess2-joint td { color: var(--foreground); }
+.ess2-joint-corner { color: var(--faint-foreground) !important; }
+.ess2-joint-total {
+  color: var(--muted-foreground);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+.ess2-joint-totalrow th,
+.ess2-joint-totalrow td {
+  border-top: 1px solid var(--border-default);
+}
+
+/* ── 通用统计 / 案例表 ── */
+.ess2-table-scroll {
+  --sticky-thead-border: var(--border-default);
+}
+.ess2-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.ess2-table thead th {
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-weight: 600;
+  text-align: center;
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+.ess2-table tbody td {
+  padding: 5px 8px;
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+  text-align: center;
+}
+.ess2-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+.ess2-num { text-align: center; white-space: nowrap; }
+.ess2-alg,
+.ess2-alg-th {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  text-align: left;
+}
+.ess2-alg { font-size: 12px; }
+.ess2-alg-q { color: var(--muted-foreground); }
+.ess2-delta[data-nonzero='true'] { color: var(--signal-warning); }
+
+/* 排序表头 */
+.ess2-th-sort { padding: 0 !important; }
+.ess2-th-btn {
+  appearance: none;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 8px;
+  width: 100%;
+  justify-content: center;
+}
+.ess2-th-btn:hover { color: var(--foreground); }
+
+/* 状态图预览单元 */
+.ess2-cube { padding: 2px 4px; }
+.ess2-cube a { display: inline-flex; }
+
+/* 搜索框 */
+.ess2-search { position: relative; display: inline-flex; align-items: center; }
+.ess2-search-input {
+  appearance: none;
+  background: var(--background);
+  border: 1px solid var(--input);
+  border-radius: 7px;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 26px 5px 10px;
+  width: 190px;
+  max-width: 46vw;
+}
+.ess2-search-input:focus { outline: none; border-color: var(--ring); }
+.ess2-cases-count {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  margin-left: auto;
+}
+
+/* 分页 */
+.ess2-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+.ess2-pager-btn {
+  appearance: none;
+  background: var(--muted);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  color: var(--foreground);
+  font: inherit;
+  min-width: 30px;
+  height: 28px;
+  cursor: pointer;
+}
+.ess2-pager-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--foreground) 10%, transparent); }
+.ess2-pager-btn:disabled { opacity: 0.4; cursor: default; }
+.ess2-pager-info {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  min-width: 96px;
+  text-align: center;
+}
+
+/* (Q|H)−Q 摘要行 */
+.ess2-dqhq {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+.ess2-dqhq-title { color: var(--muted-foreground); }
+.ess2-dqhq-item {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
+/* 案例表懒加载入口 */
+.ess2-load { margin-top: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ess2-load-btn {
+  appearance: none;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.ess2-load-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 88%, black); }
+.ess2-load-btn:disabled { opacity: 0.6; cursor: default; }
+
+/* 致谢 / 记号 */
+.ess2-credits { flex-direction: column; gap: 4px; }
+.ess2-credits a { color: var(--accent); text-decoration: none; }
+.ess2-credits a:hover { text-decoration: underline; }
+.ess2-notation { color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+
+@media (max-width: 767px) {
+  .ess2-search-input { width: 150px; }
+  .ess2-cases-count { margin-left: 0; }
+}
