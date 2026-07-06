@@ -1901,9 +1901,13 @@ body.solo .scramble-img {
     min-height: 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    /* 竖向分隔线:列间 1px 缝隙透出容器底色 */
-    column-gap: 1px;
-    background: color-mix(in srgb, var(--foreground) 14%, transparent);
+}
+
+/* 竖向分隔线:画在左列格的右缘。
+   不用「整格铺底色 + column-gap 露缝」方案——那样 1fr 行高取整时会在行缝渗出
+   一条横线(旋转的共享打乱行边界尤其明显)。改成只给左列格加右边框,行方向不留底色。 */
+.grid-players > .player-area.grid-col-left {
+    border-right: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
 }
 
 /* 3 人:上排单区(1fr) / middle-bar / 下排两格(1fr) / 下排共享打乱行(auto) */
