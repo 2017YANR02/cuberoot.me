@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Flag, Eye, Blocks } from 'lucide-react';
 import { ALG_CATALOG, ALG_PUZZLES, loadAlg, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
+import BackHome from '@/components/BackHome';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { Bld3Hub } from '../3bld/_components/Bld3Hub';
@@ -85,6 +86,7 @@ export default function TrainerHubClient() {
 
   return (
     <div className="trainer-root">
+      <BackHome />
       <div className="trainer-topbar">
         <WcaEventSelector
           availableEvents={SELECTOR_EVENTS}

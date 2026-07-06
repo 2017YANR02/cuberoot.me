@@ -17,6 +17,7 @@ import { GROUPS } from './data/categories';
 import type { GroupId, Site } from './data/types';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { isAdmin } from '@/lib/auth-store';
+import BackHome from '@/components/BackHome';
 import { listSites, deleteSite, reorderGroup } from './nav_sites_api';
 import SiteEditor from './SiteEditor';
 import './sites.css';
@@ -313,6 +314,7 @@ function SitesPageInner() {
 
   return (
     <div className="sites-page">
+      <BackHome />
       <aside className="sites-sidebar">
         <div className="sites-title">{TEXTS.title[lang]}</div>
 

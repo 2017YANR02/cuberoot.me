@@ -430,6 +430,18 @@ a {
   gap: 0.5rem;
 }
 
+/* Shared "← 首页" back-home link for first-level content/hub pages (BackHome.tsx). */
+.back-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  font-size: 14px;
+  width: fit-content;
+}
+.back-home:hover { color: var(--foreground); }
+
 .lang-toggle {
   display: inline-flex;
   align-items: center;

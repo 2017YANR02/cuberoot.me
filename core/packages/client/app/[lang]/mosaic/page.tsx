@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useMosaicStore } from './_components/state/store';
@@ -60,6 +61,7 @@ export default function MosaicPage() {
 
   return (
     <div className="mosaic-page">
+      <BackHome />
       <div className="mosaic-topbar">
         <div className="mosaic-topbar-left">
           {backAction && (

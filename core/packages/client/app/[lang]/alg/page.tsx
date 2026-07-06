@@ -11,6 +11,7 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ALG_PUZZLES, ALG_CATALOG } from '@cuberoot/shared';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import BackHome from '@/components/BackHome';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { Eye, Blocks, Box, type LucideIcon } from 'lucide-react';
@@ -31,6 +32,7 @@ export default function AlgIndexPage() {
 
   return (
     <div className="alg-root">
+      <BackHome />
       <div className="alg-index-header">
         <div className="alg-index-header-row">
           <h1 className="alg-index-title">{tr({ zh: '公式库', en: 'Algorithm DB'

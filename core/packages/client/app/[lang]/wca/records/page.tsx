@@ -3,6 +3,7 @@
 // Ported from packages/client-vite/src/pages/wca_stats/RecordsPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
+import HomeLink from '@/components/HomeLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react';
@@ -179,9 +180,9 @@ function RecordsPageInner() {
     <div className="wse-page records-page">
       <header className="wse-header">
         <div className="wse-header-row">
-          <Link href={`/wca?lang=${i18n.language}`} className="wse-back">
-            <ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}
-          </Link>
+          <HomeLink className="wse-back">
+            <ChevronLeft size={16} /> {tr({ zh: '首页', en: 'Home' })}
+          </HomeLink>
         </div>
         <h1>{tr({ zh: '纪录', en: 'Records'
         })}</h1>

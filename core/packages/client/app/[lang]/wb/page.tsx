@@ -13,6 +13,7 @@ import type { WbCategory, WbEvent, WbRecord, WbTab } from './types';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
+import BackHome from '@/components/BackHome';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import './wb.css';
 
@@ -54,6 +55,7 @@ export default function WbPage() {
 
   return (
     <div className="wb-page">
+      <BackHome />
       <header className="wb-header">
         <div className="wb-title">
           <Trophy size={20} className="wb-title-icon" />
