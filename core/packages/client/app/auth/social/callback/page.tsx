@@ -8,10 +8,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { applySession, getSessionToken } from '@/lib/auth-store';
-import { loginSocial, linkSocial, type SocialProvider } from '@/lib/account-api';
-import {
-  SOCIAL_STATE_KEY, SOCIAL_PROVIDER_KEY, SOCIAL_INTENT_KEY, SOCIAL_RETURN_KEY,
-} from '@/lib/social-auth';
+import { loginSocial, linkSocial, SOCIAL_PROVIDERS, type SocialProvider } from '@/lib/account-api';
+import { SOCIAL_RETURN_KEY } from '@/lib/social-auth';
 import { tr } from '@/i18n/tr';
 
 // StrictMode 下 useEffect 会双跑;单次闸门避免 code 被消费两次(授权码单次有效)。
@@ -38,30 +36,30 @@ export default function SocialCallbackPage() {
   async function handleCallback() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code') || params.get('auth_code'); // 支付宝回调用 auth_code
-    const state = params.get('state');
+    const state = params.get('state') || '';
     const err = params.get('error') || params.get('error_description');
 
-    // 一次性读取并清空所有标记,无论走哪条早退分支都不残留脏 intent。
-    const savedState = sessionStorage.getItem(SOCIAL_STATE_KEY);
-    const provider = sessionStorage.getItem(SOCIAL_PROVIDER_KEY) as SocialProvider | null;
-    const intent = sessionStorage.getItem(SOCIAL_INTENT_KEY);
-    const returnUrl = sessionStorage.getItem(SOCIAL_RETURN_KEY);
-    sessionStorage.removeItem(SOCIAL_STATE_KEY);
-    sessionStorage.removeItem(SOCIAL_PROVIDER_KEY);
-    sessionStorage.removeItem(SOCIAL_INTENT_KEY);
-    sessionStorage.removeItem(SOCIAL_RETURN_KEY);
+    // provider / intent 从签名 state 里解出(格式 <nonce>.<provider>.<intent>.<exp>.<sig>),
+    // 不依赖 sessionStorage —— 手机唤起支付宝 App 授权后回调常落到另一浏览器上下文,sessionStorage 会丢。
+    // 这里只做路由用途(选 login/link 端点),真正的 CSRF 校验是服务端对整个 state 验签。
+    const parts = state.split('.');
+    const provider = parts[1] as SocialProvider | undefined;
+    const intent = parts[2];
+    // returnUrl 是同上下文回来时的便利项,丢了就回首页,不影响登录成败。
+    const returnUrl = (() => { try { const v = sessionStorage.getItem(SOCIAL_RETURN_KEY); sessionStorage.removeItem(SOCIAL_RETURN_KEY); return v; } catch { return null; } })();
 
     if (err) { setErrorMsg(tr({ zh: `授权被拒绝:${err}`, en: `Authorization denied: ${err}` })); return; }
     if (!code) { setErrorMsg(tr({ zh: '未获取到授权码', en: 'No authorization code received' })); return; }
-    if (!provider) { setErrorMsg(tr({ zh: '会话已失效,请重新发起', en: 'Session expired, please retry' })); return; }
-    if (!savedState || savedState !== state) { setErrorMsg(tr({ zh: '授权校验失败,请重试', en: 'State mismatch, please retry' })); return; }
+    if (!provider || !(SOCIAL_PROVIDERS as readonly string[]).includes(provider) || parts.length !== 5) {
+      setErrorMsg(tr({ zh: '授权校验失败,请重试', en: 'State mismatch, please retry' })); return;
+    }
 
     try {
       if (intent === 'link') {
         if (!getSessionToken()) { setErrorMsg(tr({ zh: '请先登录再绑定', en: 'Sign in before linking' })); return; }
-        await linkSocial(provider, code);
+        await linkSocial(provider, code, state);
       } else {
-        const r = await loginSocial(provider, code);
+        const r = await loginSocial(provider, code, state);
         applySession(r.token, r.user);
       }
     } catch (e) {

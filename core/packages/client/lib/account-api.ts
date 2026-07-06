@@ -53,11 +53,12 @@ export const linkGoogle = (assertion: string) => post<{ ok: true; identities: Id
 // 国内三方(微信/QQ/支付宝):授权码重定向流。浏览器跳授权页 → 回调拿 code → 交后端换身份。
 export type SocialProvider = 'wechat' | 'qq' | 'alipay';
 export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay'];
-export const loginSocial = (provider: SocialProvider, code: string) => post<SessionResp>(`/v1/auth/social/${provider}`, { code });
-export const linkSocial = (provider: SocialProvider, code: string) => post<{ ok: true; identities: Identity[] }>(`/v1/auth/link/social/${provider}`, { code }, true);
-/** 服务端下发的授权页 URL(redirect_uri 由服务端固定,保证与换 code 时一致)。 */
-export async function fetchSocialAuthorizeUrl(provider: SocialProvider, state: string): Promise<string> {
-  const res = await fetch(apiUrl(`/v1/auth/social/authorize?provider=${provider}&state=${encodeURIComponent(state)}`));
+// state 为服务端签名的自包含 token(从回调 URL 读回),服务端验签做 CSRF,不依赖 sessionStorage。
+export const loginSocial = (provider: SocialProvider, code: string, state: string) => post<SessionResp>(`/v1/auth/social/${provider}`, { code, state });
+export const linkSocial = (provider: SocialProvider, code: string, state: string) => post<{ ok: true; identities: Identity[] }>(`/v1/auth/link/social/${provider}`, { code, state }, true);
+/** 服务端下发的授权页 URL(redirect_uri + 签名 state 均由服务端固定,保证与换 code 时一致)。 */
+export async function fetchSocialAuthorizeUrl(provider: SocialProvider, intent: 'login' | 'link'): Promise<string> {
+  const res = await fetch(apiUrl(`/v1/auth/social/authorize?provider=${provider}&intent=${intent}`));
   const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
   if (!res.ok || !data.url) throw new Error(data.error || `HTTP ${res.status}`);
   return data.url;
