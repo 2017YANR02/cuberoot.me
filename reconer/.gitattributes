@@ -1,0 +1,11 @@
+# LF-only 换行 (配合全局 core.autocrlf=false)
+* text=auto eol=lf
+
+# 二进制类型 (禁 EOL 转换)
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.MP4  binary
+*.mp4  binary
+*.npz  binary

@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - `packages/visualcube` — 自有 visualcube 封装;CI/server bundle 前必须先 build (`pnpm -F @cuberoot/visualcube build`,产 `dist/index.js`),否则 esbuild/Vercel build 找不到 export
    - `packages/stats-build` — WCA 统计生成管道（独立 CI 日更，stats.yml `cron 0 20 * * *`，跟 WCA dump 上游天更）
 3. **`solver/`** — 顶层(pnpm workspace 外,非 package)。魔方求解引擎(Rust,2026-05-31 从已退役的 cube-solver-rust 导入,monorepo 为唯一源)。产 native 分析器喂 `/scramble/*` 数据管道(`update_cross_stats.ps1` 的 `$SolverDir` 指这)+ 编 WASM 给浏览器端。`target/ tables/(~34GB) pkg-web/ pkg-node/` 本地 gitignored(只本机有,repo/CI/线上都没有)。
+4. **`reconer/`** — 顶层(workspace 外)。魔方速拧视频自动复盘(已知打乱):视频→分段→逐段面概率→约束搜索→复盘公式。2026-07-06 从 D:\cube\reconer 导入(旧目录留作备份),monorepo 为唯一源。TS 流水线自带 package.json(在 reconer/ 里跑 `pnpm test`/`pnpm typecheck`);Python 研究链冻结存档(本机无 torch 跑不了);`videos/`(~3GB MP4)gitignored 只本机有。背景必读 `reconer/CLAUDE.md`/`roadmap.md`/`MIGRATION.md`。
 
 ## 12 个模块的归属（重要）
 
