@@ -27,21 +27,29 @@ export default function CubeKeyboardSection({ target, onInput, enableMarks, mobi
   const labelOff = tr({ zh: '显示虚拟键盘', en: 'Show keyboard'
 });
 
+  const toggleBtn = !isMobile ? (
+    <button
+      type="button"
+      className={`vkb-toggle${showKeyboard ? ' active' : ''}${showKeyboard ? ' vkb-toggle--inline' : ''}`}
+      onClick={() => setShowKeyboard(s => !s)}
+      aria-label={showKeyboard ? labelOn : labelOff}
+      title={showKeyboard ? labelOn : labelOff}
+    >
+      <Keyboard size={14} />
+    </button>
+  ) : null;
+
   return (
     <>
-      {!isMobile && (
-        <button
-          type="button"
-          className={`vkb-toggle${showKeyboard ? ' active' : ''}`}
-          onClick={() => setShowKeyboard(s => !s)}
-          aria-label={showKeyboard ? labelOn : labelOff}
-          title={showKeyboard ? labelOn : labelOff}
-        >
-          <Keyboard size={14} />
-        </button>
-      )}
+      {/* 收起时按钮单独占一行;展开后挪进键盘内(触发器行最右侧)省空间 */}
+      {toggleBtn && !showKeyboard && toggleBtn}
       {visible && (
-        <CubeVirtualKeyboard target={target} onInput={onInput} enableMarks={enableMarks} />
+        <CubeVirtualKeyboard
+          target={target}
+          onInput={onInput}
+          enableMarks={enableMarks}
+          toggleButton={toggleBtn && showKeyboard ? toggleBtn : undefined}
+        />
       )}
     </>
   );
