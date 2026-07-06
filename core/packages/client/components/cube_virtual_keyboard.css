@@ -184,6 +184,14 @@
     color: var(--accent);
 }
 
+/* 键盘展开时挤进触发器行 / QWERTY 底行最右侧,省掉独占的一整行 */
+.vkb-toggle--inline {
+    margin-top: 0;
+    margin-left: auto;
+    flex: 0 0 auto;
+    padding: 6px 8px;
+}
+
 /* NOTE: space 左侧 `·` 小键——短按插 ·,长按出 ↑↓;字号略大让点居中可见 */
 .vkb-dot-mark {
     font-size: 1.5rem !important;
