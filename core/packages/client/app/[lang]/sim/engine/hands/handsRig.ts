@@ -21,6 +21,7 @@ import * as THREE from "three";
 import { SIZE } from "../define";
 import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
 import { loadGltfHand } from "./handModelGltf";
+import { bakeHandTextures } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
 import { homeLeft, homeRight, type HandPose } from "./handPoses";
 
@@ -166,8 +167,10 @@ interface HandState {
 
 export default class HandsRig extends THREE.Group {
   private readonly skinMat: THREE.MeshStandardMaterial;
-  private readonly nailMat: THREE.MeshStandardMaterial;
   private readonly cuffMat: THREE.MeshStandardMaterial;
+  /** 两手各自的烘焙贴图材质(UV 布局左右不一致,各烘各的);烘焙失败为空,
+   *  手退回平色 skinMat 仍可用。 */
+  private readonly handMats: THREE.MeshPhysicalMaterial[] = [];
   /** MediaPipe 风格骨架叠加层材质(透明常开,fade 只驱动 opacity)。 */
   private readonly skelMats: THREE.MeshBasicMaterial[];
   private readonly skelMatMap: Record<SkeletonMatKey, THREE.MeshBasicMaterial>;
@@ -189,8 +192,9 @@ export default class HandsRig extends THREE.Group {
   constructor() {
     super();
     this.name = "handsRig";
-    // 皮肤:物理材质 + 顶点血色(关节微红,几何侧烘)+ 程序噪声 bump/roughness
-    // (毛孔颗粒,高光散成肤质);sheen 给轮廓一圈软绒光(皮肤次表面近似)。
+    // 皮肤(前臂 + 烘焙失败时的手部回退):物理材质 + 顶点血色(几何侧烘)+
+    // 程序噪声 bump/roughness(毛孔颗粒);手本体正常路径用 initAsync 里的
+    // 烘焙贴图材质(handMats)。sheen 给轮廓软绒光(皮肤次表面近似)。
     const detail = makeSkinDetailTexture();
     const skin = new THREE.MeshPhysicalMaterial({
       color: 0xd9af94, // 降饱和肤色 —— 偏橘的高饱和基色是「橘蜡假人」主因(评审 #8)
@@ -206,9 +210,6 @@ export default class HandsRig extends THREE.Group {
     skin.bumpScale = 0.55;
     skin.roughnessMap = detail;
     this.skinMat = skin;
-    // 指甲:哑光角质 —— 高清漆 + 低粗糙会把甲片高光收成一个亮点,读成
-    // 「乒乓球贴片」(评审 #7);甲比皮肤略光即可,辨识靠形和色。
-    this.nailMat = new THREE.MeshPhysicalMaterial({ color: 0xeccab4, roughness: 0.42, metalness: 0, clearcoat: 0.15, clearcoatRoughness: 0.4 });
     this.cuffMat = new THREE.MeshStandardMaterial({ color: 0x3a4148, roughness: 0.85, metalness: 0 });
 
     // 骨架叠加层材质先建(setSkeletonVisible 在加载完成前就可调),几何在
@@ -244,8 +245,9 @@ export default class HandsRig extends THREE.Group {
     this.visible = false;
   }
 
-  /** 加载两只 GLTF 手 → 建前臂 / 骨架叠加 / HandState。魔方右侧 = 解剖学右手
-   *  (right.glb,side=-1 语义只剩 splay 镜像);左侧 = left.glb 真镜像资产。 */
+  /** 加载两只 GLTF 手 → 烘焙皮肤贴图 → 建前臂 / 骨架叠加 / HandState。魔方
+   *  右侧 = 解剖学右手(right.glb,side=-1 语义只剩 splay 镜像);左侧 =
+   *  left.glb 真镜像资产。 */
   private async initAsync(): Promise<void> {
     let right: HandModel, left: HandModel;
     try {
@@ -256,6 +258,31 @@ export default class HandsRig extends THREE.Group {
     } catch (e) {
       console.error("[sim hands] GLTF hand load failed:", e);
       return;
+    }
+    // 程序化皮肤贴图烘焙(albedo/bump/roughness + 指甲)。必须在入场景 / 摆
+    // home 姿态之前(烘焙契约:绑定姿态 + group 无父级)。UV 布局左右手不一致
+    // (实测 max diff 0.042),两手各烘各的。失败非致命:退回平色 skinMat。
+    try {
+      for (const model of [right, left]) {
+        const maps = await bakeHandTextures(model);
+        const mat = new THREE.MeshPhysicalMaterial({
+          color: 0xffffff, // 基础肤色已画进 albedo(0xd9af94 × 斑驳),别再乘一层
+          roughness: 1.0,  // roughnessMap 画的是物理值,权威;皮肤 ~0.6 / 甲面 ~0.34
+          metalness: 0,
+          vertexColors: true, // 血色/掌背明暗仍走顶点色(低频),与贴图相乘复合
+          sheen: 0.15,
+          sheenRoughness: 0.6,
+          sheenColor: new THREE.Color(0xffdfca),
+          map: maps.albedo,
+          bumpMap: maps.bump,
+          bumpScale: 0.7,
+          roughnessMap: maps.rough,
+        });
+        model.meshes[0].material = mat;
+        this.handMats.push(mat);
+      }
+    } catch (e) {
+      console.error("[sim hands] skin texture bake failed:", e);
     }
     this.add(right.group, left.group);
     const rArm = buildForearm(this.skinMat, this.cuffMat);
@@ -279,8 +306,14 @@ export default class HandsRig extends THREE.Group {
     // 加载期间开关已开 → 从 0 重新淡入(否则 fade 早到 1,手会瞬间蹦出来)。
     if (this.enabled) {
       this.fade = 0;
-      for (const mat of [this.skinMat, this.nailMat, this.cuffMat]) mat.transparent = true;
+      for (const mat of this.fadeMats()) mat.transparent = true;
     }
+  }
+
+  /** 随 fade 开合的实体材质(骨架叠加线另算,常开 transparent 只驱动 opacity)。
+   *  handMats 异步烘焙后才入列,动态取。 */
+  private fadeMats(): THREE.Material[] {
+    return [this.skinMat, this.cuffMat, ...this.handMats];
   }
 
   /** 调试开关(SimSettings.handsSkeleton 驱动):显隐 MediaPipe 风格骨架叠加线
@@ -409,7 +442,7 @@ export default class HandsRig extends THREE.Group {
     if (this.enabled === on) return;
     this.enabled = on;
     this.lastActivityAt = 0; // 让 tick 重新计 keepalive
-    for (const mat of [this.skinMat, this.nailMat, this.cuffMat]) {
+    for (const mat of this.fadeMats()) {
       mat.transparent = true; // 渐变期间开启;fade 达到 1 后关掉(省排序)
     }
   }
@@ -430,10 +463,10 @@ export default class HandsRig extends THREE.Group {
       const step = dt / FADE_MS;
       this.fade = fadeTarget > this.fade ? Math.min(1, this.fade + step) : Math.max(0, this.fade - step);
       const eased = this.fade * this.fade * (3 - 2 * this.fade);
-      for (const mat of [this.skinMat, this.nailMat, this.cuffMat, ...this.skelMats]) mat.opacity = eased;
+      for (const mat of [...this.fadeMats(), ...this.skelMats]) mat.opacity = eased;
       // 只在「淡出完成」隐藏 —— 淡入起点 fade=0 碰上 dt=0 帧不能误藏。
       if (this.fade === 0 && !this.enabled) this.visible = false;
-      if (this.fade === 1) for (const mat of [this.skinMat, this.nailMat, this.cuffMat]) mat.transparent = false;
+      if (this.fade === 1) for (const mat of this.fadeMats()) mat.transparent = false;
       animating = true;
       this.lastActivityAt = performance.now();
     }
@@ -704,7 +737,12 @@ export default class HandsRig extends THREE.Group {
     }
     this.skinMat.bumpMap?.dispose();
     this.skinMat.dispose();
-    this.nailMat.dispose();
+    for (const mat of this.handMats) {
+      mat.map?.dispose();
+      mat.bumpMap?.dispose();
+      mat.roughnessMap?.dispose();
+      mat.dispose();
+    }
     this.cuffMat.dispose();
     for (const m of this.skelMats) m.dispose();
   }
