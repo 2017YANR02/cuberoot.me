@@ -25,7 +25,7 @@ import type * as THREE from 'three';
 import type World from '@/app/[lang]/sim/engine/world';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type Toucher from '@/app/[lang]/sim/Toucher';
-import { usePainter, type PaintColor } from './_paint-shared';
+import { FACES, usePainter, type FaceLetter, type PaintColor } from './_paint-shared';
 import { PaintPalette, PaintActions } from './_PaintToolbar';
 
 // cuber FACE enum: L0 R1 D2 U3 B4 F5
@@ -67,20 +67,29 @@ export interface Interactive3DCubeProps {
   pixelSize: number;
   onSolve?: (facelet: string) => void;
   solveLabel?: { zh: string; en: string };
+  onSecondaryAction?: (facelet: string) => void;
+  secondaryActionLabel?: { zh: string; en: string };
+  secondaryActionTitle?: { zh: string; en: string };
+  secondaryBusy?: boolean;
+  optimalToggle?: { value: boolean; onChange: (v: boolean) => void };
   hideSolve?: boolean;
+  plainSolve?: boolean;
 }
 
 export default function Interactive3DCube({
-  facelet, onChange, activeColor, onActiveColorChange, pixelSize, onSolve, solveLabel, hideSolve,
+  facelet, onChange, activeColor, onActiveColorChange, pixelSize, onSolve, solveLabel,
+  onSecondaryAction, secondaryActionLabel, secondaryActionTitle, secondaryBusy, optimalToggle, hideSolve, plainSolve,
 }: Interactive3DCubeProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
   const { paint, rejectMsg } = usePainter({ facelet, onChange, activeColor, isZh });
-  // taps fire from the engine's closure; keep the latest paint() reachable by ref.
+  // taps fire from the engine's closure; keep the latest paint()/onActiveColorChange reachable by ref.
   const paintRef = useRef(paint);
   useEffect(() => { paintRef.current = paint; }, [paint]);
+  const onActiveColorChangeRef = useRef(onActiveColorChange);
+  useEffect(() => { onActiveColorChangeRef.current = onActiveColorChange; }, [onActiveColorChange]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<World | null>(null);
@@ -129,11 +138,16 @@ export default function Interactive3DCube({
         w.scene.updateMatrix();
         w.dirty = true;
       };
-      world.controller.taps.push((index, face) => {
+      world.controller.taps.push((index, face, tapOpts) => {
         if (index < 0 || face === null) return;
         const fi = REVERSE_MAP.get(`${index}_${face}`);
-        if (fi === undefined || fi % 9 === 4) return; // unknown or center (fixed)
-        paintRef.current(fi);
+        if (fi === undefined) return;
+        if (fi % 9 === 4) {
+          // center (fixed) — tapping it picks its color instead of painting.
+          if (tapOpts.button === 0) onActiveColorChangeRef.current(FACES[Math.floor(fi / 9)] as FaceLetter);
+          return;
+        }
+        paintRef.current(fi, tapOpts.button === 2 ? 'X' : undefined);
       });
 
       const onContextMenu = (e: MouseEvent) => e.preventDefault();
@@ -228,7 +242,6 @@ export default function Interactive3DCube({
               <RotateCcw size={14} />
             </button>
           </div>
-          <span className="vc-cube3d-hint">{t('拖动旋转 · 点击贴纸涂色', 'Drag to rotate · tap a sticker to paint')}</span>
         </div>
 
         <PaintPalette activeColor={activeColor} onActiveColorChange={onActiveColorChange} />
@@ -239,8 +252,14 @@ export default function Interactive3DCube({
         onChange={onChange}
         onSolve={onSolve}
         solveLabel={solveLabel}
+        onSecondaryAction={onSecondaryAction}
+        secondaryActionLabel={secondaryActionLabel}
+        secondaryActionTitle={secondaryActionTitle}
+        secondaryBusy={secondaryBusy}
+        optimalToggle={optimalToggle}
         rejectMsg={rejectMsg}
         hideSolve={hideSolve}
+        plainSolve={plainSolve}
       />
     </div>
   );
@@ -278,7 +297,4 @@ const INLINE_CSS = `
   transition: border-color 0.12s ease, color 0.12s ease;
 }
 .vc-cube3d-reset:hover { border-color: var(--accent, #ff8800); color: var(--accent, #ff8800); }
-.vc-cube3d-hint {
-  font-size: 0.78rem; color: var(--text-muted, #888);
-}
 `;

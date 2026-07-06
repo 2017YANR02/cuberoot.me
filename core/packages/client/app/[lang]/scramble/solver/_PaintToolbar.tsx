@@ -11,7 +11,7 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Eraser, RotateCcw, Shuffle, Sparkles } from 'lucide-react';
+import BoolToggle from '@/components/BoolToggle';
 import { tr } from '@/i18n/tr';
 import { validateFacelet } from './facelet';
 import {
@@ -35,15 +35,18 @@ export function PaintPalette({ activeColor, onActiveColorChange }: PaintPaletteP
   return (
     <div className="vc-paint-palette">
       <style>{PALETTE_CSS}</style>
-      <button
-        key="X"
-        type="button"
-        className={`vc-paint-swatch vc-paint-swatch-empty${activeColor === 'X' ? ' is-active' : ''}`}
-        style={{ background: EMPTY_COLOR_HEX }}
-        onClick={() => onActiveColorChange('X')}
-        title={t('空缺(灰)', 'Empty (gray)')}
-        aria-label="empty"
-      />
+      <div className="vc-paint-empty-row">
+        <button
+          key="X"
+          type="button"
+          className={`vc-paint-swatch vc-paint-swatch-empty${activeColor === 'X' ? ' is-active' : ''}`}
+          style={{ background: EMPTY_COLOR_HEX }}
+          onClick={() => onActiveColorChange('X')}
+          title={t('空缺(灰)', 'Empty (gray)')}
+          aria-label="empty"
+        />
+        <span className="vc-paint-empty-hint">{t('右键置灰', 'Right-click to erase')}</span>
+      </div>
       {PALETTE_ORDER.map((f) => (
         <button
           key={f}
@@ -64,14 +67,25 @@ export interface PaintActionsProps {
   onChange: (next: string) => void;
   onSolve?: (facelet: string) => void;
   solveLabel?: { zh: string; en: string };
+  /** A second action button after Solve, e.g. "derive solution" alongside "derive scramble". */
+  onSecondaryAction?: (facelet: string) => void;
+  secondaryActionLabel?: { zh: string; en: string };
+  secondaryActionTitle?: { zh: string; en: string };
+  /** Whether the secondary action is currently running (disables its button). */
+  secondaryBusy?: boolean;
+  /** Optional "optimal?" switch rendered after the secondary button. */
+  optimalToggle?: { value: boolean; onChange: (v: boolean) => void };
   /** Transient per-piece reject message (from usePainter), shown as a flash. */
   rejectMsg?: string | null;
   /** Hide the Solve button — the host renders its own (e.g. next to the solver's Solve). */
   hideSolve?: boolean;
+  /** Render the Solve button as a plain button (no orange primary emphasis). */
+  plainSolve?: boolean;
 }
 
 export function PaintActions({
-  facelet, onChange, onSolve, solveLabel, rejectMsg, hideSolve,
+  facelet, onChange, onSolve, solveLabel, onSecondaryAction, secondaryActionLabel, secondaryActionTitle,
+  secondaryBusy, optimalToggle, rejectMsg, hideSolve, plainSolve,
 }: PaintActionsProps) {
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -97,28 +111,44 @@ export function PaintActions({
       <style>{ACTIONS_CSS}</style>
       <div className="vc-paint-actions">
         <button type="button" className="vc-paint-btn" onClick={() => onChange(EMPTY_FACELET)} title={t('全部置灰(保留中心)', 'Clear all stickers (centers preserved)')}>
-          <Eraser size={14} />
           <span>{t('清空', 'Empty')}</span>
         </button>
         <button type="button" className="vc-paint-btn" onClick={() => onChange(SOLVED_FACELET)} title={t('还原到 solved', 'Reset to solved')}>
-          <RotateCcw size={14} />
           <span>{t('还原', 'Clean')}</span>
         </button>
         <button type="button" className="vc-paint-btn" onClick={() => onChange(randomLegalFacelet())} title={t('随机合法状态(25 步随机 HTM)', 'Random legal state (25 random HTM moves)')}>
-          <Shuffle size={14} />
           <span>{t('随机', 'Random')}</span>
         </button>
+        {optimalToggle && (
+          <BoolToggle
+            value={optimalToggle.value}
+            onChange={optimalToggle.onChange}
+            label={t('最优', 'Optimal')}
+          />
+        )}
         {!hideSolve && (
           <button
             type="button"
-            className="vc-paint-btn vc-paint-btn-primary"
+            className={`vc-paint-btn${plainSolve ? '' : ' vc-paint-btn-primary'}`}
             disabled={solveBlocked || facelet === SOLVED_FACELET}
             onClick={goSolve}
             title={validErr
               ?? (hasEmpty ? t('还有空缺颜色未填', 'Some stickers are still empty') : t('用 cubeopt 求最优解', 'Solve optimally with cubeopt'))}
           >
-            <Sparkles size={14} />
             <span>{solveLabel ? tr(solveLabel) : t('求最优解', 'Solve')}</span>
+          </button>
+        )}
+        {onSecondaryAction && (
+          <button
+            type="button"
+            className="vc-paint-btn"
+            disabled={solveBlocked || secondaryBusy}
+            onClick={() => onSecondaryAction(facelet)}
+            title={validErr
+              ?? (hasEmpty ? t('还有空缺颜色未填', 'Some stickers are still empty')
+                : (secondaryActionTitle ? tr(secondaryActionTitle) : undefined))}
+          >
+            <span>{secondaryActionLabel ? tr(secondaryActionLabel) : t('求解法', 'Derive solution')}</span>
           </button>
         )}
       </div>
@@ -137,7 +167,7 @@ export function PaintActions({
 
 const PALETTE_CSS = `
 .vc-paint-palette {
-  display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem;
 }
 .vc-paint-swatch {
   width: 30px; height: 30px;
@@ -151,6 +181,13 @@ const PALETTE_CSS = `
 .vc-paint-swatch.is-active {
   border-color: var(--accent, #ff8800);
   box-shadow: 0 0 0 2px rgba(255,136,0,0.3);
+}
+.vc-paint-empty-row {
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.vc-paint-empty-hint {
+  font-size: 0.72rem; color: var(--text-muted, #888);
+  white-space: nowrap;
 }
 `;
 
@@ -186,6 +223,10 @@ const ACTIONS_CSS = `
   padding: 0.35rem 0.7rem;
   border-radius: 5px;
   animation: vcPaintFlash 0.18s ease-out;
+}
+.vc-paint-actions .bool-toggle-label {
+  font-size: 0.8rem;
+  color: var(--text);
 }
 @keyframes vcPaintFlash {
   from { transform: scale(0.96); opacity: 0; }
