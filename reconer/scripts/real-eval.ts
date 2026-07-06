@@ -34,6 +34,8 @@ const beamArg = process.argv.indexOf("--beam");
 const BEAM = beamArg >= 0 ? parseInt(process.argv[beamArg + 1], 10) : 2048;
 const mrArg = process.argv.indexOf("--minrun");
 const MIN_RUN = mrArg >= 0 ? parseInt(process.argv[mrArg + 1], 10) : 3;
+const maArg = process.argv.indexOf("--minarea");
+const MIN_AREA = maArg >= 0 ? parseInt(process.argv[maArg + 1], 10) : undefined;
 const facesArg = process.argv.indexOf("--faces");
 type FaceName = "U" | "R" | "F" | "D" | "L" | "B";
 const SEARCH_FACES = (facesArg >= 0 ? process.argv[facesArg + 1] : "B,U").split(",") as FaceName[];
@@ -155,7 +157,7 @@ for (const sf of files) {
   // 逐帧提取 (每帧 0-2 面) → 链式静止区间检测 (链跟随能续上的网格)
   const grids: FaceObservation[][] = new Array(meta.frames.length);
   for (let i = 0; i < meta.frames.length; i++) {
-    grids[i] = extractFaceObservations(frameAt(i), meta.w, meta.h, mask);
+    grids[i] = extractFaceObservations(frameAt(i), meta.w, meta.h, mask, { minArea: MIN_AREA });
   }
   const runs: RestRun[] = [];
   {
@@ -306,6 +308,28 @@ for (const sf of files) {
     }
   }
 
+  // 帧级软覆盖: 不要求成链, ±12/±25 帧内任一单帧网格与 GT 态匹配 ≥75% (读格 ≥5)
+  // — "搜索侧状态对齐取代时间归属"方案的可达覆盖上限估计
+  let frameCov12 = 0, frameCov25 = 0;
+  for (let t = 0; t < boundStates.length; t++) {
+    const sp = splitFrames[nonRotIdx[t]];
+    let got12 = false, got25 = false;
+    for (let i = 0; i < meta.frames.length && !got12; i++) {
+      const d = Math.abs(meta.frames[i] - sp);
+      if (d > 25) continue;
+      for (const g of grids[i]) {
+        const b = bestAssign(g.colors, boundStates[t], omega);
+        if (b.read >= 5 && b.match / b.read >= 0.75) {
+          got25 = true;
+          if (d <= 12) got12 = true;
+          break;
+        }
+      }
+    }
+    if (got12) frameCov12++;
+    if (got25) frameCov25++;
+  }
+
   // 归属 (区间就近规则; 学习诊断打印两规则命中率供比对) → 每边界取最长区间
   const boundObs: (RawFaceObs | null)[] = new Array(boundStates.length).fill(null);
   const boundLen: number[] = new Array(boundStates.length).fill(0);
@@ -363,7 +387,7 @@ for (const sf of files) {
   const nacc = nullRead ? ((nullMatch / nullRead) * 100).toFixed(1) : "-";
   const wins = [...faceWins.entries()].sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f}×${n}`).join(" ");
   console.log(
-    `${name}: 区间 ${runs.length}, 边界 ${covered}/${boundStates.length} 有观测, 软覆盖天花板 ${softCov}/${boundStates.length}, 读格 ${margRead}, 边缘化逐格 ${acc}% (乱态对照 ${nacc}%)  质量 GOOD ${nGood}/mid ${nMid}/JUNK ${nJunk}  归属规则命中(GT≥80%区间): 就近 ${agreeInterval}/${nDiag} 终点 ${agreeEnd}/${nDiag}  κ=ω${omegaIdx}  赢面: ${wins}  末帧=${finalRawObs ? finalRawObs.colors.filter(Boolean).length + "格" : "无"}`,
+    `${name}: 区间 ${runs.length}, 边界 ${covered}/${boundStates.length} 有观测, 软覆盖天花板 ${softCov}/${boundStates.length}, 帧级软覆盖 ±12:${frameCov12} ±25:${frameCov25}/${boundStates.length}, 读格 ${margRead}, 边缘化逐格 ${acc}% (乱态对照 ${nacc}%)  质量 GOOD ${nGood}/mid ${nMid}/JUNK ${nJunk}  归属规则命中(GT≥80%区间): 就近 ${agreeInterval}/${nDiag} 终点 ${agreeEnd}/${nDiag}  κ=ω${omegaIdx}  赢面: ${wins}  末帧=${finalRawObs ? finalRawObs.colors.filter(Boolean).length + "格" : "无"}`,
   );
 }
 
