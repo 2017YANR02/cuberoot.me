@@ -99,6 +99,7 @@ import LiveCubeState from '../_components/LiveCubeState';
 import TimingSurface from './TimingSurface';
 import GestureWheel from '@/components/GestureWheel';
 import { useGestureWheel } from '@/hooks/useGestureWheel';
+import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
@@ -730,11 +731,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const digitsRef = useRef<HTMLDivElement | null>(null);
-
-  const shouldIgnoreTimerTarget = useCallback((target: EventTarget | null): boolean => {
-    if (!(target instanceof Element)) return false;
-    return target.closest('button, a, input, textarea, select, [contenteditable="true"], [data-no-timer]') !== null;
-  }, []);
 
   // Stable ref to the 8 radial-gesture actions, indexed by direction
   // (0=right, then counter-clockwise: 1=up-right … 7=down-right). Populated
