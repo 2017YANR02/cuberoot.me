@@ -498,7 +498,7 @@ function ScramblePanel({ ids }: { ids: number[] }) {
 // ===== TimerArea 组件 =====
 // 1:1 翻译自 battle/index.html player-area 结构
 
-function TimerArea({ playerId, rotated, hideScramble }: { playerId: number; rotated?: boolean; hideScramble?: boolean }) {
+function TimerArea({ playerId, rotated, hideScramble, cellClass }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string }) {
   const player = useBattleStore(s => s.players[playerId]);
   const store = useBattleStore();
   const areaRef = useRef<HTMLDivElement>(null);
@@ -571,6 +571,7 @@ function TimerArea({ playerId, rotated, hideScramble }: { playerId: number; rota
 
   const areaClasses = [
     'player-area',
+    cellClass || '',
     rotated ? 'rotated' : '',
     player.canStart ? 'state-can-start' : '',
     player.isReady && !player.canStart ? 'state-ready' : '',
@@ -1341,10 +1342,10 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
               {topSame && <ScramblePanel ids={[2, 3]} />}
             </div>
           )}
-          <TimerArea playerId={2} rotated hideScramble={playerCount === 4 && topSame} />
+          <TimerArea playerId={2} rotated hideScramble={playerCount === 4 && topSame} cellClass={playerCount === 4 ? 'grid-col-left' : ''} />
           {playerCount === 4 && <TimerArea playerId={3} rotated hideScramble={topSame} />}
           {middleBar}
-          <TimerArea playerId={0} hideScramble={bottomSame} />
+          <TimerArea playerId={0} hideScramble={bottomSame} cellClass="grid-col-left" />
           <TimerArea playerId={1} hideScramble={bottomSame} />
           {/* 下排两格共享一条打乱(3/4 人皆有) */}
           <div className="grid-scramble-row">
