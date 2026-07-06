@@ -24,7 +24,14 @@ import {
   type RawFaceObs,
 } from "../src/anchored-search.ts";
 import { IDENTITY_PERM, ORIENTATION_PERMS, invertPerm, physicalPerm } from "../src/rotation-perms.ts";
-import { activityMask, extractFaceObservations, medianBackground, type FaceObservation } from "../src/sticker-blobs.ts";
+import {
+  activityMask,
+  extractFaceObservations,
+  medianBackground,
+  trackFaceGrid,
+  type FaceGrid,
+  type FaceObservation,
+} from "../src/sticker-blobs.ts";
 
 const DO_SEARCH = process.argv.includes("--search");
 const DO_HIST = process.argv.includes("--hist"); // 逐区间/逐边界明细
@@ -36,6 +43,7 @@ const mrArg = process.argv.indexOf("--minrun");
 const MIN_RUN = mrArg >= 0 ? parseInt(process.argv[mrArg + 1], 10) : 3;
 const maArg = process.argv.indexOf("--minarea");
 const MIN_AREA = maArg >= 0 ? parseInt(process.argv[maArg + 1], 10) : undefined;
+const STRICT = process.argv.includes("--strict"); // 链一致性零容错 (防跨拧转混态)
 const facesArg = process.argv.indexOf("--faces");
 type FaceName = "U" | "R" | "F" | "D" | "L" | "B";
 const SEARCH_FACES = (facesArg >= 0 ? process.argv[facesArg + 1] : "B,U").split(",") as FaceName[];
@@ -82,14 +90,15 @@ interface RestRun {
   grid: (ColorName | null)[];
 }
 
-/** 两帧网格一致: 共同非空格 ≥4 且不一致 ≤1 (反光/漂移偶翻一格容忍, 转动中仍无法成区间) */
+/** 两帧网格一致: 共同非空格 ≥4 且不一致 ≤1 (--strict 零容错, 防跨拧转混态成链) */
 function agree(a: FaceObservation, b: FaceObservation): boolean {
+  const maxBad = STRICT ? 0 : 1;
   let common = 0, bad = 0;
   for (let i = 0; i < 9; i++) {
     const ca = a.colors[i], cb = b.colors[i];
     if (!ca || !cb) continue;
     common++;
-    if (ca !== cb && ++bad > 1) return false;
+    if (ca !== cb && ++bad > maxBad) return false;
   }
   return common >= 4;
 }
@@ -102,7 +111,7 @@ interface VideoEval {
   margRead: number;
   nullMatch: number;
   nullRead: number;
-  rawObs: (RawFaceObs | null)[];
+  rawObs: (RawFaceObs[] | null)[];
   finalRawObs: RawFaceObs | null;
   probs: ProbDist[];
   scrambleSc: readonly number[];
@@ -154,10 +163,39 @@ for (const sf of files) {
   const bg = medianBackground(bgFrames, meta.w, meta.h);
   const mask = activityMask(bgFrames, bg, meta.w, meta.h);
 
-  // 逐帧提取 (每帧 0-2 面) → 链式静止区间检测 (链跟随能续上的网格)
+  // 逐帧提取 (每帧 0-2 面): 冷检测优先, 失败时用上帧晶格时间连续性跟踪
+  // (魔方不瞬移; 转动层模糊 → null 格, 非转动层照常读 — 天然部分观测)
   const grids: FaceObservation[][] = new Array(meta.frames.length);
+  let prior: FaceGrid | null = null;
+  let priorColors: readonly (ColorName | null)[] | null = null;
+  let priorMiss = 0;
+  let nCold = 0, nTracked = 0;
   for (let i = 0; i < meta.frames.length; i++) {
-    grids[i] = extractFaceObservations(frameAt(i), meta.w, meta.h, mask, { minArea: MIN_AREA });
+    const cold = extractFaceObservations(frameAt(i), meta.w, meta.h, mask, { minArea: MIN_AREA });
+    if (cold.length) {
+      grids[i] = cold;
+      prior = cold[0].grid;
+      priorColors = cold[0].colors;
+      priorMiss = 0;
+      nCold++;
+      continue;
+    }
+    const tracked: FaceObservation | null = prior
+      ? trackFaceGrid(frameAt(i), meta.w, meta.h, prior, priorColors)
+      : null;
+    if (tracked) {
+      grids[i] = [tracked];
+      prior = tracked.grid;
+      priorColors = tracked.colors;
+      priorMiss = 0;
+      nTracked++;
+    } else {
+      grids[i] = [];
+      if (prior && ++priorMiss > 5) {
+        prior = null;
+        priorColors = null;
+      }
+    }
   }
   const runs: RestRun[] = [];
   {
@@ -177,7 +215,7 @@ for (const sf of files) {
             tally.set(col, (tally.get(col) ?? 0) + 1);
           }
           const top = [...tally.entries()].sort((x, y) => y[1] - x[1])[0];
-          colors.push(top && top[1] >= 2 && top[1] > tot * 0.6 ? top[0] : null);
+          colors.push(top && (tot === 1 || (top[1] >= 2 && top[1] > tot * 0.6)) ? top[0] : null);
         }
         if (colors.filter(Boolean).length >= 5) {
           runs.push({ from: meta.frames[sFrame], to: meta.frames[lastFrame], len: chain.length, grid: colors });
@@ -268,7 +306,7 @@ for (const sf of files) {
     const nExtracted = grids.filter((g) => g.length > 0).length;
     const nTwo = grids.filter((g) => g.length >= 2).length;
     console.log(
-      `--- ${basename(videoPath)} 逐帧提取 ${nExtracted}/${grids.length} (双面 ${nTwo}), 静止区间 ${runs.length} 个 (minrun=${MIN_RUN}, κ=ω${omegaIdx}) ---`,
+      `--- ${basename(videoPath)} 逐帧提取 ${nExtracted}/${grids.length} (冷 ${nCold} 跟踪 ${nTracked} 双面 ${nTwo}), 静止区间 ${runs.length} 个 (minrun=${MIN_RUN}, κ=ω${omegaIdx}) ---`,
     );
   }
   for (const run of runs) {
@@ -306,6 +344,54 @@ for (const sf of files) {
         break;
       }
     }
+  }
+
+  // 双端点段证据: 链按中心帧归属所在段, 匹配 = max(段起点态, 段终点态)。
+  // 段内任意时刻的读数必属两端之一 (拧转前=起点, 拧转后=终点, 拧转中非转动层两者皆合),
+  // 标注滞后的 ±1 归属歧义在此语义下自动消解。
+  const afterState = (j: number): readonly number[] =>
+    j + 1 < fullSeq.length ? startState[j + 1] : IDENTITY_PERM;
+  const tokIdxToProbsPre = new Map<number, number>(nonRotIdx.map((jj, tt) => [jj, tt]));
+  const segChains: RestRun[][] = Array.from({ length: boundStates.length }, () => []);
+  let segYDropped = 0;
+  for (const run of runs) {
+    const center = (run.from + run.to) / 2;
+    let j = -1;
+    if (center < splitFrames[0]) j = 0; // 前置静止 (观察期) 归段 0, 双端语义含打乱态
+    else {
+      for (let si = 0; si < splitFrames.length - 1; si++) {
+        if (center >= splitFrames[si] && center < splitFrames[si + 1]) {
+          j = si;
+          break;
+        }
+      }
+    }
+    if (j < 0) continue; // 末 split 之后 → final 观测已单独处理
+    let t = tokIdxToProbsPre.get(j);
+    if (t === undefined) {
+      // y 转体段: y 是整机旋转, 面边缘化天然吸收 (旋转态在另一指派下匹配同一状态)
+      // → 归给前一个非转体段作"终点态"证据; 开头的 y 则归给后一个段作"起点态"证据
+      for (let jj = j - 1; jj >= 0 && t === undefined; jj--) t = tokIdxToProbsPre.get(jj);
+      for (let jj = j + 1; jj < tokens.length && t === undefined; jj++) t = tokIdxToProbsPre.get(jj);
+      if (t === undefined) {
+        segYDropped++;
+        continue;
+      }
+    }
+    segChains[t].push(run);
+  }
+  let segCov = 0, segMatch = 0, segRead = 0;
+  for (let t = 0; t < boundStates.length; t++) {
+    let got = false;
+    for (const run of segChains[t]) {
+      const b1 = bestAssign(run.grid, boundStates[t], omega);
+      const b2 = bestAssign(run.grid, afterState(nonRotIdx[t]), omega);
+      const best = b1.match >= b2.match ? b1 : b2;
+      segMatch += best.match;
+      segRead += best.read;
+      if (best.read >= 5 && best.match / best.read >= 0.75) got = true;
+    }
+    if (got) segCov++;
   }
 
   // 帧级软覆盖: 不要求成链, ±12/±25 帧内任一单帧网格与 GT 态匹配 ≥75% (读格 ≥5)
@@ -376,7 +462,16 @@ for (const sf of files) {
     margRead,
     nullMatch,
     nullRead,
-    rawObs: boundObs,
+    // 搜索观测 = 每段高置信静止链 (len≥4 且填格 ≥7, 宁缺毋滥 — 55% 准确率的
+    // 弱观测是负资产, 垃圾链惩罚会把真路径挤出 beam; 实测门控前 e2e 更差), ≤3 条
+    rawObs: segChains.map((chains) => {
+      const gated = chains
+        .filter((run) => run.len >= 4 && run.grid.filter(Boolean).length >= 7)
+        .sort((a, b) => b.len - a.len)
+        .slice(0, 3)
+        .map((run) => ({ colors: run.grid }));
+      return gated.length ? gated : null;
+    }),
     finalRawObs,
     probs,
     scrambleSc,
@@ -387,7 +482,7 @@ for (const sf of files) {
   const nacc = nullRead ? ((nullMatch / nullRead) * 100).toFixed(1) : "-";
   const wins = [...faceWins.entries()].sort((a, b) => b[1] - a[1]).map(([f, n]) => `${f}×${n}`).join(" ");
   console.log(
-    `${name}: 区间 ${runs.length}, 边界 ${covered}/${boundStates.length} 有观测, 软覆盖天花板 ${softCov}/${boundStates.length}, 帧级软覆盖 ±12:${frameCov12} ±25:${frameCov25}/${boundStates.length}, 读格 ${margRead}, 边缘化逐格 ${acc}% (乱态对照 ${nacc}%)  质量 GOOD ${nGood}/mid ${nMid}/JUNK ${nJunk}  归属规则命中(GT≥80%区间): 就近 ${agreeInterval}/${nDiag} 终点 ${agreeEnd}/${nDiag}  κ=ω${omegaIdx}  赢面: ${wins}  末帧=${finalRawObs ? finalRawObs.colors.filter(Boolean).length + "格" : "无"}`,
+    `${name}: 区间 ${runs.length}, 边界 ${covered}/${boundStates.length} 有观测, 软覆盖天花板 ${softCov}/${boundStates.length}, 帧级软覆盖 ±12:${frameCov12} ±25:${frameCov25}/${boundStates.length}, **段双端证据 覆盖 ${segCov}/${boundStates.length} 逐格 ${segRead ? ((segMatch / segRead) * 100).toFixed(1) : "-"}%** (y段丢链 ${segYDropped}), 读格 ${margRead}, 边缘化逐格 ${acc}% (乱态对照 ${nacc}%)  质量 GOOD ${nGood}/mid ${nMid}/JUNK ${nJunk}  归属规则命中(GT≥80%区间): 就近 ${agreeInterval}/${nDiag} 终点 ${agreeEnd}/${nDiag}  κ=ω${omegaIdx}  赢面: ${wins}  末帧=${finalRawObs ? finalRawObs.colors.filter(Boolean).length + "格" : "无"}`,
   );
 }
 
@@ -406,9 +501,8 @@ if (DO_SEARCH) {
   console.log(`\n===== 端到端锚定搜索 (静止区间观测 + probs, 限面 ${SEARCH_FACES.join("/")}) =====`);
   let sumOk = 0, sumTot = 0, anchoredCount = 0;
   for (const e of evals) {
-    // 观测可信度取该视频实测边缘化准确率 (夹在 [0.55, 0.9])
-    const measured = e.margRead ? e.margMatch / e.margRead : 0.7;
-    const hitProb = Math.min(0.9, Math.max(0.55, measured));
+    // 门控后的高置信链可信度高于全体链实测均值, 取固定 0.75
+    const hitProb = 0.75;
     const t0 = performance.now();
     const r = anchoredBeamSearch(e.probs, e.scrambleSc, {
       beamWidth: BEAM,
