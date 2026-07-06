@@ -11,13 +11,28 @@ import { fetchSocialAuthorizeUrl, type SocialProvider } from './account-api';
 // 回跳目标页(best-effort;跨浏览器上下文丢失时回调兜底回首页)。
 export const SOCIAL_RETURN_KEY = 'social_oauth_return';
 
+/** startSocialLogin 结果:navigated=true 整页已跳授权页(页面即将卸载,spinner 保持到离开);
+ *  navigated=false 只是用 `alipays://` scheme 唤起了 App,**当前页不卸载**,调用方须收起 spinner
+ *  改提示「已打开支付宝,授权完返回本页」。 */
+export interface StartSocialResult { navigated: boolean }
+
 /** 发起三方登录/绑定。intent='login' 未登录时登录;'link' 已登录时把该身份加到当前账号。
  *  先拿 URL(失败即抛,给调用方在弹层里显错),成功再跳转。 */
-export async function startSocialLogin(provider: SocialProvider, intent: 'login' | 'link'): Promise<void> {
-  if (typeof window === 'undefined') return;
+export async function startSocialLogin(provider: SocialProvider, intent: 'login' | 'link'): Promise<StartSocialResult> {
+  if (typeof window === 'undefined') return { navigated: false };
   const url = await fetchSocialAuthorizeUrl(provider, intent);
   try { sessionStorage.setItem(SOCIAL_RETURN_KEY, window.location.href); } catch { /* 隐私模式忽略 */ }
-  window.location.href = alipayMobileWakeUrl(provider, url);
+  const target = alipayMobileWakeUrl(provider, url);
+  const navigated = target === url; // 被包成 alipays:// scheme 时页面不卸载(只唤起 App)
+  window.location.href = target;
+  return { navigated };
+}
+
+/** 是否在微信/QQ 等 App 内置浏览器里。这些 webview 里发起支付宝授权,回调会落到系统浏览器
+ *  (另一个 App 的独立 localStorage),原页面收不到登录态 → 只能引导用户「在浏览器中打开」。 */
+export function isBlockedWebview(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  return /MicroMessenger|\bQQ\/|QQBrowser|DingTalk|Weibo/i.test(navigator.userAgent || '');
 }
 
 /** 手机端把支付宝授权页包进 `alipays://` scheme,直接唤起支付宝 App 授权(而非 PC 扫码页)。
