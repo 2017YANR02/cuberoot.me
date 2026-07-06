@@ -28,8 +28,12 @@ const U = (SIZE / 64) * HAND_SCALE;
  *  「扫掌面」方向,压不到 F 面 —— 向掌心侧倾斜后 curl 才朝魔方收(2026-07-06
  *  浏览器内多起点坐标下降与 curl 联合解出)。左右手系镜像(y 反),绕 x 的旋转
  *  共轭反号 → ×side。导出给 bakeHandTexture 定拇指甲背方向(甲背 = 滚转后
- *  弯曲平面的 −z,与指腹压面方向相反)。 */
-export const THUMB_CURL_PLANE_ROLL = 1.524;
+ *  弯曲平面的 −z,与指腹压面方向相反)。
+ *  2026-07-08 用户规格「指甲盖平面 ∥ F 面」:1.524 时 home 甲背·ẑ 仅 0.32
+ *  (甲面斜 71°),+0.55 联合重解拇指 curl 后 ≈0.85(dorsal 扫掠圆 ⊥ 根段轴,
+ *  与「贴面 2.4U + 肉 |x|≥34.5 + 接触心留在 FR 贴纸内」可行域的交点极限;
+ *  再加 roll 接触被换走,oracle 实测)。改此值必须连动 handPoses 拇指 curl 重解。 */
+export const THUMB_CURL_PLANE_ROLL = 2.074;
 
 /** WebXR 25 关节命名(https://www.w3.org/TR/webxr-hand-input-1/)。
  *  四指 FK 链 = proximal/intermediate/distal(metacarpal 静止在掌内);
@@ -42,6 +46,114 @@ export const JOINT_CHAINS: Record<FingerName, { drive: [string, string, string];
   ring: { drive: ["ring-finger-phalanx-proximal", "ring-finger-phalanx-intermediate", "ring-finger-phalanx-distal"], end: "ring-finger-tip", static: "ring-finger-metacarpal" },
   pinky: { drive: ["pinky-finger-phalanx-proximal", "pinky-finger-phalanx-intermediate", "pinky-finger-phalanx-distal"], end: "pinky-finger-tip", static: "pinky-finger-metacarpal" },
 };
+
+/** 甲面框架 —— 贴图指甲(bakeHandTexture)与立体甲片(本文件)共用的单一
+ *  数学源,禁两处各写一份漂移。axis=末节轴(p3→p4);dorsal=甲背=功能性
+ *  指腹方向的反向(rig 弯指把弯曲平面 +z′ 的指腹压向魔方,拇指含
+ *  THUMB_CURL_PLANE_ROLL×side 滚转),投影到 ⊥axis;lat=侧向。 */
+export function nailFrame(
+  p1: THREE.Vector3, p2: THREE.Vector3, p3: THREE.Vector3, p4: THREE.Vector3,
+  thumb: boolean, side: 1 | -1,
+): { axis: THREE.Vector3; dorsal: THREE.Vector3; lat: THREE.Vector3; len: number } {
+  const axis = p4.clone().sub(p3);
+  const len = axis.length();
+  axis.normalize();
+  const xf = p2.clone().sub(p1).normalize();
+  const pad = new THREE.Vector3(0, 0, 1).addScaledVector(xf, -xf.z).normalize();
+  if (thumb) pad.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(xf, THUMB_CURL_PLANE_ROLL * side));
+  const dorsal = pad.clone().negate().addScaledVector(axis, pad.dot(axis)).normalize();
+  const lat = new THREE.Vector3().crossVectors(axis, dorsal).normalize();
+  return { axis, dorsal, lat, len };
+}
+
+const clamp01 = (x: number): number => (x < 0 ? 0 : x > 1 ? 1 : x);
+const sstep = (a: number, b: number, x: number): number => {
+  const t = clamp01((x - a) / (b - a));
+  return t * t * (3 - 2 * t);
+};
+
+/**
+ * 立体甲片薄壳(2026-07-08 用户规格:指甲要有薄薄的厚度、是立体结构):
+ * 超椭圆轮廓(同贴图甲掩码指数)双层格网(甲面/甲底)+ 周缘侧壁。甲底贴
+ * 绑定姿态蒙皮皮面采样高度:中段微沉进皮、两缘沿指圆度下沉(甲沟)、甲根
+ * 额外藏进近端甲襞;游离缘微翘且皮面前坠 → 前缘露出可见厚度。贴图甲保留
+ * 当甲床底色,甲片比它小一圈 —— 边缘露出的画甲读成甲沟过渡。
+ * 纯 BufferGeometry(hands_model 测试在 Node 跑 adaptGltfHand,禁 DOM)。
+ */
+function buildNailGeometry(args: {
+  p3: THREE.Vector3; axis: THREE.Vector3; dorsal: THREE.Vector3; lat: THREE.Vector3;
+  len: number; rDist: number;
+  /** 甲域皮面高度(dorsal 向投影,s = 沿末节轴绝对距离)。 */
+  surf: (s: number) => number;
+}): THREE.BufferGeometry {
+  const { p3, axis, dorsal, lat, len, rDist } = args;
+  const T0 = 0.30, T1 = 1.18;   // 末节段分数(贴图甲 0.36..1.30;甲片短一点防「悬伸壳」)
+  const halfW = rDist * 0.80;   // 宽甲片(0.68 时视觉偏窄读成「小圆顶」)
+  const TH = 0.55 * U;          // 甲片厚度(薄;游离缘侧壁可见即可)
+  const SINK = 0.7 * U;         // 甲面中段沉皮(浮顶「奶油块」就是沉得不够)
+  const EDGE_DROP = 1.1 * U;    // 两缘沿指圆度下沉(甲沟,侧缘藏进皮)
+  const BASE_SINK = 0.7 * U;    // 甲根藏进近端甲襞
+  const FREE_LIFT = 0.3 * U;    // 游离缘微翘(过大 = 翘壳)
+  const NR = 15, NC = 11;
+  const tc = (T0 + T1) / 2, th = (T1 - T0) / 2;
+
+  const pos: number[] = [];
+  const col: number[] = [];
+  const P = new THREE.Vector3();
+  for (let layer = 0; layer < 2; layer++) {
+    for (let i = 0; i < NR; i++) {
+      const q = -0.97 + (1.94 * i) / (NR - 1);
+      const sAbs = (tc + th * q) * len;
+      const w2 = Math.pow(1 - q * q, 1 / 2.6); // 超椭圆半宽(同贴图甲指数 2.6)
+      const base = args.surf(sAbs) - SINK
+        - BASE_SINK * sstep(-0.55, -0.97, q)
+        + FREE_LIFT * sstep(0.55, 0.97, q);
+      const free = sstep(0.55, 0.92, q);
+      const lun = sstep(-0.55, -0.9, q) * 0.5; // 半月对比调淡(强白斑读成大理石纹)
+      for (let j = 0; j < NC; j++) {
+        const w = -1 + (2 * j) / (NC - 1);
+        const u = w * w2 * halfW;
+        const hu = base - EDGE_DROP * w * w;
+        // 甲面=甲底+厚度(中央极轻微加厚;穹顶感主要来自甲底跟皮面圆度)
+        const h = layer === 0 ? hu + TH * (0.94 + 0.06 * Math.sqrt(Math.max(0, 1 - w * w))) : hu;
+        P.copy(p3).addScaledVector(axis, sAbs).addScaledVector(dorsal, h).addScaledVector(lat, u);
+        pos.push(P.x, P.y, P.z);
+        const shade = layer === 0 ? 1 : 0.9; // 甲底略暗
+        col.push(
+          Math.min(1, (0.93 + 0.05 * lun + 0.06 * free) * shade),
+          Math.min(1, (0.80 + 0.08 * lun + 0.15 * free) * shade),
+          Math.min(1, (0.76 + 0.08 * lun + 0.15 * free) * shade),
+        );
+      }
+    }
+  }
+  const idx: number[] = [];
+  const at = (layer: number, i: number, j: number): number => layer * NR * NC + i * NC + j;
+  for (let i = 0; i < NR - 1; i++) {
+    for (let j = 0; j < NC - 1; j++) {
+      const a = at(0, i, j), b = at(0, i + 1, j), c = at(0, i + 1, j + 1), d = at(0, i, j + 1);
+      idx.push(a, d, b, b, d, c); // 甲面朝 +dorsal
+      const a2 = at(1, i, j), b2 = at(1, i + 1, j), c2 = at(1, i + 1, j + 1), d2 = at(1, i, j + 1);
+      idx.push(a2, b2, d2, b2, c2, d2); // 甲底反绕
+    }
+  }
+  // 周缘侧壁(+dorsal 视角逆时针环,外法向 = 边×dorsal)
+  const ring: [number, number][] = [];
+  for (let j = 0; j < NC - 1; j++) ring.push([0, j]);
+  for (let i = 0; i < NR - 1; i++) ring.push([i, NC - 1]);
+  for (let j = NC - 1; j > 0; j--) ring.push([NR - 1, j]);
+  for (let i = NR - 1; i > 0; i--) ring.push([i, 0]);
+  for (let k = 0; k < ring.length; k++) {
+    const [i1, j1] = ring[k];
+    const [i2, j2] = ring[(k + 1) % ring.length];
+    idx.push(at(0, i1, j1), at(1, i1, j1), at(1, i2, j2), at(0, i1, j1), at(1, i2, j2), at(0, i2, j2));
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  geo.setIndex(idx);
+  return geo;
+}
 
 /** 目标中指链长(MCP→PIP→DIP→TIP)= 程序化手同值(56+35+24)·U,保证指尖
  *  绕魔方的包络与旧标定同数量级(整体缩放钩子,不追单指等长)。 */
@@ -195,6 +307,105 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
     };
   }
 
+  // ---- 立体甲片:每指一块薄壳挂 tip 代理(随末节弯曲);皮面高度按
+  //      distal/tip 主导蒙皮顶点在甲框架系采样,几何生成在 hand 系再转
+  //      tip 局部。材质经 extraMats 交 rig 统一 fade / dispose。 ----
+  mesh.updateMatrixWorld(true);
+  const nailMat = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    vertexColors: true, // 甲床粉 → 半月 → 游离缘白的纵向渐变烘在顶点色
+    roughness: 0.32,
+    metalness: 0,
+    clearcoat: 0.12, // 高清漆会读成「乒乓球贴片」,压低
+    clearcoatRoughness: 0.5,
+  });
+  const nailMeshes: THREE.Mesh[] = [];
+  {
+    const posA = mesh.geometry.getAttribute("position");
+    const skinIndexA = mesh.geometry.getAttribute("skinIndex");
+    const skinWeightA = mesh.geometry.getAttribute("skinWeight");
+    const boneNames = mesh.skeleton.bones.map((b) => b.name);
+    const dom = new Array<string>(posA.count);
+    for (let i = 0; i < posA.count; i++) {
+      let best = 0, bw = -1;
+      for (let k = 0; k < 4; k++) {
+        const w = skinWeightA.getComponent(i, k);
+        if (w > bw) { bw = w; best = skinIndexA.getComponent(i, k); }
+      }
+      dom[i] = boneNames[best] ?? "";
+    }
+    const v = new THREE.Vector3();
+    const rel = new THREE.Vector3();
+    for (const name of Object.keys(JOINT_CHAINS) as FingerName[]) {
+      const chain = JOINT_CHAINS[name];
+      const q1 = toHand(bindOf(chain.drive[0]));
+      const q2 = toHand(bindOf(chain.drive[1]));
+      const q3 = toHand(bindOf(chain.drive[2]));
+      const q4 = toHand(bindOf(chain.end));
+      const nf = nailFrame(q1, q2, q3, q4, name === "thumb", side);
+      const sub: number[] = [];
+      for (let i = 0; i < posA.count; i++) {
+        if (dom[i] === chain.drive[2] || dom[i] === chain.end) sub.push(i);
+      }
+      // 末节平均圆柱半径(同 bakeHandTexture.boneRadius 公式)
+      let rSum = 0, rN = 0;
+      for (const i of sub) {
+        if (dom[i] !== chain.drive[2]) continue;
+        v.fromBufferAttribute(posA, i).applyMatrix4(mesh.matrixWorld);
+        rel.copy(v).sub(q3);
+        const sa = THREE.MathUtils.clamp(rel.dot(nf.axis), 0, nf.len);
+        rSum += Math.sqrt(Math.max(0, rel.lengthSq() - sa * sa));
+        rN++;
+      }
+      const rDist = rN > 0 ? rSum / rN : 7 * U;
+      // 甲背侧皮面高度分桶(轴向 10 桶取 max 投影)→ 空桶邻近填充 → 两轮
+      // [0.25,0.5,0.25] 平滑(稀疏桶的折线尖折会让甲片呈「碎裂壳」,踩过)
+      const NB = 10;
+      const binH = new Float32Array(NB).fill(-1e9);
+      for (const i of sub) {
+        v.fromBufferAttribute(posA, i).applyMatrix4(mesh.matrixWorld);
+        rel.copy(v).sub(q3);
+        const t = rel.dot(nf.axis) / nf.len;
+        const h = rel.dot(nf.dorsal);
+        if (h <= 0 || Math.abs(rel.dot(nf.lat)) > rDist * 1.1) continue;
+        const b = Math.floor(((t + 0.1) / 1.55) * NB);
+        if (b < 0 || b >= NB) continue;
+        if (h > binH[b]) binH[b] = h;
+      }
+      const prof = new Float32Array(NB);
+      {
+        let lastV = -1e9;
+        for (let b = 0; b < NB; b++) { if (binH[b] > -1e8) lastV = binH[b]; prof[b] = lastV; }
+        for (let b = NB - 1; b >= 0; b--) { if (binH[b] > -1e8) lastV = binH[b]; else if (prof[b] < -1e8) prof[b] = lastV; }
+        for (let b = 0; b < NB; b++) if (prof[b] < -1e8) prof[b] = rDist;
+        for (let round = 0; round < 2; round++) {
+          const p0 = Array.from(prof);
+          for (let b = 0; b < NB; b++) {
+            prof[b] = 0.5 * p0[b] + 0.25 * (p0[Math.max(0, b - 1)] ?? p0[b]) + 0.25 * (p0[Math.min(NB - 1, b + 1)] ?? p0[b]);
+          }
+        }
+      }
+      const surf = (sq: number): number => {
+        const t = (sq / nf.len + 0.1) / 1.55 * NB - 0.5;
+        if (t <= 0) return prof[0];
+        if (t >= NB - 1) return prof[NB - 1] - (t - (NB - 1)) * (1.55 / NB) * nf.len * 0.35; // 指尖圆帽前坠
+        const k = Math.floor(t);
+        return prof[k] + (prof[k + 1] - prof[k]) * (t - k);
+      };
+      const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, rDist, surf });
+      const fj = fingers[name];
+      const tipInv = new THREE.Matrix4().copy(fj.tip.matrixWorld).invert();
+      geo.applyMatrix4(tipInv);
+      geo.computeVertexNormals();
+      const nm = new THREE.Mesh(geo, nailMat);
+      nm.raycast = noRaycast;
+      nm.castShadow = nm.receiveShadow = false;
+      nm.userData.nail = { finger: name, dorsalTip: nf.dorsal.clone().transformDirection(tipInv).toArray() };
+      fj.tip.add(nm);
+      nailMeshes.push(nm);
+    }
+  }
+
   // ---- 顶点血色烘焙(skinMat vertexColors:true 契约:所有肤色网格必须带
   //      color 属性)+ 掌亮背深:按蒙皮权重聚血到远端,按手系 z 分掌背。 ----
   bakeVertexTint(mesh);
@@ -204,7 +415,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
   mesh.material = skinMat;
   mesh.castShadow = mesh.receiveShadow = false;
 
-  return { group, side, fingers, meshes: [mesh as THREE.Mesh] };
+  return { group, side, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat] };
 }
 
 function bakeVertexTint(mesh: THREE.SkinnedMesh): void {
