@@ -2200,14 +2200,17 @@ function PuzzleSettings({
               <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
             )}
           </div>
-          {/* 调试控件单独成行(用户要求):半转停 / 结构着色 / 挖块。组前缀「调试」标一次,各控件
-              去掉重复的「调试:」前缀。半转停 / 结构着色 为本站引擎特性,在 cubing.js 渲染的拼图上
-              为 no-op(仅存设置);挖块为统一三选一占位(见 applySettings)。 */}
+          {/* 调试控件单独成行(用户要求):半转停 / 结构着色 / 骨架线条 / 挖块。组前缀「调试」标一次,
+              各控件去掉重复的「调试:」前缀。半转停 / 结构着色 为本站引擎特性,在 cubing.js 渲染的拼图上
+              为 no-op(仅存设置);骨架线条为手部 MediaPipe 风格叠加线,仅 3x3 手指开启时有效;
+              挖块为统一三选一占位(见 applySettings)。 */}
           <div className="sim-puzzle-debug">
             <div className="sim-puzzle-section-title">{t('调试', 'Debug')}</div>
             <div className="sim-puzzle-debug-toggles">
               <Toggle label={t('半转停', 'Hold partial turn')} value={settings.holdPartialTurn} onChange={(v) => set('holdPartialTurn', v)} disabled={!caps.supports.holdPartialTurn} title={hint(caps.supports.holdPartialTurn)} />
               <Toggle label={t('结构着色', 'Structure colors')} value={settings.debugStructureColor} onChange={(v) => set('debugStructureColor', v)} disabled={!caps.supports.structureColor} title={hint(caps.supports.structureColor)} />
+              {/* 骨架线条:MediaPipe 风格关键点叠加,仅手指(hands)开启的拼图上可用(同 caps.supports.hands)。 */}
+              <Toggle label={t('骨架线条', 'Skeleton overlay')} value={settings.handsSkeleton} onChange={(v) => set('handsSkeleton', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />
               {/* 挖块:仅当该拼图有「原生转动元素」(角/面/棱)可掀起时可选;NxN/SQ1 无单一会动块组,
                   cubing.js 拼图引擎未驱动 → 灰掉。 */}
               <label className={'sim-toggle' + (caps.supports.carve ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.carve)}>
