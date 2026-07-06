@@ -8,6 +8,8 @@
  * 手势两类:
  *  - weld  腕转:整只手焊在转动层上,绕层轴跟转(R/L 外层、整体 x/y/z 双手)。
  *  - flick 指弹:出一根手指沿转向扫(U/D 食指/无名指、F/B 拇指/中指、M/E/S)。
+ *    特例:双手都在 home 握时 F 族改「食指越顶」(F=右食指伸至 UFR、F'=左食指
+ *    UFL,style:"topPush",TOP_PUSH 参数);非 home 握仍走拇指沿 F 面扫。
  * 手/指的选择依转向(angle 符号)分配左右,映射见 classifyHandGesture(纯函数,
  * tests/hands_gestures.test.ts 锁定)。
  *
@@ -58,7 +60,7 @@ export type LayerClass = "high" | "low" | "mid" | "whole";
 
 export type HandGesture =
   | { kind: "weld"; hands: HandSide[] }
-  | { kind: "flick"; hand: HandSide; finger: FingerName };
+  | { kind: "flick"; hand: HandSide; finger: FingerName; style?: "topPush" };
 
 /**
  * (轴, 层类别, 转向) → 手势。dir = sign(group.angle)(angle 绕 AXIS_VEC)。
@@ -67,8 +69,11 @@ export type HandGesture =
  *  D = 左无名指,D' = 右无名指;F = 右拇指推,F' = 左拇指;
  *  B/B' = 后侧中指(双手指尖本就搭在 B 面);M/E/S 就近借同族手指。
  *  整体 x/y/z = 双手抱转(regrip 回位)。
+ *  bothHome(双手都在 home 握,tick 读 grip 判定)时 F 族改「食指越顶」:
+ *  F = 右食指伸至 UFR 下压拨动,F' = 左食指 UFL 镜像(用户规格,style:"topPush",
+ *  动作见 applyHand;非 home 握姿几何未标定,仍走拇指沿 F 面扫)。
  */
-export function classifyHandGesture(axis: Axis, cls: LayerClass, dir: 1 | -1): HandGesture {
+export function classifyHandGesture(axis: Axis, cls: LayerClass, dir: 1 | -1, bothHome = false): HandGesture {
   if (cls === "whole") return { kind: "weld", hands: ["L", "R"] };
   if (axis === "x") {
     if (cls === "high") return { kind: "weld", hands: ["R"] };
@@ -81,7 +86,10 @@ export function classifyHandGesture(axis: Axis, cls: LayerClass, dir: 1 | -1): H
   }
   // z 轴。F 族分手依据:拇指伸展 = 沿 F 面向上扫,F(dir>0)使左列上行 → 左拇指,
   // F' 使右列上行 → 右拇指(冻结层角实测过,反着配会出现「层往下、指往上」)。
-  if (cls === "high") return { kind: "flick", hand: dir > 0 ? "L" : "R", finger: "thumb" }; // F 族
+  if (cls === "high") {
+    if (bothHome) return { kind: "flick", hand: dir > 0 ? "R" : "L", finger: "index", style: "topPush" };
+    return { kind: "flick", hand: dir > 0 ? "L" : "R", finger: "thumb" }; // F 族
+  }
   return { kind: "flick", hand: dir < 0 ? "L" : "R", finger: "middle" }; // B / S 族
 }
 
@@ -166,11 +174,119 @@ const COMMIT_ANGLE = 0.02;
  */
 const DODGE_MAG: Record<Axis, Record<LayerClass, number>> = {
   x: { high: 0, low: 0, mid: 0, whole: 0 },
-  // y.low 26:D' 勾弯时左无名指节肉(x≈-91)蹭进 B 面 1.6U,外让把它推出
-  // |x|<96 窗口(oracle 单点标定,16 差 ~5U)。
-  y: { high: 16, low: 26, mid: 62, whole: 0 },
+  // y.low 44:① D' 勾弯时左无名指节肉(x≈-91)蹭进 B 面 1.6U(26 已够);
+  // ② 大鱼际下缘(y≈-39,越过底层 y=-32 界 7U,径向 128U)会被底层角柱
+  // (135.8U)在 θ≈1.3 犁到 3.4U —— 全顶点 oracle 2026-07-07 补测现形,
+  // 外让推到径向 >135.8U 需 ≥42,取 44 留量。
+  y: { high: 16, low: 44, mid: 62, whole: 0 },
   z: { high: 10, low: 40, mid: 10, whole: 0 },
 };
+
+/**
+ * 「食指越顶」(style:"topPush",双手 home 握的 F 族)动作参数:手根不动,
+ * 食指先沿 B 面竖直抬升(splay,越过 U 面 + 间隙),再大幅前卷 MCP(c1)+
+ * 拉直中末节,指链从魔方上方横越 U 面,指尖落到 UFR/UFL 角块 U 面贴纸上方。
+ * 用户规格:F 转动开始**之前**指尖就要到位 —— 伸指(reach)是时间驱动的前置
+ * 动画(REACH_MS,prepareTwist 启动,播放循环闸步等 isReachPreparing),
+ * 转动期间只有下压(press)随层角;拖拽/键盘没有前置窗口,beginGesture 补
+ * 触发与层角并发。抬升先行、前卷后动(liftIn < sweepStart 语义):指尖起点
+ * 就骑在 B 面上棱沿,先卷会立刻犁进 U 面。回程(reachTarget=0)同一参数化
+ * 倒放,先收卷再落指,路径对称安全。数值浏览器内标定 + 穿模 oracle 验证。
+ */
+const TOP_PUSH = {
+  liftIn: 0.5,    // reach 前半段完成抬升
+  sweepStart: 0.15, // 前卷从 reach 15% 起动(抬升先行)
+  c1: 0.66,       // MCP 前卷幅度(rad;过大越过贴纸冲到角外缘,坐标下降定档)
+  c2: 0.18,       // 中节加弯(用户规格:按压时弯曲要明显,别伸直戳)
+  c3: 0.15,       // 末节加弯
+  lift: 0.54,     // 抬升量(splay rad;弯曲平面前斜,前卷伴随下沉,~207U/rad 补偿)
+  backOff: 0.03,  // reach 早段微伸(c1 −,sin 包络):抬升弧面稍向内斜,不退
+                  // 一点指腹会蹭进 B 面上沿(oracle 实测 2.65U)
+  // —— 转动物理跟随(用户硬规格:F 转动时**只有食指动**,手根/其余手指/
+  // 另一只手一律静止;且四分转**全程**指尖贴住初始 UFR 角块)—— 接触点绕
+  // z 走弧,弧长全部由食指四关节的 TOP_PUSH_FOLLOW 曲线补(见下),指尖钉在
+  // 角块贴纸上、贴纸在指腹下滑转;不动腕 weld、不做 dodge(driveGesture 里
+  // topPush 整段跳过外让 —— 静止手安全性靠 home 姿指腹接触半径 ≥136U >
+  // 角柱扫掠 135.8U)。按压不是独立通道:knot0 就是按压姿(reach 一到位指腹
+  // 即贴到贴纸 ~1.2U,转动开始之前已接触 —— 推动 = 先接触后运动)。转过
+  // releaseAt(=90°,四分转终点)后才弹离(follow 渐出 + 额外抬升退出角柱
+  // 扫掠区),只有 F2 的第二个 90° 走释放滑行。release 用未钳制层角(F2 的
+  // UFL 角 ~2.27rad 扫到指位,必须按原角先弹离)。
+  releaseAt: HALF_PI, // 释放起点(rad,原角):四分转全程接触
+  releaseLen: 0.28, // 释放行程(~1.85rad 完全弹离;0.5 时倒退太慢,F2 第二象限
+                    // 来料棱块在 θ≈1.85 追上手指,oracle 实测 pen +4.8 → 收紧)
+  releaseLift: 0.2, // 弹离额外抬升(splay rad,指腹退出扫掠半径 135.8U)
+  // —— 收指退场(提交后)—— 层已归位,凭空造的退路全被 oracle 毙掉:弧倒退
+  // 指腹犁进已还原方块 U 面内缘 ~25U;弧姿态与收指 reach 并行衰减的合成弦线
+  // 斜穿方块内部(pen +41);splay 抬离在弧末端(指腹贴 R 面)是切向,越抬越
+  // 切进前柱(+14);沿掌轴伸直的 c1 展开扫弧直接穿心(+63)。唯一已验证绿的
+  // 离场编排 = F2 的 release 路径(弧倒退 ×3 速 + releaseLift,F2 全程扫描
+  // 实证):层方块占位 90° 周期(slab(θ)≡slab(θ−90°)),四分转提交后让原角
+  // **虚拟续转**推进走完 release 窗口,姿态与已验证的 release 点对点相同,
+  // 对静止层的占位失配 ≤ releaseLen(0.28rad)且恰在已抬离段。串行:reach 钳
+  // 在 1,decay 段跑虚拟 release,走完才收指(从带 releaseLift 的按压位倒放
+  // reach 路径)。小角度残余(拖拽回弹,提交角 < retreatSplit)按 decay 原地
+  // 缩回按压位(φ 小时弧退对静止层安全)。
+  retreatSplit: 1.2, // 提交原角 ≥ 此值走「虚拟续转 release」离场,否则原地缩回
+};
+/**
+ * 接触跟随曲线:指尖钉住随层转的角块贴纸一路到终点(用户规格:F 时初始
+ * UFR 角块转到哪、指尖跟到哪,终点 DFR)。食指独臂可达域不够(MCP 到终点
+ * 269U > 指长 237U,实测差 32U),由「原地腕转」通道 wrist 补:手根绕
+ * 「过腕点、平行转轴 z」的轴原地翻转 ψ —— 腕点自身不动 → 前臂(锚在腕点)
+ * 全程静止、手掌不离位,视觉 = 真人压腕推 F;其余弧长由食指四关节
+ * {c1,c2,c3,splay} 跟随。每 2.5° 层角一个 knot(37 个),线性插值;φ 封顶
+ * 90°(F2 第二象限由 release 弹离)。knot0 = 按压姿(φ→0 指腹贴到贴纸
+ * ~1.2U,wrist[0]=0)。**两手各一套**:left.glb 镜像资产 ~2U 雕刻不对称,
+ * 共用一套 L 手会嵌进贴纸 1.6U(同 LEFT_CURL_OFFSET 先例,必须各解各的)。
+ * 数值浏览器内连续化坐标下降标定(2.5° 步、上一 knot 热启动保同一 IK 分支 ——
+ * 各 knot 独立解会落进不同零空间盆地,之字形插值段实测嵌 12U;判据:计数
+ * 回转 −φ 后指尖钉住按压锚点、末节肉垫距贴纸 ~1.2U、接触点不出本角块贴纸、
+ * 食指顶点两域穿模 ≤0)。1° 细扫复核:R gap 0.43~2.44 / L gap 0.43~2.73,
+ * 穿模 ≤−0.43,腕转 ψ≤|0.345|(≈20°,~60° 层角前为 0)。改 home 姿 /
+ * HAND_SCALE 必须重标(rig.tuning 现场调,烘回此处;工具见 memory
+ * project_sim_hands_rig)。
+ */
+const TOP_PUSH_FOLLOW = {
+  R: {
+    c1: [0, 0, -0.015, -0.06, -0.06, -0.06, -0.075, -0.09, -0.09, -0.09, -0.105, -0.075, -0.075, -0.075, -0.06, -0.045, -0.045, -0.045, -0.015, -0.015, 0.015, 0.015, 0.03, 0.045, 0.075, 0.09, 0.135, 0.135, 0.135, 0.15, 0.15, 0.15, 0.15, 0.12, 0.12, 0.135, 0.135],
+    c2: [0, 0, 0.09, 0.195, 0.18, 0.21, 0.285, 0.36, 0.42, 0.48, 0.54, 0.51, 0.555, 0.585, 0.585, 0.6, 0.645, 0.66, 0.66, 0.675, 0.66, 0.66, 0.645, 0.63, 0.585, 0.54, 0.51, 0.48, 0.48, 0.435, 0.435, 0.42, 0.42, 0.435, 0.405, 0.36, 0.33],
+    c3: [0, 0.03, 0.03, 0.12, 0.27, 0.33, 0.315, 0.24, 0.21, 0.18, 0.15, 0.18, 0.165, 0.165, 0.135, 0.105, 0.015, -0.03, -0.105, -0.18, -0.225, -0.27, -0.315, -0.375, -0.435, -0.435, -0.435, -0.435, -0.435, -0.435, -0.435, -0.435, -0.435, -0.435, -0.435, -0.435, -0.435],
+    // splay[0..2] 比标定值抬浅 0.006(锚点在 φ=0.03 倾斜系测 gap 1.2,换算回
+    // θ=0 差 x′·sinφ≈2U,按压位实测下陷 0.78 → 抬 ~1.2U 回到面上)
+    splay: [-0.0303, -0.0303, -0.0303, -0.0513, -0.0663, -0.0813, -0.0963, -0.1263, -0.1413, -0.1713, -0.2013, -0.2163, -0.2613, -0.3063, -0.3213, -0.3663, -0.4113, -0.4563, -0.4713, -0.5163, -0.5463, -0.5763, -0.6063, -0.6363, -0.6513, -0.6813, -0.6513, -0.6813, -0.6663, -0.6663, -0.6513, -0.6513, -0.6213, -0.6213, -0.6063, -0.5913, -0.5763],
+    wrist: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -0.015, -0.045, -0.06, -0.105, -0.12, -0.15, -0.18, -0.225, -0.27, -0.3, -0.315, -0.345],
+  },
+  L: {
+    c1: [0, 0, -0.015, -0.03, -0.075, -0.075, -0.075, -0.09, -0.09, -0.09, -0.105, -0.075, -0.06, -0.015, -0.03, -0.015, 0, 0, 0.03, 0.045, 0.075, 0.105, 0.12, 0.15, 0.18, 0.195, 0.24, 0.255, 0.27, 0.27, 0.285, 0.285, 0.315, 0.345, 0.375, 0.375, 0.375],
+    c2: [0, 0, 0.045, 0.09, 0.195, 0.255, 0.315, 0.405, 0.465, 0.495, 0.54, 0.525, 0.54, 0.525, 0.54, 0.555, 0.555, 0.555, 0.525, 0.525, 0.495, 0.465, 0.45, 0.42, 0.39, 0.345, 0.315, 0.24, 0.225, 0.21, 0.18, 0.15, 0.105, 0.015, -0.075, -0.105, -0.135],
+    c3: [0, 0.015, 0.18, 0.285, 0.27, 0.255, 0.21, 0.135, 0.075, 0.09, 0.105, 0.09, 0.06, 0.075, 0.06, 0.03, -0.015, -0.03, -0.045, -0.12, -0.18, -0.21, -0.27, -0.345, -0.45, -0.405, -0.435, -0.39, -0.51, -0.51, -0.51, -0.51, -0.51, -0.51, -0.51, -0.51, -0.51],
+    // 同 R:抬浅 0.007(L 按压位实测下陷 1.13)
+    splay: [-0.0214, -0.0214, -0.0214, -0.0434, -0.0734, -0.0884, -0.1034, -0.1334, -0.1634, -0.2084, -0.2384, -0.2684, -0.2834, -0.3134, -0.3584, -0.4034, -0.4484, -0.4934, -0.5384, -0.5684, -0.5834, -0.6134, -0.6434, -0.6584, -0.6884, -0.6884, -0.6734, -0.6884, -0.6734, -0.6734, -0.6584, -0.6584, -0.6284, -0.6284, -0.6134, -0.5984, -0.5834],
+    wrist: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.015, 0.03, 0.06, 0.075, 0.105, 0.15, 0.18, 0.21, 0.24, 0.255, 0.285, 0.315, 0.345],
+  },
+};
+/** knot 线性插值;φ=k×2.5° 恰落第 k 个 knot(标定时单点解耦)。 */
+function followAt(arr: number[], phi: number): number {
+  const t = Math.min(1, phi / HALF_PI) * (arr.length - 1);
+  const i = Math.min(arr.length - 2, Math.floor(t));
+  return arr[i] + (arr[i + 1] - arr[i]) * (t - i);
+}
+const REACH_MS = 200;
+/** topPush 释放进度(0=按压跟随,1=完全弹离);t = |未钳制层角|。 */
+function topPushRelease(t: number): number {
+  const x = Math.min(1, Math.max(0, (t - TOP_PUSH.releaseAt) / TOP_PUSH.releaseLen));
+  return x * x * (3 - 2 * x);
+}
+/**
+ * topPush 弧位置(rad):release 段沿标定弧**倒退**(手指原路退回起始按压位,
+ * 比层角快 ~3 倍)—— 禁把 follow 幅度直接 ×(1−rel) 淡出:关节角朝 hover 姿
+ * 插值走的是弦线,切进魔方内部(F2 实测 pen +30)。倒退路径上手指与来料
+ * 角块在同槽位相遇时,姿态恰是该槽位的标定接触姿(间隙 ≥0.4),天然安全。
+ */
+function topPushArcPhi(rawAbs: number): number {
+  return Math.min(HALF_PI, rawAbs) * (1 - topPushRelease(rawAbs));
+}
 
 interface HandState {
   model: HandModel;
@@ -194,8 +310,12 @@ interface HandState {
   /** flick 残留(手指偏移随时间衰减)。 */
   flickFinger: FingerName | null;
   flickAxis: Axis | null; // 弹指所属轴(决定扫法:y=勾弯横拉,x/z=竖扫);decay 期间保留
+  flickStyle: "topPush" | null; // 特殊扫法(home 握 F 族食指越顶);decay 期间保留
   flickAmount: number; // 当前手指扫角(rad,随层角)
   flickDecay: number;  // drop 后残留衰减
+  /** topPush 伸指进度(时间驱动,0..1;reachTarget 为目标,tick 内推进)。 */
+  reachT: number;
+  reachTarget: 0 | 1;
   /** 转层外让:0..1 进度(目标值是层角纯函数,零延迟同步;回落 RECOVER_MS
    *  衰减)× dodgeMag = 整手沿本侧外向 x 平移量。 */
   dodge: number;
@@ -391,8 +511,11 @@ export default class HandsRig extends THREE.Group {
       recoverT: 1,
       flickFinger: null,
       flickAxis: null,
+      flickStyle: null,
       flickAmount: 0,
       flickDecay: 0,
+      reachT: 0,
+      reachTarget: 0,
       dodge: 0,
       dodgeTarget: 0,
       dodgeMag: 0,
@@ -421,8 +544,11 @@ export default class HandsRig extends THREE.Group {
       h.weldWhole = false;
       h.flickFinger = null;
       h.flickAxis = null;
+      h.flickStyle = null;
       h.flickAmount = 0;
       h.flickDecay = 0;
+      h.reachT = 0;
+      h.reachTarget = 0;
       h.dodge = 0;
       h.dodgeTarget = 0;
     }
@@ -484,8 +610,11 @@ export default class HandsRig extends THREE.Group {
       h.weldWhole = false;
       h.flickFinger = null;
       h.flickAxis = null;
+      h.flickStyle = null;
       h.flickAmount = 0;
       h.flickDecay = 0;
+      h.reachT = 0;
+      h.reachTarget = 0;
       h.dodge = 0;
       h.dodgeTarget = 0;
     }
@@ -495,6 +624,52 @@ export default class HandsRig extends THREE.Group {
   /** 换握动画进行中(播放循环用它闸住下一步;普通 weld 回位不算)。 */
   get isRegripping(): boolean {
     return this.regripFlag;
+  }
+
+  /**
+   * 播放前置伸指:该转动若将走「食指越顶」(双手 home 握的 F 族),先启动/
+   * 继续伸指动画并返回「还需等待」—— 调用方本轮不发 twist,等 isReachPreparing
+   * 落 false(指尖已到 UFR/UFL 贴纸上方)再转。返回 false = 无需前置或已到位。
+   * 幂等,播放循环可 16ms 轮询重入。
+   */
+  prepareTwist(axis: Axis, layers: number[], dir: 1 | -1): boolean {
+    const hands = this.hands;
+    const cube = this.cube;
+    if (!hands || !cube || !this.enabled) return false;
+    const bothHome = hands.R.grip.angleTo(HandsRig._qIdent) < 0.01
+      && hands.L.grip.angleTo(HandsRig._qIdent) < 0.01;
+    const g = classifyHandGesture(axis, classifyLayers(layers, cube.order), dir, bothHome);
+    if (g.kind !== "flick" || g.style !== "topPush") return false;
+    const h = hands[g.hand];
+    if (h.flickStyle === "topPush" && h.flickDecay > 0) {
+      // 上一转的弧退场未完:清 flickAmount 会让手指从弧中段瞬移。轮询重入
+      // 等 decay 走完(届时 reachT 仍为 1,下一轮直接从按压位起推)。
+      this.lastActivityAt = performance.now();
+      return true;
+    }
+    h.flickFinger = g.finger;
+    h.flickAxis = axis;
+    h.flickStyle = "topPush";
+    h.flickAmount = 0;
+    h.flickDecay = 0;
+    h.reachTarget = 1;
+    this.lastActivityAt = performance.now();
+    return h.reachT < 1;
+  }
+
+  /** 标定入口:topPush 参数的活引用(浏览器坐标下降现场改,数值烘回源码)。 */
+  get tuning(): { push: typeof TOP_PUSH; follow: typeof TOP_PUSH_FOLLOW } {
+    return { push: TOP_PUSH, follow: TOP_PUSH_FOLLOW };
+  }
+
+  /** 前置伸指进行中(播放循环闸步,与 isRegripping 同款;手关着恒 false)。 */
+  get isReachPreparing(): boolean {
+    const hands = this.hands;
+    if (!hands || !this.enabled) return false;
+    return (["R", "L"] as const).some((s) => {
+      const h = hands[s];
+      return h.flickStyle === "topPush" && h.reachTarget === 1 && h.reachT < 1;
+    });
   }
 
   setEnabled(on: boolean): void {
@@ -589,7 +764,11 @@ export default class HandsRig extends THREE.Group {
             act.gesture = null;
           }
           if (!act.gesture) {
-            act.gesture = classifyHandGesture(axis, cls, dir);
+            // 双手都在 home 握 → F 族换「食指越顶」拨法(grip 是精确四分转积,
+            // 阈值只兜浮点;regrip() 提交即写 grip,动画途中判定也指向终态)。
+            const bothHome = hands.R.grip.angleTo(HandsRig._qIdent) < 0.01
+              && hands.L.grip.angleTo(HandsRig._qIdent) < 0.01;
+            act.gesture = classifyHandGesture(axis, cls, dir, bothHome);
             act.dir = dir;
             this.beginGesture(act.gesture, axis);
           }
@@ -616,8 +795,28 @@ export default class HandsRig extends THREE.Group {
       }
       if (h.flickDecay > 0) {
         h.flickDecay = Math.max(0, h.flickDecay - dt / RECOVER_MS);
-        if (h.flickDecay === 0) { h.flickFinger = null; h.flickAxis = null; }
+        if (h.flickDecay === 0) {
+          if (h.flickStyle === "topPush") {
+            // flickAmount 不清:收指段 effRaw 靠它判定终点姿(release 走满 /
+            // 缩回按压位),完全收回(下方 reachT=0 清理)才一起清。
+            h.reachTarget = 0; // 退场走完才收指(串行,见 retreatSplit 注释)
+          } else {
+            h.flickFinger = null; h.flickAxis = null; h.flickStyle = null;
+          }
+        }
         animating = true;
+      }
+      // topPush 伸指/收指(时间驱动);完全收回后才清 flick 状态。
+      if (h.reachT !== h.reachTarget) {
+        const step = dt / REACH_MS;
+        h.reachT = h.reachTarget > h.reachT
+          ? Math.min(h.reachTarget, h.reachT + step)
+          : Math.max(h.reachTarget, h.reachT - step);
+        animating = true;
+      }
+      if (h.flickStyle === "topPush" && h.reachTarget === 0 && h.reachT === 0 && h.flickDecay === 0) {
+        h.flickFinger = null; h.flickAxis = null; h.flickStyle = null;
+        h.flickAmount = 0;
       }
       if (h.dodgeTarget > h.dodge) {
         // 外让即时跟目标(目标本身随层角从 0 连续爬升,无跳变)
@@ -654,8 +853,13 @@ export default class HandsRig extends THREE.Group {
       const h = hands[g.hand];
       h.flickFinger = g.finger;
       h.flickAxis = axis;
+      h.flickStyle = g.style ?? null;
       h.flickAmount = 0;
       h.flickDecay = 0;
+      // topPush:播放路径 prepareTwist 已前置伸指(reachT 到 1);拖拽/键盘
+      // 没有前置窗口,这里补触发,伸指与层角并发。reachT 不清零 —— 已到位
+      // 的连发(F 接 F)指尖全程停在贴纸上。
+      if (g.style === "topPush") h.reachTarget = 1;
     }
   }
 
@@ -688,20 +892,30 @@ export default class HandsRig extends THREE.Group {
       }
     } else {
       const h = hands[g.hand];
-      h.flickAmount = softClampAngle(angle);
-      // 弹指时手腕轻微借力(跟层角),applyHand 里通过 weld 通道叠加。系数按轴:
-      // x 族(M)必须为 0 —— 绕 x 借力会把贴 B 面的指腹沿 ~118U 半径圆弧转进
-      // 角块区(对角线处 Chebyshev 内陷 >15U,oracle 实测);y/z 借力在 2.7U
-      // 贴面间隙下对角线擦过量 <0(指腹接触半径 ~136U ≥ 角柱 135.8U)。
-      h.weldAxis = axis;
-      h.weldWhole = false;
-      h.weldAngle = softClampAngle(angle) * (axis === "x" ? 0 : 0.1);
-      h.weldRawAngle = 0; // 借力不烘入握姿
+      if (h.flickStyle === "topPush") {
+        // 物理跟随(用户硬规格:只有食指动):不碰腕 weld,接触弧全由
+        // applyHand 的 TOP_PUSH_FOLLOW 曲线随层角展开。flickAmount 存未钳制
+        // 原角(release 时序依赖真实层角,见 TOP_PUSH)。
+        h.flickAmount = angle;
+      } else {
+        h.flickAmount = softClampAngle(angle);
+        // 弹指时手腕轻微借力(跟层角),applyHand 里通过 weld 通道叠加。系数按轴:
+        // x 族(M)必须为 0 —— 绕 x 借力会把贴 B 面的指腹沿 ~118U 半径圆弧转进
+        // 角块区(对角线处 Chebyshev 内陷 >15U,oracle 实测);y/z 借力在 2.7U
+        // 贴面间隙下对角线擦过量 <0(指腹接触半径 ~136U ≥ 角柱 135.8U)。
+        h.weldAxis = axis;
+        h.weldWhole = false;
+        h.weldAngle = softClampAngle(angle) * (axis === "x" ? 0 : 0.1);
+        h.weldRawAngle = 0; // 借力不烘入握姿
+      }
     }
     // —— 转层外让目标(穿模禁令:见 DODGE_MAG 注释)——
     // 非 weld 手(含指弹手:弹指手指是贴着活动层扫的,整手外让同时也把它
     // 拉出扫掠区)按幅度表沿本侧外向 x 平移;0.09rad≈5° 内让满,与转动起步
     // 贴面翻剪 / 角柱越过接触点的窗口同步。weld 手随层整体转,零相对运动不让。
+    // topPush 整段跳过(用户硬规格:F 时只有食指动)—— 静止手指腹接触半径
+    // ≥136U > 角柱扫掠 135.8U,静置间隙本身兜住,oracle 复核。
+    if (g.kind === "flick" && g.style === "topPush") return;
     const mag = DODGE_MAG[axis][this.active?.cls ?? "whole"];
     if (mag > 0) {
       const t = Math.min(1, Math.abs(angle) / 0.09);
@@ -742,6 +956,9 @@ export default class HandsRig extends THREE.Group {
       if (h.flickFinger) {
         h.flickDecay = 1;
         // flickAmount 保留为残留幅度,由 flickDecay 衰减。
+        // topPush:flickAmount 保留提交原角(退场姿态由 applyHand 的 effRaw
+        // 统一推导,见 TOP_PUSH.retreatSplit 注释)。收指**串行**:reach 钳在 1,
+        // decay 段跑虚拟续转 release / 原地缩回,tick 里 decay 归零才 reachTarget=0。
       }
     }
   }
@@ -780,6 +997,34 @@ export default class HandsRig extends THREE.Group {
     g.quaternion.copy(q).multiply(h.home.quat);
     g.position.copy(h.home.pos).applyQuaternion(q);
 
+    // topPush 有效原角(活跃 = 本值;提交后退场 = 虚拟续转 release / 原地缩回;
+    // 收指段钳各自终点。姿态推导统一走它,见 TOP_PUSH.retreatSplit 注释)。
+    let topEffRaw = 0;
+    if (h.flickStyle === "topPush" && h.flickFinger) {
+      const amt = Math.abs(h.flickAmount);
+      if (h.flickDecay === 0 && h.reachTarget === 1) {
+        topEffRaw = amt; // 活跃手势(driveGesture 每帧喂原角)
+      } else if (amt >= TOP_PUSH.retreatSplit) {
+        // 虚拟续转:原角推进到 release 走满(F2 提交本就 ≥ 该值,无缝)
+        topEffRaw = amt + (1 - h.flickDecay)
+          * Math.max(0, TOP_PUSH.releaseAt + TOP_PUSH.releaseLen * 1.2 - amt);
+      } else {
+        topEffRaw = amt * h.flickDecay; // 小角度残余原地缩回
+      }
+    }
+    // topPush 原地腕转(见 TOP_PUSH_FOLLOW 注释):绕「过腕点、平行 z」轴
+    // 翻转 ψ(φ_eff) —— 腕点不动 → 前臂静止、手掌不离位,补足食指 32U 可达缺口。
+    if (h.flickStyle === "topPush" && h.flickFinger && (h.reachT > 0 || h.flickAmount !== 0)) {
+      const smReach = h.reachT * h.reachT * (3 - 2 * h.reachT);
+      const psi = followAt(TOP_PUSH_FOLLOW[side].wrist, topPushArcPhi(topEffRaw)) * smReach;
+      if (psi !== 0) {
+        const W = HandsRig._vTmp.copy(WRIST_LOCAL).applyQuaternion(g.quaternion).add(g.position);
+        const qp = HandsRig._qTmp2.setFromAxisAngle(AXIS_VEC.z, psi);
+        g.quaternion.premultiply(qp);
+        g.position.sub(W).applyQuaternion(qp).add(W);
+      }
+    }
+
     // 回位 / 换握 slerp 途中手沿径向外拱(sin 峰在行程中段,行程角越大拱越高):
     // 手绕魔方扫 90°(↑↓ 换握)时指腹接触半径 ~117U 小于角柱扫掠半径 135.8U,
     // 不外拱会整排手指削穿棱柱区(穿模禁令)。残余小角度(<0.06rad)不拱。
@@ -810,13 +1055,18 @@ export default class HandsRig extends THREE.Group {
       g.position.x += h.dodge * h.dodgeMag * (sideSign === -1 ? 1 : -1);
     }
 
-    // 待机微动:极轻的呼吸浮动(位移 ±1.2,相位左右手错开)。禁走 z —— 那是
+    // 待机微动:极轻的呼吸浮动(位移 ±1.0,相位左右手错开)。禁走 z —— 那是
     // B/F 接触法向,肉面标定间隙只 ~0.8U,呼吸会周期性吃穿;改沿本侧外向 x
-    // (掌与 R/L 面之间本就留 ~97U 空腔,纯切向安全)。
-    if (idle && !h.weldAxis) {
+    // (掌与 R/L 面之间本就留 ~97U 空腔,纯切向安全)。换握回位途中(recoverT<1)
+    // 禁全部;y 呼吸只在 home 握走 —— up/down 握下 y 变成拇指/指列的 U/D 接触
+    // 法向(L 拇指间隙只 1.25U,旧 ±2.64U 呼吸周期性吃穿 1.4U,oracle 2026-07-07
+    // 现形,存量 bug);外向 x 在任意绕 x 握姿下都切向安全,保留。指弹进行中
+    // (flickFinger)也禁全部 —— topPush 无 weld,呼吸会叠在按压接触上抖
+    // (±2U 噪声 > 1.2U 接触间隙,标定/oracle 全被污染,2026-07-07 现形)。
+    if (idle && !h.weldAxis && !h.flickFinger && h.recoverT >= 1) {
       const t = this.idleClock / 1000;
       const ph = side === "R" ? 0 : 1.7;
-      g.position.y += Math.sin(t * 1.1 + ph) * 1.2 * HAND_SCALE;
+      if (h.grip.w > 0.9999) g.position.y += Math.sin(t * 1.1 + ph) * 1.0 * HAND_SCALE;
       g.position.x += Math.cos(t * 0.9 + ph) * 0.8 * HAND_SCALE * (sideSign === -1 ? 1 : -1);
     }
 
@@ -843,14 +1093,47 @@ export default class HandsRig extends THREE.Group {
       let c2 = pose.curl[1];
       let c3 = pose.curl[2];
       let splay = pose.splay * sideSign;
-      if (h.flickFinger === name && flickA !== 0) {
+      // topPush 伸指是时间驱动(reachT),层角为零的前置/回收期间也要摆位。
+      const topPush = h.flickStyle === "topPush" && h.flickFinger === name;
+      if (topPush ? (h.reachT > 0 || flickA !== 0) : (h.flickFinger === name && flickA !== 0)) {
         // 弹指(前后钳形握姿)分三种扫法,匹配接触点处层面的真实运动方向:
         //  拇指(F 族):折叠的中节展开 → 沿 F 面向上大扫幅;
         //  y 轴(U/D/E,食指/无名指):层动水平朝本手掌心 → 向掌心勾弯横拉
         //  (真实拨 U 是「勾」;反向伸展会把手指向手背过伸 —— 用户报障);
         //  x/z 轴中指(M/B/S 族):接触立柱处层动是竖直的 → splay 竖扫为主。
         const open = Math.min(1, Math.abs(flickA) / 1.3);
-        if (name === "thumb") {
+        if (topPush) {
+          // 食指越顶(home 握 F 族):reach(时间驱动)先抬(splay 竖直离开
+          // B 面)后卷(c1 大幅前卷 + 中末节拉直,指链横越 U 面上方),指尖
+          // 落到 UFR/UFL 角块 U 面贴纸上方。转动段物理跟随:press 从转动
+          // 一开始压满(推动=接触),腕 track 同转(driveGesture);释放段
+          // (releaseAt 后)press 渐出 + releaseLift 抬离扫掠区,层滑行收尾。
+          // 收指 reachT 倒放同路径。
+          const sm = (t: number) => t * t * (3 - 2 * t);
+          const liftT = sm(Math.min(1, h.reachT / TOP_PUSH.liftIn));
+          const sweepT = sm(Math.max(0, (h.reachT - TOP_PUSH.sweepStart) / (1 - TOP_PUSH.sweepStart)));
+          // reach 早段微伸(sin 包络):抬升弧面稍向内斜,顶着 B 面上沿滑会
+          // 蹭进 2.65U(oracle),c1 退一点让指腹离面爬升。
+          const backOff = Math.sin(Math.PI * Math.min(1, h.reachT / 0.35)) * TOP_PUSH.backOff;
+          // 接触跟随:指尖钉住随层转的角块贴纸(全程接触规格),knot 曲线随
+          // 弧位置 φ_eff 展开(knot0 即按压姿,reach 到位即贴住);release(F2
+          // 第二象限)/ 收指沿同曲线倒放 —— φ_eff 退回 = 手指原路撤离,见
+          // topPushArcPhi 注释。
+          const FW = TOP_PUSH_FOLLOW[side];
+          // φ/release 统一从 topEffRaw 推导:活跃段 = 原角(与旧行为一致);
+          // 退场段 = 虚拟续转 release(与 F2 已验证姿态点对点相同)/ 原地缩回。
+          const phi = topPushArcPhi(topEffRaw);
+          const relEff = topPushRelease(topEffRaw);
+          const followGate = sm(h.reachT);
+          c1 += sweepT * TOP_PUSH.c1 - backOff + followAt(FW.c1, phi) * followGate;
+          c2 += sweepT * TOP_PUSH.c2 + followAt(FW.c2, phi) * followGate;
+          c3 += sweepT * TOP_PUSH.c3 + followAt(FW.c3, phi) * followGate;
+          // 抬升方向 = 世界 +y;splay 局部符号在镜像资产下左右相反,×sideSign
+          // (R 实测 splay 负=抬升;L 反之)。releaseLift 挂 followGate:活跃段
+          // 恒 1 无影响,收指段随 reach 渐出(从带抬离的按压位平滑归位)。
+          splay += (liftT * TOP_PUSH.lift + relEff * TOP_PUSH.releaseLift * followGate
+            + followAt(FW.splay, phi) * followGate) * sideSign;
+        } else if (name === "thumb") {
           c1 -= open * 0.25;
           c2 -= open * 0.9;
           c3 -= open * 0.35;
@@ -878,7 +1161,10 @@ export default class HandsRig extends THREE.Group {
       // 换握张手:行程中段把弯曲压掉大半(见 regripOpen 注释),指尖伸展
       // 离开抓握半径;splay 不动(横向散开会互相打架)。
       if (regripOpen > 0) {
-        const k = 1 - regripOpen * 0.78; // oracle 标定:0.6 时 180° 换握中段剩 3.2U,0.72 剩 0.46U(↓→↑),0.78 全零
+        // oracle 标定:0.6 时 180° 换握中段剩 3.2U,0.72 剩 0.46U(↓→↑),0.78 全零
+        // (旧平摊 curl);2026-07-07 home 加弯档后残余绝对弯曲变大,中段指尖
+        // 勾 U 面 1.38U → 提到 0.86。
+        const k = 1 - regripOpen * 0.86;
 
         c1 *= k;
         c2 *= k;
