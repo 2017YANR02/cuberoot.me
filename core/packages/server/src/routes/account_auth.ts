@@ -22,7 +22,7 @@ import { emailConfigured, sendEmailCode } from '../utils/email.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
 import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
 import {
-  socialLoginConfigured, socialAppId, socialAuthorizeUrl, exchangeSocialCode,
+  socialLoginConfigured, socialAppId, socialAuthorizeUrl, exchangeSocialCode, verifySocialState,
   isSocialProvider, SOCIAL_PROVIDERS, type SocialProvider, type SocialUser,
 } from '../utils/social_login.js';
 
@@ -61,15 +61,15 @@ accountAuthRoutes.get('/auth/providers', (c) => {
   });
 });
 
-// ── 国内三方授权页 URL(服务端下发,redirect_uri 由服务端固定,与换 code 时逐字一致)──
-// state 由前端生成并存 sessionStorage 做 CSRF 校验,这里只嵌进 URL。
+// ── 国内三方授权页 URL(服务端下发,redirect_uri 固定,state 为服务端签名的自包含 token)──
+// state 内含 provider/intent/exp/签名,回调只从 URL 读回、服务端验签,不依赖浏览器 sessionStorage
+// (手机唤起支付宝 App 授权后回调常落到另一浏览器上下文 → sessionStorage 会丢)。
 accountAuthRoutes.get('/auth/social/authorize', (c) => {
   c.header('Cache-Control', 'no-store');
   const provider = c.req.query('provider') ?? '';
-  const state = c.req.query('state') ?? '';
+  const intent = c.req.query('intent') === 'link' ? 'link' : 'login';
   if (!isSocialProvider(provider)) return c.json({ error: 'invalid provider' }, 400);
-  if (!state || state.length > 128) return c.json({ error: 'invalid state' }, 400);
-  const url = socialAuthorizeUrl(provider, state);
+  const url = socialAuthorizeUrl(provider, intent);
   if (!url) return c.json({ error: `${provider} not configured` }, 503);
   return c.json({ url });
 });
@@ -81,8 +81,9 @@ accountAuthRoutes.post('/auth/social/:provider', async (c) => {
   const provider = c.req.param('provider');
   if (!isSocialProvider(provider)) return c.json({ error: 'invalid provider' }, 400);
   if (!socialLoginConfigured(provider)) return c.json({ error: `${provider} not configured` }, 503);
-  const { code } = await c.req.json<{ code?: string }>().catch(() => ({ code: undefined }));
+  const { code, state } = await c.req.json<{ code?: string; state?: string }>().catch(() => ({ code: undefined, state: undefined }));
   if (!code) return c.json({ error: 'code required' }, 400);
+  if (!verifySocialState(state ?? '', provider)) return c.json({ error: `invalid ${provider} state` }, 400);
   let g: SocialUser;
   try {
     g = await exchangeSocialCode(provider, code);
@@ -104,8 +105,9 @@ accountAuthRoutes.post('/auth/link/social/:provider', async (c) => {
   const provider = c.req.param('provider');
   if (!isSocialProvider(provider)) return c.json({ error: 'invalid provider' }, 400);
   if (!socialLoginConfigured(provider)) return c.json({ error: `${provider} not configured` }, 503);
-  const { code } = await c.req.json<{ code?: string }>().catch(() => ({ code: undefined }));
+  const { code, state } = await c.req.json<{ code?: string; state?: string }>().catch(() => ({ code: undefined, state: undefined }));
   if (!code) return c.json({ error: 'code required' }, 400);
+  if (!verifySocialState(state ?? '', provider)) return c.json({ error: `invalid ${provider} state` }, 400);
   let g: SocialUser;
   try {
     g = await exchangeSocialCode(provider, code);
