@@ -12,7 +12,7 @@ export type Perm = readonly number[];
 export type Face = "U" | "R" | "F" | "D" | "L" | "B";
 
 /** 18 个基础转动的 54-sticker 置换 — 直接从 functions.cpp 的 moves map 提取 */
-const MOVE_PERMS: Record<string, Perm> = {
+export const MOVE_PERMS: Record<string, Perm> = {
   U:  [6,3,0,7,4,1,8,5,2, 45,46,47,12,13,14,15,16,17, 9,10,11,21,22,23,24,25,26, 27,28,29,30,31,32,33,34,35, 18,19,20,39,40,41,42,43,44, 36,37,38,48,49,50,51,52,53],
   U2: [8,7,6,5,4,3,2,1,0, 36,37,38,12,13,14,15,16,17, 45,46,47,21,22,23,24,25,26, 27,28,29,30,31,32,33,34,35, 9,10,11,39,40,41,42,43,44, 18,19,20,48,49,50,51,52,53],
   "U'": [2,5,8,1,4,7,0,3,6, 18,19,20,12,13,14,15,16,17, 36,37,38,21,22,23,24,25,26, 27,28,29,30,31,32,33,34,35, 45,46,47,39,40,41,42,43,44, 9,10,11,48,49,50,51,52,53],
@@ -34,7 +34,7 @@ const MOVE_PERMS: Record<string, Perm> = {
 };
 
 /** 宽转/中间层/双转别名 — 展开为 (旋转 + 基础转动) 序列 (functions.cpp move_convert) */
-const MOVE_ALIASES: Record<string, string> = {
+export const MOVE_ALIASES: Record<string, string> = {
   // 双转方向无关
   "U2'": "U2", "D2'": "D2", "L2'": "L2", "R2'": "R2", "F2'": "F2", "B2'": "B2",
   // 宽转 (小写)
@@ -62,7 +62,7 @@ const MOVE_ALIASES: Record<string, string> = {
  * faceList[i] = 旋转后, 原本作用于面 i 的转动改为作用于面 faceList[i]。
  * 面索引顺序: U=0 D=1 L=2 R=3 F=4 B=5。
  */
-const ROTATION_FACE_MAP: Record<string, readonly number[]> = {
+export const ROTATION_FACE_MAP: Record<string, readonly number[]> = {
   "x":  [5, 4, 2, 3, 0, 1],
   "x2": [1, 0, 2, 3, 5, 4],
   "x'": [4, 5, 2, 3, 1, 0],
