@@ -385,10 +385,120 @@ function PenaltyDropdown({ playerId }: { playerId: number }) {
   );
 }
 
+// ===== ScramblePanel 组件 =====
+// 打乱文字(点击复制) + 打乱图 + WCA 来源行。可被同排一对玩家共用:
+//   ids = 参与共享的玩家槽位,取 ids[0] 为代表读打乱(同 puzzle 时全组打乱相等);
+//   任一玩家计时中则整条隐藏。单人格传 [playerId],共享行传该排的一对(如 [0,1] / [2,3])。
+function ScramblePanel({ ids }: { ids: number[] }) {
+  const store = useBattleStore();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language === 'zh';
+  const rep = ids[0];
+  const anyTiming = ids.some((id) => store.players[id].isTiming);
+  const scrambleRef = useRef<HTMLDivElement>(null);
+  const [scrambleCopied, setScrambleCopied] = useState(false);
+  const copiedTimerRef = useRef<number | null>(null);
+  // WCA 来源行:打乱图正下方显示「国旗 + 比赛名 · 轮次/组别」。国旗 + 中文名需异步
+  // 加载的比赛索引,落地后 bump flagVer 重渲。
+  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
+  useEffect(() => { void loadFlagData().then((v) => setFlagVer((cur) => (v !== cur ? v : cur))); }, []);
+
+  // 点击打乱文字复制;阻止 pointer 冒泡到 .player-area(否则任何 pointerdown 都会 arm 计时器)。
+  // 共享行虽在 player-area 之外,保留此拦截无害。
+  useEffect(() => {
+    const el = scrambleRef.current;
+    if (!el) return;
+    const stop = (e: PointerEvent) => e.stopPropagation();
+    el.addEventListener('pointerdown', stop);
+    el.addEventListener('pointerup', stop);
+    el.addEventListener('pointercancel', stop);
+    return () => {
+      el.removeEventListener('pointerdown', stop);
+      el.removeEventListener('pointerup', stop);
+      el.removeEventListener('pointercancel', stop);
+    };
+  }, []);
+  useEffect(() => () => { if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current); }, []);
+
+  const copyScramble = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    const st = useBattleStore.getState();
+    const s = st.scrambles[rep];
+    if (!s || s.startsWith('⚠️')) return;
+    // SQ1 copies in compact notation (4/-36/...) to match the displayed text.
+    try { void navigator.clipboard.writeText(formatScrambleForEvent(st.puzzleIds[rep], s)); } catch { /* ignore */ }
+    setScrambleCopied(true);
+    if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = window.setTimeout(() => setScrambleCopied(false), 1200);
+  }, [rep]);
+
+  const myScramble = store.scrambles[rep];
+  const myLoading = store.scrambleLoadings[rep];
+  const myPuzzle = store.puzzleIds[rep];
+  // SQ1 shows compact notation (4/-36/...) site-wide; keep the raw csTimer form
+  // (with parens) for the CubingPreview below, which cubing.js parses. Errors pass through.
+  const myScrambleDisplay = myScramble && !myScramble.startsWith('⚠️')
+    ? formatScrambleForEvent(myPuzzle, myScramble)
+    : myScramble;
+  const scrambleContent = myLoading
+    ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
+    : (myScrambleDisplay || '');
+
+  // WCA 来源:当前打乱若来自真实比赛(wca_pool 派发过),显示其比赛 / 轮次 / 组别。
+  // 随机生成的打乱不在 meta 表里 → 返回 null,这行自然不显示。
+  const wmeta = (!myLoading && myScramble) ? wcaMetaFor(myScramble) : null;
+  const wcaSrc = useMemo(() => {
+    if (!wmeta) return null;
+    return {
+      iso2: compFlagIso2(wmeta.ci),
+      name: localizeCompName(wmeta.ci, wmeta.cn, isZh),
+      meta: compSourceLine(wmeta.r, wmeta.g, wmeta.n, isZh, !!wmeta.x),
+    };
+    // flagVer: 比赛索引落地后重新派生国旗 + 中文名。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wmeta, isZh, flagVer]);
+
+  return (
+    <>
+      {/* 打乱文字 — 放在打乱图正上方;点击复制 */}
+      <div
+        ref={scrambleRef}
+        className={`scramble-text${anyTiming ? ' hidden' : ''}`}
+        data-no-timer
+        onClick={copyScramble}
+        title={tr({ zh: '点击复制打乱', en: 'Click to copy'
+        })}
+        style={{ '--scramble-auto': getScrambleAutoScale(myScrambleDisplay || ''), cursor: 'pointer' } as React.CSSProperties}
+        dangerouslySetInnerHTML={{ __html: scrambleContent }}
+      />
+      {scrambleCopied && (
+        <div className="battle-scramble-copied" data-no-timer>{tr({ zh: '已复制', en: 'Copied'
+        })}</div>
+      )}
+
+      {/* 打乱图 — 复用 timer 的 CubingPreview（scramble-display） */}
+      <div className={`scramble-img${anyTiming ? ' hidden' : ''}`}>
+        {myScramble && !myScramble.startsWith('⚠️') && store.showImage && (
+          <CubingPreview event={myPuzzle} scramble={myScramble} className="scramble-svg-img" />
+        )}
+      </div>
+
+      {/* WCA 来源行(真实比赛打乱时) */}
+      {wcaSrc && !anyTiming && (
+        <div className="battle-scramble-src" data-no-timer>
+          <Flag iso2={wcaSrc.iso2} className="battle-src-flag" />
+          <span className="battle-src-name">{wcaSrc.name}</span>
+          {wcaSrc.meta && <span className="battle-src-meta">{wcaSrc.meta}</span>}
+        </div>
+      )}
+    </>
+  );
+}
+
 // ===== TimerArea 组件 =====
 // 1:1 翻译自 battle/index.html player-area 结构
 
-function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean }) {
+function TimerArea({ playerId, rotated, hideScramble }: { playerId: number; rotated?: boolean; hideScramble?: boolean }) {
   const player = useBattleStore(s => s.players[playerId]);
   const store = useBattleStore();
   const areaRef = useRef<HTMLDivElement>(null);
@@ -397,13 +507,6 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const rankCountry = useRankCountry();
-  const scrambleRef = useRef<HTMLDivElement>(null);
-  const [scrambleCopied, setScrambleCopied] = useState(false);
-  const copiedTimerRef = useRef<number | null>(null);
-  // WCA 来源行:打乱图正下方显示「国旗 + 比赛名 · 轮次/组别」。国旗 + 中文名需异步
-  // 加载的比赛索引,落地后 bump flagVer 重渲。
-  const [flagVer, setFlagVer] = useState(() => flagDataVersion());
-  useEffect(() => { void loadFlagData().then((v) => setFlagVer((cur) => (v !== cur ? v : cur))); }, []);
 
   // NOTE: 高频计时器动画（不走 React re-render）
   useTimerAnimation(playerId, timeRef);
@@ -466,35 +569,6 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
     };
   }, [playerId]);
 
-  // Tapping the scramble text copies it (handler below). Stop the pointer from
-  // reaching the area listener, which arms this player's timer on any pointerdown.
-  useEffect(() => {
-    const el = scrambleRef.current;
-    if (!el) return;
-    const stop = (e: PointerEvent) => e.stopPropagation();
-    el.addEventListener('pointerdown', stop);
-    el.addEventListener('pointerup', stop);
-    el.addEventListener('pointercancel', stop);
-    return () => {
-      el.removeEventListener('pointerdown', stop);
-      el.removeEventListener('pointerup', stop);
-      el.removeEventListener('pointercancel', stop);
-    };
-  }, []);
-  useEffect(() => () => { if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current); }, []);
-
-  const copyScramble = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    const st = useBattleStore.getState();
-    const s = st.scrambles[playerId];
-    if (!s || s.startsWith('⚠️')) return;
-    // SQ1 copies in compact notation (4/-36/...) to match the displayed text.
-    try { void navigator.clipboard.writeText(formatScrambleForEvent(st.puzzleIds[playerId], s)); } catch { /* ignore */ }
-    setScrambleCopied(true);
-    if (copiedTimerRef.current) window.clearTimeout(copiedTimerRef.current);
-    copiedTimerRef.current = window.setTimeout(() => setScrambleCopied(false), 1200);
-  }, [playerId]);
-
   const areaClasses = [
     'player-area',
     rotated ? 'rotated' : '',
@@ -532,31 +606,7 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
   const ao5 = computeAo5(player.solveHistory);
   const ao5Text = ao5 === null ? '' : (ao5 === Infinity ? 'ao5: DNF' : 'ao5: ' + formatTime(ao5, store.timerPrecision));
 
-  const myScramble = store.scrambles[playerId];
-  const myLoading = store.scrambleLoadings[playerId];
   const myPuzzle = store.puzzleIds[playerId];
-  // SQ1 shows compact notation (4/-36/...) site-wide; keep the raw csTimer form
-  // (with parens) for the CubingPreview below, which cubing.js parses. Errors pass through.
-  const myScrambleDisplay = myScramble && !myScramble.startsWith('⚠️')
-    ? formatScrambleForEvent(myPuzzle, myScramble)
-    : myScramble;
-  const scrambleContent = myLoading
-    ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
-    : (myScrambleDisplay || '');
-
-  // WCA 来源:当前打乱若来自真实比赛(wca_pool 派发过),显示其比赛 / 轮次 / 组别。
-  // 随机生成的打乱不在 meta 表里 → 返回 null,这行自然不显示。
-  const wmeta = (!myLoading && myScramble) ? wcaMetaFor(myScramble) : null;
-  const wcaSrc = useMemo(() => {
-    if (!wmeta) return null;
-    return {
-      iso2: compFlagIso2(wmeta.ci),
-      name: localizeCompName(wmeta.ci, wmeta.cn, isZh),
-      meta: compSourceLine(wmeta.r, wmeta.g, wmeta.n, isZh, !!wmeta.x),
-    };
-    // flagVer: 比赛索引落地后重新派生国旗 + 中文名。
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wmeta, isZh, flagVer]);
 
   const bgColor = store.bgColors[playerId];
   const bgImage = store.bgImages[playerId];
@@ -609,37 +659,9 @@ function TimerArea({ playerId, rotated }: { playerId: number; rotated?: boolean 
         </div>
       )}
 
-      {/* 打乱文字 — 放在打乱图正上方;点击复制 */}
-      <div
-        ref={scrambleRef}
-        className={`scramble-text${player.isTiming ? ' hidden' : ''}`}
-        data-no-timer
-        onClick={copyScramble}
-        title={tr({ zh: '点击复制打乱', en: 'Click to copy'
-        })}
-        style={{ '--scramble-auto': getScrambleAutoScale(myScrambleDisplay || ''), cursor: 'pointer' } as React.CSSProperties}
-        dangerouslySetInnerHTML={{ __html: scrambleContent }}
-      />
-      {scrambleCopied && (
-        <div className="battle-scramble-copied" data-no-timer>{tr({ zh: '已复制', en: 'Copied'
-        })}</div>
-      )}
-
-      {/* 打乱图 — 复用 timer 的 CubingPreview（scramble-display） */}
-      <div className={`scramble-img${player.isTiming ? ' hidden' : ''}`}>
-        {myScramble && !myScramble.startsWith('⚠️') && store.showImage && (
-          <CubingPreview event={myPuzzle} scramble={myScramble} className="scramble-svg-img" />
-        )}
-      </div>
-
-      {/* WCA 来源行(真实比赛打乱时) */}
-      {wcaSrc && !player.isTiming && (
-        <div className="battle-scramble-src" data-no-timer>
-          <Flag iso2={wcaSrc.iso2} className="battle-src-flag" />
-          <span className="battle-src-name">{wcaSrc.name}</span>
-          {wcaSrc.meta && <span className="battle-src-meta">{wcaSrc.meta}</span>}
-        </div>
-      )}
+      {/* 打乱文字 + 图 + WCA 来源。田字格里同排一对玩家共用一条打乱时 hideScramble=true,
+          改由父级在两格之间的共享行(grid-scramble-row)统一渲染一份。 */}
+      {!hideScramble && <ScramblePanel ids={[playerId]} />}
 
       {/* 多人田字格:比分/项目/罚时归各自区域(2 人模式这些在 middle-bar) */}
       {store.mode === '1v1' && store.playerCount > 2 && (
@@ -1292,6 +1314,10 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
 
   // 3/4 人:田字格布局(忽略 versus/side,横竖屏同构)
   const isGrid = mode === '1v1' && playerCount > 2;
+  // 同排一对玩家 puzzle 相同时(同 puzzle 打乱本就相等,见 loadNewScramble),
+  // 只在两格之间渲染一份共享打乱;不同项目则各自沿用格内打乱(共享行塌陷)。
+  const bottomSame = store.puzzleIds[0] === store.puzzleIds[1];
+  const topSame = store.puzzleIds[2] === store.puzzleIds[3];
   const middleBar = (
     <MiddleBar
       onSettingsClick={handleSettingsClick}
@@ -1304,14 +1330,26 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
   return (
     <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${isGrid ? ' grid-layout' : ''}`}>
 
-      {/* === 田字格布局：上排旋转 180° 面向对面;3 人时上排单区跨两列 === */}
+      {/* === 田字格布局：上排旋转 180° 面向对面;3 人时上排单区跨两列 ===
+          同排一对玩家共用一条打乱时,由跨两列的 .grid-scramble-row 统一渲染,
+          各 TimerArea 传 hideScramble 抹掉格内那份;共享行未启用则 :empty 塌陷。 */}
       {isGrid && (
-        <div className={`grid-players${playerCount === 3 ? ' grid-p3' : ''}`}>
-          <TimerArea playerId={2} rotated />
-          {playerCount === 4 && <TimerArea playerId={3} rotated />}
+        <div className={`grid-players ${playerCount === 3 ? 'grid-p3' : 'grid-p4'}`}>
+          {/* 4 人:上排(旋转)两格共享一条打乱 */}
+          {playerCount === 4 && (
+            <div className="grid-scramble-row rotated">
+              {topSame && <ScramblePanel ids={[2, 3]} />}
+            </div>
+          )}
+          <TimerArea playerId={2} rotated hideScramble={playerCount === 4 && topSame} />
+          {playerCount === 4 && <TimerArea playerId={3} rotated hideScramble={topSame} />}
           {middleBar}
-          <TimerArea playerId={0} />
-          <TimerArea playerId={1} />
+          <TimerArea playerId={0} hideScramble={bottomSame} />
+          <TimerArea playerId={1} hideScramble={bottomSame} />
+          {/* 下排两格共享一条打乱(3/4 人皆有) */}
+          <div className="grid-scramble-row">
+            {bottomSame && <ScramblePanel ids={[0, 1]} />}
+          </div>
         </div>
       )}
 
