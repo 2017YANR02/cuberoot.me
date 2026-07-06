@@ -83,14 +83,21 @@ export function friendlyValidErr(msg: string, isZh: boolean): string {
   return msg;
 }
 
-export type PaintReject = { kind: 'dup' } | { kind: 'opp'; sib: FaceLetter; active: FaceLetter };
+export type PaintReject =
+  | { kind: 'dup' }
+  | { kind: 'opp'; sib: FaceLetter; active: FaceLetter }
+  | { kind: 'full'; color: FaceLetter };
 export type PaintOutcome = { ok: true; next: string } | { ok: false; reject: PaintReject };
+
+/** Every color (including its 1 fixed center) may appear at most this many times. */
+const MAX_PER_COLOR = 9;
 
 /**
  * Paint sticker `idx` with `color`, enforcing the per-cubie rules: a single
  * piece can't carry two stickers of the same color, nor two opposite-face
- * colors. Painting 'X' (erase) is always allowed. Returns the next facelet or a
- * rejection reason (no mutation).
+ * colors, nor push a color's total count past 9 (1 center + 8 others). Painting
+ * 'X' (erase) is always allowed. Returns the next facelet or a rejection
+ * reason (no mutation).
  */
 export function paintSticker(facelet: string, idx: number, color: PaintColor): PaintOutcome {
   if (color !== 'X') {
@@ -102,6 +109,11 @@ export function paintSticker(facelet: string, idx: number, color: PaintColor): P
         return { ok: false, reject: { kind: 'opp', sib: sibColor as FaceLetter, active: color } };
       }
     }
+    if (facelet[idx] !== color) {
+      let count = 0;
+      for (let i = 0; i < facelet.length; i++) if (facelet[i] === color) count++;
+      if (count >= MAX_PER_COLOR) return { ok: false, reject: { kind: 'full', color } };
+    }
   }
   const arr = facelet.split('');
   arr[idx] = color;
@@ -111,6 +123,7 @@ export function paintSticker(facelet: string, idx: number, color: PaintColor): P
 function rejectText(r: PaintReject, isZh: boolean): string {
   const t = (z: string, e: string) => (isZh ? z : e);
   if (r.kind === 'dup') return t('一个角/棱块上不能有重复颜色', 'A piece cannot have two stickers of the same color');
+  if (r.kind === 'full') return t(`${r.color} 颜色已用满 9 格`, `Color ${r.color} is already used on all 9 stickers`);
   return t(
     `一个角/棱块上不能同时含相对面颜色(${r.sib} 与 ${r.active})`,
     `A piece cannot have opposite-face colors (${r.sib} and ${r.active})`,
@@ -119,8 +132,9 @@ function rejectText(r: PaintReject, isZh: boolean): string {
 
 /**
  * Paint controller shared by both painter views. Owns the transient reject
- * flash (a piece-rule violation), exposes `paint(idx)` that either commits via
- * `onChange` or flashes a 2.5s rejection message.
+ * flash (a piece-rule violation), exposes `paint(idx, color?)` that either
+ * commits via `onChange` or flashes a 2.5s rejection message. `color` defaults
+ * to the active palette color; pass 'X' explicitly for a right-click erase.
  */
 export function usePainter(opts: {
   facelet: string;
@@ -133,8 +147,8 @@ export function usePainter(opts: {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
-  const paint = useCallback((idx: number) => {
-    const res = paintSticker(facelet, idx, activeColor);
+  const paint = useCallback((idx: number, color: PaintColor = activeColor) => {
+    const res = paintSticker(facelet, idx, color);
     if (res.ok) {
       setRejectMsg(null);
       onChange(res.next);
