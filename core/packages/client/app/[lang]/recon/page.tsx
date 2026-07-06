@@ -28,6 +28,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { RecordBadge } from '@/components/RecordBadge';
 import { ReconCard } from '@/components/ReconCard/ReconCard';
 import WcaAuth from '@/components/WcaAuth';
+import BackHome from '@/components/BackHome';
 import { EventSelect } from '@/components/EventSelect';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { RecordSelect } from '@/components/RecordSelect';
@@ -777,6 +778,7 @@ export default function ReconListPage() {
 
   return (
     <div className="recon-page">
+      <BackHome />
       <div className="recon-page-header">
         <div>
           <h1>

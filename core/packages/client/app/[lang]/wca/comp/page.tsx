@@ -14,6 +14,7 @@ import { Suspense, useState, useEffect, useMemo, useCallback, useRef, useReducer
 import type { CSSProperties } from 'react';
 import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString, parseAsArrayOf, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
+import HomeLink from '@/components/HomeLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, Ban, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon, Layers as DualIcon } from 'lucide-react';
 import { SortArrow } from '@/components/SortArrow';
@@ -2017,6 +2018,10 @@ function CalendarPageInner() {
           </Link>
         </h1>
         <div className="upcoming-meta">
+          <HomeLink className="globe-link">
+            <ChevronLeft size={12} strokeWidth={1.75} /> {tr({ zh: '首页', en: 'Home'
+            })}
+          </HomeLink>
           <Link href="/wca/comp/stats" className="globe-link">
             <BarChart3 size={12} strokeWidth={1.75} /> {tr({ zh: '统计', en: 'Stats'
             })}

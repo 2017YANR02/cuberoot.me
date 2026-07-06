@@ -6,6 +6,7 @@
  * 1:1 port from packages/client-vite/src/pages/memo/MemoLandingPage.tsx (Vite SPA).
  */
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { Brain, type LucideIcon } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../landing.css';
@@ -29,6 +30,7 @@ export default function MemoLandingPage() {
 
   return (
     <div className="landing-page">
+      <BackHome />
       <h1 className="landing-tagline">{tr({ zh: '记忆', en: 'Memo'
     })}</h1>
 

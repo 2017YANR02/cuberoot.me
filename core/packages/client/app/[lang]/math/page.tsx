@@ -8,6 +8,7 @@
  * 1:1 port from packages/client-vite/src/pages/math/MathLandingPage.tsx (Vite SPA).
  */
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { useTranslation } from 'react-i18next';
 import { Infinity as InfinityIcon, Sigma, Dices, Ruler, Boxes } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -62,6 +63,7 @@ export default function MathLandingPage() {
   return (
     <div className="math-hub-page">
       <style>{INLINE_CSS}</style>
+      <BackHome />
       <header className="hub-header">
         <h1>{t('数学', 'Math')}</h1>
       </header>

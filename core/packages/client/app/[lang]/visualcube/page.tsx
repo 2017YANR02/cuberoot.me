@@ -29,6 +29,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryStates, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { Copy, Check, Download, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import {
   renderCubeSVG,
@@ -977,6 +978,7 @@ function VisualCubeEditorPageInner() {
     <div className="vc-editor-page">
       <style>{INLINE_CSS}</style>
 
+      <BackHome />
       <header className="vc-header">
         <h1>{t('VisualCube 编辑器', 'VisualCube Editor')}</h1>
         <div className="vc-header-right">

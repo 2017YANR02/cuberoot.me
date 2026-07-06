@@ -7,6 +7,7 @@
  */
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { HelpCircle, MonitorDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type mediaInfoFactoryT from 'mediainfo.js';
@@ -2165,6 +2166,7 @@ export default function FrameCountPage() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      <BackHome />
       {/* Header */}
       <header className="fc-header">
         <span className="fc-title">

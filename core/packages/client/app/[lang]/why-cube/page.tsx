@@ -29,6 +29,7 @@ import {
 import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { EventIcon } from '@/components/EventIcon';
+import BackHome from '@/components/BackHome';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '../../../hooks/useT';
 import LiveHero from './_LiveHero';
@@ -165,6 +166,7 @@ export default function WhyCubePage() {
 
   return (
     <div className="wc-page">
+      <BackHome />
       <StickyToc />
       <div className="wc-wrap">
         {/* ── Hero ──────────────────────────────────────────── */}

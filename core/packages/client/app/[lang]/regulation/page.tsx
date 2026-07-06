@@ -8,6 +8,7 @@
 import { useTranslation } from 'react-i18next';
 import { Newspaper, ArrowRight, ScrollText } from 'lucide-react';
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { useT } from '../../../hooks/useT';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { CORE_ARTICLES, EVENT_ARTICLES, type RegArticle } from './_data/articles';
@@ -35,6 +36,7 @@ export default function RegulationHub() {
   return (
     <div className="reg-page">
       <div className="reg-wrap">
+        <BackHome />
         <header className="reg-hero">
           <div className="reg-eyebrow">
             <img src="/icons/wca.svg" alt="WCA" />

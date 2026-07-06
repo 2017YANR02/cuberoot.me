@@ -47,6 +47,7 @@ import { AttemptsList } from '@/components/persons/sections/results/AttemptsList
 import { AttemptsGrid } from '@/components/wca-results/AttemptsGrid';
 import '@/components/wca-results/attempts-grid.css';
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import MoreToggle from '@/components/MoreToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { TeX } from '@/components/math/Tex';
@@ -360,6 +361,10 @@ function AppLinkDemo() {
       <Link href="/scramble/stats" className="cg-link">/scramble/stats</Link>
     </div>
   );
+}
+
+function BackHomeDemo() {
+  return <BackHome />;
 }
 
 /* ── catalog ────────────────────────────────────────────────────────────── */
@@ -827,6 +832,15 @@ export const CATALOG: ComponentEntry[] = [
     zh: '回首页链接(带正确 lang 前缀)。/code 等顶层页的"回首页"统一用它。',
     en: 'Back-to-home link (with the correct lang prefix). Used for "home" on top-level pages like /code.',
     usage: '<HomeLink>← Home</HomeLink>',
+  },
+  {
+    name: 'BackHome',
+    import: "import BackHome from '@/components/BackHome';",
+    category: 'nav',
+    zh: '一级内容/枢纽页统一的「← 首页」返回件(基于 HomeLink + 共享 .back-home 样式)。放页面最外层容器顶部;沉浸式工具页不用、靠浏览器后退。',
+    en: 'The one consistent "← Home" affordance for first-level content/hub pages (wraps HomeLink with the shared .back-home style). Drop at the top of the page container; immersive tool pages skip it and rely on browser back.',
+    usage: '<BackHome />',
+    Demo: BackHomeDemo,
   },
   {
     name: 'CompPicker',

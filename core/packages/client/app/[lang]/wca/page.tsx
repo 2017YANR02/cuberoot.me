@@ -12,6 +12,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
+import BackHome from '@/components/BackHome';
 import { useTranslation } from 'react-i18next';
 import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,
@@ -192,6 +193,7 @@ export default function WcaStatsIndex() {
 
   return (
     <div className="wca-stats-index">
+      <BackHome />
       <header className="wca-stats-index-hero">
         <div>
           <div className="wca-stats-index-eyebrow">WCA Statistics</div>
