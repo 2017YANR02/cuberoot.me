@@ -17,7 +17,7 @@ import {
   type Identity, type AuthProviders, type SocialProvider,
 } from '@/lib/account-api';
 import { requestGoogleAssertion } from '@/lib/google-auth';
-import { startSocialLogin } from '@/lib/social-auth';
+import { startSocialLogin, isBlockedWebview } from '@/lib/social-auth';
 import './login-modal.css';
 
 const ICON = 16;
@@ -48,27 +48,56 @@ const SOCIALS: { key: SocialProvider; Glyph: (p: { size?: number }) => React.Rea
   { key: 'alipay', Glyph: AlipayGlyph, name: { zh: '支付宝', en: 'Alipay' }, hint: { zh: '用支付宝账号登录。', en: 'Sign in with your Alipay account.' } },
 ];
 
-/** 三方登录面板:一句提示 + 一个「用 X 登录」按钮(点了整页跳授权页)。 */
+/** 三方登录面板:一句提示 + 一个「用 X 登录」按钮。桌面/微信扫码走整页跳授权页;手机支付宝走
+ *  `alipays://` 唤起 App —— 唤起后当前页不卸载,故不空转 spinner,改提示「授权完返回本页」,
+ *  返回时重读会话(同浏览器另一标签已登录会经 storage 同步回来,弹层自动切成账号面板)。 */
 function SocialPane({ provider }: { provider: SocialProvider }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const refresh = useAuthStore((s) => s.refresh);
   const meta = SOCIALS.find((s) => s.key === provider)!;
   const [busy, setBusy] = useState(false);
+  const [launched, setLaunched] = useState(false); // 已唤起 App、页面留存,等用户授权后切回
   const [error, setError] = useState<string | null>(null);
+  // 微信/QQ 内置浏览器里,支付宝授权回调会落到系统浏览器,本页收不到登录态 → 先引导去浏览器打开。
+  const blocked = provider === 'alipay' && isBlockedWebview();
+
+  useEffect(() => {
+    if (!launched) return;
+    const onVis = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('focus', refresh);
+    return () => { document.removeEventListener('visibilitychange', onVis); window.removeEventListener('focus', refresh); };
+  }, [launched, refresh]);
+
   const go = async () => {
     setError(null);
     setBusy(true);
     try {
-      await startSocialLogin(provider, 'login'); // 成功即整页跳转,busy 保持到离开
+      const r = await startSocialLogin(provider, 'login');
+      if (!r.navigated) { setBusy(false); setLaunched(true); } // 唤起了 App,页面还在 → 收 spinner,提示返回
+      // r.navigated=true:整页已在跳走,保持 busy 到卸载
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
       setBusy(false);
     }
   };
   const name = t(meta.name.zh, meta.name.en);
+
+  if (launched) {
+    return (
+      <div className="lm-flow">
+        <p className="lm-hint">{t(`已打开${name},请在其中完成授权,然后返回本页面。`, `Opened ${name} — finish authorizing there, then return to this page.`)}</p>
+        <button className="lm-primary" onClick={() => window.location.reload()}>{t('我已完成授权', 'I have authorized')}</button>
+        <button className="lm-textbtn" onClick={() => { setLaunched(false); setBusy(false); }}>{t('重新发起', 'Start over')}</button>
+      </div>
+    );
+  }
+
   return (
     <div className="lm-flow">
       <p className="lm-hint">{t(meta.hint.zh, meta.hint.en)}</p>
+      {blocked && <p className="lm-hint">{t('微信 / QQ 内暂不支持支付宝登录。请点右上角「···」选择「在浏览器打开」后再登录。', 'Alipay sign-in does not work inside WeChat / QQ. Tap the ··· menu and choose "Open in Browser" first.')}</p>}
       {error && <p className="lm-error">{error}</p>}
       <button className="lm-primary" disabled={busy} onClick={() => void go()}>
         {busy ? <Loader2 size={ICON} className="lm-spin" /> : <meta.Glyph size={ICON} />}
@@ -361,6 +390,12 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
     setIdentities(await fetchIdentities());
   }, []);
   useEffect(() => { void reload(); }, [reload]);
+  // 手机支付宝唤起 App 绑定后切回本页时,重拉身份列表(同浏览器完成的绑定即刻反映)。
+  useEffect(() => {
+    const onVis = () => { if (document.visibilityState === 'visible') void reload(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, [reload]);
 
   const hasWca = (identities ?? []).some((i) => i.provider === 'wca');
   const hasGoogle = (identities ?? []).some((i) => i.provider === 'google');
@@ -403,12 +438,18 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
     }
   };
 
-  // 国内三方绑定:整页跳授权页,回来落 callback 完成绑定(回到本页时账号面板重开会刷新列表)。
+  // 国内三方绑定:桌面/微信扫码整页跳授权页;手机支付宝唤起 App(页面不卸载 → 收起 chip spinner,
+  // 切回时上面的 visibilitychange 会 reload 拉到新绑定)。微信/QQ 内置浏览器直接引导去浏览器。
   const linkSocialStart = async (provider: SocialProvider) => {
     setError(null);
+    if (provider === 'alipay' && isBlockedWebview()) {
+      setError(t('微信 / QQ 内暂不支持支付宝绑定,请在浏览器中打开本页。', 'Alipay linking does not work inside WeChat / QQ — open this page in your browser.'));
+      return;
+    }
     setLinkingSocial(provider);
     try {
-      await startSocialLogin(provider, 'link'); // 成功即整页跳转,状态保持到离开
+      const r = await startSocialLogin(provider, 'link');
+      if (!r.navigated) setLinkingSocial(null); // 唤起了 App,页面还在
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
       setLinkingSocial(null);
