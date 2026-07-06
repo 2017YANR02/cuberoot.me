@@ -1969,11 +1969,11 @@ body.solo .scramble-img {
 }
 
 .grid-layout .scramble-text {
-    font-size: calc(clamp(0.7rem, 1.8vw, 1rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
+    font-size: calc(clamp(1.05rem, 2.7vw, 1.5rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
 }
 
 .grid-layout .scramble-svg-img {
-    max-height: clamp(80px, 15vh, 180px);
+    max-height: clamp(120px, 22.5vh, 270px);
 }
 
 /* cell 底部控制条:比分 + 项目 + 罚时(随 cell 旋转朝向各自玩家) */
