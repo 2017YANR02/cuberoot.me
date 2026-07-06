@@ -72,6 +72,8 @@ python quick_mlp_test.py                                # MLP 超参搜索
 
 ## 当前状态与陷阱
 
-- Step 2 分类已到 ~60–63% 逐段准确率并撞天花板；根本瓶颈是 229 样本 + 极端不平衡，特征工程收效甚微（`roadmap.md` §11 有完整失败实验清单，别重复踩）
-- Step 3 逆推是早期版本（贪心、单路径、视觉评分粗糙），是主要开发方向
+- **Phase-1 oracle 实验 (2026-07-06, `src/anchored-search.ts` + `scripts/oracle-eval.ts` / `oracle-diag.ts`)**：目标已改为"已知打乱"(比赛场景，打乱可查)。双端锚定 beam search 结论：① 纯 probs+锚定 = 0/5 锚定(GT 路径得分落后 18~28 nat，beam 无解)；② 方向 oracle 52% / 面 oracle 40%，仍 0/5；③ **加逐段 B 面 9 格状态观测(仿真 one-hot，噪声≤25%)→ 5/5 锚定 + 87.3% 逐段**，残差多为同置换异写(r≡L、u≡D、d'≡U'，本状态机把转体吸收进 canonical 置换)。跑法：`npx tsx scripts/oracle-eval.ts --beam 2048 --mode vis`
+- **Phase-2 主攻方向由此确定**：段边界帧贴纸颜色提取(逐格 ≥75% 即够，经典 CV) + 朝向跟踪(区分 r/L、输出人类记号)；Step-2 深度分类器降级为辅助信号，不再是主线
+- Step 2 分类 ~60–63% 逐段准确率撞天花板；根本瓶颈是 229 样本 + 极端不平衡，特征工程收效甚微（`roadmap.md` §11 有完整失败实验清单，别重复踩）
+- Step 1 自动分段与手标差距大（video 3: 自动 12 段 vs 手标 45 段），oracle 实验全部基于手标分段；生产化需分段容错（搜索已支持空段/复合段候选）
 - ROI 坐标（`template_cnn.py` 顶部 `ROI_X1..` / `greedy_reverse.py` 的 `ROI_B_FACE`）为 4K 硬编码；`roadmap.md` §12 计划迁移到 1080p30fps，届时需重标 splits + 调 ROI + 删缓存
