@@ -8,6 +8,8 @@
 
 # 特征缓存 (可从视频重建)
 *.npz
+*.framedump.bin
+*.framedump.json
 
 # 调试输出目录
 debug_splits/
