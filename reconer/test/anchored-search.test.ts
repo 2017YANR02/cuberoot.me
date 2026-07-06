@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Perm } from "../src/cube-state.ts";
 import {
   IDENTITY_PERM,
+  ORIENTATION_PERMS,
   invertPerm,
   permKey,
   physicalPerm,
@@ -161,25 +162,33 @@ describe("面身份边缘化观测 (RawFaceObs)", () => {
     expect(sGood).toBeGreaterThan(sJunk + 10);
   });
 
-  it("端到端: 面身份未知观测下锚定并还原 (真面随段漂移 B/U)", () => {
+  it("端到端: 面身份未知观测 + 常数颜色重标 κ 下锚定并还原 (真面随段漂移 B/U)", () => {
     const gt = ["R", "U'", "F2", "L", "U2"];
     const scramble = scrambleFromSolution(gt);
-    // 正向回放, 交替给 B 面 / U 面观测 (模拟持握漂移), 不带面标注
-    const faces = [45, 0, 45, 0, 45];
+    // 相机系 = κ∘GT 系 (共轭外侧半): 相机色 = floor(ω[state[ρ[45+i]]]/9)。
+    // 搜索靠 24 朝向初始 beam 吸收 ω, 锚集必须左复合 {ω∘R₀} — 本测锁死该约定。
+    const omega = physicalPerm("y"); // κ≠id
+    const faces = [5, 0, 5, 0, 5];
+    const rhoFor = (f: number) => ORIENTATION_PERMS.find((rho) => Math.floor(rho[49] / 9) === f)!;
     let cur: Perm = scramble;
     const rawObservations: (RawFaceObs | null)[] = [];
     for (let t = 0; t < gt.length; t++) {
-      const base = faces[t];
+      const rho = rhoFor(faces[t]);
       rawObservations.push({
-        colors: Array.from({ length: 9 }, (_, i) => COLOR_NAMES[Math.floor(cur[base + i] / 9)]),
+        colors: Array.from({ length: 9 }, (_, i) => COLOR_NAMES[Math.floor(omega[cur[rho[45 + i]]] / 9)]),
       });
       cur = seqCompose(cur, physicalPerm(gt[t]));
     }
+    const finalRho = rhoFor(5);
+    const finalRawObservation: RawFaceObs = {
+      colors: Array.from({ length: 9 }, (_, i) => COLOR_NAMES[Math.floor(omega[cur[finalRho[45 + i]]] / 9)]),
+    };
     const probs = gt.map((m) => ({ [m[0].toUpperCase()]: 0.8 }));
     const r = anchoredBeamSearch(probs, scramble, {
       beamWidth: 2048,
       maxRotInserts: 0,
       rawObservations,
+      finalRawObservation,
       rawHitProb: 0.9,
     });
     expect(r.anchored).toBe(true);

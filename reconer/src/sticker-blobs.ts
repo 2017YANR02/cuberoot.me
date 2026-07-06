@@ -229,6 +229,8 @@ export function detectStickerBlobs(
 }
 
 export interface FaceGrid {
+  /** 该基的全部内点色块 (含 3×3 窗口外的), 供多晶格提取移除后再拟合 */
+  inlierBlobs: Blob[];
   /** 相机视角行主序 3×3; null = 该格无色块 (遮挡/缺失) */
   cells: (Blob | null)[];
   /** 仿射网格: 格 (r,c) 中心 = origin + c·v1 + r·v2 (v1≈列向/右, v2≈行向/下) */
@@ -279,7 +281,8 @@ export function fitFaceGrid(blobs: Blob[], minFilled = 4): FaceGrid | null {
 
   const evalBasis = (ox: number, oy: number, v1x: number, v1y: number, v2x: number, v2y: number): Basis | null => {
     const det = v1x * v2y - v1y * v2x;
-    if (Math.abs(det) < medNN * medNN * 0.3) return null;
+    // 斜持顶面透视缩短: 一轴可压至 ~0.5×medNN 且轴间夹角远离 90°, det 门槛须宽
+    if (Math.abs(det) < medNN * medNN * 0.12) return null;
     const inliers: { b: Blob; gc: number; gr: number }[] = [];
     let resSum = 0;
     for (const b of blobs) {
@@ -299,13 +302,13 @@ export function fitFaceGrid(blobs: Blob[], minFilled = 4): FaceGrid | null {
   let best: Basis | null = null;
   for (let i = 0; i < n; i++) {
     const bi = blobs[i];
-    // 候选邻居: 距离在 [0.6, 1.5]×medNN 的向量
+    // 候选邻居: 距离在 [0.45, 1.6]×medNN 的向量 (透视缩短轴间距可短至半格)
     const neigh: { x: number; y: number }[] = [];
     for (let j = 0; j < n; j++) {
       if (j === i) continue;
       const dx = blobs[j].cx - bi.cx, dy = blobs[j].cy - bi.cy;
       const d = Math.hypot(dx, dy);
-      if (d > 0.6 * medNN && d < 1.5 * medNN) neigh.push({ x: dx, y: dy });
+      if (d > 0.45 * medNN && d < 1.6 * medNN) neigh.push({ x: dx, y: dy });
     }
     for (let a = 0; a < neigh.length; a++) {
       for (let b = 0; b < neigh.length; b++) {
@@ -313,7 +316,8 @@ export function fitFaceGrid(blobs: Blob[], minFilled = 4): FaceGrid | null {
         const cross = neigh[a].x * neigh[b].y - neigh[a].y * neigh[b].x;
         const la = Math.hypot(neigh[a].x, neigh[a].y);
         const lb = Math.hypot(neigh[b].x, neigh[b].y);
-        if (Math.abs(cross) / (la * lb) < 0.7) continue; // 夹角需近 90° (sin > 0.7)
+        // 斜持面在图像里剪切严重, 只拒近共线基 (sin > 0.4); 残差门槛负责挡假格
+        if (Math.abs(cross) / (la * lb) < 0.4) continue;
         const cand = evalBasis(bi.cx, bi.cy, neigh[a].x, neigh[a].y, neigh[b].x, neigh[b].y);
         if (cand && (!best || cand.inliers.length > best.inliers.length ||
           (cand.inliers.length === best.inliers.length && cand.res < best.res))) {
@@ -392,6 +396,7 @@ export function fitFaceGrid(blobs: Blob[], minFilled = 4): FaceGrid | null {
   }
   return {
     cells,
+    inlierBlobs: inl.map((e) => e.b),
     origin: { x: ox + bestWin.x0 * v1x + bestWin.y0 * v2x, y: oy + bestWin.x0 * v1y + bestWin.y0 * v2y },
     v1: { x: v1x, y: v1y },
     v2: { x: v2x, y: v2y },
@@ -496,10 +501,55 @@ export interface FaceObservation {
 }
 
 /**
- * 单帧提取主导面观测: 活动区鲜艳色块 → 魔方簇 → 网格拟合 → 格心采样。
+ * 单帧提取多面观测: 活动区鲜艳色块 → 魔方簇 → 顺序晶格拟合 (最多 2 面:
+ * 斜持时顶面 + 正对面同时可见, 拟合一面后移除其内点再拟合下一面) → 格心采样。
  * mask 建议用 activityMask (跨帧稳定性), 不要用被魔方污染的中位背景差分。
- * 返回 null = 本帧无可信面 (色块太少/无网格)。
+ * 返回 [] = 本帧无可信面; [0] 为主导面 (内点最多)。
  */
+export function extractFaceObservations(
+  rgb: Uint8Array,
+  w: number,
+  h: number,
+  mask: Uint8Array | null,
+  opts: DetectOptions & { minFilled?: number } = {},
+): FaceObservation[] {
+  const blobs = detectStickerBlobs(rgb, w, h, { ...opts, mask: mask ?? undefined });
+  let cluster = clusterCubeBlobs(blobs);
+  if (!cluster) return [];
+  // 簇内尺寸一致性: 杂物尺寸失调剔除 (斜持面贴纸透视压扁, 下限须宽)
+  const medDim = cluster.map((b) => Math.max(b.w, b.h)).sort((a, b) => a - b)[cluster.length >> 1];
+  cluster = cluster.filter((b) => {
+    const d = Math.max(b.w, b.h);
+    const m = Math.min(b.w, b.h);
+    return d >= 0.45 * medDim && d <= 1.8 * medDim && m >= 0.35 * medDim;
+  });
+  const minFilled = opts.minFilled ?? 4;
+  const out: FaceObservation[] = [];
+  let remaining = cluster;
+  while (out.length < 2 && remaining.length >= minFilled) {
+    const grid = fitFaceGrid(remaining, minFilled);
+    if (!grid) break;
+    const colors: (ColorName | null)[] = new Array(9).fill(null);
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        const blob = grid.cells[r * 3 + c];
+        if (blob) {
+          // 色块颜色含反光环带重标, 比重采样可靠
+          colors[r * 3 + c] = blob.color;
+        } else {
+          const { x, y } = cellCenter(grid, r, c);
+          colors[r * 3 + c] = sampleCell(rgb, w, h, x, y, grid.pitch * 0.22);
+        }
+      }
+    }
+    out.push({ colors, grid, blobCount: remaining.length });
+    const used = new Set(grid.inlierBlobs);
+    remaining = remaining.filter((b) => !used.has(b));
+  }
+  return out;
+}
+
+/** 单面兼容封装: 只取主导面 */
 export function extractFaceObservation(
   rgb: Uint8Array,
   w: number,
@@ -507,30 +557,5 @@ export function extractFaceObservation(
   mask: Uint8Array | null,
   opts: DetectOptions & { minFilled?: number } = {},
 ): FaceObservation | null {
-  const blobs = detectStickerBlobs(rgb, w, h, { ...opts, mask: mask ?? undefined });
-  let cluster = clusterCubeBlobs(blobs);
-  if (!cluster) return null;
-  // 簇内尺寸一致性: 异面贴纸透视压扁 (D 面下沿贴纸条)/杂物尺寸失调 → 剔除
-  const medDim = cluster.map((b) => Math.max(b.w, b.h)).sort((a, b) => a - b)[cluster.length >> 1];
-  cluster = cluster.filter((b) => {
-    const d = Math.max(b.w, b.h);
-    const m = Math.min(b.w, b.h);
-    return d >= 0.55 * medDim && d <= 1.8 * medDim && m >= 0.5 * medDim;
-  });
-  const grid = fitFaceGrid(cluster, opts.minFilled ?? 4);
-  if (!grid) return null;
-  const colors: (ColorName | null)[] = new Array(9).fill(null);
-  for (let r = 0; r < 3; r++) {
-    for (let c = 0; c < 3; c++) {
-      const blob = grid.cells[r * 3 + c];
-      if (blob) {
-        // 色块颜色含反光环带重标, 比重采样可靠
-        colors[r * 3 + c] = blob.color;
-      } else {
-        const { x, y } = cellCenter(grid, r, c);
-        colors[r * 3 + c] = sampleCell(rgb, w, h, x, y, grid.pitch * 0.22);
-      }
-    }
-  }
-  return { colors, grid, blobCount: cluster.length };
+  return extractFaceObservations(rgb, w, h, mask, opts)[0] ?? null;
 }
