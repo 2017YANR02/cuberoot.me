@@ -127,6 +127,13 @@
   font-size: 0.78rem;
 }
 
+/* 2×2 数据源切换(WCA 真题 / 所有本质状态):紧凑工具条,不做成大卡片。 */
+.scramble-stats-src-toggle {
+  margin-bottom: 1rem;
+  padding: 0.6rem 1rem;
+  gap: 0.5rem;
+}
+
 .scramble-stats-color-control {
   display: inline-flex;
   align-items: center;
