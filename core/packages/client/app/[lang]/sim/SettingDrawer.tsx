@@ -108,6 +108,9 @@ export interface SimSettings {
   /** 手指(指法演示):双手握持魔方,转层时腕转 / 弹指跟动画。仅 3x3 生效
    *  (其它拼图上开关灰禁;设置保留,切回 3x3 自动恢复)。默认关。 */
   hands: boolean;
+  /** 开发者调试(仅 3x3 手指开启时可见):MediaPipe 风格 21 关键点骨架叠加线
+   *  (关节点 + 连线)。默认关 —— 正常展示不需要这层调试线。 */
+  handsSkeleton: boolean;
 }
 
 /** WCA 标准 6 面色 — 取自全站单一来源 lib/cube-colors */
@@ -158,6 +161,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   customLogo: '',
   liveReduce: true,
   hands: false,
+  handsSkeleton: false,
 };
 
 const STORAGE_KEY = 'sim.settings';
@@ -223,6 +227,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   // 手指(指法演示):意愿写进 world,实际显隐由 world.syncHands 按拼图门控
   // (仅 3x3);内部已含 resize,所以放最前,后面的 resize 拿到的取景已是最终值。
   world.setHandsWanted(s.hands === true);
+  world.hands?.setSkeletonVisible(s.handsSkeleton === true);
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
   world.controller.holdPartial = s.holdPartialTurn;
