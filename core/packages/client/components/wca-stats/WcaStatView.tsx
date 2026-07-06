@@ -68,6 +68,9 @@ interface MetricPanel {
   labelZh: string;
   panels?: StatPanel[];
   sourcePanels?: SourcePanel[];
+  // NOTE: 若设置——sourcePanels 的选择器渲染为 BoolToggle（off=源[0], on=源[1]），而非 tab bar。
+  //   round_top3_sum 的「只看决赛」布尔开关。仅当 sourcePanels 恰为 2 个时生效。
+  sourceBool?: { labelEn: string; labelZh: string };
 }
 
 interface MetricGroup {
@@ -164,7 +167,8 @@ function renderLinkedSegment(segment: string, segIdx: number, columnKey: string 
       parts.push(' ');
     }
     let displayText = match[1];
-    if (columnKey === 'person' || columnKey === 'name') {
+    // '1st'/'2nd'/'3rd' 是领奖台式人名列(best_round / round_top3_sum),同 person 列一样剥括号 + 中译
+    if (columnKey === 'person' || columnKey === 'name' || columnKey === '1st' || columnKey === '2nd' || columnKey === '3rd') {
       if (isZh) {
         const zhName = translatePersonLink(displayText);
         displayText = zhName || stripChineseParens(displayText);
@@ -811,21 +815,30 @@ function AoxSectionsView({ header, sections, isZh, selectedEvent }: {
   );
 }
 
-function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel }: {
+function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel, sourceBool }: {
   sourcePanels: SourcePanel[];
   searchTerm: string;
   isZh: boolean;
   selectedEvent?: string;
   activePanel: number;
   onSetActivePanel: (idx: number, panels: StatPanel[]) => void;
+  sourceBool?: { labelEn: string; labelZh: string };
 }) {
   const [activeSource, setActiveSource] = useState(0);
   const source = sourcePanels[activeSource];
+  // NOTE: sourceBool 且恰为 2 个源时——渲染布尔开关（off=源[0], on=源[1]）替代 tab bar。
+  const asBool = !!sourceBool && sourcePanels.length === 2;
 
   return (
     <>
       <div className="wca-stats-tab-bar">
-        {sourcePanels.map((sp, i) => (
+        {asBool ? (
+          <BoolToggle
+            value={activeSource === 1}
+            onChange={on => setActiveSource(on ? 1 : 0)}
+            label={(isZh ? sourceBool!.labelZh : sourceBool!.labelEn)}
+          />
+        ) : sourcePanels.map((sp, i) => (
           <button
             key={sp.id}
             className={`wca-stats-tab ${i === activeSource ? 'active' : ''}`}
@@ -963,7 +976,7 @@ function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, select
 
       {metric && metric.sourcePanels ? (
         <SourcePanelsView sourcePanels={metric.sourcePanels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}
-          activePanel={activePanel} onSetActivePanel={onSetActivePanel} />
+          activePanel={activePanel} onSetActivePanel={onSetActivePanel} sourceBool={metric.sourceBool} />
       ) : metric && metric.panels ? (
         <PanelsView panels={metric.panels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}
           activePanel={activePanel} onSetActivePanel={(idx) => onSetActivePanel(idx, metric.panels!)}

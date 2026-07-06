@@ -50,6 +50,23 @@
           ]
         },
         {
+          "id": "round_top3_sum",
+          "titleEn": "Round Top-3 Sum",
+          "titleZh": "轮次前三成绩和",
+          "metrics": [
+            {
+              "id": "single",
+              "labelEn": "Single",
+              "labelZh": "单次"
+            },
+            {
+              "id": "average",
+              "labelEn": "Average",
+              "labelZh": "平均"
+            }
+          ]
+        },
+        {
           "id": "wr_non_pr",
           "titleEn": "Non-PR WR",
           "titleZh": "非 PR",
@@ -434,18 +451,6 @@
           "id": "world_records_by_person",
           "titleEn": "World records count by person",
           "titleZh": "选手世界纪录数"
-        }
-      ]
-    },
-    {
-      "nameEn": "Other",
-      "nameZh": "其他",
-      "iconName": "Pin",
-      "stats": [
-        {
-          "id": "name_stats",
-          "titleEn": "Name statistics",
-          "titleZh": "姓名统计"
         }
       ]
     }
