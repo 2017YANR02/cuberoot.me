@@ -521,7 +521,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     if (!form.solution) return null;
     const isBld = isBldEvent(form.event ?? '');
     const time = (isBld ? form.execTime : form.rawTime) ?? 0;
-    return computeAllStats(form.solution, time);
+    return computeAllStats(form.solution, time, form.event);
   }, [form.solution, form.rawTime, form.execTime, form.event]);
 
   // ── Time / avg parse ──
@@ -789,6 +789,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return () => { cancelled = true; clearTimeout(timer); setTimeLoading(false); };
   }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, singleUserTouched, isEditing, editId, isZh, setField]);
 
+  // ── 非 WCA / 练习:单次由「原始成绩」截断千分位带出(没有 WCA/已录数据可供上面那个自动获取) ──
+  useEffect(() => {
+    if (form.official === 'wca') return;
+    if (singleUserTouched) return;
+    if (form.rawTime == null || isNaN(form.rawTime)) return;
+    const truncated = Math.floor(form.rawTime * 100) / 100;
+    setField('value', formatTimeInput(truncated));
+  }, [form.official, form.rawTime, singleUserTouched, setField]);
+
   // ── WCA official scramble auto-fill (by comp / event / round / group / #) ──
   // Pulls the exact scramble the player got — same data as /scramble/gen. Only
   // for official WCA comps (compWcaId set); blocked once the user types their
@@ -859,10 +868,13 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return () => { cancelled = true; clearTimeout(timer); setScrambleLoading(false); };
   }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, scrambleUserTouched, optimalUserTouched, setField, isZh]);
 
-  // Resize the WCA scramble textarea when its value changes programmatically.
+  // Resize the WCA / optimal scramble textareas when their values change programmatically.
   useEffect(() => {
     if (wcaScrambleRef.current) autoResize(wcaScrambleRef.current);
   }, [form.wcaScramble, autoResize]);
+  useEffect(() => {
+    if (optimalScrambleRef.current) autoResize(optimalScrambleRef.current);
+  }, [form.optimalScramble, autoResize]);
 
   // ── Record marker auto-fetch (WCA only) ──
   useEffect(() => {
@@ -1464,6 +1476,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       const iso2 = (authUser?.country || personFlagIso2(authUser?.wcaId ?? '')).toLowerCase();
                       if (iso2) setField('country', iso2);
                     }
+                    // 切换后原纪录码若不合该口径(R=官方 / B=非官方最佳)则清空,防残留不匹配的值。
+                    const suffixOk = (v: string | undefined) => !v || (next === 'wca' ? v.endsWith('R') : v.endsWith('B'));
+                    if (!suffixOk(form.regionalSingleRecord)) { setField('regionalSingleRecord', ''); setSingleRecordUserTouched(false); }
+                    if (!suffixOk(form.regionalAverageRecord)) { setField('regionalAverageRecord', ''); setAverageRecordUserTouched(false); }
                   }}>
                     <option value="wca">{tr({ zh: 'WCA比赛', en: 'WCA' })}</option>
                     <option value="non_wca">{tr({ zh: '非WCA比赛', en: 'Non-WCA' })}</option>
@@ -1662,6 +1678,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     value={form.regionalSingleRecord || ''}
                     onChange={(v) => { setField('regionalSingleRecord', v); setSingleRecordUserTouched(true); }}
                     personIso2={form.personCountry}
+                    official={form.official}
                   />
                   {recordLoading
                     ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
@@ -1696,6 +1713,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     value={form.regionalAverageRecord || ''}
                     onChange={(v) => { setField('regionalAverageRecord', v); setAverageRecordUserTouched(true); }}
                     personIso2={form.personCountry}
+                    official={form.official}
                   />
                   {recordLoading
                     ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
@@ -1853,7 +1871,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   {stats && stats.stm > 0 && (
                     <span className="submit-label-stats">
                       {' ('}{stats.stm} STM
-                      {stats.tps > 0 && `, ${stats.tps} TPS`}
+                      {stats.tps > 0 && `, ${stats.tps} ${form.event === 'sq1' ? 'SPS' : 'TPS'}`}
                       {')'}
                     </span>
                   )}
