@@ -52,6 +52,9 @@ const HEAVY_STATS = new Set([
   'smallest_diff_between_single_and_average',
   'most_frequent_results',
   'moving_average',
+  // NOTE: round_top3_sum 逐项目 fetch 全部单次/平均(333 单次 ~180万行),峰值 ~1.1GB;
+  //   fork 隔离确保退出后 OS 回收,避免 compute_all 主进程内存累积。
+  'round_top3_sum',
 ]);
 
 

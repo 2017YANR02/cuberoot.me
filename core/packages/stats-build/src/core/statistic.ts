@@ -43,6 +43,9 @@ export interface MetricPanel {
   labelZh: string;    // 如 '单次'
   panels?: StatPanel[];        // 2 级结构（直接 ranking/history）
   sourcePanels?: SourcePanel[]; // 3 级结构（source → ranking/history）
+  // NOTE: 若设置——sourcePanels 的选择器渲染为 BoolToggle（off=第 0 源, on=第 1 源），
+  //   而非 tab bar（round_top3_sum 的「只看决赛」布尔开关）。仅当 sourcePanels 恰为 2 个时有效。
+  sourceBool?: { labelEn: string; labelZh: string };
 }
 
 // NOTE: 表头对齐方向
