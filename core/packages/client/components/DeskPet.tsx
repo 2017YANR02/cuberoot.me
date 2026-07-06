@@ -340,6 +340,14 @@ export default function DeskPet() {
     return () => { i18n.off('languageChanged', deferred); };
   }, []);
 
+  // Close the search overlay on language switch — its content stays untranslated
+  // otherwise, which is confusing.
+  useEffect(() => {
+    const close = () => setSearchOpen(false);
+    i18n.on('languageChanged', close);
+    return () => { i18n.off('languageChanged', close); };
+  }, []);
+
   // 反馈未读:登录用户挂载时 + 标签可见时 + 每 90s 拉一次,数字挂到桌宠身上(每页可见)。
   // 未登录 → refreshFeedbackUnread 内部归零。
   useEffect(() => {
