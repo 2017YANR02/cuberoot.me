@@ -343,6 +343,12 @@ function buildEventTags(cuberInfo: CuberInfo): EventTag[] {
   return tags;
 }
 
+// NOTE: 最近一次 fetchWithRetry 终止失败的具体原因(403/429限流耗尽/HTTP错误/网络异常)。
+// 每次调用开头重置,调用方在紧跟着的一次失败判断后立即读取才准确(不要跨异步操作缓存读取)。
+// 用于关键调用点(如 buildAllUpcomingComps 首页失败)拼出准确的失败通知——429 限流耗尽和
+// 403 被拒是完全不同的故障(前者通常几分钟到几小时自愈,后者才真指向 IP 被封),不能笼统混报。
+let lastFetchFailureReason: string | null = null;
+
 /**
  * 带限流和防封禁重试机制的网络请求。raw=true 时返回原始文本，否则解析 JSON。
  * 失败兜底返回 {}（与 Python 一致：callers 用 isinstance(x,dict)/truthiness 判定）。
@@ -352,8 +358,10 @@ function buildEventTags(cuberInfo: CuberInfo): EventTag[] {
  * persons 数组可达数 MB）必须由调用方传更大的 timeoutMs，否则慢 runner 上会下到一半被 abort。
  */
 async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000): Promise<unknown> {
+  lastFetchFailureReason = null;
   let attempt = 0;
   let rateLimitWaits = 0;
+  let lastErrorDetail = '';
   while (attempt < MAX_RETRIES) {
     await sleep(API_DELAY_SEC);
     const ctrl = new AbortController();
@@ -373,6 +381,10 @@ async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000): Pro
         clearTimeout(timer);
         if (resp.status === 404 || resp.status === 403) {
           // NOTE: 404 = 无 WCA 账号；403 = 端点需要认证，重试无意义
+          lastFetchFailureReason =
+            resp.status === 403
+              ? 'HTTP 403(请求被拒绝——可能是出口 IP 被 WCA/Cloudflare 封锁，也可能是该端点本就需要登录)'
+              : 'HTTP 404(资源不存在)';
           return {};
         }
         if (resp.status === 429) {
@@ -380,6 +392,7 @@ async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000): Pro
           //       attempt（否则 3 次 429 就丢掉这场比赛）；仅独立上限防无限卡死。
           if (rateLimitWaits >= MAX_RATE_LIMIT_WAITS) {
             console.log(`[ERROR] 429 连续 ${MAX_RATE_LIMIT_WAITS} 次仍限流，放弃: ${url}`);
+            lastFetchFailureReason = `HTTP 429 限流：连续等待 ${MAX_RATE_LIMIT_WAITS} 次仍未解除(通常是 WCA 侧临时限流高峰，不代表 IP 被封；偶发一次可忽略，连续多天出现才需要怀疑封禁)`;
             return {};
           }
           const retryAfter = resp.headers.get('Retry-After');
@@ -393,6 +406,7 @@ async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000): Pro
           continue;
         }
         console.log(`[ERROR] API 返回 ${resp.status}: ${url}`);
+        lastErrorDetail = `HTTP ${resp.status}`;
         await sleep(1);
         attempt += 1;
         continue;
@@ -404,6 +418,7 @@ async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000): Pro
     } catch (e) {
       // urllib.error.URLError / OSError 对应：网络异常 / abort（超时）/ body 读取中断
       clearTimeout(timer);
+      lastErrorDetail = `网络异常: ${(e as Error).message ?? e}`;
       console.log(`[WARN] 请求异常 ${(e as Error).message ?? e}, 重试 ${attempt + 1}/${MAX_RETRIES}...`);
       await sleep(2);
       attempt += 1;
@@ -414,6 +429,7 @@ async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000): Pro
     return raw ? text : JSON.parse(text);
   }
 
+  lastFetchFailureReason = `重试 ${MAX_RETRIES} 次后仍失败(${lastErrorDetail || '未知原因'})`;
   return {};
 }
 
@@ -1053,6 +1069,9 @@ function shortifyEvents(eventIds: string[]): string[] {
   return pairs.map((p) => p[1]);
 }
 
+// NOTE: buildAllUpcomingComps 首页失败时记录具体原因，供 main() 拼出准确的 [FAIL] 通知文案。
+let wcaListFailureReason: string | null = null;
+
 async function buildAllUpcomingComps(): Promise<AllComp[] | null> {
   /*
    * 从 WCA /competitions?ongoing_and_future=... 分页拉全球全量 upcoming 比赛。
@@ -1074,7 +1093,8 @@ async function buildAllUpcomingComps(): Promise<AllComp[] | null> {
     // NOTE: fetchWithRetry 404/失败时返回 {}；list 端点正常返回 list
     if (!Array.isArray(batch)) {
       if (page === 1) {
-        console.log('[ALL] 第一页就拿不到 list，放弃生成 all_upcoming_comps.json');
+        wcaListFailureReason = lastFetchFailureReason;
+        console.log(`[ALL] 第一页就拿不到 list，放弃生成 all_upcoming_comps.json（原因：${wcaListFailureReason ?? '未知'}）`);
         return null;
       }
       break;
@@ -1277,9 +1297,10 @@ async function main(): Promise<void> {
 
   // 拉不到 WCA 列表时:旧数据已保留(上面 guard 不写空),但这里主动非零退出让本次 CI 标红,
   // 这样会收到 GitHub Actions 失败通知 —— 数据默默变旧不可接受,要让人知道。
-  // 常见原因:WCA 把服务器出口 IP 从限速升级成 403、代理挂了、或 WCA 临时故障。
+  // 具体原因(403 拒绝 / 429 限流耗尽 / 网络异常等)已在 wcaListFailureReason 里记录,直接报出来,
+  // 别笼统猜"IP 被封"——429 限流耗尽绝大多数是临时高峰,几分钟到次日就自愈,只有连续 403 才真指向封禁。
   if (wcaListUnavailable) {
-    console.error('[FAIL] WCA upcoming 列表本次拉取失败:已保留上一份好数据(未写空),但主动失败本次 CI 以触发通知。请查代理 / WCA 是否封了服务器 IP。');
+    console.error(`[FAIL] WCA upcoming 列表本次拉取失败(${wcaListFailureReason ?? '未知原因'}):已保留上一份好数据(未写空),但主动失败本次 CI 以触发通知。`);
     process.exit(1);
   }
 }
