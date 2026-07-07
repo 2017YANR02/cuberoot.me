@@ -426,6 +426,13 @@ interface CnComp {
   competitor_limit: number;
   /** cubing.com 实际报名人数(含无 WCA ID 的新人,故比 WCA-ID 名单准);满员判定用它 */
   registered_competitors?: number;
+  /** 报名开放时刻(unix 秒,来自 c.registration.from);未开放前选手页面本就是空的,别当异常警告 */
+  registration_open_ts?: number;
+}
+
+// NOTE: 报名还没开放时,cubing.com 选手页面必然 0 人 —— 这是正常状态,不是页面结构变了。
+function isRegistrationOpen(comp: CnComp): boolean {
+  return comp.registration_open_ts === undefined || Date.now() / 1000 >= comp.registration_open_ts;
 }
 
 async function fetchCubingChinaComps(): Promise<CnComp[]> {
@@ -479,6 +486,7 @@ async function fetchCubingChinaComps(): Promise<CnComp[]> {
     const locs = locations.length ? locations : [{} as { province?: string; city?: string }];
     const province = locs[0]!.province ?? '';
     const city = locs[0]!.city ?? '';
+    const registration = (c.registration ?? {}) as { from?: number };
 
     comps.push({
       alias: c.alias as string,
@@ -488,6 +496,7 @@ async function fetchCubingChinaComps(): Promise<CnComp[]> {
       end_date: end,
       competitor_limit: limit,
       registered_competitors: typeof c.registered_competitors === 'number' ? c.registered_competitors : undefined,
+      registration_open_ts: typeof registration.from === 'number' ? registration.from : undefined,
     });
   }
 
@@ -560,6 +569,9 @@ async function integrateCubingChina(
         continue;
       }
 
+      if (!isRegistrationOpen(comp)) {
+        continue;
+      }
       const competitorIds = await fetchCubingChinaCompetitors(alias);
       if (competitorIds.size === 0) {
         continue;
@@ -654,6 +666,11 @@ async function buildCnRegistrations(): Promise<Record<string, string[]>> {
     i += 1;
     const alias = comp.alias;
     const compId = alias.replaceAll('-', '');
+    if (!isRegistrationOpen(comp)) {
+      out[compId] = [];
+      console.log(`[CN-REG] [${i}/${total}] ${compId}: 报名未开放,跳过`);
+      continue;
+    }
     try {
       const ids = await fetchCubingChinaCompetitors(alias);
       // Python sorted(set) 按 Unicode code point；WCA ID 为 ASCII，JS 默认 sort 等价。
