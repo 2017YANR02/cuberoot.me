@@ -45,7 +45,7 @@ jobs:
         # native-image 的 libzip.a 会链接 -lz; ubuntu zlib1g-dev 是 glibc 编的
         # 不能用,得自己用 musl-gcc 编一份 static libz 装到 /usr/local/lib。
         run: |
-          sudo apt-get update
+          sudo apt-get update -o Dir::Etc::sourcelist="sources.list" -o Dir::Etc::sourceparts="-"
           sudo apt-get install -y musl-tools musl-dev
           ZLIB_VER=1.3.1
           curl -fsSLO "https://github.com/madler/zlib/releases/download/v${ZLIB_VER}/zlib-${ZLIB_VER}.tar.gz"
@@ -107,7 +107,14 @@ jobs:
           ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Install rsync
-        run: sudo apt-get update && sudo apt-get install -y rsync
+        # runner 镜像里 sources.list.d/*(azure-cli/mssql 等第三方源)常年签名过期,
+        # apt-get update 全量跑会因这些无关源报错(exit 100)拖垮 && 链;
+        # 只读主 sources.list 更新,并优先复用镜像自带 rsync 绕开网络请求。
+        run: |
+          if ! command -v rsync >/dev/null 2>&1; then
+            sudo apt-get update -o Dir::Etc::sourcelist="sources.list" -o Dir::Etc::sourceparts="-"
+            sudo apt-get install -y rsync
+          fi
 
       - name: Upload binary to staging path
         run: |
