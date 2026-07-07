@@ -28,6 +28,7 @@ import {
   activityMask,
   extractFaceObservations,
   medianBackground,
+  reorientObsToBasis,
   trackFaceGrid,
   type FaceGrid,
   type FaceObservation,
@@ -44,6 +45,20 @@ const MIN_RUN = mrArg >= 0 ? parseInt(process.argv[mrArg + 1], 10) : 3;
 const maArg = process.argv.indexOf("--minarea");
 const MIN_AREA = maArg >= 0 ? parseInt(process.argv[maArg + 1], 10) : undefined;
 const STRICT = process.argv.includes("--strict"); // 链一致性零容错 (防跨拧转混态)
+const PER_FRAME = process.argv.includes("--perframe"); // 跳过链, 逐帧网格直接喂搜索
+const PIN_MODE = process.argv.includes("--pin"); // 路径级指派钉死
+const DRIFT = process.argv.includes("--drift"); // 钉死 + 段间漂移切换 (隐含 --pin)
+const TRACE = process.argv.includes("--trace"); // GT 路径在 beam 中的逐段存活排名
+const junkArg = process.argv.indexOf("--junk");
+const JUNK_P = junkArg >= 0 ? parseFloat(process.argv[junkArg + 1]) : 0; // 鲁棒垃圾混合权
+const FORWARD = process.argv.includes("--forward"); // 正向搜索 (从打乱态出发)
+// 神谕观测标定: 保持真实链的覆盖模式 (段位/条数/读格 mask), 内容换成 GT 态读数
+// 并按指定准确率注噪 — 定位"现有覆盖 + probs 赤字下视觉层需要多准才锚定"
+const oraArg = process.argv.indexOf("--oracleobs");
+const ORACLE_ACC = oraArg >= 0 ? parseFloat(process.argv[oraArg + 1]) : 0;
+// 全覆盖双窗口神谕: 每段 B+U 两张 9 格网格 (两面联合模型的理论上界)
+const ORACLE_FULL = process.argv.includes("--oraclefull");
+const ORACLE_SINGLE = process.argv.includes("--oraclesingle");
 const facesArg = process.argv.indexOf("--faces");
 type FaceName = "U" | "R" | "F" | "D" | "L" | "B";
 const SEARCH_FACES = (facesArg >= 0 ? process.argv[facesArg + 1] : "B,U").split(",") as FaceName[];
@@ -67,9 +82,10 @@ function bestAssign(
   colors: readonly (ColorName | null)[],
   state: readonly number[],
   omega: readonly number[],
-): { match: number; read: number; face: FaceName } {
-  let best = { match: -1, read: 0, face: "B" as FaceName };
-  for (const { face, assign } of ASSIGNS) {
+): { match: number; read: number; face: FaceName; rot: number } {
+  let best = { match: -1, read: 0, face: "B" as FaceName, rot: 0 };
+  for (let ai = 0; ai < ASSIGNS.length; ai++) {
+    const { face, assign } = ASSIGNS[ai];
     let m = 0, rd = 0;
     for (let i = 0; i < 9; i++) {
       const c = colors[i];
@@ -77,7 +93,7 @@ function bestAssign(
       rd++;
       if (COLOR_NAMES[Math.floor(omega[state[assign[i]] ] / 9)] === c) m++;
     }
-    if (m > best.match) best = { match: m, read: rd, face };
+    if (m > best.match) best = { match: m, read: rd, face, rot: ai % 4 };
   }
   return best;
 }
@@ -88,6 +104,10 @@ interface RestRun {
   to: number;
   len: number;
   grid: (ColorName | null)[];
+  /** 跟踪 span (prior 被杀重新冷获取才递增); 基连续化下 span 内面内旋转身份恒定 */
+  span: number;
+  /** 链帧运动量中位 (网格 bbox 帧间平均绝对差; 拧转中链的照妖镜) */
+  motion: number;
 }
 
 /** 两帧网格一致: 共同非空格 ≥4 且不一致 ≤1 (--strict 零容错, 防跨拧转混态成链) */
@@ -112,10 +132,18 @@ interface VideoEval {
   nullMatch: number;
   nullRead: number;
   rawObs: (RawFaceObs[] | null)[];
+  /** 逐帧观测 (跳过链/共识; 每段 ≤8 个按可读格数排序的单帧网格) */
+  rawObsFrames: (RawFaceObs[] | null)[];
+  /** 神谕观测 (真实覆盖模式 + GT 内容 + 注噪; --oracleobs 标定用) */
+  rawObsOracle: (RawFaceObs[] | null)[] | null;
+  finalRawObsOracle: RawFaceObs | null;
   finalRawObs: RawFaceObs | null;
   probs: ProbDist[];
   scrambleSc: readonly number[];
   gtNoRot: string[];
+  boundStates: readonly (readonly number[])[];
+  /** 正向 trace 用: 第 t 段消费后的态 (= 段 t+1 起点; 末段后 = 复原) */
+  afterStates: readonly (readonly number[])[];
 }
 
 const videosDir = join(import.meta.dirname, "..", "videos");
@@ -166,14 +194,20 @@ for (const sf of files) {
   // 逐帧提取 (每帧 0-2 面): 冷检测优先, 失败时用上帧晶格时间连续性跟踪
   // (魔方不瞬移; 转动层模糊 → null 格, 非转动层照常读 — 天然部分观测)
   const grids: FaceObservation[][] = new Array(meta.frames.length);
+  const frameSpan: number[] = new Array(meta.frames.length).fill(-1);
   let prior: FaceGrid | null = null;
   let priorColors: readonly (ColorName | null)[] | null = null;
   let priorMiss = 0;
-  let nCold = 0, nTracked = 0;
+  let nCold = 0, nTracked = 0, spanId = -1;
   for (let i = 0; i < meta.frames.length; i++) {
-    const cold = extractFaceObservations(frameAt(i), meta.w, meta.h, mask, { minArea: MIN_AREA });
+    let cold = extractFaceObservations(frameAt(i), meta.w, meta.h, mask, { minArea: MIN_AREA });
     if (cold.length) {
+      // 基连续化: 冷拟合基旋到与上帧基最对齐的 90° 变体, span 内旋转身份构造性恒定
+      // (fitFaceGrid 的"v1 取更水平者"在晶格近 45° 时帧间轴交换, 断链 + 毁按 span 钉死)
+      if (prior) cold = [reorientObsToBasis(cold[0], prior.v1, prior.v2), ...cold.slice(1)];
+      else spanId++;
       grids[i] = cold;
+      frameSpan[i] = spanId;
       prior = cold[0].grid;
       priorColors = cold[0].colors;
       priorMiss = 0;
@@ -185,6 +219,7 @@ for (const sf of files) {
       : null;
     if (tracked) {
       grids[i] = [tracked];
+      frameSpan[i] = spanId;
       prior = tracked.grid;
       priorColors = tracked.colors;
       priorMiss = 0;
@@ -197,11 +232,45 @@ for (const sf of files) {
       }
     }
   }
+  // 帧运动量: 网格 bbox 内与上帧的平均绝对差。100fps 下相邻模糊帧彼此相似,
+  // agree() 挡不住拧转中帧成链 (目检 f1122: 大幅运动模糊 3 帧照样"稳定")。
+  // 静止 vs 拧转在帧差上双峰, 这才是 rest 的物理定义; 超阈值帧不准进链。
+  const frameMotion: number[] = new Array(meta.frames.length).fill(Infinity);
+  for (let i = 1; i < meta.frames.length; i++) {
+    const g = (grids[i][0] ?? grids[i - 1][0])?.grid;
+    if (!g) continue;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const r of [-0.5, 2.5]) {
+      for (const c of [-0.5, 2.5]) {
+        const x = g.origin.x + c * g.v1.x + r * g.v2.x;
+        const y = g.origin.y + c * g.v1.y + r * g.v2.y;
+        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+      }
+    }
+    const x0 = Math.max(0, Math.round(minX)), x1 = Math.min(meta.w - 1, Math.round(maxX));
+    const y0 = Math.max(0, Math.round(minY)), y1 = Math.min(meta.h - 1, Math.round(maxY));
+    if (x1 <= x0 || y1 <= y0) continue;
+    const a = frameAt(i), b = frameAt(i - 1);
+    let sum = 0, n = 0;
+    for (let y = y0; y <= y1; y += 2) {
+      for (let x = x0; x <= x1; x += 2) {
+        const p = (y * meta.w + x) * 3;
+        sum += Math.abs(a[p] - b[p]) + Math.abs(a[p + 1] - b[p + 1]) + Math.abs(a[p + 2] - b[p + 2]);
+        n++;
+      }
+    }
+    frameMotion[i] = sum / (3 * n);
+  }
+  const motSorted = frameMotion.filter((m) => Number.isFinite(m)).sort((a, b) => a - b);
+  const motP = (q: number) => motSorted[Math.min(motSorted.length - 1, Math.floor(q * motSorted.length))] ?? 0;
+
   const runs: RestRun[] = [];
   {
     // 空帧桥接: 提取单帧失败不断链 (≤2 帧空隙), 只有"读到且全不一致"才断
     let sFrame = -1, lastFrame = -1, gap = 0;
     let chain: FaceObservation[] = [];
+    let chainIdx: number[] = [];
     const flush = () => {
       if (chain.length >= MIN_RUN) {
         const colors: (ColorName | null)[] = [];
@@ -218,13 +287,23 @@ for (const sf of files) {
           colors.push(top && (tot === 1 || (top[1] >= 2 && top[1] > tot * 0.6)) ? top[0] : null);
         }
         if (colors.filter(Boolean).length >= 5) {
-          runs.push({ from: meta.frames[sFrame], to: meta.frames[lastFrame], len: chain.length, grid: colors });
+          // 链桥接 ≤2 帧空隙 < prior 存活 5 帧, 链内 span 恒定, 取起帧的即可
+          const mots = chainIdx.map((ci) => frameMotion[ci]).filter(Number.isFinite).sort((a, b) => a - b);
+          runs.push({
+            from: meta.frames[sFrame],
+            to: meta.frames[lastFrame],
+            len: chain.length,
+            grid: colors,
+            span: frameSpan[sFrame],
+            motion: mots.length ? mots[mots.length >> 1] : Infinity,
+          });
         }
       }
       sFrame = -1;
       lastFrame = -1;
       gap = 0;
       chain = [];
+      chainIdx = [];
     };
     for (let i = 0; i < meta.frames.length; i++) {
       const gs = grids[i];
@@ -237,11 +316,13 @@ for (const sf of files) {
         lastFrame = i;
         gap = 0;
         chain = [gs[0]];
+        chainIdx = [i];
         continue;
       }
       const cont = gs.find((g) => agree(chain[chain.length - 1], g));
       if (cont) {
         chain.push(cont);
+        chainIdx.push(i);
         lastFrame = i;
         gap = 0;
         continue;
@@ -250,6 +331,7 @@ for (const sf of files) {
       sFrame = i;
       lastFrame = i;
       chain = [gs[0]];
+      chainIdx = [i];
     }
     flush();
   }
@@ -306,16 +388,16 @@ for (const sf of files) {
     const nExtracted = grids.filter((g) => g.length > 0).length;
     const nTwo = grids.filter((g) => g.length >= 2).length;
     console.log(
-      `--- ${basename(videoPath)} 逐帧提取 ${nExtracted}/${grids.length} (冷 ${nCold} 跟踪 ${nTracked} 双面 ${nTwo}), 静止区间 ${runs.length} 个 (minrun=${MIN_RUN}, κ=ω${omegaIdx}) ---`,
+      `--- ${basename(videoPath)} 逐帧提取 ${nExtracted}/${grids.length} (冷 ${nCold} 跟踪 ${nTracked} 双面 ${nTwo}), 静止区间 ${runs.length} 个 (minrun=${MIN_RUN}, κ=ω${omegaIdx})  帧运动量 p10=${motP(0.1).toFixed(1)} p25=${motP(0.25).toFixed(1)} p50=${motP(0.5).toFixed(1)} p75=${motP(0.75).toFixed(1)} p90=${motP(0.9).toFixed(1)} ---`,
     );
   }
   for (const run of runs) {
     // GT 最像边界 (需要明显赢: 读格 ≥5)
-    let gtB = -1, gtFrac = -1;
+    let gtB = -1, gtFrac = -1, gtFace: FaceName = "B", gtRot = 0;
     for (let b = 0; b <= boundStates.length; b++) {
       const r = bestAssign(run.grid, stateOf(b), omega);
       const f = r.read ? r.match / r.read : 0;
-      if (f > gtFrac) { gtFrac = f; gtB = b; }
+      if (f > gtFrac) { gtFrac = f; gtB = b; gtFace = r.face; gtRot = r.rot; }
     }
     const ruleI = splitToBound(nearestByInterval(run));
     const ruleE = splitToBound(nearestToEnd(run));
@@ -326,7 +408,7 @@ for (const sf of files) {
     }
     if (DO_HIST) {
       console.log(
-        `  [${run.from}..${run.to}] len${run.len} [${run.grid.map((c) => c ?? ".").join("")}] GT最像 b${gtB}(${(gtFrac * 100).toFixed(0)}%)  就近→b${ruleI} 终点→b${ruleE}`,
+        `  [${run.from}..${run.to}] len${run.len} mot${run.motion.toFixed(1)} [${run.grid.map((c) => c ?? ".").join("")}] GT最像 b${gtB}(${(gtFrac * 100).toFixed(0)}%) 赢面 ${gtFace}r${gtRot}  就近→b${ruleI} 终点→b${ruleE}`,
       );
     }
   }
@@ -392,6 +474,169 @@ for (const sf of files) {
       if (best.read >= 5 && best.match / best.read >= 0.75) got = true;
     }
     if (got) segCov++;
+  }
+
+  // ===== 全局钉死指派 (面内旋转 = 全视频常量) =====
+  // 逐链在 24 指派里自由取 max 把乱态底噪抬到 ~48% (9 格 1/6 巧合的 max 膨胀)。
+  // 相机不动 + 握持稳定 → 每个可见窗口 (B/U) 的面内旋转应是全视频常量, 像 κ 一样
+  // 全局拟合钉死; 逐链只剩 2 窗口 × 双端点 = 4 假设。乱态对照用"乱态自拟合 pin"
+  // (搜索侧 pin 是路径级变量, 错误路径也能挑自己的最优 pin — 这才是公平底噪)。
+  const PIN_B = assignsForFaces(["B"]);
+  const PIN_U = assignsForFaces(["U"]);
+  const pinnedBest = (
+    colors: readonly (ColorName | null)[],
+    state: readonly number[],
+    aB: readonly number[],
+    aU: readonly number[],
+  ): { match: number; read: number } => {
+    let bm = -1, br = 0;
+    for (const assign of [aB, aU]) {
+      let m = 0, rd = 0;
+      for (let i = 0; i < 9; i++) {
+        const c = colors[i];
+        if (!c) continue;
+        rd++;
+        if (COLOR_NAMES[Math.floor(omega[state[assign[i]]] / 9)] === c) m++;
+      }
+      if (m > bm) { bm = m; br = rd; }
+    }
+    return { match: bm, read: br };
+  };
+  /** 归属绑定拟合: 每段链绑定该段双端态, 16 组合取总匹配最优 (include 过滤链子集) */
+  const fitPinBound = (
+    statesOf: (t: number) => [readonly number[], readonly number[]],
+    include: (run: RestRun) => boolean = () => true,
+  ) => {
+    let best = { b: 0, u: 0, tot: -1 };
+    for (let rb = 0; rb < PIN_B.length; rb++) {
+      for (let ru = 0; ru < PIN_U.length; ru++) {
+        let tot = 0;
+        for (let t = 0; t < boundStates.length; t++) {
+          const [s1, s2] = statesOf(t);
+          for (const run of segChains[t]) {
+            if (!include(run)) continue;
+            const m1 = pinnedBest(run.grid, s1, PIN_B[rb], PIN_U[ru]).match;
+            const m2 = pinnedBest(run.grid, s2, PIN_B[rb], PIN_U[ru]).match;
+            tot += Math.max(m1, m2);
+          }
+        }
+        if (tot > best.tot) best = { b: rb, u: ru, tot };
+      }
+    }
+    return best;
+  };
+  const evalPin = (
+    statesOf: (t: number) => [readonly number[], readonly number[]],
+    pinOf: (run: RestRun) => { b: number; u: number },
+  ) => {
+    let match = 0, read = 0, good = 0, mid = 0, junk = 0;
+    for (let t = 0; t < boundStates.length; t++) {
+      const [s1, s2] = statesOf(t);
+      for (const run of segChains[t]) {
+        const pin = pinOf(run);
+        const r1 = pinnedBest(run.grid, s1, PIN_B[pin.b], PIN_U[pin.u]);
+        const r2 = pinnedBest(run.grid, s2, PIN_B[pin.b], PIN_U[pin.u]);
+        const r = r1.match >= r2.match ? r1 : r2;
+        match += r.match;
+        read += r.read;
+        const frac = r.read ? r.match / r.read : 0;
+        if (frac >= 0.85) good++;
+        else if (frac >= 0.6) mid++;
+        else junk++;
+      }
+    }
+    return { match, read, good, mid, junk };
+  };
+  const nSeg = boundStates.length;
+  const halfSeg = Math.floor(nSeg / 2);
+  const sigStates = (t: number): [readonly number[], readonly number[]] => [
+    boundStates[t],
+    afterState(nonRotIdx[t]),
+  ];
+  const nulStates = (t: number): [readonly number[], readonly number[]] => {
+    const s = (t + halfSeg) % nSeg;
+    return [boundStates[s], afterState(nonRotIdx[s])];
+  };
+  // 视频级 pin (对照: 已证伪 — 十字/F2L/OLL 换握持, 面内旋转非全视频常量)
+  const sigPin = fitPinBound(sigStates);
+  const nulPin = fitPinBound(nulStates);
+  const pinSig = evalPin(sigStates, () => sigPin);
+  const pinNul = evalPin(nulStates, () => nulPin);
+  // span 级 pin: 基连续化下跟踪 span 内旋转身份构造性恒定; 乱态对照同样每 span 自拟合
+  // (搜索侧 pin 是路径级变量, 错误路径也能按 span 挑最优 pin — 公平底噪)
+  const attachedSpans = [...new Set(segChains.flat().map((r) => r.span))].sort((a, b) => a - b);
+  const spanPinSig = new Map(attachedSpans.map((s) => [s, fitPinBound(sigStates, (r) => r.span === s)]));
+  const spanPinNul = new Map(attachedSpans.map((s) => [s, fitPinBound(nulStates, (r) => r.span === s)]));
+  const spanSig = evalPin(sigStates, (r) => spanPinSig.get(r.span)!);
+  const spanNul = evalPin(nulStates, (r) => spanPinNul.get(r.span)!);
+  const spanSizes = new Map<number, number>();
+  for (const r of segChains.flat()) spanSizes.set(r.span, (spanSizes.get(r.span) ?? 0) + 1);
+  const multiSpans = [...spanSizes.values()].filter((n) => n >= 2).length;
+
+  // 诊断: ① 颜色混淆矩阵 (链在自由指派最优对齐下 GT 色 vs 读出色 — 系统性混淆
+  // 可按视频标定修复; 均匀散布 = 错位/垃圾) ② 冷 vs 跟踪帧分层逐格准确率
+  // (跟踪采样 translation-only + step 量化, 若明显差于冷帧色块色, 毒在跟踪器)
+  const confusion = new Map<string, number>();
+  {
+    for (let t = 0; t < boundStates.length; t++) {
+      const [s1, s2] = [boundStates[t], afterState(nonRotIdx[t])];
+      for (const run of segChains[t]) {
+        // 双端取最优态 + 自由指派最优对齐 (给链最公平的对齐, 剩下的错就是颜色/错位)
+        const b1 = bestAssign(run.grid, s1, omega);
+        const b2 = bestAssign(run.grid, s2, omega);
+        const st = b1.match >= b2.match ? s1 : s2;
+        const bb = b1.match >= b2.match ? b1 : b2;
+        const assign = ASSIGNS.find((a) => a.face === bb.face)!; // 该面 rot0 起始下标
+        const ai = ASSIGNS.indexOf(assign) + bb.rot;
+        for (let i = 0; i < 9; i++) {
+          const c = run.grid[i];
+          if (!c) continue;
+          const gt = COLOR_NAMES[Math.floor(omega[st[ASSIGNS[ai].assign[i]]] / 9)];
+          confusion.set(`${gt}${c}`, (confusion.get(`${gt}${c}`) ?? 0) + 1);
+        }
+      }
+    }
+  }
+  let coldMatch = 0, coldRead = 0, trkMatch = 0, trkRead = 0;
+  let frNullMatch = 0, frNullRead = 0;
+  const segFrameObs: FaceObservation[][] = Array.from({ length: boundStates.length }, () => []);
+  {
+    // 帧 → 所在段 (含段双端语义): 复用链归属逻辑的简化版
+    const segOfFrame = (frame: number): number => {
+      if (frame < splitFrames[0]) return 0;
+      for (let si = 0; si < splitFrames.length - 1; si++) {
+        if (frame >= splitFrames[si] && frame < splitFrames[si + 1]) {
+          let t = tokIdxToProbsPre.get(si);
+          if (t === undefined) {
+            for (let jj = si - 1; jj >= 0 && t === undefined; jj--) t = tokIdxToProbsPre.get(jj);
+            for (let jj = si + 1; jj < tokens.length && t === undefined; jj++) t = tokIdxToProbsPre.get(jj);
+          }
+          return t ?? -1;
+        }
+      }
+      return -1;
+    };
+    const halfB = Math.floor(boundStates.length / 2);
+    for (let i = 0; i < meta.frames.length; i++) {
+      for (const g of grids[i]) {
+        const t = segOfFrame(meta.frames[i]);
+        if (t < 0) continue;
+        segFrameObs[t].push(g);
+        const b1 = bestAssign(g.colors, boundStates[t], omega);
+        const b2 = bestAssign(g.colors, afterState(nonRotIdx[t]), omega);
+        const b = b1.match >= b2.match ? b1 : b2;
+        const isTracked = g.blobCount === 0; // trackFaceGrid 产出 blobCount=0
+        if (isTracked) { trkMatch += b.match; trkRead += b.read; }
+        else { coldMatch += b.match; coldRead += b.read; }
+        // 帧级乱态对照 (远边界态双端, 同样自由指派 — 逐帧判别余量)
+        const s = (t + halfB) % boundStates.length;
+        const n1 = bestAssign(g.colors, boundStates[s], omega);
+        const n2 = bestAssign(g.colors, afterState(nonRotIdx[s]), omega);
+        const nb = n1.match >= n2.match ? n1 : n2;
+        frNullMatch += nb.match;
+        frNullRead += nb.read;
+      }
+    }
   }
 
   // 帧级软覆盖: 不要求成链, ±12/±25 帧内任一单帧网格与 GT 态匹配 ≥75% (读格 ≥5)
@@ -472,11 +717,93 @@ for (const sf of files) {
         .map((run) => ({ colors: run.grid }));
       return gated.length ? gated : null;
     }),
+    // 逐帧观测: 链共识会被垃圾帧多数覆盖纯净单帧 (帧级软覆盖 70% vs GOOD 链 ~12%),
+    // 直接喂单帧网格 + 搜索侧 drift-pin 平滑, 垃圾帧对所有假设近似等罚
+    rawObsFrames: segFrameObs.map((gs) => {
+      const picked = [...gs]
+        .sort((a, b) => b.colors.filter(Boolean).length - a.colors.filter(Boolean).length)
+        .slice(0, 8)
+        .map((g) => ({ colors: g.colors }));
+      return picked.length ? picked : null;
+    }),
+    ...(() => {
+      if (!(ORACLE_ACC > 0)) return { rawObsOracle: null, finalRawObsOracle: null };
+      let seed = 42 ^ boundStates.length;
+      const rng = () => {
+        seed = (seed + 0x6d2b79f5) | 0;
+        let z = seed;
+        z = Math.imul(z ^ (z >>> 15), z | 1);
+        z ^= z + Math.imul(z ^ (z >>> 7), z | 61);
+        return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+      };
+      const BU = assignsForFaces(["B", "U"]);
+      const FULL_MASK: (ColorName | null)[] = new Array(9).fill("W");
+      const synth = (
+        mask: readonly (ColorName | null)[],
+        state: readonly number[],
+        forcedAssign?: readonly number[],
+      ): RawFaceObs => {
+        const assign = forcedAssign ?? BU[Math.floor(rng() * BU.length)];
+        return {
+          colors: mask.map((c, i) => {
+            if (!c) return null;
+            const truth = COLOR_NAMES[Math.floor(omega[state[assign[i]]] / 9)];
+            if (rng() < ORACLE_ACC) return truth;
+            const wrong = COLOR_NAMES[(COLOR_NAMES.indexOf(truth) + 1 + Math.floor(rng() * 5)) % 6];
+            return wrong;
+          }),
+        };
+      };
+      return {
+        rawObsOracle: ORACLE_SINGLE
+          ? boundStates.map((st) => [synth(FULL_MASK, st, BU[0])])
+          : ORACLE_FULL
+          ? boundStates.map((st) => [synth(FULL_MASK, st, BU[0]), synth(FULL_MASK, st, BU[4])])
+          : segChains.map((chains, t) => {
+              const gated = chains
+                .filter((run) => run.len >= 4 && run.grid.filter(Boolean).length >= 7)
+                .sort((a, b) => b.len - a.len)
+                .slice(0, 3)
+                .map((run) => synth(run.grid, boundStates[t]));
+              return gated.length ? gated : null;
+            }),
+        finalRawObsOracle: ORACLE_FULL || ORACLE_SINGLE
+          ? synth(FULL_MASK, IDENTITY_PERM, BU[0])
+          : finalRawObs
+            ? synth(finalRawObs.colors, IDENTITY_PERM)
+            : null,
+      };
+    })(),
     finalRawObs,
     probs,
     scrambleSc,
     gtNoRot,
+    boundStates,
+    // trace 模 24 朝向比较, y 转体差异被吸收, afterState 直接可用
+    afterStates: nonRotIdx.map((j) => afterState(j)),
   });
+
+  // probs 质量: GT 面命中率 + 真路径概率赤字 (Σ log(p_max/p_gt), 视觉必须补回的分)
+  let greedyHit = 0, probDeficit = 0, worstDef = 0;
+  {
+    const FLOOR = 0.03;
+    for (let t = 0; t < boundStates.length; t++) {
+      const tok = gtNoRot[t];
+      const face = tok ? tok[0].toUpperCase() : null;
+      const dist = probs[t] ?? {};
+      const entries = Object.entries(dist) as [string, number][];
+      const pMax = entries.reduce((m, [, p]) => Math.max(m, p), FLOOR);
+      const pGt = face ? Math.max(dist[face] ?? 0, FLOOR) : FLOOR;
+      const argmax = entries.reduce((b, e) => (e[1] > b[1] ? e : b), ["", 0] as [string, number])[0];
+      if (face && argmax === face) greedyHit++;
+      const d = Math.log(pMax / pGt);
+      probDeficit += d;
+      if (d > worstDef) worstDef = d;
+      if (DO_HIST && d > 1.5) {
+        console.log(`  probs坏段 t${t}: GT=${tok} p(${face})=${(dist[face ?? ""] ?? 0).toFixed(3)} argmax=${argmax}(${pMax.toFixed(3)}) 赤字${d.toFixed(1)}`);
+      }
+    }
+  }
 
   const acc = margRead ? ((margMatch / margRead) * 100).toFixed(1) : "-";
   const nacc = nullRead ? ((nullMatch / nullRead) * 100).toFixed(1) : "-";
@@ -484,6 +811,32 @@ for (const sf of files) {
   console.log(
     `${name}: 区间 ${runs.length}, 边界 ${covered}/${boundStates.length} 有观测, 软覆盖天花板 ${softCov}/${boundStates.length}, 帧级软覆盖 ±12:${frameCov12} ±25:${frameCov25}/${boundStates.length}, **段双端证据 覆盖 ${segCov}/${boundStates.length} 逐格 ${segRead ? ((segMatch / segRead) * 100).toFixed(1) : "-"}%** (y段丢链 ${segYDropped}), 读格 ${margRead}, 边缘化逐格 ${acc}% (乱态对照 ${nacc}%)  质量 GOOD ${nGood}/mid ${nMid}/JUNK ${nJunk}  归属规则命中(GT≥80%区间): 就近 ${agreeInterval}/${nDiag} 终点 ${agreeEnd}/${nDiag}  κ=ω${omegaIdx}  赢面: ${wins}  末帧=${finalRawObs ? finalRawObs.colors.filter(Boolean).length + "格" : "无"}`,
   );
+  console.log(
+    `  probs质量: GT面命中 ${greedyHit}/${boundStates.length}, 概率赤字合计 ${probDeficit.toFixed(1)} (最坏单段 ${worstDef.toFixed(1)})`,
+  );
+  console.log(
+    `  钉死指派 视频级: 信号 ${pinSig.read ? ((pinSig.match / pinSig.read) * 100).toFixed(1) : "-"}% vs 乱态 ${pinNul.read ? ((pinNul.match / pinNul.read) * 100).toFixed(1) : "-"}% (分离 ${pinSig.read && pinNul.read ? ((pinSig.match / pinSig.read - pinNul.match / pinNul.read) * 100).toFixed(1) : "-"}pp)  |  span 级(${attachedSpans.length} span, ≥2链 ${multiSpans}): 信号 ${spanSig.read ? ((spanSig.match / spanSig.read) * 100).toFixed(1) : "-"}% (GOOD ${spanSig.good}/mid ${spanSig.mid}/JUNK ${spanSig.junk}) vs 乱态 ${spanNul.read ? ((spanNul.match / spanNul.read) * 100).toFixed(1) : "-"}% (分离 ${spanSig.read && spanNul.read ? ((spanSig.match / spanSig.read - spanNul.match / spanNul.read) * 100).toFixed(1) : "-"}pp)  |  自由24指派: ${segRead ? ((segMatch / segRead) * 100).toFixed(1) : "-"}% vs ${nacc}%`,
+  );
+  {
+    const perColor = new Map<string, { ok: number; tot: number }>();
+    const offDiag: [string, number][] = [];
+    for (const [k, n] of confusion) {
+      const gt = k[0], rd = k[1];
+      const e = perColor.get(gt) ?? { ok: 0, tot: 0 };
+      e.tot += n;
+      if (gt === rd) e.ok += n;
+      else offDiag.push([k, n]);
+      perColor.set(gt, e);
+    }
+    offDiag.sort((a, b) => b[1] - a[1]);
+    const colStr = [...perColor.entries()]
+      .sort((a, b) => b[1].tot - a[1].tot)
+      .map(([c, e]) => `${c}:${((e.ok / e.tot) * 100).toFixed(0)}%×${e.tot}`)
+      .join(" ");
+    console.log(
+      `  逐色准确率(自由对齐): ${colStr}  混淆TOP: ${offDiag.slice(0, 8).map(([k, n]) => `${k[0]}→${k[1]}×${n}`).join(" ")}  |  冷帧逐格 ${coldRead ? ((coldMatch / coldRead) * 100).toFixed(1) : "-"}% (${coldRead})  跟踪帧逐格 ${trkRead ? ((trkMatch / trkRead) * 100).toFixed(1) : "-"}% (${trkRead})  帧级乱态对照 ${frNullRead ? ((frNullMatch / frNullRead) * 100).toFixed(1) : "-"}%`,
+    );
+  }
 }
 
 // 汇总
@@ -498,21 +851,40 @@ console.log(
 );
 
 if (DO_SEARCH) {
-  console.log(`\n===== 端到端锚定搜索 (静止区间观测 + probs, 限面 ${SEARCH_FACES.join("/")}) =====`);
+  console.log(
+    `\n===== 端到端锚定搜索 (${PER_FRAME ? "逐帧观测" : "静止区间观测"} + probs, 限面 ${SEARCH_FACES.join("/")}${DRIFT ? ", drift-pin" : PIN_MODE ? ", 钉死pin" : ""}) =====`,
+  );
   let sumOk = 0, sumTot = 0, anchoredCount = 0;
   for (const e of evals) {
-    // 门控后的高置信链可信度高于全体链实测均值, 取固定 0.75
-    const hitProb = 0.75;
+    // 门控后的高置信链可信度高于全体链实测均值, 取固定 0.75; 逐帧观测更噪, 0.7
+    const hitProb = PER_FRAME ? 0.7 : 0.75;
+    const traceLog: string[] = [];
     const t0 = performance.now();
     const r = anchoredBeamSearch(e.probs, e.scrambleSc, {
       beamWidth: BEAM,
       maxRotInserts: 3,
-      rawObservations: e.rawObs,
-      finalRawObservation: e.finalRawObs ?? undefined,
+      rawObservations: e.rawObsOracle ?? (PER_FRAME ? e.rawObsFrames : e.rawObs),
+      finalRawObservation: (e.rawObsOracle ? e.finalRawObsOracle : e.finalRawObs) ?? undefined,
       rawHitProb: hitProb,
       rawMissProb: (1 - hitProb) / 5,
       rawFaces: SEARCH_FACES,
+      rawPinWindows: PIN_MODE || DRIFT,
+      rawPinDrift: DRIFT,
+      rawJunkProb: JUNK_P,
+      forward: FORWARD,
+      // 相邻帧观测强相关 (~10ms 间隔同姿态同错误), 有效独立样本 ~1/3
+      visualWeight: PER_FRAME ? 0.35 : 1,
+      debugGtStates: TRACE ? (FORWARD ? e.afterStates : e.boundStates) : undefined,
+      onSegmentTrace: TRACE
+        ? (t, info) => {
+            traceLog.push(info.rank < 0 ? `t${t}:†` : `t${t}:${info.rank}(落后${info.gap.toFixed(1)})`);
+          }
+        : undefined,
     });
+    if (TRACE) {
+      // 逆序搜索, traceLog 按 t 降序; 真路径死亡点 = 最后一个非 † 之后的首个 †
+      console.log(`  GT存活: ${traceLog.join(" ")}`);
+    }
     const ms = Math.round(performance.now() - t0);
     const res = r.anchored ? r : r.bestUnanchored;
     let correct = 0;
