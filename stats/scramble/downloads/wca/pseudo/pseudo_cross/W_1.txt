@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / W / bin 1
-# Population in this bin: 317
+# Population in this bin: 318
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2478001,R2 B' D2 F' L2 D2 B F2 D R2 U' L B2 U2 L' F' D' F R2,W,Santo Domingo Spring 2014 (2014-03-23),333oh Final A E2
@@ -181,7 +181,7 @@
 3147158019,L2 B2 D2 B2 D2 F2 L R' U R' D' F' L U F' L R2 B' L B,W,Polish Championship 2023 (2023-10-06~08),333mbf Final A #1
 3151446038,F D F2 L2 B R L2 D L2 U' R D2 F U2 F2 D2 F R2 B' L',W,UCSD Extravaganza PBQ 2023 (2023-10-08),333mbf Final B #1
 3167340001,F' B2 D' L2 D L' F L' R2 F2 R2 B' D2 B' L' F2 U,W,Chengdu Flash Cube Open 2023 (2023-10-15),333 R1 J #2
-3209143001,F2 L' R2 D2 U2 R' B2 R2 B L' D B D2 R B L' D U R2,W,NZ North Island Championship 2023 (2023-10-27~29),333 R2 A #5
+5735638001,R2 U L2 D2 B R2 B D2 R2 F D2 F' L' U F2 D' B' R U' L2,W,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R1 C #1
 5250331001,R' U' F R2 B2 R' U2 R' D2 R2 B2 F2 R' D2 F U2 R' D F2 L U R' D R' U' F,W,Capivara Curitiba 2025 (2025-12-06~07),333fm Final A #1
 3232951001,B2 U L2 U B2 D2 F2 D L F D2 L F D U2 R F U2,W,Cubing Kazakhstan Nationals 2023 (2023-11-03~05),333oh R1 A #5
 5119153001,R F2 U' F2 U L2 R2 B2 F R' F U B D F2 D2 B' R,W,Please Don't Flip Katipunan 2025 (2025-10-19),333 R1 C #5

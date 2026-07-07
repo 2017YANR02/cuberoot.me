@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / OR / bin 2
-# Population in this bin: 299
+# Population in this bin: 301
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4993400001,F2 R' B2 D2 U2 L' D2 B2 L2 D L2 U2 B' D' F' R F2 R D,O,Bilbao Open 2025 (2025-08-30~31),333 R1 C E1
@@ -94,7 +94,7 @@
 1046855001,B2 R F2 L2 U' L2 B R B R' U2 L' F2 R' B2 R U2 R,O,Huehue Open 2019 (2019-03-09~10),333 R1 C #2
 4087938001,U' R' D B L2 R2 U2 F' R2 B R2 D' L2 D2 U2 R D' L2 U,R,Apol Open Guayaquil 2024 (2024-09-07),333oh Final C E1
 5316465001,R2 B2 D' U2 B2 R2 B2 L2 U F' U2 L2 R2 U' F2 L F' L D,O,Ottawa 3x3x3 Winter C 2026 (2026-01-10),333 R2 B E2
-1113366001,R2 U' R2 B2 L2 U' B2 L2 U F' U F' U L2 D2 L R2 D2 B2,O,French Championship 2019 (2019-04-20~22),333 R2 A #1
+5735370001,F D' R B R2 U F2 D' U' B2 L2 B2 R U R' B D2 L' D L' F',R,Queensland Open 2026 (2026-06-27~28),333bf Final B #2
 1119644001,L U2 R' U2 D2 B U2 F D L B2 U R2 B2 D F2 D2 B2 U,R,Flag City Spring 2019 (2019-04-28),333 R1 B #2
 1137497001,B2 U' R2 D' F2 L2 U R2 U B' R B2 U2 L B' F' L F' L' U,O,Play Cube X4 2019 (2019-05-11~12),333 R1 H #2
 5147289001,R' L D2 L B' R' D' B' R' B U2 R2 F2 U F2 U B2 L2 F2,O,Crossfield Fall 2025 (2025-11-01),333 Final D #2
@@ -182,7 +182,7 @@
 3282489001,L' B' D2 L' F L2 U' L' D2 B2 R2 B2 L' F2 R' D' L D',O,Azerbaijan Nationals 2023 (2023-11-18~19),333oh Final B E1
 3293022001,L D2 B2 D2 R2 B2 D F2 D R2 D L2 R U R B R2 B2 L2,O,Dutch Nationals 2023 (2023-11-25~26),333 R1 B #4
 3413921001,F' D2 R' U R' F B2 D' R2 B2 R2 B D2 R2 B' U2 L2 D2,O,Ottawa 3x3x3 Winter C 2024 (2024-01-13),333 R1 C #3
-4273213001,F R' F2 U2 R' U2 L' F2 U2 L' B' D2 F' L2 B D' B2 D L,R,Cubing With Cold Hands Whistler 2024 (2024-11-09),333 R1 B E2
+5735407001,F' L2 B2 F' L2 F D2 U' R2 F2 D2 R' U B F' D' B D' L' F2,R,Queensland Open 2026 (2026-06-27~28),333bf R1 B #3
 5645687001,D U L2 D2 L2 B2 D' U2 F' U2 B' R2 B' D L' D L2 D2,R,Las Palmas Ahome 2026 (2026-05-16~17),333 R2 A #5
 3464774034,F' R2 L B' L2 U' R U B2 D2 B2 D2 L' F2 D2 L2 D2 F2 L' B' L',O,Please Don't DNF Kuwait 2024 (2024-01-27),333mbf Final A #1
 4376582016,R' D B2 R2 U' B' R L2 B U' L F2 R F2 R' U2 F2 R B2 L',R,Swisscubing Cup Final 2024 (2024-12-14~15),333mbf Final A #1

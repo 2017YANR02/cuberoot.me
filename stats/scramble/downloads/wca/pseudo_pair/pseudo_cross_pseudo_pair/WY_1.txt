@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / WY / bin 1
-# Population in this bin: 339
+# Population in this bin: 340
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5640748001,U2 R' U L F B2 R L2 U' F2 R2 L2 D2 R2 L2 F2 B L D,Y,Perth Puzzle Party 2026 (2026-05-16),333 Final A #1
@@ -163,7 +163,7 @@
 1764244001,L U R2 L2 B2 D2 R' U2 B L' U2 B D2 L2 B2 R2 F' D2,Y,Welcome Back Taipei 2021 (2021-12-19),333 R2 C #2
 5049063001,U R2 U2 R' B2 R' B2 R2 D L2 U2 L' B' L' D' B L2 R,W,Hvidovre Liga II 2025 (2025-09-28),333oh R1 C #4
 1828201066,U' D2 B D' B R' L' U F2 U D2 F2 L2 U2 D' L2 F2 R F L2,Y,Kidderminster - British Blind Off 2022 (2022-03-12~13),333mbf Final B #1
-1828549001,D F U' B2 D L2 U B2 D B' R U2 L' B' L' U L' D',W,Lima Cuberano 2022 (2022-03-12~13),333 R1 C #3
+5735638001,R2 U L2 D2 B R2 B D2 R2 F D2 F' L' U F2 D' B' R U' L2,W,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R1 C #1
 5486109007,R' D2 L B2 L2 D2 F' U' R2 F L D B L D' B R B' L',W,Budapest Open 2026 (2026-03-28~29),333mbf Final A #1
 1858779001,L' F' D2 L U' F' L B' R2 B2 D' B2 U2 B2 L2 D2 R2 D2 R',Y,Slow N Steady Spring 2022 (2022-04-02),333oh Final A E2
 1865343001,D2 R' D B' D2 B' D2 F' L2 R2 F2 R2 D F2 L D' B U2 L,Y,Farnworth Spring B 2022 (2022-04-10),333oh R1 A E2

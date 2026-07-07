@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / G / bin 4
-# Population in this bin: 62
-# Samples listed: 62 (all entries in this bin)
+# Population in this bin: 63
+# Samples listed: 63 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,G,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -67,3 +67,4 @@
 5311833001,B' R D2 B' D2 L2 R2 F' U2 R2 B2 D2 L' D2 B2 D' R D2 L,G,Zigzag Zambia Cubing 2026 (2026-01-03),333bf Final B #4
 5516180001,L' U2 L2 U2 F R2 B' U2 B R U2 R' B F2 L' F D,G,Marble City Cubing NY 2026 (2026-04-11),333 Final B #1
 5693421001,D F' U2 B' D2 F' U2 R' U2 B2 F2 U2 R' B D' L2 R' B' L2,G,Burnaby Cubes Big & Small 2026 (2026-06-07),333bf Final A E2
+5728205001,U' L2 B2 U B2 U' B' D2 F D2 U B' F U B' L2 F2,G,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #5

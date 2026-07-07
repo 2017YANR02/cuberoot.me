@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGOR / bin 8
-# Population in this bin: 442
+# Population in this bin: 444
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -146,7 +146,7 @@
 2619205001,R2 B D2 B2 U2 R2 B L2 B2 D2 L' R B' R' B2 D B F2 U2,O,DNFools Boulevard 2023 (2023-04-01~02),333 R2 A #3
 2582089007,F2 L2 D2 B' L2 F2 L2 F' D' L' R' F2 U' L' U L2 U R' U2 B,O,Aarhus Spring 2023 (2023-03-25~26),333mbf Final A #1
 1136604001,F' R2 B D2 F' D2 F2 D2 U2 F' D' L2 R2 F U' L' U L' R' F2,G,London Open 2019 (2019-05-11~12),333oh Final A E2
-4889075001,F2 U L' F B U2 D' B2 D R F2 U2 R2 D R2 B2 L2 F2 D B R',O,Virginia Quiet Championship 2025 (2025-07-26),333bf R1 B E1
+5728993001,L F2 D2 B U' B2 U2 F' R2 D' B2 R2 L' D2 L F2 D2 L F2,B,Almourol Riverside 2026 (2026-06-27~28),333oh Final A #3
 1142358001,R2 F U' R2 U F U' R2 U L2 B L2 U2 R2 F2 L2 F2,B,Cochabamba Open 2019 (2019-05-12),333 R1 C E2
 2378159001,F2 D2 F D2 F2 L2 U2 L2 B U F D R B2 R' F D2 B2 F,O,KSF Club Almaty 2022 (2022-12-10~11),333oh R1 C #5
 2312089001,B F U2 B L2 B2 F2 D2 L2 R' B2 L' D' F2 D2 L' F2 D2 B',G,Weston-super-Mare Autumn 2022 (2022-11-19~20),333 R1 A #3
@@ -157,7 +157,7 @@
 1271087001,U L2 D B2 D R2 U2 R' D2 B2 F U' R B D2 F' R D,G,Speedcubing ESYA 2019 (2019-08-24),333 Final A E2
 4470362001,F U' B2 L2 U B2 L2 D F2 R2 L' D2 U B R F' R U,G,Brisbane Summer 2025 (2025-02-01~02),333 R1 C #1
 1281536001,B' D' F R F' R' D2 B D R2 B2 R' B2 D2 L B2 U2 B2 U2,B,Ukrainian Nationals 2019 (2019-08-23~25),333 R1 C #4
-4595542010,U' B U' F2 D2 U' R2 D2 R2 L F U L' B' F L2 F L,G,Buckeye Big Brain Ohio State 2025 (2025-03-08~09),333mbf Final A #1
+5736478001,R2 D' L' U2 D2 L2 F' D' R2 F' L2 U2 B2 L2 U' L2 U D,B,BBQ Ropaži 2026 (2026-07-04),333oh Final B #5
 3155054001,L U' F U' F R2 F' R L' B R' B2 U2 D' B2 D' B2,O,Cochabamba Feria al Cubo 2023 (2023-10-08),333 R2 D E1
 1297706001,U' B2 D2 L2 R2 F2 D2 L' F2 R' D2 B R' D B U B D2 U',O,Ramenskoe Open 2019 (2019-09-14~15),333oh Final A #5
 4351235001,B2 D' R U2 L' F2 U2 R2 U2 R D2 B D' B' U' R F L2 F2,O,Taiwan Championship 2024 (2024-12-06~08),333oh R1 C #1

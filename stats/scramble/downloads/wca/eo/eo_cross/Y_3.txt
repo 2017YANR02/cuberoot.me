@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / Y / bin 3
-# Population in this bin: 223
+# Population in this bin: 225
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5277716001,R2 D2 L2 D' R2 F2 B U F2 U' L2 U L2 B2 U R2 D L,Y,Relámpago Medellín Explora 2025 (2025-12-13~14),333oh R1 B E2
@@ -41,14 +41,14 @@
 651935001,D B2 L2 R2 D2 U' R2 U B' D' B2 R2 F L2 D2 B U B2,Y,Tuscany Open 2017 (2017-11-25),333 R2 C #3
 660472005,D2 U2 B2 L2 R' D2 R2 F2 U2 F2 U' L' D' B' L' F D2 B2 F R' B R2,Y,Polish Nationals 2014 (2014-05-31~06-01),333mbf Final A #2
 660790004,L2 B2 R F2 R B2 U2 B2 R B2 L2 B U F' L' R U' R F2 L2 B R,Y,Helsinki Blind Weekend 2015 (2015-08-15~16),333mbf Final A #2
-660939020,U' F2 R2 B2 F2 D F2 U2 B2 D B' U2 L2 F' R B D R2 B F L2,Y,Indian Open Rubik's Cube 2016 (2016-03-04~06),333mbf Final A #3
+5736703001,D' R2 U L2 B2 U' B2 D R2 F2 D B D' B' D' B' D L' F',Y,Amman Side Events 2026 (2026-07-03),333bf Final B #2
 5489588001,D R' F2 L2 B2 R2 U' L2 F2 R2 F' L' D' R B' L2 B2 L',Y,IISER Pune PARAM Open 2026 (2026-03-29),333oh Final C #1
 661146001,L2 R2 B' D2 B' R2 B2 L2 U F2 L2 F' R F R' D2 B L B2,Y,Porto Alegre Open 2016 (2016-10-15~16),333mbf Final A #2
 661211013,U' F2 R2 F2 R2 D R2 U' R2 U R' F U' R U F' R2 F L U L' F',Y,Weifang Winter 2016 (2016-12-11),333mbf Final A #1
 661386003,F2 L2 R2 U' F2 U' B2 D' B2 D B D B' U R D2 R U2 L2 U',Y,QUALberta 2017 (2017-06-10),333mbf Final A #1
 661487023,B F2 R2 B2 L2 D2 F' L2 B R2 F' R' D2 U' L' F D2 R U2 R' U2 B R2,Y,SCMU 2017 (2017-09-01~03),333mbf Final A #2
 681654001,U2 B2 F D2 L2 R2 F' L2 R D2 L F' U F' L' U2 F',Y,Jinhua New Year's Day 2018 (2018-01-01),333 R1 B #3
-682914001,U F2 B' R2 L2 B D2 B' L' D' F2 U2 F2 U2 R' L2 B2 D2 R',Y,Shaastra Cube Open 2018 (2018-01-06~07),333 R2 F #1
+5739068001,B' U' F2 U2 B2 L D R F' R2 F2 U2 R' L2 D2 R' L2 D2 F',Y,Taipei Cube Open 2026 (2026-06-27~28),333 R2 C #2
 691081001,U' L2 U' R2 F2 U F2 D' F L2 U' R F2 R B' L' U2 R2 U,Y,Drishti Cube Open 2018 (2018-01-20),333oh R1 F #3
 5200675001,F2 L U' L' D' B2 L' F2 L2 B2 U2 F2 D' B2 U B2 D' B' L',Y,Balam Cubes Baywalk Sides 2025 (2025-11-15~16),333oh R2 B E2
 726184001,B' R' U R2 U B2 R' U D' L2 D2 F D2 R2 B' L2 D2 F' D2 R2,Y,Indian Open 2018 (2018-03-17~18),333 R1 A #5

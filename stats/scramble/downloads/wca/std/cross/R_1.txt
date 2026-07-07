@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / R / bin 1
-# Population in this bin: 107
-# Samples listed: 107 (all entries in this bin)
+# Population in this bin: 108
+# Samples listed: 108 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 13530001,F' R D' L D' B2 D2 R' F' U' R2 D2 F2 R B2 L2 F2 R',R,Naftusia Open 2014 (2014-04-12~13),333oh Final A #5
@@ -112,3 +112,4 @@
 5532085001,F' R2 B2 U' F R2 F' D F L U2 B U2 R2 B2 D2 L2 U2 B,R,Cube Against Cancer Hanoi 2026 (2026-04-14),333 R1 C E2
 5549782001,U' F D B2 U F2 D L2 B R D2 F D2 R D' U' L U' B' L,R,Brighton 3x3 Day 2026 (2026-04-18),333bf R1 A #4
 5722367001,U' B' D F' D2 F L2 F' R2 F' L2 U' F L B' F2 L D2 F2,R,Alameda County Fair 2026 (2026-06-27),333 Final A E2
+5730147001,D2 F' D2 L2 U D' R U' R2 B2 L F2 D2 L2 U2 R' U2 R' B U',R,Hampshire Summer 2026 (2026-06-27~28),333 R2 B E1

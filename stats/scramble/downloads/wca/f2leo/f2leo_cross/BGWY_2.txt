@@ -1,13 +1,13 @@
 # Scramble samples — f2leo / f2leo_cross / BGWY / bin 2
-# Population in this bin: 579
+# Population in this bin: 582
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5392183001,R F' L U F2 U' R2 B2 U B2 U F' L' B2 D' F D2,G,Melbourne Summer 2026 (2026-01-24~26),333 R1 E E1
 33026001,U2 R' D2 F' L' U R' B' L F2 L D2 F' B2 L2 D2 R2 L2,G,Masterpress Summer 2014 (2014-06-28~29),333oh Final A E2
-41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,G,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
+5735877001,R2 U F2 U F2 U' L2 D L' U' L' D R2 U B F L B',G,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R2 A #5
 4536411001,L2 D2 F2 D' U B2 R2 L U' F2 L' B2 R B D L2 U' B U2 B R,B,Hverdagscubing XV - Hvidovre med Parity 2025 (2025-03-03),333bf Final B #3
 57893001,D' U' F2 U' B2 U B2 U2 L' F2 U' L' F L D L D2 B' U2 L2 B R',B,Champagne Summer Open 2014 (2014-09-13~14),333bf R1 B E2
 5634398032,L U R2 F2 R2 F2 D F2 D2 L2 F2 B' U' L' B2 D2 L D' R D2 B R,G,Please Don't DNF Beijing 2026 (2026-05-16~17),333mbf Final A #2
@@ -66,7 +66,7 @@
 452564001,D2 F' U2 B2 D2 U2 L2 F R F' U' L' U' R' F2 L2 D2 L,G,Hamburg Open 2017 (2017-02-25~26),333oh R1 A #1
 456178001,D2 B U2 B' R2 F' D2 B2 L' B' L R2 D' B U R2 F2 U2 B',Y,Puget Sound Winter 2017 (2017-02-25),333 R1 B #4
 456914001,F2 L2 U2 B2 U2 L D2 L D2 B' R F2 R U F D2 U' B2 R,W,SynoCubix Open 2017 (2017-02-26),333 Final B #1
-5008721001,R' F' B2 R D2 L2 D' F D' L' U2 D2 F2 L' F2 R U2 D2,W,Stevenage September 2025 (2025-09-06~07),333 R1 D #1
+5735563001,B2 F2 D' L2 F2 U' B2 R2 U B' D U2 B2 R' U F' D' U R2,B,Queensland Open 2026 (2026-06-27~28),333 R1 F E1
 5543888007,F R D' L2 R2 B2 F' D2 F2 R2 U' F U2 L2 U B' R' U B' L2,G,Please Be Quiet Singapore April 2026 (2026-04-18),333mbf Final A #1
 3093989001,B2 D2 L2 D R2 B2 D' B2 L2 U2 R2 F' U' B2 U' F' U' R' U',B,Kedah Cube Open 2023 (2023-09-23),333 R1 C #2
 2562523038,R B2 D' F U2 R2 F2 R2 B' U2 F L' B2 F2 R' B2 D' B L',G,Bothell Spring Open 2023 (2023-03-17~18),333mbf Final A #1
@@ -103,7 +103,7 @@
 2449369001,U F2 D2 F2 L2 U2 F2 U2 F D2 L2 D' R' U2 F' D2 U' F2 D2,G,Pitic Open 2023 (2023-01-21~22),333 R1 C E1
 660568018,D' U' F2 D U2 F2 L2 B' R D2 U2 F2 L R2 B2 D L' F2 L,W,Hungarian Open 2014 (2014-10-17~19),333mbf Final A #2
 4299567001,U' R' D F2 R' D2 B2 L D L U2 R2 D B2 R2 B2 D' L2 U2,B,Olsztyn Squared 2024 (2024-11-16),333bf Final A #1
-5579437001,B2 R F2 U2 F2 D2 L F2 U2 L F L2 D R F' U' F U,B,Northern Tier Twist 2026 (2026-04-25),333oh Final B E1
+5737636001,B' F2 D2 R2 F' L2 F R' B' D' L' F L' B2 U B2 F' U2 L2,B,IMETRO Open 2026 (2026-07-04),333bf Final B #3
 3300927001,D U F2 R2 D L2 B2 U2 L' B2 D U' L U' F' D B2 F' R,B,TCG Space II Santa Anita 2023 (2023-11-25~26),333 R1 A #2
 1668567001,B2 R U D2 R U2 R U2 F2 R' D' L' R2 D' U2 F2 D2,W,Lubelska Liga Speedcubingu II Biała Podlaska 2021 (2021-07-10~11),333oh Final A #1
 4634477043,F2 R2 F' U F' U' F' L' F2 U' D' F2 U2 F2 L2 D L' U',B,Nacionales Chilenas 2025 (2025-02-07~09),333mbf Final A #1

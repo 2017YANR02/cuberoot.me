@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / W / bin 9
-# Population in this bin: 358
+# Population in this bin: 359
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4659675010,F L2 F L2 R2 B2 F' R' B2 L2 B R' B2 U' F' U2 L' D B2 L,W,Rhein-Neckar Please Be Squiet 2025 (2025-04-19~20),333mbf Final A #1
@@ -121,7 +121,7 @@
 1228313001,B' L U' R2 U F2 U' F R D L2 F' U2 F' U2 B2 L2 U2 F D2 L2,W,Speedcubing Academy Xelajú 2019 (2019-05-17~19),333oh R1 B E1
 1248056001,F U2 R2 B2 U2 B2 U2 R2 F2 D' R F2 L B' R' U F2 U F R2,W,Urnieta Open 2019 (2019-08-03~04),333ft Final A #3
 1250624001,B2 L B2 U2 L' R' U2 L' D2 U R2 D F L2 R2 D' F' R' B' D',W,Ha Noi Championship 2019 (2019-08-03~04),333 R1 H #1
-1251764041,B2 L2 U R2 D' B2 R2 B2 L2 U2 R D2 F' U' L B F R' D' L B,W,CubingUSA Nationals 2019 (2019-08-01~04),333mbf Final A #2
+5737401001,F' R2 D F B' D L' F2 D2 R2 D B2 U' R2 F' D R' D,W,Lazarillo Salamanca Open 2026 (2026-07-04~05),333 R1 A #5
 3559543001,D' F' R B L F2 B2 D' R2 D2 F2 R2 B' U2 B D2 L2 F2 U F',W,Glasgow Spring 2024 (2024-03-02~03),333 Final C #3
 1259043001,U2 R' F2 U2 R D2 B2 U2 F2 U' L2 D F' R B D2 R2 D2 U B',W,Vinnytsia Cube Cup 2019 (2019-08-10~11),333oh R1 A E1
 3592156062,F' B' U F R' F' D' B' D2 F' U2 D2 R2 L B2 U2 R U2 R' U2 L' F2,W,Amherst Spring Challenge 2024 (2024-03-16),333mbf Final A #1

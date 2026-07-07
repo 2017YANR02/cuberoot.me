@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / O / bin 8
-# Population in this bin: 116
-# Samples listed: 116 (all entries in this bin)
+# Population in this bin: 117
+# Samples listed: 117 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 23198001,L2 U2 F2 R' L' B2 L' F' U D' R U2 F' B' L2 B' L2 D2 B',O,Speedcubing Los Alpes 2014 (2014-05-19),333 R1 A #1
@@ -121,3 +121,4 @@
 5677593001,R' U' F R F2 L' F2 L' F2 U2 D' R' D2 F' R' U' L2 D' R2 D2 B2 R' U' F,O,New York Multimate PBQ V 2026 (2026-05-29~31),333fm R1 A #3
 5679860001,L' U' L U2 F' R' F U' D' B' D2 B2 U B2 U R2 B2 R2 B' L',O,The Last Frontier Spring 2026 (2026-05-30),333bf Final A #2
 5708571002,B U D2 R' L D' F L2 F' D' B' U' F2 D' L2 U2 F2 L' F,O,More Cubes Kelburn 2026 (2026-06-21),333mbf Final A #1
+5736122001,R F' R' B2 U' F2 L2 U' L2 D2 F2 B R' F' R2 F L U L2,O,Cubo Manía MFS Bello 2026 (2026-06-28),333 R2 C #3

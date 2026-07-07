@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / W / bin 8
-# Population in this bin: 992
+# Population in this bin: 995
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1379780001,D F' B R' L2 D' R2 U' B2 D' L2 U B2 D2 R2,W,Tangerang Open 2019 (2019-10-27),333oh Final C #1
@@ -186,7 +186,7 @@
 3801844001,L B R' U L2 U' R2 D2 F2 D F2 R' D2 L' F D2 F2 U',W,Sunway Velocity Mall Open 2024 (2024-05-25~27),333 R1 I E2
 3754838001,R D2 L F D L' F' D2 R B2 U2 L2 B R2 L2 F L' F',W,50 Years of Cubing Bulgaria 2024 (2024-05-11~12),333 R1 A #2
 1552689001,F2 D U2 B2 U' L2 F2 L2 F D2 F R' F' R2 D2 B2 F' L' R',W,Cebu Open 2020 (2020-02-15~16),333 R2 B E1
-1039950001,F2 D' R D2 F' L2 F L' B' D2 B2 D2 L' B2 R' D2 L' D2 L,W,Carte Blanche Kube Open 2019 (2019-03-02~03),333ft Final A #1
+5736877001,U2 F' L' U2 R' B2 L2 B2 U2 B' U2 L' F2 D B' U' B U,W,Anibal ao Cubo 2026 (2026-07-04),333oh Final B E1
 3886816001,R2 D2 B' D F L F2 B2 R U2 L U' R2 U2 F2 D' L2 U',W,Desafio Hungria em SP 2024 (2024-06-22),333 R2 B #2
 791689001,L2 U R F2 U B L U' L F' L U2 F2 U2 F2 L2 U2 L',W,GhanaTantra 2018 (2018-06-02),333 R1 D E2
 3675729015,R2 U2 B' L2 R2 F2 D2 F' D L' R' D' U2 R' U' L U R2 D L,W,Slow N Steady Spring 2024 (2024-04-13~14),333mbf Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BGWY / bin 0
-# Population in this bin: 49
-# Samples listed: 49 (all entries in this bin)
+# Population in this bin: 50
+# Samples listed: 50 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 111084001,U R' D R2 U2 B2 R U' B U' D2 F2 D2 F2 R2 B L2 F2 L2,Y,Osijek Open 2015 (2015-02-21~22),333oh R2 B #3
@@ -54,3 +54,4 @@
 5572071001,D2 F2 U' F R D2 F' U D2 R B2 L2 U' B2 R2 B2 U',B,National Trail Open OH 2026 (2026-04-25),333 R2 B #4
 5575506001,F L' D2 R' F2 L U' R' D' U R2 F' R' U' B2,W,Drammen Open 2026 (2026-04-18~19),333oh R1 A E2
 5642873001,U' L2 B2 U2 B2 F2 L2 D R D2 B' L R B L B' U' F2 D',B,Hamoye Jinju 2026 (2026-05-16~17),333 R1 G E2
+5732545001,R' B' D2 R2 B2 L2 B D2 L2 R2 D L' B' D2 B R2 D2 F,B,Cubing at COTA 2026 (2026-06-27),333oh Final A #2

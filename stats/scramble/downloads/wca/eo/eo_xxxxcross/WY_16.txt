@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / WY / bin 16
-# Population in this bin: 45
-# Samples listed: 45 (all entries in this bin)
+# Population in this bin: 47
+# Samples listed: 47 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 195084001,B R' B' D' L F' U' L' B U D2 R' F2 R2 D2 F2 D2 R' D2 L2,W,Arnold Classic Rubik 2015 (2015-09-25~27),333 R2 A #2
@@ -50,3 +50,5 @@
 5306243001,L R2 B2 D2 L2 F2 U2 B D2 B' D' U B L' R U L' F' L D2 B' L2,W,CF Goes Crazy II Brzeziny 2026 (2026-01-02~04),333bf R2 A #4
 5460443001,L' D R2 D' B2 D2 F2 D B2 L' B' D' L' F' L' D2 R2 B' U,W,Saipan Open 2026 (2026-03-22),333 R1 A E2
 5655219001,U' F2 D B' U2 L' U2 F U L2 B R2 B D2 F R2 F B D2 L B',W,Sheffield Spring 2026 (2026-05-23~24),333bf R1 B E2
+5735973001,F' U' L2 U2 R2 F2 U' R2 U F2 D B2 L F R B' F2 R' U' R F,W,Indian Cube Challenge BLR 2026 (2026-06-27~28),333oh R1 D E1
+5740089001,U2 F2 D2 F2 U2 L2 F R2 B R2 U2 R' F2 U' R2 F L' U R2 D' R,W,Slovak Championship 2026 (2026-07-02~05),333oh Final A #5

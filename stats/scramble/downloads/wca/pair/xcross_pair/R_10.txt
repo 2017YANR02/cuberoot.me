@@ -2,7 +2,7 @@
 # Population in this bin: 112
 # Samples listed: 112 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 194996001,U' B2 D F2 L2 U' L2 D2 B2 L' F2 L' F' D2 B' D B R B' U',R,Arnold Classic Rubik 2015 (2015-09-25~27),333oh R1 B #1

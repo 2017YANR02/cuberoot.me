@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / O / bin 6
-# Population in this bin: 72
-# Samples listed: 72 (all entries in this bin)
+# Population in this bin: 73
+# Samples listed: 73 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,O,Slow n Steady Fall 2014 (2014-11-09),333 R1 B E1
@@ -77,3 +77,4 @@
 5516180001,L' U2 L2 U2 F R2 B' U2 B R U2 R' B F2 L' F D,O,Marble City Cubing NY 2026 (2026-04-11),333 Final B #1
 5588346001,B D2 L2 F L2 R2 F R D' L' F2 R2 U L B2 R2 B2,O,Achacachi Speedcubing Open 2026 (2026-04-26),333 R1 E #2
 5680669001,U2 L2 U' R2 F2 D2 R2 D R2 F D2 B L F D2 U' B U' R2,O,Oruro Open 10th Anniversary 2026 (2026-05-30~31),333oh Final B #4
+5728070001,F' D2 U' B2 R2 U2 L2 B L' B' F2 D L U F2 R2 F R',O,Warm Up Carolina Pride 2026 (2026-06-27~28),333 R2 A E1

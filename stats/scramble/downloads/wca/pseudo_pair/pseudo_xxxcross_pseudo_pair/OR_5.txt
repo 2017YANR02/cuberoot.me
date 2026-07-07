@@ -2,7 +2,7 @@
 # Population in this bin: 1
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 518401001,F2 R2 F' R2 U2 F' R2 B' L B F2 R' F L F' D L2 B L2 D,R,Indian Nationals 2017 (2017-05-12~14),333bf R2 D E2

@@ -2,7 +2,7 @@
 # Population in this bin: 12
 # Samples listed: 12 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 661418191,D' U' B2 L2 U R U2 B2 L B D' B D B' F' U2 R2 D2,G,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2

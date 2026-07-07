@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / O / bin 3
-# Population in this bin: 653
+# Population in this bin: 657
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1013692042,F2 U' B2 D2 L2 F2 U R2 D L2 F2 R' F2 L F U' L' B2 U L' F2 D',O,MathSoc Open 2019 (2019-02-09~10),333mbf Final A #1
@@ -201,7 +201,7 @@
 1454895001,R2 U2 R' B2 F2 R' B2 R2 B2 U' B F U' B' L D L2 D L',O,Speedcub'Eirb Winter Open 2019 (2019-12-14~15),333 R1 C #4
 969874001,B2 D L2 D L2 D2 R2 B L U R D' R D R2 U2 L' U' B',O,Raipur Winter Cube Challenge 2018 (2018-12-30),333bf Final A E1
 5107518001,L2 F2 D2 R' F2 D' F2 D2 L' U R2 B' R2 F' R F,O,Poly Cubed at Pomona 2025 (2025-10-18),333 R2 B E2
-5066807001,B2 R B2 U L F2 U' F U R2 F2 B2 U2 F2 R F2 R' B2 F',O,IISER Pune October Heat 2025 (2025-10-05),333 Final A #1
+5738484001,L' U2 L2 B2 L' D2 R2 F2 U' L' U R F' R D2 R' D' B',O,Gniezno Open 2026 (2026-07-04~05),333oh R1 A #3
 991814001,R' D2 R U2 R U2 R2 U2 R' D2 R' U' R2 D L' D' B' U2 B' L',O,Geethanjali Cube Open 2019 (2019-01-26~27),333oh R1 A E2
 1009091001,U2 B2 L' B2 L2 B2 L' U' F2 U B' D' R2 F' U R' B' U2,O,IISERK Spring Open 2019 (2019-02-09),333oh R1 A #2
 5655545001,F D2 F' L2 B2 U2 R2 D' R2 F2 U2 R F' D2 B' L R D' L',O,Cube Factory League Zgierz 2026 (2026-05-23~24),333 Final B E2

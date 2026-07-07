@@ -2,7 +2,7 @@
 # Population in this bin: 335
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4780615001,F L2 B' U2 L2 D2 F2 R2 U2 F' L' U2 L' D' L2 B U2 F R,B,Singapore Jumbo June 2025 (2025-06-08),333 Final A #4

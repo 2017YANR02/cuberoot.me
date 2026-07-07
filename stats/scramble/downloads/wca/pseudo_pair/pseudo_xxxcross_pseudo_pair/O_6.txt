@@ -2,7 +2,7 @@
 # Population in this bin: 9
 # Samples listed: 9 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 354403001,L F2 R B2 R' D2 B2 L2 R' B' F U' R' B R D2 B2 D2 R',O,KJSCE Mumbai Open 2016 (2016-08-27~28),333 R2 D #3

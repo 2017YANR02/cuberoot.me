@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGWY / bin 3
-# Population in this bin: 527
+# Population in this bin: 528
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4701564001,B2 R2 D B R D2 R U2 R2 F L D F' U' R' B2,W,Hessen Mini Open 2025 (2025-05-02),333 Final B #4
@@ -187,7 +187,7 @@
 1252054018,R2 U2 B' R2 D2 B2 L2 B' D L F' D' U F' U' B' D2 B2 U' L2 U,G,CubingUSA Nationals 2019 (2019-08-01~04),333mbf Final A E1
 5469929001,U L2 D' F2 D R2 D' R2 F2 U L' D2 R' B F D L' F2 D' F',B,Happy Navro'z in Tashkent 2026 (2026-03-21~22),333 Final A E2
 2106563001,B L' F' B2 D2 R2 F2 U R2 U L' U R2 U' L B' R2 F',Y,Petrinja Cube Day 2022 (2022-08-20),333 R2 A #4
-2937476001,F2 L' B2 L' B2 L2 U R' U2 F2 U R2 F' U2 B U' B2,Y,Geelong Winter 2023 (2023-07-29~30),333 R1 A E1
+5735877001,R2 U F2 U F2 U' L2 D L' U' L' D R2 U B F L B',G,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R2 A #5
 2255004001,R L' F R' U B' L' U L B R U2 L' B2 R B2 R2 D2 L2,B,Westfries Open 2022 (2022-10-22~23),333oh Final A #5
 4315407001,B2 U2 L' D2 R' D2 R B2 L' U B2 U' B F2 U' L D' R2 F2,Y,Texas Championship 2024 (2024-11-22~24),333 R2 A #3
 1279212001,B' D' L2 D R2 F' D L' U D2 L2 F2 R2 F U2 F R2 F L2 F2,Y,Back to School Idaho 2019 (2019-08-24),333oh R1 A #5

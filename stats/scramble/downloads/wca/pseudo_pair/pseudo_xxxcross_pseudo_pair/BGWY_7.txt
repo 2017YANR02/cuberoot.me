@@ -2,7 +2,7 @@
 # Population in this bin: 482
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2255124020,B2 D2 L' R2 D2 B2 L' F2 U F2 U' L2 F' L F' R U2 L B2,B,Westfries Open 2022 (2022-10-22~23),333mbf Final A #1

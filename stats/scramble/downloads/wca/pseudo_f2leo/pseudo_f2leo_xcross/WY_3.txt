@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / WY / bin 3
-# Population in this bin: 707
+# Population in this bin: 708
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4641929001,R2 D F B R' D R F2 L B2 U' L' B2 L D2 F2 R2 F2 L,Y,Rexburg Rumble 2025 (2025-04-12),333 R1 C #3

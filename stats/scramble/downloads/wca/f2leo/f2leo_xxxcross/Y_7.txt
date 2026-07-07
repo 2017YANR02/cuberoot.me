@@ -2,7 +2,7 @@
 # Population in this bin: 71
 # Samples listed: 71 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 16764001,F2 R B' U' L F2 U2 L F R D' L B2 L2 U2 R' U2 R',Y,Castellon Open 2014 (2014-05-02~03),333 Final A #1

@@ -2,7 +2,7 @@
 # Population in this bin: 9
 # Samples listed: 9 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 728799001,R2 F' L F' D2 R' L2 D2 R2 L' U R2 B2 R2 F2 L2 U R2,Y,Marikina City Open 2018 (2018-03-18),333 R1 B #1

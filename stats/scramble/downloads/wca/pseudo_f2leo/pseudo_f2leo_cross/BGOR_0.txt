@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BGOR / bin 0
-# Population in this bin: 14
-# Samples listed: 14 (all entries in this bin)
+# Population in this bin: 15
+# Samples listed: 15 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 661016003,B2 R2 D2 R F2 D2 L' R' B2 F' R' D2 F' L2 U' F2 R' U2 B' L2 B',B,Oficina Open 2016 (2016-06-18~19),333mbf Final A #1
@@ -19,3 +19,4 @@
 4953966001,R B2 U2 L' D2 R' D B' F2 L2 D2 F2 R2 U' R2 U' L2 U' R2,O,South India Cube Championship 2025 (2025-08-14~17),333 R1 A #1
 5117693001,R U R' F2 D' L2 F2 L' D2 F' L2 F L2 U2 D2 F2 U2 F D,R,UH Cubing San José 2025 (2025-10-18),333 Final A E1
 5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1
+5732545001,R' B' D2 R2 B2 L2 B D2 L2 R2 D L' B' D2 B R2 D2 F,B,Cubing at COTA 2026 (2026-06-27),333oh Final A #2

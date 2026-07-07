@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / WY / bin 12
-# Population in this bin: 95
-# Samples listed: 95 (all entries in this bin)
+# Population in this bin: 97
+# Samples listed: 97 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 84265001,F' L D R2 L2 D R2 B L2 U R B2 R' L2 F2 R B2 D2 B2 R F2,W,PLS Szczecin 2014 (2014-11-29~30),333 R2 B #2
@@ -100,3 +100,5 @@
 5521656048,D F2 U' L U2 L2 U L2 B2 R U2 B2 R' B' F L' R D2,W,BLD Open Fürth 2026 (2026-04-11~12),333mbf Final B #1
 5523386001,B' U F2 R U2 R' F2 L' R2 D2 B' L D U B' L' B' R F2,W,Cube Against Cancer Minnesota 2026 (2026-04-11),333 R2 C #3
 5550392001,F' L2 U2 L2 B2 R' U2 R' F2 R D2 B D2 U' F' L' R' D R2 D2 L' F',W,Cube Factory League Jeżów 2026 (2026-04-18~19),333bf Final A #3
+5740087001,R2 B' R U2 L2 D2 R' B2 L R' F2 U' L F U B U' R B' L,W,Slovak Championship 2026 (2026-07-02~05),333 Final A #5
+5740089001,U2 F2 D2 F2 U2 L2 F R2 B R2 U2 R' F2 U' R2 F L' U R2 D' R,W,Slovak Championship 2026 (2026-07-02~05),333oh Final A #5

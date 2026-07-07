@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / B / bin 8
-# Population in this bin: 122
-# Samples listed: 122 (all entries in this bin)
+# Population in this bin: 123
+# Samples listed: 123 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 23678001,D R2 U2 R2 D2 F2 U B2 F2 R U F' D F U' F' D,B,San Diego Summer Splash 2014 (2014-05-24),333oh R1 A E2
@@ -127,3 +127,4 @@
 5513180001,F' D2 B2 D' R U2 R' F' R2 F' L2 D2 F' L2 F' D2 F R D2 R2,B,Karnataka Cube Open April 2026 (2026-04-05),333 R1 E E2
 5556479001,U' B F2 D2 R2 U L2 D U' B2 R' U2 R U' B' R' U B' D2,B,New Providence Spring PM 2026 (2026-04-18),333 R2 B E2
 5721779001,R' B2 D2 B2 D R2 U2 R2 B2 R D F' D' U L2 B' L2 F2 U2 B R2,B,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333bf R1 A #2
+5736478001,R2 D' L' U2 D2 L2 F' D' R2 F' L2 U2 B2 L2 U' L2 U D,B,BBQ Ropaži 2026 (2026-07-04),333oh Final B #5

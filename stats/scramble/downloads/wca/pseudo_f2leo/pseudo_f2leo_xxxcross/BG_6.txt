@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / BG / bin 6
-# Population in this bin: 130
-# Samples listed: 130 (all entries in this bin)
+# Population in this bin: 131
+# Samples listed: 131 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -135,3 +135,4 @@
 5635651001,R' U' B R' F' R F' B U B2 R2 D L2 U2 B2 U' L' D R',B,Roscommon Cubing 2026 (2026-05-16~17),333oh Final A E2
 5681245001,D' R2 U L' B2 L D L2 F R2 F R2 F U2 F2 B U' F' D,B,Mada King of Cube 2026 (2026-05-30),333oh Final B #1
 5694328001,F' R B2 F2 D2 U F2 D U2 R B D2 U2 R' B D2 R D2,B,GLS Side Challenge Gdańsk 2026 (2026-06-06~07),333 R2 C #1
+5732638001,U2 B' U' L' D2 R2 B2 U R2 D B2 R D B L' B2 L2 U2,B,Cubing at COTA 2026 (2026-06-27),333 R1 C #4

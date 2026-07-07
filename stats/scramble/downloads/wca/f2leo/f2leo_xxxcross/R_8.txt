@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / R / bin 8
-# Population in this bin: 845
+# Population in this bin: 850
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4503402001,L' R2 U2 R2 B' U2 F' L2 U2 B2 U2 D B' U2 F' D' L F L2,R,Avenida Chile XX 2025 (2025-02-15~16),333oh R1 A #5
@@ -177,7 +177,7 @@
 685174001,D2 B2 U R2 U2 L F U2 R2 U L B2 R2 D2 B' R2 D2 F',R,Thanks Four The Invite 2018 (2018-01-13),333 R1 D #3
 3186125001,U' L' F' B L' D2 R2 F D R' L' D2 F2 R F2 L B2 L2,R,Belgian Nationals 2023 (2023-10-21~22),333 R1 C #1
 695707001,F2 B2 R' F2 B2 L' F2 B R' D F R2 B2 U2 B R2 L2 B R2,R,Udaan Rubik's Cube Open 2018 (2018-01-27~28),333 R2 A #1
-4772731001,F2 U L2 D R2 D' R2 B2 R D2 B2 R' D F D' L B' U2,R,Kewbz Scottish Championship 2025 (2025-05-30~06-01),333 R2 C #5
+5737487001,D2 U2 R2 B L2 U2 F' U2 B R' D2 U L2 D' U B L' B D',R,Lazarillo Salamanca Open 2026 (2026-07-04~05),333oh Final A E2
 3653902001,L' F U D2 R2 B' L B' U2 D L2 F2 D' R2 B2 R2 D L B',R,Longstone City Blind Open 2024 (2024-04-06~07),333oh Final A #5
 4660617001,B2 F2 U' F2 U2 B2 U' R2 D' B R' F2 D2 U' B2 U2 R' D B,R,Tipping Point Bloomsburg 2025 (2025-04-19),333 R2 C #2
 724539001,B2 L' F2 L F2 R D2 R2 B2 U2 B D B2 L' D U2 L' D L',R,Sunmarke Dubai Open 2018 (2018-03-10),333oh Final B #3

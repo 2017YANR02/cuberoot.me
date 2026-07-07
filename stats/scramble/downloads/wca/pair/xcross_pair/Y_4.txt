@@ -2,7 +2,7 @@
 # Population in this bin: 316
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4937847047,F' R2 U' L2 U L2 R2 B2 D B L F2 L D2 B' L' R D' L' B,Y,BrizZon Side Open IV 2025 (2025-08-15~17),333mbf Final B #1

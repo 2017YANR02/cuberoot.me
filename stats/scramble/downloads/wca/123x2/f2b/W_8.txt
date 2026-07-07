@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / W / bin 8
-# Population in this bin: 402
+# Population in this bin: 403
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5395765001,L2 B2 F' U2 F U2 L2 F L D' B F2 D2 U2 L' U L2 U F',W,Cuenca Open 2026 (2026-02-21),333 R1 A #4

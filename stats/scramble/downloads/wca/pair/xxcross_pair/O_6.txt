@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / O / bin 6
-# Population in this bin: 265
+# Population in this bin: 266
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 10959001,R F2 D2 U2 F2 R' U2 B2 R B R U' B2 F' R' D F' D' F,O,Lexington Spring 2014 (2014-04-12),333oh R1 B #4

@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / BGWY / bin 1
-# Population in this bin: 379
+# Population in this bin: 381
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 6462001,U L2 D U2 R2 U R2 B F' L' U F' L R2 B' F' D',W,Rumia Open 2014 (2014-03-29~30),333bf R1 A E2
@@ -162,7 +162,7 @@
 1716268001,B L2 R2 F2 D' L2 D' B2 U' R2 U L2 B U L F L2 D2 F,B,Italian Championship 2021 (2021-10-30~11-01),333 R2 B #5
 1740888001,B' R D2 B U2 F U B D R2 U F2 U' B2 L2 U R2 D2 B,Y,Guayaquil Resist 2021 (2021-11-27),333 R2 D #1
 4634815001,B' U B R' U R F2 B2 L D2 B' L2 B' R2 U2 R2 U2 L' F2,G,Gliwice Open 2025 (2025-04-12),333bf Final A #3
-1802843001,U L' B2 L R D2 R F2 R2 F' R2 D' B' L' F' U' B2 D' B R2,Y,Dragon Side Open 2022 (2022-02-12~13),333bf R1 C E1
+5732545001,R' B' D2 R2 B2 L2 B D2 L2 R2 D L' B' D2 B R2 D2 F,B,Cubing at COTA 2026 (2026-06-27),333oh Final A #2
 1817194001,D2 L2 D' L2 D' B2 U R2 F U' L B' L' D' B D F' R' U',W,TCG Summer Arequipa 2022 (2022-02-26),333 Final A #4
 1822162001,L2 F2 L2 U L2 U2 L2 F2 L2 B2 D' B2 L' R' U' R' F L R' U,B,Melbourne Mini Sunday 2022 (2022-03-06),333 Final A #1
 1834948001,F2 L D' F D L U2 L' U R2 F2 R2 U' R2 L2 B2 U2 L F2,B,Cubing Returns Ghaziabad 2022 (2022-03-19),333oh R1 B #2

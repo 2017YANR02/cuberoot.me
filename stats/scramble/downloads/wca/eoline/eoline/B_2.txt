@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / B / bin 2
-# Population in this bin: 906
+# Population in this bin: 907
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4298941001,U B' D2 U2 R2 F' L2 B2 R2 U' B2 R2 F2 U2 F L R' U2,B,Sydney Spring Saturday 2024 (2024-11-16),333oh R1 B #5

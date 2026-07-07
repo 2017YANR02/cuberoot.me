@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / R / bin 8
-# Population in this bin: 948
+# Population in this bin: 954
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4676817001,R' U2 B U2 B' R2 F U' B' F' U' F D R2 D2 L2 B,R,Let's Twist Again Landsbro 2025 (2025-04-26~27),333 Final B #1
@@ -55,7 +55,7 @@
 3157216001,D2 B' D B U2 L2 F D2 L2 F2 R2 D R' U2 L2 D F2 L,R,The Art of the Cube Colorado 2023 (2023-10-14),333 R2 B #2
 5369253001,B R' B L2 U D L F2 U' L' D F2 R2 D R2 U D2 B2 U',R,Sandnes Winter 2026 (2026-02-07~08),333oh R1 B E2
 1448352037,U2 L2 B2 D' U' B2 U B L' D' B D2 F R2 U2 B2 D' L2 B R2,R,Latvian Open 2019 (2019-12-07~08),333mbf Final A #1
-937385001,D2 L' U2 B2 F2 L2 B2 D2 U F D2 L2 D' R2 B' L' B' L D2,R,Berkeley Fall 2018 (2018-11-17),333 R1 G #5
+5737487001,D2 U2 R2 B L2 U2 F' U2 B R' D2 U L2 D' U B L' B D',R,Lazarillo Salamanca Open 2026 (2026-07-04~05),333oh Final A E2
 175668001,L2 U2 B2 D' B2 L2 B2 U L' F R2 D' B2 R D2 L2 D2 U' F' U2 B R2,R,Cross-strait Cubing Exchange 2015 (2015-08-15~16),333bf Final A #3
 2656574001,F D F2 D2 U F2 D2 F2 R D2 L' D2 B L D B' D L2,R,Panthers Cube Day 2023 (2023-04-22),333 Final A E2
 4190023001,B2 R U2 B' U2 F R2 B L2 B' D2 U R2 F2 L' U2 L R2 D2 B R,R,Luso-Bussaco Open 2024 (2024-10-12~13),333mbf Final A #1
@@ -126,7 +126,7 @@
 2846503001,B2 D' R2 U L2 B2 R' B R2 B2 U' D2 R2 L2 B2 D2 F' L2 U L B',R,Mini Minnesota Summer 2023 (2023-07-01~02),333bf R1 A #2
 4606248001,L' U' L2 U D F' D F2 R' D2 L U2 L' D2 B2 U2 L2 U,R,South Dakota Playhouse 2025 (2025-03-29),333 R1 B E2
 1499795001,B D' F' U L B L' D2 R U F2 L2 U L2 B2 U' R2 U R2 U2,R,Colorado Springs Winter 2020 (2020-01-11),333 R1 D #1
-2410501001,U2 D F R' L2 F B U2 L2 U2 B2 R F2 R2 D2 R U R2 D,R,Mum's the Word 2023 (2023-01-08),333 R1 C #3
+5738551001,F' U' R' D2 F2 U R' B' R F2 D2 B2 R' B2 U2 L2 U L' B,R,Gniezno Open 2026 (2026-07-04~05),333bf R1 A #5
 1913255001,U2 L D2 R L' U L2 F U' L2 D2 L2 F U2 F2 D2,R,Arkadia 2022 (2022-05-07~08),333 R1 A #3
 1836428001,R D F2 B R' F2 B L2 D' R U' R U2 L' F2 U2 B2 L2,R,Maine Spring 2022 (2022-03-19),333oh R1 B E2
 5708571018,U D2 F' D2 B2 L D F U2 F2 U2 R2 D2 F D2 F' R2 U2 B D',R,More Cubes Kelburn 2026 (2026-06-21),333mbf Final A #1
@@ -140,7 +140,7 @@
 2570149001,F' D' L' B L F' D F' R2 F2 U' R2 D2 L2 U' L2 U F2 D,R,Synocubix 2023 (2023-03-18),333 R1 C #1
 5019574001,F' U' L' D' R' B2 L B L2 D' R B2 D2 R' D2 L F2 R2,R,La Clock-de-Fonds 2025 (2025-09-14),333 R1 B #3
 5688306022,F' U B2 D2 B2 U L' D' U2 F' D2 L2 F2 U2 B2 D' L D,R,More Than One Cube Shanghai 2026 (2026-06-06~07),333mbf Final A #1
-532908001,L2 F2 L2 B2 F' L2 F2 U2 L' R' D' F' D' U' B U F L U',R,Speed Days Kraśnik 2017 (2017-06-10~11),333 R2 B #1
+5737474001,L' U R2 D2 F U2 B' D2 R2 B' R' D L' B D' F2 U2 R,R,Lazarillo Salamanca Open 2026 (2026-07-04~05),333 R2 C E1
 4552243001,L' U2 L2 U F2 D' U' R2 B2 D' L U2 F D2 F' R' D B2 R',R,Gort-a Go Fast 2025 (2025-03-08~09),333 Final A E2
 5466732001,B' U2 R' B D2 U2 B D F' D L' D R' D' R,R,Arkansas Championship 2026 (2026-03-20~22),333 R1 B #4
 1216388001,B R' B2 U' F2 L' F' L B' L D' F2 D2 F2 U B2 D R2 D' B2,R,Luzon Championship 2019 (2019-06-22~23),333 R1 B #4

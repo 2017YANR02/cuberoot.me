@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / G / bin 2
-# Population in this bin: 129
-# Samples listed: 129 (all entries in this bin)
+# Population in this bin: 130
+# Samples listed: 130 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 53811001,R2 F2 L2 D2 F2 R F2 L2 B' D L' D' R2 B2 F D F2 R' F',G,Fortaleza Open 2014 (2014-08-23~24),333 R2 B #5
@@ -134,3 +134,4 @@
 5696209037,B2 R B2 L2 D' B2 U L2 U2 L B2 L' F D' F2 D2 L R D',G,Manchester Cubing League - Third 2026 (2026-06-13),333mbf Final B #1
 5700303001,B2 D' B2 F2 L' F2 U2 F2 U2 R' D2 F' D F2 U R2 B2 R' U2,G,Davis County Showdown 2026 (2026-06-13),333 R1 B #4
 5707613001,F U2 F' D2 F' D2 F' L2 D' F L' F2 L' D' F' L' F' D,G,No Veas Ocaña 2026 (2026-06-20),333 R2 A #5
+5728202001,D' B2 D' U' L2 B2 U R' B L2 U2 R D2 R2 D F L' B',G,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #2

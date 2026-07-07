@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / BG / bin 10
-# Population in this bin: 724
+# Population in this bin: 725
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4332297001,F' R2 U2 L2 B' L F D' R2 B' U' L2 D' R2 U D',G,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 A #2
@@ -103,7 +103,7 @@
 1828202007,D' R U2 F U2 B' D2 F L2 F2 U L' R' D B2 U R D L B,G,Kidderminster - British Blind Off 2022 (2022-03-12~13),333mbf Final B #2
 4363298001,D' L F2 R2 U2 R F2 L2 U L' R2 F U R' D L2 D2 B',B,Rocklin Winter 2024 (2024-12-15),333 Final A #5
 5312489001,U' R' F' D2 B2 U2 B2 L' D2 R2 B U2 L2 R' D B' F2 L2,G,OKC Winter 2026 (2026-01-10),333 R1 D E1
-4051650001,F' U R' U' L B' D' B' D2 F R2 F2 B2 R2 F2 R' F2 L D2 B' L,G,Chilling in Toowoomba 2024 (2024-08-24~25),333bf R1 A E1
+5728929001,L F' B' L B L U2 D F' U' L2 B2 R2 D2 B2 L' U2 D2 R B R',G,Almourol Riverside 2026 (2026-06-27~28),333bf R1 A #2
 2831622001,L U D B' D R2 B2 U' L D2 F' B2 L2 F2 B2 R F2 U2,G,Open de Lumes 2023 (2023-06-24~25),333 R2 A #2
 4288677023,L2 F' U2 B' D2 L2 F2 L2 F' U B2 L' D R D2 U' R D2 U L B,B,Dutch Nationals 2024 (2024-11-15~17),333mbf Final A #1
 4262241001,U R' L2 B' R2 B D2 F' L2 R2 B' D' L D2 B2 U' B2 F R2,G,Rubik's WCA Asian Championship 2024 (2024-11-01~04),333 R1 F #1

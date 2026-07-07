@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BG / bin 2
-# Population in this bin: 300
+# Population in this bin: 303
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 33026001,U2 R' D2 F' L' U R' B' L F2 L D2 F' B2 L2 D2 R2 L2,G,Masterpress Summer 2014 (2014-06-28~29),333oh Final A E2
@@ -93,7 +93,7 @@
 899461001,U B2 R2 U R2 U L2 D U2 B2 F2 R' U R2 D F R B L2,B,Siberian Athens 2018 (2018-10-06~07),333oh R1 B E1
 902251001,B' U2 F2 U2 L2 B R2 B L' D' B' L2 B2 L2 D' F' U B R' B R,G,Montpellier Open 2018 (2018-10-13~14),333bf Final A #1
 905243001,B2 U2 L2 F2 U2 L R' U R' D2 R D F2 D' B2 D2 R',B,Ukrainian Nationals 2018 (2018-10-12~14),333 R2 B #2
-971230001,R D F2 R2 U2 F2 L U F D F' R' B2 L' U2 R L2 D2 B2,B,Southeast Texas Winter 2019 (2019-01-04~05),333oh R1 B E2
+5735563001,B2 F2 D' L2 F2 U' B2 R2 U B' D U2 B2 R' U F' D' U R2,B,Queensland Open 2026 (2026-06-27~28),333 R1 F E1
 5263888001,L D2 B L2 B2 D2 U2 B' D2 L2 B R2 L' U' R U' L D2 B D,G,Kids America Christmas Clash OH 2025 (2025-12-13),333 R1 A #3
 1019072001,B L2 U L B' L F2 R2 U' B2 R' F2 R2 D2 L2 U2 R B2 R D2,G,Saraswati Open 2019 (2019-02-10),333oh Final A #3
 5634691001,U F' R' B2 U2 L2 U L2 U' F2 U B2 R' D L' R' U L2 D',B,Aalborg Spring 2026 (2026-05-16),333 Final A E1
@@ -137,7 +137,7 @@
 1940152001,U L2 U2 L2 U' R D R F U2 F2 D' R B' R F2,B,3x3x3 Only Hamilton B 2022 (2022-05-29),333 R1 B #1
 1965608001,B L U2 F' L' D2 B2 L D R2 D2 R D2 B2 R' F2 R2 U' L' F',G,UBC Side Events 2022 (2022-06-11),333mbf Final A #1
 1971143001,F D2 F' U' F L' U' L' U R2 D2 R2 L F2 L B2 D,B,Cubing Returns Pune 2022 (2022-06-12),333 Final A E1
-2043263001,L B2 U D B D2 L2 D B U2 B2 U2 L U2 L' F2 L2 B2 R2,G,Mallorca Open 2022 (2022-07-23~24),333 R1 C E1
+5735877001,R2 U F2 U F2 U' L2 D L' U' L' D R2 U B F L B',G,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R2 A #5
 4285571001,B2 D' F U D' L2 B D F2 B2 D F2 R2 F2 D R2 F,B,Efterårscubing i Hvidovre 2024 (2024-11-16~17),333 R1 B #3
 2077015001,R' U' F L' R2 U F2 U2 R2 F2 U R2 F U R F' L' U2 L' R U F' R' U' F,B,Manchester Summer - British Blind Off 2022 (2022-08-06~07),333fm R1 A #2
 4020793001,D' B2 U2 R U2 B L' D F B L2 D2 F' L' D2 L2,G,En Lille Søndag i Ishøj 2024 (2024-08-18),333 R2 B #2

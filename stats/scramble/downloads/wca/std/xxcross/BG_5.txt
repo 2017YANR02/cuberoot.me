@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BG / bin 5
-# Population in this bin: 226
+# Population in this bin: 227
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -75,7 +75,7 @@
 1073606001,D2 R D2 R2 F2 R' D2 R2 D2 F' D' R U' R' D2 R B D R',B,Szczytno Open 2019 (2019-03-30),333 R2 B E1
 1092193001,U D' R B2 D' R' D2 R U' B L U2 D' R2 U' B2 D B2,G,Indian Nationals 2019 (2019-04-11~14),333ft R1 A #2
 1095339001,F2 L2 F' R2 U2 B2 D2 F' R U' R U' F2 D2 U' B D U F2,G,Changsha Spring Open 2019 (2019-04-14),333 Final A #3
-5365904001,B' U' D' L2 B2 R' U' R' D' R2 U2 R2 F2 R2 B D2 B' L2,B,Cubestuff Centurion Q1 2026 (2026-01-31~02-01),333oh R1 A #4
+5728202001,D' B2 D' U' L2 B2 U R' B L2 U2 R D2 R2 D F L' B',G,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #2
 1128452001,D' F2 L2 U' L2 D U2 F2 R' U2 F2 U2 F D2 U' B2 U' B2,B,Chillán Open 2019 (2019-05-04),333oh Final A #1
 1135100010,B' F' D2 U2 F' D2 B D R F2 L' D2 R D' U2 L2 B' L B R2,G,Valborg Cubing 2019 (2019-05-03~05),333mbf Final A #1
 1170783001,L2 U2 L U2 B2 L F2 R' U2 R D2 F' D F U B2 D' R D,B,Bay Area Speedcubin' 17 2019 (2019-06-01),333 R1 G #1

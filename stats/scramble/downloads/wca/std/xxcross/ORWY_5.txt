@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / ORWY / bin 5
-# Population in this bin: 489
+# Population in this bin: 490
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4800566001,U L B' F2 D' R2 U2 L2 F2 D2 U' F' D B' D' L2 R' F2,W,Risbjerg Juni 2025 (2025-06-14~15),333oh Final B #3
@@ -133,7 +133,7 @@
 833220001,D2 F D2 F' R2 D2 R2 U2 R2 B' R D2 F' D R F L F R2 B,R,Ekat Summer 2018 (2018-07-21~22),333 Final A E1
 3868980001,L2 U2 B2 R D2 U2 R2 U F2 U' F' R2 D R F R' D',R,Gem City Donut DNF 2024 (2024-06-16),333 Final A #1
 5690390001,R2 B2 F2 L' F2 U2 B2 U' B' U' B R F' L' F D U F L' F,Y,Headache in Kode 2026 (2026-06-05~07),333bf Final A #4
-841750033,L2 F2 D R2 D R2 U2 B2 F' U2 R' U' L B2 F' R U2 R2 F' U2 L B,R,CubingUSA Nationals 2018 (2018-07-27~29),333mbf Final F #1
+5738491001,F U2 F D2 L2 U2 F' L B R F2 R U' L U' R2 B' D',O,Gniezno Open 2026 (2026-07-04~05),333oh R2 A #3
 2479136001,R U2 F2 L F2 U2 F2 L U' R B' U2 L2 D2 U F2 L R2 F,W,Cube4fun Double Weekend Świdnik 2023 (2023-02-04),333 R1 B #5
 3462299001,D L' U' F2 D B2 U F2 U2 F2 R' U' B' D B2 F L' B,R,DJ Sanghvi Cube Open 2024 (2024-01-28),333oh Final A E1
 849464001,D' R2 F2 U' R' U R U' F' R2 F2 D2 B2 R B2 R' L' D2,Y,Swisscubing Better Be Quick 2018 (2018-08-04),333 R2 A E2

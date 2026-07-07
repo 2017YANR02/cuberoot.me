@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGOR / bin 8
-# Population in this bin: 483
+# Population in this bin: 484
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4910305001,D' F2 D L2 D2 B2 L2 F' D' L2 B L2 D B' L' D R',G,Silesian Minx Fest 2025 (2025-08-02~05),333oh R1 B #3

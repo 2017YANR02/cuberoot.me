@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / G / bin 14
-# Population in this bin: 114
-# Samples listed: 114 (all entries in this bin)
+# Population in this bin: 117
+# Samples listed: 117 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 22689001,B' U2 R2 U2 B2 F' R2 B R2 F' U R' B' L' F D' F U' F,G,Berlin Open 2014 (2014-05-24~25),333 R2 B #5
@@ -119,3 +119,6 @@
 5508343001,U2 D' F U' L D R D' F2 L R2 F' D2 F U2 F2 U2 R2 F R2 B R,G,Quiet Down In Pflugerville 2026 (2026-04-05),333bf R1 B #1
 5575665002,D R L' D2 B' L B U L' B' L F R2 F B' R2 D2 F U2,G,WCC Western PBQ Championship - Santa Clara 2026 (2026-04-25),333mbf Final A #1
 5593703001,D B' D2 B2 D B2 F2 D U B2 R' D L2 B' F' U2 R' D' L2,G,Foshan Open 2026 (2026-05-02~03),333 R2 C #3
+5735264001,U D' L B' D R U' R2 L2 B2 L B' D2 F' R2 F U2 F R2,G,Shenyang Cubing League 3x3 III 2026 (2026-07-01),333 Final A #3
+5736152001,B L D' B U R U2 D2 B2 R U2 D2 R B2 L D2 L' B' R,G,Cubo Manía MFS Bello 2026 (2026-06-28),333 Final A #5
+5740089001,U2 F2 D2 F2 U2 L2 F R2 B R2 U2 R' F2 U' R2 F L' U R2 D' R,G,Slovak Championship 2026 (2026-07-02~05),333oh Final A #5

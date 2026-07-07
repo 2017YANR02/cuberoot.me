@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / OR / bin 1
-# Population in this bin: 218
+# Population in this bin: 219
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5040001,F2 D2 L2 U R B2 R F L2 D2 F2 B' L2 F L2 D2 R2 F,O,Tula Open 2014 (2014-03-28~30),333 Final A E1
@@ -155,7 +155,7 @@
 3662139001,D2 B2 F2 D' F2 R2 U' B' D' R2 B2 L D U R' D' R' B F,R,Costa de la Luz Open 2024 (2024-04-13~14),333 R2 B #2
 3699135001,D R2 B U2 R2 L' B F2 U2 L D2 F2 R2 D2 L D2 F2 U' R2,O,Astana Spring 2024 (2024-04-20~21),333oh R1 B #4
 3753831001,L' F2 L F2 U2 R2 D2 L2 B R2 D2 R' B' D2 U' R' F' L U,R,Cebu Summer Open 2024 (2024-05-11~12),333 R1 B #4
-3761541001,L' D R2 B2 F2 D2 R2 U2 L' U R B' U L2 U B' D2 R,O,Prenacionales Colombia 2024 (2024-05-12~13),333 R1 B #1
+5730147001,D2 F' D2 L2 U D' R U' R2 B2 L F2 D2 L2 U2 R' U2 R' B U',R,Hampshire Summer 2026 (2026-06-27~28),333 R2 B E1
 3784470032,F2 R' D2 F' L2 U2 L2 D2 B' L2 U2 B' U' B L' F' U2 L F' R2 B,R,South Bay Weeknight Brain Freeze 3 2024 (2024-05-22),333mbf Final A #2
 3825882001,D R D L2 R2 D L2 D L2 F' D2 F U2 F' R F2 L2 R',O,Bacolod Big Cubes 2024 (2024-06-01~02),333 Final B #4
 3837429001,R2 D2 U2 F U2 F L2 D2 R2 B' R2 D' R2 U2 B' R' U2 R B2,R,Capivarinha 2024 (2024-06-08),333 R1 A #2

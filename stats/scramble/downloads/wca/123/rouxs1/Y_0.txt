@@ -2,7 +2,7 @@
 # Population in this bin: 1
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2954589022,B2 U' R2 B' F2 D2 B2 F' R2 D2 R F2 U B2 F R B2 D B D',Y,Silence in Tlaxcala 2023 (2023-08-05~06),333mbf Final A #2

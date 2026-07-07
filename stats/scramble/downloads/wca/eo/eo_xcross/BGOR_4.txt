@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / BGOR / bin 4
-# Population in this bin: 217
+# Population in this bin: 218
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 14808001,F B' U2 B U R' F' D F2 D2 R2 L2 F R2 L2 F' B2 U2 D2,O,Didas Brest 2014 (2014-04-26~27),333ft Final A #1
@@ -45,7 +45,7 @@
 630679001,R2 F L2 R2 D2 B U2 B' L2 R F' R' F U2 R' F,G,Villa Open 2017 (2017-10-28~29),333oh R1 A #5
 633640001,R2 F' R2 D' F' D2 R2 B L2 U' L2 U R2 D' R2 D2,G,Munich Open 2017 (2017-11-04~05),333 R1 D #4
 5311833001,B' R D2 B' D2 L2 R2 F' U2 R2 B2 D2 L' D2 B2 D' R D2 L,G,Zigzag Zambia Cubing 2026 (2026-01-03),333bf Final B #4
-660652003,R2 U2 F2 D R2 D L2 R2 U2 F D2 L' R F L2 U2 L' F2 R' U' L2 U',R,Dvina 3.0 2015 (2015-02-28~03-01),333mbf Final A #1
+5728205001,U' L2 B2 U B2 U' B' D2 F D2 U B' F U B' L2 F2,G,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #5
 5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1
 660819023,L U2 B2 R' D2 R2 D2 B2 R F2 L2 F L F2 U2 L2 D' R2 B' F2 L B',O,Warsaw Cube Masters 2015 (2015-09-19~20),333mbf Final A #1
 660884001,F2 D2 R2 B F' D2 R2 F D' L B2 L F' R U2 F' L F' D2,G,Plenty o' Parity 2015 (2015-12-12~13),333mbf Final A #1

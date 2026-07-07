@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / O / bin 8
-# Population in this bin: 454
+# Population in this bin: 456
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 39342001,L U F' R2 F' D2 B' R D' F' U2 B2 D2 R2 F2 B D2 B L2,O,Gernika Open 2014 (2014-07-12~13),333oh R1 B #5
@@ -51,7 +51,7 @@
 350708001,F' L2 F U2 L2 F' U2 B' D2 R F R' B D' L' D' F2 D2 L,O,Constanta Rubik Open 2016 (2016-08-20),333 Final A E1
 1860094001,D2 L' U2 F2 R2 D U2 L2 U' B' D2 B L' D U R D2 U' L' F',O,Minnesota Cube Melt 2022 (2022-04-09),333bf Final A E2
 4524329051,L2 F' U' F R2 F2 B D L D R2 B R2 F D2 F' D2 B,O,Efficient in Elmsford Winter 2025 (2025-02-22~23),333mbf Final A #2
-356794001,D' R D2 F' D2 F D' B U2 B U' D' R2 B2 D2 R2 F2 U,O,II Masovian Open Płock 2016 (2016-08-27~28),333oh Final A E1
+5733573001,F' D2 B' F2 L2 B' U2 R' B2 U' F' L F' U R' B R2 F2 L B2,O,CF Goes Sideways VI Brzeziny 2026 (2026-06-27~28),333mbf Final B #1
 4702599001,F' U2 F2 R2 D R2 D2 F L' B' U2 R2 U R2 D L2 D' F',O,King of Prussia Spring 2025 (2025-05-03),333 Final A E2
 363040001,L2 U' R2 U2 R2 F2 D B2 F2 L' R F U2 F' D B2 D L' F2,O,KCubing Summer 2016 (2016-09-10),333 R1 C #2
 4182075027,B2 L' U D2 R' L D F' U2 B R2 F' D2 R2 B L2 B' R2 D' L B',O,Big N Blind Berwick 2024 (2024-10-12~13),333mbf Final A #1

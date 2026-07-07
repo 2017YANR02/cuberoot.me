@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / R / bin 5
-# Population in this bin: 875
+# Population in this bin: 877
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3626799001,B U2 F2 D2 L2 U R2 U' F2 R2 U' B2 L B2 D2 F' L B R2 D,R,Red Stick Spring 2024 (2024-03-30),333 R2 B #3
@@ -194,7 +194,7 @@
 730778001,R2 F R2 B' L2 U2 F2 L2 R2 U2 B2 R F2 U R B2 F' D' F U2 L' B R',R,Slovakian Spring 2018 (2018-03-17~18),333bf Final A E2
 4816336001,D2 B2 L2 R2 U' F2 U B2 U' B' F L F' R' F2 R2 B' D2 L2,R,DFW Cubing Summer 2025 (2025-06-21~22),333 R2 E E1
 4606347001,L2 U2 L2 U R2 D F2 L' F2 L' F' D F2 L B2 R' B' R2,R,South Dakota Playhouse 2025 (2025-03-29),333oh Final A #2
-4398488001,R' L' U2 F' U2 D' L D L2 D L2 D2 F L2 B U2 F' B2 D2 F',R,Just Cube and Go Pangasinan 2024 (2024-12-28),333 R1 C #2
+5734137001,U R D2 L2 B2 U' L2 U2 B R' B' F' D F D B2 L F2,R,Gdańsk Cubing Day 2026 (2026-06-27),333 R2 A E2
 5596414001,F D' R2 B R2 D2 F2 L2 F L2 D' R B' R' U R B L F2,R,Oregon State Spring 2026 (2026-05-02),333 R2 A E2
 4185125005,B' R B2 U F2 R2 U' R2 L F R F2 R L B2 U2 F2 D2 L2,R,Taboão Bigs & Blinds 2024 (2024-10-13),333mbf Final A #1
 3332644001,R L2 U B2 F2 U' R2 B2 L D F R2 U F2 D2 F2 L D',R,NxN Minnesota 2023 (2023-12-09),333 Final A #3

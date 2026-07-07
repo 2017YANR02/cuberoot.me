@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / G / bin 13
-# Population in this bin: 216
+# Population in this bin: 217
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 8407001,U L2 D F2 L2 R2 U' L2 R2 B L B L' F L' U R B' L D',G,Danish Open Championship 2014 (2014-04-05~06),333 R1 C #3
@@ -157,7 +157,7 @@
 3785715001,D R' U L F U' L B U' F R2 U D2 F2 D' R2 D R2 F2,G,Singapore Mini 2024 (2024-05-25),333 R1 B #1
 3790620001,F' R' D' B' U' F2 U R' U2 F' U L2 D2 L2 D R2 U B2 U F2,G,Bay Area Speedcubin' 62 LIVE - SSF 2024 (2024-05-26),333 R1 C E2
 3802630001,U' B2 U2 R2 B2 R2 F' D2 L2 B L' R U B' D2 L' D B2 R2,G,Missouri Summer Kickoff 2024 (2024-05-26),333 Final A #1
-3810049001,U L2 U B U B2 U' R B2 L U B2 L' U2 L' B2 R2,G,Gajah Mada Speedcubing 2024 (2024-05-25~26),333 R1 D #2
+5739340001,L2 F2 D2 R2 U2 F R2 B D2 B2 R B' U L2 B' L2 D R' F L,G,Taipei Cube Open 2026 (2026-06-27~28),333 R1 B E1
 3811631001,U F2 L U B2 U F D2 R' D2 L F2 L' D2 L B U L2 F',G,Cube4fun in Bełchatów 2024 (2024-05-25~26),333 Final A E2
 5599425001,L' D R2 F R D2 B2 R' D2 R D2 R U2 F' D' U' L2 R D2 F,G,Campeonato Mineiro 2026 (2026-05-01~03),333oh R1 A #2
 3901703001,D2 R2 U L2 D' B2 R2 D' B L' D' R' U B U' F D' L2 B' U' L2 U,G,Lazarillo Open 2024 (2024-06-29~30),333bf R2 A E1

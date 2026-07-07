@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / OR / bin 5
-# Population in this bin: 258
+# Population in this bin: 259
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -112,7 +112,7 @@
 1451373001,D' U2 F2 L2 U2 L2 R2 U' B' L U B' D B' U2 L' R U B',O,Almaty Snowflake Cube 2019 (2019-12-07~08),333 R2 B #5
 1476974001,F2 L' F2 U2 L U2 L F' R' D' F2 D R F2 U2 L B' L2,R,KES Cube Open 2019 (2019-12-22),333 Final A E2
 4617399001,R B2 R2 U B2 L2 B2 R' F2 R B F R' F L2 F2 U' R',O,Astana Spring 2025 (2025-03-29~30),333 R2 B E2
-1530747001,D L' D F2 U2 F' U' L2 F L2 F' R2 L2 B2 D2,R,Dutch Masters 2020 (2020-02-01~02),333 R2 C #5
+5738491001,F U2 F D2 L2 U2 F' L B R F2 R U' L U' R2 B' D',O,Gniezno Open 2026 (2026-07-04~05),333oh R2 A #3
 1544650001,D2 L2 B D2 R2 B L' B U2 B2 L F2 D U' F' R U,R,Bologna Winter Madness 2020 (2020-02-15),333 Final A E2
 1599259050,U2 B F D2 B R2 D2 F R2 B' R' D R U' B F2 U2 L R' B' D2 L' F,O,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final A #3
 1643647026,L2 B2 R U' D2 B2 L' D2 L2 R' F2 U2 B' D2 L B' L' F' D' B R,R,Please Be Quiet Brisbane 2021 (2021-04-10),333mbf Final A #1

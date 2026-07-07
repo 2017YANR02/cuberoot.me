@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / B / bin 8
-# Population in this bin: 985
+# Population in this bin: 992
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5002204001,L' U' F2 U F2 D2 F2 L2 D' R U' F2 U F R' D B,B,Mysore Cube Open 2025 (2025-09-06~07),333 R1 C #3
@@ -155,7 +155,7 @@
 5569642067,R2 B2 U' L' U2 B R2 D2 B D2 L2 B' F L' D L R2 U' F L2 U',B,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final A #1
 563538001,B L2 U L2 U2 L2 F B' U B' R' F2 U2 R U2 R2 D2 R U2,B,Sharon Summer 2017 (2017-08-05),333oh Final A #4
 1084160001,R2 L' U L' D2 F2 U2 R2 F L2 B D B2 L2 F2 L2 U F2 U2,B,Yancheng Spring 2019 (2019-04-06),333 R1 A #3
-5492765078,U' B' R' L2 F R' U L2 F2 L2 B U2 D2 F2 U2 B' U2 L B L B2,B,New York Multimate PBQ IV 2026 (2026-03-27~29),333mbf R1 C #1
+5737062001,D F' D' L2 B2 U2 B2 L' D2 R' D B' D B' L' U' F2 U2,B,Singapore Twist and Tips July 2026 (2026-07-05),333 R1 E #1
 1938373001,U2 R B2 D2 R2 D2 F2 L D2 B2 R' U' R' D B U F' L' F' R B' L',B,Lake Constance Cubing 2022 (2022-05-21~22),333bf Final B E1
 4400607031,U' R2 D' R2 U' R' D' F' R L2 F' D2 L2 F L2 D2 B' L2 U2,B,Don't DNF Dublin 2025 (2025-01-04),333mbf Final A #2
 586720001,L2 B2 R' U B' R' B' D' B D2 F2 D2 R2 D2 R2 F' R2 F2 D2,B,SCMU 2017 (2017-09-01~03),333oh R2 B E1
@@ -202,6 +202,6 @@
 2837548001,L2 B2 U2 B U2 B R2 B' L' B D' F' D L' U' L2 U2 L' B2,B,Bay Area Speedcubin' 48 - 6.25 Berkeley 2023 (2023-06-25),333 R1 D #1
 1085508001,R2 U2 F2 L D2 U2 L R2 F2 R B' F R' D U' L2 R B2 R',B,Open de Lumes 2019 (2019-04-06~07),333 R2 A #3
 3016013001,F R' D R2 B2 U B2 U' L2 D' B R B2 F2 L' B' D2 F D,B,Springfield Summer Open 2023 (2023-08-26),333oh Final A #1
-5046655034,L2 F R L D' B' R' L D R U2 R F2 R2 L' D2 U L B' L,B,Ottawa Blindfolded 2025 (2025-09-27),333mbf Final A #2
+5728993001,L F2 D2 B U' B2 U2 F' R2 D' B2 R2 L' D2 L F2 D2 L F2,B,Almourol Riverside 2026 (2026-06-27~28),333oh Final A #3
 4439296001,F' U B' U2 R2 F' U2 F' R2 D' L' R2 U' F L' B2 L U',B,Manchester January 2025 (2025-01-25),333 R1 D E1
 3510929001,D2 R' B2 F2 L D' R2 U2 R2 U' L' B2 D' R' D' F,B,American School of Bahrain B 2024 (2024-02-17),333 R2 A #4

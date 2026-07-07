@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / O / bin 7
-# Population in this bin: 884
+# Population in this bin: 886
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 23001,D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L',O,Galeries Dorian Open 2014 (2014-03-15),333bf Final A #2
@@ -51,7 +51,7 @@
 863059001,B R2 U2 B' U2 B2 F' L2 B D F2 L B D U F' L2 B' D' B',O,Ural Open 2018 (2018-08-25~26),333 R1 E #3
 5191273058,B2 R U2 L F R B L U F2 R2 F2 U2 R' U2 F2 R U2 B L' F',O,Cube On in Richardson 2025 (2025-11-15~16),333mbf Final A #1
 4360989001,R D2 L2 B2 R2 U B2 U F2 B' L R' B U L2 R U' F2 L2,O,Paraíso ao Cubo II DC 2024 (2024-12-14~15),333 R2 A #3
-3862593001,D L2 F2 B' D2 F U' F U2 B2 R2 F2 L2 U F2 D' B2 R U',O,Unifranz SCZ 2024 (2024-06-15),333 R1 A #3
+5731667033,B2 D' U2 F2 D2 U R2 U' F' R F2 U' F' R2 B D U B' L' F,O,Farewell Strathclyde University 2026 (2026-06-27~30),333mbf Final A #2
 171067001,F2 L2 R2 D' L2 B2 D U' F L2 U2 L' U F2 D2 B' L2 B' L,O,N8W8 Summer 2015 (2015-08-01~02),333 R2 A #2
 4561584001,U R' F2 R2 D' L2 D' R U F' D2 L2 U2 B' L2 U2 L,O,Mississauga Newcomers B 2025 (2025-03-15),333 R1 B #5
 865529001,L2 F2 L U2 L' D2 L D2 L' B R2 B' L U F L B2 U' L,O,Cuernavaca Summer 2018 (2018-08-25~26),333oh R2 B #2

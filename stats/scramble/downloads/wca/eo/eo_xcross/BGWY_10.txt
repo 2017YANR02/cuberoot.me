@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / BGWY / bin 10
-# Population in this bin: 60
-# Samples listed: 60 (all entries in this bin)
+# Population in this bin: 62
+# Samples listed: 62 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 71307001,B F D2 U2 R2 U2 B F2 L2 R2 U' L2 R U' F L' B' U B' R2 U',B,Kingscube Toulouse Open 2014 (2014-11-01~02),333 R1 B E1
@@ -65,3 +65,5 @@
 5661224001,L' B2 R B' F' R2 U2 L2 U2 B' L2 U L R' B U' B2 U' L,B,Liuzhou Open 2026 (2026-05-24),333 R1 D #4
 5666023001,B2 D U2 R2 U2 L2 F2 U' B U L D' R' F' R2 U2 R2 B,B,West Coast Cubing Western Championship 2026 (2026-05-23~25),333 R3 A #4
 5667382001,B2 D U2 R2 U2 L2 F2 U' B U L D' R' F' R2 U2 R2 B,B,West Coast Cubing Western Championship 2026 (2026-05-23~25),333 Final M #4
+5729448001,F B U F2 R' L B U' F U2 L D2 L' B2 R' B2 U2 R B2 F,B,Victoria Gardens Kyiv 2026 (2026-06-27~28),333 R2 B #3
+5732339001,L2 B' D' F' B U' B' U' L2 D2 F2 R' F2 L D2 R F' R' U2,B,Mumbai Twistathon 2026 (2026-06-27~28),333oh Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / B / bin 13
-# Population in this bin: 215
+# Population in this bin: 216
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 23650001,D F2 R2 U2 R2 U F2 U2 R2 B' U' L' U F' U L2 B' F' L' D2,B,San Diego Summer Splash 2014 (2014-05-24),333 R1 B E2
@@ -171,7 +171,7 @@
 5629822001,R' B' D2 U2 R2 F2 D2 L R D' R' F R2 B F2 L2 D' F2,B,Cubing in Westerly RI 2026 (2026-05-09~10),333oh R2 B E1
 3848606001,B2 F2 R' B2 L' R2 U2 L B L' D2 F' D2 B U2 R2 U' B D,B,Vienna Summer 2024 (2024-06-08~09),333oh R1 A #3
 3878057001,U2 L' D2 F2 L R2 B2 U B D F D' U2 B2 R' B' L' U,B,Manchester June 2024 (2024-06-23),333 R1 D E1
-3960185001,D2 L2 F D2 F' D2 F2 L2 R B2 D' U2 F R' B' U' L2 B2 F,B,Rubik's WCA South American Championship 2024 (2024-07-22~25),333 R2 F #5
+5731145001,U L' D' L' F2 L' R B2 L F2 L' F' L' B' R D B2 F L2,B,Farewell Strathclyde University 2026 (2026-06-27~30),333 Final A #2
 4024491001,L2 D' U' R2 B2 D' B2 L2 R2 D R' F U' B R B' U2 R' D' L,B,Ruta Valenciana I: Calp-Ifach 2024 (2024-08-17~18),333 R1 C #2
 4037344001,D B U2 L' U L2 B R B2 U' L2 B2 U' R2 F2 D' B2 U' F2 U B,B,Micentro Funza 2024 (2024-08-24),333 R1 C #5
 4071443001,F' R F2 D' L' U' R' L2 B2 D F2 L2 D R2 U2 R' F' U B',B,Portugal Championship 2024 (2024-08-30~09-01),333 R2 C #1
