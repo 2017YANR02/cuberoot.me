@@ -3,8 +3,8 @@
  * 特征以 U(世界单位)定义,与分辨率无关 —— 用小图快测。锁:
  *  ① UV 光栅化覆盖率合理 + BFS 外扩后全图无空洞(mipmap 黑边回归);
  *  ② 肤色基调 r>g>b 且在肤色带内(别烘出灰紫手);
- *  ③ 指甲存在:低粗糙(甲面 ~0.34)像素占比在合理窗口(0 = 甲没画上,
- *    过大 = 甲掩码溢出糊全手);
+ *  ③ 无画甲:指甲只有立体甲片(handModelGltf 蒙皮薄壳),贴图里不许再出现
+ *    低粗糙甲面区(画甲回归 = 一指三甲,2026-07-08 用户抓的);
  *  ④ bump 有中高频结构(毛孔/皱纹,不是平灰);
  *  ⑤ 确定性:imul 哈希噪声无随机状态,两次烘焙逐字节一致(刷新不换脸)。
  */
@@ -66,20 +66,13 @@ describe('computeHandMaps 皮肤贴图烘焙', () => {
     expect(b / r).toBeLessThan(0.85);
   });
 
-  it('指甲:五指甲面都画上且掩码不溢出', () => {
-    // 每指强掩码像素数(e>0.5):0 = 甲背方向解错(画到指腹侧,踩过);
-    // 过大 = 超椭圆掩码溢出糊到指节。总量按 512² 实测 ~1700px 等比换算。
-    const total = Object.values(maps.nailPx).reduce((a, b) => a + b, 0);
-    for (const [finger, px] of Object.entries(maps.nailPx)) {
-      expect(px, `${finger} 甲面像素`).toBeGreaterThan(10);
-    }
-    expect(total).toBeLessThan(S * S * 0.03);
-    // roughness 图里确实存在低粗糙(甲面 ~0.34)区
+  it('无画甲:贴图中不存在低粗糙甲面区', () => {
+    // 皮肤 roughness ~0.585±小扰动;画甲(~0.32)一旦回归立刻掉进 <0.45 桶。
     let glossy = 0;
     for (let i = 0; i < S * S; i++) {
       if (maps.rough[i * 4] < 0.45 * 255) glossy++;
     }
-    expect(glossy).toBeGreaterThan(total * 0.5);
+    expect(glossy).toBe(0);
   });
 
   it('bump 有结构(非平灰)', () => {
