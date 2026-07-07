@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / G / bin 2
-# Population in this bin: 144
-# Samples listed: 144 (all entries in this bin)
+# Population in this bin: 145
+# Samples listed: 145 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 33026001,U2 R' D2 F' L' U R' B' L F2 L D2 F' B2 L2 D2 R2 L2,G,Masterpress Summer 2014 (2014-06-28~29),333oh Final A E2
@@ -149,3 +149,4 @@
 5634398032,L U R2 F2 R2 F2 D F2 D2 L2 F2 B' U' L' B2 D2 L D' R D2 B R,G,Please Don't DNF Beijing 2026 (2026-05-16~17),333mbf Final A #2
 5694431027,L2 F L B2 L2 U2 F2 U2 L U2 D' R2 F' L2 U2 B U R U' B R',G,GLS Side Challenge Gdańsk 2026 (2026-06-06~07),333mbf Final A #2
 5706565021,U2 L2 R2 D B2 D U F2 B' R' B F L' D2 L' B2 U2 L' U B',G,Quiet Prep in Palisades 2026 (2026-06-19),333mbf Final B #1
+5735877001,R2 U F2 U F2 U' L2 D L' U' L' D R2 U B F L B',G,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R2 A #5

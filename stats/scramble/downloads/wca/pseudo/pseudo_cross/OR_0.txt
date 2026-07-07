@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / OR / bin 0
-# Population in this bin: 52
-# Samples listed: 52 (all entries in this bin)
+# Population in this bin: 53
+# Samples listed: 53 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 146624001,R' U2 R' D2 R2 B U2 L' U R' B2 L2 D' L2 D B2 U' F2,R,Indian Nationals 2015 (2015-05-29~31),333 R3 D E1
@@ -57,3 +57,4 @@
 5508209017,D2 B2 R U2 R' U2 L' D' R B' D2 F2 L' D' R2 D2 B U2 B' L,O,Johnshhhtown 2026 (2026-04-04),333mbf Final A #1
 5523826001,U' B' D2 L R2 B2 R2 D2 F2 R' U' L2 B2 R B' F2 R B2,R,Avenida Chile XXXIII 2026 (2026-04-12),333 R1 B #2
 5540873001,B R2 U2 B2 F' R2 B F R' F2 D2 R U B2 F2 R D' B' F,R,Xuzhou Zenith 2026 (2026-04-11~12),333 R2 D #1
+5730147001,D2 F' D2 L2 U D' R U' R2 B2 L F2 D2 L2 U2 R' U2 R' B U',R,Hampshire Summer 2026 (2026-06-27~28),333 R2 B E1

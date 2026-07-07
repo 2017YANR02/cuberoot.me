@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / G / bin 8
-# Population in this bin: 718
+# Population in this bin: 724
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4818663001,B2 L' D2 L2 D' U' B2 D' R2 D' R B L B D R' B F D' L' F,G,Dublin Summer Solving 2025 (2025-06-21~22),333bf Final A #3
@@ -29,7 +29,7 @@
 4303171001,L2 B L' F' B2 L2 U' D B' U2 B2 L2 B2 L' B2 D2 B2 R' D' B2,G,Amherst Fall 2024 (2024-11-23),333 R2 A E2
 2875370030,F R' F L' R2 D2 B2 U' L2 D2 U2 F' D L' B' F2 L' F' R' B' L2,G,NZ South Island Championship 2023 (2023-07-07~09),333mbf Final A #1
 1092224001,U L2 F2 D' B2 D R2 D R2 D2 F2 R B R2 F' U L D' F U' B',G,Indian Nationals 2019 (2019-04-11~14),333bf R1 A E2
-3627105001,U R2 D' U' F2 B R' D F2 R2 B D' R' F R D2 U',G,Romerike Easter Open 2024 (2024-03-23~24),333 R2 C #5
+5731667025,B' D' L R2 U' L2 D L2 D R2 U B2 R2 U2 B U L' R2 B D2 L B',G,Farewell Strathclyde University 2026 (2026-06-27~30),333mbf Final A #2
 4639679001,R2 D2 F2 R2 U2 R U2 F2 U2 R U F L F' R D L B' F R,G,Unicentro Tunja II 2025 (2025-04-13),333 R2 B #3
 210229001,B2 U2 F2 R' B2 U2 L F2 L U B U2 R2 B' R D' L' D' F' U',G,Hasselt Open 2015 (2015-10-31~11-01),333fm Final A #1
 3953819001,F R D2 R2 B2 L' U2 B2 D L U B F L B' D2 B' U2,G,Warm Up Portugalete 2024 (2024-07-19~21),333 R2 A #5

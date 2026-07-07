@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / BG / bin 0
-# Population in this bin: 44
-# Samples listed: 44 (all entries in this bin)
+# Population in this bin: 45
+# Samples listed: 45 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 213504001,B2 U2 L2 D2 F2 D2 F' L F' L2 D B2 F D' B' U2 R U2,B,AZCubing Fall 2015 (2015-11-07),333oh Final A #4
@@ -49,3 +49,4 @@
 5572071001,D2 F2 U' F R D2 F' U D2 R B2 L2 U' B2 R2 B2 U',B,National Trail Open OH 2026 (2026-04-25),333 R2 B #4
 5642873001,U' L2 B2 U2 B2 F2 L2 D R D2 B' L R B L B' U' F2 D',B,Hamoye Jinju 2026 (2026-05-16~17),333 R1 G E2
 5691284011,R B' L B2 U B2 F2 U2 R2 F2 D' R D2 B' R2 B2 D' L2 B2 L2 U',B,Calgary Please Be Quiet 2026 (2026-06-06),333mbf Final A #1
+5732545001,R' B' D2 R2 B2 L2 B D2 L2 R2 D L' B' D2 B R2 D2 F,B,Cubing at COTA 2026 (2026-06-27),333oh Final A #2

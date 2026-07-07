@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / B / bin 1
-# Population in this bin: 93
-# Samples listed: 93 (all entries in this bin)
+# Population in this bin: 94
+# Samples listed: 94 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 66339001,U R2 D2 B R B' R' U' R2 U2 B2 L D2 R2 B2 R2 F2 L' B2,B,Montevideo Open 2014 (2014-10-11),333 R2 B #3
@@ -98,3 +98,4 @@
 5642873001,U' L2 B2 U2 B2 F2 L2 D R D2 B' L R B L B' U' F2 D',B,Hamoye Jinju 2026 (2026-05-16~17),333 R1 G E2
 5689894001,L U B2 R2 F2 L' D2 L' R D2 B2 U L D2 B' R2 U' L2 D2,B,Tramsheds IX: June Sunday 2026 (2026-06-07),333 Final A #5
 5691284011,R B' L B2 U B2 F2 U2 R2 F2 D' R D2 B' R2 B2 D' L2 B2 L2 U',B,Calgary Please Be Quiet 2026 (2026-06-06),333mbf Final A #1
+5732545001,R' B' D2 R2 B2 L2 B D2 L2 R2 D L' B' D2 B R2 D2 F,B,Cubing at COTA 2026 (2026-06-27),333oh Final A #2

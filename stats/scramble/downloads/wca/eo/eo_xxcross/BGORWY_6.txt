@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGORWY / bin 6
-# Population in this bin: 594
+# Population in this bin: 595
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1682873001,F2 D L' D2 B' U2 D2 F' R2 F2 U2 L2 D2 B' D' L',W,Empire State Summer B 2021 (2021-08-01),333oh R2 B #3
@@ -127,7 +127,7 @@
 2358944001,D F2 L' U' L D2 U2 B2 L2 F2 R2 F' R2 F R' D' F2 R,Y,Oulu Open 2022 (2022-12-10~11),333 R1 B E1
 5447938001,R2 F2 U2 L2 F2 L F2 R B D L F2 U' L D U' L2 F',Y,Cube Factory League Rogów 2026 (2026-03-14~15),333 R1 B E1
 5428457001,F D2 F' U' F2 D2 F2 R2 U' B2 D' R U B2 L2 U' R D R,O,Megaminx Madness AZ 2026 (2026-03-07),333 Final D E2
-4450191001,R2 F' U F U2 B2 U2 B2 R2 U2 B' R2 U R2 B2 L' B' U' R2,G,Eretum I 2025 (2025-01-25~26),333 R2 C #4
+5736461001,D B2 L B2 F2 D2 R' D2 R2 U2 B2 R2 F' U' R' B L2 F2 D' L2 U2,Y,BBQ Ropaži 2026 (2026-07-04),333bf Final B #4
 4776336001,R B2 L D' U2 R2 U F2 U2 B2 U L D2 F' U2 B D R',O,Surrey Monday Open 2025 (2025-06-02),333 Final A E1
 1864686001,R' U2 D2 B' D2 R U L2 U' L R2 D2 R2 D' L2 D L2 U,R,Saint John's Spring 2022 (2022-04-09),333 R2 C E2
 733249020,F2 U' B2 U2 L2 B2 F2 D F2 U2 F' D' F U' R2 F2 U' L F L B2,R,Nacionales Uruguayas UCHI 2018 (2018-03-24~25),333mbf Final B #2

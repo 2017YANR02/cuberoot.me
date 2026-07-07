@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / B / bin 8
-# Population in this bin: 417
+# Population in this bin: 418
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 11598001,B2 U2 B2 F2 L' F2 D2 L' U R2 F2 L2 R B2 D' B2 F L B',B,Coliseo de Tovar 2014 (2014-04-19),333bf Final A E1
@@ -24,7 +24,7 @@
 2282241001,D' R2 L U' F' U2 L2 F R D L2 D' F2 L2 D' R2 D' F,B,Taoyuan Cubing Open 2022 (2022-11-05),333 R2 A #3
 103934001,R2 D F2 U' R2 D L2 B2 D B2 D' R' D' B2 L2 B L2,B,Happy Sheep Year 2015 (2015-01-24),333 R1 B #2
 112618001,R B2 L' B2 R' D2 F2 R2 B2 F2 U2 F' R U' B D' U2 R,B,SP Open 2015 (2015-02-28~03-01),333oh R1 B #3
-124033001,D2 L D2 U2 B2 U2 R F D' L R' U' F L' B L2 F L',B,Maru Cube for Kids Day 2015 (2015-04-05),333 R1 B #5
+5738993001,R D' B2 U F2 D' U R F L2 R2 B' U2 L' B2 F2 D',B,Taipei Cube Open 2026 (2026-06-27~28),333 R1 D #1
 129656001,U F2 D2 R2 D L2 U2 F2 R' F L2 U' B' L' U' R F' R U2,B,REC Cube Open 2015 (2015-03-21),333 R1 I E2
 5402362001,D2 U2 B F R2 D2 R' B' D L' B2 D F' U F2 D2 U',B,Cubing with Dinosaurs Lehi 2026 (2026-02-21),333 R1 C #3
 170062001,F D B R' B2 D2 F B2 R F2 D2 F2 B U2 F' L2 B' R2 D2 L2,B,Lifestyle Seasons Winter 2015 (2015-08-01),333oh R1 B #5

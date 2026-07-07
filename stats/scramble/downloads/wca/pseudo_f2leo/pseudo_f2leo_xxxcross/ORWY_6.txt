@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / ORWY / bin 6
-# Population in this bin: 242
+# Population in this bin: 243
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5024080001,D B U' D2 F' B' R F R' F R' F2 U2 D F2 R2 D,Y,León Open 2025 (2025-09-13~14),333 R1 A E2
@@ -101,7 +101,7 @@
 5598488001,D2 L2 D2 B2 L U D' B R' D' R F' L2 F2 D2 R2 L2 F,R,All Rounders Katowice I 2026 (2026-05-01~03),333 R1 C #2
 1728229001,F2 U R L' F' L F' D B' R2 L D2 B2 L' F2 R' B2 U' B,O,BrizZon Side Open III 2021 (2021-11-12~14),333bf R2 B #1
 1741049001,D2 L' B2 L2 B D2 L2 B U2 R2 F' L' D' L' F2 D' B' R2,R,Tuam Re-Open Saturday 2021 (2021-11-27),333 R1 C #1
-1752595001,F R U L' D2 L2 D L' D' F' L2 F' D2 L2 U2 B U2 B D',W,Rocky Top 2021 (2021-12-04~05),333oh Final A E1
+5728070001,F' D2 U' B2 R2 U2 L2 B L' B' F2 D L U F2 R2 F R',O,Warm Up Carolina Pride 2026 (2026-06-27~28),333 R2 A E1
 4850256001,D R' B2 R B2 R' B2 R2 D2 F R' B2 U' L R2 B' L B,W,Rubik's WCA World Championship 2025 (2025-07-03~06),333 R2 D E1
 5432779001,U' R' D R' B' D L U2 F L2 B L2 D2 F2 R2 U2 F D,W,Wiltshire Spring 2026 (2026-03-07~08),333 R3 C E2
 1940206001,B D' B' L U' B2 U F' B2 D' B R2 B2 D2 R' D2 R' D2 F2,Y,3x3x3 Only Hamilton B 2022 (2022-05-29),333 R2 A E1

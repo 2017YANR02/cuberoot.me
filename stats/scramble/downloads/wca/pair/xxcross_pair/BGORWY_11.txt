@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / BGORWY / bin 11
-# Population in this bin: 389
+# Population in this bin: 390
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 25591001,B2 U' B' R' L' U' D' F2 L F' R2 F2 D' B2 U2 R2 D L2 F2,B,Tianjin University Open 2014 (2014-06-07),333 R1 A #2
@@ -166,7 +166,7 @@
 1990095002,B2 U2 R U' B2 L' D2 R' B2 L' B2 U2 B R U' F' U2 L2 D L B',B,Blind Is Back LA 2022 (2022-06-26),333mbf Final A #1
 1995608001,F' U2 R' F2 U2 B2 D' F' L2 B2 L2 U2 F2 B2 U' B' L',B,UNAC Medellín 2022 (2022-06-26~27),333 R2 C E2
 3157162001,B' U R L' F L D F2 R D2 R B2 R F2 U2 D2 L' U' B R,B,The Big Cube Melbourne 2023 (2023-10-14),333oh R1 B #4
-5691926077,U' R L F R2 D B' U2 D2 B2 R2 D2 F2 R2 D R2 L F2 R B R,B,Swisscubing Cup Mental Breakdown I 2026 (2026-06-06~07),333mbf Final B #2
+5739782020,R2 F' U2 F2 R2 D2 F' D2 L2 F2 L2 R' D' L F' D R2 U L U2 L' B',B,Slovak Championship 2026 (2026-07-02~05),333mbf Final A #1
 2058342001,D2 R2 F2 L D2 L' D2 B2 F R' U B' D' R2 U2 L R2 F U2,B,Tashkent Open 2022 (2022-07-30~31),333 R2 B E1
 3762601001,F2 L' R2 D2 L2 R B2 L' U2 D R U' L' B' F2 L2 R2 D F,B,Kensington May Sunday 2024 (2024-05-12),333 R2 A #1
 4702493001,B' R' F2 R2 F2 D2 L2 D2 R2 D' B' F U' B' R' B' F2 U F2,B,Keep Up Karrinyup 2025 (2025-05-04),333oh R1 A E1

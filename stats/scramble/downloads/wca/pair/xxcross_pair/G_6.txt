@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / G / bin 6
-# Population in this bin: 308
+# Population in this bin: 309
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 55145001,L2 B' F' R2 F2 L2 B' U' L2 B' U2 L' F U' F R2,G,360 Degree Wellness Open 2014 (2014-08-30),333 R1 B #4
@@ -30,7 +30,7 @@
 4937846031,D2 R2 F' D2 L2 D' F2 U F2 D' L2 U R D2 L2 B2 F' L' B L2 U,G,BrizZon Side Open IV 2025 (2025-08-15~17),333mbf Final A #2
 375865001,U' D2 R D' F2 L U' R' U' F U' F2 L2 F2 R2 D' L2 F2 B2,G,Spanish Championship 2016 (2016-10-07~09),333oh R2 A #4
 3537029001,D' L F' L2 F' D' F' R' B2 L' B2 D2 L' B2 R B2 D2 B2 R B' L',G,Gran Asociación Open 2024 (2024-02-24~25),333bf Final A E1
-391810001,F2 U2 R' F2 U2 R2 D2 F2 R2 F R U B F' U L F R2 U F' L2 U',G,Melbourne Cube Days 2016 (2016-11-05~06),333bf Final A #1
+5737697001,L' B' U2 L2 U B2 U B2 U' B U L' B L' U' F' U' L,G,Åland Open 2026 (2026-07-03~05),333oh R1 A #1
 4545345001,F' R2 B R' U D F2 L F' U B' R2 B R2 U2 R2 F2 U',G,Eugene Cubing Spring 2025 (2025-03-08),333oh Final A #3
 3762748001,L' D' F2 R B2 R F2 L' D' L D B' F' D2 R2 D' R2,G,Kensington May Saturday 2024 (2024-05-11),333 R1 E #1
 433258001,B2 U' L2 R2 D B2 D2 R2 F R F2 L2 B' L' D' F' L B' D,G,Santa Fe Open 2016 (2016-12-10),333 R1 D E1

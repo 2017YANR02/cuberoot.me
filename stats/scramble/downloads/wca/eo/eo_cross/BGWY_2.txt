@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BGWY / bin 2
-# Population in this bin: 79
-# Samples listed: 79 (all entries in this bin)
+# Population in this bin: 80
+# Samples listed: 80 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,G,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
@@ -84,3 +84,4 @@
 5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,W,Sumgait Spring Open 2026 (2026-03-19),333 R1 A #4
 5511331001,B2 U2 F R2 F' L2 R2 B2 D2 R F' L2 F' L U2 L F' D2,G,French Championship 2026 (2026-04-04~06),333 R1 E #3
 5539335001,U' D L2 D R2 B U' F2 L2 D2 F D2 B2 R2 B R2 D2 L' U,B,NZ South Island Championship 2026 (2026-04-10~12),333 R1 A #3
+5737636001,B' F2 D2 R2 F' L2 F R' B' D' L' F L' B2 U B2 F' U2 L2,B,IMETRO Open 2026 (2026-07-04),333bf Final B #3

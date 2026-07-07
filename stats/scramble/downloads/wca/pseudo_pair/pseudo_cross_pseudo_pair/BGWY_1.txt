@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BGWY / bin 1
-# Population in this bin: 665
+# Population in this bin: 667
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2478001,R2 B' D2 F' L2 D2 B F2 D R2 U' L B2 U2 L' F' D' F R2,W,Santo Domingo Spring 2014 (2014-03-23),333oh Final A E2
@@ -197,7 +197,7 @@
 5252652001,L2 B2 D L B2 U' F2 L2 B' D2 B' U R2 U2 D' L2 U2,Y,Swisscubing Cup Final 2025 (2025-12-06~07),333 Final B #2
 4713211001,B2 L2 F2 U' B2 F2 D U R' B R B D U2 B2 R' U F2 R2,B,Móstoles Open 2025 (2025-05-10~11),333oh R1 B #4
 1685383001,U D R' U R D F B' L' D' F2 D' B2 L2 U2 R2 D' R2,G,Cubes Masters Zhytomyr 2021 (2021-08-07~08),333 R2 B #3
-875089001,B2 D2 F' D' F R2 U' B2 L U D2 F R2 F2 L2 D2 B L2 F2 R2,W,Champagne Open 2018 (2018-09-08~09),333oh R1 C #4
+5738122001,D2 R' U2 R2 D2 F2 D2 F2 R' D2 U' B U' B R2 B2 L D2 F2 L B,G,Åland Open 2026 (2026-07-03~05),333bf Final A E2
 5025557001,L U2 F B' L U F' D2 F' B2 U2 B2 R L2 F2 R U2 D2 F',G,The Heart of Texas Fall 2025 (2025-09-14),333 R1 B #3
 4089044001,F' U2 B2 L2 R2 B R2 B D2 U' R U' B' D F' D2 R' B D',B,Hudson Valley Summer 2024 (2024-09-08),333 R1 A E1
 4544991001,L' D' B2 L' D2 L2 R' U2 B2 R D2 B' D' B F U L2 D',W,Villavicencio 2025 (2025-03-08),333 Final B E1

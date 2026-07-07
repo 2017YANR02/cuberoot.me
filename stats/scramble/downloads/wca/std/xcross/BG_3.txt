@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BG / bin 3
-# Population in this bin: 265
+# Population in this bin: 266
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 17106001,U F2 U' D' F D' L' D L2 F2 D' R2 F2 L2 B2 D2 F2 U2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 C #5
@@ -52,7 +52,7 @@
 682867001,B' U2 L F' L' F' D' R2 B D F2 L2 F2 R2 F' U2 R2 U2 F2,G,Shaastra Cube Open 2018 (2018-01-06~07),333 R1 N #3
 683957001,U2 L2 U F2 L2 D' R2 D' B2 L U' F2 L2 R' D' F' R F2 R2,B,Northern Neck Winter 2018 (2018-01-13),333oh R1 A #2
 685141001,L' R2 U2 R' D2 F2 R' U2 R' F' R U' F2 D' F' D2 B F2 U,G,Thanks Four The Invite 2018 (2018-01-13),333oh R2 B #5
-4931998001,L2 D' F U2 L2 D F R L D2 R2 D2 B2 L U R2 B',B,Zibo Open 2025 (2025-08-10),333 R2 D E1
+5735877001,R2 U F2 U F2 U' L2 D L' U' L' D R2 U B F L B',G,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R2 A #5
 740158001,D2 L' B2 R D2 F2 L2 D2 L' B U L' U R' U R2 D,B,French Championship 2018 (2018-03-31~04-02),333bf R1 A E1
 748114001,F2 L2 B2 F2 U' B2 D R2 F2 U' R2 F' L F R' D R' B2 L D',G,La Vall d'Uixó Open 2018 (2018-04-07~08),333 R1 A #1
 756260001,U2 L2 F2 L2 U B2 D B2 R F' U' R U' F' U' L2 U L U,G,Santiago UV de Otoño 2018 (2018-04-14~15),333 R1 I #1

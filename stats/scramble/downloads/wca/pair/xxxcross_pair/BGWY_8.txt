@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGWY / bin 8
-# Population in this bin: 462
+# Population in this bin: 465
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2500839001,F2 R2 F2 D2 R B2 F2 R2 D L D2 U2 B' R2 B U2 F' U,B,Ohio State RPAC Cube Clash 2023 (2023-02-18),333 R1 C #4
@@ -203,5 +203,5 @@
 4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,G,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2
 2003358001,R2 B F2 D' F2 L2 B2 U F2 U B L2 B' L' F' L2 D' R,B,We are Back Sofia 2022 (2022-07-09),333 R1 A #2
 2068497001,R B2 L2 U2 F2 R B2 L2 D2 R2 U' L B F2 L2 D2 U' R' U' B2,Y,AZCubing Summer 2022 (2022-07-30),333 R2 A #1
-4728157001,B2 F' L2 F L2 R2 F D2 B U F' U2 R D' B2 U' F D2 F2 R',B,Energy Cube Tomaszów Mazowiecki 2025 (2025-05-17~18),333 R2 A #2
+5736478001,R2 D' L' U2 D2 L2 F' D' R2 F' L2 U2 B2 L2 U' L2 U D,B,BBQ Ropaži 2026 (2026-07-04),333oh Final B #5
 4793053001,D F L' U L U2 R2 U2 B2 L' D L U2 R U2 B R',B,Stevenage June 2025 (2025-06-07~08),333 R2 A E2

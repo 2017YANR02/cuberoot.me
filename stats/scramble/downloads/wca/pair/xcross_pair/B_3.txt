@@ -2,7 +2,7 @@
 # Population in this bin: 20
 # Samples listed: 20 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 630020001,D' F2 U' L2 R2 D2 B2 U' R2 D2 U' L' D2 F' L R2 D2 L2 U' R2,B,U.R.A. Back to School 2017 (2017-10-28~29),333 R1 A #5

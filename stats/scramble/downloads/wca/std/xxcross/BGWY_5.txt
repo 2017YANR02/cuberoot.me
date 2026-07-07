@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BGWY / bin 5
-# Population in this bin: 458
+# Population in this bin: 459
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,B,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1

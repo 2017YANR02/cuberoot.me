@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / WY / bin 8
-# Population in this bin: 243
+# Population in this bin: 244
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2608001,D' B' L' D L' F2 U F U' L' U2 F D2 R2 F' B2 R2 U2 B2,Y,CMI Fiesta Open 2014 (2014-03-21~23),333 R1 R #4
@@ -30,7 +30,7 @@
 5523543001,U' B2 D F2 U2 L2 U' L2 R F' R' D F2 R D B2 R F',W,Pickering Mini Morning 2026 (2026-04-12),333 R1 B E1
 430297001,R2 U2 B' U2 F U2 R2 U2 L2 F2 R D' F2 L F U' B' R D F2,W,Chișinău Winter 2017 (2017-01-08),333 R2 B E2
 438421001,L2 U2 R' F2 U2 R U2 R2 D' F L D' F2 D2 F' R' F' R2 B2,Y,Turkish Winter Cup 2017 (2017-01-28~29),333oh R1 A #1
-438892001,F' L2 D2 R2 U B L' F L B2 U2 D B2 D F2 L2 F2 U,W,Istres Open 2017 (2017-01-28~29),333 Final A #3
+5731666012,R F' R F2 B2 U' R D' L2 U2 L2 U R2 D' F2 L2 D' B D L B2,Y,Farewell Strathclyde University 2026 (2026-06-27~30),333mbf Final A #1
 463523001,R' B2 U2 R D2 R F2 L2 B F R F' L' B2 D R2 U R F',Y,Music City Speedsolving 2017 (2017-03-11),333 R1 C #2
 468525001,F2 D2 L' D2 L' B2 F2 L2 D2 U R' U B F2 L' F L B2 D' L2 U2,W,Unionville Open Spring 2017 (2017-03-18~19),333bf Final A #2
 478488001,D2 L' B2 R' F2 D2 L' R' U2 B2 R F D L' D2 B U' B2 D U,W,Guatemala Nationals 2017 (2017-03-25~26),333 R1 A #1

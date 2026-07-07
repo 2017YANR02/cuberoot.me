@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / ORWY / bin 2
-# Population in this bin: 578
+# Population in this bin: 580
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2305080021,D F' R2 U F2 U2 D F' U' R2 B2 R2 D2 F' U2 L U L B,R,Just Cube Joburg 2022 (2022-11-12~13),333mbf Final A #1
@@ -114,7 +114,7 @@
 1453887001,F' B2 R' U' B' D' F' R2 U' R F R2 D' B2 U' B2 D2 B2,Y,NEU Open 2019 (2019-12-15),333 R2 A #5
 680974001,L U' R D2 F U F' U' L U2 B2 R2 B2 D2 R' U2 R2 B2 R',Y,Cusco Speedcubing 2018 (2018-01-06),333 R1 A #1
 683583001,F2 R D2 R' D2 B R2 U B2 U F2 R U2 L D2 B2 R' B2 L2,R,Michigan Cubing Club Alpha 2018 (2018-01-13),333 R1 C #2
-3735543003,D F2 U R' U' B2 U D' L B2 L2 U' B2 R2 U F2 D L B,Y,Aarhus Diverse 2024 (2024-05-05),333mbf Final A #1
+5735370001,F D' R B R2 U F2 D' U' B2 L2 B2 R U R' B D2 L' D L' F',R,Queensland Open 2026 (2026-06-27~28),333bf Final B #2
 2743549001,U' F U' B' D2 R' U2 R F2 B' R2 B R2 U2 F' U F D2,Y,Pavillion Cube Open 2023 (2023-05-20~21),333 R1 G E2
 688623004,L D2 L B2 R D2 L' B2 R B' L U' R2 B2 L2 D B' R B2 U2 L2,O,Speed in Colors 2018 (2018-01-19~20),333mbf Final A #2
 3813371001,F U2 B' L2 D' F2 U' B2 D' L2 R2 U' R B D2 R2 B D' R' U' L2 U,W,Bellingham Spring 2024 (2024-06-01),333bf R1 B #3

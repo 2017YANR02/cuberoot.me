@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / G / bin 3
-# Population in this bin: 346
+# Population in this bin: 349
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 11096001,F2 R2 U2 R' B2 U' R U2 B U' B2 R' B2 D B' U,G,Slovenian Open 2014 (2014-04-12~13),333 R2 B #4
@@ -51,7 +51,7 @@
 401871001,R2 F2 L' B2 L F2 D2 F2 L' U L' D F2 R U2 R2 B' D U2 F,G,Maharashtra Championship 2016 (2016-11-13),333 R1 E #1
 5307445001,L' B R U2 L D2 R B2 L' D2 R2 U2 F' D B2 F' D' L B R2,G,Lugo Open 2026 (2026-01-03),333bf Final A #1
 4578779001,U L' F2 L2 B F D2 L2 F' D' B L' D2 R' D' R D' L',G,Oldham County Spring 2025 (2025-03-22),333 R1 D #5
-4898089001,R' D' R2 D B2 R D B' U2 L2 B2 L U2 D2 R D2 L' B2 D,G,Fort Payne Summer 2025 (2025-08-02),333 R1 A E2
+5736198001,F' D2 U2 F U2 R2 D2 F' R' D' U' F' U' L F' L2 D' U,G,Cubo Manía MFS Bello 2026 (2026-06-28),333 R2 C E2
 433587001,U2 B2 D' B L' D' F' R D' L' B2 L2 B2 U2 D F2 U2 R2 F2,G,6 Sides of Silesia 2017 (2017-01-14),333oh R2 A #5
 3979739001,D R2 B2 R D R D' L2 D2 F' U2 B R2 D2 B2 U2 L D2,G,Rubik's WCA European Championship 2024 (2024-07-25~28),333 R1 B #1
 442028001,R' F2 R' F2 L2 B2 D2 R' U2 F L U2 R B D' L F2 D' U2 L2,G,JRCA Kansai Winter 2017 (2017-02-12),333 R2 B #5

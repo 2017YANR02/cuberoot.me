@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / ORWY / bin 3
-# Population in this bin: 801
+# Population in this bin: 807
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4486321001,B2 D2 L2 D L2 F2 U' R' B2 D L' U F2 D L' R' D2 B,O,NxNs at Finprov 2025 (2025-02-16),333 R1 B E2
@@ -18,7 +18,7 @@
 2309977001,R2 U R B2 D2 F2 B U' D F U2 F2 U' L2 D B2 U R',O,Buenos Aires Cubea 2022 (2022-11-19~20),333 R1 D #2
 2831607001,L' U' R' U L U2 R U2 R2 D2 F2 D2 F' L' R' D' B2 D' B2,R,Open de Lumes 2023 (2023-06-24~25),333 R1 C #1
 1154912030,F2 L' F2 L' D2 L2 F2 U2 R B2 F2 U' L F D B2 L2 B2 F2 D2 L2 U,W,Koalafication Palmy 2019 (2019-05-25~26),333mbf Final A #1
-1881735032,D B' D2 R2 F U F' B' U2 R2 L' D2 L B2 L2 F2 L B D B' L',R,Buckeye Blind Off 2022 (2022-04-16),333mbf Final A #1
+5728205001,U' L2 B2 U B2 U' B' D2 F D2 U B' F U B' L2 F2,W,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #5
 1455992001,D2 L2 D2 R2 B' D2 B F R2 U2 R F L2 B2 R' B2 U B' U' F',Y,Keep Portland Weird 2019 (2019-12-14),333 R1 D #2
 1864672001,B2 L' U2 L R B2 D2 U' R2 U' L2 R' U' B2 U' F',W,Saint John's Spring 2022 (2022-04-09),333 R2 A E2
 1806936066,R D B2 R D2 B2 U2 R2 B2 L2 B2 U L' U' B' L' F' L B L' F',O,PoliMi Mental Breakdown 2022 (2022-02-12~13),333mbf Final A #2
@@ -100,7 +100,7 @@
 447532001,R2 B2 R F2 R' U2 R' B2 F2 R2 D L2 D2 U' L' U2 F' R' D B',O,Singapore Rubik's Cube Competition 2017 (2017-02-18~19),333oh R1 B #5
 3591420001,R' D' L' D' L' U R' D2 L' D' L2 F2 U' F2 U D F2 R2,Y,Vancouver Newcomers Morning 2024 (2024-03-16),333 Final A #3
 5697111001,U' B2 R' U2 L2 R D2 B D' F D' L' B R2 B' R2,Y,Cookeville Cube Challenge 2026 (2026-06-13),333 R1 A #4
-5114782001,B U L2 U F2 B R' U B2 D L2 B2 D' F2 U' B2 L2 U' L2,W,Guilin Open 2025 (2025-10-19),333oh R1 A E2
+5739068001,B' U' F2 U2 B2 L D R F' R2 F2 U2 R' L2 D2 R' L2 D2 F',Y,Taipei Cube Open 2026 (2026-06-27~28),333 R2 C #2
 1360662001,L' U' R' U' B R' F2 L B' D2 R D2 L D2 F2 R2 L2 F2,O,Patagonia Open 2019 (2019-10-13~14),333 R1 A #5
 4444500001,F L D2 R2 F2 R2 F L2 D2 L' D2 F2 U2 F2 R U2 L' F',R,Jesuitinas Txantrea Open 2025 (2025-01-25~26),333 R2 A E1
 2325483001,R2 B2 R2 B2 R2 U2 B2 D' R2 F2 R' D' L2 F2 U2 B' F2 L2,Y,CubingUSA Texas Championship 2022 (2022-11-19~20),333oh Final A E2

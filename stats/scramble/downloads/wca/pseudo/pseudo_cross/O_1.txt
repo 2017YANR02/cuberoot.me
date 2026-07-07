@@ -2,7 +2,7 @@
 # Population in this bin: 345
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4347560001,U2 D' L2 F' L U' L2 F' D2 F2 L2 D L2 U R2 D R D,O,KUbing Nepal 2024 (2024-12-05~06),333 R1 A #5

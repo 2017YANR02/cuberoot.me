@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / W / bin 11
-# Population in this bin: 600
+# Population in this bin: 601
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 38706001,U' L' F' R' F D B' R2 D B2 L U L2 U2 L2 U D2 B2,W,Croatian Open 2014 (2014-07-19~20),333oh Final A #1
@@ -88,7 +88,7 @@
 1655869001,D2 F2 L' R2 F2 L2 R U2 R F D R' B' R' B' D2 R F2 L2,W,Xuzhou Open PM 2021 (2021-05-16),333 R1 B #2
 553084001,F' U2 R2 F' U' L2 U' L U2 R B L' B2 R' F2 L',W,Southern Championships 2017 (2017-07-15~16),333 R1 G #5
 3924706001,F U' R2 U F' D B U' L F' U D L2 D L2 U2 B2 U L2,W,Green Summer 2024 (2024-07-06),333 R1 B #4
-5179966001,F2 L2 F R2 D2 B' U' B' D' F2 R B F' R U B2 L' B',W,Hvidovre Liga IV 2025 (2025-11-15),333bf Final A E2
+5728202001,D' B2 D' U' L2 B2 U R' B L2 U2 R D2 R2 D F L' B',W,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #2
 567711001,R' F B D F L2 D' F2 D L B' L2 F2 U2 R' U2,W,Cross-strait Cubing Exchange 2017 (2017-08-12~13),333 R2 C #4
 590703001,D' U R2 B2 D U2 B2 F' D' L F' U2 R2 U F2 U2 R2 B',W, Raipur Cube Challenge 2017 (2017-09-10),333oh Final A E2
 594845001,L2 D2 B2 U2 B F D2 F L2 U B2 L2 U' L F' L B' F,W,Metal Rubik Core 2017 (2017-09-16),333oh Final C E2

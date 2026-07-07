@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / R / bin 3
-# Population in this bin: 665
+# Population in this bin: 666
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2568701027,U2 F2 R' D L U F2 U F2 U L2 B2 L' D B2 F' U B L' B' L',R,Di Tella Open 2023 (2023-03-18~19),333mbf Final B #1
@@ -54,7 +54,7 @@
 4730818001,F D L' U2 R2 D2 B2 L R F' L D B2 R U R F' U',R,St. Louis Spring 2025 (2025-05-17),333 R1 A #5
 1776277001,R U' B2 R2 D2 B D2 R2 U L' U' R2 F' D B' D2 R,R,Bologna New Year 2022 (2022-01-02),333 R2 B #5
 340772001,F' R F2 U D' L D2 L2 F B2 R' D2 R2 F2 B2 D2 F2 R' F2 R,R,Cube Camp in Kanazawa 2016 (2016-08-05~07),333 R1 A #4
-5614299001,F' U2 D2 R2 F R B U' F U2 F' R2 B2 L2 B' L2 D2 B' U2,R,Jonava Open 2026 (2026-05-09~10),333oh Final B E1
+5734137001,U R D2 L2 B2 U' L2 U2 B R' B' F' D F D B2 L F2,R,Gdańsk Cubing Day 2026 (2026-06-27),333 R2 A E2
 342679001,F2 U' F2 R2 D F2 D F2 L' U' B2 R2 B D2 B' F' D' F' L2,R,SSN Cube Open 2016 (2016-08-05~06),333ft Final D #1
 343208001,U' B2 R2 F' R' U2 R2 L' D L D2 R2 B D2 B' U2 L2 B2 R2,R,SSN Cube Open 2016 (2016-08-05~06),333oh Final A #2
 2358406008,R2 F2 U2 L R' B2 R F2 R' B2 D' L2 B' D' L' D L B,R,Swisscubing Cup Finale 2022 (2022-12-03~04),333mbf Final A #1

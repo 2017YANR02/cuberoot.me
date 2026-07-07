@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / B / bin 5
-# Population in this bin: 670
+# Population in this bin: 675
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 558001,L F2 L2 B2 F2 D2 L D2 B U B F' L2 F' L' D' R D2,B,Hessen Open 2014 (2014-03-15~16),333 R1 C E1
@@ -67,7 +67,7 @@
 5247964001,R' F' R2 L2 F2 D2 L' B U' F2 L' U2 L' D2 L' F' D' L B',B,Cube Factory Santa Claus Race Brzeziny 2025 (2025-12-06~07),333bf R2 A E1
 347546001,R' U' F R2 F2 U2 L2 U F2 U' B2 R2 D' U' L' F L2 D2 U2 L' D2 R2 D' R' U' F,B,Korean Championship 2016 (2016-08-12~14),333fm Final A #1
 3996158007,U' L F2 R2 U2 R2 B U2 R2 B D2 F R B L2 D' B2 U B' L',B,CubingUSA Western Championship 2024 (2024-08-02~04),333mbf Final C #1
-2372946041,R2 F' L' F' D' L2 U' F2 R' B2 U F2 D' B2 R2 F2 D' F2 B L B',B,Ota Blind Winter 2022 (2022-12-18),333mbf Final B #1
+5736389001,B2 L' F' L' U2 L2 U L2 F2 L2 R2 B' D' B2 U2 L' B' L,B,BBQ Ropaži 2026 (2026-07-04),333oh R1 A #1
 1127625001,L' U' L D F' R F U2 R' B' R' L' F2 L U2 F2 U2 R2 U2 B2,B,Volga Cubing 2019 (2019-05-04),333 R2 B #3
 2514755001,D2 B2 U' B2 D' F' D' U2 F2 L2 D2 R U2 R B2 U2 D L',B,Tunja 2023 (2023-02-25),333 R1 A #1
 1895888001,B R2 B2 R2 F2 D' B2 D F L' B2 L' U' B2 L U' B2 U L B,B,Fast Kids Santa Cruz 2022 (2022-04-23~24),333bf Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / W / bin 2
-# Population in this bin: 203
+# Population in this bin: 205
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 47921001,F U2 F D2 F' R2 F L2 F R2 D' L2 R B2 R F2 D' F' U2,W,Rubik's Cube European Championships 2014 (2014-08-08~10),333 R1 O #5
@@ -92,7 +92,7 @@
 1632037001,L' D L2 D2 L' B' D' B R D2 L' U2 B2 R2 U2 B2 R' B2 D2,W,Taiwan Championship 2020 (2020-12-18~20),333 R2 B E2
 1640451001,D' B F L2 F U2 F D2 B2 L' F R F L U2 F D' B2 D,W,Barwon Cube for the Kids 2021 (2021-03-14),333 R1 B #4
 1654468001,R' U' F U' B' R F B' L F B' R' U2 B' D2 F2 R2 D B2 D' R2 B2 D R' U' F,W,Turning in Townsville 2021 (2021-05-08~09),333fm Final A #2
-1668567001,B2 R U D2 R U2 R U2 F2 R' D' L' R2 D' U2 F2 D2,W,Lubelska Liga Speedcubingu II Biała Podlaska 2021 (2021-07-10~11),333oh Final A #1
+5735638001,R2 U L2 D2 B R2 B D2 R2 F D2 F' L' U F2 D' B' R U' L2,W,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R1 C #1
 1677632001,F2 R2 D2 F2 L2 U' B2 L2 R F R' F' D F2 L U' B U' R2,W,Stowhio Open 2021 (2021-07-22),333 R1 A E2
 1682873001,F2 D L' D2 B' U2 D2 F' R2 F2 U2 L2 D2 B' D' L',W,Empire State Summer B 2021 (2021-08-01),333oh R2 B #3
 1776419001,D' F2 D2 L2 U R2 U2 F2 U' F2 B' D2 R2 U R B R' B' L2,W,Northside Duology Part 1 2022 (2022-01-07~08),333 R2 B #1
@@ -111,7 +111,7 @@
 2650702001,B L' B R2 U2 F' R2 B' F2 L' B2 R U2 R2 U' L2 R D,W,Manaus Plaza Open 2023 (2023-04-15~16),333oh R1 A #3
 2657058001,B' D F2 U F' R2 F U2 R2 B R' D' B' F' R F D',W,Banská Bystrica Open 2023 (2023-04-22~23),333 R1 B E2
 2730691001,F' U R U2 R2 D2 F2 U2 R B2 L' R' B U' F' L' D2 U' L' F',W,Adelaide Autumn 2023 (2023-05-21),333 R1 E #3
-2737473062,D2 L U2 F L2 F' U2 L D R L' D R2 D R2 L2 D',W,Salt Lake Utah Summer 2023 (2023-05-19~21),333mbf Final A #1
+5735993001,U2 F R F R2 D2 B D2 R2 B2 D2 F' U2 D' F2 D2 L B2 L2 F,W,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R1 G E1
 2799642001,R F' L2 U L2 F2 D2 L2 D' L2 R2 U2 F' L' R2 F L B2 U',W,Louisiana Mega Two Day 2023 (2023-06-17~18),333 R2 B E1
 2822639011,B2 R2 F2 L2 R2 D2 U' R' F' U' L U' L' D' B2 F' D2 U' L2 U,W,Jaqueca a Domicilio Lima 2023 (2023-06-25),333mbf Final A #1
 2900549001,D2 F2 D' F' U2 R2 U2 B U2 F L2 B R' U' L R D2 B2 L2,W,Cronos Querétaro 2023 (2023-07-15~16),333oh Final A #4

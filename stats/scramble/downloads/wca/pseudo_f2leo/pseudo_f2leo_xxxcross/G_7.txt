@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / G / bin 7
-# Population in this bin: 798
+# Population in this bin: 800
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 981107001,L2 B2 R2 U2 R2 D B2 D L2 R' B2 D2 B' L B' U F' D2 L' F2,G,Florence Winter 2019 (2019-01-12),333 R1 D E2
@@ -145,7 +145,7 @@
 5711018001,R' B2 F2 D B2 D R2 U L2 U R F2 L' U B D2 L B,G,Oldham County Summer 2026 (2026-06-20),333 Final A #3
 660967004,B2 U2 B2 R2 F2 L B2 L B2 U2 L' F' D' U2 L R2 B F R2 U' L2 U',G,Selandia Open 2016 (2016-04-16),333mbf Final A #1
 2796032001,B' R2 B' R' B R' D' R' B U2 D2 R' B2 R2 F2 L' B2 L' F2,G,Maitland Winter 2023 (2023-06-17),333 R2 B #5
-2793149001,D' B2 U' F U' F' D F' R B' D' B2 L2 U' D2 B2 D' R2,G,Vancouver Pride 2023 (2023-06-11),333 R1 A E2
+5738238001,U' B2 D' L2 D F2 D2 U' F' R2 D L B L' R2 U2 B2 F',G,Cube4fun in Barcin 2026 (2026-07-04~05),333 R2 A #2
 5630362001,R F R2 B2 L2 F' U2 F' L2 F' R' F R2 D' U2 R' B L,G,Mysłowice Cubing Spring 2026 (2026-05-16),333 R2 A E1
 3156118001,B' U2 F' D2 U2 B U2 B D' R B' L2 U L' U B' D R' D,G,Kube Kids Vila Velha 2023 (2023-10-08),333oh Final A E2
 1425007001,U' B L U F L U' B' L F' L2 F2 L2 B' U2 F R2 B2 L2,G,MPEI Open 2019 (2019-11-22~24),333 R1 E #1

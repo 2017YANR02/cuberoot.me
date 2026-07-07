@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / BGWY / bin 6
-# Population in this bin: 242
+# Population in this bin: 243
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -160,7 +160,7 @@
 3243855001,B2 R U F2 U F' R' F' U L2 U' R2 D' B2 L2 D F2 R2,Y,NIT Trichy Cube Open 2023 (2023-11-05),333 Final B #4
 5045009001,R D' B R U2 B2 U2 B2 R F' D F' R F D' L' R,Y,Singapore Polytechnic September Showdown 2025 (2025-09-27),333oh R1 B E1
 3302919062,B' U2 R2 L' D R2 D' R' U2 B' D2 L2 F2 U2 B' U2 F' L2 B' L2 U2,G,NaticubeBLD 2023 (2023-12-02),333mbf Final B #1
-3308256001,R2 U2 R2 B F2 L2 D2 U B2 U2 R B R2 F2 U' B' U2 B,G,Maloka al Cubo Bogotá 2023 (2023-12-03),333 R1 B #4
+5732638001,U2 B' U' L' D2 R2 B2 U R2 D B2 R D B L' B2 L2 U2,B,Cubing at COTA 2026 (2026-06-27),333 R1 C #4
 3392857005,U' B2 R F U2 L' U' L2 B2 L2 B2 U2 L' D2 B2 R' U' R D2 L2 U',W,Vilnius Winter 2024 (2024-01-06~07),333mbf Final C #1
 3443719001,L' D' L U2 B' U2 L2 B' D2 R' F U' F' R2 U',Y,Melbourne Summer 2024 (2024-01-19~21),333 R2 B #2
 3443928001,U2 R B2 R2 D2 L U2 R' U2 B2 F R B' F' D' B2 R2 U' R',B,Melbourne Summer 2024 (2024-01-19~21),333oh R1 A #5

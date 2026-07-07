@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / Y / bin 2
-# Population in this bin: 943
+# Population in this bin: 945
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 866875001,L2 F B' L2 F U2 D2 B U R2 L2 F2 D F2 L2 D R2 F2 D,Y,Canada's Best in the West 2018 (2018-08-24~26),333oh R1 B #1
@@ -47,7 +47,7 @@
 2235204001,D' R' L' U R L2 D' F2 D2 B2 R2 L U2 R B2 U' B2,Y,Marrickville Mini Open AM 2022 (2022-10-16),333 Final A #3
 5107649001,R2 U2 F2 L2 D2 B2 U2 R' F2 R' D R' D' B L2 D' R2 U L2 F' L2 U,Y,Please Be Quiet Reno 2025 (2025-10-18),333mbf Final B #2
 5140022001,L U2 B' U2 B R2 F U2 L2 R U B F D' B D' L B U',Y,Mongolian Championship 2025 (2025-10-25~26),333 R3 A #3
-227928001,F D2 F R2 B D2 R2 F2 D2 R2 F U' F' U' F' R B F' R' F,Y,MIT Fall 2015 (2015-12-12),333 Final A E2
+5733573044,B' D' B' D R2 B2 U2 R F' R' L2 U2 D2 F2 D2 L2 D2 L B R,Y,CF Goes Sideways VI Brzeziny 2026 (2026-06-27~28),333mbf Final B #1
 767190001,F2 U2 L2 B2 D B2 U2 R2 D' L2 B2 R B F' L2 D L U' B L' F,Y,CubingUSA Southern Championship 2018 (2018-04-27~29),333bf Final A E2
 232664001,B U' F2 B' D R2 F' D F' D' B U2 B2 R2 U2 F',Y,Sivar Open 2015 (2015-12-20),333oh R1 C E1
 4394521001,D' F2 U2 L2 U2 R D2 R' D' B2 F' L' F L' B F' D' U',Y,Liga SLP Jornada Negro 2024 (2024-12-22),333 R1 B E2

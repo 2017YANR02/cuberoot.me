@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / W / bin 6
-# Population in this bin: 57
-# Samples listed: 57 (all entries in this bin)
+# Population in this bin: 58
+# Samples listed: 58 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 36657001,U' L2 B2 L2 R2 D R2 D B2 D' F' D F2 L2 F2 L' F R D' F U' B R2,W,Czech Open 2014 (2014-07-11~13),333bf R1 B E1
@@ -62,3 +62,4 @@
 5385660013,U2 F R' F' R L' U R L D' L2 U2 B2 D2 B2 R2 F R2 U2 D' L2 U2,W,Love Is Blind Lima 2026 (2026-02-15),333mbf Final A E1
 5390210001,U F2 R2 D B2 F2 D2 B U R2 F2 D R' B L R2 F' D2 U',W,Guangdong Open - Revival & Rival 2026 (2026-02-06~08),333 R1 N #4
 5553753001,F L2 B' D B2 U R2 D2 L2 U2 B2 U L B U F' R' B D',W,LA PRE Cubing Pucallpa 2026 (2026-04-18),333 R2 D #5
+5732042001,L U' L' B' R B U' R' F U R' U2 F2 U2 B' L2 U2 B R2,W,Mumbai Twistathon 2026 (2026-06-27~28),333 R1 D #1

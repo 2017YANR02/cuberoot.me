@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / G / bin 2
-# Population in this bin: 434
+# Population in this bin: 436
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 10544001,F2 D2 R' F2 L2 R' D2 R B F2 D' L' D' B2 L' R B' F2,G,Northpark Adelaide 2014 (2014-04-12),333 R2 A #3
@@ -16,7 +16,7 @@
 77813001,L2 B2 D2 F2 D' B2 U L B' D' L' D U' B2 R2 U B L2,G,Asian Championship 2014 (2014-11-01~03),333 R1 C #4
 2418873001,B' R' U L2 D2 F2 R F2 D2 B2 U2 D' R2 F2 D R' B F2,G,Cubing Tlaxcala 2023 (2023-01-07~08),333 Final A E1
 4252237002,R' F2 U2 L' F2 U2 R U2 R' B2 R2 B' R' F L2 D2 F U B',G,5BLD in a Madison Fall 2024 (2024-11-02~03),333mbf Final A #2
-2928899001,F2 U F2 D' B2 U R2 U F' R F2 D2 F R' F L' D B2 D2,G,Partage Open II 2023 (2023-07-22~23),333oh R2 A #5
+5732501001,D2 F' U F2 R' B2 R2 F2 R2 D2 B' R2 B' D' B2 R2 U' R2,G,Cubing at COTA 2026 (2026-06-27),333 R1 A E2
 131593001,B L D2 R2 L' B2 D2 F' D R U L2 U' L2 D R2 L2 U2,G,Slovenian Open 2015 (2015-04-18~19),333 R2 B #4
 142166001,D2 B2 R' B2 D2 L' U2 F2 U2 L D' F' D U' F R2 B2 L F U,G,Thailand Championship 2015 (2015-05-23~24),333 R1 A E2
 4799189001,B2 D2 L2 F2 L2 D' R2 D2 R2 F R F L2 R2 F R2 D F' D' L' F,G,Kansai Odd and BLD 2025 (2025-06-15),333bf Final A E2
@@ -88,7 +88,7 @@
 5106627001,B' D U2 R2 B2 R' B2 L' D2 U R U' R2 U2 R' D' F',G,İstanbul October 2025 (2025-10-11~12),333 R1 D #3
 3201732001,F' U B D' R' L2 U2 F2 U L2 F D2 B U2 F' B R2 B2 L',G,Jakarta Masters 2023 (2023-10-21~22),333 R2 B #2
 1728344045,U' D2 L' U' D2 R' B R2 U L' F2 B U2 R2 B2 U2 F' R2 D2 F,G,BrizZon Side Open III 2021 (2021-11-12~14),333mbf Final B #1
-5292142001,D2 L B2 U' R2 L2 F' R2 U L2 D' F2 R2 U F2 D2 F2 R' D2,G,MYHM Bolivia Nationals 2025 (2025-12-20~22),333 R1 A E2
+5735877001,R2 U F2 U F2 U' L2 D L' U' L' D R2 U B F L B',G,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R2 A #5
 4101442001,U B2 R L' B2 R' B' F2 U L2 D R2 U' F2 D' L2 F2 U,G,Gaithersburg Back to School 2024 (2024-09-14),333 R2 B E1
 1967986001,B' U B L U F2 D2 F2 R D2 L' B2 R2 D2 F2 U2 R2,G,Franconia Mini Open B 2022 (2022-06-12),333 R2 A E2
 2514488001,F' L2 F R2 U2 B' L2 R2 U2 L2 F D' B D' B D2 L',G,Cork Spring 2023 (2023-02-25~26),333 R1 D #3

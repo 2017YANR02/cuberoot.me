@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / R / bin 7
-# Population in this bin: 36
-# Samples listed: 36 (all entries in this bin)
+# Population in this bin: 37
+# Samples listed: 37 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 444813001,U' F2 L2 D2 B2 D2 B2 R2 D B' F R' D' B' D' L R D' F' L',R,Berkeley Winter 2017 (2017-02-11),333oh Final A #3
@@ -41,3 +41,4 @@
 5395015001,U' F D L' F U' R F2 U2 L' U2 D2 L2 D2 F2 L' D' F,R,We Love Cubing Athens A 2026 (2026-02-14),333oh Final B #5
 5424488064,R' U2 R' B2 L' F2 D2 R D2 F2 D2 R2 F D' B' F' D B D' B R,R,Richardshhhon 2026 (2026-02-28~03-01),333mbf Final B #2
 5589632001,D U B2 D R2 U R B2 F' L D2 B' D2 B' R' F' L' U,R,Mini-sota Heartland Warm-Up I 2026 (2026-05-01),333oh Final A #3
+5733454001,D F2 D' F2 D2 L2 U' B2 L U L F' L2 F' D2 R' B',R,CF Goes Sideways VI Brzeziny 2026 (2026-06-27~28),333bf R1 A E1

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / Y / bin 10
-# Population in this bin: 98
-# Samples listed: 98 (all entries in this bin)
+# Population in this bin: 99
+# Samples listed: 99 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 82221001,U F2 D2 F2 R2 B2 D B2 F R2 D2 R' B2 U' L' B2 F U2,Y,Johannesburg 2014 (2014-11-23),333 R1 D #5
@@ -103,3 +103,4 @@
 5611548001,F U2 R D B2 L' F' D2 F2 D2 L U B2 U R2 D' L2 D' R2,Y,Dawgs at Denny UW 2026 (2026-05-09),333 R1 E #4
 5627320001,F R D2 L F2 L B2 F2 R B2 R2 D B U' F2 R F' D2 L' D2,Y,3x3 in Madison 2026 (2026-05-08~10),333 R2 C #1
 5704485001,F2 L U F B2 L' B L U' D R' F R2 L2 B' L2 F B2 L2,Y,Longmont Open 2026 (2026-06-13),333 R1 B #5
+5737260001,F D R L2 F U2 R2 L' U' B R L2 U' R2 U' B2 L2 F2 D2 B',Y,Lazarillo Salamanca Open 2026 (2026-07-04~05),333bf Final A #1

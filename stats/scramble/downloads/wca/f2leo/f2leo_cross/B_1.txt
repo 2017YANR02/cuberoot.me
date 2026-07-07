@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / B / bin 1
-# Population in this bin: 9
-# Samples listed: 9 (all entries in this bin)
+# Population in this bin: 10
+# Samples listed: 10 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 661016003,B2 R2 D2 R F2 D2 L' R' B2 F' R' D2 F' L2 U' F2 R' U2 B' L2 B',B,Oficina Open 2016 (2016-06-18~19),333mbf Final A #1
@@ -14,3 +14,4 @@
 4089044001,F' U2 B2 L2 R2 B R2 B D2 U' R U' B' D F' D2 R' B D',B,Hudson Valley Summer 2024 (2024-09-08),333 R1 A E1
 4799697001,R D L2 B' U2 F D2 U2 F2 R2 F R' B D2 F2 U L' B2,B,Damásio Open 2025 (2025-06-14~15),333 R1 B E1
 5569643029,D R2 F2 R2 B2 D' U' F2 L2 B D' B R2 F2 U2 F2 D2 B',B,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final B #1
+5732545001,R' B' D2 R2 B2 L2 B D2 L2 R2 D L' B' D2 B R2 D2 F,B,Cubing at COTA 2026 (2026-06-27),333oh Final A #2

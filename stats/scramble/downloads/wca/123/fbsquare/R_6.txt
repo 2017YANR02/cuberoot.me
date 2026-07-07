@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / R / bin 6
-# Population in this bin: 75
-# Samples listed: 75 (all entries in this bin)
+# Population in this bin: 76
+# Samples listed: 76 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 16765001,D2 F2 D2 L2 D2 L2 F U2 B' F L' U' F D B2 R U2 B' D2 B2,R,Castellon Open 2014 (2014-05-02~03),333 Final A #2
@@ -80,3 +80,4 @@
 5358796001,R' U' F R F' B2 L' D' F B R F2 D2 F2 R U2 D2 R D2 B L2 D' R' U' F,R,Survive FMC in Hyderabad 2026 (2026-01-31~02-01),333fm R2 A #2
 5549362001,B D2 F2 U2 R' D2 U2 R2 D2 B' F' U' F2 R' F' D' L F,R,Amman Spring A 2026 (2026-04-17),333 R1 A #4
 5640074001,U2 B2 L2 D2 B2 R D2 U2 R2 U' B' L2 D' L F L2 D F',R,Denver Mini 2026 (2026-05-16),333 R1 B #2
+5732667001,B' R' D' B' F2 R2 B2 U2 R D2 F2 U2 L2 F' L2 F2 L2 R' D' U',R,Cubing at COTA 2026 (2026-06-27),333 R2 C #5

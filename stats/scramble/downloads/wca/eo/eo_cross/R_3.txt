@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / R / bin 3
-# Population in this bin: 214
+# Population in this bin: 216
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 24457001,L2 D2 F L2 B U2 L2 B' R U' L2 D' B' L' D R' B2 F U',R,C3 Cube Open 2014 (2014-05-26~27),333oh R1 C #5
@@ -152,7 +152,7 @@
 3447241001,U' R B' D2 F2 U2 R2 F' L2 B' R D2 L2 R' D F R' F' D,R,Kingston Winter 2024 (2024-01-27),333 R1 D E1
 3450636001,R2 F R' B2 R D2 B2 R' F2 D2 F2 D2 F D R' B D R D2,R,Southern Solves Invercargill 2024 (2024-01-27~28),333 R1 C #4
 3474981001,D U2 F2 R D2 U2 R' D2 L2 F2 D' L2 B2 D U2 F L R' F2,R,DFW Cubing Winter 2024 (2024-02-03),333oh Final A #4
-3482409001,F2 R2 B2 R U2 B2 L' D2 R2 D' L' D' B2 L R F2 U' L',R,Altavista Open 2024 (2024-02-03~04),333 R1 A E1
+5739856051,R2 B2 D2 L B2 U2 F2 L2 D2 R' D B' L' F2 D' F' D L B' L',R,Slovak Championship 2026 (2026-07-02~05),333mbf Final A #2
 3532880001,L D2 L' F' B L' D R2 D2 B D2 B' R2 F D2 L' F' D2 F2,R,Ligerim Goiânia 2024 (2024-02-24),333 R1 A #5
 3594698001,R2 B L2 B2 R2 U2 F L2 F' R B L2 B2 L2 B L' U2,R,Delta County Cubing 2024 (2024-03-16),333 Final A #2
 3641576004,R2 B2 L R' F2 L' R' B L' F' R' U2 L' D U2 R U L2 U',R,Pocos Cupos Bogotá VIII 2024 (2024-04-06),333mbf Final C #3
@@ -171,7 +171,7 @@
 4129861001,U R2 B R2 U2 B' L2 B2 D F2 D R2 D2 R2 B D' R' U,R,Wiltshire September 2024 (2024-09-21~22),333 Final B #1
 5258303003,D' F D2 L2 U2 B' R2 B2 D2 F' D B' F' D2 L' U2 L U' L2 U2,R,Portugal Championship 2025 (2025-11-29~12-01),333mbf Final A #1
 4183963001,U' B2 D R D' F2 D2 R' D B U2 D' L2 U2 F2 B2 R2,R,Lloydminster Border Battle 2024 (2024-10-12),333 Final B #1
-4194257001,B2 D2 R2 B2 L2 U' F2 R2 D U F' U2 B U' R F D' B' R' D' B R,R,Regionales Santander 2024 (2024-10-12~14),333bf Final A #1
+5739988001,L' U' L2 F2 B' U L2 F U R2 F' R2 U2 F U2 B' U2 F D',R,Slovak Championship 2026 (2026-07-02~05),333bf Final B #3
 4283696001,L' U2 F2 U2 F2 D L2 U' L2 U2 L' U' F' U F D2 F' D U',R,Arizona Mini 2024 (2024-11-16),333 Final A #3
 4368948003,D' R' L2 U B2 D' L' D2 L2 U2 F2 L2 F2 L2 U' L2 D B2 L2 U',R,Success For Candy Stockholm 2024 (2024-12-15),333mbf Final A #1
 5511331001,B2 U2 F R2 F' L2 R2 B2 D2 R F' L2 F' L U2 L F' D2,R,French Championship 2026 (2026-04-04~06),333 R1 E #3

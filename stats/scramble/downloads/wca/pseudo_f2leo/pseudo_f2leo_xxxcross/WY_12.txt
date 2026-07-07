@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / WY / bin 12
-# Population in this bin: 174
-# Samples listed: 174 (all entries in this bin)
+# Population in this bin: 176
+# Samples listed: 176 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 84265001,F' L D R2 L2 D R2 B L2 U R B2 R' L2 F2 R B2 D2 B2 R F2,W,PLS Szczecin 2014 (2014-11-29~30),333 R2 B #2
@@ -179,3 +179,5 @@
 5613620001,L B' R L2 U' F' R' L2 U' D R2 L2 U L2 B2 D L2 B U2 L,W,Canet d'en Berenguer Open 2026 (2026-05-09~10),333bf Final A E1
 5690388001,R F' R' F2 D L' B' D2 R F2 R2 U F2 R2 F2 D2 L2 U2 F R' D2,W,Headache in Kode 2026 (2026-06-05~07),333bf Final A #2
 5723037001,F L' B R B2 F2 R2 D2 B2 D2 F2 R' D B2 D2 L R' D' L2,W,Défi à l'Alliance Française El Salvador 2026 (2026-06-27),333 R2 B #5
+5740087001,R2 B' R U2 L2 D2 R' B2 L R' F2 U' L F U B U' R B' L,W,Slovak Championship 2026 (2026-07-02~05),333 Final A #5
+5740089001,U2 F2 D2 F2 U2 L2 F R2 B R2 U2 R' F2 U' R2 F L' U R2 D' R,W,Slovak Championship 2026 (2026-07-02~05),333oh Final A #5

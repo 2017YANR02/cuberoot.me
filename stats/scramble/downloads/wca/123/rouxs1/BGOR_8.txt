@@ -2,7 +2,7 @@
 # Population in this bin: 25
 # Samples listed: 25 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 93484001,D B2 D2 L2 D L2 F2 R2 D2 F R B2 L B D' L2 F D2 L R,B,Schleswig Holstein Open 2014 (2014-12-27~28),333 R2 B #5

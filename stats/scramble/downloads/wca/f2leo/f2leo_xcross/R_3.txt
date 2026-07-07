@@ -2,7 +2,7 @@
 # Population in this bin: 40
 # Samples listed: 40 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 209606001,D2 F2 L' R' D2 L R' U B2 L' R' B D' R2 B' D U2,R,Avenues CUBELELO Open 2015 (2015-10-31~11-01),333ft Final A #2

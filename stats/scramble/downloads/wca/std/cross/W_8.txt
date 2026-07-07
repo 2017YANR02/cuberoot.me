@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / W / bin 8
-# Population in this bin: 675
+# Population in this bin: 677
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1421414017,B2 R2 B2 U R2 F2 U2 L2 R' U2 F2 D R2 B U' F' D' R D' U L B2,W,I Hope It's Solved Edmonton 2 2019 (2019-11-23~24),333mbf Final B #3
@@ -71,7 +71,7 @@
 366136001,D2 R' B2 L2 R' D2 U2 B2 U2 B' R' U' L2 B F L R2 D' F' L,W,Quabbin Open 2016 (2016-09-24),333 R1 A #3
 3846863001,L' D' R F D2 L2 F D2 B2 L2 U2 D' R2 F' L B2 R U,W,Budapest Summer 2024 (2024-06-08~09),333 R1 D #5
 4479290001,D2 B U2 L2 R2 F2 U2 L2 U' B' U2 B2 L' R' B D2 R D' R',W,SSN Cube Open 2025 (2025-02-08~09),333 R1 D #5
-3203465015,F' U2 F L2 B2 D2 U2 R2 B' U B L B2 L' F2 R2 U' F U2 L' B R,W,Zomblinders Lima 2023 (2023-10-29),333mbf Final A #1
+5735457001,B' R2 U B2 L U B' R U D' B2 L2 B2 D2 L' D2 L' F2 L B',W,Queensland Open 2026 (2026-06-27~28),333 R2 B #4
 4329387001,F' L2 D2 B' R2 D2 B2 U2 F U2 D' B L' R F U B' L2 U',W,Rīga Open 2024 (2024-11-30),333 R2 A #5
 4711419027,F2 D2 R D' L B' U' R2 D2 R' D2 F' U2 B' R2 D2 F' L' F2,W,Tokyo BLD Spring 2025 (2025-05-10),333mbf Final B #1
 1208606001,B2 D' U L2 D2 U R2 F2 R' B' D B2 F D' R2 B F2 U B' R,W,YJ Fest Moscow 2019 (2019-06-28~30),333 R2 A #1
@@ -158,7 +158,7 @@
 5027366001,L F2 U F' U2 L2 B' D2 R2 B2 D2 F' R' U2 B2 D F R U,W,La Montagne Open 2025 (2025-09-13~14),333 R2 C E1
 1495780027,L2 R2 B2 D' L2 F2 R2 B2 F2 R' B D L' F' R2 U' L F2 D' U L B2,W,Northside Cube Days 2020 (2020-01-11~12),333mbf Final A #2
 1461197001,F2 R' F R' L F R2 B D2 L D' R2 B2 U2 B2 R2 F2 D F2 U,W,TCG Spring 2019 (2019-12-14~15),333 R1 D #4
-5508965001,F' U' B R' L2 D' L' F' B D B2 L' D2 R2 L' D2 L' U',W,PBs in Palisades Spring 2026 (2026-04-04),333 Final A #5
+5733574045,L B L' D2 R D2 R U2 B2 F2 U2 F2 R U B' F L' B' D U2 L' F',W,CF Goes Sideways VI Brzeziny 2026 (2026-06-27~28),333mbf Final B #2
 726236011,F2 L2 B L2 F L2 F2 U2 F U2 F2 R U R' D' U2 F' L R2 U' R' B R',W,Indian Open 2018 (2018-03-17~18),333mbf Final A #1
 728058001,R' U' F R2 U2 L2 F2 L' U2 R2 F2 D2 B D2 R D U' L R2 B' F2 U2 F' R' U' F,W,Aftab Cubing Days 2018 (2018-03-15~17),333fm Final A #1
 3647656001,U2 L' D2 R D B D' F' R2 U2 D2 B2 R B2 D2 L F2 D2 L' U,W,Lente Spring 2024 (2024-04-07),333 R1 B #2

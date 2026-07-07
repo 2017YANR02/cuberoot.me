@@ -2,7 +2,7 @@
 # Population in this bin: 707
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3944923001,R' D' R2 D' L' B' R F' D U2 R2 D2 L' F2 R' U2 F2 L2 U',B,America's School Speedcubing II Huaraz 2024 (2024-07-13),333 R1 G #4

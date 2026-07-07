@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / R / bin 2
-# Population in this bin: 409
+# Population in this bin: 414
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3323001,D B2 D' U2 R2 D' L2 U' R2 U' B R' B2 L B L R2 B F2 R2,R,CMI Fiesta Open 2014 (2014-03-21~23),333oh R2 G #2
@@ -143,7 +143,7 @@
 3019455001,R2 U2 L B2 U2 B2 R B' R2 U' F2 U2 L F U2 R B' R',R,Pretzel Mania Dallas 2023 (2023-08-26~27),333 R2 B #3
 1193091001,B' D' B' D2 B2 L D' B' R' U B U2 B' R2 F' D2 L2 F L2,R,Rhein-Neckar Open 2019 (2019-06-22~23),333oh R1 A #2
 1195922001,R2 U B' R2 D' R U' R' F2 L U2 R2 L2 F2 U2 D F2 D2 R2 U',R,Santo Domingo Summer 2019 (2019-06-20),333 R2 A E2
-1208581001,L U' B U' B U' B2 L2 F2 U2 B' U' F2 D' R2 U' F2 U,R,YJ Fest Moscow 2019 (2019-06-28~30),333 R1 C #4
+5735407001,F' L2 B2 F' L2 F D2 U' R2 F2 D2 R' U B F' D' B D' L' F2,R,Queensland Open 2026 (2026-06-27~28),333bf R1 B #3
 3878834001,F' R2 F' L2 B' L2 U2 B' L D2 L2 R' B2 D' F' D' L F,R,Louisiana Championship 2024 (2024-06-22~23),333oh R1 A #5
 5355245052,U R2 U2 R2 B2 D' U2 F D2 F2 D2 R2 B' L2 U L B U' L' F',R,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final B #1
 2576635001,B2 R2 U L2 D2 L2 B2 D' R2 U' B2 R D' L D L' R2,R,Launceston Autumn 2023 (2023-03-25),333 R2 B #3
@@ -161,7 +161,7 @@
 5396488001,B R' B L2 F2 U' B2 U' R2 D' B' L F2 D2 U' B F' U' B R,R,Cube Camp in Jeju 2026 (2026-02-21~22),333bf Final A #1
 5374228006,R' F2 U' F' L' U R2 F' B2 U' F2 D' L2 U' B2 R2 B D' R2 D,R,Glasgow Winter - Scottish Blind Off 2026 (2026-02-07~08),333mbf Final A #1
 1484751001,U2 R' U2 R' D2 U2 B2 L F R2 F2 U R2 U B F2 D F',R,Cubing Korea 2019 (2019-12-28),333 R1 F E1
-1509556001,D2 U2 R2 B R2 D2 F' L F' D2 R F2 U2 F' L2 B L2 F2 L' F2,R,Lima Cuberano 2020 (2020-01-18~19),333bf R1 B #1
+5730166001,R' U2 R2 F2 L2 U' F2 L' F2 R2 B' U2 R B2 D2 L B',R,Hampshire Summer 2026 (2026-06-27~28),333 Final B #4
 1534334020,R2 D' F2 L2 D2 L2 D U2 B2 R D' L R' F' U2 F' D R' B2 L,R,Popular 'n Blind Flen 2020 (2020-01-31~02-02),333mbf Final A #3
 1537302001,U2 B R2 D2 F2 D' F D' L U2 L U2 D2 R' D2 F2 D2,R,Getafe Continúa 2020 (2020-02-01~02),333 R2 C #3
 4543234001,D2 L' U2 B2 R2 B2 F2 D B' D2 F' D' R' B L' F L2 U2,R,Luoyang Spring 2025 (2025-03-01),333 R2 C E2

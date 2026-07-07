@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BGORWY / bin 2
-# Population in this bin: 774
+# Population in this bin: 776
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5355244033,B2 D2 B2 L U2 R2 B2 F2 L' B U' F' D F' L2 U' R2 D2 F' L' F2,O,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final A #2

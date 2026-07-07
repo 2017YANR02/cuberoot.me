@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / B / bin 8
-# Population in this bin: 898
+# Population in this bin: 903
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 2652480001,D2 F2 U F2 U' F2 D' F2 U' R' D' R' U R2 U B U' L' R,B,Palmerston North 2023 (2023-04-16),333 R1 B #2
@@ -109,7 +109,7 @@
 738648001,D2 L' F2 L2 B2 R' D2 U2 R2 B U' B' U2 L' B' D2 L' F2,B,Lviv Spring Days 2018 (2018-03-24~25),333ft Final A #4
 352095001,R L2 U F' U' F' L2 F R' F' U2 R' U2 L' F2 B2 U2 F2,B,Algers Summer Open 2016 (2016-08-20),333 R1 B E2
 352777001,D2 B2 L' D2 B2 L R2 B2 U B F2 R U2 L' R D L',B,The Most Serene Competition 2016 (2016-08-27),333 R1 B #5
-4646853001,D R F' U F' U2 B U D B2 R2 U R2 D' B2 L U L,B,NYU Spring 2025 (2025-04-13),333 R1 D #4
+5736478001,R2 D' L' U2 D2 L2 F' D' R2 F' L2 U2 B2 L2 U' L2 U D,B,BBQ Ropaži 2026 (2026-07-04),333oh Final B #5
 363823001,B U2 L2 F2 U' B U' D F2 L' D B2 U2 R2 B2 R2 B2 U2,B,Cube N' Meme 2016 (2016-09-17~18),333oh Final B #1
 801822001,L' F' D2 L2 B2 D' R' U R U2 L D2 F2 D2 B2 R2 D2 B2,B,Tabacundo Open 2018 (2018-06-09),333 R1 E #4
 799231001,B2 R2 U' B2 D' U' B2 L2 B' R' D' U2 F' D2 L R2 B2 R B',B,Icelandic Nationals 2018 (2018-06-09~10),333oh R1 A E2

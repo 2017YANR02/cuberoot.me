@@ -2,7 +2,7 @@
 # Population in this bin: 281
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4280293025,L' F' D L' D2 L' F B' L B2 U' R2 L2 U' R2 D L2 U' B',W,Kubing in Kapiti 2024 (2024-11-09),333mbf Final A #1

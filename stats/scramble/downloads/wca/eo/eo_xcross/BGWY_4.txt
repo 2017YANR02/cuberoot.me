@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / BGWY / bin 4
-# Population in this bin: 205
+# Population in this bin: 206
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5003001,F D2 F' B2 D F B2 D L' D' L' F2 R' F2 L2 D2 B2,W,Tula Open 2014 (2014-03-28~30),333 R1 B #4
@@ -95,7 +95,7 @@
 2043513017,U2 L' B' U F2 R2 D' F2 U2 R2 D F' U B2 L' U' L B L,Y,Mallorca Open 2022 (2022-07-23~24),333mbf Final A #1
 2046930043,U D' F D' R' B U F2 B2 R' U F2 U2 R2 U L2 B2 U2 L2 B' L,B,Rubik's WCA South American Championship 2022 (2022-07-22~24),333mbf Final C #1
 2101177001,L D2 L F R2 U' L2 U' B' D2 R2 L' U2 F2 L2 U2,B,Rubik's WCA Asian Championship 2022 (2022-08-11~14),333 Final A #3
-2153137021,R L D F D F2 U' R' U2 R2 U2 B2 R2 L' B2 L U',W,NZ North Island Championship 2022 (2022-09-02~04),333mbf Final A #1
+5728205001,U' L2 B2 U B2 U' B' D2 F D2 U B' F U B' L2 F2,G,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #5
 2158157001,U' B F L2 U2 F D2 U2 B2 L2 D' U2 B U F' D U2,Y,Gdańsk Open 2022 (2022-09-10~11),333 R1 F #5
 2206557001,U2 L D2 U2 F' L2 B2 U2 R D' L F' R B' U2 L2,Y,Tres en Línea Bogotá 2022 (2022-09-24~25),333 R2 A E2
 2209757001,D L' F2 R' D2 R U F2 L' U D2 L2 D' B2 U F2,W,Cubing Returns To Colombo 2022 (2022-09-24~25),333 Final B #5

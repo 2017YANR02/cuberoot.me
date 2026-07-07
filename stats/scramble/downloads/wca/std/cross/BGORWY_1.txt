@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / BGORWY / bin 1
-# Population in this bin: 595
+# Population in this bin: 598
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3806975001,L F2 U' L2 U2 R B' D2 L B2 R L2 F2 U2 L' B D L2,G,TCG Space lll Santa Anita 2024 (2024-05-25~26),333 R1 B #1
@@ -126,7 +126,7 @@
 667663001,U B2 L' B2 L2 D2 R' U F' L U2 B2 R2 D2 L2 B' R2 F L2,Y,Capivara 2017 (2017-12-09~10),333 R1 B #1
 4785366001,F R2 U2 F2 U' R2 D2 F D2 L F' D' L' F R F U',O,Hong Kong Cube Day 2025 (2025-06-07),333 R2 B #2
 678466001,R' L B' L' U' L B' R2 D F' L' B2 L2 U2 R2 U2 D' L2 D,Y,Kyushu Open 2017 (2017-12-30),333 R1 C #3
-681379008,D2 R2 B2 U2 F2 L' R' D2 F2 R2 U' B' F2 L D2 U2 L2 F2 R' D2 B' L2,O,Swisscubing Mental Breakdown 2018 (2018-01-06~07),333mbf Final B #3
+5730147001,D2 F' D2 L2 U D' R U' R2 B2 L F2 D2 L2 U2 R' U2 R' B U',R,Hampshire Summer 2026 (2026-06-27~28),333 R2 B E1
 686869001,U2 R D F' D' R2 B2 D F L2 D2 B2 D2 B2 L' B2 D2 R L2 U2,B,VI QB'er 2018 (2018-01-13~14),333 R1 C E2
 2529117001,B R' D R2 F2 U2 B2 D U R2 U' F L B2 L2 F2 D B2 F' L' F',O,Hong Kong Cube Day 2023 (2023-03-04),333bf Final A #3
 4596661001,F2 R B' R2 D' B2 D' R2 F L2 F2 U2 F D2 U B' U' R',G,CubeCo Coastal Cubing KZN 2025 (2025-03-21~22),333 Final B #2

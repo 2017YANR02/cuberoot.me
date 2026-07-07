@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / ORWY / bin 1
-# Population in this bin: 691
+# Population in this bin: 692
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4024266001,D' L2 U2 F2 D2 R2 F U2 F' R D2 F2 D' B' D U B U2 B',Y,Samutprakarn Cube Open 2024 (2024-08-17~18),333 R1 C #3

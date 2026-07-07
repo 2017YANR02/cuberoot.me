@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / B / bin 7
-# Population in this bin: 831
+# Population in this bin: 836
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1528404001,U F2 L2 D F2 D' L2 U' B2 U2 R2 B U' L2 U L B2 D U' R',B,İzmir Open 2020 (2020-01-25~26),333 R2 A #1
@@ -44,7 +44,7 @@
 972365001,U2 L2 D' L2 U R2 D' F' R B' U R2 F D' L2 U',B,Uzbekistan New Year 2019 (2019-01-05~06),333 R1 D #3
 2018573062,D' R2 F2 L2 B2 U2 R U' F R2 B' D2 U2 B L D R' D L2 U2,B,Rubik's WCA European Championship 2022 (2022-07-14~17),333mbf Final B #1
 209985001,U2 B2 F L2 D2 F' L2 U2 F2 U' B' L2 U' B L D' L2 U2 R2,B,Avenues CUBELELO Open 2015 (2015-10-31~11-01),333 R2 D E1
-4861617001,B U L' F2 L2 D R B' L' U' L F2 U2 F2 B' L2 F D2 B2,B,Long Island Summer 2025 (2025-07-12),333oh Final A #2
+5736664001,F' U' F U2 R D2 R' F2 D2 R2 U2 F' L' F L' D' B' F2 U,B,Manchester Cubing League - Final 2026 (2026-07-04),333 R2 A E2
 1279013001,D' F B2 L2 U' B' D' L' F' L' F D2 R2 D2 B' R2 D2 F' R2 U2,B,Kursk Open 2019 (2019-08-24~25),333 R2 C #5
 2945298001,R' B U' D2 B2 F2 L2 D2 F2 D2 R D2 U R' B2 U B L' D',B,mcubes Cube Open 2023 (2023-07-29~30),333 R1 F E2
 3326798001,R' U2 R' F2 L2 U2 B2 U' R2 F2 D R' B D L2 D B2 F U,B,Bodocó Open 2023 (2023-12-09~10),333 Final A #1

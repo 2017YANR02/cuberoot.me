@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / OR / bin 3
-# Population in this bin: 717
+# Population in this bin: 721
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5787001,R L2 F' L' F2 L U F L2 U' D2 B2 L2 B D2 B' U2 F' D2,R,GuateRubik 2014 (2014-03-30),333oh R1 A #3
@@ -84,7 +84,7 @@
 401624001,L2 D2 R' B2 R2 F2 U2 L' F' L U2 F D2 F U' F' U F2 D2,R,Berkeley Fall 2016 (2016-11-19),333 Final A E1
 406269001,D2 B F L2 F' D2 F2 L2 D' L' R2 B2 R' D' U2 F2 L2 B2 R,O,Unifor Open 2016 (2016-12-02~03),333ft Final A #1
 1108365014,B2 R2 D' F2 U2 B2 D R2 B' R F' D' L B2 U' B R2 B' U2 L,R,Shanghai Memory Nightmare 2019 (2019-04-20~21),333mbf Final A #2
-1977626001,R U R' D' B' L2 B R L2 U2 B' R2 U' F2 U' L2 D' L2 U,O,Cubing Returns Guwahati 2022 (2022-06-18~19),333 R2 B E2
+5734102008,D' B U F2 D' R2 F2 D' B2 U' F2 U2 B' R' D R' D' L2 R B,O,Taipei PBQ Open 2026 (2026-06-26),333mbf Final A #1
 425236001,B2 L2 B' R' B2 D2 R F L' D F' U2 F L2 B2 L2 D2 F' L2 D2,R,Shenzhen New Year 2017 (2017-01-01),333 R1 D #4
 4681598001,F B2 U L2 U2 F' B' L' D' L D2 F2 U2 D2 F U2 B' D',O,Erie Spring 2025 (2025-04-26),333 R2 B #3
 5423340001,L U R U2 F2 U2 F R2 F R' U L2 B D R2 B2 R',O,Vegas Cubing Winter 2026 (2026-02-28),333 R1 A #3

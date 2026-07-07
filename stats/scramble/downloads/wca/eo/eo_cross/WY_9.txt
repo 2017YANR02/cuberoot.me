@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / WY / bin 9
-# Population in this bin: 122
-# Samples listed: 122 (all entries in this bin)
+# Population in this bin: 124
+# Samples listed: 124 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 15655001,U2 L2 F U2 B' F D2 R2 B L2 U2 L B R D B2 U' B F' R,W,Japan Contest Spring 2014 (2014-04-29),333 R1 C #1
@@ -127,3 +127,5 @@
 5653313001,B2 D2 U B2 L2 U' R2 B2 R2 D2 F L R D' B' R U' B2 L2 R2 F,W,Christchurch Autumn 2026 (2026-05-23~24),333 R2 C #4
 5684275001,L' B' R D2 F2 D2 F' L2 D2 B' U2 B' L D' L' B U' B F' U2 B R2,W,Kansai BLD Summer 2026 (2026-06-06),333bf Final A #2
 5714700001,R' D' U2 R2 F2 D' R2 F2 B L U R' D' F L U2 F' U' B' L,W,Greenwoods Big Blind & Beyond 2026 (2026-06-21),333bf Final B E1
+5737941001,F2 D L2 B2 F2 U L2 B2 D2 F2 U L D' R' B' L' F L' D' R',W,Åland Open 2026 (2026-07-03~05),333oh Final A #4
+5739605001,R2 F U B2 L U' R B U2 B U2 B2 U2 R2 B' R2 D F2 R,W,Aachen Summer Open 2026 (2026-07-04~05),333 R1 D #3

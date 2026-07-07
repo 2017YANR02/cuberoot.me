@@ -2,7 +2,7 @@
 # Population in this bin: 13
 # Samples listed: 13 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 638366001,R U2 F2 R' B2 L2 B2 U F L' R D' U' R F U F2,R,KCubing Fall 2017 (2017-11-04),333oh Final B #4

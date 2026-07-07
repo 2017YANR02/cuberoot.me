@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / G / bin 6
-# Population in this bin: 59
-# Samples listed: 59 (all entries in this bin)
+# Population in this bin: 61
+# Samples listed: 61 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 105122001,R2 D B2 L2 U B2 D2 L2 R2 B2 U' B L' U2 R' B' L U' F' D' R',G,New Avge Open 2015 (2015-01-31~02-01),333 R2 A #2
@@ -64,3 +64,5 @@
 5514914001,U' B2 D' F U2 B2 R2 F' D2 L2 F' R2 L D B' F2 D L R' F,G,Alexandria Spring 2026 (2026-04-10),333bf Final A E2
 5586378001,D' B' U F2 L' F' R U' R F2 L' B2 U2 L' U2 D2 F2 L' B',G,Govi-Altai Cup 2026 (2026-04-25),333 R1 F #3
 5668786001,B R' L' B' R2 U F' D' B' F2 D2 R F2 U2 L' B2 R F2 L2 U',G,Hungarian All-Rounder 4 2026 (2026-05-30),333 R1 A #4
+5735264001,U D' L B' D R U' R2 L2 B2 L B' D2 F' R2 F U2 F R2,G,Shenyang Cubing League 3x3 III 2026 (2026-07-01),333 Final A #3
+5740089001,U2 F2 D2 F2 U2 L2 F R2 B R2 U2 R' F2 U' R2 F L' U R2 D' R,G,Slovak Championship 2026 (2026-07-02~05),333oh Final A #5

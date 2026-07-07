@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / BGORWY / bin 4
-# Population in this bin: 312
+# Population in this bin: 313
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3594698001,R2 B L2 B2 R2 U2 F L2 F' R B L2 B2 L2 B L' U2,R,Delta County Cubing 2024 (2024-03-16),333 Final A #2
@@ -165,7 +165,7 @@
 2269598036,F2 U L B2 U' F2 B2 D' L2 D2 L2 U2 F2 L D L' U L B,B,Kewbz UK Championship 2022 (2022-10-28~30),333mbf Final A #2
 2365686001,B' D2 L2 D2 R2 F' U' B' D' B2 F' L D2 F' L' D2 L',B,Mongolian Open 2022 (2022-12-11),333 R1 J #3
 4020647001,L U F B R D R B' R' D' B2 L U2 B2 U2 B2 U2 R',G,Davis Summer 2024 (2024-08-17),333 R2 C E1
-3375405001,F' D2 B' L2 F' U2 R' F2 B L F2 L2 F L2 D2 B2 U2,G,100. Yıl MBA Cube Weekend 2023 (2023-12-16~17),333 Final A #5
+5728205001,U' L2 B2 U B2 U' B' D2 F D2 U B' F U B' L2 F2,G,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #5
 2533429046,U' F2 D R' U' D L F D' U2 F R2 B2 L2 D2 F2 B' R2 U2 D B' L2,B,MBLD in a Madison Meeting Room 2023 (2023-03-04~05),333mbf Final A #2
 2566443001,U2 D' F' U2 D' B D2 B' D' B2 D2 R2 F2 D2 F U2 B L2,G,Bolton Spring 2023 (2023-03-18~19),333 R1 A #1
 3280312001,F D' F2 B' R2 U' B' R' D2 R' B2 L2 U2 R F2 R' D B,Y,Dasmariñas Speedcubing Open II 2023 (2023-11-19),333 R1 A #2

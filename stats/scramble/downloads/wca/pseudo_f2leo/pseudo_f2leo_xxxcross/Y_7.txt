@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / Y / bin 7
-# Population in this bin: 756
+# Population in this bin: 758
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1993001,F' D' F2 R2 U F R F2 D R' D' F2 D2 F R2 F2 R2 L2,Y,Zonhoven Open 2014 (2014-03-22~23),333 R1 A #1
@@ -90,7 +90,7 @@
 382170001,D2 L2 F2 U L2 R2 F2 R2 B U' B L F' L2 R' U2 B' D' B,Y,Porto Alegre Open 2016 (2016-10-15~16),333ft Final A E1
 5384062008,B2 D2 R2 F2 U B2 U' L2 D' R F R2 B L' B2 F2 L2 B D2 L',Y,Bara Multi-Blind i Jönköping 2026 (2026-02-15),333mbf Final A #1
 3207225001,D' L2 B2 L2 B2 R2 U' R2 U2 R2 U R' F' D L2 B F' U2 R,Y,Marble City Cubing 2023 (2023-10-28),333 R1 A #4
-5719308001,F2 R2 D U B2 D' F' R2 F' U' F R2 U F D B2 L' U',Y,Ulaanbaatar Summer 2026 (2026-06-22),333oh Final B E1
+5734087001,B D R' D F2 U B2 L2 U2 R2 U' L2 R' U' B2 R2 F' L D R' B R,Y,Taipei PBQ Open 2026 (2026-06-26),333bf Final A E1
 2485138015,U L2 F2 L2 F2 D' U2 F R U B U' B' D B2 L2 B2 L2,Y,February Fitzroy Fun 2023 (2023-02-11~12),333mbf Final A #1
 3238366001,R2 F U D' B' R U2 F U2 B' U L2 B2 L2 U' D' R2 U,Y,Uzbekistan Nationals 2023 (2023-11-03~05),333 R1 D #4
 400479001,D L2 D B2 D' B2 D2 L' R F L' D' L2 D' B U2 R2 F2 R2,Y,FME & Cubo y Calla 2016 (2016-11-19~20),333 R1 B E2

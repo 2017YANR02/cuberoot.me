@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / W / bin 10
-# Population in this bin: 349
+# Population in this bin: 351
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 37618001,U' B2 D' L F' D' R' U R U' F2 U F2 D L2 F2 U B2 L2 D,W,Welcome To Cambridge 2014 (2014-07-12~13),333oh R1 B #3
@@ -40,7 +40,7 @@
 4847008001,U B2 R2 F2 L2 U L2 D2 L F' U2 B R' B L2 U2 B' F' D2,W,Di Tella Despega 2025 (2025-07-06),333oh Final A #3
 299198001,F D2 L' F R2 U' D2 L' U L2 F U2 F2 L2 F' D2 R2 B L2 B',W,Dubai Open 2016 (2016-05-13),333 R1 C #2
 5307558071,B' L2 U2 F2 D' F2 L2 D2 R2 D' R2 D B L F U' R B D R' B R',W,Multi Mayhem VA 2026 (2026-01-02~04),333mbf R1 A #3
-4699558001,U2 L2 U2 F' U2 F' D2 U2 L2 D2 U2 F' U' L' D U2 L' F' R D,W,Coquitlam Crunch 2025 (2025-05-03),333 R1 C #5
+5738421001,D L' U2 R' U F R F D' F D2 R2 F R2 D2 R2 D2 R' F,W,Gniezno Open 2026 (2026-07-04~05),333 R2 A #1
 3373783001,D2 R2 U2 F' L2 B' R2 D2 U2 R' F D' B R' U2 L2 R2 D F,W,Middleton Meetup Tuesday 2023 (2023-12-19),333 R1 B #4
 3571948001,U2 F2 D2 F' R' B U' L F B' U R2 B' D2 B2 L2 B2,W,Cubing in Corinda Saturday 2024 (2024-03-09),333 R2 D #1
 3318106001,U' R' L2 D2 F' R L' F2 L' D' B R2 F' L2 F D2 B',W,Caucasus Open 2023 (2023-12-02~03),333oh R1 B #1
@@ -73,7 +73,7 @@
 660962019,R2 F L2 D2 B2 L2 B' U2 F D' R2 F D2 L B' F' D' L2 D' U2 B' L2,W,Atomic Cubing 2016 (2016-04-09),333mbf Final A #1
 661130007,R2 D2 L' B2 R' F2 D2 R B2 L2 B U' B' F' L2 F R F2 D2 L,W,Belgorod Open 2016 (2016-10-08~09),333mbf Final A #1
 661145013,B2 R2 B2 R2 B' R2 U2 B L2 D2 F2 R' U' F2 R' F2 D2 F U F2 L' F',W,Porto Alegre Open 2016 (2016-10-15~16),333mbf Final A #1
-5485776013,R2 F2 B U' F' R' D' R' D2 F L2 D2 R2 B2 D2 F' R2 U F2 L' B' L,W,Maxi Mental Delft 2026 (2026-03-28~29),333mbf Final B #1
+5730140001,L' F2 U L' D L U' L2 F' L2 B2 R2 F2 L' B2 R' D R2,W,Hampshire Summer 2026 (2026-06-27~28),333 R2 A E1
 661351020,D2 R2 U B2 U R2 U' R2 B' F' D' R' B U2 L' U' L' B U L,W,Tlaxcala Open Clásico 2017 (2017-05-06~07),333mbf Final A #3
 661504003,L' R2 U2 R' D2 B2 R' D2 U2 L U2 F' U' B2 L D' L' B L2 D' B' L',W,Polish Open 2017 (2017-09-15~17),333mbf Final A #1
 4799920001,U B2 D' R2 F2 L R' F2 R' B2 F2 D' L' F U' F R' D',W,Cube Factory League Justynów 2025 (2025-06-14~15),333 R1 B #4

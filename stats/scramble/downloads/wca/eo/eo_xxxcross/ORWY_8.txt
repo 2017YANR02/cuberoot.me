@@ -2,7 +2,7 @@
 # Population in this bin: 459
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3369381001,B2 D2 U2 L' F2 D2 L R2 U2 B U B' R F' R2 D' R2 B',W,Sydney Summer 2023 (2023-12-16~17),333 Final A #5

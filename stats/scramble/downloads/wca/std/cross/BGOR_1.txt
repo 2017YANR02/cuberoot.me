@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / BGOR / bin 1
-# Population in this bin: 400
+# Population in this bin: 403
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5040001,F2 D2 L2 U R B2 R F L2 D2 F2 B' L2 F L2 D2 R2 F,O,Tula Open 2014 (2014-03-28~30),333 Final A E1
@@ -30,7 +30,7 @@
 352575001,F2 U B2 R2 D2 L2 R2 D' B2 L2 U' L' F2 U' R2 U' B' U2 L,R,Moldavian Nationals Summer 2016 (2016-08-20),333 Final A #3
 360210001,R2 B2 D2 R' F2 L U2 B2 L2 F' R F2 D' F' D U R U' L' B' L2,O,Kharkiv Cube Day 2016 (2016-08-27),333bf Final B #3
 4953966001,R B2 U2 L' D2 R' D B' F2 L2 D2 F2 R2 U' R2 U' L2 U' R2,O,South India Cube Championship 2025 (2025-08-14~17),333 R1 A #1
-376836001,F2 D F2 L2 U2 F L2 R D L2 R' F2 R2 F U' L' R,O,Hi-Tech Rodeo Plaza 2016 (2016-10-09),333oh Final A #2
+5730147001,D2 F' D2 L2 U D' R U' R2 B2 L F2 D2 L2 U2 R' U2 R' B U',R,Hampshire Summer 2026 (2026-06-27~28),333 R2 B E1
 385724001,D2 F2 D' F2 U R2 D2 F2 R F2 R' B' R B' U2 R2 D L2 U,R,Amalthea SCMU Open 2016 (2016-10-23),333 R1 J #5
 406269001,D2 B F L2 F' D2 F2 L2 D' L' R2 B2 R' D' U2 F2 L2 B2 R,O,Unifor Open 2016 (2016-12-02~03),333ft Final A #1
 410558001,D B2 L2 U' B2 D' B2 L2 B' R B D U' F L2 U L2 U2 B2,B,Shaker Fall 2016 (2016-12-10),333 R2 A #4
@@ -111,12 +111,12 @@
 954332020,L2 B2 L2 D2 U' R2 D2 R' U' L R2 D2 L F U2 F L2 B R' D2,B,Nacionales Argentinas 2018 (2018-12-08~09),333mbf Final E #1
 992508025,F U2 R2 U2 F L2 B D2 L2 F' D2 R' U' B R B R' F' U' L R2 B,G,Kubkvarna Winter 2019 (2019-01-26~27),333mbf Final A #2
 4634815001,B' U B R' U R F2 B2 L D2 B' L2 B' R2 U2 R2 U2 L' F2,G,Gliwice Open 2025 (2025-04-12),333bf Final A #3
-1009284008,D2 B' F' U2 F' L2 B R2 D2 R2 D2 R' B' L D R' U B L R2 D' L' F',R,Mentallinn 2019 (2019-02-09),333mbf Final A #2
+5732545001,R' B' D2 R2 B2 L2 B D2 L2 R2 D L' B' D2 B R2 D2 F,B,Cubing at COTA 2026 (2026-06-27),333oh Final A #2
 2815768001,D2 F2 L2 F2 U2 R2 F2 U B' F' U' L' F R2 U2 B L2 D2 F,B,Villasol 2023 (2023-06-18),333 Final A #2
 1019848014,F2 D2 U L2 U' B2 F2 R2 U' L2 U' F U F2 L' F2 L U' F2 L2 U2,O,U.R.A. Big Blind and FMC 2019 (2019-02-16~17),333mbf Final A #3
 4082042001,D' F2 U2 D' L B' R B F2 R U2 L B2 R2 B2 D2 U' B2,G,Champagne Open 2024 (2024-09-07~08),333 Final A E1
 2937679001,U L2 D' B2 L2 D F2 U' L2 R D2 R D2 U2 L2 D U' F' D',B,Geelong Winter 2023 (2023-07-29~30),333oh R1 B #5
-1046855001,B2 R F2 L2 U' L2 B R B R' U2 L' F2 R' B2 R U2 R,O,Huehue Open 2019 (2019-03-09~10),333 R1 C #2
+5738047001,B2 R F2 U2 F2 L D2 R U' L2 U2 F' R2 F' D R' U' B2,G,Åland Open 2026 (2026-07-03~05),333 R1 A E1
 1055572009,R2 U2 L2 U B2 D U2 L2 B2 R' D L2 B L B2 D B2 D' L2 D L2 U2,O,PoliMi Mental Breakdown 2019 (2019-03-16~17),333mbf Final B #1
 5430199006,L2 F2 R U R2 U L2 D' B2 D2 R2 U' L' R B R' B' U' R B R',R,Blind Madrid 2026 (2026-03-07),333mbf Final A #1
 1118589001,L2 R2 U' R2 B2 U L2 U' B' L2 D R2 B' R D2 R B' F' L2,R,Jambi Cube Festival 2019 (2019-04-27~28),333bf Final B E1

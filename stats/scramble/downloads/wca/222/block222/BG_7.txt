@@ -1,8 +1,8 @@
 # Scramble samples — 222 / block222 / BG / bin 7
-# Population in this bin: 146
-# Samples listed: 146 (all entries in this bin)
+# Population in this bin: 147
+# Samples listed: 147 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 1684001,L' U2 F' B2 L' B R F' R2 D' F' U2 B2 D2 R2 B2 L2 B' U2,B,Kansai Open 2014 (2014-03-21~22),333oh Final A #3
@@ -151,3 +151,4 @@
 5425971001,R2 D' U B2 D' R2 D R' F L U' L' B R F L R2 B2 F2,B,Berkeley Favorites 2026 (2026-03-01),333oh Final B E1
 5590756001,D' R' D' R' D2 R' D2 U2 L2 F2 L' U' B F' D2 U' L2 R D',B,Haileybury Astana Open 2026 (2026-04-26),333 R1 D E2
 5699972001,U L' F' R B' U' D' B U L2 U D2 L2 B2 L2 F2 D' B2 L B',B,Pickering Favourites Summer 2026 (2026-06-14),333 R1 A #5
+5739023001,L B2 R' U B' R2 D2 F2 R2 F D2 F L R2 U B D B' R2,B,Taipei Cube Open 2026 (2026-06-27~28),333 R2 A #2

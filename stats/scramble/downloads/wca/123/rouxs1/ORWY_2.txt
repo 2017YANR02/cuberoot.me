@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / ORWY / bin 2
-# Population in this bin: 535
+# Population in this bin: 536
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3820216001,F U F2 D L2 R2 U' L2 U' L2 F U2 L2 D' F2 L' D' B U' B',R,Tianjin Open 2024 (2024-06-01),333bf R1 A #2
@@ -66,7 +66,7 @@
 2985886001,L' U2 B' F2 D2 R2 B2 F L2 D2 L D' F U2 F U' F' R',Y,Norwich Summer 2023 (2023-08-19~20),333 R2 C #1
 3735774001,B2 R U2 F2 R D2 U2 R' D2 L U F2 U' L B' D' F' U F,O,Zhongshan Open 2024 (2024-05-04),333 R2 C E2
 379090001,R U2 R D2 F2 U2 F2 L' U2 R2 F2 D L2 U L' U R2 D' B' L,Y,CAVA Open 2016 (2016-10-15),333oh R1 A E2
-379726001,L D2 R U2 R' U2 B R B' D' R U' F' R' D' F D',R,Cubing ATMOSphere 2016 (2016-10-15~16),333oh R1 H #5
+5735278001,F2 R2 U2 R B2 U2 L D B2 U' R2 B' D' R2 D' F' U' F',R,Shenyang Cubing League 3x3 III 2026 (2026-07-01),333 R2 A #5
 4375823001,D2 R' F L' D' F2 R2 U2 R B U L2 F2 U' B2 U' F2 U R2 D2,R,Hangzhou Open 2024 (2024-12-15),333bf R1 A E2
 384982001,U' D F' L' U2 L' F' B2 D2 B2 D' B2 L' B2 L2 F2 R' B2 R',Y,Ural Autumn 2016 (2016-10-22~23),333oh Final A #3
 2755525014,U R2 F U' F2 L' U2 R' U2 B L' U2 D2 L' U2 R L2 B2 U2 B',R,Jaqueca Di Tella 2023 (2023-05-27~28),333mbf Final A #2

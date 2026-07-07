@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / W / bin 0
-# Population in this bin: 794
+# Population in this bin: 796
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5259667001,D' R D L2 R2 B2 U F2 R2 U2 L2 U' B F2 L' B F' D' R',W,Tashkent Open 2025 (2025-12-06~07),333 Final A #2

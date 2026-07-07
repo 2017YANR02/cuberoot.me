@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / W / bin 3
-# Population in this bin: 198
-# Samples listed: 198 (all entries in this bin)
+# Population in this bin: 200
+# Samples listed: 200 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 14804001,D L2 B2 R2 F2 R2 D R2 D' R2 B F2 D2 U L2 U2 B' U L R' U2 L,W,Didas Brest 2014 (2014-04-26~27),333bf Final A #2
@@ -203,3 +203,5 @@
 5677616009,B L2 F2 D R2 D2 L2 D' F' D2 F2 R2 B' L R2 U L D2 L B,W,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf Final B #1
 5689973001,D' R2 F2 L2 R2 U2 B2 U' B D2 U R B' R2 B' R2 U F' D2,W,Napule È Mille Culure 2026 (2026-06-06~07),333 R1 A E2
 5695607001,U2 B' L D' U2 L2 D2 B2 D' F2 U F2 U F' L F2 L' R2 D' L2 U',W,Please Be Quiet Singapore June 2026 (2026-06-13),333bf R1 B #1
+5728205001,U' L2 B2 U B2 U' B' D2 F D2 U B' F U B' L2 F2,W,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #5
+5730241001,L2 D2 F L' U' R L F' U' R' U2 F' D2 R2 U2 D2 F2 D2 R' D2,W,Hampshire Summer 2026 (2026-06-27~28),333bf R1 A #5

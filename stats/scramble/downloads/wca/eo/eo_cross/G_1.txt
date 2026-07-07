@@ -2,7 +2,7 @@
 # Population in this bin: 2
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4185127024,B R B2 D2 F2 R F2 L D2 R2 F2 L' F U2 F D2 L' D2 B,G,Taboão Bigs & Blinds 2024 (2024-10-13),333mbf Final C #1

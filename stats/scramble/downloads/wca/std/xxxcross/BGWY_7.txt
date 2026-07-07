@@ -2,7 +2,7 @@
 # Population in this bin: 308
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4931144001,R2 B2 D' U2 B2 U' L2 R B L2 U' L2 D U B' D R F,B,Medellín Explora 2025 (2025-08-09~10),333 R1 B E2

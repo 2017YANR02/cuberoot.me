@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / R / bin 11
-# Population in this bin: 508
+# Population in this bin: 511
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2
@@ -146,7 +146,7 @@
 1490971001,F R2 D2 R2 D2 R2 F' D2 B2 D2 L' B R2 D2 B2 D' L' D2 B R2 B R,R,Swisscubing Cup I 2020 (2020-01-04~05),333bf R1 A E1
 898391001,U2 B2 F2 R2 F2 L D2 L F2 L' D' B D' F D B2 D L F',R,Kaohsiung Autumn Open 2018 (2018-10-07),333 R1 F #4
 902251001,B' U2 F2 U2 L2 B R2 B L' D' B' L2 B2 L2 D' F' U B R' B R,R,Montpellier Open 2018 (2018-10-13~14),333bf Final A #1
-3621685001,R' B2 R2 F2 L' U2 R2 U L R' D2 L' U' F2 U2 R F2,R,Patio Cubik Open 2024 (2024-03-24),333 R2 C #3
+5736387001,U F' R2 B' L2 U F' R' B' U2 B2 R2 D' F2 U2 L2 U2 R2 B2 R2 B,R,BBQ Ropaži 2026 (2026-07-04),333bf R1 A #1
 5266730001,L F2 D R2 U B2 U L2 U' L F' D' L2 D2 B L F L' F',R,Götalandsmästerskapet 2025 (2025-12-13~14),333oh R1 A #4
 918532001,U F2 U2 B2 U2 R2 U2 R2 B L D2 R2 F2 R2 U' F2 B2 D' F2 D',R,Cubing ATMOSphere 2018 (2018-10-27~28),333oh Final A #1
 1614529001,B2 R2 B2 L' U R U L2 B L B2 L2 U L2 D R2 D',R,Swisscubing Cup IV 2020 (2020-08-22~23),333oh Final A #2
@@ -203,5 +203,5 @@
 3975037001,B' L F2 U2 D' R D F2 U2 B' R2 U2 R2 F2 L2 F' L' D' B,R,Cochabamba Ultra Cube 2024 (2024-07-21),333 R1 F #3
 1352399001,L' D' B R2 F U2 R' B R' B' L' D2 R2 D2 F2 R U2 L' B2,R,Belgorod Open 2019 (2019-10-12~13),333oh Final A #4
 2439324001,R' L2 D2 B D2 F R2 B2 L2 F' D2 F D U F' R U2 L D U2,R,Melbourne Summer 2023 (2023-01-20~22),333 R2 A #2
-1359887001,L2 D2 B2 R2 B F' L2 F' D' B' U' B R' B' F' U B' D,R,Spanish Championship 2019 (2019-10-11~13),333ft Final A #2
+5728514001,F2 L' U2 L U2 R U2 R B L U' B R' U' R D B L2 U,R,Guayaquil Masters Open 2026 (2026-06-27),333 R2 B E1
 1394025001,D B2 R2 U2 B2 U2 F2 R2 B' L2 U' R U L' U B' D' L F2,R,City of Joy Open 2019 (2019-11-09~10),333oh R1 A #5

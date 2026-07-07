@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / R / bin 7
-# Population in this bin: 871
+# Population in this bin: 872
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 3853392001,L' B L' U2 D2 R2 F D' L F' D2 R2 U F2 D F2 D L2,R,Prime Cubing Day Seoul 2024 (2024-06-15),333 R1 E E1
@@ -65,7 +65,7 @@
 3090630001,F2 D' B' U L U2 L F L U2 L' U' R2 D2 L2 F2 U' R2 F2 L B2,R,Criciúma Open 2023 (2023-09-16~17),333bf Final A E1
 3836839001,F D R2 U2 L B2 D2 U2 F2 D B' L2 D' U L D2 U2 L2,R,Prague June 2024 (2024-06-08~09),333 R2 C #5
 3992623001,D2 F B2 U' F2 L2 F' R F' B L2 U2 L2 U2 F' D',R,A Twisty Day in Araneta 2024 (2024-08-04),333oh R1 A E2
-2958901001,R' B' D B2 U2 R2 D F2 U' L2 B2 U' L R' B' L' D B' L',R,Peru Nationals 2023 (2023-08-04~06),333 R2 A #3
+5736478001,R2 D' L' U2 D2 L2 F' D' R2 F' L2 U2 B2 L2 U' L2 U D,R,BBQ Ropaži 2026 (2026-07-04),333oh Final B #5
 3938239001,R' F' L2 B2 R2 D' B2 F2 U' B2 R2 U B D2 U L' B' F' U2 B2,R,200 Perú 2024 (2024-07-13),333 R1 L #1
 317604001,D' L2 F2 D2 L2 D R2 D B2 F' U2 L B2 D L' B' F' D L2,R,Slow N Steady Spring 2016 (2016-06-18~19),333 R2 E #3
 326509001,B R2 B U2 L D2 R' B' U' D B2 R U2 R2 F2 R' F2 B2 R,R,Cowboys Summer 2016 (2016-07-02~03),333oh Final A #5

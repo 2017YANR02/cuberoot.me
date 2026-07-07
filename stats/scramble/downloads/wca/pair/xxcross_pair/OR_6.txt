@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / OR / bin 6
-# Population in this bin: 519
+# Population in this bin: 520
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 4716333030,F' U' B L B' R L2 F U2 B D F U2 L2 U2 F2 B U2 L',O,UCSD Blind and Big 2025 (2025-05-10),333mbf Final A #1

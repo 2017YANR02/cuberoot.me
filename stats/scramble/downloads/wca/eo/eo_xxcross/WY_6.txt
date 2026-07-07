@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / WY / bin 6
-# Population in this bin: 211
+# Population in this bin: 212
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-06-29
+# Generated: 2026-07-06
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,Y,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -186,7 +186,7 @@
 4712990001,U2 R F2 L F' D' R L F B U2 D2 L2 F2 B R2 L' F' D,W,QBERS League In Astana 2025 (2025-05-10~11),333oh Final C E2
 4725510012,D R B2 U' R' L2 U' B2 D F2 L F2 B2 U' D2 F2 D2 L2 U,W,PBQtah 8 2025 (2025-05-17),333mbf Final A #1
 4759576001,R2 F2 L2 F2 D B2 U F2 D' U2 R' B2 L2 F' L B2 U2 R2 D2,W,Bucharest Cubing May 2025 (2025-05-24),333 R2 B E2
-4789632001,U' L B' D2 F R2 D2 R2 F2 U2 D' B' D B' L' B2 D' U,Y,Kansas Championship 2025 (2025-06-06~08),333oh Final A #1
+5736461001,D B2 L B2 F2 D2 R' D2 R2 U2 B2 R2 F' U' R' B L2 F2 D' L2 U2,Y,BBQ Ropaži 2026 (2026-07-04),333bf Final B #4
 4805783058,U F U' B2 U' D2 L' D2 B R2 D' L2 D B2 D' L2 R' D2 L B2,Y,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf Final A #2
 4826430001,B2 D2 R2 D' L' U2 D L' R2 U F2 U' B2 R2 B2 L2 U' B,Y,Twist & Fries Johor Bahru 2025 (2025-06-22),333 R2 C #5
 4831024001,U' L' B2 D2 R F2 U' R B2 R2 F2 L2 D' F2 R' F2,Y,Upper Valley Cube Day 2025 (2025-06-28),333oh R1 A #4
