@@ -190,7 +190,9 @@ export function detectStickerBlobs(
   }
 
   // 反光重标: 高光核心 (W 色块) 到饱和色之间有去饱和过渡带 (s 25~110),
-  // 用放宽饱和阈 (s≥50) 的色相投票在 1.25× bbox 壳层内找底色 (再大会圈进邻贴纸)
+  // 用放宽饱和阈 (s≥50) 的色相投票在 1.25× bbox 壳层内找底色 (再大会圈进邻贴纸)。
+  // 方向性约束: 真反光核心在贴纸内部, 底色四面包围 (扇区覆盖 ≥5/8); 白贴纸旁的
+  // 邻贴纸/皮肤只出现在 1-2 侧 — 无扇区约束时 8% 环带污染即翻色, 是 W→O/G 误读大户。
   for (const blob of blobs) {
     if (blob.color !== "W") continue;
     const ew = blob.w * 0.625, eh = blob.h * 0.625;
@@ -199,6 +201,7 @@ export function detectStickerBlobs(
     const y0 = Math.max(0, Math.round(blob.cy - eh));
     const y1 = Math.min(h - 1, Math.round(blob.cy + eh));
     const counts = new Map<ColorName, number>();
+    const sectors = new Map<ColorName, number>();
     let box = 0, tinted = 0;
     for (let y = y0; y <= y1; y++) {
       for (let x = x0; x <= x1; x++) {
@@ -216,6 +219,8 @@ export function detectStickerBlobs(
         if (!c) continue;
         tinted++;
         counts.set(c, (counts.get(c) ?? 0) + 1);
+        const sec = Math.floor(((Math.atan2(y - blob.cy, x - blob.cx) + Math.PI) / (2 * Math.PI)) * 8) & 7;
+        sectors.set(c, (sectors.get(c) ?? 0) | (1 << sec));
       }
     }
     let bestC: ColorName | null = null;
@@ -223,7 +228,15 @@ export function detectStickerBlobs(
     for (const [c, n] of counts) {
       if (n > bestN) { bestN = n; bestC = c; }
     }
-    if (bestC && tinted / box >= 0.08 && bestN / tinted >= 0.5) blob.color = bestC;
+    const popcount = (m: number) => { let n = 0; while (m) { n += m & 1; m >>= 1; } return n; };
+    if (
+      bestC &&
+      tinted / box >= 0.08 &&
+      bestN / tinted >= 0.5 &&
+      popcount(sectors.get(bestC) ?? 0) >= 5
+    ) {
+      blob.color = bestC;
+    }
   }
   return blobs;
 }
@@ -534,7 +547,7 @@ export function extractFaceObservations(
       for (let c = 0; c < 3; c++) {
         const blob = grid.cells[r * 3 + c];
         if (blob) {
-          // 色块颜色含反光环带重标, 比重采样可靠
+          // 色块颜色含反光环带重标, 比重采样可靠 (色块成立本身 = 有界连通域证据)
           colors[r * 3 + c] = blob.color;
         } else {
           const { x, y } = cellCenter(grid, r, c);
@@ -547,6 +560,61 @@ export function extractFaceObservations(
     remaining = remaining.filter((b) => !used.has(b));
   }
   return out;
+}
+
+/**
+ * 基向量连续化: 把冷拟合网格的基旋到与参考基 (上一帧) 最对齐的 90° 变体。
+ * fitFaceGrid 的规范化 (v1 取更水平者朝右) 在晶格近 45° 时会帧间轴交换,
+ * 面内旋转身份跳变 → 链断裂 + 按 span 钉死指派失效。跟踪帧天然继承基,
+ * 冷重拟合帧相邻仅 ~10-60ms, 真实旋转极小, 取 4 旋转变体中 v1 夹角最小者即可。
+ * 4 变体均保持行主序读法手性 (基变换 + 窗口原点平移 + 格重排同步)。
+ */
+export function reorientObsToBasis(
+  obs: FaceObservation,
+  refV1: { x: number; y: number },
+  refV2: { x: number; y: number },
+): FaceObservation {
+  const g = obs.grid;
+  // 变体 k: 新 (v1', v2') 与新读序 new(r',c') = old(r,c) 的映射
+  const variants = [
+    { v1: g.v1, v2: g.v2, o: { x: 0, y: 0 }, map: (r: number, c: number) => [r, c] as const },
+    // 90°: v1'=v2, v2'=-v1, origin'=origin+2v1, new(r',c')=old(c',2-r')
+    { v1: g.v2, v2: { x: -g.v1.x, y: -g.v1.y }, o: { x: 2 * g.v1.x, y: 2 * g.v1.y }, map: (r: number, c: number) => [c, 2 - r] as const },
+    // 180°
+    { v1: { x: -g.v1.x, y: -g.v1.y }, v2: { x: -g.v2.x, y: -g.v2.y }, o: { x: 2 * (g.v1.x + g.v2.x), y: 2 * (g.v1.y + g.v2.y) }, map: (r: number, c: number) => [2 - r, 2 - c] as const },
+    // 270°: v1'=-v2, v2'=v1, origin'=origin+2v2, new(r',c')=old(2-c',r')
+    { v1: { x: -g.v2.x, y: -g.v2.y }, v2: g.v1, o: { x: 2 * g.v2.x, y: 2 * g.v2.y }, map: (r: number, c: number) => [2 - c, r] as const },
+  ];
+  let bestK = 0, bestDot = -Infinity;
+  for (let k = 0; k < 4; k++) {
+    const v = variants[k];
+    const dot =
+      (v.v1.x * refV1.x + v.v1.y * refV1.y) / (Math.hypot(v.v1.x, v.v1.y) * Math.hypot(refV1.x, refV1.y) || 1) +
+      (v.v2.x * refV2.x + v.v2.y * refV2.y) / (Math.hypot(v.v2.x, v.v2.y) * Math.hypot(refV2.x, refV2.y) || 1);
+    if (dot > bestDot) { bestDot = dot; bestK = k; }
+  }
+  if (bestK === 0) return obs;
+  const v = variants[bestK];
+  const colors: (ColorName | null)[] = new Array(9).fill(null);
+  const cells: (Blob | null)[] = new Array(9).fill(null);
+  for (let r = 0; r < 3; r++) {
+    for (let c = 0; c < 3; c++) {
+      const [or, oc] = v.map(r, c);
+      colors[r * 3 + c] = obs.colors[or * 3 + oc];
+      cells[r * 3 + c] = g.cells[or * 3 + oc];
+    }
+  }
+  return {
+    colors,
+    blobCount: obs.blobCount,
+    grid: {
+      ...g,
+      cells,
+      origin: { x: g.origin.x + v.o.x, y: g.origin.y + v.o.y },
+      v1: v.v1,
+      v2: v.v2,
+    },
+  };
 }
 
 /**

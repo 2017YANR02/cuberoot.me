@@ -58,13 +58,16 @@ export interface Candidate {
   face: string | null;
   /** 逆操作的真实空间置换 (逆序推理时应用) */
   invPerm: Perm;
+  /** 正操作置换 (正向推理时应用) */
+  perm: Perm;
 }
 
 /** 生成全量候选词表 (与具体某段无关, 概率在搜索时按段查) */
 export function buildVocabulary(): Candidate[] {
   const out: Candidate[] = [];
   const add = (token: string, prior: number, face: string | null) => {
-    out.push({ token, prior, face, invPerm: invertPerm(physicalPerm(token)) });
+    const perm = physicalPerm(token);
+    out.push({ token, prior, face, invPerm: invertPerm(perm), perm });
   };
 
   for (const face of FACES) {
@@ -178,6 +181,41 @@ export interface AnchoredOptions {
   rawMissProb?: number;
   /** 原始观测允许的可见面 (默认全 6 面; 限面收紧证据强度) */
   rawFaces?: readonly ("U" | "R" | "F" | "D" | "L" | "B")[];
+  /**
+   * 路径级指派钉死: 每条路径携带一组 pin (每个 rawFaces 面钉 1 个面内旋转,
+   * 组合数 = 4^面数), 初始 beam = 24 朝向 × pin 组合, 评分只用该 pin 的指派
+   * (去重键含 pin)。相比每网格自由 max over 24/8 指派, 乱态巧合从 ~48% 塌到
+   * ~30%。实拍中面内旋转随手部姿态连续漂移 (实测同视频高质量链 r0-r3 全出现),
+   * 须配 rawPinDrift 允许段间切换。
+   */
+  rawPinWindows?: boolean;
+  /**
+   * pin 漂移: 扩展时推两个子节点 — 保持当前 pin / 切到本段最优其他 pin 并付
+   * pinSwitchLogProb 惩罚。= 把持握朝向当带平滑先验的隐变量 (离散 6-DoF-lite)。
+   */
+  rawPinDrift?: boolean;
+  /** 每次 pin 切换的对数概率惩罚 (默认 log 0.05) */
+  pinSwitchLogProb?: number;
+  /**
+   * 鲁棒垃圾混合: 每网格 P(obs|state) = (1-π)·P(obs|state,指派) + π·(1/6)^读格。
+   * 跨面骑跨网格/坏晶格/拧转中帧对所有路径付同一常数 → 自动中和, 不再随机
+   * 奖励错误状态 (实测毒观测把 GT 路径在倒序第 3 段就挤出 beam)。0 = 关闭。
+   */
+  rawJunkProb?: number;
+  /**
+   * 正向搜索: 从 {ω∘打乱态} 出发按时间正序消费段, 锚定 = 末态 ∈ 24 复原朝向。
+   * 证据分布是强开局 (打乱态已知 + 观察期观测 + F2L 花色态) 弱结尾 (全黄 OLL/PLL
+   * + 跨面垃圾) — 逆序搜索从最弱一端起步, 真路径在高信息区到来前就被挤出 beam
+   * (实测 t37 死)。正向让真路径先靠强证据站稳。
+   */
+  forward?: boolean;
+  /**
+   * 诊断: GT 态序列 (GT 记谱系)。第 t 段处理完剪枝后, 对 debugGtStates[t] 报告
+   * {o∘gt | o∈24 朝向} 在 beam 中的最好排名 (-1 = 真路径已死) 与分数落差。
+   * 逆序时传段起点态; 正向时传段终点态 (调用方负责对齐)。
+   */
+  debugGtStates?: readonly (readonly number[])[];
+  onSegmentTrace?: (t: number, info: { rank: number; gap: number; top: number; gtScore: number }) => void;
   /** 视觉对数似然权重, 默认 1 */
   visualWeight?: number;
 }
@@ -199,6 +237,8 @@ interface PathNode {
   isInsert: boolean;
   parent: PathNode | null;
   inserts: number;
+  /** rawPinWindows 时的 pin 组合下标 (关闭时恒 0) */
+  pin: number;
 }
 
 export interface AnchoredResult {
@@ -218,8 +258,8 @@ function applyPermTo(sc: readonly number[], perm: Perm): number[] {
   return next;
 }
 
-/** 从叶节点回溯出时间正序的 token 列表 (逆序搜索 → 叶在最早时刻) */
-function collect(node: PathNode): { movesFlat: string[]; segTokens: string[] } {
+/** 从叶节点回溯出时间正序的 token 列表 (逆序搜索叶在最早时刻; 正向搜索叶在最晚, 需反转) */
+function collect(node: PathNode, forward = false): { movesFlat: string[]; segTokens: string[] } {
   const movesFlat: string[] = [];
   const segTokens: string[] = [];
   for (let n: PathNode | null = node; n && n.move !== null; n = n.parent) {
@@ -229,6 +269,10 @@ function collect(node: PathNode): { movesFlat: string[]; segTokens: string[] } {
       segTokens.push(n.move);
       if (n.move !== "") movesFlat.push(n.move);
     }
+  }
+  if (forward) {
+    movesFlat.reverse();
+    segTokens.reverse();
   }
   return { movesFlat, segTokens };
 }
@@ -261,25 +305,107 @@ export function anchoredBeamSearch(
   );
   const finalRawCodes = opts.finalRawObservation ? rawObsCodes(opts.finalRawObservation) : null;
 
-  // 初始 beam: 24 个 solved 朝向 (末帧观测可收敛)
-  let beam: PathNode[] = ORIENTATION_PERMS.map((o) => ({
-    state: o.slice(),
-    score: opts.finalObservation
-      ? vw * logObs(o, opts.finalObservation)
-      : finalRawCodes
-        ? vw * logRawObs(o, finalRawCodes, logHit, logMiss, rawAssigns)
-        : 0,
-    move: null,
-    isInsert: false,
-    parent: null,
-    inserts: 0,
-  }));
+  // pin 组合: 每个 rawFaces 面钉 1 个面内旋转 (笛卡尔积); 关闭时单组合 = 全指派集。
+  // 逐 pin 评分用共享的逐指派分数分解 (8 指派算一遍, 16 组合只做 max 组装)。
+  let pinCombos: (readonly (readonly number[])[])[] = [rawAssigns ?? FACE_ROT_ASSIGN];
+  let pinFlatAssigns: readonly (readonly number[])[] = [];
+  let pinComboAssignIdx: number[][] = [];
+  if (opts.rawPinWindows && opts.rawFaces) {
+    const groups = opts.rawFaces.map((f) => assignsForFaces([f]));
+    pinFlatAssigns = groups.flat();
+    let comboIdx: number[][] = [[]];
+    let offset = 0;
+    for (const group of groups) {
+      const base = offset;
+      comboIdx = comboIdx.flatMap((combo) => group.map((_, gi) => [...combo, base + gi]));
+      offset += group.length;
+    }
+    pinComboAssignIdx = comboIdx;
+    pinCombos = comboIdx.map((idxs) => idxs.map((ai) => pinFlatAssigns[ai]));
+  }
+  const drift = opts.rawPinDrift === true && pinCombos.length > 1;
+  const switchLP = opts.pinSwitchLogProb ?? Math.log(0.05);
+  const junkP = opts.rawJunkProb ?? 0;
+  const logJunkMix = junkP > 0 ? Math.log(junkP) : -Infinity;
+  const logRealMix = junkP > 0 ? Math.log(1 - junkP) : 0;
+  const LOG_SIXTH = Math.log(1 / 6);
+  /** 鲁棒混合: logaddexp(log(1-π)+s, log(π)+read·log(1/6)) */
+  const robust = (s: number, read: number): number => {
+    if (junkP <= 0) return s;
+    const a = logRealMix + s;
+    const b = logJunkMix + read * LOG_SIXTH;
+    const hi = a > b ? a : b;
+    return hi + Math.log1p(Math.exp((a > b ? b : a) - hi));
+  };
+  const readOf = (codes: readonly number[]): number => {
+    let n = 0;
+    for (let cell = 0; cell < 9; cell++) if (codes[cell] >= 0) n++;
+    return n;
+  };
 
-  for (let t = probDists.length - 1; t >= 0; t--) {
+  /** 单指派观测对数似然 */
+  const logRawOne = (sc: readonly number[], codes: readonly number[], assign: readonly number[]): number => {
+    let s = 0;
+    for (let cell = 0; cell < 9; cell++) {
+      const code = codes[cell];
+      if (code < 0) continue;
+      s += Math.floor(sc[assign[cell]] / 9) === code ? logHit : logMiss;
+    }
+    return s;
+  };
+  /** 段观测的逐 pin 分数向量 (双端点语义: 每网格 max over 该 pin 指派 × 两端点, 再过鲁棒混合) */
+  const visPerPin = (raw: readonly (readonly number[])[], startSc: readonly number[], endSc: readonly number[]): Float64Array => {
+    const totals = new Float64Array(pinCombos.length);
+    const nA = pinFlatAssigns.length;
+    const s = new Float64Array(nA * 2);
+    for (const codes of raw) {
+      const rd = readOf(codes);
+      for (let ai = 0; ai < nA; ai++) {
+        s[ai] = logRawOne(startSc, codes, pinFlatAssigns[ai]);
+        s[nA + ai] = logRawOne(endSc, codes, pinFlatAssigns[ai]);
+      }
+      for (let pi = 0; pi < pinCombos.length; pi++) {
+        let best = -Infinity;
+        for (const ai of pinComboAssignIdx[pi]) {
+          if (s[ai] > best) best = s[ai];
+          if (s[nA + ai] > best) best = s[nA + ai];
+        }
+        totals[pi] += robust(best, rd);
+      }
+    }
+    return totals;
+  };
+
+  const fwd = opts.forward === true;
+  const yPerms = Y_INSERTS.map((r) => ROTATION_PERMS[r]);
+  /** 末帧观测评分 (逆序在初始 beam 上, 正向在末段之后) */
+  const finalVis = (sc: readonly number[], pin: number): number =>
+    opts.finalObservation
+      ? vw * logObs(sc, opts.finalObservation)
+      : finalRawCodes
+        ? vw * robust(logRawObs(sc, finalRawCodes, logHit, logMiss, pinCombos[pin]), readOf(finalRawCodes))
+        : 0;
+
+  // 初始 beam × pin 组合: 逆序 = 24 solved 朝向 (末帧观测收敛朝向并淘汰错 pin);
+  // 正向 = 24 个打乱态朝向变体 {ω∘scramble} (锚定条件转移到末端)
+  let beam: PathNode[] = ORIENTATION_PERMS.flatMap((o) =>
+    pinCombos.map((_combo, pin) => ({
+      state: fwd ? [...seqCompose(o, scrambleSc)] : o.slice(),
+      score: fwd ? 0 : finalVis(o, pin),
+      move: null,
+      isInsert: false,
+      parent: null,
+      inserts: 0,
+      pin,
+    })),
+  );
+
+  for (let step = 0; step < probDists.length; step++) {
+    const t = fwd ? step : probDists.length - 1 - step;
     const dist = probDists[t];
     const expanded = new Map<string, PathNode>();
     const push = (node: PathNode) => {
-      const key = permKey(node.state);
+      const key = pinCombos.length > 1 ? `${node.pin}|${permKey(node.state)}` : permKey(node.state);
       const prev = expanded.get(key);
       if (!prev || node.score > prev.score) expanded.set(key, node);
     };
@@ -290,36 +416,96 @@ export function anchoredBeamSearch(
 
     const obs = opts.observations?.[t] ?? null;
     const raw = rawCodes?.[t] ?? null;
-    /** 段观测似然: startSc = 段起点态, endSc = 段终点态 (双端点语义, 见 rawObservations 注释) */
-    const visOf = (startSc: readonly number[], endSc: readonly number[]): number => {
+    /** 段观测似然 (单 pin): startSc = 段起点态, endSc = 段终点态 (双端点语义) */
+    const visOf = (startSc: readonly number[], endSc: readonly number[], pin: number): number => {
       if (obs) return vw * logObs(startSc, obs);
       if (!raw) return 0;
+      const assigns = pinCombos[pin];
       let s = 0;
       for (const codes of raw) {
-        const a = logRawObs(startSc, codes, logHit, logMiss, rawAssigns);
-        const b = logRawObs(endSc, codes, logHit, logMiss, rawAssigns);
-        s += a >= b ? a : b;
+        const a = logRawObs(startSc, codes, logHit, logMiss, assigns);
+        const b = logRawObs(endSc, codes, logHit, logMiss, assigns);
+        s += robust(a >= b ? a : b, readOf(codes));
       }
       return vw * s;
+    };
+
+    /**
+     * 扩展一个 (父节点, 候选, 概率): drift 开启时推 (保持 pin, 最优切换) 两子。
+     * 正向时另推"段后紧跟 y"的插入子 (y 段无帧, 只付惩罚)。
+     */
+    const expand = (parent: PathNode, cand: Candidate, p: number) => {
+      const nextState = applyPermTo(parent.state, fwd ? cand.perm : cand.invPerm);
+      const startSc = fwd ? parent.state : nextState;
+      const endSc = fwd ? nextState : parent.state;
+      const base = parent.score + Math.log(p);
+      const children: PathNode[] = [];
+      if (drift && raw && !obs) {
+        const pins = visPerPin(raw, startSc, endSc);
+        const keep = pins[parent.pin];
+        children.push({
+          state: nextState,
+          score: base + vw * keep,
+          move: cand.token,
+          isInsert: false,
+          parent,
+          inserts: parent.inserts,
+          pin: parent.pin,
+        });
+        let bp = -1, bv = -Infinity;
+        for (let pi = 0; pi < pins.length; pi++) {
+          if (pi !== parent.pin && pins[pi] > bv) { bv = pins[pi]; bp = pi; }
+        }
+        // 切换子仅在净收益为正时值得推 (省一半 map 压力)
+        if (bp >= 0 && vw * bv + switchLP > vw * keep) {
+          children.push({
+            state: nextState,
+            score: base + vw * bv + switchLP,
+            move: cand.token,
+            isInsert: false,
+            parent,
+            inserts: parent.inserts,
+            pin: bp,
+          });
+        }
+      } else {
+        children.push({
+          state: nextState,
+          score: base + visOf(startSc, endSc, parent.pin),
+          move: cand.token,
+          isInsert: false,
+          parent,
+          inserts: parent.inserts,
+          pin: parent.pin,
+        });
+      }
+      for (const child of children) {
+        push(child);
+        // 正向 y 插入: 段 t 之后紧跟转体 (逆序对应形状在下方主循环)
+        if (fwd && cand.face !== null && child.inserts < maxRotInserts) {
+          for (let yi = 0; yi < Y_INSERTS.length; yi++) {
+            push({
+              state: applyPermTo(child.state, yPerms[yi]),
+              score: child.score + Math.log(yInsertProb),
+              move: Y_INSERTS[yi],
+              isInsert: true,
+              parent: child,
+              inserts: child.inserts + 1,
+              pin: child.pin,
+            });
+          }
+        }
+      }
     };
 
     for (const path of beam) {
       // 1) 直接消费段 t
       for (const cand of segVocab) {
         const p = cand.face === null ? noopProb : (dist[cand.face] ?? floorProb) * cand.prior;
-        const nextState = applyPermTo(path.state, cand.invPerm);
-        const vis = visOf(nextState, path.state);
-        push({
-          state: nextState,
-          score: path.score + Math.log(p) + vis,
-          move: cand.token,
-          isInsert: false,
-          parent: path,
-          inserts: path.inserts,
-        });
+        expand(path, cand, p);
       }
-      // 2) 段 t 之后紧跟一个 y 转体 (不消费段, probs 无 y 条目) — 逆序时先撤销 y 再撤销段 t
-      if (path.inserts < maxRotInserts) {
+      // 2) (逆序) 段 t 之后紧跟一个 y 转体 (不消费段, probs 无 y 条目) — 先撤销 y 再撤销段 t
+      if (!fwd && path.inserts < maxRotInserts) {
         for (let yi = 0; yi < Y_INSERTS.length; yi++) {
           const rotNode: PathNode = {
             state: applyPermTo(path.state, yInvPerms[yi]),
@@ -328,44 +514,57 @@ export function anchoredBeamSearch(
             isInsert: true,
             parent: path,
             inserts: path.inserts + 1,
+            pin: path.pin,
           };
           for (const cand of segVocab) {
             if (cand.face === null) continue; // y 后紧跟空段无意义
             const p = (dist[cand.face] ?? floorProb) * cand.prior;
-            const nextState = applyPermTo(rotNode.state, cand.invPerm);
             // 段 t 的终点 = y 之前的态 (y 段帧在 real-eval 侧已单独丢弃)
-            const vis = visOf(nextState, rotNode.state);
-            push({
-              state: nextState,
-              score: rotNode.score + Math.log(p) + vis,
-              move: cand.token,
-              isInsert: false,
-              parent: rotNode,
-              inserts: rotNode.inserts,
-            });
+            expand(rotNode, cand, p);
           }
         }
       }
     }
 
     beam = [...expanded.values()].sort((a, b) => b.score - a.score).slice(0, beamWidth);
+
+    if (opts.debugGtStates && opts.onSegmentTrace) {
+      const gt = opts.debugGtStates[t];
+      if (gt) {
+        const keys = new Set(ORIENTATION_PERMS.map((o) => permKey(seqCompose(o, gt))));
+        let rank = -1, gtScore = NaN;
+        for (let i = 0; i < beam.length; i++) {
+          if (keys.has(permKey(beam[i].state))) { rank = i; gtScore = beam[i].score; break; }
+        }
+        opts.onSegmentTrace(t, { rank, gap: rank >= 0 ? beam[0].score - gtScore : NaN, top: beam[0]?.score ?? NaN, gtScore });
+      }
+    }
   }
 
-  // 锚定: 起点态 ∈ {ω∘打乱态}。相机系 = GT 系差常数颜色重标 κ (共轭的外侧半):
-  // 真路径从初始朝向 ω=κ 出发, 回推到 ω∘R₀ — 必须左复合。右复合 {R₀∘o} 仅在
-  // κ=id (纯仿真) 时与之相交于 o=id, 真实数据下不含真路径终点。
-  const anchorKeys = new Set(ORIENTATION_PERMS.map((o) => permKey(seqCompose(o, scrambleSc))));
+  // 正向: 末段之后计入末帧观测再重排 (逆序在初始 beam 已计)
+  if (fwd && (opts.finalObservation || finalRawCodes)) {
+    beam = beam
+      .map((n) => ({ ...n, score: n.score + finalVis(n.state, n.pin) }))
+      .sort((a, b) => b.score - a.score);
+  }
+
+  // 锚定: 逆序 = 起点态 ∈ {ω∘打乱态}; 正向 = 末态 ∈ 24 复原朝向。
+  // 相机系 = GT 系差常数颜色重标 κ (共轭的外侧半): 真路径从初始朝向 ω=κ 出发,
+  // 必须左复合 {ω∘R}。右复合 {R∘o} 仅在 κ=id (纯仿真) 时相交于 o=id。
+  const anchorKeys = fwd
+    ? new Set(ORIENTATION_PERMS.map((o) => permKey(o)))
+    : new Set(ORIENTATION_PERMS.map((o) => permKey(seqCompose(o, scrambleSc))));
   const best = beam.find((n) => anchorKeys.has(permKey(n.state))) ?? null;
   const bestAny = beam[0] ?? null;
 
   if (best) {
-    return { anchored: true, ...collect(best), score: best.score };
+    return { anchored: true, ...collect(best, fwd), score: best.score };
   }
   return {
     anchored: false,
     movesFlat: [],
     segTokens: [],
     score: -Infinity,
-    bestUnanchored: bestAny ? { ...collect(bestAny), score: bestAny.score } : undefined,
+    bestUnanchored: bestAny ? { ...collect(bestAny, fwd), score: bestAny.score } : undefined,
   };
 }
