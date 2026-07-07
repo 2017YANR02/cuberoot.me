@@ -140,6 +140,12 @@
       "Czech Republic"
     ],
     [
+      "[Åland Open 2026](https://www.worldcubeassociation.org/competitions/AlandOpen2026)",
+      "10.13",
+      23,
+      "Finland"
+    ],
+    [
       "[VERK IX 2025](https://www.worldcubeassociation.org/competitions/VERKIX2025)",
       "10.07",
       14,
@@ -158,16 +164,16 @@
       "Sweden"
     ],
     [
-      "[Porfyrkuben 2024](https://www.worldcubeassociation.org/competitions/Porfyrkuben2024)",
-      "10.00",
-      17,
-      "Sweden"
-    ],
-    [
       "[Mahalo iā Maui 2025](https://www.worldcubeassociation.org/competitions/MahaloiaMaui2025)",
       "10.00",
       9,
       "United States"
+    ],
+    [
+      "[Porfyrkuben 2024](https://www.worldcubeassociation.org/competitions/Porfyrkuben2024)",
+      "10.00",
+      17,
+      "Sweden"
     ],
     [
       "[Bristol Spring 2010](https://www.worldcubeassociation.org/competitions/BristolSpring2010)",
@@ -200,10 +206,10 @@
       "Sweden"
     ],
     [
-      "[Kanta-Hämeen Vääntelyt 2026](https://www.worldcubeassociation.org/competitions/KantaHameenKuutionvaantelyt2026)",
+      "[Czech Open 2009](https://www.worldcubeassociation.org/competitions/CzechOpen2009)",
       "9.82",
-      22,
-      "Finland"
+      55,
+      "Czech Republic"
     ],
     [
       "[Björneborg Winter 2023](https://www.worldcubeassociation.org/competitions/BjorneborgWinter2023)",
@@ -212,10 +218,10 @@
       "Sweden"
     ],
     [
-      "[Czech Open 2009](https://www.worldcubeassociation.org/competitions/CzechOpen2009)",
+      "[Kanta-Hämeen Vääntelyt 2026](https://www.worldcubeassociation.org/competitions/KantaHameenKuutionvaantelyt2026)",
       "9.82",
-      55,
-      "Czech Republic"
+      22,
+      "Finland"
     ],
     [
       "[VERK XVI 2026](https://www.worldcubeassociation.org/competitions/VERKXVI2026)",
@@ -524,10 +530,10 @@
       "United States"
     ],
     [
-      "[Bulacan Open 2010](https://www.worldcubeassociation.org/competitions/BulacanOpen2010)",
+      "[NZ South Island Champs 2025](https://www.worldcubeassociation.org/competitions/NZSouthIslandChampionship2025)",
       "9.00",
-      16,
-      "Philippines"
+      34,
+      "New Zealand"
     ],
     [
       "[Sint Michielsgestel 2019](https://www.worldcubeassociation.org/competitions/CubeWeekendStMichielsgestel2019)",
@@ -536,10 +542,10 @@
       "Netherlands"
     ],
     [
-      "[NZ South Island Champs 2025](https://www.worldcubeassociation.org/competitions/NZSouthIslandChampionship2025)",
+      "[Bulacan Open 2010](https://www.worldcubeassociation.org/competitions/BulacanOpen2010)",
       "9.00",
-      34,
-      "New Zealand"
+      16,
+      "Philippines"
     ],
     [
       "[Danish Open 2014](https://www.worldcubeassociation.org/competitions/DanishOpen2014)",
@@ -624,12 +630,6 @@
       "8.84",
       25,
       "Denmark"
-    ],
-    [
-      "[The End of Autotalo 2024](https://www.worldcubeassociation.org/competitions/TheEndofAutotalo2024)",
-      "8.83",
-      29,
-      "Finland"
     ]
   ]
 }
