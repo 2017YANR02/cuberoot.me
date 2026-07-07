@@ -7,16 +7,13 @@
  *
  * 特征清单:
  *  - albedo:基础肤色(0xd9af94 同前臂平色,接缝连续)+ 双频斑驳 + 关节微暗;
- *  - bump:毛孔颗粒 + 指背关节皱纹环带(横纹×高斯包络)+ 掌侧屈痕线(凹陷)
- *    + 指甲(甲面微凸 + 纵向细棱 + 甲缘沟);
- *  - roughness:直接画物理值(材质 roughness=1 不再乘系数),皮肤 ~0.6,
- *    甲面 ~0.34(略光,辨识靠形色 —— 高清漆会读成「乒乓球贴片」)。
+ *  - bump:毛孔颗粒 + 指背关节皱纹环带(横纹×高斯包络)+ 掌侧屈痕线(凹陷);
+ *  - roughness:直接画物理值(材质 roughness=1 不再乘系数),皮肤 ~0.6。
  *  血色 / 掌背明暗仍走顶点色(低频,与贴图相乘复合,见 handModelGltf
  *  bakeVertexTint),贴图只管中高频。
  *
- * 指甲落位:无甲片几何(GLB 素体),画进贴图 —— 每指取末节段(距骨关节→
- * 指尖端点骨),甲背方向不能硬用手系 -z(拇指绑定姿态有大幅 roll),从末节
- * dominant 顶点法线迭代提纯;甲形 = 轴向/侧向坐标的超椭圆软掩码。
+ * 指甲不画进贴图:立体甲片(handModelGltf 蒙皮薄壳)是唯一指甲 —— 画甲与
+ * 甲片曾叠成「一指三甲」(2026-07-08 用户抓的),贴图侧整体移除。
  *
  * 契约:必须在 adaptGltfHand 之后、模型入场景 / 摆 home 姿态之前调用
  * (group 无父级 = matrixWorld 即手系;骨骼在绑定姿态,关节世界位可信)。
@@ -24,7 +21,7 @@
 import * as THREE from "three";
 import { SIZE } from "../define";
 import { HAND_SCALE, type FingerName, type HandModel } from "./handModel";
-import { JOINT_CHAINS, nailFrame } from "./handModelGltf";
+import { JOINT_CHAINS } from "./handModelGltf";
 
 const U = (SIZE / 64) * HAND_SCALE;
 const FINGERS: FingerName[] = ["thumb", "index", "middle", "ring", "pinky"];
@@ -56,11 +53,6 @@ function fbm2(x: number, y: number, z: number, f: number): number {
 }
 
 const clamp01 = (x: number): number => (x < 0 ? 0 : x > 1 ? 1 : x);
-/** smoothstep(边界可反向:a>b 时输出随 x 增大而降)。 */
-function sstep(a: number, b: number, x: number): number {
-  const t = clamp01((x - a) / (b - a));
-  return t * t * (3 - 2 * t);
-}
 
 // ---------- 特征定义(烘焙前从骨骼/蒙皮一次性推导) ----------
 
@@ -76,17 +68,6 @@ interface WrinkleJoint {
   reach2: number;
 }
 
-interface NailDef {
-  finger: FingerName;
-  dx: number; dy: number; dz: number;   // 末节关节(甲根侧)
-  ax: number; ay: number; az: number;   // 末节轴(指向指尖)
-  ox: number; oy: number; oz: number;   // 甲背方向(dorsal)
-  lx: number; ly: number; lz: number;   // 侧向
-  len: number;
-  halfW: number;
-  reach2: number;
-}
-
 export interface HandMapsData {
   size: number;
   albedo: Uint8ClampedArray<ArrayBuffer>; // RGBA(sRGB)
@@ -94,8 +75,6 @@ export interface HandMapsData {
   rough: Uint8ClampedArray<ArrayBuffer>;  // RGBA 灰度(物理值)
   /** 光栅化直接覆盖的像素占比(外扩前)—— 测试判据。 */
   coverage: number;
-  /** 每指甲面强掩码(e>0.5)像素数 —— 测试按指断言「甲画上了且没糊开」。 */
-  nailPx: Record<FingerName, number>;
 }
 
 /**
@@ -165,9 +144,8 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
     return n > 0 ? sum / n : 7 * U;
   };
 
-  // ---- 皱纹环带 + 指甲定义 ----
+  // ---- 皱纹环带定义 ----
   const wrinkles: WrinkleJoint[] = [];
-  const nails: NailDef[] = [];
   const mkWrinkle = (
     p: THREE.Vector3, axis: THREE.Vector3, w: number, period: number, amp: number, rad: number, volar: number[],
   ): WrinkleJoint => {
@@ -196,20 +174,6 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
       wrinkles.push(mkWrinkle(p3, p4.clone().sub(p2).normalize(), 3.6 * U, 1.9 * U, 0.75, rDist * 1.5, [0]));
     }
 
-    // ---- 指甲:末节段(p3→p4)。甲面框架走共享 nailFrame(与立体甲片
-    // 单一数学源):甲背 = 功能性指腹方向的反向 —— rig 弯指把指腹压向魔方,
-    // 甲背必须与之相反。别用末节顶点法线「提纯」:法线簇平均会被指尖前向面
-    // 拽偏,踩过(甲画到指腹侧,压在贴纸上看不见)。
-    const { axis, dorsal, lat, len } = nailFrame(p1, p2, p3, p4, name === "thumb", model.side);
-    const reach = len * 1.7; // 甲拉长到 1.30·len,eligibility 半径同步放宽兜住前沿肉垫像素
-    nails.push({
-      finger: name,
-      dx: p3.x, dy: p3.y, dz: p3.z,
-      ax: axis.x, ay: axis.y, az: axis.z,
-      ox: dorsal.x, oy: dorsal.y, oz: dorsal.z,
-      lx: lat.x, ly: lat.y, lz: lat.z,
-      len, halfW: rDist * 0.72, reach2: reach * reach,
-    });
   }
 
   // ---- 光栅化 ----
@@ -218,17 +182,10 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
   const bump = new Uint8ClampedArray(S * S * 4);
   const rough = new Uint8ClampedArray(S * S * 4);
   const mask = new Uint8Array(S * S);
-  const nailPx: Record<FingerName, number> = { thumb: 0, index: 0, middle: 0, ring: 0, pinky: 0 };
 
   const fPore = 1 / (1.7 * U);
   const fMottle = 1 / (9.5 * U);
   const fMottle2 = 1 / (4.8 * U);
-
-  // 甲形轴向范围(末节段分数):甲根 ~40% 处起,盖过骨端(1.0)到指尖肉垫最前沿
-  // —— 骨端(p4)不是手指最前点,指腹肉垫还前凸一截;越界的正面盖不上靠 ndot 门
-  // (指尖圆帽法线转成 +轴向、非甲背)天然拦住,所以拉长只让甲盖满背侧、不糊到指腹。
-  const NAIL_T0 = 0.36, NAIL_T1 = 1.30;
-  const nailTc = (NAIL_T0 + NAIL_T1) / 2, nailTh = (NAIL_T1 - NAIL_T0) / 2;
 
   const index = geo.getIndex();
   const triCount = (index ? index.count : nVert) / 3;
@@ -323,53 +280,6 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
           }
         }
 
-        // ---- 指甲 ----
-        for (const nd of nails) {
-          const dxn = hx - nd.dx, dyn = hy - nd.dy, dzn = hz - nd.dz;
-          if (dxn * dxn + dyn * dyn + dzn * dzn > nd.reach2) continue;
-          const ndot = nx * nd.ox + ny * nd.oy + nz * nd.oz;
-          // 甲背门 0.12:留在明确朝背的面上,不卷过指尖 curve(卷过去甲缘会在指尖
-          // 描一圈亮沟,读成「指尖另接一截」;下调过 0.02 出过此坑)。
-          if (ndot < 0.12) continue;
-          const tt = (dxn * nd.ax + dyn * nd.ay + dzn * nd.az) / nd.len;
-          if (tt < NAIL_T0 - 0.25 || tt > NAIL_T1 + 0.25) continue;
-          const uu = (dxn * nd.lx + dyn * nd.ly + dzn * nd.lz) / nd.halfW;
-          const q = (tt - nailTc) / nailTh;
-          const m = q * q + Math.pow(Math.abs(uu), 2.6);
-          if (m > 1.45) continue;
-          const ndm = clamp01((ndot - 0.12) / 0.35);
-          const e = sstep(1.06, 0.88, m) * ndm; // 甲面(内 1 → 外 0)
-          const fold = sstep(1.0, 1.12, m) * (1 - sstep(1.15, 1.45, m)) * ndm; // 甲缘沟
-          if (e > 0.5) nailPx[nd.finger]++;
-          if (e > 0.003) {
-            const lun = sstep(-0.35, -0.75, q);  // 半月(甲根侧)
-            const free = sstep(0.55, 0.85, q);   // 游离缘(白)
-            const ridge = Math.sin(uu * 9 + (pores - 0.5) * 2) * 0.5 + 0.5; // 纵向细棱
-            // 甲色比肤色明显更浅更粉,甲片才「读」得出 —— 旧值(0.93/0.78/0.72)与
-            // 肤色太近,再经指尖顶点血色相乘(g×~0.89、b×~0.86)后几乎隐形(看着扁如平皮)。
-            // 提亮 + 提粉压出与皮肤的对比,补偿仍隐含在偏白基调里。
-            let nr = 0.95, ng = 0.82, nb = 0.77;                               // 甲床透粉
-            nr += (0.97 - nr) * lun; ng += (0.90 - ng) * lun; nb += (0.86 - nb) * lun;   // 半月
-            nr += (0.98 - nr) * free; ng += (0.95 - ng) * free; nb += (0.91 - nb) * free; // 游离缘
-
-            const rm = 1 + (ridge - 0.5) * 0.03;
-            r += (nr * rm - r) * e; g += (ng * rm - g) * e; b += (nb * rm - b) * e;
-            // 甲面凸起:横向半圆穹顶(中央高两侧低)× 纵向微拱(根/游离缘略薄),读成
-            // 弯曲甲片而非贴花平片 —— 旧版常值平台(0.68)内部零梯度 = 无明暗起伏 =
-            // 「太扁」根因;穹顶给出的法线斜率让光扫出甲面弧度。
-            const dome = Math.sqrt(clamp01(1 - uu * uu));   // 横向凸(⊥指轴)
-            const arch = clamp01(1 - q * q * 0.5);          // 纵向微拱(mid 最厚)
-            const nailBump = 0.6 + dome * arch * 0.2 + (ridge - 0.5) * 0.03;
-            bmp += (nailBump - bmp) * e;
-            rgh += (0.32 + lun * 0.06 - rgh) * e; // 甲面略光(≈0.32)催出微高光,区别于哑光皮肤
-          }
-          if (fold > 0.003) {
-            bmp -= fold * 0.10;
-            r *= 1 - fold * 0.05; g *= 1 - fold * 0.08; b *= 1 - fold * 0.09;
-            rgh += fold * 0.04;
-          }
-        }
-
         const o = (py * S + px) * 4;
         albedo[o] = clamp01(r) * 255; albedo[o + 1] = clamp01(g) * 255; albedo[o + 2] = clamp01(b) * 255; albedo[o + 3] = 255;
         const bb = clamp01(bmp) * 255;
@@ -383,7 +293,7 @@ export async function computeHandMaps(model: HandModel, size: number, yieldEvery
 
   const coverage = floodFillMaps(S, mask, [albedo, bump, rough]);
 
-  return { size: S, albedo, bump, rough, coverage, nailPx };
+  return { size: S, albedo, bump, rough, coverage };
 }
 
 /** BFS 泛洪外扩:空像素从最近的已覆盖像素复制(多源 BFS ≈ 最近传播),填满

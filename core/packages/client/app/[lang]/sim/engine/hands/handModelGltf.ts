@@ -72,29 +72,39 @@ const sstep = (a: number, b: number, x: number): number => {
   return t * t * (3 - 2 * t);
 };
 
+/** 甲片格网行列数。 */
+const NAIL_NR = 15, NAIL_NC = 11;
+
 /**
  * 立体甲片薄壳(2026-07-08 用户规格:指甲要有薄薄的厚度、是立体结构):
- * 超椭圆轮廓(同贴图甲掩码指数)双层格网(甲面/甲底)+ 周缘侧壁。甲底贴
- * 绑定姿态蒙皮皮面采样高度:中段微沉进皮、两缘沿指圆度下沉(甲沟)、甲根
- * 额外藏进近端甲襞;游离缘微翘且皮面前坠 → 前缘露出可见厚度。贴图甲保留
- * 当甲床底色,甲片比它小一圈 —— 边缘露出的画甲读成甲沟过渡。
+ * 超椭圆轮廓双层格网(甲面/甲底)+ 周缘侧壁。甲底逐格贴 (轴向,侧向) 二维
+ * 皮面高度场(绑定姿态蒙皮顶点高斯 IDW):横竖两向都跟住指背穹顶,侧缘
+ * 额外下收进皮(甲沟)、甲根藏进近端甲襞、游离缘微翘露出厚度。
+ * 甲片是唯一指甲 —— 贴图画甲已移除(曾三层叠影:壳姿态漂移裂成两团 +
+ * 画甲外露读成第三片,2026-07-08 用户抓的)。
  * 纯 BufferGeometry(hands_model 测试在 Node 跑 adaptGltfHand,禁 DOM)。
  */
 function buildNailGeometry(args: {
   p3: THREE.Vector3; axis: THREE.Vector3; dorsal: THREE.Vector3; lat: THREE.Vector3;
-  len: number; rDist: number;
-  /** 甲域皮面高度(dorsal 向投影,s = 沿末节轴绝对距离)。 */
-  surf: (s: number) => number;
+  len: number;
+  /** 甲片半宽(s = 沿末节轴绝对距离)—— 随手指向尖端收锥,等宽甲片前段
+   *  侧缘会悬伸出指侧(细白条,踩过)。 */
+  halfWAt: (s: number) => number;
+  /** 甲域皮面高度场(dorsal 向投影;s 同上,u = 侧向绝对偏移)。 */
+  surf: (s: number, u: number) => number;
 }): THREE.BufferGeometry {
-  const { p3, axis, dorsal, lat, len, rDist } = args;
-  const T0 = 0.30, T1 = 1.18;   // 末节段分数(贴图甲 0.36..1.30;甲片短一点防「悬伸壳」)
-  const halfW = rDist * 0.80;   // 宽甲片(0.68 时视觉偏窄读成「小圆顶」)
+  const { p3, axis, dorsal, lat, len } = args;
+  const T0 = 0.46, T1 = 1.06;   // 末节段分数:真甲只盖末节背侧远端一半;再长
+                                // 会顺高度场卷过指尖圆帽垂到指腹(「围兜」,踩过)
   const TH = 0.55 * U;          // 甲片厚度(薄;游离缘侧壁可见即可)
-  const SINK = 0.7 * U;         // 甲面中段沉皮(浮顶「奶油块」就是沉得不够)
-  const EDGE_DROP = 1.1 * U;    // 两缘沿指圆度下沉(甲沟,侧缘藏进皮)
-  const BASE_SINK = 0.7 * U;    // 甲根藏进近端甲襞
-  const FREE_LIFT = 0.3 * U;    // 游离缘微翘(过大 = 翘壳)
-  const NR = 15, NC = 11;
+  const LIFT = 0.1 * U;         // 甲底抬离皮面:甲冠稳定高出 ~0.65U。曾用沉皮
+                                // (甲面仅 +0.19U),IDW 场误差 ± 姿态漂移一超过
+                                // 它,甲面就在皮面上下穿插,渲出大理石白斑(踩过)
+  const EDGE_TUCK = 1.6 * U;    // 侧缘果断下收进皮(甲沟;圆柱模型对称下落在
+                                // 皮实际更低的一侧会悬空漏缝,埋深要盖过不对称量)
+  const BASE_SINK = 1.2 * U;    // 甲根藏进近端甲襞(弯指时根部皮面下沉仍要盖住)
+  const FREE_LIFT = 0.25 * U;   // 游离缘微翘(过大 = 翘壳)
+  const NR = NAIL_NR, NC = NAIL_NC;
   const tc = (T0 + T1) / 2, th = (T1 - T0) / 2;
 
   const pos: number[] = [];
@@ -104,16 +114,16 @@ function buildNailGeometry(args: {
     for (let i = 0; i < NR; i++) {
       const q = -0.97 + (1.94 * i) / (NR - 1);
       const sAbs = (tc + th * q) * len;
-      const w2 = Math.pow(1 - q * q, 1 / 2.6); // 超椭圆半宽(同贴图甲指数 2.6)
-      const base = args.surf(sAbs) - SINK
-        - BASE_SINK * sstep(-0.55, -0.97, q)
-        + FREE_LIFT * sstep(0.55, 0.97, q);
+      const w2 = Math.pow(1 - q * q, 1 / 2.6); // 超椭圆半宽(掩码指数 2.6)
       const free = sstep(0.55, 0.92, q);
       const lun = sstep(-0.55, -0.9, q) * 0.5; // 半月对比调淡(强白斑读成大理石纹)
       for (let j = 0; j < NC; j++) {
         const w = -1 + (2 * j) / (NC - 1);
-        const u = w * w2 * halfW;
-        const hu = base - EDGE_DROP * w * w;
+        const u = w * w2 * args.halfWAt(sAbs);
+        const hu = args.surf(sAbs, u) + LIFT
+          - BASE_SINK * sstep(-0.55, -0.97, q)
+          + FREE_LIFT * sstep(0.55, 0.97, q)
+          - EDGE_TUCK * sstep(0.55, 1.0, Math.abs(w));
         // 甲面=甲底+厚度(中央极轻微加厚;穹顶感主要来自甲底跟皮面圆度)
         const h = layer === 0 ? hu + TH * (0.94 + 0.06 * Math.sqrt(Math.max(0, 1 - w * w))) : hu;
         P.copy(p3).addScaledVector(axis, sAbs).addScaledVector(dorsal, h).addScaledVector(lat, u);
@@ -307,9 +317,12 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
     };
   }
 
-  // ---- 立体甲片:每指一块薄壳挂 tip 代理(随末节弯曲);皮面高度按
-  //      distal/tip 主导蒙皮顶点在甲框架系采样,几何生成在 hand 系再转
-  //      tip 局部。材质经 extraMats 交 rig 统一 fade / dispose。 ----
+  // ---- 立体甲片:每指一块薄壳刚挂 tip 代理(随末节弯曲)。甲底贴 (轴向,
+  //      侧向) 二维高斯 IDW 皮面高度场 + 甲冠抬出皮面(LIFT)—— 旧版 1D 轴向
+  //      max 桶轮廓 + SINK 沉皮把甲冠压到皮下,只剩甲根坡道和游离缘两个「岛」
+  //      露出,视觉裂成两团「假甲」(2026-07-08 用户抓的三层叠影之二)。
+  //      几何生成在 hand 系再转 tip 局部。材质经 extraMats 交 rig 统一
+  //      fade / dispose。 ----
   mesh.updateMatrixWorld(true);
   const nailMat = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
@@ -343,56 +356,73 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
       const q3 = toHand(bindOf(chain.drive[2]));
       const q4 = toHand(bindOf(chain.end));
       const nf = nailFrame(q1, q2, q3, q4, name === "thumb", side);
+      // 候选皮肤顶点:末节/端点骨主导(高度场采样 + 骨权重抄袭都从这里取)
       const sub: number[] = [];
+      const subPos: THREE.Vector3[] = [];
       for (let i = 0; i < posA.count; i++) {
-        if (dom[i] === chain.drive[2] || dom[i] === chain.end) sub.push(i);
+        if (dom[i] !== chain.drive[2] && dom[i] !== chain.end) continue;
+        sub.push(i);
+        subPos.push(v.fromBufferAttribute(posA, i).applyMatrix4(mesh.matrixWorld).clone());
       }
       // 末节平均圆柱半径(同 bakeHandTexture.boneRadius 公式)
       let rSum = 0, rN = 0;
-      for (const i of sub) {
-        if (dom[i] !== chain.drive[2]) continue;
-        v.fromBufferAttribute(posA, i).applyMatrix4(mesh.matrixWorld);
-        rel.copy(v).sub(q3);
+      for (let k = 0; k < sub.length; k++) {
+        if (dom[sub[k]] !== chain.drive[2]) continue;
+        rel.copy(subPos[k]).sub(q3);
         const sa = THREE.MathUtils.clamp(rel.dot(nf.axis), 0, nf.len);
         rSum += Math.sqrt(Math.max(0, rel.lengthSq() - sa * sa));
         rN++;
       }
       const rDist = rN > 0 ? rSum / rN : 7 * U;
-      // 甲背侧皮面高度分桶(轴向 10 桶取 max 投影)→ 空桶邻近填充 → 两轮
-      // [0.25,0.5,0.25] 平滑(稀疏桶的折线尖折会让甲片呈「碎裂壳」,踩过)
-      const NB = 10;
-      const binH = new Float32Array(NB).fill(-1e9);
-      for (const i of sub) {
-        v.fromBufferAttribute(posA, i).applyMatrix4(mesh.matrixWorld);
-        rel.copy(v).sub(q3);
-        const t = rel.dot(nf.axis) / nf.len;
+      // 背侧皮面 (s,u) 二维高度样本:h>-0.5U 收进赤道附近侧壁点(编码横向
+      // 圆度),指腹剔除。旧 1D 轴向 max 桶 + 抛物线宽度近似横竖都跟不住
+      // 真实穹顶,甲片中段埋皮两头浮出(踩过)。
+      const smp: { s: number; u: number; h: number }[] = [];
+      for (let k = 0; k < sub.length; k++) {
+        rel.copy(subPos[k]).sub(q3);
+        const sa = rel.dot(nf.axis);
         const h = rel.dot(nf.dorsal);
-        if (h <= 0 || Math.abs(rel.dot(nf.lat)) > rDist * 1.1) continue;
-        const b = Math.floor(((t + 0.1) / 1.55) * NB);
-        if (b < 0 || b >= NB) continue;
-        if (h > binH[b]) binH[b] = h;
+        const uu = rel.dot(nf.lat);
+        if (h < -0.5 * U || Math.abs(uu) > rDist * 1.4) continue;
+        if (sa < -3 * U || sa > nf.len + 6 * U) continue;
+        smp.push({ s: sa, u: uu, h });
       }
-      const prof = new Float32Array(NB);
-      {
-        let lastV = -1e9;
-        for (let b = 0; b < NB; b++) { if (binH[b] > -1e8) lastV = binH[b]; prof[b] = lastV; }
-        for (let b = NB - 1; b >= 0; b--) { if (binH[b] > -1e8) lastV = binH[b]; else if (prof[b] < -1e8) prof[b] = lastV; }
-        for (let b = 0; b < NB; b++) if (prof[b] < -1e8) prof[b] = rDist;
-        for (let round = 0; round < 2; round++) {
-          const p0 = Array.from(prof);
-          for (let b = 0; b < NB; b++) {
-            prof[b] = 0.5 * p0[b] + 0.25 * (p0[Math.max(0, b - 1)] ?? p0[b]) + 0.25 * (p0[Math.min(NB - 1, b + 1)] ?? p0[b]);
-          }
+      // 软最大场:样本再按 e^{κh} 加权 —— 纯均值会被侧壁低样本拉低、系统性
+      // 低估波峰,粗蒙皮的真实起伏(±1U)从甲片中间戳穿成碎斑(踩过)。
+      const sigS = 2.2 * U, sigU = 1.6 * U, kappa = 1.5 / U;
+      const surf = (sq: number, uq: number): number => {
+        let wSum = 0, hSum = 0, nearest = rDist, nd = Infinity;
+        for (const p of smp) {
+          const ds = (p.s - sq) / sigS, du = (p.u - uq) / sigU;
+          const d2 = ds * ds + du * du;
+          if (d2 < nd) { nd = d2; nearest = p.h; }
+          const w = Math.exp(-d2 + kappa * p.h);
+          wSum += w; hSum += w * p.h;
         }
-      }
-      const surf = (sq: number): number => {
-        const t = (sq / nf.len + 0.1) / 1.55 * NB - 0.5;
-        if (t <= 0) return prof[0];
-        if (t >= NB - 1) return prof[NB - 1] - (t - (NB - 1)) * (1.55 / NB) * nf.len * 0.35; // 指尖圆帽前坠
-        const k = Math.floor(t);
-        return prof[k] + (prof[k + 1] - prof[k]) * (t - k);
+        return wSum > 1e-9 ? hSum / wSum : nearest;
       };
-      const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, rDist, surf });
+      // 甲片高度模型 = 轴向脊线 × 横向圆柱对称下落:直接用 surf(s,u) 会让
+      // 甲片跟着局部左右不对称倾斜(一缘翘出一缘埋皮,看着「歪甲」,踩过);
+      // 脊线取 ±0.5·rDist 内 5 个横向探针的最高值。宽度/曲率半径随脊高向
+      // 尖端收锥(脊高 ≈ 局部背侧半径)。
+      const crest = (sq: number): number => {
+        let m = -Infinity;
+        for (let k = -2; k <= 2; k++) m = Math.max(m, surf(sq, k * 0.25 * rDist));
+        return m;
+      };
+      // 锥度下限 0.8·rDist:全跟 crest 会在指尖把甲片收成「方糖」(踩过)
+      const rLoc = (sq: number): number => Math.max(0.8 * rDist, Math.min(crest(sq), rDist));
+      const nailField = (sq: number, uq: number): number => {
+        const r = rLoc(sq);
+        const uc = Math.min(Math.abs(uq), r);
+        return crest(sq) - (r - Math.sqrt(Math.max(0, r * r - uc * uc)));
+      };
+      const halfWAt = (sq: number): number => 0.62 * rLoc(sq);
+      const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, halfWAt, surf: nailField });
+      // 刚挂 tip 代理:甲片区域(t≥0.42)皮肤 ≥97% 由末节/端点骨主导(与
+      // tip 代理刚体同动),姿态漂移 ≤~1U,由 BASE_SINK/EDGE_TUCK 埋皮余量
+      // 吸收。试过抄皮肤骨权重做成蒙皮甲片 —— 弯指时格网被相邻权重差撕出
+      // 碎斑,不可行(2026-07-08)。
       const fj = fingers[name];
       const tipInv = new THREE.Matrix4().copy(fj.tip.matrixWorld).invert();
       geo.applyMatrix4(tipInv);
@@ -400,7 +430,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
       const nm = new THREE.Mesh(geo, nailMat);
       nm.raycast = noRaycast;
       nm.castShadow = nm.receiveShadow = false;
-      nm.userData.nail = { finger: name, dorsalTip: nf.dorsal.clone().transformDirection(tipInv).toArray() };
+      nm.userData.nail = { finger: name };
       fj.tip.add(nm);
       nailMeshes.push(nm);
     }
