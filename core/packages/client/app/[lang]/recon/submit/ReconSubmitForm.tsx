@@ -43,7 +43,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { fetchCompRounds, type RoundFormat } from '@/lib/comp-wcif';
 import { toWcaEventId } from '@/lib/wca-events';
 import {
-  parseTimeInput, formatTimeInput, computeWcaAverage,
+  parseTimeInput, formatTimeInput, formatTime, computeWcaAverage,
   attemptsPerRound, localizeRound, isBldEvent,
 } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
@@ -750,7 +750,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             if (cancelled) return;
             if (attempts) {
               const v = attempts[idx];
-              if (v != null && v >= 0) {
+              // v may be a DNF/DNS sentinel (negative); still counts as "found".
+              if (v != null) {
                 foundTime = v;
                 foundSource = (isZh ? `自动:${label}` : `auto: ${label}`);
               }
@@ -759,8 +760,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         }
         if (cancelled) return;
         if (foundTime != null) {
-          const formatted = formatTimeInput(foundTime);
-          if (!timeUserTouched) {
+          // DNF/DNS sentinel (negative): no numeric raw time exists, so only
+          // 单次(value) gets the literal "DNF" label; 成绩(timeInput) stays blank.
+          const isSentinel = foundTime < 0;
+          const formatted = isSentinel ? formatTime(foundTime) : formatTimeInput(foundTime);
+          if (!timeUserTouched && !isSentinel) {
             setTimeInput(formatted);
             setTimeAutoSource(foundSource);
             timeAutoFilledRef.current = true;
@@ -794,6 +798,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     if (form.official === 'wca') return;
     if (singleUserTouched) return;
     if (form.rawTime == null || isNaN(form.rawTime)) return;
+    if (form.rawTime < 0) {
+      setField('value', formatTime(form.rawTime));
+      return;
+    }
     const truncated = Math.floor(form.rawTime * 100) / 100;
     setField('value', formatTimeInput(truncated));
   }, [form.official, form.rawTime, singleUserTouched, setField]);
