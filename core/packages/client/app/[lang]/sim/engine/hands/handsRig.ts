@@ -424,6 +424,14 @@ const BACK_EVADE: Record<HandSide, { c1: number; c2: number; c3: number; splay: 
  *  天然安全。幅度按回撤起点的 s 加权(缠得浅回撤本就安全,别白抬)。 */
 const RETREAT_LIFT = { c1: -0.338, c2: -0.653, c3: -0.113 };
 
+/** U2 连拨首指退场(FINGERING §4.2,用户规格 2026-07-08):第一个 U 做完
+ *  食指保持在 RUF;第二个 U 中指接力期间,食指同步向水平右(魔方系 +x)
+ *  移动离开魔方。joint 空间增量 × sm(sRaw2) 渐入;commit 后与两指同乘
+ *  decayK 从退场姿直线归 home(已在魔方外,弦不穿体)。数值浏览器标定:
+ *  Q2 端指尖 Δ位置 (+52.9,−0.3,+3.5)≈纯水平 +x,mid/tip 关节全程距魔方
+ *  中心单调递增(214→238→261U / 258→281→303U),零回穿风险。 */
+const HOOK_EXIT = { c1: -0.403, c2: 0.313, c3: 0, splay: -0.070 };
+
 /** 左中右下 F 族「食指下拨」(FINGERING §4.3):食指尖起手压 U 面 UFR 区,
  *  随 F 层角前卷(×φ/90°)把初始 UFR 往前下带;F2 次指中指 Q1 前探 UF 缘接力。
  *  数值浏览器标定。 */
@@ -872,14 +880,14 @@ export default class HandsRig extends THREE.Group {
     hook: typeof HOOK; hookFollow: typeof HOOK_FOLLOW; hookPrep: typeof HOOK_PREP;
     pinkyReach: typeof PINKY_REACH; downPush: typeof DOWN_PUSH; upPush: typeof UP_PUSH;
     thumbEvadeD: typeof THUMB_EVADE_D; backEvade: typeof BACK_EVADE;
-    retreatLift: typeof RETREAT_LIFT;
+    retreatLift: typeof RETREAT_LIFT; hookExit: typeof HOOK_EXIT;
   } {
     return {
       push: TOP_PUSH, follow: TOP_PUSH_FOLLOW,
       hook: HOOK, hookFollow: HOOK_FOLLOW, hookPrep: HOOK_PREP,
       pinkyReach: PINKY_REACH, downPush: DOWN_PUSH, upPush: UP_PUSH,
       thumbEvadeD: THUMB_EVADE_D, backEvade: BACK_EVADE,
-      retreatLift: RETREAT_LIFT,
+      retreatLift: RETREAT_LIFT, hookExit: HOOK_EXIT,
     };
   }
 
@@ -1532,6 +1540,14 @@ export default class HandsRig extends THREE.Group {
             c2 += fitAt(fit, "c2", s) * decayK;
             c3 += fitAt(fit, "c3", s) * decayK;
             splay += fitAt(fit, "splay", s) * decayK; // 每手独立标定,含侧向符号
+            // U2 首指退场(HOOK_EXIT 注释):Q2 期间食指水平右移出魔方。
+            if (role === 1 && isDouble && h.flickStyle === "hook" && name === "index") {
+              const ex = sm(sRaw2) * decayK;
+              c1 += HOOK_EXIT.c1 * ex;
+              c2 += HOOK_EXIT.c2 * ex;
+              c3 += HOOK_EXIT.c3 * ex;
+              splay += HOOK_EXIT.splay * ex * sideSign;
+            }
             if (h.flickDecay > 0) {
               // 包络说明见 downPush 分支同款注释。
               const lift = sm(Math.min(1, (1 - decayK) / 0.12)) * sm(Math.min(1, decayK / 0.15)) * s;
