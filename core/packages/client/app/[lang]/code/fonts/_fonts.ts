@@ -139,10 +139,10 @@ export const FONT_GROUPS: FontGroup[] = [
         cssVar: '',
         specimen: '12.34',
         numeric: true,
-        weights: '400',
+        weights: '700',
         coverage: { zh: '数字 + 部分符号', en: 'Digits + some symbols' },
         files: [
-          { name: 'Segment7Standard.otf', weight: '400', kb: 10 },
+          { name: 'Segment7Standard.otf', weight: '700', kb: 10 },
         ],
         source: 'Cedric Knight (SIL)',
         license: 'SIL OFL',

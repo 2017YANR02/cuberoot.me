@@ -3,11 +3,14 @@
    Dual-theme: follows ThemeToggle (no longer dark-locked). Theme tokens only,
    no hard-coded greys. Mobile (<480) collapses sidebar below timer. */
 
-/* Same 7-segment LED display as /timer (browser dedupes the shared face). */
+/* Same 7-segment LED display as /timer (browser dedupes the shared face).
+   .trainer-timer below requests font-weight:700 — declare the face AT 700 so the
+   browser skips faux-bold synthesis, which corrupts this font's near-touching
+   segment joints (worst on "4") — issue #9. */
 @font-face {
   font-family: 'Segment7Standard';
   src: url('/fonts/Segment7Standard.otf') format('opentype');
-  font-weight: normal;
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
