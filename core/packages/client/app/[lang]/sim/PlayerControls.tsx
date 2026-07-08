@@ -29,7 +29,7 @@ import {
   Play, Pause, SkipBack, SkipForward, RotateCcw,
   FlipHorizontal2, FlipVertical2, Eraser, RotateCw,
   Shuffle, Link2, Check, Upload,
-  Search, Loader2, Pipette,
+  Search, Loader2, Pipette, Sparkles,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -83,6 +83,8 @@ import { cleanForPlayer, extractAlgFromText } from '@/lib/recon-alg-utils';
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
+import { cloudOptimalScramble, firstBadHtmToken } from '@/lib/cloud-optimal-scramble';
+import { useAuthStore } from '@/lib/auth-store';
 import {
   formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg,
   simplifySq1Alg, invertSq1Alg,
@@ -101,6 +103,7 @@ import { resolveCaps } from './simCaps';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { simulateGrips, type GripName, type GripSimStep } from './engine/hands/handsRig';
 import { WheelPicker } from '@/components/WheelPicker';
+import { ClearButton } from '@/components/ClearButton';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import './player-controls.css';
@@ -820,6 +823,8 @@ export default function PlayerControls({
   // Engine-skewb uses the self-contained engine notation (UFR/UFL…), which /recon
   // (WCA skewb notation) can't parse — suppress the recon hand-off there.
   const reconEvent = isEngineTwisty ? null : reconEventForSim(puzzleKind);
+  const authUser = useAuthStore((s) => s.user);
+  const authLogin = useAuthStore((s) => s.login);
 
   const [algDraft, setAlgDraft] = useState(alg);
   const [setupDraft, setSetupDraft] = useState(setup ?? '');
@@ -829,6 +834,9 @@ export default function PlayerControls({
   const [speed, setSpeed] = useState(1);
   const [linkCopied, setLinkCopied] = useState(false);
   const [derivingScramble, setDerivingScramble] = useState(false);
+  const [optimalScrambleBusy, setOptimalScrambleBusy] = useState(false);
+  const [optimalScrambleStatus, setOptimalScrambleStatus] = useState<string | null>(null);
+  const optimalScrambleAbortRef = useRef<AbortController | null>(null);
 
   // 播放/单步转速(帧/90°):1.00× = 120 帧 ≈ 2s,整体为旧 30 帧基准的 1/4
   // (2026-07-05 用户要求)。timing.frames 是与抽屉「转动速度」共用的全局,
@@ -1535,6 +1543,69 @@ export default function PlayerControls({
     }
   }, [is3x3, world, algDraft, settings, onSettingsChange, onSetupChange]);
 
+  // Optimal scramble (cloud): reuses the exact protocol /scramble/solver's cloud
+  // 求打乱(最优) flow uses (cloudOptimalScramble, lib/cloud-optimal-scramble.ts) —
+  // generate a fast random-state scramble (Kociemba), cloud-solve it optimally,
+  // then invert that solution back into the setup box. The fewest-move solution
+  // to a state IS the fewest-move scramble reaching it — a true God's-number-length
+  // scramble, unlike the 🔀 button above (fast, but not move-optimal). 3x3-only;
+  // login-gated server-side.
+  const handleOptimalScramble = useCallback(async () => {
+    if (!is3x3 || !world || optimalScrambleBusy) return;
+    if (!authUser) { authLogin(); return; }
+    const reqId = ++scrambleReqIdRef.current;
+    setOptimalScrambleBusy(true);
+    setOptimalScrambleStatus(t('生成随机状态…', 'Generating a random state…'));
+    const ac = new AbortController();
+    optimalScrambleAbortRef.current = ac;
+    try {
+      const raw = (await tnoodleRandomScramble('333')) ?? '';
+      if (reqId !== scrambleReqIdRef.current) return;
+      if (!raw || firstBadHtmToken(raw)) throw new Error(t('生成打乱失败', 'Failed to generate a scramble'));
+      setOptimalScrambleStatus(t('云端求最优中…', 'Solving optimally (cloud)…'));
+      const { scramble, moves } = await cloudOptimalScramble(raw, (p) => {
+        if (reqId !== scrambleReqIdRef.current) return;
+        setOptimalScrambleStatus(
+          p.phase === 'loading'
+            ? t('正在把求解表载入服务器内存(首次约 20 秒)…', 'Loading the solver table into server memory (first time ~20s)…')
+            : p.phase === 'queued'
+              ? t(`排队中(前面 ${p.ahead} 个在算)…`, `Queued (${p.ahead} ahead)…`)
+              : t('求解中…', 'Solving…')
+        );
+      }, ac.signal);
+      if (reqId !== scrambleReqIdRef.current) return;
+      world.controller.clearFrozen();
+      if (settings.animateScramble) {
+        animatingScrambleRef.current = true;
+        world.cube.twister.setup('');
+        world.cube.twister.push(scramble);
+      } else {
+        animatingScrambleRef.current = true;
+        const tw = world.cube.twister as unknown as {
+          setupAsync?: (e: string) => Promise<void>;
+          setup: (e: string) => void;
+        };
+        if (tw.setupAsync) await tw.setupAsync(scramble);
+        else tw.setup(scramble);
+      }
+      if (setupElRef.current) {
+        setupElRef.current.value = scramble;
+        autosize(setupElRef.current);
+      }
+      setSetupDraft(scramble);
+      onSetupChange(scramble);
+      setOptimalScrambleStatus(t(`已求出 ${moves} 步最优打乱。`, `Optimal scramble: ${moves} moves.`));
+    } catch (err) {
+      if (ac.signal.aborted) setOptimalScrambleStatus(t('已取消。', 'Cancelled.'));
+      else setOptimalScrambleStatus(t(`求最优打乱失败:${(err as Error).message}`, `Optimal scramble failed: ${(err as Error).message}`));
+    } finally {
+      setOptimalScrambleBusy(false);
+      optimalScrambleAbortRef.current = null;
+    }
+  }, [is3x3, world, optimalScrambleBusy, authUser, authLogin, settings.animateScramble, onSetupChange]);
+
+  const cancelOptimalScramble = useCallback(() => { optimalScrambleAbortRef.current?.abort(); }, []);
+
   return (
     <div className="sim-player">
       <div className="sim-player-row sim-player-row--top">
@@ -1592,7 +1663,35 @@ export default function PlayerControls({
             {derivingScramble ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
           </button>
         )}
+        {is3x3 && (
+          <button
+            type="button"
+            className="sim-player-scramble"
+            onClick={handleOptimalScramble}
+            disabled={optimalScrambleBusy}
+            title={authUser
+              ? t('最优打乱(云端):求一个保证最少步数(God\'s number)到达随机状态的打乱', 'Optimal scramble (cloud): a scramble guaranteed to reach a random state in the fewest possible moves (God\'s number)')
+              : t('最优打乱(云端)需登录(WCA),点击登录', 'Optimal scramble (cloud) requires login (WCA) — click to log in')}
+            aria-label={t('最优打乱', 'Optimal scramble')}
+          >
+            {optimalScrambleBusy ? <Loader2 size={14} className="sim-spin" /> : <Sparkles size={14} />}
+          </button>
+        )}
       </div>
+      {optimalScrambleStatus && (
+        <div className="sim-player-status">
+          {optimalScrambleBusy && <Loader2 size={14} className="sim-spin" />}
+          <span>{optimalScrambleStatus}</span>
+          {optimalScrambleBusy && (
+            <ClearButton
+              variant="standalone"
+              onClick={cancelOptimalScramble}
+              ariaLabel={t('取消', 'Cancel')}
+              title={t('取消', 'Cancel')}
+            />
+          )}
+        </div>
+      )}
 
       <div className="sim-player-row">
         <div className="sim-player-hlwrap">

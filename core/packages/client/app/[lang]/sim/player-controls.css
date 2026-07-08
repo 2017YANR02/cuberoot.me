@@ -442,6 +442,14 @@
   to { transform: rotate(360deg); }
 }
 
+.sim-player-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+
 .sim-puzzle-sliders {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
