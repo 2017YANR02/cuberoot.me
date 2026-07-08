@@ -1269,7 +1269,40 @@ export default function SimPage() {
       w.scene.rotation.y = v;
       w.scene.updateMatrix();
       w.dirty = true;
-      if (v >= end) { swapTweenRef.current = null; return true; }
+      if (v >= end) {
+        swapTweenRef.current = null;
+        // 'orbit' mode folds any ±90° view excess into real y moves as the user
+        // drags past it (onOrbit's wrap loop below) — a swap's 180° flip is no
+        // different, so fold it here too instead of leaving scene.rotation.y
+        // sitting out of range: otherwise the *next* background drag, however
+        // tiny, would silently absorb this whole leftover swing into a spurious
+        // recorded move the user never actually dragged. Instant (fast=true)
+        // compensating twists keep the view visually unchanged — same trick
+        // onOrbit already relies on mid-drag. 'rotate' mode never reads
+        // scene.rotation (it derives whole-cube turns from raw pixel deltas), so
+        // it needs no reconciliation; 'view' mode never commits moves at all.
+        const cube = asNxN(w);
+        if (cube && settingsRef.current.dragEmpty === 'orbit') {
+          const Q = Math.PI / 2;
+          let safety = 8;
+          while (w.scene.rotation.y > Q && safety-- > 0) {
+            const action = new TwistAction('y', true, 1);
+            cube.twister.twist(action, true, true);
+            userMoveRef.current?.(action);
+            w.scene.rotation.y -= Q;
+          }
+          safety = 8;
+          while (w.scene.rotation.y < -Q && safety-- > 0) {
+            const action = new TwistAction('y', false, 1);
+            cube.twister.twist(action, true, true);
+            userMoveRef.current?.(action);
+            w.scene.rotation.y += Q;
+          }
+          w.scene.updateMatrix();
+          w.dirty = true;
+        }
+        return true;
+      }
       return false;
     });
   }, []);
