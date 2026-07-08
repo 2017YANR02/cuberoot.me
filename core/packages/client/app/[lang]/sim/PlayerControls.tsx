@@ -1617,6 +1617,24 @@ export default function PlayerControls({
 
   const cancelOptimalScramble = useCallback(() => { optimalScrambleAbortRef.current?.abort(); }, []);
 
+  // Anchor (twizzle "Setup Anchor" — cubing.js experimentalSetupAnchor 'start'/'end'):
+  // 'moves' anchors the scramble box at the timeline start (alg plays forward from it);
+  // 'algorithm' anchors it at the end (alg plays backward INTO it, i.e. the scramble box
+  // reads as the target/solved state the moves resolve to). Shared by both render paths
+  // below — the engine path also shows step/play controls, twisty mode (cubing.js
+  // TwistyPlayer) has its own native scrubber and only needs this select.
+  const anchorSelect = (
+    <select
+      className="sim-player-mode"
+      value={settings.playbackMode}
+      onChange={(e) => onSettingsChange({ ...settings, playbackMode: e.target.value as 'moves' | 'algorithm' })}
+      title={t('锚点:回放固定打乱起点还是解法终点', 'Anchor: keep the scramble start or the solve end fixed')}
+    >
+      <option value="moves">{t('锚定起点', 'Anchored at start')}</option>
+      <option value="algorithm">{t('锚定终点', 'Anchored at end')}</option>
+    </select>
+  );
+
   return (
     <div className="sim-player">
       <div className="sim-player-row sim-player-row--top">
@@ -1765,7 +1783,7 @@ export default function PlayerControls({
         )}
       </div>
 
-      {!isTwistyMode && (
+      {!isTwistyMode ? (
       <div className="sim-player-row">
         <button onClick={() => jumpToStep(0)} title={t('回到起点', 'Reset')}><RotateCcw size={14} /></button>
         <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')}><SkipBack size={14} /></button>
@@ -1787,15 +1805,7 @@ export default function PlayerControls({
         </button>
         <button onClick={stepForward} disabled={step >= totalSteps} title={t('下一步', 'Step forward')}><SkipForward size={14} /></button>
         <span className="sim-player-progress">{step} / {totalSteps}</span>
-        <select
-          className="sim-player-mode"
-          value={settings.playbackMode}
-          onChange={(e) => onSettingsChange({ ...settings, playbackMode: e.target.value as 'moves' | 'algorithm' })}
-          title={t('回放模式', 'Playback mode')}
-        >
-          <option value="moves">{t('正向', 'Moves')}</option>
-          <option value="algorithm">{t('解还原', 'Algorithm')}</option>
-        </select>
+        {anchorSelect}
         <label className="sim-player-speed">
           <span>{speed.toFixed(2)}×</span>
           <input
@@ -1808,6 +1818,13 @@ export default function PlayerControls({
           />
         </label>
       </div>
+      ) : (
+      // Twisty puzzles (pyraminx/skewb/megaminx/fto/PG explore — cubing.js TwistyPlayer,
+      // alpha.twizzle.net/edit's actual engine) already show a native play/pause/scrub bar
+      // (TwistySection's bottom-row controlPanel); only the anchor select is ours to add —
+      // TwistySection already reads settings.playbackMode into experimentalSetupAnchor, it
+      // just had no control to change it in this mode.
+      <div className="sim-player-row">{anchorSelect}</div>
       )}
 
       <div className="sim-player-tools">
