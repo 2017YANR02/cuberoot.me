@@ -327,6 +327,15 @@ export const CATALOG: UtilEntry[] = [
     zh: '把任意扭转魔方当置换群:轨道(块数+朝向)+ 生成元用循环记号定义,token 解析成生成元幂(X\'=逆/X2=平方/X--=(X++)⁻¹)作用到还原态。/scramble/gen 的非 WCA 打乱图(fto/baby_fto/master_tetraminx/kilominx/redi_cube)的渲染内核,群源在 _svg/_nets/*.ts,由 scripts/gen-net.mts 从 cubing.js 派生+校验。',
     en: 'Treats any twisty puzzle as an oriented permutation group (orbits + cycle-notation generators); resolves scramble tokens to generator powers and applies them. Renders the non-WCA 2D scramble nets; group sources in _svg/_nets/*.ts, derived from cubing.js by scripts/gen-net.mts.',
   },
+  {
+    name: 'cloudOptimalScramble',
+    sig: 'cloudOptimalScramble(scramble: string, onPhase?: (p: CloudOptimalScramblePhase) => void, signal?: AbortSignal): Promise<{ scramble: string; moves: number }>',
+    imp: "import { cloudOptimalScramble, firstBadHtmToken } from '@/lib/cloud-optimal-scramble';",
+    usage: "const { scramble, moves } = await cloudOptimalScramble('U R2 F …')  // fewest-move scramble reaching the same state",
+    category: 'cube',
+    zh: '3x3 云端最优打乱:POST /v1/scramble/optimal-solve(与 /scramble/solver 云端求解同一端点),流式拿最优解后取逆 —— 解开一个状态的最少步数 = 到达它的最少步数打乱。喂一个 tnoodleRandomScramble 打乱进去就能拿到该随机状态的最优打乱,/sim 的「最优打乱」按钮用它。3x3-only,登录门(服务端 requireAuth,401 时 reject 出服务器的错误信息)。',
+    en: '3x3 cloud optimal scramble: POSTs /v1/scramble/optimal-solve (same endpoint /scramble/solver\'s cloud solve uses), streams the optimal solution, then inverts it — fewest moves to solve a state = fewest moves to scramble to it. Feed it a tnoodleRandomScramble output to get that random state\'s optimal scramble; used by /sim\'s "optimal scramble" button. 3x3-only, login-gated server-side.',
+  },
 
   // ── util ──────────────────────────────────
   {
