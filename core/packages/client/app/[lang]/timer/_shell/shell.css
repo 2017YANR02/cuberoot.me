@@ -12,7 +12,11 @@
 @font-face {
   font-family: 'Segment7Standard';
   src: url('/fonts/Segment7Standard.otf') format('opentype');
-  font-weight: normal;
+  /* .timer-display below requests font-weight:700 — declare the face AT 700 (not
+     normal) so the browser uses the file's real outlines instead of synthesizing
+     faux-bold, which corrupts near-touching segment joints (worst on "4") in
+     WebKit — issue #9. */
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }

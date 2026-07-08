@@ -9,6 +9,7 @@
   font-family: 'Segment7Standard';
   font-display: swap;
   src: url('/fonts/Segment7Standard.otf') format('opentype');
+  font-weight: 700; /* matches battle.css/timer.css — keep the registered weight in sync */
 }
 @font-face {
   font-family: 'LiberationMono';

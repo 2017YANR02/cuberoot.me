@@ -6,11 +6,14 @@
 
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
 
-/* NOTE: Segment7 Standard — 等宽七段 LCD 字体（SIL OFL 开源，自托管） */
+/* NOTE: Segment7 Standard — 等宽七段 LCD 字体（SIL OFL 开源，自托管）。
+   多处用 font-weight:700 请求这张脸 — 声明脸本身就是 700(而非 normal),让浏览器
+   直接用文件真实轮廓,不做 faux-bold 合成(合成会在近相切的笔段处产生畸变,"4" 最明显,
+   issue #9)。 */
 @font-face {
     font-family: 'Segment7Standard';
     src: url('/fonts/Segment7Standard.otf') format('opentype');
-    font-weight: normal;
+    font-weight: 700;
     font-style: normal;
     font-display: swap;
 }
