@@ -1244,9 +1244,16 @@ export default function SimPage() {
     world.cube.twister.redo();
   }, []);
 
-  // Swap the main view with the back-view mini window: rotate 180° about the
-  // vertical axis so the face that was behind comes to the front (and the back
-  // view, always the mirror, swaps in turn).
+  // Swap the main view with the back-view mini window: spin the camera 180°
+  // about the vertical axis so the face that was behind comes to the front
+  // (and the mini window, always the mirror, swaps in turn). Always a pure
+  // view change, never a cube.twister move: the face-letter labels are
+  // children of world.scene (not of the cube), so only a scene rotation moves
+  // them — a cube twist changes sticker colors but leaves the labels in
+  // place. A cube twist also doesn't survive touching the solve textarea
+  // (jumpToStep rebuilds the cube from setup + recorded moves on every click/
+  // caret move, silently discarding it), while scene.rotation is untouched by
+  // that rebuild.
   const handleSwapView = useCallback(() => {
     const world = worldRef.current;
     if (!world) return;
@@ -1254,18 +1261,6 @@ export default function SimPage() {
       tweener.finish(swapTweenRef.current);
       swapTweenRef.current = null;
     }
-    const cube = asNxN(world);
-    // orbit / rotate modes keep scene.rotation.y within ±90° and bake
-    // reorientation into the cube — a pure-view 180° flip there would leave the
-    // angle out of range and make the next empty-drag emit a stray y. Reorient
-    // the cube itself with an animated y2 instead: view-only (not appended to
-    // the alg), undoable, and it keeps the engine + back-view consistent.
-    if (cube && settingsRef.current.dragEmpty !== 'view') {
-      cube.twister.twist(new TwistAction('y', false, 2), false, true);
-      return;
-    }
-    // view mode + SQ1: spin the camera 180° about the vertical axis. Cube state
-    // is untouched (F stays F); the back-view mirror swaps automatically.
     const begin = world.scene.rotation.y;
     const end = begin + Math.PI;
     swapTweenRef.current = tweener.tween(begin, end, 16, (v) => {
