@@ -99,7 +99,7 @@
   "recon": {
     "title": "Solve Reconstructions",
     "subtitle": "Competition solve reconstructions and analysis for top cubers",
-    "solver": "Solver",
+    "solver": "Competitor/WCA ID",
     "date": "Date",
     "competition": "Competition",
     "event": "Event",

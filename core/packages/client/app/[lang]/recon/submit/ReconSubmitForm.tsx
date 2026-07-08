@@ -16,8 +16,9 @@ import { useTranslation } from 'react-i18next';
 import type { ReconSolve, ReconOfficial } from '@cuberoot/shared';
 import {
   getRecon, addRecon, updateRecon, deleteRecon,
-  checkDuplicate, listRecons, resolveShortUrl,
+  checkDuplicate, listRecons, resolveShortUrl, fetchMethodCubeHistory,
 } from '@/lib/recon-api';
+import AppLink from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
 import { CompPicker } from '@/components/CompPicker';
@@ -48,9 +49,15 @@ import {
 } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
 import { revalidateRecon } from '../revalidate-action';
-import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups } from '@/lib/wca-results-api';
+import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, matchRoundType } from '@/lib/wca-results-api';
 import { fetchAttemptPrRank } from '@/lib/recon-attempt-pr-rank';
 import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
+import {
+  fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults,
+  type WcaResultRow, type WcaCompetition,
+} from '@/lib/wca-person-api';
+import { mergePersonLive } from '@/lib/person-live-merge';
+import { computePrRank } from '@/components/persons/logic/progress';
 import {
   cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, normalizeSolutionSlashes,
   findIllegalNotationChars,
@@ -299,6 +306,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       if (solve.rawTime != null) setTimeInput(formatTimeInput(solve.rawTime));
       if (solve.average != null) setAvgInput(formatTimeInput(solve.average));
       if (solve.execTime != null) setExecInput(formatTimeInput(solve.execTime));
+      // Loaded recon already has its own method/cube — don't let the history-based
+      // default (item 4) clobber it once personId/event are resolved.
+      setMethodUserTouched(true);
+      setCubeUserTouched(true);
       if (solutionRef.current && solve.solution) {
         solutionRef.current.value = solve.solution;
         autoResize(solutionRef.current);
@@ -353,6 +364,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       if (suggestScramble) {
         setForm(prev => ({ ...prev, wcaScramble: suggestScramble }));
       }
+      // Same-round prefill already carried over method/cube from the source recon.
+      setMethodUserTouched(true);
+      setCubeUserTouched(true);
       setLoadingEdit(false);
     }).catch(() => setLoadingEdit(false));
   }, [fromId, fromSolveNum, isEditing, authUser, suggestTime, suggestScramble]);
@@ -478,6 +492,73 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     }, 300);
     return () => clearTimeout(timer);
   }, [form.wcaScramble, form.optimalScramble, form.solution, isEditing, fromId]);
+
+  // ── Merged official+live WCA results for the current solver ──
+  // Same official (fetchWcaPersonResults/fetchWcaPersonCompetitions) + live
+  // (fetchWcaPersonLiveResults/wca_live_person_results) + mergePersonLive pipeline
+  // /wca/persons/[wcaId] already uses for its results tab. Powers: the comp-history
+  // dropdown restriction (once event is also known) and the live-results fallback
+  // for time/record auto-fill when a very recent comp isn't WCA-posted yet.
+  const [personMerged, setPersonMerged] = useState<{ results: WcaResultRow[]; comps: WcaCompetition[] } | null>(null);
+  useEffect(() => {
+    if (!form.personId) { setPersonMerged(null); return; }
+    let cancelled = false;
+    Promise.all([
+      fetchWcaPersonResults(form.personId).catch(() => []),
+      fetchWcaPersonCompetitions(form.personId).catch(() => []),
+      fetchWcaPersonLiveResults(form.personId).catch(() => null),
+    ]).then(([official, comps, live]) => {
+      if (cancelled) return;
+      setPersonMerged(mergePersonLive(official, comps, live?.results ?? [], live?.comps ?? []));
+    });
+    return () => { cancelled = true; };
+  }, [form.personId]);
+
+  // Competitions this solver has actually competed in for the selected event
+  // (newest first) — restricts the CompPicker dropdown instead of the full index.
+  const personCompOptions = useMemo<Comp[] | undefined>(() => {
+    if (!personMerged || !form.event) return undefined;
+    const wcaEventId = toWcaEventId(form.event);
+    const compById = new Map(personMerged.comps.map(c => [c.id, c]));
+    const seen = new Set<string>();
+    const list: Comp[] = [];
+    for (const r of personMerged.results) {
+      if (r.event_id !== wcaEventId || seen.has(r.competition_id)) continue;
+      const c = compById.get(r.competition_id);
+      if (!c) continue;
+      seen.add(r.competition_id);
+      list.push({
+        id: c.id, name: c.name, city: c.city,
+        country: (c.country_iso2 || '').toLowerCase(),
+        start_date: c.start_date, end_date: c.end_date,
+      });
+    }
+    list.sort((a, b) => (b.start_date || '').localeCompare(a.start_date || ''));
+    return list.length > 0 ? list : undefined;
+  }, [personMerged, form.event]);
+
+  // ── Method / cube history for this solver + event (defaults + datalist options) ──
+  const [methodCubeHistory, setMethodCubeHistory] = useState<{ methods: string[]; cubes: string[] } | null>(null);
+  const [methodUserTouched, setMethodUserTouched] = useState(false);
+  const [cubeUserTouched, setCubeUserTouched] = useState(false);
+  useEffect(() => {
+    if (!form.personId || !form.event) { setMethodCubeHistory(null); return; }
+    let cancelled = false;
+    fetchMethodCubeHistory(form.personId, form.event).then(h => { if (!cancelled) setMethodCubeHistory(h); });
+    return () => { cancelled = true; };
+  }, [form.personId, form.event]);
+  // Default to this solver's most-recently-used method/cube for the event —
+  // only into fields the user hasn't touched, and never over a "复用以前的填写" pick.
+  useEffect(() => {
+    if (!methodCubeHistory) return;
+    if (!methodUserTouched && !reusedFields.has('method') && methodCubeHistory.methods[0] && form.method !== methodCubeHistory.methods[0]) {
+      setField('method', methodCubeHistory.methods[0]);
+    }
+    if (!cubeUserTouched && !reusedFields.has('cube') && methodCubeHistory.cubes[0] && form.cube !== methodCubeHistory.cubes[0]) {
+      setField('cube', methodCubeHistory.cubes[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [methodCubeHistory, methodUserTouched, cubeUserTouched, reusedFields]);
 
   // ── CompPicker handlers ──
   const applyPickedComp = useCallback((c: Comp) => {
@@ -686,6 +767,23 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             }
           } catch { /* fall through */ }
         }
+        // 官方 + cubing.com 都没有(比如刚结束、WCA 还没公示赛果的比赛)→ 回退到本站
+        // 自己的直播成绩管道(wca_live_person_results,/wca/persons 页已在用同一份)。
+        if (foundAvg == null && form.compWcaId && personMerged) {
+          const wcaEventId = toWcaEventId(form.event!);
+          const liveRow = personMerged.results.find(r =>
+            r.competition_id === form.compWcaId && r.event_id === wcaEventId && r.live &&
+            matchRoundType(form.round!, r.round_type_id)
+          );
+          if (liveRow) {
+            const attempts = liveRow.attempts.map(v => (v === 0 ? null : v < 0 ? v : v / 100));
+            const a = computeWcaAverage(attempts, form.event!);
+            if (a != null) {
+              foundAvg = a;
+              foundSource = tr({ zh: '自动:直播', en: 'auto: live' });
+            }
+          }
+        }
         if (cancelled) return;
         if (foundAvg != null) {
           setAvgInput(formatTimeInput(foundAvg));
@@ -701,7 +799,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setAvgLoading(false); };
-  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, avgUserTouched, isEditing, editId, isZh]);
+  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, avgUserTouched, isEditing, editId, isZh, personMerged]);
 
   // ── Single-time auto-fetch (fills 成绩 + 单次 independently) ──
   useEffect(() => {
@@ -758,6 +856,22 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             }
           } catch { /* fall through */ }
         }
+        // 官方 + cubing.com 都没有 → 回退到本站自己的直播成绩管道(同 avg 的回退)。
+        if (foundTime == null && form.compWcaId && personMerged) {
+          const wcaEventId = toWcaEventId(form.event!);
+          const liveRow = personMerged.results.find(r =>
+            r.competition_id === form.compWcaId && r.event_id === wcaEventId && r.live &&
+            matchRoundType(form.round!, r.round_type_id)
+          );
+          if (liveRow) {
+            const liveAttempts = liveRow.attempts.map(v => (v === 0 ? null : v < 0 ? v : v / 100));
+            const v = liveAttempts[idx];
+            if (v != null) {
+              foundTime = v;
+              foundSource = tr({ zh: '自动:直播', en: 'auto: live' });
+            }
+          }
+        }
         if (cancelled) return;
         if (foundTime != null) {
           // DNF/DNS sentinel (negative): no numeric raw time exists, so only
@@ -791,7 +905,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setTimeLoading(false); };
-  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, singleUserTouched, isEditing, editId, isZh, setField]);
+  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, timeUserTouched, singleUserTouched, isEditing, editId, isZh, setField, personMerged]);
 
   // ── 非 WCA / 练习:单次由「原始成绩」截断千分位带出(没有 WCA/已录数据可供上面那个自动获取) ──
   useEffect(() => {
@@ -901,9 +1015,41 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         const row = await fetchResultRow(form.compWcaId!, form.event!, form.round!, form.personId!);
         if (cancelled) return;
         if (!row) {
-          if (!averageRecordUserTouched) setField('regionalAverageRecord', '');
-          if (!singleRecordUserTouched) setField('regionalSingleRecord', '');
-          setRecordAutoSource(null);
+          // WCA hasn't posted this comp's results yet (e.g. a just-finished comp) —
+          // fall back to our own live-results pipeline (wca_live_person_results,
+          // same official+live merge /wca/persons/[wcaId] already uses) instead of
+          // clearing the fields outright.
+          const wcaEventId = toWcaEventId(form.event!);
+          const liveRow = personMerged?.results.find(r =>
+            r.competition_id === form.compWcaId && r.event_id === wcaEventId &&
+            matchRoundType(form.round!, r.round_type_id)
+          ) ?? null;
+          if (!liveRow) {
+            if (!averageRecordUserTouched) setField('regionalAverageRecord', '');
+            if (!singleRecordUserTouched) setField('regionalSingleRecord', '');
+            setRecordAutoSource(null);
+            return;
+          }
+          const rf = computePrRank(personMerged!.results, personMerged!.comps).get(liveRow.id);
+          const prTag = (rank: number | null | undefined): string =>
+            rank == null ? '' : (rank <= 1 ? 'PR' : `PR${rank}`);
+          let avgFilled: string | null = null;
+          let singleFilled: string | null = null;
+          if (!averageRecordUserTouched) {
+            const v = liveRow.regional_average_record || prTag(rf?.averageRank);
+            setField('regionalAverageRecord', v);
+            if (v) avgFilled = v;
+          }
+          if (!singleRecordUserTouched) {
+            const idx = form.solveNum != null ? form.solveNum - 1 : -1;
+            const attRank = idx >= 0 ? rf?.attemptRanks?.[idx] : rf?.singleRank;
+            const v = liveRow.regional_single_record || prTag(attRank);
+            setField('regionalSingleRecord', v);
+            if (v) singleFilled = v;
+          }
+          setRecordAutoSource((avgFilled || singleFilled)
+            ? tr(liveRow.live ? { zh: '自动:直播', en: 'auto: live' } : { zh: '自动:WCA', en: 'auto: WCA' })
+            : null);
           return;
         }
         // WCA's regional_record field only carries WR/CR/NR. PR (personal
@@ -969,7 +1115,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setRecordLoading(false); };
-  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, singleRecordUserTouched, averageRecordUserTouched, setField, isZh]);
+  }, [form.personId, form.event, form.comp, form.compWcaId, form.round, form.solveNum, singleRecordUserTouched, averageRecordUserTouched, setField, isZh, personMerged]);
 
   // ── Duplicate detection(同选手 + 同打乱;与后端拒绝口径一致)──
   useEffect(() => {
@@ -1433,7 +1579,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   {solverLite ? (
                     <div className="submit-solver-pill">
                       <Flag iso2={solverLite.country_iso2} />
-                      <span className="submit-solver-name">{displayCuberName(solverLite.name, isZh)}</span>
+                      <AppLink href={`/wca/persons/${encodeURIComponent(solverLite.id)}`} className="submit-solver-name">
+                        {displayCuberName(solverLite.name, isZh)}
+                      </AppLink>
                       <ClearButton onClick={clearSolver} isZh={isZh} variant="standalone" preserveFocus />
                     </div>
                   ) : (
@@ -1441,8 +1589,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       value={null}
                       onChange={handleSolverPick}
                       isZh={isZh}
-                      placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID'
-                    })}
                     />
                   )}
                 </div>
@@ -1499,7 +1645,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   {form.compWcaId ? (
                     <div className="submit-comp-pill">
                       <Flag iso2={form.country || ''} />
-                      <span className="submit-comp-name">{localizeCompName(form.compWcaId || '', form.comp || '', isZh)}</span>
+                      <AppLink href={`/wca/comp/${encodeURIComponent(form.compWcaId)}`} className="submit-comp-name">
+                        {localizeCompName(form.compWcaId || '', form.comp || '', isZh)}
+                      </AppLink>
                       <ClearButton onClick={clearPickedComp} isZh={isZh} variant="standalone" preserveFocus />
                     </div>
                   ) : (
@@ -1511,6 +1659,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       isZh={isZh}
                       hideFuture
                       disableSuggestions={form.official !== 'wca'}
+                      restrictComps={form.official === 'wca' ? personCompOptions : undefined}
                       presets={form.official === 'practice' ? [
                         { icon: <Home size={14} />, label: tr({ zh: '家', en: 'Home' }), value: tr({ zh: '家', en: 'Home' }) },
                       ] : undefined}
@@ -2011,15 +2160,25 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     type="text"
                     list="recon-method-options"
                     value={form.method || ''}
-                    onChange={e => setField('method', e.target.value)}
+                    onChange={e => { setField('method', e.target.value); setMethodUserTouched(true); }}
                   />
                   <datalist id="recon-method-options">
-                    {METHODS.map(m => <option key={m} value={m} />)}
+                    {(methodCubeHistory?.methods ?? []).map(m => <option key={m} value={m} />)}
+                    {METHODS.filter(m => !methodCubeHistory?.methods.includes(m)).map(m => <option key={m} value={m} />)}
                   </datalist>
                 </label>
                 <label className={`submit-field${reusedCls('cube')}`}>
                   <span className="submit-label">{t('recon.cube')}</span>
-                  <input className="submit-field-input" type="text" value={form.cube || ''} onChange={e => setField('cube', e.target.value)} />
+                  <input
+                    className="submit-field-input"
+                    type="text"
+                    list="recon-cube-options"
+                    value={form.cube || ''}
+                    onChange={e => { setField('cube', e.target.value); setCubeUserTouched(true); }}
+                  />
+                  <datalist id="recon-cube-options">
+                    {(methodCubeHistory?.cubes ?? []).map(cb => <option key={cb} value={cb} />)}
+                  </datalist>
                 </label>
                 <label className={`submit-field submit-field-wide${reusedCls('note')}`}>
                   <span className="submit-label">{t('recon.note')}</span>
