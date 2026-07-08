@@ -57,10 +57,12 @@ export interface SimSettings {
   /** NxN 主视图形态:'cube' = 立体 3D(默认);'net' = 2D 平面展开图(可拖动转层)。
    *  仅 NxN 生效,SQ1 / twisty 忽略。 */
   viewMode: 'cube' | 'net';
-  /** 解法回放模式:
-   *  - 'moves'     = 默认。cube 起点 = setup,alg 向前播,看 alg 把魔方拧成什么。
-   *  - 'algorithm' = cube 终点 = setup(setup 为空 → 还原态),起点 = setup·alg⁻¹,
-   *                  看 alg 把打乱"解开"。等价 cubing.js setupAnchor='end'。 */
+  /** 锚点(alpha.twizzle.net/edit "Setup Anchor";cubing.js experimentalSetupAnchor):
+   *  - 'moves'     = 默认,锚定起点(setupAnchor='start')。cube 起点 = setup,alg 向前播,
+   *                  看 alg 把魔方拧成什么。
+   *  - 'algorithm' = 锚定终点(setupAnchor='end')。cube 终点 = setup(setup 为空 → 还原态),
+   *                  起点 = setup·alg⁻¹,看 alg 把打乱"解开"。
+   *  PlayerControls 的选择器在引擎(NxN/SQ1/…)和 cubing.js twisty 两条路径都渲染。 */
   playbackMode: 'moves' | 'algorithm';
   /** 拖魔方背景空白:
    *  - 'orbit'  = 自由切视角,跨 ±π/2 时自动 commit y/y'/x/x' 进 move list (NxN);
