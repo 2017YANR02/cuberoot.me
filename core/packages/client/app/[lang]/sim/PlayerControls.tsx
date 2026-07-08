@@ -4,10 +4,14 @@
  * PlayerControls — alg playground for /sim (Next.js port).
  *
  * Differences from the Vite version:
- *  - Uses plain <textarea> instead of AlgInput (no markable/autospace yet).
- *    AlgInput depends on 200+ lines of normalisation utils that haven't been
- *    ported yet. Plain textarea retains paste / typing / caret sync — the
- *    main "live preview while editing" UX is intact.
+ *  - The solution box uses the shared <AlgInput> (same auto-space normalisation
+ *    as /recon/submit's solve field — issue #11). The scramble box stays a
+ *    plain <textarea>. Auto-space is gated off for in-house corner-turn engine
+ *    notations that use multi-letter tokens (dino/skewb/rex/heli/fto/megaminx
+ *    all use "UFR"/"UF"/"BL" style names — auto-spacing would split them mid-
+ *    token); it stays on for every single-letter-per-move notation (NxN/twisty
+ *    WCA alg, Ivy, redi, pyraminx-engine, SQ1's digit-based format is a no-op
+ *    either way). See `algAutoSpaceSafe` below.
  *  - No CubeVirtualKeyboard (defer; mobile users can use system kbd).
  *  - Scramble path uses tnoodleRandomScramble (lib/cubing-scramble.ts), which
  *    routes to cubing.js + the in-app pool. NxN N≥8 falls back to inline
@@ -106,6 +110,7 @@ import { WheelPicker } from '@/components/WheelPicker';
 import { ClearButton } from '@/components/ClearButton';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
+import AlgInput from '@/components/AlgInput';
 import './player-controls.css';
 
 /**
@@ -810,6 +815,12 @@ export default function PlayerControls({
                   : isFtoEngine ? 'fto'
                     : null;
   const corner = cornerKind ? CORNER_SPECS[cornerKind] : null;
+  // Auto-space (recon/submit parity, issue #11) is safe wherever every move token is a
+  // single letter: NxN/twisty WCA alg, Ivy, SQ1 (no letters, no-op either way), and the
+  // 'redi' / 'pyraminx' corner-engine notations (F/L/B/R and U/L/R/B). It must stay off
+  // for the other corner-engine notations, which use multi-letter tokens per move
+  // ("UFR"/"UF"/"BL" …) that auto-spacing would split mid-token.
+  const algAutoSpaceSafe = !corner || cornerKind === 'redi' || cornerKind === 'pyraminx';
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
   const is3x3 = !isSq1 && !isIvy && !corner && !isTwistyMode && order === 3;
   const { i18n } = useTranslation();
@@ -1702,30 +1713,22 @@ export default function PlayerControls({
               ))}
             </div>
           )}
-          <textarea
-            ref={algElRef}
-            defaultValue={algDraft}
+          <AlgInput
+            elementRef={algElRef as RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
+            initialText={algDraft}
             rows={1}
             spellCheck={false}
+            autoSpace={algAutoSpaceSafe}
+            autoResize
             className={ivyAlgSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
             placeholder={t('解法', 'Solution')}
             title={is3x3 ? t('支持换握记号:↑ 上手(拇指起手 U 面)、↓ 下手(D 面)、· 回 home 握', 'Grip marks supported: ↑ thumb-up grip, ↓ thumb-down grip, · back to home grip') : undefined}
             onFocus={flushPendingScramble}
-            onInput={(e) => {
-              const el = e.currentTarget;
-              autosize(el);
-              setAlgDraft(el.value);
-              onAlgChange(el.value);
-              handleCaretSync(el.value, el.selectionStart ?? 0);
+            onChange={(text) => {
+              setAlgDraft(text);
+              onAlgChange(text);
             }}
-            onClick={(e) => {
-              const el = e.currentTarget;
-              handleCaretSync(el.value, el.selectionStart ?? 0);
-            }}
-            onKeyUp={(e) => {
-              const el = e.currentTarget;
-              handleCaretSync(el.value, el.selectionStart ?? 0);
-            }}
+            onCaretChange={handleCaretSync}
           />
         </div>
         {puzzleKind === 'skewb' && skewbNotation && onSkewbNotationChange && (
