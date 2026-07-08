@@ -5,7 +5,7 @@
  */
 
 import type { KPattern } from 'cubing/kpuzzle';
-import { patternFromAlg, isAlgPrefix, simplifyAlg } from './cube3';
+import { patternFromAlg, countMoves, isAlgPrefix, simplifyAlg } from './cube3';
 import {
   detectStage, crossOnDRotation,
   evaluateCanonical, F2L_SLOT_DEFS, F2L_SLOTS_BY_FACE, topEdgesOriented,
@@ -123,6 +123,52 @@ export async function resolveEffectivePrev(
     if (crossDone((await detectStage(st)).stage)) return st;
   }
   return prevPattern;
+}
+
+export interface CommentPopupState {
+  prevPattern: KPattern;
+  currPattern: KPattern;
+  lineMovesText: string;
+  prevMovesText: string;
+  moveCount: number;
+  /** Where in `value` a chosen suggestion should replace from (start of any partial `//`). */
+  replaceFrom: number;
+}
+
+/**
+ * Cube-state inputs for the comment popup at a given caret position. Bounded
+ * by the CARET, not the line end — the caret may sit mid-line (e.g. the user
+ * clicked back into an already-typed line to insert a comment there), and
+ * moves typed AFTER it haven't "happened" yet from the popup's point of view.
+ * (Previously this used the line's end, so a popup opened mid-line evaluated
+ * progress as if the rest of the line had already been executed too.)
+ */
+export async function resolveCommentPopupState(
+  scramble: string,
+  value: string,
+  caret: number,
+): Promise<CommentPopupState> {
+  const { start } = lineRange(value, caret);
+  const lineUpToCaret = value.substring(start, caret);
+  const slashIdx = lineUpToCaret.indexOf('//');
+  const replaceFrom = slashIdx >= 0 ? start + slashIdx : caret;
+
+  const linesBefore = value.substring(0, start);
+  const linesUpToCaret = value.substring(0, caret);
+  const prevMoves = movesOnly(linesBefore);
+  const currMoves = movesOnly(linesUpToCaret);
+
+  // Move tokens on THIS line up to the caret only (for the `(N)` suffix).
+  const lineMovesText = movesOnly(lineUpToCaret);
+  const moveCount = countMoves(lineMovesText);
+
+  // prev 用 cancel-into 修正版:上一行若是「留步靠本行首动抵消」的 cancel-into,被 cancel 的
+  // 那把要计入 prev,否则本行会把它和真正新解的那把一起误判成 xxcross。
+  const currAlg = [scramble, currMoves].filter(Boolean).join(' ');
+  const prevPattern = await resolveEffectivePrev(scramble, prevMoves, lineMovesText, linesBefore);
+  const currPattern = await patternFromAlg(currAlg);
+
+  return { prevPattern, currPattern, lineMovesText, prevMovesText: prevMoves, moveCount, replaceFrom };
 }
 
 export interface AlgSuggestion {

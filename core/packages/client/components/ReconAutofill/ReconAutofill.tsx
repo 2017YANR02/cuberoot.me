@@ -33,10 +33,10 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { X, Loader2 } from 'lucide-react';
 import { getCaretRect } from '@/lib/textarea_caret';
-import { patternFromAlg, countMoves, isAlgPrefix } from '@/lib/cube3';
+import { isAlgPrefix } from '@/lib/cube3';
 import { buildCommentSuggestions } from '@/lib/popup_suggest';
 import { detectStage } from '@/lib/stage_detect';
-import { suggestAlg, movesOnly, lineRange, resolveEffectivePrev } from '@/lib/recon_autofill_core';
+import { suggestAlg, movesOnly, lineRange, resolveCommentPopupState } from '@/lib/recon_autofill_core';
 import { computeFirstStage, getCachedFirstStage, type FirstStageResult, type FirstStageSet } from '@/lib/recon_first_stage';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
 import './ReconAutofill.css';
@@ -165,38 +165,14 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const buildCommentPopup = useCallback(async (caret: number, explicit = false): Promise<CommentPopup | null> => {
     const ta = textareaRef.current;
     if (!ta) return null;
-    const { start, end } = lineRange(value, caret);
-    const lineUpToCaret = value.substring(start, caret);
-    const fullLine = value.substring(start, end);
-
-    // Where will we insert the chosen entry? Replace from start of any partial `//`
-    // (so user can begin typing `// 1` and have us replace with `// 1st pair`).
-    const slashIdx = lineUpToCaret.indexOf('//');
-    const replaceFrom = slashIdx >= 0 ? start + slashIdx : caret;
-
-    // Compute moves-only text up to and including this line's moves
-    // (everything in `value` from start..caret minus comments).
-    const linesBefore = value.substring(0, start);
-    const linesUpToHere = value.substring(0, end);
-    const prevMoves = movesOnly(linesBefore);
-    const currMoves = movesOnly(linesUpToHere);
-
-    // Count how many move tokens are on JUST this line (for the (N) suffix).
-    const thisLineMovesText = movesOnly(fullLine);
-    const moveCount = countMoves(thisLineMovesText);
-
-    // Apply scramble + prev moves → prevPattern; +current line moves → currPattern.
-    // prev 用 cancel-into 修正版:上一行若是「留步靠本行首动抵消」的 cancel-into,被 cancel 的
-    // 那把要计入 prev,否则本行会把它和真正新解的那把一起误判成 xxcross。
-    const currAlg = [scramble, currMoves].filter(Boolean).join(' ');
-    const prevPattern = await resolveEffectivePrev(scramble, prevMoves, thisLineMovesText, linesBefore);
-    const currPattern = await patternFromAlg(currAlg);
+    const { prevPattern, currPattern, lineMovesText, prevMovesText, moveCount, replaceFrom } =
+      await resolveCommentPopupState(scramble, value, caret);
 
     const entries = await buildCommentSuggestions({
       prevPattern,
       currPattern,
-      lineMovesText: thisLineMovesText,
-      prevMovesText: prevMoves,
+      lineMovesText,
+      prevMovesText,
       moveCount,
       explicit,
     });
