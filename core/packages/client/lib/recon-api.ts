@@ -252,6 +252,19 @@ export async function getUserStats(wcaId: string): Promise<{ reconCount: number;
   return apiGet('/user-stats', { wcaId });
 }
 
+// 某选手在某项目下过往复盘用过的方法 / 魔方(去重,最近一次在前)。
+// /recon/submit 表单的 方法/魔方 下拉 + 默认值用。
+export interface MethodCubeHistory { methods: string[]; cubes: string[] }
+
+export async function fetchMethodCubeHistory(wcaId: string, event: string): Promise<MethodCubeHistory> {
+  if (!wcaId || !event) return { methods: [], cubes: [] };
+  try {
+    return await apiGet<MethodCubeHistory>('/method-cube-history', { wcaId, event });
+  } catch {
+    return { methods: [], cubes: [] };
+  }
+}
+
 // ── WCA proxy ──
 
 export async function getWcaAttempts(

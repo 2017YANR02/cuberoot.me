@@ -39,9 +39,14 @@ interface Props {
   /** Hide competitions that haven't started yet (start_date > today). For
    *  reconstructing past solves, an upcoming comp is never a valid pick. */
   hideFuture?: boolean;
+  /** When set, suggestions are drawn only from this list (e.g. one competitor's
+   *  competition history for a given event) instead of the full comp index —
+   *  shown immediately on focus (already sorted by the caller), and further
+   *  filtered by typed text within this list. Skips loadComps() entirely. */
+  restrictComps?: Comp[];
 }
 
-export function CompPicker({ value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets, onUrlPaste, hideFuture }: Props) {
+export function CompPicker({ value, onChange, onPick, placeholder, isZh, className, disableSuggestions, presets, onUrlPaste, hideFuture, restrictComps }: Props) {
   const [comps, setComps] = useState<Comp[] | null>(null);
   const [open, setOpen] = useState(false);
   const [results, setResults] = useState<Comp[]>([]);
@@ -71,7 +76,12 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
 
   useEffect(() => {
     let cancelled = false;
-    if (!open || !value.trim()) { setResults([]); return; }
+    if (!open) { setResults([]); return; }
+    if (restrictComps) {
+      setResults(value.trim() ? searchComps(value, restrictComps, 20) : restrictComps.slice(0, 20));
+      return;
+    }
+    if (!value.trim()) { setResults([]); return; }
     (async () => {
       const data = await ensureLoaded();
       if (cancelled) return;
@@ -81,7 +91,7 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
       setResults(searchComps(value, pool, 20));
     })();
     return () => { cancelled = true; };
-  }, [value, open, ensureLoaded, hideFuture]);
+  }, [value, open, ensureLoaded, hideFuture, restrictComps]);
 
   const handlePick = (c: Comp) => {
     onPick(c);
@@ -103,7 +113,7 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
           onChange(v);
           setOpen(true);
         }}
-        onFocus={() => { setFocused(true); setOpen(true); if (!disableSuggestions) ensureLoaded(); }}
+        onFocus={() => { setFocused(true); setOpen(true); if (!disableSuggestions && !restrictComps) ensureLoaded(); }}
         onBlur={() => { setFocused(false); }}
         placeholder={placeholder}
         autoComplete="off"

@@ -219,6 +219,36 @@ reconRoutes.get('/recon/search-solvers', async (c) => {
   }
 });
 
+// ==================== GET /v1/recon/method-cube-history ====================
+// 某选手在某项目下,过往复盘用过的方法 / 魔方——去重、按最近一次(id 降序)优先排序。
+// /recon/submit 表单用于把 方法/魔方 两个输入框变成"该选手该项目历史值"下拉,
+// 首项(最近一次)作为默认填充值。
+
+reconRoutes.get('/recon/method-cube-history', async (c) => {
+  const wcaId = (c.req.query('wcaId') ?? '').trim();
+  const event = (c.req.query('event') ?? '').trim();
+  if (!wcaId || !event) return c.json({ methods: [], cubes: [] });
+
+  const rows = await query<{ method: string | null; cube: string | null }>(
+    `SELECT method, cube FROM recons WHERE person_id = ? AND event = ? ORDER BY id DESC`,
+    [wcaId, event],
+  );
+
+  const methods: string[] = [];
+  const cubes: string[] = [];
+  const methodSeen = new Set<string>();
+  const cubeSeen = new Set<string>();
+  for (const r of rows) {
+    const m = (r.method ?? '').trim();
+    if (m && !methodSeen.has(m)) { methodSeen.add(m); methods.push(m); }
+    const cb = (r.cube ?? '').trim();
+    if (cb && !cubeSeen.has(cb)) { cubeSeen.add(cb); cubes.push(cb); }
+  }
+
+  c.header('Cache-Control', 'public, max-age=300');
+  return c.json({ methods, cubes });
+});
+
 // NOTE: /:id 动态路由移到文件末尾——防止具名路由（/comments, /edits 等）被 :id 捕获
 // （Hono LinearRouter 按注册顺序匹配，动态参数路由必须后于所有具名路由）
 

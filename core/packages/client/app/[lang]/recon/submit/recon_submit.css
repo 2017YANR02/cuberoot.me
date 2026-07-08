@@ -927,6 +927,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-decoration: none;
+}
+.submit-solver-pill .submit-solver-name:hover {
+  text-decoration: underline;
 }
 
 /* --- 共同完成者: 已添加选手 chip 流式排列 + 添加控件 --- */
@@ -979,6 +983,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-decoration: none;
+}
+.submit-comp-pill .submit-comp-name:hover {
+  text-decoration: underline;
 }
 
 .submit-btn-danger {
