@@ -18,7 +18,7 @@
  * (verified against the ground-truth dataset in `__fixtures__/cubedb_ground_truth.ts`).
  */
 import type { KPattern } from 'cubing/kpuzzle';
-import type { F2lSlotId, StageInfo } from './stage_detect';
+import type { F2lSlotId, Stage, StageInfo } from './stage_detect';
 import { detectStage, F2L_SLOT_DEFS, topEdgesOriented, crossOnDRotation } from './stage_detect';
 import { EDGE_STICKERS } from './sticker_tables';
 import { lookupOllAlgs } from './oll_lookup';
@@ -318,6 +318,62 @@ async function cancelIntoCandidates(prev: StageInfo, currPattern: KPattern): Pro
   return collect(2);
 }
 
+export interface CrossCancelCand {
+  stage: 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross';
+  colorLetter?: string;
+  pairs: string[];
+}
+
+/** detectStage 的阶段名 → cross 家族 cancel-into 展示用的阶段名(f2l = 一步到位建好 cross+4
+ *  pair = 俗称 xxxxcross);其余阶段(oll/pll/solved/none/pscross)不属于本前瞻范围。 */
+const CROSS_FAMILY_STAGE_NAME: Partial<Record<Stage, CrossCancelCand['stage']>> = {
+  cross: 'cross', xcross: 'xcross', xxcross: 'xxcross', xxxcross: 'xxxcross', f2l: 'xxxxcross',
+};
+
+/**
+ * 「cancel into」前瞻(cross 家族):cross 本身还没建立(prev 处于 none/pscross),但在
+ * currPattern 之后追加 ≤2 个面转就能首次建立 cross/xcross/xxcross/xxxcross(甚至一步到位整
+ * 个 F2L,俗称 xxxxcross)。跟上面 F2L pair 版本的 cancelIntoCandidates 同一套前瞻机制,只是
+ * 接受条件换成「cross 家族阶段首次成立」而非「cross 已在、新解一把 pair」。
+ */
+export async function crossFamilyCancelInto(prev: StageInfo, currPattern: KPattern): Promise<CrossCancelCand[]> {
+  if (prev.stage !== 'none' && prev.stage !== 'pscross') return [];
+
+  const collect = async (depth: number): Promise<CrossCancelCand[]> => {
+    const out: CrossCancelCand[] = [];
+    const seen = new Set<string>();
+    const consider = async (p: KPattern) => {
+      const info = await detectStage(p);
+      const stage = CROSS_FAMILY_STAGE_NAME[info.stage];
+      if (!stage) return;
+      const pairs = info.solvedSlots.map(s => slotColors(info.canonicalPattern, s).pair);
+      const key = `${stage}:${info.crossColor?.letter}:${pairs.join(',')}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ stage, colorLetter: info.crossColor?.letter, pairs });
+    };
+    if (depth === 1) {
+      for (const m of MOVES_18) {
+        try { await consider(currPattern.applyAlg(m)); } catch { /* ignore */ }
+      }
+    } else {
+      for (const m1 of MOVES_18) {
+        let p1: KPattern;
+        try { p1 = currPattern.applyAlg(m1); } catch { continue; }
+        for (const m2 of MOVES_18) {
+          try { await consider(p1.applyAlg(m2)); } catch { /* ignore */ }
+        }
+      }
+    }
+    return out;
+  };
+
+  // 差 1 步优先;没有再看差 2 步。
+  const d1 = await collect(1);
+  if (d1.length > 0) return d1;
+  return collect(2);
+}
+
 /**
  * Build suggestion strings for a given stage transition.
  * Each entry includes both bare and `(N)` variants where N = move count of the line.
@@ -351,10 +407,21 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     // 没真正解出东西。仅在用户主动按 Tab 时,试「cancel into」前瞻:某 pair 差 ≤2 步补完。
     if (!explicit) return [];
     const cands = await cancelIntoCandidates(prev, currPattern);
-    if (cands.length === 0) return [];
+    if (cands.length > 0) {
+      const out: string[] = [];
+      for (const c of cands) out.push(`// ${c.pair} cancel into`);
+      if (cands.length === 1) out.push(`// F2L${cands[0].ordinal} cancel into`);
+      return out;
+    }
+    // cross 家族自身(cross/xcross/xxcross/xxxcross/xxxxcross)差 ≤2 步补完的 cancel-into。
+    const crossCands = await crossFamilyCancelInto(prev, currPattern);
+    if (crossCands.length === 0) return [];
     const out: string[] = [];
-    for (const c of cands) out.push(`// ${c.pair} cancel into`);
-    if (cands.length === 1) out.push(`// F2L${cands[0].ordinal} cancel into`);
+    for (const c of crossCands) {
+      const suffix = c.pairs.length > 0 ? ` (${c.pairs.join('+')})` : '';
+      const label = c.colorLetter ? `${c.colorLetter} ${c.stage}${suffix}` : `${c.stage}${suffix}`;
+      out.push(`// ${label} cancel into`);
+    }
     return out;
   }
 

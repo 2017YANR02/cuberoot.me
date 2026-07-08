@@ -16,6 +16,7 @@ import { lookupPllAlgs } from './pll_lookup';
 import { lookupZbllAlgsRobust } from './zbll_lookup';
 import { lookupZblsAlgs, lookupZblsAlgsBrute } from './zbls_lookup';
 import { F2L_SLOT_DEFS as _SLOTS_FOR_BRUTE } from './stage_detect';
+import { crossFamilyCancelInto } from './popup_suggest';
 import type { Alg3x3Set } from '@cuberoot/shared/alg';
 
 /** Invert a space-separated move sequence (reverse order + flip each move). */
@@ -95,9 +96,11 @@ function crossDone(stage: string): boolean {
  * 抵消补回 —— 于是上一行结尾 cross 是断的。这种情况下,直接拿「scramble+prevMoves」当 prev 会
  * 让下一行把"被 cancel 的那把"和"真正新解的那把"一起算成 xxcross。
  *
- * 修正:仅当①上一行结尾 cross 断了、且②再上一行结尾 cross 已建立(说明这是 cancel-into 而非
- * 还没拼出 cross)时,把当前行的前缀逐步并入 prev,直到 cross 复原 —— 此时被 cancel 的那把已
- * 计入 prev,当前行只会被记成真正新解的 pair。其余情况返回原始 prev。
+ * 修正:仅当①上一行结尾 cross 断了、且②再上一行结尾 cross 已建立(说明这是 F2L pair 的
+ * cancel-into 而非还没拼出 cross)——或者②不成立,但上一行本身就是 cross 家族(cross/xcross/
+ * xxcross/xxxcross/xxxxcross)自身的 cancel-into(cross 还没建过,但上一行差 ≤2 步就能首次建
+ * 立,留给这一行首动补完)——时,把当前行的前缀逐步并入 prev,直到 cross 复原 —— 此时被 cancel
+ * 的那把(或那个 cross)已计入 prev,当前行只会被记成真正新解的部分。其余情况返回原始 prev。
  */
 export async function resolveEffectivePrev(
   scramble: string,
@@ -114,7 +117,13 @@ export async function resolveEffectivePrev(
   const lastNl = lb.lastIndexOf('\n');
   const beforePrev = lastNl >= 0 ? lb.substring(0, lastNl) : '';
   const beforePrevPattern = await patternFromAlg([scramble, movesOnly(beforePrev)].filter(Boolean).join(' '));
-  if (!crossDone((await detectStage(beforePrevPattern)).stage)) return prevPattern;
+  const beforePrevInfo = await detectStage(beforePrevPattern);
+  if (!crossDone(beforePrevInfo.stage)) {
+    // 再上一行也没建立 cross —— 除非上一行本身是 cross 家族的 cancel-into(cross 差 ≤2 步就
+    // 能首次成立),否则不算 cancel 场景,原样返回。
+    const crossCands = await crossFamilyCancelInto(beforePrevInfo, prevPattern);
+    if (crossCands.length === 0) return prevPattern;
+  }
 
   // cancel-into:并入当前行前缀,直到 cross 复原(被 cancel 的那把就在此刻补完)。
   const tokens = lineMoves.split(/\s+/).filter(Boolean);
