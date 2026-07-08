@@ -27,12 +27,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install rsync
-        # runner 镜像里 sources.list.d/*(azure-cli/mssql 等第三方源)常年签名过期,
-        # apt-get update 全量跑会因这些无关源报错(exit 100)拖垮 && 链;
-        # 只读主 sources.list 更新,并优先复用镜像自带 rsync 绕开网络请求。
+        # runner 镜像里 sources.list.d/azure-cli.list、mssql-release.list 签名过期,
+        # 全量 apt-get update 报错(exit 100)拖垮 && 链;只删这两个,别限制 sourcelist
+        # 到主文件——24.04 镜像自己的 main/universe/restricted/multiverse 定义在
+        # sources.list.d/ubuntu.sources(deb822),限制会连它也跳过、update 静默不生效。
+        # 优先复用镜像自带 rsync 绕开网络请求。
         run: |
           if ! command -v rsync >/dev/null 2>&1; then
-            sudo apt-get update -o Dir::Etc::sourcelist="sources.list" -o Dir::Etc::sourceparts="-"
+            sudo rm -f /etc/apt/sources.list.d/azure-cli.list /etc/apt/sources.list.d/mssql-release.list
+            sudo apt-get update
             sudo apt-get install -y rsync
           fi
 
