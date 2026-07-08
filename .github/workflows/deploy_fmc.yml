@@ -28,7 +28,13 @@ jobs:
         run: |
           rustup toolchain install nightly --profile minimal
           rustup target add x86_64-unknown-linux-musl --toolchain nightly
-          sudo apt-get update -o Dir::Etc::sourcelist="sources.list" -o Dir::Etc::sourceparts="-"
+          # runner 镜像里 sources.list.d/azure-cli.list、mssql-release.list 签名过期,
+          # 全量 apt-get update 会因这两个无关源报错(exit 100)。只删这两个,别限制
+          # sourcelist 到主文件——24.04 镜像自己的 main/universe/restricted/multiverse
+          # 定义在 sources.list.d/ubuntu.sources(deb822),限制 sourcelist 会连它也跳过、
+          # update 静默不生效,导致 install 时 "Unable to locate package"。
+          sudo rm -f /etc/apt/sources.list.d/azure-cli.list /etc/apt/sources.list.d/mssql-release.list
+          sudo apt-get update
           sudo apt-get install -y musl-tools
 
       # Engine correctness gate: solutions must actually solve, golden totals locked.
