@@ -50,6 +50,7 @@ export interface AlgInputProps {
   elementRef?: RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
   inputMode?: React.InputHTMLAttributes<HTMLInputElement>['inputMode'];
   style?: React.CSSProperties;
+  title?: string;
 }
 
 function autoResizeTextarea(el: HTMLTextAreaElement) {
@@ -78,6 +79,7 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
     elementRef,
     inputMode,
     style,
+    title,
   } = props;
 
   const isMobile = useIsMobile();
@@ -164,6 +166,7 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
         placeholder={placeholder}
         className={className}
         style={style}
+        title={title}
         inputMode={effectiveInputMode}
         onInput={e => {
           const el = e.target as HTMLTextAreaElement;
@@ -214,6 +217,7 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
       suppressContentEditableWarning
       className={className}
       style={style}
+      title={title}
       spellCheck={spellCheck}
       inputMode={effectiveInputMode}
       data-placeholder={placeholder}
