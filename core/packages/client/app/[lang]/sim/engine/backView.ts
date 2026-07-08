@@ -43,7 +43,6 @@ export function createBackView(
   const offset = new THREE.Vector3();
   const box = new THREE.Box3();
   const sceneSavedMat = new THREE.Matrix4();
-  const sceneSavedQuat = new THREE.Quaternion();
 
   return {
     domElement: renderer.domElement,
@@ -78,9 +77,20 @@ export function createBackView(
       if (world.cube) {
         const scene = world.scene;
         sceneSavedMat.copy(scene.matrix);
-        sceneSavedQuat.copy(scene.quaternion);
-        scene.quaternion.identity();
-        scene.updateMatrix();
+        // Zero the scene's LOCAL matrix directly (not via scene.quaternion.identity()
+        // + .copy() restore) — round-tripping through .quaternion also re-derives
+        // .rotation (Euler), and Three.js's decomposition isn't guaranteed to pick
+        // the same one of its two equivalent branches back. The restored quaternion
+        // (hence the actual render) comes out byte-identical either way, but a
+        // silently "relabeled" .rotation.x/.y can land outside NxN's onOrbit ±90°
+        // bookkeeping range — the next background drag then mis-reads it as
+        // already-out-of-range and folds the difference into spurious recorded
+        // moves. matrixAutoUpdate=false stops updateMatrixWorld() from recomputing
+        // .matrix from .quaternion/.position/.scale under us while we manually swap
+        // .matrix to/from identity, so .rotation is never touched at all here.
+        const prevAutoUpdate = scene.matrixAutoUpdate;
+        scene.matrixAutoUpdate = false;
+        scene.matrix.identity();
         scene.updateMatrixWorld(true);
         // InstancedMesh caches its boundingBox and won't refresh it when instance
         // matrices change, so clear it to force a per-instance recompute.
@@ -90,9 +100,9 @@ export function createBackView(
         });
         box.setFromObject(world.cube);
         box.getCenter(target);
-        scene.quaternion.copy(sceneSavedQuat);
-        scene.updateMatrix();
+        scene.matrix.copy(sceneSavedMat);
         scene.updateMatrixWorld(true);
+        scene.matrixAutoUpdate = prevAutoUpdate;
         target.applyMatrix4(sceneSavedMat);
       } else {
         target.set(0, 0, 0);
