@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -51,9 +51,13 @@ import { HelpCircle } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { Flag } from '@/components/Flag';
+import { ClearButton } from '@/components/ClearButton';
+import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { localizeCompName } from '@/lib/comp-localize';
-import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
+import { loadFlagData, flagDataVersion, compFlagIso2, compCountryId, countryToIso2 } from '@/lib/country-flags';
+import { countryName } from '@/lib/country-name';
+import { fetchScrambleCountryDist, type ScrambleCountryDistJson } from '@/lib/scramble-country-dist';
 import { statsUrl } from '@/lib/stats-base';
 import {
   stageLabel, isBlockVariant, VARIANT_ORDER, VARIANT_STAGES, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT,
@@ -309,6 +313,15 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const [examplesLoading, setExamplesLoading] = useState(false);
   const [examplesError, setExamplesError] = useState<string | null>(null);
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
+  // 3x3 族「各国占比条」(仅合并 WCA 池):点柱懒加载;选中某国(country_id)→ 客户端筛预览 + 服务端筛全量真题。
+  const [countryDist, setCountryDist] = useState<ScrambleCountryDistJson | null>(null);
+  const countryDistTried = useRef(false);
+  const [filterCountry, setFilterCountry] = useState<string | null>(null);
+  const ensureCountryDistLoaded = () => {
+    if (countryDistTried.current) return;
+    countryDistTried.current = true;
+    fetchScrambleCountryDist().then(setCountryDist).catch(() => { /* 缺失优雅降级,不画条 */ });
+  };
   // 组平均示例:基底(一次)+ 每变体值文件(按需);点柱后重算匹配组。
   const [avgExBase, setAvgExBase] = useState<AvgExamplesBase | null>(null);
   const [avgExVals, setAvgExVals] = useState<Record<string, AvgExValsFile | null>>({});
@@ -533,6 +546,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const handleBarClick = (bin: number) => {
     setSelectedBin(bin);
     ensureExamplesLoaded();
+    ensureCountryDistLoaded();
   };
 
   // 组平均示例:点柱时按需拉基底(一次)+ 当前变体值文件(每变体一次)。
@@ -566,6 +580,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     if (previewBins.length > 0) {
       setSelectedBin(previewBins[0]);
       ensureExamplesLoaded();
+      ensureCountryDistLoaded();
     } else {
       setSelectedBin(null);
     }
@@ -578,6 +593,15 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     if (selectedBin === null || !exSet) return null;
     return exSet.variants[variant]?.[stage]?.[effectiveSubset]?.[String(selectedBin)] ?? null;
   }, [exSet, variant, stage, effectiveSubset, selectedBin]);
+
+  // 各国占比条(仅合并 WCA 池:scrambleSet==='wca';per-event/xcross 无 country 数据 → undefined → 不画)。
+  const binCountry = useMemo<Record<string, number> | undefined>(() => {
+    if (selectedBin === null || scrambleSet !== 'wca' || !countryDist) return undefined;
+    return countryDist.sets.wca?.[variant]?.[stage]?.[effectiveSubset]?.[String(selectedBin)];
+  }, [countryDist, scrambleSet, variant, stage, effectiveSubset, selectedBin]);
+  const binTotal = selectedBin !== null ? (activeCounts[String(selectedBin)] ?? 0) : 0;
+  // 换 set/变体/阶段/底色/步数/度量 → 清国家筛选(避免筛着一个国家切走后列表空/口径错位)。
+  useEffect(() => { setFilterCountry(null); }, [scrambleSet, variant, stage, effectiveSubset, selectedBin, optMetric]);
 
   const series = useMemo<HistSeries[]>(() => {
     if (Object.keys(activeCounts).length === 0) return [];
@@ -1893,6 +1917,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         wcaEvent={event}
         merged={merged}
         dataset={dataset}
+        countryCounts={binCountry}
+        binTotal={binTotal}
+        filterCountry={filterCountry}
+        onFilterCountry={setFilterCountry}
       />
 
       {cnBenefit && (
@@ -1989,6 +2017,10 @@ function ExamplesPanel({
   wcaEvent,
   merged,
   dataset,
+  countryCounts,
+  binTotal,
+  filterCountry,
+  onFilterCountry,
 }: {
   isZh: boolean;
   lang: 'zh' | 'en';
@@ -2009,13 +2041,26 @@ function ExamplesPanel({
   wcaEvent: string;
   merged: boolean;
   dataset: string;
+  countryCounts?: Record<string, number>; // 该步数各国计数(country_id→n),合并 WCA 池才有
+  binTotal: number;                        // 该步数总数(占比条分母)
+  filterCountry: string | null;            // 选中的 country_id(null=不筛)
+  onFilterCountry: (countryId: string | null) => void;
 }) {
   // 「查看全部」展开态提到面板这一层:筛选栏(搜索 + 日期)常驻,展开后用全量列表**替换**
   // 示例预览(不再两个列表叠着),全量条数经 onTotal 收上来折进面板标题。
   const [showAll, setShowAll] = useState(false);
   const [fullTotal, setFullTotal] = useState<number | null>(null);
-  const onExpanded = (v: boolean) => { setShowAll(v); if (!v) setFullTotal(null); };
+  // 收起时清掉国家筛选(与国家条选中态、chip 同步);展开由点柱/点某国触发。
+  const onExpanded = (v: boolean) => { setShowAll(v); if (!v) { setFullTotal(null); onFilterCountry(null); } };
   const canFullList = dataset === 'wca' && !is333 && selectedBin !== null;
+  // 点某国 → 预览太薄(每 bin 5 条),自动展开服务端全量列表按该国筛。
+  useEffect(() => {
+    if (filterCountry && canFullList && !showAll) setShowAll(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterCountry]);
+  const hasCountryBar = !!countryCounts && Object.keys(countryCounts).length > 0;
+  const filterIso2 = filterCountry ? countryToIso2(filterCountry) : '';
+  const filterName = filterIso2 ? countryName(filterIso2, isZh) : filterCountry ?? '';
   const selectedDownloadable = selectedBin !== null && downloadBins.includes(selectedBin);
   // 整解 + 该 bin 示例确有最优打乱数据时才露切换(线上旧 JSON 无第 4 元 → 自动隐藏)。
   const hasOpt = is333 && !!samples?.some((s) => !!s[3]);
@@ -2026,6 +2071,10 @@ function ExamplesPanel({
     const d = dateOf(b[0]).localeCompare(dateOf(a[0]));
     return d !== 0 ? d : (Number(b[0]) - Number(a[0]));
   }) : samples;
+  // 收起态预览按国筛(客户端;仅 5 条/bin,薄 → 选国会自动展开走服务端全量)。
+  const previewSamples = (sortedSamples && filterCountry)
+    ? sortedSamples.filter(([id]) => compCountryId(idMeta?.[id]?.[0] ?? '') === filterCountry)
+    : sortedSamples;
   return (
     <div className="scramble-stats-panel scramble-stats-examples-panel">
       <div className="scramble-stats-examples-header">
@@ -2039,6 +2088,16 @@ function ExamplesPanel({
             </span>
           )}
         </div>
+        {filterCountry && (
+          <span className="pdv-cbar-chip">
+            {filterIso2 && <Flag iso2={filterIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
+            <span>{filterName}</span>
+            <ClearButton
+              onClick={() => onFilterCountry(null)}
+              ariaLabel={tr({ zh: '清除国家筛选', en: 'Clear country filter' })}
+            />
+          </span>
+        )}
         {hasOpt && (
           <PillToggle
             value={exView === 'opt'}
@@ -2062,6 +2121,18 @@ function ExamplesPanel({
           </a>
         )}
       </div>
+      {/* 各国占比条:点某国段 → 只看该国该步数真题(预览客户端筛 + 全量走服务端 country 参数)。 */}
+      {hasCountryBar && (
+        <div className="pdv-cbar-wrap">
+          <CountryShareBar
+            counts={countryCounts!}
+            total={binTotal}
+            selected={filterCountry}
+            onSelect={onFilterCountry}
+            isZh={isZh}
+          />
+        </div>
+      )}
       {/* 查看全部:筛选栏(搜索 + 日期)常驻在示例之上;展开后用全量列表替换下方的示例预览
           (仅 WCA 数据集、非整解、已选 bin)。合并池 → 不传 event;分开 → 传当前项目。 */}
       {canFullList && (
@@ -2071,6 +2142,7 @@ function ExamplesPanel({
           stage={stage}
           colors={subsetKey}
           bin={selectedBin}
+          country={filterCountry ?? undefined}
           lang={lang}
           isZh={isZh}
           exView={exView}
@@ -2087,9 +2159,9 @@ function ExamplesPanel({
         <div className="scramble-stats-examples-hint">{tr({ zh: '加载失败', en: 'Load failed'
         })}: {errorText}</div>
       )}
-      {!showAll && selectedBin !== null && !loading && !errorText && sortedSamples && sortedSamples.length > 0 && (
+      {!showAll && selectedBin !== null && !loading && !errorText && previewSamples && previewSamples.length > 0 && (
         <ul className="scramble-stats-examples-list">
-          {sortedSamples.map(([id, scr, color, opt], i) => {
+          {previewSamples.map(([id, scr, color, opt], i) => {
             const m = idMeta?.[id];
             const comp = m ? comps?.[m[0]] : undefined;
             // 最优视图:用最短等价打乱(同状态),无数据则回退原始。预览与跳转都跟当前视图。
@@ -2144,9 +2216,12 @@ function ExamplesPanel({
           })}
         </ul>
       )}
-      {!showAll && selectedBin !== null && !loading && !errorText && samples && samples.length === 0 && (
-        <div className="scramble-stats-examples-hint">{tr({ zh: '此 bin 无示例', en: 'No examples for this bin'
-        })}</div>
+      {!showAll && selectedBin !== null && !loading && !errorText && samples && previewSamples && previewSamples.length === 0 && (
+        <div className="scramble-stats-examples-hint">
+          {filterCountry
+            ? tr({ zh: '该国此步数预览无示例,点「查看全部」看全量', en: 'No preview examples from this country; click “View all” for the full list' })
+            : tr({ zh: '此 bin 无示例', en: 'No examples for this bin' })}
+        </div>
       )}
     </div>
   );

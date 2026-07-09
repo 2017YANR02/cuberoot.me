@@ -31,6 +31,7 @@ import { ListSelect } from '@/components/ListSelect';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
+import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
 import { VARIANT_ORDER } from '@/lib/scramble-variants';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
@@ -243,6 +244,16 @@ function StackedBarDemo() {
   return (
     <div style={{ width: 320, maxWidth: '100%' }}>
       <StackedBar segments={segs} minLabelFrac={0.08} ariaLabel="demo distribution" />
+    </div>
+  );
+}
+
+function CountryShareBarDemo() {
+  const [sel, setSel] = useState<string | null>(null);
+  const counts: Record<string, number> = { USA: 128, China: 74, Australia: 41, Japan: 33, Germany: 22, France: 15 };
+  return (
+    <div style={{ width: 340, maxWidth: '100%' }}>
+      <CountryShareBar counts={counts} total={360} selected={sel} onSelect={setSel} isZh={false} />
     </div>
   );
 }
@@ -911,6 +922,15 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Single-row stacked proportion bar: each segment flexGrow ∝ weight, custom color + centered label (hidden when too narrow, tooltip kept), optional onClick/dim/selected. Shared by /scramble/gen cross distribution and /wca name-distribution country breakdown.',
     usage: '<StackedBar segments={[{key,weight,color,label}]} minLabelFrac={0.08} />',
     Demo: StackedBarDemo,
+  },
+  {
+    name: 'CountryShareBar',
+    import: "import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';",
+    category: 'display',
+    zh: '「各国占比」条:在 StackedBar 上包一层,把 country_id→计数 画成国旗段(暖→冷渐变 + top12 折「其他」),点某国段选中/取消供上层按国筛选。分母优先用直方图总数(百分比准)。/scramble/stats 难度页各步数的国家分解在用。',
+    en: 'Country-share bar: wraps StackedBar to render country_id→count as flag segments (warm→cool gradient, top-12 with an "Others" tail), click a country to select/clear for filtering. Denominator prefers the histogram total (accurate %). Used by the per-step country breakdown on /scramble/stats.',
+    usage: '<CountryShareBar counts={{USA:128,China:74}} total={360} selected={sel} onSelect={setSel} isZh={isZh} />',
+    Demo: CountryShareBarDemo,
   },
   {
     name: 'ChainExplorer',

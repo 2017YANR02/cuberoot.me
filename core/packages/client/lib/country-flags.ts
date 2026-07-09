@@ -231,6 +231,12 @@ export function compFlagIso2(compId: string): string {
   return countryToIso2(countryId);
 }
 
+// 原始 WCA country_id(= comp_countries.json 的值 = wca_competitions.country_id),
+// 未经 iso2 归一 —— 按国精确筛选(服务端 c.country_id=? / 客户端相等比较)用它,别用 iso2(多名同 iso2)。
+export function compCountryId(compId: string): string {
+  return _compCountries?.[compId] ?? '';
+}
+
 const MANUAL_COMP_NAMES_ZH: Record<string, string> = {
   'China Championship 2020': '中国锦标赛2020',
 };

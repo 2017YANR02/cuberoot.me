@@ -1,0 +1,10 @@
+/* CountryShareBar 段内标签样式(条身走 StackedBar 的 .cr-stackbar)。 */
+.csbar-pct {
+  font-size: 0.68rem;
+  font-weight: 700;
+  opacity: 0.92;
+}
+.csbar-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+}

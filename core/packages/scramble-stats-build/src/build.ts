@@ -48,6 +48,9 @@ function histToJson(h: Hist) {
 const K_DOWNLOAD = 200;
 const K_PREVIEW = 5;
 const DOWNLOAD_BIN_MAX_COUNT = 1000;
+// 国家占比条(scramble_country_dist.json)每 (变体,阶段,底色,步数) 只留计数最高的前 N 个国家:
+// 前端条只显 top12 + 由直方图总数补的「其他」,存 15 给点余量(可后续调 bar 段数免重灌)。
+const TOP_COUNTRIES_DIST = 15;
 type Sample = [string, string, string];
 interface Reservoir { samples: Sample[]; seen: number }
 
@@ -87,10 +90,25 @@ async function loadScrambleMap(txtPath: string): Promise<Map<string, string>> {
   return map;
 }
 
-// id → WCA event_id (split_mbf 第 4 列)。值 intern 到共享字符串省内存(1.3M 条)。
-async function loadIdEventMap(metaCsv: string): Promise<Map<string, string>> {
+// comp_countries.json: compId → WCA country_id(= wca_competitions.country_id;与前端 loadFlagData 同源)。
+async function loadCompCountries(jsonPath: string): Promise<Map<string, string>> {
   const map = new Map<string, string>();
+  if (!fs.existsSync(jsonPath)) return map;
+  const raw = JSON.parse(fs.readFileSync(jsonPath, 'utf-8')) as Record<string, string>;
+  for (const [ci, country] of Object.entries(raw)) if (country) map.set(ci, country);
+  return map;
+}
+
+// id → WCA event_id (split_mbf 第 4 列;c[2]=competition_id)。值 intern 到共享字符串省内存(1.3M 条)。
+// 传 compCountries 时同趟建 id → country_id(c[2]→国家名),供国家占比聚合;缺则 idCountry 为空。
+async function loadIdEventMap(
+  metaCsv: string,
+  compCountries?: Map<string, string>,
+): Promise<{ idEvent: Map<string, string>; idCountry: Map<string, string> }> {
+  const idEvent = new Map<string, string>();
+  const idCountry = new Map<string, string>();
   const intern = new Map<string, string>();
+  const internC = new Map<string, string>();
   const rl = readline.createInterface({ input: fs.createReadStream(metaCsv, 'utf-8'), crlfDelay: Infinity });
   let first = true;
   for await (const line of rl) {
@@ -102,9 +120,18 @@ async function loadIdEventMap(metaCsv: string): Promise<Map<string, string>> {
     if (!id || !raw) continue;
     let ev = intern.get(raw);
     if (ev === undefined) { ev = raw; intern.set(raw, raw); }
-    map.set(id, ev ?? raw);
+    idEvent.set(id, ev ?? raw);
+    if (compCountries) {
+      const ci: string = c[2] ?? '';
+      const country = ci ? compCountries.get(ci) : undefined;
+      if (country) {
+        let cc = internC.get(country);
+        if (cc === undefined) { cc = country; internC.set(country, country); }
+        idCountry.set(id, cc);
+      }
+    }
   }
-  return map;
+  return { idEvent, idCountry };
 }
 
 // competitions.tsv: id\tname\tstart_date\tend_date  → compId → { name, 日期串 }
@@ -165,7 +192,9 @@ async function buildExampleCompMeta(
 // idEvent(可选,仅 WCA set):id → WCA event_id。提供时额外按项目分桶出 per-event 直方图
 // (六个三阶项目共用同一打乱器,分布理论上同形 —— 分桶是给 UI 按项目查看用,样本量各自缩水)。
 // per-event 桶不做 reservoir 采样(示例 / 下载走合并池,客户端按 idMeta 过滤)。
-async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap: Map<string, string>, idEvent?: Map<string, string>) {
+// idCountry(可选,仅合并 WCA 池):id → country_id。提供时额外按 (阶段,底色,步数) 聚合各国计数,
+// 每格留 top TOP_COUNTRIES_DIST → countryDist,供前端复用 StackedBar 画国家占比条 + 按国筛选。
+async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap: Map<string, string>, idEvent?: Map<string, string>, idCountry?: Map<string, string>) {
   // 每个 (set,variant) 调用前把 RNG 重新 makeRng 到随 variant key 确定的种子: reservoir 采样只依赖本变体自身数据,
   // 不被上一个变体处理时的 rng() 次数带偏 -> 增量只改一个变体时, 其它变体/set 的示例样本不再 spurious churn。
   let seed = 0x9e3779b9 >>> 0;
@@ -184,12 +213,16 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
   let evSeed = 0x55aa55aa >>> 0;
   for (const ch of spec.key) evSeed = (Math.imul(evSeed, 33) + ch.charCodeAt(0)) >>> 0;
   const evRng = makeRng(evSeed);
+  // per stage → per subset key → Map<bin, Map<country_id, count>>(仅合并 WCA 池,idCountry 提供时才填)
+  const countryByStage: Record<string, Record<string, Map<number, Map<string, number>>>> = {};
   for (const stage of spec.stages) {
     byStage[stage] = {};
     resByStage[stage] = {};
+    countryByStage[stage] = {};
     for (const key of SUBSET_KEYS) {
       byStage[stage][key] = newHist();
       resByStage[stage][key] = new Map();
+      countryByStage[stage][key] = new Map();
     }
   }
   const eventBucket = (ev: string): Record<string, Record<string, Hist>> => {
@@ -233,6 +266,7 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
     const scramble = scrambleMap.get(id);
     const ev = idEvent?.get(id);
     const evHists = ev !== undefined ? eventBucket(ev) : undefined;
+    const country = idCountry?.get(id);
     for (const stage of spec.stages) {
       const { colorIdx, subsetMasks } = plans.get(stage)!;
       const vals: number[] = new Array(6);
@@ -253,6 +287,12 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
         }
         bump(byStage[stage][key], m);
         if (evHists) bump(evHists[stage][key], m);
+        if (country !== undefined) {
+          const cm = countryByStage[stage][key];
+          let bm = cm.get(m);
+          if (!bm) { bm = new Map(); cm.set(m, bm); }
+          bm.set(country, (bm.get(country) ?? 0) + 1);
+        }
         if (scramble !== undefined && argi >= 0) {
           const bucketMap = resByStage[stage][key];
           let res = bucketMap.get(m);
@@ -338,6 +378,28 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
     eventPreviews[ev] = evPrev;
   }
 
+  // 国家占比:每 (阶段,底色,步数) 取 top TOP_COUNTRIES_DIST 个国家 → countryDist[stage][subset][bin]={country:n}。
+  // 仅 idCountry 提供(合并 WCA 池)时非空;空阶段/底色/bin 省略,前端缺则不画条。
+  let countryDist: Record<string, Record<string, Record<string, Record<string, number>>>> | undefined;
+  if (idCountry) {
+    countryDist = {};
+    for (const stage of spec.stages) {
+      const sd: Record<string, Record<string, Record<string, number>>> = {};
+      for (const key of SUBSET_KEYS) {
+        const cm = countryByStage[stage][key];
+        if (cm.size === 0) continue;
+        const binOut: Record<string, Record<string, number>> = {};
+        for (const [bin, acc] of cm) {
+          const top = [...acc.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOP_COUNTRIES_DIST);
+          binOut[String(bin)] = Object.fromEntries(top);
+        }
+        if (Object.keys(binOut).length) sd[key] = binOut;
+      }
+      if (Object.keys(sd).length) countryDist[stage] = sd;
+    }
+    if (Object.keys(countryDist).length === 0) countryDist = undefined;
+  }
+
   return {
     sampleCount,
     json: {
@@ -349,6 +411,7 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
     eventPreviews,
     previewExamples,
     pickedReservoirs,
+    countryDist,
   };
 }
 
@@ -469,8 +532,13 @@ async function main() {
 
   // SCRAMBLE_STATS_STAMP (增量管道传 export_date): 数据不变则时间戳不变 -> 无 spurious diff
   const generatedAt = process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString();
+  // comp → country_id(前端 flag 用的同一份 stats/comp_countries.json);国家占比条聚合用,缺则不产。
+  const compCountries = await loadCompCountries(path.join(repoRoot, 'stats', 'comp_countries.json'));
+  console.log(`Loaded comp→country for ${compCountries.size} comps`);
   const setsOut: Record<string, unknown> = {};
   const examplesSetsOut: Record<string, unknown> = {};
+  // 各国占比:setKey → variantKey → stage → subset → bin → {country:n}(仅有 comp meta 的合并 WCA 池非空)。
+  const countryDistSets: Record<string, Record<string, unknown>> = {};
   let txtFilesWritten = 0;
   let txtTotalBytes = 0;
 
@@ -487,13 +555,16 @@ async function main() {
     const dataRoot = path.dirname(setSpec.csv_dir);
     const metaCsv = path.join(dataRoot, 'input', 'wca_scrambles_split_mbf.csv');
     let idEvent: Map<string, string> | undefined;
+    let idCountry: Map<string, string> | undefined;
     if (fs.existsSync(metaCsv)) {
-      console.log(`Loading id→event map from ${metaCsv}`);
-      idEvent = await loadIdEventMap(metaCsv);
-      console.log(`  loaded ${idEvent.size} ids`);
+      console.log(`Loading id→event${compCountries.size ? '/country' : ''} map from ${metaCsv}`);
+      ({ idEvent, idCountry } = await loadIdEventMap(metaCsv, compCountries.size ? compCountries : undefined));
+      console.log(`  loaded ${idEvent.size} ids (${idCountry.size} with country)`);
     }
 
     const variantsOut: Record<string, unknown> = {};
+    // variantKey → countryDist(该变体各 (阶段,底色,步数) 的 top 国家计数);仅合并 WCA 池非空。
+    const countryVariantsOut: Record<string, unknown> = {};
     // per event → variantKey → 变体 JSON / 预览示例
     const eventVariantsOut: Map<string, Record<string, unknown>> = new Map();
     const eventExamplesOut: Map<string, Record<string, unknown>> = new Map();
@@ -515,9 +586,10 @@ async function main() {
         continue;
       }
       console.log(`Aggregating ${spec.key} from ${csvPath}`);
-      const { sampleCount, json, eventJson, eventPreviews, previewExamples, pickedReservoirs } = await aggregateVariant(spec, csvPath, scrambleMap, idEvent);
+      const { sampleCount, json, eventJson, eventPreviews, previewExamples, pickedReservoirs, countryDist } = await aggregateVariant(spec, csvPath, scrambleMap, idEvent, idCountry);
       variantsOut[spec.key] = json;
       examplesOut[spec.key] = previewExamples;
+      if (countryDist) countryVariantsOut[spec.key] = countryDist;
       if (sampleCount > maxCount) maxCount = sampleCount;
       for (const [ev, evJson] of Object.entries(eventJson)) {
         let bucket = eventVariantsOut.get(ev);
@@ -548,6 +620,7 @@ async function main() {
       sample_count: maxCount,
       variants: variantsOut,
     };
+    if (Object.keys(countryVariantsOut).length) countryDistSets[setSpec.key] = countryVariantsOut;
     // per-event 子集:key = `${setKey}_${eventId}`,带 event 字段供前端区分
     // (前端数据集下拉只列无 event 字段的顶级 set;per-event set 由项目选择器路由)。
     // 无 examples / downloads —— 示例走合并池按 idMeta 项目过滤。
@@ -628,6 +701,16 @@ async function main() {
   fs.writeFileSync(exPath, JSON.stringify(examplesFile));
   const exSizeKB = (fs.statSync(exPath).size / 1024).toFixed(1);
   console.log(`Wrote ${exPath} (${exSizeKB} KB)`);
+
+  // 国家占比条数据(懒加载,点柱才拉;仅含有 comp meta 的合并 WCA 池)。缺 comp_countries → 不产,前端优雅降级。
+  const cdPath = path.join(outDir, 'scramble_country_dist.json');
+  if (Object.keys(countryDistSets).length) {
+    fs.writeFileSync(cdPath, JSON.stringify({ meta: { generated_at: generatedAt }, sets: countryDistSets }));
+    const cdSizeKB = (fs.statSync(cdPath).size / 1024).toFixed(1);
+    console.log(`Wrote ${cdPath} (${cdSizeKB} KB)`);
+  } else if (fs.existsSync(cdPath)) {
+    fs.rmSync(cdPath);
+  }
 
   console.log(`Wrote ${txtFilesWritten} per-bin txt files under ${downloadsDir} (${(txtTotalBytes / 1024).toFixed(1)} KB total)`);
 }
