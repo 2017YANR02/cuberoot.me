@@ -10,8 +10,11 @@ import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { formatScrambleForEvent } from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { Flag } from '@/components/Flag';
+import { ClearButton } from '@/components/ClearButton';
+import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import { localizeCompName } from '@/lib/comp-localize';
-import { compFlagIso2 } from '@/lib/country-flags';
+import { compFlagIso2, countryToIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
+import { countryName } from '@/lib/country-name';
 import { compSourceLine } from '@/lib/comp-schedule';
 import {
   fetchPuzzleDistribution, type PuzzleDistributionJson, type PuzzleHistEntry,
@@ -114,6 +117,13 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const [sq1Unit, setSq1Unit] = useState<'wca' | 'slash'>('wca');
   // 示例:原始比赛打乱 vs 最优(最短)等价打乱(同状态)。仅当样例带最优数据时露切换。
   const [exView, setExView] = useState<'orig' | 'opt'>('orig');
+  // 国家占比条:点某国段 → 只看该国该步数的示例(iso2,null=不筛)。
+  const [filterCountry, setFilterCountry] = useState<string | null>(null);
+  // flag 数据(compId→国家)异步加载后重渲,示例筛选用 compFlagIso2 才准。
+  const [, setFlagVer] = useState(flagDataVersion());
+  useEffect(() => {
+    void loadFlagData().then((v) => setFlagVer((prev) => (v !== prev ? v : prev)));
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -146,6 +156,12 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const activeBins: PuzzleExamplesEntry['bins'] | undefined = isCube
     ? exEntry?.binsCubeshape
     : unit === 'wca' ? exEntry?.bins : exEntry?.binsAlt;
+  // 国家占比分桶(与示例分桶同 key);选中步数的国家计数表。
+  const activeCountryBins = isCube
+    ? exEntry?.countryDist?.binsCubeshape
+    : unit === 'wca' ? exEntry?.countryDist?.bins : exEntry?.countryDist?.binsAlt;
+  const binCountry = (selectedBin !== null && activeCountryBins) ? activeCountryBins[String(selectedBin)] : undefined;
+  const binTotal = (selectedBin !== null && activeDist) ? (activeDist.counts[String(selectedBin)] ?? 0) : 0;
 
   const series = useMemo<HistSeries[]>(() => {
     if (!entry || !activeDist) return [];
@@ -163,6 +179,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   useEffect(() => {
     setSelectedBin(null); // 切 puzzle / 口径 / 目标时清空,等下个 effect 按新数据重选
   }, [puzzleKey, sq1Unit, target]);
+  // 换步数 / 口径 / 目标 / puzzle 都清掉国家筛选(避免筛着一个国家切走后空列表)。
+  useEffect(() => { setFilterCountry(null); }, [selectedBin, sq1Unit, target, puzzleKey]);
   useEffect(() => {
     if (exampleBins.length === 0) return;
     setSelectedBin((prev) => {
@@ -259,6 +277,10 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           idMeta={exEntry.idMeta}
           exView={exView}
           onExView={setExView}
+          countryCounts={binCountry}
+          binTotal={binTotal}
+          filterIso2={filterCountry}
+          onFilterIso2={setFilterCountry}
         />
       )}
 
@@ -309,8 +331,79 @@ function Cell({ label, value }: { label: string; value: string }) {
   );
 }
 
+function fmtPct(p: number): string {
+  return p >= 9.95 ? `${Math.round(p)}%` : `${p.toFixed(1)}%`;
+}
+
+// 该步数「各国占比」条:复用通用 StackedBar,段宽 ∝ 该国打乱数,点某国段 → 只看该国示例。
+// 数据 = countryDist(全量,非采样),故百分比准;尾部折叠为「其他」(用直方图 bin 总数补差)。
+const CBAR_MAX_SEGMENTS = 12;
+function CountryShareBar({
+  counts, total, filterIso2, onSelect, isZh,
+}: {
+  counts: Record<string, number>;
+  total: number;
+  filterIso2: string | null;
+  onSelect: (iso2: string | null) => void;
+  isZh: boolean;
+}) {
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const shown = entries.slice(0, CBAR_MAX_SEGMENTS);
+  const shownSum = shown.reduce((s, [, n]) => s + n, 0);
+  const storedSum = entries.reduce((s, [, n]) => s + n, 0);
+  // 分母优先用直方图 bin 总数(含未进 top 的尾部);缺则退回已存计数之和。
+  const denom = total > 0 ? total : storedSum;
+  const n = shown.length;
+  const segs: StackedSeg[] = shown.map(([name, cnt], i) => {
+    const iso2 = countryToIso2(name);
+    const f = n > 1 ? i / (n - 1) : 0; // 暖(占比大)→冷渐变,同 /wca/results 国家条
+    const pct = denom > 0 ? (cnt / denom) * 100 : 0;
+    const display = iso2 ? countryName(iso2, isZh) : name;
+    return {
+      key: name,
+      weight: cnt,
+      color: `color-mix(in srgb, var(--accent) ${Math.round((1 - f) * 100)}%, var(--signal-success))`,
+      title: `${display} · ${fmtPct(pct)} (${cnt.toLocaleString()})`,
+      selected: !!filterIso2 && iso2 === filterIso2,
+      dim: !!filterIso2 && iso2 !== filterIso2,
+      onClick: iso2 ? () => onSelect(iso2 === filterIso2 ? null : iso2) : undefined,
+      label: (
+        <>
+          {iso2
+            ? <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />
+            : <span className="pdv-cbar-name">{name}</span>}
+          {pct >= 10 && <span className="pdv-cbar-pct">{fmtPct(pct)}</span>}
+        </>
+      ),
+    };
+  });
+  const others = Math.max(0, denom - shownSum);
+  if (others > 0) {
+    const op = denom > 0 ? (others / denom) * 100 : 0;
+    segs.push({
+      key: '__other__',
+      weight: others,
+      dim: !!filterIso2,
+      color: 'color-mix(in srgb, var(--muted-foreground) 38%, transparent)',
+      title: `${tr({ zh: '其他', en: 'Others' })} · ${fmtPct(op)}`,
+      label: <span className="pdv-cbar-name">{tr({ zh: '其他', en: 'Others' })}</span>,
+    });
+  }
+  return (
+    <StackedBar
+      segments={segs}
+      total={denom}
+      minLabelFrac={0.05}
+      className="pdv-cbar"
+      ariaLabel={tr({ zh: '各国占比', en: 'Country breakdown' })}
+    />
+  );
+}
+
 // 点某步数后展示该 bin 的真实比赛打乱示例(对等 3x3 难度 tab 的 ExamplesPanel,去掉底色 chip)。
+// 顶部叠一条各国占比(countryDist),点某国 → 只列该国该步数打乱;稀有步数已存全量,能完整浏览。
 // 点打乱图/打乱文字 → 跳该 puzzle 的在线求解器并带入打乱。
+const EXAMPLES_MAX_SHOWN = 40; // DOM 上限:稀有 bin 存了全量,不筛时截断展示
 function PuzzleExamplesPanel({
   isZh,
   puzzleKey,
@@ -320,6 +413,10 @@ function PuzzleExamplesPanel({
   idMeta,
   exView,
   onExView,
+  countryCounts,
+  binTotal,
+  filterIso2,
+  onFilterIso2,
 }: {
   isZh: boolean;
   puzzleKey: string;
@@ -329,6 +426,10 @@ function PuzzleExamplesPanel({
   idMeta: PuzzleExamplesEntry['idMeta'];
   exView: 'orig' | 'opt';
   onExView: (v: 'orig' | 'opt') => void;
+  countryCounts?: Record<string, number>;
+  binTotal: number;
+  filterIso2: string | null;
+  onFilterIso2: (iso2: string | null) => void;
 }) {
   const route = PUZZLE_ROUTE[puzzleKey];
   const hasSolver = !!route; // sq1 无在线求解器页 → 示例卡不可点,纯展示
@@ -338,10 +439,18 @@ function PuzzleExamplesPanel({
   const hasOpt = rawSamples.some((s) => !!s[2]);
   // 按比赛时间倒序(最新在前):有 comp 日期串按它,无则退回打乱 id(≈ 入库时间序),都取倒序。
   const dateOf = (id: string) => comps[idMeta[id]?.[0] ?? '']?.[1] ?? '';
-  const samples = [...rawSamples].sort((a, b) => {
+  const sorted = [...rawSamples].sort((a, b) => {
     const d = dateOf(b[0]).localeCompare(dateOf(a[0]));
     return d !== 0 ? d : (Number(b[0]) - Number(a[0]));
   });
+  // 按国筛选:样例的国家 = 其比赛所属国(compFlagIso2),与占比条同一份 comp_countries 源。
+  const filtered = filterIso2
+    ? sorted.filter(([id]) => compFlagIso2(idMeta[id]?.[0] ?? '') === filterIso2)
+    : sorted;
+  const samples = filtered.slice(0, EXAMPLES_MAX_SHOWN);
+  const moreCount = filtered.length - samples.length;
+  const hasCountryBar = !!countryCounts && Object.keys(countryCounts).length > 0;
+  const filterName = filterIso2 ? countryName(filterIso2, isZh) : '';
   const solverHref = (scr: string) =>
     `/scramble/${route}?${new URLSearchParams({ scramble: scr.trim() })}`;
 
@@ -351,6 +460,16 @@ function PuzzleExamplesPanel({
         <div className="scramble-stats-panel-title">
           {tr({ zh: '{n} 步示例', en: '{n}-move examples' }).replace('{n}', String(selectedBin))}
         </div>
+        {filterIso2 && (
+          <span className="pdv-cbar-chip">
+            <Flag iso2={filterIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />
+            <span>{filterName}</span>
+            <ClearButton
+              onClick={() => onFilterIso2(null)}
+              ariaLabel={tr({ zh: '清除国家筛选', en: 'Clear country filter' })}
+            />
+          </span>
+        )}
         {hasOpt && (
           <PillToggle
             value={exView === 'opt'}
@@ -363,6 +482,17 @@ function PuzzleExamplesPanel({
           />
         )}
       </div>
+      {hasCountryBar && (
+        <div className="pdv-cbar-wrap">
+          <CountryShareBar
+            counts={countryCounts!}
+            total={binTotal}
+            filterIso2={filterIso2}
+            onSelect={onFilterIso2}
+            isZh={isZh}
+          />
+        </div>
+      )}
       {samples.length > 0 ? (
         <ul className="scramble-stats-examples-list">
           {samples.map(([id, scr, opt], i) => {
@@ -423,7 +553,14 @@ function PuzzleExamplesPanel({
         </ul>
       ) : (
         <div className="scramble-stats-examples-hint">
-          {tr({ zh: '此步数无示例', en: 'No examples for this length' })}
+          {filterIso2
+            ? tr({ zh: '该国此步数无示例(示例为采样,占比条为全量)', en: 'No sampled examples from this country at this length (bar reflects the full population)' })
+            : tr({ zh: '此步数无示例', en: 'No examples for this length' })}
+        </div>
+      )}
+      {moreCount > 0 && (
+        <div className="scramble-stats-examples-more">
+          {tr({ zh: '另有 {n} 条未显示', en: '{n} more not shown' }).replace('{n}', moreCount.toLocaleString())}
         </div>
       )}
     </div>

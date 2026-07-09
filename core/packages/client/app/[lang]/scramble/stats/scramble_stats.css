@@ -413,6 +413,36 @@
   color: var(--text-sub);
 }
 
+/* ── 各国占比条(点段筛选该国示例;复用 StackedBar) ── */
+.pdv-cbar-wrap {
+  margin: 0 0 0.75rem;
+}
+.pdv-cbar-pct {
+  font-size: 0.68rem;
+  font-weight: 700;
+  opacity: 0.92;
+}
+.pdv-cbar-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+/* 已选国家的筛选标签(旗 + 名 + 清除) */
+.pdv-cbar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.2rem 0.15rem 0.4rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.scramble-stats-examples-more {
+  font-size: 0.74rem;
+  color: var(--text-sub);
+  margin-top: 0.5rem;
+}
+
 /* ── 底部元信息 ── */
 .scramble-stats-meta {
   display: flex;

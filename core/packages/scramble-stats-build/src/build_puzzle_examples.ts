@@ -12,9 +12,13 @@ import { buildCubeshapeTable, cubeshapeSlashes } from './sq1_cubeshape';
 // 数据契约(stats/scramble/puzzle_examples.json):
 //   { meta: { generated_at },
 //     puzzles: { <key>: {
-//       bins:   { "<len>": [[id, scramble, optScramble?], ...] }, // 每步数 bin K=20 条(确定性均匀步长采样)
+//       bins:   { "<len>": [[id, scramble, optScramble?], ...] }, // 每步数 bin K=20 条(确定性均匀步长采样);稀有 bin(≤FULL_BIN_CAP)存全量
 //       comps:  { "<ci>": [name, dateDisplay] },        // 被采样 id 引用到的比赛
-//       idMeta: { "<id>": [ci, event, num, round, group, extra(0|1)] }
+//       idMeta: { "<id>": [ci, event, num, round, group, extra(0|1)] },
+//       // 各步数「按比赛所属国家」的全量计数(非采样),供前端复用 StackedBar 画国家占比条 + 按国筛选示例。
+//       // 每步只留 top TOP_COUNTRIES 个国家(占比条本就折叠尾部为「其他」);其余由前端用直方图 bin 总数补「其他」。
+//       // key = WCA 国家名(与 comp_countries.json 同,前端 countryToIso2 转 iso2),bins/binsAlt/binsCubeshape 与示例分桶对齐。
+//       countryDist?: { bins?: { "<len>": { "<country>": n } }, binsAlt?: {...}, binsCubeshape?: {...} }
 //     } } }
 // optScramble = invert(analyzer 的最优解列 soln);= 最短的等价打乱(同状态),驱动「原始/最优」切换。
 // 仅当 <key>.csv 带 soln 列(analyzer 开 PUZZLE_EMIT_SOLN)时有;无则该元省略,前端只显原始。
@@ -24,6 +28,10 @@ import { buildCubeshapeTable, cubeshapeSlashes } from './sq1_cubeshape';
 // sq1 是小样本占位,dist 文件里若没有就跳过)。
 
 const EXAMPLE_K = 20;
+// bin ≤ 此阈值 → 该 bin 示例存全量(稀有步数如复形 0 步仅百余条,便于按国筛选浏览);更大 bin 仍采样 K 条。
+const FULL_BIN_CAP = 300;
+// countryDist 每步只保留计数最高的前 N 个国家(占比条只显 top 段 + 「其他」,尾部无需精确)。
+const TOP_COUNTRIES = 20;
 
 interface PuzzleSpec {
   key: string;       // = JSON key = 数据子目录名
@@ -228,16 +236,56 @@ async function loadCompNames(tsvPath: string): Promise<Map<string, [string, stri
   return map;
 }
 
+// comp_countries.json: compId → WCA 国家名(如 "United States";与前端 loadFlagData 同一份源)。
+async function loadCompCountries(jsonPath: string): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (!fs.existsSync(jsonPath)) return map;
+  const raw = JSON.parse(fs.readFileSync(jsonPath, 'utf-8')) as Record<string, string>;
+  for (const [ci, country] of Object.entries(raw)) if (country) map.set(ci, country);
+  return map;
+}
+
+// 某口径的全量分桶(step → 全部 id)按「比赛所属国家」聚合成 step → { country: n },每步只留 top TOP_COUNTRIES。
+// id → compId 走 idToComp(Scrambles.tsv 扫出),compId → 国家名走 compCountries(comp_countries.json)。
+function aggregateCountry(
+  fullBuckets: Map<number, string[]>,
+  idToComp: Map<string, string>,
+  compCountries: Map<string, string>,
+): Record<string, Record<string, number>> {
+  const out: Record<string, Record<string, number>> = {};
+  for (const [step, ids] of fullBuckets) {
+    const acc = new Map<string, number>();
+    for (const id of ids) {
+      const ci = idToComp.get(id);
+      if (!ci) continue;
+      const country = compCountries.get(ci);
+      if (!country) continue;
+      acc.set(country, (acc.get(country) ?? 0) + 1);
+    }
+    if (acc.size === 0) continue;
+    const top = [...acc.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOP_COUNTRIES);
+    out[String(step)] = Object.fromEntries(top);
+  }
+  return out;
+}
+
 // 流式扫 Scrambles.tsv(列序 scramble id competition_id event_id group_id is_extra round_type_id scramble_num,
-// 按表头名取列)→ 给被采样 id 补 [ci, event, num, round, group, extra]。照 build.ts buildExampleCompMeta 口径。
+// 按表头名取列)一趟同时:① 给被采样 id(wantedIds)补 [ci, event, num, round, group, extra] + comps 名;
+// ② 给全量 id(allIds,含 wantedIds)记 id → compId,供 countryDist 按国聚合。照 build.ts buildExampleCompMeta 口径。
 async function buildCompMeta(
-  ids: Set<string>,
+  wantedIds: Set<string>,
+  allIds: Set<string>,
   scramblesTsv: string,
   compTsv: string,
-): Promise<{ comps: Record<string, [string, string]>; idMeta: Record<string, [string, string, number, string, string, (0 | 1)]> }> {
+): Promise<{
+  comps: Record<string, [string, string]>;
+  idMeta: Record<string, [string, string, number, string, string, (0 | 1)]>;
+  idToComp: Map<string, string>;
+}> {
   const comps: Record<string, [string, string]> = {};
   const idMeta: Record<string, [string, string, number, string, string, (0 | 1)]> = {};
-  if (ids.size === 0) return { comps, idMeta };
+  const idToComp = new Map<string, string>();
+  if (allIds.size === 0) return { comps, idMeta, idToComp };
   const compNames = await loadCompNames(compTsv);
   const rl = readline.createInterface({ input: fs.createReadStream(scramblesTsv, 'utf-8'), crlfDelay: Infinity });
   let idIdx = -1, ciIdx = -1, evIdx = -1, grpIdx = -1, exIdx = -1, rndIdx = -1, numIdx = -1;
@@ -260,12 +308,15 @@ async function buildCompMeta(
     // 快速首列预筛:id 不一定在第 0 列,直接 split(列数固定,行数百万级可接受)。
     const c = line.split('\t');
     const id = c[idIdx];
-    if (!ids.has(id)) continue;
+    if (!allIds.has(id)) continue;
     const ci = c[ciIdx];
-    idMeta[id] = [ci, c[evIdx], Number(c[numIdx]), c[rndIdx], c[grpIdx], c[exIdx] === '1' ? 1 : 0];
-    if (!(ci in comps)) comps[ci] = compNames.get(ci) ?? [ci, ''];
+    idToComp.set(id, ci);
+    if (wantedIds.has(id)) {
+      idMeta[id] = [ci, c[evIdx], Number(c[numIdx]), c[rndIdx], c[grpIdx], c[exIdx] === '1' ? 1 : 0];
+      if (!(ci in comps)) comps[ci] = compNames.get(ci) ?? [ci, ''];
+    }
   }
-  return { comps, idMeta };
+  return { comps, idMeta, idToComp };
 }
 
 async function main() {
@@ -283,6 +334,9 @@ async function main() {
   // 比赛元数据源(与 update_puzzle_stats.ps1 / 3x3 管道一致):
   const scramblesTsv = 'D:/cube/scramble/wca_scramble/incremental/tsv/Scrambles.tsv';
   const compTsv = 'D:/cube/scramble/wca_scramble/competitions.tsv';
+  // compId → 国家名(前端 loadFlagData 用的同一份;countryDist 按国聚合用)。仓库根 stats/comp_countries.json。
+  const compCountries = await loadCompCountries(path.join(repoRoot, 'stats', 'comp_countries.json'));
+  if (compCountries.size === 0) console.warn('  [countryDist] comp_countries.json 缺失/空 → 跳过国家聚合');
 
   // 只对 puzzle_distribution.json 里出现的 key 产(避免 sq1 占位污染)。
   const distPath = path.join(repoRoot, 'stats', 'scramble', 'puzzle_distribution.json');
@@ -309,11 +363,15 @@ async function main() {
     }
 
     // 1. 采样 helper(确定性均匀步长 K 条 + 收 wantedIds);near 与 exact 共用。
+    //    稀有 bin(≤FULL_BIN_CAP)存全量,便于「按国筛选」时把该国该步数的打乱都列出来。
+    //    同时把每个口径的全量分桶(采样前)收进 fullBuckets,供 countryDist 按国聚合。
     const wantedIds = new Set<string>();
-    const sampleFrom = (buckets: Map<number, string[]>): Map<number, string[]> => {
+    const fullBuckets: Record<string, Map<number, string[]>> = {};
+    const sampleFrom = (buckets: Map<number, string[]>, binsKey?: string): Map<number, string[]> => {
+      if (binsKey) fullBuckets[binsKey] = buckets;
       const sampled = new Map<number, string[]>();
       for (const [len, ids] of buckets) {
-        const picked = pickUniform(ids, EXAMPLE_K);
+        const picked = pickUniform(ids, ids.length <= FULL_BIN_CAP ? ids.length : EXAMPLE_K);
         sampled.set(len, picked);
         for (const id of picked) wantedIds.add(id);
       }
@@ -324,8 +382,8 @@ async function main() {
     let sampledByBin: Map<number, string[]> | null = null;
     let sampledAlt: Map<number, string[]> | null = null;
     if (!spec.exact) {
-      sampledByBin = sampleFrom(await bucketIdsByLen(csvPath, spec.valueCol ?? spec.key));
-      if (spec.altCol) sampledAlt = sampleFrom(await bucketIdsByLen(csvPath, spec.altCol));
+      sampledByBin = sampleFrom(await bucketIdsByLen(csvPath, spec.valueCol ?? spec.key), 'bins');
+      if (spec.altCol) sampledAlt = sampleFrom(await bucketIdsByLen(csvPath, spec.altCol), 'binsAlt');
     }
 
     // 精确档采样(sq1):wca_exact 分桶(bins,exactOpt=WCA 最优打乱)+ 真 slash 最优分桶
@@ -338,13 +396,13 @@ async function main() {
     if (spec.exact) {
       const ex = await bucketExactSq1(path.join(dataRoot, spec.key));
       if (ex) {
-        exactWca = sampleFrom(ex.wca); exactSlash = sampleFrom(ex.slash);
+        exactWca = sampleFrom(ex.wca, 'bins'); exactSlash = sampleFrom(ex.slash, 'binsAlt');
         exactOpt = ex.optOf; exactSlashOpt = ex.optOf; // 默认回退:slash 视图也用 WCA 最优打乱
       } else console.warn(`  [${spec.key}] 无精确档数据(sq1_wca_exact.csv + 完成块都缺)`);
       const sl = await bucketSlashSq1(path.join(dataRoot, spec.key));
-      if (sl) { exactSlash = sampleFrom(sl.slash); exactSlashOpt = sl.optOf; } // 真 slash 最优覆盖
+      if (sl) { exactSlash = sampleFrom(sl.slash, 'binsAlt'); exactSlashOpt = sl.optOf; } // 真 slash 最优覆盖(同覆盖 fullBuckets.binsAlt)
       // 复形:从原始语料即时分桶(slash 数 0..7),示例只显原始打乱(无整解 → 无最优等价打乱)。
-      if (fs.existsSync(txtPath)) exactCubeshape = sampleFrom(await bucketCubeshapeSq1(txtPath));
+      if (fs.existsSync(txtPath)) exactCubeshape = sampleFrom(await bucketCubeshapeSq1(txtPath), 'binsCubeshape');
     }
 
     // 2. 流式读 scrambles.txt 仅取被采样 id 的原始打乱(标准 (x,y) 记号)。
@@ -380,10 +438,27 @@ async function main() {
       return bins;
     };
 
-    // 4. 比赛元数据 join(near + exact 采样 id 并集)。
-    const { comps, idMeta } = await buildCompMeta(wantedIds, scramblesTsv, compTsv);
+    // 4. 比赛元数据 join(near + exact 采样 id 并集)+ 全量 id → compId(countryDist 用)。
+    //    allIds = 各口径全量分桶里出现过的所有 id(sq1 三口径同一 id 集,union 天然去重)。
+    const allIds = new Set<string>();
+    for (const buckets of Object.values(fullBuckets)) {
+      for (const ids of buckets.values()) for (const id of ids) allIds.add(id);
+    }
+    const { comps, idMeta, idToComp } = await buildCompMeta(wantedIds, allIds, scramblesTsv, compTsv);
+
+    // 5. countryDist:各口径全量分桶 → 每步 top 国家计数(comp_countries 缺则整体省略)。
+    let countryDist: Record<string, Record<string, Record<string, number>>> | undefined;
+    if (compCountries.size > 0) {
+      countryDist = {};
+      for (const [binsKey, buckets] of Object.entries(fullBuckets)) {
+        const agg = aggregateCountry(buckets, idToComp, compCountries);
+        if (Object.keys(agg).length > 0) countryDist[binsKey] = agg;
+      }
+      if (Object.keys(countryDist).length === 0) countryDist = undefined;
+    }
 
     const out: Record<string, unknown> = { comps, idMeta };
+    if (countryDist) out.countryDist = countryDist;
     const note: string[] = [];
     const setBins = (k: string, sampled: Map<number, string[]> | null, optMap: Map<string, string>) => {
       if (!sampled) return;
