@@ -9,6 +9,7 @@
  *      → 取覆盖最多色块的 3×3 窗口; 遮挡格缺失 (由观测模型容忍)
  */
 import { rgbToHsvCv } from "./bface-color.ts";
+import { blockMedianRGB, calibClassify, type ColorCalib } from "./color-calib.ts";
 import type { ColorName } from "./reconstruct.ts";
 
 /**
@@ -118,6 +119,8 @@ export interface DetectOptions {
   maxAspect?: number; // bbox 长宽比上限, 默认 2.8
   /** 前景掩码 (1=前景); 提供则只在前景内检测 */
   mask?: Uint8Array;
+  /** 每视频颜色自标定: 只换标签层 (色块重分类 + 格采样), 检测/连通/几何不动 */
+  calib?: ColorCalib | null;
 }
 
 /** 同色 4-连通域检测贴纸色块 */
@@ -187,6 +190,16 @@ export function detectStickerBlobs(
       w: bw,
       h: bh,
     });
+  }
+
+  // 标定重分类 (标签层): 连通域按固定阈值成形后, 用每视频标定模型按色块平均
+  // RGB 重标颜色 — 白平衡偏移导致的 O/R/Y 糊与暖白误判在此修正。放在反光重标
+  // 之前: 反光核心 (亮低饱和) 标定同样判 W, 壳层投票照常修复
+  if (opts.calib) {
+    for (const blob of blobs) {
+      const cc = calibClassify(blob.r, blob.g, blob.b, opts.calib);
+      if (cc) blob.color = cc;
+    }
   }
 
   // 反光重标: 高光核心 (W 色块) 到饱和色之间有去饱和过渡带 (s 25~110),
@@ -466,7 +479,14 @@ export function sampleCell(
   cy: number,
   radius: number,
   minAgree = 0.6,
+  calib: ColorCalib | null = null,
 ): ColorName | null {
+  if (calib) {
+    // 标定路径: 块中位 RGB → 最近类 (拒判=null)。中位对反光/边缘鲁棒;
+    // 皮肤/阴影混合块距离超阈自然拒判, 不需要固定饱和阈分支
+    const m = blockMedianRGB(rgb, w, h, cx, cy, radius);
+    return m ? calibClassify(m.r, m.g, m.b, calib) : null;
+  }
   const x0 = Math.max(0, Math.round(cx - radius));
   const x1 = Math.min(w - 1, Math.round(cx + radius));
   const y0 = Math.max(0, Math.round(cy - radius));
@@ -551,7 +571,7 @@ export function extractFaceObservations(
           colors[r * 3 + c] = blob.color;
         } else {
           const { x, y } = cellCenter(grid, r, c);
-          colors[r * 3 + c] = sampleCell(rgb, w, h, x, y, grid.pitch * 0.22);
+          colors[r * 3 + c] = sampleCell(rgb, w, h, x, y, grid.pitch * 0.22, 0.6, opts.calib ?? null);
         }
       }
     }
@@ -631,11 +651,12 @@ export function trackFaceGrid(
   h: number,
   prior: FaceGrid,
   priorColors: readonly (ColorName | null)[] | null = null,
-  opts: { range?: number; step?: number; minCells?: number } = {},
+  opts: { range?: number; step?: number; minCells?: number; calib?: ColorCalib | null } = {},
 ): FaceObservation | null {
   const range = opts.range ?? 16;
   const step = opts.step ?? 4;
   const minCells = opts.minCells ?? 4;
+  const calib = opts.calib ?? null;
   const radius = prior.pitch * 0.22;
 
   let bestScore = -1;
@@ -648,7 +669,7 @@ export function trackFaceGrid(
       for (let r = 0; r < 3; r++) {
         for (let c = 0; c < 3; c++) {
           const { x, y } = cellCenter(prior, r, c);
-          const col = sampleCell(rgb, w, h, x + dx, y + dy, radius);
+          const col = sampleCell(rgb, w, h, x + dx, y + dy, radius, 0.6, calib);
           colors[r * 3 + c] = col;
           if (col) {
             readable++;
