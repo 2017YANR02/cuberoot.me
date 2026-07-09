@@ -12,7 +12,7 @@
  * 用法: npx tsx scripts/real-eval.ts [--search] [--video 3] [--faces B,U]
  *       [--beam 2048] [--hist] [--minrun 3]
  */
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { parseGT, parseSplitFrames } from "../src/splits.ts";
 import { ROTATION_TOKENS } from "../src/notation.ts";
@@ -26,6 +26,7 @@ import {
 import { IDENTITY_PERM, ORIENTATION_PERMS, invertPerm, physicalPerm } from "../src/rotation-perms.ts";
 import {
   activityMask,
+  cellCenter,
   extractFaceObservations,
   medianBackground,
   reorientObsToBasis,
@@ -33,6 +34,16 @@ import {
   type FaceGrid,
   type FaceObservation,
 } from "../src/sticker-blobs.ts";
+import {
+  blockMedianRGB,
+  calibClassify as calibClassifyDiag,
+  calibSummary,
+  classProbs,
+  COLOR_LIST,
+  fitColorCalib,
+  type ColorCalib,
+  type ColorSample,
+} from "../src/color-calib.ts";
 
 const DO_SEARCH = process.argv.includes("--search");
 const DO_HIST = process.argv.includes("--hist"); // 逐区间/逐边界明细
@@ -59,6 +70,17 @@ const ORACLE_ACC = oraArg >= 0 ? parseFloat(process.argv[oraArg + 1]) : 0;
 // 全覆盖双窗口神谕: 每段 B+U 两张 9 格网格 (两面联合模型的理论上界)
 const ORACLE_FULL = process.argv.includes("--oraclefull");
 const ORACLE_SINGLE = process.argv.includes("--oraclesingle");
+// 每视频颜色自标定 (两遍提取: pass1 默认阈值收标注样本 → 拟合 → pass2 标定重提取)
+// --calib   合法样本: 观察期帧 (已知打乱态) + 收尾帧 (已知复原态), 生产可用
+// --calibgt 天花板: 全段 GT 双端态收样本 (诊断用 — GT 标定都救不了就放弃此路)
+const CALIB_LEGIT = process.argv.includes("--calib");
+const CALIB_GT = process.argv.includes("--calibgt");
+// 软观测神谕: 满覆盖单 B 窗口, 逐格从该视频 GT 样本池抽真实特征 → 标定高斯
+// 逐类似然 → 归一化概率向量 (真特征噪声 + 合成指派)。回答"软通道能否过墙",
+// 不碰提取器。需与 --calibgt (或 --calib) 同用以拟合标定与样本池。
+const ORACLE_SOFT = process.argv.includes("--oraclesoft");
+const stArg = process.argv.indexOf("--softtemper");
+const SOFT_TEMPER = stArg >= 0 ? parseFloat(process.argv[stArg + 1]) : 1;
 const facesArg = process.argv.indexOf("--faces");
 type FaceName = "U" | "R" | "F" | "D" | "L" | "B";
 const SEARCH_FACES = (facesArg >= 0 ? process.argv[facesArg + 1] : "B,U").split(",") as FaceName[];
@@ -193,48 +215,54 @@ for (const sf of files) {
 
   // 逐帧提取 (每帧 0-2 面): 冷检测优先, 失败时用上帧晶格时间连续性跟踪
   // (魔方不瞬移; 转动层模糊 → null 格, 非转动层照常读 — 天然部分观测)
-  const grids: FaceObservation[][] = new Array(meta.frames.length);
-  const frameSpan: number[] = new Array(meta.frames.length).fill(-1);
-  let prior: FaceGrid | null = null;
-  let priorColors: readonly (ColorName | null)[] | null = null;
-  let priorMiss = 0;
-  let nCold = 0, nTracked = 0, spanId = -1;
-  for (let i = 0; i < meta.frames.length; i++) {
-    let cold = extractFaceObservations(frameAt(i), meta.w, meta.h, mask, { minArea: MIN_AREA });
-    if (cold.length) {
-      // 基连续化: 冷拟合基旋到与上帧基最对齐的 90° 变体, span 内旋转身份构造性恒定
-      // (fitFaceGrid 的"v1 取更水平者"在晶格近 45° 时帧间轴交换, 断链 + 毁按 span 钉死)
-      if (prior) cold = [reorientObsToBasis(cold[0], prior.v1, prior.v2), ...cold.slice(1)];
-      else spanId++;
-      grids[i] = cold;
-      frameSpan[i] = spanId;
-      prior = cold[0].grid;
-      priorColors = cold[0].colors;
-      priorMiss = 0;
-      nCold++;
-      continue;
-    }
-    const tracked: FaceObservation | null = prior
-      ? trackFaceGrid(frameAt(i), meta.w, meta.h, prior, priorColors)
-      : null;
-    if (tracked) {
-      grids[i] = [tracked];
-      frameSpan[i] = spanId;
-      prior = tracked.grid;
-      priorColors = tracked.colors;
-      priorMiss = 0;
-      nTracked++;
-    } else {
-      grids[i] = [];
-      if (prior && ++priorMiss > 5) {
-        prior = null;
-        priorColors = null;
+  // 函数化: 标定模式跑两遍 (pass1 默认阈值收样本 → pass2 带 calib 重提取)
+  const extractAllGrids = (calib: ColorCalib | null) => {
+    const grids: FaceObservation[][] = new Array(meta.frames.length);
+    const frameSpan: number[] = new Array(meta.frames.length).fill(-1);
+    let prior: FaceGrid | null = null;
+    let priorColors: readonly (ColorName | null)[] | null = null;
+    let priorMiss = 0;
+    let nCold = 0, nTracked = 0, spanId = -1;
+    for (let i = 0; i < meta.frames.length; i++) {
+      let cold = extractFaceObservations(frameAt(i), meta.w, meta.h, mask, { minArea: MIN_AREA, calib });
+      if (cold.length) {
+        // 基连续化: 冷拟合基旋到与上帧基最对齐的 90° 变体, span 内旋转身份构造性恒定
+        // (fitFaceGrid 的"v1 取更水平者"在晶格近 45° 时帧间轴交换, 断链 + 毁按 span 钉死)
+        if (prior) cold = [reorientObsToBasis(cold[0], prior.v1, prior.v2), ...cold.slice(1)];
+        else spanId++;
+        grids[i] = cold;
+        frameSpan[i] = spanId;
+        prior = cold[0].grid;
+        priorColors = cold[0].colors;
+        priorMiss = 0;
+        nCold++;
+        continue;
+      }
+      const tracked: FaceObservation | null = prior
+        ? trackFaceGrid(frameAt(i), meta.w, meta.h, prior, priorColors, { calib })
+        : null;
+      if (tracked) {
+        grids[i] = [tracked];
+        frameSpan[i] = spanId;
+        prior = tracked.grid;
+        priorColors = tracked.colors;
+        priorMiss = 0;
+        nTracked++;
+      } else {
+        grids[i] = [];
+        if (prior && ++priorMiss > 5) {
+          prior = null;
+          priorColors = null;
+        }
       }
     }
-  }
+    return { grids, frameSpan, nCold, nTracked };
+  };
+  let { grids, frameSpan, nCold, nTracked } = extractAllGrids(null);
   // 帧运动量: 网格 bbox 内与上帧的平均绝对差。100fps 下相邻模糊帧彼此相似,
   // agree() 挡不住拧转中帧成链 (目检 f1122: 大幅运动模糊 3 帧照样"稳定")。
   // 静止 vs 拧转在帧差上双峰, 这才是 rest 的物理定义; 超阈值帧不准进链。
+  const buildRuns = (grids: FaceObservation[][], frameSpan: number[]) => {
   const frameMotion: number[] = new Array(meta.frames.length).fill(Infinity);
   for (let i = 1; i < meta.frames.length; i++) {
     const g = (grids[i][0] ?? grids[i - 1][0])?.grid;
@@ -335,8 +363,12 @@ for (const sf of files) {
     }
     flush();
   }
+  return { runs, motP };
+  };
+  let { runs, motP } = buildRuns(grids, frameSpan);
 
   // 常数颜色重标 κ 拟合: 归属无关 (每区间对全部边界态取 max), 24 候选取总匹配最优
+  const fitOmega = (runs: RestRun[]) => {
   const allStates = [...boundStates, finalState];
   let omega: readonly number[] = IDENTITY_PERM, omegaIdx = 0, omegaBest = -1;
   for (let oi = 0; oi < 24; oi++) {
@@ -354,6 +386,143 @@ for (const sf of files) {
       omegaBest = tot;
       omega = cand;
       omegaIdx = oi;
+    }
+  }
+  return { omega, omegaIdx };
+  };
+  let { omega, omegaIdx } = fitOmega(runs);
+
+  // 段起点后继态 + token→probs 下标 (供标定样本收集与后续段证据共用)
+  const afterState = (j: number): readonly number[] =>
+    j + 1 < fullSeq.length ? startState[j + 1] : IDENTITY_PERM;
+  const tokIdxToProbsPre = new Map<number, number>(nonRotIdx.map((jj, tt) => [jj, tt]));
+
+  // ===== 每视频颜色自标定 (两遍提取) =====
+  // pass1 (默认阈值) 网格 → 已知态帧反标样本 → 拟合 → pass2 带标定重提取。
+  // 合法模式: 观察期帧 (态=打乱) + 收尾帧 (态=复原), 生产无 GT 可用;
+  // GT 模式: 全段双端态, 天花板诊断。标签取"最优平局候选一致"的格 (歧义格弃)。
+  let calibFitted: ColorCalib | null = null;
+  let calibPool: Map<ColorName, ColorSample[]> | null = null;
+  let omegaAtCalib: readonly number[] = IDENTITY_PERM;
+  if (CALIB_LEGIT || CALIB_GT) {
+    const samples: ColorSample[] = [];
+    const segOfFrameCal = (frame: number): number => {
+      if (frame < splitFrames[0]) return 0;
+      for (let si = 0; si < splitFrames.length - 1; si++) {
+        if (frame >= splitFrames[si] && frame < splitFrames[si + 1]) {
+          let t = tokIdxToProbsPre.get(si);
+          if (t === undefined) {
+            for (let jj = si - 1; jj >= 0 && t === undefined; jj--) t = tokIdxToProbsPre.get(jj);
+            for (let jj = si + 1; jj < tokens.length && t === undefined; jj++) t = tokIdxToProbsPre.get(jj);
+          }
+          return t ?? -1;
+        }
+      }
+      return -1;
+    };
+    const collectFrom = (obs: FaceObservation, states: readonly (readonly number[])[], rgb: Uint8Array) => {
+      // 全 (态×指派) 打分, 收集并列最优; 读格 ≥5 且匹配 ≥60% 才可信
+      interface Cand { st: readonly number[]; ai: number }
+      let cands: Cand[] = [];
+      let bestM = -1, read = 0;
+      for (const st of states) {
+        for (let ai = 0; ai < ASSIGNS.length; ai++) {
+          const { assign } = ASSIGNS[ai];
+          let m = 0, rd = 0;
+          for (let i = 0; i < 9; i++) {
+            const c = obs.colors[i];
+            if (!c) continue;
+            rd++;
+            if (COLOR_NAMES[Math.floor(omega[st[assign[i]]] / 9)] === c) m++;
+          }
+          if (m > bestM) { bestM = m; cands = [{ st, ai }]; read = rd; }
+          else if (m === bestM) cands.push({ st, ai });
+        }
+      }
+      if (!cands.length || read < 5 || bestM < read * 0.6) return;
+      // 逐格标签: 并列候选给出不同标签的格 = 指派歧义, 弃; 一致的格才是可信标注
+      // (段双端态共享可见面时天然并列, 标签相同无害 — 全局 margin 会误杀这类帧)
+      for (let i = 0; i < 9; i++) {
+        let label: ColorName | null = null, ok = true;
+        for (const c of cands) {
+          const l = COLOR_NAMES[Math.floor(omega[c.st[ASSIGNS[c.ai].assign[i]]] / 9)];
+          if (label === null) label = l;
+          else if (label !== l) { ok = false; break; }
+        }
+        if (!ok || !label) continue;
+        const blob = obs.grid.cells[i];
+        if (blob) {
+          samples.push({ r: blob.r, g: blob.g, b: blob.b, label });
+          continue;
+        }
+        // null 读格仅在高读出帧收集 (读出 ≥7 时 null 多为阈值失败如暖白, 非手指遮挡)
+        if (!obs.colors[i] && read < 7) continue;
+        const { x, y } = cellCenter(obs.grid, (i / 3) | 0, i % 3);
+        const m = blockMedianRGB(rgb, meta.w, meta.h, x, y, obs.grid.pitch * 0.22);
+        if (m) samples.push({ r: m.r, g: m.g, b: m.b, label });
+      }
+    };
+    for (let i = 0; i < meta.frames.length; i++) {
+      if (!grids[i].length) continue;
+      const frame = meta.frames[i];
+      let states: (readonly number[])[] | null = null;
+      if (CALIB_GT) {
+        const t = segOfFrameCal(frame);
+        if (t >= 0) states = [boundStates[t], afterState(nonRotIdx[t])];
+      } else if (frame < splitFrames[0]) states = [scrambleSc];
+      else if (frame >= splitFrames[splitFrames.length - 1]) states = [IDENTITY_PERM];
+      if (!states) continue;
+      const rgb = frameAt(i);
+      for (const obs of grids[i]) collectFrom(obs, states, rgb);
+    }
+    if (process.argv.includes("--dumpsamples")) {
+      mkdirSync(join(import.meta.dirname, "..", ".tmp"), { recursive: true });
+      const p = join(
+        import.meta.dirname, "..", ".tmp",
+        `calib-samples-${basename(videoPath).replace(/\s+/g, "_")}.json`,
+      );
+      writeFileSync(p, JSON.stringify(samples));
+      console.log(`  样本已 dump: ${p} (${samples.length})`);
+    }
+    const calib = fitColorCalib(samples);
+    if (calib) {
+      console.log(`  标定[${CALIB_GT ? "GT" : "合法"}]: ${samples.length} 样本  ${calibSummary(calib)}`);
+      // 样本内自分类 = 该特征在此模型下的贝叶斯天花板估计。低 (≲70%) 说明
+      // 类间特征本质重叠 (视角/光照条件性混淆), 静态标定无解, 别再调阈值
+      {
+        const tally = new Map<ColorName, { ok: number; tot: number; rej: number }>();
+        for (const s of samples) {
+          const e = tally.get(s.label) ?? { ok: 0, tot: 0, rej: 0 };
+          e.tot++;
+          const p = calibClassifyDiag(s.r, s.g, s.b, calib);
+          if (p === null) e.rej++;
+          else if (p === s.label) e.ok++;
+          tally.set(s.label, e);
+        }
+        let ok = 0, tot = 0, rej = 0;
+        const per = [...tally.entries()]
+          .sort((a, b) => b[1].tot - a[1].tot)
+          .map(([c, e]) => {
+            ok += e.ok; tot += e.tot; rej += e.rej;
+            return `${c}:${((e.ok / Math.max(1, e.tot - e.rej)) * 100).toFixed(0)}%`;
+          })
+          .join(" ");
+        console.log(
+          `  样本内天花板: ${((ok / Math.max(1, tot - rej)) * 100).toFixed(1)}% (拒判 ${((rej / tot) * 100).toFixed(0)}%)  ${per}`,
+        );
+      }
+      // 软神谕挂钩: 标定 + 按类样本池 + 收集时 κ (池标签与合成真值须同一 κ 口径)
+      calibFitted = calib;
+      omegaAtCalib = omega;
+      calibPool = new Map();
+      for (const s of samples) {
+        (calibPool.get(s.label) ?? calibPool.set(s.label, []).get(s.label)!).push(s);
+      }
+      ({ grids, frameSpan, nCold, nTracked } = extractAllGrids(calib));
+      ({ runs, motP } = buildRuns(grids, frameSpan));
+      ({ omega, omegaIdx } = fitOmega(runs));
+    } else {
+      console.log(`  标定失败 (实拟合类 <3, 共 ${samples.length} 样本), 沿用默认阈值`);
     }
   }
 
@@ -430,10 +599,7 @@ for (const sf of files) {
 
   // 双端点段证据: 链按中心帧归属所在段, 匹配 = max(段起点态, 段终点态)。
   // 段内任意时刻的读数必属两端之一 (拧转前=起点, 拧转后=终点, 拧转中非转动层两者皆合),
-  // 标注滞后的 ±1 归属歧义在此语义下自动消解。
-  const afterState = (j: number): readonly number[] =>
-    j + 1 < fullSeq.length ? startState[j + 1] : IDENTITY_PERM;
-  const tokIdxToProbsPre = new Map<number, number>(nonRotIdx.map((jj, tt) => [jj, tt]));
+  // 标注滞后的 ±1 归属歧义在此语义下自动消解。(afterState/tokIdxToProbsPre 已上移)
   const segChains: RestRun[][] = Array.from({ length: boundStates.length }, () => []);
   let segYDropped = 0;
   for (const run of runs) {
@@ -699,6 +865,98 @@ for (const sf of files) {
   }
 
   const name = basename(videoPath).replace(/\.MP4$/i, "");
+  const oracleObs = ((): {
+    rawObsOracle: (RawFaceObs[] | null)[] | null;
+    finalRawObsOracle: RawFaceObs | null;
+  } => {
+    if (!(ORACLE_ACC > 0) && !ORACLE_SOFT) return { rawObsOracle: null, finalRawObsOracle: null };
+    let seed = 42 ^ boundStates.length;
+    const rng = () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let z = seed;
+      z = Math.imul(z ^ (z >>> 15), z | 1);
+      z ^= z + Math.imul(z ^ (z >>> 7), z | 61);
+      return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+    };
+    const BU = assignsForFaces(["B", "U"]);
+    // 软神谕: 满覆盖单 B 窗口, 逐格抽本视频 GT 样本池真实特征 → 标定高斯概率向量
+    if (ORACLE_SOFT) {
+      if (!calibFitted || !calibPool) {
+        console.warn(`  --oraclesoft 需要 --calibgt/--calib 标定成功, ${name} 跳过软合成`);
+        return { rawObsOracle: null, finalRawObsOracle: null };
+      }
+      const cf = calibFitted, pool = calibPool, om = omegaAtCalib;
+      let softOk = 0, softTot = 0;
+      const synthSoft = (state: readonly number[], forcedAssign: readonly number[]): RawFaceObs => {
+        const colors: (ColorName | null)[] = new Array(9).fill(null);
+        const probs: (number[] | null)[] = new Array(9).fill(null);
+        for (let i = 0; i < 9; i++) {
+          const truth = COLOR_NAMES[Math.floor(om[state[forcedAssign[i]]] / 9)];
+          const ps = pool.get(truth);
+          if (!ps?.length) {
+            // 池缺类 (罕见): one-hot 真值, 等效完美格 — 打印口径里会看出来
+            colors[i] = truth;
+            probs[i] = COLOR_LIST.map((c) => (c === truth ? 1 : 0));
+            softOk++; softTot++;
+            continue;
+          }
+          const smp = ps[Math.floor(rng() * ps.length)];
+          const p = classProbs(smp.r, smp.g, smp.b, cf);
+          let bi = 0;
+          for (let k = 1; k < 6; k++) if (p[k] > p[bi]) bi = k;
+          colors[i] = COLOR_LIST[bi];
+          probs[i] = p;
+          softTot++;
+          if (COLOR_LIST[bi] === truth) softOk++;
+        }
+        return { colors, probs };
+      };
+      const res = {
+        rawObsOracle: boundStates.map((st) => [synthSoft(st, BU[0])]),
+        finalRawObsOracle: synthSoft(IDENTITY_PERM, BU[0]),
+      };
+      console.log(
+        `  软神谕运行点: argmax 精度 ${((softOk / softTot) * 100).toFixed(1)}% (${softTot} 格, 满覆盖单窗, temper=${SOFT_TEMPER})`,
+      );
+      return res;
+    }
+    const FULL_MASK: (ColorName | null)[] = new Array(9).fill("W");
+    const synth = (
+      mask: readonly (ColorName | null)[],
+      state: readonly number[],
+      forcedAssign?: readonly number[],
+    ): RawFaceObs => {
+      const assign = forcedAssign ?? BU[Math.floor(rng() * BU.length)];
+      return {
+        colors: mask.map((c, i) => {
+          if (!c) return null;
+          const truth = COLOR_NAMES[Math.floor(omega[state[assign[i]]] / 9)];
+          if (rng() < ORACLE_ACC) return truth;
+          const wrong = COLOR_NAMES[(COLOR_NAMES.indexOf(truth) + 1 + Math.floor(rng() * 5)) % 6];
+          return wrong;
+        }),
+      };
+    };
+    return {
+      rawObsOracle: ORACLE_SINGLE
+        ? boundStates.map((st) => [synth(FULL_MASK, st, BU[0])])
+        : ORACLE_FULL
+        ? boundStates.map((st) => [synth(FULL_MASK, st, BU[0]), synth(FULL_MASK, st, BU[4])])
+        : segChains.map((chains, t) => {
+            const gated = chains
+              .filter((run) => run.len >= 4 && run.grid.filter(Boolean).length >= 7)
+              .sort((a, b) => b.len - a.len)
+              .slice(0, 3)
+              .map((run) => synth(run.grid, boundStates[t]));
+            return gated.length ? gated : null;
+          }),
+      finalRawObsOracle: ORACLE_FULL || ORACLE_SINGLE
+        ? synth(FULL_MASK, IDENTITY_PERM, BU[0])
+        : finalRawObs
+          ? synth(finalRawObs.colors, IDENTITY_PERM)
+          : null,
+    };
+  })();
   evals.push({
     name,
     nBounds: boundStates.length,
@@ -726,54 +984,7 @@ for (const sf of files) {
         .map((g) => ({ colors: g.colors }));
       return picked.length ? picked : null;
     }),
-    ...(() => {
-      if (!(ORACLE_ACC > 0)) return { rawObsOracle: null, finalRawObsOracle: null };
-      let seed = 42 ^ boundStates.length;
-      const rng = () => {
-        seed = (seed + 0x6d2b79f5) | 0;
-        let z = seed;
-        z = Math.imul(z ^ (z >>> 15), z | 1);
-        z ^= z + Math.imul(z ^ (z >>> 7), z | 61);
-        return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
-      };
-      const BU = assignsForFaces(["B", "U"]);
-      const FULL_MASK: (ColorName | null)[] = new Array(9).fill("W");
-      const synth = (
-        mask: readonly (ColorName | null)[],
-        state: readonly number[],
-        forcedAssign?: readonly number[],
-      ): RawFaceObs => {
-        const assign = forcedAssign ?? BU[Math.floor(rng() * BU.length)];
-        return {
-          colors: mask.map((c, i) => {
-            if (!c) return null;
-            const truth = COLOR_NAMES[Math.floor(omega[state[assign[i]]] / 9)];
-            if (rng() < ORACLE_ACC) return truth;
-            const wrong = COLOR_NAMES[(COLOR_NAMES.indexOf(truth) + 1 + Math.floor(rng() * 5)) % 6];
-            return wrong;
-          }),
-        };
-      };
-      return {
-        rawObsOracle: ORACLE_SINGLE
-          ? boundStates.map((st) => [synth(FULL_MASK, st, BU[0])])
-          : ORACLE_FULL
-          ? boundStates.map((st) => [synth(FULL_MASK, st, BU[0]), synth(FULL_MASK, st, BU[4])])
-          : segChains.map((chains, t) => {
-              const gated = chains
-                .filter((run) => run.len >= 4 && run.grid.filter(Boolean).length >= 7)
-                .sort((a, b) => b.len - a.len)
-                .slice(0, 3)
-                .map((run) => synth(run.grid, boundStates[t]));
-              return gated.length ? gated : null;
-            }),
-        finalRawObsOracle: ORACLE_FULL || ORACLE_SINGLE
-          ? synth(FULL_MASK, IDENTITY_PERM, BU[0])
-          : finalRawObs
-            ? synth(finalRawObs.colors, IDENTITY_PERM)
-            : null,
-      };
-    })(),
+    ...oracleObs,
     finalRawObs,
     probs,
     scrambleSc,
@@ -867,6 +1078,7 @@ if (DO_SEARCH) {
       finalRawObservation: (e.rawObsOracle ? e.finalRawObsOracle : e.finalRawObs) ?? undefined,
       rawHitProb: hitProb,
       rawMissProb: (1 - hitProb) / 5,
+      rawSoftTemper: SOFT_TEMPER,
       rawFaces: SEARCH_FACES,
       rawPinWindows: PIN_MODE || DRIFT,
       rawPinDrift: DRIFT,
