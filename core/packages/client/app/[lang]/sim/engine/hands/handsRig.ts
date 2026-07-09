@@ -5,7 +5,7 @@
  * 各层 CubeGroup 的实时 angle(tween 播放与手动拖层都写这里),手跟着当前
  * 角度摆位,天然零漂移;drop() 归零后进入回位混合。
  *
- * 手势两类(**指法权威规格表:同目录 FINGERING.md,改指法先改那里**):
+ * 手势两类(**指法权威规格表:同目录 FINGERTRICKS.md,改指法先改那里**):
  *  - weld  腕转:整只手焊在转动层上,绕层轴跟转(R/L 外层、整体 x/y/z 双手)。
  *  - flick 指弹:出一根手指沿转向扫(U/D 食指/无名指、F/B 拇指/中指、M/E/S)。
  *    双中手专项:F 族「食指越顶」topPush;y 族接触勾拨 hook(180° 提示连拨:
@@ -59,7 +59,7 @@ export type HandSide = "L" | "R";
 export type Axis = "x" | "y" | "z";
 export type LayerClass = "high" | "low" | "mid" | "whole";
 
-/** 指弹样式(规格与编排细节见同目录 FINGERING.md):
+/** 指弹样式(规格与编排细节见同目录 FINGERTRICKS.md):
  *  topPush 食指越顶(双中手 F 族)/ hook 贴面勾拨(双中手 y 族,含连拨)/
  *  backHook 双中手 B' 右食指背钩 / downPush 左中右下 F 族右食指下拨 /
  *  upPush U' 推法(记号 U'p,右食指 RUB→BLU)。无 style = 遗留扫法(非标准握)。 */
@@ -77,7 +77,7 @@ export interface TwistHint { quarters?: number; push?: boolean }
 
 /**
  * (轴, 层类别, 转向, 握姿, 提示) → 手势。dir = sign(group.angle)(angle 绕 AXIS_VEC)。
- * 权威规格表在 FINGERING.md(改指法先改那里);直觉映射(标准配色正视 F 绿 U 白):
+ * 权威规格表在 FINGERTRICKS.md(改指法先改那里);直觉映射(标准配色正视 F 绿 U 白):
  *  R/L 外层 = 同侧手腕转;U 顺(dir>0)= 右食指弹,U' = 左食指;
  *  D = 左无名指,D' = 右无名指;F = 右拇指推,F' = 左拇指;
  *  B/B' = 后侧中指(双手指尖本就搭在 B 面);M/E/S 就近借同族手指。
@@ -106,7 +106,7 @@ export function classifyHandGesture(
       if (hint?.push && dir < 0 && bothHome) return { kind: "flick", hand: "R", finger: "index", style: "upPush" };
       const hand = dir > 0 ? "R" : "L";
       if (bothHome) {
-        // 连拨仅右手方向(U2,dir>0)有已解 fit;镜像 U2' 缺 L 侧标定,回落单指(FINGERING §6)。
+        // 连拨仅右手方向(U2,dir>0)有已解 fit;镜像 U2' 缺 L 侧标定,回落单指(FINGERTRICKS §6)。
         return double && hand === "R"
           ? { kind: "flick", hand, finger: "index", finger2: "middle", style: "hook" } // U2 连拨
           : { kind: "flick", hand, finger: "index", style: "hook" };
@@ -135,7 +135,7 @@ export function classifyHandGesture(
     return { kind: "flick", hand: dir > 0 ? "L" : "R", finger: "thumb" }; // F 族
   }
   if (cls === "low" && bothHome) {
-    // 双中手 B'(dir>0)= 右食指背钩;B = 左食指镜像(FINGERING §4.2 推定)。
+    // 双中手 B'(dir>0)= 右食指背钩;B = 左食指镜像(FINGERTRICKS §4.2 推定)。
     return { kind: "flick", hand: dir > 0 ? "R" : "L", finger: "index", style: "backHook" };
   }
   return { kind: "flick", hand: dir < 0 ? "L" : "R", finger: "middle" }; // B / S 族
@@ -222,11 +222,15 @@ const COMMIT_ANGLE = 0.02;
  */
 const DODGE_MAG: Record<Axis, Record<LayerClass, number>> = {
   x: { high: 0, low: 0, mid: 0, whole: 0 },
+  // y.high 0(2026-07-09 用户规格「手作为整体任何时候不远离魔方,单指可以」):
+  // U 族静止手不再整手平移(旧 16),改静止手食指单指离面避让,见
+  // HOOK_INDEX_EVADE。y.low/mid 整手让保留 —— E 犁拇指整块肉 / D 族犁大鱼际
+  // 下缘,受害的是掌肉不是单指,单指避让无解,后续迭代再评估迁移。
   // y.low 44:① D' 勾弯时左无名指节肉(x≈-91)蹭进 B 面 1.6U(26 已够);
   // ② 大鱼际下缘(y≈-39,越过底层 y=-32 界 7U,径向 128U)会被底层角柱
   // (135.8U)在 θ≈1.3 犁到 3.4U —— 全顶点 oracle 2026-07-07 补测现形,
   // 外让推到径向 >135.8U 需 ≥42,取 44 留量。
-  y: { high: 16, low: 44, mid: 62, whole: 0 },
+  y: { high: 0, low: 44, mid: 62, whole: 0 },
   z: { high: 10, low: 40, mid: 10, whole: 0 },
 };
 
@@ -346,14 +350,14 @@ const HOOK = {
   open: 1.3,   // 弯曲饱和角
 };
 
-/** 连拨次指 Q1 就位姿(FINGERING §4.1:首指扫前 90° 期间次指渐入就位,
+/** 连拨次指 Q1 就位姿(FINGERTRICKS §4.1:首指扫前 90° 期间次指渐入就位,
  *  90° 处接力)。键 = 次指名;数值浏览器标定(rig.tuning 现场调)。 */
 const HOOK_PREP: Partial<Record<FingerName, { c1: number; c2: number; c3: number; splay: number }>> = {
   middle: { c1: -0.29, c2: 0.309, c3: 0.0093, splay: 0.468 }, // U2 次指:中指沿 B 面上探 U 层带,90° 交接处进带;0.024rad 热窗密解(粗采样漏 slab 角部 −12U)
   ring: { c1: -0.12, c2: 0.06, c3: 0.04, splay: -0.08 },     // D2' 次指:无名指微让位再接力
 };
 
-/** 样式化指法跟随曲线(FINGERING §4.0「贴面」):每通道二次型
+/** 样式化指法跟随曲线(FINGERTRICKS §4.0「贴面」):每通道二次型
  *  v(s) = lin·s + quad·s²,s = 本指扫角/90°。键 = `${style}_${finger}` + 连拨
  *  次指后缀 "2"(U=hook_index / D'=hook_ring / D2'=hook_pinky+hook_ring2 /
  *  U2 次指=hook_middle2 / B'=backHook_index / 右下手 F=downPush_index+
@@ -372,9 +376,19 @@ type HookFit = { c1: [number, number, number]; c2: [number, number, number]; c3:
  *  同构(零跟随基线逐位相同,oracle 实证),关节空间解可整套移植。 */
 const HOOK_FOLLOW: Record<HandSide, Record<string, HookFit>> = {
   R: {
-    hook_index: { c1: [-0.03, -0.45, 0.3], c2: [1.26, -0.81, -0.27], c3: [-0.0614, 0.5774, -0.4054], splay: [-0.3427, 0.0532, 0.1695] },
+    // hook_index 端点重标(2026-07-09 用户规格「U 做完右食指在 RUF」):s=1 指尖
+    // 端点钉到角 M(=UFR 的 R 面贴纸,初始 BUR 贴纸随层转 90° 的落位)——
+    // 浏览器冻结 s≈1 坐标下降只解三次项(s³ 权重保早段路径基本不动),
+    // 残差 0.01U,端点 (109.0,66.0,66.0)(p4 骨端在贴纸外 ~13U = 贴块间隙)。
+    // 终姿 = 指链绕过右上棱包到 R 面前上(真实 U 拨的 follow-through)。
+    hook_index: { c1: [-0.03, -0.45, 1.0922], c2: [1.26, -0.81, 0.1378], c3: [-0.0614, 0.5774, -0.3937], splay: [-0.3427, 0.0532, 0.0492] },
     hook_ring: { c1: [0.001, -0.5045, 0.5795], c2: [1.3257, -1.1291, 0.4743], c3: [0.1113, -0.0262, -0.2939], splay: [-0.21, 0.3862, 0.1281] },
-    hook_middle2: { c1: [0.19, -0.36, 0.096], c2: [0.784, -0.704, 0.2988], c3: [-0.4291, 0.7306, 0.1306], splay: [-0.336, 0.22, -0.02] },
+    // hook_middle2 全曲线重解(2026-07-09,配 U2 规格「第二个 U 做完 R3 紧贴
+    // 角 M」):端点钉角 M 槽位(残差 1.8U,(110.7,66.2,65.5))+ Q2 全程 3° 采样
+    // 穿透罚(骨端对移动层扩壳箱,余量 10U)—— 只钉端点会让中段切顶面弦
+    // (骨端 −4.3U 压进 U 面,2026-07-09 实测),重解后路径改走 R 面外侧走廊
+    // 下潜、尾随来料角块,全程骨端穿透 ≤0.1U。
+    hook_middle2: { c1: [-0.1334, -0.4139, 1.316], c2: [1.1473, -1.0802, 0.1132], c3: [2.3893, -0.3557, -1.9683], splay: [-0.5798, 0.3442, 0.1534] },
     hook_pinky: { c1: [0.2484, -0.21, 0.0182], c2: [0.7997, -0.5291, -0.0955], c3: [-0.2046, 0.2746, -0.155], splay: [-0.1375, 0.008, 0.1] },
     hook_ring2: { c1: [0.041, -0.382, 0.5732], c2: [1.7475, -1.4909, 0.3643], c3: [0.8482, -0.6875, -0.4179], splay: [-0.34, 0.37, 0.1144] },
     backHook_index: { c1: [-0.18, 0.15, 0.069], c2: [-0.03, 0, 0.0857], c3: [0.1967, 0.1108, 0.0428], splay: [0.5063, -0.1012, -0.0764] },
@@ -417,6 +431,18 @@ const BACK_EVADE: Record<HandSide, { c1: number; c2: number; c3: number; splay: 
   L: { c1: -0.0246, c2: 0, c3: 0, splay: 0 },
 };
 
+/** U 族(y.high)静止手食指单指避让(2026-07-09 用户规格「手作为整体在任何
+ *  时候不要远离魔方,单个手指可以」,替代旧 DODGE_MAG.y.high=16 整手平移):
+ *  home 静止手食指尖贴 B 面上部(L 手 BUL / R 手 BUR),正处 U 层扫掠带,
+ *  U/U'/U2/U'p 期间沿 B 面外法线(−z)微伸离面一小段,层角回落后归位。
+ *  时序同 dodge:目标 = min(1,|层角|/0.09) 即时跟升,drop 后 RECOVER_MS
+ *  回落(HandState.indexEvade,tick 推进)。数值浏览器截图标定,判据:
+ *  U 层角块扫掠(角柱 135.8U)不碰静止食指。 */
+const HOOK_INDEX_EVADE: Record<HandSide, { c1: number; c2: number; c3: number; splay: number }> = {
+  R: { c1: -0.07, c2: -0.04, c3: 0, splay: 0 },
+  L: { c1: -0.07, c2: -0.04, c3: 0, splay: 0 },
+};
+
 /** 回撤抬指(hook/backHook/downPush 的 decay 凸包):终姿绕层缠得深(尤其连拨
  *  s=1 + 下手握),关节空间直线回 home 的「弦」会切进魔方体(真实播放 oracle
  *  F2 −21.8U,2026-07-08)。decay 叠一个伸展凸包(快攻 12% - 平台 - 快收 15%
@@ -424,15 +450,21 @@ const BACK_EVADE: Record<HandSide, { c1: number; c2: number; c3: number; splay: 
  *  天然安全。幅度按回撤起点的 s 加权(缠得浅回撤本就安全,别白抬)。 */
 const RETREAT_LIFT = { c1: -0.338, c2: -0.653, c3: -0.113 };
 
-/** U2 连拨首指退场(FINGERING §4.2,用户规格 2026-07-08):第一个 U 做完
- *  食指保持在 RUF;第二个 U 中指接力期间,食指同步向水平右(魔方系 +x)
- *  移动离开魔方。joint 空间增量 × sm(sRaw2) 渐入;commit 后与两指同乘
- *  decayK 从退场姿直线归 home(已在魔方外,弦不穿体)。数值浏览器标定:
- *  Q2 端指尖 Δ位置 (+52.9,−0.3,+3.5)≈纯水平 +x,mid/tip 关节全程距魔方
- *  中心单调递增(214→238→261U / 258→281→303U),零回穿风险。 */
-const HOOK_EXIT = { c1: -0.403, c2: 0.313, c3: 0, splay: -0.070 };
+/** U2 连拨首指退场(FINGERTRICKS §4.2,用户规格 2026-07-09 修订):第一个 U
+ *  做完食指紧贴角 M(初始 UBR 角块已转到 URF,指尖停其 R 面贴纸);第二个 U
+ *  开始的**前 20%**(sRaw2 ∈ [0,HOOK_EXIT_IN])内食指快速朝水平右(魔方系
+ *  +x)离开角 M 一小段,此后保持退场姿给接力中指让位,U2 提交后与次指同乘
+ *  decayK 直线归 home(已在魔方外,弦不穿体)。旧版 = 整个 Q2 同步渐退 +
+ *  Δ≈+52.9U 大幅离场;按用户规格收小为「一小段」。数值浏览器冻结 Q2 中段
+ *  坐标下降重解(hook_index 端点 2026-07-09 重标后旧 joint 方向已不再对应
+ *  +x):指尖端点 Δ = (+17.2,0,0) 纯 +x,残差 0.08U。判据:Q2 末中指指尖
+ *  到达角 M 时与食指无碰撞/穿模。 */
+const HOOK_EXIT = { c1: -0.061, c2: 0.225, c3: 0.021, splay: -0.025 };
+/** HOOK_EXIT 渐入窗口:Q2 前 20% 内退场到位(连续 180° 层转无时间间隙,
+ *  「先退再接」折衷为「极早期快退」)。 */
+const HOOK_EXIT_IN = 0.2;
 
-/** 左中右下 F 族「食指下拨」(FINGERING §4.3):食指尖起手压 U 面 UFR 区,
+/** 左中右下 F 族「食指下拨」(FINGERTRICKS §4.3):食指尖起手压 U 面 UFR 区,
  *  随 F 层角前卷(×φ/90°)把初始 UFR 往前下带;F2 次指中指 Q1 前探 UF 缘接力。
  *  数值浏览器标定。 */
 const DOWN_PUSH = {
@@ -442,7 +474,7 @@ const DOWN_PUSH = {
   prep2: { c1: -0.29, c2: 0.309, c3: 0.0093, splay: -0.468 },
 };
 
-/** U' 推法(记号 U'p,FINGERING §4.5):右食指前置就位到 RUB 角块 U 贴纸
+/** U' 推法(记号 U'p,FINGERTRICKS §4.5):右食指前置就位到 RUB 角块 U 贴纸
  *  (reach:从 BUR 的 B 面接触位爬过后上棱),推层 90° 指尖随初始角块到
  *  BLU。climb = reach 通道姿态;follow = 随层角展开(浏览器标定);
  *  wrist = 原地腕转 ψ 三次多项式(绕「过腕点、平行 y」轴,腕点不动 → 前臂
@@ -481,10 +513,10 @@ interface HandState {
   recoverT: number; // 0..1,1=已回位
   /** flick 残留(手指偏移随时间衰减)。 */
   flickFinger: FingerName | null;
-  /** 连拨次指(180° 接力,FINGERING §4.1);decay 期间保留(两指一起恢复)。 */
+  /** 连拨次指(180° 接力,FINGERTRICKS §4.1);decay 期间保留(两指一起恢复)。 */
   flickFinger2: FingerName | null;
   flickAxis: Axis | null; // 弹指所属轴(决定扫法:y=勾弯横拉,x/z=竖扫);decay 期间保留
-  flickStyle: FlickStyle | null; // 特殊扫法(FINGERING.md);decay 期间保留
+  flickStyle: FlickStyle | null; // 特殊扫法(FINGERTRICKS.md);decay 期间保留
   flickAmount: number; // 当前手指扫角(rad,随层角;连拨/接触样式存未钳制原角)
   flickDecay: number;  // drop 后残留衰减
   /** topPush 伸指进度(时间驱动,0..1;reachTarget 为目标,tick 内推进)。 */
@@ -495,6 +527,10 @@ interface HandState {
   dodge: number;
   dodgeTarget: number;
   dodgeMag: number;
+  /** U 族静止手食指单指避让:0..1 进度,时序语义同 dodge(即时跟升 /
+   *  RECOVER_MS 回落)× HOOK_INDEX_EVADE = 食指离面姿态偏移。 */
+  indexEvade: number;
+  indexEvadeTarget: number;
 }
 
 export default class HandsRig extends THREE.Group {
@@ -700,6 +736,8 @@ export default class HandsRig extends THREE.Group {
       dodge: 0,
       dodgeTarget: 0,
       dodgeMag: 0,
+      indexEvade: 0,
+      indexEvadeTarget: 0,
     };
   }
 
@@ -733,6 +771,8 @@ export default class HandsRig extends THREE.Group {
       h.reachTarget = 0;
       h.dodge = 0;
       h.dodgeTarget = 0;
+      h.indexEvade = 0;
+      h.indexEvadeTarget = 0;
     }
     this.regripFlag = false;
     this.pendingHint = null;
@@ -801,6 +841,8 @@ export default class HandsRig extends THREE.Group {
       h.reachTarget = 0;
       h.dodge = 0;
       h.dodgeTarget = 0;
+      h.indexEvade = 0;
+      h.indexEvadeTarget = 0;
     }
     this.regripFlag = false;
   }
@@ -835,7 +877,7 @@ export default class HandsRig extends THREE.Group {
     return { R: nameOf(hands.R.grip), L: nameOf(hands.L.grip) };
   }
 
-  /** 该手势是否走「前置伸指」(转动开始前指尖先到位;FINGERING §4.5/§4.2):
+  /** 该手势是否走「前置伸指」(转动开始前指尖先到位;FINGERTRICKS §4.5/§4.2):
    *  topPush(F 族越顶)/ upPush(U'p 就位 RUB)/ D2' 首指小指伸至 D 层。 */
   private static needsReach(g: HandGesture): boolean {
     if (g.kind !== "flick") return false;
@@ -880,6 +922,7 @@ export default class HandsRig extends THREE.Group {
     hook: typeof HOOK; hookFollow: typeof HOOK_FOLLOW; hookPrep: typeof HOOK_PREP;
     pinkyReach: typeof PINKY_REACH; downPush: typeof DOWN_PUSH; upPush: typeof UP_PUSH;
     thumbEvadeD: typeof THUMB_EVADE_D; backEvade: typeof BACK_EVADE;
+    hookIndexEvade: typeof HOOK_INDEX_EVADE;
     retreatLift: typeof RETREAT_LIFT; hookExit: typeof HOOK_EXIT;
   } {
     return {
@@ -887,6 +930,7 @@ export default class HandsRig extends THREE.Group {
       hook: HOOK, hookFollow: HOOK_FOLLOW, hookPrep: HOOK_PREP,
       pinkyReach: PINKY_REACH, downPush: DOWN_PUSH, upPush: UP_PUSH,
       thumbEvadeD: THUMB_EVADE_D, backEvade: BACK_EVADE,
+      hookIndexEvade: HOOK_INDEX_EVADE,
       retreatLift: RETREAT_LIFT, hookExit: HOOK_EXIT,
     };
   }
@@ -959,9 +1003,11 @@ export default class HandsRig extends THREE.Group {
     // —— 轮询当前转动层 ——
     const now = performance.now();
     const cube = this.cube;
-    // 外让目标每帧重算(driveGesture 写入);无手势帧目标归零 → 衰减回落。
+    // 外让/单指避让目标每帧重算(driveGesture 写入);无手势帧目标归零 → 衰减回落。
     hands.R.dodgeTarget = 0;
     hands.L.dodgeTarget = 0;
+    hands.R.indexEvadeTarget = 0;
+    hands.L.indexEvadeTarget = 0;
     if (cube) {
       let axis: Axis | null = null;
       let layers: number[] | null = null;
@@ -1073,6 +1119,14 @@ export default class HandsRig extends THREE.Group {
         h.dodge = Math.max(h.dodgeTarget, h.dodge - dt / RECOVER_MS);
         animating = true;
       }
+      // U 族静止手食指单指避让:同 dodge 时序(即时跟升 / RECOVER_MS 回落)。
+      if (h.indexEvadeTarget > h.indexEvade) {
+        h.indexEvade = h.indexEvadeTarget;
+        animating = true;
+      } else if (h.indexEvade > h.indexEvadeTarget) {
+        h.indexEvade = Math.max(h.indexEvadeTarget, h.indexEvade - dt / RECOVER_MS);
+        animating = true;
+      }
       this.applyHand(side, keepalive);
     }
     if (this.regripFlag && hands.R.recoverT >= 1 && hands.L.recoverT >= 1) {
@@ -1141,7 +1195,7 @@ export default class HandsRig extends THREE.Group {
     } else {
       const h = hands[g.hand];
       if (g.style) {
-        // 样式化指法(FINGERING.md):手根不动 —— 禁腕借力(借力绕 y/z 会把
+        // 样式化指法(FINGERTRICKS.md):手根不动 —— 禁腕借力(借力绕 y/z 会把
         // 静止的中指/无名指沿 ~130U 弧转进 B 面,dodge 已按接触规格砍掉后
         // oracle 实测 pen −5.7);接触/连拨编排全在 applyHand 随层角展开。
         // flickAmount 存未钳制原角(release / 连拨象限拆分依赖真实层角)。
@@ -1164,10 +1218,18 @@ export default class HandsRig extends THREE.Group {
     // 拉出扫掠区)按幅度表沿本侧外向 x 平移;0.09rad≈5° 内让满,与转动起步
     // 贴面翻剪 / 角柱越过接触点的窗口同步。weld 手随层整体转,零相对运动不让。
     // topPush/downPush 整段跳过(z 轴手根不动样式,静止手安全性靠 home 姿
-    // 指腹接触半径 ≥136U > 角柱扫掠 135.8U,oracle 复核)。upPush 是 y 轴:
-    // 静止手食指在 BUL 正处 U 层带,角柱扫掠会擦中(真实播放 oracle −1.7U,
-    // 2026-07-08),另一手照常外让。
+    // 指腹接触半径 ≥136U > 角柱扫掠 135.8U,oracle 复核)。
     if (g.kind === "flick" && (g.style === "topPush" || g.style === "downPush")) return;
+    // U 族(y.high,含 hook 单/连拨与 upPush)静止手改食指单指避让(见
+    // HOOK_INDEX_EVADE 注释):静止手食指尖在 B 面上部(BUL/BUR)正处 U 层
+    // 扫掠带(upPush 真实播放 oracle 曾测 −1.7U,2026-07-08),整手 dodge 已
+    // 废(DODGE_MAG.y.high=0),只写另一手的单指避让目标;弹指手不避
+    // (指尖要贴面)。
+    if (g.kind === "flick" && axis === "y" && this.active?.cls === "high") {
+      const other = hands[g.hand === "R" ? "L" : "R"];
+      const t = Math.min(1, Math.abs(angle) / 0.09);
+      if (t > other.indexEvadeTarget) other.indexEvadeTarget = t;
+    }
     const mag = DODGE_MAG[axis][this.active?.cls ?? "whole"];
     if (mag > 0) {
       const t = Math.min(1, Math.abs(angle) / 0.09);
@@ -1358,7 +1420,7 @@ export default class HandsRig extends THREE.Group {
     const sm = (t: number): number => t * t * (3 - 2 * t);
     const decayK = h.flickDecay > 0 ? h.flickDecay : 1;
     const flickA = h.flickFinger ? h.flickAmount * decayK : 0;
-    // 连拨(FINGERING §4.1):未钳制原角按象限拆两指 —— 首指扫 [0,90°] 后保持
+    // 连拨(FINGERTRICKS §4.1):未钳制原角按象限拆两指 —— 首指扫 [0,90°] 后保持
     // 末姿不恢复,次指前 90° 就位、[90°,180°] 接力;drop 后 decayK 同乘,两指
     // 一起恢复(用户硬规则)。
     const isDouble = h.flickFinger2 !== null;
@@ -1405,6 +1467,16 @@ export default class HandsRig extends THREE.Group {
         c3 += ev.c3 * tEv;
         splay += ev.splay * tEv;
       }
+      // U 族静止手食指离面避让(见 HOOK_INDEX_EVADE 注释):弹指发生在另一只
+      // 手上,本手无 flick 状态,进度走 tick 推进的 indexEvade(role===0 兜住
+      // 「上一步避让还在回落、本手食指已开始弹下一步」的重叠帧)。
+      if (name === "index" && role === 0 && h.indexEvade > 0) {
+        const ev = HOOK_INDEX_EVADE[side];
+        c1 += ev.c1 * h.indexEvade;
+        c2 += ev.c2 * h.indexEvade;
+        c3 += ev.c3 * h.indexEvade;
+        splay += ev.splay * h.indexEvade;
+      }
       const share = !isDouble ? (role === 1 ? flickA : 0) : (role === 1 ? amt1 : amt2) * rawSign;
       const engaged = role === 1
         ? (h.reachT > 0 || share !== 0)
@@ -1414,7 +1486,7 @@ export default class HandsRig extends THREE.Group {
         //  拇指(F 族):折叠的中节展开 → 沿 F 面向上大扫幅;
         //  y 轴(U/D/E,食指/无名指)与 hook/backHook:层动水平朝本手掌心 →
         //  向掌心勾弯横拉(真实拨 U 是「勾」;反向伸展会向手背过伸 —— 用户报障);
-        //  downPush/upPush:压面推层(FINGERING §4.3/§4.5);
+        //  downPush/upPush:压面推层(FINGERTRICKS §4.3/§4.5);
         //  x/z 轴中指(M/B/S 族):接触立柱处层动是竖直的 → splay 竖扫为主。
         const open = Math.min(1, Math.abs(share) / HOOK.open);
         if (topPush) {
@@ -1448,7 +1520,7 @@ export default class HandsRig extends THREE.Group {
           splay += (liftT * TOP_PUSH.lift + relEff * TOP_PUSH.releaseLift * followGate
             + followAt(FW.splay, phi) * followGate) * sideSign;
         } else if (h.flickStyle === "downPush") {
-          // 左中右下 F 族(FINGERING §4.3):食指尖起手压 U 面 UFR 区,随层角
+          // 左中右下 F 族(FINGERTRICKS §4.3):食指尖起手压 U 面 UFR 区,随层角
           // 前卷把初始 UFR 往前下带;F2 次指中指 Q1 前探 UF 缘、Q2 接力。
           const t = role === 2 ? sRaw2 : (isDouble ? sRaw1 : Math.min(rawAbs, HALF_PI) / HALF_PI);
           if (role === 2) {
@@ -1478,7 +1550,7 @@ export default class HandsRig extends THREE.Group {
             c3 += RETREAT_LIFT.c3 * lift;
           }
         } else if (h.flickStyle === "upPush") {
-          // U'p 推法(FINGERING §4.5):reach 爬上 RUB 角块 U 贴纸,随层角
+          // U'p 推法(FINGERTRICKS §4.5):reach 爬上 RUB 角块 U 贴纸,随层角
           // 沿 U 面推初始角块到 BLU;decay 沿弧倒放(U 面平面在 y 旋转下不变,
           // 弧退贴面天然安全),收指段 reach 倒放爬回 B 面。
           const smR = sm(h.reachT);
@@ -1540,9 +1612,10 @@ export default class HandsRig extends THREE.Group {
             c2 += fitAt(fit, "c2", s) * decayK;
             c3 += fitAt(fit, "c3", s) * decayK;
             splay += fitAt(fit, "splay", s) * decayK; // 每手独立标定,含侧向符号
-            // U2 首指退场(HOOK_EXIT 注释):Q2 期间食指水平右移出魔方。
+            // U2 首指退场(HOOK_EXIT 注释):Q2 前 20% 内食指快速右移一小段
+            // 离开角 M,此后保持退场姿到提交(随 decayK 与次指一起归 home)。
             if (role === 1 && isDouble && h.flickStyle === "hook" && name === "index") {
-              const ex = sm(sRaw2) * decayK;
+              const ex = sm(Math.min(1, sRaw2 / HOOK_EXIT_IN)) * decayK;
               c1 += HOOK_EXIT.c1 * ex;
               c2 += HOOK_EXIT.c2 * ex;
               c3 += HOOK_EXIT.c3 * ex;
