@@ -28,8 +28,20 @@ const CELL = 20;
 const GAP = 18;
 const PAD_TOP = 14;
 
-function facePositions(S: number): Record<SpeffzFace, [number, number]> {
+function facePositions(S: number, compact = false): Record<SpeffzFace, [number, number]> {
   const step = S + GAP;
+  if (compact) {
+    // 窄屏高阶:把六面按 U L F R B D 顺序排成两列网格(牺牲展开拓扑),
+    // 图从 4 面宽收到 2 面宽,同容器下每格约翻倍、字母翻倍可读。
+    return {
+      U: [0, PAD_TOP],
+      L: [step, PAD_TOP],
+      F: [0, PAD_TOP + step],
+      R: [step, PAD_TOP + step],
+      B: [0, PAD_TOP + 2 * step],
+      D: [step, PAD_TOP + 2 * step],
+    };
+  }
   return {
     U: [step, PAD_TOP],
     B: [3 * step, PAD_TOP],
@@ -49,10 +61,10 @@ function FaceLabel({ face, x, y }: { face: SpeffzFace; x: number; y: number }) {
 }
 
 /** 某阶某类块的逐贴纸展开图。 */
-export function SpeffzNet({ n, diagram, label }: { n: number; diagram: DiagramType; label: string }) {
+export function SpeffzNet({ n, diagram, label, compact = false }: { n: number; diagram: DiagramType; label: string; compact?: boolean }) {
   const S = n * CELL;
-  const pos = facePositions(S);
-  const W = 4 * S + 3 * GAP;
+  const pos = facePositions(S, compact);
+  const W = compact ? 2 * S + GAP : 4 * S + 3 * GAP;
   const H = PAD_TOP + 3 * S + 2 * GAP;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
