@@ -108,6 +108,13 @@ export function bfaceGridToObservations(grid: BFaceGrid): Observation[] {
  */
 export interface RawFaceObs {
   colors: readonly (ColorName | null)[];
+  /**
+   * 可选软观测: 逐格 6 色概率向量 (COLOR_CODE 顺序 W R G Y O B, 已归一化;
+   * null = 该格无信息)。提供时评分用 log p[预测色] 取代 hit/miss —
+   * 颜色重叠区的格子输出近均匀 (近中性), 干净格输出尖峰 (强证据),
+   * 硬 argmax 在 60-70% 精度下把混淆格变成对真路径的全额惩罚, 软通道不会。
+   */
+  probs?: readonly (readonly number[] | null)[];
 }
 
 const COLOR_CODE: Record<ColorName, number> = { W: 0, R: 1, G: 2, Y: 3, O: 4, B: 5 };
@@ -123,13 +130,17 @@ const FACE_ROT_ASSIGN: readonly (readonly number[])[] = ORIENTATION_PERMS.map((r
   Array.from({ length: 9 }, (_, i) => rho[45 + i]),
 );
 
-/** 面身份边缘化的观测对数似然: 对指派集取 max (默认全 24; 可限面收紧证据) */
+/**
+ * 面身份边缘化的观测对数似然: 对指派集取 max (默认全 24; 可限面收紧证据)。
+ * lp 提供时该格用软概率 log p[预测色] (预算好 log 的 Float64Array), 否则 hit/miss。
+ */
 export function logRawObs(
   sc: readonly number[],
   codes: readonly number[], // 相机 9 格颜色码 (-1 = 不可读)
   logHit: number,
   logMiss: number,
   assigns: readonly (readonly number[])[] = FACE_ROT_ASSIGN,
+  lp: readonly (Float64Array | null)[] | null = null,
 ): number {
   let best = -Infinity;
   for (const assign of assigns) {
@@ -137,7 +148,9 @@ export function logRawObs(
     for (let cell = 0; cell < 9; cell++) {
       const code = codes[cell];
       if (code < 0) continue;
-      s += Math.floor(sc[assign[cell]] / 9) === code ? logHit : logMiss;
+      const soft = lp?.[cell];
+      if (soft) s += soft[Math.floor(sc[assign[cell]] / 9)];
+      else s += Math.floor(sc[assign[cell]] / 9) === code ? logHit : logMiss;
     }
     if (s > best) best = s;
   }
@@ -179,6 +192,8 @@ export interface AnchoredOptions {
   /** 原始观测的单格命中/漏概率 (默认 0.85 / 0.03) */
   rawHitProb?: number;
   rawMissProb?: number;
+  /** 软观测回火 τ: lp = τ·log p + (1-τ)·log(1/6) (相邻帧相关性/模型过自信折减, 默认 1) */
+  rawSoftTemper?: number;
   /** 原始观测允许的可见面 (默认全 6 面; 限面收紧证据强度) */
   rawFaces?: readonly ("U" | "R" | "F" | "D" | "L" | "B")[];
   /**
@@ -300,10 +315,26 @@ export function anchoredBeamSearch(
   const logHit = Math.log(opts.rawHitProb ?? 0.85);
   const logMiss = Math.log(opts.rawMissProb ?? 0.03);
   const rawAssigns = opts.rawFaces ? assignsForFaces(opts.rawFaces) : undefined;
-  const rawCodes = opts.rawObservations?.map((o) =>
-    o ? (Array.isArray(o) ? (o as readonly RawFaceObs[]) : [o as RawFaceObs]).map(rawObsCodes) : null,
-  );
+  // 软观测预处理: probs → 逐格 log 概率 (floor 0.02 ≈ 硬 miss 量级, 防单格 -inf 核弹)
+  const softTemper = opts.rawSoftTemper ?? 1;
+  const prepLP = (o: RawFaceObs): (Float64Array | null)[] | null => {
+    if (!o.probs) return null;
+    const logSixth = Math.log(1 / 6);
+    return o.probs.map((p) => {
+      if (!p) return null;
+      const arr = new Float64Array(6);
+      for (let i = 0; i < 6; i++) {
+        arr[i] = softTemper * Math.log(Math.max(p[i], 0.02)) + (1 - softTemper) * logSixth;
+      }
+      return arr;
+    });
+  };
+  const asList = (o: RawFaceObs | readonly RawFaceObs[]): readonly RawFaceObs[] =>
+    Array.isArray(o) ? (o as readonly RawFaceObs[]) : [o as RawFaceObs];
+  const rawCodes = opts.rawObservations?.map((o) => (o ? asList(o).map(rawObsCodes) : null));
+  const rawLPs = opts.rawObservations?.map((o) => (o ? asList(o).map(prepLP) : null));
   const finalRawCodes = opts.finalRawObservation ? rawObsCodes(opts.finalRawObservation) : null;
+  const finalRawLP = opts.finalRawObservation ? prepLP(opts.finalRawObservation) : null;
 
   // pin 组合: 每个 rawFaces 面钉 1 个面内旋转 (笛卡尔积); 关闭时单组合 = 全指派集。
   // 逐 pin 评分用共享的逐指派分数分解 (8 指派算一遍, 16 组合只做 max 组装)。
@@ -343,26 +374,40 @@ export function anchoredBeamSearch(
     return n;
   };
 
-  /** 单指派观测对数似然 */
-  const logRawOne = (sc: readonly number[], codes: readonly number[], assign: readonly number[]): number => {
+  /** 单指派观测对数似然 (lp 提供的格用软概率) */
+  const logRawOne = (
+    sc: readonly number[],
+    codes: readonly number[],
+    assign: readonly number[],
+    lp: readonly (Float64Array | null)[] | null = null,
+  ): number => {
     let s = 0;
     for (let cell = 0; cell < 9; cell++) {
       const code = codes[cell];
       if (code < 0) continue;
-      s += Math.floor(sc[assign[cell]] / 9) === code ? logHit : logMiss;
+      const soft = lp?.[cell];
+      if (soft) s += soft[Math.floor(sc[assign[cell]] / 9)];
+      else s += Math.floor(sc[assign[cell]] / 9) === code ? logHit : logMiss;
     }
     return s;
   };
   /** 段观测的逐 pin 分数向量 (双端点语义: 每网格 max over 该 pin 指派 × 两端点, 再过鲁棒混合) */
-  const visPerPin = (raw: readonly (readonly number[])[], startSc: readonly number[], endSc: readonly number[]): Float64Array => {
+  const visPerPin = (
+    raw: readonly (readonly number[])[],
+    lps: readonly ((Float64Array | null)[] | null)[] | null,
+    startSc: readonly number[],
+    endSc: readonly number[],
+  ): Float64Array => {
     const totals = new Float64Array(pinCombos.length);
     const nA = pinFlatAssigns.length;
     const s = new Float64Array(nA * 2);
-    for (const codes of raw) {
+    for (let gi = 0; gi < raw.length; gi++) {
+      const codes = raw[gi];
+      const lp = lps?.[gi] ?? null;
       const rd = readOf(codes);
       for (let ai = 0; ai < nA; ai++) {
-        s[ai] = logRawOne(startSc, codes, pinFlatAssigns[ai]);
-        s[nA + ai] = logRawOne(endSc, codes, pinFlatAssigns[ai]);
+        s[ai] = logRawOne(startSc, codes, pinFlatAssigns[ai], lp);
+        s[nA + ai] = logRawOne(endSc, codes, pinFlatAssigns[ai], lp);
       }
       for (let pi = 0; pi < pinCombos.length; pi++) {
         let best = -Infinity;
@@ -383,7 +428,7 @@ export function anchoredBeamSearch(
     opts.finalObservation
       ? vw * logObs(sc, opts.finalObservation)
       : finalRawCodes
-        ? vw * robust(logRawObs(sc, finalRawCodes, logHit, logMiss, pinCombos[pin]), readOf(finalRawCodes))
+        ? vw * robust(logRawObs(sc, finalRawCodes, logHit, logMiss, pinCombos[pin], finalRawLP), readOf(finalRawCodes))
         : 0;
 
   // 初始 beam × pin 组合: 逆序 = 24 solved 朝向 (末帧观测收敛朝向并淘汰错 pin);
@@ -416,15 +461,18 @@ export function anchoredBeamSearch(
 
     const obs = opts.observations?.[t] ?? null;
     const raw = rawCodes?.[t] ?? null;
+    const rawLP = rawLPs?.[t] ?? null;
     /** 段观测似然 (单 pin): startSc = 段起点态, endSc = 段终点态 (双端点语义) */
     const visOf = (startSc: readonly number[], endSc: readonly number[], pin: number): number => {
       if (obs) return vw * logObs(startSc, obs);
       if (!raw) return 0;
       const assigns = pinCombos[pin];
       let s = 0;
-      for (const codes of raw) {
-        const a = logRawObs(startSc, codes, logHit, logMiss, assigns);
-        const b = logRawObs(endSc, codes, logHit, logMiss, assigns);
+      for (let gi = 0; gi < raw.length; gi++) {
+        const codes = raw[gi];
+        const lp = rawLP?.[gi] ?? null;
+        const a = logRawObs(startSc, codes, logHit, logMiss, assigns, lp);
+        const b = logRawObs(endSc, codes, logHit, logMiss, assigns, lp);
         s += robust(a >= b ? a : b, readOf(codes));
       }
       return vw * s;
@@ -441,7 +489,7 @@ export function anchoredBeamSearch(
       const base = parent.score + Math.log(p);
       const children: PathNode[] = [];
       if (drift && raw && !obs) {
-        const pins = visPerPin(raw, startSc, endSc);
+        const pins = visPerPin(raw, rawLP, startSc, endSc);
         const keep = pins[parent.pin];
         children.push({
           state: nextState,
