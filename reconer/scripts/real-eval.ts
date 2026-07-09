@@ -420,7 +420,9 @@ for (const sf of files) {
       }
       return -1;
     };
+    let obsId = 0;
     const collectFrom = (obs: FaceObservation, states: readonly (readonly number[])[], rgb: Uint8Array) => {
+      const myObsId = obsId++;
       // 全 (态×指派) 打分, 收集并列最优; 读格 ≥5 且匹配 ≥60% 才可信
       interface Cand { st: readonly number[]; ai: number }
       let cands: Cand[] = [];
@@ -452,14 +454,14 @@ for (const sf of files) {
         if (!ok || !label) continue;
         const blob = obs.grid.cells[i];
         if (blob) {
-          samples.push({ r: blob.r, g: blob.g, b: blob.b, label });
+          samples.push({ r: blob.r, g: blob.g, b: blob.b, label, obs: myObsId });
           continue;
         }
         // null 读格仅在高读出帧收集 (读出 ≥7 时 null 多为阈值失败如暖白, 非手指遮挡)
         if (!obs.colors[i] && read < 7) continue;
         const { x, y } = cellCenter(obs.grid, (i / 3) | 0, i % 3);
         const m = blockMedianRGB(rgb, meta.w, meta.h, x, y, obs.grid.pitch * 0.22);
-        if (m) samples.push({ r: m.r, g: m.g, b: m.b, label });
+        if (m) samples.push({ r: m.r, g: m.g, b: m.b, label, obs: myObsId });
       }
     };
     for (let i = 0; i < meta.frames.length; i++) {

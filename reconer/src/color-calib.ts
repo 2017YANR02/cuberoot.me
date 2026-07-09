@@ -40,6 +40,8 @@ export interface ColorSample {
   g: number;
   b: number;
   label: ColorName;
+  /** 同一 3×3 观测的分组 id (每帧每网格一组; 供每观测增益拟合实验) */
+  obs?: number;
 }
 
 /** 类顺序与 anchored-search COLOR_CODE (W R G Y O B) 对齐, 供软概率向量共用 */
