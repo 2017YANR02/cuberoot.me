@@ -355,8 +355,8 @@ wcaScramblesRoutes.get('/wca/scrambles/random', async (c) => {
   }
 });
 
-// GET /wca/scrambles/by-difficulty?variant=&stage=&colors=&bin=&event=&q=&from=&to=&page=&pageSize=
-// 分布页「列举某步数的全部真题」+ 比赛名搜索 + 日期范围 + 分页。确定性(非随机)→ 可缓存。
+// GET /wca/scrambles/by-difficulty?variant=&stage=&colors=&bin=&event=&q=&from=&to=&country=&page=&pageSize=
+// 分布页「列举某步数的全部真题」+ 比赛名搜索 + 日期范围 + 国家(country_id)+ 分页。确定性(非随机)→ 可缓存。
 // event 省略 = 全 3x3 族(合并池);传具体 event = 该项目(分开模式)。
 type ByDiffRow = RandomRow & {
   comp_date: string | null;
@@ -376,6 +376,9 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
   const q = (c.req.query('q') ?? '').trim().slice(0, 80);
   const from = c.req.query('from') ?? ''; const to = c.req.query('to') ?? '';
   const hasFrom = DATE_RE.test(from); const hasTo = DATE_RE.test(to);
+  // 按国家筛选:值 = WCA country_id(如 USA / China / United Kingdom;参数化绑定,无注入风险,仅限长)。
+  const country = (c.req.query('country') ?? '').trim().slice(0, 50);
+  const hasCountry = country.length > 0;
   const page = Math.max(1, Number(c.req.query('page')) || 1);
   const pageSize = Math.min(200, Math.max(1, Number(c.req.query('pageSize')) || 50));
   const offset = (page - 1) * pageSize;
@@ -395,7 +398,8 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
     if (q) { where.push('c.name ILIKE ?'); params.push(`%${q}%`); }
     if (hasFrom) { where.push('c.start_date >= ?'); params.push(from); }
     if (hasTo) { where.push('c.start_date <= ?'); params.push(to); }
-    const needComp = !!q || hasFrom || hasTo;
+    if (hasCountry) { where.push('c.country_id = ?'); params.push(country); }
+    const needComp = !!q || hasFrom || hasTo || hasCountry;
     const whereSql = where.join(' AND ');
 
     const cntRows = await query<{ n: string }>(

@@ -77,6 +77,7 @@ interface FullScrambleListProps {
   stage: string;
   colors: string;        // 子集 key
   bin: number;
+  country?: string;      // WCA country_id(点国家条某段传入;undefined = 不按国筛)
   lang: 'zh' | 'en';
   isZh: boolean;
   exView: 'orig' | 'opt';
@@ -86,7 +87,7 @@ interface FullScrambleListProps {
 }
 
 export default function FullScrambleList({
-  apiEvent, variant, stage, colors, bin, lang, isZh, exView, expanded, onExpandedChange, onTotal,
+  apiEvent, variant, stage, colors, bin, country, lang, isZh, exView, expanded, onExpandedChange, onTotal,
 }: FullScrambleListProps) {
   // 筛选进 URL(replace,不堆历史);键加 f 前缀避免与页面其它参数撞名。
   const [q, setQ] = useQueryState('fq', parseAsString.withDefault(''));
@@ -109,7 +110,7 @@ export default function FullScrambleList({
     setFailed(false);
     const t = setTimeout(() => {
       void fetchByDifficulty({
-        variant, stage, colors, bin, event: apiEvent,
+        variant, stage, colors, bin, event: apiEvent, country: country || undefined,
         q: q || undefined, from: from || undefined, to: to || undefined,
         page: 1, pageSize: BY_DIFFICULTY_PAGE_SIZE,
       }).then((res) => {
@@ -121,7 +122,7 @@ export default function FullScrambleList({
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expanded, variant, stage, colors, bin, apiEvent, q, from, to]);
+  }, [expanded, variant, stage, colors, bin, apiEvent, country, q, from, to]);
 
   // 收起态下用户一搜索 / 选日期就自动展开(静态预览没法按筛选过滤)。
   useEffect(() => {
@@ -134,7 +135,7 @@ export default function FullScrambleList({
     const myReq = ++reqId.current;
     setLoading(true);
     void fetchByDifficulty({
-      variant, stage, colors, bin, event: apiEvent,
+      variant, stage, colors, bin, event: apiEvent, country: country || undefined,
       q: q || undefined, from: from || undefined, to: to || undefined,
       page: next, pageSize: BY_DIFFICULTY_PAGE_SIZE,
     }).then((res) => {
