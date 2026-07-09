@@ -4,8 +4,12 @@
  * Pointerdown raycasts the whole puzzle. Hitting any piece (or the core) starts a
  * pending drag; missing falls back to view rotation (SimPage / the shared gesture
  * controller). On the first move past a threshold we resolve which vertex to twist
- * and the direction from the drag vector, then fire the whole 120° corner (big) turn
- * — drag only does the corner layer; tips are turned via the alg box / keyboard.
+ * and the direction from the drag vector, then fire the 120° turn.
+ *
+ * Which layer turns follows the physical puzzle: grabbing a TIP cap (the small apex
+ * piece) does the tip-only turn (lowercase u/l/r/b); grabbing the corner / an edge /
+ * the core does the whole corner layer (uppercase). Both spin about the same vertex
+ * axis, so direction scoring is identical — only the affected pieces differ.
  *
  * Candidate vertices: a tip/corner piece → its own vertex; an edge → the 2 vertices
  * its layer currently spans (read live); the core → all 4. The tangential-projection
@@ -27,8 +31,11 @@ const _axis = new THREE.Vector3();
 
 export interface PyraPickHit {
   point: THREE.Vector3;
-  /** Vertex indices (0..3) that can move the hit piece. */
+  /** Vertex indices (0..3) that can move the hit piece (corner-layer turn). */
   candidates: number[];
+  /** If the grabbed piece was a tip cap, its vertex — a drag on it turns the tip only.
+   *  null for corner / edge / core hits (they turn the whole corner layer). */
+  tipVertex: number | null;
 }
 
 export function pyraPickHit(
@@ -47,13 +54,14 @@ export function pyraPickHit(
   while (obj && obj !== cube) {
     const ud = obj.userData;
     if (ud && typeof ud.pyraKind === 'string') {
-      if (ud.pyraKind === 'edge') return { point, candidates: cube.edgeVertices(ud.pyraEdge as number) };
-      return { point, candidates: [ud.pyraVertex as number] };
+      if (ud.pyraKind === 'edge') return { point, candidates: cube.edgeVertices(ud.pyraEdge as number), tipVertex: null };
+      const vertex = ud.pyraVertex as number;
+      return { point, candidates: [vertex], tipVertex: ud.pyraKind === 'tip' ? vertex : null };
     }
     obj = obj.parent;
   }
-  // core hit — any vertex is a candidate
-  return { point, candidates: [0, 1, 2, 3] };
+  // core hit — any vertex is a candidate (corner-layer turn only)
+  return { point, candidates: [0, 1, 2, 3], tipVertex: null };
 }
 
 export interface PyraLivePlan {
@@ -70,14 +78,16 @@ export function pyraResolveLive(
 ): PyraLivePlan | null {
   scene.updateMatrixWorld();
   const originWorld = new THREE.Vector3().setFromMatrixPosition(cube.matrixWorld);
+  const tip = hit.tipVertex !== null;
+  const candidates = tip ? [hit.tipVertex as number] : hit.candidates;
   const score = scoreCornerTwist(
-    hit.candidates,
+    candidates,
     (vertex) => _axis.copy(vertexAxis(vertex)).transformDirection(cube.matrixWorld),
     hit.point, originWorld, dxPx, dyPx, camera, width, height, 0.2,
   );
   if (!score) return null;
   return {
-    move: { vertex: score.corner, tip: false, dir: score.dir },
+    move: { vertex: score.corner, tip, dir: score.dir },
     tangentX: score.tangentX, tangentY: score.tangentY,
   };
 }
