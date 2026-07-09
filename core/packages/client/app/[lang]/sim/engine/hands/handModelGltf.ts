@@ -72,14 +72,24 @@ const sstep = (a: number, b: number, x: number): number => {
   return t * t * (3 - 2 * t);
 };
 
-/** 甲片格网行列数。 */
-const NAIL_NR = 15, NAIL_NC = 11;
+/** 甲片格网行列数(掠射角下轮廓要圆滑,11 列曾看出多边形棱角)。 */
+const NAIL_NR = 21, NAIL_NC = 15;
+/** 甲片半宽 = K × 末节长(解剖学比例,拇指宽 / 小指窄)。禁从蒙皮顶点推宽度:
+ *  这套 GLB 低模把末节径向半径(rDist)高估 ~2x,甲片会比手指还宽,侧缘埋进
+ *  噪声皮面,可见轮廓抖成不规则 blob(踩过)。 */
+const NAIL_HALFW_K: Record<FingerName, number> = { thumb: 0.34, index: 0.30, middle: 0.30, ring: 0.29, pinky: 0.26 };
+/** 甲片轴向覆盖(末节段分数)+ 厚度 —— 几何层与放置层(覆盖余量)共用。
+ *  蒙皮实测(tests 曾 dump 环状剖面):皮肤管延伸到 t≈1.3+ 才收圆帽,p4(tip
+ *  骨)远在皮尖之前 —— T1=1.15 观感仍是「甲尖与指尖轮廓齐平或略短」;
+ *  再长会卷过指尖圆帽垂到指腹(「围兜」,踩过)。 */
+const NAIL_T0 = 0.46, NAIL_T1 = 1.15;
+const NAIL_TH = 0.55 * U;
 
 /**
  * 立体甲片薄壳(2026-07-08 用户规格:指甲要有薄薄的厚度、是立体结构):
- * 超椭圆轮廓双层格网(甲面/甲底)+ 周缘侧壁。甲底逐格贴 (轴向,侧向) 二维
- * 皮面高度场(绑定姿态蒙皮顶点高斯 IDW):横竖两向都跟住指背穹顶,侧缘
- * 额外下收进皮(甲沟)、甲根藏进近端甲襞、游离缘微翘露出厚度。
+ * 超椭圆轮廓双层格网(甲面/甲底)+ 周缘侧壁。甲底贴解析甲床高度场
+ * (adaptGltfHand 拟合:轴向二次脊线 × 横向定锥圆柱,已含覆盖余量):
+ * 侧缘额外下收进皮(甲沟)、甲根藏进近端甲襞、游离缘微翘露出厚度。
  * 甲片是唯一指甲 —— 贴图画甲已移除(曾三层叠影:壳姿态漂移裂成两团 +
  * 画甲外露读成第三片,2026-07-08 用户抓的)。
  * 纯 BufferGeometry(hands_model 测试在 Node 跑 adaptGltfHand,禁 DOM)。
@@ -87,23 +97,21 @@ const NAIL_NR = 15, NAIL_NC = 11;
 function buildNailGeometry(args: {
   p3: THREE.Vector3; axis: THREE.Vector3; dorsal: THREE.Vector3; lat: THREE.Vector3;
   len: number;
-  /** 甲片半宽(s = 沿末节轴绝对距离)—— 随手指向尖端收锥,等宽甲片前段
-   *  侧缘会悬伸出指侧(细白条,踩过)。 */
+  /** 甲片半宽(s = 沿末节轴绝对距离)—— 解析收锥,禁跟逐点噪声(会抖成
+   *  不规则 blob,踩过);等宽甲片前段侧缘会悬伸出指侧(细白条,踩过)。 */
   halfWAt: (s: number) => number;
-  /** 甲域皮面高度场(dorsal 向投影;s 同上,u = 侧向绝对偏移)。 */
+  /** 解析甲床高度场(dorsal 向投影;s 同上,u = 侧向绝对偏移)。 */
   surf: (s: number, u: number) => number;
+  /** 甲片横向中心(lat 向偏移):nailFrame 的 lat 原点可偏离指管中轴(拇指
+   *  ~-4U,dorsal 滚转所致),不对中会一缘埋皮一缘悬空(歪甲/缺口,踩过)。 */
+  uCenter: number;
 }): THREE.BufferGeometry {
   const { p3, axis, dorsal, lat, len } = args;
-  const T0 = 0.46, T1 = 1.06;   // 末节段分数:真甲只盖末节背侧远端一半;再长
-                                // 会顺高度场卷过指尖圆帽垂到指腹(「围兜」,踩过)
-  const TH = 0.55 * U;          // 甲片厚度(薄;游离缘侧壁可见即可)
-  const LIFT = 0.1 * U;         // 甲底抬离皮面:甲冠稳定高出 ~0.65U。曾用沉皮
-                                // (甲面仅 +0.19U),IDW 场误差 ± 姿态漂移一超过
-                                // 它,甲面就在皮面上下穿插,渲出大理石白斑(踩过)
-  const EDGE_TUCK = 1.6 * U;    // 侧缘果断下收进皮(甲沟;圆柱模型对称下落在
-                                // 皮实际更低的一侧会悬空漏缝,埋深要盖过不对称量)
+  const T0 = NAIL_T0, T1 = NAIL_T1;
+  const TH = NAIL_TH;           // 甲片厚度(薄;游离缘侧壁可见即可)
+  const EDGE_TUCK = 1.6 * U;    // 侧缘果断下收进皮(甲沟;埋深要盖过皮面不对称量)
   const BASE_SINK = 1.2 * U;    // 甲根藏进近端甲襞(弯指时根部皮面下沉仍要盖住)
-  const FREE_LIFT = 0.25 * U;   // 游离缘微翘(过大 = 翘壳)
+  const FREE_LIFT = 0.18 * U;   // 游离缘微翘(过大 = 翘壳/尖喙)
   const NR = NAIL_NR, NC = NAIL_NC;
   const tc = (T0 + T1) / 2, th = (T1 - T0) / 2;
 
@@ -114,16 +122,18 @@ function buildNailGeometry(args: {
     for (let i = 0; i < NR; i++) {
       const q = -0.97 + (1.94 * i) / (NR - 1);
       const sAbs = (tc + th * q) * len;
-      const w2 = Math.pow(1 - q * q, 1 / 2.6); // 超椭圆半宽(掩码指数 2.6)
+      const w2 = Math.pow(1 - q * q, 1 / 2.2); // 超椭圆半宽(2.2 圆角更柔;2.6 偏方)
       const free = sstep(0.55, 0.92, q);
       const lun = sstep(-0.55, -0.9, q) * 0.5; // 半月对比调淡(强白斑读成大理石纹)
       for (let j = 0; j < NC; j++) {
         const w = -1 + (2 * j) / (NC - 1);
-        const u = w * w2 * args.halfWAt(sAbs);
-        const hu = args.surf(sAbs, u) + LIFT
-          - BASE_SINK * sstep(-0.55, -0.97, q)
+        const u = args.uCenter + w * w2 * args.halfWAt(sAbs);
+        // 埋皮 ramp 只留窄边(侧缘最外一列 / 甲根最后两行):可见轮廓 =
+        // 「皮 ∩ 甲」交线,宽软坡会让交线随皮面噪声大幅横移,读成锯齿 blob(踩过)
+        const hu = args.surf(sAbs, u)
+          - BASE_SINK * sstep(-0.62, -0.95, q)
           + FREE_LIFT * sstep(0.55, 0.97, q)
-          - EDGE_TUCK * sstep(0.55, 1.0, Math.abs(w));
+          - EDGE_TUCK * sstep(0.74, 1.0, Math.abs(w));
         // 甲面=甲底+厚度(中央极轻微加厚;穹顶感主要来自甲底跟皮面圆度)
         const h = layer === 0 ? hu + TH * (0.94 + 0.06 * Math.sqrt(Math.max(0, 1 - w * w))) : hu;
         P.copy(p3).addScaledVector(axis, sAbs).addScaledVector(dorsal, h).addScaledVector(lat, u);
@@ -317,10 +327,10 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
     };
   }
 
-  // ---- 立体甲片:每指一块薄壳刚挂 tip 代理(随末节弯曲)。甲底贴 (轴向,
-  //      侧向) 二维高斯 IDW 皮面高度场 + 甲冠抬出皮面(LIFT)—— 旧版 1D 轴向
-  //      max 桶轮廓 + SINK 沉皮把甲冠压到皮下,只剩甲根坡道和游离缘两个「岛」
-  //      露出,视觉裂成两团「假甲」(2026-07-08 用户抓的三层叠影之二)。
+  // ---- 立体甲片:每指一块薄壳刚挂 tip 代理(随末节弯曲)。甲底贴解析甲床
+  //      (轴向二次脊线 × 横向定锥圆柱,见下方拟合段)—— 旧版 1D 轴向 max 桶
+  //      轮廓 + SINK 沉皮裂成两团「假甲」(踩过);再旧版逐点跟 IDW 噪声场,
+  //      甲片抖成不规则 blob + 浮空缝隙(2026-07-09 用户抓的)。
   //      几何生成在 hand 系再转 tip 局部。材质经 extraMats 交 rig 统一
   //      fade / dispose。 ----
   mesh.updateMatrixWorld(true);
@@ -387,38 +397,51 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
         if (sa < -3 * U || sa > nf.len + 6 * U) continue;
         smp.push({ s: sa, u: uu, h });
       }
-      // 软最大场:样本再按 e^{κh} 加权 —— 纯均值会被侧壁低样本拉低、系统性
-      // 低估波峰,粗蒙皮的真实起伏(±1U)从甲片中间戳穿成碎斑(踩过)。
-      const sigS = 2.2 * U, sigU = 1.6 * U, kappa = 1.5 / U;
-      const surf = (sq: number, uq: number): number => {
-        let wSum = 0, hSum = 0, nearest = rDist, nd = Infinity;
-        for (const p of smp) {
-          const ds = (p.s - sq) / sigS, du = (p.u - uq) / sigU;
-          const d2 = ds * ds + du * du;
-          if (d2 < nd) { nd = d2; nearest = p.h; }
-          const w = Math.exp(-d2 + kappa * p.h);
-          wSum += w; hSum += w * p.h;
-        }
-        return wSum > 1e-9 ? hSum / wSum : nearest;
+      // 解析甲床(2026-07-09 重做,用户抓的「粗糙白斑甲 + 浮空缝隙」)。
+      // 这套 GLB 蒙皮很粗:每指末节/端点骨主导顶点仅 ~40-70 个,甲域背侧
+      // 样本 13-28 个,呈稀疏「环」状(轴向每 ~0.4·len 一圈)—— 任何逐点/
+      // 分箱拟合(e^{κh} 软最大 IDW 场、bin-max 二次脊线)都被稀疏噪声抖成
+      // 不规则 blob,还把甲冠系统性抬出皮面(缝隙)或压到皮峰下(皮戳穿甲
+      // 面成月牙缺口),踩过两版。实测剖面是规则圆拱(R≈1.25×脊高),轴向
+      // 几乎不收锥(≤8%),但横向中心可偏离 lat 原点(拇指 ~-4U)。
+      // 故数据只取三个鲁棒标量,其余全解析:
+      //   uC    = 皮面高度加权 u 质心(横向对中,治「歪甲/单侧缺口」);
+      //   rBase = 甲域中带皮高上包络(实顶点,非插值 —— 锚高了缝隙锚低了戳穿);
+      //   need  = 面内皮样本对甲床的最大超出(覆盖余量,皮峰最多戳进甲厚 45%)。
+      let uwSum = 0, uhSum = 0;
+      for (const p of smp) {
+        const t = p.s / nf.len;
+        if (t < 0.35 || t > NAIL_T1) continue;
+        const w = Math.max(0, p.h);
+        uwSum += w; uhSum += w * p.u;
+      }
+      const uC = THREE.MathUtils.clamp(uwSum > 1e-6 ? uhSum / uwSum : 0, -6 * U, 6 * U);
+      let rBase = 0;
+      for (const p of smp) {
+        const t = p.s / nf.len;
+        if (t < 0.35 || t > NAIL_T1 || Math.abs(p.u - uC) > 0.45 * rDist) continue;
+        rBase = Math.max(rBase, p.h);
+      }
+      rBase = THREE.MathUtils.clamp(rBase > 0 ? rBase : 0.55 * rDist, 4.5 * U, 11 * U);
+      const ridge = (sq: number): number => rBase * (1 - 0.08 * sstep(0.50, NAIL_T1, sq / nf.len));
+      const halfW = NAIL_HALFW_K[name] * nf.len;
+      const rSide = Math.max(1.25 * rBase, 1.1 * halfW); // 横向曲率半径(实测拱 ≈1.25×脊高)
+      const bed0 = (sq: number, uq: number): number => {
+        const du = Math.min(Math.abs(uq - uC), rSide);
+        return ridge(sq) - (rSide - Math.sqrt(Math.max(0, rSide * rSide - du * du)));
       };
-      // 甲片高度模型 = 轴向脊线 × 横向圆柱对称下落:直接用 surf(s,u) 会让
-      // 甲片跟着局部左右不对称倾斜(一缘翘出一缘埋皮,看着「歪甲」,踩过);
-      // 脊线取 ±0.5·rDist 内 5 个横向探针的最高值。宽度/曲率半径随脊高向
-      // 尖端收锥(脊高 ≈ 局部背侧半径)。
-      const crest = (sq: number): number => {
-        let m = -Infinity;
-        for (let k = -2; k <= 2; k++) m = Math.max(m, surf(sq, k * 0.25 * rDist));
-        return m;
-      };
-      // 锥度下限 0.8·rDist:全跟 crest 会在指尖把甲片收成「方糖」(踩过)
-      const rLoc = (sq: number): number => Math.max(0.8 * rDist, Math.min(crest(sq), rDist));
-      const nailField = (sq: number, uq: number): number => {
-        const r = rLoc(sq);
-        const uc = Math.min(Math.abs(uq), r);
-        return crest(sq) - (r - Math.sqrt(Math.max(0, r * r - uc * uc)));
-      };
-      const halfWAt = (sq: number): number => 0.62 * rLoc(sq);
-      const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, halfWAt, surf: nailField });
+      const halfWAt = (): number => halfW;
+      // 覆盖余量:甲域面内(避开埋皮侧缘)按真实样本(非平滑场)校验
+      let need = 0;
+      for (const p of smp) {
+        const t = p.s / nf.len;
+        if (t < NAIL_T0 || t > NAIL_T1) continue;
+        if (Math.abs(p.u - uC) > 0.85 * halfW) continue;
+        need = Math.max(need, p.h - bed0(p.s, p.u));
+      }
+      const lift = Math.min(Math.max(0, need - 0.45 * NAIL_TH), 1.2 * U);
+      const bed = (sq: number, uq: number): number => bed0(sq, uq) + lift;
+      const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, halfWAt, surf: bed, uCenter: uC });
       // 刚挂 tip 代理:甲片区域(t≥0.42)皮肤 ≥97% 由末节/端点骨主导(与
       // tip 代理刚体同动),姿态漂移 ≤~1U,由 BASE_SINK/EDGE_TUCK 埋皮余量
       // 吸收。试过抄皮肤骨权重做成蒙皮甲片 —— 弯指时格网被相邻权重差撕出
