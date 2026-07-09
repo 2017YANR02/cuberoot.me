@@ -6,6 +6,7 @@
  * 字母计算在 _lib/speffz.ts(已逐格核对原 docx 全部展开表)。
  */
 import { useState } from 'react';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr, T } from '@/i18n/tr';
 import { diagramTypesFor, type DiagramType, type SpeffzFace } from '../../_lib/speffz';
 import { SpeffzMasterNet, SpeffzNet, SPEFFZ_FILL } from './SpeffzNets';
@@ -45,6 +46,9 @@ const ORDERS = [2, 3, 4, 5, 6, 7];
 
 export function SpeffzSchemeView() {
   const [order, setOrder] = useState(3);
+  // 窄屏(≤520,与 speffz.css 里 .speffz-fig 转满宽的断点一致)下高阶(≥5)展开图
+  // 收成两列网格,避免 4 面宽的图被压到每格字母只剩 ~7px 不可读。
+  const compactNets = useIsMobile(520) && order >= 5;
 
   return (
     <div className="speffz-view">
@@ -187,7 +191,7 @@ export function SpeffzSchemeView() {
             const caption = tr(DIAGRAM_LABEL[diagram]);
             return (
               <figure className="speffz-fig" key={diagram}>
-                <SpeffzNet n={order} diagram={diagram} label={caption} />
+                <SpeffzNet n={order} diagram={diagram} label={caption} compact={compactNets} />
                 <figcaption>{caption}</figcaption>
               </figure>
             );
