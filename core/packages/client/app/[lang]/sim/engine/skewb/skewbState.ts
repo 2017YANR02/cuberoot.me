@@ -13,18 +13,24 @@
  * to piece positions / sticker frames) by .tmp/skewb/derive.mjs and re-derived
  * independently in tests/skewb_state.test.ts — the runtime needs no rotation math.
  *
- * Notation (self-contained /sim world, like Dino): a grip is named by its 3 face
- * letters in U/D, F/B, L/R order (UFR, DBL…). A bare token = a CLOCKWISE 120° twist
- * viewed from outside (dir −1, −120° about the outward diagonal); a primed token
- * (UFR') = the CCW inverse (dir +1). We never feed this to an external solver, so
- * the convention only has to be internally consistent (bare and primed are inverses).
+ * Notation — WCA / cubing.js. The 4 WCA scramble letters name one corner per body
+ * diagonal (R=DRB, U=UBL, L=DLF, B=DBL); cubing.js's remaining families label the
+ * opposite four (F=UFR, D=DFR, UL=ULF, UR=URB) so all 8 turnable grips have a token.
+ * A bare token = a CLOCKWISE 120° twist viewed from outside (dir −1, −120° about the
+ * outward diagonal) matching the WCA "bare letter = 120° clockwise"; a primed token
+ * (R') = the CCW inverse (dir +1). This is the same corner frame + chirality as the
+ * cubing.js skewb renderer, so the engine and cubing.js views agree move-for-move.
+ * (CORNER_NAMES below stays the 3-face grip list; it drives the PG cap match + geometry,
+ * separate from the WCA display tokens in SKEWB_WCA_TOKENS.)
  */
 import {
-  parseCornerMoves, cornerMoveToString, cornerMovesToString, randomCornerScramble,
+  parseCornerMoves, cornerMoveToString, cornerMovesToString,
   type CornerMove,
 } from '../cornerNotation';
 
-/** Corner slot order (index 0..7), face order U/D, F/B, L/R. Doubles as the grip list. */
+/** Corner slot order (index 0..7), face order U/D, F/B, L/R. Doubles as the grip list.
+ *  Drives geometry + the PG cap letter-set match — NOT the user-facing notation (that's
+ *  SKEWB_WCA_TOKENS, same index order). */
 export const CORNER_NAMES = [
   'UFR', 'UFL', 'UBR', 'UBL', 'DFR', 'DFL', 'DBR', 'DBL',
 ] as const;
@@ -156,25 +162,48 @@ export function isSolved(state: SkewbState): boolean {
   return true;
 }
 
-const TOKEN_RE = /^(UFR|UFL|UBR|UBL|DFR|DFL|DBR|DBL)('?)$/;
+/**
+ * WCA / cubing.js token per grip, in CORNER_NAMES index order. R/U/L/B are the four
+ * WCA scramble letters (one corner per axis); F/D/UL/UR label the opposite four so
+ * every draggable grip records a valid cubing.js token.
+ *   0 UFR→F  1 UFL→UL  2 UBR→UR  3 UBL→U  4 DFR→D  5 DFL→L  6 DBR→R  7 DBL→B
+ */
+const SKEWB_WCA_TOKENS = ['F', 'UL', 'UR', 'U', 'D', 'L', 'R', 'B'] as const;
+
+/** The four axis corners a WCA scramble draws from (R U L B = grips 6 3 5 7). */
+const WCA_SCRAMBLE_GRIPS = [6, 3, 5, 7] as const;
+
+// Two-letter families (UL/UR) come first so the alternation matches them before U.
+const TOKEN_RE = /^(UL|UR|U|F|D|L|R|B)('?)$/;
 
 /** Parse a scramble/alg string into moves. Unknown tokens are skipped. */
 export function parseSkewbMoves(text: string): SkewbMove[] {
-  return parseCornerMoves(text, TOKEN_RE, CORNER_NAMES);
+  return parseCornerMoves(text, TOKEN_RE, SKEWB_WCA_TOKENS);
 }
 
-/** Render one move to its canonical token (bare = clockwise dir −1, primed = dir +1). */
+/** Render one move to its canonical WCA token (bare = clockwise dir −1, primed = dir +1). */
 export function skewbMoveToString(move: SkewbMove): string {
-  return cornerMoveToString(move, CORNER_NAMES);
+  return cornerMoveToString(move, SKEWB_WCA_TOKENS);
 }
 
 export function skewbMovesToString(moves: SkewbMove[]): string {
-  return cornerMovesToString(moves, CORNER_NAMES);
+  return cornerMovesToString(moves, SKEWB_WCA_TOKENS);
 }
 
-/** Random legal scramble: `n` twists over the 8 grips, never the same grip twice in a row. */
+/** Random WCA scramble: `n` twists over the 4 axis corners (R U L B), never the same
+ *  corner twice in a row — only the four WCA letters appear, like a real skewb scramble.
+ *  (Manual solving can still turn any of the 8 corners; those record F/D/UL/UR.) */
 export function randomSkewbScramble(n = 12): SkewbMove[] {
-  return randomCornerScramble(n, 8);
+  const out: SkewbMove[] = [];
+  let last = -1;
+  for (let i = 0; i < n; i++) {
+    let g: number;
+    do { g = WCA_SCRAMBLE_GRIPS[Math.floor(Math.random() * WCA_SCRAMBLE_GRIPS.length)]; }
+    while (g === last);
+    last = g;
+    out.push({ corner: g, dir: Math.random() < 0.5 ? 1 : -1 });
+  }
+  return out;
 }
 
 /** Apply a whole scramble to solved and return the resulting state. */

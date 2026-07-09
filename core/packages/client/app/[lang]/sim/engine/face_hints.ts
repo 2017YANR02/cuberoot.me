@@ -93,17 +93,18 @@ export const HELI_EDGE_HINTS: OrientationHint[] = [
   { letter: 'DL', dir: new THREE.Vector3(-1, -1, 0) },
 ];
 
-// Skewb is a deep-cut corner-turner (all 8 corners turn). 3-letter U/D F/B L/R labels
-// like the Dino/Rex — matches CORNER_NAMES / CORNER_AXIS in cuber/skewb/skewbState.
+// Skewb is a deep-cut corner-turner (all 8 corners turn). WCA / cubing.js tokens
+// (R U L B = the 4 axis corners; F D UL UR = the opposite 4) — matches SKEWB_WCA_TOKENS
+// / CORNER_AXIS in cuber/skewb/skewbState.
 export const SKEWB_CORNER_HINTS: OrientationHint[] = [
-  { letter: 'UFR', dir: new THREE.Vector3(1, 1, 1) },
-  { letter: 'UFL', dir: new THREE.Vector3(-1, 1, 1) },
-  { letter: 'UBR', dir: new THREE.Vector3(1, 1, -1) },
-  { letter: 'UBL', dir: new THREE.Vector3(-1, 1, -1) },
-  { letter: 'DFR', dir: new THREE.Vector3(1, -1, 1) },
-  { letter: 'DFL', dir: new THREE.Vector3(-1, -1, 1) },
-  { letter: 'DBR', dir: new THREE.Vector3(1, -1, -1) },
-  { letter: 'DBL', dir: new THREE.Vector3(-1, -1, -1) },
+  { letter: 'F', dir: new THREE.Vector3(1, 1, 1) },   // UFR
+  { letter: 'UL', dir: new THREE.Vector3(-1, 1, 1) }, // UFL
+  { letter: 'UR', dir: new THREE.Vector3(1, 1, -1) }, // UBR
+  { letter: 'U', dir: new THREE.Vector3(-1, 1, -1) }, // UBL
+  { letter: 'D', dir: new THREE.Vector3(1, -1, 1) },  // DFR
+  { letter: 'L', dir: new THREE.Vector3(-1, -1, 1) }, // DFL
+  { letter: 'R', dir: new THREE.Vector3(1, -1, -1) }, // DBR
+  { letter: 'B', dir: new THREE.Vector3(-1, -1, -1) },// DBL
 ];
 
 // Pyraminx is a vertex-turner: 4 vertex axes labelled U/L/R/B — matches VERTEX_NAMES

@@ -145,21 +145,28 @@ describe('Skewb state — algebra', () => {
   });
 });
 
-describe('Skewb state — notation', () => {
-  it('parse / stringify round-trips', () => {
-    const txt = "UFR UFL' DBL DBR' UBL UFR'";
+describe('Skewb state — WCA notation', () => {
+  it('parse / stringify round-trips (incl. two-letter UL/UR families)', () => {
+    const txt = "R U' L B' F D UL UR'";
     const moves = parseSkewbMoves(txt);
-    expect(moves.length).toBe(6);
+    expect(moves.length).toBe(8);
     expect(skewbMovesToString(moves)).toBe(txt);
   });
 
-  it('skips unknown tokens', () => {
-    expect(parseSkewbMoves('UFR foo R2 DBL').length).toBe(2);
+  it('skips unknown tokens (old engine names, doubles)', () => {
+    expect(parseSkewbMoves('UFR foo R2 B').length).toBe(1); // only B survives
+  });
+
+  it('WCA letters map to the right grips (cubing.js frame)', () => {
+    // R=DRB(6) U=UBL(3) L=DLF(5) B=DBL(7); F=UFR(0) D=DFR(4) UL=UFL(1) UR=UBR(2)
+    const idx = (tok: string) => parseSkewbMoves(tok)[0].corner;
+    expect([idx('R'), idx('U'), idx('L'), idx('B')]).toEqual([6, 3, 5, 7]);
+    expect([idx('F'), idx('D'), idx('UL'), idx('UR')]).toEqual([0, 4, 1, 2]);
   });
 
   it('bare = clockwise (dir -1), primed = +120 (dir +1)', () => {
-    expect(skewbMoveToString({ corner: 0, dir: -1 })).toBe('UFR');
-    expect(skewbMoveToString({ corner: 0, dir: 1 })).toBe("UFR'");
+    expect(skewbMoveToString({ corner: 6, dir: -1 })).toBe('R');
+    expect(skewbMoveToString({ corner: 6, dir: 1 })).toBe("R'");
   });
 });
 
@@ -169,6 +176,8 @@ describe('Skewb state — scramble', () => {
       const moves = randomSkewbScramble(12);
       expect(moves.length).toBe(12);
       for (let i = 1; i < moves.length; i++) expect(moves[i].corner).not.toBe(moves[i - 1].corner);
+      // A WCA scramble uses only the four axis letters R U L B.
+      for (const tok of skewbMovesToString(moves).split(' ')) expect(tok.replace("'", '')).toMatch(/^[RULB]$/);
       const s = applySkewbScramble(moves);
       expect(new Set(s.cornerPerm).size).toBe(8);
       expect(new Set(s.centerPerm).size).toBe(6);
