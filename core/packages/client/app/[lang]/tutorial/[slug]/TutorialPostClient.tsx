@@ -8,12 +8,14 @@ import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { usePostContent, type Lang } from '../_lib/useTutorialCatalog';
 import { TutorialArticleView } from '../_components/TutorialArticleView';
 import { CfopTutorialView } from '../_components/CfopTutorialView';
+import { SpeffzSchemeView } from '../_components/speffz/SpeffzSchemeView';
 import { AlgsetView } from '../_components/AlgsetView';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../tutorial.css';
 import { tr } from '@/i18n/tr';
 
 const CFOP_SLUG = 'cfop-tutorial';
+const SPEFFZ_SLUG = 'speffz-letter-scheme';
 
 export default function TutorialPostClient() {
   const params = useParams<{ slug: string | string[] }>();
@@ -27,7 +29,9 @@ export default function TutorialPostClient() {
     parseAsStringEnum(['pretty', 'raw']).withDefault('pretty').withOptions({ history: 'replace' }),
   );
 
-  const postTitle = post ? (post.title[pageLang] ?? post.title[pageLang === 'zh' ? 'en' : 'zh'] ?? post.slug) : tr({ zh: '教程', en: 'Tutorial' });
+  const postTitle = slug === SPEFFZ_SLUG
+    ? tr({ zh: 'Speffz 字母编码', en: 'Speffz Letter Scheme' })
+    : post ? (post.title[pageLang] ?? post.title[pageLang === 'zh' ? 'en' : 'zh'] ?? post.slug) : tr({ zh: '教程', en: 'Tutorial' });
   useDocumentTitle(postTitle, postTitle);
 
   if (loading) {
@@ -51,6 +55,8 @@ export default function TutorialPostClient() {
   }
 
   const isCfop = slug === CFOP_SLUG && post.view === 'article';
+  const isSpeffz = slug === SPEFFZ_SLUG && post.view === 'article';
+  const hasPretty = isCfop || isSpeffz;
   const hasEn = post.view === 'article' ? !!post.content.en : !!post.title.en;
   const hasZh = post.view === 'article' ? !!post.content.zh : !!post.title.zh;
   const title = post.title[lang] ?? post.title[lang === 'zh' ? 'en' : 'zh'] ?? post.slug;
@@ -72,9 +78,9 @@ export default function TutorialPostClient() {
           )}
           <span className="tutorial-breadcrumb-sep">/</span>
           <strong>{isCfop ? tr({ zh: '三阶 CFOP 教程', en: '3×3 CFOP Tutorial'
-        }) : title}</strong>
+        }) : isSpeffz ? tr({ zh: 'Speffz 字母编码', en: 'Speffz Letter Scheme' }) : title}</strong>
         </div>
-        {isCfop ? (
+        {hasPretty ? (
           <div className="tutorial-lang-switch" role="tablist" aria-label={tr({ zh: '版式', en: 'Layout' })}>
             <button
               className={'tutorial-lang-chip tutorial-btn' + (view === 'pretty' ? ' is-active' : '')}
@@ -112,9 +118,9 @@ export default function TutorialPostClient() {
           </div>
         )}
       </div>
-      {isCfop ? (
+      {hasPretty ? (
         view === 'pretty' ? (
-          <CfopTutorialView post={post} />
+          isCfop ? <CfopTutorialView post={post} /> : <SpeffzSchemeView />
         ) : (
           <TutorialArticleView post={post} lang={lang} />
         )
