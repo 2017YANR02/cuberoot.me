@@ -1,0 +1,146 @@
+/* Speffz Letter Scheme 精美版(light-locked tutorial 模块,沿用 --tutorial-* token) */
+
+.speffz-view {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 8px 24px 72px;
+}
+
+.speffz-view h1 {
+  font-size: 26px;
+  letter-spacing: -0.01em;
+  margin: 10px 0 10px;
+}
+
+.speffz-view h2 {
+  font-size: 19px;
+  margin: 36px 0 8px;
+}
+
+.speffz-view p {
+  font-size: 15px;
+  line-height: 1.75;
+  margin: 8px 0;
+}
+
+.speffz-lead {
+  color: var(--tutorial-text-muted);
+}
+
+.speffz-rules {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.speffz-rules li {
+  font-size: 15px;
+  line-height: 1.75;
+  margin: 8px 0;
+}
+
+.speffz-figrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 22px 30px;
+  margin: 16px 0 6px;
+}
+
+.speffz-fig {
+  margin: 0;
+  flex: 0 1 370px;
+  min-width: 250px;
+}
+
+.speffz-fig svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.speffz-fig figcaption {
+  margin-top: 6px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--tutorial-text-muted);
+}
+
+.speffz-order-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 4px;
+  font-size: 15px;
+}
+
+.speffz-select {
+  font: inherit;
+  font-size: 14px;
+  padding: 5px 10px;
+  border: 1px solid var(--tutorial-border-strong);
+  border-radius: 8px;
+  background: var(--tutorial-bg);
+  color: var(--tutorial-text);
+  width: fit-content;
+  cursor: pointer;
+}
+
+.speffz-select:focus-visible {
+  outline: 2px solid var(--tutorial-accent);
+  outline-offset: 1px;
+}
+
+.speffz-table-wrap {
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.speffz-table {
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.speffz-table th,
+.speffz-table td {
+  border: 1px solid var(--tutorial-border);
+  padding: 4px 14px;
+  text-align: left;
+}
+
+.speffz-table th {
+  background: var(--tutorial-bg-soft);
+  font-weight: 600;
+}
+
+.speffz-facecell {
+  white-space: nowrap;
+}
+
+.speffz-mono {
+  font-family: var(--font-mono);
+}
+
+.speffz-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--tutorial-border-strong);
+  vertical-align: -1px;
+  margin-right: 6px;
+}
+
+.speffz-note {
+  color: var(--tutorial-text-muted);
+}
+
+@media (max-width: 520px) {
+  .speffz-view {
+    padding: 4px 16px 56px;
+  }
+
+  .speffz-fig {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+}
