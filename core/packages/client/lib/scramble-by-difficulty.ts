@@ -33,6 +33,7 @@ export interface ByDifficultyParams {
   q?: string;       // 比赛名子串
   from?: string;    // YYYY-MM-DD
   to?: string;      // YYYY-MM-DD
+  country?: string; // WCA country_id(comp 所属国;= comp_countries.json 的值)
   page?: number;
   pageSize?: number;
 }
@@ -49,6 +50,7 @@ export async function fetchByDifficulty(p: ByDifficultyParams): Promise<ByDiffic
   if (p.q) qs.set('q', p.q);
   if (p.from) qs.set('from', p.from);
   if (p.to) qs.set('to', p.to);
+  if (p.country) qs.set('country', p.country);
   if (p.page) qs.set('page', String(p.page));
   if (p.pageSize) qs.set('pageSize', String(p.pageSize));
   try {

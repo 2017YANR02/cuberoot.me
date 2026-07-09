@@ -413,18 +413,9 @@
   color: var(--text-sub);
 }
 
-/* ── 各国占比条(点段筛选该国示例;复用 StackedBar) ── */
+/* ── 各国占比条(点段筛选该国示例;条身走共享 components/CountryShareBar) ── */
 .pdv-cbar-wrap {
   margin: 0 0 0.75rem;
-}
-.pdv-cbar-pct {
-  font-size: 0.68rem;
-  font-weight: 700;
-  opacity: 0.92;
-}
-.pdv-cbar-name {
-  font-size: 0.72rem;
-  font-weight: 700;
 }
 /* 已选国家的筛选标签(旗 + 名 + 清除) */
 .pdv-cbar-chip {
