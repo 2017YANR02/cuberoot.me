@@ -27,13 +27,10 @@ import { IDENTITY_PERM, ORIENTATION_PERMS, invertPerm, physicalPerm } from "../s
 import {
   activityMask,
   cellCenter,
-  extractFaceObservations,
   medianBackground,
-  reorientObsToBasis,
-  trackFaceGrid,
-  type FaceGrid,
   type FaceObservation,
 } from "../src/sticker-blobs.ts";
+import { extractTrackedFrames } from "../src/lattice-track.ts";
 import {
   blockMedianRGB,
   calibClassify as calibClassifyDiag,
@@ -56,6 +53,7 @@ const MIN_RUN = mrArg >= 0 ? parseInt(process.argv[mrArg + 1], 10) : 3;
 const maArg = process.argv.indexOf("--minarea");
 const MIN_AREA = maArg >= 0 ? parseInt(process.argv[maArg + 1], 10) : undefined;
 const STRICT = process.argv.includes("--strict"); // 链一致性零容错 (防跨拧转混态)
+const NO_ANCHOR = process.argv.includes("--noanchor"); // 复刻 legacy 提取 (无重获取锚定) 供 A/B
 const PER_FRAME = process.argv.includes("--perframe"); // 跳过链, 逐帧网格直接喂搜索
 const PIN_MODE = process.argv.includes("--pin"); // 路径级指派钉死
 const DRIFT = process.argv.includes("--drift"); // 钉死 + 段间漂移切换 (隐含 --pin)
@@ -213,52 +211,16 @@ for (const sf of files) {
   const bg = medianBackground(bgFrames, meta.w, meta.h);
   const mask = activityMask(bgFrames, bg, meta.w, meta.h);
 
-  // 逐帧提取 (每帧 0-2 面): 冷检测优先, 失败时用上帧晶格时间连续性跟踪
-  // (魔方不瞬移; 转动层模糊 → null 格, 非转动层照常读 — 天然部分观测)
+  // 逐帧提取 (每帧 0-2 面): 共享锚定提取环 (src/lattice-track.ts) — 冷检测优先,
+  // 失败时晶格跟踪; 默认带重获取一致性锚定 (--noanchor 复刻 legacy 供 A/B)。
   // 函数化: 标定模式跑两遍 (pass1 默认阈值收样本 → pass2 带 calib 重提取)
-  const extractAllGrids = (calib: ColorCalib | null) => {
-    const grids: FaceObservation[][] = new Array(meta.frames.length);
-    const frameSpan: number[] = new Array(meta.frames.length).fill(-1);
-    let prior: FaceGrid | null = null;
-    let priorColors: readonly (ColorName | null)[] | null = null;
-    let priorMiss = 0;
-    let nCold = 0, nTracked = 0, spanId = -1;
-    for (let i = 0; i < meta.frames.length; i++) {
-      let cold = extractFaceObservations(frameAt(i), meta.w, meta.h, mask, { minArea: MIN_AREA, calib });
-      if (cold.length) {
-        // 基连续化: 冷拟合基旋到与上帧基最对齐的 90° 变体, span 内旋转身份构造性恒定
-        // (fitFaceGrid 的"v1 取更水平者"在晶格近 45° 时帧间轴交换, 断链 + 毁按 span 钉死)
-        if (prior) cold = [reorientObsToBasis(cold[0], prior.v1, prior.v2), ...cold.slice(1)];
-        else spanId++;
-        grids[i] = cold;
-        frameSpan[i] = spanId;
-        prior = cold[0].grid;
-        priorColors = cold[0].colors;
-        priorMiss = 0;
-        nCold++;
-        continue;
-      }
-      const tracked: FaceObservation | null = prior
-        ? trackFaceGrid(frameAt(i), meta.w, meta.h, prior, priorColors, { calib })
-        : null;
-      if (tracked) {
-        grids[i] = [tracked];
-        frameSpan[i] = spanId;
-        prior = tracked.grid;
-        priorColors = tracked.colors;
-        priorMiss = 0;
-        nTracked++;
-      } else {
-        grids[i] = [];
-        if (prior && ++priorMiss > 5) {
-          prior = null;
-          priorColors = null;
-        }
-      }
-    }
-    return { grids, frameSpan, nCold, nTracked };
-  };
-  let { grids, frameSpan, nCold, nTracked } = extractAllGrids(null);
+  const extractAllGrids = (calib: ColorCalib | null) =>
+    extractTrackedFrames(frameAt, meta.frames.length, meta.w, meta.h, mask, {
+      calib,
+      minArea: MIN_AREA,
+      anchor: !NO_ANCHOR,
+    });
+  let { grids, frameSpan, nCold, nTracked, anchor } = extractAllGrids(null);
   // 帧运动量: 网格 bbox 内与上帧的平均绝对差。100fps 下相邻模糊帧彼此相似,
   // agree() 挡不住拧转中帧成链 (目检 f1122: 大幅运动模糊 3 帧照样"稳定")。
   // 静止 vs 拧转在帧差上双峰, 这才是 rest 的物理定义; 超阈值帧不准进链。
@@ -520,7 +482,7 @@ for (const sf of files) {
       for (const s of samples) {
         (calibPool.get(s.label) ?? calibPool.set(s.label, []).get(s.label)!).push(s);
       }
-      ({ grids, frameSpan, nCold, nTracked } = extractAllGrids(calib));
+      ({ grids, frameSpan, nCold, nTracked, anchor } = extractAllGrids(calib));
       ({ runs, motP } = buildRuns(grids, frameSpan));
       ({ omega, omegaIdx } = fitOmega(runs));
     } else {
@@ -1027,6 +989,11 @@ for (const sf of files) {
   console.log(
     `  probs质量: GT面命中 ${greedyHit}/${boundStates.length}, 概率赤字合计 ${probDeficit.toFixed(1)} (最坏单段 ${worstDef.toFixed(1)})`,
   );
+  if (!NO_ANCHOR) {
+    console.log(
+      `  锚定: 冷面匹配 ${anchor.matched} (snap ${anchor.snapped}, 基修 ${anchor.rotFixed}, 新槽 ${anchor.fresh})`,
+    );
+  }
   console.log(
     `  钉死指派 视频级: 信号 ${pinSig.read ? ((pinSig.match / pinSig.read) * 100).toFixed(1) : "-"}% vs 乱态 ${pinNul.read ? ((pinNul.match / pinNul.read) * 100).toFixed(1) : "-"}% (分离 ${pinSig.read && pinNul.read ? ((pinSig.match / pinSig.read - pinNul.match / pinNul.read) * 100).toFixed(1) : "-"}pp)  |  span 级(${attachedSpans.length} span, ≥2链 ${multiSpans}): 信号 ${spanSig.read ? ((spanSig.match / spanSig.read) * 100).toFixed(1) : "-"}% (GOOD ${spanSig.good}/mid ${spanSig.mid}/JUNK ${spanSig.junk}) vs 乱态 ${spanNul.read ? ((spanNul.match / spanNul.read) * 100).toFixed(1) : "-"}% (分离 ${spanSig.read && spanNul.read ? ((spanSig.match / spanSig.read - spanNul.match / spanNul.read) * 100).toFixed(1) : "-"}pp)  |  自由24指派: ${segRead ? ((segMatch / segRead) * 100).toFixed(1) : "-"}% vs ${nacc}%`,
   );
