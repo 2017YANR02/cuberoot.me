@@ -40,6 +40,19 @@
   50% { opacity: 0; }
 }
 
+/* 「当前招式」高亮——品牌橙,跟随光标(点击 / 方向键)。几何照搬 /sim 的
+   .sim-player-hl .current(twizzle TwistyAlgViewer.css .current-move):负 margin
+   抵消等量 padding,背景左右各外扩 0.1em 而不挤动文字对齐。 */
+.recon-move-current {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  margin-left: -0.1em;
+  margin-right: -0.1em;
+  padding-left: 0.1em;
+  padding-right: 0.1em;
+  border-radius: 0.1em;
+}
+
 /* Cross 行就地切换图标(标准化/原始) */
 .recon-cross-toggle {
   display: inline-flex;
