@@ -154,6 +154,9 @@ interface RestRun {
   /** 链晶格中心 (画面像素, 链内均值) — 空间聚类 = 生产可得的窗口身份 */
   cx: number;
   cy: number;
+  /** 链中间帧 index + 网格几何 (EM 探针 --dumpobs 重采样格心 RGB 用; 内部字段不序列化) */
+  midI: number;
+  midGrid: FaceObservation["grid"];
 }
 
 /** 两帧网格一致: 共同非空格 ≥4 且不一致 ≤1 (--strict 零容错, 防跨拧转混态成链) */
@@ -320,6 +323,8 @@ for (const sf of files) {
             motion: mots.length ? mots[mots.length >> 1] : Infinity,
             cx: cx / chain.length,
             cy: cy / chain.length,
+            midI: chainIdx[chain.length >> 1],
+            midGrid: chain[chain.length >> 1].grid,
           });
         }
       }
@@ -835,6 +840,13 @@ for (const sf of files) {
           face: bb.face,
           facelets: [...facelets],
           read: run.grid.map((c) => c ?? null),
+          // 读到色的格重采样格心原始 RGB (EM 探针 refit kNN 用; 未读格 null=遮挡不可信)
+          rgbRead: run.grid.map((c, i) => {
+            if (!c) return null;
+            const cc = cellCenter(run.midGrid, (i / 3) | 0, i % 3);
+            const m = blockMedianRGB(frameAt(run.midI), meta.w, meta.h, cc.x, cc.y, run.midGrid.pitch * 0.22);
+            return m ? [m.r, m.g, m.b] : null;
+          }),
           gt: facelets.map((f) => COLOR_NAMES[Math.floor(omega[st[f]] / 9)]),
           span: run.span, // 跟踪 span 身份 (span 内窗口旋转恒定) — prior-sim --spanalign 生产界用
           cx: Math.round(run.cx), // 链晶格中心 — prior-sim --winalign 空间聚类窗口身份用
