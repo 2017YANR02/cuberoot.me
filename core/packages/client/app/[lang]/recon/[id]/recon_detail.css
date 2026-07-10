@@ -661,16 +661,52 @@
   border-bottom: 2px dotted currentColor;
 }
 
-/* 该轮 5 把复盘全齐时的步数 Ao5 / TPS Ao5 摘要行 */
-.same-comp-event-ao5 {
-  display: flex;
-  flex-wrap: wrap;
+/* 详细成绩最后一把的 PR 角标绝对定位(left:100%)向右溢出,给单元右侧留白兜住它,
+   否则会顶到紧随其后的「平均步数」列。 */
+.same-comp-event-table .wp-cell-attempts { padding-right: 2.2em; }
+
+/* 平均 STM / 平均 TPS:不再单开列,改放「平均」列下方两行(与 /wca/persons 同款,复用 wp-avg-* 类名;
+   recon 页不加载 persons.css,就地定义)。第一行=平均成绩,下两行=Ao5 去尾均值,居中对齐平均值。 */
+.same-comp-event-table .wp-avg-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+/* 详细成绩每把(.wp-att)预留 2px 底边(当前把下划线占位),平均值行无此边 → 补 2px 让下方两行与逐把 stm/tps 同线(同 .same-comp-round-head) */
+.same-comp-event-table .wp-avg-cell .record-num-cell { padding-bottom: 2px; }
+.same-comp-event-table .wp-avg-substat {
+  font-size: 0.72rem; line-height: 1.2; font-weight: 400;
+  color: var(--muted-foreground); font-variant-numeric: tabular-nums;
+}
+
+/* 详细成绩单元:时间行 +(有复盘时)STM 行 / TPS 行,同一套 5 列网格逐列对齐。
+   行标(STM / TPS)不在本单元,移到「轮次」列 Fi 下方(见 .same-comp-round-*)。 */
+.same-comp-att-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(8.5ch, max-content));
   gap: 4px 12px;
-  margin-top: 4px;
-  font-family: 'Roboto Mono', monospace;
+  justify-content: start;
+  align-items: baseline;
+}
+.same-comp-event-table .wp-att-sub {
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--muted-foreground);
+  border-bottom: none;
+}
+
+/* 轮次列:轮次标签(+直播 chip)一行,其下 STM / TPS 行标。字号 0.72rem + 行间距 4px
+   与详细成绩单元的 STM / TPS 两行数值同节奏,加上两单元都 vertical-align:top → 逐行同线。 */
+.same-comp-round-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+/* 时间行 .wp-att 有 2px 透明 border-bottom(hover/当前把下划线占位),比轮次标签高 2px;
+   给轮次标签行补 2px 下内边距抹平,使其下 STM / TPS 行标与右侧数值行逐行同线。 */
+.same-comp-round-head { padding-bottom: 2px; }
+.same-comp-round-sublabel {
   font-size: 0.72rem;
   color: var(--muted-foreground);
-  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 
 /* 表格基础布局 — 复制自 persons.css .wp-bycomp-table */
@@ -695,7 +731,9 @@
 .same-comp-event-table tbody td {
   padding: 8px 10px;
   border-bottom: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
-  vertical-align: middle;
+  /* 顶对齐:详细成绩单元有「步数 / TPS」两行时,行会变高,左侧各列(排名/单次/平均/
+     平均步数/平均TPS)须与第一行(逐把成绩)同线,不能垂直居中掉到中间。 */
+  vertical-align: top;
   white-space: nowrap;
 }
 .same-comp-event-table tbody tr:last-child td { border-bottom: none; }

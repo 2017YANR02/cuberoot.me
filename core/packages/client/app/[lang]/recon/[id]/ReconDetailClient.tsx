@@ -1001,6 +1001,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
   if (rows.length === 0) return null;
 
   const eventId = toWcaEventId(solve.event!);
+  const speedUnit = eventId === 'sq1' ? 'SPS' : 'TPS';
 
   return (
     <div className="detail-section">
@@ -1042,20 +1043,34 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                   if (stmVals.some(v => v <= 0) || tpsVals.some(v => v <= 0)) return null;
                   return { moves: ao5Mean(stmVals), tps: ao5Mean(tpsVals) };
                 })();
+                // 逐把复盘(取 stm / tps);任一把有复盘就在时间行下补 STM / TPS 两行,
+                // 行标(STM / TPS)放到「轮次」列 Fi 下方,与这两行数值同线。
+                const roundRecons = r.attempts.map((_, i) => findReconStatsForCell(r.round_type_id, i + 1));
+                const hasRecon = roundRecons.some(Boolean);
                 return (
                   <tr key={r.id} className={r.live ? 'same-comp-event-row-live' : ''}>
                     <td>
-                      <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
-                        {roundLabel(r.round_type_id).replace(/^C-/, '')}
-                      </span>
-                      {r.live && (
-                        <span
-                          className="same-comp-event-live-chip"
-                          title={tr({ zh: '直播成绩,非官方,待 WCA 官方确认', en: 'Live result — unofficial, pending WCA' })}
-                        >
-                          {tr({ zh: '直播', en: 'Live' })}
-                        </span>
-                      )}
+                      <div className="same-comp-round-cell">
+                        <div className="same-comp-round-head">
+                          <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
+                            {roundLabel(r.round_type_id).replace(/^C-/, '')}
+                          </span>
+                          {r.live && (
+                            <span
+                              className="same-comp-event-live-chip"
+                              title={tr({ zh: '直播成绩,非官方,待 WCA 官方确认', en: 'Live result — unofficial, pending WCA' })}
+                            >
+                              {tr({ zh: '直播', en: 'Live' })}
+                            </span>
+                          )}
+                        </div>
+                        {hasRecon && (
+                          <>
+                            <span className="same-comp-round-sublabel">STM</span>
+                            <span className="same-comp-round-sublabel">{speedUnit}</span>
+                          </>
+                        )}
+                      </div>
                     </td>
                     <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                       {r.pos > 0 ? r.pos : '—'}
@@ -1071,13 +1086,21 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                       </span>
                     </td>
                     <td className="wp-cell-result">
-                      <span className="record-num-cell">
-                        {formatWcaResult(r.average, eventId, 'average')}
-                        {averageRecord
-                          ? <RecordBadge record={averageRecord} variant="inline" />
-                          : averageRank
-                            ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
-                            : null}
+                      <span className={hasRecon ? 'wp-avg-cell' : undefined}>
+                        <span className="record-num-cell">
+                          {formatWcaResult(r.average, eventId, 'average')}
+                          {averageRecord
+                            ? <RecordBadge record={averageRecord} variant="inline" />
+                            : averageRank
+                              ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
+                              : null}
+                        </span>
+                        {hasRecon && (
+                          <>
+                            <span className="wp-avg-substat">{roundAo5 ? roundAo5.moves.toFixed(2) : ''}</span>
+                            <span className="wp-avg-substat">{roundAo5 ? roundAo5.tps.toFixed(2) : ''}</span>
+                          </>
+                        )}
                       </span>
                     </td>
                     <td className="wp-cell-attempts">
@@ -1090,6 +1113,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                         singleRecord={singleRecord}
                         currentReconId={solve.id}
                         findReconForCell={findReconForCell}
+                        recons={roundRecons}
                         submitCtx={solve.personId && effectiveCompWcaId ? {
                           personId: solve.personId,
                           personName: solve.person ?? '',
@@ -1101,12 +1125,6 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                         } : null}
                         langQuery={(i18n.language.startsWith('zh') ? '?lang=zh' : '')}
                       />
-                      {roundAo5 && (
-                        <div className="same-comp-event-ao5">
-                          <span>{tr({ zh: '步数', en: 'Moves' })} Ao5 {roundAo5.moves.toFixed(1)}</span>
-                          <span>{eventId === 'sq1' ? 'SPS' : 'TPS'} Ao5 {roundAo5.tps.toFixed(2)}</span>
-                        </div>
-                      )}
                     </td>
                   </tr>
                 );
@@ -1119,7 +1137,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
   );
 }
 
-function RoundAttempts({ attempts, best, eventId, roundTypeId, attemptRanks, singleRecord, currentReconId, findReconForCell, langQuery, submitCtx }: {
+function RoundAttempts({ attempts, best, eventId, roundTypeId, attemptRanks, singleRecord, currentReconId, findReconForCell, recons, langQuery, submitCtx }: {
   attempts: number[];
   best: number;
   eventId: string;
@@ -1130,6 +1148,8 @@ function RoundAttempts({ attempts, best, eventId, roundTypeId, attemptRanks, sin
   singleRecord?: string | null;
   currentReconId: number;
   findReconForCell: (roundTypeId: string, attemptNum: number) => number | undefined;
+  // 逐把复盘对象(下标对齐 attempts,取 stm / tps);任一把有复盘就在时间行下补 STM / TPS 两行。
+  recons: (ReconSolve | undefined)[];
   langQuery: string;
   // 无复盘 solve 点击跳 /recon/submit 的预填上下文(身份字段);为 null 时该 solve 不可点。
   submitCtx: {
@@ -1147,10 +1167,11 @@ function RoundAttempts({ attempts, best, eventId, roundTypeId, attemptRanks, sin
       : (() => { const rk = attemptRanks?.[i] ?? null; return rk ? (rk === 1 ? 'PR' : `PR${rk}`) : undefined; })();
     return tag ? <RecordBadge record={tag} variant="inline" /> : null;
   };
+  const hasRecon = recons.some(Boolean);
   return (
-    <span className="wp-attempts-flow">
+    <div className="same-comp-att-grid">
       {attempts.map((a, i) => {
-        if (a === undefined) return null;
+        if (a === undefined) return <span key={i} />;
         const formatted = formatWcaResult(a, eventId, 'single');
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
         const badge = rankBadge(i, isBest);
@@ -1185,7 +1206,17 @@ function RoundAttempts({ attempts, best, eventId, roundTypeId, attemptRanks, sin
         }
         return <span key={i} className={cls}>{formatted}{badge}</span>;
       })}
-    </span>
+      {hasRecon && (
+        <>
+          {recons.map((rec, i) => (
+            <span key={`stm-${i}`} className="wp-att wp-att-sub">{rec?.stm != null && rec.stm > 0 ? rec.stm : ''}</span>
+          ))}
+          {recons.map((rec, i) => (
+            <span key={`tps-${i}`} className="wp-att wp-att-sub">{rec?.tps != null && rec.tps > 0 ? rec.tps.toFixed(2) : ''}</span>
+          ))}
+        </>
+      )}
+    </div>
   );
 }
 
