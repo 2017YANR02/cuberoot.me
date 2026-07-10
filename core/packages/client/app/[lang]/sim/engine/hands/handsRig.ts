@@ -76,6 +76,10 @@ export interface HandGripNames { R: GripName | null; L: GripName | null }
 /** 播放/键盘路径的转前提示(prepareTwist 登记):quarters=180° 才连拨;push=U'p。 */
 export interface TwistHint { quarters?: number; push?: boolean }
 
+/** FTN `@pin` 注解(§7,解析层产出;编排目前仅 `R[R2:@C]`):weld 前置贴块
+ *  钉指 —— 转动开始前指尖先到贴纸,weld 段随手刚体转,提交后收指。 */
+export interface PinSpec { hand: HandSide; finger: FingerName; sticker: string }
+
 /**
  * (轴, 层类别, 转向, 握姿, 提示) → 手势。dir = sign(group.angle)(angle 绕 AXIS_VEC)。
  * 权威规格表在 FINGERTRICKS.md(改指法先改那里);直觉映射(标准配色正视 F 绿 U 白):
@@ -503,6 +507,28 @@ const fitAt = (f: HookFit, ch: keyof HookFit, s: number): number => ((f[ch][2] *
  *  先伸至 D 层 BDR 接触位再起转(连拨第一击也要贴面)。数值浏览器标定。 */
 const PINKY_REACH = { c1: -0.26, c2: 0.19, c3: 0, splay: 0.02 };
 
+/** FTN 贴块钉指就位姿(§7 `@pin`,首例 `R[R2:@C]`):weld 前 R2 指尖前置到
+ *  C 贴纸(UFR 的 U 面,x,z∈[32,96] 于 y=96),weld 段随手刚体转(钉的块就在
+ *  转动层,零相对运动),提交后收指(时间驱动同 reachT)。就位姿浏览器标定,
+ *  判据:全顶点 pen≤0 + pad 贴 C 贴纸间隙 §4.0 贴块带;表里没值的 (hand,
+ *  finger) = 未编排,prepareTwist 直接忽略 pin。 */
+const WELD_PIN: Record<HandSide, Partial<Record<FingerName, { c1: number; c2: number; c3: number; splay: number }>>> = {
+  // 2026-07-10 标定(Node 蒙皮探针 SOLVE=PIN,home = 四指水平下沉版):基元
+  // = 继续卷拢折过 U-B 顶棱 + splay 上倾(「松开伸直」方向反,C 在前上方,
+  // 旧占位 c1 −0.62 就是这么飘的)。就位:pad gap 1.48@C(84.4,43.4)、全顶点
+  // pen −0.27、全手肉 x≥32(weld 绕 x 转,x 不变 ⇒ 就位安全即全程安全)。
+  R: { index: { c1: 0.59, c2: 0.3625, c3: 0.195, splay: -0.2532 } },
+  L: {},
+};
+/** 钉指转移凸包(sin(π·t) 包络):就位/收指途中抬离,直插会蹭 U 后棱(同
+ *  UP_PUSH.transit 的坑)。2026-07-10 与就位姿联合解:路径逐 t 细扫 pen ≤−0.84。 */
+const WELD_PIN_TRANSIT = { c1: -0.1125, c2: -0.1781, c3: 0, splay: -0.145 };
+/** @pin 期间中指同步收避:home(四指水平)中指尖 x=27.6 已入 M 列 x 域且
+ *  yz 半径 121.9 < 角柱 135.8 —— R weld 整手刚体转会扫穿静止 M 列。pin 就位
+ *  同步退卷让出(收避后全手肉 x≥32,绕 x 的 weld 天然安全);随 pinReachT
+ *  同节奏进退。 */
+const WELD_PIN_MID_TUCK = -0.2;
+
 /** D 族接触勾拨的拇指避让:D/D' 前 ~40° D 层 F 面材料扫过拇指下缘扇区
  *  (y<−32 的拇指肉半径 ~110U < 角柱扫掠 135.8U,零跟随 oracle 实测 pen
  *  −7.8@θ=0.35)。旧方案 = 整手外让 44U,接触规格下弹指手不能让 → 改拇指
@@ -797,6 +823,11 @@ interface HandState {
   /** topPush 伸指进度(时间驱动,0..1;reachTarget 为目标,tick 内推进)。 */
   reachT: number;
   reachTarget: 0 | 1;
+  /** FTN @pin 贴块钉指(weld 前置,见 WELD_PIN):时间驱动同 reachT;
+   *  收指走完(pinReachT 回 0)才清 pinFinger。 */
+  pinFinger: FingerName | null;
+  pinReachT: number;
+  pinReachTarget: 0 | 1;
   /** 转层外让:0..1 进度(目标值是层角纯函数,零延迟同步;回落 RECOVER_MS
    *  衰减)× dodgeMag = 整手沿本侧外向 x 平移量。 */
   dodge: number;
@@ -980,6 +1011,7 @@ export default class HandsRig extends THREE.Group {
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);
     }
+    this.setNailsVisible(this.nailsVisible); // 手模晚于设置到位,补应用「指甲」显隐
     // 加载期间开关已开 → 从 0 重新淡入(否则 fade 早到 1,手会瞬间蹦出来)。
     if (this.enabled) {
       this.fade = 0;
@@ -998,6 +1030,17 @@ export default class HandsRig extends THREE.Group {
    *  opacity 相互独立 —— 直接控 visible,不影响手部皮肤/指甲的淡入淡出。 */
   setSkeletonVisible(v: boolean): void {
     for (const mat of this.skelMats) mat.visible = v;
+  }
+
+  /** 调试开关(SimSettings.showNails 驱动):显隐立体甲片(mesh.visible,
+   *  不拆几何)。手模异步加载,加载完成处回放最后一次设置值。 */
+  private nailsVisible = true;
+  setNailsVisible(v: boolean): void {
+    this.nailsVisible = v;
+    if (!this.hands) return;
+    for (const s of ["R", "L"] as const) {
+      for (const m of this.hands[s].model.nailMeshes ?? []) m.visible = v;
+    }
   }
 
   private initHandState(model: HandModel, home: HandPose, forearm: THREE.Group, elbow: THREE.Vector3): HandState {
@@ -1023,6 +1066,9 @@ export default class HandsRig extends THREE.Group {
       flickDecay: 0,
       reachT: 0,
       reachTarget: 0,
+      pinFinger: null,
+      pinReachT: 0,
+      pinReachTarget: 0,
       dodge: 0,
       dodgeTarget: 0,
       dodgeMag: 0,
@@ -1069,6 +1115,9 @@ export default class HandsRig extends THREE.Group {
       h.flickDecay = 0;
       h.reachT = 0;
       h.reachTarget = 0;
+      h.pinFinger = null;
+      h.pinReachT = 0;
+      h.pinReachTarget = 0;
       h.dodge = 0;
       h.dodgeTarget = 0;
       h.indexEvade = 0;
@@ -1150,6 +1199,9 @@ export default class HandsRig extends THREE.Group {
       h.flickDecay = 0;
       h.reachT = 0;
       h.reachTarget = 0;
+      h.pinFinger = null;
+      h.pinReachT = 0;
+      h.pinReachTarget = 0;
       h.dodge = 0;
       h.dodgeTarget = 0;
       h.indexEvade = 0;
@@ -1211,7 +1263,7 @@ export default class HandsRig extends THREE.Group {
    * 调用方本轮不发 twist,等 isReachPreparing 落 false 再转。返回 false =
    * 无需前置或已到位。幂等,播放循环可 16ms 轮询重入。
    */
-  prepareTwist(axis: Axis, layers: number[], dir: 1 | -1, quarters = 1, push = false): boolean {
+  prepareTwist(axis: Axis, layers: number[], dir: 1 | -1, quarters = 1, push = false, pin?: PinSpec): boolean {
     const hands = this.hands;
     const cube = this.cube;
     if (!hands || !cube || !this.enabled) return false;
@@ -1230,6 +1282,20 @@ export default class HandsRig extends THREE.Group {
         this.lastActivityAt = performance.now();
         return true;
       }
+    }
+    // FTN @pin(§7,首例 R[R2:@C]):weld 前置贴块钉指 —— 指尖先到贴纸再转,
+    // weld 段随手刚体转。仅编排已标定组合(WELD_PIN 有值);上一钉指收指未完
+    // 先等(同 reach 收指闸语义,防 weld 把收回中的指链烘着转)。
+    if (pin && g.kind === "weld" && g.hands.includes(pin.hand) && WELD_PIN[pin.hand][pin.finger]) {
+      const h = hands[pin.hand];
+      if (h.pinReachT > 0 && h.pinReachTarget === 0) {
+        this.lastActivityAt = performance.now();
+        return true;
+      }
+      h.pinFinger = pin.finger;
+      h.pinReachTarget = 1;
+      this.lastActivityAt = performance.now();
+      return h.pinReachT < 1;
     }
     if (!HandsRig.needsReach(g) || g.kind !== "flick") return false;
     const h = hands[g.hand];
@@ -1261,6 +1327,7 @@ export default class HandsRig extends THREE.Group {
     sEvade: typeof S_EVADE;
     retreatLift: typeof RETREAT_LIFT; retreatLiftStyled: typeof RETREAT_LIFT_STYLED;
     hookExit: typeof HOOK_EXIT; backExit: typeof BACK_EXIT;
+    weldPin: typeof WELD_PIN; weldPinTransit: typeof WELD_PIN_TRANSIT;
   } {
     return {
       push: TOP_PUSH, follow: TOP_PUSH_FOLLOW,
@@ -1272,6 +1339,7 @@ export default class HandsRig extends THREE.Group {
       sEvade: S_EVADE,
       retreatLift: RETREAT_LIFT, retreatLiftStyled: RETREAT_LIFT_STYLED,
       hookExit: HOOK_EXIT, backExit: BACK_EXIT,
+      weldPin: WELD_PIN, weldPinTransit: WELD_PIN_TRANSIT,
     };
   }
 
@@ -1281,7 +1349,8 @@ export default class HandsRig extends THREE.Group {
     if (!hands || !this.enabled) return false;
     return (["R", "L"] as const).some((s) => {
       const h = hands[s];
-      return h.flickFinger !== null && h.reachTarget === 1 && h.reachT < 1;
+      return (h.flickFinger !== null && h.reachTarget === 1 && h.reachT < 1)
+        || (h.pinFinger !== null && h.pinReachTarget === 1 && h.pinReachT < 1);
     });
   }
 
@@ -1297,7 +1366,8 @@ export default class HandsRig extends THREE.Group {
       // decay 段也算「收指未完」:reach 式手势 decay 结束必然接 walk-back,若只
       // 看 reachTarget,下一步会在 decay 期间放行,retreat 与 weld 叠加(oracle
       // 实测 R' 把回撤中的食指烘着转进方块 −11U)。
-      return h.reachT > 0 && (h.reachTarget === 0 || h.flickDecay > 0);
+      return (h.reachT > 0 && (h.reachTarget === 0 || h.flickDecay > 0))
+        || (h.pinReachT > 0 && h.pinReachTarget === 0);
     });
   }
 
@@ -1461,6 +1531,15 @@ export default class HandsRig extends THREE.Group {
         h.flickFinger = null; h.flickFinger2 = null; h.flickAxis = null; h.flickStyle = null;
         h.flickAmount = 0;
       }
+      // FTN @pin 钉指就位/收指(时间驱动,同 reachT 节拍);收回后清指名。
+      if (h.pinReachT !== h.pinReachTarget) {
+        const step = dt / REACH_MS;
+        h.pinReachT = h.pinReachTarget > h.pinReachT
+          ? Math.min(h.pinReachTarget, h.pinReachT + step)
+          : Math.max(h.pinReachTarget, h.pinReachT - step);
+        animating = true;
+      }
+      if (h.pinFinger && h.pinReachTarget === 0 && h.pinReachT === 0) h.pinFinger = null;
       if (h.dodgeTarget > h.dodge) {
         // 外让即时跟目标(目标本身随层角从 0 连续爬升,无跳变)
         h.dodge = h.dodgeTarget;
@@ -1714,6 +1793,8 @@ export default class HandsRig extends THREE.Group {
         h.weldAngle = 0;
         h.weldRawAngle = 0;
         h.weldWhole = false;
+        // FTN @pin 钉指:weld 提交即收指(与回位并行;收指闸挡下一步)。
+        if (h.pinFinger) h.pinReachTarget = 0;
       }
       if (h.flickFinger) {
         h.flickDecay = 1;
@@ -1938,6 +2019,27 @@ export default class HandsRig extends THREE.Group {
         c2 += ev.c2 * h.indexEvade;
         c3 += ev.c3 * h.indexEvade;
         splay += ev.splay * h.indexEvade;
+      }
+      // FTN @pin 钉指(weld 前置贴块,见 WELD_PIN):就位/收指时间驱动,weld
+      // 段 pinReachT 保持 1,姿态随手刚体转。transit = sin(π·t) 转移凸包。
+      if (name === h.pinFinger && h.pinReachT > 0) {
+        const pinPose = WELD_PIN[side][name];
+        if (pinPose) {
+          const t = sm(h.pinReachT);
+          c1 += pinPose.c1 * t;
+          c2 += pinPose.c2 * t;
+          c3 += pinPose.c3 * t;
+          splay += pinPose.splay * t;
+          const tr = Math.sin(Math.PI * h.pinReachT);
+          c1 += WELD_PIN_TRANSIT.c1 * tr;
+          c2 += WELD_PIN_TRANSIT.c2 * tr;
+          c3 += WELD_PIN_TRANSIT.c3 * tr;
+          splay += WELD_PIN_TRANSIT.splay * tr;
+        }
+      }
+      // @pin 期间中指收避(见 WELD_PIN_MID_TUCK):weld 静区扫掠安全前提。
+      if (name === "middle" && h.pinFinger === "index" && h.pinReachT > 0) {
+        c1 += WELD_PIN_MID_TUCK * sm(h.pinReachT);
       }
       // D 族静止手「无名指 + 拇指」单指避让(见 LOW_EVADE 注释):弹指发生在
       // 另一只手上,进度走 tick 推进的 lowEvade(role===0 兜重叠帧,同上)。

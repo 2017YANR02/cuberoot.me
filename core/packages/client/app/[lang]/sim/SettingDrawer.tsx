@@ -113,6 +113,8 @@ export interface SimSettings {
   /** 开发者调试(仅 3x3 手指开启时可见):MediaPipe 风格 21 关键点骨架叠加线
    *  (关节点 + 连线)。默认关 —— 正常展示不需要这层调试线。 */
   handsSkeleton: boolean;
+  /** 手指的立体甲片显隐(调试区,mesh.visible 显隐不拆几何)。默认开。 */
+  showNails: boolean;
 }
 
 /** WCA 标准 6 面色 — 取自全站单一来源 lib/cube-colors */
@@ -164,6 +166,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   liveReduce: true,
   hands: false,
   handsSkeleton: false,
+  showNails: true,
 };
 
 const STORAGE_KEY = 'sim.settings';
@@ -230,6 +233,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   // (仅 3x3);内部已含 resize,所以放最前,后面的 resize 拿到的取景已是最终值。
   world.setHandsWanted(s.hands === true);
   world.hands?.setSkeletonVisible(s.handsSkeleton === true);
+  world.hands?.setNailsVisible(s.showNails !== false);
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
   world.controller.holdPartial = s.holdPartialTurn;

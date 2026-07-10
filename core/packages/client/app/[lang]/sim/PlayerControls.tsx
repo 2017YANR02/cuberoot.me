@@ -106,7 +106,8 @@ import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
-import { simulateGrips, type GripName, type GripSimStep, type HandSide } from './engine/hands/handsRig';
+import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
+import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
 import { WheelPicker } from '@/components/WheelPicker';
 import { ClearButton } from '@/components/ClearButton';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
@@ -124,25 +125,26 @@ const GRIP_MARKS: Record<string, GripName> = { '↑': 'up', '↓': 'down', '·':
 const GRIP_MARK_SPLIT = /([↑↓·])/;
 const stripGripMarks = (s: string): string => s.replace(/[↑↓·]/g, ' ');
 
-/** 指法后缀 `p`(推法,FINGERING.md §2):空白分隔的单招 token 尾接 p,如
+/** 指法后缀 `p`(推法,FINGERTRICKS.md §2):空白分隔的单招 token 尾接 p,如
  *  `U'p` = 右食指推 U'。喂 cubing.js / 变换工具前必须剥(Alg 解析不了)。 */
 const PUSH_TOKEN = /^([A-Za-z]w?[2']{0,2})p$/;
 const stripPushMarks = (s: string): string =>
   s.split(/(\s+)/).map((tok) => { const m = PUSH_TOKEN.exec(tok); return m ? m[1] : tok; }).join('');
-/** 变换/导出前剥全部手部记号(换握 ↑↓· + 推法 p 后缀)。 */
-const stripHandMarks = (s: string): string => stripPushMarks(stripGripMarks(s));
+/** 变换/导出前剥全部手部记号(FTN 注解块 + 换握 ↑↓· + 推法 p 后缀;块先剥,
+ *  `U'p[…]` 先塌成 `U'p` 再剥 p)。 */
+const stripHandMarks = (s: string): string => stripPushMarks(stripGripMarks(stripFtnBlocks(s)));
 
-type NxnPlayItem = { kind: 'move'; action: TwistAction; push?: boolean } | { kind: 'grip'; grip: GripName; side: HandSide };
+type NxnPlayItem = { kind: 'move'; action: TwistAction; push?: boolean; pin?: PinSpec } | { kind: 'grip'; grip: GripName; side: HandSide };
 
 /** 手部转前闸(与 isRegripping 同款节拍):登记 quarters/push 提示(连拨、
- *  推法分类用,FINGERING.md),该步若需前置就位(F 族越顶 / U'p / D2' 小指)
+ *  推法分类用,FINGERTRICKS.md),该步若需前置就位(F 族越顶 / U'p / D2' 小指)
  *  则启动/等待伸指动画并返回 true —— 调用方本轮不发 twist,下轮再问;
  *  false = 无需前置或已到位。 */
-function gateHandsReach(world: World | null, cube: import('./engine/nxn/cube').default, action: TwistAction, push = false): boolean {
+function gateHandsReach(world: World | null, cube: import('./engine/nxn/cube').default, action: TwistAction, push = false, pin?: PinSpec): boolean {
   const hands = world?.hands;
   if (!hands?.isEnabled) return false;
-  // 上一步 reach 式手势(topPush/U'p/D2' 小指)收指未完先等:weld 会把伸在
-  // 魔方上方的指链烘着整手转进方块(oracle 实证 −11U)。
+  // 上一步 reach 式手势(topPush/U'p/D2' 小指/@pin 钉指)收指未完先等:weld
+  // 会把伸在魔方上方的指链烘着整手转进方块(oracle 实证 −11U)。
   if (hands.isReachRetreating) return true;
   const rotates = cube.table.convert(action);
   if (!rotates.length) return false;
@@ -152,6 +154,7 @@ function gateHandsReach(world: World | null, cube: import('./engine/nxn/cube').d
     rotates[0].twist > 0 ? 1 : -1,
     Math.abs(rotates[0].twist),
     push,
+    pin,
   );
 }
 
@@ -189,6 +192,28 @@ function parseNxnItems(text: string): NxnPlayItem[] {
       }
     };
     for (const chunk of seg.split(/(\s+)/)) {
+      // FTN 注解 token(招式尾紧贴 [...],§7):剥块取招式,能解析出 @pin 则挂
+      // 到该步;无法识别的块按 §7.4 剥净后招式照播(落回缓冲)。
+      const fm = FTN_TOKEN.exec(chunk);
+      if (fm) {
+        let core = fm[1];
+        let push = false;
+        const pm = PUSH_TOKEN.exec(core);
+        if (pm) { core = pm[1]; push = true; }
+        let mv: Move | null = null;
+        try {
+          const nodes = [...new Alg(core).expand().childAlgNodes()];
+          if (nodes.length === 1 && nodes[0] instanceof Move) mv = nodes[0];
+        } catch { /* 非法招式:剥块后落回缓冲 */ }
+        if (mv) {
+          flush();
+          const pin = parseFtnPin(fm[2], mv.toString());
+          items.push({ kind: 'move', action: new TwistAction(mv.toString()), ...(push ? { push: true } : {}), ...(pin ? { pin } : {}) });
+        } else {
+          buf += fm[1];
+        }
+        continue;
+      }
       const m = PUSH_TOKEN.exec(chunk);
       if (m) {
         let mv: Move | null = null;
@@ -1144,7 +1169,7 @@ export default function PlayerControls({
       } else {
         if (cube.busy || world.hands?.isRegripping) return;
         // 前置就位:伸指在途时本次点击只推进伸指,到位后再点才转。
-        if (gateHandsReach(world, cube, it.action, it.push)) return;
+        if (gateHandsReach(world, cube, it.action, it.push, it.pin)) return;
         // 单步与播放同速:tween 在 twist() 同步捕获帧数,随即恢复抽屉值。
         timing.frames = playbackFrames;
         const ok = cube.twister.twist(it.action, false, false);
@@ -1262,7 +1287,7 @@ export default function PlayerControls({
           // state to keep playback strictly one-turn-at-a-time.
           if (cube.busy) return;
           // 前置就位:转动开始前指尖先到位(16ms 轮询幂等重入)。
-          if (gateHandsReach(world, cube, it.action, it.push)) return;
+          if (gateHandsReach(world, cube, it.action, it.push, it.pin)) return;
           started = cube.twister.twist(it.action, false, false);
         }
       }
@@ -2451,6 +2476,8 @@ function PuzzleSettings({
               <Toggle label={t('结构着色', 'Structure colors')} value={settings.debugStructureColor} onChange={(v) => set('debugStructureColor', v)} disabled={!caps.supports.structureColor} title={hint(caps.supports.structureColor)} />
               {/* 骨架线条:MediaPipe 风格关键点叠加,仅手指(hands)开启的拼图上可用(同 caps.supports.hands)。 */}
               <Toggle label={t('骨架线条', 'Skeleton overlay')} value={settings.handsSkeleton} onChange={(v) => set('handsSkeleton', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />
+              {/* 指甲:立体甲片显隐(mesh.visible,不拆几何),门控同骨架线条(手指相关调试)。 */}
+              <Toggle label={t('指甲', 'Nails')} value={settings.showNails} onChange={(v) => set('showNails', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />
               {/* 挖块:仅当该拼图有「原生转动元素」(角/面/棱)可掀起时可选;NxN/SQ1 无单一会动块组,
                   cubing.js 拼图引擎未驱动 → 灰掉。 */}
               <label className={'sim-toggle' + (caps.supports.carve ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.carve)}>

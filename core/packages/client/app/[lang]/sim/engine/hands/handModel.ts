@@ -39,6 +39,8 @@ export interface HandModel {
   meshes: THREE.Mesh[];
   /** 加载层自建材质(立体甲片等):rig 侧负责随手 fade / dispose。 */
   extraMats?: THREE.Material[];
+  /** 立体甲片 mesh(设置「指甲」开关走 visible 显隐,不拆几何)。 */
+  nailMeshes?: THREE.Mesh[];
 }
 
 /** 整手相对魔方的比例(2026-07-05 用户定真实比例:食指/中指/无名指宽 ≈0.9 个
