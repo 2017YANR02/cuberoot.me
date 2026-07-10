@@ -48,7 +48,7 @@ export default function ReconPlayerCanvas({
   fillPane?: boolean;
   /** NxN 下渲染左上角 cuberoot/cubing.js 切换(父容器须 position:relative) */
   showEngineToggle?: boolean;
-  /** 隐藏播放器自带控制条(成绩弹窗内嵌预览用,靠点解法 scrub) */
+  /** 隐藏播放器自带完整控制条,改用画面内播放/暂停浮层(成绩弹窗内嵌预览用;仍可点解法 scrub) */
   hideControls?: boolean;
 }) {
   const isSq1 = event === 'sq1';

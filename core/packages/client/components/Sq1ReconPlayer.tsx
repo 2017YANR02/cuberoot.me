@@ -21,6 +21,7 @@ import {
   useCallback, useEffect, useRef, useState, type RefObject,
 } from 'react';
 import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
+import ReconPlayOverlay from '@/components/recon/ReconPlayOverlay';
 import { parseSq1Tokens } from '@/lib/sq1-svg';
 import type World from '@/app/[lang]/sim/engine/world';
 import type Sq1Cube from '@/app/[lang]/sim/engine/sq1/Sq1Cube';
@@ -38,7 +39,7 @@ export default function Sq1ReconPlayer({
   fillPane?: boolean;
   /** Show an always-on back-view mini window (recon submit forces it). */
   backView?: boolean;
-  /** 隐藏底部播放/步进/scrubber 控制条(嵌成绩弹窗预览时用)。 */
+  /** 隐藏底部完整控制条,改用画面内居中播放/暂停浮层(嵌成绩弹窗预览时用)。 */
   hideControls?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
@@ -281,6 +282,12 @@ export default function Sq1ReconPlayer({
     <div className={`sq1-recon-player${fillPane ? ' sq1-recon-player--fill' : ''}`}>
       <div ref={hostRef} className="sq1-recon-canvas">
         {backView && <div ref={backFrameRef} className="sq1-recon-backview" aria-hidden />}
+        {hideControls && total > 0 && (
+          <ReconPlayOverlay
+            playing={playing}
+            onToggle={() => { if (atEnd) jumpToStep(0); setPlaying(p => !p); }}
+          />
+        )}
       </div>
       {!hideControls && (
       <div className="sq1-recon-controls">

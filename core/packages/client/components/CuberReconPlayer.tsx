@@ -23,6 +23,7 @@ import {
 import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
 import type World from '@/app/[lang]/sim/engine/world';
 import type { BackView } from '@/app/[lang]/sim/engine/backView';
+import ReconPlayOverlay from '@/components/recon/ReconPlayOverlay';
 import './CuberReconPlayer.css';
 
 const PLAY_INTERVAL_MS = 520;
@@ -41,7 +42,7 @@ export default function CuberReconPlayer({
   /** NxN order (2..7). */
   order: number;
   fillPane?: boolean;
-  /** 隐藏底部播放/步进/scrubber 控制条(嵌成绩弹窗预览时用)。 */
+  /** 隐藏底部完整控制条,改用画面内居中播放/暂停浮层(嵌成绩弹窗预览时用)。 */
   hideControls?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
@@ -293,6 +294,12 @@ export default function CuberReconPlayer({
     <div className={`cuber-recon-player${fillPane ? ' cuber-recon-player--fill' : ''}`}>
       <div ref={hostRef} className="cuber-recon-canvas">
         <div ref={backFrameRef} className="cuber-recon-backview" aria-hidden />
+        {hideControls && total > 0 && (
+          <ReconPlayOverlay
+            playing={playing}
+            onToggle={() => { if (atEnd) jumpToStep(0); setPlaying(p => !p); }}
+          />
+        )}
       </div>
       {!hideControls && (
       <div className="cuber-recon-controls">
