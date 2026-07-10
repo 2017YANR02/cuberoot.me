@@ -86,6 +86,7 @@ import DrillModal from '../_components/DrillModal';
 import { generateDrillScramble, type DrillType } from '../_lib/scramble/drill';
 import SolverHints from '../_components/SolverHints';
 import SolverHintPanel from '../_components/SolverHintPanel';
+import ScrambleSourcePanel from '../_components/ScrambleSourcePanel';
 import { OLL_CASES } from '../_lib/scramble/algs/oll_cases';
 import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
 import HistogramChart from '../_components/charts/HistogramChart';
@@ -1612,9 +1613,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
-        {/* 解法提示常驻面板(333):逐阶段最优 + 分步解法(含 3D 演示)。
-            桌面收成主区右侧竖栏,手机落在打乱图下方;可收起。 */}
-        {event === '333' && <SolverHintPanel scramble={scramble} isZh={isZh} />}
+        {/* 右侧配置栏:打乱来源(全项目)+ 解法提示(仅 333,逐阶段最优 + 分步解法)。
+            两块常驻可折叠面板同栏堆叠 —— 桌面收成主区右侧竖栏,手机落在打乱图下方。 */}
+        <div className="shell-rail" data-no-timer>
+          <ScrambleSourcePanel event={event} isZh={isZh} />
+          {event === '333' && <SolverHintPanel scramble={scramble} isZh={isZh} />}
+        </div>
 
         {/* Session stats — vertical cstimer-style list, bottom-left of the main
             area. Only once there's data (no bare dashes at idle). */}

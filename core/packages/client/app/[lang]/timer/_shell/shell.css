@@ -712,49 +712,90 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .stepsolve-player { width: 100%; max-width: 300px; margin: 6px auto 0; }
 .stepsolve-player .twisty-section { width: 100%; }
 
+/* Config rail wrapper (打乱来源 + 解法提示). On phones it's transparent to layout
+   (display:contents) so both panels flow inline under the scramble exactly as a
+   bare panel used to; desktop turns it into the absolute right column below. */
+.shell-rail { display: contents; }
+
 /* Phone: when expanded, let the app grow & the page scroll so the tall solver
    sits below the scramble instead of being clipped by the shell's overflow. */
 @media (max-width: 1023px) {
-  .timer-shell:has(.solver-panel[data-open='true']) {
+  /* :not(.fullscreen) — the rail is display:none in fullscreen but :has() still
+     matches its hidden panels, so without this the surface would keep the
+     panel-open min-height / scroll reflow with nothing to show. */
+  .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) {
     overflow: visible;
     height: auto;
   }
-  .timer-shell:has(.solver-panel[data-open='true']) .shell-main { flex: 0 0 auto; }
-  .timer-shell:has(.solver-panel[data-open='true']) .timing-surface { min-height: var(--solver-open-surface-h); }
-  /* Opening the panel re-flows the page (shell-main grows to fit the solver
-     below), so the bottom-of-shell-main anchored stat rail would otherwise drop
-     to the very page bottom, under the solver. Re-anchor it to the bottom-left
-     of the timing surface (its min-height above) so the 次数/成功/… readout
-     stays put by the timer instead of moving. */
-  .timer-shell:has(.solver-panel[data-open='true']) .shell-stat-rail {
+  .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) .shell-main { flex: 0 0 auto; }
+  .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) .timing-surface { min-height: var(--solver-open-surface-h); }
+  /* Opening a panel re-flows the page (shell-main grows to fit it below), so the
+     bottom-of-shell-main anchored stat rail would otherwise drop to the very page
+     bottom, under the panel. Re-anchor it to the bottom-left of the timing surface
+     (its min-height above) so the 次数/成功/… readout stays put by the timer. */
+  .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) .shell-stat-rail {
     top: var(--solver-open-surface-h);
     bottom: auto;
     transform: translateY(calc(-100% - 8px));
   }
 }
 
-/* Desktop: lift to an absolute right rail inside .shell-main; reserve room via
-   padding-right so the centered readout/scramble/cube shift left. Sits just to
-   the LEFT of the Times/Chart/Tools dock (a separate grid column), so the two
-   coexist without overlap. */
+/* Desktop: the .shell-rail lifts to an absolute column pinned to the right edge
+   of .shell-main (LEFT of the Times/Chart/Tools dock, a separate grid column).
+   All panels collapsed → a slim stack of drawer handles at center-right; any
+   panel open → the rail expands to a full-height side column and .shell-main
+   gains matching right padding so the centered readout/scramble/cube shift left
+   instead of sitting under it. The two panels (打乱来源 always, 解法提示 on 333)
+   stack vertically; if both are open the rail scrolls. */
 @media (min-width: 1024px) {
   .shell-main { transition: padding-right 160ms ease; }
-  .timer-shell:has(.solver-panel[data-open='true']) .shell-main {
-    padding-right: var(--solver-rail-w);
-  }
-  .solver-panel {
+
+  .shell-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
     position: absolute;
-    top: 0;
+    top: 50%;
     right: 0;
-    bottom: 0;
-    width: var(--solver-rail-w);
-    align-items: stretch;
-    padding: 0;
-    border-left: 1px solid var(--shell-divider);
-    background: var(--background);
+    transform: translateY(-50%);
+    width: auto;
+    max-height: 100%;
     z-index: 42; /* above the deskpet (40), like the docked rail */
   }
-  .solver-panel-head {
+  /* :not(.fullscreen) so fullscreen (rail hidden via display:none) doesn't keep a
+     phantom right pad — :has() still matches display:none panels otherwise. */
+  .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) .shell-main {
+    padding-right: var(--solver-rail-w);
+  }
+  .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail {
+    top: 0;
+    bottom: 0;
+    transform: none;
+    align-items: stretch;
+    gap: 0;
+    width: var(--solver-rail-w);
+    border-left: 1px solid var(--shell-divider);
+    background: var(--background);
+    overflow-y: auto;
+  }
+
+  /* Panels flow inside the rail (no longer each self-absolute). */
+  .shell-rail .solver-panel {
+    position: static;
+    align-items: stretch;
+    width: auto;
+    padding: 0;
+    transform: none;
+  }
+  /* Rail expanded: panels span its width; the open one grows to fill, any
+     still-collapsed sibling becomes a full-width accordion header bar. */
+  .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail .solver-panel { width: 100%; }
+  .shell-rail .solver-panel[data-open='true'] { flex: 1 1 auto; min-height: 0; }
+  .shell-rail .solver-panel[data-open='false'] { flex: 0 0 auto; }
+
+  /* Header, rail expanded: full-width bar + bottom divider. */
+  .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail .solver-panel-head {
     justify-content: space-between;
     padding: 12px 14px;
     border: 0;
@@ -762,27 +803,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
     border-radius: 0;
     background: transparent;
   }
-  .solver-panel-body {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    margin-top: 0;
-    padding: 10px 12px 16px;
-  }
-  /* Desktop chevron: collapsed ‹ (points into the rail) → expand, open › → collapse. */
-  .solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(180deg); }
-  .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(0deg); }
-  /* Collapsed: shrink to a drawer handle pinned at the right-center edge. */
-  .solver-panel[data-open='false'] {
-    top: 50%;
-    right: 0;
-    bottom: auto;
-    transform: translateY(-50%);
-    width: auto;
-    border-left: 0;
-    background: transparent;
-  }
-  .solver-panel[data-open='false'] .solver-panel-head {
+  /* Header, rail collapsed (all closed): right-pinned drawer-handle pill. */
+  .shell-rail .solver-panel[data-open='false'] .solver-panel-head {
     border: 1px solid var(--shell-divider);
     border-right: 0;
     border-radius: 999px 0 0 999px;
@@ -790,21 +812,67 @@ html[data-theme=dark] { --scramble-fg: #fff; }
     background: var(--shell-chip);
     box-shadow: 0 2px 12px color-mix(in srgb, var(--foreground) 10%, transparent);
   }
-  .solver-panel[data-open='false'] .solver-panel-head:hover { background: var(--shell-hover); }
+  .shell-rail .solver-panel[data-open='false'] .solver-panel-head:hover { background: var(--shell-hover); }
+
+  .shell-rail .solver-panel-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin-top: 0;
+    padding: 10px 12px 16px;
+  }
+
+  /* Chevron: collapsed ‹ (points into the rail) → expand, open › → collapse. */
+  .shell-rail .solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(180deg); }
+  .shell-rail .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(0deg); }
 
   /* The rail is a narrow tall column — stack the 3D player ABOVE the solution
      list (StageSolver's default puts them side-by-side, only collapsing under a
      viewport-width query that never fires on a wide desktop). Stacking gives
      each solution's full move sequence the rail's whole width, so deeper-stage
      algs aren't clipped. Override only from this wrapper (shared CSS off-limits). */
-  .solver-panel-body .stsv-result { flex-direction: column-reverse; }
-  .solver-panel-body .stsv-player {
+  .shell-rail .solver-panel-body .stsv-result { flex-direction: column-reverse; }
+  .shell-rail .solver-panel-body .stsv-player {
     position: static;
     flex-basis: auto;
     width: 100%;
     max-width: 300px;
     margin: 0 auto;
   }
+}
+
+/* 打乱来源面板取色统一走站点 token(跟随右栏 var(--background) 的明暗),而非计时器那套
+   data-timer-theme 灰阶 —— 二者可能不一致(计时器主题 dark + 站点浅色),会出现浅底配深控件。
+   这些 .settings-row* / .wca-src-* 原语默认硬码深色(给 dark-locked 设置弹层用),这里只在本
+   面板(.scramble-src-panel)内翻成 token,和同栏的「解法提示」面板一致;设置弹层 / 对战设置
+   不受影响。:root[data-timer-theme] 前缀是为了盖过 wca-source.css 里 data-timer-theme=light 覆盖。 */
+:root[data-timer-theme] .scramble-src-panel .settings-row-label { color: var(--muted-foreground); }
+:root[data-timer-theme] .scramble-src-panel .settings-row-control input[type='number'],
+:root[data-timer-theme] .scramble-src-panel .settings-row-control .settings-row-control-select,
+:root[data-timer-theme] .scramble-src-panel .wca-src-dates input[type='date'] {
+  background: var(--background);
+  color: var(--foreground);
+  border-color: var(--border-default);
+  color-scheme: light dark;
+}
+:root[data-timer-theme] .scramble-src-panel .settings-row-control .hint,
+:root[data-timer-theme] .scramble-src-panel .wca-src-hint,
+:root[data-timer-theme] .scramble-src-panel .wca-src-dash { color: var(--muted-foreground); }
+:root[data-timer-theme] .scramble-src-panel .settings-row-control .hint-btn {
+  border-color: var(--border-default);
+  color: var(--muted-foreground);
+}
+:root[data-timer-theme] .scramble-src-panel .settings-row-control .hint-btn:hover {
+  background: var(--shell-hover);
+  color: var(--foreground);
+}
+:root[data-timer-theme] .scramble-src-panel .wca-src-config { border-left-color: var(--shell-divider); }
+:root[data-timer-theme] .scramble-src-panel .wca-src-comp-name { color: var(--foreground); }
+:root[data-timer-theme] .scramble-src-panel .wca-src-steps-range .range-slider {
+  --rs-rail-bg: var(--shell-divider);
+  --rs-thumb-ring: var(--background);
+  --rs-thumb-shadow: color-mix(in srgb, var(--foreground) 20%, transparent);
+  --rs-mark-fg: var(--muted-foreground);
 }
 
 /* ── Distraction-free fade while running ────────────────── */
@@ -1353,6 +1421,6 @@ body:has(.battle-container .penalty-dropdown.open) .clawd-deskpet {
 .timer-shell.fullscreen .shell-bottombar,
 .timer-shell.fullscreen .shell-stat-rail,
 .timer-shell.fullscreen .shell-undersurface,
-.timer-shell.fullscreen .solver-panel {
+.timer-shell.fullscreen .shell-rail {
   display: none;
 }
