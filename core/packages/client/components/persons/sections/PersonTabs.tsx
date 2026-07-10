@@ -6,6 +6,7 @@ import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { Suspense, lazy, Fragment, useState, useMemo, useEffect } from 'react';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { fetchWcaPersonChampionshipPodiums, type ChampionshipPodiumRow } from '@/lib/wca-person-api';
+import type { ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 
 const ResultsTab = lazy(() => import('./results/ResultsTab'));
 const RecordsTab = lazy(() => import('./RecordsTab'));
@@ -25,7 +26,7 @@ interface Props {
   /** 直播·非官方成绩 + 对应比赛元数据(仅成绩 tab 用,不进其它 tab / PR 表) */
   liveResults?: WcaResultRow[] | null;
   liveComps?: WcaCompetition[] | null;
-  reconLookup: Map<string, number> | null;
+  reconLookup: Map<string, ReconAttemptInfo> | null;
   isZh: boolean;
 }
 

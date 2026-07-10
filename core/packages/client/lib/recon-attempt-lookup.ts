@@ -5,31 +5,54 @@ import type { ReconSolve } from '@cuberoot/shared';
 import { matchRoundType } from './wca-results-api';
 import { toWcaEventId, wcaToReconEvent } from './wca-events';
 
-export function buildReconAttemptMap(recons: ReconSolve[]): Map<string, number> {
-  const m = new Map<string, number>();
+/** 逐把复盘的最小信息:id(跳详情页) + stm/tps(选手页详细成绩下方展示)。 */
+export interface ReconAttemptInfo {
+  id: number;
+  stm?: number;
+  tps?: number;
+}
+
+export function buildReconAttemptMap(recons: ReconSolve[]): Map<string, ReconAttemptInfo> {
+  const m = new Map<string, ReconAttemptInfo>();
   for (const r of recons) {
     if (!r.compWcaId || !r.event || !r.round || r.solveNum == null) continue;
     const wcaEid = toWcaEventId(r.event);
-    m.set(`${r.compWcaId}|${wcaEid}|${r.round}|${r.solveNum}`, r.id);
+    m.set(`${r.compWcaId}|${wcaEid}|${r.round}|${r.solveNum}`, { id: r.id, stm: r.stm, tps: r.tps });
   }
   return m;
 }
 
 export function findReconForAttempt(
-  map: Map<string, number> | null | undefined,
+  map: Map<string, ReconAttemptInfo> | null | undefined,
   compId: string,
   wcaEventId: string,
   wcaRoundTypeId: string,
   attemptNum: number,
-): number | undefined {
+): ReconAttemptInfo | undefined {
   if (!map) return undefined;
   for (const reconRound of ['1', '2', '3', 'f']) {
     if (matchRoundType(reconRound, wcaRoundTypeId)) {
-      const id = map.get(`${compId}|${wcaEventId}|${reconRound}|${attemptNum}`);
-      if (id) return id;
+      const info = map.get(`${compId}|${wcaEventId}|${reconRound}|${attemptNum}`);
+      if (info) return info;
     }
   }
   return undefined;
+}
+
+/** 该轮任一把有复盘且带 stm/tps → 选手页在详细成绩下方展示 STM/TPS 两行。 */
+export function rowHasReconStats(
+  map: Map<string, ReconAttemptInfo> | null | undefined,
+  compId: string,
+  wcaEventId: string,
+  wcaRoundTypeId: string,
+  attemptCount: number,
+): boolean {
+  if (!map) return false;
+  for (let i = 1; i <= attemptCount; i++) {
+    const info = findReconForAttempt(map, compId, wcaEventId, wcaRoundTypeId, i);
+    if (info && ((info.stm ?? 0) > 0 || (info.tps ?? 0) > 0)) return true;
+  }
+  return false;
 }
 
 // Person-aware variant: keyed by personId too, so a comp results table (many people

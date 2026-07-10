@@ -24,6 +24,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
+import { rowHasReconStats, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
@@ -44,7 +45,7 @@ interface Props {
   profile: WcaPersonProfile;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
-  reconLookup: Map<string, number> | null;
+  reconLookup: Map<string, ReconAttemptInfo> | null;
   eventId: string;
   isZh: boolean;
   showAttemptRanks?: boolean;
@@ -186,7 +187,7 @@ function EventRoundsList({
   results: WcaResultRow[];
   comps: WcaCompetition[];
   eventId: string;
-  reconLookup: Map<string, number> | null;
+  reconLookup: Map<string, ReconAttemptInfo> | null;
   isZh: boolean;
   showAttemptRanks?: boolean;
 }) {
@@ -395,11 +396,14 @@ function EventRoundsList({
             const effBest = effectiveFieldValue(chain, 'best', r.best);
             const effAvg = effectiveFieldValue(chain, 'average', effectiveAverage(r, eventId));
             const effAttempts = effectiveAttempts(chain, r.attempts);
+            // 「#」开 + 该轮有复盘(带 stm/tps)→ 详细成绩下补 STM/TPS 两行,轮次列同步出两行标签。
+            const hasReconStats = showAttemptRanks && rowHasReconStats(reconLookup, r.competition_id, eventId, r.round_type_id, effAttempts.length);
+            const speedUnit = eventId === 'sq1' ? 'SPS' : 'TPS';
             return (
               <tr
                 key={r.id}
                 id={`r-${r.competition_id}-${eventId}-${r.round_type_id}`}
-                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''}`}
+                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats ? 'wp-row-has-recon-stats' : ''}`}
                 onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}
               >
                 <td className="wp-cell-comp">
@@ -415,22 +419,32 @@ function EventRoundsList({
                   {showComp && !cmp && r.competition_id}
                 </td>
                 <td>
-                  <Link
-                    href={buildAnchorHref(r.competition_id, r.round_type_id)}
-                    replace
-                    scroll={false}
-                    onClick={() => setHash(hashOf(r.competition_id, r.round_type_id))}
-                    className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
-                    title={t('复制到链接', 'Copy link to this row')}
-                  >
-                    {roundLabel(r.round_type_id)}
-                  </Link>
-                  {r.live && (
-                    <span className="wp-live-chip" title={t('直播成绩,非官方,待 WCA 官方确认', 'Live result — unofficial, pending WCA')}>
-                      {t('直播', 'LIVE')}
+                  <span className="wp-round-cell">
+                    <span className="wp-round-head">
+                      <Link
+                        href={buildAnchorHref(r.competition_id, r.round_type_id)}
+                        replace
+                        scroll={false}
+                        onClick={() => setHash(hashOf(r.competition_id, r.round_type_id))}
+                        className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
+                        title={t('复制到链接', 'Copy link to this row')}
+                      >
+                        {roundLabel(r.round_type_id)}
+                      </Link>
+                      {r.live && (
+                        <span className="wp-live-chip" title={t('直播成绩,非官方,待 WCA 官方确认', 'Live result — unofficial, pending WCA')}>
+                          {t('直播', 'LIVE')}
+                        </span>
+                      )}
+                      <PendingProposals pending={pending} eventId={eventId} isAdmin={admin} onModerated={refreshChanges} />
                     </span>
-                  )}
-                  <PendingProposals pending={pending} eventId={eventId} isAdmin={admin} onModerated={refreshChanges} />
+                    {hasReconStats && (
+                      <>
+                        <span className="wp-round-sublabel">STM</span>
+                        <span className="wp-round-sublabel">{speedUnit}</span>
+                      </>
+                    )}
+                  </span>
                 </td>
                 <td className={`wp-cell-pos ${effPos === 1 ? 'wp-pos-first' : ''} ${oldPos.length > 0 ? 'wp-cell-changed' : ''}`}>
                   <span className="record-num-cell">
@@ -506,6 +520,7 @@ function EventRoundsList({
                     }
                     attemptRanks={showAttemptRanks ? (rank?.attemptRanks ?? null) : null}
                     singleRecord={showAttemptRanks ? singleRecord : null}
+                    showReconStats={hasReconStats}
                     cols={maxAttempts}
                     onEdit={(index, newValue, note) =>
                       recordAttemptEdit({
