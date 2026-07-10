@@ -911,6 +911,20 @@ function ao5Mean(vals: number[]): number {
   return (sum - Math.min(...vals) - Math.max(...vals)) / (vals.length - 2);
 }
 
+/** 平均列一行:按小数点拆成整数 / 小数两个网格项(整数右对齐、小数左对齐)→ 小数点跨行对齐(见 .wp-avg-*)。
+ *  末位 '.' 切分,兼容 M:SS.dd(按秒的小数点对齐);无小数点(如 FMC 步数)整串进整数格。 */
+function AvgDec({ text, badge, variant }: { text: string; badge?: React.ReactNode; variant: 'main' | 'sub' }) {
+  const dot = text.lastIndexOf('.');
+  const intPart = dot >= 0 ? text.slice(0, dot) : text;
+  const fracPart = dot >= 0 ? text.slice(dot) : '';
+  return (
+    <span className={`wp-avg-dec wp-avg-dec-${variant}`}>
+      <span className="wp-avg-int">{intPart}</span>
+      <span className="wp-avg-frac">{fracPart}{badge}</span>
+    </span>
+  );
+}
+
 function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: (v: boolean) => void }) {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -1034,6 +1048,11 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                 const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
                 const singleRecord = r.regional_single_record || (liveRank?.singleTag || null);
                 const averageRecord = r.regional_average_record || (liveRank?.averageTag || null);
+                const avgBadge = averageRecord
+                  ? <RecordBadge record={averageRecord} variant="inline" />
+                  : averageRank
+                    ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
+                    : null;
                 // 该轮 5 把复盘全齐时,给出步数 Ao5 与 TPS Ao5(各自去掉极值取中间 3 把均值)。
                 const roundAo5 = (() => {
                   const recs = [1, 2, 3, 4, 5].map(n => findReconStatsForCell(r.round_type_id, n));
@@ -1086,22 +1105,18 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                       </span>
                     </td>
                     <td className="wp-cell-result">
-                      <span className={hasRecon ? 'wp-avg-cell' : undefined}>
+                      {roundAo5 ? (
+                        <span className="wp-avg-cell">
+                          <AvgDec text={formatWcaResult(r.average, eventId, 'average')} badge={avgBadge} variant="main" />
+                          <AvgDec text={roundAo5.moves.toFixed(2)} variant="sub" />
+                          <AvgDec text={roundAo5.tps.toFixed(2)} variant="sub" />
+                        </span>
+                      ) : (
                         <span className="record-num-cell">
                           {formatWcaResult(r.average, eventId, 'average')}
-                          {averageRecord
-                            ? <RecordBadge record={averageRecord} variant="inline" />
-                            : averageRank
-                              ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
-                              : null}
+                          {avgBadge}
                         </span>
-                        {hasRecon && (
-                          <>
-                            <span className="wp-avg-substat">{roundAo5 ? roundAo5.moves.toFixed(2) : ''}</span>
-                            <span className="wp-avg-substat">{roundAo5 ? roundAo5.tps.toFixed(2) : ''}</span>
-                          </>
-                        )}
-                      </span>
+                      )}
                     </td>
                     <td className="wp-cell-attempts">
                       <RoundAttempts
