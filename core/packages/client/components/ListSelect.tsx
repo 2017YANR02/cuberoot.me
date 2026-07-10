@@ -87,9 +87,8 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
           {current ? (
             <>
               {current.country && <Flag iso2={current.country} className="list-select-flag" />}
-              <span className="list-select-label">
-                {current.label}{current.hint ? ` ${current.hint}` : ''}
-              </span>
+              <span className="list-select-label">{current.label}</span>
+              {current.hint && <span className="list-select-hint">{current.hint}</span>}
             </>
           ) : (
             <span className="list-select-label">{allLabel}</span>
@@ -129,9 +128,8 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
                 onClick={() => { if (!i.disabled) select(i.value); }}
               >
                 {i.country && <Flag iso2={i.country} className="list-select-flag" />}
-                <span className="list-select-label">
-                  {i.label}{i.hint ? ` ${i.hint}` : ''}
-                </span>
+                <span className="list-select-label">{i.label}</span>
+                {i.hint && <span className="list-select-hint">{i.hint}</span>}
               </button>
             ))}
           </div>
