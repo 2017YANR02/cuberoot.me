@@ -40,6 +40,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'alg', zh: '公式库与训练', en: 'Algs & training' },
   { key: 'membership', zh: '会员', en: 'Membership' },
   { key: 'feedback', zh: '反馈', en: 'Feedback' },
+  { key: 'forum', zh: '论坛', en: 'Forum' },
   { key: 'content', zh: '内容与运维', en: 'Content & ops' },
   { key: 'timer', zh: '计时器', en: 'Timer' },
   { key: 'analytics', zh: '访问统计', en: 'Analytics' },
@@ -54,7 +55,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   account_auth alg alg_sets analytics announced_comps article auth cn_comp_names colpi
-//   comp_follows cube cubeopt_solve cubing_live feedback health historical_ranks
+//   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer ops paint progress recon scramble_555
 //   scramble_marks sponsors timer_backups wca_format wca_fun_stats wca_proxy
 //   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wiki
@@ -254,6 +255,24 @@ const ENDPOINTS: Ep[] = [
   { d: 'feedback', m: 'GET', p: '/v1/feedback', g: 'admin', zh: '全部反馈', en: 'All feedback' },
   { d: 'feedback', m: 'PATCH', p: '/v1/feedback/:id', g: 'admin', zh: '改状态', en: 'Update status' },
   { d: 'feedback', m: 'DELETE', p: '/v1/feedback/:id', g: 'admin', zh: '删除反馈', en: 'Delete feedback' },
+
+  // ---- forum ----
+  { d: 'forum', m: 'GET', p: '/v1/forum/index', g: 'public', zh: '论坛首页:分类 → 子版 + 全站统计', en: 'Forum index: categories, boards, site stats' },
+  { d: 'forum', m: 'GET', p: '/v1/forum/f/:slug', g: 'public', zh: '子版主题列表(置顶单列,分页)', en: 'Board thread list (pinned split, paged)' },
+  { d: 'forum', m: 'GET', p: '/v1/forum/t/:id', g: 'public', zh: '主题帖子分页(登录附本人反应)', en: 'Thread posts (my reactions when signed in)' },
+  { d: 'forum', m: 'GET', p: '/v1/forum/latest', g: 'public', zh: '全版最新活跃主题', en: 'Latest active threads' },
+  { d: 'forum', m: 'GET', p: '/v1/forum/search', g: 'public', zh: '搜标题 + 正文,带摘录', en: 'Search titles + bodies with snippet' },
+  { d: 'forum', m: 'POST', p: '/v1/forum/threads', g: 'login', zh: '发主题(公告版仅管理员)', en: 'Create thread (announcements admin-only)' },
+  { d: 'forum', m: 'POST', p: '/v1/forum/posts', g: 'login', zh: '回帖(锁帖仅管理员)', en: 'Reply (locked threads admin-only)' },
+  { d: 'forum', m: 'PATCH', p: '/v1/forum/posts/:id', g: 'login', zh: '编辑自己的帖子', en: 'Edit own post' },
+  { d: 'forum', m: 'DELETE', p: '/v1/forum/posts/:id', g: 'login', zh: '软删帖子(首帖禁单删)', en: 'Soft-delete post (not the first post)' },
+  { d: 'forum', m: 'PATCH', p: '/v1/forum/threads/:id', g: 'login', zh: '改标题;置顶 / 锁帖仅管理员', en: 'Edit title; pin/lock admin-only' },
+  { d: 'forum', m: 'DELETE', p: '/v1/forum/threads/:id', g: 'login', zh: '软删主题', en: 'Soft-delete thread' },
+  { d: 'forum', m: 'POST', p: '/v1/forum/posts/:id/react', g: 'login', zh: '反应(再点取消,可换类型)', en: 'React (toggle / switch kind)' },
+  { d: 'forum', m: 'POST', p: '/v1/forum/t/:id/view', g: 'public', zh: '浏览计数 +1', en: 'Bump view count' },
+  { d: 'forum', m: 'POST', p: '/v1/forum/posts/:id/report', g: 'login', zh: '举报帖子(一人一帖一条)', en: 'Report a post (one per user per post)' },
+  { d: 'forum', m: 'GET', p: '/v1/forum/reports', g: 'admin', zh: '举报列表(默认待处理,?all=1 全部)', en: 'List reports (open by default, ?all=1 for all)' },
+  { d: 'forum', m: 'POST', p: '/v1/forum/reports/:id/resolve', g: 'admin', zh: '标记举报已处理', en: 'Mark report resolved' },
 
   // ---- content ----
   { d: 'content', m: 'GET', p: '/v1/wiki/terms', g: 'public', c: 'cdn', zh: '术语表', en: 'Wiki terms' },

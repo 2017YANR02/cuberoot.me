@@ -1,0 +1,29 @@
+/* /forum/search — search page. */
+
+.forum-search-page { max-width: 900px; }
+
+.forum-search-box {
+  display: flex;
+  width: 100%;
+  max-width: 480px;
+  margin-bottom: 16px;
+}
+
+.forum-search-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--foreground);
+  background: var(--card);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  padding: 8px 30px 8px 12px;
+}
+.forum-search-input:focus { outline: none; border-color: var(--ring); }
+
+.forum-search-total {
+  font-size: 0.78rem;
+  color: var(--faint-foreground);
+  margin-bottom: 6px;
+}

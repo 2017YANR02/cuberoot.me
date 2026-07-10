@@ -1,0 +1,46 @@
+/* /forum/f/[slug] — thread listing page-specific layout. */
+
+.forum-list-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.forum-sort-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+.forum-sort-caption { white-space: nowrap; }
+
+/* .forum-sort-select 在共享 forum.css(new 页也用) */
+
+.forum-list-section { margin-bottom: 1.2rem; }
+
+.forum-list-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.forum-list-total {
+  font-size: 0.78rem;
+  color: var(--faint-foreground);
+}
+
+.forum-adminonly-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  margin-top: 12px;
+}
+
+@media (max-width: 480px) {
+  .forum-sort-caption { display: none; }
+}
