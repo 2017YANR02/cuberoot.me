@@ -747,3 +747,107 @@
 .sim-qwerty-keypad {
   font-size: 12px;
 }
+
+/* ── Skewb notation guide ──────────────────────────────────────────────
+   Tap a letter to demo the twist on the main cube. WCA and Sarah relabel the
+   same 8 corners, so watching the move beats reading a table. */
+.skewb-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+.skewb-guide-toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  background: none;
+  border: 0;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.skewb-guide-toggle:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+.skewb-guide-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border-radius: 8px;
+}
+.skewb-guide-caption {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  min-height: 1.2em;
+}
+.skewb-guide-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 4px 10px;
+}
+.skewb-guide-label {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint-foreground);
+  white-space: nowrap;
+}
+.skewb-guide-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.skewb-guide-chip {
+  min-width: 30px;
+  padding: 4px 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border-default);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.skewb-guide-chip:hover {
+  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+.skewb-guide-chip.is-active {
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.skewb-guide-restore {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  background: none;
+  border: 1px solid var(--border-default);
+  border-radius: 5px;
+  cursor: pointer;
+}
+.skewb-guide-restore:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
+.skewb-guide-chip:focus-visible,
+.skewb-guide-toggle:focus-visible,
+.skewb-guide-restore:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
