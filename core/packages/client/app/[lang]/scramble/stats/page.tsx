@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -56,7 +56,7 @@ import { compSourceLine } from '@/lib/comp-schedule';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2, compCountryId, countryToIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
-import { fetchScrambleCountryDist, type ScrambleCountryDistJson } from '@/lib/scramble-country-dist';
+import { fetchByDifficultyCountries, type ByDifficultyCountry } from '@/lib/scramble-by-difficulty';
 import { statsUrl } from '@/lib/stats-base';
 import {
   stageLabel, isBlockVariant, VARIANT_ORDER, VARIANT_STAGES, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT,
@@ -312,15 +312,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const [examplesLoading, setExamplesLoading] = useState(false);
   const [examplesError, setExamplesError] = useState<string | null>(null);
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
-  // 3x3 族「各国占比条」(仅合并 WCA 池):点柱懒加载;选中某国(country_id)→ 客户端筛预览 + 服务端筛全量真题。
-  const [countryDist, setCountryDist] = useState<ScrambleCountryDistJson | null>(null);
-  const countryDistTried = useRef(false);
+  // 选中某国(country_id)→ 客户端筛预览 + 服务端筛全量真题;各国计数由示例面板按 bin 拉 facet。
   const [filterCountry, setFilterCountry] = useState<string | null>(null);
-  const ensureCountryDistLoaded = () => {
-    if (countryDistTried.current) return;
-    countryDistTried.current = true;
-    fetchScrambleCountryDist().then(setCountryDist).catch(() => { /* 缺失优雅降级,不画条 */ });
-  };
   // 组平均示例:基底(一次)+ 每变体值文件(按需);点柱后重算匹配组。
   const [avgExBase, setAvgExBase] = useState<AvgExamplesBase | null>(null);
   const [avgExVals, setAvgExVals] = useState<Record<string, AvgExValsFile | null>>({});
@@ -545,7 +538,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const handleBarClick = (bin: number) => {
     setSelectedBin(bin);
     ensureExamplesLoaded();
-    ensureCountryDistLoaded();
   };
 
   // 组平均示例:点柱时按需拉基底(一次)+ 当前变体值文件(每变体一次)。
@@ -579,7 +571,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     if (previewBins.length > 0) {
       setSelectedBin(previewBins[0]);
       ensureExamplesLoaded();
-      ensureCountryDistLoaded();
     } else {
       setSelectedBin(null);
     }
@@ -594,10 +585,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   }, [exSet, variant, stage, effectiveSubset, selectedBin]);
 
   // 各国占比条(仅合并 WCA 池:scrambleSet==='wca';per-event/xcross 无 country 数据 → undefined → 不画)。
-  const binCountry = useMemo<Record<string, number> | undefined>(() => {
-    if (selectedBin === null || scrambleSet !== 'wca' || !countryDist) return undefined;
-    return countryDist.sets.wca?.[variant]?.[stage]?.[effectiveSubset]?.[String(selectedBin)];
-  }, [countryDist, scrambleSet, variant, stage, effectiveSubset, selectedBin]);
   // 换 set/变体/阶段/底色/步数/度量 → 清国家筛选(避免筛着一个国家切走后列表空/口径错位)。
   useEffect(() => { setFilterCountry(null); }, [scrambleSet, variant, stage, effectiveSubset, selectedBin, optMetric]);
 
@@ -1915,7 +1902,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         wcaEvent={event}
         merged={merged}
         dataset={dataset}
-        countryCounts={binCountry}
         filterCountry={filterCountry}
         onFilterCountry={setFilterCountry}
       />
@@ -2014,7 +2000,6 @@ function ExamplesPanel({
   wcaEvent,
   merged,
   dataset,
-  countryCounts,
   filterCountry,
   onFilterCountry,
 }: {
@@ -2037,7 +2022,6 @@ function ExamplesPanel({
   wcaEvent: string;
   merged: boolean;
   dataset: string;
-  countryCounts?: Record<string, number>; // 该步数各国计数(country_id→n),合并 WCA 池才有
   filterCountry: string | null;            // 选中的 country_id(null=不筛)
   onFilterCountry: (countryId: string | null) => void;
 }) {
@@ -2053,15 +2037,37 @@ function ExamplesPanel({
     if (filterCountry && canFullList && !showAll) setShowAll(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCountry]);
-  // 国家下拉选项(该步数各国 country_id→计数,按次数降序);label 后带计数 hint。
-  const countryItems: ListSelectItem[] = Object.entries(countryCounts ?? {})
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .map(([id, cnt]) => {
-      const iso2 = countryToIso2(id);
-      const en = iso2 ? countryName(iso2, false) : id;
-      const zh = iso2 ? countryName(iso2, true) : id;
-      return { value: id, label: isZh ? zh : en, hint: String(cnt), country: iso2 || undefined, searchTerms: `${en} ${zh} ${id}` };
-    });
+  // 各国计数:服务端 facet(与「查看全部」列表同源、永远对得上);仅 std/步骤(canFullList)有全量库。
+  const [facetCountries, setFacetCountries] = useState<ByDifficultyCountry[] | null>(null);
+  useEffect(() => {
+    if (!canFullList || selectedBin === null) { setFacetCountries(null); return; }
+    let alive = true;
+    void fetchByDifficultyCountries({
+      variant, stage, colors: subsetKey, bin: selectedBin, event: merged ? undefined : wcaEvent,
+    }).then((cs) => { if (alive) setFacetCountries(cs); });
+    return () => { alive = false; };
+  }, [canFullList, selectedBin, variant, stage, subsetKey, merged, wcaEvent]);
+  // 下拉选项(country_id→计数,按次数降序;label 后带计数 hint)。
+  // std/步骤:用 facet(与列表同源);整解(333)只有预览、无全量库 → 从当前样例算,计数=可见条数。
+  const countryItems: ListSelectItem[] = (() => {
+    const m: Record<string, number> = {};
+    if (canFullList && facetCountries && facetCountries.length) {
+      for (const { id, n } of facetCountries) m[id] = n;
+    } else {
+      for (const s of (samples ?? [])) {
+        const cid = compCountryId(idMeta?.[s[0]]?.[0] ?? '');
+        if (cid) m[cid] = (m[cid] ?? 0) + 1;
+      }
+    }
+    return Object.entries(m)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([id, cnt]) => {
+        const iso2 = countryToIso2(id);
+        const en = iso2 ? countryName(iso2, false) : id;
+        const zh = iso2 ? countryName(iso2, true) : id;
+        return { value: id, label: isZh ? zh : en, hint: String(cnt), country: iso2 || undefined, searchTerms: `${en} ${zh} ${id}` };
+      });
+  })();
   const selectedDownloadable = selectedBin !== null && downloadBins.includes(selectedBin);
   // 整解 + 该 bin 示例确有最优打乱数据时才露切换(线上旧 JSON 无第 4 元 → 自动隐藏)。
   const hasOpt = is333 && !!samples?.some((s) => !!s[3]);

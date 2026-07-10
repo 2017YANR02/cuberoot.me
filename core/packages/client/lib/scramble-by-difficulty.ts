@@ -40,6 +40,30 @@ export interface ByDifficultyParams {
 
 export const BY_DIFFICULTY_PAGE_SIZE = 50;
 
+export interface ByDifficultyCountry { id: string; n: number; } // WCA country_id → 真题数
+
+// 该 (方法,阶段,子集,步数[,项目]) 下各国真题计数(facet=country;与列表 total 同源、永远对得上)。
+// 失败或后端未部署 facet(旧版返回列表、无 countries 字段)→ 返回 [],调用方回退到本地样例计数。
+export async function fetchByDifficultyCountries(p: {
+  variant: string; stage: string; colors: string; bin: number; event?: string;
+}): Promise<ByDifficultyCountry[]> {
+  const qs = new URLSearchParams();
+  qs.set('variant', p.variant);
+  qs.set('stage', p.stage);
+  qs.set('colors', p.colors);
+  qs.set('bin', String(p.bin));
+  qs.set('facet', 'country');
+  if (p.event) qs.set('event', p.event);
+  try {
+    const r = await fetch(apiUrl(`/v1/wca/scrambles/by-difficulty?${qs.toString()}`));
+    if (!r.ok) return [];
+    const j = (await r.json()) as { countries?: ByDifficultyCountry[] };
+    return j.countries ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchByDifficulty(p: ByDifficultyParams): Promise<ByDifficultyResult | null> {
   const qs = new URLSearchParams();
   qs.set('variant', p.variant);
