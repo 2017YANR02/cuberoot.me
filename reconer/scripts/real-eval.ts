@@ -77,6 +77,10 @@ const ORACLE_SINGLE = process.argv.includes("--oraclesingle");
 // --calibgt 天花板: 全段 GT 双端态收样本 (诊断用 — GT 标定都救不了就放弃此路)
 const CALIB_LEGIT = process.argv.includes("--calib");
 const CALIB_GT = process.argv.includes("--calibgt");
+// --calibpool 生产界: 用其它视频的 GT 标注样本池 (留一) 建全局 kNN 应用到本视频。
+// = "一次性标注语料训色, 部署到新视频" (无本视频 GT), 与解码器 buildLogConf 留一同法学。
+// 前置: 先跑 --calibgt --dumpsamples 产 .tmp/calib-samples-*.json。隐含 kNN。
+const CALIB_POOL = process.argv.includes("--calibpool");
 // 软观测神谕: 满覆盖单 B 窗口, 逐格从该视频 GT 样本池抽真实特征 → 标定高斯
 // 逐类似然 → 归一化概率向量 (真特征噪声 + 合成指派)。回答"软通道能否过墙",
 // 不碰提取器。需与 --calibgt (或 --calib) 同用以拟合标定与样本池。
@@ -389,6 +393,24 @@ for (const sf of files) {
     j + 1 < fullSeq.length ? startState[j + 1] : IDENTITY_PERM;
   const tokIdxToProbsPre = new Map<number, number>(nonRotIdx.map((jj, tt) => [jj, tt]));
 
+  // kNN 标定就地附加: 不重提取 (重提取改链形成→丢覆盖)。给 pass1 vivid 网格附 kNN
+  // 重分类标签 (格心 RGB → kNN); agree/链检测仍用 vivid colors 保覆盖, 共识用 knn 保精度。
+  const attachKnnColors = (calib: ColorCalib) => {
+    for (let i = 0; i < grids.length; i++) {
+      if (!grids[i]?.length) continue;
+      const rgb = frameAt(i);
+      for (const obs of grids[i]) {
+        const kc: (ColorName | null)[] = new Array(9).fill(null);
+        for (let c = 0; c < 9; c++) {
+          const { x, y } = cellCenter(obs.grid, (c / 3) | 0, c % 3);
+          const m = blockMedianRGB(rgb, meta.w, meta.h, x, y, obs.grid.pitch * 0.22);
+          if (m) kc[c] = calibClassifyDiag(m.r, m.g, m.b, calib);
+        }
+        obs.knnColors = kc;
+      }
+    }
+  };
+
   // ===== 每视频颜色自标定 (两遍提取) =====
   // pass1 (默认阈值) 网格 → 已知态帧反标样本 → 拟合 → pass2 带标定重提取。
   // 合法模式: 观察期帧 (态=打乱) + 收尾帧 (态=复原), 生产无 GT 可用;
@@ -528,21 +550,7 @@ for (const sf of files) {
         (calibPool.get(s.label) ?? calibPool.set(s.label, []).get(s.label)!).push(s);
       }
       if (calib.knn) {
-        // kNN 标定: 不重提取 (重提取会改链形成→丢覆盖)。就地给 pass1 vivid 网格附加
-        // kNN 重分类标签 (格心 RGB → kNN); agree/链检测仍用 vivid colors 保覆盖, 共识用 knn 标签保精度。
-        for (let i = 0; i < grids.length; i++) {
-          if (!grids[i]?.length) continue;
-          const rgb = frameAt(i);
-          for (const obs of grids[i]) {
-            const kc: (ColorName | null)[] = new Array(9).fill(null);
-            for (let c = 0; c < 9; c++) {
-              const { x, y } = cellCenter(obs.grid, (c / 3) | 0, c % 3);
-              const m = blockMedianRGB(rgb, meta.w, meta.h, x, y, obs.grid.pitch * 0.22);
-              if (m) kc[c] = calibClassifyDiag(m.r, m.g, m.b, calib);
-            }
-            obs.knnColors = kc;
-          }
-        }
+        attachKnnColors(calib);
       } else {
         ({ grids, frameSpan, nCold, nTracked, anchor } = extractAllGrids(calib));
       }
@@ -550,6 +558,25 @@ for (const sf of files) {
       ({ omega, omegaIdx } = fitOmega(runs));
     } else {
       console.log(`  标定失败 (实拟合类 <3, 共 ${samples.length} 样本), 沿用默认阈值`);
+    }
+  } else if (CALIB_POOL) {
+    // 跨视频 GT-pool 留一: 其它视频的 GT 样本池 → 全局 kNN → 应用到本视频 (零本视频 GT)
+    const tmpDir = join(import.meta.dirname, "..", ".tmp");
+    const myKey = basename(videoPath).replace(/\s+/g, "_");
+    const pooled: ColorSample[] = [];
+    for (const f of readdirSync(tmpDir)) {
+      const m = /^calib-samples-(.*)\.json$/.exec(f);
+      if (!m || m[1] === myKey) continue;
+      pooled.push(...(JSON.parse(readFileSync(join(tmpDir, f), "utf8")) as ColorSample[]));
+    }
+    const calib = fitColorCalib(pooled, { knn: true });
+    if (calib?.knn) {
+      console.log(`  标定[池化kNN 留一, 排除本视频]: ${pooled.length} 外部样本  ${calibSummary(calib)}`);
+      attachKnnColors(calib);
+      ({ runs, motP } = buildRuns(grids, frameSpan));
+      ({ omega, omegaIdx } = fitOmega(runs));
+    } else {
+      console.log(`  池化标定失败 (外部样本 ${pooled.length}, 先跑 --calibgt --dumpsamples?), 沿用默认阈值`);
     }
   }
 
