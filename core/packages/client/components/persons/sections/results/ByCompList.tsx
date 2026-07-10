@@ -17,6 +17,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
+import { rowHasReconStats, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { isMbldEvent, effectiveMbldAverage } from '@/lib/mbf-average';
 import { useMbldAvgRecords, mbldAvgRecordKey } from '@/lib/mbld-avg-records';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
@@ -55,7 +56,7 @@ interface Props {
   personCountry?: string;
   results: WcaResultRow[] | null;
   comps: WcaCompetition[] | null;
-  reconLookup: Map<string, number> | null;
+  reconLookup: Map<string, ReconAttemptInfo> | null;
   isZh: boolean;
   showAttemptRanks?: boolean;
   onToggleAttemptRanks?: () => void;
@@ -240,33 +241,46 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                     const effBest = effectiveFieldValue(chain, 'best', r.best);
                     const effAvg = effectiveFieldValue(chain, 'average', r.average);
                     const effAttempts = effectiveAttempts(chain, r.attempts);
+                    // 「#」开 + 该轮有复盘(带 stm/tps)→ 详细成绩下补 STM/TPS 两行,轮次列同步出两行标签。
+                    const hasReconStats = showAttemptRanks && rowHasReconStats(reconLookup, comp.id, r.event_id, r.round_type_id, effAttempts.length);
+                    const speedUnit = r.event_id === 'sq1' ? 'SPS' : 'TPS';
                     return (
                       <tr
                         key={r.id}
                         id={`r-${comp.id}-${r.event_id}-${r.round_type_id}`}
-                        className={`wp-row-anchorable ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''}`}
+                        className={`wp-row-anchorable ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats ? 'wp-row-has-recon-stats' : ''}`}
                         onClick={(e) => handleRowClick(e, comp.id, r.event_id, r.round_type_id)}
                       >
                         <td className="wp-cell-event">
                           {showEvent && <EventIcon event={r.event_id} className="wp-event-icon-sm" />}
                         </td>
                         <td>
-                          <Link
-                            href={buildAnchorHref(comp.id, r.event_id, r.round_type_id)}
-                            replace
-                            scroll={false}
-                            onClick={() => setHash(hashOf(comp.id, r.event_id, r.round_type_id))}
-                            className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
-                            title={t('复制到链接', 'Copy link to this row')}
-                          >
-                            {roundLabel(r.round_type_id)}
-                          </Link>
-                          {r.live && (
-                            <span className="wp-live-chip" title={t('直播成绩,非官方,待 WCA 官方确认', 'Live result — unofficial, pending WCA')}>
-                              {t('直播', 'LIVE')}
+                          <span className="wp-round-cell">
+                            <span className="wp-round-head">
+                              <Link
+                                href={buildAnchorHref(comp.id, r.event_id, r.round_type_id)}
+                                replace
+                                scroll={false}
+                                onClick={() => setHash(hashOf(comp.id, r.event_id, r.round_type_id))}
+                                className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
+                                title={t('复制到链接', 'Copy link to this row')}
+                              >
+                                {roundLabel(r.round_type_id)}
+                              </Link>
+                              {r.live && (
+                                <span className="wp-live-chip" title={t('直播成绩,非官方,待 WCA 官方确认', 'Live result — unofficial, pending WCA')}>
+                                  {t('直播', 'LIVE')}
+                                </span>
+                              )}
+                              <PendingProposals pending={pending} eventId={r.event_id} isAdmin={admin} onModerated={refreshChanges} />
                             </span>
-                          )}
-                          <PendingProposals pending={pending} eventId={r.event_id} isAdmin={admin} onModerated={refreshChanges} />
+                            {hasReconStats && (
+                              <>
+                                <span className="wp-round-sublabel">STM</span>
+                                <span className="wp-round-sublabel">{speedUnit}</span>
+                              </>
+                            )}
+                          </span>
                         </td>
                         <td className={`wp-cell-pos ${effPos === 1 ? 'wp-pos-first' : ''} ${oldPos.length > 0 ? 'wp-cell-changed' : ''}`}>
                           <span className="record-num-cell">
@@ -342,6 +356,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                             }
                             attemptRanks={showAttemptRanks ? (rank?.attemptRanks ?? null) : null}
                             singleRecord={showAttemptRanks ? singleRecord : null}
+                            showReconStats={hasReconStats}
                             onEdit={(index, newValue, note) =>
                               recordAttemptEdit({
                                 target: { wcaId, competitionId: comp.id, eventId: r.event_id, roundTypeId: r.round_type_id, resultId: r.id ?? null },

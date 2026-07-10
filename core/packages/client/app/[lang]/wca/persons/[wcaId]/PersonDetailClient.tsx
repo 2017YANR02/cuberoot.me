@@ -18,7 +18,7 @@ import {
 } from '@/lib/wca-person-api';
 import { loadFlagData } from '@/lib/country-flags';
 import { listRecons } from '@/lib/recon-api';
-import { buildReconAttemptMap } from '@/lib/recon-attempt-lookup';
+import { buildReconAttemptMap, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import PersonHero from '@/components/persons/sections/PersonHero';
 import PersonPRTable from '@/components/persons/sections/PersonPRTable';
 import PersonBestCombos from '@/components/persons/sections/PersonBestCombos';
@@ -52,7 +52,7 @@ export default function PersonDetailClient() {
   // 直播·非官方成绩(官方尚未收录的近期比赛)— 单独持有,只下发给成绩 tab
   const [liveResults, setLiveResults] = useState<WcaResultRow[] | null>(null);
   const [liveComps, setLiveComps] = useState<WcaCompetition[] | null>(null);
-  const [reconLookup, setReconLookup] = useState<Map<string, number> | null>(null);
+  const [reconLookup, setReconLookup] = useState<Map<string, ReconAttemptInfo> | null>(null);
   const [former, setFormer] = useState<WcaFormerIdentity[]>([]);
   const [error, setError] = useState<string | null>(null);
   // 「废止项」口径开关:Σ 名次和行(PR 表底部)与「最优项目组合」共用一份状态
