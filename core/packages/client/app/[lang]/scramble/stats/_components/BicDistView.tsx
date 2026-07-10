@@ -228,7 +228,6 @@ export default function BicDistView({ isZh }: { isZh: boolean }) {
           <div className="scramble-stats-stat-grid">
             <Cell label={tr({ zh: '均值', en: 'mean' })} value={st.mean.toFixed(2)} />
             <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(st.median)} />
-            <Cell label={tr({ zh: '众数', en: 'mode' })} value={String(st.mode)} />
             <Cell label={tr({ zh: '上帝之数', en: "God's number" })} value={String(BIC_GODS_NUMBER)} />
           </div>
         </div>
