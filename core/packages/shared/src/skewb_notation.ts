@@ -16,9 +16,10 @@
  *   H = hedgeslammer  = L F' L' F (Sarah)
  *   x, y, z = standard whole-cube rotations
  *
- * WCA / cubing.js notation (as the cubing.js skewb notation mapper resolves):
- *   F = UFR, U = ULB, L = DLF, R = DRB, B = DLB, D = DFR (6 corners directly)
- *   ULF and URB have no dedicated single letter — express via conjugates of F.
+ * WCA / cubing.js notation (as the cubing.js skewb KPuzzle names its 8 grips —
+ * base moves `D U L UR R UL B F` verified via playwright probe):
+ *   F = UFR, U = ULB, L = DLF, R = DRB, B = DLB, D = DFR, UL = ULF, UR = URB.
+ *   All 8 corners have a single token — no conjugate/rotation needed.
  *
  * Resolved direct mapping:
  *   Sarah F → F        (UFR ≡ UFR)
@@ -27,15 +28,20 @@
  *   Sarah l → L        (DLF ≡ DLF)
  *   Sarah b → B        (DLB ≡ DLB)
  *   Sarah d/f → D      (DFR ≡ DFR)
+ *   Sarah L → UL       (ULF ≡ ULF; UL ≡ y' F y, verified equal cube state)
+ *   Sarah R → UR       (URB ≡ URB; UR ≡ y  F y', verified equal cube state)
  *
- * Conjugated mapping (verified empirically against cubing.js, see comments):
- *   Sarah L (ULF) → y' F y
- *   Sarah R (URB) → y  F y'
+ * Emitting the single UL/UR tokens (instead of the y-conjugates the mapper used to
+ * produce) keeps the cubing.js render identical AND makes the output parseable by
+ * the /sim engine skewb, whose corner parser accepts UL/UR but not whole-cube
+ * rotations. sr-puzzlegen (the /alg skewb thumbnail) reads only [LRUB] so it ignored
+ * both forms alike — unchanged.
  *
- * Macro expansion (per Sarah's PDF):
- *   S  → F' L F L'
+ * Macro expansion (per Sarah's PDF; L now expands to UL via the direct map, so the
+ * macros are rotation-free too):
+ *   S  → F' L F L'   →  F' UL F UL'
  *   S' → L F' L' F   (= H)
- *   H  → L F' L' F
+ *   H  → L F' L' F   →  UL F' UL' F
  *   H' → F' L F L'   (= S)
  *
  * Token grammar accepts the standard prime/double suffixes ('/2).
@@ -49,12 +55,8 @@ const SARAH_DIRECT: Record<string, string> = {
   b: 'B',
   d: 'D',
   f: 'D',
-};
-
-// Conjugate: Sarah_X = [pre] F [post]. X' = [pre] F' [post]. X2 = [pre] F2 [post].
-const SARAH_CONJUGATE: Record<string, { pre: string; mid: string; post: string }> = {
-  L: { pre: "y'", mid: 'F', post: 'y' },
-  R: { pre: 'y',  mid: 'F', post: "y'" },
+  L: 'UL',
+  R: 'UR',
 };
 
 const SARAH_MACRO: Record<string, { plain: string; prime: string; double: string }> = {
@@ -88,12 +90,6 @@ function translateToken(tok: string): string[] {
 
   if (SARAH_DIRECT[ch] !== undefined) {
     return [SARAH_DIRECT[ch] + suffix];
-  }
-
-  if (SARAH_CONJUGATE[ch]) {
-    const { pre, mid, post } = SARAH_CONJUGATE[ch];
-    const midOut = suffix === "'" ? mid + "'" : suffix === '2' ? mid + '2' : mid;
-    return [pre, midOut, post];
   }
 
   // Rotations (x/y/z) and any other tokens (e.g. lowercase u — uncommon) pass through.
