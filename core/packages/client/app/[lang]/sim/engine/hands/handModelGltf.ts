@@ -35,6 +35,17 @@ const U = (SIZE / 64) * HAND_SCALE;
  *  再加 roll 接触被换走,oracle 实测)。改此值必须连动 handPoses 拇指 curl 重解。 */
 export const THUMB_CURL_PLANE_ROLL = 2.074;
 
+/** 拇指「绕指尖下压」的挂点平移分量(手系,2026-07-10 用户规格:根部下沉、
+ *  指尖/指甲原位不动 = 以指尖为圆心顺时针转)。与 handPoses 拇指 c1/splay
+ *  改动**配对**合成绕指尖刚体旋转:curl 把链绕根转(指尖上扫),此平移把
+ *  指尖钉回原世界位 → 净效果 = 根部落 ~15U(cube 系 y),指尖零漂移
+ *  (浏览器雅可比 2 通道最小二乘解,左右资产不对称各解各的)。
+ *  键 = adaptGltfHand 的 side(-1 右 / +1 左)。改 curl 必须连动重解此表。 */
+const THUMB_PITCH_MOUNT: Record<1 | -1, [number, number, number]> = {
+  [-1]: [-0.123, 15.097, -6.747], // 右:含 E 带回填 +0.6U(cube y)整体微抬 —— 纯旋转把 x70 处外皮压到 y=-32.39 破 E 带下界 0.39U
+  [1]: [0.094, -15.882, -6.528],
+};
+
 /** WebXR 25 关节命名(https://www.w3.org/TR/webxr-hand-input-1/)。
  *  四指 FK 链 = proximal/intermediate/distal(metacarpal 静止在掌内);
  *  拇指链 = metacarpal/proximal/distal(拇指的可动基节就是掌骨)。
@@ -537,6 +548,13 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
   mesh.raycast = noRaycast;
   mesh.material = skinMat;
   mesh.castShadow = mesh.receiveShadow = false;
+
+  // 拇指挂点平移(THUMB_PITCH_MOUNT)必须放最后:attach 保世界位姿,更早
+  // 平移会被 attach 补偿成 no-op(踩过:curl 改动单边生效,拇指绕根上扫飞顶);
+  // 甲片拟合读 bind 顶点 + tip.matrixWorld,提前平移会把甲片错位烘进局部系。
+  // 此处骨骼/甲片已全部挂进代理链,平移 = 整拇指刚体随动。
+  fingers.thumb.root.position.add(new THREE.Vector3(...THUMB_PITCH_MOUNT[side]));
+  group.updateMatrixWorld(true);
 
   return { group, side, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat], nailMeshes };
 }
