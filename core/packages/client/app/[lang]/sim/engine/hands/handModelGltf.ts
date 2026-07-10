@@ -74,15 +74,24 @@ const sstep = (a: number, b: number, x: number): number => {
 
 /** 甲片格网行列数(轮廓 = 甲缘超椭圆本身,行数定侧缘圆滑度)。 */
 const NAIL_NR = 33, NAIL_NC = 21;
-/** 甲片半宽 = K × 末节长(解剖学比例,拇指宽 / 小指窄)。禁从蒙皮顶点推宽度:
- *  这套 GLB 低模把末节径向半径(rDist)高估 ~2x,甲片会比手指还宽,侧缘埋进
- *  噪声皮面,可见轮廓抖成不规则 blob(踩过)。 */
-const NAIL_HALFW_K: Record<FingerName, number> = { thumb: 0.34, index: 0.30, middle: 0.30, ring: 0.29, pinky: 0.26 };
+/** 甲片半宽 = K × 末节长。K 标定 = 实测「背侧指尖皮肤半宽」÷ 末节长 —— 即甲片建模
+ *  到指尖背侧满宽,再由 EDGE_TUCK 陡崖把最外 ~16% 收进甲沟,可见甲板 ≈ 0.84×满宽
+ *  (解剖比 75~85%,两侧余窄条 = 甲沟)。实测(tests 探针:甲域 t∈[T0,T1] 背侧半球
+ *  h≥0 顶点对 uC 居中横偏 p90,单位 U)拇指 9.8 / 食 10.2 / 中 10.4 / 环 10.1 / 小 7.4
+ *  → K×len 得甲半宽 9.9/10.3/10.5/10.0/7.6U ≈ 满宽。
+ *  仍禁「运行时」从蒙皮顶点推宽度:这套低模末节径向半径(rDist)高估 ~2x + 每指背侧
+ *  样本仅 5~14 个(环指常漏采最宽点),逐载入 p90 会抖出忽宽忽窄的 blob(旧坑);故把
+ *  实测锚点烘成确定性比例表(跨左右手一致),而非运行时采样。旧表(0.34/0.30/0.30/
+ *  0.29/0.26)甲宽仅指尖的 ~45%,用户报「指甲太小」。改末节长 / 换资产须重跑探针重标。 */
+const NAIL_HALFW_K: Record<FingerName, number> = { thumb: 0.50, index: 0.67, middle: 0.65, ring: 0.63, pinky: 0.48 };
 /** 甲片轴向覆盖(末节段分数)+ 厚度 —— 几何层与放置层(覆盖余量)共用。
  *  蒙皮实测(tests 曾 dump 环状剖面):皮肤管延伸到 t≈1.3+ 才收圆帽,p4(tip
  *  骨)远在皮尖之前 —— T1=1.15 观感仍是「甲尖与指尖轮廓齐平或略短」;
- *  再长会卷过指尖圆帽垂到指腹(「围兜」,踩过)。 */
-const NAIL_T0 = 0.46, NAIL_T1 = 1.15;
+ *  再长会卷过指尖圆帽垂到指腹(「围兜」,踩过)。
+ *  T0=0.32(2026-07-09,用户报「指甲太小」)：甲根前移到末节中前部 —— 解剖上甲根
+ *  (甲基)落 DIP 折痕附近,可见甲板铺满末节背面 ~2/3;最根一行仍由 BASE_SINK 崖埋进
+ *  近端甲襞。原 0.46 甲根偏靠指尖,甲板纵向偏短。 */
+const NAIL_T0 = 0.32, NAIL_T1 = 1.15;
 const NAIL_TH = 0.55 * U;
 
 /**
@@ -109,9 +118,13 @@ function buildNailGeometry(args: {
   const { p3, axis, dorsal, lat, len } = args;
   const T0 = NAIL_T0, T1 = NAIL_T1;
   const TH = NAIL_TH;           // 甲片厚度(薄;游离缘侧壁可见即可)
-  const EDGE_TUCK = 3.6 * U;    // 侧缘陡崖式下收进皮(甲沟):可见轮廓 = 皮∩甲交线,
+  const EDGE_TUCK = 3.0 * U;    // 侧缘陡崖式下收进皮(甲沟):可见轮廓 = 皮∩甲交线,
                                 // 缓坡交线随粗皮网格大面片横移读成折线(踩过);做成近垂直
                                 // 崖后交线钉在甲缘超椭圆本身(皮高微变几乎不移交点)→ 轮廓圆滑
+  // 崖只收最外 ~16%(0.84→0.99):甲片已建到指尖背侧满宽(halfW≈皮肤半宽),中段
+  // 平铺可见 = 甲板,外沿这一小段陡收进甲沟 → 可见甲板 ≈ 0.84×满宽(解剖比)。旧
+  // ramp 0.68→0.90 收掉外 ~30%,把加宽的甲片大半埋回皮里(拇指加宽后完全不可见,踩过)。
+  const TUCK_S = 0.84, TUCK_E = 0.99;
   const BASE_SINK = 2.2 * U;    // 甲根陡崖藏进近端甲襞(同侧缘,缓坡会让甲根轮廓折线化)
   const FREE_LIFT = 0.18 * U;   // 游离缘微翘(过大 = 翘壳/尖喙)
   const NR = NAIL_NR, NC = NAIL_NC;
@@ -135,7 +148,7 @@ function buildNailGeometry(args: {
         const hu = args.surf(sAbs, u)
           - BASE_SINK * sstep(-0.74, -0.94, q)
           + FREE_LIFT * sstep(0.55, 0.97, q)
-          - EDGE_TUCK * sstep(0.68, 0.90, Math.abs(w));
+          - EDGE_TUCK * sstep(TUCK_S, TUCK_E, Math.abs(w));
         // 甲面=甲底+厚度(中央极轻微加厚;穹顶感主要来自甲底跟皮面圆度)
         const h = layer === 0 ? hu + TH * (0.94 + 0.06 * Math.sqrt(Math.max(0, 1 - w * w))) : hu;
         P.copy(p3).addScaledVector(axis, sAbs).addScaledVector(dorsal, h).addScaledVector(lat, u);

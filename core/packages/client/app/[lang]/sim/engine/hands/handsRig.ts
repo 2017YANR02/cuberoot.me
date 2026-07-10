@@ -406,19 +406,22 @@ type HookFit = { c1: [number, number, number]; c2: [number, number, number]; c3:
  *  同构(零跟随基线逐位相同,oracle 实证),关节空间解可整套移植。 */
 const HOOK_FOLLOW: Record<HandSide, Record<string, HookFit>> = {
   R: {
-    // hook_index 端点重标(2026-07-09 用户规格「U 做完右食指在 RUF」):s=1 指尖
-    // 端点钉到角 M(=UFR 的 R 面贴纸,初始 BUR 贴纸随层转 90° 的落位)——
-    // 浏览器冻结 s≈1 坐标下降只解三次项(s³ 权重保早段路径基本不动),
-    // 残差 0.01U,端点 (109.0,66.0,66.0)(p4 骨端在贴纸外 ~13U = 贴块间隙)。
-    // 终姿 = 指链绕过右上棱包到 R 面前上(真实 U 拨的 follow-through)。
-    hook_index: { c1: [-0.03, -0.45, 1.0922], c2: [1.26, -0.81, 0.1378], c3: [-0.0614, 0.5774, -0.3937], splay: [-0.3427, 0.0532, 0.0492] },
+    // hook_index 全曲线重解(2026-07-09 r3,U/U2-Q1「贴面扫到角 M」):12 参数
+    // 节点参数化(每通道 v(1/3)/v(2/3)/v(1),中段塑形与端点解耦)坐标下降,
+    // cost = 全顶点穿透罚 400·pen²(θ 每 1.5° + 末端着陆窗 0.5° + 提交点本尊,
+    // 漏采样提交点会被 solver 牺牲,踩过)+ 贴面带 hinge + M-touch 端点。
+    // 端点禁硬钉 3D 点:r1 的 (109,66,66) 钉点姿本身肉侵入 12.6U(distal 下缘
+    // 肉卷进角块内),物理不可行 —— 改「pad 肉垫贴 RUF 角块 M 贴纸」接触目标
+    // (x−96 ∈ [0.2,1.4] 于贴纸足迹 y,z∈[36,92])+ tip 骨 y/z 松钉贴纸中带。
+    // 解:全程 pen ≤ 0(冻结 1.5° 细扫),提交姿 pad 贴 M 间隙 1.31U,
+    // tip (116.5,63.3,67.5)。中段路径 = 骑着转动层凸轮面走 R 面外侧走廊。
+    hook_index: { c1: [2.0913, -7.605, 6.0985], c2: [-3.2437, 12.8925, -9.0084], c3: [-0.6026, 3.5474, -2.6099], splay: [-1.0552, 1.7857, -0.9633] },
     hook_ring: { c1: [0.001, -0.5045, 0.5795], c2: [1.3257, -1.1291, 0.4743], c3: [0.1113, -0.0262, -0.2939], splay: [-0.21, 0.3862, 0.1281] },
-    // hook_middle2 全曲线重解(2026-07-09,配 U2 规格「第二个 U 做完 R3 紧贴
-    // 角 M」):端点钉角 M 槽位(残差 1.8U,(110.7,66.2,65.5))+ Q2 全程 3° 采样
-    // 穿透罚(骨端对移动层扩壳箱,余量 10U)—— 只钉端点会让中段切顶面弦
-    // (骨端 −4.3U 压进 U 面,2026-07-09 实测),重解后路径改走 R 面外侧走廊
-    // 下潜、尾随来料角块,全程骨端穿透 ≤0.1U。
-    hook_middle2: { c1: [-0.1334, -0.4139, 1.316], c2: [1.1473, -1.0802, 0.1132], c3: [2.3893, -0.3557, -1.9683], splay: [-0.5798, 0.3442, 0.1534] },
+    // hook_middle2 全曲线重解(2026-07-09 r3,U2 规格「第二个 U 做完 R3 紧贴
+    // 角 M」):方法同 hook_index(全顶点罚 + M-touch 端点;r2 的「骨端扩壳箱
+    // 余量 10U」低估肉厚,全顶点复测 Q2 末穿 23.6U / 提交姿穿 18.8U)。解:
+    // Q2 全程 pen ≤ +0.06U 瞬态,提交姿 pad 贴 M 间隙 1.38U,tip (118.4,61.7,79.7)。
+    hook_middle2: { c1: [0.2654, -1.1002, 1.676], c2: [-1.1264, 5.7823, -4.4656], c3: [4.4818, -4.8895, 0.6305], splay: [0.1777, -1.8721, 1.6047] },
     hook_pinky: { c1: [0.2484, -0.21, 0.0182], c2: [0.7997, -0.5291, -0.0955], c3: [-0.2046, 0.2746, -0.155], splay: [-0.1375, 0.008, 0.1] },
     hook_ring2: { c1: [0.041, -0.382, 0.5732], c2: [1.7475, -1.4909, 0.3643], c3: [0.8482, -0.6875, -0.4179], splay: [-0.34, 0.37, 0.1144] },
     backHook_index: { c1: [-0.18, 0.15, 0.069], c2: [-0.03, 0, 0.0857], c3: [0.1967, 0.1108, 0.0428], splay: [0.5063, -0.1012, -0.0764] },
@@ -608,16 +611,37 @@ const S_EVADE: Record<HandSide, { thumb: { c1: number; c2: number; c3: number; s
  *  天然安全。幅度按回撤起点的 s 加权(缠得浅回撤本就安全,别白抬)。 */
 const RETREAT_LIFT = { c1: -0.338, c2: -0.653, c3: -0.113 };
 
-/** U2 连拨首指退场(FINGERTRICKS §4.2,用户规格 2026-07-09 修订):第一个 U
- *  做完食指紧贴角 M(初始 UBR 角块已转到 URF,指尖停其 R 面贴纸);第二个 U
- *  开始的**前 20%**(sRaw2 ∈ [0,HOOK_EXIT_IN])内食指快速朝水平右(魔方系
- *  +x)离开角 M 一小段,此后保持退场姿给接力中指让位,U2 提交后与次指同乘
- *  decayK 直线归 home(已在魔方外,弦不穿体)。旧版 = 整个 Q2 同步渐退 +
- *  Δ≈+52.9U 大幅离场;按用户规格收小为「一小段」。数值浏览器冻结 Q2 中段
- *  坐标下降重解(hook_index 端点 2026-07-09 重标后旧 joint 方向已不再对应
- *  +x):指尖端点 Δ = (+17.2,0,0) 纯 +x,残差 0.08U。判据:Q2 末中指指尖
- *  到达角 M 时与食指无碰撞/穿模。 */
-const HOOK_EXIT = { c1: -0.061, c2: 0.225, c3: 0.021, splay: -0.025 };
+/** per-style 回撤凸包覆盖(缺键回落 RETREAT_LIFT;FINGERTRICKS §5.1 预留的
+ *  per-style 回撤编排):hook_index 端点 2026-07-09 钉角 M(指链绕过右上棱
+ *  包到 R 面前上)后,s=1 冻结 ×decayK 的关节直线弦会横切 U 面右前区(真实
+ *  播放 oracle ~38U);hook_middle2 同族端姿(U2 次指同贴角 M,回撤弦切
+ *  25.8U)。默认 RETREAT_LIFT 的纯伸展方向抬不过顶,且缺 splay 通道 ——
+ *  +x 甩离 R 面才是钉角端姿的天然逃逸向。数值浏览器坐标下降按 decayK 网格
+ *  解(判据 = 回撤全程 pen ≤0 对静态整方箱体;U 单拨与 U2 双指回撤两条
+ *  路径同罚)。键 = HOOK_FOLLOW 同款 `${style}_${finger}${次指 ? "2" : ""}`,
+ *  只 R 侧钉角端姿需要覆盖。有覆盖的键在 applyHand 里还启用「攻窗保持」:
+ *  decayK ∈ [0.88,1] 段 fit 输出钳在提交姿(kFit=min(1,decayK/0.88)),凸包
+ *  升满后才开始衰减 —— 贴块提交姿 pad 离贴纸只 ~1.4U,×0.99 的第一帧就会
+ *  拉进贴纸。2026-07-09 r3 解:U 回撤全程 pen ≤0;U2 回撤仅攻窗/收尾
+ *  ≤0.45U 瞬态(prep 通道仍走 decayK 的固有残差,< 0.5U 验收带)。 */
+const RETREAT_LIFT_STYLED: Record<HandSide, Partial<Record<string, { c1: number; c2: number; c3: number; splay: number }>>> = {
+  R: {
+    hook_index: { c1: -0.563, c2: 0.2, c3: 0.4, splay: 0.2 },
+    hook_middle2: { c1: -0.2, c2: 0.1, c3: 0.575, splay: 1.225 },
+  },
+  L: {},
+};
+
+/** U2 连拨首指退场(FINGERTRICKS §4.2):第一个 U 做完食指紧贴角 M(初始
+ *  UBR 角块已转到 URF,指尖停其 R 面贴纸);第二个 U 开始的**前 20%**
+ *  (sRaw2 ∈ [0,HOOK_EXIT_IN])内食指快速离开角 M,此后保持退场姿给接力
+ *  中指让位,U2 提交后与次指一起归 home(见 RETREAT_LIFT_STYLED)。幅度
+ *  下限是物理的:贴 M 的任何姿态都在角柱扫掠环带内(半径 ~117 < 96√2),
+ *  Q2 中后段(φ≈0.68-1.27)下一个角柱必扫过原地,「+x 一小段(17U)」清不掉
+ *  (r2 复测 11.8U)—— 2026-07-09 r3 按「Q2 全程全顶点 pen ≤0 + 最小幅度
+ *  正则」重解,指尖 Δ≈(+38,−21,+21) 甩出扫掠环带(radius ~178),观感 =
+ *  拨完向右前下方的自然 follow-through。判据:Q2 全程食指 pen ≤ −1U。 */
+const HOOK_EXIT = { c1: 0.139, c2: 0.225, c3: -0.016, splay: -0.1 };
 /** HOOK_EXIT 渐入窗口:Q2 前 20% 内退场到位(连续 180° 层转无时间间隙,
  *  「先退再接」折衷为「极早期快退」)。 */
 const HOOK_EXIT_IN = 0.2;
@@ -1128,7 +1152,8 @@ export default class HandsRig extends THREE.Group {
     hookIndexEvade: typeof HOOK_INDEX_EVADE; lowEvade: typeof LOW_EVADE;
     midEvade: typeof MID_EVADE; bEvade: typeof B_EVADE; fEvade: typeof F_EVADE;
     sEvade: typeof S_EVADE;
-    retreatLift: typeof RETREAT_LIFT; hookExit: typeof HOOK_EXIT;
+    retreatLift: typeof RETREAT_LIFT; retreatLiftStyled: typeof RETREAT_LIFT_STYLED;
+    hookExit: typeof HOOK_EXIT;
   } {
     return {
       push: TOP_PUSH, follow: TOP_PUSH_FOLLOW,
@@ -1138,7 +1163,8 @@ export default class HandsRig extends THREE.Group {
       hookIndexEvade: HOOK_INDEX_EVADE, lowEvade: LOW_EVADE,
       midEvade: MID_EVADE, bEvade: B_EVADE, fEvade: F_EVADE,
       sEvade: S_EVADE,
-      retreatLift: RETREAT_LIFT, hookExit: HOOK_EXIT,
+      retreatLift: RETREAT_LIFT, retreatLiftStyled: RETREAT_LIFT_STYLED,
+      hookExit: HOOK_EXIT,
     };
   }
 
@@ -1710,7 +1736,10 @@ export default class HandsRig extends THREE.Group {
     if (idle && !h.weldAxis && !h.flickFinger && h.recoverT >= 1) {
       const t = this.idleClock / 1000;
       const ph = side === "R" ? 0 : 1.7;
-      if (h.grip.w > 0.9999) g.position.y += Math.sin(t * 1.1 + ph) * 1.0 * HAND_SCALE;
+      // y 呼吸幅度 0.4(旧 1.0):2026-07-09 拇指 home 抬进 E 层带后可见肉
+      // y∈[−30.9,30.9],距 ±32 带界只剩 ~1.1U —— 旧 ±2.2U 呼吸会周期性把
+      // 拇指肉推出 E 带(L 相位 1.7 起手即 +2.18,实测 33.2)。
+      if (h.grip.w > 0.9999) g.position.y += Math.sin(t * 1.1 + ph) * 0.4 * HAND_SCALE;
       g.position.x += Math.cos(t * 0.9 + ph) * 0.8 * HAND_SCALE * (sideSign === -1 ? 1 : -1);
     }
 
@@ -2002,25 +2031,35 @@ export default class HandsRig extends THREE.Group {
             ? HOOK_FOLLOW[side][`${h.flickStyle}_${name}${role === 2 ? "2" : ""}`] : undefined;
           if (fit) {
             const s = role === 2 ? sRaw2 : (isDouble ? sRaw1 : Math.min(rawAbs, HALF_PI) / HALF_PI);
-            c1 += fitAt(fit, "c1", s) * decayK;
-            c2 += fitAt(fit, "c2", s) * decayK;
-            c3 += fitAt(fit, "c3", s) * decayK;
-            splay += fitAt(fit, "splay", s) * decayK; // 每手独立标定,含侧向符号
-            // U2 首指退场(HOOK_EXIT 注释):Q2 前 20% 内食指快速右移一小段
-            // 离开角 M,此后保持退场姿到提交(随 decayK 与次指一起归 home)。
+            // 钉角 M 端姿的 per-style 回撤覆盖(见 RETREAT_LIFT_STYLED):贴块
+            // 提交姿 pad 离贴纸只 ~1.4U,fit(1)×decayK 的第一帧就往贴纸里拉
+            // (oracle 实测 0.8U)—— 攻窗(decayK ∈ [0.88,1])先钳 kFit=1 保持
+            // 提交姿,等回撤凸包升满再沿直线衰减;凸包包络仍走 decayK。
+            const rlS = h.flickDecay > 0
+              ? RETREAT_LIFT_STYLED[side][`${h.flickStyle}_${name}${role === 2 ? "2" : ""}`] : undefined;
+            const kFit = rlS ? Math.min(1, decayK / 0.88) : decayK;
+            c1 += fitAt(fit, "c1", s) * kFit;
+            c2 += fitAt(fit, "c2", s) * kFit;
+            c3 += fitAt(fit, "c3", s) * kFit;
+            splay += fitAt(fit, "splay", s) * kFit; // 每手独立标定,含侧向符号
+            // U2 首指退场(HOOK_EXIT 注释):Q2 前 20% 内食指快速离开角 M
+            // (走廊在 Q2 中后段被下一个角柱扫过,必须撤出扫掠环带),此后
+            // 保持退场姿到提交(随 kFit 与次指一起归 home)。
             if (role === 1 && isDouble && h.flickStyle === "hook" && name === "index") {
-              const ex = sm(Math.min(1, sRaw2 / HOOK_EXIT_IN)) * decayK;
+              const ex = sm(Math.min(1, sRaw2 / HOOK_EXIT_IN)) * kFit;
               c1 += HOOK_EXIT.c1 * ex;
               c2 += HOOK_EXIT.c2 * ex;
               c3 += HOOK_EXIT.c3 * ex;
               splay += HOOK_EXIT.splay * ex * sideSign;
             }
             if (h.flickDecay > 0) {
-              // 包络说明见 downPush 分支同款注释。
+              // 包络说明见 downPush 分支同款注释;非钉角样式回落默认 RETREAT_LIFT。
               const lift = sm(Math.min(1, (1 - decayK) / 0.12)) * sm(Math.min(1, decayK / 0.15)) * s;
-              c1 += RETREAT_LIFT.c1 * lift;
-              c2 += RETREAT_LIFT.c2 * lift;
-              c3 += RETREAT_LIFT.c3 * lift;
+              const rl: { c1: number; c2: number; c3: number; splay?: number } = rlS ?? RETREAT_LIFT;
+              c1 += rl.c1 * lift;
+              c2 += rl.c2 * lift;
+              c3 += rl.c3 * lift;
+              splay += (rl.splay ?? 0) * lift;
             }
           } else {
             c1 += HOOK.c1 * open;
@@ -2044,14 +2083,28 @@ export default class HandsRig extends THREE.Group {
       // 换握张手:行程中段把弯曲压掉大半(见 regripOpen 注释),指尖伸展
       // 离开抓握半径;splay 不动(横向散开会互相打架)。
       if (regripOpen > 0) {
-        // oracle 标定:0.6 时 180° 换握中段剩 3.2U,0.72 剩 0.46U(↓→↑),0.78 全零
-        // (旧平摊 curl);2026-07-07 home 加弯档后残余绝对弯曲变大,中段指尖
-        // 勾 U 面 1.38U → 提到 0.86。
-        const k = 1 - regripOpen * 0.86;
-
-        c1 *= k;
-        c2 *= k;
-        c3 *= k;
+        if (name === "thumb") {
+          // 拇指例外(2026-07-09 E 带姿):四指「张」= 压 curl 伸直离开抓握
+          // 半径,但拇指压的是 F 面、末节大弯(c3≈1.1)—— 同款压 curl 会把
+          // 指尖伸直戳进 F 面(regrip oracle 实测 7.6U;旧姿 c3=0.55 时 2.9U
+          // 已有暴露)。拇指的「张」= 轻开 curl + 绕根节向贴面外甩
+          // (THUMB_EVADE_D 同款方向,随 open 渐入),yz 径向甩出箱体对角
+          // 扫掠区。幅度 regrip play oracle 标定。
+          const k = 1 - regripOpen * 0.3;
+          c1 *= k;
+          c2 *= k;
+          c3 *= k;
+          c2 -= 0.16 * regripOpen;
+          splay += (side === "R" ? -1 : 1) * 0.4 * regripOpen;
+        } else {
+          // oracle 标定:0.6 时 180° 换握中段剩 3.2U,0.72 剩 0.46U(↓→↑),
+          // 0.78 全零(旧平摊 curl);2026-07-07 home 加弯档后残余绝对弯曲
+          // 变大,中段指尖勾 U 面 1.38U → 提到 0.86。
+          const k = 1 - regripOpen * 0.86;
+          c1 *= k;
+          c2 *= k;
+          c3 *= k;
+        }
       }
       // 反弓钳制:extend 类偏移(x/z 竖扫)可能把中/末节压到负值 ——
       // 手指向手背反弓是解剖学假(用户报障同族问题)。拇指 IP 生理上可轻度
