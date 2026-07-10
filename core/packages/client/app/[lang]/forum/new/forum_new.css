@@ -1,6 +1,7 @@
 /* /forum/new — new thread form. */
 
-.forum-new-page { max-width: 820px; }
+/* Wider than the reading column so the rich editor's source|preview split can breathe. */
+.forum-new-page { max-width: 1000px; }
 
 .forum-new-form {
   display: flex;
@@ -31,4 +32,12 @@
   font-size: 0.72rem;
   color: var(--faint-foreground);
   white-space: nowrap;
+}
+
+.forum-new-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+@media (max-width: 480px) {
+  .forum-new-actions .forum-btn-primary { width: 100%; }
 }

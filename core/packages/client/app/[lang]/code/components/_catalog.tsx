@@ -1332,14 +1332,6 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `客户端运行,懒加载 cubing.js(~150KB);forwardRef 暴露 getPlayer() 拿底层实例做光标 sync。`, en: `Client-only, lazy-loads cubing.js (~150KB); exposes getPlayer() via forwardRef for caret-sync.` },
   },
   {
-    name: 'ArticleActions',
-    import: "import ArticleActions from '@/components/article/ArticleActions';",
-    category: 'more',
-    zh: `文章阅读页底栏交互岛,owner / admin 显示编辑 + 删除,登录非作者显示举报内联面板,未登录渲染 null;mounted 门控避免 auth 水合不一致。`,
-    en: `Article reader footer interaction island: owner/admin see edit+delete, logged-in non-authors get an inline report panel, logged-out renders null; mounted-gated to avoid auth hydration mismatch.`,
-    note: { zh: `依赖 auth store、文章写接口、路由参数,必须客户端跑。`, en: `Depends on auth store, article write APIs and route params; client-only.` },
-  },
-  {
     name: 'ArticleAlgEmbed',
     import: "import ArticleAlgEmbed from '@/components/article/ArticleAlgEmbed';",
     category: 'more',
@@ -1348,28 +1340,12 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `供文章 markdown 的 :alg[] directive 用;不要把未校验字符串传进 player。`, en: `Used by the article markdown :alg[] directive; never pass an unvalidated string into the player.` },
   },
   {
-    name: 'ArticleBody',
-    import: "import { ArticleBody } from '@/components/article/ArticleBody';",
-    category: 'more',
-    zh: `文章正文服务端渲染包装,调用安全 markdown 管道把不可信社区 markdown 和 directive 渲染成 DOM,交互叶子(动画 / 魔方图)是内部 client dynamic import。`,
-    en: `Server-renderable article body wrapper: runs the secure markdown pipeline to render untrusted community markdown + directives, with interactive leaves (player/cube image) as internal client dynamic imports.`,
-    note: { zh: `可在 RSC 中安全使用;渲染走 renderArticleMarkdown 这个唯一 sanitizer。`, en: `Safe in an RSC; rendering goes through renderArticleMarkdown, the single sanitizer of record.` },
-  },
-  {
     name: 'ArticleCubeEmbed',
     import: "import ArticleCubeEmbed from '@/components/article/ArticleCubeEmbed';",
     category: 'more',
     zh: `文章正文里的静态魔方状态图嵌入,对作者传的 alg / setup / view / mask / size 做白名单校验和尺寸 clamp(32-512),非法记号退化成已解魔方。`,
     en: `Static cube-state image embed for article bodies: whitelist-validates author-supplied alg/setup/view/mask/size and clamps size (32-512), degrading bad notation to the solved cube.`,
     note: { zh: `供文章 markdown 的 :cube[] directive 用,底层是 VisualCube。`, en: `Used by the article markdown :cube[] directive; backed by VisualCube.` },
-  },
-  {
-    name: 'ArticleEditor',
-    import: "import ArticleEditor from '@/components/article/ArticleEditor';",
-    category: 'more',
-    zh: `浏览器内文章 markdown 编辑器,左 CodeMirror 源码右实时预览(复用同一 sanitizer),工具栏插入标红 / 标蓝 / 图网格 / 公式动画 / 魔方图 directive,图片走 base64 上传,支持存草稿 / 发布。`,
-    en: `In-browser article markdown editor: CodeMirror source (left) + live preview (right) reusing the same sanitizer, toolbar inserts red/blue/figrow/alg/cube directives, images upload via base64, with save-draft/publish.`,
-    note: { zh: `create / edit 两模式,调用 createArticle / updateArticle / uploadArticleImage 写接口,客户端专用。`, en: `create/edit modes; calls createArticle/updateArticle/uploadArticleImage write APIs, client-only.` },
   },
   {
     name: 'DiscussionComposer',

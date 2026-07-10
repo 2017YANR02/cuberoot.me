@@ -11,11 +11,12 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { fetchForumIndex, createThread, type ForumIndexData } from '@/lib/forum-api';
 import { ForumBreadcrumbs } from '../_components/ForumBreadcrumbs';
-import { ForumComposer } from '../_components/ForumComposer';
+import { ForumMarkdownEditor } from '../_components/ForumMarkdownEditor';
 import '../forum.css';
 import './forum_new.css';
 
 const MAX_TITLE_LEN = 200;
+const MAX_CONTENT_LEN = 50000;
 
 export default function ForumNewThreadPage() {
   useDocumentTitle('发帖', 'New thread');
@@ -30,6 +31,7 @@ export default function ForumNewThreadPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,16 +57,26 @@ export default function ForumNewThreadPage() {
 
   const handleSubmit = async () => {
     const t = title.trim();
-    if (!selected) {
-      throw new Error(tr({ zh: '请选择版块', en: 'Pick a forum' }));
+    const body = content.trim();
+    if (!selected) return setError(tr({ zh: '请选择版块', en: 'Pick a forum' }));
+    if (!t) return setError(tr({ zh: '标题不能为空', en: 'Title is required' }));
+    if (!body) return setError(tr({ zh: '内容不能为空', en: 'Content is required' }));
+    if (body.length > MAX_CONTENT_LEN) {
+      return setError(tr({ zh: `内容超过 ${MAX_CONTENT_LEN} 字上限`, en: `Content exceeds ${MAX_CONTENT_LEN} characters` }));
     }
-    if (!t) {
-      throw new Error(tr({ zh: '标题不能为空', en: 'Title is required' }));
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await createThread(selected, t, body);
+      const prefix = lang === 'zh' ? '/zh' : '';
+      router.push(`${prefix}/forum/t/${res.id}`);
+    } catch (e) {
+      setError((e as Error).message);
+      setSubmitting(false);
     }
-    const res = await createThread(selected, t, content.trim());
-    const prefix = lang === 'zh' ? '/zh' : '';
-    router.push(`${prefix}/forum/t/${res.id}`);
   };
+
+  const canSubmit = !!selected && !!title.trim() && !!content.trim() && !submitting;
 
   return (
     <div className="forum-page forum-new-page">
@@ -124,14 +136,22 @@ export default function ForumNewThreadPage() {
 
           <div className="forum-new-field">
             <span className="forum-new-label"><T zh="内容" en="Content" /></span>
-            <ForumComposer
+            <ForumMarkdownEditor
               value={content}
               onChange={setContent}
-              onSubmit={handleSubmit}
-              submitLabel={tr({ zh: '发布主题', en: 'Post thread' })}
-              placeholder={tr({ zh: '展开说说…', en: 'Tell us more…' })}
-              minRows={8}
+              placeholder={tr({ zh: '展开说说…支持 Markdown 与标红 / 标蓝 / 活动画等指令', en: 'Tell us more… Markdown plus highlights / alg players and more' })}
             />
+          </div>
+
+          <div className="forum-new-actions">
+            <button
+              type="button"
+              className="forum-btn-primary"
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+            >
+              {submitting ? tr({ zh: '发布中…', en: 'Posting…' }) : tr({ zh: '发布主题', en: 'Post thread' })}
+            </button>
           </div>
         </div>
       )}

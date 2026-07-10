@@ -13,7 +13,7 @@ export interface ForumComposerHandle {
   focus: () => void;
 }
 
-export const MAX_POST_LEN = 20000;
+export const MAX_POST_LEN = 50000;
 
 export const ForumComposer = forwardRef<ForumComposerHandle, {
   value: string;

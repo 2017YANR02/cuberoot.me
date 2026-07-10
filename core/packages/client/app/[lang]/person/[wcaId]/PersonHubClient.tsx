@@ -1,14 +1,13 @@
 'use client';
 
-// /person/[wcaId] — 选手聚合页。顶部 选手名+国旗+性别+WCA ID,下方三入口卡片:
+// /person/[wcaId] — 选手聚合页。顶部 选手名+国旗+性别+WCA ID,下方入口卡片:
 //   成绩复盘  → /recon/person/:id
 //   WCA 档案  → /wca/persons/:id
-//   社区文章  → /article/person/:id
 // wcaId 从 useParams 取;头部信息走 WCA 公共 API(localStorage 24h 缓存)。
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Mars, Venus, Rewind, IdCard, FileText, LogOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mars, Venus, Rewind, IdCard, LogOut } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import FollowedComps from '@/components/FollowedComps';
@@ -63,13 +62,6 @@ export default function PersonHubClient() {
       Icon: IdCard,
       title: tr({ zh: 'WCA 档案', en: 'WCA Profile' }),
       desc: tr({ zh: '个人纪录 / 比赛历史 / 奖牌', en: 'Records, competition history, medals' }),
-    },
-    {
-      key: 'article',
-      href: `/article/person/${wcaId}`,
-      Icon: FileText,
-      title: tr({ zh: '社区文章', en: 'Articles' }),
-      desc: tr({ zh: '该选手发表的长文', en: 'Long-form posts by this person' }),
     },
   ];
 
