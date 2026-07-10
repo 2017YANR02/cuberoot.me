@@ -46,6 +46,15 @@ const SEED = parseInt(argAt("--seed") ?? "42", 10);
 //   --freealign 悲观界: 每候选每链自由 24 指派 (纯颜色统计, 无任何跟踪身份)
 const FREE_ALIGN = process.argv.includes("--freealign");
 const ROT_ALIGN = process.argv.includes("--rotalign");
+// 整色性证据通道权重: 候选态预测格对同/异色 vs 读出一致性 (实测 同真色对读一致
+// 45.3% vs 异真色 22.7%, ~2:1/对; 不依赖绝对颜色, 绕开 R/O/Y 色相塌缩)
+const PAIR_W = parseFloat(argAt("--pairw") ?? "0");
+const LP_PAIR = {
+  sameAgree: Math.log(0.453), sameDis: Math.log(1 - 0.453),
+  diffAgree: Math.log(0.227), diffDis: Math.log(1 - 0.227),
+};
+// 背景 (真色未知) 的格对一致边缘概率: (2326×0.453+4056×0.227)/6382 ≈ 0.309
+const LP_PAIR_BG = { agree: Math.log(0.309), dis: Math.log(1 - 0.309) };
 
 // ---------- 输入 ----------
 
@@ -279,10 +288,22 @@ function scoreAll(
 ): number[] {
   const W = llBounds.length;
   const bgLL: number[] = llBounds.map((b, t) =>
-    b.reduce((s, chain, ci) => s + chain.read.reduce((x, _, i) => {
-      const rd = reads[t][ci][i];
-      return rd ? x + logBg[rd] : x;
-    }, 0), 0),
+    b.reduce((s, chain, ci) => {
+      let x = chain.read.reduce((acc, _, i) => {
+        const rd = reads[t][ci][i];
+        return rd ? acc + logBg[rd] : acc;
+      }, 0);
+      if (PAIR_W > 0) {
+        for (let i = 0; i < 9; i++) {
+          if (!reads[t][ci][i]) continue;
+          for (let j = i + 1; j < 9; j++) {
+            if (!reads[t][ci][j]) continue;
+            x += PAIR_W * (reads[t][ci][i] === reads[t][ci][j] ? LP_PAIR_BG.agree : LP_PAIR_BG.dis);
+          }
+        }
+      }
+      return s + x;
+    }, 0),
   );
   const memo: Map<string, number>[] = Array.from({ length: W }, () => new Map());
   const chainSumLL = (t: number, state: Perm): number => {
@@ -292,26 +313,40 @@ function scoreAll(
     if (hit !== undefined) return hit;
     let sum = 0;
     llBounds[t].forEach((chain, ci) => {
+      const rdArr = reads[t][ci];
+      const evalAssign = (assign: readonly number[]): number => {
+        let s = 0;
+        for (let i = 0; i < 9; i++) {
+          const rd = rdArr[i];
+          if (!rd) continue;
+          s += logConf[`${predColor(omega, state, assign[i])}${rd}`];
+        }
+        if (PAIR_W > 0) {
+          // 整色性通道: 候选态预测格对同/异色 vs 读出一致性 (与绝对色标互补)
+          for (let i = 0; i < 9; i++) {
+            if (!rdArr[i]) continue;
+            const pi = predColor(omega, state, assign[i]);
+            for (let j = i + 1; j < 9; j++) {
+              if (!rdArr[j]) continue;
+              const same = pi === predColor(omega, state, assign[j]);
+              const agree = rdArr[i] === rdArr[j];
+              s += PAIR_W * (same ? (agree ? LP_PAIR.sameAgree : LP_PAIR.sameDis) : agree ? LP_PAIR.diffAgree : LP_PAIR.diffDis);
+            }
+          }
+        }
+        return s;
+      };
       if (FREE_ALIGN || ROT_ALIGN) {
         // 悲观/中间界: 该链对当前候选态自由取指派最优 (24 全 / 本面 4 旋转)
         const pool = FREE_ALIGN ? ASSIGNS_24 : ROT_POOLS[chain.face];
         let best = -Infinity;
         for (const assign of pool) {
-          let s = 0;
-          for (let i = 0; i < 9; i++) {
-            const rd = reads[t][ci][i];
-            if (!rd) continue;
-            s += logConf[`${predColor(omega, state, assign[i])}${rd}`];
-          }
+          const s = evalAssign(assign);
           if (s > best) best = s;
         }
         sum += best;
       } else {
-        for (let i = 0; i < 9; i++) {
-          const rd = reads[t][ci][i];
-          if (!rd) continue;
-          sum += logConf[`${predColor(omega, state, chain.facelets[i])}${rd}`];
-        }
+        sum += evalAssign(chain.facelets);
       }
     });
     m.set(k, sum);
