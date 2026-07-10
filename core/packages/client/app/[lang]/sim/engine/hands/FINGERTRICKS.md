@@ -46,7 +46,7 @@
 
 | 名称 | GripName | 记号 | 定义 | 右手指位(左手 x 镜像) |
 |------|----------|------|------|------------------------|
-| 中手 | `home` | `·` | 基准握 | R1(右手拇指)压 FR 棱 F 面,R2(食指)BUR / R3(中指)BR / R4(无名指)BDR 贴 B 面,R5(小指)悬空收拢 |
+| 中手 | `home` | `·` | 基准握 | R1(右手拇指)压 FR 棱 F 面且**可见拇指肉整体落在 E 层带 y∈[−32,32]**(2026-07-09 用户规格,禁越入 U/D 带;解到 [−30.9,30.9],62U 肉径装 60U 窗的资产极限),R2(食指)BUR / R3(中指)BR / R4(无名指)BDR 贴 B 面,R5(小指)悬空收拢 |
 | 上手 | `up` | `↑` | home 绕 x 轴 +90°(= R 提交后的腕姿) | R1 起手在 U 面,指列落 D 面 |
 | 下手 | `down` | `↓` | home 绕 x 轴 −90° | R1 压 D 面(DR 缘),**R2 落 U 面 UFR 区 / R3 UR 棱 / R4 UBR 区**,指腹朝下压 U 面 |
 
@@ -117,8 +117,8 @@ dir = sign(层角,绕引擎轴 AXIS_VEC);下表以「招式记号」为准。
 
 | 招式 | 指法 | 接触 | 状态 |
 |------|------|------|------|
-| U | R2 从角 Q(=UBR 的 B 面贴纸,home 指位)贴面扫到角 M(=UFR 的 R 面贴纸,即角 Q 贴纸随层转 90° 的落位);**结束瞬间指尖贴 RUF 贴块**(`HOOK_FOLLOW.R.hook_index` 端点重标,s=1 端点钉 (109,66,66),残差 0.01U);静止手 L2 同时沿 B 面外法线(−z)单指离面避让(`HOOK_INDEX_EVADE`,替代旧整手平移) | 贴面 + 终点贴块 | 规格 2026-07-09 |
-| U2 | 连拨:**先 R2,后 R3**;两指各自的 Q 做完都紧贴角 M;Q2 **极早期(前 ~20%)**R2 朝 +x 小距离离场(见下) | 贴面 + 终点贴块 | 规格 2026-07-09 |
+| U | R2 从角 Q(=UBR 的 B 面贴纸,home 指位)贴面扫到角 M(=UFR 的 R 面贴纸,即角 Q 贴纸随层转 90° 的落位);**结束瞬间指腹贴 RUF 角块 M 贴纸**(`HOOK_FOLLOW.R.hook_index` r3 全曲线重解:M-touch 端点 = pad 贴贴纸间隙 1.31U,tip (116.5,63.3,67.5)—— r1 的硬钉 3D 点 (109,66,66) 姿本身肉侵入 12.6U 已废);中段骑转动层凸轮面走 R 面外侧走廊,冻结 1.5° 细扫全程 pen ≤ +0.01U;静止手 L2 同时沿 B 面外法线(−z)单指离面避让(`HOOK_INDEX_EVADE`,替代旧整手平移) | 贴面 + 终点贴块 | 规格 2026-07-09 r3 |
+| U2 | 连拨:**先 R2,后 R3**;两指各自的 Q 做完都紧贴角 M(M-touch,同上);Q2 **极早期(前 ~20%)**R2 快速离场甩出角柱扫掠环带(见下) | 贴面 + 终点贴块 | 规格 2026-07-09 r3 |
 | U' | L2 拨(U 的镜像);静止手 R2 同走 `HOOK_INDEX_EVADE` 离面避让;终点贴块未标定(L 侧 `hook_index` 端点未重标,§6) | 贴面 | 推定 |
 | U'p | R2 推(§4.5);静止手 L2 离面避让 | 贴面 | 规格 2026-07-08 |
 | D' | R4 拨 | **贴面**(始终接触) | 规格 2026-07-08 |
@@ -131,11 +131,11 @@ dir = sign(层角,绕引擎轴 AXIS_VEC);下表以「招式记号」为准。
 | B' | **R2** 拨(R2 指尖本在 B 面上部 BUR) | 贴面(推定) | 规格 2026-07-08 |
 | B | L2 拨 | 贴面(推定,B' 镜像) | 推定 |
 
-**U2 首指退场与次指落点**(2026-07-09 规格,浏览器坐标下降标定):
-1. Q1 做完,R2 **紧贴角 M**(与 U 终点同一份 `hook_index` 端点重标 fit;role1 fit 冻结在 sRaw1=1 保持);
-2. Q2 **极早期(前 ~20%)**(`sm(min(1,sRaw2/HOOK_EXIT_IN))` 渐入,`HOOK_EXIT_IN=0.2`)R2 沿 `HOOK_EXIT` 快速朝水平右(+x)离开角 M **一小段** —— 指尖 Δ=(+17.2,0,0)U,残差 0.08U(带内 15-25U);此后保持退场姿给 R3 让位,直到提交。语义 =「在下一个 U 开始前离场」,连续 180° 无真间隙下的折衷;
-3. R3 的 Q2 沿重解的 `hook_middle2` 走 R 面**外侧走廊**下潜、尾随来料角块(只钉端点会切顶面弦,骨端 −4.3U 压进 U 面 —— 全曲线 12 参数重解 + Q2 每 3° 穿透罚,骨端穿透 ≤0.1U),做完**紧贴角 M**(端点残差 1.8U);
-4. 提交后两指同乘 decayK 一起归 home。Q2 末两指端点间距 ~18U(并列小距离,无穿模)。
+**U2 首指退场与次指落点**(2026-07-09 r3 规格,浏览器坐标下降标定):
+1. Q1 做完,R2 **紧贴角 M**(与 U 终点同一份 `hook_index` M-touch fit;role1 fit 冻结在 sRaw1=1 保持);
+2. Q2 **极早期(前 ~20%)**(`sm(min(1,sRaw2/HOOK_EXIT_IN))` 渐入,`HOOK_EXIT_IN=0.2`)R2 沿 `HOOK_EXIT` 快速离开角 M —— 指尖 Δ≈(+38,−21,+21)U 甩出角柱扫掠环带(半径 ~117→178U),观感 = 拨完向右前下方的自然 follow-through;此后保持退场姿给 R3 让位,直到提交。**幅度下限是物理的**:贴 M 的任何姿态都在扫掠环带(96√2≈135.8U)内,Q2 中后段(φ≈0.68-1.27)下一个角柱必扫过原地,r1 的「+x 一小段(17U)」实测被犁 11.8U 清不掉;
+3. R3 的 Q2 沿 r3 重解的 `hook_middle2` 走 R 面**外侧走廊**下潜、尾随来料角块(全曲线 12 参数重解 + 每 1.5° **全顶点**穿透罚 —— r2 的「骨端扩壳箱余量 10U」低估肉厚,全顶点复测 Q2 末穿 23.6U / 提交姿穿 18.8U),做完**紧贴角 M**(pad 贴贴纸间隙 1.38U,Q2 全程 pen ≤ +0.12U 瞬态);
+4. 提交后两指走 per-style 回撤(`RETREAT_LIFT_STYLED` + 攻窗保持,§5「回撤」),一起归 home;回撤全程 pen ≤ 0.45U 瞬态。
 
 ### 4.3 左中手 + 右下手(L home + R down)
 
@@ -166,20 +166,22 @@ dir = sign(层角,绕引擎轴 AXIS_VEC);下表以「招式记号」为准。
 - 映射:`handsRig.ts` `classifyHandGesture(axis, cls, dir, grips, hint)`;测试锁定 `tests/hands_gestures.test.ts`。
 - 连拨状态机:`HandState.flickFinger2` 通道(第一指保持 / 第二指接力 / 同步恢复)。
 - 前置就位闸:`prepareTwist` / `isReachPreparing`;**收指闸** `isReachRetreating`(reach 式手势 decay+walk-back 未完不放行下一步,防 weld 把伸指烘着转)。两闸都在 `PlayerControls.gateHandsReach`。
-- 跟随曲线:`HOOK_FOLLOW`(每手每键 cubic fit,θ 密采样 0.02~0.03 步长解 —— 方形层 45° 角部伸出 √2 半宽,粗采样会漏 ~0.1rad 的窄穿模窗口)。2026-07-09 重标:`R.hook_index` 端点改钉 U/U2-Q1 终点贴块(§4.2);`R.hook_middle2` 全曲线 12 参数重解(端点罚 + Q2 每 3° 层箱体穿透罚,走 R 面外侧走廊)。
+- 跟随曲线:`HOOK_FOLLOW`(每手每键 cubic fit,θ 密采样 0.02~0.03 步长解 —— 方形层 45° 角部伸出 √2 半宽,粗采样会漏 ~0.1rad 的窄穿模窗口)。2026-07-09 r3:`R.hook_index` / `R.hook_middle2` 全曲线 12 参数重解(节点参数化 v(1/3)/v(2/3)/v(1) 解耦中段与端点;**全顶点**穿透罚每 1.5° + 末端着陆窗 0.5° + 提交点本尊 —— 骨端扩壳近似与漏采样提交点两个坑都踩过;端点 = M-touch 接触目标,禁硬钉 3D 点,§4.2)。
 - 单指避让:`HOOK_INDEX_EVADE`(R/L 同值 {c1:-0.07, c2:-0.04, c3:0, splay:0})—— U 族 y.high 静止手食指沿 B 面外法线(−z)微伸离面,2026-07-09 替代旧 `DODGE_MAG.y.high=16` 整手平移(§0.2 总原则;upPush 的静止手同走此通道)。通道 `HandState.indexEvade/indexEvadeTarget`:`tick` 每帧目标归零、即时跟升 / RECOVER_MS 300ms 回落(与 dodge 同时序);`driveGesture` 对 y.high flick(U/U'/U2/U'p)只写**另一只手**目标;`applyHand` 作用到该手食指关节(role===0 兜重叠帧);`rig.tuning.hookIndexEvade` 暴露标定。
 - 单指避让通道族(r2,五个新常量,时序均同 `HOOK_INDEX_EVADE`:`min(1,|层角|/0.09)` 即时跟升 / RECOVER_MS 300ms 回落):`LOW_EVADE`(D 族,`HandState.lowEvade`,driveGesture 只写另一手)/ `MID_EVADE`(E 族,`midEvade`,写两手)/ `B_EVADE`(B 族,`bEvade`,写另一手;与 `BACK_EVADE` 分工 = 弹指手本侧中/无名指 vs 另一手食指/中指)/ `F_EVADE`(F 族,`fEvade`,写两手,applyHand 按该手握姿选指)/ `S_EVADE`(S 族,`sEvade`,写两手,握姿选指)。F/S 施加条件 `role===0 || flickDecay>0`(decay 段弹指也吃避让,防同类连发时上一步弹指回落被扫);标定经 `rig.tuning.{hookIndexEvade,lowEvade,midEvade,bEvade,fEvade,sEvade}`。
 - 整手避让(legacy dodge):`DODGE_MAG` 全表 0(r2 六族迁移完成),表注释保留各族裸基线记录;`THUMB_EVADE_D`(D 族静止拇指)、`BACK_EVADE`(B 族弹指手本侧中/无名指)为单指通道,保留并被新常量复用数值。
 - 弹指腕借力(0.1×层角):对 x / y.mid / z.high / z.mid 归零(贴面指半径 < 角柱半径时借力切向压入是实测穿模元凶);y.high / y.low / z.low 保留 0.1。
-- 回撤:hook/backHook/downPush 的 decay 是「s 冻结 + fit 输出 ×decayK + RETREAT_LIFT 伸展凸包」——禁沿贴面曲线倒放(提交后层已复位,倒放中段穿层);upPush 沿 U 面弧退例外。U'p 就位/收指走 `UP_PUSH.transit` 转移凸包(直插会切上后棱)。
-- U2 首指退场:`HOOK_EXIT`(role1+isDouble+hook+index 专属通道,{c1:-0.061, c2:0.225, c3:0.021, splay:-0.025})× `sm(min(1,sRaw2/HOOK_EXIT_IN))*decayK`,`HOOK_EXIT_IN=0.2`(Q2 前 20% 内到位),标定见 §4.2。
+- 回撤:hook/backHook/downPush 的 decay 是「s 冻结 + fit 输出 ×decayK + RETREAT_LIFT 伸展凸包」——禁沿贴面曲线倒放(提交后层已复位,倒放中段穿层);upPush 沿 U 面弧退例外。U'p 就位/收指走 `UP_PUSH.transit` 转移凸包(直插会切上后棱)。**钉角 M 端姿(R 侧 hook_index / hook_middle2)走 per-style 覆盖 `RETREAT_LIFT_STYLED`**(§5.1 预留的 per-style 回撤编排,2026-07-09 r3 落地):含 splay 通道(+x 甩离 R 面是钉角端姿的天然逃逸向)+ **攻窗保持**(decayK ∈ [0.88,1] 段 fit 输出钳提交姿 kFit=min(1,decayK/0.88),凸包升满再衰减 —— 贴块姿 pad 离贴纸只 ~1.4U,×0.99 第一帧就拉进贴纸);其余样式回落默认 RETREAT_LIFT,路径逐位不变。
+- U2 首指退场:`HOOK_EXIT`(role1+isDouble+hook+index 专属通道,{c1:0.139, c2:0.225, c3:-0.016, splay:-0.1})× `sm(min(1,sRaw2/HOOK_EXIT_IN))*kFit`,`HOOK_EXIT_IN=0.2`(Q2 前 20% 内到位);幅度由「Q2 全程全顶点 pen ≤0 + 最小幅度正则」解出(甩出扫掠环带,§4.2)。
 - 贴面/贴块判据与穿模 oracle、标定求解器:memory `project_sim_hands_rig`(两域 pen oracle + padGap 带)。
+- 半转停(定格验收):`settings.holdPartialTurn` 把转动定格在任意中间层角、逐帧核穿模 —— 用户 2026-07-09 指定的首选定格法(优先于直接注入 flick 状态)。
 - 记号解析:`PlayerControls.tsx` `parseNxnItems`(`p` 后缀在 `GRIP_MARKS` 同层剥取);FTN `[...]` 注解块剥离(§7.3)规划同层,未实装。
 
 ### 5.1 已知残差
 
 2026-07-08 真实播放 oracle 基线:全序列 worst −2.86U / 23 坏帧。
-r2(2026-07-09)各族迁移后播放 oracle:本族步全部零坏帧(D/E/S 全零、B worst 0.16U、F 步零贡献);下表为迁移后残差与既有暴露。
+r2(2026-07-09)各族迁移后播放 oracle:本族步全部零坏帧(D/E/S 全零、B worst 0.16U、F 步零贡献)。
+**r3(2026-07-09,U 族 hook_index/hook_middle2/HOOK_EXIT/回撤全部重解)真实播放 oracle:全序列 "U U2 D' D2' B' B U' U'p R' F F2" worst 0.50U / 0 坏帧(>0.5U)**;U 族步 worst 0.31U。下表为 r3 后残差与既有暴露。
 
 | 位置 | 深度 | 时长 | 性质 |
 |------|------|------|------|
@@ -187,23 +189,20 @@ r2(2026-07-09)各族迁移后播放 oracle:本族步全部零坏帧(D/E/S 全零
 | 各族起步 θ<0.02~0.13(COMMIT_ANGLE 前避让未升满) | 最近 −1.1~−1.7U | 瞬时 | 负值无接触,与首行同族起步特征 |
 | D2' 回撤 | 0.49U(r2 复测;r1 基线 −2.9U) | 单帧 | 双指深绕缠回撤弦切瞬态,RETREAT_LIFT 单通道极限;要清零需 per-style 回撤编排 |
 | 各 hook 收尾/交接瞬态 | ≤0.5U | 1~6 帧 | 角部窄峰的动态余量,静态 0.03 步长已清 |
-| U 单拨弹指 R2 中段(r1 `hook_index` 回归) | 35.5~38.8U | 29~33 坏帧 | r1 写的「贴面带内 ~2U」严重低估:全顶点 oracle 实测 θ=0.6 穿 6.0U、θ=1.2 穿 30.5U、drop 回撤弦切 ~38U;D/E/B/F/S 五族独立复现同签名;修法见 §6 |
-| U2 Q2 末 R2/R3 间距(2026-07-09) | 端点距 ~18U | — | 手指较粗呈紧挨并列;要更大间隙可把 `HOOK_EXIT` 四通道等比放大到 Δ≈22-25U |
+| U 族 r3 重解后残差 | U 冻结细扫 +0.01U@θ=0.103;U2 Q2 +0.12U@2.34;U2 回撤攻窗/收尾 0.45U | 各 1~2 帧 | 全在 ≤0.5U 瞬态验收带内;回撤攻窗残差 = prep 通道仍走 decayK 的固有小滑移 |
 | B 真实播放 | 0.16U | — | 弹指手自身贴面带内 |
 | B2 / B2' 弹指手自身 R2 被 Q2 扫掠 | 10.5 / 19.4U | 12 / 19 坏帧 | 既有(旧 dodge 从不覆盖弹指手);同 D2 缺口性质,§6 |
 | D2 第二个 90°(回落 L4 单指,fit 冻 s=1) | 9.18U | θ≈1.87-2.41 | 既有,待 L 侧连拨标定(§6) |
 | downPush 起步 | 0.65U@θ=0.033 | 瞬态 | downPush 免让域既有起步残差族 |
-| ↑/↓ 换握双手拇指 | 1.5~4.7U | 1~4 帧 | 疑 r1 拇指改动后回归,§6 |
-| 非 home 握 y.low/y.mid/z.low 无 style 弹指手 | 最深 11.6U(`R F' D` 的 D 步拇指) | — | dodge 废除后未标定域裸奔,§6 |
+| 非 home 握 y.low/y.mid/z.low 无 style 弹指手 | 中指 6.1U / 无名指 5.6U(`R F' D` 的 D 步;拇指旧 11.6U 已随 E 带 home 重解消失) | — | dodge 废除后未标定域裸奔,§6 |
 
-r1 遗留复核(全顶点 pen oracle)已在 r2 完成:`hook_middle2` 走廊达标(U2 混序零新穿模);`hook_index` 贴块窗口实测严重超标(上表回归行),列 §6 最高优先重解。
+r3 复核三教训(2026-07-09,标定方法论,后续重解必守):① **端点禁硬钉 3D 点** —— r1 的 (109,66,66) 钉点姿本身肉侵入 12.6U,solver 在「端点 vs 走廊」间永远解不开;改 M-touch 接触目标(pad 贴贴纸间隙带 + tip y/z 松钉)。② **穿透罚必须全顶点** —— r2 的「骨端扩壳箱余量 10U」低估肉厚,hook_middle2「走廊达标 ≤0.1U」全顶点复测实为 23.6U。③ **采样网格必须显式含提交点本尊** —— `for(th=step; th<=HP+1e-6; th+=step)` 步长不整除时永远采不到 HP,solver 会把未采样的提交姿当垃圾场牺牲掉。
 
 ## 6. 未定规格(待用户补充,当前按「推定」列实现或回落默认)
 
-- **`hook_index` 全曲线重解(最高优先,r1 回归)**:端点钉角 M 只解三次项,U 单拨弹指 R2 中段真实压进转动 U 层(worst 35.5~38.8U,五族独立复现);按 `hook_middle2` 同法重解(全曲线 12 参数 + 每 3° 穿透罚,含 drop 回撤路径)。
 - **180° 回落单指的 Q2 扫掠缺口族**:D2(9.18U,弹指 L4)、B2/B2'(10.5/19.4U,弹指 R2 softClamp 后被 Q2 扫过);旧 dodge 本就不覆盖弹指手。需 L 侧连拨标定(D2)/ B 族 180° 连拨或首指早退场编排。
-- **非 home 握 y.low / y.mid / z.low 的无 style 弹指手**:dodge 废除后该未标定域裸奔(`R F' D` 的 D 步弹指拇指 11.6U / 中指 6.1U / 无名指 5.6U),需统一标定。
-- **↑/↓ 换握拇指穿模瞬态**:裸 `↓` 复现双手拇指 1.5~4.7U(机制③张手对拇指覆盖不足);疑 THUMB_CURL_PLANE_ROLL fork + r1 甲床重做后未复跑换握 oracle,按 fork 后拇指姿重标 regripOpen / 外拱或给拇指单独张开量;另换握回落尾段(recoverT≈0.16)与下一步转动有重叠帧,闸步放行时机同域待查。
+- **非 home 握 y.low / y.mid / z.low 的无 style 弹指手**:dodge 废除后该未标定域裸奔(`R F' D` 的 D 步弹指中指 6.1U / 无名指 5.6U;拇指旧 11.6U 已随 2026-07-09 E 带 home 重解消失 —— 拇指肉不再有 y<−32 部分),需统一标定。
+- ~~↑/↓ 换握拇指穿模瞬态~~(2026-07-09 已解:换握张手给拇指单独编排 —— 压 curl 的「张」会把大弯末节(E 带姿 c3≈1.1)伸直戳进 F 面,拇指改「轻开 curl + THUMB_EVADE_D 同款方向甩离贴面」,`↑ ·`/`↓ ·`/`↑ F F' ·` regrip play oracle 全零,连旧姿 2.9~3.8U 的存量暴露一并清掉);换握回落尾段(recoverT≈0.16)与下一步转动的重叠帧闸步放行时机仍待查。
 - 双下手 / 双上手 / 左下右中 等其余握持组合的 F 族、连拨。
 - **U2' / D2 镜像连拨**:L 侧双指 fit 未标定,当前回落单指 hook + softClamp;要启用需在 L 侧解 hook_middle2 / hook_pinky / hook_ring2 三组 fit 后放开 `classifyHandGesture` 的 `hand === "R"` 限制。
 - **U' 终点贴块**:L 侧 `hook_index` 端点未重标(U' 做完 L2 不落对称贴块位),需按 R 侧 2026-07-09 同法重标。
