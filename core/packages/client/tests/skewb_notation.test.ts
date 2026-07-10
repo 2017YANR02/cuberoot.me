@@ -28,14 +28,14 @@ describe('skewb notation translator', () => {
     expect(translate('f')).toBe('D');
   });
 
-  it('Sarah conjugates for ULF / URB (no direct WCA letter)', () => {
-    // Sarah L = ULF axis → y' F y
-    expect(translate('L')).toBe("y' F y");
-    expect(translate("L'")).toBe("y' F' y");
-    expect(translate('L2')).toBe("y' F2 y");
-    // Sarah R = URB axis → y F y'
-    expect(translate('R')).toBe("y F y'");
-    expect(translate("R'")).toBe("y F' y'");
+  it('Sarah ULF / URB map to the cubing.js UL / UR grips', () => {
+    // Sarah L = ULF = cubing.js UL (UL ≡ y' F y, verified equal cube state)
+    expect(translate('L')).toBe('UL');
+    expect(translate("L'")).toBe("UL'");
+    expect(translate('L2')).toBe('UL2');
+    // Sarah R = URB = cubing.js UR (UR ≡ y F y')
+    expect(translate('R')).toBe('UR');
+    expect(translate("R'")).toBe("UR'");
   });
 
   it('Sarah suffix preservation on direct map', () => {
@@ -45,14 +45,14 @@ describe('skewb notation translator', () => {
     expect(translate('b2')).toBe('B2');
   });
 
-  it('S/H macros expand and recurse', () => {
-    // S = F' L F L' (Sarah) → F' (y' F y) F (y' F y)' = F' y' F y F y' F' y
-    expect(translate('S')).toBe("F' y' F y F y' F' y");
-    // H = L F' L' F
-    expect(translate('H')).toBe("y' F y F' y' F' y F");
+  it('S/H macros expand and recurse (L → UL, rotation-free)', () => {
+    // S = F' L F L' (Sarah) → F' UL F UL'
+    expect(translate('S')).toBe("F' UL F UL'");
+    // H = L F' L' F → UL F' UL' F
+    expect(translate('H')).toBe("UL F' UL' F");
     // S' = inverse of sledgehammer = hedgeslammer
-    expect(translate("S'")).toBe("y' F y F' y' F' y F");
-    expect(translate("H'")).toBe("F' y' F y F y' F' y");
+    expect(translate("S'")).toBe("UL F' UL' F");
+    expect(translate("H'")).toBe("F' UL F UL'");
   });
 
   it('rotations pass through', () => {
@@ -64,14 +64,14 @@ describe('skewb notation translator', () => {
   it('mixed Sarah alg from sarahs-advanced 1a', () => {
     // First alg of sarahs-advanced case 1a uses R/r/B/b/z/x/y
     const out = translate("y x R b' r' R' r z B' r B");
-    // Sarah's R → y F y'; r → R; B → U; b → B
-    expect(out).toBe("y x y F y' B' R' y F' y' R z U' R U");
+    // Sarah's R → UR; r → R; B → U; b → B
+    expect(out).toBe("y x UR B' R' UR' R z U' R U");
   });
 
   it('S/H heavy alg from sarahs-advanced 1a (3rd entry)', () => {
     // H z S z' H z H — every move is a macro or rotation
     const out = translate("H z S z' H z H");
-    expect(out).toBe("y' F y F' y' F' y F z F' y' F y F y' F' y z' y' F y F' y' F' y F z y' F y F' y' F' y F");
+    expect(out).toBe("UL F' UL' F z F' UL F UL' z' UL F' UL' F z UL F' UL' F");
   });
 
   it('unknown tokens pass through', () => {

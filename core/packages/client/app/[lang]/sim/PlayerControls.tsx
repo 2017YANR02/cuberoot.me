@@ -93,7 +93,7 @@ import {
   formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg,
   simplifySq1Alg, invertSq1Alg,
 } from '@/lib/sq1-svg';
-import type { SkewbNotation } from '@cuberoot/shared/skewb-notation';
+import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import {
   Slider, Toggle, KeymapModal, resetWorldView, mapFrames,
   DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR,
@@ -814,7 +814,29 @@ export default function PlayerControls({
                 : isMegaEngine ? 'megaminx'
                   : isFtoEngine ? 'fto'
                     : null;
-  const corner = cornerKind ? CORNER_SPECS[cornerKind] : null;
+  // For the engine skewb in Sarah mode, translate typed input Sarah → WCA before the
+  // engine (WCA-only) parser sees it, so a Sarah alg plays on the engine just like it
+  // does on the cubing.js renderer. Output (scramble / 消步 / 取逆) stays WCA — the
+  // engine's native — matching the cubing.js path (scrambles come back in WCA there too).
+  const corner = useMemo<CornerSpec | null>(() => {
+    if (!cornerKind) return null;
+    const spec = CORNER_SPECS[cornerKind];
+    if (cornerKind === 'skewb' && skewbNotation === 'sarah') {
+      return {
+        ...spec,
+        parse: (s) => spec.parse(toWcaSkewb(s, 'sarah')),
+        reduce: (s) => spec.reduce(toWcaSkewb(s, 'sarah')),
+      };
+    }
+    return spec;
+  }, [cornerKind, skewbNotation]);
+  // The setup box is fed straight to the engine twister (it bypasses corner.parse), so
+  // translate it the same way — mirrors SimPage, which runs toWca on both the setup and
+  // alg it hands the cubing.js renderer. No-op outside skewb and in WCA mode.
+  const toEngineText = useCallback(
+    (s: string) => (cornerKind === 'skewb' ? toWcaSkewb(s, skewbNotation ?? 'wca') : s),
+    [cornerKind, skewbNotation],
+  );
   // Auto-space (recon/submit parity, issue #11) is safe wherever every move token is a
   // single letter: NxN/twisty WCA alg, Ivy, SQ1 (no letters, no-op either way), and the
   // 'redi' / 'pyraminx' corner-engine notations (F/L/B/R and U/L/R/B). It must stay off
@@ -996,8 +1018,8 @@ export default function PlayerControls({
       const cube = world.cube as unknown as CornerCube;
       cube.twister.finish();
       const effSetup = settings.playbackMode === 'algorithm'
-        ? (setupDraft + ' ' + corner.toString(corner.invert(cornerActions))).trim()
-        : setupDraft;
+        ? (toEngineText(setupDraft) + ' ' + corner.toString(corner.invert(cornerActions))).trim()
+        : toEngineText(setupDraft);
       cube.twister.setup(effSetup);
       const target = Math.max(0, Math.min(n, cornerActions.length));
       for (let i = 0; i < target; i++) cube.applyMoveInstant(cornerActions[i]);
@@ -1034,7 +1056,7 @@ export default function PlayerControls({
       hands.setGrips(g.R, g.L);
     }
     setStep(target);
-  }, [world, setupDraft, algDraft, nxnItems, sq1Actions, ivyActions, cornerActions, corner, isSq1, isIvy, ivyCanPlay, settings.playbackMode]);
+  }, [world, setupDraft, algDraft, nxnItems, sq1Actions, ivyActions, cornerActions, corner, toEngineText, isSq1, isIvy, ivyCanPlay, settings.playbackMode]);
 
   const skipAutoResetRef = useRef(false);
   const animatingScrambleRef = useRef(false);
@@ -1495,18 +1517,19 @@ export default function PlayerControls({
       return;
     }
     if (!world) return;
+    const engScramble = toEngineText(scramble);
     const tw = world.cube.twister as unknown as { length: number; setup: (e: string) => void; push: (e: string) => void };
     // 动画仍在播时再次点播放键 = 直接跳到完整打乱态(走快速 WASM 整体应用,不从头重播,
     // 高阶 400+ 步宽转也是瞬时)。等价于解法框 focus 的跳过。
-    if (tw.length > 0) { tw.setup(scramble); return; }
+    if (tw.length > 0) { tw.setup(engScramble); return; }
     // Animate from solved: reset the cube instantly, then queue the scramble moves
     // via push() (the engine's tweened playback — the same primitive the auto-animate
     // scramble uses). setupDraft is unchanged, so the setup-sync effect never fires
     // and won't snap the cube mid-animation — no animatingScrambleRef needed here.
     world.controller.clearFrozen();
     tw.setup('');
-    tw.push(scramble);
-  }, [setupDraft, isTwistyMode, world, onSetupChange, onAlgChange, twistyPlayerRef]);
+    tw.push(engScramble);
+  }, [setupDraft, isTwistyMode, world, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText]);
 
   // 点解法框时,若打乱动画仍在逐步播放(高阶打乱可达 400+ 步 ≈ 分钟级),立即落到完整打乱态,
   // 让用户马上能在打乱好的魔方上输解法。走快速整体应用 setup(打乱文本):它清空待播队列后用
@@ -1515,8 +1538,8 @@ export default function PlayerControls({
     if (!world || isTwistyMode) return;
     const tw = (world.cube as unknown as { twister?: { length: number; setup: (e: string) => void } }).twister;
     const scr = setupDraft.trim();
-    if (tw && tw.length > 0 && scr) tw.setup(scr);
-  }, [world, isTwistyMode, setupDraft]);
+    if (tw && tw.length > 0 && scr) tw.setup(toEngineText(scr));
+  }, [world, isTwistyMode, setupDraft, toEngineText]);
 
   // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
   // recover the clean rotation-free scramble it solves, drop it into the
