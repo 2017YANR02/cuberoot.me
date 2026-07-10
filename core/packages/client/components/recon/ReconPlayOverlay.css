@@ -1,0 +1,46 @@
+/* ReconPlayOverlay — 复盘预览播放/暂停浮层。锚在播放器的 position:relative 画布容器里。
+   浮层本身 pointer-events:none(让拖拽穿透到画布),只有按钮接收点击。 */
+.recon-play-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* 暂停态:居中大圆(明显的“播放”提示)。play 三角靠左视觉重心,补 3px 左内边距。 */
+.recon-play-overlay-btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  padding: 0 0 0 3px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.15s, opacity 0.15s;
+}
+.recon-play-overlay-btn:hover { background: rgba(0, 0, 0, 0.68); }
+.recon-play-overlay-btn:active { transform: translate(-50%, -50%) scale(0.94); }
+
+/* 播放态:缩到左下角小圆,半透明让开魔方;hover 复现完整不透明。 */
+.recon-play-overlay-btn.is-playing {
+  left: 10px;
+  top: auto;
+  bottom: 10px;
+  transform: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0.5;
+}
+.recon-play-overlay-btn.is-playing:hover { opacity: 1; background: rgba(0, 0, 0, 0.6); }
+.recon-play-overlay-btn.is-playing:active { transform: scale(0.94); }

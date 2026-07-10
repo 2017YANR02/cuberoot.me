@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, type MutableRefObject } from 'react';
 import FaceOverlay, { type FaceTable } from './FaceOverlay';
+import ReconPlayOverlay from './recon/ReconPlayOverlay';
 import './TwistySection.css';
 
 // Pyraminx 4 vertex 方向。screenSlot mode:字母 (U/L/R/B) 不绑定具体 vertex,
@@ -121,8 +122,8 @@ export default function TwistySection({
   /** 强制 cubing.js 原生 backView ('top-right' / 'none')，独立于 settings。
    *  undefined = 不接管(走 settings.backView,如 /sim);true/false = 强制开关(recon)。 */
   backView?: boolean;
-  /** 隐藏 cubing.js 原生底部控制条(controlPanel:'none')。嵌成绩弹窗预览时用,
-   *  详情/提交页默认 false(保留 scrubber/play)。 */
+  /** 隐藏 cubing.js 原生底部控制条(controlPanel:'none'),改用画面内播放/暂停浮层。
+   *  嵌成绩弹窗预览时用,详情/提交页默认 false(保留原生 scrubber/play)。 */
   hideControls?: boolean;
   /** 启用 tap-to-twist:cubing.js 默认 movePressInput="auto" 实际关闭点击转面;
    *  传 true 改成 "basic",DragTracker → raycastMove → experimentalAddMove 链路接通。
@@ -150,6 +151,8 @@ export default function TwistySection({
   // player 重建 nonce — 每次构造新 player +1,settings effect 依赖它就能在 player
   // 刚生成时立刻把 settings 同步过去(否则 settings 引用没变 effect 不重跑)
   const [playerNonce, setPlayerNonce] = useState(0);
+  // hideControls(成绩弹窗预览)时用画面内浮层按钮播放,playing 由 cubing.js playingInfo 同步。
+  const [playing, setPlaying] = useState(false);
   const onUserMoveRef = useRef(onUserMove);
   useEffect(() => { onUserMoveRef.current = onUserMove; }, [onUserMove]);
   const onScaleChangeRef = useRef(onScaleChange);
@@ -334,6 +337,18 @@ export default function TwistySection({
     if (!player) return;
     try { player.backView = backView ? 'top-right' : 'none'; } catch { /* */ }
   }, [backView, playerNonce]);
+
+  // hideControls 浮层:订阅 cubing.js playingInfo → 同步本地 playing(驱动浮层图标)。
+  useEffect(() => {
+    if (!hideControls) return;
+    const player = playerInstRef.current;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const info = (player as any)?.experimentalModel?.playingInfo;
+    if (!info || typeof info.addFreshListener !== 'function') return;
+    const onPlaying = (v: { playing?: boolean }) => setPlaying(!!v?.playing);
+    info.addFreshListener(onPlaying);
+    return () => { try { info.removeFreshListener(onPlaying); } catch { /* */ } };
+  }, [playerNonce, hideControls]);
 
   // alg 同步 — player.alg 是 attribute setter,内部 model.alg.set 对相同输入
   // 做对比 (Alg.toString === current.toString) 不会重 trigger,所以这里直接赋值即可。
@@ -917,6 +932,12 @@ export default function TwistySection({
   return (
     <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}`}>
       <div ref={containerRef} className="twisty-container" />
+      {hideControls && alg.trim().length > 0 && (
+        <ReconPlayOverlay
+          playing={playing}
+          onToggle={() => { try { playerInstRef.current?.togglePlay(); } catch { /* */ } }}
+        />
+      )}
     </div>
   );
 }
