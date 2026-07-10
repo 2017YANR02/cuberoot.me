@@ -95,7 +95,10 @@ const NAIL_HALFW_K: Record<FingerName, number> = { thumb: 0.50, index: 0.67, mid
  *  过 tip 骨后甲板脱离皮面、微下弧切线伸出(见 ridge 的 DIP 抛物段),前缘
  *  终点 t1 = 1 + REACH·rCap/len。帽面同高处的皮在 s≈len+0.83·rCap 已结束,
  *  甲缘悬出肉外 ≈0.3·rCap,侧看有真实游离缘剪影。REACH>1:轴向越过肉尖。 */
-const NAIL_T0 = 0.32, NAIL_REACH = 1.15;
+// T0 0.32→0.40(r6):大弯姿态(↓ 握 / B 面钩)DIP 皮肤相对刚挂 tip 的甲板
+// 前滑数 U,甲根越贴折痕被盖越狠(左上角皮压板波浪,静态 lift 盖不住 ——
+// 再抬成白顶针)。退开折痕后板长 [0.40,~1.36] 仍长于 07-09 的 [0.32,1.15]。
+const NAIL_T0 = 0.40, NAIL_REACH = 1.15;
 /** 悬出段下弧深度(前缘高 = (1-DIP)×脊高):太小=平板翘出,太大=又贴回帽面。 */
 const NAIL_TIP_DIP = 0.45;
 const NAIL_TH = 0.55 * U;
@@ -120,20 +123,22 @@ function buildNailGeometry(args: {
   /** 甲片横向中心(lat 向偏移):nailFrame 的 lat 原点可偏离指管中轴(拇指
    *  ~-4U,dorsal 滚转所致),不对中会一缘埋皮一缘悬空(歪甲/缺口,踩过)。 */
   uCenter: number;
-  /** 甲板前缘终点(末节段分数,每指动态 = 1 + WRAP·rCap/len,见 NAIL_WRAP)。 */
+  /** 甲板前缘终点(末节段分数,每指动态 = 1 + REACH·rCap/len,见 NAIL_REACH)。 */
   t1: number;
+  /** 甲板抬升量(adaptGltfHand 解出):崖深随之加深,保证抬高后崖仍扎穿皮面。 */
+  lift: number;
 }): THREE.BufferGeometry {
   const { p3, axis, dorsal, lat, len } = args;
   const T0 = NAIL_T0, T1 = args.t1;
   const TH = NAIL_TH;           // 甲片厚度(薄;游离缘侧壁可见即可)
-  const EDGE_TUCK = 3.0 * U;    // 侧缘陡崖式下收进皮(甲沟):可见轮廓 = 皮∩甲交线,
-                                // 缓坡交线随粗皮网格大面片横移读成折线(踩过);做成近垂直
-                                // 崖后交线钉在甲缘超椭圆本身(皮高微变几乎不移交点)→ 轮廓圆滑
-  // 崖只收最外 ~16%(0.84→0.99):甲片已建到指尖背侧满宽(halfW≈皮肤半宽),中段
-  // 平铺可见 = 甲板,外沿这一小段陡收进甲沟 → 可见甲板 ≈ 0.84×满宽(解剖比)。旧
-  // ramp 0.68→0.90 收掉外 ~30%,把加宽的甲片大半埋回皮里(拇指加宽后完全不可见,踩过)。
-  const TUCK_S = 0.84, TUCK_E = 0.99;
-  const BASE_SINK = 2.2 * U;    // 甲根陡崖藏进近端甲襞(同侧缘,缓坡会让甲根轮廓折线化)
+  // r6 终版:**删埋皮帘幕崖**。此前侧缘/甲根用 3U+lift 深崖扎进皮里 —— 板抬
+  // 高(lift 保证全域高于皮面)后这些崖墙整段裸露,崖底缘 + 崖淡出坡道的折痕
+  // 就是用户抓的「撕纸锯齿 + 内部皱褶」(红色诊断料实证:烂边全是甲片自身几
+  // 何,皮根本没盖到板面)。现在甲片是干净闭合薄板:顶/底面 + TH 侧壁,边缘
+  // 只轻微下卷 ~0.9U(貌似贴甲床),轮廓从任何角度 = 自身解析超椭圆。
+  const EDGE_TUCK = 0.9 * U;
+  const TUCK_S = 0.80, TUCK_E = 0.98;
+  const BASE_SINK = 1.4 * U; // 甲根轻沉一点点进近端甲襞,配合肤色融接
   const NR = NAIL_NR, NC = NAIL_NC;
   const tc = (T0 + T1) / 2, th = (T1 - T0) / 2;
   // t=1(tip 骨)对应的 q:悬出段(q>qTip)侧缘崖淡出 —— 那里皮面已收帽,
@@ -152,25 +157,35 @@ function buildNailGeometry(args: {
       // 从中点就开始收,两端尖 → 读成水滴/血滴(2026-07-10 用户抓的)。
       const w2 = Math.pow(1 - Math.pow(Math.abs(q), 2.7), 1 / 2.4);
       const free = sstep(qTip - 0.15, qTip + 0.45, q);
-      const lun = sstep(-0.55, -0.9, q) * 0.5; // 半月对比调淡(强白斑读成大理石纹)
+      const lun = sstep(-0.45, -0.68, q) * 0.5; // 半月对比调淡(强白斑读成大理石纹)
+      // 甲根带渐变融入肤色(r6):甲根埋皮后,可见白界 = 低模皮肤多边形剪影
+      // 压在甲板上的折线(撕纸感,踩过)。把甲根两行的颜色 lerp 到肤色,白甲
+      // 的视觉边界改为甲板自身 q 向解析渐变(平滑弧),皮∩甲折线隐进同色里。
+      const rootBlend = sstep(-0.70, -0.92, q);
       for (let j = 0; j < NC; j++) {
         const w = -1 + (2 * j) / (NC - 1);
         const u = args.uCenter + w * w2 * args.halfWAt(sAbs);
         // 埋皮 ramp 只留窄边(侧缘最外一列 / 甲根最后两行):可见轮廓 =
         // 「皮 ∩ 甲」交线,宽软坡会让交线随皮面噪声大幅横移,读成锯齿 blob(踩过)
-        const hu = args.surf(sAbs, u)
-          - BASE_SINK * sstep(-0.74, -0.94, q)
-          - EDGE_TUCK * sstep(TUCK_S, TUCK_E, Math.abs(w)) * (1 - sstep(qTip - 0.05, qTip + 0.4, q));
+        const tuckK = sstep(TUCK_S, TUCK_E, Math.abs(w)) * (1 - sstep(qTip - 0.05, qTip + 0.4, q));
+        // 甲根角部豁免:sink 与 tuck 在根角叠加会掐出台阶剪影,角上让 sink 退掉
+        const sinkK = sstep(-0.74, -0.94, q) * (1 - 0.7 * sstep(0.5, 0.9, Math.abs(w)));
+        const hu = args.surf(sAbs, u) - BASE_SINK * sinkK - EDGE_TUCK * tuckK;
         // 甲面=甲底+厚度(中央极轻微加厚;穹顶感主要来自甲底跟皮面圆度)
         const h = layer === 0 ? hu + TH * (0.94 + 0.06 * Math.sqrt(Math.max(0, 1 - w * w))) : hu;
         P.copy(p3).addScaledVector(axis, sAbs).addScaledVector(dorsal, h).addScaledVector(lat, u);
         pos.push(P.x, P.y, P.z);
-        const shade = layer === 0 ? 1 : 0.9; // 甲底略暗
-        col.push(
-          Math.min(1, (0.93 + 0.05 * lun + 0.06 * free) * shade),
-          Math.min(1, (0.80 + 0.08 * lun + 0.15 * free) * shade),
-          Math.min(1, (0.76 + 0.08 * lun + 0.15 * free) * shade),
-        );
+        // 边缘轻微压暗(下卷面),甲底略暗。
+        const groove = Math.max(0, 1 - 0.15 * tuckK - 0.10 * sinkK);
+        const shade = (layer === 0 ? 1 : 0.9) * groove;
+        let r = (0.93 + 0.05 * lun + 0.06 * free) * shade;
+        let g = (0.80 + 0.08 * lun + 0.15 * free) * shade;
+        let b = (0.76 + 0.08 * lun + 0.15 * free) * shade;
+        // 甲根带 lerp 到肤色(bakeVertexTint 远端血色的近似值)
+        r += (1.0 - r) * rootBlend;
+        g += (0.84 - g) * rootBlend;
+        b += (0.78 - b) * rootBlend;
+        col.push(Math.min(1, r), Math.min(1, g), Math.min(1, b));
       }
     }
   }
@@ -461,25 +476,42 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
         const x = Math.min(1, (sq - nf.len) / (NAIL_REACH * rCap));
         return rTipRidge * (1 - NAIL_TIP_DIP * x * x);
       };
-      const halfW = NAIL_HALFW_K[name] * nf.len;
-      const rSide = Math.max(1.25 * rBase, 1.1 * halfW); // 横向曲率半径(实测拱 ≈1.25×脊高)
+      // ×0.82:r6 甲板抬到皮面之上后,可见白区 = 甲板全宽(旧貌「满宽建模、
+      // 只露中段」不再成立 —— 白剪影外界是板外缘 rim,收崖起点不收剪影,踩过)。
+      // 满宽白剪影 = 白顶针;0.82×满宽 ≈ 背视甲板占指背 ~3/4,解剖比。
+      const halfW = 0.82 * NAIL_HALFW_K[name] * nf.len;
+      // 横向曲率半径:r6 放平(1.25→1.7×脊高)—— 弯指姿态皮肤向单侧漂 ~1U,
+      // 拱太弯把板边压进漂移后的皮里,单侧边缘被皮咬成波浪(踩过);板边抬高
+      // ~1U 后两侧边缘都是自身解析 rim。视觉上更板状(真甲横曲率本就温和)。
+      const rSide = Math.max(1.7 * rBase, 1.5 * halfW);
       const bed0 = (sq: number, uq: number): number => {
         const du = Math.min(Math.abs(uq - uC), rSide);
         return ridge(sq) - (rSide - Math.sqrt(Math.max(0, rSide * rSide - du * du)));
       };
       const halfWAt = (): number => halfW;
-      // 覆盖余量:甲域**贴背段**面内(避开埋皮侧缘)按真实样本(非平滑场)校验;
-      // 悬出段皮面本就该在甲板之下(游离缘),不参与抬升。
+      // 覆盖余量:甲域**贴背段**面内按真实样本(非平滑场)校验;悬出段皮面
+      // 本就该在甲板之下(游离缘),不参与抬升。
+      // r6(2026-07-10 用户抓「撕纸锯齿 + 肉斑」):旧版容许皮峰戳穿 45% 甲厚
+      // + lift 封顶 1.2U + 弯指姿态漂移 ~1U → 皮肤在甲面上大片盖白,可见白色
+      // 边界 = 皮∩甲交线扫过整个甲板(随粗皮大三角游走 = 撕纸)。改为:甲板
+      // **全域必然高于皮面** —— 无戳穿容差、样本外再加 1.2U(稀疏样本插值 +
+      // 姿态漂移)余量;footprint 扩到全宽 + 根前 0.05,崖深随 lift 加深兜边缘。
+      // 采样窗 = **可见甲板区**(t≥0.45 避开甲根崖区、|u|≤0.8·halfW 避开侧缘
+      // 崖区):崖区的皮本来就该盖住崖,把它们计入 need 会把 lift 推到上限,
+      // 甲板变罩住指尖的白顶针(r6 第一版踩的)。
+      // |u| 窗 0.9·halfW = 可见板面全宽(tuck 崖 0.80 起,0.9 处才降半):窗比
+      // 可见面窄会漏掉边缘上方的皮 → 该处皮压板(左缘波浪咬边,踩过)。halfW
+      // 已 ×0.82 收窄,0.9 窗折合原满宽 0.74,不会再采到侧翼外扬皮(白顶针)。
       let need = 0;
       for (const p of smp) {
         const t = p.s / nf.len;
-        if (t < NAIL_T0 || t > Math.min(t1, 1.02)) continue;
-        if (Math.abs(p.u - uC) > 0.85 * halfW) continue;
+        if (t < 0.45 || t > Math.min(t1, 1.02)) continue;
+        if (Math.abs(p.u - uC) > 0.9 * halfW) continue;
         need = Math.max(need, p.h - bed0(p.s, p.u));
       }
-      const lift = Math.min(Math.max(0, need - 0.45 * NAIL_TH), 1.2 * U);
+      const lift = Math.min(need + 1.4 * U, 2.6 * U);
       const bed = (sq: number, uq: number): number => bed0(sq, uq) + lift;
-      const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, halfWAt, surf: bed, uCenter: uC, t1 });
+      const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, halfWAt, surf: bed, uCenter: uC, t1, lift });
       // 刚挂 tip 代理:甲片区域(t≥0.42)皮肤 ≥97% 由末节/端点骨主导(与
       // tip 代理刚体同动),姿态漂移 ≤~1U,由 BASE_SINK/EDGE_TUCK 埋皮余量
       // 吸收。试过抄皮肤骨权重做成蒙皮甲片 —— 弯指时格网被相邻权重差撕出
@@ -506,7 +538,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
   mesh.material = skinMat;
   mesh.castShadow = mesh.receiveShadow = false;
 
-  return { group, side, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat] };
+  return { group, side, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat], nailMeshes };
 }
 
 function bakeVertexTint(mesh: THREE.SkinnedMesh): void {
