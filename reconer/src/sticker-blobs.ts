@@ -651,12 +651,20 @@ export function trackFaceGrid(
   h: number,
   prior: FaceGrid,
   priorColors: readonly (ColorName | null)[] | null = null,
-  opts: { range?: number; step?: number; minCells?: number; calib?: ColorCalib | null } = {},
+  opts: {
+    range?: number;
+    step?: number;
+    minCells?: number;
+    calib?: ColorCalib | null;
+    /** 运动惩罚 (可读格/pitch): 走一格须净赚该值可读格, 防被"邻格更好读"拐走; 0 = 旧行为 */
+    motionPenalty?: number;
+  } = {},
 ): FaceObservation | null {
   const range = opts.range ?? 16;
   const step = opts.step ?? 4;
   const minCells = opts.minCells ?? 4;
   const calib = opts.calib ?? null;
+  const motionPenalty = opts.motionPenalty ?? 0;
   const radius = prior.pitch * 0.22;
 
   let bestScore = -1;
@@ -677,8 +685,8 @@ export function trackFaceGrid(
           }
         }
       }
-      // 可读格数为主, 与上帧同色为辅 (防锁到相邻杂物/别的面)
-      const score = readable + 0.3 * agreePrior;
+      // 可读格数为主, 与上帧同色为辅 (防锁到相邻杂物/别的面), 运动惩罚防走格
+      const score = readable + 0.3 * agreePrior - motionPenalty * (Math.hypot(dx, dy) / prior.pitch);
       if (score > bestScore) {
         bestScore = score;
         bestDx = dx;

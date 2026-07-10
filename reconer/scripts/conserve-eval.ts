@@ -40,6 +40,10 @@
  * 残余杠杆 (未做, 期望有限): per-span 联合钉定旋转 (span 内基构造性恒定) 只覆盖
  * 同 span 段对且 solo 视图共轭仍无解; 真正解耦需接入搜索由锚定路径钉朝向 —
  * 但内容层残差 (最优对齐后 p50 仍 -10 ≈ 3σ/格) 已注定难超 57.6% 门槛。
+ *
+ * 后记 (负⑪, 2026-07-10): 根因 (a)(b) 已由 src/lattice-track.ts 规范基锚定修复并
+ * 验证 (基角范围 150-347°→20-41°, samecheck 对齐 3/5 视频大幅改善) — 但本评测
+ * face top1 26.7→21.6, 主管线边缘化逐格/e2e 均不动: 墙在颜色层, 本判决维持不变。
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -53,12 +57,10 @@ import {
   cellCenter,
   extractFaceObservations,
   medianBackground,
-  reorientObsToBasis,
-  trackFaceGrid,
   type FaceGrid,
   type FaceObservation,
 } from "../src/sticker-blobs.ts";
-import type { ColorName } from "../src/reconstruct.ts";
+import { extractTrackedFrames } from "../src/lattice-track.ts";
 
 const vArg = process.argv.indexOf("--video");
 const ONLY = vArg >= 0 ? process.argv[vArg + 1] : null;
@@ -75,6 +77,9 @@ const NO_CANON = process.argv.includes("--nocanon");
 const cbArg = process.argv.indexOf("--combo");
 const FORCE_COMBO = cbArg >= 0 ? Number(process.argv[cbArg + 1]) : -1;
 const SAME_CHECK = process.argv.includes("--samecheck");
+const NO_ANCHOR = process.argv.includes("--noanchor");
+const NO_SNAP = process.argv.includes("--nosnap"); // 诊断: 只旋转锚定
+const NO_TRACKREF = process.argv.includes("--notrackref"); // 诊断: 跟踪帧不喂参照
 
 /** 候选动作 (GT 记谱只涉及 U D L R F B? + 宽转 r f u + 转体 x y) */
 const CANDS = [
@@ -103,6 +108,8 @@ interface ChainObs {
   filled: number;
   /** 图像中心 y (B/U 身份配对用: B 恒在下 = y 大) */
   cy: number;
+  /** 网格间距 (px, 槽判别尺度) */
+  pitch: number;
   fallback: boolean;
 }
 
@@ -219,39 +226,12 @@ for (const sf of files) {
   const mask = activityMask(bgFrames, bg, meta.w, meta.h);
   const splitIdx = splitFrames.map((f) => f - frame0);
 
-  // 逐帧提取 (冷 + 时间连续性跟踪, 同 real-eval extractAllGrids 无标定版)
-  const grids: FaceObservation[][] = new Array(n);
-  {
-    let prior: FaceGrid | null = null;
-    let priorColors: readonly (ColorName | null)[] | null = null;
-    let priorMiss = 0;
-    for (let i = 0; i < n; i++) {
-      let cold = extractFaceObservations(frameAt(i), meta.w, meta.h, mask, {});
-      if (cold.length) {
-        if (prior) cold = [reorientObsToBasis(cold[0], prior.v1, prior.v2), ...cold.slice(1)];
-        grids[i] = cold;
-        prior = cold[0].grid;
-        priorColors = cold[0].colors;
-        priorMiss = 0;
-        continue;
-      }
-      const tracked: FaceObservation | null = prior
-        ? trackFaceGrid(frameAt(i), meta.w, meta.h, prior, priorColors, {})
-        : null;
-      if (tracked) {
-        grids[i] = [tracked];
-        prior = tracked.grid;
-        priorColors = tracked.colors;
-        priorMiss = 0;
-      } else {
-        grids[i] = [];
-        if (prior && ++priorMiss > 5) {
-          prior = null;
-          priorColors = null;
-        }
-      }
-    }
-  }
+  // 逐帧提取: 共享锚定提取环 (src/lattice-track.ts); --noanchor 复刻 legacy 供 A/B
+  const { grids, anchor } = extractTrackedFrames(frameAt, n, meta.w, meta.h, mask, {
+    anchor: !NO_ANCHOR,
+    snap: !NO_SNAP,
+    trackedRefUpdate: !NO_TRACKREF,
+  });
 
   // 帧运动量 (网格 bbox 内帧差; 静止 vs 拧转双峰) + 2-means 阈值
   const frameMotion: number[] = new Array(n).fill(Infinity);
@@ -331,6 +311,7 @@ for (const sf of files) {
       feats: canon,
       filled,
       cy: cySum / idxs.length,
+      pitch: obss[obss.length >> 1].grid.pitch,
       fallback,
     };
   };
@@ -399,6 +380,7 @@ for (const sf of files) {
   // 对齐 (4 旋转取 max) 相似度若打不过随机跨对基线, 守恒前提本身死刑。
   if (SAME_CHECK) {
     let nPair = 0;
+    let crossSlot = 0;
     let alignSum = 0;
     let crossSum = 0;
     let winCnt = 0;
@@ -422,6 +404,10 @@ for (const sf of files) {
           const b = cs[j2];
           const ov = Math.min(a.to, b.to) - Math.max(a.from, b.from) + 1;
           if (ov > 0) continue; // 时间重叠 = 可能是 B/U 两个不同面, 跳过
+          if (Math.abs(a.cy - b.cy) > 1.5 * 0.5 * (a.pitch + b.pitch)) {
+            crossSlot++; // 不同槽 (B×U 跨面): 非同一物理面, 对齐无意义
+            continue;
+          }
           let bestAlign = -Infinity;
           let bestShifted = -Infinity; // 加 ±1 格平移 (区分平移漂移 vs 面漂移)
           let bestRot = 0;
@@ -480,7 +466,7 @@ for (const sf of files) {
     const q = (p: number) => (aligns.length ? aligns[Math.min(aligns.length - 1, Math.floor(p * aligns.length))] : NaN);
     const qsh = (p: number) => (shifted.length ? shifted[Math.min(shifted.length - 1, Math.floor(p * shifted.length))] : NaN);
     console.log(
-      `${meta.video} 同态自检: ${nPair} 对, 对齐均值 ${(alignSum / Math.max(1, nPair)).toFixed(2)} vs 随机基线 ${(crossSum / Math.max(1, nPair)).toFixed(2)}, 对齐胜率 ${((winCnt / Math.max(1, nPair)) * 100).toFixed(0)}%  分位 p10=${q(0.1).toFixed(1)} p25=${q(0.25).toFixed(1)} p50=${q(0.5).toFixed(1)} p75=${q(0.75).toFixed(1)} p90=${q(0.9).toFixed(1)}`,
+      `${meta.video} 同态自检: ${nPair} 对 (剔跨槽 ${crossSlot}), 对齐均值 ${(alignSum / Math.max(1, nPair)).toFixed(2)} vs 随机基线 ${(crossSum / Math.max(1, nPair)).toFixed(2)}, 对齐胜率 ${((winCnt / Math.max(1, nPair)) * 100).toFixed(0)}%  分位 p10=${q(0.1).toFixed(1)} p25=${q(0.25).toFixed(1)} p50=${q(0.5).toFixed(1)} p75=${q(0.75).toFixed(1)} p90=${q(0.9).toFixed(1)}`,
     );
     console.log(
       `  +平移对齐: p10=${qsh(0.1).toFixed(1)} p25=${qsh(0.25).toFixed(1)} p50=${qsh(0.5).toFixed(1)} p75=${qsh(0.75).toFixed(1)} p90=${qsh(0.9).toFixed(1)}  好对胜出旋转分布 [${rotWin.join(",")}]`,
@@ -584,7 +570,7 @@ for (const sf of files) {
       const feats = Array.from({ length: 9 }, (_, i) =>
         !keep || keep(i) ? colorFeat(Math.floor(states[k][assign[i]] / 9)) : null,
       );
-      return { from: 0, to: 0, len: 1, feats, filled: feats.filter(Boolean).length, cy: 0, fallback: false };
+      return { from: 0, to: 0, len: 1, feats, filled: feats.filter(Boolean).length, cy: 0, pitch: 30, fallback: false };
     };
     for (let k = 0; k <= N; k++) {
       if (ORACLE) {
@@ -601,7 +587,7 @@ for (const sf of files) {
   const nChainBound = byBoundary.filter((cs) => cs.length > 0).length;
   const nCovBound = boundaryViews.filter(Boolean).length;
   console.log(
-    `--- ${meta.video}: 链 ${chains.length} 条, 边界覆盖 ${nCovBound}/${N + 1} (链 ${nChainBound} 回退 ${nCovBound - nChainBound}), 运动阈 ${motThresh.toFixed(1)} (rest ${((nRest / Math.max(1, finiteMot.length)) * 100).toFixed(0)}%) ---`,
+    `--- ${meta.video}: 链 ${chains.length} 条, 边界覆盖 ${nCovBound}/${N + 1} (链 ${nChainBound} 回退 ${nCovBound - nChainBound}), 运动阈 ${motThresh.toFixed(1)} (rest ${((nRest / Math.max(1, finiteMot.length)) * 100).toFixed(0)}%)${NO_ANCHOR ? "" : ` 锚定 匹配${anchor.matched}/snap${anchor.snapped}/基修${anchor.rotFixed}/新槽${anchor.fresh}`} ---`,
   );
 
   // 逐段守恒打分: 先算每段 16 指派组合 × 34 动作分矩阵。指派是每视频常数
