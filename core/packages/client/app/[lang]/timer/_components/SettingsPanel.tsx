@@ -22,8 +22,10 @@ import { WCA_COLORS } from '../_lib/cube/colors';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { CountryInput } from '@/components/CountryInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
-import WcaSourceConfig from './WcaSourceConfig';
 import { tr } from '@/i18n/tr';
+// .settings-row* 原语来自 wca-source.css —— 以前靠 WcaSourceConfig 顺带 import 进来,
+// 「打乱来源」那节移出设置弹层后这里得自己 import,否则每个 Row 掉样式。
+import './wca-source.css';
 
 /** 布尔设置统一用 PillToggle 无文字 iOS 风开关,替代裸 checkbox。 */
 function BoolToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
@@ -511,33 +513,6 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           {tr({ zh: '按住并拖动呼出轮盘', en: 'Press & drag to open the wheel'
         })}
         </p>
-
-        <AccordionSection
-          id="scramble-source"
-          title={tr({ zh: '打乱来源', en: 'Scramble source'
-        })}
-          defaultExpanded={true}
-          useMobile={isMobile}
-          expanded={expandedSections}
-          setExpanded={setExpandedSections}
-        >
-          <Row label={tr({ zh: '来源', en: 'Source'
-        })}>
-            <select
-              className="settings-row-control-select"
-              value={s.scrambleSource}
-              onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
-            >
-              <option value="wca">{tr({ zh: 'WCA 真题', en: 'WCA real'
-            })}</option>
-              <option value="random">{tr({ zh: '随机生成', en: 'Random'
-            })}</option>
-            </select>
-          </Row>
-          {s.scrambleSource === 'wca' && (
-            <WcaSourceConfig isZh={isZh} event={event} settings={s} updateSettings={updateSettings} />
-          )}
-        </AccordionSection>
 
         <AccordionSection
           id="timing"
