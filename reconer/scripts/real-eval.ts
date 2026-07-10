@@ -765,6 +765,16 @@ for (const sf of files) {
         };
       });
     });
+    // 收尾静止链 (末 split 之后, 态=复原, 手已离开) — 倒推解码的锚点观测
+    const finals = runs
+      .filter((run) => (run.from + run.to) / 2 > splitFrames[splitFrames.length - 1])
+      .map((run) => ({
+        read: run.grid.map((c) => c ?? null),
+        span: run.span,
+        cx: Math.round(run.cx),
+        cy: Math.round(run.cy),
+        len: run.len,
+      }));
     dumpVideos.push({
       name: basename(videoPath),
       omega: [...omega],
@@ -773,6 +783,7 @@ for (const sf of files) {
       tailRotations,
       confusion: Object.fromEntries(confusion),
       bounds,
+      finals,
     });
   }
   let coldMatch = 0, coldRead = 0, trkMatch = 0, trkRead = 0;
