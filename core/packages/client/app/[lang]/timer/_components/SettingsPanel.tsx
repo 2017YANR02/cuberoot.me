@@ -23,9 +23,9 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { CountryInput } from '@/components/CountryInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { tr } from '@/i18n/tr';
-// .settings-row* 原语来自 wca-source.css —— 以前靠 WcaSourceConfig 顺带 import 进来,
-// 「打乱来源」那节移出设置弹层后这里得自己 import,否则每个 Row 掉样式。
-import './wca-source.css';
+// .settings-row* 原语来自 wca-source.css(现已提取到共享 components/)—— 以前靠
+// WcaSourceConfig 顺带 import 进来,「打乱来源」那节移出后这里得自己 import,否则每个 Row 掉样式。
+import '@/components/wca-source.css';
 
 /** 布尔设置统一用 PillToggle 无文字 iOS 风开关,替代裸 checkbox。 */
 function BoolToggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {

@@ -16,7 +16,7 @@ import { useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { updateSettings, useSettings } from '../_lib/settings';
 import type { EventId } from '../_lib/types';
-import WcaSourceConfig from './WcaSourceConfig';
+import WcaSourceConfig from '@/components/WcaSourceConfig';
 import { tr } from '@/i18n/tr';
 
 const LS_KEY = 'timer.scrambleSource.panelOpen';
