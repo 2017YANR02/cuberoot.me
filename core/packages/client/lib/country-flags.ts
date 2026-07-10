@@ -244,3 +244,27 @@ const MANUAL_COMP_NAMES_ZH: Record<string, string> = {
 export function compNameZh(cellName: string): string {
   return MANUAL_COMP_NAMES_ZH[cellName] ?? _compNamesZh?.[cellName] ?? '';
 }
+
+// Reverse of comp_names_zh (Chinese official name → WCA canonical English name).
+// Recon rows sometimes store a Chinese comp's *Chinese* name in `comp`; on the
+// English site we recover the English name from it so it doesn't render Chinese.
+// Memoized against _flagDataVersion (the map can grow via the cn-comp-names
+// fallback). Exact-match on the raw value; falls back to '' when unknown.
+let _compNamesEnByZh: Record<string, string> | null = null;
+let _compNamesEnByZhVer = -1;
+
+export function compNameEnFromZh(zhName: string): string {
+  if (!zhName || !_compNamesZh) return '';
+  if (_compNamesEnByZh === null || _compNamesEnByZhVer !== _flagDataVersion) {
+    const rev: Record<string, string> = {};
+    for (const [en, zh] of Object.entries(_compNamesZh)) {
+      if (zh && !(zh in rev)) rev[zh] = en;
+    }
+    for (const [en, zh] of Object.entries(MANUAL_COMP_NAMES_ZH)) {
+      if (zh && !(zh in rev)) rev[zh] = en;
+    }
+    _compNamesEnByZh = rev;
+    _compNamesEnByZhVer = _flagDataVersion;
+  }
+  return _compNamesEnByZh[zhName] ?? '';
+}
