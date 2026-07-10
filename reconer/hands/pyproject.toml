@@ -1,0 +1,9 @@
+[project]
+name = "reconer-hands"
+version = "0.1.0"
+description = "手部关键点第二证据通道: MediaPipe hands → 每段动作面分类 (与颜色通道融合)"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "mediapipe>=0.10.14",
+    "scikit-learn>=1.4",
+]
