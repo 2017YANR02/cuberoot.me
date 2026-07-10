@@ -43,7 +43,9 @@ function tokenRows(n: SkewbNotation): { top: Tok[]; bot: Tok[]; extra: Tok[] } {
   return {
     top: [c('F', 'UFR'), c('UL', 'ULF'), c('UR', 'URB'), c('U', 'ULB')],
     bot: [c('D', 'DFR'), c('L', 'DLF'), c('R', 'DRB'), c('B', 'DLB')],
-    extra: [],
+    extra: [
+      { t: 'x', kind: 'rot' }, { t: 'y', kind: 'rot' }, { t: 'z', kind: 'rot' },
+    ],
   };
 }
 
@@ -78,6 +80,7 @@ export default function SkewbNotationGuide({ notation, onDemo, onRestore }: Prop
   const restore = useCallback(() => { setActive(null); onRestore(); }, [onRestore]);
 
   const { top, bot, extra } = tokenRows(notation);
+  const hasMacro = extra.some((e) => e.kind === 'macro');
 
   const chip = (tok: Tok) => (
     <button
@@ -112,7 +115,7 @@ export default function SkewbNotationGuide({ notation, onDemo, onRestore }: Prop
             <div className="skewb-guide-chips">{bot.map(chip)}</div>
             {extra.length > 0 && (
               <>
-                <span className="skewb-guide-label">{t('宏 / 旋转', 'Macros / rotations')}</span>
+                <span className="skewb-guide-label">{hasMacro ? t('宏 / 旋转', 'Macros / rotations') : t('旋转', 'Rotations')}</span>
                 <div className="skewb-guide-chips">{extra.map(chip)}</div>
               </>
             )}
