@@ -153,6 +153,12 @@ const TABLES: Table[] = [
   { name: 'wiki_additions', domain: 'community', origin: '0009', purpose: { zh: '术语增补(他人在条目下补充)', en: 'User additions to a glossary term' } },
   { name: 'colpi_words', domain: 'community', origin: 'snapshot', evolved: [3, 4], purpose: { zh: '记忆训练词库(word + note)', en: 'Memo-training word bank (word + note)' } },
   { name: 'colpi_votes', domain: 'community', origin: 'snapshot', purpose: { zh: '词库投票', en: 'Word-bank votes' } },
+  { name: 'forum_categories', domain: 'community', origin: '0066', purpose: { zh: '/forum 论坛分类(首页分组标题)', en: 'Forum categories (index group headers)' } },
+  { name: 'forum_forums', domain: 'community', origin: '0066', purpose: { zh: '论坛子版(发帖目的地,seed 16 版)', en: 'Forum boards (16 seeded)' } },
+  { name: 'forum_threads', domain: 'community', origin: '0066', purpose: { zh: '论坛主题(置顶 / 锁帖 / 软删 + 末帖缓存)', en: 'Forum threads (pin / lock / soft-delete + last-post cache)' } },
+  { name: 'forum_posts', domain: 'community', origin: '0066', purpose: { zh: '论坛帖子(markdown 正文,软删保楼层号)', en: 'Forum posts (markdown body, soft-delete keeps post numbers)' } },
+  { name: 'forum_reactions', domain: 'community', origin: '0066', purpose: { zh: '帖子反应(一人一帖一条,可换类型)', en: 'Post reactions (one per user per post)' } },
+  { name: 'forum_reports', domain: 'community', origin: '0066', purpose: { zh: '帖子举报(一人一帖一条,resolved_at 空 = 待处理)', en: 'Post reports (one per user per post, null resolved_at = open)' } },
   { name: 'nav_sites', domain: 'community', origin: '0001', evolved: [2], purpose: { zh: '/site 网址导航(group_id 避 SQL 关键字)', en: 'The /site link directory' } },
   { name: 'ops_commands', domain: 'community', origin: '0010', evolved: [11], purpose: { zh: '/code/ops runbook 命令 + 提示词模板', en: 'Commands + prompts behind the /code/ops runbook' } },
 
@@ -229,6 +235,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 63, slug: 'recons_dup_reason', desc: { zh: 'recons 加 dup_reason 列,支撑同选手+同打乱有理由重复提交', en: 'Add dup_reason column to recons for intentional duplicate submissions' } },
   { n: 64, slug: 'user_accounts', desc: { zh: '内部账号体系:app_users + auth_identities(多身份绑定)+ auth_codes(邮箱/手机验证码),从 wca_users 回填', en: 'Internal accounts: app_users + auth_identities (multi-provider) + auth_codes (email/phone), backfilled from wca_users' } },
   { n: 65, slug: 'recon_official_enum', desc: { zh: 'recons.official 从 0/1 布尔改为三值枚举 wca / non_wca / practice', en: 'Change recons.official from 0/1 boolean to three-value enum wca / non_wca / practice' } },
+  { n: 66, slug: 'forum', desc: { zh: '论坛 6 表:分类 / 子版 / 主题 / 帖子 / 反应 / 举报 + 种子分类(6 类 16 版)', en: 'Forum: categories, boards, threads, posts, reactions, reports + seeded taxonomy (6 categories, 16 boards)' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
