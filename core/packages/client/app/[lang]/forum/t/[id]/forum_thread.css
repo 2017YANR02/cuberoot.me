@@ -1,0 +1,66 @@
+/* /forum/t/[id] — thread page-specific layout. */
+
+.forum-thread-head { margin-bottom: 0.8rem; }
+
+.forum-thread-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 1.25rem;
+  margin: 0 0 0.35rem;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.forum-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.forum-thread-headmeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.76rem;
+  color: var(--faint-foreground);
+}
+
+.forum-title-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.35rem;
+}
+
+/* .forum-title-input 在共享 forum.css(new 页也用) */
+
+.forum-post-editwrap {
+  padding: 16px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 55%, transparent);
+}
+
+.forum-reply-block { margin-top: 20px; }
+
+.forum-locked-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  padding: 12px 0;
+}
+
+@media (max-width: 480px) {
+  .forum-thread-heading { font-size: 1.05rem; }
+  .forum-title-edit { flex-wrap: wrap; }
+}

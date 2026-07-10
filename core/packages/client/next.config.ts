@@ -238,6 +238,10 @@ const nextConfig: NextConfig = {
         // id was a MISS function render of an auth-gated, zero-SEO edit form.
         // One static shell backs every id (see recon/submit/[editId]/page.tsx).
         { source: "/:lang(en|zh)/recon/submit/:editId", destination: "/:lang/recon/submit/_" },
+        // Forum subforum + thread pages: unbounded id spaces, same sentinel
+        // shells (see forum/f/[slug]/page.tsx and forum/t/[id]/page.tsx).
+        { source: "/:lang(en|zh)/forum/f/:slug", destination: "/:lang/forum/f/_" },
+        { source: "/:lang(en|zh)/forum/t/:id", destination: "/:lang/forum/t/_" },
       ],
       afterFiles: [
         // Dev only: FMC chain solver (vendored cubelib) runs as a local native
@@ -246,6 +250,12 @@ const nextConfig: NextConfig = {
         // through to api.cuberoot.me/v1/fmc/* (nginx routes /v1/fmc → cubelib-server).
         ...(process.env.NODE_ENV === "development"
           ? [{ source: "/v1/fmc/:path*", destination: "http://127.0.0.1:8099/:path*" }]
+          : []),
+        // Dev only: forum API is served by a locally-run Hono server (:3001)
+        // until the routes ship to prod — only /v1/forum goes local, every
+        // other /v1 endpoint keeps hitting prod data via the rule below.
+        ...(process.env.NODE_ENV === "development"
+          ? [{ source: "/v1/forum/:path*", destination: "http://127.0.0.1:3001/v1/forum/:path*" }]
           : []),
         // Dev: proxy backend so loadAlg() etc. don't trip CORS from 127.0.0.1.
         // In prod, apiUrl() builds absolute https://api.cuberoot.me URLs directly.

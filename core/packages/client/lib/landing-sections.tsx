@@ -5,7 +5,7 @@
 import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookMarked, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
-  Brain, Box, Sigma, Scale, Sprout, Brush, type LucideIcon,
+  Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
 
@@ -75,6 +75,7 @@ export const TEXTS: Record<string, { en: string; zh: string
 },
   whyCube:         { en: 'Why Cube', zh: '为何学魔方'
 },
+  forum:           { en: 'Forum', zh: '论坛' },
   comingSoon:      { en: 'Coming soon', zh: '即将上线'
 },
   creditsPrefix:   { en: 'Inspired by', zh: '致谢'
@@ -164,6 +165,7 @@ export const SECTIONS: Section[] = [
     sub:     { en: 'Code notes, blog, link directory, unofficial world records.', zh: '代码笔记、博客、链接导航、非官方纪录。'
     },
     cards: [
+      { id: 'forum', href: '/forum', internal: true, tier: 'medium', Icon: MessagesSquare, nameKey: 'forum' },
       { id: 'code', href: '/code',  internal: true,  tier: 'medium', Icon: CodeIcon, nameKey: 'code' },
       { id: 'blog', href: '/blog/', internal: false, tier: 'medium', Icon: BookOpen, nameKey: 'blog' },
       { id: 'site', href: '/site',  internal: true,  tier: 'medium', Icon: Compass,  nameKey: 'sitesDirectory' },
