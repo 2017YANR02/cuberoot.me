@@ -33,6 +33,21 @@ export interface ColorCalib {
   classes: Record<ColorName, ClassStats>;
   /** 归一化平方距离拒判阈 (χ²₃ 量级) */
   rejectD2: number;
+  /** 可选 kNN 分类器 (Lab 特征): 在场时 calibClassify 优先走它。逐类对角高斯在本
+   * 数据上样本内仅 ~55% (曲香蕉状类 + 极不平衡拖垮参数模型), 同批格 kNN-LOO 74%
+   * (欠债 ~19 点)。倒推解码器不需过 75% 锚定悬崖, 更准即纯增益 (见 CLAUDE.md 正⑭)。 */
+  knn?: ColorKnn;
+}
+
+/** kNN 颜色分类器: 预缩放 Lab 特征 + 标签, 每类上限采样 (顺带压不平衡) */
+export interface ColorKnn {
+  /** 已按 scale 预缩放的 Lab 特征 (查询时也缩放) */
+  feats: [number, number, number][];
+  labels: ColorName[];
+  scale: [number, number, number];
+  k: number;
+  /** 最近邻缩放平方距离超此判拒 (皮肤/遮挡外点) */
+  rejectD2: number;
 }
 
 export interface ColorSample {
@@ -63,6 +78,85 @@ export function rgbFeature(r: number, g: number, b: number): { a: number; b: num
   return { a: s * Math.cos(rad), b: s * Math.sin(rad), v };
 }
 
+/** sRGB → CIELab (D65)。Lab 色度对 R/O/W 暖簇分得比 HSV 色度盘略好 (+1.3% LOO) */
+export function labFeature(r: number, g: number, b: number): [number, number, number] {
+  const lin = (c: number): number => {
+    const x = c / 255;
+    return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+  };
+  const rl = lin(r), gl = lin(g), bl = lin(b);
+  let X = rl * 0.4124 + gl * 0.3576 + bl * 0.1805;
+  const Y = rl * 0.2126 + gl * 0.7152 + bl * 0.0722;
+  let Z = rl * 0.0193 + gl * 0.1192 + bl * 0.9505;
+  X /= 0.95047;
+  Z /= 1.08883;
+  const fq = (t: number): number => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+  const fx = fq(X), fy = fq(Y), fz = fq(Z);
+  return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
+}
+
+/**
+ * kNN 模型构建: 每类上限采样 (stride 均匀抽) 压不平衡 + 控规模, 预缩放 Lab 特征。
+ * capPerClass 兼顾"少类不被大类淹没"与"分类 O(N) 可控"。样本太薄返回 null。
+ */
+export function buildKnn(
+  samples: readonly ColorSample[],
+  k = 7,
+  capPerClass = 150,
+  rejectD2Opt = 400,
+): ColorKnn | null {
+  const byClass = new Map<ColorName, ColorSample[]>();
+  for (const s of samples) {
+    (byClass.get(s.label) ?? byClass.set(s.label, []).get(s.label)!).push(s);
+  }
+  const kept: ColorSample[] = [];
+  for (const arr of byClass.values()) {
+    const stride = Math.max(1, Math.ceil(arr.length / capPerClass));
+    for (let i = 0; i < arr.length; i += stride) kept.push(arr[i]);
+  }
+  if (kept.length < k + 3) return null;
+  const raw = kept.map((s) => labFeature(s.r, s.g, s.b));
+  const scale = [0, 1, 2].map((d) => {
+    const xs = raw.map((f) => f[d]).sort((a, b) => a - b);
+    const m = xs[xs.length >> 1];
+    const dev = xs.map((x) => Math.abs(x - m)).sort((a, b) => a - b);
+    return Math.max(1, 1.4826 * dev[dev.length >> 1]);
+  }) as [number, number, number];
+  const feats = raw.map(
+    (f) => [f[0] / scale[0], f[1] / scale[1], f[2] / scale[2]] as [number, number, number],
+  );
+  return { feats, labels: kept.map((s) => s.label), scale, k, rejectD2: rejectD2Opt };
+}
+
+/** kNN 分类 (多数票); 最近邻缩放平方距离超阈判拒 (皮肤/遮挡外点) */
+export function knnClassify(r: number, g: number, b: number, knn: ColorKnn): ColorName | null {
+  const f = labFeature(r, g, b);
+  const q0 = f[0] / knn.scale[0], q1 = f[1] / knn.scale[1], q2 = f[2] / knn.scale[2];
+  const nn: { d: number; l: ColorName }[] = [];
+  let nearest = Infinity;
+  for (let i = 0; i < knn.feats.length; i++) {
+    const e = knn.feats[i];
+    const d0 = q0 - e[0], d1 = q1 - e[1], d2 = q2 - e[2];
+    const d = d0 * d0 + d1 * d1 + d2 * d2;
+    if (d < nearest) nearest = d;
+    // 保留 k 个最小 (插入排序, 小 k 廉价)
+    if (nn.length < knn.k) {
+      nn.push({ d, l: knn.labels[i] });
+      if (nn.length === knn.k) nn.sort((a, b) => a.d - b.d);
+    } else if (d < nn[knn.k - 1].d) {
+      let j = knn.k - 1;
+      while (j > 0 && nn[j - 1].d > d) { nn[j] = nn[j - 1]; j--; }
+      nn[j] = { d, l: knn.labels[i] };
+    }
+  }
+  if (nearest > knn.rejectD2) return null;
+  const tally = new Map<ColorName, number>();
+  for (const e of nn) tally.set(e.l, (tally.get(e.l) ?? 0) + 1);
+  let best: ColorName | null = null, bestN = 0;
+  for (const [c, n] of tally) if (n > bestN) { bestN = n; best = c; }
+  return best;
+}
+
 function median(xs: number[]): number {
   if (!xs.length) return 0;
   const s = [...xs].sort((x, y) => x - y);
@@ -82,7 +176,7 @@ function madScale(xs: number[], center: number, floor: number): number {
  */
 export function fitColorCalib(
   samples: readonly ColorSample[],
-  opts: { minPerClass?: number; rejectD2?: number } = {},
+  opts: { minPerClass?: number; rejectD2?: number; knn?: boolean } = {},
 ): ColorCalib | null {
   const minPerClass = opts.minPerClass ?? 6;
   const byClass = new Map<ColorName, { a: number[]; b: number[]; v: number[] }>();
@@ -148,7 +242,8 @@ export function fitColorCalib(
       synth: true,
     };
   }
-  return { classes, rejectD2: opts.rejectD2 ?? 16 };
+  const knn = opts.knn ? (buildKnn(samples) ?? undefined) : undefined;
+  return { classes, rejectD2: opts.rejectD2 ?? 16, knn };
 }
 
 /**
@@ -185,6 +280,7 @@ export function calibClassify(
 ): ColorName | null {
   const f = rgbFeature(r, g, b);
   if (f.v < 55) return null;
+  if (calib.knn) return knnClassify(r, g, b, calib.knn);
   let best: ColorName | null = null;
   let bestD2 = Infinity;
   for (const c of COLOR_LIST) {
