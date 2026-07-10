@@ -379,6 +379,8 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
   // 按国家筛选:值 = WCA country_id(如 USA / China / United Kingdom;参数化绑定,无注入风险,仅限长)。
   const country = (c.req.query('country') ?? '').trim().slice(0, 50);
   const hasCountry = country.length > 0;
+  // facet=country → 返回各国计数(聚合,不分页);否则走常规列表。
+  const facet = (c.req.query('facet') ?? '').trim();
   const page = Math.max(1, Number(c.req.query('page')) || 1);
   const pageSize = Math.min(200, Math.max(1, Number(c.req.query('pageSize')) || 50));
   const offset = (page - 1) * pageSize;
@@ -395,6 +397,25 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
     if (plan.gmCol && plan.predCol !== plan.gmCol) where.push(`${plan.gmCol} <= ${bin}`);
     const params: unknown[] = [];
     if (hasEvent) { where.push('s.event_id = ?'); params.push(event); }
+
+    // facet=country:该 (变体,阶段,底色,步数[,项目]) 下各国真题计数(与列表同源,前端下拉计数用)。
+    // 只按 bin/subset/event 聚合(忽略 q/from/to/country),GROUP BY 比赛所属国。确定性 → 可缓存。
+    if (facet === 'country') {
+      const rows = await query<{ id: string; n: string }>(
+        `SELECT c.country_id AS id, count(*)::text AS n
+           FROM wca_scramble_steps s
+           JOIN wca_competitions c ON c.id = s.competition_id
+          WHERE ${where.join(' AND ')} AND c.country_id IS NOT NULL
+          GROUP BY c.country_id
+          ORDER BY count(*) DESC, c.country_id`,
+        params,
+      );
+      const countries = rows.map((r) => ({ id: r.id, n: Number(r.n) }));
+      const facetTotal = countries.reduce((a, r) => a + r.n, 0);
+      c.header('Cache-Control', facetTotal > 0 ? 'public, max-age=300, s-maxage=86400' : 'no-store');
+      return c.json({ facet: 'country', total: facetTotal, countries });
+    }
+
     if (q) { where.push('c.name ILIKE ?'); params.push(`%${q}%`); }
     if (hasFrom) { where.push('c.start_date >= ?'); params.push(from); }
     if (hasTo) { where.push('c.start_date <= ?'); params.push(to); }
