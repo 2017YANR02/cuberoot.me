@@ -19,6 +19,7 @@ import {
 import { ForumBreadcrumbs } from '../../_components/ForumBreadcrumbs';
 import { PostCard } from '../../_components/PostCard';
 import { ForumComposer, type ForumComposerHandle } from '../../_components/ForumComposer';
+import { ForumMarkdownEditor } from '../../_components/ForumMarkdownEditor';
 import { formatCount } from '../../_lib/forum-format';
 import '../../forum.css';
 import './forum_thread.css';
@@ -345,12 +346,9 @@ export default function ThreadClient() {
                 onReport={handleReport}
                 bodyOverride={editingPost?.id === post.id ? (
                   <div className="forum-post-editwrap">
-                    <textarea
-                      className="forum-composer-input"
+                    <ForumMarkdownEditor
                       value={editText}
-                      onChange={e => setEditText(e.target.value)}
-                      rows={6}
-                      autoFocus
+                      onChange={setEditText}
                     />
                     <div className="forum-composer-actions">
                       <span className="forum-composer-spacer" />
