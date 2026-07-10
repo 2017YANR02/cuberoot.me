@@ -17,7 +17,7 @@ import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle } from 'lucide-react';
-import { solveCross, normalizeScramble } from '@/lib/cross-solver';
+import { normalizeScramble } from '@/lib/cross-solver';
 import {
   Analyzer,
   CROSS_COLORS,
@@ -31,6 +31,10 @@ import {
 } from './analyze_worker_client';
 import TwistySection from '@/components/TwistySection';
 import StageSolver, { METHOD_KEYS, type Method as SsMethod } from '@/components/StageSolver';
+// 复用计时器的「打乱来源」综合配置 + 真题池引擎(analyzer 自持一份独立状态)。
+import WcaSourceConfig, { type WcaSourceSettings } from '@/components/WcaSourceConfig';
+import { nextWca, prefetchWca, wcaMetaFor, isWcaSourceEmpty, type WcaSourceSpec, type WcaScrambleMeta } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
+import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import ChainExplorer from '@/components/ChainExplorer';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { Flag } from '@/components/Flag';
@@ -39,7 +43,6 @@ import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
-import { statsUrl } from '@/lib/stats-base';
 import { variantLabel, stageLabel } from '@/lib/scramble-variants';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import SolveTabs from '../_components/SolveTabs';
@@ -83,12 +86,38 @@ const COLOR_LABEL: Record<CrossColor, { zh: string; en: string
 },
 };
 
-// WCA real-scramble pools: /stats/scramble/wca_cross/<letter>.json, bucketed by cross length.
-const COLOR_LETTER: Record<CrossColor, string> = {
-  White: 'W', Yellow: 'Y', Red: 'R', Orange: 'O', Blue: 'B', Green: 'G',
+// 打乱来源综合配置默认值 + 本地持久化(analyzer 自持一份,独立于计时器设置)。
+const WCA_SRC_KEY = 'analyze.wcaSrc.v1';
+const DEFAULT_WCA_SRC: WcaSourceSettings = {
+  wcaScrambleMode: 'date',
+  wcaComp: '', wcaCompName: '', wcaCompCountry: '', wcaRound: '', wcaGroup: '',
+  wcaDateFrom: '', wcaDateTo: '',
+  wcaUseOptimal: false,
+  wcaDifficultyOn: false,
+  wcaDiffVariant: 'std', wcaDiffStage: 'cross', wcaDiffColors: 'BGORWY', wcaDiffSteps: [],
+  autoMarkWcaScramble: false, // analyzer 无「打卡」概念(隐藏该开关)
 };
-interface WcaEntry { s: string; c: string; d: string; r: string; g: string; n: number; e: string; id?: string }
-interface WcaFile { color: string; bins: Record<string, WcaEntry[]> }
+function loadWcaSrc(): WcaSourceSettings {
+  if (typeof localStorage === 'undefined') return { ...DEFAULT_WCA_SRC };
+  try {
+    const raw = localStorage.getItem(WCA_SRC_KEY);
+    if (raw) { const o = JSON.parse(raw); if (o && typeof o === 'object') return { ...DEFAULT_WCA_SRC, ...o }; }
+  } catch { /* corrupt entry */ }
+  return { ...DEFAULT_WCA_SRC };
+}
+// WcaSourceSettings → wca_pool 的 WcaSourceSpec(event 恒 333;难度关或步数空则不带 diff)。
+function specFromWcaSrc(s: WcaSourceSettings): WcaSourceSpec {
+  return {
+    event: '333' as EventId,
+    mode: s.wcaScrambleMode,
+    comp: s.wcaComp, compName: s.wcaCompName, round: s.wcaRound, group: s.wcaGroup,
+    from: s.wcaDateFrom, to: s.wcaDateTo,
+    optimal: s.wcaUseOptimal,
+    diff: s.wcaDifficultyOn && s.wcaDiffSteps.length
+      ? { variant: s.wcaDiffVariant, stage: s.wcaDiffStage, colors: s.wcaDiffColors, steps: s.wcaDiffSteps }
+      : undefined,
+  };
+}
 
 // cubing.js's search worker normally bootstraps via `import.meta.resolve(...)`
 // which Turbopack can't follow. The esbuild-workaround path uses a plain
@@ -114,20 +143,6 @@ async function randomThreeByThreeScramble(): Promise<string> {
   const { randomScrambleForEvent } = await import('cubing/scramble');
   const alg = await randomScrambleForEvent('333');
   return alg.toString();
-}
-
-// wca_cross 条目只有比赛名,没有 ID。WCA 比赛 ID = 比赛名 NFKD 去重音 + 删非字母数字
-// (世锦赛特例 WCYYYY)。据此反查 comp_countries 拿国旗 + 拼 /scramble/gen?comp= 链接,~92% 命中。
-function compStripId(name: string): string {
-  return name.normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '');
-}
-function resolveComp(name: string): { id: string; iso: string } {
-  const strip = compStripId(name);
-  const iso = compFlagIso2(strip);
-  if (iso) return { id: strip, iso };
-  const m = name.match(/World Championship\s+(\d{4})/i);
-  if (m) { const wc = `WC${m[1]}`; const wcIso = compFlagIso2(wc); if (wcIso) return { id: wc, iso: wcIso }; }
-  return { id: strip, iso: '' };
 }
 
 // URL state (nuqs, replace semantics — filters/scramble shouldn't pile history).
@@ -269,17 +284,15 @@ function AnalyzePageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrSource]);
 
-  // WCA real-scramble pool。颜色 + 步数都是「可选过滤器」,默认「任意」=随机抽一条真实打乱。
-  // 颜色文件互不相交(每色 ~1500 条独立样本),任意颜色 = 随机挑一个颜色文件再抽。
-  const [wcaColor, setWcaColor] = useState<CrossColor | 'any'>('any');
-  const [wcaLen, setWcaLen] = useState<number | 'any'>('any');
-  const [wcaBins, setWcaBins] = useState<number[] | null>(null); // 选定具体颜色后该色的步数桶
-  const [wcaMeta, setWcaMeta] = useState<WcaEntry | null>(null);
+  // 打乱来源综合配置(复用计时器 WcaSourceConfig UI + wca_pool 引擎;analyzer 自持一份,
+  // 独立于计时器设置,存 localStorage)。抽题走 nextWca(spec),来源元数据走 wcaMetaFor()。
+  const [wcaSrc, setWcaSrc] = useState<WcaSourceSettings>(() => loadWcaSrc());
+  useEffect(() => { try { localStorage.setItem(WCA_SRC_KEY, JSON.stringify(wcaSrc)); } catch { /* */ } }, [wcaSrc]);
+  const patchWcaSrc = useCallback((patch: Partial<WcaSourceSettings>) => setWcaSrc((p) => ({ ...p, ...patch })), []);
+  const [wcaMeta, setWcaMeta] = useState<WcaScrambleMeta | null>(null);
   const [wcaLoading, setWcaLoading] = useState(false);
-  const [crossSol, setCrossSol] = useState<{ length: number; moves: string[] } | null>(null);
-  const [crossColor, setCrossColor] = useState<CrossColor>('White'); // 十字解读数用的颜色 = 实际抽到的颜色
+  const [wcaEmpty, setWcaEmpty] = useState(false); // 该来源确认无真题(难度组合无匹配 / 比赛缺此项目)
   const [, setFlagDataVer] = useState(0); // 国旗映射异步加载完后触发重渲染
-  const wcaCacheRef = useRef<Map<string, WcaFile>>(new Map());
 
   const [running, setRunning] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -404,70 +417,34 @@ function AnalyzePageInner() {
     }
   }
 
-  const loadWcaColor = useCallback(async (color: CrossColor): Promise<WcaFile | null> => {
-    const letter = COLOR_LETTER[color];
-    const cached = wcaCacheRef.current.get(letter);
-    if (cached) return cached;
+  // 抽一条真实打乱:把综合配置转成 WcaSourceSpec,走 wca_pool.nextWca(与计时器同一引擎:
+  // 按日期随机 / 指定比赛 / 按难度过滤 / 最优等态)。null = 该来源确认无真题 → 提示。
+  const drawWca = useCallback(async () => {
+    const spec = specFromWcaSrc(wcaSrc);
     setWcaLoading(true);
+    setWcaEmpty(false);
     try {
-      const r = await fetch(statsUrl(`/stats/scramble/wca_cross/${letter}.json`));
-      if (!r.ok) throw new Error(String(r.status));
-      const data = (await r.json()) as WcaFile;
-      wcaCacheRef.current.set(letter, data);
-      return data;
-    } catch (err) {
-      console.warn('[wca-cross] load failed', err);
-      return null;
+      const s = await nextWca(spec);
+      if (s) {
+        setScramble(s);
+        setWcaMeta(wcaMetaFor(s));
+      } else {
+        setWcaMeta(null);
+        setWcaEmpty(isWcaSourceEmpty(spec));
+      }
     } finally {
       setWcaLoading(false);
     }
-  }, []);
+  }, [wcaSrc]);
 
-  // 选具体颜色:加载该色文件取步数桶供「步数」下拉;切回任意则清空(任意不按步数过滤)。
-  const selectWcaColor = useCallback(async (color: CrossColor | 'any') => {
-    setWcaColor(color);
-    setWcaLen('any');
-    setWcaMeta(null);
-    if (color === 'any') { setWcaBins(null); return; }
-    const data = await loadWcaColor(color);
-    setWcaBins(data ? Object.keys(data.bins).map(Number).sort((a, b) => a - b) : null);
-  }, [loadWcaColor]);
-
-  // 抽一条真实打乱:任意颜色→随机挑色;任意步数(或任意颜色)→该色全部桶合并随机。
-  const drawWca = useCallback(async () => {
-    const color: CrossColor = wcaColor === 'any'
-      ? CROSS_COLORS[Math.floor(Math.random() * CROSS_COLORS.length)]
-      : wcaColor;
-    const data = await loadWcaColor(color);
-    if (!data) return;
-    const pool: WcaEntry[] = (wcaColor !== 'any' && wcaLen !== 'any' && data.bins[String(wcaLen)])
-      ? data.bins[String(wcaLen)]
-      : Object.values(data.bins).flat();
-    if (!pool.length) return;
-    const entry = pool[Math.floor(Math.random() * pool.length)];
-    setScramble(entry.s);
-    setWcaMeta(entry);
-    setCrossColor(color);
-  }, [wcaColor, wcaLen, loadWcaColor]);
-
-  // Lazily warm the default color's pool after first paint (only on idle) so the
-  // first 任意 draw is snappy. Doesn't pick a scramble — user clicks 换一个.
+  // WCA 模式下配置变化时后台预热对应来源队列,首次「换一条」更快。
   useEffect(() => {
-    const t = setTimeout(() => { void loadWcaColor('White'); }, 300);
-    return () => clearTimeout(t);
-  }, [loadWcaColor]);
-
-  // Optimal cross solution for the loaded scramble (first call builds tables ~0.5s, then instant).
-  useEffect(() => {
-    if (!wcaMeta) { setCrossSol(null); return; }
-    const t = setTimeout(() => setCrossSol(solveCross(wcaMeta.s, crossColor)), 0);
-    return () => clearTimeout(t);
-  }, [wcaMeta, crossColor]);
+    if (scrSource !== 'wca') return;
+    prefetchWca(specFromWcaSrc(wcaSrc));
+  }, [scrSource, wcaSrc]);
 
   // 国旗映射(comp_countries 等)首屏后异步拉,完成后重渲染让旗出现。
   useEffect(() => { void loadFlagData().then(setFlagDataVer); }, []);
-
-  const wcaComp = wcaMeta ? resolveComp(wcaMeta.c) : null;
 
   return (
     <div className="analyze-page">
@@ -509,80 +486,50 @@ function AnalyzePageInner() {
           ariaLabel={t('打乱来源', 'Scramble source')}
           className="analyze-src-pill"
         />
-
-        {scrSource === 'wca' ? (
-          <>
-            {/* 颜色 + 步数都是可选过滤器,默认「任意」= 随机一条真实打乱 */}
-            <select
-              className="analyze-wca-color"
-              value={wcaColor}
-              onChange={(e) => { void selectWcaColor(e.target.value as CrossColor | 'any'); }}
-              disabled={running}
-              aria-label={t('十字颜色', 'Cross color')}
-            >
-              <option value="any">{t('任意颜色', 'Any color')}</option>
-              {CROSS_COLORS.map((c) => (
-                <option key={c} value={c}>
-                  {t(`${COLOR_LABEL[c].zh}十字`, `${COLOR_LABEL[c].en} cross`)}
-                </option>
-              ))}
-            </select>
-            {wcaColor !== 'any' && (
-              <select
-                className="analyze-wca-color"
-                value={String(wcaLen)}
-                onChange={(e) => setWcaLen(e.target.value === 'any' ? 'any' : Number(e.target.value))}
-                disabled={running || !wcaBins}
-                aria-label={t('十字步数', 'Cross length')}
-              >
-                <option value="any">{t('任意步数', 'Any length')}</option>
-                {(wcaBins ?? []).map((n) => (
-                  <option key={n} value={n}>{t(`${n} 步`, `${n} moves`)}</option>
-                ))}
-              </select>
-            )}
-            <button
-              className="analyze-wca-reshuffle"
-              onClick={() => void drawWca()}
-              disabled={running || wcaLoading}
-              title={t('换一条真实打乱', 'Draw another real scramble')}
-              aria-label={t('换一条真实打乱', 'Draw another real scramble')}
-            >
-              {wcaLoading ? <Loader2 size={13} className="analyze-spin" /> : <Shuffle size={13} />}
-            </button>
-          </>
-        ) : (
-          <button
-            className="analyze-wca-reshuffle"
-            onClick={() => void fillRandom()}
-            disabled={running}
-            title={t('换一个随机打乱', 'New random scramble')}
-            aria-label={t('换一个随机打乱', 'New random scramble')}
-          >
-            <Shuffle size={13} />
-          </button>
-        )}
+        <button
+          className="analyze-wca-reshuffle"
+          onClick={() => (scrSource === 'wca' ? void drawWca() : void fillRandom())}
+          disabled={running || wcaLoading}
+          title={scrSource === 'wca' ? t('换一条真实打乱', 'Draw another real scramble') : t('换一个随机打乱', 'New random scramble')}
+          aria-label={scrSource === 'wca' ? t('换一条真实打乱', 'Draw another real scramble') : t('换一个随机打乱', 'New random scramble')}
+        >
+          {wcaLoading ? <Loader2 size={13} className="analyze-spin" /> : <Shuffle size={13} />}
+        </button>
       </div>
 
-      {/* 来源信息行:WCA 真实打乱显示比赛出处,随机显示标签;不重复打乱文字/图 */}
+      {/* 综合来源配置:复用计时器的 WcaSourceConfig(按日期范围 / 指定比赛 / 按难度 / 最优等态)。
+          始终展开内联;自动打卡对分析器无意义,隐藏。 */}
+      {scrSource === 'wca' && (
+        <div className="analyze-wca-src">
+          <WcaSourceConfig
+            isZh={lang === 'zh'}
+            event={'333' as EventId}
+            settings={wcaSrc}
+            updateSettings={patchWcaSrc}
+            showAutoMark={false}
+          />
+        </div>
+      )}
+
+      {/* 来源信息行:WCA 真实打乱显示比赛出处 / 无匹配提示;随机无出处不显示。 */}
       <div className="analyze-srcline">
-        {scrSource === 'wca' && wcaMeta && (
-          <Link
-            href={`/${lang}/scramble/gen?comp=${wcaComp?.id ?? ''}`}
-            className="analyze-scr-src"
-            title={t('在生成器中打开该比赛', 'Open this competition in the generator')}
-          >
-            {wcaComp?.iso && <Flag iso2={wcaComp.iso} className="analyze-scr-flag" />}
-            <span className="analyze-scr-comp">{localizeCompName(wcaComp?.id ?? '', wcaMeta.c, lang === 'zh')}</span>
-            <EventIcon event={wcaMeta.e} className="analyze-scr-evt" />
-            <span className="analyze-scr-meta">{compSourceLine(wcaMeta.r, wcaMeta.g, wcaMeta.n, lang === 'zh')}</span>
-          </Link>
-        )}
-        {crossSol && (
-          <span className="analyze-scr-cross">
-            {t(`${COLOR_LABEL[crossColor].zh}十字`, `${COLOR_LABEL[crossColor].en} cross`)}
-            {' '}({crossSol.length}): {crossSol.moves.join(' ') || '—'}
-          </span>
+        {scrSource === 'wca' && wcaMeta && (() => {
+          const iso = compFlagIso2(wcaMeta.ci);
+          return (
+            <Link
+              href={`/${lang}/scramble/gen?comp=${wcaMeta.ci}`}
+              className="analyze-scr-src"
+              title={t('在生成器中打开该比赛', 'Open this competition in the generator')}
+            >
+              {iso && <Flag iso2={iso} className="analyze-scr-flag" />}
+              <span className="analyze-scr-comp">{localizeCompName(wcaMeta.ci, wcaMeta.cn, lang === 'zh')}</span>
+              <EventIcon event={wcaMeta.e} className="analyze-scr-evt" />
+              <span className="analyze-scr-meta">{compSourceLine(wcaMeta.r, wcaMeta.g, wcaMeta.n, lang === 'zh')}</span>
+            </Link>
+          );
+        })()}
+        {scrSource === 'wca' && wcaEmpty && (
+          <span className="analyze-scr-meta">{t('该组合没有匹配的真题,换个条件或点右上角换一条', 'No real scramble matches these filters — adjust them or draw again')}</span>
         )}
       </div>
 
