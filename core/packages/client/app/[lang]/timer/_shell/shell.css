@@ -742,11 +742,14 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 
 /* Desktop: the .shell-rail lifts to an absolute column pinned to the right edge
    of .shell-main (LEFT of the Times/Chart/Tools dock, a separate grid column).
-   All panels collapsed → a slim stack of drawer handles at center-right; any
-   panel open → the rail expands to a full-height side column and .shell-main
-   gains matching right padding so the centered readout/scramble/cube shift left
-   instead of sitting under it. The two panels (打乱来源 always, 解法提示 on 333)
-   stack vertically; if both are open the rail scrolls. */
+   All panels collapsed → a slim stack of drawer handles top-right, tucked just
+   below the topbar's 足迹/蓝牙/设置 icons (shell-main sits directly below the
+   topbar in the grid, so top-anchoring here already clears it; the right inset
+   matches the topbar's own right padding so the pills land right under the
+   icon row). Any panel open → the rail expands to a full-height side column and
+   .shell-main gains matching right padding so the centered readout/scramble/cube
+   shift left instead of sitting under it. The two panels (打乱来源 always, 解法
+   提示 on 333) stack vertically; if both are open the rail scrolls. */
 @media (min-width: 1024px) {
   .shell-main { transition: padding-right 160ms ease; }
 
@@ -756,9 +759,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
     align-items: flex-end;
     gap: 8px;
     position: absolute;
-    top: 50%;
-    right: 0;
-    transform: translateY(-50%);
+    top: 12px;
+    right: max(12px, env(safe-area-inset-right));
     width: auto;
     max-height: 100%;
     z-index: 42; /* above the deskpet (40), like the docked rail */
@@ -770,8 +772,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   }
   .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail {
     top: 0;
+    right: 0;
     bottom: 0;
-    transform: none;
     align-items: stretch;
     gap: 0;
     width: var(--solver-rail-w);
@@ -803,11 +805,11 @@ html[data-theme=dark] { --scramble-fg: #fff; }
     border-radius: 0;
     background: transparent;
   }
-  /* Header, rail collapsed (all closed): right-pinned drawer-handle pill. */
+  /* Header, rail collapsed (all closed): free-floating pill under the topbar
+     icons (not flush to the viewport edge, so it's rounded all the way round). */
   .shell-rail .solver-panel[data-open='false'] .solver-panel-head {
     border: 1px solid var(--shell-divider);
-    border-right: 0;
-    border-radius: 999px 0 0 999px;
+    border-radius: 999px;
     padding: 9px 13px;
     background: var(--shell-chip);
     box-shadow: 0 2px 12px color-mix(in srgb, var(--foreground) 10%, transparent);
