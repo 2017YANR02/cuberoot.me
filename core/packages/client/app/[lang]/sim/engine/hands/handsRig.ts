@@ -224,14 +224,44 @@ const DODGE_MAG: Record<Axis, Record<LayerClass, number>> = {
   x: { high: 0, low: 0, mid: 0, whole: 0 },
   // y.high 0(2026-07-09 用户规格「手作为整体任何时候不远离魔方,单指可以」):
   // U 族静止手不再整手平移(旧 16),改静止手食指单指离面避让,见
-  // HOOK_INDEX_EVADE。y.low/mid 整手让保留 —— E 犁拇指整块肉 / D 族犁大鱼际
-  // 下缘,受害的是掌肉不是单指,单指避让无解,后续迭代再评估迁移。
-  // y.low 44:① D' 勾弯时左无名指节肉(x≈-91)蹭进 B 面 1.6U(26 已够);
-  // ② 大鱼际下缘(y≈-39,越过底层 y=-32 界 7U,径向 128U)会被底层角柱
-  // (135.8U)在 θ≈1.3 犁到 3.4U —— 全顶点 oracle 2026-07-07 补测现形,
-  // 外让推到径向 >135.8U 需 ≥42,取 44 留量。
-  y: { high: 0, low: 44, mid: 62, whole: 0 },
-  z: { high: 10, low: 40, mid: 10, whole: 0 },
+  // HOOK_INDEX_EVADE。
+  // y.low 0(2026-07-09 同规格迁移):D 族静止手改「无名指 + 拇指」单指避让,
+  // 见 LOW_EVADE。dodge=0 且无避让的裸基线(2026-07-09 全顶点冻结扫,双向
+  // + 180°):① 静止手无名指末节肉(骑 B 面下部 BDL/BDR)被 D 层角柱蹭
+  // 3.7~5.4U@θ≈0.05-0.25;② 静止手拇指末节下缘肉(y≈-44..-49 越过 D 界
+  // -32,径向 ~119U < 角柱 135.8U)被犁 11.5~11.7U@θ≈1.0-1.5(旧注释的
+  // 「大鱼际 3.4U」实测主犯是拇指末节肉,拇指单指避让直接可解)。
+  // y.mid 0(2026-07-09 同规格迁移):E 族改双手「拇指 + 中指(+ 弹指无名指)」
+  // 单指避让,见 MID_EVADE。dodge=0 且无避让的裸基线(全顶点冻结扫,双向
+  // + 180°):双手拇指末节肉被 E 带角柱犁 9.2~11.3U、双手中指末节肉
+  // 6.0~7.5U、弹指手无名指自身扫掠探进 4.3~4.8U、弹指手食指被腕借力压进
+  // 静止 U 带 ~3U(借力已随迁移归零,见 driveGesture)。旧注释「E 犁拇指
+  // 整块肉 + 掌体,关节动作无解」实测不成立:受害全是末节单指肉,无掌体命中。
+  y: { high: 0, low: 0, mid: 0, whole: 0 },
+  // z.low 0(2026-07-09 同规格迁移):B 族静止手改「食指 + 中指」单指避让,
+  // 见 B_EVADE。dodge=0 且无避让的裸基线(全顶点冻结扫,双向 + 180°):
+  // ① 静止手食指末节尖肉(BUL/BUR 角,z≈−95)被 B 层角柱蹭
+  // 0.7~1.4U@θ≈1.33-1.42;② 静止手中指中节侧肉(骑 BL/BR 棱,径向 ~132U)
+  // 被犁 2.3U@θ≈0.83(仅 B' 的静止 L 手)。无名指/拇指/掌体全程干净,旧
+  // 「必须让 40U」严重高估。180° 深穿(11.9/19.4U)是**弹指手自身**食指
+  // softClamp 后被 Q2 扫掠 —— 旧 dodge 本就不覆盖弹指手(styled 排除),
+  // 既有残差,见 FINGERTRICKS §6。
+  // z.high 0(2026-07-09 同规格迁移):F 族非 topPush/downPush 分支(非双中手
+  // 握持的遗留拇指上扫)改单指离面避让,见 F_EVADE;弹指腕借力对 z.high 同步
+  // 归零(见 driveGesture)。dodge=0 且借力=0 的裸基线(全顶点冻结扫,双向
+  // + 180°,up/down/home 全部 8 种组合):up 握手拇指末节被 F 层角柱犁
+  // 11.5~11.7U、无名指 3.7~5.4U;down 握手食指 0.7~2.4U;home 握手全程干净
+  // (贴 B/F 面的指肉都在 F 带 z∈[32,96] 外)。另有借力单独贡献的 up 握弹指
+  // 手中指 6.0U/食指 2.8U 静态箱穿(归零借力即清)。双中手 topPush/downPush
+  // 本就整段免让(driveGesture 早退),不受迁移影响。
+  // z.mid 0(2026-07-09 同规格迁移):S 族。home 握全程干净(dodge=0 裸基线,
+  // 全顶点冻结扫 0.94°/步双向 + 180°:贴 B 面指列 z≈−98、拇指 z≈+99 都在
+  // S 带 z∈[−32,32] 外,最近点只有弹指手无名指扫掠瞬时 −1.77U 负值)——
+  // 旧幅度 10 对 home 握纯属保险。up/down 握才有真受害(改 S_EVADE 单指
+  // 避让,见该注释;弹指腕借力对 z.mid 同步归零,见 driveGesture):
+  // 双手拇指末节 9.2~11.2U + 静止手中指末节 5.9~7.3U —— 旧 dodge=10 本就
+  // 兜不住(真实播放 R S R' S' 实测照穿 6.7U,既有暴露)。
+  z: { high: 0, low: 0, mid: 0, whole: 0 },
 };
 
 /**
@@ -443,6 +473,134 @@ const HOOK_INDEX_EVADE: Record<HandSide, { c1: number; c2: number; c3: number; s
   L: { c1: -0.07, c2: -0.04, c3: 0, splay: 0 },
 };
 
+/** D 族(y.low)静止手单指避让(2026-07-09 总原则迁移,替代旧
+ *  DODGE_MAG.y.low=44 整手平移):home 静止手上,① 无名指腹贴 B 面下部
+ *  (BDL/BDR 角)正处 D 层扫掠带,沿 B 面外法线(−z)微伸离面(基节伸展,
+ *  同 BACK_EVADE 方向学;实测指尖 Δ≈(−4,+2,−13)U,主向 −z);② 拇指
+ *  末节下缘肉被 D 层角柱(135.8U)犁到,拇指绕根节甩出 F 面(实测指尖
+ *  Δ≈(−16,−29,+34)U,径向 137.6→174.9U;数值 = THUMB_EVADE_D 同款 ——
+ *  D 族期间两手拇指做同一个避让动作,视觉统一;splay 符号两手镜像已烘入,
+ *  applyHand 不再 ×sideSign)。时序同 HOOK_INDEX_EVADE:目标 =
+ *  min(1,|层角|/0.09) 即时跟升,drop 后 RECOVER_MS 回落
+ *  (HandState.lowEvade,tick 推进)。全顶点冻结扫余量:静止手拇指/无名指
+ *  最近点均 ≥5.3U(兜真实播放 ±2.2U 呼吸浮动);真实播放 D/D' 零穿模、
+ *  D2' 仅回撤 0.49U 单帧瞬态(≪ 既有 −2.9U 基线)。 */
+const LOW_EVADE: Record<HandSide, { ring: { c1: number; c2: number; c3: number; splay: number }; thumb: { c1: number; c2: number; c3: number; splay: number } }> = {
+  R: { ring: { c1: -0.05, c2: -0.03, c3: 0, splay: 0 }, thumb: { c1: 0, c2: -0.08, c3: 0, splay: -0.2 } },
+  L: { ring: { c1: -0.05, c2: -0.03, c3: 0, splay: 0 }, thumb: { c1: 0, c2: -0.08, c3: 0, splay: 0.2 } },
+};
+
+/** E 族(y.mid)双手单指避让(2026-07-09 总原则迁移,替代旧
+ *  DODGE_MAG.y.mid=62 整手平移):E 层带(y∈[−32,32])扫掠会犁**两只手**的
+ *  贴面指 —— 受害不分弹指手(dodge=0 裸基线,全顶点冻结扫,双向 + 180°):
+ *  ① 双手拇指末节肉(贴 F 面,y≈−20、径向 ~119U < 角柱 135.8U)被犁
+ *  9.2~11.3U(弹指侧 θ≈0.1-0.64 / 静止侧 θ≈0.98-1.42,窗口首尾相接);
+ *  ② 双手中指末节肉(骑 BR/BL 棱中部 y≈0)被犁 6.0~7.5U(θ 窗口与拇指
+ *  互补);③ 弹指手无名指自身的 legacy 勾弯扫掠(标定于旧整手 dodge=62 之下)
+ *  中段/回撤探进 E 带 4.3~4.8U。避让方向全为贴面外法线:拇指绕根节甩出
+ *  F 面(+z,数值 = THUMB_EVADE_D 同款,与 D 族视觉统一);中指/无名指沿
+ *  B 面外法线(−z)基节伸展离面。旧注释「E 犁拇指整块肉,关节动作无解」
+ *  实测不成立 —— 主犯全是末节单指肉,甩出/离面即清。时序同
+ *  HOOK_INDEX_EVADE:目标 = min(1,|层角|/0.09) 即时跟升,drop 后
+ *  RECOVER_MS 回落(HandState.midEvade,tick 推进;driveGesture 写**两手**
+ *  目标)。splay 两手镜像符号已烘入表内,applyHand 不 ×sideSign。
+ *  标定实测(E' 冻结 0.8):拇指尖 Δ≈(±16,−30,+33)U 径向 138→174U(与
+ *  THUMB_EVADE_D 同款数值,D/E 两族拇指动作视觉统一);中指尖
+ *  Δ≈(±4,+4,−16)U 主向 −z;弹指无名指尖 Δ≈(+4,+2,−16)U。避让后全顶点
+ *  冻结扫余量:中指 ≥4.4U、拇指 >6U、弹指无名指 ≥4.9U(0.94° 细扫全程
+ *  零穿模,decay 0);真实播放 E/E'/E2/E2' 及混序全零。 */
+const MID_EVADE: Record<HandSide, { thumb: { c1: number; c2: number; c3: number; splay: number }; middle: { c1: number; c2: number; c3: number; splay: number }; ring: { c1: number; c2: number; c3: number; splay: number } }> = {
+  R: {
+    thumb: { c1: 0, c2: -0.08, c3: 0, splay: -0.2 },
+    middle: { c1: -0.06, c2: -0.03, c3: 0, splay: 0 },
+    ring: { c1: -0.06, c2: -0.04, c3: 0, splay: 0 },
+  },
+  L: {
+    thumb: { c1: 0, c2: -0.08, c3: 0, splay: 0.2 },
+    middle: { c1: -0.06, c2: -0.03, c3: 0, splay: 0 },
+    ring: { c1: -0.06, c2: -0.04, c3: 0, splay: 0 },
+  },
+};
+
+/** B 族(z.low)静止手单指避让(2026-07-09 总原则迁移,替代旧
+ *  DODGE_MAG.z.low=40 整手平移;与 BACK_EVADE 分工:那是**弹指手本侧**静止
+ *  中/无名指,这里是**另一只手**):home 静止手贴 B 面的指列处 B 层扫掠带
+ *  (z∈[−96,−32],角柱 135.8U),dodge=0 裸基线(2026-07-09 全顶点冻结扫,
+ *  双向 + 180°)实测只两指被蹭:① 食指末节尖肉(BUL/BUR 角,z≈−95)被
+ *  0.7~1.4U@θ≈1.33-1.42;② 中指中节侧肉(骑 BL/BR 棱,径向 ~132U)被
+ *  2.3U@θ≈0.83(仅 B' 的静止 L 手;B 的静止 R 手中指实测未中,~2U 资产
+ *  不对称 + 扫向相位所致,两手同表保镜像统一)。无名指/拇指/掌体全程干净
+ *  (旧注释「B 族犁中节侧肉,必须让 40U」严重高估)。避让方向 = B 面外法线
+ *  (−z)基节伸展离面:食指 = HOOK_INDEX_EVADE 同款数值(同一根手指同一个
+ *  动作,U/B 两族视觉统一);中指 = MID_EVADE.middle 同款(E/B 统一)。时序
+ *  同 HOOK_INDEX_EVADE:目标 = min(1,|层角|/0.09) 即时跟升,drop 后
+ *  RECOVER_MS 回落(HandState.bEvade,tick 推进;driveGesture 只写另一手)。 */
+const B_EVADE: Record<HandSide, { index: { c1: number; c2: number; c3: number; splay: number }; middle: { c1: number; c2: number; c3: number; splay: number } }> = {
+  R: { index: { c1: -0.07, c2: -0.04, c3: 0, splay: 0 }, middle: { c1: -0.06, c2: -0.03, c3: 0, splay: 0 } },
+  L: { index: { c1: -0.07, c2: -0.04, c3: 0, splay: 0 }, middle: { c1: -0.06, c2: -0.03, c3: 0, splay: 0 } },
+};
+
+/** F 族(z.high)遗留拇指分支(非 topPush/downPush 的其它握持)单指避让
+ *  (2026-07-09 总原则迁移,替代旧 DODGE_MAG.z.high=10 整手平移):F 层带
+ *  (z∈[32,96],角柱 135.8U)扫掠受害按**该手自身握姿**分组(dodge=0 且
+ *  borrow=0 裸基线,全顶点冻结扫,双向 + 180°,8 种 up/down/home 组合):
+ *  ① up 握手拇指末节肉(home 压 F 面的拇指转到 U 面上方,(±40,+112,44)
+ *  径向 ~119U)被犁 11.5~11.7U@θ≈1.0-1.3(仅静止时;弹指拇指自己张开避走);
+ *  ② up 握手无名指末节(骑 D 面下缘 (±72,−104,66..70))被蹭 3.7~5.4U
+ *  @θ≈0.15-0.2 与 θ≈1.57;③ down 握手食指末节(压 U 面上方 (±73,+110,73))
+ *  被蹭 0.7~2.4U。home 握手全程干净(贴 B/F 面的指肉都在 F 带外)——
+ *  旧整手让 10U 是为 up/down 握持兜底的保险。避让方向 = 该指所贴面的外
+ *  法线,且全部复用既有单指动作(关节空间随握姿旋转,方向自动跟面):
+ *  拇指 = THUMB_EVADE_D 同款甩出(up 握下 = 甩离 U 面,D/E/F 三族拇指
+ *  同一动作);食指 = HOOK_INDEX_EVADE 同款基节伸展(down 握下 = 离 U 面,
+ *  U/B/F 三族同一动作);无名指 = LOW_EVADE.ring 同款(up 握下 = 离 D 面,
+ *  幅度按 5.4U 裸穿加深到 c1:-0.07/c2:-0.04)。施加按握姿选指(applyHand:
+ *  up = 拇指+无名指 / down = 食指 / home 与非标准握不动),两手都写目标
+ *  (受害不分弹指手,driveGesture)。时序同 HOOK_INDEX_EVADE:目标 =
+ *  min(1,|层角|/0.09) 即时跟升,drop 后 RECOVER_MS 回落(HandState.fEvade,
+ *  tick 推进)。splay 两手镜像符号已烘入表内,applyHand 不 ×sideSign。 */
+const F_EVADE: Record<HandSide, { thumb: { c1: number; c2: number; c3: number; splay: number }; index: { c1: number; c2: number; c3: number; splay: number }; ring: { c1: number; c2: number; c3: number; splay: number } }> = {
+  R: {
+    thumb: { c1: 0, c2: -0.08, c3: 0, splay: -0.2 },
+    index: { c1: -0.07, c2: -0.04, c3: 0, splay: 0 },
+    ring: { c1: -0.07, c2: -0.04, c3: 0, splay: 0 },
+  },
+  L: {
+    thumb: { c1: 0, c2: -0.08, c3: 0, splay: 0.2 },
+    index: { c1: -0.07, c2: -0.04, c3: 0, splay: 0 },
+    ring: { c1: -0.07, c2: -0.04, c3: 0, splay: 0 },
+  },
+};
+/** F_EVADE / S_EVADE 按握姿选指用的基座快照(gripQuat 每帧新建太浪费)。 */
+const GRIP_Q_UP = gripQuat("up");
+const GRIP_Q_DOWN = gripQuat("down");
+
+/** S 族(z.mid)up/down 握单指避让(2026-07-09 总原则迁移,替代旧
+ *  DODGE_MAG.z.mid=10 整手平移):home 握全程干净(贴 B/F 面的指肉都在
+ *  S 带 z∈[−32,32] 外),受害只在 up/down 握(dodge=0 且借力=0 裸基线,
+ *  全顶点冻结扫,双向 + 180°,8 种组合):① 双手拇指末节肉(up 握下
+ *  home 压 F 面的拇指转到 U 面上方 (±56,±105,±20..23),z 探进 S 带、
+ *  径向 ~119U < 角柱 135.8U)被犁 9.2~11.2U;② 静止手中指末节肉(up 握下
+ *  骑 D 面下缘 (±64..66,∓107,±15..19))被犁 5.9~7.3U(弹指中指自己扫开,
+ *  不中);down 握 y/z 镜像同值。避让全部复用既有单指动作(关节空间随握姿
+ *  旋转,方向自动跟该指所贴面的外法线):拇指 = THUMB_EVADE_D 同款甩出
+ *  (D/E/F/S 四族拇指同一动作);中指 = MID_EVADE.middle 同款基节伸展
+ *  (E/B/S 统一,up 握下 = 离 D 面甩出扫掠半径)。施加按握姿选指
+ *  (applyHand:up/down = 拇指+中指,home 与非标准握不动),两手都写目标
+ *  (受害不分弹指手,driveGesture)。时序同 HOOK_INDEX_EVADE:目标 =
+ *  min(1,|层角|/0.09) 即时跟升,drop 后 RECOVER_MS 回落(HandState.sEvade,
+ *  tick 推进)。splay 两手镜像符号已烘入表内,applyHand 不 ×sideSign。 */
+const S_EVADE: Record<HandSide, { thumb: { c1: number; c2: number; c3: number; splay: number }; middle: { c1: number; c2: number; c3: number; splay: number } }> = {
+  R: {
+    thumb: { c1: 0, c2: -0.08, c3: 0, splay: -0.2 },
+    middle: { c1: -0.06, c2: -0.03, c3: 0, splay: 0 },
+  },
+  L: {
+    thumb: { c1: 0, c2: -0.08, c3: 0, splay: 0.2 },
+    middle: { c1: -0.06, c2: -0.03, c3: 0, splay: 0 },
+  },
+};
+
 /** 回撤抬指(hook/backHook/downPush 的 decay 凸包):终姿绕层缠得深(尤其连拨
  *  s=1 + 下手握),关节空间直线回 home 的「弦」会切进魔方体(真实播放 oracle
  *  F2 −21.8U,2026-07-08)。decay 叠一个伸展凸包(快攻 12% - 平台 - 快收 15%
@@ -531,6 +689,21 @@ interface HandState {
    *  RECOVER_MS 回落)× HOOK_INDEX_EVADE = 食指离面姿态偏移。 */
   indexEvade: number;
   indexEvadeTarget: number;
+  /** D 族静止手「无名指 + 拇指」单指避让:同 indexEvade 时序 × LOW_EVADE。 */
+  lowEvade: number;
+  lowEvadeTarget: number;
+  /** E 族双手「拇指 + 中指(+ 弹指无名指)」单指避让:同上时序 × MID_EVADE。 */
+  midEvade: number;
+  midEvadeTarget: number;
+  /** B 族静止手「食指 + 中指」单指避让:同上时序 × B_EVADE。 */
+  bEvade: number;
+  bEvadeTarget: number;
+  /** F 族遗留分支(非双中手握持)单指避让:同上时序 × F_EVADE(按握姿选指)。 */
+  fEvade: number;
+  fEvadeTarget: number;
+  /** S 族 up/down 握「拇指 + 中指」单指避让:同上时序 × S_EVADE(按握姿选指)。 */
+  sEvade: number;
+  sEvadeTarget: number;
 }
 
 export default class HandsRig extends THREE.Group {
@@ -738,6 +911,16 @@ export default class HandsRig extends THREE.Group {
       dodgeMag: 0,
       indexEvade: 0,
       indexEvadeTarget: 0,
+      lowEvade: 0,
+      lowEvadeTarget: 0,
+      midEvade: 0,
+      midEvadeTarget: 0,
+      bEvade: 0,
+      bEvadeTarget: 0,
+      fEvade: 0,
+      fEvadeTarget: 0,
+      sEvade: 0,
+      sEvadeTarget: 0,
     };
   }
 
@@ -773,6 +956,16 @@ export default class HandsRig extends THREE.Group {
       h.dodgeTarget = 0;
       h.indexEvade = 0;
       h.indexEvadeTarget = 0;
+      h.lowEvade = 0;
+      h.lowEvadeTarget = 0;
+      h.midEvade = 0;
+      h.midEvadeTarget = 0;
+      h.bEvade = 0;
+      h.bEvadeTarget = 0;
+      h.fEvade = 0;
+      h.fEvadeTarget = 0;
+      h.sEvade = 0;
+      h.sEvadeTarget = 0;
     }
     this.regripFlag = false;
     this.pendingHint = null;
@@ -843,6 +1036,16 @@ export default class HandsRig extends THREE.Group {
       h.dodgeTarget = 0;
       h.indexEvade = 0;
       h.indexEvadeTarget = 0;
+      h.lowEvade = 0;
+      h.lowEvadeTarget = 0;
+      h.midEvade = 0;
+      h.midEvadeTarget = 0;
+      h.bEvade = 0;
+      h.bEvadeTarget = 0;
+      h.fEvade = 0;
+      h.fEvadeTarget = 0;
+      h.sEvade = 0;
+      h.sEvadeTarget = 0;
     }
     this.regripFlag = false;
   }
@@ -922,7 +1125,9 @@ export default class HandsRig extends THREE.Group {
     hook: typeof HOOK; hookFollow: typeof HOOK_FOLLOW; hookPrep: typeof HOOK_PREP;
     pinkyReach: typeof PINKY_REACH; downPush: typeof DOWN_PUSH; upPush: typeof UP_PUSH;
     thumbEvadeD: typeof THUMB_EVADE_D; backEvade: typeof BACK_EVADE;
-    hookIndexEvade: typeof HOOK_INDEX_EVADE;
+    hookIndexEvade: typeof HOOK_INDEX_EVADE; lowEvade: typeof LOW_EVADE;
+    midEvade: typeof MID_EVADE; bEvade: typeof B_EVADE; fEvade: typeof F_EVADE;
+    sEvade: typeof S_EVADE;
     retreatLift: typeof RETREAT_LIFT; hookExit: typeof HOOK_EXIT;
   } {
     return {
@@ -930,7 +1135,9 @@ export default class HandsRig extends THREE.Group {
       hook: HOOK, hookFollow: HOOK_FOLLOW, hookPrep: HOOK_PREP,
       pinkyReach: PINKY_REACH, downPush: DOWN_PUSH, upPush: UP_PUSH,
       thumbEvadeD: THUMB_EVADE_D, backEvade: BACK_EVADE,
-      hookIndexEvade: HOOK_INDEX_EVADE,
+      hookIndexEvade: HOOK_INDEX_EVADE, lowEvade: LOW_EVADE,
+      midEvade: MID_EVADE, bEvade: B_EVADE, fEvade: F_EVADE,
+      sEvade: S_EVADE,
       retreatLift: RETREAT_LIFT, hookExit: HOOK_EXIT,
     };
   }
@@ -1008,6 +1215,16 @@ export default class HandsRig extends THREE.Group {
     hands.L.dodgeTarget = 0;
     hands.R.indexEvadeTarget = 0;
     hands.L.indexEvadeTarget = 0;
+    hands.R.lowEvadeTarget = 0;
+    hands.L.lowEvadeTarget = 0;
+    hands.R.midEvadeTarget = 0;
+    hands.L.midEvadeTarget = 0;
+    hands.R.bEvadeTarget = 0;
+    hands.L.bEvadeTarget = 0;
+    hands.R.fEvadeTarget = 0;
+    hands.L.fEvadeTarget = 0;
+    hands.R.sEvadeTarget = 0;
+    hands.L.sEvadeTarget = 0;
     if (cube) {
       let axis: Axis | null = null;
       let layers: number[] | null = null;
@@ -1127,6 +1344,46 @@ export default class HandsRig extends THREE.Group {
         h.indexEvade = Math.max(h.indexEvadeTarget, h.indexEvade - dt / RECOVER_MS);
         animating = true;
       }
+      // D 族静止手「无名指 + 拇指」单指避让:同上时序。
+      if (h.lowEvadeTarget > h.lowEvade) {
+        h.lowEvade = h.lowEvadeTarget;
+        animating = true;
+      } else if (h.lowEvade > h.lowEvadeTarget) {
+        h.lowEvade = Math.max(h.lowEvadeTarget, h.lowEvade - dt / RECOVER_MS);
+        animating = true;
+      }
+      // E 族双手「拇指 + 中指(+ 弹指无名指)」单指避让:同上时序。
+      if (h.midEvadeTarget > h.midEvade) {
+        h.midEvade = h.midEvadeTarget;
+        animating = true;
+      } else if (h.midEvade > h.midEvadeTarget) {
+        h.midEvade = Math.max(h.midEvadeTarget, h.midEvade - dt / RECOVER_MS);
+        animating = true;
+      }
+      // B 族静止手「食指 + 中指」单指避让:同上时序。
+      if (h.bEvadeTarget > h.bEvade) {
+        h.bEvade = h.bEvadeTarget;
+        animating = true;
+      } else if (h.bEvade > h.bEvadeTarget) {
+        h.bEvade = Math.max(h.bEvadeTarget, h.bEvade - dt / RECOVER_MS);
+        animating = true;
+      }
+      // S 族 up/down 握「拇指 + 中指」单指避让(按握姿选指):同上时序。
+      if (h.sEvadeTarget > h.sEvade) {
+        h.sEvade = h.sEvadeTarget;
+        animating = true;
+      } else if (h.sEvade > h.sEvadeTarget) {
+        h.sEvade = Math.max(h.sEvadeTarget, h.sEvade - dt / RECOVER_MS);
+        animating = true;
+      }
+      // F 族遗留分支单指避让(按握姿选指):同上时序。
+      if (h.fEvadeTarget > h.fEvade) {
+        h.fEvade = h.fEvadeTarget;
+        animating = true;
+      } else if (h.fEvade > h.fEvadeTarget) {
+        h.fEvade = Math.max(h.fEvadeTarget, h.fEvade - dt / RECOVER_MS);
+        animating = true;
+      }
       this.applyHand(side, keepalive);
     }
     if (this.regripFlag && hands.R.recoverT >= 1 && hands.L.recoverT >= 1) {
@@ -1206,10 +1463,24 @@ export default class HandsRig extends THREE.Group {
         // x 族(M)必须为 0 —— 绕 x 借力会把贴 B 面的指腹沿 ~118U 半径圆弧转进
         // 角块区(对角线处 Chebyshev 内陷 >15U,oracle 实测);y/z 借力在 2.7U
         // 贴面间隙下对角线擦过量 <0(指腹接触半径 ~136U ≥ 角柱 135.8U,且旧
-        // 扫法带 dodge 外让)。
+        // 扫法带 dodge 外让)。y.mid(E 族)也必须 0 —— 上述安全论证只覆盖
+        // 外层带(接触半径 ~136U);E 带贴面指(拇指/中指)半径只 ~119-130U,
+        // 且整手 dodge 已废,借力旋转会把弹指手食指腹沿 B 面切向压进静止 U 带
+        // 箱体(dodge=0 裸基线 oracle 实测 ~3U)。z.high(F 族遗留拇指分支,
+        // 只在 up/down/混合握持出现)也必须 0 —— 该借力绕 z 旋转弹指手,up 握
+        // 下会把中指/食指末节切向压进静止箱体角柱(dodge=0 裸基线 oracle 实测
+        // 中指 6.0U/食指 2.8U@θ≈1.2-1.6),home 握下也把食指腹压进 BUR 角
+        // ~1.4U;旧安全论证同样依赖已废的整手 dodge。归零后弹指手根更稳
+        // (总原则),残余受害由 F_EVADE 单指避让兜。z.mid(S 族)同理必须 0:
+        // up 握下借力把弹指手拇指(z 探进 S 带、径向 ~119U)切向压进转动域,
+        // 真实播放 R S R' S' 实测 10.5U(借力是该拇指唯一运动通道,归零即清
+        // 借力分量);home 握借力本安全(指肉全在 S 带外)但同享手根更稳,
+        // 静态扫掠残余受害由 S_EVADE 单指避让兜。
         h.weldAxis = axis;
         h.weldWhole = false;
-        h.weldAngle = softClampAngle(angle) * (axis === "x" ? 0 : 0.1);
+        h.weldAngle = softClampAngle(angle)
+          * (axis === "x" || (axis === "y" && this.active?.cls === "mid")
+            || (axis === "z" && (this.active?.cls === "high" || this.active?.cls === "mid")) ? 0 : 0.1);
         h.weldRawAngle = 0; // 借力不烘入握姿
       }
     }
@@ -1229,6 +1500,47 @@ export default class HandsRig extends THREE.Group {
       const other = hands[g.hand === "R" ? "L" : "R"];
       const t = Math.min(1, Math.abs(angle) / 0.09);
       if (t > other.indexEvadeTarget) other.indexEvadeTarget = t;
+    }
+    // D 族(y.low,含 hook 单/连拨)静止手改「无名指 + 拇指」单指避让(见
+    // LOW_EVADE 注释):整手 dodge 已废(DODGE_MAG.y.low=0),只写另一手目标;
+    // 弹指手自身的拇指避让走 THUMB_EVADE_D(既有通道,保留)。
+    if (g.kind === "flick" && axis === "y" && this.active?.cls === "low") {
+      const other = hands[g.hand === "R" ? "L" : "R"];
+      const t = Math.min(1, Math.abs(angle) / 0.09);
+      if (t > other.lowEvadeTarget) other.lowEvadeTarget = t;
+    }
+    // E 族(y.mid)双手单指避让(见 MID_EVADE 注释):E 带扫掠犁**两只手**的
+    // 贴 F 面拇指与贴 B 面中指(受害不分弹指手,窗口首尾相接),整手 dodge
+    // 已废(DODGE_MAG.y.mid=0),两手都写目标;弹指手无名指的扫掠抬离也由
+    // 同一进度驱动(applyHand role===1 分支)。
+    if (g.kind === "flick" && axis === "y" && this.active?.cls === "mid") {
+      const t = Math.min(1, Math.abs(angle) / 0.09);
+      if (t > hands.R.midEvadeTarget) hands.R.midEvadeTarget = t;
+      if (t > hands.L.midEvadeTarget) hands.L.midEvadeTarget = t;
+    }
+    // B 族(z.low)静止手改「食指 + 中指」单指避让(见 B_EVADE 注释):整手
+    // dodge 已废(DODGE_MAG.z.low=0),只写另一手目标;弹指手本侧的静止中/
+    // 无名指避让走 BACK_EVADE(既有通道,保留)。
+    if (g.kind === "flick" && axis === "z" && this.active?.cls === "low") {
+      const other = hands[g.hand === "R" ? "L" : "R"];
+      const t = Math.min(1, Math.abs(angle) / 0.09);
+      if (t > other.bEvadeTarget) other.bEvadeTarget = t;
+    }
+    // F 族(z.high 遗留拇指分支;topPush/downPush 已在上方整段 return)单指
+    // 避让(见 F_EVADE 注释):受害不分弹指手(up 握弹指手的无名指同样被扫),
+    // 两手都写目标,施加端按各手握姿选指(home 握手在 applyHand 里不动)。
+    if (g.kind === "flick" && axis === "z" && this.active?.cls === "high") {
+      const t = Math.min(1, Math.abs(angle) / 0.09);
+      if (t > hands.R.fEvadeTarget) hands.R.fEvadeTarget = t;
+      if (t > hands.L.fEvadeTarget) hands.L.fEvadeTarget = t;
+    }
+    // S 族(z.mid)up/down 握「拇指 + 中指」单指避让(见 S_EVADE 注释):
+    // 受害不分弹指手(弹指手拇指同样被扫),两手都写目标,施加端按各手握姿
+    // 选指(home 握手在 applyHand 里不动 —— home 握 S 全程干净)。
+    if (g.kind === "flick" && axis === "z" && this.active?.cls === "mid") {
+      const t = Math.min(1, Math.abs(angle) / 0.09);
+      if (t > hands.R.sEvadeTarget) hands.R.sEvadeTarget = t;
+      if (t > hands.L.sEvadeTarget) hands.L.sEvadeTarget = t;
     }
     const mag = DODGE_MAG[axis][this.active?.cls ?? "whole"];
     if (mag > 0) {
@@ -1437,6 +1749,20 @@ export default class HandsRig extends THREE.Group {
     const sRaw1 = Math.min(rawAbs, HALF_PI) / HALF_PI;
     const sRaw2 = Math.max(0, Math.min(rawAbs - HALF_PI, HALF_PI)) / HALF_PI;
     const prep2T = isDouble ? sm(Math.min(1, rawAbs / HALF_PI)) * decayK : 0;
+    // F 族遗留分支避让按本手握姿选指(见 F_EVADE 注释):up = 拇指+无名指在
+    // F 带内 / down = 食指在 F 带内 / home 与非标准握的指肉都在带外,不动。
+    let fEvadeGrip: GripName | null = null;
+    if (h.fEvade > 0) {
+      if (h.grip.angleTo(GRIP_Q_UP) < 0.01) fEvadeGrip = "up";
+      else if (h.grip.angleTo(GRIP_Q_DOWN) < 0.01) fEvadeGrip = "down";
+    }
+    // S 族避让同款握姿选指(见 S_EVADE 注释):up/down 握拇指+中指探进 S 带,
+    // home 与非标准握的指肉都在带外,不动。
+    let sEvadeGrip: GripName | null = null;
+    if (h.sEvade > 0) {
+      if (h.grip.angleTo(GRIP_Q_UP) < 0.01) sEvadeGrip = "up";
+      else if (h.grip.angleTo(GRIP_Q_DOWN) < 0.01) sEvadeGrip = "down";
+    }
     for (const name of ["thumb", "index", "middle", "ring", "pinky"] as const) {
       const f = h.model.fingers[name];
       const pose = h.home.fingers[name];
@@ -1476,6 +1802,74 @@ export default class HandsRig extends THREE.Group {
         c2 += ev.c2 * h.indexEvade;
         c3 += ev.c3 * h.indexEvade;
         splay += ev.splay * h.indexEvade;
+      }
+      // D 族静止手「无名指 + 拇指」单指避让(见 LOW_EVADE 注释):弹指发生在
+      // 另一只手上,进度走 tick 推进的 lowEvade(role===0 兜重叠帧,同上)。
+      // splay 两手镜像符号已烘入表内,不 ×sideSign(同 THUMB_EVADE_D 先例)。
+      if ((name === "ring" || name === "thumb") && role === 0 && h.lowEvade > 0) {
+        const ev = LOW_EVADE[side][name];
+        c1 += ev.c1 * h.lowEvade;
+        c2 += ev.c2 * h.lowEvade;
+        c3 += ev.c3 * h.lowEvade;
+        splay += ev.splay * h.lowEvade;
+      }
+      // B 族静止手「食指 + 中指」单指避让(见 B_EVADE 注释):弹指发生在另一只
+      // 手上,进度走 tick 推进的 bEvade(role===0 兜重叠帧,同上)。
+      if ((name === "index" || name === "middle") && role === 0 && h.bEvade > 0) {
+        const ev = B_EVADE[side][name];
+        c1 += ev.c1 * h.bEvade;
+        c2 += ev.c2 * h.bEvade;
+        c3 += ev.c3 * h.bEvade;
+        splay += ev.splay * h.bEvade;
+      }
+      // F 族遗留分支单指避让(见 F_EVADE 注释):受害不分弹指手,两手同走
+      // tick 推进的 fEvade,按本手握姿选指;splay 镜像符号已烘入表内,不
+      // ×sideSign。role===0 兜重叠帧;弹指手指自身在 decay 段(flickDecay>0)
+      // 也要吃 evade —— 同类连发(F 接 F')时上一步的弹指拇指正随 decayK 回落
+      // 回 home 位,恰落进下一步的扫掠区(真实播放 oracle 实测 10.6U),且
+      // decay 清零瞬间 role 0 才生效会造成单帧姿态跳变;正在扫的弹指
+      // (flickDecay===0)不避,指尖要沿面扫。
+      if ((role === 0 || h.flickDecay > 0) && h.fEvade > 0 && fEvadeGrip !== null
+        && (fEvadeGrip === "up" ? name === "thumb" || name === "ring" : name === "index")) {
+        const ev = F_EVADE[side][name as "thumb" | "ring" | "index"];
+        c1 += ev.c1 * h.fEvade;
+        c2 += ev.c2 * h.fEvade;
+        c3 += ev.c3 * h.fEvade;
+        splay += ev.splay * h.fEvade;
+      }
+      // S 族 up/down 握「拇指 + 中指」单指避让(见 S_EVADE 注释):受害不分
+      // 弹指手,两手同走 tick 推进的 sEvade,按本手握姿选指(home 握不动);
+      // splay 镜像符号已烘入表内,不 ×sideSign。role===0 兜重叠帧;弹指手指
+      // 自身在 decay 段(flickDecay>0)也吃 evade(同 F_EVADE:同类连发时
+      // 上一步弹指中指随 decayK 回落恰落进下一步扫掠区,且免 decay 清零瞬间
+      // 的单帧姿态跳变);正在扫的弹指中指(flickDecay===0)不避,自己扫开。
+      if ((role === 0 || h.flickDecay > 0) && h.sEvade > 0 && sEvadeGrip !== null
+        && (name === "thumb" || name === "middle")) {
+        const ev = S_EVADE[side][name];
+        c1 += ev.c1 * h.sEvade;
+        c2 += ev.c2 * h.sEvade;
+        c3 += ev.c3 * h.sEvade;
+        splay += ev.splay * h.sEvade;
+      }
+      // E 族双手「拇指 + 中指」单指避让(见 MID_EVADE 注释):受害不分弹指手,
+      // 两手同走 tick 推进的 midEvade(role===0 兜重叠帧,同上)。
+      if ((name === "thumb" || name === "middle") && role === 0 && h.midEvade > 0) {
+        const ev = MID_EVADE[side][name];
+        c1 += ev.c1 * h.midEvade;
+        c2 += ev.c2 * h.midEvade;
+        c3 += ev.c3 * h.midEvade;
+        splay += ev.splay * h.midEvade;
+      }
+      // E 族弹指无名指扫掠抬离(见 MID_EVADE 注释):legacy 勾弯标定于旧整手
+      // dodge=62 之下,dodge 归零后扫掠中段 / softClamp 保持段 / 回撤会探进
+      // E 带(裸基线 4.3~4.8U),叠一层沿 B 面外法线(−z)的基节伸展偏置。
+      // !flickStyle 挡掉 styled hook(D 族无名指有自己的贴面 fit)。
+      if (name === "ring" && role === 1 && !h.flickStyle && h.midEvade > 0) {
+        const ev = MID_EVADE[side].ring;
+        c1 += ev.c1 * h.midEvade;
+        c2 += ev.c2 * h.midEvade;
+        c3 += ev.c3 * h.midEvade;
+        splay += ev.splay * h.midEvade;
       }
       const share = !isDouble ? (role === 1 ? flickA : 0) : (role === 1 ? amt1 : amt2) * rawSign;
       const engaged = role === 1

@@ -72,8 +72,8 @@ const sstep = (a: number, b: number, x: number): number => {
   return t * t * (3 - 2 * t);
 };
 
-/** 甲片格网行列数(掠射角下轮廓要圆滑,11 列曾看出多边形棱角)。 */
-const NAIL_NR = 21, NAIL_NC = 15;
+/** 甲片格网行列数(轮廓 = 甲缘超椭圆本身,行数定侧缘圆滑度)。 */
+const NAIL_NR = 33, NAIL_NC = 21;
 /** 甲片半宽 = K × 末节长(解剖学比例,拇指宽 / 小指窄)。禁从蒙皮顶点推宽度:
  *  这套 GLB 低模把末节径向半径(rDist)高估 ~2x,甲片会比手指还宽,侧缘埋进
  *  噪声皮面,可见轮廓抖成不规则 blob(踩过)。 */
@@ -109,8 +109,10 @@ function buildNailGeometry(args: {
   const { p3, axis, dorsal, lat, len } = args;
   const T0 = NAIL_T0, T1 = NAIL_T1;
   const TH = NAIL_TH;           // 甲片厚度(薄;游离缘侧壁可见即可)
-  const EDGE_TUCK = 1.6 * U;    // 侧缘果断下收进皮(甲沟;埋深要盖过皮面不对称量)
-  const BASE_SINK = 1.2 * U;    // 甲根藏进近端甲襞(弯指时根部皮面下沉仍要盖住)
+  const EDGE_TUCK = 3.6 * U;    // 侧缘陡崖式下收进皮(甲沟):可见轮廓 = 皮∩甲交线,
+                                // 缓坡交线随粗皮网格大面片横移读成折线(踩过);做成近垂直
+                                // 崖后交线钉在甲缘超椭圆本身(皮高微变几乎不移交点)→ 轮廓圆滑
+  const BASE_SINK = 2.2 * U;    // 甲根陡崖藏进近端甲襞(同侧缘,缓坡会让甲根轮廓折线化)
   const FREE_LIFT = 0.18 * U;   // 游离缘微翘(过大 = 翘壳/尖喙)
   const NR = NAIL_NR, NC = NAIL_NC;
   const tc = (T0 + T1) / 2, th = (T1 - T0) / 2;
@@ -131,9 +133,9 @@ function buildNailGeometry(args: {
         // 埋皮 ramp 只留窄边(侧缘最外一列 / 甲根最后两行):可见轮廓 =
         // 「皮 ∩ 甲」交线,宽软坡会让交线随皮面噪声大幅横移,读成锯齿 blob(踩过)
         const hu = args.surf(sAbs, u)
-          - BASE_SINK * sstep(-0.62, -0.95, q)
+          - BASE_SINK * sstep(-0.74, -0.94, q)
           + FREE_LIFT * sstep(0.55, 0.97, q)
-          - EDGE_TUCK * sstep(0.74, 1.0, Math.abs(w));
+          - EDGE_TUCK * sstep(0.68, 0.90, Math.abs(w));
         // 甲面=甲底+厚度(中央极轻微加厚;穹顶感主要来自甲底跟皮面圆度)
         const h = layer === 0 ? hu + TH * (0.94 + 0.06 * Math.sqrt(Math.max(0, 1 - w * w))) : hu;
         P.copy(p3).addScaledVector(axis, sAbs).addScaledVector(dorsal, h).addScaledVector(lat, u);
