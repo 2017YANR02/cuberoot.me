@@ -1,6 +1,6 @@
 // Ported from packages/client-vite/src/utils/comp_localize.ts.
 // 比赛名本地化 — display-only stripWcaPrefix + 3-level zh fallback.
-import { compNameZh } from './country-flags';
+import { compNameZh, compNameEnFromZh } from './country-flags';
 
 const CJK_RE = /[㐀-鿿豈-﫿]/;
 
@@ -30,7 +30,15 @@ export function resolveCompName(
   opts?: LocalizeCompOpts,
 ): string {
   if (!name) return name;
-  if (!isZh) return name;
+  if (!isZh) {
+    // Recon rows may store a Chinese comp's *Chinese* name; on the English site
+    // recover the WCA canonical English name via the reverse of the zh map.
+    if (CJK_RE.test(name)) {
+      const en = compNameEnFromZh(name);
+      if (en) return en;
+    }
+    return name;
+  }
   if (opts?.explicitNameZh) return opts.explicitNameZh;
   const zh1 = opts?.upcomingNameZhById?.get(id);
   if (zh1) return zh1;
