@@ -3,10 +3,16 @@
 /**
  * 解法文本展示——高亮阶段注释 + 虚拟光标 + 光标跟随 twisty-player
  * 共享组件:详情页只读展示、编辑页标准化只读视图都用它
+ *
+ * 光标与「当前招式」橙色高亮都走 React state 声明式渲染(不再手动 splitText 插
+ * DOM):点击 / 方向键更新 cursorOffset + hlRange,渲染时按行切段、把光标位置插
+ * 一个零宽 span、把当前招式 token 包一层 .recon-move-current。高亮规则与 /sim 一致
+ * (PlayerControls 的 highlightRange):优先高亮光标所在行的招式 —— 行内光标前的招式,
+ * 否则该行第一个招式(光标落在行首 `(` 等分隔符前时,高亮本行首招而非上一行末招)。
  */
-import { useCallback, useRef, type MutableRefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
-import { findTokenPositions, snapToTokenBoundary, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded } from '@/lib/recon-alg-utils';
+import { findTokenPositions, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded, type TokenPosition } from '@/lib/recon-alg-utils';
 import { parseSq1Tokens } from '@/lib/sq1-svg';
 import './solution_view.css';
 
@@ -29,29 +35,53 @@ function getTextOffsetInElement(el: HTMLElement): number {
   return offset;
 }
 
-/** 在 DOM 元素的指定纯文本偏移处插入可视闪烁光标 */
-function insertVisualCursor(el: HTMLElement, textOffset: number) {
-  const old = el.querySelector('.detail-cursor');
-  if (old) old.remove();
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-  let accumulated = 0;
-  let targetNode: Text | null = null;
-  let localOffset = 0;
-  while (walker.nextNode()) {
-    const nodeLen = (walker.currentNode as Text).textContent?.length || 0;
-    if (accumulated + nodeLen >= textOffset) {
-      targetNode = walker.currentNode as Text;
-      localOffset = textOffset - accumulated;
-      break;
+/** 把点击偏移磁吸到「本行」的招式边界——保证光标落在点击那一行(不像旧的
+ *  snapToTokenBoundary 会退回上一行末招)。规则:落在本行首招之前 → 行首列 0(此时
+ *  textBefore 干净、不含半个 `(` 分组,player 计步不受污染);落在本行末招之后 → 末招
+ *  结尾;行内 → 最近的招式边界。无招式的行(纯注释 / 空行)→ 行首列 0。 */
+function snapCaretToLine(raw: number, plainText: string, positions: TokenPosition[]): number {
+  const lineStart = plainText.lastIndexOf('\n', Math.max(0, raw - 1)) + 1;
+  let lineEnd = plainText.indexOf('\n', raw);
+  if (lineEnd === -1) lineEnd = plainText.length;
+  const onLine = positions.filter(t => t.start >= lineStart && t.end <= lineEnd);
+  if (onLine.length === 0) return lineStart;
+  const first = onLine[0];
+  const last = onLine[onLine.length - 1];
+  if (raw <= first.start) return lineStart;
+  if (raw >= last.end) return last.end;
+  let best = first.start, bestD = Math.abs(first.start - raw);
+  for (const t of onLine) {
+    for (const b of [t.start, t.end]) {
+      const d = Math.abs(b - raw);
+      if (d < bestD) { bestD = d; best = b; }
     }
-    accumulated += nodeLen;
   }
-  if (!targetNode) return;
-  const cursor = document.createElement('span');
-  cursor.className = 'detail-cursor';
-  cursor.textContent = '​';
-  const afterNode = targetNode.splitText(localOffset);
-  afterNode.parentNode!.insertBefore(cursor, afterNode);
+  return best;
+}
+
+/** 光标位置该高亮哪一个招式 token 的字符区间(与 /sim highlightRange 同规则):
+ *  优先本行光标前的招式,否则本行第一个招式,否则退回光标前最后一个招式。 */
+function computeHighlightRange(plainText: string, offset: number): [number, number] | null {
+  const positions = findTokenPositions(plainText);
+  if (positions.length === 0) return null;
+  const lineOf = (pos: number) => {
+    let n = 0;
+    for (let i = 0; i < pos && i < plainText.length; i++) if (plainText[i] === '\n') n++;
+    return n;
+  };
+  const caretLine = lineOf(offset);
+  let prev = -1, next = -1;
+  for (let i = 0; i < positions.length; i++) {
+    if (positions[i].start <= offset) prev = i;
+    if (next === -1 && positions[i].start >= offset) next = i;
+  }
+  let idx: number;
+  if (prev >= 0 && lineOf(positions[prev].start) === caretLine) idx = prev;
+  else if (next >= 0 && lineOf(positions[next].start) === caretLine) idx = next;
+  else idx = prev;
+  if (idx < 0) return null;
+  const p = positions[idx];
+  return [p.start, p.end];
 }
 
 export default function SolutionView({ text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross }: {
@@ -64,7 +94,16 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
   onToggleCross?: () => void;
 }) {
   const preRef = useRef<HTMLPreElement>(null);
-  const cursorOffsetRef = useRef(0);
+  const cursorOffsetRef = useRef<number | null>(null);
+  // 光标字符偏移 + 当前招式高亮区间(声明式渲染)。text 变化时清空(偏移失效)。
+  const [cursorOffset, setCursorOffset] = useState<number | null>(null);
+  const [hlRange, setHlRange] = useState<[number, number] | null>(null);
+
+  useEffect(() => {
+    cursorOffsetRef.current = null;
+    setCursorOffset(null);
+    setHlRange(null);
+  }, [text]);
 
   // Scrub the player to the caret. SQ1 uses the cuber-engine player
   // (Sq1ReconPlayer, `__kind: 'sq1'`): count tuple/slice tokens directly —
@@ -87,37 +126,43 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
     syncPlayerToMoveCount(player, countMovesExpanded(extractAlgFromText(textBefore)));
   }, [playerRef]);
 
-  // NOTE: 点击解法文本——计算偏移 → 磁吸到 token 边界 → 插入光标 + 同步 player
+  const moveCaret = useCallback((plainText: string, offset: number) => {
+    cursorOffsetRef.current = offset;
+    setCursorOffset(offset);
+    setHlRange(computeHighlightRange(plainText, offset));
+    syncToOffset(plainText, offset);
+  }, [syncToOffset]);
+
+  // NOTE: 点击解法文本——计算偏移 → 磁吸到 token 边界 → 更新光标 + 高亮 + 同步 player
   const handleClick = useCallback(() => {
     const el = preRef.current;
     if (!el) return;
     let offset = getTextOffsetInElement(el);
     if (offset < 0) return;
-    const plainText = (el.textContent || '').replace(/​/g, '');
+    const plainText = el.textContent || '';
     const result = findTokenPositions(plainText);
-    offset = snapToTokenBoundary(offset, result);
-    cursorOffsetRef.current = offset;
-    insertVisualCursor(el, offset);
-    syncToOffset(plainText, offset);
-  }, [syncToOffset]);
+    offset = snapCaretToLine(offset, plainText, result);
+    moveCaret(plainText, offset);
+  }, [moveCaret]);
 
   // NOTE: 方向键导航——左右按 token 跳转,上下按行跳转
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (!['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
     const el = preRef.current;
     if (!el || !playerRef.current) return;
-    const fullText = (el.textContent || '').replace(/​/g, '');
+    const fullText = el.textContent || '';
     const tokens = findTokenPositions(fullText);
     if (tokens.length === 0) return;
-    let newPos = cursorOffsetRef.current;
+    const cur = cursorOffsetRef.current ?? 0;
+    let newPos = cur;
 
     if (e.key === 'ArrowRight') {
       for (const t of tokens) {
-        if (t.start >= cursorOffsetRef.current) { newPos = t.end; break; }
+        if (t.start >= cur) { newPos = t.end; break; }
       }
     } else if (e.key === 'ArrowLeft') {
       for (let j = tokens.length - 1; j >= 0; j--) {
-        if (tokens[j].end < cursorOffsetRef.current) { newPos = tokens[j].end; break; }
+        if (tokens[j].end < cur) { newPos = tokens[j].end; break; }
       }
     } else {
       const lines = fullText.split('\n');
@@ -126,7 +171,7 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
       for (const line of lines) { lineStarts.push(off); off += line.length + 1; }
       let curLine = 0;
       for (let l = lineStarts.length - 1; l >= 0; l--) {
-        if (cursorOffsetRef.current >= lineStarts[l]) { curLine = l; break; }
+        if (cur >= lineStarts[l]) { curLine = l; break; }
       }
       const targetLine = e.key === 'ArrowDown' ? curLine + 1 : curLine - 1;
       if (targetLine < 0 || targetLine >= lines.length) return;
@@ -142,14 +187,20 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
         }
       }
     }
-    if (newPos === cursorOffsetRef.current) return;
+    if (newPos === cur) return;
     e.preventDefault();
-    cursorOffsetRef.current = newPos;
-    insertVisualCursor(el, newPos);
-    syncToOffset(fullText, newPos);
-  }, [playerRef, syncToOffset]);
+    moveCaret(fullText, newPos);
+  }, [playerRef, moveCaret]);
 
-  const lines = text.split(/\r?\n/);
+  const lines = useMemo(() => text.split(/\r?\n/), [text]);
+  // 每行起始的全局字符偏移(含换行),用于把全局 cursorOffset / hlRange 映射到行内局部位置。
+  const lineStarts = useMemo(() => {
+    const out: number[] = [];
+    let off = 0;
+    for (const line of lines) { out.push(off); off += line.length + 1; }
+    return out;
+  }, [lines]);
+
   return (
     <pre
       key={crossNormalized ? 'normalized' : 'original'}
@@ -163,6 +214,7 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
       {lines.map((line, i) => {
         const trimmed = line.trim();
         const nl = i > 0 ? '\n' : '';
+        const lineStart = lineStarts[i];
         const toggle = i === crossLineIdx && onToggleCross ? (
           <button
             type="button"
@@ -174,10 +226,36 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
             <ArrowRightLeft size={12} />
           </button>
         ) : null;
-        if (trimmed.startsWith('//')) {
-          return <span key={i}>{nl}<span className="recon-step-label">{line}</span>{toggle}</span>;
+
+        // 行内局部位置:光标(空 span 占位)与当前招式高亮区间。
+        const localCursor = cursorOffset != null && cursorOffset >= lineStart && cursorOffset <= lineStart + line.length
+          ? cursorOffset - lineStart : null;
+        const hlS = hlRange ? hlRange[0] - lineStart : -1;
+        const hlE = hlRange ? hlRange[1] - lineStart : -1;
+        const hasHl = hlRange != null && hlS < line.length && hlE > 0 && hlE > hlS;
+
+        // 注释行整体上色;招式高亮只会落在指令区,注释行不会命中 hlRange。
+        const isComment = trimmed.startsWith('//');
+
+        // 切点:0 / 行尾 / 光标 / 高亮起止 → 分段渲染,光标插空 span,高亮段包 .recon-move-current。
+        const cuts = new Set<number>([0, line.length]);
+        if (localCursor != null) cuts.add(localCursor);
+        if (hasHl) { cuts.add(Math.max(0, hlS)); cuts.add(Math.min(line.length, hlE)); }
+        const sorted = [...cuts].sort((a, b) => a - b);
+        const parts: React.ReactNode[] = [];
+        for (let s = 0; s < sorted.length - 1; s++) {
+          const a = sorted[s], b = sorted[s + 1];
+          if (localCursor === a) parts.push(<span key={`c${a}`} className="detail-cursor" />);
+          const seg = line.slice(a, b);
+          if (!seg) continue;
+          const inHl = hasHl && a >= Math.max(0, hlS) && b <= Math.min(line.length, hlE);
+          if (inHl) parts.push(<span key={`h${a}`} className="recon-move-current">{seg}</span>);
+          else parts.push(seg);
         }
-        return <span key={i}>{nl}{line}{toggle}</span>;
+        if (localCursor === line.length) parts.push(<span key="cend" className="detail-cursor" />);
+
+        const content = isComment ? <span className="recon-step-label">{parts}</span> : parts;
+        return <span key={i}>{nl}{content}{toggle}</span>;
       })}
     </pre>
   );
