@@ -667,12 +667,25 @@
 
 /* 平均 STM / 平均 TPS:不再单开列,改放「平均」列下方两行(与 /wca/persons 同款,复用 wp-avg-* 类名;
    recon 页不加载 persons.css,就地定义)。第一行=平均成绩,下两行=Ao5 去尾均值,居中对齐平均值。 */
-.same-comp-event-table .wp-avg-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
-/* 详细成绩每把(.wp-att)预留 2px 底边(当前把下划线占位),平均值行无此边 → 补 2px 让下方两行与逐把 stm/tps 同线(同 .same-comp-round-head) */
-.same-comp-event-table .wp-avg-cell .record-num-cell { padding-bottom: 2px; }
-.same-comp-event-table .wp-avg-substat {
-  font-size: 0.72rem; line-height: 1.2; font-weight: 400;
-  color: var(--muted-foreground); font-variant-numeric: tabular-nums;
+/* 平均成绩 + 平均STM / 平均TPS 三行按小数点对齐:两列网格(整数右对齐 | 小数左对齐),小数点落在列分界线上 →
+   不论整数位数(3.74 / 42.67)小数点都跨行对齐;PR 角标仍内联跟在平均值小数部分之后。 */
+.same-comp-event-table .wp-avg-cell {
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  row-gap: 4px;
+  align-items: baseline;
+}
+.same-comp-event-table .wp-avg-dec { display: contents; }
+.same-comp-event-table .wp-avg-int { justify-self: end; text-align: right; font-variant-numeric: tabular-nums; }
+.same-comp-event-table .wp-avg-frac { justify-self: start; text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 平均值行(main):跟随 .wp-cell-result 的字号/字重;补 2px 底边(同 .wp-att 下划线占位)让下两行与逐把 stm/tps 同线 */
+.same-comp-event-table .wp-avg-dec-main .wp-avg-int,
+.same-comp-event-table .wp-avg-dec-main .wp-avg-frac { padding-bottom: 2px; }
+/* 平均STM / 平均TPS 两行(sub):小一号 + 更淡 */
+.same-comp-event-table .wp-avg-dec-sub .wp-avg-int,
+.same-comp-event-table .wp-avg-dec-sub .wp-avg-frac {
+  font-size: 0.72rem; line-height: 1.2; font-weight: 400; color: var(--muted-foreground);
 }
 
 /* 详细成绩单元:时间行 +(有复盘时)STM 行 / TPS 行,同一套 5 列网格逐列对齐。
