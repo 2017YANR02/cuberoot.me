@@ -1195,7 +1195,9 @@ const INLINE_CSS = `
   margin: 0 auto;
   padding: 1.25rem 1rem 3rem;
   color: var(--text);
-  overflow-x: hidden;
+  /* overflow-x: hidden 会把 overflow-y 隐式改算成 auto(CSS 组合规则),
+     裁掉往上弹的 event-btn tooltip(第一排图标离容器顶部太近);clip 无此副作用。 */
+  overflow-x: clip;
 }
 .cubeopt-header {
   display: flex; align-items: center; justify-content: space-between;

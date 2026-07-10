@@ -38,6 +38,12 @@
   gap: 0.4rem 0.6rem;
 }
 .solve-tab-evrow .wca-stats-event-selector { margin: 0.1rem 0 0.2rem; }
+/* 求解中心项目行贴页面顶部,图标 tooltip 默认往上弹会被视口顶边裁掉(见截图残缺的
+   "二阶魔方")。这一行把 tooltip 翻到图标下方,恒有空间。选择器更具体以压过组件内基规则。 */
+.solve-tab-evrow .wca-stats-event-selector .event-btn::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+}
 
 /* 3×3 子标签(最优解 / 阶段 / CFOP / DR)— 更小;带下分隔线分隔标签头与内容 */
 .solve-tab-subs {
