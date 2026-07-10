@@ -66,11 +66,12 @@ describe('classifyHandGesture', () => {
       .toEqual({ kind: 'flick', hand: 'R', finger: 'index', finger2: 'middle', style: 'hook' }); // U2
     expect(classifyHandGesture('y', 'low', 1, BOTH_HOME, { quarters: 2 }))
       .toEqual({ kind: 'flick', hand: 'R', finger: 'pinky', finger2: 'ring', style: 'hook' });   // D2'
-    // 镜像连拨(U2'/D2)缺 L 侧标定 → 回落单指 hook(FINGERTRICKS §6)
+    // U2' 镜像连拨(2026-07-09 L 侧 hook_index/hook_middle2 标定后解锁);
+    // D2 镜像连拨(2026-07-10 L 侧 hook_pinky/hook_ring2 标定后解锁)
     expect(classifyHandGesture('y', 'low', -1, BOTH_HOME, { quarters: 2 }))
-      .toEqual({ kind: 'flick', hand: 'L', finger: 'ring', style: 'hook' });                     // D2 回落
+      .toEqual({ kind: 'flick', hand: 'L', finger: 'pinky', finger2: 'ring', style: 'hook' });   // D2 连拨
     expect(classifyHandGesture('y', 'high', -1, BOTH_HOME, { quarters: 2 }))
-      .toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'hook' });                    // U2' 回落
+      .toEqual({ kind: 'flick', hand: 'L', finger: 'index', finger2: 'middle', style: 'hook' }); // U2' 连拨
     // E 族 / 非标准握不受影响
     expect(classifyHandGesture('y', 'mid', -1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'L', finger: 'ring' }); // E
     expect(classifyHandGesture('y', 'high', 1)).toEqual({ kind: 'flick', hand: 'R', finger: 'index' });           // U(非标准握)
@@ -80,6 +81,12 @@ describe('classifyHandGesture', () => {
   it('双中手 B\'/B = 食指背钩;U\'p 推法(FINGERTRICKS §4.2/§4.5)', () => {
     expect(classifyHandGesture('z', 'low', 1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'backHook' });  // B'
     expect(classifyHandGesture('z', 'low', -1, BOTH_HOME)).toEqual({ kind: 'flick', hand: 'L', finger: 'index', style: 'backHook' }); // B(镜像)
+    // B2'/B2 双向连拨:先食指后中指(2026-07-10 backHook_middle2 + BACK_EXIT 标定后解锁)
+    expect(classifyHandGesture('z', 'low', 1, BOTH_HOME, { quarters: 2 }))
+      .toEqual({ kind: 'flick', hand: 'R', finger: 'index', finger2: 'middle', style: 'backHook' }); // B2'
+    expect(classifyHandGesture('z', 'low', -1, BOTH_HOME, { quarters: 2 }))
+      .toEqual({ kind: 'flick', hand: 'L', finger: 'index', finger2: 'middle', style: 'backHook' }); // B2
+    expect(classifyHandGesture('z', 'low', 1, undefined, { quarters: 2 })).toEqual({ kind: 'flick', hand: 'R', finger: 'middle' }); // B2' 非标准握不连拨
     expect(classifyHandGesture('y', 'high', -1, BOTH_HOME, { push: true }))
       .toEqual({ kind: 'flick', hand: 'R', finger: 'index', style: 'upPush' }); // U'p
     expect(classifyHandGesture('y', 'high', 1, BOTH_HOME, { push: true }))
