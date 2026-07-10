@@ -9,9 +9,10 @@ import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { unofficialAoN } from '@/lib/unofficial-average';
 import { tr } from '@/i18n/tr';
 import { ResultChangeChain } from './ChangedResultValue';
+import { AvgDec } from '@/components/wca-results/AvgDec';
 
 export function AverageValueCell({
-  effAvg, attempts, eventId, averageRecord, averageRank, oldValues, note,
+  effAvg, attempts, eventId, averageRecord, averageRank, oldValues, note, decimalAlign,
 }: {
   effAvg: number;
   attempts: number[];
@@ -20,9 +21,22 @@ export function AverageValueCell({
   averageRank: number | null;
   oldValues: number[];
   note?: string | null;
+  // 小数点对齐模式(详细成绩带 平均STM/TPS 时):平均值走 AvgDec 铺进 .wp-avg-cell 网格,与下两行小数点对齐。
+  decimalAlign?: boolean;
 }) {
   const timed = eventId !== '333mbf' && eventId !== '333fm';
   const unof = effAvg === 0 && timed ? unofficialAoN(attempts) : null;
+
+  const badge = averageRecord
+    ? <RecordBadge record={averageRecord} variant="inline" />
+    : averageRank
+      ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
+      : null;
+  // 满 5 把复盘轮才会带小数点对齐(平均值为普通计时值,非 unofficial / MBLD)。变更链(旧值划线)
+  // 极罕见于此类轮 → 该模式下略过 ResultChangeChain,保 .wp-avg-cell 两列网格结构不破。
+  if (decimalAlign && !unof) {
+    return <AvgDec text={formatWcaResult(effAvg, eventId, 'average')} badge={badge} variant="main" />;
+  }
 
   if (unof) {
     const tip = tr({
@@ -45,11 +59,7 @@ export function AverageValueCell({
     <span className="record-num-cell">
       <ResultChangeChain oldValues={oldValues} eventId={eventId} kind="average" note={note} />
       {formatWcaResult(effAvg, eventId, 'average')}
-      {averageRecord
-        ? <RecordBadge record={averageRecord} variant="inline" />
-        : averageRank
-          ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
-          : null}
+      {badge}
     </span>
   );
 }

@@ -18,6 +18,7 @@ import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
 import { rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
+import { AvgDec } from '@/components/wca-results/AvgDec';
 import { isMbldEvent, effectiveMbldAverage } from '@/lib/mbf-average';
 import { useMbldAvgRecords, mbldAvgRecordKey } from '@/lib/mbld-avg-records';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
@@ -302,7 +303,22 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                           </span>
                         </td>
                         <td className={`wp-cell-result ${oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
-                          <span className={hasReconStats ? 'wp-avg-cell' : undefined}>
+                          {roundAvg ? (
+                            <span className="wp-avg-cell">
+                              <AverageValueCell
+                                effAvg={effAvg}
+                                attempts={effAttempts}
+                                eventId={r.event_id}
+                                averageRecord={averageRecord}
+                                averageRank={averageRank}
+                                oldValues={oldAvg}
+                                note={chain?.[chain.length - 1]?.note}
+                                decimalAlign
+                              />
+                              <AvgDec text={roundAvg.stm.toFixed(2)} variant="sub" />
+                              <AvgDec text={roundAvg.tps.toFixed(2)} variant="sub" />
+                            </span>
+                          ) : (
                             <AverageValueCell
                               effAvg={effAvg}
                               attempts={effAttempts}
@@ -312,13 +328,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                               oldValues={oldAvg}
                               note={chain?.[chain.length - 1]?.note}
                             />
-                            {hasReconStats && (
-                              <>
-                                <span className="wp-avg-substat">{roundAvg ? roundAvg.stm.toFixed(2) : ''}</span>
-                                <span className="wp-avg-substat">{roundAvg ? roundAvg.tps.toFixed(2) : ''}</span>
-                              </>
-                            )}
-                          </span>
+                          )}
                         </td>
                         <td className={`wp-cell-attempts ${isMbldEvent(r.event_id) ? 'wp-cell-attempts--mbld' : ''} ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
                           <AttemptsList
