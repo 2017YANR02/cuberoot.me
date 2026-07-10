@@ -285,6 +285,7 @@
 .scramble-stats-examples-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
@@ -413,21 +414,10 @@
   color: var(--text-sub);
 }
 
-/* ── 各国占比条(点段筛选该国示例;条身走共享 components/CountryShareBar) ── */
-.pdv-cbar-wrap {
-  margin: 0 0 0.75rem;
-}
-/* 已选国家的筛选标签(旗 + 名 + 清除) */
-.pdv-cbar-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.15rem 0.2rem 0.15rem 0.4rem;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
+/* ── 各国示例筛选下拉(选项 = 该步数示例覆盖的国家;走共享 components/ListSelect) ── */
+/* 宽度贴合内容,不撑成长条(基类 .list-select-trigger 是 width:100%,这里收回) */
+.pdv-country-select { width: fit-content; max-width: 100%; }
+.pdv-country-select .list-select-trigger { width: auto; }
 .scramble-stats-examples-more {
   font-size: 0.74rem;
   color: var(--text-sub);
