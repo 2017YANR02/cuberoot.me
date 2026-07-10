@@ -14,7 +14,7 @@ import {
   ChartColumn, Video, MessageCircle, TriangleAlert,
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   Globe, Radio, ClipboardPaste, ChevronDown, ChevronUp,
-  GitFork, ArrowLeft,
+  GitFork, ArrowLeft, Copy, Check,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import {
@@ -35,15 +35,17 @@ import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-fla
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
 import { displayCity } from '@/lib/city-display';
-import { cleanForPlayer } from '@/lib/recon-alg-utils';
+import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
 import {
   fetchAttempts, fetchCubingAttempts, fetchScrambles, matchRoundType,
 } from '@/lib/wca-results-api';
 import {
-  fetchWcaPersonResults, fetchWcaPersonCompetitions,
+  fetchWcaPersonResults, fetchWcaPersonCompetitions, fetchWcaPersonLiveResults,
   type WcaResultRow as WcaResultsRow, type WcaCompetition,
 } from '@/lib/wca-person-api';
+import { mergePersonLive } from '@/lib/person-live-merge';
 import { computePrRank } from '@/components/persons/logic/progress';
+import { useLivePrRanks } from '@/components/persons/logic/use-live-pr-ranks';
 import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
 import { buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
@@ -285,12 +287,29 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   // 页面展示统一转成 compact 简写("4/6/3/…",与 /scramble/solver?event=sq1 一致)。
   const displayScramble = isSq1 ? formatScrambleForEvent('sq1', scramble) : scramble;
   const displayWcaScramble = isSq1 && solve.wcaScramble ? formatScrambleForEvent('sq1', solve.wcaScramble) : solve.wcaScramble;
+  // 打乱是最优打乱(非 SQ1 记号)时,末尾标注移动数,与 /scramble/solver 的 "(Nh*)" 记号一致。
+  const optimalScrambleTag = !isSq1 && solve.optimalScramble
+    ? ` (${countMovesExpanded(solve.optimalScramble)}h*)`
+    : '';
+
+  // 「复制」按钮的目标:页面所见的整段复盘(STM 摘要行 + 打乱 + 带注释的解法)。
+  const fullCopyText = useMemo(() => {
+    if (!solutionText) return '';
+    const scrambleLine = scramble ? `${displayScramble}${optimalScrambleTag}` : '';
+    const body = [scrambleLine, displayText].filter(Boolean).join('\n');
+    return [captionHeader, body].filter(Boolean).join('\n\n');
+  }, [solutionText, scramble, displayScramble, optimalScrambleTag, displayText, captionHeader]);
 
   // NxN puzzles can render with either engine (cuberoot = in-house cuber WebGL,
   // the /sim look; or cubing.js). User-selectable + persisted, shared with the
   // submit page + AttemptPopover via the same localStorage key (ReconPlayerCanvas
   // owns the key). Other puzzles ignore it.
-  const [reconEngine, setReconEngine] = useState<ReconEngine>(() => loadReconEngine());
+  // Initial state must match the server's always-'cuber' render (loadReconEngine()
+  // returns 'cuber' during SSR since window is undefined there); reading the real
+  // localStorage preference is deferred to an effect to avoid a hydration mismatch
+  // when the stored preference is 'cubing'.
+  const [reconEngine, setReconEngine] = useState<ReconEngine>('cuber');
+  useEffect(() => { setReconEngine(loadReconEngine()); }, []);
   const pickEngine = useCallback((e: ReconEngine) => {
     setReconEngine(e);
     saveReconEngine(e);
@@ -315,7 +334,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
 
       <div className="detail-content-pane">
         {scramble && solutionText && (
-          <ExternalLinks event={solve.event} scramble={playerScramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} caption={caption} />
+          <ExternalLinks event={solve.event} scramble={playerScramble} alg={cleanForPlayer(solutionText)} solveId={solve.id} caption={caption} copyText={fullCopyText} />
         )}
 
         {(scramble || solutionText) && (
@@ -323,7 +342,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
             {captionHeader && (
               <div className="detail-caption-header">{captionHeader}</div>
             )}
-            {scramble && <div className="detail-scramble-line">{displayScramble}</div>}
+            {scramble && <div className="detail-scramble-line">{displayScramble}{optimalScrambleTag}</div>}
             {solutionText && (
               <SolutionView
                 text={displayText}
@@ -419,14 +438,15 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   );
 }
 
-function ExternalLinks({ event, scramble, alg, solveId, caption }: {
-  event: string; scramble: string; alg: string; solveId: number; caption: string;
+function ExternalLinks({ event, scramble, alg, solveId, caption, copyText }: {
+  event: string; scramble: string; alg: string; solveId: number; caption: string; copyText: string;
 }) {
   const { t } = useTranslation();
   const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, alg);
   const shareUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/recon/${solveId}`
     : `/recon/${solveId}`;
+  const [copiedFull, setCopiedFull] = useState(false);
 
   const copyTo = (text: string) => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -438,12 +458,31 @@ function ExternalLinks({ event, scramble, alg, solveId, caption }: {
     });
   };
 
+  const copyFull = () => {
+    if (!copyText) return;
+    navigator.clipboard.writeText(copyText).then(() => {
+      setCopiedFull(true);
+      setTimeout(() => setCopiedFull(false), 1500);
+    });
+  };
+
   return (
     <div className="recon-external-links">
       <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}</a>
       <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net</a>
       <a href="#" onClick={copyTo(shareUrl)}>{t('recon.link')}</a>
       {caption && <a href="#" onClick={copyTo(caption)}>{t('recon.caption')}</a>}
+      {copyText && (
+        <button
+          type="button"
+          className="recon-copy-full"
+          onClick={copyFull}
+          title={t('recon.copy')}
+          aria-label={t('recon.copy')}
+        >
+          {copiedFull ? <Check size={15} /> : <Copy size={15} />}
+        </button>
+      )}
     </div>
   );
 }
@@ -866,40 +905,63 @@ function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: Reco
   );
 }
 
+/** Ao5 中间 3 均值:去掉最大最小(对步数=最少/最多,对 TPS=最高/最低,对称同式)后取均值。 */
+function ao5Mean(vals: number[]): number {
+  const sum = vals.reduce((a, b) => a + b, 0);
+  return (sum - Math.min(...vals) - Math.max(...vals)) / (vals.length - 2);
+}
+
 function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: (v: boolean) => void }) {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  const [allResults, setAllResults] = useState<WcaResultsRow[] | null>(null);
-  const [allComps, setAllComps] = useState<WcaCompetition[] | null>(null);
-  const [reconByRoundSolve, setReconByRoundSolve] = useState<Map<string, number>>(new Map());
+  const [official, setOfficial] = useState<WcaResultsRow[] | null>(null);
+  const [officialComps, setOfficialComps] = useState<WcaCompetition[] | null>(null);
+  const [live, setLive] = useState<{ results: WcaResultsRow[]; comps: WcaCompetition[] } | null>(null);
+  const [reconByRoundSolve, setReconByRoundSolve] = useState<Map<string, ReconSolve>>(new Map());
 
   useEffect(() => {
     if (!solve.personId) return;
-    fetchWcaPersonResults(solve.personId).then(setAllResults).catch(() => setAllResults([]));
-    fetchWcaPersonCompetitions(solve.personId).then(setAllComps).catch(() => setAllComps([]));
+    fetchWcaPersonResults(solve.personId).then(setOfficial).catch(() => setOfficial([]));
+    fetchWcaPersonCompetitions(solve.personId).then(setOfficialComps).catch(() => setOfficialComps([]));
+    // 直播·非官方成绩(cubing.com / WCA Live):官方尚未收录的近期比赛(如刚办完还没上传 WCA)
+    // 靠这条撑起同场表 —— 与 /wca/persons 逐场表同一合并口径。
+    fetchWcaPersonLiveResults(solve.personId)
+      .then(j => setLive({ results: j.results, comps: j.comps }))
+      .catch(() => setLive({ results: [], comps: [] }));
   }, [solve.personId]);
+
+  // 官方成绩一旦收录某场,该场直播行整场丢弃(官方权威);剩下的直播行 + 其比赛元数据追加进来。
+  const merged = useMemo(() => {
+    if (!official || !officialComps) return null;
+    if (!live || live.results.length === 0) return { results: official, comps: officialComps };
+    return mergePersonLive(official, officialComps, live.results, live.comps);
+  }, [official, officialComps, live]);
+  const allResults = merged?.results ?? null;
+  const allComps = merged?.comps ?? null;
 
   useEffect(() => {
     listRecons().then(all => {
-      const m = new Map<string, number>();
+      const m = new Map<string, ReconSolve>();
       for (const s of all) {
         if (s.person === solve.person && s.comp === solve.comp && s.event === solve.event && s.round && s.solveNum != null) {
-          m.set(`${s.round}|${s.solveNum}`, s.id);
+          m.set(`${s.round}|${s.solveNum}`, s);
         }
       }
       setReconByRoundSolve(m);
     }).catch(() => { /* ignore */ });
   }, [solve.person, solve.comp, solve.event]);
 
-  const findReconForCell = (roundTypeId: string, attemptNum: number): number | undefined => {
+  const findReconStatsForCell = (roundTypeId: string, attemptNum: number): ReconSolve | undefined => {
     for (const reconRound of ['1', '2', '3', 'f']) {
       if (matchRoundType(reconRound, roundTypeId)) {
-        const idVal = reconByRoundSolve.get(`${reconRound}|${attemptNum}`);
-        if (idVal) return idVal;
+        const rec = reconByRoundSolve.get(`${reconRound}|${attemptNum}`);
+        if (rec) return rec;
       }
     }
     return undefined;
   };
+  const findReconForCell = (roundTypeId: string, attemptNum: number): number | undefined =>
+    findReconStatsForCell(roundTypeId, attemptNum)?.id;
 
   const effectiveCompWcaId = useMemo(() => {
     if (solve.compWcaId) return solve.compWcaId;
@@ -921,10 +983,18 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
       .sort((a, b) => (ROUND_ORDER[a.round_type_id] ?? 99) - (ROUND_ORDER[b.round_type_id] ?? 99));
   }, [allResults, effectiveCompWcaId, solve.event]);
 
+  // PR / 名次染色只算官方成绩:直播行不参与,也不挤掉官方 PR 标记。
   const prRank = useMemo(
-    () => (allResults && allComps ? computePrRank(allResults, allComps) : new Map()),
+    () => (official && officialComps ? computePrRank(official, officialComps) : new Map()),
+    [official, officialComps],
+  );
+  // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同口径且自洽。
+  const prRankLive = useMemo(
+    () => (allResults && allComps && allResults.some(r => r.live) ? computePrRank(allResults, allComps) : null),
     [allResults, allComps],
   );
+  // 直播行的区域纪录标志(WR/CR/NR)单独从 cubing-live 源取(与 /wca/comp 领奖台同口径)。
+  const livePrRanks = useLivePrRanks(rows, solve.personId ?? '');
 
   useEffect(() => { onHasRows(rows.length > 0); }, [rows.length, onHasRows]);
 
@@ -957,15 +1027,35 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
             </thead>
             <tbody>
               {rows.map(r => {
-                const rank = prRank.get(r.id);
-                const singleRank = rank?.singleRank ?? null;
-                const averageRank = rank?.averageRank ?? null;
+                const rank = r.live ? prRankLive?.get(r.id) : prRank.get(r.id);
+                const liveRank = r.live ? livePrRanks.get(r.id) : null;
+                const singleRank = rank?.singleRank ?? liveRank?.pS ?? null;
+                const averageRank = rank?.averageRank ?? liveRank?.pA ?? null;
+                const singleRecord = r.regional_single_record || (liveRank?.singleTag || null);
+                const averageRecord = r.regional_average_record || (liveRank?.averageTag || null);
+                // 该轮 5 把复盘全齐时,给出步数 Ao5 与 TPS Ao5(各自去掉极值取中间 3 把均值)。
+                const roundAo5 = (() => {
+                  const recs = [1, 2, 3, 4, 5].map(n => findReconStatsForCell(r.round_type_id, n));
+                  if (recs.some(x => !x)) return null;
+                  const stmVals = recs.map(x => x!.stm ?? 0);
+                  const tpsVals = recs.map(x => x!.tps ?? 0);
+                  if (stmVals.some(v => v <= 0) || tpsVals.some(v => v <= 0)) return null;
+                  return { moves: ao5Mean(stmVals), tps: ao5Mean(tpsVals) };
+                })();
                 return (
-                  <tr key={r.id}>
+                  <tr key={r.id} className={r.live ? 'same-comp-event-row-live' : ''}>
                     <td>
                       <span className={`wp-round-tag ${roundClass(r.round_type_id)}`}>
                         {roundLabel(r.round_type_id).replace(/^C-/, '')}
                       </span>
+                      {r.live && (
+                        <span
+                          className="same-comp-event-live-chip"
+                          title={tr({ zh: '直播成绩,非官方,待 WCA 官方确认', en: 'Live result — unofficial, pending WCA' })}
+                        >
+                          {tr({ zh: '直播', en: 'Live' })}
+                        </span>
+                      )}
                     </td>
                     <td className={`wp-cell-pos ${r.pos === 1 ? 'wp-pos-first' : ''}`}>
                       {r.pos > 0 ? r.pos : '—'}
@@ -973,8 +1063,8 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                     <td className="wp-cell-result">
                       <span className="record-num-cell">
                         {formatWcaResult(r.best, eventId, 'single')}
-                        {r.regional_single_record
-                          ? <RecordBadge record={r.regional_single_record} variant="inline" />
+                        {singleRecord
+                          ? <RecordBadge record={singleRecord} variant="inline" />
                           : singleRank
                             ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
                             : null}
@@ -983,8 +1073,8 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                     <td className="wp-cell-result">
                       <span className="record-num-cell">
                         {formatWcaResult(r.average, eventId, 'average')}
-                        {r.regional_average_record
-                          ? <RecordBadge record={r.regional_average_record} variant="inline" />
+                        {averageRecord
+                          ? <RecordBadge record={averageRecord} variant="inline" />
                           : averageRank
                             ? <RecordBadge record={averageRank === 1 ? 'PR' : `PR${averageRank}`} variant="inline" />
                             : null}
@@ -997,7 +1087,7 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                         eventId={eventId}
                         roundTypeId={r.round_type_id}
                         attemptRanks={rank?.attemptRanks ?? null}
-                        singleRecord={r.regional_single_record ?? null}
+                        singleRecord={singleRecord}
                         currentReconId={solve.id}
                         findReconForCell={findReconForCell}
                         submitCtx={solve.personId && effectiveCompWcaId ? {
@@ -1011,6 +1101,12 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                         } : null}
                         langQuery={(i18n.language.startsWith('zh') ? '?lang=zh' : '')}
                       />
+                      {roundAo5 && (
+                        <div className="same-comp-event-ao5">
+                          <span>{tr({ zh: '步数', en: 'Moves' })} Ao5 {roundAo5.moves.toFixed(1)}</span>
+                          <span>{eventId === 'sq1' ? 'SPS' : 'TPS'} Ao5 {roundAo5.tps.toFixed(2)}</span>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
