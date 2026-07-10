@@ -55,6 +55,31 @@ export function rowHasReconStats(
   return false;
 }
 
+/** Ao5 去尾均值(掐头去尾:减最小减最大,除以 n-2)。stm / tps 各按自身极值裁,与复盘详情页同口径。 */
+function ao5Mean(vals: number[]): number {
+  const sum = vals.reduce((a, b) => a + b, 0);
+  return (sum - Math.min(...vals) - Math.max(...vals)) / (vals.length - 2);
+}
+
+/**
+ * 该轮 5 把「平均 STM / 平均 TPS」(Ao5 去尾均值),仅当 5 把全部有复盘且 stm/tps 均有效才给值;
+ * 否则返回 null(缺把 → 平均列不展示,逐把值仍照常显示)。
+ */
+export function computeReconRoundAvg(
+  map: Map<string, ReconAttemptInfo> | null | undefined,
+  compId: string,
+  wcaEventId: string,
+  wcaRoundTypeId: string,
+): { stm: number; tps: number } | null {
+  if (!map) return null;
+  const recs = [1, 2, 3, 4, 5].map((n) => findReconForAttempt(map, compId, wcaEventId, wcaRoundTypeId, n));
+  if (recs.some((r) => !r)) return null;
+  const stm = recs.map((r) => r!.stm ?? 0);
+  const tps = recs.map((r) => r!.tps ?? 0);
+  if (stm.some((v) => v <= 0) || tps.some((v) => v <= 0)) return null;
+  return { stm: ao5Mean(stm), tps: ao5Mean(tps) };
+}
+
 // Person-aware variant: keyed by personId too, so a comp results table (many people
 // sharing the same comp/event/round/solveNum) doesn't collide — each person's solve N
 // maps to that person's own recon. The person-less map above is fine on /wca/persons
