@@ -194,8 +194,10 @@ export function detectStickerBlobs(
 
   // 标定重分类 (标签层): 连通域按固定阈值成形后, 用每视频标定模型按色块平均
   // RGB 重标颜色 — 白平衡偏移导致的 O/R/Y 糊与暖白误判在此修正。放在反光重标
-  // 之前: 反光核心 (亮低饱和) 标定同样判 W, 壳层投票照常修复
-  if (opts.calib) {
+  // 之前: 反光核心 (亮低饱和) 标定同样判 W, 壳层投票照常修复。
+  // kNN 标定跳过此步 (只在格心分类层用): 检测层重标会改多色簇→链形成→覆盖,
+  // 而覆盖是锚定头号杀手; kNN 的价值在分类精度, 检测保持固定阈值 (= 基线覆盖)。
+  if (opts.calib && !opts.calib.knn) {
     for (const blob of blobs) {
       const cc = calibClassify(blob.r, blob.g, blob.b, opts.calib);
       if (cc) blob.color = cc;
@@ -529,6 +531,9 @@ export function sampleCell(
 export interface FaceObservation {
   /** 相机视角行主序 3×3 颜色; null = 该格不可读 (遮挡/不均匀) */
   colors: (ColorName | null)[];
+  /** 可选 kNN 重分类颜色 (格心 RGB → kNN): 链检测/agree 用稳定的 colors 保覆盖,
+   * 共识标签优先用 knnColors 保精度 (kNN 逐帧抖动会断链, 故分离两用途) */
+  knnColors?: (ColorName | null)[];
   grid: FaceGrid;
   blobCount: number;
 }
