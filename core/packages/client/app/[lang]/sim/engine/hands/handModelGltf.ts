@@ -35,15 +35,15 @@ const U = (SIZE / 64) * HAND_SCALE;
  *  再加 roll 接触被换走,oracle 实测)。改此值必须连动 handPoses 拇指 curl 重解。 */
 export const THUMB_CURL_PLANE_ROLL = 2.074;
 
-/** 拇指「CMC 沉 D 层」的挂点平移分量(手系,2026-07-10 r8 用户规格:指尖/
- *  指甲原位不动、根部大幅压低到 D 层)。与 handPoses 拇指 curl 4 通道重解
- *  **配对**:此平移把整拇指沉下去(cube −y ~160U),curl 重解把指尖拉回原
- *  世界位(阻尼最小二乘 Newton + 末段平移精确收尾,误差 0)→ CMC R −87 /
- *  L −92,tip 零漂移(左右资产不对称各解各的)。
- *  键 = adaptGltfHand 的 side(-1 右 / +1 左)。改 curl 必须连动重解此表。 */
+/** 拇指挂点微移(手系)。r8 的 ±160U 大平移把拇指柱拽脱手掌(解剖学假,
+ *  2026-07-10 r9 撤销,改 handPoses 整手 Rz(−40°) 滚转)。现仅左手保留 2.8U
+ *  微移:L 资产雕刻偏内,r9 挂载下「pad 贴 F 间隙 ≥2.4」与「肉 |x|≥34.5
+ *  (M 列线)」在 curl 空间无交集(c2 触 −0.5 生理钳位),沿 cube −x 微移
+ *  2.8U 两者同时达标(pad 3.4 / |x| 34.9);≤15U 平移蒙皮无感(r7 实证)。
+ *  键 = adaptGltfHand 的 side(-1 右 / +1 左)。改拇指 curl 连动复核此表。 */
 const THUMB_PITCH_MOUNT: Record<1 | -1, [number, number, number]> = {
-  [-1]: [-5.656, 174.694, -5.913],
-  [1]: [-5.327, -175.239, -5.106],
+  [-1]: [0, 0, 0],
+  [1]: [-1.316, 1.739, -1.757],
 };
 
 /** WebXR 25 关节命名(https://www.w3.org/TR/webxr-hand-input-1/)。
