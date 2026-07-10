@@ -6,7 +6,7 @@
 import type { CSSProperties } from 'react';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { isAo5Bracketed, trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
-import { findReconForAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
+import { findReconForAttempt, buildReconSubmitHref, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { AttemptPopover } from './AttemptPopover';
 
@@ -16,11 +16,13 @@ export interface AttemptsListProps {
   eventId: string;
   compId: string;
   roundTypeId: string;
-  reconLookup: Map<string, number> | null;
+  reconLookup: Map<string, ReconAttemptInfo> | null;
   isZh: boolean;
   admin?: boolean;
   isOwner?: boolean;             // 本人页面:罚时即时生效(其余改动仍需审核)。
   canEdit?: boolean;            // 任何登录用户:可在弹窗里展开编辑/提议。
+  // 「#」开关开 + 该轮有复盘 → 在每把成绩下方补 STM / TPS 两行(标签在轮次列,见 ByEventView/ByCompList)。
+  showReconStats?: boolean;
   // submit 预填上下文(无复盘 solve 点击跳 /recon/submit 用)
   personId: string;
   personName: string;
@@ -48,7 +50,7 @@ export interface AttemptsListProps {
 }
 
 export function AttemptsList({
-  attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, isOwner, canEdit,
+  attempts, best, eventId, compId, roundTypeId, reconLookup, isZh, admin, isOwner, canEdit, showReconStats,
   personId, personName, personCountry, compName, compCountry, compDate,
   attemptOlds, penalties, penaltyNote, attemptVideos, pendingVideos, onAddVideo,
   attemptRanks, singleRecord, cols, onEdit, onSetOriginal, onSetPenalty, onEditRecord,
@@ -62,6 +64,10 @@ export function AttemptsList({
   const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
   const langQuery = (isZh && '?lang=zh') || '';   // recon 详情页读 ?lang;AppLink 另管 /zh 前缀
   const fmt = (v: number) => formatWcaResult(v, eventId, 'single');
+  // 逐把复盘信息(id 跳详情 + stm/tps 展示);下标对齐 atts。
+  const recs = atts.map((_, i) => findReconForAttempt(reconLookup, compId, eventId, roundTypeId, i + 1));
+  // 「#」开 + 该轮任一把有 stm/tps → 在成绩网格追加 STM / TPS 两行(与轮次列标签对齐)。
+  const showStats = !!showReconStats && recs.some((r) => r && ((r.stm ?? 0) > 0 || (r.tps ?? 0) > 0));
   // 每把的 PR 角标:最好那把优先区域纪录(同单次列),否则用时间序名次(1→PR,n→PRn)。
   const rankTag = (i: number, isBestAtt: boolean): string | undefined => {
     if (isBestAtt && singleRecord) return singleRecord;
@@ -79,7 +85,7 @@ export function AttemptsList({
         const pen = penalties?.[i] ?? 0;
         const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
         const cls = `wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(atts, i) ? 'wp-att-trimmed' : ''} ${pen > 0 ? 'wp-att-haspen' : ''}`;
-        const reconId = findReconForAttempt(reconLookup, compId, eventId, roundTypeId, i + 1);
+        const reconId = recs[i]?.id;
         // 复盘目标:有复盘→详情页(所有人可看);没复盘→/recon/submit 预填好身份字段。
         const reconHref = reconId
           ? `/recon/${reconId}${langQuery}`
@@ -120,6 +126,22 @@ export function AttemptsList({
           />
         );
       })}
+      {showStats && (
+        <>
+          {/* 补齐首行到 colCount 格,使 STM / TPS 两行各自从下一网格行首列开始、逐把对齐 */}
+          {Array.from({ length: Math.max(0, colCount - atts.length) }, (_, k) => (
+            <span key={`pad-${k}`} aria-hidden="true" />
+          ))}
+          {Array.from({ length: colCount }, (_, i) => {
+            const s = recs[i]?.stm;
+            return <span key={`stm-${i}`} className="wp-att wp-att-sub">{s != null && s > 0 ? s : ''}</span>;
+          })}
+          {Array.from({ length: colCount }, (_, i) => {
+            const p = recs[i]?.tps;
+            return <span key={`tps-${i}`} className="wp-att wp-att-sub">{p != null && p > 0 ? p.toFixed(2) : ''}</span>;
+          })}
+        </>
+      )}
     </span>
   );
 }

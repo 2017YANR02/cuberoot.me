@@ -9,6 +9,7 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { mergePersonLive } from '@/lib/person-live-merge';
+import type { ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 
 const ByCompList = lazy(() => import('./ByCompList'));
 const ByEventView = lazy(() => import('./ByEventView'));
@@ -20,7 +21,7 @@ interface Props {
   comps: WcaCompetition[] | null;
   liveResults?: WcaResultRow[] | null;
   liveComps?: WcaCompetition[] | null;
-  reconLookup: Map<string, number> | null;
+  reconLookup: Map<string, ReconAttemptInfo> | null;
   isZh: boolean;
 }
 
