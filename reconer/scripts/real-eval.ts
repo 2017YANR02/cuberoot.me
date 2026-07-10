@@ -130,6 +130,9 @@ interface RestRun {
   span: number;
   /** 链帧运动量中位 (网格 bbox 帧间平均绝对差; 拧转中链的照妖镜) */
   motion: number;
+  /** 链晶格中心 (画面像素, 链内均值) — 空间聚类 = 生产可得的窗口身份 */
+  cx: number;
+  cy: number;
 }
 
 /** 两帧网格一致: 共同非空格 ≥4 且不一致 ≤1 (--strict 零容错, 防跨拧转混态成链) */
@@ -282,6 +285,11 @@ for (const sf of files) {
         if (colors.filter(Boolean).length >= 5) {
           // 链桥接 ≤2 帧空隙 < prior 存活 5 帧, 链内 span 恒定, 取起帧的即可
           const mots = chainIdx.map((ci) => frameMotion[ci]).filter(Number.isFinite).sort((a, b) => a - b);
+          let cx = 0, cy = 0;
+          for (const g of chain) {
+            cx += g.grid.origin.x + g.grid.v1.x + g.grid.v2.x;
+            cy += g.grid.origin.y + g.grid.v1.y + g.grid.v2.y;
+          }
           runs.push({
             from: meta.frames[sFrame],
             to: meta.frames[lastFrame],
@@ -289,6 +297,8 @@ for (const sf of files) {
             grid: colors,
             span: frameSpan[sFrame],
             motion: mots.length ? mots[mots.length >> 1] : Infinity,
+            cx: cx / chain.length,
+            cy: cy / chain.length,
           });
         }
       }
@@ -749,6 +759,9 @@ for (const sf of files) {
           facelets: [...facelets],
           read: run.grid.map((c) => c ?? null),
           gt: facelets.map((f) => COLOR_NAMES[Math.floor(omega[st[f]] / 9)]),
+          span: run.span, // 跟踪 span 身份 (span 内窗口旋转恒定) — prior-sim --spanalign 生产界用
+          cx: Math.round(run.cx), // 链晶格中心 — prior-sim --winalign 空间聚类窗口身份用
+          cy: Math.round(run.cy),
         };
       });
     });
