@@ -51,8 +51,7 @@ import { HelpCircle } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { Flag } from '@/components/Flag';
-import { ClearButton } from '@/components/ClearButton';
-import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
+import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2, compCountryId, countryToIso2 } from '@/lib/country-flags';
@@ -599,7 +598,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     if (selectedBin === null || scrambleSet !== 'wca' || !countryDist) return undefined;
     return countryDist.sets.wca?.[variant]?.[stage]?.[effectiveSubset]?.[String(selectedBin)];
   }, [countryDist, scrambleSet, variant, stage, effectiveSubset, selectedBin]);
-  const binTotal = selectedBin !== null ? (activeCounts[String(selectedBin)] ?? 0) : 0;
   // 换 set/变体/阶段/底色/步数/度量 → 清国家筛选(避免筛着一个国家切走后列表空/口径错位)。
   useEffect(() => { setFilterCountry(null); }, [scrambleSet, variant, stage, effectiveSubset, selectedBin, optMetric]);
 
@@ -1918,7 +1916,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         merged={merged}
         dataset={dataset}
         countryCounts={binCountry}
-        binTotal={binTotal}
         filterCountry={filterCountry}
         onFilterCountry={setFilterCountry}
       />
@@ -2018,7 +2015,6 @@ function ExamplesPanel({
   merged,
   dataset,
   countryCounts,
-  binTotal,
   filterCountry,
   onFilterCountry,
 }: {
@@ -2042,7 +2038,6 @@ function ExamplesPanel({
   merged: boolean;
   dataset: string;
   countryCounts?: Record<string, number>; // 该步数各国计数(country_id→n),合并 WCA 池才有
-  binTotal: number;                        // 该步数总数(占比条分母)
   filterCountry: string | null;            // 选中的 country_id(null=不筛)
   onFilterCountry: (countryId: string | null) => void;
 }) {
@@ -2058,9 +2053,15 @@ function ExamplesPanel({
     if (filterCountry && canFullList && !showAll) setShowAll(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCountry]);
-  const hasCountryBar = !!countryCounts && Object.keys(countryCounts).length > 0;
-  const filterIso2 = filterCountry ? countryToIso2(filterCountry) : '';
-  const filterName = filterIso2 ? countryName(filterIso2, isZh) : filterCountry ?? '';
+  // 国家下拉选项(该步数各国 country_id→计数,按次数降序);label 后带计数 hint。
+  const countryItems: ListSelectItem[] = Object.entries(countryCounts ?? {})
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([id, cnt]) => {
+      const iso2 = countryToIso2(id);
+      const en = iso2 ? countryName(iso2, false) : id;
+      const zh = iso2 ? countryName(iso2, true) : id;
+      return { value: id, label: isZh ? zh : en, hint: String(cnt), country: iso2 || undefined, searchTerms: `${en} ${zh} ${id}` };
+    });
   const selectedDownloadable = selectedBin !== null && downloadBins.includes(selectedBin);
   // 整解 + 该 bin 示例确有最优打乱数据时才露切换(线上旧 JSON 无第 4 元 → 自动隐藏)。
   const hasOpt = is333 && !!samples?.some((s) => !!s[3]);
@@ -2088,15 +2089,15 @@ function ExamplesPanel({
             </span>
           )}
         </div>
-        {filterCountry && (
-          <span className="pdv-cbar-chip">
-            {filterIso2 && <Flag iso2={filterIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-            <span>{filterName}</span>
-            <ClearButton
-              onClick={() => onFilterCountry(null)}
-              ariaLabel={tr({ zh: '清除国家筛选', en: 'Clear country filter' })}
-            />
-          </span>
+        {countryItems.length > 1 && (
+          <ListSelect
+            className="pdv-country-select"
+            items={countryItems}
+            value={filterCountry ?? ''}
+            onChange={(v) => onFilterCountry(v || null)}
+            allLabel={tr({ zh: '全部国家', en: 'All countries' })}
+            searchable={countryItems.length > 8}
+          />
         )}
         {hasOpt && (
           <PillToggle
@@ -2121,18 +2122,6 @@ function ExamplesPanel({
           </a>
         )}
       </div>
-      {/* 各国占比条:点某国段 → 只看该国该步数真题(预览客户端筛 + 全量走服务端 country 参数)。 */}
-      {hasCountryBar && (
-        <div className="pdv-cbar-wrap">
-          <CountryShareBar
-            counts={countryCounts!}
-            total={binTotal}
-            selected={filterCountry}
-            onSelect={onFilterCountry}
-            isZh={isZh}
-          />
-        </div>
-      )}
       {/* 查看全部:筛选栏(搜索 + 日期)常驻在示例之上;展开后用全量列表替换下方的示例预览
           (仅 WCA 数据集、非整解、已选 bin)。合并池 → 不传 event;分开 → 传当前项目。 */}
       {canFullList && (
