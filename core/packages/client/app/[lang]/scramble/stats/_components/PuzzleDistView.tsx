@@ -10,8 +10,7 @@ import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { formatScrambleForEvent } from '@/app/[lang]/scramble/gen/_svg/sq1_svg';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { Flag } from '@/components/Flag';
-import { ClearButton } from '@/components/ClearButton';
-import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
+import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compFlagIso2, compCountryId, countryToIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
@@ -156,13 +155,6 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const activeBins: PuzzleExamplesEntry['bins'] | undefined = isCube
     ? exEntry?.binsCubeshape
     : unit === 'wca' ? exEntry?.bins : exEntry?.binsAlt;
-  // 国家占比分桶(与示例分桶同 key);选中步数的国家计数表。
-  const activeCountryBins = isCube
-    ? exEntry?.countryDist?.binsCubeshape
-    : unit === 'wca' ? exEntry?.countryDist?.bins : exEntry?.countryDist?.binsAlt;
-  const binCountry = (selectedBin !== null && activeCountryBins) ? activeCountryBins[String(selectedBin)] : undefined;
-  const binTotal = (selectedBin !== null && activeDist) ? (activeDist.counts[String(selectedBin)] ?? 0) : 0;
-
   const series = useMemo<HistSeries[]>(() => {
     if (!entry || !activeDist) return [];
     const label = (isZh && entry.label_zh) ? entry.label_zh : entry.label;
@@ -277,8 +269,6 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           idMeta={exEntry.idMeta}
           exView={exView}
           onExView={setExView}
-          countryCounts={binCountry}
-          binTotal={binTotal}
           filterCountry={filterCountry}
           onFilterCountry={setFilterCountry}
         />
@@ -332,7 +322,7 @@ function Cell({ label, value }: { label: string; value: string }) {
 }
 
 // 点某步数后展示该 bin 的真实比赛打乱示例(对等 3x3 难度 tab 的 ExamplesPanel,去掉底色 chip)。
-// 顶部叠一条各国占比(countryDist),点某国 → 只列该国该步数打乱;稀有步数已存全量,能完整浏览。
+// 顶部一个「国家」下拉(选项 = 该步数示例实际覆盖的国家),选某国 → 只列该国该步数打乱;稀有步数已存全量,能完整浏览。
 // 点打乱图/打乱文字 → 跳该 puzzle 的在线求解器并带入打乱。
 const EXAMPLES_MAX_SHOWN = 40; // DOM 上限:稀有 bin 存了全量,不筛时截断展示
 function PuzzleExamplesPanel({
@@ -344,8 +334,6 @@ function PuzzleExamplesPanel({
   idMeta,
   exView,
   onExView,
-  countryCounts,
-  binTotal,
   filterCountry,
   onFilterCountry,
 }: {
@@ -357,10 +345,8 @@ function PuzzleExamplesPanel({
   idMeta: PuzzleExamplesEntry['idMeta'];
   exView: 'orig' | 'opt';
   onExView: (v: 'orig' | 'opt') => void;
-  countryCounts?: Record<string, number>;
-  binTotal: number;
-  filterCountry: string | null;   // 选中的 country_id
-  onFilterCountry: (countryId: string | null) => void;
+  filterCountry: string | null;   // 选中的 country 名(= comp_countries.json 值)
+  onFilterCountry: (country: string | null) => void;
 }) {
   const route = PUZZLE_ROUTE[puzzleKey];
   const hasSolver = !!route; // sq1 无在线求解器页 → 示例卡不可点,纯展示
@@ -374,15 +360,29 @@ function PuzzleExamplesPanel({
     const d = dateOf(b[0]).localeCompare(dateOf(a[0]));
     return d !== 0 ? d : (Number(b[0]) - Number(a[0]));
   });
-  // 按国筛选:样例的国家 = 其比赛所属国(compCountryId,原始 country_id),与占比条同一份 comp_countries 源。
+  // 按国筛选:样例的国家 = 其比赛所属国(compCountryId,原始 country 名),同一份 comp_countries 源。
   const filtered = filterCountry
     ? sorted.filter(([id]) => compCountryId(idMeta[id]?.[0] ?? '') === filterCountry)
     : sorted;
   const samples = filtered.slice(0, EXAMPLES_MAX_SHOWN);
   const moreCount = filtered.length - samples.length;
-  const hasCountryBar = !!countryCounts && Object.keys(countryCounts).length > 0;
-  const filterIso2 = filterCountry ? countryToIso2(filterCountry) : '';
-  const filterName = filterIso2 ? countryName(filterIso2, isZh) : filterCountry ?? '';
+  // 下拉选项 = 该步数示例实际覆盖的国家(按出现次数降序),每项都有示例、不会选出空列表;
+  // 直接从样例算(比 countryDist top-N 更全,如复形 0 步 45 国 vs 20)。inline 计算随 flag 数据到位重算。
+  const countryItems: ListSelectItem[] = (() => {
+    const m: Record<string, number> = {};
+    for (const s of rawSamples) {
+      const c = compCountryId(idMeta[s[0]]?.[0] ?? '');
+      if (c) m[c] = (m[c] ?? 0) + 1;
+    }
+    return Object.entries(m)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([name]) => {
+        const iso2 = countryToIso2(name);
+        const en = iso2 ? countryName(iso2, false) : name;
+        const zh = iso2 ? countryName(iso2, true) : name;
+        return { value: name, label: isZh ? zh : en, country: iso2 || undefined, searchTerms: `${en} ${zh} ${name}` };
+      });
+  })();
   const solverHref = (scr: string) =>
     `/scramble/${route}?${new URLSearchParams({ scramble: scr.trim() })}`;
 
@@ -392,15 +392,15 @@ function PuzzleExamplesPanel({
         <div className="scramble-stats-panel-title">
           {tr({ zh: '{n} 步示例', en: '{n}-move examples' }).replace('{n}', String(selectedBin))}
         </div>
-        {filterCountry && (
-          <span className="pdv-cbar-chip">
-            {filterIso2 && <Flag iso2={filterIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-            <span>{filterName}</span>
-            <ClearButton
-              onClick={() => onFilterCountry(null)}
-              ariaLabel={tr({ zh: '清除国家筛选', en: 'Clear country filter' })}
-            />
-          </span>
+        {countryItems.length > 1 && (
+          <ListSelect
+            className="pdv-country-select"
+            items={countryItems}
+            value={filterCountry ?? ''}
+            onChange={(v) => onFilterCountry(v || null)}
+            allLabel={tr({ zh: '全部国家', en: 'All countries' })}
+            searchable={countryItems.length > 8}
+          />
         )}
         {hasOpt && (
           <PillToggle
@@ -414,17 +414,6 @@ function PuzzleExamplesPanel({
           />
         )}
       </div>
-      {hasCountryBar && (
-        <div className="pdv-cbar-wrap">
-          <CountryShareBar
-            counts={countryCounts!}
-            total={binTotal}
-            selected={filterCountry}
-            onSelect={onFilterCountry}
-            isZh={isZh}
-          />
-        </div>
-      )}
       {samples.length > 0 ? (
         <ul className="scramble-stats-examples-list">
           {samples.map(([id, scr, opt], i) => {
@@ -486,7 +475,7 @@ function PuzzleExamplesPanel({
       ) : (
         <div className="scramble-stats-examples-hint">
           {filterCountry
-            ? tr({ zh: '该国此步数无示例(示例为采样,占比条为全量)', en: 'No sampled examples from this country at this length (bar reflects the full population)' })
+            ? tr({ zh: '该国此步数无示例', en: 'No examples from this country at this length' })
             : tr({ zh: '此步数无示例', en: 'No examples for this length' })}
         </div>
       )}
