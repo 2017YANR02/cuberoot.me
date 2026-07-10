@@ -349,6 +349,26 @@
   text-decoration: underline;
 }
 
+/* 复制整段复盘(STM 摘要 + 打乱 + 带注释解法):贴行右侧的图标钮 */
+.recon-copy-full {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.recon-copy-full:hover {
+  color: var(--accent);
+}
+
 /* --- 元数据区 --- */
 .detail-meta {
   display: flex;
@@ -641,6 +661,18 @@
   border-bottom: 2px dotted currentColor;
 }
 
+/* 该轮 5 把复盘全齐时的步数 Ao5 / TPS Ao5 摘要行 */
+.same-comp-event-ao5 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 4px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
 /* 表格基础布局 — 复制自 persons.css .wp-bycomp-table */
 .wp-table-scroll { overflow-x: auto; }
 .same-comp-event-table {
@@ -670,6 +702,8 @@
 
 .same-comp-event-table .wp-round-tag {
   display: inline-block;
+  /* 统一两字符轮次标签(Fi/R1/R2/R3)宽度 → 后随的「直播」chip 各行左缘对齐 */
+  min-width: 1.4em;
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -682,6 +716,30 @@
 .same-comp-event-table .wp-th-info { display: inline-flex; align-items: center; gap: 3px; }
 .same-comp-event-table .wp-th-narrow { width: 50px; text-align: center !important; }
 .same-comp-event-table thead th.wp-th-attempts { text-align: center; }
+
+/* 直播·非官方成绩(官方尚未收录的近期比赛):行内 chip 标注 + 整行轻微弱化,
+   官方上传后合并逻辑自动丢弃直播行 → chip 随之消失。 */
+.same-comp-event-live-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.55;
+  border-radius: 4px;
+  color: var(--signal-warning);
+  background: color-mix(in srgb, var(--signal-warning) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal-warning) 35%, transparent);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.same-comp-event-row-live .wp-cell-result,
+.same-comp-event-row-live .wp-cell-pos,
+.same-comp-event-row-live .wp-cell-attempts {
+  color: var(--muted-foreground);
+}
+.same-comp-event-row-live .wp-cell-pos.wp-pos-first { color: var(--recon-pink); }
 
 /* .wp-attempts-flow / .wp-att 网格对齐 + 括号占位走共享
    components/wca-results/attempts-grid.css(与 /wca/persons 同一份,ReconDetailClient 已 import) */
