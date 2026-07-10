@@ -18,6 +18,11 @@ debug_splits/
 __pycache__/
 *.pyc
 
+# 手部通道派生数据 + venv + 模型 (脚本可重建/自动下载)
+hands/.venv/
+hands/data/
+hands/models/
+
 # Node / TS
 node_modules/
 dist/
