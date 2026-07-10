@@ -219,9 +219,10 @@ function mapPerspective(v: number): number { return 2 + (v / 100) * 8; }        
 // upstream cuber 的镜头映射:50 居中,两端到 ±π/2
 function mapYaw(v: number): number { return ((v / 50 - 1) * Math.PI) / 2; }     // scene.rotation.y
 function mapPitch(v: number): number { return ((1 - v / 50) * Math.PI) / 2; }   // scene.rotation.x
-// speed: 0=慢 100=快 → CubeGroup.frames (帧数,越小越快)。默认 50 = 30 帧 (现状)
+// speed: 0=慢 100=快 → CubeGroup.frames (帧数,越小越快)。默认 50 = 65 帧
+// (2026-07-10 用户要求整体转动减半:帧数 = 旧映射 ×2,60→120 / 55→110)。
 // export 给 PlayerControls:播放/单步用完自己的播放速度后恢复抽屉值(同一全局 timing.frames)。
-export function mapFrames(v: number): number { return Math.max(3, Math.round(60 - (v / 100) * 55)); }
+export function mapFrames(v: number): number { return Math.max(6, Math.round(120 - (v / 100) * 110)); }
 
 /** The in-house Three.js engine puzzles (everything that is NOT an order-N NxN cube).
  *  Their geometry is baked at construction with no InstancedRenderer, so style toggles
