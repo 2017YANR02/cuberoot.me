@@ -373,11 +373,11 @@ function PuzzleExamplesPanel({
     }
     return Object.entries(m)
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .map(([name]) => {
+      .map(([name, cnt]) => {
         const iso2 = countryToIso2(name);
         const en = iso2 ? countryName(iso2, false) : name;
         const zh = iso2 ? countryName(iso2, true) : name;
-        return { value: name, label: isZh ? zh : en, country: iso2 || undefined, searchTerms: `${en} ${zh} ${name}` };
+        return { value: name, label: isZh ? zh : en, hint: String(cnt), country: iso2 || undefined, searchTerms: `${en} ${zh} ${name}` };
       });
   })();
   const solverHref = (scr: string) =>
