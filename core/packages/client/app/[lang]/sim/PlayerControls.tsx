@@ -94,6 +94,7 @@ import {
   simplifySq1Alg, invertSq1Alg,
 } from '@/lib/sq1-svg';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
+import SkewbNotationGuide from './SkewbNotationGuide';
 import {
   Slider, Toggle, KeymapModal, resetWorldView, mapFrames,
   DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR,
@@ -1062,6 +1063,20 @@ export default function PlayerControls({
     setStep(target);
   }, [world, setupDraft, algDraft, nxnItems, sq1Actions, ivyActions, cornerActions, corner, toEngineText, isSq1, isIvy, ivyCanPlay, settings.playbackMode]);
 
+  // Notation guide (engine skewb): play ONE token on the main cube from solved so the
+  // user sees which corner a letter turns. It only borrows the cube — setup/alg text is
+  // untouched — so `jumpToStep` rebuilds the user's state on demand (Back to my cube).
+  const demoNotationMove = useCallback((token: string) => {
+    if (!world || isTwistyMode) return;
+    const tw = (world.cube as unknown as CornerCube).twister;
+    tw.finish();
+    world.controller.clearFrozen();
+    tw.setup('');
+    tw.push(toEngineText(token));
+  }, [world, isTwistyMode, toEngineText]);
+
+  const restoreFromDemo = useCallback(() => { jumpToStep(stepRef.current); }, [jumpToStep]);
+
   const skipAutoResetRef = useRef(false);
   const animatingScrambleRef = useRef(false);
   const scrambleReqIdRef = useRef(0);
@@ -1809,6 +1824,14 @@ export default function PlayerControls({
           </select>
         )}
       </div>
+
+      {puzzleKind === 'skewb' && skewbNotation && !isTwistyMode && (
+        <SkewbNotationGuide
+          notation={skewbNotation}
+          onDemo={demoNotationMove}
+          onRestore={restoreFromDemo}
+        />
+      )}
 
       {!isTwistyMode ? (
       <div className="sim-player-row">
