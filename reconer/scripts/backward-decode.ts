@@ -47,6 +47,14 @@ const PROBS_W = parseFloat(argAt("--probs") ?? "0");
 // ±1 格平移边缘化罚分 (0=关): 晶格重获取漂移 (负⑩(a)) 把整列/行采到邻面 →
 // 链按 {原位, 上下左右移 1 格} 取最优, 出格格按背景分计, 移位吃此罚分
 const SHIFT_PEN = parseFloat(argAt("--shift") ?? "0");
+// --full: LL 倒推到 LL-start 后不停, 续用自由步法穿过 F2L, 由"已知打乱态"作终点锚。
+// 各 LL 候选到达不同 LL-start 态 → 后续 F2L 边界色证据只匹配真态 Q_true, 淘汰同分冒牌案。
+const FULL = process.argv.includes("--full");
+// FULL: LL-start 之后最多再倒推 K 步 (默认 12 = 约一个 F2L 对; 到 N 即接打乱态)
+const F2L_CAP = parseInt(argAt("--f2lcap") ?? "12", 10);
+// FULL pass2: 只把 LL 分 top-K 候选各自续倒推 F2L (防止错案自由子树在盲区淹没真解)
+const TOPK = parseInt(argAt("--topk") ?? "150", 10);
+const F2L_BEAM = parseInt(argAt("--f2lbeam") ?? "1024", 10);
 
 // ---------- 输入 ----------
 
@@ -174,6 +182,32 @@ const trueStates: Perm[] = [IDENTITY_PERM];
 }
 const trueKeys = trueStates.map(permKey);
 
+// === FULL: 已知打乱作终点锚 ===
+// 生产: 打乱公式已公布 → 打乱态直接可得 (标准配色 + 定向)。本 pilot 由全解 GT 反推得
+// 打乱态 (= 已知打乱的等价物, 合法输入)。全解相机系倒推 tkFull[d] = 倒推 d 步后真态
+// (d=0 复原 … d=L LL-start … d=N 打乱态 Sstate)。d≤L 与 trueKeys 对齐 (末 L 步 = LL)。
+let N = L;
+let tkFull: string[] = trueKeys;
+let Sstate: Perm = IDENTITY_PERM;
+if (FULL) {
+  const { tokens: fToks, tailRotations: fTail } = parseGT(content);
+  const allToks = [...fToks, ...fTail];
+  N = allToks.filter((t) => !ROTATION_TOKENS.has(t)).length;
+  const ts: Perm[] = [IDENTITY_PERM];
+  let cur: Perm = IDENTITY_PERM;
+  for (let j = allToks.length - 1; j >= 0; j--) {
+    cur = applyTo(cur, invertPerm(physicalPerm(allToks[j])));
+    if (!ROTATION_TOKENS.has(allToks[j])) ts.push(cur);
+  }
+  Sstate = ts[N];
+  tkFull = ts.map(permKey);
+  if (N !== n) console.log(`⚠ FULL: N=${N} ≠ n=${n} (边界数≠动作数, t 索引将偏移)`);
+  console.log(`FULL: 全解 N=${N} 步, 打乱态锚定; LL-start 后续倒推至深度 ${Math.min(N, L + F2L_CAP)}`);
+}
+const TRUE_KEYS = tkFull;
+const DTARGET = FULL ? Math.min(N, L + F2L_CAP) : L;
+void Sstate; // 终点锚: 首版仅测 F2L 续倒推对排名的增量, Sstate 硬过滤下一版接入
+
 // === 第 0 步: 锚定 (生产可得) ===
 // 收尾时魔方落垫, 画面整体位移 → 拧解中链与收尾链各自 2-means, 再按上下位置对应
 // (相机几何不变: 上窗口=顶视, 下窗口=侧视, 拧解中与静置一致)
@@ -266,6 +300,21 @@ function chainLL(read: (string | null)[], state: Perm, assign: readonly number[]
   }
   return best;
 }
+
+/** 边界 t 证据分: 各链 vs max(动作前态 sMid, 动作后态 sAfter) 双端点似然 (主循环 + pass2 共用) */
+const evidenceAt = (t: number, sMid: Perm, sAfter: Perm, a0: number, a1: number): number => {
+  let ev = 0;
+  for (const c of v.bounds[t]) {
+    const pool = FREE_WIN ? [ASSIGNS_24[a0], ASSIGNS_24[a1]] : [ASSIGNS_24[c.win === 0 ? a0 : a1]];
+    let best = -Infinity;
+    for (const assign of pool) {
+      const s = Math.max(chainLL(c.read, sMid, assign), chainLL(c.read, sAfter, assign));
+      if (s > best) best = s;
+    }
+    ev += best;
+  }
+  return ev;
+};
 
 // === 字典后缀树 (默认模式): 候选 = 公式 × y 前缀 × 前/后 AUF, STM ∈ [L±2] ===
 interface TrieNode {
@@ -370,6 +419,10 @@ interface Path {
   trueSoFar: boolean; // 验证: 状态序列至今与 GT 全等 (只读输出)
   stm: number; // 已倒推步数
   evTrace: number[]; // 逐深度证据分 (诊断)
+  free: boolean; // FULL: 已越过 LL-start, 转自由步法续倒推 F2L
+  llScore?: number; // FULL: 不含背景补齐的纯 LL 分 (续 F2L 再排用)
+  f2lScore?: number; // FULL pass2: 最优 F2L 续倒推分
+  f2lTrue?: boolean; // FULL pass2: 真 F2L 路径是否在束中存活
 }
 // 种子: 复原态 × 窗口面假设 × 面内 4 旋转。
 // 收尾静置与拧解之间常有一次未记录放下旋转 (v2 实测 F→B ≈ y2) → 下窗口面
@@ -392,7 +445,7 @@ let beam: Path[] = [];
   for (const a0 of rotsOfFace(winFace[0])) {
     for (const f1 of f1Cands) {
       for (const a1 of rotsOfFace(f1)) {
-        beam.push({ state: IDENTITY_PERM, score: 0, toks: [], a0, a1, lastFace: "", node: trieRoot, trueSoFar: true, stm: 0, evTrace: [] });
+        beam.push({ state: IDENTITY_PERM, score: 0, toks: [], a0, a1, lastFace: "", node: trieRoot, trueSoFar: true, stm: 0, evTrace: [], free: false });
       }
     }
   }
@@ -412,20 +465,8 @@ const finished: Path[] = []; // 短候选提前耗尽 (含背景分补齐)
 for (let d = 1; d <= L; d++) {
   const t = n - d; // 全局边界下标
   const chains = v.bounds[t];
-  const evidence = (sMid: Perm, sAfter: Perm, a0: number, a1: number): number => {
-    // 证据: 该边界链 vs max(动作前态, 动作后态) — 双端点语义
-    let ev = 0;
-    for (const c of chains) {
-      const pool = FREE_WIN ? [ASSIGNS_24[a0], ASSIGNS_24[a1]] : [ASSIGNS_24[c.win === 0 ? a0 : a1]];
-      let best = -Infinity;
-      for (const assign of pool) {
-        const s = Math.max(chainLL(c.read, sMid, assign), chainLL(c.read, sAfter, assign));
-        if (s > best) best = s;
-      }
-      ev += best;
-    }
-    return ev;
-  };
+  const evidence = (sMid: Perm, sAfter: Perm, a0: number, a1: number): number =>
+    evidenceAt(t, sMid, sAfter, a0, a1);
   const next = new Map<string, Path>();
   const push = (p: Path, stepToks: string[], rotPen: number, keyExtra: string): void => {
     // stepToks 正放顺序 [转体..., 动作]; 动作前态 = 撤动作, 再逐个撤转体
@@ -446,9 +487,10 @@ for (let d = 1; d <= L; d++) {
         a1: p.a1,
         lastFace: keyExtra.startsWith("F:") ? keyExtra.slice(2) : "",
         node: p.node,
-        trueSoFar: p.trueSoFar && permKey(sBefore) === trueKeys[d],
+        trueSoFar: p.trueSoFar && permKey(sBefore) === TRUE_KEYS[d],
         stm: d,
         evTrace: [...p.evTrace, ev + rotPen],
+        free: p.free,
       });
     }
   };
@@ -462,8 +504,8 @@ for (let d = 1; d <= L; d++) {
       }
     } else {
       if (p.node.labels.length) {
-        // 候选在此耗尽 → 冻结, 更早边界补背景分 (变长公平比)
-        finished.push({ ...p, score: p.score + bgSuffix[d - 1], labels: p.node.labels });
+        // 候选在此耗尽 → 冻结, 更早边界补背景分 (变长公平比); llScore=不含补齐的纯 LL 分 (FULL 续 F2L 用)
+        finished.push({ ...p, score: p.score + bgSuffix[d - 1], llScore: p.score, labels: p.node.labels });
       }
       for (const { node, toks } of p.node.children.values()) {
         push({ ...p, node }, toks, 0, `N:${node.id}`);
@@ -472,7 +514,7 @@ for (let d = 1; d <= L; d++) {
   }
   beam = [...next.values()].sort((a, b) => b.score - a.score).slice(0, BEAM);
   // 真解存活 (验证输出) + F2L-solved 信号 (生产的停机检测, 只报不喂)
-  const tk = trueKeys[d];
+  const tk = TRUE_KEYS[d];
   const rank = beam.findIndex((p) => permKey(p.state) === tk);
   const evN = chains.reduce((s, c) => s + c.read.filter(Boolean).length, 0);
   const nF2l = beam.slice(0, 50).filter((p) => f2lSolved(p.state)).length;
@@ -500,7 +542,7 @@ for (let d = 1; d <= L; d++) {
     if (rank > 0) detail(beam[rank], "true");
   }
   if (rank < 0) {
-    console.log(`  ✗ 真解掉出束 — 倒推止步于深度 ${d}/${L}`);
+    console.log(`  ✗ 真解掉出束 — 倒推止步于深度 ${d}/${DTARGET}`);
     break;
   }
 }
@@ -508,7 +550,7 @@ for (let d = 1; d <= L; d++) {
 // === 结果: 完赛候选排名 (深度 L 活跃且候选恰在此耗尽 ∪ 提前耗尽补背景分) ===
 for (const p of beam) {
   if (NO_DICT) finished.push(p);
-  else if (p.node.labels.length) finished.push({ ...p, labels: p.node.labels });
+  else if (p.node.labels.length) finished.push({ ...p, llScore: p.score, labels: p.node.labels });
 }
 // 同一候选的不同指派变体去重 (按 token 序列取最高分)
 const byToks = new Map<string, Path>();
@@ -520,11 +562,60 @@ for (const p of finished) {
 finished.length = 0;
 finished.push(...byToks.values());
 finished.sort((a, b) => b.score - a.score);
+
+// === FULL pass2: top-K LL 候选各自从 Q (LL-start 态) 自由续倒推 F2L, 按 llScore+f2lScore 再排 ===
+// 各 LL 候选到达不同 Q; 真态 Q_true 能接上匹配视频 F2L 色的续解 (高分), 冒牌 Q' 接不上 (低分) → 真解上浮。
+// 每候选独立小束搜索, 不共享大束 → 错案的自由子树无法在盲区淹没真解 (首版统一束的败因)。
+if (FULL) {
+  const passF2L = (cand: Path): { score: number; trueAlive: boolean } => {
+    interface FB { state: Perm; score: number; lastFace: string; trueSoFar: boolean }
+    let fb: FB[] = [{ state: cand.state, score: 0, lastFace: "", trueSoFar: !!cand.trueSoFar }];
+    for (let k = 1; k <= DTARGET - cand.stm; k++) {
+      const t = n - (cand.stm + k);
+      if (t < 0) break;
+      const nx = new Map<string, FB>();
+      for (const p of fb) {
+        for (const m of MOVES36) {
+          const mFace = m[0].toUpperCase();
+          if (mFace === p.lastFace) continue;
+          const sBefore = applyTo(p.state, getInv(m));
+          const sc = p.score + evidenceAt(t, sBefore, p.state, cand.a0, cand.a1);
+          const key = `${permKey(sBefore)}|${mFace}`;
+          const old = nx.get(key);
+          if (!old || sc > old.score) {
+            nx.set(key, { state: sBefore, score: sc, lastFace: mFace, trueSoFar: p.trueSoFar && permKey(sBefore) === TRUE_KEYS[cand.stm + k] });
+          }
+        }
+      }
+      fb = [...nx.values()].sort((a, b) => b.score - a.score).slice(0, F2L_BEAM);
+      if (!fb.length) break;
+    }
+    return { score: fb.length ? fb[0].score : -Infinity, trueAlive: fb.some((p) => p.trueSoFar) };
+  };
+  // 只比同长 (stm===L) 候选: LL 长度由分段已知, 各候选覆盖同一边界集 (46..n-DTARGET),
+  // 自由 F2L 的过拟合偏置对所有同长候选一致 → 公平。混长会让短候选靠过拟合白占便宜 (首版败因)。
+  const sameLen = finished.filter((p) => p.stm === L);
+  const K = Math.min(TOPK, sameLen.length);
+  console.log(`\nFULL pass2: 同长 (stm=${L}) 候选 ${sameLen.length}, 取 top-${K} 各续倒推 F2L (至深度 ${DTARGET}, 束 ${F2L_BEAM})...`);
+  for (let i = 0; i < K; i++) {
+    const r = passF2L(sameLen[i]);
+    sameLen[i].f2lScore = r.score;
+    sameLen[i].score = (sameLen[i].llScore ?? sameLen[i].score) + r.score;
+    sameLen[i].f2lTrue = r.trueAlive;
+  }
+  // 未续 F2L 的 (含异长 / 超 K) 排到已续之后, 保原相对序
+  const scored = sameLen.slice(0, K).sort((a, b) => b.score - a.score);
+  const rest = finished.filter((p) => p.f2lScore === undefined);
+  finished.length = 0;
+  finished.push(...scored, ...rest);
+}
+
 console.log(`\n完赛候选 ${finished.length}, top10 (正放顺序; GT: ${gtToks.join(" ")}):`);
 finished.slice(0, 10).forEach((p, i) => {
+  const f2l = FULL && p.f2lScore !== undefined ? ` (LL ${(p.llScore ?? 0).toFixed(1)}+F2L ${p.f2lScore.toFixed(1)}${p.f2lTrue ? " 真F2L存活" : ""})` : "";
   console.log(
-    `  #${i + 1} ${p.score.toFixed(1)} [${p.stm}步] ${p.toks.join(" ")}` +
-      `${p.labels?.length ? `  {${p.labels.slice(0, 2).join("; ")}}` : ""}${p.trueSoFar ? "  ← 真解(全程状态等价)" : ""}`,
+    `  #${i + 1} ${p.score.toFixed(1)}${f2l} [${p.stm}步] ${p.toks.join(" ")}` +
+      `${p.labels?.length ? `  {${p.labels.slice(0, 2).join("; ")}}` : ""}${p.trueSoFar ? "  ← 真解(LL 级状态等价)" : ""}`,
   );
 });
 const gtRank = finished.findIndex((p) => p.trueSoFar);
