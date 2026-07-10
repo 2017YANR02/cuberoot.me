@@ -89,12 +89,15 @@ const NAIL_HALFW_K: Record<FingerName, number> = { thumb: 0.50, index: 0.67, mid
  *  (半径 ≈ 背侧脊高 rBase),皮尖 t≈1.3。
  *  T0=0.32(2026-07-09,用户报「指甲太小」)：甲根前移到 DIP 折痕附近,甲板铺满
  *  末节背面 ~2/3;最根一行由 BASE_SINK 崖埋进近端甲襞。
- *  前缘 2026-07-10 重做(用户第 3 轮抓「甲是指背中段的白凸起、指尖是裸肉」):
- *  旧 T1=1.15 是**直线外伸**(轴向剖面不滚降),前缘远未到皮尖,加长又成「围兜」
- *  (踩过)—— 改每指动态 t1 = 1 + WRAP·rCap/len,轴向剖面过 tip 骨后沿帽球
- *  滚降(capK),甲板**包过指尖圆帽**:正/俯视指尖轮廓顶点即是甲,肉不越前缘。
- *  WRAP = 帽弧 sinθ:0.95 ≈ 72°;≥1 时高度场在帽赤道折返非图,禁。 */
-const NAIL_T0 = 0.32, NAIL_WRAP = 0.95;
+ *  前缘 2026-07-10 第 5 轮重做(用户第 4 轮抓「没有游离缘 + 棉花糖坨」):
+ *  r3 直线外伸停在帽前(尖端裸肉)、r4 沿帽球滚降 capK 又成裹球壳(甲永远
+ *  贴皮,无游离缘,侧影圆坨)—— 现改**悬出板**:贴背段(t≤1)照旧贴甲床,
+ *  过 tip 骨后甲板脱离皮面、微下弧切线伸出(见 ridge 的 DIP 抛物段),前缘
+ *  终点 t1 = 1 + REACH·rCap/len。帽面同高处的皮在 s≈len+0.83·rCap 已结束,
+ *  甲缘悬出肉外 ≈0.3·rCap,侧看有真实游离缘剪影。REACH>1:轴向越过肉尖。 */
+const NAIL_T0 = 0.32, NAIL_REACH = 1.15;
+/** 悬出段下弧深度(前缘高 = (1-DIP)×脊高):太小=平板翘出,太大=又贴回帽面。 */
+const NAIL_TIP_DIP = 0.45;
 const NAIL_TH = 0.55 * U;
 
 /**
@@ -131,9 +134,12 @@ function buildNailGeometry(args: {
   // ramp 0.68→0.90 收掉外 ~30%,把加宽的甲片大半埋回皮里(拇指加宽后完全不可见,踩过)。
   const TUCK_S = 0.84, TUCK_E = 0.99;
   const BASE_SINK = 2.2 * U;    // 甲根陡崖藏进近端甲襞(同侧缘,缓坡会让甲根轮廓折线化)
-  const FREE_LIFT = 0.18 * U;   // 游离缘微翘(过大 = 翘壳/尖喙)
   const NR = NAIL_NR, NC = NAIL_NC;
   const tc = (T0 + T1) / 2, th = (T1 - T0) / 2;
+  // t=1(tip 骨)对应的 q:悬出段(q>qTip)侧缘崖淡出 —— 那里皮面已收帽,
+  // 没有甲沟可埋,继续压 3U 会把游离缘两角卷成下垂唇(可见);淡出后游离缘
+  // 天然比贴背段略宽,正是真甲从甲襞里探出的观感。颜色白化同锚此处。
+  const qTip = (1 - tc) / th;
 
   const pos: number[] = [];
   const col: number[] = [];
@@ -145,7 +151,7 @@ function buildNailGeometry(args: {
       // 方圆甲轮廓:|q|^2.7 让中段近等宽、只在两端圆角收窄。旧 (1-q²)^(1/2.2)
       // 从中点就开始收,两端尖 → 读成水滴/血滴(2026-07-10 用户抓的)。
       const w2 = Math.pow(1 - Math.pow(Math.abs(q), 2.7), 1 / 2.4);
-      const free = sstep(0.55, 0.92, q);
+      const free = sstep(qTip - 0.15, qTip + 0.45, q);
       const lun = sstep(-0.55, -0.9, q) * 0.5; // 半月对比调淡(强白斑读成大理石纹)
       for (let j = 0; j < NC; j++) {
         const w = -1 + (2 * j) / (NC - 1);
@@ -154,8 +160,7 @@ function buildNailGeometry(args: {
         // 「皮 ∩ 甲」交线,宽软坡会让交线随皮面噪声大幅横移,读成锯齿 blob(踩过)
         const hu = args.surf(sAbs, u)
           - BASE_SINK * sstep(-0.74, -0.94, q)
-          + FREE_LIFT * sstep(0.55, 0.97, q)
-          - EDGE_TUCK * sstep(TUCK_S, TUCK_E, Math.abs(w));
+          - EDGE_TUCK * sstep(TUCK_S, TUCK_E, Math.abs(w)) * (1 - sstep(qTip - 0.05, qTip + 0.4, q));
         // 甲面=甲底+厚度(中央极轻微加厚;穹顶感主要来自甲底跟皮面圆度)
         const h = layer === 0 ? hu + TH * (0.94 + 0.06 * Math.sqrt(Math.max(0, 1 - w * w))) : hu;
         P.copy(p3).addScaledVector(axis, sAbs).addScaledVector(dorsal, h).addScaledVector(lat, u);
@@ -445,14 +450,17 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
         rBase = Math.max(rBase, p.h);
       }
       rBase = THREE.MathUtils.clamp(rBase > 0 ? rBase : 0.55 * rDist, 4.5 * U, 11 * U);
-      // 指尖圆帽滚降 + 甲板前缘终点(NAIL_WRAP 注释):帽半径 ≈ 背侧脊高。
+      // 甲板前缘终点(NAIL_REACH 注释):帽半径 ≈ 背侧脊高。悬出段脊线 =
+      // 微下弧抛物板(不贴帽面):前缘高 (1-DIP)×脊高,始终在帽圆之上 →
+      // 甲缘悬出肉外(帽同高处的皮 s≈len+0.83·rCap 就没了);贴背段照旧。
       const rCap = rBase;
-      const t1 = 1 + (NAIL_WRAP * rCap) / nf.len;
-      const capK = (sq: number): number => {
-        const x = (sq - nf.len) / rCap;
-        return x <= 0 ? 1 : Math.sqrt(Math.max(0, 1 - x * x));
+      const t1 = 1 + (NAIL_REACH * rCap) / nf.len;
+      const rTipRidge = rBase * (1 - 0.08); // 贴背段末端(t=1)脊高,悬出段起点
+      const ridge = (sq: number): number => {
+        if (sq <= nf.len) return rBase * (1 - 0.08 * sstep(0.50, 1, sq / nf.len));
+        const x = Math.min(1, (sq - nf.len) / (NAIL_REACH * rCap));
+        return rTipRidge * (1 - NAIL_TIP_DIP * x * x);
       };
-      const ridge = (sq: number): number => rBase * (1 - 0.08 * sstep(0.50, t1, sq / nf.len)) * capK(sq);
       const halfW = NAIL_HALFW_K[name] * nf.len;
       const rSide = Math.max(1.25 * rBase, 1.1 * halfW); // 横向曲率半径(实测拱 ≈1.25×脊高)
       const bed0 = (sq: number, uq: number): number => {
@@ -460,11 +468,12 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
         return ridge(sq) - (rSide - Math.sqrt(Math.max(0, rSide * rSide - du * du)));
       };
       const halfWAt = (): number => halfW;
-      // 覆盖余量:甲域面内(避开埋皮侧缘)按真实样本(非平滑场)校验
+      // 覆盖余量:甲域**贴背段**面内(避开埋皮侧缘)按真实样本(非平滑场)校验;
+      // 悬出段皮面本就该在甲板之下(游离缘),不参与抬升。
       let need = 0;
       for (const p of smp) {
         const t = p.s / nf.len;
-        if (t < NAIL_T0 || t > t1) continue;
+        if (t < NAIL_T0 || t > Math.min(t1, 1.02)) continue;
         if (Math.abs(p.u - uC) > 0.85 * halfW) continue;
         need = Math.max(need, p.h - bed0(p.s, p.u));
       }
