@@ -38,3 +38,22 @@
 .wse-att-td::after  { content: ")"; opacity: 0; }
 .wse-att-td.is-trimmed::before,
 .wse-att-td.is-trimmed::after { opacity: 1; }
+
+/* 平均列小数点对齐(/recon/[id] 同场比赛表 + /wca/persons 详细成绩共用):平均成绩 + 平均STM + 平均TPS
+   三行两列网格——整数右对齐、小数左对齐,小数点落在列分界线上 → 不论整数位数(3.74 / 42.67)小数点跨行对齐。
+   PR 角标内联跟在平均值小数之后(见 AvgDec)。每行经 .wp-avg-dec 的 display:contents 铺成 int/frac 两格。 */
+.wp-avg-cell {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    justify-content: center;
+    row-gap: 4px;
+    align-items: baseline;
+}
+.wp-avg-dec { display: contents; }
+.wp-avg-int { justify-self: end; text-align: right; font-variant-numeric: tabular-nums; }
+.wp-avg-frac { justify-self: start; text-align: left; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 平均STM / 平均TPS 两行:小一号 + 更淡(--muted-foreground 全局 token,两页通用) */
+.wp-avg-dec-sub .wp-avg-int,
+.wp-avg-dec-sub .wp-avg-frac {
+    font-size: 0.72rem; line-height: 1.2; font-weight: 400; color: var(--muted-foreground);
+}

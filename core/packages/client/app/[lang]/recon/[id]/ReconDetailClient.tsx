@@ -69,6 +69,7 @@ import { parseReconId, reconPathSeg } from '@/lib/recon-seo';
 import '../recon.css';
 import './recon_detail.css';
 import '@/components/wca-results/attempts-grid.css';
+import { AvgDec } from '@/components/wca-results/AvgDec';
 import { tr } from '@/i18n/tr';
 
 const YOUTUBE_LOGO = '/assets/youtube_logo.svg';
@@ -909,20 +910,6 @@ function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: Reco
 function ao5Mean(vals: number[]): number {
   const sum = vals.reduce((a, b) => a + b, 0);
   return (sum - Math.min(...vals) - Math.max(...vals)) / (vals.length - 2);
-}
-
-/** 平均列一行:按小数点拆成整数 / 小数两个网格项(整数右对齐、小数左对齐)→ 小数点跨行对齐(见 .wp-avg-*)。
- *  末位 '.' 切分,兼容 M:SS.dd(按秒的小数点对齐);无小数点(如 FMC 步数)整串进整数格。 */
-function AvgDec({ text, badge, variant }: { text: string; badge?: React.ReactNode; variant: 'main' | 'sub' }) {
-  const dot = text.lastIndexOf('.');
-  const intPart = dot >= 0 ? text.slice(0, dot) : text;
-  const fracPart = dot >= 0 ? text.slice(dot) : '';
-  return (
-    <span className={`wp-avg-dec wp-avg-dec-${variant}`}>
-      <span className="wp-avg-int">{intPart}</span>
-      <span className="wp-avg-frac">{fracPart}{badge}</span>
-    </span>
-  );
 }
 
 function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: (v: boolean) => void }) {

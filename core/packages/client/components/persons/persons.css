@@ -721,13 +721,8 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 .wp-cell-attempts .wp-att-sub {
     font-size: 0.72rem; line-height: 1.2; font-weight: 400; color: var(--wp-text-mute);
 }
-/* 平均列:平均成绩(第一行)下方补 平均STM / 平均TPS 两行(Ao5 去尾均值),居中对齐平均值,
-   4px 行距与 STM/TPS 标签、逐把值同行对齐 */
-.wp-avg-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
-.wp-avg-substat {
-    font-size: 0.72rem; line-height: 1.2; font-weight: 400;
-    color: var(--wp-text-mute); font-variant-numeric: tabular-nums;
-}
+/* 平均列:平均成绩(第一行)下方补 平均STM / 平均TPS 两行(Ao5 去尾均值),按小数点对齐平均值。
+   网格结构 + 子行样式走共享 components/wca-results/attempts-grid.css(与 /recon 同场比赛表同一份)。 */
 /* 「详细成绩」表头压在下方 attempts 网格正上方:同列模板 + 同字号 + 同列下限(10ch)→ 表头序号与下方成绩同列对齐。
    下限提到 10ch:容下「值 + PR 角标」(如 (4.61 PR119)≈9ch),使表头与各行该列都贴 10ch 下限 → 列宽一致不漂移。 */
 .wp-bycomp-table thead th.wp-th-attempts { text-align: left; }
