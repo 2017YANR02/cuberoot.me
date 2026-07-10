@@ -24,7 +24,7 @@ import { ROUND_ORDER, ROUND_HINT_ZH, ROUND_HINT_EN, roundLabel, roundClass } fro
 import { AttemptsList } from './AttemptsList';
 import { AverageValueCell } from './AverageValueCell';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
-import { rowHasReconStats, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
+import { rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
@@ -399,6 +399,8 @@ function EventRoundsList({
             // 「#」开 + 该轮有复盘(带 stm/tps)→ 详细成绩下补 STM/TPS 两行,轮次列同步出两行标签。
             const hasReconStats = showAttemptRanks && rowHasReconStats(reconLookup, r.competition_id, eventId, r.round_type_id, effAttempts.length);
             const speedUnit = eventId === 'sq1' ? 'SPS' : 'TPS';
+            // 平均 STM / 平均 TPS(Ao5 去尾均值),5 把全有复盘才给值,展示在平均列下方两行。
+            const roundAvg = hasReconStats ? computeReconRoundAvg(reconLookup, r.competition_id, eventId, r.round_type_id) : null;
             return (
               <tr
                 key={r.id}
@@ -464,15 +466,23 @@ function EventRoundsList({
                   </span>
                 </td>
                 <td className={`wp-cell-result ${oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
-                  <AverageValueCell
-                    effAvg={effAvg}
-                    attempts={effAttempts}
-                    eventId={eventId}
-                    averageRecord={averageRecord}
-                    averageRank={averageRank}
-                    oldValues={oldAvg}
-                    note={chain?.[chain.length - 1]?.note}
-                  />
+                  <span className={hasReconStats ? 'wp-avg-cell' : undefined}>
+                    <AverageValueCell
+                      effAvg={effAvg}
+                      attempts={effAttempts}
+                      eventId={eventId}
+                      averageRecord={averageRecord}
+                      averageRank={averageRank}
+                      oldValues={oldAvg}
+                      note={chain?.[chain.length - 1]?.note}
+                    />
+                    {hasReconStats && (
+                      <>
+                        <span className="wp-avg-substat">{roundAvg ? roundAvg.stm.toFixed(2) : ''}</span>
+                        <span className="wp-avg-substat">{roundAvg ? roundAvg.tps.toFixed(2) : ''}</span>
+                      </>
+                    )}
+                  </span>
                 </td>
                 <td className={`wp-cell-attempts ${isMbldEvent(eventId) ? 'wp-cell-attempts--mbld' : ''} ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
                   <AttemptsList
