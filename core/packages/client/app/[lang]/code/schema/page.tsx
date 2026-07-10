@@ -236,6 +236,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 64, slug: 'user_accounts', desc: { zh: '内部账号体系:app_users + auth_identities(多身份绑定)+ auth_codes(邮箱/手机验证码),从 wca_users 回填', en: 'Internal accounts: app_users + auth_identities (multi-provider) + auth_codes (email/phone), backfilled from wca_users' } },
   { n: 65, slug: 'recon_official_enum', desc: { zh: 'recons.official 从 0/1 布尔改为三值枚举 wca / non_wca / practice', en: 'Change recons.official from 0/1 boolean to three-value enum wca / non_wca / practice' } },
   { n: 66, slug: 'forum', desc: { zh: '论坛 6 表:分类 / 子版 / 主题 / 帖子 / 反应 / 举报 + 种子分类(6 类 16 版)', en: 'Forum: categories, boards, threads, posts, reactions, reports + seeded taxonomy (6 categories, 16 boards)' } },
+  { n: 67, slug: 'forum_import_articles', desc: { zh: '已发布长文并入论坛「教程与指南」版(每篇 → 一主题 + 首帖),/article 前端退役', en: 'Import published articles into the forum tutorials board (one thread + first post each); retire the /article frontend' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

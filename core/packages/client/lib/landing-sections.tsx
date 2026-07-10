@@ -42,7 +42,6 @@ export const TEXTS: Record<string, { en: string; zh: string
   alg:             { en: 'Tutorial',   zh: '教程' },
   algdb:           { en: 'Algorithms', zh: '公式' },
   wiki:            { en: 'Wiki', zh: 'Wiki' },
-  article:         { en: 'Articles', zh: '文章' },
   sitesDirectory:  { en: 'Web', zh: '网站'
 },
   mosaic:          { en: 'Mosaic', zh: '马赛克'
@@ -133,7 +132,6 @@ export const SECTIONS: Section[] = [
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg', comingSoon: true },
       { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: BookMarked, nameKey: 'algdb' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },
-      { id: 'article',  href: '/article',  internal: true, tier: 'medium', Icon: BookOpen,   nameKey: 'article' },
       { id: 'regulation', href: '/regulation', internal: true, tier: 'medium', Icon: Scale, nameKey: 'regulation' },
       { id: 'math-hub', href: '/math', internal: true, tier: 'medium', Icon: Sigma, nameKey: 'theoryGroup' },
       { id: 'why-cube', href: '/why-cube', internal: true, tier: 'medium', Icon: Sprout, nameKey: 'whyCube' },

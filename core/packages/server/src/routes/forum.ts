@@ -58,6 +58,9 @@ function escapeLike(s: string): string {
   return s.replace(/[\\%_]/g, (m) => '\\' + m);
 }
 
+// 正文长度上限。长文并入论坛后(原 /article 无此限),放宽到 50k 让教程级长帖能发。
+const MAX_CONTENT_LEN = 50000;
+
 // post_total = 全部楼层数(含软删占位)——客户端「跳到最后一页」的分页数学要按占位算
 const THREAD_COLS = `t.id, t.title, t.author_id, t.author_name, t.created_at,
   t.reply_count, t.view_count, t.last_post_at, t.last_post_author_id, t.last_post_author_name,
@@ -366,7 +369,7 @@ forumRoutes.post('/forum/threads', async (c) => {
   if (!title) return c.json({ error: 'title is required' }, 400);
   if (title.length > 200) return c.json({ error: 'title exceeds 200 characters' }, 400);
   if (!content) return c.json({ error: 'content is required' }, 400);
-  if (content.length > 20000) return c.json({ error: 'content exceeds 20000 characters' }, 400);
+  if (content.length > MAX_CONTENT_LEN) return c.json({ error: `content exceeds ${MAX_CONTENT_LEN} characters` }, 400);
 
   const forums = await query<{ id: string; admin_only: boolean }>(
     'SELECT id, admin_only FROM forum_forums WHERE slug = ?', [body.forumSlug],
@@ -400,7 +403,7 @@ forumRoutes.post('/forum/posts', async (c) => {
   if (!Number.isInteger(threadId) || threadId <= 0) return c.json({ error: 'threadId is required' }, 400);
   const content = (body.content ?? '').trim();
   if (!content) return c.json({ error: 'content is required' }, 400);
-  if (content.length > 20000) return c.json({ error: 'content exceeds 20000 characters' }, 400);
+  if (content.length > MAX_CONTENT_LEN) return c.json({ error: `content exceeds ${MAX_CONTENT_LEN} characters` }, 400);
 
   const threads = await query<{ is_locked: boolean; is_deleted: boolean }>(
     'SELECT is_locked, is_deleted FROM forum_threads WHERE id = ?', [threadId],
@@ -437,7 +440,7 @@ forumRoutes.patch('/forum/posts/:id', async (c) => {
   const body = await c.req.json<{ content?: string }>();
   const content = (body.content ?? '').trim();
   if (!content) return c.json({ error: 'content is required' }, 400);
-  if (content.length > 20000) return c.json({ error: 'content exceeds 20000 characters' }, 400);
+  if (content.length > MAX_CONTENT_LEN) return c.json({ error: `content exceeds ${MAX_CONTENT_LEN} characters` }, 400);
 
   const posts = await query<{ author_id: string; is_deleted: boolean; is_locked: boolean; thread_deleted: boolean }>(
     `SELECT p.author_id, p.is_deleted, t.is_locked, t.is_deleted AS thread_deleted

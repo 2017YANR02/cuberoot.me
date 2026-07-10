@@ -1,0 +1,201 @@
+/* ──────────────────────────────────────────────────────────────
+   ForumMarkdownEditor — 论坛长文编辑器(移植自退役的 /article ArticleEditor)
+   - 全部颜色走 globals.css token,不硬码 hex(房规)。
+   - 布局:工具栏 → split (source | preview)。<768px:source 上、preview 下。
+   - 无 card 外框(房规):靠分隔线 + gap + margin 分层。
+   ────────────────────────────────────────────────────────────── */
+
+.forum-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── 工具栏 ─── */
+.forum-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--card);
+}
+.forum-editor-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.forum-editor-tool:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+.forum-editor-tool:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.forum-editor-tool-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--border-default);
+}
+.forum-editor-tool-hint {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--faint-foreground);
+  padding-right: 4px;
+}
+
+/* ─── split pane ─── */
+.forum-editor-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: stretch;
+  min-height: 420px;
+}
+
+/* source (CodeMirror) */
+.forum-editor-source {
+  position: relative;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--card);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.forum-editor-source-drag {
+  border-color: var(--ring);
+  border-style: dashed;
+}
+.forum-editor-source .cm-editor {
+  height: 100%;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 15px;
+}
+.forum-editor-source .cm-scroller {
+  font-family: var(--font-mono);
+  line-height: 1.7;
+}
+.forum-editor-source .cm-content {
+  padding: 12px 14px;
+  caret-color: var(--foreground);
+}
+.forum-editor-source .cm-editor.cm-focused {
+  outline: none;
+}
+.forum-editor-source .cm-cursor {
+  border-left-color: var(--foreground);
+}
+.forum-editor-source .cm-selectionBackground,
+.forum-editor-source .cm-content ::selection {
+  background: var(--accent-soft) !important;
+}
+.forum-editor-source .cm-placeholder {
+  color: var(--faint-foreground);
+}
+
+/* markdown 语法高亮 — class-based HighlightStyle(basicSetup syntaxHighlighting:false)。
+   一个 token 可能命中多个 tag,故按 弱→强 排序,link 放最后保证链接永远是 accent。 */
+.forum-editor-source .cm-md-punct { color: var(--faint-foreground); }
+.forum-editor-source .cm-md-code,
+.forum-editor-source .cm-md-muted { color: var(--muted-foreground); }
+.forum-editor-source .cm-md-strike {
+  color: var(--muted-foreground);
+  text-decoration: line-through;
+}
+.forum-editor-source .cm-md-em {
+  color: var(--foreground);
+  font-style: italic;
+}
+.forum-editor-source .cm-md-heading,
+.forum-editor-source .cm-md-strong {
+  color: var(--foreground);
+  font-weight: 700;
+}
+.forum-editor-source .cm-md-link { color: var(--accent); }
+.forum-editor-cm-loading {
+  height: 100%;
+  min-height: 420px;
+  background: var(--muted);
+}
+
+.forum-editor-drop-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  pointer-events: none;
+}
+
+/* preview — reuse .forum-post-body so preview == posted output */
+.forum-editor-preview {
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  overflow: auto;
+  background: var(--background);
+}
+.forum-editor-preview-body {
+  padding: 16px 18px;
+}
+.forum-editor-preview-empty {
+  color: var(--faint-foreground);
+  font-style: italic;
+}
+
+/* ─── error ─── */
+.forum-editor-error {
+  font-size: 14px;
+  color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--destructive) 40%, transparent);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+/* ─── spinner ─── */
+.forum-editor-spin {
+  animation: forum-editor-spin 0.9s linear infinite;
+}
+@keyframes forum-editor-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── 移动端:source 在上、preview 在下(不并排)─── */
+@media (max-width: 768px) {
+  .forum-editor-split {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+  .forum-editor-source {
+    min-height: 300px;
+  }
+  .forum-editor-cm-loading {
+    min-height: 300px;
+  }
+  .forum-editor-preview {
+    max-height: 60vh;
+  }
+  .forum-editor-tool-hint {
+    width: 100%;
+    margin-left: 0;
+    order: 10;
+  }
+}
