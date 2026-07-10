@@ -4,7 +4,7 @@ import {
   CORNER_CYCLE, CENTER_CYCLE, CORNER_ORI_DELTA,
   solvedSkewb, applySkewbMove, applySkewbScramble, isSolved,
   parseSkewbMoves, skewbMoveToString, skewbMovesToString,
-  randomSkewbScramble, type SkewbMove,
+  randomSkewbScramble, isSkewbRot, type SkewbMove,
 } from '@/app/[lang]/sim/engine/skewb/skewbState';
 
 // ── Independent geometric re-derivation (move-model fidelity anchor) ──────────
@@ -159,7 +159,7 @@ describe('Skewb state — WCA notation', () => {
 
   it('WCA letters map to the right grips (cubing.js frame)', () => {
     // R=DRB(6) U=UBL(3) L=DLF(5) B=DBL(7); F=UFR(0) D=DFR(4) UL=UFL(1) UR=UBR(2)
-    const idx = (tok: string) => parseSkewbMoves(tok)[0].corner;
+    const idx = (tok: string) => { const m = parseSkewbMoves(tok)[0]; return 'corner' in m ? m.corner : -1; };
     expect([idx('R'), idx('U'), idx('L'), idx('B')]).toEqual([6, 3, 5, 7]);
     expect([idx('F'), idx('D'), idx('UL'), idx('UR')]).toEqual([0, 4, 1, 2]);
   });
@@ -167,6 +167,41 @@ describe('Skewb state — WCA notation', () => {
   it('bare = clockwise (dir -1), primed = +120 (dir +1)', () => {
     expect(skewbMoveToString({ corner: 6, dir: -1 })).toBe('R');
     expect(skewbMoveToString({ corner: 6, dir: 1 })).toBe("R'");
+  });
+});
+
+describe('Skewb state — whole-cube rotations (x/y/z)', () => {
+  it('parses x / y / z with prime + double suffixes', () => {
+    expect(parseSkewbMoves('x')).toEqual([{ rot: 0, dir: 1 }]);
+    expect(parseSkewbMoves("y'")).toEqual([{ rot: 1, dir: -1 }]);
+    expect(parseSkewbMoves('z2')).toEqual([{ rot: 2, dir: 2 }]);
+  });
+
+  it('isSkewbRot narrows rotations from grips', () => {
+    expect(isSkewbRot(parseSkewbMoves('x')[0])).toBe(true);
+    expect(isSkewbRot(parseSkewbMoves('R')[0])).toBe(false);
+  });
+
+  it('round-trips a mix of rotations and grips', () => {
+    const txt = "x y' z2 R U' UL";
+    expect(skewbMovesToString(parseSkewbMoves(txt))).toBe(txt);
+    expect(parseSkewbMoves(txt).length).toBe(6);
+  });
+
+  it('a rotation leaves the discrete state untouched (any prior state)', () => {
+    const scrambled = applySkewbScramble(randomSkewbScramble(15));
+    for (const move of parseSkewbMoves("x x' y z2")) {
+      const after = applySkewbMove(scrambled, move);
+      expect(after.cornerPerm).toEqual(scrambled.cornerPerm);
+      expect(after.cornerOri).toEqual(scrambled.cornerOri);
+      expect(after.centerPerm).toEqual(scrambled.centerPerm);
+    }
+  });
+
+  it('rotations do not affect solved-ness', () => {
+    let s = solvedSkewb();
+    for (const move of parseSkewbMoves("x y2 z'")) s = applySkewbMove(s, move);
+    expect(isSolved(s)).toBe(true);
   });
 });
 
