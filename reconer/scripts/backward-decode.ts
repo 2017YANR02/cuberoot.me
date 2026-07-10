@@ -603,11 +603,15 @@ if (FULL) {
     sameLen[i].score = (sameLen[i].llScore ?? sameLen[i].score) + r.score;
     sameLen[i].f2lTrue = r.trueAlive;
   }
-  // 未续 F2L 的 (含异长 / 超 K) 排到已续之后, 保原相对序
-  const scored = sameLen.slice(0, K).sort((a, b) => b.score - a.score);
-  const rest = finished.filter((p) => p.f2lScore === undefined);
-  finished.length = 0;
-  finished.push(...scored, ...rest);
+  // 未续 F2L 的候选 (异长 / 超 K): 给 F2L 边界记背景分, 与已续同尺度可比后全局排序
+  let bgF2L = 0;
+  for (let dd = L + 1; dd <= DTARGET; dd++) bgF2L += bgOfBound(n - dd);
+  for (const p of finished) {
+    if (p.f2lScore === undefined) p.score = (p.llScore ?? p.score) + bgF2L;
+  }
+  finished.sort((a, b) => b.score - a.score);
+  const nScored = finished.filter((p) => p.f2lScore !== undefined).length;
+  console.log(`pass2 完成: ${nScored} 候选续了 F2L, 其余按 F2L 背景分 (${bgF2L.toFixed(1)}) 计`);
 }
 
 console.log(`\n完赛候选 ${finished.length}, top10 (正放顺序; GT: ${gtToks.join(" ")}):`);
