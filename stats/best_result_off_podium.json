@@ -305,6 +305,13 @@
           7
         ],
         [
+          "[Matty Hiroto Inaba](https://www.worldcubeassociation.org/persons/2016INAB01)",
+          "**40.05**",
+          "42.49",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#e555_f)",
+          4
+        ],
+        [
           "[Emmanuel Kao](https://www.worldcubeassociation.org/persons/2022KAOE01)",
           "**39.81**",
           "42.80",
@@ -331,13 +338,6 @@
           "43.76",
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e555_f)",
           10
-        ],
-        [
-          "[Ziyu Wu (吴子钰)](https://www.worldcubeassociation.org/persons/2016WUZI04)",
-          "**40.73**",
-          "44.00",
-          "[WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024/results/all#e555_f)",
-          5
         ]
       ]
     },
@@ -554,18 +554,18 @@
           4
         ],
         [
-          "[Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29)",
-          "**16.80**",
+          "[Jeff Park](https://www.worldcubeassociation.org/persons/2015PARK08)",
+          "**16.76**",
           "DNF",
-          "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f)",
-          6
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#e333bf_f)",
+          4
         ],
         [
-          "[Gianfranco Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN29)",
-          "**16.80**",
+          "[Jeff Park](https://www.worldcubeassociation.org/persons/2015PARK08)",
+          "**16.76**",
           "DNF",
-          "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333bf_f)",
-          6
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#e333bf_f)",
+          4
         ]
       ]
     },
@@ -678,6 +678,13 @@
           5
         ],
         [
+          "[Eli Parker](https://www.worldcubeassociation.org/persons/2016PARK02)",
+          "**8.20**",
+          "9.78",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#e333oh_f)",
+          4
+        ],
+        [
           "[Nicholas Archer](https://www.worldcubeassociation.org/persons/2020ARCH01)",
           "**7.92**",
           "9.80",
@@ -711,13 +718,6 @@
           "10.01",
           "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e333oh_f)",
           4
-        ],
-        [
-          "[Zhouheng Sun (孙舟横)](https://www.worldcubeassociation.org/persons/2008SUNZ01)",
-          "**8.11**",
-          "10.02",
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e333oh_f)",
-          9
         ]
       ]
     },
@@ -878,11 +878,39 @@
       "titleZh": "魔表",
       "rows": [
         [
+          "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
+          "**1.80**",
+          "3.18",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eclock_f)",
+          4
+        ],
+        [
+          "[Max McGill](https://www.worldcubeassociation.org/persons/2023MCGI02)",
+          "**2.45**",
+          "3.19",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eclock_f)",
+          5
+        ],
+        [
           "[Matthew Powell](https://www.worldcubeassociation.org/persons/2023POWE10)",
           "**2.92**",
           "3.20",
           "[Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026/results/all#eclock_f)",
           4
+        ],
+        [
+          "[Carter Thomas](https://www.worldcubeassociation.org/persons/2018THOM29)",
+          "**2.86**",
+          "3.25",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eclock_f)",
+          6
+        ],
+        [
+          "[Zachary Cribb](https://www.worldcubeassociation.org/persons/2022CRIB01)",
+          "**2.57**",
+          "3.27",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eclock_f)",
+          7
         ],
         [
           "[Dayson Lu (吕昊骏)](https://www.worldcubeassociation.org/persons/2023LUDA02)",
@@ -918,34 +946,6 @@
           "3.45",
           "[Singapore Championship 2026](https://www.worldcubeassociation.org/competitions/SingaporeChampionship2026/results/all#eclock_f)",
           6
-        ],
-        [
-          "[Kyle Jones](https://www.worldcubeassociation.org/persons/2022JONE11)",
-          "**2.72**",
-          "3.45",
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_f)",
-          6
-        ],
-        [
-          "[Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01)",
-          "**2.61**",
-          "3.46",
-          "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_f)",
-          7
-        ],
-        [
-          "[Luke Burns](https://www.worldcubeassociation.org/persons/2020BURN06)",
-          "**2.16**",
-          "3.48",
-          "[Wakefield Summer 2026](https://www.worldcubeassociation.org/competitions/WakefieldSummer2026/results/all#eclock_f)",
-          4
-        ],
-        [
-          "[Zoei Principe](https://www.worldcubeassociation.org/persons/2022PRIN09)",
-          "**2.77**",
-          "3.53",
-          "[WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024/results/all#eclock_f)",
-          4
         ]
       ]
     },
@@ -996,6 +996,20 @@
           4
         ],
         [
+          "[William Lavoie](https://www.worldcubeassociation.org/persons/2023LAVO01)",
+          "**1.70**",
+          "2.20",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eskewb_f)",
+          4
+        ],
+        [
+          "[Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01)",
+          "**1.70**",
+          "2.21",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eskewb_f)",
+          5
+        ],
+        [
           "[Antoni Stojek](https://www.worldcubeassociation.org/persons/2022STOJ03)",
           "**1.85**",
           "2.30",
@@ -1008,20 +1022,6 @@
           "2.31",
           "[Szansa Cubing Open Warsaw 2024](https://www.worldcubeassociation.org/competitions/SzansaCubingOpenWarsaw2024/results/all#eskewb_f)",
           5
-        ],
-        [
-          "[Kajetan Opach](https://www.worldcubeassociation.org/persons/2018OPAC01)",
-          "**1.88**",
-          "2.33",
-          "[Rzeszów Open 2025](https://www.worldcubeassociation.org/competitions/RzeszowOpen2025/results/all#eskewb_f)",
-          4
-        ],
-        [
-          "[Oskar Hanuszkiewicz](https://www.worldcubeassociation.org/persons/2018HANU02)",
-          "**1.86**",
-          "2.34",
-          "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024/results/all#eskewb_f)",
-          4
         ]
       ]
     },
@@ -1086,18 +1086,18 @@
           7
         ],
         [
+          "[Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)",
+          "**6.08**",
+          "6.45",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#esq1_f)",
+          4
+        ],
+        [
           "[Daniel Karnaukh](https://www.worldcubeassociation.org/persons/2014KARN02)",
           "**6.48**",
           "6.70",
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#esq1_f)",
           6
-        ],
-        [
-          "[Park Ji Won (박지원)](https://www.worldcubeassociation.org/persons/2017WONP01)",
-          "**5.47**",
-          "6.78",
-          "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#esq1_f)",
-          4
         ]
       ]
     },
@@ -1106,11 +1106,25 @@
       "titleZh": "四盲",
       "rows": [
         [
+          "[Joshua Gao](https://www.worldcubeassociation.org/persons/2023GAOJ02)",
+          "**1:36.76**",
+          "DNF",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#e444bf_f)",
+          4
+        ],
+        [
           "[Michael Tripodi](https://www.worldcubeassociation.org/persons/2021TRIP01)",
           "**1:36.94**",
           "1:39.39",
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e444bf_f)",
           4
+        ],
+        [
+          "[Tommy Cherry](https://www.worldcubeassociation.org/persons/2015CHER07)",
+          "**1:37.28**",
+          "DNF",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#e444bf_f)",
+          5
         ],
         [
           "[Michael Tripodi](https://www.worldcubeassociation.org/persons/2021TRIP01)",
@@ -1127,6 +1141,13 @@
           5
         ],
         [
+          "[Graham Siggins](https://www.worldcubeassociation.org/persons/2016SIGG01)",
+          "**1:45.86**",
+          "DNF",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#e444bf_f)",
+          6
+        ],
+        [
           "[Adrian Dębski](https://www.worldcubeassociation.org/persons/2017DEBS01)",
           "**1:46.12**",
           "DNF",
@@ -1141,39 +1162,18 @@
           6
         ],
         [
+          "[Gabriel Williams V](https://www.worldcubeassociation.org/persons/2022WILL06)",
+          "**1:49.43**",
+          "DNF",
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#e444bf_f)",
+          7
+        ],
+        [
           "[Graham Siggins](https://www.worldcubeassociation.org/persons/2016SIGG01)",
           "**1:49.64**",
           "DNF",
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#e444bf_f)",
           7
-        ],
-        [
-          "[Charlie Harrison](https://www.worldcubeassociation.org/persons/2017HARR08)",
-          "**1:52.36**",
-          "1:59.43",
-          "[WCA European Championship 2024](https://www.worldcubeassociation.org/competitions/Euro2024/results/all#e444bf_f)",
-          5
-        ],
-        [
-          "[Hill Pong Yong Feng](https://www.worldcubeassociation.org/persons/2017FENG10)",
-          "**1:54.81**",
-          "DNF",
-          "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023/results/all#e444bf_f)",
-          5
-        ],
-        [
-          "[Theodore Chan](https://www.worldcubeassociation.org/persons/2016CHAN25)",
-          "**1:55.78**",
-          "DNF",
-          "[WCA Asian Championship 2024](https://www.worldcubeassociation.org/competitions/RubiksWCAAsianChampionship2024/results/all#e444bf_f)",
-          4
-        ],
-        [
-          "[Kamil Przybylski](https://www.worldcubeassociation.org/persons/2016PRZY01)",
-          "**1:56.56**",
-          "2:21.61",
-          "[Bishop's Stortford Spring 2023](https://www.worldcubeassociation.org/competitions/BishopsStortfordSpringBBO2023/results/all#e444bf_f)",
-          4
         ]
       ]
     },
