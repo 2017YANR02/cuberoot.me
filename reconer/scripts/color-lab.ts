@@ -374,3 +374,47 @@ const knnRef = grid.find((c) => c.strat === "meanAll" && c.space === "hsvDisc")!
 console.log(
   `  合计 高斯样本内 ${((gOk / gTot) * 100).toFixed(1)}% (拒判 ${((gRej / gTot) * 100).toFixed(0)}%)  vs  同表征 kNN-LOO ${((knnRef.ok / knnRef.n) * 100).toFixed(1)}%  →  欠债 ${(((knnRef.ok / knnRef.n) - (gOk / gTot)) * 100).toFixed(1)} 点`,
 );
+
+// ===== 跨视频 (留一视频) kNN: legit 生产路径可行性 =====
+// per-video legit 标定失败 (scramble+solved 凑不齐 3 色)。破法 = 全局池化其他视频
+// 的已知态样本。若跨视频 kNN ≈ 同视频, 全局池化直接可用; 若崩 = 白平衡差异需归一。
+console.log("\n跨视频 LOO kNN (train=其他4视频, test=本视频) — legit 全局池化可行性");
+function labScaled(feats: number[][]): { X: number[][]; scale: number[] } {
+  const scale = [0, 1, 2].map((d) => {
+    const xs = feats.map((f) => f[d]).sort((a, b) => a - b);
+    const m = xs[xs.length >> 1];
+    const dev = xs.map((x) => Math.abs(x - m)).sort((a, b) => a - b);
+    return Math.max(1, 1.4826 * dev[dev.length >> 1]);
+  });
+  return { X: feats.map((f) => f.map((x, d) => x / scale[d])), scale };
+}
+let xvOk = 0, xvTot = 0;
+const labPer = decoded.map((v) => v.pix.map((ps) => rgb2lab(...STRATS.meanAll(ps))));
+for (let ti = 0; ti < decoded.length; ti++) {
+  const trainFeats: number[][] = [], trainLabs: string[] = [];
+  for (let vi = 0; vi < decoded.length; vi++) {
+    if (vi === ti) continue;
+    for (let j = 0; j < labPer[vi].length; j++) { trainFeats.push(labPer[vi][j]); trainLabs.push(decoded[vi].labels[j]); }
+  }
+  // 用训练集的尺度归一 (test 同尺度)
+  const { scale } = labScaled(trainFeats);
+  const Xtr = trainFeats.map((f) => f.map((x, d) => x / scale[d]));
+  let ok = 0, tot = 0;
+  for (let j = 0; j < labPer[ti].length; j++) {
+    const q = labPer[ti][j].map((x, d) => x / scale[d]);
+    const nn: { d: number; l: string }[] = [];
+    for (let m = 0; m < Xtr.length; m++) {
+      const d0 = q[0] - Xtr[m][0], d1 = q[1] - Xtr[m][1], d2 = q[2] - Xtr[m][2];
+      const d = d0 * d0 + d1 * d1 + d2 * d2;
+      if (nn.length < K) { nn.push({ d, l: trainLabs[m] }); if (nn.length === K) nn.sort((a, b) => a.d - b.d); }
+      else if (d < nn[K - 1].d) { let p = K - 1; while (p > 0 && nn[p - 1].d > d) { nn[p] = nn[p - 1]; p--; } nn[p] = { d, l: trainLabs[m] }; }
+    }
+    const tally = new Map<string, number>();
+    for (const e of nn) tally.set(e.l, (tally.get(e.l) ?? 0) + 1);
+    const pred = [...tally.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    tot++; if (pred === decoded[ti].labels[j]) ok++;
+  }
+  xvOk += ok; xvTot += tot;
+  console.log(`  test=${decoded[ti].tag.padEnd(14)} 跨视频 ${((ok / tot) * 100).toFixed(1)}% (${tot})`);
+}
+console.log(`  合计 跨视频 ${((xvOk / xvTot) * 100).toFixed(1)}%  vs  同视频 kNN-LOO ${((knnRef.ok / knnRef.n) * 100).toFixed(1)}%  (差距=白平衡代价)`);
