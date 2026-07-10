@@ -294,9 +294,7 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
           </label>
           {caseStat && (
             <span className="scramble-stats-puzzle-metric">
-              {tr({ zh: '均值 {m} · 众数 {o} · 范围 {a}–{b}', en: 'mean {m} · mode {o} · range {a}–{b}' })
-                .replace('{m}', caseStat.mean.toFixed(2)).replace('{o}', String(caseStat.mode))
-                .replace('{a}', String(caseStat.min)).replace('{b}', String(caseStat.max))}
+              {tr({ zh: '均值 {m}', en: 'mean {m}' }).replace('{m}', caseStat.mean.toFixed(2))}
             </span>
           )}
         </div>

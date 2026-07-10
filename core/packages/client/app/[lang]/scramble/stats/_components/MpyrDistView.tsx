@@ -183,8 +183,6 @@ export default function MpyrDistView({ isZh }: { isZh: boolean }) {
           <div className="scramble-stats-stat-grid">
             <Cell label={tr({ zh: '样本均值', en: 'sample mean' })} value={stats.mean.toFixed(2)} />
             <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(stats.median)} />
-            <Cell label={tr({ zh: '众数', en: 'mode' })} value={String(stats.mode)} />
-            <Cell label={tr({ zh: '最大', en: 'max' })} value={String(stats.max)} />
           </div>
         </div>
       )}

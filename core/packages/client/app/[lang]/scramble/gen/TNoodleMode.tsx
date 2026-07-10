@@ -796,13 +796,22 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     const ev = urlQuery.event ?? '';
     if (!ev || !eventsInSheets.includes(ev)) { deepLinkAppliedRef.current = loadedCompId; return; }
     deepLinkAppliedRef.current = loadedCompId;
-    const roundP = Number(urlQuery.round);
+    const rawRound = urlQuery.round ?? '';
     const groupP = urlQuery.group ?? '';
     const nP = urlQuery.attempt ?? '';
     const gIdx = /^[A-Za-z]$/.test(groupP) ? groupP.toUpperCase().charCodeAt(0) - 65 : null;
+    // ?round= 两种写法都认:① 数字 = 第几轮(1-based 位置,纯位置直链);② 字母 round_type_id
+    // (f/c/d/e/g/h/b,决赛 / 组合制等)→ 用同一 roundIdx 映射折进本场已加载轮次,算出它的位置。
+    // 否则决赛('f')这类字母轮次会被当成 NaN 退回第一轮(旧行为)。
+    const roundP = Number(rawRound);
+    let roundPos: number | null = Number.isFinite(roundP) && roundP > 0 ? roundP : null;
+    if (roundPos === null && rawRound && rawRound in ROUND_INDEX) {
+      const pos = roundIdxsForEvent(ev).indexOf(roundIdxOf(rawRound));
+      if (pos >= 0) roundPos = pos + 1;
+    }
     pendingDeepLinkRef.current = {
       event: ev,
-      round: Number.isFinite(roundP) && roundP > 0 ? roundP : null, // 1-based 位置(第几轮)
+      round: roundPos, // 1-based 位置(第几轮)
       group: gIdx,
       label: nP || null,
     };

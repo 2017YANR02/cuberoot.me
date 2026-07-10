@@ -280,9 +280,6 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           <div className="scramble-stats-stat-grid">
             <Cell label={tr({ zh: '均值', en: 'mean' })} value={st.mean.toFixed(2)} />
             <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(st.median)} />
-            <Cell label={tr({ zh: '众数', en: 'mode' })} value={String(st.mode)} />
-            <Cell label={tr({ zh: '最优', en: 'min' })} value={String(st.min)} />
-            <Cell label={tr({ zh: '最难', en: 'max' })} value={String(st.max)} />
           </div>
         </div>
       )}
@@ -452,10 +449,18 @@ function PuzzleExamplesPanel({
                   )}
                   {comp && m && (() => {
                     const iso2 = compFlagIso2(m[0]);
+                    // 点比赛名 → 该场「打乱」页,深链到这条示例对应的项目/轮次/组别/把号
+                    // (round 传 WCA round_type_id,决赛等字母轮次由 TNoodleMode 折算成位置;
+                    //  attempt = 该把标签,备打为 E{n}、正常为 {n})。
+                    const evId = m[1] || previewEvent;
+                    const params = new URLSearchParams({ view: 'scramble', event: evId });
+                    if (m[3]) params.set('round', m[3]);
+                    if (m[4]) params.set('group', m[4]);
+                    params.set('attempt', m[5] ? `E${m[2]}` : String(m[2]));
                     return (
                       <Link
                         className="scramble-stats-examples-comp"
-                        href={`/scramble/gen?comp=${encodeURIComponent(m[0])}`}
+                        href={`/wca/comp/${encodeURIComponent(m[0])}?${params.toString()}`}
                         prefetch={false}
                         title={comp[0]}
                       >
