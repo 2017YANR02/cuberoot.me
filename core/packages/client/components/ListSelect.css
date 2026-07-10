@@ -63,6 +63,18 @@
   text-overflow: ellipsis;
 }
 
+/* 次要文字(如各国示例计数):列表项内右对齐、置灰 */
+.list-select-hint {
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+.list-select-item .list-select-hint {
+  margin-left: auto;
+  padding-left: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 .list-select-flag {
   flex-shrink: 0;
   width: 1.2em;
