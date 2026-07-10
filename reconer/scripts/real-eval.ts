@@ -54,6 +54,8 @@ const maArg = process.argv.indexOf("--minarea");
 const MIN_AREA = maArg >= 0 ? parseInt(process.argv[maArg + 1], 10) : undefined;
 const STRICT = process.argv.includes("--strict"); // 链一致性零容错 (防跨拧转混态)
 const NO_ANCHOR = process.argv.includes("--noanchor"); // 复刻 legacy 提取 (无重获取锚定) 供 A/B
+const dumpObsArg = process.argv.indexOf("--dumpobs");
+const DUMP_OBS = dumpObsArg >= 0 ? process.argv[dumpObsArg + 1] : null; // 转储对齐观测+混淆 (供 prior-sim)
 const PER_FRAME = process.argv.includes("--perframe"); // 跳过链, 逐帧网格直接喂搜索
 const PIN_MODE = process.argv.includes("--pin"); // 路径级指派钉死
 const DRIFT = process.argv.includes("--drift"); // 钉死 + 段间漂移切换 (隐含 --pin)
@@ -173,6 +175,7 @@ const files = readdirSync(videosDir)
   .sort();
 
 const evals: VideoEval[] = [];
+const dumpVideos: object[] = [];
 
 for (const sf of files) {
   const splitsPath = join(videosDir, sf);
@@ -727,6 +730,38 @@ for (const sf of files) {
       }
     }
   }
+  if (DUMP_OBS) {
+    // 转储每边界每链的 GT 最优对齐观测 (facelet 映射 + 读出色 + GT 色) — prior-sim 消费。
+    // 对齐 (面/rot/端) 用 GT 最优 = "朝向已知" 乐观假设; 所有候选共享同一映射, 排名公平。
+    const bounds = boundStates.map((_, t) => {
+      const s1 = boundStates[t], s2 = afterState(nonRotIdx[t]);
+      return segChains[t].map((run) => {
+        const b1 = bestAssign(run.grid, s1, omega);
+        const b2 = bestAssign(run.grid, s2, omega);
+        const useS2 = b2.match > b1.match;
+        const st = useS2 ? s2 : s1;
+        const bb = useS2 ? b2 : b1;
+        const rot0 = ASSIGNS.findIndex((a) => a.face === bb.face);
+        const facelets = ASSIGNS[rot0 + bb.rot].assign;
+        return {
+          end: useS2 ? 1 : 0,
+          face: bb.face,
+          facelets: [...facelets],
+          read: run.grid.map((c) => c ?? null),
+          gt: facelets.map((f) => COLOR_NAMES[Math.floor(omega[st[f]] / 9)]),
+        };
+      });
+    });
+    dumpVideos.push({
+      name: basename(videoPath),
+      omega: [...omega],
+      omegaIdx,
+      gtNoRot,
+      tailRotations,
+      confusion: Object.fromEntries(confusion),
+      bounds,
+    });
+  }
   let coldMatch = 0, coldRead = 0, trkMatch = 0, trkRead = 0;
   let frNullMatch = 0, frNullRead = 0;
   const segFrameObs: FaceObservation[][] = Array.from({ length: boundStates.length }, () => []);
@@ -1029,6 +1064,11 @@ const totBounds = evals.reduce((s, e) => s + e.nBounds, 0);
 console.log(
   `\n===== 提取汇总: 覆盖 ${totCov}/${totBounds} = ${((totCov / totBounds) * 100).toFixed(1)}%, 边缘化逐格 ${totOk}/${totRead} = ${totRead ? ((totOk / totRead) * 100).toFixed(1) : "-"}% (乱态对照底噪 ${totNullRead ? ((totNull / totNullRead) * 100).toFixed(1) : "-"}%) =====`,
 );
+
+if (DUMP_OBS) {
+  writeFileSync(DUMP_OBS, JSON.stringify({ videos: dumpVideos }));
+  console.log(`观测转储 → ${DUMP_OBS} (${dumpVideos.length} 视频)`);
+}
 
 if (DO_SEARCH) {
   console.log(
