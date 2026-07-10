@@ -211,6 +211,8 @@ function snapToRef(
 export interface ExtractOptions {
   calib?: ColorCalib | null;
   minArea?: number;
+  /** 高分辨率帧用 (面积随分辨率平方缩放; 默认 4500 只适合 960×540) */
+  maxArea?: number;
   /** false = 精确复刻 legacy (reorient 仅 cold[0] 到活 prior, 无 snap/惩罚/双槽) */
   anchor?: boolean;
   /** 跟踪运动惩罚 (pitch 单位每可读格; anchor 模式默认 0.9) */
@@ -335,7 +337,7 @@ export function extractTrackedFrames(
   // pass0: 冷提取只跑一遍 (锚定/legacy 共用)
   const coldAll: FaceObservation[][] = new Array(nFrames);
   for (let i = 0; i < nFrames; i++) {
-    coldAll[i] = extractFaceObservations(frameAt(i), w, h, mask, { minArea: opts.minArea, calib });
+    coldAll[i] = extractFaceObservations(frameAt(i), w, h, mask, { minArea: opts.minArea, maxArea: opts.maxArea, calib });
   }
   const slots: Slot[] = anchor ? computeSlots(coldAll) : [];
 
