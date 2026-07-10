@@ -17,9 +17,8 @@ import type { Comp } from '@/lib/comp-search';
 import { fetchWcaScrambles, type WcaScrambleRow } from '@/lib/wca-results-api';
 import { roundTypeShort } from '@/lib/comp-schedule';
 import { ROUND_ORDER } from '@/lib/wca-round-meta';
-import { wcaEventId } from '../_lib/scramble/wca_pool';
-import type { EventId } from '../_lib/types';
-import type { TimerSettings } from '../_lib/settings';
+import { wcaEventId } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
+import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { useSubsetSelection, SubsetColorPicker } from '@/components/SubsetColorPicker/SubsetColorPicker';
@@ -54,14 +53,40 @@ interface DiffDistJson {
 // 魔表/五魔(无 solver)都没有最优打乱数据。
 const OPTIMAL_EVENTS = new Set(['333', '333oh', '333ft', '333fm', '222', 'pyram', 'skewb']);
 
+/**
+ * The slice of settings this config reads / writes. Decoupled from the timer's
+ * full TimerSettings so the same component can be reused by any host that holds
+ * these fields (timer settings store, the analyzer's own local state, …).
+ * TimerSettings structurally satisfies this, so timer callers pass it as-is.
+ */
+export interface WcaSourceSettings {
+  wcaScrambleMode: 'date' | 'comp';
+  wcaComp: string;
+  wcaCompName: string;
+  wcaCompCountry: string;
+  wcaRound: string;
+  wcaGroup: string;
+  wcaDateFrom: string;
+  wcaDateTo: string;
+  wcaUseOptimal: boolean;
+  wcaDifficultyOn: boolean;
+  wcaDiffVariant: string;
+  wcaDiffStage: string;
+  wcaDiffColors: string;
+  wcaDiffSteps: number[];
+  autoMarkWcaScramble: boolean;
+}
+
 interface Props {
   isZh: boolean;
   event: EventId;
-  settings: TimerSettings;
-  updateSettings: (patch: Partial<TimerSettings>) => void;
+  settings: WcaSourceSettings;
+  updateSettings: (patch: Partial<WcaSourceSettings>) => void;
+  /** 自动打卡(做完标记为「做过」)只对会记成绩的计时器有意义;分析器等场景传 false 隐藏。 */
+  showAutoMark?: boolean;
 }
 
-export default function WcaSourceConfig({ isZh, event, settings, updateSettings }: Props) {
+export default function WcaSourceConfig({ isZh, event, settings, updateSettings, showAutoMark = true }: Props) {
   const wev = wcaEventId(event);
   const hasOptimal = !!wev && OPTIMAL_EVENTS.has(wev); // 同态项目才显示「最优打乱」开关
   const mode = settings.wcaScrambleMode;
@@ -399,20 +424,24 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings 
         </>
       )}
 
-      <div className="settings-row wca-src-automark">
-        <span className="settings-row-label">{tr({ zh: '自动打卡', en: 'Auto-mark done'
-        })}</span>
-        <span className="settings-row-control">
-          <PillToggle
-            value={settings.autoMarkWcaScramble}
-            onChange={(v) => updateSettings({ autoMarkWcaScramble: v })}
-          />
-        </span>
-      </div>
-      <p className="wca-src-hint">
-        {tr({ zh: '做完一把后自动把这条真实打乱标记为「做过」(公开,带成绩),省去每把手动点击。需登录。', en: 'After each solve, auto-mark this real scramble as done (public, with your time) — no manual click per solve. Sign-in required.'
-        })}
-      </p>
+      {showAutoMark && (
+        <>
+          <div className="settings-row wca-src-automark">
+            <span className="settings-row-label">{tr({ zh: '自动打卡', en: 'Auto-mark done'
+            })}</span>
+            <span className="settings-row-control">
+              <PillToggle
+                value={settings.autoMarkWcaScramble}
+                onChange={(v) => updateSettings({ autoMarkWcaScramble: v })}
+              />
+            </span>
+          </div>
+          <p className="wca-src-hint">
+            {tr({ zh: '做完一把后自动把这条真实打乱标记为「做过」(公开,带成绩),省去每把手动点击。需登录。', en: 'After each solve, auto-mark this real scramble as done (public, with your time) — no manual click per solve. Sign-in required.'
+            })}
+          </p>
+        </>
+      )}
     </div>
   );
 }

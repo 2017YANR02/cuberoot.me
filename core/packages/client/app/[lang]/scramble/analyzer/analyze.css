@@ -252,6 +252,35 @@
     cursor: not-allowed;
 }
 
+/* 综合打乱来源配置(复用计时器的 WcaSourceConfig)。该组件的 .settings-row* / .wca-src-*
+   原语默认深色硬码(本给 dark-locked 设置弹层用),这里映射到 analyzer 的主题化 --az-* token,
+   浅/深主题都正确;并约束成一个 ~30rem 配置块,而非拉满 1024。 */
+.analyze-wca-src {
+    max-width: 30rem;
+    margin: 0 0 0.7rem;
+}
+.analyze-wca-src .settings-row-label { color: var(--az-text-sub); }
+.analyze-wca-src .settings-row-control input[type='number'],
+.analyze-wca-src .settings-row-control .settings-row-control-select,
+.analyze-wca-src .wca-src-dates input[type='date'] {
+    background: var(--az-surface);
+    color: var(--az-text);
+    border-color: var(--az-border-strong);
+    color-scheme: light dark;
+}
+.analyze-wca-src .settings-row-control .hint,
+.analyze-wca-src .wca-src-hint,
+.analyze-wca-src .wca-src-dash { color: var(--az-text-sub); }
+.analyze-wca-src .settings-row-control .hint-btn { border-color: var(--az-border-strong); color: var(--az-text-sub); }
+.analyze-wca-src .settings-row-control .hint-btn:hover { background: var(--az-accent-soft); color: var(--az-accent); }
+.analyze-wca-src .wca-src-config { border-left-color: var(--az-border); }
+.analyze-wca-src .wca-src-comp-name { color: var(--az-text); }
+.analyze-wca-src .wca-src-steps-range .range-slider {
+    --rs-rail-bg: var(--az-border-strong);
+    --rs-thumb-ring: var(--az-surface);
+    --rs-mark-fg: var(--az-text-sub);
+}
+
 /* 来源切换用通用 PillToggle(蓝色 iOS 开关);宽度跟随两标签较长者,避免翻转时跳动 */
 .pill-toggle.analyze-src-pill {
     min-width: 7.5rem;

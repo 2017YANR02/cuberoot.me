@@ -48,7 +48,7 @@ import { isWcaEvent } from '@/lib/wca-events';
 import RankBadge from './RankBadge';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
 import { useSettings, updateSettings } from '@/app/[lang]/timer/_lib/settings';
-import WcaSourceConfig from '@/app/[lang]/timer/_components/WcaSourceConfig';
+import WcaSourceConfig from '@/components/WcaSourceConfig';
 import { wcaMetaFor } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
