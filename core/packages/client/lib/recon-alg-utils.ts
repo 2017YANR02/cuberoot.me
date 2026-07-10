@@ -18,6 +18,25 @@ const COMMENT_LINE_RE = /^\/\/.*/;
 const COSMETIC_ANNOTATION_CHARS = '.·↑↓⅓⅔​‌‍﻿';
 const COSMETIC_ANNOTATION_STRIP_RE = new RegExp(`[${COSMETIC_ANNOTATION_CHARS}]`, 'g');
 
+/**
+ * 展开分组重复记号 `(...)N` → 把括号里的招式重复 N 遍(内层优先,迭代到不动点,支持嵌套)。
+ * `(R' F R F')2` → `R' F R F' R' F R F'`。countMovesExpanded 与 cleanForPlayer 共用同一份展开,
+ * 保证步数统计、外链、播放器三方口径一致。
+ */
+export function expandGroupRepeats(alg: string): string {
+  if (!alg) return alg;
+  let expanded = alg;
+  let prev: string;
+  do {
+    prev = expanded;
+    expanded = expanded.replace(/\(([^()]*)\)(\d+)/g, (_, body: string, n: string) => {
+      const reps = parseInt(n, 10);
+      return Array(reps).fill(body.trim()).join(' ');
+    });
+  } while (expanded !== prev);
+  return expanded;
+}
+
 export function cleanForPlayer(text: string): string {
   if (!text) return '';
   const lines = text.split(/\r?\n/);
@@ -35,6 +54,9 @@ export function cleanForPlayer(text: string): string {
   }
   let alg = cleaned.join('\n');
   alg = alg.replace(COSMETIC_ANNOTATION_STRIP_RE, '');
+  // 先把 `(...)N` 重复展开成字面招式:cuber(/sim)播放器按空白切 token 逐招喂,不认分组重复,
+  // 展开后每个 token 都是合法单招,`(R' F R F')2` 才会真播两遍(cubing.js 原生认分组,展开对它无害)。
+  alg = expandGroupRepeats(alg);
   alg = alg.replace(/\(([^)]*)\)(?!\d)/g, '$1');
   alg = alg.replace(/([RULDFBMESruldfbmesxyz][w]?2?'?)(?=[RULDFBMESruldfbmesxyz])/g, '$1 ');
   return alg;
@@ -106,6 +128,21 @@ export function findTokenPositions(text: string): TokenPosition[] {
   return tokens;
 }
 
+/** Every whitespace-delimited run, with its position in `text` — mirrors the
+ *  `text.trim().split(/\s+/)` tokenization every engine-puzzle move parser
+ *  (Ivy / Dino / Redi / Rex / Heli / Skewb / Pyraminx / Megaminx / FTO) uses,
+ *  so index N here lines up with move N as long as every token is valid. */
+export function findWhitespaceTokenPositions(text: string): TokenPosition[] {
+  if (!text) return [];
+  const tokens: TokenPosition[] = [];
+  const RE = /\S+/g;
+  let m: RegExpExecArray | null;
+  while ((m = RE.exec(text)) !== null) {
+    tokens.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
+  }
+  return tokens;
+}
+
 export function snapToTokenBoundary(cursorPos: number, positions: TokenPosition[]): number {
   if (positions.length === 0) return cursorPos;
   for (let i = 0; i < positions.length; i++) {
@@ -127,16 +164,7 @@ export function snapToTokenBoundary(cursorPos: number, positions: TokenPosition[
 
 export function countMovesExpanded(alg: string): number {
   if (!alg) return 0;
-  let expanded = alg;
-  let prev: string;
-  do {
-    prev = expanded;
-    expanded = expanded.replace(/\(([^()]*)\)(\d+)/g, (_, body: string, n: string) => {
-      const reps = parseInt(n, 10);
-      return Array(reps).fill(body.trim()).join(' ');
-    });
-  } while (expanded !== prev);
-  return expanded.trim().split(/\s+/).filter(t => t.length > 0).length;
+  return expandGroupRepeats(alg).trim().split(/\s+/).filter(t => t.length > 0).length;
 }
 
 export function extractAlgFromText(text: string): string {
