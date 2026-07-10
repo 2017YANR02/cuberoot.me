@@ -94,8 +94,11 @@ export function skewbResolveLive(
   const score = scoreCornerTwist(
     hit.candidates,
     (corner) => {
+      // Grip axes live in the cube's LOCAL frame — use the cube's world matrix (not the
+      // scene's) so drags still resolve correctly after an x/y/z reorientation is folded
+      // into the cube's own quaternion.
       const a = CORNER_AXIS[corner];
-      return _axis.set(a[0], a[1], a[2]).normalize().transformDirection(scene.matrixWorld);
+      return _axis.set(a[0], a[1], a[2]).normalize().transformDirection(cube.matrixWorld);
     },
     hit.point, originWorld, dxPx, dyPx, camera, width, height, 0.2,
   );
