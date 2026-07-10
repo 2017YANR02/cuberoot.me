@@ -85,13 +85,16 @@ const NAIL_NR = 33, NAIL_NC = 21;
  *  0.29/0.26)甲宽仅指尖的 ~45%,用户报「指甲太小」。改末节长 / 换资产须重跑探针重标。 */
 const NAIL_HALFW_K: Record<FingerName, number> = { thumb: 0.50, index: 0.67, middle: 0.65, ring: 0.63, pinky: 0.48 };
 /** 甲片轴向覆盖(末节段分数)+ 厚度 —— 几何层与放置层(覆盖余量)共用。
- *  蒙皮实测(tests 曾 dump 环状剖面):皮肤管延伸到 t≈1.3+ 才收圆帽,p4(tip
- *  骨)远在皮尖之前 —— T1=1.15 观感仍是「甲尖与指尖轮廓齐平或略短」;
- *  再长会卷过指尖圆帽垂到指腹(「围兜」,踩过)。
- *  T0=0.32(2026-07-09,用户报「指甲太小」)：甲根前移到末节中前部 —— 解剖上甲根
- *  (甲基)落 DIP 折痕附近,可见甲板铺满末节背面 ~2/3;最根一行仍由 BASE_SINK 崖埋进
- *  近端甲襞。原 0.46 甲根偏靠指尖,甲板纵向偏短。 */
-const NAIL_T0 = 0.32, NAIL_T1 = 1.15;
+ *  蒙皮实测(tests 曾 dump 环状剖面):皮管过 tip 骨(t=1)后收**半球帽**
+ *  (半径 ≈ 背侧脊高 rBase),皮尖 t≈1.3。
+ *  T0=0.32(2026-07-09,用户报「指甲太小」)：甲根前移到 DIP 折痕附近,甲板铺满
+ *  末节背面 ~2/3;最根一行由 BASE_SINK 崖埋进近端甲襞。
+ *  前缘 2026-07-10 重做(用户第 3 轮抓「甲是指背中段的白凸起、指尖是裸肉」):
+ *  旧 T1=1.15 是**直线外伸**(轴向剖面不滚降),前缘远未到皮尖,加长又成「围兜」
+ *  (踩过)—— 改每指动态 t1 = 1 + WRAP·rCap/len,轴向剖面过 tip 骨后沿帽球
+ *  滚降(capK),甲板**包过指尖圆帽**:正/俯视指尖轮廓顶点即是甲,肉不越前缘。
+ *  WRAP = 帽弧 sinθ:0.95 ≈ 72°;≥1 时高度场在帽赤道折返非图,禁。 */
+const NAIL_T0 = 0.32, NAIL_WRAP = 0.95;
 const NAIL_TH = 0.55 * U;
 
 /**
@@ -114,9 +117,11 @@ function buildNailGeometry(args: {
   /** 甲片横向中心(lat 向偏移):nailFrame 的 lat 原点可偏离指管中轴(拇指
    *  ~-4U,dorsal 滚转所致),不对中会一缘埋皮一缘悬空(歪甲/缺口,踩过)。 */
   uCenter: number;
+  /** 甲板前缘终点(末节段分数,每指动态 = 1 + WRAP·rCap/len,见 NAIL_WRAP)。 */
+  t1: number;
 }): THREE.BufferGeometry {
   const { p3, axis, dorsal, lat, len } = args;
-  const T0 = NAIL_T0, T1 = NAIL_T1;
+  const T0 = NAIL_T0, T1 = args.t1;
   const TH = NAIL_TH;           // 甲片厚度(薄;游离缘侧壁可见即可)
   const EDGE_TUCK = 3.0 * U;    // 侧缘陡崖式下收进皮(甲沟):可见轮廓 = 皮∩甲交线,
                                 // 缓坡交线随粗皮网格大面片横移读成折线(踩过);做成近垂直
@@ -137,7 +142,9 @@ function buildNailGeometry(args: {
     for (let i = 0; i < NR; i++) {
       const q = -0.97 + (1.94 * i) / (NR - 1);
       const sAbs = (tc + th * q) * len;
-      const w2 = Math.pow(1 - q * q, 1 / 2.2); // 超椭圆半宽(2.2 圆角更柔;2.6 偏方)
+      // 方圆甲轮廓:|q|^2.7 让中段近等宽、只在两端圆角收窄。旧 (1-q²)^(1/2.2)
+      // 从中点就开始收,两端尖 → 读成水滴/血滴(2026-07-10 用户抓的)。
+      const w2 = Math.pow(1 - Math.pow(Math.abs(q), 2.7), 1 / 2.4);
       const free = sstep(0.55, 0.92, q);
       const lun = sstep(-0.55, -0.9, q) * 0.5; // 半月对比调淡(强白斑读成大理石纹)
       for (let j = 0; j < NC; j++) {
@@ -426,7 +433,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
       let uwSum = 0, uhSum = 0;
       for (const p of smp) {
         const t = p.s / nf.len;
-        if (t < 0.35 || t > NAIL_T1) continue;
+        if (t < 0.35 || t > 1.3) continue; // 皮尖 ≈1.3(帽点低权重,纳入无害)
         const w = Math.max(0, p.h);
         uwSum += w; uhSum += w * p.u;
       }
@@ -434,11 +441,18 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
       let rBase = 0;
       for (const p of smp) {
         const t = p.s / nf.len;
-        if (t < 0.35 || t > NAIL_T1 || Math.abs(p.u - uC) > 0.45 * rDist) continue;
+        if (t < 0.35 || t > 1.3 || Math.abs(p.u - uC) > 0.45 * rDist) continue;
         rBase = Math.max(rBase, p.h);
       }
       rBase = THREE.MathUtils.clamp(rBase > 0 ? rBase : 0.55 * rDist, 4.5 * U, 11 * U);
-      const ridge = (sq: number): number => rBase * (1 - 0.08 * sstep(0.50, NAIL_T1, sq / nf.len));
+      // 指尖圆帽滚降 + 甲板前缘终点(NAIL_WRAP 注释):帽半径 ≈ 背侧脊高。
+      const rCap = rBase;
+      const t1 = 1 + (NAIL_WRAP * rCap) / nf.len;
+      const capK = (sq: number): number => {
+        const x = (sq - nf.len) / rCap;
+        return x <= 0 ? 1 : Math.sqrt(Math.max(0, 1 - x * x));
+      };
+      const ridge = (sq: number): number => rBase * (1 - 0.08 * sstep(0.50, t1, sq / nf.len)) * capK(sq);
       const halfW = NAIL_HALFW_K[name] * nf.len;
       const rSide = Math.max(1.25 * rBase, 1.1 * halfW); // 横向曲率半径(实测拱 ≈1.25×脊高)
       const bed0 = (sq: number, uq: number): number => {
@@ -450,13 +464,13 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
       let need = 0;
       for (const p of smp) {
         const t = p.s / nf.len;
-        if (t < NAIL_T0 || t > NAIL_T1) continue;
+        if (t < NAIL_T0 || t > t1) continue;
         if (Math.abs(p.u - uC) > 0.85 * halfW) continue;
         need = Math.max(need, p.h - bed0(p.s, p.u));
       }
       const lift = Math.min(Math.max(0, need - 0.45 * NAIL_TH), 1.2 * U);
       const bed = (sq: number, uq: number): number => bed0(sq, uq) + lift;
-      const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, halfWAt, surf: bed, uCenter: uC });
+      const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, halfWAt, surf: bed, uCenter: uC, t1 });
       // 刚挂 tip 代理:甲片区域(t≥0.42)皮肤 ≥97% 由末节/端点骨主导(与
       // tip 代理刚体同动),姿态漂移 ≤~1U,由 BASE_SINK/EDGE_TUCK 埋皮余量
       // 吸收。试过抄皮肤骨权重做成蒙皮甲片 —— 弯指时格网被相邻权重差撕出
