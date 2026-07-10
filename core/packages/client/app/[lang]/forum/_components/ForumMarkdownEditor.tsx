@@ -16,7 +16,7 @@
  *
  * Controlled value/onChange only — title, forum picker and submit stay in the page (/forum/new).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   Bold, Heading, Highlighter, Info, Image as ImageIcon, Rows3, Play, Box, Loader2,
@@ -72,13 +72,15 @@ function fileToBase64(file: File): Promise<{ dataB64: string; mime: string }> {
 
 const ACCEPTED_IMAGE = /^image\/(png|jpeg|webp)$/;
 
-export function ForumMarkdownEditor({
-  value, onChange, placeholder,
-}: {
+export interface ForumEditorHandle {
+  focus: () => void;
+}
+
+export const ForumMarkdownEditor = forwardRef<ForumEditorHandle, {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
-}) {
+}>(function ForumMarkdownEditor({ value, onChange, placeholder }, ref) {
   const tt = useT();
 
   const [uploading, setUploading] = useState(false);
@@ -86,8 +88,22 @@ export function ForumMarkdownEditor({
   const [dragOver, setDragOver] = useState(false);
 
   const viewRef = useRef<EditorView | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [cmExtensions, setCmExtensions] = useState<unknown[]>([]);
+
+  // Quote injection (from the thread page) focuses the editor and drops the caret
+  // at the end so the appended quote block is in view.
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      const view = viewRef.current;
+      if (view) {
+        view.focus();
+        view.dispatch({ selection: { anchor: view.state.doc.length } });
+      }
+      rootRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    },
+  }), []);
 
   useEffect(() => {
     let alive = true;
@@ -227,7 +243,7 @@ export function ForumMarkdownEditor({
   );
 
   return (
-    <div className="forum-editor">
+    <div className="forum-editor" ref={rootRef}>
       <div className="forum-editor-toolbar">
         {toolbarBtn('bold', tt('加粗', 'Bold'), Bold, () => wrap('**', '**', tt('粗体', 'bold')))}
         {toolbarBtn('heading', tt('小标题', 'Heading'), Heading, () => insertBlock('## ', [3, 3]))}
@@ -299,4 +315,4 @@ export function ForumMarkdownEditor({
       {error && <div className="forum-editor-error">{error}</div>}
     </div>
   );
-}
+});
