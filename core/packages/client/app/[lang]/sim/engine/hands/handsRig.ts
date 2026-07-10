@@ -21,7 +21,8 @@
  * 层角越过 45°(带迟滞)即踏移一个 90°(手瞬跳换握,与「自动转体」跨 ±90° 的
  * scene 快切同款观感,#20),提交时残差≈0 直接落回 home —— 终态 = home 握新
  * 朝向的面,与视角/自动转体一致。回 home / 换握由解法框记号驱动:↑ 上手
- * (拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握,见 regrip() / simulateGrips()。
+ * (拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握;手别由空白定(FINGERTRICKS
+ * §2:记号紧贴后续字符 = 右手,后随空白/串尾 = 左手),见 regrip() / simulateGrips()。
  *
  * 穿模禁令(用户规格:任何时刻手指不得嵌入魔方,含转动途中)三机制:
  *  1. 静置贴面 = 肉面标定(handPoses,蒙皮顶点距体表 0.7~0.8U 相切);
@@ -106,18 +107,18 @@ export function classifyHandGesture(
       if (hint?.push && dir < 0 && bothHome) return { kind: "flick", hand: "R", finger: "index", style: "upPush" };
       const hand = dir > 0 ? "R" : "L";
       if (bothHome) {
-        // 连拨仅右手方向(U2,dir>0)有已解 fit;镜像 U2' 缺 L 侧标定,回落单指(FINGERTRICKS §6)。
-        return double && hand === "R"
-          ? { kind: "flick", hand, finger: "index", finger2: "middle", style: "hook" } // U2 连拨
+        // U2 / U2' 双向连拨(2026-07-09 L 侧 hook_index/hook_middle2 镜像标定)。
+        return double
+          ? { kind: "flick", hand, finger: "index", finger2: "middle", style: "hook" } // U2/U2' 连拨
           : { kind: "flick", hand, finger: "index", style: "hook" };
       }
       return { kind: "flick", hand, finger: "index" };
     }
     const hand = dir < 0 ? "L" : "R";
     if (cls === "low" && bothHome) {
-      // 同上:D2'(dir>0 右手)已标定,镜像 D2 回落单指。
-      return double && hand === "R"
-        ? { kind: "flick", hand, finger: "pinky", finger2: "ring", style: "hook" } // D2' 先小指后无名指
+      // D2' / D2 双向连拨(2026-07-10 L 侧 hook_pinky/hook_ring2 镜像标定)。
+      return double
+        ? { kind: "flick", hand, finger: "pinky", finger2: "ring", style: "hook" } // 先小指后无名指
         : { kind: "flick", hand, finger: "ring", style: "hook" };
     }
     return { kind: "flick", hand, finger: "ring" }; // D / E 族(非标准握 / E)
@@ -136,7 +137,12 @@ export function classifyHandGesture(
   }
   if (cls === "low" && bothHome) {
     // 双中手 B'(dir>0)= 右食指背钩;B = 左食指镜像(FINGERTRICKS §4.2 推定)。
-    return { kind: "flick", hand: dir > 0 ? "R" : "L", finger: "index", style: "backHook" };
+    // B2 / B2' 双向连拨(2026-07-10 backHook_middle2 标定):先食指后中指,
+    // 首指 Q2 极早期沿 BACK_EXIT 退场(同 U2 的 HOOK_EXIT 编排)。
+    const hand = dir > 0 ? "R" : "L";
+    return double
+      ? { kind: "flick", hand, finger: "index", finger2: "middle", style: "backHook" }
+      : { kind: "flick", hand, finger: "index", style: "backHook" };
   }
   return { kind: "flick", hand: dir < 0 ? "L" : "R", finger: "middle" }; // B / S 族
 }
@@ -176,7 +182,7 @@ export function gripQuat(name: GripName): THREE.Quaternion {
 }
 
 export type GripSimStep =
-  | { grip: GripName }
+  | { grip: GripName; side?: HandSide } // side 缺省 = 双手(FINGERTRICKS §2:紧贴=R / 空格=L)
   | { axis: Axis; layers: number[]; quarters: number };
 
 /**
@@ -188,8 +194,7 @@ export function simulateGrips(steps: GripSimStep[], order: number): { R: THREE.Q
   const q = new THREE.Quaternion();
   for (const s of steps) {
     if ("grip" in s) {
-      grips.R.copy(gripQuat(s.grip));
-      grips.L.copy(gripQuat(s.grip));
+      for (const side of s.side ? [s.side] : (["R", "L"] as const)) grips[side].copy(gripQuat(s.grip));
       continue;
     }
     if (s.quarters === 0 || s.layers.length === 0) continue;
@@ -381,10 +386,26 @@ const HOOK = {
 };
 
 /** 连拨次指 Q1 就位姿(FINGERTRICKS §4.1:首指扫前 90° 期间次指渐入就位,
- *  90° 处接力)。键 = 次指名;数值浏览器标定(rig.tuning 现场调)。 */
-const HOOK_PREP: Partial<Record<FingerName, { c1: number; c2: number; c3: number; splay: number }>> = {
-  middle: { c1: -0.29, c2: 0.309, c3: 0.0093, splay: 0.468 }, // U2 次指:中指沿 B 面上探 U 层带,90° 交接处进带;0.024rad 热窗密解(粗采样漏 slab 角部 −12U)
-  ring: { c1: -0.12, c2: 0.06, c3: 0.04, splay: -0.08 },     // D2' 次指:无名指微让位再接力
+ *  90° 处接力)。键 = 次指名,两手各一套(2026-07-09 U2' 镜像标定:共享值
+ *  ×sideSign 的镜像对 L 差 ~1.4U —— 资产不对称,Q1 末 θ≈1.30 角部扫掠窗
+ *  蹭中 L3 中节;splay 语义仍 ×sideSign,L 值按 L 手密扫单解)。
+ *  数值浏览器标定(rig.tuning 现场调)。 */
+const HOOK_PREP: Record<HandSide, Partial<Record<string, { c1: number; c2: number; c3: number; splay: number }>>> = {
+  R: {
+    hook_middle: { c1: -0.29, c2: 0.309, c3: 0.0093, splay: 0.468 }, // U2 次指:中指沿 B 面上探 U 层带,90° 交接处进带;0.024rad 热窗密解(粗采样漏 slab 角部 −12U)
+    hook_ring: { c1: -0.12, c2: 0.06, c3: 0.04, splay: -0.08 },     // D2' 次指:无名指微让位再接力
+    // B2' 次指:中指沿 B 面上探顶带(BUR 区,与 hook_middle 同类攀爬),
+    // 90° 交接处接住 Q2 来料。数值浏览器标定(种子 = hook_middle)。
+    backHook_middle: { c1: -0.29, c2: 0.309, c3: 0.0093, splay: 0.468 },
+  },
+  L: {
+    // U2' 次指:R 值镜像起点上 0.02rad 密网格(Q1 每 0.02 + Q2 每 1.5° 全顶点
+    // + 贴角保持)重解 —— 共享值在 L 差 c3/splay 各 ~0.02rad,Q1 末角部窗
+    // +1.36U → 全程 ≤ −0.02U。
+    hook_middle: { c1: -0.29, c2: 0.309, c3: -0.0107, splay: 0.488 },
+    hook_ring: { c1: -0.12, c2: 0.06, c3: 0.04, splay: -0.08 },
+    backHook_middle: { c1: -0.29, c2: 0.309, c3: -0.0107, splay: 0.488 },
+  },
 };
 
 /** 样式化指法跟随曲线(FINGERTRICKS §4.0「贴面」):每通道二次型
@@ -425,6 +446,12 @@ const HOOK_FOLLOW: Record<HandSide, Record<string, HookFit>> = {
     hook_pinky: { c1: [0.2484, -0.21, 0.0182], c2: [0.7997, -0.5291, -0.0955], c3: [-0.2046, 0.2746, -0.155], splay: [-0.1375, 0.008, 0.1] },
     hook_ring2: { c1: [0.041, -0.382, 0.5732], c2: [1.7475, -1.4909, 0.3643], c3: [0.8482, -0.6875, -0.4179], splay: [-0.34, 0.37, 0.1144] },
     backHook_index: { c1: [-0.18, 0.15, 0.069], c2: [-0.03, 0, 0.0857], c3: [0.1967, 0.1108, 0.0428], splay: [0.5063, -0.1012, -0.0764] },
+    // B2' 次指 Q2 跟随(2026-07-10 连拨标定):prep 攀到 B 面顶带后,沿右侧
+    // 弧下潜接住来料(与 backHook_index 的 Q1 弧同族)。节点参数化 12 参
+    // 坐标下降(全顶点罚每 0.026rad + 贴面带 + 落地窗 ≥1.1U 软目标):Q2
+    // 全程 pen ≤ −0.17(走廊窄段 0.17~0.26U 余量),提交 pad gap 0.83U,
+    // tip (109.5, 26.9, −119.6)。
+    backHook_middle2: { c1: [0.4058, -1.0737, 0.6268], c2: [0.6442, -1.1839, 0.6754], c3: [-1.0226, 3.6657, -2.2927], splay: [0.8339, -1.3842, 0.959] },
     downPush_index: { c1: [-0.03, -0.45, 0.3], c2: [1.26, -0.81, -0.27], c3: [-0.0614, 0.5774, -0.4054], splay: [-0.3427, 0.0532, 0.1695] },
     downPush_middle2: { c1: [0.19, -0.36, 0.096], c2: [0.784, -0.704, 0.2988], c3: [-0.4291, 0.7306, 0.1306], splay: [-0.336, 0.22, -0.02] },
     // upPush 推行程 v1:独臂只跟得住起推段(RUB→BLU 弧长 ~190U 超出可达域,
@@ -433,9 +460,41 @@ const HOOK_FOLLOW: Record<HandSide, Record<string, HookFit>> = {
     upPush_index: { c1: [0, 0.3375, 0.0731], c2: [-0.4862, -0.1475, 0], c3: [-0.5769, -0.2337, -0.2719], splay: [0, 0, 0] },
   },
   L: {
-    hook_index: { c1: [-0.05, -0.4, 0.25], c2: [1.3078, -0.76, -0.3], c3: [0.2312, 0.5831, -0.6743], splay: [0.3676, -0.0814, -0.1605] },
+    // hook_index 全曲线重解(2026-07-09 U2' 镜像标定,方法同 R 侧 r3:节点
+    // 参数化 12 参 + 每 1.5° 全顶点罚 + M-touch 镜像端点 —— U'/U2'-Q1 做完
+    // L2 贴 UFL 角块 L 面贴纸,x+96 ∈ [0.2,1.4] 于 y,z∈[36,92];起点 = R 侧
+    // r3 fit 镜像)。解:冻结细扫全程 pen ≤ 0,提交姿 pad 贴镜像角 M 间隙
+    // 1.56U,tip (−118.8, 69.9, 55.6)。顺带解决 §6「U' 终点贴块未标定」。
+    hook_index: { c1: [1.9138, -6.75, 5.401], c2: [-2.7937, 11.1825, -7.7934], c3: [0.0599, 1.8149, -1.6199], splay: [1.2602, -2.2807, 1.2783] },
     hook_ring: { c1: [0.001, -0.7134, 0.7419], c2: [1.3557, -1.0769, 0.5043], c3: [0.187, -0.1418, -0.3372], splay: [0.27, -0.3878, -0.1444] },
-    backHook_index: { c1: [-0.025, 0, 0], c2: [0.025, 0.0857, 0.0254], c3: [-0.1155, 0.2399, 0.0301], splay: [-0.4433, 0.2019, 0.0495] },
+    // hook_middle2 镜像标定(2026-07-09,U2' 次指 L3 的 Q2 走廊,方法同 R 侧
+    // r3:节点参数化 12 参重解 + 每 1.5° 全顶点罚 + M-touch 镜像端点 —— U2'
+    // 终点 = 角 M 的 x 镜像贴纸,即 UFL 角块 L 面贴纸,x+96 ∈ [0.2,1.4] 于
+    // y,z∈[36,92];起点 = R 值 c 通道同 / splay 反号)。解:Q2 全程 pen ≤
+    // +0.02U 瞬态,提交姿 pad 贴镜像角 M 间隙 1.16U,tip (−118.6, 61.8, 82.2)
+    // (端点带下限提到 1.1U 重精修 —— 首解 0.52U 太贴,回撤攻窗 kFit=1 保持
+    // 提交姿 + 凸包渐升会瞬时压进贴纸,同 R 侧 1.38U 余量的经验)。
+    hook_middle2: { c1: [-0.7609, 2.0498, -0.4278], c2: [0.4223, 1.9573, -2.2044], c3: [7.318, -12.0782, 4.9055], splay: [0.2073, 1.3996, -1.4922] },
+    // D2 连拨镜像标定(2026-07-10,方法同 U2' L 侧:起点 = R 值 c 通道同 /
+    // splay 反号,节点参数化 12 参 + 每 1.5° 全顶点罚 + 锚种子正则重解;贴面
+    // 契约 —— D 族无 M-touch 端点,gap 走廊照抄 R 侧轮廓)。资产不对称只出
+    // ~0.2U 量级(≪ U2' 的 1.4U):hook_pinky 仅端点节点 v(1) 抬 +0.02rad
+    // (清 Q2 冻结保持段 +0.16U → 全程 ≤ −0.51U,首指做完停位必须在后续角柱
+    // 扫掠环带外 —— D2' 首指无 HOOK_EXIT 同款退场,靠端姿本身出带,镜像同);
+    // hook_ring2 仅 c2 前段节点 v(1/3) −0.06rad(清 Q2 走廊 +0.07U 瞬态)。
+    // 解:Q1 pinky pen ≤ −0.76 / Q2 ring pen 全负、贴面收尾 gap 0.42U。
+    hook_pinky: { c1: [0.2684, -0.3, 0.1082], c2: [0.7997, -0.5291, -0.0955], c3: [-0.2046, 0.2746, -0.155], splay: [0.1375, -0.008, -0.1] },
+    hook_ring2: { c1: [0.041, -0.382, 0.5732], c2: [1.2075, -0.1409, -0.4457], c3: [0.8482, -0.6875, -0.4179], splay: [0.34, -0.37, -0.1144] },
+    // backHook_index 端节点微调(2026-07-10 B2 连拨标定):L 侧 Q1 末端姿顶点
+    // 在 90° 边界恰贴来料角柱(1.5° 后 +0.85U,BACK_EXIT ramp 物理来不及)——
+    // 同 D2 pinky 方案,端节点 v(1) 微调 [−0.06, +0.06, −0.188, +0.2] 把停位
+    // 挪出早窗(v(1/3)/v(2/3) 不动,Q1 走廊不变),90° pad gap 1.81U、
+    // tip90 (−106.1, 76.5, −110)。单拨 B 提交姿同此(共享 fit)。
+    backHook_index: { c1: [-0.085, 0.27, -0.27], c2: [0.085, -0.1843, 0.2954], c3: [-0.3035, 1.0859, -0.8159], splay: [-0.2433, -0.6981, 0.9495] },
+    // B2 次指 Q2 跟随(2026-07-10 连拨标定,B2' 的 x 镜像;方法同 R 侧)。解:
+    // Q2 全程 pen ≤ +0.05U 冻结瞬态(走廊 θ≈2.14-2.22 蹭零),提交 pad gap
+    // 1.02U,tip (−99.2, 66.5, −117.8)。
+    backHook_middle2: { c1: [0.3354, -0.3614, 0.0009], c2: [0.0249, 0.0859, 0.0252], c3: [0.7329, -2.2905, 1.741], splay: [-0.7929, 0.5265, 0.0626] },
   },
 };
 const fitAt = (f: HookFit, ch: keyof HookFit, s: number): number => ((f[ch][2] * s + f[ch][1]) * s + f[ch][0]) * s;
@@ -629,7 +688,26 @@ const RETREAT_LIFT_STYLED: Record<HandSide, Partial<Record<string, { c1: number;
     hook_index: { c1: -0.563, c2: 0.2, c3: 0.4, splay: 0.2 },
     hook_middle2: { c1: -0.2, c2: 0.1, c3: 0.575, splay: 1.225 },
   },
-  L: {},
+  // L 侧(U'/U2' 钉镜像角端姿,2026-07-09):浏览器按 U' 单拨 + U2' 双指两条
+  // 回撤路径联解,细 k 网格(尾段 0.01~0.06 + 攻窗 0.965~0.995 都要采,
+  // kStep 0.04 粗网格漏 k=0.98/0.02 两处真峰,踩过)。**凸包 splay 镜像与
+  // fit 通道相反**:fit 的 splay 镜像 = 反号,但回撤凸包在贴角端姿上的逃逸
+  // splay 两手同号为正(负 splay 盆地多起点怎么解都剩 0.5~1.9U 残差,正
+  // splay 盆地直接全负);尾段(k≈0.02,走弦末端蹭 B 面)靠 c1 基节伸展
+  // 离面清。解:两键全 k 网格(0.005 步注入复核)pen ≤ 0。
+  L: {
+    hook_index: { c1: -0.61, c2: 0.36, c3: 0.2, splay: 0 },
+    hook_middle2: { c1: -0.35, c2: 0.06, c3: 0.17, splay: 0.7 },
+    // D2 两键(2026-07-10 镜像连拨落地):注入 0.005 步细 k 网格实测,默认
+    // RETREAT_LIFT(无 styled 键 = 无攻窗保持)在攻窗段 k≈0.945-0.965 把
+    // ring2 端姿(pad gap ~0.4U)×decayK 拉进箱体 +4.0U(R 侧同网格 +2.9U,
+    // 同族既有暴露,真实播放 60fps 采样只探到 0.5U)—— 该峰主要靠 styled 键
+    // 自带的攻窗 kFit 钳解决,凸包本身只需极小量:pinky 键零凸包(仅为启用
+    // 攻窗保持),ring2 微量伸展 + 负 splay。8 参联解(pinky+ring2 两路径
+    // 同罚),全 k 网格(0.005 步)pen ≤ −0.49。
+    hook_pinky: { c1: 0, c2: 0, c3: 0, splay: 0 },
+    hook_ring2: { c1: -0.038, c2: -0.053, c3: -0.001, splay: -0.163 },
+  },
 };
 
 /** U2 连拨首指退场(FINGERTRICKS §4.2):第一个 U 做完食指紧贴角 M(初始
@@ -645,6 +723,21 @@ const HOOK_EXIT = { c1: 0.139, c2: 0.225, c3: -0.016, splay: -0.1 };
 /** HOOK_EXIT 渐入窗口:Q2 前 20% 内退场到位(连续 180° 层转无时间间隙,
  *  「先退再接」折衷为「极早期快退」)。 */
 const HOOK_EXIT_IN = 0.2;
+
+/** B2/B2' 连拨首指退场(HOOK_EXIT 的 backHook 版):backHook Q1 做完食指
+ *  绕过 BR/BL 棱贴在 R/L 面旁(R 侧 distal 肉 (105,2,−77),径向 ~105 <
+ *  角柱扫掠 96√2 ≈ 135.8),Q2 中后段下一个角柱必扫过原地 —— Q2 前 20%
+ *  (HOOK_EXIT_IN 同窗)沿 B 面外法线(−z)拉出扫掠带 + 基节伸展,观感 =
+ *  背钩拨完向后下方的自然 follow-through。判据:Q2 全程食指全顶点 pen ≤ 0
+ *  + 最小幅度正则;两手各解各的(splay 符号已烘入,不 ×sideSign)。
+ *  2026-07-10 标定:R 最小幅度解(Q2 worst −0.81U,tip 提交
+ *  (135.2, 11.5, −115.1));L 侧早窗(90° 边界贴角柱)靠 backHook_index 端
+ *  节点微调解开(见 HOOK_FOLLOW.L 注),exit 同为中等幅度(Q2 worst 0.00U
+ *  单点擦零,tip 提交 (−131.8, 87.1, −152.7),向后上方甩出)。 */
+const BACK_EXIT: Record<HandSide, { c1: number; c2: number; c3: number; splay: number }> = {
+  R: { c1: -0.16, c2: -0.028, c3: -0.002, splay: 0 },
+  L: { c1: -0.232, c2: -0.064, c3: 0.006, splay: -0.016 },
+};
 
 /** 左中右下 F 族「食指下拨」(FINGERTRICKS §4.3):食指尖起手压 U 面 UFR 区,
  *  随 F 层角前卷(×φ/90°)把初始 UFR 往前下带;F2 次指中指 Q1 前探 UF 缘接力。
@@ -996,16 +1089,17 @@ export default class HandsRig extends THREE.Group {
   }
 
   /**
-   * 换握(动画):两手 slerp 到指定握姿基座 —— 解法框记号 ↑/↓/· 驱动。
+   * 换握(动画):手 slerp 到指定握姿基座 —— 解法框记号 ↑/↓/· 驱动。
+   * side 缺省 = 双手;单手记号(FINGERTRICKS §2 空格规则)只动指定手。
    * 把「当前显示偏移 ∘ 旧 grip」折算成相对新 grip 的回位余量,切换瞬间画面连续。
    */
-  regrip(name: GripName): void {
+  regrip(name: GripName, only?: HandSide): void {
     const hands = this.hands;
     if (!hands) return;
     const target = gripQuat(name);
     const q = HandsRig._qTmp;
     let any = false;
-    for (const side of ["R", "L"] as const) {
+    for (const side of only ? [only] : (["R", "L"] as const)) {
       const h = hands[side];
       if (h.weldAxis) {
         q.setFromAxisAngle(AXIS_VEC[h.weldAxis], h.weldAngle);
@@ -1124,6 +1218,19 @@ export default class HandsRig extends THREE.Group {
     const cls = classifyLayers(layers, cube.order);
     const g = classifyHandGesture(axis, cls, dir, this.gripNames(), { quarters, push });
     this.pendingHint = { axis, cls, dir, quarters, push, at: performance.now() };
+    // U 族接续闸(2026-07-09 U2' 镜像连拨):对侧手上一步 U 族 hook(钉角端姿)
+    // 的回撤未完时,下一步 y.high 必须等 —— 回撤走廊在 U 带扫掠环带内侧
+    // (半径 ~107U < 96√2),层再次转动会犁到回撤中的指链(真实播放 oracle
+    // U2'→U'p 实测 11U;F/S 族「decay 段吃 evade」先例是小幅姿态可解,这里
+    // 是结构性重叠只能等,decay ≤ RECOVER_MS)。同手连发(U 接 U2)不闸:
+    // beginGesture 直接重置本手 decay,r3 基线行为不变。
+    if (axis === "y" && cls === "high" && g.kind === "flick") {
+      const other = hands[g.hand === "R" ? "L" : "R"];
+      if (other.flickDecay > 0 && other.flickAxis === "y" && other.flickStyle === "hook" && other.flickFinger === "index") {
+        this.lastActivityAt = performance.now();
+        return true;
+      }
+    }
     if (!HandsRig.needsReach(g) || g.kind !== "flick") return false;
     const h = hands[g.hand];
     if (h.flickDecay > 0 && h.reachT > 0) {
@@ -1153,7 +1260,7 @@ export default class HandsRig extends THREE.Group {
     midEvade: typeof MID_EVADE; bEvade: typeof B_EVADE; fEvade: typeof F_EVADE;
     sEvade: typeof S_EVADE;
     retreatLift: typeof RETREAT_LIFT; retreatLiftStyled: typeof RETREAT_LIFT_STYLED;
-    hookExit: typeof HOOK_EXIT;
+    hookExit: typeof HOOK_EXIT; backExit: typeof BACK_EXIT;
   } {
     return {
       push: TOP_PUSH, follow: TOP_PUSH_FOLLOW,
@@ -1164,7 +1271,7 @@ export default class HandsRig extends THREE.Group {
       midEvade: MID_EVADE, bEvade: B_EVADE, fEvade: F_EVADE,
       sEvade: S_EVADE,
       retreatLift: RETREAT_LIFT, retreatLiftStyled: RETREAT_LIFT_STYLED,
-      hookExit: HOOK_EXIT,
+      hookExit: HOOK_EXIT, backExit: BACK_EXIT,
     };
   }
 
@@ -2009,8 +2116,9 @@ export default class HandsRig extends THREE.Group {
           // 基节伸展把指尖抬离层面(位置上退,不扎进转动层),中/末节加弯给出
           // 可见的向掌心勾弯(用户规格:拨 U 手指要弯,禁向手背反弓)。
           if (role === 2 && prep2T > 0) {
-            // 连拨次指就位(U2 中指上探 / D2' 无名指让位)
-            const p = HOOK_PREP[name];
+            // 连拨次指就位(U2 中指上探 / D2' 无名指让位 / B2 中指上探顶带);
+            // 键按样式区分(hook 与 backHook 的中指就位目标不同)。
+            const p = HOOK_PREP[side][`${h.flickStyle}_${name}`];
             if (p) {
               c1 += p.c1 * prep2T;
               c2 += p.c2 * prep2T;
@@ -2051,6 +2159,16 @@ export default class HandsRig extends THREE.Group {
               c2 += HOOK_EXIT.c2 * ex;
               c3 += HOOK_EXIT.c3 * ex;
               splay += HOOK_EXIT.splay * ex * sideSign;
+            }
+            // B2/B2' 连拨首指退场(BACK_EXIT 注释):Q1 末端姿在角柱扫掠环带
+            // 内(径向 ~105U),Q2 前 20% 内沿 −z 拉出;splay 符号已烘入表。
+            if (role === 1 && isDouble && h.flickStyle === "backHook" && name === "index") {
+              const bx = BACK_EXIT[side];
+              const ex = sm(Math.min(1, sRaw2 / HOOK_EXIT_IN)) * kFit;
+              c1 += bx.c1 * ex;
+              c2 += bx.c2 * ex;
+              c3 += bx.c3 * ex;
+              splay += bx.splay * ex;
             }
             if (h.flickDecay > 0) {
               // 包络说明见 downPush 分支同款注释;非钉角样式回落默认 RETREAT_LIFT。

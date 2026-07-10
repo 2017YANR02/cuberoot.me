@@ -106,7 +106,7 @@ import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
-import { simulateGrips, type GripName, type GripSimStep } from './engine/hands/handsRig';
+import { simulateGrips, type GripName, type GripSimStep, type HandSide } from './engine/hands/handsRig';
 import { WheelPicker } from '@/components/WheelPicker';
 import { ClearButton } from '@/components/ClearButton';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
@@ -117,6 +117,8 @@ import './player-controls.css';
 /**
  * 换握记号(仅 NxN 解法框):↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握。
  * 记号是播放步(占一步、驱动手部换握动画),对魔方状态零作用;手没开时照常跳过。
+ * 手别由空白定(FINGERTRICKS §2,2026-07-10 用户规格):记号**紧贴**后续字符
+ * (`↑U`)= 右手;后随空白/串尾(`↑ U`)= 左手。双手 = 紧贴链尾随空白(`↑↑ U`)。
  */
 const GRIP_MARKS: Record<string, GripName> = { '↑': 'up', '↓': 'down', '·': 'home' };
 const GRIP_MARK_SPLIT = /([↑↓·])/;
@@ -130,7 +132,7 @@ const stripPushMarks = (s: string): string =>
 /** 变换/导出前剥全部手部记号(换握 ↑↓· + 推法 p 后缀)。 */
 const stripHandMarks = (s: string): string => stripPushMarks(stripGripMarks(s));
 
-type NxnPlayItem = { kind: 'move'; action: TwistAction; push?: boolean } | { kind: 'grip'; grip: GripName };
+type NxnPlayItem = { kind: 'move'; action: TwistAction; push?: boolean } | { kind: 'grip'; grip: GripName; side: HandSide };
 
 /** 手部转前闸(与 isRegripping 同款节拍):登记 quarters/push 提示(连拨、
  *  推法分类用,FINGERING.md),该步若需前置就位(F 族越顶 / U'p / D2' 小指)
@@ -161,9 +163,19 @@ function parseNxnItems(text: string): NxnPlayItem[] {
     .map((l) => { const i = l.indexOf('//'); return i >= 0 ? l.slice(0, i) : l; })
     .join('\n');
   const items: NxnPlayItem[] = [];
-  for (const seg of noComments.split(GRIP_MARK_SPLIT)) {
+  const segs = noComments.split(GRIP_MARK_SPLIT);
+  for (let si = 0; si < segs.length; si++) {
+    const seg = segs[si];
     const grip = GRIP_MARKS[seg];
-    if (grip) { items.push({ kind: 'grip', grip }); continue; }
+    if (grip) {
+      // 手别空格规则(FINGERTRICKS §2):紧贴后续字符 = 右手;后随空白/串尾 = 左手。
+      // split-capture 交替 [文本,记号,文本,…]:后继文本段空 ⇒ 要么紧贴下一记号
+      // (还有后续段,右手),要么串尾(左手)。
+      const next = segs[si + 1] ?? '';
+      const glued = next ? !/^\s/.test(next) : si + 2 < segs.length;
+      items.push({ kind: 'grip', grip, side: glued ? 'R' : 'L' });
+      continue;
+    }
     if (!seg.trim()) continue;
     // p 后缀(推法记号):只认空白分隔的单招 token;无 p 记号时整段一次性
     // 走原路径(行为零变化)。缓冲分段解析保持步序。
@@ -1048,7 +1060,7 @@ export default function PlayerControls({
       const sim: GripSimStep[] = [];
       for (let i = 0; i < target; i++) {
         const it = nxnItems[i];
-        if (it.kind === 'grip') { sim.push({ grip: it.grip }); continue; }
+        if (it.kind === 'grip') { sim.push({ grip: it.grip, side: it.side }); continue; }
         const rotates = cube.table.convert(it.action);
         if (!rotates.length) continue;
         sim.push({
@@ -1128,7 +1140,7 @@ export default function PlayerControls({
       const cube = world.cube as import('./engine/nxn/cube').default;
       const it = nxnItems[step];
       if (it.kind === 'grip') {
-        world.hands?.regrip(it.grip);
+        world.hands?.regrip(it.grip, it.side);
       } else {
         if (cube.busy || world.hands?.isRegripping) return;
         // 前置就位:伸指在途时本次点击只推进伸指,到位后再点才转。
@@ -1158,7 +1170,7 @@ export default function PlayerControls({
           const sim: GripSimStep[] = [];
           for (let i = 0; i < step - 1; i++) {
             const p = nxnItems[i];
-            if (p.kind === 'grip') { sim.push({ grip: p.grip }); continue; }
+            if (p.kind === 'grip') { sim.push({ grip: p.grip, side: p.side }); continue; }
             const rotates = cube.table.convert(p.action);
             if (rotates.length) sim.push({ axis: rotates[0].group.axis as 'x' | 'y' | 'z', layers: rotates.map((r) => r.group.layer), quarters: rotates[0].twist });
           }
@@ -1242,7 +1254,7 @@ export default function PlayerControls({
         if (world.hands?.isRegripping) return;
         const it = nxnItems[s];
         if (it.kind === 'grip') {
-          world.hands?.regrip(it.grip);
+          world.hands?.regrip(it.grip, it.side);
           started = true;
         } else {
           // NxN twist(force=false) returns true even for a same-axis/same-face turn
