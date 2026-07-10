@@ -23,10 +23,7 @@
  * (CORNER_NAMES below stays the 3-face grip list; it drives the PG cap match + geometry,
  * separate from the WCA display tokens in SKEWB_WCA_TOKENS.)
  */
-import {
-  parseCornerMoves, cornerMoveToString, cornerMovesToString,
-  type CornerMove,
-} from '../cornerNotation';
+import { cornerMoveToString, type CornerMove } from '../cornerNotation';
 
 /** Corner slot order (index 0..7), face order U/D, F/B, L/R. Doubles as the grip list.
  *  Drives geometry + the PG cap letter-set match — NOT the user-facing notation (that's
@@ -97,7 +94,21 @@ export const CENTER_CYCLE: ReadonlyArray<readonly [number, number, number]> = [
  */
 export const CORNER_ORI_DELTA: ReadonlyArray<number> = [1, 2, 2, 1, 2, 1, 1, 2];
 
-export type SkewbMove = CornerMove;
+/**
+ * A whole-cube reorientation (x / y / z). `rot` 0/1/2 = the x/y/z axis; `dir` 1 = the
+ * bare quarter turn, −1 = prime, 2 = half turn. A rotation permutes NO piece — it only
+ * re-holds the cube — so the discrete state is untouched; the engine carries the
+ * reorientation on its render group's quaternion, exactly matching WCA / Sarah x·y·z.
+ */
+export interface SkewbRotMove { rot: 0 | 1 | 2; dir: 1 | -1 | 2; }
+
+/** A Skewb move: a corner grip twist, or a whole-cube rotation. */
+export type SkewbMove = CornerMove | SkewbRotMove;
+
+/** Narrow a Skewb move to a whole-cube rotation. */
+export function isSkewbRot(move: SkewbMove): move is SkewbRotMove {
+  return 'rot' in move;
+}
 
 export interface SkewbState {
   /** cornerPerm[slot] = corner pieceId currently in that slot. */
@@ -121,6 +132,15 @@ export function solvedSkewb(): SkewbState {
  * diagonal (tables as derived); dir −1 = the inverse (reverse 3-cycles, delta 3−d).
  */
 export function applySkewbMove(state: SkewbState, move: SkewbMove): SkewbState {
+  // A whole-cube rotation re-holds the puzzle without permuting any piece — the engine
+  // carries the reorientation on its render group, so the discrete state is unchanged.
+  if (isSkewbRot(move)) {
+    return {
+      cornerPerm: state.cornerPerm.slice(),
+      cornerOri: state.cornerOri.slice(),
+      centerPerm: state.centerPerm.slice(),
+    };
+  }
   const g = move.corner;
   const [a, b, c] = CORNER_CYCLE[g];
   const [pa, pb, pc] = CENTER_CYCLE[g];
@@ -175,26 +195,49 @@ const WCA_SCRAMBLE_GRIPS = [6, 3, 5, 7] as const;
 
 // Two-letter families (UL/UR) come first so the alternation matches them before U.
 const TOKEN_RE = /^(UL|UR|U|F|D|L|R|B)('?)$/;
+// Whole-cube rotations x / y / z, optionally primed or doubled.
+const ROT_RE = /^([xyz])(['2]?)$/;
 
-/** Parse a scramble/alg string into moves. Unknown tokens are skipped. */
+/** Parse a scramble/alg string into moves — corner grips (WCA tokens) and whole-cube
+ *  rotations (x / x' / x2). Unknown tokens are skipped. */
 export function parseSkewbMoves(text: string): SkewbMove[] {
-  return parseCornerMoves(text, TOKEN_RE, SKEWB_WCA_TOKENS);
+  const out: SkewbMove[] = [];
+  for (const raw of text.trim().split(/\s+/)) {
+    if (!raw) continue;
+    const r = ROT_RE.exec(raw);
+    if (r) {
+      out.push({
+        rot: (r[1] === 'x' ? 0 : r[1] === 'y' ? 1 : 2) as 0 | 1 | 2,
+        dir: r[2] === '2' ? 2 : r[2] === "'" ? -1 : 1,
+      });
+      continue;
+    }
+    const m = TOKEN_RE.exec(raw);
+    if (!m) continue;
+    const corner = SKEWB_WCA_TOKENS.indexOf(m[1] as typeof SKEWB_WCA_TOKENS[number]);
+    if (corner >= 0) out.push({ corner, dir: m[2] ? 1 : -1 });
+  }
+  return out;
 }
 
-/** Render one move to its canonical WCA token (bare = clockwise dir −1, primed = dir +1). */
+/** Render one move to its canonical token — grip (bare = clockwise dir −1, primed = dir
+ *  +1) or rotation (x / x' / x2). Exact inverse of parseSkewbMoves. */
 export function skewbMoveToString(move: SkewbMove): string {
+  if (isSkewbRot(move)) {
+    return 'xyz'[move.rot] + (move.dir === 2 ? '2' : move.dir === -1 ? "'" : '');
+  }
   return cornerMoveToString(move, SKEWB_WCA_TOKENS);
 }
 
 export function skewbMovesToString(moves: SkewbMove[]): string {
-  return cornerMovesToString(moves, SKEWB_WCA_TOKENS);
+  return moves.map(skewbMoveToString).join(' ');
 }
 
 /** Random WCA scramble: `n` twists over the 4 axis corners (R U L B), never the same
  *  corner twice in a row — only the four WCA letters appear, like a real skewb scramble.
  *  (Manual solving can still turn any of the 8 corners; those record F/D/UL/UR.) */
-export function randomSkewbScramble(n = 12): SkewbMove[] {
-  const out: SkewbMove[] = [];
+export function randomSkewbScramble(n = 12): CornerMove[] {
+  const out: CornerMove[] = [];
   let last = -1;
   for (let i = 0; i < n; i++) {
     let g: number;

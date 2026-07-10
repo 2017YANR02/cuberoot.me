@@ -56,7 +56,7 @@ import {
   parseHeliMoves, heliMovesToString, randomHeliScrambleMoves, type HeliMove,
 } from './engine/heli/heliState';
 import {
-  parseSkewbMoves, skewbMovesToString, randomSkewbScramble, type SkewbMove,
+  parseSkewbMoves, skewbMovesToString, randomSkewbScramble, isSkewbRot, type SkewbMove,
 } from './engine/skewb/skewbState';
 import {
   parsePyraMoves, pyraMovesToString, invertPyraMoves, reducePyraAlg, randomPyraScramble, type PyraMove,
@@ -429,18 +429,22 @@ function invertHeliMoves(moves: HeliMove[]): HeliMove[] {
 function invertSkewbMoves(moves: SkewbMove[]): SkewbMove[] {
   const out: SkewbMove[] = [];
   for (let i = moves.length - 1; i >= 0; i--) {
-    out.push({ corner: moves[i].corner, dir: moves[i].dir === 1 ? -1 : 1 });
+    const m = moves[i];
+    // Rotation inverse: x2 stays x2, else flip the quarter turn. Grip inverse: flip dir.
+    if (isSkewbRot(m)) out.push({ rot: m.rot, dir: m.dir === 2 ? 2 : (m.dir === 1 ? -1 : 1) });
+    else out.push({ corner: m.corner, dir: m.dir === 1 ? -1 : 1 });
   }
   return out;
 }
 
-/** Fold consecutive same-grip Skewb twists mod 3 (X X = X', X X' = id, …). */
+/** Fold consecutive same-grip Skewb twists mod 3 (X X = X', X X' = id, …). Rotations
+ *  are left as-is (only same-grip twists cancel). */
 function reduceSkewbAlg(s: string): string {
   const moves = parseSkewbMoves(s);
   const out: SkewbMove[] = [];
   for (const m of moves) {
     const last = out[out.length - 1];
-    if (last && last.corner === m.corner) {
+    if (!isSkewbRot(m) && last && !isSkewbRot(last) && last.corner === m.corner) {
       const net = (((last.dir === 1 ? 1 : 2) + (m.dir === 1 ? 1 : 2)) % 3 + 3) % 3;
       out.pop();
       if (net === 1) out.push({ corner: m.corner, dir: 1 });
