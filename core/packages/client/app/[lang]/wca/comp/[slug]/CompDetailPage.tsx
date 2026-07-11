@@ -609,8 +609,8 @@ function SimilarCompsView({ comps, isZh, lang }: { comps: SeriesComp[]; isZh: bo
             <Link {...compLinkProps(c.id, undefined, lang)} className="comp-similar-item">
               <Flag iso2={c.country} className="comp-similar-flag" />
               <span className="comp-similar-name">{name}</span>
-              <span className="comp-similar-date">{date}</span>
               <span className="comp-similar-place">{place}</span>
+              <span className="comp-similar-date">{date}</span>
             </Link>
           </li>
         );
@@ -1445,6 +1445,8 @@ export default function CompDetailPage() {
               const wcaLiveUrl = data.wcaLiveId
                 ? `https://live.worldcubeassociation.org/competitions/${data.wcaLiveId}${currentRound?.rd.liveId ? `/rounds/${currentRound.rd.liveId}` : ''}`
                 : 'https://live.worldcubeassociation.org/';
+              // 未开始的比赛 WCA Live 上没有页面(404),已知 start_date 且晚于今天才隐藏。
+              const notStartedYet = !!compInfo?.start_date && compInfo.start_date.slice(0, 10) > toIsoDate(new Date());
               return (
                 <>
                   {/* 旗+比赛名成组:窄屏 h1 flex-wrap 时整组占满第一行、图标落第二行,旗不与名分家 */}
@@ -1465,8 +1467,9 @@ export default function CompDetailPage() {
                     <img src="/icons/upstream/wca.svg" alt="WCA" />
                   </a>
                   {/* WCA Live 没有独立 logo(与 WCA 主站几乎一致),用 lucide Radio 表「实时成绩」。
-                      中国比赛走 cubing.com 直播,没有 WCA Live 页面,故 CN 不显示此图标。 */}
-                  {iso2 !== 'cn' && (
+                      中国比赛走 cubing.com 直播,没有 WCA Live 页面,故 CN 不显示此图标;
+                      比赛还没开始时 WCA Live 页面也不存在,同样不显示。 */}
+                  {iso2 !== 'cn' && !notStartedYet && (
                     <a href={wcaLiveUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon comp-title-icon-lucide" title="WCA Live">
                       <Radio size={18} />
                     </a>
