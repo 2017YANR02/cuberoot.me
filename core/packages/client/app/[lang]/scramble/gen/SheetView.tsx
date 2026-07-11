@@ -111,9 +111,11 @@ interface SheetViewProps {
   /** 是否允许行内展开解法分析器(跟随顶部「分析」开关)。false 时可分析打乱点击无任何反应
    *  —— 没开「分析」就完全不出分析器画面。SQ1 等不可分析事件不受影响(本就只选中)。 */
   analyzable?: boolean;
+  /** 卡片标题行左侧附加内容(如 SQ1 记号简写/完整开关),紧贴在事件图标之前。 */
+  headerExtra?: ReactNode;
 }
 
-export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, analyzable = true }: SheetViewProps) {
+export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, analyzable = true, headerExtra }: SheetViewProps) {
   const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
   const router = useRouter();
   const params = useParams();
@@ -346,6 +348,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
   return (
     <div className="gen-tn-sheet">
       <div className="gen-tn-sheet-header">
+        {headerExtra && <span className="gen-tn-sheet-header-extra">{headerExtra}</span>}
         <EventIcon event={event} />
         <span>{eventDisplayName(event, isZh)} {roundLabel}{groupSuffix}{attemptSuffix}</span>
       </div>
