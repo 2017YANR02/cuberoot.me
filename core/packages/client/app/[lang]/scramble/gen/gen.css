@@ -147,7 +147,8 @@
     gap: 0.5rem;
     margin: 12px 0;
 }
-.gen-tn-config-row .gen-sq1-format { margin: 0; }
+.gen-tn-config-row .gen-sq1-format,
+.gen-cx-switchrow .gen-sq1-format { margin: 0; }
 .gen-sq1-format-label {
     font-size: 0.8rem;
     color: var(--gen-text-mute);
@@ -1273,7 +1274,7 @@ html[data-theme=dark] .gen-page {
     flex-shrink: 0;
 }
 
-/* legend row = clickable step filter (left) + view toggle (right) */
+/* legend row = view toggle (left) + clickable step filter (right) */
 .gen-cx-legendrow {
     display: flex;
     align-items: center;
@@ -1353,6 +1354,8 @@ html[data-theme=dark] .gen-page {
 .gen-cx-hm-colhead.is-dim { opacity: 0.4; }
 .gen-cx-hm-colhead .gen-cx-dot { width: 9px; height: 9px; }
 .gen-cx-hm-headcell { display: flex; align-items: center; }
+.gen-cx-hm-corner { display: flex; align-items: center; }
+.gen-cx-hm-corner .gen-cx-viewbtn { padding: 4px 6px; }
 .gen-cx-hm-cell {
     display: flex;
     align-items: center;
@@ -1383,4 +1386,5 @@ html[data-theme=dark] .gen-page {
     .gen-cx-hm { grid-template-columns: 64px repeat(var(--cx-cols, 5), minmax(0, 1fr)); gap: 3px 4px; }
     .gen-cx-hm-cell { min-height: 26px; font-size: 0.72rem; }
     .gen-cx-hm-colhead { font-size: 0.74rem; }
+    .gen-cx-hm-corner .gen-cx-viewbtn { padding: 3px 4px; }
 }
