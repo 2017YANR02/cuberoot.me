@@ -147,8 +147,7 @@
     gap: 0.5rem;
     margin: 12px 0;
 }
-.gen-tn-config-row .gen-sq1-format,
-.gen-cx-switchrow .gen-sq1-format { margin: 0; }
+.gen-tn-config-row .gen-sq1-format { margin: 0; }
 .gen-sq1-format-label {
     font-size: 0.8rem;
     color: var(--gen-text-mute);
@@ -445,10 +444,6 @@
 /* 加载完(.is-loaded):actions 独占一行 right-aligned,正常 flow,不再 absolute */
 .gen-tn-controls.is-loaded {
     justify-content: flex-end;
-}
-/* 内嵌比赛页(forcedCompId):跟并入的 sq1 开关一起靠左,不用 actions 惯常的右对齐 */
-.gen-tn-controls.is-loaded.gen-tn-controls--left {
-    justify-content: flex-start;
 }
 /* loaded 态下右下角操作按钮去外框,只保留 hover 反馈 */
 .gen-tn-controls.is-loaded .gen-btn {
@@ -874,6 +869,7 @@
     min-width: 0;
 }
 .gen-tn-sheet-header {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -883,6 +879,11 @@
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--gen-text);
+}
+/* 标题左侧附加内容(如 SQ1 记号开关):脱离文档流固定贴左,不影响图标+文字的居中。 */
+.gen-tn-sheet-header-extra {
+    position: absolute;
+    left: 0;
 }
 .gen-tn-bench {
     font-family: 'LiberationMono', 'NotoSans', monospace;
