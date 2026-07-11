@@ -817,18 +817,15 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       <div className="stsv-controls">
         {/* 底色子集(色中性 cross 选择):只显示选中底色对应的视角格;复用 /scramble/stats 的同款 picker。 */}
         <div className="stsv-control stsv-control-subset">
-          <span>{t('底色', 'Color')}</span>
           <SubsetColorPicker sel={subsetSel} isZh={lang === 'zh'} />
         </div>
         <label className="stsv-control">
-          <span>{t('方法', 'Method')}</span>
-          <select className="stsv-control-select" value={method} onChange={(e) => setMethod(e.target.value as Method)}>
+          <select className="stsv-control-select" aria-label={t('方法', 'Method')} value={method} onChange={(e) => setMethod(e.target.value as Method)}>
             {METHOD_KEYS.map((k) => <option key={k} value={k}>{variantLabel(k, lang === 'zh')}</option>)}
           </select>
         </label>
         <label className="stsv-control">
-          <span>{t('阶段', 'Stage')}</span>
-          <select className="stsv-control-select" value={stage} onChange={(e) => setStage(Number(e.target.value))}>
+          <select className="stsv-control-select" aria-label={t('阶段', 'Stage')} value={stage} onChange={(e) => setStage(Number(e.target.value))}>
             {stages.map((k, i) => <option key={k} value={i}>{stageLabel(k, lang === 'zh')}</option>)}
           </select>
         </label>
@@ -860,7 +857,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         )}
         {/* 最大步数 = 比该面最优多几步(相对最优,跨面一致;cross 阶段也不会因绝对大值爆炸)。 */}
         <label className="stsv-control">
-          <span>{t('最大步数', 'Max len')}</span>
+          <span>{t('步数上限', 'Move limit')}</span>
           <select className="stsv-control-select" value={slack} onChange={(e) => setSlack(Number(e.target.value))}>
             {SLACK_OPTIONS.map((k) => (
               <option key={k} value={k}>{k === 0 ? t('最优', 'Opt') : `${t('最优', 'Opt')}+${k}`}</option>
@@ -868,7 +865,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           </select>
         </label>
         <label className="stsv-control">
-          <span>{t('最大数量', 'Max')}</span>
+          <span>{t('数量上限', 'Count limit')}</span>
           <select className="stsv-control-select" value={limit} onChange={(e) => setLimit(Number(e.target.value))}>
             {LIMIT_OPTIONS.map((n) => (
               <option key={n} value={n}>{n === 0 ? t('无上限', '∞') : n}</option>
@@ -1115,19 +1112,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
                 {moves && moves.sols.length > 0 && (
                   <>
-                    <div className="stsv-sols-count">
-                      {movesLoading ? (
-                        <>
-                          {t(`${moves.sols.length} 条`, `${moves.sols.length} found`)}
-                          <Loader2 size={12} className="stsv-spin stsv-sols-spin" aria-label={t('搜索中…', 'Searching…')} />
-                        </>
-                      ) : (
-                        t(`${moves.sols.length} 条解法`, `${moves.sols.length} solutions`)
-                      )}
-                      {!movesLoading && limit !== 0 && moves.sols.length >= limit && (
-                        <span className="stsv-sols-more">{t(' · 已达上限,可能更多', ' · capped, may be more')}</span>
-                      )}
-                    </div>
+                    {movesLoading && (
+                      <div className="stsv-sols-count">
+                        <Loader2 size={12} className="stsv-spin stsv-sols-spin" aria-label={t('搜索中…', 'Searching…')} />
+                      </div>
+                    )}
                     <ol className="stsv-sols-list">
                       {moves.sols.map((sol, i) => {
                         const rot = rowRot[i] ?? 0;
@@ -1138,6 +1127,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           className={`stsv-sol-row${selSol === i ? ' is-active' : ''}`}
                           onClick={() => selectSol(i, true)}
                         >
+                          <span className="stsv-sol-num">{i + 1}</span>
                           <button
                             className="stsv-sol-copy"
                             onClick={(e) => { e.stopPropagation(); copySol(i, dispAlg); }}
