@@ -17,6 +17,7 @@
  */
 import { apiUrl } from '@/lib/api-base';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
+import { groupIdxOf } from '@/lib/wca-scramble-group';
 import type { EventId } from '../types';
 
 // timer EventId → WCA scrambles event_id. Events absent here have no real
@@ -175,7 +176,7 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
       .sort((a, b) => {
         const ra = ROUND_SEQ[a.round_type_id] ?? 9, rb = ROUND_SEQ[b.round_type_id] ?? 9;
         if (ra !== rb) return ra - rb;
-        if (a.group_id !== b.group_id) return a.group_id < b.group_id ? -1 : 1;
+        if (a.group_id !== b.group_id) return groupIdxOf(a.group_id) - groupIdxOf(b.group_id);
         if (a.is_extra !== b.is_extra) return a.is_extra ? 1 : -1;
         return a.scramble_num - b.scramble_num;
       })
