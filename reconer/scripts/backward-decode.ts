@@ -344,10 +344,21 @@ const SHIFT_VARIANTS: readonly (readonly [number, number, number])[] = SHIFT_PEN
   ? [[0, 0, 0], [0, 1, SHIFT_PEN], [0, -1, SHIFT_PEN], [1, 0, SHIFT_PEN], [-1, 0, SHIFT_PEN]]
   : [[0, 0, 0]];
 const getHalo = makeHaloGetter(ASSIGNS_24);
+// --marg: 假设层 max → 边缘化 (log-mean-exp / 带先验 logsumexp)。每链证据原本对
+// (平移×端点×窗口) ≤20 个假设取最大 — 证据格越少, 错误候选越易碰到侥幸高分
+// (优化者诅咒), 真解优势随格数稀释 (⑯(c) 证据量效应的机制假设)。边缘化无此偏置。
+const MARG = process.argv.includes("--marg");
+const lse2 = (a: number, b: number): number => {
+  if (a === -Infinity) return b;
+  if (b === -Infinity) return a;
+  const m = Math.max(a, b);
+  return m + Math.log(Math.exp(a - m) + Math.exp(b - m));
+};
 function chainLL(read: (string | null)[], state: Perm, ai: number): number {
   const assign = ASSIGNS_24[ai];
   const halo = PB > 0 ? getHalo(ai) : null;
   let best = -Infinity;
+  let lseNum = -Infinity, lsePri = -Infinity; // marg: pen 作 log 先验, logsumexp(pen+ll) - logsumexp(pen)
   for (const [dr, dc, pen] of SHIFT_VARIANTS) {
     let s = pen;
     for (let i = 0; i < 9; i++) {
@@ -377,8 +388,12 @@ function chainLL(read: (string | null)[], state: Perm, ai: number): number {
       }
     }
     if (s > best) best = s;
+    if (MARG) {
+      lseNum = lse2(lseNum, s);
+      lsePri = lse2(lsePri, pen);
+    }
   }
-  return best;
+  return MARG ? lseNum - lsePri : best;
 }
 
 // --vlmev <w>: VLM 普查读数附加证据通道 (正⑱ 阶段3 原型)。不删不换管线读数,
@@ -401,13 +416,19 @@ const evidenceAt = (t: number, sMid: Perm, sAfter: Perm, a0: number, a1: number)
     const c = v.bounds[t][ci];
     const pool = FREE_WIN ? [a0, a1] : [c.win === 0 ? a0 : a1];
     let best = -Infinity;
+    let acc = -Infinity; // marg: 窗口×端点均匀先验 log-mean-exp
     const vr = VLM_W > 0 ? vlmReads.get(`${t}-${ci}`) : undefined;
     for (const ai of pool) {
-      let s = Math.max(chainLL(c.read, sMid, ai), chainLL(c.read, sAfter, ai));
-      if (vr) s += VLM_W * Math.max(chainLL(vr, sMid, ai), chainLL(vr, sAfter, ai));
+      const mid = chainLL(c.read, sMid, ai), aft = chainLL(c.read, sAfter, ai);
+      let s = MARG ? lse2(mid, aft) - Math.LN2 : Math.max(mid, aft);
+      if (vr) {
+        const vm = chainLL(vr, sMid, ai), va = chainLL(vr, sAfter, ai);
+        s += VLM_W * (MARG ? lse2(vm, va) - Math.LN2 : Math.max(vm, va));
+      }
       if (s > best) best = s;
+      if (MARG) acc = lse2(acc, s);
     }
-    ev += best;
+    ev += MARG ? acc - Math.log(pool.length) : best;
   }
   return ev;
 };
