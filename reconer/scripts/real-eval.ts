@@ -12,6 +12,7 @@
  * 用法: npx tsx scripts/real-eval.ts [--search] [--video 3] [--faces B,U]
  *       [--beam 2048] [--hist] [--minrun 3]
  */
+import { spawn } from "node:child_process";
 import { readFileSync, readdirSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { parseGT, parseSplitFrames } from "../src/splits.ts";
@@ -28,9 +29,11 @@ import {
   activityMask,
   cellCenter,
   medianBackground,
+  sampleCell,
   type FaceObservation,
 } from "../src/sticker-blobs.ts";
 import { extractTrackedFrames } from "../src/lattice-track.ts";
+import { refineHD } from "../src/hd-refine.ts";
 import {
   blockMedianRGB,
   calibClassify as calibClassifyDiag,
@@ -58,6 +61,15 @@ const dumpObsArg = process.argv.indexOf("--dumpobs");
 const DUMP_OBS = dumpObsArg >= 0 ? process.argv[dumpObsArg + 1] : null; // 转储对齐观测+混淆 (供 prior-sim)
 const DUMP_BLOCKS = process.argv.includes("--dumpblocks"); // 转储每标注格原始像素块 (供 color-lab 离线试聚合策略)
 const KNN_CLS = process.argv.includes("--knncls"); // 标定分类器用 kNN (Lab) 替对角高斯 (欠债 ~19 点); 需与 --calib/--calibgt 同用
+// HD 重采 (正⑮ 全程化): 几何仍用 960 跟踪晶格, 颜色从原片高分辨率帧格心重采
+// (ffmpeg 流式解码, 零磁盘缓存)。链形成/agree 仍用 960 vivid 保覆盖, 共识用 hdColors。
+// 注意: 与高斯 --calib 的 pass2 重提取不叠 (grids 被替换丢 hdColors); kNN attach 可叠。
+const hdArg = process.argv.indexOf("--hdres");
+const HD_RES = hdArg >= 0
+  ? (/^\d+x\d+$/.test(process.argv[hdArg + 1] ?? "") ? process.argv[hdArg + 1] : "1920x1080")
+  : null;
+// HD 亚格精修: 重采前先在 HD 帧上搜 ±0.4 格平移修晶格错位 (负⑩(a) 主噪声)
+const HD_REFINE = process.argv.includes("--hdrefine");
 const PER_FRAME = process.argv.includes("--perframe"); // 跳过链, 逐帧网格直接喂搜索
 const PIN_MODE = process.argv.includes("--pin"); // 路径级指派钉死
 const DRIFT = process.argv.includes("--drift"); // 钉死 + 段间漂移切换 (隐含 --pin)
@@ -251,6 +263,52 @@ for (const sf of files) {
       anchor: !NO_ANCHOR,
     });
   let { grids, frameSpan, nCold, nTracked, anchor } = extractAllGrids(null);
+  // HD 重采就地附加: 原片流式解码到 HD_RES, 逐帧按 960 晶格坐标 ×SC 格心重采,
+  // 附 hdColors (不改链形成)。帧序 = select between 输出序 = meta.frames 序 (连续 dump)。
+  if (HD_RES) {
+    const [W2, H2] = HD_RES.split("x").map(Number);
+    const SC = W2 / meta.w;
+    const hdBytes = W2 * H2 * 3;
+    const f0 = meta.frames[0], f1 = meta.frames[meta.frames.length - 1];
+    const t0 = Date.now();
+    const proc = spawn("ffmpeg", [
+      "-hide_banner", "-v", "error", "-threads", "12", "-i", videoPath,
+      "-vf", `select=between(n\\,${f0}\\,${f1}),scale=${W2}:${H2}`,
+      "-fps_mode", "passthrough", "-pix_fmt", "rgb24", "-f", "rawvideo", "-",
+    ], { stdio: ["ignore", "pipe", "inherit"] });
+    const fbuf = Buffer.allocUnsafe(hdBytes);
+    let fi = 0, off = 0, attached = 0;
+    const onFrame = () => {
+      const i = fi++;
+      if (i >= grids.length || !grids[i]?.length) return;
+      const rgb = new Uint8Array(fbuf.buffer, fbuf.byteOffset, hdBytes);
+      for (const obs of grids[i]) {
+        const { dx, dy } = HD_REFINE ? refineHD(rgb, W2, H2, obs.grid, SC) : { dx: 0, dy: 0 };
+        const hc: (ColorName | null)[] = new Array(9).fill(null);
+        for (let c = 0; c < 9; c++) {
+          const { x, y } = cellCenter(obs.grid, (c / 3) | 0, c % 3);
+          hc[c] = sampleCell(rgb, W2, H2, x * SC + dx, y * SC + dy, obs.grid.pitch * SC * 0.22);
+        }
+        obs.hdColors = hc;
+        attached++;
+      }
+    };
+    for await (const chunk of proc.stdout as AsyncIterable<Buffer>) {
+      let cOff = 0;
+      while (cOff < chunk.length) {
+        const n = Math.min(hdBytes - off, chunk.length - cOff);
+        chunk.copy(fbuf, off, cOff, cOff + n);
+        off += n;
+        cOff += n;
+        if (off === hdBytes) { onFrame(); off = 0; }
+      }
+    }
+    await new Promise<void>((res, rej) => {
+      proc.on("close", (code) => (code === 0 ? res() : rej(new Error(`ffmpeg exit ${code} on ${videoPath}`))));
+    });
+    if (fi !== meta.frames.length) console.warn(`  WARN: HD 流出 ${fi} 帧, framedump ${meta.frames.length}`);
+    console.log(`  HD 重采: ${fi} 帧 → ${attached} 网格附色 (${W2}×${H2}, ${((Date.now() - t0) / 1000).toFixed(0)}s)`);
+  }
   // 帧运动量: 网格 bbox 内与上帧的平均绝对差。100fps 下相邻模糊帧彼此相似,
   // agree() 挡不住拧转中帧成链 (目检 f1122: 大幅运动模糊 3 帧照样"稳定")。
   // 静止 vs 拧转在帧差上双峰, 这才是 rest 的物理定义; 超阈值帧不准进链。
@@ -298,7 +356,7 @@ for (const sf of files) {
           const tally = new Map<ColorName, number>();
           let tot = 0;
           for (const g of chain) {
-            const col = (g.knnColors ?? g.colors)[c]; // 共识用 kNN (在场时); agree/链检测仍用稳定 colors
+            const col = (g.hdColors ?? g.knnColors ?? g.colors)[c]; // 共识优先 HD 重采 > kNN > vivid; agree/链检测仍用稳定 colors
             if (!col) continue;
             tot++;
             tally.set(col, (tally.get(col) ?? 0) + 1);
