@@ -36,8 +36,8 @@
 import * as THREE from "three";
 import { SIZE } from "../define";
 import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
-import { buildSmplxForearm, fillCircularBins, loadManoHand, loadSmplxForearmData, type ForearmFit } from "./handModelMano";
-import { bakeHandTextures, bakeLimbTextures, type HandBakedMaps } from "./bakeHandTexture";
+import { loadManoHand } from "./handModelMano";
+import { bakeHandTextures, type HandBakedMaps } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
 import { homeLeft, homeRight, type HandPose } from "./handPoses";
 
@@ -796,8 +796,16 @@ const UP_PUSH = {
 interface HandState {
   model: HandModel;
   home: HandPose;
-  /** 独立前臂(肘锚固定,每帧 IK 指向手腕 —— 腕转时肘不绕魔方公转)。 */
-  forearm: THREE.Group;
+  /** 独立前臂(肘锚固定,每帧 IK 指向手腕 —— 腕转时肘不绕魔方公转)。
+   *  @4 融合资产下为 null:前臂已缝在手网格里,由 model.forearm.bone 驱动
+   *  (同一肘锚语义,摆动改为绕腕的骨旋转),袖口走 cuff 组同步。 */
+  forearm: THREE.Group | null;
+  /** @4 融合前臂的袖口组(挂 model.group,轴心 = WRIST_LOCAL,每帧与前臂
+   *  骨同步摆动)。 */
+  cuff: THREE.Group | null;
+  /** 融合前臂绑定基(手局部正交基 x=肘→腕绑定向、z≈掌法向 的逆四元数,
+   *  Δ = 目标基 · bindFrameInv;setFromUnitVectors 滚转漂移的同款规避)。 */
+  armBindFrameInv: THREE.Quaternion | null;
   /** 肘锚点(rig 局部,画面外下方)。 */
   elbow: THREE.Vector3;
   /** 持久握姿基座(weld 提交烘入 / 换握记号设定);identity = home 握。 */
@@ -985,68 +993,21 @@ export default class HandsRig extends THREE.Group {
       if (extra) this.handMats.push(...extra);
     }
     this.add(right.group, left.group);
-    // 前臂:优先 SMPL-X 真臂切段(逐机转换 gitignored 资产,与 MANO 同模式;
-    // 尺骨头/肌腹是真解剖轮廓),缺失回退程序化锥形管。左臂 = 右臂 y 镜像
-    // 几何(真前臂不对称),但 UV 相同 → 下方皮肤贴图仍烘一次共享。缩放 =
-    // 手资产同一米→rig 系数(unitScale;按腕环拟合定比例曾把整条臂缩细,
-    // 2026-07-11 用户抓),腕环实测只喂对中 + 接缝焊接。
-    const stumpFit = (model: HandModel): ForearmFit | undefined => {
-      model.group.updateMatrixWorld(true);
-      const mesh = model.meshes[0] as THREE.SkinnedMesh;
-      const pos = mesh.geometry.getAttribute("position");
-      const v = HandsRig._vTmp;
-      const scl = HAND_SCALE * (SIZE / 64);
-      let yMin = Infinity, yMax = -Infinity, zMin = Infinity, zMax = -Infinity;
-      for (let i = 0; i < pos.count; i++) {
-        v.fromBufferAttribute(pos, i);
-        if (mesh.isSkinnedMesh) mesh.applyBoneTransform(i, v);
-        if (Math.abs(v.x - WRIST_LOCAL.x) > 6 * scl) continue;
-        yMin = Math.min(yMin, v.y); yMax = Math.max(yMax, v.y);
-        zMin = Math.min(zMin, v.z); zMax = Math.max(zMax, v.z);
-      }
-      if (!Number.isFinite(yMin)) return undefined; // 量空回退 34.5U 缺省
-      const cy = (yMax + yMin) / 2, cz = (zMax + zMin) / 2;
-      // 径向轮廓 r(θ) 32 桶(桶内取外皮 max):焊接基准 —— 前臂腕端逐 θ morph
-      // 成这个真实截面,椭圆包围盒近似必在非椭圆处(掌根肌腱侧)留台阶。
-      const NB = 32;
-      const bins = new Array<number>(NB).fill(0);
-      for (let i = 0; i < pos.count; i++) {
-        v.fromBufferAttribute(pos, i);
-        if (mesh.isSkinnedMesh) mesh.applyBoneTransform(i, v);
-        if (Math.abs(v.x - WRIST_LOCAL.x) > 6 * scl) continue;
-        const th = Math.atan2(v.z - cz, v.y - cy);
-        const b = ((Math.floor(((th + Math.PI) / (2 * Math.PI)) * NB) % NB) + NB) % NB;
-        bins[b] = Math.max(bins[b], Math.hypot(v.y - cy, v.z - cz));
-      }
-      // scale = 手资产同一米→rig 系数:前臂比例跟手同源(粗细失配根治)
-      return { scale: model.unitScale, cy, cz, profile: fillCircularBins(bins) };
-    };
-    let rArm: { group: THREE.Group; meshes: THREE.Mesh[] };
-    let lArm: { group: THREE.Group; meshes: THREE.Mesh[] };
-    try {
-      const armData = await loadSmplxForearmData();
-      rArm = buildSmplxForearm(armData, -1, this.skinMat, this.cuffMat, stumpFit(right));
-      lArm = buildSmplxForearm(armData, 1, this.skinMat, this.cuffMat, stumpFit(left));
-    } catch {
-      // 未转换机器的常态,info 级即可(MANO 手模缺失才值得 warn)
-      console.info("[sim hands] SMPL-X 前臂资产不可用,使用程序化前臂");
+    // 前臂:@4 起已在转换期缝进手网格(单一网格 —— 腕缝几何/法线/贴图天然
+    // 连续,根治两件套时代的台阶与「手臂比手细」;旧 stumpFit 对齐层还犯过
+    // 米制几何 vs rig 单位 WRIST_LOCAL 的单位混用,fit 恒 undefined → 前臂恒
+    // 走 34.5U 旧回退缩放,细 18%)。此处只剩:① 融合资产 → 每手造袖口组
+    // (贴实测臂围,tick 与前臂骨同步摆动);② 旧资产兜底 → 程序化锥形管。
+    let rArm: { group: THREE.Group; meshes: THREE.Mesh[] } | null = null;
+    let lArm: { group: THREE.Group; meshes: THREE.Mesh[] } | null = null;
+    if (!right.forearm || !left.forearm) {
+      console.info("[sim hands] 资产无融合前臂(@4 前旧格式?),使用程序化前臂");
       rArm = buildForearm(this.skinMat, this.cuffMat);
       lArm = buildForearm(this.skinMat, this.cuffMat);
+      this.add(rArm.group, lArm.group);
+      right.meshes.push(...rArm.meshes);
+      left.meshes.push(...lArm.meshes);
     }
-    // 前臂烘同款皮肤贴图(同公式/同材质参数,腕缝两侧肤质细节连续 —— 平色
-    // 管子接烘焙手的材质断层比几何台阶还显眼)。两臂几何相同,烘一次共享;
-    // 失败非致命:退回平色 skinMat。
-    try {
-      const mat = mkBakedMat(bakeLimbTextures(rArm.meshes[0].geometry));
-      rArm.meshes[0].material = mat;
-      lArm.meshes[0].material = mat;
-      this.handMats.push(mat);
-    } catch (e) {
-      console.error("[sim hands] forearm texture bake failed:", e);
-    }
-    this.add(rArm.group, lArm.group);
-    right.meshes.push(...rArm.meshes);
-    left.meshes.push(...lArm.meshes);
     // 21 关键点骨架叠加(MediaPipe Hands 默认画风)—— 静态几何挂关节组,
     // 姿态自动跟随;网格进 model.meshes 复用补光层 / dispose。
     addHandSkeleton(right, this.skelMatMap);
@@ -1063,8 +1024,8 @@ export default class HandsRig extends THREE.Group {
     const homeR = homeRight();
     const homeL = homeLeft();
     this.hands = {
-      R: this.initHandState(right, homeR, rArm.group, elbowAnchor(homeR)),
-      L: this.initHandState(left, homeL, lArm.group, elbowAnchor(homeL)),
+      R: this.initHandState(right, homeR, rArm ? rArm.group : null, elbowAnchor(homeR)),
+      L: this.initHandState(left, homeL, lArm ? lArm.group : null, elbowAnchor(homeL)),
     };
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);
@@ -1101,13 +1062,88 @@ export default class HandsRig extends THREE.Group {
     }
   }
 
-  private initHandState(model: HandModel, home: HandPose, forearm: THREE.Group, elbow: THREE.Vector3): HandState {
+  /** @4 融合前臂的袖口:按手网格里前臂段的绑定态包络(手局部)造椭圆筒,
+   *  挂 model.group、轴心 = WRIST_LOCAL —— tick 与前臂骨同步同一 Δ 摆动即
+   *  永远贴臂。几何/风格同 buildForearm 袖口(盖住肘端断口 + 露一段裸臂)。 */
+  private buildFusedCuff(model: HandModel): THREE.Group {
+    const uU = HAND_SCALE * (SIZE / 64);
+    const mesh = model.meshes[0] as THREE.SkinnedMesh;
+    const pos = mesh.geometry.getAttribute("position");
+    model.group.updateMatrixWorld(true);
+    // 几何(资产米制)→ 手局部:相对矩阵一次算好(单位混用是旧 stumpFit 的死因)
+    const toHand = new THREE.Matrix4().copy(model.group.matrixWorld).invert().multiply(mesh.matrixWorld);
+    const e = model.forearm!.bindDir;                       // 腕→肘(手局部单位向量)
+    const ze = new THREE.Vector3(0, 0, 1).addScaledVector(e, -e.z).normalize();
+    const ye = new THREE.Vector3().crossVectors(ze, e);
+    const v = new THREE.Vector3();
+    // 臂段采样:沿臂参数 a(0=腕,正=向肘),垂面分量 (py,pz)
+    const samples: { a: number; py: number; pz: number }[] = [];
+    let aMax = 0;
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(toHand).sub(WRIST_LOCAL);
+      const a = v.dot(e);
+      if (a < 10 * uU) continue;
+      samples.push({ a, py: v.dot(ye), pz: v.dot(ze) });
+      aMax = Math.max(aMax, a);
+    }
+    const measure = (a0: number, a1: number): { hy: number; hz: number; cy: number; cz: number } => {
+      let yMin = Infinity, yMax = -Infinity, zMin = Infinity, zMax = -Infinity;
+      for (const s of samples) {
+        if (s.a < a0 || s.a > a1) continue;
+        yMin = Math.min(yMin, s.py); yMax = Math.max(yMax, s.py);
+        zMin = Math.min(zMin, s.pz); zMax = Math.max(zMax, s.pz);
+      }
+      if (!Number.isFinite(yMin)) return { hy: 36 * uU, hz: 25 * uU, cy: 0, cz: 0 };
+      return { hy: (yMax - yMin) / 2, hz: (zMax - zMin) / 2, cy: (yMax + yMin) / 2, cz: (zMax + zMin) / 2 };
+    };
+    // 袖筒盖肘端断口(a∈[aMax−62U, aMax+2U],长 64U),两端 band 实测 +2U 呼吸余量
+    const cuffLen = 64 * uU;
+    const wristSide = measure(aMax - 66 * uU, aMax - 50 * uU);
+    const elbowSide = measure(aMax - 20 * uU, aMax);
+    const rWrist = wristSide.hy + 2 * uU;
+    const rElbow = elbowSide.hy + 2 * uU;
+    const zRatio = (Math.max(wristSide.hz, elbowSide.hz) + 2 * uU) / Math.max(rWrist, rElbow);
+    // rotateZ(-π/2) 后筒轴=+x、radiusTop 端在 +x;网格 +x 映射到 e(向肘)→
+    // radiusTop 传肘端半径。
+    const cuffGeo = new THREE.CylinderGeometry(rElbow, rWrist, cuffLen, 22)
+      .rotateZ(-Math.PI / 2)
+      .scale(1, 1, zRatio);
+    const cuff = new THREE.Mesh(cuffGeo, this.cuffMat);
+    const mid = aMax + 2 * uU - cuffLen / 2;
+    const cy = (wristSide.cy + elbowSide.cy) / 2;
+    const cz = (wristSide.cz + elbowSide.cz) / 2;
+    cuff.position.copy(e).multiplyScalar(mid).addScaledVector(ye, cy).addScaledVector(ze, cz);
+    cuff.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(e, ye, ze));
+    cuff.raycast = () => { /* 不可拾取 */ };
+    const g = new THREE.Group();
+    g.position.copy(WRIST_LOCAL);
+    g.add(cuff);
+    model.group.add(g);
+    model.meshes.push(cuff);
+    return g;
+  }
+
+  private initHandState(model: HandModel, home: HandPose, forearm: THREE.Group | null, elbow: THREE.Vector3): HandState {
     model.group.position.copy(home.pos);
     model.group.quaternion.copy(home.quat);
+    let cuff: THREE.Group | null = null;
+    let armBindFrameInv: THREE.Quaternion | null = null;
+    if (model.forearm) {
+      cuff = this.buildFusedCuff(model);
+      // 绑定臂正交基(手局部,与 tick 目标基同款):x=肘→腕 = −bindDir
+      const xb = model.forearm.bindDir.clone().negate();
+      const zb = new THREE.Vector3(0, 0, 1).addScaledVector(xb, -xb.z).normalize();
+      const yb = new THREE.Vector3().crossVectors(zb, xb);
+      armBindFrameInv = new THREE.Quaternion()
+        .setFromRotationMatrix(new THREE.Matrix4().makeBasis(xb, yb, zb))
+        .invert();
+    }
     return {
       model,
       home,
       forearm,
+      cuff,
+      armBindFrameInv,
       elbow,
       grip: new THREE.Quaternion(),
       weldAxis: null,
@@ -1989,19 +2025,33 @@ export default class HandsRig extends THREE.Group {
       g.position.x += Math.cos(t * 0.9 + ph) * 0.8 * HAND_SCALE * (sideSign === -1 ? 1 : -1);
     }
 
-    // 前臂 IK:origin 贴到手腕接驳点,+x 指向「肘 → 腕」方向 —— 肘锚固定,
-    // 腕转/弹指/回位时前臂自然摆动而不是整条手臂绕魔方公转。滚转对齐掌平面:
-    // setFromUnitVectors 最小旋转的滚转随肘-腕方位漂,扁截面会转离腕背压扁向
-    // 现台阶;改正交基 +x=肘→腕、+z≈手系掌法向,截面扁向永远接续手背/掌面。
+    // 前臂 IK:肘锚固定,腕转/弹指/回位时前臂自然摆动而不是整条手臂绕魔方
+    // 公转。目标正交基 +x=肘→腕、+z≈手系掌法向(setFromUnitVectors 最小旋转
+    // 的滚转会随肘-腕方位漂,扁截面转离腕背 → 现台阶,故锚定掌平面)。
+    // @4 融合前臂:前臂缝在手网格里,摆动 = forearm 骨绕腕的手局部旋转
+    // Δ = 目标基 · 绑定基⁻¹(全程手局部,袖口组同步同一 Δ)。
     const wrist = HandsRig._vTmp.copy(WRIST_LOCAL).applyQuaternion(g.quaternion).add(g.position);
-    h.forearm.position.copy(wrist);
-    const dir = HandsRig._vTmp2.copy(wrist).sub(h.elbow).normalize();
-    const zF = HandsRig._vTmp3.set(0, 0, 1).applyQuaternion(g.quaternion);
-    zF.addScaledVector(dir, -zF.dot(dir));
-    if (zF.lengthSq() < 1e-6) zF.set(0, 0, 1); // 臂轴撞上掌法向的退化兜底
-    zF.normalize();
-    const yF = HandsRig._vTmp4.crossVectors(zF, dir);
-    h.forearm.quaternion.setFromRotationMatrix(HandsRig._mTmp.makeBasis(dir, yF, zF));
+    if (h.model.forearm && h.armBindFrameInv) {
+      const qInv = HandsRig._qTmp.copy(g.quaternion).invert();
+      const xT = HandsRig._vTmp2.copy(wrist).sub(h.elbow).applyQuaternion(qInv).normalize();
+      const zT = HandsRig._vTmp3.set(0, 0, 1);
+      zT.addScaledVector(xT, -zT.dot(xT));
+      if (zT.lengthSq() < 1e-6) zT.set(0, 0, 1); // 臂轴撞上掌法向的退化兜底
+      zT.normalize();
+      const yT = HandsRig._vTmp4.crossVectors(zT, xT);
+      const dq = HandsRig._qTmp2.setFromRotationMatrix(HandsRig._mTmp.makeBasis(xT, yT, zT)).multiply(h.armBindFrameInv);
+      h.model.forearm.bone.quaternion.copy(dq).multiply(h.model.forearm.bindQuat);
+      if (h.cuff) h.cuff.quaternion.copy(dq);
+    } else if (h.forearm) {
+      h.forearm.position.copy(wrist);
+      const dir = HandsRig._vTmp2.copy(wrist).sub(h.elbow).normalize();
+      const zF = HandsRig._vTmp3.set(0, 0, 1).applyQuaternion(g.quaternion);
+      zF.addScaledVector(dir, -zF.dot(dir));
+      if (zF.lengthSq() < 1e-6) zF.set(0, 0, 1); // 臂轴撞上掌法向的退化兜底
+      zF.normalize();
+      const yF = HandsRig._vTmp4.crossVectors(zF, dir);
+      h.forearm.quaternion.setFromRotationMatrix(HandsRig._mTmp.makeBasis(dir, yF, zF));
+    }
 
     // 手指姿态 = home 弯曲 + flick 偏移。
     const sm = (t: number): number => t * t * (3 - 2 * t);

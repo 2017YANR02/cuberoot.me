@@ -22,16 +22,14 @@ Input:  MANO_RIGHT.pkl (searched under --src, its models/ subdir, or inside
         homeLeft, since fixed — see handPoses.ts homeLeft mano branch.)
 Output: core/packages/client/public/sim/hands/mano/{right,left}.mano.json
 
-Also (when models_smplx_v1_1.zip / SMPLX_NEUTRAL.npz is present under --src):
-        core/packages/client/public/sim/hands/smplx/forearm.smplx.json
-        — a real-forearm piece cut from the SMPL-X body (elbow-to-past-wrist
-        slab in the forearm frame), replacing the procedural tapered tube in
-        handModel.buildForearm. Rigid (no skinning; the rig poses the forearm
-        as one group), right side only — the left arm is y-mirrored at runtime
-        (ulna head sits on the pinky side; a real forearm is not symmetric).
-        load_smplx() keeps ALL model tensors (weights/posedirs/kintree) so a
-        future full-body mode reuses the same loader + operators (mask cut ->
-        cap -> subdivide -> unwrap); the forearm is just the first consumer.
+Since @4 SMPLX_NEUTRAL.npz is REQUIRED: the real forearm (cut from the SMPL-X
+        body, scale-matched by each template's own middle-finger length) is
+        FUSED into the hand mesh at convert time (wrist rings zip-bridged into
+        one closed mesh, forearm verts skinned to a new 26th "forearm" bone
+        pivoting at the wrist). One mesh = one skinning = one texture bake =
+        seamless wrist, matching the upstream single-body look (两件套时代的
+        腕缝台阶 / 贴图断层 / stumpFit 单位混用 bug 一并根除,2026-07-11)。
+        Also emits smplx/fullbody.smplx.json (debug viewer, raw T-pose body).
         Same license rule as MANO: never commit the npz or converted output.
 
 What it does (bind pose = MANO zero pose, betas = 0):
@@ -139,9 +137,11 @@ def find_source(src: Path) -> bytes:
 
 
 # ---------------------------------------------------------------- geometry
-def loop_subdivide(v: np.ndarray, f: np.ndarray, w: np.ndarray, uv: np.ndarray):
+def loop_subdivide(v: np.ndarray, f: np.ndarray, w: np.ndarray, uv: np.ndarray, pin_boundary: bool = False):
     """One Loop step on a CLOSED triangle mesh. Weights/uv: edge verts = avg
-    of endpoints; old verts keep their weights (positions get Loop smoothing)."""
+    of endpoints; old verts keep their weights (positions get Loop smoothing).
+    pin_boundary: 边界顶点不平滑(开口件预细分用 —— 环缩会把待桥接的切口
+    拉离对缝平面)。"""
     nv = len(v)
     edges: dict[tuple[int, int], int] = {}
     opp: dict[tuple[int, int], list[int]] = {}
@@ -152,6 +152,12 @@ def loop_subdivide(v: np.ndarray, f: np.ndarray, w: np.ndarray, uv: np.ndarray):
             opp.setdefault(key, []).append(c)
     for key in opp:
         edges[key] = nv + len(edges)
+    pinned: set[int] = set()
+    if pin_boundary:
+        for (a, b), os_ in opp.items():
+            if len(os_) == 1:
+                pinned.add(a)
+                pinned.add(b)
     # neighbor sets for old-vertex smoothing
     nbr: list[set[int]] = [set() for _ in range(nv)]
     for (a, b) in opp:
@@ -160,7 +166,7 @@ def loop_subdivide(v: np.ndarray, f: np.ndarray, w: np.ndarray, uv: np.ndarray):
     v_old = np.empty_like(v)
     for i in range(nv):
         n = len(nbr[i])
-        if n < 3:
+        if n < 3 or i in pinned:
             v_old[i] = v[i]
             continue
         beta = (5.0 / 8.0 - (3.0 / 8.0 + 0.25 * np.cos(2 * np.pi / n)) ** 2) / n
@@ -235,6 +241,241 @@ def cap_boundary(v: np.ndarray, f: np.ndarray, w: np.ndarray, uv: np.ndarray, wr
             a, b = loop[i], loop[(i + 1) % len(loop)]
             tris.append([b, a, center])
     return v, np.asarray(tris, dtype=np.int64), w, uv
+
+
+def find_border_loops(f: np.ndarray) -> tuple[list[list[int]], dict[int, int]]:
+    """开口环:返回 (环列表[链式有向序], nxt 有向边表)。loop[i]→loop[i+1] 是
+    面内朝向的边界边(cap_boundary 同款判定)。"""
+    cnt: dict[tuple[int, int], int] = {}
+    directed: dict[tuple[int, int], tuple[int, int]] = {}
+    for tri in f:
+        for i in range(3):
+            a, b = int(tri[i]), int(tri[(i + 1) % 3])
+            key = (min(a, b), max(a, b))
+            cnt[key] = cnt.get(key, 0) + 1
+            directed[key] = (a, b)
+    border = [directed[k] for k, c in cnt.items() if c == 1]
+    nxt = {a: b for a, b in border}
+    loops: list[list[int]] = []
+    seen: set[int] = set()
+    for a in list(nxt):
+        if a in seen:
+            continue
+        loop = [a]
+        seen.add(a)
+        cur = nxt.get(a)
+        while cur is not None and cur != a and cur not in seen:
+            loop.append(cur)
+            seen.add(cur)
+            cur = nxt.get(cur)
+        if len(loop) >= 3:
+            loops.append(loop)
+    return loops, nxt
+
+
+def zip_rings(idsM: list[int], angM: np.ndarray, nxtM: dict[int, int],
+              idsA: list[int], angA: np.ndarray, nxtA: dict[int, int]) -> list[list[int]]:
+    """两开口环 zip 桥接(手腕环 ↔ 前臂切口环):按角参数归并推进,逐边出三角。
+    朝向规则同 cap_boundary:边界有向边 (a,b) → 桥三角 (b,a,third) 外向 ——
+    两侧网格都外向时桥面自动全局一致。ids 须已按角升序,ang 与之对应。"""
+    tris: list[list[int]] = []
+    nM, nA = len(idsM), len(idsA)
+
+    def orient(u: int, wv: int, third: int, nxt: dict[int, int]) -> list[int]:
+        if nxt.get(u) == wv:
+            return [wv, u, third]
+        assert nxt.get(wv) == u, (u, wv)  # 角序相邻但非链相邻 → 环非星形,须换角心
+        return [u, wv, third]
+
+    i = j = 0
+    while i < nM or j < nA:
+        mNext = angM[(i + 1) % nM] + 2 * np.pi * ((i + 1) // nM) if nM else np.inf
+        aNext = angA[(j + 1) % nA] + 2 * np.pi * ((j + 1) // nA) if nA else np.inf
+        if j >= nA or (i < nM and mNext <= aNext):
+            tris.append(orient(idsM[i % nM], idsM[(i + 1) % nM], idsA[j % nA], nxtM))
+            i += 1
+        else:
+            tris.append(orient(idsA[j % nA], idsA[(j + 1) % nA], idsM[i % nM], nxtA))
+            j += 1
+    return tris
+
+
+def validate_closed_manifold(v: np.ndarray, f: np.ndarray, label: str) -> None:
+    """融合网格质量闸:闭合(无边界边)+ 二流形(每无向边恰 2 面、方向相反)。"""
+    cnt: dict[tuple[int, int], list[tuple[int, int]]] = {}
+    for tri in f:
+        for i in range(3):
+            a, b = int(tri[i]), int(tri[(i + 1) % 3])
+            cnt.setdefault((min(a, b), max(a, b)), []).append((a, b))
+    bad_open = sum(1 for es in cnt.values() if len(es) == 1)
+    bad_multi = sum(1 for es in cnt.values() if len(es) > 2)
+    bad_dir = sum(1 for es in cnt.values() if len(es) == 2 and es[0] == es[1])
+    assert bad_open == 0 and bad_multi == 0 and bad_dir == 0, (
+        f"{label}: open={bad_open} multi={bad_multi} samedir={bad_dir}")
+
+
+def fuse_smplx_forearm(m: dict, sx: dict) -> dict:
+    """SMPL-X 右前臂缝进 MANO 右手模板 → 单一开口网格(唯一开口 = 肘端,后续
+    cap_boundary 封盖)。「手臂手一体」的根治:两件套时代腕缝永远可见(几何台
+    阶 / 法线断 / 两次分开烘的贴图),且运行时对齐层出过单位混用 bug(stumpFit
+    拿米制几何比 rig 单位 WRIST_LOCAL,fit 恒 undefined → 前臂恒走 34.5U 旧回
+    退,比 MANO 真腕细 18%,2026-07-11 用户三抓「手臂比手细」的真根因)。
+
+    尺度:两模板各按自身中指链长归一(k = midLen_mano/midLen_smplx),前臂在
+    MANO 米制下与手同一标定 —— 上游各自内部比例都保真。蒙皮:前臂顶点挂新增
+    forearm 列(16),近腕 30mm 与 wrist(0)线性混合;posedirs 补零。左手由
+    调用方对融合结果整体镜像(尺骨头位于小指侧的真前臂不对称随镜像保留)。"""
+    v = np.asarray(m["v_template"], dtype=np.float64)       # (778,3)
+    f = np.asarray(m["f"], dtype=np.int64)
+    w = np.asarray(m["weights"], dtype=np.float64)          # (778,16)
+    pd = np.asarray(m["posedirs"], dtype=np.float64)        # (778,3,135)
+    J = np.asarray(m["J_regressor"], dtype=np.float64) @ v  # (16,3)
+    kin = np.asarray(m["kintree_table"], dtype=np.int64)
+    assert v.shape == (778, 3) and pd.shape == (778, 3, 135), (v.shape, pd.shape)
+
+    # ---- MANO 手系(与 SMPL-X 前臂系同构:+x=腕→掌根延伸向,+z=掌法向)----
+    wrist = J[0]
+    mcps = J[[1, 4, 10, 7]]                                 # index/middle/ring/pinky 近节
+    fwd = mcps.mean(axis=0) - wrist
+    fwd /= np.linalg.norm(fwd)
+    zm = np.cross(J[1] - wrist, J[7] - wrist)               # 食指×小指 → 掌外法向(右手)
+    zm -= (zm @ fwd) * fwd
+    zm /= np.linalg.norm(zm)
+    ym = np.cross(zm, fwd)
+    Rm = np.stack([fwd, ym, zm], axis=1)                    # 列基,模板空间
+
+    # ---- 尺度 k:各自中指链长(MCP→PIP→DIP→指尖极值点)归一比 ----
+    def midlen(vv: np.ndarray, JJ: np.ndarray, ww: np.ndarray, c: list[int]) -> float:
+        axis = JJ[c[2]] - JJ[c[1]]
+        axis /= np.linalg.norm(axis)
+        cand = np.where(ww[:, c[2]] > 0.5)[0]
+        tip = vv[cand[int(np.argmax((vv[cand] - JJ[c[2]]) @ axis))]]
+        return float(np.linalg.norm(JJ[c[1]] - JJ[c[0]]) + np.linalg.norm(JJ[c[2]] - JJ[c[1]]) + np.linalg.norm(tip - JJ[c[2]]))
+
+    vx = np.asarray(sx["v_template"], dtype=np.float64)
+    fx = np.asarray(sx["f"], dtype=np.int64)
+    wx = np.asarray(sx["weights"], dtype=np.float64)
+    Jx = np.asarray(sx["J_regressor"], dtype=np.float64) @ vx
+    k = midlen(v, J, w, [4, 5, 6]) / midlen(vx, Jx, wx, [43, 44, 45])
+
+    # ---- SMPL-X 前臂局部系(同旧 convert_smplx_forearm)+ 配尺度 ----
+    jw, je = Jx[SMPLX_J["right_wrist"]], Jx[SMPLX_J["right_elbow"]]
+    xg = jw - je
+    xg /= np.linalg.norm(xg)
+    idx1 = Jx[SMPLX_J["right_index1"]] - jw
+    pnk1 = Jx[SMPLX_J["right_pinky1"]] - jw
+    zg = np.cross(idx1, pnk1)
+    zg -= (zg @ xg) * xg
+    zg /= np.linalg.norm(zg)
+    yg = np.cross(zg, xg)
+    p = ((vx - jw) @ np.stack([xg, yg, zg], axis=1)) * k    # 局部米制(已配 MANO)
+
+    # ---- MANO 腕环(模板唯一开口)与其平面 ----
+    loopsM, nxtM = find_border_loops(f)
+    assert len(loopsM) == 1, [len(x) for x in loopsM]
+    ringM = loopsM[0]
+    ring_local = (v[ringM] - wrist) @ Rm
+    x_ring = float(ring_local[:, 0].mean())
+
+    # ---- 切前臂段(腕环平面外 1.5mm 起,向肘 155mm)+ 最大连通片 ----
+    GAP, ARM_LEN = 0.0015, 0.155
+    keep = (p[:, 0] < x_ring - GAP) & (p[:, 0] > x_ring - ARM_LEN)
+    fsel = fx[keep[fx].all(axis=1)]
+    assert len(fsel) > 100, len(fsel)
+    parent: dict[int, int] = {}
+
+    def find(a: int) -> int:
+        parent.setdefault(a, a)
+        while parent[a] != a:
+            parent[a] = parent.setdefault(parent[a], parent[a])
+            a = parent[a]
+        return a
+
+    for tri in fsel:
+        ra = find(int(tri[0]))
+        for b in (int(tri[1]), int(tri[2])):
+            rb = find(b)
+            if ra != rb:
+                parent[rb] = ra
+                ra = find(ra)
+    comps: dict[int, list[int]] = {}
+    for fi, tri in enumerate(fsel):
+        comps.setdefault(find(int(tri[0])), []).append(fi)
+    fsel = fsel[max(comps.values(), key=len)]
+    used = np.unique(fsel)
+    remap = np.full(len(p), -1, dtype=np.int64)
+    remap[used] = np.arange(len(used))
+    pa = p[used]
+    fa = remap[fsel]
+
+    # ---- 前臂预细分一次(SMPL-X 体网格在前臂粗;钉死边界防切口环缩)----
+    da = np.ones((len(pa), 1))
+    ua = np.zeros((len(pa), 2))
+    pa, fa, da, ua = loop_subdivide(pa, fa, da, ua, pin_boundary=True)
+
+    loopsA, nxtA = find_border_loops(fa)
+    assert len(loopsA) == 2, len(loopsA)
+    loopsA.sort(key=lambda L: float(np.mean(pa[L, 0])))
+    ringA = loopsA[1]                                       # 腕侧切口
+
+    # ---- 桥接:两环按角参数(手系 y/z,合心)zip ----
+    cM = ring_local[:, 1:].mean(axis=0)
+    aLoc = pa[ringA][:, 1:]
+    cA = aLoc.mean(axis=0)
+    c0 = (cM + cA) / 2
+    angM_ring = np.arctan2(ring_local[:, 2] - c0[1], ring_local[:, 1] - c0[0])
+    oM = np.argsort(angM_ring)
+    idsM = [int(np.asarray(ringM)[t]) for t in oM]
+    angM = angM_ring[oM]
+    angA_ring = np.arctan2(pa[ringA, 2] - c0[1], pa[ringA, 1] - c0[0])
+    oA = np.argsort(angA_ring)
+    idsA_local = [int(np.asarray(ringA)[t]) for t in oA]
+    angA = angA_ring[oA]
+    idsA = [778 + t for t in idsA_local]                     # 前臂顶点全局偏移
+    nxtA_g = {778 + a: 778 + b for a, b in nxtA.items()}
+    bridge = zip_rings(idsM, angM, nxtM, idsA, angA, nxtA_g)
+
+    # ---- 组装:几何 / 面 / 17 列权重 / posedirs 补零 ----
+    va = wrist + pa @ Rm.T                                   # 前臂 → 模板空间
+    v2 = np.vstack([v, va])
+    f2 = np.vstack([f, fa + 778, np.asarray(bridge, dtype=np.int64)])
+    validate_closed_manifold_open_elbow(v2, f2)
+    wa = np.zeros((len(pa), 17))
+    t = np.clip((pa[:, 0] - (x_ring - 0.03)) / 0.03, 0.0, 1.0)  # 近腕 30mm 混腕权
+    wa[:, 0] = t
+    wa[:, 16] = 1.0 - t
+    w17 = np.hstack([w, np.zeros((778, 1))])
+    w2 = np.vstack([w17, wa])
+    pd2 = np.vstack([pd, np.zeros((len(pa), 3, 135))])
+    print(f"[convert-mano] fuse: hand 778 + arm {len(pa)} verts, bridge {len(bridge)} tris, "
+          f"k {k:.4f}, x_ring {x_ring * 1000:.1f} mm")
+    return {"v": v2, "f": f2, "w": w2, "pd": pd2, "J": J, "kin": kin,
+            "forearm_dir": (-fwd).tolist()}
+
+
+def validate_closed_manifold_open_elbow(v: np.ndarray, f: np.ndarray) -> None:
+    """融合后质量闸:恰一个开口环(肘端),其余全流形。"""
+    cnt: dict[tuple[int, int], list[tuple[int, int]]] = {}
+    for tri in f:
+        for i in range(3):
+            a, b = int(tri[i]), int(tri[(i + 1) % 3])
+            cnt.setdefault((min(a, b), max(a, b)), []).append((a, b))
+    open_edges = [es[0] for es in cnt.values() if len(es) == 1]
+    bad_multi = sum(1 for es in cnt.values() if len(es) > 2)
+    bad_dir = sum(1 for es in cnt.values() if len(es) == 2 and es[0] == es[1])
+    assert bad_multi == 0 and bad_dir == 0, f"fuse: multi={bad_multi} samedir={bad_dir}"
+    nxt = {a: b for a, b in open_edges}
+    loops = 0
+    seen: set[int] = set()
+    for a in list(nxt):
+        if a in seen:
+            continue
+        loops += 1
+        cur: int | None = a
+        while cur is not None and cur not in seen:
+            seen.add(cur)
+            cur = nxt.get(cur)
+    assert loops == 1, f"fuse: expected 1 open loop (elbow), got {loops}"
 
 
 def b64(arr: np.ndarray, dtype) -> str:
@@ -368,14 +609,20 @@ def box_unwrap(v: np.ndarray, f: np.ndarray):
     return np.asarray(uv_out), np.asarray(vmap, dtype=np.int64), f2
 
 
-def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
-    d = load_pkl(raw)
-    v = np.asarray(d["v_template"], dtype=np.float64)          # (778,3)
-    pd = np.asarray(d["posedirs"], dtype=np.float64)           # (778,3,135) 姿态修正场
-    assert pd.shape == (778, 3, 135), pd.shape
-    if mirror:  # left = exact mirror of RIGHT across x=0 (strict L/R symmetry)
-        v = v.copy()
+def convert(hand: str, fused: dict, subdiv: bool, mirror: bool = False) -> dict:
+    """fused = fuse_smplx_forearm() 的单一网格(手 + 前臂,唯一开口 = 肘端)。"""
+    v = np.asarray(fused["v"], dtype=np.float64).copy()        # (n,3)
+    f = np.asarray(fused["f"], dtype=np.int64).copy()
+    w = np.asarray(fused["w"], dtype=np.float64).copy()        # (n,17) 16 MANO + forearm
+    pd = np.asarray(fused["pd"], dtype=np.float64).copy()      # (n,3,135) 前臂行全零
+    J = np.asarray(fused["J"], dtype=np.float64).copy()        # (16,3)
+    fdir = np.asarray(fused["forearm_dir"], dtype=np.float64).copy()
+    nf = len(v)
+    assert pd.shape == (nf, 3, 135) and w.shape == (nf, 17) and J.shape == (16, 3), (pd.shape, w.shape, J.shape)
+    if mirror:  # left = exact mirror of fused RIGHT across x=0 (strict L/R symmetry)
         v[:, 0] *= -1.0
+        J[:, 0] *= -1.0
+        fdir[0] *= -1.0
         # posedirs 镜像:左位姿 R' = M·R·M ⇒ 系数 (R'−I)_ab = s_a·s_b·(R−I)_ab
         # (s = [−1,1,1]),故 P_L[j,a,b] = s_a·s_b · M · P_R[j,a,b]。不用官方
         # MANO_LEFT 的 posedirs:几何走镜像右手,修正场必须严格自洽。
@@ -386,13 +633,9 @@ def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
         pd = pd * sgn[None, None, :]
         pd = pd.copy()
         pd[:, 0, :] *= -1.0                     # M·P
-    f = np.asarray(d["f"], dtype=np.int64)                     # (1538,3)
-    w = np.asarray(d["weights"], dtype=np.float64)             # (778,16)
-    J = np.asarray(d["J_regressor"], dtype=np.float64) @ v     # (16,3)
-    kin = np.asarray(d["kintree_table"], dtype=np.int64)       # (2,16) parent row 0
+    kin = np.asarray(fused["kin"], dtype=np.int64)             # (2,16) parent row 0
     parent = kin[0].copy()
     parent[0] = -1
-    assert v.shape == (778, 3) and w.shape == (778, 16) and J.shape == (16, 3), (v.shape, w.shape, J.shape)
 
     # ---- finger chains from kintree (each: [base, mid, dist] joint ids) ----
     roots = [j for j in range(1, 16) if parent[j] == 0]
@@ -437,14 +680,16 @@ def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
     if any(finger_chains[k] != std[k] for k in std):
         print(f"[convert-mano] note: {hand} joint order differs from standard MANO layout: {finger_chains}")
 
-    # ---- close wrist, subdivide ----
-    # posedirs 以列拼进 w 一起过管线:封腕心行自动置 0(cap 只给 wrist 列 1),
-    # 细分边点自动取端点均值 —— 与几何同一插值算子,免重写重采样。
-    w = np.hstack([w, pd.reshape(778, -1)])     # (778, 16+405)
+    # ---- close elbow, subdivide ----
+    # posedirs 以列拼进 w 一起过管线:封盖心行自动置 0(cap 只给 forearm 列 1),
+    # 细分边点自动取端点均值 —— 与几何同一插值算子,免重写重采样。腕环已在
+    # fuse 阶段与前臂桥接,唯一开口 = 肘端断口(袖口遮盖区)。
+    w = np.hstack([w, pd.reshape(nf, -1)])      # (n, 17+405)
     uv_axes = np.argsort(v.max(axis=0) - v.min(axis=0))[::-1][:2]
     span = float((v.max(axis=0) - v.min(axis=0))[uv_axes[0]])
     uv = v[:, uv_axes] / span * 4.0
-    v, f, w, uv = cap_boundary(v, f, w, uv, wrist_col=0)
+    v, f, w, uv = cap_boundary(v, f, w, uv, wrist_col=16)
+    validate_closed_manifold(v, f, f"{hand} fused+capped")
     # 封盖后网格闭合 → 符号体积可判外向绕向;负体积 = 面片朝内(左右手资产
     # 绕向不可信),整体翻转,否则 three 正面剔除下渲成 inside-out。
     vol = float(np.einsum("ij,ij->", v[f[:, 0]], np.cross(v[f[:, 1]], v[f[:, 2]]))) / 6.0
@@ -453,8 +698,8 @@ def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
         f = f[:, ::-1].copy()
     if subdiv:
         v, f, w, uv = loop_subdivide(v, f, w, uv)
-    pd = w[:, 16:].reshape(len(v), 3, 135)      # 重采样后的 posedirs
-    w = w[:, :16]
+    pd = w[:, 17:].reshape(len(v), 3, 135)      # 重采样后的 posedirs
+    w = w[:, :17]
 
     # ---- synthesized joints: metacarpals + tips ----
     bones: list[dict] = [{"name": "wrist", "pos": J[0].tolist()}]
@@ -483,15 +728,18 @@ def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
         bones.append({"name": f"{name}{'' if name == 'thumb' else '-finger'}-tip", "pos": tip_pos.tolist()})
         bone_col.append(None)
     assert len(bones) == 25, len(bones)
+    # 前臂骨:轴心 = 腕关节(rig 以腕为支点朝肘锚摆前臂;蒙皮列 16)。
+    bones.append({"name": "forearm", "pos": J[0].tolist()})
+    bone_col.append(16)
     names = [b["name"] for b in bones]
-    assert len(set(names)) == 25
+    assert len(set(names)) == 26
 
-    # ---- weights: MANO 16 columns -> top-4 over the 25-bone list ----
+    # ---- weights: 16 MANO + forearm columns -> top-4 over the 26-bone list ----
     col_to_bone = {}
     for bi, col in enumerate(bone_col):
         if col is not None:
             col_to_bone[col] = bi
-    assert len(col_to_bone) == 16
+    assert len(col_to_bone) == 17
     n = len(v)
     sk_i = np.zeros((n, 4), dtype=np.uint8)
     sk_w = np.zeros((n, 4), dtype=np.float64)
@@ -528,10 +776,10 @@ def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
     pd_scale = np.maximum(np.abs(pd2).max(axis=(0, 1)), 1e-9) / 127.0   # (135,)
     pd_q = np.clip(np.round(pd2 / pd_scale[None, None, :]), -127, 127)
 
-    print(f"[convert-mano] {hand}: verts {n}->{n2} (uv seams) faces {len(f)} bones 25"
+    print(f"[convert-mano] {hand}: verts {n}->{n2} (uv seams) faces {len(f)} bones 26 (hand+forearm fused)"
           f" | wrist {np.round(J[0], 4).tolist()} middle-tip reach {np.linalg.norm(v[np.argmax(np.linalg.norm(v - J[0], axis=1))] - J[0]):.4f} m")
     return {
-        "format": "cuberoot-mano-hand@3",
+        "format": "cuberoot-mano-hand@4",
         "hand": hand,
         "counts": {"verts": n2, "faces": int(len(f2))},
         "bones": bones,
@@ -547,20 +795,15 @@ def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
         # (R−I)_ab,关节序 = MANO 标准 kintree(index/middle/pinky/ring/thumb)。
         "posedirs": b64(pd_q, np.int8),
         "posedirsScale": b64(pd_scale, np.float32),
+        # 前臂绑定伸向(腕→肘,资产空间单位向量;左手已镜像)。运行时据此算
+        # forearm 骨的摆动旋转(目标 = 肘锚方向)。
+        "forearmDir": fdir.tolist(),
     }
 
 
 # ---------------------------------------------------------------- SMPL-X
 # Standard SMPL-X joint layout (fixed in the released model; smplx codebase).
 SMPLX_J = {"right_elbow": 19, "right_wrist": 21, "right_index1": 40, "right_pinky1": 46}
-
-# Rig-unit calibration (handModel.buildForearm procedural tube, U space):
-# wrist-end y half-width 34.5U (matched to the hand stump), tip reach -186U
-# (embedded in the cuff, which covers [-188U,-124U]), overlap +25U past the
-# wrist into the hand interior (hides the junction inside the hand mesh).
-FOREARM_HALFY_U = 34.5
-FOREARM_LEN_U = 186.0
-FOREARM_OVL_U = 25.0
 
 
 def load_smplx(src: Path) -> dict | None:
@@ -585,101 +828,30 @@ def load_smplx(src: Path) -> dict | None:
     return None
 
 
-def convert_smplx_forearm(d: dict, subdiv: bool) -> dict:
-    v = np.asarray(d["v_template"], dtype=np.float64)       # (10475,3) m, T-pose
+def convert_smplx_fullbody(d: dict) -> dict:
+    """SMPL-X neutral 全身原样导出(米制,T-pose,y-up 面朝 +z):/sim 调试开关
+    「SMPL-X 全身」用 —— 核对手/前臂比例的上游解剖真值。不细分不变形:就是
+    v_template 本体 + 平滑法线(比例核对要零失真)。同 MANO 授权:产物禁 commit。"""
+    v = np.asarray(d["v_template"], dtype=np.float64)       # (10475,3) m
     f = np.asarray(d["f"], dtype=np.int64)                  # (20908,3)
-    J = np.asarray(d["J_regressor"], dtype=np.float64) @ v  # (55,3)
-    jw, je = J[SMPLX_J["right_wrist"]], J[SMPLX_J["right_elbow"]]
-
-    # Forearm-group frame (rig contract, handsRig forearm IK): origin = wrist,
-    # +x = elbow->wrist, +z = palm normal, +y = z×x. Derived from joints, not
-    # hardcoded axes — robust to the template's exact T-pose arm direction.
-    xg = jw - je
-    xg /= np.linalg.norm(xg)
-    idx1 = J[SMPLX_J["right_index1"]] - jw
-    pnk1 = J[SMPLX_J["right_pinky1"]] - jw
-    zg = np.cross(idx1, pnk1)  # right hand: index×pinky points out of the palm
-    zg -= (zg @ xg) * xg
-    zg /= np.linalg.norm(zg)
-    yg = np.cross(zg, xg)
-    p = (v - jw) @ np.stack([xg, yg, zg], axis=1)           # (10475,3) local
-
-    # Wrist ring half-width sets the meters->U scale; cut lengths follow so the
-    # scaled piece lands on the procedural tube's calibrated envelope.
-    ring = p[np.abs(p[:, 0]) < 0.006]
-    assert len(ring) > 8, len(ring)
-    half_y = float(ring[:, 1].max() - ring[:, 1].min()) / 2.0
-    cut_len = FOREARM_LEN_U / FOREARM_HALFY_U * half_y
-    ovl = FOREARM_OVL_U / FOREARM_HALFY_U * half_y
-
-    keep = (p[:, 0] > -cut_len) & (p[:, 0] < ovl)
-    fsel = f[keep[f].all(axis=1)]
-    assert len(fsel) > 100, len(fsel)
-    # largest vertex-connected component (guards against stray slab islands)
-    parent: dict[int, int] = {}
-
-    def find(a: int) -> int:
-        parent.setdefault(a, a)
-        while parent[a] != a:
-            parent[a] = parent.setdefault(parent[a], parent[a])
-            a = parent[a]
-        return a
-
-    for tri in fsel:
-        ra = find(int(tri[0]))
-        for b in (int(tri[1]), int(tri[2])):
-            rb = find(b)
-            if ra != rb:
-                parent[rb] = ra
-                ra = find(ra)
-    comps: dict[int, list[int]] = {}
-    for fi, tri in enumerate(fsel):
-        comps.setdefault(find(int(tri[0])), []).append(fi)
-    fsel = fsel[max(comps.values(), key=len)]
-
-    used = np.unique(fsel)
-    remap = np.full(len(p), -1, dtype=np.int64)
-    remap[used] = np.arange(len(used))
-    v2 = p[used]
-    f2 = remap[fsel]
-
-    # cap both open rings (elbow end / palm end; both hidden but capping stops
-    # see-through at glancing angles), fix winding, subdivide — all via the
-    # MANO operators (dummy weights/uv columns, unused downstream).
-    w2 = np.ones((len(v2), 1))
-    uv0 = np.zeros((len(v2), 2))
-    v2, f2, w2, uv0 = cap_boundary(v2, f2, w2, uv0, wrist_col=0)
-    vol = float(np.einsum("ij,ij->", v2[f2[:, 0]], np.cross(v2[f2[:, 1]], v2[f2[:, 2]]))) / 6.0
+    vol = float(np.einsum("ij,ij->", v[f[:, 0]], np.cross(v[f[:, 1]], v[f[:, 2]]))) / 6.0
     if vol < 0:
-        print(f"[convert-mano] smplx forearm: negative signed volume ({vol:.2e}) — flipping winding")
-        f2 = f2[:, ::-1].copy()
-    if subdiv:
-        # two steps: the SMPL-X body mesh is coarse in the forearm (~190 raw
-        # verts here vs 778 for a whole MANO hand) — one step still silhouettes.
-        for _ in range(2):
-            v2, f2, w2, uv0 = loop_subdivide(v2, f2, w2, uv0)
-
-    fn = np.cross(v2[f2[:, 1]] - v2[f2[:, 0]], v2[f2[:, 2]] - v2[f2[:, 0]])
-    nrm = np.zeros_like(v2)
+        print(f"[convert-mano] smplx fullbody: negative signed volume ({vol:.2e}) — flipping winding")
+        f = f[:, ::-1].copy()
+    fn = np.cross(v[f[:, 1]] - v[f[:, 0]], v[f[:, 2]] - v[f[:, 0]])
+    nrm = np.zeros_like(v)
     for k in range(3):
-        np.add.at(nrm, f2[:, k], fn)
+        np.add.at(nrm, f[:, k], fn)
     nrm /= np.maximum(np.linalg.norm(nrm, axis=1, keepdims=True), 1e-12)
-
-    uv2, vmap, f3 = box_unwrap(v2, f2)
-    v3 = v2[vmap]
-    nrm3 = nrm[vmap]
-
-    print(f"[convert-mano] smplx forearm: verts {len(v2)}->{len(v3)} (uv seams) faces {len(f3)}"
-          f" | wrist halfY {half_y * 1000:.1f} mm, x [{v3[:, 0].min():+.3f},{v3[:, 0].max():+.3f}] m")
+    height = float(v[:, 1].max() - v[:, 1].min())
+    print(f"[convert-mano] smplx fullbody: verts {len(v)} faces {len(f)} | height {height:.3f} m")
     return {
-        "format": "cuberoot-smplx-forearm@1",
-        "hand": "right",
-        "counts": {"verts": len(v3), "faces": int(len(f3))},
-        "position": b64(v3, np.float32),
-        "normal": b64(nrm3, np.float32),
-        "index": b64(f3, np.uint32),
-        "uv": b64(uv2, np.float32),
-        "wristHalfY": half_y,
+        "format": "cuberoot-smplx-fullbody@1",
+        "counts": {"verts": len(v), "faces": int(len(f))},
+        "position": b64(v, np.float32),
+        "normal": b64(nrm, np.float32),
+        "index": b64(f, np.uint32),
+        "heightM": height,
     }
 
 
@@ -689,19 +861,21 @@ def main() -> None:
     ap.add_argument("--no-subdiv", action="store_true")
     args = ap.parse_args()
     raw = find_source(Path(args.src))
+    sx = load_smplx(Path(args.src))
+    if sx is None:
+        sys.exit("[convert-mano] SMPLX_NEUTRAL.npz required since @4 (forearm fused into the hand asset) — put models_smplx_v1_1.zip under --src")
+    fused = fuse_smplx_forearm(load_pkl(raw), sx)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     for hand in ("right", "left"):
-        data = convert(hand, raw, subdiv=not args.no_subdiv, mirror=hand == "left")
+        data = convert(hand, fused, subdiv=not args.no_subdiv, mirror=hand == "left")
         out = OUT_DIR / f"{hand}.mano.json"
         out.write_text(json.dumps(data), encoding="utf-8")
         print(f"[convert-mano] wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
-    sx = load_smplx(Path(args.src))
-    if sx is None:
-        print("[convert-mano] no SMPLX_NEUTRAL.npz under --src — skipping real-forearm piece (procedural tube remains)")
-        return
     SMPLX_OUT_DIR.mkdir(parents=True, exist_ok=True)
-    data = convert_smplx_forearm(sx, subdiv=not args.no_subdiv)
-    out = SMPLX_OUT_DIR / "forearm.smplx.json"
+    # 旧两件套时代的独立前臂件已并入手资产,删陈迹防误用
+    (SMPLX_OUT_DIR / "forearm.smplx.json").unlink(missing_ok=True)
+    data = convert_smplx_fullbody(sx)
+    out = SMPLX_OUT_DIR / "fullbody.smplx.json"
     out.write_text(json.dumps(data), encoding="utf-8")
     print(f"[convert-mano] wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
 
