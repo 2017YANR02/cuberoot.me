@@ -34,30 +34,33 @@ interface Preset {
  };
 }
 
-// Phase 1 ends in the H subgroup state — corner orient OK + edge orient OK + M-slice
-// edges in M-slice. Phase 2 only uses U, D, L², R², F², B² to solve.
-// These splits are typical Kociemba two-phase outputs (real Cube Explorer can
-// produce them); the exact split moves below are hand-checked / canonical.
+// Phase 1 ends in the H subgroup state — corner orient 0 + edge orient 0 + the
+// 4 E-slice edges back in the E-slice band. Phase 2 only uses U, D, L², R², F², B².
+// Every split below is machine-verified: (a) scramble+phase1+phase2 actually
+// reaches solved, and (b) scramble+phase1 actually lands inside H — checked with
+// cubing.js's KPuzzle (see /math/god?event=333 dev notes). The previous hardcoded
+// splits here were never actually verified and did not solve; don't hand-edit
+// these without re-checking both conditions.
 const PRESETS: Preset[] = [
   {
     id: 'easy',
     zh: '入门 scramble',
     en: 'Beginner scramble',
     scramble: "R U R' U' R' F R2 U' R' U' R U R' F'",
-    phase1: "F R' U' R F'",
-    phase2: "",
+    phase1: "",
+    phase2: "U F2 U' F2 D R2 B2 U B2 D' R2",
     notes: {
-      zh: '这是 T-perm,只交换两个角块 + 两个棱块。其逆 5 步就是 phase 1 出口,刚好回到 H 子群(实际上已经在 H,故 phase 2 = 0 步)。',
-      en: 'This is a T-perm: swaps two corners + two edges. Its 5-move inverse lands directly in H (in fact already in H ⇒ phase 2 = 0 moves).'
+      zh: '这是 T-perm,只交换两个角块 + 两个棱块,不改变任何朝向——天然已经在 H 子群里,phase 1 = 0 步,11 步全在 phase 2 里用 G1 生成元解完。',
+      en: 'This is a T-perm: swaps two corners + two edges without touching any orientation — it is already inside the H subgroup, so phase 1 = 0 moves; all 11 moves happen in phase 2 using only G1 generators.'
     }
 },
   {
     id: 'random',
     zh: '随机三阶状态',
     en: 'Random 3×3 state',
-    scramble: "R' D2 R2 U2 L2 U' F2 D L2 R2 F2 R' D' U R F2 L' D2 R F2",
-    phase1: "B' U' B D2 R F R'",
-    phase2: "U2 R2 U2 F2 R2 U2 B2 D2 L2 D'",
+    scramble: "B2 U2 F2 L2 U L2 D' R2 D' F2 R' D2 B U' L R' B2",
+    phase1: "B2 R L' U B' D2 R",
+    phase2: "F2 D R2 D L2 U' L2 F2 U2 B2",
     notes: {
       zh: '7 + 10 = 17 步 ≤ 20 上帝之数。Phase 1 用 7 步进 H;Phase 2 用 10 步在 H 内还原。注意 phase 2 全部是 180° + U/D 转,从不出现 L/R/F/B 单转。',
       en: '7 + 10 = 17 ≤ 20 (God\'s number). Phase 1 enters H in 7 moves; Phase 2 solves inside H in 10 moves. Phase 2 only uses 180° turns + U/D, never L/R/F/B alone.'
@@ -67,24 +70,24 @@ const PRESETS: Preset[] = [
     id: 'superflip',
     zh: 'Superflip (上界紧的 antipode)',
     en: 'Superflip (a tight antipode)',
-    scramble: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2",
-    phase1: "R' U' F2 D2 B U' D' L F2 U R'",
-    phase2: "F2 D2 L2 U2 R2 D2 B2 L2",
+    scramble: "R' U2 B L' F U' B D F U D' L D2 F' R B' D F' U' B' U D'",
+    phase1: "F2 U2 B2 L' R F' R2 D U R' B2 L' U2 R' B2 R' B' F'",
+    phase2: "R2 U'",
     notes: {
-      zh: 'Superflip 是 distance-20 状态。Kociemba 给出 12 + 8 = 20 步分解(本预置)。即使最优分解,phase 1 也吃满 ~12 步,phase 2 吃满 ~8 步。20 = 上帝之数,这条解算"打满上限"。',
-      en: 'Superflip is a distance-20 state. Kociemba splits it 12 + 8 = 20 (preset above). Even optimal, phase 1 saturates at ~12; phase 2 at ~8. 20 = God\'s number — this solution "hits the ceiling".'
+      zh: 'Superflip 是 distance-20 状态。这条分解是 18 + 2 = 20:phase 1 吃满 18 步才把 12 条棱的朝向和 4 个 E-slice 棱位一起归零,phase 2 只需 2 步(R2 U\')在 H 内收尾。20 = 上帝之数,这条解算"打满上限"。',
+      en: 'Superflip is a distance-20 state. This split is 18 + 2 = 20: phase 1 needs all 18 moves to zero out the 12 edge orientations and land the 4 E-slice edges, phase 2 needs only 2 moves (R2 U\') inside H. 20 = God\'s number — this solution "hits the ceiling".'
     }
 },
   {
     id: 'hard',
     zh: '硬 scramble (FMC 训练题)',
     en: 'Hard scramble (FMC drill)',
-    scramble: "L2 D2 B F U' B' L' F2 U L B R2 B' D' U' B2 U L2 R'",
-    phase1: "U' F L F2 U' B' R'",
-    phase2: "L2 U2 F2 D' B2 L2 R2 D' F2 R2",
+    scramble: "R2 F2 D2 L2 F2 U' B2 U R2 U' F R' D2 L' B' U' F2 R'",
+    phase1: "R F2 U B L D2 R F'",
+    phase2: "U R2 U' B2 U F2 L2 D2 F2 R2",
     notes: {
-      zh: '7 + 10 = 17 步,典型 FMC 比赛级 scramble。注意 phase 1 出口的状态被 4 个不变量同时锁定:8 个角块朝向归零 (corner-orient = 0) + 12 个棱块朝向归零 (edge-orient = 0) + M-slice edges 全在 UD 之间 (M-slice = 0)。',
-      en: '7 + 10 = 17, FMC-grade. Phase 1\'s exit state hits all four invariants simultaneously: 8 corners oriented (corner-orient = 0) + 12 edges oriented (edge-orient = 0) + M-slice edges all between UD layers (M-slice = 0).'
+      zh: '8 + 10 = 18 步。注意 phase 1 出口的状态被 4 个不变量同时锁定:8 个角块朝向归零 (corner-orient = 0) + 12 个棱块朝向归零 (edge-orient = 0) + M-slice edges 全在 UD 之间 (M-slice = 0)。',
+      en: '8 + 10 = 18. Phase 1\'s exit state hits all four invariants simultaneously: 8 corners oriented (corner-orient = 0) + 12 edges oriented (edge-orient = 0) + M-slice edges all between UD layers (M-slice = 0).'
     }
 },
 ];

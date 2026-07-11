@@ -3,19 +3,21 @@
 /**
  * Superflip 详解:三阶上"最难的状态"。
  *
- * 渲染 cube 视觉 (VisualCube), 给出
- *   - 16-step Reid alg (1995, 在 QTM 里 24 步)
- *   - 20-step Rokicki alg (HTM 上帝之数下的最优解之一)
- * 解释:8 角块在原位、12 棱块也在原位但全部翻转。
- * 列出"另外 11 个 antipode 状态"——4 cubes super-states 同样需要 20 HTM。
+ * about tab: AlgStepper 从 superflip 逐步还原到 solved (20 HTM),
+ * 解释 8 角块在原位、12 棱块全部翻转,并对比 HTM=20 / QTM=24 / STM=16 三个度量。
+ * antipodes tab: 列出另外 11 个 distance-20 antipode 代表(superflip 及其复合、
+ * Reid/Rokicki 公开的具体反例)。
  */
 import { useState } from 'react';
 import { VisualCube } from '@/components/VisualCube';
+import { invertAlg } from '@/lib/cube3';
 import { MathText } from './Tex';
 import { tr } from '@/i18n/tr';
+import AlgStepper from './AlgStepper';
 
-const SUPERFLIP_REID_16 = "M' U M' U M' U2 M U M U M U2";
 const SUPERFLIP_HTM_20 = "R L U2 F U' D F2 R2 B2 L U2 F' B' U R2 D F2 U R2 U";
+/** A second, independently-known 20-HTM solution to the same superflip state (Wikipedia / speedsolving wiki canonical alg) — used to make the "countless 20-move solutions exist" point concrete. */
+const SUPERFLIP_HTM_20_ALT = "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2";
 
 interface Antipode { name: { zh: string; en: string
  }; alg: string; note?: { zh: string; en: string
@@ -29,9 +31,9 @@ const FAMOUS_ANTIPODES: Antipode[] = [
     },
   },
   {
-    name: { zh: 'Superflip · four-spot', en: 'Superflip · four-spot' },
-    alg: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2",
-    note: { zh: 'superflip 再叠 four-spot 图案', en: 'superflip composed with four-spot'
+    name: { zh: 'Superflip (另一条 20 步解)', en: 'Superflip (a second 20-move solution)' },
+    alg: SUPERFLIP_HTM_20_ALT,
+    note: { zh: '与上面同一个状态,速拧社区最常引用的另一条最优解', en: 'same state as above; the alg most commonly cited in the speedcubing community'
     },
   },
   {
@@ -118,8 +120,15 @@ export default function SuperflipShowcase({ isZh }: Props) {
       {tab === 'about' && (
         <div className="god-sf-about">
           <div className="god-sf-vis">
-            <VisualCube algorithm="" setup={SUPERFLIP_REID_16} view="iso" puzzleSize={3} size={180} alt="superflip" />
-            <div className="god-sf-vis-cap">{t('Superflip — 所有 12 个棱块翻转,8 个角块在原位', 'Superflip — all 12 edges flipped, all 8 corners in place')}</div>
+            <AlgStepper
+              from={SUPERFLIP_HTM_20}
+              solution={invertAlg(SUPERFLIP_HTM_20)}
+              isZh={isZh}
+              size={180}
+              doneLabel={{ zh: '已还原!', en: 'Solved!' }}
+              progressLabel={{ zh: '求解中', en: 'Solving' }}
+            />
+            <div className="god-sf-vis-cap">{t('从 Superflip 出发,沿 20 步最优解逐步还原', 'Starting from Superflip, stepping through the 20-move optimal solution')}</div>
           </div>
           <div className="god-sf-text">
             <h3>{t('一个改变历史的状态', 'A state that changed history')}</h3>
@@ -131,13 +140,15 @@ export default function SuperflipShowcase({ isZh }: Props) {
               '1995 年 Michael Reid 证明 superflip 需要 ≥ 20 HTM:用计算机辅助证明所有 ≤19 步解都不存在。此前社区已经知道 superflip 是"很难"的状态,但没有严格下界。Reid 的工作把 3x3 上帝之数的下界一举推到 20。',
               "In 1995 Michael Reid proved superflip needs ≥ 20 HTM: computer-assisted enumeration of all ≤19-move solutions shows none works. Community had long suspected superflip was 'hard'; Reid's work nailed the 3×3 lower bound at 20."
             )}</MathText></p>
-            <h4>{t('Reid 16-step QTM 解 (=20 HTM)', 'Reid\'s 16-move QTM solution (= 20 HTM)')}</h4>
-            <div className="god-sf-alg">{SUPERFLIP_REID_16}</div>
-            <h4>{t('20-step HTM 最优解', '20-move HTM optimal solution')}</h4>
+            <h4>{t('20 步 HTM 最优解', '20-move HTM optimal solution')}</h4>
             <div className="god-sf-alg">{SUPERFLIP_HTM_20}</div>
+            <p><MathText>{t(
+              '最优步数因"度量"而异,三个都已被严格证明,互不可换算:HTM(半转算 1 步)= 20;QTM(只许 90° 转,180° 记 2 步)= 24;STM(切片转也算 1 步)= 16。"16 步"常被误传为 QTM 下的成绩,其实说的是 STM。',
+              "Optimal length depends on the metric, and all three are proven exact — they don't convert into each other: HTM (half turns count as 1) = 20; QTM (only quarter turns, so a half turn costs 2) = 24; STM (slice turns also count as 1) = 16. The '16-move' figure is often mis-cited as QTM; it is actually STM."
+            )}</MathText></p>
             <p className="god-sf-aside"><MathText>{t(
-              '注:有无数条 20 步 HTM 解;上面只列其中一条。Rokicki 2010 证明确实存在状态(共 ~4.9 亿个 antipode)需满 20 步,且 superflip 是其中"对称性最高"的代表。',
-              'Many 20-HTM solutions exist; the above is one. Rokicki 2010 proved there exist states (about 490M antipodes total) needing exactly 20, and superflip is the most "symmetric" representative.'
+              '注:有无数条 20 步 HTM 解;上面只列其中一条(下方 Antipode 列表里还有另一条)。Rokicki 2010 证明确实存在状态(共 ~4.9 亿个 antipode)需满 20 步,且 superflip 是其中"对称性最高"的代表。',
+              'Many 20-HTM solutions exist; the above is one (the Antipode list below has another). Rokicki 2010 proved there exist states (about 490M antipodes total) needing exactly 20, and superflip is the most "symmetric" representative.'
             )}</MathText></p>
           </div>
         </div>
