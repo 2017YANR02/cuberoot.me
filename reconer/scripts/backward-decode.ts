@@ -252,6 +252,40 @@ for (const w of [0, 1]) {
     `窗口 ${w}: 收尾投票 ${[...tally.entries()].map(([c, k]) => `${c}×${k}`).join(" ")} → 面 ${winFace[w] ?? "?"}`,
   );
 }
+// --inhand: 手中收官固色链投票 (v1/v3 放下翻面靶向修)。放下期间可有任意未记录
+// 旋转 (v1 上翻 x 族, finals 读的是 D 顶面), 而放下前手中的近固色链主色 = 面中心
+// 色 = 面身份, 不依赖状态求解 (固色面自证, LL 期未动侧面全程固色)。规则: 手中票
+// 优先于收尾票; 任一窗口有手中票时另一窗口收尾票作废 (翻面波及) 走邻面放宽。
+// v2/v4/v5 实测手中票与收尾一致或缺席 — 种子构造不变。
+if (process.argv.includes("--inhand")) {
+  const inHand: (string | null)[] = [null, null];
+  for (const w of [0, 1]) {
+    const tally = new Map<Color, number>();
+    for (let t = Math.max(0, n - 2); t < n; t++) {
+      for (const c of v.bounds[t]) {
+        if (c.win !== w) continue;
+        const cnt = new Map<Color, number>();
+        let reads = 0;
+        for (const r of c.read) if (r) { reads++; cnt.set(r as Color, (cnt.get(r as Color) ?? 0) + 1); }
+        if (reads < 5) continue;
+        const top = [...cnt.entries()].sort((a, b) => b[1] - a[1])[0];
+        if (top[1] / reads < 0.72) continue;
+        tally.set(top[0], (tally.get(top[0]) ?? 0) + top[1]);
+      }
+    }
+    if (!tally.size) continue;
+    const top = [...tally.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const fi = FACES.findIndex((_, i) => faceColorOf(i) === top);
+    if (fi >= 0) inHand[w] = FACES[fi];
+  }
+  if (inHand[0] || inHand[1]) {
+    for (const w of [0, 1]) {
+      if (inHand[w] && inHand[w] !== winFace[w])
+        console.log(`窗口 ${w}: 手中收官票 ${inHand[w]} ≠ 收尾票 ${winFace[w] ?? "?"} — 检测到放下翻面`);
+      winFace[w] = inHand[w]; // 无手中票的窗口置 null → 种子层邻面放宽
+    }
+  }
+}
 
 // === 评分基元 ===
 // 逐段面概率 (n 条, 与边界对齐); 宽层按同侧外层记 (r→R), 缺面记地板 2%
@@ -468,11 +502,17 @@ const adjacentFaces = (face: string): string[] => {
 };
 let beam: Path[] = [];
 {
-  const f1Cands = winFace[0] ? adjacentFaces(winFace[0]) : winFace[1] ? [winFace[1]] : [null];
-  for (const a0 of rotsOfFace(winFace[0])) {
-    for (const f1 of f1Cands) {
-      for (const a1 of rotsOfFace(f1)) {
-        beam.push({ state: IDENTITY_PERM, score: 0, toks: [], a0, a1, lastFace: "", node: trieRoot, trueSoFar: true, stm: 0, evTrace: [], free: false });
+  // --inhand 下对称放宽: 已知下窗口 (手中票) 时上窗口取其邻面; 已知窗口的票直信
+  const INHAND = process.argv.includes("--inhand");
+  const f0Cands: (string | null)[] = winFace[0] ? [winFace[0]] : INHAND && winFace[1] ? adjacentFaces(winFace[1]) : [null];
+  const f1Cands: (string | null)[] =
+    winFace[1] && (INHAND || !winFace[0]) ? [winFace[1]] : winFace[0] ? adjacentFaces(winFace[0]) : [null];
+  for (const f0 of f0Cands) {
+    for (const a0 of rotsOfFace(f0)) {
+      for (const f1 of f1Cands) {
+        for (const a1 of rotsOfFace(f1)) {
+          beam.push({ state: IDENTITY_PERM, score: 0, toks: [], a0, a1, lastFace: "", node: trieRoot, trueSoFar: true, stm: 0, evTrace: [], free: false });
+        }
       }
     }
   }
