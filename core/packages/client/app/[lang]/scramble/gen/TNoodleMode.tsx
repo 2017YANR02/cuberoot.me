@@ -1030,21 +1030,6 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         : { ...sh, attempts: sh.attempts.map((a) => ({ ...a, scramble: displaySq1ForEvent('sq1', a.scramble, sq1Compact) })) },
     [sq1Compact],
   );
-  // 是否涉及 sq1(配置选中 或 已加载/生成的 sheets 含 sq1)→ 显示记号开关。
-  const sq1Involved = !!events['sq1'] || eventsInSheets.includes('sq1');
-  // 简写(全站默认)/ 完整(WCA 官方打乱纸风格)。已加载 + 333 分析行同时出现时并入该行,否则单独一行。
-  const sq1FormatNode = sq1Involved ? (
-    <div className="gen-sq1-format">
-      <span className="gen-sq1-format-label">{t('SQ1', 'SQ1')}</span>
-      <PillToggle
-        value={sq1Compact}
-        onChange={onSq1CompactChange}
-        onLabel={t('简写', 'Compact')}
-        offLabel={t('完整', 'Full')}
-        ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
-      />
-    </div>
-  ) : null;
   // icon 角标:多轮时显示当前轮次的位置编号 (1/2/3/…),与 URL round= 一致,提示再次点击会循环。
   const roundBadges = activeView && roundIdxsInEvent.length > 1 && activeRoundIdx !== null
     ? { [activeView]: `${roundNumOf(activeView, activeRoundIdx)}` }
@@ -1094,6 +1079,23 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   };
 
   const loaded = sheets && sheets.length > 0;
+
+  // 是否涉及 sq1 → 显示记号开关:未生成/加载前看配置是否选中 sq1;已加载后只在用户切到 sq1 视图时才显示,
+  // 不因「比赛里有 sq1 项目」就常驻(避免看别的项目时也挂着一条不相关的 sq1 开关)。
+  const sq1Involved = loaded ? activeView === 'sq1' : !!events['sq1'];
+  // 简写(全站默认)/ 完整(WCA 官方打乱纸风格)。已加载 + 333 分析行同时出现时并入该行,否则单独一行。
+  const sq1FormatNode = sq1Involved ? (
+    <div className="gen-sq1-format">
+      <span className="gen-sq1-format-label">{t('SQ1', 'SQ1')}</span>
+      <PillToggle
+        value={sq1Compact}
+        onChange={onSq1CompactChange}
+        onLabel={t('简写', 'Compact')}
+        offLabel={t('完整', 'Full')}
+        ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
+      />
+    </div>
+  ) : null;
 
   // 「分析」打开 + 333 比赛已加载时,后台预热 StageSolver 共享池(拉 WASM + ~70MB 表)。
   // 与预计算数据并行加载 —— 用户点开某把行内解法时池已就绪,免去「加载求解器与数据表」首次等待。
@@ -1349,8 +1351,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       {/* 生成 / 预览 / 清空 按钮行 — 放在 selector + config 之后,events 列表之前 */}
       {controlsNode}
 
-      {/* SQ1 记号开关:涉及 sq1 时显示;已加载且与 333 分析行同屏时并入该行(见下方 gen-cx-switchrow),此处只兜底其余场景 */}
-      {!(loaded && activeView && is333Family && sheetsInEvent.length > 0) && sq1FormatNode}
+      {/* SQ1 记号开关:未加载看配置是否选中 sq1;已加载后只在切到 sq1 视图时显示(此时不会跟 333 分析行同屏)。 */}
+      {sq1FormatNode}
 
       {loaded ? null : forcedCompId ? (
         // 内嵌模式:加载中 / 加载失败(error 已在上方渲染)的占位。
@@ -1454,7 +1456,6 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         <>
           {is333Family && sheetsInEvent.length > 0 && (
             <div className="gen-cx-switchrow">
-              {sq1FormatNode}
               <span className="gen-sq1-format-label">{t('分析', 'Analysis')}</span>
               <PillToggle
                 value={showCross}
