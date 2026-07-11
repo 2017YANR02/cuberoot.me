@@ -1,7 +1,8 @@
 /**
- * /sim 手部模型 — GLTF 蒙皮网格加载层(WebXR generic-hand,W3C License,
- * 见 public/sim/hands/LICENSE.txt)。替代程序化拼件手:真雕刻拓扑 + 骨骼蒙皮,
- * 弯指皮肤连续形变,无拼件接缝。
+ * /sim 手部模型 — 蒙皮手资产适配层(WebXR 25 关节命名契约)。历史上服务
+ * generic-hand GLB(2026-07-11 内置手模退役,GLB 资产与 loadGltfHand 已删);
+ * 现由 handModelMano 喂 MANO 转换资产走同一适配:手系对齐 / 等比缩放 /
+ * 代理关节 / meta 掌骨 / 立体甲片 / 顶点血色。
  *
  * 与 rig 的契约(同 handModel.HandModel):
  *  - fingers[name].root/mid/tip 是「代理关节组」,作者系 = +x 指尖向 / +z 掌心
@@ -13,12 +14,11 @@
  *    代理 rest 局部旋转 = identity(骨链自然弯度留在「位置」偏移里,rig 直写
  *    rotation 不破坏 rest)。
  *
- * 左右手:right.glb / left.glb 是两份真镜像资产,无 scale=-1 手性 hack。
- * 魔方右侧的手 = 解剖学右手(掌贴 R 面、指钩 B 面、拇指压 F 面 —— 人类握法),
- * side 参数只保留给 rig 做 splay 镜像语义。
+ * 左右手:两份真镜像资产,无 scale=-1 手性 hack。魔方右侧的手 = 解剖学右手
+ * (掌贴 R 面、指钩 B 面、拇指压 F 面 —— 人类握法),side 参数只保留给 rig
+ * 做 splay 镜像语义。
  */
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { SIZE } from "../define";
 import { HAND_SCALE, WRIST_LOCAL, type FingerName, type FingerJoints, type HandModel } from "./handModel";
 
@@ -244,20 +244,7 @@ function boneBloodScore(name: string): number {
 
 const noRaycast = (): void => { /* 手不可拾取 — 拖拽/点击穿透到魔方 */ };
 
-let loader: GLTFLoader | null = null;
 
-/**
- * 加载一只 GLTF 手并适配成 HandModel。side=-1 → right.glb(魔方右侧),
- * side=+1 → left.glb。失败向上抛(本地资产,失败即 bug,别静默吞)。
- */
-export async function loadGltfHand(side: 1 | -1, skinMat: THREE.Material): Promise<HandModel> {
-  loader ??= new GLTFLoader();
-  // ?v=:proxy matcher 曾漏掉 .glb 被语言 307 劫持,老 307 会被浏览器缓存粘在
-  // 裸 URL 上;带版本参数换缓存键绕开,换资产时顺手 bump。
-  const url = side === -1 ? "/sim/hands/right.glb?v=1" : "/sim/hands/left.glb?v=1";
-  const gltf = await loader.loadAsync(url);
-  return adaptGltfHand(gltf.scene, side, skinMat, url);
-}
 
 /** 按资产覆盖的适配参数(MANO 等非 generic-hand 资产经 handModelMano 走同一
  *  适配层,但拇指绑定滚转 / 甲宽比例是逐资产标定值,generic 缺省)。 */
@@ -269,7 +256,7 @@ export interface AdaptGltfOpts {
 }
 
 /** 纯适配步(无 fetch):gltf.scene → HandModel。拆出来供测试用 fs 读 GLB +
- *  GLTFLoader.parse 直喂(Node 环境无相对 URL fetch)。 */
+ *  探针/测试从 fs 读转换 JSON 直喂(Node 环境无相对 URL fetch)。 */
 export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.Material, label = "hand.glb", opts?: AdaptGltfOpts): HandModel {
   const thumbRoll = opts?.thumbRoll ?? THUMB_CURL_PLANE_ROLL;
   src.updateMatrixWorld(true);

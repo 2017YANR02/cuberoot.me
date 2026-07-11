@@ -106,7 +106,6 @@ import {
   type SimSettings, type SimBoardBg,
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
@@ -2586,19 +2585,6 @@ function PuzzleSettings({
             <Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} />
             {/* 手指(指法演示):双手握持,转层时腕转/弹指跟动画。仅 3x3(simCaps.hands)。 */}
             <Toggle label={t('手指', 'Hands')} value={settings.hands === true} onChange={(v) => set('hands', v)} disabled={!caps.supports.hands} title={hint(caps.supports.hands)} />
-            {/* 手模资产二选一:内置 generic-hand / MANO(MPI,用户自持授权;资产缺失时
-                运行时自动回退内置)。门控同「手指」。 */}
-            <span className={'sim-toggle' + (caps.supports.hands ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.hands)}>
-              <span>{t('手模', 'Hand model')}</span>
-              <PillToggle
-                value={settings.handModel !== 'mano'}
-                onChange={(v) => set('handModel', v ? 'default' : 'mano')}
-                onLabel={t('内置', 'Built-in')}
-                offLabel="MANO"
-                ariaLabel={t('手模', 'Hand model')}
-                disabled={!caps.supports.hands}
-              />
-            </span>
             {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
                 用户指定的唯一例外。 */}
             {isNxNLocal && (
