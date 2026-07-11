@@ -227,21 +227,42 @@ const FOREARM_WRIST_HALF_Y_U = 34.5;
 
 const noRaycast = (): void => { /* 手不可拾取 — 拖拽/点击穿透到魔方 */ };
 
-/** 手模腕接驳环实测(rig 侧量当前手模,喂给 buildSmplxForearm 定宽):
- *  hy/hz = 腕环 y/z 半宽,cy/cz = 环心偏移(手局部系,rig 单位)。前臂按此
- *  略瘦塞进 MANO 的闭合腕帽内 —— 胖了会把探进段顶穿手皮外露成台阶
- *  (2026-07-11 用户抓的;generic 时代的 cover 敞口模式随内置手模退役)。 */
+/** 手模腕接驳信息(rig 侧量当前手模,喂给 buildSmplxForearm):
+ *  scale = 手资产的米→rig 等比系数(HandModel.unitScale)—— **前臂缩放的唯一
+ *  来源**:MANO 手与 SMPL-X 前臂同为米制真人体型,同一系数下粗细比例 = 上游
+ *  解剖真值(此前前臂按「腕环塞进手腕」min 比例自定缩放,MANO 真腕比 generic
+ *  假设细 → 整条臂被缩细,2026-07-11 用户抓「手臂比手细」的根因,禁回退)。
+ *  cy/cz = 腕环心偏移、profile = 腕环径向轮廓 r(θ)(θ 绕 +x 轴,自 −π 起 32
+ *  桶,rig 单位)—— 只用于接缝焊接(逐 θ morph 缝合两网格毫米级残差),
+ *  不改比例。 */
 export interface ForearmFit {
-  hy: number;
-  hz: number;
+  scale: number;
   cy: number;
   cz: number;
+  profile?: number[];
+}
+
+/** 环形桶洞填补:0 = 无样本桶,用两侧最近非空桶按角距线性插值(环绕)。 */
+export function fillCircularBins(bins: number[]): number[] {
+  const n = bins.length;
+  if (!bins.some((b) => b > 0)) return bins;
+  const out = bins.slice();
+  for (let i = 0; i < n; i++) {
+    if (out[i] > 0) continue;
+    let lo = i, hi = i;
+    for (let k = 1; k < n; k++) { const j = (i - k + n) % n; if (bins[j] > 0) { lo = j; break; } }
+    for (let k = 1; k < n; k++) { const j = (i + k) % n; if (bins[j] > 0) { hi = j; break; } }
+    const dLo = (i - lo + n) % n, dHi = (hi - i + n) % n;
+    out[i] = (bins[lo] * dHi + bins[hi] * dLo) / Math.max(1, dLo + dHi);
+  }
+  return out;
 }
 
 /** SMPL-X 真前臂件:契约同 buildForearm({group, meshes[0]=臂肤 meshes[1]=袖口},
  *  origin=贴腕,几何伸向 −x 肘端)。几何解码后缩放到 rig 单位(烘焙噪声频率按
- *  U 标定,必须先缩放再烘);缩放/对中按 fit(当前手模腕环实测)自适应,缺省
- *  回退 34.5U(程序化前臂同款标定);袖口按真臂在遮盖区的实测截面贴身生成。 */
+ *  U 标定,必须先缩放再烘);**缩放 = fit.scale(手资产同一米→rig 系数,粗细
+ *  比例即 SMPL-X 解剖真值)**,腕环 fit 只负责对中 + 接缝焊接;缺省回退 34.5U
+ *  腕宽标定;袖口按真臂在遮盖区的实测截面贴身生成。 */
 export function buildSmplxForearm(
   data: SmplxForearmData,
   side: 1 | -1,
@@ -272,31 +293,59 @@ export function buildSmplxForearm(
       idx[t + 2] = tmp;
     }
   }
-  // 腕环实测(资产米制,镜像后):定缩放与对中的基准截面
+  // 腕环实测(资产米制,镜像后):定缩放与对中的基准截面 + 径向轮廓(焊接用)
   let ayMin = Infinity, ayMax = -Infinity, azMin = Infinity, azMax = -Infinity;
-  for (let i = 0; i < pos.length; i += 3) {
-    if (Math.abs(pos[i]) > 0.005) continue;
-    ayMin = Math.min(ayMin, pos[i + 1]); ayMax = Math.max(ayMax, pos[i + 1]);
-    azMin = Math.min(azMin, pos[i + 2]); azMax = Math.max(azMax, pos[i + 2]);
+  const NB = 32;
+  const aBins = new Array<number>(NB).fill(0);
+  let aCy = 0, aCz = 0;
+  for (let pass = 0; pass < 2; pass++) {
+    for (let i = 0; i < pos.length; i += 3) {
+      if (Math.abs(pos[i]) > 0.005) continue;
+      if (pass === 0) {
+        ayMin = Math.min(ayMin, pos[i + 1]); ayMax = Math.max(ayMax, pos[i + 1]);
+        azMin = Math.min(azMin, pos[i + 2]); azMax = Math.max(azMax, pos[i + 2]);
+      } else {
+        const th = Math.atan2(pos[i + 2] - aCz, pos[i + 1] - aCy);
+        const b = ((Math.floor(((th + Math.PI) / (2 * Math.PI)) * NB) % NB) + NB) % NB;
+        aBins[b] = Math.max(aBins[b], Math.hypot(pos[i + 1] - aCy, pos[i + 2] - aCz));
+      }
+    }
+    if (pass === 0) { aCy = (ayMax + ayMin) / 2; aCz = (azMax + azMin) / 2; }
   }
-  const aHy = (ayMax - ayMin) / 2, aHz = (azMax - azMin) / 2;
-  const aCy = (ayMax + ayMin) / 2, aCz = (azMax + azMin) / 2;
-  // 两轴都藏得进(取小比 −5%,tuck 进闭合腕帽)
-  const s = fit
-    ? Math.min(fit.hy / aHy, fit.hz / aHz) * 0.95
-    : (FOREARM_WRIST_HALF_Y_U * U) / data.wristHalfY;
+  const aProf = fillCircularBins(aBins);
+  // 缩放 = 手资产同一米→rig 系数(比例根治);无 fit 回退旧 34.5U 腕宽标定。
+  const s = fit ? fit.scale : (FOREARM_WRIST_HALF_Y_U * U) / data.wristHalfY;
   const dy = fit ? fit.cy - aCy * s : 0;
   const dz = fit ? fit.cz - aCz * s : 0;
+  // 焊接(2026-07-11 用户抓接缝台阶,tuck 藏皮下不是光滑):腕端 BLEND 段内
+  // 逐 θ 求「手腕实测轮廓 / 前臂自身环轮廓」比例因子,按 smoothstep 权重径向
+  // 缩放 —— 比例式(非吸附)保断口封盖等内部顶点;x=0 处截面与手皮逐点重合
+  // (×0.99 贴皮下一线,防共面闪烁),探进段(x>0)在重合基础上再渐收。
+  const sampleProf = (prof: number[], th: number): number => {
+    const tt = (((th + Math.PI) / (2 * Math.PI)) * NB + NB) % NB;
+    const i0 = Math.floor(tt) % NB, i1 = (i0 + 1) % NB;
+    return prof[i0] * (1 - (tt - Math.floor(tt))) + prof[i1] * (tt - Math.floor(tt));
+  };
+  const BLEND = 18 * U;
+  const weld = fit?.profile && fit.profile.length === NB && fit.profile.some((r) => r > 0);
   for (let i = 0; i < pos.length; i += 3) {
     const x = pos[i] * s;
     let y = pos[i + 1] * s + dy;
     let z = pos[i + 2] * s + dz;
-    // 探进段(x>0,SMPL-X 自己的掌根外扩区)向环心渐收:手模掌根轮廓与
-    // SMPL-X 不同,不收窄会在腕后再顶穿一次
-    if (fit && x > 0) {
-      const k = Math.max(0.72, 1 - 0.012 * (x / U));
-      y = fit.cy + (y - fit.cy) * k;
-      z = fit.cz + (z - fit.cz) * k;
+    if (fit && x > -BLEND) {
+      const dyv = y - fit.cy, dzv = z - fit.cz;
+      const r = Math.hypot(dyv, dzv);
+      if (r > 1e-6) {
+        const th = Math.atan2(dzv, dyv);
+        // 因子 = 目标(手腕轮廓)÷ 前臂自身腕环轮廓(同 θ,已缩放)
+        const fac = weld ? (sampleProf(fit.profile!, th) * 0.99) / Math.max(1e-6, sampleProf(aProf, th) * s) : 1;
+        const t = Math.min(1, Math.max(0, 1 + x / BLEND));
+        const w = x <= 0 ? t * t * (3 - 2 * t) : 1;
+        const shrink = x > 0 ? Math.max(0.72, 1 - 0.012 * (x / U)) : 1;
+        const k = (1 - w + w * fac) * shrink;
+        y = fit.cy + dyv * k;
+        z = fit.cz + dzv * k;
+      }
     }
     pos[i] = x; pos[i + 1] = y; pos[i + 2] = z;
   }

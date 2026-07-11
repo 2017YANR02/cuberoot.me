@@ -41,6 +41,10 @@ export interface FingerJoints {
 export interface HandModel {
   group: THREE.Group;
   side: 1 | -1;
+  /** 资产原生单位 → rig 单位的等比缩放(adaptGltfHand 的 s)。兄弟件(SMPL-X
+   *  前臂,与 MANO 同为米制)必须共用此值 —— 各自按截面拟合定比例会导致
+   *  手/臂粗细失配(2026-07-11 用户抓「手臂比手细」的根因)。 */
+  unitScale: number;
   fingers: Record<FingerName, FingerJoints>;
   /** 全部蒙皮网格(肤 + 袖口),供 rig 统一开层/透明度/禁 raycast。 */
   meshes: THREE.Mesh[];
@@ -56,10 +60,13 @@ export interface HandModel {
 }
 
 /** 整手相对魔方的比例(2026-07-05 用户定真实比例:食指/中指/无名指宽 ≈0.9 个
- *  棱块 = 0.9·SIZE,即 2r̄·scale/64 ≈ 0.9 → 2.2;真人手对 57mm 三阶就是这么大)。
+ *  棱块 = 0.9·SIZE,即 2r̄·scale/64 ≈ 0.9)。2.2 是按已退役 generic 资产的指围
+ *  标的;MANO 资产手指更细(2.2 下实测 2r̄/棱块 仅 0.71~0.79),按同规则重标 →
+ *  2.6(_pose_probe DIAG 实测隐含 scale 2.50/2.62/2.78,均值 2.63)。副作用:
+ *  拇指链/棱长比 1.49→1.76,接近真人 ~1.9,拇指才够得到 F 面内侧。
  *  改它必须同步:① handPoses 重标定(指根/指长全变,curl 要重解);② world/
  *  backView 手部 near/far 包络余量;③ handsRig 肘锚(×HAND_SCALE)。 */
-export const HAND_SCALE = 2.2;
+export const HAND_SCALE = 2.6;
 
 /** 设计基准:常量按 SIZE=64(3x3 棱长 192)标定,U 做整体缩放钩子。 */
 const U = (SIZE / 64) * HAND_SCALE;
