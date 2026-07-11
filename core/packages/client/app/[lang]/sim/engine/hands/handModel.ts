@@ -48,6 +48,11 @@ export interface HandModel {
   extraMats?: THREE.Material[];
   /** 立体甲片 mesh(设置「指甲」开关走 visible 显隐,不拆几何)。 */
   nailMeshes?: THREE.Mesh[];
+  /** 姿态修正 blendshape 更新器(MANO posedirs:LBS 之外的修正场,对掌时的
+   *  鱼际隆起等全靠它)。rig / 探针改完指关节姿态后调用;内部按关节局部旋转
+   *  算系数并重写 geometry.position(系数不变时零开销早退 —— 待机呼吸只动
+   *  手根,不触发)。 */
+  poseCorrective?: () => void;
 }
 
 /** 整手相对魔方的比例(2026-07-05 用户定真实比例:食指/中指/无名指宽 ≈0.9 个

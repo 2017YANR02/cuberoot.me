@@ -12,24 +12,31 @@
  * MANO vs generic-hand 的真实差异(为什么值得做):参数化人手扫描模型,
  * 拇指 CMC 是腕上独立真关节、掌型比例解剖准确 —— r11 在 generic-hand 上
  * 证明「真 CMC 沉 D 层」超出该资产可行域,MANO 是下一个自由度上限。
- * 注意:MANO 无贴图 UV(转换器给的是平面投影 UV,只供程序噪声 bump 平铺),
- * 皮肤走 rig 的平色 skinMat 路径,跳过 bakeHandTextures。
+ * 注意:MANO 无作者 UV;转换器 @2 起生成盒式投影无重叠 UV 图集(接缝顶点
+ * 复制 + 显式平滑法线),bakeHandTextures(UV 光栅化 + 3D 域特征求值,对
+ * 图集布局无要求、只要求单射)与 generic 同路径烘焙,MANO 同享皮肤贴图。
  */
 import * as THREE from "three";
 import { adaptGltfHand } from "./handModelGltf";
 import type { FingerName, HandModel } from "./handModel";
 
-/** scripts/convert-mano.py 的输出格式。 */
+/** scripts/convert-mano.py 的输出格式(@2:盒式投影无重叠 UV 图集 + 接缝顶点
+ *  复制 + 显式平滑法线 —— 供 bakeHandTextures 走与 generic 相同的烘焙路径)。 */
 export interface ManoHandData {
   format: string;
   hand: "right" | "left";
   counts: { verts: number; faces: number };
   bones: { name: string; pos: [number, number, number] }[];
   position: string; // b64 float32 (n,3)
+  normal: string;   // b64 float32 (n,3) — 接缝复制前算的平滑法线(复制后再算会有硬缝)
   index: string;    // b64 uint32 (f,3)
-  uv: string;       // b64 float32 (n,2)
+  uv: string;       // b64 float32 (n,2) — 无重叠图集(烘焙贴图要求单射)
   skinIndex: string; // b64 uint8 (n,4) — 25 骨列表内的索引
   skinWeight: string; // b64 float32 (n,4) 已归一
+  /** 姿态修正 blendshape(int8,(n,3,135) C 序;系数 k=(j−1)·9+a·3+b 对应
+   *  MANO 关节 j 局部旋转 (R−I)_ab)。 */
+  posedirs: string;
+  posedirsScale: string; // b64 float32 (135,) 逐系数反量化尺度
 }
 
 /** 拇指弯曲平面 roll(rad,MANO 绑定解剖系)。generic-hand 是 2.074;MANO
@@ -59,19 +66,20 @@ function b64ToArrayBuffer(s: string): ArrayBuffer {
 
 /** 纯构建步(无 fetch):转换 JSON → HandModel。探针/测试用 fs 读文件直喂。 */
 export function buildManoHand(data: ManoHandData, side: 1 | -1, skinMat: THREE.Material, label = "mano"): HandModel {
-  if (data.format !== "cuberoot-mano-hand@1") {
+  if (data.format !== "cuberoot-mano-hand@3") {
     throw new Error(`mano hand ${label}: unknown format ${data.format} — re-run scripts/convert-mano.py`);
   }
   if ((side === -1 && data.hand !== "right") || (side === 1 && data.hand !== "left")) {
     throw new Error(`mano hand ${label}: side/hand mismatch (side ${side}, file ${data.hand})`);
   }
   const pos = new Float32Array(b64ToArrayBuffer(data.position));
+  const nrm = new Float32Array(b64ToArrayBuffer(data.normal));
   const idx = new Uint32Array(b64ToArrayBuffer(data.index));
   const uv = new Float32Array(b64ToArrayBuffer(data.uv));
   const skinIndex = new Uint8Array(b64ToArrayBuffer(data.skinIndex));
   const skinWeight = new Float32Array(b64ToArrayBuffer(data.skinWeight));
   const n = data.counts.verts;
-  if (pos.length !== n * 3 || skinIndex.length !== n * 4 || skinWeight.length !== n * 4) {
+  if (pos.length !== n * 3 || nrm.length !== n * 3 || skinIndex.length !== n * 4 || skinWeight.length !== n * 4) {
     throw new Error(`mano hand ${label}: buffer size mismatch`);
   }
 
@@ -90,11 +98,13 @@ export function buildManoHand(data: ManoHandData, side: 1 | -1, skinMat: THREE.M
 
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  // 法线用转换器给的(接缝复制前的平滑法线)—— computeVertexNormals 会沿
+  // UV 岛边界(顶点已复制)算出硬缝。
+  geo.setAttribute("normal", new THREE.BufferAttribute(nrm, 3));
   geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
   geo.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(Array.from(skinIndex), 4));
   geo.setAttribute("skinWeight", new THREE.BufferAttribute(skinWeight, 4));
   geo.setIndex(new THREE.BufferAttribute(idx, 1));
-  geo.computeVertexNormals();
 
   const mesh = new THREE.SkinnedMesh(geo, skinMat);
   mesh.name = `mano-${data.hand}-skin`;
@@ -102,17 +112,92 @@ export function buildManoHand(data: ManoHandData, side: 1 | -1, skinMat: THREE.M
   src.updateMatrixWorld(true);
   mesh.bind(new THREE.Skeleton(bones), mesh.matrixWorld);
 
-  return adaptGltfHand(src, side, skinMat, label, {
+  const model = adaptGltfHand(src, side, skinMat, label, {
     thumbRoll: MANO_THUMB_ROLL,
     nailHalfWK: MANO_NAIL_HALFW_K,
   });
+  model.poseCorrective = makePoseCorrective(model, geo, data, n);
+  return model;
+}
+
+/** MANO 关节 id(1..15,标准 kintree 序)→ WebXR 骨名;parent[j] 见 MANO
+ *  kintree(四指近节的父 = 腕,MANO 无掌骨关节 —— 合成 meta 的旋转会并入
+ *  近节相对腕的局部旋转,posedirs 语义正确)。 */
+const MANO_JOINT_BONES: string[] = [
+  "wrist",
+  "index-finger-phalanx-proximal", "index-finger-phalanx-intermediate", "index-finger-phalanx-distal",
+  "middle-finger-phalanx-proximal", "middle-finger-phalanx-intermediate", "middle-finger-phalanx-distal",
+  "pinky-finger-phalanx-proximal", "pinky-finger-phalanx-intermediate", "pinky-finger-phalanx-distal",
+  "ring-finger-phalanx-proximal", "ring-finger-phalanx-intermediate", "ring-finger-phalanx-distal",
+  "thumb-metacarpal", "thumb-phalanx-proximal", "thumb-phalanx-distal",
+];
+const MANO_JOINT_PARENT = [-1, 0, 1, 2, 0, 4, 5, 0, 7, 8, 0, 10, 11, 0, 13, 14];
+
+/**
+ * posedirs 姿态修正闭包:系数 = 各关节「相对父骨的局部旋转」(R−I) 展平。
+ * 关键化简:绑定时全骨世界四元数 = align(inner 对齐变换,attach 保世界),故
+ * 模板系局部旋转 = qp_world⁻¹·qj_world 直接可得(align 共轭恰好抵消),手根
+ * 世界位姿也在共轭里抵消 —— 待机呼吸(只动手根)系数不变,早退零开销。
+ * 位移在模板(资产)空间施加于 geometry.position(蒙皮之前的绑定几何),
+ * 法线不重算(毫米级鼓包,着色误差不可见)。
+ */
+function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: ManoHandData, n: number): () => void {
+  const q8 = new Int8Array(b64ToArrayBuffer(data.posedirs));         // (n,3,135)
+  const scale = new Float32Array(b64ToArrayBuffer(data.posedirsScale)); // (135,)
+  if (q8.length !== n * 3 * 135 || scale.length !== 135) {
+    throw new Error(`mano posedirs: buffer size mismatch (${q8.length}, ${scale.length})`);
+  }
+  // 反量化并转置为 (135, n*3):逐系数累加时内层连续。
+  const pd = new Float32Array(135 * n * 3);
+  for (let i = 0; i < n * 3; i++) {
+    for (let k = 0; k < 135; k++) pd[k * n * 3 + i] = q8[i * 135 + k] * scale[k];
+  }
+  const base = new Float32Array((geo.getAttribute("position") as THREE.BufferAttribute).array as Float32Array);
+  const bones = MANO_JOINT_BONES.map((name) => {
+    const b = model.group.getObjectByName(name);
+    if (!b) throw new Error(`mano posedirs: bone ${name} missing`);
+    return b;
+  });
+  const cLast = new Float32Array(135).fill(NaN);
+  const c = new Float32Array(135);
+  const qj = new THREE.Quaternion(), qp = new THREE.Quaternion(), qr = new THREE.Quaternion();
+  const mR = new THREE.Matrix4();
+  return () => {
+    for (let j = 1; j <= 15; j++) {
+      bones[j].getWorldQuaternion(qj);
+      bones[MANO_JOINT_PARENT[j]].getWorldQuaternion(qp);
+      qr.copy(qp).invert().multiply(qj);
+      mR.makeRotationFromQuaternion(qr);
+      const e = mR.elements; // 列主序
+      const o = (j - 1) * 9;
+      c[o] = e[0] - 1; c[o + 1] = e[4]; c[o + 2] = e[8];
+      c[o + 3] = e[1]; c[o + 4] = e[5] - 1; c[o + 5] = e[9];
+      c[o + 6] = e[2]; c[o + 7] = e[6]; c[o + 8] = e[10] - 1;
+    }
+    let dirty = false;
+    for (let k = 0; k < 135; k++) {
+      if (!(Math.abs(c[k] - cLast[k]) < 1e-3)) { dirty = true; break; }
+    }
+    if (!dirty) return;
+    cLast.set(c);
+    const attr = geo.getAttribute("position") as THREE.BufferAttribute;
+    const out = attr.array as Float32Array;
+    out.set(base);
+    for (let k = 0; k < 135; k++) {
+      const ck = c[k];
+      if (Math.abs(ck) < 0.01) continue; // int8 量化底噪以下,跳过
+      const row = k * n * 3;
+      for (let i = 0; i < n * 3; i++) out[i] += ck * pd[row + i];
+    }
+    attr.needsUpdate = true;
+  };
 }
 
 /** 浏览器加载入口(同 loadGltfHand 语义:side=-1 → 右手)。资产 gitignored,
  *  未部署/未转换时 fetch 404 → 上抛,由 rig 侧回退 generic-hand 并告警。 */
 export async function loadManoHand(side: 1 | -1, skinMat: THREE.Material): Promise<HandModel> {
   const name = side === -1 ? "right" : "left";
-  const url = `/sim/hands/mano/${name}.mano.json?v=1`;
+  const url = `/sim/hands/mano/${name}.mano.json?v=3`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`mano hand asset missing (${res.status} ${url}) — run scripts/convert-mano.py`);
   const data = (await res.json()) as ManoHandData;

@@ -75,6 +75,7 @@ function applyPose(m: HandModel, pose: HandPose): void {
     }
   }
   g.updateMatrixWorld(true);
+  m.poseCorrective?.(); // MANO posedirs(姿态修正 blendshape)—— 改绑定几何,量哪都得先修
 }
 
 type Probe = {
@@ -83,6 +84,10 @@ type Probe = {
   dom: string[]; // 每顶点主导骨名
   sec: string[]; // 次权重骨名(>0.15)
   nailThumb: THREE.Mesh;
+  /** 无名指+小指的肉半径和(绑定姿实测 p50 顶点→链轴距):指间净距 =
+   *  链轴线间最短距 − 此值(轴线法对穿插深度有正确梯度,表面点間距在
+   *  互穿时恒 ≈0 无梯度)。 */
+  ringPinkyRad: number;
 };
 
 async function makeProbe(file: 'right.glb' | 'left.glb', side: 1 | -1): Promise<Probe> {
@@ -109,7 +114,49 @@ async function makeProbe(file: 'right.glb' | 'left.glb', side: 1 | -1): Promise<
     sec.push(si >= 0 ? names[si] ?? '' : '');
   }
   const nailThumb = m.nailMeshes!.find((n) => (n.userData.nail as { finger: string }).finger === 'thumb')!;
-  return { m, mesh, dom, sec, nailThumb };
+  const p: Probe = { m, mesh, dom, sec, nailThumb, ringPinkyRad: 0 };
+  // 绑定姿下量无名/小指肉半径(p50 顶点→本指链轴距),解算期常量。
+  m.group.updateMatrixWorld(true);
+  const radOf = (name: FingerName): number => {
+    const segs = chainSegs(p, name);
+    const ds = skinnedVerts(p, (n) => n.includes(`${name}-finger-phalanx`) || n === chainBones[name][3])
+      .map((v) => Math.min(...segs.map(([a, b]) => segPointDist(a, b, v))));
+    ds.sort((a, b) => a - b);
+    return ds.length ? ds[Math.floor(ds.length * 0.5)] : 0;
+  };
+  p.ringPinkyRad = radOf('ring') + radOf('pinky');
+  return p;
+}
+
+/** 指链 3 段(骨关节世界位)。 */
+function chainSegs(p: Probe, name: FingerName): [THREE.Vector3, THREE.Vector3][] {
+  const [j1, j2, j3, j4] = chainBones[name];
+  const q = [jointWorld(p, j1), jointWorld(p, j2), jointWorld(p, j3), jointWorld(p, j4)];
+  return [[q[0], q[1]], [q[1], q[2]], [q[2], q[3]]];
+}
+
+function segPointDist(a: THREE.Vector3, b: THREE.Vector3, v: THREE.Vector3): number {
+  const ab = b.clone().sub(a);
+  const t = Math.max(0, Math.min(1, v.clone().sub(a).dot(ab) / Math.max(1e-9, ab.lengthSq())));
+  return a.clone().addScaledVector(ab, t).distanceTo(v);
+}
+
+/** 线段-线段最短距(夹持参数化,数值稳)。 */
+function segSegDist(a1: THREE.Vector3, a2: THREE.Vector3, b1: THREE.Vector3, b2: THREE.Vector3): number {
+  const d1 = a2.clone().sub(a1), d2 = b2.clone().sub(b1), r = a1.clone().sub(b1);
+  const A = d1.lengthSq(), E = d2.lengthSq(), F = d2.dot(r);
+  let s = 0, t = 0;
+  if (A > 1e-9) {
+    const C = d1.dot(r), B = d1.dot(d2);
+    const den = A * E - B * B;
+    s = den > 1e-9 ? Math.max(0, Math.min(1, (B * F - C * E) / den)) : 0;
+    t = E > 1e-9 ? (B * s + F) / E : 0;
+    if (t < 0) { t = 0; s = Math.max(0, Math.min(1, -C / A)); }
+    else if (t > 1) { t = 1; s = Math.max(0, Math.min(1, (B - C) / A)); }
+  } else if (E > 1e-9) {
+    t = Math.max(0, Math.min(1, F / E));
+  }
+  return a1.clone().addScaledVector(d1, s).distanceTo(b1.clone().addScaledVector(d2, t));
 }
 
 const _v = new THREE.Vector3();
@@ -184,6 +231,8 @@ function nailNormal(p: Probe): THREE.Vector3 {
 
 type Metrics = {
   pen: number; // 全手 Chebyshev 穿模(>0 = 穿进方块)
+  /** 小指↔无名指净距:链轴线最短距 − 两指肉半径和(<0 = 互穿)。 */
+  pinkyRingClear: number;
   fingers: Record<string, { tiltDeg: number; gapB: number; contactY: number; contactX: number; dorsalY: number; tip: THREE.Vector3 }>;
   thumb: {
     fGap: number; cx: number; cy: number; minAbsX: number;
@@ -272,8 +321,12 @@ function measure(p: Probe, opts?: { penScope?: 'all' | 'noThumb' | 'thumbOnly'; 
   const mcp = jointWorld(p, 'thumb-phalanx-proximal');
   const ttip = jointWorld(p, 'thumb-tip');
   const n = opts?.skipNail ? new THREE.Vector3(0, 0, 1) : nailNormal(p);
+  const rSegs = chainSegs(p, 'ring'), pSegs = chainSegs(p, 'pinky');
+  let axisD = 1e9;
+  for (const [a1, a2] of rSegs) for (const [b1, b2] of pSegs) axisD = Math.min(axisD, segSegDist(a1, a2, b1, b2));
   return {
     pen,
+    pinkyRingClear: axisD - p.ringPinkyRad,
     fingers,
     thumb: {
       fGap: cn ? fGap : 1e9,
@@ -299,7 +352,7 @@ function fmt(mx: Metrics): string {
   });
   const t = mx.thumb;
   return [
-    `pen ${f(mx.pen, 2)}`,
+    `pen ${f(mx.pen, 2)} pinkyRingClear ${f(mx.pinkyRingClear, 2)}`,
     ...rows,
     `thumb fGap ${f(t.fGap, 2)} contact (${f(t.cx)},${f(t.cy)}) |x|min ${f(t.minAbsX)} nail·ẑ ${f(t.nailDotZ, 3)}`,
     `thumb CMC y ${f(t.cmcY)} MCP y ${f(t.mcpY)} fleshY [${f(t.fleshMinY)},${f(t.fleshMaxY)}] len2d ${f(t.len2d)}`,
@@ -380,6 +433,9 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
     if (name === 'pinky') {
       L += t(`${name}.tilt`, 200 * hinge(r.tiltDeg - 25) ** 2);
       L += t(`${name}.tipz`, 6 * hinge(r.tip.z + 40) ** 2);
+      // 小指↔无名指净距 ≥0.8U(2026-07-11 用户抓 MANO 小指压进无名指):
+      // 轴线距对互穿深度有梯度,表面点距在互穿时恒 ≈0 推不动。
+      L += t(`${name}.ringClear`, 120 * hinge(0.8 - mx.pinkyRingClear) ** 2);
     } else {
       L += t(`${name}.tilt`, 200 * hinge(r.tiltDeg - 7.8) ** 2 + 2.5 * (r.tiltDeg / 8) ** 2);
     }
@@ -554,35 +610,34 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       return;
     }
     if (MODE === 'SYM') {
-      // 对称性二分诊断(SOLVE=SYM MODEL=mano)。只比前 779 个顶点(MANO 原始
-      // 模板 778 + 封腕心 1,索引左右严格对应;Loop 细分边点因左手翻绕向后
-      // 边字典插入序不同而重排,不可逐点比)。
+      // 对称性二分诊断(SOLVE=SYM MODEL=mano)。转换器 @2 起 UV 图集重排顶点,
+      // 左右索引不再对应 → 关节按名精确比 + 顶点最近邻抽样(1/7)。
       // ①绑定层:两腕同锚 WRIST_LOCAL ⇒ 手系里 L = R 关于 y=WRIST_LOCAL.y
-      //   平面镜像;②摆姿层:世界系里 L ≈ R 关于 x=0 镜像(绑定层镜面偏移
-      //   2·WLy≈4.4U 随姿态旋转,构成基线残差)。哪层先炸 = 不对称源。
-      const N_TPL = 779;
+      //   平面镜像;②摆姿层:世界系里 L = R 关于 x=0 镜像(homeLeft 已补腕锚
+      //   常差项)。哪层先炸 = 不对称源。
       const pl = await makeProbe('left.glb', 1);
-      const layer = (tag: string, vr: THREE.Vector3[], vl: THREE.Vector3[], mir: (v: THREE.Vector3) => THREE.Vector3): void => {
-        const acc: Record<string, number> = {};
-        let worst = 0, wi = -1;
-        for (let i = 0; i < N_TPL; i++) {
-          const d = vr[i].distanceTo(mir(vl[i]));
-          const k = p.dom[i];
-          if (d > (acc[k] ?? 0)) acc[k] = d;
-          if (d > worst) { worst = d; wi = i; }
+      const layer = (tag: string, mir: (v: THREE.Vector3) => THREE.Vector3): void => {
+        let jWorst = 0, jName = '';
+        for (const name of FINGERS.flatMap((fn) => chainBones[fn]).concat('wrist')) {
+          const d = jointWorld(p, name).distanceTo(mir(jointWorld(pl, name)));
+          if (d > jWorst) { jWorst = d; jName = name; }
         }
-        console.log(`SYM ${tag}: n ${N_TPL} max ${worst.toFixed(3)} @vert ${wi} dom ${p.dom[wi]}`);
-        for (const [k, d] of Object.entries(acc).sort((a, b) => b[1] - a[1]).slice(0, 8)) {
-          console.log(`SYM ${tag}  ${k.padEnd(34)} ${d.toFixed(3)}`);
+        const vr = skinnedVerts(p), vl = skinnedVerts(pl).map(mir);
+        let nnWorst = 0;
+        for (let i = 0; i < vr.length; i += 7) {
+          let best = 1e9;
+          for (const w of vl) { const d = vr[i].distanceToSquared(w); if (d < best) best = d; }
+          nnWorst = Math.max(nnWorst, Math.sqrt(best));
         }
+        console.log(`SYM ${tag}: joint max ${jWorst.toFixed(3)} @${jName} | vert NN max ${nnWorst.toFixed(3)}`);
       };
       const wly = WRIST_LOCAL.y;
       p.m.group.updateMatrixWorld(true);
       pl.m.group.updateMatrixWorld(true);
-      layer('bind ', skinnedVerts(p), skinnedVerts(pl), (v) => new THREE.Vector3(v.x, 2 * wly - v.y, v.z));
+      layer('bind ', (v) => new THREE.Vector3(v.x, 2 * wly - v.y, v.z));
       applyPose(p.m, homeRight(MODEL));
       applyPose(pl.m, homeLeft(MODEL));
-      layer('posed', skinnedVerts(p), skinnedVerts(pl), (v) => new THREE.Vector3(-v.x, v.y, v.z));
+      layer('posed', (v) => new THREE.Vector3(-v.x, v.y, v.z));
       expect(true).toBe(true);
       return;
     }
