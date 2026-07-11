@@ -525,10 +525,12 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
       // 只露中段」不再成立 —— 白剪影外界是板外缘 rim,收崖起点不收剪影,踩过)。
       // 满宽白剪影 = 白顶针;0.82×满宽 ≈ 背视甲板占指背 ~3/4,解剖比。
       const halfW = 0.82 * (opts?.nailHalfWK?.[name] ?? NAIL_HALFW_K[name]) * nf.len;
-      // 横向曲率半径:r6 放平(1.25→1.7×脊高)—— 弯指姿态皮肤向单侧漂 ~1U,
-      // 拱太弯把板边压进漂移后的皮里,单侧边缘被皮咬成波浪(踩过);板边抬高
-      // ~1U 后两侧边缘都是自身解析 rim。视觉上更板状(真甲横曲率本就温和)。
-      const rSide = Math.max(1.7 * rBase, 1.5 * halfW);
+      // 横向曲率半径(r7,2026-07-11 用户抓「甲片平板悬空不贴指」):随形圆拱,
+      // 曲率 ≈ 指管半径(rSide≈1.05×脊高,板弧 ~150° 包住指背)。r6 的放平
+      // (1.7×)+高抬升是对旧 generic 粗蒙皮「皮咬板波浪」的规避 —— MANO 高
+      // 密度蒙皮下皮∩甲交线本身平滑,板缘贴进甲沟是正确观感,不再放平。
+      // 1.02×halfW 下界只保 sqrt 定义域(halfW 可能略超脊高)。
+      const rSide = Math.max(1.05 * rBase, 1.02 * halfW);
       const bed0 = (sq: number, uq: number): number => {
         const du = Math.min(Math.abs(uq - uC), rSide);
         return ridge(sq) - (rSide - Math.sqrt(Math.max(0, rSide * rSide - du * du)));
@@ -554,7 +556,9 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
         if (Math.abs(p.u - uC) > 0.9 * halfW) continue;
         need = Math.max(need, p.h - bed0(p.s, p.u));
       }
-      const lift = Math.min(need + 1.4 * U, 2.6 * U);
+      // r7:抬升收到最小(0.5U 余量 / 1.4U 顶)—— 随形拱下 need 本就小,大
+      // 抬升 = 整板悬空缝隙(用户抓的)。
+      const lift = Math.min(need + 0.5 * U, 1.4 * U);
       const bed = (sq: number, uq: number): number => bed0(sq, uq) + lift;
       const geo = buildNailGeometry({ p3: q3, axis: nf.axis, dorsal: nf.dorsal, lat: nf.lat, len: nf.len, halfWAt, surf: bed, uCenter: uC, t1, lift });
       // 刚挂 tip 代理:甲片区域(t≥0.42)皮肤 ≥97% 由末节/端点骨主导(与
