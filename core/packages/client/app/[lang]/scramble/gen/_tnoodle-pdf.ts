@@ -29,7 +29,7 @@ import { renderMirrorBlocksScrambleSvg } from './_svg/mirror_blocks_svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from './_svg/mega_svg';
 import { renderPyraScrambleSvg, PYRA_DEFAULT_COLORS } from './_svg/pyraminx_svg';
 import { renderSkewbScrambleSvg, SKEWB_DEFAULT_COLORS } from './_svg/skewb_svg';
-import type { WcaFormat } from './_wca-round';
+import { groupLetter, type WcaFormat } from './_wca-round';
 import { eventDisplayName } from '@/lib/wca-events';
 import { tFmc, fontForLocale, type TnoodleLocale } from './_tnoodle-translate';
 
@@ -326,7 +326,7 @@ function roundDetailString(sheet: RoundSheetInput, isZh: boolean): string {
   const evName = tnoodleEventTitle(sheet.event) ?? eventDisplayName(sheet.event, false);
   // WCA round_type_id 'f'/'h' → roundIdx=3 = Final regardless of total rounds.
   const round = sheet.roundIdx === 3 ? 'Final' : `Round ${sheet.roundIdx + 1}`;
-  const grp = (sheet.totalGroups ?? 1) > 1 ? ` Scramble Set ${String.fromCharCode(65 + sheet.groupIdx)}` : '';
+  const grp = (sheet.totalGroups ?? 1) > 1 ? ` Scramble Set ${groupLetter(sheet.groupIdx)}` : '';
   const att = sheet.attemptNumber !== undefined ? ` Attempt ${sheet.attemptNumber + 1}` : '';
   return `${evName} ${round}${grp}${att}`;
 }
@@ -893,7 +893,7 @@ async function renderFmcPage(
 
 /** Tnoodle Set label (A/B/...) for the activityCode "Scramble Set X" suffix. */
 function tnoodleSetLabel(groupIdx: number): string {
-  return String.fromCharCode(65 + groupIdx);
+  return groupLetter(groupIdx);
 }
 
 function clamp(v: number, lo: number, hi: number): number {

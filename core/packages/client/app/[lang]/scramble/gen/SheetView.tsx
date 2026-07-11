@@ -19,7 +19,7 @@ import { ScramblePreview2D, eventHasScramblePreview } from '@/components/Scrambl
 import { isAnalysableScramble } from '@/lib/cross-solver';
 import type { Method } from '@/components/StageSolver';
 import { isBlockVariant } from '@/lib/scramble-variants';
-import type { WcaFormat } from './_wca-round';
+import { groupLetter, type WcaFormat } from './_wca-round';
 import type { Metric } from './CompCrossAnalysis';
 import ScrambleLines from './ScrambleLines';
 import { CUBE_FILL, BADGE_FACE_ORDER } from '@/lib/cube-colors';
@@ -121,9 +121,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
   const params = useParams();
   const langPrefix = params?.lang === 'zh' || params?.lang === 'en' ? `/${params.lang}` : (isZh ? '/zh' : '/en');
   const groupSuffix = (totalGroups ?? 1) > 1
-    ? ((isZh
-            ? ` ${String.fromCharCode(65 + groupIdx)} 组`
-            : ` Group ${String.fromCharCode(65 + groupIdx)}`))
+    ? t(` ${groupLetter(groupIdx)} 组`, ` Group ${groupLetter(groupIdx)}`)
     : '';
   const attemptSuffix = attemptNumber !== undefined
     ? ` ${t('第', 'Attempt')} ${attemptNumber + 1}${t('次', '')}`

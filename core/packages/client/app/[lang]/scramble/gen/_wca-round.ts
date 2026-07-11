@@ -8,6 +8,8 @@
 
 import type { TnoodleLocale } from './_tnoodle-translate';
 
+export { groupIdxOf, groupLetter } from '@/lib/wca-scramble-group';
+
 export type WcaFormat = 'a' | 'm' | '5' | '3' | '2' | '1';
 //  a = Average of 5 (Ao5)   →  5 attempts
 //  m = Mean of 3 (Mo3)      →  3 attempts (FMC, MBLD)
