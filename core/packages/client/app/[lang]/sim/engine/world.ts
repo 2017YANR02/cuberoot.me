@@ -360,27 +360,12 @@ export default class World {
     this.resize(); // refHalf 随手显隐变化(见 resize)
   }
 
-  /** 手模资产(default = 内置 generic-hand / mano = MPI MANO,applySettings
-   *  驱动)。切换 = 销毁重建整个 rig(姿态基线/甲片/血色全绑加载期,rig 构造
-   *  参数定死);已建 rig 且种类没变则零开销。 */
-  private handModel: import("./hands/handPoses").HandModelKind = "default";
-  setHandModel(kind: import("./hands/handPoses").HandModelKind): void {
-    if (this.handModel === kind) return;
-    this.handModel = kind;
-    if (this.hands) {
-      this.scene.remove(this.hands);
-      this.hands.dispose();
-      this.hands = null;
-      this.syncHands(); // handsWanted 未变:想要就立刻按新资产重建
-      this.dirty = true;
-    }
-  }
-
-  /** 手 rig 显隐 = 「想要」 && 3x3(镜面/其它阶/非 NxN 都不上手)。 */
+  /** 手 rig 显隐 = 「想要」 && 3x3(镜面/其它阶/非 NxN 都不上手)。
+   *  手模 = MANO 独占(2026-07-11 内置 generic-hand 退役)。 */
   private syncHands(): void {
     const active = this.handsWanted && this.puzzleKind === 3;
     if (active && this.hands == null) {
-      this.hands = new HandsRig(this.handModel);
+      this.hands = new HandsRig();
       this.scene.add(this.hands);
     }
     if (this.hands) {

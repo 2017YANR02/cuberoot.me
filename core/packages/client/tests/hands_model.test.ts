@@ -1,5 +1,6 @@
 /**
- * /sim GLTF 手模适配层回归(adaptGltfHand,fs 读 GLB + GLTFLoader.parse 直喂)。
+ * /sim 蒙皮手模适配层回归(adaptGltfHand;2026-07-11 起喂 MANO 转换资产 ——
+ * 内置 generic-hand GLB 已退役,资产 gitignored 缺失时整组 skip)。
  * 锁死加载层与 rig 的契约:
  *  ① WebXR 平铺骨骼重建为 FK 链 —— 驱动骨挂进 root/mid/tip 代理组,且绑定
  *    世界位置不被破坏(v1 曾把绑定位快照放在 inner 变换之后 → 代理支点被
@@ -11,11 +12,11 @@
  *  ⑤ 左右手为真镜像资产:食指侧 y 符号相反。
  */
 import { describe, expect, it, beforeAll } from 'vitest';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
-import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { adaptGltfHand } from '@/app/[lang]/sim/engine/hands/handModelGltf';
+import { buildManoHand, type ManoHandData } from '@/app/[lang]/sim/engine/hands/handModelMano';
 import { WRIST_LOCAL, HAND_SCALE, type HandModel, type FingerName } from '@/app/[lang]/sim/engine/hands/handModel';
 import { SIZE } from '@/app/[lang]/sim/engine/define';
 
@@ -30,14 +31,15 @@ const CHAIN: Record<FingerName, { drive: [string, string, string]; end: string }
   pinky: { drive: ['pinky-finger-phalanx-proximal', 'pinky-finger-phalanx-intermediate', 'pinky-finger-phalanx-distal'], end: 'pinky-finger-tip' },
 };
 
-async function loadModel(file: 'right.glb' | 'left.glb', side: 1 | -1, mat: THREE.Material): Promise<HandModel> {
-  const p = fileURLToPath(new URL(`../public/sim/hands/${file}`, import.meta.url));
-  const buf = await readFile(p);
-  const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
-  const gltf = await new Promise<GLTF>((resolve, reject) => {
-    new GLTFLoader().parse(ab, '', resolve, reject);
-  });
-  return adaptGltfHand(gltf.scene, side, mat, file);
+const FILES = {
+  right: fileURLToPath(new URL('../public/sim/hands/mano/right.mano.json', import.meta.url)),
+  left: fileURLToPath(new URL('../public/sim/hands/mano/left.mano.json', import.meta.url)),
+};
+const HAVE = existsSync(FILES.right) && existsSync(FILES.left);
+
+async function loadModel(name: 'right' | 'left', side: 1 | -1, mat: THREE.Material): Promise<HandModel> {
+  const data = JSON.parse(await readFile(FILES[name], 'utf8')) as ManoHandData;
+  return buildManoHand(data, side, mat, `${name}.mano.json`);
 }
 
 const worldOf = (o: THREE.Object3D): THREE.Vector3 => new THREE.Vector3().setFromMatrixPosition(o.matrixWorld);
@@ -47,7 +49,7 @@ const boneByName = (m: HandModel, name: string): THREE.Object3D => {
   return b;
 };
 
-describe('adaptGltfHand GLTF 手模适配', () => {
+describe.skipIf(!HAVE)('adaptGltfHand 蒙皮手模适配(MANO 资产)', () => {
   const skinR = new THREE.MeshStandardMaterial();
   const skinL = new THREE.MeshStandardMaterial();
   let right: HandModel; // side=-1,魔方右侧 = 解剖学右手
@@ -55,8 +57,8 @@ describe('adaptGltfHand GLTF 手模适配', () => {
 
   beforeAll(async () => {
     [right, left] = await Promise.all([
-      loadModel('right.glb', -1, skinR),
-      loadModel('left.glb', 1, skinL),
+      loadModel('right', -1, skinR),
+      loadModel('left', 1, skinL),
     ]);
     right.group.updateMatrixWorld(true);
     left.group.updateMatrixWorld(true);
