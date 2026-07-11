@@ -78,11 +78,11 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
 
   const th = (k: SortKey, label: string, title?: string) => (
     <th
-      className="ess2-th-sort"
+      className="ess-th-sort"
       aria-sort={sortKey === k ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
       title={title}
     >
-      <button type="button" className="ess2-th-btn" onClick={() => toggleSort(k)}>
+      <button type="button" className="ess-th-btn" onClick={() => toggleSort(k)}>
         {label}
         <SortArrow active={sortKey === k} dir={sortDir} />
       </button>
@@ -90,11 +90,11 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
   );
 
   return (
-    <div className="ess2-cases">
-      <div className="ess2-cases-controls">
-        <div className="ess2-search">
+    <div className="ess-cases">
+      <div className="ess-cases-controls">
+        <div className="ess-search">
           <input
-            className="ess2-search-input"
+            className="ess-search-input"
             type="text"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setPage(0); }}
@@ -105,7 +105,7 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
           />
           {query && <ClearButton onClick={() => { setQuery(''); setPage(0); }} isZh={isZh} />}
         </div>
-        <label className="ess2-filter">
+        <label className="ess-filter">
           <span>F</span>
           <select className="scramble-stats-select" value={String(fF)}
             onChange={(e) => onFilterChange(() => setFF(e.target.value === 'all' ? 'all' : Number(e.target.value)))}>
@@ -113,7 +113,7 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
             {fOpts.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
         </label>
-        <label className="ess2-filter">
+        <label className="ess-filter">
           <span>H</span>
           <select className="scramble-stats-select" value={String(fH)}
             onChange={(e) => onFilterChange(() => setFH(e.target.value === 'all' ? 'all' : Number(e.target.value)))}>
@@ -121,7 +121,7 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
             {hOpts.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
         </label>
-        <label className="ess2-filter">
+        <label className="ess-filter">
           <span>Q</span>
           <select className="scramble-stats-select" value={String(fQ)}
             onChange={(e) => onFilterChange(() => setFQ(e.target.value === 'all' ? 'all' : Number(e.target.value)))}>
@@ -129,23 +129,23 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
             {qOpts.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
         </label>
-        <span className="ess2-cases-count">
+        <span className="ess-cases-count">
           {tr({ zh: '{n} 个案例', en: '{n} cases' }).replace('{n}', sorted.length.toLocaleString())}
         </span>
       </div>
 
-      <div className="ess2-table-scroll sticky-scroll">
-        <table className="ess2-table sticky-thead">
+      <div className="ess-table-scroll sticky-scroll">
+        <table className="ess-table sticky-thead">
           <thead>
             <tr>
               {th('idx', '#', tr({ zh: '难度序号(1 = 最难)', en: 'Difficulty rank (1 = hardest)' }))}
               <th>{tr({ zh: '状态', en: 'State' })}</th>
-              <th className="ess2-alg-th">{tr({ zh: 'HTM 最优解', en: 'HTM-optimal' })}</th>
+              <th className="ess-alg-th">{tr({ zh: 'HTM 最优解', en: 'HTM-optimal' })}</th>
               {th('F', 'F', tr({ zh: '面转步数', en: 'Face turns' }))}
               {th('H', 'H', tr({ zh: 'HTM 步数', en: 'HTM' }))}
               {th('QH', 'Q|H', tr({ zh: '该 HTM 最优解的 QTM 步数', en: 'QTM length of that HTM-optimal solution' }))}
               {th('Q', 'Q', tr({ zh: 'QTM 最优步数', en: 'QTM-optimal' }))}
-              <th className="ess2-alg-th">{tr({ zh: 'QTM 最优解', en: 'QTM-optimal' })}</th>
+              <th className="ess-alg-th">{tr({ zh: 'QTM 最优解', en: 'QTM-optimal' })}</th>
               {th('dqhq', 'Δ', tr({ zh: '(Q|H)−Q:HTM 最优解多花的四分之一转数', en: '(Q|H)−Q: extra quarter turns of the HTM-optimal solution' }))}
             </tr>
           </thead>
@@ -155,8 +155,8 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
               const scramble = invertAlg(hAlg);
               return (
                 <tr key={idx}>
-                  <td className="ess2-num">{idx.toLocaleString()}</td>
-                  <td className="ess2-cube">
+                  <td className="ess-num">{idx.toLocaleString()}</td>
+                  <td className="ess-cube">
                     <Link
                       href={`/scramble/222?scramble=${encodeURIComponent(scramble)}`}
                       prefetch={false}
@@ -165,15 +165,15 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
                       <ScramblePreview2D event="222" scramble={scramble} size={22} />
                     </Link>
                   </td>
-                  <td className="ess2-alg">{hAlg}</td>
-                  <td className="ess2-num" title={f6 ? `F1–F6: ${f6.join(' ')}` : undefined}>
+                  <td className="ess-alg">{hAlg}</td>
+                  <td className="ess-num" title={f6 ? `F1–F6: ${f6.join(' ')}` : undefined}>
                     {F}{f6 ? '*' : ''}
                   </td>
-                  <td className="ess2-num">{H}</td>
-                  <td className="ess2-num">{QH}</td>
-                  <td className="ess2-num">{Q}</td>
-                  <td className="ess2-alg ess2-alg-q">{qAlg ?? tr({ zh: '(同左)', en: '(same)' })}</td>
-                  <td className="ess2-num ess2-delta" data-nonzero={dqhq > 0}>{dqhq > 0 ? `+${dqhq}` : '0'}</td>
+                  <td className="ess-num">{H}</td>
+                  <td className="ess-num">{QH}</td>
+                  <td className="ess-num">{Q}</td>
+                  <td className="ess-alg ess-alg-q">{qAlg ?? tr({ zh: '(同左)', en: '(same)' })}</td>
+                  <td className="ess-num ess-delta" data-nonzero={dqhq > 0}>{dqhq > 0 ? `+${dqhq}` : '0'}</td>
                 </tr>
               );
             })}
@@ -181,15 +181,15 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
         </table>
       </div>
 
-      <div className="ess2-pager">
-        <button type="button" className="ess2-pager-btn" disabled={curPage === 0} onClick={() => setPage(0)}>«</button>
-        <button type="button" className="ess2-pager-btn" disabled={curPage === 0} onClick={() => setPage(curPage - 1)}>‹</button>
-        <span className="ess2-pager-info">
+      <div className="ess-pager">
+        <button type="button" className="ess-pager-btn" disabled={curPage === 0} onClick={() => setPage(0)}>«</button>
+        <button type="button" className="ess-pager-btn" disabled={curPage === 0} onClick={() => setPage(curPage - 1)}>‹</button>
+        <span className="ess-pager-info">
           {tr({ zh: '第 {a} / {b} 页', en: 'Page {a} / {b}' })
             .replace('{a}', String(curPage + 1)).replace('{b}', String(pageCount))}
         </span>
-        <button type="button" className="ess2-pager-btn" disabled={curPage >= pageCount - 1} onClick={() => setPage(curPage + 1)}>›</button>
-        <button type="button" className="ess2-pager-btn" disabled={curPage >= pageCount - 1} onClick={() => setPage(pageCount - 1)}>»</button>
+        <button type="button" className="ess-pager-btn" disabled={curPage >= pageCount - 1} onClick={() => setPage(curPage + 1)}>›</button>
+        <button type="button" className="ess-pager-btn" disabled={curPage >= pageCount - 1} onClick={() => setPage(pageCount - 1)}>»</button>
       </div>
     </div>
   );

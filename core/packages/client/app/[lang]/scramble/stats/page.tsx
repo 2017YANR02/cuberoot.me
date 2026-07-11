@@ -36,6 +36,7 @@ import BicDistView from './_components/BicDistView';
 import Sia123DistView from './_components/Sia123DistView';
 import Sia222DistView from './_components/Sia222DistView';
 import Essential2x2View from './_components/Essential2x2View';
+import PyraminxEssentialView from './_components/PyraminxEssentialView';
 import ScrambleLengthView, {
   type EventLengthsJson, type EventLengthsAvgJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
@@ -660,7 +661,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
   // 2×2「所有本质状态」视图激活:仅 event=222 + 难度 tab + 数据源切到 all。
-  const isEssential = tab === 'difficulty' && event === '222' && essSrc === 'all';
+  const isEssential = tab === 'difficulty' && (event === '222' || event === 'pyram') && essSrc === 'all';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -1602,8 +1603,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   if (!DIFFICULTY_EVENTS.has(event)) {
     const puzzleKey = PUZZLE_EVENT_MAP[event];
     if (puzzleKey) {
-      // 2×2 独有:数据源切换(WCA 真题采样 / 所有本质状态)。参照 analyzer 的来源切换 pill。
-      const srcToggle = event === '222' ? (
+      // 2×2 / 金字塔:数据源切换(WCA 真题采样 / 所有本质状态)。参照 analyzer 的来源切换 pill。
+      const hasEssential = event === '222' || event === 'pyram';
+      const srcToggle = hasEssential ? (
         <div className="scramble-stats-controls scramble-stats-src-toggle">
           <PillToggle
             value={essSrc === 'wca'}
@@ -1614,10 +1616,15 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           />
           <InfoTooltip
             icon={HelpCircle}
-            content={tr({
-              zh: 'WCA 真题:真实比赛打乱的采样分布;所有本质状态:2×2 全部 3,674,160 个本质状态的精确统计',
-              en: 'WCA: sampled from real competition scrambles; All states: exact statistics over all 3,674,160 essential 2×2 states',
-            })}
+            content={event === 'pyram'
+              ? tr({
+                zh: 'WCA 真题:真实比赛打乱的采样分布;所有本质状态:金字塔(不含小角)全部 933,120 态精确枚举、去重后 39,035 个本质案例',
+                en: 'WCA: sampled from real competition scrambles; All states: exact enumeration of all 933,120 tip-less Pyraminx states → 39,035 deduped essential cases',
+              })
+              : tr({
+                zh: 'WCA 真题:真实比赛打乱的采样分布;所有本质状态:2×2 全部 3,674,160 个本质状态的精确统计',
+                en: 'WCA: sampled from real competition scrambles; All states: exact statistics over all 3,674,160 essential 2×2 states',
+              })}
           />
         </div>
       ) : null;
@@ -1626,7 +1633,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           {header}
           {srcToggle}
           {isEssential
-            ? <Essential2x2View isZh={isZh} />
+            ? (event === 'pyram' ? <PyraminxEssentialView isZh={isZh} /> : <Essential2x2View isZh={isZh} />)
             : timelineActive
               ? timelineBlock
               : <PuzzleDistView isZh={isZh} puzzleKey={puzzleKey} />}
