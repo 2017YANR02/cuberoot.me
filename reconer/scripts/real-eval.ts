@@ -70,6 +70,9 @@ const HD_RES = hdArg >= 0
   : null;
 // HD 亚格精修: 重采前先在 HD 帧上搜 ±0.4 格平移修晶格错位 (负⑩(a) 主噪声)
 const HD_REFINE = process.argv.includes("--hdrefine");
+// 链形成/agree 也用 HD 色 (覆盖实验): vivid 960 读不出的糊格 HD 可读 →
+// 快转段可能成链。风险 = HD 逐帧抖动断链 (kNN 的教训), 用数据判
+const HD_AGREE = process.argv.includes("--hdagree");
 const PER_FRAME = process.argv.includes("--perframe"); // 跳过链, 逐帧网格直接喂搜索
 const PIN_MODE = process.argv.includes("--pin"); // 路径级指派钉死
 const DRIFT = process.argv.includes("--drift"); // 钉死 + 段间漂移切换 (隐含 --pin)
@@ -175,8 +178,10 @@ interface RestRun {
 function agree(a: FaceObservation, b: FaceObservation): boolean {
   const maxBad = STRICT ? 0 : 1;
   let common = 0, bad = 0;
+  const va = HD_AGREE ? (a.hdColors ?? a.colors) : a.colors;
+  const vb = HD_AGREE ? (b.hdColors ?? b.colors) : b.colors;
   for (let i = 0; i < 9; i++) {
-    const ca = a.colors[i], cb = b.colors[i];
+    const ca = va[i], cb = vb[i];
     if (!ca || !cb) continue;
     common++;
     if (ca !== cb && ++bad > maxBad) return false;
@@ -285,11 +290,16 @@ for (const sf of files) {
       for (const obs of grids[i]) {
         const { dx, dy } = HD_REFINE ? refineHD(rgb, W2, H2, obs.grid, SC) : { dx: 0, dy: 0 };
         const hc: (ColorName | null)[] = new Array(9).fill(null);
+        const hr: ([number, number, number] | null)[] = new Array(9).fill(null);
+        const rad = obs.grid.pitch * SC * 0.22;
         for (let c = 0; c < 9; c++) {
           const { x, y } = cellCenter(obs.grid, (c / 3) | 0, c % 3);
-          hc[c] = sampleCell(rgb, W2, H2, x * SC + dx, y * SC + dy, obs.grid.pitch * SC * 0.22);
+          hc[c] = sampleCell(rgb, W2, H2, x * SC + dx, y * SC + dy, rad);
+          const m = blockMedianRGB(rgb, W2, H2, x * SC + dx, y * SC + dy, rad);
+          hr[c] = m ? [m.r, m.g, m.b] : null;
         }
         obs.hdColors = hc;
+        obs.hdRgb = hr;
         attached++;
       }
     };
@@ -356,7 +366,7 @@ for (const sf of files) {
           const tally = new Map<ColorName, number>();
           let tot = 0;
           for (const g of chain) {
-            const col = (g.hdColors ?? g.knnColors ?? g.colors)[c]; // 共识优先 HD 重采 > kNN > vivid; agree/链检测仍用稳定 colors
+            const col = (g.knnColors ?? g.hdColors ?? g.colors)[c]; // 共识优先 kNN (在场时, 特征源可为 HD) > HD 重采 > vivid; agree/链检测仍用稳定 colors
             if (!col) continue;
             tot++;
             tally.set(col, (tally.get(col) ?? 0) + 1);
@@ -465,8 +475,14 @@ for (const sf of files) {
       for (const obs of grids[i]) {
         const kc: (ColorName | null)[] = new Array(9).fill(null);
         for (let c = 0; c < 9; c++) {
-          const { x, y } = cellCenter(obs.grid, (c / 3) | 0, c % 3);
-          const m = blockMedianRGB(rgb, meta.w, meta.h, x, y, obs.grid.pitch * 0.22);
+          // 特征源优先 HD 精修块中位 (漂移已修, 跨视频迁移更干净), 无 HD 时 960 块中位
+          const hm = obs.hdRgb?.[c];
+          const m = hm
+            ? { r: hm[0], g: hm[1], b: hm[2] }
+            : (() => {
+                const { x, y } = cellCenter(obs.grid, (c / 3) | 0, c % 3);
+                return blockMedianRGB(rgb, meta.w, meta.h, x, y, obs.grid.pitch * 0.22);
+              })();
           if (m) kc[c] = calibClassifyDiag(m.r, m.g, m.b, calib);
         }
         obs.knnColors = kc;
@@ -535,6 +551,12 @@ for (const sf of files) {
           const px = extractBlock(rgb, meta.w, meta.h, cc.x, cc.y, Math.round(obs.grid.pitch * 0.26));
           if (px.length >= 27) blocks.push({ label, px });
         }
+        // 特征源优先 HD 精修块中位 (与 attachKnnColors 同源, 训练/应用特征一致)
+        const hm = obs.hdRgb?.[i];
+        if (hm) {
+          samples.push({ r: hm[0], g: hm[1], b: hm[2], label, obs: myObsId });
+          continue;
+        }
         const blob = obs.grid.cells[i];
         if (blob) {
           samples.push({ r: blob.r, g: blob.g, b: blob.b, label, obs: myObsId });
@@ -564,7 +586,7 @@ for (const sf of files) {
       mkdirSync(join(import.meta.dirname, "..", ".tmp"), { recursive: true });
       const p = join(
         import.meta.dirname, "..", ".tmp",
-        `calib-samples-${basename(videoPath).replace(/\s+/g, "_")}.json`,
+        `calib-samples${HD_RES ? "-hd" : ""}-${basename(videoPath).replace(/\s+/g, "_")}.json`,
       );
       writeFileSync(p, JSON.stringify(samples));
       console.log(`  样本已 dump: ${p} (${samples.length})`);
@@ -627,8 +649,9 @@ for (const sf of files) {
     const tmpDir = join(import.meta.dirname, "..", ".tmp");
     const myKey = basename(videoPath).replace(/\s+/g, "_");
     const pooled: ColorSample[] = [];
+    const poolRe = HD_RES ? /^calib-samples-hd-(.*)\.json$/ : /^calib-samples-(?!hd-)(.*)\.json$/;
     for (const f of readdirSync(tmpDir)) {
-      const m = /^calib-samples-(.*)\.json$/.exec(f);
+      const m = poolRe.exec(f);
       if (!m || m[1] === myKey) continue;
       pooled.push(...(JSON.parse(readFileSync(join(tmpDir, f), "utf8")) as ColorSample[]));
     }
