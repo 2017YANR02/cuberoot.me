@@ -476,40 +476,44 @@ function AnalyzePageInner() {
         />
       </div>
 
-      <div className="analyze-wca">
-        {/* 来源切换:WCA 真实打乱(带比赛信息)/ 随机生成 */}
-        <PillToggle
-          value={scrSource === 'wca'}
-          onChange={(v) => setScrSource(v ? 'wca' : 'random')}
-          onLabel={t('WCA 真题', 'WCA real')}
-          offLabel={t('随机生成', 'Random')}
-          ariaLabel={t('打乱来源', 'Scramble source')}
-          className="analyze-src-pill"
-        />
-        <button
-          className="analyze-wca-reshuffle"
-          onClick={() => (scrSource === 'wca' ? void drawWca() : void fillRandom())}
-          disabled={running || wcaLoading}
-          title={scrSource === 'wca' ? t('换一条真实打乱', 'Draw another real scramble') : t('换一个随机打乱', 'New random scramble')}
-          aria-label={scrSource === 'wca' ? t('换一条真实打乱', 'Draw another real scramble') : t('换一个随机打乱', 'New random scramble')}
-        >
-          {wcaLoading ? <Loader2 size={13} className="analyze-spin" /> : <Shuffle size={13} />}
-        </button>
-      </div>
-
-      {/* 综合来源配置:复用计时器的 WcaSourceConfig(按日期范围 / 指定比赛 / 按难度 / 最优等态)。
-          始终展开内联;自动打卡对分析器无意义,隐藏。 */}
-      {scrSource === 'wca' && (
-        <div className="analyze-wca-src">
-          <WcaSourceConfig
-            isZh={lang === 'zh'}
-            event={'333' as EventId}
-            settings={wcaSrc}
-            updateSettings={patchWcaSrc}
-            showAutoMark={false}
+      {/* 来源切换 + 综合配置同处一条可换行的 flex 线:窄了自然折,宽了「WCA 真题 / 选源方式 /
+          按难度 / 最优 / 日期范围」全排一行。配置块用 display:contents 打平进这条线(见 analyze.css)。 */}
+      <div className="analyze-wca-line">
+        <div className="analyze-wca">
+          {/* 来源切换:WCA 真实打乱(带比赛信息)/ 随机生成 */}
+          <PillToggle
+            value={scrSource === 'wca'}
+            onChange={(v) => setScrSource(v ? 'wca' : 'random')}
+            onLabel={t('WCA 真题', 'WCA real')}
+            offLabel={t('随机生成', 'Random')}
+            ariaLabel={t('打乱来源', 'Scramble source')}
+            className="analyze-src-pill"
           />
+          <button
+            className="analyze-wca-reshuffle"
+            onClick={() => (scrSource === 'wca' ? void drawWca() : void fillRandom())}
+            disabled={running || wcaLoading}
+            title={scrSource === 'wca' ? t('换一条真实打乱', 'Draw another real scramble') : t('换一个随机打乱', 'New random scramble')}
+            aria-label={scrSource === 'wca' ? t('换一条真实打乱', 'Draw another real scramble') : t('换一个随机打乱', 'New random scramble')}
+          >
+            {wcaLoading ? <Loader2 size={13} className="analyze-spin" /> : <Shuffle size={13} />}
+          </button>
         </div>
-      )}
+
+        {/* 综合来源配置:复用计时器的 WcaSourceConfig(按日期范围 / 指定比赛 / 按难度 / 最优等态)。
+            始终展开内联;自动打卡对分析器无意义,隐藏。 */}
+        {scrSource === 'wca' && (
+          <div className="analyze-wca-src">
+            <WcaSourceConfig
+              isZh={lang === 'zh'}
+              event={'333' as EventId}
+              settings={wcaSrc}
+              updateSettings={patchWcaSrc}
+              showAutoMark={false}
+            />
+          </div>
+        )}
+      </div>
 
       {/* 来源信息行:WCA 真实打乱显示比赛出处 / 无匹配提示;随机无出处不显示。 */}
       <div className="analyze-srcline">
