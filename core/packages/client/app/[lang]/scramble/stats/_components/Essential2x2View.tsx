@@ -15,7 +15,7 @@ import {
   type Essential2x2Json, type EssCaseRow,
 } from '@/lib/essential-2x2';
 import { tr } from '@/i18n/tr';
-import './essential_2x2.css';
+import './_essential-shared.css';
 
 const Essential2x2CaseTable = dynamic(() => import('./Essential2x2CaseTable'), {
   ssr: false,
@@ -110,9 +110,9 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
   const colTotals = data.joint.htm.map((_, hi) => data.joint.grid.reduce((s, row) => s + (row[hi] ?? 0), 0));
 
   return (
-    <div className="ess2-view">
+    <div className="ess-view">
       {/* 概览:状态总数 / God's number / 平均 */}
-      <div className="scramble-stats-controls ess2-overview">
+      <div className="scramble-stats-controls ess-overview">
         <div className="scramble-stats-puzzle-meta">
           <span>{tr({ zh: '{n} 个本质状态', en: '{n} essential states' }).replace('{n}', meta.total_positions.toLocaleString())}</span>
           <span className="scramble-stats-puzzle-metric">
@@ -165,13 +165,13 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
       {/* 联合 HTM×QTM 表 */}
       <div className="scramble-stats-panel">
         <div className="scramble-stats-panel-title">{tr({ zh: '联合分布(HTM × QTM)', en: 'Joint distribution (HTM × QTM)' })}</div>
-        <div className="ess2-joint-scroll">
-          <table className="ess2-joint">
+        <div className="ess-joint-scroll">
+          <table className="ess-joint">
             <thead>
               <tr>
-                <th className="ess2-joint-corner">Q\H</th>
+                <th className="ess-joint-corner">Q\H</th>
                 {data.joint.htm.map((h) => <th key={h}>{h}</th>)}
-                <th className="ess2-joint-total">Σ</th>
+                <th className="ess-joint-total">Σ</th>
               </tr>
             </thead>
             <tbody>
@@ -180,7 +180,7 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
                 const rowTotal = row.reduce((s, v) => s + (v ?? 0), 0);
                 return (
                   <tr key={q}>
-                    <th className="ess2-joint-qhead">{q}</th>
+                    <th className="ess-joint-qhead">{q}</th>
                     {data.joint.htm.map((_, hi) => {
                       const v = row[hi] ?? 0;
                       const pct = v > 0 ? Math.round((Math.log(v) / Math.log(jointMax)) * 80) : 0;
@@ -190,19 +190,19 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
                         </td>
                       );
                     })}
-                    <td className="ess2-joint-total">{compact(rowTotal)}</td>
+                    <td className="ess-joint-total">{compact(rowTotal)}</td>
                   </tr>
                 );
               })}
-              <tr className="ess2-joint-totalrow">
-                <th className="ess2-joint-qhead">Σ</th>
-                {colTotals.map((t, i) => <td key={i} className="ess2-joint-total">{compact(t)}</td>)}
-                <td className="ess2-joint-total">{compact(meta.total_positions)}</td>
+              <tr className="ess-joint-totalrow">
+                <th className="ess-joint-qhead">Σ</th>
+                {colTotals.map((t, i) => <td key={i} className="ess-joint-total">{compact(t)}</td>)}
+                <td className="ess-joint-total">{compact(meta.total_positions)}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div className="ess2-note">
+        <div className="ess-note">
           {tr({
             zh: '行 = QTM 最优步数,列 = HTM 最优步数;格子 = 同时达到该 (HTM, QTM) 的状态数(颜色越深越多)。',
             en: 'Rows = QTM-optimal length, columns = HTM-optimal length; each cell = states at that (HTM, QTM) pair (darker = more).',
@@ -213,8 +213,8 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
       {/* 首面 / 首层子分布(stat 表)*/}
       <div className="scramble-stats-panel">
         <div className="scramble-stats-panel-title">{tr({ zh: '底面 / 首层步数分布', en: 'First-face / first-layer distributions' })}</div>
-        <div className="ess2-stat-controls">
-          <label className="ess2-filter">
+        <div className="ess-stat-controls">
+          <label className="ess-filter">
             <span>{tr({ zh: '数据集', en: 'Dataset' })}</span>
             <select className="scramble-stats-select" value={statKey} onChange={(e) => setStatKey(e.target.value)}>
               {data.stat.groups.map((g) => (
@@ -242,8 +242,8 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
                 onYModeToggle={() => setStatY(statY === 'percent' ? 'count' : 'percent')}
               />
             </div>
-            <div className="ess2-table-scroll sticky-scroll">
-              <table className="ess2-table sticky-thead">
+            <div className="ess-table-scroll sticky-scroll">
+              <table className="ess-table sticky-thead">
                 <thead>
                   <tr>
                     <th>HTM</th>
@@ -256,11 +256,11 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
                 <tbody>
                   {statGroup.rows.map((r) => (
                     <tr key={r.m}>
-                      <td className="ess2-num">{r.m}</td>
-                      <td className="ess2-num">{r.cases.toLocaleString()}</td>
-                      <td className="ess2-num">{r.inv != null ? `1 / ${r.inv < 100 ? r.inv.toFixed(1) : Math.round(r.inv).toLocaleString()}` : '—'}</td>
-                      <td className="ess2-num">{r.dist != null ? `${(r.dist * 100).toFixed(2)}%` : '—'}</td>
-                      <td className="ess2-num">{r.cumm != null ? `${(r.cumm * 100).toFixed(2)}%` : '—'}</td>
+                      <td className="ess-num">{r.m}</td>
+                      <td className="ess-num">{r.cases.toLocaleString()}</td>
+                      <td className="ess-num">{r.inv != null ? `1 / ${r.inv < 100 ? r.inv.toFixed(1) : Math.round(r.inv).toLocaleString()}` : '—'}</td>
+                      <td className="ess-num">{r.dist != null ? `${(r.dist * 100).toFixed(2)}%` : '—'}</td>
+                      <td className="ess-num">{r.cumm != null ? `${(r.cumm * 100).toFixed(2)}%` : '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -268,7 +268,7 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
             </div>
           </>
         )}
-        <div className="ess2-note">
+        <div className="ess-note">
           {tr({
             zh: 'FF = 底面(把一个面拼成纯色);FL = 首层(整层复原);Fixed = 固定底色参照;CN = 色中性(六色任选取最优)。',
             en: 'FF = first face (one solid-color face); FL = first layer (a fully solved layer); Fixed = fixed reference color; CN = color-neutral (best over all 6 colors).',
@@ -280,8 +280,8 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
       {/* 案例聚合(F/H/Q)*/}
       <div className="scramble-stats-panel">
         <div className="scramble-stats-panel-title">{tr({ zh: '案例库(去重后 {n} 个本质案例)', en: 'Case database ({n} unique essential cases)' }).replace('{n}', data.case_agg.total.toLocaleString())}</div>
-        <div className="ess2-stat-controls">
-          <label className="ess2-filter">
+        <div className="ess-stat-controls">
+          <label className="ess-filter">
             <span>{tr({ zh: '度量', en: 'Metric' })}</span>
             <select className="scramble-stats-select" value={caseMetric} onChange={(e) => setCaseMetric(e.target.value as 'F' | 'H' | 'Q' | 'QH')}>
               <option value="F">{tr({ zh: 'F(面转)', en: 'F (face)' })}</option>
@@ -307,10 +307,10 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
           />
         </div>
         {/* HTM 最优解是否同时是 QTM 最优解 */}
-        <div className="ess2-dqhq">
-          <span className="ess2-dqhq-title">{tr({ zh: 'HTM 最优解的 QTM 代价', en: 'QTM cost of the HTM-optimal solution' })}:</span>
+        <div className="ess-dqhq">
+          <span className="ess-dqhq-title">{tr({ zh: 'HTM 最优解的 QTM 代价', en: 'QTM cost of the HTM-optimal solution' })}:</span>
           {Object.entries(data.case_agg.dqhq).map(([d, n]) => (
-            <span key={d} className="ess2-dqhq-item">
+            <span key={d} className="ess-dqhq-item">
               {d === '0'
                 ? tr({ zh: '同时最优 {p}%', en: 'also optimal {p}%' }).replace('{p}', ((n / data.case_agg.total) * 100).toFixed(1))
                 : tr({ zh: '多 {d}Q:{p}%', en: '+{d}Q: {p}%' }).replace('{d}', d).replace('{p}', ((n / data.case_agg.total) * 100).toFixed(1))}
@@ -322,8 +322,8 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
         {cases ? (
           <Essential2x2CaseTable isZh={isZh} rows={cases} />
         ) : (
-          <div className="ess2-load">
-            <button type="button" className="ess2-load-btn" onClick={loadCases} disabled={casesLoading}>
+          <div className="ess-load">
+            <button type="button" className="ess-load-btn" onClick={loadCases} disabled={casesLoading}>
               {casesLoading
                 ? tr({ zh: '加载中…', en: 'Loading…' })
                 : tr({ zh: '浏览全部 {n} 个案例(约 5 MB)', en: 'Browse all {n} cases (~5 MB)' }).replace('{n}', data.case_agg.total.toLocaleString())}
@@ -334,7 +334,7 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
       </div>
 
       {/* 致谢 + 记号 */}
-      <div className="scramble-stats-meta ess2-credits">
+      <div className="scramble-stats-meta ess-credits">
         <span>
           {tr({ zh: '数据', en: 'Data' })}: {tr(meta.credits.author)}
           {' · '}{tr({ zh: '去重', en: 'Dedup' })} {tr(meta.credits.dedup)}
@@ -343,7 +343,7 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
           <a href={meta.credits.source_url} target="_blank" rel="noopener noreferrer">Jaap Scherphuis</a>
           {' · '}{tr({ zh: '生成', en: 'Generated' })} {meta.generated_at}
         </span>
-        <span className="ess2-notation">
+        <span className="ess-notation">
           {meta.notation.map((n) => `${n.sym} = ${tr(n)}`).join(isZh ? ';' : '; ')}
         </span>
       </div>

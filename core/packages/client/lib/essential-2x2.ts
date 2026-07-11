@@ -76,7 +76,7 @@ export interface Essential2x2CasesJson {
   rows: EssCaseRow[];
 }
 
-const V = '20260706';
+const V = '20260711';
 
 export async function fetchEssential2x2(): Promise<Essential2x2Json> {
   const r = await fetch(statsUrl('/stats/scramble/2x2_essential.json') + `?v=${V}`);
