@@ -73,6 +73,12 @@ const HD_REFINE = process.argv.includes("--hdrefine");
 // 链形成/agree 也用 HD 色 (覆盖实验): vivid 960 读不出的糊格 HD 可读 →
 // 快转段可能成链。风险 = HD 逐帧抖动断链 (kNN 的教训), 用数据判
 const HD_AGREE = process.argv.includes("--hdagree");
+// 逐帧格 veto (正⑱ 阶段1): 共识投票前, 格心块 RGB 经 kNN 判"毒"(衣服/手/背景) 的
+// 帧票剥夺。训练池 = VLM 普查标注 (scripts/vlm-census-cells.json), 分类时留一排除
+// 本视频样本 (防自证)。外套格全程毒→格自然清零; 手指格瞬时毒→干净帧存活。
+// 值 = 判毒票阈 (kNN k=5 毒票占比 ≥ 此值即剥夺), 0 = 关闭 (默认, 基线不变)。
+const vetoArg = process.argv.indexOf("--cellveto");
+const CELL_VETO = vetoArg >= 0 ? parseFloat(process.argv[vetoArg + 1] ?? "0.6") : 0;
 const PER_FRAME = process.argv.includes("--perframe"); // 跳过链, 逐帧网格直接喂搜索
 const PIN_MODE = process.argv.includes("--pin"); // 路径级指派钉死
 const DRIFT = process.argv.includes("--drift"); // 钉死 + 段间漂移切换 (隐含 --pin)
@@ -172,6 +178,12 @@ interface RestRun {
   /** 链中间帧 index + 网格几何 (EM 探针 --dumpobs 重采样格心 RGB 用; 内部字段不序列化) */
   midI: number;
   midGrid: FaceObservation["grid"];
+  /** 每格色块支撑率: 贡献颜色的帧里有实测色块 (grid.cells 非 null) 的占比。
+   * 0 = 全程外插采样 (格心可能悬在衣服/手/背景上, 正⑱ 脱靶拒判判据) */
+  sup: number[];
+  /** --cellveto 双轨共识: 毒帧票剥夺后的读数, 只喂 dump bounds read (解码证据);
+   * 链存在性/锚点 finals/κ 拟合全用原始 grid (veto 动锚会翻 v1 种子面) */
+  gridVeto?: (ColorName | null)[];
 }
 
 /** 两帧网格一致: 共同非空格 ≥4 且不一致 ≤1 (--strict 零容错, 防跨拧转混态成链) */
@@ -210,6 +222,47 @@ interface VideoEval {
   boundStates: readonly (readonly number[])[];
   /** 正向 trace 用: 第 t 段消费后的态 (= 段 t+1 起点; 末段后 = 复原) */
   afterStates: readonly (readonly number[])[];
+}
+
+// --cellveto 毒格分类器 (kNN k=5, z-score): 池 = VLM 普查标注格 (rgb + 毒/贴纸)。
+// 返回毒票占比; 分类时排除与被测视频同源的样本 (留一防自证)。
+let vetoKnn: ((rgb: { r: number; g: number; b: number }, vid: string) => number) | null = null;
+if (CELL_VETO > 0) {
+  const rows = JSON.parse(
+    readFileSync(join(import.meta.dirname, "vlm-census-cells.json"), "utf8"),
+  ) as { v: string; rgb: [number, number, number]; bad: number }[];
+  const feat = (r: number, g: number, b: number): number[] => {
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    const s = mx ? ((mx - mn) / mx) * 255 : 0;
+    let h = 0;
+    if (mx > mn) {
+      if (mx === r) h = (60 * (g - b)) / (mx - mn);
+      else if (mx === g) h = 120 + (60 * (b - r)) / (mx - mn);
+      else h = 240 + (60 * (r - g)) / (mx - mn);
+      if (h < 0) h += 360;
+    }
+    return [h / 2, s, mx, r, g, b];
+  };
+  const pool = rows.map((r) => ({ v: r.v, bad: r.bad, f: feat(r.rgb[0], r.rgb[1], r.rgb[2]) }));
+  const D = 6;
+  const mu = new Array<number>(D).fill(0), sd = new Array<number>(D).fill(0);
+  for (const s of pool) for (let d = 0; d < D; d++) mu[d] += s.f[d] / pool.length;
+  for (const s of pool) for (let d = 0; d < D; d++) sd[d] += (s.f[d] - mu[d]) ** 2 / pool.length;
+  for (let d = 0; d < D; d++) sd[d] = Math.sqrt(sd[d]) || 1;
+  const zpool = pool.map((p) => ({ ...p, f: p.f.map((x, d) => (x - mu[d]) / sd[d]) }));
+  vetoKnn = (rgb, vid) => {
+    const zf = feat(rgb.r, rgb.g, rgb.b).map((x, d) => (x - mu[d]) / sd[d]);
+    let best: { d: number; bad: number }[] = [];
+    for (const p of zpool) {
+      if (vid.startsWith(p.v)) continue;
+      let dd = 0;
+      for (let d = 0; d < D; d++) { const t = p.f[d] - zf[d]; dd += t * t; }
+      if (best.length < 5) { best.push({ d: dd, bad: p.bad }); best.sort((a, b) => a.d - b.d); }
+      else if (dd < best[4].d) { best[4] = { d: dd, bad: p.bad }; best.sort((a, b) => a.d - b.d); }
+    }
+    return best.reduce((a, x) => a + x.bad, 0) / best.length;
+  };
+  console.log(`cellveto: 票阈 ${CELL_VETO}, 训练池 ${pool.length} 格 (毒 ${pool.filter((p) => p.bad).length})`);
 }
 
 const videosDir = join(import.meta.dirname, "..", "videos");
@@ -362,17 +415,37 @@ for (const sf of files) {
     const flush = () => {
       if (chain.length >= MIN_RUN) {
         const colors: (ColorName | null)[] = [];
+        const colorsVeto: (ColorName | null)[] = [];
+        const sup: number[] = [];
+        const consensus = (tally: Map<ColorName, number>, tot: number): ColorName | null => {
+          const top = [...tally.entries()].sort((x, y) => y[1] - x[1])[0];
+          return top && (tot === 1 || (top[1] >= 2 && top[1] > tot * 0.6)) ? top[0] : null;
+        };
         for (let c = 0; c < 9; c++) {
           const tally = new Map<ColorName, number>();
-          let tot = 0;
-          for (const g of chain) {
+          const tallyV = new Map<ColorName, number>();
+          let tot = 0, totV = 0, supN = 0;
+          for (let gi = 0; gi < chain.length; gi++) {
+            const g = chain[gi];
             const col = (g.knnColors ?? g.hdColors ?? g.colors)[c]; // 共识优先 kNN (在场时, 特征源可为 HD) > HD 重采 > vivid; agree/链检测仍用稳定 colors
             if (!col) continue;
             tot++;
+            if (g.grid.cells[c]) supN++; // 实测色块支撑 (非外插采样)
             tally.set(col, (tally.get(col) ?? 0) + 1);
+            // 逐帧格 veto (正⑱): 格心块 RGB 判毒 (衣服/手/背景) 的帧票剥夺, 只进
+            // veto 轨。外套格全程毒→格清零, 手指格瞬时毒→干净帧存活 (整格删除会误
+            // 杀 v3)。链存在性/锚点/κ 拟合全走原始轨 — veto 动收尾锚会翻 v1 种子面。
+            if (vetoKnn) {
+              const cc = cellCenter(g.grid, (c / 3) | 0, c % 3);
+              const m = blockMedianRGB(frameAt(chainIdx[gi]), meta.w, meta.h, cc.x, cc.y, g.grid.pitch * 0.22);
+              if (m && vetoKnn(m, sf) >= CELL_VETO) continue;
+            }
+            totV++;
+            tallyV.set(col, (tallyV.get(col) ?? 0) + 1);
           }
-          const top = [...tally.entries()].sort((x, y) => y[1] - x[1])[0];
-          colors.push(top && (tot === 1 || (top[1] >= 2 && top[1] > tot * 0.6)) ? top[0] : null);
+          colors.push(consensus(tally, tot));
+          colorsVeto.push(consensus(tallyV, totV));
+          sup.push(tot ? Math.round((supN / tot) * 100) / 100 : 0);
         }
         if (colors.filter(Boolean).length >= 5) {
           // 链桥接 ≤2 帧空隙 < prior 存活 5 帧, 链内 span 恒定, 取起帧的即可
@@ -393,6 +466,8 @@ for (const sf of files) {
             cy: cy / chain.length,
             midI: chainIdx[chain.length >> 1],
             midGrid: chain[chain.length >> 1].grid,
+            sup,
+            gridVeto: vetoKnn ? colorsVeto : undefined,
           });
         }
       }
@@ -908,7 +983,11 @@ for (const sf of files) {
     // 对齐 (面/rot/端) 用 GT 最优 = "朝向已知" 乐观假设; 所有候选共享同一映射, 排名公平。
     const bounds = boundStates.map((_, t) => {
       const s1 = boundStates[t], s2 = afterState(nonRotIdx[t]);
-      return segChains[t].map((run) => {
+      // veto 空壳过滤: 票被剥到 <5 可读格的链不进边界证据 (残格是稀疏噪声, 实测
+      // 害 v3); 锚点 finals/κ 不受影响 (走原始 grid)
+      return segChains[t]
+        .filter((run) => !run.gridVeto || run.gridVeto.filter(Boolean).length >= 5)
+        .map((run) => {
         const b1 = bestAssign(run.grid, s1, omega);
         const b2 = bestAssign(run.grid, s2, omega);
         const useS2 = b2.match > b1.match;
@@ -920,9 +999,10 @@ for (const sf of files) {
           end: useS2 ? 1 : 0,
           face: bb.face,
           facelets: [...facelets],
-          read: run.grid.map((c) => c ?? null),
+          // veto 轨只换解码证据 read; face/rot 拟合与 gt 仍走原始 grid (与锚点/κ 同轨)
+          read: (run.gridVeto ?? run.grid).map((c) => c ?? null),
           // 读到色的格重采样格心原始 RGB (EM 探针 refit kNN 用; 未读格 null=遮挡不可信)
-          rgbRead: run.grid.map((c, i) => {
+          rgbRead: (run.gridVeto ?? run.grid).map((c, i) => {
             if (!c) return null;
             const cc = cellCenter(run.midGrid, (i / 3) | 0, i % 3);
             const m = blockMedianRGB(frameAt(run.midI), meta.w, meta.h, cc.x, cc.y, run.midGrid.pitch * 0.22);
@@ -941,6 +1021,8 @@ for (const sf of files) {
           rot: bb.rot,
           // 完整仿射基 (orient-probe 逐链姿态分类: 各向异性/剪切 = 倾斜度读数)
           basis: [run.midGrid.v1.x, run.midGrid.v1.y, run.midGrid.v2.x, run.midGrid.v2.y].map((x) => Math.round(x * 10) / 10),
+          // 每格色块支撑率 (正⑱ 脱靶拒判: 0=全程外插, 格心可能悬在衣服/手/背景)
+          sup: run.sup,
         };
       });
     });

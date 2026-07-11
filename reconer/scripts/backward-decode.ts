@@ -72,6 +72,8 @@ interface DumpChain {
   cx?: number;
   cy?: number;
   win?: number;
+  /** 每格色块支撑率 (real-eval 转储; 正⑱ 脱靶拒判) */
+  sup?: number[];
 }
 interface DumpFinal {
   read: (string | null)[];
@@ -165,6 +167,23 @@ const videosDir = join(import.meta.dirname, "..", "videos");
 const v = dump.videos.find((x) => x.name.startsWith(ONLY));
 if (!v) throw new Error(`视频 ${ONLY} 不在转储里`);
 const n = v.bounds.length;
+
+// --reject <thr>: 色块支撑率 < thr 的格置 null (正⑱ 脱靶拒判 — 无实测色块支撑的
+// 外插采样格常悬在衣服/手/背景上, 被分类器自信标成魔方色; 删毒不改色)。默认 0 关闭。
+const REJECT = parseFloat(argAt("--reject") ?? "0");
+if (REJECT > 0) {
+  let killed = 0, total = 0;
+  for (const bs of v.bounds) {
+    for (const c of bs) {
+      if (!c.sup) continue;
+      for (let k = 0; k < 9; k++) {
+        if (c.read[k] !== null) total++;
+        if (c.sup[k] < REJECT && c.read[k] !== null) { c.read[k] = null; killed++; }
+      }
+    }
+  }
+  console.log(`拒判: 支撑率 <${REJECT} 置 null ${killed}/${total} 格`);
+}
 
 // === 验证参照 (只读, 不喂解码) ===
 const content = readFileSync(join(videosDir, `${v.name}.splits.txt`), "utf8");
