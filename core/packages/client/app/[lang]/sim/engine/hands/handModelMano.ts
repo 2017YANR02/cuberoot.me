@@ -38,11 +38,11 @@ export interface ManoHandData {
  *  经验值,标定后更新(改它必须重跑 MANO home 求解)。 */
 export const MANO_THUMB_ROLL = 0.9;
 
-/** MANO 甲宽比例表(K = 背侧指尖满宽 ÷ 末节长)。初值抄 generic-hand 表;
- *  资产到位后跑探针 MEASURE_NAILK=1 实测重烘(handModelGltf.NAIL_HALFW_K
- *  注释里的标定法,换资产必须重标)。 */
+/** MANO 甲宽比例表(K = 背侧指尖满宽 ÷ 末节长)。2026-07-11 探针
+ *  MEASURE_NAILK=1 MODEL=mano 实测(真实解剖比例,远窄于 generic-hand 胖低模;
+ *  重跑转换器后需复测)。 */
 export const MANO_NAIL_HALFW_K: Partial<Record<FingerName, number>> = {
-  thumb: 0.50, index: 0.67, middle: 0.65, ring: 0.63, pinky: 0.48,
+  thumb: 0.227, index: 0.267, middle: 0.272, ring: 0.26, pinky: 0.274,
 };
 
 function b64ToArrayBuffer(s: string): ArrayBuffer {
