@@ -233,8 +233,7 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings,
 
   return (
     <div className="wca-src-config">
-      <div className="settings-row">
-        <span className="settings-row-label">{tr({ zh: '选源方式', en: 'Draw by' })}</span>
+      <div className="settings-row wca-src-toprow">
         <span className="settings-row-control">
           <select
             className="settings-row-control-select"
@@ -245,12 +244,29 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings,
             <option value="comp">{tr({ zh: '指定比赛', en: 'Specific competition' })}</option>
           </select>
         </span>
+        {canDifficulty && (
+          <span className="settings-row-tight-group">
+            <span className="settings-row-label">{tr({ zh: '按难度', en: 'By difficulty' })}</span>
+            <PillToggle
+              value={settings.wcaDifficultyOn}
+              onChange={(v) => updateSettings({ wcaDifficultyOn: v })}
+            />
+          </span>
+        )}
+        {hasOptimal && (
+          <span className="settings-row-tight-group">
+            <span className="settings-row-label">{tr({ zh: '最优打乱', en: 'Optimal scramble' })}</span>
+            <PillToggle
+              value={settings.wcaUseOptimal}
+              onChange={(v) => updateSettings({ wcaUseOptimal: v })}
+            />
+          </span>
+        )}
       </div>
 
       {mode === 'date' ? (
         <>
-          <div className="settings-row">
-            <span className="settings-row-label">{tr({ zh: '日期范围', en: 'Date range' })}</span>
+          <div className="settings-row wca-src-daterow">
             <span className="settings-row-control wca-src-dates">
               <input
                 type="date"
@@ -271,23 +287,9 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings,
               />
             </span>
           </div>
-          <p className="wca-src-hint">
-            {(settings.wcaDateFrom || settings.wcaDateTo)
-              ? tr({ zh: '在该时间段内的官方打乱中完全随机抽取。', en: 'Uniformly random among official scrambles in this range.' })
-              : tr({ zh: '留空 = 全部年份。在所选时间段的官方打乱中完全随机。', en: 'Empty = all years. Uniformly random among official scrambles in the range.' })}
-          </p>
 
           {canDifficulty && (
             <>
-              <div className="settings-row">
-                <span className="settings-row-label">{tr({ zh: '按难度', en: 'By difficulty' })}</span>
-                <span className="settings-row-control">
-                  <PillToggle
-                    value={settings.wcaDifficultyOn}
-                    onChange={(v) => updateSettings({ wcaDifficultyOn: v })}
-                  />
-                </span>
-              </div>
               {settings.wcaDifficultyOn && (
                 <div className="wca-src-diff">
                   <div className="wca-src-diff-row">
@@ -406,22 +408,10 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings,
       )}
 
       {hasOptimal && (
-        <>
-          <div className="settings-row">
-            <span className="settings-row-label">{tr({ zh: '最优打乱', en: 'Optimal scramble'
-            })}</span>
-            <span className="settings-row-control">
-              <PillToggle
-                value={settings.wcaUseOptimal}
-                onChange={(v) => updateSettings({ wcaUseOptimal: v })}
-              />
-            </span>
-          </div>
-          <p className="wca-src-hint">
-            {tr({ zh: '用到达同一状态的最短打乱(最优解步数,通常比原始真题短)替代:同一个魔方态,步数更少。三阶/单手/脚拧/最少步、二阶/金字塔/斜转有。', en: 'Use the shortest sequence reaching the same state (optimal length, usually shorter than the original) — same cube, fewer moves. Available for 3×3 / OH / feet / FMC, 2×2, pyraminx and skewb.'
-            })}
-          </p>
-        </>
+        <p className="wca-src-hint">
+          {tr({ zh: '用到达同一状态的最短打乱(最优解步数,通常比原始真题短)替代:同一个魔方态,步数更少。三阶/单手/脚拧/最少步、二阶/金字塔/斜转有。', en: 'Use the shortest sequence reaching the same state (optimal length, usually shorter than the original) — same cube, fewer moves. Available for 3×3 / OH / feet / FMC, 2×2, pyraminx and skewb.'
+          })}
+        </p>
       )}
 
       {showAutoMark && (
