@@ -998,20 +998,17 @@ export default class HandsRig extends THREE.Group {
       bumpScale: 0.7,
       roughnessMap: maps.rough,
     });
-    if (this.effectiveModel !== "mano") {
-      try {
-        for (const model of [right, left]) {
-          const mat = mkBakedMat(await bakeHandTextures(model));
-          model.meshes[0].material = mat;
-          this.handMats.push(mat);
-        }
-      } catch (e) {
-        console.error("[sim hands] skin texture bake failed:", e);
+    // MANO 同路径烘焙(转换器 @2 起给盒式投影无重叠 UV 图集 —— 烘焙器在 3D
+    // 域求值特征,对图集布局无要求,只要求单射)。
+    try {
+      for (const model of [right, left]) {
+        const mat = mkBakedMat(await bakeHandTextures(model));
+        model.meshes[0].material = mat;
+        this.handMats.push(mat);
       }
+    } catch (e) {
+      console.error("[sim hands] skin texture bake failed:", e);
     }
-    // MANO 无作者 UV(转换器只给噪声 bump 用的平面投影 UV),烘焙贴图的皱纹/
-    // 甲位画在投影 UV 上会成乱斑 —— 跳过,走平色 skinMat + 顶点血色路径
-    // (rig 本就有该回退,烘焙失败同款)。
     // 加载层自建材质(甲片等,HandModel.extraMats 契约):入 handMats 统一
     // fade/dispose。结构断言兼容尚未携带该字段的加载层。
     for (const model of [right, left]) {
@@ -2404,6 +2401,9 @@ export default class HandsRig extends THREE.Group {
         }
       }
     }
+    // MANO posedirs 姿态修正(指关节局部旋转驱动;系数不变时内部早退,待机
+    // 呼吸只动手根零开销,只有指弹帧真正重写绑定几何)。
+    h.model.poseCorrective?.();
   }
 
   /** 释放几何/材质(rig 与 world 同生命周期,当前无人调用;备完整性)。 */
