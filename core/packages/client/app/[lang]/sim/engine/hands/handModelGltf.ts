@@ -474,7 +474,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
         const h = rel.dot(nf.dorsal);
         const uu = rel.dot(nf.lat);
         if (h < -0.5 * U || Math.abs(uu) > rDist * 1.4) continue;
-        if (sa < -3 * U || sa > nf.len + 6 * U) continue;
+        if (sa < -3 * U || sa > nf.len + 14 * U) continue; // 前窗放宽到皮帽外(实测皮尖用)
         smp.push({ s: sa, u: uu, h });
       }
       // 解析甲床(2026-07-09 重做,用户抓的「粗糙白斑甲 + 浮空缝隙」)。
@@ -503,11 +503,18 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
         rBase = Math.max(rBase, p.h);
       }
       rBase = THREE.MathUtils.clamp(rBase > 0 ? rBase : 0.55 * rDist, 4.5 * U, 11 * U);
-      // 甲板前缘终点(NAIL_REACH 注释):帽半径 ≈ 背侧脊高。悬出段脊线 =
-      // 微下弧抛物板(不贴帽面):前缘高 (1-DIP)×脊高,始终在帽圆之上 →
-      // 甲缘悬出肉外(帽同高处的皮 s≈len+0.83·rCap 就没了);贴背段照旧。
+      // 甲板前缘终点 = **实测皮尖**(2026-07-11 用户规格「指甲要刚好到手指
+      // 尖端」):MANO 的 tip 骨是转换器取的皮肤极值顶点(t=1 即肉尖),写死
+      // REACH·rCap 悬伸会让整段甲板飘出指外(太长,用户抓的);generic 皮帽
+      // 还向前伸 ~0.9·rCap,实测皮尖自动落在帽端。REACH 只作上限(异常样本
+      // 兜底);悬出段 DIP 下弧仍给游离缘剪影,但不越过指尖。
       const rCap = rBase;
-      const t1 = 1 + (NAIL_REACH * rCap) / nf.len;
+      let sApex = nf.len;
+      for (const p of smp) {
+        if (Math.abs(p.u - uC) > 0.6 * rDist) continue;
+        sApex = Math.max(sApex, p.s);
+      }
+      const t1 = Math.min(sApex / nf.len, 1 + (NAIL_REACH * rCap) / nf.len);
       const rTipRidge = rBase * (1 - 0.08); // 贴背段末端(t=1)脊高,悬出段起点
       const ridge = (sq: number): number => {
         if (sq <= nf.len) return rBase * (1 - 0.08 * sstep(0.50, 1, sq / nf.len));
