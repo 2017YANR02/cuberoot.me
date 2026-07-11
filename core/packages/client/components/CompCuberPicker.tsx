@@ -216,21 +216,6 @@ export function CompCuberPicker({
       )}
       {showDropdown && (
         <div className="comp-picker-popup">
-          {cuberResults.length > 0 && (
-            <div className="cuber-search-section">
-              <div className="cuber-search-section-label">{tr({ zh: '选手', en: 'Cubers'
-            })}</div>
-              {cuberResults.map(c => (
-                <button key={`p-${c.id}`} type="button" className="cuber-search-item" onClick={() => pickCuber(c)}>
-                  <Flag iso2={c.country_iso2} className="cuber-search-flag" />
-                  <span className="cuber-search-item-main">
-                    <span className="cuber-search-item-name">{displayCuberName(c.name, !!isZh)}</span>
-                    <span className="cuber-search-item-id">{c.id}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
           {compResults.length > 0 && (
             <div className="cuber-search-section">
               <div className="cuber-search-section-label">{tr({ zh: '比赛', en: 'Competitions'
@@ -257,6 +242,21 @@ export function CompCuberPicker({
                   </AppLink>
                 );
               })}
+            </div>
+          )}
+          {cuberResults.length > 0 && (
+            <div className="cuber-search-section">
+              <div className="cuber-search-section-label">{tr({ zh: '选手', en: 'Cubers'
+            })}</div>
+              {cuberResults.map(c => (
+                <button key={`p-${c.id}`} type="button" className="cuber-search-item" onClick={() => pickCuber(c)}>
+                  <Flag iso2={c.country_iso2} className="cuber-search-flag" />
+                  <span className="cuber-search-item-main">
+                    <span className="cuber-search-item-name">{displayCuberName(c.name, !!isZh)}</span>
+                    <span className="cuber-search-item-id">{c.id}</span>
+                  </span>
+                </button>
+              ))}
             </div>
           )}
           {loading && cuberResults.length === 0 && compResults.length === 0 && (
