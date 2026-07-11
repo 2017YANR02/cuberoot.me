@@ -241,6 +241,7 @@
   padding: 10px 16px;
   border-bottom: 1px solid var(--border-default);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* 斑马纹 */
