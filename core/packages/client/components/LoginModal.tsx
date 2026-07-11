@@ -5,7 +5,7 @@
 // 由 store 的 loginOpen 控制,全局挂在 app/layout.tsx。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { X, Mail, Smartphone, Key, Loader2, LogOut, Link2, UserRound } from 'lucide-react';
+import { X, Mail, Smartphone, Key, Loader2, LogOut } from 'lucide-react';
 import { SiWechat, SiQq, SiAlipay } from 'react-icons/si';
 import AppLink from '@/components/AppLink';
 import { useAuthStore, applySession } from '@/lib/auth-store';
@@ -458,12 +458,12 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      <h2 className="lm-title">{t('我的账号', 'My account')}</h2>
-      <p className="lm-who">{user?.name || (user?.wcaId ? user.wcaId : t('未命名', 'Unnamed'))}</p>
-      {user?.wcaId && (
-        <AppLink href={`/person/${user.wcaId}`} className="lm-textbtn lm-profile" onClick={onClose}>
-          <UserRound size={14} /> {t('我的主页', 'My profile')}
+      {user?.wcaId ? (
+        <AppLink href={`/person/${user.wcaId}`} className="lm-who lm-who-link" onClick={onClose}>
+          {user?.name || user.wcaId}
         </AppLink>
+      ) : (
+        <p className="lm-who">{user?.name || t('未命名', 'Unnamed')}</p>
       )}
 
       <div className="lm-idlist">
@@ -476,10 +476,12 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
             const lab = PROVIDER_LABEL[i.provider] ?? { zh: i.provider, en: i.provider };
             const key = `${i.provider}:${i.providerUid}`;
             const onlyOne = identities.length <= 1;
+            // WCA ID / 邮箱 / 手机号对用户有意义,展示;三方(Google/支付宝/微信/QQ)的 uid 是不透明数字串,不展示。
+            const showUid = i.provider === 'wca' || i.provider === 'email' || i.provider === 'phone';
             return (
               <div key={key} className="lm-idrow">
                 <span className="lm-idprov">{lang === 'zh' ? lab.zh : lab.en}</span>
-                <span className="lm-iduid">{i.providerUid}</span>
+                {showUid && <span className="lm-iduid">{i.providerUid}</span>}
                 {confirmKey === key ? (
                   <div className="lm-unlink-confirm">
                     <span className="lm-unlink-confirm-text">{t('确定解绑?', 'Unlink?')}</span>
@@ -520,35 +522,47 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
       {error && <p className="lm-error">{error}</p>}
 
       {(avail.email || avail.phone || !hasWca || (googleOn && !hasGoogle) || availableSocials.length > 0) && (
-        <div className="lm-linkrow">
-          <span className="lm-linktitle">{t('绑定新方式', 'Link a method')}</span>
-          <div className="lm-linkbtns">
-            {avail.email && (
-              <button type="button" className="lm-chip" onClick={() => setLinking(linking === 'email' ? null : 'email')}>
-                <Mail size={14} /> {t('邮箱', 'Email')}
+        <div className="lm-linklist">
+          {avail.email && (
+            <div className="lm-idrow">
+              <span className="lm-idprov">{t('邮箱', 'Email')}</span>
+              <button type="button" className="lm-link" onClick={() => setLinking(linking === 'email' ? null : 'email')}>
+                {t('绑定', 'Link')}
               </button>
-            )}
-            {avail.phone && (
-              <button type="button" className="lm-chip" onClick={() => setLinking(linking === 'phone' ? null : 'phone')}>
-                <Smartphone size={14} /> {t('手机', 'Phone')}
+            </div>
+          )}
+          {avail.phone && (
+            <div className="lm-idrow">
+              <span className="lm-idprov">{t('手机', 'Phone')}</span>
+              <button type="button" className="lm-link" onClick={() => setLinking(linking === 'phone' ? null : 'phone')}>
+                {t('绑定', 'Link')}
               </button>
-            )}
-            {!hasWca && (
-              <button type="button" className="lm-chip" onClick={linkWcaStart}>
-                <Link2 size={14} /> WCA
+            </div>
+          )}
+          {!hasWca && (
+            <div className="lm-idrow">
+              <span className="lm-idprov">WCA</span>
+              <button type="button" className="lm-link" onClick={linkWcaStart}>
+                {t('绑定', 'Link')}
               </button>
-            )}
-            {googleOn && !hasGoogle && (
-              <button type="button" className="lm-chip" disabled={linkingGoogle} onClick={() => void linkGoogleStart()}>
-                {linkingGoogle ? <Loader2 size={14} className="lm-spin" /> : <GoogleGlyph size={14} />} Google
+            </div>
+          )}
+          {googleOn && !hasGoogle && (
+            <div className="lm-idrow">
+              <span className="lm-idprov">Google</span>
+              <button type="button" className="lm-link" disabled={linkingGoogle} onClick={() => void linkGoogleStart()}>
+                {linkingGoogle ? <Loader2 size={12} className="lm-spin" /> : t('绑定', 'Link')}
               </button>
-            )}
-            {availableSocials.map((s) => (
-              <button key={s.key} type="button" className="lm-chip" disabled={linkingSocial === s.key} onClick={() => void linkSocialStart(s.key)}>
-                {linkingSocial === s.key ? <Loader2 size={14} className="lm-spin" /> : <s.Glyph size={14} />} {t(s.name.zh, s.name.en)}
+            </div>
+          )}
+          {availableSocials.map((s) => (
+            <div key={s.key} className="lm-idrow">
+              <span className="lm-idprov">{t(s.name.zh, s.name.en)}</span>
+              <button type="button" className="lm-link" disabled={linkingSocial === s.key} onClick={() => void linkSocialStart(s.key)}>
+                {linkingSocial === s.key ? <Loader2 size={12} className="lm-spin" /> : t('绑定', 'Link')}
               </button>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       )}
 

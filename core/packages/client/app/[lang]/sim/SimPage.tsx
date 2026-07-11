@@ -253,6 +253,10 @@ export default function SimPage() {
   useEffect(() => { useEngineRef.current = useEngine; }, [useEngine]);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  // Slot below the cube canvas that PlayerControls portals its playback bar into
+  // (twizzle-style controls directly under the puzzle). state (not ref) so the
+  // portal re-renders once the node mounts.
+  const [playbackSlot, setPlaybackSlot] = useState<HTMLDivElement | null>(null);
   const worldRef = useRef<World | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const toucherRef = useRef<Toucher | null>(null);
@@ -1381,6 +1385,7 @@ export default function SimPage() {
       </header>
 
       <div className="sim-body">
+        <div className="sim-stage">
         <div className={`sim-canvas-wrap${netMode ? ' sim-canvas-wrap--net' : ''}`} ref={containerRef}>
           {netMode && (
             <SimCubeNet
@@ -1451,6 +1456,8 @@ export default function SimPage() {
             </button>
           )}
         </div>
+        <div className="sim-playback-under" ref={setPlaybackSlot} />
+        </div>
 
         <aside className="sim-side">
           <CollapsibleSection
@@ -1490,6 +1497,7 @@ export default function SimPage() {
             onSkewbNotationChange={setSkewbNotation}
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
+            playbackSlot={playbackSlot}
           />
           {!twisty && (
             <DirectorPanel

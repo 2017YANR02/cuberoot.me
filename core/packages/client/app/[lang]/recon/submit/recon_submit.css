@@ -241,7 +241,8 @@
 .submit-hero .record-select-trigger,
 .submit-hero .event-select-trigger,
 .submit-hero .submit-solver-pill,
-.submit-hero .submit-comp-pill {
+.submit-hero .submit-comp-pill,
+.submit-hero .submit-add-cosolver {
   height: 48px;
   box-sizing: border-box;
   padding: 12px 14px;
@@ -905,6 +906,27 @@
 /* --- 选手搜索 — 相对定位容器 --- */
 .submit-field {
   position: relative;
+}
+
+/* 原生 <select> 会用 OS 自带渲染(方框高度/基线/箭头随平台+缩放漂移),放在 hero 行里
+   跟自定义的 EventSelect / pill 并排就显得不齐。这里抹掉原生外观,画一致的 CSS 方框 +
+   token 上色的 chevron(mask 只提供箭头形状,颜色走 var(--muted-foreground),不硬码灰阶)。 */
+.submit-field--select > .submit-field-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+}
+.submit-field--select::after {
+  content: '';
+  position: absolute;
+  right: 13px;
+  bottom: 0;
+  height: 48px;  /* 对齐 hero 行 select 高度,使 chevron 竖直居中于方框而非整个 label */
+  width: 12px;
+  background-color: var(--muted-foreground);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 L6 8 L9.5 4.5' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 L6 8 L9.5 4.5' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
+  pointer-events: none;
 }
 
 /* --- 已选选手 pill（替代旧 dropdown 的 hint 行）--- */

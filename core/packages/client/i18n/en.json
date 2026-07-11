@@ -213,6 +213,7 @@
     "gestureBracket": "() down/up",
     "notFound": "Not found",
     "col": {
+      "solver": "Competitor",
       "single": "Single",
       "round": "Rnd#",
       "average": "Avg",

@@ -15,7 +15,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { Calendar } from 'lucide-react';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { localizeCompName } from '@/lib/comp-localize';
-import { compFlagIso2 } from '@/lib/country-flags';
+import { compFlagIso2, compNamesByZhSubstring, loadFlagData } from '@/lib/country-flags';
 import { COLOR_HEX, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
 import {
@@ -71,6 +71,70 @@ function IsoDateField({ value, onChange, min, max, ariaLabel, placeholder }: {
   );
 }
 
+// 筛选栏(搜索比赛名 + 日期范围 + 查看全部/收起)。与下方 FullScrambleList 共享同一组 nuqs
+// URL 键(fq/ffrom/fto),因此可渲染进示例面板标题行、跟国家筛选并成一行,列表在下方读同一状态。
+export function FullScrambleFilterBar({ expanded, onExpandedChange, isZh }: {
+  expanded: boolean;
+  onExpandedChange: (v: boolean) => void;
+  isZh: boolean;
+}) {
+  const [q, setQ] = useQueryState('fq', parseAsString.withDefault(''));
+  const [from, setFrom] = useQueryState('ffrom', parseAsString.withDefault(''));
+  const [to, setTo] = useQueryState('fto', parseAsString.withDefault(''));
+  const hasDate = !!(from || to);
+  // 收起态下一搜索 / 选日期就自动展开(静态预览没法按筛选过滤)。
+  useEffect(() => {
+    if (!expanded && (q || from || to)) onExpandedChange(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, from, to]);
+  // 收起:回到预览态并清空筛选(否则带着筛选退回静态预览会对不上)。
+  const collapse = () => { onExpandedChange(false); void setQ(''); void setFrom(''); void setTo(''); };
+  return (
+    <div className="scramble-stats-fulllist-bar">
+      <SearchInput
+        value={q}
+        onChange={(v) => void setQ(v)}
+        placeholder={tr({ zh: '搜索比赛名', en: 'Search competition' })}
+        className="scramble-stats-fulllist-search"
+        inputClassName="scramble-stats-fulllist-input"
+      />
+      {/* 日期范围:ISO 显示(yyyy-mm-dd,跟列表里的比赛日期一致),两框收紧成一段。 */}
+      <div className="scramble-stats-fulllist-daterange">
+        <IsoDateField
+          value={from}
+          max={to || undefined}
+          onChange={(v) => void setFrom(v)}
+          ariaLabel={tr({ zh: '起始日期', en: 'From date' })}
+          placeholder={tr({ zh: '起始', en: 'From' })}
+        />
+        <span className="scramble-stats-fulllist-dash" aria-hidden="true">~</span>
+        <IsoDateField
+          value={to}
+          min={from || undefined}
+          onChange={(v) => void setTo(v)}
+          ariaLabel={tr({ zh: '结束日期', en: 'To date' })}
+          placeholder={tr({ zh: '结束', en: 'To' })}
+        />
+        {hasDate && (
+          <ClearButton
+            onClick={() => { void setFrom(''); void setTo(''); }}
+            isZh={isZh}
+            variant="standalone"
+            ariaLabel={tr({ zh: '清除日期', en: 'Clear dates' })}
+          />
+        )}
+      </div>
+      <button
+        type="button"
+        className="scramble-stats-fulllist-close"
+        onClick={() => (expanded ? collapse() : onExpandedChange(true))}
+      >
+        {expanded ? tr({ zh: '收起', en: 'Collapse' }) : tr({ zh: '展开', en: 'Expand' })}
+      </button>
+    </div>
+  );
+}
+
 interface FullScrambleListProps {
   apiEvent?: string;     // undefined = 合并池(全 3x3-family)
   variant: string;
@@ -98,6 +162,16 @@ export default function FullScrambleList({
   const [rows, setRows] = useState<ByDifficultyRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  // comp_names_zh 加载后 bump,触发中文名搜索重新解析(首帧 map 可能还没到)。
+  const [flagVer, setFlagVer] = useState(0);
+  useEffect(() => { void loadFlagData().then(setFlagVer); }, []);
+  // 搜索词含中文时:DB 只存官方拉丁名,故把中文子串解析成官方名列表走 names 精确筛;
+  // 纯拉丁词照旧走 q 子串。中文词解析不到任何比赛 → 直接空结果(不发请求,避免退化成全量)。
+  const cjkQuery = /[㐀-鿿豈-﫿]/.test(q);
+  const resolvedNames = cjkQuery ? compNamesByZhSubstring(q) : null;
+  const searchFilter = cjkQuery
+    ? { names: resolvedNames ?? [], noMatch: (resolvedNames?.length ?? 0) === 0 }
+    : { q: q || undefined, noMatch: false };
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const reqId = useRef(0);
@@ -106,12 +180,17 @@ export default function FullScrambleList({
   useEffect(() => {
     if (!expanded) return;
     const myReq = ++reqId.current;
+    // 中文搜索解析不到比赛 → 立即空结果,不打后端。
+    if (searchFilter.noMatch) {
+      setLoading(false); setFailed(false); setRows([]); setTotal(0); setPage(1); onTotal?.(0);
+      return;
+    }
     setLoading(true);
     setFailed(false);
     const t = setTimeout(() => {
       void fetchByDifficulty({
         variant, stage, colors, bin, event: apiEvent, country: country || undefined,
-        q: q || undefined, from: from || undefined, to: to || undefined,
+        q: searchFilter.q, names: searchFilter.names, from: from || undefined, to: to || undefined,
         page: 1, pageSize: BY_DIFFICULTY_PAGE_SIZE,
       }).then((res) => {
         if (myReq !== reqId.current) return;
@@ -122,13 +201,7 @@ export default function FullScrambleList({
     }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expanded, variant, stage, colors, bin, apiEvent, country, q, from, to]);
-
-  // 收起态下用户一搜索 / 选日期就自动展开(静态预览没法按筛选过滤)。
-  useEffect(() => {
-    if (!expanded && (q || from || to)) onExpandedChange(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, from, to]);
+  }, [expanded, variant, stage, colors, bin, apiEvent, country, q, flagVer, from, to]);
 
   const loadMore = () => {
     const next = page + 1;
@@ -136,7 +209,7 @@ export default function FullScrambleList({
     setLoading(true);
     void fetchByDifficulty({
       variant, stage, colors, bin, event: apiEvent, country: country || undefined,
-      q: q || undefined, from: from || undefined, to: to || undefined,
+      q: searchFilter.q, names: searchFilter.names, from: from || undefined, to: to || undefined,
       page: next, pageSize: BY_DIFFICULTY_PAGE_SIZE,
     }).then((res) => {
       if (myReq !== reqId.current) return;
@@ -146,55 +219,13 @@ export default function FullScrambleList({
   };
 
   const hasMore = rows.length < total;
-  const hasDate = !!(from || to);
   // 收起:回到预览态并清空筛选(否则带着筛选退回静态预览会对不上)。
   const collapse = () => { onExpandedChange(false); void setQ(''); void setFrom(''); void setTo(''); };
+  // 筛选栏已上移到示例面板标题行(FullScrambleFilterBar);列表只在展开时渲染全量结果。
+  if (!expanded) return null;
   return (
     <div className="scramble-stats-fulllist">
-      <div className="scramble-stats-fulllist-bar">
-        <SearchInput
-          value={q}
-          onChange={(v) => void setQ(v)}
-          placeholder={tr({ zh: '搜索比赛名', en: 'Search competition' })}
-          className="scramble-stats-fulllist-search"
-          inputClassName="scramble-stats-fulllist-input"
-        />
-        {/* 日期范围:ISO 显示(yyyy-mm-dd,跟列表里的比赛日期一致),两框收紧成一段。 */}
-        <div className="scramble-stats-fulllist-daterange">
-          <IsoDateField
-            value={from}
-            max={to || undefined}
-            onChange={(v) => void setFrom(v)}
-            ariaLabel={tr({ zh: '起始日期', en: 'From date' })}
-            placeholder={tr({ zh: '起始', en: 'From' })}
-          />
-          <span className="scramble-stats-fulllist-dash" aria-hidden="true">~</span>
-          <IsoDateField
-            value={to}
-            min={from || undefined}
-            onChange={(v) => void setTo(v)}
-            ariaLabel={tr({ zh: '结束日期', en: 'To date' })}
-            placeholder={tr({ zh: '结束', en: 'To' })}
-          />
-          {hasDate && (
-            <ClearButton
-              onClick={() => { void setFrom(''); void setTo(''); }}
-              isZh={isZh}
-              variant="standalone"
-              ariaLabel={tr({ zh: '清除日期', en: 'Clear dates' })}
-            />
-          )}
-        </div>
-        <button
-          type="button"
-          className="scramble-stats-fulllist-close"
-          onClick={() => (expanded ? collapse() : onExpandedChange(true))}
-        >
-          {expanded ? tr({ zh: '收起', en: 'Collapse' }) : tr({ zh: '查看全部', en: 'View all' })}
-        </button>
-      </div>
-
-      {expanded && (<>
+      <>
       {failed && (
         <div className="scramble-stats-examples-hint">{tr({ zh: '加载失败', en: 'Load failed' })}</div>
       )}
@@ -257,7 +288,7 @@ export default function FullScrambleList({
           </button>
         </div>
       )}
-      </>)}
+      </>
     </div>
   );
 }

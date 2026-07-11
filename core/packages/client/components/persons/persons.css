@@ -711,7 +711,10 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td {
 /* 复盘 STM/TPS 行:整行顶对齐 → 轮次列的 STM/TPS 标签与详细成绩列下方的 stm/tps 值同行对齐。
    轮次列改 flex 列(head 一行 + 两标签行,4px 行距 = 详细成绩网格 row-gap);标签/值同字号同行高 → 逐行对齐。 */
 .wp-bycomp-table tbody tr.wp-row-has-recon-stats td { vertical-align: top; }
-.wp-round-cell { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+/* 有复盘 STM/TPS 子行的行:收紧首行(单次/平均/详细成绩)行高,让主值与其下 STM/TPS 两行贴近;
+   五列(排名/单次/平均/详细成绩/轮次标签)统一同一行高 → 首行数值仍跨列对齐,子行整体上移。 */
+.wp-bycomp-table tbody tr.wp-row-has-recon-stats td { line-height: 1.25; }
+.wp-round-cell { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .wp-round-head { display: inline-flex; align-items: baseline; gap: 6px; }
 .wp-round-sublabel {
     font-size: 0.72rem; line-height: 1.2; font-weight: 400;

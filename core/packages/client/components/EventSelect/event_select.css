@@ -49,6 +49,13 @@
   font-size: 0.88rem;
 }
 
+/* 触发按钮里显示的当前值/占位跟随 trigger 的 font-size(默认 0.88rem,放大场景如
+   submit hero 设 1.1rem 时自动跟上);弹层项(.event-select-item 里)仍走上面的固定值 */
+.event-select-trigger .event-select-label,
+.event-select-trigger .event-select-empty {
+  font-size: inherit;
+}
+
 .event-select .cubing-icon {
   font-size: 1.1rem;
   line-height: 1;

@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useParams, useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { LogOut, TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
@@ -38,9 +38,18 @@ interface RoleFlags { solver: boolean; reconer: boolean; adder: boolean }
 const PAGE_SIZE = 60;
 
 export default function ReconPersonClient() {
-  const params = useParams();
+  // Route ships as ONE prerendered sentinel shell ("_") reused for every wcaId (see
+  // page.tsx + next.config rewrite): the real id can't come from useParams (yields
+  // "_"), so derive it from the browser path. usePathname is the dep so this re-runs
+  // on soft nav; useState('') keeps the client's first render matching the empty
+  // server shell (no hydration mismatch), the effect fills it post-hydration.
+  const pathname = usePathname();
   const router = useRouter();
-  const wcaId = String(params?.wcaId ?? '');
+  const [wcaId, setWcaId] = useState('');
+  useEffect(() => {
+    const m = window.location.pathname.match(/\/recon\/person\/([^/?#]+)/);
+    setWcaId(m ? decodeURIComponent(m[1]) : '');
+  }, [pathname]);
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
 

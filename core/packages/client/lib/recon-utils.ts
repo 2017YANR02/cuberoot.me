@@ -3,11 +3,18 @@ import { ISO2_TO_CONTINENT } from './continent';
 
 // ── Time formatting ──
 
+// NOTE: WCA 单次成绩按截断(非四舍五入)显示到厘秒；筛选比较也要用这个截断值，
+//       否则 2.803 显示成 "2.80" 却因原始值 2.803 > 2.80 被范围筛选排除。
+//       先取整到毫秒消掉浮点误差(裸 5.02*100 = 501.9999… 被 floor 成 501 → 错显 "5.01"、
+//       4.10 → "4.09"),再按 WCA 规则截断到厘秒。
+export function truncateCs(seconds: number): number {
+  return Math.floor(Math.round(seconds * 1000) / 10) / 100;
+}
+
 export function formatTime(seconds: number | undefined | null): string {
   if (seconds === undefined || seconds === null || seconds < 0) return 'DNF';
   if (seconds === 0) return '0.00';
-  const cs = Math.floor(seconds * 100);
-  const truncated = cs / 100;
+  const truncated = truncateCs(seconds);
   if (truncated >= 60) {
     const mins = Math.floor(truncated / 60);
     const secs = truncated - mins * 60;
@@ -134,16 +141,23 @@ export function wcaPersonUrl(personId: string): string {
 
 // ── helpers ported from packages/client-vite/src/utils/recon_utils.ts ──
 
+// NOTE: 忠实用户输入——2.80 存成 float 后与 2.8 无法区分,但显示回编辑框时
+// 至少补到百分位(2.8 → "2.80"),只有千分位非零时才展示第 3 位小数(2.803 → "2.803")。
+// 禁止裸 String(ms / 1000)，那会把尾随 0 吃掉变成 "2.8"。
 export function formatTimeInput(seconds: number | undefined | null): string {
   if (seconds == null || isNaN(seconds) || seconds < 0) return '';
   const ms = Math.round(seconds * 1000);
+  const wholeSec = Math.floor(ms / 1000);
+  const remMs = ms % 1000;
+  const frac = remMs % 10 !== 0
+    ? String(remMs).padStart(3, '0')
+    : String(Math.floor(remMs / 10)).padStart(2, '0');
   if (ms >= 60000) {
-    const m = Math.floor(ms / 60000);
-    const s = (ms % 60000) / 1000;
-    const sStr = s < 10 ? '0' + String(s) : String(s);
-    return `${m}:${sStr}`;
+    const m = Math.floor(wholeSec / 60);
+    const s = wholeSec % 60;
+    return `${m}:${String(s).padStart(2, '0')}.${frac}`;
   }
-  return String(ms / 1000);
+  return `${wholeSec}.${frac}`;
 }
 
 export function parseTimeInput(raw: string): number {

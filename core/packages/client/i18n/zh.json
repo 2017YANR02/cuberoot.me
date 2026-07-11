@@ -213,6 +213,7 @@
     "gestureBracket": "()下滑/上滑",
     "notFound": "未找到",
     "col": {
+      "solver": "选手",
       "single": "单次",
       "round": "轮次",
       "average": "平均",

@@ -240,6 +240,48 @@ export interface TLEntry {
 }
 export const TIMELINE: TLEntry[] = [
   {
+    date: '2026-07-09',
+    tag: 'feature',
+    zh: {
+      title: '上线 /forum 社区论坛，长文板块并入',
+      body: '上线一个 speedsolving 风格的社区论坛 /forum，支持发帖、回复、板块归类和全文搜索；原来的长文 /article 全部迁成论坛主题帖，/article 退役。',
+      expand: '回复和帖子编辑用富文本编辑器，单帖支持约 5 万字长文；帖子按板块组织，可全文搜索。',
+    },
+    en: {
+      title: 'A community forum /forum launches; long-form posts fold in',
+      body: 'A speedsolving-style community forum /forum launched with threads, replies, boards, and full-text search; the former long-form /article posts were all migrated into forum threads, and /article was retired.',
+      expand: 'Replies and post edits use a rich-text editor supporting posts up to ~50k characters; threads are organised by board and full-text searchable.',
+    }
+},
+  {
+    date: '2026-07-04 ~ 07-06',
+    tag: 'feature',
+    zh: {
+      title: '上线内部账号系统与第三方登录',
+      body: '新增自有账号体系：邮箱 / 手机验证码登录、一个账号可绑定多种身份；同时接入 Google、Apple、微信、QQ、支付宝等第三方登录。',
+      expand: '登录框用 Apple 风格分段验证码输入；第三方登录用无状态签名 state，能扛浏览器上下文切换，未配置的登录方式自动隐藏。',
+    },
+    en: {
+      title: 'An internal account system with third-party sign-in',
+      body: 'A first-party account system landed: email / phone-code login with several identities linkable to one account, alongside Google, Apple, WeChat, QQ, and Alipay sign-in.',
+      expand: 'The login modal uses an Apple-style segmented code input; social login uses a stateless signed state that survives browser context switches, and unconfigured methods hide automatically.',
+    }
+},
+  {
+    date: '2026-07-04 ~ 07-10',
+    tag: 'feature',
+    zh: {
+      title: '/sim 加可开关的写实指法手模',
+      body: '虚拟魔方 /sim 新增一套 3x3 指法手模(设置开关)：GLTF 蒙皮骨骼手，按真实指法逐招转动、换握，随手指避让不穿模。',
+      expand: '手模从程序化网格换成 WebXR 蒙皮模型，带运行时烘焙皮肤、指甲床和分手握姿标记；指法规范覆盖钩、连拨、推等记号。',
+    },
+    en: {
+      title: '/sim gains a realistic fingertrick hand model (toggle)',
+      body: 'The virtual cube /sim added a 3x3 fingertrick hand model (settings toggle): a GLTF skinned-mesh pair of hands that turn and regrip move-by-move to real fingering, dodging without clipping the cube.',
+      expand: 'The hands moved from a procedural mesh to a WebXR skinned model with runtime-baked skin, nail beds, and per-hand grip marks; the fingering spec covers hooks, double flicks, and push notation.',
+    }
+},
+  {
     date: '2026-06-23 ~ 06-29',
     tag: 'feature',
     zh: {

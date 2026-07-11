@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { Flag } from '@/components/Flag';
@@ -23,29 +24,39 @@ export interface AvgGroupCase {
 }
 
 const MEMBERS_SHOWN = 12; // 大组(多盲数十条)只展示前 N 条,平均仍按全部算
+const CASES_INITIAL = 24; // 先展示前 N 个组,更多点「展开全部」
 
 export default function AvgExamplesPanel({
-  cases, comps, lang, isZh, selectedBin, loading, errorText, avgDenom, eventLabel,
+  cases, comps, lang, isZh, selectedBin, fullCount, loading, errorText, eventLabel,
 }: {
   cases: AvgGroupCase[] | null;
   comps: Record<string, [string, string]> | undefined;
   lang: 'zh' | 'en';
   isZh: boolean;
   selectedBin: number | null;
+  fullCount: number;           // 该 bin 全量组数(直方图口径),判定「完整 / 抽样」
   loading: boolean;
   errorText: string | null;
-  avgDenom: number;
   eventLabel: (e: string) => string;
 }) {
   const analyzerHref = (scr: string) =>
     `/${lang}/scramble/analyzer?${new URLSearchParams({ scramble: scr.trim().replace(/ /g, '_') })}`;
 
+  const [showAll, setShowAll] = useState(false);
+  useEffect(() => { setShowAll(false); }, [selectedBin]);
+  // 分片里该 bin 的组是否 = 全量(完整)。稀有头尾 bin 完整;常见中间 bin 是抽样(分片少于全量)。
+  const matched = cases?.length ?? 0;
+  const isComplete = matched >= fullCount;
+  const shownCases = cases ? (showAll ? cases : cases.slice(0, CASES_INITIAL)) : null;
+
   return (
     <div className="scramble-stats-panel scramble-stats-avg-cases-panel">
       <div className="scramble-stats-examples-header">
         <span className="scramble-stats-panel-title">
-          {selectedBin !== null
-            ? tr({ zh: `平均 ${(selectedBin / avgDenom).toFixed(1)} 步的组`, en: `Groups averaging ${(selectedBin / avgDenom).toFixed(1)}` })
+          {selectedBin !== null && !loading && !errorText && cases && cases.length > 0
+            ? (isComplete
+                ? tr({ zh: `共 ${matched} 组,全部列出`, en: `All ${matched} groups` })
+                : tr({ zh: `示例 ${matched} / ${fullCount} 组`, en: `${matched} of ${fullCount} groups` }))
             : tr({ zh: '示例组', en: 'Example groups' })}
         </span>
       </div>
@@ -60,12 +71,12 @@ export default function AvgExamplesPanel({
         <div className="scramble-stats-examples-hint">{tr({ zh: '加载失败', en: 'Load failed' })}: {errorText}</div>
       )}
       {selectedBin !== null && !loading && !errorText && cases && cases.length === 0 && (
-        <div className="scramble-stats-examples-hint">{tr({ zh: '此平均值抽样中无组', en: 'No sampled groups at this average' })}</div>
+        <div className="scramble-stats-examples-hint">{tr({ zh: '此平均值下暂无比赛组', en: 'No competition groups at this average' })}</div>
       )}
 
-      {selectedBin !== null && !loading && !errorText && cases && cases.length > 0 && (
+      {selectedBin !== null && !loading && !errorText && shownCases && shownCases.length > 0 && (
         <div className="scramble-stats-avg-cases">
-          {cases.map((c, ci) => {
+          {shownCases.map((c, ci) => {
             const comp = comps?.[c.comp];
             const iso2 = compFlagIso2(c.comp);
             const grpLabel = c.group ? tr({ zh: ` ${c.group}组`, en: ` ${c.group}` }) : '';
@@ -88,10 +99,6 @@ export default function AvgExamplesPanel({
                       <span>{roundGrp}</span>
                     </span>
                   </Link>
-                  <span className="scramble-stats-avg-case-mean">
-                    {tr({ zh: '平均', en: 'avg' })} {c.mean.toFixed(2)}
-                    <span className="scramble-stats-avg-case-cnt"> · {c.cnt}{tr({ zh: ' 条', en: '' })}</span>
-                  </span>
                 </div>
                 <ul className="scramble-stats-avg-members">
                   {shown.map((m, mi) => {
@@ -110,7 +117,6 @@ export default function AvgExamplesPanel({
                           {disp}
                         </Link>
                         <span className="scramble-stats-avg-mval" title={tr({ zh: '该成员步数', en: 'Member move count' })}>{m.val}</span>
-                        <span className="scramble-stats-avg-mnum">{m.extra ? `E${m.num}` : `#${m.num}`}</span>
                       </li>
                     );
                   })}
@@ -122,6 +128,12 @@ export default function AvgExamplesPanel({
             );
           })}
         </div>
+      )}
+
+      {selectedBin !== null && !loading && !errorText && cases && cases.length > CASES_INITIAL && !showAll && (
+        <button type="button" className="scramble-stats-avg-expand" onClick={() => setShowAll(true)}>
+          {tr({ zh: `展开全部 ${cases.length} 组`, en: `Show all ${cases.length} groups` })}
+        </button>
       )}
     </div>
   );

@@ -87,6 +87,21 @@
   background: color-mix(in srgb, var(--destructive) 30%, transparent);
   box-shadow: 0 0 0 1px var(--destructive);
 }
+/* "Currently playing" move — brand orange, follows playback position (step
+   forward/back, play, or clicking into the box). Geometry copied verbatim from
+   twizzle's TwistyAlgViewer.css (.wrapper.current-move): the negative margin
+   cancels the equal padding, so the background extends 0.1em past the glyph on
+   each side WITHOUT shifting the text out of alignment with the invisible
+   textarea characters underneath. Only the color differs (brand orange vs
+   twizzle's blue). */
+.sim-player-hl .current {
+  background: var(--accent);
+  margin-left: -0.1em;
+  margin-right: -0.1em;
+  padding-left: 0.1em;
+  padding-right: 0.1em;
+  border-radius: 0.1em;
+}
 
 .sim-player-row button {
   display: inline-flex;
@@ -163,20 +178,6 @@
   border-radius: 4px;
   padding: 2px 4px;
   margin-left: 6px;
-}
-
-.sim-player-speed {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  font-size: 13px;
-  color: var(--muted-foreground);
-  font-variant-numeric: tabular-nums;
-}
-.sim-player-speed input[type=range] {
-  width: 110px;
-  accent-color: var(--accent);
 }
 
 .sim-player-tools {
