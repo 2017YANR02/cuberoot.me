@@ -15,15 +15,26 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { adaptGltfHand } from '@/app/[lang]/sim/engine/hands/handModelGltf';
+import { adaptGltfHand, nailFrame } from '@/app/[lang]/sim/engine/hands/handModelGltf';
+import { buildManoHand, MANO_THUMB_ROLL, type ManoHandData } from '@/app/[lang]/sim/engine/hands/handModelMano';
 import type { HandModel, FingerName } from '@/app/[lang]/sim/engine/hands/handModel';
-import { homeRight, homeLeft, quatFromWorldRots, type HandPose, type FingerCurl } from '@/app/[lang]/sim/engine/hands/handPoses';
+import { homeRight, homeLeft, quatFromWorldRots, type HandPose, type FingerCurl, type HandModelKind } from '@/app/[lang]/sim/engine/hands/handPoses';
 
-const MODE = process.env.SOLVE ?? (process.env.PROBE ? 'PROBE' : '');
+const MODE = process.env.SOLVE ?? (process.env.PROBE ? 'PROBE' : process.env.MEASURE_NAILK ? 'NAILK' : '');
+/** MODEL=mano → 加载 scripts/convert-mano.py 的转换资产,解 MANO 版 home;
+ *  缺省 = 内置 generic-hand。MANO 版比 default 多一条硬规格:真 CMC 沉 D 层
+ *  (cmcY ≤ −30,含 1.5U 余量;generic 上 r11 已证不可行,MANO 是下一个上限)。 */
+const MODEL: HandModelKind = process.env.MODEL === 'mano' ? 'mano' : 'default';
 const FINGERS: FingerName[] = ['thumb', 'index', 'middle', 'ring', 'pinky'];
 const HALF = 96; // 魔方半宽(SIZE=64,棱长 192)
 
 async function loadModel(file: 'right.glb' | 'left.glb', side: 1 | -1): Promise<HandModel> {
+  if (MODEL === 'mano') {
+    const name = side === -1 ? 'right' : 'left';
+    const p = fileURLToPath(new URL(`../public/sim/hands/mano/${name}.mano.json`, import.meta.url));
+    const data = JSON.parse(await readFile(p, 'utf8')) as ManoHandData;
+    return buildManoHand(data, side, new THREE.MeshStandardMaterial(), `${name}.mano.json`);
+  }
   const p = fileURLToPath(new URL(`../public/sim/hands/${file}`, import.meta.url));
   const buf = await readFile(p);
   const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
@@ -342,6 +353,10 @@ function fourLoss(mx: Metrics): number {
   // 静置余量 ≥1.2U:待机呼吸 x ±1.76 / y ±0.88(home),贴 0 的裸间隙会被
   // 周期性吃穿(L 首解 pen −0.79 抓的)。
   let L = 1e4 * hinge(mx.pen) ** 2 + 5 * hinge(mx.pen + 1.2) ** 2;
+  // MANO 版新增硬规格:真 CMC(thumb-metacarpal 关节)沉 D 层(y ≤ −30,
+  // 规格界 −28.5 留 1.5U 余量)。CMC 位置只由手根位姿决定(关节自转不移位),
+  // 放 stage A/C 的全局参数才有梯度 —— stage B 冻结手根,放 thumbLoss 无用。
+  if (MODEL === 'mano') L += 60 * hinge(mx.thumb.cmcY + 30) ** 2;
   for (const name of FOUR) {
     const r = mx.fingers[name];
     // 倾角:硬墙提前到 7.8°(规格 8.6°,r10 终解曾全贴 8.6 上限 —— 四指水平
@@ -456,9 +471,42 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
   it('run', async () => {
     const isL = MODE === 'PROBE_L' || MODE === 'L';
     const p = await makeProbe(isL ? 'left.glb' : 'right.glb', isL ? 1 : -1);
-    const base = isL ? homeLeft() : homeRight();
+    if (MODE === 'NAILK') {
+      // 甲宽比例标定(换资产必重标,NAIL_HALFW_K 注释的方法):绑定姿态下
+      // 每指末节甲域(t∈[0.4,1.15])背侧(h≥0)顶点横向偏移 |u−uC| 的 p90
+      // ÷ 末节长 = K(背侧指尖满宽比)。打出来抄进 MANO_NAIL_HALFW_K。
+      for (const name of FINGERS) {
+        const [j1, j2, j3, j4] = chainBones[name];
+        const q1 = jointWorld(p, j1), q2 = jointWorld(p, j2), q3 = jointWorld(p, j3), q4 = jointWorld(p, j4);
+        const nf = nailFrame(q1, q2, q3, q4, name === 'thumb', p.m.side, MODEL === 'mano' ? MANO_THUMB_ROLL : undefined);
+        const verts = skinnedVerts(p, (n) => n === j3 || n === j4);
+        const us: number[] = [];
+        let uw = 0, uh = 0;
+        for (const v of verts) {
+          const rel = v.clone().sub(q3);
+          const t = rel.dot(nf.axis) / nf.len;
+          const h = rel.dot(nf.dorsal);
+          if (t < 0.4 || t > 1.15 || h < 0) continue;
+          uw += h; uh += h * rel.dot(nf.lat);
+        }
+        const uC = uw > 1e-6 ? uh / uw : 0;
+        for (const v of verts) {
+          const rel = v.clone().sub(q3);
+          const t = rel.dot(nf.axis) / nf.len;
+          const h = rel.dot(nf.dorsal);
+          if (t < 0.4 || t > 1.15 || h < 0) continue;
+          us.push(Math.abs(rel.dot(nf.lat) - uC));
+        }
+        us.sort((a, b) => a - b);
+        const p90 = us.length ? us[Math.min(us.length - 1, Math.floor(us.length * 0.9))] : NaN;
+        console.log(`NAILK ${name.padEnd(6)} len ${nf.len.toFixed(1)} p90 ${p90.toFixed(1)} K ${(p90 / nf.len).toFixed(3)} (n=${us.length})`);
+      }
+      expect(true).toBe(true);
+      return;
+    }
+    const base = isL ? homeLeft(MODEL) : homeRight(MODEL);
     applyPose(p.m, base);
-    console.log(`=== ${isL ? 'L' : 'R'} 当前姿态(handPoses 现值) ===`);
+    console.log(`=== ${isL ? 'L' : 'R'} ${MODEL} 当前姿态(handPoses 现值) ===`);
     console.log(fmt(measure(p)));
     PIVOT.x *= isL ? -1 : 1; // 接触质心枢轴随手侧镜像
     if (process.env.SEED && (MODE === 'R' || MODE === 'L')) {
@@ -466,7 +514,7 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       // 全新 A/B 随权重微调跳去别的解构)。
       const seed = JSON.parse(process.env.SEED) as Params;
       const boundsA2: [number, number][] = [
-        [-70, 70], [-50, 50], [-100, 45], [-55, 55],
+        [-90, 90], [-50, 50], [-100, 45], [-55, 55],
         ...FOUR.flatMap((): [number, number][] => [[-0.9, 0.9], [-0.9, 0.9], [-1.3, 1.3]]),
         [-1.7, 1.8], [-0.6, 1.2], [-0.3, 1.3], [-0.6, 2.0], [-3.3, 3.3], [-2.2, 2.2], [-1.2, 1.2],
       ];
@@ -497,13 +545,16 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
     if (MODE === 'R' || MODE === 'L') {
       // ---- stage A:roll 网格 × 四指恢复(pen 不含拇指,免得失效拇指姿污染) ----
       // L 手 base 已含 R 解烘焙的 roll(homeLeft 镜像),只解 0 档微调。
-      const ROLLS = MODE === 'L' ? [0] : [0, -12, -20, -28, -36, -44, -52];
+      // MANO R:CMC 沉 D 是硬约束,可行域未知 → roll 网格铺得更深更密。
+      const ROLLS = MODE === 'L' ? [0]
+        : MODEL === 'mano' ? [0, -12, -20, -28, -36, -44, -52, -60, -68, -76]
+        : [0, -12, -20, -28, -36, -44, -52];
       // L 手全程冻结手根(dy/dz 也冻):pos/quat 必须保持 homeLeft 严格镜像,
       // 不对称只由指参吸收(stage A 曾拿 dy+23 换倾角,拇指被拖垮且烘不进偏移表)。
       const gA = MODE === 'L' ? 0 : 4;
       const stepsA = [0, 0, gA, gA, ...FOUR.flatMap(() => [0.07, 0.07, 0.12]), 0, 0, 0, 0, 0, 0, 0];
       const boundsA: [number, number][] = [
-        [-70, 70], [-50, 50], [-100, 45], [-55, 55],
+        [-90, 90], [-50, 50], [-100, 45], [-55, 55],
         ...FOUR.flatMap((): [number, number][] => [[-0.9, 0.9], [-0.9, 0.9], [-1.3, 1.3]]),
         [-1.7, 1.8], [-0.6, 1.2], [-0.3, 1.3], [-0.6, 2.0], [-3.3, 3.3], [-2.2, 2.2], [-1.2, 1.2],
       ];

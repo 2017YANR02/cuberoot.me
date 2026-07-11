@@ -62,13 +62,14 @@ export const JOINT_CHAINS: Record<FingerName, { drive: [string, string, string];
 export function nailFrame(
   p1: THREE.Vector3, p2: THREE.Vector3, p3: THREE.Vector3, p4: THREE.Vector3,
   thumb: boolean, side: 1 | -1,
+  thumbRoll: number = THUMB_CURL_PLANE_ROLL,
 ): { axis: THREE.Vector3; dorsal: THREE.Vector3; lat: THREE.Vector3; len: number } {
   const axis = p4.clone().sub(p3);
   const len = axis.length();
   axis.normalize();
   const xf = p2.clone().sub(p1).normalize();
   const pad = new THREE.Vector3(0, 0, 1).addScaledVector(xf, -xf.z).normalize();
-  if (thumb) pad.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(xf, THUMB_CURL_PLANE_ROLL * side));
+  if (thumb) pad.applyQuaternion(new THREE.Quaternion().setFromAxisAngle(xf, thumbRoll * side));
   const dorsal = pad.clone().negate().addScaledVector(axis, pad.dot(axis)).normalize();
   const lat = new THREE.Vector3().crossVectors(axis, dorsal).normalize();
   return { axis, dorsal, lat, len };
@@ -258,9 +259,19 @@ export async function loadGltfHand(side: 1 | -1, skinMat: THREE.Material): Promi
   return adaptGltfHand(gltf.scene, side, skinMat, url);
 }
 
+/** 按资产覆盖的适配参数(MANO 等非 generic-hand 资产经 handModelMano 走同一
+ *  适配层,但拇指绑定滚转 / 甲宽比例是逐资产标定值,generic 缺省)。 */
+export interface AdaptGltfOpts {
+  /** 拇指弯曲平面 roll(rad,绑定解剖系;generic = THUMB_CURL_PLANE_ROLL)。 */
+  thumbRoll?: number;
+  /** 甲片半宽比例表覆盖(K = 背侧指尖满宽 ÷ 末节长,探针实测烘定值)。 */
+  nailHalfWK?: Partial<Record<FingerName, number>>;
+}
+
 /** 纯适配步(无 fetch):gltf.scene → HandModel。拆出来供测试用 fs 读 GLB +
  *  GLTFLoader.parse 直喂(Node 环境无相对 URL fetch)。 */
-export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.Material, label = "hand.glb"): HandModel {
+export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.Material, label = "hand.glb", opts?: AdaptGltfOpts): HandModel {
+  const thumbRoll = opts?.thumbRoll ?? THUMB_CURL_PLANE_ROLL;
   src.updateMatrixWorld(true);
 
   // ---- 收集骨骼与蒙皮网格(gltf.scene 世界系 = 资产系) ----
@@ -344,7 +355,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
     const yf = new THREE.Vector3().crossVectors(zf, xf);
     const rootBase = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(xf, yf, zf));
     if (name === "thumb") {
-      rootBase.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), THUMB_CURL_PLANE_ROLL * side));
+      rootBase.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), thumbRoll * side));
     }
     const invBase = rootBase.clone().invert();
 
@@ -434,7 +445,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
       const q2 = toHand(bindOf(chain.drive[1]));
       const q3 = toHand(bindOf(chain.drive[2]));
       const q4 = toHand(bindOf(chain.end));
-      const nf = nailFrame(q1, q2, q3, q4, name === "thumb", side);
+      const nf = nailFrame(q1, q2, q3, q4, name === "thumb", side, thumbRoll);
       // 候选皮肤顶点:末节/端点骨主导(高度场采样 + 骨权重抄袭都从这里取)
       const sub: number[] = [];
       const subPos: THREE.Vector3[] = [];
@@ -506,7 +517,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
       // ×0.82:r6 甲板抬到皮面之上后,可见白区 = 甲板全宽(旧貌「满宽建模、
       // 只露中段」不再成立 —— 白剪影外界是板外缘 rim,收崖起点不收剪影,踩过)。
       // 满宽白剪影 = 白顶针;0.82×满宽 ≈ 背视甲板占指背 ~3/4,解剖比。
-      const halfW = 0.82 * NAIL_HALFW_K[name] * nf.len;
+      const halfW = 0.82 * (opts?.nailHalfWK?.[name] ?? NAIL_HALFW_K[name]) * nf.len;
       // 横向曲率半径:r6 放平(1.25→1.7×脊高)—— 弯指姿态皮肤向单侧漂 ~1U,
       // 拱太弯把板边压进漂移后的皮里,单侧边缘被皮咬成波浪(踩过);板边抬高
       // ~1U 后两侧边缘都是自身解析 rim。视觉上更板状(真甲横曲率本就温和)。
