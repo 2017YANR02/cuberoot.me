@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 const tmp = join(import.meta.dirname, "..", ".tmp");
 function objAcc(path: string) {
@@ -22,7 +22,15 @@ function objAcc(path: string) {
   }
   return { per: out.join(" "), all: ((100 * gO) / Math.max(1, gT)).toFixed(1), tot: gT };
 }
-for (const [n, p] of [["vivid 基线", "obs-dump.json"], ["GT上界(同视频)", "obs-knngt.json"], ["pool(跨视频)", "obs-pool.json"]] as const) {
+for (const [n, p] of [
+  ["vivid 基线", "obs-dump.json"],
+  ["GT上界(同视频)", "obs-knngt.json"],
+  ["pool(跨视频)", "obs-pool.json"],
+  ["HD重采(零GT)", "obs-hd.json"],
+  ["HD重采+精修", "obs-hdr.json"],
+  ["4K重采+精修", "obs-4k.json"],
+] as const) {
+  if (!existsSync(join(tmp, p))) continue;
   const r = objAcc(p);
   console.log(`${n.padEnd(16)} obs逐格 ${r.all}% (${r.tot}格)  ${r.per}`);
 }

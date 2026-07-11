@@ -534,6 +534,9 @@ export interface FaceObservation {
   /** 可选 kNN 重分类颜色 (格心 RGB → kNN): 链检测/agree 用稳定的 colors 保覆盖,
    * 共识标签优先用 knnColors 保精度 (kNN 逐帧抖动会断链, 故分离两用途) */
   knnColors?: (ColorName | null)[];
+  /** 可选 HD 重采颜色 (原片高分辨率帧按 960 晶格坐标 ×SC 格心重采): 960 降采样
+   * 混色/糊格在 HD 像素下可分 (正⑮ 分辨率墙), 共识优先级 hd > knn > colors */
+  hdColors?: (ColorName | null)[];
   grid: FaceGrid;
   blobCount: number;
 }
