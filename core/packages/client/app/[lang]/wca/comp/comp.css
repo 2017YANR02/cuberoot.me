@@ -1689,13 +1689,16 @@ td.is-pr {
 }
 .comp-similar-flag { flex: none; }
 .comp-similar-name { flex: 1 1 auto; min-width: 0; font-weight: 500; }
+.comp-similar-place { flex: none; color: var(--muted-foreground); font-size: 0.85em; }
+/* 固定宽度 + 排最后一列:同一 flex 行内前面元素宽度随内容变化,只有靠右且宽度固定的
+   列才能在各行之间对齐(name 是唯一 flex-grow 项,吸收剩余空间,把 date 推到行尾)。 */
 .comp-similar-date {
   flex: none;
+  width: 8.4em;
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.comp-similar-place { flex: none; color: var(--muted-foreground); font-size: 0.85em; }
 @media (max-width: 480px) {
   .comp-similar-item { flex-wrap: wrap; gap: 0.25rem 0.55rem; }
   .comp-similar-name { flex-basis: 100%; }
