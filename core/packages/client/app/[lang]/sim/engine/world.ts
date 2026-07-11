@@ -16,6 +16,7 @@ import FtoCube from "./fto/FtoCube";
 import { APEX_UP_QUAT } from "./pyra/pyraGeometry";
 import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS, MEGA_FACE_HINTS, FTO_FACE_HINTS } from "./face_hints";
 import HandsRig, { type HandsCubeLike } from "./hands/handsRig";
+import { loadSmplxFullBody } from "./hands/handModelMano";
 
 /** Puzzle slot — NxN cube (order >= 1), SQ1, Ivy, Dino, Redi, Rex (corner-turning),
  *  Heli (edge-turning Helicopter Cube), Skewb (deep-cut corner-turning), or Pyraminx
@@ -63,6 +64,13 @@ export default class World {
   public hands: HandsRig | null = null;
   /** 设置里的「手指」意愿;是否实际显示还要 && puzzleKind === 3(见 syncHands)。 */
   private handsWanted = false;
+
+  /** 调试:「SMPL-X 全身」查看 —— 开 = 藏拼图与手,只显示原版 SMPL-X neutral
+   *  T-pose 全身(米制原样零变形,等比缩放满框)。手/前臂比例的上游解剖真值
+   *  参照。资产 gitignored 逐机转换,缺失时开关无效果(console.info 一次)。 */
+  private smplxBody: THREE.Group | null = null;
+  private smplxBodyWanted = false;
+  private smplxBodyLoading = false;
 
   public controller: Controller;
 
@@ -299,6 +307,8 @@ export default class World {
     this.puzzleKind = kind;
     this.scene.add(this.cube);
     this.syncHands();
+    this.applySmplxBody(); // 全身查看开着时新 cube 实例也要藏
+
     // Camera framing is a pure function of puzzleKind (per-puzzle refHalf in resize()),
     // so it MUST re-frame the moment the kind changes — otherwise a puzzle switched in
     // after init keeps the previous puzzle's frame (e.g. FTO, which needs a wider
@@ -373,6 +383,55 @@ export default class World {
       this.hands.attachCube(active ? (this.cube as unknown as HandsCubeLike) : null);
       this.dirty = true;
     }
+  }
+
+  /** 调试开关(SimSettings.showSmplxBody 驱动):SMPL-X 全身查看。首开惰性
+   *  fetch + 建 mesh(654KB,一次);资产缺失静默降级(开关无效果)。 */
+  setSmplxBodyVisible(want: boolean): void {
+    if (this.smplxBodyWanted === want) return;
+    this.smplxBodyWanted = want;
+    if (want && this.smplxBody == null && !this.smplxBodyLoading) {
+      this.smplxBodyLoading = true;
+      void loadSmplxFullBody()
+        .then(({ geometry, heightM }) => {
+          // 平色近似手部肤色(比例核对用,不必烘贴图);光照同场景现有灯。
+          const mat = new THREE.MeshStandardMaterial({ color: 0xd9af94, roughness: 0.8, metalness: 0 });
+          const mesh = new THREE.Mesh(geometry, mat);
+          mesh.raycast = () => { /* 不可拾取 */ };
+          // 米 → 世界:身高 5.4×SIZE ≈ 满框(refHalf=SIZE*3,留 ~10% 边距);
+          // bbox 中心归零(资产脚底不在 y=0)。
+          const s = (SIZE * 5.4) / heightM;
+          mesh.scale.setScalar(s);
+          geometry.computeBoundingBox();
+          const c = geometry.boundingBox!.getCenter(new THREE.Vector3()).multiplyScalar(s);
+          mesh.position.set(-c.x, -c.y, -c.z);
+          const g = new THREE.Group();
+          g.add(mesh);
+          this.smplxBody = g;
+          this.scene.add(g);
+          this.applySmplxBody();
+        })
+        .catch((e: unknown) => {
+          this.smplxBodyLoading = false;
+          console.info("[sim] SMPL-X 全身资产不可用(scripts/convert-mano.py 转换后可用):", e);
+        });
+    }
+    this.applySmplxBody();
+  }
+
+  /** 全身查看生效中(开关开 && 资产已加载)。渲染循环用它压掉方位字母。 */
+  get smplxBodyOn(): boolean {
+    return this.smplxBodyWanted && this.smplxBody != null;
+  }
+
+  /** 全身查看态落地:开 = 只看人(拼图 + 手 rig 隐藏)。setPuzzle 换 cube
+   *  实例后也要补一次(visible 挂在实例上)。 */
+  private applySmplxBody(): void {
+    const on = this.smplxBodyOn;
+    if (this.smplxBody) this.smplxBody.visible = on;
+    if (this.cube) this.cube.visible = !on;
+    if (this.hands) this.hands.visible = !on;
+    this.dirty = true;
   }
 
   scale = 1;

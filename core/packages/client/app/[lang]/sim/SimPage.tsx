@@ -1092,7 +1092,8 @@ export default function SimPage() {
       const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints, world.pyraHints, world.megaHints, world.ftoHints];
       // 方位字母完全由设置面板「字母」开关控制:开=该拼图的方位标签常驻,关=完全不显示
       // (拖视角 / 拖层时也不再浮现 —— 这个开关是字母的唯一开关,用户明确要求)。
-      const showLabels = settingsRef.current.faceLabels === true;
+      // SMPL-X 全身查看时字母无意义(拼图已藏),一并压掉。
+      const showLabels = settingsRef.current.faceLabels === true && !world.smplxBodyOn;
       if (showLabels) activeHints.show(); else activeHints.hide();
       for (const h of allHints) if (h !== activeHints) h.hide();
       let hintsAnimating = false;

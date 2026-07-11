@@ -17,9 +17,8 @@
  * 图集布局无要求、只要求单射)与 generic 同路径烘焙,MANO 同享皮肤贴图。
  */
 import * as THREE from "three";
-import { SIZE } from "../define";
 import { adaptGltfHand } from "./handModelGltf";
-import { HAND_SCALE, type FingerName, type HandModel } from "./handModel";
+import { type FingerName, type HandModel } from "./handModel";
 
 /** scripts/convert-mano.py 的输出格式(@2:盒式投影无重叠 UV 图集 + 接缝顶点
  *  复制 + 显式平滑法线 —— 供 bakeHandTextures 走与 generic 相同的烘焙路径)。 */
@@ -38,6 +37,8 @@ export interface ManoHandData {
    *  MANO 关节 j 局部旋转 (R−I)_ab)。 */
   posedirs: string;
   posedirsScale: string; // b64 float32 (135,) 逐系数反量化尺度
+  /** @4:融合前臂的绑定臂伸向(腕→肘,资产空间单位向量;左手已镜像)。 */
+  forearmDir: [number, number, number];
 }
 
 /** 拇指弯曲平面 roll(rad,MANO 绑定解剖系)。generic-hand 是 2.074;MANO
@@ -67,7 +68,7 @@ function b64ToArrayBuffer(s: string): ArrayBuffer {
 
 /** 纯构建步(无 fetch):转换 JSON → HandModel。探针/测试用 fs 读文件直喂。 */
 export function buildManoHand(data: ManoHandData, side: 1 | -1, skinMat: THREE.Material, label = "mano"): HandModel {
-  if (data.format !== "cuberoot-mano-hand@3") {
+  if (data.format !== "cuberoot-mano-hand@4") {
     throw new Error(`mano hand ${label}: unknown format ${data.format} — re-run scripts/convert-mano.py`);
   }
   if ((side === -1 && data.hand !== "right") || (side === 1 && data.hand !== "left")) {
@@ -116,6 +117,7 @@ export function buildManoHand(data: ManoHandData, side: 1 | -1, skinMat: THREE.M
   const model = adaptGltfHand(src, side, skinMat, label, {
     thumbRoll: MANO_THUMB_ROLL,
     nailHalfWK: MANO_NAIL_HALFW_K,
+    forearmDirAsset: data.forearmDir,
   });
   model.poseCorrective = makePoseCorrective(model, geo, data, n);
   return model;
@@ -198,212 +200,43 @@ function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: M
  *  未部署/未转换时 fetch 404 → 上抛,由 rig 侧回退 generic-hand 并告警。 */
 export async function loadManoHand(side: 1 | -1, skinMat: THREE.Material): Promise<HandModel> {
   const name = side === -1 ? "right" : "left";
-  const url = `/sim/hands/mano/${name}.mano.json?v=3`;
+  const url = `/sim/hands/mano/${name}.mano.json?v=4`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`mano hand asset missing (${res.status} ${url}) — run scripts/convert-mano.py`);
   const data = (await res.json()) as ManoHandData;
   return buildManoHand(data, side, skinMat, `${name}.mano.json`);
 }
 
-// ---------------------------------------------------------------- SMPL-X 前臂
+// ---------------------------------------------------------------- SMPL-X 全身(调试查看)
 
-/** scripts/convert-mano.py 附带产出的 SMPL-X 真前臂切段(右臂;左臂运行时
- *  y 镜像 —— 尺骨头在小指侧,真前臂不对称,禁两臂共享同一几何)。刚体件,
- *  无蒙皮:rig 把整个 group 当一节前臂摆位(契约同 handModel.buildForearm)。 */
-export interface SmplxForearmData {
+/** convert-mano.py 附带导出的 SMPL-X neutral 全身(米制 T-pose 原样,零变形;
+ *  y-up 面朝 +z)。调试开关「SMPL-X 全身」专用 —— 手/前臂比例的上游真值参照。 */
+interface SmplxFullBodyData {
   format: string;
-  hand: "right";
   counts: { verts: number; faces: number };
-  position: string; // b64 float32 (n,3) 米制,前臂件局部系(origin=腕,+x=肘→腕,+z=掌法向)
-  normal: string;   // b64 float32 (n,3) 接缝复制前的平滑法线
+  position: string; // b64 float32 (n,3) 米
+  normal: string;   // b64 float32 (n,3)
   index: string;    // b64 uint32 (f,3)
-  uv: string;       // b64 float32 (n,2) 盒式投影无重叠图集(bakeLimbTextures 要求单射)
-  wristHalfY: number; // 腕环 y 半宽(米)—— 运行时按程序化前臂同款 34.5U 定缩放
+  heightM: number;  // 全身高(米)—— world 侧按它定等比缩放
 }
 
-const U = (SIZE / 64) * HAND_SCALE; // 与 handModel.ts 同基准
-/** 程序化前臂腕端 y 半宽(buildForearm 34.5U)= 手模残端标定宽,真前臂对齐它。 */
-const FOREARM_WRIST_HALF_Y_U = 34.5;
-
-const noRaycast = (): void => { /* 手不可拾取 — 拖拽/点击穿透到魔方 */ };
-
-/** 手模腕接驳信息(rig 侧量当前手模,喂给 buildSmplxForearm):
- *  scale = 手资产的米→rig 等比系数(HandModel.unitScale)—— **前臂缩放的唯一
- *  来源**:MANO 手与 SMPL-X 前臂同为米制真人体型,同一系数下粗细比例 = 上游
- *  解剖真值(此前前臂按「腕环塞进手腕」min 比例自定缩放,MANO 真腕比 generic
- *  假设细 → 整条臂被缩细,2026-07-11 用户抓「手臂比手细」的根因,禁回退)。
- *  cy/cz = 腕环心偏移、profile = 腕环径向轮廓 r(θ)(θ 绕 +x 轴,自 −π 起 32
- *  桶,rig 单位)—— 只用于接缝焊接(逐 θ morph 缝合两网格毫米级残差),
- *  不改比例。 */
-export interface ForearmFit {
-  scale: number;
-  cy: number;
-  cz: number;
-  profile?: number[];
-}
-
-/** 环形桶洞填补:0 = 无样本桶,用两侧最近非空桶按角距线性插值(环绕)。 */
-export function fillCircularBins(bins: number[]): number[] {
-  const n = bins.length;
-  if (!bins.some((b) => b > 0)) return bins;
-  const out = bins.slice();
-  for (let i = 0; i < n; i++) {
-    if (out[i] > 0) continue;
-    let lo = i, hi = i;
-    for (let k = 1; k < n; k++) { const j = (i - k + n) % n; if (bins[j] > 0) { lo = j; break; } }
-    for (let k = 1; k < n; k++) { const j = (i + k) % n; if (bins[j] > 0) { hi = j; break; } }
-    const dLo = (i - lo + n) % n, dHi = (hi - i + n) % n;
-    out[i] = (bins[lo] * dHi + bins[hi] * dLo) / Math.max(1, dLo + dHi);
-  }
-  return out;
-}
-
-/** SMPL-X 真前臂件:契约同 buildForearm({group, meshes[0]=臂肤 meshes[1]=袖口},
- *  origin=贴腕,几何伸向 −x 肘端)。几何解码后缩放到 rig 单位(烘焙噪声频率按
- *  U 标定,必须先缩放再烘);**缩放 = fit.scale(手资产同一米→rig 系数,粗细
- *  比例即 SMPL-X 解剖真值)**,腕环 fit 只负责对中 + 接缝焊接;缺省回退 34.5U
- *  腕宽标定;袖口按真臂在遮盖区的实测截面贴身生成。 */
-export function buildSmplxForearm(
-  data: SmplxForearmData,
-  side: 1 | -1,
-  skinMat: THREE.Material,
-  cuffMat: THREE.Material,
-  fit?: ForearmFit,
-): { group: THREE.Group; meshes: THREE.Mesh[] } {
-  if (data.format !== "cuberoot-smplx-forearm@1") {
-    throw new Error(`smplx forearm: unknown format ${data.format} — re-run scripts/convert-mano.py`);
+/** 全身资产加载 + 组装几何(米制;缩放由调用方决定)。缺失 404 → 上抛。 */
+export async function loadSmplxFullBody(): Promise<{ geometry: THREE.BufferGeometry; heightM: number }> {
+  const url = "/sim/hands/smplx/fullbody.smplx.json?v=1";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`smplx fullbody asset missing (${res.status} ${url}) — run scripts/convert-mano.py`);
+  const data = (await res.json()) as SmplxFullBodyData;
+  if (data.format !== "cuberoot-smplx-fullbody@1") {
+    throw new Error(`smplx fullbody: unknown format ${data.format} — re-run scripts/convert-mano.py`);
   }
   const n = data.counts.verts;
   const pos = new Float32Array(b64ToArrayBuffer(data.position));
   const nrm = new Float32Array(b64ToArrayBuffer(data.normal));
   const idx = new Uint32Array(b64ToArrayBuffer(data.index));
-  const uv = new Float32Array(b64ToArrayBuffer(data.uv));
-  if (pos.length !== n * 3 || nrm.length !== n * 3 || uv.length !== n * 2) {
-    throw new Error("smplx forearm: buffer size mismatch");
-  }
-  if (side === 1) {
-    // 左臂 = y 镜像(rig 前臂系 yF=z×dir,左右手世界镜像下局部 y 反号)+ 翻绕向
-    for (let i = 1; i < pos.length; i += 3) {
-      pos[i] *= -1;
-      nrm[i] *= -1;
-    }
-    for (let t = 0; t < idx.length; t += 3) {
-      const tmp = idx[t + 1];
-      idx[t + 1] = idx[t + 2];
-      idx[t + 2] = tmp;
-    }
-  }
-  // 腕环实测(资产米制,镜像后):定缩放与对中的基准截面 + 径向轮廓(焊接用)
-  let ayMin = Infinity, ayMax = -Infinity, azMin = Infinity, azMax = -Infinity;
-  const NB = 32;
-  const aBins = new Array<number>(NB).fill(0);
-  let aCy = 0, aCz = 0;
-  for (let pass = 0; pass < 2; pass++) {
-    for (let i = 0; i < pos.length; i += 3) {
-      if (Math.abs(pos[i]) > 0.005) continue;
-      if (pass === 0) {
-        ayMin = Math.min(ayMin, pos[i + 1]); ayMax = Math.max(ayMax, pos[i + 1]);
-        azMin = Math.min(azMin, pos[i + 2]); azMax = Math.max(azMax, pos[i + 2]);
-      } else {
-        const th = Math.atan2(pos[i + 2] - aCz, pos[i + 1] - aCy);
-        const b = ((Math.floor(((th + Math.PI) / (2 * Math.PI)) * NB) % NB) + NB) % NB;
-        aBins[b] = Math.max(aBins[b], Math.hypot(pos[i + 1] - aCy, pos[i + 2] - aCz));
-      }
-    }
-    if (pass === 0) { aCy = (ayMax + ayMin) / 2; aCz = (azMax + azMin) / 2; }
-  }
-  const aProf = fillCircularBins(aBins);
-  // 缩放 = 手资产同一米→rig 系数(比例根治);无 fit 回退旧 34.5U 腕宽标定。
-  const s = fit ? fit.scale : (FOREARM_WRIST_HALF_Y_U * U) / data.wristHalfY;
-  const dy = fit ? fit.cy - aCy * s : 0;
-  const dz = fit ? fit.cz - aCz * s : 0;
-  // 焊接(2026-07-11 用户抓接缝台阶,tuck 藏皮下不是光滑):腕端 BLEND 段内
-  // 逐 θ 求「手腕实测轮廓 / 前臂自身环轮廓」比例因子,按 smoothstep 权重径向
-  // 缩放 —— 比例式(非吸附)保断口封盖等内部顶点;x=0 处截面与手皮逐点重合
-  // (×0.99 贴皮下一线,防共面闪烁),探进段(x>0)在重合基础上再渐收。
-  const sampleProf = (prof: number[], th: number): number => {
-    const tt = (((th + Math.PI) / (2 * Math.PI)) * NB + NB) % NB;
-    const i0 = Math.floor(tt) % NB, i1 = (i0 + 1) % NB;
-    return prof[i0] * (1 - (tt - Math.floor(tt))) + prof[i1] * (tt - Math.floor(tt));
-  };
-  const BLEND = 18 * U;
-  const weld = fit?.profile && fit.profile.length === NB && fit.profile.some((r) => r > 0);
-  for (let i = 0; i < pos.length; i += 3) {
-    const x = pos[i] * s;
-    let y = pos[i + 1] * s + dy;
-    let z = pos[i + 2] * s + dz;
-    if (fit && x > -BLEND) {
-      const dyv = y - fit.cy, dzv = z - fit.cz;
-      const r = Math.hypot(dyv, dzv);
-      if (r > 1e-6) {
-        const th = Math.atan2(dzv, dyv);
-        // 因子 = 目标(手腕轮廓)÷ 前臂自身腕环轮廓(同 θ,已缩放)
-        const fac = weld ? (sampleProf(fit.profile!, th) * 0.99) / Math.max(1e-6, sampleProf(aProf, th) * s) : 1;
-        const t = Math.min(1, Math.max(0, 1 + x / BLEND));
-        const w = x <= 0 ? t * t * (3 - 2 * t) : 1;
-        const shrink = x > 0 ? Math.max(0.72, 1 - 0.012 * (x / U)) : 1;
-        const k = (1 - w + w * fac) * shrink;
-        y = fit.cy + dyv * k;
-        z = fit.cz + dzv * k;
-      }
-    }
-    pos[i] = x; pos[i + 1] = y; pos[i + 2] = z;
-  }
-
+  if (pos.length !== n * 3 || nrm.length !== n * 3) throw new Error("smplx fullbody: buffer size mismatch");
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
   geo.setAttribute("normal", new THREE.BufferAttribute(nrm, 3));
-  geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
-  // skinMat vertexColors:true — 全白(基础肤色走烘焙 albedo,不再叠顶点色调)
-  geo.setAttribute("color", new THREE.BufferAttribute(new Float32Array(n * 3).fill(1), 3));
   geo.setIndex(new THREE.BufferAttribute(idx, 1));
-
-  const group = new THREE.Group();
-  const meshes: THREE.Mesh[] = [];
-  const arm = new THREE.Mesh(geo, skinMat);
-  arm.name = `smplx-forearm-${side === -1 ? "right" : "left"}`;
-  arm.raycast = noRaycast;
-  group.add(arm);
-  meshes.push(arm);
-
-  // 袖口贴真臂截面:锚在实际肘端断口(xMin,fit 缩放后臂长会变,禁写死),
-  // 长 64U 盖住断口 + 露出腕侧一段裸臂;两端 band 实测 y/z 包络 +2U 呼吸余量,
-  // 椭圆度取实测 z/y 比。
-  let xMin = Infinity;
-  for (let i = 0; i < pos.length; i += 3) xMin = Math.min(xMin, pos[i]);
-  const cuffX0 = xMin - 2 * U;            // 袖筒肘端(断口整段埋进袖内)
-  const cuffLen = 64 * U;
-  const measure = (x0: number, x1: number): { hy: number; hz: number; cy: number; cz: number } => {
-    let yMin = Infinity, yMax = -Infinity, zMin = Infinity, zMax = -Infinity;
-    for (let i = 0; i < pos.length; i += 3) {
-      if (pos[i] < x0 || pos[i] > x1) continue;
-      yMin = Math.min(yMin, pos[i + 1]); yMax = Math.max(yMax, pos[i + 1]);
-      zMin = Math.min(zMin, pos[i + 2]); zMax = Math.max(zMax, pos[i + 2]);
-    }
-    if (!Number.isFinite(yMin)) return { hy: 36 * U, hz: 25 * U, cy: 0, cz: 0 };
-    return { hy: (yMax - yMin) / 2, hz: (zMax - zMin) / 2, cy: (yMax + yMin) / 2, cz: (zMax + zMin) / 2 };
-  };
-  const wristSide = measure(cuffX0 + cuffLen - 12 * U, cuffX0 + cuffLen + 4 * U);
-  const elbowSide = measure(xMin, xMin + 20 * U);
-  const rTop = wristSide.hy + 2 * U;
-  const rBot = elbowSide.hy + 2 * U;
-  const zRatio = (Math.max(wristSide.hz, elbowSide.hz) + 2 * U) / Math.max(rTop, rBot);
-  const cuffGeo = new THREE.CylinderGeometry(rTop, rBot, cuffLen, 22)
-    .rotateZ(-Math.PI / 2)
-    .scale(1, 1, zRatio);
-  const cuff = new THREE.Mesh(cuffGeo, cuffMat);
-  cuff.position.set(cuffX0 + cuffLen / 2, (wristSide.cy + elbowSide.cy) / 2, (wristSide.cz + elbowSide.cz) / 2);
-  cuff.raycast = noRaycast;
-  group.add(cuff);
-  meshes.push(cuff);
-  return { group, meshes };
-}
-
-/** SMPL-X 前臂资产加载(单文件右臂,两侧共用同一份数据各自 build)。缺失
- *  (未转换/未部署)fetch 404 → 上抛,rig 侧回退程序化前臂,不告警刷屏。 */
-export async function loadSmplxForearmData(): Promise<SmplxForearmData> {
-  const url = "/sim/hands/smplx/forearm.smplx.json?v=1";
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`smplx forearm asset missing (${res.status} ${url}) — run scripts/convert-mano.py`);
-  return (await res.json()) as SmplxForearmData;
+  return { geometry: geo, heightM: data.heightM };
 }
