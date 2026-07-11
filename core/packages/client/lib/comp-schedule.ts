@@ -142,19 +142,15 @@ export function roundTypeName(id: string, isZh: boolean): string {
   return ROUND_TYPE_NAME[id]?.[isZh ? 'zh' : 'en'] ?? id;
 }
 
-// 紧凑代号（来源行 / 标签用）：EN R1/R2/R3/Fi/Q/BF；ZH 去掉「组合制」前缀,与 EN 一样把
-// 组合制/非组合制并到同一短名(组合制初赛=初赛 等)。完整名仍走 roundTypeName(组合制保留)。
-const ROUND_TYPE_SHORT_EN: Record<string, string> = {
+// 紧凑代号（来源行 / 标签用）：R1/R2/R3/Fi/Q/BF——与 wca-round-meta.ts 的 R1/R2/R3/Fi 记号
+// 同一套(见 /wca/persons 页),中英文一律用此记号,不再译成中文词。组合制/非组合制并到
+// 同一短名(组合制初赛=初赛 等)。完整名仍走 roundTypeName(组合制保留)。
+const ROUND_TYPE_SHORT: Record<string, string> = {
   '0': 'Q', '1': 'R1', '2': 'R2', '3': 'R3',
   'b': 'BF', 'c': 'Fi', 'd': 'R1', 'e': 'R2', 'f': 'Fi', 'g': 'R3', 'h': 'Q',
 };
-const ROUND_TYPE_SHORT_ZH: Record<string, string> = {
-  '0': '资格赛', '1': '初赛', '2': '复赛', '3': '半决赛',
-  'b': 'B组决赛', 'c': '决赛', 'd': '初赛', 'e': '复赛', 'f': '决赛', 'g': '半决赛', 'h': '资格赛',
-};
 export function roundTypeShort(id: string, isZh: boolean): string {
-  if (isZh) return ROUND_TYPE_SHORT_ZH[id] ?? ROUND_TYPE_NAME[id]?.zh ?? id;
-  return ROUND_TYPE_SHORT_EN[id] ?? ROUND_TYPE_NAME[id]?.en ?? id;
+  return ROUND_TYPE_SHORT[id] ?? (isZh ? ROUND_TYPE_NAME[id]?.zh : ROUND_TYPE_NAME[id]?.en) ?? id;
 }
 
 // 来源行: 轮次 + 组别 + 打乱序号（近期打乱 / scramble 示例卡片共用），如「初赛E组#4」。

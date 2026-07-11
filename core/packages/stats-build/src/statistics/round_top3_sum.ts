@@ -114,14 +114,14 @@ export class RoundTop3Sum extends Statistic {
           panels: [rankingPanel(allRank), historyPanel(allHist)],
         },
         {
-          id: `${metric.id}-finals`, labelEn: 'Finals only', labelZh: '只看决赛',
+          id: `${metric.id}-finals`, labelEn: 'Podiums only', labelZh: '仅领奖台',
           panels: [rankingPanel(finRank), historyPanel(finHist)],
         },
       ];
 
       metricPanels.push({
         id: metric.id, labelEn: metric.labelEn, labelZh: metric.labelZh,
-        sourceBool: { labelEn: 'Finals only', labelZh: '只看决赛' },
+        sourceBool: { labelEn: 'Podiums only', labelZh: '仅领奖台' },
         sourcePanels,
       });
     }
