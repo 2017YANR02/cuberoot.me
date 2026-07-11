@@ -37,8 +37,16 @@ What it does (bind pose = MANO zero pose, betas = 0):
   5. Cap the open wrist ring (fan to centroid, skinned to wrist) so the
      mesh is closed; then one Loop subdivision step (778 -> ~3.1k verts,
      silhouette-smooth; skin weights averaged + renormalized to top-4).
-  6. Planar UVs from the two largest template axes (only used to tile the
-     procedural skin-noise bump; MANO has no authored UV layout).
+  6. Injective UV atlas via box projection (MANO has no authored UV layout):
+     faces bucketed by dominant normal axis (6 directions), split into
+     edge-connected components, each component projected onto its axis plane
+     and shelf-packed with gutters; seam vertices are duplicated per
+     component. This is what lets bakeHandTextures (UV-space rasterization,
+     3D-domain feature evaluation) run on MANO — an overlapping projection
+     would blend palm/dorsal features into the same texels.
+  7. Smooth area-weighted vertex normals exported explicitly (computed
+     BEFORE seam duplication — computeVertexNormals on the duplicated mesh
+     would produce hard shading seams along every UV island border).
 """
 from __future__ import annotations
 
@@ -94,7 +102,7 @@ def _to_np(x) -> np.ndarray:
 def load_pkl(raw: bytes) -> dict:
     d = _Unpickler(io.BytesIO(raw), encoding="latin1").load()
     out = {}
-    for k in ("v_template", "f", "weights", "J_regressor", "kintree_table"):
+    for k in ("v_template", "f", "weights", "J_regressor", "kintree_table", "posedirs"):
         if k not in d:
             raise KeyError(f"MANO pkl missing '{k}' (got keys {sorted(d.keys())})")
         out[k] = _to_np(d[k])
@@ -220,12 +228,151 @@ def b64(arr: np.ndarray, dtype) -> str:
     return base64.b64encode(np.ascontiguousarray(arr, dtype=dtype).tobytes()).decode("ascii")
 
 
+def box_unwrap(v: np.ndarray, f: np.ndarray):
+    """Injective UV atlas: dominant-axis bucket (6) -> edge-connected components
+    -> per-component planar projection -> shelf pack. Returns (uv, vmap, f2)
+    where vmap[i] = source vertex of output vertex i (seam verts duplicated)
+    and f2 indexes the duplicated vertex list."""
+    e1 = v[f[:, 1]] - v[f[:, 0]]
+    e2 = v[f[:, 2]] - v[f[:, 0]]
+    fn = np.cross(e1, e2)
+    fnn = fn / np.maximum(np.linalg.norm(fn, axis=1, keepdims=True), 1e-12)
+    ax = np.argmax(np.abs(fnn), axis=1)
+    island = ax * 2 + (fnn[np.arange(len(f)), ax] < 0)
+
+    # ---- majority smoothing: raw per-face argmax zigzags on curved surfaces
+    # (hundreds of sliver components -> pad/shelf waste ate 80% of the atlas).
+    # Reassign each face to its edge-neighbors' majority island, gated on the
+    # target axis still having slope >= 0.3 (stretch <= 3.3x, fine for noise
+    # features evaluated in 3D). 3 rounds converge.
+    nbr_faces: list[list[int]] = [[] for _ in range(len(f))]
+    edge_owner: dict[tuple[int, int], int] = {}
+    for fi, tri in enumerate(f):
+        for i in range(3):
+            a, b = tri[i], tri[(i + 1) % 3]
+            key = (min(a, b), max(a, b))
+            if key in edge_owner:
+                fj = edge_owner[key]
+                nbr_faces[fi].append(fj)
+                nbr_faces[fj].append(fi)
+            else:
+                edge_owner[key] = fi
+    def can_join(fi: int, isl: int) -> bool:
+        c = float(fnn[fi, isl // 2])
+        if abs(c) < 0.3:
+            return False  # 目标轴上过陡,拉伸 >3.3x
+        sign_needed = -1.0 if isl % 2 else 1.0
+        # 号向一致,或近切向(側壁锯齿面,折叠风险低)—— 反向大分量并入会折叠重叠
+        return c * sign_needed > 0 or abs(c) < 0.35
+
+    for _ in range(3):
+        nxt = island.copy()
+        for fi in range(len(f)):
+            votes: dict[int, int] = {int(island[fi]): 1}
+            for fj in nbr_faces[fi]:
+                votes[int(island[fj])] = votes.get(int(island[fj]), 0) + 1
+            best = max(votes, key=lambda k: votes[k])
+            if best != island[fi] and can_join(fi, best):
+                nxt[fi] = best
+        island = nxt
+
+    # union-find faces sharing an edge within the same island
+    parent = list(range(len(f)))
+
+    def find(a: int) -> int:
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    edge_face: dict[tuple[int, int], int] = {}
+    for fi, tri in enumerate(f):
+        for i in range(3):
+            a, b = tri[i], tri[(i + 1) % 3]
+            key = (min(a, b), max(a, b))
+            if key in edge_face:
+                fj = edge_face[key]
+                if island[fi] == island[fj]:
+                    ra, rb = find(fi), find(fj)
+                    if ra != rb:
+                        parent[ra] = rb
+            else:
+                edge_face[key] = fi
+    comp_of = np.array([find(i) for i in range(len(f))])
+    # merge components of the same root only if same island (roots already respect it)
+    comps = {}
+    for fi, root in enumerate(comp_of):
+        comps.setdefault(root, []).append(fi)
+
+    uv_axes_of = {0: (1, 2), 1: (0, 2), 2: (0, 1)}
+    span = float((v.max(axis=0) - v.min(axis=0)).max())
+    pad = 0.008 * span
+    boxes = []  # (root, faces, uv2d per corner, w, h)
+    for root, faces in comps.items():
+        a = ax[faces[0]]
+        ua, va = uv_axes_of[a]
+        pts = v[f[faces]][:, :, [ua, va]]  # (nf,3,2)
+        lo = pts.reshape(-1, 2).min(axis=0)
+        pts = pts - lo + pad
+        hi = pts.reshape(-1, 2).max(axis=0) + pad
+        boxes.append([root, faces, pts, hi[0], hi[1]])
+    # shelf pack, tallest first
+    boxes.sort(key=lambda b: -b[4])
+    strip_w = 1.15 * float(np.sqrt(sum(b[3] * b[4] for b in boxes)))
+    x = y = row_h = 0.0
+    offsets = {}
+    for b in boxes:
+        if x + b[3] > strip_w and x > 0:
+            y += row_h
+            x = row_h = 0.0
+        offsets[b[0]] = (x, y)
+        x += b[3]
+        row_h = max(row_h, b[4])
+    total_h = y + row_h
+    used_w = max(offsets[b[0]][0] + b[3] for b in boxes)
+    # 非均匀拉伸填满 [0,1]²(特征在 3D 域求值,纹素长宽比失真无害;
+    # 均匀缩放曾留 ~40% 空带,纹素密度白折半)
+    sx = 1.0 / used_w
+    sy = 1.0 / total_h
+
+    # duplicate vertices per (vertex, component)
+    vmap: list[int] = []
+    uv_out: list[tuple[float, float]] = []
+    f2 = np.empty_like(f)
+    inst: dict[tuple[int, int], int] = {}
+    for b in boxes:
+        root, faces, pts = b[0], b[1], b[2]
+        ox, oy = offsets[root]
+        for k, fi in enumerate(faces):
+            for c in range(3):
+                vid = int(f[fi][c])
+                key = (vid, root)
+                if key not in inst:
+                    inst[key] = len(vmap)
+                    vmap.append(vid)
+                    uv_out.append(((pts[k, c, 0] + ox) * sx, (pts[k, c, 1] + oy) * sy))
+                f2[fi][c] = inst[key]
+    return np.asarray(uv_out), np.asarray(vmap, dtype=np.int64), f2
+
+
 def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
     d = load_pkl(raw)
     v = np.asarray(d["v_template"], dtype=np.float64)          # (778,3)
+    pd = np.asarray(d["posedirs"], dtype=np.float64)           # (778,3,135) 姿态修正场
+    assert pd.shape == (778, 3, 135), pd.shape
     if mirror:  # left = exact mirror of RIGHT across x=0 (strict L/R symmetry)
         v = v.copy()
         v[:, 0] *= -1.0
+        # posedirs 镜像:左位姿 R' = M·R·M ⇒ 系数 (R'−I)_ab = s_a·s_b·(R−I)_ab
+        # (s = [−1,1,1]),故 P_L[j,a,b] = s_a·s_b · M · P_R[j,a,b]。不用官方
+        # MANO_LEFT 的 posedirs:几何走镜像右手,修正场必须严格自洽。
+        s = np.array([-1.0, 1.0, 1.0])
+        k = np.arange(135)
+        a, b = (k % 9) // 3, k % 3
+        sgn = s[a] * s[b]                       # (135,)
+        pd = pd * sgn[None, None, :]
+        pd = pd.copy()
+        pd[:, 0, :] *= -1.0                     # M·P
     f = np.asarray(d["f"], dtype=np.int64)                     # (1538,3)
     w = np.asarray(d["weights"], dtype=np.float64)             # (778,16)
     J = np.asarray(d["J_regressor"], dtype=np.float64) @ v     # (16,3)
@@ -278,6 +425,9 @@ def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
         print(f"[convert-mano] note: {hand} joint order differs from standard MANO layout: {finger_chains}")
 
     # ---- close wrist, subdivide ----
+    # posedirs 以列拼进 w 一起过管线:封腕心行自动置 0(cap 只给 wrist 列 1),
+    # 细分边点自动取端点均值 —— 与几何同一插值算子,免重写重采样。
+    w = np.hstack([w, pd.reshape(778, -1)])     # (778, 16+405)
     uv_axes = np.argsort(v.max(axis=0) - v.min(axis=0))[::-1][:2]
     span = float((v.max(axis=0) - v.min(axis=0))[uv_axes[0]])
     uv = v[:, uv_axes] / span * 4.0
@@ -290,6 +440,8 @@ def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
         f = f[:, ::-1].copy()
     if subdiv:
         v, f, w, uv = loop_subdivide(v, f, w, uv)
+    pd = w[:, 16:].reshape(len(v), 3, 135)      # 重采样后的 posedirs
+    w = w[:, :16]
 
     # ---- synthesized joints: metacarpals + tips ----
     bones: list[dict] = [{"name": "wrist", "pos": J[0].tolist()}]
@@ -342,18 +494,46 @@ def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
             sk_i[i, k] = col_to_bone[int(top[i, k])]
             sk_w[i, k] = ws[k] / s
 
-    print(f"[convert-mano] {hand}: verts {n} faces {len(f)} bones 25"
+    # ---- smooth normals (area-weighted, BEFORE seam duplication) ----
+    fn = np.cross(v[f[:, 1]] - v[f[:, 0]], v[f[:, 2]] - v[f[:, 0]])
+    nrm = np.zeros_like(v)
+    for k in range(3):
+        np.add.at(nrm, f[:, k], fn)
+    nrm /= np.maximum(np.linalg.norm(nrm, axis=1, keepdims=True), 1e-12)
+
+    # ---- injective UV atlas + seam vertex duplication ----
+    uv2, vmap, f2 = box_unwrap(v, f)
+    v2 = v[vmap]
+    nrm2 = nrm[vmap]
+    sk_i2 = sk_i[vmap]
+    sk_w2 = sk_w[vmap]
+    pd2 = pd[vmap]                              # (n2,3,135)
+    n2 = len(v2)
+
+    # posedirs int8 量化(逐系数尺度):修正位移 ~毫米级,int8 精度 <1% 足够;
+    # 全量 float32 会把资产撑到 ~9MB。
+    pd_scale = np.maximum(np.abs(pd2).max(axis=(0, 1)), 1e-9) / 127.0   # (135,)
+    pd_q = np.clip(np.round(pd2 / pd_scale[None, None, :]), -127, 127)
+
+    print(f"[convert-mano] {hand}: verts {n}->{n2} (uv seams) faces {len(f)} bones 25"
           f" | wrist {np.round(J[0], 4).tolist()} middle-tip reach {np.linalg.norm(v[np.argmax(np.linalg.norm(v - J[0], axis=1))] - J[0]):.4f} m")
     return {
-        "format": "cuberoot-mano-hand@1",
+        "format": "cuberoot-mano-hand@3",
         "hand": hand,
-        "counts": {"verts": n, "faces": int(len(f))},
+        "counts": {"verts": n2, "faces": int(len(f2))},
         "bones": bones,
-        "position": b64(v, np.float32),
-        "index": b64(f, np.uint32),
-        "uv": b64(uv, np.float32),
-        "skinIndex": b64(sk_i, np.uint8),
-        "skinWeight": b64(sk_w, np.float32),
+        "position": b64(v2, np.float32),
+        "normal": b64(nrm2, np.float32),
+        "index": b64(f2, np.uint32),
+        "uv": b64(uv2, np.float32),
+        "skinIndex": b64(sk_i2, np.uint8),
+        "skinWeight": b64(sk_w2, np.float32),
+        # MANO 姿态修正 blendshape(LBS 之外的另一半模型 —— 鱼际隆起/关节
+        # 鼓包全靠它;丢了它拇指对掌时鱼际瘪成空壳,2026-07-11 用户抓的)。
+        # 布局 (n,3,135) C 序;系数 k=(j−1)·9+a·3+b 对应关节 j 局部旋转
+        # (R−I)_ab,关节序 = MANO 标准 kintree(index/middle/pinky/ring/thumb)。
+        "posedirs": b64(pd_q, np.int8),
+        "posedirsScale": b64(pd_scale, np.float32),
     }
 
 
