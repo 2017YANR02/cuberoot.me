@@ -177,15 +177,32 @@ export function homeRight(kind: HandModelKind = "default"): HandPose {
 }
 
 /**
- * MANO 右手 home(占位:资产未到位前抄 default 解 —— 适配层把中指链归一到
- * 同长,generic 参数在 MANO 上是「能看的起点」而非合规解)。资产转换 + 探针
- * MODEL=mano SOLVE=R 求解后重烘;MANO 版硬规格比 default 多一条:**真 CMC
- * (thumb-metacarpal 关节)y ≤ −28.5(D 层界下)** —— generic-hand 上已证明
- * 超出可行域(r11),MANO 掌型/CMC 位形不同,是此规格的下一个自由度上限。
+ * MANO 右手 home(2026-07-11 实解,_pose_probe MODEL=mano SOLVE=R 三阶段 +
+ * NAILW=60000 高甲权盆地)。MANO 版硬规格比 default 多一条:**真 CMC
+ * (thumb-metacarpal 关节)y ≤ −28.5(D 层界下)** —— generic-hand r11 已证
+ * 超出其可行域(CMC 卡 +30),MANO 真实掌型下达成 **CMC −30.0**,且甲面∥F
+ * 反超 generic(nail·ẑ 0.995 vs 0.991)。
+ * 终解指标:四指倾角 4.9/2.8/7.8°(<8.6)、贴面 2.91/2.60/2.92、行带内
+ * (60.9/−4.6/−71.2);小指 25° 蜷收豁免;拇指 fGap 3.18 压 FR 贴纸
+ * (90.0,6.7)、MCP −51.7(D 层下)、肉 |x|min 48.2(M 列 34.5 余量)、
+ * mid 深出平面 [−0.24,−0.77](twist 2.40 盆地 —— 12000 甲权停 0.961,
+ * 60000 才跳出);pen −1.63(≥1.2U 呼吸余量)。
+ * 求解自由度比 default 多:四指 dc2/dc3 尾参 + 手根 pitch/yaw(generic 的
+ * base.quat 按其掌弓解,MANO 真实掌弓指根线俯倾 ~10°,只有 z-roll 修不平);
+ * 全都烘进本值,改 convert-mano.py / MANO_THUMB_ROLL 必须重解。
  */
 function manoHomeRight(): HandPose {
-  const base = homeRight("default");
-  return base;
+  return {
+    pos: new THREE.Vector3(321.66, -62.36, 1.6),
+    quat: new THREE.Quaternion(-0.587042, -0.102574, 0.783097, 0.177817),
+    fingers: fingerPose(
+      { curl: [1.7164, -0.211, 0.0763], splay: 0.3815, twist: 2.3955, mid: [-0.2436, -0.7714] }, // 拇指:CMC −30 沉 D + 甲面∥F 0.995
+      { curl: [0.7508, 0.4931, -0.0234], splay: -0.2763, twist: -0.1858 }, // 食指:4.9° 水平
+      { curl: [0.9028, 0.4388, 0.3113], splay: -0.1321, twist: -0.098 },   // 中指:2.8° 水平
+      { curl: [0.7611, 0.5475, 0.396], splay: -0.1608, twist: -0.4287 },   // 无名指:7.8° 水平
+      { curl: [0.7166, 0.1887, 0.3208], splay: 0.4795, twist: 0.0145 },    // 小指:25° 蜷收豁免
+    ),
+  };
 }
 
 /** 左手相对右手的每指弯曲固定偏移(rad)= 左手独立肉面间隙标定解 − 右手解
@@ -208,10 +225,17 @@ const LEFT_CURL_OFFSET: Record<FingerName, [number, number, number, number?, num
   pinky: [0.0254, -0.02, 0.04, 0, -0.002],
 };
 
-/** MANO 左手偏移(占位 0:MANO_LEFT 是独立左手扫描资产,解出 R 后按
- *  MODEL=mano SOLVE=L 独立解偏移,同 default 的先例)。 */
+/** MANO 左手偏移(2026-07-11 实解:MODEL=mano SOLVE=L,手根冻结严格镜像,
+ *  MANO_LEFT 是独立扫描均值、非 R 的完美镜像 —— 镜像姿态下拇指 fGap 1.57 vs
+ *  R 3.19 实测,不对称全由指参吸收)。L 终解:四指倾角 5.6/4.4/7.8°、贴面
+ *  2.90~2.91、行带内;拇指 nail·ẑ 0.984、CMC −34.0(D 层下,比 R 更深)、
+ *  MCP −55.6、fGap 3.44 压 FL 贴纸 (−90.2,−27.8)、肉 |x|≥39.0、pen −1.56。 */
 const MANO_LEFT_CURL_OFFSET: Record<FingerName, [number, number, number, number?, number?, number?, number?]> = {
-  thumb: [0, 0, 0], index: [0, 0, 0], middle: [0, 0, 0], ring: [0, 0, 0], pinky: [0, 0, 0],
+  thumb: [0.0091, 0.1616, -0.2461, 0.034, 0.1665, -0.2904, 0.185],
+  index: [-0.1023, 0.0881, 0.2127, 0.0123, 0.0458],
+  middle: [0.0345, -0.0242, 0.0001, -0.0647, -0.245],
+  ring: [-0.1568, 0.2647, -0.0436, 0.1005, 0.2166],
+  pinky: [0.1761, -0.0243, 0.0353, -0.0302, 0.0078],
 };
 
 const LEFT_OFFSET_BY_KIND: Record<HandModelKind, Record<FingerName, [number, number, number, number?, number?, number?, number?]>> = {
