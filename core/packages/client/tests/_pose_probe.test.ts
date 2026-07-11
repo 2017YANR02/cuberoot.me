@@ -17,7 +17,7 @@ import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { adaptGltfHand, nailFrame } from '@/app/[lang]/sim/engine/hands/handModelGltf';
 import { buildManoHand, MANO_THUMB_ROLL, type ManoHandData } from '@/app/[lang]/sim/engine/hands/handModelMano';
-import type { HandModel, FingerName } from '@/app/[lang]/sim/engine/hands/handModel';
+import { WRIST_LOCAL, type HandModel, type FingerName } from '@/app/[lang]/sim/engine/hands/handModel';
 import { homeRight, homeLeft, quatFromWorldRots, type HandPose, type FingerCurl, type HandModelKind } from '@/app/[lang]/sim/engine/hands/handPoses';
 
 const MODE = process.env.SOLVE ?? (process.env.PROBE ? 'PROBE' : process.env.MEASURE_NAILK ? 'NAILK' : '');
@@ -550,6 +550,39 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
           console.log(`THUMBROLL ${sc.roll.toFixed(2)} score ${sc.score.toFixed(2)} w90 ${sc.w.toFixed(1)} hMean ${sc.h.toFixed(1)} (n=${sc.n})`);
         }
       }
+      expect(true).toBe(true);
+      return;
+    }
+    if (MODE === 'SYM') {
+      // 对称性二分诊断(SOLVE=SYM MODEL=mano)。只比前 779 个顶点(MANO 原始
+      // 模板 778 + 封腕心 1,索引左右严格对应;Loop 细分边点因左手翻绕向后
+      // 边字典插入序不同而重排,不可逐点比)。
+      // ①绑定层:两腕同锚 WRIST_LOCAL ⇒ 手系里 L = R 关于 y=WRIST_LOCAL.y
+      //   平面镜像;②摆姿层:世界系里 L ≈ R 关于 x=0 镜像(绑定层镜面偏移
+      //   2·WLy≈4.4U 随姿态旋转,构成基线残差)。哪层先炸 = 不对称源。
+      const N_TPL = 779;
+      const pl = await makeProbe('left.glb', 1);
+      const layer = (tag: string, vr: THREE.Vector3[], vl: THREE.Vector3[], mir: (v: THREE.Vector3) => THREE.Vector3): void => {
+        const acc: Record<string, number> = {};
+        let worst = 0, wi = -1;
+        for (let i = 0; i < N_TPL; i++) {
+          const d = vr[i].distanceTo(mir(vl[i]));
+          const k = p.dom[i];
+          if (d > (acc[k] ?? 0)) acc[k] = d;
+          if (d > worst) { worst = d; wi = i; }
+        }
+        console.log(`SYM ${tag}: n ${N_TPL} max ${worst.toFixed(3)} @vert ${wi} dom ${p.dom[wi]}`);
+        for (const [k, d] of Object.entries(acc).sort((a, b) => b[1] - a[1]).slice(0, 8)) {
+          console.log(`SYM ${tag}  ${k.padEnd(34)} ${d.toFixed(3)}`);
+        }
+      };
+      const wly = WRIST_LOCAL.y;
+      p.m.group.updateMatrixWorld(true);
+      pl.m.group.updateMatrixWorld(true);
+      layer('bind ', skinnedVerts(p), skinnedVerts(pl), (v) => new THREE.Vector3(v.x, 2 * wly - v.y, v.z));
+      applyPose(p.m, homeRight(MODEL));
+      applyPose(pl.m, homeLeft(MODEL));
+      layer('posed', skinnedVerts(p), skinnedVerts(pl), (v) => new THREE.Vector3(-v.x, v.y, v.z));
       expect(true).toBe(true);
       return;
     }
