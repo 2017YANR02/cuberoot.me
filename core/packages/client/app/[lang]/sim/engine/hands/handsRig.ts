@@ -1069,14 +1069,20 @@ export default class HandsRig extends THREE.Group {
     // 姿态自动跟随;网格进 model.meshes 复用补光层 / dispose。
     addHandSkeleton(right, this.skelMatMap);
     addHandSkeleton(left, this.skelMatMap);
+    // 肘锚 = home 腕点沿「手局部 −x(腕→肘,即手轴的反向延长)」推远:静止时
+    // 前臂就是手的自然延长线(腕部不打折 —— 固定世界锚曾让前臂垂直下垂 /
+    // 斜插,2026-07-11 用户两次抓的);锚仍是固定点(距离 ≫ 臂长),腕转 /
+    // 弹指时前臂绕它小幅摆动而不是整条手臂跟手公转(原设计语义保留)。
+    const elbowAnchor = (home: HandPose): THREE.Vector3 => {
+      const wrist = WRIST_LOCAL.clone().applyQuaternion(home.quat).add(home.pos);
+      const back = new THREE.Vector3(-1, 0, 0).applyQuaternion(home.quat);
+      return wrist.addScaledVector(back, SIZE * 7.5 * HAND_SCALE);
+    };
+    const homeR = homeRight(this.effectiveModel);
+    const homeL = homeLeft(this.effectiveModel);
     this.hands = {
-      // 肘锚随 HAND_SCALE 等比外推:手/前臂变大后锚点太近会让前臂几何越过肘
-      // 悬在半空(几何长 ~186U·scale,锚点必须比腕远至少这么多)。
-      // 方位 = 自然持方块:肘在体侧偏下偏前(相机侧),前臂接近水平(从腕向
-      // 外下 ~12°)—— 旧锚 (4.4,−5.2,1.4) 在腕正下深处,前臂垂直下垂,
-      // 2026-07-11 用户抓的「手臂要接近水平」。
-      R: this.initHandState(right, homeRight(this.effectiveModel), rArm.group, new THREE.Vector3(SIZE * 7.6, -SIZE * 1.0, SIZE * 1.8).multiplyScalar(HAND_SCALE)),
-      L: this.initHandState(left, homeLeft(this.effectiveModel), lArm.group, new THREE.Vector3(-SIZE * 7.6, -SIZE * 1.0, SIZE * 1.8).multiplyScalar(HAND_SCALE)),
+      R: this.initHandState(right, homeR, rArm.group, elbowAnchor(homeR)),
+      L: this.initHandState(left, homeL, lArm.group, elbowAnchor(homeL)),
     };
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);
