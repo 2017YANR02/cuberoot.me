@@ -240,104 +240,34 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings,
             value={mode}
             onChange={(e) => updateSettings({ wcaScrambleMode: e.target.value as 'date' | 'comp' })}
           >
-            <option value="date">{tr({ zh: '按日期范围(随机)', en: 'Date range (random)' })}</option>
-            <option value="comp">{tr({ zh: '指定比赛', en: 'Specific competition' })}</option>
+            <option value="date">{tr({ zh: '日期', en: 'Date' })}</option>
+            <option value="comp">{tr({ zh: '比赛', en: 'Comp' })}</option>
           </select>
         </span>
-        {canDifficulty && (
-          <span className="settings-row-tight-group">
-            <span className="settings-row-label">{tr({ zh: '按难度', en: 'By difficulty' })}</span>
-            <PillToggle
-              value={settings.wcaDifficultyOn}
-              onChange={(v) => updateSettings({ wcaDifficultyOn: v })}
+        {mode === 'date' && (
+          <span className="settings-row-control wca-src-dates">
+            <input
+              type="date"
+              value={settings.wcaDateFrom}
+              min={WCA_MIN_DATE}
+              max={settings.wcaDateTo || today}
+              onChange={(e) => updateSettings({ wcaDateFrom: e.target.value })}
+              aria-label={tr({ zh: '起始日期', en: 'From date' })}
+            />
+            <span className="wca-src-dash">–</span>
+            <input
+              type="date"
+              value={settings.wcaDateTo}
+              min={settings.wcaDateFrom || WCA_MIN_DATE}
+              max={today}
+              onChange={(e) => updateSettings({ wcaDateTo: e.target.value })}
+              aria-label={tr({ zh: '结束日期', en: 'To date' })}
             />
           </span>
         )}
-        {hasOptimal && (
-          <span className="settings-row-tight-group">
-            <span className="settings-row-label">{tr({ zh: '最优打乱', en: 'Optimal scramble' })}</span>
-            <PillToggle
-              value={settings.wcaUseOptimal}
-              onChange={(v) => updateSettings({ wcaUseOptimal: v })}
-            />
-          </span>
-        )}
-      </div>
-
-      {mode === 'date' ? (
-        <>
-          <div className="settings-row wca-src-daterow">
-            <span className="settings-row-control wca-src-dates">
-              <input
-                type="date"
-                value={settings.wcaDateFrom}
-                min={WCA_MIN_DATE}
-                max={settings.wcaDateTo || today}
-                onChange={(e) => updateSettings({ wcaDateFrom: e.target.value })}
-                aria-label={tr({ zh: '起始日期', en: 'From date' })}
-              />
-              <span className="wca-src-dash">–</span>
-              <input
-                type="date"
-                value={settings.wcaDateTo}
-                min={settings.wcaDateFrom || WCA_MIN_DATE}
-                max={today}
-                onChange={(e) => updateSettings({ wcaDateTo: e.target.value })}
-                aria-label={tr({ zh: '结束日期', en: 'To date' })}
-              />
-            </span>
-          </div>
-
-          {canDifficulty && (
-            <>
-              {settings.wcaDifficultyOn && (
-                <div className="wca-src-diff">
-                  <div className="wca-src-diff-row">
-                    <SubsetColorPicker sel={diffSel} isZh={isZh} />
-                    <VariantSelect
-                      value={settings.wcaDiffVariant}
-                      options={variantOpts}
-                      onChange={(v) => updateSettings({ wcaDiffVariant: v })}
-                      isZh={isZh}
-                      ariaLabel={tr({ zh: '方法', en: 'Method' })}
-                    />
-                    <VariantSelect
-                      value={settings.wcaDiffStage}
-                      options={stageOpts}
-                      onChange={(s) => updateSettings({ wcaDiffStage: s })}
-                      isZh={isZh}
-                      label={stageLabel}
-                      ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
-                    />
-                  </div>
-                  <div className="wca-src-steps-range">
-                    <span className="wca-src-steps-readout">
-                      {shownLo === shownHi
-                        ? tr({ zh: `${shownLo} 步`, en: `${shownLo} moves` })
-                        : tr({ zh: `${shownLo}–${shownHi} 步`, en: `${shownLo}–${shownHi} moves` })}
-                    </span>
-                    <RangeSlider
-                      min={stepLo}
-                      max={stepHi}
-                      value={[shownLo, shownHi]}
-                      onChange={([a, b]) => updateSettings({ wcaDiffSteps: stepRange(a, b) })}
-                      marks={stepMarks}
-                      ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
-                    />
-                  </div>
-                  <p className="wca-src-hint">
-                    {tr({ zh: '只抽该方法 / 阶段 / 底色下,最优步数落在所选范围内的真题。拖两个圆点设上下限。', en: 'Only scrambles whose optimal length (for this method / stage / color) falls in the selected range. Drag the two handles to set the bounds.' })}
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-        </>
-      ) : (
-        <>
-          <div className="settings-row wca-src-comprow">
-            <span className="settings-row-label">{tr({ zh: '比赛', en: 'Competition' })}</span>
-            <span className="settings-row-control wca-src-comppick">
+        {mode === 'comp' && (
+          <span className="settings-row-control wca-src-comp-inline">
+            <span className="wca-src-comppick">
               {settings.wcaComp ? (
                 // 已锁定一场:展示「国旗 + 比赛名(省略号截断)+ 清除」,避免长名溢出。
                 <span className="wca-src-comp-selected">
@@ -357,12 +287,74 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings,
                   onPick={onPick}
                   isZh={isZh}
                   hideFuture
-                  placeholder={tr({ zh: '搜索 WCA 比赛', en: 'Search a WCA competition' })}
                 />
               )}
             </span>
-          </div>
+          </span>
+        )}
+        {hasOptimal && (
+          <span className="settings-row-tight-group">
+            <span className="settings-row-label">{tr({ zh: '最优', en: 'Optimal' })}</span>
+            <PillToggle
+              value={settings.wcaUseOptimal}
+              onChange={(v) => updateSettings({ wcaUseOptimal: v })}
+            />
+          </span>
+        )}
+        {canDifficulty && (
+          <span className="settings-row-tight-group">
+            <span className="settings-row-label">{tr({ zh: '难度', en: 'Difficulty' })}</span>
+            <PillToggle
+              value={settings.wcaDifficultyOn}
+              onChange={(v) => updateSettings({ wcaDifficultyOn: v })}
+            />
+          </span>
+        )}
+      </div>
 
+      {mode === 'date' ? (
+        <>
+          {canDifficulty && (
+            <>
+              {settings.wcaDifficultyOn && (
+                <div className="wca-src-diff">
+                  <div className="wca-src-diff-row">
+                    <SubsetColorPicker sel={diffSel} isZh={isZh} />
+                    <VariantSelect
+                      className="settings-row-control-select"
+                      value={settings.wcaDiffVariant}
+                      options={variantOpts}
+                      onChange={(v) => updateSettings({ wcaDiffVariant: v })}
+                      isZh={isZh}
+                      ariaLabel={tr({ zh: '方法', en: 'Method' })}
+                    />
+                    <VariantSelect
+                      className="settings-row-control-select"
+                      value={settings.wcaDiffStage}
+                      options={stageOpts}
+                      onChange={(s) => updateSettings({ wcaDiffStage: s })}
+                      isZh={isZh}
+                      label={stageLabel}
+                      ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
+                    />
+                  </div>
+                  <div className="wca-src-steps-range">
+                    <RangeSlider
+                      min={stepLo}
+                      max={stepHi}
+                      value={[shownLo, shownHi]}
+                      onChange={([a, b]) => updateSettings({ wcaDiffSteps: stepRange(a, b) })}
+                      marks={stepMarks}
+                      ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      ) : (
+        <>
           {settings.wcaComp && hasEvent === false && (
             <p className="wca-src-hint wca-src-warn">
               {tr({ zh: '该比赛没有当前项目的打乱,会回退到随机生成。', en: 'This competition has no scrambles for the current event — falls back to generated.' })}
@@ -405,13 +397,6 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings,
             </>
           )}
         </>
-      )}
-
-      {hasOptimal && (
-        <p className="wca-src-hint">
-          {tr({ zh: '用到达同一状态的最短打乱(最优解步数,通常比原始真题短)替代:同一个魔方态,步数更少。三阶/单手/脚拧/最少步、二阶/金字塔/斜转有。', en: 'Use the shortest sequence reaching the same state (optimal length, usually shorter than the original) — same cube, fewer moves. Available for 3×3 / OH / feet / FMC, 2×2, pyraminx and skewb.'
-          })}
-        </p>
       )}
 
       {showAutoMark && (

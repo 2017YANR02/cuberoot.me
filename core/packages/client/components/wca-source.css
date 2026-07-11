@@ -18,7 +18,7 @@
 .settings-row-tight-group { display: inline-flex; align-items: center; gap: 6px; }
 .settings-row-tight-group .settings-row-label { flex: 0 0 auto; }
 .settings-row-control input[type="number"],
-.settings-row-control .settings-row-control-select {
+.settings-row-control-select {
   background: #0e0e10;
   color: #ededed;
   border: 1px solid #333;
@@ -69,11 +69,25 @@
 }
 .wca-src-warn { color: #e0a14b; }
 /* CompPicker 占满整行;inline × 浮在输入框内需要定位上下文。 */
-/* 「比赛」行:标签只占文字宽,把整条剩余宽度让给比赛控件,长名才不会被挤窄。 */
-.wca-src-comprow { align-items: center; }
-.wca-src-comprow .settings-row-label { flex: 0 0 auto; }
+/* 「比赛」搜索框:挂在顶行,与「指定比赛」下拉同排;宽了紧挨右侧,窄了随顶行整体换行
+   (见 .wca-src-toprow)。CompPicker 自身不带边框/背景(caller 按场景各自定),这里补上。 */
+/* flex-basis 故意压低(不是理想展示宽):换行判定用的是各项基准宽之和,基准太大会把
+   同行的「最优/生成」挤到下一行;真正的展示宽靠 flex-grow:1 在有余量时再撑开。 */
+.wca-src-comp-inline { flex: 1 1 140px; min-width: 100px; }
 .wca-src-comppick { position: relative; flex: 1; min-width: 0; }
 .wca-src-comppick > :first-child { width: 100%; }
+.wca-src-comppick .comp-picker-input {
+  background: #0e0e10;
+  color: #ededed;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+.wca-src-comppick .comp-picker-input:focus { outline: none; border-color: #555; }
+:root[data-timer-theme="light"] .wca-src-comppick .comp-picker-input {
+  background: #fff; color: #1d1d1f; border-color: #ccc;
+}
 /* 已选中一场:国旗 + 名(省略号截断)+ 清除,横向贴合不溢出。 */
 .wca-src-comp-selected { display: flex; align-items: center; gap: 7px; width: 100%; min-width: 0; }
 .wca-src-comp-flag { width: 20px; height: 14px; flex: none; object-fit: cover; border-radius: 2px; }
@@ -92,17 +106,11 @@
 }
 :root[data-timer-theme="light"] .wca-src-hint { color: #777; }
 
-/* 按难度出题:配色 + 方法 + 阶段 选择器一行,步数 chip 多选一行。 */
-.wca-src-diff { margin: 4px 0 2px; display: flex; flex-direction: column; gap: 8px; }
-.wca-src-diff-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-/* 步数范围:双圆点滑块 + 选中区间读数 */
-.wca-src-steps-range { display: flex; flex-direction: column; gap: 2px; padding: 0 9px 18px; }
-.wca-src-steps-readout {
-  font-size: 13px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--accent, #4b9fff);
-}
+/* 按难度出题:配色 + 方法 + 阶段选择器 + 步数滑块能并一行就并一行,窄了才折行。 */
+.wca-src-diff { margin: 4px 0 2px; display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; }
+.wca-src-diff-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 0 0 auto; }
+/* 步数范围:双圆点滑块(拖动区间即所选步数,不再单独文字读数);占同行剩余宽度。 */
+.wca-src-steps-range { display: flex; flex-direction: column; gap: 2px; padding: 0 9px 18px; flex: 1 1 200px; min-width: 160px; }
 /* RangeSlider 在 timer 面板(data-timer-theme,沿用面板的旧硬码灰阶)里的取色 */
 .wca-src-steps-range .range-slider {
   --rs-rail-bg: #333;

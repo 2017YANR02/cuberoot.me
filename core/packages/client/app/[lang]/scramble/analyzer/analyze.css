@@ -39,6 +39,16 @@
     line-height: 0;
 }
 
+/* 「生成」按钮就近放在打乱框左侧(WCA/随机两种来源共用一个按钮,不必按模式分别放两处);
+   贴合输入框高度,不用来源行那个小尺寸。 */
+.analyze-wca-gen-inline {
+    flex: 0 0 auto;
+    margin-right: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    align-self: stretch;
+}
+
 .analyze-scramble {
     flex: 1;
     min-width: 0;
@@ -201,16 +211,15 @@
 
 /* ── WCA real-scramble + cross-step filter ── */
 
-/* 来源切换 + 综合配置的公共一行:宽了「WCA 真题 / 选源方式 / 按难度 / 最优 / 日期范围」全排一行,
-   窄了各段自然折行。配置块打平进这条 flex 线(见下方 display:contents)。 */
+/* 来源切换 + 综合配置的公共一行:宽了「WCA 真题 / 选源方式 / 难度 / 最优 / 日期范围」全排一行,
+   窄了各段自然折行。配置块打平进这条 flex 线(见下方 display:contents)。
+   位于标签栏与打乱图之间,顶部不再自带分隔线(SolveTabs 已有 border-bottom + 间距)。 */
 .analyze-wca-line {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem 0.9rem;
     margin-bottom: 0.7rem;
-    padding-top: 0.65rem;
-    border-top: 1px solid var(--az-border);
     font-size: 0.82rem;
 }
 .analyze-wca {
@@ -235,26 +244,28 @@
     border-color: var(--az-accent);
 }
 
-.analyze-wca-reshuffle {
+/* 「生成」按钮:文字而非图标(随机模式挂在切换旁,WCA 模式挂在 WcaSourceConfig 顶行末尾)。 */
+.analyze-wca-gen {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: var(--az-surface);
     border: 1px solid var(--az-border);
     border-radius: 4px;
-    padding: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.82rem;
     color: var(--az-text-sub);
     font-family: inherit;
     cursor: pointer;
 }
 
-.analyze-wca-reshuffle:hover:not(:disabled) {
+.analyze-wca-gen:hover:not(:disabled) {
     background: var(--az-accent-soft);
     border-color: var(--az-accent);
     color: var(--az-accent);
 }
 
-.analyze-wca-reshuffle:disabled {
+.analyze-wca-gen:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
@@ -269,11 +280,12 @@
 .analyze-wca-line .settings-row { margin: 0; }
 .analyze-wca-line .wca-src-diff,
 .analyze-wca-line .wca-src-hint,
-.analyze-wca-line .settings-row:not(.wca-src-toprow):not(.wca-src-daterow) { flex-basis: 100%; }
+.analyze-wca-line .settings-row:not(.wca-src-toprow) { flex-basis: 100%; }
 .analyze-wca-src .settings-row-label { color: var(--az-text-sub); }
 .analyze-wca-src .settings-row-control input[type='number'],
-.analyze-wca-src .settings-row-control .settings-row-control-select,
-.analyze-wca-src .wca-src-dates input[type='date'] {
+.analyze-wca-src .settings-row-control-select,
+.analyze-wca-src .wca-src-dates input[type='date'],
+.analyze-wca-src .wca-src-comppick .comp-picker-input {
     background: var(--az-surface);
     color: var(--az-text);
     border-color: var(--az-border-strong);
