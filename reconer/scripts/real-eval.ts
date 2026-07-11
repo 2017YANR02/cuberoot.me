@@ -932,6 +932,15 @@ for (const sf of files) {
           span: run.span, // 跟踪 span 身份 (span 内窗口旋转恒定) — prior-sim --spanalign 生产界用
           cx: Math.round(run.cx), // 链晶格中心 — prior-sim --winalign 空间聚类窗口身份用
           cy: Math.round(run.cy),
+          // 几何朝向探针 (orient-probe) 用: 帧区间 + 中帧晶格基角/pitch + 链运动量 + GT rot
+          f0: run.from,
+          f1: run.to,
+          ang: Math.round(((Math.atan2(run.midGrid.v1.y, run.midGrid.v1.x) * 180) / Math.PI) * 10) / 10,
+          pitch: Math.round(run.midGrid.pitch * 10) / 10,
+          motion: Math.round(run.motion * 100) / 100,
+          rot: bb.rot,
+          // 完整仿射基 (orient-probe 逐链姿态分类: 各向异性/剪切 = 倾斜度读数)
+          basis: [run.midGrid.v1.x, run.midGrid.v1.y, run.midGrid.v2.x, run.midGrid.v2.y].map((x) => Math.round(x * 10) / 10),
         };
       });
     });
@@ -944,6 +953,10 @@ for (const sf of files) {
         cx: Math.round(run.cx),
         cy: Math.round(run.cy),
         len: run.len,
+        f0: run.from,
+        f1: run.to,
+        ang: Math.round(((Math.atan2(run.midGrid.v1.y, run.midGrid.v1.x) * 180) / Math.PI) * 10) / 10,
+        pitch: Math.round(run.midGrid.pitch * 10) / 10,
       }));
     dumpVideos.push({
       name: basename(videoPath),
