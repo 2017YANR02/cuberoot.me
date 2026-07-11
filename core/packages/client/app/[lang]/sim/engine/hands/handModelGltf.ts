@@ -570,7 +570,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
   mesh.material = skinMat;
   mesh.castShadow = mesh.receiveShadow = false;
 
-  return { group, side, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat], nailMeshes };
+  return { group, side, unitScale: s, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat], nailMeshes };
 }
 
 function bakeVertexTint(mesh: THREE.SkinnedMesh): void {

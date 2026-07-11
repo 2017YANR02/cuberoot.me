@@ -36,7 +36,7 @@
 import * as THREE from "three";
 import { SIZE } from "../define";
 import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
-import { buildSmplxForearm, loadManoHand, loadSmplxForearmData, type ForearmFit } from "./handModelMano";
+import { buildSmplxForearm, fillCircularBins, loadManoHand, loadSmplxForearmData, type ForearmFit } from "./handModelMano";
 import { bakeHandTextures, bakeLimbTextures, type HandBakedMaps } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
 import { homeLeft, homeRight, type HandPose } from "./handPoses";
@@ -987,9 +987,9 @@ export default class HandsRig extends THREE.Group {
     this.add(right.group, left.group);
     // 前臂:优先 SMPL-X 真臂切段(逐机转换 gitignored 资产,与 MANO 同模式;
     // 尺骨头/肌腹是真解剖轮廓),缺失回退程序化锥形管。左臂 = 右臂 y 镜像
-    // 几何(真前臂不对称),但 UV 相同 → 下方皮肤贴图仍烘一次共享。宽度按
-    // 手模腕环实测自适应,略瘦藏进 MANO 封腕帽内 —— 写死 34.5U 曾把腕顶穿
-    // 出台阶(2026-07-11)。
+    // 几何(真前臂不对称),但 UV 相同 → 下方皮肤贴图仍烘一次共享。缩放 =
+    // 手资产同一米→rig 系数(unitScale;按腕环拟合定比例曾把整条臂缩细,
+    // 2026-07-11 用户抓),腕环实测只喂对中 + 接缝焊接。
     const stumpFit = (model: HandModel): ForearmFit | undefined => {
       model.group.updateMatrixWorld(true);
       const mesh = model.meshes[0] as THREE.SkinnedMesh;
@@ -1005,7 +1005,21 @@ export default class HandsRig extends THREE.Group {
         zMin = Math.min(zMin, v.z); zMax = Math.max(zMax, v.z);
       }
       if (!Number.isFinite(yMin)) return undefined; // 量空回退 34.5U 缺省
-      return { hy: (yMax - yMin) / 2, hz: (zMax - zMin) / 2, cy: (yMax + yMin) / 2, cz: (zMax + zMin) / 2 };
+      const cy = (yMax + yMin) / 2, cz = (zMax + zMin) / 2;
+      // 径向轮廓 r(θ) 32 桶(桶内取外皮 max):焊接基准 —— 前臂腕端逐 θ morph
+      // 成这个真实截面,椭圆包围盒近似必在非椭圆处(掌根肌腱侧)留台阶。
+      const NB = 32;
+      const bins = new Array<number>(NB).fill(0);
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        if (mesh.isSkinnedMesh) mesh.applyBoneTransform(i, v);
+        if (Math.abs(v.x - WRIST_LOCAL.x) > 6 * scl) continue;
+        const th = Math.atan2(v.z - cz, v.y - cy);
+        const b = ((Math.floor(((th + Math.PI) / (2 * Math.PI)) * NB) % NB) + NB) % NB;
+        bins[b] = Math.max(bins[b], Math.hypot(v.y - cy, v.z - cz));
+      }
+      // scale = 手资产同一米→rig 系数:前臂比例跟手同源(粗细失配根治)
+      return { scale: model.unitScale, cy, cz, profile: fillCircularBins(bins) };
     };
     let rArm: { group: THREE.Group; meshes: THREE.Mesh[] };
     let lArm: { group: THREE.Group; meshes: THREE.Mesh[] };
