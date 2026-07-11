@@ -1987,6 +1987,9 @@ export default class HandsRig extends THREE.Group {
       let c2 = pose.curl[1];
       let c3 = pose.curl[2];
       let splay = pose.splay * sideSign;
+      // r11 轴向扭转(FingerCurl.twist,Euler x 槽,此前恒 0):拇指 CMC 旋前 /
+      // 四指指柱滚转。目前仅姿态层入参,弹指手势不叠加(twist 不参与扫掠)。
+      const twist = (pose.twist ?? 0) * sideSign;
       // topPush 伸指是时间驱动(reachT),层角为零的前置/回收期间也要摆位。
       const topPush = h.flickStyle === "topPush" && h.flickFinger === name;
       // 本指角色与负担扫角(带符号):单指 = 全量;连拨首指钳 90°、次指接后半。
@@ -2335,12 +2338,34 @@ export default class HandsRig extends THREE.Group {
         c2 = Math.max(0.03, c2);
       }
       c3 = Math.max(0.03, c3);
-      // 指根 = 基座朝向 ∘ (curl/splay)。四指基座为 identity;拇指基座是对掌位
-      // 四元数 —— 直接写 rotation 会抹掉它(踩过),必须叠加。
-      HandsRig._eTmp.set(0, -c1, splay);
+      // 指根 = 基座朝向 ∘ (curl/splay/twist)。四指基座为 identity;拇指基座是
+      // 对掌位四元数 —— 直接写 rotation 会抹掉它(踩过),必须叠加。
+      // Euler 序 'YZX':R = Ry(curl)·Rz(splay)·Rx(twist),twist 最内层 = 先绕
+      // 指长轴旋前、再随 swing 整体带走(真轴向旋前,弯曲平面同转)。'XYZ' 的
+      // twist 是绕**绑定**轴的定轴旋转,大幅 swing 后语义漂成进动,r11 踩过。
+      // twist=0 时两序等价(Ry·Rz),历史姿态逐位不变。
+      HandsRig._eTmp.set(twist, -c1, splay, "YZX");
       f.root.quaternion.setFromEuler(HandsRig._eTmp).premultiply(f.rootBase);
-      f.mid.rotation.set(0, -c2, 0);
+      // 中节:默认纯铰链;姿态层可给出平面通道(拇指 MCP 外展+旋前,r11)。
+      const pm = pose.mid;
+      if (pm) {
+        f.mid.rotation.set(pm[0] * sideSign, -c2, pm[1] * sideSign, "YZX");
+      } else {
+        f.mid.rotation.set(0, -c2, 0);
+      }
       f.tip.rotation.set(0, -c3, 0);
+      // 掌骨关节(r11 掌弓通道):euler 在掌骨作者系解读,手系共轭施加
+      // (meta rest 局部 = identity → 缺省姿态与旧「焊死」行为逐位一致)。
+      if (f.meta && f.metaBase) {
+        const m = pose.meta;
+        if (m) {
+          HandsRig._eTmp.set((m[2] ?? 0) * sideSign, -m[0], m[1] * sideSign, "YZX");
+          f.meta.quaternion.setFromEuler(HandsRig._eTmp).premultiply(f.metaBase)
+            .multiply(HandsRig._qTmp2.copy(f.metaBase).invert());
+        } else {
+          f.meta.quaternion.identity();
+        }
+      }
     }
   }
 

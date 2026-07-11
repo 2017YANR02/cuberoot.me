@@ -33,24 +33,15 @@ const U = (SIZE / 64) * HAND_SCALE;
  *  (甲面斜 71°),+0.55 联合重解拇指 curl 后 ≈0.85(dorsal 扫掠圆 ⊥ 根段轴,
  *  与「贴面 2.4U + 肉 |x|≥34.5 + 接触心留在 FR 贴纸内」可行域的交点极限;
  *  再加 roll 接触被换走,oracle 实测)。改此值必须连动 handPoses 拇指 curl 重解。
- *  2026-07-10 r10 硬平行收口:2.074→2.6。上述「0.85 极限」的解析口径与屏上
- *  实物甲片有偏差,真实甲片 PCA 法向 ·ẑ 当时只有 0.67;roll 加大导致的拇指链
- *  外甩接触崩塌改由 THUMB_PITCH_MOUNT ≤15U 挂点微移拉回(此前无该杠杆才卡在
- *  0.85),8 通道嵌套解后双手 PCA ·ẑ 0.999/0.997。roll 网格 2.85+ 接触域
- *  不可恢复,2.6 = 双手共同最优(此常量两手共用,×side 镜像)。 */
-export const THUMB_CURL_PLANE_ROLL = 2.6;
-
-/** 拇指挂点微移(手系)。硬上限 ~15U:r8 的 ±160U 大平移把拇指柱拽脱手掌
- *  (解剖学假,已撤销);≤15U 蒙皮无感(r7 实证)。r10 用途:ROLL 2.074→2.6
- *  (甲面∥F)会把拇指链绕掌骨轴外甩出接触域,本表微移把 pad 拉回 FR 贴纸,
- *  与「贴面 + 肉 |x|≥34.5(M 列线)+ E 带」同解(8 通道嵌套,handPoses 注释)。
- *  R 模长 9.4U / L 10.0U(烘焙态二次收敛终值 —— 活体 roll 模拟与烘焙 roll
- *  在非零 curl 下不等价,见 handPoses 拇指注释)。键 = adaptGltfHand 的
- *  side(-1 右 / +1 左)。改拇指 curl / ROLL 连动重解此表。 */
-const THUMB_PITCH_MOUNT: Record<1 | -1, [number, number, number]> = {
-  [-1]: [-9.352, -0.159, -0.079],
-  [1]: [-9.535, 2.996, -0.706],
-};
+ *  2026-07-10 r10.1:此常量**钉死在 bind 解剖系 2.074**(甲床贴肉背脊线、
+ *  皮肤贴图甲背方向、curl 平面三者在 bind 姿下自洽)。r10 首版直接改 2.6 是
+ *  错的 —— ROLL 在 attach 前进 rootBase,attach 保世界位姿,**肉不跟转**,
+ *  只有甲片/弯曲平面转了 30°:甲片偏离解剖脊线、拇指侧肉压面(用户抓的
+ *  「只改支架,拇指没跟着转」)。对 F 面的甲面取向改走姿态层 FingerCurl.twist
+ *  (r11 全关节解锁:CMC 轴向旋前,rig 每帧 Euler x 槽,肉+甲+curl 平面
+ *  经真实关节同转);r10 的挂载旋转/平移 hack(THUMB_MOUNT_ROT /
+ *  THUMB_PITCH_MOUNT)随之删除 —— 挂载变换是「支架」,真关节才动肉。 */
+export const THUMB_CURL_PLANE_ROLL = 2.074;
 
 /** WebXR 25 关节命名(https://www.w3.org/TR/webxr-hand-input-1/)。
  *  四指 FK 链 = proximal/intermediate/distal(metacarpal 静止在掌内);
@@ -333,11 +324,9 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
   group.add(inner);
   group.updateMatrixWorld(true);
 
-  // 腕骨 + 四指掌骨:静止件,直接挂 group(保世界变换)。
+  // 腕骨:静止件,直接挂 group(保世界变换)。四指掌骨不再焊死 —— r11 全
+  // 关节解锁,进各指 meta 代理关节(掌弓自由度,见下方指环)。
   group.attach(bone("wrist"));
-  for (const chain of Object.values(JOINT_CHAINS)) {
-    if (chain.static) group.attach(bone(chain.static));
-  }
 
   const fingers = {} as Record<FingerName, FingerJoints>;
   for (const name of Object.keys(JOINT_CHAINS) as FingerName[]) {
@@ -359,14 +348,34 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
     }
     const invBase = rootBase.clone().invert();
 
+    // 掌骨 meta 代理(r11 全关节解锁;拇指无 —— 其 root 即掌骨):rest 局部
+    // 旋转 = identity(手系对齐),root 改挂它下面 —— 缺省时 root 的局部
+    // pos/quat 语义与直接挂 group 完全一致(rig 契约零改动),meta 一转,
+    // 掌骨蒙皮 + 整指链 FK 随动(真人掌弓/cupping)。
+    let metaJ: THREE.Group | undefined;
+    let metaBase: THREE.Quaternion | undefined;
+    if (chain.static) {
+      const pm = toHand(bindOf(chain.static));
+      metaJ = new THREE.Group();
+      metaJ.position.copy(pm);
+      group.add(metaJ);
+      // 掌骨作者系:+x = 掌骨→指根,+z = 掌心向投影(同指作者系构造)。
+      const xm = p1.clone().sub(pm).normalize();
+      const zm = new THREE.Vector3(0, 0, 1).sub(xm.clone().multiplyScalar(xm.z)).normalize();
+      const ym = new THREE.Vector3().crossVectors(zm, xm);
+      metaBase = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(xm, ym, zm));
+      group.updateMatrixWorld(true);
+      metaJ.attach(bone(chain.static));
+    }
+
     const root = new THREE.Group();
-    root.position.copy(p1);
+    root.position.copy(metaJ ? p1.clone().sub(metaJ.position) : p1);
     root.quaternion.copy(rootBase);
     const mid = new THREE.Group();
     mid.position.copy(p2.clone().sub(p1).applyQuaternion(invBase)); // ≈ (len1,0,0)
     const tip = new THREE.Group();
     tip.position.copy(p3.clone().sub(p2).applyQuaternion(invBase));
-    group.add(root);
+    (metaJ ?? group).add(root);
     root.add(mid);
     mid.add(tip);
     group.updateMatrixWorld(true);
@@ -383,6 +392,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
       tip,
       segLens: [p1.distanceTo(p2), p2.distanceTo(p3), p3.distanceTo(p4)],
       rootBase,
+      ...(metaJ && metaBase ? { meta: metaJ, metaBase } : {}),
     };
   }
 
@@ -554,13 +564,6 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
   mesh.raycast = noRaycast;
   mesh.material = skinMat;
   mesh.castShadow = mesh.receiveShadow = false;
-
-  // 拇指挂点平移(THUMB_PITCH_MOUNT)必须放最后:attach 保世界位姿,更早
-  // 平移会被 attach 补偿成 no-op(踩过:curl 改动单边生效,拇指绕根上扫飞顶);
-  // 甲片拟合读 bind 顶点 + tip.matrixWorld,提前平移会把甲片错位烘进局部系。
-  // 此处骨骼/甲片已全部挂进代理链,平移 = 整拇指刚体随动。
-  fingers.thumb.root.position.add(new THREE.Vector3(...THUMB_PITCH_MOUNT[side]));
-  group.updateMatrixWorld(true);
 
   return { group, side, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat], nailMeshes };
 }
