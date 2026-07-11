@@ -381,14 +381,30 @@ function chainLL(read: (string | null)[], state: Perm, ai: number): number {
   return best;
 }
 
+// --vlmev <w>: VLM 普查读数附加证据通道 (正⑱ 阶段3 原型)。不删不换管线读数,
+// 在其上叠加普查读数的似然 ×w — 给证据薄的视频"补净证据"而非"删毒" (删格触发
+// 证据总量效应反伤 v3)。读数与 run.grid 同格序 (普查协议实证), 同窗/同端边缘化。
+const VLM_W = parseFloat(argAt("--vlmev") ?? "0");
+const vlmReads = new Map<string, (string | null)[]>();
+if (VLM_W > 0) {
+  const path = join(import.meta.dirname, "vlm-census-reads.json");
+  const all = JSON.parse(readFileSync(path, "utf8")) as Record<string, Record<string, (string | null)[]>>;
+  const mine = all[ONLY];
+  if (mine) for (const [k, r] of Object.entries(mine)) vlmReads.set(k, r);
+  console.log(`vlmev: 权重 ${VLM_W}, 普查读数 ${vlmReads.size} 链`);
+}
+
 /** 边界 t 证据分: 各链 vs max(动作前态 sMid, 动作后态 sAfter) 双端点似然 (主循环 + pass2 共用) */
 const evidenceAt = (t: number, sMid: Perm, sAfter: Perm, a0: number, a1: number): number => {
   let ev = 0;
-  for (const c of v.bounds[t]) {
+  for (let ci = 0; ci < v.bounds[t].length; ci++) {
+    const c = v.bounds[t][ci];
     const pool = FREE_WIN ? [a0, a1] : [c.win === 0 ? a0 : a1];
     let best = -Infinity;
+    const vr = VLM_W > 0 ? vlmReads.get(`${t}-${ci}`) : undefined;
     for (const ai of pool) {
-      const s = Math.max(chainLL(c.read, sMid, ai), chainLL(c.read, sAfter, ai));
+      let s = Math.max(chainLL(c.read, sMid, ai), chainLL(c.read, sAfter, ai));
+      if (vr) s += VLM_W * Math.max(chainLL(vr, sMid, ai), chainLL(vr, sAfter, ai));
       if (s > best) best = s;
     }
     ev += best;
@@ -479,9 +495,14 @@ if (!NO_DICT) {
   console.log(`字典后缀树: ${nCand} 候选 (STM ${L - 2}..${L + 2})`);
 }
 
-// 短候选提前耗尽后, 更早边界按真色未知计分 — 变长公平比
+// 短候选提前耗尽后, 更早边界按真色未知计分 — 变长公平比 (含 --vlmev 附加通道格)
 const bgOfBound = (t: number): number =>
-  v.bounds[t].reduce((s, c) => s + c.read.reduce((a, r) => (r ? a + logBg[r] : a), 0), 0);
+  v.bounds[t].reduce((s, c, ci) => {
+    let b = c.read.reduce((a, r) => (r ? a + logBg[r] : a), 0);
+    const vr = VLM_W > 0 ? vlmReads.get(`${t}-${ci}`) : undefined;
+    if (vr) b += VLM_W * vr.reduce((a, r) => (r ? a + logBg[r] : a), 0);
+    return s + b;
+  }, 0);
 /** bgSuffix[d] = 深度 d 耗尽后, 剩余边界 (深度 d+1..L) 的背景分总和 */
 const bgSuffix: number[] = new Array(L + 1).fill(0);
 for (let d = L - 1; d >= 0; d--) bgSuffix[d] = bgSuffix[d + 1] + bgOfBound(n - (d + 1));
