@@ -489,12 +489,22 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
       // 隐式满足:全部肉 |x|≳32.5)。深度上 tip 拉回面附近:旧解食指 tip
       // z −123.6 悬空越面 27U(只有指腹蹭到面,端点戳向空中)。
       const ax = r.tip.x * mx.inwardSgn; // 带符号:跨过中线 = 负,墙立即起(r12 镜像解教训)
-      L += t(`${name}.tipx`, 50 * (hinge(36 - ax) ** 2 + hinge(ax - 46) ** 2));
-      L += t(`${name}.tipz`, 2 * (hinge(-104 - r.tip.z) ** 2 + hinge(r.tip.z + 94) ** 2));
+      // r21:CW26 整手俯转下 [36,46] 内缘带与拇指 Je 契约被证不可兼容(5 连解:
+      // 四指钉内缘 ⇒ 手根内移 40U ⇒ 拇指 F 接触可达区中心塌到 x≈0,要么穿 M 列
+      // 要么丢面)。TIPX 放宽仍须在 Q/Te/T 贴纸带内(x≤96−肉半径)。
+      const [tipxLo, tipxHi] = (process.env.TIPX ?? '36,46').split(',').map(Number);
+      L += t(`${name}.tipx`, 50 * (hinge(tipxLo - ax) ** 2 + hinge(ax - tipxHi) ** 2));
+      // r21:CW26 下尖排斜穿面,越面深度放宽(TIPZLO;用户预览认可 −150 级越面)
+      const tipzLo = Number(process.env.TIPZLO ?? -104);
+      L += t(`${name}.tipz`, 2 * (hinge(tipzLo - r.tip.z) ** 2 + hinge(r.tip.z + 94) ** 2));
     } else if (Number.isFinite(r.gapB) && r.gapB < 900) {
       L += t(`${name}.gap`, 60 * hinge(2.0 - r.gapB) ** 2); // 小指不需接触,但别蹭面
     }
   }
+  // r21(2026-07-11 用户俯视图规格):食/中/无名指尖排与 B 面平行 —— 三尖
+  // z 展布 ≤2U 软墙(丢接触时 tip 仍有坐标,lost 项主导,此项只在贴面后收尾)。
+  const zs = (['index', 'middle', 'ring'] as const).map((n) => mx.fingers[n].tip.z);
+  L += t('tipzEq', 30 * hinge(Math.max(...zs) - Math.min(...zs) - 2) ** 2);
   return L;
 }
 
@@ -502,7 +512,9 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
 function thumbLoss(mx: Metrics): number {
   let L = 1e4 * hinge(mx.pen) ** 2 + 100 * hinge(mx.pen + 1.2) ** 2;
   const t = mx.thumb;
-  L += 100 * hinge(34.5 - t.minAbsX) ** 2; // M 列安全(硬)
+  // M 列安全(硬)。r21 CW26:拇指几何上必入 M 列(5 连解证明),M 扫掠避让
+  // 交指法侧(同中指 @pin 先例),墙职责降为左右拇指互撑净距 —— THUMBMX 下调。
+  L += 100 * hinge(Number(process.env.THUMBMX ?? 34.5) - t.minAbsX) ** 2;
   if (!Number.isFinite(t.fGap) || t.fGap > 900) {
     // 丢接触软拉目标:水平拇指 tip 落 F 竖直正中、贴中列边界(r6/r7 用户规格)
     const d = t.tip.distanceTo(new THREE.Vector3(58, 0, HALF + 3));
