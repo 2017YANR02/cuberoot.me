@@ -441,7 +441,8 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
   // 静置余量 ≥1.2U:待机呼吸 x ±1.76 / y ±0.88(home),贴 0 的裸间隙会被
   // 周期性吃穿(L 首解 pen −0.79 抓的)。
   // 余量墙 MANO ×20:权 5 在 pen −1.17 处梯度 ~0.005,推不动(实测停 −1.17)
-  let L = t('pen', 1e4 * hinge(mx.pen) ** 2 + 100 * hinge(mx.pen + 1.2) ** 2);
+  // 呼吸余量墙权重 PENW(r22:yaw 解在 pen 0.00 平衡,100 推不动,加压清)
+  let L = t('pen', 1e4 * hinge(mx.pen) ** 2 + Number(process.env.PENW ?? 100) * hinge(mx.pen + 1.2) ** 2);
   // 左右手互撑硬墙(2026-07-11 用户背面截图:左右指尖对撞):四指肉内伸不过
   // x=12 ⇒ 镜像后左右净距 ≥24(≈0.375 棱块)。此前无任何跨手项,单手合规即
   // 放行 —— HAND_SCALE 变大/带宽收紧时会静默撞上。
@@ -510,7 +511,7 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
 
 /** 拇指部分(stage B;pen 只含拇指肉 + 甲片)。 */
 function thumbLoss(mx: Metrics): number {
-  let L = 1e4 * hinge(mx.pen) ** 2 + 100 * hinge(mx.pen + 1.2) ** 2;
+  let L = 1e4 * hinge(mx.pen) ** 2 + Number(process.env.PENW ?? 100) * hinge(mx.pen + 1.2) ** 2;
   const t = mx.thumb;
   // M 列安全(硬)。r21 CW26:拇指几何上必入 M 列(5 连解证明),M 扫掠避让
   // 交指法侧(同中指 @pin 先例),墙职责降为左右拇指互撑净距 —— THUMBMX 下调。
@@ -830,6 +831,12 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       const compounds = (MODE === 'L' ? [] : [
         ...[0.008, 0.016, 0.032].map((k) => ({ idx: [1, 4, 7, 10, 13], d: [-1.2, k, k, k, k] })),
         { idx: [1, 23, 24, 25, 26], d: [-1.2, 0.02, 0.02, 0.02, 0.02] },
+        // r22(用户机理「MCP 弯少一点」):手根沿 CW26 手轴外移 (+cos26,0,+sin26)
+        // + 四指 dc2 **加勾**补偿(近节平伸、远节扣面 —— 探针实测 dc1 伸直的
+        // 雅可比把尖甩更远,不能钉尖;钉尖靠 PIP 加深)。dc1 变体只管观感直化。
+        // ⚠ t∈[7,20] 平台:拇指肉跨中线时 |x|min 恒 ≈0 无梯度,种子必须跳过。
+        ...[0.008, 0.016, 0.032].map((k) => ({ idx: [1, 3, 23, 24, 25, 26], d: [1.08, 0.53, k, k, k, k] })),
+        { idx: [1, 3, 4, 7, 10, 13], d: [1.08, 0.53, -0.02, -0.02, -0.02, -0.02] },
       ]).filter((c) => !c.idx.some((i) => frozen.has(i))); // 冻结下标的复合步一并禁(r14 曾绕过)
       const fin = descend(evalC2, seed, stepsC2, boundsA2, 'POLISH', false, compounds);
       applyPose(p.m, buildPose(base, fin.s));
