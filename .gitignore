@@ -106,5 +106,6 @@ fmc/**/target/
 /core/*.bmp
 /core/*.avif
 
-# MANO hand model (MPI licensed, no redistribution — converted per-machine by scripts/convert-mano.py)
+# MANO / SMPL-X hand+forearm models (MPI licensed, no redistribution — converted per-machine by scripts/convert-mano.py)
 core/packages/client/public/sim/hands/mano/
+core/packages/client/public/sim/hands/smplx/

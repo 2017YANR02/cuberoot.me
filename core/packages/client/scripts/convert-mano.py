@@ -22,6 +22,18 @@ Input:  MANO_RIGHT.pkl (searched under --src, its models/ subdir, or inside
         homeLeft, since fixed — see handPoses.ts homeLeft mano branch.)
 Output: core/packages/client/public/sim/hands/mano/{right,left}.mano.json
 
+Also (when models_smplx_v1_1.zip / SMPLX_NEUTRAL.npz is present under --src):
+        core/packages/client/public/sim/hands/smplx/forearm.smplx.json
+        — a real-forearm piece cut from the SMPL-X body (elbow-to-past-wrist
+        slab in the forearm frame), replacing the procedural tapered tube in
+        handModel.buildForearm. Rigid (no skinning; the rig poses the forearm
+        as one group), right side only — the left arm is y-mirrored at runtime
+        (ulna head sits on the pinky side; a real forearm is not symmetric).
+        load_smplx() keeps ALL model tensors (weights/posedirs/kintree) so a
+        future full-body mode reuses the same loader + operators (mask cut ->
+        cap -> subdivide -> unwrap); the forearm is just the first consumer.
+        Same license rule as MANO: never commit the npz or converted output.
+
 What it does (bind pose = MANO zero pose, betas = 0):
   1. Unpickle with a chumpy stub (original pkls reference chumpy classes;
      we only need the wrapped ndarrays — no chumpy install, no numpy pin).
@@ -63,6 +75,7 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[3]  # core/packages/client/scripts -> repo/core
 OUT_DIR = REPO / "packages" / "client" / "public" / "sim" / "hands" / "mano"
+SMPLX_OUT_DIR = REPO / "packages" / "client" / "public" / "sim" / "hands" / "smplx"
 
 WEBXR_FINGERS = ["thumb", "index", "middle", "ring", "pinky"]
 
@@ -537,6 +550,139 @@ def convert(hand: str, raw: bytes, subdiv: bool, mirror: bool = False) -> dict:
     }
 
 
+# ---------------------------------------------------------------- SMPL-X
+# Standard SMPL-X joint layout (fixed in the released model; smplx codebase).
+SMPLX_J = {"right_elbow": 19, "right_wrist": 21, "right_index1": 40, "right_pinky1": 46}
+
+# Rig-unit calibration (handModel.buildForearm procedural tube, U space):
+# wrist-end y half-width 34.5U (matched to the hand stump), tip reach -186U
+# (embedded in the cuff, which covers [-188U,-124U]), overlap +25U past the
+# wrist into the hand interior (hides the junction inside the hand mesh).
+FOREARM_HALFY_U = 34.5
+FOREARM_LEN_U = 186.0
+FOREARM_OVL_U = 25.0
+
+
+def load_smplx(src: Path) -> dict | None:
+    """SMPLX_NEUTRAL.npz (loose, models/smplx/, or inside models_smplx_v1_1.zip).
+    Returns every model tensor — the forearm piece only needs geometry, but a
+    future full-body mode reuses this loader as-is. None if not present."""
+    def pick(z) -> dict:
+        keys = ("v_template", "f", "weights", "J_regressor", "kintree_table", "posedirs")
+        return {k: np.asarray(z[k]) for k in keys}
+
+    for cand in (src, src / "models" / "smplx", src / "models"):
+        if cand.is_dir():
+            for p in cand.glob("*.npz"):
+                if p.name.upper() == "SMPLX_NEUTRAL.NPZ":
+                    return pick(np.load(p))
+    if src.is_dir():
+        for zp in sorted(src.glob("*.zip")):
+            with zipfile.ZipFile(zp) as z:
+                for info in z.infolist():
+                    if Path(info.filename).name.upper() == "SMPLX_NEUTRAL.NPZ":
+                        return pick(np.load(io.BytesIO(z.read(info))))
+    return None
+
+
+def convert_smplx_forearm(d: dict, subdiv: bool) -> dict:
+    v = np.asarray(d["v_template"], dtype=np.float64)       # (10475,3) m, T-pose
+    f = np.asarray(d["f"], dtype=np.int64)                  # (20908,3)
+    J = np.asarray(d["J_regressor"], dtype=np.float64) @ v  # (55,3)
+    jw, je = J[SMPLX_J["right_wrist"]], J[SMPLX_J["right_elbow"]]
+
+    # Forearm-group frame (rig contract, handsRig forearm IK): origin = wrist,
+    # +x = elbow->wrist, +z = palm normal, +y = z×x. Derived from joints, not
+    # hardcoded axes — robust to the template's exact T-pose arm direction.
+    xg = jw - je
+    xg /= np.linalg.norm(xg)
+    idx1 = J[SMPLX_J["right_index1"]] - jw
+    pnk1 = J[SMPLX_J["right_pinky1"]] - jw
+    zg = np.cross(idx1, pnk1)  # right hand: index×pinky points out of the palm
+    zg -= (zg @ xg) * xg
+    zg /= np.linalg.norm(zg)
+    yg = np.cross(zg, xg)
+    p = (v - jw) @ np.stack([xg, yg, zg], axis=1)           # (10475,3) local
+
+    # Wrist ring half-width sets the meters->U scale; cut lengths follow so the
+    # scaled piece lands on the procedural tube's calibrated envelope.
+    ring = p[np.abs(p[:, 0]) < 0.006]
+    assert len(ring) > 8, len(ring)
+    half_y = float(ring[:, 1].max() - ring[:, 1].min()) / 2.0
+    cut_len = FOREARM_LEN_U / FOREARM_HALFY_U * half_y
+    ovl = FOREARM_OVL_U / FOREARM_HALFY_U * half_y
+
+    keep = (p[:, 0] > -cut_len) & (p[:, 0] < ovl)
+    fsel = f[keep[f].all(axis=1)]
+    assert len(fsel) > 100, len(fsel)
+    # largest vertex-connected component (guards against stray slab islands)
+    parent: dict[int, int] = {}
+
+    def find(a: int) -> int:
+        parent.setdefault(a, a)
+        while parent[a] != a:
+            parent[a] = parent.setdefault(parent[a], parent[a])
+            a = parent[a]
+        return a
+
+    for tri in fsel:
+        ra = find(int(tri[0]))
+        for b in (int(tri[1]), int(tri[2])):
+            rb = find(b)
+            if ra != rb:
+                parent[rb] = ra
+                ra = find(ra)
+    comps: dict[int, list[int]] = {}
+    for fi, tri in enumerate(fsel):
+        comps.setdefault(find(int(tri[0])), []).append(fi)
+    fsel = fsel[max(comps.values(), key=len)]
+
+    used = np.unique(fsel)
+    remap = np.full(len(p), -1, dtype=np.int64)
+    remap[used] = np.arange(len(used))
+    v2 = p[used]
+    f2 = remap[fsel]
+
+    # cap both open rings (elbow end / palm end; both hidden but capping stops
+    # see-through at glancing angles), fix winding, subdivide — all via the
+    # MANO operators (dummy weights/uv columns, unused downstream).
+    w2 = np.ones((len(v2), 1))
+    uv0 = np.zeros((len(v2), 2))
+    v2, f2, w2, uv0 = cap_boundary(v2, f2, w2, uv0, wrist_col=0)
+    vol = float(np.einsum("ij,ij->", v2[f2[:, 0]], np.cross(v2[f2[:, 1]], v2[f2[:, 2]]))) / 6.0
+    if vol < 0:
+        print(f"[convert-mano] smplx forearm: negative signed volume ({vol:.2e}) — flipping winding")
+        f2 = f2[:, ::-1].copy()
+    if subdiv:
+        # two steps: the SMPL-X body mesh is coarse in the forearm (~190 raw
+        # verts here vs 778 for a whole MANO hand) — one step still silhouettes.
+        for _ in range(2):
+            v2, f2, w2, uv0 = loop_subdivide(v2, f2, w2, uv0)
+
+    fn = np.cross(v2[f2[:, 1]] - v2[f2[:, 0]], v2[f2[:, 2]] - v2[f2[:, 0]])
+    nrm = np.zeros_like(v2)
+    for k in range(3):
+        np.add.at(nrm, f2[:, k], fn)
+    nrm /= np.maximum(np.linalg.norm(nrm, axis=1, keepdims=True), 1e-12)
+
+    uv2, vmap, f3 = box_unwrap(v2, f2)
+    v3 = v2[vmap]
+    nrm3 = nrm[vmap]
+
+    print(f"[convert-mano] smplx forearm: verts {len(v2)}->{len(v3)} (uv seams) faces {len(f3)}"
+          f" | wrist halfY {half_y * 1000:.1f} mm, x [{v3[:, 0].min():+.3f},{v3[:, 0].max():+.3f}] m")
+    return {
+        "format": "cuberoot-smplx-forearm@1",
+        "hand": "right",
+        "counts": {"verts": len(v3), "faces": int(len(f3))},
+        "position": b64(v3, np.float32),
+        "normal": b64(nrm3, np.float32),
+        "index": b64(f3, np.uint32),
+        "uv": b64(uv2, np.float32),
+        "wristHalfY": half_y,
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", default="D:/cube/mano")
@@ -549,6 +695,15 @@ def main() -> None:
         out = OUT_DIR / f"{hand}.mano.json"
         out.write_text(json.dumps(data), encoding="utf-8")
         print(f"[convert-mano] wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
+    sx = load_smplx(Path(args.src))
+    if sx is None:
+        print("[convert-mano] no SMPLX_NEUTRAL.npz under --src — skipping real-forearm piece (procedural tube remains)")
+        return
+    SMPLX_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    data = convert_smplx_forearm(sx, subdiv=not args.no_subdiv)
+    out = SMPLX_OUT_DIR / "forearm.smplx.json"
+    out.write_text(json.dumps(data), encoding="utf-8")
+    print(f"[convert-mano] wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
 
 
 if __name__ == "__main__":
