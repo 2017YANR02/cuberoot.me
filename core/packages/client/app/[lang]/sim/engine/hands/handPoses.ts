@@ -6,7 +6,7 @@
  * splay 由 rig 侧 ×side。
  */
 import * as THREE from "three";
-import type { FingerName } from "./handModel";
+import { WRIST_LOCAL, type FingerName } from "./handModel";
 
 /** 手模资产种类:default = WebXR generic-hand(right/left.glb);mano = MPI MANO
  *  (用户自持授权,scripts/convert-mano.py 转换,gitignored)。home 姿逐资产
@@ -225,17 +225,17 @@ const LEFT_CURL_OFFSET: Record<FingerName, [number, number, number, number?, num
   pinky: [0.0254, -0.02, 0.04, 0, -0.002],
 };
 
-/** MANO 左手偏移(2026-07-11 实解:MODEL=mano SOLVE=L,手根冻结严格镜像,
- *  MANO_LEFT 是独立扫描均值、非 R 的完美镜像 —— 镜像姿态下拇指 fGap 1.57 vs
- *  R 3.19 实测,不对称全由指参吸收)。L 终解:四指倾角 5.6/4.4/7.8°、贴面
- *  2.90~2.91、行带内;拇指 nail·ẑ 0.984、CMC −34.0(D 层下,比 R 更深)、
- *  MCP −55.6、fGap 3.44 压 FL 贴纸 (−90.2,−27.8)、肉 |x|≥39.0、pen −1.56。 */
+/** MANO 左手偏移 = 全零(2026-07-11 用户拍板「左右手必须对称」):左资产由
+ *  convert-mano.py 从 MANO_RIGHT 镜像生成(官方 MANO_LEFT 本就是 R 的位精确
+ *  镜像,实测顶点/关节/权重差全 0;此前「左模板非镜像、fGap 1.57 vs 3.19」
+ *  是 homeLeft 腕锚常差 bug 的误诊,已修——见 homeLeft mano 分支),左姿态 =
+ *  右姿态纯镜像,全部指标与 R 逐项相同(SOLVE=SYM 顶点级 0 残差)。 */
 const MANO_LEFT_CURL_OFFSET: Record<FingerName, [number, number, number, number?, number?, number?, number?]> = {
-  thumb: [0.0091, 0.1616, -0.2461, 0.034, 0.1665, -0.2904, 0.185],
-  index: [-0.1023, 0.0881, 0.2127, 0.0123, 0.0458],
-  middle: [0.0345, -0.0242, 0.0001, -0.0647, -0.245],
-  ring: [-0.1568, 0.2647, -0.0436, 0.1005, 0.2166],
-  pinky: [0.1761, -0.0243, 0.0353, -0.0302, 0.0078],
+  thumb: [0, 0, 0],
+  index: [0, 0, 0],
+  middle: [0, 0, 0],
+  ring: [0, 0, 0],
+  pinky: [0, 0, 0],
 };
 
 const LEFT_OFFSET_BY_KIND: Record<HandModelKind, Record<FingerName, [number, number, number, number?, number?, number?, number?]>> = {
@@ -264,9 +264,15 @@ export function homeLeft(kind: HandModelKind = "default"): HandPose {
       ...(f.meta ? { meta: f.meta } : {}), // 掌弓通道镜像语义由 rig ×side,需要 L 独立偏移时再扩表
     };
   }
-  return {
-    pos: new THREE.Vector3(-r.pos.x, r.pos.y, r.pos.z),
-    quat: mirrorQuatX(r.quat).multiply(qz),
-    fingers,
-  };
+  const quat = mirrorQuatX(r.quat).multiply(qz);
+  const pos = new THREE.Vector3(-r.pos.x, r.pos.y, r.pos.z);
+  if (kind === "mano") {
+    // 两腕同锚 WRIST_LOCAL(y=−1U≠0)⇒ 手系里 L 几何 = My·R + (0,2·WLy,0)
+    // 常差,世界严格镜像必须把该项沿左手姿态转回:pos_L = Mx·pos_R −
+    // quat_L·(0,2·WLy,0)。缺此项整只左手偏离完美镜像 4.4U(SOLVE=SYM 实测,
+    // 曾被误诊为「MANO 左模板非镜像」)。default 不加:其 LEFT_CURL_OFFSET
+    // 标定在带偏移的世界位上解的,补了要全部重解(且该资产本身雕刻不对称)。
+    pos.add(new THREE.Vector3(0, -2 * WRIST_LOCAL.y, 0).applyQuaternion(quat));
+  }
+  return { pos, quat, fingers };
 }
