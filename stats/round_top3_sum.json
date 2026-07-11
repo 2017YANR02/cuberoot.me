@@ -11,8 +11,8 @@
       "labelEn": "Single",
       "labelZh": "单次",
       "sourceBool": {
-        "labelEn": "Finals only",
-        "labelZh": "只看决赛"
+        "labelEn": "Podiums only",
+        "labelZh": "仅领奖台"
       },
       "sourcePanels": [
         {
@@ -10016,8 +10016,8 @@
         },
         {
           "id": "single-finals",
-          "labelEn": "Finals only",
-          "labelZh": "只看决赛",
+          "labelEn": "Podiums only",
+          "labelZh": "仅领奖台",
           "panels": [
             {
               "id": "ranking",
@@ -17985,8 +17985,8 @@
       "labelEn": "Average",
       "labelZh": "平均",
       "sourceBool": {
-        "labelEn": "Finals only",
-        "labelZh": "只看决赛"
+        "labelEn": "Podiums only",
+        "labelZh": "仅领奖台"
       },
       "sourcePanels": [
         {
@@ -28270,8 +28270,8 @@
         },
         {
           "id": "average-finals",
-          "labelEn": "Finals only",
-          "labelZh": "只看决赛",
+          "labelEn": "Podiums only",
+          "labelZh": "仅领奖台",
           "panels": [
             {
               "id": "ranking",
