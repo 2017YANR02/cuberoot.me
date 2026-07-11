@@ -15,7 +15,7 @@
  * 用法: npx tsx scripts/backward-decode.ts [--video 2] [--beam 512] [--freewin]
  *       [--dump .tmp/obs-dump.json] [--rotpen -3]
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseGT } from "../src/splits.ts";
 import { ROTATION_TOKENS } from "../src/notation.ts";
@@ -263,6 +263,20 @@ const probsLL = (t: number, move: string): number => {
   const face = move[0].toUpperCase();
   return PROBS_W * Math.log(Math.max(probsArr[t]?.[face] ?? 0, 0.02));
 };
+// logo 通道 (logo-probe2 → .tmp/logo-measure.json, 正⑮ (d)): 白心 GAN logo
+// 转角给出末步 U 层转量 (方向 4/4 实测全对), 只作用于深度 1 (末步)
+const LOGO_W = parseFloat(argAt("--logo") ?? "0");
+const logoPath = join(import.meta.dirname, "..", ".tmp", "logo-measure.json");
+const logoNcc: number[] | null = LOGO_W > 0 && existsSync(logoPath)
+  ? ((JSON.parse(readFileSync(logoPath, "utf8")) as Record<string, { ncc: number[] }>)[v.name[0]]?.ncc ?? null)
+  : null;
+const logoMax = logoNcc ? Math.max(...logoNcc) : 0;
+const logoLL = (m: string): number => {
+  if (!logoNcc) return 0;
+  // 注意字典 token 有 U2' 写法 (U2 ≡ U2' = 180°), 先查 "2" 再查 "'"
+  const k = m[0].toUpperCase() !== "U" ? 0 : m.includes("2") ? 2 : m.endsWith("'") ? 3 : 1;
+  return LOGO_W * (logoNcc[k] - logoMax);
+};
 const looConf = buildLogConf(dump.videos.filter((x) => x.name !== v.name));
 const predColor = (state: Perm, f: number): Color => COLOR_NAMES[Math.floor(v.omega[state[f]] / 9)];
 // 背景似然 (真色未知的边缘似然): 短候选补齐 + 平移出格格用
@@ -487,7 +501,7 @@ for (let d = 1; d <= L; d++) {
     const sMid = applyTo(p.state, getInv(move));
     let sBefore = sMid;
     for (let i = stepToks.length - 2; i >= 0; i--) sBefore = applyTo(sBefore, getInv(stepToks[i]));
-    const ev = evidence(sMid, p.state, p.a0, p.a1) + probsLL(t, move);
+    const ev = evidence(sMid, p.state, p.a0, p.a1) + probsLL(t, move) + (d === 1 ? logoLL(move) : 0);
     const score = p.score + ev + rotPen;
     const key = `${permKey(sBefore)}|${p.a0}|${p.a1}|${keyExtra}`;
     const old = next.get(key);
