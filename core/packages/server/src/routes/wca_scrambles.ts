@@ -374,6 +374,11 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
   const event = c.req.query('event') ?? '';
   const hasEvent = /^[0-9a-z]{2,6}$/.test(event);
   const q = (c.req.query('q') ?? '').trim().slice(0, 80);
+  // names: \n-joined exact WCA competition names — used by the client to search
+  // by localized (Chinese) comp name, which the DB doesn't store: the client
+  // resolves the CJK query to matching WCA names via comp_names_zh and sends them here.
+  const names = (c.req.query('names') ?? '').split('\n').map((s) => s.trim()).filter(Boolean).slice(0, 300);
+  const hasNames = names.length > 0;
   const from = c.req.query('from') ?? ''; const to = c.req.query('to') ?? '';
   const hasFrom = DATE_RE.test(from); const hasTo = DATE_RE.test(to);
   // 按国家筛选:值 = WCA country_id(如 USA / China / United Kingdom;参数化绑定,无注入风险,仅限长)。
@@ -417,10 +422,11 @@ wcaScramblesRoutes.get('/wca/scrambles/by-difficulty', async (c) => {
     }
 
     if (q) { where.push('c.name ILIKE ?'); params.push(`%${q}%`); }
+    if (hasNames) { where.push('c.name = ANY(?)'); params.push(names); }
     if (hasFrom) { where.push('c.start_date >= ?'); params.push(from); }
     if (hasTo) { where.push('c.start_date <= ?'); params.push(to); }
     if (hasCountry) { where.push('c.country_id = ?'); params.push(country); }
-    const needComp = !!q || hasFrom || hasTo || hasCountry;
+    const needComp = !!q || hasNames || hasFrom || hasTo || hasCountry;
     const whereSql = where.join(' AND ');
 
     const cntRows = await query<{ n: string }>(

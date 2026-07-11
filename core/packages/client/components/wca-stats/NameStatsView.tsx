@@ -271,8 +271,7 @@ export default function NameStatsView({ data, isZh, queryKey = 'type', nameMode:
               clickableBins={hist.clickable}
               selectedBin={selectedBin}
               onBarClick={setSelectedBin}
-              onYAxisClick={() => setYMode(m => (m === 'percent' ? 'count' : 'percent'))}
-              yAxisTitle={tr({ zh: '点击切换 百分比 / 数量', en: 'Click to toggle percent / count' })}
+              onYModeToggle={() => setYMode(m => (m === 'percent' ? 'count' : 'percent'))}
             />
           </div>
 

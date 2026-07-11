@@ -4,7 +4,7 @@
  * （之前的 block-based 实现要求标签独占一行，会让所有 inline 注释的 recon 全部得 0）
  */
 import type { ReconStatsResult } from '@cuberoot/shared';
-import { formatTime } from './recon-utils';
+import { formatTime, truncateCs } from './recon-utils';
 import { sq1MoveCounts } from './sq1-metrics';
 
 /** 删除每行 `//` 之后的注释，去掉空行 */
@@ -181,7 +181,7 @@ function computeStm(recon: string, event?: string): number {
 
 function computeTps(stm: number, single: number): number {
   if (!stm || !single || single <= 0) return 0;
-  const floored = Math.floor(single * 100) / 100;
+  const floored = truncateCs(single);
   if (floored <= 0) return 0;
   return Math.round((stm / floored) * 100) / 100;
 }

@@ -6,7 +6,7 @@
 // wcaId 从 useParams 取;头部信息走 WCA 公共 API(localStorage 24h 缓存)。
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Mars, Venus, Rewind, IdCard, LogOut } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
@@ -24,8 +24,17 @@ export default function PersonHubClient() {
   const lang = useLang();
   const isZh = lang !== 'en';
 
-  const params = useParams<{ wcaId: string }>();
-  const wcaId = Array.isArray(params.wcaId) ? params.wcaId[0] : (params.wcaId ?? '');
+  // Route ships as ONE prerendered sentinel shell ("_") reused for every wcaId (see
+  // page.tsx + next.config rewrite): the real id can't come from useParams (yields
+  // "_"), so derive it from the browser path. usePathname is the dep so this re-runs
+  // on soft nav; useState('') keeps the client's first render matching the empty
+  // server shell (no hydration mismatch), the effect fills it post-hydration.
+  const pathname = usePathname();
+  const [wcaId, setWcaId] = useState('');
+  useEffect(() => {
+    const m = window.location.pathname.match(/\/person\/([^/?#]+)/);
+    setWcaId(m ? decodeURIComponent(m[1]) : '');
+  }, [pathname]);
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);

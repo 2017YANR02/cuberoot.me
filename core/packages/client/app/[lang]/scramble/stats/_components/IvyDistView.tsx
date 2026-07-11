@@ -112,7 +112,6 @@ export default function IvyDistView({ isZh }: { isZh: boolean }) {
           onBarClick={(b) => setSelectedBin(b)}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-          yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count' })}
         />
       </div>
 

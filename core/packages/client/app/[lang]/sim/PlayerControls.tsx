@@ -27,13 +27,15 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useRouter, useParams } from 'next/navigation';
 import {
-  Play, Pause, SkipBack, SkipForward, RotateCcw,
+  Play, Pause, SkipBack, SkipForward,
   FlipHorizontal2, FlipVertical2, Eraser, RotateCw,
   Shuffle, Link2, Check, Upload,
   Search, Loader2, Pipette, Sparkles,
+  Undo2, Redo2, Keyboard,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -83,7 +85,10 @@ function randomIvyScramble(): string {
 }
 import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg } from '@/lib/cube3';
 import { get_shortened_rotation } from '@/lib/roux/RotationHelp';
-import { cleanForPlayer, extractAlgFromText } from '@/lib/recon-alg-utils';
+import {
+  cleanForPlayer, extractAlgFromText, findTokenPositions, findWhitespaceTokenPositions,
+  type TokenPosition,
+} from '@/lib/recon-alg-utils';
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
@@ -101,6 +106,7 @@ import {
   type SimSettings, type SimBoardBg,
 } from './SettingDrawer';
 import { type KeyMove } from './keymap';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
@@ -124,6 +130,22 @@ import './player-controls.css';
 const GRIP_MARKS: Record<string, GripName> = { '↑': 'up', '↓': 'down', '·': 'home' };
 const GRIP_MARK_SPLIT = /([↑↓·])/;
 const stripGripMarks = (s: string): string => s.replace(/[↑↓·]/g, ' ');
+
+/** Char offsets of grip marks in `text` (line comments excluded — mirrors the
+ *  `noComments` pass parseNxnItems does before splitting on GRIP_MARK_SPLIT). */
+function findGripMarkPositions(text: string): number[] {
+  const positions: number[] = [];
+  let offset = 0;
+  for (const line of text.split(/\r?\n/)) {
+    const commentIdx = line.indexOf('//');
+    const instr = commentIdx >= 0 ? line.slice(0, commentIdx) : line;
+    for (let i = 0; i < instr.length; i++) {
+      if (GRIP_MARKS[instr[i]]) positions.push(offset + i);
+    }
+    offset += line.length + 1;
+  }
+  return positions;
+}
 
 /** 指法后缀 `p`(推法,FINGERTRICKS.md §2):空白分隔的单招 token 尾接 p,如
  *  `U'p` = 右食指推 U'。喂 cubing.js / 变换工具前必须剥(Alg 解析不了)。 */
@@ -615,6 +637,33 @@ function autosize(el: HTMLTextAreaElement | null): void {
   el.style.height = el.scrollHeight + 'px';
 }
 
+type AlgHlSpan = { text: string; bad?: boolean; current?: boolean };
+
+/** Splice a `[start, end)` "currently playing" range across a span list, tagging
+ *  the overlapping slice(s) `current` (and slicing a span in two/three when the
+ *  range only partly covers it) — same mirror-overlay trick the Ivy `bad`
+ *  highlighting already uses (`.sim-player-hl`), just orange instead of red and
+ *  driven by playback position instead of live validation. */
+function applyAlgHighlight(spans: AlgHlSpan[], range: [number, number] | null): AlgHlSpan[] {
+  if (!range) return spans;
+  const [hs, he] = range;
+  if (he <= hs) return spans;
+  const out: AlgHlSpan[] = [];
+  let pos = 0;
+  for (const s of spans) {
+    const start = pos;
+    const end = pos + s.text.length;
+    pos = end;
+    if (end <= hs || start >= he) { out.push(s); continue; }
+    const preLen = Math.max(0, hs - start);
+    const postStart = Math.min(s.text.length, Math.max(preLen, he - start));
+    if (preLen > 0) out.push({ ...s, text: s.text.slice(0, preLen) });
+    if (postStart > preLen) out.push({ ...s, text: s.text.slice(preLen, postStart), current: true });
+    if (postStart < s.text.length) out.push({ ...s, text: s.text.slice(postStart) });
+  }
+  return out;
+}
+
 // 整体转体的「消步」:cubing.js 的 simplifyAlg 只抵消相邻同轴,不会把一串
 // x/y/z 折成最短等价转体。复用 recon/roux 的 get_shortened_rotation(整 24 朝向
 // 解最短转体串),按面转切段、只对纯转体的连续段求最短,面转原样保留。仅 NxN。
@@ -814,6 +863,9 @@ interface Props {
    *  panel) is retired — still typed so stale URLs parse, treated as 'group'. */
   renderer?: 'cubing' | 'engine' | 'group';
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
+  /** DOM node below the cube canvas to portal the playback control row into
+   *  (twizzle-style bar under the puzzle). Falls back to inline when absent. */
+  playbackSlot?: HTMLElement | null;
 }
 
 export default function PlayerControls({
@@ -824,6 +876,7 @@ export default function PlayerControls({
   userMoveRef, twistyPlayerRef,
   skewbNotation, onSkewbNotationChange,
   renderer = 'cubing', onRendererChange,
+  playbackSlot,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const isIvy = puzzleKind === 'ivy';
@@ -906,18 +959,24 @@ export default function PlayerControls({
   const [sq1Format, setSq1Format] = useState<'compact' | 'wca'>('compact');
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  // Caret char offset in the solution box while the user is navigating text (click
+  // / arrow keys / typing) — drives the "current move" highlight the twizzle way
+  // (highlight the move the caret is *on*, not the last one fully behind it).
+  // Null = highlight follows playback position (`step`) instead; cleared whenever
+  // a non-caret action (play / step / reset) moves the timeline.
+  const [caretChar, setCaretChar] = useState<number | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [derivingScramble, setDerivingScramble] = useState(false);
   const [optimalScrambleBusy, setOptimalScrambleBusy] = useState(false);
   const [optimalScrambleStatus, setOptimalScrambleStatus] = useState<string | null>(null);
   const optimalScrambleAbortRef = useRef<AbortController | null>(null);
 
-  // 播放/单步转速(帧/90°):1.00× = 120 帧 ≈ 2s,整体为旧 30 帧基准的 1/4
-  // (2026-07-05 用户要求)。timing.frames 是与抽屉「转动速度」共用的全局,
-  // 禁在 mount/slider 时裸写抢顺序 —— 播放与单步路径显式 set,用完立刻
-  // restore 回抽屉值(tween 在 twist() 调用瞬间捕获帧数,同步恢复安全)。
-  const playbackFrames = Math.max(2, Math.round(120 / speed));
+  // 播放/单步转速(帧/90°)= 抽屉「转动速度」的基准 mapFrames(settings.speed)。
+  // 手动拖动 / 键盘 / 播放 / 单步全用这一个速度(2026-07-09 用户要求统一为单一旋钮;
+  // 旧的独立「×」播放倍率已删)。timing.frames 是与抽屉共用的全局,禁在 mount/slider
+  // 时裸写抢顺序 —— 播放与单步路径显式 set(此处即写回同值,幂等),用完立刻 restore
+  // 回抽屉基准值(tween 在 twist() 调用瞬间捕获帧数,同步恢复安全)。
+  const playbackFrames = mapFrames(settings.speed);
 
   const playTimerRef = useRef<number | null>(null);
   const stepRef = useRef(0);
@@ -1008,6 +1067,64 @@ export default function PlayerControls({
     () => (corner ? corner.parse(algDraft) : []),
     [corner, algDraft],
   );
+
+  // Char range of every play-item (move token / grip mark), in play order — the
+  // single source both the highlight (index → range) and caret sync (caret →
+  // index) read from. SQ1's tuple notation isn't one-move-per-token and the
+  // cubing.js twisty path has its own native scrubber, so both stay empty.
+  const itemPositions = useMemo<TokenPosition[]>(() => {
+    if (isSq1 || isTwistyMode) return [];
+    if (isIvy) return ivyCanPlay ? findWhitespaceTokenPositions(algDraft) : [];
+    if (corner) return findWhitespaceTokenPositions(algDraft).filter((tk) => corner.parse(tk.text).length === 1);
+    // NxN: WCA move tokens + grip marks (↑↓·), merged back into text order.
+    const moves = findTokenPositions(algDraft);
+    const grips = findGripMarkPositions(algDraft).map((p) => ({ start: p, end: p + 1, text: algDraft[p] }));
+    return [...moves, ...grips].sort((a, b) => a.start - b.start);
+  }, [algDraft, isSq1, isTwistyMode, isIvy, ivyCanPlay, corner]);
+
+  // Which play-item to paint orange. While the user navigates text (caretChar set,
+  // not playing) it's the move on the caret's own line — the last item at/before
+  // the caret when that move shares the caret's line, else the first move on the
+  // caret's line (so a caret before a leading `(` of a group highlights that
+  // group's first move, not the previous line's last move). Otherwise it follows
+  // the playback position: `step - 1` = the move just started / finishing.
+  const highlightRange = useMemo<[number, number] | null>(() => {
+    let idx: number;
+    if (!playing && caretChar !== null) {
+      const lineOf = (pos: number) => {
+        let n = 0;
+        for (let i = 0; i < pos && i < algDraft.length; i++) if (algDraft[i] === '\n') n++;
+        return n;
+      };
+      const caretLine = lineOf(caretChar);
+      let prev = -1, next = -1;
+      for (let i = 0; i < itemPositions.length; i++) {
+        if (itemPositions[i].start <= caretChar) prev = i;
+        if (next === -1 && itemPositions[i].start >= caretChar) next = i;
+      }
+      // Prefer a move on the caret's line: the behind-move if it's on this line,
+      // else the ahead-move if it's on this line (caret sits in the leading
+      // whitespace / `(` before the line's first move), else fall back to behind.
+      if (prev >= 0 && lineOf(itemPositions[prev].start) === caretLine) idx = prev;
+      else if (next >= 0 && lineOf(itemPositions[next].start) === caretLine) idx = next;
+      else idx = prev;
+    } else {
+      idx = step - 1;
+    }
+    if (idx < 0) return null;
+    const p = itemPositions[idx];
+    return p ? [p.start, p.end] : null;
+  }, [playing, caretChar, itemPositions, step, algDraft]);
+
+  const algHlBaseSpans = useMemo<AlgHlSpan[]>(
+    () => ivyAlgSpans ?? [{ text: algDraft }],
+    [ivyAlgSpans, algDraft],
+  );
+  const algHlSpans = useMemo(
+    () => applyAlgHighlight(algHlBaseSpans, highlightRange),
+    [algHlBaseSpans, highlightRange],
+  );
+  const showAlgOverlay = !!ivyAlgSpans || !!highlightRange;
 
   const totalSteps = isSq1
     ? sq1Actions.length
@@ -1134,6 +1251,10 @@ export default function PlayerControls({
   }, [setupDraft, nxnItems, sq1Actions, ivyActions, cornerActions, settings.playbackMode]);
 
   const handleCaretSync = useCallback((text: string, caretIndex: number) => {
+    // Remember the caret so the highlight can follow the move it sits on (twizzle
+    // rule, see the highlightRange memo) — separate from the cube state, which is
+    // driven by jumpToStep(moves-before-caret) below.
+    setCaretChar(caretIndex);
     const before = text.slice(0, caretIndex);
     if (!isSq1 && !isIvy && !corner) {
       // NxN 直接喂原文(parseNxnItems 自己剥注释):extractAlgFromText 会把
@@ -1160,6 +1281,7 @@ export default function PlayerControls({
   // 目前只走 NxN(SQ1/Ivy/角转引擎仍瞬切):cube 状态恒等于 setup+前 step 项,
   // 正向 twist 第 step 项 / 反向 twist 第 step-1 项的逆,状态保持一致。
   const stepForward = useCallback(() => {
+    setCaretChar(null); // hand the highlight back to the playback position
     const animate = settings.animatePlayback !== false;
     if (animate && !isSq1 && !isIvy && !corner && world && step < nxnItems.length) {
       const cube = world.cube as import('./engine/nxn/cube').default;
@@ -1184,6 +1306,7 @@ export default function PlayerControls({
   }, [jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSq1, isIvy, corner, world, nxnItems]);
 
   const stepBack = useCallback(() => {
+    setCaretChar(null); // hand the highlight back to the playback position
     const animate = settings.animatePlayback !== false;
     if (animate && !isSq1 && !isIvy && !corner && world && step > 0 && step <= nxnItems.length) {
       const cube = world.cube as import('./engine/nxn/cube').default;
@@ -1803,10 +1926,15 @@ export default function PlayerControls({
 
       <div className="sim-player-row">
         <div className="sim-player-hlwrap">
-          {ivyAlgSpans && (
+          {showAlgOverlay && (
             <div className="sim-player-hl" aria-hidden="true">
-              {ivyAlgSpans.map((s, i) => (
-                <span key={i} className={s.bad ? 'bad' : undefined}>{s.text}</span>
+              {algHlSpans.map((s, i) => (
+                <span
+                  key={i}
+                  className={[s.bad && 'bad', s.current && 'current'].filter(Boolean).join(' ') || undefined}
+                >
+                  {s.text}
+                </span>
               ))}
             </div>
           )}
@@ -1817,7 +1945,7 @@ export default function PlayerControls({
             spellCheck={false}
             autoSpace={algAutoSpaceSafe}
             autoResize
-            className={ivyAlgSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
+            className={showAlgOverlay ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
             placeholder={t('解法', 'Solution')}
             title={is3x3 ? t('支持换握记号:↑ 上手(拇指起手 U 面)、↓ 下手(D 面)、· 回 home 握', 'Grip marks supported: ↑ thumb-up grip, ↓ thumb-down grip, · back to home grip') : undefined}
             onFocus={flushPendingScramble}
@@ -1870,13 +1998,17 @@ export default function PlayerControls({
         />
       )}
 
-      {!isTwistyMode ? (
+      {(() => {
+      const playbackBar = !isTwistyMode ? (
+      // 播放控制排(twizzle alpha.twizzle.net/edit 同款):跳到起点 |◀ / 上一步 ↩ /
+      // 播放 ▶ / 下一步 ↪ / 跳到末尾 ▶|。单步用弧形箭头,跳首尾用带竖线的双三角。
       <div className="sim-player-row">
-        <button onClick={() => jumpToStep(0)} title={t('回到起点', 'Reset')}><RotateCcw size={14} /></button>
-        <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')}><SkipBack size={14} /></button>
+        <button onClick={() => { setCaretChar(null); jumpToStep(0); }} disabled={step === 0} title={t('回到起点', 'Skip to start')} aria-label={t('回到起点', 'Skip to start')}><SkipBack size={14} /></button>
+        <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')} aria-label={t('上一步', 'Step back')}><Undo2 size={14} /></button>
         <button
           onClick={async () => {
             if (playing) { setPlaying(false); return; }
+            setCaretChar(null); // playback owns the highlight from here
             // 已在末尾时再点播放 = 从头重播:先把魔方复位到第 0 步(并同步 stepRef,
             // 否则播放轮询读到 step≥total 会立刻停),复位完成后再开播。
             if (step >= totalSteps) {
@@ -1887,23 +2019,14 @@ export default function PlayerControls({
           }}
           disabled={totalSteps === 0}
           title={playing ? t('暂停', 'Pause') : t('播放', 'Play')}
+          aria-label={playing ? t('暂停', 'Pause') : t('播放', 'Play')}
         >
           {playing ? <Pause size={14} /> : <Play size={14} />}
         </button>
-        <button onClick={stepForward} disabled={step >= totalSteps} title={t('下一步', 'Step forward')}><SkipForward size={14} /></button>
+        <button onClick={stepForward} disabled={step >= totalSteps} title={t('下一步', 'Step forward')} aria-label={t('下一步', 'Step forward')}><Redo2 size={14} /></button>
+        <button onClick={() => { setCaretChar(null); jumpToStep(totalSteps); }} disabled={step >= totalSteps} title={t('跳到末尾', 'Skip to end')} aria-label={t('跳到末尾', 'Skip to end')}><SkipForward size={14} /></button>
         <span className="sim-player-progress">{step} / {totalSteps}</span>
         {anchorSelect}
-        <label className="sim-player-speed">
-          <span>{speed.toFixed(2)}×</span>
-          <input
-            type="range"
-            min={0.25}
-            max={4}
-            step={0.05}
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-          />
-        </label>
       </div>
       ) : (
       // Twisty puzzles (pyraminx/skewb/megaminx/fto/PG explore — cubing.js TwistyPlayer,
@@ -1912,7 +2035,9 @@ export default function PlayerControls({
       // TwistySection already reads settings.playbackMode into experimentalSetupAnchor, it
       // just had no control to change it in this mode.
       <div className="sim-player-row">{anchorSelect}</div>
-      )}
+      );
+      return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
+      })()}
 
       <div className="sim-player-tools">
         <button onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
@@ -2353,8 +2478,10 @@ function PuzzleSettings({
               type="button"
               className="sim-keymap-open-btn"
               onClick={() => setKeymapOpen(true)}
+              title={t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}
+              aria-label={t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}
             >
-              {t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}
+              <Keyboard size={15} />
             </button>
             <button
               type="button"
@@ -2459,6 +2586,19 @@ function PuzzleSettings({
             <Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} />
             {/* 手指(指法演示):双手握持,转层时腕转/弹指跟动画。仅 3x3(simCaps.hands)。 */}
             <Toggle label={t('手指', 'Hands')} value={settings.hands === true} onChange={(v) => set('hands', v)} disabled={!caps.supports.hands} title={hint(caps.supports.hands)} />
+            {/* 手模资产二选一:内置 generic-hand / MANO(MPI,用户自持授权;资产缺失时
+                运行时自动回退内置)。门控同「手指」。 */}
+            <span className={'sim-toggle' + (caps.supports.hands ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.hands)}>
+              <span>{t('手模', 'Hand model')}</span>
+              <PillToggle
+                value={settings.handModel !== 'mano'}
+                onChange={(v) => set('handModel', v ? 'default' : 'mano')}
+                onLabel={t('内置', 'Built-in')}
+                offLabel="MANO"
+                ariaLabel={t('手模', 'Hand model')}
+                disabled={!caps.supports.hands}
+              />
+            </span>
             {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
                 用户指定的唯一例外。 */}
             {isNxNLocal && (

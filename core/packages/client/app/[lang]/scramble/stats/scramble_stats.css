@@ -261,6 +261,11 @@
   .scramble-stats-color-control {
     grid-column: 1 / -1;
   }
+  .scramble-stats-inline-summary {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
   .scramble-stats-color-control .subset-picker-mode {
     flex: 0 0 auto;
     width: auto;
@@ -607,6 +612,30 @@
   margin-left: auto;
   white-space: nowrap;
 }
+/* 均值 / 中位数 —— 内嵌在过滤行右侧,替代原来图表下的摘要面板 */
+.scramble-stats-inline-summary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  margin-left: auto;
+}
+.scramble-stats-inline-summary + .scramble-stats-count { margin-left: 0; }
+.scramble-stats-inline-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+.scramble-stats-inline-label {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+}
+.scramble-stats-inline-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
 /* 「下载全部」全量语料下载 — 紧跟样本数右侧 */
 .scramble-stats-download-all {
   display: inline-flex;
@@ -848,6 +877,11 @@ a.scramble-timeline-scramble:hover {
   align-items: center;
   gap: 0.5rem 0.6rem;
 }
+/* 筛选栏并入示例标题行(跟国家/下载同一行):占据标题右侧剩余宽度,搜索框内部再伸展。 */
+.scramble-stats-examples-header .scramble-stats-fulllist-bar {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
 /* 全量条数:折进面板标题(N 步示例 共 X 条),轻量灰字 */
 .scramble-stats-examples-allcount {
   margin-left: 0.5rem;
@@ -855,6 +889,29 @@ a.scramble-timeline-scramble:hover {
   font-weight: 400;
   color: var(--text-sub);
   font-variant-numeric: tabular-nums;
+}
+/* 组平均示例:标题右侧「完整 / 抽样 N/M」计数 */
+.scramble-stats-examples-count {
+  font-size: 0.76rem;
+  font-weight: 400;
+  color: var(--text-sub);
+  font-variant-numeric: tabular-nums;
+}
+/* 组平均示例:展开全部按钮 */
+.scramble-stats-avg-expand {
+  appearance: none;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.25rem;
+  font-size: 0.78rem;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.scramble-stats-avg-expand:hover {
+  text-decoration: underline;
 }
 .scramble-stats-fulllist-search {
   position: relative;

@@ -242,6 +242,16 @@ const nextConfig: NextConfig = {
         // shells (see forum/f/[slug]/page.tsx and forum/t/[id]/page.tsx).
         { source: "/:lang(en|zh)/forum/f/:slug", destination: "/:lang/forum/f/_" },
         { source: "/:lang(en|zh)/forum/t/:id", destination: "/:lang/forum/t/_" },
+        // Competition detail: ~17k comps, pure client shell (all data fetched in the
+        // browser). Same sentinel trick — one static shell backs every comp slug so a
+        // crawler / post-deploy sweep never burns a function render per slug (this was
+        // the Function Invocations spike). See wca/comp/[slug]/page.tsx.
+        { source: "/:lang(en|zh)/wca/comp/:slug", destination: "/:lang/wca/comp/_" },
+        // Person hub + personal-recon pages: unbounded wcaId space, pure client shells
+        // (same latent spike as the comp page above). One static sentinel shell each.
+        // See person/[wcaId]/page.tsx and recon/person/[wcaId]/page.tsx.
+        { source: "/:lang(en|zh)/person/:wcaId", destination: "/:lang/person/_" },
+        { source: "/:lang(en|zh)/recon/person/:wcaId", destination: "/:lang/recon/person/_" },
       ],
       afterFiles: [
         // Dev only: FMC chain solver (vendored cubelib) runs as a local native

@@ -45,7 +45,7 @@ import { fetchCompRounds, type RoundFormat } from '@/lib/comp-wcif';
 import { toWcaEventId } from '@/lib/wca-events';
 import {
   parseTimeInput, formatTimeInput, formatTime, computeWcaAverage,
-  attemptsPerRound, localizeRound, isBldEvent,
+  attemptsPerRound, localizeRound, isBldEvent, truncateCs,
 } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
 import { revalidateRecon } from '../revalidate-action';
@@ -66,7 +66,7 @@ import { buildNormalizedSolution, hasWideMoveInCrossSection } from '@/lib/recon-
 import { encodeUrlAlg, decodeUrlAlg } from '@/lib/cubedb-url';
 import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { parseSq1Tokens, formatScrambleForEvent } from '@/lib/sq1-svg';
-import type { Comp } from '@/lib/comp-search';
+import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { ArrowLeft, ArrowRightLeft, Box, History, Home, Loader2, LogIn, UserPlus, ListPlus, AlertTriangle } from 'lucide-react';
 import '../recon.css';
@@ -514,6 +514,20 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return () => { cancelled = true; };
   }, [form.personId]);
 
+  // Full comp index (id → events) from all_past_comps.json — same source /wca/comp
+  // reads. personCompOptions is built from WCA person results, which carry no
+  // `events`; without this, isCancelledComp() would false-flag every >60-day-old
+  // comp as cancelled (empty events == cancelled heuristic). loadComps() is
+  // module-cached (CompPicker calls it too), so this adds no extra fetch.
+  const [compEventsById, setCompEventsById] = useState<Map<string, string[]> | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    loadComps()
+      .then(list => { if (!cancelled) setCompEventsById(new Map(list.map(c => [c.id, c.events ?? []]))); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
   // Competitions this solver has actually competed in for the selected event
   // (newest first) — restricts the CompPicker dropdown instead of the full index.
   const personCompOptions = useMemo<Comp[] | undefined>(() => {
@@ -527,15 +541,21 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       const c = compById.get(r.competition_id);
       if (!c) continue;
       seen.add(r.competition_id);
+      // Backfill events from all_past_comps so isCancelledComp() judges these the
+      // same way /wca/comp does. If a very recent comp isn't in the dump yet (empty
+      // or missing), fall back to the current event — the solver has a posted result
+      // here, so the comp definitely ran and wasn't cancelled.
+      const dumpEvents = compEventsById?.get(c.id);
       list.push({
         id: c.id, name: c.name, city: c.city,
         country: (c.country_iso2 || '').toLowerCase(),
         start_date: c.start_date, end_date: c.end_date,
+        events: dumpEvents && dumpEvents.length > 0 ? dumpEvents : [form.event],
       });
     }
     list.sort((a, b) => (b.start_date || '').localeCompare(a.start_date || ''));
     return list.length > 0 ? list : undefined;
-  }, [personMerged, form.event]);
+  }, [personMerged, form.event, compEventsById]);
 
   // ── Method / cube history for this solver + event (defaults + datalist options) ──
   const [methodCubeHistory, setMethodCubeHistory] = useState<{ methods: string[]; cubes: string[] } | null>(null);
@@ -916,7 +936,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       setField('value', formatTime(form.rawTime));
       return;
     }
-    const truncated = Math.floor(form.rawTime * 100) / 100;
+    const truncated = truncateCs(form.rawTime);
     setField('value', formatTimeInput(truncated));
   }, [form.official, form.rawTime, singleUserTouched, setField]);
 
@@ -1592,6 +1612,38 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     />
                   )}
                 </div>
+                {solverLite && (
+                  <div className={`submit-field submit-field-shrink${reusedCls('coPersons')}`}>
+                    <span className="submit-label">{tr({ zh: '共同完成者', en: 'Co-solvers' })}</span>
+                    <div className="submit-cosolvers">
+                      {(form.coPersons ?? []).map((c, i) => (
+                        <div key={`${c.id || c.name}-${i}`} className="submit-solver-pill submit-cosolver-pill">
+                          <Flag iso2={c.country || ''} />
+                          <span className="submit-solver-name">{displayCuberName(c.name, isZh)}</span>
+                          <ClearButton onClick={() => removeCoPerson(i)} isZh={isZh} variant="standalone" preserveFocus />
+                        </div>
+                      ))}
+                      {addingCo ? (
+                        <WcaPersonPicker
+                          value={null}
+                          onChange={addCoPerson}
+                          isZh={isZh}
+                          className="submit-cosolver-picker"
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          className="submit-add-cosolver"
+                          onClick={() => setAddingCo(true)}
+                          title={tr({ zh: '添加选手', en: 'Add solver' })}
+                          aria-label={tr({ zh: '添加选手', en: 'Add solver' })}
+                        >
+                          <UserPlus size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <label className={`submit-field submit-field-fit${reusedCls('event')}`}>
                   <span className="submit-label">{t('recon.event')} *</span>
                   <EventSelect events={EVENTS} value={form.event ?? ''} onChange={(v) => setField('event', v)} />
@@ -1620,7 +1672,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     </label>
                   </>
                 )}
-                <label className={`submit-field submit-field-fit${reusedCls('official')}`}>
+                <label className={`submit-field submit-field-fit submit-field--select${reusedCls('official')}`}>
                   <span className="submit-label">WCA</span>
                   <select className="submit-field-select" value={form.official ?? 'wca'} onChange={e => {
                     const next = e.target.value as ReconOfficial;
@@ -1658,6 +1710,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       onPick={applyPickedComp}
                       isZh={isZh}
                       hideFuture
+                      hideCancelled
                       disableSuggestions={form.official !== 'wca'}
                       restrictComps={form.official === 'wca' ? personCompOptions : undefined}
                       presets={form.official === 'practice' ? [
@@ -1667,38 +1720,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   )}
                 </div>
               </div>
-
-              {solverLite && (
-                <div className="submit-row">
-                  <div className={`submit-field${reusedCls('coPersons')}`}>
-                    <span className="submit-label">{tr({ zh: '共同完成者', en: 'Co-solvers' })}</span>
-                    <div className="submit-cosolvers">
-                      {(form.coPersons ?? []).map((c, i) => (
-                        <div key={`${c.id || c.name}-${i}`} className="submit-solver-pill submit-cosolver-pill">
-                          <Flag iso2={c.country || ''} />
-                          <span className="submit-solver-name">{displayCuberName(c.name, isZh)}</span>
-                          <ClearButton onClick={() => removeCoPerson(i)} isZh={isZh} variant="standalone" preserveFocus />
-                        </div>
-                      ))}
-                      {addingCo ? (
-                        <WcaPersonPicker
-                          value={null}
-                          onChange={addCoPerson}
-                          isZh={isZh}
-                          placeholder={tr({ zh: '搜选手名 / WCA ID', en: 'Search name / WCA ID'
-                        })}
-                          className="submit-cosolver-picker"
-                        />
-                      ) : (
-                        <button type="button" className="submit-add-cosolver" onClick={() => setAddingCo(true)}>
-                          <UserPlus size={14} /> {tr({ zh: '添加选手', en: 'Add solver'
-                        })}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* 非 WCA(非WCA比赛 / 练习):补国家(选完显示国旗) + 城市,WCA 比赛由所选比赛自动带出 */}
               {form.official !== 'wca' && (

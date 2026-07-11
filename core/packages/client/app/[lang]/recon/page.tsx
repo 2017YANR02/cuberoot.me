@@ -34,6 +34,7 @@ import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { RecordSelect } from '@/components/RecordSelect';
 import { EventIcon } from '@/components/EventIcon';
 import { ColFilter, ColFilterCloseContext } from '@/components/ColFilter/ColFilter';
+import { SearchInput } from '@/components/SearchInput';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import './recon.css';
 import { tr } from '@/i18n/tr';
@@ -64,7 +65,7 @@ interface Column {
 // NOTE: 列顺序：Single→Solver→Date→Comp→Rnd#→Avg→AoXR→Result→STM→TPS→Event→Method→Reconer→#
 const COLUMNS: Column[] = [
   { key: 'rawTime', labelKey: '', className: 'col-dsingle', sortable: true },
-  { key: 'person', labelKey: 'recon.solver', className: 'col-solver', sortable: true },
+  { key: 'person', labelKey: 'recon.col.solver', className: 'col-solver', sortable: true },
   { key: 'date', labelKey: 'recon.date', className: 'col-date', sortable: true },
   { key: 'comp', labelKey: 'recon.competition', className: 'col-comp', sortable: true },
   { key: 'round', labelKey: '', className: 'col-round', sortable: true },
@@ -213,7 +214,8 @@ export default function ReconListPage() {
     loadAll, setFilter, setSort, resetSort,
     getFilteredSolves, getAvailableEvents, getAvailableMethods, getAvailableSolvers,
     getAvailableReconers,
-    getAvailableComps, getAvailableRecords, getAvailableRounds, getAvailableAoTypes,
+    getAvailableComps, getAvailableRecords, getAvailableSingleRecords, getAvailableAverageRecords,
+    getAvailableRounds, getAvailableAoTypes,
   } = useReconStore();
 
   // NOTE: 页面加载时获取数据
@@ -275,6 +277,14 @@ export default function ReconListPage() {
     useReconStore.getState().allSolves,
   ]);
   const records = useMemo(() => getAvailableRecords(), [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useReconStore.getState().allSolves,
+  ]);
+  const singleRecords = useMemo(() => getAvailableSingleRecords(), [
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useReconStore.getState().allSolves,
+  ]);
+  const averageRecords = useMemo(() => getAvailableAverageRecords(), [
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useReconStore.getState().allSolves,
   ]);
@@ -482,12 +492,12 @@ export default function ReconListPage() {
         );
       }
       case 'rawTime': {
-        // NOTE: 单次列：range + record 两组合并入一个 popover
-        const active = filters.rawTimeMin != null || filters.rawTimeMax != null || !!filters.record;
+        // NOTE: 单次列：range + record 两组合并入一个 popover；record 只匹配 regionalSingleRecord
+        const active = filters.rawTimeMin != null || filters.rawTimeMax != null || !!filters.singleRecord;
         const onClear = () => {
           setFilter('rawTimeMin', null);
           setFilter('rawTimeMax', null);
-          setFilter('record', '');
+          setFilter('singleRecord', '');
         };
         return (
           <ColFilter active={active} onClear={onClear} align="left">
@@ -497,9 +507,9 @@ export default function ReconListPage() {
               onChange={(mn, mx) => { setFilter('rawTimeMin', mn); setFilter('rawTimeMax', mx); }}
             />
             <RecordSelect
-              records={records}
-              value={filters.record}
-              onChange={(v) => setFilter('record', v)}
+              records={singleRecords}
+              value={filters.singleRecord}
+              onChange={(v) => setFilter('singleRecord', v)}
               placeholder={t('recon.allRecords')}
             />
           </ColFilter>
@@ -546,14 +556,25 @@ export default function ReconListPage() {
         );
       }
       case 'average': {
-        const active = filters.averageMin != null || filters.averageMax != null;
-        const onClear = () => { setFilter('averageMin', null); setFilter('averageMax', null); };
+        // NOTE: 平均列 range + record 两组合并入一个 popover；record 只匹配 regionalAverageRecord
+        const active = filters.averageMin != null || filters.averageMax != null || !!filters.averageRecord;
+        const onClear = () => {
+          setFilter('averageMin', null);
+          setFilter('averageMax', null);
+          setFilter('averageRecord', '');
+        };
         return (
           <ColFilter active={active} onClear={onClear}>
             <RangeFilter
               min={filters.averageMin}
               max={filters.averageMax}
               onChange={(mn, mx) => { setFilter('averageMin', mn); setFilter('averageMax', mx); }}
+            />
+            <RecordSelect
+              records={averageRecords}
+              value={filters.averageRecord}
+              onChange={(v) => setFilter('averageRecord', v)}
+              placeholder={t('recon.allRecords')}
             />
           </ColFilter>
         );
@@ -842,6 +863,13 @@ export default function ReconListPage() {
             <Plus size={18} />
           </Link>
           <WcaAuth />
+          <SearchInput
+            value={filters.search}
+            onChange={(v) => setFilter('search', v)}
+            placeholder={tr({ zh: '搜索', en: 'Search' })}
+            className="recon-search"
+            inputClassName="recon-search-input"
+          />
         </div>
       </div>
 

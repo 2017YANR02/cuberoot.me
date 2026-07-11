@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, Copy, Check, Info, X } from 'lucide-react';
+import { Loader2, Copy, Check, Info, X, ChevronRight } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
 import { SubsetColorPicker, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
@@ -314,6 +314,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const isXfStage = method === 'std' && stage >= 1; // xcross/xxcross/xxxcross/F2L:k=stage 对
   const isGridStage = isCrossStage || isXfStage; // 渲 18 格 + 走 54-move 受限引擎的阶段
   const [crCells, setCrCells] = useState<boolean[]>(() => CR_DEFAULT.slice());
+  // 步法限制默认收起(省空间),用户按需展开。受限时头部给个「已限制」提示,收起也可见。
+  const [mrOpen, setMrOpen] = useState(false);
   // 18 格 → 54-bit allowed:格 i 覆盖 move [3i,3i+2];lo=低 32 位、hi=高 22 位。
   const crMask = useMemo(() => {
     let lo = 0, hi = 0;
@@ -891,80 +893,106 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       {/* 步法限制:std 全阶段(cross/xcross/xxcross/xxxcross/F2L)铺全 18 格(6面+6宽+3中层+3旋转,
           宽/中层/旋转走 54-move 受限引擎,纯 6 面仍走老快引擎零回归);其余方法保留 6 面 mask 勾选。 */}
       {isGridStage ? (
-        <div className="stsv-moverestrict stsv-mr-18">
-          <span className="stsv-mr-label">{t('步法限制', 'Allowed moves')}</span>
-          <div className="stsv-mr-rows">
-            {CR_ROWS.map((row) => (
-              <div key={row.key} className="stsv-mr-grid" role="group" aria-label={t('步法限制', 'Allowed moves')}>
-                {row.cells.map((ci) => (
-                  <button
-                    key={ci}
-                    type="button"
-                    className={`stsv-mr-cell${crCells[ci] ? ' is-on' : ''}`}
-                    onClick={() => setCrCells((prev) => prev.map((v, j) => (j === ci ? !v : v)))}
-                    aria-pressed={crCells[ci]}
-                    title={crCells[ci]
-                      ? t(`允许 ${CR_CELLS[ci]}(点击禁用)`, `${CR_CELLS[ci]} allowed (click to forbid)`)
-                      : t(`已禁用 ${CR_CELLS[ci]}(点击允许)`, `${CR_CELLS[ci]} forbidden (click to allow)`)}
-                  >
-                    {CR_CELLS[ci]}
-                  </button>
+        <div className={`stsv-moverestrict stsv-mr-18${mrOpen ? ' is-open' : ''}`}>
+          <button
+            type="button"
+            className="stsv-mr-toggle"
+            onClick={() => setMrOpen((o) => !o)}
+            aria-expanded={mrOpen}
+          >
+            <ChevronRight size={14} className="stsv-mr-chevron" />
+            <span className="stsv-mr-label">{t('转动限制', 'Allowed moves')}</span>
+            {crRestricted && <span className="stsv-mr-active">{t('已限制', 'limited')}</span>}
+          </button>
+          {mrOpen && (
+            <div className="stsv-mr-body">
+              <div className="stsv-mr-rows">
+                {CR_ROWS.map((row) => (
+                  <div key={row.key} className="stsv-mr-grid" role="group" aria-label={t('转动限制', 'Allowed moves')}>
+                    {row.cells.map((ci) => (
+                      <button
+                        key={ci}
+                        type="button"
+                        className={`stsv-mr-cell${crCells[ci] ? ' is-on' : ''}`}
+                        onClick={() => setCrCells((prev) => prev.map((v, j) => (j === ci ? !v : v)))}
+                        aria-pressed={crCells[ci]}
+                        title={crCells[ci]
+                          ? t(`允许 ${CR_CELLS[ci]}(点击禁用)`, `${CR_CELLS[ci]} allowed (click to forbid)`)
+                          : t(`已禁用 ${CR_CELLS[ci]}(点击允许)`, `${CR_CELLS[ci]} forbidden (click to allow)`)}
+                      >
+                        {CR_CELLS[ci]}
+                      </button>
+                    ))}
+                  </div>
                 ))}
               </div>
-            ))}
-          </div>
-          {crRestricted && (
-            <button
-              type="button"
-              className="stsv-mr-reset"
-              onClick={() => setCrCells(CR_DEFAULT.slice())}
-            >
-              {t('全选', 'All')}
-            </button>
-          )}
-          {counts.some(isTooBroad) && (
-            <span className="stsv-mr-hint">
-              {t('⋯ = 该格限制过宽,未在预算内算出;缩小范围(尤其少选宽/中层/旋转)可得精确解',
-                '⋯ = restriction too broad to resolve within budget here; narrow it (esp. fewer wide/slice/rotation) for an exact result')}
-            </span>
+              {crRestricted && (
+                <button
+                  type="button"
+                  className="stsv-mr-reset"
+                  onClick={() => setCrCells(CR_DEFAULT.slice())}
+                >
+                  {t('全选', 'All')}
+                </button>
+              )}
+              {counts.some(isTooBroad) && (
+                <span className="stsv-mr-hint">
+                  {t('⋯ = 该格限制过宽,未在预算内算出;缩小范围(尤其少选宽/中层/旋转)可得精确解',
+                    '⋯ = restriction too broad to resolve within budget here; narrow it (esp. fewer wide/slice/rotation) for an exact result')}
+                </span>
+              )}
+            </div>
           )}
         </div>
       ) : maskSupported ? (
-        <div className="stsv-moverestrict">
-          <span className="stsv-mr-label">{t('步法限制', 'Allowed moves')}{singleFace ? t('(限单面)', ' (one face)') : ''}</span>
-          <div className="stsv-mr-grid" role="group" aria-label={t('步法限制', 'Allowed moves')}>
-            {MOVE_FACES.map((f, i) => (
-              <button
-                key={f}
-                type="button"
-                className={`stsv-mr-cell${allowedFaces[i] ? ' is-on' : ''}`}
-                onClick={() => setAllowedFaces((prev) => {
-                  // singleFace(pair/eo):最多禁 1 面 —— 禁已禁的 → 全开;否则只禁这一面(自动放开其余)
-                  if (singleFace) {
-                    if (!prev[i]) return [true, true, true, true, true, true];
-                    const next = [true, true, true, true, true, true];
-                    next[i] = false;
-                    return next;
-                  }
-                  return prev.map((v, j) => (j === i ? !v : v));
-                })}
-                aria-pressed={allowedFaces[i]}
-                title={allowedFaces[i]
-                  ? t(`允许 ${f}(点击禁用)`, `${f} allowed (click to forbid)`)
-                  : t(`已禁用 ${f}(点击允许)`, `${f} forbidden (click to allow)`)}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-          {restricted && (
-            <button
-              type="button"
-              className="stsv-mr-reset"
-              onClick={() => setAllowedFaces([true, true, true, true, true, true])}
-            >
-              {t('全选', 'All')}
-            </button>
+        <div className={`stsv-moverestrict${mrOpen ? ' is-open' : ''}`}>
+          <button
+            type="button"
+            className="stsv-mr-toggle"
+            onClick={() => setMrOpen((o) => !o)}
+            aria-expanded={mrOpen}
+          >
+            <ChevronRight size={14} className="stsv-mr-chevron" />
+            <span className="stsv-mr-label">{t('转动限制', 'Allowed moves')}{singleFace ? t('(限单面)', ' (one face)') : ''}</span>
+            {restricted && <span className="stsv-mr-active">{t('已限制', 'limited')}</span>}
+          </button>
+          {mrOpen && (
+            <div className="stsv-mr-body">
+              <div className="stsv-mr-grid" role="group" aria-label={t('转动限制', 'Allowed moves')}>
+                {MOVE_FACES.map((f, i) => (
+                  <button
+                    key={f}
+                    type="button"
+                    className={`stsv-mr-cell${allowedFaces[i] ? ' is-on' : ''}`}
+                    onClick={() => setAllowedFaces((prev) => {
+                      // singleFace(pair/eo):最多禁 1 面 —— 禁已禁的 → 全开;否则只禁这一面(自动放开其余)
+                      if (singleFace) {
+                        if (!prev[i]) return [true, true, true, true, true, true];
+                        const next = [true, true, true, true, true, true];
+                        next[i] = false;
+                        return next;
+                      }
+                      return prev.map((v, j) => (j === i ? !v : v));
+                    })}
+                    aria-pressed={allowedFaces[i]}
+                    title={allowedFaces[i]
+                      ? t(`允许 ${f}(点击禁用)`, `${f} allowed (click to forbid)`)
+                      : t(`已禁用 ${f}(点击允许)`, `${f} forbidden (click to allow)`)}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+              {restricted && (
+                <button
+                  type="button"
+                  className="stsv-mr-reset"
+                  onClick={() => setAllowedFaces([true, true, true, true, true, true])}
+                >
+                  {t('全选', 'All')}
+                </button>
+              )}
+            </div>
           )}
         </div>
       ) : null}
@@ -1067,17 +1095,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           {selFace !== null && (
             <div className="stsv-result">
               <div className="stsv-sols">
-                <div className="stsv-sols-head">
-                  <strong>{stageLabel(stages[stage], lang === 'zh')}</strong>
-                  <span
-                    className="stsv-sols-face"
-                    title={faceDesc(FACES[selFace].face)}
-                  >
-                    <i className="stsv-sols-swatch" style={{ background: CUBE_FILL[FACES[selFace].face] }} />
-                  </span>
-                  {moves && !isSentinel(moves.len) && <span className="stsv-len">{moves.len} HTM</span>}
-                </div>
-
                 {movesLoading && (!moves || moves.sols.length === 0) && (
                   <div className="stsv-status"><Loader2 size={14} className="stsv-spin" />{t('搜索最优解…', 'Searching…')}</div>
                 )}
@@ -1085,7 +1102,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                 {moves && !movesLoading && moves.sols.length === 0 && (
                   <div className="stsv-empty">
                     {restricted && isSentinel(moves.len)
-                      ? t('该步法限制下无解(或超出深度上限)', 'No solution under this move restriction (within the depth cap)')
+                      ? t('该转动限制下无解(或超出深度上限)', 'No solution under this move restriction (within the depth cap)')
                       : isSentinel(moves.len)
                         ? (method === 'htr2'
                           ? t('该视角未处于 HTR,HTR 收尾不适用', 'This view is not in HTR, so HTR-finish does not apply')

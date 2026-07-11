@@ -673,5 +673,50 @@
     "date": "2026-06-30",
     "zh": "新建 /code/guards 约束守卫索引页 + 全站复选框统一为开关 + 多盲成绩按数值解码",
     "en": "New /code/guards constraint-guard index page; checkboxes unified to toggles site-wide; MBLD decoded by value magnitude"
+  },
+  {
+    "date": "2026-07-01",
+    "zh": "新建 /math/kernel 群论内核讲解页 + /sim 各魔方接入群论内核 + 打乱分布加单次与分组平均切换 + 比赛详情页加相似比赛标签",
+    "en": "New /math/kernel group-theory explainer; /sim puzzles wired to the group-theory kernel; scramble distribution toggles single vs group-average; competition detail gains a similar-comps tab"
+  },
+  {
+    "date": "2026-07-03",
+    "zh": "修复直播比赛缓存无界导致的每日 OOM + 分组平均柱可点开看示例比赛组 + 桌宠 Clawd 用爪子转动魔方",
+    "en": "Bounded the live-competition cache to stop daily OOM crashes; group-average bars open to example competition groups; desk-pet Clawd turns the cube with its own claws"
+  },
+  {
+    "date": "2026-07-04",
+    "zh": "上线内部账号:邮箱与手机验证码登录、一号绑定多身份 + /sim 加 3x3 指法手模(设置开关)",
+    "en": "Internal accounts land — email and phone-code login with multiple identities per account; /sim gains a fingertrick hand model for 3x3 (settings toggle)"
+  },
+  {
+    "date": "2026-07-05",
+    "zh": "/sim 手模换成 GLTF 蒙皮骨骼模型 + 登录加 Google 与 Apple 风格分段验证码框 + 复盘比赛属性改为 WCA / 非 WCA / 练习三态",
+    "en": "/sim hands rebuilt as a rigged GLTF skinned mesh; login adds Google and an Apple-style segmented code input; recon's official flag becomes a WCA / non-WCA / practice enum"
+  },
+  {
+    "date": "2026-07-06",
+    "zh": "导入速拧视频自动复盘引擎为仓库顶层 + 登录加微信 / QQ / 支付宝绑定 + WCA 统计加单轮前三名之和 + 一级内容页统一返回首页 + 计时器网格对局配对选手共享打乱",
+    "en": "The solve-video reconstruction engine is imported as a repo top-level; login gains WeChat / QQ / Alipay binding; WCA stats add a Round Top-3 Sum; first-level content pages get a consistent back-home link; grid battle shares one scramble between paired players"
+  },
+  {
+    "date": "2026-07-07",
+    "zh": "复盘提交表单按选手带出资料链接与比赛 / 方法 / 魔方历史 + /sim 加 3x3 最优打乱按钮 + F2L 消去延伸到十字族 + 近期比赛抓取失败据实报因",
+    "en": "Recon submit form surfaces per-person profile links and comp / method / cube history; /sim gains an optimal-scramble button; F2L cancel-into extends to the cross family; upcoming-comps reports the actual fetch-failure reason"
+  },
+  {
+    "date": "2026-07-08",
+    "zh": "刷新近期比赛数据、中文赛名与 WCA 统计",
+    "en": "Refreshed upcoming competitions, Chinese comp names, and WCA statistics"
+  },
+  {
+    "date": "2026-07-09",
+    "zh": "上线 /forum 社区论坛并将 /article 长文并入 + /sim 手模三轮避让重做 + 引擎斜转改用 WCA 记号 + 教程页自定义 Speffz 字母方案 + 打乱难度加各阶段国家构成柱",
+    "en": "The /forum community forum launches and /article long-form posts fold into it; /sim hands reworked over three rounds; the Skewb engine switches to WCA notation; the tutorial gains a custom Speffz letter scheme; scramble difficulty adds a per-step country breakdown bar"
+  },
+  {
+    "date": "2026-07-10",
+    "zh": "复盘同赛表格加单轮步数与 TPS 的 Ao5 及整解复制 + /sim 手模第四五轮指法 + 斜转记号指南可点字母演示 + 论坛回复用富文本编辑器 + 打乱难度国家改为可搜索下拉",
+    "en": "Recon's same-comp table gains a round-level moves/TPS Ao5 and a full-reconstruction copy; /sim hands rounds 4-5; a Skewb notation guide demos each letter on tap; forum replies use the rich editor; the scramble country filter becomes a searchable dropdown"
   }
 ]

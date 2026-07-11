@@ -349,9 +349,8 @@
   text-decoration: underline;
 }
 
-/* 复制整段复盘(STM 摘要 + 打乱 + 带注释解法):贴行右侧的图标钮 */
+/* 复制整段复盘(STM 摘要 + 打乱 + 带注释解法):紧跟在 caption 之后(不推到行右端) */
 .recon-copy-full {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -390,6 +389,11 @@
   display: inline-flex;
   align-items: center;
   color: var(--faint-foreground);
+}
+
+/* 复盘者=提交者同一人时,双图标并排 */
+.detail-meta-label-dual {
+  gap: 4px;
 }
 
 .detail-meta-value {
@@ -675,10 +679,27 @@
    行标(STM / TPS)不在本单元,移到「轮次」列 Fi 下方(见 .same-comp-round-*)。 */
 .same-comp-att-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(8.5ch, max-content));
-  gap: 4px 12px;
+  grid-template-columns: repeat(var(--att-cols, 5), minmax(8.5ch, max-content));
+  gap: 2px 12px;
   justify-content: start;
   align-items: baseline;
+}
+/* 详细成绩表头:每把序号(1 2 3 4 5)按同一套列网格逐列对齐到下方成绩 */
+.same-comp-att-head {
+  display: inline-grid;
+  grid-template-columns: repeat(var(--att-cols, 5), minmax(8.5ch, max-content));
+  column-gap: 12px;
+  justify-content: start;
+  /* ch 随字号 / 字重变(Inter 变体字重不同 → 数字步进不同 → 8.5ch 列宽不同):
+     对齐 tbody 的字号 / 字重 / 字距,使表头 8.5ch 与下方成绩逐列同宽对齐 */
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+.same-comp-att-head-i {
+  justify-self: end;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 .same-comp-event-table .wp-att-sub {
   font-size: 0.72rem;
@@ -694,7 +715,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 2px;
 }
 /* 时间行 .wp-att 有 2px 透明 border-bottom(hover/当前把下划线占位),比轮次标签高 2px;
    给轮次标签行补 2px 下内边距抹平,使其下 STM / TPS 行标与右侧数值行逐行同线。 */
@@ -733,6 +754,9 @@
   white-space: nowrap;
 }
 .same-comp-event-table tbody tr:last-child td { border-bottom: none; }
+/* 有复盘 STM/TPS 子行的行:收紧首行(单次/平均/详细成绩/轮次)行高,让主值与其下 STM/TPS 两行贴近;
+   各列统一同一行高 → 首行数值仍跨列对齐,子行整体上移(与 /wca/persons 的 .wp-row-has-recon-stats 同口径)。 */
+.same-comp-event-table tbody tr:has(.wp-att-sub) td { line-height: 1.25; }
 
 .same-comp-event-table .wp-round-tag {
   display: inline-block;
@@ -749,7 +773,8 @@
 
 .same-comp-event-table .wp-th-info { display: inline-flex; align-items: center; gap: 3px; }
 .same-comp-event-table .wp-th-narrow { width: 50px; text-align: center !important; }
-.same-comp-event-table thead th.wp-th-attempts { text-align: center; }
+/* 详细成绩表头改成逐把序号网格(1 2 3 4 5),左对齐锚定,与下方成绩单元同左缘 → 逐列同宽对齐 */
+.same-comp-event-table thead th.wp-th-attempts { text-align: left; }
 
 /* 直播·非官方成绩(官方尚未收录的近期比赛):行内 chip 标注 + 整行轻微弱化,
    官方上传后合并逻辑自动丢弃直播行 → chip 随之消失。 */

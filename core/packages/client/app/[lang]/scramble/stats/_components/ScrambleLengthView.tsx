@@ -301,7 +301,6 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric, 
             formatBin={(v) => (v / denom).toFixed(1)}
             onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
             onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-            yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count' })}
           />
         </div>
         {avgStats && (
@@ -338,8 +337,6 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric, 
               hideLegendColors
               onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
               onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-              yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count'
-                          })}
             />
           </div>
 

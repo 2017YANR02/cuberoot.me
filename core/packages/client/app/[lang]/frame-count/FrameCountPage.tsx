@@ -130,9 +130,15 @@ interface Solve {
 type RotationDeg = 0 | 90 | 180 | 270;
 const NEXT_ROTATION: Record<RotationDeg, RotationDeg> = { 0: 90, 90: 180, 180: 270, 270: 0 };
 
+/** WCA 单次截断到厘秒。先取整到毫秒消掉浮点误差(裸 5.02*100 = 501.9999… 会被
+ *  floor 成 501 → 5.01,4.10 → 4.09),再截断——否则算错帧数 / 显示。 */
+function truncateCs(seconds: number): number {
+  return Math.floor(Math.round(seconds * 1000) / 10) / 100;
+}
+
 /** WCA 时间→帧数公式 */
 function timeToFrames(time: number, fps: number): number {
-  const truncated = Math.floor(time * 100) / 100;
+  const truncated = truncateCs(time);
   return Math.ceil((truncated + 0.009) * fps);
 }
 
@@ -654,7 +660,7 @@ export default function FrameCountPage() {
       ? activeSolve.marks[activeSolve.marks.length - 1].frame
       : currentFrame;
     if (endFrame <= 0) return null;
-    const truncatedTime = Math.floor(solveTimeNum * 100) / 100; // ⌊time⌋₂
+    const truncatedTime = truncateCs(solveTimeNum); // ⌊time⌋₂
     const adjustedTime = truncatedTime + 0.009;                 // 和 WCA 公式一致的目标时差
     const framesBack = timeToFrames(solveTimeNum, videoFps);
     const byFps = Math.max(0, endFrame - framesBack);
@@ -1061,7 +1067,7 @@ export default function FrameCountPage() {
       let startFrame: number;
       if (startFrameMethod === 'timestamp') {
         // 和 WCA 公式 (⌊time⌋₂+.009) 对齐,两种方法查询同一个目标时间点
-        const truncated = Math.floor(solveTimeNum * 100) / 100;
+        const truncated = truncateCs(solveTimeNum);
         const tsFrame = findStartFrameByTimestamp(currentFrame, truncated + 0.009);
         // samples 未就绪时 fallback 到 fps 公式, 不让用户等
         startFrame = tsFrame ?? Math.max(0, currentFrame - timeToFrames(solveTimeNum, videoFps));
@@ -1214,7 +1220,7 @@ export default function FrameCountPage() {
     if (timeMatches && timeMatches.length > 0) {
       const raw = parseFloat(timeMatches[timeMatches.length - 1]);
       if (!isNaN(raw)) {
-        const truncated = Math.floor(raw * 100) / 100;
+        const truncated = truncateCs(raw);
         defaultTime = truncated.toFixed(2).replace(/\.?0+$/, '') || String(truncated);
       }
     }
