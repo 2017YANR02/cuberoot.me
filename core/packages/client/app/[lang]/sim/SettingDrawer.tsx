@@ -118,6 +118,9 @@ export interface SimSettings {
   handsSkeleton: boolean;
   /** 手指的立体甲片显隐(调试区,mesh.visible 显隐不拆几何)。默认开。 */
   showNails: boolean;
+  /** 调试:SMPL-X 全身查看 —— 开 = 藏拼图与手,只显示原版 SMPL-X neutral
+   *  T-pose 人体(手/前臂比例的上游真值参照)。资产逐机转换,缺失时无效果。 */
+  showSmplxBody: boolean;
 }
 
 /** WCA 标准 6 面色 — 取自全站单一来源 lib/cube-colors */
@@ -170,6 +173,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   hands: false,
   handsSkeleton: false,
   showNails: true,
+  showSmplxBody: false,
 };
 
 const STORAGE_KEY = 'sim.settings';
@@ -239,6 +243,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   world.setHandsWanted(s.hands === true);
   world.hands?.setSkeletonVisible(s.handsSkeleton === true);
   world.hands?.setNailsVisible(s.showNails !== false);
+  world.setSmplxBodyVisible(s.showSmplxBody === true);
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
   world.controller.holdPartial = s.holdPartialTurn;

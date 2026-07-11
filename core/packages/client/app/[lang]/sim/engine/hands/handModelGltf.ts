@@ -253,6 +253,9 @@ export interface AdaptGltfOpts {
   thumbRoll?: number;
   /** 甲片半宽比例表覆盖(K = 背侧指尖满宽 ÷ 末节长,探针实测烘定值)。 */
   nailHalfWK?: Partial<Record<FingerName, number>>;
+  /** @4 融合前臂的绑定臂伸向(腕→肘,资产空间单位向量,转换器 forearmDir)。
+   *  与骨名 "forearm" 同时存在才装配 HandModel.forearm。 */
+  forearmDirAsset?: [number, number, number];
 }
 
 /** 纯适配步(无 fetch):gltf.scene → HandModel。拆出来供测试用 fs 读 GLB +
@@ -325,6 +328,16 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
   // 腕骨:静止件,直接挂 group(保世界变换)。四指掌骨不再焊死 —— r11 全
   // 关节解锁,进各指 meta 代理关节(掌弓自由度,见下方指环)。
   group.attach(bone("wrist"));
+
+  // @4 融合前臂骨:attach 进 group(手系,轴心=腕),rig 每帧绕腕摆向肘锚;
+  // 绑定臂伸向 = 资产系 forearmDir 过对齐旋转(等比缩放不改方向)。
+  let forearm: HandModel["forearm"];
+  const armBone = bones.get("forearm");
+  if (armBone && opts?.forearmDirAsset) {
+    group.attach(armBone);
+    const bindDir = new THREE.Vector3(...opts.forearmDirAsset).applyQuaternion(align).normalize();
+    forearm = { bone: armBone, bindDir, bindQuat: armBone.quaternion.clone() };
+  }
 
   const fingers = {} as Record<FingerName, FingerJoints>;
   for (const name of Object.keys(JOINT_CHAINS) as FingerName[]) {
@@ -570,7 +583,7 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
   mesh.material = skinMat;
   mesh.castShadow = mesh.receiveShadow = false;
 
-  return { group, side, unitScale: s, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat], nailMeshes };
+  return { group, side, unitScale: s, fingers, meshes: [mesh as THREE.Mesh, ...nailMeshes], extraMats: [nailMat], nailMeshes, forearm };
 }
 
 function bakeVertexTint(mesh: THREE.SkinnedMesh): void {
