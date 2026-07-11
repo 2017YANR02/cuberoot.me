@@ -378,7 +378,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         <Scramble333ModePicker active333={events.has('333')} isZh={isZh} />
         {events.has('sq1') && (
           <div className="gen-sq1-format">
-            <span className="gen-sq1-format-label">{t('SQ1 记号', 'SQ1 notation')}</span>
+            <span className="gen-sq1-format-label">{t('SQ1', 'SQ1')}</span>
             <PillToggle
               value={sq1Compact}
               onChange={onSq1CompactChange}
