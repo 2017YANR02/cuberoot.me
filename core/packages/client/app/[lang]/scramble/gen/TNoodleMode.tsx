@@ -1083,7 +1083,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   // 是否涉及 sq1 → 显示记号开关:未生成/加载前看配置是否选中 sq1;已加载后只在用户切到 sq1 视图时才显示,
   // 不因「比赛里有 sq1 项目」就常驻(避免看别的项目时也挂着一条不相关的 sq1 开关)。
   const sq1Involved = loaded ? activeView === 'sq1' : !!events['sq1'];
-  // 简写(全站默认)/ 完整(WCA 官方打乱纸风格)。已加载 + 333 分析行同时出现时并入该行,否则单独一行。
+  // 简写(全站默认)/ 完整(WCA 官方打乱纸风格)。
   const sq1FormatNode = sq1Involved ? (
     <div className="gen-sq1-format">
       <span className="gen-sq1-format-label">{t('SQ1', 'SQ1')}</span>
@@ -1095,6 +1095,17 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
       />
     </div>
+  ) : null;
+  // 内嵌比赛页(forcedCompId)已加载时,与打乱图/PDF 操作图标并入同一行、左对齐;
+  // 已明确是 sq1 视图,不再重复标「SQ1」文字。
+  const sq1BareToggle = sq1Involved ? (
+    <PillToggle
+      value={sq1Compact}
+      onChange={onSq1CompactChange}
+      onLabel={t('简写', 'Compact')}
+      offLabel={t('完整', 'Full')}
+      ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
+    />
   ) : null;
 
   // 「分析」打开 + 333 比赛已加载时,后台预热 StageSolver 共享池(拉 WASM + ~70MB 表)。
@@ -1272,9 +1283,15 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
   // 比赛已加载:操作图标(打乱图开关 / 下载 PDF)挪到 header 输入框右侧,与比赛名同一行;
   // 配置态仍把操作(生成按钮等)留在正文 controls 行。无 header slot 时整体回落正文。
-  // 内嵌模式(forcedCompId):没有比赛选择器 / 生成按钮,只在已加载后留打乱图开关 + 下载 PDF。
+  // 内嵌模式(forcedCompId):没有比赛选择器 / 生成按钮,只在已加载后留打乱图开关 + 下载 PDF,
+  // 涉及 sq1 时记号开关并入同一行、靠左(见 gen-tn-controls--left)。
   const controlsNode = forcedCompId ? (
-    loaded ? <div className="gen-tn-controls is-loaded">{actionsNode}</div> : null
+    loaded ? (
+      <div className="gen-tn-controls is-loaded gen-tn-controls--left">
+        {sq1BareToggle}
+        {actionsNode}
+      </div>
+    ) : null
   ) : !compHeaderSlot ? (
     <div className={`gen-tn-controls${loaded ? ' is-loaded' : ''}`}>
       {compPickerNode}
@@ -1351,8 +1368,9 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       {/* 生成 / 预览 / 清空 按钮行 — 放在 selector + config 之后,events 列表之前 */}
       {controlsNode}
 
-      {/* SQ1 记号开关:未加载看配置是否选中 sq1;已加载后只在切到 sq1 视图时显示(此时不会跟 333 分析行同屏)。 */}
-      {sq1FormatNode}
+      {/* SQ1 记号开关:未加载看配置是否选中 sq1;已加载后只在切到 sq1 视图时显示(此时不会跟 333 分析行同屏)。
+          forcedCompId 已加载时并入 controlsNode(见上),这里跳过避免重复。 */}
+      {!(forcedCompId && loaded) && sq1FormatNode}
 
       {loaded ? null : forcedCompId ? (
         // 内嵌模式:加载中 / 加载失败(error 已在上方渲染)的占位。
