@@ -822,9 +822,20 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       // 根修四指,把拇指甩出可达域;冻 dx 逼四指走加卷路线)。
       const frozen = new Set((process.env.FREEZE ?? '').split(',').filter(Boolean).map(Number));
       for (const fi of frozen) stepsC2[fi] = 0;
+      // r24(用户规格「食/中/无名弯曲程度要小」):CURLW>0 时直接罚三指
+      // MCP+PIP 绝对弯曲平方 —— 带内自由度全部花在"更直"上,而不是停在
+      // 带边任意点(r22/r23 只动了掌角,关节弯曲基本没变,用户抓的)。
+      const curlW = Number(process.env.CURLW ?? 0);
       const evalC2 = (v: Params): number => {
         applyPose(p.m, buildPose(base, v));
-        return totalLoss(measure(p, { fast: true }));
+        let L = totalLoss(measure(p, { fast: true }));
+        if (curlW) {
+          for (let i = 0; i < 3; i++) {
+            const b = base.fingers[FOUR[i]];
+            L += curlW * ((b.curl[0] + v[4 + i * 3]) ** 2 + (b.curl[1] + (v[23 + i] ?? 0)) ** 2);
+          }
+        }
+        return L;
       };
       // 复合方向:整手根沿手内方向平移 + 四指补卷(dc1 或 dc2)保 tip 不出带。
       // κ 三档括住"1.2U 平移 ≈ 多少补卷"的未知雅可比,singles 事后清残差。
