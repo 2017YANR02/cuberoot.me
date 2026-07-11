@@ -29,6 +29,9 @@ for (const [n, p] of [
   ["HD重采(零GT)", "obs-hd.json"],
   ["HD重采+精修", "obs-hdr.json"],
   ["4K重采+精修", "obs-4k.json"],
+  ["HD+精修+HD链", "obs-hda.json"],
+  ["HD+GT-kNN上界", "obs-hdgt.json"],
+  ["HD+pool(零GT)", "obs-hdpool.json"],
 ] as const) {
   if (!existsSync(join(tmp, p))) continue;
   const r = objAcc(p);

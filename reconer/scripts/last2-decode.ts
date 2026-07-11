@@ -26,6 +26,7 @@ import { IDENTITY_PERM, invertPerm, permKey, physicalPerm } from "../src/rotatio
 import { activityMask, cellCenter, medianBackground, sampleCell, type FaceObservation } from "../src/sticker-blobs.ts";
 import { extractTrackedFrames } from "../src/lattice-track.ts";
 import { refineHD } from "../src/hd-refine.ts";
+import { makeHaloGetter } from "../src/halo.ts";
 import type { Perm } from "../src/cube-state.ts";
 
 const argAt = (name: string): string | null => {
@@ -96,71 +97,8 @@ const SHIFT_VARIANTS: readonly (readonly [number, number, number])[] = SHIFT_PEN
   ? [[0, 0, 0], [0, 1, SHIFT_PEN], [0, -1, SHIFT_PEN], [1, 0, SHIFT_PEN], [-1, 0, SHIFT_PEN]]
   : [[0, 0, 0]];
 
-// === cubie 签名 → halo 映射 (窗口边缘之外 = 邻面同块贴纸) ===
-// 签名 = 6 个外层 90° 转动里"动到该 facelet"的面集合: 角块 3 面 / 棱块 2 面 /
-// 中心 1 面, 同签名 = 同 cubie。窗口某边缘之外的可见贴纸 = 该边缘贴纸的同块
-// 邻面 partner (纯置换群推导, 无需硬编码布局)。
-const faceOfFacelet = (x: number): number => Math.floor(x / 9);
-const SIG: number[] = (() => {
-  const sig = new Array<number>(54).fill(0);
-  for (let fi = 0; fi < 6; fi++) {
-    const p = physicalPerm(FACES[fi]);
-    for (let i = 0; i < 54; i++) if (p[i] !== i) sig[i] |= 1 << fi;
-  }
-  return sig;
-})();
-const CUBIE = new Map<number, number[]>();
-for (let i = 0; i < 54; i++) {
-  const arr = CUBIE.get(SIG[i]);
-  if (arr) arr.push(i);
-  else CUBIE.set(SIG[i], [i]);
-}
-const partnerOnFace = (x: number, g: number): number => {
-  for (const y of CUBIE.get(SIG[x]) ?? []) if (y !== x && faceOfFacelet(y) === g) return y;
-  return -1;
-};
-const otherFaceOfEdge = (edgeFacelet: number, f: number): number => {
-  for (let fi = 0; fi < 6; fi++) if (fi !== f && SIG[edgeFacelet] & (1 << fi)) return fi;
-  return -1;
-};
-interface Halo {
-  /** 每窗口格的渗色候选 facelet (边缘格 1-2 个, 中心 0 个) */
-  bleed: number[][];
-  /** 平移出窗位置 (r+1)*5+(c+1) → halo facelet (双向出窗 = -1 按背景) */
-  out: Int32Array;
-}
-const haloCache = new Map<number, Halo>();
-function getHalo(ai: number): Halo {
-  let h = haloCache.get(ai);
-  if (h) return h;
-  const assign = ASSIGNS_24[ai];
-  const f = faceOfFacelet(assign[4]);
-  // 窗口四方向邻面 (由中行/中列边缘棱贴纸唯一决定)
-  const gTop = otherFaceOfEdge(assign[1], f);
-  const gRight = otherFaceOfEdge(assign[5], f);
-  const gBottom = otherFaceOfEdge(assign[7], f);
-  const gLeft = otherFaceOfEdge(assign[3], f);
-  const bleed: number[][] = [];
-  for (let j = 0; j < 9; j++) {
-    const r = (j / 3) | 0, c = j % 3;
-    const cands: number[] = [];
-    if (r === 0) cands.push(partnerOnFace(assign[j], gTop));
-    if (r === 2) cands.push(partnerOnFace(assign[j], gBottom));
-    if (c === 0) cands.push(partnerOnFace(assign[j], gLeft));
-    if (c === 2) cands.push(partnerOnFace(assign[j], gRight));
-    bleed.push(cands.filter((x) => x >= 0));
-  }
-  const out = new Int32Array(25).fill(-1);
-  for (let k = 0; k < 3; k++) {
-    out[(0) * 5 + (k + 1)] = partnerOnFace(assign[k], gTop); // r=-1
-    out[(4) * 5 + (k + 1)] = partnerOnFace(assign[6 + k], gBottom); // r=3
-    out[(k + 1) * 5 + 0] = partnerOnFace(assign[k * 3], gLeft); // c=-1
-    out[(k + 1) * 5 + 4] = partnerOnFace(assign[k * 3 + 2], gRight); // c=3
-  }
-  h = { bleed, out };
-  haloCache.set(ai, h);
-  return h;
-}
+// cubie 签名 → halo 渗色映射: src/halo.ts 共享
+const getHalo = makeHaloGetter(ASSIGNS_24);
 const rotsOfFace = (face: string | null): number[] => {
   if (!face) return ASSIGNS_24.map((_, i) => i);
   const fi = FACES.indexOf(face as (typeof FACES)[number]);

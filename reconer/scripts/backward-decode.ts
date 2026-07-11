@@ -21,6 +21,7 @@ import { parseGT } from "../src/splits.ts";
 import { ROTATION_TOKENS } from "../src/notation.ts";
 import { IDENTITY_PERM, invertPerm, permKey, physicalPerm } from "../src/rotation-perms.ts";
 import { assignsForFaces } from "../src/anchored-search.ts";
+import { makeHaloGetter } from "../src/halo.ts";
 import type { Perm } from "../src/cube-state.ts";
 
 const argAt = (name: string): string | null => {
@@ -47,6 +48,9 @@ const PROBS_W = parseFloat(argAt("--probs") ?? "0");
 // ±1 格平移边缘化罚分 (0=关): 晶格重获取漂移 (负⑩(a)) 把整列/行采到邻面 →
 // 链按 {原位, 上下左右移 1 格} 取最优, 出格格按背景分计, 移位吃此罚分
 const SHIFT_PEN = parseFloat(argAt("--shift") ?? "0");
+// 边缘格渗色混合权 (0=关): 斜视角下窗口边缘格采到邻面同块贴纸 (正⑮ (c),
+// halo 映射见 src/halo.ts), 打分 (1-PB)·P(面内) + PB·avg P(渗色)
+const PB = parseFloat(argAt("--bleed") ?? "0");
 // --full: LL 倒推到 LL-start 后不停, 续用自由步法穿过 F2L, 由"已知打乱态"作终点锚。
 // 各 LL 候选到达不同 LL-start 态 → 后续 F2L 边界色证据只匹配真态 Q_true, 淘汰同分冒牌案。
 const FULL = process.argv.includes("--full");
@@ -268,33 +272,42 @@ for (const rd of COLOR_NAMES) {
   for (const gt of COLOR_NAMES) s += Math.exp(looConf[`${gt}${rd}`]) / 6;
   logBg[rd] = Math.log(s);
 }
-/** 平移变体: 网格 i=r*3+c 读 assign 中 (r,c)+delta 的 facelet; 出格 → -1 (按背景计) */
-const SHIFTS: readonly (readonly number[])[] = (() => {
-  const variants: number[][] = [Array.from({ length: 9 }, (_, i) => i)]; // 原位
-  if (SHIFT_PEN !== 0) {
-    for (const [dr, dc] of [[0, 1], [0, -1], [1, 0], [-1, 0]] as const) {
-      variants.push(
-        Array.from({ length: 9 }, (_, i) => {
-          const r = Math.floor(i / 3) + dr, c = (i % 3) + dc;
-          return r >= 0 && r < 3 && c >= 0 && c < 3 ? r * 3 + c : -1;
-        }),
-      );
-    }
-  }
-  return variants;
-})();
-function chainLL(read: (string | null)[], state: Perm, assign: readonly number[]): number {
+/** 平移变体 [dr, dc, 罚分]: 晶格重获取漂移 ±1 格边缘化 */
+const SHIFT_VARIANTS: readonly (readonly [number, number, number])[] = SHIFT_PEN !== 0
+  ? [[0, 0, 0], [0, 1, SHIFT_PEN], [0, -1, SHIFT_PEN], [1, 0, SHIFT_PEN], [-1, 0, SHIFT_PEN]]
+  : [[0, 0, 0]];
+const getHalo = makeHaloGetter(ASSIGNS_24);
+function chainLL(read: (string | null)[], state: Perm, ai: number): number {
+  const assign = ASSIGNS_24[ai];
+  const halo = PB > 0 ? getHalo(ai) : null;
   let best = -Infinity;
-  for (let si = 0; si < SHIFTS.length; si++) {
-    const sh = SHIFTS[si];
-    let s = si === 0 ? 0 : SHIFT_PEN;
+  for (const [dr, dc, pen] of SHIFT_VARIANTS) {
+    let s = pen;
     for (let i = 0; i < 9; i++) {
       const rd = read[i];
       if (!rd) continue;
-      const j = sh[i];
-      if (j < 0) { s += logBg[rd]; continue; } // 移出面外: 真色未知
-      const ll = looConf[`${predColor(state, assign[j])}${rd}`];
-      s += JUNK > 0 ? Math.log((1 - JUNK) * Math.exp(ll) + JUNK / 6) : ll;
+      const r = ((i / 3) | 0) + dr, c = (i % 3) + dc;
+      if (r >= 0 && r < 3 && c >= 0 && c < 3) {
+        const j = r * 3 + c;
+        let p = Math.exp(looConf[`${predColor(state, assign[j])}${rd}`]);
+        if (halo) {
+          const cands = halo.bleed[j];
+          if (cands.length) {
+            let pH = 0;
+            for (const hf of cands) pH += Math.exp(looConf[`${predColor(state, hf)}${rd}`]);
+            p = (1 - PB) * p + PB * (pH / cands.length);
+          }
+        }
+        s += Math.log(JUNK > 0 ? (1 - JUNK) * p + JUNK / 6 : p);
+      } else {
+        // 移出面外: halo 在场时按 0.5 渗色 + 0.5 背景, 否则背景 (真色未知)
+        const pBg = Math.exp(logBg[rd]);
+        if (halo) {
+          const hf = halo.out[(r + 1) * 5 + (c + 1)];
+          const pH = hf >= 0 ? Math.exp(looConf[`${predColor(state, hf)}${rd}`]) : pBg;
+          s += Math.log(0.5 * pH + 0.5 * pBg);
+        } else s += logBg[rd];
+      }
     }
     if (s > best) best = s;
   }
@@ -305,10 +318,10 @@ function chainLL(read: (string | null)[], state: Perm, assign: readonly number[]
 const evidenceAt = (t: number, sMid: Perm, sAfter: Perm, a0: number, a1: number): number => {
   let ev = 0;
   for (const c of v.bounds[t]) {
-    const pool = FREE_WIN ? [ASSIGNS_24[a0], ASSIGNS_24[a1]] : [ASSIGNS_24[c.win === 0 ? a0 : a1]];
+    const pool = FREE_WIN ? [a0, a1] : [c.win === 0 ? a0 : a1];
     let best = -Infinity;
-    for (const assign of pool) {
-      const s = Math.max(chainLL(c.read, sMid, assign), chainLL(c.read, sAfter, assign));
+    for (const ai of pool) {
+      const s = Math.max(chainLL(c.read, sMid, ai), chainLL(c.read, sAfter, ai));
       if (s > best) best = s;
     }
     ev += best;
