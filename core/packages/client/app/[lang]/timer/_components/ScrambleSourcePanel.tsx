@@ -52,7 +52,7 @@ export default function ScrambleSourcePanel({ event, isZh }: Props) {
       <button
         type="button"
         className="solver-panel-head"
-        onClick={toggle}
+        onClick={(e) => { toggle(); e.currentTarget.blur(); }}
         aria-expanded={open}
       >
         <span className="solver-panel-title">{title}</span>
