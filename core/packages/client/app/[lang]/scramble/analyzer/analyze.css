@@ -201,15 +201,22 @@
 
 /* ── WCA real-scramble + cross-step filter ── */
 
-.analyze-wca {
+/* 来源切换 + 综合配置的公共一行:宽了「WCA 真题 / 选源方式 / 按难度 / 最优 / 日期范围」全排一行,
+   窄了各段自然折行。配置块打平进这条 flex 线(见下方 display:contents)。 */
+.analyze-wca-line {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.45rem 0.7rem;
-    margin-bottom: 0.6rem;
+    gap: 0.5rem 0.9rem;
+    margin-bottom: 0.7rem;
     padding-top: 0.65rem;
     border-top: 1px solid var(--az-border);
     font-size: 0.82rem;
+}
+.analyze-wca {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
 }
 
 .analyze-wca-color {
@@ -255,10 +262,14 @@
 /* 综合打乱来源配置(复用计时器的 WcaSourceConfig)。该组件的 .settings-row* / .wca-src-*
    原语默认深色硬码(本给 dark-locked 设置弹层用),这里映射到 analyzer 的主题化 --az-* token,
    浅/深主题都正确;并约束成一个 ~30rem 配置块,而非拉满 1024。 */
-.analyze-wca-src {
-    max-width: 30rem;
-    margin: 0 0 0.7rem;
-}
+/* 打平进 .analyze-wca-line:配置的顶行(选源方式+按难度+最优)与日期范围成为该 flex 线的直接项,
+   与左侧的「WCA 真题」胶囊同排;难度子面板 / 提示 / 指定比赛的轮次组别各自 flex-basis:100% 另起整行。 */
+.analyze-wca-src,
+.analyze-wca-line .wca-src-config { display: contents; }
+.analyze-wca-line .settings-row { margin: 0; }
+.analyze-wca-line .wca-src-diff,
+.analyze-wca-line .wca-src-hint,
+.analyze-wca-line .settings-row:not(.wca-src-toprow):not(.wca-src-daterow) { flex-basis: 100%; }
 .analyze-wca-src .settings-row-label { color: var(--az-text-sub); }
 .analyze-wca-src .settings-row-control input[type='number'],
 .analyze-wca-src .settings-row-control .settings-row-control-select,
