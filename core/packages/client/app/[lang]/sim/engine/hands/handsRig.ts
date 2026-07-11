@@ -36,11 +36,10 @@
 import * as THREE from "three";
 import { SIZE } from "../define";
 import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
-import { loadGltfHand } from "./handModelGltf";
 import { buildSmplxForearm, loadManoHand, loadSmplxForearmData, type ForearmFit } from "./handModelMano";
 import { bakeHandTextures, bakeLimbTextures, type HandBakedMaps } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
-import { homeLeft, homeRight, type HandPose, type HandModelKind } from "./handPoses";
+import { homeLeft, homeRight, type HandPose } from "./handPoses";
 
 /** 只读 duck-type,避免运行时 import NxN Cube(rig 只碰 groups 的 angle)。 */
 export interface HandsCubeLike {
@@ -880,16 +879,8 @@ export default class HandsRig extends THREE.Group {
    *  quarters = 整体转体已踏移的 90° 数(带迟滞,driveGesture 维护)。 */
   private active: { axis: Axis; cls: LayerClass; dir: 0 | 1 | -1; gesture: HandGesture | null; lastAngle: number; quarters: number } | null = null;
 
-  /** 手模资产种类(构造时定死;运行中切换 = world 销毁重建整个 rig —— 姿态
-   *  基线/甲片/血色全绑在加载期,热替换不值得)。mano 资产缺失时 initAsync
-   *  回退 generic,effectiveModel 记录实际生效的那套。 */
-  readonly modelSource: HandModelKind;
-  private effectiveModel: HandModelKind;
-
-  constructor(modelSource: HandModelKind = "default") {
+  constructor() {
     super();
-    this.modelSource = modelSource;
-    this.effectiveModel = modelSource;
     this.name = "handsRig";
     // 皮肤(前臂 + 烘焙失败时的手部回退):物理材质 + 顶点血色(几何侧烘)+
     // 程序噪声 bump/roughness(毛孔颗粒);手本体正常路径用 initAsync 里的
@@ -917,8 +908,8 @@ export default class HandsRig extends THREE.Group {
     this.skelMatMap = makeHandSkeletonMats();
     this.skelMats = Object.values(this.skelMatMap);
     this.setSkeletonVisible(false);
-    // GLTF 手模异步加载(本地 /sim/hands/*.glb,~94KB/只)。失败打日志,
-    // 手指开关成为空操作(本地资产失败即 bug,不做程序化回退)。
+    // MANO 手模异步加载(逐机转换 gitignored 资产)。缺失打 warn,手指开关
+    // 成为空操作 —— 内置 generic-hand 已退役(2026-07-11 用户拍板),无回退。
     void this.initAsync();
 
     // 手专属补光:layer 1(魔方在默认 layer 0,不受影响;手网格同时在 0+1,
@@ -945,42 +936,20 @@ export default class HandsRig extends THREE.Group {
     this.visible = false;
   }
 
-  /** 加载两只 GLTF 手 → 烘焙皮肤贴图 → 建前臂 / 骨架叠加 / HandState。魔方
-   *  右侧 = 解剖学右手(right.glb,side=-1 语义只剩 splay 镜像);左侧 =
-   *  left.glb 真镜像资产。 */
+  /** 加载两只 MANO 手 → 烘焙皮肤贴图 → 建前臂 / 骨架叠加 / HandState。魔方
+   *  右侧 = 解剖学右手(side=-1 语义只剩 splay 镜像);左侧 = 镜像资产。 */
   private async initAsync(): Promise<void> {
     let right: HandModel, left: HandModel;
-    if (this.modelSource === "mano") {
-      // MANO 资产是逐机转换的 gitignored 文件(授权数据不入公开仓库):缺失
-      // 是正常状态,回退 generic-hand 并降级提示,不让「手」功能整个消失。
-      try {
-        [right, left] = await Promise.all([
-          loadManoHand(-1, this.skinMat),
-          loadManoHand(1, this.skinMat),
-        ]);
-      } catch (e) {
-        console.warn("[sim hands] MANO 资产不可用,回退内置手模:", e);
-        this.effectiveModel = "default";
-        try {
-          [right, left] = await Promise.all([
-            loadGltfHand(-1, this.skinMat),
-            loadGltfHand(1, this.skinMat),
-          ]);
-        } catch (e2) {
-          console.error("[sim hands] GLTF hand load failed:", e2);
-          return;
-        }
-      }
-    } else {
-      try {
-        [right, left] = await Promise.all([
-          loadGltfHand(-1, this.skinMat),
-          loadGltfHand(1, this.skinMat),
-        ]);
-      } catch (e) {
-        console.error("[sim hands] GLTF hand load failed:", e);
-        return;
-      }
+    // MANO 资产是逐机转换的 gitignored 文件(授权数据不入公开仓库):缺失时
+    // 手部功能整体不可用(内置 generic-hand 已退役,无回退)。
+    try {
+      [right, left] = await Promise.all([
+        loadManoHand(-1, this.skinMat),
+        loadManoHand(1, this.skinMat),
+      ]);
+    } catch (e) {
+      console.warn("[sim hands] MANO 资产缺失(scripts/convert-mano.py 逐机转换),手部不可用:", e);
+      return;
     }
     // 程序化皮肤贴图烘焙(albedo/bump/roughness + 指甲)。必须在入场景 / 摆
     // home 姿态之前(烘焙契约:绑定姿态 + group 无父级)。UV 布局左右手不一致
@@ -1019,9 +988,9 @@ export default class HandsRig extends THREE.Group {
     // 前臂:优先 SMPL-X 真臂切段(逐机转换 gitignored 资产,与 MANO 同模式;
     // 尺骨头/肌腹是真解剖轮廓),缺失回退程序化锥形管。左臂 = 右臂 y 镜像
     // 几何(真前臂不对称),但 UV 相同 → 下方皮肤贴图仍烘一次共享。宽度按
-    // 当前手模腕环实测自适应:generic 残端敞口要盖住(cover),MANO 封腕
-    // 要藏进去(tuck)—— 写死 34.5U 曾把 MANO 腕顶穿出台阶(2026-07-11)。
-    const stumpFit = (model: HandModel, mode: "cover" | "tuck"): ForearmFit | undefined => {
+    // 手模腕环实测自适应,略瘦藏进 MANO 封腕帽内 —— 写死 34.5U 曾把腕顶穿
+    // 出台阶(2026-07-11)。
+    const stumpFit = (model: HandModel): ForearmFit | undefined => {
       model.group.updateMatrixWorld(true);
       const mesh = model.meshes[0] as THREE.SkinnedMesh;
       const pos = mesh.geometry.getAttribute("position");
@@ -1036,15 +1005,14 @@ export default class HandsRig extends THREE.Group {
         zMin = Math.min(zMin, v.z); zMax = Math.max(zMax, v.z);
       }
       if (!Number.isFinite(yMin)) return undefined; // 量空回退 34.5U 缺省
-      return { hy: (yMax - yMin) / 2, hz: (zMax - zMin) / 2, cy: (yMax + yMin) / 2, cz: (zMax + zMin) / 2, mode };
+      return { hy: (yMax - yMin) / 2, hz: (zMax - zMin) / 2, cy: (yMax + yMin) / 2, cz: (zMax + zMin) / 2 };
     };
     let rArm: { group: THREE.Group; meshes: THREE.Mesh[] };
     let lArm: { group: THREE.Group; meshes: THREE.Mesh[] };
     try {
       const armData = await loadSmplxForearmData();
-      const mode = this.effectiveModel === "mano" ? "tuck" : "cover";
-      rArm = buildSmplxForearm(armData, -1, this.skinMat, this.cuffMat, stumpFit(right, mode));
-      lArm = buildSmplxForearm(armData, 1, this.skinMat, this.cuffMat, stumpFit(left, mode));
+      rArm = buildSmplxForearm(armData, -1, this.skinMat, this.cuffMat, stumpFit(right));
+      lArm = buildSmplxForearm(armData, 1, this.skinMat, this.cuffMat, stumpFit(left));
     } catch {
       // 未转换机器的常态,info 级即可(MANO 手模缺失才值得 warn)
       console.info("[sim hands] SMPL-X 前臂资产不可用,使用程序化前臂");
@@ -1078,8 +1046,8 @@ export default class HandsRig extends THREE.Group {
       const back = new THREE.Vector3(-1, 0, 0).applyQuaternion(home.quat);
       return wrist.addScaledVector(back, SIZE * 7.5 * HAND_SCALE);
     };
-    const homeR = homeRight(this.effectiveModel);
-    const homeL = homeLeft(this.effectiveModel);
+    const homeR = homeRight();
+    const homeL = homeLeft();
     this.hands = {
       R: this.initHandState(right, homeR, rArm.group, elbowAnchor(homeR)),
       L: this.initHandState(left, homeL, lArm.group, elbowAnchor(homeL)),

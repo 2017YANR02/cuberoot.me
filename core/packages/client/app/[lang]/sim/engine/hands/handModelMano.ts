@@ -194,7 +194,7 @@ function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: M
   };
 }
 
-/** 浏览器加载入口(同 loadGltfHand 语义:side=-1 → 右手)。资产 gitignored,
+/** 浏览器加载入口(side=-1 → 右手)。资产 gitignored,
  *  未部署/未转换时 fetch 404 → 上抛,由 rig 侧回退 generic-hand 并告警。 */
 export async function loadManoHand(side: 1 | -1, skinMat: THREE.Material): Promise<HandModel> {
   const name = side === -1 ? "right" : "left";
@@ -228,16 +228,14 @@ const FOREARM_WRIST_HALF_Y_U = 34.5;
 const noRaycast = (): void => { /* 手不可拾取 — 拖拽/点击穿透到魔方 */ };
 
 /** 手模腕接驳环实测(rig 侧量当前手模,喂给 buildSmplxForearm 定宽):
- *  hy/hz = 腕环 y/z 半宽,cy/cz = 环心偏移(手局部系,rig 单位)。
- *  mode:'cover' = 盖住开口残端(generic GLB 残端是敞口斜切,臂必须略胖包住);
- *  'tuck' = 塞进闭合腕帽内(MANO 手网格封腕,臂必须略瘦藏进去 —— 胖了会把
- *  探进段顶穿手皮外露成台阶,2026-07-11 用户抓的)。 */
+ *  hy/hz = 腕环 y/z 半宽,cy/cz = 环心偏移(手局部系,rig 单位)。前臂按此
+ *  略瘦塞进 MANO 的闭合腕帽内 —— 胖了会把探进段顶穿手皮外露成台阶
+ *  (2026-07-11 用户抓的;generic 时代的 cover 敞口模式随内置手模退役)。 */
 export interface ForearmFit {
   hy: number;
   hz: number;
   cy: number;
   cz: number;
-  mode: "cover" | "tuck";
 }
 
 /** SMPL-X 真前臂件:契约同 buildForearm({group, meshes[0]=臂肤 meshes[1]=袖口},
@@ -283,11 +281,9 @@ export function buildSmplxForearm(
   }
   const aHy = (ayMax - ayMin) / 2, aHz = (azMax - azMin) / 2;
   const aCy = (ayMax + ayMin) / 2, aCz = (azMax + azMin) / 2;
-  // cover:两轴都够盖(取大比 +2%);tuck:两轴都藏得进(取小比 −5%)
+  // 两轴都藏得进(取小比 −5%,tuck 进闭合腕帽)
   const s = fit
-    ? (fit.mode === "cover"
-      ? Math.max(fit.hy / aHy, fit.hz / aHz) * 1.02
-      : Math.min(fit.hy / aHy, fit.hz / aHz) * 0.95)
+    ? Math.min(fit.hy / aHy, fit.hz / aHz) * 0.95
     : (FOREARM_WRIST_HALF_Y_U * U) / data.wristHalfY;
   const dy = fit ? fit.cy - aCy * s : 0;
   const dz = fit ? fit.cz - aCz * s : 0;
@@ -295,9 +291,9 @@ export function buildSmplxForearm(
     const x = pos[i] * s;
     let y = pos[i + 1] * s + dy;
     let z = pos[i + 2] * s + dz;
-    // tuck 模式探进段(x>0,SMPL-X 自己的掌根外扩区)向环心渐收:手模掌根
-    // 轮廓与 SMPL-X 不同,不收窄会在腕后再顶穿一次
-    if (fit?.mode === "tuck" && x > 0) {
+    // 探进段(x>0,SMPL-X 自己的掌根外扩区)向环心渐收:手模掌根轮廓与
+    // SMPL-X 不同,不收窄会在腕后再顶穿一次
+    if (fit && x > 0) {
       const k = Math.max(0.72, 1 - 0.012 * (x / U));
       y = fit.cy + (y - fit.cy) * k;
       z = fit.cz + (z - fit.cz) * k;

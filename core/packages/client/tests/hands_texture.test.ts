@@ -1,5 +1,6 @@
 /**
- * /sim 手部皮肤贴图烘焙回归(computeHandMaps 纯计算核,Node 直烘 right.glb)。
+ * /sim 手部皮肤贴图烘焙回归(computeHandMaps 纯计算核,Node 直烘 MANO 右手;
+ * 资产 gitignored 缺失时整组 skip —— 内置 generic-hand GLB 已退役)。
  * 特征以 U(世界单位)定义,与分辨率无关 —— 用小图快测。锁:
  *  ① UV 光栅化覆盖率合理 + BFS 外扩后全图无空洞(mipmap 黑边回归);
  *  ② 肤色基调 r>g>b 且在肤色带内(别烘出灰紫手);
@@ -9,27 +10,24 @@
  *  ⑤ 确定性:imul 哈希噪声无随机状态,两次烘焙逐字节一致(刷新不换脸)。
  */
 import { describe, expect, it, beforeAll } from 'vitest';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
-import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { adaptGltfHand } from '@/app/[lang]/sim/engine/hands/handModelGltf';
+import { buildManoHand, type ManoHandData } from '@/app/[lang]/sim/engine/hands/handModelMano';
 import { computeHandMaps, type HandMapsData } from '@/app/[lang]/sim/engine/hands/bakeHandTexture';
 import type { HandModel } from '@/app/[lang]/sim/engine/hands/handModel';
 
 const S = 192;
 
+const RIGHT = fileURLToPath(new URL('../public/sim/hands/mano/right.mano.json', import.meta.url));
+
 async function loadRight(): Promise<HandModel> {
-  const p = fileURLToPath(new URL('../public/sim/hands/right.glb', import.meta.url));
-  const buf = await readFile(p);
-  const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
-  const gltf = await new Promise<GLTF>((resolve, reject) => {
-    new GLTFLoader().parse(ab, '', resolve, reject);
-  });
-  return adaptGltfHand(gltf.scene, -1, new THREE.MeshStandardMaterial(), 'right.glb');
+  const data = JSON.parse(await readFile(RIGHT, 'utf8')) as ManoHandData;
+  return buildManoHand(data, -1, new THREE.MeshStandardMaterial(), 'right.mano.json');
 }
 
-describe('computeHandMaps 皮肤贴图烘焙', () => {
+describe.skipIf(!existsSync(RIGHT))('computeHandMaps 皮肤贴图烘焙', () => {
   let model: HandModel;
   let maps: HandMapsData;
 

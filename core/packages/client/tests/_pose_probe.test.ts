@@ -14,34 +14,34 @@ import { describe, expect, it } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
-import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { adaptGltfHand, nailFrame } from '@/app/[lang]/sim/engine/hands/handModelGltf';
+import { nailFrame } from '@/app/[lang]/sim/engine/hands/handModelGltf';
 import { buildManoHand, MANO_THUMB_ROLL, type ManoHandData } from '@/app/[lang]/sim/engine/hands/handModelMano';
 import { WRIST_LOCAL, type HandModel, type FingerName } from '@/app/[lang]/sim/engine/hands/handModel';
-import { homeRight, homeLeft, quatFromWorldRots, type HandPose, type FingerCurl, type HandModelKind } from '@/app/[lang]/sim/engine/hands/handPoses';
+import { homeRight, homeLeft, quatFromWorldRots, type HandPose, type FingerCurl } from '@/app/[lang]/sim/engine/hands/handPoses';
 
 const MODE = process.env.SOLVE ?? (process.env.PROBE ? 'PROBE' : process.env.MEASURE_NAILK ? 'NAILK' : '');
-/** MODEL=mano → 加载 scripts/convert-mano.py 的转换资产,解 MANO 版 home;
- *  缺省 = 内置 generic-hand。MANO 版比 default 多一条硬规格:真 CMC 沉 D 层
- *  (cmcY ≤ −30,含 1.5U 余量;generic 上 r11 已证不可行,MANO 是下一个上限)。 */
-const MODEL: HandModelKind = process.env.MODEL === 'mano' ? 'mano' : 'default';
+// PROBE_OUT=<file>:全部探针日志同步落盘 —— vitest 后台跑(非 TTY 管道)时
+// console.log 会被 reporter 吞掉,6 分钟求解跑完只剩 summary(2026-07-11 两连踩)。
+const PROBE_OUT = process.env.PROBE_OUT;
+if (PROBE_OUT) {
+  const fs = await import('node:fs');
+  fs.writeFileSync(PROBE_OUT, '');
+  const orig = console.log.bind(console);
+  console.log = (...args: unknown[]): void => {
+    orig(...args);
+    fs.appendFileSync(PROBE_OUT, args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n');
+  };
+}
+// 手模 = MANO 独占(2026-07-11 内置 generic-hand 退役):硬规格含真 CMC 沉
+// D 层(cmcY ≤ −30,generic 上 r11 已证不可行,是删它的动因之一)。
 const FINGERS: FingerName[] = ['thumb', 'index', 'middle', 'ring', 'pinky'];
 const HALF = 96; // 魔方半宽(SIZE=64,棱长 192)
 
-async function loadModel(file: 'right.glb' | 'left.glb', side: 1 | -1): Promise<HandModel> {
-  if (MODEL === 'mano') {
-    const name = side === -1 ? 'right' : 'left';
-    const p = fileURLToPath(new URL(`../public/sim/hands/mano/${name}.mano.json`, import.meta.url));
-    const data = JSON.parse(await readFile(p, 'utf8')) as ManoHandData;
-    return buildManoHand(data, side, new THREE.MeshStandardMaterial(), `${name}.mano.json`);
-  }
-  const p = fileURLToPath(new URL(`../public/sim/hands/${file}`, import.meta.url));
-  const buf = await readFile(p);
-  const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
-  const gltf = await new Promise<GLTF>((resolve, reject) => {
-    new GLTFLoader().parse(ab, '', resolve, reject);
-  });
-  return adaptGltfHand(gltf.scene, side, new THREE.MeshStandardMaterial(), file);
+async function loadModel(side: 1 | -1): Promise<HandModel> {
+  const name = side === -1 ? 'right' : 'left';
+  const p = fileURLToPath(new URL(`../public/sim/hands/mano/${name}.mano.json`, import.meta.url));
+  const data = JSON.parse(await readFile(p, 'utf8')) as ManoHandData;
+  return buildManoHand(data, side, new THREE.MeshStandardMaterial(), `${name}.mano.json`);
 }
 
 /** rig applyHand 的姿态数学复刻(twist/meta 含 r11 通道;sideSign = model.side)。 */
@@ -90,8 +90,8 @@ type Probe = {
   ringPinkyRad: number;
 };
 
-async function makeProbe(file: 'right.glb' | 'left.glb', side: 1 | -1): Promise<Probe> {
-  const m = await loadModel(file, side);
+async function makeProbe(side: 1 | -1): Promise<Probe> {
+  const m = await loadModel(side);
   const mesh = m.meshes[0] as THREE.SkinnedMesh;
   const geo = mesh.geometry;
   const skinIndex = geo.getAttribute('skinIndex');
@@ -238,6 +238,9 @@ type Metrics = {
     fGap: number; cx: number; cy: number; minAbsX: number;
     nailDotZ: number; cmcY: number; mcpY: number; fleshMinY: number; fleshMaxY: number;
     len2d: number; // 拇指链 CMC→tip 直线距(视觉长度 proxy,防拉直读长)
+    /** 可见拇指(MCP→tip)对水平面的仰俯角(°)。2026-07-11 用户硬规格:
+     *  拇指要水平 —— r3 抛光曾漂成 40° 斜插(接触 y 28)。 */
+    horizDeg: number;
     tip: THREE.Vector3;
   };
 };
@@ -339,6 +342,7 @@ function measure(p: Probe, opts?: { penScope?: 'all' | 'noThumb' | 'thumbOnly'; 
       fleshMinY,
       fleshMaxY,
       len2d: cmc.distanceTo(ttip),
+      horizDeg: Math.atan2(Math.abs(ttip.y - mcp.y), Math.hypot(ttip.x - mcp.x, ttip.z - mcp.z)) * 180 / Math.PI,
       tip: ttip.clone(),
     },
   };
@@ -348,13 +352,13 @@ function fmt(mx: Metrics): string {
   const f = (x: number, d = 1): string => (Number.isFinite(x) ? x.toFixed(d) : '—');
   const rows = FOUR.map((k) => {
     const r = mx.fingers[k];
-    return `${k.padEnd(6)} tilt ${f(r.tiltDeg)}° gapB ${f(r.gapB, 2)} contact (${f(r.contactX)},${f(r.contactY)}) dorsalY ${f(r.dorsalY, 2)}`;
+    return `${k.padEnd(6)} tilt ${f(r.tiltDeg)}° gapB ${f(r.gapB, 2)} contact (${f(r.contactX)},${f(r.contactY)}) tip (${f(r.tip.x)},${f(r.tip.y)},${f(r.tip.z)}) dorsalY ${f(r.dorsalY, 2)}`;
   });
   const t = mx.thumb;
   return [
     `pen ${f(mx.pen, 2)} pinkyRingClear ${f(mx.pinkyRingClear, 2)}`,
     ...rows,
-    `thumb fGap ${f(t.fGap, 2)} contact (${f(t.cx)},${f(t.cy)}) |x|min ${f(t.minAbsX)} nail·ẑ ${f(t.nailDotZ, 3)}`,
+    `thumb fGap ${f(t.fGap, 2)} contact (${f(t.cx)},${f(t.cy)}) |x|min ${f(t.minAbsX)} nail·ẑ ${f(t.nailDotZ, 3)} horiz ${f(t.horizDeg)}°`,
     `thumb CMC y ${f(t.cmcY)} MCP y ${f(t.mcpY)} fleshY [${f(t.fleshMinY)},${f(t.fleshMaxY)}] len2d ${f(t.len2d)}`,
   ].join('\n');
 }
@@ -404,9 +408,8 @@ function buildPose(base: HandPose, s: Params): HandPose {
 const hinge = (x: number): number => Math.max(0, x);
 // 拇指 5+2 通道界(c1,c2,c3,splay,twist,mid×2)。MANO 放宽 c2/c3 过伸下界:
 // 真实拇指 IP/MCP 可过伸,generic 界内 c2=-0.6/c3=-0.3 双顶死、甲面∥F 收不满(实测)。
-const THUMB_BOUNDS: [number, number][] = MODEL === 'mano'
-  ? [[-1.7, 1.8], [-0.9, 1.2], [-0.6, 1.3], [-0.6, 2.0], [-3.3, 3.3], [-2.2, 2.2], [-1.2, 1.2]]
-  : [[-1.7, 1.8], [-0.6, 1.2], [-0.3, 1.3], [-0.6, 2.0], [-3.3, 3.3], [-2.2, 2.2], [-1.2, 1.2]];
+const THUMB_BOUNDS: [number, number][] =
+  [[-1.7, 1.8], [-0.9, 1.2], [-0.6, 1.3], [-0.6, 2.0], [-3.3, 3.3], [-2.2, 2.2], [-1.2, 1.2]];
 const rowY: Record<string, number> = { index: 64, middle: 0, ring: -64 };
 // r6 被认可姿态的 dorsalY 实测锚点 —— 指背在该握里朝外侧平伸,twist 的职责是
 // 整手 roll 后把指背转回这个朝向,不是「朝上」。
@@ -418,11 +421,11 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
   // 静置余量 ≥1.2U:待机呼吸 x ±1.76 / y ±0.88(home),贴 0 的裸间隙会被
   // 周期性吃穿(L 首解 pen −0.79 抓的)。
   // 余量墙 MANO ×20:权 5 在 pen −1.17 处梯度 ~0.005,推不动(实测停 −1.17)
-  let L = t('pen', 1e4 * hinge(mx.pen) ** 2 + (MODEL === 'mano' ? 100 : 5) * hinge(mx.pen + 1.2) ** 2);
+  let L = t('pen', 1e4 * hinge(mx.pen) ** 2 + 100 * hinge(mx.pen + 1.2) ** 2);
   // MANO 版新增硬规格:真 CMC(thumb-metacarpal 关节)沉 D 层(y ≤ −30,
   // 规格界 −28.5 留 1.5U 余量)。CMC 位置只由手根位姿决定(关节自转不移位),
   // 放 stage A/C 的全局参数才有梯度 —— stage B 冻结手根,放 thumbLoss 无用。
-  if (MODEL === 'mano') L += t('cmc', 60 * hinge(mx.thumb.cmcY + 30) ** 2);
+  L += t('cmc', 60 * hinge(mx.thumb.cmcY + 30) ** 2);
   for (const name of FOUR) {
     const r = mx.fingers[name];
     // 倾角:硬墙提前到 7.8°(规格 8.6°,r10 终解曾全贴 8.6 上限 —— 四指水平
@@ -436,6 +439,10 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
       // 小指↔无名指净距 ≥0.8U(2026-07-11 用户抓 MANO 小指压进无名指):
       // 轴线距对互穿深度有梯度,表面点距在互穿时恒 ≈0 推不动。
       L += t(`${name}.ringClear`, 120 * hinge(0.8 - mx.pinkyRingClear) ** 2);
+      // 小指不与其它指交叉/被挡(2026-07-11 用户抓「小拇指被挡住」):tip 要
+      // 明确低于无名指 tip ≥12U —— r5 两者 y 只差 2U,俯/仰角下小指整根被
+      // 无名指遮死。轴距净距是方向无关量,挡视线的「同高贴排」它拦不住。
+      L += t(`${name}.below`, 25 * hinge(r.tip.y - (mx.fingers.ring.tip.y - 12)) ** 2);
     } else {
       L += t(`${name}.tilt`, 200 * hinge(r.tiltDeg - 7.8) ** 2 + 2.5 * (r.tiltDeg / 8) ** 2);
     }
@@ -451,6 +458,14 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
       // 接触漂到 y=31(越界进中排)—— 行带必须是硬墙。
       const dyRow = Math.abs(r.contactY - rowY[name]);
       L += t(`${name}.row`, 25 * hinge(dyRow - 24) ** 2 + 1.2 * (dyRow / 10) ** 2);
+      // 2026-07-11 用户规格:背面看食/中/无名**指尖端点**要刚好碰到所压
+      // 棱/角块的内缘(往中心收)。tip 骨(MANO=皮尖)|x| 进 [36,46] 带 →
+      // 指尖肉(侧向半径 ~4U)刚好探到块内缘 x≈32,不越 R 层界(M 列安全
+      // 隐式满足:全部肉 |x|≳32.5)。深度上 tip 拉回面附近:旧解食指 tip
+      // z −123.6 悬空越面 27U(只有指腹蹭到面,端点戳向空中)。
+      const ax = Math.abs(r.tip.x);
+      L += t(`${name}.tipx`, 50 * (hinge(36 - ax) ** 2 + hinge(ax - 46) ** 2));
+      L += t(`${name}.tipz`, 2 * (hinge(-104 - r.tip.z) ** 2 + hinge(r.tip.z + 94) ** 2));
     } else if (Number.isFinite(r.gapB) && r.gapB < 900) {
       L += t(`${name}.gap`, 60 * hinge(2.0 - r.gapB) ** 2); // 小指不需接触,但别蹭面
     }
@@ -460,29 +475,36 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
 
 /** 拇指部分(stage B;pen 只含拇指肉 + 甲片)。 */
 function thumbLoss(mx: Metrics): number {
-  let L = 1e4 * hinge(mx.pen) ** 2 + (MODEL === 'mano' ? 100 : 5) * hinge(mx.pen + 1.2) ** 2;
+  let L = 1e4 * hinge(mx.pen) ** 2 + 100 * hinge(mx.pen + 1.2) ** 2;
   const t = mx.thumb;
   L += 100 * hinge(34.5 - t.minAbsX) ** 2; // M 列安全(硬)
   if (!Number.isFinite(t.fGap) || t.fGap > 900) {
-    const d = t.tip.distanceTo(new THREE.Vector3(60, -8, HALF + 3)); // FR 贴纸带心软拉
+    // 丢接触软拉目标:水平拇指 tip 落 F 竖直正中(r6 用户规格「高 3 则指尖在 1.5」)
+    const d = t.tip.distanceTo(new THREE.Vector3(60, 0, HALF + 3));
     return L + 3e3 + 2 * d * d;
   }
   L += 60 * (hinge(2.4 - t.fGap) ** 2 + hinge(t.fGap - 3.4) ** 2);
-  // 接触心硬带:必须留在 FR/FL 贴纸内(|x|∈[38,90], y∈[-28,28])—— stage C
-  // 曾拿 0.2 弱罚换 MCP 分,把接触心漂到 (96,-47) 角块区。L 手 x 为负,取绝对值。
+  // 接触心硬带:留在 F 面本列贴纸内(|x|∈[38,90])—— stage C 曾拿 0.2 弱罚换
+  // MCP 分,把接触心漂到 (96,-47) 角块区。L 手 x 为负,取绝对值。
+  // y 带 = 竖直正中 ±12(r6 用户规格「魔方高 3 则拇指尖在 1.5」:tip/接触
+  // y≈0;r4/r5 的下半区带 [−52,−8] 被此规格取代)。MCP 沉 D 随之废除(水平
+  // + 居中 ⇒ MCP ≈ ±17 内,与沉 D 几何互斥;真 CMC ≤ −30 仍保留 —— 掌骨
+  // 从腕上 CMC 斜升 ~19° 到 MCP,解剖可行)。
   const cxA = Math.abs(t.cx);
-  L += 30 * (hinge(38 - cxA) ** 2 + hinge(cxA - 90) ** 2 + hinge(-28 - t.cy) ** 2 + hinge(t.cy - 28) ** 2);
+  const [cyLo, cyHi] = [-12, 12];
+  L += 30 * (hinge(38 - cxA) ** 2 + hinge(cxA - 90) ** 2 + hinge(cyLo - t.cy) ** 2 + hinge(t.cy - cyHi) ** 2);
   // 甲面∥F(硬规格,出平面通道解锁后应逼近 1)。MANO ×4:len2d 项在 MANO
   // 解剖长拇指上天然大,曾把这条硬规格压到只剩 ~16 的话语权(0.926 实测)。
   // MANO ×20:12000 档 stage C 停 0.961(len2d/gap 换分),60000 全解找到
   // twist 2.40 + mid 深出平面盆地 → 0.995,其余规格无一破(2026-07-11 实测)。
-  L += (MODEL === 'mano' ? Number(process.env.NAILW ?? 60000) : 3000) * (1 - t.nailDotZ) ** 2;
-  L += 6 * hinge(t.mcpY + 34) ** 2 + 0.04 * (t.mcpY + 40) ** 2; // 可见拇指根(MCP)沉 D 层以下(带余量)
-  // V 形折叠(用户「太长」= 直棍下探观感):tip 要折回 MCP 之上 + 链距压短
-  L += 4 * hinge(t.mcpY + 10 - t.tip.y) ** 2;
+  L += Number(process.env.NAILW ?? 60000) * (1 - t.nailDotZ) ** 2;
+  // 可见拇指(MCP→tip)水平硬墙(2026-07-11 用户规格「大拇指要水平」;
+  // r3 曾斜插 40°)。9° 墙对齐四指 7.8/8.6 的余量哲学。generic 时代的
+  // V 形折叠 / MCP 沉 D 约束均与「水平 + tip 居中」互斥,随内置手模退役。
+  L += 300 * hinge(t.horizDeg - 9) ** 2 + 1.5 * (t.horizDeg / 9) ** 2;
   // len2d 软审美(「太长」直棍观感):200 按 generic 比例定;MANO 真实解剖
   // 拇指更长(CMC 真关节在腕上),200 不可达 → 265,免得软项吃掉硬规格。
-  L += 0.5 * hinge(t.len2d - (MODEL === 'mano' ? 265 : 200)) ** 2;
+  L += 0.5 * hinge(t.len2d - 265) ** 2;
   return L;
 }
 
@@ -545,7 +567,7 @@ function warmStartSplay(p: Probe, base: HandPose, s: Params): void {
 describe.skipIf(!MODE)('pose probe / solver', () => {
   it('run', async () => {
     const isL = MODE === 'PROBE_L' || MODE === 'L';
-    const p = await makeProbe(isL ? 'left.glb' : 'right.glb', isL ? 1 : -1);
+    const p = await makeProbe(isL ? 1 : -1);
     if (MODE === 'NAILK') {
       // 甲宽比例标定(换资产必重标,NAIL_HALFW_K 注释的方法):绑定姿态下
       // 每指末节甲域(t∈[0.4,1.15])背侧(h≥0)顶点横向偏移 |u−uC| 的 p90
@@ -553,7 +575,7 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       for (const name of FINGERS) {
         const [j1, j2, j3, j4] = chainBones[name];
         const q1 = jointWorld(p, j1), q2 = jointWorld(p, j2), q3 = jointWorld(p, j3), q4 = jointWorld(p, j4);
-        const nf = nailFrame(q1, q2, q3, q4, name === 'thumb', p.m.side, MODEL === 'mano' ? MANO_THUMB_ROLL : undefined);
+        const nf = nailFrame(q1, q2, q3, q4, name === 'thumb', p.m.side, MANO_THUMB_ROLL);
         const verts = skinnedVerts(p, (n) => n === j3 || n === j4);
         const us: number[] = [];
         let uw = 0, uh = 0;
@@ -576,7 +598,7 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
         const p90 = us.length ? us[Math.min(us.length - 1, Math.floor(us.length * 0.9))] : NaN;
         console.log(`NAILK ${name.padEnd(6)} len ${nf.len.toFixed(1)} p90 ${p90.toFixed(1)} K ${(p90 / nf.len).toFixed(3)} (n=${us.length})`);
       }
-      if (MODEL === 'mano') {
+      {
         // 拇指绑定滚转标定:扫 roll∈[0,2π),对每个候选量背侧窗(t∈[0.4,1.15],
         // h≥0)的横宽 p90 与高度均值 —— 甲床方向 = 宽/高比最大(甲板宽而平,
         // 指腹窄而鼓,侧棱两者皆小)。取分最高的抄进 MANO_THUMB_ROLL。
@@ -615,7 +637,7 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       // ①绑定层:两腕同锚 WRIST_LOCAL ⇒ 手系里 L = R 关于 y=WRIST_LOCAL.y
       //   平面镜像;②摆姿层:世界系里 L = R 关于 x=0 镜像(homeLeft 已补腕锚
       //   常差项)。哪层先炸 = 不对称源。
-      const pl = await makeProbe('left.glb', 1);
+      const pl = await makeProbe(1);
       const layer = (tag: string, mir: (v: THREE.Vector3) => THREE.Vector3): void => {
         let jWorst = 0, jName = '';
         for (const name of FINGERS.flatMap((fn) => chainBones[fn]).concat('wrist')) {
@@ -635,15 +657,15 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       p.m.group.updateMatrixWorld(true);
       pl.m.group.updateMatrixWorld(true);
       layer('bind ', (v) => new THREE.Vector3(v.x, 2 * wly - v.y, v.z));
-      applyPose(p.m, homeRight(MODEL));
-      applyPose(pl.m, homeLeft(MODEL));
+      applyPose(p.m, homeRight());
+      applyPose(pl.m, homeLeft());
       layer('posed', (v) => new THREE.Vector3(-v.x, v.y, v.z));
       expect(true).toBe(true);
       return;
     }
-    const base = isL ? homeLeft(MODEL) : homeRight(MODEL);
+    const base = isL ? homeLeft() : homeRight();
     applyPose(p.m, base);
-    console.log(`=== ${isL ? 'L' : 'R'} ${MODEL} 当前姿态(handPoses 现值) ===`);
+    console.log(`=== ${isL ? 'L' : 'R'} mano 当前姿态(handPoses 现值) ===`);
     console.log(fmt(measure(p)));
     PIVOT.x *= isL ? -1 : 1; // 接触质心枢轴随手侧镜像
     if (process.env.SEED && (MODE === 'R' || MODE === 'L')) {
@@ -651,8 +673,8 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       // pitch/yaw)> 跳过 A/B,只跑 C(盆地稳定,免得全新 A/B 随权重微调跳去
       // 别的解构)。
       const seed = JSON.parse(process.env.SEED) as Params;
-      const tail2 = MODEL === 'mano' ? 10 : 0;
-      const spB2 = MODEL === 'mano' ? 1.35 : 0.9;
+      const tail2 = 10;
+      const spB2 = 1.35;
       const boundsA2: [number, number][] = [
         [-90, 90], [-50, 50], [-100, 45], [-55, 55],
         ...FOUR.flatMap((): [number, number][] => [[-0.9, 0.9], [-spB2, spB2], [-1.3, 1.3]]),
@@ -691,20 +713,18 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       // L 手 base 已含 R 解烘焙的 roll(homeLeft 镜像),只解 0 档微调。
       // MANO R:解锁 pitch/yaw 后盆地在 roll≈0(深 roll 全档食指丢接触实测),
       // 网格改细扫 0 附近。
-      const ROLLS = MODE === 'L' ? [0]
-        : MODEL === 'mano' ? [8, 4, 0, -4]
-        : [0, -12, -20, -28, -36, -44, -52];
+      const ROLLS = MODE === 'L' ? [0] : [8, 4, 0, -4];
       // L 手全程冻结手根(dy/dz 也冻):pos/quat 必须保持 homeLeft 严格镜像,
       // 不对称只由指参吸收(stage A 曾拿 dy+23 换倾角,拇指被拖垮且烘不进偏移表)。
       const gA = MODE === 'L' ? 0 : 4;
       // MANO 尾部 10 维:dc2×4 + dc3×4(23..30)+ 全局 pitch/yaw 度(31/32)
-      const manoTail = MODEL === 'mano' ? 10 : 0;
+      const manoTail = 10;
       const gAng = MODE === 'L' ? 0 : 2; // pitch/yaw 也属手根,L 冻结保镜像
-      const gDx = MODE === 'L' || MODEL !== 'mano' ? 0 : 3; // MANO 解冻 dx(掌型不同,x 定位不能沿用 generic)
+      const gDx = MODE === 'L' ? 0 : 3; // 解冻 dx(L 冻结手根保镜像)
       const stepsA = [0, gDx, gA, gA, ...FOUR.flatMap(() => [0.07, 0.07, 0.12]), 0, 0, 0, 0, 0, 0, 0,
         ...(manoTail ? [...Array(8).fill(0.06), gAng, gAng] : [])];
       // MANO dsplay 放宽 ±1.35:真实手指根横距 < 三行贴纸跨距,行对齐更吃 splay
-      const spB = MODEL === 'mano' ? 1.35 : 0.9;
+      const spB = 1.35;
       const boundsA: [number, number][] = [
         [-90, 90], [-50, 50], [-100, 45], [-55, 55],
         ...FOUR.flatMap((): [number, number][] => [[-0.9, 0.9], [-spB, spB], [-1.3, 1.3]]),
@@ -722,7 +742,7 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
           ...Array(manoTail).fill(0)];
         warmStartSplay(p, base, s);
         let r = descend(evalA, s, stepsA, boundsA, `A roll=${roll}`, true);
-        if (MODEL === 'mano') {
+        {
           // 多起点抖动重启:33 维坐标下降易停浅盆(dsp/py 实测远离界仍卡),
           // 从当前优点加扰动再降,取最优(扰动幅度≈各通道步长 2~3 倍)。
           for (let k = 0; k < 5; k++) {
@@ -750,14 +770,16 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       // (a) 纯关节位置(免蒙皮,快)最小二乘:(c1,splay) 把 MCP 钉到 D 层下
       //     目标网格点;(b) (c2,c3) 把 thumb-tip 拉到 F 贴纸带心;(c) 全 5 参精解。
       const mxf = isL ? -1 : 1; // 目标点 x 随手侧镜像
+      // r6:拇指尖居中(y≈0)+ 水平 ⇒ MCP 也在 ±17 内;网格铺中带
       const mcpTargets = [
-        new THREE.Vector3(58 * mxf, -42, 50), new THREE.Vector3(48 * mxf, -52, 58), new THREE.Vector3(65 * mxf, -38, 62),
+        new THREE.Vector3(58 * mxf, -6, 50), new THREE.Vector3(48 * mxf, 4, 58), new THREE.Vector3(65 * mxf, -14, 62),
       ];
       // twist('YZX' 序 = 真轴向旋前)网格铺满 ±3:「从下向上折的 V」在 MCP 处
       // 要 ~150° 反折,c2 界内做不到 —— 可行解构 = twist 把弯曲平面旋转半圈,
       // 让 c2+c3 正向弯度(≤137°)变成向上折。
       const twistGrid = [-3, -2.25, -1.5, -0.75, 0, 0.75, 1.5, 2.25, 3];
-      const tipTarget = new THREE.Vector3(60 * mxf, -12, HALF + 3);
+      // 水平拇指 tip 落竖直正中(r6 规格 y≈0)
+      const tipTarget = new THREE.Vector3(60 * mxf, 0, HALF + 3);
       const stepsB = [0.1, 0.1, 0.1, 0.12, 0.15, 0.12, 0.12];
       const boundsB: [number, number][] = [...THUMB_BOUNDS];
       const aimSeed = (cFull: Params, mcpT: THREE.Vector3, tw: number): number[] => {
@@ -784,7 +806,7 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
       };
       // MANO 闸门放宽:A 优点普遍停在几百量级的浅盆(非可行域问题),
       // 让 stage C 全维联合抛光收尾;default 保持 80 严闸。
-      const gateB = MODEL === 'mano' ? 800 : 80;
+      const gateB = 800;
       for (const c of cands) {
         if (c.lossA > gateB) { console.log(`[B] skip roll=${c.s[0]}(A 不可行 ${c.lossA.toFixed(1)})`); continue; }
         let bestT: { s: Params; loss: number } | null = null;
