@@ -683,6 +683,8 @@ td.is-pr {
 .comp-table-dual .dual-td-person { white-space: nowrap; }
 .dual-person-inner { display: inline-flex; align-items: center; gap: 8px; }
 .comp-table-dual .td-dual-round { color: var(--foreground); }
+/* 表头带 InfoTooltip 的布局 wrapper:横向 flex + 间距,实际触发 / 弹层走组件 */
+.wp-th-info { display: inline-flex; align-items: center; gap: 3px; }
 /* 较差那轮:成绩/平均/单次/轮次淡化,attempts 本就是 muted 色 */
 .comp-table-dual tbody tr.dual-row-worse td.td-dual-round,
 .comp-table-dual tbody tr.dual-row-worse td.td-avg,

@@ -10,7 +10,7 @@ import Link from '@/components/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
@@ -53,6 +53,7 @@ import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effect
 import { AttemptPopover } from '@/components/persons/sections/results/AttemptPopover';
 import { listReconsByComp } from '@/lib/recon-api';
 import { buildReconPersonAttemptMap, findReconForPersonAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
+import { roundLabel, ROUND_HINT_ZH, ROUND_HINT_EN } from '@/lib/wca-round-meta';
 import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
 import { ResultChangeEditor, type ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
@@ -1611,12 +1612,11 @@ export default function CompDetailPage() {
           {showScramblesTab && (
           <button
             type="button"
-            className={`comp-view-tab comp-view-tab--icon${isScramble ? ' is-active' : ''}`}
+            className={`comp-view-tab${isScramble ? ' is-active' : ''}`}
             onClick={() => onChangeView('scramble')}
             title={tr({ zh: '查看本场打乱', en: 'View scrambles'
             })}
           >
-            <Shuffle size={14} strokeWidth={1.75} />
             {tr({ zh: '打乱', en: 'Scrambles'
             })}
           </button>
@@ -2421,8 +2421,12 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
             <th className="th-place">{tr({ zh: '名次', en: 'Place' })}</th>
             <th className="th-person">{tr({ zh: '选手', en: 'Person'
             })}</th>
-            <th className="th-dual-round">{tr({ zh: '轮次', en: 'Round'
-            })}</th>
+            <th className="th-dual-round">
+              <span className="wp-th-info">
+                {tr({ zh: '轮次', en: 'Round' })}
+                <InfoTooltip content={(isZh ? ROUND_HINT_ZH : ROUND_HINT_EN)} />
+              </span>
+            </th>
             {(() => {
               const avgTh = showAvg ? <th key="avg" className={`th-avg${!singleFirst ? ' is-rank-col' : ''}`}>{tr({ zh: '平均', en: 'Average' })}</th> : null;
               const bestTh = <th key="best" className={`th-best${singleFirst ? ' is-rank-col' : ''}`}>{tr({ zh: '单次', en: 'Best'
@@ -2492,7 +2496,7 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
                       </span>
                     </td>
                   )}
-                  <td className="td-dual-round">{roundDisplayName(sr.rd.name, isZh)}</td>
+                  <td className="td-dual-round">{roundLabel(sr.rd.i)}</td>
                   {singleFirst ? [bestCell, avgCell] : [avgCell, bestCell]}
                   {Array.from({ length: attemptCount }).map((_, i) => (
                     <td key={i} className={`td-attempt ${isAo5Bracketed(sr.res.v, i) ? 'td-attempt-trimmed' : ''}`}>
@@ -3019,8 +3023,12 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                 <table className="comp-modal-table">
                   <thead>
                     <tr>
-                      <th>{tr({ zh: '轮次', en: 'Round'
-                    })}</th>
+                      <th>
+                        <span className="wp-th-info">
+                          {tr({ zh: '轮次', en: 'Round' })}
+                          <InfoTooltip content={(isZh ? ROUND_HINT_ZH : ROUND_HINT_EN)} />
+                        </span>
+                      </th>
                       <th>{tr({ zh: '名次', en: 'Place' })}</th>
                       <th>{tr({ zh: '单次', en: 'Best'
                     })}</th>
@@ -3050,7 +3058,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                           className="comp-modal-row-clickable"
                           onClick={() => onSelectRound(en.ev.i, en.rd.i)}
                         >
-                          <td>{roundDisplayName(en.rd.name, isZh)}</td>
+                          <td>{roundLabel(en.rd.i)}</td>
                           <td>{place}</td>
                           <td>
                             {formatLive(result.b, result.e, false)}
