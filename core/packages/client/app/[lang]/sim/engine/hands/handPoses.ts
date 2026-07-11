@@ -13,6 +13,23 @@ export interface FingerCurl {
   curl: [number, number, number];
   /** 指根横向张开(rad,作者系:正=向拇指侧;rig 应用时 ×side)。 */
   splay: number;
+  /** 指根绕自身长轴的轴向扭转(rad,作者系,rig ×side;默认 0 = 历史姿态
+   *  不变)。r11 全关节解锁新通道:拇指 = CMC 旋前(真人对掌伴随掌骨 ~90°
+   *  轴旋,甲面朝向的唯一直接杠杆 —— curl/splay 空间对甲面法向无杠杆,
+   *  r10 实测);四指 = 指柱滚转(整手滚转后把指背转回朝上的补偿,r9 缺
+   *  此通道所以救不回四指水平)。 */
+  twist?: number;
+  /** 中节关节(拇指=MCP / 四指=PIP)的出平面通道 [twist, splay](rad,作者系,
+   *  均由 rig ×side;缺省 = 纯铰链 = 旧行为)。r11 追加:拇指链此前是「共面
+   *  三连杆」,几何可证 甲面∥F 与 MCP 沉 D 层不可兼得(解析上界 nail·ẑ≈0.87
+   *  @MCP−35,求解器 Pareto 前沿实测吻合)—— 真人拇指 MCP 自带外展+旋前,
+   *  出平面自由度是该死结的唯一解。四指慎用(PIP 出平面在解剖上很小)。 */
+  mid?: [number, number];
+  /** 掌骨关节 [curl, splay, twist?](rad,作者系,splay/twist 由 rig ×side)。
+   *  四指专用(拇指的掌骨 = root 本身,忽略此项);默认缺省 = 掌骨保持绑定
+   *  位(旧「焊死在掌内」行为)。真人掌弓自由度:握持时环/小指掌骨向掌心
+   *  收拢(cupping),掌面不是刚板。 */
+  meta?: [number, number, number?];
 }
 export type HandFingerPose = Record<FingerName, FingerCurl>;
 
@@ -45,7 +62,6 @@ function fingerPose(
 ): HandFingerPose {
   return { thumb, index, middle, ring, pinky };
 }
-const fc = (c1: number, c2: number, c3: number, splay = 0): FingerCurl => ({ curl: [c1, c2, c3], splay });
 
 /**
  * 右手 home 握持(前后钳形,按用户指位规格):指列竖排绕过右后竖棱 ——
@@ -62,7 +78,7 @@ const fc = (c1: number, c2: number, c3: number, splay = 0): FingerCurl => ({ cur
  */
 export function homeRight(): HandPose {
   return {
-    pos: new THREE.Vector3(312, 15.17, 31.19),
+    pos: new THREE.Vector3(299.27, -48.92, 29.41),
     quat: quatFromWorldRots([
       ["y", 90],     // 指列转向 -z(后)
       ["z", 180],    // 食指侧翻到上方,掌心落向 -x(魔方)
@@ -72,9 +88,10 @@ export function homeRight(): HandPose {
                      // c1 环抱绕过右后棱 + 原 c2/c3 拱形,pos.y/z 随之重解。
                      // 同日 r6:整手下移 posY 19→15.2、接触列居中到贴纸带心)
       ["y", 12.62],  // yaw:拇指侧向魔方收拢(8.59→12.62,16 维联合解)
-                     // r10(2026-07-10):r9 的整手 Rz(−40°) 滚转已撤 —— 它把
-                     // 指列转斜,违反 r5「食/中/无名长轴水平」硬规格(用户重申);
-                     // 回滚 r6 挂载,拇指问题只在 curl 空间解(见拇指注释)。
+      ["z", -15.778], // r11 滚转:拇指侧下沉(CMC 87.8→30.9,配合 pos.y 下移
+                     // 15.2→−49.7)。r9 的 Rz(−40°) 因四指转斜被否;r11 靠新
+                     // twist 通道逐指把长轴/指背转回规格(7.8/7.8/5.1/0°),
+                     // roll 只取拇指规格所需最小档(_pose_probe stage A 网格扫)。
     ]),
     fingers: fingerPose(
       // 2026-07-06 GLTF 蒙皮手模(WebXR generic-hand)标定,浏览器内坐标下降。
@@ -125,28 +142,29 @@ export function homeRight(): HandPose {
       // ⚠ 涟漪:全部 flick fit(HOOK_FOLLOW 等)的起点 = 本 home 姿,大改后
       // 各手势贴面质量需按 r3/r4 方法复检(FINGERTRICKS §5)。
       // 2026-07-10 r10(回滚 + 甲面硬平行):r7/r8「拇指挂点大平移」脱掌解剖学
-      // 假、r9「整手 Rz(−40°) 滚转」违反四指水平硬规格,先后被用户否决,全部
-      // 撤销 —— 挂载与四指 curl 恢复 r6 解(上一段数值全部有效)。拇指按用户
-      // 重申规格重解:**甲面硬平行 F**(旧解真实甲片 PCA 法向·ẑ 仅 0.67,即
-      // 斜 48°;历史注释的「甲背·ẑ≈0.85」是重烘焙解析口径,非屏上实物)且
-      // 弯曲链平顺(r9 的 c2 −0.49 过伸 + c3 1.1 深屈造成侧影波浪线)。
-      // 解法:判据改为**真实甲片网格 PCA 平面法向**(所见即所得,解析 dorsal
-      // 在 curl≠bind 时与实物有偏差);扭转分量(法向 x)在 curl 空间无杠杆,
-      // 唯一杠杆 = THUMB_CURL_PLANE_ROLL(2.074→2.6,handModelGltf),roll
-      // 增大导致的链条外甩靠 THUMB_PITCH_MOUNT ≤15U 挂点微移拉回接触。
-      // 8 通道(c1/c2/c3/splay/roll/挂点 xyz)嵌套坐标下降,roll 网格扫 2.07~3.05:
-      // 2.85+ 接触域崩塌不可恢复,2.6 双手同点最优。⚠ 活体 roll 模拟(转 rootBase)
-      // 与烘焙 roll(invBase 连动 mid/tip 局部系)在非零 curl 下不等价 —— 首轮
-      // 烘焙后重载穿模 12U;终解 = 在**重载后的真实烘焙态**上 7 通道(curl+挂点,
-      // 均为精确迁移杠杆)二次收敛。R 终解:甲法向 (0.009,-0.007,**1.000**),
-      // 贴面 2.42、肉 |x|≥35.0、yVis [-32.0,24.9] ⊂ ±32(E 带)、接触 (87,-2)
-      // FR 贴纸内、挂点 9.4U;链 c1 −0.6(CMC 伸展,平压姿的真人特征)/c2 −0.35/
-      // c3 +0.11 单调无蛇形。
-      fc(-0.6, -0.35, 0.1075, 1.08),   // 拇指:末节平贴 F,甲面∥F(PCA ·ẑ 1.000)
-      fc(0.7543, 0.38, 0.28, -0.0525), // 食指:水平环抱,Q 角排居中,4.6°
-      fc(0.8058, 0.42, 0.26, -0.0375), // 中指:水平环抱,T 棱排居中,4.9°
-      fc(0.6722, 0.40, 0.28, -0.005),  // 无名指:水平环抱,T 角排居中,7.5°
-      fc(0.98, 0.42, 0.30, -0.05),     // 小指:随无名指并拢弯收,悬空不接触,8.3°
+      // 假(attach 前的 rootBase 改动被世界位姿补偿吞掉,「只转支架肉不动」,
+      // 用户抓的)、r9「整手 Rz(−40°) 滚转」违反四指水平硬规格,先后被否决。
+      // 2026-07-10 r11(全关节解锁,方案 D):用户拍板「真人手有多少自由度就给
+      // 多少」。资产(WebXR generic-hand,25 关节全蒙皮)本就够,是绑定层焊死
+      // 的 —— 解锁:①每指根 twist(Euler x 槽,'YZX' 序 = 真轴向旋前);②四指
+      // 掌骨 meta 关节(掌弓);③拇指 MCP 出平面 [twist,splay](mid 通道)。
+      // 关键认知:旧拇指链是**共面三连杆**,几何可证 甲面∥F 与 MCP 沉 D 不可
+      // 兼得(解析上界 nail·ẑ≈0.87@MCP−35,solver Pareto 前沿吻合)—— 真人
+      // 拇指靠 MCP 外展+旋前出平面,mid 通道是死结唯一解。求解 = tests/
+      // _pose_probe.test.ts(SOLVE=R 三阶段:roll 网格×四指恢复 → CMC/tip 两步
+      // 解析瞄准种子×twist 网格单解拇指 → 全 23 维抛光;SEED= 直通抛光)。
+      // R 终解(loss 14.1):四指倾角 7.8/7.8/5.1/0°(<8.6 留余量)、贴面
+      // 2.86~2.94、行带内、指背贴 r6 锚;拇指甲片 PCA 法向·ẑ 0.974、MCP y
+      // −34.0(D 层下)、贴面 3.36、接触 (90,7) FR 贴纸内、肉 |x|≥58.5、链距
+      // 231→202(V 形折叠,治「太长」)、pen −2.86。真 CMC(腕侧掌骨根)y
+      // 29.6 = 本解构运动学下限:再低要么破四指水平(roll>−28 后 stage A 崩),
+      // 要么脱 F 接触 —— 用户口径「CMC 沉 D」按可见拇指根(MCP+鱼际)交付,
+      // 鱼际肉 fleshY 已到 −63。
+      { curl: [1.5054, -0.3684, 0.145], splay: 0.997, twist: 2.2846, mid: [-0.0614, -0.8862] }, // 拇指:从下向上立,甲面∥F 0.991
+      { curl: [0.7593, 0.38, 0.28], splay: -0.1024, twist: -0.0321 }, // 食指:水平环抱,7.8°
+      { curl: [0.8085, 0.42, 0.26], splay: -0.0887, twist: -0.0312 }, // 中指:水平环抱,7.8°
+      { curl: [0.673, 0.40, 0.28], splay: -0.0334, twist: 0.0004 },   // 无名指:水平环抱,5.6°
+      { curl: [0.6836, 0.42, 0.30], splay: 0.0795, twist: 0.114 },    // 小指:蜷收在后半区悬空(tip z≤−40,禁探 D 底)
     ),
   };
 }
@@ -155,18 +173,20 @@ export function homeRight(): HandPose {
  *  (left.glb 镜像资产有 ~2U 雕刻不对称,同 curl 下两手间隙不同,必须各解各的)
  *  + 破双手逐帧完美镜像同步的 CG 感(评审 #9)。写死常量,禁随机(刷新换脸)。
  *  第 4 位(可选)= splay 偏移:2026-07-10 手指放平重解后左拇指 E 带差 splay
- *  一口气(y 抬升的主杠杆,c2/c3 抬不动),给偏移表补上该维度。 */
-const LEFT_CURL_OFFSET: Record<FingerName, [number, number, number, number?]> = {
-  // 2026-07-10 r6 随整列下沉居中重解(SOLVE=L 12 维偏移解,L 独立解−R 解):
-  // 倾角 食 3.6 / 中 3.8 / 无名 6.8 / 小 7.9°,贴面 3.0/2.5/2.7(y 65/1/−63
-  // 各排居中)。四指偏移沿用 r6;拇指偏移 = r10 L 烘焙态独立解(甲法向 ·ẑ
-  // 1.000、贴面 2.63、|x|≥34.6、yVis ⊂ ±32,roll 同 2.6,挂点 10.0U 见
-  // handModelGltf THUMB_PITCH_MOUNT)− r10 R 解。
-  thumb: [0, 0, 0.0091, -0.01],
-  index: [0.0104, 0.02, 0.03, 0.0175],
-  middle: [-0.0051, 0.025, -0.02, 0.02],
-  ring: [0.0158, -0.03, 0.02, 0.0125],
-  pinky: [0.04, -0.02, 0.04],
+ *  一口气(y 抬升的主杠杆,c2/c3 抬不动),给偏移表补上该维度。
+ *  第 5 位(可选)= twist 偏移;第 6/7 位(可选)= MCP mid [twist, splay] 偏移
+ *  (r11 通道,见 FingerCurl)。 */
+const LEFT_CURL_OFFSET: Record<FingerName, [number, number, number, number?, number?, number?, number?]> = {
+  // 2026-07-10 r11(全关节解锁)重解:L 手根冻结为 homeRight 严格镜像(不对称
+  // 全由指参吸收),_pose_probe SOLVE=L SEED=镜像 R 拇指 直通抛光,L 独立解 −
+  // R 解。L 终解 loss 10.8:四指倾角 7.8/7.8/6.6°、小指 9.2° 蜷收后半区、贴面
+  // 2.88~2.91、行带内;拇指甲法向 ·ẑ 0.994、MCP y −38.8(D 层下)、贴面 2.40、
+  // 接触 (−89,6) FL 贴纸内、肉 |x|≥59.8、链距 199、pen −2.40(≥1.2U 呼吸余量)。
+  thumb: [-0.0037, 0.0233, -0.0177, -0.0219, 0.0143, 0.0665, -0.0325],
+  index: [0.011, 0.02, 0.03, -0.0075, -0.0156],
+  middle: [-0.0088, 0.025, -0.02, -0.005, -0.0221],
+  ring: [0.0178, -0.03, 0.02, 0.017, -0.0041],
+  pinky: [0.0254, -0.02, 0.04, 0, -0.002],
 };
 
 export function homeLeft(): HandPose {
@@ -179,9 +199,15 @@ export function homeLeft(): HandPose {
   for (const name of Object.keys(r.fingers) as FingerName[]) {
     const f = r.fingers[name];
     const off = LEFT_CURL_OFFSET[name];
+    const midBase = f.mid ?? [0, 0];
+    const mid: [number, number] | undefined = f.mid || off[5] != null || off[6] != null
+      ? [midBase[0] + (off[5] ?? 0), midBase[1] + (off[6] ?? 0)] : undefined;
     fingers[name] = {
       curl: [f.curl[0] + off[0], f.curl[1] + off[1], f.curl[2] + off[2]],
       splay: f.splay + (off[3] ?? 0), // splay 由 rig ×side 镜像;偏移是左手局部值
+      twist: (f.twist ?? 0) + (off[4] ?? 0), // twist 同 splay:rig ×side,偏移为左手局部值
+      ...(mid ? { mid } : {}), // MCP 出平面通道镜像语义由 rig ×side,偏移为左手局部值
+      ...(f.meta ? { meta: f.meta } : {}), // 掌弓通道镜像语义由 rig ×side,需要 L 独立偏移时再扩表
     };
   }
   return {

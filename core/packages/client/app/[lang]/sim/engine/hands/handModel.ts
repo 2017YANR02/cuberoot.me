@@ -29,6 +29,13 @@ export interface FingerJoints {
    *  `root.quaternion = rootBase ∘ R(curl/splay)` 叠加,禁止直接写
    *  rotation(会抹掉拇指基座 —— v1 实测踩过)。 */
   rootBase: THREE.Quaternion;
+  /** 掌骨代理关节(r11 全关节解锁;四指专有,拇指的掌骨 = root 本身)。
+   *  rest 局部旋转 = identity(手系对齐),root 是它的子节点 —— rig 写
+   *  `meta.quaternion = metaBase ∘ R(euler) ∘ metaBase⁻¹`(手系共轭,euler
+   *  在掌骨作者系解读,rest 恒等 → 缺省姿态与旧「焊死」行为逐位一致)。 */
+  meta?: THREE.Group;
+  /** 掌骨作者系基(+x = 掌骨→指根方向,+z 掌心向),供上式共轭。 */
+  metaBase?: THREE.Quaternion;
 }
 
 export interface HandModel {
