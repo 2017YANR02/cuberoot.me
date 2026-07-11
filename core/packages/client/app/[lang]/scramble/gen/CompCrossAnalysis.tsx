@@ -202,6 +202,30 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
     </div>
   );
 
+  // 热力网格视图下并入网格角落单元格(与列头同一行);条形图视图单独一行(legend 在其右侧)。
+  const viewToggleNode = (
+    <div className="gen-cx-viewtoggle" role="group" aria-label={t('视图', 'View')}>
+      <button
+        type="button"
+        className={`gen-cx-viewbtn${view === 'heatmap' ? ' is-on' : ''}`}
+        onClick={() => setView('heatmap')}
+        title={t('热力网格', 'Heatmap grid')}
+        aria-label={t('热力网格', 'Heatmap grid')}
+      >
+        <LayoutGrid size={14} />
+      </button>
+      <button
+        type="button"
+        className={`gen-cx-viewbtn${view === 'bars' ? ' is-on' : ''}`}
+        onClick={() => setView('bars')}
+        title={t('条形图', 'Stacked bars')}
+        aria-label={t('条形图', 'Stacked bars')}
+      >
+        <BarChart3 size={14} />
+      </button>
+    </div>
+  );
+
   return (
     <section className="gen-cx-panel">
       {step.error ? (
@@ -219,9 +243,10 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
           {!activeReady && (
             <p className="gen-cx-loading"><Loader2 size={15} className="gen-spin" />{progressLabel}</p>
           )}
-          <div className="gen-cx-legendrow">
-            {/* 热力网格的列头已是「色点 + 步号 + 可点筛选」,图例重复 → 仅条形图显示图例当色标 */}
-            {view === 'bars' ? (
+          {view === 'bars' ? (
+            <div className="gen-cx-legendrow">
+              {viewToggleNode}
+              {/* 热力网格的列头已是「色点 + 步号 + 可点筛选」,图例重复 → 仅条形图显示图例当色标 */}
               <ul className="gen-cx-legend">
                 {legendSteps.map((s) => (
                   <li key={s}>
@@ -237,28 +262,8 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
                   </li>
                 ))}
               </ul>
-            ) : <span />}
-            <div className="gen-cx-viewtoggle" role="group" aria-label={t('视图', 'View')}>
-              <button
-                type="button"
-                className={`gen-cx-viewbtn${view === 'heatmap' ? ' is-on' : ''}`}
-                onClick={() => setView('heatmap')}
-                title={t('热力网格', 'Heatmap grid')}
-                aria-label={t('热力网格', 'Heatmap grid')}
-              >
-                <LayoutGrid size={14} />
-              </button>
-              <button
-                type="button"
-                className={`gen-cx-viewbtn${view === 'bars' ? ' is-on' : ''}`}
-                onClick={() => setView('bars')}
-                title={t('条形图', 'Stacked bars')}
-                aria-label={t('条形图', 'Stacked bars')}
-              >
-                <BarChart3 size={14} />
-              </button>
             </div>
-          </div>
+          ) : null}
 
           {view === 'bars' ? (
             <div className="gen-cx-rows">
@@ -271,7 +276,7 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
             </div>
           ) : (
             <div className="gen-cx-hm" style={{ ['--cx-cols' as string]: legendSteps.length }}>
-              <div className="gen-cx-hm-corner" />
+              <div className="gen-cx-hm-corner">{viewToggleNode}</div>
               {legendSteps.map((s) => (
                 <button
                   key={s}

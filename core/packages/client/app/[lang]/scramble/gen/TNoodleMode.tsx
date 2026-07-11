@@ -1032,6 +1032,19 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   );
   // 是否涉及 sq1(配置选中 或 已加载/生成的 sheets 含 sq1)→ 显示记号开关。
   const sq1Involved = !!events['sq1'] || eventsInSheets.includes('sq1');
+  // 简写(全站默认)/ 完整(WCA 官方打乱纸风格)。已加载 + 333 分析行同时出现时并入该行,否则单独一行。
+  const sq1FormatNode = sq1Involved ? (
+    <div className="gen-sq1-format">
+      <span className="gen-sq1-format-label">{t('SQ1', 'SQ1')}</span>
+      <PillToggle
+        value={sq1Compact}
+        onChange={onSq1CompactChange}
+        onLabel={t('简写', 'Compact')}
+        offLabel={t('完整', 'Full')}
+        ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
+      />
+    </div>
+  ) : null;
   // icon 角标:多轮时显示当前轮次的位置编号 (1/2/3/…),与 URL round= 一致,提示再次点击会循环。
   const roundBadges = activeView && roundIdxsInEvent.length > 1 && activeRoundIdx !== null
     ? { [activeView]: `${roundNumOf(activeView, activeRoundIdx)}` }
@@ -1336,19 +1349,8 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       {/* 生成 / 预览 / 清空 按钮行 — 放在 selector + config 之后,events 列表之前 */}
       {controlsNode}
 
-      {/* SQ1 记号开关:涉及 sq1 时显示。简写(全站默认)/ 完整(WCA 官方打乱纸风格) */}
-      {sq1Involved && (
-        <div className="gen-sq1-format">
-          <span className="gen-sq1-format-label">{t('SQ1 记号', 'SQ1 notation')}</span>
-          <PillToggle
-            value={sq1Compact}
-            onChange={onSq1CompactChange}
-            onLabel={t('简写', 'Compact')}
-            offLabel={t('完整', 'Full')}
-            ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
-          />
-        </div>
-      )}
+      {/* SQ1 记号开关:涉及 sq1 时显示;已加载且与 333 分析行同屏时并入该行(见下方 gen-cx-switchrow),此处只兜底其余场景 */}
+      {!(loaded && activeView && is333Family && sheetsInEvent.length > 0) && sq1FormatNode}
 
       {loaded ? null : forcedCompId ? (
         // 内嵌模式:加载中 / 加载失败(error 已在上方渲染)的占位。
@@ -1452,11 +1454,11 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         <>
           {is333Family && sheetsInEvent.length > 0 && (
             <div className="gen-cx-switchrow">
+              {sq1FormatNode}
+              <span className="gen-sq1-format-label">{t('分析', 'Analysis')}</span>
               <PillToggle
                 value={showCross}
                 onChange={setShowCross}
-                onLabel={t('分析', 'Analysis')}
-                offLabel={t('分析', 'Analysis')}
                 ariaLabel={t('显示十字步数分析', 'Show cross analysis')}
               />
               {showCross && roundIdxsInEvent.length > 1 && (
