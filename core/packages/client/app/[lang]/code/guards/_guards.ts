@@ -123,6 +123,12 @@ export const CI_GUARDS_DRIFT: CiGuard[] = [
     en: { title: '/code/solvers fleet table drift', desc: '/code/solvers’ NONWCA_TS table must exactly equal CSTIMER_SOLVABLE_IDS (the real "already solvable" set); the not-yet-built PLANNED list must be disjoint from it.' },
   },
   {
+    id: 'param-shell-sentinel',
+    test: 'dynamic-param-shell-sentinel.test.ts',
+    zh: { title: '无界客户端壳 [param] 页哨兵', desc: '无界 id 的纯客户端壳 [param] 页(数据全在浏览器拉)禁用老的 on-demand 模型(dynamicParams=true),必须走单一预生成哨兵壳(dynamicParams=false + generateStaticParams 返 [\'_\'] + next.config rewrite),否则爬虫 / 部署后扫全量按 id 逐个现跑 Function(2026-07-10 comp[slug] 真炸过 Function Invocations spike)。allowlist 只放真 SEO 页 + bounded id 页。' },
+    en: { title: 'Unbounded client-shell [param] page sentinel', desc: 'An unbounded pure client-shell [param] page (all data fetched in the browser) can’t use the old on-demand model (dynamicParams=true) — it must ship as ONE prerendered sentinel shell (dynamicParams=false + generateStaticParams -> [\'_\'] + a next.config rewrite), or a crawler / post-deploy sweep renders a Function per id (comp[slug] caused a real Function Invocations spike on 2026-07-10). The allowlist holds only real-SEO and bounded-id pages.' },
+  },
+  {
     id: 'guards-drift',
     test: 'code-guards-drift.test.ts',
     zh: { title: '/code/guards 自身漂移', desc: '这页也是一份手工快照,所以也有自己的漂移守卫:每个带 guard-registry 标记注释的 CI 测试必须在这页列出,这页列出的每个测试必须真的存在且带标记。新增一对守卫忘了登记 → 直接红。' },

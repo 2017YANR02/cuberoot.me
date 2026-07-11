@@ -13,7 +13,21 @@ import { tr } from '@/i18n/tr';
 interface DayEntry { date: string; zh: string; en: string;
  }
 const DAYS = COMMITS_DATA as DayEntry[];
-const CAL_MONTHS = ['2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06'];
+// 月份 tab 从数据的首尾日期自动推导(含中间无提交的月),加新日期时不用再手动维护月份列表
+function monthRange(first: string, last: string): string[] {
+  const out: string[] = [];
+  let [y, m] = first.slice(0, 7).split('-').map(Number);
+  const [ly, lm] = last.slice(0, 7).split('-').map(Number);
+  while (y < ly || (y === ly && m <= lm)) {
+    out.push(`${y}-${String(m).padStart(2, '0')}`);
+    if (++m > 12) { m = 1; y++; }
+  }
+  return out;
+}
+const SORTED_DATES = DAYS.map((d) => d.date).sort();
+const CAL_MONTHS = SORTED_DATES.length
+  ? monthRange(SORTED_DATES[0], SORTED_DATES[SORTED_DATES.length - 1])
+  : ['2025-12'];
 
 function Timeline() {
   const [open, setOpen] = useState<number | null>(null);

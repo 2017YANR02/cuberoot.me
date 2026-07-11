@@ -159,7 +159,6 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
           hideLegendColors
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-          yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count' })}
         />
       </div>
 
@@ -241,7 +240,6 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
                 chartMode="pdf"
                 hideLegendColors
                 onYModeToggle={() => setStatY(statY === 'percent' ? 'count' : 'percent')}
-                yModeLabel={statY === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count' })}
               />
             </div>
             <div className="ess2-table-scroll sticky-scroll">
@@ -306,7 +304,6 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
             chartMode="pdf"
             hideLegendColors
             onYModeToggle={() => setCaseY(caseY === 'percent' ? 'count' : 'percent')}
-            yModeLabel={caseY === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count' })}
           />
         </div>
         {/* HTM 最优解是否同时是 QTM 最优解 */}

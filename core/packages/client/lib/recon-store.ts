@@ -6,6 +6,9 @@ import { create } from 'zustand';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listRecons } from './recon-api';
 import { loadCachedSolves, saveCachedSolves } from './recon-cache';
+import {
+  formatTime, formatAvg, formatAoXR, formatResult, formatRound, truncateCs,
+} from './recon-utils';
 
 // ── 排序 ──
 
@@ -26,7 +29,9 @@ export interface ReconFilters {
   solver: string;      // '' = 全部, '__NO_PERSON__' = 无选手名
   reconer: string;     // '' = 全部, '__NO_RECONER__' = 无复盘者
   comp: string;        // '' = 全部, '__NO_COMP__' = 无比赛
-  record: string;      // '' = 全部 (e.g. 'WR' / 'CR' / 'NR' / ...)
+  record: string;      // '' = 全部 (e.g. 'WR' / 'CR' / 'NR' / ...)；卡片视图通用筛选，匹配 single/average/aoxr 任一
+  singleRecord: string; // '' = 全部；仅匹配 regionalSingleRecord（单次列筛选）
+  averageRecord: string; // '' = 全部；仅匹配 regionalAverageRecord（平均列筛选）
   rawTimeMin: number | null;  // null = 不限；秒
   rawTimeMax: number | null;  // null = 不限；秒
   dateMin: string;     // '' = 不限；YYYY-MM-DD
@@ -41,6 +46,21 @@ export interface ReconFilters {
   tpsMax: number | null;
   idMin: number | null;
   idMax: number | null;
+  search: string;      // '' = 不限；匹配表格任意可见列
+}
+
+// NOTE: 搜索——把该行在表格里可见的列拼成一个 haystack，做不区分大小写的子串匹配
+function matchesSearch(s: ReconSolve, q: string): boolean {
+  const parts = [
+    s.person, ...(s.coPersons?.map(c => c.name) ?? []),
+    s.date, s.comp, s.compWcaId,
+    formatRound(s.round, s.solveNum),
+    formatAvg(s.average), formatAoXR(s.aoType), formatResult(s.rawTime),
+    s.value, formatTime(s.rawTime),
+    s.stm != null ? String(s.stm) : '', s.tps != null ? String(s.tps) : '',
+    s.event, s.method, s.reconer, String(s.id),
+  ];
+  return parts.some(p => p && String(p).toLowerCase().includes(q));
 }
 
 // ── Store ──
@@ -72,8 +92,12 @@ interface ReconStoreActions {
   getAvailableReconers: () => { name: string; count: number; wcaId: string }[];
   /** 按频率排序的比赛列表 */
   getAvailableComps: () => { name: string; count: number; country: string }[];
-  /** 按频率排序的纪录代码列表 (WR / CR / NR 等) */
+  /** 按频率排序的纪录代码列表 (WR / CR / NR 等)；single/average/aoxr 三字段并集 */
   getAvailableRecords: () => { code: string; count: number }[];
+  /** 仅 regionalSingleRecord 字段的纪录代码列表（单次列筛选用） */
+  getAvailableSingleRecords: () => { code: string; count: number }[];
+  /** 仅 regionalAverageRecord 字段的纪录代码列表（平均列筛选用） */
+  getAvailableAverageRecords: () => { code: string; count: number }[];
   /** 可用 round 列表（频率排序） */
   getAvailableRounds: () => { name: string; count: number }[];
   /** 可用 aoType 列表（频率排序） */
@@ -88,6 +112,8 @@ const DEFAULT_FILTERS: ReconFilters = {
   reconer: '',
   comp: '',
   record: '',
+  singleRecord: '',
+  averageRecord: '',
   rawTimeMin: null,
   rawTimeMax: null,
   dateMin: '',
@@ -102,6 +128,7 @@ const DEFAULT_FILTERS: ReconFilters = {
   tpsMax: null,
   idMin: null,
   idMax: null,
+  search: '',
 };
 
 const PAGE_SIZE = 50;
@@ -211,15 +238,25 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
         (s.regionalAoxrRecord && String(s.regionalAoxrRecord).toUpperCase() === q),
       );
     }
+    if (filters.singleRecord) {
+      const q = filters.singleRecord.toUpperCase();
+      result = result.filter(s => s.regionalSingleRecord && String(s.regionalSingleRecord).toUpperCase() === q);
+    }
+    if (filters.averageRecord) {
+      const q = filters.averageRecord.toUpperCase();
+      result = result.filter(s => s.regionalAverageRecord && String(s.regionalAverageRecord).toUpperCase() === q);
+    }
 
-    // NOTE: rawTime 范围（单次/成绩同源），单位秒。DNF (rawTime < 0) 视为不在任何范围
+    // NOTE: rawTime 范围（单次/成绩同源），单位秒。DNF (rawTime < 0) 视为不在任何范围。
+    //       按截断到厘秒的值比较（与"单次"列显示口径一致），否则 2.803 显示"2.80"
+    //       却因原始值 2.803 != 2.80 被"2.80"精确查询漏掉。
     if (filters.rawTimeMin != null) {
       const min = filters.rawTimeMin;
-      result = result.filter(s => s.rawTime != null && s.rawTime >= 0 && s.rawTime >= min);
+      result = result.filter(s => s.rawTime != null && s.rawTime >= 0 && truncateCs(s.rawTime) >= min);
     }
     if (filters.rawTimeMax != null) {
       const max = filters.rawTimeMax;
-      result = result.filter(s => s.rawTime != null && s.rawTime >= 0 && s.rawTime <= max);
+      result = result.filter(s => s.rawTime != null && s.rawTime >= 0 && truncateCs(s.rawTime) <= max);
     }
 
     // NOTE: 日期 / 轮次 / 平均 / AoXR / STM / TPS / id
@@ -268,6 +305,10 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
     if (filters.idMax != null) {
       const max = filters.idMax;
       result = result.filter(s => s.id <= max);
+    }
+    if (filters.search.trim()) {
+      const q = filters.search.trim().toLowerCase();
+      result = result.filter(s => matchesSearch(s, q));
     }
 
     // NOTE: 排序——'result' 实际排 rawTime
@@ -394,17 +435,56 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
   },
 
   // NOTE: 按频率排序的纪录代码列表; 取自 single / average / aoxr 三个字段并集
+  // NOTE: 去重/计数用大写 key(避免同一把 single+average 都是 WR 时重复计数)，
+  //       展示用首次出现的原始大小写(如 "AsR"，不能强转大写变成 "ASR")
   getAvailableRecords: () => {
     const counts: Record<string, number> = {};
+    const display: Record<string, string> = {};
     for (const s of get().allSolves) {
-      const codes = new Set<string>();
-      if (s.regionalSingleRecord) codes.add(String(s.regionalSingleRecord).toUpperCase());
-      if (s.regionalAverageRecord) codes.add(String(s.regionalAverageRecord).toUpperCase());
-      if (s.regionalAoxrRecord) codes.add(String(s.regionalAoxrRecord).toUpperCase());
-      for (const c of codes) counts[c] = (counts[c] || 0) + 1;
+      const raws = [s.regionalSingleRecord, s.regionalAverageRecord, s.regionalAoxrRecord]
+        .filter((v): v is string => !!v);
+      const keys = new Set<string>();
+      for (const r of raws) {
+        const key = r.toUpperCase();
+        keys.add(key);
+        if (!display[key]) display[key] = r;
+      }
+      for (const k of keys) counts[k] = (counts[k] || 0) + 1;
     }
     return Object.entries(counts)
-      .map(([code, count]) => ({ code, count }))
+      .map(([key, count]) => ({ code: display[key] ?? key, count }))
+      .sort((a, b) => b.count - a.count);
+  },
+
+  // NOTE: 单字段版——只统计 regionalSingleRecord，供"单次"列筛选用（去重/展示大小写规则同 getAvailableRecords）
+  getAvailableSingleRecords: () => {
+    const counts: Record<string, number> = {};
+    const display: Record<string, string> = {};
+    for (const s of get().allSolves) {
+      const r = s.regionalSingleRecord;
+      if (!r) continue;
+      const key = r.toUpperCase();
+      if (!display[key]) display[key] = r;
+      counts[key] = (counts[key] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([key, count]) => ({ code: display[key] ?? key, count }))
+      .sort((a, b) => b.count - a.count);
+  },
+
+  // NOTE: 单字段版——只统计 regionalAverageRecord，供"平均"列筛选用
+  getAvailableAverageRecords: () => {
+    const counts: Record<string, number> = {};
+    const display: Record<string, string> = {};
+    for (const s of get().allSolves) {
+      const r = s.regionalAverageRecord;
+      if (!r) continue;
+      const key = r.toUpperCase();
+      if (!display[key]) display[key] = r;
+      counts[key] = (counts[key] || 0) + 1;
+    }
+    return Object.entries(counts)
+      .map(([key, count]) => ({ code: display[key] ?? key, count }))
       .sort((a, b) => b.count - a.count);
   },
 }));

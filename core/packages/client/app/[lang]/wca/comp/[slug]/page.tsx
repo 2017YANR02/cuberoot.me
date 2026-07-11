@@ -1,18 +1,21 @@
 // Server wrapper for /wca/comp/[slug]. CompDetailPage is 'use client' and loads ALL
 // data client-side (fetch + WebSocket), so the server render produces only the empty
-// <Suspense fallback={null}> shell — identical for every slug. Serve that shell as a
-// cached static asset (CDN) instead of re-rendering per request:
-//   - force-static makes useSearchParams() return empty server-side (no DYNAMIC_SERVER_
-//     USAGE throw — the earlier force-dynamic was working around exactly that error).
-//   - 17k comps → don't prebuild; dynamicParams renders the shell on first hit per slug,
-//     then it's cached. Kills the per-hit / per-prefetch function invocation + CPU.
+// <Suspense fallback={null}> shell — identical for every slug.
+//
+// The slug space is unbounded (~17k comps) and Vercel resets the ISR cache on every
+// deploy, so the old dynamicParams=true model re-rendered a Function per first-seen
+// slug on every crawler / post-deploy sweep (the Function Invocations spike). Instead
+// prerender ONE static shell at the sentinel param "_" and route every real slug to it
+// via a next.config rewrite (/:lang/wca/comp/:slug -> .../comp/_). The client
+// (CompDetailPage) reads the real slug from window.location. Zero per-slug function
+// invocations, survives the per-deployment ISR cache reset. Same trick as
+// wca/persons/[wcaId], memo/colpi/[pair], recon/submit/[editId], forum/*.
 import { Suspense } from 'react';
 import CompDetailPage from './CompDetailPage';
 
-export const dynamic = 'force-static';
-export const dynamicParams = true;
+export const dynamicParams = false;
 export function generateStaticParams(): { slug: string }[] {
-  return [];
+  return [{ slug: '_' }];
 }
 
 export default function Page() {

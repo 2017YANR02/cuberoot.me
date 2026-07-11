@@ -842,6 +842,22 @@ td.is-pr {
   display: inline-flex;
 }
 .comp-modal-close:hover { color: var(--foreground); }
+/* Lang toggle + screenshot-download, sat left of the X close button. */
+.comp-modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.comp-modal-header-actions .lang-toggle {
+  padding: 8px;
+  border-radius: 4px;
+  color: var(--muted-foreground);
+}
+.comp-modal-header-actions .lang-toggle:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--foreground);
+}
 .comp-modal-body {
   padding: 12px 16px;
   overflow-y: auto;
@@ -1017,12 +1033,16 @@ td.is-pr {
 
 /* In-modal language switch (reuses the shared LangToggle in `soft` no-nav mode
    so toggling locale re-renders the modal without unmounting it). Sits right of
-   复制; its auto-margin pushes 所有 to the right edge. Menu opens upward (footer
-   is at the modal's bottom). */
+   复制, left of the screenshot-download button. Menu opens upward (footer is at
+   the modal's bottom). */
 .comp-round-modal-footer .lang-toggle-wrap {
   position: relative;
   display: inline-flex;
   align-items: center;
+}
+/* Screenshot-download button: last item of the left-packed icon group; its
+   auto-margin pushes 所有 to the right edge. */
+.comp-round-modal-footer .comp-round-modal-download-btn {
   margin-right: auto;
 }
 .comp-round-modal-footer .lang-toggle {

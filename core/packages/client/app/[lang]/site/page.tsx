@@ -314,8 +314,8 @@ function SitesPageInner() {
 
   return (
     <div className="sites-page">
-      <BackHome />
       <aside className="sites-sidebar">
+        <BackHome className="sites-back" />
         <div className="sites-title">{TEXTS.title[lang]}</div>
 
         <div className="sites-search">

@@ -126,6 +126,28 @@
   gap: 12px;
 }
 
+/* NOTE: 搜索框——表格任意可见列的自由文本搜索,紧贴头像右侧 */
+.recon-search-input {
+  width: 160px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: var(--foreground);
+  font-size: 0.85rem;
+  font-family: 'Inter', Arial, sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.recon-search-input::placeholder {
+  color: var(--faint-foreground);
+}
+
+.recon-search-input:focus {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
 /* 窄屏：toolbar 改 2 列网格,塞满空缺 */
 @media (max-width: 480px) {
   .recon-toolbar {
@@ -140,7 +162,9 @@
   .recon-filters .recon-solver-filter,
   .recon-comp-filter,
   .recon-record-filter { width: 100%; min-width: 0; max-width: none; }
-  .recon-actions { justify-content: flex-end; gap: 8px; }
+  .recon-actions { justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+  .recon-search { flex: 1 1 100%; }
+  .recon-search-input { width: 100%; }
 }
 
 /* --- 表格 --- */

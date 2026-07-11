@@ -7,10 +7,11 @@
 import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
-import { useParams, useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Radio, ArrowUp, ArrowDown, Ban } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Shuffle, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download } from 'lucide-react';
+import { toPng } from 'html-to-image';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
@@ -619,8 +620,19 @@ function SimilarCompsView({ comps, isZh, lang }: { comps: SeriesComp[]; isZh: bo
 }
 
 export default function CompDetailPage() {
-  const params = useParams<{ slug: string }>();
-  const rawSlug = (Array.isArray(params?.slug) ? params.slug[0] : params?.slug) ?? '';
+  // Route ships as ONE prerendered sentinel shell ("_") reused for every comp (see
+  // page.tsx + next.config rewrite): the real slug can't come from useParams (that
+  // yields "_"), so derive it from the browser path. usePathname is the dep so this
+  // re-runs on soft nav between comps — the sentinel route never remounts, so an empty
+  // dep array would keep showing the previous comp. useState('') (not a lazy window
+  // read) keeps the client's first render matching the server-rendered empty shell,
+  // avoiding a hydration mismatch; the effect fills the real slug post-hydration.
+  const pathname = usePathname();
+  const [rawSlug, setRawSlug] = useState('');
+  useEffect(() => {
+    const m = window.location.pathname.match(/\/comp\/([^/?#]+)/);
+    setRawSlug(m ? decodeURIComponent(m[1]) : '');
+  }, [pathname]);
   const slug = rawSlug.replace(/-/g, '');
   const router = useRouter();
   const { i18n } = useTranslation();
@@ -943,6 +955,7 @@ export default function CompDetailPage() {
   }, [slug, sourceParam]);
 
   useEffect(() => {
+    if (!slug) return; // sentinel shell: wait until the real slug resolves from the URL
     let cancel = false;
     setLoading(true);
     const handle = load();
@@ -951,7 +964,7 @@ export default function CompDetailPage() {
       cancel = true;
       handle.cancel();
     };
-  }, [load]);
+  }, [load, slug]);
 
   const refresh = async () => {
     setRefreshing(true);
@@ -2880,6 +2893,8 @@ interface CuberModalProps {
 }
 
 function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClose }: CuberModalProps) {
+  const [downloadState, setDownloadState] = useState<'idle' | 'busy' | 'error'>('idle');
+  const cardRef = useRef<HTMLDivElement>(null);
   const u = data.users[String(number)];
   const rows = useMemo(() => {
     if (!u) return [];
@@ -2916,9 +2931,48 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
     cur.entries.push(row);
   }
 
+  async function handleDownload() {
+    const node = cardRef.current;
+    if (!node) return;
+    setDownloadState('busy');
+    // Same treatment as the round modal: expand off internal scroll for the capture,
+    // and hide chrome (close button + the download/lang controls themselves).
+    const body = node.querySelector<HTMLElement>('.comp-modal-body');
+    const closeBtn = node.querySelector<HTMLElement>('.comp-modal-close');
+    const actions = node.querySelector<HTMLElement>('.comp-modal-header-actions');
+    const prevCardMaxHeight = node.style.maxHeight;
+    const prevBodyOverflowY = body?.style.overflowY ?? '';
+    const prevBodyOverflowX = body?.style.overflowX ?? '';
+    const prevCloseDisplay = closeBtn?.style.display ?? '';
+    const prevActionsDisplay = actions?.style.display ?? '';
+    node.style.maxHeight = 'none';
+    if (body) { body.style.overflowY = 'visible'; body.style.overflowX = 'visible'; }
+    if (closeBtn) closeBtn.style.display = 'none';
+    if (actions) actions.style.display = 'none';
+    try {
+      const dataUrl = await toPng(node, { pixelRatio: 2 });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `${data.slug}-${u.wcaid || number}-all-${isZh ? 'zh' : 'en'}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setDownloadState('idle');
+    } catch (e) {
+      console.error('[comp screenshot] failed:', e);
+      setDownloadState('error');
+      setTimeout(() => setDownloadState('idle'), 2000);
+    } finally {
+      node.style.maxHeight = prevCardMaxHeight;
+      if (body) { body.style.overflowY = prevBodyOverflowY; body.style.overflowX = prevBodyOverflowX; }
+      if (closeBtn) closeBtn.style.display = prevCloseDisplay;
+      if (actions) actions.style.display = prevActionsDisplay;
+    }
+  }
+
   return (
     <div className="comp-modal-backdrop" onClick={onClose}>
-      <div className="comp-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div ref={cardRef} className="comp-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header">
           <div className="comp-modal-title">
             <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
@@ -2934,6 +2988,18 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
             ) : (
               <span className="cuber-link-static">{displayCuberName(u.name, isZh)}</span>
             )}
+          </div>
+          <div className="comp-modal-header-actions">
+            <LangToggle soft variant="inline" />
+            <button
+              type="button"
+              className="comp-modal-copy-btn"
+              onClick={handleDownload}
+              disabled={downloadState === 'busy'}
+              title={tr({ zh: '下载为图片', en: 'Download as image' })}
+            >
+              <Download size={14} />
+            </button>
           </div>
           <button type="button" className="comp-modal-close" onClick={onClose} aria-label="Close">
             <XIcon size={18} />
@@ -3029,6 +3095,8 @@ interface RoundResultModalProps {
 
 function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMap, changeMap, onShowAll, onClose }: RoundResultModalProps) {
   const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done' | 'nothing' | 'error'>('idle');
+  const [downloadState, setDownloadState] = useState<'idle' | 'busy' | 'error'>('idle');
+  const cardRef = useRef<HTMLDivElement>(null);
   // 破 PR 时显示「这成绩在 WCA 历史能排第几」(NR/WR)。渲染期同步读 rank-client 模块缓存 →
   // 比赛页已预热则秒出;未命中才在 effect 里单查,回来 bump tick 重渲染。
   const [, setRankTick] = useState(0);
@@ -3196,9 +3264,49 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
     }
   }
 
+  async function handleDownload() {
+    const node = cardRef.current;
+    if (!node) return;
+    setDownloadState('busy');
+    // Body scrolls internally (max-height: 90vh); html-to-image renders overflow:auto
+    // regions with the browser's native scrollbar baked into the image. Expand to full
+    // content height for the capture, then restore. Close button + footer (copy/lang/
+    // download/所有) are chrome, not part of the result — hide them for the capture too.
+    const body = node.querySelector<HTMLElement>('.comp-round-modal-body');
+    const closeBtn = node.querySelector<HTMLElement>('.comp-modal-close');
+    const footer = node.querySelector<HTMLElement>('.comp-round-modal-footer');
+    const prevCardMaxHeight = node.style.maxHeight;
+    const prevBodyOverflowY = body?.style.overflowY ?? '';
+    const prevCloseDisplay = closeBtn?.style.display ?? '';
+    const prevFooterDisplay = footer?.style.display ?? '';
+    node.style.maxHeight = 'none';
+    if (body) body.style.overflowY = 'visible';
+    if (closeBtn) closeBtn.style.display = 'none';
+    if (footer) footer.style.display = 'none';
+    try {
+      const dataUrl = await toPng(node, { pixelRatio: 2 });
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `${data.slug}-${eventId}-${roundId}-${u.wcaid || number}-${isZh ? 'zh' : 'en'}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setDownloadState('idle');
+    } catch (e) {
+      console.error('[comp screenshot] failed:', e);
+      setDownloadState('error');
+      setTimeout(() => setDownloadState('idle'), 2000);
+    } finally {
+      node.style.maxHeight = prevCardMaxHeight;
+      if (body) body.style.overflowY = prevBodyOverflowY;
+      if (closeBtn) closeBtn.style.display = prevCloseDisplay;
+      if (footer) footer.style.display = prevFooterDisplay;
+    }
+  }
+
   return (
     <div className="comp-modal-backdrop comp-modal-backdrop-2" onClick={onClose}>
-      <div className="comp-round-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div ref={cardRef} className="comp-round-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header">
           <div className="comp-modal-title">
             <Flag iso2={iso2} className="comp-flag" />
@@ -3308,6 +3416,15 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
             </button>
           )}
           <LangToggle soft variant="inline" />
+          <button
+            type="button"
+            className="comp-modal-copy-btn comp-round-modal-download-btn"
+            onClick={handleDownload}
+            disabled={downloadState === 'busy'}
+            title={tr({ zh: '下载为图片', en: 'Download as image' })}
+          >
+            <Download size={14} />
+          </button>
           <button type="button" className="comp-modal-close-btn" onClick={onShowAll}>
             {tr({ zh: '所有', en: 'All' })}
           </button>

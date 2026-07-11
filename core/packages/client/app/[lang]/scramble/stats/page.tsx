@@ -40,7 +40,7 @@ import ScrambleLengthView, {
   type EventLengthsJson, type EventLengthsAvgJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
 } from './_components/ScrambleLengthView';
 import FirstAppearanceTimeline, { type TimelineEntry } from './_components/FirstAppearanceTimeline';
-import FullScrambleList from './_components/FullScrambleList';
+import FullScrambleList, { FullScrambleFilterBar } from './_components/FullScrambleList';
 import AvgExamplesPanel, { type AvgGroupCase } from './_components/AvgExamplesPanel';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import NonWcaPuzzlePicker from '@/components/NonWcaPuzzlePicker/NonWcaPuzzlePicker';
@@ -106,15 +106,16 @@ interface AvgVariantData { stages: string[]; data: Record<string, Record<string,
 interface AvgSetData { label: string; label_zh: string | null; event?: string; sample_count: number; variants: Record<string, AvgVariantData>; }
 interface DistributionAvgJson { meta: { generated_at: string; avg_denom: number; subset_keys: string[] }; sets: Record<string, AvgSetData>; }
 
-// 组平均「示例组」(build_group_avg_examples.ts):基底 = 抽样组骨架 + comp meta + 变体→stages 布局;
-// 每变体值文件 = 抽样组每成员的每 stage 6 色步数([B,G,O,R,W,Y] 序)。点柱后客户端按成员步数重算平均。
-type AvgExMember = [string, number, 0 | 1]; // [scramble, num, extra]
-interface AvgExamplesBase {
-  meta: { generated_at: string; avg_denom: number; min_group: number; color_order: string; variants: Record<string, string[]> };
+// 组平均「示例组」(build_group_avg_examples.ts):按 (variant,stage) 分片,点柱只加载当前视图那片。
+// 每片自包含:骨架 + comp meta + 每成员该 stage 的 6 色步数([B,G,O,R,W,Y] 序,-1=缺)。
+// 覆盖策略 = 头尾极端 bin 完整 + 中间 bin 抽样(见 builder),故稀有柱子点开必有真实完整的组。
+// 成员 = [scramble, num, extra, B,G,O,R,W,Y]。客户端按所选 subset 取 min 重算组平均。
+type AvgExMember = [string, number, 0 | 1, number, number, number, number, number, number];
+interface AvgExShard {
+  meta: { generated_at: string; avg_denom: number; min_group: number; color_order: string; variant: string; stage: string };
   comps: Record<string, [string, string]>;
   groups: Array<{ c: string; e: string; r: string; g: string; m: AvgExMember[] }>;
 }
-interface AvgExValsFile { variant: string; stages: string[]; vals: number[][][] }
 
 type ExampleSample = [string, string, string, string?]; // [id, scramble, bottomColor, optScramble?]
 type ExampleCompMeta = [string, string, number, string, string, (0 | 1)?]; // [compId, eventId, scrambleNum, roundType, group, isExtra?]
@@ -314,9 +315,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
   // 选中某国(country_id)→ 客户端筛预览 + 服务端筛全量真题;各国计数由示例面板按 bin 拉 facet。
   const [filterCountry, setFilterCountry] = useState<string | null>(null);
-  // 组平均示例:基底(一次)+ 每变体值文件(按需);点柱后重算匹配组。
-  const [avgExBase, setAvgExBase] = useState<AvgExamplesBase | null>(null);
-  const [avgExVals, setAvgExVals] = useState<Record<string, AvgExValsFile | null>>({});
+  // 组平均示例:按 (variant#stage) 分片缓存,点柱后按需加载 + 重算匹配组。
+  const [avgShards, setAvgShards] = useState<Record<string, AvgExShard | null>>({});
   const [avgExLoading, setAvgExLoading] = useState(false);
   const [avgExError, setAvgExError] = useState<string | null>(null);
   // 整解(333)示例:原始 WCA 打乱 vs 最优(最短)等价打乱(同状态)。
@@ -540,29 +540,23 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     ensureExamplesLoaded();
   };
 
-  // 组平均示例:点柱时按需拉基底(一次)+ 当前变体值文件(每变体一次)。
-  const ensureAvgExamplesLoaded = (v: string) => {
-    const needBase = !avgExBase;
-    const needVals = !(v in avgExVals);
-    if (!needBase && !needVals) return;
-    setAvgExLoading(true);
-    const jobs: Promise<unknown>[] = [];
-    if (needBase) {
-      jobs.push(fetch(statsUrl('/stats/scramble/examples_avg.json?v=20260701avg'), { cache: 'no-store' })
+  // 组平均示例:点柱时按需拉当前 (variant,stage) 分片(每片一次)。
+  const ensureAvgExamplesLoaded = (v: string, st: string) => {
+    const key = `${v}#${st}`;
+    setAvgShards((m) => {
+      if (key in m) return m; // 已请求 / 已加载
+      setAvgExLoading(true); setAvgExError(null);
+      fetch(statsUrl(`/stats/scramble/examples_avg/${v}__${st}.json?v=20260710avg`), { cache: 'no-store' })
         .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-        .then((j) => setAvgExBase(j)));
-    }
-    if (needVals) {
-      setAvgExVals((m) => ({ ...m, [v]: null }));
-      jobs.push(fetch(statsUrl(`/stats/scramble/examples_avg_v_${v}.json?v=20260701avg`), { cache: 'no-store' })
-        .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-        .then((j) => setAvgExVals((m) => ({ ...m, [v]: j }))));
-    }
-    Promise.all(jobs).then(() => setAvgExLoading(false)).catch((e) => { setAvgExError(String(e)); setAvgExLoading(false); });
+        .then((j) => setAvgShards((mm) => ({ ...mm, [key]: j })))
+        .then(() => setAvgExLoading(false))
+        .catch((e) => { setAvgExError(String(e)); setAvgExLoading(false); setAvgShards((mm) => { const n = { ...mm }; delete n[key]; return n; }); });
+      return { ...m, [key]: null };
+    });
   };
   const handleAvgBarClick = (bin: number) => {
     setSelectedBin(bin);
-    ensureAvgExamplesLoaded(variant);
+    ensureAvgExamplesLoaded(variant, stage);
   };
 
   useEffect(() => {
@@ -623,69 +617,45 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     [avgActiveCounts],
   );
 
-  // 点柱后的「示例组」:遍历抽样组,按当前 (variant,stage,subset,备打) 从成员步数重算平均,
-  // 命中所选 bin 且(per-event 时)项目匹配者收下(每成员带该阶段步数 + 底色 argmin)。
-  const AVG_CASES_CAP = 12;
+  // 点柱后的「示例组」:遍历当前 (variant,stage) 分片,按当前 (subset,备打) 从成员步数重算平均,
+  // 命中所选 bin 且(per-event 时)项目匹配者全收(头尾极端 bin 分片里是完整的,面板再决定展示多少)。
   const avgMatchingGroups = useMemo<AvgGroupCase[] | null>(() => {
     if (!avgOn || tab !== 'difficulty' || selectedBin === null) return null;
-    const base = avgExBase;
-    const vf = avgExVals[variant];
-    if (!base || !vf) return null; // 尚未加载完成
-    const order = base.meta.color_order;
+    const shard = avgShards[`${variant}#${stage}`];
+    if (!shard) return null; // 尚未加载完成
+    const order = shard.meta.color_order;
     const letters = [...effectiveSubset] as ColorLetter[];
     const colorIdxs = letters.map((c) => order.indexOf(c));
-    const si = vf.stages.indexOf(stage);
-    if (si < 0 || colorIdxs.some((i) => i < 0)) return [];
-    const denom = base.meta.avg_denom;
+    if (colorIdxs.some((i) => i < 0)) return [];
+    const denom = shard.meta.avg_denom;
     const wantEvent = isPerEvent ? event : null;
     const out: AvgGroupCase[] = [];
-    for (let gi = 0; gi < base.groups.length; gi++) {
-      const g = base.groups[gi];
+    for (const g of shard.groups) {
       if (wantEvent && g.e !== wantEvent) continue;
-      const rows = vf.vals[gi];
       let sum = 0, cnt = 0;
       const members: AvgGroupCase['members'] = [];
-      for (let mi = 0; mi < g.m.length; mi++) {
-        const [scr, num, extra] = g.m[mi];
+      for (const m of g.m) {
+        const extra = m[2];
         if (!avgExtras && extra === 1) continue;
-        const flat = rows[mi];
         let mn = Infinity;
         let bc: ColorLetter = letters[0];
         for (let k = 0; k < colorIdxs.length; k++) {
-          const val = flat[si * 6 + colorIdxs[k]];
+          const val = m[3 + colorIdxs[k]] as number; // 索引 3..8 = 6 色步数(number)
           if (val >= 0 && val < mn) { mn = val; bc = letters[k]; }
         }
         if (mn === Infinity) continue;
         sum += mn; cnt++;
-        members.push({ scr, num, extra: extra === 1, val: mn, bottomColor: bc });
+        members.push({ scr: m[0], num: m[1], extra: extra === 1, val: mn, bottomColor: bc });
       }
       if (cnt < 2) continue;
       const mean = sum / cnt;
       if (Math.round(mean * denom) !== selectedBin) continue;
       out.push({ comp: g.c, event: g.e, round: g.r, group: g.g, mean, cnt, members });
-      if (out.length >= AVG_CASES_CAP) break;
     }
+    // 稳定排序:先按组平均、再按成员数,展示时确定。
+    out.sort((a, b) => a.mean - b.mean || b.cnt - a.cnt);
     return out;
-  }, [avgOn, tab, selectedBin, avgExBase, avgExVals, variant, stage, effectiveSubset, avgExtras, isPerEvent, event]);
-
-  const cnBenefit = useMemo(() => {
-    if (!currentSet) return null;
-    const v = currentSet.variants[variant];
-    if (!v) return null;
-    const sd = v.data[stage];
-    if (!sd) return null;
-    const white = computeStats(sd.W?.counts ?? {});
-    const yellow = computeStats(sd.Y?.counts ?? {});
-    const wy = computeStats(sd.WY?.counts ?? {});
-    const all6 = computeStats(sd.BGORWY?.counts ?? {});
-    if (!white || !yellow || !wy || !all6) return null;
-    return {
-      whiteMean: white.mean,
-      yellowMean: yellow.mean,
-      wyMean: wy.mean,
-      all6Mean: all6.mean,
-    };
-  }, [currentSet, variant, stage]);
+  }, [avgOn, tab, selectedBin, avgShards, variant, stage, effectiveSubset, avgExtras, isPerEvent, event]);
 
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
@@ -821,13 +791,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         onLabel={tr({ zh: '时间线', en: 'Timeline' })}
         ariaLabel={tr({ zh: '图表或首次出现时间线', en: 'Chart or first-appearance timeline' })}
       />
-      <InfoTooltip
-        icon={HelpCircle}
-        content={tr({
-          zh: '时间线:每个步数 / 长度第一次出现在哪场比赛(按比赛日期升序)',
-          en: 'Timeline: which competition each step-count / length first appeared at (earliest by date)',
-        })}
-      />
     </div>
   ) : null;
 
@@ -837,16 +800,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       <PillToggle
         value={avgMode}
         onChange={setAvgMode}
-        offLabel={tr({ zh: '单个', en: 'Single' })}
-        onLabel={tr({ zh: '组平均', en: 'Group avg' })}
+        offLabel={tr({ zh: '单次', en: 'Single' })}
+        onLabel={tr({ zh: '平均', en: 'Average' })}
         ariaLabel={tr({ zh: '单个打乱或按比赛组求平均', en: 'Per single scramble or per competition-group average' })}
-      />
-      <InfoTooltip
-        icon={HelpCircle}
-        content={tr({
-          zh: '组平均:把每场比赛每轮每组的一组打乱(三阶 5 条、多盲一组几十条)各项统计取平均(不去尾),再看这些组平均的分布',
-          en: 'Group average: for each competition round-group (5 scrambles for 3×3, dozens for MBLD), average the stat over the whole group (no trim), then show the distribution of those group means',
-        })}
       />
       {avgMode && (
         <PillToggle
@@ -928,6 +884,31 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const showMergeToggle = tab === 'length'
     ? LENGTH_MERGE_EVENTS.has(event)
     : (DIFFICULTY_EVENTS.has(event) && dataset === 'wca');
+
+  // 工具栏三个切换钮(合并/分开、单次/平均、图表/时间线)共用一个说明气泡,而非各自一个「?」;
+  // 按当前哪些钮实际渲染,只拼对应那几段说明。
+  const canShowTimelineToggle = canTimeline && !avgOn && !isEssential;
+  const toggleInfoBits: string[] = [];
+  if (showMergeToggle) {
+    toggleInfoBits.push(tab === 'difficulty'
+      ? tr({ zh: '合并 / 分开:三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧打乱相同,合并为一个池', en: 'Merged / Split: all six 3×3 events share scrambles; merged into one pool' })
+      : tr({ zh: '合并 / 分开:三阶速拧与单手、三盲与多盲打乱相同', en: 'Merged / Split: 3×3 speed + OH, and 3BLD + MBLD share scrambles' }));
+  }
+  if (avgAvailable) {
+    toggleInfoBits.push(tr({
+      zh: '单次 / 平均:组平均把每场比赛每轮每组的一组打乱(三阶 5 条、多盲一组几十条)各项统计取平均(不去尾),再看这些组平均的分布',
+      en: 'Single / Average: group average takes each competition round-group (5 scrambles for 3×3, dozens for MBLD) and averages the stat over the group (no trim), then shows the distribution of those group means',
+    }));
+  }
+  if (canShowTimelineToggle) {
+    toggleInfoBits.push(tr({
+      zh: '图表 / 时间线:时间线显示每个步数 / 长度第一次出现在哪场比赛(按比赛日期升序)',
+      en: 'Chart / Timeline: which competition each step-count / length first appeared at (earliest by date)',
+    }));
+  }
+  const toggleInfoTooltip = toggleInfoBits.length > 0
+    ? <InfoTooltip icon={HelpCircle} content={toggleInfoBits.join('\n\n')} variant="modal" />
+    : null;
 
   // 统一「求解」中心:项目行高亮按当前 event 推(3x3 族都算 3×3)。
   const distPuzzle: SolvePuzzle | null =
@@ -1014,14 +995,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
               ariaLabel={tr({ zh: '合并打乱相同的项目', en: 'Merge events that share scrambles'
             })}
             />
-            <InfoTooltip
-              icon={HelpCircle}
-              content={tab === 'difficulty'
-                ? tr({ zh: '三阶速拧 / 单手 / 盲拧 / 多盲 / 最少步 / 脚拧打乱相同,合并为一个池', en: 'All six 3×3 events share scrambles; merged into one pool'
-                                  })
-                : tr({ zh: '三阶速拧与单手、三盲与多盲打乱相同', en: '3×3 speed + OH, and 3BLD + MBLD share scrambles'
-                                  })}
-            />
           </div>
         )}
         {lenHasQtm && (
@@ -1044,6 +1017,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         )}
         {avgToggle}
         {viewToggle}
+        {toggleInfoTooltip}
         </div>
       </div>
     </div>
@@ -1785,6 +1759,24 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             </span>
           </div>
         )}
+        {!timelineActive && (() => {
+          const s = avgOn ? avgStats : extendedStats;
+          if (!s) return null;
+          const mean = avgOn ? (avgStats!.mean / avgDenom).toFixed(2) : extendedStats!.mean.toFixed(2);
+          const median = avgOn ? (avgStats!.median / avgDenom).toFixed(1) : String(extendedStats!.median);
+          return (
+            <div className="scramble-stats-inline-summary">
+              <span className="scramble-stats-inline-stat">
+                <span className="scramble-stats-inline-label">{tr({ zh: '均值', en: 'mean' })}</span>
+                <span className="scramble-stats-inline-value">{mean}</span>
+              </span>
+              <span className="scramble-stats-inline-stat">
+                <span className="scramble-stats-inline-label">{tr({ zh: '中位数', en: 'median' })}</span>
+                <span className="scramble-stats-inline-value">{median}</span>
+              </span>
+            </div>
+          );
+        })()}
         <span className="scramble-stats-count">
           {avgOn
             ? tr({ zh: '{n} 组', en: '{n} groups' }).replace('{n}', avgGroups.toLocaleString())
@@ -1821,30 +1813,17 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           formatBin={(v) => (v / avgDenom).toFixed(1)}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-          yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count' })}
         />
       </div>
-      {avgStats && (
-        <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计(组平均)', en: 'Summary stats (group avg)' })}</div>
-          <div className="scramble-stats-stat-grid">
-            <StatCell label={tr({ zh: '均值', en: 'mean' })} value={(avgStats.mean / avgDenom).toFixed(2)} />
-            <StatCell label={tr({ zh: '中位数', en: 'median' })} value={(avgStats.median / avgDenom).toFixed(1)} />
-            <StatCell label="p10" value={(avgStats.p10 / avgDenom).toFixed(1)} />
-            <StatCell label="p90" value={(avgStats.p90 / avgDenom).toFixed(1)} />
-            <StatCell label="p99" value={(avgStats.p99 / avgDenom).toFixed(1)} />
-          </div>
-        </div>
-      )}
       <AvgExamplesPanel
         cases={avgMatchingGroups}
-        comps={avgExBase?.comps}
+        comps={avgShards[`${variant}#${stage}`]?.comps}
         lang={uiLangOf(i18n.language)}
         isZh={isZh}
         selectedBin={selectedBin}
+        fullCount={selectedBin !== null ? (avgActiveCounts[String(selectedBin)] ?? 0) : 0}
         loading={avgExLoading}
         errorText={avgExError}
-        avgDenom={avgDenom}
         eventLabel={eventLabel}
       />
       </>
@@ -1862,25 +1841,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           hideLegendColors
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
-          yModeLabel={yMode === 'percent' ? tr({ zh: '百分比', en: '%' }) : tr({ zh: '数量', en: 'count'
-                  })}
         />
       </div>
-
-      {extendedStats && (
-        <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计', en: 'Summary stats'
-        })}</div>
-          <div className="scramble-stats-stat-grid">
-            <StatCell label={tr({ zh: '均值', en: 'mean' })} value={extendedStats.mean.toFixed(2)} />
-            <StatCell label={tr({ zh: '中位数', en: 'median'
-            })} value={String(extendedStats.median)} />
-            <StatCell label="p10" value={String(extendedStats.p10)} />
-            <StatCell label="p90" value={String(extendedStats.p90)} />
-            <StatCell label="p99" value={String(extendedStats.p99)} />
-          </div>
-        </div>
-      )}
 
       <ExamplesPanel
         isZh={isZh}
@@ -1906,25 +1868,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         onFilterCountry={setFilterCountry}
       />
 
-      {cnBenefit && (
-        <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '颜色中立收益（本阶段均值）', en: 'Color-neutrality gain (stage mean)'
-        })}</div>
-          <div className="scramble-stats-cn-grid">
-            <CnCell label={tr({ zh: '黄底', en: 'Yellow'
-            })} value={cnBenefit.yellowMean.toFixed(3)} />
-            <CnCell label={tr({ zh: '白底', en: 'White' })} value={cnBenefit.whiteMean.toFixed(3)} />
-            <CnCell label={tr({ zh: '白黄双色底', en: 'Dual'
-            })} value={cnBenefit.wyMean.toFixed(3)} diff={cnBenefit.wyMean - cnBenefit.whiteMean} />
-            <CnCell label={tr({ zh: '六色底', en: 'CN' })} value={cnBenefit.all6Mean.toFixed(3)} diff={cnBenefit.all6Mean - cnBenefit.whiteMean} />
-          </div>
-          <div className="scramble-stats-cn-note">
-            {(isZh
-                                    ? `相对白底基线：双色底省 ${(cnBenefit.whiteMean - cnBenefit.wyMean).toFixed(3)} 步，六色底省 ${(cnBenefit.whiteMean - cnBenefit.all6Mean).toFixed(3)} 步`
-                                    : `Savings vs white: dual −${(cnBenefit.whiteMean - cnBenefit.wyMean).toFixed(3)}, cn −${(cnBenefit.whiteMean - cnBenefit.all6Mean).toFixed(3)}`)}
-          </div>
-        </div>
-      )}
       </>
       )}
 
@@ -1938,29 +1881,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         })}: {new Date(data.meta.generated_at).toLocaleString()}
         </span>
       </div>
-    </div>
-  );
-}
-
-function StatCell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
-  );
-}
-
-function CnCell({ label, value, diff }: { label: string; value: string; diff?: number }) {
-  return (
-    <div className="scramble-stats-cn-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-      {diff !== undefined && (
-        <div className={`scramble-stats-cn-diff ${diff < 0 ? 'good' : ''}`}>
-          {diff >= 0 ? '+' : ''}{diff.toFixed(3)}
-        </div>
-      )}
     </div>
   );
 }
@@ -2116,19 +2036,26 @@ function ExamplesPanel({
             })}
           />
         )}
+        {canFullList && (
+          <FullScrambleFilterBar
+            expanded={showAll}
+            onExpandedChange={onExpanded}
+            isZh={isZh}
+          />
+        )}
         {selectedDownloadable && (
           <a
             className="scramble-stats-download-btn"
             href={`/stats/scramble/downloads/${scrambleSet}/${variant}/${stage}/${subsetKey}_${selectedBin}.txt`}
             download={`${scrambleSet}_${variant}_${stage}_${subsetKey}_${selectedBin}.txt`}
-            title={(isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`)}
-            aria-label={(isZh ? `下载 ${selectedBin} 步完整 txt` : `Download full txt for ${selectedBin} moves`)}
+            title={tr({ zh: `下载 ${selectedBin} 步完整 txt`, en: `Download full txt for ${selectedBin} moves` })}
+            aria-label={tr({ zh: `下载 ${selectedBin} 步完整 txt`, en: `Download full txt for ${selectedBin} moves` })}
           >
             <DownloadIcon />
           </a>
         )}
       </div>
-      {/* 查看全部:筛选栏(搜索 + 日期)常驻在示例之上;展开后用全量列表替换下方的示例预览
+      {/* 查看全部:筛选栏(搜索 + 日期)在标题行内跟国家/下载并排;展开后用全量列表替换下方的示例预览
           (仅 WCA 数据集、非整解、已选 bin)。合并池 → 不传 event;分开 → 传当前项目。 */}
       {canFullList && (
         <FullScrambleList

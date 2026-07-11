@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useMemo } from 'react';
-import PillToggle from '@/components/PillToggle/PillToggle';
+import { tr } from '@/i18n/tr';
 import './DiscreteHistogram.css';
 
 export interface HistSeries {
@@ -24,11 +24,11 @@ interface Props {
   clickableBins?: number[];
   selectedBin?: number | null;
   onBarClick?: (bin: number) => void;
-  // NOTE: PDF/CDF 切换 & Y 轴 %/count 切换（挪进图例右上区的两个小按钮）
+  // NOTE: PDF/CDF 切换(图例右上小按钮)。%/count 切换挪到 y 轴刻度区点击(见下 onYModeToggle)。
   onChartModeToggle?: () => void;
+  // NOTE: 点击 y 轴区域(刻度标签 + 轴线那条竖带)触发 %/计数 切换 —— 无独立按钮,靠 hover 提亮提示可点。
   onYModeToggle?: () => void;
-  yModeLabel?: string;
-  // NOTE: 图例最顶的 Set 下拉（通常只有 WCA 一项，留着给未来多打乱集）
+  // NOTE: 图例最顶的 Set 下拉(通常只有 WCA 一项,留着给未来多打乱集)
   setOptions?: { value: string; label: string }[];
   activeSet?: string;
   onSetChange?: (v: string) => void;
@@ -38,16 +38,8 @@ interface Props {
   formatBin?: (v: number) => string;
   // NOTE: 强制开/关柱顶 计数+百分比 标签(默认仅单 series 时显示);bin 很多时关掉避免横向重叠
   showBarLabels?: boolean;
-  // NOTE: 模式控件样式 —— 'button'(默认,小方钮循环) / 'switch'(PillToggle 滑动开关)
-  modeControl?: 'button' | 'switch';
-  // switch 模式下两端标签(默认 PDF/CDF、%/count)
-  chartModeLabels?: { off: string; on: string };
-  yModeLabels?: { off: string; on: string };
   // NOTE: 稀疏整数轴(中间有空档 bin)。开启后 x 标签只标有数据的 bin(抽稀)、命中区填满空档。
   gapAware?: boolean;
-  // NOTE: 点击 y 轴区域(刻度标签 + 轴线那条竖带)触发 —— 用作 %/计数 切换的隐式入口。
-  onYAxisClick?: () => void;
-  yAxisTitle?: string;
 }
 
 const W = 760, H = 400;
@@ -56,7 +48,7 @@ const PAD = { l: 56, r: 20, t: 40, b: 44 };
 const chartW = W - PAD.l - PAD.r;
 const chartH = H - PAD.t - PAD.b;
 
-export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, yModeLabel, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, modeControl = 'button', chartModeLabels, yModeLabels, gapAware, onYAxisClick, yAxisTitle }: Props) {
+export default function DiscreteHistogram({ series, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, gapAware }: Props) {
   const clickableSet = useMemo(() => new Set(clickableBins ?? []), [clickableBins]);
   // NOTE: svg 内 <linearGradient> id 必须全局唯一，用 React 的 useId 前缀
   const gradPrefix = useId().replace(/:/g, '_');
@@ -204,7 +196,7 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
         <line x1={PAD.l} x2={PAD.l + chartW} y1={PAD.t + chartH} y2={PAD.t + chartH} style={{ stroke: 'var(--border-strong)' }} />
         <line x1={PAD.l} x2={PAD.l} y1={PAD.t} y2={PAD.t + chartH} style={{ stroke: 'var(--border-strong)' }} />
         {/* y 轴可点竖带(刻度标签 + 轴线):点它切换 %/计数 —— 放在标签之上以接住点击 */}
-        {onYAxisClick && (
+        {onYModeToggle && (
           <rect
             className="scramble-hist-yaxis-hit"
             x={0}
@@ -213,9 +205,9 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
             height={chartH}
             fill="transparent"
             style={{ cursor: 'pointer' }}
-            onClick={onYAxisClick}
+            onClick={onYModeToggle}
           >
-            {yAxisTitle && <title>{yAxisTitle}</title>}
+            <title>{yMode === 'percent' ? tr({ zh: '点击切换数量', en: 'Click to switch to count' }) : tr({ zh: '点击切换百分比', en: 'Click to switch to percent' })}</title>
           </rect>
         )}
         {/* Bars */}
@@ -331,51 +323,15 @@ export default function DiscreteHistogram({ series, isZh: _isZh, yMode = 'percen
             </div>
           );
         })}
-        {(onChartModeToggle || onYModeToggle) && (
-          <div className={`scramble-hist-legend-toggles${modeControl === 'switch' ? ' is-switch' : ''}`}>
-            {modeControl === 'switch' ? (
-              <>
-                {onChartModeToggle && (
-                  <PillToggle
-                    value={chartMode === 'cdf'}
-                    onChange={onChartModeToggle}
-                    offLabel={chartModeLabels?.off ?? 'PDF'}
-                    onLabel={chartModeLabels?.on ?? 'CDF'}
-                    ariaLabel="PDF / CDF"
-                  />
-                )}
-                {onYModeToggle && (
-                  <PillToggle
-                    value={yMode === 'count'}
-                    onChange={onYModeToggle}
-                    offLabel={yModeLabels?.off ?? '%'}
-                    onLabel={yModeLabels?.on ?? 'count'}
-                    ariaLabel="percent / count"
-                  />
-                )}
-              </>
-            ) : (
-              <>
-                {onChartModeToggle && (
-                  <button
-                    className="scramble-hist-legend-btn"
-                    onClick={onChartModeToggle}
-                    title={`Switch to ${chartMode === 'pdf' ? 'CDF' : 'PDF'}`}
-                  >
-                    {chartMode === 'pdf' ? 'PDF' : 'CDF'}
-                  </button>
-                )}
-                {onYModeToggle && (
-                  <button
-                    className="scramble-hist-legend-btn"
-                    onClick={onYModeToggle}
-                    title={`Switch to ${yMode === 'percent' ? 'count' : '%'}`}
-                  >
-                    {yModeLabel ?? (yMode === 'percent' ? '%' : 'count')}
-                  </button>
-                )}
-              </>
-            )}
+        {onChartModeToggle && (
+          <div className="scramble-hist-legend-toggles">
+            <button
+              className="scramble-hist-legend-btn"
+              onClick={onChartModeToggle}
+              title={`Switch to ${chartMode === 'pdf' ? 'CDF' : 'PDF'}`}
+            >
+              {chartMode === 'pdf' ? 'PDF' : 'CDF'}
+            </button>
           </div>
         )}
       </div>

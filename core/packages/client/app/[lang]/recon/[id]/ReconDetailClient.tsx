@@ -316,6 +316,24 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
     saveReconEngine(e);
   }, []);
 
+  // 复盘者与提交者常是同一人——同一人时合并成一行,名字只显示一次(双图标)
+  const sameContributor =
+    !!solve.reconer && !!solve.addedBy &&
+    (solve.reconerId && solve.addedById
+      ? solve.reconerId === solve.addedById
+      : displayCuberName(solve.reconer, isZh) === displayCuberName(solve.addedBy, isZh));
+
+  const renderContributor = (name: string, id?: string) => (
+    <span className="detail-meta-value">
+      {id && <Flag iso2={personFlagIso2(id)} className="yt-comment-flag" />}
+      {id ? (
+        <a href={wcaPersonUrl(id)} target="_blank" rel="noopener noreferrer">
+          {displayCuberName(name, isZh)}
+        </a>
+      ) : displayCuberName(name, isZh)}
+    </span>
+  );
+
   return (
     <div className="detail-layout">
       <div className="detail-player-pane">
@@ -381,17 +399,15 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
               <span className="detail-meta-value">{solve.cube}</span>
             </div>
           )}
-          {solve.reconer && (
+          {sameContributor ? (
+            <div className="detail-meta-item">
+              <span className="detail-meta-label detail-meta-label-dual"><PenLine size={16} /><UserPlus size={16} /></span>
+              {renderContributor(solve.reconer!, solve.reconerId || solve.addedById)}
+            </div>
+          ) : solve.reconer && (
             <div className="detail-meta-item">
               <span className="detail-meta-label"><PenLine size={16} /></span>
-              <span className="detail-meta-value">
-                {solve.reconerId && <Flag iso2={personFlagIso2(solve.reconerId)} className="yt-comment-flag" />}
-                {solve.reconerId ? (
-                  <a href={wcaPersonUrl(solve.reconerId)} target="_blank" rel="noopener noreferrer">
-                    {displayCuberName(solve.reconer, isZh)}
-                  </a>
-                ) : displayCuberName(solve.reconer, isZh)}
-              </span>
+              {renderContributor(solve.reconer, solve.reconerId)}
             </div>
           )}
           {solve.reconDate && (
@@ -400,17 +416,10 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
               <span className="detail-meta-value">{solve.reconDate.slice(0, 10)}</span>
             </div>
           )}
-          {solve.addedBy && (
+          {!sameContributor && solve.addedBy && (
             <div className="detail-meta-item">
               <span className="detail-meta-label"><UserPlus size={16} /></span>
-              <span className="detail-meta-value">
-                {solve.addedById && <Flag iso2={personFlagIso2(solve.addedById)} className="yt-comment-flag" />}
-                {solve.addedById ? (
-                  <a href={wcaPersonUrl(solve.addedById)} target="_blank" rel="noopener noreferrer">
-                    {displayCuberName(solve.addedBy, isZh)}
-                  </a>
-                ) : displayCuberName(solve.addedBy, isZh)}
-              </span>
+              {renderContributor(solve.addedBy, solve.addedById)}
             </div>
           )}
         </div>
@@ -1003,13 +1012,15 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
 
   const eventId = toWcaEventId(solve.event!);
   const speedUnit = eventId === 'sq1' ? 'SPS' : 'TPS';
+  // 详细成绩列数(该项目每轮把数):333 等 = 5,六七阶/盲拧/最少步 = 3,多盲 = 1。
+  const nAtt = attemptsPerRound(solve.event!);
 
   return (
     <div className="detail-section">
       <div className="detail-section-label">{t('recon.sameCompEvent')}</div>
       <div className="same-comp-event-table-wrap">
         <div className="wp-table-scroll">
-          <table className="wp-bycomp-table same-comp-event-table">
+          <table className="wp-bycomp-table same-comp-event-table" style={{ '--att-cols': nAtt } as React.CSSProperties}>
             <thead>
               <tr>
                 <th>
@@ -1023,8 +1034,13 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
                 <th>{tr({ zh: '单次', en: 'Single'
                 })}</th>
                 <th>{tr({ zh: '平均', en: 'Avg' })}</th>
-                <th className="wp-th-attempts">{tr({ zh: '详细成绩', en: 'Attempts'
-                })}</th>
+                <th className="wp-th-attempts">
+                  <span className="same-comp-att-head">
+                    {Array.from({ length: nAtt }, (_, i) => (
+                      <span key={i} className="same-comp-att-head-i">{i + 1}</span>
+                    ))}
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>

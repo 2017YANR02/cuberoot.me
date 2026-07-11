@@ -209,10 +209,16 @@
 
 /* ── 账号面板 ── */
 .lm-who {
-  margin: -8px 0 14px;
+  margin: 0 0 14px;
   font-size: 14px;
   color: var(--muted-foreground);
 }
+.lm-who-link {
+  display: inline-block;
+  text-decoration: none;
+  cursor: pointer;
+}
+.lm-who-link:hover { color: var(--foreground); text-decoration: underline; }
 .lm-idlist { display: flex; flex-direction: column; gap: 6px; }
 .lm-loading { display: flex; justify-content: center; padding: 12px; color: var(--muted-foreground); }
 .lm-idrow {
@@ -233,6 +239,7 @@
   white-space: nowrap;
 }
 .lm-unlink {
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
   padding: 5px 10px;
@@ -254,7 +261,7 @@
 }
 .lm-unlink:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.lm-unlink-confirm { display: flex; align-items: center; gap: 6px; }
+.lm-unlink-confirm { margin-left: auto; display: flex; align-items: center; gap: 6px; }
 .lm-unlink-confirm-text { font-size: 12px; color: var(--muted-foreground); white-space: nowrap; }
 .lm-unlink-yes {
   display: inline-flex;
@@ -286,23 +293,26 @@
 .lm-unlink-no:not(:disabled):hover { color: var(--foreground); border-color: var(--border-strong); }
 .lm-unlink-no:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.lm-linkrow { margin-top: 16px; }
-.lm-linktitle { font-size: 12px; color: var(--muted-foreground); }
-.lm-linkbtns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.lm-chip {
+.lm-linklist { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.lm-link {
+  margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
+  justify-content: center;
+  min-width: 44px;
+  padding: 5px 10px;
   font: inherit;
-  font-size: 13px;
-  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
   appearance: none;
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
   border: 1px solid var(--border-default);
-  border-radius: 999px;
+  border-radius: 7px;
   cursor: pointer;
+  white-space: nowrap;
 }
-.lm-chip:hover { border-color: var(--border-strong); }
+.lm-link:not(:disabled):hover { color: var(--foreground); border-color: var(--border-strong); }
+.lm-link:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .lm-logout { margin-top: 18px; }

@@ -268,3 +268,22 @@ export function compNameEnFromZh(zhName: string): string {
   }
   return _compNamesEnByZh[zhName] ?? '';
 }
+
+// All WCA canonical English names whose localized Chinese name CONTAINS `sub`
+// (substring, case-insensitive). Powers Chinese-name search over data that only
+// stores Latin comp names — caller sends the returned names to the backend.
+// Returns [] until flag data has loaded (comp_names_zh empty).
+export function compNamesByZhSubstring(sub: string): string[] {
+  const s = sub.trim().toLowerCase();
+  if (!s) return [];
+  const out: string[] = [];
+  const scan = (map: Record<string, string> | null) => {
+    if (!map) return;
+    for (const [en, zh] of Object.entries(map)) {
+      if (zh && zh.toLowerCase().includes(s)) out.push(en);
+    }
+  };
+  scan(MANUAL_COMP_NAMES_ZH);
+  scan(_compNamesZh);
+  return Array.from(new Set(out));
+}

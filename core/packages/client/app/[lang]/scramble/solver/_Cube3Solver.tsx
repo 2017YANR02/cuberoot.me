@@ -38,6 +38,7 @@ import InteractiveCubeNet, { EMPTY_FACELET, type PaintColor } from './_Interacti
 import Interactive3DCube from './_Interactive3DCube';
 import { useT } from "@/hooks/useT";
 import BoolToggle from '@/components/BoolToggle';
+import { ListSelect } from '@/components/ListSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { ClearButton } from '@/components/ClearButton';
@@ -896,39 +897,19 @@ export default function Cube3Solver() {
       )}
 
       <section className="cubeopt-card">
-        <div className="paint-view-toggle" role="tablist">
-          <button
-            role="tab"
-            aria-selected={viewMode === 'net'}
-            className={`pmt-btn${viewMode === 'net' ? ' is-active' : ''}`}
-            onClick={() => setViewMode('net')}
-          >
-            {t('平面', '2D')}
-          </button>
-          <button
-            role="tab"
-            aria-selected={viewMode === 'cube'}
-            className={`pmt-btn${viewMode === 'cube' ? ' is-active' : ''}`}
-            onClick={() => setViewMode('cube')}
-          >
-            {t('立体', '3D')}
-          </button>
-          <button
-            role="tab"
-            aria-selected={viewMode === 'scramble'}
-            className={`pmt-btn${viewMode === 'scramble' ? ' is-active' : ''}`}
-            onClick={() => setViewMode('scramble')}
-          >
-            {t('打乱', 'Scramble')}
-          </button>
-          <button
-            role="tab"
-            aria-selected={viewMode === 'recon'}
-            className={`pmt-btn${viewMode === 'recon' ? ' is-active' : ''}`}
-            onClick={() => setViewMode('recon')}
-          >
-            {t('复盘', 'Reconstruction')}
-          </button>
+        <div className="paint-view-toggle">
+          <ListSelect
+            clearable={false}
+            value={viewMode}
+            onChange={(v) => setViewMode(v as 'net' | 'cube' | 'scramble' | 'recon')}
+            allLabel=""
+            items={[
+              { value: 'net', label: t('平面', '2D') },
+              { value: 'cube', label: t('立体', '3D') },
+              { value: 'scramble', label: t('打乱', 'Scramble') },
+              { value: 'recon', label: t('复盘', 'Reconstruction') },
+            ]}
+          />
         </div>
         <div className="paint-wrap">
           {viewMode === 'cube' ? (
@@ -1299,11 +1280,11 @@ const INLINE_CSS = `
   display: flex; justify-content: center;
 }
 .paint-view-toggle {
-  display: flex; flex-wrap: wrap; gap: 0.25rem; width: fit-content; max-width: 100%;
-  margin: 0 auto 0.75rem; padding: 0.2rem;
-  background: var(--panel-sub, #181818);
-  border: 1px solid var(--border, #333);
-  border-radius: 7px;
+  width: fit-content; max-width: 100%; margin: 0 auto 0.75rem;
+}
+/* 视图切换器:下拉贴合内容(默认 min-width:220px 是给带国旗/搜索的长列表的,这里 4 个短项不需要) */
+.paint-view-toggle .list-select-popup {
+  min-width: 0; width: max-content; right: auto;
 }
 .move-input {
   display: flex; flex-direction: column; gap: 0.6rem;
@@ -1321,15 +1302,6 @@ const INLINE_CSS = `
 .move-input-err { font-size: 0.82rem; color: #ff8866; line-height: 1.4; }
 .move-input-actions {
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;
-}
-.paint-view-toggle .pmt-btn {
-  background: transparent; border: none; color: var(--text-muted, #aaa);
-  padding: 0.3rem 0.85rem; font-size: 0.82rem; cursor: pointer;
-  border-radius: 5px; transition: background 0.12s ease, color 0.12s ease;
-}
-.paint-view-toggle .pmt-btn:hover { color: var(--text); }
-.paint-view-toggle .pmt-btn.is-active {
-  background: var(--accent, #ff8800); color: #000; font-weight: 600;
 }
 .auto-dl {
   display: inline-flex; align-items: center; gap: 0.35rem;
