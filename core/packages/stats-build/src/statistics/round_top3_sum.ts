@@ -16,6 +16,7 @@ import { Statistic } from '../core/statistic.js';
 import { EVENTS_ENTRIES, headerZh, eventZh } from '../core/events.js';
 import { SolveTime } from '../core/solve_time.js';
 import { query as dbQuery } from '../core/database.js';
+import { roundLabel } from '@cuberoot/shared/wca-round';
 import type { StatJson, StatPanel, SourcePanel, MetricPanel, StatSection, TableHeader } from '../core/statistic.js';
 import type { RowDataPacket } from 'mysql2';
 
@@ -191,7 +192,8 @@ export class RoundTop3Sum extends Statistic {
       const rt = this.roundTypes.get(g.rt);
       const comp = this.comps.get(g.comp);
       out.push({
-        roundName: rt?.name ?? g.rt,
+        // NOTE: 精简轮次标签(R1/R2/R3/Fi),与选手页 wp-round-tag 同源(@cuberoot/shared roundLabel)
+        roundName: roundLabel(g.rt),
         isFinal: rt?.final ?? false,
         compLink: comp?.link ?? g.comp,
         date: comp?.date ?? '',
@@ -228,11 +230,11 @@ export class RoundTop3Sum extends Statistic {
     }).reverse();
   }
 
-  // NOTE: podium 单元格——名字内链 + 该成绩
+  // NOTE: podium 单元格——成绩 + 国旗(渲染层插入) + 名字内链;成绩放最前,不加括号
   private podiumCell(eventId: string, type: 'single' | 'average', pid: string, value: number): string {
     const name = this.persons.get(pid) ?? pid;
     const result = new SolveTime(eventId, type, value).clockFormat();
-    return `[${name}](https://www.worldcubeassociation.org/persons/${pid}) (${result})`;
+    return `${result} [${name}](https://www.worldcubeassociation.org/persons/${pid})`;
   }
 }
 

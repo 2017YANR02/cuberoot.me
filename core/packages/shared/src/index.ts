@@ -27,3 +27,4 @@ export {
 export * from './nemesizer_format';
 export * from './alg';
 export * from './wca_events';
+export * from './wca_round';
