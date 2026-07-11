@@ -121,6 +121,7 @@ html[data-theme='dark'] .stsv {
 /* 直接子 select 才套工具栏外观;嵌套的「底色」picker(孙级 .subset-picker-mode)保留自带样式。 */
 .stsv-control > .stsv-control-select {
   font: inherit;
+  font-size: 13px;
   padding: 6px 8px;
   width: fit-content;
   max-width: 100%;
@@ -346,7 +347,6 @@ html[data-theme='dark'] .stsv {
 }
 .stsv-sols { flex: 1; min-width: 0; }
 .stsv-sols-count { color: var(--sv-text-mute); font-size: 12px; margin-bottom: 6px; }
-.stsv-sols-more { color: var(--sv-accent); }
 .stsv-empty { color: var(--sv-text-mute); font-size: 13px; padding: 6px 0; }
 
 .stsv-sols-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -370,6 +370,7 @@ html[data-theme='dark'] .stsv {
   white-space: nowrap;
   overflow-x: auto;
 }
+.stsv-sol-num { color: var(--sv-text-mute); font-size: 11px; min-width: 14px; text-align: right; font-variant-numeric: tabular-nums; }
 .stsv-sol-len { color: var(--sv-text-mute); font-size: 11px; min-width: 16px; text-align: right; }
 /* 并列多槽时逐行标注槽位 */
 .stsv-sol-slot {

@@ -16,7 +16,7 @@ import { useQueryState, useQueryStates, parseAsString, parseAsInteger, parseAsSt
 import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Copy, Loader2, Check, Shuffle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Loader2, Check } from 'lucide-react';
 import { normalizeScramble } from '@/lib/cross-solver';
 import {
   Analyzer,
@@ -450,7 +450,47 @@ function AnalyzePageInner() {
     <div className="analyze-page">
       <SolveTabs puzzle="3x3" mode="solve" sub={tool} />
 
+      {/* 来源切换 + 综合配置同处一条可换行的 flex 线:窄了自然折,宽了「WCA 真题 / 选源方式 /
+          难度 / 最优 / 日期范围」全排一行。配置块用 display:contents 打平进这条线(见 analyze.css)。
+          放在打乱图/输入框之上:先选来源,再看抽到的打乱。「生成」按钮不挂在这条线上 —— 两种来源
+          共用同一个按钮,挂在下面打乱框旁边(见 .analyze-input-row),不用按模式分别放两处。 */}
+      <div className="analyze-wca-line">
+        <div className="analyze-wca">
+          {/* 来源切换:WCA 真实打乱(带比赛信息)/ 随机生成 */}
+          <PillToggle
+            value={scrSource === 'wca'}
+            onChange={(v) => setScrSource(v ? 'wca' : 'random')}
+            onLabel={t('WCA 真题', 'WCA real')}
+            offLabel={t('随机生成', 'Random')}
+            ariaLabel={t('打乱来源', 'Scramble source')}
+            className="analyze-src-pill"
+          />
+        </div>
+
+        {/* 综合来源配置:复用计时器的 WcaSourceConfig(按日期范围 / 指定比赛 / 按难度 / 最优等态)。
+            始终展开内联;自动打卡对分析器无意义,隐藏。 */}
+        {scrSource === 'wca' && (
+          <div className="analyze-wca-src">
+            <WcaSourceConfig
+              isZh={lang === 'zh'}
+              event={'333' as EventId}
+              settings={wcaSrc}
+              updateSettings={patchWcaSrc}
+              showAutoMark={false}
+            />
+          </div>
+        )}
+      </div>
+
       <div className="analyze-input-row">
+        {/* 「生成」按钮放在打乱图左侧:WCA 模式抽真题 / 随机模式生成随机打乱,同一个按钮。 */}
+        <button
+          className="analyze-wca-gen analyze-wca-gen-inline"
+          onClick={() => (scrSource === 'wca' ? void drawWca() : void fillRandom())}
+          disabled={running || wcaLoading}
+        >
+          {t('生成', 'Generate')}
+        </button>
         {/* 当前打乱的 2D 打乱图(点击看大图);打乱文字唯一来源是右侧输入框,不再重复 */}
         <div className="analyze-input-img">
           <ScramblePreview2D
@@ -474,45 +514,6 @@ function AnalyzePageInner() {
           autoCorrect="off"
           inputMode="text"
         />
-      </div>
-
-      {/* 来源切换 + 综合配置同处一条可换行的 flex 线:窄了自然折,宽了「WCA 真题 / 选源方式 /
-          按难度 / 最优 / 日期范围」全排一行。配置块用 display:contents 打平进这条线(见 analyze.css)。 */}
-      <div className="analyze-wca-line">
-        <div className="analyze-wca">
-          {/* 来源切换:WCA 真实打乱(带比赛信息)/ 随机生成 */}
-          <PillToggle
-            value={scrSource === 'wca'}
-            onChange={(v) => setScrSource(v ? 'wca' : 'random')}
-            onLabel={t('WCA 真题', 'WCA real')}
-            offLabel={t('随机生成', 'Random')}
-            ariaLabel={t('打乱来源', 'Scramble source')}
-            className="analyze-src-pill"
-          />
-          <button
-            className="analyze-wca-reshuffle"
-            onClick={() => (scrSource === 'wca' ? void drawWca() : void fillRandom())}
-            disabled={running || wcaLoading}
-            title={scrSource === 'wca' ? t('换一条真实打乱', 'Draw another real scramble') : t('换一个随机打乱', 'New random scramble')}
-            aria-label={scrSource === 'wca' ? t('换一条真实打乱', 'Draw another real scramble') : t('换一个随机打乱', 'New random scramble')}
-          >
-            {wcaLoading ? <Loader2 size={13} className="analyze-spin" /> : <Shuffle size={13} />}
-          </button>
-        </div>
-
-        {/* 综合来源配置:复用计时器的 WcaSourceConfig(按日期范围 / 指定比赛 / 按难度 / 最优等态)。
-            始终展开内联;自动打卡对分析器无意义,隐藏。 */}
-        {scrSource === 'wca' && (
-          <div className="analyze-wca-src">
-            <WcaSourceConfig
-              isZh={lang === 'zh'}
-              event={'333' as EventId}
-              settings={wcaSrc}
-              updateSettings={patchWcaSrc}
-              showAutoMark={false}
-            />
-          </div>
-        )}
       </div>
 
       {/* 来源信息行:WCA 真实打乱显示比赛出处 / 无匹配提示;随机无出处不显示。 */}
