@@ -1196,6 +1196,21 @@ html[data-theme=dark] .gen-page {
     margin: 0.25rem 0 0.75rem;
 }
 
+/* 内嵌模式(forcedCompId):打乱图/下载图标并入本行最前(靠左),复刻原
+   .gen-tn-controls.is-loaded 的无边框图标样式。 */
+.gen-cx-actions-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.gen-cx-actions-inline .gen-btn {
+    border-color: transparent;
+    background: transparent;
+}
+.gen-cx-actions-inline .gen-btn:hover:not(:disabled) {
+    background: var(--gen-accent-soft);
+}
+
 /* 底色选择:模式下拉(六/四/双/单)+ swatch 选择器(单色 6 选 1 等) */
 .gen-cx-colorsel { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .gen-cx-modesel {

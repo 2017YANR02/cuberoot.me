@@ -41,7 +41,7 @@ const CSTIMER_EVENT_ORDER: ReadonlyArray<string> = CSTIMER_EVENTS.map((e) => e.i
 const SHAPE_MOD_EVENT_ORDER: ReadonlyArray<string> = SHAPE_MOD_EVENTS.map((e) => e.id);
 import {
   allowedFormats, FORMAT_LABEL, formatAttempts, DEFAULT_EXTRA_COUNT,
-  defaultEventConfig, defaultRoundConfig,
+  defaultEventConfig, defaultRoundConfig, groupIdxOf, groupLetter,
   type EventConfig, type WcaFormat,
 } from './_wca-round';
 import type { RoundSheetInput } from './_tnoodle-pdf';
@@ -155,13 +155,6 @@ const ROUND_INDEX: Record<string, number> = {
   'f': 3, 'h': 3,
 };
 function roundIdxOf(rt: string): number { return ROUND_INDEX[rt] ?? 0; }
-function groupIdxOf(g: string): number {
-  if (!g) return 0;
-  const c = g.toUpperCase().charCodeAt(0);
-  return c >= 65 && c <= 90 ? c - 65 : 0;
-}
-// 0-based 分组序号 → 字母(0→A);URL ?group= 的写/读两端共用,与 SheetView 的标题渲染一致。
-const groupLetter = (idx: number): string => String.fromCharCode(65 + idx);
 function inferFormat(event: string, nonExtraCount: number): WcaFormat {
   const allowed = allowedFormats(event);
   const COUNT: Record<WcaFormat, number> = { 'a': 5, 'm': 3, '5': 5, '3': 3, '2': 2, '1': 1 };
@@ -799,7 +792,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     const rawRound = urlQuery.round ?? '';
     const groupP = urlQuery.group ?? '';
     const nP = urlQuery.attempt ?? '';
-    const gIdx = /^[A-Za-z]$/.test(groupP) ? groupP.toUpperCase().charCodeAt(0) - 65 : null;
+    const gIdx = /^[A-Za-z]+$/.test(groupP) ? groupIdxOf(groupP) : null;
     // ?round= 两种写法都认:① 数字 = 第几轮(1-based 位置,纯位置直链);② 字母 round_type_id
     // (f/c/d/e/g/h/b,决赛 / 组合制等)→ 用同一 roundIdx 映射折进本场已加载轮次,算出它的位置。
     // 否则决赛('f')这类字母轮次会被当成 NaN 退回第一轮(旧行为)。
@@ -1186,6 +1179,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     </div>
   );
 
+  // 内嵌模式(forcedCompId)下,打乱图/下载图标行与下方「分析」控制行合并成一行(都靠左,
+  // 图标在前);只在「分析」行确实会渲染时合并,否则(如 sq1 等非 333 系事件)图标仍独占一行。
+  const showAnalysisRow = loaded && !!activeView && is333Family && sheetsInEvent.length > 0;
+
   const actionsNode = (
       <div className="gen-control-group gen-control-actions">
           {loaded ? (
@@ -1279,7 +1276,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   // 配置态仍把操作(生成按钮等)留在正文 controls 行。无 header slot 时整体回落正文。
   // 内嵌模式(forcedCompId):没有比赛选择器 / 生成按钮,只在已加载后留打乱图开关 + 下载 PDF。
   const controlsNode = forcedCompId ? (
-    loaded ? <div className="gen-tn-controls is-loaded">{actionsNode}</div> : null
+    loaded && !showAnalysisRow ? <div className="gen-tn-controls is-loaded">{actionsNode}</div> : null
   ) : !compHeaderSlot ? (
     <div className={`gen-tn-controls${loaded ? ' is-loaded' : ''}`}>
       {compPickerNode}
@@ -1461,6 +1458,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         <>
           {is333Family && sheetsInEvent.length > 0 && (
             <div className="gen-cx-switchrow">
+              {forcedCompId && <div className="gen-cx-actions-inline">{actionsNode}</div>}
               <span className="gen-sq1-format-label">{t('分析', 'Analysis')}</span>
               <PillToggle
                 value={showCross}

@@ -18,6 +18,7 @@ import { fetchWcaScrambles, type WcaScrambleRow } from '@/lib/wca-results-api';
 import { roundTypeShort } from '@/lib/comp-schedule';
 import { ROUND_ORDER } from '@/lib/wca-round-meta';
 import { wcaEventId } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
+import { groupIdxOf } from '@/lib/wca-scramble-group';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
@@ -114,7 +115,7 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings,
   const groups = useMemo(() => {
     if (!evRows) return [];
     const inRound = evRows.filter((r) => !settings.wcaRound || r.round_type_id === settings.wcaRound);
-    return [...new Set(inRound.map((r) => r.group_id).filter(Boolean))].sort();
+    return [...new Set(inRound.map((r) => r.group_id).filter(Boolean))].sort((a, b) => groupIdxOf(a) - groupIdxOf(b));
   }, [evRows, settings.wcaRound]);
   const hasEvent = evRows === null ? null : evRows.length > 0;
 
