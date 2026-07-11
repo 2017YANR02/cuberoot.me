@@ -74,6 +74,18 @@ const NAME_SYNONYMS: Record<string, SynEntry> = {
   '中锦赛': { tokens: ['china', 'championship'], phrase: true },
   '公开赛': { tokens: ['open'] },
   'wc': { tokens: ['world', 'championship'] },
+  // 六大洲锦标赛(WCA championship_type _Africa/_Asia/_Europe/_North America/_Oceania/_South America)常用简称。
+  '亚锦赛': { tokens: ['asian', 'championship'] },
+  '亚洲锦标赛': { tokens: ['asian', 'championship'] },
+  '非锦赛': { tokens: ['african', 'championship'] },
+  '非洲锦标赛': { tokens: ['african', 'championship'] },
+  '欧锦赛': { tokens: ['european', 'championship'] },
+  '欧洲锦标赛': { tokens: ['european', 'championship'] },
+  '北美锦标赛': { tokens: ['north', 'american', 'championship'] },
+  '南美锦赛': { tokens: ['south', 'american', 'championship'] },
+  '南美锦标赛': { tokens: ['south', 'american', 'championship'] },
+  '大洋锦赛': { tokens: ['oceanic', 'championship'] },
+  '大洋洲锦标赛': { tokens: ['oceanic', 'championship'] },
 };
 
 function escapeRe(s: string) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }

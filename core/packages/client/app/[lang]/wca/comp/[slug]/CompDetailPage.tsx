@@ -1575,7 +1575,7 @@ export default function CompDetailPage() {
           )}
           <button
             type="button"
-            className={`comp-view-tab${(!isPsych && !isSchedule && !isPodium) ? ' is-active' : ''}`}
+            className={`comp-view-tab${(!isPsych && !isSchedule && !isPodium && !isSimilar && !isScramble) ? ' is-active' : ''}`}
             onClick={() => onChangeView('result')}
           >
             {(isZh ? '成绩' : (isWca ? 'Results' : 'Live'))}
