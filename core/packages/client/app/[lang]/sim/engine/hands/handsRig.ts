@@ -37,9 +37,10 @@ import * as THREE from "three";
 import { SIZE } from "../define";
 import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
 import { loadGltfHand } from "./handModelGltf";
+import { loadManoHand } from "./handModelMano";
 import { bakeHandTextures, bakeLimbTextures, type HandBakedMaps } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
-import { homeLeft, homeRight, type HandPose } from "./handPoses";
+import { homeLeft, homeRight, type HandPose, type HandModelKind } from "./handPoses";
 
 /** 只读 duck-type,避免运行时 import NxN Cube(rig 只碰 groups 的 angle)。 */
 export interface HandsCubeLike {
@@ -879,8 +880,16 @@ export default class HandsRig extends THREE.Group {
    *  quarters = 整体转体已踏移的 90° 数(带迟滞,driveGesture 维护)。 */
   private active: { axis: Axis; cls: LayerClass; dir: 0 | 1 | -1; gesture: HandGesture | null; lastAngle: number; quarters: number } | null = null;
 
-  constructor() {
+  /** 手模资产种类(构造时定死;运行中切换 = world 销毁重建整个 rig —— 姿态
+   *  基线/甲片/血色全绑在加载期,热替换不值得)。mano 资产缺失时 initAsync
+   *  回退 generic,effectiveModel 记录实际生效的那套。 */
+  readonly modelSource: HandModelKind;
+  private effectiveModel: HandModelKind;
+
+  constructor(modelSource: HandModelKind = "default") {
     super();
+    this.modelSource = modelSource;
+    this.effectiveModel = modelSource;
     this.name = "handsRig";
     // 皮肤(前臂 + 烘焙失败时的手部回退):物理材质 + 顶点血色(几何侧烘)+
     // 程序噪声 bump/roughness(毛孔颗粒);手本体正常路径用 initAsync 里的
@@ -941,14 +950,37 @@ export default class HandsRig extends THREE.Group {
    *  left.glb 真镜像资产。 */
   private async initAsync(): Promise<void> {
     let right: HandModel, left: HandModel;
-    try {
-      [right, left] = await Promise.all([
-        loadGltfHand(-1, this.skinMat),
-        loadGltfHand(1, this.skinMat),
-      ]);
-    } catch (e) {
-      console.error("[sim hands] GLTF hand load failed:", e);
-      return;
+    if (this.modelSource === "mano") {
+      // MANO 资产是逐机转换的 gitignored 文件(授权数据不入公开仓库):缺失
+      // 是正常状态,回退 generic-hand 并降级提示,不让「手」功能整个消失。
+      try {
+        [right, left] = await Promise.all([
+          loadManoHand(-1, this.skinMat),
+          loadManoHand(1, this.skinMat),
+        ]);
+      } catch (e) {
+        console.warn("[sim hands] MANO 资产不可用,回退内置手模:", e);
+        this.effectiveModel = "default";
+        try {
+          [right, left] = await Promise.all([
+            loadGltfHand(-1, this.skinMat),
+            loadGltfHand(1, this.skinMat),
+          ]);
+        } catch (e2) {
+          console.error("[sim hands] GLTF hand load failed:", e2);
+          return;
+        }
+      }
+    } else {
+      try {
+        [right, left] = await Promise.all([
+          loadGltfHand(-1, this.skinMat),
+          loadGltfHand(1, this.skinMat),
+        ]);
+      } catch (e) {
+        console.error("[sim hands] GLTF hand load failed:", e);
+        return;
+      }
     }
     // 程序化皮肤贴图烘焙(albedo/bump/roughness + 指甲)。必须在入场景 / 摆
     // home 姿态之前(烘焙契约:绑定姿态 + group 无父级)。UV 布局左右手不一致
@@ -966,15 +998,20 @@ export default class HandsRig extends THREE.Group {
       bumpScale: 0.7,
       roughnessMap: maps.rough,
     });
-    try {
-      for (const model of [right, left]) {
-        const mat = mkBakedMat(await bakeHandTextures(model));
-        model.meshes[0].material = mat;
-        this.handMats.push(mat);
+    if (this.effectiveModel !== "mano") {
+      try {
+        for (const model of [right, left]) {
+          const mat = mkBakedMat(await bakeHandTextures(model));
+          model.meshes[0].material = mat;
+          this.handMats.push(mat);
+        }
+      } catch (e) {
+        console.error("[sim hands] skin texture bake failed:", e);
       }
-    } catch (e) {
-      console.error("[sim hands] skin texture bake failed:", e);
     }
+    // MANO 无作者 UV(转换器只给噪声 bump 用的平面投影 UV),烘焙贴图的皱纹/
+    // 甲位画在投影 UV 上会成乱斑 —— 跳过,走平色 skinMat + 顶点血色路径
+    // (rig 本就有该回退,烘焙失败同款)。
     // 加载层自建材质(甲片等,HandModel.extraMats 契约):入 handMats 统一
     // fade/dispose。结构断言兼容尚未携带该字段的加载层。
     for (const model of [right, left]) {
@@ -1005,8 +1042,8 @@ export default class HandsRig extends THREE.Group {
     this.hands = {
       // 肘锚随 HAND_SCALE 等比外推:手/前臂变大后锚点太近会让前臂几何越过肘
       // 悬在半空(几何长 152U·scale,锚点必须比腕远至少这么多)。
-      R: this.initHandState(right, homeRight(), rArm.group, new THREE.Vector3(SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
-      L: this.initHandState(left, homeLeft(), lArm.group, new THREE.Vector3(-SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
+      R: this.initHandState(right, homeRight(this.effectiveModel), rArm.group, new THREE.Vector3(SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
+      L: this.initHandState(left, homeLeft(this.effectiveModel), lArm.group, new THREE.Vector3(-SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
     };
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);

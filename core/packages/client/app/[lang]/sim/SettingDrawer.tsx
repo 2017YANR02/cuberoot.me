@@ -110,6 +110,10 @@ export interface SimSettings {
   /** 手指(指法演示):双手握持魔方,转层时腕转 / 弹指跟动画。仅 3x3 生效
    *  (其它拼图上开关灰禁;设置保留,切回 3x3 自动恢复)。默认关。 */
   hands: boolean;
+  /** 手模资产:'default' = 内置 WebXR generic-hand;'mano' = MPI MANO(用户
+   *  自持授权,资产逐机由 scripts/convert-mano.py 转换,缺失时运行时自动回退
+   *  内置并 console.warn)。默认 'default'。 */
+  handModel: 'default' | 'mano';
   /** 开发者调试(仅 3x3 手指开启时可见):MediaPipe 风格 21 关键点骨架叠加线
    *  (关节点 + 连线)。默认关 —— 正常展示不需要这层调试线。 */
   handsSkeleton: boolean;
@@ -165,6 +169,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   customLogo: '',
   liveReduce: true,
   hands: false,
+  handModel: 'default',
   handsSkeleton: false,
   showNails: true,
 };
@@ -190,6 +195,7 @@ export function loadSettings(): SimSettings {
     if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
     if (typeof merged.customLogo !== 'string') merged.customLogo = '';
     if (typeof merged.hands !== 'boolean') merged.hands = false;
+    if (merged.handModel !== 'mano') merged.handModel = 'default';
     return merged;
   } catch {
     return DEFAULT_SETTINGS;
@@ -232,6 +238,8 @@ const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'ivy', 'dino', 'redi', 'rex'
 export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
   // 手指(指法演示):意愿写进 world,实际显隐由 world.syncHands 按拼图门控
   // (仅 3x3);内部已含 resize,所以放最前,后面的 resize 拿到的取景已是最终值。
+  // 手模资产先于开关:切资产要销毁重建 rig,先设好再 syncHands 免得建完又拆。
+  world.setHandModel(s.handModel === 'mano' ? 'mano' : 'default');
   world.setHandsWanted(s.hands === true);
   world.hands?.setSkeletonVisible(s.handsSkeleton === true);
   world.hands?.setNailsVisible(s.showNails !== false);

@@ -8,6 +8,12 @@
 import * as THREE from "three";
 import type { FingerName } from "./handModel";
 
+/** 手模资产种类:default = WebXR generic-hand(right/left.glb);mano = MPI MANO
+ *  (用户自持授权,scripts/convert-mano.py 转换,gitignored)。home 姿逐资产
+ *  各解各的(骨长/掌型不同,同参数不同世界结果);指法 fit 表暂共用 default
+ *  标定值(MANO 侧近似,FINGERTRICKS §5 重标时再分家)。 */
+export type HandModelKind = "default" | "mano";
+
 export interface FingerCurl {
   /** 三关节弯曲量(rad,正=向掌心卷)。 */
   curl: [number, number, number];
@@ -76,7 +82,8 @@ function fingerPose(
  * 数值在 SIZE=64(棱长 192、半宽 96)坐标系下;由坐标下降求解 + Playwright 复核,
  * 改 HAND_SCALE / 指根 rz / 掌横弓必须重跑标定(方法见 memory project_sim_hands_rig)。
  */
-export function homeRight(): HandPose {
+export function homeRight(kind: HandModelKind = "default"): HandPose {
+  if (kind === "mano") return manoHomeRight();
   return {
     pos: new THREE.Vector3(299.27, -48.92, 29.41),
     quat: quatFromWorldRots([
@@ -169,6 +176,18 @@ export function homeRight(): HandPose {
   };
 }
 
+/**
+ * MANO 右手 home(占位:资产未到位前抄 default 解 —— 适配层把中指链归一到
+ * 同长,generic 参数在 MANO 上是「能看的起点」而非合规解)。资产转换 + 探针
+ * MODEL=mano SOLVE=R 求解后重烘;MANO 版硬规格比 default 多一条:**真 CMC
+ * (thumb-metacarpal 关节)y ≤ −28.5(D 层界下)** —— generic-hand 上已证明
+ * 超出可行域(r11),MANO 掌型/CMC 位形不同,是此规格的下一个自由度上限。
+ */
+function manoHomeRight(): HandPose {
+  const base = homeRight("default");
+  return base;
+}
+
 /** 左手相对右手的每指弯曲固定偏移(rad)= 左手独立肉面间隙标定解 − 右手解
  *  (left.glb 镜像资产有 ~2U 雕刻不对称,同 curl 下两手间隙不同,必须各解各的)
  *  + 破双手逐帧完美镜像同步的 CG 感(评审 #9)。写死常量,禁随机(刷新换脸)。
@@ -189,8 +208,19 @@ const LEFT_CURL_OFFSET: Record<FingerName, [number, number, number, number?, num
   pinky: [0.0254, -0.02, 0.04, 0, -0.002],
 };
 
-export function homeLeft(): HandPose {
-  const r = homeRight();
+/** MANO 左手偏移(占位 0:MANO_LEFT 是独立左手扫描资产,解出 R 后按
+ *  MODEL=mano SOLVE=L 独立解偏移,同 default 的先例)。 */
+const MANO_LEFT_CURL_OFFSET: Record<FingerName, [number, number, number, number?, number?, number?, number?]> = {
+  thumb: [0, 0, 0], index: [0, 0, 0], middle: [0, 0, 0], ring: [0, 0, 0], pinky: [0, 0, 0],
+};
+
+const LEFT_OFFSET_BY_KIND: Record<HandModelKind, Record<FingerName, [number, number, number, number?, number?, number?, number?]>> = {
+  default: LEFT_CURL_OFFSET,
+  mano: MANO_LEFT_CURL_OFFSET,
+};
+
+export function homeLeft(kind: HandModelKind = "default"): HandPose {
+  const r = homeRight(kind);
   // 左手几何在「局部 y=0 平面」镜像(left.glb 真镜像资产,side=+1),世界姿态在「x=0 平面」
   // 镜像:M_x·R·M_y = mirrorQuatX(R) ∘ Rz(π)(M_x·M_y = diag(-1,-1,1) = 绕 z 转 π)。
   // 少乘这个局部 Rz(π) 手指会指向正下方(v1 实测踩过)。
@@ -198,7 +228,7 @@ export function homeLeft(): HandPose {
   const fingers = {} as HandFingerPose;
   for (const name of Object.keys(r.fingers) as FingerName[]) {
     const f = r.fingers[name];
-    const off = LEFT_CURL_OFFSET[name];
+    const off = LEFT_OFFSET_BY_KIND[kind][name];
     const midBase = f.mid ?? [0, 0];
     const mid: [number, number] | undefined = f.mid || off[5] != null || off[6] != null
       ? [midBase[0] + (off[5] ?? 0), midBase[1] + (off[6] ?? 0)] : undefined;
