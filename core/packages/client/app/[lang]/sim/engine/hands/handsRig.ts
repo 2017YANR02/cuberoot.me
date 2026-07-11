@@ -37,7 +37,7 @@ import * as THREE from "three";
 import { SIZE } from "../define";
 import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
 import { loadGltfHand } from "./handModelGltf";
-import { loadManoHand } from "./handModelMano";
+import { buildSmplxForearm, loadManoHand, loadSmplxForearmData, type ForearmFit } from "./handModelMano";
 import { bakeHandTextures, bakeLimbTextures, type HandBakedMaps } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
 import { homeLeft, homeRight, type HandPose, type HandModelKind } from "./handPoses";
@@ -1016,8 +1016,41 @@ export default class HandsRig extends THREE.Group {
       if (extra) this.handMats.push(...extra);
     }
     this.add(right.group, left.group);
-    const rArm = buildForearm(this.skinMat, this.cuffMat);
-    const lArm = buildForearm(this.skinMat, this.cuffMat);
+    // 前臂:优先 SMPL-X 真臂切段(逐机转换 gitignored 资产,与 MANO 同模式;
+    // 尺骨头/肌腹是真解剖轮廓),缺失回退程序化锥形管。左臂 = 右臂 y 镜像
+    // 几何(真前臂不对称),但 UV 相同 → 下方皮肤贴图仍烘一次共享。宽度按
+    // 当前手模腕环实测自适应:generic 残端敞口要盖住(cover),MANO 封腕
+    // 要藏进去(tuck)—— 写死 34.5U 曾把 MANO 腕顶穿出台阶(2026-07-11)。
+    const stumpFit = (model: HandModel, mode: "cover" | "tuck"): ForearmFit | undefined => {
+      model.group.updateMatrixWorld(true);
+      const mesh = model.meshes[0] as THREE.SkinnedMesh;
+      const pos = mesh.geometry.getAttribute("position");
+      const v = HandsRig._vTmp;
+      const scl = HAND_SCALE * (SIZE / 64);
+      let yMin = Infinity, yMax = -Infinity, zMin = Infinity, zMax = -Infinity;
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        if (mesh.isSkinnedMesh) mesh.applyBoneTransform(i, v);
+        if (Math.abs(v.x - WRIST_LOCAL.x) > 6 * scl) continue;
+        yMin = Math.min(yMin, v.y); yMax = Math.max(yMax, v.y);
+        zMin = Math.min(zMin, v.z); zMax = Math.max(zMax, v.z);
+      }
+      if (!Number.isFinite(yMin)) return undefined; // 量空回退 34.5U 缺省
+      return { hy: (yMax - yMin) / 2, hz: (zMax - zMin) / 2, cy: (yMax + yMin) / 2, cz: (zMax + zMin) / 2, mode };
+    };
+    let rArm: { group: THREE.Group; meshes: THREE.Mesh[] };
+    let lArm: { group: THREE.Group; meshes: THREE.Mesh[] };
+    try {
+      const armData = await loadSmplxForearmData();
+      const mode = this.effectiveModel === "mano" ? "tuck" : "cover";
+      rArm = buildSmplxForearm(armData, -1, this.skinMat, this.cuffMat, stumpFit(right, mode));
+      lArm = buildSmplxForearm(armData, 1, this.skinMat, this.cuffMat, stumpFit(left, mode));
+    } catch {
+      // 未转换机器的常态,info 级即可(MANO 手模缺失才值得 warn)
+      console.info("[sim hands] SMPL-X 前臂资产不可用,使用程序化前臂");
+      rArm = buildForearm(this.skinMat, this.cuffMat);
+      lArm = buildForearm(this.skinMat, this.cuffMat);
+    }
     // 前臂烘同款皮肤贴图(同公式/同材质参数,腕缝两侧肤质细节连续 —— 平色
     // 管子接烘焙手的材质断层比几何台阶还显眼)。两臂几何相同,烘一次共享;
     // 失败非致命:退回平色 skinMat。
@@ -1038,9 +1071,12 @@ export default class HandsRig extends THREE.Group {
     addHandSkeleton(left, this.skelMatMap);
     this.hands = {
       // 肘锚随 HAND_SCALE 等比外推:手/前臂变大后锚点太近会让前臂几何越过肘
-      // 悬在半空(几何长 152U·scale,锚点必须比腕远至少这么多)。
-      R: this.initHandState(right, homeRight(this.effectiveModel), rArm.group, new THREE.Vector3(SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
-      L: this.initHandState(left, homeLeft(this.effectiveModel), lArm.group, new THREE.Vector3(-SIZE * 4.4, -SIZE * 5.2, SIZE * 1.4).multiplyScalar(HAND_SCALE)),
+      // 悬在半空(几何长 ~186U·scale,锚点必须比腕远至少这么多)。
+      // 方位 = 自然持方块:肘在体侧偏下偏前(相机侧),前臂接近水平(从腕向
+      // 外下 ~12°)—— 旧锚 (4.4,−5.2,1.4) 在腕正下深处,前臂垂直下垂,
+      // 2026-07-11 用户抓的「手臂要接近水平」。
+      R: this.initHandState(right, homeRight(this.effectiveModel), rArm.group, new THREE.Vector3(SIZE * 7.6, -SIZE * 1.0, SIZE * 1.8).multiplyScalar(HAND_SCALE)),
+      L: this.initHandState(left, homeLeft(this.effectiveModel), lArm.group, new THREE.Vector3(-SIZE * 7.6, -SIZE * 1.0, SIZE * 1.8).multiplyScalar(HAND_SCALE)),
     };
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);
