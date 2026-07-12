@@ -30,6 +30,16 @@ const EVENT_MAP: Partial<Record<EventId, string>> = {
   pyra: 'pyram', skewb: 'skewb', sq1: 'sq1', mega: 'minx', clock: 'clock',
 };
 
+// WCA event_ids (mapped values above) with a God's-number optimal-equivalent scramble available
+// (see wca_scramble_optimal in the DB, computed by an exact solver for these homogeneous events
+// only). Single source of truth — both the "最优打乱" toggle's visibility (WcaSourceConfig) and
+// the pool's actual filtering here must agree, or a stale wcaUseOptimal=true left over from
+// switching away from one of these events would silently filter out every real scramble of an
+// event that has no optimal data (e.g. clock) — filtering here is what actually matters; the UI
+// toggle is just a convenience that mirrors this set.
+export const WCA_OPTIMAL_EVENTS = new Set(['333', '333oh', '333ft', '333fm', '222', 'pyram', 'skewb']);
+function supportsOptimal(w: string): boolean { return WCA_OPTIMAL_EVENTS.has(w); }
+
 const FETCH_COUNT = 50;
 const REFILL_AT = 8;
 const META_CAP = 1000; // 元数据 Map 软上限,超出按插入序丢最旧。
@@ -141,7 +151,9 @@ function wev(spec: WcaSourceSpec): string | undefined {
 function specKey(spec: WcaSourceSpec): string | null {
   const w = wev(spec);
   if (!w) return null;
-  const opt = spec.optimal ? '|opt' : ''; // 原始/最优打乱用不同池,切换即重灌
+  // 该项目不支持最优等态(见 supportsOptimal)时忽略 spec.optimal —— 否则粘滞的 wcaUseOptimal=true
+  // 残留到切换后的项目,会算出一个「最优池」key,而这个项目永远没有 optimal_scramble,查回空。
+  const opt = spec.optimal && supportsOptimal(w) ? '|opt' : ''; // 原始/最优打乱用不同池,切换即重灌
   if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}` : null;
   // 难度过滤只在 date 模式生效;steps 非空才计入池 key(切换难度即重灌)。
   const d = spec.diff && spec.diff.steps.length > 0
@@ -164,6 +176,7 @@ function rememberMeta(s: string, m: WcaScrambleMeta): void {
 async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
   const w = wev(spec);
   if (!w) return;
+  const useOptimal = spec.optimal && supportsOptimal(w);
   let rows = compRows[key];
   if (!rows) {
     const all = await fetchWcaScrambles(spec.comp);
@@ -172,7 +185,7 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
         && (!spec.round || r.round_type_id === spec.round)
         && (!spec.group || r.group_id === spec.group)
         // 最优模式:只留有最优等态的真题,不再静默回退原打乱(无则该比赛队列空 -> 回退随机生成)。
-        && (!spec.optimal || !!r.optimal_scramble))
+        && (!useOptimal || !!r.optimal_scramble))
       .sort((a, b) => {
         const ra = ROUND_SEQ[a.round_type_id] ?? 9, rb = ROUND_SEQ[b.round_type_id] ?? 9;
         if (ra !== rb) return ra - rb;
@@ -182,7 +195,7 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
       })
       .map((r) => ({
         // 最优模式且该打乱有最优等态(同态项目)→ 用最优打乱,否则原打乱。
-        scramble: normalize(spec.optimal && r.optimal_scramble ? r.optimal_scramble : r.scramble),
+        scramble: normalize(useOptimal && r.optimal_scramble ? r.optimal_scramble : r.scramble),
         meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: w, r: r.round_type_id, g: r.group_id, n: r.scramble_num, x: (r.is_extra ? 1 : 0) as 0 | 1 },
       }));
     compRows[key] = rows;
@@ -198,10 +211,11 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
 async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   const w = wev(spec);
   if (!w) return;
+  const useOptimal = spec.optimal && supportsOptimal(w);
   const qs = new URLSearchParams({ event: w, count: String(FETCH_COUNT) });
   if (spec.from) qs.set('from', spec.from);
   if (spec.to) qs.set('to', spec.to);
-  if (spec.optimal) qs.set('optimal', '1'); // 服务端只回有最优等态的真题,池内每条都可切最优
+  if (useOptimal) qs.set('optimal', '1'); // 服务端只回有最优等态的真题,池内每条都可切最优
   // 难度过滤(date 模式):只回该 (方法,阶段,配色) 最优步数 ∈ steps 的真题。
   if (spec.diff && spec.diff.steps.length > 0) {
     qs.set('variant', spec.diff.variant);
@@ -221,12 +235,12 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   for (const it of items) {
     if (!it?.scramble) continue;
     // 最优模式且该条带最优等态 → 用最优打乱(同态,更短);否则用原打乱(服务器在稀有难度档无最优时回退)。
-    const useOpt = spec.optimal && !!it.o;
+    const useOpt = useOptimal && !!it.o;
     const s = normalize(useOpt ? it.o! : it.scramble);
     q.push(s);
     rememberMeta(s, {
       ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x,
-      ...(spec.optimal && !useOpt ? { nonOptimal: true } : {}),
+      ...(useOptimal && !useOpt ? { nonOptimal: true } : {}),
     });
   }
   persist();

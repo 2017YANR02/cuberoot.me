@@ -1462,10 +1462,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                 ? <span className="scramble-loading">{tr({ zh: '加载真实打乱…', en: 'Loading real scramble…' })}</span>
                 : wcaSourceEmpty
                   ? <span className="scramble-empty">{
-                      settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
-                        ? tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
-                        : settings.wcaScrambleMode === 'comp'
-                          ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
+                      // 难度过滤只在 date 模式生效(见 wca_pool.ts fillComp 注释),comp 模式必须
+                      // 先判——否则残留的 date 模式难度设置会在 comp 模式下显示错误的提示文案。
+                      settings.wcaScrambleMode === 'comp'
+                        ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
+                        : settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
+                          ? tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
                           : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
                     }</span>
                   : displayScramble
@@ -1482,6 +1484,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                 })}</span>
               )}
               {wcaSrcDisplay && (
+                <div className="scramble-src-row">
                 <a
                   className="scramble-src"
                   data-no-timer
@@ -1494,8 +1497,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                   <EventIcon event={wcaSrcDisplay.event} className="scramble-src-evt" />
                   <span className="scramble-src-meta">{wcaSrcDisplay.meta}</span>
                 </a>
-              )}
-              {wcaSrcDisplay && wcaSource && curMarks && curMarks.count > 0 && (
+                {wcaSource && curMarks && curMarks.count > 0 && (
                 <span className="scramble-marks" data-no-timer ref={marksBoxRef} onClick={(e) => e.stopPropagation()}>
                   <button
                     type="button"
@@ -1528,6 +1530,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                     </div>
                   )}
                 </span>
+                )}
+                </div>
               )}
             </div>
           }

@@ -17,7 +17,7 @@ import type { Comp } from '@/lib/comp-search';
 import { fetchWcaScrambles, type WcaScrambleRow } from '@/lib/wca-results-api';
 import { roundTypeShort } from '@/lib/comp-schedule';
 import { ROUND_ORDER } from '@/lib/wca-round-meta';
-import { wcaEventId } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
+import { wcaEventId, WCA_OPTIMAL_EVENTS } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import { groupIdxOf } from '@/lib/wca-scramble-group';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { VariantSelect } from '@/components/VariantSelect';
@@ -48,11 +48,8 @@ interface DiffDistJson {
   sets: Record<string, { variants: Record<string, { data: Record<string, Record<string, DiffHist>> }> }>;
 }
 
-// 同态项目:打乱可由 God's-number 最优等态打乱作真题的等价替身(同一魔方态,更短)。
-// 3x3 纯面转族(333/oh/ft/fm)+ 二阶/金字塔/斜转(各自精确最优 solver)。
-// 盲拧/多盲带宽块定向(本地求解的是剥定向后的态,非同态)、sq1(近最优,无 solver 解列)、
-// 魔表/五魔(无 solver)都没有最优打乱数据。
-const OPTIMAL_EVENTS = new Set(['333', '333oh', '333ft', '333fm', '222', 'pyram', 'skewb']);
+// 同态项目集合的唯一来源在 wca_pool.ts(WCA_OPTIMAL_EVENTS)——那里才是实际过滤发生的地方,
+// 这里只复用同一份判定来决定「最优打乱」开关是否显示,避免两处判据不一致。
 
 /**
  * The slice of settings this config reads / writes. Decoupled from the timer's
@@ -89,7 +86,7 @@ interface Props {
 
 export default function WcaSourceConfig({ isZh, event, settings, updateSettings, showAutoMark = true }: Props) {
   const wev = wcaEventId(event);
-  const hasOptimal = !!wev && OPTIMAL_EVENTS.has(wev); // 同态项目才显示「最优打乱」开关
+  const hasOptimal = !!wev && WCA_OPTIMAL_EVENTS.has(wev); // 同态项目才显示「最优打乱」开关
   const mode = settings.wcaScrambleMode;
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -118,6 +115,13 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings,
     return [...new Set(inRound.map((r) => r.group_id).filter(Boolean))].sort((a, b) => groupIdxOf(a) - groupIdxOf(b));
   }, [evRows, settings.wcaRound]);
   const hasEvent = evRows === null ? null : evRows.length > 0;
+
+  // 「最优打乱」是跨项目粘滞的设置;切到不支持最优等态的项目(如魔表)后,开关本身会隐藏,
+  // 但设置值若仍是 true,fillComp/fillDate 会去要求 optimal_scramble 非空 —— 该项目永远没有,
+  // 于是真实打乱被全部过滤成空,误报「没有真题」。开关一消失就顺手把它复位。
+  useEffect(() => {
+    if (!hasOptimal && settings.wcaUseOptimal) updateSettings({ wcaUseOptimal: false });
+  }, [hasOptimal, settings.wcaUseOptimal, updateSettings]);
 
   // Reset round/group when they fall outside the loaded comp's options.
   useEffect(() => {
