@@ -256,6 +256,9 @@ export interface AdaptGltfOpts {
   /** @4 融合前臂的绑定臂伸向(腕→肘,资产空间单位向量,转换器 forearmDir)。
    *  与骨名 "forearm" 同时存在才装配 HandModel.forearm。 */
   forearmDirAsset?: [number, number, number];
+  /** 融合手系基 Rm(行优先 3×3,列 = fwd/ym/zm,资产模板空间,转换器
+   *  handFrame;左手已镜像)。存在时装配 forearm.frameQuat = align·Rm。 */
+  handFrame?: number[][];
 }
 
 /** 纯适配步(无 fetch):gltf.scene → HandModel。拆出来供测试用 fs 读 GLB +
@@ -336,7 +339,19 @@ export function adaptGltfHand(src: THREE.Object3D, side: 1 | -1, skinMat: THREE.
   if (armBone && opts?.forearmDirAsset) {
     group.attach(armBone);
     const bindDir = new THREE.Vector3(...opts.forearmDirAsset).applyQuaternion(align).normalize();
-    forearm = { bone: armBone, bindDir, bindQuat: armBone.quaternion.clone() };
+    let frameQuat: THREE.Quaternion | undefined;
+    if (opts.handFrame) {
+      // frameQuat = align·Rm:融合手系基(资产模板空间列基 fwd/ym/zm,行优先
+      // 存储)转进手组系。体 rig 焊臂的常量因子(smplxBody.updateArm)。
+      const hf = opts.handFrame;
+      const m = new THREE.Matrix4().makeBasis(
+        new THREE.Vector3(hf[0][0], hf[1][0], hf[2][0]),
+        new THREE.Vector3(hf[0][1], hf[1][1], hf[2][1]),
+        new THREE.Vector3(hf[0][2], hf[1][2], hf[2][2]),
+      );
+      frameQuat = new THREE.Quaternion().setFromRotationMatrix(m).premultiply(align);
+    }
+    forearm = { bone: armBone, bindDir, bindQuat: armBone.quaternion.clone(), frameQuat };
   }
 
   const fingers = {} as Record<FingerName, FingerJoints>;

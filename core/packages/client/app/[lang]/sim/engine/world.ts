@@ -497,17 +497,22 @@ export default class World {
     // 视角滑杆低段(mapPerspective 下限 2)distance 仅 7.8×SIZE,margin 一减为负,
     // 透视投影 near≤0 = 投影矩阵损坏,大图小图在任意角度出现乱切面(2026-07-04 实测根因)。
     // 全身人物:身体站在镜头侧 z≈+1800~+2400(过肩视角),nearMargin 15(近面
-    // = 魔方前 960)会把整个躯干裁掉只剩残臂 —— 放宽到 40 罩住人体纵深。
-    const nearMargin = handsOn ? (this.handsFullBodyWanted ? 40 : 15) : isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto ? 5 : 4;
+    // = 魔方前 960)会把整个躯干裁掉只剩残臂。near 面位于世界 z=+margin×SIZE
+    // (轴向情形,与 dolly 无关)—— 人体最深点(肩背/头后)z 可达 ~50×SIZE,
+    // margin 40 恰在头中间切一刀(2026-07-12 拉远「无头人」实测),58 整体罩住。
+    const nearMargin = handsOn ? (this.handsFullBodyWanted ? 58 : 15) : isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto ? 5 : 4;
     this.camera.near = Math.max(distance - SIZE * nearMargin, SIZE * 0.4);
     // 全身人物:人体站在魔方后方(−z 纵深 ~1m ≈ 数十 SIZE),far 随开关放宽
-    // (按意愿而非加载完成算 —— 资产异步就位时不再有 resize 时机)。
-    this.camera.far = distance + SIZE * (handsOn ? (this.handsFullBodyWanted ? 64 : 15.5) : 8);
-    // 全身穿越带:0.3 以下相机后拉穿过躯干(胸 z≈19×SIZE → 背 z≈36×SIZE),
-    // 穿越段身体淡出,出体(scale≲0.15,distance>45×SIZE)再淡入。
+    // (按意愿而非加载完成算 —— 资产异步就位时不再有 resize 时机)。swap 背视
+    // 图下人体在 far 侧(视深 ≈ distance + 42×SIZE,pitch/yaw 斜置再加成),
+    // 64 会把上半身裁掉只剩腿(2026-07-12 swap 远景实测),放宽到 84。
+    this.camera.far = distance + SIZE * (handsOn ? (this.handsFullBodyWanted ? 84 : 15.5) : 8);
+    // 全身穿越带:0.3 以下相机后拉穿过躯干(胸 z≈19×SIZE → 背/头 z≈42×SIZE),
+    // 穿越段身体淡出;再淡入必须等相机整体出体(头后余量 → scale≲0.11,
+    // distance>53×SIZE;旧 0.16 淡入时相机还在头颅里,2026-07-12 实测)。
     if (this.handsFullBodyWanted) {
       const s = this.scale;
-      const op = s >= 0.295 ? 1 : Math.max(0, Math.min(1, Math.max((s - 0.27) / 0.025, (0.16 - s) / 0.03)));
+      const op = s >= 0.295 ? 1 : Math.max(0, Math.min(1, Math.max((s - 0.27) / 0.025, (0.13 - s) / 0.02)));
       this.hands?.setBodyZoomFade(op);
     }
     this._lookAtTarget.set(this.panX, this.panY, 0);

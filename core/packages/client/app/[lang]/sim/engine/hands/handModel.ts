@@ -60,8 +60,11 @@ export interface HandModel {
   /** @4 融合前臂(转换期把 SMPL-X 前臂缝进手网格 —— 单一网格无腕缝):
    *  bone 绕腕摆动驱动前臂蒙皮;bindDir = 绑定态臂伸向(腕→肘,手局部单位
    *  向量);bindQuat = attach 进 group 后骨的局部四元数快照(Δ 摆动左乘)。
-   *  无此字段 = 旧资产,rig 回退独立程序化前臂。 */
-  forearm?: { bone: THREE.Bone; bindDir: THREE.Vector3; bindQuat: THREE.Quaternion };
+   *  无此字段 = 旧资产,rig 回退独立程序化前臂。
+   *  frameQuat = align·Rm(融合手系基转进手组系的常量):全身体 rig 焊臂用,
+   *  体肘骨世界旋转 = gq·dq·frameQuat·Xᵀ 与融合前臂表面严格重合(推导见
+   *  smplxBody.updateArm);无 handFrame 的旧资产缺省,体臂退化为静止姿。 */
+  forearm?: { bone: THREE.Bone; bindDir: THREE.Vector3; bindQuat: THREE.Quaternion; frameQuat?: THREE.Quaternion };
 }
 
 /** 整手相对魔方的比例(2026-07-05 用户定真实比例:食指/中指/无名指宽 ≈0.9 个
