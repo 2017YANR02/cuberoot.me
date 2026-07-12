@@ -37,9 +37,12 @@ const ScheduleCalendar = dynamic(() => import('./ScheduleCalendar'), {
 
 type View = 'calendar' | 'table';
 
-export default function ScheduleView({ slug, isZh, compName, view, detailsExpanded }: {
+export default function ScheduleView({ slug, isZh, compName, view, detailsExpanded, eventFilter }: {
   slug: string; isZh: boolean; compName: string;
   view: View; detailsExpanded: boolean;
+  // 项目多选筛选:空集 = 不筛选,展示完整赛程;非空 = 只展示这些项目的轮次
+  // (签到/用餐/颁奖等无项目归属的活动始终保留,不受筛选影响)。
+  eventFilter?: ReadonlySet<string>;
 }) {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<ScheduleData | null>(null);
@@ -61,8 +64,19 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
     return () => { cancel = true; };
   }, [slug]);
 
-  const tz = data?.venues[0]?.timezone ?? 'UTC';
-  const cols = useMemo(() => (data ? computeDayColumns(data, tz) : null), [data, tz]);
+  const filteredData = useMemo(() => {
+    if (!data || !eventFilter || eventFilter.size === 0) return data;
+    return {
+      ...data,
+      activities: data.activities.filter(a => {
+        const evId = eventOfActivity(a);
+        return evId === '' || eventFilter.has(evId);
+      }),
+    };
+  }, [data, eventFilter]);
+
+  const tz = filteredData?.venues[0]?.timezone ?? 'UTC';
+  const cols = useMemo(() => (filteredData ? computeDayColumns(filteredData, tz) : null), [filteredData, tz]);
 
   if (loading) {
     return (
@@ -74,29 +88,29 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
     );
   }
 
-  if (error || !data || !cols || cols.days.length === 0) {
+  if (error || !data || !filteredData || !cols || cols.days.length === 0) {
+    const filtered = !!eventFilter && eventFilter.size > 0 && !!data && data.activities.length > 0;
     return (
       <div className="sched-empty">
-        {tr({ zh: '暂无赛程', en: 'No schedule available'
-        })}
+        {filtered
+          ? tr({ zh: '所选项目暂无赛程', en: 'No schedule for the selected events' })
+          : tr({ zh: '暂无赛程', en: 'No schedule available' })}
       </div>
     );
   }
 
   return (
     <>
-      {data.venues.length > 1 && (
+      {filteredData.venues.length > 1 && (
         <p className="sched-note">
-          {(isZh
-                              ? `本赛程按第一个场地时区(${tz})显示`
-                              : `Times shown in the first venue's timezone (${tz})`)}
+          {tr({ zh: `本赛程按第一个场地时区(${tz})显示`, en: `Times shown in the first venue's timezone (${tz})` })}
         </p>
       )}
       {view === 'calendar' ? (
-        <CalendarSection data={data} tz={tz} isZh={isZh} />
+        <CalendarSection data={filteredData} tz={tz} isZh={isZh} />
       ) : (
         <TableView
-          data={data}
+          data={filteredData}
           days={cols.days}
           tz={tz}
           isZh={isZh}
@@ -132,7 +146,8 @@ function DetailsToggle({ expanded, onToggle }: {
       className="sched-details-toggle"
       value={expanded}
       onChange={onToggle}
-      label={tr({ zh: '显示轮次详情', en: 'Show Round Details' })}
+      label={tr({ zh: '详情', en: 'Details' })}
+      ariaLabel={tr({ zh: '显示轮次详情', en: 'Show Round Details' })}
     />
   );
 }

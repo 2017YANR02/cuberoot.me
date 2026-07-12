@@ -229,6 +229,7 @@ const MISC_NAME_ZH: Record<string, string> = {
   'teardown': '收尾',
   'cleanup': '清理',
   'clean up': '清理',
+  'clean-up': '清理',
   'q&a': '问答',
 };
 
