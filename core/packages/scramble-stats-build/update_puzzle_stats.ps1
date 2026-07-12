@@ -272,6 +272,21 @@ if ($Sq1Requested -and -not $BuildOnly) {
   }
 }
 
+# ---- 2.9 「按步数」多口径度量预算 (2x2 底面/底层/魔方/QTM、金字塔 V/魔方) ----
+# client 端 build_puzzle_metrics.mts 复用计时器求解器 (lib/cube222-metric、timer/_lib/solver/pyra),
+# 增量补算 <key>_metrics.csv (只算 scrambles.txt 里尚未在 CSV 的新打乱)。build_puzzle_dist /
+# build_puzzle_examples 读它产多口径分布与示例。2x2 走全态查表 (3.67M 态 BFS 一次 ~10s,查 O(1)),
+# 全量 44 万条也只 ~1min;金字塔逐条求解 (~1000/s,增量 delta 秒级)。-BuildOnly 也跑 (无新打乱即 no-op)。
+$metricPuzzles = @($Puzzles | Where-Object { $_ -eq '222' -or $_ -eq 'pyraminx' })
+if ($metricPuzzles.Count -gt 0) {
+  Step "按步数度量预算 build_puzzle_metrics ($($metricPuzzles -join ', '))"
+  Push-Location (Join-Path $PkgDir '..\client')
+  try {
+    pnpm exec tsx scripts/build_puzzle_metrics.mts @metricPuzzles
+    if ($LASTEXITCODE -ne 0) { throw 'build_puzzle_metrics 失败' }
+  } finally { Pop-Location }
+}
+
 # ---- 3. 重算 puzzle_distribution.json ----
 Step "build_puzzle_dist (stats/scramble/puzzle_distribution.json)"
 if (Test-Path $ExportDate) { $env:SCRAMBLE_STATS_STAMP = (Get-Content $ExportDate -Raw).Trim() }

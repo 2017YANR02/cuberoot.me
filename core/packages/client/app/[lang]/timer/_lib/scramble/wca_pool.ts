@@ -18,6 +18,7 @@
 import { apiUrl } from '@/lib/api-base';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
 import { groupIdxOf } from '@/lib/wca-scramble-group';
+import { fetchPuzzleExamples, type PuzzleExamplesJson } from '@/lib/puzzle-examples';
 import { scrambleStepMetric } from './gen-by-steps';
 import type { EventId } from '../types';
 
@@ -93,6 +94,24 @@ const knownEmpty = new Set<string>();
 // 30 批(1500 条)对 1/400 有 ~98% 命中率。命中即停,所以常见区间仍是一批秒出、稀有区间平均抓 ~8 批
 // 即出;只有真正空的区间(如底层=7、htm≤3)才抓满 30 批才提示「无匹配」(~3s,之后 knownEmpty 缓存)。
 const MAX_FILTER_BATCHES = 30;
+
+// 「按步数」预计算真题桶:stats/scramble/puzzle_examples.json 的 metrics.<度量>.bins 存了每个步数值的
+// 真实比赛打乱(稀有值全量,≤300)。稀有区间(如 2×2 底层=0)live 采样难命中,直接播种这些预计算真题
+// → 即时+可靠;常见区间再用 live 补充变化。timer event → puzzle_examples.json 的 puzzle key。
+const EXAMPLES_KEY: Record<string, string> = { '222': '222', pyra: 'pyraminx' };
+let examplesCache: PuzzleExamplesJson | null = null;
+let examplesPromise: Promise<PuzzleExamplesJson | null> | null = null;
+function loadExamples(): Promise<PuzzleExamplesJson | null> {
+  if (examplesCache) return Promise.resolve(examplesCache);
+  if (!examplesPromise) {
+    examplesPromise = fetchPuzzleExamples()
+      .then((j) => { examplesCache = j; return j; })
+      .catch(() => { examplesPromise = null; return null; }); // 失败重置,下次可重试
+  }
+  return examplesPromise;
+}
+const precomputedSeeded = new Set<string>();       // 已建过预计算桶的 key(每 key 只 seed 一次)
+const precomputedFor = new Map<string, string[]>(); // key -> 区间内预计算真题打乱串(refill 洗牌灌回池)
 
 // localStorage persistence — so reopening the timer (or returning to a source /
 // setting used before) serves the first scramble instantly from cache and tops
@@ -230,6 +249,43 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
   persist();
 }
 
+/** 「按步数」:从 puzzle_examples.json 的 metrics.<度量>.bins 收集 [lo,hi] 内真题,登记来源元数据,
+ *  存进 precomputedFor[key]。返回收集到的条数(0 = 该度量/区间无预计算,回退 live 采样)。 */
+async function seedPrecomputed(spec: WcaSourceSpec, key: string): Promise<number> {
+  const sf = spec.stepFilter;
+  if (!sf) return 0;
+  const exKey = EXAMPLES_KEY[spec.event];
+  if (!exKey) return 0;
+  const j = await loadExamples();
+  const entry = j?.puzzles?.[exKey];
+  const bins = entry?.metrics?.[sf.metric]?.bins;
+  if (!entry || !bins) return 0;
+  // 最优模式与 live 语义一致:只端有最优等态的示例(最优打乱同态,度量值不变),不静默回退原打乱。
+  const useOptimal = !!spec.optimal && supportsOptimal(wev(spec)!);
+  const list: string[] = [];
+  for (let v = sf.lo; v <= sf.hi; v++) {
+    const samples = bins[String(v)];
+    if (!samples) continue;
+    for (const smp of samples) {
+      const raw = useOptimal ? smp[2] : smp[1];
+      if (!raw) continue;
+      const s = normalize(raw);
+      list.push(s);
+      const m = entry.idMeta[smp[0]];
+      if (m) rememberMeta(s, { ci: m[0], cn: entry.comps[m[0]]?.[0] ?? m[0], e: m[1], r: m[3], g: m[4], n: m[2], x: m[5] as 0 | 1 });
+    }
+  }
+  precomputedFor.set(key, list);
+  return list.length;
+}
+
+/** Fisher–Yates 洗牌拷贝(每次 refill 换序端出,避免固定顺序)。 */
+function shuffledCopy(src: string[]): string[] {
+  const a = src.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
 /** date mode: top up from the server's random sampler (optionally date-bounded). */
 async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   const w = wev(spec);
@@ -250,19 +306,42 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
     return qs;
   };
   const q = (pools[key] ??= []);
-  // 「按步数」客户端过滤时真题近上帝数、低步数区间可能整批被滤掉。同一次 fill 内连抓最多
-  // MAX_FILTER_BATCHES 批找匹配,命中即停;全空才判 knownEmpty —— 避免几秒退避后才提示无匹配。
-  // 无 stepFilter 时只抓一批(原行为)。
-  const maxBatches = spec.stepFilter ? MAX_FILTER_BATCHES : 1;
+  // 「按步数」:先用预计算真题桶播种(稀有区间即时+可靠,如 2×2 底层=0),再 live 补充变化。
+  let hasPrecomputed = false;
+  // 预计算真题桶是全时段的,只在无日期范围时播种(有 from/to 时 live 采样才尊重日期过滤)。
+  if (spec.stepFilter && !spec.from && !spec.to) {
+    if (!precomputedSeeded.has(key)) {
+      await seedPrecomputed(spec, key);
+      if (examplesCache) precomputedSeeded.add(key); // examples 读到了才不再重试;fetch 失败留待下次
+    }
+    const pre = precomputedFor.get(key);
+    if (pre && pre.length) {
+      hasPrecomputed = true;
+      // 只在队列见底时才把预计算桶洗牌灌回(循环用,不会耗尽):常见区间靠 live 批次保持变化,
+      // 每次 refill 全量重灌会造成队内重复 + 出题被固定采样集垄断。灌回时跳过仍在队列里的,
+      // 桶太小(如仅 3 条)全在队列 → 只能整桶循环,再防洗牌头 == 队尾的背靠背重复。
+      if (q.length <= 2) {
+        const inQ = new Set(q);
+        let arr = shuffledCopy(pre).filter((s) => !inQ.has(s));
+        if (arr.length === 0) arr = shuffledCopy(pre);
+        if (q.length > 0 && arr.length > 1 && arr[0] === q[q.length - 1]) arr.push(arr.shift()!);
+        for (const s of arr) q.push(s);
+      }
+      knownEmpty.delete(key);
+    }
+  }
+  // live 采样:无 stepFilter → 1 批(原行为);有 stepFilter 且无预计算 → MAX_FILTER_BATCHES 批找稀有匹配,
+  // 全空才判 knownEmpty;有预计算 → 只补 3 批变化(常见区间一批即中并短路,稀有区间靠预计算不硬搜),永不判空。
+  const maxBatches = spec.stepFilter ? (hasPrecomputed ? 3 : MAX_FILTER_BATCHES) : 1;
   let totalAdded = 0;
   for (let batch = 0; batch < maxBatches; batch++) {
     const res = await fetch(apiUrl(`/v1/wca/scrambles/random?${buildQs().toString()}`));
-    // 难度无匹配时端点回 404 → 确认空(非瞬时错误),让 UI 显式提示。
-    if (res.status === 404) { knownEmpty.add(key); return; }
+    // 难度无匹配时端点回 404 → 确认空(非瞬时错误),让 UI 显式提示。有预计算则不判空。
+    if (res.status === 404) { if (!hasPrecomputed) knownEmpty.add(key); return; }
     if (!res.ok) return; // 其它失败(5xx / 网络)= 瞬时,不标空,稍后重取
     const data = (await res.json()) as { scrambles?: RandomItem[] };
     const items = Array.isArray(data.scrambles) ? data.scrambles : [];
-    if (items.length === 0) { knownEmpty.add(key); return; }
+    if (items.length === 0) { if (!hasPrecomputed) knownEmpty.add(key); return; }
     let added = 0;
     for (const it of items) {
       if (!it?.scramble) continue;
@@ -280,8 +359,8 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
     totalAdded += added;
     if (added > 0) break; // 已找到匹配,不再多抓(短路,常态一批即够)
   }
-  // 连抓 maxBatches 批仍一条不落(仅 stepFilter 会到此)→ 该步数区间在真题里没有 → 确认空。
-  if (spec.stepFilter && totalAdded === 0) { knownEmpty.add(key); return; }
+  // 连抓 maxBatches 批仍一条不落且无预计算(仅 stepFilter 会到此)→ 该步数区间在真题里没有 → 确认空。
+  if (spec.stepFilter && !hasPrecomputed && totalAdded === 0) { knownEmpty.add(key); return; }
   knownEmpty.delete(key);
   persist();
 }
