@@ -855,6 +855,71 @@ def convert_smplx_fullbody(d: dict) -> dict:
     }
 
 
+# SMPL-X 55 关节标准布局里全身层需要的命名下标(smplx codebase 固定)。
+SMPLX_BODY_J = {
+    "pelvis": 0, "spine1": 3, "spine2": 6, "spine3": 9, "neck": 12, "head": 15,
+    "left_collar": 13, "right_collar": 14,
+    "left_shoulder": 16, "right_shoulder": 17,
+    "left_elbow": 18, "right_elbow": 19,
+    "left_wrist": 20, "right_wrist": 21,
+}
+
+
+def convert_smplx_body_rig(d: dict) -> dict:
+    """SMPL-X 全身可动 rig(@1,「完整人还原魔方」用):T-pose 本体 + 55 关节
+    骨架 + top-4 稀疏蒙皮权重。双臂在「腕内 150mm」半空间切除 —— 前臂+手由 @4
+    手资产接管(其前臂从腕向肘伸 155mm,留 ~5mm 套接重叠遮开口;T-pose 双臂沿
+    ±x 水平伸出,该半空间恰只含前臂尖+手,躯干/头/腿不受影响)。posedirs 不导
+    出:躯干/腿静态站姿(T-pose 即站立)、运行时只做双臂 2 骨 IK,省 ~14MB。
+    同 MANO 授权:产物禁 commit。"""
+    v = np.asarray(d["v_template"], dtype=np.float64)       # (10475,3) m
+    f = np.asarray(d["f"], dtype=np.int64)
+    w = np.asarray(d["weights"], dtype=np.float64)          # (10475,55)
+    J = np.asarray(d["J_regressor"], dtype=np.float64) @ v  # (55,3)
+    kin = np.asarray(d["kintree_table"], dtype=np.int64)
+    parents = kin[0].astype(np.int64).copy()
+    parents[0] = -1
+    # 绕向与 fullbody@1 同一口径(闭合全身网格上判符号,再沿用到切后开口网格)
+    vol = float(np.einsum("ij,ij->", v[f[:, 0]], np.cross(v[f[:, 1]], v[f[:, 2]]))) / 6.0
+    if vol < 0:
+        f = f[:, ::-1].copy()
+    keep = np.ones(len(v), dtype=bool)
+    CUT = 0.150
+    for side in ("left", "right"):
+        wj = J[SMPLX_BODY_J[f"{side}_wrist"]]
+        ej = J[SMPLX_BODY_J[f"{side}_elbow"]]
+        ax = (wj - ej) / np.linalg.norm(wj - ej)
+        keep &= (v - wj) @ ax < -CUT
+    fsel = f[keep[f].all(axis=1)]
+    used = np.unique(fsel)
+    remap = np.full(len(v), -1, dtype=np.int64)
+    remap[used] = np.arange(len(used))
+    vb, fb, wb = v[used], remap[fsel], w[used]
+    fn = np.cross(vb[fb[:, 1]] - vb[fb[:, 0]], vb[fb[:, 2]] - vb[fb[:, 0]])
+    nrm = np.zeros_like(vb)
+    for k3 in range(3):
+        np.add.at(nrm, fb[:, k3], fn)
+    nrm /= np.maximum(np.linalg.norm(nrm, axis=1, keepdims=True), 1e-12)
+    order = np.argsort(-wb, axis=1)[:, :4]                   # top-4 稀疏化
+    wt = np.take_along_axis(wb, order, axis=1)
+    wt /= np.maximum(wt.sum(axis=1, keepdims=True), 1e-12)
+    height = float(v[:, 1].max() - v[:, 1].min())
+    print(f"[convert-mano] smplx body-rig: verts {len(vb)}/{len(v)} faces {len(fb)} joints {len(J)} | height {height:.3f} m")
+    return {
+        "format": "cuberoot-smplx-bodyrig@1",
+        "counts": {"verts": len(vb), "faces": int(len(fb)), "joints": int(len(J))},
+        "position": b64(vb, np.float32),
+        "normal": b64(nrm, np.float32),
+        "index": b64(fb, np.uint32),
+        "joints": b64(J, np.float32),
+        "parents": parents.tolist(),
+        "skinIndex": b64(order, np.uint8),
+        "skinWeight": b64(wt, np.float32),
+        "named": SMPLX_BODY_J,
+        "heightM": height,
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", default="D:/cube/mano")
@@ -876,6 +941,10 @@ def main() -> None:
     (SMPLX_OUT_DIR / "forearm.smplx.json").unlink(missing_ok=True)
     data = convert_smplx_fullbody(sx)
     out = SMPLX_OUT_DIR / "fullbody.smplx.json"
+    out.write_text(json.dumps(data), encoding="utf-8")
+    print(f"[convert-mano] wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
+    data = convert_smplx_body_rig(sx)
+    out = SMPLX_OUT_DIR / "bodyrig.smplx.json"
     out.write_text(json.dumps(data), encoding="utf-8")
     print(f"[convert-mano] wrote {out} ({out.stat().st_size / 1024:.0f} KB)")
 
