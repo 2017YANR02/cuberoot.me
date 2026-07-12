@@ -29,9 +29,10 @@
 
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryState, parseAsString } from 'nuqs';
 import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff, Swords, Timer as TimerIcon } from 'lucide-react';
-import { useBattleStore, battleToTimerEvent, prefetchBattleScrambles } from '@/app/[lang]/battle/_components/engine/battle_store';
-import { KEY_MAP, PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/battle/_components/engine/constants';
+import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles } from '@/app/[lang]/battle/_components/engine/battle_store';
+import { PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/battle/_components/engine/constants';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
@@ -155,19 +156,27 @@ function isTypingTarget(e: KeyboardEvent): boolean {
   return t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable;
 }
 
+// NOTE: playerKeys 里存的是 KeyboardEvent.key 原样值,这里转成人类可读的按钮文案。
+function formatKeyLabel(key: string): string {
+  if (key === ' ') return 'Space';
+  if (key.length === 1) return key.toUpperCase();
+  return key;
+}
+
 function useKeyboardControls() {
   const keyPressedRef = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const store = useBattleStore.getState();
+      if (store.recordingKeyFor !== null) return; // 设置面板正在录键,这次按键归它处理
 
-      const playerId = KEY_MAP[e.key];
+      const playerId = keyToPlayer(store.playerKeys, e.key);
       if (playerId === undefined) return;
       if (isTypingTarget(e)) return;
 
       if (store.mode === 'solo' && playerId !== 0) return;
-      // 未参战槽位的键不拦(4 人键位 Q/P 在 2 人模式下保持正常输入行为)
+      // 未参战槽位的键不拦(4 人键位默认 Q/P,自定义后同理,在 2 人模式下保持正常输入行为)
       if (store.mode !== 'solo' && playerId >= store.playerCount) return;
 
       e.preventDefault();
@@ -180,7 +189,8 @@ function useKeyboardControls() {
 
     const handleKeyUp = (e: KeyboardEvent) => {
       const store = useBattleStore.getState();
-      const playerId = KEY_MAP[e.key];
+      if (store.recordingKeyFor !== null) return;
+      const playerId = keyToPlayer(store.playerKeys, e.key);
       if (playerId === undefined) return;
       if (isTypingTarget(e)) return;
       if (store.mode !== 'solo' && playerId >= store.playerCount) return;
@@ -821,10 +831,6 @@ function MiddleBar({
   const leftId  = layout === 'side' ? 0 : 1;
   const rightId = layout === 'side' ? 1 : 0;
 
-  const keyHint = playerCount === 4
-    ? 'Q P ↑ · ↓ Space Enter'
-    : (playerCount === 3 ? 'Q ↑ · ↓ Space Enter' : 'Enter ↑ · ↓ Space');
-
   return (
     <div className="middle-bar" data-no-timer>
       {/* 左侧比分 + 项目 + 罚时(2 人模式) */}
@@ -842,7 +848,6 @@ function MiddleBar({
       {/* 中间操作按钮 */}
       <div className="middle-actions">
         {playersControl}
-        <span className="key-hint">{keyHint}</span>
         <CubeRootLogo className="middle-logo" />
         <button className="middle-btn" title={tr({ zh: '历史', en: 'History'
         })} onClick={onHistoryClick}>
@@ -980,6 +985,32 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
 
+  // 录键态:捕获态期间的下一次按键(除 Esc 外)绑定给 recordingKeyFor 那个玩家。
+  // capture 阶段监听,保证先于全局 useKeyboardControls(bubble 阶段)拿到这次按键;
+  // 后者也另有 recordingKeyFor 判空守卫,双保险。
+  useEffect(() => {
+    const target = store.recordingKeyFor;
+    if (target === null) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const s = useBattleStore.getState();
+      if (e.key === 'Escape') { s.setRecordingKeyFor(null); return; }
+      if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return; // 纯修饰键跳过,继续等
+      s.setPlayerKey(target, e.key);
+      s.setRecordingKeyFor(null);
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [store.recordingKeyFor]);
+
+  // 面板关掉(visible=false,组件本身不卸载)时若还在录键态,取消它 —— 否则「按任意键…」
+  // 的提示已经看不见了,下一次按键却仍会被吞掉而不触发计时。
+  useEffect(() => {
+    if (!visible && store.recordingKeyFor !== null) store.setRecordingKeyFor(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
   return (
     <div className={`settings-overlay${visible ? ' visible' : ''}`} onClick={(e) => {
       if (e.target === e.currentTarget) onClose();
@@ -1106,6 +1137,41 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
           </div>
         </div>
 
+        {/* 上排翻转 — 仅多人对战:围坐一桌上排面向对面(默认开);同向观看时关掉,上排正立 */}
+        {store.mode !== 'solo' && (
+          <div className="settings-group">
+            <div className="setting-item">
+              <BoolToggle
+                value={store.flipTopRow}
+                onChange={store.setFlipTopRow}
+                label={tr({ zh: '上排翻转', en: 'Flip top row' })}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 按键 — 仅多人对战:每位玩家的计时键,点按钮进入录键态,按任意键即绑定
+            (Esc 取消);和另一位玩家已用的键冲突时自动互换,不会撞键。 */}
+        {store.mode !== 'solo' && (
+          <div className="settings-group">
+            <div className="settings-label">{tr({ zh: '按键', en: 'Key bindings' })}</div>
+            {Array.from({ length: store.playerCount }, (_, i) => i).map(i => (
+              <div className="setting-item" key={i}>
+                <span>{`P${i + 1}`}</span>
+                <button
+                  type="button"
+                  className={`key-bind-btn${store.recordingKeyFor === i ? ' recording' : ''}`}
+                  onClick={() => store.setRecordingKeyFor(store.recordingKeyFor === i ? null : i)}
+                >
+                  {store.recordingKeyFor === i
+                    ? tr({ zh: '按任意键…', en: 'Press a key…' })
+                    : formatKeyLabel(store.playerKeys[i])}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Scramble Size */}
         <div className="settings-group">
           <div className="setting-item slider-row">
@@ -1207,6 +1273,28 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
   useEffect(() => {
     useBattleStore.getState().setPlayerCount(playerCount);
   }, [playerCount]);
+
+  // 各玩家项目进 URL(?event=,与 Solo 用同一 timer EventId 记号、逗号分隔、按
+  // 玩家顺序,强制显式展示 —— 用户选了不同项目时也要能看到/分享)。
+  //   有 ?event= 且和当前 store 不同 → 以 URL 为准写回 store(分享链接场景,只跑一次);
+  //   否则 store.puzzleIds 变了就强制写回 URL(localStorage 落地的默认值也要显式展示)。
+  const [eventsParam, setEventsParam] = useQueryState('event', parseAsString.withOptions({ history: 'replace' }));
+  const validBattleIds = useMemo(() => new Set(PUZZLES.map(p => p.id)), []);
+  const battleUrlInitRef = useRef(false);
+  useEffect(() => {
+    if (battleUrlInitRef.current || !eventsParam) return;
+    battleUrlInitRef.current = true;
+    eventsParam.split(',').slice(0, playerCount).forEach((timerId, i) => {
+      const battleId = timerToBattleEvent(timerId);
+      if (validBattleIds.has(battleId) && battleId !== useBattleStore.getState().puzzleIds[i]) {
+        useBattleStore.getState().changePuzzle(i, battleId);
+      }
+    });
+  }, [eventsParam, playerCount, validBattleIds]);
+  useEffect(() => {
+    const ids = store.puzzleIds.slice(0, playerCount).map(battleToTimerEvent).join(',');
+    if (ids && eventsParam !== ids) void setEventsParam(ids, { history: 'replace' });
+  }, [store.puzzleIds, playerCount, eventsParam, setEventsParam]);
 
   useDocumentTitle(playerCount > 2 ? '多人' : '双人', playerCount > 2 ? 'Multi' : 'Duo');
   // SSG/first-paint gate: battle_store 默认值从 localStorage 读 (mode/layout/...),
@@ -1320,6 +1408,9 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
   // 只在两格之间渲染一份共享打乱;不同项目则各自沿用格内打乱(共享行塌陷)。
   const bottomSame = store.puzzleIds[0] === store.puzzleIds[1];
   const topSame = store.puzzleIds[2] === store.puzzleIds[3];
+  // 上排是否翻转 180°(围坐一桌面向对面 = true;同向观看 = false,用户可关)。
+  //   关掉后上排文字/图正立,控制条也从「对面视角上角」回到本屏上角。
+  const flipTop = store.flipTopRow;
   const middleBar = (
     <MiddleBar
       onSettingsClick={handleSettingsClick}
@@ -1333,24 +1424,45 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
     <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${isGrid ? ' grid-layout' : ''}`}>
 
       {/* === 田字格布局：上排旋转 180° 面向对面;3 人时上排单区跨两列 ===
-          同排一对玩家共用一条打乱时,由跨两列的 .grid-scramble-row 统一渲染,
-          各 TimerArea 传 hideScramble 抹掉格内那份;共享行未启用则 :empty 塌陷。 */}
+          同排一对玩家共用一条打乱时,由 .grid-scramble-row 统一渲染,各 TimerArea 传
+          hideScramble 抹掉格内那份;共享行未启用则 :empty 塌陷。
+          上/下各自包一层 .grid-half(共享打乱行 + 双格 flex:1),两半各占外层 grid 的一个
+          1fr 行 —— 不共享打乱时打乱图改画在各自格内、撑高那一侧的 1fr,若不这样包一层,
+          "auto 打乱行 + 1fr 格行" 两条独立 track 各自等分,会让有共享打乱的那半天然比
+          没有的那半矮/高一截(4 部分面积不相等)。 */}
       {isGrid && (
-        <div className={`grid-players ${playerCount === 3 ? 'grid-p3' : 'grid-p4'}`}>
-          {/* 4 人:上排(旋转)两格共享一条打乱 */}
-          {playerCount === 4 && (
-            <div className="grid-scramble-row rotated">
-              {topSame && <ScramblePanel ids={[2, 3]} />}
+        <div className="grid-players">
+          {playerCount === 4 ? (
+            <div className="grid-half">
+              {/* 翻转时共享打乱行在物理顶部(整块旋转 180° 后对面玩家看到「时间上/打乱下」);
+                  不翻转时移到玩家下方,与底排结构一致(时间上、打乱下)。 */}
+              {flipTop && (
+                <div className="grid-scramble-row rotated">
+                  {topSame && <ScramblePanel ids={[2, 3]} />}
+                </div>
+              )}
+              <div className="grid-half-players">
+                <TimerArea playerId={2} rotated={flipTop} hideScramble={topSame} cellClass="grid-col-left" controlsCorner={flipTop ? 'right' : 'left'} />
+                <TimerArea playerId={3} rotated={flipTop} hideScramble={topSame} controlsCorner={flipTop ? 'left' : 'right'} />
+              </div>
+              {!flipTop && (
+                <div className="grid-scramble-row">
+                  {topSame && <ScramblePanel ids={[2, 3]} />}
+                </div>
+              )}
             </div>
+          ) : (
+            <TimerArea playerId={2} rotated={flipTop} controlsCorner="center" />
           )}
-          <TimerArea playerId={2} rotated hideScramble={playerCount === 4 && topSame} cellClass={playerCount === 4 ? 'grid-col-left' : ''} controlsCorner={playerCount === 4 ? 'right' : 'center'} />
-          {playerCount === 4 && <TimerArea playerId={3} rotated hideScramble={topSame} controlsCorner="left" />}
           {middleBar}
-          <TimerArea playerId={0} hideScramble={bottomSame} cellClass="grid-col-left" controlsCorner="left" />
-          <TimerArea playerId={1} hideScramble={bottomSame} controlsCorner="right" />
-          {/* 下排两格共享一条打乱(3/4 人皆有) */}
-          <div className="grid-scramble-row">
-            {bottomSame && <ScramblePanel ids={[0, 1]} />}
+          <div className="grid-half">
+            <div className="grid-half-players">
+              <TimerArea playerId={0} hideScramble={bottomSame} cellClass="grid-col-left" controlsCorner="left" />
+              <TimerArea playerId={1} hideScramble={bottomSame} controlsCorner="right" />
+            </div>
+            <div className="grid-scramble-row">
+              {bottomSame && <ScramblePanel ids={[0, 1]} />}
+            </div>
           </div>
         </div>
       )}
@@ -1367,10 +1479,10 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
         </>
       )}
 
-      {/* === Versus 布局：上下分屏 === */}
+      {/* === Versus 布局：上下分屏(上方玩家默认旋转,可关) === */}
       {mode === '1v1' && !isGrid && store.layout === 'versus' && (
         <>
-          <TimerArea playerId={1} rotated />
+          <TimerArea playerId={1} rotated={flipTop} />
           {middleBar}
           <TimerArea playerId={0} />
         </>

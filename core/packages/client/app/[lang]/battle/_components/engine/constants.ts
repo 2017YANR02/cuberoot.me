@@ -88,13 +88,10 @@ export const MIN_SOLVE_TIME = 100;
 // localStorage 键名前缀，避免和其他页面冲突
 export const LS_PREFIX = 'battle_';
 
-// NOTE: 桌面端键盘映射 — P1(下左)=空格, P2(下右)=Enter; 多人田字格上排 P3=Q, P4=P
-export const KEY_MAP: Record<string, number> = {
-  ' ': 0,       // Space → Player 1 (bottom / bottom-left)
-  'Enter': 1,   // Enter → Player 2 (top / bottom-right)
-  'q': 2, 'Q': 2, // Q → Player 3 (top-left)
-  'p': 3, 'P': 3, // P → Player 4 (top-right)
-};
+// NOTE: 桌面端键盘映射默认值 — P1(下左)=空格, P2(下右)=Enter, P3(上左)=Q, P4(上右)=P。
+// 用户可在设置里自定义(battle_store.playerKeys),这里只是初值 + 重置基准。
+// KeyboardEvent.key 原样存(单字母大小写不敏感,由 keyToPlayer 归一化比较)。
+export const DEFAULT_PLAYER_KEYS = [' ', 'Enter', 'q', 'p'];
 
 // NOTE: 双语文本映射（JS 动态设置的文本，无法用 data-i18n 属性）
 export const I18N_TEXT: Record<string, Record<string, string>> = {

@@ -17,7 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQueryState, parseAsString } from 'nuqs';
+import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
   Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
@@ -232,12 +232,26 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     setLastPenalty(null);
   }, []);
 
-  const [event, setEvent] = useState<EventId>(() => {
-    if (typeof window === 'undefined') return '333';
+  // 项目进 URL(?event=,nuqs,clearOnDefault:false 强制写默认值也显式展示,不再只落
+  // localStorage)。history:'replace' 不污染后退(换项目很频繁,不该像换人数那样入栈)。
+  const [event, setEvent] = useQueryState(
+    'event',
+    parseAsStringEnum<EventId>(EVENTS.map(e => e.id) as EventId[])
+      .withDefault('333')
+      .withOptions({ history: 'replace', clearOnDefault: false }),
+  );
+  // 裸 /timer(无 ?event=)→ 用 localStorage 记的上次项目补齐并强制写回 URL;
+  // 有 ?event= 时(分享链接 / 收藏)以 URL 为准。
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).has('event')) return;
     const stored = localStorage.getItem('cuberoot-timer.event');
     const valid = EVENTS.some(e => e.id === stored);
-    return valid ? (stored as EventId) : '333';
-  });
+    // 始终显式写一次(哪怕就是当前默认值 '333'),否则 clearOnDefault:false 只在真调用
+    // setEvent 时生效 —— 光靠 withDefault 不会自动把默认值补进 URL。
+    void setEvent(valid ? (stored as EventId) : event, { history: 'replace' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => { localStorage.setItem('cuberoot-timer.event', event); }, [event]);
 
   const solves = useMemo(() => byEvent[event] ?? [], [byEvent, event]);

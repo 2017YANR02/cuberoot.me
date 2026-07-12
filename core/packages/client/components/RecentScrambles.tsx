@@ -480,8 +480,8 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
         <PillToggle
           value={mode === 'rare'}
           onChange={(v) => setMode(v ? 'rare' : 'type')}
-          offLabel={tr({ zh: '按类型', en: 'By type' })}
-          onLabel={tr({ zh: '稀有', en: 'Rare' })}
+          offLabel={tr({ zh: '类型', en: 'By type' })}
+          onLabel={tr({ zh: '概率', en: 'Rare' })}
           ariaLabel={tr({ zh: '视图', en: 'View' })}
         />
         {mode === 'rare' ? (
@@ -509,7 +509,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
         )}
         {prob && probHref && (
           <Link href={probHref} prefetch={false} className="rs-prob" title={tr({ zh: '随机打乱出现此难度的概率,点查看完整分布', en: 'How often a random scramble is this easy — click for the full distribution' })}>
-            ≈ {prob.text}
+            {prob.text}
           </Link>
         )}
         </>)}
