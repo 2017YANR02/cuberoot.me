@@ -2,7 +2,7 @@
 // (业务表 801 处仍以 wcaId 为主键,撞了就会串号 / 越权),外加邮箱 / 手机的规范化 + 校验。
 import { describe, it, expect } from 'vitest';
 import {
-  ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone,
+  ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
 } from '@cuberoot/shared/account';
 
 describe('ownerKey', () => {
@@ -60,5 +60,20 @@ describe('phone 规范化 + 校验(仅 +86)', () => {
     expect(isValidPhone('+8612345')).toBe(false);     // 太短
     expect(isValidPhone('+14155552671')).toBe(false); // 非 +86
     expect(isValidPhone('13800138000')).toBe(false);  // 未规范化
+  });
+});
+
+describe('password 校验(长度 8..128)', () => {
+  it('接受 8..128 位', () => {
+    expect(isValidPassword('abcdefgh')).toBe(true);      // 恰好 8
+    expect(isValidPassword('a'.repeat(128))).toBe(true); // 恰好 128
+    expect(isValidPassword('Str0ng-Pass!')).toBe(true);
+  });
+  it('拒绝过短 / 过长 / 非字符串', () => {
+    expect(isValidPassword('short')).toBe(false);        // 5 位
+    expect(isValidPassword('a'.repeat(7))).toBe(false);  // 7 位
+    expect(isValidPassword('a'.repeat(129))).toBe(false); // 超 128
+    expect(isValidPassword(undefined)).toBe(false);
+    expect(isValidPassword(12345678)).toBe(false);       // 非字符串,即便"长度"够
   });
 });
