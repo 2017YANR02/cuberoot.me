@@ -35,6 +35,7 @@ import { syncLangToUrl } from '@/i18n/i18n-client';
 import { generateScramble, registerScramble } from '../_lib/scramble';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
 import { takeScramble } from '../_lib/scramble/scramble_pool';
+import { generate222ByMetric, CUBE222_METRIC_RANGE } from '@/lib/cube222-metric';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
@@ -298,6 +299,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const wcaSourceSig = settings.scrambleSource === 'wca'
     ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}`
     : 'random';
+  // 2×2 按步数生成签名:开启且选了步数才生效,变了即重置打乱队列(同 wcaSourceSig 机制)。
+  const genStepsSig = settings.scrambleSource === 'random' && event === '222' && settings.genByStepsOn && settings.genSteps.length > 0
+    ? `222byst|${settings.genStepsMetric}|${settings.genSteps[0]}.${settings.genSteps[settings.genSteps.length - 1]}`
+    : '';
 
   // Live timer phase (written through after useTimer below) — read by the scramble
   // buffer's safety gate so background generation never blocks a running solve.
@@ -325,9 +330,22 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // deterministic seeded-sync mode where consumption order must stay exact.
     const s = getSettings();
     if (s.syncSeed) return generateScramble(event);
+    // 2×2「按步数生成」:从完整 3,674,160 态里均匀采样、按所选度量最优步数过滤(非案例库)。
+    // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在后台 idle 生成,不阻塞计时。
+    if (event === '222' && s.genByStepsOn && s.genSteps.length > 0) {
+      const metric = s.genStepsMetric;
+      const [rMin, rMax] = CUBE222_METRIC_RANGE[metric];
+      const lo = Math.max(s.genSteps[0], rMin);
+      const hi = Math.min(s.genSteps[s.genSteps.length - 1], rMax);
+      return takeScramble(
+        `222byst|${metric}|${lo}.${hi}`,
+        () => generate222ByMetric(metric, lo, hi, Math.random),
+        canGenScramble,
+      );
+    }
     return takeScramble(`${event}|${s.cnMode}`, () => generateScramble(event), canGenScramble);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, canGenScramble]);
+  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, genStepsSig, canGenScramble]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
