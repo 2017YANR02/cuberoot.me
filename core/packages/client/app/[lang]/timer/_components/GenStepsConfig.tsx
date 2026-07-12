@@ -3,8 +3,8 @@
 /**
  * GenStepsConfig — 「按步数」子面板(event ∈ {2×2, 金字塔} 时出现,随机生成 + WCA 真题两种来源都用)。
  *
- * 随机生成:从该魔方完整状态空间均匀采样、按所选度量的最优步数过滤后生成打乱。
- * WCA 真题:把拉到的真实比赛打乱按同一度量过滤,只留步数在范围内的(近上帝数分布,低步数可能为空 → 提示)。
+ * 随机生成:从该魔方完整状态空间均匀采样、按所选度量的最优步数过滤后生成打乱(滑条走完整范围)。
+ * WCA 真题:把拉到的真实比赛打乱按同一度量过滤(滑条只给语料实际出现的步数 wcaRange,不出必空的低步数)。
  * 度量表见 _lib/scramble/step-metrics.ts;2×2 生成算法见 lib/cube222-metric,金字塔见 _lib/scramble/pyram-metric。
  */
 
@@ -23,7 +23,7 @@ interface Settings {
 interface Props {
   isZh: boolean;
   event: string;
-  /** 'random' 均匀采样生成;'wca' 过滤真实打乱 —— 只影响提示文案。 */
+  /** 'random' 均匀采样生成(滑条走完整 range);'wca' 过滤真实打乱(滑条收到语料实际出现的 wcaRange)。 */
   source: 'random' | 'wca';
   settings: Settings;
   updateSettings: (patch: Partial<Settings>) => void;
@@ -45,7 +45,8 @@ export default function GenStepsConfig({ isZh, event, source, settings, updateSe
   }, [event, settings.genStepsMetric]);
 
   const spec = active ? stepMetricSpec(event, active.key) : null;
-  const [mMin, mMax] = spec ? spec.range : [0, 0];
+  // 滑条范围随来源:WCA 真题只覆盖语料实际出现的步数(如 2×2 魔方 4–11),随机生成走完整状态空间。
+  const [mMin, mMax] = spec ? (source === 'wca' ? (spec.wcaRange ?? spec.range) : spec.range) : [0, 0];
 
   // 当前区间:优先用已存 genSteps,否则用该度量默认带;始终夹进 [mMin, mMax]。
   const stored = settings.genSteps;
@@ -54,14 +55,16 @@ export default function GenStepsConfig({ isZh, event, source, settings, updateSe
   const lo = clamp(Math.min(rawLo, rawHi), mMin, mMax);
   const hi = clamp(Math.max(rawLo, rawHi), mMin, mMax);
 
-  // 开启但步数为空(首开 / 切度量后越界)→ 落该度量默认带,保证滑块与过滤口径一致。
+  // 步数为空(首开 / 切度量)→ 落默认带;越界(切度量或切来源使边界收窄)→ 夹回新边界,保证滑块与过滤口径一致。
   useEffect(() => {
     if (!settings.genByStepsOn || !spec) return;
-    if (stored.length === 0 || stored[0] < mMin || stored[stored.length - 1] > mMax) {
+    if (stored.length === 0) {
       updateSettings({ genSteps: range(clamp(spec.band[0], mMin, mMax), clamp(spec.band[1], mMin, mMax)) });
+    } else if (stored[0] < mMin || stored[stored.length - 1] > mMax) {
+      updateSettings({ genSteps: range(clamp(stored[0], mMin, mMax), clamp(stored[stored.length - 1], mMin, mMax)) });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.genByStepsOn, settings.genStepsMetric]);
+  }, [settings.genByStepsOn, settings.genStepsMetric, source, mMin, mMax]);
 
   if (!metrics || !active || !spec) return null;
 
@@ -94,29 +97,16 @@ export default function GenStepsConfig({ isZh, event, source, settings, updateSe
       </div>
 
       {settings.genByStepsOn && (
-        <>
-          <div className="wca-src-steps-range">
-            <RangeSlider
-              min={mMin}
-              max={mMax}
-              value={[lo, hi]}
-              onChange={([a, b]) => updateSettings({ genSteps: range(a, b) })}
-              marks={range(mMin, mMax)}
-              ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
-            />
-          </div>
-          <p className="wca-src-hint">
-            {source === 'wca'
-              ? tr({
-                  zh: '只出该度量最优步数在此范围内的 WCA 真题(真实打乱多接近上帝之数,低步数可能没有匹配)。',
-                  en: 'Only WCA scrambles whose optimal move count (for this metric) falls in this range (real scrambles cluster near the God number — low counts may have no match).',
-                })
-              : tr({
-                  zh: '从完整状态空间均匀采样,只出该度量最优步数在此范围内的打乱(非案例库)。',
-                  en: 'Uniformly sampled from the full state space; only scrambles whose optimal move count (for this metric) falls in this range — not the case library.',
-                })}
-          </p>
-        </>
+        <div className="wca-src-steps-range">
+          <RangeSlider
+            min={mMin}
+            max={mMax}
+            value={[lo, hi]}
+            onChange={([a, b]) => updateSettings({ genSteps: range(a, b) })}
+            marks={range(mMin, mMax)}
+            ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
+          />
+        </div>
       )}
     </div>
   );
