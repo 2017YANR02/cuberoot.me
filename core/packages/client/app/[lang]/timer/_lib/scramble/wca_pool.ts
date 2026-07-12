@@ -87,9 +87,12 @@ const compRows: Record<string, { scramble: string; meta: WcaScrambleMeta }[]> = 
 // 与「瞬时空(还在加载 / 网络失败)」区分:后者不进此集合,稍后重取。
 const knownEmpty = new Set<string>();
 // 「按步数」date 模式客户端过滤:一次 fillDate 内最多连抓这么多批(每批 FETCH_COUNT 条)找匹配,
-// 全空才判 knownEmpty。放在同一次 fill 内连抓(而非拆成 SoloView 的退避重试)——真题近上帝数,
-// 低步数区间可能整批被滤掉,若每批一次 fill、靠 UI 退避串起来会累计 1s→6s 才提示「无匹配」。
-const MAX_FILTER_BATCHES = 4;
+// 命中即停(常见区间一批即够,秒出);全空才判 knownEmpty。放在同一次 fill 内连抓(而非拆成
+// SoloView 的退避重试)避免累计几秒才提示。批数上限要够大以覆盖稀有但真实存在的区间:实测 2000 条
+// 真题里 2×2 底层=0 占 ~1/400、底层=1 占 ~1/180,4 批(200 条)会 ~60% 概率漏掉 → 误报「无匹配」;
+// 30 批(1500 条)对 1/400 有 ~98% 命中率。命中即停,所以常见区间仍是一批秒出、稀有区间平均抓 ~8 批
+// 即出;只有真正空的区间(如底层=7、htm≤3)才抓满 30 批才提示「无匹配」(~3s,之后 knownEmpty 缓存)。
+const MAX_FILTER_BATCHES = 30;
 
 // localStorage persistence — so reopening the timer (or returning to a source /
 // setting used before) serves the first scramble instantly from cache and tops
