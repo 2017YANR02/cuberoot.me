@@ -35,7 +35,7 @@ import { syncLangToUrl } from '@/i18n/i18n-client';
 import { generateScramble, registerScramble } from '../_lib/scramble';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
 import { takeScramble } from '../_lib/scramble/scramble_pool';
-import { generate222ByMetric, CUBE222_METRIC_RANGE } from '@/lib/cube222-metric';
+import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
@@ -280,6 +280,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   const wcaDiffSig = settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
     ? `${settings.wcaDiffVariant}:${settings.wcaDiffStage}:${settings.wcaDiffColors}:${[...settings.wcaDiffSteps].sort((a, b) => a - b).join('.')}`
     : '';
+  // 「按步数」WCA 过滤(2×2 / 金字塔):把真实打乱按度量步数筛到 [lo,hi]。与随机来源共用同一组设置。
+  const wcaStep = wcaStepFilter(event, settings);
+  const wcaStepSig = wcaStep ? `${wcaStep.metric}:${wcaStep.lo}.${wcaStep.hi}` : '';
   const wcaSpec = useMemo<WcaSourceSpec>(() => ({
     event,
     mode: settings.wcaScrambleMode,
@@ -293,15 +296,17 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     diff: settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
       ? { variant: settings.wcaDiffVariant, stage: settings.wcaDiffStage, colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps }
       : undefined,
-  }), [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps]);
+    stepFilter: wcaStep ?? undefined,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps, wcaStepSig]);
   const wcaSpecRef = useRef(wcaSpec);
   wcaSpecRef.current = wcaSpec;
   const wcaSourceSig = settings.scrambleSource === 'wca'
-    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}`
+    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}|${wcaStepSig}`
     : 'random';
-  // 2×2 按步数生成签名:开启且选了步数才生效,变了即重置打乱队列(同 wcaSourceSig 机制)。
-  const genStepsSig = settings.scrambleSource === 'random' && event === '222' && settings.genByStepsOn && settings.genSteps.length > 0
-    ? `222byst|${settings.genStepsMetric}|${settings.genSteps[0]}.${settings.genSteps[settings.genSteps.length - 1]}`
+  // 按步数生成签名(2×2 / 金字塔,随机来源):开启且选了步数才生效,变了即重置打乱队列(同 wcaSourceSig 机制)。
+  const genStepsSig = settings.scrambleSource === 'random'
+    ? genByStepsSig(event, settings)
     : '';
 
   // Live timer phase (written through after useTimer below) — read by the scramble
@@ -330,19 +335,10 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     // deterministic seeded-sync mode where consumption order must stay exact.
     const s = getSettings();
     if (s.syncSeed) return generateScramble(event);
-    // 2×2「按步数生成」:从完整 3,674,160 态里均匀采样、按所选度量最优步数过滤(非案例库)。
+    // 「按步数生成」(2×2 / 金字塔):从完整状态空间均匀采样、按所选度量最优步数过滤(非案例库)。
     // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在后台 idle 生成,不阻塞计时。
-    if (event === '222' && s.genByStepsOn && s.genSteps.length > 0) {
-      const metric = s.genStepsMetric;
-      const [rMin, rMax] = CUBE222_METRIC_RANGE[metric];
-      const lo = Math.max(s.genSteps[0], rMin);
-      const hi = Math.min(s.genSteps[s.genSteps.length - 1], rMax);
-      return takeScramble(
-        `222byst|${metric}|${lo}.${hi}`,
-        () => generate222ByMetric(metric, lo, hi, Math.random),
-        canGenScramble,
-      );
-    }
+    const byStepsScr = genByStepsScramble(event, s);
+    if (byStepsScr) return takeScramble(byStepsScr.key, byStepsScr.gen, canGenScramble);
     return takeScramble(`${event}|${s.cnMode}`, () => generateScramble(event), canGenScramble);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, genStepsSig, canGenScramble]);
@@ -1462,13 +1458,16 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                 ? <span className="scramble-loading">{tr({ zh: '加载真实打乱…', en: 'Loading real scramble…' })}</span>
                 : wcaSourceEmpty
                   ? <span className="scramble-empty">{
-                      // 难度过滤只在 date 模式生效(见 wca_pool.ts fillComp 注释),comp 模式必须
-                      // 先判——否则残留的 date 模式难度设置会在 comp 模式下显示错误的提示文案。
-                      settings.wcaScrambleMode === 'comp'
-                        ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
-                        : settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
-                          ? tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
-                          : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
+                      // 「按步数」过滤在 comp/date 两模式都生效,先判——真题近上帝数,低步数常无匹配。
+                      wcaStep
+                        ? tr({ zh: '该步数范围没有匹配的 WCA 真题,换个步数试试', en: 'No WCA scramble matches this move-count range — try another range' })
+                        // 难度过滤只在 date 模式生效(见 wca_pool.ts fillComp 注释),comp 模式必须
+                        // 先判——否则残留的 date 模式难度设置会在 comp 模式下显示错误的提示文案。
+                        : settings.wcaScrambleMode === 'comp'
+                          ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
+                          : settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
+                            ? tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
+                            : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
                     }</span>
                   : displayScramble
                     ? <><span className="scramble-moves">{displayScramble}</span>{wcaNonOptimal && (
