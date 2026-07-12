@@ -12,8 +12,13 @@ export interface StepMetricSpec {
   key: string;
   zh: string;
   en: string;
-  /** slider bounds [min, max] — the metric's full value range */
+  /** slider bounds [min, max] — the metric's full value range (random-generation source) */
   range: [number, number];
+  /** observed range in the WCA real-scramble corpus; the low end is bounded by TNoodle's minimum
+   *  scramble-length policy (e.g. no real 2×2 solves in ≤3 HTM), so the slider only offers steps that
+   *  actually occur. Omit when it equals `range`. Source of truth = stats/scramble/puzzle_distribution.json
+   *  metrics.<key>.dist.{min,max}; if the pipeline ever shows a new extreme, update here. */
+  wcaRange?: [number, number];
   /** default band the slider opens on for this metric (mid-difficulty) */
   band: [number, number];
 }
@@ -22,12 +27,12 @@ export const STEP_METRICS: Record<StepPuzzle, StepMetricSpec[]> = {
   '222': [
     { key: 'face', zh: '底面', en: 'First face', range: [0, 5], band: [3, 4] },
     { key: 'layer', zh: '底层', en: 'First layer', range: [0, 7], band: [4, 6] },
-    { key: 'htm', zh: '魔方', en: 'Cube', range: [0, 11], band: [8, 10] },
-    { key: 'qtm', zh: 'QTM', en: 'QTM', range: [0, 14], band: [10, 12] },
+    { key: 'htm', zh: '魔方', en: 'Cube', range: [0, 11], wcaRange: [4, 11], band: [8, 10] },
+    { key: 'qtm', zh: 'QTM', en: 'QTM', range: [0, 14], wcaRange: [4, 14], band: [10, 12] },
   ],
   pyra: [
     { key: 'v', zh: 'V', en: 'V', range: [0, 7], band: [3, 5] },
-    { key: 'cube', zh: '魔方', en: 'Cube', range: [0, 11], band: [6, 9] },
+    { key: 'cube', zh: '魔方', en: 'Cube', range: [0, 11], wcaRange: [2, 11], band: [6, 9] },
   ],
 };
 
