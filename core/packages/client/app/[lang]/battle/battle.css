@@ -571,7 +571,7 @@
     width: 32px;
     height: 32px;
     border-radius: 6px;
-    border: 1px solid var(--border-default);
+    border: none;
     background: transparent;
     color: var(--muted-foreground);
     font-size: 1rem;
@@ -585,7 +585,6 @@
 .middle-btn:hover {
     background: color-mix(in srgb, var(--foreground) 8%, transparent);
     color: var(--foreground);
-    border-color: var(--border-strong);
 }
 
 /* 窄屏:键盘提示已隐藏,整条工具栏收紧 —— versus 布局这一条必须保持单行
@@ -611,21 +610,6 @@
 .middle-logo img {
     height: 24px;
     width: auto;
-}
-
-/* NOTE: 桌面端键盘快捷键提示（触摸设备隐藏） */
-.key-hint {
-    font-size: 0.65rem;
-    color: var(--faint-foreground);
-    letter-spacing: 0.03em;
-    white-space: nowrap;
-}
-
-/* 触屏(键盘提示无意义)或窄屏(否则 94px 把比分挤出屏幕)都隐藏 */
-@media (hover: none) and (pointer: coarse), (max-width: 480px) {
-    .key-hint {
-        display: none;
-    }
 }
 
 /* ==========================================================
@@ -887,6 +871,28 @@ input:checked+.slider:before {
     border-color: var(--accent);
 }
 
+/* NOTE: 设置面板按键自定义按钮 —— 点击进入录键态,按下任意键即绑定(Esc 取消) */
+.key-bind-btn {
+    background: var(--background);
+    color: var(--foreground);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    min-width: 84px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.key-bind-btn:hover {
+    background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+
+.key-bind-btn.recording {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
 /* ==========================================================
    Solo 模式布局
    ========================================================== */
@@ -894,10 +900,6 @@ input:checked+.slider:before {
 /* NOTE: Solo 模式隐藏比分区 */
 body.solo .score-section {
     display: none;
-}
-
-body.solo .key-hint {
-    visibility: hidden;
 }
 
 /* ==========================================================
@@ -1833,10 +1835,6 @@ body.solo .scramble-img {
     font-size: clamp(0.8rem, 2.5vw, 1.1rem);
 }
 
-/* side 布局下隐藏键盘提示（横屏空间有限） */
-.side-layout .key-hint {
-    display: none;
-}
 /* ==========================================================
    BattleView 集成新增样式 (Phase 3 — 对战并入 /timer)
    author token-clean / 适配旧 dark-locked 表;旧 .event-overlay-grid
@@ -1899,7 +1897,25 @@ body.solo .scramble-img {
     flex-direction: column;
 }
 
+/* 上/下两半各占一个 1fr 行,中间 middle-bar 一条 auto 行 —— 3/4 人共用同一模板,
+   半区内部（.grid-half）自己决定要不要一条共享打乱行,外层永远只看到两个等高的 1fr。 */
 .grid-players {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 1fr auto 1fr;
+}
+
+/* 半区:共享打乱行(auto,可 :empty 塌陷)+ 双格区(flex:1,内部再分两列)。
+   包一层是关键 —— 若把 auto 打乱行和 1fr 双格行都摊在外层 grid 当独立 track,
+   两条 1fr track 本身仍会被等分,但「有共享打乱」的那一半会比「没有」的那一半多出
+   打乱行的高度,导致视觉上四象限面积不等;包成 flex 列后整半区只贡献一个 1fr。 */
+.grid-half {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.grid-half-players {
     flex: 1;
     min-height: 0;
     display: grid;
@@ -1911,26 +1927,16 @@ body.solo .scramble-img {
    一条横线(旋转的共享打乱行边界尤其明显)。改成只给左列格加边框,行方向不留底色。
    下排左格未旋转:右缘 = 屏幕中线 → border-right。
    上排左格随整格翻转 180°,local 左缘才是屏幕中线 → border-left(否则线跑到屏幕最左)。 */
-.grid-players > .player-area.grid-col-left:not(.rotated) {
+.grid-half-players > .player-area.grid-col-left:not(.rotated) {
     border-right: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
 }
-.grid-players > .player-area.grid-col-left.rotated {
+.grid-half-players > .player-area.grid-col-left.rotated {
     border-left: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
 }
 
-/* 3 人:上排单区(1fr) / middle-bar / 下排两格(1fr) / 下排共享打乱行(auto) */
-.grid-players.grid-p3 {
-    grid-template-rows: 1fr auto 1fr auto;
-}
-/* 4 人:上排共享打乱(auto) / 上排两格(1fr) / middle-bar / 下排两格(1fr) / 下排共享打乱(auto) */
-.grid-players.grid-p4 {
-    grid-template-rows: auto 1fr auto 1fr auto;
-}
-
-/* 共享打乱行:同排一对玩家共用一条打乱(文字 + 图 + 来源),跨两列居中。
-   未共享(不同项目)时不渲染 ScramblePanel → :empty → 零高塌陷,保持网格稳定。 */
+/* 共享打乱行:同排一对玩家共用一条打乱(文字 + 图 + 来源)。
+   未共享(不同项目)时不渲染 ScramblePanel → :empty → 零高塌陷,保持半区高度稳定。 */
 .grid-scramble-row {
-    grid-column: 1 / -1;
     min-width: 0;
     min-height: 0;
     background: var(--background);
@@ -1956,7 +1962,7 @@ body.solo .scramble-img {
     pointer-events: none;
 }
 
-.grid-players > .player-area {
+.grid-layout .player-area {
     min-width: 0;
     min-height: 0;
     background: var(--background);
@@ -1965,13 +1971,7 @@ body.solo .scramble-img {
 }
 
 .grid-players > .middle-bar {
-    grid-column: 1 / -1;
     justify-content: center;
-}
-
-/* 3 人:上排单区跨两列 */
-.grid-players.grid-p3 > .player-area.rotated {
-    grid-column: 1 / -1;
 }
 
 /* 象限内字号 / 打乱图整体收一档 */
@@ -2025,7 +2025,7 @@ body.solo .scramble-img {
 }
 
 @media (max-width: 480px) {
-    .grid-players > .player-area {
+    .grid-layout .player-area {
         padding-top: 44px;
     }
     .grid-layout .time-display {

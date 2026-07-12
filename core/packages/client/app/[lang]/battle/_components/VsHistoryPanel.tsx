@@ -7,7 +7,7 @@
 
 import { Fragment, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Swords, Trophy, Download, Trash2 } from 'lucide-react';
+import { Trophy, Download, Trash2 } from 'lucide-react';
 import { useBattleStore } from './engine/battle_store';
 import { formatTimePlain } from '@/app/[lang]/timer/_shared/format';
 import { getEffectiveTimeFromEntry } from '@/app/[lang]/timer/_shared/stats-core';
@@ -108,7 +108,6 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
       <div className="history-panel vs-history-panel">
         <div className="history-header">
           <span className="history-title">
-            <Swords size={16} />
             {n === 2 ? '1v1' : `${n}P`} {tr({ zh: '历史', en: 'History'
             })}
             {puzzlesDiffer && (
