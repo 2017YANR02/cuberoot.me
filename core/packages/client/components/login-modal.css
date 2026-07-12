@@ -84,6 +84,30 @@
 
 .lm-flow { display: flex; flex-direction: column; gap: 10px; }
 
+/* 邮箱 pane 顶部「验证码 / 密码」切换 */
+.lm-modeswitch { display: flex; justify-content: center; margin-bottom: 14px; }
+
+/* 密码输入 + 眼睛切换 */
+.lm-pwfield { position: relative; display: flex; align-items: center; }
+.lm-pwfield .lm-input { padding-right: 42px; }
+.lm-pweye {
+  position: absolute;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  appearance: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.lm-pweye:hover { color: var(--foreground); }
+.lm-pwform { margin-top: 6px; }
+
 .lm-label {
   font-size: 12px;
   color: var(--muted-foreground);

@@ -12,7 +12,7 @@ import { JWT_SECRET } from './session.js';
 
 // 纯逻辑(归属键 + 输入校验)在 shared,前后端共用 + 客户端可单测;这里再导出保持调用方不变。
 export {
-  ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone,
+  ownerKey, isWcaIdFormat, normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
 } from '@cuberoot/shared/account';
 
 export type Provider = 'email' | 'phone' | 'wca' | 'apple' | 'google' | 'wechat' | 'alipay' | 'qq';
@@ -110,6 +110,81 @@ export async function verifyCode(
     await tx`UPDATE auth_codes SET attempts = attempts + 1 WHERE id = ${row.id}`;
     return false;
   }) as Promise<boolean>;
+}
+
+// ── 密码(scrypt:自带随机盐 + 自描述参数串,明文永不落库)──
+// 串格式 scrypt$N$r$p$saltB64$hashB64 —— 参数随哈希一起存,将来调参不破坏旧密码。
+const SCRYPT_N = 16384;      // 2^14,~16MB 内存开销(128*N*r),抗 GPU 爆破
+const SCRYPT_R = 8;
+const SCRYPT_P = 1;
+const SCRYPT_KEYLEN = 32;
+const SCRYPT_MAXMEM = 64 * 1024 * 1024;  // 默认 32MB 会被 N=2^14 顶到临界,放宽到 64MB 兜底
+
+function scryptDerive(pw: string, salt: Buffer, keylen: number, N: number, r: number, p: number): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(pw, salt, keylen, { N, r, p, maxmem: SCRYPT_MAXMEM }, (err, dk) => (err ? reject(err) : resolve(dk)));
+  });
+}
+
+/** 生成自描述密码哈希。调用方负责先 isValidPassword 校验。 */
+export async function hashPassword(pw: string): Promise<string> {
+  const salt = crypto.randomBytes(16);
+  const dk = await scryptDerive(pw, salt, SCRYPT_KEYLEN, SCRYPT_N, SCRYPT_R, SCRYPT_P);
+  return `scrypt$${SCRYPT_N}$${SCRYPT_R}$${SCRYPT_P}$${salt.toString('base64')}$${dk.toString('base64')}`;
+}
+
+/** 常量时间校验密码;串格式非法 / 不匹配一律返 false(不抛)。 */
+export async function verifyPassword(pw: string, stored: string): Promise<boolean> {
+  try {
+    const [algo, nStr, rStr, pStr, saltB64, hashB64] = stored.split('$');
+    if (algo !== 'scrypt') return false;
+    const salt = Buffer.from(saltB64, 'base64');
+    const expected = Buffer.from(hashB64, 'base64');
+    if (!salt.length || !expected.length) return false;
+    const dk = await scryptDerive(pw, salt, expected.length, Number(nStr), Number(rStr), Number(pStr));
+    return dk.length === expected.length && crypto.timingSafeEqual(dk, expected);
+  } catch {
+    return false;
+  }
+}
+
+// 无账号 / 未设密码时也跑一次 scrypt(对一个真实格式的假哈希),消除「邮箱是否存在 / 是否设了密码」
+// 的时序侧信道 —— 失败路径的耗时与真实校验一致。verifyPassword 对它永远返回 false。
+const DUMMY_PASSWORD_HASH = `scrypt$${SCRYPT_N}$${SCRYPT_R}$${SCRYPT_P}$${Buffer.alloc(16).toString('base64')}$${Buffer.alloc(SCRYPT_KEYLEN).toString('base64')}`;
+
+/** 当前账号存的密码哈希(未设为 null)。 */
+export async function getPasswordHash(userId: number): Promise<string | null> {
+  const rows = await query<{ password_hash: string | null }>(
+    'SELECT password_hash FROM app_users WHERE id = ?',
+    [userId],
+  );
+  return rows[0]?.password_hash ?? null;
+}
+
+/** 设置 / 覆盖密码。调用方负责鉴权、校验新密码合法、以及(改密时)先验旧密。 */
+export async function setPassword(userId: number, pw: string): Promise<void> {
+  const hash = await hashPassword(pw);
+  await query(
+    'UPDATE app_users SET password_hash = ?, password_updated_at = NOW() WHERE id = ?',
+    [hash, userId],
+  );
+}
+
+/**
+ * 邮箱 + 密码登录:按 email 身份找账号 → 验密码。成功返 AppUser;无账号 / 未设密码 / 密码错都返 null
+ * (统一走一次 scrypt,含假哈希兜底,不泄露具体失败原因 + 无时序侧信道)。
+ */
+export async function loginWithPassword(email: string, pw: string): Promise<AppUser | null> {
+  const rows = await query<AppUser & { password_hash: string | null }>(
+    `SELECT u.id, u.display_name, u.avatar_url, u.wca_id, u.password_hash
+     FROM auth_identities i JOIN app_users u ON u.id = i.user_id
+     WHERE i.provider = 'email' AND i.provider_uid = ?`,
+    [email],
+  );
+  const row = rows[0];
+  const ok = await verifyPassword(pw, row?.password_hash ?? DUMMY_PASSWORD_HASH);
+  if (!row || !row.password_hash || !ok) return null;
+  return { id: row.id, display_name: row.display_name, avatar_url: row.avatar_url, wca_id: row.wca_id };
 }
 
 // ── 账号 / 身份 ──

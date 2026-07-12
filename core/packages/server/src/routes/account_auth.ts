@@ -15,7 +15,8 @@ import { signSession } from '../utils/session.js';
 import {
   issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity,
   getIdentities, getUserById, findUserByWcaId, publicUser,
-  normalizeEmail, isValidEmail, normalizePhone, isValidPhone,
+  normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
+  loginWithPassword, setPassword, getPasswordHash, verifyPassword,
   type Provider,
 } from '../utils/account.js';
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
@@ -181,6 +182,36 @@ accountAuthRoutes.post('/auth/phone/verify', async (c) => {
   return c.json({ token, user: publicUser(user) });
 });
 
+// ── 邮箱 + 密码登录(账号已存在且已设密码即可;不依赖邮件服务)──
+// 失败一律返回同一句 generic 文案 + 相同耗时(loginWithPassword 含假哈希兜底),不区分
+// 「邮箱未注册 / 未设密码 / 密码错」,避免用户枚举。前端在密码 pane 常挂「改用验证码」出口。
+accountAuthRoutes.post('/auth/email/password', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const { email, password } = await c.req.json<{ email?: string; password?: string }>().catch(() => ({ email: undefined, password: undefined }));
+  const norm = normalizeEmail(email ?? '');
+  if (!isValidEmail(norm) || typeof password !== 'string' || !password) return c.json({ error: 'invalid input' }, 400);
+  const user = await loginWithPassword(norm, password);
+  if (!user) return c.json({ error: 'wrong email or password' }, 401);
+  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+  return c.json({ token, user: publicUser(user) });
+});
+
+// ── 设置 / 修改密码(登录态)。已有密码时必须先验旧密码;首次设置无需旧密码 ──
+accountAuthRoutes.post('/auth/password/set', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const uid = await requireUserId(c);
+  const { password, currentPassword } = await c.req.json<{ password?: string; currentPassword?: string }>().catch(() => ({ password: undefined, currentPassword: undefined }));
+  if (!isValidPassword(password)) return c.json({ error: 'invalid password' }, 400);
+  const existing = await getPasswordHash(uid);
+  if (existing && !(typeof currentPassword === 'string' && await verifyPassword(currentPassword, existing))) {
+    return c.json({ error: 'wrong current password' }, 401);
+  }
+  await setPassword(uid, password);
+  return c.json({ ok: true, hasPassword: true });
+});
+
 // ── 绑定(登录态下给当前账号加身份)──
 accountAuthRoutes.post('/auth/link/email/send', async (c) => {
   c.header('Cache-Control', 'no-store');
@@ -340,9 +371,10 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   return c.json({ ok: true, token, user: user ? publicUser(user) : undefined, identities: await getIdentities(uid) });
 });
 
-// ── 我的身份列表 ──
+// ── 我的身份列表(附是否已设密码,供账号面板显示「设置 / 修改密码」)──
 accountAuthRoutes.get('/auth/identities', async (c) => {
   c.header('Cache-Control', 'no-store');
   const uid = await requireUserId(c);
-  return c.json({ identities: await getIdentities(uid) });
+  const [identities, pwHash] = await Promise.all([getIdentities(uid), getPasswordHash(uid)]);
+  return c.json({ identities, hasPassword: pwHash != null });
 });

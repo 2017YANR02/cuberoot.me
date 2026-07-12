@@ -35,6 +35,11 @@ async function post<T>(path: string, body: unknown, auth = false): Promise<T> {
 // 登录/注册(合并流程)
 export const sendEmailCode = (email: string) => post<{ ok: true }>('/v1/auth/email/send', { email });
 export const verifyEmailCode = (email: string, code: string) => post<SessionResp>('/v1/auth/email/verify', { email, code });
+// 邮箱 + 密码登录(账号已设密码即可,不依赖邮件服务)
+export const loginPassword = (email: string, password: string) => post<SessionResp>('/v1/auth/email/password', { email, password });
+// 设置 / 修改密码(登录态;改密时传 currentPassword)
+export const setPassword = (password: string, currentPassword?: string) =>
+  post<{ ok: true; hasPassword: true }>('/v1/auth/password/set', { password, currentPassword }, true);
 export const sendPhoneCode = (phone: string) => post<{ ok: true }>('/v1/auth/phone/send', { phone });
 export const verifyPhoneCode = (phone: string, code: string) => post<SessionResp>('/v1/auth/phone/verify', { phone, code });
 
@@ -93,11 +98,11 @@ export async function fetchAuthProviders(): Promise<AuthProviders> {
   return { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null, social: { ...NO_SOCIAL } };
 }
 
-export async function fetchIdentities(): Promise<Identity[]> {
+export async function fetchIdentities(): Promise<{ identities: Identity[]; hasPassword: boolean }> {
   const res = await fetch(apiUrl('/v1/auth/identities'), {
     headers: { Authorization: `Bearer ${getSessionToken()}` },
   });
-  if (!res.ok) return [];
-  const data = (await res.json().catch(() => ({}))) as { identities?: Identity[] };
-  return data.identities ?? [];
+  if (!res.ok) return { identities: [], hasPassword: false };
+  const data = (await res.json().catch(() => ({}))) as { identities?: Identity[]; hasPassword?: boolean };
+  return { identities: data.identities ?? [], hasPassword: !!data.hasPassword };
 }
