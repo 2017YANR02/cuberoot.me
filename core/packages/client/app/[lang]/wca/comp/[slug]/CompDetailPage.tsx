@@ -680,6 +680,10 @@ export default function CompDetailPage() {
     'psychEvent',
     parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
   );
+  const [schedEventParam, setSchedEventParam] = useQueryState(
+    'schedEvent',
+    parseAsString.withDefault('').withOptions({ history: 'push', scroll: false }),
+  );
   const [filterParam, setFilterParam] = useQueryState(
     'filter',
     parseAsString.withDefault('all').withOptions({ history: 'replace', scroll: false }),
@@ -1311,6 +1315,14 @@ export default function CompDetailPage() {
     setPsychEventParam(ordered.length ? ordered.join(',') : null);
   };
 
+  // 赛程项目多选:同上, 序列化进 schedEvent. 空 = 不筛选(展示完整赛程).
+  const onToggleSchedEvent = (eventId: string) => {
+    const cur = new Set(schedEventIds);
+    if (cur.has(eventId)) cur.delete(eventId); else cur.add(eventId);
+    const ordered = data ? data.events.filter(e => cur.has(e.i)).map(e => e.i) : [...cur];
+    setSchedEventParam(ordered.length ? ordered.join(',') : null);
+  };
+
   useEffect(() => {
     if (viewParam !== 'psych' || !data) return;
     if (data.personalRecords) return;
@@ -1330,6 +1342,15 @@ export default function CompDetailPage() {
     return data.events.filter(e => want.has(e.i)).map(e => e.i);
   }, [data, psychEventParam]);
   const psychSelectedSet = useMemo(() => new Set(psychEventIds), [psychEventIds]);
+
+  // 赛程选中的项目集合(同 psychEventIds 逻辑). 空 = 展示全部项目的完整赛程.
+  const schedEventIds = useMemo(() => {
+    if (!data) return [] as string[];
+    const valid = new Set(data.events.map(e => e.i));
+    const want = new Set(schedEventParam.split(',').map(s => s.trim()).filter(s => valid.has(s)));
+    return data.events.filter(e => want.has(e.i)).map(e => e.i);
+  }, [data, schedEventParam]);
+  const schedSelectedSet = useMemo(() => new Set(schedEventIds), [schedEventIds]);
 
   if (loading) {
     const pct = progress && progress.total > 0 ? Math.round(100 * progress.done / progress.total) : 0;
@@ -1393,9 +1414,6 @@ export default function CompDetailPage() {
   const onSelectEvent = (newEventId: string) => {
     const ev = data.events.find(e => e.i === newEventId);
     if (!ev) return;
-    // 赛程视图下点项目 = 钻进该项目成绩(切到「成绩」),否则点击只改 URL 不变内容(死点);
-    // 其余视图维持原行为(同项目循环轮次 / 切项目)。
-    if (isSchedule) onChangeView('result');
     // 双轮 + 合并视图:第一轮和第二轮渲染同一张合并表 → 合为一个循环档(用第一轮代表),
     // 且整个事件的轮次都进循环(含尚无成绩的决赛),让点图标能从合并视图直达决赛,
     // 而不是在两张相同的合并表之间空转。非双轮 / 未合并时维持原行为(只循环有成绩的轮)。
@@ -1614,8 +1632,6 @@ export default function CompDetailPage() {
             type="button"
             className={`comp-view-tab${isScramble ? ' is-active' : ''}`}
             onClick={() => onChangeView('scramble')}
-            title={tr({ zh: '查看本场打乱', en: 'View scrambles'
-            })}
           >
             {tr({ zh: '打乱', en: 'Scrambles'
             })}
@@ -1639,11 +1655,13 @@ export default function CompDetailPage() {
               availableEvents={availableEventIds}
               {...(isPsych
                 ? { selectedEvents: psychSelectedSet, onToggle: onTogglePsychEvent }
-                : { selectedEvent: eventParam, onSelect: onSelectEvent })}
+                : isSchedule
+                  ? { selectedEvents: schedSelectedSet, onToggle: onToggleSchedEvent }
+                  : { selectedEvent: eventParam, onSelect: onSelectEvent })}
               isZh={isZh}
               onlyAvailable
-              badges={isPsych ? {} : eventBadges}
-              topBadges={isPsych ? {} : eventTopBadges}
+              badges={(isPsych || isSchedule) ? {} : eventBadges}
+              topBadges={(isPsych || isSchedule) ? {} : eventTopBadges}
               appendEvents={nonWcaEvents}
             />
           </div>
@@ -1660,6 +1678,7 @@ export default function CompDetailPage() {
             compName={compNameTitle}
             view={schedView}
             detailsExpanded={schedDetailsExpanded}
+            eventFilter={schedSelectedSet}
           />
         ) : isPodium ? (
           <>
