@@ -18,6 +18,7 @@
 import { apiUrl } from '@/lib/api-base';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
 import { groupIdxOf } from '@/lib/wca-scramble-group';
+import { scrambleStepMetric } from './gen-by-steps';
 import type { EventId } from '../types';
 
 // timer EventId → WCA scrambles event_id. Events absent here have no real
@@ -63,6 +64,9 @@ export interface WcaSourceSpec {
   // 按难度过滤:只在 date 模式生效(随机采样端点支持);comp 模式按比赛原序,忽略。
   // steps 为空 = 不过滤。variant/stage/colors 同 /scramble/stats 的口径。
   diff?: { variant: string; stage: string; colors: string; steps: number[] };
+  // 「按步数」过滤(2×2 / 金字塔):客户端算每条真题的度量步数,只留 [lo,hi] 内的。
+  // date + comp 两种模式都生效(真题分布近上帝数,低步数可能全被过滤 → knownEmpty → UI 提示)。
+  stepFilter?: { metric: string; lo: number; hi: number };
 }
 
 /** 一条真实打乱的来源元数据(键名对齐首页 RecentScrambles 的 ScrMeta)。 */
@@ -82,6 +86,10 @@ const compRows: Record<string, { scramble: string; meta: WcaScrambleMeta }[]> = 
 // 用于让 UI 显式提示,而不是悄悄伪造一条本地生成打乱(无比赛来源、且不符所选难度)。
 // 与「瞬时空(还在加载 / 网络失败)」区分:后者不进此集合,稍后重取。
 const knownEmpty = new Set<string>();
+// 「按步数」date 模式客户端过滤:每个 key 连续多少批(每批 FETCH_COUNT 条)全被滤掉。
+// 连续 MAX_FILTER_BATCHES 批仍空才判 knownEmpty,避免偶发 0 命中误报(真题近上帝数,低步数稀)。
+const filterMisses = new Map<string, number>();
+const MAX_FILTER_BATCHES = 4;
 
 // localStorage persistence — so reopening the timer (or returning to a source /
 // setting used before) serves the first scramble instantly from cache and tops
@@ -154,12 +162,14 @@ function specKey(spec: WcaSourceSpec): string | null {
   // 该项目不支持最优等态(见 supportsOptimal)时忽略 spec.optimal —— 否则粘滞的 wcaUseOptimal=true
   // 残留到切换后的项目,会算出一个「最优池」key,而这个项目永远没有 optimal_scramble,查回空。
   const opt = spec.optimal && supportsOptimal(w) ? '|opt' : ''; // 原始/最优打乱用不同池,切换即重灌
-  if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}` : null;
+  // 「按步数」过滤两种模式都生效,进 key(切换度量/区间即重灌)。
+  const sf = spec.stepFilter ? `|S:${spec.stepFilter.metric}:${spec.stepFilter.lo}.${spec.stepFilter.hi}` : '';
+  if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}${sf}` : null;
   // 难度过滤只在 date 模式生效;steps 非空才计入池 key(切换难度即重灌)。
   const d = spec.diff && spec.diff.steps.length > 0
     ? `|D:${spec.diff.variant}:${spec.diff.stage}:${spec.diff.colors}:${[...spec.diff.steps].sort((a, b) => a - b).join('.')}`
     : '';
-  return `d|${w}|${spec.from}|${spec.to}${opt}${d}`;
+  return `d|${w}|${spec.from}|${spec.to}${opt}${d}${sf}`;
 }
 
 function rememberMeta(s: string, m: WcaScrambleMeta): void {
@@ -169,6 +179,15 @@ function rememberMeta(s: string, m: WcaScrambleMeta): void {
     if (oldest === undefined) break;
     metaByScramble.delete(oldest);
   }
+}
+
+/** 「按步数」过滤:该条真题的度量步数是否落在 [lo,hi] 内。无 stepFilter 或无法度量(非 2×2/金字塔、
+ *  记号超出 gauge)时放行(不误杀)。 */
+function stepPass(spec: WcaSourceSpec, scramble: string): boolean {
+  if (!spec.stepFilter) return true;
+  const d = scrambleStepMetric(spec.event, spec.stepFilter.metric, scramble);
+  if (d == null) return true;
+  return d >= spec.stepFilter.lo && d <= spec.stepFilter.hi;
 }
 
 /** comp mode: load the comp once (cached), filter to event + round + group,
@@ -197,7 +216,8 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
         // 最优模式且该打乱有最优等态(同态项目)→ 用最优打乱,否则原打乱。
         scramble: normalize(useOptimal && r.optimal_scramble ? r.optimal_scramble : r.scramble),
         meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: w, r: r.round_type_id, g: r.group_id, n: r.scramble_num, x: (r.is_extra ? 1 : 0) as 0 | 1 },
-      }));
+      }))
+      .filter((it) => stepPass(spec, it.scramble)); // 「按步数」过滤(该比赛此步数无匹配 → rows 空 → 提示)
     compRows[key] = rows;
   }
   if (rows.length === 0) { knownEmpty.add(key); return; } // 该比赛没有此 event → 显式提示,不伪造生成
@@ -230,19 +250,31 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   const data = (await res.json()) as { scrambles?: RandomItem[] };
   const items = Array.isArray(data.scrambles) ? data.scrambles : [];
   if (items.length === 0) { knownEmpty.add(key); return; }
-  knownEmpty.delete(key);
   const q = (pools[key] ??= []);
+  let added = 0;
   for (const it of items) {
     if (!it?.scramble) continue;
     // 最优模式且该条带最优等态 → 用最优打乱(同态,更短);否则用原打乱(服务器在稀有难度档无最优时回退)。
     const useOpt = useOptimal && !!it.o;
     const s = normalize(useOpt ? it.o! : it.scramble);
+    if (!stepPass(spec, s)) continue; // 「按步数」客户端过滤(服务端不懂 2×2/金字塔度量)
     q.push(s);
+    added++;
     rememberMeta(s, {
       ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x,
       ...(useOptimal && !useOpt ? { nonOptimal: true } : {}),
     });
   }
+  // 「按步数」过滤后本批全被滤掉:真题近上帝数,低步数可能极稀。多试几批(每批 50 条)再判空,
+  // 避免偶发 0 命中就误报;连续 MAX 批仍空 → knownEmpty → UI 提示。有命中即清零。
+  if (spec.stepFilter && added === 0) {
+    const misses = (filterMisses.get(key) ?? 0) + 1;
+    filterMisses.set(key, misses);
+    if (misses >= MAX_FILTER_BATCHES) knownEmpty.add(key);
+    return;
+  }
+  filterMisses.delete(key);
+  knownEmpty.delete(key);
   persist();
 }
 

@@ -114,12 +114,12 @@ export interface TimerSettings {
   wcaDiffColors: string;    // subset key, e.g. 'BGORWY' (six-color) / 'W' / 'WY'
   wcaDiffSteps: number[];   // allowed optimal step-counts; empty = no filter
 
-  /** Locally generate 2×2 scrambles filtered by move-count, sampled uniformly from the full
-   *  3,674,160-state space (NOT the deduped case library). Only event 222 + random source.
-   *  genStepsMetric picks the metric (底面/首层/整解 HTM/QTM); genSteps = the allowed inclusive
-   *  step range [lo..hi]; empty = the metric's default range. See lib/cube222-metric.ts. */
+  /** "按步数" scramble filter for 2×2 (face/layer/cube-HTM/QTM) and pyraminx (V / cube-HTM). Works under
+   *  both sources: random = uniform full-space sampling + reject; WCA = filter real scrambles by the metric.
+   *  genStepsMetric is a metric key from _lib/scramble/step-metrics (validated per event); genSteps = the
+   *  allowed inclusive step range [lo..hi], empty = the metric's default band. */
   genByStepsOn: boolean;
-  genStepsMetric: 'face' | 'layer' | 'htm' | 'qtm';
+  genStepsMetric: string;
   genSteps: number[];
 
   /** Auto-mark each WCA real scramble as done (public) after a non-DNF solve,
