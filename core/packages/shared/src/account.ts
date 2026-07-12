@@ -36,3 +36,9 @@ export function normalizePhone(raw: string): string {
 export function isValidPhone(p: string): boolean {
   return PHONE_RE.test(p);
 }
+
+// 密码:仅长度约束(8..128)。不强制字符组成(NIST 800-63B:长度优先,组成规则反而降安全),
+// 前后端共用同一判据。真正的抗爆破靠服务端 scrypt 慢哈希 + 每 IP 限流。
+export function isValidPassword(pw: unknown): pw is string {
+  return typeof pw === 'string' && pw.length >= 8 && pw.length <= 128;
+}

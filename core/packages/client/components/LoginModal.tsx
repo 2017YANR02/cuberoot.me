@@ -5,13 +5,15 @@
 // 由 store 的 loginOpen 控制,全局挂在 app/layout.tsx。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { X, Mail, Smartphone, Key, Loader2, LogOut } from 'lucide-react';
+import { X, Mail, Smartphone, Key, Loader2, LogOut, Eye, EyeOff } from 'lucide-react';
 import { SiWechat, SiQq, SiAlipay } from 'react-icons/si';
 import AppLink from '@/components/AppLink';
+import PillToggle from '@/components/PillToggle/PillToggle';
 import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
 import {
   sendEmailCode, verifyEmailCode, sendPhoneCode, verifyPhoneCode,
+  loginPassword, setPassword as apiSetPassword,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
   unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle,
   type Identity, type AuthProviders, type SocialProvider,
@@ -149,6 +151,9 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
   const m = raw.toLowerCase();
   if (m.includes('too frequent')) return t('操作太频繁,请 60 秒后再试', 'Too many requests — please wait a minute');
   if (m.includes('wrong or expired')) return t('验证码错误或已过期', 'Wrong or expired code');
+  if (m.includes('wrong email or password')) return t('邮箱或密码错误,或该邮箱未设密码', 'Wrong email or password (or no password set)');
+  if (m.includes('wrong current password')) return t('当前密码不正确', 'Current password is incorrect');
+  if (m.includes('invalid password')) return t('密码至少 8 位', 'Password must be at least 8 characters');
   if (m.includes('not configured')) return t('该登录方式暂未开放', "This sign-in method isn't available yet");
   if (m.includes('already linked')) return t('该方式已绑定到另一个账号', 'Already linked to another account');
   if (m.includes('invalid email')) return t('邮箱格式不正确', 'Invalid email address');
@@ -255,6 +260,183 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
   );
 }
 
+/** 密码输入框 + 明文/密文切换眼睛。autoComplete 由调用方指定(登录 current / 设密 new)。 */
+function PasswordInput({ value, onChange, placeholder, autoComplete, autoFocus, onEnter }: {
+  value: string; onChange: (v: string) => void; placeholder?: string;
+  autoComplete: 'current-password' | 'new-password'; autoFocus?: boolean; onEnter?: () => void;
+}) {
+  const lang = useLang();
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const [show, setShow] = useState(false);
+  return (
+    <div className="lm-pwfield">
+      <input
+        className="lm-input"
+        type={show ? 'text' : 'password'}
+        value={value}
+        autoFocus={autoFocus}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter' && onEnter) onEnter(); }}
+      />
+      <button
+        type="button"
+        className="lm-pweye"
+        onClick={() => setShow((s) => !s)}
+        aria-label={show ? t('隐藏密码', 'Hide password') : t('显示密码', 'Show password')}
+      >
+        {show ? <EyeOff size={ICON} /> : <Eye size={ICON} />}
+      </button>
+    </div>
+  );
+}
+
+/** 邮箱 + 密码登录(仅登录已设密码的账号;新用户 / 未设密码走验证码,再去账号面板设密码)。 */
+function EmailPasswordFlow({ onDone, onUseCode }: { onDone: () => void; onUseCode: () => void }) {
+  const lang = useLang();
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = useCallback(async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      const r = await loginPassword(email, pw);
+      applySession(r.token, r.user);
+      onDone();
+    } catch (e) {
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+    } finally {
+      setBusy(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, pw, onDone]);
+
+  return (
+    <div className="lm-flow">
+      <label className="lm-label">{t('邮箱', 'Email')}</label>
+      <input
+        className="lm-input"
+        type="email"
+        value={email}
+        autoFocus
+        autoComplete="username"
+        placeholder="you@example.com"
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <label className="lm-label">{t('密码', 'Password')}</label>
+      <PasswordInput
+        value={pw}
+        onChange={setPw}
+        autoComplete="current-password"
+        placeholder={t('密码', 'Password')}
+        onEnter={() => { if (email && pw && !busy) void submit(); }}
+      />
+      {error && <p className="lm-error">{error}</p>}
+      <button className="lm-primary" disabled={!email || !pw || busy} onClick={() => void submit()}>
+        {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+        {t('登录', 'Sign in')}
+      </button>
+      <button className="lm-textbtn" onClick={onUseCode}>
+        {t('没有密码?改用验证码登录', 'No password? Use a code instead')}
+      </button>
+    </div>
+  );
+}
+
+/** 邮箱 pane:顶部「验证码 / 密码」切换(PillToggle,密码为绿主项),下方渲染对应流程。 */
+function EmailPane({ onDone }: { onDone: () => void }) {
+  const lang = useLang();
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const [pwMode, setPwMode] = useState(false);
+  return (
+    <>
+      <div className="lm-modeswitch">
+        <PillToggle
+          value={pwMode}
+          onChange={setPwMode}
+          onLabel={t('密码', 'Password')}
+          offLabel={t('验证码', 'Code')}
+          ariaLabel={t('邮箱登录方式', 'Email sign-in method')}
+        />
+      </div>
+      {pwMode
+        ? <EmailPasswordFlow onDone={onDone} onUseCode={() => setPwMode(false)} />
+        : <CodeFlow channel="email" mode="login" onDone={onDone} />}
+    </>
+  );
+}
+
+/** 设置 / 修改密码(账号面板内)。已有密码时要求先输当前密码;两次新密码需一致。 */
+function SetPasswordForm({ hasPassword, onDone }: { hasPassword: boolean; onDone: () => void }) {
+  const lang = useLang();
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const [current, setCurrent] = useState('');
+  const [next, setNext] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  const submit = useCallback(async () => {
+    setError(null);
+    if (next.length < 8) { setError(t('密码至少 8 位', 'Password must be at least 8 characters')); return; }
+    if (next !== confirm) { setError(t('两次输入的密码不一致', 'Passwords do not match')); return; }
+    setBusy(true);
+    try {
+      await apiSetPassword(next, hasPassword ? current : undefined);
+      setDone(true);
+      window.setTimeout(onDone, 800);
+    } catch (e) {
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+      setBusy(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, next, confirm, hasPassword, onDone]);
+
+  if (done) {
+    return <div className="lm-flow lm-pwform"><p className="lm-hint">{t('密码已保存。', 'Password saved.')}</p></div>;
+  }
+  return (
+    <div className="lm-flow lm-pwform">
+      {hasPassword && (
+        <>
+          <label className="lm-label">{t('当前密码', 'Current password')}</label>
+          <PasswordInput value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
+        </>
+      )}
+      <label className="lm-label">{hasPassword ? t('新密码', 'New password') : t('设置密码', 'Set password')}</label>
+      <PasswordInput
+        value={next}
+        onChange={setNext}
+        autoComplete="new-password"
+        autoFocus={!hasPassword}
+        placeholder={t('至少 8 位', 'At least 8 characters')}
+      />
+      <label className="lm-label">{t('确认密码', 'Confirm password')}</label>
+      <PasswordInput
+        value={confirm}
+        onChange={setConfirm}
+        autoComplete="new-password"
+        onEnter={() => { if (!busy) void submit(); }}
+      />
+      {error && <p className="lm-error">{error}</p>}
+      <button
+        className="lm-primary"
+        disabled={busy || !next || !confirm || (hasPassword && !current)}
+        onClick={() => void submit()}
+      >
+        {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+        {t('保存', 'Save')}
+      </button>
+    </div>
+  );
+}
+
 function LoginTabs({ onClose }: { onClose: () => void }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
@@ -322,7 +504,7 @@ function LoginTabs({ onClose }: { onClose: () => void }) {
         </div>
       )}
 
-      {method === 'email' && avail.email && <CodeFlow channel="email" mode="login" onDone={onClose} />}
+      {method === 'email' && avail.email && <EmailPane onDone={onClose} />}
       {method === 'phone' && avail.phone && (
         <>
           <CodeFlow channel="phone" mode="login" onDone={onClose} />
@@ -372,6 +554,8 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
   const logout = useAuthStore((s) => s.logout);
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
   const [identities, setIdentities] = useState<Identity[] | null>(null);
+  const [hasPassword, setHasPassword] = useState(false);
+  const [settingPw, setSettingPw] = useState(false);
   const [linking, setLinking] = useState<'email' | 'phone' | null>(null);
   const [error, setError] = useState<string | null>(null);
   // 解绑二次确认:先点「解绑」进入待确认态,再点「确定」才真正调用。
@@ -387,7 +571,9 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
   const [linkingSocial, setLinkingSocial] = useState<SocialProvider | null>(null);
 
   const reload = useCallback(async () => {
-    setIdentities(await fetchIdentities());
+    const acct = await fetchIdentities();
+    setIdentities(acct.identities);
+    setHasPassword(acct.hasPassword);
   }, []);
   useEffect(() => { void reload(); }, [reload]);
   // 手机支付宝唤起 App 绑定后切回本页时,重拉身份列表(同浏览器完成的绑定即刻反映)。
@@ -399,6 +585,8 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
 
   const hasWca = (identities ?? []).some((i) => i.provider === 'wca');
   const hasGoogle = (identities ?? []).some((i) => i.provider === 'google');
+  // 密码登录 = 邮箱 + 密码,故仅当账号有邮箱身份时才给密码入口(无邮箱设了也用不上)。
+  const hasEmail = (identities ?? []).some((i) => i.provider === 'email');
   const boundProviders = new Set((identities ?? []).map((i) => i.provider));
   const availableSocials = SOCIALS.filter((s) => !!avail.social[s.key] && !boundProviders.has(s.key));
 
@@ -568,6 +756,20 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
 
       {linking && (
         <CodeFlow channel={linking} mode="link" onDone={() => { setLinking(null); void reload(); }} />
+      )}
+
+      {hasEmail && (
+        <div className="lm-linklist">
+          <div className="lm-idrow">
+            <span className="lm-idprov">{t('密码', 'Password')}</span>
+            <button type="button" className="lm-link" onClick={() => setSettingPw((v) => !v)}>
+              {hasPassword ? t('修改', 'Change') : t('设置', 'Set')}
+            </button>
+          </div>
+        </div>
+      )}
+      {settingPw && (
+        <SetPasswordForm hasPassword={hasPassword} onDone={() => { setSettingPw(false); void reload(); }} />
       )}
 
       <button className="lm-textbtn lm-logout" onClick={() => { logout(); onClose(); }}>
