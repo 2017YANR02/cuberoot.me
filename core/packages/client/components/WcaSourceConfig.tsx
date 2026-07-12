@@ -82,9 +82,31 @@ interface Props {
   updateSettings: (patch: Partial<WcaSourceSettings>) => void;
   /** 自动打卡(做完标记为「做过」)只对会记成绩的计时器有意义;分析器等场景传 false 隐藏。 */
   showAutoMark?: boolean;
+  /** 该项目还有「按步数」面板(GenStepsConfig)时,自动打卡改由那边的顶行合并渲染(见 AutoMarkToggle
+   *  导出),这里跳过自己那行,避免同一开关两处重复出现。 */
+  mergeAutoMarkIntoSteps?: boolean;
 }
 
-export default function WcaSourceConfig({ isZh, event, settings, updateSettings, showAutoMark = true }: Props) {
+/** 「自动打卡」标签+开关,紧凑一组(标签贴开关,不用 flex:1 撑开)。独立导出供 ScrambleSourcePanel
+ *  在有「按步数」面板时把它并进 GenStepsConfig 的顶行(两个开关合一行,不再各占一行)。 */
+export function AutoMarkToggle({ settings, updateSettings }: {
+  settings: Pick<WcaSourceSettings, 'autoMarkWcaScramble'>;
+  updateSettings: (patch: Partial<WcaSourceSettings>) => void;
+}) {
+  return (
+    <span className="settings-row-tight-group">
+      <span className="settings-row-label">{tr({ zh: '自动打卡', en: 'Auto-mark done' })}</span>
+      <PillToggle
+        value={settings.autoMarkWcaScramble}
+        onChange={(v) => updateSettings({ autoMarkWcaScramble: v })}
+      />
+    </span>
+  );
+}
+
+export default function WcaSourceConfig({
+  isZh, event, settings, updateSettings, showAutoMark = true, mergeAutoMarkIntoSteps = false,
+}: Props) {
   const wev = wcaEventId(event);
   const hasOptimal = !!wev && WCA_OPTIMAL_EVENTS.has(wev); // 同态项目才显示「最优打乱」开关
   const mode = settings.wcaScrambleMode;
@@ -404,23 +426,10 @@ export default function WcaSourceConfig({ isZh, event, settings, updateSettings,
         </>
       )}
 
-      {showAutoMark && (
-        <>
-          <div className="settings-row wca-src-automark">
-            <span className="settings-row-label">{tr({ zh: '自动打卡', en: 'Auto-mark done'
-            })}</span>
-            <span className="settings-row-control">
-              <PillToggle
-                value={settings.autoMarkWcaScramble}
-                onChange={(v) => updateSettings({ autoMarkWcaScramble: v })}
-              />
-            </span>
-          </div>
-          <p className="wca-src-hint">
-            {tr({ zh: '做完一把后自动把这条真实打乱标记为「做过」(公开,带成绩),省去每把手动点击。需登录。', en: 'After each solve, auto-mark this real scramble as done (public, with your time) — no manual click per solve. Sign-in required.'
-            })}
-          </p>
-        </>
+      {showAutoMark && !mergeAutoMarkIntoSteps && (
+        <div className="settings-row wca-src-automark">
+          <AutoMarkToggle settings={settings} updateSettings={updateSettings} />
+        </div>
       )}
     </div>
   );

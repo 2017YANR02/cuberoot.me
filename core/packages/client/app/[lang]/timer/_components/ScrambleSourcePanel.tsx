@@ -16,7 +16,7 @@ import { useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { updateSettings, useSettings } from '../_lib/settings';
 import type { EventId } from '../_lib/types';
-import WcaSourceConfig from '@/components/WcaSourceConfig';
+import WcaSourceConfig, { AutoMarkToggle } from '@/components/WcaSourceConfig';
 import GenStepsConfig from './GenStepsConfig';
 import { stepPuzzleOf } from '../_lib/scramble/step-metrics';
 import { tr } from '@/i18n/tr';
@@ -31,6 +31,7 @@ interface Props {
 export default function ScrambleSourcePanel({ event, isZh }: Props) {
   const s = useSettings();
   const [open, setOpen] = useState(false);
+  const hasSteps = !!stepPuzzleOf(event);
 
   // 读 localStorage 记住的展开态(SSR 初值恒 false,挂载后再同步,避免 hydration mismatch)。
   useEffect(() => {
@@ -60,35 +61,46 @@ export default function ScrambleSourcePanel({ event, isZh }: Props) {
         <span className="solver-panel-title">{title}</span>
         <ChevronRight size={14} className="solver-panel-chevron" />
       </button>
-      {open && (
-        <div className="solver-panel-body">
-          <div className="settings-row">
-            <span className="settings-row-label">{tr({ zh: '来源', en: 'Source' })}</span>
-            <span className="settings-row-control">
-              <select
-                className="settings-row-control-select"
-                value={s.scrambleSource}
-                onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
-              >
-                <option value="wca">{tr({ zh: 'WCA 真题', en: 'WCA real' })}</option>
-                <option value="random">{tr({ zh: '随机生成', en: 'Random' })}</option>
-              </select>
-            </span>
+      {open && (() => {
+        const sourceSelect = (
+          <select
+            className="settings-row-control-select"
+            value={s.scrambleSource}
+            onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
+          >
+            <option value="wca">{tr({ zh: 'WCA 真题', en: 'WCA real' })}</option>
+            <option value="random">{tr({ zh: '随机状态', en: 'Random' })}</option>
+          </select>
+        );
+        return (
+          <div className="solver-panel-body">
+            {/* 无「按步数」面板(如三阶)时来源选择器独占一行;有则并进 GenStepsConfig 顶行(见下)。 */}
+            {!hasSteps && <div className="settings-row">{sourceSelect}</div>}
+            {s.scrambleSource === 'wca' && (
+              <WcaSourceConfig
+                isZh={isZh}
+                event={event}
+                settings={s}
+                updateSettings={updateSettings}
+                mergeAutoMarkIntoSteps={hasSteps}
+              />
+            )}
+            {hasSteps && (
+              <GenStepsConfig
+                isZh={isZh}
+                event={event}
+                source={s.scrambleSource}
+                settings={s}
+                updateSettings={updateSettings}
+                extraToprow={<>
+                  {sourceSelect}
+                  {s.scrambleSource === 'wca' && <AutoMarkToggle settings={s} updateSettings={updateSettings} />}
+                </>}
+              />
+            )}
           </div>
-          {s.scrambleSource === 'wca' && (
-            <WcaSourceConfig isZh={isZh} event={event} settings={s} updateSettings={updateSettings} />
-          )}
-          {stepPuzzleOf(event) && (
-            <GenStepsConfig
-              isZh={isZh}
-              event={event}
-              source={s.scrambleSource}
-              settings={s}
-              updateSettings={updateSettings}
-            />
-          )}
-        </div>
-      )}
+        );
+      })()}
     </aside>
   );
 }

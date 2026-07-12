@@ -8,7 +8,7 @@
  * 度量表见 _lib/scramble/step-metrics.ts;2×2 生成算法见 lib/cube222-metric,金字塔见 _lib/scramble/pyram-metric。
  */
 
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -27,12 +27,15 @@ interface Props {
   source: 'random' | 'wca';
   settings: Settings;
   updateSettings: (patch: Partial<Settings>) => void;
+  /** WCA 真题来源时,ScrambleSourcePanel 把「自动打卡」开关并进来同占顶行(见 WcaSourceConfig 的
+   *  AutoMarkToggle 导出),两个开关合一行、不再各占一行。 */
+  extraToprow?: ReactNode;
 }
 
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 const clamp = (x: number, lo: number, hi: number) => Math.min(Math.max(x, lo), hi);
 
-export default function GenStepsConfig({ isZh, event, source, settings, updateSettings }: Props) {
+export default function GenStepsConfig({ isZh, event, source, settings, updateSettings, extraToprow }: Props) {
   const metrics = stepMetricsFor(event);
   // 当前度量:存的值若不属于本魔方(切魔方后残留)→ 回退首个度量。
   const active = metrics?.find((m) => m.key === settings.genStepsMetric) ?? metrics?.[0];
@@ -76,6 +79,7 @@ export default function GenStepsConfig({ isZh, event, source, settings, updateSe
   return (
     <div className="wca-src-config">
       <div className="settings-row wca-src-toprow">
+        {extraToprow}
         <span className="settings-row-tight-group">
           <span className="settings-row-label">{tr({ zh: '按步数', en: 'By steps' })}</span>
           <PillToggle
