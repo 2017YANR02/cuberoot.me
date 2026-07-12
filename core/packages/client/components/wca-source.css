@@ -44,11 +44,9 @@
 }
 .settings-row-control .hint-btn:disabled:hover { background: transparent; color: #aaa; }
 
-/* WCA 真实打乱选源配置(打乱来源=WCA 时展开)。缩进 + 左描边,从属于上面的来源 Row。 */
+/* WCA 真实打乱选源配置(打乱来源=WCA 时展开),从属于上面的来源 Row。 */
 .wca-src-config {
   margin: 4px 0 10px;
-  padding-left: 10px;
-  border-left: 2px solid #2a2a2e;
 }
 .wca-src-dates { gap: 6px; }
 .wca-src-dates input[type="date"] {
@@ -99,7 +97,6 @@
   overflow-wrap: break-word;
   color: #ededed;
 }
-:root[data-timer-theme="light"] .wca-src-config { border-left-color: #e0e0e3; }
 :root[data-timer-theme="light"] .wca-src-comp-name { color: #1d1d1f; }
 :root[data-timer-theme="light"] .wca-src-dates input[type="date"] {
   background: #fff; color: #1d1d1f; border-color: #ccc; color-scheme: light;
