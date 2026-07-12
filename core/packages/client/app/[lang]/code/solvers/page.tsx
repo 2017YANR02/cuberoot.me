@@ -717,6 +717,69 @@ export default function SolversPage() {
           </p>
         </section>
 
+        {/* 计时器「按步数」度量求解器 (纯 TS, /timer 生成+真题筛选 + /scramble 分布多口径共用) */}
+        <section className="solv-section">
+          <header className="solv-sec-head">
+            <Gauge size={15} strokeWidth={2} />
+            <h2>{zh ? '计时器按步数度量(纯 TS)' : 'Timer by-steps metrics (pure TS)'}</h2>
+            <span className="solv-sec-note">{zh ? '按步数生成 · 真题筛选 · 分布多口径 · 单一源' : 'by-move-count generation · real-scramble filter · multi-metric dist · single source'}</span>
+          </header>
+          <div className="solv-mx-wrap">
+            <table className="solv-mx">
+              <tbody>
+                <tr>
+                  <th scope="row" className="solv-mx-name">
+                    <span className="solv-mx-nm">{zh ? '2×2 四口径' : '2×2 four metrics'}</span>
+                    <span className="solv-mx-sub">{zh ? '底面 · 底层 · 魔方 · QTM' : 'face · layer · cube · QTM'}</span>
+                  </th>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{zh ? '查表 + IDA*' : 'tables + IDA*'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-badge solv-q-optimal solv-mx-pad">{zh ? '可证精确' : 'provably exact'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val">3,674,160</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">0–5 · 0–7 · 0–11 · 0–14</span></td>
+                  <td className="solv-mx-cell">
+                    <button type="button" className="solv-mx-btn" onClick={() => setModal({
+                      title: zh ? '2×2 按步数度量 · 方法' : '2×2 by-steps metrics · method',
+                      body: <>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '态' : 'states'}</span><span className="solv-tbl-sz">3,674,160 = 7!·3⁶ {zh ? '(DBL 角固定 gauge, U/R/F 9 招 HTM)' : '(DBL corner fixed gauge, U/R/F 9 HTM moves)'}</span></div>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '口径' : 'metrics'}</span><span className="solv-tbl-sz">{zh ? '底面 0–5(任一面同色) · 底层 0–7(任一整层) · 魔方 HTM 0–11 · QTM 0–14, 全部色中立' : 'first face 0–5 (any solid face) · first layer 0–7 · cube HTM 0–11 · QTM 0–14, all color-neutral'}</span></div>
+                        <p className="solv-modal-p">{zh
+                          ? '浏览器(/timer 按步数生成):均匀随机态拒绝采样 + 子目标/整解 IDA*(双剪枝表惰性建, 零表下载), 接受态出 WCA 式最优等态打乱。离线(统计管道 build_puzzle_metrics.mts):create222MetricEvaluator 全空间 BFS 距离表 —— perm(5040)×ori(729) 坐标独立演化 → 两张 move 表, face/layer 多源 BFS + HTM BFS + QTM 四分转 BFS, 建表 ~2s 后每条 O(1);对 24 万条 IDA* 结果 0 mismatch。同一份预计算喂 /scramble 分布「度量」下拉 + /timer WCA 真题稀有区间(如底层=0)即时出题。lib/cube222-metric.ts。'
+                          : 'Browser (/timer by-move-count generation): uniform random-state rejection sampling + subgoal/full-solve IDA* (two pruning tables built lazily, zero downloads); accepted states emit a WCA-style optimal-equivalent scramble. Offline (stats pipeline build_puzzle_metrics.mts): create222MetricEvaluator full-space BFS distance tables — perm(5040)×ori(729) coordinates evolve independently → two move tables; multi-source BFS for face/layer, HTM BFS, quarter-turn BFS for QTM; ~2s build then O(1) per scramble; 0 mismatches against 240k IDA*-computed rows. The same precompute feeds the /scramble metric dropdown and instant rare-range real scrambles (e.g. layer=0) on /timer. lib/cube222-metric.ts.'}</p>
+                      </>,
+                    })}>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                    </button>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row" className="solv-mx-name">
+                    <span className="solv-mx-nm">{zh ? '金字塔双口径' : 'Pyraminx two metrics'}</span>
+                    <span className="solv-mx-sub">{zh ? 'V · 魔方' : 'V · cube'}</span>
+                  </th>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">{zh ? '面片态 IDA*' : 'facelet IDA*'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-badge solv-q-optimal solv-mx-pad">{zh ? '可证精确' : 'provably exact'}</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val">933,120</span></td>
+                  <td className="solv-mx-cell"><span className="solv-mx-val solv-tone-dim">V 0–7 · {zh ? '魔方' : 'cube'} 0–11</span></td>
+                  <td className="solv-mx-cell">
+                    <button type="button" className="solv-mx-btn" onClick={() => setModal({
+                      title: zh ? '金字塔 V/魔方度量 · 方法' : 'Pyraminx V/cube metrics · method',
+                      body: <>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '态' : 'states'}</span><span className="solv-tbl-sz">933,120 = 360·2⁵·3⁴ {zh ? '(body, tips 独立剥离)' : '(body; tips independent, stripped)'}</span></div>
+                        <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '口径' : 'metrics'}</span><span className="solv-tbl-sz">{zh ? 'V 步 0–7(4 面框架最短 V-solve 取 min) · 魔方 0–11(去 tips 整解最优)' : 'V 0–7 (min V-solve across the 4 face frames) · cube 0–11 (tips-excluded optimal full solve)'}</span></div>
+                        <p className="solv-modal-p">{zh
+                          ? 'cstimer gsolver pyraCube 移植:24 字符面片态(F R L D ×6)+ R U L B 四角 120° 招, IDA* 精确最优(~1000–3000 条/s, 零表下载)。同一求解器喂 /timer「按步数」(V/魔方生成与筛选)与统计管道 pyraminx_metrics.csv(/scramble 分布「度量」下拉 + 真题稀有桶)。timer/_lib/solver/pyra.ts。'
+                          : 'Port of cstimer gsolver pyraCube: 24-char facelet state (F R L D ×6) + R U L B 120° corner moves, exact-optimal IDA* (~1000–3000 scrambles/s, zero downloads). The same solver powers /timer by-steps (V/cube generation + filtering) and the stats pipeline pyraminx_metrics.csv (the /scramble metric dropdown + rare real-scramble buckets). timer/_lib/solver/pyra.ts.'}</p>
+                      </>,
+                    })}>
+                      <span className="solv-mx-val solv-tone-accent">{zh ? '查看' : 'view'}</span><span className="solv-mx-more">▸</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         {/* 纯 TS 3×3 STM 最优(研究级,引擎就绪 / UI 待接) */}
         <section className="solv-section">
           <header className="solv-sec-head">
