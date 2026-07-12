@@ -1068,10 +1068,22 @@ export default class HandsRig extends THREE.Group {
     this.bodyWanted = want;
     if (want) this.ensureBody();
     if (this.body) this.body.visible = want;
+    this.syncCuffs();
   }
 
   get fullBodyOn(): boolean {
     return this.bodyWanted && this.body != null;
+  }
+
+  /** 灰袖口只在无身体时有用(盖融合前臂的肘端断口);全身开启后体臂接管断口,
+   *  袖口反成异物(2026-07-11 用户抓「这个灰色的是啥」)—— 随 fullBodyOn 显隐。 */
+  private syncCuffs(): void {
+    if (!this.hands) return;
+    const on = this.fullBodyOn;
+    for (const s of ["R", "L"] as const) {
+      const c = this.hands[s].cuff;
+      if (c) c.visible = !on;
+    }
   }
 
   private ensureBody(): void {
@@ -1081,7 +1093,7 @@ export default class HandsRig extends THREE.Group {
       .then((data) => {
         const hands = this.hands;
         if (!hands) { this.bodyLoading = false; return; }
-        const body = new SmplxBody(data, hands.R.model.unitScale);
+        const body = new SmplxBody(data, hands.R.model.unitScale, this.skinMat);
         // home 姿一次放置:两侧肘目标 = home 腕点 + 前臂轴向 × 身体前臂长
         const elbowTarget = (side: HandSide): THREE.Vector3 => {
           const h = hands[side];
@@ -1097,6 +1109,7 @@ export default class HandsRig extends THREE.Group {
         this.body = body;
         this.bodyLoading = false;
         this.setBodyZoomFade(this.bodyZoomFade); // 资产晚于变焦态到位的回放
+        this.syncCuffs();                        // 体臂接管断口,灰袖口退场
       })
       .catch((e: unknown) => {
         this.bodyLoading = false;
@@ -2102,6 +2115,13 @@ export default class HandsRig extends THREE.Group {
       const dq = HandsRig._qTmp2.setFromRotationMatrix(HandsRig._mTmp.makeBasis(xT, yT, zT)).multiply(h.armBindFrameInv);
       h.model.forearm.bone.quaternion.copy(dq).multiply(h.model.forearm.bindQuat);
       if (h.cuff) h.cuff.quaternion.copy(dq);
+      // SMPL-X 全身焊臂:体前臂目标世界旋转 = gq·dq·frameQuat(体系→模板系
+      // 的解析刚性对应,推导见 smplxBody.updateArm),体腕点钉在手腕点 ——
+      // 位置/朝向/扭转三者全对齐,体残段与融合前臂表面严格重合(手不再断开)。
+      if (this.body && this.body.visible && h.model.forearm.frameQuat) {
+        const geoQ = HandsRig._qTmp.copy(g.quaternion).multiply(dq).multiply(h.model.forearm.frameQuat);
+        this.body.updateArm(side, wrist, geoQ);
+      }
     } else if (h.forearm) {
       h.forearm.position.copy(wrist);
       const dir = HandsRig._vTmp2.copy(wrist).sub(h.elbow).normalize();
@@ -2111,14 +2131,6 @@ export default class HandsRig extends THREE.Group {
       zF.normalize();
       const yF = HandsRig._vTmp4.crossVectors(zF, dir);
       h.forearm.quaternion.setFromRotationMatrix(HandsRig._mTmp.makeBasis(dir, yF, zF));
-    }
-
-    // SMPL-X 全身:肩/肘追手 —— 肘目标 = 腕 + 前臂轴向 × 身体前臂长(与上面
-    // 前臂 IK 同一根轴,身体前臂残段与手前臂共线,套接重叠区吸收臂长差)。
-    if (this.body && this.body.visible) {
-      const dirB = HandsRig._vTmp2.copy(h.elbow).sub(wrist).normalize();
-      const eT = HandsRig._vTmp3.copy(wrist).addScaledVector(dirB, this.body.foreLen(side));
-      this.body.updateArm(side, wrist, eT);
     }
 
     // 手指姿态 = home 弯曲 + flick 偏移。

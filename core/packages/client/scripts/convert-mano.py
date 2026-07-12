@@ -449,8 +449,11 @@ def fuse_smplx_forearm(m: dict, sx: dict) -> dict:
     pd2 = np.vstack([pd, np.zeros((len(pa), 3, 135))])
     print(f"[convert-mano] fuse: hand 778 + arm {len(pa)} verts, bridge {len(bridge)} tris, "
           f"k {k:.4f}, x_ring {x_ring * 1000:.1f} mm")
+    # hand_frame = Rm(列基 fwd/ym/zm):体 rig 焊接用 —— 前臂几何从 SMPL-X 体系
+    # (xg,yg,zg) 到模板系的映射 M = Rm·Xᵀ 是解析刚性对应,运行时据此把体肘骨
+    # 摆到与融合前臂表面严格重合(位置+扭转全精确,见 smplxBody.updateArm)。
     return {"v": v2, "f": f2, "w": w2, "pd": pd2, "J": J, "kin": kin,
-            "forearm_dir": (-fwd).tolist()}
+            "forearm_dir": (-fwd).tolist(), "hand_frame": Rm.tolist()}
 
 
 def validate_closed_manifold_open_elbow(v: np.ndarray, f: np.ndarray) -> None:
@@ -617,12 +620,16 @@ def convert(hand: str, fused: dict, subdiv: bool, mirror: bool = False) -> dict:
     pd = np.asarray(fused["pd"], dtype=np.float64).copy()      # (n,3,135) 前臂行全零
     J = np.asarray(fused["J"], dtype=np.float64).copy()        # (16,3)
     fdir = np.asarray(fused["forearm_dir"], dtype=np.float64).copy()
+    hframe = np.asarray(fused["hand_frame"], dtype=np.float64).copy()  # 3×3 列基 fwd/ym/zm
     nf = len(v)
     assert pd.shape == (nf, 3, 135) and w.shape == (nf, 17) and J.shape == (16, 3), (pd.shape, w.shape, J.shape)
     if mirror:  # left = exact mirror of fused RIGHT across x=0 (strict L/R symmetry)
         v[:, 0] *= -1.0
         J[:, 0] *= -1.0
         fdir[0] *= -1.0
+        # 镜像基:Rm_L = Sx·Rm·D(D=diag(1,−1,1) 保右手系;与体侧 X_L 的
+        # 「叉积换序」recipe 配对,M_L = Rm_L·X_Lᵀ 仍是纯旋转)
+        hframe = np.diag([-1.0, 1.0, 1.0]) @ hframe @ np.diag([1.0, -1.0, 1.0])
         # posedirs 镜像:左位姿 R' = M·R·M ⇒ 系数 (R'−I)_ab = s_a·s_b·(R−I)_ab
         # (s = [−1,1,1]),故 P_L[j,a,b] = s_a·s_b · M · P_R[j,a,b]。不用官方
         # MANO_LEFT 的 posedirs:几何走镜像右手,修正场必须严格自洽。
@@ -798,6 +805,9 @@ def convert(hand: str, fused: dict, subdiv: bool, mirror: bool = False) -> dict:
         # 前臂绑定伸向(腕→肘,资产空间单位向量;左手已镜像)。运行时据此算
         # forearm 骨的摆动旋转(目标 = 肘锚方向)。
         "forearmDir": fdir.tolist(),
+        # 融合手系基(行优先 3×3,列 = fwd/ym/zm,资产模板空间;左手已镜像)。
+        # 全身体 rig 焊臂用:R_body = gq·dq·(align·Rm)·Xᵀ,见 smplxBody.ts。
+        "handFrame": hframe.tolist(),
     }
 
 
@@ -856,22 +866,25 @@ def convert_smplx_fullbody(d: dict) -> dict:
 
 
 # SMPL-X 55 关节标准布局里全身层需要的命名下标(smplx codebase 固定)。
+# index1/pinky1:体侧前臂绑定基 X(掌法向叉积 recipe,与 fuse 的 zg 同款)用。
 SMPLX_BODY_J = {
     "pelvis": 0, "spine1": 3, "spine2": 6, "spine3": 9, "neck": 12, "head": 15,
     "left_collar": 13, "right_collar": 14,
     "left_shoulder": 16, "right_shoulder": 17,
     "left_elbow": 18, "right_elbow": 19,
     "left_wrist": 20, "right_wrist": 21,
+    "left_index1": 25, "left_pinky1": 31,
+    "right_index1": 40, "right_pinky1": 46,
 }
 
 
 def convert_smplx_body_rig(d: dict) -> dict:
-    """SMPL-X 全身可动 rig(@1,「完整人还原魔方」用):T-pose 本体 + 55 关节
-    骨架 + top-4 稀疏蒙皮权重。双臂在「腕内 150mm」半空间切除 —— 前臂+手由 @4
-    手资产接管(其前臂从腕向肘伸 155mm,留 ~5mm 套接重叠遮开口;T-pose 双臂沿
-    ±x 水平伸出,该半空间恰只含前臂尖+手,躯干/头/腿不受影响)。posedirs 不导
-    出:躯干/腿静态站姿(T-pose 即站立)、运行时只做双臂 2 骨 IK,省 ~14MB。
-    同 MANO 授权:产物禁 commit。"""
+    """SMPL-X 全身可动 rig(@2,「完整人还原魔方」用):T-pose 本体 + 55 关节
+    骨架 + top-4 稀疏蒙皮权重。双臂在「腕内 132mm」半空间切除并在套接区径向内
+    缩 —— 前臂+手由 @4 手资产接管(其前臂从腕向肘伸 155mm,体残段藏在其管内;
+    T-pose 双臂沿 ±x 水平伸出,该半空间恰只含前臂尖+手,躯干/头/腿不受影响)。
+    posedirs 不导出:躯干/腿静态站姿(T-pose 即站立)、运行时只做双臂 2 骨 IK,
+    省 ~14MB。同 MANO 授权:产物禁 commit。"""
     v = np.asarray(d["v_template"], dtype=np.float64)       # (10475,3) m
     f = np.asarray(d["f"], dtype=np.int64)
     w = np.asarray(d["weights"], dtype=np.float64)          # (10475,55)
@@ -884,7 +897,10 @@ def convert_smplx_body_rig(d: dict) -> dict:
     if vol < 0:
         f = f[:, ::-1].copy()
     keep = np.ones(len(v), dtype=bool)
-    CUT = 0.150
+    # CUT 130mm < 手资产前臂 155mm:锯齿切口(整三角剔除,边界顶点最深 =
+    # CUT+最长边,SMPL-X 前臂最长边 ~21mm)必须全部落在手管覆盖区内,否则接缝
+    # 露洞(2026-07-11 实测;CUT=132 时边界达 153.1mm,贴 153 安全线)。
+    CUT = 0.130
     for side in ("left", "right"):
         wj = J[SMPLX_BODY_J[f"{side}_wrist"]]
         ej = J[SMPLX_BODY_J[f"{side}_elbow"]]
@@ -895,6 +911,34 @@ def convert_smplx_body_rig(d: dict) -> dict:
     remap = np.full(len(v), -1, dtype=np.int64)
     remap[used] = np.arange(len(used))
     vb, fb, wb = v[used], remap[fsel], w[used]
+    # 套接区径向内缩:腕内 [CUT,155mm] 全深 1.5mm、155→190mm 渐出 —— 体残段藏
+    # 进手前臂管内(体网格未过 Loop 细分,比手管略胖;左臂也非逐点精确镜像),
+    # 防共面闪烁/顶穿;155mm 处台阶 1.5mm 由手管肘端封盖遮边。
+    INSET, I_HI, I_END = 0.0015, 0.155, 0.190
+    for side in ("left", "right"):
+        wj = J[SMPLX_BODY_J[f"{side}_wrist"]]
+        ej = J[SMPLX_BODY_J[f"{side}_elbow"]]
+        ax = (wj - ej) / np.linalg.norm(wj - ej)
+        dd = -((vb - wj) @ ax)                               # 腕内深度(对侧/躯干为大值→t=0)
+        t = np.clip((I_END - dd) / (I_END - I_HI), 0.0, 1.0)
+        rad = (vb - wj) + dd[:, None] * ax                   # 径向分量(去轴向)
+        rn = np.linalg.norm(rad, axis=1, keepdims=True)
+        vb = vb - rad / np.maximum(rn, 1e-9) * (INSET * t)[:, None]
+    # 质量闸:腕邻域恰两个开口环(双臂切口;模板自带的头部小开口放行),且
+    # 锯齿边界全部 ≤153mm(手管 155mm 盖住,否则接缝露洞)
+    loops_b, _ = find_border_loops(fb)
+    arm_loops = 0
+    for L in loops_b:
+        dmin = np.full(len(L), np.inf)
+        for side in ("left", "right"):
+            wj = J[SMPLX_BODY_J[f"{side}_wrist"]]
+            ej = J[SMPLX_BODY_J[f"{side}_elbow"]]
+            ax = (wj - ej) / np.linalg.norm(wj - ej)
+            dmin = np.minimum(dmin, -((vb[L] - wj) @ ax))
+        if dmin.max() < 0.30:  # 腕 300mm 内 = 臂切口(模板头部开口离腕 >0.5m)
+            arm_loops += 1
+            assert dmin.max() < 0.153, f"body-rig: cut boundary reaches {dmin.max() * 1000:.1f} mm inboard (> hand forearm 155mm coverage)"
+    assert arm_loops == 2, f"body-rig: expected 2 arm-cut loops near wrists, got {arm_loops} (total {len(loops_b)})"
     fn = np.cross(vb[fb[:, 1]] - vb[fb[:, 0]], vb[fb[:, 2]] - vb[fb[:, 0]])
     nrm = np.zeros_like(vb)
     for k3 in range(3):
@@ -906,7 +950,7 @@ def convert_smplx_body_rig(d: dict) -> dict:
     height = float(v[:, 1].max() - v[:, 1].min())
     print(f"[convert-mano] smplx body-rig: verts {len(vb)}/{len(v)} faces {len(fb)} joints {len(J)} | height {height:.3f} m")
     return {
-        "format": "cuberoot-smplx-bodyrig@1",
+        "format": "cuberoot-smplx-bodyrig@2",
         "counts": {"verts": len(vb), "faces": int(len(fb)), "joints": int(len(J))},
         "position": b64(vb, np.float32),
         "normal": b64(nrm, np.float32),

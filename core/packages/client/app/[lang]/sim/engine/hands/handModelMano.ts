@@ -39,6 +39,9 @@ export interface ManoHandData {
   posedirsScale: string; // b64 float32 (135,) 逐系数反量化尺度
   /** @4:融合前臂的绑定臂伸向(腕→肘,资产空间单位向量;左手已镜像)。 */
   forearmDir: [number, number, number];
+  /** 融合手系基 Rm(行优先 3×3,列 = fwd/ym/zm;左手已镜像)。全身体 rig
+   *  焊臂用;旧资产可缺(体臂退化为静止姿)。 */
+  handFrame?: number[][];
 }
 
 /** 拇指弯曲平面 roll(rad,MANO 绑定解剖系)。generic-hand 是 2.074;MANO
@@ -118,6 +121,7 @@ export function buildManoHand(data: ManoHandData, side: 1 | -1, skinMat: THREE.M
     thumbRoll: MANO_THUMB_ROLL,
     nailHalfWK: MANO_NAIL_HALFW_K,
     forearmDirAsset: data.forearmDir,
+    handFrame: data.handFrame,
   });
   model.poseCorrective = makePoseCorrective(model, geo, data, n);
   return model;
