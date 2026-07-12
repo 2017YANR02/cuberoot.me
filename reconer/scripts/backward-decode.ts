@@ -354,7 +354,10 @@ const lse2 = (a: number, b: number): number => {
   const m = Math.max(a, b);
   return m + Math.log(Math.exp(a - m) + Math.exp(b - m));
 };
-function chainLL(read: (string | null)[], state: Perm, ai: number): number {
+function chainLL(
+  read: (string | null)[], state: Perm, ai: number,
+  conf: LogConf = looConf, bg: Record<string, number> = logBg,
+): number {
   const assign = ASSIGNS_24[ai];
   const halo = PB > 0 ? getHalo(ai) : null;
   let best = -Infinity;
@@ -367,24 +370,24 @@ function chainLL(read: (string | null)[], state: Perm, ai: number): number {
       const r = ((i / 3) | 0) + dr, c = (i % 3) + dc;
       if (r >= 0 && r < 3 && c >= 0 && c < 3) {
         const j = r * 3 + c;
-        let p = Math.exp(looConf[`${predColor(state, assign[j])}${rd}`]);
+        let p = Math.exp(conf[`${predColor(state, assign[j])}${rd}`]);
         if (halo) {
           const cands = halo.bleed[j];
           if (cands.length) {
             let pH = 0;
-            for (const hf of cands) pH += Math.exp(looConf[`${predColor(state, hf)}${rd}`]);
+            for (const hf of cands) pH += Math.exp(conf[`${predColor(state, hf)}${rd}`]);
             p = (1 - PB) * p + PB * (pH / cands.length);
           }
         }
         s += Math.log(JUNK > 0 ? (1 - JUNK) * p + JUNK / 6 : p);
       } else {
         // 移出面外: halo 在场时按 0.5 渗色 + 0.5 背景, 否则背景 (真色未知)
-        const pBg = Math.exp(logBg[rd]);
+        const pBg = Math.exp(bg[rd]);
         if (halo) {
           const hf = halo.out[(r + 1) * 5 + (c + 1)];
-          const pH = hf >= 0 ? Math.exp(looConf[`${predColor(state, hf)}${rd}`]) : pBg;
+          const pH = hf >= 0 ? Math.exp(conf[`${predColor(state, hf)}${rd}`]) : pBg;
           s += Math.log(0.5 * pH + 0.5 * pBg);
-        } else s += logBg[rd];
+        } else s += bg[rd];
       }
     }
     if (s > best) best = s;
@@ -394,6 +397,40 @@ function chainLL(read: (string | null)[], state: Perm, ai: number): number {
     }
   }
   return MARG ? lseNum - lsePri : best;
+}
+
+// --dump2 <path> [--dump2w <w>]: 双证据合奏 — 同一提取的第二读数轨 (如 hdpool
+// kNN 共识 dump), 每链叠加第二读数似然 ×w。两轨错误结构互补 (实测 v2/v5 喜 vivid,
+// v3/v4 喜池), 似然相加免去逐视频配置选择。链结构不保证 1:1 (kNN 共识可空壳掉链),
+// 按 (端, 窗, 中心最近) 几何匹配; 混淆/背景用第二 dump 自身留一矩阵。
+const DUMP2_PATH = argAt("--dump2");
+const DUMP2_W = parseFloat(argAt("--dump2w") ?? "1");
+let reads2: ((string | null)[] | null)[][] | null = null;
+let conf2: LogConf = {}, bg2: Record<string, number> = {};
+if (DUMP2_PATH) {
+  const d2 = JSON.parse(readFileSync(DUMP2_PATH, "utf8")) as { videos: DumpVideo[] };
+  const v2 = d2.videos.find((x) => x.name === v.name);
+  if (!v2) throw new Error(`--dump2 缺视频 ${v.name}`);
+  conf2 = buildLogConf(d2.videos.filter((x) => x.name !== v.name));
+  for (const rd of COLOR_NAMES) {
+    let s = 0;
+    for (const gt of COLOR_NAMES) s += Math.exp(conf2[`${gt}${rd}`]) / 6;
+    bg2[rd] = Math.log(s);
+  }
+  let matched = 0, total = 0;
+  reads2 = v.bounds.map((b, t) => b.map((c) => {
+    total++;
+    let best: DumpChain | null = null, bd = 25;
+    // 注意勿比 win: 主 dump 的 win 是解码器 cluster2 现算回写的, dump2 原始 null
+    for (const c2 of v2.bounds[t] ?? []) {
+      if (c2.end !== c.end) continue;
+      const d = Math.hypot((c2.cx ?? 0) - (c.cx ?? 0), (c2.cy ?? 0) - (c.cy ?? 0));
+      if (d < bd) { bd = d; best = c2; }
+    }
+    if (best) matched++;
+    return best?.read ?? null;
+  }));
+  console.log(`dump2: ${DUMP2_PATH} 权重 ${DUMP2_W}, 链匹配 ${matched}/${total}`);
 }
 
 // --vlmev <w>: VLM 普查读数附加证据通道 (正⑱ 阶段3 原型)。不删不换管线读数,
@@ -418,12 +455,17 @@ const evidenceAt = (t: number, sMid: Perm, sAfter: Perm, a0: number, a1: number)
     let best = -Infinity;
     let acc = -Infinity; // marg: 窗口×端点均匀先验 log-mean-exp
     const vr = VLM_W > 0 ? vlmReads.get(`${t}-${ci}`) : undefined;
+    const r2 = reads2?.[t]?.[ci];
     for (const ai of pool) {
       const mid = chainLL(c.read, sMid, ai), aft = chainLL(c.read, sAfter, ai);
       let s = MARG ? lse2(mid, aft) - Math.LN2 : Math.max(mid, aft);
       if (vr) {
         const vm = chainLL(vr, sMid, ai), va = chainLL(vr, sAfter, ai);
         s += VLM_W * (MARG ? lse2(vm, va) - Math.LN2 : Math.max(vm, va));
+      }
+      if (r2) {
+        const m2 = chainLL(r2, sMid, ai, conf2, bg2), a2 = chainLL(r2, sAfter, ai, conf2, bg2);
+        s += DUMP2_W * (MARG ? lse2(m2, a2) - Math.LN2 : Math.max(m2, a2));
       }
       if (s > best) best = s;
       if (MARG) acc = lse2(acc, s);
@@ -522,6 +564,8 @@ const bgOfBound = (t: number): number =>
     let b = c.read.reduce((a, r) => (r ? a + logBg[r] : a), 0);
     const vr = VLM_W > 0 ? vlmReads.get(`${t}-${ci}`) : undefined;
     if (vr) b += VLM_W * vr.reduce((a, r) => (r ? a + logBg[r] : a), 0);
+    const r2 = reads2?.[t]?.[ci];
+    if (r2) b += DUMP2_W * r2.reduce((a, r) => (r ? a + bg2[r] : a), 0);
     return s + b;
   }, 0);
 /** bgSuffix[d] = 深度 d 耗尽后, 剩余边界 (深度 d+1..L) 的背景分总和 */
