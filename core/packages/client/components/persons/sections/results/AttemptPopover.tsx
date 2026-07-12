@@ -10,8 +10,15 @@
 //   ⑤ 编辑变更记录(管理员):打开整条变更记录编辑模态(onEditRecord)。
 // 触发件用真 <button>(iOS Safari tap 可靠),浮层 portal 到 body + position:fixed,逃出表格 overflow 裁切;
 // 结构/定位内联(dev CSS HMR 滞后也不塌),配色走主题 token。
+//
+// 性能:选手页一张表可有数千把成绩,若每把都常驻整套弹窗 state(~13 useState + 3 useEffect + 急切
+// loadReconEngine 读 localStorage),整表 re-render(reconLookup / changeMap / livePrRanks 陆续到达)
+// 就要 reconcile 数千个重组件 → 100~350ms 长任务、鼠标一顿一顿。故拆成两层:
+//   · <AttemptPopover>(常驻)= 极轻触发 <button>,只持 open + anchorRef,无 recon/编辑 state、不碰 localStorage;
+//   · <AttemptPopoverBody>(懒挂载)= 点开那一把才挂,承载复盘/编辑/视频/定位全部重逻辑。
+// 公开 API 不变(选手页 AttemptsList / comp 页 CompDetailPage 均无需改动)。
 
-import { useState, useRef, useEffect, useCallback, type CSSProperties } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect, type CSSProperties, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, X } from 'lucide-react';
 import Link from '@/components/AppLink';
@@ -154,11 +161,7 @@ const videoAddBtnStyle: CSSProperties = {
   background: 'var(--accent)', color: 'var(--accent-foreground, #fff)', border: 'none', borderRadius: 6,
 };
 
-export function AttemptPopover({
-  value, eventId, penalty, penaltyNote, format, cls, oldValues, rankBadge, reconHref, hasRecon, reconId,
-  canEdit, isAdmin, isOwner, onEdit, onSetOriginal, onSetPenalty, onEditRecord, video,
-  reconClassName = 'wp-att-recon', plainClassName = 'wp-att-tonew', showOldBelow = true,
-}: {
+interface AttemptPopoverProps {
   value: number;
   eventId: string;
   penalty?: number;
@@ -189,18 +192,84 @@ export function AttemptPopover({
   plainClassName?: string;
   // 被改那把的旧值堆到下方(绝对定位,需所在格 position:relative + 留底部空间)。comp 表格行高紧,传 false 关掉。
   showOldBelow?: boolean;
-}) {
+}
+
+// ── 常驻层:极轻触发 <button> ──────────────────────────────────────────
+// 只持 open + anchorRef(2 个 hook),不碰复盘/编辑 state、不读 localStorage。关闭时 DOM/开销与一段
+// 静态成绩几乎无异;数千把成绩同表也不再拖垮 reconcile。点开才挂 <AttemptPopoverBody>。
+export function AttemptPopover({
+  value, penalty, format, cls, oldValues, rankBadge, hasRecon,
+  reconClassName = 'wp-att-recon', plainClassName = 'wp-att-tonew', showOldBelow = true,
+  ...bodyProps
+}: AttemptPopoverProps) {
   const anchorRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+
+  return (
+    <>
+      <button
+        type="button"
+        ref={anchorRef}
+        className={`${cls ?? ''} ${hasRecon ? reconClassName : plainClassName}`}
+        style={triggerReset}
+        title={tr({ zh: '点击查看 / 复盘 / 编辑', en: 'Click to view / reconstruct / edit' })}
+        onClick={(e) => { e.stopPropagation(); setOpen((o) => !o); }}
+      ><SolveValue value={value} penalty={penalty} format={format} note={(penalty ?? 0) > 0 ? bodyProps.penaltyNote : undefined} />{rankBadge}{showOldBelow && <AttemptBelow oldValues={oldValues} format={format} />}</button>
+      {open && (
+        <AttemptPopoverBody
+          anchorRef={anchorRef}
+          onClose={close}
+          value={value}
+          penalty={penalty}
+          format={format}
+          hasRecon={hasRecon}
+          {...bodyProps}
+        />
+      )}
+    </>
+  );
+}
+
+// ── 懒挂载层:承载复盘 / 编辑 / 视频 / 定位的全部重逻辑 ──────────────────
+// 仅在对应那把成绩被点开时挂载;卸载即清空全部编辑/复盘 state(无需手动 reset)。
+function AttemptPopoverBody({
+  anchorRef, onClose,
+  value, eventId, penalty, penaltyNote, format, reconHref, hasRecon, reconId,
+  canEdit, isAdmin, isOwner, onEdit, onSetOriginal, onSetPenalty, onEditRecord, video,
+}: Omit<AttemptPopoverProps, 'cls' | 'oldValues' | 'rankBadge' | 'reconClassName' | 'plainClassName' | 'showOldBelow'> & {
+  anchorRef: RefObject<HTMLButtonElement | null>;
+  onClose: () => void;
+}) {
   const popRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  const pn = penalty ?? 0;
+
+  // 初始定位在挂载前同步算好(anchor 按钮此刻已在 DOM),避免首帧闪现在错位处。
+  const computePos = useCallback((measured?: number): { top: number; left: number } | null => {
+    const el = anchorRef.current;
+    if (typeof window === 'undefined' || !el) return null;
+    const r = el.getBoundingClientRect();
+    const effW = Math.min(BASE_W, window.innerWidth - 2 * MARGIN);
+    const halfW = effW / 2;
+    const h = measured ?? popRef.current?.offsetHeight ?? 280; // 首帧估值,挂载后用实测高度
+    const left = Math.min(Math.max(r.left + r.width / 2, halfW + MARGIN), window.innerWidth - halfW - MARGIN);
+    let top = r.bottom + 6;
+    if (top + h > window.innerHeight - MARGIN) {
+      const above = r.top - 6 - h;
+      top = above >= MARGIN ? above : Math.max(MARGIN, window.innerHeight - h - MARGIN);
+    }
+    return { top, left };
+  }, [anchorRef]);
+
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(() => computePos());
   const [mode, setMode] = useState<'orig' | 'next' | 'penalty'>('orig');
   const [orig, setOrig] = useState('');
   const [next, setNext] = useState('');
-  const [pen, setPen] = useState('1');
-  const [note, setNote] = useState('');
+  const [pen, setPen] = useState(() => (pn > 0 ? String(Math.round(pn / PENALTY_STEP_CS)) : '1'));
+  const [note, setNote] = useState(penaltyNote ?? '');
   const [busy, setBusy] = useState(false);
   const [reconSolve, setReconSolve] = useState<ReconSolve | null>(null);
   const [justAdded, setJustAdded] = useState<string[]>([]);
@@ -208,7 +277,11 @@ export function AttemptPopover({
   const [vidBusy, setVidBusy] = useState(false);
   const [engine] = useState<ReconEngine>(() => loadReconEngine());
 
-  const pn = penalty ?? 0;
+  const reposition = useCallback(() => {
+    const p = computePos();
+    if (p) setPos(p);
+  }, [computePos]);
+
   const reason = penaltyNote?.trim();
   const maxPenaltyCount = maxPenaltySteps(eventId, value);
   const allowPenalty = canPenalizeAttempt(eventId, value);
@@ -231,41 +304,19 @@ export function AttemptPopover({
   // 无复盘时「去复盘」带上已知视频(已批准 + 本次刚加)→ /recon/submit 预填。
   const reconLinkHref = hasRecon ? reconHref : withVideoParam(reconHref, uniq([...approvedVideos, ...justAdded]).join('\n'));
 
-  const reposition = useCallback(() => {
-    const el = anchorRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const effW = Math.min(BASE_W, window.innerWidth - 2 * MARGIN);
-    const halfW = effW / 2;
-    const h = popRef.current?.offsetHeight ?? 280; // 首帧估值,挂载后用实测高度
-    const left = Math.min(Math.max(r.left + r.width / 2, halfW + MARGIN), window.innerWidth - halfW - MARGIN);
-    let top = r.bottom + 6;
-    if (top + h > window.innerHeight - MARGIN) {
-      const above = r.top - 6 - h;
-      top = above >= MARGIN ? above : Math.max(MARGIN, window.innerHeight - h - MARGIN);
-    }
-    setPos({ top, left });
-  }, []);
-
-  const close = useCallback(() => {
-    setOpen(false);
-    setMode('orig'); setOrig(''); setNext(''); setPen('1'); setNote('');
-    setVidInput('');
-  }, []);
-
-  // 有复盘:点开懒取整条复盘(缓存按 reconId 去重)→ 内嵌播放器 + 解法 + 视频封面。
+  // 有复盘:挂载即懒取整条复盘(缓存按 reconId 去重)→ 内嵌播放器 + 解法 + 视频封面。
   useEffect(() => {
-    if (!open || !reconId) return;
+    if (!reconId) return;
     let alive = true;
     void loadRecon(reconId).then((s) => { if (alive) setReconSolve(s); });
     return () => { alive = false; };
-  }, [open, reconId]);
+  }, [reconId]);
 
-  useEffect(() => {
-    if (!open) return;
+  // 挂载后用实测高度重新定位(翻转/夹取);滚动/缩放跟随;Esc 关闭。
+  useLayoutEffect(() => {
     reposition();
     const onMove = () => reposition();
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('scroll', onMove, true);
     window.addEventListener('resize', onMove);
     window.addEventListener('keydown', onKey);
@@ -274,22 +325,13 @@ export function AttemptPopover({
       window.removeEventListener('resize', onMove);
       window.removeEventListener('keydown', onKey);
     };
-  }, [open, reposition, close]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reposition]);
 
   // 编辑模式切换、复盘/视频加载后高度变化 → 重新定位(翻转/夹取)。
   useEffect(() => {
-    if (open) reposition();
-  }, [mode, open, reposition, reconSolve, justAdded.length, showVideoSection]);
-
-  const toggle = () => {
-    if (open) { close(); return; }
-    // 编辑表单直接展开(不再藏在折叠后):打开即初始化罚时档位/原因默认值。
-    setMode('orig');
-    setPen(pn > 0 ? String(Math.round(pn / PENALTY_STEP_CS)) : '1');
-    setNote(penaltyNote ?? '');
     reposition();
-    setOpen(true);
-  };
+  }, [mode, reposition, reconSolve, justAdded.length, showVideoSection]);
 
   const addVideo = async () => {
     const u = vidInput.trim();
@@ -320,11 +362,11 @@ export function AttemptPopover({
       const noteChanged = n !== (penaltyNote ?? undefined);
       if (penCs !== pn || noteChanged) action = () => onSetPenalty?.(penCs, n);
     }
-    if (!action) { close(); return; }
+    if (!action) { onClose(); return; }
     setBusy(true);
     try {
       await action();
-      close();
+      onClose();
     } catch (e) {
       window.alert((e as Error).message);
     } finally {
@@ -332,191 +374,180 @@ export function AttemptPopover({
     }
   };
 
-  return (
+  if (!pos) return null;
+  return createPortal(
     <>
-      <button
-        type="button"
-        ref={anchorRef}
-        className={`${cls ?? ''} ${hasRecon ? reconClassName : plainClassName}`}
-        style={triggerReset}
-        title={tr({ zh: '点击查看 / 复盘 / 编辑', en: 'Click to view / reconstruct / edit' })}
-        onClick={(e) => { e.stopPropagation(); toggle(); }}
-      ><SolveValue value={value} penalty={penalty} format={format} note={pn > 0 ? penaltyNote : undefined} />{rankBadge}{showOldBelow && <AttemptBelow oldValues={oldValues} format={format} />}</button>
-      {open && pos && createPortal(
-        <>
-          <div style={backdropStyle} onClick={close} />
-          <div ref={popRef} style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
-            <div style={closeBarStyle}>
-              <button type="button" style={closeBtnStyle} onClick={close} aria-label={tr({ zh: '关闭', en: 'Close' })}>
-                <X size={16} />
-              </button>
-            </div>
-            {/* ① 复盘 + 动画演示(内嵌播放器 + 解法);没复盘 → 去复盘 */}
-            {showReconSection ? (
-              <div style={reconSectionStyle}>
-                <Link
-                  href={reconHref}
-                  prefetch={false}
-                  className="wp-att-menu-action"
-                  style={reconHeaderStyle}
-                  onClick={close}
-                >
-                  <span>{tr({ zh: '查看完整复盘', en: 'Full reconstruction' })}</span>
-                  <ChevronRight size={15} style={{ flexShrink: 0, opacity: 0.55 }} />
-                </Link>
-                {reconScramble ? (
-                  <>
-                    <div style={playerWrapStyle}>
-                      <ReconPlayerCanvas
-                        event={reconEvent}
-                        scramble={reconScramble}
-                        displayText={reconSolution}
-                        playerRef={playerRef}
-                        engine={engine}
-                        fillPane
-                        hideControls
-                      />
-                    </div>
-                    {/* 解法前先放打乱(用户要求);点解法文字可 scrub 播放器 */}
-                    <div style={scrambleLineStyle}>{reconScramble}</div>
-                    {reconSolution && (
-                      <div style={solutionWrapStyle}>
-                        <SolutionView text={reconSolution} playerRef={playerRef} />
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div style={playerLoadingStyle}>{tr({ zh: '载入复盘…', en: 'Loading…' })}</div>
-                )}
-              </div>
-            ) : (
-              <Link
-                href={reconLinkHref}
-                prefetch={false}
-                className="wp-att-menu-action"
-                style={actionStyle}
-                onClick={close}
-              >
-                <span>{tr({ zh: '去复盘', en: 'Reconstruct' })}</span>
-                <ChevronRight size={15} style={{ flexShrink: 0, opacity: 0.55 }} />
-              </Link>
-            )}
-
-            {/* ② 判罚原因(只读) */}
-            {pn > 0 && (
-              <div style={reasonStyle}>
-                <span style={reasonLabelStyle}>{tr({ zh: '判罚原因', en: 'Penalty reason' })}</span>
-                {reason
-                  ? <span style={reasonTextStyle}>{reason}</span>
-                  : <span style={reasonEmptyStyle}>{tr({ zh: '未记录', en: 'not recorded' })}</span>}
-              </div>
-            )}
-
-            {/* ③ 比赛视频(复盘自带 + 已批准 + 提议;登录用户可粘链接,非管理员待审核) */}
-            {showVideoSection && (
-              <div style={videoSectionStyle}>
-                <span style={reasonLabelStyle}>{tr({ zh: '比赛视频', en: 'Competition video' })}</span>
-                {(confirmedVideos.length > 0 || pendingOnlyVideos.length > 0) && (
-                  <div style={videoThumbsStyle}>
-                    {confirmedVideos.map((u, k) => <VideoCoverThumb key={`c${k}`} url={u} />)}
-                    {pendingOnlyVideos.map((u, k) => (
-                      <VideoCoverThumb key={`p${k}`} url={u} pending pendingLabel={tr({ zh: '待审核', en: 'pending' })} />
-                    ))}
+      <div style={backdropStyle} onClick={onClose} />
+      <div ref={popRef} style={{ ...boxStyle, top: pos.top, left: pos.left }} role="dialog" onClick={(e) => e.stopPropagation()}>
+        <div style={closeBarStyle}>
+          <button type="button" style={closeBtnStyle} onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
+            <X size={16} />
+          </button>
+        </div>
+        {/* ① 复盘 + 动画演示(内嵌播放器 + 解法);没复盘 → 去复盘 */}
+        {showReconSection ? (
+          <div style={reconSectionStyle}>
+            <Link
+              href={reconHref}
+              prefetch={false}
+              className="wp-att-menu-action"
+              style={reconHeaderStyle}
+              onClick={onClose}
+            >
+              <span>{tr({ zh: '查看完整复盘', en: 'Full reconstruction' })}</span>
+              <ChevronRight size={15} style={{ flexShrink: 0, opacity: 0.55 }} />
+            </Link>
+            {reconScramble ? (
+              <>
+                <div style={playerWrapStyle}>
+                  <ReconPlayerCanvas
+                    event={reconEvent}
+                    scramble={reconScramble}
+                    displayText={reconSolution}
+                    playerRef={playerRef}
+                    engine={engine}
+                    fillPane
+                    hideControls
+                  />
+                </div>
+                {/* 解法前先放打乱(用户要求);点解法文字可 scrub 播放器 */}
+                <div style={scrambleLineStyle}>{reconScramble}</div>
+                {reconSolution && (
+                  <div style={solutionWrapStyle}>
+                    <SolutionView text={reconSolution} playerRef={playerRef} />
                   </div>
                 )}
-                {canAddVideo && (
-                  <>
-                    <div style={videoAddRowStyle}>
-                      <input
-                        style={inputStyle}
-                        placeholder={tr({ zh: '粘贴视频链接(B 站 / 抖音 / YouTube)', en: 'Paste video link' })}
-                        value={vidInput}
-                        onChange={(e) => setVidInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') addVideo(); else if (e.key === 'Escape') close(); }}
-                      />
-                      <button type="button" style={videoAddBtnStyle} onClick={addVideo} disabled={vidBusy || !vidInput.trim()}>
-                        {vidBusy ? '…' : tr({ zh: '添加', en: 'Add' })}
-                      </button>
-                    </div>
-                    {!isAdmin && (
-                      <span style={{ fontSize: '0.66rem', color: 'var(--muted-foreground)', lineHeight: 1.4 }}>
-                        {tr({ zh: '提交后需管理员审核才公开', en: 'Submitted for admin review before going public' })}
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* ④ 编辑(登录用户)— 直接展开,不藏在折叠后 */}
-            {canEdit && (
-              <>
-                <span style={editLabelStyle}>{isAdmin
-                  ? tr({ zh: '编辑这一把(原始 / 改判 / 罚时)', en: 'Edit this solve' })
-                  : tr({ zh: '提议修改(需审核;自己的 +2 即时)', en: 'Propose an edit' })}</span>
-                <div style={formStyle}>
-                  <label style={rowStyle}>
-                    <span style={rowLabelStyle}>{tr({ zh: '操作', en: 'Action' })}</span>
-                    <select style={inputStyle} value={mode} onChange={(e) => setMode(e.target.value as 'orig' | 'next' | 'penalty')}>
-                      {allowPenalty && <option value="penalty">{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</option>}
-                      <option value="orig">{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</option>
-                      <option value="next">{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</option>
-                    </select>
-                  </label>
-                  <span style={curStyle}>{tr({ zh: '当前', en: 'now' })} <SolveValue value={value} penalty={penalty} format={format} /></span>
-                  {mode === 'orig' && (
-                    <label style={rowStyle}>
-                      <span style={rowLabelStyle}>{tr({ zh: '原始值(更正前)', en: 'Original value' })}</span>
-                      <input style={inputStyle} value={orig} onChange={(e) => setOrig(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }} />
-                    </label>
-                  )}
-                  {mode === 'next' && (
-                    <label style={rowStyle}>
-                      <span style={rowLabelStyle}>{tr({ zh: '改判为(更正后)', en: 'Corrected to' })}</span>
-                      <input style={inputStyle} value={next} onChange={(e) => setNext(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }} />
-                    </label>
-                  )}
-                  {mode === 'penalty' && allowPenalty && (
-                    <label style={rowStyle}>
-                      <span style={rowLabelStyle}>{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</span>
-                      <select style={inputStyle} value={pen} onChange={(e) => setPen(e.target.value)}>
-                        {Array.from({ length: maxPenaltyCount }, (_, i) => i + 1).map((n) => (
-                          <option key={n} value={n}>+{n * 2}</option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  <label style={rowStyle}>
-                    <span style={rowLabelStyle}>{tr({ zh: '原因', en: 'Reason' })}</span>
-                    <input style={inputStyle} value={note} onChange={(e) => setNote(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') close(); }} />
-                  </label>
-                  {pendingForMode && (
-                    <span style={{ fontSize: '0.68rem', color: 'var(--muted-foreground)', lineHeight: 1.4 }}>
-                      {tr({ zh: '提交后需管理员审核才上线', en: 'Submitted for admin review before going live' })}
-                    </span>
-                  )}
-                  <span style={actionsStyle}>
-                    <button type="button" style={saveStyle} onClick={save} disabled={busy}>
-                      {busy ? '…' : (pendingForMode ? tr({ zh: '提交', en: 'Submit' }) : tr({ zh: '保存', en: 'Save' }))}
-                    </button>
-                  </span>
-                </div>
               </>
-            )}
-
-            {/* ⑤ 编辑变更记录(管理员) */}
-            {isAdmin && onEditRecord && (
-              <button type="button" style={recordBtnStyle} onClick={() => { onEditRecord(); close(); }}>
-                {tr({ zh: '编辑变更记录…', en: 'Edit change record…' })}
-              </button>
+            ) : (
+              <div style={playerLoadingStyle}>{tr({ zh: '载入复盘…', en: 'Loading…' })}</div>
             )}
           </div>
-        </>,
-        document.body,
-      )}
-    </>
+        ) : (
+          <Link
+            href={reconLinkHref}
+            prefetch={false}
+            className="wp-att-menu-action"
+            style={actionStyle}
+            onClick={onClose}
+          >
+            <span>{tr({ zh: '去复盘', en: 'Reconstruct' })}</span>
+            <ChevronRight size={15} style={{ flexShrink: 0, opacity: 0.55 }} />
+          </Link>
+        )}
+
+        {/* ② 判罚原因(只读) */}
+        {pn > 0 && (
+          <div style={reasonStyle}>
+            <span style={reasonLabelStyle}>{tr({ zh: '判罚原因', en: 'Penalty reason' })}</span>
+            {reason
+              ? <span style={reasonTextStyle}>{reason}</span>
+              : <span style={reasonEmptyStyle}>{tr({ zh: '未记录', en: 'not recorded' })}</span>}
+          </div>
+        )}
+
+        {/* ③ 比赛视频(复盘自带 + 已批准 + 提议;登录用户可粘链接,非管理员待审核) */}
+        {showVideoSection && (
+          <div style={videoSectionStyle}>
+            <span style={reasonLabelStyle}>{tr({ zh: '比赛视频', en: 'Competition video' })}</span>
+            {(confirmedVideos.length > 0 || pendingOnlyVideos.length > 0) && (
+              <div style={videoThumbsStyle}>
+                {confirmedVideos.map((u, k) => <VideoCoverThumb key={`c${k}`} url={u} />)}
+                {pendingOnlyVideos.map((u, k) => (
+                  <VideoCoverThumb key={`p${k}`} url={u} pending pendingLabel={tr({ zh: '待审核', en: 'pending' })} />
+                ))}
+              </div>
+            )}
+            {canAddVideo && (
+              <>
+                <div style={videoAddRowStyle}>
+                  <input
+                    style={inputStyle}
+                    placeholder={tr({ zh: '粘贴视频链接(B 站 / 抖音 / YouTube)', en: 'Paste video link' })}
+                    value={vidInput}
+                    onChange={(e) => setVidInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') addVideo(); else if (e.key === 'Escape') onClose(); }}
+                  />
+                  <button type="button" style={videoAddBtnStyle} onClick={addVideo} disabled={vidBusy || !vidInput.trim()}>
+                    {vidBusy ? '…' : tr({ zh: '添加', en: 'Add' })}
+                  </button>
+                </div>
+                {!isAdmin && (
+                  <span style={{ fontSize: '0.66rem', color: 'var(--muted-foreground)', lineHeight: 1.4 }}>
+                    {tr({ zh: '提交后需管理员审核才公开', en: 'Submitted for admin review before going public' })}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ④ 编辑(登录用户)— 直接展开,不藏在折叠后 */}
+        {canEdit && (
+          <>
+            <span style={editLabelStyle}>{isAdmin
+              ? tr({ zh: '编辑这一把(原始 / 改判 / 罚时)', en: 'Edit this solve' })
+              : tr({ zh: '提议修改(需审核;自己的 +2 即时)', en: 'Propose an edit' })}</span>
+            <div style={formStyle}>
+              <label style={rowStyle}>
+                <span style={rowLabelStyle}>{tr({ zh: '操作', en: 'Action' })}</span>
+                <select style={inputStyle} value={mode} onChange={(e) => setMode(e.target.value as 'orig' | 'next' | 'penalty')}>
+                  {allowPenalty && <option value="penalty">{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</option>}
+                  <option value="orig">{tr({ zh: '更正前(原始)', en: 'Original (before)' })}</option>
+                  <option value="next">{tr({ zh: '更正后(改判)', en: 'Corrected (after)' })}</option>
+                </select>
+              </label>
+              <span style={curStyle}>{tr({ zh: '当前', en: 'now' })} <SolveValue value={value} penalty={penalty} format={format} /></span>
+              {mode === 'orig' && (
+                <label style={rowStyle}>
+                  <span style={rowLabelStyle}>{tr({ zh: '原始值(更正前)', en: 'Original value' })}</span>
+                  <input style={inputStyle} value={orig} onChange={(e) => setOrig(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') onClose(); }} />
+                </label>
+              )}
+              {mode === 'next' && (
+                <label style={rowStyle}>
+                  <span style={rowLabelStyle}>{tr({ zh: '改判为(更正后)', en: 'Corrected to' })}</span>
+                  <input style={inputStyle} value={next} onChange={(e) => setNext(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') onClose(); }} />
+                </label>
+              )}
+              {mode === 'penalty' && allowPenalty && (
+                <label style={rowStyle}>
+                  <span style={rowLabelStyle}>{tr({ zh: '罚时(每档 +2)', en: 'Penalty (+2 each)' })}</span>
+                  <select style={inputStyle} value={pen} onChange={(e) => setPen(e.target.value)}>
+                    {Array.from({ length: maxPenaltyCount }, (_, i) => i + 1).map((n) => (
+                      <option key={n} value={n}>+{n * 2}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <label style={rowStyle}>
+                <span style={rowLabelStyle}>{tr({ zh: '原因', en: 'Reason' })}</span>
+                <input style={inputStyle} value={note} onChange={(e) => setNote(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') save(); else if (e.key === 'Escape') onClose(); }} />
+              </label>
+              {pendingForMode && (
+                <span style={{ fontSize: '0.68rem', color: 'var(--muted-foreground)', lineHeight: 1.4 }}>
+                  {tr({ zh: '提交后需管理员审核才上线', en: 'Submitted for admin review before going live' })}
+                </span>
+              )}
+              <span style={actionsStyle}>
+                <button type="button" style={saveStyle} onClick={save} disabled={busy}>
+                  {busy ? '…' : (pendingForMode ? tr({ zh: '提交', en: 'Submit' }) : tr({ zh: '保存', en: 'Save' }))}
+                </button>
+              </span>
+            </div>
+          </>
+        )}
+
+        {/* ⑤ 编辑变更记录(管理员) */}
+        {isAdmin && onEditRecord && (
+          <button type="button" style={recordBtnStyle} onClick={() => { onEditRecord(); onClose(); }}>
+            {tr({ zh: '编辑变更记录…', en: 'Edit change record…' })}
+          </button>
+        )}
+      </div>
+    </>,
+    document.body,
   );
 }
