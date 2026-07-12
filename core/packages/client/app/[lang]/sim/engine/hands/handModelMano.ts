@@ -17,6 +17,7 @@
  * 图集布局无要求、只要求单射)与 generic 同路径烘焙,MANO 同享皮肤贴图。
  */
 import * as THREE from "three";
+import { staticUrl } from "@/lib/stats-base";
 import { adaptGltfHand } from "./handModelGltf";
 import { type FingerName, type HandModel } from "./handModel";
 
@@ -200,14 +201,19 @@ function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: M
   };
 }
 
-/** 浏览器加载入口(side=-1 → 右手)。资产 gitignored,
- *  未部署/未转换时 fetch 404 → 上抛,由 rig 侧回退 generic-hand 并告警。 */
+/** 浏览器加载入口(side=-1 → 右手)。资产 gitignored:dev 走本地 public/,
+ *  prod 走 static.cuberoot.me(作者授权后手动上传);缺失 404 → 上抛,由 rig
+ *  侧回退 generic-hand 并告警。内容变更必须 bump ?v=(30 天强缓存,不 bump
+ *  = 旧缓存静默降级,2026-07-12 焊臂实测教训)。 */
 export async function loadManoHand(side: 1 | -1, skinMat: THREE.Material): Promise<HandModel> {
   const name = side === -1 ? "right" : "left";
-  const url = `/sim/hands/mano/${name}.mano.json?v=4`;
+  const url = staticUrl(`/sim/hands/mano/${name}.mano.json`) + "?v=5";
   const res = await fetch(url);
   if (!res.ok) throw new Error(`mano hand asset missing (${res.status} ${url}) — run scripts/convert-mano.py`);
   const data = (await res.json()) as ManoHandData;
+  if (!data.handFrame) {
+    console.warn(`mano hand asset stale (no handFrame, ${url}) — body arms will stay in T-pose; hard-refresh or re-run scripts/convert-mano.py`);
+  }
   return buildManoHand(data, side, skinMat, `${name}.mano.json`);
 }
 
@@ -226,7 +232,7 @@ interface SmplxFullBodyData {
 
 /** 全身资产加载 + 组装几何(米制;缩放由调用方决定)。缺失 404 → 上抛。 */
 export async function loadSmplxFullBody(): Promise<{ geometry: THREE.BufferGeometry; heightM: number }> {
-  const url = "/sim/hands/smplx/fullbody.smplx.json?v=1";
+  const url = staticUrl("/sim/hands/smplx/fullbody.smplx.json") + "?v=1";
   const res = await fetch(url);
   if (!res.ok) throw new Error(`smplx fullbody asset missing (${res.status} ${url}) — run scripts/convert-mano.py`);
   const data = (await res.json()) as SmplxFullBodyData;
