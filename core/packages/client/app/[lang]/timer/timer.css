@@ -115,10 +115,11 @@
 }
 
 /* WCA 真实打乱来源行(国旗 + 比赛名 + 项目 + 轮次 + 打卡 chip),复刻首页 RecentScrambles 的来源行。
-   .scramble-src-row 是块级(非 inline-flex),永远独占一行、和上面的打乱公式换行显示,不随窗口
-   宽度偶然挤在同一行;内部再用 flex 居中排布来源徽标 + 打卡 chip。非等宽、word-spacing 复位
-   避免 CJK 被撑开。 */
+   父 .scramble-strip 是 flex-wrap 行容器(见 shell.css),所以本行必须 flex-basis:100% 独占整行,
+   才能永远换到打乱公式下一行;否则短打乱(2×2/金字塔)会和公式挤在同一行。内部再用 flex 居中排布
+   来源徽标 + 打卡 chip。非等宽、word-spacing 复位避免 CJK 被撑开。 */
 .scramble-src-row {
+  flex-basis: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
