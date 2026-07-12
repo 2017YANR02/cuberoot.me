@@ -231,8 +231,9 @@ function buildNailGeometry(args: {
 const TARGET_MIDDLE_LEN = 115 * U;
 
 /** 每骨「血色分数」:越远端越红(皮肤薄血管近),同程序化手 boneTint 的
- *  远端加权;顶点色 = Σ 蒙皮权重 × 分数 → 指尖聚血、掌根素净。 */
-function boneBloodScore(name: string): number {
+ *  远端加权;顶点色 = Σ 蒙皮权重 × 分数 → 指尖聚血、掌根素净。onepiece 傀儡
+ *  层(smplxBody)手区顶点色同源,导出共用。 */
+export function boneBloodScore(name: string): number {
   if (/-tip$/.test(name)) return 1.0;
   if (/phalanx-distal/.test(name)) return 0.85;
   if (/phalanx-intermediate/.test(name)) return 0.5;

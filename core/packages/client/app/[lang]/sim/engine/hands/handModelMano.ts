@@ -130,8 +130,9 @@ export function buildManoHand(data: ManoHandData, side: 1 | -1, skinMat: THREE.M
 
 /** MANO 关节 id(1..15,标准 kintree 序)→ WebXR 骨名;parent[j] 见 MANO
  *  kintree(四指近节的父 = 腕,MANO 无掌骨关节 —— 合成 meta 的旋转会并入
- *  近节相对腕的局部旋转,posedirs 语义正确)。 */
-const MANO_JOINT_BONES: string[] = [
+ *  近节相对腕的局部旋转,posedirs 语义正确)。onepiece 傀儡层(smplxBody)
+ *  按同序配对活手骨 ↔ 体网格手骨,导出共用。 */
+export const MANO_JOINT_BONES: string[] = [
   "wrist",
   "index-finger-phalanx-proximal", "index-finger-phalanx-intermediate", "index-finger-phalanx-distal",
   "middle-finger-phalanx-proximal", "middle-finger-phalanx-intermediate", "middle-finger-phalanx-distal",
@@ -139,7 +140,30 @@ const MANO_JOINT_BONES: string[] = [
   "ring-finger-phalanx-proximal", "ring-finger-phalanx-intermediate", "ring-finger-phalanx-distal",
   "thumb-metacarpal", "thumb-phalanx-proximal", "thumb-phalanx-distal",
 ];
-const MANO_JOINT_PARENT = [-1, 0, 1, 2, 0, 4, 5, 0, 7, 8, 0, 10, 11, 0, 13, 14];
+export const MANO_JOINT_PARENT = [-1, 0, 1, 2, 0, 4, 5, 0, 7, 8, 0, 10, 11, 0, 13, 14];
+
+const _qj = new THREE.Quaternion();
+const _qp = new THREE.Quaternion();
+const _qr = new THREE.Quaternion();
+const _mR = new THREE.Matrix4();
+
+/** posedirs 系数:各 MANO 关节「相对父骨的局部旋转」(R−I) 展平成 135 维。
+ *  bones = MANO_JOINT_BONES 同序的 16 个关节对象(世界四元数已刷新)。绑定时
+ *  全骨世界四元数 = align(attach 保世界),故 qp⁻¹·qj 直接给出模板系局部旋转
+ *  (align 共轭抵消,手根位姿同理)。活手修正与 onepiece 傀儡修正共用。 */
+export function manoPoseCoeffs(bones: THREE.Object3D[], c: Float32Array): void {
+  for (let j = 1; j <= 15; j++) {
+    bones[j].getWorldQuaternion(_qj);
+    bones[MANO_JOINT_PARENT[j]].getWorldQuaternion(_qp);
+    _qr.copy(_qp).invert().multiply(_qj);
+    _mR.makeRotationFromQuaternion(_qr);
+    const e = _mR.elements; // 列主序
+    const o = (j - 1) * 9;
+    c[o] = e[0] - 1; c[o + 1] = e[4]; c[o + 2] = e[8];
+    c[o + 3] = e[1]; c[o + 4] = e[5] - 1; c[o + 5] = e[9];
+    c[o + 6] = e[2]; c[o + 7] = e[6]; c[o + 8] = e[10] - 1;
+  }
+}
 
 /**
  * posedirs 姿态修正闭包:系数 = 各关节「相对父骨的局部旋转」(R−I) 展平。
@@ -168,20 +192,8 @@ function makePoseCorrective(model: HandModel, geo: THREE.BufferGeometry, data: M
   });
   const cLast = new Float32Array(135).fill(NaN);
   const c = new Float32Array(135);
-  const qj = new THREE.Quaternion(), qp = new THREE.Quaternion(), qr = new THREE.Quaternion();
-  const mR = new THREE.Matrix4();
   return () => {
-    for (let j = 1; j <= 15; j++) {
-      bones[j].getWorldQuaternion(qj);
-      bones[MANO_JOINT_PARENT[j]].getWorldQuaternion(qp);
-      qr.copy(qp).invert().multiply(qj);
-      mR.makeRotationFromQuaternion(qr);
-      const e = mR.elements; // 列主序
-      const o = (j - 1) * 9;
-      c[o] = e[0] - 1; c[o + 1] = e[4]; c[o + 2] = e[8];
-      c[o + 3] = e[1]; c[o + 4] = e[5] - 1; c[o + 5] = e[9];
-      c[o + 6] = e[2]; c[o + 7] = e[6]; c[o + 8] = e[10] - 1;
-    }
+    manoPoseCoeffs(bones, c);
     let dirty = false;
     for (let k = 0; k < 135; k++) {
       if (!(Math.abs(c[k] - cLast[k]) < 1e-3)) { dirty = true; break; }

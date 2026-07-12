@@ -14,6 +14,7 @@
  */
 import * as THREE from "three";
 import { SIZE } from "../define";
+import type { WrinkleJoint } from "./bakeHandTexture";
 
 export type FingerName = "thumb" | "index" | "middle" | "ring" | "pinky";
 
@@ -57,6 +58,9 @@ export interface HandModel {
    *  算系数并重写 geometry.position(系数不变时零开销早退 —— 待机呼吸只动
    *  手根,不触发)。 */
   poseCorrective?: () => void;
+  /** 皮肤烘焙时缓存的皱纹环带(bind 手系;computeHandMaps 写入)。onepiece
+   *  全身烘焙复用 —— 体烘焙晚于摆姿,bind 关节位届时已不可重建。 */
+  bakeWrinkles?: WrinkleJoint[];
   /** @4 融合前臂(转换期把 SMPL-X 前臂缝进手网格 —— 单一网格无腕缝):
    *  bone 绕腕摆动驱动前臂蒙皮;bindDir = 绑定态臂伸向(腕→肘,手局部单位
    *  向量);bindQuat = attach 进 group 后骨的局部四元数快照(Δ 摆动左乘)。
