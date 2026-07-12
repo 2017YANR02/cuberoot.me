@@ -86,9 +86,9 @@ const compRows: Record<string, { scramble: string; meta: WcaScrambleMeta }[]> = 
 // 用于让 UI 显式提示,而不是悄悄伪造一条本地生成打乱(无比赛来源、且不符所选难度)。
 // 与「瞬时空(还在加载 / 网络失败)」区分:后者不进此集合,稍后重取。
 const knownEmpty = new Set<string>();
-// 「按步数」date 模式客户端过滤:每个 key 连续多少批(每批 FETCH_COUNT 条)全被滤掉。
-// 连续 MAX_FILTER_BATCHES 批仍空才判 knownEmpty,避免偶发 0 命中误报(真题近上帝数,低步数稀)。
-const filterMisses = new Map<string, number>();
+// 「按步数」date 模式客户端过滤:一次 fillDate 内最多连抓这么多批(每批 FETCH_COUNT 条)找匹配,
+// 全空才判 knownEmpty。放在同一次 fill 内连抓(而非拆成 SoloView 的退避重试)——真题近上帝数,
+// 低步数区间可能整批被滤掉,若每批一次 fill、靠 UI 退避串起来会累计 1s→6s 才提示「无匹配」。
 const MAX_FILTER_BATCHES = 4;
 
 // localStorage persistence — so reopening the timer (or returning to a source /
@@ -232,48 +232,53 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
   const w = wev(spec);
   if (!w) return;
   const useOptimal = spec.optimal && supportsOptimal(w);
-  const qs = new URLSearchParams({ event: w, count: String(FETCH_COUNT) });
-  if (spec.from) qs.set('from', spec.from);
-  if (spec.to) qs.set('to', spec.to);
-  if (useOptimal) qs.set('optimal', '1'); // 服务端只回有最优等态的真题,池内每条都可切最优
-  // 难度过滤(date 模式):只回该 (方法,阶段,配色) 最优步数 ∈ steps 的真题。
-  if (spec.diff && spec.diff.steps.length > 0) {
-    qs.set('variant', spec.diff.variant);
-    qs.set('stage', spec.diff.stage);
-    qs.set('colors', spec.diff.colors);
-    qs.set('steps', [...spec.diff.steps].sort((a, b) => a - b).join(','));
-  }
-  const res = await fetch(apiUrl(`/v1/wca/scrambles/random?${qs.toString()}`));
-  // 难度无匹配时端点回 404 → 确认空(非瞬时错误),让 UI 显式提示。
-  if (res.status === 404) { knownEmpty.add(key); return; }
-  if (!res.ok) return; // 其它失败(5xx / 网络)= 瞬时,不标空,稍后重取
-  const data = (await res.json()) as { scrambles?: RandomItem[] };
-  const items = Array.isArray(data.scrambles) ? data.scrambles : [];
-  if (items.length === 0) { knownEmpty.add(key); return; }
+  const buildQs = () => {
+    const qs = new URLSearchParams({ event: w, count: String(FETCH_COUNT) });
+    if (spec.from) qs.set('from', spec.from);
+    if (spec.to) qs.set('to', spec.to);
+    if (useOptimal) qs.set('optimal', '1'); // 服务端只回有最优等态的真题,池内每条都可切最优
+    // 难度过滤(date 模式):只回该 (方法,阶段,配色) 最优步数 ∈ steps 的真题。
+    if (spec.diff && spec.diff.steps.length > 0) {
+      qs.set('variant', spec.diff.variant);
+      qs.set('stage', spec.diff.stage);
+      qs.set('colors', spec.diff.colors);
+      qs.set('steps', [...spec.diff.steps].sort((a, b) => a - b).join(','));
+    }
+    return qs;
+  };
   const q = (pools[key] ??= []);
-  let added = 0;
-  for (const it of items) {
-    if (!it?.scramble) continue;
-    // 最优模式且该条带最优等态 → 用最优打乱(同态,更短);否则用原打乱(服务器在稀有难度档无最优时回退)。
-    const useOpt = useOptimal && !!it.o;
-    const s = normalize(useOpt ? it.o! : it.scramble);
-    if (!stepPass(spec, s)) continue; // 「按步数」客户端过滤(服务端不懂 2×2/金字塔度量)
-    q.push(s);
-    added++;
-    rememberMeta(s, {
-      ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x,
-      ...(useOptimal && !useOpt ? { nonOptimal: true } : {}),
-    });
+  // 「按步数」客户端过滤时真题近上帝数、低步数区间可能整批被滤掉。同一次 fill 内连抓最多
+  // MAX_FILTER_BATCHES 批找匹配,命中即停;全空才判 knownEmpty —— 避免几秒退避后才提示无匹配。
+  // 无 stepFilter 时只抓一批(原行为)。
+  const maxBatches = spec.stepFilter ? MAX_FILTER_BATCHES : 1;
+  let totalAdded = 0;
+  for (let batch = 0; batch < maxBatches; batch++) {
+    const res = await fetch(apiUrl(`/v1/wca/scrambles/random?${buildQs().toString()}`));
+    // 难度无匹配时端点回 404 → 确认空(非瞬时错误),让 UI 显式提示。
+    if (res.status === 404) { knownEmpty.add(key); return; }
+    if (!res.ok) return; // 其它失败(5xx / 网络)= 瞬时,不标空,稍后重取
+    const data = (await res.json()) as { scrambles?: RandomItem[] };
+    const items = Array.isArray(data.scrambles) ? data.scrambles : [];
+    if (items.length === 0) { knownEmpty.add(key); return; }
+    let added = 0;
+    for (const it of items) {
+      if (!it?.scramble) continue;
+      // 最优模式且该条带最优等态 → 用最优打乱(同态,更短);否则用原打乱(服务器在稀有难度档无最优时回退)。
+      const useOpt = useOptimal && !!it.o;
+      const s = normalize(useOpt ? it.o! : it.scramble);
+      if (!stepPass(spec, s)) continue; // 「按步数」客户端过滤(服务端不懂 2×2/金字塔度量)
+      q.push(s);
+      added++;
+      rememberMeta(s, {
+        ci: it.ci, cn: it.cn, e: it.e, r: it.r, g: it.g, n: it.n, x: it.x,
+        ...(useOptimal && !useOpt ? { nonOptimal: true } : {}),
+      });
+    }
+    totalAdded += added;
+    if (added > 0) break; // 已找到匹配,不再多抓(短路,常态一批即够)
   }
-  // 「按步数」过滤后本批全被滤掉:真题近上帝数,低步数可能极稀。多试几批(每批 50 条)再判空,
-  // 避免偶发 0 命中就误报;连续 MAX 批仍空 → knownEmpty → UI 提示。有命中即清零。
-  if (spec.stepFilter && added === 0) {
-    const misses = (filterMisses.get(key) ?? 0) + 1;
-    filterMisses.set(key, misses);
-    if (misses >= MAX_FILTER_BATCHES) knownEmpty.add(key);
-    return;
-  }
-  filterMisses.delete(key);
+  // 连抓 maxBatches 批仍一条不落(仅 stepFilter 会到此)→ 该步数区间在真题里没有 → 确认空。
+  if (spec.stepFilter && totalAdded === 0) { knownEmpty.add(key); return; }
   knownEmpty.delete(key);
   persist();
 }
@@ -281,6 +286,9 @@ async function fillDate(spec: WcaSourceSpec, key: string): Promise<void> {
 function fill(spec: WcaSourceSpec): Promise<void> {
   const key = specKey(spec);
   if (!key) return Promise.resolve();
+  // 已确认无匹配(404 / 空 / 按步数区间在真题里不存在)就别再抓 —— 否则每次 peek(池空恒 < REFILL_AT)
+  // 都会再打一轮网络。改设置/度量/区间会得到新 key,自然不在此集合、重新尝试。
+  if (knownEmpty.has(key)) return Promise.resolve();
   const existing = inflight[key];
   if (existing) return existing;
   const p = (async () => {

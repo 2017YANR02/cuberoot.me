@@ -6,6 +6,10 @@
 .range-slider {
   position: relative;
   width: 100%;
+  /* 拖拽把手时别选中刻度文字(桌面拖动误选文字会闪 not-allowed/文本光标),触屏拖动别让页面滚动。 */
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
   --rs-h: 32px;
   --rs-thumb: 18px;
   --rs-rail: 6px;
