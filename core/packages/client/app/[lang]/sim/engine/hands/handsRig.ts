@@ -37,7 +37,7 @@ import * as THREE from "three";
 import { SIZE } from "../define";
 import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
 import { loadManoHand } from "./handModelMano";
-import { SmplxBody, loadSmplxBodyRig } from "./smplxBody";
+import { SmplxBody, loadSmplxOnePiece } from "./smplxBody";
 import { bakeHandTextures, type HandBakedMaps } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
 import { homeLeft, homeRight, type HandPose } from "./handPoses";
@@ -876,7 +876,8 @@ export default class HandsRig extends THREE.Group {
    *  加载完成后若开关已开则从 fade=0 淡入。 */
   private hands: Record<HandSide, HandState> | null = null;
   private cube: HandsCubeLike | null = null;
-  /** SMPL-X 全身(设置「全身人物」;懒加载,躯干静态 + 双臂追手,见 smplxBody.ts)。 */
+  /** SMPL-X 全身(设置「全身人物」;懒加载,onepiece 单网格傀儡 —— 肘臂腕手
+   *  同一块皮,手区逐骨同步活手,见 smplxBody.ts)。 */
   private body: SmplxBody | null = null;
   private bodyWanted = false;
   private bodyLoading = false;
@@ -1058,17 +1059,32 @@ export default class HandsRig extends THREE.Group {
     this.body.mat.opacity = op;
     this.body.mat.transparent = op < 1;
     this.body.mesh.visible = op > 0.01;
+    this.syncLiveSkin(); // 穿越带淡出后换回活手皮肤(近景与手部单开一致)
   }
   private bodyZoomFade = 1;
 
+  /** onepiece 全身渲染时隐藏活手皮肤网格:傀儡手区表面与活手逐点重合,双显 =
+   *  共面 z-fight。甲片/骨架线挂代理关节组,不在 meshes[0],照常显示;活手的
+   *  姿态/求解/修正照常运转(傀儡的数据源)。变焦穿越带把整人淡没(fade≤0.01)
+   *  后换回活手皮肤 —— 近景手部实心呈现与「手指」单开模式一致。 */
+  private syncLiveSkin(): void {
+    if (!this.hands) return;
+    const puppet = this.fullBodyOn && this.bodyZoomFade > 0.01;
+    for (const s of ["R", "L"] as const) {
+      this.hands[s].model.meshes[0].visible = !puppet;
+    }
+  }
+
   /** 设置「全身人物」(SimSettings.fullBody 驱动):SMPL-X 全身随手出场。
-   *  首开惰性 fetch + 建体(~770KB 一次);资产缺失静默降级(开关无效果)。
-   *  依赖手模就位(unitScale / home 放置),手未加载完时由 initAsync 尾部回放。 */
+   *  首开惰性 fetch + 建体(onepiece 单网格 ~8.7MB 一次,30 天强缓存);资产
+   *  缺失静默降级(开关无效果)。依赖手模就位(unitScale / 傀儡常量预算 /
+   *  home 放置),手未加载完时由 initAsync 尾部回放。 */
   setFullBody(want: boolean): void {
     this.bodyWanted = want;
     if (want) this.ensureBody();
     if (this.body) this.body.visible = want;
     this.syncCuffs();
+    this.syncLiveSkin();
   }
 
   get fullBodyOn(): boolean {
@@ -1089,11 +1105,11 @@ export default class HandsRig extends THREE.Group {
   private ensureBody(): void {
     if (this.body || this.bodyLoading || !this.hands) return;
     this.bodyLoading = true;
-    void loadSmplxBodyRig()
+    void loadSmplxOnePiece()
       .then((data) => {
         const hands = this.hands;
         if (!hands) { this.bodyLoading = false; return; }
-        const body = new SmplxBody(data, hands.R.model.unitScale, this.skinMat);
+        const body = new SmplxBody(data, { R: hands.R.model, L: hands.L.model }, this.skinMat);
         // home 姿一次放置:两侧肘目标 = home 腕点 + 前臂轴向 × 身体前臂长
         const elbowTarget = (side: HandSide): THREE.Vector3 => {
           const h = hands[side];
@@ -1110,6 +1126,9 @@ export default class HandsRig extends THREE.Group {
         this.bodyLoading = false;
         this.setBodyZoomFade(this.bodyZoomFade); // 资产晚于变焦态到位的回放
         this.syncCuffs();                        // 体臂接管断口,灰袖口退场
+        this.syncLiveSkin();                     // 傀儡接管手区,活手皮肤退场
+        // 全身贴图异步烘焙(基肤 + 双手皱纹;烘完热替换,失败留平色可用)
+        void body.bakeTextures().catch((e: unknown) => console.info("[sim hands] body texture bake failed:", e));
       })
       .catch((e: unknown) => {
         this.bodyLoading = false;
@@ -1765,6 +1784,9 @@ export default class HandsRig extends THREE.Group {
       }
       this.applyHand(side, keepalive);
     }
+    // onepiece 全身傀儡:两手姿态(applyHand 含 poseCorrective)全部落定后,
+    // 手骨逐骨解析同步 —— 傀儡手区表面与活手表面逐点重合(见 smplxBody)。
+    if (this.body && this.body.visible) this.body.syncHands();
     if (this.regripFlag && hands.R.recoverT >= 1 && hands.L.recoverT >= 1) {
       this.regripFlag = false;
     }
