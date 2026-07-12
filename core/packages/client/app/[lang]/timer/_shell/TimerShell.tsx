@@ -4,7 +4,9 @@
  * TimerShell — the mode host for /timer.
  *
  * One URL param owns the whole experience: ?players=1..4 (nuqs, default 1,
- * omitted from the URL when solo). players=1 renders SoloView; players>=2
+ * force-written even when default via clearOnDefault:false — a bare /timer
+ * gets ?players=1 on first paint so the URL is always shareable/bookmarkable
+ * with the exact mode). players=1 renders SoloView; players>=2
  * renders BattleView (2 = the original versus/side duo, 3/4 = 田字格 grid).
  * The old ?mode=solo|duo param and the solo/duo segmented pill are gone — the
  * single 人数 select (rendered here, injected into each view's chrome) is the
@@ -33,11 +35,18 @@ export default function TimerShell() {
   const [mounted, setMounted] = useState(false);
   const [playersParam, setPlayersParam] = useQueryState(
     'players',
-    parseAsInteger.withDefault(1).withOptions({ history: 'push' }),
+    parseAsInteger.withDefault(1).withOptions({ history: 'push', clearOnDefault: false }),
   );
   const playerCount = Math.max(1, Math.min(4, playersParam));
 
   useEffect(() => { setMounted(true); }, []);
+  // 裸 /timer 强制写显式 ?players=1(默认人数也进 URL,不再省略)。
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !new URLSearchParams(window.location.search).has('players')) {
+      void setPlayersParam(playerCount, { history: 'replace' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const playersControl = (
     <select

@@ -7,7 +7,7 @@
 
 import { create } from 'zustand';
 import type { PlayerState, SolveEntry, Session, BattleMode, BattleLayout, TabName } from './types';
-import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME } from './constants';
+import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME, DEFAULT_PLAYER_KEYS } from './constants';
 import type { PenaltyType } from './constants';
 import { generateScramble, generateScrambleImageUrl } from './scramble_engine';
 import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from '@/app/[lang]/timer/_shared/stats-core';
@@ -25,6 +25,24 @@ const BATTLE_TO_TIMER_EVENT: Record<string, EventId> = {
 };
 export function battleToTimerEvent(id: string): EventId {
   return (BATTLE_TO_TIMER_EVENT[id] ?? id) as EventId;
+}
+// Inverse of the above — used to read a shared /timer?event= link (written in
+// timer EventId form, matching Solo) back into battle-native puzzle ids.
+const TIMER_TO_BATTLE_EVENT: Record<string, string> = Object.fromEntries(
+  Object.entries(BATTLE_TO_TIMER_EVENT).map(([battleId, timerId]) => [timerId, battleId]),
+);
+export function timerToBattleEvent(id: string): string {
+  return TIMER_TO_BATTLE_EVENT[id] ?? id;
+}
+
+// KeyboardEvent.key → player slot, given the store's (possibly user-customized)
+// playerKeys. Single-letter keys compare case-insensitively (so 'q'/'Q' both hit
+// the slot bound to 'q'); Space/Enter/etc. compare exactly.
+export function keyToPlayer(playerKeys: string[], key: string): number | undefined {
+  const normalize = (k: string) => (k.length === 1 ? k.toLowerCase() : k);
+  const nk = normalize(key);
+  const idx = playerKeys.findIndex(k => normalize(k) === nk);
+  return idx === -1 ? undefined : idx;
 }
 
 /** Build the WCA source spec for a battle puzzle, reading the shared timer
@@ -165,10 +183,20 @@ export interface BattleState {
   // 每位玩家的项目 ID。Solo 只用 puzzleIds[0]
   // NOTE: 1v1 中各自独立选；同 id 的玩家强制同 scramble（见 loadNewScramble）
   puzzleIds: string[];
+  // NOTE: 每位玩家的计时键(KeyboardEvent.key 原样存;单字母大小写不敏感,由 keyToPlayer
+  //   归一化比较)。可在设置里自定义;冲突(和另一位玩家重复)时与对方互换,不会撞键。
+  playerKeys: string[];
+  // NOTE: 正在设置面板里录键的玩家槽位(null=没在录)。非持久化 UI 态 —— 录键期间
+  //   全局 useKeyboardControls 必须跳过(见 keyToPlayer 调用点),否则按下的键会先
+  //   被当成「计时按下」触发,而不是被捕获成新绑定。
+  recordingKeyFor: number | null;
   // 是否显示计时中的时间
   showTime: boolean;
   // 是否显示打乱图
   showImage: boolean;
+  // NOTE: 多人对战时是否把上排(3/4 人田字格)/ versus 上方玩家旋转 180°。
+  //   默认 true(围坐一桌、上排面向对面玩家);同向观看(如都站一侧)时可关。
+  flipTopRow: boolean;
   // WCA 观察倒计时时长（秒）：0=OFF, 8, 15(WCA), 9999=∞
   inspectionTime: number;
   // 观察语音提示（8s/12s）
@@ -231,6 +259,9 @@ export interface BattleState {
   resetAll: () => void;
   // target 只换该玩家。Solo 始终 target=0；1v1 各自独立
   changePuzzle: (target: number, puzzleId: string) => void;
+  // NOTE: 自定义按键;和另一位玩家当前键冲突时与其互换
+  setPlayerKey: (target: number, key: string) => void;
+  setRecordingKeyFor: (target: number | null) => void;
   setMode: (mode: BattleMode) => void;
   setLayout: (layout: BattleLayout) => void;
   // NOTE: 参战人数(2~4)。切换时重置回合/比分,按槽位重新加载各自历史
@@ -239,6 +270,7 @@ export interface BattleState {
   setVoice: (voice: boolean) => void;
   setPhases: (phases: number) => void;
   setShowImage: (show: boolean) => void;
+  setFlipTopRow: (flip: boolean) => void;
   setScrambleScale: (scale: number) => void;
   setBgOpacity: (opacity: number) => void;
   // NOTE: 单侧背景色;传空串清除
@@ -294,8 +326,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // NOTE: 人数由 URL ?players= 驱动(BattleView 同步进来),不持久化
   playerCount: 2,
   puzzleIds: loadInitialPuzzleIds(),
+  playerKeys: Array.from({ length: MAX_PLAYERS }, (_, i) =>
+    localStorage.getItem(LS_PREFIX + `key_${i}`) ?? DEFAULT_PLAYER_KEYS[i]),
+  recordingKeyFor: null,
   showTime: localStorage.getItem(LS_PREFIX + 'showTime') !== 'false',
   showImage: localStorage.getItem(LS_PREFIX + 'showImage') !== 'false',
+  flipTopRow: localStorage.getItem(LS_PREFIX + 'flipTopRow') !== 'false',
   inspectionTime: parseInt(localStorage.getItem(LS_PREFIX + 'inspectionTime') || '0') || 0,
   voice: localStorage.getItem(LS_PREFIX + 'voice') !== 'false',
   phases: parseInt(localStorage.getItem(LS_PREFIX + 'phases') || '1') || 1,
@@ -911,6 +947,26 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     get().loadNewScramble(target);
   },
 
+  setPlayerKey: (target: number, key: string) => {
+    const s = get();
+    const normalize = (k: string) => (k.length === 1 ? k.toLowerCase() : k);
+    const nk = normalize(key);
+    const newKeys = [...s.playerKeys];
+    const conflictIdx = newKeys.findIndex((k, i) => i !== target && normalize(k) === nk);
+    if (conflictIdx !== -1) {
+      // 冲突:和目标玩家互换,谁都不会丢键
+      newKeys[conflictIdx] = s.playerKeys[target];
+      localStorage.setItem(LS_PREFIX + `key_${conflictIdx}`, newKeys[conflictIdx]);
+    }
+    newKeys[target] = key;
+    localStorage.setItem(LS_PREFIX + `key_${target}`, key);
+    set({ playerKeys: newKeys });
+  },
+
+  setRecordingKeyFor: (target: number | null) => {
+    set({ recordingKeyFor: target });
+  },
+
   setMode: (mode: BattleMode) => {
     get().saveSolveHistory();
     localStorage.setItem(LS_PREFIX + 'mode', mode);
@@ -999,6 +1055,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     } else {
       set({ scrambleImageUrls: Array.from({ length: MAX_PLAYERS }, () => null) });
     }
+  },
+
+  setFlipTopRow: (flip: boolean) => {
+    localStorage.setItem(LS_PREFIX + 'flipTopRow', String(flip));
+    set({ flipTopRow: flip });
   },
 
   setScrambleScale: (scale: number) => {

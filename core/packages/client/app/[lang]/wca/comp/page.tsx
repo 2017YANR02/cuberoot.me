@@ -2467,9 +2467,6 @@ function CalendarPageInner() {
         })()}
       </div>
 
-      {allLoading && mode === 'all' && (
-        <div className="mode-status">{t('upcoming.allLoading')}</div>
-      )}
       {allError && mode === 'all' && (
         <div className="mode-status is-error">{allError}</div>
       )}
