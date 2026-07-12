@@ -284,6 +284,25 @@ export function generate222ByMetric(
   return best ? scrambleFor(best.s) : scrambleFor(randomState(rng));
 }
 
+/** Apply a scramble string (U/R/F tokens, the only faces WCA 2×2 scrambles use) to solved. Returns null if
+ *  a token isn't on the U/R/F gauge (can't be measured in this fixed-DBL model — never happens for WCA 2×2). */
+function stateFromScramble(scramble: string): State | null {
+  let s = solvedState();
+  for (const tok of scramble.trim().split(/\s+/).filter(Boolean)) {
+    const f = tok[0];
+    if (f !== 'U' && f !== 'R' && f !== 'F') return null;
+    const n = tok.length === 1 ? 1 : tok[1] === '2' ? 2 : 3;
+    for (let i = 0; i < n; i++) s = applyMove(s, Q[f as 'U' | 'R' | 'F']);
+  }
+  return s;
+}
+
+/** The chosen metric's value for a 2×2 scramble string, or null if it isn't a U/R/F-only 2×2 scramble. */
+export function cube222MetricOfScramble(scramble: string, metric: Cube222Metric): number | null {
+  const s = stateFromScramble(scramble);
+  return s ? metricOf(s, metric) : null;
+}
+
 // ── test/diagnostic exports (used by tests to verify metrics against the essential-case oracle) ──
 export const _test = {
   solvedState, applyMove, randomState, metricOf,

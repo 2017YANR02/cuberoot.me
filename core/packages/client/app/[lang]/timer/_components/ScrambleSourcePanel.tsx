@@ -17,7 +17,8 @@ import { ChevronRight } from 'lucide-react';
 import { updateSettings, useSettings } from '../_lib/settings';
 import type { EventId } from '../_lib/types';
 import WcaSourceConfig from '@/components/WcaSourceConfig';
-import Gen222StepsConfig from './Gen222StepsConfig';
+import GenStepsConfig from './GenStepsConfig';
+import { stepPuzzleOf } from '../_lib/scramble/step-metrics';
 import { tr } from '@/i18n/tr';
 
 const LS_KEY = 'timer.scrambleSource.panelOpen';
@@ -77,8 +78,14 @@ export default function ScrambleSourcePanel({ event, isZh }: Props) {
           {s.scrambleSource === 'wca' && (
             <WcaSourceConfig isZh={isZh} event={event} settings={s} updateSettings={updateSettings} />
           )}
-          {s.scrambleSource === 'random' && event === '222' && (
-            <Gen222StepsConfig isZh={isZh} settings={s} updateSettings={updateSettings} />
+          {stepPuzzleOf(event) && (
+            <GenStepsConfig
+              isZh={isZh}
+              event={event}
+              source={s.scrambleSource}
+              settings={s}
+              updateSettings={updateSettings}
+            />
           )}
         </div>
       )}
