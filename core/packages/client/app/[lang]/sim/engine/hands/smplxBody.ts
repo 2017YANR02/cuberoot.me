@@ -21,6 +21,7 @@
  * 教训 —— 各自拟合比例会手/臂/体粗细失配)。
  */
 import * as THREE from "three";
+import { staticUrl } from "@/lib/stats-base";
 
 export interface SmplxBodyRigData {
   format: string;
@@ -45,7 +46,7 @@ function b64ToArrayBuffer(s: string): ArrayBuffer {
 }
 
 export async function loadSmplxBodyRig(): Promise<SmplxBodyRigData> {
-  const url = "/sim/hands/smplx/bodyrig.smplx.json?v=2";
+  const url = staticUrl("/sim/hands/smplx/bodyrig.smplx.json") + "?v=2";
   const res = await fetch(url);
   if (!res.ok) throw new Error(`smplx bodyrig asset missing (${res.status} ${url}) — run scripts/convert-mano.py`);
   const data = (await res.json()) as SmplxBodyRigData;
