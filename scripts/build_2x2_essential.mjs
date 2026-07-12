@@ -16,7 +16,7 @@
 // Deterministic. CI-runnable: node --max-old-space-size=4096 scripts/build_2x2_essential.mjs
 // Optional: --out=<dir> to redirect output; --verify=<oracle.json> to self-check against a reference.
 //
-// Credits: author 张铭源 (Mingyuan Zhang); dedup 欧阳韵奇 (Yunqi Ouyang); classify CubeRoot.
+// Home-grown enumeration + dedup by CubeRoot (this script is the sole source of the data).
 // Reference model: https://www.jaapsch.net/puzzles/cube2.htm
 
 import { writeFileSync, readFileSync, mkdirSync } from 'node:fs';
@@ -393,8 +393,8 @@ const meta = {
   wca_legal_min4h: N - htmLE3, total_positions: N,
   generated_at: GENERATED_AT,
   credits: {
-    author: { zh: '张铭源', en: 'Mingyuan Zhang' },
-    dedup: { zh: '欧阳韵奇', en: 'Yunqi Ouyang' },
+    author: { zh: 'CubeRoot', en: 'CubeRoot' },
+    algorithm: { zh: '自有枚举(3,674,160 态精确)', en: 'home-grown enumeration (exact over 3,674,160 states)' },
     classify: { zh: 'CubeRoot', en: 'CubeRoot' },
     source_url: 'https://www.jaapsch.net/puzzles/cube2.htm',
   },
