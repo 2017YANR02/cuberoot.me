@@ -1,14 +1,14 @@
 'use client';
 
-// 全站登录 / 账号弹层。未登录:邮箱 / 手机 / WCA 三种方式(方案 A);已登录:账号面板
-// (已绑定身份列表 + 绑定新方式 + 解绑 + 登出)。结构镜像 FeedbackModal(自包含 + 本地 t + 背景点击关闭)。
-// 由 store 的 loginOpen 控制,全局挂在 app/layout.tsx。
+// 全站登录 / 账号弹层。未登录:行业标准布局 —— 邮箱为主凭据(验证码优先,可切密码),下方
+// 分隔线 + 「用 X 登录」第三方按钮竖排(WCA / Google / 支付宝 / 微信 / QQ)。已登录:账号面板
+// (已绑定身份列表 + 绑定新方式 + 设/改密码 + 解绑 + 登出)。结构镜像 FeedbackModal(自包含 +
+// 本地 t + 背景点击关闭)。由 store 的 loginOpen 控制,全局挂在 app/layout.tsx。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { X, Mail, Smartphone, Key, Loader2, LogOut, Eye, EyeOff } from 'lucide-react';
+import { X, Key, Loader2, LogOut, Eye, EyeOff } from 'lucide-react';
 import { SiWechat, SiQq, SiAlipay } from 'react-icons/si';
 import AppLink from '@/components/AppLink';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
 import {
@@ -43,71 +43,12 @@ const WechatGlyph = ({ size = 16 }: { size?: number }) => <SiWechat size={size} 
 const QqGlyph = ({ size = 16 }: { size?: number }) => <SiQq size={size} color="#1EBAFC" aria-hidden="true" />;
 const AlipayGlyph = ({ size = 16 }: { size?: number }) => <SiAlipay size={size} color="#1677FF" aria-hidden="true" />;
 
-/** 国内三方 provider 配置(标 + 名 + 登录提示),供 tab / 绑定 chip 共用。 */
-const SOCIALS: { key: SocialProvider; Glyph: (p: { size?: number }) => React.ReactNode; name: { zh: string; en: string }; hint: { zh: string; en: string } }[] = [
-  { key: 'wechat', Glyph: WechatGlyph, name: { zh: '微信', en: 'WeChat' }, hint: { zh: '用微信扫码登录。', en: 'Sign in by scanning with WeChat.' } },
-  { key: 'qq', Glyph: QqGlyph, name: { zh: 'QQ', en: 'QQ' }, hint: { zh: '用 QQ 账号登录。', en: 'Sign in with your QQ account.' } },
-  { key: 'alipay', Glyph: AlipayGlyph, name: { zh: '支付宝', en: 'Alipay' }, hint: { zh: '用支付宝账号登录。', en: 'Sign in with your Alipay account.' } },
+/** 国内三方 provider 配置(标 + 名),供 SSO 按钮 / 账号绑定 chip 共用。 */
+const SOCIALS: { key: SocialProvider; Glyph: (p: { size?: number }) => React.ReactNode; name: { zh: string; en: string } }[] = [
+  { key: 'wechat', Glyph: WechatGlyph, name: { zh: '微信', en: 'WeChat' } },
+  { key: 'qq', Glyph: QqGlyph, name: { zh: 'QQ', en: 'QQ' } },
+  { key: 'alipay', Glyph: AlipayGlyph, name: { zh: '支付宝', en: 'Alipay' } },
 ];
-
-/** 三方登录面板:一句提示 + 一个「用 X 登录」按钮。桌面/微信扫码走整页跳授权页;手机支付宝走
- *  `alipays://` 唤起 App —— 唤起后当前页不卸载,故不空转 spinner,改提示「授权完返回本页」,
- *  返回时重读会话(同浏览器另一标签已登录会经 storage 同步回来,弹层自动切成账号面板)。 */
-function SocialPane({ provider }: { provider: SocialProvider }) {
-  const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const refresh = useAuthStore((s) => s.refresh);
-  const meta = SOCIALS.find((s) => s.key === provider)!;
-  const [busy, setBusy] = useState(false);
-  const [launched, setLaunched] = useState(false); // 已唤起 App、页面留存,等用户授权后切回
-  const [error, setError] = useState<string | null>(null);
-  // 微信/QQ 内置浏览器里,支付宝授权回调会落到系统浏览器,本页收不到登录态 → 先引导去浏览器打开。
-  const blocked = provider === 'alipay' && isBlockedWebview();
-
-  useEffect(() => {
-    if (!launched) return;
-    const onVis = () => { if (document.visibilityState === 'visible') refresh(); };
-    document.addEventListener('visibilitychange', onVis);
-    window.addEventListener('focus', refresh);
-    return () => { document.removeEventListener('visibilitychange', onVis); window.removeEventListener('focus', refresh); };
-  }, [launched, refresh]);
-
-  const go = async () => {
-    setError(null);
-    setBusy(true);
-    try {
-      const r = await startSocialLogin(provider, 'login');
-      if (!r.navigated) { setBusy(false); setLaunched(true); } // 唤起了 App,页面还在 → 收 spinner,提示返回
-      // r.navigated=true:整页已在跳走,保持 busy 到卸载
-    } catch (e) {
-      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
-      setBusy(false);
-    }
-  };
-  const name = t(meta.name.zh, meta.name.en);
-
-  if (launched) {
-    return (
-      <div className="lm-flow">
-        <p className="lm-hint">{t(`已打开${name},请在其中完成授权,然后返回本页面。`, `Opened ${name} — finish authorizing there, then return to this page.`)}</p>
-        <button className="lm-primary" onClick={() => window.location.reload()}>{t('我已完成授权', 'I have authorized')}</button>
-        <button className="lm-textbtn" onClick={() => { setLaunched(false); setBusy(false); }}>{t('重新发起', 'Start over')}</button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="lm-flow">
-      <p className="lm-hint">{t(meta.hint.zh, meta.hint.en)}</p>
-      {blocked && <p className="lm-hint">{t('微信 / QQ 内暂不支持支付宝登录。请点右上角「···」选择「在浏览器打开」后再登录。', 'Alipay sign-in does not work inside WeChat / QQ. Tap the ··· menu and choose "Open in Browser" first.')}</p>}
-      {error && <p className="lm-error">{error}</p>}
-      <button className="lm-primary" disabled={busy} onClick={() => void go()}>
-        {busy ? <Loader2 size={ICON} className="lm-spin" /> : <meta.Glyph size={ICON} />}
-        {t(`用${name}登录`, `Continue with ${name}`)}
-      </button>
-    </div>
-  );
-}
 
 /** Apple 风格分格验证码输入:6 个格子 + 高亮当前格 + 跳动光标。一个透明原生 input 承接
  *  键盘/粘贴/iOS 短信自动填充(autocomplete=one-time-code),格子只做展示、始终左到右填。 */
@@ -292,11 +233,97 @@ function PasswordInput({ value, onChange, placeholder, autoComplete, autoFocus, 
   );
 }
 
-/** 邮箱 + 密码登录(仅登录已设密码的账号;新用户 / 未设密码走验证码,再去账号面板设密码)。 */
-function EmailPasswordFlow({ onDone, onUseCode }: { onDone: () => void; onUseCode: () => void }) {
+/** 邮箱验证码登录(受控 email,发码 → 输码 → 校验)。默认方式,passwordless(Vercel/Notion 风)。 */
+function EmailCodeFlow({ email, setEmail, onDone, toPassword }: {
+  email: string; setEmail: (v: string) => void; onDone: () => void; toPassword: () => void;
+}) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [step, setStep] = useState<'input' | 'code'>('input');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const send = useCallback(async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await sendEmailCode(email);
+      setStep('code');
+    } catch (e) {
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+    } finally {
+      setBusy(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
+
+  const verify = useCallback(async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      const r = await verifyEmailCode(email, code);
+      applySession(r.token, r.user);
+      onDone();
+    } catch (e) {
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+    } finally {
+      setBusy(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, code, onDone]);
+
+  // 满 6 位自动提交;验证失败后 code 不变不会重复触发。
+  useEffect(() => {
+    if (step === 'code' && code.length === CODE_LEN && !busy) void verify();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, step]);
+
+  if (step === 'code') {
+    return (
+      <div className="lm-flow">
+        <p className="lm-hint">{t(`验证码已发送至 ${email}`, `We sent a code to ${email}`)}</p>
+        <CodeCells value={code} onChange={setCode} disabled={busy} />
+        {error && <p className="lm-error">{error}</p>}
+        <button className="lm-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
+          {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+          {t('登录', 'Sign in')}
+        </button>
+        <button className="lm-textbtn" onClick={() => { setStep('input'); setCode(''); setError(null); }}>
+          {t('换邮箱 / 重新发送', 'Change email / resend')}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="lm-flow">
+      <label className="lm-label">{t('邮箱', 'Email')}</label>
+      <input
+        className="lm-input"
+        type="email"
+        value={email}
+        autoFocus
+        autoComplete="email"
+        placeholder="you@example.com"
+        onChange={(e) => setEmail(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter' && email && !busy) void send(); }}
+      />
+      {error && <p className="lm-error">{error}</p>}
+      <button className="lm-primary" disabled={!email || busy} onClick={() => void send()}>
+        {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+        {t('发送验证码', 'Send code')}
+      </button>
+      <button className="lm-textbtn" onClick={toPassword}>{t('用密码登录', 'Sign in with a password')}</button>
+    </div>
+  );
+}
+
+/** 邮箱 + 密码登录(受控 email;仅登录已设密码的账号,未设密码走验证码 + 账号面板设密码)。 */
+function EmailPasswordFlow({ email, setEmail, onDone, toCode }: {
+  email: string; setEmail: (v: string) => void; onDone: () => void; toCode: () => void;
+}) {
+  const lang = useLang();
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -341,33 +368,35 @@ function EmailPasswordFlow({ onDone, onUseCode }: { onDone: () => void; onUseCod
         {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
         {t('登录', 'Sign in')}
       </button>
-      <button className="lm-textbtn" onClick={onUseCode}>
-        {t('没有密码?改用验证码登录', 'No password? Use a code instead')}
-      </button>
+      <button className="lm-textbtn" onClick={toCode}>{t('用邮箱验证码登录', 'Email me a code instead')}</button>
     </div>
   );
 }
 
-/** 邮箱 pane:顶部「验证码 / 密码」切换(PillToggle,密码为绿主项),下方渲染对应流程。 */
-function EmailPane({ onDone }: { onDone: () => void }) {
+/** 邮箱凭据区:验证码(默认)/ 密码两种方式,email 提升到此以便切换时保留已输入的地址。 */
+function EmailAuth({ onDone }: { onDone: () => void }) {
+  const [email, setEmail] = useState('');
+  const [mode, setMode] = useState<'code' | 'password'>('code');
+  return mode === 'code'
+    ? <EmailCodeFlow email={email} setEmail={setEmail} onDone={onDone} toPassword={() => setMode('password')} />
+    : <EmailPasswordFlow email={email} setEmail={setEmail} onDone={onDone} toCode={() => setMode('code')} />;
+}
+
+/** 「或」分隔线(两侧发丝线 + 居中文字),分隔主凭据区与第三方登录。 */
+function OrDivider() {
   const lang = useLang();
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  const [pwMode, setPwMode] = useState(false);
+  return <div className="lm-divider"><span>{lang === 'zh' ? '或' : 'or'}</span></div>;
+}
+
+/** 第三方「用 X 登录」按钮:整行、图标定位左侧、文字居中(Google/Apple 官方按钮范式)。 */
+function SsoButton({ icon, label, busy, onClick }: {
+  icon: React.ReactNode; label: string; busy?: boolean; onClick: () => void;
+}) {
   return (
-    <>
-      <div className="lm-modeswitch">
-        <PillToggle
-          value={pwMode}
-          onChange={setPwMode}
-          onLabel={t('密码', 'Password')}
-          offLabel={t('验证码', 'Code')}
-          ariaLabel={t('邮箱登录方式', 'Email sign-in method')}
-        />
-      </div>
-      {pwMode
-        ? <EmailPasswordFlow onDone={onDone} onUseCode={() => setPwMode(false)} />
-        : <CodeFlow channel="email" mode="login" onDone={onDone} />}
-    </>
+    <button type="button" className="lm-sso" disabled={busy} onClick={onClick}>
+      <span className="lm-sso-icon">{busy ? <Loader2 size={ICON} className="lm-spin" /> : icon}</span>
+      <span className="lm-sso-label">{label}</span>
+    </button>
   );
 }
 
@@ -437,36 +466,27 @@ function SetPasswordForm({ hasPassword, onDone }: { hasPassword: boolean; onDone
   );
 }
 
-function LoginTabs({ onClose }: { onClose: () => void }) {
+function LoginForm({ onClose }: { onClose: () => void }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
-  const [method, setMethod] = useState<'email' | 'phone' | 'wca' | 'google' | SocialProvider>('email');
-  // 服务端已配置的登录方式:未配的(email/sms env 缺、google 没配 client id)tab 隐藏,现在只亮 WCA;
-  // 配好 env 一 reload 即自动亮,不用改代码。拿不到默认全开 email/phone/wca(退化成旧行为),
-  // google 拿不到 clientId 没法弹窗,不能乐观开。
+  const refresh = useAuthStore((s) => s.refresh);
+  // 服务端已配置的登录方式:未配的(email/sms env 缺、google/三方没配)对应入口隐藏,配好 env 一
+  // reload 即自动亮。拿不到默认全开 email/phone/wca(退化成旧行为),google/三方拿不到凭据不乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
   const avail = providers ?? { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null } };
   const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
-  const [gBusy, setGBusy] = useState(false);
-  const [gError, setGError] = useState<string | null>(null);
 
-  type TabKey = 'email' | 'phone' | 'wca' | 'google' | SocialProvider;
-  const tabs: { key: TabKey; icon: React.ReactNode; label: string; on: boolean }[] = ([
-    { key: 'email', icon: <Mail size={ICON} />, label: t('邮箱', 'Email'), on: avail.email },
-    { key: 'phone', icon: <Smartphone size={ICON} />, label: t('手机', 'Phone'), on: avail.phone },
-    { key: 'wca', icon: <Key size={ICON} />, label: 'WCA', on: true },
-    { key: 'google', icon: <GoogleGlyph size={ICON} />, label: 'Google', on: googleOn },
-    ...SOCIALS.map((s) => ({ key: s.key, icon: <s.Glyph size={ICON} />, label: t(s.name.zh, s.name.en), on: !!avail.social[s.key] })),
-  ] as { key: TabKey; icon: React.ReactNode; label: string; on: boolean }[]).filter((tb) => tb.on);
-
-  // 当前选中的方式若被隐藏(如默认 email 但未开放),落到第一个可用 tab。
+  // 主凭据区:邮箱(默认)/ 手机;仅邮箱未开放时落到手机。
+  const [credMode, setCredMode] = useState<'email' | 'phone'>('email');
   useEffect(() => {
-    if (providers && !tabs.some((tb) => tb.key === method)) setMethod(tabs[0]?.key ?? 'wca');
+    if (providers && !avail.email && avail.phone) setCredMode('phone');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providers]);
 
+  const [gBusy, setGBusy] = useState(false);
+  const [gError, setGError] = useState<string | null>(null);
   const handleGoogleLogin = async () => {
     const { googleClientId: clientId, googleRelayUrl: relayUrl } = avail;
     if (!clientId || !relayUrl) return;
@@ -484,54 +504,87 @@ function LoginTabs({ onClose }: { onClose: () => void }) {
     }
   };
 
+  // 国内三方:桌面/扫码整页跳授权页(navigated);手机支付宝唤起 App(页面不卸载 → 提示返回本页,
+  // 切回时 refresh 拉回会话)。微信/QQ 内置浏览器直接引导去浏览器。(原 SocialPane 逻辑内联到此。)
+  const [socialBusy, setSocialBusy] = useState<SocialProvider | null>(null);
+  const [socialLaunched, setSocialLaunched] = useState<SocialProvider | null>(null);
+  const [socialError, setSocialError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!socialLaunched) return;
+    const onVis = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('focus', refresh);
+    return () => { document.removeEventListener('visibilitychange', onVis); window.removeEventListener('focus', refresh); };
+  }, [socialLaunched, refresh]);
+  const startSocial = async (p: SocialProvider) => {
+    setSocialError(null);
+    if (p === 'alipay' && isBlockedWebview()) {
+      setSocialError(t('微信 / QQ 内暂不支持支付宝登录,请点右上角「···」在浏览器中打开。', 'Alipay sign-in does not work inside WeChat / QQ — open this page in your browser first.'));
+      return;
+    }
+    setSocialBusy(p);
+    try {
+      const r = await startSocialLogin(p, 'login');
+      if (!r.navigated) { setSocialBusy(null); setSocialLaunched(p); }
+    } catch (e) {
+      setSocialError(authErrorText(e instanceof Error ? e.message : String(e), t));
+      setSocialBusy(null);
+    }
+  };
+
+  // 手机支付宝唤起 App 后当前页留存:改成「返回本页」提示态,切回时上面的 visibilitychange 会 refresh。
+  if (socialLaunched) {
+    const meta = SOCIALS.find((s) => s.key === socialLaunched)!;
+    const name = t(meta.name.zh, meta.name.en);
+    return (
+      <>
+        <h2 className="lm-title">{t('登录 / 注册', 'Sign in / up')}</h2>
+        <div className="lm-flow">
+          <p className="lm-hint">{t(`已打开${name},请完成授权后返回本页面。`, `Opened ${name} — finish authorizing there, then return to this page.`)}</p>
+          <button className="lm-primary" onClick={() => window.location.reload()}>{t('我已完成授权', 'I have authorized')}</button>
+          <button className="lm-textbtn" onClick={() => setSocialLaunched(null)}>{t('返回', 'Back')}</button>
+        </div>
+      </>
+    );
+  }
+
+  const activeSocials = SOCIALS.filter((s) => !!avail.social[s.key]);
+  const hasCred = avail.email || avail.phone;
+  const hasSso = avail.wca || googleOn || activeSocials.length > 0;
+
   return (
     <>
       <h2 className="lm-title">{t('登录 / 注册', 'Sign in / up')}</h2>
-      {tabs.length > 1 && (
-        <div className="lm-tabs" role="tablist">
-          {tabs.map((tb) => (
-            <button
-              key={tb.key}
-              type="button"
-              role="tab"
-              aria-selected={method === tb.key}
-              className={`lm-tab${method === tb.key ? ' is-active' : ''}`}
-              onClick={() => setMethod(tb.key)}
-            >
-              {tb.icon}<span>{tb.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
 
-      {method === 'email' && avail.email && <EmailPane onDone={onClose} />}
-      {method === 'phone' && avail.phone && (
+      {credMode === 'email' && avail.email && <EmailAuth onDone={onClose} />}
+      {credMode === 'phone' && avail.phone && (
         <>
           <CodeFlow channel="phone" mode="login" onDone={onClose} />
           <p className="lm-hint">{t('目前仅支持中国大陆手机号(+86)。', 'Mainland China (+86) numbers only for now.')}</p>
         </>
       )}
-      {method === 'wca' && (
-        <div className="lm-flow">
-          <p className="lm-hint">{t('用 WCA 账号登录 —— 自动关联你的选手成绩。', 'Sign in with your WCA account — links your competitor results.')}</p>
-          <button className="lm-primary" onClick={() => loginWithWca()}>
-            <Key size={ICON} /> {t('用 WCA 登录', 'Continue with WCA')}
-          </button>
+      {avail.email && avail.phone && (
+        <button className="lm-textbtn lm-cred-switch" onClick={() => setCredMode((m) => (m === 'email' ? 'phone' : 'email'))}>
+          {credMode === 'email' ? t('用手机号登录', 'Use phone number') : t('用邮箱登录', 'Use email')}
+        </button>
+      )}
+
+      {hasCred && hasSso && <OrDivider />}
+
+      {hasSso && (
+        <div className="lm-sso-list">
+          {avail.wca && (
+            <SsoButton icon={<Key size={ICON} />} label={t('用 WCA 登录', 'Continue with WCA')} onClick={() => loginWithWca()} />
+          )}
+          {googleOn && (
+            <SsoButton icon={<GoogleGlyph size={ICON} />} busy={gBusy} label={t('用 Google 登录', 'Continue with Google')} onClick={() => void handleGoogleLogin()} />
+          )}
+          {activeSocials.map((s) => (
+            <SsoButton key={s.key} icon={<s.Glyph size={ICON} />} busy={socialBusy === s.key} label={t(`用${s.name.zh}登录`, `Continue with ${s.name.en}`)} onClick={() => void startSocial(s.key)} />
+          ))}
         </div>
       )}
-      {method === 'google' && googleOn && (
-        <div className="lm-flow">
-          <p className="lm-hint">{t('用 Google 账号登录。', 'Sign in with your Google account.')}</p>
-          {gError && <p className="lm-error">{gError}</p>}
-          <button className="lm-primary" disabled={gBusy} onClick={() => void handleGoogleLogin()}>
-            {gBusy ? <Loader2 size={ICON} className="lm-spin" /> : <GoogleGlyph size={ICON} />}
-            {t('用 Google 登录', 'Continue with Google')}
-          </button>
-        </div>
-      )}
-      {SOCIALS.some((s) => s.key === method) && avail.social[method as SocialProvider] && (
-        <SocialPane provider={method as SocialProvider} />
-      )}
+      {(gError || socialError) && <p className="lm-error lm-sso-error">{gError || socialError}</p>}
     </>
   );
 }
@@ -811,7 +864,7 @@ export default function LoginModal() {
         <button className="lm-close" onClick={close} aria-label={t('关闭', 'Close')}>
           <X size={ICON} />
         </button>
-        {user ? <AccountPanel onClose={close} /> : <LoginTabs onClose={close} />}
+        {user ? <AccountPanel onClose={close} /> : <LoginForm onClose={close} />}
       </div>
     </div>
   );
