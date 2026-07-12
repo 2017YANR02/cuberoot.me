@@ -110,6 +110,10 @@ export interface SimSettings {
   /** 手指(指法演示):双手握持魔方,转层时腕转 / 弹指跟动画。仅 3x3 生效
    *  (其它拼图上开关灰禁;设置保留,切回 3x3 自动恢复)。默认关。 */
   hands: boolean;
+  /** 全身人物(SMPL-X):完整的人随手出场还原魔方(躯干静态站姿 + 双臂 IK
+   *  追手;拉远 Scale 可见全身)。依赖手指开启;资产逐机转换,缺失静默降级。
+   *  默认关。 */
+  fullBody: boolean;
   /** 手模资产:'default' = 内置 WebXR generic-hand;'mano' = MPI MANO(用户
    *  自持授权,资产逐机由 scripts/convert-mano.py 转换,缺失时运行时自动回退
    *  内置并 console.warn)。默认 'default'。 */
@@ -171,6 +175,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   customLogo: '',
   liveReduce: true,
   hands: false,
+  fullBody: false,
   handsSkeleton: false,
   showNails: true,
   showSmplxBody: false,
@@ -197,6 +202,7 @@ export function loadSettings(): SimSettings {
     if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
     if (typeof merged.customLogo !== 'string') merged.customLogo = '';
     if (typeof merged.hands !== 'boolean') merged.hands = false;
+    if (typeof merged.fullBody !== 'boolean') merged.fullBody = false;
     return merged;
   } catch {
     return DEFAULT_SETTINGS;
@@ -241,6 +247,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   // (仅 3x3);内部已含 resize,所以放最前,后面的 resize 拿到的取景已是最终值。
   // 手模资产先于开关:切资产要销毁重建 rig,先设好再 syncHands 免得建完又拆。
   world.setHandsWanted(s.hands === true);
+  world.setHandsFullBody(s.hands === true && s.fullBody === true);
   world.hands?.setSkeletonVisible(s.handsSkeleton === true);
   world.hands?.setNailsVisible(s.showNails !== false);
   world.setSmplxBodyVisible(s.showSmplxBody === true);
