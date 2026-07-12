@@ -70,6 +70,17 @@ const HD_RES = hdArg >= 0
   : null;
 // HD 亚格精修: 重采前先在 HD 帧上搜 ±0.4 格平移修晶格错位 (负⑩(a) 主噪声)
 const HD_REFINE = process.argv.includes("--hdrefine");
+// 4K 贴合修正 (scripts/snap4k.ts --sidecar 产物, 键 = 视频名): 链级平移 Δ (格单位)
+// 优先于 refineHD — 后者 ±0.4 格搜不到实测 ~1 格的脱靶, 且其黑缝暗线目标对无贴纸
+// 魔方失效; snap4k 目标 = 格线跳变中位数 + kNN 内容项, 范围 ±1.5 格, 普查验证
+// 毒0帧 |Δ|p50≈0.22 / 毒≥3帧 ≈1.1。需与 --hd 连用 (修正只作用于 HD 重采位置)。
+const snapFixArg = process.argv.indexOf("--snapfix");
+const SNAP_FIX = snapFixArg >= 0
+  ? (JSON.parse(readFileSync(process.argv[snapFixArg + 1], "utf8")) as Record<
+      string, { f0: number; f1: number; cx: number; cy: number; dx: number; dy: number }[]
+    >)
+  : null;
+if (SNAP_FIX && !HD_RES) throw new Error("--snapfix 需与 --hd 连用");
 // 链形成/agree 也用 HD 色 (覆盖实验): vivid 960 读不出的糊格 HD 可读 →
 // 快转段可能成链。风险 = HD 逐帧抖动断链 (kNN 的教训), 用数据判
 const HD_AGREE = process.argv.includes("--hdagree");
@@ -374,6 +385,7 @@ for (const sf of files) {
   if (HD_RES) {
     const [W2, H2] = HD_RES.split("x").map(Number);
     const SC = W2 / meta.w;
+    const snapRows = SNAP_FIX?.[sf.replace(/\.splits\.txt$/, "")] ?? null;
     const hdBytes = W2 * H2 * 3;
     const f0 = meta.frames[0], f1 = meta.frames[meta.frames.length - 1];
     const t0 = Date.now();
@@ -389,7 +401,19 @@ for (const sf of files) {
       if (i >= grids.length || !grids[i]?.length) return;
       const rgb = new Uint8Array(fbuf.buffer, fbuf.byteOffset, hdBytes);
       for (const obs of grids[i]) {
-        const { dx, dy } = HD_REFINE ? refineHD(rgb, W2, H2, obs.grid, SC) : { dx: 0, dy: 0 };
+        let dx = 0, dy = 0;
+        const srow = snapRows?.find((r) => {
+          const f = meta.frames[i];
+          if (f < r.f0 || f > r.f1) return false;
+          const gx = obs.grid.origin.x + obs.grid.v1.x + obs.grid.v2.x;
+          const gy = obs.grid.origin.y + obs.grid.v1.y + obs.grid.v2.y;
+          return Math.hypot(gx - r.cx, gy - r.cy) < obs.grid.pitch * 2;
+        });
+        if (srow) {
+          // Δ 格单位 → HD 像素 (随该帧自身晶格基, 链内跟踪漂移自动跟随)
+          dx = (srow.dx * obs.grid.v1.x + srow.dy * obs.grid.v2.x) * SC;
+          dy = (srow.dx * obs.grid.v1.y + srow.dy * obs.grid.v2.y) * SC;
+        } else if (HD_REFINE) ({ dx, dy } = refineHD(rgb, W2, H2, obs.grid, SC));
         const hc: (ColorName | null)[] = new Array(9).fill(null);
         const hr: ([number, number, number] | null)[] = new Array(9).fill(null);
         const rad = obs.grid.pitch * SC * 0.22;
