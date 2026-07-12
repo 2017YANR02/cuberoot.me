@@ -15,7 +15,7 @@
 # Engine ported from solver/src/pyraminx_solver.rs and validated against jaapsch.net and the
 # research oracle `.tmp/Pyraminx uniq [39035].xlsx` (39,035 filled cases; matches exactly).
 #
-# Author of the state model / metrics: 张铭源 (Mingyuan Zhang). Classification: CubeRoot.
+# Home-grown enumeration by CubeRoot; this script is the sole source of the data.
 #
 # Outputs (this is the full state space and never changes — a static one-off build):
 #   <OUT_DIR>/pyram_essential.json        — marginals (essential + full-space), joint V×H grid,
@@ -39,7 +39,7 @@ OUT_DIR = os.environ.get("PYRAM_OUT_DIR", os.path.join(REPO, ".tmp", "enum", "ou
 GENERATED_AT = "2026-07-11"
 
 CREDITS = {
-    "author": {"zh": "张铭源", "en": "Mingyuan Zhang"},
+    "author": {"zh": "CubeRoot", "en": "CubeRoot"},
     "classify": {"zh": "CubeRoot", "en": "CubeRoot"},
     "algorithm": {"zh": "自有枚举(933,120 态精确)",
                   "en": "home-grown enumeration (exact over 933,120 states)"},

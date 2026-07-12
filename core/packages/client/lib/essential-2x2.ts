@@ -35,7 +35,7 @@ export interface EssNotation { sym: string; zh: string; en: string }
 export interface EssBilingual { zh: string; en: string }
 export interface EssCredits {
   author: EssBilingual;
-  dedup: EssBilingual;
+  algorithm: EssBilingual;
   classify: EssBilingual;
   source_url: string;
 }
@@ -76,7 +76,7 @@ export interface Essential2x2CasesJson {
   rows: EssCaseRow[];
 }
 
-const V = '20260711';
+const V = '20260711b';
 
 export async function fetchEssential2x2(): Promise<Essential2x2Json> {
   const r = await fetch(statsUrl('/stats/scramble/2x2_essential.json') + `?v=${V}`);

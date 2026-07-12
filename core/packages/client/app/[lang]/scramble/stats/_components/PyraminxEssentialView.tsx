@@ -218,11 +218,8 @@ export default function PyraminxEssentialView({ isZh }: { isZh: boolean }) {
       {/* 致谢 + 记号 */}
       <div className="scramble-stats-meta ess-credits">
         <span>
-          {tr({ zh: '数据', en: 'Data' })}: {tr(meta.credits.author)}
-          {' · '}{tr({ zh: '整理', en: 'Classify' })} {meta.credits.classify.en}
-          {' · '}{tr(meta.credits.algorithm)}
-          {' · '}
-          <a href={meta.credits.source_url} target="_blank" rel="noopener noreferrer">Jaap Scherphuis</a>
+          {tr({ zh: '数据', en: 'Data' })}: {tr(meta.credits.author)} {tr(meta.credits.algorithm)}
+          {' · '}{tr({ zh: '参考', en: 'ref.' })} <a href={meta.credits.source_url} target="_blank" rel="noopener noreferrer">Jaap Scherphuis</a>
           {' · '}{tr({ zh: '生成', en: 'Generated' })} {meta.generated_at}
         </span>
         <span className="ess-notation">
