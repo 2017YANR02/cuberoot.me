@@ -362,7 +362,9 @@ function measure(p: Probe, opts?: { penScope?: 'all' | 'noThumb' | 'thumbOnly'; 
       fleshMinY,
       fleshMaxY,
       len2d: cmc.distanceTo(ttip),
-      horizDeg: Math.atan2(Math.abs(ttip.y - mcp.y), Math.hypot(ttip.x - mcp.x, ttip.z - mcp.z)) * 180 / Math.PI,
+      // r26 起带符号:正 = 指尖高于 MCP(用户规格「指尖到 MCP 从左上到右下」
+      // 的期望方向),负 = MCP 反翘。
+      horizDeg: Math.atan2(ttip.y - mcp.y, Math.hypot(ttip.x - mcp.x, ttip.z - mcp.z)) * 180 / Math.PI,
       tip: ttip.clone(),
     },
   };
@@ -459,8 +461,13 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
     // 8.3°),小指被推平后前伸横穿 D 面底下(截图抓的)—— 改宽墙 25° + 强制
     // 收拢在后半区(tip z ≤ −40,别探进 D 扫掠柱/画面底部)。
     if (name === 'pinky') {
-      L += t(`${name}.tilt`, 200 * hinge(r.tiltDeg - 25) ** 2);
-      L += t(`${name}.tipz`, 6 * hinge(r.tip.z + 40) ** 2);
+      // r26(用户规格「小拇指不要往上翘,接近水平、和无名指差不多」):宽墙
+      // 25° env 化(TILTP),解题时压到无名指同级(~13°)。
+      L += t(`${name}.tilt`, 200 * hinge(r.tiltDeg - Number(process.env.TILTP ?? 25)) ** 2);
+      // r26:z 双侧带(PINKZ)—— TILTP 压平时小指曾被推到 z −142(越过 B 面
+      // 深探背后,正对背面视角直戳观察者),平化必须圈在后半区浅带内。
+      const [pzLo, pzHi] = (process.env.PINKZ ?? '-999,-40').split(',').map(Number);
+      L += t(`${name}.tipz`, 6 * hinge(r.tip.z - pzHi) ** 2 + 25 * hinge(pzLo - r.tip.z) ** 2);
       // 小指↔无名指净距 ≥0.8U(2026-07-11 用户抓 MANO 小指压进无名指):
       // 轴线距对互穿深度有梯度,表面点距在互穿时恒 ≈0 推不动。
       L += t(`${name}.ringClear`, 120 * hinge(0.8 - mx.pinkyRingClear) ** 2);
@@ -468,7 +475,11 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
       // 明确低于无名指 tip ≥12U —— r5 两者 y 只差 2U,俯/仰角下小指整根被
       // 无名指遮死。轴距净距是方向无关量,挡视线的「同高贴排」它拦不住。
       // 带上界 45U:r7 无下界时小指被推飞到 −215(垂直下插 130U,假)。
-      L += t(`${name}.below`, 25 * (hinge(r.tip.y - (mx.fingers.ring.tip.y - 12)) ** 2 + hinge((mx.fingers.ring.tip.y - 45) - r.tip.y) ** 2));
+      // r26:带宽 env 化(PBELOW='lo,hi')。TILTP 压平小指后其自然高度更低
+      // (根位固定,平指 tip ≈ 根高),旧 hi=45 下界会经此耦合反把无名指从块
+      // 中线拽下来(实测 −66.9→−80.3),压平解必须放宽 hi。
+      const [pbLo, pbHi] = (process.env.PBELOW ?? '12,45').split(',').map(Number);
+      L += t(`${name}.below`, 25 * (hinge(r.tip.y - (mx.fingers.ring.tip.y - pbLo)) ** 2 + hinge((mx.fingers.ring.tip.y - pbHi) - r.tip.y) ** 2));
     } else {
       // r25:水平墙 env 化(TILT4,默认 7.8°)。「指中线对齐块中线」(2026-07-11
       // 用户规格)在手根冻结下几何上必须让指轴上斜 ~8°(接触点抬 27U / 链长
@@ -501,7 +512,10 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
       // 四指钉内缘 ⇒ 手根内移 40U ⇒ 拇指 F 接触可达区中心塌到 x≈0,要么穿 M 列
       // 要么丢面)。TIPX 放宽仍须在 Q/Te/T 贴纸带内(x≤96−肉半径)。
       const [tipxLo, tipxHi] = (process.env.TIPX ?? '36,46').split(',').map(Number);
-      L += t(`${name}.tipx`, 50 * (hinge(tipxLo - ax) ** 2 + hinge(ax - tipxHi) ** 2));
+      // r26:ring 上界可单独豁免(TIPXR)—— ring 钉块中线的上摆天然把 tip x
+      // 推外(r25 锥面),全指同带硬收会拿中线换 tipx(实测 −78.5 掉线)。
+      const hiEff = name === 'ring' && process.env.TIPXR ? Number(process.env.TIPXR) : tipxHi;
+      L += t(`${name}.tipx`, 50 * (hinge(tipxLo - ax) ** 2 + hinge(ax - hiEff) ** 2));
       // r21:CW26 下尖排斜穿面,越面深度放宽(TIPZLO;用户预览认可 −150 级越面)
       const tipzLo = Number(process.env.TIPZLO ?? -104);
       L += t(`${name}.tipz`, 2 * (hinge(tipzLo - r.tip.z) ** 2 + hinge(r.tip.z + 94) ** 2));
@@ -536,7 +550,10 @@ function thumbLoss(mx: Metrics): number {
   // + 居中 ⇒ MCP ≈ ±17 内,与沉 D 几何互斥;真 CMC ≤ −30 仍保留 —— 掌骨
   // 从腕上 CMC 斜升 ~19° 到 MCP,解剖可行)。
   const cxA = Math.abs(t.cx);
-  const [cyLo, cyHi] = [-12, 12];
+  // r26:cy 带 env 化(THCY)。解「MCP 下沉、指尖不动」时必须收窄钉住指尖
+  // —— 否则水平项的陡梯度走「抬整只拇指」宽盆地(cy −8→+28 实测两连翻车),
+  // 沉 MCP 的窄谷根本进不去。
+  const [cyLo, cyHi] = (process.env.THCY ?? '-12,12').split(',').map(Number);
   // 拇指 tip 内收带(r7 用户规格「拇指要往里靠拢」,TTX=lo,hi env 可调):
   // [38,50](中列边界)与 [44,64](贴纸带心)均被证不可达 —— 四指收中已把
   // 掌体拉向 B 侧(pos z ≈−130),拇指跨 225U+ 深度才够到 F,链长 288 无
@@ -554,7 +571,12 @@ function thumbLoss(mx: Metrics): number {
   // 可见拇指(MCP→tip)水平硬墙(2026-07-11 用户规格「大拇指要水平」;
   // r3 曾斜插 40°)。9° 墙对齐四指 7.8/8.6 的余量哲学。generic 时代的
   // V 形折叠 / MCP 沉 D 约束均与「水平 + tip 居中」互斥,随内置手模退役。
-  L += 300 * hinge(t.horizDeg - 9) ** 2 + 1.5 * (t.horizDeg / 9) ** 2;
+  // r26(用户规格「指尖不动,MCP 往下降」):水平墙改带符号目标带 THORIZ
+  // (lo,hi,单位度;正 = 指尖高于 MCP)。默认 '-9,9' = 旧水平规格口径;解题
+  // 时给 '12,22' 级把 MCP 压到指尖下方。
+  const [thLo, thHi] = (process.env.THORIZ ?? '-9,9').split(',').map(Number);
+  L += 300 * (hinge(thLo - t.horizDeg) ** 2 + hinge(t.horizDeg - thHi) ** 2)
+    + 1.5 * ((t.horizDeg - (thLo + thHi) / 2) / 9) ** 2;
   // len2d 软审美(「太长」直棍观感):200 按 generic 比例定;MANO 真实解剖
   // 拇指更长(CMC 真关节在腕上),200 不可达 → 265,免得软项吃掉硬规格。
   L += 0.5 * hinge(t.len2d - 265) ** 2;
@@ -828,6 +850,7 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
             .map(([kk, v]) => `${kk} ${v.toFixed(0)}`).join(' | ');
           console.log(`SCAN s[${si}]=${trial[si].toFixed(3)} total ${totalLoss(m).toFixed(0)} thumb ${(totalLoss(m) - fourLoss(m)).toFixed(0)} :: ${top}`);
           console.log(`  idx cy ${m.fingers.index.contactY.toFixed(1)} mid cy ${m.fingers.middle.contactY.toFixed(1)} ring cy ${m.fingers.ring.contactY.toFixed(1)} ringGap ${m.fingers.ring.gapB.toFixed(2)} ringTilt ${m.fingers.ring.tiltDeg.toFixed(1)} pen ${m.pen.toFixed(2)} prClear ${m.pinkyRingClear.toFixed(2)}`);
+          console.log(`  thumb MCP ${m.thumb.mcpY.toFixed(1)} cy ${m.thumb.cy.toFixed(1)} cx ${m.thumb.cx.toFixed(1)} fGap ${m.thumb.fGap.toFixed(2)} horiz ${m.thumb.horizDeg.toFixed(1)} nail ${m.thumb.nailDotZ.toFixed(3)}`);
         }
         expect(true).toBe(true);
         return;
