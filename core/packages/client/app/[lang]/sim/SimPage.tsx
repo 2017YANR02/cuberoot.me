@@ -537,7 +537,9 @@ export default function SimPage() {
     const ro = new ResizeObserver(resize);
     ro.observe(container);
 
-    const SCALE_MIN = 0.3;
+    // 全身人物开启时放宽下限:人体高 ~27×棱长,0.3 只够拉到胸口 —— 0.04 才装
+    // 得下整个人(默认取景不变,细节靠常规档,拉远才看全身)。
+    const scaleMin = (): number => (settingsRef.current.fullBody && settingsRef.current.hands ? 0.04 : 0.3);
     const SCALE_MAX = Infinity;
     const settingsFromScale = (s: number) => Math.round((s - 0.5) * 100);
     let scaleSyncTimer: number | null = null;
@@ -557,7 +559,7 @@ export default function SimPage() {
       const w = worldRef.current;
       if (!w) return;
       const oldScale = w.scale;
-      const newScale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, oldScale * (e.deltaY > 0 ? 0.92 : 1.08)));
+      const newScale = Math.max(scaleMin(), Math.min(SCALE_MAX, oldScale * (e.deltaY > 0 ? 0.92 : 1.08)));
       if (newScale === oldScale) return;
       const rect = renderer.domElement.getBoundingClientRect();
       const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -958,7 +960,7 @@ export default function SimPage() {
         if (settingsRef.current.lockView) return;
         const [a, b] = [...activePointers.values()];
         const ratio = dist(a, b) / Math.max(pinchStartDist, 1);
-        world.scale = Math.max(SCALE_MIN, Math.min(SCALE_MAX, pinchStartScale * ratio));
+        world.scale = Math.max(scaleMin(), Math.min(SCALE_MAX, pinchStartScale * ratio));
         const center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
         const d = screenDeltaToWorld(center.x - pinchStartCenter.x, center.y - pinchStartCenter.y);
         world.panX = pinchStartPan.x + d.x;

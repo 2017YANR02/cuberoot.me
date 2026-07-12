@@ -376,6 +376,7 @@ export default class World {
     const active = this.handsWanted && this.puzzleKind === 3;
     if (active && this.hands == null) {
       this.hands = new HandsRig();
+      this.hands.setFullBody(this.handsFullBodyWanted); // rig 晚于设置到位的回放
       this.scene.add(this.hands);
     }
     if (this.hands) {
@@ -383,6 +384,17 @@ export default class World {
       this.hands.attachCube(active ? (this.cube as unknown as HandsCubeLike) : null);
       this.dirty = true;
     }
+  }
+
+  /** 设置「全身人物」(SimSettings.fullBody 驱动):手 rig 的 SMPL-X 全身随手
+   *  出场。意愿常存,rig 晚建时 syncHands 回放;far 包络随之放宽(人体纵深
+   *  远超手,见 resize)。 */
+  private handsFullBodyWanted = false;
+  setHandsFullBody(want: boolean): void {
+    if (this.handsFullBodyWanted === want) return;
+    this.handsFullBodyWanted = want;
+    this.hands?.setFullBody(want);
+    this.resize();
   }
 
   /** 调试开关(SimSettings.showSmplxBody 驱动):SMPL-X 全身查看。首开惰性
@@ -441,7 +453,13 @@ export default class World {
   panY = 0;
   private _lookAtTarget = new THREE.Vector3();
   resize(): void {
-    const min = this.height / Math.min(this.width, this.height) / this.scale / this.perspective;
+    // 变焦架构 = 变 FOV,相机 z 恒 refHalf·perspective(≈19.5×SIZE)。全身人物
+    // 的身体就站在相机位一带(胸口 z≈19×SIZE,过肩视角),继续开广角只会鱼眼
+    // 穿胸 —— scale 低于常规下限 0.3 的部分改为「后拉相机」(dolly),FOV 封在
+    // 0.3 档,apparent size 连续。
+    const fovScale = this.handsFullBodyWanted ? Math.max(this.scale, 0.3) : this.scale;
+    const dolly = this.handsFullBodyWanted ? fovScale / this.scale : 1; // ≥1
+    const min = this.height / Math.min(this.width, this.height) / fovScale / this.perspective;
     const fov = (2 * Math.atan(min) * 180) / Math.PI;
 
     this.camera.aspect = this.width / this.height;
@@ -466,7 +484,7 @@ export default class World {
     // frames them to the NxN-3 fill.
     // 手开着时把 3x3 取景拉宽(手/前臂环在魔方外围,SIZE*3 会顶出画框)。
     const refHalf = isSq1 ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
-    const distance = refHalf * this.perspective;
+    const distance = refHalf * this.perspective * dolly;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
     this.camera.position.z = distance;
@@ -478,9 +496,20 @@ export default class World {
     // 皮圈」假象(2026-07-06 实测:腕缝「乱开」根因之一)。near 必须钳正 ——
     // 视角滑杆低段(mapPerspective 下限 2)distance 仅 7.8×SIZE,margin 一减为负,
     // 透视投影 near≤0 = 投影矩阵损坏,大图小图在任意角度出现乱切面(2026-07-04 实测根因)。
-    const nearMargin = handsOn ? 15 : isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto ? 5 : 4;
+    // 全身人物:身体站在镜头侧 z≈+1800~+2400(过肩视角),nearMargin 15(近面
+    // = 魔方前 960)会把整个躯干裁掉只剩残臂 —— 放宽到 40 罩住人体纵深。
+    const nearMargin = handsOn ? (this.handsFullBodyWanted ? 40 : 15) : isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto ? 5 : 4;
     this.camera.near = Math.max(distance - SIZE * nearMargin, SIZE * 0.4);
-    this.camera.far = distance + SIZE * (handsOn ? 15.5 : 8);
+    // 全身人物:人体站在魔方后方(−z 纵深 ~1m ≈ 数十 SIZE),far 随开关放宽
+    // (按意愿而非加载完成算 —— 资产异步就位时不再有 resize 时机)。
+    this.camera.far = distance + SIZE * (handsOn ? (this.handsFullBodyWanted ? 64 : 15.5) : 8);
+    // 全身穿越带:0.3 以下相机后拉穿过躯干(胸 z≈19×SIZE → 背 z≈36×SIZE),
+    // 穿越段身体淡出,出体(scale≲0.15,distance>45×SIZE)再淡入。
+    if (this.handsFullBodyWanted) {
+      const s = this.scale;
+      const op = s >= 0.295 ? 1 : Math.max(0, Math.min(1, Math.max((s - 0.27) / 0.025, (0.16 - s) / 0.03)));
+      this.hands?.setBodyZoomFade(op);
+    }
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);
     this.camera.updateProjectionMatrix();
