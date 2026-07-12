@@ -29,10 +29,10 @@ interface Props {
 const METRIC_ORDER: Cube222Metric[] = ['face', 'layer', 'htm', 'qtm'];
 const metricLabel = (key: string, zh: boolean): string => {
   const m: Record<string, { zh: string; en: string }> = {
-    face: { zh: '底面步数', en: 'Bottom face' },
-    layer: { zh: '首层步数', en: 'First layer' },
-    htm: { zh: '整解 HTM', en: 'Full solve (HTM)' },
-    qtm: { zh: '整解 QTM', en: 'Full solve (QTM)' },
+    face: { zh: '底面', en: 'First face' },
+    layer: { zh: '底层', en: 'First layer' },
+    htm: { zh: '魔方', en: 'Cube' },
+    qtm: { zh: 'QTM', en: 'QTM' },
   };
   return zh ? m[key].zh : m[key].en;
 };
