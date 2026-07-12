@@ -53,7 +53,7 @@ export interface PyramEssentialCasesJson {
   rows: PyramCaseRow[];
 }
 
-const V = '20260711';
+const V = '20260711b';
 
 export async function fetchPyramEssential(): Promise<PyramEssentialJson> {
   const r = await fetch(statsUrl('/stats/scramble/pyram_essential.json') + `?v=${V}`);
