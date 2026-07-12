@@ -470,7 +470,11 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
       // 带上界 45U:r7 无下界时小指被推飞到 −215(垂直下插 130U,假)。
       L += t(`${name}.below`, 25 * (hinge(r.tip.y - (mx.fingers.ring.tip.y - 12)) ** 2 + hinge((mx.fingers.ring.tip.y - 45) - r.tip.y) ** 2));
     } else {
-      L += t(`${name}.tilt`, 200 * hinge(r.tiltDeg - 7.8) ** 2 + 2.5 * (r.tiltDeg / 8) ** 2);
+      // r25:水平墙 env 化(TILT4,默认 7.8°)。「指中线对齐块中线」(2026-07-11
+      // 用户规格)在手根冻结下几何上必须让指轴上斜 ~8°(接触点抬 27U / 链长
+      // ~180U),两规格冲突时中线对齐优先 —— 真人跨三行贴纸的握持本就扇形张指。
+      const tilt4 = Number(process.env.TILT4 ?? 7.8);
+      L += t(`${name}.tilt`, 200 * hinge(r.tiltDeg - tilt4) ** 2 + 2.5 * (r.tiltDeg / 8) ** 2);
     }
     L += t(`${name}.dorsal`, 120 * hinge(Math.abs(r.dorsalY - dorsalAnchor[name]) - 0.15) ** 2 + 2 * (r.dorsalY - dorsalAnchor[name]) ** 2);
     if (name !== 'pinky') {
@@ -482,8 +486,11 @@ function fourLoss(mx: Metrics, out?: Record<string, number>): number {
       L += t(`${name}.gap`, 60 * (hinge(2.4 - r.gapB) ** 2 + hinge(r.gapB - 3.4) ** 2) + 0.8 * (r.gapB - 2.9) ** 2);
       // 行带硬约束(±24 内)+ 弱行心拉:stage C 曾拿行心弱罚换拇指分,把食指
       // 接触漂到 y=31(越界进中排)—— 行带必须是硬墙。
+      // r25(用户规格「指中线对齐所压块中线」):行带 env 化,解题时收窄
+      // (ROWBAND=5 级)把接触心钉到块心;默认 24 = 贴纸带内即可(回归口径)。
       const dyRow = Math.abs(r.contactY - rowY[name]);
-      L += t(`${name}.row`, 25 * hinge(dyRow - 24) ** 2 + 1.2 * (dyRow / 10) ** 2);
+      const rowBand = Number(process.env.ROWBAND ?? 24);
+      L += t(`${name}.row`, 25 * hinge(dyRow - rowBand) ** 2 + 1.2 * (dyRow / 10) ** 2);
       // 2026-07-11 用户规格:背面看食/中/无名**指尖端点**要刚好碰到所压
       // 棱/角块的内缘(往中心收)。tip 骨(MANO=皮尖)|x| 进 [36,46] 带 →
       // 指尖肉(侧向半径 ~4U)刚好探到块内缘 x≈32,不越 R 层界(M 列安全
@@ -806,6 +813,25 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
         expect(true).toBe(true);
         return;
       }
+      if (process.env.SCAN) {
+        // r25 诊断:SCAN=<idx>:<lo>:<hi>:<n> 沿单参数线扫,打 totalLoss + 分项
+        // (找"row 想拉、谁在顶"的墙)。
+        const [si, lo, hi, n] = process.env.SCAN.split(':').map(Number);
+        for (let k = 0; k <= n; k++) {
+          const trial = [...seed];
+          trial[si] = lo + ((hi - lo) * k) / n;
+          applyPose(p.m, buildPose(base, trial));
+          const m = measure(p);
+          const parts: Record<string, number> = {};
+          fourLoss(m, parts);
+          const top = Object.entries(parts).filter(([, v]) => v >= 20).sort((a, b) => b[1] - a[1])
+            .map(([kk, v]) => `${kk} ${v.toFixed(0)}`).join(' | ');
+          console.log(`SCAN s[${si}]=${trial[si].toFixed(3)} total ${totalLoss(m).toFixed(0)} thumb ${(totalLoss(m) - fourLoss(m)).toFixed(0)} :: ${top}`);
+          console.log(`  idx cy ${m.fingers.index.contactY.toFixed(1)} mid cy ${m.fingers.middle.contactY.toFixed(1)} ring cy ${m.fingers.ring.contactY.toFixed(1)} ringGap ${m.fingers.ring.gapB.toFixed(2)} ringTilt ${m.fingers.ring.tiltDeg.toFixed(1)} pen ${m.pen.toFixed(2)} prClear ${m.pinkyRingClear.toFixed(2)}`);
+        }
+        expect(true).toBe(true);
+        return;
+      }
       const tail2 = 10;
       const spB2 = 1.35;
       const boundsA2: [number, number][] = [
@@ -848,6 +874,12 @@ describe.skipIf(!MODE)('pose probe / solver', () => {
         // ⚠ t∈[7,20] 平台:拇指肉跨中线时 |x|min 恒 ≈0 无梯度,种子必须跳过。
         ...[0.008, 0.016, 0.032].map((k) => ({ idx: [1, 3, 23, 24, 25, 26], d: [1.08, 0.53, k, k, k, k] })),
         { idx: [1, 3, 4, 7, 10, 13], d: [1.08, 0.53, -0.02, -0.02, -0.02, -0.02] },
+        // r25(用户规格「指中线对齐块中线」):splay 摆是沿锥面的 —— 上摆压肉
+        // 进面(pen 6.2 线扫实证)、下摆脱面(lost),必须配 curl 收放走「贴面
+        // 等高线」。每指 (splay, dc1, dc2) 三档 κ + (splay, dc3) 变体,双向自动。
+        ...[0, 1, 2].flatMap((i) => [0.012, 0.025, 0.05].map((k) => (
+          { idx: [5 + 3 * i, 4 + 3 * i, 23 + i], d: [0.05, -k, -k] }))),
+        ...[0, 1, 2].map((i) => ({ idx: [5 + 3 * i, 27 + i], d: [0.05, -0.03] })),
       ]).filter((c) => !c.idx.some((i) => frozen.has(i))); // 冻结下标的复合步一并禁(r14 曾绕过)
       const fin = descend(evalC2, seed, stepsC2, boundsA2, 'POLISH', false, compounds);
       applyPose(p.m, buildPose(base, fin.s));
