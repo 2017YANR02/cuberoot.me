@@ -114,15 +114,24 @@
   font-style: italic;
 }
 
-/* WCA 真实打乱来源行(国旗 + 比赛名 + 项目 + 轮次),复刻首页 RecentScrambles 的来源行。
-   嵌在 .scramble-strip 内,块级独占一行居中显示;非等宽、word-spacing 复位避免 CJK 被撑开。 */
+/* WCA 真实打乱来源行(国旗 + 比赛名 + 项目 + 轮次 + 打卡 chip),复刻首页 RecentScrambles 的来源行。
+   .scramble-src-row 是块级(非 inline-flex),永远独占一行、和上面的打乱公式换行显示,不随窗口
+   宽度偶然挤在同一行;内部再用 flex 居中排布来源徽标 + 打卡 chip。非等宽、word-spacing 复位
+   避免 CJK 被撑开。 */
+.scramble-src-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
 .scramble-src {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 8px;
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 12px;
   line-height: 1.3;
@@ -139,13 +148,12 @@
 :root[data-timer-theme="light"] .scramble-src:hover .scramble-src-name { color: #111; }
 :root[data-timer-theme="light"] .scramble-src-meta { color: #888; }
 
-/* 打卡:来源行旁的「N 人做过」chip + 名单弹层。与 .scramble-src 同字体复位。 */
+/* 打卡:来源行旁的「N 人做过」chip + 名单弹层。与 .scramble-src 同字体复位;和来源徽标同在
+   .scramble-src-row 内,行内间距靠该 row 的 gap,这里不再自带 margin。 */
 .scramble-marks {
   position: relative;
   display: inline-flex;
-  vertical-align: bottom;
-  margin-top: 8px;
-  margin-left: 10px;
+  align-items: center;
   font-family: ui-sans-serif, system-ui, sans-serif;
   word-spacing: normal;
 }
