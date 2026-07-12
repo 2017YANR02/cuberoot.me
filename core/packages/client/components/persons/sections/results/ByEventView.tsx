@@ -35,6 +35,7 @@ import { UnofficialMark } from '@/components/UnofficialMark';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
 import { useLivePrRanks } from '../../logic/use-live-pr-ranks';
+import { useProgressiveCount } from '../../logic/use-progressive-count';
 import { ResultChangeChain } from './ChangedResultValue';
 import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
@@ -174,6 +175,18 @@ function resolveHashRow(hash: string): HTMLElement | null {
   return null;
 }
 
+// 深链目标 (#r-{comp}-{event}-{round}) 在渐进渲染列表中的下标:comp 尾段/round 头段夹出 comp,
+// round 按 ROUND_VARIANTS 容错。找不到返回 -1。用于把目标行立即纳入渲染范围(不必等 idle 追上)。
+function hashRowIndex(hash: string, rows: WcaResultRow[]): number {
+  if (!hash) return -1;
+  const m = hash.slice(1).match(/^r-(.+)-([^-]+)-([^-]+)$/); // r-{comp}-{event}-{round}
+  if (!m) return -1;
+  const comp = m[1];
+  const round = m[3];
+  const variants = ROUND_VARIANTS[round] ?? [round];
+  return rows.findIndex((r) => r.competition_id === comp && variants.includes(r.round_type_id));
+}
+
 // ─── 全部成绩 (按比赛倒序的轮次表) ───────────────────────────────────────
 // 轮次显示元数据已抽到 utils/wca_round_meta.ts 共用 (ByCompList / 复盘页同场比赛表也用)
 
@@ -252,15 +265,8 @@ function EventRoundsList({
   // 名次数字优先用本地 prRankLive,cubing pS/pA 仅作兜底(本地无效时)。
   const livePrRanks = useLivePrRanks(rows, wcaId);
 
-  // /wca/regulations 风格的 hash 锚点:#r-{comp}-{event}-{round}
-  useEffect(() => {
-    document.querySelectorAll('.wp-row-target').forEach((el) => el.classList.remove('wp-row-target'));
-    if (!hash) return;
-    const el = resolveHashRow(hash);
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.classList.add('wp-row-target');
-  }, [hash, rows]);
+  // /wca/regulations 风格的 hash 锚点:#r-{comp}-{event}-{round} 的定位副作用移到 displayRows /
+  // 渐进计数之后(需 count / ensureIndex),见下方。
 
   const hashOf = (compId: string, roundType: string) =>
     `#r-${compId}-${eventId}-${roundType}`;
@@ -311,6 +317,23 @@ function EventRoundsList({
       return dir === 'asc' ? va - vb : vb - va;
     });
   }, [baseSorted, sort, eventId]);
+
+  // 渐进渲染:先挂前 N 行,其余趁 idle 补齐(顶级选手单项目可 500+ 行,一次性挂 = 单个长任务卡顿)。
+  // 切项目 / 改排序 → displayRows 重排 → 重置重新渐进。
+  const { count, ensureIndex } = useProgressiveCount(displayRows.length, `${eventId}|${sort.key ?? ''}|${sort.dir}`);
+
+  // hash 锚点 (#r-{comp}-{event}-{round}):目标行可能还没渐进渲染到 → 先 ensureIndex 纳入,
+  // count 涨到覆盖它后本副作用再跑一次(count 在 deps),此时元素已挂载即滚动高亮。
+  useEffect(() => {
+    document.querySelectorAll('.wp-row-target').forEach((el) => el.classList.remove('wp-row-target'));
+    if (!hash) return;
+    const idx = hashRowIndex(hash, displayRows);
+    if (idx >= 0 && idx >= count) { ensureIndex(idx); return; }
+    const el = resolveHashRow(hash);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('wp-row-target');
+  }, [hash, displayRows, count, ensureIndex]);
 
   if (displayRows.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
 
@@ -371,7 +394,7 @@ function EventRoundsList({
           </tr>
         </thead>
         <tbody>
-          {displayRows.map((r) => {
+          {displayRows.slice(0, count).map((r) => {
             const cmp = compById.get(r.competition_id);
             const rank = r.live ? prRankLive?.get(r.id) : prRank.get(r.id);
             const liveRank = r.live ? livePrRanks.get(r.id) : null;
