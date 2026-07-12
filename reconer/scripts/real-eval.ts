@@ -74,10 +74,13 @@ const HD_REFINE = process.argv.includes("--hdrefine");
 // 优先于 refineHD — 后者 ±0.4 格搜不到实测 ~1 格的脱靶, 且其黑缝暗线目标对无贴纸
 // 魔方失效; snap4k 目标 = 格线跳变中位数 + kNN 内容项, 范围 ±1.5 格, 普查验证
 // 毒0帧 |Δ|p50≈0.22 / 毒≥3帧 ≈1.1。需与 --hdres 连用 (修正只作用于 HD 重采位置)。
+// v2 (snap4k 多关键帧): 行含 keys:[[f,dx,dy],...] 按帧线性插值; 旧格式 {dx,dy} 常量兼容
 const snapFixArg = process.argv.indexOf("--snapfix");
 const SNAP_FIX = snapFixArg >= 0
   ? (JSON.parse(readFileSync(process.argv[snapFixArg + 1], "utf8")) as Record<
-      string, { f0: number; f1: number; cx: number; cy: number; dx: number; dy: number }[]
+      string,
+      { f0: number; f1: number; cx: number; cy: number; dx?: number; dy?: number;
+        keys?: [number, number, number][]; m?: number[] }[]
     >)
   : null;
 if (SNAP_FIX && !HD_RES) throw new Error("--snapfix 需与 --hdres 连用");
@@ -402,6 +405,7 @@ for (const sf of files) {
       const rgb = new Uint8Array(fbuf.buffer, fbuf.byteOffset, hdBytes);
       for (const obs of grids[i]) {
         let dx = 0, dy = 0;
+        let aff: number[] | null = null, gxA = 0, gyA = 0;
         const srow = snapRows?.find((r) => {
           const f = meta.frames[i];
           if (f < r.f0 || f > r.f1) return false;
@@ -410,15 +414,45 @@ for (const sf of files) {
           return Math.hypot(gx - r.cx, gy - r.cy) < obs.grid.pitch * 2;
         });
         if (srow) {
-          // Δ 格单位 → HD 像素 (随该帧自身晶格基, 链内跟踪漂移自动跟随)
-          dx = (srow.dx * obs.grid.v1.x + srow.dy * obs.grid.v2.x) * SC;
-          dy = (srow.dx * obs.grid.v1.y + srow.dy * obs.grid.v2.y) * SC;
+          // Δ 格单位 → HD 像素 (随该帧自身晶格基, 链内跟踪漂移自动跟随)。
+          // keys 版: 按帧在关键帧间线性插值 (端点外夹紧), 修链内漂移。
+          // m 版 (仿射): 格心绕窗口中心过 M 重映射, 平移向量用生效基 M·v
+          let sdx: number, sdy: number;
+          if (srow.keys) {
+            const kk = srow.keys, f = meta.frames[i];
+            if (f <= kk[0][0]) [, sdx, sdy] = kk[0];
+            else if (f >= kk[kk.length - 1][0]) [, sdx, sdy] = kk[kk.length - 1];
+            else {
+              let j = 1;
+              while (kk[j][0] < f) j++;
+              const [fa, xa, ya] = kk[j - 1], [fb, xb, yb] = kk[j];
+              const t = (f - fa) / (fb - fa);
+              sdx = xa + (xb - xa) * t; sdy = ya + (yb - ya) * t;
+            }
+          } else { sdx = srow.dx!; sdy = srow.dy!; }
+          let v1x = obs.grid.v1.x, v1y = obs.grid.v1.y, v2x = obs.grid.v2.x, v2y = obs.grid.v2.y;
+          if (srow.m) {
+            aff = srow.m;
+            gxA = obs.grid.origin.x + v1x + v2x;
+            gyA = obs.grid.origin.y + v1y + v2y;
+            const [ma, mb, mc, md] = srow.m;
+            const t1x = ma * v1x + mb * v1y, t1y = mc * v1x + md * v1y;
+            const t2x = ma * v2x + mb * v2y, t2y = mc * v2x + md * v2y;
+            v1x = t1x; v1y = t1y; v2x = t2x; v2y = t2y;
+          }
+          dx = (sdx * v1x + sdy * v2x) * SC;
+          dy = (sdx * v1y + sdy * v2y) * SC;
         } else if (HD_REFINE) ({ dx, dy } = refineHD(rgb, W2, H2, obs.grid, SC));
         const hc: (ColorName | null)[] = new Array(9).fill(null);
         const hr: ([number, number, number] | null)[] = new Array(9).fill(null);
         const rad = obs.grid.pitch * SC * 0.22;
         for (let c = 0; c < 9; c++) {
-          const { x, y } = cellCenter(obs.grid, (c / 3) | 0, c % 3);
+          let { x, y } = cellCenter(obs.grid, (c / 3) | 0, c % 3);
+          if (aff) {
+            const rx = x - gxA, ry = y - gyA;
+            x = gxA + aff[0] * rx + aff[1] * ry;
+            y = gyA + aff[2] * rx + aff[3] * ry;
+          }
           hc[c] = sampleCell(rgb, W2, H2, x * SC + dx, y * SC + dy, rad);
           const m = blockMedianRGB(rgb, W2, H2, x * SC + dx, y * SC + dy, rad);
           hr[c] = m ? [m.r, m.g, m.b] : null;
