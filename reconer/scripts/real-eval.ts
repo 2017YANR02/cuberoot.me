@@ -715,7 +715,10 @@ for (const sf of files) {
     let obsId = 0;
     const collectFrom = (obs: FaceObservation, states: readonly (readonly number[])[], rgb: Uint8Array) => {
       const myObsId = obsId++;
-      // 全 (态×指派) 打分, 收集并列最优; 读格 ≥5 且匹配 ≥60% 才可信
+      // 全 (态×指派) 打分, 收集并列最优; 读格 ≥5 且匹配 ≥60% 才可信。
+      // 评分读数优先 hdColors (--hdres+--snapfix 时 = 4K 贴合修正后读色) —
+      // ⑭(a) 观察期饥饿的主因是 vivid 960 斜视角读噪对不上 60% 门, 贴合后重开
+      const oc = obs.hdColors ?? obs.colors;
       interface Cand { st: readonly number[]; ai: number }
       let cands: Cand[] = [];
       let bestM = -1, read = 0;
@@ -724,7 +727,7 @@ for (const sf of files) {
           const { assign } = ASSIGNS[ai];
           let m = 0, rd = 0;
           for (let i = 0; i < 9; i++) {
-            const c = obs.colors[i];
+            const c = oc[i];
             if (!c) continue;
             rd++;
             if (COLOR_NAMES[Math.floor(omega[st[assign[i]]] / 9)] === c) m++;
@@ -761,7 +764,7 @@ for (const sf of files) {
           continue;
         }
         // null 读格仅在高读出帧收集 (读出 ≥7 时 null 多为阈值失败如暖白, 非手指遮挡)
-        if (!obs.colors[i] && read < 7) continue;
+        if (!oc[i] && read < 7) continue;
         const { x, y } = cellCenter(obs.grid, (i / 3) | 0, i % 3);
         const m = blockMedianRGB(rgb, meta.w, meta.h, x, y, obs.grid.pitch * 0.22);
         if (m) samples.push({ r: m.r, g: m.g, b: m.b, label, obs: myObsId });
