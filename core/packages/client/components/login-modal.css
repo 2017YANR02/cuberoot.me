@@ -54,38 +54,61 @@
   color: var(--foreground);
 }
 
-.lm-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 16px;
-}
-.lm-tab {
-  flex: 1 1 64px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 9px 6px;
-  font: inherit;
-  font-size: 13px;
-  border-radius: 9px;
-  color: var(--muted-foreground);
-  appearance: none;
-  background: color-mix(in srgb, var(--foreground) 5%, transparent);
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-.lm-tab.is-active {
-  color: var(--accent-foreground);
-  background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-}
-
 .lm-flow { display: flex; flex-direction: column; gap: 10px; }
 
-/* 邮箱 pane 顶部「验证码 / 密码」切换 */
-.lm-modeswitch { display: flex; justify-content: center; margin-bottom: 14px; }
+/* 「或」分隔线:两侧发丝线 + 居中文字,分隔主凭据区与第三方登录 */
+.lm-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 14px;
+  font-size: 12px;
+  color: var(--faint-foreground);
+}
+.lm-divider::before,
+.lm-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-default);
+}
+
+/* 第三方「用 X 登录」按钮竖排 */
+.lm-sso-list { display: flex; flex-direction: column; gap: 8px; }
+.lm-sso {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 11px 42px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  appearance: none;
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.lm-sso:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 7%, transparent);
+  border-color: var(--border-strong);
+}
+.lm-sso:disabled { opacity: 0.6; cursor: not-allowed; }
+/* 图标钉左、文字居中(Google/Apple 官方按钮范式:不同长度标签下图标始终对齐) */
+.lm-sso-icon {
+  position: absolute;
+  left: 14px;
+  display: inline-flex;
+  align-items: center;
+}
+.lm-sso-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lm-sso-error { text-align: center; margin-top: 4px; }
+
+/* 邮箱/手机 切换链接 */
+.lm-cred-switch { margin-top: 2px; }
 
 /* 密码输入 + 眼睛切换 */
 .lm-pwfield { position: relative; display: flex; align-items: center; }
