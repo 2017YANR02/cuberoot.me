@@ -21,12 +21,28 @@ import {
 import {
   fetchPuzzleExamples, type PuzzleExamplesEntry,
 } from '@/lib/puzzle-examples';
+import { stepMetricsFor } from '@/app/[lang]/timer/_lib/scramble/step-metrics';
 import { tr } from '@/i18n/tr';
 
 // puzzle key → 在线求解器路由名(sq1 无求解器页 → 不在表里 → 示例卡不可点)。
 const PUZZLE_ROUTE: Record<string, string> = { '222': '222', pyraminx: 'pyraminx', skewb: 'skewb' };
 // 2D 预览用的 WCA event_id。
 const PUZZLE_EVENT: Record<string, string> = { '222': '222', pyraminx: 'pyram', skewb: 'skewb', sq1: 'sq1' };
+// 「按步数」多口径的 puzzle → step-metrics.ts 的 event(度量下拉选项从那取,与计时器同源)。
+const STEP_EVENT: Record<string, string> = { '222': '222', pyraminx: 'pyra' };
+
+// 「按步数」多口径(2×2 底面/底层/魔方/QTM、金字塔 V/魔方)的度量说明。key = step-metrics.ts key。
+function byStepsMetricNote(metric: string): { zh: string; en: string } {
+  const notes: Record<string, { zh: string; en: string }> = {
+    face: { zh: '底面:任意一面同色的最优步数(HTM,0–5)', en: 'First face: optimal HTM to make any one face solid (0–5)' },
+    layer: { zh: '底层:任意一整层还原的最优步数(HTM,0–7)', en: 'First layer: optimal HTM to solve any full layer (0–7)' },
+    htm: { zh: '魔方:整解最优步数(HTM,0–11)', en: 'Cube: full-solve optimal HTM (0–11)' },
+    qtm: { zh: 'QTM:整解最优步数(90° 计 1、180° 计 2,0–14)', en: 'QTM: full-solve optimal quarter turns (0–14)' },
+    v: { zh: 'V:V-first 法的 V 步,4 面取最短(0–7)', en: 'V: V-first V step, shortest over the 4 faces (0–7)' },
+    cube: { zh: '魔方:整解最优步数(HTM,不含小角,0–11)', en: 'Cube: full-solve optimal HTM, tips excluded (0–11)' },
+  };
+  return notes[metric] ?? { zh: metric, en: metric };
+}
 
 // 每个 puzzle 一个数据色(图表填充,非 UI 灰阶);沿用魔方色系。
 const PUZZLE_COLOR: Record<string, string> = {
@@ -114,6 +130,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const [target, setTarget] = useState<'full' | 'cubeshape'>('full');
   // sq1 双口径(单 toggle):'wca'(WCA 12c4,官方计步)/ 'slash'(twist,God 13)。仅 sq1 + 完整魔方有 alt。
   const [sq1Unit, setSq1Unit] = useState<'wca' | 'slash'>('wca');
+  // 「按步数」多口径(2×2 底面/底层/魔方/QTM、金字塔 V/魔方)当前选中口径;'' = 用该 puzzle 主口径。
+  const [selectedMetric, setSelectedMetric] = useState<string>('');
   // 示例:原始比赛打乱 vs 最优(最短)等价打乱(同状态)。仅当样例带最优数据时露切换。
   const [exView, setExView] = useState<'orig' | 'opt'>('orig');
   // 国家占比条:点某国段 → 只看该国该步数的示例(country_id,null=不筛)。
@@ -138,6 +156,13 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const entry = json?.puzzles[puzzleKey];
   const exEntry = examples?.[puzzleKey];
 
+  // 「按步数」多口径(2×2 / 金字塔):entry.metrics 在即启用度量下拉,选项/标签取自 step-metrics.ts。
+  const stepMetrics = STEP_EVENT[puzzleKey] ? stepMetricsFor(STEP_EVENT[puzzleKey]) : null;
+  const hasMetrics = !!entry?.metrics && !!stepMetrics;
+  const selMetric = hasMetrics
+    ? (selectedMetric && entry!.metrics![selectedMetric] ? selectedMetric : entry!.metric)
+    : '';
+
   const hasAlt = !!entry?.alt;
   const hasCubeshape = puzzleKey === 'sq1' && !!entry?.cubeshape; // 复形下拉门控(数据在才露)
   const isCube = hasCubeshape && target === 'cubeshape';
@@ -147,13 +172,17 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
   const slashAmbiguous = entry?.alt?.ambiguous ?? 0;
   // 目标 = 复形 → cubeshape.dist;否则 sq1 双口径:unit=wca → dist(W,WCA 12c4 最优);unit=slash → alt.dist(t,真 slash 最优,God 13)。
   const unit = sq1Unit;
-  const activeDist: PuzzleHistEntry | undefined = isCube
-    ? entry?.cubeshape?.dist
+  const activeDist: PuzzleHistEntry | undefined = hasMetrics
+    ? entry!.metrics![selMetric]?.dist
+    : isCube ? entry?.cubeshape?.dist
     : unit === 'wca' ? entry?.dist : entry?.alt?.dist;
-  const activeMetricKey: string = isCube ? 'slash' : unit === 'wca' ? (entry?.metric ?? 'wca') : (entry?.alt?.metric ?? 'slash');
-  // 示例分桶:复形→binsCubeshape;W→bins;t→binsAlt。
-  const activeBins: PuzzleExamplesEntry['bins'] | undefined = isCube
-    ? exEntry?.binsCubeshape
+  const activeMetricKey: string = hasMetrics
+    ? selMetric
+    : isCube ? 'slash' : unit === 'wca' ? (entry?.metric ?? 'wca') : (entry?.alt?.metric ?? 'slash');
+  // 示例分桶:「按步数」→ metrics.<key>.bins;复形→binsCubeshape;W→bins;t→binsAlt。
+  const activeBins: PuzzleExamplesEntry['bins'] | undefined = hasMetrics
+    ? exEntry?.metrics?.[selMetric]?.bins
+    : isCube ? exEntry?.binsCubeshape
     : unit === 'wca' ? exEntry?.bins : exEntry?.binsAlt;
   const series = useMemo<HistSeries[]>(() => {
     if (!entry || !activeDist) return [];
@@ -168,11 +197,12 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     () => (activeBins ? Object.keys(activeBins).map(Number).sort((a, b) => a - b) : []),
     [activeBins],
   );
+  useEffect(() => { setSelectedMetric(''); }, [puzzleKey]); // 切 puzzle 回到主口径
   useEffect(() => {
-    setSelectedBin(null); // 切 puzzle / 口径 / 目标时清空,等下个 effect 按新数据重选
-  }, [puzzleKey, sq1Unit, target]);
-  // 换步数 / 口径 / 目标 / puzzle 都清掉国家筛选(避免筛着一个国家切走后空列表)。
-  useEffect(() => { setFilterCountry(null); }, [selectedBin, sq1Unit, target, puzzleKey]);
+    setSelectedBin(null); // 切 puzzle / 口径 / 目标 / 度量时清空,等下个 effect 按新数据重选
+  }, [puzzleKey, sq1Unit, target, selectedMetric]);
+  // 换步数 / 口径 / 目标 / puzzle / 度量都清掉国家筛选(避免筛着一个国家切走后空列表)。
+  useEffect(() => { setFilterCountry(null); }, [selectedBin, sq1Unit, target, puzzleKey, selectedMetric]);
   useEffect(() => {
     if (exampleBins.length === 0) return;
     setSelectedBin((prev) => {
@@ -196,12 +226,16 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     );
   }
 
-  const note = isCube
-    ? cubeshapeNote()
-    : (puzzleKey === 'sq1' && hasAlt)
-      ? sq1Note(unit, slashProvisional, slashResidual)
-      : metricNote(puzzleKey, activeMetricKey);
-  const total = isCube ? (entry.cubeshape?.sample_count ?? entry.sample_count) : entry.sample_count;
+  const note = hasMetrics
+    ? byStepsMetricNote(selMetric)
+    : isCube
+      ? cubeshapeNote()
+      : (puzzleKey === 'sq1' && hasAlt)
+        ? sq1Note(unit, slashProvisional, slashResidual)
+        : metricNote(puzzleKey, activeMetricKey);
+  const total = hasMetrics
+    ? (entry.metrics![selMetric]?.sample_count ?? entry.sample_count)
+    : isCube ? (entry.cubeshape?.sample_count ?? entry.sample_count) : entry.sample_count;
   const sampleLine = tr({ zh: '{n} 条样本', en: '{n} samples' }).replace('{n}', total.toLocaleString());
 
   return (
@@ -211,6 +245,20 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           <span>{sampleLine}</span>
           <span className="scramble-stats-puzzle-metric">{tr(note)}</span>
         </div>
+        {hasMetrics && stepMetrics && (
+          <label className="scramble-stats-puzzle-target">
+            <span>{tr({ zh: '度量', en: 'Metric' })}</span>
+            <select
+              className="scramble-stats-select"
+              value={selMetric}
+              onChange={(e) => setSelectedMetric(e.target.value)}
+            >
+              {stepMetrics.map((m) => (
+                <option key={m.key} value={m.key}>{isZh ? m.zh : m.en}</option>
+              ))}
+            </select>
+          </label>
+        )}
         {hasCubeshape && (
           <label className="scramble-stats-puzzle-target">
             <span>{tr({ zh: '目标', en: 'Goal' })}</span>
@@ -288,7 +336,9 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           {tr({ zh: '生成时间', en: 'Generated' })}: {json.meta.generated_at}
         </span>
         <span>
-          {isCube
+          {hasMetrics
+            ? tr(byStepsMetricNote(selMetric))
+            : isCube
             ? tr({
               zh: '复形(cubeshape)= 把顶底两层各自还原成正方形(即立方体形状),不管中层(equator)的朝向。度量 = 最少 slash(/)数;两刀之间任意转动顶层 / 底层都免费、不计步。任意打乱最多 7 刀复形(Jaap Scherphuis 给出的 cube-shape God\'s number;全 170 个双层 shape 查表即得)。这是 SQ1 解法的第一步。',
               en: 'Cube shape (cubeshape) = make both the top and bottom layers square (i.e. restore the cube shape), ignoring the middle (equator) orientation. Metric = fewest slashes (/); any top/bottom turns between slashes are free. Any scramble reaches cube shape in at most 7 slashes (the cube-shape God\'s number per Jaap Scherphuis; a lookup over all 170 two-layer shapes). This is the first step of solving a Square-1.',

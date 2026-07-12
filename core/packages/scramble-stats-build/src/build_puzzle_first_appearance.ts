@@ -24,14 +24,18 @@ import { dateDisplay } from './comp_date';
 interface PuzzleSpec {
   key: string;       // = JSON key = 数据子目录名
   event: string;     // WCA event_id(Scrambles.tsv 过滤 + 前端 2D 预览)
+  valueCsv?: string; // 主口径 CSV 文件名(默认 = <key>.csv;金字塔 = 度量 CSV,时间线跟面板默认口径)
   valueCol?: string; // 主口径列名(默认 = key;sq1 = 'wca')
   altCol?: string;   // 备选口径列名(sq1 = 'slash' → 产 binsAlt)
 }
 
 // 与 build_puzzle_examples.ts / build_puzzle_dist.ts 的 PUZZLES 对齐。
 const PUZZLES: PuzzleSpec[] = [
+  // 222.csv 主列 = 整解最优 HTM,与面板「按步数」默认口径(htm)相同,无需换源。
   { key: '222', event: '222' },
-  { key: 'pyraminx', event: 'pyram' },
+  // 面板默认口径改为 cube(去 tips 整解,0..11)后,时间线同步换到度量 CSV 的 cube 列,
+  // 否则旧含 tips 口径(6..14)的「12/13/14 步」条目在面板任一口径下都不存在,单位对不上。
+  { key: 'pyraminx', event: 'pyram', valueCsv: 'pyraminx_metrics.csv', valueCol: 'cube' },
   { key: 'skewb', event: 'skewb' },
   { key: 'sq1', event: 'sq1', valueCol: 'wca', altCol: 'slash' },
 ];
@@ -72,7 +76,9 @@ async function loadIdToLen(csvPath: string, valueCol: string): Promise<Map<strin
       continue;
     }
     const c = line.split(',');
-    const v = Number(c[valIdx]);
+    const s = c[valIdx];
+    if (!s) continue; // 空字段(截断行)防御:Number('')===0 会造幻影 0 步
+    const v = Number(s);
     if (!Number.isFinite(v)) continue;
     map.set(c[idIdx], v);
   }
@@ -206,7 +212,7 @@ async function main() {
 
   for (const spec of PUZZLES) {
     if (liveKeys && !liveKeys.includes(spec.key)) { console.log(`  [skip] ${spec.key}: not in puzzle_distribution.json`); continue; }
-    const csvPath = path.join(dataRoot, spec.key, `${spec.key}.csv`);
+    const csvPath = path.join(dataRoot, spec.key, spec.valueCsv ?? `${spec.key}.csv`);
     const txtPath = path.join(dataRoot, spec.key, 'scrambles.txt');
     if (!fs.existsSync(csvPath) || !fs.existsSync(txtPath)) { console.warn(`  [skip] ${spec.key}: missing csv/txt (${csvPath})`); continue; }
 
@@ -214,6 +220,15 @@ async function main() {
     const idToLen = await loadIdToLen(csvPath, spec.valueCol ?? spec.key);
     const idToLenAlt = spec.altCol ? await loadIdToLen(csvPath, spec.altCol) : null;
     console.log(`  ${idToLen.size} ids${idToLenAlt ? ` (+${idToLenAlt.size} alt)` : ''}`);
+    // 度量 CSV 源的覆盖率守卫(与 build_puzzle_dist 同款):半截回填会把「首次出现」判给错误的比赛。
+    if (spec.valueCsv) {
+      let corpus = 0;
+      const rlc = readline.createInterface({ input: fs.createReadStream(txtPath, 'utf-8'), crlfDelay: Infinity });
+      for await (const line of rlc) if (line && line.includes(',')) corpus++;
+      if (idToLen.size < corpus * 0.995) {
+        throw new Error(`[${spec.key}] ${spec.valueCsv} covers ${idToLen.size}/${corpus} corpus scrambles — run build_puzzle_metrics.mts first (update_puzzle_stats.ps1 step 2.9)`);
+      }
+    }
 
     console.log(`[${spec.key}] scanning Scrambles.tsv (event=${spec.event})...`);
     const { best, bestAlt } = await scanFirstAppearance(scramblesTsv, spec.event, idToLen, idToLenAlt, compInfo);

@@ -303,6 +303,98 @@ export function cube222MetricOfScramble(scramble: string, metric: Cube222Metric)
   return s ? metricOf(s, metric) : null;
 }
 
+// ── offline batch evaluator (stats pipeline / node scripts ONLY) ─────────────────────────────────
+// Builds full-space BFS distance tables over all 3,674,160 states (a few seconds, ~15MB), then every
+// scramble is an O(1) lookup — used by scripts/build_puzzle_metrics.mts to precompute the WCA corpus
+// (440k scrambles in seconds vs hours of per-scramble IDA*). NEVER call from browser code: the
+// per-sample IDA* path above is the UI path precisely because it needs no table build.
+export interface Cube222Metrics { face: number; layer: number; htm: number; qtm: number }
+
+/** Inverse of permRank (Lehmer decode over the 7 free pieces; DBL stays at slot 6). */
+function unrankPerm(r: number): Int8Array {
+  const cp = new Int8Array(8); cp[6] = 6;
+  const avail = [0, 1, 2, 3, 4, 5, 6];
+  for (let i = 0; i < 7; i++) {
+    const f = FACT[6 - i];
+    const s = Math.floor(r / f); r %= f;
+    cp[FREE[i]] = FREE[avail[s]];
+    avail.splice(s, 1);
+  }
+  return cp;
+}
+/** Inverse of oriRank; co[7] is forced by total-twist ≡ 0 (mod 3), which all valid states satisfy. */
+function unrankOri(r: number): Int8Array {
+  const co = new Int8Array(8);
+  let sum = 0;
+  for (let i = 5; i >= 0; i--) { const t = r % 3; r = (r - t) / 3; co[FREE[i]] = t; sum += t; }
+  co[7] = (3 - (sum % 3)) % 3;
+  return co;
+}
+
+export function create222MetricEvaluator(): (scramble: string) => Cube222Metrics | null {
+  const N = 5040 * 729; // 3,674,160
+  // perm and ori coordinates evolve independently under a fixed move (cp'[i]=cp[m.p[i]],
+  // co'[i]=co[m.p[i]]+m.o[i]), so full-state transitions factor into two small move tables.
+  const permMove = new Int16Array(5040 * 9);
+  for (let p = 0; p < 5040; p++) {
+    const s: State = { cp: unrankPerm(p), co: new Int8Array(8) };
+    for (let m = 0; m < 9; m++) permMove[p * 9 + m] = permRank(applyMove(s, HTM[m]).cp);
+  }
+  const oriMove = new Int16Array(729 * 9);
+  for (let o = 0; o < 729; o++) {
+    const s: State = { cp: Int8Array.from([0, 1, 2, 3, 4, 5, 6, 7]), co: unrankOri(o) };
+    for (let m = 0; m < 9; m++) oriMove[o * 9 + m] = oriRank(applyMove(s, HTM[m]).co);
+  }
+  // BFS from a seed set (dist 0 pre-marked, 255 elsewhere) over a move subset. The move set is
+  // inverse-closed, so distance FROM the seed set equals min moves INTO it (= subgoalDist/solveHTM).
+  const bfs = (dist: Uint8Array, moves: number[]): void => {
+    const queue = new Int32Array(N);
+    let head = 0, tail = 0;
+    for (let i = 0; i < N; i++) if (dist[i] === 0) queue[tail++] = i;
+    while (head < tail) {
+      const idx = queue[head++];
+      const d = dist[idx] + 1;
+      const p = (idx / 729) | 0, o = idx - p * 729;
+      for (const m of moves) {
+        const n = permMove[p * 9 + m] * 729 + oriMove[o * 9 + m];
+        if (dist[n] === 255) { dist[n] = d; queue[tail++] = n; }
+      }
+    }
+  };
+  // seed face/layer with every state already satisfying the (color-neutral) predicate
+  const faceDist = new Uint8Array(N).fill(255);
+  const layerDist = new Uint8Array(N).fill(255);
+  const cos: Int8Array[] = [];
+  for (let o = 0; o < 729; o++) cos.push(unrankOri(o));
+  const st: State = { cp: new Int8Array(8), co: new Int8Array(8) };
+  for (let p = 0; p < 5040; p++) {
+    st.cp = unrankPerm(p);
+    const base = p * 729;
+    for (let o = 0; o < 729; o++) {
+      st.co = cos[o];
+      if (anyFaceSolid(st)) faceDist[base + o] = 0;
+      if (anyLayerSolved(st)) layerDist[base + o] = 0;
+    }
+  }
+  const htmDist = new Uint8Array(N).fill(255);
+  const qtmDist = new Uint8Array(N).fill(255);
+  htmDist[0] = 0; qtmDist[0] = 0; // solved ranks to index 0
+  const ALL = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+  // QTM distance = plain BFS over the 6 quarter turns: U2 = U·U (cost 2), and merging consecutive
+  // same-face quarters never lengthens a word — identical to distQTM's HTM-move + QTM-cost search.
+  const QUARTER = ALL.filter((m) => HTM_QCOST[m] === 1);
+  bfs(faceDist, ALL);
+  bfs(layerDist, ALL);
+  bfs(htmDist, ALL);
+  bfs(qtmDist, QUARTER);
+  return (scramble: string): Cube222Metrics | null => {
+    const s = stateFromScramble(scramble);
+    if (!s) return null;
+    const idx = permRank(s.cp) * 729 + oriRank(s.co);
+    return { face: faceDist[idx], layer: layerDist[idx], htm: htmDist[idx], qtm: qtmDist[idx] };
+  };
+}
+
 // ── test/diagnostic exports (used by tests to verify metrics against the essential-case oracle) ──
 export const _test = {
   solvedState, applyMove, randomState, metricOf,

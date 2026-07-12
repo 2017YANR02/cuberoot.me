@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { _test, generate222ByMetric, type Cube222Metric } from '@/lib/cube222-metric';
+import { _test, generate222ByMetric, create222MetricEvaluator, type Cube222Metric } from '@/lib/cube222-metric';
 
 const casesPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../stats/scramble/2x2_essential_cases.json');
 const cases: [number, string, number, number, number, number, string | null, number[] | null, number][] =
@@ -54,6 +54,32 @@ describe('cube222-metric vs essential-case oracle', () => {
     }
     expect(checked).toBeGreaterThan(100);
     expect(qFail).toBe(0);
+  });
+
+  it('create222MetricEvaluator (full-space BFS tables) matches the per-scramble IDA*/subgoal path', () => {
+    const evaluate = create222MetricEvaluator();
+    // solved state: all four metrics 0
+    expect(evaluate('')).toEqual({ face: 0, layer: 0, htm: 0, qtm: 0 });
+    // non-U/R/F tokens are unmeasurable in the fixed-DBL model — must match cube222MetricOfScramble
+    expect(evaluate('R L')).toBeNull();
+    // face/htm vs the stored essential-case oracle (both symmetry-class invariants), qtm/layer vs the
+    // live IDA*/subgoal path — the evaluator must agree on every sampled case.
+    const N = cases.length;
+    const STEP = Math.floor(N / 150) || 1;
+    let checked = 0;
+    for (let i = 0; i < N; i += STEP) {
+      const [, hAlg, F, H] = cases[i];
+      const scr = invert(hAlg);
+      const v = evaluate(scr);
+      expect(v, `unmeasurable: "${scr}"`).not.toBeNull();
+      expect(v!.face, `face of "${scr}"`).toBe(F);
+      expect(v!.htm, `htm of "${scr}"`).toBe(H);
+      const s = _test.applyScramble(scr);
+      expect(v!.layer, `layer of "${scr}"`).toBe(_test.metricOf(s, 'layer'));
+      expect(v!.qtm, `qtm of "${scr}"`).toBe(_test.distQTM(s));
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(100);
   });
 
   it('generate222ByMetric yields scrambles with the requested metric value', () => {
