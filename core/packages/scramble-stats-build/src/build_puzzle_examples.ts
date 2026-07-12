@@ -38,6 +38,9 @@ interface PuzzleSpec {
   event: string;     // WCA event_id(比赛元数据按此过滤,UI 预览 event 也用它)
   valueCol?: string; // 主口径 CSV 列名(默认 = key;sq1 = 'wca')
   altCol?: string;   // 备选口径列名(sq1 = 'slash';→ 产 binsAlt)
+  // 「按步数」多口径(2×2 底面/底层/魔方/QTM、金字塔 V/魔方):示例按每个口径的度量值分桶,
+  // 写进 metrics.<key>.bins。值来自 <key>_metrics.csv(build_puzzle_metrics.mts 预算)。
+  metricsCsv?: { file: string; cols: string[] };
   // sq1 = 可证 WCA 12c4 最优(Sq1WcaSolver)。示例源 = sq1_wca_exact.csv + 未 ingest 完成块,
   // 按 wca_exact / opt 的 slash 数分桶,写进 bins/binsAlt(近最优 2026-06-18 退役,不再产 near 示例)。
   exact?: boolean;
@@ -45,8 +48,8 @@ interface PuzzleSpec {
 
 // 与 build_puzzle_dist.ts 的 PUZZLES 对齐(顺序无关,sq1 视 dist 是否存在决定产不产)。
 const PUZZLES: PuzzleSpec[] = [
-  { key: '222', event: '222' },
-  { key: 'pyraminx', event: 'pyram' },
+  { key: '222', event: '222', metricsCsv: { file: '222_metrics.csv', cols: ['face', 'layer', 'htm', 'qtm'] } },
+  { key: 'pyraminx', event: 'pyram', metricsCsv: { file: 'pyraminx_metrics.csv', cols: ['v', 'cube'] } },
   { key: 'skewb', event: 'skewb' },
   { key: 'sq1', event: 'sq1', exact: true }, // 精确档:bins=wca_exact、binsAlt=slash(opt_scramble 驱动「原始/最优」)
 ];
@@ -111,6 +114,47 @@ async function bucketIdsByLen(csvPath: string, valueCol: string): Promise<Map<nu
     arr.push(id);
   }
   return buckets;
+}
+
+// 「按步数」多口径分桶:读 <key>_metrics.csv(id,<col1>,<col2>,...),每列(度量)按值分桶 id。
+// 一趟读文件,同时给所有口径分桶(值列都在同一行)。
+async function bucketIdsByMetrics(csvPath: string, cols: string[]): Promise<Record<string, Map<number, string[]>>> {
+  const out: Record<string, Map<number, string[]>> = {};
+  for (const c of cols) out[c] = new Map();
+  const rl = readline.createInterface({ input: fs.createReadStream(csvPath, 'utf-8'), crlfDelay: Infinity });
+  const idx: Record<string, number> = {};
+  let idIdx = -1;
+  for await (const line of rl) {
+    if (!line) continue;
+    if (idIdx === -1) {
+      const header = line.split(',');
+      idIdx = header.indexOf('id');
+      for (const c of cols) {
+        const i = header.indexOf(c);
+        if (idIdx === -1 || i === -1) throw new Error(`missing id/'${c}' in ${csvPath} header: ${line}`);
+        idx[c] = i;
+      }
+      continue;
+    }
+    const parts = line.split(',');
+    const id = parts[idIdx];
+    if (!id) continue;
+    // 整行有效才分桶(与 build_puzzle_dist.aggregateMetrics 同款):任一列缺/空/非数(崩溃截断尾行,
+    // Number('')===0 会进幻影 0 步桶)→ 整行跳过;该 id 会被增量重算补一条好行。
+    let ok = true;
+    for (const c of cols) {
+      const s = parts[idx[c]];
+      if (!s || !Number.isFinite(Number(s))) { ok = false; break; }
+    }
+    if (!ok) continue;
+    for (const c of cols) {
+      const v = Number(parts[idx[c]]);
+      let arr = out[c].get(v);
+      if (!arr) { arr = []; out[c].set(v, arr); }
+      arr.push(id);
+    }
+  }
+  return out;
 }
 
 // sq1 精确档双分桶:读 sq1_wca_exact.csv + _exact_chunks/*_sq1.csv(全量灌注进行中时块未 ingest),
@@ -352,6 +396,84 @@ async function main() {
   for (const spec of PUZZLES) {
     if (liveKeys && !liveKeys.includes(spec.key)) {
       console.log(`  [skip] ${spec.key}: not in puzzle_distribution.json meta.puzzles`);
+      continue;
+    }
+    // 「按步数」多口径(2×2 / 金字塔):每个口径按度量值分桶示例,写进 metrics.<key>.bins。
+    // 稀有桶(≤FULL_BIN_CAP)存全量 —— 既供面板「点某步数看真题」,也供计时器稀有区间即时取真题。
+    if (spec.metricsCsv) {
+      const mcsvPath = path.join(dataRoot, spec.key, spec.metricsCsv.file);
+      const mtxtPath = path.join(dataRoot, spec.key, 'scrambles.txt');
+      if (!fs.existsSync(mcsvPath) || !fs.existsSync(mtxtPath)) {
+        console.warn(`  [skip] ${spec.key}: missing metrics csv/txt (${mcsvPath})`);
+        continue;
+      }
+      const perMetricFull = await bucketIdsByMetrics(mcsvPath, spec.metricsCsv.cols);
+      // 覆盖率守卫(与 build_puzzle_dist 同款):<99.5% = build_puzzle_metrics 没跑完,硬失败防半截样本发布。
+      {
+        let corpus = 0;
+        const rlc = readline.createInterface({ input: fs.createReadStream(mtxtPath, 'utf-8'), crlfDelay: Infinity });
+        for await (const line of rlc) if (line && line.includes(',')) corpus++;
+        let rows = 0;
+        for (const ids of perMetricFull[spec.metricsCsv.cols[0]].values()) rows += ids.length;
+        if (rows < corpus * 0.995) {
+          throw new Error(`[${spec.key}] metrics CSV covers ${rows}/${corpus} corpus scrambles — run build_puzzle_metrics.mts first (update_puzzle_stats.ps1 step 2.9)`);
+        }
+      }
+      const wantedIds = new Set<string>();
+      const sampledPerMetric: Record<string, Map<number, string[]>> = {};
+      for (const col of spec.metricsCsv.cols) {
+        const sampled = new Map<number, string[]>();
+        for (const [v, ids] of perMetricFull[col]) {
+          const picked = pickUniform(ids, ids.length <= FULL_BIN_CAP ? ids.length : EXAMPLE_K);
+          sampled.set(v, picked);
+          for (const id of picked) wantedIds.add(id);
+        }
+        sampledPerMetric[col] = sampled;
+      }
+      // 原始打乱串(仅被采样 id)
+      const scrambleOf = new Map<string, string>();
+      {
+        const rl = readline.createInterface({ input: fs.createReadStream(mtxtPath, 'utf-8'), crlfDelay: Infinity });
+        for await (const line of rl) {
+          if (!line) continue;
+          const i = line.indexOf(',');
+          if (i <= 0) continue;
+          const id = line.slice(0, i);
+          if (!wantedIds.has(id)) continue;
+          scrambleOf.set(id, line.slice(i + 1).trim());
+        }
+      }
+      // 最优等价打乱 = <key>.csv 的 soln 反演(状态属性,与口径无关)→ 保住示例卡「原始/最优」切换。
+      const optOf = await loadOptScrambles(path.join(dataRoot, spec.key, `${spec.key}.csv`), wantedIds);
+      // 全量 id(countryDist 按国聚合用)= 各口径全量桶并集(所有口径同一 id 集)。
+      const allIds = new Set<string>();
+      for (const col of spec.metricsCsv.cols) for (const ids of perMetricFull[col].values()) for (const id of ids) allIds.add(id);
+      const { comps, idMeta, idToComp } = await buildCompMeta(wantedIds, allIds, scramblesTsv, compTsv);
+      const metricsOut: Record<string, unknown> = {};
+      const note: string[] = [];
+      for (const col of spec.metricsCsv.cols) {
+        const bins: Record<string, Sample[]> = {};
+        for (const v of [...sampledPerMetric[col].keys()].sort((a, b) => a - b)) {
+          const arr: Sample[] = [];
+          for (const id of sampledPerMetric[col].get(v)!) {
+            const scr = scrambleOf.get(id);
+            if (scr === undefined) continue;
+            const opt = optOf.get(id);
+            arr.push(opt ? [id, scr, opt] : [id, scr]);
+          }
+          if (arr.length) bins[String(v)] = arr;
+        }
+        const entry: Record<string, unknown> = { bins };
+        if (compCountries.size > 0) {
+          const cd = aggregateCountry(perMetricFull[col], idToComp, compCountries);
+          if (Object.keys(cd).length) entry.countryDist = cd;
+        }
+        metricsOut[col] = entry;
+        let n = 0; for (const b of Object.values(bins)) n += b.length;
+        note.push(`${col}=${Object.keys(bins).length}bin/${n}`);
+      }
+      puzzlesOut[spec.key] = { comps, idMeta, metrics: metricsOut };
+      console.log(`  [${spec.key}] ${note.join(', ')}, ${Object.keys(comps).length} comps`);
       continue;
     }
     const csvPath = path.join(dataRoot, spec.key, `${spec.key}.csv`);

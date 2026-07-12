@@ -31,6 +31,14 @@ interface PuzzleExactPrimary {
                       // 缺则回退数 WCA-最优解里的 / 数(slash 最优紧上界 ≤13)
 }
 
+// 「按步数」多口径(2×2 底面/底层/魔方/QTM、金字塔 V/魔方):值由 build_puzzle_metrics.mts(client 端复用
+// 计时器求解器)预算进 <key>_metrics.csv,列名 = 度量 key。与 step-metrics.ts(前端 + 计时器)同一套 key。
+interface PuzzleMetricsCsv {
+  file: string;       // 度量 CSV 文件名(id,<key1>,<key2>,...)
+  cols: string[];     // 度量 key 列(= step-metrics.ts 的 key)
+  default: string;    // 主口径 key(entry.metric / dist 取它,前端默认选它)
+}
+
 interface PuzzleSpec {
   key: string;       // puzzle 名 = JSON key = 数据子目录名
   event: string;     // WCA event_id(语料过滤口径,meta 用)
@@ -38,13 +46,15 @@ interface PuzzleSpec {
   label_zh: string;
   metric: string;    // 主口径 key(2x2x2 = htm;sq1 = wca)
   valueCol?: string; // 主口径在 CSV 里的列名(默认 = key)
+  metricsCsv?: PuzzleMetricsCsv; // 「按步数」多口径:整个 dist 从此 CSV 出(取代 <key>.csv 单口径)
   exactPrimary?: PuzzleExactPrimary; // sq1:主口径 = 精确 WCA 12c4 最优(取代退役的近最优)
 }
 
 // 新 puzzle 注册处:加一行 + update_puzzle_stats.ps1 的 $PUZZLE 表加对应 analyzer 即可。
 const PUZZLES: PuzzleSpec[] = [
-  { key: '222', event: '222', label: '2x2x2', label_zh: '二阶', metric: 'htm' },
-  { key: 'pyraminx', event: 'pyram', label: 'Pyraminx', label_zh: '金字塔', metric: 'htm' }, // 总 HTM 含 tips
+  // 2×2 / 金字塔:多口径「按步数」(值来自 build_puzzle_metrics.mts 的 <key>_metrics.csv)。
+  { key: '222', event: '222', label: '2x2x2', label_zh: '二阶', metric: 'htm', metricsCsv: { file: '222_metrics.csv', cols: ['face', 'layer', 'htm', 'qtm'], default: 'htm' } },
+  { key: 'pyraminx', event: 'pyram', label: 'Pyraminx', label_zh: '金字塔', metric: 'cube', metricsCsv: { file: 'pyraminx_metrics.csv', cols: ['v', 'cube'], default: 'cube' } },
   { key: 'skewb', event: 'skewb', label: 'Skewb', label_zh: '斜转', metric: 'htm' },
   // sq1 主口径 = 可证 WCA 12c4 最优(Sq1WcaSolver,sq1_wca_exact.csv + 未 ingest 块),备选 slash。
   // 近最优(twophase 上界)2026-06-18 退役:不再产 near 分布(代码仍在 solver/src/sq1_twophase.rs 作对照)。
@@ -185,6 +195,52 @@ async function aggregate(csvPath: string, valueCol: string): Promise<{ sampleCou
   return { sampleCount, hist };
 }
 
+// 「按步数」多口径聚合:读 <key>_metrics.csv(id,<col1>,<col2>,...),每列建一个直方图。
+// sample_count 全列一致(每条打乱对每个口径都贡献一次),故取行数。
+async function aggregateMetrics(csvPath: string, cols: string[]): Promise<{ sampleCount: number; hists: Record<string, Hist> } | null> {
+  if (!fs.existsSync(csvPath)) return null;
+  const hists: Record<string, Hist> = {};
+  for (const c of cols) hists[c] = { min: Infinity, max: -Infinity, counts: new Map() };
+  const rl = readline.createInterface({ input: fs.createReadStream(csvPath, 'utf-8'), crlfDelay: Infinity });
+  const idx: Record<string, number> = {};
+  let sampleCount = 0;
+  for await (const line of rl) {
+    if (!line) continue;
+    if (Object.keys(idx).length === 0) {
+      const header = line.split(',');
+      for (const c of cols) {
+        const i = header.indexOf(c);
+        if (i === -1) throw new Error(`missing column '${c}' in ${csvPath} header: ${line}`);
+        idx[c] = i;
+      }
+      continue;
+    }
+    const parts = line.split(',');
+    // 整行有效才计入:任一列缺/空/非数(如崩溃截断的尾行,Number('')===0 会造幻影 0 步桶)→ 整行跳过,
+    // 防止半行给部分口径贡献计数(loadDoneIds 同款严格校验会让该 id 增量重算,坏行永久被忽略)。
+    let ok = true;
+    for (const c of cols) {
+      const s = parts[idx[c]];
+      if (!s || !Number.isFinite(Number(s))) { ok = false; break; }
+    }
+    if (!ok) continue;
+    for (const c of cols) bump(hists[c], Number(parts[idx[c]]));
+    sampleCount++;
+  }
+  return { sampleCount, hists };
+}
+
+// 覆盖率守卫:度量 CSV 行数必须≈语料行数(<99.5% 即视为没跑完 build_puzzle_metrics,如中断的回填),
+// 硬失败防止静默发布半截样本的分布(子集 -Puzzles 调用 / 直跑本脚本时 step 2.9 可能没刷新它)。
+async function assertMetricsCoverage(key: string, sampleCount: number, txtPath: string): Promise<void> {
+  let corpus = 0;
+  const rl = readline.createInterface({ input: fs.createReadStream(txtPath, 'utf-8'), crlfDelay: Infinity });
+  for await (const line of rl) if (line && line.includes(',')) corpus++;
+  if (sampleCount < corpus * 0.995) {
+    throw new Error(`[${key}] metrics CSV covers ${sampleCount}/${corpus} corpus scrambles — run build_puzzle_metrics.mts first (update_puzzle_stats.ps1 step 2.9)`);
+  }
+}
+
 async function main() {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const pkgRoot = path.resolve(here, '..');
@@ -249,6 +305,26 @@ async function main() {
         }
       }
       puzzlesOut[spec.key] = entry;
+      keys.push(spec.key);
+      continue;
+    }
+    // 「按步数」多口径(2×2 / 金字塔):整个 dist 从 <key>_metrics.csv 出,主口径 = spec.metricsCsv.default。
+    if (spec.metricsCsv) {
+      const mcsvPath = path.join(dataRoot, spec.key, spec.metricsCsv.file);
+      const agg = await aggregateMetrics(mcsvPath, spec.metricsCsv.cols);
+      if (!agg) { console.warn(`  [skip] ${spec.key}: missing metrics CSV ${mcsvPath}`); continue; }
+      await assertMetricsCoverage(spec.key, agg.sampleCount, path.join(dataRoot, spec.key, 'scrambles.txt'));
+      const def = spec.metricsCsv.default;
+      const metrics: Record<string, unknown> = {};
+      for (const c of spec.metricsCsv.cols) {
+        metrics[c] = { sample_count: agg.sampleCount, dist: histToJson(agg.hists[c]) };
+      }
+      console.log(`  [${spec.key}] ${agg.sampleCount} rows; ${spec.metricsCsv.cols.map((c) => `${c} ${agg.hists[c].min}..${agg.hists[c].max}`).join(', ')}`);
+      puzzlesOut[spec.key] = {
+        event: spec.event, label: spec.label, label_zh: spec.label_zh,
+        metric: def, sample_count: agg.sampleCount, dist: histToJson(agg.hists[def]),
+        metrics, // 前端度量下拉 + 计时器「按步数」都读这个;key = step-metrics.ts 的 key
+      };
       keys.push(spec.key);
       continue;
     }

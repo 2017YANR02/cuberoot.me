@@ -20,6 +20,12 @@ export interface PuzzleAltDist {
   residual?: number;      // sq1 slash:穷尽证明超时不可行、取紧上界的最深残留态数(meta.fallback)
 }
 
+// 「按步数」单口径分布(2×2 底面/底层/魔方/QTM、金字塔 V/魔方);key = step-metrics.ts 的度量 key。
+export interface PuzzleMetricDist {
+  sample_count: number;
+  dist: PuzzleHistEntry;
+}
+
 export interface PuzzleDistEntry {
   event: string;          // WCA event_id(语料口径,如 '222')
   label: string;
@@ -30,6 +36,7 @@ export interface PuzzleDistEntry {
   alt?: PuzzleAltDist;    // 备选口径(sq1: wca 主 + slash 备,前端可切)
   wcaOptSlash?: PuzzleHistEntry; // sq1 2×2 格3:WCA 最优解的 slash 含量分布(数 opt 解里的 /;≥ slash 最优)
   cubeshape?: PuzzleCubeshapeDist; // sq1 复形:到 cube shape(顶底两层 square)的最少 slash 数(0..7,God 7)
+  metrics?: Record<string, PuzzleMetricDist>; // 「按步数」多口径(2×2 / 金字塔);面板度量下拉 + 计时器按步数共用
 }
 
 // sq1 复形(cubeshape)分布:把顶底两层还原成正方形(立方体形状)所需的最少 slash 数,中层不计。
@@ -46,7 +53,7 @@ export interface PuzzleDistributionJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260626sq1cubeshape';
+const V = '20260712bysteps';
 
 export async function fetchPuzzleDistribution(): Promise<PuzzleDistributionJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_distribution.json') + `?v=${V}`);

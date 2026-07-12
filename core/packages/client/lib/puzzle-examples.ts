@@ -10,10 +10,18 @@ export type PuzzleExampleCompMeta = [string, string, number, string, string, (0 
 // 分桶键与示例分桶对齐:bins(主口径)/ binsAlt(sq1 slash)/ binsCubeshape(sq1 复形)。
 export type PuzzleCountryDist = Partial<Record<'bins' | 'binsAlt' | 'binsCubeshape', Record<string, Record<string, number>>>>;
 
+// 「按步数」单口径示例(2×2 底面/底层/魔方/QTM、金字塔 V/魔方);稀有桶存全量,供面板点桶看真题 +
+// 计时器稀有区间即时取真题。countryDist:该口径各步数 top 国家计数。
+export interface PuzzleMetricExamples {
+  bins: Record<string, PuzzleExampleSample[]>;
+  countryDist?: Record<string, Record<string, number>>; // 步数 -> 国家 -> 计数
+}
+
 export interface PuzzleExamplesEntry {
   bins?: Record<string, PuzzleExampleSample[]>;   // 主口径步数 -> 示例(每 bin K 条,稀有 bin 全量;sq1 = 可证 WCA 12c4 最优分桶)
   binsAlt?: Record<string, PuzzleExampleSample[]>; // 备选口径分桶(sq1 = slash)
   binsCubeshape?: Record<string, PuzzleExampleSample[]>; // sq1 复形:到 cube shape 最少 slash 数分桶(只原始打乱)
+  metrics?: Record<string, PuzzleMetricExamples>; // 「按步数」多口径(2×2 / 金字塔);key = step-metrics.ts key
   comps: Record<string, [string, string]>;       // compId -> [比赛名, 日期串]
   idMeta: Record<string, PuzzleExampleCompMeta>;  // id -> 比赛元数据
   countryDist?: PuzzleCountryDist;                // 各步数国家占比(复用 StackedBar 画条 + 按国筛选示例)
@@ -25,7 +33,7 @@ export interface PuzzleExamplesJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260709countrydist';
+const V = '20260712bysteps';
 
 export async function fetchPuzzleExamples(): Promise<PuzzleExamplesJson> {
   const r = await fetch(statsUrl('/stats/scramble/puzzle_examples.json') + `?v=${V}`);
