@@ -79,6 +79,13 @@ const HD_AGREE = process.argv.includes("--hdagree");
 // 值 = 判毒票阈 (kNN k=5 毒票占比 ≥ 此值即剥夺), 0 = 关闭 (默认, 基线不变)。
 const vetoArg = process.argv.indexOf("--cellveto");
 const CELL_VETO = vetoArg >= 0 ? parseFloat(process.argv[vetoArg + 1] ?? "0.6") : 0;
+// 魔方地理围栏 (正⑱ 阶段2, 用户"先造工具识别图中哪里是魔方"): 每链帧以晶格为
+// 中心粗扫 ROI, kNN 把块标 毒(衣/手/背景)/暗(格缝, 中性)/魔方色, 非毒块 4 连通,
+// 格心不落在"含 ≥3 魔方色块的连通域"内的帧票剥夺。与 --cellveto 互补: cellveto
+// 孤立看单格色 (悬在外套上但色似贴纸的格漏网), geofence 用空间上下文杀。
+// 只进 veto 轨 (链存在性/锚点/κ 不碰)。值 = 块判毒票阈, 0 = 关 (默认, 基线不变)。
+const geoArg = process.argv.indexOf("--geofence");
+const GEO_THR = geoArg >= 0 ? parseFloat(process.argv[geoArg + 1] ?? "0.6") : 0;
 const PER_FRAME = process.argv.includes("--perframe"); // 跳过链, 逐帧网格直接喂搜索
 const PIN_MODE = process.argv.includes("--pin"); // 路径级指派钉死
 const DRIFT = process.argv.includes("--drift"); // 钉死 + 段间漂移切换 (隐含 --pin)
@@ -184,6 +191,8 @@ interface RestRun {
   /** --cellveto 双轨共识: 毒帧票剥夺后的读数, 只喂 dump bounds read (解码证据);
    * 链存在性/锚点 finals/κ 拟合全用原始 grid (veto 动锚会翻 v1 种子面) */
   gridVeto?: (ColorName | null)[];
+  /** --geofence 诊断: 中帧 9 格心掩码成员位串 (如 "111011111", 对照普查逐格标签) */
+  geoIn?: string;
 }
 
 /** 两帧网格一致: 共同非空格 ≥4 且不一致 ≤1 (--strict 零容错, 防跨拧转混态成链) */
@@ -227,7 +236,7 @@ interface VideoEval {
 // --cellveto 毒格分类器 (kNN k=5, z-score): 池 = VLM 普查标注格 (rgb + 毒/贴纸)。
 // 返回毒票占比; 分类时排除与被测视频同源的样本 (留一防自证)。
 let vetoKnn: ((rgb: { r: number; g: number; b: number }, vid: string) => number) | null = null;
-if (CELL_VETO > 0) {
+if (CELL_VETO > 0 || GEO_THR > 0) {
   const rows = JSON.parse(
     readFileSync(join(import.meta.dirname, "vlm-census-cells.json"), "utf8"),
   ) as { v: string; rgb: [number, number, number]; bad: number }[];
@@ -263,6 +272,45 @@ if (CELL_VETO > 0) {
     return best.reduce((a, x) => a + x.bad, 0) / best.length;
   };
   console.log(`cellveto: 票阈 ${CELL_VETO}, 训练池 ${pool.length} 格 (毒 ${pool.filter((p) => p.bad).length})`);
+}
+
+// 地理围栏掩码: 面心 ±3.6 pitch、步长 0.45 pitch 的粗块格, 每块 kNN 毒票率作
+// "软毒场" — 单块硬标签用不上弱信号 (LOO 后外套块毒票常仅 1-2/5, 硬阈全漏),
+// 但外套/皮肤是成片的低度可疑 (0.2-0.4), 魔方区 ~0.05-0.15, 3×3 块邻域平均后
+// 分离 — 空间上下文的正确形式是软场平滑, 不是硬标签连通拓扑 (试过, 查杀仅 41%)。
+// 暗块 (格缝黑线) 不计入平均。格心判死 = 邻域平滑毒率 ≥ GEO_THR。
+function cubeMask(
+  frame: Uint8Array, w: number, h: number,
+  grid: FaceObservation["grid"], vid: string,
+): (x: number, y: number) => boolean {
+  const p = grid.pitch;
+  const cx = grid.origin.x + grid.v1.x + grid.v2.x;
+  const cy = grid.origin.y + grid.v1.y + grid.v2.y;
+  const STEP = 0.45 * p, HALF = 3.6 * p;
+  const N = Math.round((HALF * 2) / STEP) + 1;
+  const x0 = cx - HALF, y0 = cy - HALF;
+  const vote = new Float32Array(N * N).fill(-1); // -1 = 暗/出画 (不计入平均)
+  for (let gy = 0; gy < N; gy++) {
+    for (let gx = 0; gx < N; gx++) {
+      const m = blockMedianRGB(frame, w, h, x0 + gx * STEP, y0 + gy * STEP, p * 0.2);
+      if (!m || Math.max(m.r, m.g, m.b) < 40) continue;
+      vote[gy * N + gx] = vetoKnn!(m, vid);
+    }
+  }
+  return (x, y) => {
+    const gx = Math.round((x - x0) / STEP), gy = Math.round((y - y0) / STEP);
+    if (gx < 0 || gy < 0 || gx >= N || gy >= N) return false; // 出 ROI = 死
+    let sum = 0, n = 0;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = gx + dx, ny = gy + dy;
+        if (nx < 0 || ny < 0 || nx >= N || ny >= N) continue;
+        const v = vote[ny * N + nx];
+        if (v >= 0) { sum += v; n++; }
+      }
+    }
+    return n > 0 && sum / n < GEO_THR;
+  };
 }
 
 const videosDir = join(import.meta.dirname, "..", "videos");
@@ -417,6 +465,10 @@ for (const sf of files) {
         const colors: (ColorName | null)[] = [];
         const colorsVeto: (ColorName | null)[] = [];
         const sup: number[] = [];
+        // 地理围栏: 逐帧掩码 (v3 手指遮挡是瞬时的, 掩码必须逐帧; v1 外套是全程的)
+        const geoMasks = GEO_THR > 0
+          ? chain.map((g, gi) => cubeMask(frameAt(chainIdx[gi]), meta.w, meta.h, g.grid, sf))
+          : null;
         const consensus = (tally: Map<ColorName, number>, tot: number): ColorName | null => {
           const top = [...tally.entries()].sort((x, y) => y[1] - x[1])[0];
           return top && (tot === 1 || (top[1] >= 2 && top[1] > tot * 0.6)) ? top[0] : null;
@@ -435,10 +487,13 @@ for (const sf of files) {
             // 逐帧格 veto (正⑱): 格心块 RGB 判毒 (衣服/手/背景) 的帧票剥夺, 只进
             // veto 轨。外套格全程毒→格清零, 手指格瞬时毒→干净帧存活 (整格删除会误
             // 杀 v3)。链存在性/锚点/κ 拟合全走原始轨 — veto 动收尾锚会翻 v1 种子面。
-            if (vetoKnn) {
+            if (vetoKnn && (CELL_VETO > 0 || geoMasks)) {
               const cc = cellCenter(g.grid, (c / 3) | 0, c % 3);
-              const m = blockMedianRGB(frameAt(chainIdx[gi]), meta.w, meta.h, cc.x, cc.y, g.grid.pitch * 0.22);
-              if (m && vetoKnn(m, sf) >= CELL_VETO) continue;
+              if (CELL_VETO > 0) {
+                const m = blockMedianRGB(frameAt(chainIdx[gi]), meta.w, meta.h, cc.x, cc.y, g.grid.pitch * 0.22);
+                if (m && vetoKnn(m, sf) >= CELL_VETO) continue;
+              }
+              if (geoMasks && !geoMasks[gi](cc.x, cc.y)) continue;
             }
             totV++;
             tallyV.set(col, (tallyV.get(col) ?? 0) + 1);
@@ -450,6 +505,15 @@ for (const sf of files) {
         if (colors.filter(Boolean).length >= 5) {
           // 链桥接 ≤2 帧空隙 < prior 存活 5 帧, 链内 span 恒定, 取起帧的即可
           const mots = chainIdx.map((ci) => frameMotion[ci]).filter(Number.isFinite).sort((a, b) => a - b);
+          let geoIn: string | undefined;
+          if (geoMasks) {
+            const mi = chain.length >> 1, mg = chain[mi].grid;
+            geoIn = "";
+            for (let c = 0; c < 9; c++) {
+              const cc = cellCenter(mg, (c / 3) | 0, c % 3);
+              geoIn += geoMasks[mi](cc.x, cc.y) ? "1" : "0";
+            }
+          }
           let cx = 0, cy = 0;
           for (const g of chain) {
             cx += g.grid.origin.x + g.grid.v1.x + g.grid.v2.x;
@@ -468,6 +532,7 @@ for (const sf of files) {
             midGrid: chain[chain.length >> 1].grid,
             sup,
             gridVeto: vetoKnn ? colorsVeto : undefined,
+            geoIn,
           });
         }
       }
@@ -985,6 +1050,12 @@ for (const sf of files) {
       const s1 = boundStates[t], s2 = afterState(nonRotIdx[t]);
       // veto 空壳过滤: 票被剥到 <5 可读格的链不进边界证据 (残格是稀疏噪声, 实测
       // 害 v3); 锚点 finals/κ 不受影响 (走原始 grid)
+      // 地理围栏诊断行 (过滤前原始链序, 与 VLM 普查 g-<t>-<ci> 对账贴合评级)
+      if (GEO_THR > 0) {
+        for (let ci = 0; ci < segChains[t].length; ci++) {
+          console.log(`GEOIN ${sf[0]} b${t} c${ci} in=${segChains[t][ci].geoIn}`);
+        }
+      }
       return segChains[t]
         .filter((run) => !run.gridVeto || run.gridVeto.filter(Boolean).length >= 5)
         .map((run) => {
