@@ -18,3 +18,10 @@ export function statsUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;
   return STATIC_ORIGIN + p;
 }
+
+// Non-stats static-origin assets (e.g. /sim/hands/* MANO/SMPL-X rigs: prod
+// serves them from static.cuberoot.me — not in git, uploaded to the server —
+// dev from local public/). Same origin logic as statsUrl.
+export function staticUrl(path: string): string {
+  return STATIC_ORIGIN + path;
+}
