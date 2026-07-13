@@ -73,6 +73,15 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 export const CATALOG: UtilEntry[] = [
   // ── hooks ─────────────────────────────────
   {
+    name: 'useCopy',
+    sig: 'useCopy(resetMs?: number): { copied: boolean; copy: (text: string) => void }',
+    imp: "import { useCopy } from '@/hooks/useCopy';",
+    usage: "const { copied, copy } = useCopy();  // <button onClick={() => copy(alg)}>{copied ? <Check/> : <Copy/>}</button>",
+    category: 'hook',
+    zh: '「复制 → 打勾 → 复位」。卸载时清掉 timer(手写那几处都漏了,组件在 1.2s 内卸载会 setState 到已卸载组件)。',
+    en: 'Copy-to-clipboard with a transient checkmark. Clears its timer on unmount (the hand-rolled copies all forgot to).',
+  },
+  {
     name: 'useDocumentTitle',
     sig: 'useDocumentTitle(zh: string, en: string): void',
     imp: "import { useDocumentTitle } from '@/hooks/useDocumentTitle';",

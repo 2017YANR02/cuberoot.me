@@ -1596,6 +1596,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `无 props,读全局 store;各处「登录」入口统一调 useAuthStore().login() 打开它。`, en: `No props; reads the global store. Every "sign in" entry point opens it via useAuthStore().login().` },
   },
   {
+    name: 'AlgCaseMetaModal',
+    import: "import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';",
+    category: 'more',
+    zh: `公式 case 的富元数据弹窗:OLLCP 名 / 编号 / 子集 / OLL / 角换 / 叠加类型 / 生成元 / 对称性 / 打乱 / 四套最优解 / COEP,以及镜像·逆·镜像逆的互跳。只有从站长 1LLL 表导入的 case(1lll / zbll / pll / ell)有 meta。`,
+    en: `Rich metadata modal for an alg case: OLLCP name, number, subset, OLL, CP, composite type, generators, symmetry, scramble, four optimal-length metrics, COEP, plus jump links to the mirror / inverse / inverse-mirror case. Only cases imported from the 1LLL sheet carry meta.`,
+    note: { zh: `需传 caseObj / byNo(meta.no → case,用于关联跳转)/ onClose / onJump。`, en: `Takes caseObj, byNo (meta.no → case, for the related-case links), onClose and onJump.` },
+  },
+  {
     name: 'ValidationReportModal',
     import: "import ValidationReportModal from '@/components/ValidationReportModal';",
     category: 'more',
