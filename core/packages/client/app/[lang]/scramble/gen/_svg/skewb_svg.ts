@@ -20,7 +20,7 @@
  * (origin face). Same permutation as the old color-index model, but the id also
  * carries piece identity so `mask` travels with the piece.
  */
-import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-types';
+import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-core';
 
 export const SKEWB_DEFAULT_COLORS: Record<string, string> = {
   // Tnoodle SkewbPuzzle.java defaultColorScheme

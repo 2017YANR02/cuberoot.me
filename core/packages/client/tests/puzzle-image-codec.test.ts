@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { readSpecFromParams, specToParams } from '@/lib/puzzle-image/codec';
-import { DEFAULTS, rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
+import {
+  DEFAULTS, rotationDefaultsFor, resetRotationsForPuzzle, snapRotationOnVariantBoundary,
+} from '@/lib/puzzle-image/defaults';
 import type { ImageSpec } from '@/lib/puzzle-image/types';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -74,6 +76,39 @@ describe('puzzle-image codec — live-page URL contract', () => {
       expect(pairs(emitted)).toEqual(pairs(live));
     });
   }
+});
+
+describe('rotation boundaries — the two are NOT the same function', () => {
+  // page.tsx: the puzzle-TYPE buttons reset unconditionally; the VARIANT buttons
+  // snap only when the angles are still the defaults. Both live in defaults.ts so
+  // the shell cannot pick the wrong one by accident.
+  const dialled = spec({ puzzleType: 'megaminx', rotateAxis1: 'y', rotateAngle1: 17, rotateAxis2: 'x', rotateAngle2: 3 });
+
+  it('puzzle-type switch throws a hand-dialled rotation away', () => {
+    const next = resetRotationsForPuzzle(dialled, { puzzleType: 'pyraminx' });
+    expect(next.puzzleType).toBe('pyraminx');
+    expect([next.rotateAxis1, next.rotateAngle1, next.rotateAxis2, next.rotateAngle2])
+      .toEqual(['y', 60, 'x', -60]);   // pyraminx defaults
+  });
+
+  it('puzzle-type switch also lands on the defaults when nothing was dialled', () => {
+    const next = resetRotationsForPuzzle(spec({}), { puzzleType: 'skewb' });
+    expect([next.rotateAxis1, next.rotateAngle1, next.rotateAxis2, next.rotateAngle2])
+      .toEqual(['y', 45, 'x', 34]);
+  });
+
+  it('variant switch KEEPS a hand-dialled rotation', () => {
+    const next = snapRotationOnVariantBoundary(dialled, { puzzleVariant: 'top' });
+    expect([next.rotateAxis1, next.rotateAngle1, next.rotateAxis2, next.rotateAngle2])
+      .toEqual(['y', 17, 'x', 3]);
+  });
+
+  it('variant switch snaps when the rotation is still the default', () => {
+    const clean = spec({ puzzleType: 'skewb' });                       // y45 x34
+    const next = snapRotationOnVariantBoundary(clean, { puzzleVariant: 'top' });
+    expect([next.rotateAxis1, next.rotateAngle1, next.rotateAxis2, next.rotateAngle2])
+      .toEqual(['y', 0, 'x', 0]);                                      // skewb-top defaults
+  });
 });
 
 describe('puzzle-image codec — prefix isolation', () => {

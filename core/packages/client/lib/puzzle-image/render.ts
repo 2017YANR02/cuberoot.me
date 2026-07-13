@@ -32,7 +32,61 @@ import {
 } from '@/app/[lang]/scramble/gen/_svg/skewb_svg';
 import { renderUnfoldedSvg } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
 import { DEFAULTS, FACE_DEFAULTS, rotationsMatchDefault } from './defaults';
+import { parseStickerId, toRenderMask, type MaskRenderOptions } from './mask-core';
 import type { ImageSpec, PuzzleType, PuzzleVariant } from './types';
+
+/** Knobs a HOST can turn that do not belong in the spec (they change the DOM, not the image). */
+export interface SpecRenderOptions {
+  /**
+   * Emit `data-sid="F3"` on every sticker of the tnoodle unfolded renderers, so
+   * a host can map a click back to a canonical sticker id (mask authoring).
+   * Off by default — the emitted SVG must stay byte-identical without it.
+   * Not available on the visualcube iso/plan path or on sq1 (no id space).
+   */
+  stickerIds?: boolean;
+}
+
+/** The spec's per-sticker mask, in the shape the tnoodle unfolded renderers take. */
+function maskOptions(s: ImageSpec, o?: SpecRenderOptions): MaskRenderOptions | undefined {
+  const mask = toRenderMask(s.stickerMask, s.maskColor || DEFAULTS.maskColor);
+  if (!mask && !o?.stickerIds) return undefined;
+  return { ...(mask ? { mask } : {}), ...(o?.stickerIds ? { stickerIds: true } : {}) };
+}
+
+/** Face order of `ICubeOptions.stickerColors` (visualcube `AllFaces`). */
+const CUBE_FACE_ORDER = ['U', 'R', 'F', 'D', 'L', 'B'];
+
+/**
+ * visualcube has no per-sticker mask param, but it has `stickerColors` — a flat
+ * 6N² array (face order U R F D L B, index = row*N + col: the same canonical id
+ * space as the arrow DSL). `makeStickerColors()` applies things in this order:
+ *
+ *   stickerColors seeds the array  →  the STAGE mask overwrites with maskColor
+ *   →  the alg permutes what is there.
+ *
+ * So on overlap a STAGE mask wins over a sticker mask — kept on purpose (the
+ * stage is the coarser, deliberate choice), and the alg carries both, which is
+ * exactly the "gray travels with the piece" semantics we want.
+ *
+ * Returns undefined when the spec carries no sticker mask, so an unmasked render
+ * passes no stickerColors at all and stays byte-identical to the pre-mask output.
+ */
+function cubeStickerColors(s: ImageSpec): string[] | undefined {
+  const ids = toRenderMask(s.stickerMask, s.maskColor || DEFAULTS.maskColor);
+  if (!ids) return undefined;
+  const N = Math.max(1, Math.min(50, s.cubeSize));
+  const scheme = [s.faceU, s.faceR, s.faceF, s.faceD, s.faceL, s.faceB];
+  const colors: string[] = [];
+  for (let f = 0; f < 6; f++) for (let i = 0; i < N * N; i++) colors.push(scheme[f]);
+  for (const sid of ids.ids) {
+    const p = parseStickerId(sid);
+    if (!p) continue;
+    const f = CUBE_FACE_ORDER.indexOf(p.face);
+    if (f < 0 || p.index < 0 || p.index >= N * N) continue;  // not a sticker of this cube
+    colors[f * N * N + p.index] = ids.color;
+  }
+  return colors;
+}
 
 /** sr-puzzlegen kind for a non-cube iso/top spec; null when a different renderer owns it. */
 export function srKindOf(type: PuzzleType, variant: PuzzleVariant): PuzzleKind | null {
@@ -70,6 +124,13 @@ export function specToCubeOptions(s: ImageSpec): ICubeOptions {
 
   if (s.stageMask) opts.mask = s.stageMask as Masking;
   if (s.maskAlg) opts.maskAlg = s.maskAlg;
+
+  // Per-sticker mask → the seed array. `trans` already set maskColor='transparent'
+  // above; the sticker mask carries its own color in the seeded values, so a
+  // transparent sticker mask hides the sticker instead of graying it (drawing.ts
+  // skips a sticker whose color is `transparent`).
+  const stickerColors = cubeStickerColors(s);
+  if (stickerColors) opts.stickerColors = stickerColors;
 
   const schDiff =
     s.faceU !== FACE_DEFAULTS.U || s.faceR !== FACE_DEFAULTS.R ||
@@ -116,7 +177,7 @@ export function domRenderKindOf(s: ImageSpec): DomRenderKind | null {
  * Throws whatever the underlying renderer throws — the caller decides how to
  * surface a bad alg.
  */
-export function renderSpecSvg(s: ImageSpec): string | null {
+export function renderSpecSvg(s: ImageSpec, o?: SpecRenderOptions): string | null {
   const isCubeNet = s.puzzleType === 'cube' && s.cubeView === 'net';
   const isCubeWca = s.puzzleType === 'cube' && s.cubeView === 'wca';
   const isOtherUnfolded = s.puzzleType !== 'cube'
@@ -125,6 +186,8 @@ export function renderSpecSvg(s: ImageSpec): string | null {
   if (isCubeNet && s.cubeSize === 3) return null; // InteractiveCubeNet paint editor
 
   if (isCubeNet || isCubeWca || isOtherUnfolded) {
+    // sq1 has no stable per-sticker id space → not maskable (see puzzle-mask.ts).
+    const m = maskOptions(s, o);
     if (s.puzzleType === 'cube') {
       const raw = s.algorithm ?? '';
       const forward = s.algType === 'case' ? invertAlg(raw) : raw;
@@ -132,7 +195,7 @@ export function renderSpecSvg(s: ImageSpec): string | null {
       // KNOWN: cube `view=net` and `view=wca` both land on renderUnfoldedSvg, so
       // for N !== 3 net and wca produce the identical image (only 3x3 net differs,
       // because it is the paint editor). Preserved from the original page.
-      return renderUnfoldedSvg(N, forward);
+      return renderUnfoldedSvg(N, forward, m);
     }
     if (s.puzzleType === 'skewb' && s.puzzleVariant === 'net') {
       return null; // cubing.js <scramble-display>, custom element
@@ -144,10 +207,10 @@ export function renderSpecSvg(s: ImageSpec): string | null {
     return s.puzzleType === 'sq1'
       ? renderSq1ScrambleSvg(forward, DEFAULT_SQ1_COLORS)
       : s.puzzleType === 'megaminx'
-      ? renderMegaScrambleSvg(forward, DEFAULT_MEGA_COLORS)
+      ? renderMegaScrambleSvg(forward, DEFAULT_MEGA_COLORS, m)
       : s.puzzleType === 'pyraminx'
-      ? renderPyraScrambleSvg(forward, PYRA_DEFAULT_COLORS)
-      : renderSkewbScrambleSvg(forward, SKEWB_DEFAULT_COLORS);
+      ? renderPyraScrambleSvg(forward, PYRA_DEFAULT_COLORS, m)
+      : renderSkewbScrambleSvg(forward, SKEWB_DEFAULT_COLORS, m);
   }
 
   if (s.puzzleType === 'cube') return renderCubeSVG(specToCubeOptions(s));

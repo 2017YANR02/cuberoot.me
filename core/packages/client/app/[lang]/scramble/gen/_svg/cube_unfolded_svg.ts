@@ -22,7 +22,7 @@
  * unified with mirror-blocks renderer.
  */
 import { simulateNxN, simulateNxNIds, FACE_D, FACE_L, FACE_B, FACE_U, FACE_R, FACE_F } from './nnn_sim';
-import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-types';
+import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-core';
 
 // WCA colors keyed by cstimer face id (D L B U R F = 0..5). Matches tnoodle
 // CubePuzzle.java defaultColorScheme.

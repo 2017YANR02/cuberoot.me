@@ -53,7 +53,7 @@ const MASK_PUZZLE: Partial<Record<PuzzleKind, PuzzleType>> = {
   skewb: 'skewb', 'skewb-net': 'skewb',
 };
 
-export interface PuzzleSVGProps {
+interface PuzzleSVGBaseProps {
   kind: PuzzleKind;
   alg?: string;
   case?: string;
@@ -65,14 +65,35 @@ export interface PuzzleSVGProps {
   svgWidth?: number;
   svgHeight?: number;
   rotations?: { x?: number; y?: number; z?: number }[];
-  /** Canonical sticker ids to gray out — the `U:0,2;F:3-5` DSL or the parsed set.
-   *  Ignored for sq1 and for `skewb-top` (which is not an sr render). */
-  mask?: string | Set<StickerId>;
-  stickerColors?: Record<string, SrColor[]>;
+  /** Per-face colors. Honored ALONGSIDE a mask (sr applies the scheme after its
+   *  simulator, so mask + alg survive) — prefer this over `stickerColors`. */
   scheme?: Record<string, SrColor>;
   arrows?: SrArrow[];
   arrowColor?: SrColor;
 }
+
+/**
+ * `mask` and `stickerColors` are mutually exclusive BY TYPE, because sr silently
+ * drops the mask when both are given: visualizer.js:114-122 — `applyColors()`
+ * takes the `stickerColors` branch (`puzzleGeometry.setColors(stickerColors)`)
+ * and never reaches `applySimulatorColors()`, which is where `applyMask()` and
+ * `applyAlgorithm()` live. So `stickerColors` loses the mask AND the alg.
+ * Custom colors next to a mask must go through `scheme`, which IS honored
+ * (applySimulatorColors → applyColorScheme(faceValues, options.scheme)).
+ */
+export type PuzzleSVGProps = PuzzleSVGBaseProps & (
+  | {
+      /** Canonical sticker ids to gray out — the `U:0,2;F:3-5` DSL or the parsed set.
+       *  Ignored for sq1 and for `skewb-top` (which is not an sr render). */
+      mask?: string | Set<StickerId>;
+      stickerColors?: never;
+    }
+  | {
+      mask?: never;
+      /** Per-sticker colors. Bypasses sr's simulator entirely — no mask, no alg. */
+      stickerColors?: Record<string, SrColor[]>;
+    }
+);
 
 export function PuzzleSVG({
   kind, alg, case: caseAlg, size = 88, strokeWidth, className,
@@ -118,8 +139,15 @@ export function PuzzleSVG({
       if (caseAlg && caseAlg.trim()) puzzle.case = norm(caseAlg);
       else if (alg && alg.trim()) puzzle.alg = norm(alg);
       if (rotations && rotations.length > 0) puzzle.rotations = rotations;
-      if (srMask && Object.keys(srMask).length > 0) puzzle.mask = srMask;
-      if (stickerColors) puzzle.stickerColors = stickerColors;
+      const hasMask = !!srMask && Object.keys(srMask).length > 0;
+      if (hasMask) puzzle.mask = srMask;
+      // Belt-and-braces for a JS caller that dodges the type-level exclusion:
+      // handing sr both would drop the mask on the floor (visualizer.js:114-122).
+      if (stickerColors && hasMask) {
+        console.error('[PuzzleSVG] stickerColors + mask is invalid — sr drops the mask; ignoring stickerColors (use `scheme`)');
+      } else if (stickerColors) {
+        puzzle.stickerColors = stickerColors;
+      }
       if (scheme) puzzle.scheme = scheme;
       if (arrows && arrows.length > 0) puzzle.arrows = arrows;
       try {
