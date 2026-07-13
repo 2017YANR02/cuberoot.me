@@ -1,0 +1,96 @@
+<div class="vc-net-paint"><style>
+.vc-net-paint {
+  display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+}
+.vc-net-body {
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: center;
+  gap: 1rem;
+}
+.vc-net-canvas {
+  position: relative;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+}
+.vc-net-sticker {
+  position: absolute;
+  border: 1px solid rgba(0,0,0,0.5);
+  border-radius: 2px;
+  padding: 0;
+  cursor: crosshair;
+  transition: transform 0.08s ease, border-color 0.08s ease;
+}
+.vc-net-sticker:hover:not(:disabled) {
+  transform: scale(1.08);
+  border-color: #fff;
+  z-index: 1;
+}
+.vc-net-sticker.is-center {
+  cursor: pointer;
+  border-color: rgba(0,0,0,0.7);
+}
+</style><div class="vc-net-body"><div class="vc-net-canvas" style="width:244px;height:187px"><button type="button" class="vc-net-sticker" style="left:65px;top:8px;width:18px;height:18px;background:#ffffff" title="U1(右键置灰)" aria-label="Sticker U1 = U"></button><button type="button" class="vc-net-sticker" style="left:84px;top:8px;width:18px;height:18px;background:#ffffff" title="U2(右键置灰)" aria-label="Sticker U2 = U"></button><button type="button" class="vc-net-sticker" style="left:103px;top:8px;width:18px;height:18px;background:#ffffff" title="U3(右键置灰)" aria-label="Sticker U3 = U"></button><button type="button" class="vc-net-sticker" style="left:65px;top:27px;width:18px;height:18px;background:#ffffff" title="U4(右键置灰)" aria-label="Sticker U4 = U"></button><button type="button" class="vc-net-sticker is-center" style="left:84px;top:27px;width:18px;height:18px;background:#ffffff" title="点击取色" aria-label="Pick color U"></button><button type="button" class="vc-net-sticker" style="left:103px;top:27px;width:18px;height:18px;background:#ffffff" title="U6(右键置灰)" aria-label="Sticker U6 = U"></button><button type="button" class="vc-net-sticker" style="left:65px;top:46px;width:18px;height:18px;background:#ffffff" title="U7(右键置灰)" aria-label="Sticker U7 = U"></button><button type="button" class="vc-net-sticker" style="left:84px;top:46px;width:18px;height:18px;background:#ffffff" title="U8(右键置灰)" aria-label="Sticker U8 = U"></button><button type="button" class="vc-net-sticker" style="left:103px;top:46px;width:18px;height:18px;background:#ffffff" title="U9(右键置灰)" aria-label="Sticker U9 = U"></button><button type="button" class="vc-net-sticker" style="left:122px;top:65px;width:18px;height:18px;background:#ff0000" title="R1(右键置灰)" aria-label="Sticker R1 = R"></button><button type="button" class="vc-net-sticker" style="left:141px;top:65px;width:18px;height:18px;background:#ff0000" title="R2(右键置灰)" aria-label="Sticker R2 = R"></button><button type="button" class="vc-net-sticker" style="left:160px;top:65px;width:18px;height:18px;background:#ff0000" title="R3(右键置灰)" aria-label="Sticker R3 = R"></button><button type="button" class="vc-net-sticker" style="left:122px;top:84px;width:18px;height:18px;background:#ff0000" title="R4(右键置灰)" aria-label="Sticker R4 = R"></button><button type="button" class="vc-net-sticker is-center" style="left:141px;top:84px;width:18px;height:18px;background:#ff0000" title="点击取色" aria-label="Pick color R"></button><button type="button" class="vc-net-sticker" style="left:160px;top:84px;width:18px;height:18px;background:#ff0000" title="R6(右键置灰)" aria-label="Sticker R6 = R"></button><button type="button" class="vc-net-sticker" style="left:122px;top:103px;width:18px;height:18px;background:#ff0000" title="R7(右键置灰)" aria-label="Sticker R7 = R"></button><button type="button" class="vc-net-sticker" style="left:141px;top:103px;width:18px;height:18px;background:#ff0000" title="R8(右键置灰)" aria-label="Sticker R8 = R"></button><button type="button" class="vc-net-sticker" style="left:160px;top:103px;width:18px;height:18px;background:#ff0000" title="R9(右键置灰)" aria-label="Sticker R9 = R"></button><button type="button" class="vc-net-sticker" style="left:65px;top:65px;width:18px;height:18px;background:#44ee00" title="F1(右键置灰)" aria-label="Sticker F1 = F"></button><button type="button" class="vc-net-sticker" style="left:84px;top:65px;width:18px;height:18px;background:#44ee00" title="F2(右键置灰)" aria-label="Sticker F2 = F"></button><button type="button" class="vc-net-sticker" style="left:103px;top:65px;width:18px;height:18px;background:#44ee00" title="F3(右键置灰)" aria-label="Sticker F3 = F"></button><button type="button" class="vc-net-sticker" style="left:65px;top:84px;width:18px;height:18px;background:#44ee00" title="F4(右键置灰)" aria-label="Sticker F4 = F"></button><button type="button" class="vc-net-sticker is-center" style="left:84px;top:84px;width:18px;height:18px;background:#44ee00" title="点击取色" aria-label="Pick color F"></button><button type="button" class="vc-net-sticker" style="left:103px;top:84px;width:18px;height:18px;background:#44ee00" title="F6(右键置灰)" aria-label="Sticker F6 = F"></button><button type="button" class="vc-net-sticker" style="left:65px;top:103px;width:18px;height:18px;background:#44ee00" title="F7(右键置灰)" aria-label="Sticker F7 = F"></button><button type="button" class="vc-net-sticker" style="left:84px;top:103px;width:18px;height:18px;background:#44ee00" title="F8(右键置灰)" aria-label="Sticker F8 = F"></button><button type="button" class="vc-net-sticker" style="left:103px;top:103px;width:18px;height:18px;background:#44ee00" title="F9(右键置灰)" aria-label="Sticker F9 = F"></button><button type="button" class="vc-net-sticker" style="left:65px;top:122px;width:18px;height:18px;background:#f4f400" title="D1(右键置灰)" aria-label="Sticker D1 = D"></button><button type="button" class="vc-net-sticker" style="left:84px;top:122px;width:18px;height:18px;background:#f4f400" title="D2(右键置灰)" aria-label="Sticker D2 = D"></button><button type="button" class="vc-net-sticker" style="left:103px;top:122px;width:18px;height:18px;background:#f4f400" title="D3(右键置灰)" aria-label="Sticker D3 = D"></button><button type="button" class="vc-net-sticker" style="left:65px;top:141px;width:18px;height:18px;background:#f4f400" title="D4(右键置灰)" aria-label="Sticker D4 = D"></button><button type="button" class="vc-net-sticker is-center" style="left:84px;top:141px;width:18px;height:18px;background:#f4f400" title="点击取色" aria-label="Pick color D"></button><button type="button" class="vc-net-sticker" style="left:103px;top:141px;width:18px;height:18px;background:#f4f400" title="D6(右键置灰)" aria-label="Sticker D6 = D"></button><button type="button" class="vc-net-sticker" style="left:65px;top:160px;width:18px;height:18px;background:#f4f400" title="D7(右键置灰)" aria-label="Sticker D7 = D"></button><button type="button" class="vc-net-sticker" style="left:84px;top:160px;width:18px;height:18px;background:#f4f400" title="D8(右键置灰)" aria-label="Sticker D8 = D"></button><button type="button" class="vc-net-sticker" style="left:103px;top:160px;width:18px;height:18px;background:#f4f400" title="D9(右键置灰)" aria-label="Sticker D9 = D"></button><button type="button" class="vc-net-sticker" style="left:8px;top:65px;width:18px;height:18px;background:#ff8000" title="L1(右键置灰)" aria-label="Sticker L1 = L"></button><button type="button" class="vc-net-sticker" style="left:27px;top:65px;width:18px;height:18px;background:#ff8000" title="L2(右键置灰)" aria-label="Sticker L2 = L"></button><button type="button" class="vc-net-sticker" style="left:46px;top:65px;width:18px;height:18px;background:#ff8000" title="L3(右键置灰)" aria-label="Sticker L3 = L"></button><button type="button" class="vc-net-sticker" style="left:8px;top:84px;width:18px;height:18px;background:#ff8000" title="L4(右键置灰)" aria-label="Sticker L4 = L"></button><button type="button" class="vc-net-sticker is-center" style="left:27px;top:84px;width:18px;height:18px;background:#ff8000" title="点击取色" aria-label="Pick color L"></button><button type="button" class="vc-net-sticker" style="left:46px;top:84px;width:18px;height:18px;background:#ff8000" title="L6(右键置灰)" aria-label="Sticker L6 = L"></button><button type="button" class="vc-net-sticker" style="left:8px;top:103px;width:18px;height:18px;background:#ff8000" title="L7(右键置灰)" aria-label="Sticker L7 = L"></button><button type="button" class="vc-net-sticker" style="left:27px;top:103px;width:18px;height:18px;background:#ff8000" title="L8(右键置灰)" aria-label="Sticker L8 = L"></button><button type="button" class="vc-net-sticker" style="left:46px;top:103px;width:18px;height:18px;background:#ff8000" title="L9(右键置灰)" aria-label="Sticker L9 = L"></button><button type="button" class="vc-net-sticker" style="left:179px;top:65px;width:18px;height:18px;background:#2266ff" title="B1(右键置灰)" aria-label="Sticker B1 = B"></button><button type="button" class="vc-net-sticker" style="left:198px;top:65px;width:18px;height:18px;background:#2266ff" title="B2(右键置灰)" aria-label="Sticker B2 = B"></button><button type="button" class="vc-net-sticker" style="left:217px;top:65px;width:18px;height:18px;background:#2266ff" title="B3(右键置灰)" aria-label="Sticker B3 = B"></button><button type="button" class="vc-net-sticker" style="left:179px;top:84px;width:18px;height:18px;background:#2266ff" title="B4(右键置灰)" aria-label="Sticker B4 = B"></button><button type="button" class="vc-net-sticker is-center" style="left:198px;top:84px;width:18px;height:18px;background:#2266ff" title="点击取色" aria-label="Pick color B"></button><button type="button" class="vc-net-sticker" style="left:217px;top:84px;width:18px;height:18px;background:#2266ff" title="B6(右键置灰)" aria-label="Sticker B6 = B"></button><button type="button" class="vc-net-sticker" style="left:179px;top:103px;width:18px;height:18px;background:#2266ff" title="B7(右键置灰)" aria-label="Sticker B7 = B"></button><button type="button" class="vc-net-sticker" style="left:198px;top:103px;width:18px;height:18px;background:#2266ff" title="B8(右键置灰)" aria-label="Sticker B8 = B"></button><button type="button" class="vc-net-sticker" style="left:217px;top:103px;width:18px;height:18px;background:#2266ff" title="B9(右键置灰)" aria-label="Sticker B9 = B"></button></div><div class="vc-paint-palette"><style>
+.vc-paint-palette {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem;
+}
+.vc-paint-swatch {
+  width: 30px; height: 30px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 5px; padding: 0;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.12s ease, transform 0.08s ease;
+}
+.vc-paint-swatch:hover { transform: scale(1.08); }
+.vc-paint-swatch.is-active {
+  border-color: var(--accent, #ff8800);
+  box-shadow: 0 0 0 2px rgba(255,136,0,0.3);
+}
+.vc-paint-empty-row {
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.vc-paint-empty-hint {
+  font-size: 0.72rem; color: var(--text-muted, #888);
+  white-space: nowrap;
+}
+</style><div class="vc-paint-empty-row"><button type="button" class="vc-paint-swatch vc-paint-swatch-empty" style="background:#5a5a5a" title="空缺(灰)" aria-label="empty"></button><span class="vc-paint-empty-hint">右键置灰</span></div><button type="button" class="vc-paint-swatch is-active" style="background:#ffffff" title="U" aria-label="color U"></button><button type="button" class="vc-paint-swatch" style="background:#f4f400" title="D" aria-label="color D"></button><button type="button" class="vc-paint-swatch" style="background:#44ee00" title="F" aria-label="color F"></button><button type="button" class="vc-paint-swatch" style="background:#2266ff" title="B" aria-label="color B"></button><button type="button" class="vc-paint-swatch" style="background:#ff0000" title="R" aria-label="color R"></button><button type="button" class="vc-paint-swatch" style="background:#ff8000" title="L" aria-label="color L"></button></div></div><div class="vc-paint-controls"><style>
+.vc-paint-controls {
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  width: 100%;
+}
+.vc-paint-actions {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.4rem;
+}
+.vc-paint-btn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: var(--panel-sub, #2a2a2a);
+  border: 1px solid var(--border, #444);
+  color: var(--text); padding: 0.35rem 0.6rem;
+  border-radius: 5px; font-size: 0.8rem; cursor: pointer;
+}
+.vc-paint-btn:hover:not(:disabled) { border-color: var(--accent, #ff8800); }
+.vc-paint-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.vc-paint-btn-primary {
+  background: var(--accent, #ff8800); color: #000;
+  border-color: var(--accent, #ff8800); font-weight: 600;
+}
+.vc-paint-err {
+  font-size: 0.85rem; color: #ff8866;
+  text-align: center; max-width: 28rem; line-height: 1.4;
+}
+.vc-paint-err-flash {
+  background: rgba(255,80,80,0.12);
+  border: 1px solid rgba(255,120,80,0.45);
+  color: #ffb38a;
+  padding: 0.35rem 0.7rem;
+  border-radius: 5px;
+  animation: vcPaintFlash 0.18s ease-out;
+}
+.vc-paint-actions .bool-toggle-label {
+  font-size: 0.8rem;
+  color: var(--text);
+}
+@keyframes vcPaintFlash {
+  from { transform: scale(0.96); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+</style><div class="vc-paint-actions"><button type="button" class="vc-paint-btn" title="全部置灰(保留中心)"><span>清空</span></button><button type="button" class="vc-paint-btn" title="还原到 solved"><span>还原</span></button><button type="button" class="vc-paint-btn" title="随机合法状态(25 步随机 HTM)"><span>随机</span></button><button type="button" class="vc-paint-btn vc-paint-btn-primary" disabled="" title="用 cubeopt 求最优解"><span>求最优解</span></button></div></div></div>
