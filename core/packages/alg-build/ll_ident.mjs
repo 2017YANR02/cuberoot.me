@@ -80,7 +80,39 @@ export function ident(setup) {
 }
 
 export const invert = (m) => new Alg(m).invert().toString();
-/** 一条公式解的是哪个 case */
-export const identOfAlg = (moves) => { try { return ident(invert(moves)); } catch { return null; } };
+
+const ROT_CENTERS = ROTS.map(r => JSON.stringify((r ? SOLVED.applyAlg(new Alg(r)) : SOLVED).patternData.CENTERS.pieces));
+
+/** 一条公式做完之后,整个魔方净转了哪个体(24 个之一)。中心块唯一确定它。 */
+export function netRotation(moves) {
+  const c = JSON.stringify(SOLVED.applyAlg(new Alg(moves)).patternData.CENTERS.pieces);
+  const i = ROT_CENTERS.indexOf(c);
+  return i < 0 ? null : ROTS[i];
+}
+
+/**
+ * 一条公式解的是哪个 case。
+ *
+ * ⚠ **不是 `ident(A⁻¹)`。** 公式 A 把打乱态 S 送到「还原 · ρ」,ρ 是 A 的**净转体**
+ * (S 是纯 LL 置换,不动中心块,所以做完 A 之后中心块的位置完全由 A 自己决定):
+ *
+ * ```
+ *   S · A = ρ   ⟹   S = ρ · A⁻¹
+ * ```
+ *
+ * 净转体必须**前置**。只写 `A⁻¹` 的话,带净转体的公式(`[oh]` 里一大把,`x'` / `z` 开头不收尾)
+ * 会被算成一个根本不是 LL 的态,于是被误判成「不保 F2L」。实测假阳性 5 条
+ * (12/PLL-A- 的 `[oh] x' R' U'D' …`、22/PLL-T 的 `[fmc] …` 等),它们其实完全正确。
+ *
+ * `normalize` 里那个**后**接的旋转治不了这个 —— 右乘和左乘不是一回事。
+ */
+export const identOfAlg = (moves) => {
+  try {
+    const rho = netRotation(moves);
+    if (rho === null) return null;
+    return ident(rho ? `${rho} ${invert(moves)}` : invert(moves));
+  } catch { return null; }
+};
+
 /** 一条打乱是哪个 case(DELETE_AUF 剥掉起手 AUF 不影响轨道 —— 前 AUF 本就在轨道里) */
 export const identOfScramble = (moves) => { try { return ident(moves); } catch { return null; } };
