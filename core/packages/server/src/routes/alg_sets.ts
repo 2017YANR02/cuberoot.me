@@ -35,6 +35,7 @@ interface AlgCaseRow {
   algs: unknown;
   ori_names: unknown;
   trainer_key: string | null;
+  meta: unknown;          // AlgCaseMeta — 只有从站长 1LLL 表导入的 case 才有
   updated_at: string | Date;
 }
 
@@ -51,6 +52,7 @@ function caseRowToJson(c: AlgCaseRow): Record<string, unknown> {
   if (c.standard !== null) out.standard = c.standard;
   if (c.ori_names) out.oriNames = c.ori_names;
   if (c.trainer_key) out.trainerKey = c.trainer_key;
+  if (c.meta) out.meta = c.meta;
   return out;
 }
 
