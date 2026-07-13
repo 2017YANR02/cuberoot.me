@@ -1,5 +1,5 @@
 /**
- * Phase 0 —— **状态轨道 join**:把站长那张表的 3915 行,和站上 3893 个 LL case 对上。
+ * Phase 0 —— **状态轨道 join**:把站长那张表的 3915 行,和站上 3918 个 LL case 对上。
  * 产出 `.tmp/phase0/mapping.json` + 冲突报告。见 docs/1lll-migration.md §8。
  *
  * case 身份 / 朝向类 / 角置换类的定义与证明:见 ll_ident.mjs。
@@ -14,8 +14,10 @@
  *   ④ 角置换类 = CP  算出的 cp 必须与表里声明的 `CP` 列(去掉 OLL 前缀的方向字母)一致
  *
  * ══ 预言 ═════════════════════════════════════════════════════════════════════
- *   站上 3893 个 case → 3891 个态(1LLL 4 63==4 64、5 21==5 22 是既有重复)
- *   ⟹ 表侧对不上 = 3915 − 3891 = **24** = 22(整个 OLL 20 / 字母 X 组)+ 2(被那两对重复挤掉的)
+ *   站上 3918 = pll 21 + zbll 472 + 1lll 3400 + ell 25,但只有 **3896 个不同的态**:
+ *     · 1lll 内部有 2 对重复(1LLL 4 63==4 64、5 21==5 22)
+ *     · ell 的 20 个(棱块两翻的 ELL-A/B)与 1lll 里的**同态重复**
+ *   ⟹ 表侧对不上 = 3915 − 3896 = **19** = 17(OLL 20 / 字母 X 组里非 ELL 的)+ 2(被那两对重复挤掉的)
  *   ⟹ 站侧对不上 = **0**(有孤儿 = 表里有公式解错了 case)
  *
  *   node phase0_join.mjs
@@ -32,15 +34,19 @@ const OLL_NUM = JSON.parse(readFileSync(`${TMP}/oll_letter_to_number.json`, 'utf
 
 // ══ 站上 ══════════════════════════════════════════════════════════════════════
 const site = [];
-for (const s of ['pll', 'zbll', '1lll']) {
+// ⚠ `ell` **必须**在名单里。站上早就有 ell(25 个,speedcubedb 那套),而且它的 20 个
+// (棱块两翻的 ELL-A / ELL-B)与 `1lll` 里的**同态重复** —— 漏掉 ell 就会把表里那 5 个
+// ELL-X 误判成「站上没有的新 case」,然后往 1lll 里凭空插 5 个重复。
+for (const s of ['pll', 'zbll', '1lll', 'ell']) {
   const { cases } = await (await fetch(`${API}/${s}`)).json();
   for (const c of cases) {
     const I = ident(c.setup);
     if (!I) { console.log(`  ⚠ ${s}/${c.name} 的 setup 不是 LL 态`); continue; }
-    // 组:pll → 'PLL';zbll → 名字里的组字母;1lll → 名字里的组号(= OLL 号)
+    // 组:pll → 'PLL';zbll → 名字里的组字母;1lll → 名字里的组号(= OLL 号);ell 无组
     const g = s === 'pll' ? 'PLL'
-      : s === 'zbll' ? /^ZBLL (\S+) /.exec(c.name)?.[1]
-        : Number(/^1LLL (\d+) /.exec(c.name)?.[1]);
+      : s === 'ell' ? 'ELL'
+        : s === 'zbll' ? /^ZBLL (\S+) /.exec(c.name)?.[1]
+          : Number(/^1LLL (\d+) /.exec(c.name)?.[1]);
     site.push({ set: s, id: c.id, name: c.name, setup: c.setup, group: g, ...I });
   }
 }
@@ -101,8 +107,35 @@ if (numBad.length) console.table(numBad);
 console.log(`  OCLL(ZBLL 地盘)的字母 → 站上组:`
   + [...OLL2GROUP].filter(([, g]) => typeof g === 'string' && g !== 'PLL').map(([o, g]) => `${o}→${g}`).join('  '));
 
-const siteByGroup = new Map();
-for (const c of site) { if (!siteByGroup.has(c.group)) siteByGroup.set(c.group, []); siteByGroup.get(c.group).push(c); }
+/**
+ * 站上每个 case 属于哪个 OLL 字母 —— **按它自己的朝向类算**,不是按它在哪个 set。
+ *
+ * `ell` 那 25 个是反例:它们**横跨多个 OLL 组**(棱块两翻的 ELL-A/B 落在 28+ 组,
+ * ELL-X 落在 20 组),按 set 名给组会把它们塞进一个虚构的「ELL 组」,然后 22 个 X 组的行
+ * 去抢 25 个 ell 槽位,17 个匹配不上变成「定不了」。
+ *
+ * 朝向类 → OLL 字母是**封闭**的(表里 58 个朝向类逐一对应一个 OLL 字母,判据 ② 已验)。
+ */
+// ⚠ 必须**多数派**,不能「第一行胜出」:19 条坏公式的 ori 是错的,一条就能把整个 OLL 组的桶带偏
+// (实测:L+ / O- / T2 三组各 72 个整组丢失,被误报成「站上没有」)。每个 ori 类有 ~72 行,
+// 一两条坏的翻不了盘。
+const oriVote = new Map();
+for (const s of sheet) {
+  if (!s.ori) continue;
+  if (!oriVote.has(s.ori)) oriVote.set(s.ori, new Map());
+  const m = oriVote.get(s.ori);
+  m.set(s.oll, (m.get(s.oll) ?? 0) + 1);
+}
+const ORI2OLL = new Map();
+for (const [ori, m] of oriVote) ORI2OLL.set(ori, [...m].sort((a, b) => b[1] - a[1])[0][0]);
+const siteByOll = new Map();
+for (const c of site) {
+  const oll = ORI2OLL.get(c.ori);
+  if (oll === undefined) { console.log(`  ⚠ 站上 ${c.set}/${c.name} 的朝向类不在表里`); continue; }
+  c.oll = oll;
+  if (!siteByOll.has(oll)) siteByOll.set(oll, []);
+  siteByOll.get(oll).push(c);
+}
 
 // ══ 学映射:(OLL 字母, CP 方向) → 角置换类 ═══════════════════════════════════
 // 只用"公式落在本组且独占"的可信行来学。
@@ -131,8 +164,8 @@ const badAlgs = [];            // 公式解错了 case 的行
 
 for (const [oll, rowsG] of groupBy(sheet, s => s.oll)) {
   const g = OLL2GROUP.get(oll);
-  const cases = (g === undefined ? [] : siteByGroup.get(g) ?? []);
-  // 站上没有这个组(= OLL 20 / 字母 X)⟹ 整组都是新 case
+  const cases = siteByOll.get(oll) ?? [];
+  // 站上这个 OLL 一个 case 都没有 ⟹ 整组都是新 case
   if (!cases.length) { newCases.push(...rowsG); continue; }
 
   const avail = new Map();     // key → [case…](站上重复的两个 case 共用一个 key)
@@ -237,7 +270,7 @@ function* permutations(a) {
 console.log('\n' + '═'.repeat(78));
 console.log(`JOIN:表 ${sheet.length} 行 ↔ 站 ${site.length} 个 case`);
 console.log(`  对上:${assign.size} 行`);
-console.log(`  站上没有(新 case):${newCases.length} 行   ← 预言 24`);
+console.log(`  站上没有(新 case):${newCases.length} 行   ← 预言 19`);
 console.log(`  定不了、要人定夺:${problems.length} 组`);
 const claimed = new Set([...assign.values()].flat().map(c => c.id));
 console.log(`  站上被认领的 case:${claimed.size} / ${site.length}   ← 应当全部认领`);
@@ -295,9 +328,9 @@ for (const b of badAlgs) {
 if (problems.length) { console.log('\n✗ 定不了(交给站长):'); console.log(JSON.stringify(problems, null, 2)); }
 
 // ══ 判据 ② 全量:朝向类 vs 声明的 OLL ═════════════════════════════════════════
-const oriVote = groupBy(sheet.filter(s => s.ori), s => s.oll);
+const oriByOll = groupBy(sheet.filter(s => s.ori), s => s.oll);
 let oriBad = 0;
-for (const [oll, rs] of oriVote) {
+for (const [oll, rs] of oriByOll) {
   const m = new Map();
   for (const s of rs) m.set(s.ori, (m.get(s.ori) ?? 0) + 1);
   const top = [...m].sort((a, b) => b[1] - a[1])[0][0];
