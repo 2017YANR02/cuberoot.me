@@ -15,8 +15,8 @@
 | 0 | 状态轨道 join(表 3915 ↔ 站 3893) | ✅ 零残留(Phase 2 修完地基后**重跑,结论不变**) |
 | 1 | 共享记号 / 计步 lib + 收 9 个计步器 + MIRROR | ✅ |
 | 2 | 全量校验报告(含备选公式)→ 交站长 | ✅ `docs/1lll-sheet-issues.md` |
-| 3 | Schema:`alg_cases.meta` + `AlgEntry` 扩字段 | ⬜ |
-| 4 | 导入(pg13 dry run → 生产) | ⬜ |
+| 3 | Schema:`alg_cases.meta` + `AlgEntry` 扩字段 | ✅ migration 0069 |
+| 4 | 导入(pg13 dry run → 生产) | 🟡 **dry run 全绿,等站长点头再灌生产** |
 | 5 | UI:OLLCP 主名 + 元数据弹窗 + 标签筛选 | ⬜ |
 | 6 | Trainer 打乱类型选择器 | ⬜ |
 | 7 | 学习进度(后置,本轮不做) | ⏸ |
@@ -31,6 +31,8 @@
 | `recon-stats.htm` 把 `Rw` 数成 2 步 | recon 的步数 / TPS 全错 | 换成 shared 的 tokenizer |
 | `timer/export_csv.qtmOf` 把 M/E/S 记 0 步 | CSV 导出的 QTM 偏低 | 同上 |
 | `math/god` 的 `MetricExplainer` 自己算错度量 | 一个**讲度量**的页面把 STM 写死 = HTM | 三个数都走 shared |
+| `AlgPlayer` 把库里的原文**直接**喂 cubing.js | 人写的公式带连写 `MR` / 换握 `↑` / 分组 `(…)2`。cubing.js 对 `MR` **不报错**(收下一个叫 `MR` 的 family),到 applyAlg 才炸,而 catch 只 warn 一行 → 用户看到**空播放器**。1LLL 一进来立刻踩 554 条 | `normalizeAlgForTwisty` 走 shared 的 `toMoveString`;megaminx/sq1 记号不同,白名单 gate |
+| `sheet_notation` 自己造了第二份 MOVE_RE | 不认 `w`:`Lw2` 被切成 `L` + junk `w2`,站上 3 条公式静默作废 | 改 import shared 的 `MOVE_RE` / `MOVE_CHARS` —— **没有第二份文法可漂移了** |
 
 ### ⚠ 判据雷区(记下来,别再踩)
 
@@ -125,16 +127,65 @@
 
 ## Phase 3 —— Schema
 
-- [ ] **3a** migration:`ALTER TABLE alg_cases ADD COLUMN meta JSONB`
-- [ ] **3b** `AlgEntry` 加 `tags` / `source`(JSONB 内,免 migration)
-- [ ] **3c** typecheck + 全量测试绿
+- [x] **3a** migration `0069_alg_cases_meta.sql`:`ALTER TABLE alg_cases ADD COLUMN meta JSONB`
+- [x] **3b** `AlgEntry` 加 `tags` / `source` / `stm` / `sqtm`;`AlgCaseMeta`;server route 吐 `meta`
+- [x] **3c** typecheck + 全量测试绿
+
+### 顺手堵掉的 `AlgEditor` 静默毁数据
+
+`getValue()` 原本把每行**重建**成 `{ alg }` —— 管理员在后台编任意一个 case,该 case 所有公式的
+`altId` / `ytId` / `tags` / `source` / `stm` / `sqtm` 全部**静默蒸发**。改成 rest-spread 保留未知字段。
+(这个 bug 在 1LLL 之前就有,只是当时 `AlgEntry` 上没什么值钱的东西。)
 
 ## Phase 4 —— 导入
 
-- [ ] **4a** 生成 `BEGIN…COMMIT` SQL(范本 `gen_zbls_sql.mjs`)。**直连 PG,禁走 REST**
-- [ ] **4b** 本地 pg13(docker 5433)dry run;计数对 GT
-- [ ] **4c** `pg_dump` 备份 → 生产
+- [x] **4a** `import_1lll.mjs` 生成 `BEGIN…COMMIT` SQL。**直连 PG,禁走 REST**
+- [x] **4b** 生产 `pg_dump` → 本机 pg13 `alg_dry` → migration 0069 → import SQL → **读回来验**
+- [ ] **4c** 生产:`pg_dump` 备份 → 灌 → 复验   ← **等站长点头**(写生产 DB + push)
 - [ ] **4d** 线上复验
+
+### Dry run 验收(2026-07-13)—— `phase4_verify.mjs`
+
+判据不看生成器的内存对象(同一份 buggy 逻辑既造 SQL 又造断言 = 永远绿),而是
+**生产 dump → pg13 → 跑 SQL → psql 读回 → cubing.js 判**:
+
+```
+从 pg13/alg_dry 读回 3915 个 case、10123 条公式
+  ✓ 每条公式都满足 setup + alg == 还原(10123 条)   ← 不抽样
+  ✓ pll 21 / zbll 472 / ell 25 / 1lll 3397 = 3915(全部命中 GT)
+  ✓ 3915 个互不相同的态(没有重复 case)
+  ✓ 1lll position 连续 0..3396
+  ✓ meta.no 3915 个不重号 / stm / sqtm 与公式一致
+```
+
+动作:**3898 UPDATE / 17 INSERT / 20 DELETE** + 1lll 的 position 全量重排。
+
+| 公式 | |
+|---|---|
+| 站长的,原样就还原 | 4173 |
+| 站长的,补收尾 AUF | 805 |
+| 站长的,补起手 AUF | 44 |
+| 站长的,跳过 | 28(25 条坏 + 3 条净 x/z 转体) |
+| 站上原有(speedcubedb)留用 | 5101 |
+| 与站长的重复 | 871 |
+| 丢弃(新 setup 下装不进) | 12(全是净 x/z 转体) |
+
+### ★ 定理:带 x/z 净转体的公式,**收尾 AUF 用不了**
+
+设公式 `A` 的净转体为 ρ、它解的态 `S_A = ρ·A⁻¹`。
+
+- **起手** AUF `U^a` 把它能服务的态**右乘**成 `S_A·U^-a` —— 永远可用。
+- **收尾** AUF `U^b` 要**左乘**成 `U^-b·S_A`,前提是 `ρ·U^b·ρ⁻¹` 仍是 U 层的转 ——
+  **只有 ρ 是纯 y(或恒等)时才成立**。ρ 带 x/z 时那个 `U` 落到别的面上去了。
+
+⟹ 带 x/z 净转体的公式只能覆盖 16 元轨道里的 **4** 个态。setup 不在那 4 个里就装不进,**改不了**。
+
+实测(全部 5034 条正确的站长公式),推导与数据逐格吻合:
+
+| ρ | 装得进 | 装不进 | 靠**非零收尾 AUF** 装进的 |
+|---|---|---|---|
+| 纯 y / 无转体 | 5030 | **0** | 常见 |
+| 含 x/z | 1 | **3** | **0 —— 一条都没有** |
 
 ## Phase 5 —— UI
 ## Phase 6 —— Trainer 打乱类型选择器
@@ -152,3 +203,10 @@
   - 揪出 `identOfAlg` 的净转体 bug(Phase 0 的地基),修完**重跑 Phase 0,结论逐格不变**。
   - 全量校验 5059 条公式 → `docs/1lll-sheet-issues.md`(25 条坏公式 + 表格 typo 清单)。
   - **未写入任何生产数据。**
+- **2026-07-13(再续)** — **Phase 3 + Phase 4 dry run 完成。**
+  - `alg_cases.meta` (JSONB) 上线到 schema;`AlgEntry` 扩 `tags`/`source`/`stm`/`sqtm`。
+  - `import_1lll.mjs` → 7343 行 SQL。生产两张表已 `pg_dump` 备份到 `.tmp/phase4/`(2.1 MB)。
+  - dry run:pg13 里跑通,**读回来 10123 条公式逐条过 cubing.js,全绿**,计数命中 GT。
+  - 又根治 2 个线上 bug:`AlgPlayer` 裸喂 cubing.js(1LLL 一进来就有 554 条炸成空播放器)、
+    `sheet_notation` 的第二份 MOVE_RE 不认 `Lw2`。
+  - **仍未写入任何生产数据** —— 3915 个 case 的破坏性替换,等站长点头。
