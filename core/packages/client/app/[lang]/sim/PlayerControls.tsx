@@ -41,6 +41,7 @@ import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
 import { TwistAction } from './engine/nxn/twister';
 import { timing } from './engine/tweenTiming';
+import tweener from './engine/tweener';
 import { parseSq1Scramble, movesToString, type Sq1Move } from './engine/sq1/sq1State';
 import { parseIvyMoves } from './engine/ivy/IvyTwister';
 import type { IvyMove } from './engine/ivy/IvyCube';
@@ -868,7 +869,7 @@ interface Props {
 }
 
 export default function PlayerControls({
-  world, alg, setup, onAlgChange, onSetupChange,
+  world, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
   order, onOrderChange, puzzleKind, onPuzzleChange,
   settings, onSettingsChange,
   keymap, onKeymapChange, onResetKeymap,
@@ -983,8 +984,95 @@ export default function PlayerControls({
   const algElRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => { stepRef.current = step; }, [step]);
 
-  useEffect(() => { setAlgDraft(alg); }, [alg]);
-  useEffect(() => { setSetupDraft(setup ?? ''); }, [setup]);
+  // The alg/setup props round-trip through the URL (nuqs): a local edit calls
+  // onAlgChange → setQuery → the prop echoes back. That echo arrives in several waves
+  // and each wave oscillates between the previous value and the new one (a transient
+  // empty read before it settles) before finally landing on what we pushed. Every
+  // such prop change clobbers the local draft below and re-fires the auto-reset
+  // effect UNGUARDED → the cube reset+replays = the "snap-back flash" (local dev only,
+  // where the extra render passes surface the transient; prod batches it away).
+  //
+  // Fix: wrap the change callbacks so each local push records both the value pushed
+  // and the value it replaced. The prop-sync effects then ignore any prop equal to
+  // either (it's our own echo / bounce — the local draft is already correct) and only
+  // apply genuinely external values (URL load, alg picker), which are never one of the
+  // two we just cycled between.
+  const skipAutoResetRef = useRef(false);
+  const algDraftRef = useRef(algDraft);
+  const setupDraftRef = useRef(setupDraft);
+  useEffect(() => { algDraftRef.current = algDraft; }, [algDraft]);
+  useEffect(() => { setupDraftRef.current = setupDraft; }, [setupDraft]);
+  const pushedAlgRef = useRef<string | null>(null);
+  const replacedAlgRef = useRef<string | null>(null);
+  const pushedSetupRef = useRef<string | null>(null);
+  const replacedSetupRef = useRef<string | null>(null);
+
+  // The URL write for a user move is debounced (see appendUserMove) so it lands after
+  // the snap animation, not during it. lastCommittedAlgRef = the value the URL currently
+  // holds; the echo-gate refs above are set from it at write time so the nuqs bounce
+  // (lastCommitted ↔ next) is still recognised as our own echo.
+  const lastCommittedAlgRef = useRef<string>(alg);
+  const pendingAlgCommitRef = useRef<string | null>(null);
+  const algCommitTimerRef = useRef<number | null>(null);
+  const applyAlgToUrl = useCallback((next: string) => {
+    replacedAlgRef.current = lastCommittedAlgRef.current;
+    pushedAlgRef.current = next;
+    lastCommittedAlgRef.current = next;
+    onAlgChangeProp(next);
+  }, [onAlgChangeProp]);
+  const flushAlgCommit = useCallback(() => {
+    if (algCommitTimerRef.current != null) { window.clearTimeout(algCommitTimerRef.current); algCommitTimerRef.current = null; }
+    if (pendingAlgCommitRef.current != null) {
+      const v = pendingAlgCommitRef.current;
+      pendingAlgCommitRef.current = null;
+      applyAlgToUrl(v);
+    }
+  }, [applyAlgToUrl]);
+  // Fire the deferred URL write only once the turn animation has fully settled — a
+  // fixed timer can land mid-snap (a 90° snap runs ~500ms) and re-drop frames. Poll
+  // the shared tweener + controller until idle, then commit. Reads latest world/flush
+  // via a ref so the poller keeps a stable identity.
+  const commitEnvRef = useRef({ world, flushAlgCommit });
+  commitEnvRef.current = { world, flushAlgCommit };
+  const scheduleAlgCommit = useCallback(() => {
+    if (algCommitTimerRef.current != null) window.clearTimeout(algCommitTimerRef.current);
+    algCommitTimerRef.current = window.setTimeout(() => {
+      algCommitTimerRef.current = null;
+      const { world: w, flushAlgCommit: fl } = commitEnvRef.current;
+      const ctrl = w?.controller as { rotating?: boolean; dragging?: boolean } | undefined;
+      const busy = tweener.length > 0 || !!ctrl?.rotating || !!ctrl?.dragging;
+      if (busy) { scheduleAlgCommit(); return; }
+      fl();
+    }, 120);
+  }, []);
+  const commitAlgDebounced = useCallback((next: string) => {
+    pendingAlgCommitRef.current = next;
+    scheduleAlgCommit();
+  }, [scheduleAlgCommit]);
+  // Immediate path (typing / scramble / alg picker): supersede any pending move-commit.
+  const onAlgChange = useCallback((next: string) => {
+    pendingAlgCommitRef.current = null;
+    if (algCommitTimerRef.current != null) { window.clearTimeout(algCommitTimerRef.current); algCommitTimerRef.current = null; }
+    applyAlgToUrl(next);
+  }, [applyAlgToUrl]);
+  // Persist any pending move URL write when leaving the component.
+  useEffect(() => () => { flushAlgCommit(); }, [flushAlgCommit]);
+
+  const onSetupChange = useCallback((next: string) => {
+    replacedSetupRef.current = setupDraftRef.current;
+    pushedSetupRef.current = next;
+    onSetupChangeProp(next);
+  }, [onSetupChangeProp]);
+
+  useEffect(() => {
+    if (alg === pushedAlgRef.current || alg === replacedAlgRef.current) return;
+    setAlgDraft(alg);
+  }, [alg]);
+  useEffect(() => {
+    const s = setup ?? '';
+    if (s === pushedSetupRef.current || s === replacedSetupRef.current) return;
+    setSetupDraft(s);
+  }, [setup]);
 
   // Keep both textareas sized to their content. The onInput handlers only fire
   // on typing, so a value arriving via defaultValue (shared URL on first mount),
@@ -1230,7 +1318,6 @@ export default function PlayerControls({
 
   const restoreFromDemo = useCallback(() => { jumpToStep(stepRef.current); }, [jumpToStep]);
 
-  const skipAutoResetRef = useRef(false);
   const animatingScrambleRef = useRef(false);
   const scrambleReqIdRef = useRef(0);
 
@@ -1489,12 +1576,13 @@ export default function PlayerControls({
   useEffect(() => () => { if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current); }, []);
   const handleCopyLink = useCallback(() => {
     if (typeof window === 'undefined' || !navigator.clipboard?.writeText) return;
+    flushAlgCommit(); // land any debounced move into the URL before copying it
     navigator.clipboard.writeText(window.location.href).then(() => {
       setLinkCopied(true);
       if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
       copyTimerRef.current = window.setTimeout(() => setLinkCopied(false), 1500);
     }).catch(() => { /* clipboard denied */ });
-  }, []);
+  }, [flushAlgCommit]);
 
   // Hand off the current scramble + solution to /recon/submit (matching event).
   const handlePublishRecon = useCallback(() => {
@@ -1532,8 +1620,13 @@ export default function PlayerControls({
     autosize(algEl);
     skipAutoResetRef.current = true;
     setAlgDraft(next);
-    onAlgChange(next);
-  }, [onAlgChange, isSq1, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle]);
+    // Defer only the URL write (nuqs setQuery). Synchronously it re-renders SimPage
+    // (query changed) right as the snap animation starts — the dominant per-move frame
+    // drop (the "开始转动掉帧"). The cube, textarea DOM and React alg state are already
+    // current above; the URL can lag, so land it once the turn animation has settled
+    // (idle-gated) and coalesce rapid turns into one write.
+    commitAlgDebounced(next);
+  }, [commitAlgDebounced, isSq1, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle]);
 
   useEffect(() => {
     if (!userMoveRef) return;
