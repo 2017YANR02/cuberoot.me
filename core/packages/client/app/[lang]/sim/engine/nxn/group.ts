@@ -200,8 +200,17 @@ export default class CubeGroup extends THREE.Group {
   }
 
   drag(): boolean {
-    while (this.holding) {
+    // Finish any in-flight snap tween before re-holding for a fresh drag. A group left
+    // holding with NO tween (an interrupted gesture — e.g. a new drag started before the
+    // previous snap-back finished) can't be finished, so finish() returns 0 and the old
+    // `while (this.holding)` spun forever (the /sim drag freeze). Release it cleanly instead.
+    let guard = 8;
+    while (this.holding && guard-- > 0) {
       this.angle = -this.finish();
+      if (this.holding && !this.tween) {
+        if (guard === 7) console.warn('[sim] group.drag: released a stranded hold (holding, no tween)');
+        this.drop();
+      }
     }
     return this.hold();
   }
