@@ -1,7 +1,8 @@
 #!/usr/bin/env pwsh
 # WCA 十字步数分布 手动增量刷新管道 (按需触发, 非定时; 仅本地: 需 solver 的 ~34GB 表 + ~16GB 内存余量)
 #
-# 一键:        pwsh update_cross_stats.ps1          (真人终端裸跑 -> 自动进交互向导; AI/非交互终端 -> 旧一键直跑)
+# 一键:        pwsh update_cross_stats.ps1          (真人终端裸跑 -> 开场先问「一键全跑 / 逐项自定义」: 选一键 = 后续 0 交互,
+#                                                   全作业 + 下载最新 export + 全变体补满 + 发布; AI/非交互终端 -> 直接一键直跑, 不弹)
 # 一条龙(默认):pwsh update_cross_stats.ps1          (= -Jobs all: stages 3x3阶段难度 + 333opt 整解最优 + puzzles 非3x3, 共享一次发布)
 # 只跑某作业:  pwsh update_cross_stats.ps1 -Jobs 333opt        (任选 stages/333opt/puzzles; 多个: -Jobs stages,puzzles)
 # 选 puzzle:   pwsh update_cross_stats.ps1 -Jobs puzzles -Puzzles sq1
@@ -690,6 +691,22 @@ function Invoke-CrossWizard([int]$nNew){
   $go = Read-Confirm -Prompt '开始?' -Default $true
   if(-not $go){ return $null }
   return @{ Variants=$chosen; MaxChunks=$maxc; NoPublish=(-not $pub) }
+}
+
+# ---- 开场: 一键 / 逐项自定义 ----
+# 一键 = 就地关掉向导 -> 后面 5 个问题(作业/TSV来源/变体/块数/发布)一个都不弹, 直接吃 param 默认值:
+# 全作业 + 下载最新 export + 全 12 变体补满 + 发布。想改任何一项就选逐项, 或直接带 flag 跑(带参数本就不弹)。
+if($Wizard){
+  Write-Host ''
+  $mi = Read-SingleSelect -Prompt '怎么跑?' -Options @(
+    '一键全跑 (全作业 + 最新 export + 全变体补满 + 发布) — 后续不再询问',
+    '逐项自定义 (作业 / TSV 来源 / 变体 / 块数 / 发布)'
+  ) -Default 0
+  if($mi -eq -1){ Write-Host '已取消。' -ForegroundColor Yellow; Hold-Console; return }
+  if($mi -eq 0){
+    $Wizard = $false
+    Write-Host '  -> 一键全跑, 后续无交互 (Ctrl+C 可中断; 变体分块已落盘, 下次自动续)' -ForegroundColor DarkGray
+  }
 }
 
 # ---- 作业选择 (一条龙: stages / 333opt / puzzles) ----
