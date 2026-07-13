@@ -18,7 +18,7 @@ import { Copy, Check, Download, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
-import { apiUrl } from '@/lib/api-base';
+import { publicApiUrl } from '@/lib/api-base';
 import { appendArrow, buildArrowEntry } from '@/lib/puzzle-image/arrows';
 import { pzlShort, specToParams } from '@/lib/puzzle-image/codec';
 import {
@@ -181,6 +181,10 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className 
       if (pure) return pure;
     } catch { /* fall through to the DOM */ }
     if (domRenderKindOf(s) === 'net-paint-3x3') return renderPaintedNetSvg(s.paintedFacelet);
+    // skewb `net` renders inside <scramble-display>'s shadow root, which
+    // querySelector can't reach → export is a no-op here, same as pre-migration.
+    // Not worth piercing the shadow DOM: that view intentionally shows cubing.js's
+    // layout, so a tnoodle-net fallback would export a picture unlike the preview.
     const node = previewRef.current?.querySelector('svg');
     return node ? new XMLSerializer().serializeToString(node) : '';
   }, [s]);
@@ -253,13 +257,10 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className 
     if (s.cubeColor !== DEFAULTS.cubeColor) p.set('cc', s.cubeColor);
     if (s.cubeOpacity !== DEFAULTS.cubeOpacity) p.set('co', String(s.cubeOpacity));
     const qs = p.toString();
-    // apiUrl() is '' in dev (the /v1 rewrite proxies to prod), so absolutize
-    // against the current origin — a copied snippet must be pasteable.
-    const base = apiUrl('/v1/visualcube.svg');
-    const abs = base.startsWith('http') || typeof window === 'undefined'
-      ? base
-      : window.location.origin + base;
-    return `${abs}${qs ? '?' + qs : ''}`;
+    // Copy-out snippet (API link / <img> / Markdown) → always the public API
+    // origin; a dev-relative or 127.0.0.1 URL is dead the moment it's pasted
+    // into an external blog or README.
+    return `${publicApiUrl('/v1/visualcube.svg')}${qs ? '?' + qs : ''}`;
   }, [s]);
 
   // ── arrow builder ──────────────────────────────────────────────────────
@@ -397,10 +398,10 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className 
           <div className="vc-row-controls vc-col">
             <div className="vc-algtype">
               <PillToggle
-                value={s.algType === 'case'}
-                onChange={(v) => set('algType', v ? 'case' : 'alg')}
-                onLabel={t('Case (反向)', 'Case (inverse)')}
-                offLabel={t('应用公式', 'Apply alg')}
+                value={s.algType === 'alg'}
+                onChange={(v) => set('algType', v ? 'alg' : 'case')}
+                onLabel={t('应用公式', 'Apply alg')}
+                offLabel={t('Case (反向)', 'Case (inverse)')}
                 ariaLabel={t('公式模式', 'Algorithm mode')}
               />
             </div>
