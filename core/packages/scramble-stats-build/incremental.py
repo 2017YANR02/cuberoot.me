@@ -186,7 +186,7 @@ def _download_with_progress(url: str, dest: str) -> None:
                 tag = f"续传 (第 {attempt} 次) " if done else ""
                 mark = total // 4 if total else 0   # 非 tty: 每 25% 一行, 免几分钟静默像卡死
                 next_mark = (done // mark + 1) * mark if mark else 0
-                tick = 0
+                last_pct, tick = -1, 0
                 with open(part, "ab" if done else "wb") as out:
                     while True:
                         chunk = resp.read(1 << 20)  # 1 MB
@@ -195,11 +195,14 @@ def _download_with_progress(url: str, dest: str) -> None:
                         out.write(chunk)
                         done += len(chunk)
                         tick += 1
-                        pct = f" ({done*100//total}%)" if total else ""
-                        if TTY and tick % 4 == 0:  # 每 4 MB 刷新同一行
-                            _progress(f"{tag}{done/1e6:.0f}/{total/1e6:.0f} MB{pct}")
+                        pct = done * 100 // total if total else -1
+                        size = (f"{done/1e6:.0f}/{total/1e6:.0f} MB ({pct}%)" if total
+                                else f"{done/1e6:.0f} MB")
+                        if TTY and (pct > last_pct if total else tick % 4 == 0):
+                            last_pct = pct          # tty: 每 1% 就地重写同一行
+                            _progress(f"{tag}{size}")
                         elif not TTY and mark and done >= next_mark:
-                            print(f"    {tag}{done/1e6:.0f}/{total/1e6:.0f} MB{pct}", flush=True)
+                            print(f"    {tag}{size}", flush=True)
                             next_mark += mark
                 _progress_end()
         except (urllib.error.URLError, http.client.HTTPException, OSError) as e:
@@ -318,7 +321,7 @@ def _extract_to(z: zipfile.ZipFile, member: str, dest: str) -> None:
     done = 0
     step = 1 << 27  # 非 tty 每 128 MB 报一次 (大 TSV 解压几十秒, 别静默); tty 走单行刷新
     next_mark = step
-    tick = 0
+    last_pct, tick = -1, 0
     name = os.path.basename(dest)
     with z.open(member) as src, open(dest, "wb") as dst:
         while True:
@@ -328,11 +331,14 @@ def _extract_to(z: zipfile.ZipFile, member: str, dest: str) -> None:
             dst.write(chunk)
             done += len(chunk)
             tick += 1
-            tail = f"/{total/1e6:.0f} MB" if total else " MB"
-            if TTY and tick % 16 == 0:
-                _progress(f"解压 {name} {done/1e6:.0f}{tail}")
+            pct = done * 100 // total if total else -1
+            size = (f"{done/1e6:.0f}/{total/1e6:.0f} MB ({pct}%)" if total
+                    else f"{done/1e6:.0f} MB")
+            if TTY and (pct > last_pct if total else tick % 16 == 0):
+                last_pct = pct          # tty: 每 1% 就地重写同一行
+                _progress(f"解压 {name} {size}")
             elif not TTY and done >= next_mark:
-                print(f"    解压 {name} {done/1e6:.0f}{tail}", flush=True)
+                print(f"    解压 {name} {size}", flush=True)
                 next_mark += step
     _progress_end()
     print(f"  解出 {member} -> {name}")
