@@ -131,7 +131,7 @@ function escapeHtml(s: string): string {
   ));
 }
 
-export function registryKey(s: ImageSpec): string {
+function registryKey(s: ImageSpec): string {
   return `${s.puzzleType}:${s.puzzleType === 'cube' ? s.cubeView : s.puzzleVariant}`;
 }
 

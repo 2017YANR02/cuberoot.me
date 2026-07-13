@@ -85,7 +85,7 @@
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
-/* SimPage 用 CollapsibleSection 把 AlgsPanel / DirectorPanel 折进侧栏。
+/* SimPage 用 CollapsibleSection 把 AlgsPanel / PuzzleImageStudio 折进侧栏。
    子面板自身已有 border-top,wrapper 不再重复加。 */
 .sim-section-body {
   display: flex;
@@ -93,6 +93,101 @@
 }
 .sim-section-body > .sim-algs {
   max-height: none;  /* 折叠面板里不再用 40vh 顶死,让父级 .sim-side 滚动 */
+}
+/* 图像面板:studio 自带内边距,折叠体只需给一点四周留白与其它面板一致。 */
+.sim-section-body > .vc-studio-panel {
+  padding: 8px 12px 12px;
+}
+
+/* 图像面板 export 行里的「实时」录制子组(仅 /sim 面板模式渲染):整组换行独占
+   一行,与上方静态导出按钮用一条 hairline 分隔。按钮本身复用 studio 的 .vc-btn。 */
+.sim-side .vc-capture-group {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-default);
+}
+.sim-side .vc-capture-label {
+  font-size: 11px;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.sim-side .vc-capture-group .vc-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 离线导出 mp4 进度浮层(原 director-panel.css,DirectorPanel 退役后随录制逻辑
+   并入 PuzzleImageStudio)。全屏 modal + 深色 scrim,保留原有字面色。 */
+.sim-export-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.72);
+  padding: 24px;
+}
+.sim-export-card {
+  width: min(720px, calc(100vw - 48px));
+  padding: 24px 28px;
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+.sim-export-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+.sim-export-preview {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  background: #000;
+  border-radius: 6px;
+}
+.sim-export-bar {
+  height: 8px;
+  background: #2a2a2a;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.sim-export-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4d8eff, #66c8ff);
+  transition: width 0.3s ease-out;
+}
+.sim-export-msg {
+  font-size: 13px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.4em;
+}
+.sim-export-cancel {
+  align-self: flex-end;
+  padding: 6px 18px;
+  font-size: 13px;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  background: #1f1f1f;
+  color: #ddd;
+  cursor: pointer;
+}
+.sim-export-cancel:hover {
+  background: #2a2a2a;
+  color: #fff;
 }
 
 .sim-body {
