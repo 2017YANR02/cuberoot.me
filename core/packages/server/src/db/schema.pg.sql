@@ -283,6 +283,9 @@ CREATE TABLE alg_cases (
   algs        JSONB NOT NULL,                   -- 2D AlgEntry[][]
   ori_names   JSONB,                            -- F2L 才有(string[],4 个 orientation 名)
   trainer_key VARCHAR(32),                      -- ZBLS 才有
+  -- 富元数据(AlgCaseMeta):OLLCP 名 / 数字号 / 6 套打乱 / 步数 / 四套最优 / 镜像·逆·镜像逆
+  -- 编号 / 叠加类型 / 对称性 / 生成元。只有从站长那张 1LLL 表导入的 case 才有,其余 NULL。
+  meta        JSONB,
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   FOREIGN KEY (puzzle, set_slug) REFERENCES alg_sets(puzzle, set_slug) ON DELETE CASCADE
 );

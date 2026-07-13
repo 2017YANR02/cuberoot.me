@@ -81,13 +81,17 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
     getValue: (): AlgEntry[][] =>
       layout.map(ori =>
         ori.map(row => {
+          // 这个编辑器只管 alg / algHtml 两个字段。AlgEntry 上其余的东西(altId、ytId、
+          // 以及 1LLL 带来的 tags / source / stm / sqtm)它**不认识,但必须原样带回去** ——
+          // 重建成 `{ alg }` 就等于编一次 case 把它们全抹掉,而且是静默的。
+          const { uid: _uid, alg: _alg, algHtml: _algHtml, ...rest } = row;
           const h = handles.current.get(row.uid);
-          if (!h) return { alg: '' };
+          if (!h) return { ...rest, alg: '' };
           const text = h.getText();
+          if (!text) return { ...rest, alg: '' };
           const html = h.getHtml();
-          if (!text) return { alg: '' };
           const hasTag = /<(u|s|em|strong|sub|sup)\b/i.test(html);
-          return hasTag ? { alg: text, algHtml: html } : { alg: text };
+          return hasTag ? { ...rest, alg: text, algHtml: html } : { ...rest, alg: text };
         }),
       ),
   }), [layout]);
