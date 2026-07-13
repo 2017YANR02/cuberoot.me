@@ -15,6 +15,7 @@ import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { query } from '../db/connection.js';
 import { enrichComp, resolvePersonIso2, type CompRecordsSnapshot } from '../utils/current_records.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
+import { trimToRounds, resolveOnlyKeys } from '../utils/comp_trim.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 
@@ -104,6 +105,9 @@ interface CompData {
   /** cubing / wca_live 路径预填:WR/CR/NR 快照(仅本场涉及国家/洲),
    *  client 拿去给 WS 实时推送的成绩做同样的 tag 推断. */
   currentRecords?: CompRecordsSnapshot;
+  /** ?only= 裁过的分片响应(resultsByRound/users/personalRecords 不全);
+   *  client 据此决定要不要再拉一次全量。缓存里存的永远是全量,裁剪只发生在响应阶段. */
+  partial?: boolean;
 }
 
 // ─── HTML scraping ─────────────────────────────────────────────────────────
@@ -412,9 +416,16 @@ async function getCompStartDate(wcaId: string): Promise<string | null> {
   }
 }
 
-/** L2 TTL 分层:wca_db 过去比赛 7d 不变;实时源按比赛日期距今天分档. */
+/** L2 TTL 分层:wca_db 过去比赛按「结束多久」分档;实时源按比赛日期距今天分档. */
 async function pickL2TtlMs(data: CompData): Promise<number> {
-  if (data.source === 'wca_db') return 7 * 24 * 60 * 60_000;
+  if (data.source === 'wca_db') {
+    // 刚进 dump 的比赛还可能被 WCA 订正(成绩/判罚)→ 7d 稳一点;
+    // 30 天以上的老比赛近乎静态(payload 全是向后看的历史量,只有改名和追溯订正会变)→ 30d。
+    // 过期也不阻塞:上面 SWR 先返旧再后台刷,TTL 在这里只决定「多久后台重算一次」。
+    const sd = await getCompStartDate(data.slug);
+    const daysAgo = sd ? (Date.now() - Date.parse(sd)) / 86400_000 : 0;
+    return (daysAgo > 30 ? 30 : 7) * 24 * 60 * 60_000;
+  }
   const sd = await getCompStartDate(data.slug);
   if (!sd) return 10 * 60_000; // 未入 dump 的新公示比赛
   const days = (Date.parse(sd) - Date.now()) / 86400_000;
@@ -425,14 +436,34 @@ async function pickL2TtlMs(data: CompData): Promise<number> {
 }
 
 async function readSnapshotL2(wcaId: string, source: SourceId): Promise<CompData | null> {
+  const hit = await readSnapshotL2Raw(wcaId, source);
+  return hit && !hit.stale ? hit.data : null;
+}
+
+// 过期的快照也读回来(带 stale 标记),给 wca_db 的 stale-while-revalidate 用:
+// 老比赛的 payload 全是「向后看」的历史量(赛前 PR / 名次 / 纪录标),过期不等于错,
+// 而重算一次大比赛的 prior-PR 要几分钟 —— 宁可先返旧再后台刷,也不让用户干等。
+// SERVE_STALE_MAX_MS 之外(比如快照压根是几个月前的)才认栽阻塞重算。
+const SERVE_STALE_MAX_MS = 180 * 24 * 60 * 60_000;
+
+async function readSnapshotL2Raw(
+  wcaId: string,
+  source: SourceId,
+): Promise<{ data: CompData; stale: boolean } | null> {
   try {
-    const rows = await query<{ payload: CompData }>(
-      `SELECT payload FROM comp_snapshots
-        WHERE wca_id = ? AND source = ? AND schema_version = ? AND expires_at > NOW()
+    const rows = await query<{ payload: CompData; expired: boolean; age_ms: number }>(
+      `SELECT payload,
+              expires_at <= NOW() AS expired,
+              EXTRACT(EPOCH FROM (NOW() - fetched_at)) * 1000 AS age_ms
+         FROM comp_snapshots
+        WHERE wca_id = ? AND source = ? AND schema_version = ?
         LIMIT 1`,
       [wcaId, source, SCHEMA_VERSION],
     );
-    return rows[0]?.payload ?? null;
+    const row = rows[0];
+    if (!row) return null;
+    if (row.expired && Number(row.age_ms) > SERVE_STALE_MAX_MS) return null;
+    return { data: row.payload, stale: !!row.expired };
   } catch (e) {
     console.warn(`[cubing-live] L2 read failed ${wcaId}/${source}:`, (e as Error).message);
     return null;
@@ -1595,6 +1626,31 @@ async function enrichUsersWithChineseNames(competitorUsers: Record<string, User>
   return competitorUsers;
 }
 
+/** 从 PG dump 重算一场比赛并回填 L1/L2.去重:大比赛 tryLoadFromWcaDb 的 prior-PR 查询 5+ 分钟,
+ *  并发刷新会堆爆 PG 连接池 (max=10) — 同 comp 已在飞就复用同一个 promise,不开新查询.
+ *  SWR 的后台刷新和冷启的阻塞加载共用它,所以后台刷新期间来的请求不会再开一路查询. */
+function refreshWcaDb(wcaId: string, cacheKey: string, onProgress?: ProgressFn): Promise<CompData | null> {
+  let pending = inflightWcaDb.get(cacheKey);
+  if (!pending) {
+    pending = (async () => {
+      try {
+        const data = await tryLoadFromWcaDb(wcaId, onProgress);
+        if (data) {
+          data.availableSources = ['wca_db'];
+          setL1AndL2(cacheKey, data);
+          return data;
+        }
+        return null;
+      } catch (e) {
+        console.warn(`[cubing-live] wca_db query failed for ${wcaId}:`, (e as Error).message);
+        return null;  // PG 错误也走 fall-through (choice='wca_db' 时调用方 throw)
+      }
+    })().finally(() => { inflightWcaDb.delete(cacheKey); });
+    inflightWcaDb.set(cacheKey, pending);
+  }
+  return pending;
+}
+
 async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
   // wca_db fast-path: 命中即独占,不发外部 probe.单次 PG 查直接出全部数据.
   if (choice === 'auto' || choice === 'wca_db') {
@@ -1604,32 +1660,18 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
       return { ...cached, availableSources: ['wca_db'] };
     }
     // L2: pm2 重启后 L1 空,从 PG 兜底.比 tryLoadFromWcaDb 全跑省 ~100-200ms (TOAST decompress + serialize).
-    const l2 = await readSnapshotL2(wcaId, 'wca_db');
-    if (l2) {
-      l1Set(cacheKey, l2);
-      return { ...l2, availableSources: ['wca_db'] };
+    const l2 = await readSnapshotL2Raw(wcaId, 'wca_db');
+    if (l2 && !l2.stale) {
+      l1Set(cacheKey, l2.data);
+      return { ...l2.data, availableSources: ['wca_db'] };
     }
-    // 去重:大比赛 tryLoadFromWcaDb 的 prior-PR 查询 5+ 分钟,并发刷新会堆爆 PG 连接池 (max=10).
-    // 同 comp 已在飞就 await 同一个 promise,不开新查询.
-    let pending = inflightWcaDb.get(cacheKey);
-    if (!pending) {
-      pending = (async () => {
-        try {
-          const data = await tryLoadFromWcaDb(wcaId, onProgress);
-          if (data) {
-            data.availableSources = ['wca_db'];
-            setL1AndL2(cacheKey, data);
-            return data;
-          }
-          return null;
-        } catch (e) {
-          console.warn(`[cubing-live] wca_db query failed for ${wcaId}:`, (e as Error).message);
-          return null;  // PG 错误也走 fall-through (choice='wca_db' 时下方 throw)
-        }
-      })().finally(() => { inflightWcaDb.delete(cacheKey); });
-      inflightWcaDb.set(cacheKey, pending);
+    if (l2?.stale) {
+      // stale-while-revalidate:旧快照当场返回,重算(大比赛几分钟)扔后台.不写 L1 —
+      // 让下一个请求还能走到这里、看到新鲜的那份;后台跑完会自己填 L1/L2.
+      void refreshWcaDb(wcaId, cacheKey);
+      return { ...l2.data, availableSources: ['wca_db'] };
     }
-    const result = await pending;
+    const result = await refreshWcaDb(wcaId, cacheKey, onProgress);
     if (result) return result;
     if (choice === 'wca_db') throw new Error(`No data on wca_db for ${wcaId}`);
   }
@@ -2047,33 +2089,6 @@ function pickDefaultRound(data: CompData): { eventId: string; roundId: string } 
   return null;
 }
 
-/** 把 CompData 裁成只含焦点轮的小响应 (events/membersByFilter 元数据保留;users/resultsByRound/personalRecords 仅保留该轮选手).
- *  /comp/<slug>?event=333&round=f 首屏只需 16 行,完整 621KB 太重 — 走 ?only=333:f 仅 ~3KB. */
-function trimToOnlyRound(data: CompData, eventId: string, roundId: string): CompData {
-  const key = `${eventId}:${roundId}`;
-  const rows = data.resultsByRound[key] ?? [];
-  const userNums = new Set<string>();
-  for (const r of rows) userNums.add(String(r.n));
-  const trimmedUsers: Record<string, User> = {};
-  for (const [k, v] of Object.entries(data.users)) {
-    if (userNums.has(k)) trimmedUsers[k] = v;
-  }
-  let trimmedPR: CompData['personalRecords'] = undefined;
-  if (data.personalRecords) {
-    trimmedPR = {};
-    for (const u of Object.values(trimmedUsers)) {
-      if (u.wcaid && data.personalRecords[u.wcaid]) {
-        trimmedPR[u.wcaid] = data.personalRecords[u.wcaid];
-      }
-    }
-  }
-  return {
-    ...data,
-    users: trimmedUsers,
-    resultsByRound: { [key]: rows },
-    personalRecords: trimmedPR,
-  };
-}
 
 // ─── /v1/cubing-zh: 中国大陆比赛中文元数据 ───────
 // cubing.com 详情页的"地点"(合并 venue/address/details) + 退赛/重开报名时间。
@@ -2100,7 +2115,6 @@ cubingLiveRoutes.get('/cubing-live/:slug', async (c) => {
   const wcaId = raw.replace(/-/g, '');
   const source = parseSource(c.req.query('source'));
   const onlyRaw = c.req.query('only');
-  const onlyMatch = onlyRaw && /^([A-Za-z0-9]+):([A-Za-z0-9]+)$/.exec(onlyRaw);
   try {
     const data = await loadComp(wcaId, source);
     // wca_db = 过去比赛 (CI 周更),响应可放心 1d immutable;实时源 30s 兜底.
@@ -2108,13 +2122,10 @@ cubingLiveRoutes.get('/cubing-live/:slug', async (c) => {
       'Cache-Control',
       data.source === 'wca_db' ? 'public, max-age=86400, immutable' : 'public, max-age=30',
     );
-    if (onlyRaw === 'auto') {
-      const pick = pickDefaultRound(data);
-      if (pick) return c.json(trimToOnlyRound(data, pick.eventId, pick.roundId));
-      return c.json(data); // 空赛事 fallback 完整
-    }
-    if (onlyMatch) {
-      return c.json(trimToOnlyRound(data, onlyMatch[1], onlyMatch[2]));
+    // ?only=<event> 单项目 / ?only=<event>:<round> 单轮 / ?only=auto 默认项目;认不出的一律回全量。
+    if (onlyRaw) {
+      const keys = resolveOnlyKeys(data, onlyRaw, () => pickDefaultRound(data)?.eventId ?? null);
+      if (keys) return c.json(trimToRounds(data, keys));
     }
     return c.json(data);
   } catch (e) {

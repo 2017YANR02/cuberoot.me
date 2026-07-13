@@ -25,7 +25,7 @@ import { adjustRankWithLiveComp, type LiveCompEntry } from '@/lib/comp-live-rank
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiUrl } from '@/lib/api-base';
 import { statsUrl } from '@/lib/stats-base';
-import { isAo5Bracketed } from '@/lib/wca-ao5-brackets';
+import { isAo5Bracketed, trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { fetchPb, prefetchPbs, type PbByEvent } from '@/lib/wca-pb';
 import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '@/lib/comp-wcif';
@@ -132,6 +132,8 @@ interface CompData {
   fetchedAt: number;
   personalRecords?: Record<string, Record<string, CompPersonalRecordSlot>>;
   currentRecords?: CompRecordsSnapshot;
+  /** 服务端 ?only= 裁过的分片响应:只有当前项目的轮次/选手。见首屏分片加载。 */
+  partial?: boolean;
 }
 
 function regionToIso2(region: string): string {
@@ -305,11 +307,16 @@ function rankComparator(byAvg: boolean, eff?: EffRank): (x: LiveResult, y: LiveR
   const cmp = (a: number, b: number) => (a < b ? -1 : a > b ? 1 : 0);
   const bOf = (r: LiveResult) => (eff ? eff(r).b : r.b);
   const aOf = (r: LiveResult) => (eff ? eff(r).a : effectiveAvg(r));
+  const att = (r: LiveResult) => (trimEmptyAttempts(r.v).length > 0 ? 1 : 0);
   return (x, y) => {
     const primary = byAvg
       ? cmp(rankKey(aOf(x)), rankKey(aOf(y)))
       : cmp(rankKey(bOf(x)), rankKey(bOf(y)));
-    return primary !== 0 ? primary : cmp(rankKey(bOf(x)), rankKey(bOf(y)));
+    if (primary !== 0) return primary;
+    const secondary = cmp(rankKey(bOf(x)), rankKey(bOf(y)));
+    if (secondary !== 0) return secondary;
+    // 都无有效成绩时:全 DNF 的行仍排在一把没打的空行之前(否则靠源顺序,空行会插到 DNF 中间)。
+    return att(y) - att(x);
   };
 }
 
@@ -506,6 +513,7 @@ interface DualRow {
   betterRound: 1 | 2;
   place: number;      // 竞赛名次 (并列同名次)
   hasResult: boolean; // 至少一轮有有效成绩
+  attempted: boolean; // 至少动过一把 (含 DNF);全空 = 报了名没出场,排在 DNF 行之后
 }
 
 // 两轮成绩按选手合并 → 取更好的排名,算竞赛名次 (并列同名次,跳号)。
@@ -529,11 +537,15 @@ function buildDualRows(r1res: LiveResult[], r2res: LiveResult[], byAvg: boolean)
     } else if (r1) { better = r1; betterRound = 1; }
     else { better = r2 as LiveResult; betterRound = 2; }
     const hasResult = better.b > 0 || effectiveAvg(better) > 0;
-    ranked.push({ n, r1, r2, better, betterRound, hasResult });
+    const attempted = trimEmptyAttempts(r1?.v ?? []).length > 0 || trimEmptyAttempts(r2?.v ?? []).length > 0;
+    ranked.push({ n, r1, r2, better, betterRound, hasResult, attempted });
   }
   ranked.sort((a, b) => {
     const c = compareDualResults(a.better, b.better, byAvg);
-    return c !== 0 ? c : a.n - b.n;
+    if (c !== 0) return c;
+    // 无有效成绩的行彼此都"相等",此时全 DNF 的行仍排在一把没打的空行之前。
+    if (a.attempted !== b.attempted) return a.attempted ? -1 : 1;
+    return a.n - b.n;
   });
   const out: DualRow[] = [];
   let prev: LiveResult | null = null;
@@ -705,6 +717,17 @@ export default function CompDetailPage() {
   }, [rawSlug, slug, router]);
 
   const [data, setData] = useState<CompData | null>(null);
+  // 首屏分片:URL 已经指明「看成绩」时,先只拉当前项目(?only=<event>,几 KB)把表格渲出来,
+  // 完整数据(领奖台 / 预排名 / 纪录 / 选手弹窗要用)随后台请求补齐 —— 大比赛全量 gzip 后
+  // 仍有 380KB,跨洋要好几秒。没有 ?view= 的裸链默认视图还取决于全量(结束的比赛默认领奖台),
+  // 拿不准就照旧一次拉全;?source= / 手动刷新走 SSE,也只有全量。
+  // 只在 URL 已经带上 event 时分片(?only=<event>):老后端不认这个参数会直接回全量,
+  // 客户端认响应里的 partial 标记,所以前后端谁先上线都不会错。
+  const [fullLoaded, setFullLoaded] = useState(false);
+  const bootOnlyRef = useRef<string | null | undefined>(undefined);
+  if (bootOnlyRef.current === undefined) {
+    bootOnlyRef.current = !sourceParam && explicitView === 'result' && eventParam ? eventParam : null;
+  }
   // cubingZh 实时给当天公示的 CN 比赛提供中文名(绕开 comp_names_zh.json 日更延迟);
   // 提前声明以便标题 / 复制都能取 nameZh。fetch 在下方 effect(依赖 compInfo)。
   const [cubingZh, setCubingZh] = useState<CubingZhMeta | null>(null);
@@ -814,8 +837,10 @@ export default function CompDetailPage() {
   }, [slug]);
   const showSimilarTab = similarComps.length > 0;
   // 领奖台:各项目决赛前三。比赛结束(所有项目末轮都有成绩)且有领奖台时默认展示。
-  const podiumGroups = useMemo(() => (data ? computePodiumGroups(data, changeMap) : []), [data, changeMap]);
-  const compRecords = useMemo(() => (data ? computeCompRecords(data) : []), [data]);
+  // 领奖台 / 纪录要看全部项目的末轮,分片数据只有一个项目 — 必须等全量到位才算,
+  // 否则会短暂算出「只有一个项目的领奖台」。tab 迟一步出现,同 scramble / similar 两个 tab 的做法。
+  const podiumGroups = useMemo(() => (data && fullLoaded ? computePodiumGroups(data, changeMap) : []), [data, fullLoaded, changeMap]);
+  const compRecords = useMemo(() => (data && fullLoaded ? computeCompRecords(data) : []), [data, fullLoaded]);
   const hasPodiumTab = podiumGroups.length > 0 || compRecords.length > 0;
   // 全场结束 = 每个项目的决赛(末轮)都 s===1。比「末轮有成绩」严格:决赛进行中(s===2)不算结束。
   const compFinished = useMemo(() => {
@@ -857,8 +882,9 @@ export default function CompDetailPage() {
   // toggle); default on so Format / Time limit / Cutoff / Proceed show like WCA.
   const [schedDetailsExpanded, setSchedDetailsExpanded] = useState(true);
 
-  const load = useCallback((opts?: { fresh?: boolean }): { promise: Promise<void>; cancel: () => void } => {
+  const load = useCallback((opts?: { fresh?: boolean; only?: string }): { promise: Promise<void>; cancel: () => void } => {
     const fresh = opts?.fresh ?? false;
+    const only = opts?.only;
     setError(null);
     setProgress(null);
     let done = false;
@@ -878,6 +904,8 @@ export default function CompDetailPage() {
     const finishWith = (j: CompData, partial = false) => {
       if (done) return;
       setData(j);
+      // 认响应里的 partial 标记而不是请求参数:项目没成绩时服务端会自己回退成全量。
+      if (!j.partial) setFullLoaded(true);
       setProgress(null);
       resolveOnce();
       if (partial) return;
@@ -944,7 +972,8 @@ export default function CompDetailPage() {
     if (sourceParam || fresh) {
       startSse();
     } else {
-      fetch(`/api/comp/${encodeURIComponent(slug)}`, { signal: apiAbort.signal })
+      const onlyQs = only ? `?only=${encodeURIComponent(only)}` : '';
+      fetch(`/api/comp/${encodeURIComponent(slug)}${onlyQs}`, { signal: apiAbort.signal })
         .then(async r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           return r.json();
@@ -952,7 +981,7 @@ export default function CompDetailPage() {
         .then(j => finishWith(j))
         .catch((e) => {
           if ((e as Error).name === 'AbortError' || done) return;
-          startSse();
+          startSse(); // SSE 只有全量,分片失败即退化成完整加载
         });
     }
     return { promise, cancel };
@@ -963,13 +992,28 @@ export default function CompDetailPage() {
     if (!slug) return; // sentinel shell: wait until the real slug resolves from the URL
     let cancel = false;
     setLoading(true);
-    const handle = load();
+    const handle = load({ only: bootOnlyRef.current ?? undefined });
     handle.promise.finally(() => { if (!cancel) setLoading(false); });
     return () => {
       cancel = true;
       handle.cancel();
     };
   }, [load, slug]);
+
+  // 分片首屏之后静默补全量:失败就守着分片数据(成绩表照常能用),不弹错误页。
+  // 全量落地会覆盖 WS 已打的补丁,但它最多 30s 旧,WS 随后会再补回来。
+  const fullReqRef = useRef(false);
+  const dataReady = !!data; // 依赖布尔而非 data 本身:WS 补丁改 data 不该中断这个后台请求
+  useEffect(() => {
+    if (!slug || !dataReady || fullLoaded || fullReqRef.current) return;
+    fullReqRef.current = true;
+    const ac = new AbortController();
+    fetch(`/api/comp/${encodeURIComponent(slug)}`, { signal: ac.signal })
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((j: CompData) => { setData(j); setFullLoaded(true); })
+      .catch(() => { fullReqRef.current = false; });
+    return () => ac.abort();
+  }, [slug, dataReady, fullLoaded]);
 
   const refresh = async () => {
     setRefreshing(true);
@@ -1785,6 +1829,11 @@ export default function CompDetailPage() {
               />
             )}
           </>
+        ) : !fullLoaded ? (
+          // 分片首屏只带当前项目的选手 — 预排名要全场报名者,等后台的全量请求(已在飞)落地。
+          <div className="comp-loading">
+            <div className="comp-loading-label">{tr({ zh: '加载中…', en: 'Loading…' })}</div>
+          </div>
         ) : (
           <PsychSheet
             data={data}
@@ -2050,7 +2099,9 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
   const showAvg = isAverageFormat || isBlindAvgEvent(round.e) || isMbldMo3;
   const singleFirst = !isAverageFormat; // 按单次排名的项目 (含 3 盲 bo5 / 4/5 盲 bo3):单次列在平均列前
   const formatAttempts = round.f === 'a' || round.f === '' ? 5 : round.f === 'm' ? 3 : parseInt(round.f, 10) || 1;
-  const maxRowAttempts = results.reduce((m, r) => Math.max(m, r.v.length), 0);
+  // cubing.live 源把 v 补零到 5 列(Mo3 的最少步 = [21,24,24,0,0]),WCA 源则按赛制给实际长度。
+  // 统一先砍尾部 0,否则 3 把项目会多出第 4/5 列,且长度=5 会被 isAo5Bracketed 误加去尾括号。
+  const maxRowAttempts = results.reduce((m, r) => Math.max(m, trimEmptyAttempts(r.v).length), 0);
   const attemptCount = Math.max(formatAttempts, maxRowAttempts);
   // 竞赛名次 (并列同名次,Reg 9f15);领奖台奖牌色按名次而非行序染 (并列第一 → 两金,无银)。
   const places = computePlaces(results, isAverageFormat, eff);
@@ -2101,7 +2152,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
             // 当前有效值 = live 值叠加变更链最新(行内改某次后即时反映)。
             const effBest = effectiveFieldValue(chain, 'best', r.b);
             const effAvg = effectiveFieldValue(chain, 'average', effectiveAvg(r));
-            const effAttempts = effectiveAttempts(chain, r.v);
+            const effAttempts = trimEmptyAttempts(effectiveAttempts(chain, r.v));
             const isOdd = idx % 2 === 1;
             const advanced = advancers?.has(r.n);
             const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
@@ -2316,7 +2367,7 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
   return (
     <div className="comp-records">
       {groups.map(g => {
-        const attemptCount = g.rows.reduce((m, e) => Math.max(m, e.res.v.length), 0);
+        const attemptCount = g.rows.reduce((m, e) => Math.max(m, trimEmptyAttempts(e.res.v).length), 0);
         // 合并同一 (选手, 轮次) 的单次 + 平均纪录到一行:同轮的 res/详情完全相同,只是
         // 分别破了单次纪录和平均纪录,原本拆成两行重复。按 g.rows 既有顺序(已 WR→大洲→NR
         // 排好)首次出现建行,后续同 (选手, 轮次) 并入对应单次/平均槽;不同轮次仍各自成行。
@@ -2351,6 +2402,7 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
                     const u = users[String(row.n)];
                     if (!u) return null;
                     const iso2 = regionToIso2(u.region);
+                    const atts = trimEmptyAttempts(row.res.v);
                     return (
                       // allow-static-onclick: 数据表整行点击(<tr> 不能是 <button>),与本页其它成绩表同款,点开成绩详情
                       <tr
@@ -2381,8 +2433,8 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
                           )}
                         </td>
                         {Array.from({ length: attemptCount }).map((_, i) => (
-                          <td key={i} className={`td-attempt ${isAo5Bracketed(row.res.v, i) ? 'td-attempt-trimmed' : ''}`}>
-                            {formatLive(row.res.v[i] ?? 0, g.ev.i, false)}
+                          <td key={i} className={`td-attempt ${isAo5Bracketed(atts, i) ? 'td-attempt-trimmed' : ''}`}>
+                            {formatLive(atts[i] ?? 0, g.ev.i, false)}
                           </td>
                         ))}
                       </tr>
@@ -2428,7 +2480,7 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
   );
 
   const formatAttempts = r1.f === 'a' || r1.f === '' ? 5 : r1.f === 'm' ? 3 : parseInt(r1.f, 10) || 1;
-  const maxRowAttempts = [...r1res, ...r2res].reduce((m, r) => Math.max(m, r.v.length), 0);
+  const maxRowAttempts = [...r1res, ...r2res].reduce((m, r) => Math.max(m, trimEmptyAttempts(r.v).length), 0);
   const attemptCount = Math.max(formatAttempts, maxRowAttempts);
   const fixedCols = 3 + (showAvg ? 2 : 1); // place + person + round + best (+ avg)
 
@@ -2470,6 +2522,7 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
               const { singleRank, averageRank } = classifyPr(sr.res, pb);
               const singleBadge = prBadgeFor(singleRank);
               const averageBadge = prBadgeFor(averageRank);
+              const atts = trimEmptyAttempts(sr.res.v);
               const trCls = [
                 advanced ? 'row-advanced' : '',
                 idx % 2 === 1 ? 'row-odd' : '',
@@ -2518,8 +2571,8 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
                   <td className="td-dual-round">{roundLabel(sr.rd.i)}</td>
                   {singleFirst ? [bestCell, avgCell] : [avgCell, bestCell]}
                   {Array.from({ length: attemptCount }).map((_, i) => (
-                    <td key={i} className={`td-attempt ${isAo5Bracketed(sr.res.v, i) ? 'td-attempt-trimmed' : ''}`}>
-                      {formatLive(sr.res.v[i] ?? 0, ev.i, false)}
+                    <td key={i} className={`td-attempt ${isAo5Bracketed(atts, i) ? 'td-attempt-trimmed' : ''}`}>
+                      {formatLive(atts[i] ?? 0, ev.i, false)}
                     </td>
                   ))}
                 </tr>
@@ -3067,6 +3120,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                       // 名次与成绩表同口径:按成绩变更覆盖层订正后的值重排再取竞赛名次。
                       const rankEff = makeEffRank(data.users, changeMap);
                       const rankedArr = arr.slice().sort(rankComparator(isAverageFormat, rankEff));
+                      const atts = trimEmptyAttempts(result.v);
                       const rIdx = rankedArr.findIndex(rr => rr.n === number);
                       const place = rIdx >= 0 && result.b !== 0
                         ? (computePlaces(rankedArr, isAverageFormat, rankEff)[rIdx] ?? '-')
@@ -3092,8 +3146,8 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                               : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null)}
                           </td>
                           {Array.from({ length: 5 }).map((_, i) => (
-                            <td key={i} className={`td-attempt ${isAo5Bracketed(result.v, i) ? 'td-attempt-trimmed' : ''}`}>
-                              {formatLive(result.v[i] ?? 0, result.e, false)}
+                            <td key={i} className={`td-attempt ${isAo5Bracketed(atts, i) ? 'td-attempt-trimmed' : ''}`}>
+                              {formatLive(atts[i] ?? 0, result.e, false)}
                             </td>
                           ))}
                         </tr>
