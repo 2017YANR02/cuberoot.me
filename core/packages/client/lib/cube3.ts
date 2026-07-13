@@ -65,31 +65,30 @@ export function isAlgPrefix(needle: string, haystack: string): boolean {
   }
 }
 
-/** Mirror an alg through one of the slice planes. */
+/**
+ * Mirror an alg through one of the slice planes.
+ *
+ * A reflection is orientation-reversing, so EVERY move flips direction — slices
+ * (M/S/E) and rotations (x/y/z) included. Only the two faces straddling the
+ * plane trade names. Negating just the on-axis families (the pre-2026-07 bug)
+ * silently produced non-algs: mirroring T-perm that way wrecked D + E.
+ */
 export function mirrorAlg(alg: string, axis: 'M' | 'S' | 'E'): string {
   if (!alg) return '';
-  const swap = ({ M: ['R', 'L'], S: ['F', 'B'], E: ['U', 'D'] } as const)[axis];
-  const wideSwap = ({ M: ['r', 'l'], S: ['f', 'b'], E: ['u', 'd'] } as const)[axis];
-  const wideSwapW = ({ M: ['Rw', 'Lw'], S: ['Fw', 'Bw'], E: ['Uw', 'Dw'] } as const)[axis];
-  const flipAxis = ({ M: 'x', S: 'z', E: 'y' } as const)[axis];
+  const pairs = ({
+    M: [['R', 'L'], ['r', 'l'], ['Rw', 'Lw']],
+    S: [['F', 'B'], ['f', 'b'], ['Fw', 'Bw']],
+    E: [['U', 'D'], ['u', 'd'], ['Uw', 'Dw']],
+  } as const)[axis];
   try {
     const out: string[] = [];
     for (const m of new Alg(alg).experimentalLeafMoves()) {
-      let f = m.family;
-      let amount = m.amount;
-      if (f === swap[0]) f = swap[1];
-      else if (f === swap[1]) f = swap[0];
-      else if (f === wideSwap[0]) f = wideSwap[1];
-      else if (f === wideSwap[1]) f = wideSwap[0];
-      else if (f === wideSwapW[0]) f = wideSwapW[1];
-      else if (f === wideSwapW[1]) f = wideSwapW[0];
-      if (
-        [...swap, ...wideSwap, ...wideSwapW, axis, flipAxis].includes(f as never) ||
-        [...swap, ...wideSwap, ...wideSwapW, axis, flipAxis].includes(m.family as never)
-      ) {
-        amount = -amount;
+      let f: string = m.family;
+      for (const [a, b] of pairs) {
+        if (f === a) { f = b; break; }
+        if (f === b) { f = a; break; }
       }
-      out.push(new Move(f, amount).toString());
+      out.push(new Move(f, -m.amount).toString());
     }
     return out.join(' ');
   } catch {
