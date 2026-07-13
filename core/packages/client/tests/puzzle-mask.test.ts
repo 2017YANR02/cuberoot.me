@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
-  parseMask, formatMask, pieceGroups, pieceOf, expandToPieces,
-  toSrMask, maskSupported, srMaskSupported, MASK_COLOR, toRenderMask,
+  pieceGroups, pieceOf, expandToPieces,
+  toSrMask, maskKey, maskSupported, srMaskSupported,
 } from '@/lib/puzzle-image/puzzle-mask';
+import {
+  parseMask, formatMask, MASK_COLOR, toRenderMask,
+} from '@/lib/puzzle-image/mask-core';
 import { renderPyraScrambleSvg, PYRA_DEFAULT_COLORS } from '@/app/[lang]/scramble/gen/_svg/pyraminx_svg';
 import { renderSkewbScrambleSvg, SKEWB_DEFAULT_COLORS } from '@/app/[lang]/scramble/gen/_svg/skewb_svg';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@/app/[lang]/scramble/gen/_svg/mega_svg';
@@ -51,10 +54,12 @@ describe('piece groups', () => {
   for (const N of CUBE_SIZES) perms[`cube${N}`] = D.cubePerms(N);
 
   const fixture = JSON.parse(
-    readFileSync('tests/fixtures/puzzle-mask/piece-groups.json', 'utf8'),
+    readFileSync('lib/puzzle-image/data/piece-groups.json', 'utf8'),
   ) as Record<string, string[][]>;
 
-  it('re-derives byte-for-byte from the renderers (fixture lock)', () => {
+  // The shipped table (lib/puzzle-image/data) is the thing under lock: re-derive
+  // it from the renderers on every run and compare. Never hand-edit the JSON.
+  it('re-derives byte-for-byte from the renderers (shipped-table lock)', () => {
     const derived: Record<string, string[][]> = {};
     for (const [k, p] of Object.entries(perms)) derived[k] = D.derivePieceGroups(p);
     expect(derived).toEqual(fixture);
@@ -103,7 +108,7 @@ describe('piece groups', () => {
 
 describe('sr index map', () => {
   const fixture = JSON.parse(
-    readFileSync('tests/fixtures/puzzle-mask/sr-index-map.json', 'utf8'),
+    readFileSync('lib/puzzle-image/data/sr-index-map.json', 'utf8'),
   ) as Record<string, Record<string, [string, number]>>;
 
   it('re-derives from the two libraries permutations, and is UNIQUE', () => {
@@ -177,10 +182,30 @@ describe('capabilities', () => {
   it('gates sq1 off', () => {
     expect(maskSupported('sq1')).toBe(false);
     expect(srMaskSupported('sq1')).toBe(false);
-    for (const p of ['cube', 'pyraminx', 'skewb', 'megaminx'] as const) {
+    for (const p of ['pyraminx', 'skewb', 'megaminx'] as const) {
       expect(maskSupported(p)).toBe(true);
     }
     expect(srMaskSupported('cube')).toBe(false); // PuzzleSVG never renders NxN through sr
+  });
+
+  it('tells the truth about which cube sizes really have a table', () => {
+    for (const N of CUBE_SIZES) expect(maskSupported('cube', N), `cube${N}`).toBe(true);
+    for (const N of [1, 8, 9, 10]) expect(maskSupported('cube', N), `cube${N}`).toBe(false);
+    expect(maskKey('cube', 3)).toBe('cube3');
+    expect(maskKey('cube', 8)).toBeNull();
+    expect(maskKey('cube')).toBeNull();            // no default N — an unstated size is unknown
+    expect(maskKey('sq1')).toBeNull();
+  });
+
+  it('fails loudly instead of degrading to a one-sticker piece', () => {
+    // the old default (cubeSize = 3) made a 4x4 id resolve to a lone sticker
+    expect(() => pieceOf('cube', 'U12', 3)).toThrow(/not on cube3/);
+    expect(() => pieceOf('cube', 'U0', 8)).toThrow(/no derived piece table/);
+    expect(() => pieceGroups('cube', 8)).toThrow(/no derived piece table/);
+    expect(() => expandToPieces('cube', ['U0'], 8)).toThrow(/no derived piece table/);
+    expect(() => pieceOf('sq1', 'U0', 3)).toThrow(/no derived piece table/);
+    // ...and the 4x4 id resolves correctly once the size is stated
+    expect(pieceOf('cube', 'U12', 4).length).toBe(3);
   });
 });
 

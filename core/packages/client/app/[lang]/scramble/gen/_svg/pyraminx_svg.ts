@@ -24,7 +24,7 @@
  * while the id also carries piece identity through the scramble (that is what
  * makes `mask` follow the piece rather than the position).
  */
-import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-types';
+import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-core';
 
 export const PYRA_DEFAULT_COLORS: Record<string, string> = {
   // Tnoodle PyraminxPuzzle.java defaultColorScheme
