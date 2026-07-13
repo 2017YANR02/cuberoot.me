@@ -113,10 +113,16 @@ in : R U R' U' R' F R2 U' R' U' R U R' F'
  negate-all → L' U' L U L F' L2' U L U L' U' L F     LL-valid ✓
 ```
 
-> **🐛 站上 `lib/cube3.ts:69` 的 `mirrorAlg` 是坏的。** 它只对 `{R,L,r,l,Rw,Lw,M,x}` 取反,
-> `U/D/F/B/E/S/y/z` 全漏了。含 U/F 的公式镜像出来是垃圾(T-perm 镜像后 D 层和中层被破坏)。
-> 无任何测试;唯一调用点是 `PlayerControls.tsx:2052` 的 /sim 镜像按钮 —— **线上一直静默错着**。
-> 迁移前必须修 + 补测试。
+> **站上 `lib/cube3.ts` 的 `mirrorAlg` 曾经是坏的,2026-07-13 已修**(`tests/cube3_mirror.test.ts`)。
+> 旧实现只对 `{R,L,r,l,Rw,Lw,M,x}` 取反,`U/D/F/B/E/S/y/z` 全漏了 —— 反射是**反定向**的,
+> **每一个** move 都要翻,只有跨平面的那两个面才换名字。含 U/F 的公式按旧法镜像出来是垃圾
+> (T-perm 镜像后 D 层和中层被破坏)。唯一调用点是 /sim 的镜像按钮,**线上曾静默错了很久**。
+>
+> **🐛 但表侧的 `MIRRORLR` 还带着同一类 bug。** Phase 0 实证:`1/PLL-U+` 的 alg[0]
+> `L2 U' S U2' S' U' L2` 是 `2/PLL-U-` 的 `R2 U' S' U2' S U' R2` 镜像来的,
+> 只翻了 `R↔L` 和 `S` 的量,**没翻 `U` 的量**(正确应是 `L2 U S U2 S' U L2`)。
+> 坏公式还经 MIRRORLR **传染**给了别的行(`3419/O-U8` 坏 → 它的镜像 `3347/O+U9` 也坏)。
+> 详见 §6''。**这是表侧的事,要站长改表。**
 
 ### 4.2 整体旋转(ROTATE):family 重映射表
 
