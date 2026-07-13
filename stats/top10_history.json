@@ -2502,6 +2502,11 @@
       "country": "China",
       "iso2": "CN"
     },
+    "2025XUYA01": {
+      "name": "Yaqian Xu (徐雅芊)",
+      "country": "China",
+      "iso2": "CN"
+    },
     "2004BELL01": {
       "name": "Patrick Bellenbaum",
       "country": "Germany",
@@ -8342,6 +8347,11 @@
       "country": "USA",
       "iso2": "US"
     },
+    "2010MATT02": {
+      "name": "Kevin Matthews",
+      "country": "Canada",
+      "iso2": "CA"
+    },
     "2016WHIT16": {
       "name": "Jason White",
       "country": "USA",
@@ -8351,11 +8361,6 @@
       "name": "Benjamin Gottschalk",
       "country": "USA",
       "iso2": "US"
-    },
-    "2010MATT02": {
-      "name": "Kevin Matthews",
-      "country": "Canada",
-      "iso2": "CA"
     },
     "2016LOPE44": {
       "name": "Mauro Moisés Ortega López",
@@ -8572,16 +8577,6 @@
       "country": "Singapore",
       "iso2": "SG"
     },
-    "2018RUAN04": {
-      "name": "Xiwen Ruan (阮熙文)",
-      "country": "China",
-      "iso2": "CN"
-    },
-    "2011JIAN07": {
-      "name": "Weijie Jian (简维杰)",
-      "country": "China",
-      "iso2": "CN"
-    },
     "2013PENG02": {
       "name": "Yongqiang Peng (彭永强)",
       "country": "China",
@@ -8597,8 +8592,18 @@
       "country": "China",
       "iso2": "CN"
     },
+    "2018RUAN04": {
+      "name": "Xiwen Ruan (阮熙文)",
+      "country": "China",
+      "iso2": "CN"
+    },
     "2017SUNN02": {
       "name": "Nachuan Sun (孙纳川)",
+      "country": "China",
+      "iso2": "CN"
+    },
+    "2011JIAN07": {
+      "name": "Weijie Jian (简维杰)",
       "country": "China",
       "iso2": "CN"
     },
@@ -8611,6 +8616,16 @@
       "name": "Jackson Warley",
       "country": "USA",
       "iso2": "US"
+    },
+    "2020BERM02": {
+      "name": "Adam Bermingham",
+      "country": "Ireland",
+      "iso2": "IE"
+    },
+    "2018GRYT01": {
+      "name": "Nikita Grytsenko (Микита Гриценко)",
+      "country": "Ukraine",
+      "iso2": "UA"
     },
     "2009XUAN03": {
       "name": "Yan Xuan (宣炎)",
@@ -10532,6 +10547,11 @@
       "country": "Spain",
       "iso2": "ES"
     },
+    "2023POWE10": {
+      "name": "Matthew Powell",
+      "country": "Singapore",
+      "iso2": "SG"
+    },
     "2006PIRZ01": {
       "name": "Markus Pirzer",
       "country": "Germany",
@@ -10701,11 +10721,6 @@
       "name": "Ollie Thompson",
       "country": "USA",
       "iso2": "US"
-    },
-    "2023POWE10": {
-      "name": "Matthew Powell",
-      "country": "Singapore",
-      "iso2": "SG"
     },
     "2008DANG01": {
       "name": "Bobby D'Angelo",
@@ -14796,11 +14811,6 @@
       "name": "Zhe Wang (王喆)",
       "country": "China",
       "iso2": "CN"
-    },
-    "2018GRYT01": {
-      "name": "Nikita Grytsenko (Микита Гриценко)",
-      "country": "Ukraine",
-      "iso2": "UA"
     },
     "2023TESS01": {
       "name": "Killian Pelletier Tesseraud",
@@ -27018,6 +27028,9 @@
     "WestMelbourneOpen2026": {
       "name": "West Melbourne Open 2026"
     },
+    "XuzhouZenith2026": {
+      "name": "Xuzhou Zenith 2026"
+    },
     "GLSGdanskIII2026": {
       "name": "GLS Gdańsk III 2026"
     },
@@ -27059,6 +27072,9 @@
     },
     "NxNinJura2026": {
       "name": "NxN in Jura 2026"
+    },
+    "ShenyangCubingLeague3x3IV2026": {
+      "name": "Shenyang 3x3 L4 2026"
     },
     "DanishCubeDay2008": {
       "name": "Danish Cube Day 2008"
@@ -28980,9 +28996,6 @@
     "LeedsSpring2026": {
       "name": "Leeds Spring 2026"
     },
-    "XuzhouZenith2026": {
-      "name": "Xuzhou Zenith 2026"
-    },
     "CubeFactoryLeagueJezow2026": {
       "name": "Cube Factory League Jeżów 2026"
     },
@@ -29696,6 +29709,9 @@
     },
     "ShenyangCubingLeague3x3III2026": {
       "name": "Shenyang 3x3 L3 2026"
+    },
+    "WeihaiOpen2026": {
+      "name": "Weihai Open 2026"
     },
     "ShaastraOpen2008": {
       "name": "Shaastra Open 2008"
@@ -30983,6 +30999,9 @@
     },
     "MidwestCubingClassic2026": {
       "name": "Midwest Cubing Classic 2026"
+    },
+    "ShenyangCubingLeague3x3II2026": {
+      "name": "Shenyang 3x3 L2 2026"
     },
     "BrazilOpen2007": {
       "name": "Brazil Open 2007"
@@ -34131,6 +34150,9 @@
     "Cube4funinBarcin2026": {
       "name": "Cube4fun in Barcin 2026"
     },
+    "WarmUpNiepolomice2026": {
+      "name": "Warm Up Niepołomice 2026"
+    },
     "FinnishOpen2009": {
       "name": "Finnish Open 2009"
     },
@@ -36107,6 +36129,9 @@
     },
     "PyraminxinPhitsanulok2026": {
       "name": "Pyraminx in Phitsanulok 2026"
+    },
+    "Cube4funLublinSummer2026": {
+      "name": "Cube4fun Lublin Summer 2026"
     },
     "ShaastraOpen2010": {
       "name": "Shaastra Cube Open 2010"
@@ -38592,6 +38617,9 @@
     "WisconsiNxN2025": {
       "name": "WisconsiNxN 2025"
     },
+    "BangkokCubeFestival2026": {
+      "name": "Bangkok Cube Festival 2026"
+    },
     "NanjingSpring2011": {
       "name": "Nanjing Spring 2011"
     },
@@ -39746,6 +39774,9 @@
     },
     "IndianCubeChallengeBLR2026": {
       "name": "Indian Cube Challenge BLR 2026"
+    },
+    "OddJulySingapore2026": {
+      "name": "Odd July Singapore 2026"
     },
     "TallinnOpen2012": {
       "name": "Tallinn Open 2012"
@@ -40914,11 +40945,11 @@
     "BigNBlindNYC2017": {
       "name": "Big N Blind NYC 2017"
     },
-    "DontPeek2018": {
-      "name": "Don't Peek 2018"
-    },
     "HendersonvilleWinter2018": {
       "name": "Hendersonville Winter 2018"
+    },
+    "DontPeek2018": {
+      "name": "Don't Peek 2018"
     },
     "ImaginaliaOpen2018": {
       "name": "Imaginalia Open 2018"
@@ -41106,11 +41137,11 @@
     "VaudesincourtSideEvents2024": {
       "name": "Vaudesincourt Side Events 2024"
     },
-    "CountlessCubesChicagoA2024": {
-      "name": "Countless Cubes Chicago A 2024"
-    },
     "MinnesotaQualifier2024": {
       "name": "Minnesota Qualifier 2024"
+    },
+    "CountlessCubesChicagoA2024": {
+      "name": "Countless Cubes Chicago A 2024"
     },
     "HessenOpen2024": {
       "name": "Hessen Open 2024"
@@ -41187,11 +41218,11 @@
     "BimaalCuboBogota2025": {
       "name": "Bima al Cubo Bogotá 2025"
     },
-    "LaMontagneOpen2025": {
-      "name": "La Montagne Open 2025"
-    },
     "VITCubeOpen2025": {
       "name": "VIT Cube Open 2025"
+    },
+    "LaMontagneOpen2025": {
+      "name": "La Montagne Open 2025"
     },
     "ThailandChampionship2025": {
       "name": "Thailand Championship 2025"
@@ -41211,11 +41242,11 @@
     "RheinSiegOpen2026": {
       "name": "Rhein-Sieg Open 2026"
     },
-    "CernaylesReimsOpen2026": {
-      "name": "Cernay-lès-Reims Open 2026"
-    },
     "LetsGoCarlow2026": {
       "name": "Lets Go Carlow 2026"
+    },
+    "CernaylesReimsOpen2026": {
+      "name": "Cernay-lès-Reims Open 2026"
     },
     "CFGoesSidewaysBrzeziny2026": {
       "name": "CF Goes Sideways Brzeziny 2026"
@@ -41328,11 +41359,11 @@
     "GermanBigCubeOpen2019": {
       "name": "German Big Cube Open 2019"
     },
-    "ShriRamCubingChallenge2019": {
-      "name": "Shri Ram Cubing Challenge 2019"
-    },
     "SouthSurreySideEvents2019": {
       "name": "South Surrey Side Events 2019"
+    },
+    "ShriRamCubingChallenge2019": {
+      "name": "Shri Ram Cubing Challenge 2019"
     },
     "LaSillaII2019": {
       "name": "La Silla II 2019"
@@ -41373,11 +41404,11 @@
     "SanMarinoNationals2023": {
       "name": "San Marino Nationals 2023"
     },
-    "JaquecaDiTella2023": {
-      "name": "Jaqueca Di Tella 2023"
-    },
     "SwissNationals2023": {
       "name": "Swiss Nationals 2023"
+    },
+    "JaquecaDiTella2023": {
+      "name": "Jaqueca Di Tella 2023"
     },
     "BigCubesinEdneyville2023": {
       "name": "Big Cubes in Edneyville 2023"
@@ -41469,11 +41500,11 @@
     "TokyoAutumn2025": {
       "name": "Tokyo Autumn 2025"
     },
-    "BacktoBuchy2025": {
-      "name": "Back to Buchy 2025"
-    },
     "MachesneyParkFall2025": {
       "name": "Machesney Park Fall 2025"
+    },
+    "BacktoBuchy2025": {
+      "name": "Back to Buchy 2025"
     },
     "KrungthepFarewell2025": {
       "name": "Krungthep Farewell 2025"
@@ -41589,11 +41620,11 @@
     "QinhuangdaoOpen2019": {
       "name": "Qinhuangdao Open 2019"
     },
-    "PennCubeDaySpring2019": {
-      "name": "Penn Cube Day Spring 2019"
-    },
     "EmpireStateSpring2019": {
       "name": "Empire State Spring 2019"
+    },
+    "PennCubeDaySpring2019": {
+      "name": "Penn Cube Day Spring 2019"
     },
     "ReadyForSummerFrisco2019": {
       "name": "Ready For Summer Frisco 2019"
@@ -41664,11 +41695,11 @@
     "NxNxNurtingen2023": {
       "name": "NxNxNürtingen 2023"
     },
-    "DeNxNver2024": {
-      "name": "DeNxNver 2024"
-    },
     "BristolWinter2024": {
       "name": "Bristol Winter 2024"
+    },
+    "DeNxNver2024": {
+      "name": "DeNxNver 2024"
     },
     "NinerNationSilence2024": {
       "name": "Niner Nation Silence 2024"
@@ -41691,11 +41722,11 @@
     "NayaritOpen2024": {
       "name": "Nayarit Open 2024"
     },
-    "RobinsonLatkrabangOpen2024": {
-      "name": "Robinson Latkrabang Open 2024"
-    },
     "KarnatakaCubeChampionship2024": {
       "name": "Karnataka Cube Championship 2024"
+    },
+    "RobinsonLatkrabangOpen2024": {
+      "name": "Robinson Latkrabang Open 2024"
     },
     "NapervilleWinter2025": {
       "name": "Naperville Winter 2025"
@@ -41747,6 +41778,9 @@
     },
     "NUSClockClash2026": {
       "name": "NUS Clock Clash 2026"
+    },
+    "MentalBreakdownIIBogota2026": {
+      "name": "Mental Breakdown II Bogotá 2026"
     },
     "BeijingFebruary2011": {
       "name": "Beijing February 2011"
@@ -41910,11 +41944,11 @@
     "SwisscubingCupII2026": {
       "name": "Swisscubing Cup II 2026"
     },
-    "PinoyBigCubesOpen2026": {
-      "name": "Pinoy Big Cubes Open 2026"
-    },
     "KopliNxNRampage2026": {
       "name": "Kopli NxN Rampage 2026"
+    },
+    "PinoyBigCubesOpen2026": {
+      "name": "Pinoy Big Cubes Open 2026"
     },
     "WinnipegSpring2026": {
       "name": "Winnipeg Spring 2026"
@@ -42921,6 +42955,9 @@
     "MidAtlanticQuietChampionship2026": {
       "name": "Mid-Atlantic Quiet Champs 2026"
     },
+    "PoznanMentalBreakdown2026": {
+      "name": "Poznań Mental Breakdown 2026"
+    },
     "SkarupLastChance2011": {
       "name": "Skårup Last Chance 2011"
     },
@@ -43491,11 +43528,11 @@
     "FMCAsia2018": {
       "name": "FMC Asia 2018"
     },
-    "FewestMovesChristmas2018": {
-      "name": "Fewest Moves Christmas 2018"
-    },
     "TolongDiamMedan2018": {
       "name": "Tolong Diam Medan 2018"
+    },
+    "FewestMovesChristmas2018": {
+      "name": "Fewest Moves Christmas 2018"
     },
     "SwisscubingCupI2019": {
       "name": "Swisscubing Cup I 2019"
@@ -43503,11 +43540,11 @@
     "PSSFMCWarszawa2019": {
       "name": "PSS FMC Warszawa 2019"
     },
-    "PleaseBeQuietUtah2019": {
-      "name": "Please Be Quiet Utah 2019"
-    },
     "SalemCubeTrials2019": {
       "name": "Salem Cube Trials 2019"
+    },
+    "PleaseBeQuietUtah2019": {
+      "name": "Please Be Quiet Utah 2019"
     },
     "PBQOshawa2019": {
       "name": "Please Be Quiet Oshawa 2019"
@@ -43608,11 +43645,11 @@
     "DanishFMChampionship2022": {
       "name": "Danish FM Championship 2022"
     },
-    "FMCFallSanDiego2022": {
-      "name": "FMC Fall San Diego 2022"
-    },
     "KewbzUKChampionshipFMC2022": {
       "name": "Kewbz UK Championship FMC 2022"
+    },
+    "FMCFallSanDiego2022": {
+      "name": "FMC Fall San Diego 2022"
     },
     "KyivFMCFriendsOctober2022": {
       "name": "Kyiv FMC Friends October 2022"
@@ -43620,11 +43657,11 @@
     "Minyons2022": {
       "name": "Minyons 2022"
     },
-    "FMCSingapore2022": {
-      "name": "FMC Singapore 2022"
-    },
     "PleaseBeQuietKorea2022": {
       "name": "Please Be Quiet Korea 2022"
+    },
+    "FMCSingapore2022": {
+      "name": "FMC Singapore 2022"
     },
     "FMConaMadisonTerrace2022": {
       "name": "FMC on a Madison Terrace 2022"
@@ -43689,6 +43726,9 @@
     "FMCLondonSummer2023": {
       "name": "FMC London Summer 2023"
     },
+    "IrishChampionshipFMC2023": {
+      "name": "Irish Championship FMC 2023"
+    },
     "MiniMinnesotaSummer2023": {
       "name": "Mini Minnesota Summer 2023"
     },
@@ -43731,11 +43771,11 @@
     "FMCUkraineFriendship2023": {
       "name": "FMC Ukraine Friendship 2023"
     },
-    "AyaseFMC2023": {
-      "name": "Ayase FMC 2023"
-    },
     "FMCItaly2023": {
       "name": "FMC Italy 2023"
+    },
+    "AyaseFMC2023": {
+      "name": "Ayase FMC 2023"
     },
     "KyivFMCFriendsV2023": {
       "name": "Kyiv FMC Friends V 2023"
@@ -43746,6 +43786,9 @@
     "GlendaleHeightsFMCWinter2023": {
       "name": "Glendale Heights FMC Winter 2023"
     },
+    "DontDNFDublin2024": {
+      "name": "Don't DNF Dublin 2024"
+    },
     "FMCPolandCzechiaSlovakia2024": {
       "name": "FMC Poland-Czechia-Slovakia 2024"
     },
@@ -43755,26 +43798,29 @@
     "PleaseBeQuietThailand2024": {
       "name": "Please Be Quiet Thailand 2024"
     },
-    "GlasgowWinterSBO2024": {
-      "name": "Glasgow Winter - SBO 2024"
+    "ClockMastersOpole2024": {
+      "name": "Clock Masters Opole 2024"
     },
     "PBQtah62024": {
       "name": "PBQtah 6 2024"
     },
-    "LeapDayFMCItalyTicino2024": {
-      "name": "Leap Day FMC Italy Ticino 2024"
+    "GlasgowWinterSBO2024": {
+      "name": "Glasgow Winter - SBO 2024"
     },
     "WCCFMCLeapDay2024": {
       "name": "WCC FMC Leap Day 2024"
     },
+    "LeapDayFMCItalyTicino2024": {
+      "name": "Leap Day FMC Italy Ticino 2024"
+    },
     "OhioStateMentalMadness2024": {
       "name": "Ohio State Mental Madness 2024"
     },
-    "AmherstSpringChallenge2024": {
-      "name": "Amherst Spring Challenge 2024"
-    },
     "PrimerAldeillaOpen2024": {
       "name": "Primer Aldeilla Open 2024"
+    },
+    "AmherstSpringChallenge2024": {
+      "name": "Amherst Spring Challenge 2024"
     },
     "FMCSingapore2024": {
       "name": "FMC Singapore 2024"
@@ -43806,6 +43852,9 @@
     "FMCBaliPuraPuraMencariSolusi2024": {
       "name": "Pura Pura Mencari Solusi 2024"
     },
+    "RubiksIrishChampionshipFMC2024": {
+      "name": "Rubik's Irish Champs FMC 2024"
+    },
     "HariHariHoras4HorasFMCTourPM2024": {
       "name": "Hari-Hari Horas 4 FMC PM 2024"
     },
@@ -43827,11 +43876,11 @@
     "KoreanFMCChampionship2024": {
       "name": "Korean FMC Championship 2024"
     },
-    "FinnishFMCChampionship2024": {
-      "name": "Finnish FMC Championship 2024"
-    },
     "SundaySilenceSingapore2024": {
       "name": "Sunday Silence Singapore 2024"
+    },
+    "FinnishFMCChampionship2024": {
+      "name": "Finnish FMC Championship 2024"
     },
     "NewYorkQuietChampionship2024": {
       "name": "New York Quiet Championship 2024"
@@ -43917,6 +43966,9 @@
     "TokyoFMCSpring2025": {
       "name": "Tokyo FMC Spring 2025"
     },
+    "ItsaLongWaytoTipperary2025": {
+      "name": "Its a Long Way to Tipp 2025"
+    },
     "CampeonatoBrasileiroFMC2025": {
       "name": "Campeonato Brasileiro FMC 2025"
     },
@@ -43958,6 +44010,9 @@
     },
     "FMCWorld2026": {
       "name": "FMC World 2026"
+    },
+    "IrishChampionshipFMC2026": {
+      "name": "Irish Championship FMC 2026"
     },
     "ChinaFMShanghai2011": {
       "name": "China FM Shanghai 2011"
@@ -44013,11 +44068,11 @@
     "FewestMovesVitebsk2019": {
       "name": "Fewest Moves Vitebsk 2019"
     },
-    "PleaseBeQuietThailand2019": {
-      "name": "Please Be Quiet Thailand 2019"
-    },
     "PleaseBeSolvedVancouver2019": {
       "name": "Please Be Solved Vancouver 2019"
+    },
+    "PleaseBeQuietThailand2019": {
+      "name": "Please Be Quiet Thailand 2019"
     },
     "PleaseBeQuietMerdeka2019": {
       "name": "Please Be Quiet Merdeka 2019"
@@ -44052,11 +44107,11 @@
     "MiniMinnesotaFriday2022": {
       "name": "Mini Minnesota Friday 2022"
     },
-    "ImagineFMCinRzeszow2023": {
-      "name": "Imagine FMC in Rzeszów 2023"
-    },
     "TurninginTownsville2023": {
       "name": "Turning in Townsville 2023"
+    },
+    "ImagineFMCinRzeszow2023": {
+      "name": "Imagine FMC in Rzeszów 2023"
     },
     "FMCinaGemCityTemple2023": {
       "name": "FMC in a Gem City Temple 2023"
@@ -44088,14 +44143,14 @@
     "SEAB2023": {
       "name": "Singapore Eighty and Below 2023"
     },
-    "BaztanSideEvents2023": {
-      "name": "Baztan Side Events 2023"
+    "SzokolyaMentalBreakdown2023": {
+      "name": "Szokolya Mental Breakdown 2023"
     },
     "StockholmMentalBreakdown2023": {
       "name": "Stockholm Mental Breakdown 2023"
     },
-    "SzokolyaMentalBreakdown2023": {
-      "name": "Szokolya Mental Breakdown 2023"
+    "BaztanSideEvents2023": {
+      "name": "Baztan Side Events 2023"
     },
     "HarrowAutumn2023": {
       "name": "Harrow Autumn 2023"
@@ -44103,11 +44158,11 @@
     "DanishFMChampionship2023": {
       "name": "Danish FM Championship 2023"
     },
-    "CzechFMCChampionship2023": {
-      "name": "Czech FMC Championship 2023"
-    },
     "HalfTurnsHataitai2023": {
       "name": "Half Turns Hataitai 2023"
+    },
+    "CzechFMCChampionship2023": {
+      "name": "Czech FMC Championship 2023"
     },
     "UCSDExtravaganzaPBQ2023": {
       "name": "UCSD Extravaganza PBQ 2023"
@@ -44169,11 +44224,11 @@
     "SideEventsinNyack2024": {
       "name": "Side Events in Nyack 2024"
     },
-    "DolneOresanyCubeDay2024": {
-      "name": "Dolné Orešany Cube Day 2024"
-    },
     "GaridechOpen2024": {
       "name": "Garidech Open 2024"
+    },
+    "DolneOresanyCubeDay2024": {
+      "name": "Dolné Orešany Cube Day 2024"
     },
     "FMCSwissNationals2024": {
       "name": "FMC Swiss Nationals 2024"
@@ -44262,11 +44317,11 @@
     "EuropeFMCFriendsWinter2026": {
       "name": "Europe FMC Friends Winter 2026"
     },
-    "FMCCheltenhamWinter2026": {
-      "name": "FMC Cheltenham Winter 2026"
-    },
     "FortheLoveofFMCUSA2026": {
       "name": "For the Love of FMC USA 2026"
+    },
+    "FMCCheltenhamWinter2026": {
+      "name": "FMC Cheltenham Winter 2026"
     },
     "SCUIIIFMCTripleScoop2026": {
       "name": "SCU III: FMC Triple-Scoop 2026"
@@ -46254,9 +46309,6 @@
     "CharantonnayCubeClash2024": {
       "name": "Charantonnay Cube Clash 2024"
     },
-    "DontDNFDublin2024": {
-      "name": "Don't DNF Dublin 2024"
-    },
     "SideEventsBangaloreJan2024": {
       "name": "Side Events Bangalore Jan 2024"
     },
@@ -46656,9 +46708,6 @@
     "MoorheadMadness2025": {
       "name": "Moorhead Madness 2025"
     },
-    "ItsaLongWaytoTipperary2025": {
-      "name": "Its a Long Way to Tipp 2025"
-    },
     "HurryUpHalswell2025": {
       "name": "Hurry Up Halswell 2025"
     },
@@ -46736,6 +46785,9 @@
     },
     "LAUnorthodoxTwistgiving2025": {
       "name": "LA Unorthodox Twistgiving 2025"
+    },
+    "SingaporeSprintNovember2025": {
+      "name": "Singapore Sprint November 2025"
     },
     "DragonCubingXI2025": {
       "name": "Dragon Cubing XI 2025"
@@ -47118,6 +47170,9 @@
     "GrandForks2024": {
       "name": "Grand Forks 2024"
     },
+    "Cube4funWislaMasters2024": {
+      "name": "Cube4fun Wisła Masters 2024"
+    },
     "MinxItUpinPasig2024": {
       "name": "Minx It Up in Pasig 2024"
     },
@@ -47298,9 +47353,6 @@
     "MinnesotaChampionship2025": {
       "name": "Minnesota Championship 2025"
     },
-    "SingaporeSprintNovember2025": {
-      "name": "Singapore Sprint November 2025"
-    },
     "LeopardstownCubeRaces2025": {
       "name": "Leopardstown Cube Races 2025"
     },
@@ -47339,6 +47391,9 @@
     },
     "GuangzhouSpecial2026": {
       "name": "Guangzhou Special 2026"
+    },
+    "NoSkewbaDivingGreenport2026": {
+      "name": "No Skewba Diving Greenport 2026"
     },
     "LETIOpen2017": {
       "name": "LETI Open 2017"
@@ -47916,9 +47971,6 @@
     "PribramCube2024": {
       "name": "Příbram Cube 2024"
     },
-    "Cube4funWislaMasters2024": {
-      "name": "Cube4fun Wisła Masters 2024"
-    },
     "KingofPrussiaWeeknights2024": {
       "name": "King of Prussia Weeknights 2024"
     },
@@ -48368,9 +48420,6 @@
     },
     "CubingintheLionsDen2024": {
       "name": "Cubing in the Lion's Den 2024"
-    },
-    "ClockMastersOpole2024": {
-      "name": "Clock Masters Opole 2024"
     },
     "ParquemetCubing2024": {
       "name": "Parquemet Cubing 2024"
@@ -48933,6 +48982,9 @@
     "TrebelnoOpen2025": {
       "name": "Trebelno Open 2025"
     },
+    "CoolDownSzczecin2025": {
+      "name": "Cool Down Szczecin 2025"
+    },
     "MadridNorteOpen2025": {
       "name": "Madrid Norte Open 2025"
     },
@@ -48966,9 +49018,6 @@
     "U24GlobusOpenJuly2023": {
       "name": "U24 Globus Open July 2023"
     },
-    "CoolDownSzczecin2025": {
-      "name": "Cool Down Szczecin 2025"
-    },
     "SuwonSummer2025": {
       "name": "Suwon Summer 2025"
     },
@@ -48977,6 +49026,12 @@
     },
     "SpaceCitySummer2023": {
       "name": "Space City Summer 2023"
+    },
+    "FolketsKubAlvesta2024": {
+      "name": "Folkets Kub Alvesta 2024"
+    },
+    "SleepSolveLandsbro2026": {
+      "name": "Sleep & Solve Landsbro 2026"
     },
     "MindGames2019": {
       "name": "Mind Games 2019"
@@ -50943,9 +50998,6 @@
     "KeSoloLur2024": {
       "name": "Ke Solo Lur 2024"
     },
-    "FolketsKubAlvesta2024": {
-      "name": "Folkets Kub Alvesta 2024"
-    },
     "BerkeleyWinter2024": {
       "name": "Berkeley Winter 2024"
     },
@@ -52494,11 +52546,11 @@
     "GoianiaXiu2024": {
       "name": "Goiânia Xiu 2024"
     },
-    "CrevalcorealCubo2025": {
-      "name": "Crevalcore al Cubo 2025"
-    },
     "LjubljanaBlindOpen2025": {
       "name": "Ljubljana Blind Open 2025"
+    },
+    "CrevalcorealCubo2025": {
+      "name": "Crevalcore al Cubo 2025"
     },
     "TorontoBlindfolded2025": {
       "name": "Toronto Blindfolded 2025"

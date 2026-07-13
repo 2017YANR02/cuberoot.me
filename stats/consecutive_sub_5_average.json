@@ -42,22 +42,28 @@
           "titleZh": "",
           "rows": [
             [
-              30,
+              33,
               "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
               "[Chengdu Welcoming Summer 2026](https://www.worldcubeassociation.org/competitions/ChengduWelcomingSummer2026)",
-              "[Hefei Cubing League 3x3 IV 2026](https://www.worldcubeassociation.org/competitions/HefeiCubingLeague3x3IV2026)"
+              "[Weihai Open 2026](https://www.worldcubeassociation.org/competitions/WeihaiOpen2026)"
             ],
             [
-              27,
+              30,
               "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
               "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026)",
-              "[Bali Discovery Master 2026](https://www.worldcubeassociation.org/competitions/BaliDiscoveryMasters2026)"
+              "[Weihai Open 2026](https://www.worldcubeassociation.org/competitions/WeihaiOpen2026)"
             ],
             [
               6,
               "[Yufang Du (杜昱方)](https://www.worldcubeassociation.org/persons/2023DUYU01)",
               "[Hangzhou Open 2026](https://www.worldcubeassociation.org/competitions/HangzhouOpen2026)",
               "[Hefei Cubing League 3x3 IV 2026](https://www.worldcubeassociation.org/competitions/HefeiCubingLeague3x3IV2026)"
+            ],
+            [
+              3,
+              "[Yize Dong (董一泽)](https://www.worldcubeassociation.org/persons/2023DONG20)",
+              "[Shenyang 3x3 L3 2026](https://www.worldcubeassociation.org/competitions/ShenyangCubingLeague3x3III2026)",
+              "[Shenyang 3x3 L4 2026](https://www.worldcubeassociation.org/competitions/ShenyangCubingLeague3x3IV2026)"
             ],
             [
               3,
@@ -76,12 +82,6 @@
               "[Ruihang Xu (许瑞航)](https://www.worldcubeassociation.org/persons/2017XURU04)",
               "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)",
               "[Guangdong Revival & Rival 2026](https://www.worldcubeassociation.org/competitions/GuangdongRevivalRival2026)"
-            ],
-            [
-              2,
-              "[Yize Dong (董一泽)](https://www.worldcubeassociation.org/persons/2023DONG20)",
-              "[Xi'an Cherry Blossom 2026](https://www.worldcubeassociation.org/competitions/XianCherryBlossom2026)",
-              "[Xi'an Cherry Blossom 2026](https://www.worldcubeassociation.org/competitions/XianCherryBlossom2026)"
             ]
           ]
         }
@@ -117,14 +117,14 @@
           "titleZh": "",
           "rows": [
             [
-              30,
+              33,
               "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
-              "[Chengdu Welcoming Summer 2026](https://www.worldcubeassociation.org/competitions/ChengduWelcomingSummer2026) → [Hefei Cubing League 3x3 IV 2026](https://www.worldcubeassociation.org/competitions/HefeiCubingLeague3x3IV2026)"
+              "[Chengdu Welcoming Summer 2026](https://www.worldcubeassociation.org/competitions/ChengduWelcomingSummer2026) → [Weihai Open 2026](https://www.worldcubeassociation.org/competitions/WeihaiOpen2026)"
             ],
             [
-              27,
+              30,
               "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
-              "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026) → [Bali Discovery Master 2026](https://www.worldcubeassociation.org/competitions/BaliDiscoveryMasters2026)"
+              "[Xuzhou Zenith 2026](https://www.worldcubeassociation.org/competitions/XuzhouZenith2026) → [Weihai Open 2026](https://www.worldcubeassociation.org/competitions/WeihaiOpen2026)"
             ],
             [
               23,
