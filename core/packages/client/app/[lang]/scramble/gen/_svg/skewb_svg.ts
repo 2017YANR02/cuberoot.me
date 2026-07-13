@@ -15,7 +15,13 @@
  *
  * The 6 face transforms in `getFaceTrans()` skew the unit square (-1..1) into
  * each face's hexagonal projection in the net.
+ *
+ * State values are STICKER IDS (`face * 5 + slot`); the color index is `id / 5`
+ * (origin face). Same permutation as the old color-index model, but the id also
+ * carries piece identity so `mask` travels with the piece.
  */
+import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-types';
+
 export const SKEWB_DEFAULT_COLORS: Record<string, string> = {
   // Tnoodle SkewbPuzzle.java defaultColorScheme
   U: '#FFFFFF',
@@ -26,7 +32,15 @@ export const SKEWB_DEFAULT_COLORS: Record<string, string> = {
   B: '#FF8000',
 };
 
-const FACE_LABELS = ['U', 'R', 'F', 'D', 'L', 'B'] as const;
+export const SKEWB_FACE_LABELS = ['U', 'R', 'F', 'D', 'L', 'B'] as const;
+const FACE_LABELS = SKEWB_FACE_LABELS;
+export const SKEWB_STICKERS_PER_FACE = 5;
+
+/** Sticker id (`U0`..`B4`) for a state value / canonical `face * 5 + slot`. */
+export function skewbStickerId(v: number): StickerId {
+  return `${FACE_LABELS[Math.floor(v / 5)]}${v % 5}`;
+}
+
 const PIECE_SIZE = 30;
 const GAP = 3;
 const SQ3D2 = Math.sqrt(3) / 2;
@@ -42,8 +56,8 @@ const STROKE_W = 1;             // svglite default stroke
  * skewb_pyramid_svg.ts which the visualcube top view uses.)
  */
 export class SkewbState {
-  // image[face][sticker], face 0..5 = U R F D L B; sticker 0..4 (0=center, 1..4=corners)
-  image: number[][] = Array.from({ length: 6 }, (_, i) => Array(5).fill(i));
+  // image[face][slot] = sticker id sitting there; face 0..5 = U R F D L B; slot 0..4 (0=center, 1..4=corners)
+  image: number[][] = Array.from({ length: 6 }, (_, f) => Array.from({ length: 5 }, (_, s) => f * 5 + s));
 
   private static swap3(arr: number[][], f1: number, s1: number, f2: number, s2: number, f3: number, s3: number) {
     const t = arr[f1][s1];
@@ -53,7 +67,7 @@ export class SkewbState {
   }
 
   /** Tnoodle SkewbState.turn — axes 0=R, 1=U, 2=L, 3=B. */
-  private turnOnce(axis: number) {
+  turnOnce(axis: number) {
     const im = this.image;
     switch (axis) {
       case 0: // R
@@ -145,7 +159,11 @@ function fmt(n: number): string {
 }
 
 /** Render a skewb scramble preview SVG (transparent background). */
-export function renderSkewbScrambleSvg(scramble: string, colors: Record<string, string> = SKEWB_DEFAULT_COLORS): string {
+export function renderSkewbScrambleSvg(
+  scramble: string,
+  colors: Record<string, string> = SKEWB_DEFAULT_COLORS,
+  opts?: MaskRenderOptions,
+): string {
   const state = new SkewbState();
   try { state.applyAlgorithm(scramble); } catch (e) {
     console.warn('[skewb_svg] applyAlgorithm failed', scramble, e);
@@ -164,11 +182,13 @@ export function renderSkewbScrambleSvg(scramble: string, colors: Record<string, 
     const t = trans[face];
     const stickers = state.image[face];
     for (let i = 0; i < 5; i++) {
-      const colorIdx = stickers[i] ?? 0;
-      const fill = scheme[colorIdx] ?? '#888';
+      const id = stickers[i] ?? 0;
+      const masked = opts?.mask?.ids.has(skewbStickerId(id)) ?? false;
+      const fill = masked ? opts!.mask!.color : (scheme[Math.floor(id / 5)] ?? '#888');
+      const sid = opts?.stickerIds ? ` data-sid="${FACE_LABELS[face]}${i}"` : '';
       const pts = STICKER_PATHS[i].map(([x, y]) => tx(t, x, y));
       const d = `M${pts.map((p) => `${fmt(p[0])},${fmt(p[1])}`).join(' L')} Z`;
-      out.push(`<path d="${d}" fill="${fill}" stroke="#000" stroke-width="${STROKE_W}" stroke-linejoin="round"/>`);
+      out.push(`<path d="${d}" fill="${fill}"${sid} stroke="#000" stroke-width="${STROKE_W}" stroke-linejoin="round"/>`);
     }
   }
   out.push('</svg>');

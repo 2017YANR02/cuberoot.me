@@ -21,7 +21,8 @@
  * → seconds of GC pressure. The cstimer sim is in-place Uint8Array, faster +
  * unified with mirror-blocks renderer.
  */
-import { simulateNxN, FACE_D, FACE_L, FACE_B, FACE_U, FACE_R, FACE_F } from './nnn_sim';
+import { simulateNxN, simulateNxNIds, FACE_D, FACE_L, FACE_B, FACE_U, FACE_R, FACE_F } from './nnn_sim';
+import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-types';
 
 // WCA colors keyed by cstimer face id (D L B U R F = 0..5). Matches tnoodle
 // CubePuzzle.java defaultColorScheme.
@@ -74,14 +75,41 @@ export function eventToCubeSize(event: string): number | null {
 }
 
 /** Parse a WCA scramble string and return the SVG unfolded-net for the resulting cube state. */
-export function renderUnfoldedSvgForEvent(event: string, scramble: string): string | null {
+export function renderUnfoldedSvgForEvent(event: string, scramble: string, opts?: MaskRenderOptions): string | null {
   const N = eventToCubeSize(event);
   if (!N) return null;
-  return renderUnfoldedSvg(N, scramble);
+  return renderUnfoldedSvg(N, scramble, opts);
 }
 
-export function renderUnfoldedSvg(N: number, scramble: string): string {
-  const posit = simulateNxN(N, scramble);
+/** cstimer face id (D L B U R F = 0..5) → canonical face letter. */
+export const CUBE_FACE_LETTERS = ['D', 'L', 'B', 'U', 'R', 'F'] as const;
+
+/**
+ * Canonical NxN sticker id — `${FACE}${row * N + col}` where row/col are read on
+ * the face AS DRAWN in the unfolded net (row 0 on top, col 0 on the left). That
+ * is the same space as the arrow DSL (`U0U2`) and `ICubeOptions.stickerColors`.
+ */
+export function cubeStickerId(N: number, face: number, row: number, col: number): StickerId {
+  return `${CUBE_FACE_LETTERS[face]}${row * N + col}`;
+}
+
+/** Canonical sticker id for a solved-frame posit index (the value `simulateNxNIds` carries). */
+export function cubeStickerIdFromPosit(N: number, positIndex: number): StickerId {
+  const s2 = N * N;
+  const f = Math.floor(positIndex / s2);
+  const rem = positIndex % s2;
+  const y = Math.floor(rem / N);
+  const x = rem % N;
+  const col = (f === FACE_L || f === FACE_B) ? N - 1 - x : x;
+  const row = (f === FACE_D) ? N - 1 - y : y;
+  return cubeStickerId(N, f, row, col);
+}
+
+export function renderUnfoldedSvg(N: number, scramble: string, opts?: MaskRenderOptions): string {
+  // Fast path (no mask, no ids): keep the Uint8Array color model — at N=300 the
+  // Int32 id model would be 4x the memory for no gain.
+  const tracked = !!(opts?.mask || opts?.stickerIds);
+  const posit = tracked ? simulateNxNIds(N, scramble) : simulateNxN(N, scramble);
   const s2 = N * N;
 
   // Tnoodle CubePuzzle layout — same width/height as before:
@@ -109,9 +137,17 @@ export function renderUnfoldedSvg(N: number, scramble: string): string {
       for (let j = 0; j < N; j++) {
         // D face mirrors vertically
         const y = (f === FACE_D) ? N - 1 - j : j;
-        const color = WCA_COLORS[posit[f * s2 + y * N + x]];
+        const v = posit[f * s2 + y * N + x];
+        let color: string;
+        if (tracked) {
+          const masked = opts?.mask?.ids.has(cubeStickerIdFromPosit(N, v)) ?? false;
+          color = masked ? opts!.mask!.color : WCA_COLORS[Math.floor(v / s2)];
+        } else {
+          color = WCA_COLORS[v];
+        }
+        const sid = opts?.stickerIds ? ` data-sid="${cubeStickerId(N, f, j, i)}"` : '';
         parts.push(
-          `<rect x="${ox + i}" y="${oy + j}" width="1" height="1" fill="${color}" stroke="${STROKE_COLOR}" stroke-width="${STROKE_W}"/>`,
+          `<rect x="${ox + i}" y="${oy + j}" width="1" height="1" fill="${color}"${sid} stroke="${STROKE_COLOR}" stroke-width="${STROKE_W}"/>`,
         );
       }
     }

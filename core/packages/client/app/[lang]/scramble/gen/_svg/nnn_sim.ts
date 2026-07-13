@@ -36,9 +36,13 @@ const MOVE_TO_FACE: Record<string, number> = {
  *  `10Rw` parses correctly (visualcube's old `[2-9]+` only matched 2..9). */
 const TOKEN_RE = /^(\d+)?([URFDLB])(w)?([2'])?$/;
 
+/** Any array the sim can permute: `Uint8Array` for the color model, `Int32Array`
+ *  for the sticker-id model (ids exceed 255 from N=7 up). */
+export type PositArray = Uint8Array | Int32Array;
+
 /** One quarter-turn on slice `d` of face `f` (d=0 = outer face slice). Verbatim
  *  cstimer formulas (size parameterized). Mutates posit in place. */
-function doslice(f: number, d: number, q: number, size: number, posit: Uint8Array): void {
+export function doslice(f: number, d: number, q: number, size: number, posit: PositArray): void {
   const s2 = size * size;
   for (let k = 0; k < q; k++) {
     let f1 = 0, f2 = 0, f3 = 0, f4 = 0;
@@ -105,14 +109,8 @@ function doslice(f: number, d: number, q: number, size: number, posit: Uint8Arra
   }
 }
 
-/** Apply a scramble to a fresh solved cube, return the resulting posit array.
- *  Tokens that don't parse are silently skipped (logs nothing — caller doesn't
- *  need a strict parser, only "render whatever I gave you sensibly"). */
-export function simulateNxN(size: number, scramble: string): Uint8Array {
-  const s2 = size * size;
-  const posit = new Uint8Array(6 * s2);
-  // Solved state: each face filled with its own face id.
-  for (let f = 0; f < 6; f++) posit.fill(f, f * s2, (f + 1) * s2);
+/** Apply a scramble to an already-seeded posit array, in place. */
+export function applyScrambleTo(size: number, scramble: string, posit: PositArray): void {
   const tokens = scramble.trim().split(/\s+/);
   for (const tok of tokens) {
     if (!tok) continue;
@@ -131,5 +129,26 @@ export function simulateNxN(size: number, scramble: string): Uint8Array {
     else width = 1;
     for (let d = 0; d < width; d++) doslice(face, d, q, size, posit);
   }
+}
+
+/** Apply a scramble to a fresh solved cube, return the resulting posit array.
+ *  Tokens that don't parse are silently skipped (logs nothing — caller doesn't
+ *  need a strict parser, only "render whatever I gave you sensibly"). */
+export function simulateNxN(size: number, scramble: string): Uint8Array {
+  const s2 = size * size;
+  const posit = new Uint8Array(6 * s2);
+  // Solved state: each face filled with its own face id.
+  for (let f = 0; f < 6; f++) posit.fill(f, f * s2, (f + 1) * s2);
+  applyScrambleTo(size, scramble, posit);
+  return posit;
+}
+
+/** Same permutation, but seeded with sticker IDS (= the solved-frame posit index)
+ *  instead of face ids, so each slot reports which sticker ORIGINALLY lived there.
+ *  Face id of a value `v` is `v / size²` — i.e. `simulateNxN` colors are recoverable. */
+export function simulateNxNIds(size: number, scramble: string): Int32Array {
+  const posit = new Int32Array(6 * size * size);
+  for (let i = 0; i < posit.length; i++) posit[i] = i;
+  applyScrambleTo(size, scramble, posit);
   return posit;
 }
