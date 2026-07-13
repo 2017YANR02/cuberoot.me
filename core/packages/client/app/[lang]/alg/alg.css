@@ -1113,3 +1113,172 @@ a.alg-community-author:hover {
   display: flex; flex-direction: column; gap: 10px;
   padding-top: 6px;
 }
+
+/* ── 公式标签 + 步数(1LLL 表带来的:[oh] / [ft] / [fmc] / [big] / [key])──────── */
+.alg-tag {
+  flex: none;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: var(--font-sans, inherit);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+/* 单手最多(300+ 条),给它一点存在感;其余保持中性,免得一行五颜六色 */
+.alg-tag-oh {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+/* 照写的 STM。`R4` 是 1 步 —— 它是个真实的物理动作,不折 mod 4(见 shared/alg_notation) */
+.alg-alg-len {
+  flex: none;
+  min-width: 1.5em;
+  text-align: right;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+/* ── 元数据弹窗 ─────────────────────────────────────────────────────────────── */
+.alg-tag-filter {
+  padding: 3px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 13px;
+  width: fit-content;
+}
+.alg-case-meta-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.alg-case-meta-btn:hover { color: var(--accent); }
+
+.alg-meta-modal { width: min(520px, 95vw); }
+.alg-meta-head-sub {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+.alg-meta-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  overflow-y: auto;
+}
+.alg-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 13px;
+}
+.alg-meta-key {
+  flex: none;
+  min-width: 5.5em;
+  color: var(--muted-foreground);
+}
+.alg-meta-val {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.alg-meta-chip {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.alg-meta-related {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.alg-meta-link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+.alg-meta-link.is-plain {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+
+.alg-meta-section {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.alg-meta-section > h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.alg-meta-refs { margin-top: 12px; }
+
+.alg-meta-algline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.alg-meta-algline-label {
+  flex: none;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.alg-meta-algline-code {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-family: var(--font-mono, Consolas, monospace);
+  font-size: 12px;
+}
+.alg-meta-copy {
+  flex: none;
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.alg-meta-copy:hover { color: var(--accent); }
+
+.alg-meta-optimal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.alg-meta-optimal-len {
+  flex: none;
+  min-width: 4.5em;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.alg-meta-optimal-len > strong { color: var(--foreground); }
+/* 组卡副名:字母制 OLL 名当标题之后,原来的 `1LLL 06` 降到这里 */
+.alg-subgroup-card-sub {
+  margin-right: 6px;
+  opacity: 0.7;
+}
