@@ -15,6 +15,8 @@ import {
   type Essential2x2Json, type EssCaseRow,
 } from '@/lib/essential-2x2';
 import { tr } from '@/i18n/tr';
+import FirstStepGallery, { type GalleryRow } from './FirstStepGallery';
+import firstFace2x2 from '../_data/firstface_2x2.json';
 import './_essential-shared.css';
 
 const Essential2x2CaseTable = dynamic(() => import('./Essential2x2CaseTable'), {
@@ -332,6 +334,20 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
           </div>
         )}
       </div>
+
+      {/* 首面案例画廊(无关块变灰)*/}
+      <FirstStepGallery
+        event="222"
+        mask={firstFace2x2.meta.mask}
+        rows={firstFace2x2.rows as unknown as GalleryRow[]}
+        totalReorient={firstFace2x2.meta.total_reorient}
+        totalMirror={firstFace2x2.meta.total_mirror_folded}
+        metric={{ sym: 'F', name: { zh: '把展示的这一面拼成纯色所需面转步数', en: 'face turns to make the shown face solid' } }}
+        note={{
+          zh: '2×2 首面:固定一个角块参照,展示四个底面角块的全部本质不同摆法(整体重定向去重)。',
+          en: '2×2 first face: with one corner as a fixed reference, every essentially-different arrangement of the four bottom-face corners (whole-puzzle reorientations deduped).',
+        }}
+      />
 
       {/* 致谢 + 记号 */}
       <div className="scramble-stats-meta ess-credits">
