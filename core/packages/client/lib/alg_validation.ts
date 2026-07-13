@@ -84,49 +84,63 @@ export async function validateAlgCase(
     return { ok: false, reason: `公式语法错误: ${(e as Error).message}` };
   }
 
-  // 末尾 AUF 检查:LL 类 (face/f2l) 不应有末尾 U-family move
-  if (sticker.kind === 'face' || sticker.kind === 'f2l') {
+  const goal = (p: KPattern) => reachesGoal(p, kp, puzzle, sticker.kind);
+
+  if (!goal(pattern)) {
+    return {
+      ok: false,
+      reason: sticker.kind === 'f2l'
+        ? 'F2L 没还原(setup + alg 后 D 层 / 中层 / 底层未完成)'
+        : '执行 setup + alg 后没有还原魔方',
+    };
+  }
+
+  // 收尾 AUF:库里存的是**完整公式**(setup + alg 精确还原),前端用 displayAlg() 显示时才剥掉。
+  //
+  // face 集合不用单独拦末尾 U:上面已经要求整体还原,而 U 转不是整体旋转 —— `setup + A` 和
+  // `setup + A + U` 不可能同时还原。所以只要过了还原判据,末尾那个 U 必然是载荷性的收尾 AUF。
+  //
+  // f2l 集合就不同了:判据压根不看顶层,U 转对它毫无影响 ⟹ 末尾的 U 永远是多余的,拦掉。
+  if (sticker.kind === 'f2l') {
     const trailing = trailingUFamilyMove(leafMoves);
     if (trailing) {
       return { ok: false, reason: `公式末尾的 ${trailing.toString()} 是多余的 AUF` };
     }
   }
 
-  if (sticker.kind === 'face') {
-    return validateFullSolved(pattern, kp, puzzle);
-  }
-  if (sticker.kind === 'f2l') {
-    if (puzzle !== '3x3') return { ok: true };
-    return validateF2LSolved(pattern);
-  }
   return { ok: true };
 }
 
-function validateFullSolved(pattern: KPattern, kp: KPuzzle, puzzle: string): ValidateAlgResult {
-  const def = kp.defaultPattern();
-  if (patternsEqual(pattern, def)) return { ok: true };
-  // cube 类容忍整体 rotation(公式末尾带 y 等)
-  if (CUBE_LIKE.has(puzzle)) {
-    for (const r of CUBE_ORIENTATIONS) {
-      try {
-        const t = r ? pattern.applyAlg(r) : pattern;
-        if (patternsEqual(t, def)) return { ok: true };
-      } catch { /* skip */ }
-    }
-  }
-  return { ok: false, reason: '执行 setup + alg 后没有还原魔方' };
+/** 本集合的目标态达成了吗?face = 整体还原;f2l = D 层 + 中层完整。 */
+function reachesGoal(pattern: KPattern, kp: KPuzzle, puzzle: string, kind: AlgSticker['kind']): boolean {
+  if (kind === 'face') return isFullySolved(pattern, kp, puzzle);
+  if (kind === 'f2l') return puzzle !== '3x3' || isF2LSolvedUpToRotation(pattern);
+  return true;
 }
 
-function validateF2LSolved(pattern: KPattern): ValidateAlgResult {
+/** 整体还原?cube 类容忍 24 个整体 rotation(公式里可能带 y / x 等) */
+function isFullySolved(pattern: KPattern, kp: KPuzzle, puzzle: string): boolean {
+  const def = kp.defaultPattern();
+  if (patternsEqual(pattern, def)) return true;
+  if (!CUBE_LIKE.has(puzzle)) return false;
+  for (const r of CUBE_ORIENTATIONS) {
+    try {
+      if (r && patternsEqual(pattern.applyAlg(r), def)) return true;
+    } catch { /* skip */ }
+  }
+  return false;
+}
+
+function isF2LSolvedUpToRotation(pattern: KPattern): boolean {
   // 容忍整体 rotation:公式可能含 y/y2/x 等,patternData 里 piece id 跟着旋转,
   // 严格 piece===slot 检查会假阴性。试 24 个 rotation,任一让 F2L 严格完整即过。
   for (const r of CUBE_ORIENTATIONS) {
     try {
       const t = r ? pattern.applyAlg(r) : pattern;
-      if (isF2LStrict(t)) return { ok: true };
+      if (isF2LStrict(t)) return true;
     } catch { /* skip */ }
   }
-  return { ok: false, reason: 'F2L 没还原(setup + alg 后 D 层 / 中层 / 底层未完成)' };
+  return false;
 }
 
 function isF2LStrict(pattern: KPattern): boolean {
@@ -143,7 +157,7 @@ function isF2LStrict(pattern: KPattern): boolean {
   return true;
 }
 
-/** 公式最后一个 leaf 若 family === 'U',视为多余 AUF */
+/** 公式最后一个 leaf 是不是 U-family(U / U2 / U') */
 function trailingUFamilyMove(moves: Move[]): Move | null {
   if (moves.length === 0) return null;
   const last = moves[moves.length - 1];

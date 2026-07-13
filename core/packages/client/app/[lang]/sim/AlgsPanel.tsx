@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ALG_CATALOG, loadAlg, type AlgPuzzle, type AlgFile, type AlgCase } from '@cuberoot/shared';
 import './algs-panel.css';
+import { displayAlg } from '@/lib/alg_display';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 
@@ -122,7 +123,8 @@ export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
               disabled={!algText}
             >
               <span className="sim-algs-name">{c.name}</span>
-              <span className="sim-algs-alg">{algText}</span>
+              {/* 列表里剥掉收尾 AUF;choose() 送去回放的仍是完整公式,动画才停在还原态。 */}
+              <span className="sim-algs-alg">{displayAlg(algText)}</span>
             </button>
           );
         })}

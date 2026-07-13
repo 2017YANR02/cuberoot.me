@@ -90,6 +90,8 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer({ alg, p
     const setupForTwisty = setup && setup.trim()
       ? normalizeAlgForTwisty(puzzle, setup)
       : `(${normalized})'`;
+    // NOTE: 播的是库里的完整公式(含收尾 AUF),动画才停在还原态。前端只在**显示/复制**时
+    // 用 displayAlg() 剥掉那个 AUF —— 别把 displayAlg 的结果传进来。
     import('cubing/twisty').then((mod) => {
       if (cancelled || !host) return;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -30,6 +30,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type * as THREE from 'three';
 import { Play, Pause, RotateCcw, X } from 'lucide-react';
 import { loadAlg, type AlgCase } from '@cuberoot/shared';
+import { displayAlg } from '@/lib/alg_display';
 import type World from '@/app/[lang]/sim/engine/world';
 import type Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import type { TwistAction as TwistActionT } from '@/app/[lang]/sim/engine/nxn/twister';
@@ -421,7 +422,8 @@ export default function PllPerformerOverlay({
           ))}
         </select>
 
-        {main && <p className="pll-perf-alg">{main}</p>}
+        {/* 显示剥掉收尾 AUF;上面 setup/播放用的仍是完整的 main。 */}
+        {main && <p className="pll-perf-alg">{displayAlg(main)}</p>}
 
         {/* Stage: clawd HOLDS the real cube. Z-order:
               clawd body+face (z0, BEHIND — cube occludes the lower torso)
