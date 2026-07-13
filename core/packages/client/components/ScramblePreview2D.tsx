@@ -64,6 +64,7 @@ import {
   renderUnfoldedSvgForEvent,
   eventToCubeSize,
 } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
+import { toRenderMask, type MaskRenderOptions } from '@/lib/puzzle-image/puzzle-mask';
 
 // Minimal shape-mod helpers inline — full table lives in client/utils/shapeModScramble.ts
 // (not yet ported). Only mirror_333 needs special-case handling here.
@@ -102,6 +103,10 @@ interface Props {
   fullSizeLink?: boolean;
   /** Tooltip for the full-size link (caller passes the i18n'd string). */
   linkTitle?: string;
+  /** Gray out stickers — canonical id DSL, e.g. `U:0,2;F:3-5`. Applied in the
+   *  solved frame, so the gray travels with the piece through the scramble.
+   *  Only the piece-model renderers honour it (NxN net, pyraminx, skewb, megaminx). */
+  mask?: string;
 }
 
 export function ScramblePreview2D({
@@ -113,17 +118,22 @@ export function ScramblePreview2D({
   megaColors,
   fullSizeLink,
   linkTitle,
+  mask,
 }: Props) {
   const eff = previewSource(event);
 
   const customSvg = useMemo(() => {
+    const m: MaskRenderOptions | undefined = (() => {
+      const rm = toRenderMask(mask);
+      return rm ? { mask: rm } : undefined;
+    })();
     try {
       if (event === 'mirror_333') return renderMirrorBlocksScrambleSvg(scramble);
       if (eff === 'clock') return renderClockScrambleSvg(scramble, clockColors ?? DEFAULT_CLOCK_COLORS);
       if (eff === 'sq1') return renderSq1ScrambleSvg(scramble, sq1Colors ?? DEFAULT_SQ1_COLORS);
-      if (eff === 'minx') return renderMegaScrambleSvg(scramble, megaColors ?? DEFAULT_MEGA_COLORS);
-      if (eff === 'pyram') return renderPyraScrambleSvg(scramble, PYRA_DEFAULT_COLORS);
-      if (eff === 'skewb') return renderSkewbScrambleSvg(scramble, SKEWB_DEFAULT_COLORS);
+      if (eff === 'minx') return renderMegaScrambleSvg(scramble, megaColors ?? DEFAULT_MEGA_COLORS, m);
+      if (eff === 'pyram') return renderPyraScrambleSvg(scramble, PYRA_DEFAULT_COLORS, m);
+      if (eff === 'skewb') return renderSkewbScrambleSvg(scramble, SKEWB_DEFAULT_COLORS, m);
       if (eff === 'ivy') return renderIvyScrambleSvg(scramble);
       if (eff === '133') return renderFloppyScrambleSvg(scramble);
       if (eff === '223') return renderCuboid223ScrambleSvg(scramble);
@@ -153,13 +163,13 @@ export function ScramblePreview2D({
       if (eff === 'sia222') return renderSia222ScrambleSvg(scramble);
       const baked = renderBakedNet(eff, scramble);
       if (baked) return baked;
-      if (eventToCubeSize(eff)) return renderUnfoldedSvgForEvent(eff, scramble);
+      if (eventToCubeSize(eff)) return renderUnfoldedSvgForEvent(eff, scramble, m);
       return null;
     } catch (err) {
       console.warn(`[ScramblePreview2D] ${event} (eff=${eff}) render failed`, err);
       return null;
     }
-  }, [event, eff, scramble, clockColors, sq1Colors, megaColors]);
+  }, [event, eff, scramble, clockColors, sq1Colors, megaColors, mask]);
 
   // Object URL of the exact same SVG, for the "open full-size" link. Create AND
   // revoke inside one effect so React StrictMode's mount→unmount→remount (dev)

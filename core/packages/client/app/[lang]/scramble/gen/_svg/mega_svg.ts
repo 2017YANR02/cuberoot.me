@@ -18,8 +18,17 @@
  * newline allowed between cycles).
  */
 
-const FACE_NAMES = ['U', 'BL', 'BR', 'R', 'F', 'L', 'D', 'DR', 'DBR', 'B', 'DBL', 'DL'] as const;
+import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-types';
+
+export const MEGA_FACE_NAMES = ['U', 'BL', 'BR', 'R', 'F', 'L', 'D', 'DR', 'DBR', 'B', 'DBL', 'DL'] as const;
+const FACE_NAMES = MEGA_FACE_NAMES;
 export type MegaFaceKey = typeof FACE_NAMES[number];
+export const MEGA_STICKERS_PER_FACE = 11;
+
+/** Sticker id (`U0`..`DL10`) for a state value / canonical `face * 11 + slot`. */
+export function megaStickerId(v: number): StickerId {
+  return `${FACE_NAMES[Math.floor(v / 11)]}${v % 11}`;
+}
 
 /** Verbatim from tnoodle MegaminxPuzzle.java defaultColorScheme. */
 export const DEFAULT_MEGA_COLORS: Record<MegaFaceKey, string> = {
@@ -41,17 +50,26 @@ export const DEFAULT_MEGA_COLORS: Record<MegaFaceKey, string> = {
 const U = 0, BL = 1, BR = 2, R = 3, F = 4, L = 5, D = 6, DR = 7, DBR = 8, B = 9, DBL = 10, DL = 11;
 void BL; void BR; void R; void F; void L; void DR; void DBR; void B; void DBL; void DL;
 
-/** 12 × 11 image: image[face][slot]. Slots 0..9 = outer wedges, 10 = center. */
+/**
+ * 12 × 11 image: image[face][slot]. Slots 0..9 = outer wedges, 10 = center.
+ * Values are STICKER IDS (`face * 11 + slot`); the color face is `id / 11`.
+ */
 export type MegaState = number[][];
 
-function solvedState(): MegaState {
+export function megaSolvedState(): MegaState {
   const out: MegaState = [];
   for (let f = 0; f < 12; f++) {
     const row: number[] = new Array(11);
-    for (let s = 0; s < 11; s++) row[s] = f;
+    for (let s = 0; s < 11; s++) row[s] = f * 11 + s;
     out.push(row);
   }
   return out;
+}
+const solvedState = megaSolvedState;
+
+/** One clockwise quarter (1/5) turn of a face — exposed for piece-group derivation. */
+export function megaTurnFace(state: MegaState, face: number, dir = 1): void {
+  turn(state, face, dir);
 }
 
 // ─── State mutators (verbatim port) ─────────────────────────────────────
@@ -232,6 +250,8 @@ function drawPentagon(
   rotateCCW: number,
   label: string | null,
   colors: Record<string, string>,
+  faceLabel: string,
+  opts?: MaskRenderOptions,
 ): void {
   const angs = [1.3, 1.7, 0.1, 0.5, 0.9];
   if (pointup) for (let i = 0; i < 5; i++) angs[i] -= 0.2;
@@ -285,11 +305,15 @@ function drawPentagon(
   for (let i = 0; i < 11; i++) {
     let j = i;
     if (j < 10) j = (j + 2 * rotateCCW) % 10;
-    const stateFace = faceState[j];
-    const colorName = FACE_NAMES[stateFace];
-    const fill = colors[colorName] ?? DEFAULT_MEGA_COLORS[colorName as MegaFaceKey] ?? '#888';
+    const id = faceState[j];
+    const colorName = FACE_NAMES[Math.floor(id / 11)];
+    const masked = opts?.mask?.ids.has(megaStickerId(id)) ?? false;
+    const fill = masked
+      ? opts!.mask!.color
+      : (colors[colorName] ?? DEFAULT_MEGA_COLORS[colorName as MegaFaceKey] ?? '#888');
+    const sid = opts?.stickerIds ? ` data-sid="${faceLabel}${j}"` : '';
     parts.push(
-      `<path d="${ds[i]}" fill="${fill}" stroke="#000" stroke-width="1" stroke-linejoin="round" />`,
+      `<path d="${ds[i]}" fill="${fill}"${sid} stroke="#000" stroke-width="1" stroke-linejoin="round" />`,
     );
   }
 
@@ -309,18 +333,18 @@ function drawPentagon(
   }
 }
 
-export function renderMegaSvg(state: MegaState, colors: Record<string, string>): string {
+export function renderMegaSvg(state: MegaState, colors: Record<string, string>, opts?: MaskRenderOptions): string {
   const parts: string[] = [];
   for (let f = 0; f < 12; f++) {
     const fc = FACE_CENTERS[f];
     const rotateCCW = f === 0 ? 0 : (f >= 1 && f <= 5 ? 1 : 2);
     const label = f === 0 ? 'U' : (f === 4 ? 'F' : null);
-    drawPentagon(parts, fc.cx, fc.cy, fc.up, state[f], rotateCCW, label, colors);
+    drawPentagon(parts, fc.cx, fc.cy, fc.up, state[f], rotateCCW, label, colors, FACE_NAMES[f], opts);
   }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" stroke-linecap="round" style="width:100%;height:100%">${parts.join('')}</svg>`;
 }
 
 /** Convenience: scramble string + colors → final SVG. */
-export function renderMegaScrambleSvg(scramble: string, colors: Record<string, string>): string {
-  return renderMegaSvg(applyMegaScramble(scramble), colors);
+export function renderMegaScrambleSvg(scramble: string, colors: Record<string, string>, opts?: MaskRenderOptions): string {
+  return renderMegaSvg(applyMegaScramble(scramble), colors, opts);
 }

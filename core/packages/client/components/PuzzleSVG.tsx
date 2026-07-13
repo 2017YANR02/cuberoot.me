@@ -9,6 +9,8 @@ import { useEffect, useMemo, useRef } from 'react';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 import { canonicalSq1Alg } from '@/lib/sq1-svg';
 import { patchSrPuzzlegen } from '@/components/sr-puzzlegen-patch';
+import { parseMask, toSrMask, type StickerId } from '@/lib/puzzle-image/puzzle-mask';
+import type { PuzzleType } from '@/lib/puzzle-image/types';
 
 function invertSkewbAlg(alg: string): string {
   return alg.trim().split(/\s+/).filter(Boolean).reverse().map((t) => {
@@ -37,6 +39,20 @@ const TYPE_MAP: Record<PuzzleKind, string> = {
   'skewb-top':     '__custom__',
 };
 
+/** sr `IColor`. */
+export interface SrColor { value: string; stroke?: string }
+export interface SrArrow {
+  start: { face: string; sticker: number };
+  end: { face: string; sticker: number };
+}
+
+/** sr's own puzzle key, for the mask id space. sq1 has no derived map on purpose. */
+const MASK_PUZZLE: Partial<Record<PuzzleKind, PuzzleType>> = {
+  megaminx: 'megaminx', 'megaminx-net': 'megaminx', 'megaminx-top': 'megaminx',
+  pyraminx: 'pyraminx', 'pyraminx-net': 'pyraminx',
+  skewb: 'skewb', 'skewb-net': 'skewb',
+};
+
 export interface PuzzleSVGProps {
   kind: PuzzleKind;
   alg?: string;
@@ -49,13 +65,29 @@ export interface PuzzleSVGProps {
   svgWidth?: number;
   svgHeight?: number;
   rotations?: { x?: number; y?: number; z?: number }[];
+  /** Canonical sticker ids to gray out — the `U:0,2;F:3-5` DSL or the parsed set.
+   *  Ignored for sq1 and for `skewb-top` (which is not an sr render). */
+  mask?: string | Set<StickerId>;
+  stickerColors?: Record<string, SrColor[]>;
+  scheme?: Record<string, SrColor>;
+  arrows?: SrArrow[];
+  arrowColor?: SrColor;
 }
 
 export function PuzzleSVG({
   kind, alg, case: caseAlg, size = 88, strokeWidth, className,
   minx, miny, svgWidth, svgHeight, rotations,
+  mask, stickerColors, scheme, arrows, arrowColor,
 }: PuzzleSVGProps) {
   const hostRef = useRef<HTMLDivElement>(null);
+
+  const srMask = useMemo(() => {
+    const puzzle = MASK_PUZZLE[kind];
+    if (!mask || !puzzle) return undefined;
+    const ids = typeof mask === 'string' ? parseMask(mask) : mask;
+    if (!ids.size) return undefined;
+    return toSrMask(puzzle, ids);
+  }, [kind, mask]);
 
   const customSvg = useMemo(() => {
     if (kind !== 'skewb-top') return null;
@@ -80,12 +112,16 @@ export function PuzzleSVG({
       if (cancelled || !host) return;
       patchSrPuzzlegen(mod);
       host.innerHTML = '';
-      const puzzle: { alg?: string; case?: string; rotations?: { x?: number; y?: number; z?: number }[] } = {};
+      const puzzle: Record<string, unknown> = {};
       const isSq1 = kind === 'sq1' || kind === 'sq1-net';
       const norm = (s: string) => isSq1 ? canonicalSq1Alg(s) : s;
       if (caseAlg && caseAlg.trim()) puzzle.case = norm(caseAlg);
       else if (alg && alg.trim()) puzzle.alg = norm(alg);
       if (rotations && rotations.length > 0) puzzle.rotations = rotations;
+      if (srMask && Object.keys(srMask).length > 0) puzzle.mask = srMask;
+      if (stickerColors) puzzle.stickerColors = stickerColors;
+      if (scheme) puzzle.scheme = scheme;
+      if (arrows && arrows.length > 0) puzzle.arrows = arrows;
       try {
         (mod as { SVG: (host: HTMLElement, type: string, opts: unknown) => void }).SVG(host, TYPE_MAP[kind], {
           width: size, height: size,
@@ -94,6 +130,7 @@ export function PuzzleSVG({
           ...(miny !== undefined ? { miny } : {}),
           ...(svgWidth !== undefined ? { svgWidth } : {}),
           ...(svgHeight !== undefined ? { svgHeight } : {}),
+          ...(arrowColor !== undefined ? { arrowColor } : {}),
           puzzle,
         });
       } catch (err) {
@@ -105,7 +142,8 @@ export function PuzzleSVG({
     });
 
     return () => { cancelled = true; };
-  }, [kind, alg, caseAlg, size, strokeWidth, minx, miny, svgWidth, svgHeight, rotations]);
+  }, [kind, alg, caseAlg, size, strokeWidth, minx, miny, svgWidth, svgHeight, rotations,
+      srMask, stickerColors, scheme, arrows, arrowColor]);
 
   if (customSvg !== null) {
     return (

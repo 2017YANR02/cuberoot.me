@@ -18,7 +18,14 @@
  *
  * Move semantics (uppercase = full face turn + tip; lowercase = tip-only):
  *   U / L / R / B  → axes 0..3, each a 120° rotation of the matching tip side.
+ *
+ * State values are STICKER IDS (`face * 9 + slot`), not color indices — the
+ * color index is `id / 9` (the sticker's origin face), so colors are unchanged
+ * while the id also carries piece identity through the scramble (that is what
+ * makes `mask` follow the piece rather than the position).
  */
+import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-types';
+
 export const PYRA_DEFAULT_COLORS: Record<string, string> = {
   // Tnoodle PyraminxPuzzle.java defaultColorScheme
   F: '#00FF00',  // green
@@ -27,19 +34,26 @@ export const PYRA_DEFAULT_COLORS: Record<string, string> = {
   R: '#0000FF',  // blue
 };
 
-const FACE_LABELS = ['F', 'D', 'L', 'R'] as const;
+export const PYRA_FACE_LABELS = ['F', 'D', 'L', 'R'] as const;
+const FACE_LABELS = PYRA_FACE_LABELS;
+export const PYRA_STICKERS_PER_FACE = 9;
+
+/** Sticker id (`F0`..`R8`) for a state value / canonical `face * 9 + slot`. */
+export function pyraStickerId(v: number): StickerId {
+  return `${FACE_LABELS[Math.floor(v / 9)]}${v % 9}`;
+}
 
 const PIECE_SIZE = 30;          // tnoodle pieceSize
 const GAP = 5;                  // tnoodle gap
 const SQRT3 = Math.sqrt(3);
 const STROKE_W = 1;             // svglite default
 
-class PyraminxState {
-  // image[face][sticker] = color index (0..3) where index → FACE_LABELS[index]
+export class PyraminxState {
+  // image[face][slot] = sticker id currently sitting there (`origin face * 9 + origin slot`)
   image: number[][];
 
   constructor() {
-    this.image = Array.from({ length: 4 }, (_, i) => Array(9).fill(i));
+    this.image = Array.from({ length: 4 }, (_, f) => Array.from({ length: 9 }, (_, s) => f * 9 + s));
   }
 
   private static swap3(arr: number[][], f1: number, s1: number, f2: number, s2: number, f3: number, s3: number) {
@@ -50,7 +64,7 @@ class PyraminxState {
   }
 
   /** Tnoodle PyraminxState.turn(s, image) — 120° body turn around tip `s`. */
-  private turnBody(s: number) {
+  turnBody(s: number) {
     const im = this.image;
     switch (s) {
       case 0: // U
@@ -77,7 +91,7 @@ class PyraminxState {
     this.turnTipOnly(s);
   }
 
-  private turnTipOnly(s: number) {
+  turnTipOnly(s: number) {
     const im = this.image;
     switch (s) {
       case 0: PyraminxState.swap3(im, 0, 0, 3, 0, 2, 3); break;
@@ -141,7 +155,7 @@ function intersect(p1: Pt, p2: Pt, p3: Pt, p4: Pt): Pt {
   };
 }
 
-function drawTriangle(out: string[], cx: number, cy: number, pointUp: boolean, faceState: number[], pieceSize: number, scheme: string[]): void {
+function drawTriangle(out: string[], cx: number, cy: number, pointUp: boolean, faceState: number[], pieceSize: number, scheme: string[], faceLabel: string, opts?: MaskRenderOptions): void {
   const tri = makeTriangle(pointUp, pieceSize);
   const xpoints = [tri.vx[0] + cx, tri.vx[1] + cx, tri.vx[2] + cx];
   const ypoints = [tri.vy[0] + cy, tri.vy[1] + cy, tri.vy[2] + cy];
@@ -186,10 +200,12 @@ function drawTriangle(out: string[], cx: number, cy: number, pointUp: boolean, f
   }
 
   for (let i = 0; i < polys.length; i++) {
-    const colorIdx = faceState[i] ?? 0;
-    const fill = scheme[colorIdx] ?? '#888';
+    const id = faceState[i] ?? 0;
+    const masked = opts?.mask?.ids.has(pyraStickerId(id)) ?? false;
+    const fill = masked ? opts!.mask!.color : (scheme[Math.floor(id / 9)] ?? '#888');
+    const sid = opts?.stickerIds ? ` data-sid="${faceLabel}${i}"` : '';
     const d = `M${polys[i].map((p) => `${fmt(p[0])},${fmt(p[1])}`).join(' L')} Z`;
-    out.push(`<path d="${d}" fill="${fill}" stroke="#000" stroke-width="${STROKE_W}" stroke-linejoin="round"/>`);
+    out.push(`<path d="${d}" fill="${fill}"${sid} stroke="#000" stroke-width="${STROKE_W}" stroke-linejoin="round"/>`);
   }
 }
 
@@ -199,7 +215,11 @@ function fmt(n: number): string {
 }
 
 /** Render a pyraminx scramble preview SVG (transparent background). */
-export function renderPyraScrambleSvg(scramble: string, colors: Record<string, string> = PYRA_DEFAULT_COLORS): string {
+export function renderPyraScrambleSvg(
+  scramble: string,
+  colors: Record<string, string> = PYRA_DEFAULT_COLORS,
+  opts?: MaskRenderOptions,
+): string {
   const state = new PyraminxState();
   try { state.applyAlgorithm(scramble); } catch (e) {
     console.warn('[pyraminx_svg] applyAlgorithm failed', scramble, e);
@@ -215,13 +235,13 @@ export function renderPyraScrambleSvg(scramble: string, colors: Record<string, s
   out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(w)} ${fmt(h)}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`);
   // Tnoodle drawMinx face origins (centroids of each unfolded triangle)
   // F (face 0): top-center, point-up
-  drawTriangle(out, 2 * GAP + 3 * PIECE_SIZE, GAP + SQRT3 * PIECE_SIZE,         true,  state.image[0], PIECE_SIZE, scheme);
+  drawTriangle(out, 2 * GAP + 3 * PIECE_SIZE, GAP + SQRT3 * PIECE_SIZE,         true,  state.image[0], PIECE_SIZE, scheme, 'F', opts);
   // D (face 1): bottom-center, point-down
-  drawTriangle(out, 2 * GAP + 3 * PIECE_SIZE, 2 * GAP + 2 * SQRT3 * PIECE_SIZE, false, state.image[1], PIECE_SIZE, scheme);
+  drawTriangle(out, 2 * GAP + 3 * PIECE_SIZE, 2 * GAP + 2 * SQRT3 * PIECE_SIZE, false, state.image[1], PIECE_SIZE, scheme, 'D', opts);
   // L (face 2): upper-left, point-down
-  drawTriangle(out, GAP + 1.5 * PIECE_SIZE,    GAP + 0.5 * SQRT3 * PIECE_SIZE,  false, state.image[2], PIECE_SIZE, scheme);
+  drawTriangle(out, GAP + 1.5 * PIECE_SIZE,    GAP + 0.5 * SQRT3 * PIECE_SIZE,  false, state.image[2], PIECE_SIZE, scheme, 'L', opts);
   // R (face 3): upper-right, point-down
-  drawTriangle(out, 3 * GAP + 4.5 * PIECE_SIZE, GAP + 0.5 * SQRT3 * PIECE_SIZE, false, state.image[3], PIECE_SIZE, scheme);
+  drawTriangle(out, 3 * GAP + 4.5 * PIECE_SIZE, GAP + 0.5 * SQRT3 * PIECE_SIZE, false, state.image[3], PIECE_SIZE, scheme, 'R', opts);
   out.push('</svg>');
   return out.join('');
 }
