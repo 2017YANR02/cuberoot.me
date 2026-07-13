@@ -65,21 +65,38 @@ export function isAlgPrefix(needle: string, haystack: string): boolean {
   }
 }
 
+/** The two faces a mirror plane swaps, in every width they are written in. */
+const MIRROR_SWAP = {
+  M: [['R', 'L'], ['r', 'l'], ['Rw', 'Lw']],
+  S: [['F', 'B'], ['f', 'b'], ['Fw', 'Bw']],
+  E: [['U', 'D'], ['u', 'd'], ['Uw', 'Dw']],
+} as const;
+
 /**
- * Mirror an alg through one of the slice planes.
+ * The slice and the rotation that live ON the mirror axis keep their direction.
+ * Everything else negates. This is forced, not a convention we picked:
  *
- * A reflection is orientation-reversing, so EVERY move flips direction — slices
- * (M/S/E) and rotations (x/y/z) included. Only the two faces straddling the
- * plane trade names. Negating just the on-axis families (the pre-2026-07 bug)
- * silently produced non-algs: mirroring T-perm that way wrecked D + E.
+ *   l = L M  and  r = R M'  (cubing.js; verified, not assumed)
+ *   The mirror must send l to r', and r' = (R M')' = R' M.
+ *   It also sends L to R'. So  R' · mirror(M) = R' M  ⟹  mirror(M) = M.
+ *   Likewise x = R M' L'  ⟹  mirror(x) = L' M' R = x.
+ *
+ * M follows L and x follows R — the very families the mirror swaps — so the flip
+ * in their reference direction cancels the flip of the move itself. S/z and E/y
+ * are the same story on their own axes.
+ *
+ * Negating them anyway (what this did until 2026-07-13) breaks 3 of those 9
+ * identities and silently produces non-algs: it wrecked 590 of the 7771 stored
+ * last-layer algs under M, 340 under S — every alg carrying an M or an x, which
+ * is most M-slice PLLs and every side-held A/E-perm.
  */
+const MIRROR_EXEMPT = { M: ['M', 'x'], S: ['S', 'z'], E: ['E', 'y'] } as const;
+
+/** Mirror an alg through one of the three slice planes. */
 export function mirrorAlg(alg: string, axis: 'M' | 'S' | 'E'): string {
   if (!alg) return '';
-  const pairs = ({
-    M: [['R', 'L'], ['r', 'l'], ['Rw', 'Lw']],
-    S: [['F', 'B'], ['f', 'b'], ['Fw', 'Bw']],
-    E: [['U', 'D'], ['u', 'd'], ['Uw', 'Dw']],
-  } as const)[axis];
+  const pairs = MIRROR_SWAP[axis];
+  const exempt: readonly string[] = MIRROR_EXEMPT[axis];
   try {
     const out: string[] = [];
     for (const m of new Alg(alg).experimentalLeafMoves()) {
@@ -88,7 +105,11 @@ export function mirrorAlg(alg: string, axis: 'M' | 'S' | 'E'): string {
         if (f === a) { f = b; break; }
         if (f === b) { f = a; break; }
       }
-      out.push(new Move(f, -m.amount).toString());
+      const amount = exempt.includes(m.family) ? m.amount : -m.amount;
+      // A quarter-turn multiple of 4 is a no-op, but `new Move('R', 0)` stringifies
+      // back to "R" — a real turn. Drop it instead of inventing one.
+      if (amount % 4 === 0) continue;
+      out.push(new Move(f, amount).toString());
     }
     return out.join(' ');
   } catch {
