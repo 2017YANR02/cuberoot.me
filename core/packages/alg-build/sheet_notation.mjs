@@ -85,10 +85,44 @@ function expand(tokens) {
   return walk(0);
 }
 
-/** 把散文注释从一行里摘掉(署名一律丢弃);返回剥干净的串 */
+/** 散文括号(里面含非 move 字符)的字符区间。落在里面的 `=` 不是分隔符。 */
+function proseSpans(s) {
+  const spans = [];
+  for (const m of s.matchAll(/\(([^()]*)\)/g)) {
+    if (NON_MOVE_RE.test(m[1])) spans.push([m.index, m.index + m[0].length]);
+  }
+  return spans;
+}
+
+/**
+ * 按 `=` 切段 —— 但**跳过落在散文注释里的 `=`**。
+ * 署名里写个 `=`(`(by X = Y)`)就把公式撕成两半、两半都报错、原公式整条丢失。
+ * (当前表里 0 行命中;但表是活文档,解析器不能有这种可能。)
+ */
+function splitOnEquals(line) {
+  const spans = proseSpans(line);
+  const segs = [];
+  let start = 0;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] !== '=') continue;
+    if (spans.some(([a, b]) => i >= a && i < b)) continue;
+    segs.push(line.slice(start, i));
+    start = i + 1;
+  }
+  segs.push(line.slice(start));
+  return segs;
+}
+
+/**
+ * 把散文注释从一行里摘掉(署名一律丢弃)。
+ *
+ * ⚠ 注释**紧贴换握记号**时不能补空格:`↑U` 是右手、`↑ U` 是左手(FINGERTRICKS §2,
+ * 「转写/格式化工具不得增删记号周边空格」)。所以把记号一起吃进来再原样吐回去。
+ * (当前表里 0 行命中;同上,防的是以后。)
+ */
 function stripProse(s) {
   return s
-    .replace(/\(([^()]*)\)/g, (full, inner) => (NON_MOVE_RE.test(inner) ? ' ' : full))
+    .replace(/([↑↓·]?)\(([^()]*)\)/g, (full, mark, inner) => (NON_MOVE_RE.test(inner) ? mark || ' ' : full))
     .replace(PROSE_WORDS, ' ');
 }
 
@@ -111,7 +145,7 @@ export function parseAlgCell(cell) {
     if (!line0.trim()) continue;
     // 行中的 `=` 也是分隔符 —— 一行里写了两条等价公式。第一段是本体,后面的都是等价写法。
     // `raw` 存的是**这一段**的原文(不是整行),入库要它。
-    const segs = line0.split('=');
+    const segs = splitOnEquals(line0);
     segs.forEach((seg, i) => {
       const e = parseOneAlg(seg, i > 0);
       if (e) out.push(e);

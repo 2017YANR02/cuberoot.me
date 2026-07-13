@@ -10,20 +10,18 @@
  * 用户切换度量,组件高亮"哪几步会折算成 2"。
  */
 import { useState } from 'react';
+import { htm, moveCost, qtm, stm, tokenizeMoves } from '@cuberoot/shared/alg-notation';
 import { MathText } from './Tex';
 
 type Metric = 'HTM' | 'QTM' | 'STM';
 
-const ALG = "R U2 R' U' R U R2 F' R U R' U' R' F R2";
-// 切分成单步;带 2 后缀者在 QTM 算 2 步,在 HTM/STM 算 1 步。
-const TOKENS = ALG.split(/\s+/);
+// 带一个 M 层,好让 STM 真的跟 HTM 分开(M = R' L x' ⟹ HTM 记 2 步、STM 记 1 步)。
+const ALG = "M2 U M U2 M' U M2";
+const TOKENS = tokenizeMoves(ALG).moves;
 
-const COUNTS: Record<Metric, number> = (() => {
-  const htm = TOKENS.length;
-  const qtm = TOKENS.reduce((sum, m) => sum + (/2$/.test(m) ? 2 : 1), 0);
-  const stm = TOKENS.length; // 例子里没有内层 → 与 HTM 相同
-  return { HTM: htm, QTM: qtm, STM: stm };
-})();
+// 三个数都由 @cuberoot/shared/alg-notation 算出来 —— 这一页讲的就是度量,自己算错就没得看了。
+// (此处原先是内联的:`/2$/` 抓不到 `R2'`,STM 还直接写死等于 HTM。)
+const COUNTS: Record<Metric, number> = { HTM: htm(ALG), QTM: qtm(ALG), STM: stm(ALG) };
 
 const GOD: Record<Metric, { puzzle: string; v: number }[]> = {
   HTM: [
@@ -84,12 +82,12 @@ export default function MetricExplainer({ isZh }: Props) {
       <div className="god-metric-example">
         <div className="god-metric-alg">
           {TOKENS.map((m, i) => {
-            const heavy = metric === 'QTM' && /2$/.test(m);
+            const w = moveCost(m, metric.toLowerCase() as Lowercase<Metric>);
             return (
-              <span key={i} className={`god-metric-move ${heavy ? 'is-heavy' : ''}`}
-                    title={heavy ? t('这一步在 QTM 里算 2 步', 'counts as 2 in QTM') : undefined}>
-                {m}
-                {heavy && <sup>×2</sup>}
+              <span key={i} className={`god-metric-move ${w > 1 ? 'is-heavy' : ''}`}
+                    title={w > 1 ? t(`这一步在 ${metric} 里算 ${w} 步`, `counts as ${w} in ${metric}`) : undefined}>
+                {m.raw}
+                {w > 1 && <sup>×{w}</sup>}
               </span>
             );
           })}

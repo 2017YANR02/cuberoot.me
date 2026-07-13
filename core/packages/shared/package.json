@@ -24,6 +24,10 @@
       "default": "./src/comp_schedule.ts"
     },
     "./alg": "./src/alg.ts",
+    "./alg-notation": {
+      "node": "./dist/alg_notation.js",
+      "default": "./src/alg_notation.ts"
+    },
     "./skewb-pyramid-svg": {
       "node": "./dist/skewb_pyramid_svg.js",
       "default": "./src/skewb_pyramid_svg.ts"

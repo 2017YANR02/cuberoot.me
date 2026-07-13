@@ -72,7 +72,19 @@ function solveSimplification(target: number[]): string[] {
   return [];
 }
 
-interface RecordedMove { originalFace: number; amount: number }
+interface RecordedMove { originalFace: number; amount: number; slice?: boolean }
+
+/**
+ * 一个中层的身份完全由它的**参照面**决定,方向也跟着那个面:`M` 跟 `L`、`E` 跟 `D`、`S` 跟 `F`。
+ * 所以只要记下参照面的**原始 face id**,就能和面转用同一套 `orig2slot` 还原 —— 不必给中层单开模型。
+ */
+const SLICE_REF: Record<string, number> = { M: L, E: D, S: F };
+
+/** 参照面最终落在哪个 slot → 该写哪个中层,以及方向要不要反过来(落到对面就反)。 */
+const SLOT_TO_SLICE: Array<readonly [string, boolean]> = [];
+SLOT_TO_SLICE[L] = ['M', false]; SLOT_TO_SLICE[R] = ['M', true];
+SLOT_TO_SLICE[D] = ['E', false]; SLOT_TO_SLICE[U] = ['E', true];
+SLOT_TO_SLICE[F] = ['S', false]; SLOT_TO_SLICE[B] = ['S', true];
 
 function charToFace(c: string): number {
   switch (c) {
@@ -105,10 +117,18 @@ function processToken(token: string, state: number[], history: RecordedMove[]) {
     return;
   }
 
+  // 中层 M / E / S。旧实现没有这一支:它们走到下面的面转分支,charToFace 返 -1 就 `return`,
+  // 于是招式**从 history 里凭空消失**,状态算错却不报错。实测 rotateSolutionY("M2 U M U2 M' U M2", 1)
+  // 曾得到 "y U U2 U" —— 四个 M 全没了。今天没炸只因调用点喂的都是纯面转的十字解。
+  if (!isWideUpper && (base === 'M' || base === 'E' || base === 'S')) {
+    history.push({ originalFace: state[SLICE_REF[base]], amount, slice: true });
+    return;
+  }
+
   // 单层面转动：大写且非 Xw 形式
   if (!isWideUpper && base >= 'A' && base <= 'Z') {
     const slot = charToFace(base);
-    if (slot < 0) return;
+    if (slot < 0) return;   // 不是招式(UFRBLD / MES / xyz / 宽块已全部在上面认掉)
     history.push({ originalFace: state[slot], amount });
     return;
   }
@@ -125,17 +145,26 @@ function processToken(token: string, state: number[], history: RecordedMove[]) {
     case 'd': rotAxis = 'y'; rotAmt = (4 - amount) % 4; counterSlot = U; break;
     case 'f': rotAxis = 'z'; rotAmt = amount; counterSlot = B; break;
     case 'b': rotAxis = 'z'; rotAmt = (4 - amount) % 4; counterSlot = F; break;
+    // recon 里的注解(`[regrip]` `...`)也会走到这儿 —— 跳过它们是对的。招式已全部认掉:
+    // 面转 UFRBLD、中层 MES、转体 xyz、宽块 rludfb / Xw。
     default: return;
   }
   applyRot(state, rotAxis, rotAmt);
   history.push({ originalFace: state[counterSlot], amount });
 }
 
-function moveStr(slot: number, amount: number): string {
-  let s: string = FACE_NAMES[slot];
-  if (amount === 2) s += '2';
-  else if (amount === 3) s += "'";
-  return s;
+function suffix(amount: number): string {
+  if (amount === 2) return '2';
+  if (amount === 3) return "'";
+  return '';
+}
+
+/** 把一条记录还原成当前朝向下的写法。面转查 slot 名,中层查参照面落到哪个 slot。 */
+function emit(m: RecordedMove, orig2slot: number[]): string {
+  const slot = orig2slot[m.originalFace];
+  if (!m.slice) return FACE_NAMES[slot] + suffix(m.amount);
+  const [family, flipped] = SLOT_TO_SLICE[slot];
+  return family + suffix(flipped ? (4 - m.amount) % 4 : m.amount);
 }
 
 /**
@@ -153,9 +182,7 @@ export function normalize(tokens: string[]): string[] {
   for (let s = 0; s < 6; s++) orig2slot[state[s]] = s;
 
   const out: string[] = [...prefix];
-  for (const m of history) {
-    out.push(moveStr(orig2slot[m.originalFace], m.amount));
-  }
+  for (const m of history) out.push(emit(m, orig2slot));
   return out;
 }
 
@@ -179,8 +206,6 @@ export function normalizeLines(linesOfTokens: string[][]): {
   const orig2slot = [0, 0, 0, 0, 0, 0];
   for (let s = 0; s < 6; s++) orig2slot[state[s]] = s;
 
-  const perLine = perLineHistory.map(hist =>
-    hist.map(m => moveStr(orig2slot[m.originalFace], m.amount))
-  );
+  const perLine = perLineHistory.map(hist => hist.map(m => emit(m, orig2slot)));
   return { prefix, perLine };
 }

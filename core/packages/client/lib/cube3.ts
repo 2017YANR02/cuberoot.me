@@ -4,6 +4,7 @@
  */
 import { Alg, Move } from 'cubing/alg';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
+import { mirrorFamily, mirrorKeepsAmount, type MirrorAxis } from '@cuberoot/shared/alg-notation';
 
 let _kpuzzle: Promise<KPuzzle> | null = null;
 
@@ -65,51 +66,27 @@ export function isAlgPrefix(needle: string, haystack: string): boolean {
   }
 }
 
-/** The two faces a mirror plane swaps, in every width they are written in. */
-const MIRROR_SWAP = {
-  M: [['R', 'L'], ['r', 'l'], ['Rw', 'Lw']],
-  S: [['F', 'B'], ['f', 'b'], ['Fw', 'Bw']],
-  E: [['U', 'D'], ['u', 'd'], ['Uw', 'Dw']],
-} as const;
-
 /**
- * The slice and the rotation that live ON the mirror axis keep their direction.
- * Everything else negates. This is forced, not a convention we picked:
+ * Mirror an alg through one of the three slice planes.
  *
- *   l = L M  and  r = R M'  (cubing.js; verified, not assumed)
- *   The mirror must send l to r', and r' = (R M')' = R' M.
- *   It also sends L to R'. So  R' · mirror(M) = R' M  ⟹  mirror(M) = M.
- *   Likewise x = R M' L'  ⟹  mirror(x) = L' M' R = x.
- *
- * M follows L and x follows R — the very families the mirror swaps — so the flip
- * in their reference direction cancels the flip of the move itself. S/z and E/y
- * are the same story on their own axes.
- *
- * Negating them anyway (what this did until 2026-07-13) breaks 3 of those 9
- * identities and silently produces non-algs: it wrecked 590 of the 7771 stored
- * last-layer algs under M, 340 under S — every alg carrying an M or an x, which
- * is most M-slice PLLs and every side-held A/E-perm.
+ * The rule lives in `@cuberoot/shared/alg-notation` (which family each plane swaps,
+ * and which slice/rotation is exempt from the sign flip). Parsing stays on cubing.js
+ * so commutators `[R, U]` and repeat groups still work.
  */
-const MIRROR_EXEMPT = { M: ['M', 'x'], S: ['S', 'z'], E: ['E', 'y'] } as const;
-
-/** Mirror an alg through one of the three slice planes. */
-export function mirrorAlg(alg: string, axis: 'M' | 'S' | 'E'): string {
+export function mirrorAlg(alg: string, axis: MirrorAxis): string {
   if (!alg) return '';
-  const pairs = MIRROR_SWAP[axis];
-  const exempt: readonly string[] = MIRROR_EXEMPT[axis];
   try {
     const out: string[] = [];
     for (const m of new Alg(alg).experimentalLeafMoves()) {
-      let f: string = m.family;
-      for (const [a, b] of pairs) {
-        if (f === a) { f = b; break; }
-        if (f === b) { f = a; break; }
-      }
-      const amount = exempt.includes(m.family) ? m.amount : -m.amount;
-      // A quarter-turn multiple of 4 is a no-op, but `new Move('R', 0)` stringifies
-      // back to "R" — a real turn. Drop it instead of inventing one.
-      if (amount % 4 === 0) continue;
-      out.push(new Move(f, amount).toString());
+      const family = mirrorFamily(m.family, axis);
+      const amount = mirrorKeepsAmount(m.family, axis) ? m.amount : -m.amount;
+      // `new Move(f, 0)` stringifies back to "R" — a real quarter turn. Nothing
+      // legitimate produces amount 0, so drop it rather than invent a move.
+      if (amount === 0) continue;
+      // `.modified()` keeps the layer prefix. `new Move(family, amount)` throws it
+      // away, which silently rewrote `2R` as `L'` and `3Rw` as `Lw'` — /sim's mirror
+      // buttons are live on 4x4 and 5x5.
+      out.push(m.modified({ family, amount }).toString());
     }
     return out.join(' ');
   } catch {
