@@ -40,7 +40,7 @@ function getWorker(): Worker {
  * render a short text label via `textLabel`.
  */
 /**
- * Family buckets for the non-WCA grouped picker (NonWcaPuzzlePicker). Every
+ * Family buckets for the grouped puzzle picker (PuzzlePicker). Every
  * cstimer puzzle is tagged with one — the picker groups its dropdown by family
  * so future puzzles slot into a category instead of crowding an icon row.
  *   cuboid    长方体(1×3×3 / 2×2×3 / 3×3×N …)

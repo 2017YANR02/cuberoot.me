@@ -44,7 +44,7 @@ import FirstAppearanceTimeline, { type TimelineEntry } from './_components/First
 import FullScrambleList, { FullScrambleFilterBar } from './_components/FullScrambleList';
 import AvgExamplesPanel, { type AvgGroupCase } from './_components/AvgExamplesPanel';
 import WcaEventSelector from '@/components/WcaEventSelector';
-import NonWcaPuzzlePicker from '@/components/NonWcaPuzzlePicker/NonWcaPuzzlePicker';
+import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
@@ -412,7 +412,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     } else if (merged) {
       for (const id of MERGED_HIDDEN) all.delete(id);
     }
-    // 非 WCA 求解项目(ivy 等)不进 WCA 图标行;走 NonWcaPuzzlePicker 分组下拉。
+    // 非 WCA 求解项目(ivy 等)不进 WCA 图标行;走 PuzzlePicker 分组下拉。
     return all;
   }, [lengthsData, merged, tab, dataset]);
 
@@ -961,7 +961,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       ) : (
         <>
           {/* 项目/事件选择置顶。独立分布页:这是唯一的项目选择器(全 WCA 项目)+ 右侧
-              NonWcaPuzzlePicker(ivy 等)。 */}
+              PuzzlePicker(ivy 等)。 */}
           <div className="scramble-stats-event-pick">
             <WcaEventSelector
               availableEvents={availableEvents}
@@ -970,7 +970,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
               isZh={isZh}
               onlyAvailable
             />
-            <NonWcaPuzzlePicker
+            <PuzzlePicker
               isZh={isZh}
               availableEvents={CSTIMER_SOLVABLE_IDS}
               selectedEvent={event}
