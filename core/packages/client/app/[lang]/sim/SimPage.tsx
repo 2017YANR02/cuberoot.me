@@ -24,6 +24,7 @@ import {
   BookOpen,
   Maximize2, Minimize2,
   ArrowLeftRight,
+  ImagePlus,
 } from 'lucide-react';
 import World, { type PuzzleKind } from './engine/world';
 import type Cube from './engine/nxn/cube';
@@ -85,7 +86,11 @@ import PlayerControls, { type SimPuzzle } from './PlayerControls';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
 import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
-import DirectorPanel from './DirectorPanel';
+import { puzzleCaps } from './simCaps';
+import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
+import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
+import { resetRotationsForPuzzle } from '@/lib/puzzle-image/defaults';
+import type { PuzzleType } from '@/lib/puzzle-image/types';
 import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import SimCubeNet from './_SimCubeNet';
@@ -221,6 +226,28 @@ export default function SimPage() {
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
     return n;
   }, [query.puzzle]);
+
+  // The puzzle-image studio is mounted as the /sim 图像 panel. Its puzzle is NOT chosen
+  // inside the panel — the sim's own puzzle dropdown is the single selector, mapped here
+  // into the studio's vocabulary (mirror → order-3 cube). imageStudioSupported (from the
+  // simCaps registry) gates whether the panel shows at all.
+  const imageStudioSupported = puzzleCaps(puzzleParam).imageStudio;
+  const imgPuzzle = useMemo((): { puzzleType: PuzzleType; cubeSize: number } => {
+    if (typeof puzzleParam === 'number') return { puzzleType: 'cube', cubeSize: puzzleParam };
+    if (puzzleParam === 'mirror') return { puzzleType: 'cube', cubeSize: 3 };
+    if (puzzleParam === 'sq1' || puzzleParam === 'skewb'
+      || puzzleParam === 'pyraminx' || puzzleParam === 'megaminx') {
+      return { puzzleType: puzzleParam, cubeSize: 3 };
+    }
+    return { puzzleType: 'cube', cubeSize: 3 };
+  }, [puzzleParam]);
+
+  // Second, INDEPENDENT URL-state host for the studio panel, namespaced under `img_` (no
+  // key collides with sim's own puzzle/cuts/alg/setup/renderer). Injecting the host puzzle
+  // keeps the studio's `pzl` OUT of the URL entirely: the puzzle has ONE source (sim's
+  // `puzzle=`), which the mirror effect below keeps the spec in step with. `view` and the
+  // rotation defaults are parsed against the injected puzzle, so a cold link is correct.
+  const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle });
   // A twisty puzzle is rendered by the in-house engine when it has an engine
   // alternative AND the renderer toggle is off cubing.js (default 'cubing' keeps the
   // cubing.js TwistyPlayer). The non-cubing view is always the engine + group panel
@@ -323,6 +350,25 @@ export default function SimPage() {
     if (typeof window === 'undefined') return;
     try { localStorage.setItem('sim.panel.algs', algsOpen ? '1' : '0'); } catch { /* private */ }
   }, [algsOpen]);
+
+  // Image studio panel: auto-open when a shared /sim?img_… link carries ANY image state
+  // (so the panel is visible without a click), otherwise honour the persisted preference.
+  // In panel mode the codec omits `img_pzl` and writes only non-default settings, so a
+  // pristine studio contributes zero img_ keys — any img_ key present is real intent.
+  const [imageOpen, setImageOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      for (const [k] of sp) {
+        if (k.startsWith('img_')) return true;
+      }
+    } catch { /* ignore */ }
+    try { return localStorage.getItem('sim.panel.image') === '1'; } catch { return false; }
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try { localStorage.setItem('sim.panel.image', imageOpen ? '1' : '0'); } catch { /* private */ }
+  }, [imageOpen]);
 
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
@@ -1374,6 +1420,28 @@ export default function SimPage() {
     worldRef.current as unknown as SimWorldView | null, []);
   const getRenderer = useCallback((): THREE.WebGLRenderer | null => rendererRef.current, []);
 
+  const simBridge = useMemo<SimBridge>(() => ({
+    getCanvas, getWorld, getRenderer,
+    setup: setupParam, alg: algParam,
+    faceColors: settings.faceColors,
+    puzzleType: imgPuzzle.puzzleType, cubeSize: imgPuzzle.cubeSize,
+  }), [getCanvas, getWorld, getRenderer, setupParam, algParam, settings.faceColors, imgPuzzle]);
+
+  // The sim's puzzle dropdown is the single puzzle selector on this page — the studio
+  // panel has no puzzle picker of its own (PuzzleImageStudio panel mode). Mirror the sim's
+  // current puzzle into the image spec, doing exactly what clicking that puzzle chip did:
+  // resetRotationsForPuzzle snaps the viewport rotation to the new puzzle's default and
+  // leaves alg / colors / mask / view untouched. Guarded on identity so it fires only on
+  // an actual puzzle change, not on every colour or slider tweak (which also updates imgSpec).
+  useEffect(() => {
+    if (!imageStudioSupported) return;
+    if (imgSpec.puzzleType === imgPuzzle.puzzleType && imgSpec.cubeSize === imgPuzzle.cubeSize) return;
+    setImgSpec(resetRotationsForPuzzle(imgSpec, {
+      puzzleType: imgPuzzle.puzzleType,
+      cubeSize: imgPuzzle.cubeSize,
+    }));
+  }, [imageStudioSupported, imgPuzzle, imgSpec, setImgSpec]);
+
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
 
@@ -1502,14 +1570,20 @@ export default function SimPage() {
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}
           />
-          {!twisty && (
-            <DirectorPanel
-              getCanvas={getCanvas}
-              getWorld={getWorld}
-              getRenderer={getRenderer}
-              setup={setupParam}
-              alg={algParam}
-            />
+          {imageStudioSupported && (
+            <CollapsibleSection
+              open={imageOpen}
+              onToggle={() => setImageOpen((o) => !o)}
+              icon={ImagePlus}
+              label={t('图像', 'Image')}
+            >
+              <PuzzleImageStudio
+                mode="panel"
+                spec={imgSpec}
+                onSpecChange={setImgSpec}
+                simBridge={simBridge}
+              />
+            </CollapsibleSection>
           )}
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
               PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)

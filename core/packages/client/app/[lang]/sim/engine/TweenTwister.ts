@@ -1,7 +1,7 @@
 /**
  * TweenTwister — animation orchestrator shared by the non-NxN cuber engines
- * (Ivy / Dino / Redi / SQ1). Uses the global `tweener` so DirectorPanel's offline
- * `tweener.paused=true` + manual `tweener.update()` stepping records every puzzle.
+ * (Ivy / Dino / Redi / SQ1). Uses the global `tweener` so the sim's offline mp4
+ * export (`tweener.paused=true` + manual `tweener.update()` stepping) records every puzzle.
  * One tween per move; frames synced with the speed slider via `tweenTiming`.
  *
  * Subclass and implement `parse` + `framesFor`. Override `beginAnims` / `twist`

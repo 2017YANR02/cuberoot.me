@@ -4,7 +4,7 @@
  * /sim — 虚拟魔方 Playground / Player / Algs / Director (Next.js port).
  *
  * SimPage handles the full client-side simulator (cuber engine + AlgsPanel +
- * DirectorPanel + PlayerControls). It's dynamically imported to keep the
+ * PuzzleImageStudio + PlayerControls). It's dynamically imported to keep the
  * THREE.js / cubing.js bundle off the SSR path.
  *
  * Deferred (vs Vite parity):

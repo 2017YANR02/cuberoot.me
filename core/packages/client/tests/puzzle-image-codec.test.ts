@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { readSpecFromParams, specToParams } from '@/lib/puzzle-image/codec';
+import { readSpecFromParams, specToParams, type CodecOptions } from '@/lib/puzzle-image/codec';
 import {
   DEFAULTS, rotationDefaultsFor, resetRotationsForPuzzle, snapRotationOnVariantBoundary,
 } from '@/lib/puzzle-image/defaults';
@@ -136,5 +136,55 @@ describe('puzzle-image codec — prefix isolation', () => {
   it('emits prefixed keys only', () => {
     const qs = specToParams(spec({ cubeSize: 4, algorithm: 'U' }), 'img_').toString();
     expect(qs).toBe('img_pzl=4&img_alg=U');
+  });
+});
+
+describe('puzzle-image codec — panel mode (host owns the puzzle)', () => {
+  // /sim mounts the studio with the sim's own `puzzle=` as the single puzzle source, so
+  // the codec neither reads nor writes `pzl`, and the host puzzle is injected before the
+  // puzzle-dependent parses (`view`, rotation defaults). This is what removed the
+  // "img_pzl written but not honored" clobber the workflow reviewers flagged.
+  const megaOpts: CodecOptions = { puzzle: { puzzleType: 'megaminx', cubeSize: 3 } };
+  const pyraOpts: CodecOptions = { puzzle: { puzzleType: 'pyraminx', cubeSize: 3 } };
+  const cubeOpts: CodecOptions = { puzzle: { puzzleType: 'cube', cubeSize: 3 } };
+  const cube5Opts: CodecOptions = { puzzle: { puzzleType: 'cube', cubeSize: 5 } };
+
+  it('never writes pzl — not for a non-cube puzzle', () => {
+    const qs = specToParams(spec({ puzzleType: 'megaminx', puzzleVariant: 'top' }), 'img_', megaOpts).toString();
+    expect(qs).not.toContain('img_pzl');
+    expect(qs).toContain('img_view=top');
+  });
+
+  it('never writes pzl — not even for a non-default cube size', () => {
+    const qs = specToParams(spec({ cubeSize: 5, imageSize: 512 }), 'img_', cube5Opts).toString();
+    expect(qs).not.toContain('img_pzl');
+    expect(qs).toContain('img_size=512');
+  });
+
+  it('the injected host puzzle wins over a stray img_pzl in the URL', () => {
+    const s = readSpecFromParams(new URLSearchParams('img_pzl=3&img_view=top'), 'img_', megaOpts);
+    expect(s.puzzleType).toBe('megaminx');
+    expect(s.cubeSize).toBe(3);
+    expect(s.puzzleVariant).toBe('top');   // view parsed against megaminx, not cube
+  });
+
+  it('parses `view` against the injected puzzle (wca → variant vs cubeView)', () => {
+    const asCube = readSpecFromParams(new URLSearchParams('img_view=wca'), 'img_', cubeOpts);
+    expect(asCube.cubeView).toBe('wca');
+    expect(asCube.puzzleVariant).toBe(DEFAULTS.puzzleVariant);
+    const asPyra = readSpecFromParams(new URLSearchParams('img_view=wca'), 'img_', pyraOpts);
+    expect(asPyra.puzzleVariant).toBe('wca');
+    expect(asPyra.cubeView).toBe(DEFAULTS.cubeView);
+  });
+
+  it('rotation defaults come from the injected puzzle on a cold link', () => {
+    const s = readSpecFromParams(new URLSearchParams(''), 'img_', pyraOpts);
+    expect([s.rotateAxis1, s.rotateAngle1, s.rotateAxis2, s.rotateAngle2]).toEqual(['y', 60, 'x', -60]);
+  });
+
+  it('round-trips a non-cube spec — the puzzle survives via injection, not pzl', () => {
+    const s = spec({ puzzleType: 'pyraminx', algType: 'case', algorithm: "U R' L R B'" });
+    const back = readSpecFromParams(specToParams(s, 'img_', pyraOpts), 'img_', pyraOpts);
+    expect(back).toEqual(s);
   });
 });
