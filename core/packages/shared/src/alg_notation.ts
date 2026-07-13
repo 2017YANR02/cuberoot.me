@@ -46,8 +46,20 @@ const ROTATIONS = 'xyz';
 const SLICES = 'MSE';
 const WIDE_LOWER = 'rludfb';
 
-/** 层前缀 + 面字母 + 可选 w + 可选量 + 可选撇 */
-const MOVE_RE = /^(\d+(?:-\d+)?)?([RLUDFBMSExyzrludfb])(w?)(\d*)('?)/;
+/**
+ * 层前缀 + 面字母 + 可选 w + 可选量 + 可选撇。**全站唯一的 move 文法。**
+ *
+ * 导出是为了让别的解析器(如 alg-build 的 sheet_notation)复用而不是各造一份 ——
+ * 造第二份的代价实测过:少认一个 `w`,`Lw2` 就被切成 `L` + junk `w2`,整条公式静默作废。
+ */
+export const MOVE_RE = /^(\d+(?:-\d+)?)?([RLUDFBMSExyzrludfb])(w?)(\d*)('?)/;
+
+/**
+ * 能出现在纯 move 串里的字符,**已转义成可直接嵌进字符类的形式**(层前缀的 `-` escape 过 ——
+ * 裸的尾随 `-` 拼到 `[^…\s]` 里会被当成区间端点,行为随 `u` flag 变)。
+ * 用来判断「这段是招式还是散文」。
+ */
+export const MOVE_CHARS = "RLUDFBrludfbMSExyzw0-9'\\-";
 
 function kindOf(base: string, wide: boolean, layer: string | undefined): MoveKind {
   if (ROTATIONS.includes(base)) return 'rotation';
