@@ -37,9 +37,13 @@ export const sendEmailCode = (email: string) => post<{ ok: true }>('/v1/auth/ema
 export const verifyEmailCode = (email: string, code: string) => post<SessionResp>('/v1/auth/email/verify', { email, code });
 // 邮箱 + 密码登录(账号已设密码即可,不依赖邮件服务)
 export const loginPassword = (email: string, password: string) => post<SessionResp>('/v1/auth/email/password', { email, password });
-// 设置 / 修改密码(登录态;改密时传 currentPassword)
+// 设置 / 修改 / 重置密码(登录态)。改密要 currentPassword;但「刚用邮箱验证码登录」的会话
+// (后端 amr=email_code,15 分钟内)可免旧密码 —— 忘记密码就走这条,等价于别家的重置邮件链接。
 export const setPassword = (password: string, currentPassword?: string) =>
   post<{ ok: true; hasPassword: true }>('/v1/auth/password/set', { password, currentPassword }, true);
+// 移除密码,退回纯验证码登录(同 Notion 的 Remove password)。凭据要求同上。
+export const removePassword = (currentPassword?: string) =>
+  post<{ ok: true; hasPassword: false }>('/v1/auth/password/remove', { currentPassword }, true);
 export const sendPhoneCode = (phone: string) => post<{ ok: true }>('/v1/auth/phone/send', { phone });
 export const verifyPhoneCode = (phone: string, code: string) => post<SessionResp>('/v1/auth/phone/verify', { phone, code });
 
@@ -98,11 +102,12 @@ export async function fetchAuthProviders(): Promise<AuthProviders> {
   return { email: true, phone: true, wca: true, googleClientId: null, googleRelayUrl: null, social: { ...NO_SOCIAL } };
 }
 
-export async function fetchIdentities(): Promise<{ identities: Identity[]; hasPassword: boolean }> {
+/** canResetPassword:本次会话刚用邮箱验证码登录 → 改 / 移除密码时无需当前密码。 */
+export async function fetchIdentities(): Promise<{ identities: Identity[]; hasPassword: boolean; canResetPassword: boolean }> {
   const res = await fetch(apiUrl('/v1/auth/identities'), {
     headers: { Authorization: `Bearer ${getSessionToken()}` },
   });
-  if (!res.ok) return { identities: [], hasPassword: false };
-  const data = (await res.json().catch(() => ({}))) as { identities?: Identity[]; hasPassword?: boolean };
-  return { identities: data.identities ?? [], hasPassword: !!data.hasPassword };
+  if (!res.ok) return { identities: [], hasPassword: false, canResetPassword: false };
+  const data = (await res.json().catch(() => ({}))) as { identities?: Identity[]; hasPassword?: boolean; canResetPassword?: boolean };
+  return { identities: data.identities ?? [], hasPassword: !!data.hasPassword, canResetPassword: !!data.canResetPassword };
 }

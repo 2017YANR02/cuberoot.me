@@ -11,12 +11,12 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
-import { signSession } from '../utils/session.js';
+import { signSession, hasFreshEmailGrant } from '../utils/session.js';
 import {
   issueCode, verifyCode, loginWithIdentity, addIdentity, removeIdentity,
   getIdentities, getUserById, findUserByWcaId, publicUser,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
-  loginWithPassword, setPassword, getPasswordHash, verifyPassword,
+  loginWithPassword, setPassword, clearPassword, getPasswordHash, verifyPassword,
   type Provider,
 } from '../utils/account.js';
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
@@ -36,6 +36,15 @@ function getIp(c: Context): string {
 // 语言(仅用于验证码邮件文案),从 Accept-Language 粗判。
 function langOf(c: Context): 'zh' | 'en' {
   return (c.req.header('Accept-Language') ?? '').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+}
+
+/**
+ * 本次会话是否「刚用邮箱验证码登录」(15 分钟窗口,见 session.ts)。
+ * 凭此可免旧密码设 / 改 / 移除密码 —— 即业界的「忘记密码」重置路径。
+ */
+function emailGrant(c: Context): boolean {
+  const h = c.req.header('Authorization');
+  return h?.startsWith('Bearer ') ? hasFreshEmailGrant(h.slice(7)) : false;
 }
 
 /** 解析当前登录用户的内部 uid(uid token 直接用;老 wca-only token 按真实 wcaId 查)。 */
@@ -147,7 +156,8 @@ accountAuthRoutes.post('/auth/email/verify', async (c) => {
   const ok = await verifyCode('email', norm, 'login', code as string);
   if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
   const user = await loginWithIdentity('email', norm, { name: norm.split('@')[0] });
-  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name });
+  // amr=email_code:本次会话已证明邮箱所有权 → 15 分钟内可免旧密码重设密码(忘记密码路径)。
+  const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name, amr: 'email_code' });
   return c.json({ token, user: publicUser(user) });
 });
 
@@ -197,7 +207,11 @@ accountAuthRoutes.post('/auth/email/password', async (c) => {
   return c.json({ token, user: publicUser(user) });
 });
 
-// ── 设置 / 修改密码(登录态)。已有密码时必须先验旧密码;首次设置无需旧密码 ──
+// ── 设置 / 修改 / 重置密码(登录态)──
+// 业界(GitHub / Figma / Notion)把这件事分成两条路,凭据要求不同:
+//   修改(知道旧密码)  → 必须先验旧密码,防「会话被劫持者直接换密码」。
+//   重置(忘了 / 没设) → 邮件通道证明邮箱所有权即可,不问旧密码。
+// 我们的 amr=email_code 会话就是后者的凭据(等价于别家的重置链接),故 grant 在手时跳过旧密码校验。
 accountAuthRoutes.post('/auth/password/set', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
@@ -205,11 +219,26 @@ accountAuthRoutes.post('/auth/password/set', async (c) => {
   const { password, currentPassword } = await c.req.json<{ password?: string; currentPassword?: string }>().catch(() => ({ password: undefined, currentPassword: undefined }));
   if (!isValidPassword(password)) return c.json({ error: 'invalid password' }, 400);
   const existing = await getPasswordHash(uid);
-  if (existing && !(typeof currentPassword === 'string' && await verifyPassword(currentPassword, existing))) {
+  if (existing && !emailGrant(c) && !(typeof currentPassword === 'string' && await verifyPassword(currentPassword, existing))) {
     return c.json({ error: 'wrong current password' }, 401);
   }
   await setPassword(uid, password);
   return c.json({ ok: true, hasPassword: true });
+});
+
+// ── 移除密码(退回纯验证码登录,同 Notion 的 Remove password)。凭据要求同上 ──
+accountAuthRoutes.post('/auth/password/remove', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const uid = await requireUserId(c);
+  const { currentPassword } = await c.req.json<{ currentPassword?: string }>().catch(() => ({ currentPassword: undefined }));
+  const existing = await getPasswordHash(uid);
+  if (!existing) return c.json({ ok: true, hasPassword: false }); // 幂等
+  if (!emailGrant(c) && !(typeof currentPassword === 'string' && await verifyPassword(currentPassword, existing))) {
+    return c.json({ error: 'wrong current password' }, 401);
+  }
+  await clearPassword(uid);
+  return c.json({ ok: true, hasPassword: false });
 });
 
 // ── 绑定(登录态下给当前账号加身份)──
@@ -372,9 +401,10 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
 });
 
 // ── 我的身份列表(附是否已设密码,供账号面板显示「设置 / 修改密码」)──
+// canResetPassword:本次会话刚验过邮箱 → 改密码时前端不必再要当前密码(后端同样放行)。
 accountAuthRoutes.get('/auth/identities', async (c) => {
   c.header('Cache-Control', 'no-store');
   const uid = await requireUserId(c);
   const [identities, pwHash] = await Promise.all([getIdentities(uid), getPasswordHash(uid)]);
-  return c.json({ identities, hasPassword: pwHash != null });
+  return c.json({ identities, hasPassword: pwHash != null, canResetPassword: emailGrant(c) });
 });
