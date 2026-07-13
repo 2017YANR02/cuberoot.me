@@ -32,29 +32,33 @@ import {
   type MoveFamily,
 } from './pll-fingertricks';
 
-// Snapshot of loadAlg('3x3','pll') case order + first alg (2026-06-01).
+// Snapshot of loadAlg('3x3','pll') case order + first alg (2026-07-13).
+//
+// These are the STORED algs — leading `y` rewritten to `U` and carrying their finishing AUF
+// (see lib/alg_display.ts). That is what the performer actually animates, so it is what the
+// fingertrick resolver must handle. What the cuber reads is displayAlg() of these.
 const PLL_MAIN_ALGS: Record<string, string> = {
   Aa: "x R' U R' D2 R U' R' D2 R2 x'",
   Ab: "x R2 D2 R U R' D2 R U' R x'",
-  E: "y x' R U' R' D R U R' D' R U R' D R U' R' D' x",
-  F: "y R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R",
+  E: "U x' R U' R' D R U R' D' R U R' D R U' R' D' x U'",
+  F: "U R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R U'",
   Ga: "R2 U R' U R' U' R U' R2 D U' R' U R D'",
   Gb: "D R' U' R U D' R2 U R' U R U' R U' R2",
-  Gc: "y2 R2 F2 R U2 R U2 R' F R U R' U' R' F R2",
+  Gc: "U2 R2 F2 R U2 R U2 R' F R U R' U' R' F R2 U'",
   Gd: "R U R' U' D R2 U' R U' R' U R' U R2 D'",
   H: "M2 U' M2 U2 M2 U' M2",
-  Ja: "y2 x R2 F R F' R U2 r' U r U2 x'",
+  Ja: "U2 x R2 F R F' R U2 r' U r U2 x' U'",
   Jb: "R U R' F' R U R' U' R' F R2 U' R'",
   Na: "R U R' U R U R' F' R U R' U' R' F R2 U' R' U2 R U' R'",
   Nb: "R' U R U' R' F' U' F R U R' F R' F' R U' R",
-  Ra: "y R U' R' U' R U R D R' U' R D' R' U2 R'",
+  Ra: "U R U' R' U' R U R D R' U' R D' R' U2 R' U'",
   Rb: "R' U2 R U2 R' F R U R' U' R' F' R2",
   T: "R U R' U' R' F R2 U' R' U' R U R' F'",
-  Ua: "y2 M2 U M U2 M' U M2",
-  Ub: "y2 M2 U' M U2 M' U' M2",
+  Ua: "U2 M2 U M U2 M' U M2 U2",
+  Ub: "U2 M2 U' M U2 M' U' M2 U2",
   V: "R' U R' U' R D' R' D R' U D' R2 U' R2 D R2",
   Y: "F R U' R' U' R U R' F' R U R' U' R' F R F'",
-  Z: "M' U' M2 U' M2 U' M' U2 M2",
+  Z: "M' U' M2 U' M2 U' M' U2 M2 U'",
 };
 
 describe('HandPose / HOME', () => {
@@ -164,16 +168,23 @@ describe('every move family in all 21 PLL mainAlgs resolves to a trick', () => {
     });
   }
 
-  it('exercises the expected family coverage (R L U F D M + x/y rotations)', () => {
-    // PLLs use these; B/z/wide are in the table for completeness even if no PLL hits them.
+  it('exercises the expected family coverage (R U F D M + x rotation + wide)', () => {
     expect(seen.has('R')).toBe(true);
     expect(seen.has('U')).toBe(true);
     expect(seen.has('F')).toBe(true);
     expect(seen.has('M')).toBe(true);
     expect(seen.has('D')).toBe(true);
-    expect(seen.has('x')).toBe(true);
-    expect(seen.has('y')).toBe(true);
+    expect(seen.has('x')).toBe(true);   // E / Ja hold the cube on its side
     expect(seen.has('wide')).toBe(true); // Ja has r/r'
+  });
+
+  // Since the leading-y rewrite (2026-07-13) no PLL main alg opens with a cube rotation about
+  // the y axis — a leading `y^k` is now stored as `U^k … U^-k`, so the cuber never regrips.
+  // The `y` trick stays in the table (other sets still rotate mid-alg); it is just no longer
+  // reached from a PLL. If a `y` reappears here, the rewrite regressed.
+  it('no longer needs the y trick — leading rotations became U turns', () => {
+    expect(seen.has('y')).toBe(false);
+    expect(FINGERTRICKS.y).toBeDefined();
   });
 });
 
