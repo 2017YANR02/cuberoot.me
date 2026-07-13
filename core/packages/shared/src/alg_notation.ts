@@ -210,6 +210,22 @@ export function flattenAlg(alg: string): string {
 }
 
 /**
+ * 归一成**解析器能直接吃**的招式串:剥净 → 展开 `(...)N` → 按 token 重新用空格拼。
+ *
+ * `flattenAlg` 干不了这件事 —— 它在字符串层做,**连写原样留着**。而人写的公式里连写很常见
+ * (`MR` `UD` `R'M'` `E'U'`,那张 1LLL 表 167 条),`new Alg("MR")` 不报错,它会当成一个
+ * 叫 `MR` 的 family 静默吃掉 —— 播出来少一步,还没人知道。tokenizeMoves 是最长匹配,
+ * `MR` 只有 `M` + `R` 一种切法,这里把它切开再拼回去。
+ *
+ * @throws 认不出来的记号 —— **绝不静默丢**。
+ */
+export function toMoveString(alg: string): string {
+  const { moves, junk } = tokenizeMoves(flattenAlg(alg));
+  if (junk.length) throw new Error(`认不出来的记号:${junk.join(' ')}`);
+  return moves.map((m) => m.raw).join(' ');
+}
+
+/**
  * 数步。认不出来的片段**跳过并不计入** —— 计步器不该因为一个杂字符就报错。
  * 要知道有没有杂字符,直接调 `tokenizeMoves` 看 `junk`。
  */

@@ -201,7 +201,9 @@ for (const row of rows) {
   const algs = [];
   const seen = new Set();
   for (const e of entries) {
-    const fit = fitToSetup(e.text, e.moves, setup);
+    // `body` 不是 `text`:标签 `[oh]` 另存 tags,留在公式里既冗余又会炸 cubing.js,
+    // 还会让起手 AUF 补到标签前面(见 sheet_notation 的 @returns)。
+    const fit = fitToSetup(e.body, e.moves, setup);
     if (!fit) { skipped.push({ self, name: row.Name, alg: e.text, 毛病: '按本行 setup 怎么补 AUF 都不还原' }); continue; }
     const k = dedupKey(fit.text);
     if (seen.has(k)) continue;
@@ -220,7 +222,7 @@ for (const row of rows) {
   for (const old of (isRepurposed ? [] : target?.algs?.[0] ?? [])) {
     const parsed = parseAlgCell(old.alg)[0];
     if (!parsed?.moves) { sdb.unparsable++; continue; }
-    const fit = fitToSetup(parsed.text, parsed.moves, setup);
+    const fit = fitToSetup(parsed.body, parsed.moves, setup);
     if (!fit) { sdb.dropped.push({ self, name: row.Name, set: targetSet, alg: old.alg }); continue; }
     const k = dedupKey(fit.text);
     if (seen.has(k)) { sdb.deduped++; continue; }
@@ -251,7 +253,7 @@ function buildMeta(row, firstAlg) {
     const len = num(row[lenCol]);
     if (len === undefined) continue;
     const s = parseAlgCell(row[scrCol])[0];
-    optimal[k] = { len, ...(s?.text ? { scramble: s.text } : {}) };
+    optimal[k] = { len, ...(s?.body ? { scramble: s.body } : {}) };
   }
   const coepAlg = parseAlgCell(row['COEP alg (COEP, EPCO, OO) (currently only ZBLL)'])[0];
   const coepScr = parseAlgCell(row['COEP scramble (COEP, EPCO, OO) (currently only ZBLL)'])[0];
@@ -269,13 +271,13 @@ function buildMeta(row, firstAlg) {
     subset: String(row.Subset),
     oll: String(row.OLL),
     cp: String(row.CP ?? ''),
-    scramble: scr?.text,
+    scramble: scr?.body,
     gen: gen(firstAlg.alg) || undefined,
     type: str(row.Type),
     mirror: num(row.Mirror), inv: num(row.Inv), im: num(row.IM),
     ...(Object.keys(optimal).length ? { optimal } : {}),
     ...(coepAlg?.text || coepScr?.text
-      ? { coep: { ...(coepAlg?.text ? { alg: coepAlg.text } : {}), ...(coepScr?.text ? { scramble: coepScr.text } : {}) } }
+      ? { coep: { ...(coepAlg?.body ? { alg: coepAlg.body } : {}), ...(coepScr?.body ? { scramble: coepScr.body } : {}) } }
       : {}),
     ...(Object.values(sym).some((v) => v !== undefined) ? { sym: Object.fromEntries(Object.entries(sym).filter(([, v]) => v !== undefined)) } : {}),
     sdbNo: str(row['Speedcubedb no.']),
