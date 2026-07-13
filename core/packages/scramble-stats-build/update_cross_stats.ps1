@@ -41,10 +41,28 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $ChunkExplicit = $PSBoundParameters.ContainsKey('ChunkSize')  # 显式 -ChunkSize 覆盖每变体默认
-# 向导触发: 显式 -Interactive, 或裸跑(无参数)+ 真人终端(stdin 未重定向)。AI 工具/scheduled task stdin 被重定向 -> IsInputRedirected=True -> 不弹, 保持旧一键。
-$Wizard = $Interactive -or ($PSBoundParameters.Count -eq 0 -and [Environment]::UserInteractive -and -not [Console]::IsInputRedirected)
+# 真人终端 (AI 工具/CI/scheduled task 的 stdin 被重定向 -> IsInputRedirected=True)。向导 + 退出暂停都看它。
+$HumanTerm = [Environment]::UserInteractive -and -not [Console]::IsInputRedirected
+# 向导触发: 显式 -Interactive, 或裸跑(无参数)+ 真人终端。AI/非交互 -> 不弹, 保持旧一键。
+$Wizard = $Interactive -or ($PSBoundParameters.Count -eq 0 -and $HumanTerm)
 # UTF-8 控制台输出: 否则中文 Windows 默认 GBK(936) 码页下 ›/■/●/◆ 等非 GBK 字形被编成 ?。
 try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+
+# ---- 退出前别让窗口自己关 (双击 / Terminal profile 起的 pwsh 一退出就消失, 报错信息全看不到) ----
+# 成功/失败都停在这;AI/CI/scheduled task (stdin 重定向) 不阻塞。
+function Hold-Console {
+  if(-not $HumanTerm){ return }
+  Write-Host ''
+  Write-Host '按 Enter 关闭窗口...' -ForegroundColor DarkGray
+  try { [void][Console]::ReadLine() } catch {}
+}
+trap {
+  Write-Host ''
+  Write-Host "!! 失败: $_" -ForegroundColor Red
+  if($_.ScriptStackTrace){ Write-Host $_.ScriptStackTrace -ForegroundColor DarkGray }
+  Hold-Console
+  exit 1
+}
 
 # ---- 本机算力限额 (全局规则: 重计算最多 7 核 14 线程, 留 1 核给系统; 长跑进程低优先级) ----
 # solver 各 analyzer 走 rayon 全局池 (executor.rs par_iter), 无自建 ThreadPoolBuilder, 故 RAYON_NUM_THREADS 直接钉死线程数。
@@ -684,7 +702,7 @@ if($Wizard){
     @{ Name='333opt  整解最优 HTM'; Key='2'; Selected=$run333opt },
     @{ Name='puzzles 非3x3 (二阶/金字塔/斜转/SQ1)'; Key='3'; Selected=$runPuzzles }
   )
-  if(-not (Read-MultiSelect -Prompt '跑哪些作业?' -Items $jItems)){ Write-Host '已取消。' -ForegroundColor Yellow; return }
+  if(-not (Read-MultiSelect -Prompt '跑哪些作业?' -Items $jItems)){ Write-Host '已取消。' -ForegroundColor Yellow; Hold-Console; return }
   $runStages  = [bool]$jItems[0].Selected
   $run333opt  = [bool]$jItems[1].Selected
   $runPuzzles = [bool]$jItems[2].Selected
@@ -718,7 +736,7 @@ if($SkipSolve){
         '下载官方最新 export (联网, 按 export_date 缓存)',
         "用本地缓存 $czDate ($czMb MB, 不联网)"
       ) -Default 0
-      if($ti -eq -1){ Write-Host '已取消, 未改动任何 master/JSON。' -ForegroundColor Yellow; return }
+      if($ti -eq -1){ Write-Host '已取消, 未改动任何 master/JSON。' -ForegroundColor Yellow; Hold-Console; return }
       if($ti -eq 1){ $UseCached = $true; Write-Host "  -> 用本地缓存 $czDate" -ForegroundColor DarkGray }
       else { Write-Host '  -> 下载官方最新 export' -ForegroundColor DarkGray }
     } else {
@@ -741,7 +759,7 @@ Write-Host "新打乱(去宽层后)行数: $nNew"
 # 交互向导(裸跑+真人终端 或 -Interactive): 取数后弹问题, 把选择套回 $Variants/$MaxChunks/$NoPublish。
 if($Wizard){
   $plan = Invoke-CrossWizard $nNew
-  if($null -eq $plan){ Write-Host '已取消, 未改动任何 master/JSON。' -ForegroundColor Yellow; return }
+  if($null -eq $plan){ Write-Host '已取消, 未改动任何 master/JSON。' -ForegroundColor Yellow; Hold-Console; return }
   $Variants  = $plan.Variants
   $MaxChunks = $plan.MaxChunks
   $NoPublish = [bool]$plan.NoPublish
@@ -769,6 +787,7 @@ if($DryRun){
     }
     Write-Host ("[DryRun] 合计实跑 ~$dryTot 条 (串行, 总墙钟 ≈ 各 ETA 之和)") -ForegroundColor Yellow
   }
+  Hold-Console
   return
 }
 
@@ -875,6 +894,7 @@ $willInject = $run333opt -or ($runStages -and ($stdChanged -or $variantChanged))
 
 if(-not $stdChanged -and -not $variantChanged -and -not $willInject -and -not $puzzleChanged -and -not $eventsChanged -and -not $mirrorChanged){
   Step '无任何数据变化, 结束。'
+  Hold-Console
   return
 }
 
@@ -1060,3 +1080,4 @@ if($NoPublish){
 }
 
 Step ("完成 (std +{0}; 变体 {1}; 333opt {2}; puzzles {3})" -f $nNew, $(if($variantChanged){$Variants -join '/'}else{'-'}), $(if($optChanged){'是'}else{'-'}), $(if($puzzleChanged){$Puzzles -join '/'}else{'-'}))
+Hold-Console
