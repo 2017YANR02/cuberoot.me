@@ -89,8 +89,9 @@ import AlgsPanel from './AlgsPanel';
 import { puzzleCaps } from './simCaps';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
-import { resetRotationsForPuzzle } from '@/lib/puzzle-image/defaults';
-import type { PuzzleType } from '@/lib/puzzle-image/types';
+import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
+import type { InheritedFields } from '@/lib/puzzle-image/codec';
+import type { ImageSpec, PuzzleType } from '@/lib/puzzle-image/types';
 import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import SimCubeNet from './_SimCubeNet';
@@ -241,13 +242,6 @@ export default function SimPage() {
     }
     return { puzzleType: 'cube', cubeSize: 3 };
   }, [puzzleParam]);
-
-  // Second, INDEPENDENT URL-state host for the studio panel, namespaced under `img_` (no
-  // key collides with sim's own puzzle/cuts/alg/setup/renderer). Injecting the host puzzle
-  // keeps the studio's `pzl` OUT of the URL entirely: the puzzle has ONE source (sim's
-  // `puzzle=`), which the mirror effect below keeps the spec in step with. `view` and the
-  // rotation defaults are parsed against the injected puzzle, so a cold link is correct.
-  const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle });
   // A twisty puzzle is rendered by the in-house engine when it has an engine
   // alternative AND the renderer toggle is off cubing.js (default 'cubing' keeps the
   // cubing.js TwistyPlayer). The non-cubing view is always the engine + group panel
@@ -372,6 +366,21 @@ export default function SimPage() {
 
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  // The studio panel is driven entirely by the sim: its puzzle comes from the sim's
+  // `puzzle=` dropdown (imgPuzzle — keeps `pzl` out of the URL) and its alg + colour
+  // scheme are the sim's own (imgInherit — keeps `alg`/`case`/`sch` out too). Both are
+  // injected into the codec so a cold `?img_…` link parses `view`/rotation against the
+  // right puzzle and the panel never holds a second, conflicting copy of the sim's state.
+  const imgInherit = useMemo<InheritedFields>(() => {
+    const fc = settings.faceColors;
+    const applied = [setupParam, algParam].filter((x) => x && x.trim()).join(' ');
+    return {
+      algType: 'alg', algorithm: applied,
+      faceU: fc.U, faceR: fc.R, faceF: fc.F, faceD: fc.D, faceL: fc.L, faceB: fc.B,
+    };
+  }, [settings.faceColors, setupParam, algParam]);
+  const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
 
   // Lay out the back-view mini window: size it ~30% of the smaller container
   // dimension (clamped), and shift the fullscreen button left of it so they
@@ -1423,24 +1432,33 @@ export default function SimPage() {
   const simBridge = useMemo<SimBridge>(() => ({
     getCanvas, getWorld, getRenderer,
     setup: setupParam, alg: algParam,
-    faceColors: settings.faceColors,
-    puzzleType: imgPuzzle.puzzleType, cubeSize: imgPuzzle.cubeSize,
-  }), [getCanvas, getWorld, getRenderer, setupParam, algParam, settings.faceColors, imgPuzzle]);
+  }), [getCanvas, getWorld, getRenderer, setupParam, algParam]);
 
-  // The sim's puzzle dropdown is the single puzzle selector on this page — the studio
-  // panel has no puzzle picker of its own (PuzzleImageStudio panel mode). Mirror the sim's
-  // current puzzle into the image spec, doing exactly what clicking that puzzle chip did:
-  // resetRotationsForPuzzle snaps the viewport rotation to the new puzzle's default and
-  // leaves alg / colors / mask / view untouched. Guarded on identity so it fires only on
-  // an actual puzzle change, not on every colour or slider tweak (which also updates imgSpec).
+  // Keep the (seeded) image spec in step with the sim as its puzzle / alg / colours
+  // change after mount — the codec injection only runs on the cold-load seed, so every
+  // later change is pushed here. The panel dropped these controls, so the sim is the sole
+  // writer and there is nothing to clobber. A puzzle-type change also snaps the viewport
+  // rotation to the new puzzle's clean iso (what clicking a puzzle chip used to do).
   useEffect(() => {
     if (!imageStudioSupported) return;
-    if (imgSpec.puzzleType === imgPuzzle.puzzleType && imgSpec.cubeSize === imgPuzzle.cubeSize) return;
-    setImgSpec(resetRotationsForPuzzle(imgSpec, {
-      puzzleType: imgPuzzle.puzzleType,
-      cubeSize: imgPuzzle.cubeSize,
-    }));
-  }, [imageStudioSupported, imgPuzzle, imgSpec, setImgSpec]);
+    const patch: Partial<ImageSpec> = {};
+    if (imgSpec.puzzleType !== imgPuzzle.puzzleType) patch.puzzleType = imgPuzzle.puzzleType;
+    if (imgSpec.cubeSize !== imgPuzzle.cubeSize) patch.cubeSize = imgPuzzle.cubeSize;
+    if (imgSpec.algType !== imgInherit.algType) patch.algType = imgInherit.algType;
+    if (imgSpec.algorithm !== imgInherit.algorithm) patch.algorithm = imgInherit.algorithm;
+    if (imgSpec.faceU !== imgInherit.faceU) patch.faceU = imgInherit.faceU;
+    if (imgSpec.faceR !== imgInherit.faceR) patch.faceR = imgInherit.faceR;
+    if (imgSpec.faceF !== imgInherit.faceF) patch.faceF = imgInherit.faceF;
+    if (imgSpec.faceD !== imgInherit.faceD) patch.faceD = imgInherit.faceD;
+    if (imgSpec.faceL !== imgInherit.faceL) patch.faceL = imgInherit.faceL;
+    if (imgSpec.faceB !== imgInherit.faceB) patch.faceB = imgInherit.faceB;
+    if (patch.puzzleType !== undefined || patch.cubeSize !== undefined) {
+      const d = rotationDefaultsFor({ puzzleType: imgPuzzle.puzzleType, puzzleVariant: imgSpec.puzzleVariant });
+      patch.rotateAxis1 = d.axis1; patch.rotateAngle1 = d.angle1;
+      patch.rotateAxis2 = d.axis2; patch.rotateAngle2 = d.angle2;
+    }
+    if (Object.keys(patch).length > 0) setImgSpec(patch);
+  }, [imageStudioSupported, imgPuzzle, imgInherit, imgSpec, setImgSpec]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';

@@ -14,7 +14,7 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Copy, Check, Download, RotateCcw, Plus, Trash2, Camera, Film, Wand2 } from 'lucide-react';
+import { Copy, Check, Download, RotateCcw, Plus, Trash2, Camera, Film } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 // Type-only imports (fully erased at build) — the concrete sim engine + export
 // module are dynamically imported inside the capture handler so /visualcube (which
@@ -163,10 +163,10 @@ function CopyButton({ getValue, label }: { getValue: () => string; label: string
  * Absent on the /visualcube page (page mode), so the capture subgroup never
  * renders there and the golden fixtures stay byte-identical.
  *
- * It carries the sim's live handles (for the offline-render mp4 + canvas PNG) and
- * a snapshot of the sim's current puzzle / setup / alg / face colors (for the
- * one-shot "从模拟器取" button). ONE-WAY: the studio only ever reads these and
- * writes img_* — it never writes back into the sim's puzzle/alg/setup.
+ * It carries the sim's live handles (for the canvas PNG snapshot + offline-render
+ * mp4) and its current setup + alg (the mp4 export animates the alg). The image's
+ * puzzle / alg / colours are NOT pulled through here — the sim injects them into the
+ * spec via the codec (see SimPage), so the panel always mirrors the sim automatically.
  */
 export interface SimBridge {
   getCanvas: () => HTMLCanvasElement | null;
@@ -174,10 +174,6 @@ export interface SimBridge {
   getRenderer: () => THREE.WebGLRenderer | null;
   setup: string;
   alg: string;
-  faceColors: { U: string; R: string; F: string; D: string; L: string; B: string };
-  /** Sim puzzle mapped into the studio's own vocabulary (mirror → cube/3). */
-  puzzleType: PuzzleType;
-  cubeSize: number;
 }
 
 export interface PuzzleImageStudioProps {
@@ -205,6 +201,10 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   // so the studio drops its own puzzle-type + NxN-size controls. Every render/view/mask
   // control below stays.
   const showPuzzleControls = mode === 'page';
+  // Panel mode also drops the controls the sim already owns — 公式 / 六面配色 come
+  // straight from the sim (SimPage injects them via the codec), 背景色 defaults to
+  // transparent, and 视角旋转 to the puzzle's clean iso. One control per concept.
+  const showInheritedControls = mode === 'page';
 
   const previewRef = useRef<HTMLDivElement | null>(null);
 
@@ -325,21 +325,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   const capturePreviewRef = useRef<HTMLCanvasElement | null>(null);
   const abortRef = useRef<{ aborted: boolean }>({ aborted: false });
 
-  // One-shot: copy the sim's current puzzle + setup + alg + face colors into img_*.
-  // One-way — writes the image spec, never the sim's own state.
-  const pullFromSim = useCallback(() => {
-    if (!simBridge) return;
-    const fc = simBridge.faceColors;
-    const applied = [simBridge.setup, simBridge.alg].filter((x) => x && x.trim()).join(' ');
-    onSpecChange(resetRotationsForPuzzle(s, {
-      puzzleType: simBridge.puzzleType,
-      cubeSize: simBridge.cubeSize,
-      algType: 'alg',
-      algorithm: applied,
-      faceU: fc.U, faceR: fc.R, faceF: fc.F, faceD: fc.D, faceL: fc.L, faceB: fc.B,
-    }));
-  }, [simBridge, s, onSpecChange]);
-
   const snapshot = useCallback(() => {
     const cv = simBridge?.getCanvas();
     if (!cv) return;
@@ -414,9 +399,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
         {simBridge && (
           <div className="vc-capture-group">
             <span className="vc-capture-label">{t('实时', 'Live')}</span>
-            <button type="button" className="vc-btn" onClick={pullFromSim}>
-              <Wand2 size={14} /> {t('从模拟器取', 'From simulator')}
-            </button>
             <button type="button" className="vc-btn" onClick={snapshot}>
               <Camera size={14} /> {t('截图', 'Snapshot')}
             </button>
@@ -543,39 +525,41 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           />
         </div>
 
-        <div className="vc-row vc-row-block">
-          <label className="vc-label">{t('公式', 'Algorithm')}</label>
-          <div className="vc-row-controls vc-col">
-            <div className="vc-algtype">
-              <PillToggle
-                value={s.algType === 'alg'}
-                onChange={(v) => set('algType', v ? 'alg' : 'case')}
-                onLabel={t('应用公式', 'Apply alg')}
-                offLabel={t('Case (反向)', 'Case (inverse)')}
-                ariaLabel={t('公式模式', 'Algorithm mode')}
-              />
+        {showInheritedControls && (
+          <div className="vc-row vc-row-block">
+            <label className="vc-label">{t('公式', 'Algorithm')}</label>
+            <div className="vc-row-controls vc-col">
+              <div className="vc-algtype">
+                <PillToggle
+                  value={s.algType === 'alg'}
+                  onChange={(v) => set('algType', v ? 'alg' : 'case')}
+                  onLabel={t('应用公式', 'Apply alg')}
+                  offLabel={t('Case (反向)', 'Case (inverse)')}
+                  ariaLabel={t('公式模式', 'Algorithm mode')}
+                />
+              </div>
+              <div className="vc-row-controls">
+                <textarea
+                  ref={algRef}
+                  className="vc-text vc-textarea"
+                  rows={2}
+                  defaultValue={s.algorithm}
+                  onInput={syncAlgFromDom}
+                />
+                <button
+                  type="button" className="vc-btn-icon" title="Clear"
+                  onClick={() => {
+                    if (algRef.current) algRef.current.value = '';
+                    set('algorithm', '');
+                  }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+              <CubeVirtualKeyboard target={algRef} onInput={syncAlgFromDom} />
             </div>
-            <div className="vc-row-controls">
-              <textarea
-                ref={algRef}
-                className="vc-text vc-textarea"
-                rows={2}
-                defaultValue={s.algorithm}
-                onInput={syncAlgFromDom}
-              />
-              <button
-                type="button" className="vc-btn-icon" title="Clear"
-                onClick={() => {
-                  if (algRef.current) algRef.current.value = '';
-                  set('algorithm', '');
-                }}
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-            <CubeVirtualKeyboard target={algRef} onInput={syncAlgFromDom} />
           </div>
-        </div>
+        )}
 
         {isCube && projected && (
           <div className="vc-row vc-row-block">
@@ -682,7 +666,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           </div>
         )}
 
-        {isCube && projected && (
+        {isCube && projected && showInheritedControls && (
           <div className="vc-row vc-row-block">
             <label className="vc-label">{t('六面配色', 'Color Schemes')}</label>
             <div className="vc-row-controls vc-col">
@@ -720,7 +704,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           </div>
         )}
 
-        {projected && (
+        {projected && showInheritedControls && (
           <div className="vc-row vc-row-block">
             <label className="vc-label">{t('视角旋转', 'Rotation Sequence')}</label>
             <div className="vc-row-controls vc-col">
@@ -765,13 +749,15 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           </div>
         )}
 
-        <ColorRow
-          label={t('背景色', 'Background Color')}
-          value={s.backgroundColor}
-          onChange={(v) => set('backgroundColor', v)}
-          onReset={() => set('backgroundColor', '')}
-          allowEmpty
-        />
+        {showInheritedControls && (
+          <ColorRow
+            label={t('背景色', 'Background Color')}
+            value={s.backgroundColor}
+            onChange={(v) => set('backgroundColor', v)}
+            onReset={() => set('backgroundColor', '')}
+            allowEmpty
+          />
+        )}
         {isCube && projected && (
           <>
             <ColorRow

@@ -40,10 +40,22 @@ export type ImageSpecPatch = (patch: Partial<ImageSpec>) => void;
  */
 export function useImageSpec(prefix: string, opts?: CodecOptions): [ImageSpec, ImageSpecPatch] {
   const hasPuzzle = !!opts?.puzzle;
-  const keyOpts = useMemo<CodecOptions | undefined>(
-    () => (hasPuzzle ? { puzzle: { puzzleType: 'cube', cubeSize: 3 } } : undefined),
-    [hasPuzzle],
-  );
+  const hasInherit = !!opts?.inherit;
+  // The KEY set (imageQueryKeys / imageWriteKeys) depends only on WHICH options are
+  // present, not their values — so memoize on the two booleans with placeholder values.
+  // The real `opts` (live sim alg/colours) still seeds the spec below.
+  const keyOpts = useMemo<CodecOptions | undefined>(() => {
+    if (!hasPuzzle && !hasInherit) return undefined;
+    const o: CodecOptions = {};
+    if (hasPuzzle) o.puzzle = { puzzleType: 'cube', cubeSize: 3 };
+    if (hasInherit) {
+      o.inherit = {
+        algType: 'alg', algorithm: '',
+        faceU: '', faceR: '', faceF: '', faceD: '', faceL: '', faceB: '',
+      };
+    }
+    return o;
+  }, [hasPuzzle, hasInherit]);
   const parsers = useMemo(() => {
     const m: Record<string, typeof parseAsString> = {};
     for (const k of imageQueryKeys(prefix, keyOpts)) m[k] = parseAsString;

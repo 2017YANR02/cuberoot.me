@@ -18,14 +18,31 @@ const WRITE_KEYS = [
 ] as const;
 
 /**
+ * Panel-mode fields the HOST (sim) owns: the studio drops its own 公式 / 六面配色
+ * controls and instead mirrors the sim's current algorithm + colour scheme. Like
+ * `puzzle`, these are injected on read and never written to the URL — so the image
+ * has ONE source for state + colours (the sim), not a second copy under `img_*`.
+ */
+export interface InheritedFields {
+  algType: 'alg' | 'case';
+  algorithm: string;
+  faceU: string; faceR: string; faceF: string; faceD: string; faceL: string; faceB: string;
+}
+
+/**
  * Codec options. `puzzle` = PANEL MODE: the puzzle identity comes from the HOST
  * (e.g. /sim's own `puzzle=` dropdown), not from our `pzl` key. When set, `pzl` is
  * neither read nor written (so there is no second, conflicting source of the puzzle
  * type in the URL), and this puzzle is injected before `view` / rotation parsing —
  * both of which depend on knowing the puzzle type up front.
+ *
+ * `inherit` = the sim's live alg + colour scheme (see InheritedFields). Same
+ * discipline: injected on read (overriding any stray `alg`/`case`/`sch`), never
+ * emitted, so the studio's dropped controls have no orphan URL keys.
  */
 export interface CodecOptions {
   puzzle?: { puzzleType: PuzzleType; cubeSize: number };
+  inherit?: InheritedFields;
 }
 
 /**
@@ -34,9 +51,14 @@ export interface CodecOptions {
  */
 const LEGACY_PZL_ALIAS = 'puzzle';
 
-/** Write keys minus `pzl` when the host owns the puzzle (panel mode). */
+/** Write keys the host owns in panel mode (never emitted): `pzl` when the host owns
+ *  the puzzle, and `alg`/`case`/`sch` when it owns the alg + colour scheme. */
+const INHERITED_KEYS = ['alg', 'case', 'sch'] as const;
 function ownedWriteKeys(opts?: CodecOptions): readonly string[] {
-  return opts?.puzzle ? WRITE_KEYS.filter((k) => k !== 'pzl') : WRITE_KEYS;
+  let keys: readonly string[] = WRITE_KEYS;
+  if (opts?.puzzle) keys = keys.filter((k) => k !== 'pzl');
+  if (opts?.inherit) keys = keys.filter((k) => !(INHERITED_KEYS as readonly string[]).includes(k));
+  return keys;
 }
 
 /** All keys this codec owns at `prefix` (write keys + the legacy alias at ''). */
@@ -169,6 +191,16 @@ export function readSpecFromParams(params: ParamsInput, prefix: string, opts?: C
   s.cubeOpacity = num('co', DEFAULTS.cubeOpacity, 0, 100);
   s.stickerOpacity = num('fo', DEFAULTS.stickerOpacity, 0, 100);
   s.dist = num('dist', DEFAULTS.dist, 1, 100);
+
+  // Panel mode: the host owns the alg + colour scheme — inject LAST so it wins over
+  // any stray `alg`/`case`/`sch` still in the URL (same clobber-proofing as `puzzle`).
+  if (opts?.inherit) {
+    const inh = opts.inherit;
+    s.algType = inh.algType;
+    s.algorithm = inh.algorithm;
+    s.faceU = inh.faceU; s.faceR = inh.faceR; s.faceF = inh.faceF;
+    s.faceD = inh.faceD; s.faceL = inh.faceL; s.faceB = inh.faceB;
+  }
   return s;
 }
 
@@ -182,7 +214,9 @@ export function specToParams(s: ImageSpec, prefix: string, opts?: CodecOptions):
     else set('pzl', String(s.cubeSize));
   }
   if (s.imageSize !== DEFAULTS.imageSize) set('size', String(s.imageSize));
-  if (s.algorithm) set(s.algType, s.algorithm);
+  // Panel mode: alg + colour scheme are host-owned (injected on read), so never emit
+  // `alg`/`case`/`sch` — a second copy would duplicate the sim's own `alg`/`setup`.
+  if (!opts?.inherit && s.algorithm) set(s.algType, s.algorithm);
   if (s.arrows) set('arw', s.arrows);
   if (s.defaultArrowColor) set('ac', s.defaultArrowColor);
   if (s.puzzleType === 'cube') {
@@ -197,7 +231,7 @@ export function specToParams(s: ImageSpec, prefix: string, opts?: CodecOptions):
     s.faceU !== FACE_DEFAULTS.U || s.faceR !== FACE_DEFAULTS.R ||
     s.faceF !== FACE_DEFAULTS.F || s.faceD !== FACE_DEFAULTS.D ||
     s.faceL !== FACE_DEFAULTS.L || s.faceB !== FACE_DEFAULTS.B;
-  if (schDifferent) {
+  if (!opts?.inherit && schDifferent) {
     set('sch', [s.faceU, s.faceR, s.faceF, s.faceD, s.faceL, s.faceB].join(','));
   }
   if (!rotationsMatchDefault(s)) {
