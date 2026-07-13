@@ -19,7 +19,9 @@
  *   括号       分组无语义;`(...)2` `(...)3` 是重复;**会嵌套**(`(R U R' U (R U' R' U)2 R U2' R')`)。
  *   无空格连写 `M'L` `ML'` `RL` `U'D'` `R'L'` —— tokenizer 按最长 move 匹配自然切开。
  *   量         `R2` `R2'` `R3`(= R')`L4'`(= 恒等)`U2'` —— 全部 <family><digits><prime?>。
- *   宽层       只有小写 `r l u d f b`,**没有** `Rw` 写法(w 只在散文 `(wyh)` 里出现)。
+ *   宽层       表里只有小写 `r l u d f b`。但**这个解析器也吃站上的 speedcubedb 公式**
+ *              (Phase 4 要把它们重新对 AUF),那边写 `Rw` / `Lw2` —— 所以文法必须认 `w`。
+ *              曾经不认:`Lw2` 被切成 `L` + junk `w2`,3 条公式静默作废。
  *   散文注释   `(by CubeRoot 251028)` `(by RC Hamner)` `(wyh)` —— 括号里含非 move 字符
  *              `from OLL R U R' U …`  —— 前缀
  *              `[oh] table z (…)2 z'` —— 关键词 table
@@ -27,14 +29,12 @@
  *              但**必须先识别再丢** —— 直接喂 tokenizer 会当成 junk 炸掉整条公式。
  *   数据 bug   有极少数行括号不配对 —— 报 error,交给人。
  */
+import { MOVE_RE, MOVE_CHARS } from '@cuberoot/shared/alg-notation';
 
-/** move 字母表。注意大写 E/M/S 是中层,小写 rludfb 是宽层,xyz 是转体。 */
-const FAMILY = 'RLUDFBrludfbMSExyz';
-const MOVE_RE = new RegExp(`^([${FAMILY}])(\\d*)('?)`);
 /** ↑ ↓ · —— 对状态零作用 */
 export const REGRIP_RE = /[↑↓·]/g;
 /** 括号里出现这些字符 ⟹ 它是散文注释,不是分组 */
-const NON_MOVE_RE = new RegExp(`[^${FAMILY}0-9'\\s()\\u2191\\u2193\\u00B7]`);
+const NON_MOVE_RE = new RegExp(`[^${MOVE_CHARS}\\s()\\u2191\\u2193\\u00B7]`);
 /** 已知的散文关键词(整词) */
 const PROSE_WORDS = /\b(?:from OLL|table)\b/g;
 
