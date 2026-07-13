@@ -1,0 +1,226 @@
+[
+  {
+    "name": "cube-normal",
+    "qs": "pzl=3",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3",
+    "bytes": 6991,
+    "empty": false
+  },
+  {
+    "name": "cube-normal-alg",
+    "qs": "pzl=3&alg=R U R%27 U%27",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&alg=R U R%27 U%27",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&alg=R%20U%20R%27%20U%27",
+    "bytes": 6991,
+    "empty": false
+  },
+  {
+    "name": "cube-plan",
+    "qs": "pzl=3&view=plan",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&view=plan",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&view=plan",
+    "bytes": 5167,
+    "empty": false
+  },
+  {
+    "name": "cube-trans",
+    "qs": "pzl=3&view=trans",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&view=trans",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&view=trans",
+    "bytes": 13897,
+    "empty": false
+  },
+  {
+    "name": "cube-net-3",
+    "qs": "pzl=3&view=net",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&view=net",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&view=net",
+    "bytes": 13425,
+    "empty": false
+  },
+  {
+    "name": "cube-net-5",
+    "qs": "pzl=5&view=net",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=5&view=net",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=5&view=net",
+    "bytes": 15360,
+    "empty": false
+  },
+  {
+    "name": "cube-wca-4",
+    "qs": "pzl=4&view=wca",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=4&view=wca",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=4&view=wca",
+    "bytes": 9863,
+    "empty": false
+  },
+  {
+    "name": "cube-arrows",
+    "qs": "pzl=3&alg=R U R%27 U%27&arw=U0U2,U2U8-s10-ff0000&ac=red",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&alg=R U R%27 U%27&arw=U0U2,U2U8-s10-ff0000&ac=red",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&alg=R%20U%20R%27%20U%27&arw=U0U2,U2U8-s10-ff0000&ac=red",
+    "bytes": 7848,
+    "empty": false
+  },
+  {
+    "name": "cube-scheme",
+    "qs": "pzl=3&sch=%23ffffff,%23ff8800,%2300aa00,%23ffff00,%23dd0000,%230000cc",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&sch=%23ffffff,%23ff8800,%2300aa00,%23ffff00,%23dd0000,%230000cc",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&sch=%23ffffff,%23ff8800,%2300aa00,%23ffff00,%23dd0000,%230000cc",
+    "bytes": 6991,
+    "empty": false
+  },
+  {
+    "name": "cube-stage-oll",
+    "qs": "pzl=3&case=R U R%27 U R U2 R%27&stage=oll",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&case=R U R%27 U R U2 R%27&stage=oll",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&case=R%20U%20R%27%20U%20R%20U2%20R%27&stage=oll",
+    "bytes": 6991,
+    "empty": false
+  },
+  {
+    "name": "cube-stage-f2l-y",
+    "qs": "pzl=3&case=R U R%27&stage=f2l-y",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&case=R U R%27&stage=f2l-y",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&case=R%20U%20R%27&stage=f2l-y",
+    "bytes": 6991,
+    "empty": false
+  },
+  {
+    "name": "cube-rot",
+    "qs": "pzl=3&r=y45x-20",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&r=y45x-20",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&r=y45x-20",
+    "bytes": 7042,
+    "empty": false
+  },
+  {
+    "name": "cube-shell",
+    "qs": "pzl=3&co=50&fo=80&bg=%23123456&cc=%23ffffff&dist=8",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&co=50&fo=80&bg=%23123456&cc=%23ffffff&dist=8",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&co=50&fo=80&bg=%23123456&cc=%23ffffff&dist=8",
+    "bytes": 13952,
+    "empty": false
+  },
+  {
+    "name": "cube-size-512",
+    "qs": "pzl=3&size=512",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=3&size=512",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=3&size=512",
+    "bytes": 6991,
+    "empty": false
+  },
+  {
+    "name": "cube-2x2-ff",
+    "qs": "pzl=2&stage=ff&case=R U R%27 U R U2 R%27",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=2&stage=ff&case=R U R%27 U R U2 R%27",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=2&stage=ff&case=R%20U%20R%27%20U%20R%20U2%20R%27",
+    "bytes": 3746,
+    "empty": false
+  },
+  {
+    "name": "cube-4x4-yau",
+    "qs": "pzl=4&stage=yau",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=4&stage=yau",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=4&stage=yau",
+    "bytes": 11578,
+    "empty": false
+  },
+  {
+    "name": "sq1-iso",
+    "qs": "pzl=sq1&alg=%2F(3,3)%2F(1,0)%2F",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=sq1&alg=%2F(3,3)%2F(1,0)%2F",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=sq1&alg=%2F(3,3)%2F(1,0)%2F",
+    "bytes": 24954,
+    "empty": false
+  },
+  {
+    "name": "sq1-iso-case",
+    "qs": "pzl=sq1&case=(3,3)%2F(1,0)%2F",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=sq1&case=(3,3)%2F(1,0)%2F",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=sq1&case=(3,3)%2F(1,0)%2F",
+    "bytes": 147,
+    "empty": false
+  },
+  {
+    "name": "sq1-iso-case-renderfail",
+    "qs": "pzl=sq1&case=%2F(3,3)%2F(1,0)%2F",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=sq1&case=%2F(3,3)%2F(1,0)%2F",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=sq1&case=%2F(3,3)%2F(1,0)%2F",
+    "bytes": 147,
+    "empty": false
+  },
+  {
+    "name": "sq1-wca",
+    "qs": "pzl=sq1&view=wca&case=%2F(3,3)%2F(1,0)%2F",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=sq1&view=wca&case=%2F(3,3)%2F(1,0)%2F",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=sq1&view=wca&case=%2F(3,3)%2F(1,0)%2F",
+    "bytes": 11989,
+    "empty": false
+  },
+  {
+    "name": "mega-iso",
+    "qs": "pzl=mega",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=mega",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=mega",
+    "bytes": 36216,
+    "empty": false
+  },
+  {
+    "name": "mega-top",
+    "qs": "pzl=mega&view=top",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=mega&view=top",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=mega&view=top",
+    "bytes": 7395,
+    "empty": false
+  },
+  {
+    "name": "pyra-iso",
+    "qs": "pzl=pyra&case=U R%27 L R B%27",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=pyra&case=U R%27 L R B%27",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=pyra&case=U%20R%27%20L%20R%20B%27",
+    "bytes": 8578,
+    "empty": false
+  },
+  {
+    "name": "pyra-wca",
+    "qs": "pzl=pyra&view=wca&case=U R%27 L R B%27",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=pyra&view=wca&case=U R%27 L R B%27",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=pyra&view=wca&case=U%20R%27%20L%20R%20B%27",
+    "bytes": 4525,
+    "empty": false
+  },
+  {
+    "name": "skewb-iso",
+    "qs": "pzl=skewb&case=R U L%27 B",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=skewb&case=R U L%27 B",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=skewb&case=R%20U%20L%27%20B",
+    "bytes": 7343,
+    "empty": false
+  },
+  {
+    "name": "skewb-top",
+    "qs": "pzl=skewb&view=top&case=R U L%27 B",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=skewb&view=top&case=R U L%27 B",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=skewb&view=top&case=R%20U%20L%27%20B",
+    "bytes": 2260,
+    "empty": false
+  },
+  {
+    "name": "skewb-wca",
+    "qs": "pzl=skewb&view=wca&case=R U L%27 B",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=skewb&view=wca&case=R U L%27 B",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=skewb&view=wca&case=R%20U%20L%27%20B",
+    "bytes": 3956,
+    "empty": false
+  },
+  {
+    "name": "skewb-net",
+    "qs": "pzl=skewb&view=net&case=R U L%27 B",
+    "url": "http://127.0.0.1:3000/zh/visualcube?pzl=skewb&view=net&case=R U L%27 B",
+    "finalUrl": "http://127.0.0.1:3000/zh/visualcube?pzl=skewb&view=net&case=R%20U%20L%27%20B",
+    "bytes": 235,
+    "empty": false
+  }
+]
