@@ -7,6 +7,10 @@
 // let users pick any move count, not just the minimum), joins competition names, and writes
 // one JSON consumed by the landing page RecentScrambles widget.
 //
+// Also emits `opt` (id -> optimal equivalent scramble, from solver/333opt/out.0.csv) — the landing
+// widget displays THAT instead of the raw scramble (same as /timer's 最优打乱). Same cube state, so
+// every bucketed step count still applies verbatim.
+//
 // Deliberately standalone from build.ts / build_wca_cross.ts (which the live refresh
 // pipeline runs mid-flight) — duplicates a little variant/metadata boilerplate on purpose
 // to stay isolated from their in-progress runs.
@@ -65,6 +69,27 @@ const VARIANTS: Variant[] = [
 interface NewMeta { scramble: string; compId: string; event: string; round: string; group: string; num: number; extra: boolean }
 // step(字符串) -> 该步数的样例 [id, 取最少步的底色字母] 列表（每桶 ≤ PER_STEP）
 type StepBuckets = Record<string, [string, string][]>;
+
+// 最优等态打乱(首页强制显示的那份,与 /timer「最优打乱」同源):invert(333opt 整解最优解) =
+// 到达同一魔方态的最短打乱。同态项目才可替身 —— 盲拧/多盲的 WCA 打乱带宽块定向后缀,master 语料已剥离,
+// 最优打乱不是同一态。口径与 solver/333opt/export_optimal.mjs 一致。
+const SAME_STATE_EVENTS = new Set(['333', '333oh', '333ft', '333fm']);
+const invertAlg = (alg: string) => alg.trim().split(/\s+/).filter(Boolean).reverse()
+  .map((m) => (m.endsWith("'") ? m.slice(0, -1) : m.endsWith('2') ? m : `${m}'`)).join(' ');
+
+// 流式 solver/333opt/out.0.csv (id,htm,solution),只取 wanted 里的 id。缺文件/缺 id -> 该条回退原打乱。
+async function loadOptimal333(outCsv: string, wanted: Set<string>): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (wanted.size === 0 || !fs.existsSync(outCsv)) return out;
+  const rl = readline.createInterface({ input: fs.createReadStream(outCsv, 'utf-8'), crlfDelay: Infinity });
+  for await (const line of rl) {
+    if (!line) continue;
+    const c = line.split(',');
+    if (c.length < 3 || !c[2] || !wanted.has(c[0])) continue;
+    out.set(c[0], invertAlg(c[2]));
+  }
+  return out;
+}
 
 async function loadCompMeta(tsvPath: string): Promise<Map<string, { name: string; date: string }>> {
   const map = new Map<string, { name: string; date: string }>();
@@ -259,15 +284,23 @@ async function main() {
   for (const vk in rank) for (const m in rank[vk]) for (const c in rank[vk][m]) for (const k in rank[vk][m][c]) for (const [id] of rank[vk][m][c][k]) usedIds.add(id);
   const scr: Record<string, string> = {};
   const meta: Record<string, unknown> = {};
+  const optWanted = new Set<string>();
   for (const id of [...usedIds].sort()) {
     const nm = newMeta.get(id)!;
     scr[id] = nm.scramble;
+    if (SAME_STATE_EVENTS.has(nm.event)) optWanted.add(id);
     const cm = compMeta.get(nm.compId);
     meta[id] = { ci: nm.compId, cn: cm?.name ?? nm.compId, cd: cm?.date ?? '', r: nm.round, g: nm.group, n: nm.num, e: nm.event, x: nm.extra ? 1 : 0 };
   }
 
+  // 4. 最优等态打乱(首页显示这份;同态 -> rank 里的各阶段步数不变,仍适用)。
+  const optMap = await loadOptimal333(path.join(repoRoot, 'solver', '333opt', 'out.0.csv'), optWanted);
+  const opt: Record<string, string> = {};
+  for (const id of [...optMap.keys()].sort()) opt[id] = optMap.get(id)!;
+  console.log(`[recent-scrambles] optimal: ${optMap.size}/${optWanted.size} same-state ids solved${optMap.size < optWanted.size ? ' (rest fall back to the raw scramble)' : ''}`);
+
   const stamp = process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString().slice(0, 10);
-  const out = { export_date: stamp, generated_at: stamp, new_count: newCount, scr, meta, rank };
+  const out = { export_date: stamp, generated_at: stamp, new_count: newCount, scr, opt, meta, rank };
   const outDir = path.join(repoRoot, 'stats', 'scramble');
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, 'recent_scrambles.json');

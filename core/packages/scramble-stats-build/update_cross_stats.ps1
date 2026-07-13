@@ -938,11 +938,6 @@ if($stdChanged -or $variantChanged){
     # 每场预计算表(gen 页秒出), gitignore+只 scp。任一变体(含 std)CSV 变 -> 对应 comp_steps_<v> 需重算。
     pnpm --filter @cuberoot/scramble-stats-build build:comp-steps
     if($LASTEXITCODE -ne 0){ throw 'build:comp-steps 失败' }
-    if($nNew -gt 0 -or $variantChanged){
-      # 近期打乱(recent_scrambles.json): 最近一批新增里各 (变体×类型×底色) 最简单的, 给首页 RecentScrambles。须在步骤4之后。
-      pnpm --filter @cuberoot/scramble-stats-build build:recent-scrambles
-      if($LASTEXITCODE -ne 0){ throw 'build:recent-scrambles 失败' }
-    }
   } finally { Pop-Location }
 }
 
@@ -985,6 +980,18 @@ if($willInject){
   } else {
     Write-Host '[333opt] 无 out.*.csv (没跑过 solve_loop), 跳过 inject。' -ForegroundColor DarkGray
   }
+}
+
+# ---- 5b2. 近期打乱(recent_scrambles.json): 最近一批新增里各 (变体×类型×底色) 最简单的, 给首页 RecentScrambles。
+# 必须在 5a/5b 之后: 首页显示的是**最优等态打乱**(读 solver/333opt/out.0.csv), 本批新 id 得先被 solve_loop 解出来,
+# 否则这批全回退成原打乱。故 333opt 单独跑(新解了 id)也要重出这份。变体 CSV 在步骤 4/5 已就绪。
+if($nNew -gt 0 -or $variantChanged -or $optChanged){
+  Step '5b2 近期打乱(3x3) — build:recent-scrambles (显示最优等态打乱)'
+  Push-Location (Join-Path $RepoRoot 'core')
+  try {
+    pnpm --filter @cuberoot/scramble-stats-build build:recent-scrambles
+    if($LASTEXITCODE -ne 0){ throw 'build:recent-scrambles 失败' }
+  } finally { Pop-Location }
 }
 
 # ---- 5c. 长度 tab「原始/最优」overlay (event_length_examples_opt.json) ----
