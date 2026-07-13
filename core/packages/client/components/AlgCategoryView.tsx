@@ -33,6 +33,7 @@ import { reorderCases } from '@/lib/alg_sets_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { displayAlgCaseName, renameZbllGroupToken } from '@/lib/alg_case_display';
+import { displayAlg } from '@/lib/alg_display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 
@@ -66,7 +67,8 @@ function sanitizeAlgHtml(html: string): string {
 
 function AlgRow({ alg, algHtml, expanded, onToggle, animatable, puzzle, set, setup }: { alg: string; algHtml?: string; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string }) {
   const [copied, setCopied] = useState(false);
-  const algShown = formatScrambleForEvent(puzzle, alg);
+  // 显示 / 复制都剥掉收尾 AUF;下面的 AlgPlayer 拿的仍是完整公式,动画才停在还原态。
+  const algShown = formatScrambleForEvent(puzzle, displayAlg(alg));
   return (
     <>
       <div
@@ -169,7 +171,7 @@ function SubgroupIndex({
             <div className="alg-subgroup-thumb">
               {useF2lThumb
                 ? <CaseThumb puzzle={puzzle} set={set} sticker={sample.sticker} alg={firstAlg} setup={sample.setup} size={110} />
-                : <VisualCube algorithm={firstAlg} view="oll" size={120} />}
+                : <VisualCube setup={sample.setup} algorithm={firstAlg} view="oll" size={120} />}
             </div>
             <div className="alg-subgroup-card-title">{useF2lThumb ? (dispTop || tr({ zh: '其他', en: 'Other' })) : `${set.toUpperCase()} ${dispTop || tr({ zh: '其他', en: 'Other' })}`}</div>
             <div className="alg-subgroup-card-count">{count} {tr({ zh: '个', en: 'cases'
