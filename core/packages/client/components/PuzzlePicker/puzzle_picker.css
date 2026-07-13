@@ -1,12 +1,12 @@
-/* 非 WCA 魔方分组选择器 —— 「更多魔方」下拉 + 分组弹层。
+/* 魔方项目选择下拉 —— 触发器 + 分组弹层(WCA 组 + 非 WCA 家族组)。
    配色全走主题 token,不硬码灰阶。 */
 
-.nwp {
+.pp {
   position: relative;
   display: inline-flex;
 }
 
-.nwp-trigger {
+.pp-trigger {
   appearance: none;
   display: inline-flex;
   align-items: center;
@@ -23,26 +23,27 @@
   white-space: nowrap;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-.nwp-trigger:hover { color: var(--foreground); }
-.nwp-trigger:focus-visible {
+.pp-trigger:hover { color: var(--foreground); }
+.pp-trigger:focus-visible {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
 }
-.nwp-trigger--active {
+.pp-trigger--active {
   color: var(--accent);
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
-.nwp-trigger-icon { flex-shrink: 0; }
-.nwp-trigger-label { font-weight: 600; }
-.nwp-trigger-chevron { color: var(--muted-foreground); flex-shrink: 0; }
+.pp-trigger-icon { flex-shrink: 0; font-size: 1.05rem; }
+.pp-trigger-label { font-weight: 600; }
+.pp-trigger-chevron { color: var(--muted-foreground); flex-shrink: 0; }
 
-.nwp-popup {
+.pp-popup {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  min-width: 200px;
-  max-height: 60vh;
+  width: max-content;
+  max-width: min(560px, calc(100vw - 32px));
+  max-height: 70vh;
   overflow-y: auto;
   background: var(--popover);
   border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
@@ -52,8 +53,8 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-.nwp-group + .nwp-group { margin-top: 4px; }
-.nwp-group-title {
+.pp-group + .pp-group { margin-top: 4px; }
+.pp-group-title {
   padding: 6px 10px 3px;
   font-size: 0.72rem;
   font-weight: 700;
@@ -61,38 +62,57 @@
   text-transform: uppercase;
   color: var(--faint-foreground);
 }
+/* 项目多(WCA 18 + 非 WCA ~30):双列铺开,免超长滚动 */
+.pp-group-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px 4px;
+}
 
-.nwp-item {
+.pp-item {
   appearance: none;
   display: flex;
   align-items: center;
+  gap: 0.5rem;
   width: 100%;
-  padding: 7px 10px;
+  padding: 6px 10px;
   border: none;
   border-radius: 7px;
   background: none;
   color: var(--foreground);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   text-align: left;
   text-decoration: none;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
 }
-.nwp-item:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
-.nwp-item--active {
+.pp-item:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.pp-item--active {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
   color: var(--accent);
   font-weight: 600;
 }
-.nwp-item-label { line-height: 1.2; }
+.pp-item-icon {
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  color: var(--muted-foreground);
+}
+.pp-item--active .pp-item-icon { color: var(--accent); }
+/* 无图标的非 WCA 魔方:短文本代号占同一图标槽,列表左沿对齐 */
+.pp-item-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.05em;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.pp-item-label { line-height: 1.2; white-space: nowrap; }
 
 @media (max-width: 480px) {
-  .nwp-trigger { padding: 0.4rem 0.6rem; }
-  .nwp-popup {
-    /* 窄屏:贴左、限宽,不溢出视口 */
-    left: 0;
-    min-width: 180px;
-    max-width: calc(100vw - 32px);
-  }
+  .pp-trigger { padding: 0.4rem 0.6rem; }
+  .pp-popup { max-width: calc(100vw - 32px); }
+  .pp-group-items { grid-template-columns: 1fr; }
 }
