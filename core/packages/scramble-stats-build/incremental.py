@@ -29,11 +29,14 @@ from __future__ import annotations
 import argparse
 import csv
 import glob
+import http.client
 import io
 import json
 import os
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 import zipfile
 
@@ -140,32 +143,91 @@ def refresh_competitions(src_tsv: str, dest_tsv: str) -> None:
     print(f"  competitions.tsv 刷新 {n} 行 -> {dest_tsv}")
 
 
+DOWNLOAD_TRIES = 6
+TTY = sys.stdout.isatty()  # 真人终端 -> \r 单行原地刷新; 被 AI/CI/日志捕获 -> 只打里程碑, 不刷屏
+
+
+def _progress(msg: str) -> None:
+    """下载进度: 真人终端就地重写同一行 (不滚屏), 非 tty 静默 (由 _milestone 打里程碑)。"""
+    if TTY:
+        print(f"\r    {msg:<48}", end="", flush=True)
+
+
+def _progress_end() -> None:
+    if TTY:
+        print(flush=True)  # 收尾换行, 后续输出不接在进度行尾
+
+
 def _download_with_progress(url: str, dest: str) -> None:
-    """流式下载 + 每 5% 打一行进度 (urlretrieve 无进度, 344MB 静默太久, 像卡死)。"""
-    with urllib.request.urlopen(url) as resp:
-        total = int(resp.headers.get("Content-Length") or 0)
-        done = 0
-        step = total // 20 if total else 0  # 每 5%
-        next_mark = step
-        with open(dest, "wb") as out:
-            while True:
-                chunk = resp.read(1 << 20)  # 1 MB
-                if not chunk:
-                    break
-                out.write(chunk)
-                done += len(chunk)
-                if total and done >= next_mark:
-                    print(f"    {done/1e6:.0f}/{total/1e6:.0f} MB ({done*100//total}%)", flush=True)
-                    next_mark += step
-        if not total:
-            print(f"    {done/1e6:.0f} MB (无 Content-Length)", flush=True)
+    """流式下载 366MB export: 单行进度 + Range 断点续传重试 + 原子落盘。
+
+    坑: 连接被中途掐断 (代理/网关超时) 时 resp.read() 只是返回空 chunk, 不抛异常 ->
+    裸 while 循环会把残缺文件当成"下好了"。必须拿 Content-Length 比对实际字节数,
+    差额走 Range 续传 (WCA export 返回 Accept-Ranges: bytes)。
+    下载期间写 .part, 只有字节数对得上才 rename -> cache/ 里永远不会出现残缺成品。
+    """
+    part = dest + ".part"
+    # 上次残缺的成品当续传起点, 别把已下的几百 MB 丢了重来
+    if os.path.exists(dest) and not zipfile.is_zipfile(dest):
+        os.replace(dest, part)
+
+    for attempt in range(1, DOWNLOAD_TRIES + 1):
+        done = os.path.getsize(part) if os.path.exists(part) else 0
+        req = urllib.request.Request(url)
+        if done:
+            req.add_header("Range", f"bytes={done}-")
+        try:
+            with urllib.request.urlopen(req) as resp:
+                if done and resp.status != 206:  # 服务器不认 Range -> 只能从头下
+                    print("    服务端不支持 Range, 从头下载", flush=True)
+                    done = 0
+                    os.remove(part)
+                total = done + int(resp.headers.get("Content-Length") or 0)
+                tag = f"续传 (第 {attempt} 次) " if done else ""
+                mark = total // 4 if total else 0   # 非 tty: 每 25% 一行, 免几分钟静默像卡死
+                next_mark = (done // mark + 1) * mark if mark else 0
+                tick = 0
+                with open(part, "ab" if done else "wb") as out:
+                    while True:
+                        chunk = resp.read(1 << 20)  # 1 MB
+                        if not chunk:
+                            break
+                        out.write(chunk)
+                        done += len(chunk)
+                        tick += 1
+                        pct = f" ({done*100//total}%)" if total else ""
+                        if TTY and tick % 4 == 0:  # 每 4 MB 刷新同一行
+                            _progress(f"{tag}{done/1e6:.0f}/{total/1e6:.0f} MB{pct}")
+                        elif not TTY and mark and done >= next_mark:
+                            print(f"    {tag}{done/1e6:.0f}/{total/1e6:.0f} MB{pct}", flush=True)
+                            next_mark += mark
+                _progress_end()
+        except (urllib.error.URLError, http.client.HTTPException, OSError) as e:
+            _progress_end()
+            print(f"    下载出错 ({type(e).__name__}: {e}), 重试 {attempt}/{DOWNLOAD_TRIES}", flush=True)
+            time.sleep(2 * attempt)
+            continue
+
+        got = os.path.getsize(part)
+        if not total:  # 无 Content-Length: 没法校验, 只能信它
+            break
+        if got >= total:
+            break
+        print(f"    连接提前关闭 ({got/1e6:.0f}/{total/1e6:.0f} MB), 续传 {attempt}/{DOWNLOAD_TRIES}", flush=True)
+        time.sleep(2 * attempt)
+    else:
+        raise SystemExit(f"下载失败: 重试 {DOWNLOAD_TRIES} 次仍不完整 ({url}); 残段留在 {part}, 下次自动续传")
+
+    os.replace(part, dest)
 
 
 def _prune_cache(keep_path: str) -> None:
     """cache/ 恒只留当前 export zip(用户要求"永远只有一个"), 删其余 WCA_export_*.tsv.zip。"""
     keep = os.path.abspath(keep_path)
     removed = 0
-    for p in glob.glob(os.path.join(CACHE_DIR, "WCA_export_*.tsv.zip")):
+    stale = (glob.glob(os.path.join(CACHE_DIR, "WCA_export_*.tsv.zip"))
+             + glob.glob(os.path.join(CACHE_DIR, "WCA_export_*.tsv.zip.part")))  # 过期残段也扫掉
+    for p in stale:
         if os.path.abspath(p) != keep:
             try:
                 os.remove(p)
@@ -209,8 +271,8 @@ def fetch_export(args) -> tuple[str, dict]:
         if cached_ok:
             print(f"  已缓存 {zip_path} ({os.path.getsize(zip_path)/1e6:.0f} MB), 跳过下载")
         else:
-            if os.path.exists(zip_path):
-                print(f"  缓存残缺 (非合法 zip), 重新下载")
+            if os.path.exists(zip_path) or os.path.exists(zip_path + ".part"):
+                print(f"  缓存残缺 (非合法 zip), 续传补齐")
             print(f"  下载 {url} -> {zip_path}", flush=True)
             _download_with_progress(url, zip_path)
             if not zipfile.is_zipfile(zip_path):
@@ -254,8 +316,10 @@ def _extract_to(z: zipfile.ZipFile, member: str, dest: str) -> None:
     except KeyError:
         total = 0
     done = 0
-    step = 1 << 27  # 每 128 MB 报一次 (大 TSV 解压几十秒, 别静默)
+    step = 1 << 27  # 非 tty 每 128 MB 报一次 (大 TSV 解压几十秒, 别静默); tty 走单行刷新
     next_mark = step
+    tick = 0
+    name = os.path.basename(dest)
     with z.open(member) as src, open(dest, "wb") as dst:
         while True:
             chunk = src.read(1 << 20)
@@ -263,11 +327,15 @@ def _extract_to(z: zipfile.ZipFile, member: str, dest: str) -> None:
                 break
             dst.write(chunk)
             done += len(chunk)
-            if done >= next_mark:
-                tail = f"/{total/1e6:.0f} MB" if total else " MB"
-                print(f"    解压 {os.path.basename(dest)} {done/1e6:.0f}{tail}", flush=True)
+            tick += 1
+            tail = f"/{total/1e6:.0f} MB" if total else " MB"
+            if TTY and tick % 16 == 0:
+                _progress(f"解压 {name} {done/1e6:.0f}{tail}")
+            elif not TTY and done >= next_mark:
+                print(f"    解压 {name} {done/1e6:.0f}{tail}", flush=True)
                 next_mark += step
-    print(f"  解出 {member} -> {os.path.basename(dest)}")
+    _progress_end()
+    print(f"  解出 {member} -> {name}")
 
 
 def load_processed_ids() -> set[int]:
