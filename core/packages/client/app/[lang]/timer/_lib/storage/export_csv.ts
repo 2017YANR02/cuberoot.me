@@ -16,6 +16,7 @@
  * (double turns count as 2 quarter turns).
  */
 
+import { qtm } from '@cuberoot/shared/alg-notation';
 import type { EventId, Solve } from '../types';
 import { EVENTS, effectiveMs } from '../types';
 import { loadAll } from './db';
@@ -63,23 +64,17 @@ function numOrEmpty(n: number | null | undefined): string {
   return typeof n === 'number' && Number.isFinite(n) ? String(n) : '';
 }
 
-/** Approximate QTM: double turns ("R2", "U2") count as 2 quarter turns;
- *  single / prime turns count as 1; rotations / slices / unknown tokens are
- *  ignored. Returns null when the move stream is absent. */
+/**
+ * QTM of the recorded move stream. Returns null when the stream is absent.
+ *
+ * Used to be inline and wrong in two ways: it dropped M/E/S entirely (a slice is
+ * two quarter turns, not zero) and it read the amount with `t.includes('2')`, so
+ * `2R` scored 2. Smart cubes only ever report face turns, so neither fired — but
+ * the stream is notation, and notation is what `alg-notation` is for.
+ */
 function qtmOf(moves: Solve['moves']): number | null {
   if (!moves) return null;
-  let qtm = 0;
-  for (const mv of moves) {
-    const t = (mv.m ?? '').trim();
-    if (!t) continue;
-    const head = t[0];
-    if (head === undefined) continue;
-    // Skip rotations and slices for HTM/QTM accounting (matches stage_segments).
-    if ('xyzXYZMES'.includes(head)) continue;
-    if (t.includes('2')) qtm += 2;
-    else qtm += 1;
-  }
-  return qtm;
+  return qtm(moves.map((mv) => mv.m ?? '').join(' '));
 }
 
 /** Sum of stage HTM counts when stageSegments is present and complete enough. */

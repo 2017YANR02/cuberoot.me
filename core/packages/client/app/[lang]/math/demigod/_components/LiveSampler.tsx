@@ -17,6 +17,7 @@
  */
 import { useCallback, useRef, useState } from 'react';
 import { randomScrambleForEvent } from 'cubing/scramble';
+import { htm } from '@cuberoot/shared/alg-notation';
 import { TeX } from '../../god/_components/Tex';
 
 interface Props {
@@ -24,11 +25,7 @@ interface Props {
   onSamples?: (counts: Map<number, number>, mean: number, total: number) => void;
 }
 
-function countHTM(scramble: string): number {
-  // Each whitespace-separated token in the cubing.js Alg toString is one HTM move
-  // (cubing.js outputs in HTM by default for 333). Filter empty tokens.
-  return scramble.trim().split(/\s+/).filter(Boolean).length;
-}
+const countHTM = htm;
 
 export default function LiveSampler({ isZh, onSamples }: Props) {
   const t = (zh: string, en: string) => (isZh ? zh : en);

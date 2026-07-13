@@ -26,6 +26,9 @@ importers:
 
   packages/alg-build:
     dependencies:
+      '@cuberoot/shared':
+        specifier: workspace:*
+        version: link:../shared
       adm-zip:
         specifier: ^0.5.16
         version: 0.5.17
