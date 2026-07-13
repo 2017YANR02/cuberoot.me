@@ -21,6 +21,14 @@ export function apiUrl(path: string): string {
   return API_ORIGIN + path;
 }
 
+// For a URL the user COPIES OUT (an <img src>, a Markdown image, a hotlink to
+// paste into an external blog/README), always emit the public API origin — a
+// dev-relative '' or a 127.0.0.1 origin is useless once pasted elsewhere. Same
+// body as streamApiUrl but a distinct name so the intent reads at the call site.
+export function publicApiUrl(path: string): string {
+  return (process.env.NEXT_PUBLIC_API_ORIGIN || 'https://api.cuberoot.me') + path;
+}
+
 // For STREAMING (SSE) endpoints, always hit the API origin directly — even in
 // dev. The Next dev rewrite proxy BUFFERS SSE (it holds every byte until the
 // upstream stream closes), so live progress events + the keep-alive heartbeat
