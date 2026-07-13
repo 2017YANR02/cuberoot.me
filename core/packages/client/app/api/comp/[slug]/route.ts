@@ -29,17 +29,23 @@ interface MinimalRound { s?: number }
 interface MinimalEvent { rs?: MinimalRound[] }
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params;
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(slug)) {
     return Response.json({ error: 'invalid slug' }, { status: 400, headers: { 'cache-control': 'no-store' } });
   }
+  // 首屏分片:?only=<event> 只要当前项目 (WC2023 380KB → 数 KB)。查询串进边缘缓存键,
+  // 分片与全量各自成条目;上游认不出的 only 会自己回全量,这里只做形状校验。
+  const only = new URL(req.url).searchParams.get('only');
+  const onlyQs = only && /^(auto|[A-Za-z0-9]+(:[A-Za-z0-9]+)?)$/.test(only)
+    ? `?only=${encodeURIComponent(only)}`
+    : '';
 
   let upstream: Response;
   try {
-    upstream = await fetch(`${UPSTREAM}/v1/cubing-live/${encodeURIComponent(slug)}`, {
+    upstream = await fetch(`${UPSTREAM}/v1/cubing-live/${encodeURIComponent(slug)}${onlyQs}`, {
       signal: AbortSignal.timeout(28_000),
       headers: { accept: 'application/json' },
     });
