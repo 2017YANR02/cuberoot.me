@@ -129,10 +129,13 @@ function stripProse(s) {
 /**
  * 解析一格公式(可能多行 \n)。三份产物,各有各的用途,别混:
  *
- * @returns {Array<{raw, text, tags: string[], equiv: boolean, moves: string|null, error: string|null}>}
+ * @returns {Array<{raw, text, body, tags: string[], equiv: boolean, moves: string|null, error: string|null}>}
  *   - `raw`   本段**逐字原文**(含署名)。只给报告 / 排错看。
- *   - `text`  **入库用**。剥掉署名,但换握记号 / 标签 / 记号周边的空格**一个不动**
- *             (手别是靠空白定的 —— 见 FINGERTRICKS §2)。
+ *   - `text`  剥掉署名的原文,**标签前缀还在**。给报告看(`[oh] R U …` 一眼看出是单手公式)。
+ *   - `body`  **入库用**。`text` 再剥掉 `[oh]` 这类标签前缀 —— 标签另存 `tags`,留在公式里
+ *             既是冗余,又会炸 cubing.js(`new Alg("[oh] R U")`),还会让补起手 AUF 补到
+ *             标签前面去(`deleteAuf` 看不见被 `[` 挡住的 U)。
+ *             换握记号 `↑↓·` 和记号周边的空格**一个不动**(手别靠空白定 —— FINGERTRICKS §2)。
  *   - `moves` **算状态用**。纯 move 串,空格分隔,cubing.js 能直接 `new Alg(moves)`;
  *             认不出来时为 null 且 `error` 非空。
  *
@@ -176,7 +179,7 @@ function parseOneAlg(seg, equiv) {
     s = s.slice(m[0].length);
   }
 
-  const base = { raw, text, tags, equiv };
+  const base = { raw, text, body: s, tags, equiv };
   const { tokens, junk } = tokenize(s.replace(REGRIP_RE, ' '));
   if (junk.length) return { ...base, moves: null, error: `认不出来的记号:${junk.join(' ')}` };
 
