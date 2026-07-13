@@ -4,6 +4,7 @@
  * （之前的 block-based 实现要求标签独占一行，会让所有 inline 注释的 recon 全部得 0）
  */
 import type { ReconStatsResult } from '@cuberoot/shared';
+import { stm } from '@cuberoot/shared/alg-notation';
 import { formatTime, truncateCs } from './recon-utils';
 import { sq1MoveCounts } from './sq1-metrics';
 
@@ -18,21 +19,9 @@ function deleteComment(recon: string): string {
   return out.join('\n');
 }
 
-/** 展开 `(moves)2` / `(moves)3` 重复标记 */
-function expandAlg(alg: string): string {
-  if (!alg) return '';
-  let r = alg.replace(/\(([^()]+)\)2/g, '$1 $1');
-  r = r.replace(/\(([^()]+)\)3/g, '$1 $1 $1');
-  return r;
-}
-
-/** HTM 步数：移除空白/括号/'/旋转/数字/特殊符号后剩余字符数 */
-function htm(alg: string): number {
-  if (!alg) return 0;
-  // NOTE: 与 Python 一致——移除 ` ()'xyz234·↑↓./\n\r`（以及多种 Unicode 引号）
-  const cleaned = alg.replace(/[ ()'’‘`xyz234·↑↓./\n\r]/g, '');
-  return cleaned.length;
-}
+// 这里原本有一个字符法计步器(删掉 ` ()'xyz234·↑↓./` 后数剩余字符),剥离集里没有 `w`,
+// 于是 `Rw` 被数成 2 步 —— 而 recon 文本里宽块正是写 `Rw`。现在走 `@cuberoot/shared/alg-notation`
+// 的 tokenizer。`stm` 自带剥注释 / 剥换握记号 / 展开 `(...)N`,所以调用点不再需要预处理。
 
 /** 取含指定阶段名的整行（取 `//` 之前部分；大小写不敏感） */
 function findStage(recon: string, stageName: string): string {
@@ -163,11 +152,7 @@ const ANNOTATIONS = new Set([
 ]);
 
 function countStmFromTokens(recon: string): number {
-  if (!recon) return 0;
-  const cleaned = deleteComment(recon);
-  const expanded = expandAlg(cleaned);
-  // NOTE: 用 htm 字符法兜底（更接近 Python 的 htm() 定义；不依赖空格分词）
-  return htm(expanded);
+  return stm(recon);
 }
 
 function computeStm(recon: string, event?: string): number {
@@ -199,14 +184,14 @@ function computeCrossStm(recon: string): number {
   }
   const text = startToStage(recon, sn);
   if (!text) return 0;
-  return htm(expandAlg(deleteComment(text)));
+  return stm(text);
 }
 
 /** LL 步数：按 LL 方法组合分支判断 */
 function computeLl(recon: string): number {
   if (!recon || !/cross/i.test(recon)) return 0;
 
-  const stageHtm = (name: string) => htm(expandAlg(findStage(recon, name)));
+  const stageHtm = (name: string) => stm(findStage(recon, name));
   const trailingAuf = (name: string): number => {
     const s = findStage(recon, name);
     if (!s) return 0;

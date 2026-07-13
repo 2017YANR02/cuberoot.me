@@ -2,6 +2,7 @@
  * Alg text utilities — strip comments / zero-width chars, count expanded moves,
  * extract alg from recon-prefixed text. Ported from packages/client-vite/src/utils/recon_alg_utils.ts.
  */
+import { etm } from '@cuberoot/shared/alg-notation';
 
 const STRIP_TOKENS = new Set([
   '[regrip]', '[lockup]', '[freePair]', '[free_pair]',
@@ -162,9 +163,14 @@ export function snapToTokenBoundary(cursorPos: number, positions: TokenPosition[
   return 0;
 }
 
+/**
+ * 招式数(ETM:每个 token 记 1,**转体也算**)—— 播放器的步进索引就是这个口径。
+ *
+ * 走 shared 的 tokenizer 而不是按空白分词:表和用户都会写无空格连写(`M'R'`、`U'D'`),
+ * 按空白数会把它们数成 1 步,播放器就跟公式错位了。
+ */
 export function countMovesExpanded(alg: string): number {
-  if (!alg) return 0;
-  return expandGroupRepeats(alg).trim().split(/\s+/).filter(t => t.length > 0).length;
+  return etm(alg);
 }
 
 export function extractAlgFromText(text: string): string {

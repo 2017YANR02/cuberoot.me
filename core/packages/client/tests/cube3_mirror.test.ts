@@ -134,11 +134,29 @@ describe('mirrorAlg', () => {
     }
   });
 
-  // `new Move('R', 0)` stringifies to "R" — a real quarter turn. A no-op input
-  // must not come back out as a turn.
-  it('drops whole-revolution moves instead of turning them into quarter turns', () => {
-    expect(mirrorAlg('R4', 'M')).toBe('');
-    expect(mirrorAlg("R U R4 U'", 'M')).toBe("L' U' U");
+  /**
+   * `R4` is the identity as a group element but a real physical action — a full
+   * revolution of the R layer, which costs time and drives the hand animation.
+   * The 1LLL sheet writes it on purpose. Mirroring must hand it back, not eat it.
+   */
+  it('preserves whole-revolution moves', () => {
+    expect(mirrorAlg('R4', 'M')).toBe("L4'");
+    expect(mirrorAlg("L4'", 'M')).toBe('R4');
+    expect(mirrorAlg("R U R4 U'", 'M')).toBe("L' U' L4' U");
+    expect(mirrorAlg('R3', 'M')).toBe("L3'");
+  });
+
+  /**
+   * `new Move(family, amount)` throws the layer prefix away, so `2R` came out as
+   * `L'` and `3Rw` as `Lw'` — a different move on a different layer. /sim's mirror
+   * buttons are live on 4x4 and 5x5, so this was reachable.
+   */
+  it('keeps the layer prefix on NxN moves', () => {
+    expect(mirrorAlg('2R', 'M')).toBe("2L'");
+    expect(mirrorAlg('3Rw', 'M')).toBe("3Lw'");
+    expect(mirrorAlg("3Rw2'", 'M')).toBe('3Lw2');
+    expect(mirrorAlg('2-3r', 'M')).toBe("2-3l'");
+    expect(mirrorAlg('3Uw', 'E')).toBe("3Dw'");
   });
 
   it('returns the input unchanged when it cannot be parsed', () => {

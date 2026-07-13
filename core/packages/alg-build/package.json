@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@cuberoot/shared": "workspace:*",
     "adm-zip": "^0.5.16",
     "cheerio": "^1.0.0",
     "cubing": "^0.63.3",
