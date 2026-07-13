@@ -20,13 +20,16 @@ export interface RecentScramblesEventsJson {
   export_date: string;
   generated_at: string;
   new_count: number;
-  scr: Record<string, string>;          // id -> 打乱文字
+  scr: Record<string, string>;          // id -> 原始 WCA 打乱
+  // id -> 最优等态打乱(与原打乱同态、步数最短,其长度即难度值)。仅 222/金字塔/斜转有。
+  // 难度视图强制显示这份;长度视图仍用 scr(那按的就是原打乱长度)。
+  opt?: Record<string, string>;
   meta: Record<string, RecentScrMeta>;   // id -> 比赛元数据
   events: Record<string, RecentEventBuckets>;
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260616';
+const V = '20260712opt';
 
 export async function fetchRecentScramblesEvents(): Promise<RecentScramblesEventsJson | null> {
   try {

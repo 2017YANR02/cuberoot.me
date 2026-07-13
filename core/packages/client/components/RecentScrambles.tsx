@@ -6,6 +6,8 @@
 //  - every other event → simplest scrambles of the latest batch, bucketed by scramble length;
 //    222 / pyraminx / skewb also offer a difficulty (whole-solve optimal step) mode. Fed by
 //    stats/scramble/recent_scrambles_events.json (RecentEventBody).
+// 显示的打乱一律是**最优等态打乱**(同 /timer 真题的「最优打乱」,无 toggle):与该场原打乱同一魔方态、
+// 步数最短。同态 ⇒ 各阶段步数 / 难度值不变。仅「打乱长度」视图例外(那按的就是原打乱长度)。
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
@@ -33,6 +35,9 @@ interface RecentScramblesJson {
   export_date: string;
   new_count: number;
   scr: Record<string, string>;
+  // id -> 最优等态打乱(invert 整解最优解:与原打乱同一魔方态、步数最短)。同态 ⇒ rank 里各阶段步数不变,
+  // 故这里强制显示最优那份(同 /timer 真题的「最优打乱」)。缺的(未解 / 盲拧)回退原打乱。
+  opt?: Record<string, string>;
   meta: Record<string, ScrMeta>;
   // variant -> metric -> subsetKey -> step(字符串) -> [id, 取最少步的底色字母][]（每桶 ≤12 条）
   rank: Record<string, Record<string, Record<string, Record<string, [string, ColorLetter][]>>>>;
@@ -253,7 +258,7 @@ function CompSource({ m, lp, isZh, row }: { m: RecentScrMeta | ScrMeta; lp: stri
 
 // 统一打乱小卡(2 列网格单元):魔方图 + 打乱记号 + 比赛来源,可选左上角底色点。
 // 整卡非单一 <a>(内部「大图 / analyzer / gen」三个并列链接,禁嵌套),与原 hero 同结构。
-function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, rarity }: {
+function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, rarity, optimal }: {
   event: string;
   scramble: string;
   m?: RecentScrMeta | ScrMeta;
@@ -263,6 +268,8 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, rarity }:
   color?: ColorLetter;
   // 稀有汇总卡专用:顶部「变体 类型 步数」标签 + 概率徽章(下钻视图不传,概率在头部统一显示)。
   rarity?: { tag: string; prob: string };
+  // 显示的是最优等态打乱(非该场原打乱的记号)→ 悬停说明,免得被当成比赛原打乱。
+  optimal?: boolean;
 }) {
   return (
     <div className="rs-scard">
@@ -277,7 +284,12 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, rarity }:
             <span className="rs-scard-rprob">≈ {rarity.prob}</span>
           </div>
         )}
-        <Link href={analyzerHref(lp, scramble, ssTarget, color)} prefetch={false} className="rs-scard-scramble">{scramble}</Link>
+        <Link
+          href={analyzerHref(lp, scramble, ssTarget, color)}
+          prefetch={false}
+          className="rs-scard-scramble"
+          title={optimal ? tr({ zh: '最优等态打乱:与该场原打乱同一魔方态,步数最短', en: 'Optimal equivalent scramble — same cube state as the original, fewest moves' }) : undefined}
+        >{scramble}</Link>
         {m && <CompSource m={m} lp={lp} isZh={isZh} row />}
       </div>
     </div>
@@ -523,7 +535,8 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
                 <ScrambleCard
                   key={r.id}
                   event="333"
-                  scramble={data.scr[r.id] ?? ''}
+                  scramble={data.opt?.[r.id] ?? data.scr[r.id] ?? ''}
+                  optimal={!!data.opt?.[r.id]}
                   m={data.meta[r.id]}
                   lp={lp}
                   isZh={isZh}
@@ -543,7 +556,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
       ) : entries.length > 0 ? (
         <div className="rs-cards scroll-panel">
           {entries.slice(0, 12).map(([id, color]) => (
-            <ScrambleCard key={id} event="333" scramble={data.scr[id] ?? ''} m={data.meta[id]} lp={lp} isZh={isZh} ssTarget={ssTarget} color={color} />
+            <ScrambleCard key={id} event="333" scramble={data.opt?.[id] ?? data.scr[id] ?? ''} optimal={!!data.opt?.[id]} m={data.meta[id]} lp={lp} isZh={isZh} ssTarget={ssTarget} color={color} />
           ))}
         </div>
       ) : (
@@ -570,7 +583,9 @@ function RecentEventBody({ event, json, isZh, lp }: { event: string; json: Recen
     return <div className="rs-empty">{tr({ zh: '该项目本批暂无数据', en: 'No recent scrambles for this event' })}</div>;
   }
 
-  const scrOf = (id: string) => json?.scr?.[id] ?? '';
+  // 难度视图强制显示最优等态打乱(同态,其步数 = 该桶的难度值);长度视图按的是原打乱长度,必须显示原打乱。
+  const optOf = (id: string) => (curMode === 'difficulty' ? json?.opt?.[id] : undefined);
+  const scrOf = (id: string) => optOf(id) ?? json?.scr?.[id] ?? '';
   const metaOf = (id: string) => json?.meta?.[id];
 
   return (
@@ -593,7 +608,7 @@ function RecentEventBody({ event, json, isZh, lp }: { event: string; json: Recen
       {ids.length > 0 ? (
         <div className="rs-cards scroll-panel">
           {ids.slice(0, 12).map((id) => (
-            <ScrambleCard key={id} event={event} scramble={scrOf(id)} m={metaOf(id)} lp={lp} isZh={isZh} />
+            <ScrambleCard key={id} event={event} scramble={scrOf(id)} optimal={!!optOf(id)} m={metaOf(id)} lp={lp} isZh={isZh} />
           ))}
         </div>
       ) : null}

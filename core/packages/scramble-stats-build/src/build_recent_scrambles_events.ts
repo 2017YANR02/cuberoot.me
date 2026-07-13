@@ -11,7 +11,10 @@
 //
 // For each event we bucket the batch by **scramble length** (move count, per-event notation).
 // For 2x2x2 / Pyraminx / Skewb we ALSO bucket by **difficulty** = the whole-solve optimal
-// step count, joined by id from the puzzle pipeline CSVs (update_puzzle_stats.ps1 output).
+// step count, joined by id from the puzzle pipeline CSVs (update_puzzle_stats.ps1 output);
+// those same CSVs' `soln` column also gives us `opt` (id -> optimal equivalent scramble), which the
+// difficulty view displays instead of the raw scramble (same as /timer's 最优打乱 — same state,
+// its move count IS the difficulty value). The length view keeps the raw scramble by definition.
 // 333 itself + multi-blind (333mbf/333mbo, multi-cube blobs) are excluded.
 //
 // Deliberately standalone from build.ts / build_puzzle_dist.ts — duplicates a little
@@ -94,18 +97,26 @@ async function loadCompMeta(tsvPath: string): Promise<Map<string, { name: string
   return map;
 }
 
-// stream a puzzle <key>.csv, returning id -> optimal step for the wanted ids only.
-async function loadPuzzleSteps(csvPath: string, valueCol: string, wanted: Set<string>): Promise<Map<string, number>> {
-  const out = new Map<string, number>();
+// 最优等态打乱(难度视图显示这份,与 /timer「最优打乱」同源):invert(整解最优解) = 到达同一魔方态的
+// 最短打乱,其步数即该条的难度值。222/金字塔/斜转的 WCA 打乱无宽块定向后缀,故可作原打乱的等态替身。
+// 口径与 export_puzzle_optimal.mjs 一致(金字塔小写 tip 同理可逆)。
+const invertAlg = (alg: string) => alg.trim().split(/\s+/).filter(Boolean).reverse()
+  .map((m) => (m.endsWith('2') ? m : m.endsWith("'") ? m.slice(0, -1) : `${m}'`)).join(' ');
+
+// stream a puzzle <key>.csv, returning id -> { step, opt } for the wanted ids only.
+// opt = 最优等态打乱(该 puzzle 未开 PUZZLE_EMIT_SOLN 重解时无 soln 列 -> 无 opt,回退原打乱)。
+async function loadPuzzleSteps(csvPath: string, valueCol: string, wanted: Set<string>): Promise<Map<string, { step: number; opt?: string }>> {
+  const out = new Map<string, { step: number; opt?: string }>();
   if (wanted.size === 0 || !fs.existsSync(csvPath)) return out;
   const rl = readline.createInterface({ input: fs.createReadStream(csvPath, 'utf-8'), crlfDelay: Infinity });
-  let idIdx = -1, valIdx = -1;
+  let idIdx = -1, valIdx = -1, solnIdx = -1;
   for await (const line of rl) {
     if (!line) continue;
     if (idIdx === -1) {
       const h = line.split(',');
       idIdx = h.indexOf('id');
       valIdx = h.indexOf(valueCol);
+      solnIdx = h.indexOf('soln');
       if (idIdx === -1 || valIdx === -1) throw new Error(`puzzle csv missing id/${valueCol}: ${csvPath}`);
       continue;
     }
@@ -113,7 +124,9 @@ async function loadPuzzleSteps(csvPath: string, valueCol: string, wanted: Set<st
     const id = c[idIdx];
     if (!wanted.has(id)) continue;
     const v = Number(c[valIdx]);
-    if (Number.isFinite(v)) out.set(id, v);
+    if (!Number.isFinite(v)) continue;
+    const soln = solnIdx === -1 ? '' : (c[solnIdx] ?? '');
+    out.set(id, { step: v, ...(soln && soln !== '-' ? { opt: invertAlg(soln) } : {}) });
   }
   return out;
 }
@@ -231,7 +244,8 @@ async function main() {
     insertCapped(ev.length[String(len)], id, PER_BUCKET);
   }
 
-  // difficulty buckets (222/pyram/skewb) via puzzle CSV join.
+  // difficulty buckets (222/pyram/skewb) via puzzle CSV join. 同时收下最优等态打乱(难度视图显示这份)。
+  const optimal = new Map<string, string>();
   for (const [event, key] of Object.entries(DIFFICULTY_PUZZLES)) {
     const ids = new Set<string>();
     for (const [id, b] of newRows) if (b.event === event) ids.add(id);
@@ -241,11 +255,14 @@ async function main() {
     if (steps.size === 0) { console.warn(`  [difficulty] ${event}: no steps joined from ${csvPath}`); continue; }
     const ev = ensure(event);
     const byStep: Record<string, string[]> = {};
-    for (const [id, step] of steps) {
+    let nOpt = 0;
+    for (const [id, { step, opt }] of steps) {
       (byStep[String(step)] ??= []);
       insertCapped(byStep[String(step)], id, PER_BUCKET);
+      if (opt) { optimal.set(id, opt); nOpt++; }
     }
     ev.difficulty = { metric: 'htm', byStep };
+    console.log(`  [difficulty] ${event}: ${steps.size} joined, ${nOpt} with an optimal scramble`);
   }
 
   // collect referenced ids → scr + comp-name-joined meta.
@@ -255,16 +272,19 @@ async function main() {
     if (ev.difficulty) for (const arr of Object.values(ev.difficulty.byStep)) for (const id of arr) usedIds.add(id);
   }
   const scr: Record<string, string> = {};
+  const opt: Record<string, string> = {};
   const meta: Record<string, unknown> = {};
   for (const id of [...usedIds].sort((a, b) => rawIdNum(a) - rawIdNum(b))) {
     const b = newRows.get(id)!;
     scr[id] = b.scr;
+    const o = optimal.get(id);
+    if (o) opt[id] = o;
     const cm = compMeta.get(b.ci);
     meta[id] = { ci: b.ci, cn: cm?.name ?? b.ci, cd: cm?.date ?? '', r: b.r, g: b.g, n: b.n, e: b.event, x: b.x };
   }
 
   const stamp = process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString().slice(0, 10);
-  const out = { export_date: stamp, generated_at: stamp, new_count: newCount, scr, meta, events };
+  const out = { export_date: stamp, generated_at: stamp, new_count: newCount, scr, opt, meta, events };
   const outDir = path.join(repoRoot, 'stats', 'scramble');
   fs.mkdirSync(outDir, { recursive: true });
   const outPath = path.join(outDir, 'recent_scrambles_events.json');
