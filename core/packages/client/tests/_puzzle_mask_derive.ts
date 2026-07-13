@@ -1,8 +1,10 @@
 /**
  * Empirical derivation of the two mask tables. NOT a test file (no `.test.ts`),
  * imported by `tests/puzzle-mask.test.ts`, which re-derives on every run and
- * compares against the committed fixtures — so a renderer change breaks the test
- * instead of silently corrupting masks.
+ * compares against the shipped tables in `lib/puzzle-image/data/*.json` — so a
+ * renderer change breaks the test instead of silently corrupting masks. The
+ * derivation lives in tests/, the tables live in lib/ (the app needs them at
+ * runtime); nothing in either is hand-typed.
  *
  * Nothing here is hand-typed. Both tables come out of the state machines
  * themselves:

@@ -18,7 +18,7 @@
  * newline allowed between cycles).
  */
 
-import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-types';
+import type { MaskRenderOptions, StickerId } from '@/lib/puzzle-image/mask-core';
 
 export const MEGA_FACE_NAMES = ['U', 'BL', 'BR', 'R', 'F', 'L', 'D', 'DR', 'DBR', 'B', 'DBL', 'DL'] as const;
 const FACE_NAMES = MEGA_FACE_NAMES;

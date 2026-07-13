@@ -89,6 +89,25 @@ export function rotationsMatchDefault(s: ImageSpec): boolean {
          s.rotateAxis2 === d.axis2 && s.rotateAngle2 === d.angle2;
 }
 
+/**
+ * Puzzle-TYPE switch: reset the viewport rotation to the new puzzle's defaults
+ * UNCONDITIONALLY, throwing away whatever the user had dialled in. A megaminx
+ * angle is meaningless on a pyraminx, so the old page (visualcube page.tsx, the
+ * puzzle-type buttons) never tried to preserve it.
+ *
+ * NOT the same as `snapRotationOnVariantBoundary`, which is what the VARIANT
+ * switch uses: that one only snaps when the current angles still equal the
+ * defaults, i.e. it preserves a hand-dialled rotation across iso/top/net/wca.
+ * Two boundaries, two behaviours — keep them separate.
+ */
+export function resetRotationsForPuzzle(s: ImageSpec, partial: Partial<ImageSpec>): ImageSpec {
+  const next = { ...s, ...partial };
+  const d = rotationDefaultsFor(next);
+  next.rotateAxis1 = d.axis1; next.rotateAngle1 = d.angle1;
+  next.rotateAxis2 = d.axis2; next.rotateAngle2 = d.angle2;
+  return next;
+}
+
 export function snapRotationOnVariantBoundary(s: ImageSpec, partial: Partial<ImageSpec>): ImageSpec {
   const next = { ...s, ...partial };
   if (rotationsMatchDefault(s)) {

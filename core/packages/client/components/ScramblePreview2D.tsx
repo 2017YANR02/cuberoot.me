@@ -64,7 +64,10 @@ import {
   renderUnfoldedSvgForEvent,
   eventToCubeSize,
 } from '@/app/[lang]/scramble/gen/_svg/cube_unfolded_svg';
-import { toRenderMask, type MaskRenderOptions } from '@/lib/puzzle-image/puzzle-mask';
+// mask-core, NOT puzzle-mask: this component only parses a mask string, it never
+// expands pieces — so it must not pull the derived tables (lib/puzzle-image/data)
+// into the chunk of every page that shows a scramble preview.
+import { toRenderMask, type MaskRenderOptions } from '@/lib/puzzle-image/mask-core';
 
 // Minimal shape-mod helpers inline — full table lives in client/utils/shapeModScramble.ts
 // (not yet ported). Only mirror_333 needs special-case handling here.
