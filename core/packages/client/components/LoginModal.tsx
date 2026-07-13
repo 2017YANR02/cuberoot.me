@@ -13,7 +13,7 @@ import { useAuthStore, applySession } from '@/lib/auth-store';
 import { useLang } from '@/i18n/tr';
 import {
   sendEmailCode, verifyEmailCode, sendPhoneCode, verifyPhoneCode,
-  loginPassword, setPassword as apiSetPassword,
+  loginPassword, setPassword as apiSetPassword, removePassword,
   linkEmailSend, linkEmailVerify, linkPhoneSend, linkPhoneVerify,
   unlinkIdentity, fetchIdentities, fetchAuthProviders, loginGoogle, linkGoogle,
   type Identity, type AuthProviders, type SocialProvider,
@@ -233,9 +233,12 @@ function PasswordInput({ value, onChange, placeholder, autoComplete, autoFocus, 
   );
 }
 
-/** 邮箱验证码登录(受控 email,发码 → 输码 → 校验)。默认方式,passwordless(Vercel/Notion 风)。 */
-function EmailCodeFlow({ email, setEmail, onDone, toPassword }: {
-  email: string; setEmail: (v: string) => void; onDone: () => void; toPassword: () => void;
+/**
+ * 邮箱验证码登录(受控 email,发码 → 输码 → 校验)。默认方式,passwordless(Vercel/Notion 风)。
+ * reset=true 时是「忘记密码」进来的:同一套验证码,只是验完不关窗,交由上层引导设新密码。
+ */
+function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
+  email: string; setEmail: (v: string) => void; onDone: () => void; toPassword: () => void; reset?: boolean;
 }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
@@ -287,7 +290,7 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword }: {
         {error && <p className="lm-error">{error}</p>}
         <button className="lm-primary" disabled={code.length !== CODE_LEN || busy} onClick={() => void verify()}>
           {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
-          {t('登录', 'Sign in')}
+          {reset ? t('继续', 'Continue') : t('登录', 'Sign in')}
         </button>
         <button className="lm-textbtn" onClick={() => { setStep('input'); setCode(''); setError(null); }}>
           {t('换邮箱 / 重新发送', 'Change email / resend')}
@@ -297,6 +300,11 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword }: {
   }
   return (
     <div className="lm-flow">
+      {reset && (
+        <p className="lm-hint">
+          {t('给你的邮箱发一个验证码,验证后即可设置新密码。', "We'll email you a code — verify it and you can set a new password.")}
+        </p>
+      )}
       <label className="lm-label">{t('邮箱', 'Email')}</label>
       <input
         className="lm-input"
@@ -313,14 +321,16 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword }: {
         {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
         {t('发送验证码', 'Send code')}
       </button>
-      <button className="lm-textbtn" onClick={toPassword}>{t('用密码登录', 'Sign in with a password')}</button>
+      <button className="lm-textbtn" onClick={toPassword}>
+        {reset ? t('返回密码登录', 'Back to password sign-in') : t('用密码登录', 'Sign in with a password')}
+      </button>
     </div>
   );
 }
 
 /** 邮箱 + 密码登录(受控 email;仅登录已设密码的账号,未设密码走验证码 + 账号面板设密码)。 */
-function EmailPasswordFlow({ email, setEmail, onDone, toCode }: {
-  email: string; setEmail: (v: string) => void; onDone: () => void; toCode: () => void;
+function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
+  email: string; setEmail: (v: string) => void; onDone: () => void; toCode: () => void; onForgot: () => void;
 }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
@@ -369,17 +379,51 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode }: {
         {t('登录', 'Sign in')}
       </button>
       <button className="lm-textbtn" onClick={toCode}>{t('用邮箱验证码登录', 'Email me a code instead')}</button>
+      <button className="lm-textbtn" onClick={onForgot}>{t('忘记密码?', 'Forgot your password?')}</button>
     </div>
   );
 }
 
-/** 邮箱凭据区:验证码(默认)/ 密码两种方式,email 提升到此以便切换时保留已输入的地址。 */
+/**
+ * 邮箱凭据区:验证码(默认)/ 密码两种方式,email 提升到此以便切换时保留已输入的地址。
+ *
+ * 忘记密码走 reset:同一套邮箱验证码 —— 验完即登录(会话带 amr=email_code)→ 不关窗,
+ * 直接落到「设置新密码」表单(免旧密码,后端认这个 grant)。等价于别家的重置邮件链接,
+ * 但不必再发第二种邮件、也不必再造一个 /reset-password 页。
+ */
 function EmailAuth({ onDone }: { onDone: () => void }) {
+  const lang = useLang();
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const [email, setEmail] = useState('');
-  const [mode, setMode] = useState<'code' | 'password'>('code');
-  return mode === 'code'
-    ? <EmailCodeFlow email={email} setEmail={setEmail} onDone={onDone} toPassword={() => setMode('password')} />
-    : <EmailPasswordFlow email={email} setEmail={setEmail} onDone={onDone} toCode={() => setMode('code')} />;
+  const [mode, setMode] = useState<'code' | 'password' | 'reset'>('code');
+  const [newPw, setNewPw] = useState(false); // 重置流验证通过,待设新密码
+
+  if (newPw) {
+    return (
+      <div className="lm-flow">
+        <p className="lm-hint">{t('邮箱已验证。设置一个新密码,下次即可用它登录。', 'Email verified. Set a new password to sign in with next time.')}</p>
+        <SetPasswordForm needCurrent={false} label={t('新密码', 'New password')} onDone={onDone} />
+        <button className="lm-textbtn" onClick={onDone}>{t('跳过', 'Skip')}</button>
+      </div>
+    );
+  }
+  if (mode === 'password') {
+    return (
+      <EmailPasswordFlow
+        email={email} setEmail={setEmail} onDone={onDone}
+        toCode={() => setMode('code')}
+        onForgot={() => setMode('reset')}
+      />
+    );
+  }
+  return (
+    <EmailCodeFlow
+      email={email} setEmail={setEmail}
+      reset={mode === 'reset'}
+      onDone={() => (mode === 'reset' ? setNewPw(true) : onDone())}
+      toPassword={() => setMode('password')}
+    />
+  );
 }
 
 /** 「或」分隔线(两侧发丝线 + 居中文字),分隔主凭据区与第三方登录。 */
@@ -400,8 +444,13 @@ function SsoButton({ icon, label, busy, onClick }: {
   );
 }
 
-/** 设置 / 修改密码(账号面板内)。已有密码时要求先输当前密码;两次新密码需一致。 */
-function SetPasswordForm({ hasPassword, onDone }: { hasPassword: boolean; onDone: () => void }) {
+/**
+ * 设置 / 修改 / 重置密码。needCurrent 决定要不要先验旧密码 —— 与后端同一条规矩:
+ * 已有密码要改 → 要旧密码;首次设置、或本次会话刚验过邮箱(忘记密码) → 不要。
+ */
+function SetPasswordForm({ needCurrent, label, onDone }: {
+  needCurrent: boolean; label: string; onDone: () => void;
+}) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const [current, setCurrent] = useState('');
@@ -417,7 +466,7 @@ function SetPasswordForm({ hasPassword, onDone }: { hasPassword: boolean; onDone
     if (next !== confirm) { setError(t('两次输入的密码不一致', 'Passwords do not match')); return; }
     setBusy(true);
     try {
-      await apiSetPassword(next, hasPassword ? current : undefined);
+      await apiSetPassword(next, needCurrent ? current : undefined);
       setDone(true);
       window.setTimeout(onDone, 800);
     } catch (e) {
@@ -425,25 +474,25 @@ function SetPasswordForm({ hasPassword, onDone }: { hasPassword: boolean; onDone
       setBusy(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, next, confirm, hasPassword, onDone]);
+  }, [current, next, confirm, needCurrent, onDone]);
 
   if (done) {
     return <div className="lm-flow lm-pwform"><p className="lm-hint">{t('密码已保存。', 'Password saved.')}</p></div>;
   }
   return (
     <div className="lm-flow lm-pwform">
-      {hasPassword && (
+      {needCurrent && (
         <>
           <label className="lm-label">{t('当前密码', 'Current password')}</label>
           <PasswordInput value={current} onChange={setCurrent} autoComplete="current-password" autoFocus />
         </>
       )}
-      <label className="lm-label">{hasPassword ? t('新密码', 'New password') : t('设置密码', 'Set password')}</label>
+      <label className="lm-label">{label}</label>
       <PasswordInput
         value={next}
         onChange={setNext}
         autoComplete="new-password"
-        autoFocus={!hasPassword}
+        autoFocus={!needCurrent}
         placeholder={t('至少 8 位', 'At least 8 characters')}
       />
       <label className="lm-label">{t('确认密码', 'Confirm password')}</label>
@@ -456,12 +505,57 @@ function SetPasswordForm({ hasPassword, onDone }: { hasPassword: boolean; onDone
       {error && <p className="lm-error">{error}</p>}
       <button
         className="lm-primary"
-        disabled={busy || !next || !confirm || (hasPassword && !current)}
+        disabled={busy || !next || !confirm || (needCurrent && !current)}
         onClick={() => void submit()}
       >
         {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
         {t('保存', 'Save')}
       </button>
+    </div>
+  );
+}
+
+/** 移除密码(退回纯验证码登录)。凭据要求与改密一致:无「刚验过邮箱」的 grant 就得输当前密码。 */
+function RemovePasswordForm({ needCurrent, onDone, onCancel }: {
+  needCurrent: boolean; onDone: () => void; onCancel: () => void;
+}) {
+  const lang = useLang();
+  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
+  const [current, setCurrent] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = useCallback(async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await removePassword(needCurrent ? current : undefined);
+      onDone();
+    } catch (e) {
+      setError(authErrorText(e instanceof Error ? e.message : String(e), t));
+      setBusy(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, needCurrent, onDone]);
+
+  return (
+    <div className="lm-flow lm-pwform">
+      <p className="lm-hint">{t('移除后仍可用邮箱验证码登录,不会丢失账号。', 'You can still sign in with an emailed code — your account stays.')}</p>
+      {needCurrent && (
+        <>
+          <label className="lm-label">{t('当前密码', 'Current password')}</label>
+          <PasswordInput
+            value={current} onChange={setCurrent} autoComplete="current-password" autoFocus
+            onEnter={() => { if (!busy && current) void submit(); }}
+          />
+        </>
+      )}
+      {error && <p className="lm-error">{error}</p>}
+      <button className="lm-primary" disabled={busy || (needCurrent && !current)} onClick={() => void submit()}>
+        {busy ? <Loader2 size={ICON} className="lm-spin" /> : null}
+        {t('移除密码', 'Remove password')}
+      </button>
+      <button className="lm-textbtn" onClick={onCancel}>{t('取消', 'Cancel')}</button>
     </div>
   );
 }
@@ -608,7 +702,9 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
   const loginWithWca = useAuthStore((s) => s.loginWithWca);
   const [identities, setIdentities] = useState<Identity[] | null>(null);
   const [hasPassword, setHasPassword] = useState(false);
-  const [settingPw, setSettingPw] = useState(false);
+  // 本次会话刚用邮箱验证码登录 → 改 / 移除密码免输当前密码(忘了密码的人正是这样进来的)。
+  const [canReset, setCanReset] = useState(false);
+  const [pwAction, setPwAction] = useState<'set' | 'remove' | null>(null);
   const [linking, setLinking] = useState<'email' | 'phone' | null>(null);
   const [error, setError] = useState<string | null>(null);
   // 解绑二次确认:先点「解绑」进入待确认态,再点「确定」才真正调用。
@@ -627,6 +723,7 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
     const acct = await fetchIdentities();
     setIdentities(acct.identities);
     setHasPassword(acct.hasPassword);
+    setCanReset(acct.canResetPassword);
   }, []);
   useEffect(() => { void reload(); }, [reload]);
   // 手机支付宝唤起 App 绑定后切回本页时,重拉身份列表(同浏览器完成的绑定即刻反映)。
@@ -815,14 +912,38 @@ function AccountPanel({ onClose }: { onClose: () => void }) {
         <div className="lm-linklist">
           <div className="lm-idrow">
             <span className="lm-idprov">{t('密码', 'Password')}</span>
-            <button type="button" className="lm-link" onClick={() => setSettingPw((v) => !v)}>
+            <button
+              type="button"
+              className="lm-link"
+              onClick={() => setPwAction((a) => (a === 'set' ? null : 'set'))}
+            >
               {hasPassword ? t('修改', 'Change') : t('设置', 'Set')}
             </button>
+            {hasPassword && (
+              <button
+                type="button"
+                className="lm-unlink"
+                onClick={() => setPwAction((a) => (a === 'remove' ? null : 'remove'))}
+              >
+                {t('移除', 'Remove')}
+              </button>
+            )}
           </div>
         </div>
       )}
-      {settingPw && (
-        <SetPasswordForm hasPassword={hasPassword} onDone={() => { setSettingPw(false); void reload(); }} />
+      {pwAction === 'set' && (
+        <SetPasswordForm
+          needCurrent={hasPassword && !canReset}
+          label={hasPassword ? t('新密码', 'New password') : t('设置密码', 'Set password')}
+          onDone={() => { setPwAction(null); void reload(); }}
+        />
+      )}
+      {pwAction === 'remove' && (
+        <RemovePasswordForm
+          needCurrent={!canReset}
+          onDone={() => { setPwAction(null); void reload(); }}
+          onCancel={() => setPwAction(null)}
+        />
       )}
 
       <button className="lm-textbtn lm-logout" onClick={() => { logout(); onClose(); }}>

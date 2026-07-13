@@ -171,6 +171,17 @@ export async function setPassword(userId: number, pw: string): Promise<void> {
 }
 
 /**
+ * 移除密码(退回纯 passwordless)。密码从来不是登录方式的最后一根稻草 —— 邮箱验证码永远在,
+ * 故移除它不会让账号失联(不像 removeIdentity 需要「最后一个身份」保护)。
+ */
+export async function clearPassword(userId: number): Promise<void> {
+  await query(
+    'UPDATE app_users SET password_hash = NULL, password_updated_at = NOW() WHERE id = ?',
+    [userId],
+  );
+}
+
+/**
  * 邮箱 + 密码登录:按 email 身份找账号 → 验密码。成功返 AppUser;无账号 / 未设密码 / 密码错都返 null
  * (统一走一次 scrypt,含假哈希兜底,不泄露具体失败原因 + 无时序侧信道)。
  */
