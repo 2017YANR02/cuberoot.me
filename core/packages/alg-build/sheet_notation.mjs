@@ -93,11 +93,16 @@ function stripProse(s) {
 }
 
 /**
- * 解析一格公式(可能多行 \n)。
- * @returns {Array<{raw, tags: string[], equiv: boolean, moves: string|null, error: string|null}>}
- *   moves = 空格分隔的纯 move 串,cubing.js 能直接 `new Alg(moves)`;认不出来时为 null 且 error 非空。
- *   `raw` 保留**原样**(含换握记号 / 标签 / 空格),入库要它;`moves` 只用来算状态。
- *   整行只有署名注释(`(by CubeRoot)`)的行**不产出条目**。
+ * 解析一格公式(可能多行 \n)。三份产物,各有各的用途,别混:
+ *
+ * @returns {Array<{raw, text, tags: string[], equiv: boolean, moves: string|null, error: string|null}>}
+ *   - `raw`   本段**逐字原文**(含署名)。只给报告 / 排错看。
+ *   - `text`  **入库用**。剥掉署名,但换握记号 / 标签 / 记号周边的空格**一个不动**
+ *             (手别是靠空白定的 —— 见 FINGERTRICKS §2)。
+ *   - `moves` **算状态用**。纯 move 串,空格分隔,cubing.js 能直接 `new Alg(moves)`;
+ *             认不出来时为 null 且 `error` 非空。
+ *
+ *   整行只有署名(`(by CubeRoot)`)的行**不产出条目**。
  */
 export function parseAlgCell(cell) {
   if (cell == null) return [];
@@ -105,19 +110,31 @@ export function parseAlgCell(cell) {
   for (const line0 of String(cell).split('\n')) {
     if (!line0.trim()) continue;
     // 行中的 `=` 也是分隔符 —— 一行里写了两条等价公式。第一段是本体,后面的都是等价写法。
+    // `raw` 存的是**这一段**的原文(不是整行),入库要它。
     const segs = line0.split('=');
     segs.forEach((seg, i) => {
-      const e = parseOneAlg(seg, line0.trim(), i > 0 || line0.trim().startsWith('='));
+      const e = parseOneAlg(seg, i > 0);
       if (e) out.push(e);
     });
   }
   return out;
 }
 
-function parseOneAlg(seg, raw, equiv) {
-  let s = seg.trim();
-  if (!s) return null;
+/**
+ * `raw` = 本段原文,**原样保留**换握记号 / 标签 / 记号周边的空格(手别是靠空白定的,
+ * 见 FINGERTRICKS §2:`↑U` = 右手,`↑ U` = 左手 —— 增删一个空格就改了指法)。
+ * 只 trim 首尾:记号落在行尾时后面本就没有字符,手别无从谈起。
+ */
+function parseOneAlg(seg, equiv) {
+  const raw = seg.trim();
+  if (!raw) return null;
 
+  // 入库文本:只剥署名。**多空格压成一个是安全的** —— 它既不会把"紧贴"变成"带空格",
+  // 也不会反过来,所以 FINGERTRICKS 的手别规则不受影响。
+  const text = stripProse(raw).replace(/ {2,}/g, ' ').trim();
+  if (!text) return null;   // 整段只是署名 —— 丢掉,不是一条公式
+
+  let s = text;
   const tags = [];
   let m;
   while ((m = /^\[([a-z,]+)\]\s*/.exec(s))) {
@@ -125,11 +142,9 @@ function parseOneAlg(seg, raw, equiv) {
     s = s.slice(m[0].length);
   }
 
-  s = stripProse(s);
-  if (!s.trim()) return null;   // 整段只是署名 —— 丢掉,不是一条公式
-
+  const base = { raw, text, tags, equiv };
   const { tokens, junk } = tokenize(s.replace(REGRIP_RE, ' '));
-  if (junk.length) return { raw, tags, equiv, moves: null, error: `认不出来的记号:${junk.join(' ')}` };
+  if (junk.length) return { ...base, moves: null, error: `认不出来的记号:${junk.join(' ')}` };
 
   let moves, warn = null;
   try {
@@ -138,13 +153,13 @@ function parseOneAlg(seg, raw, equiv) {
     // 表里有极少数行括号漏配对(typo)。括号只有在带重复指数 `(...)N` 时才有语义 ——
     // 没有指数就整个丢掉括号照样是同一条公式。有指数才是真解不了。
     if (tokens.some(t => t.t === ')' && t.rep !== 1)) {
-      return { raw, tags, equiv, moves: null, error: `括号不配对且带重复指数,救不回来(${e.message})` };
+      return { ...base, moves: null, error: `括号不配对且带重复指数,救不回来(${e.message})` };
     }
     moves = tokens.filter(t => t.t === 'm').map(t => t.s).join(' ');
     warn = `括号不配对(${e.message})—— 无重复指数,已丢弃括号照常解析`;
   }
-  if (!moves) return { raw, tags, equiv, moves: null, error: '空公式' };
-  return { raw, tags, equiv, moves, error: null, ...(warn ? { warn } : {}) };
+  if (!moves) return { ...base, moves: null, error: '空公式' };
+  return { ...base, moves, error: null, ...(warn ? { warn } : {}) };
 }
 
 /** 单个公式串 → cubing.js 能吃的 move 串(拿不到就 null) */
