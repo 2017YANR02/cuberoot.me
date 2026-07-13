@@ -1,0 +1,147 @@
+# pnpm 版本自动升级 —— 保持在最新版,但**上游发个坏版本永远打不红主干**。
+#
+# 版本的唯一来源是 core/package.json 的 `packageManager`(所有 workflow 的 action-setup 都读它,
+# 本地 pnpm 也照它自动切版本 —— 本地和 CI 从此同一个 pnpm)。
+#
+# 为什么闸门在 PR **之前**:GITHUB_TOKEN 开的 PR 不会触发别的 workflow(GitHub 防递归),
+# 所以「开个 PR 等 Test 变绿」在这个仓库行不通。于是本 workflow 自己把该跑的跑完 ——
+# 装上候选 pnpm、frozen-lockfile、typecheck、测试 —— **全过了才开 PR**。
+#
+# 这条闸门防的正是 2026-07-13 那次:pnpm 11.12.0 把依赖从"全打包"改成"声明真实依赖",
+# 于是它自己的 self-update / packageManager 切换路径直接崩(`'integrity' in undefined`)。
+# 那次是 `version: 11` 浮动大版本,零 commit 把全仓打红。现在同样的坏版本只会让这个 job 变红,
+# PR 根本不会开出来。
+name: pnpm bump
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'   # 每周一 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            core
+            .claude/hooks
+          filter: blob:none
+
+      - name: 看看有没有新版
+        id: check
+        run: |
+          CURRENT=$(node -p "require('./core/package.json').packageManager.split('@')[1]")
+          LATEST=$(npm view pnpm version)
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "latest=$LATEST"   >> "$GITHUB_OUTPUT"
+          if [ "$CURRENT" = "$LATEST" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "已经是最新的 pnpm $CURRENT,收工。"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "pnpm $CURRENT → $LATEST,开验。"
+          fi
+
+      - name: 改 packageManager(只在工作区,先不提交)
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          node -e "
+            const fs = require('fs'), f = 'core/package.json';
+            const j = JSON.parse(fs.readFileSync(f, 'utf8'));
+            j.packageManager = 'pnpm@${{ steps.check.outputs.latest }}';
+            fs.writeFileSync(f, JSON.stringify(j, null, 2) + '\n');
+          "
+
+      # ⚠ 下面两步 continue-on-error —— **上游发个坏版本不该把这个周任务打红**
+      # (否则 11.12.0 这种坏版本会让它周周红,把人训练成无视红灯)。
+      # 没过验证 = 跳过本周 + Bark 告警,job 仍然是绿的。
+
+      # 这一步正是 11.12.0 栽的地方:action-setup 读 packageManager 去装那个版本。
+      - uses: pnpm/action-setup@v6
+        id: setup
+        if: steps.check.outputs.changed == 'true'
+        continue-on-error: true
+        with:
+          package_json_file: core/package.json
+
+      - uses: actions/setup-node@v6
+        if: steps.check.outputs.changed == 'true' && steps.setup.outcome == 'success'
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+
+      # 与 test.yml 同一套。`--frozen-lockfile`:新 pnpm 想改 lockfile 就直接失败。
+      # (shared/visualcube 的 dist 是 typecheck 的前置 —— 原因见 test.yml 的注释。)
+      - name: 拿候选 pnpm 真跑一遍
+        id: verify
+        if: steps.check.outputs.changed == 'true' && steps.setup.outcome == 'success'
+        continue-on-error: true
+        working-directory: core
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @cuberoot/shared build
+          pnpm --filter @cuberoot/visualcube build
+          pnpm --filter @cuberoot/client typecheck
+          pnpm --filter @cuberoot/server typecheck
+          pnpm --filter @cuberoot/client test
+          pnpm exec knip --include files,dependencies,unlisted,binaries --no-config-hints
+
+      - name: 没过验证 → 跳过本周(不红 CI,只告警)
+        if: steps.check.outputs.changed == 'true' && (steps.setup.outcome != 'success' || steps.verify.outcome != 'success')
+        env:
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+          LATEST: ${{ steps.check.outputs.latest }}
+          CURRENT: ${{ steps.check.outputs.current }}
+        run: |
+          WHERE=$([ "${{ steps.setup.outcome }}" != 'success' ] && echo '装不上(action-setup)' || echo '装上了但构建/测试没过')
+          echo "## pnpm $LATEST 没通过验证 —— 跳过本周" >> "$GITHUB_SUMMARY"
+          echo "" >> "$GITHUB_SUMMARY"
+          echo "卡在:**$WHERE**。仓库仍留在 pnpm \`$CURRENT\`,主干不受影响。" >> "$GITHUB_SUMMARY"
+          echo "上游修好后,下周会自动再试一次。" >> "$GITHUB_SUMMARY"
+          curl -sS -m 10 -X POST "https://api.day.app/$BARK_KEY" \
+            --data-urlencode "title=pnpm $LATEST 没过验证" \
+            --data-urlencode "body=$WHERE;仓库留在 $CURRENT,主干没事。下周自动重试。" \
+            --data-urlencode "group=cuberoot-monitor" || true
+
+      - name: 全过了才开 PR
+        if: steps.check.outputs.changed == 'true' && steps.verify.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST: ${{ steps.check.outputs.latest }}
+          CURRENT: ${{ steps.check.outputs.current }}
+        run: |
+          BRANCH="chore/pnpm-$LATEST"
+          if gh pr list --head "$BRANCH" --state open --json number -q '.[0].number' | grep -q .; then
+            echo "PR 已存在,不重复开。"; exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add core/package.json
+          git commit -m "chore(deps): pnpm $CURRENT -> $LATEST
+
+          Verified in CI before this PR was opened: the version installs via action-setup,
+          pnpm install --frozen-lockfile accepts the existing lockfile untouched, and build +
+          typecheck + the full test suite pass on it.
+
+          Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
+          git push -u origin "$BRANCH"
+          gh pr create --title "chore(deps): pnpm $CURRENT -> $LATEST" --body "\
+          pnpm \`$CURRENT\` → \`$LATEST\`。
+
+          \`core/package.json\` 的 \`packageManager\` 是 pnpm 版本的**唯一来源** —— 所有 workflow 的
+          action-setup 读它,本地 pnpm 也照它自动切版本。
+
+          **开这个 PR 之前已经验过**(见本 PR 关联的 \`pnpm bump\` run):
+          - action-setup 能装上这个版本(2026-07 的 11.12.0 就是死在这一步)
+          - \`pnpm install --frozen-lockfile\` 接受现有 lockfile,一个字节没改
+          - build + typecheck + 全量测试通过
+
+          装不上或跑不过的版本,PR 根本不会开出来。"
