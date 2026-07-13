@@ -81,9 +81,16 @@ interface RendererEntry {
   renderer: RendererId | ((s: ImageSpec) => RendererId);
   /** Drag-to-rotate: only the projected (non-unfolded) views have a viewport. */
   draggable: boolean;
-  /** Extra class on the .vc-preview root (kept from the original markup). */
-  extraClass?: string;
 }
+
+/** Extra `.vc-preview` class, keyed on the RESOLVED renderer — not the row, so a
+ *  4x4 `cube:net` (which resolves to the pure tnoodle SVG, not the 3x3 paint
+ *  editor) does not inherit the paint-editor marker. Mirrors the original markup,
+ *  where these classes lived inside the per-renderer branch. */
+const RENDERER_CLASS: Partial<Record<RendererId, string>> = {
+  'net-paint-3x3': 'vc-preview-net-paint',
+  'skewb-net-display': 'vc-preview-cubing',
+};
 
 /** key = `${puzzleType}:${cubeView | puzzleVariant}`. Every combination the codec
  *  can produce has a row — an unknown key falls back to the pure renderer. */
@@ -92,8 +99,7 @@ const REGISTRY: Record<string, RendererEntry> = {
   'cube:plan':   { renderer: 'pure', draggable: true },
   'cube:trans':  { renderer: 'pure', draggable: true },
   // 3x3 net is the paint editor; every other size falls through to the tnoodle net.
-  'cube:net':    { renderer: (s) => (s.cubeSize === 3 ? 'net-paint-3x3' : 'pure'), draggable: false,
-                   extraClass: 'vc-preview-net-paint' },
+  'cube:net':    { renderer: (s) => (s.cubeSize === 3 ? 'net-paint-3x3' : 'pure'), draggable: false },
   'cube:wca':    { renderer: 'pure', draggable: false },
 
   'sq1:iso':      { renderer: 'sr-puzzlegen', draggable: true },
@@ -113,11 +119,17 @@ const REGISTRY: Record<string, RendererEntry> = {
 
   'skewb:iso': { renderer: 'sr-puzzlegen', draggable: true },
   'skewb:top': { renderer: 'sr-puzzlegen', draggable: true },
-  'skewb:net': { renderer: 'skewb-net-display', draggable: false, extraClass: 'vc-preview-cubing' },
+  'skewb:net': { renderer: 'skewb-net-display', draggable: false },
   'skewb:wca': { renderer: 'pure', draggable: false },
 };
 
 const FALLBACK: RendererEntry = { renderer: 'pure', draggable: false };
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string
+  ));
+}
 
 export function registryKey(s: ImageSpec): string {
   return `${s.puzzleType}:${s.puzzleType === 'cube' ? s.cubeView : s.puzzleVariant}`;
@@ -125,11 +137,8 @@ export function registryKey(s: ImageSpec): string {
 
 function entryFor(s: ImageSpec): { renderer: RendererId; draggable: boolean; extraClass?: string } {
   const e = REGISTRY[registryKey(s)] ?? FALLBACK;
-  return {
-    renderer: typeof e.renderer === 'function' ? e.renderer(s) : e.renderer,
-    draggable: e.draggable,
-    extraClass: e.extraClass,
-  };
+  const renderer = typeof e.renderer === 'function' ? e.renderer(s) : e.renderer;
+  return { renderer, draggable: e.draggable, extraClass: RENDERER_CLASS[renderer] };
 }
 
 /** sr-puzzlegen's own axis naming: sq1 / pyraminx spin about z where we say y. */
@@ -160,14 +169,17 @@ export default function PuzzleImage({
   const { renderer, draggable, extraClass } = entryFor(spec);
   const wantIds = !!onStickerClick;
 
-  // Pinned pre-existing behaviour: a renderer throw becomes this red div rather
-  // than an error boundary. tests/fixtures/puzzle-image-golden locks the markup.
+  // Pinned pre-existing behaviour: a renderer throw becomes a red div rather than
+  // an error boundary. The message is HTML-escaped before it reaches
+  // dangerouslySetInnerHTML (the original interpolated it raw). The sr-puzzlegen
+  // render-fail path is the one the golden fixtures lock; this is the parallel
+  // pure-render path.
   const svg = useMemo(() => {
     if (renderer !== 'pure') return null;
     try {
       return renderSpecSvg(spec, wantIds ? { stickerIds: true } : undefined);
     } catch (e) {
-      return `<div style="color:red">${(e as Error).message}</div>`;
+      return `<div style="color:red">${escapeHtml((e as Error).message)}</div>`;
     }
   }, [spec, renderer, wantIds]);
 
