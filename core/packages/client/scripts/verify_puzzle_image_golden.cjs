@@ -15,9 +15,12 @@
  * 不进 CI(要跑浏览器 + dev server),是本地迁移期的验收闸。
  */
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { chromium } = require('@playwright/test');
-const { disableWebRTC } = require('C:/Users/CubeRoot/.claude/bin/pw-no-webrtc.cjs');
+// 起 ad-hoc playwright 前必须先禁 WebRTC(全局规矩)。这份 kill 在 ~/.claude/bin/ 下,不在仓库里 ——
+// 走 homedir 解析,别硬编码某台机器的绝对路径(换机即挂,knip 也会把它当未声明依赖)。
+const { disableWebRTC } = require(path.join(os.homedir(), '.claude', 'bin', 'pw-no-webrtc.cjs'));
 
 const FIX = path.resolve(__dirname, '../tests/fixtures/puzzle-image-golden');
 const CHROME = process.env.SAFE_CHROME_BIN
