@@ -915,6 +915,38 @@ export const CATALOG: ComponentEntry[] = [
     Demo: ScramblePreview2DDemo,
   },
   {
+    name: 'PuzzleImage',
+    import: "import PuzzleImage from '@/components/puzzle-image/PuzzleImage';",
+    category: 'more',
+    zh: '任意魔方状态图的统一预览件(/visualcube 的画面部分)。按 (魔方, 视图) 查一张注册表分派渲染器:visualcube 立体 / 平面、tnoodle 展开图、sr-puzzlegen 立体 / 顶视、3x3 涂色板、cubing.js 斜转展开;自带拖拽转视角与可选贴纸点选(mask 编写)。渲染器抛错渲染成红字块,不炸整页。',
+    en: 'The single preview surface for any puzzle-state image (the picture half of /visualcube). A registry keyed on (puzzle, view) dispatches the renderer: visualcube iso/plan, the tnoodle nets, sr-puzzlegen iso/top, the 3x3 paint editor and the cubing.js skewb net — with drag-to-rotate and optional sticker picking (mask authoring). A renderer throw becomes a red block, never a page crash.',
+    usage: '<PuzzleImage spec={spec} onSpecChange={patch} />',
+    note: {
+      zh: 'root class 必须保持 vc-preview:scripts/verify_puzzle_image_golden.cjs 抓它的 innerHTML 当零丢失铁证(28 条 fixture)。',
+      en: 'The root must keep the class vc-preview — scripts/verify_puzzle_image_golden.cjs scrapes its innerHTML as the 28-fixture zero-loss oracle.',
+    },
+  },
+  {
+    name: 'PuzzleImageStudio',
+    import: "import PuzzleImageStudio from '@/components/puzzle-image/PuzzleImageStudio';",
+    category: 'more',
+    zh: '整套魔方图片生成控制台:预览 + 导出行(分享链接 / API 链接 / SVG / PNG / <img> / Markdown)+ 全部控件(魔方与视图、阶数、尺寸、公式、箭头、stage mask、六面配色、视角、背景 / 壳体 / 透明度 / 投影)。完全受控(spec + onSpecChange),内部不碰 URL —— URL 归页面宿主(useImageSpec)。mode="page" 整页,mode="panel" 窄栏。',
+    en: 'The whole puzzle-image console: preview + export row (share URL / API URL / SVG / PNG / <img> / Markdown) + every control (puzzle & view, cube size, image size, alg, arrows, stage mask, face colors, viewport rotation, background / shell / opacity / projection). Fully controlled (spec + onSpecChange) and owns no URL state — the page host does (useImageSpec). mode="page" for a full page, mode="panel" for a narrow sidebar.',
+    usage: '<PuzzleImageStudio spec={spec} onSpecChange={patch} mode="page" />',
+    note: {
+      zh: 'nuqs 只能在页级宿主里跑,所以本组件必须受控;/visualcube 与 /sim 图片面板挂的是同一份。',
+      en: 'nuqs only runs in a page-level host, hence the controlled contract; /visualcube and the /sim image panel mount the same component.',
+    },
+  },
+  {
+    name: 'MaskCatalogGrid',
+    import: "import MaskCatalogGrid from '@/components/puzzle-image/MaskCatalogGrid';",
+    category: 'more',
+    zh: 'stage mask 速查网格(~147 张卡,数据来自 lib/puzzle-image/masks 的 STAGE_SECTIONS)。basePath 决定点卡片进哪个编辑器(/visualcube 或 /sim)。卡片一律 prefetch={false} —— 147 张的视口预取会打爆 Edge Requests。',
+    en: 'The stage-mask cheat-sheet grid (~147 cards, data from STAGE_SECTIONS in lib/puzzle-image/masks). basePath picks which editor a card opens (/visualcube or /sim). Cards are prefetch={false} — viewport-prefetching 147 links would blow the Edge Request budget.',
+    usage: '<MaskCatalogGrid basePath="/visualcube" />',
+  },
+  {
     name: 'StackedBar',
     import: "import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';",
     category: 'display',

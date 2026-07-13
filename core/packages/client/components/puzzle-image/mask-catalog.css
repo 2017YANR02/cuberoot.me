@@ -1,0 +1,106 @@
+/* Stage-mask catalog grid + its page chrome. Was the INLINE_CSS blob in
+ * app/[lang]/visualcube/stages/page.tsx; vcs-* class names kept verbatim. */
+
+.vcs-page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px 20px 64px;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+.vcs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0 16px;
+  border-bottom: 1px solid var(--border-default);
+  margin-bottom: 16px;
+}
+.vcs-header h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.vcs-header-right { display: flex; align-items: center; gap: 12px; }
+.vcs-link {
+  color: var(--signal-info);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 4px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+}
+.vcs-link:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+
+.vcs-intro {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.vcs-section { margin-bottom: 32px; }
+.vcs-section-title {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0 0 12px;
+  color: var(--foreground);
+  border-left: 3px solid var(--signal-info);
+  padding-left: 10px;
+}
+.vcs-count {
+  color: var(--faint-foreground);
+  font-weight: 400;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.vcs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.vcs-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px 8px;
+  background: var(--card);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.vcs-card:hover {
+  border-color: var(--signal-info);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+.vcs-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 110px;
+}
+.vcs-thumb img { display: block; max-width: 100%; height: auto; }
+.vcs-label {
+  font-size: 12px;
+  font-family: var(--font-mono, ui-monospace, 'SF Mono', Menlo, Consolas, monospace);
+  color: var(--muted-foreground);
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.3;
+}
+
+@media (max-width: 480px) {
+  .vcs-page { padding: 12px 12px 48px; }
+  .vcs-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+  .vcs-thumb { min-height: 88px; }
+  .vcs-thumb img { max-width: 88px; }
+  .vcs-label { font-size: 11px; }
+}

@@ -1,0 +1,218 @@
+/* Puzzle-image studio chrome. Was the INLINE_CSS blob in app/[lang]/visualcube/page.tsx;
+ * the vc-* class names are kept verbatim so the existing look (and app/globals.css's
+ * rule for .vc-editor-page) still applies to the extracted components.
+ *
+ * Two roots declare the token aliases:
+ *   .vc-editor-page — the /visualcube page host (max-width + page background)
+ *   .vc-studio      — <PuzzleImageStudio> itself, so it also works mounted in a
+ *                     narrow sidebar (mode="panel") outside the page host.
+ *
+ * Colors are theme tokens. Puzzle sticker colors are DATA and live in the
+ * renderers, never here. */
+
+.vc-editor-page,
+.vc-studio {
+  --vc-bg: var(--background);
+  --vc-panel: var(--card);
+  --vc-input: color-mix(in srgb, var(--foreground) 5%, transparent);
+  --vc-hover: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --vc-text: var(--foreground);
+  --vc-text-dim: var(--muted-foreground);
+  --vc-accent: var(--accent);
+  --vc-divider: var(--border-default);
+}
+
+.vc-editor-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px;
+  background: var(--vc-bg);
+  color: var(--vc-text);
+}
+
+.vc-studio {
+  color: var(--vc-text);
+}
+
+.vc-header {
+  padding: 4px 0 14px; margin-bottom: 12px;
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+}
+.vc-header h1 { margin: 0; font-size: 18px; font-weight: 500; color: var(--vc-text); letter-spacing: 0.3px; }
+.vc-header-right { display: flex; align-items: center; gap: 12px; }
+.vc-header-link {
+  color: var(--signal-info); text-decoration: none; font-size: 13px;
+  padding: 4px 10px; border: 1px solid var(--vc-divider); border-radius: 6px;
+}
+.vc-header-link:hover { background: var(--vc-hover); }
+
+.vc-preview-wrap {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; justify-content: center; align-items: center;
+  padding: calc(24px + var(--sat, 0px)) max(24px, var(--sar, 0px)) 24px max(24px, var(--sal, 0px));
+  /* Opaque: composite the input tint over the page bg so scrolled content
+     (alg input / virtual keyboard) doesn't bleed through the pinned preview. */
+  background: linear-gradient(var(--vc-input), var(--vc-input)), var(--vc-bg);
+  border-radius: 4px;
+  max-height: 45vh;
+}
+.vc-preview {
+  display: inline-block;
+  background: repeating-conic-gradient(color-mix(in srgb, var(--foreground) 3%, transparent) 0% 25%, transparent 0% 50%) 50% / 16px 16px;
+  max-width: 100%; max-height: 100%;
+  overflow: hidden;
+}
+.vc-preview svg { display: block; max-width: 100%; max-height: calc(45vh - 48px); width: auto; height: auto; }
+.vc-preview-draggable { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.vc-preview-draggable.dragging { cursor: grabbing; }
+.vc-preview-draggable svg { pointer-events: none; }
+/* Sticker-click authoring: the paths must take the click, so re-enable them. */
+.vc-preview-pickable svg { pointer-events: auto; }
+.vc-preview-pickable [data-sid] { cursor: crosshair; }
+
+.vc-exports { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 18px; }
+
+.vc-controls { display: flex; flex-direction: column; }
+.vc-row {
+  display: flex; gap: 14px; align-items: center; padding: 10px 0;
+}
+.vc-row-block { align-items: flex-start; }
+.vc-row-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex: 1 1 auto; min-width: 0; }
+.vc-col { flex-direction: column; align-items: stretch; gap: 8px; }
+.vc-label {
+  flex: 0 0 auto; min-width: 100px;
+  font-size: 12px; font-weight: 500; color: var(--vc-text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.vc-label-secondary { min-width: 0; padding-left: 16px; }
+
+.vc-num, .vc-text, .vc-num-sm, .vc-color-text, .vc-select, .vc-select-sm {
+  background: var(--vc-input); color: var(--vc-text);
+  border: 1px solid transparent; border-radius: 3px;
+  padding: 6px 9px; font-size: 13px; font-family: inherit;
+  outline: none;
+}
+.vc-select { width: fit-content; max-width: 100%; }
+.vc-num { width: 72px; }
+.vc-num-sm { width: 56px; padding: 4px 7px; font-size: 12px; }
+.vc-text { flex: 1; min-width: 0; font-family: var(--font-mono, monospace); }
+.vc-textarea { resize: vertical; min-height: 36px; }
+.vc-color-text { width: 96px; font-size: 12px; font-family: var(--font-mono, monospace); }
+.vc-select-sm { width: 56px; padding: 4px 7px; font-size: 12px; }
+.vc-num:focus, .vc-text:focus, .vc-num-sm:focus, .vc-color-text:focus,
+.vc-select:focus, .vc-select-sm:focus {
+  border-color: var(--vc-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.vc-range { flex: 1; min-width: 120px; height: 18px; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
+.vc-range::-webkit-slider-runnable-track { height: 4px; background: var(--vc-input); border-radius: 2px; }
+.vc-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--vc-accent); margin-top: -5px; cursor: pointer; }
+.vc-range::-moz-range-track { height: 4px; background: var(--vc-input); border-radius: 2px; border: none; }
+.vc-range::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--vc-accent); border: none; cursor: pointer; }
+
+.vc-color, .vc-color-sm {
+  padding: 0; border: none; border-radius: 3px; cursor: pointer; background: transparent;
+}
+.vc-color { width: 44px; height: 26px; }
+.vc-color-sm { width: 34px; height: 22px; }
+.vc-color::-webkit-color-swatch-wrapper, .vc-color-sm::-webkit-color-swatch-wrapper { padding: 0; }
+.vc-color::-webkit-color-swatch, .vc-color-sm::-webkit-color-swatch { border: none; border-radius: 3px; }
+.vc-color::-moz-color-swatch, .vc-color-sm::-moz-color-swatch { border: none; border-radius: 3px; }
+
+.vc-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
+  background: var(--vc-panel); color: var(--vc-text);
+  border: none; border-radius: 3px;
+  font-size: 12px; cursor: pointer; transition: background 0.12s;
+  font-family: inherit;
+}
+.vc-btn:hover { background: var(--vc-hover); }
+.vc-btn:active { background: color-mix(in srgb, var(--foreground) 12%, transparent); }
+.vc-btn-sm { padding: 5px 9px; font-size: 11px; }
+.vc-btn-active { background: var(--vc-accent); color: var(--accent-foreground); }
+.vc-btn-active:hover { background: var(--vc-accent); filter: brightness(1.1); }
+.vc-btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; padding: 0;
+  background: var(--vc-panel); color: var(--vc-text-dim);
+  border: none; border-radius: 3px; cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.vc-btn-icon:hover { background: var(--vc-hover); color: var(--vc-text); }
+
+.vc-algtype { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--vc-text-dim); }
+
+.vc-keyrow { display: flex; flex-wrap: wrap; gap: 3px; }
+
+.vc-arrow-builder {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px;
+  background: var(--vc-input); padding: 10px 12px; border-radius: 4px;
+  color: var(--vc-text-dim);
+}
+.vc-arrow-builder > span { color: var(--vc-text-dim); margin-right: -2px; }
+
+.vc-face-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.vc-face-cell {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--vc-text-dim); padding: 6px; background: var(--vc-input); border-radius: 3px;
+}
+.vc-face-cell input[type=color] { width: 100%; height: 24px; padding: 0; border: none; border-radius: 2px; cursor: pointer; background: transparent; }
+.vc-face-cell input[type=color]::-webkit-color-swatch { border: none; border-radius: 2px; }
+.vc-face-cell input[type=color]::-moz-color-swatch { border: none; border-radius: 2px; }
+
+.vc-api-doc {
+  margin-top: 24px; padding: 14px 16px;
+  background: var(--vc-input); border-radius: 4px;
+  color: var(--vc-text-dim); font-size: 13px;
+}
+.vc-api-doc summary {
+  cursor: pointer; font-weight: 500; color: var(--vc-text); user-select: none;
+  padding: 2px 0;
+}
+.vc-api-doc summary::-webkit-details-marker { color: var(--vc-text-dim); }
+.vc-api-doc[open] summary { margin-bottom: 10px; }
+.vc-api-doc p { margin: 8px 0; line-height: 1.5; }
+.vc-api-example {
+  background: var(--vc-input); padding: 8px 10px; border-radius: 3px;
+  font-family: var(--font-mono, monospace); font-size: 11.5px;
+  color: var(--vc-text); overflow-x: auto; white-space: pre;
+  margin: 8px 0; word-break: break-all;
+}
+.vc-api-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+.vc-api-table th, .vc-api-table td {
+  padding: 6px 10px; text-align: left; vertical-align: top;
+  border-bottom: 1px solid var(--vc-divider);
+}
+.vc-api-table th { color: var(--vc-text); font-weight: 500; }
+.vc-api-table td { color: var(--vc-text-dim); }
+.vc-api-table code {
+  background: var(--vc-input); padding: 1px 5px; border-radius: 2px;
+  font-family: var(--font-mono, monospace); font-size: 11.5px; color: var(--vc-text);
+}
+.vc-api-note { font-size: 12px; opacity: 0.85; margin-top: 12px; }
+
+/* mode="panel": a narrow sidebar mount. Same controls, stacked — nothing dropped. */
+.vc-studio-panel .vc-row { flex-direction: column; align-items: stretch; gap: 6px; }
+.vc-studio-panel .vc-label { min-width: 0; }
+.vc-studio-panel .vc-preview-wrap { position: static; padding: 12px; max-height: none; }
+.vc-studio-panel .vc-face-grid { grid-template-columns: repeat(3, 1fr); }
+.vc-studio-panel .vc-api-doc { margin-top: 16px; padding: 10px 12px; }
+.vc-studio-panel .vc-api-example { white-space: pre-wrap; }
+
+@media (max-width: 768px) {
+  .vc-row { flex-direction: column; align-items: stretch; gap: 6px; padding: 10px 0; }
+  .vc-label { min-width: 0; font-size: 11px; }
+  .vc-num, .vc-text, .vc-num-sm { font-size: 12px; }
+  .vc-face-grid { grid-template-columns: repeat(3, 1fr); }
+  .vc-preview-wrap { padding: 16px; }
+  .vc-api-table { font-size: 11px; }
+  .vc-api-table th, .vc-api-table td { padding: 5px 6px; }
+  .vc-api-example { white-space: pre-wrap; }
+}
+
+@media (max-width: 480px) {
+  .vc-editor-page { padding: 12px; }
+  .vc-arrow-builder { gap: 6px; padding: 8px; }
+  .vc-num, .vc-select { max-width: 100%; }
+}
