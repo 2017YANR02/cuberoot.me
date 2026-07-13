@@ -32,27 +32,33 @@ export interface SimPuzzleCaps {
    *  exactly one kind of element, so this is one value, not a set. The cube implements a
    *  uniform `setCarve(on)` regardless of element. */
   carve?: CarveElement;
+  /** Whether the static puzzle-image studio (/visualcube's control surface, mounted as
+   *  the /sim 图像 panel) can render this puzzle. True only for the types in the studio's
+   *  registry — NxN cube (numeric kind), sq1, skewb, pyraminx, megaminx, and mirror (an
+   *  order-3 NxN, so it maps to the cube renderer). false everywhere else (ivy / dino /
+   *  redi / rex / heli / fto / custom / PG-explore) → the panel is hidden. */
+  imageStudio: boolean;
 }
 
-const NXN_CAPS: SimPuzzleCaps = { engine: 'always' };
-const TWISTY_CAPS: SimPuzzleCaps = { engine: 'never' };
+const NXN_CAPS: SimPuzzleCaps = { engine: 'always', imageStudio: true };
+const TWISTY_CAPS: SimPuzzleCaps = { engine: 'never', imageStudio: false };
 
 /** Per-kind capabilities. Keyed by the string puzzle kinds; NxN (numeric kind) and
  *  PG explore puzzles fall back to NXN_CAPS / TWISTY_CAPS respectively. */
 const CAPS: Record<string, SimPuzzleCaps> = {
-  sq1: { engine: 'always' },
-  ivy: { engine: 'always', carve: 'corner' },
-  dino: { engine: 'always', carve: 'corner' },
-  redi: { engine: 'always', carve: 'corner' },
-  rex: { engine: 'always', carve: 'corner' },
-  heli: { engine: 'always', carve: 'edge' },
-  skewb: { engine: 'engineMode', carve: 'corner' },
-  pyraminx: { engine: 'engineMode', carve: 'corner' },
-  megaminx: { engine: 'engineMode', carve: 'face' },
-  fto: { engine: 'engineMode', carve: 'face' },
+  sq1: { engine: 'always', imageStudio: true },
+  ivy: { engine: 'always', carve: 'corner', imageStudio: false },
+  dino: { engine: 'always', carve: 'corner', imageStudio: false },
+  redi: { engine: 'always', carve: 'corner', imageStudio: false },
+  rex: { engine: 'always', carve: 'corner', imageStudio: false },
+  heli: { engine: 'always', carve: 'edge', imageStudio: false },
+  skewb: { engine: 'engineMode', carve: 'corner', imageStudio: true },
+  pyraminx: { engine: 'engineMode', carve: 'corner', imageStudio: true },
+  megaminx: { engine: 'engineMode', carve: 'face', imageStudio: true },
+  fto: { engine: 'engineMode', carve: 'face', imageStudio: false },
   // Mirror Cube — order-3 NxN engine (uniform logic, non-uniform geometry). Like NxN
-  // it has no single moving group to lift off, so no carve.
-  mirror: { engine: 'always' },
+  // it has no single moving group to lift off, so no carve. Studio renders it as a cube.
+  mirror: { engine: 'always', imageStudio: true },
 };
 
 /** Static capabilities for a puzzle kind (independent of the active renderer). */

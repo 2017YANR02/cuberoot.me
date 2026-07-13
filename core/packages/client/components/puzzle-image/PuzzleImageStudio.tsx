@@ -14,7 +14,14 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Copy, Check, Download, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { Copy, Check, Download, RotateCcw, Plus, Trash2, Camera, Film, Wand2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+// Type-only imports (fully erased at build) — the concrete sim engine + export
+// module are dynamically imported inside the capture handler so /visualcube (which
+// passes no simBridge) never bundles the ~1.2MB three/cuber engine.
+import type * as THREE from 'three';
+import type World from '@/app/[lang]/sim/engine/world';
+import type { ExportProgress } from '@/app/[lang]/sim/sim_export';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
@@ -151,15 +158,41 @@ function CopyButton({ getValue, label }: { getValue: () => string; label: string
 
 // ── studio ──────────────────────────────────────────────────────────────────
 
+/**
+ * Live-simulator bridge — present ONLY when the studio is the /sim 图像 panel.
+ * Absent on the /visualcube page (page mode), so the capture subgroup never
+ * renders there and the golden fixtures stay byte-identical.
+ *
+ * It carries the sim's live handles (for the offline-render mp4 + canvas PNG) and
+ * a snapshot of the sim's current puzzle / setup / alg / face colors (for the
+ * one-shot "从模拟器取" button). ONE-WAY: the studio only ever reads these and
+ * writes img_* — it never writes back into the sim's puzzle/alg/setup.
+ */
+export interface SimBridge {
+  getCanvas: () => HTMLCanvasElement | null;
+  getWorld: () => World | null;
+  getRenderer: () => THREE.WebGLRenderer | null;
+  setup: string;
+  alg: string;
+  faceColors: { U: string; R: string; F: string; D: string; L: string; B: string };
+  /** Sim puzzle mapped into the studio's own vocabulary (mirror → cube/3). */
+  puzzleType: PuzzleType;
+  cubeSize: number;
+}
+
 export interface PuzzleImageStudioProps {
   spec: ImageSpec;
   onSpecChange: (patch: Partial<ImageSpec>) => void;
   mode: 'page' | 'panel';
   className?: string;
+  /** Present only in /sim panel mode → shows the live capture subgroup + 从模拟器取. */
+  simBridge?: SimBridge;
 }
 
-export default function PuzzleImageStudio({ spec, onSpecChange, mode, className }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge }: PuzzleImageStudioProps) {
   const t = useT();
+  const { i18n } = useTranslation();
+  const isZh = i18n.language.startsWith('zh');
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
     onSpecChange({ [key]: value } as Partial<ImageSpec>);
@@ -167,6 +200,11 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className 
 
   const projected = isProjected(s);
   const isCube = s.puzzleType === 'cube';
+  // In /sim panel mode the sim's own puzzle dropdown is the single puzzle selector:
+  // the panel renders whatever puzzle the sim shows (SimPage mirrors it into the spec),
+  // so the studio drops its own puzzle-type + NxN-size controls. Every render/view/mask
+  // control below stays.
+  const showPuzzleControls = mode === 'page';
 
   const previewRef = useRef<HTMLDivElement | null>(null);
 
@@ -281,6 +319,77 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className 
     if (algRef.current) set('algorithm', algRef.current.value);
   }, [set]);
 
+  // ── live capture (sim panel only — moved out of the retired DirectorPanel) ──
+  const [exporting, setExporting] = useState(false);
+  const [progress, setProgress] = useState<ExportProgress | null>(null);
+  const capturePreviewRef = useRef<HTMLCanvasElement | null>(null);
+  const abortRef = useRef<{ aborted: boolean }>({ aborted: false });
+
+  // One-shot: copy the sim's current puzzle + setup + alg + face colors into img_*.
+  // One-way — writes the image spec, never the sim's own state.
+  const pullFromSim = useCallback(() => {
+    if (!simBridge) return;
+    const fc = simBridge.faceColors;
+    const applied = [simBridge.setup, simBridge.alg].filter((x) => x && x.trim()).join(' ');
+    onSpecChange(resetRotationsForPuzzle(s, {
+      puzzleType: simBridge.puzzleType,
+      cubeSize: simBridge.cubeSize,
+      algType: 'alg',
+      algorithm: applied,
+      faceU: fc.U, faceR: fc.R, faceF: fc.F, faceD: fc.D, faceL: fc.L, faceB: fc.B,
+    }));
+  }, [simBridge, s, onSpecChange]);
+
+  const snapshot = useCallback(() => {
+    const cv = simBridge?.getCanvas();
+    if (!cv) return;
+    cv.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sim-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  }, [simBridge]);
+
+  const startExport = useCallback(async () => {
+    if (!simBridge) return;
+    const world = simBridge.getWorld();
+    const renderer = simBridge.getRenderer();
+    if (!world || !renderer || exporting) return;
+    setExporting(true);
+    abortRef.current = { aborted: false };
+    setProgress({ phase: t('准备...', 'Preparing...'), pct: 0, framesDone: 0, framesTotal: 0 });
+    // wait a frame so the overlay mounts and capturePreviewRef is live
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    try {
+      const { exportSimVideo } = await import('@/app/[lang]/sim/sim_export');
+      await exportSimVideo({
+        world, renderer, setup: simBridge.setup, alg: simBridge.alg, isZh,
+        abortRef: abortRef.current,
+        onProgress: setProgress,
+        previewCanvas: capturePreviewRef.current,
+      });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg !== 'aborted') {
+        console.error('[Sim Export] failed:', e);
+        // eslint-disable-next-line no-alert
+        alert(t('导出失败:', 'Export failed: ') + msg);
+      }
+    } finally {
+      setExporting(false);
+      setProgress(null);
+    }
+  }, [simBridge, exporting, isZh, t]);
+
+  const cancelExport = useCallback(() => { abortRef.current.aborted = true; }, []);
+  const canRecord = !!simBridge && simBridge.alg.trim().length > 0;
+
   return (
     <div className={`vc-studio vc-studio-${mode}${className ? ` ${className}` : ''}`}>
       <section className="vc-preview-wrap" ref={previewRef}>
@@ -301,24 +410,65 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className 
           getValue={() => `<img src="${apiSvgUrl}" alt="cube" width="${s.imageSize}" height="${s.imageSize}" />`}
         />
         <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />
+
+        {simBridge && (
+          <div className="vc-capture-group">
+            <span className="vc-capture-label">{t('实时', 'Live')}</span>
+            <button type="button" className="vc-btn" onClick={pullFromSim}>
+              <Wand2 size={14} /> {t('从模拟器取', 'From simulator')}
+            </button>
+            <button type="button" className="vc-btn" onClick={snapshot}>
+              <Camera size={14} /> {t('截图', 'Snapshot')}
+            </button>
+            <button
+              type="button"
+              className="vc-btn"
+              onClick={startExport}
+              disabled={!canRecord || exporting}
+              title={!canRecord
+                ? t('解法为空, 无可导出动画', 'Alg is empty — nothing to record')
+                : t('导出 mp4 1080p:离线渲染当前解法动画', 'Export mp4 1080p: offline render of the solution animation')}
+            >
+              <Film size={14} /> {t('录制 MP4', 'Record MP4')}
+            </button>
+          </div>
+        )}
       </section>
 
-      <section className="vc-controls">
-        <div className="vc-row">
-          <label className="vc-label">{t('魔方', 'Puzzle')}</label>
-          <div className="vc-row-controls">
-            {(['cube', 'sq1', 'megaminx', 'pyraminx', 'skewb'] as PuzzleType[]).map((pt) => (
-              <button
-                key={pt}
-                type="button"
-                className={`vc-btn vc-btn-sm${s.puzzleType === pt ? ' vc-btn-active' : ''}`}
-                onClick={() => onSpecChange(resetRotationsForPuzzle(s, { puzzleType: pt }))}
-              >
-                {PUZZLE_LABELS[pt]}
-              </button>
-            ))}
+      {simBridge && exporting && progress && (
+        <div className="sim-export-overlay">
+          <div className="sim-export-card">
+            <div className="sim-export-title">{t('导出视频中', 'Exporting video')}</div>
+            <canvas ref={capturePreviewRef} className="sim-export-preview" />
+            <div className="sim-export-bar">
+              <div className="sim-export-bar-fill" style={{ width: `${(progress.pct * 100).toFixed(1)}%` }} />
+            </div>
+            <div className="sim-export-msg">{progress.phase}</div>
+            <button type="button" className="sim-export-cancel" onClick={cancelExport}>
+              {t('取消', 'Cancel')}
+            </button>
           </div>
         </div>
+      )}
+
+      <section className="vc-controls">
+        {showPuzzleControls && (
+          <div className="vc-row">
+            <label className="vc-label">{t('魔方', 'Puzzle')}</label>
+            <div className="vc-row-controls">
+              {(['cube', 'sq1', 'megaminx', 'pyraminx', 'skewb'] as PuzzleType[]).map((pt) => (
+                <button
+                  key={pt}
+                  type="button"
+                  className={`vc-btn vc-btn-sm${s.puzzleType === pt ? ' vc-btn-active' : ''}`}
+                  onClick={() => onSpecChange(resetRotationsForPuzzle(s, { puzzleType: pt }))}
+                >
+                  {PUZZLE_LABELS[pt]}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="vc-row">
           <label className="vc-label">{t('视图', 'View')}</label>
@@ -353,7 +503,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className 
         </div>
 
         <div className="vc-row">
-          {isCube && (
+          {isCube && showPuzzleControls && (
             <>
               <label className="vc-label">{t('阶数', 'NxN Size')}</label>
               <input
@@ -365,7 +515,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className 
               />
             </>
           )}
-          <label className={`vc-label${isCube ? ' vc-label-secondary' : ''}`}>
+          <label className={`vc-label${isCube && showPuzzleControls ? ' vc-label-secondary' : ''}`}>
             {t('图片尺寸 (px)', 'Image Size (px)')}
           </label>
           {/* Preset select + a free number input: `?size=300` used to show an

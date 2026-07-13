@@ -25,29 +25,43 @@ import {
   imageWriteKeys,
   readSpecFromParams,
   specToParams,
+  type CodecOptions,
 } from '@/lib/puzzle-image/codec';
 import type { ImageSpec } from '@/lib/puzzle-image/types';
 
 export type ImageSpecPatch = (patch: Partial<ImageSpec>) => void;
 
-export function useImageSpec(prefix: string): [ImageSpec, ImageSpecPatch] {
+/**
+ * `opts.puzzle` = PANEL MODE (e.g. /sim): the host's own selector owns the puzzle
+ * type, so `pzl` leaves the URL entirely and the host puzzle is injected on seed (so
+ * `view` parses against the right puzzle). The host is then responsible for keeping the
+ * spec's puzzleType/cubeSize in sync as its selector changes (SimPage does this).
+ * `opts.puzzle` presence is fixed for a mount, so memoizing on `hasPuzzle` is safe.
+ */
+export function useImageSpec(prefix: string, opts?: CodecOptions): [ImageSpec, ImageSpecPatch] {
+  const hasPuzzle = !!opts?.puzzle;
+  const keyOpts = useMemo<CodecOptions | undefined>(
+    () => (hasPuzzle ? { puzzle: { puzzleType: 'cube', cubeSize: 3 } } : undefined),
+    [hasPuzzle],
+  );
   const parsers = useMemo(() => {
     const m: Record<string, typeof parseAsString> = {};
-    for (const k of imageQueryKeys(prefix)) m[k] = parseAsString;
+    for (const k of imageQueryKeys(prefix, keyOpts)) m[k] = parseAsString;
     return m;
-  }, [prefix]);
-  const writeKeys = useMemo(() => imageWriteKeys(prefix), [prefix]);
+  }, [prefix, keyOpts]);
+  const writeKeys = useMemo(() => imageWriteKeys(prefix, keyOpts), [prefix, keyOpts]);
   const legacyKeys = useMemo(
-    () => imageQueryKeys(prefix).filter((k) => !writeKeys.includes(k)),
-    [prefix, writeKeys],
+    () => imageQueryKeys(prefix, keyOpts).filter((k) => !writeKeys.includes(k)),
+    [prefix, keyOpts, writeKeys],
   );
 
   const [urlParams, setUrlParams] = useQueryStates(parsers, { history: 'replace', scroll: false });
 
-  // Seed once — afterwards the URL is derived from the spec, not the other way.
+  // Seed once — afterwards the URL is derived from the spec, not the other way. In
+  // panel mode the host puzzle is injected here so `view`/rotations parse correctly.
   const initialRef = useRef<ImageSpec | null>(null);
   if (initialRef.current === null) {
-    initialRef.current = readSpecFromParams(urlParams, prefix);
+    initialRef.current = readSpecFromParams(urlParams, prefix, opts);
   }
   const [spec, setSpec] = useState<ImageSpec>(initialRef.current);
 
@@ -58,7 +72,7 @@ export function useImageSpec(prefix: string): [ImageSpec, ImageSpecPatch] {
   // spec → URL. Build the full owned-key patch (value, or null to delete) and
   // compare against the live nuqs snapshot so an unchanged render is a no-op.
   useEffect(() => {
-    const sp = specToParams(spec, prefix);
+    const sp = specToParams(spec, prefix, keyOpts);
     const patch: Record<string, string | null> = {};
     let changed = false;
     for (const k of writeKeys) {
@@ -70,7 +84,7 @@ export function useImageSpec(prefix: string): [ImageSpec, ImageSpecPatch] {
       if (urlParams[k] != null) { patch[k] = null; changed = true; }
     }
     if (changed) void setUrlParams(patch);
-  }, [spec, prefix, urlParams, setUrlParams, writeKeys, legacyKeys]);
+  }, [spec, prefix, keyOpts, urlParams, setUrlParams, writeKeys, legacyKeys]);
 
   return [spec, patchSpec];
 }

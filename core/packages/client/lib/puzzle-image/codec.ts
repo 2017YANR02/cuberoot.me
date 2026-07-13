@@ -18,21 +18,37 @@ const WRITE_KEYS = [
 ] as const;
 
 /**
+ * Codec options. `puzzle` = PANEL MODE: the puzzle identity comes from the HOST
+ * (e.g. /sim's own `puzzle=` dropdown), not from our `pzl` key. When set, `pzl` is
+ * neither read nor written (so there is no second, conflicting source of the puzzle
+ * type in the URL), and this puzzle is injected before `view` / rotation parsing —
+ * both of which depend on knowing the puzzle type up front.
+ */
+export interface CodecOptions {
+  puzzle?: { puzzleType: PuzzleType; cubeSize: number };
+}
+
+/**
  * Read-only legacy alias for `pzl`. Honored ONLY at prefix '' — with a prefix,
  * a bare `puzzle=` belongs to the host page, not to us.
  */
 const LEGACY_PZL_ALIAS = 'puzzle';
 
+/** Write keys minus `pzl` when the host owns the puzzle (panel mode). */
+function ownedWriteKeys(opts?: CodecOptions): readonly string[] {
+  return opts?.puzzle ? WRITE_KEYS.filter((k) => k !== 'pzl') : WRITE_KEYS;
+}
+
 /** All keys this codec owns at `prefix` (write keys + the legacy alias at ''). */
-export function imageQueryKeys(prefix: string): string[] {
-  const keys = WRITE_KEYS.map((k) => prefix + k);
-  if (prefix === '') keys.push(LEGACY_PZL_ALIAS);
+export function imageQueryKeys(prefix: string, opts?: CodecOptions): string[] {
+  const keys = ownedWriteKeys(opts).map((k) => prefix + k);
+  if (prefix === '' && !opts?.puzzle) keys.push(LEGACY_PZL_ALIAS);
   return keys;
 }
 
 /** Keys specToParams can emit at `prefix` (excludes the read-only alias). */
-export function imageWriteKeys(prefix: string): string[] {
-  return WRITE_KEYS.map((k) => prefix + k);
+export function imageWriteKeys(prefix: string, opts?: CodecOptions): string[] {
+  return ownedWriteKeys(opts).map((k) => prefix + k);
 }
 
 export function pzlShort(t: PuzzleType): string {
@@ -55,7 +71,7 @@ function toGetter(params: ParamsInput): (k: string) => string | null {
   return (k) => params[k] ?? null;
 }
 
-export function readSpecFromParams(params: ParamsInput, prefix: string): ImageSpec {
+export function readSpecFromParams(params: ParamsInput, prefix: string, opts?: CodecOptions): ImageSpec {
   const raw = toGetter(params);
   const get = (k: string) => raw(prefix + k);
   const num = (k: string, fallback: number, min?: number, max?: number) => {
@@ -69,19 +85,26 @@ export function readSpecFromParams(params: ParamsInput, prefix: string): ImageSp
   };
   const s: ImageSpec = { ...DEFAULTS };
 
-  const pzl = get('pzl') ?? (prefix === '' ? raw(LEGACY_PZL_ALIAS) : null);
-  if (pzl != null) {
-    const n = parseInt(pzl, 10);
-    if (!isNaN(n) && String(n) === pzl.trim()) {
-      s.puzzleType = 'cube';
-      s.cubeSize = Math.max(1, Math.min(50, n));
-    } else {
-      const v = pzl.toLowerCase();
-      if (v === 'cube') s.puzzleType = 'cube';
-      else if (v === 'sq1') s.puzzleType = 'sq1';
-      else if (v === 'mega' || v === 'megaminx') s.puzzleType = 'megaminx';
-      else if (v === 'pyra' || v === 'pyraminx') s.puzzleType = 'pyraminx';
-      else if (v === 'skewb') s.puzzleType = 'skewb';
+  // Panel mode: the host owns the puzzle. Inject it FIRST — `view` and the rotation
+  // defaults below both branch on s.puzzleType, so it must be right before either runs.
+  if (opts?.puzzle) {
+    s.puzzleType = opts.puzzle.puzzleType;
+    s.cubeSize = opts.puzzle.cubeSize;
+  } else {
+    const pzl = get('pzl') ?? (prefix === '' ? raw(LEGACY_PZL_ALIAS) : null);
+    if (pzl != null) {
+      const n = parseInt(pzl, 10);
+      if (!isNaN(n) && String(n) === pzl.trim()) {
+        s.puzzleType = 'cube';
+        s.cubeSize = Math.max(1, Math.min(50, n));
+      } else {
+        const v = pzl.toLowerCase();
+        if (v === 'cube') s.puzzleType = 'cube';
+        else if (v === 'sq1') s.puzzleType = 'sq1';
+        else if (v === 'mega' || v === 'megaminx') s.puzzleType = 'megaminx';
+        else if (v === 'pyra' || v === 'pyraminx') s.puzzleType = 'pyraminx';
+        else if (v === 'skewb') s.puzzleType = 'skewb';
+      }
     }
   }
   s.imageSize = num('size', DEFAULTS.imageSize, 1, 1000);
@@ -149,11 +172,15 @@ export function readSpecFromParams(params: ParamsInput, prefix: string): ImageSp
   return s;
 }
 
-export function specToParams(s: ImageSpec, prefix: string): URLSearchParams {
+export function specToParams(s: ImageSpec, prefix: string, opts?: CodecOptions): URLSearchParams {
   const p = new URLSearchParams();
   const set = (k: string, v: string) => p.set(prefix + k, v);
-  if (s.puzzleType !== 'cube') set('pzl', pzlShort(s.puzzleType));
-  else set('pzl', String(s.cubeSize));
+  // Panel mode: the host owns the puzzle (`puzzle=`), so we never emit `pzl` — a
+  // second copy in the URL would be a redundant, potentially-conflicting source.
+  if (!opts?.puzzle) {
+    if (s.puzzleType !== 'cube') set('pzl', pzlShort(s.puzzleType));
+    else set('pzl', String(s.cubeSize));
+  }
   if (s.imageSize !== DEFAULTS.imageSize) set('size', String(s.imageSize));
   if (s.algorithm) set(s.algType, s.algorithm);
   if (s.arrows) set('arw', s.arrows);
