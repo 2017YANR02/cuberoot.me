@@ -316,10 +316,12 @@ export default class Controller {
         const contingle: Set<number> = new Set();
         for (const group of (this.world.cube as import('./cube').default).table.groups[this.axis[0]]) {
           let success = group.drag();
-          while (!success) {
+          let guard = 8;
+          while (!success && guard-- > 0) {
             tweener.finish();
             success = group.drag();
           }
+          if (!success) console.warn('[sim] controller whole-cube drag: lock never cleared');
           contingle.add(group.angle);
         }
         if (contingle.size == 1) {
@@ -350,10 +352,12 @@ export default class Controller {
           return;
         }
         let success = this.group.drag();
-        while (!success) {
+        let guard = 8;
+        while (!success && guard-- > 0) {
           tweener.finish();
           success = this.group.drag();
         }
+        if (!success) console.warn('[sim] controller layer drag: lock never cleared');
         // 默认单层切片;Alt 修饰键按下 → 走 wide (深度 = 宽度)
         this.wideExtras = [];
         this.wideSign = "";
@@ -365,10 +369,12 @@ export default class Controller {
             if (l === this.group.layer) continue;
             const g = (this.world.cube as import('./cube').default).table.groups[this.group.axis][l];
             let s = g.drag();
-            while (!s) {
+            let guardW = 8;
+            while (!s && guardW-- > 0) {
               tweener.finish();
               s = g.drag();
             }
+            if (!s) console.warn('[sim] controller wide-extra drag: lock never cleared');
             this.wideExtras.push(g);
           }
         }

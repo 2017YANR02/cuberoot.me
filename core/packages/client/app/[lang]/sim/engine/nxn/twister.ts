@@ -787,10 +787,17 @@ export default class Twister {
     }
     for (const rotate of list) {
       success = rotate.group.twist((Math.PI / 2) * rotate.twist, fast);
-      while (!success && force) {
+      // force = instant sync (playback jumpToStep etc.). If the target layer can't lock
+      // because a perpendicular layer is stranded holding with no tween (e.g. a drag's
+      // snap-back overlapping a jumpToStep), tweener.finish() can't release it and this
+      // spun forever — the /sim drag freeze. Bound the retries and skip the move (with a
+      // warning) rather than hang the page.
+      let guard = 8;
+      while (!success && force && guard-- > 0) {
         tweener.finish();
         success = rotate.group.twist((Math.PI / 2) * rotate.twist, fast);
       }
+      if (!success && force) console.warn('[sim] twister.twist(force): layer never locked, skipped');
     }
     if (success) {
       this.cube.record(action);
