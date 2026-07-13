@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { readSpecFromParams, specToParams, type CodecOptions } from '@/lib/puzzle-image/codec';
+import { readSpecFromParams, specToParams, type CodecOptions, type InheritedFields } from '@/lib/puzzle-image/codec';
 import {
   DEFAULTS, rotationDefaultsFor, resetRotationsForPuzzle, snapRotationOnVariantBoundary,
 } from '@/lib/puzzle-image/defaults';
@@ -186,5 +186,44 @@ describe('puzzle-image codec — panel mode (host owns the puzzle)', () => {
     const s = spec({ puzzleType: 'pyraminx', algType: 'case', algorithm: "U R' L R B'" });
     const back = readSpecFromParams(specToParams(s, 'img_', pyraOpts), 'img_', pyraOpts);
     expect(back).toEqual(s);
+  });
+});
+
+describe('puzzle-image codec — panel mode (host owns alg + colour scheme)', () => {
+  // /sim also drops the studio's 公式 / 六面配色 controls: the sim's own alg + scheme
+  // are injected via `inherit`, so the codec neither reads a stray `alg`/`case`/`sch`
+  // nor emits one (no second copy of the sim's `alg`/`setup` under `img_*`).
+  const inherit: InheritedFields = {
+    algType: 'alg', algorithm: "R U R'",
+    faceU: '#111111', faceR: '#222222', faceF: '#333333',
+    faceD: '#444444', faceL: '#555555', faceB: '#666666',
+  };
+  const opts: CodecOptions = { puzzle: { puzzleType: 'cube', cubeSize: 3 }, inherit };
+
+  it('injects the host alg + scheme, overriding any stray img_ keys', () => {
+    const s = readSpecFromParams(
+      new URLSearchParams('img_case=U2&img_sch=#a,#b,#c,#d,#e,#f'), 'img_', opts,
+    );
+    expect(s.algType).toBe('alg');
+    expect(s.algorithm).toBe("R U R'");
+    expect(s.faceU).toBe('#111111');
+    expect(s.faceB).toBe('#666666');
+  });
+
+  it('never emits alg / case / sch — they are host-owned', () => {
+    const s = spec({ algType: 'case', algorithm: 'U2', faceU: '#abcdef' });
+    const qs = specToParams(s, 'img_', opts).toString();
+    expect(qs).not.toContain('img_alg');
+    expect(qs).not.toContain('img_case');
+    expect(qs).not.toContain('img_sch');
+  });
+
+  it('still emits the image-specific keys (view / size / mask) and never pzl', () => {
+    const s = spec({ cubeView: 'plan', imageSize: 128, stageMask: 'oll' });
+    const qs = specToParams(s, 'img_', opts).toString();
+    expect(qs).toContain('img_view=plan');
+    expect(qs).toContain('img_size=128');
+    expect(qs).toContain('img_stage=oll');
+    expect(qs).not.toContain('img_pzl');
   });
 });

@@ -44,10 +44,15 @@ function simPuzzleValue(pzl) {
 }
 
 /**
- * 给 query 的每个 key 加前缀(/sim 面板用 img_ 避免和 sim 自己的 puzzle/alg 撞车)。
- * 迁移后 studio 面板没有自己的 puzzle 选择器——拼图类型只有一个来源:sim 的 `puzzle`
- * 下拉(codec 在面板模式下根本不读写 img_pzl)。所以把 fixture 的 `pzl=X` 翻译成
- * `puzzle=<映射>` 喂给 sim,其余 key 照常加 img_ 前缀。
+ * 给 query 的每个 key 翻译到 /sim 面板的等价来源。迁移后 studio 面板不再持有自己的
+ * 拼图 / 公式 / 配色 / 视角旋转 —— 这些都归 sim 所有,codec 在面板模式下把它们注入、
+ * 既不读也不写 img_ 键:
+ *   - `pzl`  → sim 的 `puzzle=`(拼图单一来源)
+ *   - `alg`  → sim 的 `alg=`(应用式公式,同样是 sim 的来源)
+ *   - `case` / `sch` / `r` → 宿主所有,/sim 上没有对应的 img_ 键可设(逆向公式 / 六面配色 /
+ *     视角旋转的 fixture 因此在 /sim 上会渲染成默认态,属蓄意差异,不再逐字节可比)
+ *   - 其余(size / view / stage / arw / cc / co / fo / dist)照常加 img_ 前缀。
+ * 完整逐字节铁证只对 /visualcube(page 模式)成立;/sim 只核图像专属参数。
  */
 function withPrefix(qs, prefix) {
   if (!prefix) return qs;
@@ -57,6 +62,8 @@ function withPrefix(qs, prefix) {
     const k = eq < 0 ? kv : kv.slice(0, eq);
     const v = eq < 0 ? '' : kv.slice(eq + 1);
     if (k === 'pzl') out.push(`puzzle=${simPuzzleValue(v)}`);
+    else if (k === 'alg') out.push(`alg=${v}`);
+    else if (k === 'case' || k === 'sch' || k === 'r') continue; // host-owned: no img_ key
     else out.push(`${prefix}${k}=${v}`);
   }
   return out.join('&');
