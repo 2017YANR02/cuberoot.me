@@ -1161,7 +1161,9 @@ a.alg-community-author:hover {
 }
 .alg-case-meta-btn:hover { color: var(--accent); }
 
-.alg-meta-modal { width: min(520px, 95vw); }
+/* 宽度是被公式定死的:最长一条 78 字符 × 12px 等宽 ≈ 560px,再加缩略图一列 + 步数 + 复制。
+   窄了就得折行或横滚,两个都不要。 */
+.alg-meta-modal { width: min(800px, 95vw); }
 .alg-meta-head-sub {
   margin-left: 8px;
   font-size: 12px;
@@ -1261,15 +1263,19 @@ a.alg-community-author:hover {
   font-size: 11px;
   color: var(--muted-foreground);
 }
-/* 长公式**折行**,不横滚 —— 横滚条既丑又要求用户去拖它才能看全 */
+/* 一条公式 = 一行。折行会把 `(R U R' U')` 这种成组的手法从中间劈开,读起来就废了。
+   弹窗宽度按最长的一条(78 字符)配的,桌面端一行放得下;窄屏放不下就横向滑 ——
+   但那根滚动条不显示(丑,且它一出现就说明「有东西你看不见」,滑动本身已经够提示了)。 */
 .alg-meta-algline-code {
   flex: 1;
   min-width: 0;
-  white-space: normal;
-  overflow-wrap: break-word;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
   font-family: var(--font-mono, Consolas, monospace);
   font-size: 12px;
 }
+.alg-meta-algline-code::-webkit-scrollbar { display: none; }
 .alg-meta-copy {
   flex: none;
   display: inline-flex;
