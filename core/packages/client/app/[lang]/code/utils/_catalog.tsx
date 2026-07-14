@@ -140,8 +140,8 @@ export const CATALOG: UtilEntry[] = [
     imp: "import { useGestureWheel } from '@/hooks/useGestureWheel';",
     usage: 'const { wheelRef } = useGestureWheel({ surfaceRef, canGesture, enabledFor, fireAction, onPressDown, onPressUp, onArmCancel });',
     category: 'hook',
-    zh: 'cstimer 式按住拖动径向轮盘:绑定计时面板,普通按压照常计时,拖过死区切手势模式并触发对应方向。配 <GestureWheel>,/timer 与 /trainer 共用。',
-    en: 'cstimer-style press-and-drag radial dial on a timing surface: a hold still times, a drag fires the nearest direction. Pairs with <GestureWheel>; shared by /timer and /trainer.',
+    zh: 'cstimer 式按住拖动径向轮盘:绑定计时面板,普通按压照常计时,拖过死区切手势模式并触发对应方向。配 <GestureWheel>,/timer 与 /alg 训练页共用。',
+    en: 'cstimer-style press-and-drag radial dial on a timing surface: a hold still times, a drag fires the nearest direction. Pairs with <GestureWheel>; shared by /timer and the /alg trainer pages.',
   },
   {
     name: 'useSpeechToText',

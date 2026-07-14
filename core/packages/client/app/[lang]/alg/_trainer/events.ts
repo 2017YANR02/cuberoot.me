@@ -1,5 +1,5 @@
-// Trainer URL 第一段 = WCA event code(如 /trainer/333、/trainer/333/pll).
-// 兼容 legacy puzzle 名(/trainer/3x3/pll)——resolveAlgPuzzle 两种都吃.
+// Trainer URL 第一段 = WCA event code(如 /alg/333、/alg/333/pll).
+// 兼容 legacy puzzle 名(/alg/3x3/pll)——resolveAlgPuzzle 两种都吃.
 import { ALG_PUZZLES, type AlgPuzzle } from '@cuberoot/shared';
 
 // alg-set puzzle <-> WCA event id

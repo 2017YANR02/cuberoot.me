@@ -19,7 +19,7 @@ const RECIPES: { code: string; zh: string; en: string }[] = [
 ];
 
 const STRATEGY: { mode: string; zh: string; en: string; pages: string }[] = [
-  { mode: '双主题', zh: '走 :root token,跟随用户 light / dark 自动翻', en: 'Follows :root tokens, flips with the user’s light / dark choice', pages: '/trainer · /battle · /recon · /mosaic · /alg' },
+  { mode: '双主题', zh: '走 :root token,跟随用户 light / dark 自动翻', en: 'Follows :root tokens, flips with the user’s light / dark choice', pages: '/alg · /battle · /recon · /mosaic' },
   { mode: 'dark-locked', zh: 'WCA 统计家族,永远暗色,不参与主题切换', en: 'WCA-stats family — always dark, opts out of the toggle', pages: '/wca/* · /records · /nemesizer' },
   { mode: 'light-locked', zh: '锁 light,page-scope color-scheme: light', en: 'Locked light via page-scoped color-scheme', pages: '/calc' },
 ];

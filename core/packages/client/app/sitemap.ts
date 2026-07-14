@@ -14,12 +14,11 @@ export const dynamic = 'force-static';
 const BASE = 'https://cuberoot.me';
 
 // Kept OUT (dev/poc/internal pages, no SEO value). Locale-stripped path, exact.
-// 'trainer' now redirects to 'trainer/333' (event in the path) → list the canonical instead.
-const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor', 'trainer']);
+const EXCLUDE = new Set(['ffmpeg-poc', 'jsonEditor']);
 
 // Dynamic-segment pages worth indexing at a specific value (the scan skips
 // [param] dirs since it can't know which values are valid).
-const EXTRA = ['recognize/pll', 'trainer/333'];
+const EXTRA = ['recognize/pll', 'alg/3x3'];
 
 // Walk app/[lang]/** collecting static routes (dirs containing page.tsx),
 // skipping dynamic [param], private _folders and (route groups).

@@ -1,5 +1,5 @@
 /* Trainer — SpeedCubeDB-style training UI.
-   Shared by /trainer (landing), /trainer/:p/:s (select), /trainer/:p/:s/run.
+   Shared by /alg/:p/:s/select and /alg/:p/:s/run.
    Dual-theme: follows ThemeToggle (no longer dark-locked). Theme tokens only,
    no hard-coded greys. Mobile (<480) collapses sidebar below timer. */
 

@@ -7,7 +7,7 @@
 // corners, and parity — by reusing the existing 3BLD trainer read-engine.
 //
 // Buffers / borrow order / hue-skip are user-configurable and SHARED with the
-// /trainer/3bld config (single useBldConfigStore), so a cuber's BLD identity is
+// /alg/3bld config (single useBldConfigStore), so a cuber's BLD identity is
 // one setting site-wide. Memo letters are cycle-coloured: blue = cycle start,
 // green = cycle end (upstream reader.js color:blue / color:green).
 //
@@ -18,9 +18,9 @@ import { useEffect, useId, useMemo, useState, type JSX } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { ClearButton } from '@/components/ClearButton';
 import BoolToggle from '@/components/BoolToggle';
-import { codereader } from '@/app/[lang]/trainer/3bld/_lib/read-engine';
-import { useBldConfigStore, useBldConfigHydrated } from '@/app/[lang]/trainer/3bld/_store/bld-config-store';
-import type { LetterCell, CodeReadResult } from '@/app/[lang]/trainer/3bld/_lib/types';
+import { codereader } from '@/app/[lang]/alg/3bld/_lib/read-engine';
+import { useBldConfigStore, useBldConfigHydrated } from '@/app/[lang]/alg/3bld/_store/bld-config-store';
+import type { LetterCell, CodeReadResult } from '@/app/[lang]/alg/3bld/_lib/types';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import './bld_helper.css';
 import { tr } from '@/i18n/tr';

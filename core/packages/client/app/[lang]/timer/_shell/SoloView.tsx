@@ -766,7 +766,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // below once the solve mutators exist.
   const gestureActionsRef = useRef<Array<() => void>>([]);
 
-  // Radial press-and-drag dial (idle/stopped) — shared with /trainer via the
+  // Radial press-and-drag dial (idle/stopped) — shared with the /alg trainer run page via the
   // useGestureWheel hook. A plain hold still times; only a drag fires a slot.
   const { wheelRef: gestureWheelRef } = useGestureWheel({
     surfaceRef,

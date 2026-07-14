@@ -892,8 +892,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'GestureWheel',
     import: "import GestureWheel from '@/components/GestureWheel';",
     category: 'more',
-    zh: 'cstimer 式按住拖动径向轮盘(8 方向,ref 命令式驱动)。配 useGestureWheel hook 用,/timer 与 /trainer 计时面板共用;labels 可定制,空字符串隐藏槽位。',
-    en: 'cstimer-style press-and-drag radial dial (8 directions, ref-driven). Pairs with the useGestureWheel hook; shared by /timer and /trainer timing surfaces. Labels are customizable; an empty string hides a slot.',
+    zh: 'cstimer 式按住拖动径向轮盘(8 方向,ref 命令式驱动)。配 useGestureWheel hook 用,/timer 与 /alg 训练计时面板共用;labels 可定制,空字符串隐藏槽位。',
+    en: 'cstimer-style press-and-drag radial dial (8 directions, ref-driven). Pairs with the useGestureWheel hook; shared by /timer and the /alg trainer timing surfaces. Labels are customizable; an empty string hides a slot.',
   },
   {
     name: 'VisualCube',

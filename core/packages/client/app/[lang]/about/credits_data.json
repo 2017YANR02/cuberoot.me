@@ -157,30 +157,30 @@
   {
     "name": "spooncuber/bldtrainer",
     "url": "https://github.com/spooncuber/spooncuber.github.io",
-    "zh": "三盲训练器引擎 + 各模块移植(/trainer/3bld;作者 Zhi Qiao,GPL-3.0)",
-    "en": "3BLD trainer engine + modules ported (/trainer/3bld; author Zhi Qiao, GPL-3.0)",
-    "long_en": "3BLD trainer engine + modules ported — read-code engine, helper / memo / commutator / parity / flip / twist / float trainers and the resources list under `/trainer/3bld` (author Zhi Qiao, GPL-3.0)"
+    "zh": "三盲训练器引擎 + 各模块移植(/alg/3bld;作者 Zhi Qiao,GPL-3.0)",
+    "en": "3BLD trainer engine + modules ported (/alg/3bld; author Zhi Qiao, GPL-3.0)",
+    "long_en": "3BLD trainer engine + modules ported — read-code engine, helper / memo / commutator / parity / flip / twist / float trainers and the resources list under `/alg/3bld` (author Zhi Qiao, GPL-3.0)"
   },
   {
     "name": "zhucidong/三盲助手",
     "url": "https://github.com/zhucidong/blindfolded_hepler",
     "zh": "盲拧助手 App;记忆回想训练器 + 换位子公式库 + 联想词表合并自此",
     "en": "Blindfolded helper app; memo recall trainer + commutator library + association words merged",
-    "long_en": "blindfolded helper Android app; its memo recall trainer, commutator library, and association-word dictionary are merged into the `/trainer/3bld` modules"
+    "long_en": "blindfolded helper Android app; its memo recall trainer, commutator library, and association-word dictionary are merged into the `/alg/3bld` modules"
   },
   {
     "name": "AnnikaStein/SkewbPage",
     "url": "https://github.com/AnnikaStein/SkewbPage",
-    "zh": "Skewb 技巧训练器(SkewbSkills;三模式首层 / L2L 公式 / One-Look 全 port 为 React /trainer/skewb;作者 Annika Stein,Apache-2.0)",
-    "en": "Skewb Skills trainer (SkewbSkills; three-mode First Layer / L2L Alg / One-Look ported to React at /trainer/skewb; author Annika Stein, Apache-2.0)",
-    "long_en": "SkewbSkills web trainer — First Layer Trainer, L2L Algorithm Trainer, and One-Looking Trainer (alg database, RubiksSkewb→WCA notation conversion, scramble generation) ported to React for `/trainer/skewb` (author Annika Stein, Apache-2.0)"
+    "zh": "Skewb 技巧训练器(SkewbSkills;三模式首层 / L2L 公式 / One-Look 全 port 为 React /alg/skewb-trainer;作者 Annika Stein,Apache-2.0)",
+    "en": "Skewb Skills trainer (SkewbSkills; three-mode First Layer / L2L Alg / One-Look ported to React at /alg/skewb-trainer; author Annika Stein, Apache-2.0)",
+    "long_en": "SkewbSkills web trainer — First Layer Trainer, L2L Algorithm Trainer, and One-Looking Trainer (alg database, RubiksSkewb→WCA notation conversion, scramble generation) ported to React for `/alg/skewb-trainer` (author Annika Stein, Apache-2.0)"
   },
   {
     "name": "onionhoney/roux-trainers",
     "url": "https://github.com/onionhoney/roux-trainers",
-    "zh": "桥式训练器(/trainer/333 的 Roux 标签;引擎 + three.js 渲染器全量 port 为 React、去 MUI;作者 Onionhoney,GPL-3.0)",
-    "en": "Roux trainer (/trainer/333 Roux tab; engine + three.js renderer fully ported to React, de-MUI'd; author Onionhoney, GPL-3.0)",
-    "long_en": "Roux-method trainer collection — first-block / analyzer / FS / SS / CMLL / LSE trainers + in-browser Roux solver + three.js cube renderer, ported to React (MUI removed) and embedded under the `/trainer/333` Roux tab (author Onionhoney, GPL-3.0)"
+    "zh": "桥式训练器(/alg/roux;引擎 + three.js 渲染器全量 port 为 React、去 MUI;作者 Onionhoney,GPL-3.0)",
+    "en": "Roux trainer (/alg/roux page; engine + three.js renderer fully ported to React, de-MUI'd; author Onionhoney, GPL-3.0)",
+    "long_en": "Roux-method trainer collection — first-block / analyzer / FS / SS / CMLL / LSE trainers + in-browser Roux solver + three.js cube renderer, ported to React (MUI removed) and embedded under the `/alg/roux` page (author Onionhoney, GPL-3.0)"
   },
   {
     "name": "WCA Regulations & 5b5f Visual Guide",

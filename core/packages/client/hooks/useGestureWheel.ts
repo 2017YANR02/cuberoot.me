@@ -3,7 +3,7 @@
 /**
  * useGestureWheel — press-and-drag radial gesture input for a timing surface.
  *
- * Extracted from /timer SoloView so /timer and /trainer share one implementation
+ * Extracted from /timer SoloView so /timer and the /alg trainer run page share one implementation
  * (cstimer-style dial). Attaches native pointer listeners ({ passive:false } so
  * preventDefault works on iOS) to `surfaceRef`. A plain press/hold still times
  * (onPressDown → onPressUp); only a drag past the dead-zone switches to gesture

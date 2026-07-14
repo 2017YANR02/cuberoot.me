@@ -14,7 +14,7 @@
  * Direction order: 0=right and going counter-clockwise (1=up-right, 2=up, …
  * 7=down-right). The host's action/enabled arrays use the same index order.
  *
- * Used by /timer (SoloView) and /trainer run via `useGestureWheel`.
+ * Used by /timer (SoloView) and the /alg trainer run page via `useGestureWheel`.
  */
 
 import { forwardRef, useImperativeHandle, useRef } from 'react';
