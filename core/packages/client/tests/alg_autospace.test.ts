@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { autoSpaceMoves, autoSpaceAfterComment, autoCloseBracket, stripZeroWidth } from '@/lib/alg-autospace';
+import { autoSpaceMoves, autoSpaceAfterComment, autoCloseBracket, stripZeroWidth, cleanAlgText } from '@/lib/alg-autospace';
 
 describe('autoSpaceMoves — 相邻转动自动加空格', () => {
   // 模拟「刚输入第二步那个面字母」后的一次 onInput 调用
@@ -113,5 +113,56 @@ describe('autoCloseBracket — 左括号自动补右括号', () => {
   it('非左括号 / 非 insertText 不动', () => {
     expect(autoCloseBracket('R', 1, 'insertText').value).toBe('R');
     expect(autoCloseBracket('(', 1, 'insertFromPaste').value).toBe('(');
+  });
+});
+
+describe('cleanAlgText — 中文输入法漏进来的字符', () => {
+  // 网页改不了系统输入法(Chrome 不认 ime-mode),只能保证「打不进来」。
+  const clean = (s: string) => cleanAlgText(s, s.length).value;
+
+  it('全角字母 / 数字 → 半角', () => {
+    expect(clean('Ｒ Ｕ２ Ｒ')).toBe('R U2 R');
+  });
+
+  it('中文输入法的弯引号 → 直引号(最阴的一种:肉眼几乎看不出)', () => {
+    expect(clean('R U’ R’')).toBe("R U' R'");
+    expect(clean('R U‘ R')).toBe("R U' R");
+  });
+
+  it('全角空格 → 普通空格', () => {
+    expect(clean('R　U')).toBe('R U');
+  });
+
+  it('汉字直接删,公式本身留着', () => {
+    expect(clean('R U 右手 R\'')).toBe("R U  R'");
+    expect(clean('打乱')).toBe('');
+  });
+
+  it('中文标点删掉 / 映射,不残留', () => {
+    expect(clean('R，U。')).toBe('R,U.');
+    expect(clean('R U（R）')).toBe('R U(R)');
+  });
+
+  it('换握标注 ↑↓· 是公式的一部分,不能删', () => {
+    expect(clean("R U↑ R'·")).toBe("R U↑ R'·");
+  });
+
+  it('干净的公式原样返回(引用相同,不白洗一遍)', () => {
+    const s = "R U R' U' R' F R2 U' R' U' R U R' F'";
+    const r = cleanAlgText(s, 3);
+    expect(r.value).toBe(s);
+    expect(r.cursor).toBe(3);
+  });
+
+  it('光标按清洗后的前缀重算 —— 在中间删字不该把光标甩到行尾', () => {
+    //            0123456
+    const s = 'R 右手 U';       // 光标停在「手」后面(index 4)
+    const r = cleanAlgText(s, 4);
+    expect(r.value).toBe('R  U');
+    expect(r.cursor).toBe(2);  // 'R ' 洗完剩 2 个字符
+  });
+
+  it('零宽字符(粘贴带进来的)一并删掉', () => {
+    expect(clean('R​U')).toBe('RU');
   });
 });

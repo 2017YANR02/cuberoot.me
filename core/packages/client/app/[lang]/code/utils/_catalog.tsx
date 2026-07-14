@@ -73,6 +73,15 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 export const CATALOG: UtilEntry[] = [
   // ── hooks ─────────────────────────────────
   {
+    name: 'useAlgTextField',
+    sig: 'useAlgTextField(setValue: (v: string) => void): { ref, lang, onChange, onCompositionEnd }',
+    imp: "import { useAlgTextField } from '@/hooks/useAlgTextField';",
+    usage: "const f = useAlgTextField(setDraftAlg);  // <textarea value={draftAlg} {...f} />",
+    category: 'hook',
+    zh: '受控公式输入框:中文输入法开着也只落半角招式(全角转半角、汉字直接删)。组字中不动 value(IME 缓冲区会错乱),洗掉字符后把光标补回原位(受控 textarea 改 value 会被 React 甩到行尾)。非受控的用 components/AlgInput。',
+    en: 'Controlled alg <textarea>: only half-width moves land, even with a CJK IME on. Skips composition, restores the caret after stripping.',
+  },
+  {
     name: 'useCopy',
     sig: 'useCopy(resetMs?: number): { copied: boolean; copy: (text: string) => void }',
     imp: "import { useCopy } from '@/hooks/useCopy';",

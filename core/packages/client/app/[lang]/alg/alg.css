@@ -1386,6 +1386,14 @@ a.alg-community-author:hover {
   .alg-case.is-flash { transition: box-shadow 0.25s ease, border-color 0.25s ease; }
 }
 
+/* 公式输入框:挡住输入法。
+   `ime-mode` 只有 Firefox / IE 认 —— Chrome 从来不支持,网页也没有任何 API 能替用户切回英文。
+   所以这条只是白拿的一层;真正兜底的是 cleanAlgText:中文打进来也留不下。 */
+.alg-community-textarea,
+.alg-admin-setup-textarea {
+  ime-mode: disabled;
+}
+
 /* 这个 case 里有公式过不了校验(admin 才扫、才看得到)—— 红框直接指出来该修哪张 */
 .alg-case.is-invalid {
   border-color: var(--destructive);

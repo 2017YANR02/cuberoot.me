@@ -16,8 +16,8 @@ import {
 } from 'react';
 import {
   autoSpaceMoves, autoSpaceMovesCE, getTextBeforeCaret,
-  normalizePunctuationTA, normalizePunctuationCE,
-  autoSpaceAfterComment, autoCloseBracket, stripZeroWidth,
+  cleanAlgText, cleanAlgTextCE,
+  autoSpaceAfterComment, autoCloseBracket,
 } from '@/lib/alg-autospace';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -156,6 +156,36 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
     getElement: () => (markable ? ceRef.current : taRef.current),
   }), [markable, autoResize]);
 
+  /** 洗一遍 + 自动加空格 + 回调。组字**结束后**也要走一遍(那时候字才真正落进 value)。 */
+  const runTextareaInput = (el: HTMLTextAreaElement, inputType: string) => {
+    // 全角 / 中日韩 / 零宽字符输入即洗,不进数据(中文输入法开着也能打;见 cleanAlgText)
+    const c = cleanAlgText(el.value, el.selectionStart ?? 0);
+    if (c.value !== el.value) {
+      el.value = c.value;
+      el.setSelectionRange(c.cursor, c.cursor);
+    }
+    if (autoSpace) {
+      let adj = autoSpaceMoves(el.value, el.selectionStart ?? 0, inputType);
+      adj = autoSpaceAfterComment(adj.value, adj.cursor, inputType);
+      adj = autoCloseBracket(adj.value, adj.cursor, inputType);
+      if (adj.value !== el.value) {
+        el.value = adj.value;
+        el.setSelectionRange(adj.cursor, adj.cursor);
+      }
+    }
+    if (autoResize) autoResizeTextarea(el);
+    onChange?.(el.value, el.value);
+    onCaretChange?.(el.value, el.selectionStart ?? 0);
+  };
+
+  const runCeInput = (el: HTMLDivElement, inputType: string) => {
+    cleanAlgTextCE(el);
+    if (autoSpace) autoSpaceMovesCE(el, inputType);
+    const text = el.textContent ?? '';
+    onChange?.(text, el.innerHTML);
+    onCaretChange?.(text, getTextBeforeCaret(el).length);
+  };
+
   if (!markable) {
     return (
       <textarea
@@ -168,32 +198,16 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
         style={style}
         title={title}
         inputMode={effectiveInputMode}
+        lang="en"
         onInput={e => {
           const el = e.target as HTMLTextAreaElement;
           const native = e.nativeEvent as InputEvent;
-          normalizePunctuationTA(el);
-          // 零宽字符(粘贴常带入的不可见垃圾)输入即删,不进数据。
-          {
-            const z = stripZeroWidth(el.value, el.selectionStart ?? 0);
-            if (z.value !== el.value) {
-              el.value = z.value;
-              el.setSelectionRange(z.cursor, z.cursor);
-            }
-          }
-          if (autoSpace) {
-            const inputType = native.inputType ?? '';
-            let adj = autoSpaceMoves(el.value, el.selectionStart ?? 0, inputType);
-            adj = autoSpaceAfterComment(adj.value, adj.cursor, inputType);
-            adj = autoCloseBracket(adj.value, adj.cursor, inputType);
-            if (adj.value !== el.value) {
-              el.value = adj.value;
-              el.setSelectionRange(adj.cursor, adj.cursor);
-            }
-          }
-          if (autoResize) autoResizeTextarea(el);
-          onChange?.(el.value, el.value);
-          onCaretChange?.(el.value, el.selectionStart ?? 0);
+          // 组字中(IME 缓冲区还开着):**别碰 value** —— 一改缓冲区就错乱、字会重复。
+          // 等 compositionend,那时候字落地了再洗。
+          if (native.isComposing) return;
+          runTextareaInput(el, native.inputType ?? '');
         }}
+        onCompositionEnd={e => runTextareaInput(e.currentTarget, 'insertText')}
         onClick={e => {
           onClick?.(e);
           const el = e.target as HTMLTextAreaElement;
@@ -221,18 +235,14 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
       spellCheck={spellCheck}
       inputMode={effectiveInputMode}
       data-placeholder={placeholder}
+      lang="en"
       onInput={e => {
         const el = e.target as HTMLDivElement;
         const native = e.nativeEvent as InputEvent;
-        normalizePunctuationCE(el);
-        if (autoSpace) {
-          autoSpaceMovesCE(el, native.inputType ?? '');
-        }
-        const text = (el.textContent ?? '');
-        const html = el.innerHTML;
-        onChange?.(text, html);
-        onCaretChange?.(text, getTextBeforeCaret(el).length);
+        if (native.isComposing) return; // 见 textarea 分支:组字中别碰内容
+        runCeInput(el, native.inputType ?? '');
       }}
+      onCompositionEnd={e => runCeInput(e.currentTarget as HTMLDivElement, 'insertText')}
       onClick={e => {
         onClick?.(e);
         const el = e.currentTarget as HTMLDivElement;
