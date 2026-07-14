@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / O / bin 8
-# Population in this bin: 869
+# Population in this bin: 871
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 9064001,R F2 L F2 D2 F2 L' F' L R' F' L B' L U' L2 F D,O,SESC Santo Amaro 2014 (2014-04-05~06),333 R1 B #1
@@ -167,7 +167,7 @@
 3087801001,R D L B D B2 U L2 F D2 F' D2 F2 L2 B' U2 R' D' B2,O,La Florida 2023 (2023-09-17),333 R2 C #4
 1346517001,D' R2 D B2 U2 F2 D' L' B' D' R' B' D R F2 U2 R F2,O,Pau Open Fast'n Cuber 2019 (2019-10-12~13),333oh R1 A #1
 2629194001,L' U2 B2 U2 R U2 L2 D2 L' D' L2 R2 D' B' F2 L U B2 U2 L',O,Stockholmsligan Easter Special: The Toffees - 2023 (2023-04-10),333bf R1 A #1
-2417987001,D' B' L2 F2 L' D R D2 B' L2 D2 R2 F2 U2 F2 D' R2 U' B2 D',O,Minnesota Meetup Tuesday 2023 (2023-01-10),333 R2 B #3
+5746049001,L' U2 R2 B R2 F' D2 B' R2 B U2 F2 U B2 F2 U F D' R2,O,Malabar Cubing Clash 2026 (2026-07-11~12),333oh R1 B #1
 2262376001,F L' D2 U2 R U2 R' B2 F2 L' U2 B' L' B2 D2 F' D2 B,O,U24 Open October 2022 (2022-10-23),333 R2 A E2
 756276001,B2 L' U2 R2 D2 B2 D2 L F' U2 B' D U' F D' R' U2 L B,O,Santiago UV de Otoño 2018 (2018-04-14~15),333 R1 K #3
 3662647059,U' R F D' B' R U F U2 R2 D R2 U2 B2 D' B2 U2 F' U2 B' L2,O,Poznań Mental Breakdown 2024 (2024-04-06~07),333mbf Final A #3

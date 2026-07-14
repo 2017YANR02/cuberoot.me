@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / W / bin 1
-# Population in this bin: 318
+# Population in this bin: 319
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2478001,R2 B' D2 F' L2 D2 B F2 D R2 U' L B2 U2 L' F' D' F R2,W,Santo Domingo Spring 2014 (2014-03-23),333oh Final A E2
@@ -146,7 +146,7 @@
 1760380001,F' L' U2 L2 B2 F2 D B2 D R2 B2 F2 U B' L' R' B' R U R2,W,Back To Cubing Arequipa 2021 (2021-12-11),333 R1 J #3
 1781242001,U' B D' U2 F2 L B2 U2 L' R' F L2 U F2 L2 R B2 L,W,Quito Open 2022 (2022-01-15),333 R2 D E1
 1810536001,L B U D2 B2 U2 L R2 F2 R2 D2 F' U2 B U R2 F2 U L,W,Cape Fear 2022 (2022-02-12),333 R1 D #4
-4230218001,U2 B' D2 R2 D2 R2 B U2 F L F U' R2 D R2 F U L F',W,Wichita Speedcubing Fall 2024 (2024-10-26),333 R2 B E2
+5746603001,U F D L B D' R2 U' F2 U2 L2 B2 R B2 R U2 R' D' F,W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A #4
 1828549001,D F U' B2 D L2 U B2 D B' R U2 L' B' L' U L' D',W,Lima Cuberano 2022 (2022-03-12~13),333 R1 C #3
 1962245001,U2 R2 D L2 D2 B2 R D2 B2 L2 R' D2 U' R F' D U L2 F2,W,Puzzling Porirua 2022 (2022-06-11),333 R1 D #2
 1988654001,F' U R F U B2 U2 R F R F2 B2 U2 F2 B2 D B2 U B2 L,W,Oslo Open 2022 (2022-06-24~26),333bf R1 B E1

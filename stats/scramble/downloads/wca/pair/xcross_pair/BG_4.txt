@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / BG / bin 4
-# Population in this bin: 616
+# Population in this bin: 617
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2092795001,L' B2 L' F2 R B2 U2 B2 R' B2 F2 R B' U R U B D2,B,DFW Cubing Summer 2022 (2022-08-14),333 R1 D #5

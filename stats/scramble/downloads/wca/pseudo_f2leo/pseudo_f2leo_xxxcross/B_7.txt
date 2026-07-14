@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / B / bin 7
-# Population in this bin: 836
+# Population in this bin: 839
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1528404001,U F2 L2 D F2 D' L2 U' B2 U2 R2 B U' L2 U L B2 D U' R',B,İzmir Open 2020 (2020-01-25~26),333 R2 A #1
@@ -47,7 +47,7 @@
 5736664001,F' U' F U2 R D2 R' F2 D2 R2 U2 F' L' F L' D' B' F2 U,B,Manchester Cubing League - Final 2026 (2026-07-04),333 R2 A E2
 1279013001,D' F B2 L2 U' B' D' L' F' L' F D2 R2 D2 B' R2 D2 F' R2 U2,B,Kursk Open 2019 (2019-08-24~25),333 R2 C #5
 2945298001,R' B U' D2 B2 F2 L2 D2 F2 D2 R D2 U R' B2 U B L' D',B,mcubes Cube Open 2023 (2023-07-29~30),333 R1 F E2
-3326798001,R' U2 R' F2 L2 U2 B2 U' R2 F2 D R' B D L2 D B2 F U,B,Bodocó Open 2023 (2023-12-09~10),333 Final A #1
+5748383001,B U B2 L' U' R' D2 F' D' F' L2 D2 B2 R' L' B2 D2 L B2,B,Stevenage July 2026 (2026-07-11~12),333 R1 E #2
 5245776001,U2 F D2 B F' D2 B2 U2 R B2 D' L' B' R U' B' R' F L2,B,Evanston Fall Favorites B 2025 (2025-12-06),333 R1 C #4
 2682479001,U B2 R' B2 D B D F2 D R U2 R2 D2 R L2 B2 U2 R D',B,National Capital Region A 2023 (2023-05-06),333bf Final A #1
 1800958001,B' D' R D' U2 R2 F2 U2 L B2 R' U L R B U2 B L2,B,North Star Cubing Challenge 2022 (2022-02-05~06),333oh R1 D #1

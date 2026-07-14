@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / BGOR / bin 3
-# Population in this bin: 135
-# Samples listed: 135 (all entries in this bin)
+# Population in this bin: 136
+# Samples listed: 136 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 17106001,U F2 U' D' F D' L' D L2 F2 D' R2 F2 L2 B2 D2 F2 U2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 C #5
@@ -140,3 +140,4 @@
 5562422001,F2 U' B' U' B2 U F2 R D2 B' R' B2 L' U2 F2 U2 R U2,G,Xuzhou Zenith 2026 (2026-04-11~12),333 Final L #5
 5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,R,Fewest Moves Bogotá XII 2026 (2026-04-25),333fm Final A #2
 5669651001,U B D B L2 D2 F R2 U2 F' U2 R B' R B D' F U',O,Nuevo Chimbote Speedcube Fest 2026 (2026-05-23~24),333 Final B #4
+5746469001,F2 D B2 D R2 U' F2 U' R' D2 B' F L' D' B' D2 F2 U2 F',O,Sleep & Solve Landsbro 2026 (2026-07-11~12),333oh Final A E1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / B / bin 2
-# Population in this bin: 413
+# Population in this bin: 414
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3752773001,R2 D2 B' U2 R2 B' R2 B L B U' L2 U' L' F U2 B' L2 R,B,North Jersey Speedsolving B 2024 (2024-05-12),333 R1 A #2
@@ -118,7 +118,7 @@
 746536001,D2 L R U2 R D2 R B2 U2 R' F' R' D' B2 D' F D L' R',B,Faria Brito Open 2018 (2018-04-07~08),333oh R2 B #4
 3423207001,D R2 B' R' U2 L2 B2 U B2 F2 L2 F2 R' B' U L2 U R D,B,Iguatemi Fortaleza 2024 (2024-01-13~14),333oh R1 B #3
 759291001,F U' L F2 U B' R D' R2 U' F' U2 R2 F2 B L2 U2 F' R2,B,Oakridge Cube Open - April 2018 (2018-04-14~15),333 R1 G E1
-775525005,U L2 F2 D2 L2 D2 R2 F2 U' B' F2 D F2 L U2 R2 B' L R2 B' L',B,SESC Gravataí 2018 (2018-05-05~06),333mbf Final A #1
+5746263010,F R U2 B2 F2 R B2 U2 L2 U B F' D' U2 B D F2 R F' D2,B,Sleep & Solve Landsbro 2026 (2026-07-11~12),333mbf Final A #1
 4780615001,F L2 B' U2 L2 D2 F2 R2 U2 F' L' U2 L' D' L2 B U2 F R,B,Singapore Jumbo June 2025 (2025-06-08),333 Final A #4
 791450012,U2 R F2 D2 L B2 D2 U2 L D F2 L' B' U2 L2 D2 L R' U L B',B,Palmerston North 2018 (2018-05-27),333mbf Final A #1
 822391001,F B R F D L' U' R U B2 U' F2 U2 R2 L' U2 L' B2 L',B,GLS Cup III 2018 (2018-07-07~08),333 R2 C #3

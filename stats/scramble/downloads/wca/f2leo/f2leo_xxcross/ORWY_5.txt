@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / ORWY / bin 5
-# Population in this bin: 260
+# Population in this bin: 261
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 32845001,U' D2 B2 R' B2 L2 F' L' U B' R2 D2 B2 R' D2 L' U2 L,Y,Masterpress Summer 2014 (2014-06-28~29),333 R1 A #2
@@ -179,7 +179,7 @@
 5053823001,F D2 F2 B' R' U' R2 F D' B L2 F2 B D2 F2 U2 L2 U2 L2,R,Amor y Amistad Aves María 2025 (2025-09-27~28),333 R2 B #4
 4843429001,U2 L D2 L F D F' B' R' D2 R2 L D2 F2 L2 D L F',O,Taipei Summer Open 2025 (2025-06-28~29),333 R1 H #3
 5011408001,D F2 D2 L R2 D2 F2 R D2 F2 L2 B D' R2 D' U B' D' L',W,Viña Winter Open 2025 (2025-09-06~07),333oh R1 B #4
-4559718001,B' R2 B U2 R2 B F2 L2 D2 L2 D' B' F2 U' L B2 U' L2 B R,O,Atlanta Algs at AIS 2025 (2025-03-15),333 Final B #5
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
 3868980001,L2 U2 B2 R D2 U2 R2 U F2 U' F' R2 D R F R' D',R,Gem City Donut DNF 2024 (2024-06-16),333 Final A #1
 3888174044,L' F2 L2 D' F U2 L2 U2 F' D' L2 F2 U2 F2 L D2 R' F2 D2 L' F2,O,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final A #2
 3902472003,F D U2 R2 D L2 B2 L2 D' B' D2 U2 L2 R D U B R' D L2 U,O,CubingUSA Southeast Championship 2024 (2024-06-28~30),333mbf Final A #1

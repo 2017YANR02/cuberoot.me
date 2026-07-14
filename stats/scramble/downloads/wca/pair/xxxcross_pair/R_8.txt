@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / R / bin 8
-# Population in this bin: 101
-# Samples listed: 101 (all entries in this bin)
+# Population in this bin: 102
+# Samples listed: 102 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -106,3 +106,4 @@
 5624825001,D2 B R B2 R2 U B2 L2 D' F2 D2 L2 B R2 F2 L U2 L2 F2,R,Cubing at Vivira B 2026 (2026-05-10),333 R1 C E1
 5688166001,L' B L' U F U R2 F2 U' R' B R2 L B2 L U2 D2 R2,R,LCCC Cubing Summer 2026 (2026-06-06),333 R2 A #3
 5709191001,F D L2 U2 F2 L2 D F2 U' F' U R' U' L2 B R2 F U,R,B-Game - Bastardo Open 2026 (2026-06-13~14),333 Final A E2
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1

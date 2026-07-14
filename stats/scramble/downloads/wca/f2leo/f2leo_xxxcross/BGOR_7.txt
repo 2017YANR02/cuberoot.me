@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / BGOR / bin 7
-# Population in this bin: 258
+# Population in this bin: 259
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -32,7 +32,7 @@
 267153001,F' D L U L2 D' F2 D2 B2 U' B U2 R2 B L2 F D2 F',R,Roskilde by Vote 2016 (2016-03-13),333 R1 D #2
 5423734001,B2 L' B' L2 D U R2 D' L2 B2 L2 R' U2 R B' U F' L,R,Moura Lacerda Open 2026 (2026-02-28~03-01),333 R1 A #3
 286389001,R2 L' B' L2 U F R' F2 B U D' L2 F2 D2 B2 L B2 R U2 B2,G,Plaza Norte Rubik 2016 (2016-04-23~24),333 R2 B #3
-4739631026,R F L' U R2 U' F2 D2 F2 D F' L' B R2 D' R2 B2 U2 L2,R,Beginner & Blind Johannesburg 2025 (2025-05-17~18),333mbf Final A #2
+5746768001,L U2 F2 R' D F U L2 D' U' L' F L R' F',R,Seattle Summer 2026 (2026-07-11),333 R2 B #3
 330138001,B R2 B' D L' B' R B R U2 F' B2 R' L F2 R B2,B,Atatürk Cube Day 2016 (2016-07-16~17),333oh Final A #4
 331687001,F2 L D2 U2 F2 D2 R U2 L B' L' U' L F2 L D L R',G,Spontaneous Summer 2016 (2016-07-17),333 Final A E2
 4698828001,B' U' B' L2 F' R2 U F2 L' U2 D2 B2 D2 L2 D2 B U2 L2 F' B',B,Kansas City Side Events 2025 (2025-05-03),333 R1 C #3

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / ORWY / bin 7
-# Population in this bin: 269
+# Population in this bin: 270
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,O,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -78,7 +78,7 @@
 4628911020,R' D' F' D2 R2 F' U2 L2 U2 L2 U' L B L2 F' U L R2 F' D',Y,Nevada Quiet Championship 2025 (2025-04-05),333mbf Final A #2
 925697001,L2 F' D2 B2 L2 D2 B' U2 R2 U2 L B U R D2 U R' D L,R,Unikl MFI Open 2018 (2018-11-03~04),333 R2 C #1
 944590022,F2 D R2 F2 R2 D2 R2 D U2 F2 U2 F' U2 R U2 B2 U L' D2 B' F2 L B2,Y,Please Be Quiet Berkeley 2018 (2018-12-01~02),333mbf Final B #3
-949864012,D2 L' B2 L2 D2 L2 F2 D2 R' U2 B' L' B2 D' U B' U' L2 B U B' L',Y,Cluj-Napoca Big Blind 2018 (2018-12-08),333mbf Final A #3
+5746768001,L U2 F2 R' D F U L2 D' U' L' F L R' F',R,Seattle Summer 2026 (2026-07-11),333 R2 B #3
 952585001,U F2 L2 D F2 D' B2 U F U F D' B2 R' F2 D' F' U2 L' U,O,Pittsburgh Open 2018 (2018-12-08~09),333 R2 B #2
 961313001,D2 L2 F2 D2 L2 B2 U R2 U2 B' R D2 U' L2 U2 R' B2 F,O,WCA South American Championship 2018 (2018-12-15~16),333oh R1 C E1
 5575666026,L' U2 R2 D' L2 R2 B2 U2 F' U F U2 B L' R' U2 F' U F' L2 U',Y,WCC Western PBQ Championship - Santa Clara 2026 (2026-04-25),333mbf Final A #2

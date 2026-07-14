@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / O / bin 6
-# Population in this bin: 563
+# Population in this bin: 564
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2769423001,U2 B2 D2 B2 F L2 U2 F' R D' B' R2 D2 F2 U' L U F2 D2,O,Singapore AMK CC Cubing A 2023 (2023-06-03),333 R1 F #1

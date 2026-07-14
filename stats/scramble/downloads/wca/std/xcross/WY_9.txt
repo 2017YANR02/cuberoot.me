@@ -1,11 +1,11 @@
 # Scramble samples — std / xcross / WY / bin 9
-# Population in this bin: 294
+# Population in this bin: 297
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
-13959001,D2 U F2 R2 U2 L2 D' U R' U L' F U F R B F U R,W,Toronto Open Spring 2014 (2014-04-26),333oh R1 A #4
+5742360001,L B2 R U' R F L F' L2 B' D2 L2 F' R2 F2 D2 R2 L' D' F',W,Rubik's WCA North American Championship 2026 (2026-07-02~05),333 R1 L #4
 19726001,F' U2 L2 F' R2 U2 L2 F R2 D F' U' R' B' L' D L2 U R' B',W,Michigan May Madness 2014 (2014-05-10),333 R1 A E2
 82765001,U B2 D2 R2 F2 L2 R2 U' B2 L' R2 B D2 F2 U F' L' R D F2,W,Game Pro Tour 2014 (2014-11-29~30),333oh Final A #3
 5087097031,L2 B D L D2 F2 L2 R2 B' R2 B F' L2 U R' B' L' F' U B,W,Blind Marathon in Rzeszów 2025 (2025-10-11),333mbf Final A #1
@@ -24,7 +24,7 @@
 280023001,D' R2 D2 L2 D2 F2 U2 B2 U' L' R' B2 R' F' D2 R' B L U F',W,Classic San Lorenzo Open 2016 (2016-03-24~26),333 R1 B E1
 4798522033,R' U2 B' U R2 U2 R2 U2 R2 F2 L' U2 F2 U' F' L' D B2 R' D2 B' L,W,VIC Side State Championship 2025 (2025-06-14~15),333mbf Final A #2
 329633001,B2 L D2 R' B2 L2 D2 L' D' L F D L2 D U' F L' D2 L2 B R,W,Campeonato Nacional Perubik 2016 (2016-07-16~17),333bf Final A #1
-364727001,U' R2 F D F B L D R2 F R B D2 F' U2 F2 L2 B,W,Praxis Open 2016 (2016-09-24),333oh Final C #4
+5747340049,L2 D2 L2 F D L F2 D' F2 R B2 U2 R2 D L2 D F2 L2 U2 L2 B' L',W,Poznań Mental Breakdown 2026 (2026-07-04~05),333mbf Final A #2
 5668598001,U' B2 L' F' L U2 B2 U2 R B2 L2 R U' F R2 D2 B' R F',W,Hiroshima Spring 2026 (2026-05-30),333oh Final B E2
 375448001,D2 F' D2 F' L2 U2 R2 F' D2 F2 L' F R U' R D F2 R B' U L,W,Japan Open 2016 (2016-10-09~10),333 R1 C E1
 382451001,R' D2 F2 L2 R' D2 F2 D2 F D2 U' R U2 B2 U2 F U2 B' D,W,Tucuman Open 2016 (2016-10-08~09),333oh Final D #3
@@ -54,7 +54,7 @@
 660542035,B F' R2 B F2 U2 B' D2 L R B' R2 F' R2 U L' U B U' B R2,W,TCG Lima 2014 (2014-09-06~07),333mbf Final A #1
 660593003,U L2 B2 D' L2 D' F2 L2 U2 L U L2 U2 L B R F R2 D F L' F,W,Brain Studio Cube Open 2014 (2014-11-15~16),333mbf Final A #1
 660632009,D2 F D2 B' D2 F2 U2 R2 F' U L' U R D2 B F U' F' D2 U2 B,W,Speed Cubing Mumbai Unlimited 2015 (2015-01-16~18),333mbf Final A #1
-660812001,L2 B L2 F R2 D2 L2 U2 B2 F' L2 D' R B D2 L2 D' F' L2 R2 D' L' F2,W,Barcelona FME Open 2015 (2015-09-12~13),333mbf Final A #3
+5747171001,D2 U2 B' F2 D2 B' R2 B F L' R B' D2 B2 L R2 D' L' B U',W,Warm Up Niepołomice 2026 (2026-07-11~12),333 Final B #3
 5247997001,R2 L2 U2 L D' B' R F D B2 U B2 U2 B2 U R2 D F2 L2 R',W,Cube Factory Santa Claus Race Brzeziny 2025 (2025-12-06~07),333oh R2 A #5
 660930003,B2 R2 D' L2 U2 F2 D B2 D L D2 R' F' U B L2 F2 D' R' U' F' L',W,Big Cubes Challenge 2016 (2016-02-27~28),333mbf Final A #1
 4438978001,F' U' L2 B2 D' B2 R2 U B2 R2 D' L F' R B L D' R2 F U,W,Unorthodox Blocks Wisconsin 2025 (2025-01-25),333 Final E E1

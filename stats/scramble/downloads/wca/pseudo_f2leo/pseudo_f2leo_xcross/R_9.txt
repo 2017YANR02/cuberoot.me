@@ -2,7 +2,7 @@
 # Population in this bin: 367
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4310084009,R' U2 F' R' F' D2 R2 F L2 F R2 L' D U L' B F' U' L' F',R,Verona Big & Blind 2024 (2024-11-23~24),333mbf Final A #2

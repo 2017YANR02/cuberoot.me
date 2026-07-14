@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BG / bin 7
-# Population in this bin: 253
+# Population in this bin: 256
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 31496001,R2 U' R' F' B L D2 F' B D' F U L2 D' F2 D B2 U' F2,G,Excellite Cube Open 2014 (2014-06-22),333 R1 F E1
@@ -38,7 +38,7 @@
 443646001,F2 D R2 D2 B2 D F D' L U2 R' U2 L B2 L' D2 B',B,Lorena Open 2017 (2017-02-11~12),333oh R1 A #4
 450031001,B U2 F U D F L' U2 L F2 B2 D' R2 U2 L2 U L2 F2,G,Piedra del Sol Santander 2017 (2017-02-18),333oh Final B #3
 5631005020,U' R2 D2 B2 D2 B R D' F2 D2 R B2 L' U2 F2 D2 B2 R U F2 D,B,Toledo Big & Blind 2026 (2026-05-16),333mbf Final A #1
-558943001,F L2 R2 F L2 U2 R2 F' D2 U R U R' F2 R B2 U,G,SNZ Northern 2017 (2017-07-23),333 R1 C #4
+5741741001,D2 U2 F2 L2 B' L2 F R2 F2 L' R' U' L' F' U2 R' B' U2,B,Wiltshire Summer 2026 (2026-07-04~05),333 Final B #3
 566083001,D' F2 D' F2 L2 D U R2 U' R B F2 L' D U' F2 R B2 D R,B,Copa de Invierno 2017 (2017-08-05),333 Final B #4
 568247001,F2 L D2 F2 R' B2 F2 L R' B' U B L' U2 F2 D R' F2 L',B,Borneo Championship 2017 (2017-08-12),333 R2 C #3
 627947001,L2 U2 B' D2 R2 D2 U2 F' R2 D' F D R2 B L B2 U2 B R2,G,UK Championship 2017 (2017-10-27~29),333oh R1 A #4
@@ -199,7 +199,7 @@
 5113524001,U' R2 U L2 D' U' L' B2 L' F L D' U F' U B L' D' L',G,Please Be Quiet UMBC 2025 (2025-10-19),333bf R1 A #1
 4391619001,U' R2 D2 B U2 F R2 B R F2 L' R F' D' L',B,Penang Cube Masters 2024 (2024-12-28~29),333 R1 B #3
 4399665001,L F' L2 D B' D' L' F L2 U2 F' B2 L2 F2 R F' D' B',G,Hannukubing Israel 2024 (2024-12-31~2025-01-01),333 R2 A #2
-4475748001,F2 D' L' D F' D' L U L2 F' R2 D2 L' D2 R F2 R2 B2,B,Brazuca al Cubo I 2025 (2025-02-08),333 R2 A #5
+5743024001,L2 U R2 F2 L' B2 L U2 R U2 B2 F L D L' F R F2 L',G,Victoria Gardens Lviv 2026 (2026-07-04~05),333 R1 E #2
 4550949001,F' B2 L2 U2 L D L D R' D B2 D2 R L2 U2 L2,B,Gdańska Liga Speedcubingu II 2025 (2025-03-08~09),333 R1 D #2
 5485794001,F2 U F2 U' R2 D' B R' F' D' R D L2 B2 U2 L2 F2 D,G,Budapest Open 2026 (2026-03-28~29),333 R1 C #3
 4455140001,B2 U F2 U2 F2 U2 F U2 F U B2 D2 B2 R' B2 D F' R',B,Charlotte Winter 2025 (2025-01-25),333 R2 B #4

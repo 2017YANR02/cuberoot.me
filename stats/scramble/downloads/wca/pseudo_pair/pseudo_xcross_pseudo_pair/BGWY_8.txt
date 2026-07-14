@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGWY / bin 8
-# Population in this bin: 287
+# Population in this bin: 289
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 10613001,R2 U' B2 U R2 U2 B2 R F2 L' F' D B L D' U' L B' L,B,Inspiria Cube Day 2014 (2014-04-12),333oh R1 B #4
@@ -141,7 +141,7 @@
 2106500001,F R2 D2 B2 U' F2 D' R2 B2 F2 D U R F2 L2 F L B2 U' F2 D' L B',B,Yoga Summer A 2022 (2022-08-21),333bf Final A #1
 2112452001,F2 U' B2 U R2 D B2 F2 U F2 U R' D' F U2 R B' R2 U' L' B2,B,Kansas City Krazy Cubing 2022 (2022-08-20),333 R2 A #4
 5226297001,U2 R U2 L2 D2 B2 R' U2 R' U F2 R D R2 F' D' B U2 F2 R',B,Tuparendi Open Quati 2025 (2025-11-29~30),333 R1 C #3
-2171219001,U' F2 R2 D2 U' F2 U R D' B2 U L2 R' B' U2 F' R F2,B,Sandnes Open 2022 (2022-09-17~18),333 R1 C #1
+5745944001,B' D R L2 U L' F B U' L' F2 L2 F2 R2 U' B2 R2 D' L2 R,B,Odd July Singapore 2026 (2026-07-12),333 R1 C #4
 2262995001,F L F2 R U F' B' D' L' F2 D B2 R2 B2 D' R2 D F2 D2 B',B,Cubing in The Springs 2022 (2022-10-29),333 R1 A E1
 2269028001,B' L' U2 F' R2 D2 B R' D B2 L' D2 R U2 L2 U2 F2 L' B2 U',B,Kewbz UK Championship 2022 (2022-10-28~30),333 R2 A #5
 2279864001,L' U D' L' F' L2 D2 R U F' L' U' D2 F2 L2 U D2 L2 B2,B,Cuber Jackets Fall 2022 (2022-10-29),333oh R1 A #5

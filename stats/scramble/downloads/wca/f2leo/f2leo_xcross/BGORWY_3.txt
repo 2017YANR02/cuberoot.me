@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / BGORWY / bin 3
-# Population in this bin: 215
+# Population in this bin: 216
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 17106001,U F2 U' D' F D' L' D L2 F2 D' R2 F2 L2 B2 D2 F2 U2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 C #5
@@ -195,7 +195,7 @@
 4920828001,R D2 R F2 D2 L U2 R D' L D B2 F' R U R' F' R,Y,Cubing in the Ocean County 2025 (2025-08-09),333 R2 B #3
 4993400001,F2 R' B2 D2 U2 L' D2 B2 L2 D L2 U2 B' D' F' R F2 R D,O,Bilbao Open 2025 (2025-08-30~31),333 R1 C E1
 4998897001,L2 U' L' D B2 R2 U F D F' R L U2 F2 R U2 R',R,Mofunland Speedcubing Singapore 2025 (2025-09-06),333 R3 A #3
-5041993001,B2 F2 L D2 R F2 U B2 F2 R2 D' U2 L' R2 U2,O,Hanoi Summer 2025 (2025-09-20~21),333 R2 D #4
+5746469001,F2 D B2 D R2 U' F2 U' R' D2 B' F L' D' B' D2 F2 U2 F',O,Sleep & Solve Landsbro 2026 (2026-07-11~12),333oh Final A E1
 5049359001,R B2 F L2 U L2 B2 D L2 F2 L2 R' F' L U' R2 B U2 B2,O,Energy Cube Białołęka 2025 (2025-09-27~28),333oh R1 A E2
 5050275001,D F' B R B' R' L2 D2 R F' B2 L U2 R' U2 L2 F' L',W,LexOpen France 2025 (2025-09-27~28),333bf Final B #2
 5065416001,U2 L2 B2 U2 B2 U' R2 D' L' F' R2 B2 U R D' R2 U' L U',R,Clock & 'Minx Ohio 2025 (2025-10-04),333 Final B E1

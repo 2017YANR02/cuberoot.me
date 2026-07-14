@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / ORWY / bin 3
-# Population in this bin: 149
-# Samples listed: 149 (all entries in this bin)
+# Population in this bin: 150
+# Samples listed: 150 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 33876001,L D2 R U2 L F2 L2 U2 B2 D2 F' D U' R2 F L2 F U' R2 D',O,P3 Grand Open 2014 (2014-06-28~29),333bf Final A E1
@@ -154,3 +154,4 @@
 5688308051,F' U' F' D2 B2 D2 L' D2 R' D2 U R' U2 R2 U' B' D' U B R2,Y,More Than One Cube Shanghai 2026 (2026-06-06~07),333mbf Final A #3
 5693421001,D F' U2 B' D2 F' U2 R' U2 B2 F2 U2 R' B D' L2 R' B' L2,Y,Burnaby Cubes Big & Small 2026 (2026-06-07),333bf Final A E2
 5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,Y,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1
+5746469001,F2 D B2 D R2 U' F2 U' R' D2 B' F L' D' B' D2 F2 U2 F',O,Sleep & Solve Landsbro 2026 (2026-07-11~12),333oh Final A E1

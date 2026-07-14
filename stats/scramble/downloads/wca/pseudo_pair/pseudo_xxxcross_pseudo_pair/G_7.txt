@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / G / bin 7
-# Population in this bin: 123
-# Samples listed: 123 (all entries in this bin)
+# Population in this bin: 125
+# Samples listed: 125 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 31496001,R2 U' R' F' B L D2 F' B D' F U L2 D' F2 D B2 U' F2,G,Excellite Cube Open 2014 (2014-06-22),333 R1 F E1
@@ -128,3 +128,5 @@
 5560802001,U2 R U2 R' B2 R' F2 D2 R2 F' D F' U B' U' B2 D2 L F2,G,Racing Kane 2026 (2026-04-18),333 R1 A #1
 5578479001,U' B U R L U2 L' D' R F B2 D2 R2 B R2 F2 D,G,Fundación de Cuenca Open 2026 (2026-04-25~26),333 R1 B #4
 5677615027,U2 R' F U' L' B' L2 D2 R' U B2 R2 B2 R U2 L U2 L' B,G,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf Final A #3
+5743024001,L2 U R2 F2 L' B2 L U2 R U2 B2 F L D L' F R F2 L',G,Victoria Gardens Lviv 2026 (2026-07-04~05),333 R1 E #2
+5745086001,L2 B2 R2 U2 F' L2 B R2 B2 D L2 F2 L D L' U2 R D,G,Mumbai Monsoon Mayhem 2026 (2026-07-05),333 R1 B E2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / Y / bin 3
-# Population in this bin: 706
+# Population in this bin: 707
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1067552001,B' D2 R2 F D2 B U L B' L B2 U' F' D2 R2 D' U2,Y,Astrakhan Spring Open 2019 (2019-03-23~24),333 R1 A #5
@@ -190,7 +190,7 @@
 5317007001,F' L2 D' U' R2 D2 L2 U' B' L' D F' L' D2 F' D' F' R2,Y,Super Duper San Diego 2026 (2026-01-09~11),333 R1 C #3
 3464777020,D R2 B D' B2 L2 D L2 U L2 D R2 U F' L B2 F L2,Y,Please Don't DNF Kuwait 2024 (2024-01-27),333mbf Final B #2
 1163196001,U2 B2 D' F2 U F2 R2 D' L2 U' F' U F L' D' B L' U' R' U2,Y,Colorado Qualifier 2019 (2019-05-25~26),333 R2 A E2
-927444001,U2 F' L2 R2 U2 F L2 D2 B' R2 U L U F2 D F2 D' L2 R' D',Y,Maoming Open 2018 (2018-11-11),333 Final A #1
+5745928001,R2 D F L' D2 B2 D2 F2 L B2 L2 D' R' B2 L R' D F,Y,Odd July Singapore 2026 (2026-07-12),333 R2 A #4
 1410465001,F L U L' U' F' B' D2 F D' F2 D2 F' U2 B' U2 F D2,Y,Palacio del Cubo 2019 (2019-11-16~17),333oh R1 A #3
 4801868039,U2 F B2 R F U' R B' R2 F2 U2 R2 L2 U2 B' U' R2 D2 L' F',Y,Silent Brasília 2025 (2025-06-14~15),333mbf Final A #2
 938650001,U2 B' L2 B' U2 F2 U2 F2 L' R' F' D' L2 B2 R U B2 U2 R,Y,Chengdu Winter Open 2018 (2018-11-24~25),333 R1 E E1

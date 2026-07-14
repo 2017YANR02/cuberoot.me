@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / BGOR / bin 4
-# Population in this bin: 691
+# Population in this bin: 692
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1863333001,D2 R2 D2 B2 D2 L' D2 L B2 R U' L B' L' U L' F2 L,G,Romerike Easter Open 2022 (2022-04-09~10),333 R2 A E1

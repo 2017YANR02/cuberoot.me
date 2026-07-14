@@ -2,7 +2,7 @@
 # Population in this bin: 1
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,R,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2

@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / ORWY / bin 3
-# Population in this bin: 537
+# Population in this bin: 539
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4933863001,L2 F2 R B2 U2 R B2 L U' L' D2 F' D' F R2 D F2 L2,Y,Visayas Championship 2025 (2025-08-09~10),333 R2 A E1
@@ -171,7 +171,7 @@
 4343370001,D2 R U' R D B U L2 D2 R2 F' D2 B' L2 B U' R D2,Y,Cubing Zacatecas 2024 (2024-12-07~08),333 R2 A E1
 1019312001,U' R2 D L2 B2 D2 L2 U' L2 D' U' R D2 R2 B2 F D' F' D2 L' R2,O,Princeton Winter 2019 (2019-02-09),333 R2 A #1
 3073283001,D' R' D R2 D L F U2 B U F D2 F D2 F B2 L2 B2,O,Cranbourne Spring Sunday 2023 (2023-09-10),333 R1 D E1
-4178497001,L2 B L2 F U2 B' U2 F L' F' D2 F2 U' F2 L' B F' U',W,Swiss Nationals 2024 (2024-10-04~06),333 R1 A #4
+5746469001,F2 D B2 D R2 U' F2 U' R' D2 B' F L' D' B' D2 F2 U2 F',O,Sleep & Solve Landsbro 2026 (2026-07-11~12),333oh Final A E1
 3429771001,L' R2 U2 L' F2 L2 U2 R' F2 D B L R' U L B' U R D,Y,GLS I 2024 (2024-01-20~21),333 R1 B #2
 1037531001,R' B R L D2 B' U' D2 F' L U2 D2 R2 F B2 D2 B,W,Voronezh Open 2019 (2019-03-02~03),333oh Final A E2
 4797982028,L' B' U' F' U' R2 F L2 F D F L2 D2 F' R2 U2 B2 L',Y,Perdiendo el Tiempo en Granada 2025 (2025-06-14~15),333mbf Final A #2

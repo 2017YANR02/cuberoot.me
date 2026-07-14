@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / Y / bin 8
-# Population in this bin: 892
+# Population in this bin: 896
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 5090348001,R' U2 R B R' U' B R D L2 F L2 F D2 F2 B U R',Y,Puzzling Puzzles Vantaa 2025 (2025-10-11~12),333oh R1 A #4
@@ -113,7 +113,7 @@
 409682001,B2 L' B' U' F' U R F2 L U' F U2 B' L2 B' U2 F' D2 F' B' L2,Y,João Câmara Open 2016 (2016-12-10),333 Final A #2
 3161534058,D' L D2 U2 F2 D2 L2 F' U2 R2 F' R2 F2 D2 R' F' U' L U' R2 B' L,Y,Empire State Fall Focus 2023 (2023-10-15),333mbf Final A #1
 5608021001,U L2 U R U2 R F2 R U2 R' F' U L' D U' F D' L',Y,Berkeley May Weekday 2026 (2026-05-01),333 R1 A E2
-1143705001,U F2 D B2 U2 B2 L2 U' F' L2 B2 F D' U F R B' D2 F2,Y,White City Cubing 2019 (2019-05-18~19),333 R1 B #5
+5743437001,U2 L U' R U B L' B2 U R2 U2 R2 U' R2 F2 U2 R2 L B,Y,Tlaxcala Open 10 Aniversario 2026 (2026-07-04~05),333 R1 D #3
 1781207001,R B R2 U F2 B2 R' D2 F R2 F U2 L2 F2 B' L2 U2 B R',Y,Quito Open 2022 (2022-01-15),333 R1 F E1
 2074016009,B' U R2 U L2 R2 U' L2 F2 D2 L' R' F2 L' U' R F L2 B L' F',Y,Sønderjysk Sommercubing 2022 (2022-08-05~07),333mbf Final A #1
 3273973001,D2 B' L F U' B2 R' B2 U2 D' F2 L2 U' D' L U B',Y,Rhein-Neckar Autumn 2023 (2023-11-18~19),333 R2 C #1

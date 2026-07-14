@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / OR / bin 10
-# Population in this bin: 633
+# Population in this bin: 635
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1734001,B' L2 F' R2 B' D2 F L2 R2 D' B F2 D' F U' B2 R F2 L' B',O,Kansai Open 2014 (2014-03-21~22),333 R2 B E1
@@ -181,7 +181,7 @@
 2249147001,F2 L B R2 F2 U2 D' L F' U B2 D2 F' L2 F L2 F2 R2 D,O,Mongolia Championship 2022 (2022-10-15~16),333 R1 I E2
 1339229001,R' U2 B2 L2 U2 R2 U2 R2 D' L' U2 L B D' F' U' L' F2 R',O,Värnamo Cube Days 2019 (2019-10-05~06),333oh Final A #2
 1126355001,R' U F' R2 U R D L B D2 B' U' D R2 B2 U B2 D2 L2 D L2,O,NxNZ 2019 (2019-04-26~27),333 R1 A E1
-1132713001,B' D' B D R F B' D2 L U D R2 U2 L2 D2 F2 R' U2 L' D2,O,Puget Sound Spring 2019 (2019-05-04),333 R1 D #1
+5743900001,B R2 U R B2 D F' D R B2 R U2 R' F2 R2 L' U2 R D,O,Michigan Mini 43 2026 (2026-07-07),333 Final B E1
 2767377022,L F' D' B' U' R' F' B' L F B2 L2 F' R2 L2 U2 R2 U L2 U2,O,Washtenaw Qualifier 2023 (2023-05-27~28),333mbf Final B #1
 4072926001,F' L2 D' B' L2 F R' B L' D' F2 D2 F2 L2 U' B2 R2 B U,O,2x2 at 2 in Prague 2024 (2024-08-31~09-01),333 R2 B #3
 4737027036,F2 R B' F2 R2 D' U2 L2 U' F2 L' D' L' B D' L2 R D B' L' F,O,Kewbz Scottish Championship Blind Off 2025 (2025-05-24),333mbf Final A #2

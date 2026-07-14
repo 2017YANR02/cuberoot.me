@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / W / bin 2
-# Population in this bin: 136
-# Samples listed: 136 (all entries in this bin)
+# Population in this bin: 137
+# Samples listed: 137 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 28707001,R2 F U F L' U B' R' F2 U2 R U2 R2 F L2 F' B,W,New Albany Open 2014 (2014-06-21),333 R2 A E2
@@ -141,3 +141,4 @@
 5677616009,B L2 F2 D R2 D2 L2 D' F' D2 F2 R2 B' L R2 U L D2 L B,W,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf Final B #1
 5693080011,R' L' B' U2 R2 D L D F2 D2 F2 B2 R D2 R B2 R2 U R B' L',W,Pickering Blindfolded 2026 (2026-06-06),333mbf Final A #1
 5694431058,R2 B' D' F2 U' D2 B L' U D' L U2 R' U2 L D2 L' D L B2,W,GLS Side Challenge Gdańsk 2026 (2026-06-06~07),333mbf Final A #2
+5746603001,U F D L B D' R2 U' F2 U2 L2 B2 R B2 R U2 R' D' F,W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A #4

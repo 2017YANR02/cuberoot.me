@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / WY / bin 1
-# Population in this bin: 75
-# Samples listed: 75 (all entries in this bin)
+# Population in this bin: 76
+# Samples listed: 76 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 67895001,F2 R2 D' F2 R2 D' U2 L2 R D R' D2 R D' L2 D U2 F',Y,DJ Open 2014 (2014-10-18~19),333 R1 G #5
@@ -80,3 +80,4 @@
 5418247048,U' B2 R2 D' U R2 B2 U' F2 R D L2 U L U B' D2 B' D' L',W,WIW at Opole 2026 (2026-02-28~03-01),333mbf Final A #1
 5513603001,D2 F U' B R U2 R U' D L2 B2 D' B2 U2 L2 F2 L2 F,Y,DFW Cubing Spring 2026 (2026-03-28~29),333 Final B #1
 5569095001,U2 F2 R' F2 D F2 D' R F U B2 D2 F2 R' D2 R' D2 L2 U2,W,Duper Super Davis Spring 2026 (2026-04-19),333 Final H #4
+5746603001,U F D L B D' R2 U' F2 U2 L2 B2 R B2 R U2 R' D' F,W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A #4

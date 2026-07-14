@@ -1,11 +1,11 @@
 # Scramble samples — f2leo / f2leo_xxcross / BG / bin 11
-# Population in this bin: 707
+# Population in this bin: 708
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
-3944923001,R' D' R2 D' L' B' R F' D U2 R2 D2 L' F2 R' U2 F2 L2 U',B,America's School Speedcubing II Huaraz 2024 (2024-07-13),333 R1 G #4
+5748135001,U' R L' U R' D R' F2 U2 F2 B R2 D2 L2 U2 R B' L2 F2,B,Persevere in De Pere 2026 (2026-07-11),333oh R1 C E1
 2253793001,B2 D B2 D2 U F2 D' L2 R F' L' D' R' B' U' F' U2 R' F2,B,Cavite Speedcubing Open 2022 (2022-10-22),333 R1 A #2
 2206970001,F2 L' F' D B' L' F2 R' B2 D B2 L2 D' F2 U' B2 F R' U',B,Marshall Cubing September 2022 (2022-09-24),333 R1 A E2
 2003001,B2 U R2 B2 U2 B2 D' B2 U2 R B' L R D' B R B2 U2 B L,B,Zonhoven Open 2014 (2014-03-22~23),333 R1 B #4

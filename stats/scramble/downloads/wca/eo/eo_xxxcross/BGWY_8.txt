@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGWY / bin 8
-# Population in this bin: 474
+# Population in this bin: 475
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 5149956021,U R2 B2 U F2 U F2 U' B D F2 U' R2 U2 F2 U' L' U B L,G,Furesø 3x3 Frenzy 2025 (2025-11-01~02),333mbf Final A #1
@@ -48,7 +48,7 @@
 2068497001,R B2 L2 U2 F2 R B2 L2 D2 R2 U' L B F2 L2 D2 U' R' U' B2,Y,AZCubing Summer 2022 (2022-07-30),333 R2 A #1
 441612001,D U2 F2 D L2 R2 U2 R' F2 U2 L' D F' U2 F D2 U' F,G,B.O.N.D. Open 2017 (2017-02-04~05),333oh R1 A #5
 3435766001,U2 L D' B2 L2 U2 F' L2 F L2 B2 F' L' R B' D R F2 R',W,SacCubing XVI 2024 (2024-01-20~21),333 R2 C #1
-3632200001,D' F' U2 B L F L' F R' F2 R' D2 R2 L2 F2 D',G,Huzhou Open 2024 (2024-03-30),333 R1 G E1
+5747438001,F' L' B2 R' F2 U F2 U B U D L2 D' F2 U' F2 B,Y,Bangkok Cube Festival 2026 (2026-07-11~12),333oh R1 C #2
 460042001,D2 L2 U2 B2 L2 B' R2 F2 D2 L2 B2 R' B D' U2 B F2 R B2 L2 F',Y,Speedsolving Huancayo 2017 (2017-03-05),333oh Final A E2
 3735451048,U' D B' R D R2 F R' F' U2 L' F U2 D2 B U2 B2 U2 F' L,Y,BrizZon Side Open II 2024 (2024-05-01~05),333mbf Final B #1
 5558688001,U' F2 L2 D2 B D2 F' U2 L2 B' U2 R2 D B2 F2 L U' B',G,Cube Against Cancer - Orange County 2026 (2026-04-19),333 R1 C #4

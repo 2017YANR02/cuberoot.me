@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / O / bin 7
-# Population in this bin: 798
+# Population in this bin: 802
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1284434015,R2 F' U2 F L2 D2 B2 D2 U' L' U B D U' B' D2 B2 L D B' L',O,Croatian Nationals 2019 (2019-08-31~09-01),333mbf Final A #1
@@ -58,7 +58,7 @@
 1013128001,L2 F2 U2 R D2 L F2 L D B' U2 B L2 B L2 F U' R' D',O,Canada's Wild West 2019 (2019-02-09),333 R2 B #2
 1690486031,L D F2 U F2 R2 F2 D' F2 U' R F' R' B2 R B U F2 D L B2,O,Szansa Cubing Open Warsaw 2021 (2021-09-11~12),333mbf Final B #2
 1974474001,L2 F L2 U B R' F' D' R L U2 D2 L' D2 L D2 F2 R2 D2 U,O,Singapore Mofun & FIS Cubing 2022 (2022-06-18),333 R1 D #4
-5364797001,L2 B' R' F R2 D2 F U2 B2 R2 U2 L B2 R2 U L2 D' B',O,AEO Moliceiro Open 2026 (2026-01-31~02-01),333 R1 C #3
+5747076001,L2 D2 F' D2 B' D2 F D' B D2 F U B2 R U' L R2,O,Warm Up Niepołomice 2026 (2026-07-11~12),333 Final A #1
 197104001,B F2 D2 F' D2 L2 B' D2 F2 U2 L' B D' B L F2 U R U2 F2,O,Torneo Medellín Explora 2015 (2015-10-04),333 R2 A #3
 5028044001,U2 L' R2 B2 L R' U' L2 R2 F L2 B L B U2 F2 U,O,Athens Never Ending Summer A 2025 (2025-09-13),333 Final A #5
 1870191027,U B D2 R2 B L2 B' U2 L D U2 F2 R B U2 L R2 U' L B',O,Swisscubing Cup II 2022 (2022-04-09~10),333mbf Final A #2

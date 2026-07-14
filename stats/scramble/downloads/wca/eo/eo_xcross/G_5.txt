@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / G / bin 5
-# Population in this bin: 702
+# Population in this bin: 705
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 5139459001,D2 F2 L' B2 R2 F2 L2 D' L2 B' D B2 F' D' R2 F' U' F,G,Spookin' on the Plains at Auburn 2025 (2025-10-25),333oh R1 C E2
@@ -72,7 +72,7 @@
 5422936006,R' B' U' R2 B D2 B' L2 F U2 F2 D2 L' D' U2 B' R2 D' U R' B R,G,Glasgow Favourites Evening V 2026 (2026-03-03),333mbf Final A #1
 314356001,B D2 B D2 U2 R' B' D2 R2 B' F2 L2 F R B' F,G,Strasbourg Open 2016 (2016-06-19),333 R1 D #5
 2057741018,L F2 D2 L B2 D2 L' F' R' B2 R2 U' B2 L D B2 L D L2 U,G,CubingUSA Southeast Championship 2022 (2022-07-29~31),333mbf Final C #1
-4049061001,R' D B2 U' B2 U' B2 L2 B2 U' B2 U' L' B L2 U' B U F,G,Telangana Cube Championship 2024 (2024-08-23~25),333 R1 C #3
+5747349024,B' R2 D2 L' B R' F' R2 U2 R' F R2 F' L2 F2 R2 F' L' F,G,Poznań Mental Breakdown 2026 (2026-07-04~05),333mbf Final A #3
 5415992001,B' R2 B L2 U2 R' U' R U' F' R D' U2 L F2 U2,G,Wichita Art Museum 2026 (2026-02-28),333 R1 D #3
 5551719001,D L' D' R B2 D2 R D' L2 D B' D' F2 U2 D L2 D2 R2,G,German Open 2026 (2026-04-18~19),333 R1 A E1
 332418001,U2 F2 D' L2 F2 U' F' R2 U' B U' B D U2 F' R2 U',G,National Cubing Region Open 2016 (2016-07-23~24),333 R2 I #3

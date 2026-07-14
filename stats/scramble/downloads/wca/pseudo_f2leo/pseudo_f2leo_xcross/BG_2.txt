@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BG / bin 2
-# Population in this bin: 54
-# Samples listed: 54 (all entries in this bin)
+# Population in this bin: 55
+# Samples listed: 55 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 99925001,B2 R2 B2 F U2 F2 D2 R2 B U2 F L B2 F U B2 L D B2 R' F',B,PB Smashathon 2015 (2015-01-17~18),333oh R1 B #3
@@ -59,3 +59,4 @@
 5419667001,R' D R' B F R2 D2 B' U2 B' F' D B R2 D' F' U',B,Open de Gatineau 2026 (2026-02-28),333oh Final A E1
 5491191001,F2 R' F' L2 R2 D2 R2 D' B2 D2 F' D' R' B R2 F L2 U2,G,NxNjoyable Sydney Gathering 2026 (2026-03-28~29),333 R1 B #3
 5513183001,B R2 U' F2 B' D' B U2 R2 F2 U D F2 D' B2 L2 D2 L,B,Karnataka Cube Open April 2026 (2026-04-05),333 R1 F #3
+5741453001,L' D L2 F2 D2 U R2 B2 D' U2 R2 L D2 B' L B2 R U' L,G,Gwada Cubing 2026 (2026-07-04~05),333 Final A #2

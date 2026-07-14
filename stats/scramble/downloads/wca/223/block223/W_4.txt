@@ -2,7 +2,7 @@
 # Population in this bin: 87
 # Samples listed: 87 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 208474001,D2 F2 U' B2 U2 B2 R2 U B' F D B' R D B2 U2 B2 R,W,Saint Petersburg Autumn Open 2015 (2015-10-24~25),333oh R1 A #3

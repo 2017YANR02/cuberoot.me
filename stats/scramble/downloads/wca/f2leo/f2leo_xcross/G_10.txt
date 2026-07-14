@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / G / bin 10
-# Population in this bin: 37
-# Samples listed: 37 (all entries in this bin)
+# Population in this bin: 38
+# Samples listed: 38 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 74109001,L2 F2 U F2 D' F2 U2 R2 U L2 F' D2 U2 B2 L' U' R' B' D' U2 R,G,Los Andes 2014 (2014-11-08),333oh R1 A #2
@@ -42,3 +42,4 @@
 5342120001,F' B2 L2 U2 B2 D B2 R2 U' R2 F L' D R U' B' D2 U B' L2,G,Cuñape Open SCZ 2026 (2026-01-23~24),333 R1 D #2
 5437754001,L2 B U' D2 B' D' L D2 R U2 F2 U2 L2 F' L2 F2 B U2 B' D2,G,Dobeles Pavasaris 2026 (2026-03-07~08),333oh R1 A E2
 5523630001,U R2 L D F R B L U2 D' F' U D R2 U L2 B2 L2 U,G,Pickering Mini Afternoon 2026 (2026-04-12),333 R2 B #2
+5748565001,R B' R2 D' U' B2 L2 B2 L2 B' L' F D U L' U2 B2 R D,G,Stevenage July 2026 (2026-07-11~12),333 R1 B E2

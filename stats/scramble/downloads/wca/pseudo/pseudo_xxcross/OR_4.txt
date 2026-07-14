@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / OR / bin 4
-# Population in this bin: 358
+# Population in this bin: 359
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 810001,B L2 F U2 B' F' L2 B L' R2 U R' F' R2 D' L' F U' B',R,Dnepr Cube Day 2014 (2014-03-15),333 R1 B #4

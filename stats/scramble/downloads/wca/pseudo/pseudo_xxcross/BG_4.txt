@@ -2,7 +2,7 @@
 # Population in this bin: 342
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4883556001,R' F2 R D2 F2 R' U B' U F L' F2 U2 L2 U2 B' L,G,Harbin Open 2025 (2025-07-20),333 R1 B E2

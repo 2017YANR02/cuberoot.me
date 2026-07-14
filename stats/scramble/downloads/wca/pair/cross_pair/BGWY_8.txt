@@ -2,7 +2,7 @@
 # Population in this bin: 2
 # Samples listed: 2 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2338423001,R2 U2 R2 D L2 D' U' L2 F2 B' L R2 D' R' D2 F U R' D,B,Cube4fun in Lublin 2022 (2022-11-27),333 R2 A #2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BGWY / bin 1
-# Population in this bin: 158
-# Samples listed: 158 (all entries in this bin)
+# Population in this bin: 159
+# Samples listed: 159 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,G,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
@@ -163,3 +163,4 @@
 5569095001,U2 F2 R' F2 D F2 D' R F U B2 D2 F2 R' D2 R' D2 L2 U2,W,Duper Super Davis Spring 2026 (2026-04-19),333 Final H #4
 5610245001,R2 U' B2 D F2 U F2 D2 F L U2 F2 L' D2 F' L U F2 L2,B,Puzzles in Pittsford 2026 (2026-05-09),333 R1 A #4
 5634398032,L U R2 F2 R2 F2 D F2 D2 L2 F2 B' U' L' B2 D2 L D' R D2 B R,G,Please Don't DNF Beijing 2026 (2026-05-16~17),333mbf Final A #2
+5746603001,U F D L B D' R2 U' F2 U2 L2 B2 R B2 R U2 R' D' F,W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A #4

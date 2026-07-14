@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / Y / bin 9
-# Population in this bin: 366
+# Population in this bin: 367
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2643001,D2 B2 L2 D2 U2 B2 R' D2 L D2 L2 D B' L2 U2 F' D2 R' B U' L,Y,CMI Fiesta Open 2014 (2014-03-21~23),333 R2 C #4
@@ -62,7 +62,7 @@
 660716015,B L2 D2 L2 B D2 B' L2 B' R U' F U' B L' D2 F' D' U2 R' D2,Y,Uchi Florida 2015 (2015-05-23~24),333mbf Final A #1
 2789093001,L2 B L' D2 R2 B D2 L2 B L U R B' D' F D2 U',Y,Pulmapelipäivät 2023 (2023-06-09~11),333oh R2 B E1
 660885013,F2 R2 U2 R2 B' L2 D2 B2 F U2 L' R' U2 F R' U F2 R' D' F2 L',Y,Plenty o' Parity 2015 (2015-12-12~13),333mbf Final A #2
-661179037,U2 F2 R2 D2 B2 U2 L' B2 L2 F U' R' B2 D B' L U B2 F' D' B' L,Y,FME & Cubo y Calla 2016 (2016-11-19~20),333mbf Final A #2
+5746884001,D2 R2 D B2 L2 F2 D B2 U2 R D2 L2 F D B' D2 B R' U',Y,Seattle Summer 2026 (2026-07-11),333 R2 B E2
 3482787004,U F R B2 L2 B2 R' F2 D2 L' F2 D2 B L D U' R' B' F R' B',Y,Brasília Bigs & Blind 2024 (2024-02-03~04),333mbf Final B #2
 675390001,B2 U2 B F2 L2 B D2 R2 D2 L F U2 B' U' F D' B' F D' U' B' L',Y,Speedsolving Sakura 2017 (2017-12-17),333bf Final A #2
 681365001,F L2 U2 R2 B2 R2 B' F L B2 U' F U' L' F' R2 D L' U L B',Y,Swisscubing Mental Breakdown 2018 (2018-01-06~07),333bf Final A #2

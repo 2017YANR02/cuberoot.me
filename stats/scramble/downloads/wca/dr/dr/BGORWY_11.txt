@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / BGORWY / bin 11
-# Population in this bin: 204
+# Population in this bin: 205
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 27465001,U' F' L B' R2 U' F B2 R' B' D B2 U' D' F2 B2 L2 U' L2,B,Mingdao Cube Carnival 2014 (2014-06-15),333oh R2 A #4
@@ -35,7 +35,7 @@
 459508001,L2 D' R B L2 B2 R' L' U F' B' U R2 U R2 U' L2 U B2 U',B,Caltech Winter 2017 (2017-02-25),333oh R1 F #1
 459665001,D2 B2 D R2 F2 D F2 L2 D' L2 B' R U L' B' R2 B R F' L2 R',B,Caltech Winter 2017 (2017-02-25),333 R1 I #4
 481968001,B' U2 F U R B L F2 B' U F L U2 B2 L B2 R2 L F2 B2,B,ŚLS Jastrzębie Zdrój 2017 (2017-04-01),333 R1 B #4
-482996001,R' B' L' U D L D' R2 U R U2 F2 D2 B' D2 L2 D2 F D2 B,B,Eugene 3x3 Mania 2017 (2017-04-08),333 Final A #5
+5744851001,L' U2 F2 U2 R2 U' B2 R2 F2 B U L F' U F2 R2 U2 L' D,B,Bursa Summer 2026 (2026-07-04~05),333 R1 E #5
 504259001,B L2 B R D2 F D' L' D' F2 B' U D F2 R2 B2 U2 B2 L2 B2,B,Maybe Melrose Spring 2017 (2017-04-29),333 R2 B #1
 514540001,U L D F' R2 L B R U R2 L' D B2 U2 R2 U2 D L2 U2 B2,B,EZ Cubes Spring 2017 (2017-05-27),333 R1 B #5
 553070001,B U2 R2 U2 L2 D' R U' F U L F U B F2 R2 U',B,Southern Championships 2017 (2017-07-15~16),333 R1 E #5

@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eo / WY / bin 7
-# Population in this bin: 108
-# Samples listed: 108 (all entries in this bin)
+# Population in this bin: 110
+# Samples listed: 110 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1252001,D' B R2 U L' B' R F L' D R L2 U2 R' B2 U2 F2 U2 R2 D2,W,Shepparton Autumn 2014 (2014-03-22),333 R1 B E2
@@ -113,3 +113,5 @@
 5665301001,D L2 R F2 U' B2 D2 F2 R2 D' R2 U F R' B U L' D F U2,W,Hangzhou Open 2026 (2026-05-23),333 R2 B #3
 5720700001,L2 F2 R' F B L D' R' L2 F2 R2 U2 D' L2 D L2 B L2 D,W,GAN Warm Up Iloilo 2026 (2026-06-20),333 R2 A #3
 5740089001,U2 F2 D2 F2 U2 L2 F R2 B R2 U2 R' F2 U' R2 F L' U R2 D' R,W,Slovak Championship 2026 (2026-07-02~05),333oh Final A #5
+5742360001,L B2 R U' R F L F' L2 B' D2 L2 F' R2 F2 D2 R2 L' D' F',W,Rubik's WCA North American Championship 2026 (2026-07-02~05),333 R1 L #4
+5742533001,L2 R2 F' L2 B R2 U2 B2 L2 D R' B' U' L F R' D2 B2 L2,W,Rubik's WCA North American Championship 2026 (2026-07-02~05),333oh R1 E E1

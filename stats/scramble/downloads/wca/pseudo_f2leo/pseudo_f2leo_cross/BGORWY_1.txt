@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BGORWY / bin 1
-# Population in this bin: 250
+# Population in this bin: 251
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 29329001,B2 R2 F2 U R2 U B2 U2 B U L2 D' F D2 U' L2 U,O,No Parity Open 2014 (2014-06-21),333 R2 A E2
@@ -85,7 +85,7 @@
 5237403001,D2 L F2 U' F2 L2 U' R2 D' F' L' B2 L' D L' F2 D' F,W,Hangzhou Winter 2025 (2025-11-29),333 R1 F #3
 954332020,L2 B2 L2 D2 U' R2 D2 R' U' L R2 D2 L F U2 F L2 B R' D2,B,Nacionales Argentinas 2018 (2018-12-08~09),333mbf Final E #1
 994685001,R2 U R2 L' F2 U' B L2 B' L' F2 R2 U2 F2 U' F2 U2 R2 F2,B,Mongolia Championship 2019 (2019-01-26~27),333 R1 G E1
-1001262013,F2 D2 R' F2 R' B2 U2 L2 B2 U' F' R F2 D L2 D' B U' F' L2 U',R,Kiev Super Blind 2019 (2019-02-02~03),333mbf Final B #3
+5746603001,U F D L B D' R2 U' F2 U2 L2 B2 R B2 R U2 R' D' F,W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A #4
 1020684001,D2 F L2 D2 R2 B' U2 B2 L B L' D2 F' L' B' L D2 L' F2,R,Bremium Cubing 2019 (2019-02-16~17),333bf R1 B E2
 1062102001,D2 L2 U2 F2 D2 F2 L' U2 R2 B2 R2 B D' B' D' L B2 R D',B,Las Vegas Spring 2019 (2019-03-23),333oh Final A #3
 1073262001,F D2 B' L2 F' U2 F U' F' L' R2 U L2 D2 F2 D U2 L,B,Ibagué Open 2019 (2019-03-31),333oh Final B #2

@@ -2,7 +2,7 @@
 # Population in this bin: 41
 # Samples listed: 41 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 106926001,F2 R2 D' L2 D' R2 U R2 U' B2 D2 F' L' U' B' L' U L2 U2 R' U2 L' F2,W,ULA Rubiks Reloaded 2015 (2015-02-06),333bf Final A E2

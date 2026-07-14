@@ -2,7 +2,7 @@
 # Population in this bin: 16
 # Samples listed: 16 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 431666001,B D' R F U D L B R F' U' F2 U2 L' D2 F2 L B2 L' F2 L2,B,Manchester Open 2017 (2017-01-14~15),333 R2 C #4

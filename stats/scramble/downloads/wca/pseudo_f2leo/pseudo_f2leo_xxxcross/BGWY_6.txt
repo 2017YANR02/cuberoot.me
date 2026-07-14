@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / BGWY / bin 6
-# Population in this bin: 243
+# Population in this bin: 244
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -38,7 +38,7 @@
 409093001,D B2 D' R2 D' U2 L U2 L2 B D U' B2 F' R B D2 U2,Y,ODU Big Blue Winter 2016 (2016-12-03),333 R1 D E1
 411140001,F U2 R2 D2 F R2 U2 R2 F' R' U F2 L' U2 R' U' L' B2,B,Charrua 2016 (2016-12-03),333 R1 A #2
 419567001,U' R2 F2 D2 U' L2 D F2 U' B2 R' F2 U F' L' B D' B' L' D2,G,Cubelelo Winter Open 2016 (2016-12-22~23),333 R2 H #3
-430292001,U2 L2 R2 B' R2 B F U' L U' B L2 B L2 F' R' U B,G,Chișinău Winter 2017 (2017-01-08),333 R2 B #2
+5748741004,R F' R' U2 L2 U B2 L2 D L2 D' L F' U L' R2 U2 B2 U L',W,Australian Nationals 2026 (2026-07-09~12),333mbf Final A #1
 4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,G,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2
 504494001,F L2 D' B' U' F2 U B' R D R F2 B2 R' L' U2 L,G,GLS Cup II 2017 (2017-05-06),333 R2 C E2
 4682526001,U' L2 B' R D2 B L D2 B2 L' B L2 U' F2 U2 D' R2 D',B,UNSA Speedcubing Otoño 2025 (2025-04-26),333 R2 F E2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / ORWY / bin 7
-# Population in this bin: 473
+# Population in this bin: 474
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2198244038,B U' D' B2 L B' U B2 D2 F2 L2 U2 L2 B2 U' F2 U' R B,W,Trondheim Mental Breakdown 2022 (2022-09-24~25),333mbf Final A #3
@@ -34,7 +34,7 @@
 244495001,R' B2 U2 R2 B2 D2 R' D B2 D U2 R' U' F' L F L' F',O,Campeonato Chileno de Verano 2016 (2016-01-23),333oh Final C #2
 251726001,U' F2 D' U2 B2 U B2 F2 U' L2 F' R F' R' F' D2 B D,R,UiO Open 2016 (2016-02-07),333oh R1 B E2
 260573001,B' L2 R2 D2 B' R2 F' L2 B2 U2 R F' R2 D L' U' B D L' B,R,Big Apple Cube Clash 2016 (2016-02-27),333 R1 F #1
-3298250096,D2 B2 U2 B2 L' F' R' U2 F2 D F2 D F2 B2 R2 U' B' D2 L B',O,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 C #1
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
 4542026001,B' R2 D2 B2 F' D2 R2 F' R' F L2 U2 R U F2 U' L',W,Nepali Nationals 2025 (2025-02-27~03-01),333oh R1 A #1
 2838613001,F' L' U2 F2 U2 R2 F2 R2 B2 U2 R U B2 D' B R D2 R' F2,O,Autotalo Common 2023 (2023-07-01),333 Final A E2
 328264001,D2 U2 F2 D2 R2 F' R2 F2 U R2 B' D2 L2 B L' U B2 U2,W,Hefei Open 2016 (2016-07-15~17),333 R2 B #3

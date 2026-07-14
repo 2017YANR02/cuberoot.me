@@ -1,13 +1,13 @@
 # Scramble samples — pseudo / pseudo_cross / R / bin 1
-# Population in this bin: 355
+# Population in this bin: 357
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4596864001,B D2 R' L2 F' D L' U2 F2 D2 B' R2 F2 U2 B2 D F R' D2 L B2,R,Anaunian Side Events 2025 (2025-03-22~23),333bf R1 A E1
 4874508001,U' R' D B2 U' L2 D U2 F2 D R B' D R' U F2 U2 F L2,R,BrizZon Side Open III 2025 (2025-07-19~20),333mbf Final B #1
-2920424001,B2 F2 R' U2 B2 D2 B2 L2 U2 D' R' F' L2 U R2 F2 U2 B' D,R,Monterrey Bogotá III 2023 (2023-07-23),333oh R1 A #1
+5743024001,L2 U R2 F2 L' B2 L U2 R U2 B2 F L D L' F R F2 L',R,Victoria Gardens Lviv 2026 (2026-07-04~05),333 R1 E #2
 3977667001,L2 F D R2 B2 F L2 B2 F R2 U2 D' F2 R2 D2 F U2 L R,R,Malaysia 15th Anniversary Championship 2024 (2024-07-27~28),333oh R1 D E1
 67055001,L2 U2 L' F2 L2 D2 R B D F2 D' R' D' L' R2 B' U' B',R,Las Lomas 2014 (2014-10-18~19),333oh Final A #4
 4691835001,L D2 L2 F2 L2 R' D2 R2 F U R B' L2 B' U' R2 B' L,R,CubingZA Nationals 2025 (2025-04-26~28),333 R3 B #2
@@ -67,7 +67,7 @@
 652612001,L' D2 L' F2 B' R2 U D2 R L2 F' D2 R2 B2 D2 B U2 L2 F B',R,Bratislava Open 2017 (2017-11-25~26),333 R1 C E2
 660676028,R2 D2 L2 B2 L2 B D2 B U2 L2 U2 L' U B R D' L2 B2 R2 U2 L',R,Polish Open 2015 (2015-03-27~29),333mbf Final A #2
 660927016,L2 F2 U2 F' U2 F R2 B' L' B2 D B' F L' U' L' R U F' L B2,R,Singapore Rubik's Cube Competition 2016 (2016-02-20~21),333mbf Final A #1
-3596784001,R2 B2 F2 U' F2 D' U F2 B' D' B' F L' D2 L' D' L F,R,Lyttelton Newcomer Rumble 2024 (2024-03-17),333oh R1 B #2
+5741463001,B2 L2 B2 D2 B2 F2 L U2 R B D' B2 F' L F2 R2 U L2,R,Gwada Cubing 2026 (2026-07-04~05),333 R2 B #2
 3358794001,B U2 B2 L2 D R2 D' B' F2 U2 L' D2 L2 U2 D2 L' F2 B D2,R,Cubing Knights V 2023 (2023-12-16),333 R2 B #5
 661170004,L R U2 B2 L F2 L B2 D' B' D L' D' B U R U R D,R,GeniusCube 2016 (2016-11-05~07),333mbf Final A #1
 661398010,F2 D' B2 L2 D L2 R' B' U L' U F L U B2 R2 B2 F' L B,R,Plentzia Open 2017 (2017-06-17~18),333mbf Final A #1

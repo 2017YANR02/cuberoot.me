@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGOR / bin 3
-# Population in this bin: 536
+# Population in this bin: 538
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3164001,F' B2 R2 L F U2 F R B' R2 B L2 U B2 U' L2 D F2,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 D #4
@@ -93,7 +93,7 @@
 4522402001,B2 R2 D L2 U2 R2 U' B2 R2 U L' B R2 F' R F' U R2 F',O,Cincinnati Speed Solving 2025 (2025-02-22),333 R2 A #3
 4381947001,U' R2 U R2 B R2 L D' R' U' L2 D2 R2 F2 U2 F2 R U2,O,Barberton Mini 5 2024 (2024-12-16),333 Final A #2
 4279660001,U' F R2 B' D2 F D2 F2 L F' R2 F2 R2 U' F U R' B',R,Slow N Steady UMD Fall 2024 (2024-11-09~10),333 R1 D #1
-661242012,U' R2 D B2 U' B2 R2 D B' R' B2 R D2 U' L2 R' F2 U' L R2 B' L2,R,Please Be Quiet Berkeley 2017 (2017-02-04~05),333mbf Final A #1
+5746712001,U' B2 U2 B L2 F' U2 R2 F' L2 R D2 R2 D U F R D2,O,Seattle Summer 2026 (2026-07-11),333 R1 C #1
 5596414001,F D' R2 B R2 D2 F2 L2 F L2 D' R B' R' U R B L F2,R,Oregon State Spring 2026 (2026-05-02),333 R2 A E2
 4799697001,R D L2 B' U2 F D2 U2 F2 R2 F R' B D2 F2 U L' B2,B,Damásio Open 2025 (2025-06-14~15),333 R1 B E1
 5555613001,U D L B2 D2 L' U' F L D2 R D2 B2 L' U2 R2 B2 U2 F',R,St. Ansgar 2026 (2026-04-18),333 R1 C #5

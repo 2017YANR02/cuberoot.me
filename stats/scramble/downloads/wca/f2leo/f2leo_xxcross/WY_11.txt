@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / WY / bin 11
-# Population in this bin: 569
+# Population in this bin: 570
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 5665273001,U' L2 R' U2 R' B2 D2 U2 L2 F2 R D2 F D2 L' D' B L D U,W,Hangzhou Open 2026 (2026-05-23),333 R1 F #3
@@ -96,7 +96,7 @@
 512461001,L U' F L B U R2 D F D' F2 R2 U2 L' D2 R' U2 R U2 R' B2,W,Rose City 2017 (2017-05-20~21),333 R1 C #5
 1642445001,B2 L2 F' U' L' U' F' L2 U B' D R L D2 F2 R' F2 U2 F2 L,W,Ural Spring 2021 (2021-04-04),333 Final A #3
 4924507001,R F' B2 D' B2 L' U' B' R' B2 R' D2 L2 D2 F2 R2 D B2 L',W,Portugalete Open 2025 (2025-08-09~10),333 R1 C #4
-1350055001,B2 F D2 B2 D2 L2 F U2 F2 L2 D R D U B2 R F L B F L',W,Bački Petrovac Open 2019 (2019-10-12~13),333bf Final A #2
+5746379001,U' R2 F' R B2 R2 D F' B U D2 B2 L D2 R' L2 D2 R' B',W,Sleep & Solve Landsbro 2026 (2026-07-11~12),333 R2 B #3
 2392514001,R2 U B2 F2 U R2 U B2 R2 U F' R B' D F2 R2 U R' B' D,W,NR Hanukkah: Sq-1 & Skewb 2022 (2022-12-21),333 R1 B #4
 5602361001,R' D' F2 U2 L2 U R2 U2 B2 U' R B R' F' L2 D L' R F2 D2,W,Makati Speedcubing Open VII 2026 (2026-05-02),333 R1 C #1
 547563001,D2 R D2 L' B2 L' B2 R2 B' F R2 D L' D2 U F2 U L U L2 U2,W,CubingUSA Nationals 2017 (2017-07-07~09),333bf Final A #3

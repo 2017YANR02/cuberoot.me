@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / Y / bin 10
-# Population in this bin: 337
+# Population in this bin: 338
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 16592001,D2 L2 D' F2 R2 F2 R2 D' U' L2 F' D2 R2 D' F2 L' B2 L' D2 F' R D2,Y,Atlantic Open 2014 (2014-05-03),333bf Final A E2
@@ -14,7 +14,7 @@
 187263001,F' U2 F2 U2 R2 F' U2 L2 U L' U B' F2 L' U2 B' L2 U' F',Y,I Campeonato de Cubo Mágico de Barueri 2015 (2015-09-12~13),333oh R1 B #2
 5195985001,F U R2 B2 D2 L2 F2 D' U' L2 B' L F L2 F' R F2 L',Y,Basauri Open 2025 (2025-11-15~16),333 R1 B #4
 5224178041,R2 B R2 F U2 L2 D2 L F L2 D F2 U' F D' L D' B' D2,Y,PBQ Madness in Dobřejovice 2025 (2025-11-29),333mbf Final A #3
-5704103001,R B L D' B D' R' L2 B L' B2 U2 D' R2 D' L2 U,Y,GAN Southern Championship 2026 (2026-06-11~14),333oh R2 A E1
+5740482001,U B2 D2 F U R' D' L D R' B2 L2 F2 D2 R2 L2 B2,Y,Parla Open 2026 (2026-07-04~05),333 R1 B E1
 253244001,U2 B2 R2 D' R2 B2 D' F2 R2 D2 R F L' F R D2 F2 L U' F' D2,Y,SCMU Open 2016 (2016-02-06~07),333bf R1 B #1
 265788001,F' U' F R U R' U F' U' F' D2 F2 U' R2 F2 D F2,Y,Utah Spring: Gotta go Fast 2016 (2016-03-05),333 R1 C E2
 280276001,R' D B2 D2 F L F' D2 R2 L2 F' L2 D' L2 D R2 F2 L2 D2,Y,Classic San Lorenzo Open 2016 (2016-03-24~26),333oh Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / R / bin 8
-# Population in this bin: 850
+# Population in this bin: 853
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4503402001,L' R2 U2 R2 B' U2 F' L2 U2 B2 U2 D B' U2 F' D' L F L2,R,Avenida Chile XX 2025 (2025-02-15~16),333oh R1 A #5
@@ -113,7 +113,7 @@
 5223732001,F D2 L F D2 F2 L2 F R2 F' D L' D2 L' D' B F' R',R,Waterloo Fall 2025 (2025-11-29),333 R2 C E1
 2184199001,L2 D2 B2 R' F2 L2 U2 L' D B' L' F' U' F L D' L2 R' F,R,Cubing Peoria 2022 (2022-09-24),333 R1 D E1
 5307095001,F L2 F2 R' L U L D' L' D2 L R2 F2 D2 B' U2 L2 F' U2,R,Edmonton Winter 2026 (2026-01-03),333oh R1 C #1
-5358169001,B2 L' D' R2 F' L2 B R' F R' F2 D L2 F2 D2 F2 D' R2,R,New Braunfels Comal Cubing Classic 2026 (2026-02-01),333 R1 C #3
+5744976001,R L2 B' L F L B L F2 D2 L2 U R2 D B2 U2 F2 D',R,Mumbai Monsoon Mayhem 2026 (2026-07-05),333 R1 C #2
 5525232001,U' R2 D L2 R2 F2 U' F2 R2 B' D2 F2 R' B' R2 F D2 F2 L',R,Cubestuff Centurion Q2 2026 (2026-04-11~12),333 R2 A #4
 5718915001,U2 L2 F U' L2 B' R F2 U' L2 D L2 U' B2 R B2 D2 B',R,Lavey-Vous les Mains 2026 (2026-06-20~21),333 R2 C #5
 2723338046,F2 L B2 L' F2 U2 B' D' B2 L2 D L D' F D B' F' L B',R,Cambridge Spring Challenge 2023 (2023-05-20),333mbf Final B #1
@@ -131,7 +131,7 @@
 1970432001,F' R2 L2 F U' F' R B U2 F2 L2 F' L2 B2 D2 B R2 L2 D',R,Fyris Cubing 2022 (2022-06-11~12),333 R3 B #3
 2304323001,U2 L2 F' L F L' U' B D' B2 D2 L' D2 R2 F2 D2 F2 R U2,R,Ohio State Fall Gray 2022 (2022-11-13),333 R1 A #4
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,R,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
-4308288001,U B2 D' L B2 L F2 D2 B2 R' U2 B U' L2 B2 D' U' F D' L' F',R,Winnipeg Big & Blind 2024 (2024-11-23),333bf Final A E1
+5748741048,F2 L2 D R2 F2 L2 B2 D2 F' R' F R2 D2 L' R2 D U L' B L,R,Australian Nationals 2026 (2026-07-09~12),333mbf Final A #1
 558315001,U L2 R2 F2 D' U F2 U' R2 U' F U2 L F2 D B U F2 R2 B,R,China Championship 2017 (2017-07-28~30),333oh R1 B E1
 2320100001,R2 F2 L D2 L2 U' F2 D2 R2 B2 L2 F' U' R2 D' B' F R2 B,R,Dragon Cubing 2022 (2022-11-19~20),333oh Final B E2
 573409001,R2 B2 F D2 B2 D2 U' F' R' U2 R D U2 F D' F R2,R,Shantou Open 2017 (2017-08-20),333 R1 B E1

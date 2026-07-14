@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / OR / bin 7
-# Population in this bin: 129
-# Samples listed: 129 (all entries in this bin)
+# Population in this bin: 130
+# Samples listed: 130 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,O,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -134,3 +134,4 @@
 5704660001,L' D' U R2 F2 D R2 U2 L B2 R D2 L B R' D' R D2,R,Saint John's Summer 2026 (2026-06-13),333 R2 A #5
 5707715001,D2 R L D' L D' F' U2 L' R2 D2 F2 B U2 F R2 F,R,Garland City NY 2026 (2026-06-20),333 Final B #5
 5721837036,L B R F U2 F2 R' B2 L B2 L2 D2 B' U R D2 L' R B L B,R,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333mbf Final A #1
+5746768001,L U2 F2 R' D F U L2 D' U' L' F L R' F',R,Seattle Summer 2026 (2026-07-11),333 R2 B #3

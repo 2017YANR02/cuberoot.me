@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / Y / bin 8
-# Population in this bin: 79
-# Samples listed: 79 (all entries in this bin)
+# Population in this bin: 80
+# Samples listed: 80 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 65303001,R' B' U' L D F2 R U' D' F2 D2 B U2 R2 F' L2 D2 R2 D2 B',Y,Cubing ATMOSphere 2014 (2014-10-11~12),333 R1 E E1
@@ -84,3 +84,4 @@
 5601459001,U2 F D' B L2 R2 U2 F' L2 B' U2 F R' F' L2 B' L U R' F',Y,Malegno MegaOpen 2026 (2026-05-01~03),333 Final B #2
 5686163001,R U B' U2 B L2 D2 B' L2 D2 F' R U F' R' D R' U2 F' L,Y,Only Cubes in ABQ 2026 (2026-06-06),333 R2 B E2
 5692150001,R' F2 L2 U L2 F2 U F2 D' B2 U B2 F R' U2 B D L2 F' U2 R,Y,Miri Seahorse STEM Cube Open 2026 (2026-06-07),333 Final A E2
+5742533001,L2 R2 F' L2 B R2 U2 B2 L2 D R' B' U' L F R' D2 B2 L2,Y,Rubik's WCA North American Championship 2026 (2026-07-02~05),333oh R1 E E1

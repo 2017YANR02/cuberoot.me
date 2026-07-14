@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BG / bin 2
-# Population in this bin: 303
+# Population in this bin: 304
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 33026001,U2 R' D2 F' L' U R' B' L F2 L D2 F' B2 L2 D2 R2 L2,G,Masterpress Summer 2014 (2014-06-28~29),333oh Final A E2
@@ -35,7 +35,7 @@
 389863001,L2 U2 B2 U B2 L2 B2 D2 U' R' D' B2 F L' F' U L2 U2 L,B,Torneo de Speedcubers 2016 (2016-10-29~30),333 R2 A #3
 393437001,B' U2 R2 B2 L2 B' L2 R D U L2 D F' L R2 U' L' U L,B,Munich Open 2016 (2016-11-05~06),333bf R1 A #1
 402915001,F2 L2 D' U2 R2 D L2 F2 D' B' R2 D R2 F' D' L' R' B' D' L B R',G,Calgary Limited Fall 2016 (2016-11-26),333bf Final E #3
-5035689001,R U2 R' F2 U D2 B L' B' U' D2 B2 D F2 R2 B2 U' L',B,Munich Open 2025 (2025-09-20~21),333 R2 B #1
+5741453001,L' D L2 F2 D2 U R2 B2 D' U2 R2 L D2 B' L B2 R U' L,G,Gwada Cubing 2026 (2026-07-04~05),333 Final A #2
 5055234001,R2 F' R2 L' F' U' F2 L' U' R U2 L2 B2 R D2 L2 B2 L',B,Vilniaus Ruduo 2025 (2025-09-27~28),333 R2 C #1
 5318143001,L' U2 L F' R B2 R' B R D2 R2 B2 U2 L' U2 R F2 U,G,Beijing Winter 2026 (2026-01-10~11),333 R3 B #1
 451245001,L' U F' R' D' R D R U' R' L' U2 L' B2 R' B2 D2 F2 L',B,P3 Grand Open - Feb 2017 (2017-02-26),333 R1 I #4

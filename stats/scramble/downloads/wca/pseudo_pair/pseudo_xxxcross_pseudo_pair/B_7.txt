@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / B / bin 7
-# Population in this bin: 130
-# Samples listed: 130 (all entries in this bin)
+# Population in this bin: 131
+# Samples listed: 131 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 38031001,B' R2 L' D2 B D' L' B' L D F2 U L2 D F2 D' F2 L2 B2,B,Dixon Summer 2014 (2014-07-19),333 R1 B #5
@@ -135,3 +135,4 @@
 5623676004,D B2 F2 D' U' L2 B2 F2 U R F' D2 R' D' R D' L R F' L,B,Nittedal Mental Breakdown Spring 2026 (2026-05-09~10),333mbf Final B #1
 5631005020,U' R2 D2 B2 D2 B R D' F2 D2 R B2 L' U2 F2 D2 B2 R U F2 D,B,Toledo Big & Blind 2026 (2026-05-16),333mbf Final A #1
 5696209040,L2 R2 B L2 R2 D2 R' F R' U' L' B D' R2 D2 L' D2 B' L',B,Manchester Cubing League - Third 2026 (2026-06-13),333mbf Final B #1
+5741741001,D2 U2 F2 L2 B' L2 F R2 F2 L' R' U' L' F' U2 R' B' U2,B,Wiltshire Summer 2026 (2026-07-04~05),333 Final B #3

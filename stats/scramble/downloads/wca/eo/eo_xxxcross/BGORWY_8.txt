@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGORWY / bin 8
-# Population in this bin: 697
+# Population in this bin: 699
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,G,Longjum'Open 2024 (2024-01-27~28),333oh R1 A #4
@@ -203,5 +203,5 @@
 5338845013,L' D2 L2 B L2 F' R2 D2 B2 F2 R2 D' R2 D' B R' U2 B' L2 D2,R,BlindCon Venteira 2026 (2026-01-24),333mbf Final A #1
 1111185001,B2 U2 R' U2 R B2 R D' R' F2 R' U' F2 D F L D B,Y,DFW With A Twist 2019 (2019-04-20~21),333 Final A #4
 2744532020,L D R B R2 B D2 U2 F D2 F R2 L' D2 B D2 L' B2 U2 L B,G,SacQuiet Spring 2023 (2023-05-21),333mbf Final A #2
-4739251001,U' B D2 F L2 R2 U2 B2 L D' F L' B2 F2 U2 L2 R2 F,G,Beijing Summer 2025 (2025-05-17~18),333oh R1 C #2
+5744976001,R L2 B' L F L B L F2 D2 L2 U R2 D B2 U2 F2 D',R,Mumbai Monsoon Mayhem 2026 (2026-07-05),333 R1 C #2
 3919311001,D2 F2 R2 B2 F' L2 F' D2 F U2 L' U2 L2 F' R' U B R' D',R,Rubik's Irish Championship 2024 (2024-07-05~07),333 Final A #3

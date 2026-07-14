@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / WY / bin 8
-# Population in this bin: 803
+# Population in this bin: 805
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 969271001,R F2 L' D2 L' U2 B2 D2 U2 R2 B R2 F2 U' R' F U B' R B',W,Welcome to 2019 (2018-12-31~2019-01-01),333bf Final A #1

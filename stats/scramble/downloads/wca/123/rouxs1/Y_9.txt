@@ -2,7 +2,7 @@
 # Population in this bin: 1
 # Samples listed: 1 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1196113001,R2 U2 R2 D2 U R2 F2 L B2 D F' L' B D' L D U L D,Y,CubingUSA Northwest Championship 2019 (2019-06-21~23),333 R2 B #2

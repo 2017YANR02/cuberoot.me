@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BGOR / bin 2
-# Population in this bin: 124
-# Samples listed: 124 (all entries in this bin)
+# Population in this bin: 125
+# Samples listed: 125 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 80106001,D2 R' B2 D2 B2 R2 D2 R D R2 B2 L' F L2 U B' L R2 U2,O,Brain Studio Cube Open 2014 (2014-11-15~16),333 R1 M E2
@@ -129,3 +129,4 @@
 5513183001,B R2 U' F2 B' D' B U2 R2 F2 U D F2 D' B2 L2 D2 L,B,Karnataka Cube Open April 2026 (2026-04-05),333 R1 F #3
 5684386001,B U R2 U2 L' D2 F2 R D B D U2 R' B2 L F2 L' F2 L,O,NUS Clock Clash 2026 (2026-06-06),333oh R1 C #3
 5690417025,R' D' L2 B2 U2 B2 U2 L2 B' D' R2 U R2 B' R2 F2 U' L2 U',R,Headache in Kode 2026 (2026-06-05~07),333mbf R1 B #1
+5741453001,L' D L2 F2 D2 U R2 B2 D' U2 R2 L D2 B' L B2 R U' L,G,Gwada Cubing 2026 (2026-07-04~05),333 Final A #2

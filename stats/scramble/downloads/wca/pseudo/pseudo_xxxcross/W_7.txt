@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / W / bin 7
-# Population in this bin: 897
+# Population in this bin: 900
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4542026001,B' R2 D2 B2 F' D2 R2 F' R' F L2 U2 R U F2 U' L',W,Nepali Nationals 2025 (2025-02-27~03-01),333oh R1 A #1
@@ -115,7 +115,7 @@
 4025812001,R' U B2 F2 D' B2 U L2 D L' R' F D' U L B D' L' R2,W,İstanbul Small A 2024 (2024-08-17),333 R2 B #3
 743139001,D' R2 U F2 D2 R2 D F2 D B2 R' D U F' D' U2 F L' U L,W,GLS Cup II 2018 (2018-04-07~08),333 R1 A #4
 4634479003,B2 R' D' F R2 D' F2 U R2 U F2 U B F' L B U' F2 L2 U',W,Nacionales Chilenas 2025 (2025-02-07~09),333mbf Final B #1
-822471001,F D2 L2 U2 B' R2 U2 B' D2 L B' L R' U2 L2 U' L' F,W,Swisscubing Cup II 2018 (2018-07-07~08),333 Final A E2
+5740385001,F' D L' D2 R' U2 B2 L2 R' U' L R2 F' D2 B2 L U' B,W,Parla Open 2026 (2026-07-04~05),333 Final C #3
 503045001,L2 F2 U F2 R2 U F D' U' B' U' R2 D' U' R D' B' D2,W,Bekasi Mini Competition 2017 (2017-04-30),333 R1 B #5
 816816001,U2 B' L B L' F2 R F' R' U L' B2 D' F2 R2 U2 L2 B2 L2,W,Vantaa Open 2018 (2018-06-30~07-01),333oh R1 A #1
 2610385001,D U' L2 D' R2 B2 L' R' B U' B F2 D2 L F2 L U2,W,Miami in an Ohio Oxford 2023 (2023-04-01),333oh R1 B E2

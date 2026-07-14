@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / ORWY / bin 4
-# Population in this bin: 309
+# Population in this bin: 311
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3194001,L' U2 L' R2 F2 R D2 F D L' R D' B2 D' F R2 B2 L,W,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 H E1
@@ -55,7 +55,7 @@
 595691001,L2 U R2 D' B2 D' L2 R2 D' F D' U2 R' B' U B' U L' R,W,Golden Rubik's Cube 2017 (2017-09-14~15),333oh R1 A #3
 5306475001,U' F' U F L F' R' B' U B2 U' D2 L2 B2 U2 F2 D' F2 U2,R,Weston-super-Mare Winter 2026 (2026-01-03~04),333 R2 B #4
 5123002001,R' U' F R F' D2 U2 F L2 B' U2 B D' F U B F2 L R D' B D' R' U' F,Y,FMC East Melbourne 2025 (2025-10-25),333fm Final A #2
-660660029,U F2 D' R2 U' L2 D' B2 U R' U' R U B' R2 D2 L' U2 L' F',W,Grudziadz Open 2015 (2015-03-07~08),333mbf Final A #1
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
 660662010,R2 U' L2 U F2 D2 L2 B2 R2 D' B' D2 B2 R F D R D L U2 B' L',Y,Abrakadabra Magic 2015 (2015-03-14~15),333mbf Final A #1
 660669011,D2 B2 L2 B2 L' R2 U2 R' B' D' F D U B' D B2 U' B L2 U2,Y,Indian Open Rubik's Cube 2015 (2015-03-20~22),333mbf Final A #1
 5596304001,U' L2 D L2 D L2 D2 B2 L2 D' R' B' L D2 L' U' L D' L,W,Rahn Education Open 2026 (2026-05-01~03),333oh Final B #2
@@ -162,7 +162,7 @@
 4797982028,L' B' U' F' U' R2 F L2 F D F L2 D2 F' R2 U2 B2 L',Y,Perdiendo el Tiempo en Granada 2025 (2025-06-14~15),333mbf Final A #2
 4991650068,F' R2 U2 F2 U R' U' R' F R2 L D2 R2 U2 D2 F2 R' F' D,W,West Coast Cubing Western Championship 2025 (2025-08-29~31),333mbf Final A #2
 2357270001,B U D B2 U2 B' R2 B U B2 R2 U' B2 D' R2 L' U F',O,New Zealand Nationals 2022 (2022-12-09~11),333 R1 A #5
-2372945023,R' L2 B' L' D2 R' U2 R' U2 B R D2 F2 L U2 L U2 L B2,R,Ota Blind Winter 2022 (2022-12-18),333mbf Final A #1
+5744704001,U' F' D2 B' R L' F R2 L2 F2 U B2 U' B L' B2 R,W,Bursa Summer 2026 (2026-07-04~05),333 R1 B #2
 2380898001,U2 B' D F' D2 L2 F U2 B2 F' D2 U L R U' R' U R2 F2,Y,Panama Nationals 2022 (2022-12-17~18),333 R1 C #2
 2398392001,F2 L R2 B2 D2 L' D2 L D2 U2 R' D' R' D' F2 L2,Y,Taiwan Championship 2022 (2022-12-16~18),333oh R1 B #2
 5349091014,L D' L2 U2 B D2 R2 D2 L2 B2 F' R' D' L' R2 D F2 U' L' F2,Y,Casagiove Winter 2026 (2026-01-24~25),333mbf Final A #1

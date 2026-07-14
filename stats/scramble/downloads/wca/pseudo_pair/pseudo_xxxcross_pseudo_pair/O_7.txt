@@ -2,7 +2,7 @@
 # Population in this bin: 121
 # Samples listed: 121 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 10700001,L' U2 R' B2 R2 L' B U F' L U2 L2 F D2 F' L2 B' L2 F,O,Inspiria Cube Day 2014 (2014-04-12),333 R1 B E2

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / R / bin 8
-# Population in this bin: 118
-# Samples listed: 118 (all entries in this bin)
+# Population in this bin: 119
+# Samples listed: 119 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 28574001,D2 L2 U2 R' B2 F2 U2 F2 L' F2 U L D L2 B' R2 D' L2 U,R,BASC 3: Flagj Day 2014 (2014-06-14),333 R2 A E1
@@ -123,3 +123,4 @@
 5532835001,D2 R B2 U2 L R D2 L U2 D' B2 R U' R' F' L' R2 F D2,R,Coliseo al Gratín Yumbo 2026 (2026-04-11~12),333oh Final A #3
 5678420001,U R2 D R F2 B' D R' B U' L2 U2 B2 D L2 B2 R',R,Gif-sûr de PR 2026 (2026-05-30~31),333oh R1 B #4
 5724594001,B' D F' U2 B2 F2 R2 U B2 U' B2 L' U L D' B' U' B,R,VERK XVI 2026 (2026-06-27~28),333oh R1 B E1
+5744976001,R L2 B' L F L B L F2 D2 L2 U R2 D B2 U2 F2 D',R,Mumbai Monsoon Mayhem 2026 (2026-07-05),333 R1 C #2

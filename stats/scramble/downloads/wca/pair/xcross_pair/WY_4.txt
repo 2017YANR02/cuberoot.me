@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / WY / bin 4
-# Population in this bin: 611
+# Population in this bin: 613
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 5126395001,L' B2 L2 U F L' F' D L R2 F D2 L2 F' B' D2 B2 U2,Y,Hvidovre Liga III 2025 (2025-10-25),333 Final A #1
@@ -97,7 +97,7 @@
 4992989001,B2 L' D2 L' D' F D' F2 U F B2 U' D2 B2 D2 R2 D2,Y,Quangang Morning 2025 (2025-08-31),333 Final C #1
 3768431001,L2 U B L2 D2 U2 B2 D2 B F2 R B' D F2 L U' L2 D2,W,Weston-super-Mare Spring 2024 (2024-05-18~19),333 R2 A #1
 4214351016,L' B' L2 D L D2 R2 D2 F2 R' B2 U L2 U2 B F' U' F' L' F,W,Valsugana Speedcubing 2024 (2024-10-19~20),333mbf Final A #1
-1516168001,D2 F R D' L2 F2 D' R' B' L F2 B2 L2 F L2 F R2 B U2 B2,Y,Imagination Station 2020 (2020-01-18),333 Final A E2
+5741391001,U' F R2 U2 L2 U' B2 D L2 U B2 R D' L' F U' F',W,Mike's Cubes Israel 2026 (2026-07-05),333 R2 B E2
 2204373001,U2 L2 F U' F2 R' F2 L' B' R L2 U2 D F2 L2 D' L2 B2 U' R2,Y,Finnish Championship 2022 (2022-09-24~25),333oh Final A E2
 1194381001,U L2 U L2 U' F2 L2 F2 U B2 F' D' R B2 U' L B' R2 B',W,Bulldog Qualifier 2019 (2019-06-22~23),333 R1 B #4
 1163904001,R2 B R2 U2 B L2 B2 D B U' B2 D' L U' L' U' R2 B',W,Cube Factory League Domaniewice 2019 (2019-05-26),333oh R1 B #5

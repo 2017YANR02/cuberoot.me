@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / BGOR / bin 9
-# Population in this bin: 96
-# Samples listed: 96 (all entries in this bin)
+# Population in this bin: 97
+# Samples listed: 97 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 47841001,D' R2 U' F2 U' F2 L2 B R2 D' F' U2 F2 D2 L' F U2 F',O,Rubik's Cube European Championships 2014 (2014-08-08~10),333 R1 D #2
@@ -101,3 +101,4 @@
 5604270001,B2 R L2 B' R2 F2 D F' L2 U2 L2 D B2 D2 L2 D L' U2,O,Start of Summer Beijing 2026 (2026-05-01~02),333 R1 F #3
 5623637001,L2 B2 F' D2 F' D2 R B L2 U2 R2 F U L D L D',G,Nittedal Mental Breakdown Spring 2026 (2026-05-09~10),333bf R1 B #2
 5666017001,D F' R D2 F' L2 R2 U2 L2 B L D B' F L B' D B2,R,West Coast Cubing Western Championship 2026 (2026-05-23~25),333 R2 C #5
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
