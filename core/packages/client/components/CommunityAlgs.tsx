@@ -12,7 +12,7 @@ import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import type { AlgSubmission, AlgSticker } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
 import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api';
-import { validateAlgCase } from '@/lib/alg_validation';
+import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
 import { displayAlg } from '@/lib/alg_display';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
@@ -26,6 +26,8 @@ interface Props {
   /** Case sticker + setup — used to validate a submitted alg actually solves the case. */
   sticker: AlgSticker;
   setup: string;
+  /** 本 case 的首条公式 —— setup 为空的集合靠它反推 setup(见 `setupForCase`)。 */
+  firstAlg?: string;
   /** All current submissions for this case (parent already filtered). */
   submissions: AlgSubmission[];
   /** Patch the page-level submissions array. caseName edits cross cases so we
@@ -38,7 +40,7 @@ interface Props {
   ) => void;
 }
 
-export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setup, submissions, onPatch }: Props) {
+export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setup, firstAlg, submissions, onPatch }: Props) {
   const { i18n } = useTranslation(); // subscribe to language changes; text via tr()
   const isZh = i18n.language.startsWith('zh');
   const user = useAuthStore(s => s.user);
@@ -56,7 +58,9 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
   const prepareAlg = async (raw: string): Promise<string | null> => {
     const bare = displayAlg(raw);
     try {
-      const res = await validateAlgCase(setup, bare, sticker, puzzle);
+      // 空 setup 的集合(2x2 / 大魔方 parity / skewb)靠 case 的**首条**公式反推 —— 拿投稿者
+      // 自己那条反推等于让他自证,永远通过。
+      const res = await validateAlgCase(setupForCase(puzzle, setup, firstAlg), bare, sticker, puzzle, setSlug);
       if (res.ok) return res.auf ? `${bare} ${res.auf}` : bare;
       const ok = confirm(`${tr({ zh: '公式校验未通过', en: 'Validation failed' })}: ${res.reason ?? ''}\n\n${tr({ zh: '仍然提交?', en: 'Submit anyway?' })}`);
       return ok ? raw : null;
