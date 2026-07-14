@@ -3,7 +3,7 @@
 
 import { create } from 'zustand';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
-import { generateScramble } from './trainer-scramble';
+import { generateScramble, type ScrambleKind } from './trainer-scramble';
 import { caseKey, findCaseByKey } from './trainer-case-key';
 import { petReact } from './deskpet';
 
@@ -62,12 +62,15 @@ interface TrainerState {
   currentKey: string | null;
   currentName: string | null;
   currentScramble: string | null;
+  /** 出题用哪一种打乱。非 `inv` 的几套来自站长 1LLL 表的 meta,只有部分 set 有。 */
+  scrambleKind: ScrambleKind;
   timerState: TimerState;
   timerStarted: number;
   observingIdx: number;
 
   loadSession: (p: AlgPuzzle, s: string, cases: AlgCase[]) => void;
   setSelected: (keys: string[]) => void;
+  setScrambleKind: (k: ScrambleKind) => void;
   pickRandomCase: () => void;
 
   getTimerReady: (delayMs: number) => void;
@@ -90,6 +93,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => ({
   currentKey: null,
   currentName: null,
   currentScramble: null,
+  scrambleKind: 'inv',
   timerState: TimerState.NOT_RUNNING,
   timerStarted: 0,
   observingIdx: 0,
@@ -115,6 +119,16 @@ export const useTrainerStore = create<TrainerState>((set, get) => ({
     }
   },
 
+  // 换打乱类型立刻重出当前这道题 —— 不然要等下一次 pickRandomCase 才生效,
+  // 用户会以为没起作用。计时中不换(会把手上正在做的题换掉)。
+  setScrambleKind: (k) => {
+    set({ scrambleKind: k });
+    const { currentKey, cases, puzzle, timerState } = get();
+    if (!currentKey || !puzzle || timerState !== TimerState.NOT_RUNNING) return;
+    const c = findCaseByKey(cases, currentKey);
+    if (c) set({ currentScramble: generateScramble(c, puzzle, k) });
+  },
+
   setSelected: (keys) => {
     const { puzzle, set: setSlug, solves } = get();
     if (!puzzle || !setSlug) return;
@@ -123,7 +137,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => ({
   },
 
   pickRandomCase: () => {
-    const { selected, cases, puzzle } = get();
+    const { selected, cases, puzzle, scrambleKind } = get();
     if (selected.length === 0 || !puzzle) {
       set({ currentKey: null, currentName: null, currentScramble: null });
       return;
@@ -137,7 +151,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => ({
     set({
       currentKey: key,
       currentName: c.name,
-      currentScramble: generateScramble(c, puzzle),
+      currentScramble: generateScramble(c, puzzle, scrambleKind),
     });
   },
 

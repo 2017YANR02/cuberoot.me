@@ -36,7 +36,7 @@ import { listSubmissions } from '@/lib/alg_api';
 import { reorderCases } from '@/lib/alg_sets_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
-import { displayAlgCaseName, renameZbllGroupToken } from '@/lib/alg_case_display';
+import { displayAlgCaseName, primaryCaseName, renameZbllGroupToken } from '@/lib/alg_case_display';
 import { displayAlg } from '@/lib/alg_display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
@@ -50,17 +50,6 @@ const ALG_TAG_LABEL: Record<AlgTag, () => string> = {
   key: () => tr({ zh: '键盘', en: 'Keyboard' }),
 };
 const ALG_TAGS = Object.keys(ALG_TAG_LABEL) as AlgTag[];
-
-/**
- * case 的主名。有 `meta.ollcp` 就用它(站长定的字母制命名优先,数字制降为副名 —— §7 B8)。
- * `PLL-Aa` 里的 set 前缀是冗余的,剥掉 —— 不然 pll 页每张卡都顶着一个 `PLL-`。
- */
-function primaryCaseName(puzzle: string, set: string, c: AlgCase): string {
-  const ollcp = c.meta?.ollcp;
-  if (!ollcp) return displayAlgCaseName(puzzle, set, c.name);
-  const prefix = `${set.toUpperCase()}-`;
-  return ollcp.startsWith(prefix) ? ollcp.slice(prefix.length) : ollcp;
-}
 
 const ORI_SUFFIX = ['', 'y', 'y2', "y'"];
 function oriAdjustSetup(setup: string, oriIdx: number): string {

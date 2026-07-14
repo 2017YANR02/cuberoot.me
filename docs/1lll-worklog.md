@@ -16,9 +16,9 @@
 | 1 | 共享记号 / 计步 lib + 收 9 个计步器 + MIRROR | ✅ |
 | 2 | 全量校验报告(含备选公式)→ 交站长 | ✅ `docs/1lll-sheet-issues.md` |
 | 3 | Schema:`alg_cases.meta` + `AlgEntry` 扩字段 | ✅ migration 0069 |
-| 4 | 导入(pg13 dry run → 生产) | 🟡 **dry run 全绿,等站长点头再灌生产** |
-| 5 | UI:OLLCP 主名 + 元数据弹窗 + 标签筛选 | ⬜ |
-| 6 | Trainer 打乱类型选择器 | ⬜ |
+| 4 | 导入(pg13 dry run → 生产) | ✅ **已上生产**,3915 case 逐条复验 |
+| 5 | UI:OLLCP 主名 + 元数据弹窗 + 标签筛选 | ✅ |
+| 6 | Trainer 打乱类型选择器 | ✅ |
 | 7 | 学习进度(后置,本轮不做) | ⏸ |
 
 ## 顺手挖出的**线上** bug(与 1LLL 无关,但都已根治)
@@ -141,8 +141,46 @@
 
 - [x] **4a** `import_1lll.mjs` 生成 `BEGIN…COMMIT` SQL。**直连 PG,禁走 REST**
 - [x] **4b** 生产 `pg_dump` → 本机 pg13 `alg_dry` → migration 0069 → import SQL → **读回来验**
-- [ ] **4c** 生产:`pg_dump` 备份 → 灌 → 复验   ← **等站长点头**(写生产 DB + push)
-- [ ] **4d** 线上复验
+- [x] **4c** 生产:`pg_dump` 备份 → migration 0069 → 灌 → 复验(4.1s;`make_rollback.mjs` 的回滚脚本实测可用)
+- [x] **4d** 线上复验:`phase4_verify.mjs prod` 直连生产库读回,10123 条公式逐条过 cubing.js,全绿
+
+### ⚠ 灌完之后才发现的:**打乱列也有错的**
+
+Phase 2 只验了公式列。做 Phase 6 时把六个**打乱列**也过了一遍轨道判据 —— **113 条打的是别的 case**
+(`Scramble` 17、`SH*` 13、`SQ*` 25、`H*` 28、`Q*` 28、`COEP` 2)。它们当时已经进了生产的 meta,
+弹窗正在展示错的打乱,trainer 一旦用它出题就是**静默教错**(屏幕上写着这个 case 的名字,
+手上打出来的是另一个)。
+
+根因:导入时**没给打乱列立判据**,只给公式立了。修法 = `import_1lll.mjs` 的 `keepScramble()`,
+每条打乱都要打出**本行的** case(16 折轨道)才收,验不过只留步数。
+生产走「回滚 → 重灌」(回滚脚本此前已实测),复验后六套打乱 3898/3902/3890/3887/3887/470 条**零错误**。
+
+## Phase 5 —— UI
+
+- [x] **5a** OLLCP 主名(`O-U8`),站上原名(`1LLL 6 7`)降为副名;PLL 的 ollcp 剥掉 `PLL-` 前缀后
+      与站上原名重合 → 不显示副名
+- [x] **5b** 组名也换字母制:1lll 的组号是纯数字(`1LLL 06`),组内每个 case 的 `meta.oll` 都一样
+      (实测 50 组全 1:1)→ 组名 `O-`,数字降为副名
+- [x] **5c** 公式行显示标签(单手 / 脚拧 / 最少步 / 高阶 / 键盘)+ STM
+- [x] **5d** 标签筛选下拉(`?tag=oh`,nuqs replace);筛完没公式的 case 一并隐藏
+- [x] **5e** `AlgCaseMetaModal`:编号 / 子集 / OLL / 角换 / 叠加类型 / 生成元 / 对称性 / 打乱 /
+      四套最优解 / COEP + 镜像·逆·镜像逆的互跳
+- [x] **5f** `useCopy` hook(5 处手写的 clipboard 都漏了卸载时清 timer)
+
+### ★ STM 徽章要数**屏幕上那一条**
+
+入库的公式带着**载荷收尾 AUF**(`setup + alg` 必须精确还原),而 `displayAlg` 显示时会剥掉它。
+直接把 `entry.stm`(入库值)当徽章 ⟹ **显示 10 步、徽章写 11**。徽章改成 `stm(displayAlg(alg))`。
+
+## Phase 6 —— Trainer 打乱类型选择器
+
+- [x] **6a** `ScrambleKind` = `inv` / `stm`(SH\*)/ `sqtm`(SQ\*)/ `htm`(H\*)/ `qtm`(Q\*)/ `coep`
+- [x] **6b** `availableKinds(c)` 按 case 算 —— 不是每个 case 都有全套(验不过判据的没入库),
+      选中的这批 case 取并集;只有一种就不渲染选择器,缺的那种自动退回 `inv`
+- [x] **6c** 换类型立刻重出当前题(不然要等下一次「换一个」才生效,用户以为没反应);计时中禁换
+- [x] **6d** 收尾随机 AUF 对**所有**类型一视同仁 —— 少了它,同一个 case 永远长同一个样,
+      练的就成了背图。多一步 U 不影响「它是最短打乱」(长度在元数据弹窗里看)
+- [x] **6e** 实测:六种类型对同一个 case 出的六条打乱,cubing.js 判定全落在同一个 16 折轨道
 
 ### Dry run 验收(2026-07-13)—— `phase4_verify.mjs`
 
@@ -187,9 +225,6 @@
 | 纯 y / 无转体 | 5030 | **0** | 常见 |
 | 含 x/z | 1 | **3** | **0 —— 一条都没有** |
 
-## Phase 5 —— UI
-## Phase 6 —— Trainer 打乱类型选择器
-
 ---
 
 ## 日志
@@ -210,3 +245,12 @@
   - 又根治 2 个线上 bug:`AlgPlayer` 裸喂 cubing.js(1LLL 一进来就有 554 条炸成空播放器)、
     `sheet_notation` 的第二份 MOVE_RE 不认 `Lw2`。
   - **仍未写入任何生产数据** —— 3915 个 case 的破坏性替换,等站长点头。
+- **2026-07-13(收尾)** — 站长拍板「备份好 然后全做了」。**Phase 4 / 5 / 6 全部完成。**
+  - 生产:`pg_dump` 备份 → migration 0069 → 灌 3915 个 case(4.1s)→ 直连生产库读回,
+    10123 条公式逐条过 cubing.js,全绿。push 上线(CI 三绿:Test / Deploy Next / Deploy Core)。
+  - 灌完才发现**打乱列也有 113 条打错 case** —— 导入时只给公式立了判据,没给打乱立。
+    补上 `keepScramble()`(每条打乱都要打出本行的 case)后走「回滚 → 重灌」,六套打乱现在零错误。
+  - Phase 5:OLLCP 主名 + 组名字母制 + 标签徽章/筛选 + `AlgCaseMetaModal` + `useCopy`。
+  - Phase 6:trainer 六选一打乱类型,实测六种打乱同轨道。
+  - 又根治 2 个线上 bug:`AlgPlayer` 裸喂 cubing.js、`sheet_notation` 不认 `Lw2`。
+  - 剩:Phase 7(学习进度)后置;`docs/1lll-sheet-issues.md` 的 138 条表侧问题交站长改表。

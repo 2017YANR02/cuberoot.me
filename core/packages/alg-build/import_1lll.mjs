@@ -40,7 +40,7 @@ import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import { parseAlgCell } from './sheet_notation.mjs';
 import { ident, identOfAlg, netRotation, invert } from './ll_ident.mjs';
-import { stm, sqtm, gen, deleteAuf, flattenAlg, tokenizeMoves } from '@cuberoot/shared/alg-notation';
+import { stm, sqtm, gen, deleteAuf, flattenAlg, tokenizeMoves, toMoveString } from '@cuberoot/shared/alg-notation';
 
 const ROOT = path.resolve(import.meta.dirname, '../../..');
 const read = (p) => JSON.parse(readFileSync(path.join(ROOT, p), 'utf8'));
@@ -126,6 +126,8 @@ const skipped = [];            // 怎么都不还原的公式(表侧坏数据)
 const kept = { fit0: 0, fitTrail: 0, fitLead: 0 };
 /** 站上原有的 speedcubedb 公式的去向 —— dropped 是**净丢数据**,必须数出来 */
 const sdb = { kept: 0, deduped: 0, dropped: [], unparsable: 0 };
+/** 表的打乱列里打错 case 的(`Scramble` / `SH*` / `SQ*` / `H*` / `Q*` / `COEP`)*/
+const badScrambles = [];
 
 /** 站上这一行对应的 case(matched 里可能有 2 个:1lll + ell 同态重复,或 1lll 内部重复) */
 const siteOf = new Map();      // self → [siteCase…]
@@ -235,16 +237,36 @@ for (const row of rows) {
   plan.push({
     action: isNew && !repurpose.has(self) ? 'insert' : 'update',
     self, targetSet, target, setup, algs,
-    meta: buildMeta(row, algs[0]),
+    meta: buildMeta(row, algs[0], trueKey),
     name: row.Name,
   });
 }
 
-/** AlgCaseMeta —— shape 见 shared/src/alg.ts */
-function buildMeta(row, firstAlg) {
+/** 打乱要不要收:必须真的打出**这个** case(16 折轨道)。 */
+function keepScramble(text, trueKey, what, row) {
+  if (!text) return undefined;
+  let key = null;
+  try { key = ident(toMoveString(text))?.key; } catch { /* 解析不了 */ }
+  if (key === trueKey) return text;
+  badScrambles.push({
+    self: Math.round(row.Self), name: String(row.Name), 列: what, 打乱: text,
+    毛病: key ? '打的是别的 case' : '不是 LL 态 / 解析不了',
+  });
+  return undefined;
+}
+
+/**
+ * AlgCaseMeta —— shape 见 shared/src/alg.ts
+ *
+ * ⚠ **每一条打乱都要过轨道判据。** 表的打乱列不是独立数据 —— `Scramble` 就是 `Self alg`
+ * 首条的逆,首条坏了它跟着坏(19 行里 16 行如此)。而 `SH*`/`SQ*`/`H*`/`Q*`/`COEP` 各有
+ * 各的独立错误。收进 meta 就会:①弹窗展示错的打乱;②trainer 用它出题 —— 屏幕上写着
+ * 这个 case 的名字,手上打出来的是另一个 case,**静默教错**。验不过就不收,记进报告。
+ */
+function buildMeta(row, firstAlg, trueKey) {
   const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? Math.round(v) : undefined);
   const str = (v) => { const s = String(v ?? '').trim(); return s || undefined; };
-  const scr = parseAlgCell(row['Scramble (alg of inv case)'])[0];
+  const scr = keepScramble(parseAlgCell(row['Scramble (alg of inv case)'])[0]?.body, trueKey, 'Scramble', row);
   const optimal = {};
   for (const [k, lenCol, scrCol] of [
     ['stm', 'SH*', 'SH* scramble'], ['sqtm', 'SQ*', 'SQ* scramble'],
@@ -252,11 +274,13 @@ function buildMeta(row, firstAlg) {
   ]) {
     const len = num(row[lenCol]);
     if (len === undefined) continue;
-    const s = parseAlgCell(row[scrCol])[0];
-    optimal[k] = { len, ...(s?.body ? { scramble: s.body } : {}) };
+    // 步数留着(它是最优步数,不依赖那条打乱写得对不对),打乱验不过就只留步数
+    const s = keepScramble(parseAlgCell(row[scrCol])[0]?.body, trueKey, scrCol, row);
+    optimal[k] = { len, ...(s ? { scramble: s } : {}) };
   }
   const coepAlg = parseAlgCell(row['COEP alg (COEP, EPCO, OO) (currently only ZBLL)'])[0];
-  const coepScr = parseAlgCell(row['COEP scramble (COEP, EPCO, OO) (currently only ZBLL)'])[0];
+  const coepScramble = keepScramble(
+    parseAlgCell(row['COEP scramble (COEP, EPCO, OO) (currently only ZBLL)'])[0]?.body, trueKey, 'COEP scramble', row);
   const sym = {
     cn: str(row['C_n (symmetry type)']),
     selfMirror: row['Self-Mirror'] ? true : undefined,
@@ -271,13 +295,13 @@ function buildMeta(row, firstAlg) {
     subset: String(row.Subset),
     oll: String(row.OLL),
     cp: String(row.CP ?? ''),
-    scramble: scr?.body,
+    scramble: scr,
     gen: gen(firstAlg.alg) || undefined,
     type: str(row.Type),
     mirror: num(row.Mirror), inv: num(row.Inv), im: num(row.IM),
     ...(Object.keys(optimal).length ? { optimal } : {}),
-    ...(coepAlg?.text || coepScr?.text
-      ? { coep: { ...(coepAlg?.body ? { alg: coepAlg.body } : {}), ...(coepScr?.body ? { scramble: coepScr.body } : {}) } }
+    ...(coepAlg?.body || coepScramble
+      ? { coep: { ...(coepAlg?.body ? { alg: coepAlg.body } : {}), ...(coepScramble ? { scramble: coepScramble } : {}) } }
       : {}),
     ...(Object.values(sym).some((v) => v !== undefined) ? { sym: Object.fromEntries(Object.entries(sym).filter(([, v]) => v !== undefined)) } : {}),
     sdbNo: str(row['Speedcubedb no.']),
@@ -355,11 +379,16 @@ console.log(`  留用            ${sdb.kept}`);
 console.log(`  与站长的重复    ${sdb.deduped}`);
 console.log(`  丢弃(新 setup 下不成立) ${sdb.dropped.length}`);
 console.log(`  解析不了        ${sdb.unparsable}`);
+console.log(`\n表里的打乱列(过 16 折轨道判据):剔掉 ${badScrambles.length} 条`);
+const byCol = badScrambles.reduce((m, b) => ((m[b.列] = (m[b.列] ?? 0) + 1), m), {});
+for (const [col, n] of Object.entries(byCol)) console.log(`  ${col.padEnd(15)} ${n}`);
+
 console.log(`\n动作:${plan.filter(p => p.action === 'update').length} UPDATE / ${inserts.length} INSERT / ${dropFrom1lll.length} DELETE`);
 console.log(`SQL:${sql.length} 行 → .tmp/phase4/import_1lll.sql`);
 
 writeFileSync(path.join(OUT, 'report.json'), JSON.stringify({
   counts, kept, skipped,
   sdb: { kept: sdb.kept, deduped: sdb.deduped, unparsable: sdb.unparsable, dropped: sdb.dropped },
+  badScrambles,
   plan: plan.map((p) => ({ self: p.self, name: p.name, set: p.targetSet, action: p.action, id: p.target?.id ?? null, algs: p.algs.length })),
 }, null, 2));
