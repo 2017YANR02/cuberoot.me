@@ -11,13 +11,13 @@
  * Keeps: subgroup picker (umbrella sets), second-level picker, ori switcher,
  * per-case ori cycle, subgroup collapse, sticker/setup/HTML alg rendering.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, Flag, Info, AlertTriangle } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
-import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
+import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
   loadAlg, getAlgSetMeta, ALG_PUZZLES,
@@ -33,7 +33,7 @@ import AlgPlayer from '@/components/AlgPlayer';
 import { useCopy } from '@/hooks/useCopy';
 import { stm } from '@cuberoot/shared/alg-notation';
 import { listSubmissions } from '@/lib/alg_api';
-import { reorderCases } from '@/lib/alg_sets_api';
+import { reorderCases, reorderCaseAlgs } from '@/lib/alg_sets_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { scanCases } from '@/lib/alg_validation_scan';
 import { caseAnchor, findCaseByHash } from '@/lib/alg_case_link';
@@ -116,6 +116,39 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, inv
       </div>
       {expanded && animatable && <AlgPlayer alg={alg} puzzle={puzzle} set={set} setup={setup} />}
     </>
+  );
+}
+
+/**
+ * 一条公式的 sortable 外壳(admin 才拖得动)。
+ *
+ * handle 单独一个 —— 整行是「点了播放动画」的 role=button,不能拿它当拖把。
+ * 内层 DndContext 嵌在 case 那层里:外层的 listeners 只挂在卡片的 grip 上,两边不打架。
+ */
+function SortableAlgRow({ id, draggable, children }: { id: string; draggable: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled: !draggable });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+  };
+  return (
+    <div ref={setNodeRef} style={style} className={draggable ? 'alg-alg-sortable' : undefined}>
+      {draggable && (
+        <button
+          type="button"
+          className="alg-alg-drag-handle"
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          title={tr({ zh: '拖动调整公式顺序', en: 'Drag to reorder algs' })}
+        >
+          <GripVertical size={12} />
+        </button>
+      )}
+      {children}
+    </div>
   );
 }
 
@@ -287,14 +320,45 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     return m;
   }, [data]);
 
+  /** 标签筛选真的在生效吗(选了 `oh`、且这个 set 确实有 `oh`)—— 生效时公式列表是个子集 */
+  const filtering = tagFilter !== 'all' && availableTags.includes(tagFilter);
+
   /** 一个 case 在当前筛选下要显示的公式(标签筛选作用在**公式**上,不是 case 上) */
   const algsUnderFilter = (algs: AlgEntry[]) =>
-    tagFilter === 'all' || !availableTags.includes(tagFilter)
-      ? algs
-      : algs.filter(a => a.tags?.includes(tagFilter));
+    filtering ? algs.filter(a => a.tags?.includes(tagFilter)) : algs;
 
   // dnd-kit sensors:鼠标按住超过 5px 才认作 drag,避免误触发(普通点击不被吞)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  /** 一条公式的拖动 id。真下标(未筛选)编进去,drop 的时候直接读回来。 */
+  const algDragId = (caseId: number, ori: number, i: number) => `alg-${caseId}-${ori}-${i}`;
+
+  /**
+   * 一个 case 内部重排公式 —— 第一条是主推解法,顺序是有意义的。
+   * 乐观更新,失败回滚(和 case 重排同一套路)。
+   */
+  const handleAlgDragEnd = (c: AlgCase, oriIdx: number) => (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id || c.id == null) return;
+    const idxOf = (id: string | number) => Number(String(id).split('-').pop());
+    const from = idxOf(active.id);
+    const to = idxOf(over.id);
+    const rows = c.algs[oriIdx] ?? [];
+    const sane = (n: number) => Number.isInteger(n) && n >= 0 && n < rows.length;
+    if (!sane(from) || !sane(to)) return;
+
+    const before = c.algs;
+    const after = c.algs.map((ori, i) => (i === oriIdx ? arrayMove(ori, from, to) : ori));
+    const swap = (algs: AlgCase['algs']) =>
+      setData(d => (d ? { ...d, cases: d.cases.map(x => (x.id === c.id ? { ...x, algs } : x)) } : d));
+
+    swap(after);
+    reorderCaseAlgs(puzzleParam, set, c, after).catch(err => {
+      console.error('reorder algs failed', err);
+      alert(`Reorder failed: ${err.message}`);
+      swap(before);
+    });
+  };
 
   const handleDragEnd = (e: DragEndEvent) => {
     if (!data) return;
@@ -734,25 +798,50 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                         </div>
                       </div>
                       <div className="alg-case-algs">
-                        {algsForOri.map((entry, i) => {
-                          const rowKey = `${c.name}::${oriIdx}::${i}`;
-                          const expanded = expandedKey === rowKey;
-                          // 校验结果按**未筛选**的下标存(标签筛选只是个视图)—— 拿对象身份换回真下标
-                          const trueIdx = allAlgsForOri.indexOf(entry);
+                        {(() => {
+                          // 筛了标签就别拖:看到的是子集,拖出来的顺序对不上真实数组
+                          const dragAlgs = isAdmin && c.id != null && !filtering;
+                          const rows = algsForOri.map((entry, i) => {
+                            const rowKey = `${c.name}::${oriIdx}::${i}`;
+                            const expanded = expandedKey === rowKey;
+                            // 校验结果 / 拖动 id 都按**未筛选**的下标走(标签筛选只是个视图)——
+                            // 拿对象身份换回真下标
+                            const trueIdx = allAlgsForOri.indexOf(entry);
+                            const row = (
+                              <AlgRow
+                                entry={entry}
+                                expanded={expanded}
+                                onToggle={() => setExpandedKey(expanded ? null : rowKey)}
+                                animatable={animatable}
+                                puzzle={puzzleParam as AlgPuzzle}
+                                set={set}
+                                setup={oriAdjustSetup(c.setup, oriIdx)}
+                                invalid={c.id != null ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
+                              />
+                            );
+                            const key = `${entry.altId ?? ''}::${trueIdx}`;
+                            // 不拖的时候一层壳都不加 —— AlgRow 是 fragment(行 + 展开的播放器),
+                            // 套个 div 会把它俩和列表的 gap 关系改掉
+                            return dragAlgs
+                              ? (
+                                <SortableAlgRow key={key} id={algDragId(c.id!, oriIdx, trueIdx)} draggable>
+                                  {row}
+                                </SortableAlgRow>
+                              )
+                              : <Fragment key={key}>{row}</Fragment>;
+                          });
+                          if (!dragAlgs) return rows;
                           return (
-                            <AlgRow
-                              key={`${entry.altId ?? i}`}
-                              entry={entry}
-                              expanded={expanded}
-                              onToggle={() => setExpandedKey(expanded ? null : rowKey)}
-                              animatable={animatable}
-                              puzzle={puzzleParam as AlgPuzzle}
-                              set={set}
-                              setup={oriAdjustSetup(c.setup, oriIdx)}
-                              invalid={c.id != null ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
-                            />
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleAlgDragEnd(c, oriIdx)}>
+                              <SortableContext
+                                items={algsForOri.map(e => algDragId(c.id!, oriIdx, allAlgsForOri.indexOf(e)))}
+                                strategy={verticalListSortingStrategy}
+                              >
+                                {rows}
+                              </SortableContext>
+                            </DndContext>
                           );
-                        })}
+                        })()}
                       </div>
                       <CommunityAlgs
                         puzzle={puzzleParam}
