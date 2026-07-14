@@ -8,6 +8,7 @@
  */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAlgTextField } from '@/hooks/useAlgTextField';
 import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import type { AlgSubmission, AlgSticker } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
@@ -77,6 +78,11 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
   const [editAlg, setEditAlg] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editCaseName, setEditCaseName] = useState('');
+
+  // 公式框只收半角招式 —— 中文输入法开着也一样(全角转半角、汉字直接删)。注释框不管,
+  // 那里本来就该能写中文。
+  const draftAlgField = useAlgTextField(setDraftAlg);
+  const editAlgField = useAlgTextField(setEditAlg);
 
   const handleSubmit = async () => {
     if (!draftAlg.trim()) return;
@@ -162,7 +168,7 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
                 <textarea
                   className="alg-community-textarea"
                   value={editAlg}
-                  onChange={e => setEditAlg(e.target.value)}
+                  {...editAlgField}
                   rows={1}
                 />
                 <input
@@ -210,7 +216,7 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
           <textarea
             className="alg-community-textarea"
             value={draftAlg}
-            onChange={e => setDraftAlg(e.target.value)}
+            {...draftAlgField}
             placeholder={tr({ zh: '输入算法', en: 'Enter alg' })}
             rows={1}
             autoFocus

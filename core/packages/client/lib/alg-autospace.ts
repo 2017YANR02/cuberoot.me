@@ -51,6 +51,61 @@ export function stripZeroWidth(value: string, cursor: number): { value: string; 
   return { value: cleaned, cursor: cleanedBefore.length };
 }
 
+/**
+ * ## 中文输入法开着也要能打公式
+ *
+ * 网页**改不了操作系统的输入法** —— `ime-mode` 只有 IE / Firefox 认,Chrome 从来不支持,
+ * 也没有任何 API 能替用户按下 Shift。所以不去「强制切英文」,改成**让它打不进来**:
+ *
+ * - 全角 → 半角:`Ｒ` → `R`、`’` → `'`、`，` → `,`、全角空格 → 空格。中文输入法下
+ *   顺手打出的全角字符是最常见的脏数据,而且肉眼几乎看不出来。
+ * - 中日韩字符(汉字 / 假名 / 谚文 / 中文标点)**直接删**。公式里不可能出现它们,
+ *   删掉比留着让校验器事后报错强。
+ *
+ * 保留 `↑↓·⅓⅔` —— 那是换握标注,是公式的一部分(见 docs/alg-upstream-notation.md)。
+ */
+const CJK_RE = /[、-〿぀-ヿㇰ-ㇿ㈀-鿿가-힯豈-﫿]/;
+
+// 不带 /g:带 /g 的正则 `.test()` 会记 lastIndex,逐字符调用时结果隔一次翻一次。
+const ZERO_WIDTH_1_RE = /[​‌‍﻿]/;
+
+function cleanChar(ch: string): string {
+  const code = ch.codePointAt(0)!;
+  if (code === 0x3000) return ' ';                                   // 全角空格
+  if (code >= 0xFF01 && code <= 0xFF5E) return String.fromCharCode(code - 0xFEE0); // 全角 ASCII
+  if (PUNCT_MAP[ch]) return PUNCT_MAP[ch];                           // 弯引号 / 中文标点
+  if (ZERO_WIDTH_1_RE.test(ch)) return '';
+  if (CJK_RE.test(ch)) return '';
+  return ch;
+}
+
+function cleanStr(s: string): string {
+  let out = '';
+  for (const ch of s) out += cleanChar(ch);
+  return out;
+}
+
+/**
+ * 公式输入清洗(纯函数,给**受控**输入框用):全角→半角、零宽 / 中日韩字符删掉。
+ * 光标按「清洗后的前缀长度」重算 —— 否则在中间删掉一个字,光标会跳到行尾。
+ */
+export function cleanAlgText(value: string, cursor: number): { value: string; cursor: number } {
+  const cleaned = cleanStr(value);
+  if (cleaned === value) return { value, cursor };
+  return { value: cleaned, cursor: cleanStr(value.slice(0, cursor)).length };
+}
+
+/** contenteditable 版:逐个文本节点洗。 */
+export function cleanAlgTextCE(root: HTMLElement): void {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n: Node | null;
+  while ((n = walker.nextNode())) {
+    const t = n as Text;
+    const cleaned = cleanStr(t.data);
+    if (cleaned !== t.data) t.data = cleaned;
+  }
+}
+
 export function inComment(text: string, pos: number): boolean {
   const lineStart = text.lastIndexOf('\n', pos - 1) + 1;
   return text.slice(lineStart, pos).includes('//');
