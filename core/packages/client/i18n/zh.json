@@ -110,7 +110,7 @@
     "allEvents": "全部项目",
     "allComps": "全部比赛",
     "allRecords": "全部纪录",
-    "count": "{{count}} 条复盘",
+    "count": "{{count}} 条",
     "add": "添加",
     "noResults": "没有找到匹配的复盘记录",
     "showing": "已显示 {{shown}} / {{total}}",

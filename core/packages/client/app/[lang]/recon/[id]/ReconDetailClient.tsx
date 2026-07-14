@@ -247,6 +247,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   initialSameScramble?: ReconSolve[];
 }) {
   const [sameCompHasRows, setSameCompHasRows] = useState(false);
+  const [sameSessionHasRows, setSameSessionHasRows] = useState(false);
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -424,12 +425,18 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           )}
         </div>
 
-        {solve.comp && solve.event && solve.round && !sameCompHasRows && (
+        {solve.comp && solve.event && solve.round && !sameCompHasRows && !sameSessionHasRows && (
           <SameRoundNav solve={solve} />
         )}
 
         {solve.event && solve.personId && (solve.compWcaId || solve.comp) && (
           <SameCompEventTable solve={solve} onHasRows={setSameCompHasRows} />
+        )}
+
+        {/* 非 WCA 比赛 / 练习:WCA 官方成绩里查不到这场,同场表只能由复盘记录自身拼(见 SameSessionTable)。
+            万一非 WCA 的比赛名恰好撞上某场 WCA 比赛,上面那张官方表已经出行 → 这里让位。 */}
+        {solve.official !== 'wca' && !sameCompHasRows && (
+          <SameSessionTable solve={solve} onHasRows={setSameSessionHasRows} />
         )}
 
         <SameScrambleNav solve={solve} initial={initialSameScramble} />
@@ -1155,6 +1162,194 @@ function SameCompEventTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows
   );
 }
 
+/**
+ * 非 WCA 比赛 / 练习的同场表 —— 与 SameCompEventTable 同一张表的长相,但数据源相反:
+ * 那边的行来自 WCA 官方成绩(练习在官方库里查无此场,那张表必然为空),这边的行只能由复盘记录自身拼。
+ *
+ * 一行 = 一个平均。同组判据:同性质 + 同选手 + 同项目 + 同比赛(自由文本场地名)+ 同一天,
+ * 再按轮次(非 WCA 比赛可能填了)或平均值(练习一般只填平均)细分 —— 同一天同一场地可以有多个平均。
+ * 名次列不设:练习没有对手,无从排名。
+ *
+ * 该平均下还没复盘的把 = 空槽,渲染成「+」链接跳 /recon/submit?from=<本条>&solveNum=<第几把>,
+ * 由 ?from= 把性质 / 选手 / 场地 / 日期 / 平均一并带过去,用户只补这一把的解法。
+ */
+function SameSessionTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: (v: boolean) => void }) {
+  const [all, setAll] = useState<ReconSolve[] | null>(null);
+
+  useEffect(() => {
+    listRecons().then(setAll).catch(() => setAll([]));
+  }, []);
+
+  const rows = useMemo(() => {
+    if (!all || solve.average == null || !solve.event) return [];
+    const personOf = (s: ReconSolve) => s.personId || s.person || '';
+    const dayOf = (s: ReconSolve) => (s.date ?? '').slice(0, 10);
+    const siblings = all.filter(s =>
+      s.official === solve.official
+      && s.event === solve.event
+      && s.average != null
+      && personOf(s) === personOf(solve)
+      && (s.comp ?? '') === (solve.comp ?? '')
+      && dayOf(s) === dayOf(solve));
+
+    const groups = new Map<string, ReconSolve[]>();
+    for (const s of siblings) {
+      const key = s.round ? `r:${s.round}` : `a:${s.average}`;
+      const g = groups.get(key);
+      if (g) g.push(s); else groups.set(key, [s]);
+    }
+    const perRound = attemptsPerRound(solve.event);
+    return [...groups.values()]
+      .map(g => {
+        // 填了「第几把」的钉死在该槽(用户的断言优先);其余按提交时间(复盘按还原顺序录入)填剩下的空槽。
+        const maxNum = Math.max(0, ...g.map(s => s.solveNum ?? 0));
+        const cols = Math.max(perRound, maxNum, g.length);
+        const slots: (ReconSolve | undefined)[] = Array.from({ length: cols });
+        const floating: ReconSolve[] = [];
+        for (const s of g) {
+          const n = s.solveNum;
+          if (n != null && n >= 1 && n <= cols && !slots[n - 1]) slots[n - 1] = s;
+          else floating.push(s);
+        }
+        floating.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0) || a.id - b.id);
+        let i = 0;
+        for (const s of floating) {
+          while (slots[i]) i++;
+          slots[i] = s;
+        }
+        return { round: g[0].round, group: g, slots };
+      })
+      .sort((a, b) => (a.round && b.round
+        ? (ROUND_ORDER[a.round] ?? 99) - (ROUND_ORDER[b.round] ?? 99)
+        : (b.group[0].createdAt ?? 0) - (a.group[0].createdAt ?? 0)));
+  }, [all, solve]);
+
+  // 有平均就出表 —— 哪怕只复盘了一把:表格给出这把所在的平均,并把其余几把亮成可补的空槽。
+  const show = rows.length > 0;
+  useEffect(() => { onHasRows(show); }, [show, onHasRows]);
+  if (!show) return null;
+
+  const eventId = toWcaEventId(solve.event!);
+  const speedUnit = eventId === 'sq1' ? 'SPS' : 'TPS';
+  const anyRound = rows.some(r => r.round);
+  const nAtt = Math.max(...rows.map(r => r.slots.length));
+
+  return (
+    <div className="detail-section">
+      <div className="detail-section-label">
+        {solve.official === 'practice'
+          ? tr({ zh: '同场练习还原', en: 'Same Session' })
+          : tr({ zh: '同场比赛还原', en: 'Same Competition' })}
+      </div>
+      <div className="same-comp-event-table-wrap">
+        <div className="wp-table-scroll">
+          <table className="wp-bycomp-table same-comp-event-table" style={{ '--att-cols': nAtt } as React.CSSProperties}>
+            <thead>
+              <tr>
+                <th>{anyRound ? tr({ zh: '轮次', en: 'Round' }) : tr({ zh: '场次', en: 'Session' })}</th>
+                <th>{tr({ zh: '单次', en: 'Single' })}</th>
+                <th>{tr({ zh: '平均', en: 'Avg' })}</th>
+                <th className="wp-th-attempts">
+                  <span className="same-comp-att-head">
+                    {Array.from({ length: nAtt }, (_, i) => (
+                      <span key={i} className="same-comp-att-head-i">{i + 1}</span>
+                    ))}
+                  </span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(r => {
+                const group = r.group;
+                // 空槽记 0(既非最好也非最差,不进括号);DNF(无时间)记 -1,与 WCA 成绩行的编码口径一致。
+                const times = r.slots.map(s => (s ? (s.rawTime != null && s.rawTime > 0 ? s.rawTime : -1) : 0));
+                const valid = times.filter(x => x > 0);
+                const bestTime = valid.length > 0 ? Math.min(...valid) : 0;
+                const bestSolve = valid.length > 0 ? r.slots[times.indexOf(bestTime)] : undefined;
+                const average = group.find(s => s.average != null)?.average;
+                const averageRecord = group.find(s => s.regionalAverageRecord)?.regionalAverageRecord ?? null;
+                // 全组把把都有复盘才给步数 / TPS 的 Ao5(去极值取中间 3 把),与 WCA 那张表同口径。
+                const ao5 = (() => {
+                  if (r.slots.length !== 5 || r.slots.some(s => !s)) return null;
+                  const stmVals = r.slots.map(s => s!.stm ?? 0);
+                  const tpsVals = r.slots.map(s => s!.tps ?? 0);
+                  if (stmVals.some(v => v <= 0) || tpsVals.some(v => v <= 0)) return null;
+                  return { moves: ao5Mean(stmVals), tps: ao5Mean(tpsVals) };
+                })();
+                const avgBadge = averageRecord
+                  ? <RecordBadge record={averageRecord} variant="inline" />
+                  : null;
+                // 括号 = Ao5 掐头去尾,只有把把齐了才知道去掉的是哪两把;缺把时一律不加括号。
+                const complete = r.slots.every(Boolean);
+                const cells: AttemptCell[] = r.slots.map((s, i) => {
+                  // 空槽:该平均里这一把还没人复盘 → 「+」链接,?from= 带走性质/选手/场地/日期/平均。
+                  if (!s) {
+                    return {
+                      text: '+',
+                      href: `/recon/submit?from=${solve.id}&solveNum=${i + 1}`,
+                      linkClass: 'same-comp-event-att-add',
+                      title: tr({ zh: `还没有复盘 — 点击补第 ${i + 1} 把`, en: `No reconstruction yet — add attempt ${i + 1}` }),
+                    };
+                  }
+                  return {
+                    text: padReconSingle(s.value) || formatTime(s.rawTime),
+                    best: times[i] > 0 && times[i] === bestTime,
+                    trimmed: complete && isAo5Bracketed(times, i),
+                    record: s.regionalSingleRecord ?? null,
+                    current: s.id === solve.id,
+                    href: s.id === solve.id ? undefined : `/recon/${reconPathSeg(s)}`,
+                    linkClass: 'same-comp-event-att-link',
+                  };
+                });
+                return (
+                  <tr key={r.round ?? `a:${average}`}>
+                    <td>
+                      <div className="same-comp-round-cell">
+                        <div className="same-comp-round-head">
+                          <span className={`wp-round-tag ${r.round ? roundClass(r.round) : 'wp-round-first'}`}>
+                            {r.round ? roundLabel(r.round).replace(/^C-/, '') : (group[0].aoType || 'Ao5')}
+                          </span>
+                        </div>
+                        <span className="same-comp-round-sublabel">STM</span>
+                        <span className="same-comp-round-sublabel">{speedUnit}</span>
+                      </div>
+                    </td>
+                    <td className="wp-cell-result">
+                      <span className="record-num-cell">
+                        {bestSolve ? (padReconSingle(bestSolve.value) || formatTime(bestSolve.rawTime)) : 'DNF'}
+                        {bestSolve?.regionalSingleRecord
+                          ? <RecordBadge record={bestSolve.regionalSingleRecord} variant="inline" />
+                          : null}
+                      </span>
+                    </td>
+                    <td className="wp-cell-result">
+                      {ao5 ? (
+                        <span className="wp-avg-cell">
+                          <AvgDec text={formatTime(average)} badge={avgBadge} variant="main" />
+                          <AvgDec text={ao5.moves.toFixed(2)} variant="sub" />
+                          <AvgDec text={ao5.tps.toFixed(2)} variant="sub" />
+                        </span>
+                      ) : (
+                        <span className="record-num-cell">
+                          {formatTime(average)}
+                          {avgBadge}
+                        </span>
+                      )}
+                    </td>
+                    <td className="wp-cell-attempts">
+                      <AttemptGrid cells={cells} recons={r.slots} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function RoundAttempts({ attempts, best, eventId, roundTypeId, attemptRanks, singleRecord, currentReconId, findReconForCell, recons, langQuery, submitCtx }: {
   attempts: number[];
   best: number;
@@ -1178,51 +1373,75 @@ function RoundAttempts({ attempts, best, eventId, roundTypeId, attemptRanks, sin
   if (attempts.length === 0) return <span className="wp-text-mute">—</span>;
   const validNums = attempts.filter(x => x > 0);
   const minValid = validNums.length > 0 ? Math.min(...validNums) : 0;
-  // 每把的 PR 角标:最好那把优先区域纪录(同单次列),否则用时间序名次(1→PR,n→PRn)。
-  const rankBadge = (i: number, isBestAtt: boolean) => {
-    const tag = isBestAtt && singleRecord
-      ? singleRecord
-      : (() => { const rk = attemptRanks?.[i] ?? null; return rk ? (rk === 1 ? 'PR' : `PR${rk}`) : undefined; })();
-    return tag ? <RecordBadge record={tag} variant="inline" /> : null;
-  };
+  const cells: AttemptCell[] = attempts.map((a, i) => {
+    if (a === undefined) return { text: '' };
+    const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
+    // 每把的 PR 角标:最好那把优先区域纪录(同单次列),否则用时间序名次(1→PR,n→PRn)。
+    const rk = attemptRanks?.[i] ?? null;
+    const cell: AttemptCell = {
+      text: formatWcaResult(a, eventId, 'single'),
+      best: isBest,
+      trimmed: isAo5Bracketed(attempts, i),
+      record: isBest && singleRecord ? singleRecord : rk ? (rk === 1 ? 'PR' : `PR${rk}`) : null,
+    };
+    const reconId = findReconForCell(roundTypeId, i + 1);
+    if (reconId === currentReconId) return { ...cell, current: true };
+    if (reconId) {
+      return { ...cell, href: `/recon/${reconId}${langQuery}`, linkClass: 'same-comp-event-att-link' };
+    }
+    // 没复盘 → 点击去复盘(预填好选手/比赛/项目/轮次/第几把),与 /wca/persons 同一条 buildReconSubmitHref
+    if (submitCtx) {
+      return {
+        ...cell,
+        href: buildReconSubmitHref({
+          wcaEventId: eventId, roundTypeId, solveNum: i + 1,
+          personId: submitCtx.personId, personName: submitCtx.personName,
+          personCountry: submitCtx.personCountry, compId: submitCtx.compId,
+          compName: submitCtx.compName, compCountry: submitCtx.compCountry,
+          compDate: submitCtx.compDate,
+        }),
+        linkClass: 'same-comp-event-att-tonew',
+        title: tr({ zh: '还没有复盘 — 点击去复盘这一把', en: 'No reconstruction yet — click to reconstruct' }),
+      };
+    }
+    return cell;
+  });
+  return <AttemptGrid cells={cells} recons={recons} />;
+}
+
+/** 逐把网格的一格。WCA 官方成绩行(RoundAttempts)与练习/非 WCA 同场组(SameSessionTable)
+ *  各自组装 cell,渲染共用 AttemptGrid —— 两边的时间来源与角标口径不同,但格子长得一样。 */
+interface AttemptCell {
+  /** 显示文本(已格式化);空串 = 该把不存在,只占位 */
+  text: string;
+  best?: boolean;
+  /** Ao5 里被去掉的最好 / 最差那把 → 加括号 */
+  trimmed?: boolean;
+  /** 纪录 / PR 角标码,如 'NR' 'PR2' 'PB10' */
+  record?: string | null;
+  href?: string;
+  linkClass?: string;
+  /** 当前正在看的这把 → 实色下划线 */
+  current?: boolean;
+  title?: string;
+}
+
+/** 逐把成绩网格:时间行 +(任一把有复盘时)STM / TPS 两行,同一套列网格逐列对齐。 */
+function AttemptGrid({ cells, recons }: { cells: AttemptCell[]; recons: (ReconSolve | undefined)[] }) {
   const hasRecon = recons.some(Boolean);
   return (
     <div className="same-comp-att-grid">
-      {attempts.map((a, i) => {
-        if (a === undefined) return <span key={i} />;
-        const formatted = formatWcaResult(a, eventId, 'single');
-        const isBest = validNums.length > 0 && a > 0 && a === minValid && a === best;
-        const badge = rankBadge(i, isBest);
-        const reconId = findReconForCell(roundTypeId, i + 1);
-        const isCurrent = reconId === currentReconId;
-        const cls = `wp-att ${isBest ? 'wp-att-best' : ''} ${isAo5Bracketed(attempts, i) ? 'wp-att-trimmed' : ''} ${isCurrent ? 'same-comp-event-att-current' : ''}`;
-        if (reconId && !isCurrent) {
-          return (
-            <Link key={i} href={`/recon/${reconId}${langQuery}`} className={`${cls} same-comp-event-att-link`}>
-              {formatted}{badge}
+      {cells.map((c, i) => {
+        if (!c.text) return <span key={i} />;
+        const cls = `wp-att ${c.best ? 'wp-att-best' : ''} ${c.trimmed ? 'wp-att-trimmed' : ''} ${c.current ? 'same-comp-event-att-current' : ''}`;
+        const body = <>{c.text}{c.record ? <RecordBadge record={c.record} variant="inline" /> : null}</>;
+        return c.href
+          ? (
+            <Link key={i} href={c.href} className={`${cls} ${c.linkClass ?? ''}`} title={c.title}>
+              {body}
             </Link>
-          );
-        }
-        // 没复盘 → 点击去复盘(预填好选手/比赛/项目/轮次/第几把),与 /wca/persons 同一条 buildReconSubmitHref
-        if (!reconId && submitCtx) {
-          return (
-            <Link
-              key={i}
-              href={buildReconSubmitHref({
-                wcaEventId: eventId, roundTypeId, solveNum: i + 1,
-                personId: submitCtx.personId, personName: submitCtx.personName,
-                personCountry: submitCtx.personCountry, compId: submitCtx.compId,
-                compName: submitCtx.compName, compCountry: submitCtx.compCountry,
-                compDate: submitCtx.compDate,
-              })}
-              className={`${cls} same-comp-event-att-tonew`}
-              title={tr({ zh: '还没有复盘 — 点击去复盘这一把', en: 'No reconstruction yet — click to reconstruct' })}
-            >
-              {formatted}{badge}
-            </Link>
-          );
-        }
-        return <span key={i} className={cls}>{formatted}{badge}</span>;
+          )
+          : <span key={i} className={cls}>{body}</span>;
       })}
       {hasRecon && (
         <>
