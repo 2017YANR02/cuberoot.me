@@ -65,20 +65,29 @@ trap {
   exit 1
 }
 
-# ---- analyzer 进度: 一行, 不刷屏 ----
-# 真人终端: \r 就地重写同一行(analyzer 每 37 条打一次 [PROG], 逐行 Write-Host 会刷几百屏)。
+# ---- 长跑进度: 一行, 不刷屏 ----
+# 用于所有"每 N 条打一行"的子进程(analyzer 的 [PROG]、333opt solve.mjs 的 [done/total])。
+# 真人终端: \r 就地重写同一行(逐行 Write-Host 会刷几百屏)。
 # 非 tty(AI/CI/日志): \r 在日志里是垃圾字符 -> 退回"每 5min 打一行", 免几十分钟静默像卡死。
 $script:progTick = Get-Date
+$script:progOpen = $false   # 当前行是否停在未换行的进度行上(决定 Write-ProgEnd 要不要补换行)
 function Write-Prog {
   param([string]$Text)
-  if($HumanTerm){ Write-Host ("`r  " + $Text.PadRight(58)) -NoNewline; return }
+  if($HumanTerm){
+    Write-Host ("`r  " + $Text.PadRight(64)) -NoNewline
+    $script:progOpen = $true
+    return
+  }
   $now = Get-Date
   if(($now - $script:progTick).TotalMinutes -ge 5){
     Write-Host "  $Text  $($now.ToString('HH:mm:ss'))"
     $script:progTick = $now
   }
 }
-function Write-ProgEnd { if($HumanTerm){ Write-Host '' } }  # 收尾换行, 后续输出不接在进度行尾
+# 收尾换行, 后续输出不接在进度行尾。幂等: 没开着进度行就什么都不做(免平白多出空行)。
+function Write-ProgEnd {
+  if($HumanTerm -and $script:progOpen){ Write-Host ''; $script:progOpen = $false }
+}
 
 # ---- 本机算力限额 (全局规则: 重计算最多 7 核 14 线程, 留 1 核给系统; 长跑进程低优先级) ----
 # solver 各 analyzer 走 rayon 全局池 (executor.rs par_iter), 无自建 ThreadPoolBuilder, 故 RAYON_NUM_THREADS 直接钉死线程数。
@@ -978,7 +987,26 @@ if($run333opt -and -not $SkipSolve333){
     if($freeGB -lt 16){ Write-Host ("[333opt-solve] 警告: 空闲内存 {0:N1}G (<16G), 15G 表可能换页变慢(别让它写 C 盘)。" -f $freeGB) -ForegroundColor Yellow }
     Step '5a 333 整解最优全量求解 — node solver/333opt/solve_loop.mjs (续跑; 首次全量~3.5天, 增量缺口快; 已全解则秒退)'
     Push-Location $opt333Dir
-    try { node solve_loop.mjs; $solveRc = $LASTEXITCODE } finally { Pop-Location }
+    try {
+      # solve.mjs 每 100 条打一行 "[done/total] id -> htm (ms) · rate · ETA" -> 几千行刷屏。
+      # 进度行折成单行原地刷新(保留 rate/ETA 尾巴); 其余(表加载 / [loop] 起停 / 报错)原样放行。
+      node solve_loop.mjs 2>&1 | ForEach-Object {
+        $s = "$_"
+        $mm = [regex]::Match($s, '^\[(\d+)/(\d+)\]')
+        if($mm.Success){
+          $d = [int]$mm.Groups[1].Value; $t = [int]$mm.Groups[2].Value
+          $pct = if($t){ [int]($d * 100 / $t) } else { 0 }
+          $tm = [regex]::Match($s, '·\s*([\d.]+/s.*)$')
+          $tail = if($tm.Success){ " · $($tm.Groups[1].Value)" } else { '' }
+          Write-Prog "整解 $d/$t ($pct%)$tail"
+        } else {
+          Write-ProgEnd
+          Write-Host $s
+        }
+      }
+      $solveRc = $LASTEXITCODE
+      Write-ProgEnd
+    } finally { Pop-Location }
     if($solveRc -eq 2){ throw '333opt solve_loop 连续 3 次零进展, 已停下报警(unwind/表加载问题)。未 inject 半成品, 请人工查。' }
     if($solveRc -ne 0){ throw "333opt solve_loop 失败 (rc=$solveRc)" }
   } else {

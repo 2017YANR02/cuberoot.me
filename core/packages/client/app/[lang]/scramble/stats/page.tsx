@@ -43,7 +43,6 @@ import ScrambleLengthView, {
 import FirstAppearanceTimeline, { type TimelineEntry } from './_components/FirstAppearanceTimeline';
 import FullScrambleList, { FullScrambleFilterBar } from './_components/FullScrambleList';
 import AvgExamplesPanel, { type AvgGroupCase } from './_components/AvgExamplesPanel';
-import WcaEventSelector from '@/components/WcaEventSelector';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -61,6 +60,7 @@ import { fetchByDifficultyCountries, type ByDifficultyCountry } from '@/lib/scra
 import { statsUrl } from '@/lib/stats-base';
 import {
   stageLabel, isBlockVariant, VARIANT_ORDER, VARIANT_STAGES, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT,
+  EO_DATA_VARIANTS, EO_STAGE_VARIANT, EO_UI_STAGES, isEoVariant,
   type ScrambleVariant,
 } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
@@ -960,18 +960,12 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         <div className="scramble-stats-embed-title">{tr({ zh: '分布', en: 'Distribution' })}</div>
       ) : (
         <>
-          {/* 项目/事件选择置顶。独立分布页:这是唯一的项目选择器(全 WCA 项目)+ 右侧
-              PuzzlePicker(ivy 等)。 */}
+          {/* 项目/事件选择置顶。独立分布页:单个 PuzzlePicker 下拉(WCA 组 + 非 WCA 家族组
+              同一菜单,同 SolveTabs 的收拢套路)是页面唯一的项目选择器。 */}
           <div className="scramble-stats-event-pick">
-            <WcaEventSelector
-              availableEvents={availableEvents}
-              selectedEvent={event}
-              onSelect={setEvent}
-              isZh={isZh}
-              onlyAvailable
-            />
             <PuzzlePicker
               isZh={isZh}
+              wcaEvents={availableEvents}
               availableEvents={CSTIMER_SOLVABLE_IDS}
               selectedEvent={event}
               onSelect={setEvent}
@@ -1694,17 +1688,22 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const sampleCount = tr({ zh: '{n} 条', en: '{n} scrambles'
 }).replace('{n}', sampleN.toLocaleString());
 
-  // 方法下拉:数据层块变体(123/123x2/222/223)聚合显示为「砖」;阶段下拉列块形状,
-  // 选中时经 BLOCK_STAGE_VARIANT 落回底层变体,数据/示例/下载全走原 variant+stage 键。
-  // 方法下拉顺序走共享 VARIANT_ORDER(与首页 RecentScrambles 一致);块族折叠为 'block'。
+  // 方法下拉:数据层块变体(123/123x2/222/223)聚合显示为「砖」,EOLine 变体并入「EO」;
+  // 阶段下拉列细分(块形状 / EO·EOLine),选中时经 *_STAGE_VARIANT 落回底层变体,
+  // 数据/示例/下载全走原 variant+stage 键。顺序走共享 VARIANT_ORDER(与首页 RecentScrambles 一致)。
   const methodOptions = VARIANT_ORDER.filter((v) =>
     v === 'block'
       ? BLOCK_DATA_VARIANTS.some((b) => !!currentSet.variants[b])
-      : !!currentSet.variants[v],
+      : v === 'eo'
+        ? EO_DATA_VARIANTS.some((b) => !!currentSet.variants[b])
+        : !!currentSet.variants[v],
   ) as VariantKey[];
   const blockStages = VARIANT_STAGES.block.filter((s) =>
     currentSet.variants[BLOCK_STAGE_VARIANT[s]]?.stages.includes(s));
+  const eoStages = EO_UI_STAGES.filter((s) =>
+    currentSet.variants[EO_STAGE_VARIANT[s]]?.stages.includes(s));
   const isBlockUi = isBlockVariant(variant);
+  const isEoUi = isEoVariant(variant);
 
   return (
     <div className="scramble-stats-page">
@@ -1720,13 +1719,16 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         <label>
           <VariantSelect
             className="scramble-stats-select"
-            value={isBlockUi ? 'block' : variant}
+            value={isBlockUi ? 'block' : isEoUi ? 'eo' : variant}
             options={methodOptions}
             onChange={(val) => {
               const v = val as VariantKey;
               if (v === 'block') {
                 const s = blockStages[0];
                 if (s) { setVariant(BLOCK_STAGE_VARIANT[s] as VariantKey); setStage(s); }
+              } else if (v === 'eo') {
+                const s = eoStages[0];
+                if (s) { setVariant(EO_STAGE_VARIANT[s] as VariantKey); setStage(s); }
               } else setVariant(v);
             }}
             isZh={i18n.language.startsWith('zh')}
@@ -1738,9 +1740,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           <VariantSelect
             className="scramble-stats-select"
             value={stage}
-            options={isBlockUi ? blockStages : currentStages}
+            options={isBlockUi ? blockStages : isEoUi ? eoStages : currentStages}
             onChange={(s) => {
               if (isBlockUi && BLOCK_STAGE_VARIANT[s]) setVariant(BLOCK_STAGE_VARIANT[s] as VariantKey);
+              else if (isEoUi && EO_STAGE_VARIANT[s]) setVariant(EO_STAGE_VARIANT[s] as VariantKey);
               setStage(s);
             }}
             isZh={isZh}
