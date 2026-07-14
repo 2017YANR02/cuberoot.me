@@ -2,13 +2,17 @@
 
 // Landing "近期打乱" (Recent Scrambles). An event picker on top:
 //  - 333 → the rich variant(std/eo/pseudo/...) × metric(cross/xc/...) × bottom-color × move
-//    widget, fed by stats/scramble/recent_scrambles.json (Recent333Body).
+//    widget, fed by stats/scramble/recent_scrambles.json (Recent333Body). Its variant dropdown
+//    also carries a "打乱长度" pseudo-variant (LENGTH_VARIANT) that buckets the batch by raw
+//    scramble length (3x3 scrambles vary, 12–23 moves) off the events JSON below.
 //  - every other event → simplest scrambles of the latest batch, bucketed by scramble length;
 //    222 / pyraminx / skewb also offer a difficulty (whole-solve optimal step) mode. Fed by
 //    stats/scramble/recent_scrambles_events.json (RecentEventBody).
+//    222 / skewb have a fixed WCA scramble length, so they only get the difficulty view;
+//    4x4–7x7 / megaminx / clock are fixed-length with no difficulty data → not listed at all.
 // 显示的打乱一律是**最优等态打乱**(同 /timer 真题的「最优打乱」,无 toggle):与该场原打乱同一魔方态、
 // 步数最短。同态 ⇒ 各阶段步数 / 难度值不变。仅「打乱长度」视图例外(那按的就是原打乱长度)。
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -63,6 +67,10 @@ const METRIC_ORDER = ['333', 'eo', 'eoline', 'cross', 'xc', 'xxc', 'xxxc', 'xxxx
 
 // 难度模式的项目(整解最优步数);其余项目只按打乱长度。
 const DIFFICULTY_EVENTS = new Set(['222', 'pyram', 'skewb']);
+// WCA 官方打乱是固定长度(非随机态变长),打乱长度分布无意义 → 不给长度切换,只留难度。
+const FIXED_LENGTH_NO_TOGGLE = new Set(['222', 'skewb']);
+// 打乱长度固定且无难度数据(4/5/6/7 阶、五魔、魔表)→ 整个项目在本栏不展示。
+const HIDDEN_FIXED_LENGTH_EVENTS = new Set(['444', '555', '666', '777', 'minx', 'clock']);
 
 // meta.cd 是比赛起讫日的紧凑串(2026-06-20 / 2026-06-20~21 / 2026-06-20~07-05),
 // 还原出结束日的完整 ISO,用于跨全批求最晚日期。
@@ -278,6 +286,13 @@ function rarityTag(uiVariant: string, metric: string, step: number, isZh: boolea
 // 步数下拉选项标签(zh「N 步」/ en「N」)。tr 包住避免内联 isZh 文案三元。
 const stepOptionLabel = (n: number) => tr({ zh: `${n} 步`, en: String(n) });
 
+// 3x3 变体下拉里的伪变体:选中即按**原打乱长度**分桶(其余变体都是难度口径)。数据同其它项目走
+// eventsJson;放在变体下拉而非视图下拉,因为它和「魔方 / 标准 / DR」一样是「按什么分桶」的选择。
+const LENGTH_VARIANT = 'length';
+const variantOrLengthLabel = (key: string, isZh: boolean): string => (
+  key === LENGTH_VARIANT ? tr({ zh: '打乱', en: 'Length' }) : variantLabel(key, isZh)
+);
+
 // Pattern B: English is bare; only Chinese is /zh-prefixed.
 const langPrefix = (lang: 'zh' | 'en') => (lang === 'zh' ? '/zh' : '');
 const genHref = (lp: string, ci: string) => `${lp}/scramble/gen?comp=${encodeURIComponent(ci)}`;
@@ -424,6 +439,7 @@ export default function RecentScrambles({ lang }: Props) {
     const s = new Set<string>();
     if (has333) s.add('333');
     if (eventsJson) for (const [ev, b] of Object.entries(eventsJson.events)) {
+      if (HIDDEN_FIXED_LENGTH_EVENTS.has(ev)) continue;
       if (Object.keys(b.length).length > 0 || (b.difficulty && Object.keys(b.difficulty.byStep).length > 0)) s.add(ev);
     }
     return s;
@@ -445,19 +461,26 @@ export default function RecentScrambles({ lang }: Props) {
       </div>
       <EventPickerDropdown availableEvents={availableEvents} curEvent={curEvent} onSelect={setEvent} isZh={isZh} />
       {curEvent === '333'
-        ? <Recent333Body data={data} dist={dist} isZh={isZh} lp={lp} />
+        ? <Recent333Body data={data} dist={dist} eventsJson={eventsJson} isZh={isZh} lp={lp} />
         : <RecentEventBody event={curEvent} json={eventsJson} isZh={isZh} lp={lp} />}
     </div>
   );
 }
 
 // ============================ 333:富控件(变体 × 类型 × 底色 × 步数)============================
-function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | null; dist: DistributionJson | null; isZh: boolean; lp: string }) {
+function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
+  data: RecentScramblesJson | null;
+  dist: DistributionJson | null;
+  eventsJson: RecentScramblesEventsJson | null;
+  isZh: boolean;
+  lp: string;
+}) {
   const [variant, setVariant] = useState('std');
   const [metric, setMetric] = useState('cross');
   const [step, setStep] = useState<number | null>(null);
   const sel = useSubsetSelection('dual');
-  // 视图:'type' 按 变体/类型/底色/步数 下钻单桶;'rare' 横扫全部组合,列出概率 < threshold 的稀有打乱。
+  // 视图:'type' 按 变体/类型/底色/步数 下钻单桶(变体可选 LENGTH_VARIANT = 按原打乱长度分桶);
+  // 'rare' 横扫全部组合,列出概率 < threshold 的稀有打乱。
   const [mode, setMode] = useState<'type' | 'rare'>('type');
   const [threshold, setThreshold] = useState(RARE_DEFAULT);
 
@@ -497,7 +520,14 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [data]);
 
-  const curVariant = (variants as string[]).includes(variant) ? variant : (variants[0] ?? 'std');
+  // 长度桶在 eventsJson(同其它项目);本批没有长度数据就不在变体下拉里给这一项。
+  const hasLength = Object.keys(eventsJson?.events?.['333']?.length ?? {}).length > 0;
+  const variantOptions = useMemo(
+    () => (hasLength ? [...variants, LENGTH_VARIANT] : [...variants]),
+    [variants, hasLength],
+  );
+  const curVariant = variantOptions.includes(variant) ? variant : (variants[0] ?? 'std');
+  const isLength = curVariant === LENGTH_VARIANT;
   // 聚合方法(block / eo)的指标散在多个数据变体里 -> 按映射表逐个指标回查其所属变体。
   const stageVariantMap = curVariant === 'block' ? BLOCK_STAGE_VARIANT : curVariant === 'eo' ? EO_STAGE_VARIANT : null;
   const metrics = useMemo(() => {
@@ -557,18 +587,44 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
     [mode, data, dist, threshold],
   );
 
+  const modePill = (
+    <PillToggle
+      value={mode === 'rare'}
+      onChange={(v) => setMode(v ? 'rare' : 'type')}
+      offLabel={tr({ zh: '类型', en: 'By type' })}
+      onLabel={tr({ zh: '概率', en: 'Rare' })}
+      ariaLabel={tr({ zh: '视图', en: 'View' })}
+    />
+  );
+  const variantSelect = (
+    <VariantSelect
+      className="rs-select"
+      value={curVariant}
+      options={variantOptions}
+      onChange={(v) => { markTouched(); setVariant(v); }}
+      isZh={isZh}
+      label={variantOrLengthLabel}
+      ariaLabel={tr({ zh: '变体', en: 'Variant' })}
+    />
+  );
+
+  // 「打乱长度」变体:按原打乱长度分桶,整体复用其它项目那套(桶 + 卡片)。不依赖 rank(难度)数据,
+  // 故放在 rank 空守卫之前;头部只留视图 + 变体两个下拉(底色 / 类型 / 步数对长度无意义)。
+  if (mode === 'type' && isLength) {
+    return (
+      <RecentEventBody
+        event="333" json={eventsJson} isZh={isZh} lp={lp}
+        headExtra={<>{modePill}{variantSelect}</>}
+      />
+    );
+  }
+
   if (!data || variants.length === 0) return null;
 
   return (
     <>
       <div className="rs-head">
-        <PillToggle
-          value={mode === 'rare'}
-          onChange={(v) => setMode(v ? 'rare' : 'type')}
-          offLabel={tr({ zh: '类型', en: 'By type' })}
-          onLabel={tr({ zh: '概率', en: 'Rare' })}
-          ariaLabel={tr({ zh: '视图', en: 'View' })}
-        />
+        {modePill}
         {mode === 'rare' ? (
           <select
             className="rs-select"
@@ -583,7 +639,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
           </select>
         ) : (<>
         {!isWhole && <SubsetColorPicker sel={pickerSel} isZh={isZh} />}
-        <VariantSelect className="rs-select" value={curVariant} options={variants} onChange={(v) => { markTouched(); setVariant(v); }} isZh={isZh} ariaLabel={tr({ zh: '变体', en: 'Variant' })} />
+        {variantSelect}
         {metrics.length > 1 && (
           <VariantSelect className="rs-select" value={curMetric} options={metrics} onChange={(v) => { markTouched(); setMetric(v); }} isZh={isZh} label={stageLabel} ariaLabel={tr({ zh: '类型', en: 'Type' })} />
         )}
@@ -640,20 +696,29 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
 }
 
 // ============================ 其他项目:长度(全项目)+ 难度(222/金字塔/斜转)============================
-function RecentEventBody({ event, json, isZh, lp }: { event: string; json: RecentScramblesEventsJson | null; isZh: boolean; lp: string }) {
+// headExtra:插在控件行最前的额外控件。3x3 的长度视图复用本组件,把它的「视图」下拉塞在这里。
+function RecentEventBody({ event, json, isZh, lp, headExtra }: {
+  event: string; json: RecentScramblesEventsJson | null; isZh: boolean; lp: string; headExtra?: ReactNode;
+}) {
   const buckets = json?.events?.[event];
   const hasDifficulty = !!(buckets?.difficulty && DIFFICULTY_EVENTS.has(event) && Object.keys(buckets.difficulty.byStep).length > 0);
+  const showLengthToggle = hasDifficulty && !FIXED_LENGTH_NO_TOGGLE.has(event);
   const [mode, setMode] = useState<'difficulty' | 'length'>('difficulty');
   const [value, setValue] = useState<number | null>(null);
 
-  const curMode: 'difficulty' | 'length' = hasDifficulty ? mode : 'length';
+  const curMode: 'difficulty' | 'length' = hasDifficulty ? (showLengthToggle ? mode : 'difficulty') : 'length';
   const bucketMap = curMode === 'difficulty' ? (buckets?.difficulty?.byStep ?? {}) : (buckets?.length ?? {});
   const values = useMemo(() => Object.keys(bucketMap).map(Number).sort((a, b) => a - b), [bucketMap]);
   const curValue = (value != null && values.includes(value)) ? value : (values[0] ?? null);
   const ids = (curValue != null ? bucketMap[String(curValue)] : undefined) ?? [];
 
   if (!buckets || values.length === 0) {
-    return <div className="rs-empty">{tr({ zh: '该项目本批暂无数据', en: 'No recent scrambles for this event' })}</div>;
+    return (
+      <>
+        {headExtra && <div className="rs-head">{headExtra}</div>}
+        <div className="rs-empty">{tr({ zh: '该项目本批暂无数据', en: 'No recent scrambles for this event' })}</div>
+      </>
+    );
   }
 
   // 难度视图强制显示最优等态打乱(同态,其步数 = 该桶的难度值);长度视图按的是原打乱长度,必须显示原打乱。
@@ -664,7 +729,8 @@ function RecentEventBody({ event, json, isZh, lp }: { event: string; json: Recen
   return (
     <>
       <div className="rs-head">
-        {hasDifficulty && (
+        {headExtra}
+        {showLengthToggle && (
           <PillToggle
             value={curMode === 'length'}
             onChange={(v) => { setMode(v ? 'length' : 'difficulty'); setValue(null); }}

@@ -1,7 +1,8 @@
 // 近期打乱(全项目)数据契约 + 加载路径。
 // 生产端:scramble-stats-build/src/build_recent_scrambles_events.ts(改 shape 必须两处同步 + bump V)。
-// 覆盖除 3x3 外的所有 WCA 项目:每项目按「打乱长度」分桶;222 / 金字塔 / 斜转 额外按「难度」
-// (整解最优步数)分桶。3x3 本身仍走 recent_scrambles.json 的变体×类型×底色富控件。
+// 覆盖全部 WCA 项目:每项目按「打乱长度」分桶;222 / 金字塔 / 斜转 额外按「难度」(整解最优步数)分桶。
+// 3x3 只取这里的长度桶(其打乱长度不定,12–23 步);3x3 的难度(变体×类型×底色)仍走
+// recent_scrambles.json 的富控件。
 import { statsUrl } from '@/lib/stats-base';
 
 export interface RecentEventBuckets {
@@ -29,7 +30,7 @@ export interface RecentScramblesEventsJson {
 }
 
 // shape 变更或数据全量重灌时 bump(防缓存旧 JSON)
-const V = '20260712opt';
+const V = '20260714len333';
 
 export async function fetchRecentScramblesEvents(): Promise<RecentScramblesEventsJson | null> {
   try {
