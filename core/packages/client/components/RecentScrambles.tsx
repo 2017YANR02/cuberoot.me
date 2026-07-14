@@ -19,7 +19,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
-import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, isBlockVariant, VARIANT_STAGES } from '@/lib/scramble-variants';
+import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, isBlockVariant, EO_DATA_VARIANTS, EO_STAGE_VARIANT, VARIANT_STAGES } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
@@ -48,13 +48,18 @@ interface RecentScramblesJson {
 const WHOLE_SOLVE = '333';
 const WHOLE_SOLVE_SUBSET = 'ALL';
 
+// 数据变体 -> 方法下拉里的 UI 项(块族折成 'block';EOLine 并入 'eo')。
+const uiVariantOf = (dataVariant: string): string =>
+  isBlockVariant(dataVariant) ? 'block' : dataVariant === 'eoline' ? 'eo' : dataVariant;
+
 // 概率提示数据源 = /scramble/stats 的 distribution.json('wca' 合并池:全部 WCA 三阶打乱)。
 interface DistHist { counts: Record<string, number> }
 interface DistributionJson {
   sets: Record<string, { variants: Record<string, { data: Record<string, Record<string, DistHist>> }> }>;
 }
 
-const METRIC_ORDER = ['333', 'cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'eo', 'eoline', 'dr'];
+// eo / eoline 排在十字系列之前:EO 方法下的阶段顺序是「先定向,再 EOLine,再 EO+十字」。
+const METRIC_ORDER = ['333', 'eo', 'eoline', 'cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'dr'];
 
 // 难度模式的项目(整解最优步数);其余项目只按打乱长度。
 const DIFFICULTY_EVENTS = new Set(['222', 'pyram', 'skewb']);
@@ -141,7 +146,7 @@ function findRarestSelection(
           if (c <= 0) continue;
           const p = c / total;
           if (best === null || p < best.p) {
-            best = { variant: isBlockVariant(dataVariant) ? 'block' : dataVariant, metric, subsetKey, step: Number(stepStr), p };
+            best = { variant: uiVariantOf(dataVariant), metric, subsetKey, step: Number(stepStr), p };
           }
         }
       }
@@ -171,7 +176,7 @@ function collectRareScrambles(data: RecentScramblesJson, dist: DistributionJson,
   for (const dataVariant in data.rank) {
     const distVar = wcaVars[dataVariant];
     if (!distVar) continue;
-    const uiVariant = isBlockVariant(dataVariant) ? 'block' : dataVariant;
+    const uiVariant = uiVariantOf(dataVariant);
     const byMetric = data.rank[dataVariant];
     for (const metric in byMetric) {
       const target = stageLabel(metric, false);
@@ -222,13 +227,15 @@ const genHref = (lp: string, ci: string) => `${lp}/scramble/gen?comp=${encodeURI
 // (变体, 类型) → analyzer StageSolver 的 method + 阶段索引(深链直达「砖 / F2B」这类视图)。
 // 333(整解)无 StageSolver 方法 → null,不附加参数。metric 短键(xc)与阶段全名(xcross)经
 // stageLabel 归一后按位匹配。
+// EO 是 UI 聚合方法,但 StageSolver 那边 EOLine 仍是独立引擎方法 → EO/EOLine 两个阶段回落到 'eoline'。
 function stageSolverTarget(uiVariant: string, metric: string): { method: string; stage: number } | null {
   if (uiVariant === '333') return null;
-  const stages = VARIANT_STAGES[uiVariant as keyof typeof VARIANT_STAGES];
+  const method = uiVariant === 'eo' ? (EO_STAGE_VARIANT[metric] ?? 'eo') : uiVariant;
+  const stages = VARIANT_STAGES[method as keyof typeof VARIANT_STAGES];
   if (!stages) return null;
   const target = stageLabel(metric, false);
   const stage = stages.findIndex((s) => stageLabel(s, false) === target);
-  return stage >= 0 ? { method: uiVariant, stage } : null;
+  return stage >= 0 ? { method, stage } : null;
 }
 // 底色字母 → StageSolver 6 视角(FACES=[D,U,L,R,F,B])索引。标准配色 U=白 D=黄 F=绿 B=蓝 R=红 L=橙
 // (lib/cube-colors),故 Y→0(D) W→1(U) O→2(L) R→3(R) G→4(F) B→5(B)。锁定底色对应的视角用。
@@ -347,7 +354,7 @@ export default function RecentScrambles({ lang }: Props) {
     if (!data || data.new_count === 0) return false;
     return VARIANT_ORDER.some((v) => {
       if (v === '333') return true; // 占位恒列
-      const vars = v === 'block' ? BLOCK_DATA_VARIANTS : [v];
+      const vars: readonly string[] = v === 'block' ? BLOCK_DATA_VARIANTS : v === 'eo' ? EO_DATA_VARIANTS : [v];
       return vars.some((dv) => {
         const r = data.rank?.[dv];
         return r && Object.values(r).some((byColor) => Object.values(byColor).some((byStep) => Object.keys(byStep).length > 0));
@@ -431,23 +438,29 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
     return Object.values(r).some((byColor) => Object.values(byColor).some((byStep) => Object.keys(byStep).length > 0));
   };
   const variants = useMemo(() => VARIANT_ORDER.filter((v) =>
-    v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData) : hasData(v),
+    v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData)
+      : v === 'eo' ? EO_DATA_VARIANTS.some(hasData)
+        : hasData(v),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [data]);
 
   const curVariant = (variants as string[]).includes(variant) ? variant : (variants[0] ?? 'std');
+  // 聚合方法(block / eo)的指标散在多个数据变体里 -> 按映射表逐个指标回查其所属变体。
+  const stageVariantMap = curVariant === 'block' ? BLOCK_STAGE_VARIANT : curVariant === 'eo' ? EO_STAGE_VARIANT : null;
   const metrics = useMemo(() => {
-    if (curVariant === 'block') {
+    if (stageVariantMap) {
       return METRIC_ORDER.filter((m) => {
-        const dv = BLOCK_STAGE_VARIANT[m];
+        const dv = stageVariantMap[m];
         return dv !== undefined && m in (data?.rank?.[dv] ?? {});
       });
     }
     const r = data?.rank?.[curVariant];
     return r ? METRIC_ORDER.filter((m) => m in r) : [];
-  }, [data, curVariant]);
+  }, [data, curVariant, stageVariantMap]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
-  const dataVariant = curVariant === 'block' ? (BLOCK_STAGE_VARIANT[curMetric] ?? '123') : curVariant;
+  const dataVariant = stageVariantMap
+    ? (stageVariantMap[curMetric] ?? (curVariant === 'block' ? '123' : 'eo'))
+    : curVariant;
   const isWhole = curVariant === WHOLE_SOLVE;                                  // 整解: 无底色维度
   const subsetKey = isWhole ? WHOLE_SOLVE_SUBSET : sel.subsetKey;
   const byStep = data?.rank?.[dataVariant]?.[curMetric]?.[subsetKey];
@@ -518,7 +531,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
         ) : (<>
         {!isWhole && <SubsetColorPicker sel={pickerSel} isZh={isZh} />}
         <VariantSelect className="rs-select" value={curVariant} options={variants} onChange={(v) => { markTouched(); setVariant(v); }} isZh={isZh} ariaLabel={tr({ zh: '变体', en: 'Variant' })} />
-        {metrics.length > 0 && (
+        {metrics.length > 1 && (
           <VariantSelect className="rs-select" value={curMetric} options={metrics} onChange={(v) => { markTouched(); setMetric(v); }} isZh={isZh} label={stageLabel} ariaLabel={tr({ zh: '类型', en: 'Type' })} />
         )}
         {steps.length > 0 && (

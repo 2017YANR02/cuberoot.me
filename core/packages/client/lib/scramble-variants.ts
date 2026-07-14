@@ -17,7 +17,7 @@ export interface VariantLabel { zh: string; en: string }
 
 export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
   // 整解:整个 3x3 最优解(stats 难度 tab 的一个方法,阶段只有 '333' 自身)。
-  '333': { zh: '333', en: '333' },
+  '333': { zh: '魔方', en: 'Cube' },
   std: { zh: '标准', en: 'Standard' },
   eo: { zh: 'EO', en: 'EO' },
   pair: { zh: '基态', en: 'Pair' },
@@ -42,11 +42,11 @@ export const VARIANT_LABEL: Record<ScrambleVariant, VariantLabel> = {
 };
 
 // 规范展示顺序(RecentScrambles / gen 下拉用;stats 按 distribution.json 键枚举序,不用这个)。
-// 块族只出 'block' 一项。
+// 块族只出 'block' 一项;EOLine 并入 'eo' 一项(见下)。
 export const VARIANT_ORDER: ScrambleVariant[] = [
   '333',
   'std', 'pseudo', 'pair', 'pseudo_pair', 'eo', 'f2leo', 'pseudo_f2leo',
-  'block', 'eoline', 'dr',
+  'block', 'dr',
 ];
 
 // 数据层块变体集合 + 「block 方法的阶段/指标 → 底层数据变体」映射
@@ -57,6 +57,21 @@ export const isBlockVariant = (v: string): boolean =>
 export const BLOCK_STAGE_VARIANT: Record<string, ScrambleVariant> = {
   fbsquare: '123', rouxs1: '123', block222: '222', block223: '223', f2b: '123x2',
   b122: '123', b123: '123', b222: '222', b223: '223', bf2b: '123x2',
+};
+
+// 'eo'(EO)同为 UI 聚合方法:数据层 'eoline' 变体(纯 EO / EOLine 两阶段)收进 EO 这一个
+// 方法下拉项,细分落到阶段下拉(EO / EOLine / 十字 / XCross …)。数据键仍是 eo / eoline 两个变体
+// —— 它们背后是两个求解引擎(VariantSolverWasm / EoDrSolverWasm),只在 UI 合并。
+// 例外:/scramble/analyzer 的 StageSolver 方法下拉不走 VARIANT_ORDER(那是引擎选择器,
+// 换阶段就换 WASM 池 = 重拉表),EOLine 在那里仍是独立方法。
+export const EO_DATA_VARIANTS = ['eoline', 'eo'] as const;
+export const isEoVariant = (v: string): boolean => v === 'eo' || v === 'eoline';
+// 「EO 方法的阶段/指标 → 底层数据变体」映射,键覆盖三套键空间:
+// distribution 全名键(eo_cross)/ recent_scrambles 指标键(cross, xc)/ gen 的 b 前缀键(beo)。
+export const EO_STAGE_VARIANT: Record<string, ScrambleVariant> = {
+  eo: 'eoline', eoline: 'eoline', beo: 'eoline', beoline: 'eoline',
+  eo_cross: 'eo', eo_xcross: 'eo', eo_xxcross: 'eo', eo_xxxcross: 'eo', eo_xxxxcross: 'eo',
+  cross: 'eo', xc: 'eo', xxc: 'eo', xxxc: 'eo', xxxxc: 'eo',
 };
 
 /** 变体显示名;未知 key 回退原样。 */
@@ -73,7 +88,7 @@ export const variantLabel = (key: string, isZh: boolean): string => {
 
 const STAGE_BASE: Record<string, VariantLabel> = {
   // 整解:整个 3x3 的最优解步数(stats 页专属阶段,数据驱动;StageSolver/gen 不含)。
-  '333': { zh: '333', en: '333' },
+  '333': { zh: '魔方', en: 'Cube' },
   cross: { zh: '十字', en: 'Cross' },
   xcross: { zh: 'XCross', en: 'XCross' },
   xxcross: { zh: 'XXCross', en: 'XXCross' },
@@ -142,3 +157,7 @@ export const VARIANT_STAGES: Record<ScrambleVariant, string[]> = {
   htr2: ['htr2'],
   fr: ['fr'],
 };
+
+// 聚合方法 'eo' 在阶段下拉里的完整序(跨两个数据变体):EO → EOLine → EO+十字系列。
+// 刻意不塞进 VARIANT_STAGES.eo —— 那个数组是 StageSolver 的 WASM 阶段索引契约(i ↔ 阶段 id)。
+export const EO_UI_STAGES: string[] = [...VARIANT_STAGES.eoline, ...VARIANT_STAGES.eo];
