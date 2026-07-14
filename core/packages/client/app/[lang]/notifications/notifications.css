@@ -51,6 +51,16 @@
 }
 .ntf-login-btn:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 
+.ntf-prefs {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 18px;
+  font-size: 14px;
+}
+.ntf-prefs-hint { margin: 0; color: var(--muted-foreground); font-size: 13px; }
+
 .ntf-list { display: flex; flex-direction: column; }
 
 .ntf-item {
