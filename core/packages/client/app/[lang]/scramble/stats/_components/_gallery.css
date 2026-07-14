@@ -20,23 +20,38 @@
   color: var(--muted-foreground);
 }
 
+/* Column min-width fits the longest alg line (18 mono chars ≈ 110px + padding). */
 .gal-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
   gap: 6px;
 }
 .gal-cell {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 2px;
   border-radius: 6px;
-  padding: 2px;
-  /* Galleries can hold thousands of thumbnails (pyraminx V = 3239 SVGs). Skip
-     layout/paint/style for off-screen cells; the intrinsic size keeps the grid
-     and scrollbar stable. Matches ScramblePreview2D's 42px host (84×63 + pad). */
+  padding: 4px 2px 5px;
+  color: inherit;
+  text-decoration: none;
+  /* Galleries can hold thousands of cells (pyraminx V = 3239). Skip layout/paint/style
+     for off-screen ones; the intrinsic size keeps the grid and scrollbar stable
+     (ScramblePreview2D's 42px host renders 84×63, plus the two alg lines). */
   content-visibility: auto;
-  contain-intrinsic-size: 88px 67px;
+  contain-intrinsic-size: 132px 105px;
 }
 .gal-cell:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
+
+/* Two lines under the thumbnail: the scramble, then one optimal solution for it. */
+.gal-alg {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.gal-scramble { color: var(--muted-foreground); }
+.gal-solution { color: var(--foreground); }

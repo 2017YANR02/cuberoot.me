@@ -22,9 +22,13 @@
 # else 1 + its shown COLOUR (F/R/L/D -> 0..3). Colour is intrinsic, so a position permutation
 # is a real rotated view — used only for the mirror perm here.
 #
+# Each row also carries `sol`: an optimal home-frame V solve for the representative scramble
+# (greedy descent on distD), so its move count is exactly the row's V.
+#
 # Engine reused from scripts/build_pyram_essential.py.
 # Output: core/packages/client/app/[lang]/scramble/stats/_data/firstface_pyram.json
-#   { meta:{generated_at,total_reorient,total_mirror_folded,fixed_frame,mask,cols,note}, rows:[[scramble,V,mgid],...] }
+#   { meta:{generated_at,total_reorient,total_mirror_folded,fixed_frame,mask,cols,note},
+#     rows:[[scramble,V,mgid,sol],...] }
 # Run:  uv run --with numpy python scripts/build_pyram_firstface.py
 from __future__ import annotations
 import json, os
@@ -36,7 +40,7 @@ REPO = os.path.dirname(HERE)
 OUT = os.path.join(REPO, "core", "packages", "client", "app", "[lang]",
                    "scramble", "stats", "_data", "firstface_pyram.json")
 DBG = os.path.join(REPO, ".tmp", "enum", "pyram_firstface_debug.json")
-GENERATED_AT = "2026-07-13"
+GENERATED_AT = "2026-07-14"
 
 # ---------------- abstract no-tips engine (verbatim) ----------------
 CYC = [[0, 1, 3], [1, 2, 5], [0, 4, 2], [3, 5, 4]]
@@ -167,7 +171,7 @@ def build():
         phi[i] = mt[phi[parent[i]], MIR_AXIS[a] * 2 + (0 if p else 1)]
     assert phi[0] == 0 and (phi[phi] == np.arange(n)).all(), "mirror not an involution"
     assert (H[phi] == H).all(), "mirror does not preserve god-distance"
-    return H, distD, blur, phi, parent, pmove
+    return H, distD, blur, phi, parent, pmove, mt
 
 
 def scramble_of(rep, parent, pmove):
@@ -179,8 +183,24 @@ def scramble_of(rep, parent, pmove):
     return ' '.join(reversed(seq))
 
 
+def solve_of(rep, mt, distD):
+    """Optimal home-frame V solve: greedy descent on distD (first-index tie-break)."""
+    seq = []; cur = int(rep)
+    while distD[cur]:
+        d = int(distD[cur])
+        for m in range(8):
+            t = int(mt[cur, m])
+            if int(distD[t]) == d - 1:
+                seq.append(ABS[m // 2] + ("'" if m % 2 else ""))
+                cur = t
+                break
+        else:
+            raise AssertionError("distD descent stuck")
+    return ' '.join(seq)
+
+
 def main():
-    H, distD, blur, phi, parent, pmove = build()
+    H, distD, blur, phi, parent, pmove, mt = build()
     n = blur.shape[0]
 
     # fixed-frame appearance key (24 bytes) + the appearance of its L<->R mirror STATE.
@@ -223,15 +243,18 @@ def main():
         mk = int(inv_mir[rep])
         if mk not in mg_of:
             mg_of[mk] = len(mg_of)
-        rows.append([scramble_of(rep, parent, pmove), int(metric[inv_fixed[rep]]), mg_of[mk]])
+        v = int(metric[inv_fixed[rep]])
+        sol = solve_of(rep, mt, distD)
+        assert len(sol.split()) == v, (sol, v)               # solution length == the shown metric
+        rows.append([scramble_of(rep, parent, pmove), v, mg_of[mk], sol])
     rows.sort(key=lambda r: -r[1])                            # hardest V first (section order)
 
     total_fixed = len(rows); total_mirror = len(mg_of)
     assert total_fixed == n_fixed - 1, (total_fixed, n_fixed)     # all minus solved
     assert total_mirror < total_fixed, (total_mirror, total_fixed)  # mirror must fold
     vdist = {}
-    for _, v, _ in rows:
-        vdist[v] = vdist.get(v, 0) + 1
+    for r in rows:
+        vdist[r[1]] = vdist.get(r[1], 0) + 1
 
     mask = "F:0,1,2,3,5,6,8;D:0,2,3,6;L:0,2,3,4,5,6;R:0,1,2,3,6,8"
     meta = {
@@ -240,10 +263,11 @@ def main():
         "total_mirror_folded": total_mirror,    # UI's "合并/On" count = mirror orbits
         "fixed_frame": n_fixed,
         "mask": mask,
-        "cols": ["scramble", "V", "mgid"],
+        "cols": ["scramble", "V", "mgid", "sol"],
         "note": "pyraminx V first step: centers L/R/B + the 2 edges forming the V, shown in one "
                 "fixed orientation (V gap toward front). V = HTM moves to build the V from this "
-                "appearance; mgid folds the L<->R mirror pair.",
+                "appearance; sol = an optimal V solve for the shown scramble (|sol| == V); "
+                "mgid folds the L<->R mirror pair.",
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
