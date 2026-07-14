@@ -12,8 +12,7 @@
  */
 import { useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties } from 'react';
 import type { AlgPuzzle } from '@cuberoot/shared';
-import { toMoveString } from '@cuberoot/shared/alg-notation';
-import { canonicalSq1Alg } from '@/lib/sq1-svg';
+import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 
 export interface AlgPlayerHandle {
   /** 拿到底层 cubing.js TwistyPlayer 实例,给光标 sync 等高级用法用 */
@@ -33,25 +32,8 @@ export const TWISTY_PUZZLE: Record<AlgPuzzle, string> = {
   'skewb': 'skewb',
 };
 
-/** 用 WCA 面/宽/中层/转体记号的魔方 —— 这几种才能走 `toMoveString`。
- *  megaminx(`R++` `D--`)、sq1(`(1,0)/`)是另一套文法,喂进去只会炸。 */
-const CUBE_NOTATION = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5', 'pyraminx', 'skewb']);
-
-/**
- * 库里的公式文本 → cubing.js 能吃的招式串。
- *
- * 公式是**人写的**:带换握记号 `↑↓·`、分组括号、以及**无空格连写**(`MR` = M+R,`U'D'`)。
- * cubing.js 对连写不报错 —— 它把 `MR` 当成一个叫 `MR` 的 family 收下,直到 apply 才炸
- * (`Invalid move for KPuzzle`),而 AlgPlayer 的 catch 只打一行 warn,用户看到的是**空播放器**。
- * `toMoveString` 按 token 重切再拼,`↑`/`(...)N` 一并处理。
- *
- * SQ1 → canonical `(t,b)/(t,b)/…`。别的魔方(megaminx)记号不同,原样透传。
- */
-export function normalizeAlgForTwisty(puzzle: AlgPuzzle, alg: string): string {
-  if (puzzle === 'sq1') return canonicalSq1Alg(alg);
-  if (!CUBE_NOTATION.has(puzzle)) return alg;
-  try { return toMoveString(alg); } catch { return alg; }
-}
+/** 归一化搬去了 `lib/alg_normalize.ts`(校验器要用同一份)。这里转出去,老 import 不用改。 */
+export { normalizeAlgForTwisty };
 
 /** Map our (puzzle, set) to a cubing.js experimentalStickering value (LL/LS grayed out). */
 export function pickStickering(puzzle: AlgPuzzle, set: string): string | undefined {

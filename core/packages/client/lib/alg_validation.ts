@@ -10,16 +10,35 @@
  *      仅 3x3 启用,其它 puzzle 不出现 F2L kind。
  *  - 'raw': 跳过(自定义 sticker,语义不明)。
  *
- * 对 LL 类 set (face/f2l) 还会检查公式末尾的 leaf 是否是 U-family(算多余 AUF)。
+ * ## 收尾 AUF:**不要求人写**,库里替他补
+ *
+ * LL 公式做完常常差一个顶层转才「整体还原」。那个 U 对魔友没有意义(他自己会转),
+ * 所以:**校验只要求「差一个 AUF 之内能还原」**,库里存补齐的完整式(`setup + alg` 精确还原),
+ * 显示时 `displayAlg()` 再把它剥掉。补哪个 U 由 `auf` 字段告诉调用方 —— 站长定的规矩。
+ *
+ * f2l 类反过来:它的判据压根不看顶层,末尾的 U 永远是废动作,照旧拦。
+ *
+ * ## 记号
+ *
+ * 公式文本里混着换握记号 `↑↓·`、上游标注 `=`/`*`、连写(`U'D'`)—— 一律先过
+ * `normalizeAlg`(和播放器同一份)。**别再把原文直接喂 cubing.js**:那样 611 条好公式
+ * 会被报成语法错。含义见 `docs/alg-upstream-notation.md`。
  */
 import { Alg, Move } from 'cubing/alg';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
-import type { AlgSticker } from '@cuberoot/shared';
+import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
+import { normalizeAlg } from '@/lib/alg_normalize';
+import { displayAlg } from '@/lib/alg_display';
 
 export interface ValidateAlgResult {
   ok: boolean;
   reason?: string;
+  /** face 类:入库前要补在公式末尾的收尾 AUF(`''` = 不用补)。ok=false 时无意义。 */
+  auf?: string;
 }
+
+/** 收尾 AUF 的四种可能。`''` 排最前 —— 已经写全的公式不该被改。 */
+const AUF_CANDIDATES = ['', 'U', 'U2', "U'"] as const;
 
 const PUZZLE_TO_CUBINGJS_ID: Record<string, string> = {
   '2x2': '2x2x2',
@@ -66,49 +85,59 @@ export async function validateAlgCase(
   if (!loader) return { ok: true };
   if (!alg.trim()) return { ok: true };
 
-  // NOTE: cubedb / SpeedCubeDB 的 alg 里有 `=y` / `=y2` / `=R'` / `=U2` 这种
-  // "orientation hint" 标记,= 字符 cubing.js 不识别,直接 strip 即可(后跟的 token 仍执行)。
-  const cleanAlg = alg.replace(/=/g, '');
-  const cleanSetup = setup.replace(/=/g, '');
-
-  let pattern: KPattern;
+  let cleanAlg: string;
+  let cleanSetup: string;
   let leafMoves: Move[];
   let kp: KPuzzle;
   try {
     kp = await loader;
+    cleanAlg = normalizeAlg(puzzle as AlgPuzzle, alg);
+    cleanSetup = setup ? normalizeAlg(puzzle as AlgPuzzle, setup) : '';
     leafMoves = [...new Alg(cleanAlg).experimentalLeafMoves()];
     if (cleanSetup) new Alg(cleanSetup);
-    const combined = (cleanSetup ? cleanSetup + ' ' : '') + cleanAlg;
-    pattern = kp.defaultPattern().applyAlg(combined);
   } catch (e) {
     return { ok: false, reason: `公式语法错误: ${(e as Error).message}` };
   }
 
   const goal = (p: KPattern) => reachesGoal(p, kp, puzzle, sticker.kind);
+  const head = (cleanSetup ? cleanSetup + ' ' : '') + cleanAlg;
+  const run = (tail: string): KPattern | null => {
+    try { return kp.defaultPattern().applyAlg(tail ? `${head} ${tail}` : head); }
+    catch { return null; }
+  };
 
-  if (!goal(pattern)) {
-    return {
-      ok: false,
-      reason: sticker.kind === 'f2l'
-        ? 'F2L 没还原(setup + alg 后 D 层 / 中层 / 底层未完成)'
-        : '执行 setup + alg 后没有还原魔方',
-    };
-  }
-
-  // 收尾 AUF:库里存的是**完整公式**(setup + alg 精确还原),前端用 displayAlg() 显示时才剥掉。
-  //
-  // face 集合不用单独拦末尾 U:上面已经要求整体还原,而 U 转不是整体旋转 —— `setup + A` 和
-  // `setup + A + U` 不可能同时还原。所以只要过了还原判据,末尾那个 U 必然是载荷性的收尾 AUF。
-  //
-  // f2l 集合就不同了:判据压根不看顶层,U 转对它毫无影响 ⟹ 末尾的 U 永远是多余的,拦掉。
+  // f2l:判据不看顶层 ⟹ 末尾的 U 永远是废动作,拦掉(补 AUF 也无从谈起)。
   if (sticker.kind === 'f2l') {
     const trailing = trailingUFamilyMove(leafMoves);
-    if (trailing) {
-      return { ok: false, reason: `公式末尾的 ${trailing.toString()} 是多余的 AUF` };
-    }
+    if (trailing) return { ok: false, reason: `公式末尾的 ${trailing.toString()} 是多余的 AUF` };
+    const p = run('');
+    if (!p || !goal(p)) return { ok: false, reason: 'F2L 没还原(setup + alg 后 D 层 / 中层 / 底层未完成)' };
+    return { ok: true, auf: '' };
   }
 
-  return { ok: true };
+  // face:允许差一个收尾 AUF。四种里至多一种成立 —— U 转不是整体旋转,`setup+A` 和
+  // `setup+A+U` 不可能同时还原,所以「补哪个 U」没有歧义。
+  for (const auf of AUF_CANDIDATES) {
+    const p = run(auf);
+    if (p && goal(p)) return { ok: true, auf };
+  }
+  return { ok: false, reason: '执行 setup + alg 后没有还原魔方(补任何收尾 AUF 都不行)' };
+}
+
+/**
+ * 入库前把公式补成**完整式**:剥掉原有的收尾 AUF,再按校验器算出来的补回去。
+ * 幂等 —— 已经补齐的公式过一遍还是它自己。校验不过就原样退回(由调用方拦下)。
+ */
+export async function completeAlgAuf(
+  setup: string,
+  alg: string,
+  sticker: AlgSticker,
+  puzzle: string,
+): Promise<string> {
+  const bare = displayAlg(alg);
+  const r = await validateAlgCase(setup, bare, sticker, puzzle);
+  if (!r.ok) return alg;
+  return r.auf ? `${bare} ${r.auf}` : bare;
 }
 
 /** 本集合的目标态达成了吗?face = 整体还原;f2l = D 层 + 中层完整。 */

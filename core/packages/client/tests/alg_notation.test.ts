@@ -3,6 +3,7 @@ import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import {
   tokenizeMoves, flattenAlg, expandGroups, cubeOnly, stripGripMarks, deleteAuf,
+  stripUpstreamMarks, invertMoveString, toMoveString,
   stm, sqtm, htm, qtm, etm, gen,
 } from '@cuberoot/shared/alg-notation';
 import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
@@ -50,6 +51,37 @@ describe('expandGroups', () => {
   it('throws on unbalanced parens — flattenAlg is the forgiving one', () => {
     expect(() => expandGroups('(R U')).toThrow();
     expect(flattenAlg('(R U')).toBe('R U');
+  });
+
+  // cubedb 抓来的 zbls 里有 `F' (L' U2 L U')2' F U'` —— 重复两遍**再整段取逆**。
+  // 少认这一条,整条公式会被判成语法错(线上真报过)。
+  it('expands a primed repeat — repeat first, then invert the whole run', () => {
+    expect(expandGroups("(R U)2'")).toBe("U' R' U' R'");
+    expect(expandGroups("F' (L' U2 L U')2' F")).toBe("F' U L' U2' L U L' U2' L F");
+  });
+
+  it("expands a bare primed group `(A)'`", () => {
+    expect(expandGroups("(R U R')'")).toBe("R U' R'");
+  });
+});
+
+describe('invertMoveString', () => {
+  it('reverses and flips every step, amounts written as-is', () => {
+    expect(invertMoveString("R U2 R' D3")).toBe("D3' R U2' R'");
+    expect(invertMoveString("L4' M'")).toBe('M L4');
+  });
+});
+
+describe('stripUpstreamMarks', () => {
+  // `=` = 本条与上一条等价(上游公式库的标注);`*` 同族。都不是招式 —— 引擎面前一律剥掉,
+  // 库里的原文照留。含义见 docs/alg-upstream-notation.md。
+  it('drops the `=` / `*` annotations, keeps every move', () => {
+    expect(stripUpstreamMarks("=y F' r U r'")).toBe("y F' r U r'");
+    expect(stripUpstreamMarks("U2 =*y U' (f' L2' f)")).toBe("U2 y U' (f' L2' f)");
+  });
+
+  it('is in the canonical strip chain, so the tokenizer never sees them', () => {
+    expect(toMoveString("U2 =U' (L' U2 L U) F U' F'")).toBe("U2 U' L' U2 L U F U' F'");
   });
 });
 
