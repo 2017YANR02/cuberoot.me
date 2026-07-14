@@ -13,6 +13,7 @@ import type { AlgSubmission, AlgSticker } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
 import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api';
 import { validateAlgCase } from '@/lib/alg_validation';
+import { displayAlg } from '@/lib/alg_display';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -46,15 +47,21 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
   // 所有权键(与服务端一致):非 WCA 账号也能认出自己提交的公式。
   const myKey = user ? computeOwnerKey(user.uid, user.wcaId) : '';
 
-  /** Run cubing.js validation; if it fails, let the user override via confirm.
-   *  Returns true to proceed with the write, false to abort. */
-  const passesValidation = async (alg: string): Promise<boolean> => {
+  /** 校验 + 补齐收尾 AUF。
+   *
+   *  魔友**不必自己写**结尾那个 U(他自己会转)—— 校验器算得出该补哪个,入库存补齐的完整式,
+   *  显示时 `displayAlg()` 再剥掉。校验没过就让他自己决定要不要照样提交。
+   *
+   *  @returns 入库用的公式;`null` = 用户放弃提交。 */
+  const prepareAlg = async (raw: string): Promise<string | null> => {
+    const bare = displayAlg(raw);
     try {
-      const res = await validateAlgCase(setup, alg, sticker, puzzle);
-      if (res.ok) return true;
-      return confirm(`${tr({ zh: '公式校验未通过', en: 'Validation failed' })}: ${res.reason ?? ''}\n\n${tr({ zh: '仍然提交?', en: 'Submit anyway?' })}`);
+      const res = await validateAlgCase(setup, bare, sticker, puzzle);
+      if (res.ok) return res.auf ? `${bare} ${res.auf}` : bare;
+      const ok = confirm(`${tr({ zh: '公式校验未通过', en: 'Validation failed' })}: ${res.reason ?? ''}\n\n${tr({ zh: '仍然提交?', en: 'Submit anyway?' })}`);
+      return ok ? raw : null;
     } catch {
-      return true; // validation infra error shouldn't block submission
+      return raw; // 校验设施自己炸了,不该拦人提交
     }
   };
 
@@ -69,10 +76,11 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
 
   const handleSubmit = async () => {
     if (!draftAlg.trim()) return;
-    if (!await passesValidation(draftAlg.trim())) return;
+    const alg = await prepareAlg(draftAlg.trim());
+    if (alg === null) return;
     setBusy(true);
     try {
-      const created = await addSubmission(puzzle, setSlug, caseName, draftAlg.trim(), draftNotes.trim() || undefined);
+      const created = await addSubmission(puzzle, setSlug, caseName, alg, draftNotes.trim() || undefined);
       onPatch({ type: 'add', submission: created });
       setDraftAlg('');
       setDraftNotes('');
@@ -86,11 +94,12 @@ export default function CommunityAlgs({ puzzle, setSlug, caseName, sticker, setu
 
   const handleSaveEdit = async (id: number) => {
     if (!editAlg.trim()) return;
-    if (!await passesValidation(editAlg.trim())) return;
+    const alg = await prepareAlg(editAlg.trim());
+    if (alg === null) return;
     setBusy(true);
     try {
       const fields: { alg: string; notes?: string; caseName?: string } = {
-        alg: editAlg.trim(),
+        alg,
         notes: editNotes.trim() || undefined,
       };
       // Only admins can re-target caseName; ignore for everyone else.

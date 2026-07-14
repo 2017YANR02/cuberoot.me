@@ -134,16 +134,44 @@ export function stripComments(s: string): string {
 }
 
 /**
+ * 上游公式库的**标注字符**:`=`(本条与上一条等价)、`*`(见 docs/alg-upstream-notation.md)。
+ * 它们**不是招式**,只是挂在公式上的记号 —— 引擎(cubing.js / tokenizer)一律先剥掉,
+ * 数据库里的原文照留(标注对魔友有用:一眼看出哪几条本质是同一条)。
+ */
+export function stripUpstreamMarks(s: string): string {
+  return s.replace(/[=*]/g, '');
+}
+
+/**
  * FINGERTRICKS §7.3 的规范剥离链:invert / mirror / 反推打乱 / recon 手递前统一走它。
  * 顺序有讲究 —— 先剥注解块(里面可能含 `p` 和记号),再剥换握,最后剥推法糖。
  */
 export function cubeOnly(s: string): string {
-  return stripPushMarks(stripGripMarks(stripFtnBlocks(stripComments(s)))).replace(/\s+/g, ' ').trim();
+  return stripPushMarks(stripGripMarks(stripUpstreamMarks(stripFtnBlocks(stripComments(s)))))
+    .replace(/\s+/g, ' ').trim();
 }
 
-/** 递归展开 `(...)N`(**会嵌套**)。括号不配对 → 抛。 */
+/** 一个 move 写回原文:`R` / `R2` / `R2'` / `3Rw4'`。`amount` 照写不折 mod 4。 */
+function renderMove(m: ParsedMove): string {
+  const n = Math.abs(m.amount);
+  return `${m.layer ?? ''}${m.family}${n === 1 ? '' : n}${m.amount < 0 ? "'" : ''}`;
+}
+
+/** 逆序 + 每步取反。输入必须是纯招式串(已展开、已剥净)。认不出的片段 → 抛。 */
+export function invertMoveString(s: string): string {
+  const { moves, junk } = tokenizeMoves(s);
+  if (junk.length) throw new Error(`认不出来的记号:${junk.join(' ')}`);
+  return moves.reverse().map(m => renderMove({ ...m, amount: -m.amount })).join(' ');
+}
+
+/**
+ * 递归展开 `(...)N`(**会嵌套**)。括号不配对 → 抛。
+ *
+ * 重复指数后面可以带撇:`(A)2'` = 「重复两遍再整段取逆」,`(A)'` = 整段取逆。
+ * cubedb 抓来的 zbls 里就有(`F' (L' U2 L U')2' F U'`),漏了这一条整条公式会被判成语法错。
+ */
 export function expandGroups(s: string): string {
-  type Tok = { t: 'm'; s: string } | { t: '(' } | { t: ')'; rep: number };
+  type Tok = { t: 'm'; s: string } | { t: '(' } | { t: ')'; rep: number; inv: boolean };
   const toks: Tok[] = [];
   let i = 0;
   while (i < s.length) {
@@ -153,7 +181,9 @@ export function expandGroups(s: string): string {
       i++;
       let d = '';
       while (i < s.length && /\d/.test(s[i])) d += s[i++];
-      toks.push({ t: ')', rep: d ? Number(d) : 1 });
+      let inv = false;
+      if (s[i] === "'") { inv = true; i++; }
+      toks.push({ t: ')', rep: d ? Number(d) : 1, inv });
       continue;
     }
     let j = i;
@@ -170,7 +200,8 @@ export function expandGroups(s: string): string {
       if (tk.t === '(') { k++; out.push(...walk(depth + 1)); continue; }
       k++;
       if (depth === 0) throw new Error('多出一个 ")"');
-      return Array.from({ length: tk.rep }, () => out).flat();
+      const body = Array.from({ length: tk.rep }, () => out).flat();
+      return tk.inv ? [invertMoveString(body.join(' '))] : body;
     }
     if (depth !== 0) throw new Error('少一个 ")"');
     return out;
@@ -205,7 +236,7 @@ export function flattenAlg(alg: string): string {
   try {
     return expandGroups(clean);
   } catch {
-    return clean.replace(/[()]\d*/g, ' ').replace(/\s+/g, ' ').trim();
+    return clean.replace(/[()]\d*'?/g, ' ').replace(/\s+/g, ' ').trim();
   }
 }
 
