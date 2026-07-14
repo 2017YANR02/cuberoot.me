@@ -20,6 +20,7 @@
  */
 import { useState, useRef, useCallback, useEffect, type RefObject, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { cleanAlgText } from '@/lib/alg-autospace';
 import './cube_virtual_keyboard.css';
 
 type EditorTarget = HTMLTextAreaElement | HTMLDivElement;
@@ -77,15 +78,6 @@ const SUGGEST_ALGS = [
   { label: "F' L F L'", alg: "F' L F L' " },
 ];
 
-// NOTE: 自动替换非标准标点
-const PUNCT_MAP: Record<string, string> = {
-  '‘': "'", '’': "'",
-  '“': "'", '”': "'",
-  '"': "'",
-  '（': '(', '）': ')',
-  '，': ',', '。': '.',
-};
-const PUNCT_RE = /[‘’“”"（），。]/g;
 
 /** 词法解析——把魔方公式字符串切成 token 数组 */
 function tokenizeAlg(str: string): string[] {
@@ -321,20 +313,20 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
   // NOTE: QWERTY 键的大小写受 Shift 控制
   const isUpper = shiftState !== 'off';
 
-  /** 标准化标点 + 通知父组件(只在 textarea 模式下做标点替换) */
+  /** 清洗输入 + 通知父组件(只在 textarea 模式下洗)。
+   *  规则和键盘输入同一份 —— 撇号只留直撇号、全角折半角、汉字删掉、`//` 注释不动。 */
   const normAndNotify = useCallback(() => {
     const el = target.current;
     if (!el) return;
     if (!isCE(el)) {
       const val = el.value;
-      let newVal = val.replace(PUNCT_RE, ch => PUNCT_MAP[ch] || ch);
-      newVal = newVal.replace(/''+/g, "'");
+      const c = cleanAlgText(val, el.selectionStart ?? 0);
+      // `R''` 是敲重了,不是四分之二圈
+      const newVal = c.value.replace(/''+/g, "'");
       if (newVal !== val) {
-        const s = el.selectionStart;
-        const e = el.selectionEnd;
+        const cursor = Math.min(c.cursor, newVal.length);
         el.value = newVal;
-        el.selectionStart = s;
-        el.selectionEnd = e;
+        el.setSelectionRange(cursor, cursor);
       }
     }
     onInput?.();

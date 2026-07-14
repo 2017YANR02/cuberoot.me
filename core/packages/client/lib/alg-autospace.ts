@@ -6,10 +6,7 @@
 export const MOVE_START_RE = /[RLUDFBMESxyzrludfbmes]/;
 export const MOVE_END_RE = /[RLUDFBMESwxyzrludfbmes'2]/;
 
-export const PUNCT_MAP: Record<string, string> = {
-  '‘': "'", '’': "'",
-  '“': "'", '”': "'",
-  '"': "'",
+const PUNCT_MAP: Record<string, string> = {
   '（': '(', '）': ')',
   '，': ',', '。': '.',
   '：': ':', '；': ';',
@@ -17,39 +14,6 @@ export const PUNCT_MAP: Record<string, string> = {
   '／': '/', '［': '[',
   '］': ']',
 };
-export const PUNCT_RE = /[‘’“”"（），。：；？！／［］]/g;
-
-export function normalizePunctuationTA(el: HTMLTextAreaElement): void {
-  const v = el.value;
-  if (!PUNCT_RE.test(v)) return;
-  const s = el.selectionStart;
-  const e = el.selectionEnd;
-  el.value = v.replace(PUNCT_RE, ch => PUNCT_MAP[ch] ?? ch);
-  el.setSelectionRange(s, e);
-}
-
-export function normalizePunctuationCE(root: HTMLElement): void {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  let n: Node | null;
-  while ((n = walker.nextNode())) {
-    const t = n as Text;
-    if (PUNCT_RE.test(t.data)) {
-      t.data = t.data.replace(PUNCT_RE, ch => PUNCT_MAP[ch] ?? ch);
-    }
-  }
-}
-
-// 零宽字符(U+200B/200C/200D、U+FEFF):不可见,多半是从别处粘贴带进来的垃圾,没有保留价值。
-// 跟可见的 regrip 标注 ↑↓·⅓⅔ 不同 —— 这些一输入就直接删掉,不进数据(也就不必靠校验放行)。
-const ZERO_WIDTH_RE = /[​‌‍﻿]/g;
-
-/** 删掉零宽字符,并按删掉的(光标前的)个数回退光标。无零宽时原样返回。 */
-export function stripZeroWidth(value: string, cursor: number): { value: string; cursor: number } {
-  const cleaned = value.replace(ZERO_WIDTH_RE, '');
-  if (cleaned === value) return { value, cursor };
-  const cleanedBefore = value.slice(0, cursor).replace(ZERO_WIDTH_RE, '');
-  return { value: cleaned, cursor: cleanedBefore.length };
-}
 
 /**
  * ## 中文输入法开着也要能打公式
@@ -57,13 +21,16 @@ export function stripZeroWidth(value: string, cursor: number): { value: string; 
  * 网页**改不了操作系统的输入法** —— `ime-mode` 只有 IE / Firefox 认,Chrome 从来不支持,
  * 也没有任何 API 能替用户按下 Shift。所以不去「强制切英文」,改成**让它打不进来**:
  *
- * - 全角 → 半角:`Ｒ` → `R`、`’` → `'`、`，` → `,`、全角空格 → 空格。中文输入法下
- *   顺手打出的全角字符是最常见的脏数据,而且肉眼几乎看不出来。
+ * - **撇号只有一种:直撇号 `'`(U+0027)。** 逆时针记号全靠它,而长得像撇号的字符有一大把:
+ *   弯撇 `’`、反引号 `` ` ``、锐音符 `´`、prime `′`、类撇字母 `ʼ`、全角 `＇`…… 中文输入法
+ *   随手就能打出来,肉眼几乎分不出,进了库就是一条播不动的公式。一律折成 `'`。
+ * - 全角 → 半角:`Ｒ` → `R`、`，` → `,`、全角空格 → 空格。
  * - 中日韩字符(汉字 / 假名 / 谚文 / 中文标点)**直接删**。公式里不可能出现它们,
  *   删掉比留着让校验器事后报错强。
  *
  * 只洗**招式区**:
- * - `//` 到行尾是注释,原样保留 —— 注释就是拿来写人话的(`R U R' // 插右前槽`)。
+ * - `//` 到行尾是注释,原样保留 —— 注释就是拿来写人话的(`R U R' // 插右前槽`);
+ *   注释里的弯撇号是人话的一部分,也不动。
  * - `↑↓·⅓⅔` 保留 —— 那是换握标注,是公式的一部分(见 docs/alg-upstream-notation.md)。
  */
 const CJK_RE = /[、-〿぀-ヿㇰ-ㇿ㈀-鿿가-힯豈-﫿]/;
@@ -71,14 +38,22 @@ const CJK_RE = /[、-〿぀-ヿㇰ-ㇿ㈀-鿿가-힯豈-﫿]/;
 // 不带 /g:带 /g 的正则 `.test()` 会记 lastIndex,逐字符调用时结果隔一次翻一次。
 const ZERO_WIDTH_1_RE = /[​‌‍﻿]/;
 
+/**
+ * 所有「长得像撇号」的字符 —— 一律折成直撇号 `'`。
+ * 反引号 / 双引号也算:公式里它们不可能是别的意思,而打错的人多半是想打撇号。
+ */
+const APOSTROPHE_RE = /[`´ʹʻʼʽˈˊˋ‘’‚‛“”„′″‵ꞌ"]/;
+
 function cleanChar(ch: string): string {
   const code = ch.codePointAt(0)!;
-  if (code === 0x3000) return ' ';                                   // 全角空格
-  if (code >= 0xFF01 && code <= 0xFF5E) return String.fromCharCode(code - 0xFEE0); // 全角 ASCII
-  if (PUNCT_MAP[ch]) return PUNCT_MAP[ch];                           // 弯引号 / 中文标点
-  if (ZERO_WIDTH_1_RE.test(ch)) return '';
-  if (CJK_RE.test(ch)) return '';
-  return ch;
+  if (code === 0x3000) return ' ';                                    // 全角空格
+  // 全角 ASCII 先折半角(＇→ ' 、｀→ ` ),折完再往下判 —— 否则全角反引号会漏网
+  const c = code >= 0xFF01 && code <= 0xFF5E ? String.fromCharCode(code - 0xFEE0) : ch;
+  if (APOSTROPHE_RE.test(c)) return "'";                              // 撇号只有一种
+  if (PUNCT_MAP[c]) return PUNCT_MAP[c];                              // 中文标点
+  if (ZERO_WIDTH_1_RE.test(c)) return '';
+  if (CJK_RE.test(c)) return '';
+  return c;
 }
 
 /**
