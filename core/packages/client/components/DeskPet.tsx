@@ -15,6 +15,8 @@ import i18n from '@/i18n/i18n-client';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { useAlgSubmissionUnread, refreshAlgSubmissionUnread } from '@/lib/alg-submission-unread';
+import { useNotificationsUnread, refreshNotificationsUnread } from '@/lib/notifications-unread';
+import AppLink from '@/components/AppLink';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -245,6 +247,14 @@ const CSS = `
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-badge{left:60%;top:54%;}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-badge{left:66%;top:22%;}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge{left:58%;top:37%;}
+/* Site-notification badge (recon replies / comments / alternatives) — clickable
+   link to /notifications, info-colored so it reads apart from the red fb badge and
+   the accent admin one. Sits above both so all three can show at once. */
+.clawd-deskpet-badge-ntf{pointer-events:auto;cursor:pointer;text-decoration:none;
+  background:var(--signal-info,#3b82f6);}
+.clawd-deskpet[data-char=clawd] .clawd-deskpet-badge-ntf{left:46%;top:38%;}
+.clawd-deskpet[data-char=calico] .clawd-deskpet-badge-ntf{left:44%;top:8%;}
+.clawd-deskpet[data-char=cloudling] .clawd-deskpet-badge-ntf{left:44%;top:22%;}
 /* Admin new-submission badge — clickable, accent-colored (distinct from the red
    fb badge). Sits on the pet's body, mirrored opposite the fb badge so both can
    show at once without overlapping (was pinned to the container corner, which is
@@ -287,6 +297,7 @@ export default function DeskPet() {
   const fbUnread = useFeedbackUnread();
   const isAdmin = !!user && ADMIN_WCA_IDS.includes(user.wcaId);
   const algUnread = useAlgSubmissionUnread();
+  const ntfUnread = useNotificationsUnread();
   const [submPanelOpen, setSubmPanelOpen] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -351,23 +362,24 @@ export default function DeskPet() {
   // 反馈未读:登录用户挂载时 + 标签可见时 + 每 90s 拉一次,数字挂到桌宠身上(每页可见)。
   // 未登录 → refreshFeedbackUnread 内部归零。
   useEffect(() => {
-    refreshFeedbackUnread();
-    refreshAlgSubmissionUnread();
+    const all = () => { refreshFeedbackUnread(); refreshAlgSubmissionUnread(); refreshNotificationsUnread(); };
+    all();
     if (!user) return;
-    const onVis = () => { if (document.visibilityState === 'visible') { refreshFeedbackUnread(); refreshAlgSubmissionUnread(); } };
+    const onVis = () => { if (document.visibilityState === 'visible') all(); };
     document.addEventListener('visibilitychange', onVis);
-    const iv = setInterval(() => { refreshFeedbackUnread(); refreshAlgSubmissionUnread(); }, 90000);
+    const iv = setInterval(all, 90000);
     return () => { document.removeEventListener('visibilitychange', onVis); clearInterval(iv); };
   }, [user]);
 
   // 未读数上升(来了新回复)→ 桌宠做一次通知姿势吸引注意(引擎监听 clawd:state)。
   const prevUnreadRef = useRef(0);
   useEffect(() => {
-    if (fbUnread > prevUnreadRef.current) {
+    const total = fbUnread + ntfUnread;
+    if (total > prevUnreadRef.current) {
       try { window.dispatchEvent(new CustomEvent('clawd:state', { detail: 'notification' })); } catch {}
     }
-    prevUnreadRef.current = fbUnread;
-  }, [fbUnread]);
+    prevUnreadRef.current = total;
+  }, [fbUnread, ntfUnread]);
 
   // Open the PLL performer from anywhere:
   //   window.dispatchEvent(new CustomEvent('clawd:perform', { detail: { caseName: 'Aa' } }))
@@ -947,6 +959,19 @@ export default function DeskPet() {
         <img ref={imgRef} alt="" />
         {fbUnread > 0 && (
           <span className="clawd-deskpet-badge">{fbUnread > 9 ? '9+' : fbUnread}</span>
+        )}
+        {ntfUnread > 0 && (
+          <AppLink
+            href="/notifications"
+            className="clawd-deskpet-badge clawd-deskpet-badge-ntf"
+            title={t('新消息', 'New notifications')}
+            aria-label={t('新消息', 'New notifications')}
+            prefetch={false}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {ntfUnread > 9 ? '9+' : ntfUnread}
+          </AppLink>
         )}
         {isAdmin && algUnread > 0 && (
           <button

@@ -159,6 +159,11 @@ const TABLES: Table[] = [
   { name: 'forum_posts', domain: 'community', origin: '0066', purpose: { zh: '论坛帖子(markdown 正文,软删保楼层号)', en: 'Forum posts (markdown body, soft-delete keeps post numbers)' } },
   { name: 'forum_reactions', domain: 'community', origin: '0066', purpose: { zh: '帖子反应(一人一帖一条,可换类型)', en: 'Post reactions (one per user per post)' } },
   { name: 'forum_reports', domain: 'community', origin: '0066', purpose: { zh: '帖子举报(一人一帖一条,resolved_at 空 = 待处理)', en: 'Post reports (one per user per post, null resolved_at = open)' } },
+  { name: 'notifications', domain: 'community', origin: '0070', purpose: { zh: '站内通知(recon 另解 / 评论 / 回复 → 管理员 + 被回复者;read_at 空 = 未读)', en: 'Site notifications (recon alternatives / comments / replies → admins + the person replied to; null read_at = unread)' }, cols: [
+    { name: 'id (PK)' }, { name: 'user_key', note: { zh: '收件人 ownerKey,同 comments.author_id 语义', en: 'recipient ownerKey, same semantics as comments.author_id' } },
+    { name: 'kind', note: { zh: 'recon_alt / recon_comment / recon_reply', en: 'recon_alt / recon_comment / recon_reply' } },
+    { name: 'actor_key, actor_name' }, { name: 'title, excerpt, link' }, { name: 'created_at, read_at' },
+  ] },
   { name: 'nav_sites', domain: 'community', origin: '0001', evolved: [2], purpose: { zh: '/site 网址导航(group_id 避 SQL 关键字)', en: 'The /site link directory' } },
   { name: 'ops_commands', domain: 'community', origin: '0010', evolved: [11], purpose: { zh: '/code/ops runbook 命令 + 提示词模板', en: 'Commands + prompts behind the /code/ops runbook' } },
 
@@ -239,6 +244,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 67, slug: 'forum_import_articles', desc: { zh: '已发布长文并入论坛「教程与指南」版(每篇 → 一主题 + 首帖),/article 前端退役', en: 'Import published articles into the forum tutorials board (one thread + first post each); retire the /article frontend' } },
   { n: 68, slug: 'account_password', desc: { zh: 'app_users 加可选密码(password_hash / password_updated_at,scrypt),支撑邮箱 + 密码登录', en: 'app_users gains an optional password (password_hash / password_updated_at, scrypt) for email + password sign-in' } },
   { n: 69, slug: 'alg_cases_meta', desc: { zh: 'alg_cases 加 meta JSONB:OLLCP 名 / 数字号 / 六套打乱 / 四套最优解 / 镜像·逆·镜像逆编号 / 对称性 / 生成元,供 1LLL 公式库迁移用', en: 'alg_cases gains meta JSONB: OLLCP name, numeric id, six scrambles, four optimal solutions, mirror/inverse/inverse-mirror ids, symmetry, generators — for the 1LLL migration' } },
+  { n: 70, slug: 'notifications', desc: { zh: '站内通知:recon 另解 / 评论 / 回复 → 管理员 + 被回复者(未读红点 + Resend 邮件)', en: 'Site notifications: recon alternatives / comments / replies → admins + the person replied to (unread badge + Resend email)' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
