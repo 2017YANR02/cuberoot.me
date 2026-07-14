@@ -166,3 +166,42 @@ describe('cleanAlgText — 中文输入法漏进来的字符', () => {
     expect(clean('R​U')).toBe('RU');
   });
 });
+
+describe('cleanAlgText — `//` 之后是注释,中文照写', () => {
+  // /recon/submit 的「解法」框:注释就是拿来写人话的。提交时的校验器
+  // (findIllegalNotationChars)本来就只管 `//` 之前,输入清洗必须跟它一致。
+  const clean = (s: string) => cleanAlgText(s, s.length).value;
+
+  it('注释里的中文一个字都不动', () => {
+    expect(clean("R U R' // 插右前槽")).toBe("R U R' // 插右前槽");
+  });
+
+  it('注释里的全角标点也不动(那是人话,不是记号)', () => {
+    expect(clean('R U // 先做十字,再插槽。')).toBe('R U // 先做十字,再插槽。');
+  });
+
+  it('招式区照洗,注释区照留 —— 同一行里两套规矩', () => {
+    // 汉字删掉后两边的空格都留着(只删字符,不合并空白 —— toMoveString 吃得下多余空格)
+    expect(clean('Ｒ U’ 右 R // 右手 R’')).toBe("R U'  R // 右手 R’");
+  });
+
+  it('换行结束注释,下一行回到招式区', () => {
+    expect(clean("R // 注释\nＵ 汉字 R'")).toBe("R // 注释\nU  R'");
+  });
+
+  it('多行解法:每行各自判注释', () => {
+    const s = "y' // 转体\nR U R' // 第一组\nU2 汉字 R";
+    expect(clean(s)).toBe("y' // 转体\nR U R' // 第一组\nU2  R");
+  });
+
+  it('单个 / 不是注释,照洗', () => {
+    expect(clean('R / 汉字')).toBe('R / ');
+  });
+
+  it('光标在注释里也算得对', () => {
+    const s = "Ｒ U // 注释";
+    const r = cleanAlgText(s, s.length);
+    expect(r.value).toBe('R U // 注释');
+    expect(r.cursor).toBe(r.value.length);
+  });
+});

@@ -62,7 +62,9 @@ export function stripZeroWidth(value: string, cursor: number): { value: string; 
  * - 中日韩字符(汉字 / 假名 / 谚文 / 中文标点)**直接删**。公式里不可能出现它们,
  *   删掉比留着让校验器事后报错强。
  *
- * 保留 `↑↓·⅓⅔` —— 那是换握标注,是公式的一部分(见 docs/alg-upstream-notation.md)。
+ * 只洗**招式区**:
+ * - `//` 到行尾是注释,原样保留 —— 注释就是拿来写人话的(`R U R' // 插右前槽`)。
+ * - `↑↓·⅓⅔` 保留 —— 那是换握标注,是公式的一部分(见 docs/alg-upstream-notation.md)。
  */
 const CJK_RE = /[、-〿぀-ヿㇰ-ㇿ㈀-鿿가-힯豈-﫿]/;
 
@@ -79,29 +81,46 @@ function cleanChar(ch: string): string {
   return ch;
 }
 
-function cleanStr(s: string): string {
+/**
+ * 洗一段文本。**`//` 到行尾是注释,一个字都不动** —— 注释就是拿来写人话的
+ * (`R U R' // 插右前槽`),/recon 的解法框全靠它。招式区才管。
+ *
+ * `inCmt` 进 / 出:contenteditable 那边一行会被拆成好几个文本节点,注释状态得跨节点带着走,
+ * 否则后半个节点会被当成招式区洗掉中文。
+ */
+function cleanStr(s: string, inCmt = false): { out: string; inCmt: boolean } {
   let out = '';
-  for (const ch of s) out += cleanChar(ch);
-  return out;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '\n') { inCmt = false; out += ch; continue; }
+    if (inCmt) { out += ch; continue; }
+    if (ch === '/' && s[i + 1] === '/') { inCmt = true; out += '//'; i++; continue; }
+    out += cleanChar(ch);
+  }
+  return { out, inCmt };
 }
 
 /**
- * 公式输入清洗(纯函数,给**受控**输入框用):全角→半角、零宽 / 中日韩字符删掉。
+ * 公式输入清洗(纯函数,给**受控**输入框用):全角→半角、零宽 / 中日韩字符删掉,
+ * `//` 后的注释原样保留。
  * 光标按「清洗后的前缀长度」重算 —— 否则在中间删掉一个字,光标会跳到行尾。
  */
 export function cleanAlgText(value: string, cursor: number): { value: string; cursor: number } {
-  const cleaned = cleanStr(value);
+  const cleaned = cleanStr(value).out;
   if (cleaned === value) return { value, cursor };
-  return { value: cleaned, cursor: cleanStr(value.slice(0, cursor)).length };
+  return { value: cleaned, cursor: cleanStr(value.slice(0, cursor)).out.length };
 }
 
-/** contenteditable 版:逐个文本节点洗。 */
+/** contenteditable 版:逐个文本节点洗,注释状态跨节点接力。 */
 export function cleanAlgTextCE(root: HTMLElement): void {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   let n: Node | null;
+  let inCmt = false;
   while ((n = walker.nextNode())) {
     const t = n as Text;
-    const cleaned = cleanStr(t.data);
+    const r = cleanStr(t.data, inCmt);
+    inCmt = r.inCmt;
+    const cleaned = r.out;
     if (cleaned !== t.data) t.data = cleaned;
   }
 }
