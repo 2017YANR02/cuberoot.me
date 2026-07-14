@@ -40,16 +40,26 @@ interface Props {
   showBarLabels?: boolean;
   // NOTE: 稀疏整数轴(中间有空档 bin)。开启后 x 标签只标有数据的 bin(抽稀)、命中区填满空档。
   gapAware?: boolean;
+  // NOTE: 图内均值 / 中位数标注(竖虚线 + 底部文字),替代外部单独的「摘要统计」卡片。
+  meanValue?: number;
+  meanLabel?: string;
+  medianValue?: number;
+  medianLabel?: string;
+  // NOTE: 图内样本总数(图例区,PDF 钮下),替代外部单独的「N 条样本」文字行。总数由 series 自身
+  // 求和得出(与柱子同源,永不失配),多 series 时语义不明 → 只在单 series 时出。
+  showTotal?: boolean;
 }
 
 const W = 760, H = 400;
-// NOTE: 图例放在图表左上空白区（0..low-count 的柱子永远很矮），不再占右边 pad
-const PAD = { l: 56, r: 20, t: 40, b: 44 };
-const chartW = W - PAD.l - PAD.r;
-const chartH = H - PAD.t - PAD.b;
 
-export default function DiscreteHistogram({ series, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, gapAware }: Props) {
+export default function DiscreteHistogram({ series, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, gapAware, meanValue, meanLabel, medianValue, medianLabel, showTotal = true }: Props) {
   const clickableSet = useMemo(() => new Set(clickableBins ?? []), [clickableBins]);
+  // NOTE: 图例放在图表左上空白区（0..low-count 的柱子永远很矮），不再占右边 pad
+  // 均值/中位数标注需要底部多留一行,两者都传时再加宽 b。
+  const hasAnnRow2 = meanValue != null && medianValue != null;
+  const PAD = { l: 56, r: 20, t: 40, b: meanValue != null || medianValue != null ? (hasAnnRow2 ? 58 : 44) : 44 };
+  const chartW = W - PAD.l - PAD.r;
+  const chartH = H - PAD.t - PAD.b;
   // NOTE: svg 内 <linearGradient> id 必须全局唯一，用 React 的 useId 前缀
   const gradPrefix = useId().replace(/:/g, '_');
 
@@ -244,6 +254,55 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
             })}
           </g>
         ))}
+        {/* 均值标注:竖虚线 + 底部文字(避开顶部柱状标签),替代外部单独卡片 */}
+        {meanValue != null && meanValue >= xMin && meanValue <= xMax && (
+          <g style={{ pointerEvents: 'none' }}>
+            <line
+              x1={PAD.l + (meanValue - xMin + 0.5) * slotW}
+              x2={PAD.l + (meanValue - xMin + 0.5) * slotW}
+              y1={PAD.t}
+              y2={PAD.t + chartH}
+              style={{ stroke: 'var(--accent)' }}
+              strokeWidth={1.5}
+              strokeDasharray="4,3"
+            />
+            <text
+              x={PAD.l + (meanValue - xMin + 0.5) * slotW}
+              y={PAD.t + chartH + (hasAnnRow2 ? 48 : 34)}
+              textAnchor="middle"
+              fontSize="10.5"
+              fontWeight={600}
+              style={{ fill: 'var(--accent)' }}
+            >
+              {meanLabel ?? `${tr({ zh: '平均', en: 'mean' })} ${meanValue.toFixed(2)}`}
+            </text>
+          </g>
+        )}
+        {/* 中位数标注:与均值同款,放上面一行(离图更近);离散整数轴上中位数必是某个已标数字的 bin,
+            横轴刻度已经标过这个数,默认文案不再重复(除非调用方传 medianLabel 自定义,如组平均口径换算)。 */}
+        {medianValue != null && medianValue >= xMin && medianValue <= xMax && (
+          <g style={{ pointerEvents: 'none' }}>
+            <line
+              x1={PAD.l + (medianValue - xMin + 0.5) * slotW}
+              x2={PAD.l + (medianValue - xMin + 0.5) * slotW}
+              y1={PAD.t}
+              y2={PAD.t + chartH}
+              style={{ stroke: 'var(--signal-info)' }}
+              strokeWidth={1.5}
+              strokeDasharray="2,2"
+            />
+            <text
+              x={PAD.l + (medianValue - xMin + 0.5) * slotW}
+              y={PAD.t + chartH + 34}
+              textAnchor="middle"
+              fontSize="10.5"
+              fontWeight={600}
+              style={{ fill: 'var(--signal-info)' }}
+            >
+              {medianLabel ?? tr({ zh: '中位数', en: 'median' })}
+            </text>
+          </g>
+        )}
         {/* 整列透明 hit-rect：边到边铺满整格(slotW，无列间间隙),覆盖柱子及下方 x 轴标签,
             点该列任意位置都能选中该 bin —— 跟「点 0~7 数字所在列」一致,不留死区。 */}
         {onBarClick && clickableBins && series.length === 1 && Array.from({ length: nBins }, (_, i) => xMin + i).map((v, bi) => {
@@ -333,6 +392,11 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
               {chartMode === 'pdf' ? 'PDF' : 'CDF'}
             </button>
           </div>
+        )}
+        {showTotal && series.length === 1 && (
+          <span className="scramble-hist-total">
+            {tr({ zh: `共 ${(totals[0] ?? 0).toLocaleString()}`, en: `${(totals[0] ?? 0).toLocaleString()} in total` })}
+          </span>
         )}
       </div>
     </div>
