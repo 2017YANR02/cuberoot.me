@@ -15,12 +15,17 @@ export function emailConfigured(): boolean {
   return Boolean(RESEND_API_KEY);
 }
 
-/** 发送一封邮件。失败抛异常,由调用方决定给用户的响应。 */
+/**
+ * 发送一封邮件。失败抛异常,由调用方决定给用户的响应。
+ * headers:透传给 Resend 的自定义邮件头(通知类邮件用它带 List-Unsubscribe,
+ * Gmail/Outlook 会渲染成标题栏旁的「取消订阅」按钮)。
+ */
 export async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
   text: string;
+  headers?: Record<string, string>;
 }): Promise<void> {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -34,6 +39,7 @@ export async function sendEmail(opts: {
       subject: opts.subject,
       html: opts.html,
       text: opts.text,
+      ...(opts.headers ? { headers: opts.headers } : {}),
     }),
     signal: AbortSignal.timeout(10000),
   });

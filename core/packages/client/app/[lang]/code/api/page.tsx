@@ -263,6 +263,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'notification', m: 'GET', p: '/v1/notifications', g: 'login', zh: '我的通知(recon 另解 / 评论 / 回复)', en: 'My notifications (recon alternatives / comments / replies)' },
   { d: 'notification', m: 'GET', p: '/v1/notifications/unread', g: 'login', zh: '未读数(桌宠红点)', en: 'Unread count (desk-pet badge)' },
   { d: 'notification', m: 'POST', p: '/v1/notifications/read', g: 'login', zh: '标记已读(不传 ids = 全部)', en: 'Mark read (no ids = all)' },
+  { d: 'notification', m: 'GET', p: '/v1/notifications/prefs', g: 'login', zh: '邮件通知开关', en: 'Email-notification preference' },
+  { d: 'notification', m: 'PUT', p: '/v1/notifications/prefs', g: 'login', zh: '开 / 关邮件通知', en: 'Toggle email notifications' },
+  { d: 'notification', m: 'GET', p: '/v1/notifications/unsubscribe', g: 'public', zh: '邮件退订(签名令牌,免登录,回确认页)', en: 'Unsubscribe via signed token (no login, HTML page)' },
+  { d: 'notification', m: 'POST', p: '/v1/notifications/unsubscribe', g: 'public', zh: '一键退订(RFC 8058,邮件客户端调)', en: 'One-click unsubscribe (RFC 8058)' },
 
   // ---- forum ----
   { d: 'forum', m: 'GET', p: '/v1/forum/index', g: 'public', zh: '论坛首页:分类 → 子版 + 全站统计', en: 'Forum index: categories, boards, site stats' },
