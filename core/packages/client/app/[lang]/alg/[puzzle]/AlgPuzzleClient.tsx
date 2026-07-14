@@ -105,7 +105,6 @@ export default function AlgPuzzleClient() {
           <EventIcon event={puzzle} className="alg-cat-title-icon" />
           <span>{eventDisplayName(puzzle, isZh)} {tr({ zh: '公式', en: 'Algorithms' })}</span>
         </h1>
-        <span className="alg-cat-count">{sets.length} {tr({ zh: '套', en: 'sets' })}</span>
       </div>
 
       <div className="alg-bento">
