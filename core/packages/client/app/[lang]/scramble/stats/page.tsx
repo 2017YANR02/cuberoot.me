@@ -612,7 +612,6 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     return [{ name: modeLabel, fillColors: fillColorsForSubset(selectedColors), counts: avgActiveCounts }];
   }, [avgActiveCounts, modeLabel, selectedColors]);
   const avgStats = useMemo(() => computeStats(avgActiveCounts), [avgActiveCounts]);
-  const avgGroups = avgOn && avgData ? (avgData.sets[scrambleSet]?.sample_count ?? 0) : 0;
   const avgPreviewBins = useMemo<number[]>(
     () => Object.keys(avgActiveCounts).map(Number).sort((a, b) => a - b),
     [avgActiveCounts],
@@ -667,11 +666,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
   const lenHasQtm = tab === 'length' && !!lenCur?.counts_qtm;
   const lenAlt = lengthAltMeta(event);
-  // 该项目打乱总数(两口径同总数);顶栏右侧展示。
-  const lenTotal = useMemo(
-    () => (lenCur ? Object.values(lenCur.counts).reduce((a, b) => a + b, 0) : 0),
-    [lenCur],
-  );
+  // 打乱总数不在顶栏展示 —— DiscreteHistogram 在图内自报(共 N)。
 
   // lang 走索引(避开 i18n.language 三元 ratchet);isZh 已是 startsWith('zh')。
   const lang: 'zh' | 'en' = (['en', 'zh'] as const)[Number(isZh)];
@@ -843,20 +838,15 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   );
 
   const tabsBar = (
-    <div className="scramble-stats-tabs" role="tablist">
-      <button
-        type="button" role="tab" aria-selected={tab === 'difficulty'}
-        className={`scramble-stats-tab${tab === 'difficulty' ? ' active' : ''}`}
-        onClick={() => setTab('difficulty')}
-      >{tr({ zh: '难度', en: 'Difficulty'
-    })}</button>
-      <button
-        type="button" role="tab" aria-selected={tab === 'length'}
-        className={`scramble-stats-tab${tab === 'length' ? ' active' : ''}`}
-        onClick={() => setTab('length')}
-      >{tr({ zh: '打乱长度', en: 'Scramble length'
-    })}</button>
-    </div>
+    <VariantSelect
+      className="scramble-stats-select"
+      value={tab}
+      options={['difficulty', 'length']}
+      onChange={(v) => setTab(v as 'difficulty' | 'length')}
+      isZh={isZh}
+      label={(v) => tr(v === 'difficulty' ? { zh: '难度', en: 'Difficulty' } : { zh: '打乱长度', en: 'Scramble length' })}
+      ariaLabel={tr({ zh: '难度或打乱长度', en: 'Difficulty or scramble length' })}
+    />
   );
 
   // Dataset toggle (difficulty tab only): the two top-level sets (WCA / xcross)
@@ -865,17 +855,17 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // (DIFFICULTY_EVENTS)出现 —— 4x4/5x5/魔表/各盲 等非三阶项目难度 tab 只是占位,不给这个切换。
   const topSets = data ? Object.entries(data.sets).filter(([, s]) => !s.event) : [];
   const datasetToggle = (tab === 'difficulty' && DIFFICULTY_EVENTS.has(event) && topSets.length === 2) ? (() => {
-    const [k0, s0] = topSets[0];
-    const [k1, s1] = topSets[1];
     const lab = (s: SetData) => (isZh && s.label_zh) ? s.label_zh : s.label;
+    const labelByKey = Object.fromEntries(topSets.map(([k, s]) => [k, lab(s)]));
     return (
-      <PillToggle
-        value={dataset === k0}
-        onChange={(v) => setDataset(v ? k0 : k1)}
-        onLabel={lab(s0)}
-        offLabel={lab(s1)}
-        ariaLabel={tr({ zh: '数据集', en: 'Dataset'
-        })}
+      <VariantSelect
+        className="scramble-stats-select"
+        value={dataset}
+        options={topSets.map(([k]) => k)}
+        onChange={setDataset}
+        isZh={isZh}
+        label={(v) => labelByKey[v] ?? v}
+        ariaLabel={tr({ zh: '数据集', en: 'Dataset' })}
       />
     );
   })() : null;
@@ -947,8 +937,22 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                                   : event === 'sia123' ? 'sia123'
                                   : null;
 
-  // Shared header: WCA-event selector sits ABOVE the tab bar so it drives both
-  // the difficulty tab and the length tab.
+  // 2×2 / 金字塔:数据源切换(WCA 真题采样 / 所有本质状态)。与「难度/打乱长度」tab 同一行
+  // (原来单独占一行,和 tabsBar 语义/视觉上都是同一组控件)。
+  const hasEssential = tab === 'difficulty' && (event === '222' || event === 'pyram');
+  const srcToggle = hasEssential ? (
+    <VariantSelect
+      className="scramble-stats-select"
+      value={essSrc}
+      options={['wca', 'all']}
+      onChange={(v) => setEssSrc(v as 'wca' | 'all')}
+      isZh={isZh}
+      label={(v) => tr(v === 'wca' ? { zh: 'WCA 真题', en: 'WCA' } : { zh: '所有本质状态', en: 'All states' })}
+      ariaLabel={tr({ zh: '数据源:WCA 真题或所有本质状态', en: 'Data source: WCA scrambles or all essential states' })}
+    />
+  ) : null;
+
+  // Shared header:项目选择器与「难度 / 打乱长度」标签同一行,驱动两个 tab。
   //
   // 嵌入求解页时(embedded):求解区上方的 SolveTabs 已是页面唯一的项目选择器并驱动 ?event,
   // 这里就不再渲染本组件自带的项目选择器 + SolveTabs(否则一页两个项目选择器),只露一个
@@ -956,13 +960,15 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const header = (
     <div className="scramble-stats-header">
       {!embedded && <StatsDocTitle />}
-      {embedded ? (
+      {embedded && (
         <div className="scramble-stats-embed-title">{tr({ zh: '分布', en: 'Distribution' })}</div>
-      ) : (
-        <>
-          {/* 项目/事件选择置顶。独立分布页:单个 PuzzlePicker 下拉(WCA 组 + 非 WCA 家族组
-              同一菜单,同 SolveTabs 的收拢套路)是页面唯一的项目选择器。 */}
-          <div className="scramble-stats-event-pick">
+      )}
+      <div className="scramble-stats-event-bar">
+        <div className="scramble-stats-tabrow">
+          {/* 项目选择器与「难度 / 打乱长度」同一行。独立分布页:单个 PuzzlePicker 下拉
+              (WCA 组 + 非 WCA 家族组同一菜单)是页面唯一的项目选择器;嵌入求解页时
+              顶部 SolveTabs 已是那个选择器,这里不再出第二个。 */}
+          {!embedded && (
             <PuzzlePicker
               isZh={isZh}
               wcaEvents={availableEvents}
@@ -970,14 +976,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
               selectedEvent={event}
               onSelect={setEvent}
             />
-          </div>
-          <SolveTabs puzzle={distPuzzle} mode="dist" />
-        </>
-      )}
-      <div className="scramble-stats-event-bar">
-        <div className="scramble-stats-tabrow">
+          )}
           {tabsBar}
           {datasetToggle}
+          {srcToggle}
         {showMergeToggle && (
           <div className="scramble-len-merge">
             <PillToggle
@@ -1004,17 +1006,14 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             <InfoTooltip icon={HelpCircle} content={lenMetric === 'qtm' ? lenAlt.onHint : lenAlt.offHint} />
           </div>
         )}
-        {tab === 'length' && lenTotal > 0 && (
-          <span className="scramble-stats-count">
-            {tr({ zh: '共 {n} 条', en: '{n} scrambles'
-            }).replace('{n}', lenTotal.toLocaleString())}
-          </span>
-        )}
         {avgToggle}
         {viewToggle}
         {toggleInfoTooltip}
         </div>
       </div>
+      {/* SolveTabs 在 dist 模式下只剩 3×3 子标签(最优解 / 阶段 / CFOP / DR);项目行由上面那个
+          PuzzlePicker 承担,不重复渲染,故非 3×3 时它是空的 —— 直接不挂。 */}
+      {!embedded && distPuzzle === '3x3' && <SolveTabs puzzle={distPuzzle} mode="dist" />}
     </div>
   );
 
@@ -1597,35 +1596,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   if (!DIFFICULTY_EVENTS.has(event)) {
     const puzzleKey = PUZZLE_EVENT_MAP[event];
     if (puzzleKey) {
-      // 2×2 / 金字塔:数据源切换(WCA 真题采样 / 所有本质状态)。参照 analyzer 的来源切换 pill。
-      const hasEssential = event === '222' || event === 'pyram';
-      const srcToggle = hasEssential ? (
-        <div className="scramble-stats-controls scramble-stats-src-toggle">
-          <PillToggle
-            value={essSrc === 'wca'}
-            onChange={(v) => setEssSrc(v ? 'wca' : 'all')}
-            onLabel={tr({ zh: 'WCA 真题', en: 'WCA' })}
-            offLabel={tr({ zh: '所有本质状态', en: 'All states' })}
-            ariaLabel={tr({ zh: '数据源:WCA 真题或所有本质状态', en: 'Data source: WCA scrambles or all essential states' })}
-          />
-          <InfoTooltip
-            icon={HelpCircle}
-            content={event === 'pyram'
-              ? tr({
-                zh: 'WCA 真题:真实比赛打乱的采样分布;所有本质状态:金字塔(不含小角)全部 933,120 态精确枚举、去重后 39,035 个本质案例',
-                en: 'WCA: sampled from real competition scrambles; All states: exact enumeration of all 933,120 tip-less Pyraminx states → 39,035 deduped essential cases',
-              })
-              : tr({
-                zh: 'WCA 真题:真实比赛打乱的采样分布;所有本质状态:2×2 全部 3,674,160 个本质状态的精确统计',
-                en: 'WCA: sampled from real competition scrambles; All states: exact statistics over all 3,674,160 essential 2×2 states',
-              })}
-          />
-        </div>
-      ) : null;
       return (
         <div className="scramble-stats-page">
           {header}
-          {srcToggle}
           {isEssential
             ? (event === 'pyram' ? <PyraminxEssentialView isZh={isZh} /> : <Essential2x2View isZh={isZh} />)
             : timelineActive
@@ -1681,12 +1654,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   const vData = currentSet.variants[variant];
 
-  // 整解阶段样本量 = 该口径直方图总数(目前为抽样雏形);其余用数据集总样本。
-  const sampleN = is333
-    ? Object.values(activeCounts).reduce((a, b) => a + b, 0)
-    : currentSet.sample_count;
-  const sampleCount = tr({ zh: '{n} 条', en: '{n} scrambles'
-}).replace('{n}', sampleN.toLocaleString());
+  // 样本量由图内自报(DiscreteHistogram 对 series 求和 = 打乱条数 / 组数),这里不再另算一份。
 
   // 方法下拉:数据层块变体(123/123x2/222/223)聚合显示为「砖」,EOLine 变体并入「EO」;
   // 阶段下拉列细分(块形状 / EO·EOLine),选中时经 *_STAGE_VARIANT 落回底层变体,
@@ -1769,29 +1737,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             </span>
           </div>
         )}
-        {!timelineActive && (() => {
-          const s = avgOn ? avgStats : extendedStats;
-          if (!s) return null;
-          const mean = avgOn ? (avgStats!.mean / avgDenom).toFixed(2) : extendedStats!.mean.toFixed(2);
-          const median = avgOn ? (avgStats!.median / avgDenom).toFixed(1) : String(extendedStats!.median);
-          return (
-            <div className="scramble-stats-inline-summary">
-              <span className="scramble-stats-inline-stat">
-                <span className="scramble-stats-inline-label">{tr({ zh: '均值', en: 'mean' })}</span>
-                <span className="scramble-stats-inline-value">{mean}</span>
-              </span>
-              <span className="scramble-stats-inline-stat">
-                <span className="scramble-stats-inline-label">{tr({ zh: '中位数', en: 'median' })}</span>
-                <span className="scramble-stats-inline-value">{median}</span>
-              </span>
-            </div>
-          );
-        })()}
-        <span className="scramble-stats-count">
-          {avgOn
-            ? tr({ zh: '{n} 组', en: '{n} groups' }).replace('{n}', avgGroups.toLocaleString())
-            : sampleCount}
-        </span>
+        {/* 均值 / 中位数不再在这里另起一行 —— 复用 DiscreteHistogram 的图内标注(竖虚线 + 底部文字),见下方图表调用。 */}
+        {/* 样本量不在这里报 —— DiscreteHistogram 在图内自报总数(单次 = 打乱条数,组平均 = 组数)。 */}
         {/* 下载全部:该阶段全量语料(每条打乱 + 比赛信息 + 各底色十字步数)gz CSV;仅 std 变体有。组平均模式无对应下载。 */}
         {!avgOn && dataset === 'wca' && variant === 'std' && bundleStages?.includes(stage) && (
           <a
@@ -1821,6 +1768,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           gapAware
           showBarLabels={false}
           formatBin={(v) => (v / avgDenom).toFixed(1)}
+          meanValue={avgStats?.mean}
+          medianValue={avgStats?.median}
+          meanLabel={avgStats ? `${tr({ zh: '平均', en: 'mean' })} ${(avgStats.mean / avgDenom).toFixed(2)}` : undefined}
+          medianLabel={avgStats ? `${tr({ zh: '中位数', en: 'median' })} ${(avgStats.median / avgDenom).toFixed(1)}` : undefined}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
         />
@@ -1849,6 +1800,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           selectedBin={selectedBin}
           onBarClick={handleBarClick}
           hideLegendColors
+          meanValue={extendedStats?.mean}
+          medianValue={extendedStats?.median}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
         />
