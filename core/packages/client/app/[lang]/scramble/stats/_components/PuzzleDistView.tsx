@@ -24,8 +24,8 @@ import {
 import { stepMetricsFor } from '@/app/[lang]/timer/_lib/scramble/step-metrics';
 import { tr } from '@/i18n/tr';
 
-// puzzle key → 在线求解器路由名(sq1 无求解器页 → 不在表里 → 示例卡不可点)。
-const PUZZLE_ROUTE: Record<string, string> = { '222': '222', pyraminx: 'pyraminx', skewb: 'skewb' };
+// puzzle key → 在线求解器 event slug(/scramble/solver?event=;sq1 不在表里 → 示例卡不可点)。
+const PUZZLE_ROUTE: Record<string, string> = { '222': '222', pyraminx: 'pyram', skewb: 'skewb' };
 // 2D 预览用的 WCA event_id。
 const PUZZLE_EVENT: Record<string, string> = { '222': '222', pyraminx: 'pyram', skewb: 'skewb', sq1: 'sq1' };
 // 「按步数」多口径的 puzzle → step-metrics.ts 的 event(度量下拉选项从那取,与计时器同源)。
@@ -430,7 +430,7 @@ function PuzzleExamplesPanel({
       });
   })();
   const solverHref = (scr: string) =>
-    `/scramble/${route}?${new URLSearchParams({ scramble: scr.trim() })}`;
+    `/scramble/solver?${new URLSearchParams({ event: route, scramble: scr.trim() })}`;
 
   return (
     <div className="scramble-stats-panel scramble-stats-examples-panel">

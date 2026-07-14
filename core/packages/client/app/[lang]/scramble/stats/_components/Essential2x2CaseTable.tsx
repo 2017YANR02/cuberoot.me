@@ -158,7 +158,7 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
                   <td className="ess-num">{idx.toLocaleString()}</td>
                   <td className="ess-cube">
                     <Link
-                      href={`/scramble/222?scramble=${encodeURIComponent(scramble)}`}
+                      href={`/scramble/solver?event=222&scramble=${encodeURIComponent(scramble)}`}
                       prefetch={false}
                       aria-label={tr({ zh: '在求解器中打开', en: 'Open in solver' })}
                     >
