@@ -1,27 +1,20 @@
 /* RecentScrambles — 落地页 tagline 下方「近期打乱」栏:本批最简单打乱,变体×类型×底色切片。
    双主题,走 :root token;底色 swatch/色点用魔方固定色(inline)。 */
 
+/* 标题/日期/项目图标/变体控件一律揉进这一行流:.rs-topbar 与 .rs-head 是
+   display:contents 空壳(标记原意,不占布局),其子节点直接当本容器的 flex item;
+   卡片/空态(rs-cards / rs-empty / rs-rare-more)撑满整行强制换行,单独另起。 */
 .recent-scrambles {
   width: 100%;
   max-width: 1100px;
   margin: 0 auto 2.5rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.rs-topbar {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.rs-head {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.6rem;
 }
+
+.rs-topbar, .rs-head { display: contents; }
 
 .rs-title {
   font-size: 0.95rem;
@@ -30,9 +23,7 @@
   color: var(--foreground);
 }
 
-/* 标题右侧:本批打乱来源比赛的日期跨度(最早~最晚,紧凑 ISO)。margin-right:auto 让标题+日期靠左抱团 */
 .rs-date-range {
-  margin-right: auto;
   font-size: 0.8rem;
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
@@ -110,6 +101,7 @@
 /* 卡片网格:一行两卡;单卡时撑满整行(避免半宽留白)。固定高度 + 右侧滚动条走
    .scroll-panel(scroll_panel.css)。minmax(0,…) 让列缩到容器、不被卡内容顶宽。 */
 .rs-cards {
+  flex: 1 1 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
@@ -181,6 +173,7 @@
 }
 /* 稀有汇总超出渲染上限时的提示行 */
 .rs-rare-more {
+  flex: 1 1 100%;
   margin-top: 0.5rem;
   font-size: 0.76rem;
   color: var(--faint-foreground);
@@ -213,6 +206,7 @@
 .rs-src-meta { font-size: 0.78rem; color: var(--muted-foreground); }
 
 .rs-empty {
+  flex: 1 1 100%;
   padding: 1.2rem;
   text-align: center;
   font-size: 0.85rem;
