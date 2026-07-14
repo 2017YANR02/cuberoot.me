@@ -22,6 +22,7 @@ import { CaseThumb } from '@/components/CaseThumb';
 import { useCopy } from '@/hooks/useCopy';
 import { ALG_TAG_LABEL } from '@/lib/alg_tags';
 import { primaryCaseName } from '@/lib/alg_case_display';
+import { algCaseHref } from '@/lib/alg_case_link';
 import { displayAlg } from '@/lib/alg_display';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { tr } from '@/i18n/tr';
@@ -88,12 +89,10 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
   }), [caseObj.algs, puzzle]);
 
   /** 「在列表中打开」—— 真 <a>,中键能新开(CLAUDE.md「链接支持中键新开」) */
-  const listHref = useMemo(() => {
-    const top = (caseObj.subgroup || '').split('/', 1)[0];
-    const slug = encodeURIComponent(top.toLowerCase()) || '_';
-    const hash = caseObj.id != null ? `#case-${caseObj.id}` : '';
-    return `/alg/${puzzle}/${set}/${slug}${hash}`;
-  }, [caseObj.subgroup, caseObj.id, puzzle, set]);
+  const listHref = useMemo(
+    () => algCaseHref(puzzle, set, caseObj),
+    [caseObj, puzzle, set],
+  );
 
   const related = useMemo(() => ([
     { label: tr({ zh: '镜像', en: 'Mirror' }), no: m.mirror },

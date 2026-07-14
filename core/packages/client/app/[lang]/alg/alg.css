@@ -1355,3 +1355,14 @@ a.alg-community-author:hover {
 @media (prefers-reduced-motion: no-preference) {
   .alg-case.is-flash { transition: box-shadow 0.25s ease, border-color 0.25s ease; }
 }
+
+/* 这个 case 里有公式过不了校验(admin 才扫、才看得到)—— 红框直接指出来该修哪张 */
+.alg-case.is-invalid {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--destructive) 30%, transparent);
+}
+/* 跳转闪光压过红框 —— 正在看的那张,先让人找到它 */
+.alg-case.is-invalid.is-flash {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
