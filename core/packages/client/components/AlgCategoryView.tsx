@@ -437,7 +437,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
     setError(null);
     setData(null);
-    loadAlg(puzzleParam, set).then(d => {
+    // admin 必须绕开那 1 小时的 Cache-Control。他刚删掉的那条公式,DB 里确实没了,
+    // 但浏览器缓存里那份旧响应还在 —— 而 Ctrl+Shift+R 只绕文档和子资源的缓存,
+    // **绕不过页面加载后 JS 自己发的 fetch()**,那一发照样命中旧响应。结果就是:
+    // 保存成功、页面也对,一强刷,删掉的公式原地复活。fresh 就是为这个留的口子。
+    loadAlg(puzzleParam, set, { fresh: isAdmin }).then(d => {
       setData(d);
       if (d.cases.length > 100 && !meta.umbrella) {
         const groups = new Set<string>();
@@ -447,7 +451,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
         setCollapsedGroups(new Set());
       }
     }).catch(e => setError(String(e)));
-  }, [puzzleParam, set, validPuzzle, meta]);
+  }, [puzzleParam, set, validPuzzle, meta, isAdmin]);
 
   /** admin 才扫。case 改完(data 变 / validationRefreshKey)重扫,红标跟着消。 */
   useEffect(() => {
