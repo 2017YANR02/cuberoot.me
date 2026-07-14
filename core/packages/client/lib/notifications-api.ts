@@ -1,7 +1,10 @@
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
+import i18n, { normalizeAppLang } from '@/i18n/i18n-client';
 
-export type NotificationKind = 'recon_alt' | 'recon_comment' | 'recon_reply';
+export type NotificationKind =
+  | 'recon_alt' | 'recon_comment' | 'recon_reply'
+  | 'forum_thread' | 'forum_reply' | 'forum_report';
 
 export interface SiteNotification {
   id: number;
@@ -25,8 +28,13 @@ export async function fetchNotifications(limit = 30): Promise<SiteNotification[]
   return handleApi<SiteNotification[]>(r);
 }
 
+/**
+ * 未读数(红点角标)。顺带把当前站点语言报给服务端 —— 通知邮件按收件人语言发,而收件人的
+ * 语言只有他自己在站上时才知道。这是每个登录用户都会周期性打的请求,搭车即可,不新增请求。
+ */
 export async function fetchUnreadNotifications(): Promise<number> {
-  const r = await fetch(apiUrl('/v1/notifications/unread'), {
+  const lang = normalizeAppLang(i18n.language);
+  const r = await fetch(apiUrl(`/v1/notifications/unread?lang=${lang}`), {
     headers: authHeaders(false),
     cache: 'no-store',
   });

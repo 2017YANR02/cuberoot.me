@@ -1,11 +1,14 @@
 'use client';
 
 /**
- * /notifications — 站内消息。目前来源是 recon:别人给你回复评论、或给复盘提了另解/评论(管理员收)。
+ * /notifications — 站内消息。两个来源:recon(别人回复你的评论,或提了另解/评论 → 管理员收)
+ * 和论坛(别人回复你的主题;新主题/举报 → 管理员收)。
  * 进页即把列出的未读标记已读(红点回落),但列表仍保留「新」高亮,免得用户还没看清就被清空。
  */
 import { useCallback, useEffect, useState } from 'react';
-import { ChevronLeft, MessageSquare, Reply, GitBranch, LogIn, Check } from 'lucide-react';
+import {
+  ChevronLeft, MessageSquare, Reply, GitBranch, LogIn, Check, MessagesSquare, Flag,
+} from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
@@ -23,6 +26,9 @@ const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   recon_alt: GitBranch,
   recon_comment: MessageSquare,
   recon_reply: Reply,
+  forum_thread: MessagesSquare,
+  forum_reply: Reply,
+  forum_report: Flag,
 };
 
 /** TIMESTAMPTZ → 本地 `yyyy-mm-dd hh:mm`。 */
@@ -50,6 +56,9 @@ export default function NotificationsPage() {
     recon_alt: t('提交了新另解', 'submitted an alternative'),
     recon_comment: t('发表了新评论', 'left a new comment'),
     recon_reply: t('回复了你的评论', 'replied to your comment'),
+    forum_thread: t('发布了新主题', 'started a new thread'),
+    forum_reply: t('回复了你的主题', 'replied to your thread'),
+    forum_report: t('举报了一个帖子', 'reported a post'),
   }[k]);
 
   const load = useCallback(() => {
@@ -96,8 +105,8 @@ export default function NotificationsPage() {
       {!user ? (
         <div className="ntf-login">
           <p className="ntf-login-hint">
-            {t('登录后即可看到别人对你的复盘评论、另解和回复。',
-              'Sign in to see replies, comments and alternative solutions addressed to you.')}
+            {t('登录后即可看到别人对你的复盘评论、另解,以及论坛主题的回复。',
+              'Sign in to see comments, alternative solutions and forum replies addressed to you.')}
           </p>
           <button type="button" className="ntf-login-btn" onClick={login}>
             <LogIn size={15} /> {t('登录', 'Sign in')}
