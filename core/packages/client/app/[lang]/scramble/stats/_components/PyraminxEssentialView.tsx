@@ -17,6 +17,8 @@ import {
   type PyramEssentialJson, type PyramCaseRow,
 } from '@/lib/essential-pyram';
 import { tr } from '@/i18n/tr';
+import FirstStepGallery, { type GalleryRow } from './FirstStepGallery';
+import firstFacePyram from '../_data/firstface_pyram.json';
 import './_essential-shared.css';
 
 const GREEN = '#2ec27e'; // H(整解,与 pyram 图同色)
@@ -132,7 +134,7 @@ export default function PyraminxEssentialView({ isZh }: { isZh: boolean }) {
         <span className="scramble-stats-puzzle-metric">
           {metric === 'h'
             ? tr({ zh: 'H:整解最优步数(HTM*,不含小角;每个顶点转 1 步)', en: "H: full-solve optimal length (HTM*, tips ignored; each vertex turn = 1)" })
-            : tr({ zh: 'V:先拼好 4 中心 + 2 相邻棱组成的 V(V-first 首步)', en: 'V: solve all 4 centers + 2 adjacent edges forming a V (V-first first step)' })}
+            : tr({ zh: 'V:先拼好 L/R/B 三个中心 + 2 相邻棱组成的 V(V-first 首步)', en: 'V: solve the L/R/B centers + 2 adjacent edges forming a V (V-first first step)' })}
           {` · ${tr({ zh: '平均', en: 'mean' })} ${avgMain.toFixed(2)}`}
         </span>
       </div>
@@ -214,6 +216,20 @@ export default function PyraminxEssentialView({ isZh }: { isZh: boolean }) {
           </div>
         )}
       </div>
+
+      {/* V 首步案例画廊(无关块变灰,固定「V 缺口朝前」朝向)*/}
+      <FirstStepGallery
+        event="pyram"
+        mask={firstFacePyram.meta.mask}
+        rows={firstFacePyram.rows as unknown as GalleryRow[]}
+        totalReorient={firstFacePyram.meta.total_reorient}
+        totalMirror={firstFacePyram.meta.total_mirror_folded}
+        metric={{ sym: 'V', name: { zh: '在此固定朝向下拼好 V 所需的转数', en: 'turns to build the V in this fixed orientation' } }}
+        note={{
+          zh: 'V 首步:L/R/B 三个中心 + 组成 V 的 2 条棱,统一以「V 缺口朝前」的固定朝向展示(不做整体重定向去重,仅可选合并左右镜像)。',
+          en: 'V first step: the L/R/B centers + the 2 edges forming the V, all shown in one fixed orientation (V gap toward the front; no whole-puzzle reorientation dedup, only the optional L↔R mirror fold).',
+        }}
+      />
 
       {/* 致谢 + 记号 */}
       <div className="scramble-stats-meta ess-credits">
@@ -361,7 +377,7 @@ function PyramCaseTable({ isZh, rows }: { isZh: boolean; rows: PyramCaseRow[] })
                   <td className="ess-num">{idx.toLocaleString()}</td>
                   <td className="ess-cube">
                     <Link
-                      href={`/scramble/pyraminx?scramble=${encodeURIComponent(scramble)}`}
+                      href={`/scramble/solver?event=pyram&scramble=${encodeURIComponent(scramble)}`}
                       prefetch={false}
                       aria-label={tr({ zh: '在求解器中打开', en: 'Open in solver' })}
                     >
