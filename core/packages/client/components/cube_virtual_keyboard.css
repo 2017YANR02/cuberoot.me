@@ -168,10 +168,10 @@
     align-items: center;
     gap: 6px;
     margin-top: 8px;
-    padding: 6px 12px;
+    padding: 6px 8px;
     font-size: 0.8rem;
     background: transparent;
-    border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
+    border: none;
     border-radius: 6px;
     color: var(--muted-foreground);
     cursor: pointer;
@@ -180,7 +180,6 @@
 .vkb-toggle:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); color: var(--foreground); }
 .vkb-toggle.active {
     background: color-mix(in srgb, var(--accent) 15%, transparent);
-    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
     color: var(--accent);
 }
 

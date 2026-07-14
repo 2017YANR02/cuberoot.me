@@ -3,6 +3,7 @@
  * extract alg from recon-prefixed text. Ported from packages/client-vite/src/utils/recon_alg_utils.ts.
  */
 import { etm } from '@cuberoot/shared/alg-notation';
+import { parseSq1Tokens } from './sq1-svg';
 
 const STRIP_TOKENS = new Set([
   '[regrip]', '[lockup]', '[freePair]', '[free_pair]',
@@ -231,6 +232,28 @@ export function findIllegalNotationChars(text: string): NotationViolation[] {
     }
   }
   return out;
+}
+
+/**
+ * Caret-driven player scrub, dispatched by the player instance's `__kind`
+ * (set by whichever engine mounted: Sq1ReconPlayer / CuberReconPlayer / plain
+ * cubing.js TwistySection). Shared by the recon submit form and the
+ * add/edit-alternative form via ReconPlayerPane + ReconSolutionField.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function syncReconPlayerCursorFromText(player: any, textBeforeCaret: string): void {
+  if (!player) return;
+  if (player.__kind === 'sq1') {
+    player.jumpToMoveCount?.(parseSq1Tokens(textBeforeCaret).length);
+    return;
+  }
+  const algBefore = extractAlgFromText(textBeforeCaret);
+  const moves = algBefore.trim().split(/\s+/).filter((s) => s.length > 0);
+  if (player.__kind === 'nxn-cuber') {
+    player.jumpToMoveCount?.(moves.length);
+    return;
+  }
+  syncPlayerToMoveCount(player, moves.length);
 }
 
 export function normalizeSolutionSlashes(text: string): string {
