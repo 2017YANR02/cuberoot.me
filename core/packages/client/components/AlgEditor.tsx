@@ -12,7 +12,7 @@
  */
 import { Fragment, useState, useRef, useImperativeHandle, useMemo, forwardRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, AlertTriangle } from 'lucide-react';
 import type { AlgEntry } from '@cuberoot/shared';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import AlgInput, { type AlgInputHandle } from '@/components/AlgInput';
@@ -20,6 +20,12 @@ import { tr } from '@/i18n/tr';
 
 export interface AlgEditorHandle {
   getValue(): AlgEntry[][];
+  /**
+   * 把校验没过的行标红。`ai` 是**编辑器里的行号**(含空行),不是入库数组的下标。
+   *
+   * 收到就立刻解析成行的 uid 存下来 —— 存下标的话,用户随手删一行,红标就飘到别的公式上了。
+   */
+  markInvalid(marks: { oi: number; ai: number; reason: string }[]): void;
 }
 
 interface Props {
@@ -59,6 +65,8 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
   const elements = useRef<Map<string, HTMLTextAreaElement | HTMLDivElement>>(new Map());
 
   const [focusedUid, setFocusedUid] = useState<string | null>(null);
+  /** 校验没过的行:uid → 原因。按 uid 不按下标 —— 删一行下标就全串位了。 */
+  const [invalid, setInvalid] = useState<Map<string, string>>(new Map());
   /** 实时跟踪当前 focused 行的纯文本,给 AlgPlayer 用 */
   const [currentAlg, setCurrentAlg] = useState('');
   const keyboardTargetRef = useMemo(
@@ -94,6 +102,14 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
           return hasTag ? { ...rest, alg: text, algHtml: html } : { ...rest, alg: text };
         }),
       ),
+    markInvalid: (marks) => {
+      const m = new Map<string, string>();
+      for (const { oi, ai, reason } of marks) {
+        const uid = layout[oi]?.[ai]?.uid;
+        if (uid) m.set(uid, reason);
+      }
+      setInvalid(m);
+    },
   }), [layout]);
 
   const addAlg = (oi: number) => {
@@ -125,9 +141,10 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
           )}
           {ori.map(row => {
             const isFocused = focusedUid === row.uid;
+            const bad = invalid.get(row.uid);
             return (
               <Fragment key={row.uid}>
-              <div className="alg-editor-row">
+              <div className={`alg-editor-row${bad ? ' is-invalid' : ''}`}>
                 <AlgInput
                   ref={(h: AlgInputHandle | null) => {
                     if (h) {
@@ -153,7 +170,16 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
                     if (next && next.closest('.alg-editor')) return;
                     setFocusedUid(prev => (prev === row.uid ? null : prev));
                   }}
-                  onChange={text => { if (focusedUid === row.uid) setCurrentAlg(text); }}
+                  onChange={text => {
+                    if (focusedUid === row.uid) setCurrentAlg(text);
+                    // 一动这行就摘掉它的红标 —— 旧的判定已经不作数了,留着只会误导
+                    setInvalid(prev => {
+                      if (!prev.has(row.uid)) return prev;
+                      const next = new Map(prev);
+                      next.delete(row.uid);
+                      return next;
+                    });
+                  }}
                   onCaretChange={(text, caret) => {
                     if (focusedUid !== row.uid) return;
                     onCursorMoveCount?.(tokenCountBeforeCaret(text, caret));
@@ -177,14 +203,20 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
                   </button>
                 )}
               </div>
+                {bad && (
+                  <div className="alg-editor-row-error">
+                    <AlertTriangle size={12} />
+                    <span>{bad}</span>
+                  </div>
+                )}
                 {isFocused && (
                   <CubeKeyboardSection target={keyboardTargetRef} enableMarks />
                 )}
               </Fragment>
             );
           })}
-          <button type="button" className="alg-editor-add" onClick={() => addAlg(oi)} tabIndex={-1}>
-            <Plus size={12} /> {tr({ zh: '加一条', en: 'Add' })}
+          <button type="button" className="alg-editor-add" onClick={() => addAlg(oi)} tabIndex={-1} title={tr({ zh: '加一条', en: 'Add' })}>
+            <Plus size={12} />
           </button>
         </div>
       ))}

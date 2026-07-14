@@ -11,7 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { X, Save, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
 import type { AlgCase, AlgEntry, AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '@/lib/alg_sets_api';
-import { validateAlgCase } from '@/lib/alg_validation';
+import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
 import { displayAlg } from '@/lib/alg_display';
 import AlgEditor, { type AlgEditorHandle } from '@/components/AlgEditor';
 import AlgInput from '@/components/AlgInput';
@@ -125,6 +125,9 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
 
     // Algs: prefer advanced JSON if user filled it; else read from AlgEditor
     let algs: AlgEntry[][];
+    /** 入库数组的下标 → **编辑器里的行号**。空行不入库,两边的下标因此对不上 ——
+     *  照 `ai` 直接标红会标到隔壁那条公式上。高级 JSON 那条路没有行可标,留 null。 */
+    let editorRowOf: number[][] | null = null;
     if (advancedOpen && algsJson.trim()) {
       try {
         const parsed = JSON.parse(algsJson);
@@ -135,7 +138,15 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
       }
     } else {
       const raw = algEditorRef.current?.getValue() ?? [];
-      algs = raw.map(ori => ori.filter(e => e.alg.trim()));
+      const rows: number[][] = [];
+      algs = raw.map(ori => {
+        const kept: AlgEntry[] = [];
+        const idx: number[] = [];
+        ori.forEach((e, i) => { if (e.alg.trim()) { kept.push(e); idx.push(i); } });
+        rows.push(idx);
+        return kept;
+      });
+      editorRowOf = rows;
       const total = algs.reduce((n, ori) => n + ori.length, 0);
       if (total === 0) {
         setError(tr({ zh: '至少要写一条公式', en: 'At least one alg required' })); return;
@@ -177,19 +188,37 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
       const checks = await Promise.all(
         algs.flatMap((ori, oi) => ori.map((entry, ai) => {
           const bare = displayAlg(entry.alg);
-          return validateAlgCase(body.setup, bare, sticker, puzzle)
+          // setup 只描述第 0 个朝向;别的槽位要共轭过去。空 setup 的集合由首条公式反推。
+          const oriSetup = setupForCase(puzzle, body.setup, algs[0]?.[0]?.alg, oi);
+          return validateAlgCase(oriSetup, bare, sticker, puzzle, setSlug)
             .then(r => ({ oi, ai, alg: entry.alg, bare, ...r }));
         }))
       );
       const bad = checks.filter(c => !c.ok);
       if (bad.length > 0) {
-        setError(
-          tr({ zh: '以下公式没通过校验:\n', en: 'Validation failed:\n' }) +
-          bad.map(b => `• "${b.alg}" — ${b.reason}`).join('\n')
-        );
+        // 原因标到**行上**(红框 + 行下一句话),不再堆成底部一大段文字 —— 四条公式里
+        // 是哪条不过,得让人一眼看见,而不是拿公式原文去跟列表比对。
+        if (editorRowOf) {
+          algEditorRef.current?.markInvalid(bad.map(b => ({
+            oi: b.oi,
+            ai: editorRowOf[b.oi]?.[b.ai] ?? b.ai,
+            reason: b.reason ?? '',
+          })));
+          setError(tr({
+            zh: `有 ${bad.length} 条公式没通过校验`,
+            en: `${bad.length} alg(s) failed validation`,
+          }));
+        } else {
+          // 高级 JSON:没有行可标,还是把原文列出来
+          setError(
+            tr({ zh: '以下公式没通过校验:\n', en: 'Validation failed:\n' }) +
+            bad.map(b => `• "${b.alg}" — ${b.reason}`).join('\n')
+          );
+        }
         setBusy(false);
         return;
       }
+      algEditorRef.current?.markInvalid([]); // 全过了,把上一轮的红标清掉
       body.algs = algs.map((ori, oi) => ori.map((entry, ai) => {
         const c = checks.find(x => x.oi === oi && x.ai === ai)!;
         return { ...entry, alg: c.auf ? `${c.bare} ${c.auf}` : c.bare };
