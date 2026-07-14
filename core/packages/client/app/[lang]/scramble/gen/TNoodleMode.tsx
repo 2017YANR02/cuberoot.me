@@ -29,7 +29,7 @@ import { type WcaScrambleRow } from '@/lib/wca-results-api';
 import { fetchCompName } from '@/lib/comp-wcif';
 import { apiUrl } from '@/lib/api-base';
 import { eventDisplayName } from '@/lib/wca-events';
-import { VARIANT_LABEL, VARIANT_ORDER, BLOCK_STAGE_VARIANT, stageLabel, type ScrambleVariant } from '@/lib/scramble-variants';
+import { VARIANT_LABEL, VARIANT_ORDER, BLOCK_STAGE_VARIANT, EO_STAGE_VARIANT, stageLabel, type ScrambleVariant } from '@/lib/scramble-variants';
 import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '@/lib/cstimer-scramble';
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
@@ -81,7 +81,10 @@ const F2L_STAGES: Metric[] = ['cross', 'xc', 'xxc', 'xxxc'];
 // solver 就绪后从 'none' 改 'variant')。'none' = 仅 comp_steps 预计算,无 client 引擎。
 const VARIANT_SPEC: Record<VariantKey, { stages: Metric[]; engine: 'std' | 'f2leo' | 'variant' | 'roux223' | 'none' }> = {
   std: { stages: STD_STAGES, engine: 'std' },
-  eo: { stages: STD_STAGES, engine: 'variant' },
+  // EO 是 UI 聚合方法:EOLine 变体的两阶段(beo/beoline)并进来,细分落阶段下拉。engine 按
+  // 阶段所属数据变体取(见 dataVariant / variantEngine)—— EO+十字系列走 VariantSolverWasm,
+  // EO / EOLine 走 EoDrSolverWasm,不能只看方法。
+  eo: { stages: ['beo', 'beoline', ...STD_STAGES], engine: 'variant' },
   pair: { stages: F2L_STAGES, engine: 'variant' },
   pseudo: { stages: F2L_STAGES, engine: 'variant' },
   pseudo_pair: { stages: F2L_STAGES, engine: 'variant' },
@@ -865,12 +868,15 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     [colorMode, cxSingle, cxPair, cxQuadExcl],
   );
   const vspec = VARIANT_SPEC[variant];
-  const variantEngine = vspec.engine;
   // metric 落在当前变体阶段集外(切变体后)→ 视为该变体首阶段(std=cross),避免越界取数。
   const safeMetric: Metric = vspec.stages.includes(metric) ? metric : vspec.stages[0];
-  // UI 聚合方法 'block' → 数据层底层变体由当前 metric 决定(b122/b123→123,b222→222,
-  // b223→223,bf2b→123x2);comp_steps 文件 + WASM need 都按它取。
-  const dataVariant: VariantKey = variant === 'block' ? (BLOCK_STAGE_VARIANT[safeMetric] ?? '123') : variant;
+  // UI 聚合方法 → 数据层底层变体由当前 metric 决定('block': b122/b123→123,b222→222,b223→223,
+  // bf2b→123x2;'eo': beo/beoline→eoline,其余→eo);comp_steps 文件 + WASM need 都按它取。
+  const dataVariant: VariantKey = variant === 'block' ? (BLOCK_STAGE_VARIANT[safeMetric] ?? '123')
+    : variant === 'eo' ? (EO_STAGE_VARIANT[safeMetric] ?? 'eo')
+      : variant;
+  // 引擎随数据变体走(块族 4 个变体同为 roux223;EO 的两半分属 variant / roux223)。
+  const variantEngine = VARIANT_SPEC[dataVariant].engine;
   // 切变体后复位越界 metric(同步 select)。
   useEffect(() => {
     if (!VARIANT_SPEC[variant].stages.includes(metric)) setMetric(VARIANT_SPEC[variant].stages[0]);
