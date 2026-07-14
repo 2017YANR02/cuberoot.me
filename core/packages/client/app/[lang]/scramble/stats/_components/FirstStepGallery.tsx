@@ -32,7 +32,7 @@ export default function FirstStepGallery({
   event, mask, rows, totalReorient, totalMirror, metric, note,
 }: Props) {
   const [foldMirror, setFoldMirror] = useState(false);
-  const [pick, setPick] = useState<'all' | number>('all');
+  const [pick, setPick] = useState<number | null>(null);
 
   // mirror fold: keep one representative per mgid (rows already sorted hardest-first).
   const shown = useMemo(() => {
@@ -50,7 +50,9 @@ export default function FirstStepGallery({
     return [...by.entries()].sort((a, b) => b[0] - a[0]);
   }, [shown]);
 
-  const picked = pick === 'all' ? sections : sections.filter(([m]) => m === pick);
+  // default to the first (hardest) section; re-pin if the fold toggle changes what's available.
+  const active = pick != null && sections.some(([m]) => m === pick) ? pick : (sections[0]?.[0] ?? null);
+  const picked = sections.filter(([m]) => m === active);
   const size = 42;
 
   return (
@@ -76,10 +78,9 @@ export default function FirstStepGallery({
           <span>{metric.sym}</span>
           <select
             className="scramble-stats-select"
-            value={String(pick)}
-            onChange={(e) => setPick(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            value={String(active)}
+            onChange={(e) => setPick(Number(e.target.value))}
           >
-            <option value="all">{tr({ zh: '全部', en: 'All' })}</option>
             {sections.map(([m]) => (
               <option key={m} value={m}>{m}</option>
             ))}
