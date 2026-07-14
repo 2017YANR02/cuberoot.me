@@ -1,6 +1,6 @@
 // Emits stats/scramble/recent_scrambles_events.json — the "近期打乱" widget data for
-// EVERY WCA event (3x3 itself keeps its own rich variant/metric/color widget fed by
-// recent_scrambles.json; this file covers all the other events).
+// EVERY WCA event, including 3x3's scramble-length buckets (3x3's variant/metric/color
+// difficulty widget is fed separately by recent_scrambles.json).
 //
 // "Recent batch" = the genuinely-new scrambles of the latest export, replicated for all
 // events via a monotonic scramble-id watermark (WCA's Scrambles.id is auto-increment):
@@ -15,7 +15,9 @@
 // those same CSVs' `soln` column also gives us `opt` (id -> optimal equivalent scramble), which the
 // difficulty view displays instead of the raw scramble (same as /timer's 最优打乱 — same state,
 // its move count IS the difficulty value). The length view keeps the raw scramble by definition.
-// 333 itself + multi-blind (333mbf/333mbo, multi-cube blobs) are excluded.
+// 3x3 is here for its **length** buckets only (its scramble length varies, 12–23 moves);
+// its difficulty / variant / colour widget stays in recent_scrambles.json.
+// Multi-blind (333mbf/333mbo, multi-cube blobs) is excluded — no single length / preview.
 //
 // Deliberately standalone from build.ts / build_puzzle_dist.ts — duplicates a little
 // metadata/length boilerplate on purpose to stay isolated from their in-progress runs.
@@ -35,8 +37,9 @@ const RECENT_WINDOW_DAYS = 30; // bootstrap window when no watermark exists yet
 // value column in <key>.csv = the puzzle key itself (see build_puzzle_dist.ts).
 const DIFFICULTY_PUZZLES: Record<string, string> = { '222': '222', pyram: 'pyraminx', skewb: 'skewb' };
 
-// 333 = own rich widget; multi-blind = multi-cube blob (no single length / preview).
-const EXCLUDE_EVENTS = new Set(['333', '333mbf', '333mbo']);
+// multi-blind = multi-cube blob (no single length / preview). 3x3 stays in (length buckets only —
+// no entry in DIFFICULTY_PUZZLES, so it gets no difficulty here; that lives in recent_scrambles.json).
+const EXCLUDE_EVENTS = new Set(['333mbf', '333mbo']);
 
 // Scramble move-count, per-event notation. Mirrors shared/scramble_length.ts; kept inline so
 // this builder stays standalone (multi-blind is excluded upstream, so no per-line split here).
