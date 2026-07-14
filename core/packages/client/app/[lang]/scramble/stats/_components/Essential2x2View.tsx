@@ -80,14 +80,20 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
     if (!mainCounts) return [];
     return [{ name: metric.toUpperCase(), fillColors: [RED], counts: mainCounts }];
   }, [mainCounts, metric]);
+  const mainStat = useMemo(() => (mainCounts ? statOf(mainCounts) : null), [mainCounts]);
 
   const statGroup = useMemo(() => data?.stat.groups.find((g) => g.key === statKey) ?? null, [data, statKey]);
-  const statSeries = useMemo<HistSeries[]>(() => {
-    if (!statGroup) return [];
+  const statCounts = useMemo(() => {
+    if (!statGroup) return null;
     const counts: Record<string, number> = {};
     for (const r of statGroup.rows) counts[String(r.m)] = r.cases;
-    return [{ name: statGroup.label.en, fillColors: [BLUE], counts }];
+    return counts;
   }, [statGroup]);
+  const statSeries = useMemo<HistSeries[]>(() => {
+    if (!statGroup || !statCounts) return [];
+    return [{ name: statGroup.label.en, fillColors: [BLUE], counts: statCounts }];
+  }, [statGroup, statCounts]);
+  const statStat = useMemo(() => (statCounts ? statOf(statCounts) : null), [statCounts]);
 
   const caseCounts = data?.case_agg[caseMetric];
   const caseSeries = useMemo<HistSeries[]>(() => {
@@ -113,23 +119,9 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
 
   return (
     <div className="ess-view">
-      {/* 概览:状态总数 / God's number / 平均 */}
-      <div className="scramble-stats-controls ess-overview">
-        <div className="scramble-stats-puzzle-meta">
-          <span>{tr({ zh: '{n} 个本质状态', en: '{n} essential states' }).replace('{n}', meta.total_positions.toLocaleString())}</span>
-          <span className="scramble-stats-puzzle-metric">
-            {tr({ zh: '2×2 完整状态空间(固定一个角块),精确枚举', en: 'The full 2×2 state space (one corner fixed), exactly enumerated' })}
-          </span>
-        </div>
-      </div>
-
+      {/* 状态总数不在这里报 —— 图内已自报(共 N);这里只留图上没有的口径 */}
       <div className="scramble-stats-panel">
         <div className="scramble-stats-stat-grid">
-          <Cell label={tr({ zh: '状态总数', en: 'Total states' })} value={meta.total_positions.toLocaleString()} />
-          <Cell label={tr({ zh: '上帝之数 HTM', en: "God's number HTM" })} value={String(meta.god_htm)} />
-          <Cell label={tr({ zh: '上帝之数 QTM', en: "God's number QTM" })} value={String(meta.god_qtm)} />
-          <Cell label={tr({ zh: '平均 HTM', en: 'Mean HTM' })} value={meta.avg_htm.toFixed(2)} />
-          <Cell label={tr({ zh: '平均 QTM', en: 'Mean QTM' })} value={meta.avg_qtm.toFixed(2)} />
           <Cell label={tr({ zh: '需 ≥4 HTM', en: '≥4 HTM' })} value={meta.wca_legal_min4h.toLocaleString()} />
         </div>
       </div>
@@ -146,11 +138,6 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
             ariaLabel={tr({ zh: '度量:HTM 或 QTM', en: 'Metric: HTM or QTM' })}
           />
         </div>
-        <span className="scramble-stats-puzzle-metric">
-          {metric === 'htm'
-            ? tr({ zh: 'HTM:U2 计 1 步(固定角、3 面)', en: 'HTM: U2 counts as one move (one corner fixed, 3 faces)' })
-            : tr({ zh: 'QTM:U2 计 2 步(固定角、3 面)', en: 'QTM: U2 counts as two moves (one corner fixed, 3 faces)' })}
-        </span>
       </div>
       <div className="scramble-stats-chart-wrapper">
         <DiscreteHistogram
@@ -159,6 +146,8 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
           yMode={yMode}
           chartMode={chartMode}
           hideLegendColors
+          meanValue={mainStat?.mean}
+          medianValue={mainStat?.median}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
         />
@@ -204,12 +193,6 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
             </tbody>
           </table>
         </div>
-        <div className="ess-note">
-          {tr({
-            zh: '行 = QTM 最优步数,列 = HTM 最优步数;格子 = 同时达到该 (HTM, QTM) 的状态数(颜色越深越多)。',
-            en: 'Rows = QTM-optimal length, columns = HTM-optimal length; each cell = states at that (HTM, QTM) pair (darker = more).',
-          })}
-        </div>
       </div>
 
       {/* 首面 / 首层子分布(stat 表)*/}
@@ -224,13 +207,6 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
               ))}
             </select>
           </label>
-          {statGroup?.mean != null && (
-            <span className="scramble-stats-puzzle-metric">
-              {tr({ zh: '平均 {m} HTM · 共 {n}', en: 'mean {m} HTM · {n} total' })
-                .replace('{m}', statGroup.mean.toFixed(2))
-                .replace('{n}', (statGroup.total ?? 0).toLocaleString())}
-            </span>
-          )}
         </div>
         {statGroup && (
           <>
@@ -241,32 +217,10 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
                 yMode={statY}
                 chartMode="pdf"
                 hideLegendColors
+                meanValue={statStat?.mean}
+                medianValue={statStat?.median}
                 onYModeToggle={() => setStatY(statY === 'percent' ? 'count' : 'percent')}
               />
-            </div>
-            <div className="ess-table-scroll sticky-scroll">
-              <table className="ess-table sticky-thead">
-                <thead>
-                  <tr>
-                    <th>HTM</th>
-                    <th>{tr({ zh: '案例数', en: '#case' })}</th>
-                    <th>{tr({ zh: '几率', en: '1-in-N' })}</th>
-                    <th>{tr({ zh: '占比', en: 'density' })}</th>
-                    <th>{tr({ zh: '累计', en: 'cumulative' })}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {statGroup.rows.map((r) => (
-                    <tr key={r.m}>
-                      <td className="ess-num">{r.m}</td>
-                      <td className="ess-num">{r.cases.toLocaleString()}</td>
-                      <td className="ess-num">{r.inv != null ? `1 / ${r.inv < 100 ? r.inv.toFixed(1) : Math.round(r.inv).toLocaleString()}` : '—'}</td>
-                      <td className="ess-num">{r.dist != null ? `${(r.dist * 100).toFixed(2)}%` : '—'}</td>
-                      <td className="ess-num">{r.cumm != null ? `${(r.cumm * 100).toFixed(2)}%` : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </>
         )}
@@ -292,11 +246,6 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
               <option value="QH">{tr({ zh: 'Q|H', en: 'Q|H' })}</option>
             </select>
           </label>
-          {caseStat && (
-            <span className="scramble-stats-puzzle-metric">
-              {tr({ zh: '均值 {m}', en: 'mean {m}' }).replace('{m}', caseStat.mean.toFixed(2))}
-            </span>
-          )}
         </div>
         <div className="scramble-stats-chart-wrapper">
           <DiscreteHistogram
@@ -305,6 +254,8 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
             yMode={caseY}
             chartMode="pdf"
             hideLegendColors
+            meanValue={caseStat?.mean}
+            medianValue={caseStat?.median}
             onYModeToggle={() => setCaseY(caseY === 'percent' ? 'count' : 'percent')}
           />
         </div>
@@ -342,22 +293,13 @@ export default function Essential2x2View({ isZh }: { isZh: boolean }) {
         rows={firstFace2x2.rows as unknown as GalleryRow[]}
         totalReorient={firstFace2x2.meta.total_reorient}
         totalMirror={firstFace2x2.meta.total_mirror_folded}
-        metric={{ sym: 'F', name: { zh: '把展示的这一面拼成纯色所需面转步数', en: 'face turns to make the shown face solid' } }}
-        note={{
-          zh: '2×2 首面:固定一个角块参照,展示四个底面角块的全部本质不同摆法(整体重定向去重)。',
-          en: '2×2 first face: with one corner as a fixed reference, every essentially-different arrangement of the four bottom-face corners (whole-puzzle reorientations deduped).',
-        }}
+        metricLabel={{ zh: '底面', en: 'Face' }}
       />
 
-      {/* 致谢 + 记号 */}
+      {/* 致谢 */}
       <div className="scramble-stats-meta ess-credits">
         <span>
-          {tr({ zh: '数据', en: 'Data' })}: {tr(meta.credits.author)} {tr(meta.credits.algorithm)}
-          {' · '}{tr({ zh: '参考', en: 'ref.' })} <a href={meta.credits.source_url} target="_blank" rel="noopener noreferrer">Jaap Scherphuis</a>
-          {' · '}{tr({ zh: '生成', en: 'Generated' })} {meta.generated_at}
-        </span>
-        <span className="ess-notation">
-          {meta.notation.map((n) => `${n.sym} = ${tr(n)}`).join(isZh ? ';' : '; ')}
+          {tr({ zh: '参考', en: 'ref.' })} <a href={meta.credits.source_url} target="_blank" rel="noopener noreferrer">Jaap Scherphuis</a>
         </span>
       </div>
     </div>

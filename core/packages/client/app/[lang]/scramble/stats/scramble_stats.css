@@ -50,17 +50,15 @@
 }
 .scramble-stats-error { color: var(--accent); }
 
-/* ── 控制区 ── */
+/* ── 控制区 ──
+   外层不做卡片(无 border / background / padding):层级靠 margin + gap。内部的小控件
+   (select / stat cell / 示例条目)仍各自有边框,那是内容级的,不是外框。 */
 .scramble-stats-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem 1.5rem;
   align-items: center;
-  padding: 1rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .scramble-stats-controls label {
@@ -71,7 +69,7 @@
   color: var(--text-sub);
 }
 
-.scramble-stats-controls .scramble-stats-select {
+.scramble-stats-select {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border);
@@ -82,10 +80,10 @@
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
-.scramble-stats-controls .scramble-stats-select:hover {
+.scramble-stats-select:hover {
   border-color: var(--border-strong);
 }
-.scramble-stats-controls .scramble-stats-select:focus {
+.scramble-stats-select:focus {
   outline: none;
   border-color: var(--accent);
 }
@@ -98,6 +96,7 @@
   color: var(--text-sub);
 }
 .scramble-stats-puzzle-metric {
+  font-size: 0.82rem;
   color: var(--text-faint, var(--text-sub));
 }
 /* slash 最优 t 分布:当前为紧上界、真最优计算中的提示条(callout 单边框,非卡片)。 */
@@ -127,13 +126,6 @@
   font-size: 0.78rem;
 }
 
-/* 2×2 数据源切换(WCA 真题 / 所有本质状态):紧凑工具条,不做成大卡片。 */
-.scramble-stats-src-toggle {
-  margin-bottom: 1rem;
-  padding: 0.6rem 1rem;
-  gap: 0.5rem;
-}
-
 .scramble-stats-color-control {
   display: inline-flex;
   align-items: center;
@@ -149,20 +141,12 @@
 
 /* ── 图表容器 ── */
 .scramble-stats-chart-wrapper {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1.75rem;
 }
 
 /* ── 统计摘要 + CN 收益面板 ── */
 .scramble-stats-panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1.75rem;
 }
 
 .scramble-stats-panel-title {
@@ -242,7 +226,6 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.625rem 0.75rem;
-    padding: 0.875rem 1rem;
   }
   .scramble-stats-controls > * {
     min-width: 0;
@@ -262,11 +245,6 @@
   }
   .scramble-stats-color-control {
     grid-column: 1 / -1;
-  }
-  .scramble-stats-inline-summary {
-    grid-column: 1 / -1;
-    margin-left: 0;
-    justify-content: flex-start;
   }
   .scramble-stats-color-control .subset-picker-mode {
     flex: 0 0 auto;
@@ -441,50 +419,9 @@
   padding: 0 0.25rem;
 }
 
-/* ── 难度 / 长度 分段切换 ── */
-.scramble-stats-tabs {
-  display: inline-flex;
-  gap: 0.25rem;
-  margin: 0.25rem 0 0.75rem;
-  padding: 0.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  width: fit-content;
-}
-.scramble-stats-tab {
-  background: transparent;
-  color: var(--text-sub);
-  border: none;
-  border-radius: 7px;
-  padding: 0.4rem 0.9rem;
-  font-size: 0.85rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
-}
-.scramble-stats-tab:hover { color: var(--accent); }
-.scramble-stats-tab.active {
-  color: var(--text);
-  background: var(--bg);
-  font-weight: 500;
-}
-
 /* ── 长度视图：项目选择器 + 全项目一览 ── */
 .scramble-stats-event-bar {
   margin: 0.25rem 0 0.85rem;
-}
-/* 项目/事件选择器(分布模式唯一的项目选择器)— 置顶,紧贴下方「求解/分布」功能行,
-   对齐求解模式项目行在功能行之上的紧凑节奏 */
-.scramble-stats-event-pick {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 0.6rem;
-  margin-bottom: 0.1rem;
-}
-.scramble-stats-event-pick .wca-stats-event-selector {
-  margin: 0.1rem 0 0.2rem;
 }
 .scramble-len-unit {
   margin-left: 0.4rem;
@@ -505,9 +442,6 @@
   gap: 1rem;
   flex-wrap: wrap;
   margin-bottom: 0.7rem;
-}
-.scramble-stats-tabrow .scramble-stats-tabs {
-  margin: 0;
 }
 .scramble-len-merge {
   display: flex;
@@ -614,30 +548,6 @@
   margin-left: auto;
   white-space: nowrap;
 }
-/* 均值 / 中位数 —— 内嵌在过滤行右侧,替代原来图表下的摘要面板 */
-.scramble-stats-inline-summary {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 1.25rem;
-  margin-left: auto;
-}
-.scramble-stats-inline-summary + .scramble-stats-count { margin-left: 0; }
-.scramble-stats-inline-stat {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  white-space: nowrap;
-}
-.scramble-stats-inline-label {
-  font-size: 0.78rem;
-  color: var(--text-sub);
-}
-.scramble-stats-inline-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
 /* 「下载全部」全量语料下载 — 紧跟样本数右侧 */
 .scramble-stats-download-all {
   display: inline-flex;
@@ -722,7 +632,6 @@ html[data-theme=dark] .scramble-stats-page {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  margin-left: auto;          /* 推到顶栏右侧 */
 }
 
 /* ── 首次出现时间线 ── */
