@@ -14,15 +14,19 @@
  */
 import type { AlgPuzzle } from '@cuberoot/shared';
 import { toMoveString } from '@cuberoot/shared/alg-notation';
+import { toWca as skewbToWca } from '@cuberoot/shared/skewb-notation';
 import { canonicalSq1Alg } from '@/lib/sq1-svg';
 
 /** 用 WCA 面/宽/中层/转体记号的魔方 —— 这几种才能走 `toMoveString`。
  *  megaminx(`R++` `D--`)、sq1(`(1,0)/`)是另一套文法,喂进去只会炸。 */
-export const CUBE_NOTATION = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5', 'pyraminx', 'skewb']);
+const CUBE_NOTATION = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5', 'pyraminx', 'skewb']);
 
 /** 严格版:认不出来的记号**抛错**。校验器用 —— 它要把「认不出来」如实报给人看。 */
 export function normalizeAlg(puzzle: AlgPuzzle, alg: string): string {
   if (puzzle === 'sq1') return canonicalSq1Alg(alg);
+  // skewb 库里存的是 Sarah 记号(`R b' r' R'`)。缩略图一直在转,引擎这边以前没转 —— 448 条
+  // 好公式因此被判成语法错 / 没还原。
+  if (puzzle === 'skewb') return toMoveString(skewbToWca(alg, 'sarah'));
   if (!CUBE_NOTATION.has(puzzle)) return alg;
   return toMoveString(alg);
 }

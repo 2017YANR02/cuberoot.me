@@ -1,0 +1,134 @@
+/* 个人页的公式校验汇总(admin only)—— 见 AlgValidationAlert.tsx */
+
+.ava-section {
+  margin-top: 28px;
+}
+
+.ava-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.ava-icon-ok { color: var(--signal-success); }
+.ava-icon-bad { color: var(--destructive); }
+
+.ava-count {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--destructive);
+}
+.ava-count.is-ok { color: var(--muted-foreground); }
+
+.ava-rescan {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.ava-rescan:hover:not(:disabled) { color: var(--accent); }
+.ava-rescan:disabled { cursor: default; opacity: 0.6; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .ava-spin { animation: ava-spin 0.9s linear infinite; }
+}
+@keyframes ava-spin { to { transform: rotate(360deg); } }
+
+.ava-progress,
+.ava-toggle {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.ava-toggle {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.ava-toggle:hover { color: var(--accent); }
+
+.ava-list,
+.ava-rows {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ava-set + .ava-set { margin-top: 14px; }
+
+.ava-set-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.ava-set-name { font-family: var(--font-mono); }
+
+.ava-set-count {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--destructive) 14%, transparent);
+  color: var(--destructive);
+  font-size: 0.72rem;
+}
+
+.ava-rows { margin-top: 4px; }
+
+.ava-row {
+  display: grid;
+  grid-template-columns: minmax(64px, auto) minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--foreground);
+  text-decoration: none;
+}
+.ava-row:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+
+.ava-row-case {
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ava-row-alg {
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--muted-foreground);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ava-row-reason {
+  font-size: 0.72rem;
+  color: var(--destructive);
+  white-space: nowrap;
+}
+
+.ava-row-chev { color: var(--faint-foreground); }
+
+/* 窄屏:公式和原因各占一行,别横向溢出(CLAUDE.md「移动端 / 桌面端都要适配」) */
+@media (max-width: 640px) {
+  .ava-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .ava-row-alg { grid-column: 1 / -1; }
+  .ava-row-reason {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+}

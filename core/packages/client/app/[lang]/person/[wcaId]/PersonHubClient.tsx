@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight, Mars, Venus, Rewind, IdCard, LogOut } from '
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import FollowedComps from '@/components/FollowedComps';
+import AlgValidationAlert from '@/components/AlgValidationAlert';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/name-utils';
 import { countryName } from '@/lib/country-name';
@@ -114,6 +115,9 @@ export default function PersonHubClient() {
           </AppLink>
         ))}
       </nav>
+
+      {/* 公式库校验汇总 —— 组件自己判 admin,非管理员什么都不渲染、也不扫 */}
+      {isSelf && <AlgValidationAlert />}
 
       <FollowedComps wcaId={wcaId} isZh={isZh} lang={isZh ? 'zh' : 'en'} />
     </div>

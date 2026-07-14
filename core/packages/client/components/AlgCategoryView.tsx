@@ -35,6 +35,7 @@ import { stm } from '@cuberoot/shared/alg-notation';
 import { listSubmissions } from '@/lib/alg_api';
 import { reorderCases } from '@/lib/alg_sets_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
+import { scanCases } from '@/lib/alg_validation_scan';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { displayAlgCaseName, primaryCaseName, renameZbllGroupToken } from '@/lib/alg_case_display';
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
@@ -231,6 +232,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
   const [flashId, setFlashId] = useState<number | null>(null);
+  /** 校验不过的 case → 卡片红框。**只给 admin 跑** —— 每个访客的浏览器都跑一遍 cubing.js
+   *  纯属浪费,而红框是给能修的人看的。 */
+  const [invalidIds, setInvalidIds] = useState<Set<number>>(new Set());
   // 筛选 → replace(不往历史里塞;CLAUDE.md「URL 状态」)
   const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
   const animatable = true;
@@ -327,27 +331,57 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     }).catch(e => setError(String(e)));
   }, [puzzleParam, set, validPuzzle, meta]);
 
+  /** admin 才扫。case 改完(validationRefreshKey)重扫,红框跟着消。 */
+  useEffect(() => {
+    if (!isAdmin || !data || !validPuzzle) { setInvalidIds(new Set()); return; }
+    let cancelled = false;
+    scanCases(puzzleParam, set, data.cases, { shouldCancel: () => cancelled })
+      .then(fails => {
+        if (cancelled) return;
+        setInvalidIds(new Set(fails.map(f => f.caseObj.id).filter((x): x is number => x != null)));
+      })
+      .catch(e => console.warn('[alg] validation scan failed', e));
+    return () => { cancelled = true; };
+  }, [isAdmin, data, puzzleParam, set, validPuzzle, validationRefreshKey]);
+
   /**
-   * `#case-<id>` 锚点:从元数据弹窗的「在列表中打开」跳过来(镜像 / 逆多半在别的组),
-   * 落地后滚到那张卡并闪一下 —— 一组七十来个 case,不指出来等于没跳。
-   * (锚点不是页内状态,是 URL 片段,和 nuqs 那条约定不冲突。)
+   * `#case-<id>` 锚点:从元数据弹窗的「在列表中打开」、或个人页的校验汇总跳过来
+   * (镜像 / 逆 / 坏公式多半在别的组),落地后滚到那张卡并闪一下 —— 一组七十来个 case,
+   * 不指出来等于没跳。(锚点不是页内状态,是 URL 片段,和 nuqs 那条约定不冲突。)
+   *
+   * 目标卡在**折叠的组**里(>100 个 case 的 set 默认全折)⟹ 先把那组展开,否则
+   * `getElementById` 拿到 null,跳转静默失败。
    */
   useEffect(() => {
     if (!data) return;
-    const jump = () => {
+    const targetId = () => {
       const hit = /^#case-(\d+)$/.exec(window.location.hash);
-      if (!hit) return;
-      const id = Number(hit[1]);
+      return hit ? Number(hit[1]) : null;
+    };
+    const jump = () => {
+      const id = targetId();
+      if (id == null) return;
       const el = document.getElementById(`case-${id}`);
       if (!el) return;
       el.scrollIntoView({ block: 'center', behavior: 'smooth' });
       setFlashId(id);
       window.setTimeout(() => setFlashId(cur => (cur === id ? null : cur)), 1800);
     };
+    const id = targetId();
+    if (id != null) {
+      const target = data.cases.find(c => c.id === id);
+      if (target) setCollapsedGroups(prev => {
+        const g = target.subgroup || '';
+        if (!prev.has(g)) return prev;
+        const next = new Set(prev);
+        next.delete(g);
+        return next;
+      });
+    }
     const t = window.setTimeout(jump, 80); // 等卡片渲染完(缩略图是异步的,但布局已定)
     window.addEventListener('hashchange', jump);
     return () => { window.clearTimeout(t); window.removeEventListener('hashchange', jump); };
-  }, [data, subgroupParam]);
+  }, [data, subgroupParam, collapsedGroups]);
 
   const subgroupSlug = subgroupParam ? decodeURIComponent(subgroupParam).toLowerCase() : null;
   const slugLevel: 'top' | 'sub' | null = useMemo(() => {
@@ -594,8 +628,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                   return (
                     <SortableCaseCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
                     <article
-                      className={`alg-case${flashId === c.id ? ' is-flash' : ''}`}
+                      className={`alg-case${flashId === c.id ? ' is-flash' : ''}${c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
                       id={c.id != null ? `case-${c.id}` : undefined}
+                      title={c.id != null && invalidIds.has(c.id)
+                        ? tr({ zh: '这个 case 有公式校验不通过', en: 'This case has failing algs' })
+                        : undefined}
                     >
                       {isAdmin && c.id != null && (
                         <button
@@ -684,6 +721,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                         caseName={c.name}
                         sticker={c.sticker}
                         setup={c.setup}
+                        firstAlg={c.algs[0]?.[0]?.alg}
                         submissions={submissionsByCase.get(c.name) ?? []}
                         onPatch={(action) => {
                           setSubmissions(prev => {
