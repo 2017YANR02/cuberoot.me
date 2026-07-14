@@ -603,7 +603,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
         )}
         {data && !showSubgroupPicker && (
           <Link href={`/alg/${puzzleParam}/${set}/select`} className="alg-train-cta" prefetch={false}>
-            <Flag size={14} /> {tr({ zh: '开始训练', en: 'Train' })}
+            <Flag size={14} /> {tr({ zh: '训练', en: 'Train' })}
           </Link>
         )}
         {isAdmin && data && !showSubgroupPicker && (
@@ -614,7 +614,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
               onClick={() => setEditorState({ mode: 'add' })}
               title={tr({ zh: '新增 case (admin)', en: 'Add case (admin)' })}
             >
-              <Plus size={14} /> {tr({ zh: '新增 case', en: 'Add case' })}
+              <Plus size={14} />
             </button>
             <button
               type="button"
