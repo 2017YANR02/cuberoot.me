@@ -5,8 +5,10 @@
  * Full port of packages/client-vite/src/pages/recon/ReconSubmitPage.tsx to Next.js.
  * Auto-fill (avg / single / record), duplicate check, WCIF round options,
  * BLD exec/memo derivation, scramble↔URL roundtrip, danger-zone delete,
- * collapsible sections, virtual keyboard, TwistyPlayer live preview,
- * <AlgInput> autoSpace input + <ReconAutofill> Tab suggestions.
+ * collapsible sections, virtual keyboard, TwistyPlayer live preview.
+ * Live preview (ReconPlayerPane) and the solution input (ReconSolutionField —
+ * AlgInput + ReconAutofill + virtual keyboard) are shared with the
+ * add/edit-alternative form (AltSubmitForm) so both stay UI/UX-identical.
  */
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
@@ -26,13 +28,10 @@ import { CountryInput } from '@/components/CountryInput/CountryInput';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { EventSelect } from '@/components/EventSelect';
 import { RecordSelect } from '@/components/RecordSelect';
-import TwistySection from '@/components/TwistySection';
-import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
-import CuberReconPlayer from '@/components/CuberReconPlayer';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
-import AlgInput from '@/components/AlgInput';
 import SolutionView from '@/components/SolutionView';
-import ReconAutofill from '@/components/ReconAutofill';
+import ReconPlayerPane from '@/components/ReconPlayerPane';
+import ReconSolutionField, { type ReconSolutionFieldHandle } from '@/components/ReconSolutionField';
 import ReconReuseModal from './ReconReuseModal';
 import ScramblePicker from './ScramblePicker';
 import { useAuthStore } from '@/lib/auth-store';
@@ -58,14 +57,11 @@ import {
 } from '@/lib/wca-person-api';
 import { mergePersonLive } from '@/lib/person-live-merge';
 import { computePrRank } from '@/components/persons/logic/progress';
-import {
-  cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount, normalizeSolutionSlashes,
-  findIllegalNotationChars,
-} from '@/lib/recon-alg-utils';
+import { syncReconPlayerCursorFromText, findIllegalNotationChars } from '@/lib/recon-alg-utils';
 import { buildNormalizedSolution, hasWideMoveInCrossSection } from '@/lib/recon-norm-cross-extract';
 import { encodeUrlAlg, decodeUrlAlg } from '@/lib/cubedb-url';
 import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
-import { parseSq1Tokens, formatScrambleForEvent } from '@/lib/sq1-svg';
+import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { ArrowLeft, ArrowRightLeft, Box, History, Home, Loader2, LogIn, UserPlus, ListPlus, AlertTriangle } from 'lucide-react';
@@ -179,7 +175,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
   }, [flagVer]);
 
-  const solutionRef = useRef<HTMLTextAreaElement>(null);
+  const solutionFieldRef = useRef<ReconSolutionFieldHandle>(null);
 
   const [form, setForm] = useState<Partial<ReconSolve>>({
     official: 'wca',
@@ -310,13 +306,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       // default (item 4) clobber it once personId/event are resolved.
       setMethodUserTouched(true);
       setCubeUserTouched(true);
-      if (solutionRef.current && solve.solution) {
-        solutionRef.current.value = solve.solution;
-        autoResize(solutionRef.current);
-      }
+      if (solve.solution) solutionFieldRef.current?.setText(solve.solution);
       setLoadingEdit(false);
     }).catch(() => setLoadingEdit(false));
-  }, [editId, isEditing, autoResize]);
+  }, [editId, isEditing]);
 
   // ── ?from= prefill ──
   useEffect(() => {
@@ -384,10 +377,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       optimalScramble: optimal || prev.optimalScramble || '',
       solution: solution || prev.solution || '',
     }));
-    if (solutionRef.current && solution) {
-      solutionRef.current.value = solution;
-      autoResize(solutionRef.current);
-    }
+    if (solution) solutionFieldRef.current?.setText(solution);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -1232,29 +1222,6 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     }));
   }, [authUser]);
 
-  // ── Puzzle id ──
-  const puzzle = useMemo(() => {
-    if (!form.event) return '3x3x3';
-    const ev = form.event;
-    if (ev.includes('3x3') || ev.includes('3bld') || ev === 'fmc' || ev === 'oh') return '3x3x3';
-    if (ev.includes('2x2')) return '2x2x2';
-    if (ev.includes('4x4') || ev.includes('4bld')) return '4x4x4';
-    if (ev.includes('5x5') || ev.includes('5bld')) return '5x5x5';
-    if (ev.includes('6x6')) return '6x6x6';
-    if (ev.includes('7x7')) return '7x7x7';
-    if (ev === 'mega') return 'megaminx';
-    if (ev === 'pyra') return 'pyraminx';
-    if (ev === 'skewb') return 'skewb';
-    if (ev === 'sq1') return 'square1';
-    if (ev === 'clock') return 'clock';
-    return '3x3x3';
-  }, [form.event]);
-
-  // NxN puzzles can render with either engine (cuber / cubing.js); everything
-  // else is fixed (SQ1 → cuber-only Sq1ReconPlayer, twisty/clock → cubing.js).
-  const isNxnPuzzle = /^[2-7]x[2-7]x[2-7]$/.test(puzzle);
-  const nxnOrder = isNxnPuzzle ? parseInt(puzzle, 10) : 3;
-
   // ── Normalized cross toggle ──
   const [normalized, setNormalized] = useState(false);
   const canNormalize = useMemo(
@@ -1269,107 +1236,20 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     return buildNormalizedSolution(orig) ?? orig;
   }, [form.solution, normalized, canNormalize]);
 
-  // ── Debounced player inputs ──
-  const [debouncedScramble, setDebouncedScramble] = useState(form.wcaScramble || form.optimalScramble || '');
-  const [debouncedSolution, setDebouncedSolution] = useState(displaySolution);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedScramble(form.wcaScramble || form.optimalScramble || '');
-      setDebouncedSolution(displaySolution);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [form.wcaScramble, form.optimalScramble, displaySolution]);
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
 
-  // Render engine for NxN previews — cuber (the /sim look, back view forced) vs
-  // cubing.js. User-selectable; persisted. Other puzzles ignore it.
-  const [reconEngine, setReconEngine] = useState<'cuber' | 'cubing'>(() => {
-    if (typeof window === 'undefined') return 'cuber';
-    try { return localStorage.getItem('recon.player.engine') === 'cubing' ? 'cubing' : 'cuber'; }
-    catch { return 'cuber'; }
-  });
-  const pickEngine = useCallback((e: 'cuber' | 'cubing') => {
-    setReconEngine(e);
-    try { localStorage.setItem('recon.player.engine', e); } catch { /* private */ }
-  }, []);
-
-  const handleCursorSync = useCallback((el: HTMLTextAreaElement) => {
-    const player = playerRef.current;
-    if (!player) return;
-    const offset = el.selectionStart;
-    const textBefore = el.value.substring(0, offset);
-    // SQ1 uses the cuber-engine player (Sq1ReconPlayer): count tuple/slice
-    // tokens directly — extractAlgFromText/cleanForPlayer would strip the
-    // `(t,b)` parens SQ1 notation depends on.
-    if (player.__kind === 'sq1') {
-      player.jumpToMoveCount?.(parseSq1Tokens(textBefore).length);
-      return;
-    }
-    const algBefore = extractAlgFromText(textBefore);
-    const moves = algBefore.trim().split(/\s+/).filter(s => s.length > 0);
-    // The cuber NxN player scrubs by whitespace move count (same as below);
-    // cubing.js goes through its own timeline mapping.
-    if (player.__kind === 'nxn-cuber') {
-      player.jumpToMoveCount?.(moves.length);
-      return;
-    }
-    syncPlayerToMoveCount(player, moves.length);
-  }, [playerRef]);
-
   // Shared player render — used in both the desktop pane and the mobile inline
-  // slot. Picks the engine per puzzle and forces the back view on everywhere.
-  const renderReconPlayer = () => {
-    if (!form.event) return null;
-    const engineToggle = isNxnPuzzle ? (
-      <div className="submit-engine-toggle" role="radiogroup" aria-label={tr({ zh: '渲染引擎', en: 'Render engine' })}>
-        <button
-          type="button" role="radio" aria-checked={reconEngine === 'cuber'}
-          className={`submit-engine-opt${reconEngine === 'cuber' ? ' active' : ''}`}
-          onClick={() => pickEngine('cuber')}
-        >cuberoot</button>
-        <button
-          type="button" role="radio" aria-checked={reconEngine === 'cubing'}
-          className={`submit-engine-opt${reconEngine === 'cubing' ? ' active' : ''}`}
-          onClick={() => pickEngine('cubing')}
-        >cubing.js</button>
-      </div>
-    ) : null;
-    let player: React.ReactNode;
-    if (form.event === 'sq1') {
-      player = (
-        <Sq1ReconPlayer scramble={debouncedScramble} alg={debouncedSolution} playerRef={playerRef} fillPane backView />
-      );
-    } else if (isNxnPuzzle && reconEngine === 'cuber') {
-      player = (
-        <CuberReconPlayer
-          scramble={debouncedScramble}
-          alg={cleanForPlayer(debouncedSolution)}
-          order={nxnOrder}
-          playerRef={playerRef}
-          fillPane
-        />
-      );
-    } else {
-      player = (
-        <TwistySection
-          puzzle={puzzle}
-          scramble={debouncedScramble}
-          alg={cleanForPlayer(debouncedSolution)}
-          playerRef={playerRef}
-          fillPane
-          backView
-        />
-      );
-    }
-    return <>{engineToggle}{player}</>;
-  };
-
-  useEffect(() => {
-    if (solutionRef.current) handleCursorSync(solutionRef.current);
-  }, [debouncedSolution, handleCursorSync]);
+  // slot. ReconPlayerPane picks the engine per puzzle, debounces internally,
+  // and forces the back view — shared with the add/edit-alternative form.
+  const renderReconPlayer = () => (
+    <ReconPlayerPane
+      event={form.event}
+      scramble={form.wcaScramble || form.optimalScramble || ''}
+      solution={displaySolution}
+      playerRef={playerRef}
+    />
+  );
 
   // ── Submit ──
   // 校验解法 / 打乱里的非法字符(注释 `//` 之外只允许 ASCII)。合法返回 null,
@@ -2073,73 +1953,19 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   crossNormalized={true}
                 />
               ) : (
-                <AlgInput
-                  // Underlying textarea: AlgInput exposes it via elementRef (markable=false).
-                  // Cast is safe because we always render textarea here.
-                  elementRef={solutionRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
-                  initialText={form.solution || ''}
-                  className="submit-field-textarea submit-solution-textarea"
-                  rows={6}
-                  spellCheck={false}
-                  autoSpace
-                  autoResize
-                  style={{ overflow: 'hidden', resize: 'none', fontFamily: 'monospace' }}
-                  onChange={(text) => {
-                    setField('solution', text);
-                    if (solutionRef.current) handleCursorSync(solutionRef.current);
-                  }}
-                  onCaretChange={() => {
-                    if (solutionRef.current) handleCursorSync(solutionRef.current);
-                  }}
-                  onClick={() => {
-                    if (solutionRef.current) handleCursorSync(solutionRef.current);
-                  }}
-                  onFocus={() => setActiveVkbField('solution')}
-                  onBlur={() => {
-                    setActiveVkbField(f => f === 'solution' ? null : f);
-                    const el = solutionRef.current;
-                    if (!el) return;
-                    const next = normalizeSolutionSlashes(el.value);
-                    if (next !== el.value) {
-                      el.value = next;
-                      setField('solution', next);
-                      autoResize(el);
-                    }
-                  }}
-                />
-              )}
-              {!normalized && (
-                <ReconAutofill
-                  textareaRef={solutionRef}
+                <ReconSolutionField
+                  ref={solutionFieldRef}
                   value={form.solution || ''}
-                  setValue={(next) => {
-                    setField('solution', next);
-                    if (solutionRef.current) {
-                      solutionRef.current.value = next;
-                      autoResize(solutionRef.current);
-                      handleCursorSync(solutionRef.current);
-                    }
-                  }}
+                  onChange={(text) => setField('solution', text)}
+                  onCaretSync={(textBefore) => syncReconPlayerCursorFromText(playerRef.current, textBefore)}
                   scramble={form.wcaScramble || form.optimalScramble || ''}
                   isMobile={isMobile}
+                  mobileKeyboardVisible={activeVkbField === 'solution'}
+                  onFocusField={() => setActiveVkbField('solution')}
+                  onBlurField={() => setActiveVkbField(f => f === 'solution' ? null : f)}
                 />
               )}
             </div>
-
-            {/* Virtual keyboard (mobile: follows focus among wca/optimal/solution; desktop toggleable) */}
-            {!normalized && (
-              <CubeKeyboardSection
-                target={solutionRef}
-                mobileVisible={activeVkbField === 'solution'}
-                onInput={() => {
-                  if (solutionRef.current) {
-                    setField('solution', solutionRef.current.value);
-                    autoResize(solutionRef.current);
-                    handleCursorSync(solutionRef.current);
-                  }
-                }}
-              />
-            )}
 
             <div className="submit-row">
                 <label className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>
