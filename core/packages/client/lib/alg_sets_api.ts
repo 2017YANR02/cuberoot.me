@@ -36,6 +36,32 @@ export async function updateCase(puzzle: string, set: string, id: number, body: 
   return handle<AlgCase>(r);
 }
 
+/**
+ * 一个 case 内部的**公式顺序**(第一条是主推解法,顺序有意义)。
+ *
+ * 没有专门的端点,也不需要:PUT case 的 UPDATE 只写 name/subgroup/setup/standard/
+ * sticker/algs/ori_names/trainer_key —— `meta` / `number` / `position` 它不碰,
+ * 拿整条 case 回写不会顺手抹掉别的字段。
+ */
+export async function reorderCaseAlgs(
+  puzzle: string,
+  set: string,
+  c: AlgCase,
+  algs: AlgCase['algs'],
+): Promise<AlgCase> {
+  if (c.id == null) throw new Error('case has no id');
+  return updateCase(puzzle, set, c.id, {
+    caseName: c.name,
+    subgroup: c.subgroup ?? '',
+    setup: c.setup ?? '',
+    standard: c.standard ?? null,
+    sticker: c.sticker,
+    algs,
+    oriNames: c.oriNames ?? null,
+    trainerKey: c.trainerKey ?? null,
+  });
+}
+
 export async function reorderCases(puzzle: string, set: string, ids: number[]): Promise<{ ok: boolean }> {
   const r = await fetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/reorder`,
