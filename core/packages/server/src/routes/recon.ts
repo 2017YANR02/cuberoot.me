@@ -14,12 +14,23 @@ import {
 } from '../utils/recon_helpers.js';
 import { fetchCubingAttempts } from '../utils/cubing_proxy.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
+import { notify, adminRecipients } from '../utils/notify.js';
 
 export const reconRoutes = new Hono();
 
 /** 从 Hono Context 提取客户端 IP（Nginx 反代场景用 X-Real-IP） */
 function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
   return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
+}
+
+/** 通知用的 recon 抬头 + 站内链接。id 段即可打开详情页(前端 parseReconId 兼容 slug)。 */
+async function reconNotifyMeta(reconId: number): Promise<{ title: string; link: string }> {
+  const rows = await query<{ person: string | null; event: string | null; comp: string | null }>(
+    'SELECT person, event, comp FROM recons WHERE id = ?', [reconId],
+  );
+  const r = rows[0];
+  const title = [r?.person, r?.event, r?.comp].filter(Boolean).join(' ') || `#${reconId}`;
+  return { title, link: `/recon/${reconId}` };
 }
 
 // ==================== GET /v1/recon/list ====================
@@ -324,6 +335,31 @@ reconRoutes.post('/recon/comments', async (c) => {
      RETURNING id`,
     [body.reconId, authUser.wcaId, authUser.name, content, Math.floor(Date.now() / 1000), parentId]
   );
+
+  // 通知:被回复者收「回复」,管理员收「新评论」。两者互斥去重(admin 恰是被回复者时只收回复)。
+  // 整段 best-effort —— 通知挂了不能连累已经落库的评论。
+  try {
+    const { title, link } = await reconNotifyMeta(Number(body.reconId));
+    let parentAuthor: string | null = null;
+    if (parentId != null) {
+      const rows = await query<{ author_id: string }>(
+        'SELECT author_id FROM comments WHERE id = ?', [parentId]
+      );
+      parentAuthor = rows[0]?.author_id ?? null;
+    }
+    const base = { actorKey: authUser.wcaId, actorName: authUser.name, title, excerpt: content, link };
+    if (parentAuthor) {
+      await notify({ ...base, kind: 'recon_reply', recipients: [parentAuthor] });
+    }
+    await notify({
+      ...base,
+      kind: 'recon_comment',
+      recipients: adminRecipients().filter((a) => a !== parentAuthor),
+    });
+  } catch (e) {
+    console.warn('[recon] comment notify failed:', (e as Error).message);
+  }
+
   return c.json({ ok: true, id: Number(result[0].id) });
 });
 
@@ -1057,6 +1093,23 @@ reconRoutes.post('/recon/:id/alternatives', async (c) => {
     createdAt: Math.floor(Date.now() / 1000),
   });
   await saveAlternatives(id, alts);
+
+  // 另解没有「被回复者」,只通知管理员。best-effort,不连累已保存的另解。
+  try {
+    const { title, link } = await reconNotifyMeta(Number(id));
+    await notify({
+      recipients: adminRecipients(),
+      kind: 'recon_alt',
+      actorKey: authUser.wcaId,
+      actorName: authUser.name,
+      title,
+      excerpt: solution,
+      link,
+    });
+  } catch (e) {
+    console.warn('[recon] alternative notify failed:', (e as Error).message);
+  }
+
   return c.json({ alternatives: alts });
 });
 
