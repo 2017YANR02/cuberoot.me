@@ -29,12 +29,34 @@
 import { describe, it, expect } from 'vitest';
 import { Project, SyntaxKind, Node } from 'ts-morph';
 import { fileURLToPath } from 'node:url';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
+const SRC_DIRS = ['app', 'components', 'lib', 'hooks'];
 const HAS_CJK = /[㐀-鿿豈-﫿]/;
 
 const refsLanguage = (t: string) => /\.language\b/.test(t);
+
+// 预筛:只有原文出现 `.language` 的文件才可能违规。senseOfTest 的四条分支
+// (`.startsWith` / `===` / `isZh` / `!isZh`)最终都要 refsLanguage(节点文本) 为真
+// ——`isZh` 那两条也要,因为 isGlobalLangIdent 只认「同文件内由 .language 初始化的 const」——
+// 而节点文本必是文件文本的子串,故 refsLanguage(原文) 为假 ⇒ 该文件零违规。这是**充分**判据,
+// 不是抽样:筛掉的文件里不可能藏东西。1566 → ~180 个文件,建 AST(这条守卫的全部开销)省九成。
+//
+// ⚠ 以后给 senseOfTest 加不经过 refsLanguage 的新分支,这里的预筛必须跟着放宽,否则新分支
+//   根本扫不到自己该扫的文件 —— 守卫会静默失效。
+function candidatePaths(): string[] {
+  const out: string[] = [];
+  for (const d of SRC_DIRS) {
+    for (const e of readdirSync(join(ROOT, d), { recursive: true, withFileTypes: true })) {
+      if (!e.isFile() || !/\.tsx?$/.test(e.name)) continue;
+      const p = join(e.parentPath, e.name);
+      if (refsLanguage(readFileSync(p, 'utf8'))) out.push(p);
+    }
+  }
+  return out;
+}
 
 // `isZh` is the GLOBAL UI language only when it's a const initialised from
 // `.language` in this file — NOT a function parameter / prop (that carries an
@@ -117,9 +139,7 @@ describe('i18n: no new inline UI-language text ternaries (use tr / <T> / useT / 
     const BASELINE = 0;
 
     const project = new Project({ skipAddingFilesFromTsConfig: true });
-    for (const d of ['app', 'components', 'lib', 'hooks']) {
-      project.addSourceFilesAtPaths([join(ROOT, d, '**/*.tsx'), join(ROOT, d, '**/*.ts')]);
-    }
+    for (const p of candidatePaths()) project.addSourceFileAtPath(p);
     const offenders: string[] = [];
     for (const sf of project.getSourceFiles()) {
       for (const ce of sf.getDescendantsOfKind(SyntaxKind.ConditionalExpression)) {
