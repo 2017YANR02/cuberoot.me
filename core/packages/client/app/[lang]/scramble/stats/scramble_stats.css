@@ -141,6 +141,8 @@
   font-size: 0.8rem;
   color: var(--text-sub);
 }
+/* 本页 light-locked(页级 --surface),底色菜单浮层不能吃全局 --popover(可能是暗的) */
+.scramble-stats-color-control .subset-picker { --sp-surface: var(--surface); }
 
 /* 直方图自身样式（.scramble-hist-* + 图例）已抽到 _components/DiscreteHistogram.css，
    随组件 import，可跨页复用。此处仅保留页面级容器 .scramble-stats-chart-wrapper。 */

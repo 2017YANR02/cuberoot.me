@@ -1,10 +1,11 @@
 'use client';
 
-// 底色子集选择器 — 模式下拉(六色/四色/双色/单色)+ 方形色块。
+// 底色子集选择器 — 一个下拉:按钮显示当前子集(色块 + 模式名),菜单里四档模式各一行,
+// 每行摊开该模式的全部色块,点色块 = 同时定模式和子集。
 // /scramble/stats 与首页 RecentScrambles 共用(单一来源:子集 key 推导 + 魔方色常量 + 渐变序)。
-// 主题无关:用 currentColor 派生边框 + var(--accent) 选中态(两页都有 --accent),不碰 --background/--foreground
-// (stats 页 light-locked 用页级 --bg/--text,RecentScrambles 用全局 token)。
-import { useMemo, useState } from 'react';
+// 主题无关:边框/文字走 currentColor 派生 + var(--accent) 选中态;菜单面板背景走局部 token
+// --sp-surface(默认 var(--popover),light-locked 的 stats / StageSolver 在各自 CSS 里覆盖成页内 surface)。
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import './SubsetColorPicker.css';
 import { tr } from '@/i18n/tr';
 
@@ -53,7 +54,8 @@ export function SubsetSwatch({ colors }: { colors: ColorLetter[] }) {
   return <span className="subset-swatch-tile" style={{ background: `conic-gradient(from -90deg, ${stops})` }} />;
 }
 
-const MODE_ORDER: ColorMode[] = ['dual', 'single', 'cn', 'quad'];
+// 菜单里的行序:按底色数从多到少(六 → 四 → 双 → 单),色块行也随之从 1 个铺到 6 个。
+const MODE_ORDER: ColorMode[] = ['cn', 'quad', 'dual', 'single'];
 const MODE_LABEL: Record<ColorMode, { zh: string; en: string
  }> = {
   cn: { zh: '六色', en: 'CN' },
@@ -65,6 +67,25 @@ const MODE_LABEL: Record<ColorMode, { zh: string; en: string
 };
 
 export interface SubsetOption { id: string; key: string; colors: ColorLetter[] }
+
+/** 某档模式下的全部子集选项(菜单一次摊开四档,所以要能脱离当前 mode 取)。 */
+export function subsetOptionsFor(mode: ColorMode): SubsetOption[] {
+  switch (mode) {
+    case 'single':
+      // 白/黄放前(GRADIENT_ORDER,与直方图配色序一致),不用 COLOR_LETTERS 的字母序。
+      return GRADIENT_ORDER.map((c) => ({ id: c, key: c, colors: [c] }));
+    case 'dual':
+      return DUAL_PAIRS.map((p) => ({ id: p.key, key: subsetKeyFromLetters(p.letters), colors: [...p.letters] }));
+    case 'quad':
+      return DUAL_PAIRS.map((p) => {
+        const cs = COLOR_LETTERS.filter((c) => !(p.letters as string[]).includes(c));
+        return { id: p.key, key: subsetKeyFromLetters(cs), colors: cs };
+      });
+    case 'cn':
+    default:  // 六色 = 用全部色,无子选,单个「全色」块代表这一档
+      return [{ id: 'cn', key: subsetKeyFromLetters([...COLOR_LETTERS]), colors: [...COLOR_LETTERS] }];
+  }
+}
 export interface SubsetSelection {
   colorMode: ColorMode;
   setColorMode: (m: ColorMode) => void;
@@ -116,22 +137,19 @@ export function useSubsetSelection(initialMode: ColorMode = 'cn', initialSubsetK
 
     switch (colorMode) {
       case 'single':
-        options = COLOR_LETTERS.map((c) => ({ id: c, key: c, colors: [c] }));
+        options = subsetOptionsFor('single');
         activeOptionId = singleColor;
         selectedColors = [singleColor];
         selectOption = (id) => setSingleColor(id as ColorLetter);
         break;
       case 'dual':
-        options = DUAL_PAIRS.map((p) => ({ id: p.key, key: subsetKeyFromLetters(p.letters), colors: [...p.letters] }));
+        options = subsetOptionsFor('dual');
         activeOptionId = dualPairKey;
         selectedColors = [...(DUAL_PAIRS.find((p) => p.key === dualPairKey) ?? DUAL_PAIRS[0]).letters];
         selectOption = (id) => setDualPairKey(id);
         break;
       case 'quad':
-        options = DUAL_PAIRS.map((p) => {
-          const cs = COLOR_LETTERS.filter((c) => !(p.letters as string[]).includes(c));
-          return { id: p.key, key: subsetKeyFromLetters(cs), colors: cs };
-        });
+        options = subsetOptionsFor('quad');
         activeOptionId = quadExcludedPairKey;
         {
           const p = DUAL_PAIRS.find((x) => x.key === quadExcludedPairKey) ?? DUAL_PAIRS[0];
@@ -163,41 +181,80 @@ export function useSubsetSelection(initialMode: ColorMode = 'cn', initialSubsetK
 }
 
 export function SubsetColorPicker({ sel, isZh, className }: { sel: SubsetSelection; isZh: boolean; className?: string }) {
-  const colorTitle = (colors: ColorLetter[]) => colors.map((c) => COLOR_NAME[c][isZh ? 'zh' : 'en']).join(isZh ? '' : '+');
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  // 开着时:点外面 / Esc 关掉(Esc 焦点还给按钮)。
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      btnRef.current?.focus();
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const colorTitle = (colors: ColorLetter[]) =>
+    (colors.length === COLOR_LETTERS.length
+      ? tr({ zh: '色中性 全部 6 色', en: 'Color-neutral, all six' })
+      : colors.map((c) => COLOR_NAME[c][isZh ? 'zh' : 'en']).join(isZh ? '' : '+'));
+  const modeName = MODE_LABEL[sel.colorMode][isZh ? 'zh' : 'en'];
+  const curTitle = colorTitle(sel.selectedColors);
+
   return (
-    <div className={`subset-picker${className ? ` ${className}` : ''}`}>
-      <select
-        className="subset-picker-mode"
-        value={sel.colorMode}
-        onChange={(e) => sel.setColorMode(e.target.value as ColorMode)}
-        aria-label={tr({ zh: '底色模式', en: 'Color mode' })}
+    <div ref={rootRef} className={`subset-picker${className ? ` ${className}` : ''}`}>
+      <button
+        ref={btnRef}
+        type="button"
+        className={`subset-picker-mode${open ? ' is-open' : ''}`}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label={`${tr({ zh: '底色', en: 'Bottom color' })}: ${modeName} ${curTitle}`}
+        title={curTitle}
       >
-        {MODE_ORDER.map((m) => (
-          <option key={m} value={m}>{MODE_LABEL[m][isZh ? 'zh' : 'en']}</option>
-        ))}
-      </select>
-      <div className="subset-picker-swatches" role="group" aria-label={tr({ zh: '底色', en: 'Bottom color' })}>
-        {sel.options.length === 0
-          // 六色(色中性):一个划分方格 tile,与 dual/quad 同视觉语言
-          ? (
-              <span className="subset-swatch is-static" title={tr({ zh: '色中性 全部 6 色', en: 'Color-neutral, all six' })}>
-                <SubsetSwatch colors={COLOR_LETTERS} />
-              </span>
-            )
-          : sel.options.map((opt) => (
-              <button
-                key={opt.id}
-                type="button"
-                className={`subset-swatch${opt.id === sel.activeOptionId ? ' is-active' : ''}`}
-                onClick={() => sel.selectOption(opt.id)}
-                title={colorTitle(opt.colors)}
-                aria-label={colorTitle(opt.colors)}
-                aria-pressed={opt.id === sel.activeOptionId}
-              >
-                <SubsetSwatch colors={opt.colors} />
-              </button>
-            ))}
-      </div>
+        <span className="subset-swatch is-static" aria-hidden="true"><SubsetSwatch colors={sel.selectedColors} /></span>
+      </button>
+
+      {open && (
+        <div className="subset-picker-panel" role="group" aria-label={tr({ zh: '底色', en: 'Bottom color' })}>
+          {/* 两列网格(模式名 | 色块行),行用 Fragment 直接摊进网格 = 四档模式名左边缘自动对齐。 */}
+          {MODE_ORDER.map((m) => (
+            <Fragment key={m}>
+              <span className="subset-picker-name is-row">{MODE_LABEL[m][isZh ? 'zh' : 'en']}</span>
+              <div className="subset-picker-swatches">
+                {subsetOptionsFor(m).map((opt) => {
+                  const active = opt.key === sel.subsetKey;
+                  return (
+                    <button
+                      key={`${m}-${opt.id}`}
+                      type="button"
+                      className={`subset-swatch${active ? ' is-active' : ''}`}
+                      // 直接按 subsetKey 定位 = 一次点击同时定模式和子选。
+                      onClick={() => { sel.selectByKey(opt.key); setOpen(false); btnRef.current?.focus(); }}
+                      title={colorTitle(opt.colors)}
+                      aria-label={colorTitle(opt.colors)}
+                      aria-pressed={active}
+                    >
+                      <SubsetSwatch colors={opt.colors} />
+                    </button>
+                  );
+                })}
+              </div>
+            </Fragment>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
