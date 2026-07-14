@@ -698,6 +698,39 @@ html[data-theme=dark] .alg-root {
 .alg-case-drag-handle:hover { color: var(--accent); border-color: var(--accent); }
 .alg-case-drag-handle:active { cursor: grabbing; }
 
+/* 公式行的拖动 handle(admin)—— 第一条公式是主推解法,顺序得能改。
+   压在行的左内侧、平时半隐:行本身是「点了播动画」的按钮,handle 不能把它顶变形,
+   也不该在四条公式旁边杵四个大灰块。悬停 / 拖动时才显形。 */
+.alg-alg-sortable { position: relative; touch-action: none; }
+.alg-alg-drag-handle {
+  position: absolute;
+  top: 50%;
+  left: -2px;
+  z-index: 5;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--faint-foreground);
+  opacity: 0;
+  cursor: grab;
+  touch-action: none;
+}
+.alg-alg-sortable:hover .alg-alg-drag-handle,
+.alg-alg-drag-handle:focus-visible { opacity: 1; }
+.alg-alg-drag-handle:hover { color: var(--accent); }
+.alg-alg-drag-handle:active { cursor: grabbing; }
+/* handle 占的那点位置从行的左内边距里让出来,别把公式文本挤动 */
+.alg-alg-sortable .alg-alg-row { padding-left: 18px; }
+/* 触屏没有 hover:一直显出来,否则管理员在手机上根本拖不动 */
+@media (hover: none) {
+  .alg-alg-drag-handle { opacity: 1; }
+}
+
 /* === Validation report modal === */
 .alg-validation-modal {
   max-width: 720px;
