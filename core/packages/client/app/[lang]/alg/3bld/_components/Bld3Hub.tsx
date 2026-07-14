@@ -1,9 +1,6 @@
 'use client';
 
-// Shared 3BLD module grid — rendered both as the standalone hub page
-// (/alg/3bld) and inline on /trainer when the puzzle selector is set to
-// 三盲/3BLD. `embedded` drops the page-level wrapper + big title so it nests
-// cleanly under the /trainer landing.
+// 3BLD module grid — the standalone hub page at /alg/3bld.
 
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -126,24 +123,20 @@ function TimerLink({}: { isZh: boolean }) {
   );
 }
 
-function HubBody({ isZh, embedded }: { isZh: boolean; embedded: boolean }) {
+function HubBody({ isZh }: { isZh: boolean }) {
   return (
     <>
-      {!embedded && (
-        <div className="bld-topbar">
-          <h1><EventIcon event="333bf" /> {tr({ zh: '盲拧训练', en: '3BLD Trainer'
+      <div className="bld-topbar">
+        <h1><EventIcon event="333bf" /> {tr({ zh: '盲拧训练', en: '3BLD Trainer'
         })}</h1>
-          <span className="bld-spacer" />
-          <TimerLink isZh={isZh} />
-        </div>
-      )}
+        <span className="bld-spacer" />
+        <TimerLink isZh={isZh} />
+      </div>
 
       <p className="bld-hub-intro">
         {tr({ zh: '三阶盲拧全套训练：读码还原、棱角公式、浮动缓冲、编组、奇偶，以及记忆默写与公式库。', en: 'Full 3BLD training suite: read-code helper, edge/corner drills, floating buffer, 2-2 swaps, parity, plus memory recall and a commutator library.'
         })}
       </p>
-
-      {embedded && <div className="bld-hub-embed-actions"><TimerLink isZh={isZh} /></div>}
 
       {GROUPS.map((group) => (
         <section key={group.en} className="bld-hub-group">
@@ -169,16 +162,13 @@ function HubBody({ isZh, embedded }: { isZh: boolean; embedded: boolean }) {
   );
 }
 
-export function Bld3Hub({ embedded = false }: { embedded?: boolean }) {
+export function Bld3Hub() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
 
-  if (embedded) {
-    return <div className="bld-hub-embed">{<HubBody isZh={isZh} embedded />}</div>;
-  }
   return (
     <div className="bld-trainer-root">
-      <HubBody isZh={isZh} embedded={false} />
+      <HubBody isZh={isZh} />
     </div>
   );
 }

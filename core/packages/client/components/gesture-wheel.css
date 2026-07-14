@@ -1,5 +1,5 @@
 /* ── Radial gesture wheel (cstimer-style press-and-drag dial) ──────
-   Shared by /timer (SoloView) and /trainer run. Class names are neutral
+   Shared by /timer (SoloView) and the /alg trainer run page. Class names are neutral
    so any timing surface can reuse it. Tokens only — theme-correct. */
 .gesture-wheel {
   position: fixed;

@@ -27,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Score Calculator | `/calc` | client `app/[lang]/calc/` | ported from carykh/hthgrapher | ✅ |
 | 1v1 Battle | `/battle` | client | ported from MatteoColombo/cube_challenge_timer | ✅ |
 | Recon | `/recon` | client | 自有 | ✅ |
-| Trainer | `/trainer` | client | 自有 | ✅ |
+| Trainer | `/alg`(公式库内,`/alg/:p/:s/select` + `/alg/{3bld,roux,skewb-trainer}`) | client | 自有 | ✅ |
 | Recognize | `/recognize/pll` | client | 自有 | ✅ |
 | Frame Count | `/frame-count` | client | 自有 | ✅ |
 | Distribution | `/wca/viz` | client | 自有 | ✅ |
@@ -60,7 +60,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 开发命令
 
-pnpm 11(不是 npm),pwsh。CWD 已在 `core/`;`pnpm install` 报 `ERR_PNPM_NO_PKG_MANIFEST` = 在仓库根,`Set-Location core`。
+pnpm 11,pwsh。CWD 已在 `core/`;`pnpm install` 报 `ERR_PNPM_NO_PKG_MANIFEST` = 在仓库根,`Set-Location core`。
 
 ```bash
 pnpm --filter @cuberoot/client dev            # http://127.0.0.1:3000/
@@ -89,8 +89,8 @@ pnpm --filter @cuberoot/client lint
 
 ## 代码风格
 
-- 响应简洁,不加多余注释,不做超需抽象;优先编辑已有文件;改完跑 typecheck。
-- UI 不用 emoji,用 lucide-react;不放页面级"返回"按钮(wizard 步骤间不算)。
+- 优先编辑已有文件;改完跑 typecheck。
+- UI 可用 lucide-react;不放页面级"返回"按钮(wizard 步骤间不算)。
 - 按钮式交互必须真 `<button>`(剥 UA 样式)或 `AppLink`,禁 `<div/span onClick>`(iOS Safari tap 不可靠);例外 div 加 `role="button"`+`tabIndex`+`onKeyDown`;豁免注释 `allow-static-onclick`。守卫:hook + CI ratchet。
 - 选择/搜索输入框非空时显示清除按钮,统一 `components/ClearButton`。
 - 切换器默认下拉;chip 仅当选项 ≤4 且需左右对比。
@@ -121,7 +121,7 @@ pnpm --filter @cuberoot/client lint
 
 ## i18n(繁体已移除)
 
-- 全站只 en + zh-Hans;源码禁繁体字。守卫:hook `block-handwritten-trad` + CI `i18n-removal-guard`(含 en/zh key 对齐)。
+- 全站只 en + zh-Hans。守卫:hook `block-handwritten-trad` + CI `i18n-removal-guard`(含 en/zh key 对齐)。
 - 文案走 `tr({en,zh})` / `<T en zh/>` / `useT()`;长文/复用走 `t()` + `en.json`/`zh.json`;HTML lang `en`/`zh-Hans`。
 - 禁内联 `isZh`/`i18n.language` 文案三元(`isZh ? '中' : 'EN'`);`isZh` 仅可作 util 参数。守卫:hook + CI ratchet。细则调 skill `i18n`。
 
@@ -135,7 +135,7 @@ pnpm --filter @cuberoot/client lint
 
 ## 造 SQ1 最优求解器 loop
 
-`/loop 继续造 SQ1 最优求解器`(或"造 SQ1 最优")= 读 `solver/SQ1_WCA_LOOP.md` + `solver/SQ1_WCA_GODS_NUMBER.md` 全文,按前者 §0 推进;≤15GB 大表、严禁 OOM、线程 12/14。
+`/loop 继续造 SQ1 最优求解器`(或"造 SQ1 最优")= 读 `solver/SQ1_WCA_LOOP.md` + `solver/SQ1_WCA_GODS_NUMBER.md` 全文,按前者 §0 推进;≤15GB 大表、禁 OOM、线程 12/14。
 
 ## 造非 WCA 小魔方求解器 loop
 

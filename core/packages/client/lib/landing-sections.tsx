@@ -3,7 +3,7 @@
 // without duplicating the card list.
 
 import {
-  Film, ScanSearch, BookOpen, Shuffle, Library, BookMarked, BookA,
+  Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
   Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, type LucideIcon,
 } from 'lucide-react';
@@ -20,8 +20,6 @@ export const TEXTS: Record<string, { en: string; zh: string
   recon:           { en: 'Recon', zh: '复盘'
 },
   algTrainer:      { en: 'mihlefeld Trainer', zh: 'mihlefeld 训练器'
-},
-  cuberootTrainer: { en: 'Trainer', zh: '训练器'
 },
   hthGrapher:      { en: 'Calculator', zh: '计算器'
 },
@@ -113,7 +111,7 @@ export const SECTIONS: Section[] = [
     sub:     { en: 'Drill algorithms, race the clock, battle head-to-head, recall image pairs.', zh: '背公式、计时、对战、记忆 — 把每一步打磨到肌肉记忆。'
     },
     cards: [
-      { id: 'cuberoot', href: '/trainer',      internal: true, tier: 'hero',     nameKey: 'cuberootTrainer' },
+      { id: 'algdb',    href: '/alg',          internal: true, tier: 'hero',     nameKey: 'algdb' },
       { id: 'timer',    href: '/timer',        internal: true, tier: 'standard', Icon: TimerIcon, nameKey: 'timer' },
       { id: 'memo',     href: '/memo',         internal: true, tier: 'standard', Icon: Brain,     nameKey: 'memo' },
       { id: 'trainer',  href: '/alg-trainers', internal: true, tier: 'standard', iconImg: '/icons/upstream/algtrainer.png', nameKey: 'algTrainer' },
@@ -130,7 +128,6 @@ export const SECTIONS: Section[] = [
     },
     cards: [
       { id: 'alg',      href: '/tutorial', internal: true, tier: 'medium', Icon: Library,    nameKey: 'alg', comingSoon: true },
-      { id: 'algdb',    href: '/alg',      internal: true, tier: 'medium', Icon: BookMarked, nameKey: 'algdb' },
       { id: 'wiki',     href: '/wiki',     internal: true, tier: 'medium', Icon: BookA,      nameKey: 'wiki' },
       { id: 'regulation', href: '/regulation', internal: true, tier: 'medium', Icon: Scale, nameKey: 'regulation' },
       { id: 'math-hub', href: '/math', internal: true, tier: 'medium', Icon: Sigma, nameKey: 'theoryGroup' },

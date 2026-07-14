@@ -66,7 +66,7 @@ export interface Mod {
 }
 export const MODULES: Mod[] = [
   { route: '/recon',           zh: '复盘',        en: 'Recon',        origin: 'own' },
-  { route: '/trainer',         zh: '公式训练',    en: 'Trainer',      origin: 'own' },
+  { route: '/alg',             zh: '公式库',      en: 'Algorithms',   origin: 'own' },
   { route: '/frame-count',     zh: '逐帧',        en: 'Frame Count',  origin: 'own' },
   { route: '/wca/calendar',    zh: '比赛日历',    en: 'Calendar',     origin: 'own' },
   { route: '/scramble-stats',  zh: '打乱难度',    en: 'Scramble',     origin: 'own' },

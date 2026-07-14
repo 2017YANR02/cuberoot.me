@@ -2,7 +2,7 @@
 //
 // Golden oracle: tests/fixtures/3bld_golden.json — captured from the ORIGINAL
 // spooncuber reader.js / codetrans.js / min2phase.js under a DOM shim. The TS
-// port (app/[lang]/trainer/3bld/_lib/*) MUST reproduce these byte-for-byte.
+// port (app/[lang]/alg/3bld/_lib/*) MUST reproduce these byte-for-byte.
 //
 // Sections:
 //   A. READ-CODE parity (make-or-break): readEdges/readCorners structured cells
@@ -31,7 +31,7 @@ import {
   edgeOrientation,
   cornerOrientation,
   codereader,
-} from '@/app/[lang]/trainer/3bld/_lib/read-engine';
+} from '@/app/[lang]/alg/3bld/_lib/read-engine';
 import {
   posChichu,
   groupRecog,
@@ -44,10 +44,10 @@ import {
   randomEdge1,
   randomCorner1,
   globalState,
-} from '@/app/[lang]/trainer/3bld/_lib/state-gen';
-import { buildFacelet } from '@/app/[lang]/trainer/3bld/_lib/m2p-bridge';
-import { CubeModel } from '@/app/[lang]/trainer/3bld/_lib/facelet-model';
-import type { BldConfig, LetterCell } from '@/app/[lang]/trainer/3bld/_lib/types';
+} from '@/app/[lang]/alg/3bld/_lib/state-gen';
+import { buildFacelet } from '@/app/[lang]/alg/3bld/_lib/m2p-bridge';
+import { CubeModel } from '@/app/[lang]/alg/3bld/_lib/facelet-model';
+import type { BldConfig, LetterCell } from '@/app/[lang]/alg/3bld/_lib/types';
 import { memoize3bld } from '@/app/[lang]/timer/_lib/solver/bld_helper';
 
 // ---------------------------------------------------------------------------

@@ -562,7 +562,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .shell-stat-val { font-size: 14px; color: var(--foreground); font-variant-numeric: tabular-nums; }
 
 /* Radial gesture wheel styles moved to components/gesture-wheel.css
-   (imported by components/GestureWheel.tsx, shared with /trainer). */
+   (imported by components/GestureWheel.tsx, shared with the /alg trainer run page). */
 
 /* Solver-hint pills (de-boxed in SolverHints.tsx) brighten on hover. */
 .shell-undersurface .solver-hints .solver-hint-btn:hover { color: var(--foreground); }

@@ -1,6 +1,6 @@
 // 约束守卫:按钮式 onClick 不许落在非交互静态元素(<div>/<span>/<li>…)上。
 // iOS Safari(实测 iOS 26)不可靠把 tap 合成 click 给静态元素 —— 连 cursor:pointer 都救不了,
-// 选择器/开关点不动,且 :hover 灰色 sticky 会伪装成选中(2026-06-16 /trainer/333/f2l 真案例)。
+// 选择器/开关点不动,且 :hover 灰色 sticky 会伪装成选中(2026-06-16 /alg/333/f2l 真案例)。
 // 按钮式交互必须用真 <button> / 框架 <Link>/AppLink(或 role="button" + tabIndex + 键盘处理)。
 //
 // 只盯"高信号"的:静态元素 + onClick + className 含按钮词 + 无 role=。背景遮罩 / 事件委托类

@@ -22,9 +22,7 @@ const SCAN_DIRS = ['app', 'components', 'lib', 'hooks'];
 const ALLOWLIST = new Set([
   // 危险区「删除」确认后程序化重定向到 /recon —— post-mutation redirect,无可点链接实体
   'app/[lang]/recon/submit/ReconSubmitForm.tsx',
-  // 「开始」按钮带 disabled 门控(canStart),<a> 无法 disable;就绪后才跳 /run
-  'app/[lang]/trainer/[puzzle]/[set]/TrainerSetClient.tsx',
-  // 同上,迁入 /alg 的并行副本(选 case 后才跳 /run)
+  // 「开始」按钮带 disabled 门控(canStart),<a> 无法 disable;选完 case 才跳 /run
   'app/[lang]/alg/[puzzle]/[set]/select/TrainerSetClient.tsx',
   // 表单「取消」动作,与提交按钮成对,语义是 action 非链接
   'app/[lang]/recon/[id]/alt/AltSubmitForm.tsx',
