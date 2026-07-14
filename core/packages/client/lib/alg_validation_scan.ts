@@ -71,7 +71,9 @@ export async function scanTargets(targets: ScanTarget[], opts: ScanOpts = {}): P
   let total = 0;
   for (const t of targets) {
     if (opts.shouldCancel?.()) return [];
-    const data = await loadAlg(t.puzzle, t.set);
+    // fresh —— 扫描只有 admin 跑,而 GET 带 1 小时 Cache-Control。拿缓存去扫,
+    // 报告里就会挂着他刚删掉的那条公式,越修越不对。
+    const data = await loadAlg(t.puzzle, t.set, { fresh: true });
     loaded.push({ ...t, cases: data.cases });
     for (const c of data.cases) for (const ori of c.algs) total += ori.length;
   }
