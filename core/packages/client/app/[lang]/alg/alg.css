@@ -1161,9 +1161,14 @@ a.alg-community-author:hover {
 }
 .alg-case-meta-btn:hover { color: var(--accent); }
 
-/* 宽度是被公式定死的:最长一条 78 字符 × 12px 等宽 ≈ 560px,再加缩略图一列 + 步数 + 复制。
-   窄了就得折行或横滚,两个都不要。 */
-.alg-meta-modal { width: min(800px, 95vw); }
+/* 宽度**由内容定**:`max-content` = 最长那条公式一行放下所需的宽,短公式的 case(PLL)就窄。
+   钉死 800px 的话,PLL 那种四五十字符的 case 会拖着半屏空白。上限管住全库最长的一条
+   (76 字符 ≈ 560px + 缩略图列 + 步数 + 复制),下限防止只有寥寥几字时缩成一条。 */
+.alg-meta-modal {
+  width: max-content;
+  min-width: min(420px, 95vw);
+  max-width: min(880px, 95vw);
+}
 .alg-meta-head-sub {
   margin-left: 8px;
   font-size: 12px;
