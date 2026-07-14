@@ -9,20 +9,22 @@
  */
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ALG_PUZZLES, ALG_CATALOG } from '@cuberoot/shared';
+import { ALG_PUZZLES } from '@cuberoot/shared';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import BackHome from '@/components/BackHome';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
-import { Eye, Blocks, Box, type LucideIcon } from 'lucide-react';
+import { Eye, Blocks, type LucideIcon } from 'lucide-react';
 import './alg.css';
 import { tr } from '@/i18n/tr';
 
-/** Standalone method trainers (not per-set timing drills) — surfaced on the landing. */
-const LANDING_TRAINERS: { href: string; zh: string; en: string; descZh: string; descEn: string; Icon: LucideIcon }[] = [
-  { href: '/alg/3bld', zh: '3BLD 盲拧', en: '3BLD', descZh: '盲拧公式与记忆训练', descEn: 'Blind algs & memo drills', Icon: Eye },
-  { href: '/alg/roux', zh: 'Roux 桥式', en: 'Roux', descZh: 'CMLL 与块训练器', descEn: 'CMLL & block trainer', Icon: Blocks },
-  { href: '/alg/skewb-trainer', zh: 'Skewb 技巧', en: 'Skewb Skills', descZh: '一步看穿与第一层', descEn: 'One-look & first layer', Icon: Box },
+/**
+ * Standalone method trainers (not per-set timing drills) — surfaced on the landing.
+ * Skewb 技巧训练不列在这 —— /alg/skewb 的「训练专区」已经有入口了,这里再放一张是重复。
+ */
+const LANDING_TRAINERS: { href: string; zh: string; en: string; Icon: LucideIcon }[] = [
+  { href: '/alg/3bld', zh: '三盲', en: '3BLD', Icon: Eye },
+  { href: '/alg/roux', zh: '桥式', en: 'Roux', Icon: Blocks },
 ];
 
 export default function AlgIndexPage() {
@@ -38,61 +40,23 @@ export default function AlgIndexPage() {
           <h1 className="alg-index-title">{tr({ zh: '公式库', en: 'Algorithm DB'
         })}</h1>
         </div>
-        <p className="alg-index-subtitle">
-          {tr({ zh: '魔方公式速查 — ', en: 'Cube algorithm reference — ' }) +
-            ALG_PUZZLES.map((p) => eventDisplayName(p, isZh)).join(' / ')}
-        </p>
-        <p className="alg-index-credit">
-          {tr({ zh: '数据来源: ', en: 'Source: '
-        })}
-          <a href="https://speedcubedb.com" target="_blank" rel="noopener noreferrer">
-            speedcubedb.com
-          </a>
-        </p>
       </div>
 
       <div className="alg-puzzle-grid">
-        {ALG_PUZZLES.map((p) => {
-          const sets = ALG_CATALOG[p];
-          return (
-            <Link key={p} href={`/alg/${p}`} className="alg-puzzle-card">
-              <div className="alg-puzzle-name">
-                <EventIcon event={p} className="alg-puzzle-icon" />
-                <span>{eventDisplayName(p, isZh)}</span>
-              </div>
-              <div className="alg-puzzle-count">
-                {sets.length} {tr({ zh: '套公式', en: 'sets' })}
-              </div>
-              <div className="alg-puzzle-preview">
-                {sets.slice(0, 6).map((s) => (
-                  <span key={s.slug} className="alg-puzzle-chip">
-                    {tr(s)}
-                  </span>
-                ))}
-                {sets.length > 6 && (
-                  <span className="alg-puzzle-chip is-more">+{sets.length - 6}</span>
-                )}
-              </div>
-            </Link>
-          );
-        })}
+        {ALG_PUZZLES.map((p) => (
+          <Link key={p} href={`/alg/${p}`} className="alg-puzzle-card">
+            <div className="alg-puzzle-name">
+              <EventIcon event={p} className="alg-puzzle-icon" />
+              <span>{eventDisplayName(p, isZh)}</span>
+            </div>
+          </Link>
+        ))}
         <Link href="/alg/commutator" className="alg-puzzle-card">
           <div className="alg-puzzle-name">
             <span className="alg-puzzle-icon alg-bracket-icon" aria-hidden="true">
               [,]
             </span>
-            <span>{tr({ zh: '换位子', en: 'Commutator'
-            })}</span>
-          </div>
-          <div className="alg-puzzle-count">
-            {tr({ zh: '换位子分解工具', en: 'Commutator decomposer'
-            })}
-          </div>
-          <div className="alg-puzzle-preview">
-            <span className="alg-puzzle-chip">{tr({ zh: '分解', en: 'Decompose' })}</span>
-            <span className="alg-puzzle-chip">{tr({ zh: '展开', en: 'Expand'
-            })}</span>
-            <span className="alg-puzzle-chip">Excel</span>
+            <span>{tr({ zh: '换位子', en: 'Commutator' })}</span>
           </div>
         </Link>
       </div>
@@ -105,10 +69,16 @@ export default function AlgIndexPage() {
               <t.Icon className="alg-puzzle-icon" size={20} aria-hidden="true" />
               <span>{tr({ zh: t.zh, en: t.en })}</span>
             </div>
-            <div className="alg-puzzle-count">{tr({ zh: t.descZh, en: t.descEn })}</div>
           </Link>
         ))}
       </div>
+
+      <p className="alg-index-credit">
+        {tr({ zh: '部分数据来源: ', en: 'Some data from: ' })}
+        <a href="https://speedcubedb.com" target="_blank" rel="noopener noreferrer">
+          speedcubedb.com
+        </a>
+      </p>
     </div>
   );
 }

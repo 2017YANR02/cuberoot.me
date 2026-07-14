@@ -48,15 +48,13 @@ html[data-theme=dark] .alg-root {
   margin: 0;
   letter-spacing: -0.01em;
 }
-.alg-index-subtitle {
-  color: var(--muted-foreground);
-  font-size: 14px;
-  margin: 0 0 4px;
-}
+/* 页尾的出处行 —— 不再嵌在 header 里,自己撑住左右内边距 */
 .alg-index-credit {
+  max-width: 1200px;
+  margin: 32px auto 24px;
+  padding: 0 24px;
   color: var(--faint-foreground);
   font-size: 12px;
-  margin: 0;
 }
 .alg-index-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .alg-index-credit a:hover { color: var(--accent); }
@@ -249,14 +247,17 @@ html[data-theme=dark] .alg-root {
   margin: 0 auto;
   padding: 0 24px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
+  /* 卡片只剩一行字,260px 那会儿是按三行内容定的 —— 收窄,一排多放几张。
+     auto-fill 不是 auto-fit:后者会把空轨道折叠、把仅有 3 张的训练器卡拉成两倍宽,
+     跟上面的魔方格子对不齐。 */
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
 }
+/* 卡片就一行(图标 + 名字)—— 内边距按单行收,别撑成一个半空的盒子 */
 .alg-puzzle-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 24px;
+  padding: 18px 20px;
   background: var(--card);
   border: 1px solid var(--border-default);
   border-radius: 12px;
@@ -299,30 +300,6 @@ html[data-theme=dark] .alg-root {
   color: var(--muted-foreground);
   line-height: 1;
 }
-.alg-puzzle-count {
-  font-size: 12px;
-  color: var(--muted-foreground);
-}
-.alg-puzzle-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 4px;
-}
-.alg-puzzle-chip {
-  font-size: 11px;
-  padding: 2px 8px;
-  background: var(--background);
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  white-space: nowrap;
-}
-.alg-puzzle-chip.is-more {
-  color: var(--faint-foreground);
-  font-style: italic;
-}
-
 .alg-cat-puzzle {
   font-size: 14px;
   font-weight: 600;
