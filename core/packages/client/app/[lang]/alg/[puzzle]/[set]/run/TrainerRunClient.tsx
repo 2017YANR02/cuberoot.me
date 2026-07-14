@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client-vite/src/pages/trainer/TrainerRunPage.tsx
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +13,7 @@ import { useGestureWheel } from '@/hooks/useGestureWheel';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import GestureWheel from '@/components/GestureWheel';
 import { findCaseByKey } from '@/lib/trainer-case-key';
+import { availableKinds, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
 import {
   TimerDisplay, ScrambleHeader, SolveCard, StatsList,
 } from '@/app/[lang]/alg/_trainer/trainer-components';
@@ -43,6 +44,8 @@ export default function TrainerRunClient() {
   const timerState = useTrainerStore(s => s.timerState);
   const timerStarted = useTrainerStore(s => s.timerStarted);
   const observingIdx = useTrainerStore(s => s.observingIdx);
+  const scrambleKind = useTrainerStore(s => s.scrambleKind);
+  const setScrambleKind = useTrainerStore(s => s.setScrambleKind);
   const storePuzzle = useTrainerStore(s => s.puzzle);
   const storeSet = useTrainerStore(s => s.set);
   const loadSession = useTrainerStore(s => s.loadSession);
@@ -211,6 +214,19 @@ export default function TrainerRunClient() {
     if (timerState === TimerState.NOT_RUNNING) pickRandomCase();
   };
 
+  /**
+   * 选中的这批 case 一共支持哪几种打乱(并集)。只有一种(全是 `inv`)就不渲染选择器。
+   * 不是每个 case 都有全套 —— 表里验不过轨道判据的打乱没入库,generateScramble 会退回 `inv`。
+   */
+  const kinds = useMemo(() => {
+    const seen = new Set<ScrambleKind>();
+    for (const k of selected) {
+      const c = findCaseByKey(cases, k);
+      if (c) for (const kind of availableKinds(c)) seen.add(kind);
+    }
+    return SCRAMBLE_KINDS.filter(k => seen.has(k.id));
+  }, [selected, cases]);
+
   return (
     <div className="trainer-root">
       <div className="trainer-topbar">
@@ -239,6 +255,17 @@ export default function TrainerRunClient() {
               <RefreshCw size={12} /> {tr({ zh: '换一个', en: 'New Case'
             })}
             </button>
+            {kinds.length > 1 && (
+              <select
+                className="trainer-scramble-kind"
+                value={scrambleKind}
+                onChange={e => setScrambleKind(e.target.value as ScrambleKind)}
+                disabled={timerState !== TimerState.NOT_RUNNING}
+                aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
+              >
+                {kinds.map(k => <option key={k.id} value={k.id}>{k.label()}</option>)}
+              </select>
+            )}
           </div>
 
           <TimerDisplay state={timerState} ms={ms} penalty={solves.length > 0 ? solves[solves.length - 1].penalty : undefined} />

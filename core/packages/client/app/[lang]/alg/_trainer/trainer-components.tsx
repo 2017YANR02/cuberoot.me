@@ -9,6 +9,7 @@ import { VisualCube } from '@/components/VisualCube';
 import { TimerState } from '@/lib/trainer-store';
 import type { TrainerSolve, TrainerPenalty } from '@/lib/trainer-store';
 import { caseKey } from '@/lib/trainer-case-key';
+import { primaryCaseName } from '@/lib/alg_case_display';
 import { tr } from '@/i18n/tr';
 
 export function formatMs(ms: number, precision = 2): string {
@@ -96,7 +97,7 @@ export function SolveCard({
           </div>
           <div className="trainer-solve-row">
             <span>{tr({ zh: '情况:', en: 'Case:'
-            })}</span>{c.name}
+            })}</span>{primaryCaseName(puzzle, set, c)}
           </div>
           <div className="trainer-solve-row">
             <span>{tr({ zh: '成绩:', en: 'Result:'
@@ -407,7 +408,7 @@ function CaseCell({
           size={64}
         />
       </span>
-      <span className="trainer-case-cell-name">{c.name}</span>
+      <span className="trainer-case-cell-name">{primaryCaseName(puzzle, set, c)}</span>
     </button>
   );
 }

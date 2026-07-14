@@ -389,3 +389,15 @@
   background: color-mix(in srgb, var(--tr-sel) 8%, transparent);
   border-color: color-mix(in srgb, var(--tr-sel) 50%, transparent);
 }
+
+/* 打乱类型选择器(1LLL 表带来的 SH* / SQ* / H* / Q* / COEP;只有 meta 里真有那条打乱才出现) */
+.trainer-scramble-kind {
+  padding: 3px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 12px;
+  width: fit-content;
+}
+.trainer-scramble-kind:disabled { opacity: 0.5; }

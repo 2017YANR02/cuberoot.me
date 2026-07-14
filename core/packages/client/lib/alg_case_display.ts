@@ -9,6 +9,7 @@
  * 同一份映射既给 /alg/3x3/{oll,pll} 列表展示用,也给 recon 自动补全的注释
  * (`// OLL-S+` / `// PLL-Gd`)用。
  */
+import type { AlgCase } from '@cuberoot/shared';
 
 /** OLL 编号(1..57) → 社区英文名。来源:用户提供的 OLL 命名表。 */
 export const OLL_NAME_BY_NUMBER: Record<number, string> = {
@@ -121,4 +122,17 @@ export function displayAlgCaseName(puzzle: string, set: string, name: string): s
   if (puzzle === '3x3' && set === 'pll') return displayPllName(name);
   if (puzzle === '3x3' && set === 'zbll') return displayZbllName(name);
   return name;
+}
+
+/**
+ * case 的主名。有 `meta.ollcp`(1LLL 表导入的 case)就用它 —— 站长定的字母制命名优先,
+ * 站上原来那个数字制名字降为副名(docs/1lll-migration.md §7 B8)。
+ *
+ * `PLL-A+` 里的 set 前缀是冗余的,剥掉 —— 不然 pll 页每张卡都顶着一个 `PLL-`。
+ */
+export function primaryCaseName(puzzle: string, set: string, c: AlgCase): string {
+  const ollcp = c.meta?.ollcp;
+  if (!ollcp) return displayAlgCaseName(puzzle, set, c.name);
+  const prefix = `${set.toUpperCase()}-`;
+  return ollcp.startsWith(prefix) ? ollcp.slice(prefix.length) : ollcp;
 }
