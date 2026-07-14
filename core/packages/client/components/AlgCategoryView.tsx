@@ -269,7 +269,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
 
   /** 一个 case 在当前筛选下要显示的公式(标签筛选作用在**公式**上,不是 case 上) */
   const algsUnderFilter = (algs: AlgEntry[]) =>
-    tagFilter === 'all' ? algs : algs.filter(a => a.tags?.includes(tagFilter));
+    tagFilter === 'all' || !availableTags.includes(tagFilter)
+      ? algs
+      : algs.filter(a => a.tags?.includes(tagFilter));
 
   // dnd-kit sensors:鼠标按住超过 5px 才认作 drag,避免误触发(普通点击不被吞)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -353,10 +355,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
       if (slugLevel === 'sub') return parts[1] === subgroupSlug;
       return false;
     });
-    // 选了标签就只留「至少有一条带该标签的公式」的 case —— 否则筛出来一堆空卡片
-    if (tagFilter === 'all') return inSubgroup;
+    // 选了标签就只留「至少有一条带该标签的公式」的 case —— 否则筛出来一堆空卡片。
+    // ⚠ 这个 set 压根没有该标签(书签 / 后退带过来的 `?tag=oh` 落到 f2l 上)⟹ 当没筛 ——
+    //    否则页面空空如也,而下拉根本不渲染,用户没有任何控件能把它改回来。
+    if (tagFilter === 'all' || !availableTags.includes(tagFilter)) return inSubgroup;
     return inSubgroup.filter(c => c.algs.some(ori => ori.some(a => a.tags?.includes(tagFilter))));
-  }, [data, subgroupSlug, slugLevel, tagFilter]);
+  }, [data, subgroupSlug, slugLevel, tagFilter, availableTags]);
 
   const grouped = useMemo(() => {
     const map = new Map<string, typeof visibleCases>();

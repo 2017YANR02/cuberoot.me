@@ -227,6 +227,12 @@ export default function TrainerRunClient() {
     return SCRAMBLE_KINDS.filter(k => seen.has(k.id));
   }, [selected, cases]);
 
+  // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
+  // value 落空、显示成一片空白。退回 `inv`(它永远支持)。
+  useEffect(() => {
+    if (kinds.length && !kinds.some(k => k.id === scrambleKind)) setScrambleKind('inv');
+  }, [kinds, scrambleKind, setScrambleKind]);
+
   return (
     <div className="trainer-root">
       <div className="trainer-topbar">
