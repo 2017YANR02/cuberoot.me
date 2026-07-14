@@ -8,11 +8,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { ChevronLeft, MessageSquare, Reply, GitBranch, LogIn, Check } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
+import BoolToggle from '@/components/BoolToggle';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
 import { useAuthStore } from '@/lib/auth-store';
 import {
-  fetchNotifications, markNotificationsRead,
+  fetchNotifications, markNotificationsRead, fetchEmailNotifyPref, setEmailNotifyPref,
   type SiteNotification, type NotificationKind,
 } from '@/lib/notifications-api';
 import { refreshNotificationsUnread } from '@/lib/notifications-unread';
@@ -41,6 +42,7 @@ export default function NotificationsPage() {
   const [mounted, setMounted] = useState(false);
   const [items, setItems] = useState<SiteNotification[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [emailNotify, setEmailNotify] = useState<boolean | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -65,6 +67,23 @@ export default function NotificationsPage() {
 
   useEffect(() => { if (user && mounted) load(); }, [user, mounted, load]);
 
+  useEffect(() => {
+    if (!user || !mounted) return;
+    fetchEmailNotifyPref().then(setEmailNotify).catch(() => {});
+  }, [user, mounted]);
+
+  // 乐观切换:失败回滚,免开关卡在错的位置。
+  async function toggleEmail(next: boolean) {
+    const prev = emailNotify;
+    setEmailNotify(next);
+    try {
+      await setEmailNotifyPref(next);
+    } catch (e) {
+      setEmailNotify(prev);
+      setErr(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   if (!mounted) return <div className="ntf-page" />;
 
   return (
@@ -86,6 +105,21 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <>
+          {emailNotify !== null && (
+            <div className="ntf-prefs">
+              <BoolToggle
+                value={emailNotify}
+                onChange={toggleEmail}
+                label={t('新消息也发邮件给我', 'Also email me about new notifications')}
+              />
+              {!emailNotify && (
+                <p className="ntf-prefs-hint">
+                  {t('已关闭邮件,这里的红点和列表照常。', 'Email is off. The badge and this list still work.')}
+                </p>
+              )}
+            </div>
+          )}
+
           {err && <div className="ntf-error">{err}</div>}
           {!items && !err && <div className="ntf-empty">{t('加载中…', 'Loading…')}</div>}
           {items && items.length === 0 && (

@@ -43,3 +43,22 @@ export async function markNotificationsRead(ids?: number[]): Promise<void> {
   });
   await handleApi<{ ok: boolean }>(r);
 }
+
+/** 邮件通知开关(关掉 = 退订;站内红点不受影响)。 */
+export async function fetchEmailNotifyPref(): Promise<boolean> {
+  const r = await fetch(apiUrl('/v1/notifications/prefs'), {
+    headers: authHeaders(false),
+    cache: 'no-store',
+  });
+  const data = await handleApi<{ emailNotify?: boolean }>(r);
+  return data.emailNotify ?? true;
+}
+
+export async function setEmailNotifyPref(emailNotify: boolean): Promise<void> {
+  const r = await fetch(apiUrl('/v1/notifications/prefs'), {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify({ emailNotify }),
+  });
+  await handleApi<{ ok: boolean }>(r);
+}

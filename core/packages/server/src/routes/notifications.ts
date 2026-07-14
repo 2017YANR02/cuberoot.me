@@ -6,8 +6,102 @@
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
 import { requireAuth } from '../utils/recon_helpers.js';
+import { verifyUnsubToken } from '../utils/notify.js';
 
 export const notificationRoutes = new Hono();
+
+/** ownerKey(真 wca_id 或 `u<uid>`)→ app_users.id。查不到返回 null。 */
+async function userIdForOwnerKey(key: string): Promise<number | null> {
+  const rows = await query<{ id: number }>(
+    `SELECT id FROM app_users WHERE wca_id = ? OR ('u' || id::text) = ? LIMIT 1`,
+    [key, key],
+  );
+  return rows[0]?.id != null ? Number(rows[0].id) : null;
+}
+
+/** 关掉某人的邮件通知。幂等:重复退订不报错。返回是否命中账号。 */
+async function disableEmailNotify(ownerKey: string): Promise<boolean> {
+  const id = await userIdForOwnerKey(ownerKey);
+  if (id == null) return false;
+  await query('UPDATE app_users SET email_notify = FALSE WHERE id = ?', [id]);
+  return true;
+}
+
+/** 退订结果页(免登录,邮件里点进来的人不一定还有会话)。双语 + 跟随系统深浅色。 */
+function unsubPage(ok: boolean): string {
+  const title = ok ? '已退订' : '链接无效';
+  const zh = ok
+    ? '你不会再收到复盘评论 / 另解的邮件通知了。站内消息(红点)不受影响。'
+    : '这个退订链接无效或已失效。';
+  const en = ok
+    ? 'You will no longer receive email notifications about recon comments or alternatives. In-site notifications are unaffected.'
+    : 'This unsubscribe link is invalid or expired.';
+  const back = ok
+    ? `<p style="margin:20px 0 0"><a href="https://cuberoot.me/notifications" style="color:#0b7;font-size:14px">想改回来?在「消息」页重新打开 / Re-enable in Notifications</a></p>`
+    : '';
+  return `<!doctype html><html lang="zh-Hans"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title} — cuberoot.me</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:#faf9f5; color:#181716; }
+  main { max-width:460px; padding:32px 24px; }
+  h1 { font-size:20px; margin:0 0 12px; }
+  p { margin:0 0 8px; font-size:14px; line-height:1.6; }
+  .en { color:#888; }
+  @media (prefers-color-scheme: dark) { body { background:#1c1917; color:#f0ebe3; } .en { color:#999; } }
+</style></head>
+<body><main>
+  <h1>${title}</h1>
+  <p>${zh}</p>
+  <p class="en">${en}</p>
+  ${back}
+</main></body></html>`;
+}
+
+// GET /v1/notifications/unsubscribe?t=… — 邮件里点进来的退订(免登录,签名令牌)
+notificationRoutes.get('/notifications/unsubscribe', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const key = verifyUnsubToken(c.req.query('t') ?? '');
+  const ok = key ? await disableEmailNotify(key) : false;
+  return c.html(unsubPage(ok), ok ? 200 : 400);
+});
+
+// POST /v1/notifications/unsubscribe?t=… — 邮件客户端一键退订(RFC 8058,无正文交互)
+notificationRoutes.post('/notifications/unsubscribe', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const key = verifyUnsubToken(c.req.query('t') ?? '');
+  if (!key) return c.json({ error: 'Invalid token' }, 400);
+  await disableEmailNotify(key);
+  return c.json({ ok: true });
+});
+
+// GET /v1/notifications/prefs — 当前用户的通知偏好
+notificationRoutes.get('/notifications/prefs', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const id = await userIdForOwnerKey(user.wcaId);
+  if (id == null) return c.json({ emailNotify: false });
+  const rows = await query<{ email_notify: boolean }>(
+    'SELECT email_notify FROM app_users WHERE id = ?', [id],
+  );
+  return c.json({ emailNotify: rows[0]?.email_notify ?? true });
+});
+
+// PUT /v1/notifications/prefs — 开 / 关邮件通知
+notificationRoutes.put('/notifications/prefs', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  const body = await c.req.json<{ emailNotify?: boolean }>().catch(() => ({} as { emailNotify?: boolean }));
+  if (typeof body.emailNotify !== 'boolean') {
+    return c.json({ error: 'emailNotify (boolean) is required' }, 400);
+  }
+  const id = await userIdForOwnerKey(user.wcaId);
+  if (id == null) return c.json({ error: 'Account not found' }, 404);
+  await query('UPDATE app_users SET email_notify = ? WHERE id = ?', [body.emailNotify, id]);
+  return c.json({ ok: true, emailNotify: body.emailNotify });
+});
 
 interface NotificationRow {
   id: number;
