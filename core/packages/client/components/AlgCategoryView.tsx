@@ -15,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, Flag, Info } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, Flag, Info, AlertTriangle } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -73,7 +73,7 @@ function sanitizeAlgHtml(html: string): string {
   });
 }
 
-function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup }: { entry: AlgEntry; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string }) {
+function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid }: { entry: AlgEntry; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string; invalid?: string }) {
   const { alg, algHtml } = entry;
   const { copied, copy } = useCopy();
   // 显示 / 复制都剥掉收尾 AUF;下面的 AlgPlayer 拿的仍是完整公式,动画才停在还原态。
@@ -86,7 +86,7 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup }: {
       <div
         role="button"
         tabIndex={0}
-        className={`alg-alg-row${expanded ? ' is-expanded' : ''}`}
+        className={`alg-alg-row${expanded ? ' is-expanded' : ''}${invalid ? ' is-invalid' : ''}`}
         onClick={animatable ? onToggle : undefined}
         onKeyDown={(e) => {
           if (animatable && (e.key === 'Enter' || e.key === ' ')) {
@@ -94,8 +94,10 @@ function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup }: {
             onToggle();
           }
         }}
-        title={animatable ? (expanded ? 'collapse' : 'play') : 'copy'}
+        title={invalid ?? (animatable ? (expanded ? 'collapse' : 'play') : 'copy')}
       >
+        {/* 就是这条过不了校验 —— 卡片红框只说「这张有问题」,不说是哪条 */}
+        {invalid && <AlertTriangle size={13} className="alg-alg-invalid-icon" aria-label={invalid} />}
         {entry.tags?.map(t => (
           <span key={t} className={`alg-tag alg-tag-${t}`} title={ALG_TAG_LABEL[t]()}>{ALG_TAG_LABEL[t]()}</span>
         ))}
@@ -238,9 +240,17 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
   const [selectedId, setSelectedId] = useState<number | null>(null);
   /** 已经为哪个片段滚过了 —— 同一个锚点只滚一次,免得展开 / 折叠某组时被拽回选中的卡 */
   const scrolledFor = useRef<string | null>(null);
-  /** 校验不过的 case → 卡片红框。**只给 admin 跑** —— 每个访客的浏览器都跑一遍 cubing.js
-   *  纯属浪费,而红框是给能修的人看的。 */
-  const [invalidIds, setInvalidIds] = useState<Set<number>>(new Set());
+  /**
+   * 校验不过的**公式**:`${caseId}:${oriIdx}:${algIdx}` → 原因。卡片红框由它推出来。
+   * 存到公式这一级,是因为「这张卡有问题」不够用 —— 一张卡挂四条公式,得指出是哪条。
+   * **只给 admin 跑**:每个访客的浏览器都跑一遍 cubing.js 纯属浪费,而红框是给能修的人看的。
+   */
+  const [invalidAlgs, setInvalidAlgs] = useState<Map<string, string>>(new Map());
+  const invalidIds = useMemo(() => {
+    const s = new Set<number>();
+    for (const k of invalidAlgs.keys()) s.add(Number(k.split(':', 1)[0]));
+    return s;
+  }, [invalidAlgs]);
   // 筛选 → replace(不往历史里塞;CLAUDE.md「URL 状态」)
   const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
   const animatable = true;
@@ -337,14 +347,19 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     }).catch(e => setError(String(e)));
   }, [puzzleParam, set, validPuzzle, meta]);
 
-  /** admin 才扫。case 改完(validationRefreshKey)重扫,红框跟着消。 */
+  /** admin 才扫。case 改完(data 变 / validationRefreshKey)重扫,红标跟着消。 */
   useEffect(() => {
-    if (!isAdmin || !data || !validPuzzle) { setInvalidIds(new Set()); return; }
+    if (!isAdmin || !data || !validPuzzle) { setInvalidAlgs(new Map()); return; }
     let cancelled = false;
     scanCases(puzzleParam, set, data.cases, { shouldCancel: () => cancelled })
       .then(fails => {
         if (cancelled) return;
-        setInvalidIds(new Set(fails.map(f => f.caseObj.id).filter((x): x is number => x != null)));
+        const m = new Map<string, string>();
+        for (const f of fails) {
+          if (f.caseObj.id == null) continue;
+          m.set(`${f.caseObj.id}:${f.oriIdx}:${f.algIdx}`, f.reason);
+        }
+        setInvalidAlgs(m);
       })
       .catch(e => console.warn('[alg] validation scan failed', e));
     return () => { cancelled = true; };
@@ -722,6 +737,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                         {algsForOri.map((entry, i) => {
                           const rowKey = `${c.name}::${oriIdx}::${i}`;
                           const expanded = expandedKey === rowKey;
+                          // 校验结果按**未筛选**的下标存(标签筛选只是个视图)—— 拿对象身份换回真下标
+                          const trueIdx = allAlgsForOri.indexOf(entry);
                           return (
                             <AlgRow
                               key={`${entry.altId ?? i}`}
@@ -732,6 +749,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                               puzzle={puzzleParam as AlgPuzzle}
                               set={set}
                               setup={oriAdjustSetup(c.setup, oriIdx)}
+                              invalid={c.id != null ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
                             />
                           );
                         })}

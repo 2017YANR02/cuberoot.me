@@ -1359,6 +1359,17 @@ a.alg-community-author:hover {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--destructive) 30%, transparent);
 }
 
+/* 卡片红框说「这张有问题」,这里说**是哪一条**:出问题的那行公式自己也标红 + 挂个 ⚠。
+   hover 出原因(title)。一张卡四条公式,不指到行上等于让人自己一条条试。 */
+.alg-alg-row.is-invalid {
+  border-color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 8%, transparent);
+}
+.alg-alg-invalid-icon {
+  flex: none;
+  color: var(--destructive);
+}
+
 /* 点中的那张(URL 片段指着它)—— 黄框。
    写在 .is-invalid 之后:选中压过红框(你正看着它,红不红编辑器里会告诉你),
    .is-flash 又压过选中(刚跳进来的那一下,先让人找到它)。
