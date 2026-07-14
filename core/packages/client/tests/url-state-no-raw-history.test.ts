@@ -22,6 +22,7 @@ const ALLOWLIST = new Set([
   'app/[lang]/calc/_components/stores/calc_store.ts', // zustand store(无法用 hook)+ t0/t1.. 动态键成绩序列化,data-blob 例外
   'app/[lang]/recon/submit/ReconSubmitForm.tsx',      // cubedb 自定义编码(encodeUrlAlg)+ 编辑/?from 模式门控,nuqs 声明式 hook 无法复刻
   'app/[lang]/code/stack/_tools/react-router.tsx',    // 文档示例文本(<code> 里展示 API 名),非真实调用
+  'lib/url_hash.ts',                                 // URL 片段(#case 名):nuqs 只管 query string,不碰 hash;全站唯一一处写 hash
 ]);
 
 // 另一团队的 roux 实验 WIP,不在本约定范围内;落地后再纳入

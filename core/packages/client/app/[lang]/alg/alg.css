@@ -1347,11 +1347,8 @@ a.alg-community-author:hover {
 }
 .alg-meta-open:hover { color: var(--accent); }
 
-/* 从 `#case-<id>` 锚点跳进来的那张卡,闪一下 —— 不然一组七十个 case,滚过去也认不出是哪张 */
-.alg-case.is-flash {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
-}
+/* 从 `#<case 名>` 锚点跳进来的那张卡,闪一下 —— 不然一组七十个 case,滚过去也认不出是哪张。
+   闪光本身的色值在下面那组「边框优先级」里定(要压过红框 / 黄框,得排在它们后面)。 */
 @media (prefers-reduced-motion: no-preference) {
   .alg-case.is-flash { transition: box-shadow 0.25s ease, border-color 0.25s ease; }
 }
@@ -1361,8 +1358,19 @@ a.alg-community-author:hover {
   border-color: var(--destructive);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--destructive) 30%, transparent);
 }
-/* 跳转闪光压过红框 —— 正在看的那张,先让人找到它 */
-.alg-case.is-invalid.is-flash {
+
+/* 点中的那张(URL 片段指着它)—— 黄框。
+   写在 .is-invalid 之后:选中压过红框(你正看着它,红不红编辑器里会告诉你),
+   .is-flash 又压过选中(刚跳进来的那一下,先让人找到它)。
+   iOS Safari 只对「看起来能点」的元素稳定派发 tap ⟹ 整张卡给 cursor:pointer。 */
+.alg-case { cursor: pointer; }
+.alg-case.is-selected {
+  border-color: var(--signal-warning);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--signal-warning) 26%, transparent);
+}
+.alg-case.is-flash,
+.alg-case.is-invalid.is-flash,
+.alg-case.is-selected.is-flash {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
