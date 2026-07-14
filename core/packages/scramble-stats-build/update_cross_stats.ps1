@@ -65,6 +65,21 @@ trap {
   exit 1
 }
 
+# ---- analyzer 进度: 一行, 不刷屏 ----
+# 真人终端: \r 就地重写同一行(analyzer 每 37 条打一次 [PROG], 逐行 Write-Host 会刷几百屏)。
+# 非 tty(AI/CI/日志): \r 在日志里是垃圾字符 -> 退回"每 5min 打一行", 免几十分钟静默像卡死。
+$script:progTick = Get-Date
+function Write-Prog {
+  param([string]$Text)
+  if($HumanTerm){ Write-Host ("`r  " + $Text.PadRight(58)) -NoNewline; return }
+  $now = Get-Date
+  if(($now - $script:progTick).TotalMinutes -ge 5){
+    Write-Host "  $Text  $($now.ToString('HH:mm:ss'))"
+    $script:progTick = $now
+  }
+}
+function Write-ProgEnd { if($HumanTerm){ Write-Host '' } }  # 收尾换行, 后续输出不接在进度行尾
+
 # ---- 本机算力限额 (全局规则: 重计算最多 7 核 14 线程, 留 1 核给系统; 长跑进程低优先级) ----
 # solver 各 analyzer 走 rayon 全局池 (executor.rs par_iter), 无自建 ThreadPoolBuilder, 故 RAYON_NUM_THREADS 直接钉死线程数。
 # env 在本 session 持久, 此处设一次, 后续每个 `& $exe` 子进程都继承; 子进程也继承本 pwsh 的优先级类。
@@ -449,24 +464,22 @@ function Sync-Variant($Name){
   $inTxt  = Join-Path $IncrDir "sync_$Name.txt"
   $outCsv = Join-Path $IncrDir ("sync_{0}_{0}.csv" -f $Name)
   $errLog = Join-Path $IncrDir "sync_$Name.analyzer.log"  # analyzer 的 banner/提示/非进度行转存于此, 不刷终端
-  $done=0; $chunksRun=0; $script:tick=Get-Date  # tick: 上次打印进度的时刻, 跨块保持 -> 每 5min 跳一行(按墙钟, 非按块)
+  $done=0; $chunksRun=0
   for($i=0; $i -lt $total; $i += $chunk){
     $cnt=[Math]::Min($chunk, $total-$i)
     $slice=$missing.GetRange($i, $cnt)
     [IO.File]::WriteAllText($inTxt, ([string]::Join("`n",$slice)+"`n"), [Text.UTF8Encoding]::new($false))
     if(Test-Path $outCsv){ Remove-Item $outCsv -Force }
     if(Test-Path $errLog){ Remove-Item $errLog -Force }
-    # analyzer: stdout 噪音丢弃; stderr([PROG] x/n + banner) 逐行过滤 -> 满 5min 打一行干净总进度(~已算/total), 其余进 $errLog。
+    # analyzer: stdout 噪音丢弃; stderr([PROG] x/n + banner) 逐行过滤 -> Write-Prog 打干净总进度(~已算/total), 其余进 $errLog。
     $inTxt | & $exe 2>&1 | ForEach-Object {
       if($_ -isnot [System.Management.Automation.ErrorRecord]){ return }  # stdout, 丢弃
       $s = "$_"
       $mm = [regex]::Match($s, '\[PROG\]\s+(\d+)')
       if($mm.Success){
-        $now = Get-Date
-        if(($now - $script:tick).TotalMinutes -ge 5){
-          Write-Host "[$Name] ~$($done + [int]$mm.Groups[1].Value)/$total  $($now.ToString('HH:mm:ss'))"
-          $script:tick = $now
-        }
+        $d = $done + [int]$mm.Groups[1].Value
+        $pct = if($total){ [int]($d * 100 / $total) } else { 0 }
+        Write-Prog "[$Name] $d/$total ($pct%)"
       } else { Add-Content -LiteralPath $errLog -Value $s }
     }
     if($LASTEXITCODE -ne 0){ throw "[$Name] analyzer 失败 (块 @$i), 详见 $errLog" }
@@ -477,10 +490,12 @@ function Sync-Variant($Name){
     Remove-Item $outCsv -Force
     $done += $cnt; $chunksRun++
     if($MaxChunks -gt 0 -and $chunksRun -ge $MaxChunks){
+      Write-ProgEnd
       Write-Host "[$Name] 已达 -MaxChunks $MaxChunks, 停止 (还差 $($total-$done) 条, 下次 run 自动续)。" -ForegroundColor Yellow
       break
     }
   }
+  Write-ProgEnd
   Remove-Item $inTxt,$errLog -Force -ErrorAction SilentlyContinue
   if($done -ge $total){ Write-Host "[$Name] 完成, 现 $(Lc $csv) 行(含表头)。" -ForegroundColor Green }
   else { Write-Host "[$Name] 部分补缺 $done/$total, 现 $(Lc $csv) 行(含表头)。" -ForegroundColor Yellow }
@@ -826,13 +841,20 @@ if($nNew -gt 0){
     $env:CUBE_ALLOW_HUGE_TABLES = '1'
     $env:CUBE_RUN_FULL_STD      = '1'
     # stdin=文件名; analyzer 是交互程序(有 banner + "Enter file (or exit):" 提示), 管道喂文件名时这些会漏到终端。
-    # 同变体步骤(Sync-Variant)做法: 只放行 [PROG] 进度行, 其余(banner/提示/杂项)转存日志, 终端干净。
+    # 同变体步骤(Sync-Variant)做法: [PROG] 走 Write-Prog(单行原地刷新), 其余(banner/提示/杂项)转存日志, 终端干净。
     $stdLog = Join-Path $IncrDir 'std_analyzer.log'
     if(Test-Path $stdLog){ Remove-Item $stdLog -Force }
     $newTxt | & $StdAnalyzer 2>&1 | ForEach-Object {
       $s = "$_"
-      if($s -match '\[PROG\]'){ Write-Host $s } else { Add-Content -LiteralPath $stdLog -Value $s }
+      $mm = [regex]::Match($s, '\[PROG\]\s+(\d+)\s*/\s*(\d+)')
+      if($mm.Success){
+        $d = [int]$mm.Groups[1].Value; $t = [int]$mm.Groups[2].Value
+        $pct = if($t){ [int]($d * 100 / $t) } else { 0 }
+        Write-Prog "解算 $d/$t ($pct%)"
+      } elseif($s -match '\[PROG\]'){ }  # 无数字的进度行: 丢弃, 别刷屏也别进日志
+      else { Add-Content -LiteralPath $stdLog -Value $s }
     }
+    Write-ProgEnd
     if($LASTEXITCODE -ne 0){ throw "std_analyzer 失败 (详见 $stdLog)" }
   }
   if(-not (Test-Path $stdOut)){ throw "solver 没产出 $stdOut" }

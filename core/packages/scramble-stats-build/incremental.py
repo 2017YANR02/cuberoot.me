@@ -144,6 +144,7 @@ def refresh_competitions(src_tsv: str, dest_tsv: str) -> None:
 
 
 DOWNLOAD_TRIES = 6
+DOWNLOAD_TIMEOUT = 60  # 秒: socket 上这么久没来任何字节 = 连接半死 (代理挂着不关也不发) -> 断掉走续传
 TTY = sys.stdout.isatty()  # 真人终端 -> \r 单行原地刷新; 被 AI/CI/日志捕获 -> 只打里程碑, 不刷屏
 
 
@@ -161,9 +162,11 @@ def _progress_end() -> None:
 def _download_with_progress(url: str, dest: str) -> None:
     """流式下载 366MB export: 单行进度 + Range 断点续传重试 + 原子落盘。
 
-    坑: 连接被中途掐断 (代理/网关超时) 时 resp.read() 只是返回空 chunk, 不抛异常 ->
+    坑一: 连接被中途掐断 (代理/网关超时) 时 resp.read() 只是返回空 chunk, 不抛异常 ->
     裸 while 循环会把残缺文件当成"下好了"。必须拿 Content-Length 比对实际字节数,
     差额走 Range 续传 (WCA export 返回 Accept-Ranges: bytes)。
+    坑二: 连接不关也不发数据 (半死) 时 read() 无限阻塞, 卡在 99% 永远不动 ->
+    必须给 socket 设 timeout, 让停滞变成异常, 落进下面的续传重试。
     下载期间写 .part, 只有字节数对得上才 rename -> cache/ 里永远不会出现残缺成品。
     """
     part = dest + ".part"
@@ -177,7 +180,7 @@ def _download_with_progress(url: str, dest: str) -> None:
         if done:
             req.add_header("Range", f"bytes={done}-")
         try:
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=DOWNLOAD_TIMEOUT) as resp:
                 if done and resp.status != 206:  # 服务器不认 Range -> 只能从头下
                     print("    服务端不支持 Range, 从头下载", flush=True)
                     done = 0
@@ -207,7 +210,11 @@ def _download_with_progress(url: str, dest: str) -> None:
                 _progress_end()
         except (urllib.error.URLError, http.client.HTTPException, OSError) as e:
             _progress_end()
-            print(f"    下载出错 ({type(e).__name__}: {e}), 重试 {attempt}/{DOWNLOAD_TRIES}", flush=True)
+            got = os.path.getsize(part) if os.path.exists(part) else 0
+            stalled = isinstance(e, TimeoutError) or isinstance(getattr(e, "reason", None), TimeoutError)
+            why = (f"{DOWNLOAD_TIMEOUT}s 没收到数据 (连接半死)" if stalled
+                   else f"{type(e).__name__}: {e}")
+            print(f"    下载中断 @{got/1e6:.0f} MB ({why}), 续传 {attempt}/{DOWNLOAD_TRIES}", flush=True)
             time.sleep(2 * attempt)
             continue
 
@@ -222,6 +229,7 @@ def _download_with_progress(url: str, dest: str) -> None:
         raise SystemExit(f"下载失败: 重试 {DOWNLOAD_TRIES} 次仍不完整 ({url}); 残段留在 {part}, 下次自动续传")
 
     os.replace(part, dest)
+    print(f"    下载完成 {os.path.getsize(dest)/1e6:.0f} MB -> {dest}", flush=True)
 
 
 def _prune_cache(keep_path: str) -> None:
@@ -262,7 +270,7 @@ def fetch_export(args) -> tuple[str, dict]:
         print(f"  用本地缓存 {zip_path} ({os.path.getsize(zip_path)/1e6:.0f} MB), export_date={meta['export_date']}, 不联网")
     if not zip_path:
         print(f"拉取 export 元数据 {EXPORT_META_URL}")
-        with urllib.request.urlopen(EXPORT_META_URL) as r:
+        with urllib.request.urlopen(EXPORT_META_URL, timeout=DOWNLOAD_TIMEOUT) as r:
             meta = json.load(r)
         url = meta.get("tsv_url") or meta.get("tsvUrl")
         export_date = (meta.get("export_date") or meta.get("exportDate") or "unknown")[:10]
