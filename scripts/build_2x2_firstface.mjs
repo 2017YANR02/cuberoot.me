@@ -21,7 +21,7 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const N = 3674160;
-const GENERATED_AT = '2026-07-13';
+const GENERATED_AT = '2026-07-14';
 const OUT = fileURLToPath(new URL('../core/packages/client/app/[lang]/scramble/stats/_data', import.meta.url));
 const log = (...a) => process.stderr.write(a.join(' ') + '\n');
 
@@ -83,6 +83,19 @@ console.timeEnd('canon');
 log('FF distance...');
 const ffDist=new Map();{ffDist.set(codeF[0],0);const seen=new Set([codeF[0]]);let fr=[0],d=0;const vis=new Uint8Array(N);vis[0]=1;while(fr.length){const nx=[];for(const s of fr)for(let m=0;m<9;m++){const t=tbl[m][s];if(!vis[t]){vis[t]=1;const c=codeF[t];if(!seen.has(c)){seen.add(c);ffDist.set(c,d+1);}nx.push(t);}}fr=nx;d++;}}
 
+// ── true first-face solve distance + solution (multi-source BFS from every solid-D state) ──
+// codeF[i]===codeF[0] ⟺ the four D-pieces sit in the D slots with the D sticker down (face
+// granularity, so any D-corner permutation counts) ⟺ the shown face is solid.
+log('FF solve distance...');
+const dFF=new Uint8Array(N).fill(255);
+{let fr=[];for(let i=0;i<N;i++)if(codeF[i]===codeF[0]){dFF[i]=0;fr.push(i);}
+ let d=0;while(fr.length){const nx=[];for(const s of fr)for(let m=0;m<9;m++){const t=tbl[m][s];if(dFF[t]===255){dFF[t]=d+1;nx.push(t);}}fr=nx;d++;}}
+// The shipped F metric (BFS-from-solved, first depth a code appears) must BE that solve distance.
+{let bad=0;for(let i=0;i<N;i++)if(dFF[i]!==ffDist.get(codeF[i]))bad++;
+ log('F metric vs true solve distance, mismatches (must be 0):',bad);
+ if(bad)throw new Error('F metric is not the first-face solve distance');}
+function solveOf(i){const mv=[];let s=i;while(dFF[s]){const d=dFF[s];let ok=false;for(let m=0;m<9;m++){const t=tbl[m][s];if(dFF[t]===d-1){mv.push(MOVE_NAMES[m]);s=t;ok=true;break;}}if(!ok)throw new Error('dFF descent stuck');}return mv.join(' ');}
+
 // ── representative per reorient-case: min dH, tie min scramble ────────────────
 log('representatives...');
 function invScramble(s){const mv=[];let g=0;while(s!==0&&g++<40){const d=dH[s];for(let m=0;m<9;m++){const t=tbl[m][s];if(dH[t]===d-1){mv.push(m);s=t;break;}}}const inv=[];for(let i=mv.length-1;i>=0;i--){const nm=MOVE_NAMES[mv[i]];inv.push(nm.endsWith('2')?nm:nm.endsWith("'")?nm.slice(0,-1):nm+"'");}return inv.join(' ');}
@@ -97,16 +110,19 @@ for(let i=0;i<N;i++){
 log('reorient cases:',best.size,'(expect 258)');
 
 const mgidOf=new Map();let mg=0;const rows=[];
-for(const[,rep]of best){const mk=canonM[rep.idx];if(!mgidOf.has(mk))mgidOf.set(mk,mg++);rows.push({scr:rep.scr,F:ffDist.get(rep.code),mgid:mgidOf.get(mk),key:rep.code});}
+for(const[,rep]of best){const mk=canonM[rep.idx];if(!mgidOf.has(mk))mgidOf.set(mk,mg++);
+  const sol=solveOf(rep.idx);
+  if(sol.split(' ').filter(Boolean).length!==ffDist.get(rep.code))throw new Error('solution length != F');
+  rows.push({scr:rep.scr,F:ffDist.get(rep.code),sol,mgid:mgidOf.get(mk),key:rep.code});}
 log('mirror groups:',mgidOf.size,'(expect 140)');
 rows.sort((a,b)=>(b.F-a.F)||(a.key-b.key));
 
 // mask = gray the four U-face corners (cube2 groups carrying a U sticker) — renderer id space.
 const MASK='U:0-3;B:0,1;F:0,1;L:0,1;R:0,1';
 const out={
-  meta:{generated_at:GENERATED_AT,total_reorient:rows.length,total_mirror_folded:mgidOf.size,fixed_frame:945,mask:MASK,cols:['scramble','F','mgid'],
-    note:'2×2 first-face cases: essentially-different arrangements of the four D-face corners (face granularity: target pieces interchangeable), deduped by whole-puzzle physical reorientation via masked-facelet canonicalisation. F = HTM moves to make the shown D face solid; mgid folds mirror pairs.'},
-  rows:rows.map(r=>[r.scr,r.F,r.mgid]),
+  meta:{generated_at:GENERATED_AT,total_reorient:rows.length,total_mirror_folded:mgidOf.size,fixed_frame:945,mask:MASK,cols:['scramble','F','mgid','sol'],
+    note:'2×2 first-face cases: essentially-different arrangements of the four D-face corners (face granularity: target pieces interchangeable), deduped by whole-puzzle physical reorientation via masked-facelet canonicalisation. F = HTM moves to make the shown D face solid; sol = an optimal first-face solve for the shown scramble (|sol| == F); mgid folds mirror pairs.'},
+  rows:rows.map(r=>[r.scr,r.F,r.mgid,r.sol]),
 };
 mkdirSync(OUT,{recursive:true});
 writeFileSync(OUT+'/firstface_2x2.json',JSON.stringify(out)+'\n');
