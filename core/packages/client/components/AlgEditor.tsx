@@ -18,18 +18,23 @@ import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import AlgInput, { type AlgInputHandle } from '@/components/AlgInput';
 import { tr } from '@/i18n/tr';
 
+/** 一条「这行没过校验」的标记。`ai` 是**编辑器里的行号**(含空行),不是入库数组的下标。 */
+export interface AlgInvalidMark { oi: number; ai: number; reason: string }
+
 export interface AlgEditorHandle {
   getValue(): AlgEntry[][];
   /**
-   * 把校验没过的行标红。`ai` 是**编辑器里的行号**(含空行),不是入库数组的下标。
+   * 把校验没过的行标红。
    *
    * 收到就立刻解析成行的 uid 存下来 —— 存下标的话,用户随手删一行,红标就飘到别的公式上了。
    */
-  markInvalid(marks: { oi: number; ai: number; reason: string }[]): void;
+  markInvalid(marks: AlgInvalidMark[]): void;
 }
 
 interface Props {
   initialValue: AlgEntry[][];
+  /** 开局就标红的行(页面那轮全库校验已经知道谁挂了,不必等用户按一次保存才告诉他)。 */
+  initialInvalid?: AlgInvalidMark[];
   oriNames?: string[] | null;
   /** 当前聚焦行的纯文本(无聚焦则空)—— 父组件用来驱动左侧 AlgPlayer */
   onCurrentAlgChange?: (alg: string) => void;
@@ -51,7 +56,7 @@ function newUid(): string {
   return `r${Date.now().toString(36)}_${_uidCounter}`;
 }
 
-const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, onCurrentAlgChange, onCursorMoveCount }, ref) => {
+const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, initialInvalid, oriNames, onCurrentAlgChange, onCursorMoveCount }, ref) => {
   useTranslation(); // subscribe to language changes; text via tr()
   const [layout, setLayout] = useState<Row[][]>(() => {
     const src = initialValue.length === 0
@@ -66,7 +71,16 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, oriNames, 
 
   const [focusedUid, setFocusedUid] = useState<string | null>(null);
   /** 校验没过的行:uid → 原因。按 uid 不按下标 —— 删一行下标就全串位了。 */
-  const [invalid, setInvalid] = useState<Map<string, string>>(new Map());
+  const [invalid, setInvalid] = useState<Map<string, string>>(() => {
+    // 挂载这一刻,layout 的行号和 initialValue 的下标还是一一对应的(空行是后来加的),
+    // 所以 initialInvalid 的 (oi, ai) 可以直接查到 uid。之后一律按 uid 走。
+    const m = new Map<string, string>();
+    for (const { oi, ai, reason } of initialInvalid ?? []) {
+      const uid = layout[oi]?.[ai]?.uid;
+      if (uid) m.set(uid, reason);
+    }
+    return m;
+  });
   /** 实时跟踪当前 focused 行的纯文本,给 AlgPlayer 用 */
   const [currentAlg, setCurrentAlg] = useState('');
   const keyboardTargetRef = useMemo(

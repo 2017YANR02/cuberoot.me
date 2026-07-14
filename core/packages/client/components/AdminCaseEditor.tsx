@@ -13,7 +13,7 @@ import type { AlgCase, AlgEntry, AlgPuzzle, AlgSticker } from '@cuberoot/shared'
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '@/lib/alg_sets_api';
 import { validateAlgCase, setupForCase } from '@/lib/alg_validation';
 import { displayAlg } from '@/lib/alg_display';
-import AlgEditor, { type AlgEditorHandle } from '@/components/AlgEditor';
+import AlgEditor, { type AlgEditorHandle, type AlgInvalidMark } from '@/components/AlgEditor';
 import AlgInput from '@/components/AlgInput';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
@@ -28,6 +28,8 @@ interface Props {
   puzzle: AlgPuzzle;
   setSlug: string;
   state: AdminEditorState;
+  /** 页面那轮校验已经判出的坏行 —— 一开编辑器就标红,不用先按一次保存。 */
+  initialInvalid?: AlgInvalidMark[];
   onClose: () => void;
   onSaved: (action:
     | { type: 'add'; created: AlgCase }
@@ -64,7 +66,7 @@ function blankCase(puzzle: string, set: string): AlgCase {
   };
 }
 
-export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSaved }: Props) {
+export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, onClose, onSaved }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
   const initial = state.mode === 'edit' ? state.existing : blankCase(puzzle, setSlug);
 
@@ -325,6 +327,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
             <AlgEditor
               ref={algEditorRef}
               initialValue={initial.algs}
+              initialInvalid={initialInvalid}
               oriNames={initial.oriNames}
               onCurrentAlgChange={handlePreviewAlg}
               onCursorMoveCount={handleCursorMoveCount}
