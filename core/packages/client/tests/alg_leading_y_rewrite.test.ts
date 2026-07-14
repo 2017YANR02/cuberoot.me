@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import type { AlgSticker } from '@cuberoot/shared';
-import { validateAlgCase } from '@/lib/alg_validation';
+import { toMoveString } from '@cuberoot/shared/alg-notation';
+import { validateAlgCase, completeAlgAuf } from '@/lib/alg_validation';
 import { displayAlg } from '@/lib/alg_display';
 
 const FACE: AlgSticker = { kind: 'face', us: '', ub: '', uf: '', ul: '', ur: '' };
@@ -48,38 +49,35 @@ describe('the identity the leading-y rewrite rests on', () => {
   });
 });
 
-describe('validateAlgCase — the stored alg carries its finishing AUF', () => {
+// 2026-07-14 站长定的规矩:**收尾 AUF 不要求人写。** 谁都不该为了「让机器判它还原」去补一个
+// 自己转手就完事的 U。所以校验只要求「差一个 AUF 之内能还原」,该补哪个由校验器算(`auf`),
+// 入库前补齐(`completeAlgAuf`),显示时 `displayAlg` 再剥掉。
+//
+// 老基线里「丢了收尾 AUF 就判不还原」的两条,正是被这条新规矩推翻的 —— 故意改,不是放宽。
+describe('validateAlgCase — 收尾 AUF 由库来补,不要求人写', () => {
   it.each([
     ['y', 'U', "U'"],
     ['y2', 'U2', 'U2'],
     ["y'", "U'", 'U'],
   ])('accepts the rewrite of a %s-led alg', async (lead, pre, post) => {
     const setup = inv(`${lead} ${BODY}`);
-    expect(await validateAlgCase(setup, `${pre} ${BODY} ${post}`, FACE, '3x3')).toEqual({ ok: true });
+    expect(await validateAlgCase(setup, `${pre} ${BODY} ${post}`, FACE, '3x3')).toEqual({ ok: true, auf: '' });
   });
 
-  it('rejects the rewrite with its finishing AUF dropped — it no longer solves', async () => {
+  it('accepts the rewrite with its finishing AUF dropped, and says which U to append', async () => {
     const r = await validateAlgCase(inv(`y ${BODY}`), `U ${BODY}`, FACE, '3x3');
-    expect(r.ok).toBe(false);
-    expect(r.reason).toContain('没有还原');
+    expect(r.ok).toBe(true);
+    expect(r.auf).toBe("U'");
   });
 
-  // The old rule ("any trailing U is a redundant AUF") made the only correct form of an
-  // AUF-needing alg unstorable. It is gone for face sets — and provably not needed: a U turn
-  // is not a whole-cube rotation, so `setup + A` and `setup + A + U` cannot both solve. Any
-  // trailing U that survives the solve check is load-bearing by construction.
   it('accepts a trailing U that is load-bearing', async () => {
-    expect(await validateAlgCase(inv(`${BODY} U`), `${BODY} U`, FACE, '3x3')).toEqual({ ok: true });
-  });
-
-  it('rejects a trailing U that is not, via the solve check', async () => {
-    const r = await validateAlgCase(inv(BODY), `${BODY} U`, FACE, '3x3');
-    expect(r.ok).toBe(false);
-    expect(r.reason).toContain('没有还原');
+    expect(await validateAlgCase(inv(`${BODY} U`), `${BODY} U`, FACE, '3x3')).toEqual({ ok: true, auf: '' });
   });
 
   it('still rejects an alg that no AUF can rescue', async () => {
-    expect((await validateAlgCase(inv(BODY), "R U R' U'", FACE, '3x3')).ok).toBe(false);
+    const r = await validateAlgCase(inv(BODY), "R U R' U'", FACE, '3x3');
+    expect(r.ok).toBe(false);
+    expect(r.reason).toContain('没有还原');
   });
 
   // F2L is the mirror image: its goal ignores the last layer entirely, so a U turn can never
@@ -87,10 +85,36 @@ describe('validateAlgCase — the stored alg carries its finishing AUF', () => {
   it('still rejects a trailing AUF on an F2L alg, where it is always redundant', async () => {
     const F2L: AlgSticker = { kind: 'f2l', fl: '' };
     const pair = "U R U' R'";
-    expect(await validateAlgCase(inv(pair), pair, F2L, '3x3')).toEqual({ ok: true });
+    expect(await validateAlgCase(inv(pair), pair, F2L, '3x3')).toEqual({ ok: true, auf: '' });
     const r = await validateAlgCase(inv(pair), `${pair} U`, F2L, '3x3');
     expect(r.ok).toBe(false);
     expect(r.reason).toContain('多余的 AUF');
+  });
+
+  // 记号:换握 `↑↓·`、上游标注 `=`、连写 `U'D'` —— 数据里遍地都是,校验器**不许**因此报语法错。
+  it('reads grip marks, upstream `=` marks and glued moves', async () => {
+    const glued = "x' R' U'D' (R U R' D) (R U' R' D) (R U' R' D2) R";  // PLL Ab —— `U'D'` 连写
+    // setup 用**归一化后**的公式取逆:cubing.js 自己就读不了连写(它把 `U'D'` 当一个 family)。
+    expect((await validateAlgCase(inv(toMoveString(glued)), glued, FACE, '3x3')).ok).toBe(true);
+    const marked = `=y2 ${BODY.split(' ').join('·')}`;            // 等价标注 + 换握记号
+    expect((await validateAlgCase(inv(`y2 ${BODY}`), marked, FACE, '3x3')).ok).toBe(true);
+  });
+});
+
+describe('completeAlgAuf — 入库前补成完整式', () => {
+  it('appends the AUF the author did not write', async () => {
+    const setup = inv(`y ${BODY}`);
+    expect(await completeAlgAuf(setup, `U ${BODY}`, FACE, '3x3')).toBe(`U ${BODY} U'`);
+  });
+
+  it('is idempotent — a complete alg comes back byte for byte', async () => {
+    const setup = inv(`y ${BODY}`);
+    const complete = `U ${BODY} U'`;
+    expect(await completeAlgAuf(setup, complete, FACE, '3x3')).toBe(complete);
+  });
+
+  it('drops a trailing U that was never load-bearing', async () => {
+    expect(await completeAlgAuf(inv(BODY), `${BODY} U`, FACE, '3x3')).toBe(BODY);
   });
 });
 

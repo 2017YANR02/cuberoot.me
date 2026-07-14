@@ -12,6 +12,7 @@ import { X, Save, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
 import type { AlgCase, AlgEntry, AlgPuzzle, AlgSticker } from '@cuberoot/shared';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '@/lib/alg_sets_api';
 import { validateAlgCase } from '@/lib/alg_validation';
+import { displayAlg } from '@/lib/alg_display';
 import AlgEditor, { type AlgEditorHandle } from '@/components/AlgEditor';
 import AlgInput from '@/components/AlgInput';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer';
@@ -170,13 +171,15 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
 
     setBusy(true);
 
-    // 校验每条公式 setup + alg 后是否完成对应阶段(3x3 face/f2l 启用,其它先放过)
+    // 校验每条公式 setup + alg 后是否完成对应阶段(3x3 face/f2l 启用,其它先放过)。
+    // 收尾 AUF **不用手写**:校验器算得出该补哪个 U,入库前补齐(显示时 displayAlg 再剥)。
     try {
       const checks = await Promise.all(
-        algs.flatMap((ori, oi) => ori.map((entry, ai) =>
-          validateAlgCase(body.setup, entry.alg, sticker, puzzle)
-            .then(r => ({ oi, ai, alg: entry.alg, ...r }))
-        ))
+        algs.flatMap((ori, oi) => ori.map((entry, ai) => {
+          const bare = displayAlg(entry.alg);
+          return validateAlgCase(body.setup, bare, sticker, puzzle)
+            .then(r => ({ oi, ai, alg: entry.alg, bare, ...r }));
+        }))
       );
       const bad = checks.filter(c => !c.ok);
       if (bad.length > 0) {
@@ -187,6 +190,10 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, onClose, onSav
         setBusy(false);
         return;
       }
+      body.algs = algs.map((ori, oi) => ori.map((entry, ai) => {
+        const c = checks.find(x => x.oi === oi && x.ai === ai)!;
+        return { ...entry, alg: c.auf ? `${c.bare} ${c.auf}` : c.bare };
+      }));
     } catch (e) {
       setError(tr({ zh: '校验出错: ', en: 'Validation error: ' }) + (e as Error).message);
       setBusy(false);

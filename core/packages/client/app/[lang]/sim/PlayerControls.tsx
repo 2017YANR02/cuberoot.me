@@ -113,6 +113,7 @@ import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
+import { stripGripMarks } from '@cuberoot/shared/alg-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
 import { WheelPicker } from '@/components/WheelPicker';
 import { ClearButton } from '@/components/ClearButton';
@@ -129,7 +130,6 @@ import './player-controls.css';
  */
 const GRIP_MARKS: Record<string, GripName> = { '↑': 'up', '↓': 'down', '·': 'home' };
 const GRIP_MARK_SPLIT = /([↑↓·])/;
-const stripGripMarks = (s: string): string => s.replace(/[↑↓·]/g, ' ');
 
 /** Char offsets of grip marks in `text` (line comments excluded — mirrors the
  *  `noComments` pass parseNxnItems does before splitting on GRIP_MARK_SPLIT). */
