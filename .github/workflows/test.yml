@@ -67,8 +67,13 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/server typecheck
 
+      # 全集,含慢测。analyzer_worker.test.ts 一个人 ~257s,占整集墙钟 99%(测试按文件分线程
+      # 并行,其余 115 个文件早在它底下跑完了),所以它默认被 vitest.config 排除出本地
+      # `pnpm test` —— 但它是 recon 分析器的回归防线,CI 这一层必须跑。在这里显式打开。
       - name: Test
         working-directory: core
+        env:
+          RUN_SLOW_TESTS: '1'
         run: pnpm --filter @cuberoot/client test
 
       # 死代码棘轮:只卡已清零的类别(unused files / deps / unlisted / binaries),
