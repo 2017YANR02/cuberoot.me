@@ -198,18 +198,14 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
       );
       const bad = checks.filter(c => !c.ok);
       if (bad.length > 0) {
-        // 原因标到**行上**(红框 + 行下一句话),不再堆成底部一大段文字 —— 四条公式里
-        // 是哪条不过,得让人一眼看见,而不是拿公式原文去跟列表比对。
+        // 原因标到**行上**(红框 + 行下一句话)。行上已经写清楚了,底部就别再说一遍。
         if (editorRowOf) {
           algEditorRef.current?.markInvalid(bad.map(b => ({
             oi: b.oi,
             ai: editorRowOf[b.oi]?.[b.ai] ?? b.ai,
             reason: b.reason ?? '',
           })));
-          setError(tr({
-            zh: `有 ${bad.length} 条公式没通过校验`,
-            en: `${bad.length} alg(s) failed validation`,
-          }));
+          setError('');
         } else {
           // 高级 JSON:没有行可标,还是把原文列出来
           setError(
