@@ -141,7 +141,7 @@ export default function AlgValidationAlert() {
                     {fails.map((f, i) => (
                       <li key={`${f.caseId}-${i}`}>
                         <AppLink
-                          href={algCaseHref(f.puzzle, f.set, { id: f.caseId ?? undefined, subgroup: f.subgroup })}
+                          href={algCaseHref(f.puzzle, f.set, { id: f.caseId, name: f.caseName, subgroup: f.subgroup })}
                           className="ava-row"
                           prefetch={false}
                         >
