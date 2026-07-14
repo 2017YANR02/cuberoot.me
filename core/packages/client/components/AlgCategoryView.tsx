@@ -152,11 +152,13 @@ function SortableCaseCard({ id, draggable, children }: { id: number; draggable: 
 }
 
 function SubgroupIndex({
-  puzzle, set, cases,
+  puzzle, set, cases, ollByGroup,
 }: {
   puzzle: AlgPuzzle;
   set: string;
   cases: AlgCase[];
+  /** 组号 → 字母制 OLL 名。**校验过是单射才非空**(见主组件里的 ollByGroup)。 */
+  ollByGroup: Map<string, string>;
   isZh: boolean;
 }) {
   const groups = useMemo(() => {
@@ -178,9 +180,8 @@ function SubgroupIndex({
         const firstAlg = sample.algs.flat()[0]?.alg ?? sample.standard ?? '';
         const slug = encodeURIComponent(topLabel.toLowerCase()) || '_'; // slug 用原名(避免 "+" 进 URL)
         const dispTop = set === 'zbll' ? renameZbllGroupToken(topLabel) : topLabel; // 展示名:ZBLL S→S+, AS→S-
-        // 1lll 的组号是纯数字(`06`),没人看得懂;组内每个 case 的 `meta.oll` 都是同一个
-        // 字母制 OLL 名(实测 50 组全部 1:1),拿它当标题,数字降为副名。
-        const ollName = sample.meta?.oll;
+        // 1lll 的组号是纯数字(`06`),没人看得懂 —— 换成字母制 OLL 名,数字降为副名。
+        const ollName = ollByGroup.get(topLabel);
         return (
           <Link
             key={topLabel || '_root_'}
@@ -250,14 +251,21 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     return ALG_TAGS.filter(t => seen.has(t));
   }, [data]);
 
-  /** 组号 → 字母制 OLL 名(`06` → `O-`)。组内每个 case 的 meta.oll 都一样,取第一个即可。 */
+  /**
+   * 组号 → 字母制 OLL 名(1lll:`06` → `O-`)。
+   *
+   * ⚠ 只有当这是个**单射**时才用得上 —— 光「组内唯一」不够。pll 每个 case 的 `meta.oll`
+   * 都是常量 `"PLL"`,照那样贴标题,`Adj Swap` / `Diag Swap` / `EPLL` 三个组会全变成 `PLL`。
+   * (我只在 1lll 上验了组内唯一就推广,pll 立刻被打脸。)组间撞名 ⟹ 整个 set 退回原组名。
+   */
   const ollByGroup = useMemo(() => {
     const m = new Map<string, string>();
     for (const c of data?.cases ?? []) {
       const top = (c.subgroup || '').split('/', 1)[0];
       if (c.meta?.oll && !m.has(top)) m.set(top, c.meta.oll);
     }
-    return m;
+    const injective = new Set(m.values()).size === m.size;
+    return injective ? m : new Map<string, string>();
   }, [data]);
 
   /** meta.no → case,给弹窗的镜像 / 逆做链接(**表编号**,不是 DB id) */
@@ -497,7 +505,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     })}</div>}
 
       {data && showSubgroupPicker && (
-        <SubgroupIndex puzzle={puzzleParam as AlgPuzzle} set={set} cases={data.cases} isZh={isZh} />
+        <SubgroupIndex puzzle={puzzleParam as AlgPuzzle} set={set} cases={data.cases} ollByGroup={ollByGroup} isZh={isZh} />
       )}
 
       {data && showSubSubgroupPicker && (() => {
