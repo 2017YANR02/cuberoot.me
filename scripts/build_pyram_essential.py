@@ -6,7 +6,7 @@
 # scratch (tips ignored — only U/L/R/B and their inverses), computes for every state:
 #   H(s) = optimal full-solve distance in HTM* (no tips; each vertex turn = 1 move) via BFS.
 #   V(s) = cstimer "Pyraminx V": min over the 12 reorientation frames of the optimal distance
-#          to the V-target (solve all 4 centers + 2 adjacent edges forming a V). Computed on
+#          to the V-target (solve the L/R/B centers + 2 adjacent edges forming a V). Computed on
 #          the ALG-STATE (apply(alg, solved)); NOT inverse-symmetric.
 # Then dedups by the tetrahedral group S4 (order 24 = 12 rotations A4 + 12 reflections; NOT
 # inverse, since V is not inverse-invariant), giving 39,036 orbits; excluding the solved orbit
@@ -47,8 +47,8 @@ CREDITS = {
 }
 NOTATION = [
     {"sym": "V",
-     "zh": "V-first 的 V 步数(先拼好 4 个中心块 + 2 条相邻棱组成的 V,不含小角)",
-     "en": "V-first V step: solve all 4 centers + 2 adjacent edges forming a V (tips ignored)"},
+     "zh": "V-first 的 V 步数(先拼好 L/R/B 三个中心 + 2 条相邻棱组成的 V,不含小角)",
+     "en": "V-first V step: solve the L/R/B centers + 2 adjacent edges forming a V (tips ignored)"},
     {"sym": "H",
      "zh": "整解步数(HTM*,不含小角;每个顶点转 1 步)",
      "en": "Full-solve HTM* (tips ignored; each vertex turn = 1 move)"},
@@ -146,7 +146,7 @@ def build():
     H = bfs([0])
     assert int(H.max()) == 11 and (H != 255).all()
 
-    # V target frame D (solve all 4 centers + 2 adjacent edges forming a V)
+    # V target frame D (solve the L/R/B centers + 2 adjacent edges forming a V)
     def matches(s, t):
         return all(t[i] == '?' or s[i] == t[i] for i in range(len(t)))
     VTARGET = '????FF??RRR??L?L?L?DDDDD'

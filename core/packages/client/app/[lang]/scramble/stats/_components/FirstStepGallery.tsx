@@ -92,7 +92,7 @@ export default function FirstStepGallery({
               <Link
                 key={`${m}-${i}-${r[0]}`}
                 className="gal-cell"
-                href={`/scramble/${event}?scramble=${encodeURIComponent(r[0])}`}
+                href={`/scramble/solver?event=${event}&scramble=${encodeURIComponent(r[0])}`}
                 prefetch={false}
                 title={r[0]}
                 aria-label={tr({ zh: '在求解器中打开', en: 'Open in solver' })}

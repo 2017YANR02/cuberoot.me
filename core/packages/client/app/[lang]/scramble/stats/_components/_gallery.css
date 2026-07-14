@@ -31,6 +31,11 @@
   justify-content: center;
   border-radius: 6px;
   padding: 2px;
+  /* Galleries can hold thousands of thumbnails (pyraminx V = 3239 SVGs). Skip
+     layout/paint/style for off-screen cells; the intrinsic size keeps the grid
+     and scrollbar stable. Matches ScramblePreview2D's 42px host (84×63 + pad). */
+  content-visibility: auto;
+  contain-intrinsic-size: 88px 67px;
 }
 .gal-cell:hover {
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
