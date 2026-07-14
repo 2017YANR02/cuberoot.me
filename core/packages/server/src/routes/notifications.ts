@@ -1,12 +1,12 @@
 /**
  * 站内通知 —— 当前登录用户收件箱。
- * 写入侧在 utils/notify.ts(由 recon 评论/另解触发),这里只读 + 标已读。
+ * 写入侧在 utils/notify.ts(由 recon 评论/另解、论坛主题/回帖/举报触发),这里只读 + 标已读。
  * 收件人键 = ownerKey(requireAuth 的 user.wcaId)。
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
 import { requireAuth } from '../utils/recon_helpers.js';
-import { verifyUnsubToken } from '../utils/notify.js';
+import { rememberLang, verifyUnsubToken } from '../utils/notify.js';
 
 export const notificationRoutes = new Hono();
 
@@ -31,10 +31,10 @@ async function disableEmailNotify(ownerKey: string): Promise<boolean> {
 function unsubPage(ok: boolean): string {
   const title = ok ? '已退订' : '链接无效';
   const zh = ok
-    ? '你不会再收到复盘评论 / 另解的邮件通知了。站内消息(红点)不受影响。'
+    ? '你不会再收到站内消息的邮件通知了(复盘评论 / 另解、论坛回复)。站内消息(红点)不受影响。'
     : '这个退订链接无效或已失效。';
   const en = ok
-    ? 'You will no longer receive email notifications about recon comments or alternatives. In-site notifications are unaffected.'
+    ? 'You will no longer receive email notifications (recon comments and alternatives, forum replies). In-site notifications are unaffected.'
     : 'This unsubscribe link is invalid or expired.';
   const back = ok
     ? `<p style="margin:20px 0 0"><a href="https://cuberoot.me/notifications" style="color:#0b7;font-size:14px">想改回来?在「消息」页重新打开 / Re-enable in Notifications</a></p>`
@@ -138,10 +138,15 @@ notificationRoutes.get('/notifications', async (c) => {
   })));
 });
 
-// GET /v1/notifications/unread — 未读数(给红点角标)
+// GET /v1/notifications/unread?lang=zh|en — 未读数(给红点角标)
+//
+// ?lang 顺带记住这人的站点语言(通知邮件按收件人语言发)。搭这个端点的车,是因为它是唯一
+// 「每个登录用户都会周期性打」的已认证请求 —— 收件人的语言只有他自己在场时才能知道,
+// 发通知的那一刻在场的是 actor。rememberLang 内部 memo + 幂等,轮询频繁也不会写放大。
 notificationRoutes.get('/notifications/unread', async (c) => {
   c.header('Cache-Control', 'no-store');
   const user = await requireAuth(c);
+  rememberLang(user.wcaId, c.req.query('lang'));
   const rows = await query<{ count: number }>(
     'SELECT COUNT(*)::int AS count FROM notifications WHERE user_key = ? AND read_at IS NULL',
     [user.wcaId],

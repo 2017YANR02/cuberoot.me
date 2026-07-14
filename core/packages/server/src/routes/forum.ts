@@ -10,8 +10,23 @@ import {
   requireAuth, authenticateUser, checkRateLimit, ADMIN_WCA_IDS,
 } from '../utils/recon_helpers.js';
 import type { WcaUser } from '../utils/recon_helpers.js';
+import { notify, adminRecipients } from '../utils/notify.js';
 
 export const forumRoutes = new Hono();
+
+/**
+ * 通知失败绝不能连累已经落库的帖子(用户看到 500 会重发,于是重复发帖)—— 故吞异常。
+ * 但要 await:notify() 里写 notifications 表是主路径(邮件才是它内部的旁路),
+ * 不等的话响应已返回而通知行还没写,收件人的红点会慢一拍甚至在崩溃时丢掉。
+ * 与 recon.ts 的挂钩方式一致。
+ */
+async function notifyBestEffort(input: Parameters<typeof notify>[0]): Promise<void> {
+  try {
+    await notify(input);
+  } catch (e) {
+    console.warn('[forum] notify failed:', (e as Error).message);
+  }
+}
 
 /** 从 Hono Context 提取客户端 IP(Nginx 反代场景用 X-Real-IP) */
 function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
@@ -390,7 +405,19 @@ forumRoutes.post('/forum/threads', async (c) => {
     [Number(forums[0].id), title, authUser.wcaId, authUser.name, authUser.wcaId, authUser.name,
      authUser.wcaId, authUser.name, content],
   );
-  return c.json({ ok: true, id: Number(inserted[0].thread_id) });
+  const threadId = Number(inserted[0].thread_id);
+
+  // 新主题 → 管理员。回帖不给管理员发(否则热帖会把收件箱淹了),回帖只找主题作者。
+  await notifyBestEffort({
+    recipients: adminRecipients(),
+    kind: 'forum_thread',
+    actorKey: authUser.wcaId,
+    actorName: authUser.name,
+    title,
+    excerpt: content,
+    link: `/forum/t/${threadId}`,
+  });
+  return c.json({ ok: true, id: threadId });
 });
 
 // ==================== POST /v1/forum/posts ====================
@@ -405,8 +432,8 @@ forumRoutes.post('/forum/posts', async (c) => {
   if (!content) return c.json({ error: 'content is required' }, 400);
   if (content.length > MAX_CONTENT_LEN) return c.json({ error: `content exceeds ${MAX_CONTENT_LEN} characters` }, 400);
 
-  const threads = await query<{ is_locked: boolean; is_deleted: boolean }>(
-    'SELECT is_locked, is_deleted FROM forum_threads WHERE id = ?', [threadId],
+  const threads = await query<{ is_locked: boolean; is_deleted: boolean; title: string; author_id: string }>(
+    'SELECT is_locked, is_deleted, title, author_id FROM forum_threads WHERE id = ?', [threadId],
   );
   if (threads.length === 0 || threads[0].is_deleted) return c.json({ error: 'Thread not found' }, 404);
   if (threads[0].is_locked && !isAdmin(authUser)) return c.json({ error: 'Thread is locked' }, 403);
@@ -427,6 +454,17 @@ forumRoutes.post('/forum/posts', async (c) => {
   const nos = await query<{ n: number }>(
     'SELECT COUNT(*)::int AS n FROM forum_posts WHERE thread_id = ? AND id <= ?', [threadId, newId],
   );
+
+  // 回帖 → 主题作者(notify 内部会剔除 actor 自己:自己回自己的帖不通知)。
+  await notifyBestEffort({
+    recipients: [threads[0].author_id],
+    kind: 'forum_reply',
+    actorKey: authUser.wcaId,
+    actorName: authUser.name,
+    title: threads[0].title,
+    excerpt: content,
+    link: `/forum/t/${threadId}`,
+  });
   return c.json({ ok: true, id: newId, postNo: nos[0].n });
 });
 
@@ -697,8 +735,12 @@ forumRoutes.post('/forum/posts/:id/report', async (c) => {
   if (!reason) return c.json({ error: 'reason is required' }, 400);
   if (reason.length > 500) return c.json({ error: 'reason exceeds 500 characters' }, 400);
 
-  const posts = await query<{ author_id: string; is_deleted: boolean; thread_deleted: boolean }>(
-    `SELECT p.author_id, p.is_deleted, t.is_deleted AS thread_deleted
+  const posts = await query<{
+    author_id: string; is_deleted: boolean; thread_deleted: boolean;
+    thread_id: string; thread_title: string;
+  }>(
+    `SELECT p.author_id, p.is_deleted, t.is_deleted AS thread_deleted,
+            t.id AS thread_id, t.title AS thread_title
      FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE p.id = ?`,
     [id],
   );
@@ -713,6 +755,17 @@ forumRoutes.post('/forum/posts/:id/report', async (c) => {
      DO UPDATE SET reason = EXCLUDED.reason, created_at = NOW(), resolved_at = NULL`,
     [id, authUser.wcaId, authUser.name, reason],
   );
+
+  // 举报 → 管理员。没人盯的举报等于没举报,所以这条必须推,不能只躺在 /forum/reports 列表里。
+  await notifyBestEffort({
+    recipients: adminRecipients(),
+    kind: 'forum_report',
+    actorKey: authUser.wcaId,
+    actorName: authUser.name,
+    title: posts[0].thread_title,
+    excerpt: reason,
+    link: `/forum/t/${Number(posts[0].thread_id)}`,
+  });
   return c.json({ ok: true });
 });
 
