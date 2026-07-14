@@ -1,17 +1,24 @@
-/* SubsetColorPicker — /scramble/stats + 首页 RecentScrambles 共用。
-   主题无关:边框走 currentColor,选中态走 var(--accent)(两页都定义),不依赖 --background/--foreground。 */
+/* SubsetColorPicker — /scramble/stats + 首页 RecentScrambles + StageSolver 共用。
+   主题无关:边框/文字走 currentColor 派生,选中态走 var(--accent)(各页都定义)。
+   浮层背景是唯一需要不透明色的地方 -> 局部 token --sp-surface,默认全局 --popover;
+   light-locked 的页(stats / StageSolver)在自己的 CSS 里覆盖成页内 surface,别在这里判主题。 */
 .subset-picker {
-  display: flex;
+  --sp-surface: var(--popover, var(--card, #fff));
+  position: relative;
+  display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
 }
 
+/* 触发按钮:当前子集色块 + 模式名 + 箭头 */
 .subset-picker-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   appearance: none;
   font: inherit;
   font-size: 0.82rem;
-  padding: 0.3rem 1.5rem 0.3rem 0.6rem;
+  line-height: 1.2;
+  padding: 0.28rem 1.5rem 0.28rem 0.35rem;
   color: inherit;
   background: transparent
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E")
@@ -22,7 +29,42 @@
   transition: border-color 0.12s;
 }
 .subset-picker-mode:hover { border-color: color-mix(in srgb, currentColor 45%, transparent); }
+.subset-picker-mode.is-open { border-color: var(--accent); }
 .subset-picker-mode:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.subset-picker-name { white-space: nowrap; }
+.subset-picker-name.is-row {
+  font-size: 0.78rem;
+  color: color-mix(in srgb, currentColor 62%, transparent);
+}
+
+/* 菜单:两列网格(模式名 | 该模式的全部色块) */
+.subset-picker-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.6rem 0.75rem;
+  width: max-content;
+  max-width: min(90vw, 22rem);
+  background: var(--sp-surface);
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+  transform-origin: top left;
+  animation: subset-picker-pop 0.12s ease-out;
+}
+@keyframes subset-picker-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .subset-picker-panel { animation: none; }
+}
 
 .subset-picker-swatches {
   display: flex;
@@ -41,8 +83,12 @@
   transition: transform 0.1s;
   display: block;
   overflow: hidden;
+  flex: none;
 }
 .subset-swatch-tile { display: block; width: 100%; height: 100%; }
-.subset-swatch:not(.is-static):hover { transform: scale(1.1); }
+.subset-swatch:not(.is-static):hover { transform: scale(1.12); }
+.subset-swatch:not(.is-static):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .subset-swatch.is-active { outline: 2px solid var(--accent); outline-offset: 1px; }
-.subset-swatch.is-static { cursor: default; }
+.subset-swatch.is-static { cursor: inherit; }
+/* 触发按钮里的色块小一号,和文字视觉等高 */
+.subset-picker-mode .subset-swatch { width: 1.05rem; height: 1.05rem; border-radius: 4px; }
