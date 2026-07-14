@@ -40,7 +40,7 @@
 .ess-filter > span { white-space: nowrap; }
 /* scramble_stats.css only styles .scramble-stats-select inside .scramble-stats-controls,
    so the ess-* control rows carry their own copy. Matches .ess-search-input's tokens. */
-.ess-filter select {
+.ess-filter .scramble-stats-select {
   background: var(--background);
   border: 1px solid var(--input);
   border-radius: 7px;
@@ -50,8 +50,8 @@
   padding: 5px 8px;
   cursor: pointer;
 }
-.ess-filter select:hover { border-color: var(--border-strong); }
-.ess-filter select:focus { outline: none; border-color: var(--ring); }
+.ess-filter .scramble-stats-select:hover { border-color: var(--border-strong); }
+.ess-filter .scramble-stats-select:focus { outline: none; border-color: var(--ring); }
 
 /* ── 联合热力表 ── */
 .ess-joint-scroll {
