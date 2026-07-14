@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BGWY / bin 2
-# Population in this bin: 515
+# Population in this bin: 519
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 749001,B' F' L2 B' R2 F' D2 R' D2 F R2 F' D L B' L' R' F2,Y,Bogotá Cúbico 2014 (2014-03-15),333 R1 A #2
@@ -158,7 +158,7 @@
 972284032,D L2 U' B2 U2 B2 L2 F2 D B2 L2 R' B2 F D F R2 F2 D' F2 L,W,Speedcubing Camp Minsk 2019 (2019-01-04~06),333mbf Final A #2
 980866001,B2 L' U2 B2 R D2 L' D2 L' B2 L U L2 R' F' L' B2 D L2 B,W,Bay Area Speedcubin' 13 2019 (2019-01-13),333oh R1 B #3
 2633655001,F' R B2 D F' D2 B F2 R U2 F2 U2 R' D2 F2 R2 B2 F R2,G,You Only Need a 3x3 AZ 2023 (2023-04-15),333 Final A #1
-1007657001,F2 U' R2 D' U2 F2 D' R2 D2 L' F2 L2 F2 U2 B L' R U' B2 D,W,Valenzuela Cube Classic 2019 (2019-02-02),333bf Final B #2
+5743448001,F' R L2 U R2 F2 U2 R2 B2 D L U L2 R D2 B2 F' U',W,Tlaxcala Open 10 Aniversario 2026 (2026-07-04~05),333oh R2 A #4
 1017548001,D' U2 R2 D2 U' B2 L2 R2 U' R B' R B U R D R' F,W,Izhevsk Winter Cube 2019 (2019-02-09~10),333 R1 D E2
 1024083006,F L2 F R2 F2 R2 U2 B F D' B D' B2 R F2 D2 U B' U' B',G,I Hope It's Solved Edmonton 2019 (2019-02-16~17),333mbf Final A #2
 1035604001,R B U' R B L2 D F' L F2 L2 D' B2 D' B2 L2 U' B2 D' L2,G,Myyrmäki Spring Challenge 2019 (2019-03-01~03),333 R1 C #1

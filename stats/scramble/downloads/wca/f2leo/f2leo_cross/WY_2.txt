@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / WY / bin 2
-# Population in this bin: 281
+# Population in this bin: 282
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4280293025,L' F' D L' D2 L' F B' L B2 U' R2 L2 U' R2 D L2 U' B',W,Kubing in Kapiti 2024 (2024-11-09),333mbf Final A #1
@@ -165,7 +165,7 @@
 3073192001,D2 B' U2 B R2 B' R2 D2 L' D L' F2 R2 U2 B' L' F2 R F2,W,Reno Fall 2023 (2023-09-09),333oh R1 C E1
 5179643001,U' L2 B' R D2 R2 D' R B2 L' U2 D2 R2 F D2 B' D2 B,W,Uhseo Osong 2025 (2025-11-15),333 R1 A #1
 4618558001,L' D' L2 D2 L2 B2 L' F2 L D2 F L2 F' D2 U2 B2 L B,W,South Bend Scramble 2025 (2025-04-05),333oh Final B #1
-5584357001,L U' L' F2 D' F2 L2 U L2 D2 B2 R D B U B L' U',Y,Welcome Guayaquil Open 2026 (2026-04-25),333 R1 A E2
+5746603001,U F D L B D' R2 U' F2 U2 L2 B2 R B2 R U2 R' D' F,W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A #4
 3110404001,F U' L' D2 L' D2 L' U' L2 F' L2 U' L2 D L2 U' R2 B2 R2,W,Glasgow Autumn 2023 (2023-09-22~24),333 R1 C #5
 5173659001,D2 L F2 D2 L2 F2 U R2 B2 U2 L' B' D' U' B L2 D' L',W,Kjeller Open 2025 (2025-11-08~09),333 R2 C E2
 5593688001,L' F' L' F2 L2 F2 D2 B2 L' B2 U' B' D2 R' F2 R2 U2 F L',Y,Foshan Open 2026 (2026-05-02~03),333 R2 A #2

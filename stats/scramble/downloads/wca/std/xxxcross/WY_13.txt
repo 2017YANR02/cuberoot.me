@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / WY / bin 13
-# Population in this bin: 20
-# Samples listed: 20 (all entries in this bin)
+# Population in this bin: 21
+# Samples listed: 21 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 558930001,F R' U' R' F2 U B R U' F' L2 D2 F2 R2 L' B2 R' B2 U2,W,SNZ Northern 2017 (2017-07-23),333 R1 A #5
@@ -25,3 +25,4 @@
 4536935001,U' B' R' F R2 D2 F2 R2 U2 F' U2 R2 L U R' D' U F' R2 U,W,Mix & Match at McDo Lacson 2025 (2025-03-01),333 R2 B E1
 4898930003,R B2 U2 F L2 F' D2 B' R2 D2 F2 D B' U' B2 L' R' F L2 B L2 U2,W,Swedish Blind Marathon 2025 (2025-08-02),333mbf R1 A #3
 5266408001,L2 B R2 U' B2 R2 U L2 F2 R' F2 D' U' B' L' B D2 B R',W,Dragon Cubing XI 2025 (2025-12-13~14),333oh R1 A E2
+5742049057,B' L B2 D U2 B' R2 B' L2 B' F2 L2 D2 F L' F2 R D B D2 B' L B',W,Rubik's WCA North American Championship 2026 (2026-07-02~05),333mbf Final A #2

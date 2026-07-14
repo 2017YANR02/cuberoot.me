@@ -1,15 +1,15 @@
 # Scramble samples — pair / xcross_pair / O / bin 4
-# Population in this bin: 299
+# Population in this bin: 300
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4987001,F D2 U2 F' D2 R2 B' F' D2 U2 R F' D' L D' R2 U L2 B2 R' B L,O,Tula Open 2014 (2014-03-28~30),333bf R1 B E2
 9064001,R F2 L F2 D2 F2 L' F' L R' F' L B' L U' L2 F D,O,SESC Santo Amaro 2014 (2014-04-05~06),333 R1 B #1
 5492721001,D R2 U L2 R2 D' F2 U' R' B2 R2 D' F' R' B F' D' L' D L B2,O,New York Multimate PBQ IV 2026 (2026-03-27~29),333bf Final B E1
 59148001,F2 U2 L2 B' U2 L2 B L2 U' R F' U B' U2 L B2 R' D F',O,Slovakian Open 2014 (2014-09-20~21),333 R2 B #1
-64421001,D2 F2 R D2 R' F2 L U2 R' F2 L2 B D R2 B2 D' F' R' F,O,Harvard Fall 2014 (2014-10-11),333 R1 B #2
+5749319001,D F2 D R' U2 F2 L2 D F2 U' B F2 R' F' R2 D2 R' D,O,Vigo Open 2026 (2026-07-11),333bf Final A #3
 74824001,D R2 D2 L2 B2 D2 R U' B R' D2 L2 R' F' R F' U,O,Slow n Steady Fall 2014 (2014-11-09),333 R1 B E1
 83417001,D' U2 F2 U' L2 B2 F2 U' F' L2 U' F D2 L2 R D' R' U2,O,Rubik Huehue 2014 (2014-11-29~30),333 R1 A #5
 4334030001,L D' R' L F2 B2 D' R B' L' F2 U2 L2 B' D2 B D2 L2 F,O,Manchester FMC Day 2024 (2024-12-07),333oh R1 B #3

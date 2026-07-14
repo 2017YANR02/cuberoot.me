@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / R / bin 5
-# Population in this bin: 825
+# Population in this bin: 828
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3775412001,F L2 B D B' L B L F D B D2 R2 F' R2,R,Mriy Diy Cubing Lviv 2024 (2024-05-18~19),333 R1 A #4
@@ -191,7 +191,7 @@
 4627007001,B' L B D2 R2 D2 U2 B' R2 B2 U R' U2 R' D' U' F' U B,R,Michigan Mini 30 2025 (2025-04-07),333 R2 B E2
 4114953001,B' D' B2 F2 D2 L B2 U2 L2 R' B2 D' L2 B2 L2 F2 L F' L',R,Logroño Open 2024 (2024-09-14),333 Final D E1
 878819001,L B2 F2 L' U2 R2 D2 L F2 R F2 U' B2 D' B2 D L2 R B U2,R,Thailand Championship 2018 (2018-09-15~16),333 R1 B #2
-5171092001,D2 F2 D2 B2 U2 R B2 L' R2 B' D' F2 R F' L2 D L2 F2,R,Gulf Shores 2025 (2025-11-08),333 Final A E1
+5740798001,R2 F U2 R2 U2 B2 R2 U2 R' D B2 U L R B D' L D2 B',R,NxN in Jura 2026 (2026-07-04~05),333 Final A #3
 890244001,L2 B2 L2 F2 U2 R' D2 U2 R2 D' R B' L' D2 F2 L' D' R D2,R,Salesianos Open 2018 (2018-09-29~30),333 R1 C #4
 4602186001,L2 U2 F R' B2 D' F U D' F' U L D2 R2 U2 D2,R,Silesian Cubing Mysłowice 2025 (2025-03-29~30),333 R1 C #1
 1484595001,U R2 U' L2 U' F2 D F2 U F' L' D' L' D2 U' F U' R2 F2,R,Brasília Closing 2019 (2019-12-28~29),333oh Final A E1

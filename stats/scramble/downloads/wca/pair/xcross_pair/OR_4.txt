@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / OR / bin 4
-# Population in this bin: 604
+# Population in this bin: 606
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1537044001,U2 B2 L2 U2 B2 D' R2 U2 R2 U2 F2 R' D' R' U' L2 U L2 F' L2 D,O,Centauros Open 2020 (2020-02-01~02),333oh R2 A E1
@@ -198,7 +198,7 @@
 3737082001,R' U' F R U2 L D2 L B2 F2 R' F D' B U2 L2 F2 L B' R' U' F R' U' F,R,Altiplanic FMC 2024 (2024-05-05),333fm Final A #1
 1312513001,F2 U F2 U' R2 U L2 R2 U L R U F2 R B' U' B2 D' R2,R,Arnold Classic Europe 2019 (2019-09-21~22),333 R1 A #2
 1017102001,U2 B2 R B2 L D2 U2 R' U2 R F' R2 D2 L B' D' L,O,Austrian Open 2019 (2019-02-09~10),333 R1 A E1
-1019312001,U' R2 D L2 B2 D2 L2 U' L2 D' U' R D2 R2 B2 F D' F' D2 L' R2,O,Princeton Winter 2019 (2019-02-09),333 R2 A #1
+5749319001,D F2 D R' U2 F2 L2 D F2 U' B F2 R' F' R2 D2 R' D,O,Vigo Open 2026 (2026-07-11),333bf Final A #3
 1024271001,F2 D2 U2 R' B2 R U2 B U2 F' D F U2 B' F D' U' F,R,Albany Winter 2019 (2019-02-16),333 R2 B E1
 1024571001,F2 R2 F2 R2 F2 U2 B U2 R' B' R2 U2 L D U R U' L R',O,GLS Winter Camp 2019 (2019-02-11~15),333 R1 A #3
 1065344001,B R2 F' L2 B U2 F U' R U2 L' R' F' D2 R B' L2 U2 B' L,O,Speedsolving Huancayo 2019 (2019-03-24),333bf Final A E1

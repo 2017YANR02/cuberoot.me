@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / W / bin 5
-# Population in this bin: 707
+# Population in this bin: 710
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1663999001,R2 U2 B D2 B' R2 F2 D2 R2 F' U' R2 F' D' F2 R2 B2 L',W,GA Cubers Return A 2021 (2021-07-10),333oh Final B E2
@@ -178,7 +178,7 @@
 4774448001,U2 R2 U2 B2 D L' U R' B' U B2 R2 F2 D F2 L2 U' D2,W,Rheinland-Pfalz Open 2025 (2025-05-30~06-01),333 R2 C #3
 4779009001,R D B2 L2 B2 F2 L' U2 L B2 R' B R2 U R2 B2 R' B,W,Esbjerg Open 2025 (2025-06-07),333 R1 B #2
 791023001,F2 D2 F2 U2 B L2 B D2 F D' L2 D' L F2 U' L2 R2 U F U,W,Bacolod Cubing Quest 2018 (2018-05-29~30),333 R2 A #4
-4612466001,B U L B' D F2 D' R2 D2 U2 F' R2 D' L2 R B D L B2,W,Kuldīgas Pavasaris 2025 (2025-03-29~30),333bf R1 A #3
+5741781001,L2 B2 L R F2 D2 L2 F' R' F' L2 D2 F' L2 U R2 B' L',W,Wiltshire Summer 2026 (2026-07-04~05),333 R2 B #4
 5274501030,R' B2 D B R' U' D' B U' F2 D' L2 U2 R2 B2 D2 B2 L' B2 L,W,New Zealand Nationals 2025 (2025-12-12~14),333mbf Final A #1
 804404001,R2 B2 D2 B U F R' U2 B' U' D2 B2 R U2 B2 R' U2 F2 U2 R',W,Indian Nationals 2018 (2018-05-25~27),333 R1 M #1
 5239064001,F2 D2 U2 R2 U2 B2 U' L' B' F2 L' D' L2 R2 F2 D' B' F,W,Varaždin Open 2025 (2025-11-29~30),333oh R1 A E2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / W / bin 3
-# Population in this bin: 702
+# Population in this bin: 703
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3350547001,R2 F2 L2 D' B2 R2 D2 R2 D2 L' D U2 B L2 D' U' B2 F' D,W,Italian Championship 2023 (2023-12-08~10),333 R2 A E1
@@ -23,7 +23,7 @@
 5357029001,D2 L' D2 B2 R2 F2 L F2 L' D2 B U' B D2 L2 D2 U L2 F2,W,Regreso a Clases Aves Maria 2026 (2026-01-31~02-01),333oh R1 B #1
 4290755049,L2 U2 D R F' D' B R' F' U' R2 U2 R2 D B2 R2 U D L2 B R,W,Ottawa Blindfolded 2024 (2024-11-16),333mbf Final A #1
 4486978001,D B2 F' L2 B U2 L2 R2 B U F' R' B2 D2 R B R' U2 R',W,Cube4fun Biała Podlaska Sunday 2025 (2025-02-16),333oh R1 A E2
-99934001,R U L F' L2 B' D' R' D R' U2 D2 L U2 R2 D2 B2 U2 R',W,PB Smashathon 2015 (2015-01-17~18),333oh R1 C #5
+5742869001,L2 U D R L' B D2 B' L2 D2 R' B2 L2 B2 L F2 B,W,Santo Domingo Summer 2026 (2026-07-04~05),333oh Final B #5
 3061621002,U D R B2 D B U2 F2 D2 F' L2 B' U2 R2 F' U2 D' F L2 U,W,Cerrado Open 2023 (2023-09-08~10),333mbf Final A #2
 1456602020,D2 F' L2 D2 F' L2 F' U2 R2 U' B2 D2 F' U B2 L B' D' L' B' L B2,W,Tapiola Winter Open 2019 (2019-12-14~15),333mbf Final A #1
 1137532001,D' U' B2 U2 F2 L2 D2 L2 R' F' R2 U2 L' D' L B2 R B L',W,Play Cube X4 2019 (2019-05-11~12),333 R2 A #2

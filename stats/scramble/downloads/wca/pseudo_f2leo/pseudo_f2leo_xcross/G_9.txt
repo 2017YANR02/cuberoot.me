@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / G / bin 9
-# Population in this bin: 359
+# Population in this bin: 361
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3775418001,U' B R2 L' B R' F' U L2 B' U2 F L2 B L2 D' L B2,G,Mriy Diy Cubing Lviv 2024 (2024-05-18~19),333 R1 B #3

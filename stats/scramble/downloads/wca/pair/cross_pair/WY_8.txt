@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / WY / bin 8
-# Population in this bin: 431
+# Population in this bin: 432
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 903001,L' D' B2 L F L B R U' F' L B2 L2 B' R2 B U2 F' L2,W,Dnepr Cube Day 2014 (2014-03-15),333oh Final A #1
@@ -90,7 +90,7 @@
 661419016,L2 B2 L2 U' F2 R2 F2 L2 U2 B L R F' U B' F R2 D L2 U2 B R',W,Mantua Summer 2017 (2017-07-08~09),333mbf Final A #1
 5055351001,D L2 D2 U' F2 L2 D' R2 U' F' U' L' U' R F' U' B' D R2 F,W,Vilniaus Ruduo 2025 (2025-09-27~28),333bf Final B #2
 674741001,B2 U' L2 D L2 F2 L2 U L D B R' U L B D F' U2 L2 D2,W,Bangladesh Cubing Fiesta 2017 (2017-12-23),333 Final B #2
-675077001,D R2 F2 U R L F L U B R' F' L2 F2 U2 B,W,Zibo Open 2017 (2017-12-23),333 R2 B #1
+5743641001,R2 U2 B' U L U2 F' D' U2 F2 U2 L2 F' B L2 B' D L U2,W,Izarraizpe Open 2026 (2026-07-04~05),333oh R2 A #2
 681342032,F2 U2 L2 D F2 D2 B2 D' B2 U2 L2 B' F2 U B2 D F2 L F' R' U B R2,W,Dnepr Super Blind 2018 (2018-01-06~07),333mbf Final A #1
 689634001,B2 U' L2 R2 U L2 B2 D B2 D B' U' L' B' R2 B' R F' U' B,W,Santa Tecla Cubo Desafio 2018 (2018-01-21),333 R1 F #4
 692239041,D' U2 L2 U2 L2 B2 D' U' F' L' R2 D2 R' B2 F' D2 L' U F2 U2 L,W,Please Be Quiet WPI Winter 2018 (2018-01-20),333mbf Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / R / bin 7
-# Population in this bin: 124
-# Samples listed: 124 (all entries in this bin)
+# Population in this bin: 125
+# Samples listed: 125 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -129,3 +129,4 @@
 5667180001,L2 F D2 F R2 F L2 D2 R' F' U R2 D2 R U' F U2 B,R,Victoria Dockyard Sprint 2026 (2026-05-24),333 R2 A E1
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2
 5687949001,F2 R U2 F' U2 B' R2 F2 R2 U2 B U' F R F D2 L D,R,RVA Spring 2026 (2026-05-31),333 R2 A #5
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1

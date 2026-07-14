@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BGORWY / bin 2
-# Population in this bin: 776
+# Population in this bin: 780
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 5355244033,B2 D2 B2 L U2 R2 B2 F2 L' B U' F' D F' L2 U' R2 D2 F' L' F2,O,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final A #2
@@ -80,7 +80,7 @@
 4847473001,D' U2 F2 D' R2 U2 B' L' R U R2 F' D F L U',B,Rubí Guanajuato 2025 (2025-07-05~06),333oh R2 A #3
 3954885001,L2 F2 U2 B' D2 B' L2 B U2 R2 U' B2 U' B U2 L U2 L2,R,Rubik's WCA North American Championship 2024 (2024-07-18~21),333 R1 B #2
 3362038001,B D2 B2 U' B L' B2 D' F' D2 R2 B2 U2 B' L2 F2 R2 D2 L',W,Pocos Cupos Floridablanca 2023 (2023-12-17),333 Final B E2
-2818755003,F' U L U' D F R' D2 B' U B2 U2 D2 R2 F U2 F' U2 D2 L2,R,Side Events Bangalore 2023 (2023-06-24~25),333mbf Final A #2
+5746008001,L2 D' B R U2 R2 B2 D' F L' F U' L2 U2 R2 B2 U2 D R2 B,B,Odd July Singapore 2026 (2026-07-12),333bf Final A E2
 5610175001,L' F' R2 B R' F U F2 R' F2 R U2 R' D2 R2 B2 R B2,B,Marista Glória Open 2026 (2026-05-09),333 Final B E1
 371360001,L U D2 F2 R2 B' R' B U2 F' U D B2 R2 D' R2 U R2 B2,R,Asian Championship 2016 (2016-10-01~03),333 R1 G #3
 379090001,R U2 R D2 F2 U2 F2 L' U2 R2 F2 D L2 U L' U R2 D' B' L,Y,CAVA Open 2016 (2016-10-15),333oh R1 A E2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / Y / bin 1
-# Population in this bin: 144
-# Samples listed: 144 (all entries in this bin)
+# Population in this bin: 145
+# Samples listed: 145 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 33768001,F2 R2 D F2 U2 B2 L2 D B2 F L U' L R2 F' U' F2 U B,Y,P3 Grand Open 2014 (2014-06-28~29),333oh R1 B #3
@@ -149,3 +149,4 @@
 5663447001,L F2 L' B2 R U2 L R B L2 U B L2 F' D R U B D,Y,Barby Cube 2026 (2026-05-22~25),333 R1 B E2
 5687939001,F2 D2 B2 L2 R2 D R2 F2 D L2 F R2 D' L B2 D' B2 F2 R2,Y,RVA Spring 2026 (2026-05-31),333 R1 E #2
 5693726001,F' L2 B R2 U R2 U2 F' R' U R2 U' F2 U2 L2 D F U2,Y,Las Piñas Speedcubing Open IV 2026 (2026-06-06),333 Final D #5
+5743026001,R2 B2 R2 D2 U' L' R' B' D' R2 U R' D2 B L F U,Y,Victoria Gardens Lviv 2026 (2026-07-04~05),333 R1 A #3

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / G / bin 10
-# Population in this bin: 356
+# Population in this bin: 359
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 5764001,B F R2 B2 L2 B U2 R' F2 D' R' U2 R' F2 R' F2 U B',G,GuateRubik 2014 (2014-03-30),333 R2 A #1
@@ -137,7 +137,7 @@
 1356393001,F2 D R2 D L2 D' F2 D' L2 U' F2 R B2 D2 R' F U B2 F' L D',G,Reto Chignahuapan 2019 (2019-10-12~13),333oh R1 D #2
 5343901001,B2 D U2 B2 F2 L2 U2 L' F2 L F2 D F D' R2 U2 L' F D' L' F2,G,Steel's Cubes Lima 2026 (2026-01-23~24),333bf Final A #1
 4204912053,B2 R B2 D2 B2 U2 L B2 L2 F2 D' F2 L2 U' L R D2 F L' F,G,BrizZon Side Open IV 2024 (2024-10-19~20),333mbf Final A #2
-1459659001,U2 B2 F2 U' B2 U B2 F2 R' B2 L' B' U R' U' L2 D2 R' B',G,Nacionales Argentinas 2019 (2019-12-07~08),333 R2 A E1
+5746611001,U F2 L2 D2 F2 U L2 B2 U' B R' B' L R2 B2 F2 D F' D',G,Cube4fun Lublin Summer 2026 (2026-07-12),333oh Final A #4
 1503562001,B U2 B' D2 B' R2 F' U2 R' D F' L2 R2 D B2 U R2 B D2,G,Guildford Open 2020 (2020-01-18~19),333 R1 E #3
 4851460047,L' B' D L D' B D F D2 F2 B U2 F U2 D2 L B2 U L B',G,Rubik's WCA World Championship 2025 (2025-07-03~06),333mbf Final A E1
 3621761001,R U' B2 U B D R' B2 U2 F2 B' U2 L2 F' U F2 U2 F2,G,Elyu Cube Clash 2024 (2024-03-28),333 R1 B #2

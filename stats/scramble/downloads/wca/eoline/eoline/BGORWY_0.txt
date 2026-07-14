@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / BGORWY / bin 0
-# Population in this bin: 52
-# Samples listed: 52 (all entries in this bin)
+# Population in this bin: 53
+# Samples listed: 53 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 68271001,U F2 B D' B2 D B D2 B' U R2 D B2 U L2 U' B2 D,Y,Rice University 2014 (2014-10-18),333 R2 B #3
@@ -57,3 +57,4 @@
 5337151001,L2 U' B2 D2 L2 U L2 U2 R D L' D2 L B2 F2 R' D2 L' D,R,Just Judge Jura 2026 (2026-01-17~18),333bf Final A #4
 5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,O,Sumgait Spring Open 2026 (2026-03-19),333 R1 A #4
 5611477001,F' U2 F2 R2 U2 B' D B F2 D' U2 B' F' D U2 L2,W,Derwood Cubing Derby Spring 2026 (2026-05-09),333oh Final C #3
+5744725001,U' L2 D B2 D' U2 R U R' F2 R2 D R U' B2 L',R,Bursa Summer 2026 (2026-07-04~05),333 R1 E #2

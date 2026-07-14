@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / O / bin 8
-# Population in this bin: 716
+# Population in this bin: 718
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1046988001,U L B2 D' R' U' F' B' D2 R' B2 U' R2 B2 D F2 U R2 B2 D2 F2,O,Huehue Open 2019 (2019-03-09~10),333ft Final A #4
@@ -62,7 +62,7 @@
 289370001,R' L' B L' B U D B L D2 R' B2 U' F2 U B2 U L2 D F2,O,Severna Park Spring 2016 (2016-04-30),333 R1 A #4
 5355244037,R F' D2 R2 F2 L2 R D2 R2 D2 U' L D' L' B2 D2 R B' F L' F2,O,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final A #2
 309094001,R2 F2 R' F2 L B2 R2 D2 R D L2 B R U B D' B L' D F',O,El Escorial Open 2016 (2016-05-28~29),333 R2 B #4
-317283001,R2 U2 R' D2 U2 L B2 U2 R' D2 L' B' U R' D' F L2 U' F2,O,Gothenburg Cube Open 2016 (2016-06-18~19),333 R2 B #4
+5748373001,L' F L2 U2 L' D2 U2 L' F2 R D L B' F' D' L F2 U' B2,O,Stevenage July 2026 (2026-07-11~12),333 R1 C #2
 317876001,L R2 B2 L R2 U2 R F2 R' D F U2 B D' R2 D2 B2 R2 F2 L,O,Slow N Steady Spring 2016 (2016-06-18~19),333oh R1 J #2
 3436987001,B U2 B' U' L' F' D' R B2 L' B' R2 U D2 L2 D2 R2 U' F2,O,Big N Blind Bangalore Jan 2024 (2024-01-20~21),333oh R1 B E2
 2775995001,F2 U R2 D B2 U' B2 U2 F2 R' B U' F D R B D U' R' D',O,Peterborough Summer 2023 (2023-06-03~04),333oh Final B #4

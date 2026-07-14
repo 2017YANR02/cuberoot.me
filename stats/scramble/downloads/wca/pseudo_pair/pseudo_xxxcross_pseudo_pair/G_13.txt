@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / G / bin 13
-# Population in this bin: 217
+# Population in this bin: 218
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 8407001,U L2 D F2 L2 R2 U' L2 R2 B L B L' F L' U R B' L D',G,Danish Open Championship 2014 (2014-04-05~06),333 R1 C #3
@@ -172,7 +172,7 @@
 4378638001,F' U D2 L2 F2 R2 B2 L' D2 R B' F' U' F' R2 B2 F' L F',G,The Last Game EC 2024 (2024-12-21),333 R2 A E2
 4393465034,F U D2 B L D B R F2 L U B2 D2 L2 F2 D B2 D R B',G,Twixmas Flen 2024 (2024-12-27~29),333mbf Final A #1
 4446188001,U L2 B2 D L2 D' F2 U L2 D' R2 L F' L2 U' L' B' F2 L2 D' R,G,The Heart of Texas 2025 (2025-01-26),333 R2 A #4
-4448896022,B' U' L2 B U2 R2 B' U2 B2 R' D2 R D' U F2 R' D' U2 B' L',G,Dublin Winter Solving 2025 (2025-01-25~26),333mbf Final A #1
+5745498001,D' L2 B2 D L' B' R' B D L2 D L2 D R2 B2 U L2 B' L,G,No Skewba Diving in Greenport 2026 (2026-07-11),333oh Final B E1
 4449811016,R' D2 L2 F2 L' F2 R2 U2 F2 B R2 D2 R U' B2 R' D' L2 B' F L B2,G,Amherst Winter Challenge 2025 (2025-01-25~26),333mbf Final B #1
 4456562001,R D L U2 B2 R2 D2 B2 R D2 F2 L2 D L F D' B' F' R' F',G,Luzon Championship 2025 (2025-01-25~26),333 Final B #2
 4462916001,L2 U R2 F2 D R B' R2 U L2 F L F U L2 U' F2,G,Żory Open 2025 (2025-02-01~02),333oh Final A E1

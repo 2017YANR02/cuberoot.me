@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / G / bin 4
-# Population in this bin: 325
+# Population in this bin: 326
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3888175073,D2 R2 F' D2 L2 R D2 F2 L D2 U L' D L' D U' L F' L,G,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final B #1
@@ -72,7 +72,7 @@
 5543704001,R' D F' B2 U' L2 B' U2 L F B2 R2 B2 U' F2 L2 U2 F2,G,Xi'an Cherry Blossom 2026 (2026-04-04~05),333oh R1 A #5
 733249020,F2 U' B2 U2 L2 B2 F2 D F2 U2 F' D' F U' R2 F2 U' L F L B2,G,Nacionales Uruguayas UCHI 2018 (2018-03-24~25),333mbf Final B #2
 740861041,F2 U2 L2 U2 R2 D R2 D' F2 U2 F2 L' F U' L' B' U L2 F2 R2 B' D2,G,CFCTC Open 2018 (2018-03-31~04-01),333mbf Final A #1
-3735449040,F U' B D' F' L2 D' F' B U' R F B L2 B2 D2 B D2 B' L',G,BrizZon Side Open II 2024 (2024-05-01~05),333mbf Final A #2
+5748374001,L2 R2 B' D2 B D L F2 L2 D F' R2 F U B R2,G,Stevenage July 2026 (2026-07-11~12),333oh R1 C #2
 5599819001,R' U' B R B2 D L' D' L U2 B2 U' D2 R2 U' F2 R2 L2 D' B2 L2 U,G,FME Campos Open 2026 (2026-05-02),333bf Final A #1
 3659453001,L D' B2 U L2 D2 B2 R F2 L B2 D' U B' D B' L' U',G,SLS Kwiecień 2024 (2024-04-13),333 R2 A #2
 5715925001,B2 R L' B R L F' L2 U F2 B D2 F U2 F' L2 F' B2 D2,G,24K Glitterati Cube Open 2026 (2026-06-21),333 R1 A #5

@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / O / bin 0
-# Population in this bin: 793
+# Population in this bin: 795
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 6864001,F' D2 F R' D' R' F2 R U2 B D' L2 U2 F2 R2 F2 R' F2 R2,O,Carroll Spring Open 2014 (2014-03-29),333oh R1 A #4
@@ -24,7 +24,7 @@
 2100660089,B' U2 B2 R' U2 R2 U2 R' F' U2 L2 U L U B' U' F U2,O,SoCal Silent Spectacular 2022 (2022-08-13~14),333mbf Final A #1
 4173005001,R U' D2 F2 R U F2 D U2 F2 U2 L2 U2 L' D2 B2 F L',O,Spark Melbourne Spring Sunday 2024 (2024-10-06),333 R1 E E1
 2843239001,F2 B L2 F2 U' B L D F2 U2 R2 F2 B2 U' B2 D L2 D F2,O,West Side Cube Clash 2023 (2023-07-01),333 Final A #3
-3078044001,U F' L2 D2 F L2 D2 L2 U2 R2 B' R U L D R2 D L' F',O,Speed Cubing Fest Pachuca 2023 (2023-09-15~17),333oh R2 A #1
+5743344001,D2 B L2 F' R' B' R' D R2 B' L2 F D2 L2 D2 R2 F2 R' D2,O,Tlaxcala Open 10 Aniversario 2026 (2026-07-04~05),333 R1 B #1
 1051368038,U' L2 F2 L2 F2 D2 F2 R' D2 U R F D2 F L F D' B' L B R2,O,CubingUSA Heartland Championship 2019 (2019-03-09~10),333mbf Final B #1
 156262001,D2 B2 U2 B' L2 D2 F U2 L2 D2 R2 U' B' L D' U B' D' L2 U,O,Lent Open 2015 (2015-06-27~28),333 Final A #5
 2449919004,R2 D' B2 L B2 R' F2 R' D2 R2 F2 R2 F U' F' R2 B2 U L2 U,O,BrizZon Side Open 2023 (2023-01-21~22),333mbf Final B #2

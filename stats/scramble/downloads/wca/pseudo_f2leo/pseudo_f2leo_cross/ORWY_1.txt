@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / ORWY / bin 1
-# Population in this bin: 167
-# Samples listed: 167 (all entries in this bin)
+# Population in this bin: 168
+# Samples listed: 168 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 29329001,B2 R2 F2 U R2 U B2 U2 B U L2 D' F D2 U' L2 U,O,No Parity Open 2014 (2014-06-21),333 R2 A E2
@@ -172,3 +172,4 @@
 5539220001,U' R' F2 U' F U' F' R2 F2 D2 B2 R2 D' F2 D' L' B' L,O,Adelaide Autumn 2026 (2026-04-12),333 R1 D E2
 5569095001,U2 F2 R' F2 D F2 D' R F U B2 D2 F2 R' D2 R' D2 L2 U2,W,Duper Super Davis Spring 2026 (2026-04-19),333 Final H #4
 5602154001,U L2 D2 L' F D R F B' R' F' L2 U2 F2 R2 U2 F U',O,MilaNxNesas en La MataNxNza 2026 (2026-05-02~03),333 R1 C #3
+5746603001,U F D L B D' R2 U' F2 U2 L2 B2 R B2 R U2 R' D' F,W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A #4

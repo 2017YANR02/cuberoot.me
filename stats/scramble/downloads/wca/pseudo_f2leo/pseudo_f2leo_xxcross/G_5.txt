@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / G / bin 5
-# Population in this bin: 921
+# Population in this bin: 922
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2622391001,U2 B U2 F R B2 R2 B U' F2 D' F2 U2 L2 F2 L U2 R U2,G,Abierto de Pascuas 2023 (2023-04-07~08),333 R1 A #4
@@ -146,7 +146,7 @@
 3579058001,F2 B2 U2 F' U2 L D L' F R2 B R2 L2 B L2 B U2 B2 U',G,Franconia First Timers 2024 (2024-03-09),333 R1 B #3
 614978001,U L2 R2 F2 U R2 B2 F2 D2 L' D' L' B' R' B L2 F D L,G,Tathva Cube Open 2017 (2017-10-14),333 R1 H E2
 620064004,D2 B2 U F2 D' L2 R2 B2 D F' L F D2 R2 U B D L' D B R2,G,Pekanbaru Open 2017 (2017-10-14~15),333mbf Final A #1
-1502172001,B' F R2 B L2 D2 L2 D' B R' D2 R' D' B F2 U2 B' U,G,Jharkhand Cube Open 2020 (2020-01-19),333 R2 B #2
+5747459001,B' R D2 U F2 R2 D2 R2 D2 U' F L' R2 U L2 F2 D' F U2 L' F2,G,Bangkok Cube Festival 2026 (2026-07-11~12),333bf Final A #3
 4628160001,U2 R' D2 L F2 R' B2 R U2 R F' U' F2 L D' F L2 U',G,Langenstein City Blind Open 2025 (2025-04-05~06),333oh R1 A #5
 1311674001,U2 F R2 D2 F' L2 F' R2 B L B U2 B R2 D B2 R D' F,G,Oruro Open 2019 (2019-09-21),333 R2 B #2
 3598238001,R2 D R2 D' F' U B' L U2 D2 F2 U D R2 D F2 B' L2,G,Ulaanbaatar Spring 2024 (2024-03-16),333 R1 B E1

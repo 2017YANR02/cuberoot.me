@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / R / bin 3
-# Population in this bin: 666
+# Population in this bin: 668
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2568701027,U2 F2 R' D L U F2 U F2 U L2 B2 L' D B2 F' U B L' B' L',R,Di Tella Open 2023 (2023-03-18~19),333mbf Final B #1
@@ -34,7 +34,7 @@
 1336122001,L F2 L B2 L' D2 F2 R D2 F R' B' R' U R' F' L' U L',R,Chilliwack Cubes Fall 2019 (2019-10-05),333 R2 A #3
 209606001,D2 F2 L' R' D2 L R' U B2 L' R' B D' R2 B' D U2,R,Avenues CUBELELO Open 2015 (2015-10-31~11-01),333ft Final A #2
 226223001,F2 D2 F L2 F D2 B' L2 B D' F2 D' R' D' R2 U L',R,Northern Luzon Open 2015 (2015-12-06),333 Final A #5
-232297001,B' U2 B F2 R2 F' D' U' L2 U' B' L R' D2 R' U2 B2,R,Korea Winter 2015 (2015-12-19),333 Final B #5
+5748350001,F2 D R F L2 D' L D R D2 R2 D B2 U2 D' R2 F2 L2 B',R,Stevenage July 2026 (2026-07-11~12),333 R2 A #2
 1176438005,L2 U' F2 D' U2 F2 R2 F2 R2 D2 B D' L2 F D' R U L D B D L' F,R,SESC Gravataí 2019 (2019-06-08~09),333mbf Final E #2
 242080001,L' D F D' R L F B' U F2 R B2 D2 L' B2 L B2 D2 L,R,OKCubing 2016 (2016-01-16),333 R1 B #2
 4545345001,F' R2 B R' U D F2 L F' U B' R2 B R2 U2 R2 F2 U',R,Eugene Cubing Spring 2025 (2025-03-08),333oh Final A #3

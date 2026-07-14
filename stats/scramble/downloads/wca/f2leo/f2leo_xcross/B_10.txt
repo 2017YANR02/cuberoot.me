@@ -2,7 +2,7 @@
 # Population in this bin: 27
 # Samples listed: 27 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 174760001,U2 F2 R2 D2 U L2 D R2 U' R' U' L' R2 B U R D2 F R2 B',B,Torneo Salitre Plaza 2015 (2015-08-07~09),333 R2 A #5

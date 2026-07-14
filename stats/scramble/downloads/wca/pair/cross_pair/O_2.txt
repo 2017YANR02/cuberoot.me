@@ -2,7 +2,7 @@
 # Population in this bin: 186
 # Samples listed: 186 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 10406001,D2 B U2 F' D2 F L2 U2 F' U' R F2 L2 U B' D U' R2 U',O,Marikina City 2 Open 2014 (2014-04-05),333 R2 A E2

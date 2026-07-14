@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGOR / bin 5
-# Population in this bin: 248
+# Population in this bin: 249
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 5433363044,D' R' B2 D' L F' U2 B' U2 R' D2 L U2 D2 L F2 R U2 L B,O,BrizZon Side Open II 2026 (2026-03-07~08),333mbf Final A #2
@@ -29,7 +29,7 @@
 410742001,D F2 L2 D L2 U F2 L2 U L2 B R D' F U L2 U' B2 R2,B,Urdaneta City Fiesta Open 2016 (2016-12-04),333 R1 A #1
 411140001,F U2 R2 D2 F R2 U2 R2 F' R' U F2 L' U2 R' U' L' B2,B,Charrua 2016 (2016-12-03),333 R1 A #2
 5562422001,F2 U' B' U' B2 U F2 R D2 B' R' B2 L' U2 F2 U2 R U2,G,Xuzhou Zenith 2026 (2026-04-11~12),333 Final L #5
-5117341001,D B2 D' L2 D2 R2 U F' U2 B' F2 R' F' D2 L' U2 R F2,B,Regina Twist 'N Treat 2025 (2025-10-18),333 R1 A #2
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
 448341001,F D2 B' D2 R2 F' R2 D2 L' B' R B D2 L D2 F2 D' R,O,Altasierra 2017 (2017-02-18),333oh Final B #4
 498605001,B2 D' L2 U R2 B2 U' L2 U B L F2 L' F2 R' U' F' D U',G,Don't Mess With Texas 2017 (2017-04-29),333 R3 A E2
 517262001,F' U2 B2 D2 R2 B F2 L2 U2 R B' U R U' B2 F D' L' F,B,Indian Nationals 2017 (2017-05-12~14),333 R1 U #4

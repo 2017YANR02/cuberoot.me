@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / WY / bin 13
-# Population in this bin: 40
-# Samples listed: 40 (all entries in this bin)
+# Population in this bin: 41
+# Samples listed: 41 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 133100001,B' U2 D B2 R2 B U R' B2 L D2 B' U2 B' D2 B2 U2 F' U2 R2 D2,W,FNSM Open 2015 (2015-04-18~19),333oh Final B #4
@@ -45,3 +45,4 @@
 5333905054,D2 R L' F R2 B D' F R' F2 U2 F2 L2 U2 L U2 F2 R L2 U B R2,W,No Sprinting NY 2026 (2026-01-17~18),333mbf Final B #1
 5390210001,U F2 R2 D B2 F2 D2 B U R2 F2 D R' B L R2 F' D2 U',W,Guangdong Open - Revival & Rival 2026 (2026-02-06~08),333 R1 N #4
 5738692001,D B2 D' U2 R2 B2 U2 R F L F2 L2 D' U2 L R' U' L2 B',W,Hanoi CSP Open 2026 (2026-06-28),333 R1 A #2
+5742049057,B' L B2 D U2 B' R2 B' L2 B' F2 L2 D2 F L' F2 R D B D2 B' L B',W,Rubik's WCA North American Championship 2026 (2026-07-02~05),333mbf Final A #2

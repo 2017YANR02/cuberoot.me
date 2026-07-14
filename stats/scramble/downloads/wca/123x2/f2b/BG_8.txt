@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / BG / bin 8
-# Population in this bin: 860
+# Population in this bin: 863
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1626433016,R2 F2 U' F2 U B2 L2 D' F2 R' D R B L F' R2 D' U F' L B,G,Turn Around Tassie 2020 (2020-12-12~13),333mbf Final A #1

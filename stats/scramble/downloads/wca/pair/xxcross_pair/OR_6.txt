@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / OR / bin 6
-# Population in this bin: 520
+# Population in this bin: 521
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4716333030,F' U' B L B' R L2 F U2 B D F U2 L2 U2 F2 B U2 L',O,UCSD Blind and Big 2025 (2025-05-10),333mbf Final A #1
@@ -122,7 +122,7 @@
 708988001,U2 D' B2 U' F' R U' R' B U B2 L2 U2 R2 F' U2 F' B2 L2,O,Ural Winter 2018 (2018-02-17~18),333 Final A #2
 724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018 (2018-03-10),333oh R1 A #4
 3515336001,U' D2 R' U' F' L2 F R L' F' L2 B' R2 F2 U2 F2 R' F,O,ODU Big Blue Winter 2024 (2024-02-17),333 R1 C #1
-2971802001,U B2 D U2 F2 U' L' F L D B U B2 D B F2 D2,R,Burley Summer 2023 (2023-08-12),333 R2 B #5
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
 2815036001,B' D2 U' B2 L2 U' L2 R2 B U' R D2 R2 B2 D2 L2 B2 D',O,Winchester Weeknights I 2023 (2023-06-21),333oh Final A #4
 4522973001,B2 R' L' F' R' B R' D' F' U2 R2 B' R2 F' U2 B R2 B L,O,Flushing Glow Open PM 2025 (2025-02-23),333 R2 A E1
 5418691001,R' F2 U F2 D' U' L2 U' F2 U R2 F' R F2 L2 B2 R D R2 B,O,Iowa Winter Cooldown 2026 (2026-02-28),333 R2 B #5

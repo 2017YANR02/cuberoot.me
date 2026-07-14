@@ -2,7 +2,7 @@
 # Population in this bin: 132
 # Samples listed: 132 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 68780001,F2 L2 B' L B L' U' B' R' D2 F2 U2 B2 L U2 R D2 L B2,G,Hungarian Open 2014 (2014-10-17~19),333oh Final A #5

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / B / bin 8
-# Population in this bin: 903
+# Population in this bin: 904
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2652480001,D2 F2 U F2 U' F2 D' F2 U' R' D' R' U R2 U B U' L' R,B,Palmerston North 2023 (2023-04-16),333 R1 B #2
@@ -173,7 +173,7 @@
 660858015,L B U' B R' L2 F' D L' B' U' R2 B2 R2 D R2 U' D',B,Waves Cube Challenge 2015 (2015-11-08),333mbf Final A #2
 3630965001,U R2 B U' R2 F2 D' B2 U F2 D' L B R2 D B L2 F' L',B,New to Sherwood Park 2024 (2024-03-30),333 R2 B #5
 4697016001,F2 R2 F U' R B R2 D2 F R2 L' U2 F2 U2 L B2 L' U2 F2 L2 U,B,BrizZon Side Open II 2025 (2025-05-01~04),333bf R1 A #2
-3954202001,U D2 F U' L' F2 R2 L B F2 R' U2 L' U2 L B2 L D2 L',B,Avenida Chile XIII 2024 (2024-07-21),333 R1 B #4
+5743103001,R2 D2 R' F R F U F R' D2 L D2 F L2 U2 F U2,B,Victoria Gardens Lviv 2026 (2026-07-04~05),333 R2 B #5
 1269632001,F' U' R' U L2 B U F2 U' R B' U2 R2 B' U2 R2 D2 F D2,B,Peru Nationals 2019 (2019-08-16~18),333 R3 B #1
 661014009,R2 U2 B2 F2 U F2 U' B2 U R B U2 F L F' L2 R F' U B L2,B,Mental Breakdown 2016 (2016-06-18~19),333mbf Final A #2
 661192016,F U2 F2 R2 D2 F D2 B2 U B U R' U R D2 F' L2 U B R2,B,New Zealand Nationals 2016 (2016-12-03~04),333mbf Final A #1

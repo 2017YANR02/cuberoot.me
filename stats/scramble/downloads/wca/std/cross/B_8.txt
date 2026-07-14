@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / B / bin 8
-# Population in this bin: 651
+# Population in this bin: 652
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2023001,U' R' D L D B U' F' R F U2 B2 U2 R2 F2 U B2 L2 U' B2 U',B,Zonhoven Open 2014 (2014-03-22~23),333 R2 B #3

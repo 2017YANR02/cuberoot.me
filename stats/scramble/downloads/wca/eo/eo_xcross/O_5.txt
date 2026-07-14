@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / O / bin 5
-# Population in this bin: 705
+# Population in this bin: 707
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 5003001,F D2 F' B2 D F B2 D L' D' L' F2 R' F2 L2 D2 B2,O,Tula Open 2014 (2014-03-28~30),333 R1 B #4
@@ -148,7 +148,7 @@
 4172496001,F' D2 U2 L2 D2 U2 B L2 B U2 L2 F2 R' F D F R',O,Galerías Bogotá II 2024 (2024-10-06),333 R1 C #4
 4014303058,B' L2 D2 F2 D2 F' U2 B' U2 L2 D' L' F L F D' B L2 B R2,O,BrizZon Side Open III 2024 (2024-08-15~18),333mbf Final A #2
 1134352037,D' F2 U2 L2 B2 U F2 U2 L' D2 F' U2 F U F' R' D2 L R B R,O,Casal Catalunya Baires Open 2019 (2019-05-03~04),333mbf Final A #1
-1273524059,R2 B D2 R2 U2 R2 B' L U' B F R' U B F R B' R2 B' L',O,Indiana 2019 (2019-08-16~18),333mbf Final A #1
+5747867004,U2 L' D F R' F2 L B2 R' F R2 D2 F2 U2 B' D2 B' L2 B',O,Bigs & MBLD Vila Velha 2026 (2026-07-12),333mbf Final A #2
 5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,O,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1
 3875185001,R' F2 D2 R2 B2 D2 R2 B2 U L' D' R D2 R' U L' D2 B F',O,Chilling in Canberra Saturday 2024 (2024-06-22),333 R2 A #3
 5599614013,R' F' U R2 U D' B2 U' L' F R2 F2 D2 F' R2 F D2 B R' B R2,O,Campeonato Mineiro 2026 (2026-05-01~03),333mbf Final B #1

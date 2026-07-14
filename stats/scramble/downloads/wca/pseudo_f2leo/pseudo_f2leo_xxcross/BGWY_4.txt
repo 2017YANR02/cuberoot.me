@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGWY / bin 4
-# Population in this bin: 303
+# Population in this bin: 304
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4486197001,B' D2 L2 F U' F2 R U R F2 U R2 U F2 R2 B2 D2 F,G,Cubing Returns Nagpur 2025 (2025-02-16),333 R1 D #2
@@ -96,7 +96,7 @@
 4781526001,B2 D2 L2 B2 D' U2 B2 L2 B2 R2 F2 D F L U2 F' U' L2 F,Y,Pulmapelipäivät 2025 (2025-06-06~08),333oh Final A #3
 1003723001,B2 L' R2 F2 L D2 L' U2 R' B2 U' L' R' F U2 B L2 D2 B' L' F',B,Bogotá Free Comic Cubing 2019 (2019-02-02~03),333bf Final A #2
 1004836001,D' L' F' R' U L F2 R' U2 L' F2 L2 D' L2 U' B2 L2 U,G,Return to Toronto 2019 (2019-02-02),333 R1 B #3
-1025219001,D2 B' L2 B2 D2 U2 R2 B' D2 B U F D' B F2 L' U R' U' B2 U L' F,G,UCSD Winter 2019 (2019-02-16~17),333bf R2 B E2
+5744704001,U' F' D2 B' R L' F R2 L2 F2 U B2 U' B L' B2 R,W,Bursa Summer 2026 (2026-07-04~05),333 R1 B #2
 4999936001,B' R2 F2 U' B2 F2 R2 D2 U' R U F' U B2 D' R2 B' U' B,G,Colégio Asther Open 2025 (2025-09-06),333 R1 C E2
 4333800001,U2 L' D2 L2 D2 B2 R' D2 L' D R F' U2 F' D F2 D R',G,Singapore Freeze 2024 (2024-12-07),333oh R1 C E1
 1056657001,R' U' F D2 R2 D' L2 R2 F2 U F2 L2 F2 R' B' R' D U' R F' L R' D' B' R' U' F,Y,Please Be Quiet Korea 2019 (2019-03-16),333fm Final A #1

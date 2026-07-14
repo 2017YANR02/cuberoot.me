@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / O / bin 3
-# Population in this bin: 28
-# Samples listed: 28 (all entries in this bin)
+# Population in this bin: 29
+# Samples listed: 29 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 33876001,L D2 R U2 L F2 L2 U2 B2 D2 F' D U' R2 F L2 F U' R2 D',O,P3 Grand Open 2014 (2014-06-28~29),333bf Final A E1
@@ -33,3 +33,4 @@
 5101282001,L2 B D2 R2 D2 L' F L D B2 D R D2 R B' F',O,Cubing in Westerly RI 2025 (2025-10-11~12),333 R2 B E2
 5539376001,R D L2 F D' R2 F U2 F2 U D2 F2 R2 U L2 F2 L2,O,NZ South Island Championship 2026 (2026-04-10~12),333 R2 C #2
 5669651001,U B D B L2 D2 F R2 U2 F' U2 R B' R B D' F U',O,Nuevo Chimbote Speedcube Fest 2026 (2026-05-23~24),333 Final B #4
+5746469001,F2 D B2 D R2 U' F2 U' R' D2 B' F L' D' B' D2 F2 U2 F',O,Sleep & Solve Landsbro 2026 (2026-07-11~12),333oh Final A E1

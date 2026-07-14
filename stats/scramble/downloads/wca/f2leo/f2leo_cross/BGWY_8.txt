@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGWY / bin 8
-# Population in this bin: 144
-# Samples listed: 144 (all entries in this bin)
+# Population in this bin: 145
+# Samples listed: 145 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 48955001,L' D2 L' D2 B2 R' D2 U2 L2 F R D' L D2 L B' F2 D F',B,Cross-strait Cubing Exchange 2014 (2014-08-09~10),333 R2 A #3
@@ -149,3 +149,4 @@
 5705111001,D2 U2 R2 B' D2 F' L2 D2 B F' D' U' L' B R F U' L R D2,B,Rockfort City Cubing Challenge 2026 (2026-06-13~14),333 R1 E #5
 5719564001,D2 L2 B F2 R2 D2 B U' B' U R2 D R' F' D L D2 U',B,Cape May Summer A 2026 (2026-06-20),333 R1 D #3
 5727133038,U' L2 D R2 B2 U' R2 B2 U2 B' L' D' F2 U F R B' L F2 R2 B,B,BL&D BLD Liestal 2026 (2026-06-27~28),333mbf Final A #2
+5748458001,D' U2 R2 D2 B L2 B2 F R2 B2 L F' D R B' U L' U' R' U',B,Stevenage July 2026 (2026-07-11~12),333 R2 C #4

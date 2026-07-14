@@ -2,7 +2,7 @@
 # Population in this bin: 196
 # Samples listed: 196 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2478001,R2 B' D2 F' L2 D2 B F2 D R2 U' L B2 U2 L' F' D' F R2,W,Santo Domingo Spring 2014 (2014-03-23),333oh Final A E2

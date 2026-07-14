@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / W / bin 8
-# Population in this bin: 677
+# Population in this bin: 681
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1421414017,B2 R2 B2 U R2 F2 U2 L2 R' U2 F2 D R2 B U' F' D' R D' U L B2,W,I Hope It's Solved Edmonton 2 2019 (2019-11-23~24),333mbf Final B #3
@@ -59,7 +59,7 @@
 1080194001,F' B' U R' L U R' F L2 F2 U' B' U2 D2 R2 F' B2 R2 D2,W,Anyang Open 2019 (2019-04-06),333oh R1 C E2
 4122631050,R2 B2 L' D L2 F2 U R2 U' F2 L F2 D2 B' U' F' R B L B,W,Do You Remember San Diego 2024 (2024-09-21),333mbf Final B #1
 300888001,L2 B2 D' L2 D B2 D' L2 U' R2 U F R' B L' B2 U F D2 L',W,Canberra Autumn 2016 (2016-05-21~22),333oh R1 A E2
-5404313001,F2 L B2 D2 L U2 L' R' B R U L2 F' U' F2 U2 L U' F',W,Zeer Rangsit Cubing 2026 (2026-02-21~22),333oh R1 A E2
+5741155001,R F2 D U2 R2 U' R2 F2 L2 B' U F' L F R U2 F U,W,Mike's Cubes Israel 2026 (2026-07-05),333 R2 A #1
 3430074001,F' B' R2 F R F' L' F2 R2 F2 U2 D' R2 U2 B' R2 U B2,W,Jesuitinas Txantrea Open 2024 (2024-01-20~21),333 R2 C #4
 333002001,D2 U2 B' L2 U2 F D2 L2 F' D2 L R' U' B' R F2 D U' F R' B',W,Petoskey Cubing 2016 (2016-07-23),333 R1 C #1
 339375001,U2 F2 L2 U' B2 U2 L2 U L' U2 R F D' L B2 R' B F' U,W,US Nationals 2016 (2016-07-29~31),333 R1 S #4
@@ -97,7 +97,7 @@
 5414581001,U' R2 B R2 F' D2 B2 R2 D2 R2 F' D2 R B' L U' B D F L',W,UMass Spring 2026 (2026-02-28),333oh Final B #2
 4806319001,L U' B2 U2 F2 R2 U2 B R2 D2 U' F2 D B2 L D2 U' L,W,Stockholmsligan Nane - Twiga 2025 (2025-06-17),333oh Final A #1
 4342332011,L' U' R U' D F' D R2 B' R2 B2 L2 F U2 L2 D2 L' F2 U' B',W,Bolivia Nationals 2024 (2024-12-06~08),333mbf Final A #1
-5080702001,U2 L D2 L2 D R B' U R U2 B2 L2 F2 R' F2 B2 R2 B2 F,W,Seattle Cube Cascade UW 2025 (2025-10-04),333 R2 A #1
+5748524001,L2 U' L' B L U F R' F2 D2 B2 R' B2 R2 U' D2 L2 F',W,Stevenage July 2026 (2026-07-11~12),333oh R1 B E1
 555773001,L2 D F2 R2 U B2 R2 D2 U B2 L' F' U' B2 R' B L2 U2 L' D2 F',W,Cool Toons Guadalajara 2017 (2017-07-21~23),333 R1 B #4
 5302124001,B2 U2 B2 U B2 U L' D' R B' F D2 L2 R' D U2 F2 U,W,Cubeada de Fin de Año Huánuco 2025 (2025-12-28),333 Final B #2
 4846237005,F2 L2 F' D' B2 U2 R B D' R2 U2 D F2 U2 F2 R2 D2 R2 B' L' B R',W,Trentatré Trentini Entrarono a Trento 2025 (2025-07-05~06),333mbf Final A #1

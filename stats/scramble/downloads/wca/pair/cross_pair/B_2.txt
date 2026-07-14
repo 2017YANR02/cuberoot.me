@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / B / bin 2
-# Population in this bin: 206
+# Population in this bin: 207
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 55529001,D2 F' U2 F D2 B' U2 R2 F U F2 U' B L' D' F' D U2 L,B,Mogi Open 2014 (2014-08-30~31),333 Final A E2
@@ -79,7 +79,7 @@
 1262173022,D2 L' R D2 R' F2 L' F2 U2 F' D F L' R2 F2 D' R U' B2 L2 U',B,Baia Mare North Open 2019 (2019-08-17~18),333mbf Final A #3
 1283892001,B2 U2 B2 D2 R B2 D2 R2 U' L' B2 U B' U F L2 U2 R' D2,B,ACA League Final 2019 (2019-09-01),333 Final C #5
 1350932001,L2 R2 B F2 R2 U2 R2 D F L2 D U2 L' D' F L' B' U,B,Daegu Autumn Open 2019 (2019-10-13),333 R1 F E1
-1367531001,U B2 U F2 D' R2 D R2 U' R' B2 U L2 R2 B F2 D' L D2 U',B,Trois-Rivieres 2019 (2019-10-19),333 R1 C #5
+5741666001,U F' R2 D R L2 D2 B L2 U2 F2 U B2 R2 D' F2 U R' D',B,Wiltshire Summer 2026 (2026-07-04~05),333oh R1 A #2
 1387356001,U L' F' R2 U L2 D B' R F B' R F2 R' D2 L' B2 L' B2 D2,B,CCC Qualification Yakutsk 2019 (2019-11-02~03),333 R2 B #3
 1485104001,R2 D2 L2 F' D2 L2 B2 U2 F' L2 F2 R D2 U' R2 B U2 F2 U' F2,B,Lexington Feet Fest 2019 (2019-12-31),333ft R1 B E2
 1486135001,L' F L U2 B' D2 R' F U R2 D2 L2 D2 F' R2 F2 B' L2 F R2,B,Small Cheese 2019 (2019-12-30),333oh Final A #2

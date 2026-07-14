@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BGORWY / bin 7
-# Population in this bin: 725
+# Population in this bin: 729
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1327415027,B R2 F' L2 D2 B2 F' D2 L2 F D' B' L' R F' U B L' D L D2 B' L,R,Comas Speedsolving 2019 (2019-09-28~29),333mbf Final A #1
@@ -16,7 +16,7 @@
 46950001,U2 F2 D2 B2 U L2 D R F L F' D F L' D2 L' B2 F,W,Brasileiro Etapa de Inverno 2014 (2014-07-25~27),333oh R1 B #1
 5508904007,D R' U2 L2 R2 B2 R2 F' R2 B' D' B D F2 R U2 L' F,Y,No Peeking Calgary 2026 (2026-04-04~05),333mbf Final A #2
 4093335001,B2 D' U' B2 D R2 U2 F2 R2 D' L2 R' U2 F U2 B2 D L' F' U',O,Aliso Niguel Summer 2024 (2024-09-08),333 R1 D #5
-3850491001,D2 R2 F2 D2 R2 B' D2 L' F2 D L2 D R2 F L U B D',G,Zielona Góra Fresh Cubing 2024 (2024-06-08~09),333 R2 B #3
+5741741001,D2 U2 F2 L2 B' L2 F R2 F2 L' R' U' L' F' U2 R' B' U2,B,Wiltshire Summer 2026 (2026-07-04~05),333 Final B #3
 4780871001,L R2 D' B2 R2 U F2 D' F2 L2 U2 B' L R F R' F2 D' B L2 U,O,Cartagena UPCT Open 2025 (2025-06-07~08),333bf Final B #1
 77446001,F2 U' L2 U' B2 U' F2 U' F' R B2 F R U' F2 R D' B2 D,O,PLS Autumn Reda 2014 (2014-11-08~09),333oh R1 B E1
 5237940001,U F2 U B F U2 B' D2 B' D2 F' R' U2 F' D R2 D' F,O,Taoyuan Airport Cube Day 2025 (2025-11-29~30),333 R2 B #1
@@ -30,7 +30,7 @@
 142747001,L' B2 R U2 F2 L' F2 U2 R2 F L R2 B2 D' R U' R2 B2 F' L',Y,Brasov Rubik's Open 2015 (2015-05-24),333 R1 B #1
 3157145001,R' B R2 D' L' B' U2 B' L D2 F2 B R2 L2 F' D2 F' B' U2 B R,R,The Big Cube Melbourne 2023 (2023-10-14),333bf R1 B E1
 149115001,R L D2 F' R L' D' F R F' D R2 B' U2 B2 R2 B' L2,B,Foon Yew Open 2015 (2015-06-07),333 R1 A #5
-3641905001,U' L' D2 L D2 B2 R2 F2 R2 U R2 U' B' D2 R F',W,Sparking Back To School Santiago 2024 (2024-03-31),333 R1 D E2
+5745086001,L2 B2 R2 U2 F' L2 B R2 B2 D L2 F2 L D L' U2 R D,G,Mumbai Monsoon Mayhem 2026 (2026-07-05),333 R1 B E2
 1065428001,B2 R2 F2 R2 U' R2 U F2 U F' R2 U' R2 F2 R B' D2 L' U' R',B,Speedsolving Huancayo 2019 (2019-03-24),333 Final A E1
 1283311016,D' B2 U' L2 D F2 U' L2 R2 F2 R B L' F2 U2 L' D' L R' F' R2 D2,W,Please Be Quiet Merdeka 2019 (2019-08-31),333mbf Final A #1
 5360315001,L2 D2 U' F2 U B2 L U2 L2 F L R' F2 L2 F' L F R2,R,Gurizão em Osório 2026 (2026-01-30~02-01),333 R2 C #4

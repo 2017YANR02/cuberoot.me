@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / OR / bin 5
-# Population in this bin: 144
-# Samples listed: 144 (all entries in this bin)
+# Population in this bin: 145
+# Samples listed: 145 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,O,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -149,3 +149,4 @@
 5660738011,L' D' F2 R2 U L' B2 U' R B L' U2 B2 R' U2 F2 R B L B',R,Ileseum Cube Open 2026 (2026-05-24),333mbf Final A #1
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,R,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
 5704382052,D F R2 D' R U F' R' B' U2 F2 R2 D2 F2 R F2 D2 L2 F2 D',O,GAN Southern Championship 2026 (2026-06-11~14),333mbf Final A #2
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1

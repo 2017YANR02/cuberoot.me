@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / BG / bin 10
-# Population in this bin: 725
+# Population in this bin: 728
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4332297001,F' R2 U2 L2 B' L F D' R2 B' U' L2 D' R2 U D',G,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 A #2
@@ -187,7 +187,7 @@
 2915205001,U' R2 U2 L D R' B' F2 U2 L' U2 F2 B2 R' D2 L F2 R D F2,G,Back to İzmir 2023 (2023-07-15~16),333 R1 C E1
 5692270001,B' R' F2 U' B2 R' U' D' R U F2 B R2 D2 F' R2 B L2 B,G,CubingUSA Great Lakes Championship 2026 (2026-06-05~07),333 R1 B #1
 854765001,F' B2 L' D' R' L F U2 F D2 L' F2 R' U2 R' F2 U2 D2 B2,B,Brno Open 2018 (2018-08-11~12),333bf Final A #1
-859664001,F2 B' L' F2 D' F' U' F' U' R D' R U2 R' D2 F2 L' U2 L' U2,B,Shenyang Summer 2018 (2018-08-05),333oh Final C E2
+5746611001,U F2 L2 D2 F2 U L2 B2 U' B R' B' L R2 B2 F2 D F' D',G,Cube4fun Lublin Summer 2026 (2026-07-12),333oh Final A #4
 5390279001,U' B2 L2 D F2 U' R2 U2 R' F R U2 B' R F U L B2 D',B,Guangdong Open - Revival & Rival 2026 (2026-02-06~08),333 R2 G #3
 4727254001,D R B' L2 F2 R D2 B2 R2 B2 R2 U B2 U' L' D2 R D2,B,No Parity Mayhem Singapore 2025 (2025-05-18),333 R2 A #4
 872049001,D2 B2 L2 U' L2 R2 B2 D' R F' L D' R F' L R' F D,B,Zhongshan NxN Speedcubing 2018 (2018-09-09),333 R2 A E2

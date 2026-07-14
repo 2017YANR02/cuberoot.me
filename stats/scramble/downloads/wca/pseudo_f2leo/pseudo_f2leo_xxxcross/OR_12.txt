@@ -1,11 +1,11 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / OR / bin 12
-# Population in this bin: 218
+# Population in this bin: 220
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
-49816001,L' F U' D R B D B2 D L B' R2 D F2 L2 D2 L2 F2,O,Summer with Cubers 2014 (2014-08-14~15),333 R2 B #1
+5741620001,B' U2 F D2 B2 L2 F' R2 F D F2 R2 U' B' D B2 L2 R B' L',O,Wiltshire Summer 2026 (2026-07-04~05),333 R1 A #1
 71357001,B2 U L2 D2 B2 R2 D2 R2 F' L2 D R' F' L' D' L2 U2 F L2 R',O,Kingscube Toulouse Open 2014 (2014-11-01~02),333oh R1 B E2
 88708001,L2 B2 U2 L2 R2 D F2 D2 L2 B D L2 F' R B2 L D L2 R' F2,O,PoliMi Italian Open 2014 (2014-12-13~14),333 R2 C #5
 108370001,F' D B' L' F2 U R D R' F2 R L2 F2 U' L2 U2 R2 D2 B2 R2 D,O,Kaohsiung Winter Open 2015 (2015-02-15),333 R1 C #5
@@ -128,7 +128,7 @@
 2763044074,F2 L2 U' F2 D2 L2 B2 L2 F D L2 R D U2 F2 L2 F U L' R' B' L,O,Please Be Quiet in Tashkent 2023 (2023-05-27~28),333mbf Final A #1
 2771600001,U' F' L' U' L2 D2 L2 F2 D L F2 L F L B F2 L U',O,Swiss Nationals 2023 (2023-05-27~29),333 R1 B E2
 2828173037,D' F2 D L' B' U' F R' B L' F2 B2 U2 D B2 U' B2 R2 B' D,O,Please Be Quiet Evanston 2023 (2023-06-24~25),333mbf Final C #2
-5592796064,B2 L2 R' F2 L2 F2 U2 L2 D B D' U R D L' B' U L2 R' B R2,O,Brizzon Side Open III 2026 (2026-05-01~03),333mbf Final A #1
+5742022001,R L2 U2 B' D2 B' F2 L2 B R2 L U F2 R B D R B F2 U2,O,Rubik's WCA North American Championship 2026 (2026-07-02~05),333 R1 G #1
 2935164001,L' D L2 B2 U L' B R F U2 F B2 D2 L2 F' U2 D2 L2 U R,O,UFBA II 2023 (2023-07-28~29),333 R2 C #3
 2944184005,B' U' L' B U' L F R' D2 L F2 L2 D' F2 U R2 U2 D R2 B' L',O,Gotland Open 2023 (2023-07-29~31),333mbf Final A #1
 2948467028,D' U R2 B2 D' F2 U F' D' R U F' L' B' F L2 D' R B R',O,Stockholm Mental Breakdown 2023 (2023-08-05),333mbf Final A #2

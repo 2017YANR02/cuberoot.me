@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / W / bin 14
-# Population in this bin: 103
-# Samples listed: 103 (all entries in this bin)
+# Population in this bin: 104
+# Samples listed: 104 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 264001,B2 L' R2 F2 U2 B2 F2 L B2 U' L' R B' U' B2 D' F L2 D R2,W,Montréal Open 2014 (2014-03-15),333 R2 B #4
@@ -108,3 +108,4 @@
 5715932001,L R2 B2 R2 U R2 D2 U L2 B2 D2 F' U' R' B' F' D R' F R,W,24K Glitterati Cube Open 2026 (2026-06-21),333 R1 B #5
 5719693001,R' L' D F U2 B D R' U' D F2 B2 R' U2 L2 D2 B2 L' F2,W,Cape May Summer B 2026 (2026-06-21),333 R1 A E1
 5736152001,B L D' B U R U2 D2 B2 R U2 D2 R B2 L D2 L' B' R,W,Cubo Manía MFS Bello 2026 (2026-06-28),333 Final A #5
+5746649001,B L U' F' D' R' F R U2 F U2 R2 D2 B2 L F2 L F2 D',W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A E1

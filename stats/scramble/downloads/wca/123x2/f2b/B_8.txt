@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / B / bin 8
-# Population in this bin: 418
+# Population in this bin: 419
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 11598001,B2 U2 B2 F2 L' F2 D2 L' U R2 F2 L2 R B2 D' B2 F L B',B,Coliseo de Tovar 2014 (2014-04-19),333bf Final A E1
@@ -163,7 +163,7 @@
 3483613001,U2 F2 D2 L' D2 R F2 L' D' B L2 F D' F2 D2 U R2 U L,B,Fall River Cubikon 2024 (2024-02-04),333 Final A #2
 4810290001,U2 B' R' B' R' L U2 B' U F2 L2 D F2 U2 D' R2 B2 L,B,Twisty Te Raekura 2025 (2025-06-21),333oh R1 B #5
 1305190001,D2 B L2 B' D2 L2 F' D2 B2 L B2 F' D U2 R2 F L' F2 L D,B,Singapore MentalMatrix Open 2019 (2019-09-21),333 Final A #1
-5498932001,F2 B R2 F L' F R' B2 R2 B2 D F2 U' F' D2 R' B2,B,Shri Ram Cubing Challenge 2026 (2026-03-28~29),333 R1 B #4
+5740426001,L D R' U F2 D2 R' B2 D2 B2 R' B' R2 F U L B' F,B,Parla Open 2026 (2026-07-04~05),333 R2 D #4
 1330597001,B2 U2 F2 R U2 B2 L2 D' L F2 L2 R D F2 R' D' B' D' B R2,B,HLC Cube Challenge 2019 (2019-09-28),333bf Final A #2
 4972175001,R2 D2 F' L2 F' U2 B2 D2 B' F2 R D R' F2 U B' R' B' L,B,Rubik's UK Championship 2025 (2025-08-22~24),333 R1 B #1
 1343476001,L2 D' L D' L2 F D' L' U L2 D2 F2 R2 L' D2 R F2 L2 B2,B,Polish Speedcubing Tour Rzeszów 2019 (2019-10-05~06),333 R1 A #5

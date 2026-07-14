@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / WY / bin 10
-# Population in this bin: 688
+# Population in this bin: 689
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1341324001,U2 F2 U2 F' U2 F R' D' B L2 R' B' R2 F2 L D B' L2,Y,Cube Party Santa Cruz 2019 (2019-10-05~06),333bf Final A #2
@@ -181,7 +181,7 @@
 971141001,D F B2 L F2 U' F R2 L' B' L2 F U2 F R2 L2 F R2 B,W,Southeast Texas Winter 2019 (2019-01-04~05),333 R1 C #2
 5590728014,B' U B2 R2 D2 F' D2 R2 F L2 B L' D2 R' B D' B2 R,W,Vaudesincourt Open 2026 (2026-05-01~02),333mbf Final A #1
 1001813024,D2 L U B L D2 R B2 D' F' D2 L2 U' R2 L2 D' F2 U' F2,Y,Please Be Quiet Utah 2019 (2019-02-02),333mbf Final A #1
-3750962001,L F B' U B2 R B' L' F2 B2 R' L B2 L D F U2 F,W,GLS III 2024 (2024-05-11~12),333 R1 C E1
+5740482001,U B2 D2 F U R' D' L D R' B2 L2 F2 D2 R2 L2 B2,Y,Parla Open 2026 (2026-07-04~05),333 R1 B E1
 1007703010,B2 R2 D F2 L2 F2 D R2 D L' U L B F L2 U B2 D' B R2 B' L',Y,Valenzuela Cube Classic 2019 (2019-02-02),333mbf Final A #1
 4764267001,F2 L D L2 B' L' F R B L2 F2 U' R2 D' R2 F2 U R2 U',Y,Only 3x3's in Academyium Bangalore 2025 (2025-06-01),333 Final B #2
 2710863001,B' L R U2 L B2 F2 U2 F2 R B' R2 U R2 F' D' R2 B' R2,W,French Championship 2023 (2023-05-06~08),333oh R2 A #2

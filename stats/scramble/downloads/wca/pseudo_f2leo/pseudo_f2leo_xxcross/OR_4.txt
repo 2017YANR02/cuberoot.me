@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / OR / bin 4
-# Population in this bin: 164
-# Samples listed: 164 (all entries in this bin)
+# Population in this bin: 165
+# Samples listed: 165 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 32691001,F2 R2 B' U2 R2 F' D2 L2 D2 R2 U' F' R U2 B' D' F' U2 B F2 R2 B R2,R,Thailand Championship 2014 (2014-06-21~22),333bf Final A #3
@@ -169,3 +169,4 @@
 5624269001,R F2 D2 B2 U2 R B2 L B2 D' R B' R2 B2 F D2 L2 F2,O,Bayonne Atoutcubes Open 2026 (2026-05-08~10),333oh Final B #1
 5660738011,L' D' F2 R2 U L' B2 U' R B L' U2 B2 R' U2 F2 R B L B',R,Ileseum Cube Open 2026 (2026-05-24),333mbf Final A #1
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,R,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1

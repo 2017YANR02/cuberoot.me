@@ -2,7 +2,7 @@
 # Population in this bin: 15
 # Samples listed: 15 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 678393001,L2 F B2 D2 L' B L' D2 R2 B2 U2 D2 R2 B' D2 F2 L2,R,Kharkiv Winter 2017 (2017-12-23~24),333 R1 C #5

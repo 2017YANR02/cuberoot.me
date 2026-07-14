@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / B / bin 7
-# Population in this bin: 924
+# Population in this bin: 930
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2624052001,D' B F2 U2 F2 R B2 U2 R U2 F D' F2 D2 B L U B' R,B,Eretum 2: Easter Boogaloo 2023 (2023-04-08),333 R1 A #5
@@ -131,7 +131,7 @@
 3713492001,D2 L2 F2 L2 U2 B2 R2 B' D2 R' U' F L B U2 L U R' F',B,DFW Cubing Spring 2024 (2024-04-28),333 R2 A E1
 5466732001,B' U2 R' B D2 U2 B D F' D L' D R' D' R,B,Arkansas Championship 2026 (2026-03-20~22),333 R1 B #4
 608388001,B2 D U2 F2 D' F2 L2 U2 R2 B' L' B' D L2 F R D U2 F',B,Prague Open 2017 (2017-09-30~10-01),333 R2 C #4
-3554475001,U' D2 L2 R U2 L F2 D2 B2 U B2 D' L R B' R' F' L,B,Nalsar Cube Open 2024 (2024-03-02),333 R1 B #2
+5747936001,D2 R' U B2 U2 F2 D F2 U B2 D' B F' U R' F2 U L2 D',B,Persevere in De Pere 2026 (2026-07-11),333 Final A #1
 4812821053,L2 B' R' F2 U' L2 F2 D' R2 F2 U' L B U' F' D2 B' L D2 B',B,CF Goes Sideways Brzeziny II 2025 (2025-06-21~22),333mbf Final B #1
 3910725040,L2 D2 F' U' L2 U2 R2 B2 D2 F D2 B L U' L2 F' U F' R B' L2,B,CubingUSA Northwest Championship 2024 (2024-06-28~30),333mbf Final A #2
 619450001,L' F R U' R F' D B' U L D' B' L2 D2 R2 F2 L2 B' D2 B',B,Barnaul Open 2017 (2017-10-14~15),333 R1 B #2

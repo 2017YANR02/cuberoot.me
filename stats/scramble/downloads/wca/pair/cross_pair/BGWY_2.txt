@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGWY / bin 2
-# Population in this bin: 785
+# Population in this bin: 787
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
@@ -49,7 +49,7 @@
 1196257024,B2 U2 L R2 U2 L' F2 D2 B2 D2 U' F' L2 U R D' R F2 U' B' L',Y,CubingUSA Northwest Championship 2019 (2019-06-21~23),333mbf Final A #1
 1865343001,D2 R' D B' D2 B' D2 F' L2 R2 F2 R2 D F2 L D' B U2 L,Y,Farnworth Spring B 2022 (2022-04-10),333oh R1 A E2
 3891883001,D' L B' F' R2 F D2 U2 F L F2 L R U2 F' U B R2,B,Almost Flaminia Open 2024 (2024-06-22~23),333oh Final C #3
-5256693009,D' F2 U L' F2 B R' D B2 D B2 R2 U2 R2 U2 L2 D' L D L,G,Texas Championship 2025 (2025-12-05~07),333mbf Final B #1
+5743026001,R2 B2 R2 D2 U' L' R' B' D' R2 U R' D2 B L F U,Y,Victoria Gardens Lviv 2026 (2026-07-04~05),333 R1 A #3
 1492975001,D2 F D2 F2 D2 F D2 R2 B2 D' L2 D R B' D2 R D B2,W,Canandaigua Winter 2020 (2020-01-11),333 R1 D E2
 3906033001,U2 F' L2 R2 D' R2 F2 D L2 B2 U' B2 D2 B' L' U2 L' D' R',Y,Dandong Yalu River Open 2024 (2024-06-29),333 Final A #5
 5688166001,L' B L' U F U R2 F2 U' R' B R2 L B2 L U2 D2 R2,B,LCCC Cubing Summer 2026 (2026-06-06),333 R2 A #3

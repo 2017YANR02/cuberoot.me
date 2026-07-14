@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BGORWY / bin 6
-# Population in this bin: 60
-# Samples listed: 60 (all entries in this bin)
+# Population in this bin: 61
+# Samples listed: 61 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -65,3 +65,4 @@
 5432779001,U' R' D R' B' D L U2 F L2 B L2 D2 F2 R2 U2 F D,W,Wiltshire Spring 2026 (2026-03-07~08),333 R3 C E2
 5596304001,U' L2 D L2 D L2 D2 B2 L2 D' R' B' L D2 L' U' L D' L,W,Rahn Education Open 2026 (2026-05-01~03),333oh Final B #2
 5632126001,L' F' R2 U2 L2 U2 B F L2 F' R' F R2 D' R B2 L R F2 L',G,Long Island No Sound 2026 (2026-05-16),333mbf Final A #1
+5748741004,R F' R' U2 L2 U B2 L2 D L2 D' L F' U L' R2 U2 B2 U L',W,Australian Nationals 2026 (2026-07-09~12),333mbf Final A #1

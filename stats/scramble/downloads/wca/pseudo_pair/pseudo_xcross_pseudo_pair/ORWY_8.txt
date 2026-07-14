@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / ORWY / bin 8
-# Population in this bin: 303
+# Population in this bin: 304
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4636001,L2 B2 L2 R B2 D2 R' D2 R' D' R D' U2 B D U' B F' R' D,O,Madrid Spring Open 2014 (2014-03-21~22),333oh Final A E2
@@ -85,7 +85,7 @@
 5555509001,R' U' D' B' L F R2 D R U2 B' U2 L' D2 L' B2 R2 B2 D2 F2,O,Unicentro Tunja V 2026 (2026-04-18),333 Final A E2
 4481180001,B2 D' F' L' B U2 B F R2 U2 F' R2 L' B2 L2 B' U B2 D2,O,Berkeley Winter 2025 (2025-02-08),333 R2 A #5
 983944001,R2 B2 D2 R U2 F2 L' D2 B2 F' U' R D L' F2 R2 D' B2 D2 B',O,STEM Cube Open Kuala Lumpur 2019 (2019-01-20),333 Final A E2
-988423001,B L2 R2 U2 L2 R2 B' U2 B' L' F L D2 L' F2 D B L' U' B',O,Jieyang Winter 2019 (2019-01-27),333oh R1 A #2
+5741710001,D L2 U F2 B U L2 B2 D' L F D2 B' L2 F' R2 F' L2 U',O,Wiltshire Summer 2026 (2026-07-04~05),333 R1 A #3
 1012011001,U2 F2 L U2 B2 D2 R' B2 R' D' F D2 U F' L' B' U2 R F',O,Battle of Virginia Beach Winter 2019 (2019-02-09),333 R2 A E1
 1025760001,R L B' U' D F' U2 R D L' B' L2 F R2 L2 F D2 F',O,Glorioso San Carlos 2019 (2019-02-16),333 R2 B #5
 1052746001,D B' D2 L' F' L' U R' B' L U2 B2 D F2 U' L2 D' R2 F2 B2 U',O,Oklahoma Spring 2019 (2019-03-16),333 R2 A #5

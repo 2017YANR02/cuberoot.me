@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / B / bin 1
-# Population in this bin: 159
-# Samples listed: 159 (all entries in this bin)
+# Population in this bin: 160
+# Samples listed: 160 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 22227001,U2 F2 D2 F D2 F' R2 B' R B U' R2 B U' L F2 U B U B',B,Zhejiang University Open 2014 (2014-05-24),333bf Final A #3
@@ -164,3 +164,4 @@
 5676699001,R2 D B' L' F2 U' B2 D' F R F2 R U2 L' D2 L2 U' L',B,Fast in Fargo 2026 (2026-05-30),333 R1 C E2
 5677125001,D2 R F2 R' B2 D2 L' R' U2 B R F' L U2 B' D F' R D2 F2 L' F,B,Lets Go Back to Carlow 2026 (2026-05-30~31),333bf Final A E1
 5688166001,L' B L' U F U R2 F2 U' R' B R2 L B2 L U2 D2 R2,B,LCCC Cubing Summer 2026 (2026-06-06),333 R2 A #3
+5745301001,D2 L2 B2 U2 B' U2 F' R2 F2 L2 D' L R' D2 B2 L B U2 L',B,Cardinal Country KY Cubing 2026 (2026-07-11),333 R2 A E1

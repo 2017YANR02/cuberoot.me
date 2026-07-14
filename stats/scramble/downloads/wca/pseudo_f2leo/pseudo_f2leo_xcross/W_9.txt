@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / W / bin 9
-# Population in this bin: 359
+# Population in this bin: 362
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4659675010,F L2 F L2 R2 B2 F' R' B2 L2 B R' B2 U' F' U2 L' D B2 L,W,Rhein-Neckar Please Be Squiet 2025 (2025-04-19~20),333mbf Final A #1
@@ -76,7 +76,7 @@
 660948009,B' R2 B' D2 L2 D2 R2 F' R' D B' L' U2 R' D' L' F L D2 B' L2,W,Grudziądz Open 2016 (2016-03-19~20),333mbf Final A #2
 660969025,U' B2 D2 L2 D2 F2 U L2 B' R' B2 L' F D B' F2 L' U' R U B,W,Summer Speed Cube Olympics 2016 (2016-04-20~22),333mbf Final A #1
 4352594001,R2 D' F' R' F' B U' F U' L' D U2 R' B2 U2 D2 R B2,W,End of Year Ankara 2024 (2024-12-07~08),333 R1 C #1
-661258015,U B2 L2 D2 L2 F2 D U2 R2 U' B D L' R' D2 B D2 L R2 F2 U' L',W,PSU Winter 2017 (2017-02-18~19),333mbf Final A #1
+5748735001,F2 D' L2 B' R U B D B2 L' F' U2 D' R2 D L2 B2 U',W,Syracuse Elite Cubing 2026 (2026-07-12),333 R2 B E2
 5629375001,F' L' U D B' R' F' L2 D2 R' L2 D2 F2 U2 F2 U L2 B2 R2 F2,W,Just Sides in Lyndhurst 2026 (2026-05-16),333oh R1 A #2
 661397007,D L2 D2 B2 U B2 R2 D L U2 L2 F D' R' B L' B2 L2 D U L' F,W,Brasileiro 2017 (2017-06-16~18),333mbf Final A #2
 3735450001,B2 R2 B2 R B2 R U2 F2 L2 U2 B D U' F D' L R2 U R' B' L2,W,BrizZon Side Open II 2024 (2024-05-01~05),333mbf Final A #3
@@ -94,7 +94,7 @@
 4036164017,D' B' D2 R F2 R2 D2 L' F2 L' U2 R' D' U L2 F2 R D2 F' R D2,W,Israel Championship 2024 (2024-08-18~21),333mbf Final A #1
 805483001,D' R D L' D' R B R' F' L U2 R2 U F2 B2 D F2 L2 D' L2,W,Turning in Texas 2018 (2018-06-16),333 R2 A #3
 3483919001,B U2 L2 F D2 F D2 B2 R D R2 B2 F L B2 R U R' B',W,Empire State Winter 2024 (2024-02-03~04),333 R1 A E1
-842563001,F D2 B U2 F2 D2 R2 U2 L2 F' D2 L D B' L' U' R' U' L U F,W,VCP Invierno 2018 (2018-07-28),333 R2 A #4
+5747349009,F2 R2 F2 L D2 F2 R F U' L' F D' B' D2 L U' R' B L',W,Poznań Mental Breakdown 2026 (2026-07-04~05),333mbf Final A #3
 4749100001,B' D' L2 D' R U F2 L U' F B' L2 B2 R2 D2 L2 B U2 L2 F',W,Daejeon Spring 2025 (2025-05-25),333 R1 B #1
 877896001,L D2 R' D2 U2 L' D2 L' F2 L' R2 B R U' F' R' F' L B L2 U',W,San Rafael 50 Aniversario 2018 (2018-09-08~09),333 Final A #5
 4007315001,L U F' U2 L F2 U R' U2 F2 U2 B2 U2 R' F2 L2 D2 U' L B,W,Norwegian Championship 2024 (2024-08-09~11),333 R2 B E2

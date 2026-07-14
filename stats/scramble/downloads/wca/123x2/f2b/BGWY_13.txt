@@ -2,7 +2,7 @@
 # Population in this bin: 42
 # Samples listed: 42 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 163363001,U2 L F' B R L2 F' U F D' B2 R' B2 U2 L' D2 R2 B2 L',B,TCG & Friends 2015 (2015-07-11~12),333 R1 B #2

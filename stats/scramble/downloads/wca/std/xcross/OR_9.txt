@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / OR / bin 9
-# Population in this bin: 288
+# Population in this bin: 289
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 5055001,B2 U' R' U2 D' F' B U L' D F2 U2 D2 R' B2 U2 R L2 F2 U2,O,Tula Open 2014 (2014-03-28~30),333oh R1 B E2
@@ -105,7 +105,7 @@
 1284819001,L' F' R' F2 D' B L U2 R' D2 R' F2 D' R2 B2 D' R2 D B2 L2,O,Scuppernong Spectacular 2019 (2019-08-30~31),333 R2 C E2
 4278131001,U F U2 L2 B2 U2 L2 B2 F' U2 B L2 D' R U2 F U F L' B R',O,Beginner and Blind Cape Town 2024 (2024-11-09~10),333bf Final A E2
 1334939001,R D L2 U B2 D' B D2 R F' U B' R2 U2 F2 B' U2 F L2 D2,O,Oklahoma Fall 2019 (2019-10-05),333 R1 B #3
-1365678001,U2 B D2 F2 D L' F U R' B D' L2 U B2 U2 R2 D' L2 B2 U' B2,O,Dnepr Puzzles Fest 2019 (2019-10-19~20),333 R2 C E1
+5743954001,D' F' U' B L2 U' F2 D L U R' F2 U2 R D2 L F2 L U2,O,Stockholmsligan 7: Peber - 2026 (2026-07-07),333 Final B #4
 3938726001,B' U R2 U2 R2 B L B' D F U' F' D2 B2 R2 F' D2 F' D2 B,O,Dobeles Vasara 2024 (2024-07-13~14),333 Final A E1
 4459887018,U R' F2 L2 B2 U F2 D2 B2 F2 U' R' D U F' D B L2 R U' L B,O,Silent Club Bogotá 2025 (2025-02-01),333mbf Final A #1
 1433131001,B2 L2 R2 U F2 U' L2 D U2 B R U L B' L2 F D B U F2 L2 B' L2,O,Kjeller Mental Breakdown 2019 (2019-11-30~12-01),333bf R1 B #2

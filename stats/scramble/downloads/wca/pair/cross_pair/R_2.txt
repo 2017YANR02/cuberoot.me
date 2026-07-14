@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / R / bin 2
-# Population in this bin: 197
-# Samples listed: 197 (all entries in this bin)
+# Population in this bin: 199
+# Samples listed: 199 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 11137001,R U2 B2 L2 U2 L' R' F2 U' R2 D R F U2 L' R U' B F L B,R,Slovenian Open 2014 (2014-04-12~13),333bf Final A #3
@@ -202,3 +202,5 @@
 5539908001,R2 L F' L' F L D2 B2 L2 D' F2 L2 D2 F' L2 F2,R,NZ South Island Championship 2026 (2026-04-10~12),333 Final A #2
 5545447001,L B2 R' L' D F' D' L D2 B2 D2 F2 B' U2 F' R2 D' F2 D,R,Swift Cubing in Swabia 2026 (2026-04-17~18),333 Final B #1
 5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,R,Fewest Moves Bogotá XII 2026 (2026-04-25),333fm Final A #2
+5743868001,D' R2 U2 B R2 B' D2 B' F2 R2 U' L2 D2 B' F' L U' L B',R,Michigan Mini 43 2026 (2026-07-07),333 R1 B #3
+5749436001,R F2 U' R' D2 B2 L' F' R2 F2 R' D2 B2 L' U2 L2 F2 U' B,R,Vigo Open 2026 (2026-07-11),333 R1 D E2

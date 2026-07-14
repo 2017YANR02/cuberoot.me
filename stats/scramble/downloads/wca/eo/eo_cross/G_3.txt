@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / G / bin 3
-# Population in this bin: 199
-# Samples listed: 199 (all entries in this bin)
+# Population in this bin: 201
+# Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 28514001,F U2 F2 R2 F2 D2 B U L2 B' U2 D2 L2 B U2 F R2 U2 B',G,Bucharest Rubik Summer 2014 (2014-06-15),333 R2 B E2
@@ -31,7 +31,7 @@
 607736017,F2 L2 F2 D2 U2 F' D2 R2 F2 L' R D2 F' R U L2 U B R D2,G,Feevale NH Open 2017 (2017-09-29~30),333mbf Final A #2
 609557001,B F' R2 F' R' U2 L2 R' U' F' L2 B L U2 B2,G,CET Cubing Paradox 2017 (2017-10-01~02),333 Final B #5
 630679001,R2 F L2 R2 D2 B U2 B' L2 R F' R' F U2 R' F,G,Villa Open 2017 (2017-10-28~29),333oh R1 A #5
-647035001,U' L' U2 F' R2 U2 L2 B' U L D B2 L2 D F2 R2 U',G,Finnish Championship 2017 (2017-11-17~19),333oh R2 A #3
+5747349024,B' R2 D2 L' B R' F' R2 U2 R' F R2 F' L2 F2 R2 F' L' F,G,Poznań Mental Breakdown 2026 (2026-07-04~05),333mbf Final A #3
 655602001,R' U' F L' R2 B2 U2 L B2 R' F2 R' F2 U' B R D L2 D2 B' D' B2 R' U' F,G,Nancy Open 2017 (2017-11-25~26),333fm Final A #1
 660891006,U2 B' U2 R2 B' F' U2 B L R' B L' F' L' R U2 L U2 L2 U2,G,BSD Open 2016 (2016-01-09),333mbf Final A #1
 660914001,D' L2 B2 D' R2 F2 D' R2 U' F2 L U' F' D U B F' U2 F' U' B R',G,Manchester Open 2016 (2016-01-30~31),333mbf Final A #1
@@ -204,3 +204,4 @@
 5606190001,R' U2 R' F' U L F' L2 U' L2 U' B2 U2 L' F2 D',G,Speedcubing Huánuco 2026 (2026-05-03),333oh Final B #1
 5703769001,D2 L2 F' L2 B R' F2 B U2 B U2 D2 R2 B2 R' L2 D2,G,GAN Southern Championship 2026 (2026-06-11~14),333 R1 E #5
 5727137001,L2 U2 L2 F R2 U2 F2 L2 F U2 R B R D2 R' F R' D' R',G,BL&D BLD Liestal 2026 (2026-06-27~28),333oh R1 A #4
+5741647001,R D' L' D2 B2 D2 B D2 B L2 B2 D2 R' U' R2 U2 F2 U' F,G,Wiltshire Summer 2026 (2026-07-04~05),333oh Final B #1

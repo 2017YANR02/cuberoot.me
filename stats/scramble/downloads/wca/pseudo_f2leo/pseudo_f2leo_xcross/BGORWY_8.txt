@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BGORWY / bin 8
-# Population in this bin: 941
+# Population in this bin: 948
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2775066004,F R B2 R2 U2 R' F2 D2 U2 B' R U' F D B F2 R F2 U' B',B,BrizZon Side Open III 2023 (2023-06-03~04),333mbf Final A #1
@@ -17,7 +17,7 @@
 4898286001,F' L F' D2 B U2 F R2 B' R' D2 R2 B U' L' D' U' R B,B,Glasgow NxN Day 2025 (2025-08-02),333 R2 A #1
 4801792001,B' U L2 R2 B2 D2 R2 U B2 D' F2 R' D' U' L B D U F D2,B,Królowie Speedcubingu Gniezno 2025 (2025-06-07~08),333oh Final A #4
 951350001,U' L2 U B2 D' B2 U' F2 R' D' L' U' F' D U2 B U' R2 B' F',B,İstanbul Winter 2018 (2018-12-01~02),333 R2 A #4
-5092989001,B D R F2 U2 L U2 L2 R B2 L2 B U' R B D' B2 F' R2,B,Mission Viejo Fall 2025 (2025-10-12),333 R2 B E1
+5749046001,F' R2 L U' R' U2 F' D B' R2 D' L2 D2 F2 U L2 U2 R2 F',B,Australian Nationals 2026 (2026-07-09~12),333oh R1 A #5
 931720001,F2 D2 L F2 U L' B' U R2 D' L' F' R2 B2 U2 L2 B R2 F,B,Smart Cube Fest 2018 (2018-11-09~11),333 R3 A E1
 5352671001,R2 U' R L B' L' F' R2 U' D2 B2 D2 L2 U L2 U' R2 L' U' L,B,Vienna Winter 2026 (2026-01-24~25),333oh Final B #2
 51081001,F U2 B D2 R2 B' L2 R2 B2 F' R' D2 L2 D' B' U L D2 R B,B,Kaliska Open 2014 (2014-08-16~17),333 R2 B E2
@@ -109,7 +109,7 @@
 1294623001,F R' L F' L' B L U R' D R F' B2 R2 F' U2 F' R2 D2,B,Waco Cube Assembly 2019 (2019-09-14),333 R1 A #5
 449936001,F2 R B2 R2 U2 D2 F R' U' B2 D' R2 U2 R2 U2 L2 B U2 R2 D2,B,Carte Blanche Kube Open 2017 (2017-02-18~19),333ft Final D #3
 960839014,L2 F2 U2 B2 F2 L2 R2 U F2 D2 L2 R' B2 F' L2 R B F U' F' D' L',B,WCA South American Championship 2018 (2018-12-15~16),333mbf Final A #1
-3278387001,R2 U' R2 L' F R U F R2 D2 R2 D2 F' U2 F D B U L',B,Berkeley Fall 2023 (2023-11-18),333 R1 G E2
+5747550001,B2 U' R' L' B' D' L' R2 B U2 F R2 D2 R2 B' U2 D' R2 U',B,Bangkok Cube Festival 2026 (2026-07-11~12),333 R1 B #5
 453050001,R2 U' F2 D2 U2 R2 D2 U2 R' B U F L2 B2 D' L' B L' R2,B,Surabaya Comeback 2017 (2017-02-19),333 R1 D E1
 5339372001,B R' D B U2 B2 D2 F' D2 F' R2 L F2 U F L R' B F',B,Berkshires Cube Day at BART 2026 (2026-01-24),333 R1 A E1
 5019359001,F' B2 U2 L' U2 B2 R2 B2 R2 U F' U2 L2 B L' U' R' D' F',B,Weston-super-Mare Autumn 2025 (2025-09-13~14),333 R2 C #5
@@ -185,7 +185,7 @@
 1532590001,D L2 D' B2 R2 U2 F2 R2 U2 L' U B L2 R B2 L F L' U' B',B,Pingtung Cubing Open 2020 (2020-02-01),333 R1 E #2
 661289028,F2 D2 L2 D' B2 U2 R2 B' R' B L B' L D R2 B F' D L B2,B,Shanghai Spring 2017 (2017-03-18~19),333mbf Final A #1
 3318957001,R' D2 L B2 U2 B2 F2 L2 U2 L F R2 U' L' D2 F' D B' R' D,B,Capivara 2023 (2023-12-02~03),333 R1 B E2
-2056950001,U' B2 L' F2 B2 D' R F U2 F' R2 F' D2 F2 U2 B L2 U' R D,B,Bay Area Speedcubin' 35 - Pacifica 2022 (2022-07-30),333 R3 A #3
+5744427001,R2 D' R' D2 R2 F2 L2 R2 F' L2 U2 F R2 F D L' R' U' F' R' B,B,Weihai Open 2026 (2026-07-05),333oh Final A #1
 2361242005,R' U R' D2 R2 D2 B2 L R2 U2 L B2 F R2 U2 F' U2 R U L B,B,Mental Breakdown Singapore 2022 (2022-12-11),333mbf Final A #1
 4276691005,R2 B2 D2 B2 R2 B2 R' B2 L B2 D L' R D R' B' F R' D U2 L' F',B,Colombian Nationals Avenida Chile 2024 (2024-11-09~11),333mbf Final A #2
 4604145001,U F L' U' B' U2 B' D2 F U2 R2 L U' L2 F R2 B' D2,B,Let's Go Carlow 2025 (2025-03-29~30),333 R1 C E2

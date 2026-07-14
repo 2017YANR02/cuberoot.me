@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / W / bin 10
-# Population in this bin: 105
-# Samples listed: 105 (all entries in this bin)
+# Population in this bin: 106
+# Samples listed: 106 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 69615001,F U2 F' R2 F2 R2 D2 B D2 B2 R' D2 F D2 L' D' B' U F2 R2 U2,W,Cubing V1.0 2014 (2014-10-25),333 R2 C #3
@@ -110,3 +110,4 @@
 5666202001,L U' R2 F' R' L2 D' R2 U2 R2 F2 R F2 L2 B R' F D',W,West Coast Cubing Western Championship 2026 (2026-05-23~25),333bf R1 B #1
 5721511021,R' D' F' R2 B L' D2 L' F2 U2 B2 L2 F L2 D R' F' U2 R B',W,Blind League Dobřejovice III: Brightscript 2026 (2026-06-27),333mbf Final A #1
 5739485001,L' F D2 B2 R' F' U' F2 B D2 R L2 B2 R F2 U2 B2 D2 R' F2 L',W,Aachen Summer Open 2026 (2026-07-04~05),333 Final A #1
+5749349001,R' U L2 U L2 U2 B2 F2 R2 B2 D' U L' D R' F' D L' B' U2,W,Vigo Open 2026 (2026-07-11),333 Final A #4

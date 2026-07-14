@@ -2,7 +2,7 @@
 # Population in this bin: 17
 # Samples listed: 17 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 490703001,F2 R' U2 F R' B2 L' B' R' F2 L' F2 L2 D2 F2 D2 R B2 U2,B,SPB Easter Open 2017 (2017-04-15~16),333oh R1 A #2

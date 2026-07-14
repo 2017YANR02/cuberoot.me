@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / R / bin 7
-# Population in this bin: 872
+# Population in this bin: 876
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3853392001,L' B L' U2 D2 R2 F D' L F' D2 R2 U F2 D F2 D L2,R,Prime Cubing Day Seoul 2024 (2024-06-15),333 R1 E E1
@@ -13,7 +13,7 @@
 32843001,D2 L F2 R' U2 L D2 L' B2 L U' R' F L' D' U L2 B2 R B2 L' F2,R,Masterpress Summer 2014 (2014-06-28~29),333bf Final A E2
 3856898001,D' R2 U' D' R D2 L' B2 U2 L2 F2 U' D2 B2 U' L2 B',R,Belfast Summer 2024 (2024-06-15~16),333oh Final B E2
 2187181001,D' F U2 B R F' D' F D2 L2 U' F2 U' L2 U F2 U2 B2 D',R,Taman Anggrek Speedcubing B 2022 (2022-09-18),333bf Final A E2
-4126010001,R L2 D2 B D' B' L2 B2 R' L2 D2 F' D2 F2 B L2 B2 R2 U',R,Poções Geek 2024 (2024-09-21),333 Final C #1
+5744976001,R L2 B' L F L B L F2 D2 L2 U R2 D B2 U2 F2 D',R,Mumbai Monsoon Mayhem 2026 (2026-07-05),333 R1 C #2
 43118001,B' F' U2 R2 B U2 R2 F R D' B' R2 D L2 D2 B L2 D2 R,R,N8W8 Summer 2014 (2014-08-02~03),333 Final A E2
 4326899001,R2 U2 R2 B' D2 B D2 F D2 F L' D F2 D' U2 B L,R,Melbourne Cube Days 2024 (2024-11-30~12-01),333oh Final A E2
 2862160001,U2 R' D2 R U2 F2 R U' L F L' U' L F R' B',R,Eretum 3.5: Easy Peasy Edition 2023 (2023-07-09),333 Final B E2
@@ -49,7 +49,7 @@
 1314157001,U' L2 F2 U' F2 U2 L2 F2 D2 F D' L' R D R' U2 L2 D2 U2 F,R,Samyak Cube Open 2019 (2019-09-27),333 R1 A #4
 1820076001,B2 L U2 R2 D' L2 B2 U2 B2 R2 U R2 U R' D' U B' L' U',R,UIO 2022 (2022-02-26~27),333 R2 B #2
 1677842001,F' D2 B R2 B R2 D2 L2 F' U' R2 F2 L' D L F' R F D,R,Bergen Open 2021 (2021-07-31~08-01),333 R2 B E2
-239354001,D' R2 B2 R2 U' F2 D' F U F L' F U' F D F2 D B2 L2 U2,R,Great Indian Cubeathon 2016 (2016-01-08~10),333bf Final A #1
+5746768001,L U2 F2 R' D F U L2 D' U' L' F L R' F',R,Seattle Summer 2026 (2026-07-11),333 R2 B #3
 246360001,B2 R' D2 L' D2 B2 D2 R2 U' R' D2 B' F2 D B L2 D' B2 R2,R,Good Nutrition Cube Day 2016 (2016-01-24),333 R2 A #2
 3650559001,F L F2 R' U2 L' F2 D2 B2 L' B L R' D2 L' D2 R',R,Sanda Spring 2024 (2024-04-06~07),333 R1 C #5
 4441195001,R' U2 R' D2 L' D2 F2 D2 R U F2 D' R U B2 U2,R,Utah Ice Cubing 2025 (2025-01-25),333oh R1 A #5

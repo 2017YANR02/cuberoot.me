@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / W / bin 7
-# Population in this bin: 823
+# Population in this bin: 825
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3483929001,D B' D F' U2 B U L F2 R F' L2 U2 B2 U' L2 D' F2 L2,W,Empire State Winter 2024 (2024-02-03~04),333 R1 C #2

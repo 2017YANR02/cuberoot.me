@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGOR / bin 8
-# Population in this bin: 323
+# Population in this bin: 324
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 7959001,U D' F' U2 L' U2 R' U2 B U L2 F' U2 L2 B' L2 B' U2 F2,B,Welwyn Garden City Open 2014 (2014-04-05~06),333 R1 C E1
@@ -178,7 +178,7 @@
 5061452001,U' F2 L' D L B' L' U2 B2 R2 F B' R2 U' L2 F D2,B,Kedah Cube Open 2025 (2025-09-27),333oh Final A #5
 4118879001,F' R' D2 B2 L' D F2 B U R' D' B U2 R2 U2 F B L2 B,B,Shin Kong Cube Open - Taichung 2024 (2024-09-14),333 R1 E E1
 3082339011,R2 B' D' U' B2 R2 U B2 F2 R' D' F' U' R2 U2 B2 R F2 L B',B,Swoop in Silence Oxford 2023 (2023-09-16),333mbf Final A #1
-4838551001,D' L F' U R B2 L D2 F L F' U2 R2 B U2 F2 R2 B' L2,B,Sanskara Cube Open 2025 (2025-06-28~29),333 R2 B #4
+5741359001,B2 L2 R2 F' L2 F2 L2 R2 F D2 F D2 R' B' U' L' R' D F2 R',B,Mike's Cubes Israel 2026 (2026-07-05),333 R2 C E1
 3247633001,D' L2 U2 D2 L' D' B' R' U R2 U F2 B2 U2 B2 D B2 U F' D',B,SnoCo Veterans Day Weekend 2023 (2023-11-10~11),333 R3 B #5
 3289336003,F' D2 R B2 L F2 U2 L B2 D2 F2 U R' U2 F2 D' B F D U' L2 U2,B,Viña Cubing Fest III 2023 (2023-11-18~19),333mbf Final A #1
 3321055001,B' U' F U2 R' B2 L' B2 F2 R' B2 R' B2 U L2 F2 L2 F' D F2,B,KUbing Nepal 2023 (2023-12-02~03),333oh R1 B #2

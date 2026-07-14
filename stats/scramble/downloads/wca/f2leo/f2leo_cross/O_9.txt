@@ -2,7 +2,7 @@
 # Population in this bin: 12
 # Samples listed: 12 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 661212007,B2 D' B2 F2 U2 B2 U' L2 D' L2 R' F U2 R B' F2 U' R F U B2 L' F2,O,Wiehnachtswürfelä z Bärn 2016 (2016-12-10~11),333mbf Final A #1

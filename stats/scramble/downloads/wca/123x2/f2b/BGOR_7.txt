@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / BGOR / bin 7
-# Population in this bin: 130
-# Samples listed: 130 (all entries in this bin)
+# Population in this bin: 131
+# Samples listed: 131 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 25868001,D' U2 L2 B2 D B2 R2 F2 L2 U2 R' F U2 B' U2 B' D L D2 B2 U',B,Erfurt Open 2014 (2014-06-07~08),333oh Final A #2
@@ -135,3 +135,4 @@
 5589632001,D U B2 D R2 U R B2 F' L D2 B' D2 B' R' F' L' U,R,Mini-sota Heartland Warm-Up I 2026 (2026-05-01),333oh Final A #3
 5690000001,D2 L' U' R L D R U2 R2 B2 U2 D2 F D2 R B2 U',G,Napule È Mille Culure 2026 (2026-06-06~07),333 R2 B E1
 5733454001,D F2 D' F2 D2 L2 U' B2 L U L F' L2 F' D2 R' B',R,CF Goes Sideways VI Brzeziny 2026 (2026-06-27~28),333bf R1 A E1
+5740600001,B2 L D2 L' B2 R B2 D2 B2 F2 L F' U R2 F U2 B2,O,Ezeiza Cubea 2026 (2026-07-05),333 Final A #4

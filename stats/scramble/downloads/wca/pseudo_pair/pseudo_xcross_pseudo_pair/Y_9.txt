@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / Y / bin 9
-# Population in this bin: 8
-# Samples listed: 8 (all entries in this bin)
+# Population in this bin: 9
+# Samples listed: 9 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 831713001,F2 D2 L2 D2 L' U2 F2 R2 F2 D L R2 U2 F R D' B2 F D B',Y,Fredericksburg Summer Open 2018 (2018-07-21),333 R2 C E1
@@ -13,3 +13,4 @@
 3288421001,F' L2 U R2 D2 B2 F2 D' R2 U' R2 L' B' F2 R U F U B' D',Y,Kjeller Open 2023 (2023-11-17~19),333 R2 B #1
 4999567001,L2 B F R2 B' D2 R2 F U' F' L' R D R2 U2 L' U' L' F,Y,Cubing in Venteira 2025 (2025-09-06),333 R2 A #2
 5630544001,F B L F' D B D B' U F2 U' F2 U L2 U D2 L2 F2 R' U,Y,3x3x3 un Nekas Cits Rīgā 2026 (2026-05-16),333 R2 B E1
+5742360001,L B2 R U' R F L F' L2 B' D2 L2 F' R2 F2 D2 R2 L' D' F',Y,Rubik's WCA North American Championship 2026 (2026-07-02~05),333 R1 L #4

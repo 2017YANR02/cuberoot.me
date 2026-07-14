@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / O / bin 5
-# Population in this bin: 628
+# Population in this bin: 629
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 1973508001,R B R B2 D2 L' D B' F2 L B2 L2 F2 R' U L F,O,Welcome Back Nepal 2022 (2022-06-17~18),333oh R1 A #2
@@ -183,7 +183,7 @@
 5054050034,R2 D2 F R D B2 L U' L2 B D2 F2 B' U2 B U' L2 B L' F',O,SacQuiet Fall 2025 (2025-09-27),333mbf Final A #1
 5485776013,R2 F2 B U' F' R' D' R' D2 F L2 D2 R2 B2 D2 F' R2 U F2 L' B' L,O,Maxi Mental Delft 2026 (2026-03-28~29),333mbf Final B #1
 5285866017,B' U' L2 B' U R2 D F' D B2 D L2 F' B2 R' D2 B',O,Please Be Quiet Hefei 2025 (2025-12-21),333mbf Final A #2
-1968142001,B2 F2 D' U' B2 F2 L2 U' R U R2 D F D' F U L2 B' L2 U2,O,Kidderminster Summer - British Blind Off 2022 (2022-06-11~12),333bf R1 A #1
+5746469001,F2 D B2 D R2 U' F2 U' R' D2 B' F L' D' B' D2 F2 U2 F',O,Sleep & Solve Landsbro 2026 (2026-07-11~12),333oh Final A E1
 1166151007,D2 R' D2 L D2 L2 R' F2 U R F L' R' U' R' B2 U R2 U' B' L',O,Swedish Championship 2019 (2019-05-30~06-02),333mbf Final B #2
 1170989001,F2 L2 D2 U2 B L2 D2 B L' F2 L' R F2 R B' L' U B' L,O,Tuzo Clásico 2019 (2019-06-01~02),333bf Final A #3
 2503431001,R D2 F2 R2 B2 U2 B2 U2 L2 U' R2 B D2 R B D B' L F D,O,Solo Comeback 2023 (2023-02-25),333 Final A #5

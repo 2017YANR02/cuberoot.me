@@ -2,7 +2,7 @@
 # Population in this bin: 70
 # Samples listed: 70 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 61068001,B U F L' B' D' F2 D' L' F L2 B2 R2 L2 D2 R2 L' F2 D2,O,Spanish Championship 2014 (2014-09-26~28),333 R3 A #4

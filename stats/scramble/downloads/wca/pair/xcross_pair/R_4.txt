@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / R / bin 4
-# Population in this bin: 305
+# Population in this bin: 306
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3938051001,U D R' B2 U' F R F2 L' U' R2 B2 U2 D' R2 U D L,R,Varna Open 2024 (2024-07-13),333 Final A #2
@@ -147,7 +147,7 @@
 5251836001,D2 L2 B F2 L2 D2 B' R2 U' F R F U' L B L' F L' U2,R,Nacionales Argentinas 2025 (2025-12-05~07),333oh R1 C #5
 1798526001,R B R' B D L2 F2 R' U' F2 U R2 F2 L' F2 U2,R,Ankara Winter 2022 (2022-01-29~30),333 R1 E #3
 1926021001,F2 R2 L2 B' U2 F R' F2 R2 U2 F2 D' F2 U2 B2 D' B2 R U L2 U,R,Dutch Masters 2022 (2022-05-21~22),333bf Final A E2
-1987688001,L U' L' F' U2 F L2 D2 R2 D2 U2 F U' L D2 B D' B L,R,Cubing Bulls 2022 (2022-06-25),333 R2 A #5
+5742869001,L2 U D R L' B D2 B' L2 D2 R' B2 L2 B2 L F2 B,R,Santo Domingo Summer 2026 (2026-07-04~05),333oh Final B #5
 5052423001,U R L' B' L2 U D2 F2 L2 D' B' U2 F R2 D2 L2 U2 R2,R,Avenida Chile XXVI 2025 (2025-09-28),333 R1 B #2
 2085389001,F B' U B U' F' U2 R' F R' U' F2 D F2 R2 D' L2 D2,R,BeCubed Summer 2022 (2022-08-06),333 R1 B #2
 2127389001,L F B' U2 L' U F' R U2 B2 L' D2 R B2 U' L2 F',R,Irvine Summer 2022 (2022-08-28),333 R1 A #4

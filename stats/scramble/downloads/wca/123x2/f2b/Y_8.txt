@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / Y / bin 8
-# Population in this bin: 400
+# Population in this bin: 401
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 6384001,U' L2 U' F2 D B' R' B2 L B' U F2 B2 R2 D2 R2 L2 B2 U B2 D,Y,Rumia Open 2014 (2014-03-29~30),333 R1 C #4
@@ -144,7 +144,7 @@
 4475503001,L2 U' F2 L2 U B2 L2 F2 U2 F2 D' L' R' B L' R2 F' D L' R,Y,Cube Factory League Rogów 2025 (2025-02-08~09),333oh Final A #5
 1298816001,F2 U' F' L' D' R' F B D' B' L D2 F' D2 F L2 D2 R2 F2 B',Y,Ridge Cubing Fall 2019 (2019-09-14),333 R2 A #5
 1306180001,B2 R2 D2 R B2 R' F2 L F2 L F U' B2 L2 R' D R2 F' L2 F2,Y,Dutch Nationals 2019 (2019-09-21~22),333 R1 G #4
-3623923001,F2 L2 U2 L2 F2 U2 B D2 L' F' R2 B D B2 U2 F' D U2,Y,Happy Valley Spring 2024 (2024-03-30),333 R1 A E2
+5747520001,R U2 B L2 D U F2 R2 D' F2 R2 U F2 L U2 B' D F2 D' U2,Y,Bangkok Cube Festival 2026 (2026-07-11~12),333oh R1 C #4
 3646746001,U D2 L2 R2 B' F2 U2 B2 D F' R' D R B' L2 R U2 R',Y,Cuboss Open 2024 (2024-04-06~07),333 R2 C #4
 1355611037,F2 D2 L' U2 L' B2 L' D2 B2 R' B' R2 U2 F R D2 R2 U' L' F' L2 U,Y,Polish Championship 2019 (2019-10-11~13),333mbf Final A #1
 4053951001,R' L2 F' B2 D B2 R' U B' R2 L2 U2 F R2 D2 R2 F B2 L',Y,Deqing Small Cubes Summer 2024 (2024-08-25),333 R1 F #1

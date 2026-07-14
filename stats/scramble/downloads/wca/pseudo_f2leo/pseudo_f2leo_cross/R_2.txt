@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / R / bin 2
-# Population in this bin: 414
+# Population in this bin: 415
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3323001,D B2 D' U2 R2 D' L2 U' R2 U' B R' B2 L B L R2 B F2 R2,R,CMI Fiesta Open 2014 (2014-03-21~23),333oh R2 G #2
@@ -144,7 +144,7 @@
 1193091001,B' D' B' D2 B2 L D' B' R' U B U2 B' R2 F' D2 L2 F L2,R,Rhein-Neckar Open 2019 (2019-06-22~23),333oh R1 A #2
 1195922001,R2 U B' R2 D' R U' R' F2 L U2 R2 L2 F2 U2 D F2 D2 R2 U',R,Santo Domingo Summer 2019 (2019-06-20),333 R2 A E2
 5735407001,F' L2 B2 F' L2 F D2 U' R2 F2 D2 R' U B F' D' B D' L' F2,R,Queensland Open 2026 (2026-06-27~28),333bf R1 B #3
-3878834001,F' R2 F' L2 B' L2 U2 B' L D2 L2 R' B2 D' F' D' L F,R,Louisiana Championship 2024 (2024-06-22~23),333oh R1 A #5
+5744614001,L2 B' L B' U R' U' D B2 R F2 L2 D2 B' D2 B L2 B R2 F',R,Shenyang Cubing League 3x3 IV 2026 (2026-07-08),333 R2 A #2
 5355245052,U R2 U2 R2 B2 D' U2 F D2 F2 D2 R2 B' L2 U L B U' L' F',R,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final B #1
 2576635001,B2 R2 U L2 D2 L2 B2 D' R2 U' B2 R D' L D L' R2,R,Launceston Autumn 2023 (2023-03-25),333 R2 B #3
 3133050001,D F' D L' F' R' L B' D2 L' U2 F2 B U2 R2 B' L2 B' D2,R,CubingZA Cape Cubes Spring 2023 (2023-09-30~10-01),333oh Final A #4

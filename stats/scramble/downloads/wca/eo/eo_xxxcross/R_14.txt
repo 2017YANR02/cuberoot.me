@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / R / bin 14
-# Population in this bin: 119
-# Samples listed: 119 (all entries in this bin)
+# Population in this bin: 120
+# Samples listed: 120 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 33813001,U2 D F D2 R U L F' B U' R' L U2 B2 U2 F2 R2 L D2 B2,R,P3 Grand Open 2014 (2014-06-28~29),333oh R1 H E1
@@ -124,3 +124,4 @@
 5565667001,F' U L D B' U' L2 B' L D2 R U2 B2 U2 L2 B R2 B2 U2,R,Ghem Ammò Vöia Da Cubaa 2026 (2026-04-18~19),333 R2 B #3
 5569840001,D B2 U F2 D' F2 D' B2 U2 B R' B2 D' B2 U' F L' F2 D',R,Macul Otoño 2026 (2026-04-19),333oh R1 B #1
 5668940001,F2 U' B2 L R2 F2 R U2 R2 U2 D L B' D U L' B2 L B',R,Kublördag Jönköping XII - 2026 (2026-05-30),333 Final A #5
+5744027001,F2 U2 F2 D2 B' D2 B' L2 R2 U2 F D' B' F2 R B2 L U' F L',R,Salados en Mexicali 2026 (2026-07-04),333oh Final B #2

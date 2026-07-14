@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / OR / bin 3
-# Population in this bin: 404
+# Population in this bin: 406
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3222001,U' R2 U L2 R2 F2 L2 U' R B2 U L' F2 D' F2 L2 F L,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 L E1
@@ -45,7 +45,7 @@
 5253203001,B' R' L' F2 D2 R' D' L F L2 F L2 F' R2 U2 L2 U2 B R2,O,Cubeando en Navidad Caracas 2025 (2025-12-07),333 R1 A E1
 360073001,L2 U2 F' L2 F L' U2 R2 B' U2 R' B2 L2 U2 R' B2 D2 B2 U2,R,GLS Cup IV 2016 (2016-09-03),333 R1 D #5
 5136615029,D' R2 D' L B2 D' F2 R2 L D B L2 D2 L2 F B' L2 B' R2 B' L',O,New Zealand Cubing Decathlon 2025 (2025-10-25~26),333mbf Final A #1
-4400996001,U B L U' L2 B2 U B2 D' U2 L2 D B R2 D2 R2 U' B' F,R,Boulder Holiday Bash 2025 (2025-01-04),333 R2 A #4
+5747829001,L2 U2 F' L2 F U2 R2 B D2 B2 U2 L' U' L' R' F' R' D2 F2 D,R,No Olvides la Paridad Tonalá 2026 (2026-07-12),333bf Final A #4
 428343001,U' L U D2 B2 D' L U D' R F2 U2 F2 U' L2 D2 F2,O,Cubelonia 2017 (2017-01-06~08),333 R2 B E2
 438104001,R' D2 R2 U2 B2 L R2 B2 F U2 F R2 B' F2 L' U2 R,O,Wirewood 3 2017 (2017-01-29),333oh R1 B #2
 4598837001,B' D2 B2 F' L2 B U2 F L' B' D2 U2 L R B2 R2 D' F2 L B R2,R,Cubolimpiadas Aves María 2025 (2025-03-22~24),333bf Final B #3

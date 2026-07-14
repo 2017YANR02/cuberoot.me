@@ -2,7 +2,7 @@
 # Population in this bin: 158
 # Samples listed: 158 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 45920001,L2 D2 R F' B2 L F B' D' L2 D2 F' B D2 L2 B' D2 B',B,US Nationals 2014 (2014-08-01~03),333 R2 B #3

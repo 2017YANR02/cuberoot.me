@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / B / bin 2
-# Population in this bin: 907
+# Population in this bin: 910
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4298941001,U B' D2 U2 R2 F' L2 B2 R2 U' B2 R2 F2 U2 F L R' U2,B,Sydney Spring Saturday 2024 (2024-11-16),333oh R1 B #5
@@ -18,7 +18,7 @@
 5176641001,B2 L D2 F2 U2 B' D L2 D2 L2 B D2 R F2 D2 F,B,Palais'10Open 2025 (2025-11-08~09),333 R2 C #2
 4556917001,L2 R2 F2 L2 U' F' R2 D2 R2 B D' B U' B' D,B,Hasselt Sunday Open 2025 (2025-03-09),333oh Final A #4
 822699005,R2 U2 L' D2 R' B2 L D L' F2 U2 R' D B2 L' B' F2 L2 U',B,Mental Breakdown Minnesota 2018 (2018-07-07~08),333mbf Final A #2
-963754014,U R2 B2 U' L2 U' F2 D2 F2 L2 D2 F' L2 D2 U B' U L' D2 B' L2,B,New Zealand Nationals 2018 (2018-12-14~16),333mbf Final A #1
+5748872001,R F' D B2 R U2 D2 F' L' B' U' R2 L2 B R2 U2 B U2,B,Australian Nationals 2026 (2026-07-09~12),333oh R2 B #2
 1247180043,U' F2 R2 U L2 U R2 U' R U2 B' F2 L' F2 R2 B' D2 B2 U' L2 U,B,Canadian Championship 2019 (2019-07-26~28),333mbf Final A #1
 4851460036,L' B2 D L F2 U' L2 U' L2 B2 L2 R' U2 B' F' U' L R2 U' L' F',B,Rubik's WCA World Championship 2025 (2025-07-03~06),333mbf Final A E1
 89138001,U2 R2 F D2 B U2 B2 F' U2 F R B2 D U' R2 U' L2 B2 U' L B,B,Euskadi Open 2014 (2014-12-06~07),333bf Final A #2

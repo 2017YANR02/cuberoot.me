@@ -2,7 +2,7 @@
 # Population in this bin: 127
 # Samples listed: 127 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 83123001,L2 U' B2 U B2 F2 R2 U' L R D' B2 F' L B D B2 D2 L' U2,G,Franconia Winter 2014 (2014-11-29~30),333oh Final A #2

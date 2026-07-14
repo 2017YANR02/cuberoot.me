@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGORWY / bin 2
-# Population in this bin: 304
+# Population in this bin: 305
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 17474001,D2 B2 L2 B D2 L2 R2 F2 D' L D R U' L2 F U2 F' U',R,Apollo Open 2014 (2014-05-04),333 R2 B E1
@@ -32,7 +32,7 @@
 4740644001,R2 F2 D F B D2 L' R2 U2 D L2 D2 F2 U' F2 D' B' R U2,Y,Singapore Cubing Mayday 2025 (2025-05-25),333oh R1 A E2
 254507001,U2 R F' D L' U F' L' U F' D' R2 F2 D2 F2 U2 R2 F2 B,G,Molina Open 2016 (2016-02-13~14),333 R2 C #2
 260607001,U R2 B2 D' B U' F R' U F R2 D2 L2 D2 R2 B L2 F L2 U2,B,Big Apple Cube Clash 2016 (2016-02-27),333 R1 J E2
-284453001,U R2 U2 L' D' R' L2 B R U2 D B' R2 F2 B U2 F B2,W,Manhasset Spring 2016 (2016-04-16),333 R1 E #2
+5741453001,L' D L2 F2 D2 U R2 B2 D' U2 R2 L D2 B' L B2 R U' L,G,Gwada Cubing 2026 (2026-07-04~05),333 Final A #2
 5364148001,D2 L F2 L' F2 R' F2 U2 B2 D2 L2 B' D' B L F2 D' U2 B',G,Alcobendas Virgen de la Paz Open 2026 (2026-01-31),333 R1 C E2
 4582954001,D' L' F' R U' F2 D L2 D2 F2 D' F2 R U2 L F2 L F' R B R,W,Big Side & Blind Olsztyn 2025 (2025-03-22~23),333bf R2 B E1
 298961001,R' U2 B2 D2 F2 L U2 L2 R' D L B' F R' D2 L B L' F',R,Big CubingItaly 2016 (2016-05-14~15),333 R1 B #4

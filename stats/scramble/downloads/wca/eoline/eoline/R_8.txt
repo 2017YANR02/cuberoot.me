@@ -2,7 +2,7 @@
 # Population in this bin: 61
 # Samples listed: 61 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 41039001,U' D' F' L' D' R U' D R2 B L' U2 L F2 R' B2 L D2 L2 B2,R,Aguascalientes Summer 2014 (2014-07-26~27),333 R1 B E1

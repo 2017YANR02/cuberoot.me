@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / R / bin 7
-# Population in this bin: 776
+# Population in this bin: 780
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 2674859001,R B L B2 L' F B U F' R2 F2 L2 F2 D2 R2 B D2 U R2,R,Medan Speedcubing Festival 2023 (2023-04-29~30),333 R1 D #5
@@ -167,7 +167,7 @@
 797561001,R2 D2 U B2 D2 U' R2 D2 L' F' R' B' D2 L2 F' L' F2 R U2,R,Zhongshan Children's Cube Day 2018 (2018-06-02),333 Final A #1
 4038275001,L2 B2 D' B2 R L F L F U' F B R2 U2 F R2 U2 B',R,Geelong Winter 2024 (2024-08-24~25),333 R2 C E1
 5458224001,D2 F' B2 R2 U R2 F2 D L2 R' B' R D' R2 B' U2 F',R,Utah Newcomers 2026 (2026-03-21),333 R1 A E2
-4472376037,U2 R' D' R F2 R2 B2 F2 L' D2 B U F' D' R2 F U' B' L B',R,Hungarian All-Rounder 2: Frozen 2025 (2025-02-08),333mbf Final A #1
+5748770001,F' R U L' B2 R F2 L D2 R' D' L D L2 F' D' R,R,Australian Nationals 2026 (2026-07-09~12),333oh Final A #1
 814360001,R D2 L F2 L D2 L' R' U' F' D' B F R' B U R' B2 L',R,Byczy Cube Race 2018 (2018-06-23~24),333 Final A #5
 5593860001,F2 L2 R2 B' L2 F D F' R' B R' U L2 R U R' U,R,Foshan Open 2026 (2026-05-02~03),333oh R1 B E1
 2544238028,B2 D2 L' D L' D2 R' L2 U L U2 R2 F2 B' L2 F2 R2 B R2 B',R,Gesté Mentalement Là 2023 (2023-03-11~12),333mbf Final B #3

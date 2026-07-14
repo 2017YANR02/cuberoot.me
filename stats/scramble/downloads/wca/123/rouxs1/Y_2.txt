@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / Y / bin 2
-# Population in this bin: 128
-# Samples listed: 128 (all entries in this bin)
+# Population in this bin: 130
+# Samples listed: 130 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 749001,B' F' L2 B' R2 F' D2 R' D2 F R2 F' D L B' L' R' F2,Y,Bogotá Cúbico 2014 (2014-03-15),333 R1 A #2
@@ -133,3 +133,5 @@
 5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,Y,Fewest Moves Bogotá XII 2026 (2026-04-25),333fm Final A #2
 5579437001,B2 R F2 U2 F2 D2 L F2 U2 L F L2 D R F' U' F U,Y,Northern Tier Twist 2026 (2026-04-25),333oh Final B E1
 5598381001,B2 R2 F B' R' L' B R' B2 R2 U2 L2 B' U2 R2 U' F,Y,Passo Fundo Cubing 2026 (2026-05-02~03),333oh Final A #1
+5741939028,U2 F2 L2 F' D2 B' U2 B L B' U' F2 D L2 U2 B U R,Y,Rubik's WCA North American Championship 2026 (2026-07-02~05),333mbf Final A #1
+5746688001,D2 R' U2 L' D2 L' D' R D' F D2 R2 F R D2 F2 R,Y,Cube4fun Lublin Summer 2026 (2026-07-12),333oh R1 B E2

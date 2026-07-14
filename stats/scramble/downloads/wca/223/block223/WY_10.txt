@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / WY / bin 10
-# Population in this bin: 894
+# Population in this bin: 896
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3307504001,R2 F U R' B U R F R2 D' L2 U' B2 U2 R2 F2 R F' L',W,Texas Championship 2023 (2023-12-02~03),333 R2 C E1
@@ -77,7 +77,7 @@
 4352594001,R2 D' F' R' F' B U' F U' L' D U2 R' B2 U2 D2 R B2,W,End of Year Ankara 2024 (2024-12-07~08),333 R1 C #1
 361690001,R B R2 U L F' U' D' R' F U2 F2 L2 F2 U F2 B2 L2 D' L2 D2,W,Tecla Rubik 2016 (2016-09-10),333oh R1 A #5
 2941896001,L2 D' F' D2 F L2 F U2 F2 D2 F R2 B2 R B' R F' L D R' U',W,CubingUSA Nationals 2023 (2023-07-27~30),333oh R1 A #3
-852282001,B' L2 R2 F' D2 B' F D' B L' D U' R F L' D' B2 R2,W,Ibarra Open 2018 (2018-08-11),333 Final A #1
+5744041001,L2 D2 L2 B2 D L2 F2 D' L2 F U2 R' F U2 B L' U' B D',W,Salados en Mexicali 2026 (2026-07-04),333 R1 B #3
 5264880001,U L2 F' L' D B U' D2 B U2 F2 B' U2 F' D2 R' F2 D2,W,Tulsa Holiday Cube-Off 2025 (2025-12-13),333 R1 A #1
 376452001,R2 D B2 R2 D' L2 D' L B2 U B' D F' D2 L' D B2 R D',W,Santo Domingo Fall 2016 (2016-10-08~09),333 Final B #4
 4697261011,B2 U' R' F2 R2 U' L2 B2 D U2 B2 L2 F L U' B L2 U R' U L2,W,BrizZon Side Open II 2025 (2025-05-01~04),333mbf Final B #1

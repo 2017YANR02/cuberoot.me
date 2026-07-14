@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGOR / bin 8
-# Population in this bin: 484
+# Population in this bin: 485
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 4910305001,D' F2 D L2 D2 B2 L2 F' D' L2 B L2 D B' L' D R',G,Silesian Minx Fest 2025 (2025-08-02~05),333oh R1 B #3
@@ -29,7 +29,7 @@
 201512001,D' R2 B2 D' R U B R2 U R2 F2 L F2 R' B2 R' B2 D2 L',R,Spanish Championship 2015 (2015-10-09~11),333oh R1 B #4
 5525232001,U' R2 D L2 R2 F2 U' F2 R2 B' D2 F2 R' B' R2 F D2 F2 L',R,Cubestuff Centurion Q2 2026 (2026-04-11~12),333 R2 A #4
 205523001,R2 F2 L2 B' F' R2 B' D2 L' B2 L2 R F U' R' U F' D2 L',B,ŚLS Wodzisław Śląski 2015 (2015-10-17),333 R1 C #3
-4954705010,B' U R2 F' D2 B2 L2 D2 F2 R B2 L' R2 F U F' R2 D2 B' L2,B,South India Cube Championship 2025 (2025-08-14~17),333mbf Final A #1
+5744976001,R L2 B' L F L B L F2 D2 L2 U R2 D B2 U2 F2 D',R,Mumbai Monsoon Mayhem 2026 (2026-07-05),333 R1 C #2
 3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,G,BMME 3x3 Day 2023 (2023-09-23),333mbf Final B #1
 3676517001,L2 U' F U L2 U L2 D2 F2 U R2 U2 L F D' B' F2 D' F2,G,Thornhill Spring 2024 (2024-04-20),333 R2 B #4
 269466001,F2 D2 B2 D R2 D2 U' B' U R' B2 L2 R U' L2 D' L2 R,R,Grudziądz Open 2016 (2016-03-19~20),333oh R1 B #3

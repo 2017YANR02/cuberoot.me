@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BGOR / bin 3
-# Population in this bin: 792
+# Population in this bin: 796
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-06
+# Generated: 2026-07-14
 # Columns: id,scramble,bottom_color,competition,round
 
 3222001,U' R2 U L2 R2 F2 L2 U' R B2 U L' F2 D' F2 L2 F L,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 L E1
@@ -53,7 +53,7 @@
 1559527001,F2 R B2 L2 F2 R' B2 U' R D' L' B2 R' U2 R' D2,R,Mauritius Open 2020 (2020-02-23),333 R1 B E1
 4251428001,D2 F' U2 F2 U2 L R2 U2 L' D B2 U L D2 L2 U B R',B,Canadian Prairie Championship 2024 (2024-11-02~03),333 R1 J #4
 268905001,R' D2 L U2 L' U2 L D R' U B2 U' L D U2 R2 U2 B',O,Tulip Open 2016 (2016-03-20),333 Final A #1
-275191001,L2 B L2 F2 U B2 L2 B' D2 F2 D2 L2 D L2 B2 D' B2 R2 U2,G,Speedcubing Mérida 2016 (2016-03-27),333oh R1 B #4
+5741647001,R D' L' D2 B2 D2 B D2 B L2 B2 D2 R' U' R2 U2 F2 U' F,G,Wiltshire Summer 2026 (2026-07-04~05),333oh Final B #1
 278843001,U' D2 R' D' F2 L2 U D L' D2 B R2 D F2 B2 D L2 U',B,Jeonju Spring 2016 (2016-04-02),333 R1 H #1
 3888176027,R D2 R D2 R' B2 L' B2 L2 F2 U B2 L' F' D2 U2 L2 D2 B' L2 U2,O,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final B #2
 3330902001,L' B' L' F2 U2 L2 F2 L' U2 F2 R2 F D2 F' U R2 B R2 B,G,Dragon Cubing II 2023 (2023-12-09~10),333oh R1 A #3
