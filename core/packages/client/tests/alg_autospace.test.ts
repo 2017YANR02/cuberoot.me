@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { autoSpaceMoves, autoSpaceAfterComment, autoCloseBracket, stripZeroWidth, cleanAlgText } from '@/lib/alg-autospace';
+import { autoSpaceMoves, autoSpaceAfterComment, autoCloseBracket, cleanAlgText } from '@/lib/alg-autospace';
 
 describe('autoSpaceMoves — 相邻转动自动加空格', () => {
   // 模拟「刚输入第二步那个面字母」后的一次 onInput 调用
@@ -48,22 +48,42 @@ describe('autoSpaceMoves — 相邻转动自动加空格', () => {
   });
 });
 
-describe('stripZeroWidth — 零宽字符输入即删', () => {
-  it('删掉零宽并回退光标', () => {
-    // "R​U" 光标在末尾(3)→ 删掉零宽后变 "RU" 光标 2
-    const r = stripZeroWidth('R​U', 3);
-    expect(r.value).toBe('RU');
-    expect(r.cursor).toBe(2);
+describe('cleanAlgText — 撇号只有一种', () => {
+  // 逆时针记号全靠这个撇号。长得像它的字符有一大把,中文输入法随手就能打出来,
+  // 肉眼几乎分不出 —— 进了库就是一条播不动的公式。一律折成直撇号 U+0027。
+  const clean = (s: string) => cleanAlgText(s, s.length).value;
+
+  it.each([
+    ['弯撇 U+2019', 'R U’'],
+    ['左弯撇 U+2018', 'R U‘'],
+    ['反引号 U+0060', 'R U`'],
+    ['全角反引号 U+FF40', 'R U｀'],
+    ['全角撇号 U+FF07', 'R U＇'],
+    ['锐音符 U+00B4', 'R U´'],
+    ['prime U+2032', 'R U′'],
+    ['类撇字母 U+02BC', 'R Uʼ'],
+    ['修饰符 prime U+02B9', 'R Uʹ'],
+    ['双引号 U+0022', 'R U"'],
+    ['右弯双引号 U+201D', 'R U”'],
+    ['double prime U+2033', 'R U″'],
+  ])('%s → 直撇号', (_name, input) => {
+    expect(clean(input)).toBe("R U'");
   });
 
-  it('多种零宽都删(200B/200C/200D/FEFF)', () => {
-    expect(stripZeroWidth('A​B‌C‍D﻿E', 9).value).toBe('ABCDE');
+  it('标准直撇号本来就对,不动', () => {
+    expect(clean("R U' R'")).toBe("R U' R'");
   });
 
-  it('无零宽时原样返回', () => {
-    const r = stripZeroWidth("R U R'", 6);
-    expect(r.value).toBe("R U R'");
-    expect(r.cursor).toBe(6);
+  it('一整条混着几种撇号的公式,全折平', () => {
+    expect(clean("R U’ R` U´ R′")).toBe("R U' R' U' R'");
+  });
+
+  it('注释里的弯撇号不动 —— 那是人话的一部分', () => {
+    expect(clean("R U' // don’t regrip")).toBe("R U' // don’t regrip");
+  });
+
+  it('零宽字符(粘贴带进来的)照删', () => {
+    expect(clean('A​B‌C‍D﻿E')).toBe('ABCDE');
   });
 });
 
