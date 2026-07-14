@@ -1199,25 +1199,41 @@ a.alg-community-author:hover {
   color: var(--muted-foreground);
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
-.alg-meta-related {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--muted-foreground);
+/* 镜像 / 逆 / 镜像逆:三张图,点了换 case。编号(`#3021`)只在 byNo 里查不到时才退回。 */
+.alg-meta-related-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
-.alg-meta-link {
-  border: none;
+.alg-meta-related-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid transparent;
+  border-radius: 8px;
   background: none;
-  padding: 0;
   font: inherit;
-  font-weight: 600;
-  color: var(--accent);
   cursor: pointer;
 }
-.alg-meta-link.is-plain {
+.alg-meta-related-card:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.alg-meta-related-card.is-plain {
+  cursor: default;
+  justify-content: center;
+  min-width: 76px;
+}
+.alg-meta-related-label {
+  font-size: 11px;
   color: var(--muted-foreground);
-  font-weight: 500;
+}
+.alg-meta-related-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--foreground);
 }
 
 .alg-meta-section {
@@ -1245,11 +1261,12 @@ a.alg-community-author:hover {
   font-size: 11px;
   color: var(--muted-foreground);
 }
+/* 长公式**折行**,不横滚 —— 横滚条既丑又要求用户去拖它才能看全 */
 .alg-meta-algline-code {
   flex: 1;
   min-width: 0;
-  overflow-x: auto;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: break-word;
   font-family: var(--font-mono, Consolas, monospace);
   font-size: 12px;
 }
@@ -1281,4 +1298,49 @@ a.alg-community-author:hover {
 .alg-subgroup-card-sub {
   margin-right: 6px;
   opacity: 0.7;
+}
+
+/* 弹窗顶部的 case 本体:缩略图 + 公式。跳到镜像 / 逆之后,列表里根本没渲染那张卡
+   (它多半在别的组),这块就是唯一能看到「它长什么样、怎么打」的地方。 */
+.alg-meta-case {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-default);
+}
+.alg-meta-case-thumb { flex: none; }
+.alg-meta-case-algs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.alg-meta-algline-len {
+  flex: none;
+  font-size: 11px;
+  color: var(--faint-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.alg-meta-open {
+  align-self: flex-start;
+  margin-top: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+.alg-meta-open:hover { color: var(--accent); }
+
+/* 从 `#case-<id>` 锚点跳进来的那张卡,闪一下 —— 不然一组七十个 case,滚过去也认不出是哪张 */
+.alg-case.is-flash {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .alg-case.is-flash { transition: box-shadow 0.25s ease, border-color 0.25s ease; }
 }

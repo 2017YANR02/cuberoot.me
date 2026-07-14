@@ -37,19 +37,10 @@ import { reorderCases } from '@/lib/alg_sets_api';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { displayAlgCaseName, primaryCaseName, renameZbllGroupToken } from '@/lib/alg_case_display';
+import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
 import { displayAlg } from '@/lib/alg_display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
-
-/** 公式标签(站长 1LLL 表的 `[oh]` 等)。语义见 docs/1lll-migration.md §表里实际出现的形态。 */
-const ALG_TAG_LABEL: Record<AlgTag, () => string> = {
-  oh: () => tr({ zh: '单手', en: 'OH' }),
-  ft: () => tr({ zh: '脚拧', en: 'Feet' }),
-  fmc: () => tr({ zh: '最少步', en: 'FMC' }),
-  big: () => tr({ zh: '高阶', en: 'Big cube' }),
-  key: () => tr({ zh: '键盘', en: 'Keyboard' }),
-};
-const ALG_TAGS = Object.keys(ALG_TAG_LABEL) as AlgTag[];
 
 const ORI_SUFFIX = ['', 'y', 'y2', "y'"];
 function oriAdjustSetup(setup: string, oriIdx: number): string {
@@ -239,6 +230,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
   const [validationRefreshKey, setValidationRefreshKey] = useState(0);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
+  const [flashId, setFlashId] = useState<number | null>(null);
   // 筛选 → replace(不往历史里塞;CLAUDE.md「URL 状态」)
   const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
   const animatable = true;
@@ -334,6 +326,28 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
       }
     }).catch(e => setError(String(e)));
   }, [puzzleParam, set, validPuzzle, meta]);
+
+  /**
+   * `#case-<id>` 锚点:从元数据弹窗的「在列表中打开」跳过来(镜像 / 逆多半在别的组),
+   * 落地后滚到那张卡并闪一下 —— 一组七十来个 case,不指出来等于没跳。
+   * (锚点不是页内状态,是 URL 片段,和 nuqs 那条约定不冲突。)
+   */
+  useEffect(() => {
+    if (!data) return;
+    const jump = () => {
+      const hit = /^#case-(\d+)$/.exec(window.location.hash);
+      if (!hit) return;
+      const id = Number(hit[1]);
+      const el = document.getElementById(`case-${id}`);
+      if (!el) return;
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      setFlashId(id);
+      window.setTimeout(() => setFlashId(cur => (cur === id ? null : cur)), 1800);
+    };
+    const t = window.setTimeout(jump, 80); // 等卡片渲染完(缩略图是异步的,但布局已定)
+    window.addEventListener('hashchange', jump);
+    return () => { window.clearTimeout(t); window.removeEventListener('hashchange', jump); };
+  }, [data, subgroupParam]);
 
   const subgroupSlug = subgroupParam ? decodeURIComponent(subgroupParam).toLowerCase() : null;
   const slugLevel: 'top' | 'sub' | null = useMemo(() => {
@@ -579,7 +593,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                   const firstAlg = allAlgsForOri[0]?.alg ?? c.standard ?? '';
                   return (
                     <SortableCaseCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
-                    <article className="alg-case">
+                    <article
+                      className={`alg-case${flashId === c.id ? ' is-flash' : ''}`}
+                      id={c.id != null ? `case-${c.id}` : undefined}
+                    >
                       {isAdmin && c.id != null && (
                         <button
                           type="button"
@@ -721,6 +738,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
       {metaCase?.meta && (
         <AlgCaseMetaModal
           caseObj={metaCase}
+          puzzle={puzzleParam as AlgPuzzle}
+          set={set}
           byNo={byNo}
           onClose={() => setMetaCase(null)}
           onJump={(c) => setMetaCase(c)}
