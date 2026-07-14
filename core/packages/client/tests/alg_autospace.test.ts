@@ -74,6 +74,21 @@ describe('cleanAlgText — 撇号只有一种', () => {
     expect(clean("R U' R'")).toBe("R U' R'");
   });
 
+  it("双撇号并成一个(`R''` 没有合法含义,只可能是敲重了)", () => {
+    expect(clean("R U''")).toBe("R U'");
+    expect(clean("R U'''")).toBe("R U'");
+    // 混着来的也一样:双引号先折成撇号,再并
+    expect(clean('R U"’')).toBe("R U'");
+  });
+
+  it("`R2'` 不受影响 —— 那是 `2'`,不是 `''`", () => {
+    expect(clean("R2' U2'")).toBe("R2' U2'");
+  });
+
+  it('注释里的两撇不动(人话里 \'\' 可以是引号)', () => {
+    expect(clean("R U' // 叫做 ''sune''")).toBe("R U' // 叫做 ''sune''");
+  });
+
   it('一整条混着几种撇号的公式,全折平', () => {
     expect(clean("R U’ R` U´ R′")).toBe("R U' R' U' R'");
   });
