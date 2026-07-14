@@ -246,6 +246,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 69, slug: 'alg_cases_meta', desc: { zh: 'alg_cases 加 meta JSONB:OLLCP 名 / 数字号 / 六套打乱 / 四套最优解 / 镜像·逆·镜像逆编号 / 对称性 / 生成元,供 1LLL 公式库迁移用', en: 'alg_cases gains meta JSONB: OLLCP name, numeric id, six scrambles, four optimal solutions, mirror/inverse/inverse-mirror ids, symmetry, generators — for the 1LLL migration' } },
   { n: 70, slug: 'notifications', desc: { zh: '站内通知:recon 另解 / 评论 / 回复 → 管理员 + 被回复者(未读红点 + Resend 邮件)', en: 'Site notifications: recon alternatives / comments / replies → admins + the person replied to (unread badge + Resend email)' } },
   { n: 71, slug: 'email_notify_pref', desc: { zh: 'app_users 加 email_notify:邮件通知开关(退订),默认开;只关邮件,站内红点照常', en: 'app_users gains email_notify: the email-notification opt-out (default on); mutes email only, in-site badge unaffected' } },
+  { n: 72, slug: 'user_lang', desc: { zh: 'app_users 加 lang:通知邮件按收件人语言发;未读角标轮询搭车上报,NULL(没见过这人)回落双语', en: 'app_users gains lang: notification emails follow the recipient’s language; reported by the unread-badge poll, NULL (never seen) falls back to bilingual' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
