@@ -1,9 +1,9 @@
 'use client';
-// Alternative submit/edit form — ported from packages/client-vite/src/pages/recon/AltSubmitPage.tsx.
-// TwistySection live preview + solution textarea + caret sync + ReconAutofill Tab suggestions
-// + real-time STM stats label.
+// Alternative submit/edit form — shares ReconPlayerPane (live preview) and
+// ReconSolutionField (AlgInput + ReconAutofill + virtual keyboard) with the
+// main recon submit form (ReconSubmitForm) so both stay UI/UX-identical.
 
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -11,14 +11,13 @@ import { TriangleAlert, ArrowLeft, LogIn } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getRecon, addAlternative, updateAlternative } from '@/lib/recon-api';
 import { revalidateRecon } from '../../revalidate-action';
-import { getPuzzleId } from '@/lib/recon-utils';
 import { computeAllStats } from '@/lib/recon-stats';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import TwistySection from '@/components/TwistySection';
-import { cleanForPlayer, extractAlgFromText, syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
-import ReconAutofill from '@/components/ReconAutofill';
+import ReconPlayerPane from '@/components/ReconPlayerPane';
+import ReconSolutionField from '@/components/ReconSolutionField';
+import { syncReconPlayerCursorFromText } from '@/lib/recon-alg-utils';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../../recon.css';
 import '../../submit/recon_submit.css';
@@ -45,7 +44,6 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
   const [solution, setSolution] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const solutionRef = useRef<HTMLTextAreaElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
 
@@ -66,41 +64,11 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
 
   const scramble = parent?.optimalScramble || parent?.wcaScramble || '';
   const displayScramble = parent?.event === 'sq1' ? formatScrambleForEvent('sq1', scramble) : scramble;
-  const puzzle = parent ? getPuzzleId(parent.event) : '3x3x3';
-
-  const [debouncedSolution, setDebouncedSolution] = useState('');
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSolution(solution), 500);
-    return () => clearTimeout(timer);
-  }, [solution]);
 
   const stats = useMemo(
-    () => computeAllStats(debouncedSolution, parent?.rawTime ?? 0, parent?.event),
-    [debouncedSolution, parent?.rawTime, parent?.event],
+    () => computeAllStats(solution, parent?.rawTime ?? 0, parent?.event),
+    [solution, parent?.rawTime, parent?.event],
   );
-
-  const handleCursorSync = useCallback((el: HTMLTextAreaElement) => {
-    if (!playerRef.current) return;
-    const offset = el.selectionStart;
-    const textBefore = el.value.substring(0, offset);
-    const algBefore = extractAlgFromText(textBefore);
-    const moves = algBefore.trim().split(/\s+/).filter(s => s.length > 0);
-    syncPlayerToMoveCount(playerRef.current, moves.length);
-  }, []);
-
-  const autoResize = useCallback((el: HTMLTextAreaElement | null) => {
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
-  }, []);
-
-  useEffect(() => {
-    if (solutionRef.current) autoResize(solutionRef.current);
-  }, [solution, autoResize]);
-
-  useEffect(() => {
-    if (solutionRef.current) handleCursorSync(solutionRef.current);
-  }, [debouncedSolution, handleCursorSync]);
 
   const handleSubmit = async () => {
     const trimmed = solution.trim();
@@ -171,13 +139,12 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
       <div className="submit-layout">
         {!isMobile && (
           <div className="submit-player-pane">
-            {scramble && parent.event && parent.event !== 'sq1' && (
-              <TwistySection
-                puzzle={puzzle}
+            {scramble && parent.event && (
+              <ReconPlayerPane
+                event={parent.event}
                 scramble={scramble}
-                alg={cleanForPlayer(debouncedSolution)}
+                solution={solution}
                 playerRef={playerRef}
-                fillPane
               />
             )}
           </div>
@@ -197,14 +164,13 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
               />
             </label>
 
-            {isMobile && scramble && parent.event && parent.event !== 'sq1' && (
+            {isMobile && scramble && parent.event && (
               <div className="submit-inline-player">
-                <TwistySection
-                  puzzle={puzzle}
+                <ReconPlayerPane
+                  event={parent.event}
                   scramble={scramble}
-                  alg={cleanForPlayer(debouncedSolution)}
+                  solution={solution}
                   playerRef={playerRef}
-                  fillPane
                 />
               </div>
             )}
@@ -213,40 +179,20 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
               <span className="submit-label">
                 {t('recon.solution')} *
                 {stats && stats.stm > 0 && (
-                  <span className="submit-label-stats"> ({stats.stm} STM)</span>
+                  <span className="submit-label-stats">
+                    {' ('}{stats.stm} STM
+                    {stats.tps > 0 && `, ${stats.tps} ${parent.event === 'sq1' ? 'SPS' : 'TPS'}`}
+                    {')'}
+                  </span>
                 )}
               </span>
-              <textarea
-                ref={(el) => {
-                  (solutionRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = el;
-                  autoResize(el);
-                }}
+              <ReconSolutionField
                 value={solution}
-                onChange={(e) => {
-                  setSolution(e.target.value);
-                  autoResize(e.currentTarget);
-                  handleCursorSync(e.currentTarget);
-                }}
-                onClick={e => handleCursorSync(e.target as HTMLTextAreaElement)}
-                onKeyUp={e => handleCursorSync(e.target as HTMLTextAreaElement)}
-                placeholder={t('recon.writeAlternative')}
-                className="submit-field-textarea submit-solution-textarea"
-                rows={6}
-                autoFocus
-              />
-              <ReconAutofill
-                textareaRef={solutionRef}
-                value={solution}
-                setValue={(next) => {
-                  setSolution(next);
-                  if (solutionRef.current) {
-                    solutionRef.current.value = next;
-                    autoResize(solutionRef.current);
-                    handleCursorSync(solutionRef.current);
-                  }
-                }}
+                onChange={setSolution}
+                onCaretSync={(textBefore) => syncReconPlayerCursorFromText(playerRef.current, textBefore)}
                 scramble={scramble || ''}
                 isMobile={isMobile}
+                autoFocus
               />
             </div>
 
@@ -264,7 +210,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
                 onClick={handleSubmit}
                 disabled={submitting || !solution.trim()}
               >
-                {submitting ? t('recon.posting') : (isEditing ? t('recon.save') : t('recon.addAlternative'))}
+                {submitting ? t('recon.posting') : t('recon.save')}
               </button>
             </div>
           </div>
