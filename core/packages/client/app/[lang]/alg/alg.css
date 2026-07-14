@@ -489,6 +489,15 @@ html[data-theme=dark] .alg-root {
   flex: 1;
   min-width: 0;
 }
+/* 打乱行的复制按钮:行是 align-items:flex-start(打乱会折行),按钮得自己贴顶,
+   否则长打乱折成两行时它会掉到中间。 */
+.alg-case-setup-copy {
+  flex-shrink: 0;
+  align-self: flex-start;
+  color: var(--faint-foreground);
+}
+.alg-case-setup-copy:hover { color: var(--foreground); }
+
 .alg-ori-tabs {
   display: flex;
   gap: 4px;
@@ -627,6 +636,20 @@ html[data-theme=dark] .alg-root {
 }
 .alg-editor-input:focus {
   border-color: var(--accent);
+}
+/* 保存时没过校验的那一行 —— 红框 + 行下写清楚为什么。
+   比 :focus 那条更具体,所以点进去改的时候红框还在(改动了才摘掉)。 */
+.alg-editor-row.is-invalid .alg-editor-input {
+  border-color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 6%, var(--background));
+}
+.alg-editor-row-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 3px 0 2px 2px;
+  color: var(--destructive);
+  font-size: 0.78rem;
 }
 .alg-editor-input:empty:before {
   content: attr(data-placeholder);

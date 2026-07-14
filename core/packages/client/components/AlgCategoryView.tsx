@@ -73,6 +73,26 @@ function sanitizeAlgHtml(html: string): string {
   });
 }
 
+/** 打乱行。复制的是**屏幕上这一条**(sq1 之类会重排格式),不是库里的原文。 */
+function SetupLine({ puzzle, setup }: { puzzle: string; setup: string }) {
+  const { copied, copy } = useCopy();
+  const text = formatScrambleForEvent(puzzle, setup);
+  return (
+    <div className="alg-case-standard">
+      <Shuffle size={13} className="alg-case-icon" aria-label={tr({ zh: '打乱', en: 'Setup' })} />
+      <code>{text}</code>
+      <button
+        type="button"
+        className="alg-alg-copy-btn alg-case-setup-copy"
+        onClick={() => copy(text)}
+        title={tr({ zh: '复制打乱', en: 'Copy setup' })}
+      >
+        {copied ? <Check size={12} /> : <Copy size={12} />}
+      </button>
+    </div>
+  );
+}
+
 function AlgRow({ entry, expanded, onToggle, animatable, puzzle, set, setup, invalid }: { entry: AlgEntry; expanded: boolean; onToggle: () => void; animatable: boolean; puzzle: AlgPuzzle; set: string; setup?: string; invalid?: string }) {
   const { alg, algHtml } = entry;
   const { copied, copy } = useCopy();
@@ -788,13 +808,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
                               </button>
                             )}
                           </div>
-                          {c.setup && (
-                            <div className="alg-case-standard">
-                              <Shuffle size={13} className="alg-case-icon" aria-label={tr({ zh: '打乱', en: 'Setup'
-                            })} />
-                              <code>{formatScrambleForEvent(puzzleParam, c.setup)}</code>
-                            </div>
-                          )}
+                          {c.setup && <SetupLine puzzle={puzzleParam} setup={c.setup} />}
                         </div>
                       </div>
                       <div className="alg-case-algs">
