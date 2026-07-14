@@ -1436,8 +1436,3 @@
   .bld-hub-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
   .bld-hub-intro { margin-top: 0; }
 }
-
-/* Embedded under /trainer (puzzle selector = 三盲): no page wrapper, just the grid. */
-.bld-hub-embed { margin-top: 4px; }
-.bld-hub-embed .bld-hub-intro { margin-top: 0; }
-.bld-hub-embed-actions { margin-bottom: 4px; }

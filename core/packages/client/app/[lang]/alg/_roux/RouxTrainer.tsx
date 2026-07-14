@@ -154,8 +154,7 @@ const introTextZh = `# Onionhoney 的桥式（Roux）训练器
 https://github.com/onionhoney/roux-trainers
 `;
 
-function RouxTrainer(props: { embedded?: boolean }) {
-  const { embedded } = props;
+function RouxTrainer() {
   const { i18n } = useTranslation();
   const isZh = i18n.language?.startsWith('zh');
   const tt = useT();
@@ -202,15 +201,13 @@ function RouxTrainer(props: { embedded?: boolean }) {
 
   if (!mounted) {
     // Lightweight skeleton (no localStorage / no reducer state reads).
-    return <div className="roux-root roux-skeleton" data-embedded={embedded ? '1' : undefined} />;
+    return <div className="roux-root roux-skeleton" />;
   }
 
   return (
-    <div className="roux-root" data-embedded={embedded ? '1' : undefined} data-cube-theme={cubeTheme}>
+    <div className="roux-root" data-cube-theme={cubeTheme}>
       <div className="roux-topbar">
-        {/* When embedded under the 333 hub's 桥式 section heading, the section title
-            already names it — drop the internal title to avoid a double label. */}
-        {!embedded && <div className="roux-topbar-title">{tt('桥式训练器', 'Roux Trainer')}</div>}
+        <div className="roux-topbar-title">{tt('桥式训练器', 'Roux Trainer')}</div>
 
         <select
           className="roux-mode-select"

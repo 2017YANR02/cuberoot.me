@@ -105,7 +105,7 @@
 - [x] **P3d** WASM 类 + 重建仪式 + `/scramble/pyraminx`。✅ 2026-06-11 `15646376c`(12 文件)。照 pocket new_lean 路线:0.9MB 核心距离表现场转移(弃 29.9MB 联合移动表),wasm 首查惰性 BFS node 408ms/浏览器 613ms 后续 <1ms;解=核心大写+tips 小写;V bump 20260611h,TABLE_SETS.pyraminx=[] 零下载,pyram 跳过 3x3 normalizeScramble;PuzzleOptimalSolver 加可选 placeholder prop(默认示例 F2 对 pyram 非法,防教错);门全绿:cargo 6/6 + node 冒烟 12 条相等 + cubing.js replay 12/12(isIdentical)+ typecheck/zh + playwright 桌面+390px en/zh 0 error(主 loop 复核 typecheck EXIT=0,harness 中途诊断系过期快照)。
 - [x] **P3e** 看板登记 + **📦 MANUAL(Pyraminx)** 交接写 §3。✅ 2026-06-11 `f9ce5ef61`(1 文件)。NATIVE/TABLES/BROWSER/概览卡照 pocket 范本;顺手把待灌注行语料文案按 event 参数化(去 pocket 硬码);typecheck EXIT=0 + 39 守卫测试绿。**EPIC 3.2(Pyraminx)代码侧全链路完成**,MANUAL 交接见 §3。
 
-#### EPIC 3.3 — Skewb(全空间 3,149,280;/trainer/skewb 已有宿主;solver 参考 cstimer `skewb.js`,`mathlib.Solver(4,2,...)` BFS)
+#### EPIC 3.3 — Skewb(全空间 3,149,280;/alg/skewb-trainer 已有宿主;solver 参考 cstimer `skewb.js`,`mathlib.Solver(4,2,...)` BFS)
 > 照范式。注意:Skewb 件 = 8 角(两轨道各 4)+ 6 中心,WCA 打乱记号 U/L/R/B ± '(角转);态数/件集合/固定参照自行从 cstimer 推导并独立暴力对照,别信记忆(3,149,280 待实算验证);God's number 文献 11(对公开分布逐项锁)。
 - [x] **P4a** Rust 核心 `skewb_solver.rs`(key `skewb`)。✅ 2026-06-11 `507a73ca4`。推导修正调研预期:WCA 4 轴 = cubing.js 角 6/4/5/7,{4,5,6} A3 轨道 + {0,1,2,7} A4 轨道,**角 3 完全不动不扭 = 天然全局参照**(无需消朝向);move 数组取自 cubing.js kpuzzle 现场 dump 与 cstimer 4320×2187/3 交叉核对。态数 360×12×3×3^5=3,149,280 闭包实算相符、编码恰双射;God 数 11,分布对 jaapsch 逐项锁。实现即 lean:3.0MB u8 距离表现场 BFS ~1.2s,转移件级现算(full 联合移动表理论 100.8MB 不建,P4d 直接用 lean);4/4 测试绿 + 全量 lib 126/0 + cubing.js 手性 replay 8/8(P4d 消险)。
 - [x] **P4b** analyzer bin `skewb_analyzer.rs` + `tests/e2e_skewb.rs`。✅ 2026-06-11 `e19a58529`(2 文件,executor/solver 零改动)。走 raw 通道(skewb 全大写但语义非 3x3,X2=240° 走 string_to_alg 会错映);bin 3 单测(全 8 记号 / round-trip×60 / 件级 IDDFS oracle×32)+ e2e 双 baseline(真实 WCA 5 条 9/9/9/8/8 + 手算 5 条)锁死;P4a 4/4 不塌、全量 lib 126/0;smoke 5 条全 ≤11。
@@ -209,7 +209,7 @@
 **核心结论**:四个都是非 3x3 puzzle,`cube_common`(`State{corners:[u8;8],edges:[u8;12]}` + 18-move + Lehmer 编码)是为 3x3 件锁死的,**四者全 0 复用**,各需独立状态模型与移动表(几十~一两百行 Rust 一套,小空间全表 BFS,不落盘大表)。但本舰队用途 = **3x3 打乱的分阶段难度统计喂 `/scramble/*`**;这四个 puzzle 的 scramble 已由 cubing.js + cstimer 引擎现成生成,**没有任何"在 3x3 打乱上做分阶段统计"的语义**——它们各是独立 puzzle,进 master 灌注管道无意义。所以即便做,落点只能是「在线求解器 / 打乱难度直方图独立页」,不是现有 analyzer/gen 管道。
 
 **现成资源(全部已在仓库,不需新造)**:
-- 渲染:`client/app/[lang]/scramble/gen/_svg/` 已有 `sq1_svg.ts`/`pyraminx_svg.ts`/`skewb_svg.ts`(+ `mega_svg.ts`);`components/PuzzleSVG.tsx`/`lib/sq1-svg.ts`;`/trainer/skewb` 已上线。
+- 渲染:`client/app/[lang]/scramble/gen/_svg/` 已有 `sq1_svg.ts`/`pyraminx_svg.ts`/`skewb_svg.ts`(+ `mega_svg.ts`);`components/PuzzleSVG.tsx`/`lib/sq1-svg.ts`;`/alg/skewb-trainer` 已上线。
 - 打乱:`lib/cubing-scramble`(cubing.js WCA,含 222/sq1/pyram/skewb)+ `lib/cstimer-scramble` 双轨,`/scramble/gen` 已全部生成 + 画图。
 - 求解参考(cstimer,`D:\cube\cstimer\src\js\`):2x2x2 = `tools/gsolver.js::pocketCube`(BFS gSolver,完整最优,且 333 step solver 已复用其块求解);SQ1 = `scramble/scramble_sq1_new.js`(双阶段 search + `SquarePrun` 剪枝,min2phase 风格 WCA 标准最优);Skewb = `scramble/skewb.js`(`mathlib.Solver(4,2,...)` BFS,普通 + ivy);Pyraminx = `scramble/pyraminx.js`(`mathlib.Solver(4,2,...)` BFS + phase 表)。
 
@@ -218,13 +218,13 @@
 | puzzle | 状态空间(数量级) | 复用现模型? | 工作量量级 | 现成渲染/打乱/solver 参考 | 接 /scramble 管道? | 落点 |
 |---|---|---|---|---|---|---|
 | 2x2x2 口袋 | 3,674,160(7!·3^6) | ❌ 8 角无棱模型 | 小:全表 BFS(~3.7M u8 ≈ 3.6MB)零落盘,~半天 | 全有;solver=gsolver.js pocketCube | ❌ 无 3x3 分阶段语义 | 在线最优求解器 / 打乱难度独立页 |
-| Skewb | 3,149,280 | ❌ 4 轴中心 + 8 角独有件 | 小:全表 BFS ~3MB,~半天 | 全有(/trainer/skewb 已在);solver=skewb.js | ❌ 同上 | 同上(可挂 /trainer/skewb 旁) |
+| Skewb | 3,149,280 | ❌ 4 轴中心 + 8 角独有件 | 小:全表 BFS ~3MB,~半天 | 全有(/alg/skewb-trainer 已在);solver=skewb.js | ❌ 同上 | 同上(可挂 /alg/skewb-trainer 旁) |
 | Pyraminx | 933,120(核心 75,582 × 顶点 3^4) | ❌ 顶点/边独有件 | 最小:核心全表 BFS 几十 KB,~半天 | 全有;solver=pyraminx.js | ❌ 同上 | 在线最优求解器(顶点 trivial) |
 | SQ1 (S1+S2) | ~3.4 亿(shape-reachable,全态过大) | ❌ shape/层非件模型 | 中:双阶段 search + 剪枝表(照 cstimer 双 prun),非全表 | 全有;solver=scramble_sq1_new.js(双阶段) | ❌ 阶段是 shape→perm,非 3x3 cross/eo/dr | 在线最优求解器 / 步数分布独立页 |
 
 **推荐排序(只摆事实,不替用户决定)**:
 1. **最不该进本管道 = 全部**:四者都没有"3x3 打乱分阶段难度"语义,接 `/scramble` analyzer/gen master 管道无落点。若要做,只做独立"在线求解器 / 难度直方图"页,与本舰队统计管道脱钩。
-2. **若仍要做,性价比序**:Pyraminx(空间最小、表最小、最快)> 2x2x2(空间小、最经典、口袋魔方有受众)> Skewb(空间小,且 /trainer/skewb 已有宿主页)> SQ1(唯一需双阶段 search + 剪枝表、shape 模型最复杂、工作量最大)。
+2. **若仍要做,性价比序**:Pyraminx(空间最小、表最小、最快)> 2x2x2(空间小、最经典、口袋魔方有受众)> Skewb(空间小,且 /alg/skewb-trainer 已有宿主页)> SQ1(唯一需双阶段 search + 剪枝表、shape 模型最复杂、工作量最大)。
 3. **更省的替代**:这四个 puzzle 的最优/近最优 solver cstimer 已自带且本站已 vendored——要在线求解器**直接复用 cstimer 引擎**(JS,无需 Rust/WASM 新表),比新写 Rust 引擎成本低一个量级;Rust 新引擎只在"要灌百万级打乱跑批统计"时才值得,而恰恰这点没有 3x3 式分阶段语义支撑。
 
 **一句话给用户**:档3 = 另一个 feature(非 3x3,零复用本引擎,零 master 管道落点);最划算路径是若要在线求解器就复用 cstimer 现成 JS solver,本 Rust 舰队不必扩。等用户明确「做哪个 + 用 cstimer JS 还是新写 Rust + 接不接(其实不该接)管道」。

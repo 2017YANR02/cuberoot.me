@@ -8,8 +8,8 @@ import {
   fourswap,
   firstLayerList,
   randomFirstLayer,
-} from '@/app/[lang]/trainer/skewb/_lib/scramble';
-import { ALL_ALGS } from '@/app/[lang]/trainer/skewb/_lib/algs';
+} from '@/app/[lang]/alg/skewb-trainer/_lib/scramble';
+import { ALL_ALGS } from '@/app/[lang]/alg/skewb-trainer/_lib/algs';
 
 // ---------------------------------------------------------------------------
 // VERBATIM JS reference implementations copied from skewbskillsscripts.js

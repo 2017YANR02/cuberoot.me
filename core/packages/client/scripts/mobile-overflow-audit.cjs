@@ -66,7 +66,7 @@ const DEFAULT_ROUTES = [
   '/zh/wca/results?show=persons', '/zh/wca/records', '/zh/wca/fun-stats', '/zh/wca/comp',
   '/zh/wca/viz', '/zh/wca/globe', '/zh/wca/prediction', '/zh/wca/sor',
   '/zh/scramble/gen', '/zh/scramble/stats', '/zh/scramble/solver', '/zh/scramble/analyzer',
-  '/zh/timer', '/zh/battle', '/zh/calc', '/zh/recon', '/zh/trainer', '/zh/algdb',
+  '/zh/timer', '/zh/battle', '/zh/calc', '/zh/recon', '/zh/alg',
   '/zh/membership', '/zh/support', '/zh/mosaic', '/zh/frame-count', '/zh/paint', '/zh/sim',
   '/zh/math/group', '/zh/math/god', '/zh/code', '/zh/code/architecture', '/zh/code/solvers',
   '/zh/recognize/pll', '/zh/regulation', '/zh/regulation/events', '/zh/nemesizer',
