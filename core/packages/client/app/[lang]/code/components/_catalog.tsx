@@ -1115,8 +1115,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'SubsetColorPicker',
     import: "import { SubsetColorPicker } from '@/components/SubsetColorPicker/SubsetColorPicker';",
     category: 'input',
-    zh: `打乱底色子集选择器:模式下拉(六 / 四 / 双 / 单色)+ 切扇形的方块色块;配套 useSubsetSelection hook 推导子集 key。`,
-    en: `Scramble bottom-color subset picker: mode dropdown (six/quad/dual/single) plus pie-segment swatches; pairs with the useSubsetSelection hook that derives the subset key.`,
+    zh: `打乱底色子集选择器:单个下拉,菜单里四档模式(六 / 四 / 双 / 单色)各摊一行切扇形色块,点色块 = 一次定模式和子集;配套 useSubsetSelection hook 推导子集 key。`,
+    en: `Scramble bottom-color subset picker: one dropdown whose menu lays out all four modes (six/quad/dual/single) as rows of pie-segment swatches — a click sets both mode and subset; pairs with the useSubsetSelection hook that derives the subset key.`,
     note: { zh: `需配 useSubsetSelection 提供 sel 状态(两者同文件导出),选色逻辑别另写。`, en: `Requires useSubsetSelection (same file) for its sel state; don't reimplement the color logic.` },
   },
   {

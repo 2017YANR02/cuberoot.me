@@ -132,8 +132,8 @@ html[data-theme='dark'] .stsv {
   border-radius: 6px;
 }
 .stsv-control > .stsv-control-select:focus { outline: none; border-color: var(--sv-accent); }
-/* 底色 picker 嵌进工具栏:下拉与色块整行靠左,高度与相邻 select 对齐 */
-.stsv-control-subset .subset-picker { gap: 8px; min-height: 33px; }
+/* 底色 picker 嵌进工具栏:高度与相邻 select 对齐;菜单浮层用工具栏自己的 surface(本组件默认取全局 --popover) */
+.stsv-control-subset .subset-picker { min-height: 33px; --sp-surface: var(--sv-surface); }
 .stsv-control-subset .subset-picker-mode { color: var(--sv-text); }
 .stsv-diag {
   margin-left: auto;

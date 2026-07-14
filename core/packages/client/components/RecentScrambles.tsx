@@ -79,6 +79,7 @@ function cdEndIso(cd: string): string {
 }
 
 // 本批全部打乱来源比赛的日期跨度:最早开始日 ~ 最晚结束日(跨 333 与其它项目两份 meta)。
+// 本栏标题紧挨着,年份是噪音 -> 掐掉打头的 "YYYY-"(跨年才会剩下结束日的年份,不去,消歧义)。
 function batchDateRange(
   data: RecentScramblesJson | null,
   eventsJson: RecentScramblesEventsJson | null,
@@ -95,7 +96,63 @@ function batchDateRange(
   };
   if (data?.meta) for (const k in data.meta) consider(data.meta[k].cd);
   if (eventsJson?.meta) for (const k in eventsJson.meta) consider(eventsJson.meta[k].cd);
-  return minStart ? formatDateRangeIso(minStart, maxEnd) : null;
+  if (!minStart) return null;
+  return formatDateRangeIso(minStart, maxEnd).replace(/^\d{4}-/, '');
+}
+
+// 项目选择器收进下拉:触发按钮只显示当前项目图标,菜单里摊开 WcaEventSelector 原生图标网格
+// (共 28 处共用该组件,不改它本身;只在本栏外面套一层折叠壳)。
+function EventPickerDropdown({
+  availableEvents, curEvent, onSelect, isZh,
+}: { availableEvents: Set<string>; curEvent: string; onSelect: (id: string) => void; isZh: boolean }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      btnRef.current?.focus();
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="rs-event-picker">
+      <button
+        ref={btnRef}
+        type="button"
+        className={`rs-event-trigger${open ? ' is-open' : ''}`}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label={tr({ zh: '项目', en: 'Puzzle' })}
+      >
+        <EventIcon event={curEvent} className="rs-evt" />
+      </button>
+      {open && (
+        <div className="rs-event-panel" role="group" aria-label={tr({ zh: '项目', en: 'Puzzle' })}>
+          <WcaEventSelector
+            availableEvents={availableEvents}
+            selectedEvent={curEvent}
+            onSelect={(id) => { onSelect(id); setOpen(false); btnRef.current?.focus(); }}
+            isZh={isZh}
+            onlyAvailable
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 // 紧凑数字(960000→960k)。
@@ -386,13 +443,7 @@ export default function RecentScrambles({ lang }: Props) {
         <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
         {dateRange && <span className="rs-date-range">{dateRange}</span>}
       </div>
-      <WcaEventSelector
-        availableEvents={availableEvents}
-        selectedEvent={curEvent}
-        onSelect={setEvent}
-        isZh={isZh}
-        onlyAvailable
-      />
+      <EventPickerDropdown availableEvents={availableEvents} curEvent={curEvent} onSelect={setEvent} isZh={isZh} />
       {curEvent === '333'
         ? <Recent333Body data={data} dist={dist} isZh={isZh} lp={lp} />
         : <RecentEventBody event={curEvent} json={eventsJson} isZh={isZh} lp={lp} />}
@@ -430,6 +481,8 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
     ...sel,
     setColorMode: (m: ColorMode) => { markTouched(); sel.setColorMode(m); },
     selectOption: (id: string) => { markTouched(); sel.selectOption(id); },
+    // 菜单里点色块走这条(一次定模式 + 子集);auto-pick 用的是未包装的 sel,不会误标 touched。
+    selectByKey: (key: string) => { markTouched(); sel.selectByKey(key); },
   };
 
   const hasData = (v: string) => {
