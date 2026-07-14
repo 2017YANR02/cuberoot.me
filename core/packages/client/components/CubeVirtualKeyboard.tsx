@@ -320,13 +320,11 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
     if (!el) return;
     if (!isCE(el)) {
       const val = el.value;
+      // 撇号折叠(`R''` → `R'`)也在 cleanAlgText 里 —— 这儿原来那条 /''+/g 会连注释一起改
       const c = cleanAlgText(val, el.selectionStart ?? 0);
-      // `R''` 是敲重了,不是四分之二圈
-      const newVal = c.value.replace(/''+/g, "'");
-      if (newVal !== val) {
-        const cursor = Math.min(c.cursor, newVal.length);
-        el.value = newVal;
-        el.setSelectionRange(cursor, cursor);
+      if (c.value !== val) {
+        el.value = c.value;
+        el.setSelectionRange(c.cursor, c.cursor);
       }
     }
     onInput?.();

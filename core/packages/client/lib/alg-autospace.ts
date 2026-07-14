@@ -70,7 +70,11 @@ function cleanStr(s: string, inCmt = false): { out: string; inCmt: boolean } {
     if (ch === '\n') { inCmt = false; out += ch; continue; }
     if (inCmt) { out += ch; continue; }
     if (ch === '/' && s[i + 1] === '/') { inCmt = true; out += '//'; i++; continue; }
-    out += cleanChar(ch);
+    const cleaned = cleanChar(ch);
+    // `R''` 在 WCA 记号里没有含义(`R2'` 那是 `2'`,不是 `''`)—— 只可能是敲重了,或从别处
+    // 粘来的双引号被展开成两撇。一律并成一个。
+    if (cleaned === "'" && out.endsWith("'")) continue;
+    out += cleaned;
   }
   return { out, inCmt };
 }
