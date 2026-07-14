@@ -665,6 +665,19 @@
   border-bottom: 2px dotted currentColor;
 }
 
+/* 非 WCA / 练习同场表的空槽:该平均下这一把还没人复盘 → 「+」,点击去补。
+   直接用 accent 常亮(不是弱化装饰,是明确的可点操作),悬停加下划线呼应其它跳转格。 */
+.same-comp-event-att-add {
+  text-decoration: none;
+  color: var(--accent);
+  font-weight: 700;
+  transition: color 0.12s, border-color 0.12s;
+}
+.same-comp-event-table .same-comp-event-att-add:hover {
+  color: var(--foreground);
+  border-bottom: 2px dotted currentColor;
+}
+
 /* 详细成绩最后一把的 PR 角标绝对定位(left:100%)向右溢出,给单元右侧留白兜住它,
    否则会顶到紧随其后的「平均步数」列。 */
 .same-comp-event-table .wp-cell-attempts { padding-right: 2.2em; }

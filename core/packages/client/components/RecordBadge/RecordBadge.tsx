@@ -13,7 +13,9 @@ interface RecordBadgeProps {
 export function RecordBadge({ record, variant = 'standalone', iso2 }: RecordBadgeProps) {
   const expanded = iso2 ? expandContinentRecord(record, iso2) : record;
 
-  const prRankMatch = expanded ? /^PR(\d+)$/.exec(expanded) : null;
+  // 带名次的个人最好成绩(PR2 / PB10 …)是「第 n 好」而非纪录,不给方框,只作小角标;
+  // 不带数字的 PR / PB(个人最佳本身)仍走下面的纪录方框。
+  const prRankMatch = expanded ? /^P[RB](\d+)$/.exec(expanded) : null;
   if (prRankMatch && Number(prRankMatch[1]) >= 2) {
     const cls = variant === 'inline'
       ? 'record-pr-rank record-badge--inline'
