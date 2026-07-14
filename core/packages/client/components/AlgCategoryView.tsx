@@ -27,6 +27,7 @@ import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
 import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
+import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
 import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
 import AlgPlayer from '@/components/AlgPlayer';
@@ -304,6 +305,23 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     for (const k of invalidAlgs.keys()) s.add(Number(k.split(':', 1)[0]));
     return s;
   }, [invalidAlgs]);
+  /** 某个 case 的坏行,拆回 (oi, ai) 交给编辑器。挂载那刻编辑器行号 == algs 下标。 */
+  const invalidMarksOf = useCallback((caseId: number): AlgInvalidMark[] => {
+    const out: AlgInvalidMark[] = [];
+    for (const [k, reason] of invalidAlgs) {
+      const [cid, oi, ai] = k.split(':').map(Number);
+      if (cid === caseId) out.push({ oi, ai, reason });
+    }
+    return out;
+  }, [invalidAlgs]);
+  /** 这个 case 的红标全撤。保存成功 ⟹ 它每条公式都刚过了校验,旧结论不作数了。 */
+  const clearInvalidFor = useCallback((caseId: number) => {
+    setInvalidAlgs(prev => {
+      const next = new Map(prev);
+      for (const k of prev.keys()) if (Number(k.split(':', 1)[0]) === caseId) next.delete(k);
+      return next.size === prev.size ? prev : next;
+    });
+  }, []);
   // 筛选 → replace(不往历史里塞;CLAUDE.md「URL 状态」)
   const [tagFilter, setTagFilter] = useQueryState('tag', parseAsStringEnum<AlgTag | 'all'>(['all', ...ALG_TAGS]).withDefault('all'));
   const animatable = true;
@@ -890,6 +908,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
           puzzle={puzzleParam as AlgPuzzle}
           setSlug={set}
           state={editorState}
+          initialInvalid={
+            editorState.mode === 'edit' && editorState.existing.id != null
+              ? invalidMarksOf(editorState.existing.id)
+              : undefined
+          }
           onClose={() => setEditorState(null)}
           onSaved={(action) => {
             if (!data) return;
@@ -897,6 +920,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
               setData({ ...data, cases: [...data.cases, action.created] });
             } else if (action.type === 'update') {
               setData({ ...data, cases: data.cases.map(c => c.id === action.updated.id ? action.updated : c) });
+              if (action.updated.id != null) clearInvalidFor(action.updated.id);
               // 改的正是选中那张 ⟹ 片段跟着换名字,否则地址栏还挂着旧名(分享出去就是个死链)
               if (selectedId === action.updated.id) {
                 const frag = caseAnchor(action.updated.name);
@@ -905,6 +929,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
               }
             } else {
               setData({ ...data, cases: data.cases.filter(c => c.id !== action.id) });
+              clearInvalidFor(action.id); // case 没了,它的红标也别留着
               if (selectedId === action.id) { setSelectedId(null); replaceHash(''); }
             }
             // 校验报告打开时,case saved 后让它重跑刷新结果
