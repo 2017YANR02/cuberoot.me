@@ -489,6 +489,9 @@ function Sync-Variant($Name){
     AppendData $csv $outCsv $true
     Remove-Item $outCsv -Force
     $done += $cnt; $chunksRun++
+    # analyzer 的 [PROG] 每 N 条一跳, 最后不满 N 条不打 -> 进度会停在 3774/3790 这种数。
+    # 块跑完这里知道真实条数, 用它覆盖最后一跳, 收尾就是 total/total。
+    Write-Prog "[$Name] $done/$total ($([int]($done * 100 / $total))%)"
     if($MaxChunks -gt 0 -and $chunksRun -ge $MaxChunks){
       Write-ProgEnd
       Write-Host "[$Name] 已达 -MaxChunks $MaxChunks, 停止 (还差 $($total-$done) 条, 下次 run 自动续)。" -ForegroundColor Yellow
@@ -854,6 +857,7 @@ if($nNew -gt 0){
       } elseif($s -match '\[PROG\]'){ }  # 无数字的进度行: 丢弃, 别刷屏也别进日志
       else { Add-Content -LiteralPath $stdLog -Value $s }
     }
+    if($LASTEXITCODE -eq 0){ Write-Prog "解算 $nNew/$nNew (100%)" }  # 补最后不满一跳的余数
     Write-ProgEnd
     if($LASTEXITCODE -ne 0){ throw "std_analyzer 失败 (详见 $stdLog)" }
   }

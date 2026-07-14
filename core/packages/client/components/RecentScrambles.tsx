@@ -40,8 +40,13 @@ interface RecentScramblesJson {
   opt?: Record<string, string>;
   meta: Record<string, ScrMeta>;
   // variant -> metric -> subsetKey -> step(字符串) -> [id, 取最少步的底色字母][]（每桶 ≤12 条）
-  rank: Record<string, Record<string, Record<string, Record<string, [string, ColorLetter][]>>>>;
+  // 例外:'333'(整解)与底色无关 -> 只有一个子集键 'ALL', 颜色字母为空串。
+  rank: Record<string, Record<string, Record<string, Record<string, [string, ColorLetter | ''][]>>>>;
 }
+
+// 整解变体:难度 = 整个 3x3 的最优 HTM, 没有「底色」这一维 -> 固定子集键(同 distribution.json)。
+const WHOLE_SOLVE = '333';
+const WHOLE_SOLVE_SUBSET = 'ALL';
 
 // 概率提示数据源 = /scramble/stats 的 distribution.json('wca' 合并池:全部 WCA 三阶打乱)。
 interface DistHist { counts: Record<string, number> }
@@ -49,7 +54,7 @@ interface DistributionJson {
   sets: Record<string, { variants: Record<string, { data: Record<string, Record<string, DistHist>> }> }>;
 }
 
-const METRIC_ORDER = ['cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'eo', 'eoline', 'dr'];
+const METRIC_ORDER = ['333', 'cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'eo', 'eoline', 'dr'];
 
 // 难度模式的项目(整解最优步数);其余项目只按打乱长度。
 const DIFFICULTY_EVENTS = new Set(['222', 'pyram', 'skewb']);
@@ -154,7 +159,7 @@ const RARE_THRESHOLDS = [
 const RARE_DEFAULT = 1e-4;
 const RARE_CAP = 60; // 渲染上限(每张卡含 SVG 预览 + ObjectURL,过多伤性能);超出给提示
 
-interface RareEntry { id: string; uiVariant: string; metric: string; step: number; color: ColorLetter; p: number }
+interface RareEntry { id: string; uiVariant: string; metric: string; step: number; color: ColorLetter | ''; p: number }
 
 // 横扫本批 rank 的每个 (变体 × 类型 × 底色子集 × 步数) 桶,用 distribution 算概率,收集 p < threshold
 // 的全部样例。同一打乱(id)可在多个桶里稀有,按 id 去重,只保留概率最低(最稀有)的那次,
@@ -426,7 +431,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
     return Object.values(r).some((byColor) => Object.values(byColor).some((byStep) => Object.keys(byStep).length > 0));
   };
   const variants = useMemo(() => VARIANT_ORDER.filter((v) =>
-    v === '333' ? true : v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData) : hasData(v),
+    v === 'block' ? BLOCK_DATA_VARIANTS.some(hasData) : hasData(v),
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [data]);
 
@@ -443,7 +448,9 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
   }, [data, curVariant]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
   const dataVariant = curVariant === 'block' ? (BLOCK_STAGE_VARIANT[curMetric] ?? '123') : curVariant;
-  const byStep = data?.rank?.[dataVariant]?.[curMetric]?.[sel.subsetKey];
+  const isWhole = curVariant === WHOLE_SOLVE;                                  // 整解: 无底色维度
+  const subsetKey = isWhole ? WHOLE_SOLVE_SUBSET : sel.subsetKey;
+  const byStep = data?.rank?.[dataVariant]?.[curMetric]?.[subsetKey];
   const steps = useMemo(() => Object.keys(byStep ?? {}).map(Number).sort((a, b) => a - b), [byStep]);
   const curStep = (step != null && steps.includes(step)) ? step : (steps[0] ?? null);
   const entries = (curStep != null ? byStep?.[String(curStep)] : undefined) ?? [];
@@ -458,7 +465,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
   }, [distVar, curMetric]);
   const prob = useMemo(() => {
     if (curStep == null || !distVar || !distStageKey) return null;
-    const counts = distVar.data[distStageKey]?.[sel.subsetKey]?.counts;
+    const counts = distVar.data[distStageKey]?.[subsetKey]?.counts;
     if (!counts) return null;
     let total = 0;
     for (const k in counts) total += counts[k];
@@ -466,17 +473,17 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
     if (total <= 0 || c <= 0) return null;
     const text = formatProb(c / total);
     return text ? { text, stageKey: distStageKey } : null;
-  }, [curStep, distVar, distStageKey, sel.subsetKey]);
+  }, [curStep, distVar, distStageKey, subsetKey]);
 
   const probHref = useMemo(() => {
     if (!prob) return null;
     const p = new URLSearchParams();
     if (dataVariant !== 'std') p.set('variant', dataVariant);
     if (prob.stageKey !== 'cross') p.set('stage', prob.stageKey);
-    if (sel.subsetKey !== 'BGORWY') p.set('colors', sel.subsetKey);
+    if (!isWhole && subsetKey !== 'BGORWY') p.set('colors', subsetKey);  // 整解无底色维度
     const qs = p.toString();
     return `${lp}/scramble/stats${qs ? `?${qs}` : ''}`;
-  }, [prob, dataVariant, sel.subsetKey, lp]);
+  }, [prob, dataVariant, isWhole, subsetKey, lp]);
 
   // 稀有汇总:横扫全部组合,概率 < threshold 的去重打乱(最稀有在前)。仅 rare 模式计算。
   const rare = useMemo(
@@ -509,7 +516,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
             ))}
           </select>
         ) : (<>
-        <SubsetColorPicker sel={pickerSel} isZh={isZh} />
+        {!isWhole && <SubsetColorPicker sel={pickerSel} isZh={isZh} />}
         <VariantSelect className="rs-select" value={curVariant} options={variants} onChange={(v) => { markTouched(); setVariant(v); }} isZh={isZh} ariaLabel={tr({ zh: '变体', en: 'Variant' })} />
         {metrics.length > 0 && (
           <VariantSelect className="rs-select" value={curMetric} options={metrics} onChange={(v) => { markTouched(); setMetric(v); }} isZh={isZh} label={stageLabel} ariaLabel={tr({ zh: '类型', en: 'Type' })} />
@@ -541,7 +548,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
                   lp={lp}
                   isZh={isZh}
                   ssTarget={stageSolverTarget(r.uiVariant, r.metric)}
-                  color={r.color}
+                  color={r.color || undefined}
                   rarity={{ tag: rarityTag(r.uiVariant, r.metric, r.step, isZh), prob: formatProb(r.p) ?? '' }}
                 />
               ))}
@@ -556,7 +563,7 @@ function Recent333Body({ data, dist, isZh, lp }: { data: RecentScramblesJson | n
       ) : entries.length > 0 ? (
         <div className="rs-cards scroll-panel">
           {entries.slice(0, 12).map(([id, color]) => (
-            <ScrambleCard key={id} event="333" scramble={data.opt?.[id] ?? data.scr[id] ?? ''} optimal={!!data.opt?.[id]} m={data.meta[id]} lp={lp} isZh={isZh} ssTarget={ssTarget} color={color} />
+            <ScrambleCard key={id} event="333" scramble={data.opt?.[id] ?? data.scr[id] ?? ''} optimal={!!data.opt?.[id]} m={data.meta[id]} lp={lp} isZh={isZh} ssTarget={ssTarget} color={color || undefined} />
           ))}
         </div>
       ) : (
