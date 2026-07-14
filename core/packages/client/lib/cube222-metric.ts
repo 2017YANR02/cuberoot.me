@@ -89,8 +89,16 @@ const ADJ: number[][][] = [
   [[0, 3, 0], [3, 7, 3], [7, 4, 1], [4, 0, 2]],
   [[1, 2, 0], [2, 6, 3], [6, 5, 1], [5, 1, 2]],
 ];
+// CC[slot].indexOf(face) 只取决于 (slot, face) —— 预算成 8×6 表。它原本跑在
+// anyFaceSolid / anyLayerSolved 的最内层:全空间建表(create222MetricEvaluator)要对
+// 367 万个状态各调 ~50 次 showColor,那就是上亿次 indexOf,是建表的主要开销。
+const CC_IDX: Int8Array[] = CC.map((stickers) => {
+  const t = new Int8Array(6).fill(-1);
+  stickers.forEach((f, j) => { t[f] = j; });
+  return t;
+});
 function showColor(s: State, slot: number, face: number): number {
-  const j = CC[slot].indexOf(face);
+  const j = CC_IDX[slot][face];
   return CC[s.cp[slot]][(((j - s.co[slot]) % 3) + 3) % 3];
 }
 function anyFaceSolid(s: State): boolean {
