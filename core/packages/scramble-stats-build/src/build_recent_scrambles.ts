@@ -11,6 +11,10 @@
 // widget displays THAT instead of the raw scramble (same as /timer's 最优打乱). Same cube state, so
 // every bucketed step count still applies verbatim.
 //
+// The same out.0.csv feeds the '333' variant (whole-solve optimal HTM). It has no bottom-color
+// dimension, so it gets a single subset key 'ALL' — matching distribution.json's
+// sets.wca.variants['333'].data['333'].ALL, which the widget reads for the probability hint.
+//
 // Deliberately standalone from build.ts / build_wca_cross.ts (which the live refresh
 // pipeline runs mid-flight) — duplicates a little variant/metadata boilerplate on purpose
 // to stay isolated from their in-progress runs.
@@ -78,15 +82,19 @@ const invertAlg = (alg: string) => alg.trim().split(/\s+/).filter(Boolean).rever
   .map((m) => (m.endsWith("'") ? m.slice(0, -1) : m.endsWith('2') ? m : `${m}'`)).join(' ');
 
 // 流式 solver/333opt/out.0.csv (id,htm,solution),只取 wanted 里的 id。缺文件/缺 id -> 该条回退原打乱。
-async function loadOptimal333(outCsv: string, wanted: Set<string>): Promise<Map<string, string>> {
-  const out = new Map<string, string>();
+// htm = 整解最优步数(= '333' 变体的难度值),scr = invert(最优解) = 最优等态打乱。一趟扫出两者。
+interface Opt333 { htm: number; scr: string }
+async function loadOptimal333(outCsv: string, wanted: Set<string>): Promise<Map<string, Opt333>> {
+  const out = new Map<string, Opt333>();
   if (wanted.size === 0 || !fs.existsSync(outCsv)) return out;
   const rl = readline.createInterface({ input: fs.createReadStream(outCsv, 'utf-8'), crlfDelay: Infinity });
   for await (const line of rl) {
     if (!line) continue;
     const c = line.split(',');
     if (c.length < 3 || !c[2] || !wanted.has(c[0])) continue;
-    out.set(c[0], invertAlg(c[2]));
+    const htm = Number(c[1]);
+    if (!Number.isFinite(htm)) continue;
+    out.set(c[0], { htm, scr: invertAlg(c[2]) });
   }
   return out;
 }
@@ -278,6 +286,25 @@ async function main() {
     console.log(`[recent-scrambles] ${v.key}: ${hit} new rows ranked`);
   }
 
+  // 2b. '333' 变体 = 整解:难度值 = 整解最优 HTM(solver/333opt/out.0.csv 的 htm 列),与底色无关
+  //     -> 单一子集键 'ALL',与 distribution.json 的 sets.wca.variants['333'].data['333'].ALL 同键
+  //     (客户端对该变体固定用 'ALL',不走底色选择)。桶里的颜色字母留空 = 无底色语义。
+  const same333 = new Set<string>();
+  for (const [id, nm] of newMeta) if (SAME_STATE_EVENTS.has(nm.event)) same333.add(id);
+  const optMap = await loadOptimal333(path.join(repoRoot, 'solver', '333opt', 'out.0.csv'), same333);
+  if (optMap.size > 0) {
+    const buckets: StepBuckets = {};
+    for (const id of [...optMap.keys()].sort()) {
+      const k = String(optMap.get(id)!.htm);
+      if (!buckets[k]) buckets[k] = [];
+      insertCapped(buckets[k], id, '', PER_STEP);
+    }
+    rank['333'] = { '333': { ALL: buckets } };
+    console.log(`[recent-scrambles] 333: ${optMap.size}/${same333.size} new rows ranked (whole-solve HTM)`);
+  } else {
+    console.log(`[recent-scrambles] skip 333 (solver/333opt/out.0.csv has no row for this batch)`);
+  }
+
   // 3. collect referenced ids -> dedup scramble text + comp-name-joined metadata
   const compMeta = await loadCompMeta(compTsv);
   const usedIds = new Set<string>();
@@ -293,11 +320,14 @@ async function main() {
     meta[id] = { ci: nm.compId, cn: cm?.name ?? nm.compId, cd: cm?.date ?? '', r: nm.round, g: nm.group, n: nm.num, e: nm.event, x: nm.extra ? 1 : 0 };
   }
 
-  // 4. 最优等态打乱(首页显示这份;同态 -> rank 里的各阶段步数不变,仍适用)。
-  const optMap = await loadOptimal333(path.join(repoRoot, 'solver', '333opt', 'out.0.csv'), optWanted);
+  // 4. 最优等态打乱(首页显示这份;同态 -> rank 里的各阶段步数不变,仍适用)。复用 2b 已扫出的 optMap。
   const opt: Record<string, string> = {};
-  for (const id of [...optMap.keys()].sort()) opt[id] = optMap.get(id)!;
-  console.log(`[recent-scrambles] optimal: ${optMap.size}/${optWanted.size} same-state ids solved${optMap.size < optWanted.size ? ' (rest fall back to the raw scramble)' : ''}`);
+  for (const id of [...optWanted].sort()) {
+    const o = optMap.get(id);
+    if (o) opt[id] = o.scr;
+  }
+  const optHit = Object.keys(opt).length;
+  console.log(`[recent-scrambles] optimal: ${optHit}/${optWanted.size} same-state ids solved${optHit < optWanted.size ? ' (rest fall back to the raw scramble)' : ''}`);
 
   const stamp = process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString().slice(0, 10);
   const out = { export_date: stamp, generated_at: stamp, new_count: newCount, scr, opt, meta, rank };
