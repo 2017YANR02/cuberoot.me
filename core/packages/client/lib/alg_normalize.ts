@@ -21,20 +21,17 @@ import { canonicalSq1Alg } from '@/lib/sq1-svg';
  *  megaminx(`R++` `D--`)、sq1(`(1,0)/`)是另一套文法,喂进去只会炸。 */
 const CUBE_NOTATION = new Set<AlgPuzzle>(['2x2', '3x3', '4x4', '5x5', 'pyraminx', 'skewb']);
 
-/**
- * 偶数阶**没有中层**,所以 cubing.js 的 4x4 引擎根本没有 M/E/S 这几个 grip
- * (喂进去当场 `Bad grip in move M`)。但 4x4 的公式作者照写 `M` —— 指的是
- * 「**两个内层一起转**」,也就是 SiGN 的 `2-3Lw`(引擎认)。
+/*
+ * 中层切的大小写是**两个不同的招式**,不是同一个招式的两种写法。库里该写哪个,看这个魔方
+ * 有几片内层 —— 所以这里**不做大小写翻译**,原样交给引擎判:
  *
- * 实测(oll-parity 的 M case,拿唯一不含 M 的那条公式反推 setup 当判据):
- * 换之前含 M 的三条全判「没还原」,换之后四条全过。5x5 是奇数阶、真有中层,引擎自己就认 M,
- * 不能动。
+ *   `M` = 正中间那**一片**层。只有奇数阶才有 —— 3x3 ✅ / 5x5 ✅ / **4x4 引擎当场 `Bad grip`**。
+ *   `m` = `R L' x'` = **全部内层**一起转。任意阶都有定义,但 **3x3 引擎反而不收**。
+ *
+ * 5x5 上两个都合法却**不等价**(一片 vs 三片)。真去翻译,不会报错,只会把公式**悄悄换成
+ * 另一个变换** —— 这是最阴的一种坏法。4x4 的公式就该写小写 `m`。
+ * 每一条都是拿 cubing.js 实测的,见 tests/alg_slice_case.test.ts。
  */
-const EVEN_CUBE_SLICE: Record<string, string> = { M: '2-3Lw', E: '2-3Dw', S: '2-3Fw' };
-function mapEvenCubeSlices(alg: string): string {
-  return alg.replace(/(?<![\w-])([MES])(\d*'?)(?![\w-])/g, (_m, face: string, suffix: string) =>
-    EVEN_CUBE_SLICE[face] + suffix);
-}
 
 /** 严格版:认不出来的记号**抛错**。校验器用 —— 它要把「认不出来」如实报给人看。 */
 export function normalizeAlg(puzzle: AlgPuzzle, alg: string): string {
@@ -43,8 +40,7 @@ export function normalizeAlg(puzzle: AlgPuzzle, alg: string): string {
   // 好公式因此被判成语法错 / 没还原。
   if (puzzle === 'skewb') return toMoveString(skewbToWca(alg, 'sarah'));
   if (!CUBE_NOTATION.has(puzzle)) return alg;
-  const s = toMoveString(alg);
-  return puzzle === '4x4' ? mapEvenCubeSlices(s) : s;
+  return toMoveString(alg);
 }
 
 /** 容错版:抛了就原样退回。播放器用 —— 宁可让 cubing.js 自己去判,也不要白屏。 */

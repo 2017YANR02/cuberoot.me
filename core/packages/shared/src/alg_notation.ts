@@ -43,7 +43,15 @@ export interface ParsedMove {
 }
 
 const ROTATIONS = 'xyz';
-const SLICES = 'MSE';
+/**
+ * 中层切,**大小写是两个不同的招式**,别合并:
+ *   `M` = 那**一片**正中间的层 —— 只有奇数阶才有(3x3/5x5)。
+ *   `m` = `R L' x'` = **全部内层**一起转 —— 任意阶都有定义。
+ * 3x3 上只有一片内层,两者恰好相等;**5x5 上 `m` 是三片、`M` 是一片,是两个变换**;
+ * 4x4 根本没有正中间的层,只有 `m`(实测:cubing.js 的 4x4 引擎收 `m` 而拒 `M`)。
+ * 这里只管切词 —— 哪个阶数认哪个,交给引擎和 lib/alg_normalize 的翻译层。
+ */
+const SLICES = 'MSEmse';
 const WIDE_LOWER = 'rludfb';
 
 /**
@@ -52,7 +60,7 @@ const WIDE_LOWER = 'rludfb';
  * 导出是为了让别的解析器(如 alg-build 的 sheet_notation)复用而不是各造一份 ——
  * 造第二份的代价实测过:少认一个 `w`,`Lw2` 就被切成 `L` + junk `w2`,整条公式静默作废。
  */
-export const MOVE_RE = /^(\d+(?:-\d+)?)?([RLUDFBMSExyzrludfb])(w?)(\d*)('?)/;
+export const MOVE_RE = /^(\d+(?:-\d+)?)?([RLUDFBMSExyzrludfbmse])(w?)(\d*)('?)/;
 
 /**
  * 能出现在纯 move 串里的字符,**已转义成可直接嵌进字符类的形式**(层前缀的 `-` escape 过 ——
@@ -329,7 +337,9 @@ export const MIRROR_SWAP = {
  * 反过来「全部取反」会毁掉带 `M` 或 `x` 的公式(站上 7771 条 LL 公式里 590 条;
  * 独立几何 oracle 实测 2000 条随机公式只过 1116 条)。这个错犯过两次,别来第三次。
  */
-export const MIRROR_EXEMPT = { M: ['M', 'x'], S: ['S', 'z'], E: ['E', 'y'] } as const;
+// 小写内层切(`m` = R L' x')落在同一条法线轴上,豁免规则跟大写完全一样 —— 漏掉它,
+// 带 `m` 的高阶公式一镜像就被取反,而且不报错。
+export const MIRROR_EXEMPT = { M: ['M', 'm', 'x'], S: ['S', 's', 'z'], E: ['E', 'e', 'y'] } as const;
 
 export type MirrorAxis = keyof typeof MIRROR_SWAP;
 
@@ -354,4 +364,6 @@ export const ROTATE_Y: Record<string, readonly [string, 1 | -1]> = {
   Rw: ['Fw', 1], Uw: ['Uw', 1], Fw: ['Lw', 1], Dw: ['Dw', 1], Bw: ['Rw', 1], Lw: ['Bw', 1],
   x: ['z', 1], y: ['y', 1], z: ['x', -1],
   E: ['E', 1], M: ['S', -1], S: ['M', 1],
+  // 小写内层切跟着同一套轴规则 —— 缺了它,`ROTATE_Y['m']` 是 undefined,y 一转就静默丢步
+  e: ['e', 1], m: ['s', -1], s: ['m', 1],
 };
