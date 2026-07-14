@@ -40,6 +40,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'alg', zh: '公式库与训练', en: 'Algs & training' },
   { key: 'membership', zh: '会员', en: 'Membership' },
   { key: 'feedback', zh: '反馈', en: 'Feedback' },
+  { key: 'notification', zh: '通知', en: 'Notifications' },
   { key: 'forum', zh: '论坛', en: 'Forum' },
   { key: 'content', zh: '内容与运维', en: 'Content & ops' },
   { key: 'timer', zh: '计时器', en: 'Timer' },
@@ -56,7 +57,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_sets analytics announced_comps article auth cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
-//   membership nav_sites nemesizer ops paint progress recon scramble_555
+//   membership nav_sites nemesizer notifications ops paint progress recon scramble_555
 //   scramble_marks sponsors timer_backups wca_format wca_fun_stats wca_proxy
 //   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wiki
 // ─ covers-routes-end ─
@@ -257,6 +258,11 @@ const ENDPOINTS: Ep[] = [
   { d: 'feedback', m: 'GET', p: '/v1/feedback', g: 'admin', zh: '全部反馈', en: 'All feedback' },
   { d: 'feedback', m: 'PATCH', p: '/v1/feedback/:id', g: 'admin', zh: '改状态', en: 'Update status' },
   { d: 'feedback', m: 'DELETE', p: '/v1/feedback/:id', g: 'admin', zh: '删除反馈', en: 'Delete feedback' },
+
+  // ---- notifications ----
+  { d: 'notification', m: 'GET', p: '/v1/notifications', g: 'login', zh: '我的通知(recon 另解 / 评论 / 回复)', en: 'My notifications (recon alternatives / comments / replies)' },
+  { d: 'notification', m: 'GET', p: '/v1/notifications/unread', g: 'login', zh: '未读数(桌宠红点)', en: 'Unread count (desk-pet badge)' },
+  { d: 'notification', m: 'POST', p: '/v1/notifications/read', g: 'login', zh: '标记已读(不传 ids = 全部)', en: 'Mark read (no ids = all)' },
 
   // ---- forum ----
   { d: 'forum', m: 'GET', p: '/v1/forum/index', g: 'public', zh: '论坛首页:分类 → 子版 + 全站统计', en: 'Forum index: categories, boards, site stats' },
