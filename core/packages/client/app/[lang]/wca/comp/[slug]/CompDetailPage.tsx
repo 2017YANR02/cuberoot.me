@@ -345,12 +345,34 @@ function computePlaces(results: LiveResult[], byAvg: boolean, eff?: EffRank): (n
 //   cubing.com(data-events 原生)/wca_db/wca(有成绩轮恒 1)各源已正确。按项目独立判,
 //   所以一场比赛里已结束的项目可先出领奖台,未结束的项目不出。
 // 排名口径镜像 live 视图的 filteredResults;并列第三名一并带上 (Reg 9f15,并列铜牌)。
-function computePodiumGroups(data: CompData, changeMap?: Map<string, ResultChange[]>): PodiumGroup[] {
+// 双轮末轮 (dual pair 的第二轮即末轮,如 FMC 初赛+决赛):领奖台按「合并双轮」排名 (取两轮
+// 更好的成绩,Reg 9v4),而非仅决赛。否则顶尖选手决赛 DNF (其初赛才是最终成绩) 会被漏掉,
+// 只剩决赛没崩的人爬上台 —— 与主视图「合并双轮」及 cubing.com 前三不一致。
+function computePodiumGroups(
+  data: CompData,
+  compYear: number,
+  authoritativeDual: Set<string> | undefined,
+  changeMap?: Map<string, ResultChange[]>,
+): PodiumGroup[] {
   const out: PodiumGroup[] = [];
   const eff = makeEffRank(data.users, changeMap);
   for (const ev of data.events) {
     const finalRd = ev.rs[ev.rs.length - 1];
     if (!finalRd || finalRd.s !== 1) continue;
+    const dp = dualPairFor(ev, data.resultsByRound, compYear, authoritativeDual);
+    if (dp && finalRd.i === dp.r2.i) {
+      // 双轮即末轮 → 合并两轮取更好排名,前三 (含并列铜牌);每位取其更好那轮的成绩行展示
+      // (与 cubing.com「前三」一致:该轮的单次/平均/详情)。
+      const byAvg = isAvgRankedFormat(dp.r1.f);
+      const r1res = data.resultsByRound[roundKey(ev.i, dp.r1.i)] || [];
+      const r2res = data.resultsByRound[roundKey(ev.i, dp.r2.i)] || [];
+      const dualRows = buildDualRows(r1res, r2res, byAvg).filter(r => r.hasResult);
+      if (dualRows.length === 0) continue;
+      let cut = Math.min(3, dualRows.length);
+      while (cut < dualRows.length && dualRows[cut].place === dualRows[cut - 1].place) cut++;
+      out.push({ ev, rd: finalRd, rows: dualRows.slice(0, cut).map(r => r.better) });
+      continue;
+    }
     const cmpRank = rankComparator(isAvgRankedFormat(finalRd.f), eff);
     const ranked = (data.resultsByRound[roundKey(ev.i, finalRd.i)] || []).slice()
       .filter(r => r.b !== 0)
@@ -839,7 +861,18 @@ export default function CompDetailPage() {
   // 领奖台:各项目决赛前三。比赛结束(所有项目末轮都有成绩)且有领奖台时默认展示。
   // 领奖台 / 纪录要看全部项目的末轮,分片数据只有一个项目 — 必须等全量到位才算,
   // 否则会短暂算出「只有一个项目的领奖台」。tab 迟一步出现,同 scramble / similar 两个 tab 的做法。
-  const podiumGroups = useMemo(() => (data && fullLoaded ? computePodiumGroups(data, changeMap) : []), [data, fullLoaded, changeMap]);
+  // 双轮赛制:年份 (2026 起) + 权威标记 (dump linked_round_id → comp_dual.json)。领奖台/主视图共用。
+  const compYear = useMemo(() => compYearFromSlug(slug), [slug]);
+  const [authoritativeDual, setAuthoritativeDual] = useState<Set<string> | null>(null);
+  useEffect(() => {
+    let alive = true;
+    loadCompDual().then((m) => { if (alive) setAuthoritativeDual(new Set(m[slug] ?? [])); });
+    return () => { alive = false; };
+  }, [slug]);
+  const podiumGroups = useMemo(
+    () => (data && fullLoaded ? computePodiumGroups(data, compYear, authoritativeDual ?? undefined, changeMap) : []),
+    [data, fullLoaded, compYear, authoritativeDual, changeMap],
+  );
   const compRecords = useMemo(() => (data && fullLoaded ? computeCompRecords(data) : []), [data, fullLoaded]);
   const hasPodiumTab = podiumGroups.length > 0 || compRecords.length > 0;
   // 全场结束 = 每个项目的决赛(末轮)都 s===1。比「末轮有成绩」严格:决赛进行中(s===2)不算结束。
@@ -1241,14 +1274,7 @@ export default function CompDetailPage() {
   }, [data, currentRound, filteredResults]);
 
   // 双轮赛制:当前项目的双轮对 (前两轮) + 当前轮是否属于双轮 + 合并开关 (默认开)。
-  const compYear = useMemo(() => compYearFromSlug(slug), [slug]);
-  // 权威双轮标记(dump linked_round_id):按本场 compId(=slug)取出含双轮的 event id 集合。
-  const [authoritativeDual, setAuthoritativeDual] = useState<Set<string> | null>(null);
-  useEffect(() => {
-    let alive = true;
-    loadCompDual().then((m) => { if (alive) setAuthoritativeDual(new Set(m[slug] ?? [])); });
-    return () => { alive = false; };
-  }, [slug]);
+  // compYear / authoritativeDual 已在上方 (领奖台也用) 声明。
   const dualPair = useMemo(
     () => (data && currentRound
       ? dualPairFor(currentRound.ev, data.resultsByRound, compYear, authoritativeDual ?? undefined)
@@ -1708,6 +1734,19 @@ export default function CompDetailPage() {
               topBadges={(isPsych || isSchedule) ? {} : eventTopBadges}
               appendEvents={nonWcaEvents}
             />
+            {/* 双轮合并开关与所选项目图标同行(currentIsDual 仅成绩视图为真,预排名/赛程不显示) */}
+            {currentIsDual && (
+              <PillToggle
+                value={showCombined}
+                onChange={setCombinedPref}
+                onLabel={tr({ zh: '合并双轮', en: 'Combined'
+                })}
+                offLabel={tr({ zh: '合并双轮', en: 'Combined'
+                })}
+                ariaLabel={tr({ zh: '合并双轮成绩', en: 'Combine dual rounds'
+                })}
+              />
+            )}
           </div>
         )}
 
@@ -1762,8 +1801,8 @@ export default function CompDetailPage() {
           </>
         ) : !isPsych ? (
           <>
-            <div className="comp-selectors">
-              {!isWca && (
+            {!isWca && (
+              <div className="comp-selectors">
                 <select
                   className="comp-select comp-filter-select"
                   value={filterParam}
@@ -1773,20 +1812,8 @@ export default function CompDetailPage() {
                     <option key={f.value} value={f.value}>{(isZh ? f.labelZh : f.labelEn)}</option>
                   ))}
                 </select>
-              )}
-              {currentIsDual && (
-                <PillToggle
-                  value={showCombined}
-                  onChange={setCombinedPref}
-                  onLabel={tr({ zh: '合并双轮', en: 'Combined'
-                })}
-                  offLabel={tr({ zh: '合并双轮', en: 'Combined'
-                })}
-                  ariaLabel={tr({ zh: '合并双轮成绩', en: 'Combine dual rounds'
-                })}
-                />
-              )}
-            </div>
+              </div>
+            )}
 
             {showCombined && dualPair && currentRound ? (
               <CombinedDualRoundsTable

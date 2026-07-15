@@ -511,6 +511,10 @@
 /* 编辑模式铅笔 + .comp-att-recon 链接已退役:点成绩统一走 AttemptPopover(复盘/判罚/编辑/视频),
    触发件提示类改用共享 .att-trig-recon / .att-trig-plain(见 result-change.css)。 */
 .comp-event-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 12px;
 }
 .comp-event-bar .wca-stats-event-selector {
