@@ -177,13 +177,13 @@ export default function PageNoticeBar() {
         <div className="page-notice-editor">
           <label className="page-notice-field">
             <span><T en="Applies to path (use /* for whole site)" zh="作用路径(填 /* 覆盖全站)" /></span>
-            <input value={form.path} onChange={(e) => setForm({ ...form, path: e.target.value })} placeholder="/scramble/stats" />
+            <input className="page-notice-input" value={form.path} onChange={(e) => setForm({ ...form, path: e.target.value })} placeholder="/scramble/stats" />
           </label>
 
           <div className="page-notice-editor-row">
             <label className="page-notice-field">
               <span><T en="Level" zh="级别" /></span>
-              <select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value as NoticeLevel })}>
+              <select className="page-notice-input" value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value as NoticeLevel })}>
                 <option value="info">{tr({ en: 'Info', zh: '信息' })}</option>
                 <option value="warning">{tr({ en: 'Warning', zh: '警告' })}</option>
                 <option value="maintenance">{tr({ en: 'Maintenance', zh: '维护' })}</option>
@@ -197,12 +197,12 @@ export default function PageNoticeBar() {
 
           <label className="page-notice-field">
             <span><T en="Chinese text" zh="中文" /></span>
-            <textarea value={form.bodyZh} onChange={(e) => setForm({ ...form, bodyZh: e.target.value })}
+            <textarea className="page-notice-input" value={form.bodyZh} onChange={(e) => setForm({ ...form, bodyZh: e.target.value })}
               placeholder={tr({ en: 'e.g. This page is under maintenance', zh: '例:本页正在维护,稍后恢复' })} />
           </label>
           <label className="page-notice-field">
             <span><T en="English text" zh="英文" /></span>
-            <textarea value={form.bodyEn} onChange={(e) => setForm({ ...form, bodyEn: e.target.value })}
+            <textarea className="page-notice-input" value={form.bodyEn} onChange={(e) => setForm({ ...form, bodyEn: e.target.value })}
               placeholder="e.g. This page is under maintenance" />
           </label>
 
