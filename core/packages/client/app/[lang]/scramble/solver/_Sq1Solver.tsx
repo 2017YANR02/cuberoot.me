@@ -9,19 +9,18 @@
  * 真最优(单阶段 IDA*)与 WCA 12c4 口径的上帝之数详见 /math/sq1。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
+import { useQueryState, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { Dices, LoaderCircle, ArrowRight } from 'lucide-react';
+import { LoaderCircle, ArrowRight } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
-import { SearchInput } from '@/components/SearchInput';
 import { pooledScramble, prewarmScramble } from '@/lib/cubing-scramble';
 import { sq1MoveCounts, type Sq1MoveCounts } from '@/lib/sq1-metrics';
 import { solveSq1 } from '../../timer/_lib/solver/sq1';
 import SolveTabs from '../_components/SolveTabs';
-import { BatchSolvePanel, SolveModeToggle, type BatchSpec } from '../_components/BatchSolvePanel';
+import { SolvePanel, type BatchSpec } from '../_components/BatchSolvePanel';
 import '../_components/puzzle_optimal_solver.css';
 import './sq1_solver.css';
 
@@ -58,11 +57,6 @@ export default function Sq1SolverPage() {
   useDocumentTitle('SQ1 求解器', 'Square-1 Solver');
 
   const [scramble, setScramble] = useQueryState('scramble', parseAsString.withDefault(''));
-  const [mode, setMode] = useQueryState(
-    'mode',
-    parseAsStringEnum(['single', 'batch'] as const).withDefault('single'),
-  );
-  const [generating, setGenerating] = useState(false);
   const [solving, setSolving] = useState(false);
   const [result, setResult] = useState<Outcome | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,14 +67,17 @@ export default function Sq1SolverPage() {
     return () => window.clearTimeout(id);
   }, []);
 
-  const trimmed = scramble.trim();
+  const lines = useMemo(() => scramble.split('\n').map((s) => s.trim()).filter(Boolean), [scramble]);
+  const lineCount = lines.length;
+  const trimmed = lines[0] ?? '';
   const hasTokens = useMemo(() => /[\d/]/.test(trimmed), [trimmed]);
 
   // 打乱变化 → 防抖求解。引擎是同步 BFS,首次会懒建剪枝表(≤100k),用 timeout 让出主线程。
+  // 仅单条(≤1 行)时跑,≥2 行交给 SolvePanel 的批量求解。
   useEffect(() => {
     const id = ++seq.current;
     setError(null);
-    if (!trimmed || !hasTokens) {
+    if (!trimmed || !hasTokens || lineCount > 1) {
       setResult(null);
       setSolving(false);
       return;
@@ -100,18 +97,7 @@ export default function Sq1SolverPage() {
       }
     }, 200);
     return () => window.clearTimeout(timer);
-  }, [trimmed, hasTokens]);
-
-  const randomScramble = async () => {
-    if (generating) return;
-    setGenerating(true);
-    try {
-      const s = await pooledScramble('sq1');
-      if (s) void setScramble(s.trim());
-    } finally {
-      setGenerating(false);
-    }
-  };
+  }, [trimmed, hasTokens, lineCount]);
 
   const showResult = result && result.scramble === trimmed && result.ok;
 
@@ -140,103 +126,88 @@ export default function Sq1SolverPage() {
   return (
     <div className="pos-page">
       <SolveTabs puzzle="sq1" mode="solve" />
-      <SolveModeToggle value={mode} onChange={(v) => void setMode(v)} />
 
-      {mode === 'batch' ? (
-        <BatchSolvePanel spec={batchSpec} />
-      ) : (
-      <>
-      <p className="pos-lead">
-        {tr({
-          zh: 'Square-1 在线求解:两阶段近最优解,并对同一段解给出三套度量的步数。',
-          en: 'Square-1 online solver: a two-phase near-optimal solution, with the move count under all three metrics.',
-        })}
-      </p>
-
-      <div className="pos-input-row">
-        <SearchInput
-          className="pos-input-wrap"
-          inputClassName="pos-input"
-          value={scramble}
-          onChange={(v) => void setScramble(v)}
-          placeholder={tr({ zh: '输入打乱,如 (1,0)/(-3,3)/(0,-3)/', en: 'Enter a scramble, e.g. (1,0)/(-3,3)/(0,-3)/' })}
-          spellCheck={false}
-          autoComplete="off"
-          autoCapitalize="off"
-        />
-        <button type="button" className="pos-random-btn" onClick={() => void randomScramble()} disabled={generating}>
-          {generating ? <LoaderCircle size={16} className="pos-spin" aria-hidden /> : <Dices size={16} aria-hidden />}
-          {tr({ zh: '随机打乱', en: 'Random' })}
-        </button>
-      </div>
-
-      {trimmed && hasTokens && (
-        <div className="pos-preview">
-          <ScramblePreview2D event="sq1" scramble={trimmed} size={96} />
-        </div>
-      )}
-
-      {trimmed && hasTokens && (
-        <div className="pos-result" aria-live="polite">
-          {solving && !showResult && (
-            <p className="pos-solving">
-              <LoaderCircle size={14} className="pos-spin" aria-hidden />
-              {tr({ zh: '求解中(首次建表约 1 秒)…', en: 'Solving (first run builds tables, ~1s)…' })}
+      <SolvePanel
+        spec={batchSpec}
+        scramble={scramble}
+        onScrambleChange={(v) => void setScramble(v)}
+        renderSingle={() => (
+          <>
+            <p className="pos-lead">
+              {tr({
+                zh: 'Square-1 在线求解:两阶段近最优解,并对同一段解给出三套度量的步数。',
+                en: 'Square-1 online solver: a two-phase near-optimal solution, with the move count under all three metrics.',
+              })}
             </p>
-          )}
 
-          {error === 'illegal' && !solving && (
-            <p className="pos-error">
-              {tr({ zh: '打乱不合法或无法求解,请检查记号(应为 (a,b)/ 形式)。', en: 'Scramble is illegal or unsolvable — check the notation (expects (a,b)/).' })}
-            </p>
-          )}
-          {error && error !== 'illegal' && !solving && (
-            <p className="pos-error">{tr({ zh: '求解失败', en: 'Solve failed' })}: {error}</p>
-          )}
-
-          {showResult && (
-            <>
-              <div className="sq1s-metrics">
-                {METRIC_CARDS.map((m) => (
-                  <div key={m.key} className={`sq1s-mcard ${m.cls}`}>
-                    <div className="sq1s-mname">{tr(m.name)}</div>
-                    <div className="sq1s-mrule">{tr(m.rule)}</div>
-                    <div className="sq1s-mval">{result.counts[m.key]}</div>
-                    <div className="sq1s-mgod">
-                      {m.god === '?'
-                        ? tr({ zh: '上帝之数 未知', en: "God's number unknown" })
-                        : tr({ zh: `上帝之数 ${m.god}`, en: `God's number ${m.god}` })}
-                    </div>
-                  </div>
-                ))}
+            {trimmed && hasTokens && (
+              <div className="pos-preview">
+                <ScramblePreview2D event="sq1" scramble={trimmed} size={96} />
               </div>
+            )}
 
-              {result.counts.turns + result.counts.slices === 0 ? (
-                <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved' })}</p>
-              ) : (
-                <>
-                  <div className="sq1s-solbox">{result.solution}</div>
-                  <div className="sq1s-stages">
-                    {result.stages.map((s) => (
-                      <div key={s.head} className="sq1s-stage">
-                        <div className="sq1s-stage-head">
-                          {s.head === 'Shape' ? tr({ zh: '方块形', en: 'Cube shape' }) : tr({ zh: '排列', en: 'Permutation' })}
+            {trimmed && hasTokens && (
+              <div className="pos-result" aria-live="polite">
+                {solving && !showResult && (
+                  <p className="pos-solving">
+                    <LoaderCircle size={14} className="pos-spin" aria-hidden />
+                    {tr({ zh: '求解中(首次建表约 1 秒)…', en: 'Solving (first run builds tables, ~1s)…' })}
+                  </p>
+                )}
+
+                {error === 'illegal' && !solving && (
+                  <p className="pos-error">
+                    {tr({ zh: '打乱不合法或无法求解,请检查记号(应为 (a,b)/ 形式)。', en: 'Scramble is illegal or unsolvable — check the notation (expects (a,b)/).' })}
+                  </p>
+                )}
+                {error && error !== 'illegal' && !solving && (
+                  <p className="pos-error">{tr({ zh: '求解失败', en: 'Solve failed' })}: {error}</p>
+                )}
+
+                {showResult && (
+                  <>
+                    <div className="sq1s-metrics">
+                      {METRIC_CARDS.map((m) => (
+                        <div key={m.key} className={`sq1s-mcard ${m.cls}`}>
+                          <div className="sq1s-mname">{tr(m.name)}</div>
+                          <div className="sq1s-mrule">{tr(m.rule)}</div>
+                          <div className="sq1s-mval">{result.counts[m.key]}</div>
+                          <div className="sq1s-mgod">
+                            {m.god === '?'
+                              ? tr({ zh: '上帝之数 未知', en: "God's number unknown" })
+                              : tr({ zh: `上帝之数 ${m.god}`, en: `God's number ${m.god}` })}
+                          </div>
                         </div>
-                        <div className="sq1s-stage-moves">
-                          {s.moves || tr({ zh: '(无)', en: '(none)' })}
-                          <span className="sq1s-stage-count"> {tr({ zh: `${s.raw} 面转`, en: `${s.raw} face turns` })}</span>
+                      ))}
+                    </div>
+
+                    {result.counts.turns + result.counts.slices === 0 ? (
+                      <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved' })}</p>
+                    ) : (
+                      <>
+                        <div className="sq1s-solbox">{result.solution}</div>
+                        <div className="sq1s-stages">
+                          {result.stages.map((s) => (
+                            <div key={s.head} className="sq1s-stage">
+                              <div className="sq1s-stage-head">
+                                {s.head === 'Shape' ? tr({ zh: '方块形', en: 'Cube shape' }) : tr({ zh: '排列', en: 'Permutation' })}
+                              </div>
+                              <div className="sq1s-stage-moves">
+                                {s.moves || tr({ zh: '(无)', en: '(none)' })}
+                                <span className="sq1s-stage-count"> {tr({ zh: `${s.raw} 面转`, en: `${s.raw} face turns` })}</span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </>
-          )}
-        </div>
-      )}
-      </>
-      )}
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      />
 
       <div className="sq1s-caveat">
         <strong>{tr({ zh: '关于「最优」', en: 'About "optimal"' })}</strong>{' '}

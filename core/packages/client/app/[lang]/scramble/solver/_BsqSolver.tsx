@@ -12,15 +12,14 @@
  * 记号 = cstimer 同款 `(x,0) /`:顶层转 x·30°,`/` 同时切上下两层;长度按 cstimer 的「切片数」口径计步。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
-import { Dices, LoaderCircle } from 'lucide-react';
+import { useQueryState, parseAsString } from 'nuqs';
+import { LoaderCircle } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
-import { SearchInput } from '@/components/SearchInput';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { randomBsqScramble, solveBsq, BSQ_STATE_COUNT_STR, type BsqSolution } from '@/lib/bsq-solver';
 import SolveTabs from '../_components/SolveTabs';
-import { BatchSolvePanel, SolveModeToggle, type BatchSpec } from '../_components/BatchSolvePanel';
+import { SolvePanel, type BatchSpec } from '../_components/BatchSolvePanel';
 import '../_components/puzzle_optimal_solver.css';
 import './ivy_solver.css';
 
@@ -38,19 +37,16 @@ export default function BsqSolverPage() {
   useDocumentTitle('受限方块一求解器', 'Bandaged Square-1 Solver');
 
   const [scramble, setScramble] = useQueryState('scramble', parseAsString.withDefault(''));
-  const [mode, setMode] = useQueryState(
-    'mode',
-    parseAsStringEnum(['single', 'batch'] as const).withDefault('single'),
-  );
-  const [generating, setGenerating] = useState(false);
   const [state, setState] = useState<SolveState>({ kind: 'idle' });
 
-  const trimmed = scramble.trim();
+  const lines = useMemo(() => scramble.split('\n').map((s) => s.trim()).filter(Boolean), [scramble]);
+  const lineCount = lines.length;
+  const trimmed = lines[0] ?? '';
   const hasTokens = useMemo(() => HAS_TOKENS.test(trimmed), [trimmed]);
 
   const reqRef = useRef(0);
   useEffect(() => {
-    if (!trimmed || !hasTokens) { setState({ kind: 'idle' }); return; }
+    if (!trimmed || !hasTokens || lineCount > 1) { setState({ kind: 'idle' }); return; }
     const myReq = ++reqRef.current;
     setState({ kind: 'solving' });
     const id = window.setTimeout(() => {
@@ -63,17 +59,7 @@ export default function BsqSolverPage() {
       if (reqRef.current === myReq) setState(next);
     }, 16);
     return () => window.clearTimeout(id);
-  }, [trimmed, hasTokens]);
-
-  const randomScramble = () => {
-    if (generating) return;
-    setGenerating(true);
-    try {
-      void setScramble(randomBsqScramble(RANDOM_LEN));
-    } finally {
-      setGenerating(false);
-    }
-  };
+  }, [trimmed, hasTokens, lineCount]);
 
   const batchSpec: BatchSpec = useMemo(() => ({
     event: 'bsq',
@@ -94,82 +80,67 @@ export default function BsqSolverPage() {
   return (
     <div className="pos-page">
       <SolveTabs puzzle="bsq" mode="solve" />
-      <SolveModeToggle value={mode} onChange={(v) => void setMode(v)} />
 
-      {mode === 'batch' ? (
-        <BatchSolvePanel spec={batchSpec} />
-      ) : (
-        <>
-          <p className="pos-lead">
-            {tr({
-              zh: '受限方块一(Bandaged Square-1)在线求解:只允许顶层 (x,0) 转 + / 切片(底层不直接转),三阶段形状+角+棱约简,给出一条有效且有界的解(非最优),长度随打乱难度变化。记号 (x,0) /(顶层转 x,/ 同切两层),按切片数计步。',
-              en: 'Bandaged Square-1 online solver: only top `(x,0)` turns + `/` slices are allowed (the bottom never turns directly). A three-stage shape+corner+edge reduction returns a valid, bounded solution (not optimal); its length varies with the scramble. Notation (x,0) / (top turn x, / slices both); counted in slices.',
-            })}
-          </p>
+      <SolvePanel
+        spec={batchSpec}
+        scramble={scramble}
+        onScrambleChange={(v) => void setScramble(v)}
+        renderSingle={() => (
+          <>
+            <p className="pos-lead">
+              {tr({
+                zh: '受限方块一(Bandaged Square-1)在线求解:只允许顶层 (x,0) 转 + / 切片(底层不直接转),三阶段形状+角+棱约简,给出一条有效且有界的解(非最优),长度随打乱难度变化。记号 (x,0) /(顶层转 x,/ 同切两层),按切片数计步。',
+                en: 'Bandaged Square-1 online solver: only top `(x,0)` turns + `/` slices are allowed (the bottom never turns directly). A three-stage shape+corner+edge reduction returns a valid, bounded solution (not optimal); its length varies with the scramble. Notation (x,0) / (top turn x, / slices both); counted in slices.',
+              })}
+            </p>
 
-          <div className="pos-input-row">
-            <SearchInput
-              className="pos-input-wrap"
-              inputClassName="pos-input"
-              value={scramble}
-              onChange={(v) => void setScramble(v)}
-              placeholder={tr({ zh: '输入打乱,如 (1,0) / (3,0) /', en: 'Enter a scramble, e.g. (1,0) / (3,0) /' })}
-              spellCheck={false}
-              autoComplete="off"
-              autoCapitalize="off"
-            />
-            <button type="button" className="pos-random-btn" onClick={randomScramble} disabled={generating}>
-              {generating ? <LoaderCircle size={16} className="pos-spin" aria-hidden /> : <Dices size={16} aria-hidden />}
-              {tr({ zh: '随机打乱', en: 'Random' })}
-            </button>
-          </div>
-
-          {trimmed && hasTokens && (
-            <div className="pos-result" aria-live="polite">
-              {state.kind !== 'error' && (
-                <div className="ivy-preview">
-                  <ScramblePreview2D event="bsq" scramble={trimmed} size={96} />
-                </div>
-              )}
-              {state.kind === 'solving' && (
-                <p className="pos-result-solved">
-                  <LoaderCircle size={16} className="pos-spin" aria-hidden style={{ verticalAlign: '-3px', marginRight: 6 }} />
-                  {tr({ zh: '求解中…', en: 'Solving…' })}
-                </p>
-              )}
-              {state.kind === 'error' && (
-                <p className="pos-error">
-                  {tr({ zh: '打乱记号无法识别(应为 (x,0)/ 形式)', en: 'Unrecognized notation (expected (x,0)/)' })}: <code>{state.message}</code>
-                </p>
-              )}
-              {state.kind === 'done' && state.result.length === 0 && (
-                <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved' })}</p>
-              )}
-              {state.kind === 'done' && state.result.length > 0 && (
-                <>
-                  <div className="ivy-metric">
-                    <span className="ivy-metric-num">{state.result.length}</span>
-                    <span className="ivy-metric-label">
-                      {state.result.optimal
-                        ? tr({ zh: '步 最优解', en: state.result.length === 1 ? 'move (optimal)' : 'moves (optimal)' })
-                        : tr({ zh: '步 有界解', en: state.result.length === 1 ? 'move (bounded)' : 'moves (bounded)' })}
-                    </span>
+            {trimmed && hasTokens && (
+              <div className="pos-result" aria-live="polite">
+                {state.kind !== 'error' && (
+                  <div className="ivy-preview">
+                    <ScramblePreview2D event="bsq" scramble={trimmed} size={96} />
                   </div>
-                  <div className="ivy-solbox">{state.result.solution}</div>
-                </>
-              )}
-            </div>
-          )}
+                )}
+                {state.kind === 'solving' && (
+                  <p className="pos-result-solved">
+                    <LoaderCircle size={16} className="pos-spin" aria-hidden style={{ verticalAlign: '-3px', marginRight: 6 }} />
+                    {tr({ zh: '求解中…', en: 'Solving…' })}
+                  </p>
+                )}
+                {state.kind === 'error' && (
+                  <p className="pos-error">
+                    {tr({ zh: '打乱记号无法识别(应为 (x,0)/ 形式)', en: 'Unrecognized notation (expected (x,0)/)' })}: <code>{state.message}</code>
+                  </p>
+                )}
+                {state.kind === 'done' && state.result.length === 0 && (
+                  <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved' })}</p>
+                )}
+                {state.kind === 'done' && state.result.length > 0 && (
+                  <>
+                    <div className="ivy-metric">
+                      <span className="ivy-metric-num">{state.result.length}</span>
+                      <span className="ivy-metric-label">
+                        {state.result.optimal
+                          ? tr({ zh: '步 最优解', en: state.result.length === 1 ? 'move (optimal)' : 'moves (optimal)' })
+                          : tr({ zh: '步 有界解', en: state.result.length === 1 ? 'move (bounded)' : 'moves (bounded)' })}
+                      </span>
+                    </div>
+                    <div className="ivy-solbox">{state.result.solution}</div>
+                  </>
+                )}
+              </div>
+            )}
 
-          <div className="ivy-caveat">
-            <strong>{tr({ zh: '关于「最优」', en: 'About "optimal"' })}</strong>{' '}
-            {tr({
-              zh: `受限方块一(Bandaged Square-1)是一只物理 Square-1,但记号被限制成 < / , (1,0) >:只能转顶层 (x,0) 和切片 /,底层从不直接转。可达状态是 Square-1 群的一个**大子群**(${BSQ_STATE_COUNT_STR}),太大无法整图 BFS;单阶段搜索在随机态上会爆。求解器采用**三阶段约简**直接解实际状态(非打乱路径):先把形状归到方块形(399 种形状的 BFS),再解角块排列(720 态表),最后用「固定角」的宏解棱块排列(720 态表)——三段都只用合法的顶层转 + 切片。结果**有效且有界**(非最优),解里绝不出底层转;长度随打乱难度变化(真分布,非单一长度)。`,
-              en: `The Bandaged Square-1 is a physical Square-1 whose notation is restricted to < / , (1,0) >: only top (x,0) turns and the / slice — the bottom never turns directly. Its reachable states form a LARGE SUBGROUP of the Square-1 group (${BSQ_STATE_COUNT_STR}) — far too many to BFS, and a single-phase search explodes on random states. The solver uses a genuine THREE-STAGE reduction of the actual STATE (not the scramble path): reduce SHAPE to cube shape (a 399-shape BFS), then CORNER permutation (a 720-state table), then EDGE permutation with corner-fixing macros (a 720-state table) — all three use only legal top-turns + slices. The result is VALID + BOUNDED (not optimal); it never emits a bottom turn, and its length VARIES with the scramble (a real distribution, not a single length).`,
-            })}
-          </div>
-        </>
-      )}
+            <div className="ivy-caveat">
+              <strong>{tr({ zh: '关于「最优」', en: 'About "optimal"' })}</strong>{' '}
+              {tr({
+                zh: `受限方块一(Bandaged Square-1)是一只物理 Square-1,但记号被限制成 < / , (1,0) >:只能转顶层 (x,0) 和切片 /,底层从不直接转。可达状态是 Square-1 群的一个**大子群**(${BSQ_STATE_COUNT_STR}),太大无法整图 BFS;单阶段搜索在随机态上会爆。求解器采用**三阶段约简**直接解实际状态(非打乱路径):先把形状归到方块形(399 种形状的 BFS),再解角块排列(720 态表),最后用「固定角」的宏解棱块排列(720 态表)——三段都只用合法的顶层转 + 切片。结果**有效且有界**(非最优),解里绝不出底层转;长度随打乱难度变化(真分布,非单一长度)。`,
+                en: `The Bandaged Square-1 is a physical Square-1 whose notation is restricted to < / , (1,0) >: only top (x,0) turns and the / slice — the bottom never turns directly. Its reachable states form a LARGE SUBGROUP of the Square-1 group (${BSQ_STATE_COUNT_STR}) — far too many to BFS, and a single-phase search explodes on random states. The solver uses a genuine THREE-STAGE reduction of the actual STATE (not the scramble path): reduce SHAPE to cube shape (a 399-shape BFS), then CORNER permutation (a 720-state table), then EDGE permutation with corner-fixing macros (a 720-state table) — all three use only legal top-turns + slices. The result is VALID + BOUNDED (not optimal); it never emits a bottom turn, and its length VARIES with the scramble (a real distribution, not a single length).`,
+              })}
+            </div>
+          </>
+        )}
+      />
     </div>
   );
 }

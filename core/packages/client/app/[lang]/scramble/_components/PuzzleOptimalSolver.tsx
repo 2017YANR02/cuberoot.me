@@ -7,18 +7,17 @@
  * 写一个 spec + 路由页复用(见 solver/VARIANT_PLAYBOOK.md §8)。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
+import { useQueryState, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { Dices, LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
-import { SearchInput } from '@/components/SearchInput';
 import { pooledScramble, prewarmScramble } from '@/lib/cubing-scramble';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import type { RustCrossPool, MovesTimed } from '@/lib/rust-cross-client';
 import SolveTabs, { type SolvePuzzle } from './SolveTabs';
-import { BatchSolvePanel, SolveModeToggle, type BatchSpec } from './BatchSolvePanel';
+import { SolvePanel, type BatchSpec } from './BatchSolvePanel';
 import './puzzle_optimal_solver.css';
 
 export interface OptimalSolverSpec {
@@ -56,11 +55,6 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
     'scramble',
     parseAsString.withDefault(''),
   );
-  const [mode, setMode] = useQueryState(
-    'mode',
-    parseAsStringEnum(['single', 'batch'] as const).withDefault('single'),
-  );
-  const [generating, setGenerating] = useState(false);
   const [solving, setSolving] = useState(false);
   const [result, setResult] = useState<SolveOutcome | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,17 +77,23 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spec.need]);
 
-  const trimmed = scramble.trim();
+  const lines = useMemo(
+    () => scramble.split('\n').map((s) => s.trim()).filter(Boolean),
+    [scramble],
+  );
+  const lineCount = lines.length;
+  const trimmed = lines[0] ?? '';
   const badToken = useMemo(() => {
     if (!trimmed) return null;
     return trimmed.split(/\s+/).find((t) => !spec.tokenRe.test(t)) ?? null;
   }, [trimmed, spec.tokenRe]);
 
-  // 打乱变化 → 防抖求解(首查 wasm 现场 BFS 建表 ~1s,之后查表毫秒级)。
+  // 打乱变化 → 防抖求解(首查 wasm 现场 BFS 建表 ~1s,之后查表毫秒级)。仅单条(≤1 行)时跑,
+  // ≥2 行交给 SolvePanel 的批量求解。
   useEffect(() => {
     const id = ++seq.current;
     setError(null);
-    if (!trimmed || badToken) {
+    if (!trimmed || badToken || lineCount > 1) {
       setResult(null);
       setSolving(false);
       return;
@@ -115,18 +115,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
     }, 250);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trimmed, badToken, spec.need]);
-
-  const randomScramble = async () => {
-    if (generating) return;
-    setGenerating(true);
-    try {
-      const s = await pooledScramble(spec.event);
-      if (s) void setScramble(s.trim());
-    } finally {
-      setGenerating(false);
-    }
-  };
+  }, [trimmed, badToken, lineCount, spec.need]);
 
   const showResult = result && result.scramble === trimmed && !badToken;
 
@@ -139,7 +128,7 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
   const batchSpec: BatchSpec = useMemo(() => ({
     event: spec.event,
     metricLabel: spec.metric,
-    placeholder: spec.placeholder ?? { zh: "输入打乱,如 R U R' F2 U'", en: "Enter scrambles, e.g. R U R' F2 U'" },
+    placeholder: spec.placeholder ?? { zh: '输入打乱', en: 'Enter scrambles' },
     validate: (line) => line.trim().split(/\s+/).find((t) => t && !spec.tokenRe.test(t)) ?? null,
     solveOne: async (s) => {
       const pool = getRustCrossPool(spec.need, Math.min(2, poolSizeForDevice()));
@@ -152,87 +141,63 @@ export function PuzzleOptimalSolver({ spec }: { spec: OptimalSolverSpec }) {
 
   return (
     <div className="pos-page">
-      <SolveTabs puzzle={puzzle} mode="solve" />
-      <SolveModeToggle value={mode} onChange={(v) => void setMode(v)} />
-
-      {mode === 'batch' ? (
-        <BatchSolvePanel spec={batchSpec} />
-      ) : (
-      <>
-      <p className="pos-lead">{tr(spec.lead)}</p>
-
-      <div className="pos-input-row">
-        <SearchInput
-          className="pos-input-wrap"
-          inputClassName="pos-input"
-          value={scramble}
-          onChange={(v) => void setScramble(v)}
-          placeholder={tr(spec.placeholder ?? { zh: '输入打乱,如 R U R\' F2 U\'', en: "Enter a scramble, e.g. R U R' F2 U'"
-          })}
-          spellCheck={false}
-          autoComplete="off"
-          autoCapitalize="off"
-        />
-        <button
-          type="button"
-          className="pos-random-btn"
-          onClick={() => void randomScramble()}
-          disabled={generating}
-        >
-          {generating
-            ? <LoaderCircle size={16} className="pos-spin" aria-hidden />
-            : <Dices size={16} aria-hidden />}
-          {tr({ zh: '随机打乱', en: 'Random'
-        })}
-        </button>
+      <div className="pos-toprow">
+        <SolveTabs puzzle={puzzle} mode="solve" />
       </div>
 
-      {badToken && (
-        <p className="pos-error">
-          {tr({ zh: '无法识别的记号', en: 'Unrecognized token'
-        })}: <code>{badToken}</code>
-        </p>
-      )}
+      <SolvePanel
+        spec={batchSpec}
+        scramble={scramble}
+        onScrambleChange={(v) => void setScramble(v)}
+        renderSingle={() => (
+          <>
+            {badToken && (
+              <p className="pos-error">
+                {tr({ zh: '无法识别的记号', en: 'Unrecognized token'
+              })}: <code>{badToken}</code>
+              </p>
+            )}
 
-      {trimmed && !badToken && (
-        <div className="pos-preview">
-          <ScramblePreview2D event={spec.event} scramble={trimmed} size={84} />
-        </div>
-      )}
-
-      {error && (
-        <p className="pos-error">{tr({ zh: '求解失败', en: 'Solve failed'
-        })}: {error}</p>
-      )}
-
-      {trimmed && !badToken && !error && (
-        <div className="pos-result" aria-live="polite">
-          {solving && !showResult && (
-            <p className="pos-solving">
-              <LoaderCircle size={14} className="pos-spin" aria-hidden />
-              {tr({ zh: '求解中…', en: 'Solving…'
-            })}
-            </p>
-          )}
-          {showResult && (
-            <>
-              <div className="pos-result-len">
-                <span className="pos-result-num">{result.len}</span>
-                <span className="pos-result-metric">
-                  {tr({ zh: '步', en: result.len === 1 ? 'move' : 'moves' })} ({spec.metric})
-                </span>
-                <span className="pos-result-ms">{result.ms < 1 ? '<1' : Math.round(result.ms)} ms</span>
+            {trimmed && !badToken && (
+              <div className="pos-preview">
+                <ScramblePreview2D event={spec.event} scramble={trimmed} size={84} />
               </div>
-              {result.len === 0
-                ? <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved'
-                })}</p>
-                : <p className="pos-result-sol">{result.solution}</p>}
-            </>
-          )}
-        </div>
-      )}
-      </>
-      )}
+            )}
+
+            {error && (
+              <p className="pos-error">{tr({ zh: '求解失败', en: 'Solve failed'
+              })}: {error}</p>
+            )}
+
+            {trimmed && !badToken && !error && (
+              <div className="pos-result" aria-live="polite">
+                {solving && !showResult && (
+                  <p className="pos-solving">
+                    <LoaderCircle size={14} className="pos-spin" aria-hidden />
+                    {tr({ zh: '求解中…', en: 'Solving…'
+                  })}
+                  </p>
+                )}
+                {showResult && (
+                  <>
+                    <div className="pos-result-len">
+                      <span className="pos-result-num">{result.len}</span>
+                      <span className="pos-result-metric">
+                        {tr({ zh: '步', en: result.len === 1 ? 'move' : 'moves' })} ({spec.metric})
+                      </span>
+                      <span className="pos-result-ms">{result.ms < 1 ? '<1' : Math.round(result.ms)} ms</span>
+                    </div>
+                    {result.len === 0
+                      ? <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved'
+                      })}</p>
+                      : <p className="pos-result-sol">{result.solution}</p>}
+                  </>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      />
     </div>
   );
 }

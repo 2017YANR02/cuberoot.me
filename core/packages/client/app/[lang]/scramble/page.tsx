@@ -13,37 +13,20 @@
  */
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import { Dices, Sparkles, Wand2 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 
 interface Card {
   to: string;
-  Icon: typeof Dices;
-  zh: { title: string; desc: string };
-  en: { title: string; desc: string };
+  zh: { title: string };
+  en: { title: string };
 }
 
 const CARDS: Card[] = [
-  {
-    to: '/scramble/gen',
-    Icon: Dices,
-    zh: { title: '生成', desc: '17 个 WCA 项目的随机状态打乱,tnoodle 风格 PDF' },
-    en: { title: 'Generate', desc: 'Random-state scrambles for 17 WCA events, tnoodle-style PDF' }
-},
-  {
-    to: '/scramble/solver',
-    Icon: Sparkles,
-    zh: { title: '求解', desc: '3×3 最优解 / 逐阶段 / CFOP / DR,2×2×2 / 金字塔 / 斜转最优解,打乱步数分布' },
-    en: { title: 'Solve', desc: 'Optimal 3×3 / stage / CFOP / DR, plus 2×2×2 / Pyraminx / Skewb optimal solvers and step distributions' }
-},
-  {
-    to: '/scramble/pattern',
-    Icon: Wand2,
-    zh: { title: '图案', desc: '著名 3x3 / 4x4 / 5x5 / 6x6 / 7x7 图案集 (棋盘 / 十字 / 立方体中立方等)' },
-    en: { title: 'Pattern', desc: 'Famous pretty patterns for 3×3 / 4×4 / 5×5 / 6×6 / 7×7 (checkerboard, cross, cube-in-cube, …)' }
-},
+  { to: '/scramble/gen', zh: { title: '生成' }, en: { title: 'Generate' } },
+  { to: '/scramble/solver', zh: { title: '求解' }, en: { title: 'Solve' } },
+  { to: '/scramble/pattern', zh: { title: '花式' }, en: { title: 'Pattern' } },
 ];
 
 export default function ScrambleHubPage() {
@@ -60,9 +43,7 @@ export default function ScrambleHubPage() {
       <div className="hub-grid">
         {CARDS.map((c) => (
           <Link key={c.to} href={c.to} className="hub-card">
-            <c.Icon size={28} />
             <div className="hub-card-title">{tr(c).title}</div>
-            <div className="hub-card-desc">{tr(c).desc}</div>
           </Link>
         ))}
       </div>
@@ -100,34 +81,20 @@ const INLINE_CSS = `
   line-height: 1.6;
 }
 .hub-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
 }
 .hub-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1.25rem;
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
   color: var(--foreground);
   text-decoration: none;
-  transition: transform 0.12s ease, border-color 0.12s ease;
 }
-.hub-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-2px);
+.hub-card:hover .hub-card-title {
+  color: var(--accent);
 }
 .hub-card-title {
   font-size: 1.15rem;
   font-weight: 600;
-}
-.hub-card-desc {
-  color: var(--muted-foreground);
-  font-size: 0.9rem;
-  line-height: 1.45;
 }
 @media (max-width: 480px) {
   .scramble-hub-page { padding: 1rem 0.75rem 2rem; }

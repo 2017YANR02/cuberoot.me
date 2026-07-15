@@ -1,32 +1,4 @@
-/* 批量求解面板(BatchSolvePanel)+ 单条/批量切换(SolveModeToggle) */
-
-/* ---- 单条 / 批量 切换 ---- */
-.bsp-mode {
-  display: inline-flex;
-  gap: 2px;
-  margin: 0 0 1.1rem;
-  padding: 3px;
-  background: var(--muted);
-  border-radius: 9px;
-}
-
-.bsp-mode-tab {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 0.86rem;
-  font-weight: 500;
-  padding: 0.35rem 0.95rem;
-  border-radius: 7px;
-  cursor: pointer;
-}
-
-.bsp-mode-tab.is-active {
-  background: var(--background);
-  color: var(--foreground);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--foreground) 10%, transparent);
-}
+/* 统一求解面板(SolvePanel):单条/批量按输入行数自动判定,不再有独立 tab 切换 */
 
 /* ---- 输入 ---- */
 .bsp {
@@ -36,7 +8,6 @@
 .bsp-textarea {
   width: 100%;
   resize: vertical;
-  min-height: 7.5rem;
   padding: 0.6rem 0.7rem;
   font-family: var(--font-mono);
   font-size: 0.9rem;
