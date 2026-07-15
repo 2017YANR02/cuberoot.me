@@ -76,9 +76,7 @@
 }
 .page-notice-field { display: flex; flex-direction: column; gap: 3px; }
 .page-notice-field > span { font-size: 0.75rem; color: var(--muted-foreground); }
-.page-notice-editor input,
-.page-notice-editor textarea,
-.page-notice-editor select {
+.page-notice-input {
   font: inherit;
   color: var(--foreground);
   background: var(--background);
@@ -86,10 +84,8 @@
   border-radius: 6px;
   padding: 5px 8px;
 }
-.page-notice-editor textarea { resize: vertical; min-height: 46px; }
-.page-notice-editor input:focus,
-.page-notice-editor textarea:focus,
-.page-notice-editor select:focus { outline: none; border-color: var(--ring); }
+textarea.page-notice-input { resize: vertical; min-height: 46px; }
+.page-notice-input:focus { outline: none; border-color: var(--ring); }
 
 .page-notice-editor-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
 .page-notice-editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
