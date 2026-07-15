@@ -8,7 +8,7 @@ import Link from '@/components/AppLink';
 import { Video } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { pickReconCover, coverSyncSrc, loadBiliCover, loadDouyinCover } from '@/lib/recon-video-cover';
-import { formatTime, formatAvg, padReconSingle } from '@/lib/recon-utils';
+import { formatAvg, formatReconSingle } from '@/lib/recon-utils';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -84,7 +84,7 @@ export function ReconCard({ solve, isZh, href, horizontal = false }: {
     { name: solve.person || '', country: solve.personCountry },
     ...(solve.coPersons ?? []).map(c => ({ name: c.name, country: c.country })),
   ].filter(c => c.name);
-  const single = padReconSingle(solve.value) || formatTime(solve.rawTime);
+  const single = formatReconSingle(solve.event, solve.value, solve.rawTime);
   const compName = localizeCompName(solve.compWcaId ?? '', solve.comp || '', isZh);
 
   return (
