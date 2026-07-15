@@ -111,6 +111,40 @@ export function translate(alg: string): string {
 }
 
 /**
+ * Invert one skewb token by negating its amount: flip the prime, keep the
+ * repeat count. Works on the whole token grammar — corner twists (`R`↔`R'`,
+ * `r2`↔`r2'`), macros (`S`↔`S'`, `H`↔`H'`, since the notation defines S' as the
+ * hedge = inverse sledge) and rotations (`y2`↔`y2'`). Unknown tokens pass through.
+ *
+ * `X2'` (= X⁻²) is the exact inverse of `X2` (= X²) regardless of the move's
+ * order — so this stays correct for skewb's 3-fold corner twists, where the
+ * naive "keep the 2" rule (right for 3x3/rotations) would be wrong.
+ */
+function invertToken(tok: string): string {
+  const m = /^([A-Za-z])(\d*)('?)$/.exec(tok);
+  if (!m) return tok;
+  const [, ch, digits, prime] = m;
+  const repeat = digits && digits !== '1' ? digits : '';
+  return ch + repeat + (prime ? '' : "'");
+}
+
+/**
+ * Inverse of a skewb alg: reverse the token order and invert each token.
+ *
+ * Skewb's Sarah-Advanced algs are full solves (no AUF), so a case's scramble is
+ * exactly the inverse of the alg that solves it. speedcubedb's scraped `setup`
+ * strings are unreliable (buggy WCA-ified inverses — e.g. containing `R' R`
+ * cancellations); {@link loadAlg} regenerates skewb setups from this instead.
+ */
+export function invert(alg: string): string {
+  if (!alg || !alg.trim()) return alg;
+  const toks = alg.trim().split(/\s+/).filter(Boolean);
+  const out: string[] = [];
+  for (let i = toks.length - 1; i >= 0; i--) out.push(invertToken(toks[i]));
+  return out.join(' ');
+}
+
+/**
  * The two skewb notation systems currently supported.
  *  - 'wca': WCA / cubing.js native (R/U/L/B/F/D)
  *  - 'sarah': Sarah / Algorithm notation (R/L/B/F uppercase = top corners;

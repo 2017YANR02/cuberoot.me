@@ -7,7 +7,7 @@
  * TwistyPlayer to the correct cube state for the user-typed Sarah alg.
  */
 import { describe, it, expect } from 'vitest';
-import { toWca, translate } from '@cuberoot/shared/skewb-notation';
+import { toWca, translate, invert } from '@cuberoot/shared/skewb-notation';
 
 describe('skewb notation translator', () => {
   it('passes through WCA notation unchanged', () => {
@@ -84,5 +84,34 @@ describe('skewb notation translator', () => {
     expect(translate('')).toBe('');
     expect(translate('   ')).toBe('');
     expect(toWca('', 'sarah')).toBe('');
+  });
+});
+
+describe('skewb alg inverse', () => {
+  it('reverses tokens and flips each prime', () => {
+    // sarahs-advanced 30a first alg — the scramble is exactly this inverse.
+    expect(invert("y2 x B' r' B r B R r' R'")).toBe("R r R' B' r' B' r B x' y2'");
+  });
+
+  it('macros invert like any token (S↔S\', H↔H\')', () => {
+    expect(invert("z2 H z' S z S z' S")).toBe("S' z S' z' S' z H' z2'");
+    expect(invert('S')).toBe("S'");
+    expect(invert("H'")).toBe('H');
+  });
+
+  it('negates the amount for doubles — r2 → r2\' (3-fold corner, not "keep the 2")', () => {
+    expect(invert('r2')).toBe("r2'");
+    expect(invert("r2'")).toBe('r2');
+    expect(invert('y2')).toBe("y2'");
+  });
+
+  it('is an involution up to whitespace', () => {
+    const alg = "y' x R r R' z R r' R' r z' r2' R r R'";
+    expect(invert(invert(alg))).toBe(alg);
+  });
+
+  it('empty / whitespace', () => {
+    expect(invert('')).toBe('');
+    expect(invert('   ')).toBe('   ');
   });
 });
