@@ -36,7 +36,7 @@ import { localizeCity } from '@/lib/city-localize';
 import { getSimilarComps, type SeriesComp } from '@/lib/comp-series';
 import { compLinkProps } from '@/lib/comp-link';
 import WcaEventSelector from '@/components/WcaEventSelector';
-import PillToggle from '@/components/PillToggle/PillToggle';
+import BoolToggle from '@/components/BoolToggle';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { EventIcon } from '@/components/EventIcon';
 import { formatWcaResult } from '@/lib/wca-format-result';
@@ -1736,12 +1736,10 @@ export default function CompDetailPage() {
             />
             {/* 双轮合并开关与所选项目图标同行(currentIsDual 仅成绩视图为真,预排名/赛程不显示) */}
             {currentIsDual && (
-              <PillToggle
+              <BoolToggle
                 value={showCombined}
                 onChange={setCombinedPref}
-                onLabel={tr({ zh: '合并双轮', en: 'Combined'
-                })}
-                offLabel={tr({ zh: '合并双轮', en: 'Combined'
+                label={tr({ zh: '双轮', en: 'Dual'
                 })}
                 ariaLabel={tr({ zh: '合并双轮成绩', en: 'Combine dual rounds'
                 })}
