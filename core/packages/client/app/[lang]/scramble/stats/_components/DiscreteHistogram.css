@@ -71,6 +71,14 @@
   background: var(--accent-soft);
 }
 
+/* 样本总数:图例列内(PDF 钮下),替代图表外那行「N 条样本」 */
+.scramble-hist-total {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .scramble-hist { width: 100%; height: auto; display: block; }
 
 .scramble-hist-empty {

@@ -117,8 +117,11 @@ for(const[,rep]of best){const mk=canonM[rep.idx];if(!mgidOf.has(mk))mgidOf.set(m
 log('mirror groups:',mgidOf.size,'(expect 140)');
 rows.sort((a,b)=>(b.F-a.F)||(a.key-b.key));
 
-// mask = gray the four U-face corners (cube2 groups carrying a U sticker) — renderer id space.
-const MASK='U:0-3;B:0,1;F:0,1;L:0,1;R:0,1';
+// mask = gray everything except the D face — renderer id space. This is a FACE case, not a layer
+// one: blurDigits marks a D-corner's two non-D stickers with the same digit (1), so the side
+// colours carry zero information in the case identity (F = turns to make the face solid, side
+// colours may end up anywhere). Colouring them would render it as a first-LAYER case.
+const MASK='U:0-3;R:0-3;F:0-3;L:0-3;B:0-3';
 const out={
   meta:{generated_at:GENERATED_AT,total_reorient:rows.length,total_mirror_folded:mgidOf.size,fixed_frame:945,mask:MASK,cols:['scramble','F','mgid','sol'],
     note:'2×2 first-face cases: essentially-different arrangements of the four D-face corners (face granularity: target pieces interchangeable), deduped by whole-puzzle physical reorientation via masked-facelet canonicalisation. F = HTM moves to make the shown D face solid; sol = an optimal first-face solve for the shown scramble (|sol| == F); mgid folds mirror pairs.'},

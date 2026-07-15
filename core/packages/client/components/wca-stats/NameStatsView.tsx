@@ -267,6 +267,7 @@ export default function NameStatsView({ data, isZh, queryKey = 'type', nameMode:
               yMode={yMode}
               hideLegendColors
               showBarLabels={showBarLabels}
+              showTotal={false}
               gapAware
               clickableBins={hist.clickable}
               selectedBin={selectedBin}

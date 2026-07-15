@@ -10,7 +10,7 @@ import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import {
-  DIAMOND_LENGTH_DISTRIBUTION, DIAMOND_GODS_NUMBER, DIAMOND_TOTAL_STATES,
+  DIAMOND_LENGTH_DISTRIBUTION,
   diamondExamplesByLength, diamondAllStates, diamondAllScramblesByLength,
 } from '@/lib/diamond-solver';
 import { tr } from '@/i18n/tr';
@@ -90,7 +90,7 @@ export default function DiamondDistView({ isZh }: { isZh: boolean }) {
     <>
       <div className="scramble-stats-controls">
         <div className="scramble-stats-puzzle-meta">
-          <span>{tr({ zh: `全 ${DIAMOND_TOTAL_STATES.toLocaleString()} 态(精确枚举)`, en: `All ${DIAMOND_TOTAL_STATES.toLocaleString()} states (exact enumeration)` })}</span>
+          <span>{tr({ zh: '全空间精确枚举(非抽样)', en: 'Full state space, exactly enumerated (not sampled)' })}</span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '一次转动 = 1 步(4 个 90° 面转、每面 order 3)', en: 'one turn = 1 move (4 face turns, each of order 3)' })}</span>
         </div>
         <button
@@ -116,6 +116,8 @@ export default function DiamondDistView({ isZh }: { isZh: boolean }) {
           onBarClick={(b) => setSelectedBin(b)}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          meanValue={st?.mean}
+          medianValue={st?.median}
         />
       </div>
 
@@ -161,17 +163,6 @@ export default function DiamondDistView({ isZh }: { isZh: boolean }) {
         </div>
       )}
 
-      {st && (
-        <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计', en: 'Summary stats' })}</div>
-          <div className="scramble-stats-stat-grid">
-            <Cell label={tr({ zh: '均值', en: 'mean' })} value={st.mean.toFixed(2)} />
-            <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(st.median)} />
-            <Cell label={tr({ zh: '上帝之数', en: "God's number" })} value={String(DIAMOND_GODS_NUMBER)} />
-          </div>
-        </div>
-      )}
-
       <div className="scramble-stats-meta">
         <span>
           {tr({
@@ -181,14 +172,5 @@ export default function DiamondDistView({ isZh }: { isZh: boolean }) {
         </span>
       </div>
     </>
-  );
-}
-
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
   );
 }

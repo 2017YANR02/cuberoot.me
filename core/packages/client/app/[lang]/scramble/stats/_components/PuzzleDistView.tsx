@@ -233,18 +233,20 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
       : (puzzleKey === 'sq1' && hasAlt)
         ? sq1Note(unit, slashProvisional, slashResidual)
         : metricNote(puzzleKey, activeMetricKey);
+  // 样本总数不再在图外单独占一行 —— DiscreteHistogram 在图内(PDF 钮下)自报总数;
+  // total 仍用于 slash 上界那段文案的占比计算。
   const total = hasMetrics
     ? (entry.metrics![selMetric]?.sample_count ?? entry.sample_count)
     : isCube ? (entry.cubeshape?.sample_count ?? entry.sample_count) : entry.sample_count;
-  const sampleLine = tr({ zh: '{n} 条样本', en: '{n} samples' }).replace('{n}', total.toLocaleString());
 
   return (
     <>
       <div className="scramble-stats-controls">
-        <div className="scramble-stats-puzzle-meta">
-          <span>{sampleLine}</span>
-          <span className="scramble-stats-puzzle-metric">{tr(note)}</span>
-        </div>
+        {!hasMetrics && (
+          <div className="scramble-stats-puzzle-meta">
+            <span className="scramble-stats-puzzle-metric">{tr(note)}</span>
+          </div>
+        )}
         {hasMetrics && stepMetrics && (
           <label className="scramble-stats-puzzle-target">
             <span>{tr({ zh: '度量', en: 'Metric' })}</span>
@@ -303,6 +305,8 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
           onBarClick={(b) => setSelectedBin(b)}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          meanValue={st?.mean}
+          medianValue={st?.median}
         />
       </div>
 
@@ -321,24 +325,13 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
         />
       )}
 
-      {st && (
-        <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计', en: 'Summary stats' })}</div>
-          <div className="scramble-stats-stat-grid">
-            <Cell label={tr({ zh: '均值', en: 'mean' })} value={st.mean.toFixed(2)} />
-            <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(st.median)} />
-          </div>
-        </div>
-      )}
-
       <div className="scramble-stats-meta">
         <span>
           {tr({ zh: '生成时间', en: 'Generated' })}: {json.meta.generated_at}
         </span>
+        {!hasMetrics && (
         <span>
-          {hasMetrics
-            ? tr(byStepsMetricNote(selMetric))
-            : isCube
+          {isCube
             ? tr({
               zh: '复形(cubeshape)= 把顶底两层各自还原成正方形(即立方体形状),不管中层(equator)的朝向。度量 = 最少 slash(/)数;两刀之间任意转动顶层 / 底层都免费、不计步。任意打乱最多 7 刀复形(Jaap Scherphuis 给出的 cube-shape God\'s number;全 170 个双层 shape 查表即得)。这是 SQ1 解法的第一步。',
               en: 'Cube shape (cubeshape) = make both the top and bottom layers square (i.e. restore the cube shape), ignoring the middle (equator) orientation. Metric = fewest slashes (/); any top/bottom turns between slashes are free. Any scramble reaches cube shape in at most 7 slashes (the cube-shape God\'s number per Jaap Scherphuis; a lookup over all 170 two-layer shapes). This is the first step of solving a Square-1.',
@@ -353,17 +346,9 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
             })
             : tr({ zh: '度量:整个打乱的最优解步数', en: 'Metric: optimal solution length per scramble' })}
         </span>
+        )}
       </div>
     </>
-  );
-}
-
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
   );
 }
 

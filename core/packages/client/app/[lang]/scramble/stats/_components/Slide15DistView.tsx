@@ -12,7 +12,7 @@ import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import {
-  solveSlide15Grid, SLIDE15_GODS_NUMBER, SLIDE15_MEAN_OPTIMAL, SLIDE15_STATE_COUNT_APPROX,
+  solveSlide15Grid, SLIDE15_MEAN_OPTIMAL, SLIDE15_STATE_COUNT_APPROX,
 } from '@/lib/slide15-solver';
 import { tr } from '@/i18n/tr';
 
@@ -185,11 +185,17 @@ export default function Slide15DistView({ isZh }: { isZh: boolean }) {
     <>
       <div className="scramble-stats-controls">
         <div className="scramble-stats-puzzle-meta">
+          {/* 采完后总数由图内自报(共 N),这里只在采样中报进度,不重复终值 */}
           <span>
-            {tr({
-              zh: `采样 ${done.toLocaleString()} / ${sampleN.toLocaleString()} 个均匀随机状态(非全空间)`,
-              en: `Sampled ${done.toLocaleString()} / ${sampleN.toLocaleString()} uniform-random states (not full-space)`,
-            })}
+            {running
+              ? tr({
+                zh: `采样中 ${done.toLocaleString()} / ${sampleN.toLocaleString()}`,
+                en: `Sampling ${done.toLocaleString()} / ${sampleN.toLocaleString()}`,
+              })
+              : tr({
+                zh: '均匀随机状态采样(非全空间)',
+                en: 'Uniform-random state sample (not full-space)',
+              })}
           </span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '一次滑动 = 1 步(U/D/L/R)', en: 'one slide = 1 move (U/D/L/R)' })}</span>
         </div>
@@ -227,6 +233,8 @@ export default function Slide15DistView({ isZh }: { isZh: boolean }) {
               onBarClick={(b) => setSelectedBin(b)}
               onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
               onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+              meanValue={stats?.mean}
+              medianValue={stats?.median}
             />
           </div>
 
@@ -259,16 +267,6 @@ export default function Slide15DistView({ isZh }: { isZh: boolean }) {
             </div>
           )}
 
-          {stats && (
-            <div className="scramble-stats-panel">
-              <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计(样本)', en: 'Summary stats (sample)' })}</div>
-              <div className="scramble-stats-stat-grid">
-                <Cell label={tr({ zh: '样本均值', en: 'sample mean' })} value={stats.mean.toFixed(2)} />
-                <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(stats.median)} />
-                <Cell label={tr({ zh: '上帝之数', en: "God's number" })} value={String(SLIDE15_GODS_NUMBER)} />
-              </div>
-            </div>
-          )}
         </>
       )}
 
@@ -281,14 +279,5 @@ export default function Slide15DistView({ isZh }: { isZh: boolean }) {
         </span>
       </div>
     </>
-  );
-}
-
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
   );
 }

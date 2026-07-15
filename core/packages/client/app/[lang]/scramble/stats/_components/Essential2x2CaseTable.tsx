@@ -1,6 +1,6 @@
 'use client';
 
-// 「所有本质状态」案例库全量可搜索表格 —— 77,801 个去重后的本质 2×2 案例,每条带 HTM 最优解
+// 「所有本质状态」全量可搜索表格 —— 77,801 个去重后的本质 2×2 状态,每条带 HTM 最优解
 // 与 QTM 最优解及 F/H/Q 步数。支持公式子串搜索、按 F/H/Q 过滤、任意列排序、分页。数据由
 // Essential2x2View 懒加载(约 5 MB)后传入。
 import { useMemo, useState } from 'react';
@@ -130,7 +130,7 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
           </select>
         </label>
         <span className="ess-cases-count">
-          {tr({ zh: '{n} 个案例', en: '{n} cases' }).replace('{n}', sorted.length.toLocaleString())}
+          {tr({ zh: '{n} 个状态', en: '{n} states' }).replace('{n}', sorted.length.toLocaleString())}
         </span>
       </div>
 
@@ -146,7 +146,7 @@ export default function Essential2x2CaseTable({ isZh, rows }: { isZh: boolean; r
               {th('QH', 'Q|H', tr({ zh: '该 HTM 最优解的 QTM 步数', en: 'QTM length of that HTM-optimal solution' }))}
               {th('Q', 'Q', tr({ zh: 'QTM 最优步数', en: 'QTM-optimal' }))}
               <th className="ess-alg-th">{tr({ zh: 'QTM 最优解', en: 'QTM-optimal' })}</th>
-              {th('dqhq', 'Δ', tr({ zh: '(Q|H)−Q:HTM 最优解多花的四分之一转数', en: '(Q|H)−Q: extra quarter turns of the HTM-optimal solution' }))}
+              {th('dqhq', '(Q|H)−Q')}
             </tr>
           </thead>
           <tbody>
