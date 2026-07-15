@@ -15,8 +15,8 @@ import { Plus, HelpCircle, TriangleAlert, LayoutGrid, List } from 'lucide-react'
 import type { ReconSolve } from '@cuberoot/shared';
 import { useReconStore, type SortKey, type SortDir } from '@/lib/recon-store';
 import {
-  formatResult, formatTime, formatAvg, formatAoXR, formatRound, localizeRound,
-  padReconSingle,
+  formatResult, formatAvg, formatAoXR, formatRound, localizeRound,
+  formatReconSingle,
 } from '@/lib/recon-utils';
 import { compLinkProps } from '@/lib/comp-link';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -678,7 +678,7 @@ export default function ReconListPage() {
         // NOTE: Single 列——优先 value 字段（含 DNF/(5.09) 括号格式），缺失时回退 rawTime 格式化
         return (
           <span className="record-num-cell">
-            {padReconSingle(solve.value) || formatTime(solve.rawTime)}
+            {formatReconSingle(solve.event, solve.value, solve.rawTime)}
             {solve.regionalSingleRecord && (
               <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
             )}

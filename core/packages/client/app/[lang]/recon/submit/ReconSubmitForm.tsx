@@ -250,6 +250,17 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [groupOptions, setGroupOptions] = useState<string[] | null>(null);
   const isMobile = useIsMobile();
 
+  // FMC(最少步)的 成绩/单次 是步数(正整数),不是时间:自动填充会把 24 步当秒
+  // 格式化成 "24.00",手输也可能带小数/负号。统一收敛成正整数字符串(保留 DNF/DNS
+  // 文字单次),并在输入框上限制为正整数。
+  const isFmc = form.event === 'fmc';
+  const toFmcInt = (raw: string): string => {
+    const t = raw.trim();
+    if (/^(dnf|dns)$/i.test(t)) return t.toUpperCase();
+    const n = parseFloat(t.replace(/[^0-9.]/g, ''));
+    return Number.isFinite(n) ? String(Math.floor(n)) : '';
+  };
+
   // 复用以前的填写:reuseOpen = 选择器弹窗开关;
   // reusedFields = 当前被「复用」带入、尚未编辑的字段 key(用于高亮标记)。
   const [reuseOpen, setReuseOpen] = useState(false);
@@ -1693,18 +1704,20 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
               <div className="submit-row">
                 <label className="submit-field">
-                  <span className="submit-label">{tr({ zh: '原始成绩(千分位)', en: 'Original time (0.001s)' })}</span>
+                  <span className="submit-label">{tr(isFmc ? { zh: '原始成绩', en: 'Original moves' } : { zh: '原始成绩(千分位)', en: 'Original time (0.001s)' })}</span>
                   <input
                     className="submit-field-input"
                     type="text"
-                    value={timeInput}
+                    inputMode={isFmc ? 'numeric' : undefined}
+                    value={isFmc ? toFmcInt(timeInput) : timeInput}
                     onChange={e => {
-                      setTimeInput(e.target.value);
+                      setTimeInput(isFmc ? toFmcInt(e.target.value) : e.target.value);
                       setTimeUserTouched(true);
                       setTimeAutoSource(null);
                       timeAutoFilledRef.current = false;
                     }}
-                    title={tr({ zh: '精确到千分位的成绩;自动填充后仍可手动改', en: 'Result to the thousandth; still editable after auto-fill'
+                    title={tr(isFmc ? { zh: '成绩步数(正整数);自动填充后仍可手动改', en: 'Move count (positive integer); still editable after auto-fill'
+                    } : { zh: '精确到千分位的成绩;自动填充后仍可手动改', en: 'Result to the thousandth; still editable after auto-fill'
                     })}
                   />
                   {timeAutoSource ? <span className="submit-hint">{timeAutoSource}</span> : null}
@@ -1713,9 +1726,10 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   <span className="submit-label">{t('recon.single')}</span>
                   <input
                     type="text"
-                    value={form.value ?? ''}
+                    inputMode={isFmc ? 'numeric' : undefined}
+                    value={isFmc ? toFmcInt(form.value ?? '') : (form.value ?? '')}
                     onChange={e => {
-                      setField('value', e.target.value);
+                      setField('value', isFmc ? toFmcInt(e.target.value) : e.target.value);
                       setSingleUserTouched(true);
                       setSingleAutoSource(null);
                       singleAutoFilledRef.current = false;

@@ -25,7 +25,7 @@ import { revalidateRecon } from '../revalidate-action';
 import {
   formatTime, isBldEvent, wcaPersonUrl,
   buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
-  padReconSingle,
+  formatReconSingle,
 } from '@/lib/recon-utils';
 import { compLinkProps } from '@/lib/comp-link';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -113,7 +113,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
     });
     if (!solve) return fallback;
     const parts: string[] = [];
-    const ts = padReconSingle(solve.value) || (solve.rawTime != null ? formatTime(solve.rawTime) : null);
+    const ts = formatReconSingle(solve.event, solve.value, solve.rawTime);
     if (ts) parts.push(ts);
     if (solve.event) parts.push(eventDisplayName(solve.event, isZh));
     if (solve.person) parts.push(displayCuberName(solve.person, isZh));
@@ -178,7 +178,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             {/* 成绩 + 纪录标志同处一个 inline 项,标志才能 vertical-align:super 成右上角标
                 (.detail-title 是 flex 容器,直接子项的 vertical-align 会被忽略) */}
             <span className="detail-result">
-              {padReconSingle(solve.value) || (solve.rawTime != null ? formatTime(solve.rawTime) : null)}
+              {formatReconSingle(solve.event, solve.value, solve.rawTime)}
               <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
             </span>
             {solve.event && (
@@ -1292,7 +1292,7 @@ function SameSessionTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: 
                     };
                   }
                   return {
-                    text: padReconSingle(s.value) || formatTime(s.rawTime),
+                    text: formatReconSingle(s.event, s.value, s.rawTime),
                     best: times[i] > 0 && times[i] === bestTime,
                     trimmed: complete && isAo5Bracketed(times, i),
                     record: s.regionalSingleRecord ?? null,
@@ -1316,7 +1316,7 @@ function SameSessionTable({ solve, onHasRows }: { solve: ReconSolve; onHasRows: 
                     </td>
                     <td className="wp-cell-result">
                       <span className="record-num-cell">
-                        {bestSolve ? (padReconSingle(bestSolve.value) || formatTime(bestSolve.rawTime)) : 'DNF'}
+                        {bestSolve ? formatReconSingle(bestSolve.event, bestSolve.value, bestSolve.rawTime) : 'DNF'}
                         {bestSolve?.regionalSingleRecord
                           ? <RecordBadge record={bestSolve.regionalSingleRecord} variant="inline" />
                           : null}

@@ -16,7 +16,7 @@ import type { ReconSolve } from '@cuberoot/shared';
 import { apiUrl } from './api-base';
 import { displayCuberName } from './cuber-name-display';
 import { localizeCompName } from './comp-localize';
-import { formatTime, padReconSingle } from './recon-utils';
+import { formatReconSingle } from './recon-utils';
 
 const REVALIDATE = 86400; // 24h
 
@@ -79,11 +79,10 @@ export function eventNameForSeo(event: string | undefined, isZh: boolean): strin
   return (isZh ? EVENT_ZH : EVENT_EN)[event] ?? event;
 }
 
-/** Single-time display: prefer the stored truncated value, else format rawTime. */
+/** Single-time display: prefer the stored truncated value, else format rawTime.
+ *  FMC(最少步)normalizes to an integer move count via formatReconSingle. */
 export function reconTimeText(solve: ReconSolve): string {
-  if (solve.value) return padReconSingle(solve.value);
-  if (solve.rawTime != null) return formatTime(solve.rawTime);
-  return '';
+  return formatReconSingle(solve.event, solve.value, solve.rawTime);
 }
 
 /** Server-side fetch of one recon by id with ISR caching. Returns null on any
