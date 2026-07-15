@@ -36,6 +36,7 @@ import BicDistView from './_components/BicDistView';
 import Sia123DistView from './_components/Sia123DistView';
 import Sia222DistView from './_components/Sia222DistView';
 import Essential2x2View from './_components/Essential2x2View';
+import { ESS_STAT_DATASETS, ESS_STAT_SLUGS, type EssStatSlug } from '@/lib/essential-2x2';
 import PyraminxEssentialView from './_components/PyraminxEssentialView';
 import ScrambleLengthView, {
   type EventLengthsJson, type EventLengthsAvgJson, MERGE_GROUPS, MERGED_HIDDEN, resolveEventLen, lengthAltMeta,
@@ -243,6 +244,13 @@ function computeStats(counts: Record<string, number>) {
   };
 }
 
+// 2×2 / 金字塔的难度数据源。一个下拉装下全部 9 档(原先「数据源 3 档 + 面板内数据集 6 档」
+// 两个菜单已合并 —— 它们本就不是正交的两个轴,每一档其实都是一组(总体, 统计量)):
+//   整解 3 档:'wca'(WCA 真题采样)/ 'all'(全部 3,674,160 个状态)/ 'ess'(去重后 77,801 个本质状态)
+//   局部目标 6 档:ESS_STAT_SLUGS(底面 / 底层 / 两角块;分母是商或子集,各档自报口径)
+// 用 <optgroup> 分成两组,免得读者把 9 项读成并列的数据源。仅 2×2 有局部目标档(金字塔只有 3 档)。
+type EssSrc = 'wca' | 'all' | 'ess' | EssStatSlug;
+
 // 仅在独立 /scramble/stats 页接管浏览器标题。嵌入求解页时不渲染本组件 ——
 // 否则它的 useDocumentTitle 会和求解器的标题互相覆盖(且 cleanup 把标题重置成品牌名)。
 function StatsDocTitle() {
@@ -297,7 +305,11 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const [yMode, setYMode] = useQueryState(k('y'), parseAsStringEnum<YMode>(['percent', 'count']).withDefault('percent'));
   const [chartMode, setChartMode] = useQueryState(k('chart'), parseAsStringEnum<ChartMode>(['pdf', 'cdf']).withDefault('pdf'));
   // 2×2 难度数据源:WCA 真题采样(默认)/ 所有本质状态(全 3,674,160 态精确统计)。仅 event=222 有意义。
-  const [essSrc, setEssSrc] = useQueryState(k('src'), parseAsStringEnum<'wca' | 'all'>(['wca', 'all']).withDefault('wca'));
+  // 数据源(9 档,见 EssSrc 注释)。旧深链 ?dsrc=all / ?dsrc=wca 语义不变。
+  const [essSrc, setEssSrc] = useQueryState(
+    k('src'),
+    parseAsStringEnum<EssSrc>(['wca', 'all', 'ess', ...ESS_STAT_SLUGS]).withDefault('wca'),
+  );
   // 组平均(?avg):观测单位 = 一组打乱的平均(某场某轮某组);备打开关(?avgx)仅 avg 时露。
   // filter 性质 → replace。数据懒加载(默认页不拉,省流量)。
   const [avgMode, setAvgMode] = useQueryState(k('avg'), parseAsBoolean.withDefault(false));
@@ -659,8 +671,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
 
   // 非 3x3 puzzle 项目:难度 tab 显示 puzzle 整解分布,3x3 专属的合并/数据集开关无意义,隐藏。
   const isPuzzleEvent = tab === 'difficulty' && !!PUZZLE_EVENT_MAP[event];
-  // 2×2「所有本质状态」视图激活:仅 event=222 + 难度 tab + 数据源切到 all。
-  const isEssential = tab === 'difficulty' && (event === '222' || event === 'pyram') && essSrc === 'all';
+  // 2×2 / 金字塔的精确枚举视图激活:难度 tab + 数据源切到 all(所有状态)或 ess(所有本质状态)。
+  const isEssential = tab === 'difficulty' && (event === '222' || event === 'pyram') && essSrc !== 'wca';
 
   // 长度 tab 第二计步口径钮(顶栏右侧):仅当所选项目带 counts_qtm 时出现。
   const lenCur = useMemo(() => resolveEventLen(lengthsData, event, merged), [lengthsData, event, merged]);
@@ -937,18 +949,31 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
                                   : event === 'sia123' ? 'sia123'
                                   : null;
 
-  // 2×2 / 金字塔:数据源切换(WCA 真题采样 / 所有本质状态)。与「难度/打乱长度」tab 同一行
-  // (原来单独占一行,和 tabsBar 语义/视觉上都是同一组控件)。
+  // 2×2 / 金字塔:数据源下拉。与「难度/打乱长度」tab 同一行(和 tabsBar 语义/视觉上是同一组控件)。
+  // 页面唯一的数据源选择器:整解 3 档 + (仅 2×2)局部目标 6 档,optgroup 分组。每一档只渲染归属
+  // 自己那一档的面板 —— 别再把不同总体的图上下堆在同一屏(用户读不出两张几乎重合的直方图差在哪)。
   const hasEssential = tab === 'difficulty' && (event === '222' || event === 'pyram');
+  const has222Stats = event === '222';
+  const ESS_SRC_LABEL: Record<string, { zh: string; en: string }> = {
+    wca: { zh: 'WCA 真题', en: 'WCA' },
+    all: { zh: '所有状态', en: 'All states' },
+    ess: { zh: '所有本质状态', en: 'Essential states' },
+    ...Object.fromEntries(ESS_STAT_DATASETS.map((d) => [d.slug, d.label])),
+  };
   const srcToggle = hasEssential ? (
     <VariantSelect
       className="scramble-stats-select"
       value={essSrc}
-      options={['wca', 'all']}
-      onChange={(v) => setEssSrc(v as 'wca' | 'all')}
+      groups={has222Stats
+        ? [
+          { label: tr({ zh: '完整', en: 'Full solve' }), options: ['wca', 'all', 'ess'] },
+          { label: tr({ zh: '子集', en: 'Sub-goals (first face / layer)' }), options: ESS_STAT_SLUGS },
+        ]
+        : [{ label: tr({ zh: '完整', en: 'Full solve' }), options: ['wca', 'all', 'ess'] }]}
+      onChange={(v) => setEssSrc(v as EssSrc)}
       isZh={isZh}
-      label={(v) => tr(v === 'wca' ? { zh: 'WCA 真题', en: 'WCA' } : { zh: '所有本质状态', en: 'All states' })}
-      ariaLabel={tr({ zh: '数据源:WCA 真题或所有本质状态', en: 'Data source: WCA scrambles or all essential states' })}
+      label={(v) => tr(ESS_SRC_LABEL[v])}
+      ariaLabel={tr({ zh: '数据源', en: 'Data source' })}
     />
   ) : null;
 
@@ -1600,7 +1625,10 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         <div className="scramble-stats-page">
           {header}
           {isEssential
-            ? (event === 'pyram' ? <PyraminxEssentialView isZh={isZh} /> : <Essential2x2View isZh={isZh} />)
+            ? (event === 'pyram'
+              // 局部目标 6 档只有 2×2 有;金字塔若从 URL 拿到这些 slug,退回「所有状态」而不是白屏。
+              ? <PyraminxEssentialView isZh={isZh} pop={essSrc === 'ess' ? 'ess' : 'all'} />
+              : <Essential2x2View isZh={isZh} view={essSrc} />)
             : timelineActive
               ? timelineBlock
               : <PuzzleDistView isZh={isZh} puzzleKey={puzzleKey} />}

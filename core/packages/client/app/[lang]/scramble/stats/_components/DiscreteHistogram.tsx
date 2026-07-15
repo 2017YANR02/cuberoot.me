@@ -48,11 +48,15 @@ interface Props {
   // NOTE: 图内样本总数(图例区,PDF 钮下),替代外部单独的「N 条样本」文字行。总数由 series 自身
   // 求和得出(与柱子同源,永不失配),多 series 时语义不明 → 只在单 series 时出。
   showTotal?: boolean;
+  // NOTE: 总数的量词 —— 「共 N」里的 N 到底数的是什么。同一页里不同图的分母口径可能不同
+  // (全空间状态 / 子问题的子状态 / 某个子集),光秃秃一个「共 378」会被读成 378 个魔方状态。
+  // 不传则退回中性的「共 N」。
+  totalUnit?: { zh: string; en: string };
 }
 
 const W = 760, H = 400;
 
-export default function DiscreteHistogram({ series, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, gapAware, meanValue, meanLabel, medianValue, medianLabel, showTotal = true }: Props) {
+export default function DiscreteHistogram({ series, yMode = 'percent', chartMode = 'pdf', clickableBins, selectedBin, onBarClick, onChartModeToggle, onYModeToggle, setOptions, activeSet, onSetChange, hideLegendColors, formatBin, showBarLabels, gapAware, meanValue, meanLabel, medianValue, medianLabel, showTotal = true, totalUnit }: Props) {
   const clickableSet = useMemo(() => new Set(clickableBins ?? []), [clickableBins]);
   // NOTE: 图例放在图表左上空白区（0..low-count 的柱子永远很矮），不再占右边 pad
   // 均值/中位数标注需要底部多留一行,两者都传时再加宽 b。
@@ -395,7 +399,11 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
         )}
         {showTotal && series.length === 1 && (
           <span className="scramble-hist-total">
-            {tr({ zh: `共 ${(totals[0] ?? 0).toLocaleString()}`, en: `${(totals[0] ?? 0).toLocaleString()} in total` })}
+            {(() => {
+              const n = (totals[0] ?? 0).toLocaleString();
+              if (!totalUnit) return tr({ zh: `共 ${n}`, en: `${n} in total` });
+              return tr({ zh: `共 ${n} ${totalUnit.zh}`, en: `${n} ${totalUnit.en}` });
+            })()}
           </span>
         )}
       </div>

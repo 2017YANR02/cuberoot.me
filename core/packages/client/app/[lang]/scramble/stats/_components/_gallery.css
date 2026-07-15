@@ -1,23 +1,7 @@
-/* 首步案例画廊(FirstStepGallery) —— 缩略图网格 + 分段。中性类名,2×2 / 金字塔共用。 */
+/* 首步状态图示(FirstStepGallery) —— 缩略图网格 + 分段。中性类名,2×2 / 金字塔共用。 */
 
 .gal-section {
   margin-top: 12px;
-}
-.gal-section-head {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.gal-section-metric {
-  font-size: 13px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--foreground);
-}
-.gal-section-count {
-  font-size: 12px;
-  color: var(--muted-foreground);
 }
 
 /* Column min-width fits the longest alg line (18 mono chars ≈ 110px + padding). */

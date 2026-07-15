@@ -113,8 +113,8 @@ export default function Sia123DistView({ isZh }: { isZh: boolean }) {
         <div className="scramble-stats-puzzle-meta">
           <span>
             {tr({
-              zh: `${sampleCount.toLocaleString()} 条随机打乱样本(离线预计算,按 z2 拆半 + 各半 IDA* 最优,拼接=全局最优)`,
-              en: `${sampleCount.toLocaleString()} random-scramble samples (precomputed offline, split at z2 + per-half optimal IDA*, concatenation is globally optimal)`,
+              zh: '随机打乱样本(离线预计算,按 z2 拆半 + 各半 IDA* 最优,拼接=全局最优)',
+              en: 'random-scramble samples (precomputed offline, split at z2 + per-half optimal IDA*, concatenation is globally optimal)',
             })}
           </span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '一个 token = 1 步', en: 'one token = 1 move' })}</span>
@@ -139,6 +139,8 @@ export default function Sia123DistView({ isZh }: { isZh: boolean }) {
           onBarClick={(b) => setSelectedBin(b)}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          meanValue={stats?.mean}
+          medianValue={stats?.median}
         />
       </div>
 
@@ -171,18 +173,6 @@ export default function Sia123DistView({ isZh }: { isZh: boolean }) {
         </div>
       )}
 
-      {stats && (
-        <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计(随机态样本,per-half 最优)', en: 'Summary stats (random-state sample, per-half optimal)' })}</div>
-          <div className="scramble-stats-stat-grid">
-            <Cell label={tr({ zh: '样本均值', en: 'sample mean' })} value={stats.mean.toFixed(1)} />
-            <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(stats.median)} />
-            <Cell label={tr({ zh: '最小', en: 'min' })} value={String(stats.min)} />
-            <Cell label={tr({ zh: '最大', en: 'max' })} value={String(stats.max)} />
-          </div>
-        </div>
-      )}
-
       <div className="scramble-stats-meta">
         <span>
           {tr({
@@ -193,14 +183,5 @@ export default function Sia123DistView({ isZh }: { isZh: boolean }) {
         <span>{tr({ zh: '生成时间', en: 'Generated' })}: {json.generated_at}</span>
       </div>
     </>
-  );
-}
-
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
   );
 }

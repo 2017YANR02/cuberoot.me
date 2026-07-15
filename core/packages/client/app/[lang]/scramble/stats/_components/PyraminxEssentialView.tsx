@@ -1,10 +1,11 @@
 'use client';
 
-// 金字塔「所有本质状态」视图 —— 不含小角(tips)的完整状态空间 933,120 态、去重后 39,035 个本质案例的
-// 精确统计(与 WCA 真题采样相对)。数据来自 scripts/build_pyram_essential.py 生成的静态 JSON。
-//   full_h/full_v → 全空间(933,120)边际 = 随机打乱的真实难度分布(主分布)
-//   h/v/joint     → 39,035 本质案例的 V/H 边际 + 联合 V×H(案例库结构)
-//   cases         → 全量 39,035 案例(懒加载)
+// 金字塔全空间精确枚举视图 —— 不含小角(tips)的完整状态空间 933,120 态、去重后 39,035 个本质状态
+// (与 WCA 真题采样相对)。数据来自 scripts/build_pyram_essential.py 生成的静态 JSON。
+// 总体(pop)由顶部数据源下拉(page.tsx 的 essSrc)选,与 2×2 同一个选择器 —— 原先本组件内嵌的
+// 「总体」PillToggle 已废除,免得一页两个总体开关:
+//   pop='all'(所有状态,933,120)  → full_h/full_v 边际 = 随机打乱的真实难度分布
+//   pop='ess'(所有本质状态,39,035)→ h/v 边际 + 联合 V×H + 全量状态表(懒加载)+ V 首步状态图示
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
@@ -31,11 +32,10 @@ function compact(n: number): string {
   return String(n);
 }
 
-export default function PyraminxEssentialView({ isZh }: { isZh: boolean }) {
+export default function PyraminxEssentialView({ isZh, pop }: { isZh: boolean; pop: 'all' | 'ess' }) {
   const [data, setData] = useState<PyramEssentialJson | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [metric, setMetric] = useState<'h' | 'v'>('h');
-  const [pop, setPop] = useState<'full' | 'essential'>('full');
   const [yMode, setYMode] = useState<'percent' | 'count'>('percent');
   const [chartMode, setChartMode] = useState<'pdf' | 'cdf'>('pdf');
   const [cases, setCases] = useState<PyramCaseRow[] | null>(null);
@@ -59,13 +59,22 @@ export default function PyraminxEssentialView({ isZh }: { isZh: boolean }) {
 
   const mainCounts = useMemo(() => {
     if (!data) return null;
-    if (pop === 'full') return metric === 'h' ? data.full_h.counts : data.full_v.counts;
+    if (pop === 'all') return metric === 'h' ? data.full_h.counts : data.full_v.counts;
     return metric === 'h' ? data.h.counts : data.v.counts;
   }, [data, metric, pop]);
   const mainSeries = useMemo<HistSeries[]>(() => {
     if (!mainCounts) return [];
     return [{ name: metric.toUpperCase(), fillColors: [metric === 'h' ? GREEN : BLUE], counts: mainCounts }];
   }, [mainCounts, metric]);
+  // 中位数:counts 直方图的 50% 分位(均值走 meta 的精确值,不再另算)。
+  const medianMain = useMemo(() => {
+    if (!mainCounts) return undefined;
+    const e = Object.entries(mainCounts).map(([k, v]) => [Number(k), v] as const).sort((a, b) => a[0] - b[0]);
+    const total = e.reduce((s, [, v]) => s + v, 0);
+    let c = 0;
+    for (const [x, v] of e) { c += v; if (c >= total / 2) return x; }
+    return undefined;
+  }, [mainCounts]);
 
   const jointMax = useMemo(() => {
     if (!data) return 1;
@@ -79,64 +88,41 @@ export default function PyraminxEssentialView({ isZh }: { isZh: boolean }) {
 
   const { meta } = data;
   const colTotals = data.joint.h.map((_, hi) => data.joint.grid.reduce((s, row) => s + (row[hi] ?? 0), 0));
-  const avgMain = pop === 'full'
+  const avgMain = pop === 'all'
     ? (metric === 'h' ? meta.avg_h_full : meta.avg_v_full)
     : (metric === 'h' ? meta.avg_h : meta.avg_v);
 
   return (
     <div className="ess-view">
-      {/* 概览 */}
+      {/* 概览:总数不在这里报 —— 图内已自报当前总体的样本数,这行只留口径说明。 */}
       <div className="scramble-stats-controls ess-overview">
         <div className="scramble-stats-puzzle-meta">
-          <span>{tr({ zh: '{n} 个本质案例', en: '{n} essential cases' }).replace('{n}', meta.essential_count.toLocaleString())}</span>
           <span className="scramble-stats-puzzle-metric">
-            {tr({
-              zh: '不含小角(tips)的完整状态空间 {n} 态,精确枚举',
-              en: 'The full tip-less state space ({n} states), exactly enumerated',
-            }).replace('{n}', meta.total_positions.toLocaleString())}
+            {pop === 'all'
+              ? tr({
+                zh: '不含小角(tips)的完整状态空间,精确枚举 —— 即随机打乱的真实难度分布',
+                en: 'The full tip-less state space, exactly enumerated — the true difficulty distribution of a random scramble',
+              })
+              : tr({
+                zh: '完整状态空间按旋转 / 镜像去重后的本质状态',
+                en: 'The full state space deduped by rotation / mirror into essential states',
+              })}
           </span>
         </div>
       </div>
 
-      <div className="scramble-stats-panel">
-        <div className="scramble-stats-stat-grid">
-          <Cell label={tr({ zh: '完整状态空间', en: 'Full state space' })} value={meta.total_positions.toLocaleString()} />
-          <Cell label={tr({ zh: '本质案例', en: 'Essential cases' })} value={meta.essential_count.toLocaleString()} />
-          <Cell label={tr({ zh: '上帝之数 H', en: "God's number H" })} value={String(meta.god_htm)} />
-          <Cell label={tr({ zh: '最大 V', en: 'Max V' })} value={String(data.v.max)} />
-          <Cell label={tr({ zh: '平均 H(全空间)', en: 'Mean H (all states)' })} value={meta.avg_h_full.toFixed(2)} />
-          <Cell label={tr({ zh: '平均 V(全空间)', en: 'Mean V (all states)' })} value={meta.avg_v_full.toFixed(2)} />
-        </div>
-      </div>
-
-      {/* 主分布:度量 H/V + 总体 全空间/本质 */}
+      {/* 主分布:度量 H/V(总体由顶部数据源下拉选)*/}
       <div className="scramble-stats-controls">
         <div className="scramble-stats-puzzle-toggle">
           <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '度量', en: 'Metric' })}</span>
           <PillToggle
             value={metric === 'h'}
             onChange={(v) => setMetric(v ? 'h' : 'v')}
-            onLabel={tr({ zh: 'H 整解', en: 'H full' })}
-            offLabel={tr({ zh: 'V 首步', en: 'V step' })}
+            onLabel={tr({ zh: '魔方', en: 'Full solve' })}
+            offLabel={tr({ zh: 'V', en: 'V' })}
             ariaLabel={tr({ zh: '度量:整解 H 或 V-first 首步 V', en: 'Metric: full-solve H or V-first V' })}
           />
         </div>
-        <div className="scramble-stats-puzzle-toggle">
-          <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '总体', en: 'Population' })}</span>
-          <PillToggle
-            value={pop === 'full'}
-            onChange={(v) => setPop(v ? 'full' : 'essential')}
-            onLabel={tr({ zh: '全空间', en: 'All states' })}
-            offLabel={tr({ zh: '本质案例', en: 'Essential' })}
-            ariaLabel={tr({ zh: '总体:全 933,120 态或去重后本质案例', en: 'Population: all 933,120 states or deduped essential cases' })}
-          />
-        </div>
-        <span className="scramble-stats-puzzle-metric">
-          {metric === 'h'
-            ? tr({ zh: 'H:整解最优步数(HTM*,不含小角;每个顶点转 1 步)', en: "H: full-solve optimal length (HTM*, tips ignored; each vertex turn = 1)" })
-            : tr({ zh: 'V:先拼好 L/R/B 三个中心 + 2 相邻棱组成的 V(V-first 首步)', en: 'V: solve the L/R/B centers + 2 adjacent edges forming a V (V-first first step)' })}
-          {` · ${tr({ zh: '平均', en: 'mean' })} ${avgMain.toFixed(2)}`}
-        </span>
       </div>
       <div className="scramble-stats-chart-wrapper">
         <DiscreteHistogram
@@ -145,12 +131,21 @@ export default function PyraminxEssentialView({ isZh }: { isZh: boolean }) {
           yMode={yMode}
           chartMode={chartMode}
           hideLegendColors
+          // 两档分母不是一个总体(全空间状态 / 去重后的本质状态),「共 N」必须自报数的是什么。
+          totalUnit={pop === 'all'
+            ? { zh: '个状态', en: 'states' }
+            : { zh: '个本质状态', en: 'essential states' }}
+          meanValue={avgMain}
+          medianValue={medianMain}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
         />
       </div>
 
-      {/* 联合 V×H 表(本质案例)*/}
+      {/* 以下三块都是本质状态(39,035)口径的:Σ = essential_count,故只在 pop='ess' 出。 */}
+      {pop === 'ess' && (
+      <>
+      {/* 联合 V×H 表(本质状态)*/}
       <div className="scramble-stats-panel">
         <div className="scramble-stats-panel-title">{tr({ zh: '联合分布(V × H)', en: 'Joint distribution (V × H)' })}</div>
         <div className="ess-joint-scroll">
@@ -192,17 +187,14 @@ export default function PyraminxEssentialView({ isZh }: { isZh: boolean }) {
         </div>
         <div className="ess-note">
           {tr({
-            zh: '行 = V-first 首步 V,列 = 整解 H;格子 = 该 (V, H) 的本质案例数(颜色越深越多)。',
-            en: 'Rows = V-first V, columns = full-solve H; each cell = essential cases at that (V, H) pair (darker = more).',
+            zh: '行 = V-first 首步 V,列 = 整解 H;格子 = 该 (V, H) 的本质状态数(颜色越深越多)。',
+            en: 'Rows = V-first V, columns = full-solve H; each cell = essential states at that (V, H) pair (darker = more).',
           })}
         </div>
       </div>
 
-      {/* 案例库 */}
+      {/* 本质状态库 */}
       <div className="scramble-stats-panel">
-        <div className="scramble-stats-panel-title">
-          {tr({ zh: '案例库(去重后 {n} 个本质案例)', en: 'Case database ({n} unique essential cases)' }).replace('{n}', meta.essential_count.toLocaleString())}
-        </div>
         {cases ? (
           <PyramCaseTable isZh={isZh} rows={cases} />
         ) : (
@@ -210,52 +202,36 @@ export default function PyraminxEssentialView({ isZh }: { isZh: boolean }) {
             <button type="button" className="ess-load-btn" onClick={loadCases} disabled={casesLoading}>
               {casesLoading
                 ? tr({ zh: '加载中…', en: 'Loading…' })
-                : tr({ zh: '浏览全部 {n} 个案例', en: 'Browse all {n} cases' }).replace('{n}', meta.essential_count.toLocaleString())}
+                : tr({ zh: '浏览全部 {n} 个状态', en: 'Browse all {n} states' }).replace('{n}', meta.essential_count.toLocaleString())}
             </button>
             {casesError && <span className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed' })}: {casesError}</span>}
           </div>
         )}
       </div>
 
-      {/* V 首步案例画廊(无关块变灰,固定「V 缺口朝前」朝向)*/}
+      {/* V 首步状态图示(无关块变灰,固定「V 缺口朝前」朝向)*/}
       <FirstStepGallery
         event="pyram"
         mask={firstFacePyram.meta.mask}
         rows={firstFacePyram.rows as unknown as GalleryRow[]}
         totalReorient={firstFacePyram.meta.total_reorient}
         totalMirror={firstFacePyram.meta.total_mirror_folded}
-        metric={{ sym: 'V', name: { zh: '在此固定朝向下拼好 V 所需的转数', en: 'turns to build the V in this fixed orientation' } }}
-        note={{
-          zh: 'V 首步:L/R/B 三个中心 + 组成 V 的 2 条棱,统一以「V 缺口朝前」的固定朝向展示(不做整体重定向去重,仅可选合并左右镜像)。',
-          en: 'V first step: the L/R/B centers + the 2 edges forming the V, all shown in one fixed orientation (V gap toward the front; no whole-puzzle reorientation dedup, only the optional L↔R mirror fold).',
-        }}
+        metricLabel={{ zh: 'V', en: 'V' }}
       />
+      </>
+      )}
 
-      {/* 致谢 + 记号 */}
+      {/* 致谢 */}
       <div className="scramble-stats-meta ess-credits">
         <span>
-          {tr({ zh: '数据', en: 'Data' })}: {tr(meta.credits.author)} {tr(meta.credits.algorithm)}
-          {' · '}{tr({ zh: '参考', en: 'ref.' })} <a href={meta.credits.source_url} target="_blank" rel="noopener noreferrer">Jaap Scherphuis</a>
-          {' · '}{tr({ zh: '生成', en: 'Generated' })} {meta.generated_at}
-        </span>
-        <span className="ess-notation">
-          {meta.notation.map((n) => `${n.sym} = ${tr(n)}`).join(isZh ? ';' : '; ')}
+          {tr({ zh: '参考', en: 'ref.' })} <a href={meta.credits.source_url} target="_blank" rel="noopener noreferrer">Jaap Scherphuis</a>
         </span>
       </div>
     </div>
   );
 }
 
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
-  );
-}
-
-// ── 全量案例表(懒加载后传入):搜公式/序号、按 V/H 过滤、任意列排序、分页 ──────────────────
+// ── 全量状态表(懒加载后传入):搜公式/序号、按 V/H 过滤、任意列排序、分页 ──────────────────
 type SortKey = 'idx' | 'V' | 'H';
 const COL_IDX: Record<SortKey, number> = { idx: 0, V: 2, H: 3 };
 const PAGE_SIZE = 50;
@@ -353,7 +329,7 @@ function PyramCaseTable({ isZh, rows }: { isZh: boolean; rows: PyramCaseRow[] })
           </select>
         </label>
         <span className="ess-cases-count">
-          {tr({ zh: '{n} 个案例', en: '{n} cases' }).replace('{n}', sorted.length.toLocaleString())}
+          {tr({ zh: '{n} 个状态', en: '{n} states' }).replace('{n}', sorted.length.toLocaleString())}
         </span>
       </div>
 

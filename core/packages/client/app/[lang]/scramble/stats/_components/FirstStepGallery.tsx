@@ -1,6 +1,6 @@
 'use client';
 
-// 首步案例画廊 —— 展示某一步(2×2 首面 / 金字塔 V)的全部本质不同情况,无关块变灰。
+// 首步状态图示 —— 展示某一步(2×2 首面 / 金字塔 V)的全部本质不同状态,无关块变灰。
 // 数据由 scripts/build_*_firstface 预生成的静态 JSON 提供(代表打乱 + 该步步数 metric +
 // 镜像组 mgid + 该打乱的一条最优解 sol,|sol| == metric)。渲染走 ScramblePreview2D 的 mask
 // (灰阶随块跟随打乱)。2×2 与金字塔共用本组件,差异走 props。
@@ -12,7 +12,6 @@ import { tr } from '@/i18n/tr';
 import './_essential-shared.css';
 import './_gallery.css';
 
-type Bilingual = { zh: string; en: string };
 export type GalleryRow = [scramble: string, metric: number, mgid: number, sol?: string];
 
 interface Props {
@@ -22,16 +21,14 @@ interface Props {
   /** total before mirror fold / after mirror fold — shown in the summary. */
   totalReorient: number;
   totalMirror: number;
-  /** metric symbol + full name, e.g. { sym:'F', name:{…} }. */
-  metric: { sym: string; name: Bilingual };
-  /** i18n note under the gallery. */
-  note: Bilingual;
+  /** 步数下拉的标签,如「底面 / Face」(2×2 首面)、「V」(金字塔 V 首步)。 */
+  metricLabel: { zh: string; en: string };
 }
 
 export default function FirstStepGallery({
-  event, mask, rows, totalReorient, totalMirror, metric, note,
+  event, mask, rows, totalReorient, totalMirror, metricLabel,
 }: Props) {
-  const [foldMirror, setFoldMirror] = useState(false);
+  const [foldMirror, setFoldMirror] = useState(true);
   const [pick, setPick] = useState<number | null>(null);
 
   // mirror fold: keep one representative per mgid (rows already sorted hardest-first).
@@ -53,14 +50,11 @@ export default function FirstStepGallery({
   // default to the first (hardest) section; re-pin if the fold toggle changes what's available.
   const active = pick != null && sections.some(([m]) => m === pick) ? pick : (sections[0]?.[0] ?? null);
   const picked = sections.filter(([m]) => m === active);
+  const pickedCount = picked.reduce((s, [, list]) => s + list.length, 0);
   const size = 42;
 
   return (
     <div className="scramble-stats-panel">
-      <div className="scramble-stats-panel-title">
-        {tr({ zh: '案例画廊(无关块变灰)', en: 'Case gallery (irrelevant pieces grayed)' })}
-      </div>
-
       <div className="ess-stat-controls">
         <div className="scramble-stats-puzzle-toggle">
           <span className="scramble-stats-puzzle-toggle-label">
@@ -69,13 +63,11 @@ export default function FirstStepGallery({
           <PillToggle
             value={foldMirror}
             onChange={setFoldMirror}
-            onLabel={tr({ zh: '合并', en: 'On' })}
-            offLabel={tr({ zh: '全部', en: 'Off' })}
             ariaLabel={tr({ zh: '是否合并镜像情况', en: 'Fold mirror-image cases' })}
           />
         </div>
         <label className="ess-filter">
-          <span>{metric.sym}</span>
+          <span>{tr(metricLabel)}</span>
           <select
             className="scramble-stats-select"
             value={String(active)}
@@ -87,22 +79,17 @@ export default function FirstStepGallery({
           </select>
         </label>
         <span className="scramble-stats-puzzle-metric">
-          {tr({ zh: '共 {n} 个本质情况', en: '{n} essential cases' })
-            .replace('{n}', String(foldMirror ? totalMirror : totalReorient))}
-          {' · '}
-          {foldMirror
-            ? tr({ zh: '已合并镜像', en: 'mirrors folded' })
-            : tr({ zh: '{a} → 合并镜像 {b}', en: '{a} → {b} folded' })
-                .replace('{a}', String(totalReorient)).replace('{b}', String(totalMirror))}
+          {tr({ zh: '共 {a}/{b} 个', en: '{a}/{b} cases' })
+            .replace('{a}', String(pickedCount))
+            .replace('{b}', String(foldMirror ? totalMirror : totalReorient))}
+        </span>
+        <span className="scramble-stats-puzzle-metric">
+          {tr({ zh: '首行为打乱', en: 'First line = scramble' })}
         </span>
       </div>
 
       {picked.map(([m, list]) => (
         <div key={m} className="gal-section">
-          <div className="gal-section-head">
-            <span className="gal-section-metric">{metric.sym} = {m}</span>
-            <span className="gal-section-count">{list.length}</span>
-          </div>
           <div className="gal-grid">
             {list.map((r, i) => (
               <Link
@@ -126,15 +113,6 @@ export default function FirstStepGallery({
           </div>
         </div>
       ))}
-
-      <div className="ess-note">
-        {tr(note)}
-        {' '}
-        {tr({
-          zh: `${metric.sym} = ${tr(metric.name)};灰块 = 该步无关的块(灰阶随块跟随打乱)。每格图下第一行是打乱、第二行是该打乱的一条最优解(招式数 = ${metric.sym})。点缩略图在求解器中打开。`,
-          en: `${metric.sym} = ${tr(metric.name)}; gray pieces are irrelevant to this step (the gray follows each piece through the scramble). Under each thumbnail: the scramble on the first line, one optimal solution for it on the second (${metric.sym} moves). Click a thumbnail to open it in the solver.`,
-        })}
-      </div>
     </div>
   );
 }

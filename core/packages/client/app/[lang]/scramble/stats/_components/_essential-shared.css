@@ -1,4 +1,4 @@
-/* 「所有本质状态」视图共享样式(Essential2x2View / PyraminxEssentialView + 各自案例表)。
+/* 「所有本质状态」视图共享样式(Essential2x2View / PyraminxEssentialView + 各自状态表)。
    全部走主题 token,双主题自适应。中性 ess-* 类名,供 2×2 / 金字塔等本质态视图复用。 */
 
 .ess-view {
@@ -29,6 +29,18 @@
   gap: 10px 14px;
   margin-bottom: 10px;
 }
+/* 同排控件字号统一 13px:页面级的 .scramble-stats-puzzle-toggle-label / -puzzle-metric 用
+   的是 0.82rem(13.12px),和 ess-* 的 13px 差一点点,同排看得出来。 */
+.ess-stat-controls .scramble-stats-puzzle-toggle,
+.ess-stat-controls .scramble-stats-puzzle-toggle-label,
+.ess-stat-controls .scramble-stats-puzzle-metric {
+  font-size: 13px;
+}
+/* .scramble-stats-puzzle-toggle 自带 margin-top: 0.5rem(独立成块时用);在这条 center 对齐的
+   flex 行里,那段外边距会把它整体压低 4px,和同排的下拉/文字错位。 */
+.ess-stat-controls .scramble-stats-puzzle-toggle {
+  margin-top: 0;
+}
 
 .ess-filter {
   display: inline-flex;
@@ -52,6 +64,11 @@
 }
 .ess-filter .scramble-stats-select:hover { border-color: var(--border-strong); }
 .ess-filter .scramble-stats-select:focus { outline: none; border-color: var(--ring); }
+/* 控件行里的下拉高度对齐 PillToggle 的 switch(22px),否则两个带框控件明显不等高。 */
+.ess-stat-controls .ess-filter .scramble-stats-select {
+  height: 22px;
+  padding: 0 8px;
+}
 
 /* ── 联合热力表 ── */
 .ess-joint-scroll {
@@ -71,6 +88,9 @@
   min-width: 34px;
   white-space: nowrap;
 }
+.ess-joint td {
+  text-align: right;
+}
 .ess-joint thead th,
 .ess-joint .ess-joint-qhead,
 .ess-joint .ess-joint-rhead {
@@ -89,7 +109,7 @@
   border-top: 1px solid var(--border-default);
 }
 
-/* ── 通用统计 / 案例表 ── */
+/* ── 通用统计 / 状态表 ── */
 .ess-table-scroll {
   --sticky-thead-border: var(--border-default);
 }
@@ -197,25 +217,7 @@
   text-align: center;
 }
 
-/* (Q|H)−Q 摘要行(2×2 专用,金字塔不用) */
-.ess-dqhq {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 12px;
-  margin-top: 10px;
-  font-size: 13px;
-}
-.ess-dqhq-title { color: var(--muted-foreground); }
-.ess-dqhq-item {
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--foreground) 7%, transparent);
-  color: var(--foreground);
-  white-space: nowrap;
-}
-
-/* 案例表懒加载入口 */
+/* 状态表懒加载入口 */
 .ess-load { margin-top: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ess-load-btn {
   appearance: none;
@@ -231,11 +233,135 @@
 .ess-load-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--primary) 88%, black); }
 .ess-load-btn:disabled { opacity: 0.6; cursor: default; }
 
-/* 致谢 / 记号 */
+/* 致谢 */
 .ess-credits { flex-direction: column; gap: 4px; }
 .ess-credits a { color: var(--accent); text-decoration: none; }
 .ess-credits a:hover { text-decoration: underline; }
-.ess-notation { color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+
+/* ── 底面子问题商链示意(fixff 专属):全空间 → 945 → 258 → 140 ── */
+.ff-chain {
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ff-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  max-width: 100%;
+  overflow-x: auto;         /* 窄屏(≥561px 时)横滚,绝不撑破 body */
+  padding-bottom: 2px;
+}
+.ff-node {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+/* 945 是本页分布自己数的那个数,用略强的中性底做锚点(品牌色留给「精确投影」那一箭头,
+   两处都上 accent 会打架) */
+.ff-node-key {
+  background: color-mix(in srgb, var(--foreground) 11%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+.ff-n {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.1;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.ff-cap {
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  text-align: center;
+}
+.ff-arr {
+  --ff-arrow-c: var(--border-strong);
+  flex: 1 1 64px;
+  min-width: 82px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 2px;
+}
+.ff-arr-exact { --ff-arrow-c: var(--accent); }
+.ff-op {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.ff-arr-exact .ff-op { color: var(--accent); }
+.ff-glyph {
+  position: relative;
+  width: 100%;
+  min-width: 36px;
+  height: 2px;
+  background: var(--ff-arrow-c);
+}
+.ff-glyph::after {   /* 箭头头(向右) */
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 7px solid var(--ff-arrow-c);
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+.ff-det {
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ff-foot {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+}
+
+/* 窄屏:商链竖排,箭头转成向下,不再横滚 */
+@media (max-width: 560px) {
+  .ff-flow {
+    flex-direction: column;
+    align-items: center;
+    overflow-x: visible;
+    gap: 2px;
+  }
+  .ff-node { width: 100%; max-width: 280px; }
+  .ff-arr { width: auto; min-width: 0; flex: 0 0 auto; padding: 3px 0; }
+  .ff-glyph {
+    width: 2px;
+    min-width: 2px;
+    height: 20px;
+  }
+  .ff-glyph::after {   /* 箭头头(向下) */
+    right: auto;
+    left: 50%;
+    top: auto;
+    bottom: -5px;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 7px solid var(--ff-arrow-c);
+    border-bottom: 0;
+  }
+}
 
 @media (max-width: 767px) {
   .ess-search-input { width: 150px; }

@@ -28,10 +28,6 @@ export const SPEC_BY_EVENT: Record<string, OptimalSolverSpec> = {
     need: 'pyraminx',
     solve: (pool, scramble) => pool.solvePyraminxMoves(scramble),
     tokenRe: /^[URLBurlb]['2]?$/,
-    placeholder: {
-      zh: "输入打乱,如 R U R' B' U' l b",
-      en: "Enter a scramble, e.g. R U R' B' U' l b",
-    },
   },
   skewb: {
     event: 'skewb',
@@ -44,9 +40,5 @@ export const SPEC_BY_EVENT: Record<string, OptimalSolverSpec> = {
     need: 'skewb',
     solve: (pool, scramble) => pool.solveSkewbMoves(scramble),
     tokenRe: /^[ULRB]['2]?$/,
-    placeholder: {
-      zh: "输入打乱,如 U L' R B' U' R L",
-      en: "Enter a scramble, e.g. U L' R B' U' R L",
-    },
   },
 };

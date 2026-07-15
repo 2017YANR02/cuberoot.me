@@ -13,7 +13,7 @@ description: "Use when user asks how mainstream/major sites or '业界/大厂' h
 | 本地化 / 多语言 / i18n | Apple、Microsoft、Google、Wikipedia(自动转换)、MDN、Netflix、Steam |
 | SEO / 路由 / canonical / hreflang | Apple、MDN、Wikipedia、Stripe docs、Next.js/Vercel |
 | 文档站 | MDN、Stripe、Cloudflare、Tailwind、React/Next docs |
-| AI 产品(本站近邻) | OpenAI/ChatGPT、Anthropic/Claude、Google Gemini、Perplexity |
+| AI 产品(本站近邻) | OpenAI/ChatGPT、Google Gemini、Perplexity |
 | 开发者工具 / SaaS(本站近邻) | GitHub、Vercel、Stripe、Linear、Notion、Figma、Supabase |
 | 消费 / 媒体 | Netflix、Steam、Spotify、YouTube |
 
