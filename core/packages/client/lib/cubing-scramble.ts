@@ -304,7 +304,7 @@ function scheduleRefill(wcaId: string): void {
 /**
  * Prewarm: kick off scramble generation for one or more events in the
  * background. Call this when the user navigates to a route that will
- * probably need a scramble soon (e.g. /scramble/gen, /trainer). The first
+ * probably need a scramble soon (e.g. /scramble/gen, /alg trainer). The first
  * 4x4 / 5x5 call builds heavy pruning tables (~3s) — moving that into idle
  * time eliminates the perceived "I clicked Generate, why is it stuck?" delay.
  */

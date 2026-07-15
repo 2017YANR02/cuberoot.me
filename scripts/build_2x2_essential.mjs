@@ -374,12 +374,15 @@ function makeGroup(key, label, hist, total) {
   return { key, label, rows, total, mean: ratRound(msum, total, 4) };
 }
 const statGroups = [
-  makeGroup('Fixed V', { zh: '固定 V', en: 'Fixed V' }, fixV.h, fixV.total),
+  // 追踪 UFL(1) + ULB(2) 两个角块(有序)。原名「V」借自金字塔记号,在 2×2 面板里误导 ——
+  // 按它实际追踪的东西命名。DBL(6) 本就固定,故解出这两块 = L 面三个角块归位。
+  makeGroup('Fixed V', { zh: '固定两角块', en: 'Fixed 2 corners' }, fixV.h, fixV.total),
   makeGroup('Fixed FF', { zh: '固定底面', en: 'Fixed FF' }, fixFF.h, fixFF.total),
-  makeGroup('CN FF', { zh: '色中性底面', en: 'CN FF' }, histOf(dFF), N),
-  makeGroup('(No Bar) CN FF', { zh: '无 bar · 色中性底面', en: '(No Bar) CN FF' }, histOf(dFF, noBarFlag), (() => { let c = 0; for (let i = 0; i < N; i++) if (noBarFlag[i]) c++; return c; })()),
-  makeGroup('Fixed FL', { zh: '固定首层', en: 'Fixed FL' }, fixFL.h, fixFL.total),
-  makeGroup('CN FL', { zh: '色中性首层', en: 'CN FL' }, histOf(dFL), N),
+  // 中文标签保留 CN 缩写(不译成「色中性」);bar 译作「连色」(相邻同色贴纸)。
+  makeGroup('CN FF', { zh: 'CN底面', en: 'CN FF' }, histOf(dFF), N),
+  makeGroup('(No Bar) CN FF', { zh: '无连色 · CN底面', en: '(No Bar) CN FF' }, histOf(dFF, noBarFlag), (() => { let c = 0; for (let i = 0; i < N; i++) if (noBarFlag[i]) c++; return c; })()),
+  makeGroup('Fixed FL', { zh: '固定底层', en: 'Fixed FL' }, fixFL.h, fixFL.total),
+  makeGroup('CN FL', { zh: 'CN底层', en: 'CN FL' }, histOf(dFL), N),
 ];
 
 // =====================================================================================

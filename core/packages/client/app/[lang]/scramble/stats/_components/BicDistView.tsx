@@ -13,7 +13,7 @@ import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import {
-  BIC_DIST_HISTOGRAM, BIC_GODS_NUMBER, BIC_STATE_COUNT,
+  BIC_DIST_HISTOGRAM,
   loadBicTable, bicExamplesByLengthFromTable, streamBicScramblesFromTable, bicScramblesForLengthFromTable,
   type BicTable,
 } from '@/lib/bicube-solver';
@@ -139,7 +139,7 @@ export default function BicDistView({ isZh }: { isZh: boolean }) {
     <>
       <div className="scramble-stats-controls">
         <div className="scramble-stats-puzzle-meta">
-          <span>{tr({ zh: `全 ${BIC_STATE_COUNT.toLocaleString()} 态(精确枚举)`, en: `All ${BIC_STATE_COUNT.toLocaleString()} states (exact enumeration)` })}</span>
+          <span>{tr({ zh: '全空间精确枚举(非抽样)', en: 'Full state space, exactly enumerated (not sampled)' })}</span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '一次转动 = 1 步(U/F/L/R 90°/180°/270°)', en: 'one turn = 1 move (U/F/L/R 90°/180°/270°)' })}</span>
         </div>
         <button
@@ -168,6 +168,8 @@ export default function BicDistView({ isZh }: { isZh: boolean }) {
           onBarClick={(b) => setSelectedBin(b)}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          meanValue={st?.mean}
+          medianValue={st?.median}
         />
       </div>
 
@@ -221,17 +223,6 @@ export default function BicDistView({ isZh }: { isZh: boolean }) {
         </div>
       )}
 
-      {st && (
-        <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计', en: 'Summary stats' })}</div>
-          <div className="scramble-stats-stat-grid">
-            <Cell label={tr({ zh: '均值', en: 'mean' })} value={st.mean.toFixed(2)} />
-            <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(st.median)} />
-            <Cell label={tr({ zh: '上帝之数', en: "God's number" })} value={String(BIC_GODS_NUMBER)} />
-          </div>
-        </div>
-      )}
-
       <div className="scramble-stats-meta">
         <span>
           {tr({
@@ -241,14 +232,5 @@ export default function BicDistView({ isZh }: { isZh: boolean }) {
         </span>
       </div>
     </>
-  );
-}
-
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
   );
 }

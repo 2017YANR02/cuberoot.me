@@ -92,7 +92,7 @@ export default function FloppyDistView({ isZh }: { isZh: boolean }) {
     <>
       <div className="scramble-stats-controls">
         <div className="scramble-stats-puzzle-meta">
-          <span>{tr({ zh: '全 192 态(精确枚举)', en: 'All 192 states (exact enumeration)' })}</span>
+          <span>{tr({ zh: '全空间精确枚举(非抽样)', en: 'Full state space, exactly enumerated (not sampled)' })}</span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '每转一面 180° = 1 步', en: 'one 180° face turn = 1 move' })}</span>
         </div>
         <button type="button" className="ivy-dl-all" onClick={downloadAll}>
@@ -113,6 +113,8 @@ export default function FloppyDistView({ isZh }: { isZh: boolean }) {
           onBarClick={(b) => setSelectedBin(b)}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          meanValue={st?.mean}
+          medianValue={st?.median}
         />
       </div>
 
@@ -158,17 +160,6 @@ export default function FloppyDistView({ isZh }: { isZh: boolean }) {
         </div>
       )}
 
-      {st && (
-        <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计', en: 'Summary stats' })}</div>
-          <div className="scramble-stats-stat-grid">
-            <Cell label={tr({ zh: '均值', en: 'mean' })} value={st.mean.toFixed(2)} />
-            <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(st.median)} />
-            <Cell label={tr({ zh: '上帝之数', en: "God's number" })} value={String(FLOPPY_GODS_NUMBER)} />
-          </div>
-        </div>
-      )}
-
       <div className="scramble-stats-meta">
         <span>
           {tr({
@@ -178,14 +169,5 @@ export default function FloppyDistView({ isZh }: { isZh: boolean }) {
         </span>
       </div>
     </>
-  );
-}
-
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
   );
 }

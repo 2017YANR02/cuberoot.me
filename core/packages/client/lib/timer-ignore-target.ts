@@ -1,4 +1,4 @@
-// Shared press-target guard for timing surfaces (/timer SoloView + /trainer run).
+// Shared press-target guard for timing surfaces (/timer SoloView + /alg trainer run).
 // A press that starts on an interactive child (button/link/input/…) must NOT
 // arm the timer — it's a real click, not a "start timing" gesture. Passed as
 // `ignoreTarget` to useGestureWheel. Keeping this in one place stops the two

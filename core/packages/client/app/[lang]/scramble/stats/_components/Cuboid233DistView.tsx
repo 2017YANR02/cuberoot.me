@@ -119,8 +119,8 @@ export default function Cuboid233DistView({ isZh }: { isZh: boolean }) {
         <div className="scramble-stats-puzzle-meta">
           <span>
             {tr({
-              zh: `${sampleCount.toLocaleString()} 个随机态样本(离线预计算,IDA* 可证最优,非全空间)`,
-              en: `${sampleCount.toLocaleString()} random-state samples (precomputed offline, IDA* provably optimal, not full-space)`,
+              zh: '随机态样本(离线预计算,IDA* 可证最优,非全空间)',
+              en: 'random-state samples (precomputed offline, IDA* provably optimal, not full-space)',
             })}
           </span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '一个 token = 1 步(IDA* 最优)', en: 'one token = 1 move (IDA* optimal)' })}</span>
@@ -145,6 +145,8 @@ export default function Cuboid233DistView({ isZh }: { isZh: boolean }) {
           onBarClick={(b) => setSelectedBin(b)}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          meanValue={stats?.mean}
+          medianValue={stats?.median}
         />
       </div>
 
@@ -177,16 +179,6 @@ export default function Cuboid233DistView({ isZh }: { isZh: boolean }) {
         </div>
       )}
 
-      {stats && (
-        <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计(样本,最优)', en: 'Summary stats (sample, optimal)' })}</div>
-          <div className="scramble-stats-stat-grid">
-            <Cell label={tr({ zh: '样本均值', en: 'sample mean' })} value={stats.mean.toFixed(2)} />
-            <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(stats.median)} />
-          </div>
-        </div>
-      )}
-
       <div className="scramble-stats-meta">
         <span>
           {tr({
@@ -197,14 +189,5 @@ export default function Cuboid233DistView({ isZh }: { isZh: boolean }) {
         <span>{tr({ zh: '生成时间', en: 'Generated' })}: {json.generated_at}</span>
       </div>
     </>
-  );
-}
-
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
   );
 }

@@ -225,7 +225,6 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric, 
     [merged, event],
   );
   const curName = activeGroup ? tr(activeGroup) : eventName(event, isZh);
-  const curSub = activeGroup ? ((isZh ? activeGroup.subZh : activeGroup.subEn)) : null;
 
   // Synthesize the merged distribution (sum member counts) or use the raw event.
   const cur = useMemo<EventLen | null>(() => resolveEventLen(data, event, merged), [data, event, merged]);
@@ -301,22 +300,12 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric, 
             formatBin={(v) => (v / denom).toFixed(1)}
             onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
             onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+            meanValue={avgStats?.mean}
+            meanLabel={avgStats ? `${tr({ zh: '平均', en: 'mean' })} ${(avgStats.mean / denom).toFixed(2)}` : undefined}
+            medianValue={avgStats?.median}
+            medianLabel={avgStats ? `${tr({ zh: '中位数', en: 'median' })} ${(avgStats.median / denom).toFixed(1)}` : undefined}
           />
         </div>
-        {avgStats && (
-          <div className="scramble-stats-panel">
-            <div className="scramble-stats-panel-title">
-              {curName}
-              {curSub && <span className="scramble-len-sub">{curSub}</span>} {tr({ zh: '摘要统计(组平均)', en: 'Summary stats (group avg)' })}
-              <span className="scramble-len-unit">({curUnit})</span>
-            </div>
-            <div className="scramble-stats-stat-grid">
-              <Cell label={tr({ zh: '均值', en: 'mean' })} value={(avgStats.mean / denom).toFixed(2)} />
-              <Cell label={tr({ zh: '中位数', en: 'median' })} value={(avgStats.median / denom).toFixed(1)} />
-              <Cell label={tr({ zh: '组数', en: 'groups' })} value={a.groups.toLocaleString()} />
-            </div>
-          </div>
-        )}
       </>
     );
   }
@@ -337,6 +326,8 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric, 
               hideLegendColors
               onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
               onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+              meanValue={stats?.mean}
+              medianValue={stats?.median}
             />
           </div>
 
@@ -391,24 +382,6 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric, 
             <div className="scramble-len-footnote">
               {tr({ zh: '注：脚拧与三阶 / 单手用的是同一套打乱程序(TNoodle 三阶随机状态),但脚拧 2019 年已被 WCA 废止,样本集中在较早的 TNoodle 版本,分布略偏长(众数 20 步,三阶 / 单手为 19),故未并入「三阶(速拧)」,单独列出。', en: 'Note: With-Feet uses the same scramble program as 3×3 / One-Handed (TNoodle 3×3 random state), but it was retired by the WCA in 2019, so its sample sits on older TNoodle versions and skews ~1 move longer (mode 20 vs 19). It is therefore kept separate from the merged 3×3 (speed) group.'
             })}
-            </div>
-          )}
-
-          {stats && (
-            <div className="scramble-stats-panel">
-              <div className="scramble-stats-panel-title">
-                {curName}
-                {curSub && <span className="scramble-len-sub">{curSub}</span>} {tr({ zh: '摘要统计', en: 'Summary stats'
-                })}
-                <span className="scramble-len-unit">({curUnit})</span>
-              </div>
-              <div className="scramble-stats-stat-grid">
-                <Cell label={tr({ zh: '均值', en: 'mean' })} value={stats.mean.toFixed(2)} />
-                <Cell label={tr({ zh: '中位数', en: 'median'
-                })} value={String(stats.median)} />
-                <Cell label={tr({ zh: '样本', en: 'samples'
-                })} value={stats.total.toLocaleString()} />
-              </div>
             </div>
           )}
 
@@ -498,11 +471,3 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric, 
   );
 }
 
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
-  );
-}

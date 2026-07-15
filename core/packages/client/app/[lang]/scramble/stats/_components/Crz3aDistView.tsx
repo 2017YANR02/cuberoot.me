@@ -119,8 +119,8 @@ export default function Crz3aDistView({ isZh }: { isZh: boolean }) {
         <div className="scramble-stats-puzzle-meta">
           <span>
             {tr({
-              zh: `${sampleCount.toLocaleString()} 个随机态样本(离线预计算,等价于标准三阶,kociemba 两阶段近最优,非全空间)`,
-              en: `${sampleCount.toLocaleString()} random-state samples (precomputed offline — equivalent to a standard 3×3, kociemba two-phase near-optimal, not full-space)`,
+              zh: '随机态样本(离线预计算,等价于标准三阶,kociemba 两阶段近最优,非全空间)',
+              en: 'random-state samples (precomputed offline — equivalent to a standard 3×3, kociemba two-phase near-optimal, not full-space)',
             })}
           </span>
           <span className="scramble-stats-puzzle-metric">{tr({ zh: '一个 token = 1 步(HTM,kociemba 两阶段解)', en: 'one token = 1 move (HTM, kociemba two-phase solution)' })}</span>
@@ -145,6 +145,8 @@ export default function Crz3aDistView({ isZh }: { isZh: boolean }) {
           onBarClick={(b) => setSelectedBin(b)}
           onChartModeToggle={() => setChartMode(chartMode === 'pdf' ? 'cdf' : 'pdf')}
           onYModeToggle={() => setYMode(yMode === 'percent' ? 'count' : 'percent')}
+          meanValue={stats?.mean}
+          medianValue={stats?.median}
         />
       </div>
 
@@ -177,16 +179,6 @@ export default function Crz3aDistView({ isZh }: { isZh: boolean }) {
         </div>
       )}
 
-      {stats && (
-        <div className="scramble-stats-panel">
-          <div className="scramble-stats-panel-title">{tr({ zh: '摘要统计(样本,近最优)', en: 'Summary stats (sample, near-optimal)' })}</div>
-          <div className="scramble-stats-stat-grid">
-            <Cell label={tr({ zh: '样本均值', en: 'sample mean' })} value={stats.mean.toFixed(2)} />
-            <Cell label={tr({ zh: '中位数', en: 'median' })} value={String(stats.median)} />
-          </div>
-        </div>
-      )}
-
       <div className="scramble-stats-meta">
         <span>
           {tr({
@@ -197,14 +189,5 @@ export default function Crz3aDistView({ isZh }: { isZh: boolean }) {
         <span>{tr({ zh: '生成时间', en: 'Generated' })}: {json.generated_at}</span>
       </div>
     </>
-  );
-}
-
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="scramble-stats-stat-cell">
-      <div className="scramble-stats-stat-label">{label}</div>
-      <div className="scramble-stats-stat-value">{value}</div>
-    </div>
   );
 }
