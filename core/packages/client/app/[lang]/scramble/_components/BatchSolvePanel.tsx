@@ -1,15 +1,22 @@
 'use client';
 
 /**
- * 批量求解面板(共享):多行打乱(一行一条)→ 并发求解 → 汇总(数量/平均/min/max/步数
- * 直方图)+ 逐条结果表(# / 打乱 / 步数 / 一条最优解)+ 复制·下载 CSV。
+ * 统一求解面板(共享):单条 / 批量按输入行数自动判定,不再有独立 tab。
+ *
+ * 输入框永远是同一个多行 textarea:0/1 行 → 调用方通过 renderSingle 渲染它自己的
+ * 「单条」结果视图(预览图/步数/最优解等,各 puzzle 展示不同,故不在本组件里做);
+ * ≥2 行 → 本组件接管,并发求解 → 汇总(数量/平均/min/max/步数直方图)+ 逐条结果表
+ * (# / 打乱 / 步数 / 一条最优解)+ 复制·下载 CSV。
+ *
+ * 随机按钮带一个条数输入:N=1 直接替换整个输入框(等价于「再随机一条」,留在单条视图);
+ * N>1 追加到已有内容后面(建批量用),自然地把视图切到批量。
  *
  * 与具体 puzzle 解耦:调用方传 BatchSpec(solveOne / validate / randomOne / 度量名)。
  * 222 / 金字塔 / 斜转 走 rust-cross worker 池(solveOne 内并发,池自身限流),SQ1 走纯 TS
  * 同步引擎(concurrency=1,solveOne 内 setTimeout 让出主线程)。两者同一套 UI。
  */
-import { useMemo, useRef, useState } from 'react';
-import { Play, Dices, Trash2, Copy, Download, LoaderCircle, Check } from 'lucide-react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { Trash2, Copy, Download, Check } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import './batch_solve.css';
 
@@ -22,7 +29,7 @@ export interface BatchSpec {
   validate: (line: string) => string | null;
   /** 单条求解:返回步数 + 一条解;不合法/无法解时抛错。 */
   solveOne: (scramble: string) => Promise<{ len: number; solution: string }>;
-  /** 生成一条随机打乱(「随机 N 条」用) */
+  /** 生成一条随机打乱(随机按钮用) */
   randomOne: () => Promise<string | null>;
   /** 并发度:池类 puzzle 4,SQ1 同步引擎 1 */
   concurrency: number;
@@ -37,24 +44,37 @@ interface Row {
 }
 
 const MAX_LINES = 2000;
+const MAX_GEN = 200;
 const tick = () => new Promise<void>((r) => window.setTimeout(r, 0));
 
 const csvCell = (s: string) => (/[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
 
-export function BatchSolvePanel({ spec }: { spec: BatchSpec }) {
-  const [input, setInput] = useState('');
+export function SolvePanel({
+  spec,
+  scramble,
+  onScrambleChange,
+  renderSingle,
+}: {
+  spec: BatchSpec;
+  scramble: string;
+  onScrambleChange: (v: string) => void;
+  /** 0/1 行(单条模式)时的结果视图,调用方自己渲染(各 puzzle 展示不同) */
+  renderSingle: (trimmed: string) => ReactNode;
+}) {
   const [rows, setRows] = useState<Row[]>([]);
   const [running, setRunning] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
-  const [genN, setGenN] = useState(12);
+  const [genN, setGenN] = useState(1);
   const [copied, setCopied] = useState(false);
   const cancelRef = useRef(false);
 
-  const lineCount = useMemo(
-    () => input.split('\n').map((s) => s.trim()).filter(Boolean).length,
-    [input],
+  const lines = useMemo(
+    () => scramble.split('\n').map((s) => s.trim()).filter(Boolean),
+    [scramble],
   );
+  const lineCount = lines.length;
+  const isBatch = lineCount > 1;
 
   const stats = useMemo(() => {
     const ok = rows.filter((r) => r.error === null && r.len !== null);
@@ -81,7 +101,6 @@ export function BatchSolvePanel({ spec }: { spec: BatchSpec }) {
   }, [rows]);
 
   async function runAll() {
-    const lines = input.split('\n').map((s) => s.trim()).filter(Boolean);
     if (!lines.length || running) return;
     const capped = lines.slice(0, MAX_LINES);
     cancelRef.current = false;
@@ -125,7 +144,7 @@ export function BatchSolvePanel({ spec }: { spec: BatchSpec }) {
     if (generating || running) return;
     setGenerating(true);
     cancelRef.current = false;
-    const n = Math.max(1, Math.min(200, Math.floor(genN) || 1));
+    const n = Math.max(1, Math.min(MAX_GEN, Math.floor(genN) || 1));
     const got: string[] = [];
     for (let k = 0; k < n; k++) {
       if (cancelRef.current) break;
@@ -134,17 +153,20 @@ export function BatchSolvePanel({ spec }: { spec: BatchSpec }) {
         if (s) got.push(s.trim());
       } catch { /* 跳过失败的一条 */ }
     }
-    setInput((prev) => (prev.trim() ? `${prev.trim()}\n` : '') + got.join('\n'));
+    // 单条(N=1):替换整框,像「再随机一条」;批量(N>1):追加到已有内容后建批量。
+    onScrambleChange(n === 1 ? got.join('\n') : (scramble.trim() ? `${scramble.trim()}\n` : '') + got.join('\n'));
     setGenerating(false);
   }
 
   function cancel() {
     cancelRef.current = true;
+    setGenerating(false);
+    setRunning(false);
   }
 
   function clearAll() {
     cancelRef.current = true;
-    setInput('');
+    onScrambleChange('');
     setRows([]);
     setProgress({ done: 0, total: 0 });
   }
@@ -191,47 +213,34 @@ export function BatchSolvePanel({ spec }: { spec: BatchSpec }) {
       <div className="bsp-input-block">
         <textarea
           className="bsp-textarea"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
+          value={scramble}
+          onChange={(e) => onScrambleChange(e.target.value)}
           placeholder={tr(spec.placeholder)}
           spellCheck={false}
           autoComplete="off"
           autoCapitalize="off"
-          rows={6}
+          rows={Math.min(6, Math.max(1, lineCount || 1))}
         />
-        <div className="bsp-input-meta">
-          {lineCount > 0
-            ? tr({ zh: `${lineCount} 条打乱`, en: `${lineCount} scramble${lineCount === 1 ? '' : 's'}` })
-            : tr({ zh: '一行一条打乱', en: 'one scramble per line' })}
-          {lineCount > MAX_LINES && (
-            <span className="bsp-warn"> {tr({ zh: `(只取前 ${MAX_LINES} 条)`, en: `(first ${MAX_LINES} only)` })}</span>
-          )}
-        </div>
+        {isBatch && (
+          <div className="bsp-input-meta">
+            {tr({ zh: `${lineCount} 条打乱`, en: `${lineCount} scrambles` })}
+            {lineCount > MAX_LINES && (
+              <span className="bsp-warn"> {tr({ zh: `(只取前 ${MAX_LINES} 条)`, en: `(first ${MAX_LINES} only)` })}</span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="bsp-toolbar">
-        {running ? (
-          <button type="button" className="bsp-btn bsp-btn-primary" onClick={cancel}>
-            <LoaderCircle size={15} className="bsp-spin" aria-hidden />
-            {tr({ zh: `停止 (${progress.done}/${progress.total})`, en: `Stop (${progress.done}/${progress.total})` })}
-          </button>
-        ) : (
-          <button type="button" className="bsp-btn bsp-btn-primary" onClick={() => void runAll()} disabled={lineCount === 0}>
-            <Play size={15} aria-hidden />
-            {tr({ zh: '全部求解', en: 'Solve all' })}
-          </button>
-        )}
-
         <div className="bsp-gen">
-          <button type="button" className="bsp-btn" onClick={() => void genRandom()} disabled={generating || running}>
-            {generating ? <LoaderCircle size={15} className="bsp-spin" aria-hidden /> : <Dices size={15} aria-hidden />}
-            {tr({ zh: '随机', en: 'Random' })}
+          <button type="button" className="bsp-btn bsp-btn-primary" onClick={() => void genRandom()} disabled={generating || running}>
+            {tr({ zh: '打乱', en: 'Scramble' })}
           </button>
           <input
             className="bsp-gen-n"
             type="number"
             min={1}
-            max={200}
+            max={MAX_GEN}
             value={genN}
             onChange={(e) => setGenN(Number(e.target.value))}
             aria-label={tr({ zh: '随机条数', en: 'count' })}
@@ -239,21 +248,34 @@ export function BatchSolvePanel({ spec }: { spec: BatchSpec }) {
           <span className="bsp-gen-unit">{tr({ zh: '条', en: '' })}</span>
         </div>
 
-        {(input || rows.length > 0) && (
-          <button type="button" className="bsp-btn bsp-btn-ghost" onClick={clearAll}>
+        {isBatch && (
+          running ? (
+            <button type="button" className="bsp-btn" onClick={cancel}>
+              {tr({ zh: `停止 (${progress.done}/${progress.total})`, en: `Stop (${progress.done}/${progress.total})` })}
+            </button>
+          ) : (
+            <button type="button" className="bsp-btn" onClick={() => void runAll()} disabled={lineCount === 0}>
+              {tr({ zh: '求解', en: 'Solve' })}
+            </button>
+          )
+        )}
+
+        {(scramble || rows.length > 0) && (
+          <button type="button" className="bsp-btn bsp-btn-ghost" onClick={clearAll} aria-label={tr({ zh: '清空', en: 'Clear' })}>
             <Trash2 size={15} aria-hidden />
-            {tr({ zh: '清空', en: 'Clear' })}
           </button>
         )}
       </div>
 
-      {running && (
+      {isBatch && running && (
         <div className="bsp-progress" aria-hidden>
           <div className="bsp-progress-bar" style={{ width: `${progress.total ? (progress.done / progress.total) * 100 : 0}%` }} />
         </div>
       )}
 
-      {rows.length > 0 && (
+      {!isBatch && renderSingle(lines[0] ?? '')}
+
+      {isBatch && rows.length > 0 && (
         <>
           <div className="bsp-summary">
             <div className="bsp-stat">
@@ -327,32 +349,6 @@ export function BatchSolvePanel({ spec }: { spec: BatchSpec }) {
           </div>
         </>
       )}
-    </div>
-  );
-}
-
-/** 单条 / 批量 模式切换(求解中心两个求解器页共用)。 */
-export function SolveModeToggle({ value, onChange }: { value: 'single' | 'batch'; onChange: (v: 'single' | 'batch') => void }) {
-  return (
-    <div className="bsp-mode" role="tablist">
-      <button
-        type="button"
-        role="tab"
-        aria-selected={value === 'single'}
-        className={`bsp-mode-tab${value === 'single' ? ' is-active' : ''}`}
-        onClick={() => onChange('single')}
-      >
-        {tr({ zh: '单条', en: 'Single' })}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={value === 'batch'}
-        className={`bsp-mode-tab${value === 'batch' ? ' is-active' : ''}`}
-        onClick={() => onChange('batch')}
-      >
-        {tr({ zh: '批量', en: 'Batch' })}
-      </button>
     </div>
   );
 }
