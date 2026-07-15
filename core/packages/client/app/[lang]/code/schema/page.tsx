@@ -166,6 +166,7 @@ const TABLES: Table[] = [
   ] },
   { name: 'nav_sites', domain: 'community', origin: '0001', evolved: [2], purpose: { zh: '/site 网址导航(group_id 避 SQL 关键字)', en: 'The /site link directory' } },
   { name: 'ops_commands', domain: 'community', origin: '0010', evolved: [11], purpose: { zh: '/code/ops runbook 命令 + 提示词模板', en: 'Commands + prompts behind the /code/ops runbook' } },
+  { name: 'page_notices', domain: 'community', origin: '0073', purpose: { zh: '每页顶部管理员通知条(维护中/WIP/bug),按路径匹配', en: 'Per-page admin notice bars (maintenance/WIP/bug), matched by path' } },
 
   // ── analytics ───────────────────────────────────────────
   { name: 'pageviews', domain: 'analytics', origin: '0008', purpose: { zh: 'PV 明细:按日轮换的访客 hash,无 cookie', en: 'Pageview events with a daily-rotating visitor hash, no cookie' }, cols: [
@@ -247,6 +248,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 70, slug: 'notifications', desc: { zh: '站内通知:recon 另解 / 评论 / 回复 → 管理员 + 被回复者(未读红点 + Resend 邮件)', en: 'Site notifications: recon alternatives / comments / replies → admins + the person replied to (unread badge + Resend email)' } },
   { n: 71, slug: 'email_notify_pref', desc: { zh: 'app_users 加 email_notify:邮件通知开关(退订),默认开;只关邮件,站内红点照常', en: 'app_users gains email_notify: the email-notification opt-out (default on); mutes email only, in-site badge unaffected' } },
   { n: 72, slug: 'user_lang', desc: { zh: 'app_users 加 lang:通知邮件按收件人语言发;未读角标轮询搭车上报,NULL(没见过这人)回落双语', en: 'app_users gains lang: notification emails follow the recipient’s language; reported by the unread-badge poll, NULL (never seen) falls back to bilingual' } },
+  { n: 73, slug: 'page_notices', desc: { zh: '新表 page_notices:每页顶部管理员通知条(维护中/WIP/bug),按路径匹配(精确/前缀 /*),分级 info/warning/维护', en: 'New page_notices table: per-page admin notice bars (maintenance/WIP/bug), matched by path (exact or /* prefix), levels info/warning/maintenance' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

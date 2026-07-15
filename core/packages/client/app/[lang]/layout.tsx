@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import I18nProvider from '@/i18n/I18nProvider';
+import PageNoticeBar from '@/components/PageNoticeBar';
 
 const SUPPORTED = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED[number];
@@ -24,7 +25,10 @@ export default async function LangLayout({
   if (!SUPPORTED.includes(lang as Locale)) notFound();
   return (
     <I18nProvider initialLang={lang as Locale}>
-      <Suspense>{children}</Suspense>
+      <Suspense>
+        <PageNoticeBar />
+        {children}
+      </Suspense>
     </I18nProvider>
   );
 }

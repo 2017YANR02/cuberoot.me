@@ -57,7 +57,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth alg alg_sets analytics announced_comps article auth cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
-//   membership nav_sites nemesizer notifications ops paint progress recon scramble_555
+//   membership nav_sites nemesizer notifications ops page_notices paint progress recon scramble_555
 //   scramble_marks sponsors timer_backups wca_format wca_fun_stats wca_proxy
 //   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wiki
 // ─ covers-routes-end ─
@@ -327,6 +327,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'PUT', p: '/v1/ops/commands/reorder', g: 'admin', zh: '重排命令', en: 'Reorder commands' },
   { d: 'content', m: 'PUT', p: '/v1/ops/commands/:id', g: 'admin', zh: '改命令', en: 'Edit command' },
   { d: 'content', m: 'DELETE', p: '/v1/ops/commands/:id', g: 'admin', zh: '删命令', en: 'Delete command' },
+  { d: 'content', m: 'GET', p: '/v1/page-notices', g: 'public', zh: '每页顶部通知条(enabled)', en: 'Per-page notice bars (enabled)' },
+  { d: 'content', m: 'GET', p: '/v1/page-notices/manage', g: 'admin', zh: '全部通知(含停用)', en: 'All notices incl. disabled' },
+  { d: 'content', m: 'PUT', p: '/v1/page-notices', g: 'admin', zh: '按路径新增/编辑通知', en: 'Upsert notice by path' },
+  { d: 'content', m: 'DELETE', p: '/v1/page-notices/:id', g: 'admin', zh: '删通知', en: 'Delete notice' },
   { d: 'content', m: 'GET', p: '/v1/paint/drawings', g: 'login', zh: '我的矢量画作', en: 'My paint drawings' },
   { d: 'content', m: 'GET', p: '/v1/paint/drawings/:id', g: 'public', zh: '单个画作', en: 'Single drawing' },
   { d: 'content', m: 'POST', p: '/v1/paint/drawings', g: 'login', zh: '保存画作', en: 'Save drawing' },
