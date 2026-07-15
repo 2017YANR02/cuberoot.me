@@ -28,12 +28,37 @@ export function formatTime(seconds: number | undefined | null): string {
 // / "1:23.4" → "1:23.40", while leaving integers (FMC moves "29"), "DNF", and
 // MBLD points ("11/13 58:00") untouched. Returns '' for empty so `|| formatTime(...)`
 // fallbacks at call sites still kick in.
-export function padReconSingle(value: string | undefined | null): string {
+function padReconSingle(value: string | undefined | null): string {
   const v = (value ?? '').trim();
   if (!v) return '';
   return v.replace(/(\d+)\.(\d+)/g, (_m, int: string, frac: string) =>
     frac.length >= 2 ? `${int}.${frac}` : `${int}.${frac.padEnd(2, '0')}`,
   );
+}
+
+// Headline single string for a recon solve. FMC(最少步)stores a move count
+// (positive integer), but legacy rows and the raw time carry a time-formatted
+// "24.00" — for FMC we always render the integer "24" (DNF/DNS text passes
+// through). Non-FMC keeps the padded stored value, else the formatted raw time.
+// Consolidates the repeated `padReconSingle(value) || formatTime(rawTime)` shape
+// across recon views so FMC is normalized in exactly one place.
+export function formatReconSingle(
+  event: string | undefined | null,
+  value: string | undefined | null,
+  rawTime: number | undefined | null,
+): string {
+  if (event === 'fmc') {
+    const v = (value ?? '').trim();
+    if (v) {
+      if (/^(dnf|dns)$/i.test(v)) return v.toUpperCase();
+      const n = parseFloat(v.replace(/[^0-9.]/g, ''));
+      if (Number.isFinite(n)) return String(Math.floor(n));
+      return v;
+    }
+    if (rawTime != null && rawTime >= 0) return String(Math.floor(rawTime));
+    return rawTime != null ? formatTime(rawTime) : '';
+  }
+  return padReconSingle(value) || (rawTime != null ? formatTime(rawTime) : '');
 }
 
 export function formatResult(val: number | undefined | null): string {
