@@ -2,7 +2,7 @@
 # Population in this bin: 42
 # Samples listed: 42 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 108204001,U2 R2 L2 F2 D B D' R2 U L2 F' U2 B R2 L2 F2 D2 F,B,San Pedro de Macoris Open 2015 (2015-02-08),333 R2 A #4

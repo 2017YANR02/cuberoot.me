@@ -2,7 +2,7 @@
 # Population in this bin: 140
 # Samples listed: 140 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 13936001,B' L2 F U2 L2 F2 R' F2 U L' U' R2 D2 L2 F R2 L2 B',R,Toronto Open Spring 2014 (2014-04-26),333 R2 A #2

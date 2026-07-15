@@ -2,7 +2,7 @@
 # Population in this bin: 104
 # Samples listed: 104 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 29555001,L' B2 U2 L U2 R U2 L2 R' U2 B F' R' D2 B' D B U' F' L2 B2,W,PLS Sopot 2014 (2014-06-21~22),333 R1 B #5

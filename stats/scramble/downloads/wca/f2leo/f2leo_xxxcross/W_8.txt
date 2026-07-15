@@ -2,7 +2,7 @@
 # Population in this bin: 914
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 3839483001,R2 B' L B L' B2 U2 F2 D2 L' F2 U' R' B2 D' B U' F2,W,24 Horas em Salvador 2024 (2024-06-08~09),333 Final A E2

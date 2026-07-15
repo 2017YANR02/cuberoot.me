@@ -2,7 +2,7 @@
 # Population in this bin: 892
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 5475705001,B2 U B2 R2 U2 L2 U' L2 F2 B' U2 F' L2 U' F U' B U R',G,Only Cubes in Scarborough 2026 (2026-03-28),333oh Final A E1

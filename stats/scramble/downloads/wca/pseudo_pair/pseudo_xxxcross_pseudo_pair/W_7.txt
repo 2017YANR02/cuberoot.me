@@ -2,7 +2,7 @@
 # Population in this bin: 112
 # Samples listed: 112 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 46950001,U2 F2 D2 B2 U L2 D R F L F' D F L' D2 L' B2 F,W,Brasileiro Etapa de Inverno 2014 (2014-07-25~27),333oh R1 B #1

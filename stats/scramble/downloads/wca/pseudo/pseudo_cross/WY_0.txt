@@ -2,7 +2,7 @@
 # Population in this bin: 54
 # Samples listed: 54 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 94470001,R2 D U B2 F2 U2 R2 F U2 L' D' F2 D' R2 U F R2 U2 F,W,Kyushu Open 2014 (2014-12-28),333 Final A #4

@@ -2,7 +2,7 @@
 # Population in this bin: 629
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 1973508001,R B R B2 D2 L' D B' F2 L B2 L2 F2 R' U L F,O,Welcome Back Nepal 2022 (2022-06-17~18),333oh R1 A #2

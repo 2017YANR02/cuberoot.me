@@ -2,7 +2,7 @@
 # Population in this bin: 14
 # Samples listed: 14 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 570407001,R2 F L2 U2 R2 F D2 R2 F2 R U' F2 R' U' F' U' B D R',O,Univalle Spring 2017 (2017-08-12~13),333oh R1 A #4

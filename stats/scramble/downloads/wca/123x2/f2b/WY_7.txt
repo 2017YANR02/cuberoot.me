@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / WY / bin 7
-# Population in this bin: 67
-# Samples listed: 67 (all entries in this bin)
+# Population in this bin: 68
+# Samples listed: 68 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 2686001,F B U2 B' U' R2 B D F' B2 R F2 U2 L2 B' L2 F2 L2,W,CMI Fiesta Open 2014 (2014-03-21~23),333 Final B #5
@@ -72,3 +72,4 @@
 5354121001,L2 R F' L2 U2 L2 D' U' F2 U' R D L2 U' B2,Y,Otsu Biwako Winter 2026 (2026-02-01),333oh R1 B #2
 5365708001,L2 D' R2 D F2 D' F2 L2 F U2 F U' R' B F' L' U2 L D,Y,Mini-Tridentum 2026 (2026-01-31~02-01),333oh Final A E2
 5690398022,U' B R B U' F2 L2 D2 B' R2 D R2 L2 F' U2 R2 F L2,Y,Headache in Kode 2026 (2026-06-05~07),333mbf Final A #2
+5749542001,L R2 F' L2 B' F L2 R2 B' U' R D R' B D2 B2 U' R' U2,Y,FLIP Open 2026 (2026-07-11~12),333oh Final C #4

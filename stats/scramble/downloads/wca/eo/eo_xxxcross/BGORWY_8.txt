@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGORWY / bin 8
-# Population in this bin: 699
+# Population in this bin: 700
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 3451814001,L B' U R' B' R U' F L2 B' L2 B2 U2 B2 U2 B' L F,G,Longjum'Open 2024 (2024-01-27~28),333oh R1 A #4

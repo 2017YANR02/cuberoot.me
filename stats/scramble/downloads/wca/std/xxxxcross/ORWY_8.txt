@@ -2,7 +2,7 @@
 # Population in this bin: 10
 # Samples listed: 10 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 111030001,D B D L2 D2 R2 L2 F' L2 F L U2 B2 U B2 R2 F2 D2,R,Osijek Open 2015 (2015-02-21~22),333 R1 B #5

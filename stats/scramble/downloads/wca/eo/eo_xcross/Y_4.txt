@@ -2,7 +2,7 @@
 # Population in this bin: 64
 # Samples listed: 64 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 27905001,D' B U' D2 B' R F2 D2 L U B L' U2 R' B2 U2 B2 D2 R,Y,Back to Piedemonte 2014 (2014-06-15),333 R2 B #2

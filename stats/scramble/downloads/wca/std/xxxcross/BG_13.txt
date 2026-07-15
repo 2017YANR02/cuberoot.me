@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / BG / bin 13
-# Population in this bin: 21
-# Samples listed: 21 (all entries in this bin)
+# Population in this bin: 22
+# Samples listed: 22 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 198498001,F2 U2 L2 F2 U2 R2 U2 B' D2 L' F D R B D L U' L2 D2 U',B,SP Open Mini 2015 (2015-10-10),333oh R1 G #5
@@ -26,3 +26,4 @@
 5369799001,R2 F2 R2 F' R2 U2 F' L2 D2 L F L2 R U2 B L2 D2 U F' R2 D',B,Devon Winter 2026 (2026-02-07~08),333bf Final A E2
 5413278062,L' D' L B' R' B2 U B2 L F2 L2 D2 B' U2 D2 B2 L2 F' R2 L2 B' L',B,CF Goes Sideways Brzeziny 2026 (2026-02-21~22),333mbf Final A #2
 5677609054,B' R' F2 R U2 B2 L U2 L U2 R' D B' D U F2 D' L D' F' L B,B,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf R1 A #3
+5749634001,R' U' F L' U2 B2 L D2 R' B2 D2 R2 U2 R' D' F2 L' D2 F D' R U' B2 R' U' F,B,FMC Nanjing 2026 (2026-07-12),333fm Final A #2

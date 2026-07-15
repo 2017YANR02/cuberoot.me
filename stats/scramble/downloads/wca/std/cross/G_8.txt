@@ -2,7 +2,7 @@
 # Population in this bin: 728
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 4818663001,B2 L' D2 L2 D' U' B2 D' R2 D' R B L B D R' B F D' L' F,G,Dublin Summer Solving 2025 (2025-06-21~22),333bf Final A #3

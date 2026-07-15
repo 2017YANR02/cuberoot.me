@@ -2,7 +2,7 @@
 # Population in this bin: 853
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 4503402001,L' R2 U2 R2 B' U2 F' L2 U2 B2 U2 D B' U2 F' D' L F L2,R,Avenida Chile XX 2025 (2025-02-15~16),333oh R1 A #5
