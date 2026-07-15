@@ -2,7 +2,7 @@
 # Population in this bin: 11
 # Samples listed: 11 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 351082001,F2 D2 B2 R U2 L' F2 U2 F2 D2 L2 B D' F2 L' D F R2 B2 L2,O,CCC Summer Open 2016 (2016-08-20~21),333 R2 B E2

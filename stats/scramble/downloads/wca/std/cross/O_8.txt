@@ -2,7 +2,7 @@
 # Population in this bin: 718
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 1046988001,U L B2 D' R' U' F' B' D2 R' B2 U' R2 B2 D F2 U R2 B2 D2 F2,O,Huehue Open 2019 (2019-03-09~10),333ft Final A #4

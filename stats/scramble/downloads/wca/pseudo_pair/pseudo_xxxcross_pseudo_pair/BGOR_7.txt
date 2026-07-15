@@ -2,7 +2,7 @@
 # Population in this bin: 501
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 5226045001,F2 B2 L' U2 L2 U2 D' B L U' L2 B2 D' F2 D F2 L2 D2 R2 B,G,Guadix Open 2025 (2025-11-29~30),333 R2 C E1

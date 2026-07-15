@@ -2,7 +2,7 @@
 # Population in this bin: 607
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 1875958001,U2 L2 B L2 B2 D2 F' U2 F2 L2 R' U' F2 D B R',B,Kirkkonummen Kuutionvääntelyt 2022 (2022-04-15~17),333 Final A #2

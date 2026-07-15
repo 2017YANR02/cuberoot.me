@@ -2,7 +2,7 @@
 # Population in this bin: 798
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 5390296001,D2 F2 R' D2 L F2 R F2 U' R2 D' U2 R F L2 U2 R2 B2,G,Guangdong Open - Revival & Rival 2026 (2026-02-06~08),333 R3 A E1

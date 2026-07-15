@@ -2,7 +2,7 @@
 # Population in this bin: 678
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 561001,B U L2 F' U' F R' B D' L F U2 B' R2 F U2 D2 F',Y,Hessen Open 2014 (2014-03-15~16),333 R2 A #2

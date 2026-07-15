@@ -2,7 +2,7 @@
 # Population in this bin: 570
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 5665273001,U' L2 R' U2 R' B2 D2 U2 L2 F2 R D2 F D2 L' D' B L D U,W,Hangzhou Open 2026 (2026-05-23),333 R1 F #3

@@ -2,7 +2,7 @@
 # Population in this bin: 70
 # Samples listed: 70 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 197066001,D' F U2 B2 L2 D' L' F2 B' R U2 R2 F B2 L2 B' R2 L2 F,O,Torneo Medellín Explora 2015 (2015-10-04),333 R1 A E2

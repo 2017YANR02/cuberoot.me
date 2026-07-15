@@ -2,7 +2,7 @@
 # Population in this bin: 246
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 5099434028,B2 R' D B' D R' U R U' F' R2 U F2 D F2 U2 B2 U D L B,O,Thailand Championship 2025 (2025-10-11~13),333mbf Final A #1

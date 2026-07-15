@@ -2,7 +2,7 @@
 # Population in this bin: 14
 # Samples listed: 14 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 661016003,B2 R2 D2 R F2 D2 L' R' B2 F' R' D2 F' L2 U' F2 R' U2 B' L2 B',B,Oficina Open 2016 (2016-06-18~19),333mbf Final A #1

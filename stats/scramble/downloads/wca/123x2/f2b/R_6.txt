@@ -2,7 +2,7 @@
 # Population in this bin: 7
 # Samples listed: 7 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 113641001,F2 D2 L' B2 R' U2 R D2 R2 D2 B' F' D' B R2 F' D2 F R',R,Faria Brito Open 2015 (2015-02-28~03-01),333 R2 B #2

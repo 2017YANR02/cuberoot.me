@@ -2,7 +2,7 @@
 # Population in this bin: 957
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 4676817001,R' U2 B U2 B' R2 F U' B' F' U' F D R2 D2 L2 B,R,Let's Twist Again Landsbro 2025 (2025-04-26~27),333 Final B #1

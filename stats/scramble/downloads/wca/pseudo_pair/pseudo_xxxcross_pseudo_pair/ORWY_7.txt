@@ -2,7 +2,7 @@
 # Population in this bin: 474
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 2198244038,B U' D' B2 L B' U B2 D2 F2 L2 U2 L2 B2 U' F2 U' R B,W,Trondheim Mental Breakdown 2022 (2022-09-24~25),333mbf Final A #3

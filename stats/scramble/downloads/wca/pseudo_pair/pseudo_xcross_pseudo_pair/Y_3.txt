@@ -2,7 +2,7 @@
 # Population in this bin: 707
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 1067552001,B' D2 R2 F D2 B U L B' L B2 U' F' D2 R2 D' U2,Y,Astrakhan Spring Open 2019 (2019-03-23~24),333 R1 A #5

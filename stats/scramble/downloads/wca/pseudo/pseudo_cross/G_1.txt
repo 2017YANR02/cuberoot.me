@@ -2,7 +2,7 @@
 # Population in this bin: 328
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 16806001,L2 B L2 F2 L2 R2 F' R2 F' D2 F' D R U2 L' B' U2 L' U' F' U2 B R,G,Castellon Open 2014 (2014-05-02~03),333bf Final A #2

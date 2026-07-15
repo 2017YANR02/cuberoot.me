@@ -2,7 +2,7 @@
 # Population in this bin: 123
 # Samples listed: 123 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 23678001,D R2 U2 R2 D2 F2 U B2 F2 R U F' D F U' F' D,B,San Diego Summer Splash 2014 (2014-05-24),333oh R1 A E2

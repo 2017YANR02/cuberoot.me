@@ -2,7 +2,7 @@
 # Population in this bin: 4
 # Samples listed: 4 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 3670889052,R F' B' D B2 D F' B' D2 L' U F2 D F2 U R2 U' D' L2 U2,G,New Jersey Quiet Championship 2024 (2024-04-14),333mbf Final A #1

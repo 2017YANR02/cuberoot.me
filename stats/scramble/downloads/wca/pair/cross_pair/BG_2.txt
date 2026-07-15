@@ -2,7 +2,7 @@
 # Population in this bin: 390
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 5484523001,R' F2 R2 U' R F R' B L' F2 U2 R B2 R D2 L2 D2 B U,B,Cube Against Cancer Pittsburgh 2026 (2026-03-28),333 R1 B #4

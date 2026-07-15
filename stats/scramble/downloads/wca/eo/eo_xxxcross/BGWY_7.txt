@@ -2,7 +2,7 @@
 # Population in this bin: 35
 # Samples listed: 35 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-07-14
+# Generated: 2026-07-15
 # Columns: id,scramble,bottom_color,competition,round
 
 115238001,D R' U L' U2 B U2 L2 B' L' U' B2 U2 R2 U L2 D L2 B2,W,Summit City Open 2015 (2015-03-07),333 R2 A E1
