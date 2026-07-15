@@ -21,58 +21,12 @@
   line-height: 1.55;
 }
 
-.pos-input-row {
-  display: flex;
-  gap: 0.6rem;
-  align-items: stretch;
-  flex-wrap: wrap;
+/* 项目选择器(SolveTabs) */
+.pos-toprow {
+  margin-bottom: 1.25rem;
 }
-
-.pos-input-wrap {
-  position: relative;
-  flex: 1 1 280px;
-  display: flex;
-}
-
-.pos-input {
-  width: 100%;
-  padding: 0.55rem 2rem 0.55rem 0.7rem;
-  font-family: var(--font-mono);
-  font-size: 0.95rem;
-  color: var(--foreground);
-  background: var(--background);
-  border: 1px solid var(--input);
-  border-radius: 8px;
-}
-
-.pos-input:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 1px;
-}
-
-.pos-input-wrap .clear-btn {
-  position: absolute;
-  right: 0.45rem;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.pos-random-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 0.9rem;
-  font-size: 0.9rem;
-  color: var(--primary-foreground);
-  background: var(--primary);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.pos-random-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
+.pos-toprow .solve-tabs {
+  margin: 0;
 }
 
 .pos-error {
@@ -156,10 +110,5 @@
 
   .pos-page h1 {
     font-size: 1.3rem;
-  }
-
-  .pos-random-btn {
-    flex: 1 1 auto;
-    justify-content: center;
   }
 }
