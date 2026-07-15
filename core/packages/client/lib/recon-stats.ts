@@ -164,7 +164,9 @@ function computeStm(recon: string, event?: string): number {
   return countStmFromTokens(recon);
 }
 
-function computeTps(stm: number, single: number): number {
+// FMC(最少步)的 rawTime 存的是步数而非秒数,stm/rawTime 算不出有意义的 TPS —— 直接不算。
+function computeTps(stm: number, single: number, event?: string): number {
+  if (event === 'fmc') return 0;
   if (!stm || !single || single <= 0) return 0;
   const floored = truncateCs(single);
   if (floored <= 0) return 0;
@@ -373,7 +375,7 @@ export function computeAllStats(
 ): ReconStatsResult {
   const recon = solutionText || '';
   const stm = computeStm(recon, event);
-  const tps = computeTps(stm, rawTimeSec);
+  const tps = computeTps(stm, rawTimeSec, event);
   const ll = computeLl(recon);
   // NOTE: F2L = STM - LL（含 cross 步数；与 Python 参考一致）
   const f2l = stm > 0 && ll > 0 ? stm - ll : 0;
@@ -406,10 +408,12 @@ const ROTATION_LINE_RE = /^(?:[xyz][2']?\s*)+$/;
 /**
  * `48STM/ 8.56=5.61TPS` 摘要行,caption 首行与详情页解法上方共用。
  * SQ1 按"/"切片计 STM(见 computeStm),速度单位相应改叫 SPS。
+ * FMC(最少步)没有速度概念(rawTime 存的是步数而非秒数),只标 STM。
  */
 export function buildCaptionHeader(solutionText: string, single: number, event?: string): string {
   const stm = computeStm(solutionText, event);
-  const tps = computeTps(stm, single);
+  if (event === 'fmc') return `${stm}STM`;
+  const tps = computeTps(stm, single, event);
   const unit = event === 'sq1' ? 'SPS' : 'TPS';
   return `${stm}STM/ ${formatTime(single)}=${tps.toFixed(2)}${unit}`;
 }
