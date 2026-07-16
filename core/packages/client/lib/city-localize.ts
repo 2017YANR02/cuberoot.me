@@ -10,7 +10,7 @@ import { PLACE_CITY_ZH, PLACE_ADMIN_ZH } from '@/lib/data/place-zh';
 const CITY_ZH: Record<string, string> = {
   'Beijing': '北京', 'Shanghai': '上海', 'Tianjin': '天津', 'Chongqing': '重庆',
   'Hong Kong': '香港', 'Macau': '澳门', 'Macao': '澳门',
-  'Anyang': '安阳', 'Baoji': '宝鸡', 'Changchun': '长春', 'ChangChun': '长春',
+  'Anyang': '安阳', 'Baoji': '宝鸡', 'Beihai': '北海', 'Changchun': '长春', 'ChangChun': '长春',
   'Changsha': '长沙', 'Changzhou': '常州', 'Chaozhou': '潮州', 'Chengdu': '成都',
   'Chifeng': '赤峰', 'Dalian': '大连', 'Dandong': '丹东', 'Dongguan': '东莞',
   'Ezhou': '鄂州', 'Foshan': '佛山', 'Fushun': '抚顺', 'Fuzhou': '福州',
@@ -55,6 +55,7 @@ const CITY_ZH: Record<string, string> = {
   'São Paulo': '圣保罗', 'Sao Paulo': '圣保罗',
   'Las Vegas': '拉斯维加斯', 'Lake Buena Vista': '布埃纳维斯塔湖',
   'Düsseldorf': '杜塞尔多夫', 'Dusseldorf': '杜塞尔多夫', 'Budapest': '布达佩斯',
+  'Ramallah': '拉姆安拉',
 };
 
 const GREATER_CN = new Set(['CN', 'HK', 'MO', 'TW']);
