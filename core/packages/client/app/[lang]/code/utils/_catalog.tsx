@@ -118,6 +118,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Viewport-width detection (matchMedia), SSR-safe with a live listener.',
   },
   {
+    name: 'usePanelClamp',
+    sig: 'usePanelClamp(open: boolean, ref: RefObject<HTMLElement | null>): void',
+    imp: "import { usePanelClamp } from '@/hooks/usePanelClamp';",
+    usage: 'usePanelClamp(open, panelRef); // {open && <div ref={panelRef} className="x-panel">}',
+    category: 'hook',
+    zh: '锚定下拉面板防溢出:打开时实测面板矩形,右缘越出视口就整体左移(负 margin-left,不碰 transform)。锚在触发钮下方(absolute + top:100%)的浮层必用;CSS 规则注明 anchored-panel: clamped(CI ratchet 查)。',
+    en: 'Viewport clamp for anchored dropdown panels: on open, measures the panel and shifts it left (negative margin-left, transform untouched) if its right edge crosses the viewport. Required for panels anchored below a trigger (absolute + top:100%); declare anchored-panel: clamped in the CSS rule (CI ratchet).',
+  },
+  {
     name: 'useMembership',
     sig: 'useMembership(): { membership: Membership | null; isMember: boolean; loading: boolean; refresh: () => void }',
     imp: "import { useMembership } from '@/hooks/useMembership';",

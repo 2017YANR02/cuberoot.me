@@ -54,6 +54,14 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     en: { title: 'IME-unsafe search input', desc: 'An <input>/<textarea> with its value bound directly to a nuqs state writes back to the URL on every keystroke, breaking CJK input-method composition. Use <SearchInput> (composition handling built in).' },
   },
   {
+    id: 'anchored-panel',
+    hook: 'block-unclamped-anchored-panel.ps1 → hook-detect-unclamped-anchored-panel.mjs',
+    test: 'anchored-panel-clamp.test.ts',
+    baseline: '21 ↓',
+    zh: { title: '锚定下拉面板未钳视口', desc: '挂在触发钮下方的浮层(position:absolute + top:~100%)在触发钮靠右时右缘越出视口被裁(issue #29 首页两个 picker 手机端被切)。新面板必须挂 usePanelClamp 并在 CSS 注明 anchored-panel: clamped,或确证安全注明 anchored-panel: safe;两侧钉死 / width:100% 的形态自动豁免。运行时实测走 audit:overflow 的 popup pass。' },
+    en: { title: 'Anchored panel without viewport clamp', desc: 'A panel anchored under its trigger (position:absolute + top:~100%) gets clipped at the right viewport edge when the trigger sits near it (issue #29: both homepage pickers on phones). New panels must wire usePanelClamp and declare anchored-panel: clamped in the CSS (or anchored-panel: safe with a reason); left+right-pinned / width:100% shapes are auto-exempt. Runtime verification via the audit:overflow popup pass.' },
+  },
+  {
     id: 'traditional',
     hook: 'block-handwritten-trad.ps1 → hook-detect-traditional.mjs',
     test: 'i18n-removal-guard.test.ts + i18n-no-isz-text-ternary.test.ts',
