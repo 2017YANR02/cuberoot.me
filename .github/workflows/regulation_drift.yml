@@ -81,7 +81,7 @@ jobs:
           else
             gh issue create \
               --label regulation-drift \
-              --assignee RuiminYan \
+              --assignee "${{ github.repository_owner }}" \
               --title "WCA 规则更新检测 ($(date -u +%Y-%m-%d))" \
               --body-file "$RUNNER_TEMP/reg-drift-report.md"
           fi

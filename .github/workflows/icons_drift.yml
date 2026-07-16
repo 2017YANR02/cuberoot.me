@@ -1,0 +1,66 @@
+# 每周检测上游 cubing/icons(src/svg)是否新增/变更了 SVG。
+# 站内 components/EventIcon/svg/ 是它的 verbatim vendored 副本(驱动 CubingIcon /
+# /sim 选择器 / /icon 画廊);上游动了就开/更新带清单+处理步骤的 issue 提醒
+# (assignee 触发 GitHub 通知),把 issue 丢给 AI 即可完成 vendoring。
+# 检测只打一次 GitHub trees API(node 内置 fetch,无需 install)。
+name: cubing/icons Drift
+
+on:
+  schedule:
+    # 每周一 08:00 UTC
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: core
+          filter: blob:none
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      # 只用 node 内置 + fetch,无需 pnpm install。带 token 走 5000/h 配额防限流。
+      - name: Check icons drift
+        id: check
+        working-directory: core
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          node packages/client/scripts/icons-check.mjs --report "$RUNNER_TEMP/icons-drift-report.md"
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Fail on detector error
+        if: steps.check.outputs.code == '1'
+        run: |
+          echo "::error::icons-check failed (exit 1) — 上游 API 或本地 svg 目录异常"
+          exit 1
+
+      # 漂移(exit 3):开/更新 issue。已有 open issue 时追加评论,不重复开新的。
+      - name: Open / update drift issue
+        if: steps.check.outputs.code == '3'
+        working-directory: core
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create icons-drift --color 1D76DB --description "上游 cubing/icons 出现新增/变更 SVG" --force || true
+          existing=$(gh issue list --label icons-drift --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file "$RUNNER_TEMP/icons-drift-report.md"
+            echo "commented drift report on #$existing"
+          else
+            gh issue create \
+              --label icons-drift \
+              --assignee "${{ github.repository_owner }}" \
+              --title "cubing/icons 上游图标更新 ($(date -u +%Y-%m-%d))" \
+              --body-file "$RUNNER_TEMP/icons-drift-report.md"
+          fi
