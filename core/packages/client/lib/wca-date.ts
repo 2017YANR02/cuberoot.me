@@ -14,6 +14,14 @@ export function toIsoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
+/** ISO 时间戳 → 本地时区 'YYYY-MM-DD HH:MM'(报名起止等需要时分的场合,不带秒);非法输入返回 ''。 */
+export function formatDateTimeLocal(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${toIsoDate(d)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 const WEEKDAY_ZH = ['日', '一', '二', '三', '四', '五', '六'];
 const WEEKDAY_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 

@@ -19,6 +19,7 @@ import {
 } from '@/lib/comp-schedule';
 import { eventDisplayName } from '@/lib/wca-events';
 import { localizeCity } from '@/lib/city-localize';
+import { encode as encodeQr } from 'uqr';
 import type { CompInfo } from '@/lib/comp-wcif';
 
 const POSTER_W = 540;
@@ -36,6 +37,24 @@ function posterActivityName(
   const rtId = getRoundTypeId(round.roundNumber, round.totalRounds, !!round.cutoff);
   const attempt = /-a(\d+)$/.exec(a.activityCode)?.[1];
   return `${roundTypeShort(rtId, isZh)}${attempt ? ` #${attempt}` : ''}`;
+}
+
+// 右下角二维码:uqr 编码出模块矩阵,渲成单 <path> SVG。二维码要保证可扫,
+// 固定真黑白、不随主题/配色 token 走(海报深浅底都压白底卡)。
+function QrSvg({ text, className }: { text: string; className?: string }) {
+  const { size, data } = useMemo(() => encodeQr(text, { border: 1, ecc: 'M' }), [text]);
+  let d = '';
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (data[y]![x]) d += `M${x} ${y}h1v1h-1z`;
+    }
+  }
+  return (
+    <svg className={className} viewBox={`0 0 ${size} ${size}`} shapeRendering="crispEdges" aria-hidden>
+      <rect width={size} height={size} fill="#fff" />
+      <path d={d} fill="#000" />
+    </svg>
+  );
 }
 
 interface CompPosterProps {
@@ -191,12 +210,6 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
                       <dd>{dateStr}{dateWd ? ` ${dateWd}` : ''}</dd>
                     </div>
                   )}
-                  {info?.city && (
-                    <div className="comp-poster-fact">
-                      <dt>{tr({ zh: '城市', en: 'City' })}</dt>
-                      <dd>{localizeCity(info.city, isZh, info.country_iso2)}</dd>
-                    </div>
-                  )}
                   {regStr && (
                     <div className="comp-poster-fact">
                       <dt>{tr({ zh: '报名', en: 'Registration' })}</dt>
@@ -209,6 +222,12 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
                       <dd>{info.competitor_limit}</dd>
                     </div>
                   ) : null}
+                  {info?.city && (
+                    <div className="comp-poster-fact">
+                      <dt>{tr({ zh: '城市', en: 'City' })}</dt>
+                      <dd>{localizeCity(info.city, isZh, info.country_iso2)}</dd>
+                    </div>
+                  )}
                 </dl>
               </header>
 
@@ -249,7 +268,10 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
               </div>
             </div>
 
-            <footer className="comp-poster-foot">{url}</footer>
+            <footer className="comp-poster-foot">
+              <span>{url}</span>
+              <QrSvg text={`https://${url}`} className="comp-poster-qr" />
+            </footer>
           </div>
         </div>
         <div className="comp-poster-actions">
