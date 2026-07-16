@@ -76,17 +76,45 @@ function escapeLike(s: string): string {
 // 正文长度上限。长文并入论坛后(原 /article 无此限),放宽到 50k 让教程级长帖能发。
 const MAX_CONTENT_LEN = 50000;
 
-// post_total = 全部楼层数(含软删占位)——客户端「跳到最后一页」的分页数学要按占位算
+// ── 发帖审核(issue #36,Discourse approve-post-count 模式)────────────────────
+// 新用户前 N 帖(含主题首帖)须管理员过审才公开;已过审帖数 >= N 视为可信直发。
+const APPROVE_POST_COUNT = (() => {
+  const n = Number(process.env.FORUM_APPROVE_POST_COUNT);
+  return Number.isInteger(n) && n >= 0 ? n : 3;
+})();
+// 敏感词(Discourse watched words):命中则连可信用户也进队列。逗号分隔,大小写不敏感。
+const WATCH_WORDS = (process.env.FORUM_WATCH_WORDS ?? '')
+  .split(',').map((w) => w.trim().toLowerCase()).filter(Boolean);
+
+type ReviewStatus = 'approved' | 'pending' | 'rejected';
+
+/** 发布门槛:管理员免审 → 敏感词必审 → 已过审帖数不足 N 必审。 */
+async function statusFor(user: WcaUser, text: string): Promise<'approved' | 'pending'> {
+  if (isAdmin(user)) return 'approved';
+  const lower = text.toLowerCase();
+  if (WATCH_WORDS.some((w) => lower.includes(w))) return 'pending';
+  if (APPROVE_POST_COUNT === 0) return 'approved';
+  // LIMIT N 内层:够数就停,不全表数
+  const rows = await query<{ n: number }>(
+    `SELECT COUNT(*)::int AS n FROM (
+       SELECT 1 FROM forum_posts WHERE author_id = ? AND status = 'approved' AND NOT is_deleted LIMIT ?
+     ) s`,
+    [user.wcaId, APPROVE_POST_COUNT],
+  );
+  return rows[0].n >= APPROVE_POST_COUNT ? 'approved' : 'pending';
+}
+
+// post_total = 全部楼层数(含软删/待审占位)——客户端「跳到最后一页」的分页数学要按占位算
 const THREAD_COLS = `t.id, t.title, t.author_id, t.author_name, t.created_at,
   t.reply_count, t.view_count, t.last_post_at, t.last_post_author_id, t.last_post_author_name,
-  t.is_pinned, t.is_locked,
+  t.is_pinned, t.is_locked, t.status,
   (SELECT COUNT(*)::int FROM forum_posts pp WHERE pp.thread_id = t.id) AS post_total`;
 
 interface ThreadRow {
   id: string; title: string; author_id: string; author_name: string; created_at: Date;
   reply_count: number; view_count: number; last_post_at: Date;
   last_post_author_id: string | null; last_post_author_name: string | null;
-  is_pinned: boolean; is_locked: boolean; post_total: number;
+  is_pinned: boolean; is_locked: boolean; status: ReviewStatus; post_total: number;
   forum_slug?: string; forum_name_en?: string; forum_name_zh?: string;
   snippet_content?: string | null;
 }
@@ -97,7 +125,7 @@ function threadJson(r: ThreadRow) {
     createdAt: r.created_at, replyCount: r.reply_count, viewCount: r.view_count,
     lastPostAt: r.last_post_at, lastPostAuthorId: r.last_post_author_id,
     lastPostAuthorName: r.last_post_author_name, isPinned: r.is_pinned, isLocked: r.is_locked,
-    postTotal: r.post_total,
+    status: r.status, postTotal: r.post_total,
   };
 }
 
@@ -150,11 +178,11 @@ forumRoutes.get('/forum/index', async (c) => {
      LEFT JOIN LATERAL (
        SELECT COUNT(*)::int AS thread_count,
               (COALESCE(SUM(t.reply_count), 0) + COUNT(*))::int AS post_count
-       FROM forum_threads t WHERE t.forum_id = f.id AND NOT t.is_deleted
+       FROM forum_threads t WHERE t.forum_id = f.id AND NOT t.is_deleted AND t.status = 'approved'
      ) s ON TRUE
      LEFT JOIN LATERAL (
        SELECT t.id, t.title, t.last_post_at, t.last_post_author_id, t.last_post_author_name
-       FROM forum_threads t WHERE t.forum_id = f.id AND NOT t.is_deleted
+       FROM forum_threads t WHERE t.forum_id = f.id AND NOT t.is_deleted AND t.status = 'approved'
        ORDER BY t.last_post_at DESC LIMIT 1
      ) lt ON TRUE
      ORDER BY c.sort_order, c.id, f.sort_order, f.id`,
@@ -182,8 +210,8 @@ forumRoutes.get('/forum/index', async (c) => {
   }
 
   const stats = await query<{ threads: number; posts: number; members: number; latest_member: string | null }>(
-    `SELECT (SELECT COUNT(*) FROM forum_threads WHERE NOT is_deleted)::int AS threads,
-            (SELECT (COALESCE(SUM(reply_count), 0) + COUNT(*)) FROM forum_threads WHERE NOT is_deleted)::int AS posts,
+    `SELECT (SELECT COUNT(*) FROM forum_threads WHERE NOT is_deleted AND status = 'approved')::int AS threads,
+            (SELECT (COALESCE(SUM(reply_count), 0) + COUNT(*)) FROM forum_threads WHERE NOT is_deleted AND status = 'approved')::int AS posts,
             (SELECT COUNT(*) FROM app_users)::int AS members,
             (SELECT display_name FROM app_users ORDER BY id DESC LIMIT 1) AS latest_member`,
   );
@@ -221,19 +249,20 @@ forumRoutes.get('/forum/f/:slug', async (c) => {
   const pinned = page === 1
     ? await query<ThreadRow>(
         `SELECT ${THREAD_COLS} FROM forum_threads t
-         WHERE t.forum_id = ? AND t.is_pinned AND NOT t.is_deleted
+         WHERE t.forum_id = ? AND t.is_pinned AND NOT t.is_deleted AND t.status = 'approved'
          ORDER BY t.last_post_at DESC`,
         [forumId],
       )
     : [];
   const threads = await query<ThreadRow>(
     `SELECT ${THREAD_COLS} FROM forum_threads t
-     WHERE t.forum_id = ? AND NOT t.is_pinned AND NOT t.is_deleted
+     WHERE t.forum_id = ? AND NOT t.is_pinned AND NOT t.is_deleted AND t.status = 'approved'
      ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
     [forumId, size, (page - 1) * size],
   );
   const totals = await query<{ n: number }>(
-    'SELECT COUNT(*)::int AS n FROM forum_threads t WHERE t.forum_id = ? AND NOT t.is_pinned AND NOT t.is_deleted',
+    `SELECT COUNT(*)::int AS n FROM forum_threads t
+     WHERE t.forum_id = ? AND NOT t.is_pinned AND NOT t.is_deleted AND t.status = 'approved'`,
     [forumId],
   );
 
@@ -259,12 +288,16 @@ forumRoutes.get('/forum/t/:id', async (c) => {
   const page = posInt(c.req.query('page'), 1, 1, 100000);
   const size = posInt(c.req.query('size'), 20, 1, 100);
 
+  // 鉴权前置:非公开主题(待审/驳回)只有作者与管理员可看;帖子掩码也要用 viewer
+  const viewer = await authenticateUser(c.req.header('Authorization')).catch(() => null);
+  const viewerIsAdmin = !!viewer && isAdmin(viewer);
+
   const threads = await query<ThreadRow & {
-    forum_id: string; is_deleted: boolean;
+    forum_id: string; is_deleted: boolean; review_note: string | null;
     forum_slug: string; forum_name_en: string; forum_name_zh: string;
     cat_slug: string; cat_name_en: string; cat_name_zh: string;
   }>(
-    `SELECT ${THREAD_COLS}, t.forum_id, t.is_deleted,
+    `SELECT ${THREAD_COLS}, t.forum_id, t.is_deleted, t.review_note,
             f.slug AS forum_slug, f.name_en AS forum_name_en, f.name_zh AS forum_name_zh,
             c2.slug AS cat_slug, c2.name_en AS cat_name_en, c2.name_zh AS cat_name_zh
      FROM forum_threads t
@@ -275,6 +308,10 @@ forumRoutes.get('/forum/t/:id', async (c) => {
   );
   if (threads.length === 0 || threads[0].is_deleted) return c.json({ error: 'Thread not found' }, 404);
   const t = threads[0];
+  if (t.status !== 'approved' && !viewerIsAdmin && viewer?.wcaId !== t.author_id) {
+    // 对外不区分「不存在」与「待审核」,不泄露存在性
+    return c.json({ error: 'Thread not found' }, 404);
+  }
 
   const totals = await query<{ n: number }>(
     'SELECT COUNT(*)::int AS n FROM forum_posts WHERE thread_id = ?', [id],
@@ -285,8 +322,9 @@ forumRoutes.get('/forum/t/:id', async (c) => {
   const posts = await query<{
     id: string; author_id: string; author_name: string; content: string;
     created_at: Date; edited_at: Date | null; is_deleted: boolean;
+    status: ReviewStatus; review_note: string | null;
   }>(
-    `SELECT id, author_id, author_name, content, created_at, edited_at, is_deleted
+    `SELECT id, author_id, author_name, content, created_at, edited_at, is_deleted, status, review_note
      FROM forum_posts WHERE thread_id = ? ORDER BY id LIMIT ? OFFSET ?`,
     [id, size, offset],
   );
@@ -303,6 +341,7 @@ forumRoutes.get('/forum/t/:id', async (c) => {
       `SELECT p.author_id, COUNT(*)::int AS n FROM forum_posts p
        JOIN forum_threads t2 ON t2.id = p.thread_id
        WHERE p.author_id IN (${ph}) AND NOT p.is_deleted AND NOT t2.is_deleted
+         AND p.status = 'approved'
        GROUP BY p.author_id`,
       authorIds,
     );
@@ -339,9 +378,8 @@ forumRoutes.get('/forum/t/:id', async (c) => {
     }
   }
 
-  // 可选鉴权:游客照常读,登录者多拿自己的反应
+  // 可选鉴权(viewer 已在上面取):游客照常读,登录者多拿自己的反应
   const myReactions: Record<number, string> = {};
-  const viewer = await authenticateUser(c.req.header('Authorization')).catch(() => null);
   if (viewer && postIds.length > 0) {
     const ph = postIds.map(() => '?').join(',');
     const rows = await query<{ post_id: string; kind: string }>(
@@ -352,20 +390,26 @@ forumRoutes.get('/forum/t/:id', async (c) => {
   }
 
   return c.json({
-    thread: { ...threadJson(t), forumId: Number(t.forum_id) },
+    thread: { ...threadJson(t), forumId: Number(t.forum_id), reviewNote: t.review_note },
     forum: { slug: t.forum_slug, nameEn: t.forum_name_en, nameZh: t.forum_name_zh },
     category: { slug: t.cat_slug, nameEn: t.cat_name_en, nameZh: t.cat_name_zh },
-    posts: posts.map((p, i) => ({
-      id: Number(p.id),
-      authorId: p.author_id,
-      authorName: p.author_name,
-      content: p.is_deleted ? '' : p.content,
-      createdAt: p.created_at,
-      editedAt: p.edited_at,
-      isDeleted: p.is_deleted,
-      postNo: offset + i + 1,
-      reactions: reactions.get(Number(p.id)) ?? [],
-    })),
+    posts: posts.map((p, i) => {
+      // 待审/驳回楼层只对本楼作者与管理员露内容,其他人只见占位(楼号不塌)
+      const canSee = p.status === 'approved' || viewerIsAdmin || viewer?.wcaId === p.author_id;
+      return {
+        id: Number(p.id),
+        authorId: p.author_id,
+        authorName: p.author_name,
+        content: p.is_deleted || !canSee ? '' : p.content,
+        createdAt: p.created_at,
+        editedAt: p.edited_at,
+        isDeleted: p.is_deleted,
+        status: p.status,
+        reviewNote: canSee ? p.review_note : null,
+        postNo: offset + i + 1,
+        reactions: reactions.get(Number(p.id)) ?? [],
+      };
+    }),
     authors,
     myReactions,
     total, page, size,
@@ -394,30 +438,32 @@ forumRoutes.post('/forum/threads', async (c) => {
     return c.json({ error: 'Only admins can post in this forum' }, 403);
   }
 
-  // 单条语句 CTE:主题 + 首帖一起落库,中途崩不会留无首帖的空主题
+  const status = await statusFor(authUser, title + '\n' + content);
+  // 单条语句 CTE:主题 + 首帖一起落库,中途崩不会留无首帖的空主题;status 主题/首帖同值
   const inserted = await query<{ thread_id: string }>(
     `WITH nt AS (
-       INSERT INTO forum_threads (forum_id, title, author_id, author_name, last_post_author_id, last_post_author_name)
-       VALUES (?, ?, ?, ?, ?, ?) RETURNING id
+       INSERT INTO forum_threads (forum_id, title, author_id, author_name, last_post_author_id, last_post_author_name, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id
      )
-     INSERT INTO forum_posts (thread_id, author_id, author_name, content)
-     SELECT id, ?, ?, ? FROM nt RETURNING thread_id`,
-    [Number(forums[0].id), title, authUser.wcaId, authUser.name, authUser.wcaId, authUser.name,
-     authUser.wcaId, authUser.name, content],
+     INSERT INTO forum_posts (thread_id, author_id, author_name, content, status)
+     SELECT id, ?, ?, ?, ? FROM nt RETURNING thread_id`,
+    [Number(forums[0].id), title, authUser.wcaId, authUser.name, authUser.wcaId, authUser.name, status,
+     authUser.wcaId, authUser.name, content, status],
   );
   const threadId = Number(inserted[0].thread_id);
 
   // 新主题 → 管理员。回帖不给管理员发(否则热帖会把收件箱淹了),回帖只找主题作者。
+  // 待审核主题走 forum_review(链接直达审核队列)。
   await notifyBestEffort({
     recipients: adminRecipients(),
-    kind: 'forum_thread',
+    kind: status === 'pending' ? 'forum_review' : 'forum_thread',
     actorKey: authUser.wcaId,
     actorName: authUser.name,
     title,
     excerpt: content,
-    link: `/forum/t/${threadId}`,
+    link: status === 'pending' ? '/forum/review' : `/forum/t/${threadId}`,
   });
-  return c.json({ ok: true, id: threadId });
+  return c.json({ ok: true, id: threadId, status });
 });
 
 // ==================== POST /v1/forum/posts ====================
@@ -432,40 +478,63 @@ forumRoutes.post('/forum/posts', async (c) => {
   if (!content) return c.json({ error: 'content is required' }, 400);
   if (content.length > MAX_CONTENT_LEN) return c.json({ error: `content exceeds ${MAX_CONTENT_LEN} characters` }, 400);
 
-  const threads = await query<{ is_locked: boolean; is_deleted: boolean; title: string; author_id: string }>(
-    'SELECT is_locked, is_deleted, title, author_id FROM forum_threads WHERE id = ?', [threadId],
+  const threads = await query<{ is_locked: boolean; is_deleted: boolean; title: string; author_id: string; status: ReviewStatus }>(
+    'SELECT is_locked, is_deleted, title, author_id, status FROM forum_threads WHERE id = ?', [threadId],
   );
   if (threads.length === 0 || threads[0].is_deleted) return c.json({ error: 'Thread not found' }, 404);
   if (threads[0].is_locked && !isAdmin(authUser)) return c.json({ error: 'Thread is locked' }, 403);
+  // 待审/驳回的主题不开放回帖(作者也不行——先等审核结果;管理员例外)
+  if (threads[0].status !== 'approved' && !isAdmin(authUser)) {
+    return c.json({ error: 'Thread is awaiting review' }, 403);
+  }
 
-  // 单条语句 CTE:插帖 + 主题计数/末帖缓存一起更新;postNo 按自身 id 数楼层,并发下不错位
-  const inserted = await query<{ id: string }>(
-    `WITH np AS (
-       INSERT INTO forum_posts (thread_id, author_id, author_name, content)
-       VALUES (?, ?, ?, ?) RETURNING id
-     ), bump AS (
-       UPDATE forum_threads SET reply_count = reply_count + 1, last_post_at = NOW(),
-         last_post_author_id = ?, last_post_author_name = ? WHERE id = ?
-     )
-     SELECT id FROM np`,
-    [threadId, authUser.wcaId, authUser.name, content, authUser.wcaId, authUser.name, threadId],
-  );
+  const status = await statusFor(authUser, content);
+  // 单条语句 CTE:插帖 + 主题计数/末帖缓存一起更新;postNo 按自身 id 数楼层,并发下不错位。
+  // 待审帖不动计数缓存(过审时再补),但仍占楼层号。
+  const inserted = status === 'approved'
+    ? await query<{ id: string }>(
+        `WITH np AS (
+           INSERT INTO forum_posts (thread_id, author_id, author_name, content)
+           VALUES (?, ?, ?, ?) RETURNING id
+         ), bump AS (
+           UPDATE forum_threads SET reply_count = reply_count + 1, last_post_at = NOW(),
+             last_post_author_id = ?, last_post_author_name = ? WHERE id = ?
+         )
+         SELECT id FROM np`,
+        [threadId, authUser.wcaId, authUser.name, content, authUser.wcaId, authUser.name, threadId],
+      )
+    : await query<{ id: string }>(
+        `INSERT INTO forum_posts (thread_id, author_id, author_name, content, status)
+         VALUES (?, ?, ?, ?, 'pending') RETURNING id`,
+        [threadId, authUser.wcaId, authUser.name, content],
+      );
   const newId = Number(inserted[0].id);
   const nos = await query<{ n: number }>(
     'SELECT COUNT(*)::int AS n FROM forum_posts WHERE thread_id = ? AND id <= ?', [threadId, newId],
   );
 
-  // 回帖 → 主题作者(notify 内部会剔除 actor 自己:自己回自己的帖不通知)。
-  await notifyBestEffort({
-    recipients: [threads[0].author_id],
-    kind: 'forum_reply',
-    actorKey: authUser.wcaId,
-    actorName: authUser.name,
-    title: threads[0].title,
-    excerpt: content,
-    link: `/forum/t/${threadId}`,
-  });
-  return c.json({ ok: true, id: newId, postNo: nos[0].n });
+  // 已发布回帖 → 主题作者(notify 内部会剔除 actor 自己:自己回自己的帖不通知)。
+  // 待审回帖 → 管理员;过审时才通知主题作者(见 /forum/review 审核端点)。
+  await notifyBestEffort(status === 'pending'
+    ? {
+        recipients: adminRecipients(),
+        kind: 'forum_review',
+        actorKey: authUser.wcaId,
+        actorName: authUser.name,
+        title: threads[0].title,
+        excerpt: content,
+        link: '/forum/review',
+      }
+    : {
+        recipients: [threads[0].author_id],
+        kind: 'forum_reply',
+        actorKey: authUser.wcaId,
+        actorName: authUser.name,
+        title: threads[0].title,
+        excerpt: content,
+        link: `/forum/t/${threadId}`,
+      });
+  return c.json({ ok: true, id: newId, postNo: nos[0].n, status });
 });
 
 // ==================== PATCH /v1/forum/posts/:id ====================
@@ -528,16 +597,18 @@ forumRoutes.delete('/forum/posts/:id', async (c) => {
     'UPDATE forum_posts SET is_deleted = TRUE WHERE id = ? AND NOT is_deleted RETURNING thread_id', [id],
   );
   if (flipped.length === 0) return c.json({ error: 'Post not found' }, 404);
-  // 单条语句重算 reply_count + 末帖缓存(被删的可能正是末帖;首帖不可删,可见帖 ≥1)
+  // 单条语句重算 reply_count + 末帖缓存(被删的可能正是末帖;首帖不可删,可见帖 ≥1)。
+  // 计数/末帖只认已过审帖——待审帖从未进过缓存,删它不该动缓存。
   await query(
     `UPDATE forum_threads t
      SET reply_count = GREATEST(s.cnt - 1, 0),
          last_post_at = lp.created_at,
          last_post_author_id = lp.author_id,
          last_post_author_name = lp.author_name
-     FROM (SELECT COUNT(*)::int AS cnt FROM forum_posts WHERE thread_id = ? AND NOT is_deleted) s,
+     FROM (SELECT COUNT(*)::int AS cnt FROM forum_posts
+           WHERE thread_id = ? AND NOT is_deleted AND status = 'approved') s,
           (SELECT created_at, author_id, author_name FROM forum_posts
-           WHERE thread_id = ? AND NOT is_deleted ORDER BY id DESC LIMIT 1) lp
+           WHERE thread_id = ? AND NOT is_deleted AND status = 'approved' ORDER BY id DESC LIMIT 1) lp
      WHERE t.id = ?`,
     [threadId, threadId, threadId],
   );
@@ -615,12 +686,12 @@ forumRoutes.post('/forum/posts/:id/react', async (c) => {
   const kind = body.kind ?? null;
   if (kind !== null && !REACTION_KINDS.includes(kind)) return c.json({ error: 'Invalid reaction kind' }, 400);
 
-  const posts = await query<{ is_deleted: boolean; thread_deleted: boolean }>(
-    `SELECT p.is_deleted, t.is_deleted AS thread_deleted
+  const posts = await query<{ is_deleted: boolean; thread_deleted: boolean; status: ReviewStatus }>(
+    `SELECT p.is_deleted, t.is_deleted AS thread_deleted, p.status
      FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE p.id = ?`,
     [id],
   );
-  if (posts.length === 0 || posts[0].is_deleted || posts[0].thread_deleted) {
+  if (posts.length === 0 || posts[0].is_deleted || posts[0].thread_deleted || posts[0].status !== 'approved') {
     return c.json({ error: 'Post not found' }, 404);
   }
 
@@ -659,7 +730,7 @@ forumRoutes.get('/forum/latest', async (c) => {
   const rows = await query<ThreadRow>(
     `SELECT ${THREAD_COLS}, f.slug AS forum_slug, f.name_en AS forum_name_en, f.name_zh AS forum_name_zh
      FROM forum_threads t JOIN forum_forums f ON f.id = t.forum_id
-     WHERE NOT t.is_deleted
+     WHERE NOT t.is_deleted AND t.status = 'approved'
      ORDER BY t.last_post_at DESC LIMIT ?`,
     [limit],
   );
@@ -681,8 +752,9 @@ forumRoutes.get('/forum/search', async (c) => {
   if (q.length < 2) return c.json({ threads: [], total: 0, page, size });
   const pattern = '%' + escapeLike(q) + '%';
 
-  const where = `NOT t.is_deleted AND (t.title ILIKE ? ESCAPE '\\' OR EXISTS (
-    SELECT 1 FROM forum_posts p WHERE p.thread_id = t.id AND NOT p.is_deleted AND p.content ILIKE ? ESCAPE '\\'))`;
+  const where = `NOT t.is_deleted AND t.status = 'approved' AND (t.title ILIKE ? ESCAPE '\\' OR EXISTS (
+    SELECT 1 FROM forum_posts p WHERE p.thread_id = t.id AND NOT p.is_deleted AND p.status = 'approved'
+      AND p.content ILIKE ? ESCAPE '\\'))`;
   const rows = await query<ThreadRow>(
     `SELECT ${THREAD_COLS}, f.slug AS forum_slug, f.name_en AS forum_name_en, f.name_zh AS forum_name_zh,
             sp.content AS snippet_content
@@ -690,7 +762,8 @@ forumRoutes.get('/forum/search', async (c) => {
      JOIN forum_forums f ON f.id = t.forum_id
      LEFT JOIN LATERAL (
        SELECT p.content FROM forum_posts p
-       WHERE p.thread_id = t.id AND NOT p.is_deleted AND p.content ILIKE ? ESCAPE '\\'
+       WHERE p.thread_id = t.id AND NOT p.is_deleted AND p.status = 'approved'
+         AND p.content ILIKE ? ESCAPE '\\'
        ORDER BY p.id LIMIT 1
      ) sp ON TRUE
      WHERE ${where}
@@ -736,15 +809,16 @@ forumRoutes.post('/forum/posts/:id/report', async (c) => {
   if (reason.length > 500) return c.json({ error: 'reason exceeds 500 characters' }, 400);
 
   const posts = await query<{
-    author_id: string; is_deleted: boolean; thread_deleted: boolean;
+    author_id: string; is_deleted: boolean; thread_deleted: boolean; status: ReviewStatus;
     thread_id: string; thread_title: string;
   }>(
-    `SELECT p.author_id, p.is_deleted, t.is_deleted AS thread_deleted,
+    `SELECT p.author_id, p.is_deleted, t.is_deleted AS thread_deleted, p.status,
             t.id AS thread_id, t.title AS thread_title
      FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id WHERE p.id = ?`,
     [id],
   );
-  if (posts.length === 0 || posts[0].is_deleted || posts[0].thread_deleted) {
+  // 非公开楼层(待审/驳回)对举报者本就不可见,不受理
+  if (posts.length === 0 || posts[0].is_deleted || posts[0].thread_deleted || posts[0].status !== 'approved') {
     return c.json({ error: 'Post not found' }, 404);
   }
   if (posts[0].author_id === authUser.wcaId) return c.json({ error: 'Cannot report your own post' }, 400);
@@ -809,5 +883,150 @@ forumRoutes.post('/forum/reports/:id/resolve', async (c) => {
   const id = Number(c.req.param('id'));
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid report id' }, 400);
   await query('UPDATE forum_reports SET resolved_at = NOW() WHERE id = ?', [id]);
+  return c.json({ ok: true });
+});
+
+// ==================== GET /v1/forum/review ====================
+// 管理员:待审核队列(待审主题 + 待审回帖混排,先来先审)。
+forumRoutes.get('/forum/review', async (c) => {
+  noStore(c);
+  const authUser = await requireAuth(c);
+  if (!isAdmin(authUser)) return c.json({ error: 'Admin access required' }, 403);
+
+  const threads = await query<{
+    id: string; title: string; author_id: string; author_name: string; created_at: Date;
+    content: string; forum_name_en: string; forum_name_zh: string;
+  }>(
+    `SELECT t.id, t.title, t.author_id, t.author_name, t.created_at, p.content,
+            f.name_en AS forum_name_en, f.name_zh AS forum_name_zh
+     FROM forum_threads t
+     JOIN forum_forums f ON f.id = t.forum_id
+     JOIN LATERAL (SELECT content FROM forum_posts WHERE thread_id = t.id ORDER BY id LIMIT 1) p ON TRUE
+     WHERE t.status = 'pending' AND NOT t.is_deleted
+     ORDER BY t.created_at LIMIT 100`,
+  );
+  // 待审回帖只列「所在主题已公开」的——待审主题下不开放回帖,驳回/删除的主题连带失效
+  const posts = await query<{
+    id: string; thread_id: string; thread_title: string;
+    author_id: string; author_name: string; created_at: Date; content: string;
+  }>(
+    `SELECT p.id, p.thread_id, t.title AS thread_title,
+            p.author_id, p.author_name, p.created_at, p.content
+     FROM forum_posts p JOIN forum_threads t ON t.id = p.thread_id
+     WHERE p.status = 'pending' AND NOT p.is_deleted
+       AND t.status = 'approved' AND NOT t.is_deleted
+     ORDER BY p.created_at LIMIT 100`,
+  );
+
+  const items = [
+    ...threads.map((r) => ({
+      type: 'thread' as const, id: Number(r.id), threadId: Number(r.id),
+      threadTitle: r.title, forumNameEn: r.forum_name_en, forumNameZh: r.forum_name_zh,
+      authorId: r.author_id, authorName: r.author_name, content: r.content, createdAt: r.created_at,
+    })),
+    ...posts.map((r) => ({
+      type: 'post' as const, id: Number(r.id), threadId: Number(r.thread_id),
+      threadTitle: r.thread_title, forumNameEn: null, forumNameZh: null,
+      authorId: r.author_id, authorName: r.author_name, content: r.content, createdAt: r.created_at,
+    })),
+  ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  return c.json({ items });
+});
+
+// ==================== POST /v1/forum/review/:type/:id/:action ====================
+// 管理员审核:type = thread|post,action = approve|reject(reject 可带 reason,回执给作者)。
+// 条件 UPDATE 只翻 pending 行:双击/两窗并发只有一次生效,第二次 404。
+forumRoutes.post('/forum/review/:type/:id/:action', async (c) => {
+  noStore(c);
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  if (!isAdmin(authUser)) return c.json({ error: 'Admin access required' }, 403);
+  const type = c.req.param('type');
+  const action = c.req.param('action');
+  const id = Number(c.req.param('id'));
+  if (type !== 'thread' && type !== 'post') return c.json({ error: 'Invalid review type' }, 400);
+  if (action !== 'approve' && action !== 'reject') return c.json({ error: 'Invalid review action' }, 400);
+  if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'Invalid id' }, 400);
+  const body = action === 'reject'
+    ? await c.req.json<{ reason?: string }>().catch(() => ({} as { reason?: string }))
+    : {};
+  const reason = (body.reason ?? '').trim().slice(0, 500);
+  const newStatus = action === 'approve' ? 'approved' : 'rejected';
+
+  if (type === 'thread') {
+    const flipped = await query<{ author_id: string; title: string }>(
+      `UPDATE forum_threads SET status = ?, review_note = ?
+       WHERE id = ? AND status = 'pending' AND NOT is_deleted RETURNING author_id, title`,
+      [newStatus, action === 'reject' ? reason || null : null, id],
+    );
+    if (flipped.length === 0) return c.json({ error: 'Not pending' }, 404);
+    // 首帖随主题同批过审/驳回(待审主题不开放回帖,故 pending 帖只有首帖)
+    await query(
+      `UPDATE forum_posts SET status = ? WHERE thread_id = ? AND status = 'pending'`,
+      [newStatus, id],
+    );
+    await notifyBestEffort({
+      recipients: [flipped[0].author_id],
+      kind: action === 'approve' ? 'forum_approved' : 'forum_rejected',
+      actorKey: authUser.wcaId,
+      actorName: authUser.name,
+      title: flipped[0].title,
+      excerpt: action === 'reject' && reason ? reason : flipped[0].title,
+      link: `/forum/t/${id}`,
+    });
+    return c.json({ ok: true });
+  }
+
+  // type === 'post'
+  const flipped = await query<{ thread_id: string; author_id: string; content: string }>(
+    `UPDATE forum_posts SET status = ?, review_note = ?
+     WHERE id = ? AND status = 'pending' AND NOT is_deleted RETURNING thread_id, author_id, content`,
+    [newStatus, action === 'reject' ? reason || null : null, id],
+  );
+  if (flipped.length === 0) return c.json({ error: 'Not pending' }, 404);
+  const threadId = Number(flipped[0].thread_id);
+  const threads = await query<{ title: string; author_id: string }>(
+    'SELECT title, author_id FROM forum_threads WHERE id = ?', [threadId],
+  );
+
+  if (action === 'approve') {
+    // 过审即「发布」:补记 reply_count / 末帖缓存(发帖时待审没记)。
+    // 末帖取最新已过审帖——积压队列乱序过审也不会把旧帖顶成末帖。
+    await query(
+      `UPDATE forum_threads t
+       SET reply_count = GREATEST(s.cnt - 1, 0),
+           last_post_at = lp.created_at,
+           last_post_author_id = lp.author_id,
+           last_post_author_name = lp.author_name
+       FROM (SELECT COUNT(*)::int AS cnt FROM forum_posts
+             WHERE thread_id = ? AND NOT is_deleted AND status = 'approved') s,
+            (SELECT created_at, author_id, author_name FROM forum_posts
+             WHERE thread_id = ? AND NOT is_deleted AND status = 'approved' ORDER BY id DESC LIMIT 1) lp
+       WHERE t.id = ?`,
+      [threadId, threadId, threadId],
+    );
+    // 补发原本在发帖时压下的「回复了你的主题」(actor 是发帖人,不是管理员)
+    const posts2 = await query<{ author_name: string }>(
+      'SELECT author_name FROM forum_posts WHERE id = ?', [id],
+    );
+    await notifyBestEffort({
+      recipients: [threads[0]?.author_id],
+      kind: 'forum_reply',
+      actorKey: flipped[0].author_id,
+      actorName: posts2[0]?.author_name ?? '',
+      title: threads[0]?.title ?? '',
+      excerpt: flipped[0].content,
+      link: `/forum/t/${threadId}`,
+    });
+  }
+  await notifyBestEffort({
+    recipients: [flipped[0].author_id],
+    kind: action === 'approve' ? 'forum_approved' : 'forum_rejected',
+    actorKey: authUser.wcaId,
+    actorName: authUser.name,
+    title: threads[0]?.title ?? '',
+    excerpt: action === 'reject' && reason ? reason : flipped[0].content,
+    link: `/forum/t/${threadId}`,
+  });
   return c.json({ ok: true });
 });

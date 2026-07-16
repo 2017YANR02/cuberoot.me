@@ -249,6 +249,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 71, slug: 'email_notify_pref', desc: { zh: 'app_users 加 email_notify:邮件通知开关(退订),默认开;只关邮件,站内红点照常', en: 'app_users gains email_notify: the email-notification opt-out (default on); mutes email only, in-site badge unaffected' } },
   { n: 72, slug: 'user_lang', desc: { zh: 'app_users 加 lang:通知邮件按收件人语言发;未读角标轮询搭车上报,NULL(没见过这人)回落双语', en: 'app_users gains lang: notification emails follow the recipient’s language; reported by the unread-badge poll, NULL (never seen) falls back to bilingual' } },
   { n: 73, slug: 'page_notices', desc: { zh: '新表 page_notices:每页顶部管理员通知条(维护中/WIP/bug),按路径匹配(精确/前缀 /*),分级 info/warning/维护', en: 'New page_notices table: per-page admin notice bars (maintenance/WIP/bug), matched by path (exact or /* prefix), levels info/warning/maintenance' } },
+  { n: 74, slug: 'forum_review', desc: { zh: 'forum_threads / forum_posts 加 status(approved/pending/rejected)+ review_note:新用户前 N 帖先审后发,待审仅作者与管理员可见', en: 'forum_threads / forum_posts gain status (approved/pending/rejected) + review_note: new users’ first N posts are held for review, visible only to the author and admins' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

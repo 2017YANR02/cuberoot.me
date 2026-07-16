@@ -285,6 +285,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'forum', m: 'POST', p: '/v1/forum/posts/:id/report', g: 'login', zh: '举报帖子(一人一帖一条)', en: 'Report a post (one per user per post)' },
   { d: 'forum', m: 'GET', p: '/v1/forum/reports', g: 'admin', zh: '举报列表(默认待处理,?all=1 全部)', en: 'List reports (open by default, ?all=1 for all)' },
   { d: 'forum', m: 'POST', p: '/v1/forum/reports/:id/resolve', g: 'admin', zh: '标记举报已处理', en: 'Mark report resolved' },
+  { d: 'forum', m: 'GET', p: '/v1/forum/review', g: 'admin', zh: '待审核队列(新用户主题 + 回帖)', en: 'Review queue (new users’ threads + replies)' },
+  { d: 'forum', m: 'POST', p: '/v1/forum/review/:type/:id/:action', g: 'admin', zh: '审核:通过 / 驳回(thread|post,驳回可附原因)', en: 'Moderate: approve / reject (thread|post, optional reject reason)' },
 
   // ---- content ----
   { d: 'content', m: 'GET', p: '/v1/wiki/terms', g: 'public', c: 'cdn', zh: '术语表', en: 'Wiki terms' },
