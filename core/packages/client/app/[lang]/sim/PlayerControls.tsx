@@ -12,7 +12,9 @@
  *    token); it stays on for every single-letter-per-move notation (NxN/twisty
  *    WCA alg, Ivy, redi, pyraminx-engine, SQ1's digit-based format is a no-op
  *    either way). See `algAutoSpaceSafe` below.
- *  - No CubeVirtualKeyboard (defer; mobile users can use system kbd).
+ *  - Virtual keyboards (issue #32): 'alg' = CubeVirtualKeyboard writing into the
+ *    solution box; 'qwerty' = SimQwertyKeypad mirroring the keymap (click =
+ *    twist, same applyMove path as hard keys). Mobile auto-opens qwerty.
  *  - Scramble path uses tnoodleRandomScramble (lib/cubing-scramble.ts), which
  *    routes to cubing.js + the in-app pool. NxN N≥8 falls back to inline
  *    random-move (cheap, no solver needed).
@@ -35,7 +37,7 @@ import {
   FlipHorizontal2, FlipVertical2, Eraser, RotateCw,
   Shuffle, Link2, Check, Upload,
   Search, Loader2, Pipette,
-  Undo2, Redo2, Keyboard,
+  Undo2, Redo2, Keyboard, Grid3x3,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -109,7 +111,8 @@ import {
   DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR,
   type SimSettings, type SimBoardBg,
 } from './SettingDrawer';
-import { type KeyMove } from './keymap';
+import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
+import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
@@ -1007,6 +1010,14 @@ export default function PlayerControls({
   const algElRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => { stepRef.current = step; }, [step]);
 
+  // 虚拟键盘:'alg' = 记号输入键盘(写进解法框),'qwerty' = 按键映射键盘(点击 =
+  // 转魔方)。桌面默认收起;移动端(实体键盘点不到)mount 后自动展开 qwerty —
+  // 不能用 useIsMobile 做 useState 初值:SSR 首帧按非移动渲染,水合会不一致。
+  const [kbVariant, setKbVariant] = useState<'alg' | 'qwerty' | null>(null);
+  useEffect(() => {
+    if (window.matchMedia('(max-width: 768px)').matches) setKbVariant('qwerty');
+  }, []);
+
   // The alg/setup props round-trip through the URL (nuqs): a local edit calls
   // onAlgChange → setQuery → the prop echoes back. That echo arrives in several waves
   // and each wave oscillates between the previous value and the new one (a transient
@@ -1657,9 +1668,23 @@ export default function PlayerControls({
     return () => { userMoveRef.current = null; };
   }, [userMoveRef, appendUserMove]);
 
-  // QWERTY: keymap → twist + append (no virtual keyboard, just hard keys).
+  // QWERTY: keymap → twist + append (hard keys + the on-screen keymap keypad).
   const applyMove = useCallback((k: KeyMove) => {
-    if (isSq1 || isIvy || corner || isTwistyMode) return;
+    if (isSq1 || isIvy || isTwistyMode) return;
+    if (corner) {
+      // corner-registry engines (gear/dino/…): route the keys the puzzle's own
+      // grammar parses (gear: U R F D L B); everything else is a silent no-op.
+      if (!world) return;
+      const text = new TwistAction(k.sign, !!k.reverse, 1).value;
+      let moves: unknown[] = [];
+      try { moves = corner.parse(text); } catch { return; }
+      if (moves.length !== 1) return;
+      const cube = world.cube as unknown as CornerCube;
+      if (cube.twister.twist(moves[0], settings.animatePlayback === false, true)) {
+        appendUserMove(corner.toString(moves));
+      }
+      return;
+    }
     let action: TwistAction | null = new TwistAction(k.sign, !!k.reverse, 1);
     let moveText = action.value;
     if (world && world.cube.order === 1) {
@@ -1682,7 +1707,25 @@ export default function PlayerControls({
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
-  }, [world, isSq1, isIvy, corner, isTwistyMode, onAlgChange, settings.animatePlayback]);
+  }, [world, isSq1, isIvy, corner, isTwistyMode, onAlgChange, settings.animatePlayback, appendUserMove]);
+
+  // QWERTY 键盘展开时,实体按键按 keymap 走(捕获阶段,连解法框聚焦时也接管);
+  // 打乱框聚焦时放行(让字符正常落进打乱框)。capture + stopPropagation 同时挡掉
+  // SimPage 的全局 keydown,不会双触发。
+  useEffect(() => {
+    if (kbVariant !== 'qwerty') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (document.activeElement === setupElRef.current) return;
+      const k = keymap[e.code];
+      if (!k) return;
+      e.preventDefault();
+      e.stopPropagation();
+      applyMove(k);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [kbVariant, keymap, applyMove]);
 
   const handleScramble = useCallback(async () => {
     const reqId = ++scrambleReqIdRef.current;
@@ -2161,6 +2204,47 @@ export default function PlayerControls({
       return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
       })()}
 
+      {!isTwistyMode && (
+      <div className="sim-keyboard-section">
+        <div className="sim-keyboard-switcher">
+          <button
+            type="button"
+            className={'vkb-toggle' + (kbVariant === 'alg' ? ' active' : '')}
+            onClick={() => setKbVariant((v) => (v === 'alg' ? null : 'alg'))}
+            title={t('解法虚拟键盘', 'Alg virtual keyboard')}
+            aria-label={t('解法虚拟键盘', 'Alg virtual keyboard')}
+          >
+            <Keyboard size={14} />
+          </button>
+          <button
+            type="button"
+            className={'vkb-toggle' + (kbVariant === 'qwerty' ? ' active' : '')}
+            onClick={() => setKbVariant((v) => (v === 'qwerty' ? null : 'qwerty'))}
+            title={t('按键映射键盘(点击 = 转魔方)', 'Keymap keyboard (click = twist cube)')}
+            aria-label={t('按键映射键盘', 'Keymap keyboard')}
+          >
+            <Grid3x3 size={14} />
+          </button>
+        </div>
+        {kbVariant === 'alg' && (
+          <CubeVirtualKeyboard
+            target={algElRef}
+            onInput={() => {
+              const el = algElRef.current;
+              if (!el) return;
+              const text = el.value;
+              skipAutoResetRef.current = false; // 文本键盘改的是文字,回放该重置
+              setAlgDraft(text);
+              onAlgChange(text);
+            }}
+          />
+        )}
+        {kbVariant === 'qwerty' && (
+          <SimQwertyKeypad keymap={keymap} onMove={applyMove} />
+        )}
+      </div>
+      )}
+
       <div className="sim-player-tools">
         <button onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
         {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
@@ -2209,6 +2293,44 @@ export default function PlayerControls({
         onKeymapChange={onKeymapChange}
         onResetKeymap={onResetKeymap}
       />
+    </div>
+  );
+}
+
+/** 按键映射键盘:按 keymap 的 QWERTY 布局排键,点键 = 转魔方(与实体按键同一条
+ *  applyMove 路径)。空位(没映射的键)禁用。布局数据与快捷键弹窗共用 keymap.ts。 */
+function SimQwertyKeypad({
+  keymap,
+  onMove,
+}: {
+  keymap: Record<string, KeyMove>;
+  onMove: (k: KeyMove) => void;
+}) {
+  return (
+    <div className="sim-keyboard sim-qwerty-keypad">
+      {KEYBOARD_ROWS.map((row, ri) => (
+        <div key={ri} className="sim-keyboard-row">
+          {row.map((code) => {
+            const m = keymap[code];
+            return (
+              <button
+                key={code}
+                type="button"
+                className={'sim-key' + (!m ? ' empty' : '')}
+                disabled={!m}
+                onPointerDown={(e) => {
+                  if (!m) return;
+                  e.preventDefault();
+                  onMove(m);
+                }}
+              >
+                <span className="sim-key-label">{keyLabel(code)}</span>
+                <span className="sim-key-move">{m ? displayMove(m) : '·'}</span>
+              </button>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 }

@@ -3,17 +3,18 @@
  *
  * 8 corners + 6 centers + core, each one pivot at the origin (quaternion = truth).
  * The 12 edge GEARS get a NESTED pivot pair: an orbit pivot (face/middle turns) with
- * a spin pivot inside (the gear's own 60°-per-flip rotation about its slot's radial
- * axis). The compound motion R_axis(α·v)·R_radial(β·v) factors exactly into two
- * fixed-axis PieceAnims — the orbit anim premultiplies in world space, the spin anim
+ * a spin pivot inside (the gear's own rotation about its slot's radial axis). The
+ * compound motion R_axis(α·v)·R_radial(β·v) factors exactly into two fixed-axis
+ * PieceAnims — the orbit anim premultiplies in world space, the spin anim
  * premultiplies the child's LOCAL quaternion about axis (outerQuat₀⁻¹ · r̂_slot),
  * constant for the whole tween — so the shared applyAnimFrame drives both untouched.
  *
  * One move (face f, amt): face layer −amt·180° about the face axis, middle slab
  * (4 centers + core + the equator ring's 4 gears) −amt·90°, equator gears ALSO spin
- * +amt·60° about their outward radials; the opposite layer holds still. The face's
- * own 4 riding gears do NOT spin (verified vs cstimer's facelet maps — see
- * gearState). A discrete piece state advances in finishMove for `complete`/history.
+ * +amt·480° about their outward radials (net +amt·120°, matching the mod-3 spin
+ * phase — issue #32); the opposite layer holds still. The face's own 4 riding gears
+ * do NOT spin (verified vs cstimer's facelet maps — see gearState). A discrete
+ * piece state advances in finishMove for `complete`/history.
  */
 import * as THREE from 'three';
 import { Evaluator } from 'three-bvh-csg';
@@ -96,7 +97,12 @@ export default class GearCube extends THREE.Group implements TweenCube<GearMove>
     const anims: PieceAnim[] = [];
     const faceAngle = -move.amt * Math.PI;
     const midAngle = -move.amt * (Math.PI / 2);
-    const spinAngle = move.amt * (Math.PI / 3);
+    // 480° per 180° flip (issue #32): the real puzzle's gearing whirls the
+    // equator gears a full extra revolution — net 120° (mod 360°), which is
+    // what the mod-3 spin phase renders (3 flips → 360° → visually solved;
+    // a 60°-per-flip render desyncs from the discrete state at phase 0).
+    // applyAnimFrame interpolates axis·angle, so angles > 2π animate fully.
+    const spinAngle = move.amt * (8 * Math.PI / 3);
     const faceDelta = _q.setFromAxisAngle(n, faceAngle).clone();
     // face layer: corners + riding gears (orbit pivots only) + the face's center
     for (const s of FACE_CORNER_SLOTS[f]) {
