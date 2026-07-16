@@ -8,6 +8,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import './SubsetColorPicker.css';
 import { tr } from '@/i18n/tr';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 
 export type ColorLetter = 'B' | 'G' | 'O' | 'R' | 'W' | 'Y';
 export type ColorMode = 'cn' | 'quad' | 'dual' | 'single';
@@ -184,6 +185,8 @@ export function SubsetColorPicker({ sel, isZh, className }: { sel: SubsetSelecti
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(open, panelRef); // 触发钮靠右时面板右缘可能越出视口 → 实测左移
 
   // 开着时:点外面 / Esc 关掉(Esc 焦点还给按钮)。
   useEffect(() => {
@@ -227,7 +230,7 @@ export function SubsetColorPicker({ sel, isZh, className }: { sel: SubsetSelecti
       </button>
 
       {open && (
-        <div className="subset-picker-panel" role="group" aria-label={tr({ zh: '底色', en: 'Bottom color' })}>
+        <div ref={panelRef} className="subset-picker-panel" role="group" aria-label={tr({ zh: '底色', en: 'Bottom color' })}>
           {/* 两列网格(模式名 | 色块行),行用 Fragment 直接摊进网格 = 四档模式名左边缘自动对齐。 */}
           {MODE_ORDER.map((m) => (
             <Fragment key={m}>

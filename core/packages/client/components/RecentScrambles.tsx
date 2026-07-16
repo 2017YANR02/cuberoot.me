@@ -27,6 +27,7 @@ import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STA
 import { VariantSelect } from '@/components/VariantSelect';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import './recent_scrambles.css';
 import './scroll_panel.css';
@@ -116,6 +117,8 @@ function EventPickerDropdown({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(open, panelRef); // 触发钮靠右时面板右缘可能越出视口 → 实测左移
 
   useEffect(() => {
     if (!open) return;
@@ -149,7 +152,7 @@ function EventPickerDropdown({
         <EventIcon event={curEvent} className="rs-evt" />
       </button>
       {open && (
-        <div className="rs-event-panel" role="group" aria-label={tr({ zh: '项目', en: 'Puzzle' })}>
+        <div ref={panelRef} className="rs-event-panel" role="group" aria-label={tr({ zh: '项目', en: 'Puzzle' })}>
           <WcaEventSelector
             availableEvents={availableEvents}
             selectedEvent={curEvent}
