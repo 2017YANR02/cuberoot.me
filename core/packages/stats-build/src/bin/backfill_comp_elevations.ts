@@ -29,8 +29,10 @@ async function backfill(relPath: string): Promise<number> {
 
 async function main(): Promise<void> {
   let remaining = 0;
-  remaining += await backfill('stats/all_past_comps.json');
+  // upcoming 在前:列表默认视图最先看到未来比赛,且它只有几百个坐标;
+  // past 1.7 万场放后面,配额(5000 坐标/时)耗尽就留给下一轮
   remaining += await backfill('stats/all_upcoming_comps.json');
+  remaining += await backfill('stats/all_past_comps.json');
   // ASCII 标记供外层循环判断是否收工(API 有小时/日配额,一轮可能跑不完)
   console.log(`ELEV_REMAINING=${remaining}`);
 }
