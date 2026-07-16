@@ -25,6 +25,28 @@ const LEVEL_ICON: Record<NoticeLevel, typeof Info> = {
 
 const DISMISS_KEY = 'pn-dismissed';
 
+// 常用模板:点一下填 级别 + 中英文,填完仍可自由改。
+const PRESETS: { label: { en: string; zh: string }; level: NoticeLevel; bodyZh: string; bodyEn: string }[] = [
+  { label: { en: 'Maintenance', zh: '维护中' }, level: 'maintenance',
+    bodyZh: '本页正在维护,稍后恢复,给你带来不便敬请谅解。',
+    bodyEn: 'This page is under maintenance and will be back shortly. Sorry for the inconvenience.' },
+  { label: { en: 'Work in progress', zh: '开发中' }, level: 'info',
+    bodyZh: '本页仍在开发中,功能尚不完整,后续会持续完善。',
+    bodyEn: 'This page is still under development; some features are incomplete and will keep improving.' },
+  { label: { en: 'Known issue', zh: '已知问题' }, level: 'warning',
+    bodyZh: '本页存在已知问题,我们正在修复,感谢反馈与耐心。',
+    bodyEn: 'This page has a known issue we are working to fix. Thanks for your patience.' },
+  { label: { en: 'Data updating', zh: '数据更新中' }, level: 'info',
+    bodyZh: '数据正在更新,部分内容可能暂不准确,稍后刷新即可。',
+    bodyEn: 'Data is currently updating; some content may be temporarily inaccurate. Please check back soon.' },
+  { label: { en: 'Experimental', zh: '实验性功能' }, level: 'warning',
+    bodyZh: '实验性功能,行为可能随时变化,请谨慎使用。',
+    bodyEn: 'Experimental feature — behavior may change at any time. Use with caution.' },
+  { label: { en: 'Beta / preview', zh: '预览版' }, level: 'info',
+    bodyZh: '本页为预览版,仅供体验,数据与样式后续可能调整。',
+    bodyEn: 'This is a preview build for early access; data and layout may still change.' },
+];
+
 interface FormState {
   id: number | null;   // null = 新建
   path: string;
@@ -147,21 +169,22 @@ export default function PageNoticeBar() {
         const Icon = LEVEL_ICON[n.level];
         return (
           <div key={n.id} className="page-notice" data-level={n.level} role="status">
+            {isAdmin && (
+              <button type="button" className="page-notice-btn page-notice-edit" onClick={() => openEdit(n)}
+                aria-label={tr({ en: 'Edit notice', zh: '编辑通知' })}>
+                <Pencil size={15} aria-hidden />
+              </button>
+            )}
             <Icon className="page-notice-icon" size={17} aria-hidden />
             <div className="page-notice-body">{pick(n)}</div>
-            <div className="page-notice-actions">
-              {isAdmin ? (
-                <button type="button" className="page-notice-btn" onClick={() => openEdit(n)}
-                  aria-label={tr({ en: 'Edit notice', zh: '编辑通知' })}>
-                  <Pencil size={15} aria-hidden />
-                </button>
-              ) : n.dismissible ? (
+            {!isAdmin && n.dismissible && (
+              <div className="page-notice-actions">
                 <button type="button" className="page-notice-btn" onClick={() => dismiss(n)}
                   aria-label={tr({ en: 'Dismiss', zh: '关闭' })}>
                   <X size={16} aria-hidden />
                 </button>
-              ) : null}
-            </div>
+              </div>
+            )}
           </div>
         );
       })}
@@ -182,8 +205,8 @@ export default function PageNoticeBar() {
 
           <div className="page-notice-editor-row">
             <label className="page-notice-field">
-              <span><T en="Level" zh="级别" /></span>
-              <select className="page-notice-input" value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value as NoticeLevel })}>
+              <select className="page-notice-input" value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value as NoticeLevel })}
+                aria-label={tr({ en: 'Level', zh: '级别' })}>
                 <option value="info">{tr({ en: 'Info', zh: '信息' })}</option>
                 <option value="warning">{tr({ en: 'Warning', zh: '警告' })}</option>
                 <option value="maintenance">{tr({ en: 'Maintenance', zh: '维护' })}</option>
@@ -193,6 +216,24 @@ export default function PageNoticeBar() {
               label={<T en="Enabled" zh="启用" />} ariaLabel={tr({ en: 'Enabled', zh: '启用' })} />
             <BoolToggle value={form.dismissible} onChange={(v) => setForm({ ...form, dismissible: v })}
               label={<T en="Dismissible" zh="可关闭" />} ariaLabel={tr({ en: 'Dismissible', zh: '可关闭' })} />
+          </div>
+
+          <p className="page-notice-hint">
+            <T
+              en="Enabled: whether this notice shows at all (off = saved but hidden from everyone). Dismissible: whether visitors can click × to close it (off = always shown, cannot be dismissed)."
+              zh="启用:这条通知是否显示(关掉则保存但不展示给任何人)。可关闭:访客能否点 × 关掉它(关掉则常驻,访客无法关闭)。"
+            />
+          </p>
+
+          <div className="page-notice-field">
+            <div className="page-notice-presets">
+              {PRESETS.map((p) => (
+                <button key={p.label.en} type="button" className="page-notice-preset"
+                  onClick={() => setForm({ ...form, level: p.level, bodyZh: p.bodyZh, bodyEn: p.bodyEn })}>
+                  {tr(p.label)}
+                </button>
+              ))}
+            </div>
           </div>
 
           <label className="page-notice-field">
@@ -216,9 +257,9 @@ export default function PageNoticeBar() {
               <T en="Cancel" zh="取消" />
             </button>
             {form.id != null && (
-              <button type="button" className="page-notice-delete" onClick={remove} disabled={saving}>
-                <Trash2 size={14} aria-hidden style={{ verticalAlign: '-2px', marginRight: 3 }} />
-                <T en="Delete" zh="删除" />
+              <button type="button" className="page-notice-delete" onClick={remove} disabled={saving}
+                aria-label={tr({ en: 'Delete notice', zh: '删除通知' })}>
+                <Trash2 size={15} aria-hidden />
               </button>
             )}
           </div>
