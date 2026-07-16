@@ -710,6 +710,31 @@
 .sim-swatch-raw-box {
   background: linear-gradient(135deg, #00D800 0 50%, #FFA100 50% 100%);
 }
+/* 「自然甲」格:甲床粉 → 游离缘白的纵向渐变,evoke 未涂甲油的真甲(物理肤色,非主题灰阶) */
+.sim-swatch-nail-box {
+  background: linear-gradient(160deg, #EDC5B5 0%, #F2DACB 55%, #FBF4EC 100%);
+}
+/* 「无渐变」格:空底 + 斜杠,evoke 关闭态(主题 token,随 light/dark 翻) */
+.sim-swatch-nail-off-box {
+  background:
+    linear-gradient(135deg, transparent 0 45%, var(--muted-foreground) 45% 55%, transparent 55% 100%),
+    var(--background);
+}
+/* 指甲配色行的「深浅」滑杆:行内紧凑版,布局对齐 .sim-face-pick(标签在上),
+   滑杆高度对齐色块 22px;左淡右深 */
+.sim-nail-shade {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.sim-nail-shade input[type="range"] {
+  width: 76px;
+  height: 22px;
+  accent-color: var(--accent);
+}
 .sim-swatch:hover .sim-swatch-box {
   border-color: var(--accent-foreground);
 }

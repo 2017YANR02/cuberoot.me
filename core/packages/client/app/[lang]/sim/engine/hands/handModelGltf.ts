@@ -157,6 +157,9 @@ function buildNailGeometry(args: {
 
   const pos: number[] = [];
   const col: number[] = [];
+  // 甲油重涂参数(paintNailPolish 用):(轴向 t 甲根 0→游离缘 1, 阴影乘数, 根部融肤)。
+  // 建甲时烘死 —— 重涂只换基色,侧壁压暗 / 甲根渐入肤色(盖皮∩甲交线)与自然甲同款。
+  const pol: number[] = [];
   const P = new THREE.Vector3();
   for (let layer = 0; layer < 2; layer++) {
     for (let i = 0; i < NR; i++) {
@@ -195,6 +198,7 @@ function buildNailGeometry(args: {
         g += (0.84 - g) * rootBlend;
         b += (0.78 - b) * rootBlend;
         col.push(Math.min(1, r), Math.min(1, g), Math.min(1, b));
+        pol.push((q + 0.97) / 1.94, shade, rootBlend);
       }
     }
   }
@@ -222,8 +226,81 @@ function buildNailGeometry(args: {
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
+  geo.setAttribute("polish", new THREE.Float32BufferAttribute(pol, 3));
   geo.setIndex(idx);
   return geo;
+}
+
+/** 甲油规格(SimSettings.nailColor* 驱动):color = 底色 hex(#rrggbb);tip 非空 =
+ *  沿甲根→游离缘渐变到第二色;shade 0~100 深浅(50 = 原色,低向白提淡、高向黑压深)。 */
+export interface NailPolishSpec {
+  color: string;
+  tip: string;
+  shade: number;
+}
+
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+
+/** hex → 顶点色线性值,深浅在 sRGB 域调(线性域 lerp 向白瞬间发灰,同贴纸 dim 的
+ *  sRGB 教训);顶点色在线性工作空间参与光照,手动转换不依赖 ColorManagement 全局态。 */
+function polishLinear(hex: string, shade: number): [number, number, number] {
+  const v = parseInt(hex.slice(1), 16);
+  let r = ((v >> 16) & 255) / 255, g = ((v >> 8) & 255) / 255, b = (v & 255) / 255;
+  const t = THREE.MathUtils.clamp(shade, 0, 100) / 100;
+  if (t < 0.5) {
+    const k = (0.5 - t) * 2 * 0.75; // 淡:向白(留 25% 保色相,拉满不成纯白)
+    r += (1 - r) * k; g += (1 - g) * k; b += (1 - b) * k;
+  } else {
+    const k = (t - 0.5) * 2 * 0.65; // 深:向黑
+    r *= 1 - k; g *= 1 - k; b *= 1 - k;
+  }
+  const lin = (x: number): number => (x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4));
+  return [lin(r), lin(g), lin(b)];
+}
+
+/** 重涂甲片(设置「指甲配色」):null = 还原自然甲(首涂前把自然顶点色快照进
+ *  geometry.userData,可反复来回切)。基色沿 polish 属性的轴向 t 渐变;阴影乘数 /
+ *  甲根融肤是建甲时烘好的参数,重涂后仍盖住皮∩甲交线。涂色时甲面轻加清漆
+ *  (真甲油是亮面;仍远低于「乒乓球贴片」翻车档,那次是高清漆 + 厚椭球叠加)。 */
+export function paintNailPolish(model: HandModel, polish: NailPolishSpec | null): void {
+  if (polish && !HEX_RE.test(polish.color)) polish = null; // 入口拦非法色值,别算出垃圾色
+  const base = polish ? polishLinear(polish.color, polish.shade) : null;
+  const tipC = polish && HEX_RE.test(polish.tip) ? polishLinear(polish.tip, polish.shade) : base;
+  for (const m of model.nailMeshes ?? []) {
+    const geo = m.geometry;
+    const colA = geo.getAttribute("color") as THREE.BufferAttribute | undefined;
+    const par = geo.getAttribute("polish") as THREE.BufferAttribute | undefined;
+    if (!colA || !par) continue;
+    const arr = colA.array as Float32Array;
+    let natural = geo.userData.naturalNailColor as Float32Array | undefined;
+    if (!natural) {
+      natural = arr.slice();
+      geo.userData.naturalNailColor = natural;
+    }
+    if (!base || !tipC) {
+      arr.set(natural);
+    } else {
+      for (let i = 0; i < par.count; i++) {
+        const t = par.getX(i), shade = par.getY(i), rootBlend = par.getZ(i);
+        let r = (base[0] + (tipC[0] - base[0]) * t) * shade;
+        let g = (base[1] + (tipC[1] - base[1]) * t) * shade;
+        let b = (base[2] + (tipC[2] - base[2]) * t) * shade;
+        r += (1.0 - r) * rootBlend;
+        g += (0.84 - g) * rootBlend;
+        b += (0.78 - b) * rootBlend;
+        arr[i * 3] = Math.min(1, r);
+        arr[i * 3 + 1] = Math.min(1, g);
+        arr[i * 3 + 2] = Math.min(1, b);
+      }
+    }
+    colA.needsUpdate = true;
+  }
+  const nailMat = model.extraMats?.[0] as THREE.MeshPhysicalMaterial | undefined;
+  if (nailMat?.isMeshPhysicalMaterial) {
+    nailMat.roughness = polish ? 0.26 : 0.32;
+    nailMat.clearcoat = polish ? 0.38 : 0.12;
+    nailMat.clearcoatRoughness = polish ? 0.4 : 0.5;
+  }
 }
 
 /** 目标中指链长(MCP→PIP→DIP→TIP)= 程序化手同值(56+35+24)·U,保证指尖
