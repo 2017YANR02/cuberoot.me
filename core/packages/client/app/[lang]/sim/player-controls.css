@@ -179,6 +179,10 @@
   padding: 2px 4px;
   margin-left: 6px;
 }
+/* 阶段色块下拉在播放条最左,margin-left 交给行 gap */
+.sim-player-stickering {
+  margin-left: 0;
+}
 
 .sim-player-tools {
   display: flex;
