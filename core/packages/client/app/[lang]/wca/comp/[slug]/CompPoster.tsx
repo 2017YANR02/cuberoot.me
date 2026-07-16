@@ -6,7 +6,7 @@
 // 窄屏按容器宽等比缩放预览,导出节点本身不带 transform;右上角悬浮下载按钮。
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Download, Loader2 } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { toBlob } from 'html-to-image';
 import { EventIcon } from '@/components/EventIcon';
 import { Flag } from '@/components/Flag';
 import { tr } from '@/i18n/tr';
@@ -117,37 +117,72 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
     ...[...eventRounds.keys()].filter(id => !ALL_EVENT_IDS.includes(id)).sort(),
   ], [eventRounds]);
 
-  // 赛程主体:只保留轮次活动(过滤签到 / 午餐 / 颁奖等无项目归属的活动)
+  // 赛程主体:只保留轮次活动(过滤签到 / 午餐 / 颁奖等无项目归属的活动)。
+  // 同一轮次被拆成多组/多舞台(多个同时段 top-level activity)时合并成一行取
+  // 最早开始/最晚结束 —— 海报只报轮次不报分组(issue #33);不同时段的同轮次
+  // (如上下午两波)仍分行。key = activityCode 去掉分组段(-gN),attempt 段保留。
   const days = useMemo(() => {
     if (!data) return [];
+    const dedupKey = (code: string) => code.split('-').filter(s => !/^g\d+$/.test(s)).join('-');
     return computeDayColumns(data, tz).days
-      .map(d => ({
-        dateKey: d.dateKey,
-        activities: d.activities
+      .map(d => {
+        const acts = d.activities
           .filter(a => eventOfActivity(a) !== '')
-          .sort((a, b) => a.startMin - b.startMin || a.roomName.localeCompare(b.roomName)),
-      }))
+          .sort((a, b) => a.startMin - b.startMin || a.roomName.localeCompare(b.roomName));
+        const merged: typeof acts = [];
+        const lastByKey = new Map<string, (typeof acts)[number]>();
+        for (const a of acts) {
+          const k = dedupKey(a.activityCode);
+          const prev = lastByKey.get(k);
+          if (prev && a.startMin < prev.endMin) { // 时段重叠 = 同轮次的并行分组/舞台
+            prev.endMin = Math.max(prev.endMin, a.endMin);
+            if (a.endTime > prev.endTime) prev.endTime = a.endTime;
+            continue;
+          }
+          const copy = { ...a };
+          merged.push(copy);
+          lastByKey.set(k, copy);
+        }
+        return { dateKey: d.dateKey, activities: merged };
+      })
       .filter(d => d.activities.length > 0);
   }, [data, tz]);
 
-  // 行数多切双栏;字号不再分档,由下面的 fit 连续缩放铺满版面
+  // 均衡多栏(issue #33):按行数(含日期头)选 1-4 栏,避免单栏时右侧大面积留白;
+  // 字号不分档,由下面的 fit 连续缩放铺满版面。
   const totalRows = days.reduce((n, d) => n + d.activities.length, 0) + days.length;
-  const twoCol = totalRows > 26 ? ' comp-poster--2col' : '';
+  const schedCols = totalRows <= 8 ? 1 : totalRows <= 26 ? 2 : totalRows <= 48 ? 3 : 4;
 
   // 铺满版面:海报内字号/间距全部 em(基准 14px),渲染后实测内容高度,把基准字号
   // 乘上 (可用高 / 实际用高) 迭代逼近——内容刚好填满 960px 且不溢出(余量 ≤4% 收敛)。
-  // 换行/分栏是非线性的,收敛不了就在第 6 轮停手,保持"不溢出"优先。
+  // 多栏后行宽是第二道约束(issue #33):轮次标签被省略号截断时,只把赛程区自己的
+  // 字号(schedFit,em 叠乘)按实测溢出比例压回栏宽内 —— 标题/信息区不受行宽牵连,
+  // 仍由 fit 按高度放大铺满。换行/分栏是非线性的,第 10 轮停手,"不溢出"优先。
   const mainRef = useRef<HTMLDivElement>(null);
   const daysRef = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState(1);
+  const [schedFit, setSchedFit] = useState(1);
   const fitIter = useRef(0);
-  useLayoutEffect(() => { fitIter.current = 0; setFit(1); }, [data, isZh, info]);
+  useLayoutEffect(() => { fitIter.current = 0; setFit(1); setSchedFit(1); }, [data, isZh, info]);
   useLayoutEffect(() => {
     if (loading || days.length === 0) return;
     const main = mainRef.current;
     const daysEl = daysRef.current;
     if (!main || !daysEl) return;
-    if (fitIter.current >= 6) return;
+    if (fitIter.current >= 10) return;
+    // 行宽:轮次标签(flex 收缩项)被截断的最大溢出比例 → 一次性把 schedFit 压回去
+    let widthFactor = 1;
+    for (const name of Array.from(daysEl.querySelectorAll<HTMLElement>('.comp-poster-row-name'))) {
+      const row = name.parentElement;
+      if (!row || row.clientWidth <= 0) continue;
+      const need = row.clientWidth - name.clientWidth + name.scrollWidth;
+      widthFactor = Math.max(widthFactor, need / row.clientWidth);
+    }
+    if (widthFactor > 1.01) {
+      fitIter.current += 1;
+      setSchedFit(s => Math.max(0.5, s / (widthFactor * 1.02)));
+      return;
+    }
     // offsetTop/offsetHeight 是布局值,不受预览 transform: scale 影响
     const avail = main.clientHeight;
     const used = daysEl.offsetTop + daysEl.offsetHeight - main.offsetTop;
@@ -156,7 +191,7 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
     if (ratio >= 1 && ratio <= 1.04) return;
     fitIter.current += 1;
     setFit(f => Math.min(2, Math.max(0.55, f * ratio)));
-  }, [fit, loading, days, isZh]);
+  }, [fit, schedFit, loading, days, isZh]);
 
   const t24 = (iso: string) => new Intl.DateTimeFormat('en-GB', {
     timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false,
@@ -176,13 +211,34 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
     if (!node) return;
     setDownloadState('busy');
     try {
-      const dataUrl = await toPng(node, { pixelRatio: 2 });
+      const blob = await toBlob(node, { pixelRatio: 2 });
+      if (!blob) throw new Error('toBlob returned null');
+      let fileLang = 'en';
+      if (isZh) fileLang = 'zh';
+      const fileName = `${slug}-poster-${fileLang}.png`;
+      // iOS Safari 对 data:/blob: 的 <a download> 落地不可靠(弹 View/Download 后无文件,
+      // issue #33)—— 触屏设备优先走系统分享单(可直接存入相册);用户取消不算失败。
+      if (typeof navigator.canShare === 'function' && window.matchMedia('(pointer: coarse)').matches) {
+        const file = new File([blob], fileName, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file] });
+            setDownloadState('idle');
+            return;
+          } catch (e) {
+            if ((e as DOMException).name === 'AbortError') { setDownloadState('idle'); return; }
+            // 分享不可用(NotAllowedError 等)→ 回落 blob URL 下载
+          }
+        }
+      }
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `${slug}-poster-${isZh ? 'zh' : 'en'}.png`;
+      a.href = url;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
       setDownloadState('idle');
     } catch (e) {
       console.error('[comp poster] failed:', e);
@@ -195,14 +251,13 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
     <div className="comp-poster-inline" ref={wrapRef}>
       <div className="comp-poster-frame" style={{ width: POSTER_W * scale, height: POSTER_H * scale }}>
         <div style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-          <div ref={posterRef} className={`comp-poster${twoCol}`} style={{ fontSize: `${(14 * fit).toFixed(2)}px` }}>
+          <div ref={posterRef} className="comp-poster" style={{ fontSize: `${(14 * fit).toFixed(2)}px` }}>
             <div className="comp-poster-main" ref={mainRef}>
               <header className="comp-poster-head">
                 <div className="comp-poster-name">
                   {compIso2 && <Flag iso2={compIso2} className="comp-flag comp-poster-flag" />}
                   <span>{compName}</span>
                 </div>
-                <div className="comp-poster-rule" />
                 <dl className="comp-poster-facts">
                   {dateStr && (
                     <div className="comp-poster-fact">
@@ -248,7 +303,14 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
                 ) : days.length === 0 ? (
                   <div className="comp-poster-empty">{tr({ zh: '暂无赛程', en: 'No schedule available' })}</div>
                 ) : (
-                  <div className="comp-poster-days" ref={daysRef}>
+                  <div
+                    className="comp-poster-days"
+                    ref={daysRef}
+                    style={{
+                      ...(schedCols > 1 ? { columnCount: schedCols } : null),
+                      ...(schedFit !== 1 ? { fontSize: `${schedFit.toFixed(3)}em` } : null),
+                    }}
+                  >
                     {days.map(d => (
                       <section key={d.dateKey} className="comp-poster-day">
                         <h4 className="comp-poster-day-h">{dayHeaderLabel(d.dateKey, tz, isZh)}</h4>

@@ -573,11 +573,12 @@ export function dayHeaderLabel(dateKey: string, _timeZone: string, isZh: boolean
 }
 
 // Full localized date for the WCA-style table heading "Schedule for <date>".
-// Mirrors luxon DATE_HUGE: en -> "Wednesday, June 3, 2026", zh -> "2026年6月3日星期三".
+// en mirrors luxon DATE_HUGE ("Wednesday, June 3, 2026");zh 用短星期(周三,issue #33
+// 站内统一「周X」不用「星期X」)-> "2026年6月3日周三"。
 export function fullDateLabel(dateKey: string, isZh: boolean): string {
   const dt = new Date(`${dateKey}T00:00:00Z`);
   return new Intl.DateTimeFormat(isZh ? 'zh-CN' : 'en-US', {
-    timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    timeZone: 'UTC', weekday: isZh ? 'short' : 'long', month: 'long', day: 'numeric', year: 'numeric',
   }).format(dt);
 }
 

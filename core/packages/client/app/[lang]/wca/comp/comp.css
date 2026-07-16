@@ -134,7 +134,26 @@
   font-weight: 500;
   font-size: 0.95rem;
 }
-.comp-recent-slug { font-size: 0.8rem; color: var(--muted-foreground); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+/* 未登录时的登录入口(issue #33:最近浏览为登录用户专属) */
+.comp-recent-login {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+.comp-recent-login-btn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
 .comp-recent-remove {
   padding: 8px 10px;
@@ -1058,23 +1077,19 @@ td.is-pr {
   font-weight: 800;
   line-height: 1.25;
 }
+/* 国旗与比赛名同级放大(issue #33):.comp-flag 钉死的 20×14px 在 1.86em 标题旁太小,
+   两个尺寸都要用 em 盖掉(4:3 比例),随标题字号走 */
 .comp-poster-flag {
   width: 1.15em;
+  height: 0.86em;
   flex: none;
   margin-top: 0.19em;
-}
-.comp-poster-rule {
-  width: 3.14em;
-  height: 0.29em;
-  border-radius: 2px;
-  background: var(--accent);
-  margin: 1em 0 1.14em;
 }
 .comp-poster-facts {
   display: flex;
   flex-direction: column;
   gap: 0.36em;
-  margin: 0;
+  margin: 1em 0 0;
 }
 .comp-poster-fact {
   display: flex;
@@ -1160,9 +1175,8 @@ td.is-pr {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* 赛程行数多时双栏(字号由 fit 缩放,不再分档) */
-.comp-poster--2col .comp-poster-days {
-  column-count: 2;
+/* 多栏赛程(栏数 1-4 由 CompPoster 按行数算好走内联 columnCount;字号由 fit 缩放) */
+.comp-poster-days {
   column-gap: 1.57em;
 }
 .comp-poster-foot {

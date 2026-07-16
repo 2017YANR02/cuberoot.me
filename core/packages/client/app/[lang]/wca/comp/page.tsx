@@ -16,7 +16,7 @@ import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parse
 import Link from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, Ban, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, Mountain, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon, Layers as DualIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, Mountain, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon } from 'lucide-react';
 import { SortArrow } from '@/components/SortArrow';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
@@ -29,6 +29,7 @@ import {
   type CompRoundMetaMap,
 } from '@cuberoot/shared';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { displayCuberName } from '@/lib/name-utils';
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
 import { Flag as SharedFlag } from '@/components/Flag';
@@ -64,7 +65,7 @@ import MonthGrid from '@/components/MonthGrid';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import { useCompFollows } from '@/components/CompFollow';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore, useOwnerKey, getOwnerKey } from '@/lib/auth-store';
 import './calendar_page.css';
 import './comp.css';
 import { tr } from '@/i18n/tr';
@@ -76,10 +77,16 @@ const GlobeMapClient = dynamic(() => import('../globe/GlobeMapClient'), {
   loading: () => <div className="comp-globe-loading">Loading globe…</div>,
 });
 
-// ── 最近浏览(localStorage)─────────────────────────────────────────────────
+// ── 最近浏览(localStorage,登录用户专属)──────────────────────────────────
+// issue #33:最近浏览只属于登录用户 —— 按 ownerKey 分桶存取,未登录不记录,列表区
+// 显示登录入口。老共享桶('comp.recent')在该设备首个登录用户读取时迁移进用户桶后删除。
 
-const RECENT_KEY = 'comp.recent';
+const RECENT_KEY_LEGACY = 'comp.recent';
 const RECENT_MAX = 12;
+
+function recentKeyFor(ownerKey: string): string {
+  return `comp.recent.${ownerKey}`;
+}
 
 interface RecentEntry {
   slug: string;
@@ -103,11 +110,17 @@ function decodeEntities(s: string): string {
     .replace(/&amp;/g, '&');
 }
 
-function loadRecent(): RecentEntry[] {
-  if (typeof window === 'undefined') return [];
+function loadRecent(ownerKey: string): RecentEntry[] {
+  if (typeof window === 'undefined' || !ownerKey) return [];
   try {
-    const raw = localStorage.getItem(RECENT_KEY);
-    if (!raw) return [];
+    let raw = localStorage.getItem(recentKeyFor(ownerKey));
+    if (!raw) {
+      // 老共享桶一次性迁移到当前用户桶(仅设备上第一个登录用户继承,随后删除)
+      raw = localStorage.getItem(RECENT_KEY_LEGACY);
+      if (!raw) return [];
+      localStorage.setItem(recentKeyFor(ownerKey), raw);
+      localStorage.removeItem(RECENT_KEY_LEGACY);
+    }
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr)) return [];
     const valid = arr.filter((e): e is RecentEntry =>
@@ -127,15 +140,18 @@ function loadRecent(): RecentEntry[] {
 
 export function rememberRecent(slug: string, name: string, nameZh?: string, iso2?: string) {
   if (typeof window === 'undefined') return;
+  // 未登录不记录(issue #33:最近浏览是登录用户自己的浏览史)
+  const ownerKey = getOwnerKey();
+  if (!ownerKey) return;
   try {
     const norm = slug.replace(/-/g, '');
-    const all = loadRecent();
+    const all = loadRecent(ownerKey);
     // nameZh / iso2 缺省时保留旧记录里已有的(例如 EN 模式再次访问不该抹掉之前解析到的中文 / 国旗)
     const prev = all.find(r => r.slug === norm);
     const cur = all.filter(r => r.slug !== norm);
     const entry: RecentEntry = { slug: norm, name, nameZh: nameZh ?? prev?.nameZh, iso2: iso2 ?? prev?.iso2, viewedAt: Date.now() };
     const next: RecentEntry[] = [entry, ...cur].slice(0, RECENT_MAX);
-    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+    localStorage.setItem(recentKeyFor(ownerKey), JSON.stringify(next));
   } catch { /* quota */ }
 }
 
@@ -1398,12 +1414,14 @@ function CalendarPageInner() {
   // 模态 / 列表 / 日历条 / day-list,与首页 OngoingComps 共用同一份 server 数据。
   const { loggedIn: followLoggedIn, follows, toggle: toggleFollow } = useCompFollows();
   const login = useAuthStore((s) => s.login);
+  // 最近浏览按登录用户分桶(issue #33);ownerKey 空 = 未登录,列表区显示登录入口
+  const recentOwnerKey = useOwnerKey();
   const [recent, setRecent] = useState<RecentEntry[]>([]);
-  useEffect(() => { setRecent(loadRecent()); }, []);
+  useEffect(() => { setRecent(recentOwnerKey ? loadRecent(recentOwnerKey) : []); }, [recentOwnerKey]);
   const removeRecent = (slug: string) => {
     setRecent((cur) => {
       const next = cur.filter(r => r.slug !== slug);
-      try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* quota */ }
+      try { localStorage.setItem(recentKeyFor(recentOwnerKey), JSON.stringify(next)); } catch { /* quota */ }
       return next;
     });
   };
@@ -1512,6 +1530,24 @@ function CalendarPageInner() {
     'dual',
     parseAsBoolean.withDefault(false).withOptions({ history: 'replace', scroll: false }),
   );
+  // 合并筛选菜单(issue #33):已取消 / 首秀 / 双轮 + (仅列表视图)整场列/项目格 metric。
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersWrapRef = useRef<HTMLDivElement>(null);
+  const filtersPanelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(filtersOpen, filtersPanelRef);
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (!filtersWrapRef.current?.contains(e.target as Node)) setFiltersOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFiltersOpen(false); };
+    window.addEventListener('pointerdown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [filtersOpen]);
   // 三个 popover 共用一份 state：'month' = 日历模式月份选择；'from'/'to' = 列表模式年月范围
   const [pickerOpen, setPickerOpen] = useState<'month' | 'from' | 'to' | null>(null);
   const monthBtnRef = useRef<HTMLButtonElement>(null);
@@ -2061,50 +2097,111 @@ function CalendarPageInner() {
           restrictTo={countryOptions}
           allLabel={t('upcoming.allCountries')}
         />
-        <button
-          type="button"
-          className={`cancelled-toggle${cancelledFilter === 'only' ? ' is-active' : ''}`}
-          onClick={() => setCancelledFilter((v) => (v === 'only' ? 'all' : 'only'))}
-          aria-pressed={cancelledFilter === 'only'}
-          title={tr({ zh: '只看已取消的比赛', en: 'Show only cancelled competitions'
-        })}
-        >
-          <Ban size={14} strokeWidth={1.75} />
-          <span>{tr({ zh: '已取消', en: 'Cancelled' })}</span>
-        </button>
-        <div
-          className={`debuts-select-wrap${debutMode !== 'off' ? ' is-active' : ''}`}
-          title={tr({ zh: '首秀：国家＝只显示每个国家有史以来的第一场 WCA 比赛；项目＝只显示每个项目有史以来第一次出现的那场比赛（配合左侧国家 / 下方项目筛选可锁定某国或某项目，日期列点「最早在前」按时间看登场顺序）', en: 'Debuts: Country = each country’s first-ever WCA competition; Event = each event’s first-ever appearance (combine with the country filter or event chips to focus one, click the date header for oldest-first)' })}
-        >
-          <DebutIcon size={14} strokeWidth={1.75} />
-          <select
-            className="debuts-select"
-            value={debutMode === 'off' ? '' : debutMode}
-            onChange={(e) => setDebutMode(e.target.value as DebutMode)}
-            aria-label={tr({ zh: '首秀', en: 'Debuts' })}
-          >
-            <option value="" disabled hidden>{tr({ zh: '首秀', en: 'Debuts' })}</option>
-            <option value="country">{tr({ zh: '国家首秀', en: 'Country debuts' })}</option>
-            <option value="event">{tr({ zh: '项目首秀', en: 'Event debuts' })}</option>
-          </select>
-          {debutMode !== 'off' && (
-            <ClearButton
-              onClick={() => setDebutMode('off')}
-              isZh={isZh}
-              variant="standalone"
-            />
-          )}
-        </div>
-        <button
-          type="button"
-          className={`dual-toggle${dualOnly ? ' is-active' : ''}`}
-          onClick={() => setDualOnly((v) => !v)}
-          aria-pressed={dualOnly}
-          title={tr({ zh: '双轮赛制：只显示含双轮项目的比赛（WCA Reg 9v，2026 新规，前两轮合并排名、不淘汰）。含双轮的项目在下方列表里带强调色圈', en: 'Dual rounds: show only competitions with a dual-round event (WCA Reg 9v, new in 2026 — first two rounds combined, no elimination). Dual events are ringed in the list below' })}
-        >
-          <DualIcon size={14} strokeWidth={1.75} />
-          <span>{tr({ zh: '双轮', en: 'Dual rounds' })}</span>
-        </button>
+        {(() => {
+          // 已取消 / 首秀 / 双轮 合并成一个菜单(issue #33,不用 lucide 图标);
+          // 整场列 / 项目格 metric 只在列表视图出现(人数和上限 / 满员率等仅列表有意义)。
+          const activeCount = (cancelledFilter === 'only' ? 1 : 0)
+            + (debutMode !== 'off' ? 1 : 0)
+            + (dualOnly ? 1 : 0);
+          return (
+            <div className="comp-filters-wrap" ref={filtersWrapRef}>
+              <button
+                type="button"
+                className={`comp-filters-btn${activeCount > 0 ? ' is-active' : ''}`}
+                onClick={() => setFiltersOpen((o) => !o)}
+                aria-expanded={filtersOpen}
+                aria-haspopup="true"
+              >
+                <span>{tr({ zh: '筛选', en: 'Filters' })}</span>
+                {activeCount > 0 && <span className="comp-filters-count">{activeCount}</span>}
+                <span className="comp-filters-caret" aria-hidden>▾</span>
+              </button>
+              {filtersOpen && (
+                /* anchored-panel: clamped (usePanelClamp) */
+                <div className="comp-filters-panel" ref={filtersPanelRef}>
+                  <div
+                    className="comp-filters-row"
+                    title={tr({ zh: '只看已取消的比赛', en: 'Show only cancelled competitions' })}
+                  >
+                    <BoolToggle
+                      value={cancelledFilter === 'only'}
+                      onChange={(v) => setCancelledFilter(v ? 'only' : 'all')}
+                      label={tr({ zh: '已取消', en: 'Cancelled only' })}
+                    />
+                  </div>
+                  <div
+                    className="comp-filters-row"
+                    title={tr({ zh: '双轮赛制：只显示含双轮项目的比赛（WCA Reg 9v，2026 新规，前两轮合并排名、不淘汰）。含双轮的项目在下方列表里带强调色圈', en: 'Dual rounds: show only competitions with a dual-round event (WCA Reg 9v, new in 2026 — first two rounds combined, no elimination). Dual events are ringed in the list below' })}
+                  >
+                    <BoolToggle
+                      value={dualOnly}
+                      onChange={(v) => setDualOnly(v)}
+                      label={tr({ zh: '双轮', en: 'Dual rounds' })}
+                    />
+                  </div>
+                  <label
+                    className="comp-filters-row comp-filters-row--select"
+                    title={tr({ zh: '首秀：国家＝只显示每个国家有史以来的第一场 WCA 比赛；项目＝只显示每个项目有史以来第一次出现的那场比赛（配合左侧国家 / 下方项目筛选可锁定某国或某项目，日期列点「最早在前」按时间看登场顺序）', en: 'Debuts: Country = each country’s first-ever WCA competition; Event = each event’s first-ever appearance (combine with the country filter or event chips to focus one, click the date header for oldest-first)' })}
+                  >
+                    <span className="comp-filters-label">{tr({ zh: '首秀', en: 'Debuts' })}</span>
+                    <select
+                      className="list-metric-select"
+                      value={debutMode}
+                      onChange={(e) => setDebutMode(e.target.value as DebutMode)}
+                      aria-label={tr({ zh: '首秀', en: 'Debuts' })}
+                    >
+                      <option value="off">{tr({ zh: '关', en: 'Off' })}</option>
+                      <option value="country">{tr({ zh: '国家首秀', en: 'Country debuts' })}</option>
+                      <option value="event">{tr({ zh: '项目首秀', en: 'Event debuts' })}</option>
+                    </select>
+                  </label>
+                  {viewMode === 'list' && (
+                    <>
+                      <label
+                        className="comp-filters-row comp-filters-row--select"
+                        title={tr({ zh: '整场列显示什么（人数和上限 / 满员率 / 名称长度 / 城市名长度 / 纬度 / 经度 / 海拔），点列头可排序', en: 'What the whole-comp column shows (people & limit / fill rate / name length / city length / latitude / longitude / elevation); click header to sort' })}
+                      >
+                        <span className="comp-filters-label">{tr({ zh: '整场列', en: 'Comp column' })}</span>
+                        <select
+                          className="list-metric-select"
+                          value={compMetric}
+                          onChange={(e) => setCompMetric(e.target.value as CompMetric)}
+                          aria-label={tr({ zh: '整场列显示', en: 'Whole-comp column' })}
+                        >
+                          <option value="peopleLimit">{tr({ zh: '人数和上限', en: 'People & limit' })}</option>
+                          <option value="ratio">{tr({ zh: '满员率', en: 'Fill rate' })}</option>
+                          <option value="nameLength">{tr({ zh: '名称长度', en: 'Name length' })}</option>
+                          <option value="cityLength">{tr({ zh: '城市名长度', en: 'City name length' })}</option>
+                          <option value="latlng">{tr({ zh: '经纬度', en: 'Coordinates' })}</option>
+                          <option value="elevation">{tr({ zh: '海拔', en: 'Elevation' })}</option>
+                        </select>
+                      </label>
+                      <label
+                        className="comp-filters-row comp-filters-row--select"
+                        title={tr({ zh: '每个项目格子显示什么（限时 / 及格 / 晋级 / 资格仅未来比赛有）', en: 'What each event cell shows (time limit / cutoff / advancement / qualification: upcoming only)' })}
+                      >
+                        <span className="comp-filters-label">{tr({ zh: '项目格', en: 'Event cell' })}</span>
+                        <select
+                          className="list-metric-select"
+                          value={eventMetric}
+                          onChange={(e) => setEventMetric(e.target.value as EventMetric)}
+                          aria-label={tr({ zh: '项目格子显示', en: 'Per-event cell' })}
+                        >
+                          <option value="rounds">{tr({ zh: '轮次', en: 'Rounds' })}</option>
+                          <option value="regs">{tr({ zh: '人数', en: 'Entries' })}</option>
+                          <option value="timeLimit">{tr({ zh: '限时', en: 'Time limit' })}</option>
+                          <option value="cutoff">{tr({ zh: '及格线', en: 'Cutoff' })}</option>
+                          <option value="advancement">{tr({ zh: '晋级', en: 'Advance' })}</option>
+                          <option value="qualification">{tr({ zh: '参赛资格', en: 'Qualify' })}</option>
+                        </select>
+                      </label>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       <div className="month-bar">
@@ -2222,42 +2319,6 @@ function CalendarPageInner() {
                                           ? `共 ${displayedComps.length.toLocaleString()} 场`
                                           : `${displayedComps.length.toLocaleString()} comps`)}
             </span>
-            <select
-              className="list-metric-select"
-              value={compMetric}
-              onChange={(e) => setCompMetric(e.target.value as CompMetric)}
-              aria-label={tr({ zh: '整场列显示', en: 'Whole-comp column'
-            })}
-              title={tr({ zh: '整场列显示什么（人数和上限 / 满员率 / 名称长度 / 城市名长度 / 纬度 / 经度 / 海拔），点列头可排序', en: 'What the whole-comp column shows (people & limit / fill rate / name length / city length / latitude / longitude / elevation); click header to sort'
-            })}
-            >
-              <option value="peopleLimit">{tr({ zh: '人数和上限', en: 'People & limit'
-            })}</option>
-              <option value="ratio">{tr({ zh: '满员率', en: 'Fill rate'
-            })}</option>
-              <option value="nameLength">{tr({ zh: '名称长度', en: 'Name length'
-            })}</option>
-              <option value="cityLength">{tr({ zh: '城市名长度', en: 'City name length'
-            })}</option>
-              <option value="latlng">{tr({ zh: '经纬度', en: 'Coordinates'
-            })}</option>
-              <option value="elevation">{tr({ zh: '海拔', en: 'Elevation'
-            })}</option>
-            </select>
-            <select
-              className="list-metric-select"
-              value={eventMetric}
-              onChange={(e) => setEventMetric(e.target.value as EventMetric)}
-              aria-label={tr({ zh: '项目格子显示', en: 'Per-event cell' })}
-              title={tr({ zh: '每个项目格子显示什么（限时 / 及格 / 晋级 / 资格仅未来比赛有）', en: 'What each event cell shows (time limit / cutoff / advancement / qualification: upcoming only)' })}
-            >
-              <option value="rounds">{tr({ zh: '轮次', en: 'Rounds' })}</option>
-              <option value="regs">{tr({ zh: '人数', en: 'Entries' })}</option>
-              <option value="timeLimit">{tr({ zh: '限时', en: 'Time limit' })}</option>
-              <option value="cutoff">{tr({ zh: '及格线', en: 'Cutoff' })}</option>
-              <option value="advancement">{tr({ zh: '晋级', en: 'Advance' })}</option>
-              <option value="qualification">{tr({ zh: '参赛资格', en: 'Qualify' })}</option>
-            </select>
           </div>
         )}
       </div>
@@ -2837,10 +2898,19 @@ function CalendarPageInner() {
         </div>
       )}
 
-      {recent.length > 0 && (
+      {(recent.length > 0 || !recentOwnerKey) && (
         <div className="comp-recent comp-recent-calendar">
           <h2 className="comp-recent-title">{tr({ zh: '最近浏览', en: 'Recent'
         })}</h2>
+          {!recentOwnerKey ? (
+            // 未登录:不展示任何浏览记录,给登录入口(issue #33)
+            <p className="comp-recent-login">
+              <span>{tr({ zh: '登录后记录并显示你浏览过的比赛', en: 'Sign in to keep track of competitions you viewed' })}</span>
+              <button type="button" className="comp-recent-login-btn" onClick={login}>
+                {tr({ zh: '登录', en: 'Sign in' })}
+              </button>
+            </p>
+          ) : (
           <ul className="comp-recent-list">
             {recent.map(r => {
               const iso2 = compFlagIso2(r.slug) || r.iso2 || '';
@@ -2855,7 +2925,6 @@ function CalendarPageInner() {
                       {iso2 && <SharedFlag iso2={iso2} className="comp-flag" />}
                       <span>{display}</span>
                     </span>
-                    <span className="comp-recent-slug">{r.slug}</span>
                   </Link>
                   <button
                     type="button"
@@ -2870,6 +2939,7 @@ function CalendarPageInner() {
               );
             })}
           </ul>
+          )}
         </div>
       )}
 
