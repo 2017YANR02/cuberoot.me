@@ -9,6 +9,7 @@ import DinoCube from "./dino/DinoCube";
 import RediCube from "./redi/RediCube";
 import RexCube from "./rex/RexCube";
 import HeliCube from "./heli/HeliCube";
+import GearCube from "./gear/GearCube";
 import SkewbCube from "./skewb/SkewbCube";
 import PyraCube from "./pyra/PyraCube";
 import MegaminxCube from "./mega/MegaminxCube";
@@ -22,7 +23,7 @@ import { loadSmplxFullBody } from "./hands/handModelMano";
  *  Heli (edge-turning Helicopter Cube), Skewb (deep-cut corner-turning), or Pyraminx
  *  (vertex-turning tetrahedron). Skewb + Pyraminx are the in-house engine alternatives
  *  to the cubing.js TwistyPlayer renders (chosen via the `renderer` toggle). */
-export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror';
+export type PuzzleKind = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror';
 
 export default class World {
   public width = 1;
@@ -34,7 +35,7 @@ export default class World {
   /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
    *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
    *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
-  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | SkewbCube | PyraCube | MegaminxCube | FtoCube;
+  public cube!: Cube | Sq1Cube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -49,6 +50,7 @@ export default class World {
   private rediCube: RediCube | null = null;
   private rexCube: RexCube | null = null;
   private heliCube: HeliCube | null = null;
+  private gearCube: GearCube | null = null;
   private skewbCube: SkewbCube | null = null;
   private pyraCube: PyraCube | null = null;
   private megaCube: MegaminxCube | null = null;
@@ -236,6 +238,17 @@ export default class World {
       // Heli: edge-turning (Helicopter Cube) — NxN Controller doesn't apply. SimPage
       // installs a dedicated heli drag-to-turn + view-rotate handler. Reuse the SQ1
       // rim-light rig (32 solid wedge pieces with many oblique facets).
+      this.controller.disable = true;
+      this._ensureSq1Lights();
+    } else if (kind === 'gear') {
+      if (this.gearCube == null) {
+        this.gearCube = new GearCube();
+        this.gearCube.callbacks.push(this.callback);
+      }
+      this.cube = this.gearCube;
+      // Gear: geared 180° face flips — NxN Controller doesn't apply. SimPage installs
+      // a dedicated gear drag-to-turn + view-rotate handler (corner-gesture registry).
+      // Reuse the SQ1 rim-light rig (toothed wheels with many oblique flanks).
       this.controller.disable = true;
       this._ensureSq1Lights();
     } else if (kind === 'skewb') {
@@ -476,6 +489,7 @@ export default class World {
     const isRedi = this.puzzleKind === 'redi';
     const isRex = this.puzzleKind === 'rex';
     const isHeli = this.puzzleKind === 'heli';
+    const isGear = this.puzzleKind === 'gear';
     const isSkewb = this.puzzleKind === 'skewb';
     const isMega = this.puzzleKind === 'megaminx';
     const isFto = this.puzzleKind === 'fto';
@@ -483,7 +497,7 @@ export default class World {
     // dodecahedron reaches ~3.0·SIZE at its vertices; the FTO octahedron ~3.2·SIZE; ~4.0
     // frames them to the NxN-3 fill.
     // 手开着时把 3x3 取景拉宽(手/前臂环在魔方外围,SIZE*3 会顶出画框)。
-    const refHalf = isSq1 ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
+    const refHalf = isSq1 ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
     const distance = refHalf * this.perspective * dolly;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
@@ -500,7 +514,7 @@ export default class World {
     // = 魔方前 960)会把整个躯干裁掉只剩残臂。near 面位于世界 z=+margin×SIZE
     // (轴向情形,与 dolly 无关)—— 人体最深点(肩背/头后)z 可达 ~50×SIZE,
     // margin 40 恰在头中间切一刀(2026-07-12 拉远「无头人」实测),58 整体罩住。
-    const nearMargin = handsOn ? (this.handsFullBodyWanted ? 58 : 15) : isSq1 || isDino || isRedi || isRex || isHeli || isSkewb || isMega || isFto ? 5 : 4;
+    const nearMargin = handsOn ? (this.handsFullBodyWanted ? 58 : 15) : isSq1 || isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto ? 5 : 4;
     this.camera.near = Math.max(distance - SIZE * nearMargin, SIZE * 0.4);
     // 全身人物:人体站在魔方后方(−z 纵深 ~1m ≈ 数十 SIZE),far 随开关放宽
     // (按意愿而非加载完成算 —— 资产异步就位时不再有 resize 时机)。swap 背视

@@ -9,8 +9,8 @@
 
 import { encodeUrlAlg } from './cubedb-url';
 
-/** sim puzzleKind (cuber engine) — number for NxN, else a named twisty/sq1/ivy/dino/redi/rex/heli. */
-type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto';
+/** sim puzzleKind (cuber engine) — number for NxN, else a named twisty/sq1/ivy/dino/redi/rex/heli/gear. */
+type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto';
 
 /** sim puzzle → recon event id, or null when recon has no matching event.
  *  Accepts PuzzleGeometry explore ids (string) too — they have no recon event. */
@@ -21,7 +21,7 @@ export function reconEventForSim(p: SimPuzzle | string): string | null {
   if (p === 'skewb') return 'skewb';
   if (p === 'megaminx') return 'mega';
   if (typeof p === 'number' && p >= 2 && p <= 7) return `${p}x${p}`;
-  return null; // 1x1, 8x8+, dino, redi, rex, heli — no recon event
+  return null; // 1x1, 8x8+, dino, redi, rex, heli, gear — no recon event
 }
 
 /** recon event id → sim `puzzle` URL value, or null when sim can't show it. */
