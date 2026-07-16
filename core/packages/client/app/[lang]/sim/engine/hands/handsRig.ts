@@ -715,6 +715,12 @@ const RETREAT_LIFT_STYLED: Record<HandSide, Partial<Record<string, { c1: number;
   R: {
     hook_index: { c1: -0.563, c2: 0.2, c3: 0.4, splay: 0.2 },
     hook_middle2: { c1: -0.2, c2: 0.1, c3: 0.575, splay: 1.225 },
+    // D2'(hook_pinky/hook_ring2)不设键(2026-07-16 MANO 重验):generic 时代
+    // 的攻窗峰 +2.9U 随 generic 退役消失 —— MANO 端姿离箱体远(ring2 提交姿
+    // ~35U),默认 RETREAT_LIFT 全 k 网格(0.005 步)worst −0.56 全负。
+    // ⚠ 勿照 L 侧加「零凸包键」:styled 键会整体顶掉默认 RETREAT_LIFT
+    // (rl = rlS ?? RETREAT_LIFT),ring2 失去抬指后关节直线弦在 k≈0.2 切进
+    // 底后角区 +15.6U(2026-07-16 注入实测)。
   },
   // L 侧(U'/U2' 钉镜像角端姿,2026-07-09):浏览器按 U' 单拨 + U2' 双指两条
   // 回撤路径联解,细 k 网格(尾段 0.01~0.06 + 攻窗 0.965~0.995 都要采,
