@@ -15,9 +15,11 @@
  *    circle), so a turning gear NEVER penetrates a corner — constructive, with
  *    R_BITE − R_BALL clearance. One splat-crown sticker per face (outer plate with
  *    concave inner arcs where the bites cross the surface).
- *  - 6 CENTERS: plain rounded cap + square sticker (the spider turns with the middle
- *    slab every move). No axle arms: the turning face's corners sweep the full
- *    annulus over the cap, so anything past the middle slab would be sheared off.
+ *  - 6 CENTERS: rounded cap + square sticker + 4 C-shaped spider arms (one toward
+ *    each adjacent gear, stickered — the reference front view's brackets). The arms
+ *    live entirely inside the equator ring's bite tube, so the corner bites that
+ *    protect the gears protect the arms too; their radial reach is capped by the
+ *    face-layer wheels' sweep curve (see GEAR_FRONT_SPEC.md §3).
  *  - CORE: a dark sphere riding the middle slab.
  *
  * Clearance invariants (locked by tests/gear_geometry.test.ts):
@@ -32,7 +34,7 @@ import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { SIZE } from '../define';
 import { CUBE_FILL } from '@/lib/cube-colors';
-import { makeSticker, cubeFaceBasis, extrudeOntoFace, roundCorners, polyArea2, type V2 } from '../stickerGeom';
+import { makeSticker, cubeFaceBasis, extrudeOntoFace, roundCorners, offsetInward, polyArea2, type V2 } from '../stickerGeom';
 
 /** Uniform arc-length resample of a closed outline (spacing `s`). */
 function resampleClosed(pts: V2[], s: number): V2[] {
@@ -115,6 +117,20 @@ export const RING_R = GEAR_B * Math.SQRT2;
 export const CORE_R = 0.21 * H;
 export const CAP_HALF = 0.19 * H;
 const CAP_T = 12;
+/** Center spider arms — the reference front view's C-brackets between the cap and
+ *  each gear. They belong to the CENTER piece (an edge-mounted plate would sweep
+ *  through the equator wheels' bulge mid-turn — refuted numerically in
+ *  .tmp/gear/derive3.mjs; the center-arm reading clears every relative motion,
+ *  see .tmp/gear/GEAR_FRONT_SPEC.md §3). The whole arm sits inside the equator
+ *  ring's bite tube, so the same tori that protect the gears protect the arms
+ *  from the corners — constructive, test-locked. */
+export const ARM_R0 = 0.30 * H;   // feet inner edge (radial, from face center)
+export const ARM_R1 = 0.375 * H;  // bar outer edge — capped by the face-layer
+                                  // wheels' sweep reach curve (derive3b check C)
+export const ARM_S = 24;          // tangent half-width (corner-tab shell clearance)
+export const ARM_SFOOT = 12;      // feet span |s| ∈ [ARM_SFOOT, ARM_S]
+export const ARM_BAR = 44;        // feet→bar radial boundary
+export const ARM_D = 5;           // plate depth below the surface
 
 const BODY_COLOR = 0x141414;
 const STICKER_LIFT = 0.5;
@@ -427,6 +443,37 @@ export function buildCenterPiece(f: number): { pivot: THREE.Object3D; group: THR
   group.add(makeSticker(geo, stickerMat(GEAR_FACE_NAMES[f]), bodyMat, {
     simStickerNormal: n.clone(),
   }));
+
+  // 4 spider arms, one toward each adjacent gear: C-shaped plate (outer bar + two
+  // feet) opening toward the cap, plus a matching sticker. (r, s) = (radial from
+  // face center toward the gear, tangent along the edge).
+  const armPoly: V2[] = [
+    [ARM_R1, -ARM_S], [ARM_R1, ARM_S], [ARM_R0, ARM_S], [ARM_R0, ARM_SFOOT],
+    [ARM_BAR, ARM_SFOOT], [ARM_BAR, -ARM_SFOOT], [ARM_R0, -ARM_SFOOT], [ARM_R0, -ARM_S],
+  ];
+  for (const [ru, rv] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const rHat = u.clone().multiplyScalar(ru).add(v.clone().multiplyScalar(rv));
+    const eHat = new THREE.Vector3().crossVectors(n, rHat);
+    const mapped: V2[] = armPoly.map(([r, s]) => {
+      const p = rHat.clone().multiplyScalar(r).addScaledVector(eHat, s);
+      return [p.dot(u), p.dot(v)];
+    });
+    const ccw = polyArea2(mapped) > 0 ? mapped : mapped.slice().reverse();
+    const rounded = roundCorners(ccw, 4);
+    const bodyShape = new THREE.Shape(rounded.map(([a, b]) => new THREE.Vector2(a, b)));
+    const bodyGeo = new THREE.ExtrudeGeometry(bodyShape, { depth: ARM_D, bevelEnabled: false });
+    bodyGeo.applyMatrix4(new THREE.Matrix4().makeBasis(u, v, n)
+      .setPosition(n.clone().multiplyScalar(H - ARM_D)));
+    const armBody = new THREE.Mesh(bodyGeo, bodyMat);
+    armBody.userData.simRole = 'body';
+    group.add(armBody);
+    const stickerOutline = offsetInward(roundCorners(ccw, 5), 2);
+    const armSticker = extrudeOntoFace(stickerOutline,
+      { u, v, n, origin: n.clone().multiplyScalar(H + STICKER_LIFT) }, STICKER_DEPTH);
+    group.add(makeSticker(armSticker, stickerMat(GEAR_FACE_NAMES[f]), bodyMat, {
+      simStickerNormal: n.clone(),
+    }));
+  }
   return { pivot, group };
 }
 
