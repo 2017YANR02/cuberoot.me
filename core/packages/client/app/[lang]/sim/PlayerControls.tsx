@@ -34,7 +34,7 @@ import {
   Play, Pause, SkipBack, SkipForward,
   FlipHorizontal2, FlipVertical2, Eraser, RotateCw,
   Shuffle, Link2, Check, Upload,
-  Search, Loader2, Pipette, Sparkles,
+  Search, Loader2, Pipette,
   Undo2, Redo2, Keyboard,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
@@ -883,6 +883,9 @@ interface Props {
    *  这里只渲染播放条最左的下拉。支持与否走 simCaps.supports.stickering(不支持隐藏)。 */
   stickering?: string;
   onStickeringChange?: (v: string) => void;
+  /** 十字(底面)颜色(cubedb Cross Color),仅 NxN 引擎遮罩;默认黄(=D,恒等)。 */
+  stickeringColor?: string;
+  onStickeringColorChange?: (v: string) => void;
 }
 
 export default function PlayerControls({
@@ -895,6 +898,7 @@ export default function PlayerControls({
   renderer = 'cubing', onRendererChange,
   playbackSlot,
   stickering = 'full', onStickeringChange,
+  stickeringColor = 'yellow', onStickeringColorChange,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const isIvy = puzzleKind === 'ivy';
@@ -1951,7 +1955,7 @@ export default function PlayerControls({
   // 按阶段展示色块(twizzle edit 同款,issue #27)— 播放条最左。支持面走 simCaps
   // (NxN 引擎 ≥2 阶 / cubing.js megaminx·fto),不支持的拼图整个隐藏。
   const stickeringSelect = resolveCaps(puzzleKind, renderer).supports.stickering && onStickeringChange
-    ? <StickeringSelect puzzleKind={puzzleKind} value={stickering} onChange={onStickeringChange} />
+    ? <StickeringSelect puzzleKind={puzzleKind} value={stickering} onChange={onStickeringChange} color={stickeringColor} onColorChange={onStickeringColorChange} />
     : null;
 
   return (
@@ -1989,6 +1993,20 @@ export default function PlayerControls({
         >
           <Shuffle size={14} />
         </button>
+        {is3x3 && (
+          <button
+            type="button"
+            className="sim-player-scramble sim-player-scramble-optimal"
+            onClick={handleOptimalScramble}
+            disabled={optimalScrambleBusy}
+            title={authUser
+              ? t('最优打乱(云端):求一个保证最少步数(God\'s number)到达随机状态的打乱', 'Optimal scramble (cloud): a scramble guaranteed to reach a random state in the fewest possible moves (God\'s number)')
+              : t('最优打乱(云端)需登录(WCA),点击登录', 'Optimal scramble (cloud) requires login (WCA) — click to log in')}
+            aria-label={t('最优打乱', 'Optimal scramble')}
+          >
+            {optimalScrambleBusy ? <Loader2 size={14} className="sim-spin" /> : t('最优', 'optimal')}
+          </button>
+        )}
         <button
           type="button"
           className="sim-player-scramble"
@@ -2009,20 +2027,6 @@ export default function PlayerControls({
             aria-label={t('反推打乱', 'Derive scramble')}
           >
             {derivingScramble ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
-          </button>
-        )}
-        {is3x3 && (
-          <button
-            type="button"
-            className="sim-player-scramble"
-            onClick={handleOptimalScramble}
-            disabled={optimalScrambleBusy}
-            title={authUser
-              ? t('最优打乱(云端):求一个保证最少步数(God\'s number)到达随机状态的打乱', 'Optimal scramble (cloud): a scramble guaranteed to reach a random state in the fewest possible moves (God\'s number)')
-              : t('最优打乱(云端)需登录(WCA),点击登录', 'Optimal scramble (cloud) requires login (WCA) — click to log in')}
-            aria-label={t('最优打乱', 'Optimal scramble')}
-          >
-            {optimalScrambleBusy ? <Loader2 size={14} className="sim-spin" /> : <Sparkles size={14} />}
           </button>
         )}
       </div>
@@ -2184,7 +2188,7 @@ export default function PlayerControls({
             onClick={handlePublishRecon}
             title={t('用当前打乱 / 解法去发布复盘', 'Take this scramble / solution to publish a reconstruction')}
           >
-            <Upload size={13} />{t('发布复盘', 'Publish recon')}
+            <Upload size={13} />{t('发布', 'Publish')}
           </button>
         )}
       </div>

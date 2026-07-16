@@ -158,24 +158,48 @@ function primaryFace(p: Piece, max: number): number {
   return FACE.L;
 }
 
-/** 阶段名 → (initial, face) 遮罩函数;full / 未知阶段返回 null(= 全原色)。 */
-export function stickeringMaskFn(order: number, name: string): StickeringMaskFn | null {
+// —— 十字(底面)颜色:整体旋转共轭(cubedb 的 Cross Color)——
+// 规则表固定写在标准坐标系(十字=D、LL=U);选其它颜色时把物理 (坐标, 面) 先旋转到
+// 该坐标系再查规则:所选颜色的面充当 D,LL 阶段自动落到对面,Roux/Petrus 等侧向
+// 阶段随同一旋转重定向。颜色 → 面按标准配色(U=白 D=黄 F=绿 B=蓝 R=红 L=橙)。
+export const CROSS_COLORS = ["white", "yellow", "green", "blue", "red", "orange"] as const;
+export type CrossColor = (typeof CROSS_COLORS)[number];
+const CROSS_COLOR_TO_FACE: Record<CrossColor, FACE> = {
+  white: FACE.U, yellow: FACE.D, green: FACE.F, blue: FACE.B, red: FACE.R, orange: FACE.L,
+};
+
+/** 物理坐标 → 遮罩坐标 的整体旋转(det=+1)+ 面置换(下标物理面 → 遮罩面),
+ *  键 = 充当 D 的物理面。FACE 编码 L0 R1 D2 U3 B4 F5。 */
+type CrossXform = {
+  map: (x: number, y: number, z: number, max: number) => readonly [number, number, number];
+  facePerm: readonly FACE[];
+};
+const CROSS_XFORMS: Record<FACE, CrossXform> = {
+  [FACE.D]: { map: (x, y, z) => [x, y, z], facePerm: [0, 1, 2, 3, 4, 5] },        // 恒等
+  [FACE.U]: { map: (x, y, z, m) => [x, m - y, m - z], facePerm: [0, 1, 3, 2, 5, 4] }, // x2
+  [FACE.F]: { map: (x, y, z, m) => [x, m - z, y], facePerm: [0, 1, 4, 5, 3, 2] },     // x'
+  [FACE.B]: { map: (x, y, z, m) => [x, z, m - y], facePerm: [0, 1, 5, 4, 2, 3] },     // x
+  [FACE.R]: { map: (x, y, z, m) => [y, m - x, z], facePerm: [3, 2, 0, 1, 4, 5] },     // z
+  [FACE.L]: { map: (x, y, z, m) => [m - y, x, z], facePerm: [2, 3, 1, 0, 4, 5] },     // z'
+};
+
+/** 阶段名 → (initial, face) 遮罩函数;full / 未知阶段返回 null(= 全原色)。
+ *  crossColor:十字(底面)颜色,未知值回退 yellow(=D,恒等)。 */
+export function stickeringMaskFn(order: number, name: string, crossColor?: string): StickeringMaskFn | null {
   if (order < 2 || !name || name === "full") return null;
   const rules = rulesFor(order, name);
   if (!rules || rules.length === 0) return null;
   const max = order - 1;
   const N2 = order * order;
+  const xf = CROSS_XFORMS[CROSS_COLOR_TO_FACE[(crossColor ?? "yellow") as CrossColor] ?? FACE.D];
   return (initial, face) => {
-    const p: Piece = {
-      x: initial % order,
-      y: ((initial / order) | 0) % order,
-      z: (initial / N2) | 0,
-    };
+    const [x, y, z] = xf.map(initial % order, ((initial / order) | 0) % order, (initial / N2) | 0, max);
+    const p: Piece = { x, y, z };
     let ps: PieceStickering = "Regular";
     for (let i = rules.length - 1; i >= 0; i--) {
       if (rules[i][0](p)) { ps = rules[i][1]; break; }
     }
-    return EXPAND[ps][primaryFace(p, max) === face ? 0 : 1];
+    return EXPAND[ps][primaryFace(p, max) === (xf.facePerm[face] ?? face) ? 0 : 1];
   };
 }
 
@@ -200,7 +224,7 @@ export function stickeringGroupsFor(order: number): StickeringGroup[] {
       { group: "Stickering", items: ["full"] },
       { group: "Last Layer", items: LL_GROUP },
       { group: "Last Slot", items: LS_GROUP },
-      { group: "CFOP (Fridrich)", items: ["F2L", "Daisy", "Cross"] },
+      { group: "CFOP", items: ["F2L", "Daisy", "Cross"] },
       { group: "ZZ", items: ["EO", "EOline", "EOcross"] },
       { group: "Roux", items: ["FirstBlock", "SecondBlock", "CMLL", "L10P", "L6E", "L6EO"] },
       { group: "Petrus", items: ["2x2x2", "2x2x3"] },
@@ -215,7 +239,7 @@ export function stickeringGroupsFor(order: number): StickeringGroup[] {
     return [
       { group: "Stickering", items: ["full"] },
       { group: "Reduction", items: ["L2C", "opposite-centers"] },
-      { group: "CFOP (Fridrich)", items: ["Cross", "F2L"] },
+      { group: "CFOP", items: ["Cross", "F2L"] },
       { group: "Last Layer", items: ["OLL", "PLL", "LL"] },
       { group: "Miscellaneous", items: ["centers-only"] },
     ];
