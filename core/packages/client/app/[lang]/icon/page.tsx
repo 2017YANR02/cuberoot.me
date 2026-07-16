@@ -90,7 +90,6 @@ export default function IconGalleryPage() {
           <SearchInput
             value={query}
             onChange={(v) => setQuery(v || null)}
-            placeholder={tr({ zh: '搜索项目 / 类名', en: 'Search event / class' })}
             ariaLabel={tr({ zh: '搜索图标', en: 'Search icons' })}
             className="icon-search-field"
             inputClassName="icon-search-input"
