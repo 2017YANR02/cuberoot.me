@@ -66,16 +66,21 @@ export function SolveCard({
   scramble: string | null;
   c: AlgCase | null;
   isZh: boolean;
-  header: ReactNode;
+  /** 卡片标题(如 `#3`)。省略 = 不渲染标题行(跟随当前题时无需「当前」字样)。 */
+  header?: ReactNode;
   /** 点 case 名弹出该情况的详情弹窗(元数据 / 公式)。 */
   onShowCase?: (c: AlgCase) => void;
 }) {
   return (
     <div className="trainer-solve-card">
-      <div className="trainer-card-header">
-        <span>{header}</span>
-      </div>
-      <hr className="trainer-card-divider" />
+      {header != null && (
+        <>
+          <div className="trainer-card-header">
+            <span>{header}</span>
+          </div>
+          <hr className="trainer-card-divider" />
+        </>
+      )}
       {!scramble || !c ? (
         <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet'
         })}</div>

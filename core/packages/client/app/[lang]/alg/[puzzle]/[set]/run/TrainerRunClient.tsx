@@ -11,6 +11,7 @@ import { getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
 import { useTrainerStore, TimerState, trainerPool } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { useGestureWheel } from '@/hooks/useGestureWheel';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import GestureWheel from '@/components/GestureWheel';
@@ -73,10 +74,18 @@ export default function TrainerRunClient() {
   const setMode = useTrainerStore(s => s.setMode);
   const probMode = useTrainerStore(s => s.probMode);
   const setProbMode = useTrainerStore(s => s.setProbMode);
+  const recapOrder = useTrainerStore(s => s.recapOrder);
+  const setRecapOrder = useTrainerStore(s => s.setRecapOrder);
   const timerFont = useTrainerStore(s => s.timerFont);
   const setTimerFont = useTrainerStore(s => s.setTimerFont);
   const scrambleFont = useTrainerStore(s => s.scrambleFont);
   const setScrambleFont = useTrainerStore(s => s.setScrambleFont);
+  const showCaseCard = useTrainerStore(s => s.showCaseCard);
+  const setShowCaseCard = useTrainerStore(s => s.setShowCaseCard);
+  const showStats = useTrainerStore(s => s.showStats);
+  const setShowStats = useTrainerStore(s => s.setShowStats);
+  const observingPinned = useTrainerStore(s => s.observingPinned);
+  const pinObserving = useTrainerStore(s => s.pinObserving);
   const recapQueue = useTrainerStore(s => s.recapQueue);
   const recapPos = useTrainerStore(s => s.recapPos);
   const nextScramble = useTrainerStore(s => s.nextScramble);
@@ -85,7 +94,6 @@ export default function TrainerRunClient() {
   const startTimer = useTrainerStore(s => s.startTimer);
   const stopTimer = useTrainerStore(s => s.stopTimer);
   const setTimerState = useTrainerStore(s => s.setTimerState);
-  const setObservingIdx = useTrainerStore(s => s.setObservingIdx);
   const setSolvePenalty = useTrainerStore(s => s.setSolvePenalty);
   const deleteSolve = useTrainerStore(s => s.deleteSolve);
   const clearSolves = useTrainerStore(s => s.clearSolves);
@@ -127,6 +135,28 @@ export default function TrainerRunClient() {
   }, [scopedKeys, setScope]);
 
   const pool = useMemo(() => trainerPool(selected, scope), [selected, scope]);
+
+  /**
+   * 选中的这批 case 一共支持哪几种打乱(并集)。只有一种(全是 `inv`)就不渲染选择器。
+   * 不是每个 case 都有全套 —— 表里验不过轨道判据的打乱没入库,generateScramble 会退回 `inv`。
+   * (必须在下面的 early return 之前 —— hooks 不能因「尚未选 case」而少跑。)
+   */
+  const kinds = useMemo(() => {
+    const seen = new Set<ScrambleKind>();
+    for (const k of pool) {
+      const c = findCaseByKey(cases, k);
+      if (c) for (const kind of availableKinds(c)) seen.add(kind);
+    }
+    // cstimer 风格 = 求解器现算随机态打乱,不依赖表 meta,3x3 一律可用(issue #30)
+    if (puzzle === '3x3') seen.add('cstimer');
+    return SCRAMBLE_KINDS.filter(k => seen.has(k.id));
+  }, [pool, cases, puzzle]);
+
+  // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
+  // value 落空、显示成一片空白。退回 `inv`(它永远支持)。
+  useEffect(() => {
+    if (kinds.length && !kinds.some(k => k.id === scrambleKind)) setScrambleKind('inv');
+  }, [kinds, scrambleKind, setScrambleKind]);
 
   useEffect(() => {
     // 读 live 状态而不是闭包值:setScope 的 effect 可能在同一个 commit 里已经出过题了,
@@ -174,7 +204,9 @@ export default function TrainerRunClient() {
   // 监听 pointerdown 而非 mousedown:stage 手势层在 pointerdown 里 preventDefault,
   // 会抑制后续的兼容性 mousedown —— 挂 mousedown 的话点 stage 空白永远关不上。
   const optsRef = useRef<HTMLDivElement | null>(null);
+  const optsPanelRef = useRef<HTMLDivElement | null>(null);
   const [optsOpen, setOptsOpen] = useState(false);
+  usePanelClamp(optsOpen, optsPanelRef);
   useEffect(() => {
     if (!optsOpen) return;
     const handler = (e: PointerEvent) => {
@@ -192,12 +224,14 @@ export default function TrainerRunClient() {
     return m;
   }, [cases]);
 
-  // index: 0 new · 1 OK · 2 +2 · 3 DNF · 4 prev-solve · 5 next-solve · 6 del · 7 copy
+  // index: 0 next · 1 OK · 2 +2 · 3 DNF · 4 prev · 5 (空) · 6 del · 7 copy
+  // 4/5 原是「看上次/看下次」(翻成绩) —— 与 /timer 对齐改为「上一个」= 上一条打乱
+  //(同 ← 键),「看下次」与「下一个」语义重复,删(issue #30)。
   const wheelLabels = [
     tr({ zh: '下一个', en: 'Next' }),
     'OK', '+2', 'DNF',
-    tr({ zh: '看上次', en: 'Prev solve' }),
-    tr({ zh: '看下次', en: 'Next solve' }),
+    tr({ zh: '上一个', en: 'Prev' }),
+    '',
     tr({ zh: '删除', en: 'Del' }),
     tr({ zh: '复制', en: 'Copy' }),
   ];
@@ -217,8 +251,8 @@ export default function TrainerRunClient() {
       return [
         st.timerState === TimerState.NOT_RUNNING,
         hasLast, hasLast, hasLast,
-        st.observingIdx > 0,
-        st.observingIdx < st.solves.length - 1,
+        st.hist.idx > 0,
+        false,
         hasLast,
         !!st.currentScramble,
       ];
@@ -227,14 +261,12 @@ export default function TrainerRunClient() {
       const st = useTrainerStore.getState();
       const lastIdx = st.solves.length - 1;
       const last = st.solves[lastIdx];
-      const obs = st.observingIdx;
       switch (i) {
         case 0: if (st.timerState === TimerState.NOT_RUNNING) nextScramble(); break;
         case 1: if (last) setSolvePenalty(lastIdx, 'ok'); break;
         case 2: if (last) setSolvePenalty(lastIdx, last.penalty === '+2' ? 'ok' : '+2'); break;
         case 3: if (last) setSolvePenalty(lastIdx, last.penalty === 'DNF' ? 'ok' : 'DNF'); break;
-        case 4: if (obs > 0) setObservingIdx(obs - 1); break;
-        case 5: if (obs < st.solves.length - 1) setObservingIdx(obs + 1); break;
+        case 4: prevScramble(); break;
         case 6: if (last) deleteSolve(lastIdx); break;
         case 7: {
           const scr = st.currentScramble;
@@ -337,41 +369,21 @@ export default function TrainerRunClient() {
     solves.length > 0 ? solves[solves.length - 1].ms : 0;
 
   const observingSolve = solves[observingIdx] ?? null;
-  const observingCase = observingSolve
-    ? findCaseByKey(cases, observingSolve.caseKey) ?? null
-    : null;
 
-  // 侧栏卡片:计时模式跟随所观察的成绩;不计时没有成绩流,直接跟随当前题
-  //(否则右侧一直冻结在最后一条成绩上,左边打乱换了它一动不动)。
+  // 侧栏卡片:计时模式跟随所观察的成绩;不计时默认跟随当前题(否则右侧一直冻结在
+  // 最后一条成绩上),但统计里点选了成绩(pinned)时也切到那条 —— 打乱图与打乱
+  // 公式一同更改(issue #30),出下一题自动回落。
   const currentCase = currentKey ? findCaseByKey(cases, currentKey) ?? null : null;
-  const cardCase = timing ? observingCase : currentCase;
-  const cardScramble = timing ? (observingSolve?.scramble ?? null) : currentScramble;
-  const cardHeader = timing && observingSolve
-    ? `#${observingSolve.i + 1}`
-    : tr({ zh: '当前', en: 'Current' });
+  const cardSolve = timing ? observingSolve : (observingPinned ? observingSolve : null);
+  const cardCase = cardSolve
+    ? findCaseByKey(cases, cardSolve.caseKey) ?? null
+    : (timing ? null : currentCase);
+  const cardScramble = cardSolve ? cardSolve.scramble : (timing ? null : currentScramble);
+  const cardHeader = cardSolve ? `#${cardSolve.i + 1}` : undefined;
 
   const onNextCase = () => {
     if (timerState === TimerState.NOT_RUNNING) nextScramble();
   };
-
-  /**
-   * 选中的这批 case 一共支持哪几种打乱(并集)。只有一种(全是 `inv`)就不渲染选择器。
-   * 不是每个 case 都有全套 —— 表里验不过轨道判据的打乱没入库,generateScramble 会退回 `inv`。
-   */
-  const kinds = useMemo(() => {
-    const seen = new Set<ScrambleKind>();
-    for (const k of pool) {
-      const c = findCaseByKey(cases, k);
-      if (c) for (const kind of availableKinds(c)) seen.add(kind);
-    }
-    return SCRAMBLE_KINDS.filter(k => seen.has(k.id));
-  }, [pool, cases]);
-
-  // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
-  // value 落空、显示成一片空白。退回 `inv`(它永远支持)。
-  useEffect(() => {
-    if (kinds.length && !kinds.some(k => k.id === scrambleKind)) setScrambleKind('inv');
-  }, [kinds, scrambleKind, setScrambleKind]);
 
   // pre-AUF 只对「顶层 case + U 可作 AUF」的场景有意义(F2L 类打乱前加 U 会换 case)
   const preAufSupported = (puzzle === '3x3' || puzzle === '2x2') && cases[0]?.sticker.kind !== 'f2l';
@@ -404,10 +416,10 @@ export default function TrainerRunClient() {
             <Settings size={18} />
           </button>
           {optsOpen && (
-            <div className="trainer-opts-panel">
+            <div className="trainer-opts-panel" ref={optsPanelRef}>
               {kinds.length > 1 && (
                 <div className="trainer-opts-row">
-                  <span className="trainer-opts-label">{tr({ zh: '打乱类型', en: 'Scramble' })}</span>
+                  <span className="trainer-opts-label">{tr({ zh: '打乱', en: 'Scramble' })}</span>
                   <select
                     className="trainer-scramble-kind"
                     value={scrambleKind}
@@ -420,7 +432,6 @@ export default function TrainerRunClient() {
                 </div>
               )}
               <div className="trainer-opts-row">
-                <span className="trainer-opts-label">{tr({ zh: '模式', en: 'Mode' })}</span>
                 <PillToggle
                   value={mode === 'train'}
                   onChange={v => setMode(v ? 'train' : 'recap')}
@@ -429,6 +440,17 @@ export default function TrainerRunClient() {
                   ariaLabel={tr({ zh: '训练 / 复习模式', en: 'Train / recap mode' })}
                 />
               </div>
+              {mode === 'recap' && (
+                <div className="trainer-opts-row">
+                  <PillToggle
+                    value={recapOrder === 'seq'}
+                    onChange={v => setRecapOrder(v ? 'seq' : 'shuffle')}
+                    onLabel={tr({ zh: '顺序', en: 'In order' })}
+                    offLabel={tr({ zh: '乱序', en: 'Shuffled' })}
+                    ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
+                  />
+                </div>
+              )}
               <div className="trainer-opts-row">
                 <BoolToggle
                   value={timing}
@@ -452,8 +474,8 @@ export default function TrainerRunClient() {
                   <PillToggle
                     value={probMode === 'uniform'}
                     onChange={v => setProbMode(v ? 'uniform' : 'real')}
-                    onLabel={tr({ zh: '均等概率', en: 'Uniform' })}
-                    offLabel={tr({ zh: '真实概率', en: 'Real odds' })}
+                    onLabel={tr({ zh: '均等', en: 'Uniform' })}
+                    offLabel={tr({ zh: '真实', en: 'Real' })}
                     ariaLabel={tr({ zh: '出题概率模式', en: 'Case probability mode' })}
                   />
                 </div>
@@ -475,6 +497,21 @@ export default function TrainerRunClient() {
                   previewWeight={400}
                 />
               </div>
+              {/* 极简:侧栏两块各自可隐藏(issue #30) */}
+              <div className="trainer-opts-row">
+                <BoolToggle
+                  value={showCaseCard}
+                  onChange={setShowCaseCard}
+                  label={tr({ zh: 'case 卡片', en: 'Case card' })}
+                />
+              </div>
+              <div className="trainer-opts-row">
+                <BoolToggle
+                  value={showStats}
+                  onChange={setShowStats}
+                  label={tr({ zh: '统计', en: 'Stats' })}
+                />
+              </div>
               <div className="trainer-opts-help">
                 {timing
                   ? tr({ zh: '空格开始/停止，按住拖动呼出轮盘', en: 'Space to start/stop, hold & drag for the wheel' })
@@ -485,7 +522,7 @@ export default function TrainerRunClient() {
         </div>
       </div>
 
-      <div className="trainer-run">
+      <div className={`trainer-run${showCaseCard || showStats ? '' : ' trainer-run--solo'}`}>
         <div className="trainer-stage" ref={stageRef}>
           <ScrambleHeader
             scramble={currentScramble || ''}
@@ -509,7 +546,7 @@ export default function TrainerRunClient() {
           {recapShown && (
             <div className="trainer-stage-opts">
               <span className="trainer-recap-progress">
-                {tr({ zh: '复习进度', en: 'Recap' })} {Math.min(recapPos, recapTotal)}/{recapTotal}
+                {Math.min(recapPos, recapTotal)}/{recapTotal}
               </span>
             </div>
           )}
@@ -525,28 +562,34 @@ export default function TrainerRunClient() {
 
         </div>
 
-        <aside className="trainer-sidebar">
-          <SolveCard
-            puzzle={puzzle}
-            set={setSlug}
-            scramble={cardScramble}
-            c={cardCase}
-            isZh={isZh}
-            onShowCase={cardCase?.meta ? (c) => setMetaCase(c) : undefined}
-            header={cardHeader}
-          />
-          <StatsList
-            solves={solves}
-            observingIdx={observingIdx}
-            isZh={isZh}
-            onPick={(i) => setObservingIdx(i)}
-            onClear={() => {
-              if (confirm(tr({ zh: '清空所有成绩?', en: 'Clear all solves?'
-            })))
-                clearSolves();
-            }}
-          />
-        </aside>
+        {(showCaseCard || showStats) && (
+          <aside className="trainer-sidebar">
+            {showCaseCard && (
+              <SolveCard
+                puzzle={puzzle}
+                set={setSlug}
+                scramble={cardScramble}
+                c={cardCase}
+                isZh={isZh}
+                onShowCase={cardCase?.meta ? (c) => setMetaCase(c) : undefined}
+                header={cardHeader}
+              />
+            )}
+            {showStats && (
+              <StatsList
+                solves={solves}
+                observingIdx={observingIdx}
+                isZh={isZh}
+                onPick={pinObserving}
+                onClear={() => {
+                  if (confirm(tr({ zh: '清空所有成绩?', en: 'Clear all solves?'
+                })))
+                    clearSolves();
+                }}
+              />
+            )}
+          </aside>
+        )}
       </div>
 
       <GestureWheel ref={wheelRef} isZh={isZh} labels={wheelLabels} />
