@@ -6,9 +6,10 @@ import Link from '@/components/AppLink';
 import { useParams } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Settings } from 'lucide-react';
 import { getAlgSetMeta, loadAlg, type AlgCase } from '@cuberoot/shared';
-import { useTrainerStore, TimerState, trainerPool, type TrainerTimerFont } from '@/lib/trainer-store';
+import { useTrainerStore, TimerState, trainerPool } from '@/lib/trainer-store';
+import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { useGestureWheel } from '@/hooks/useGestureWheel';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
@@ -30,14 +31,6 @@ import { tr } from '@/i18n/tr';
 
 const TIMER_DELAY_MS = 0;
 
-/** 计时数字字体(默认 lcd = /timer 同款七段;其余为站内自托管字体)。 */
-const TIMER_FONTS: ReadonlyArray<{ id: TrainerTimerFont; label: () => string }> = [
-  { id: 'lcd', label: () => tr({ zh: 'LCD 七段', en: 'LCD' }) },
-  { id: 'mono', label: () => 'Roboto Mono' },
-  { id: 'liberation', label: () => 'Liberation Mono' },
-  { id: 'sans', label: () => 'Inter' },
-];
-
 export default function TrainerRunClient() {
   const params = useParams<{ puzzle: string; set: string }>();
   const puzzleParam = (Array.isArray(params?.puzzle) ? params.puzzle[0] : params?.puzzle) ?? '';
@@ -58,6 +51,7 @@ export default function TrainerRunClient() {
   const scope = useTrainerStore(s => s.scope);
   const solves = useTrainerStore(s => s.solves);
   const currentName = useTrainerStore(s => s.currentName);
+  const currentKey = useTrainerStore(s => s.currentKey);
   const currentScramble = useTrainerStore(s => s.currentScramble);
   const timerState = useTrainerStore(s => s.timerState);
   const timerStarted = useTrainerStore(s => s.timerStarted);
@@ -71,6 +65,8 @@ export default function TrainerRunClient() {
   const hydratePrefs = useTrainerStore(s => s.hydratePrefs);
   const preAuf = useTrainerStore(s => s.preAuf);
   const setPreAuf = useTrainerStore(s => s.setPreAuf);
+  const postAuf = useTrainerStore(s => s.postAuf);
+  const setPostAuf = useTrainerStore(s => s.setPostAuf);
   const timing = useTrainerStore(s => s.timing);
   const setTiming = useTrainerStore(s => s.setTiming);
   const mode = useTrainerStore(s => s.mode);
@@ -79,6 +75,8 @@ export default function TrainerRunClient() {
   const setProbMode = useTrainerStore(s => s.setProbMode);
   const timerFont = useTrainerStore(s => s.timerFont);
   const setTimerFont = useTrainerStore(s => s.setTimerFont);
+  const scrambleFont = useTrainerStore(s => s.scrambleFont);
+  const setScrambleFont = useTrainerStore(s => s.setScrambleFont);
   const recapQueue = useTrainerStore(s => s.recapQueue);
   const recapPos = useTrainerStore(s => s.recapPos);
   const nextScramble = useTrainerStore(s => s.nextScramble);
@@ -171,6 +169,20 @@ export default function TrainerRunClient() {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [copied, setCopied] = useState(false);
   const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
+
+  // 齿轮设置弹出面板(训练选项全收在里面),点外部关闭。
+  // 监听 pointerdown 而非 mousedown:stage 手势层在 pointerdown 里 preventDefault,
+  // 会抑制后续的兼容性 mousedown —— 挂 mousedown 的话点 stage 空白永远关不上。
+  const optsRef = useRef<HTMLDivElement | null>(null);
+  const [optsOpen, setOptsOpen] = useState(false);
+  useEffect(() => {
+    if (!optsOpen) return;
+    const handler = (e: PointerEvent) => {
+      if (optsRef.current && !optsRef.current.contains(e.target as Node)) setOptsOpen(false);
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [optsOpen]);
   const stageMounted = !!(puzzle && meta) && !(pool.length === 0 && cases.length > 0);
 
   /** meta.no → case:元数据弹窗里的镜像 / 逆链接用(同 AlgCategoryView) */
@@ -255,6 +267,41 @@ export default function TrainerRunClient() {
     },
   });
 
+  // stage 之外的页面空白(顶栏边缘、栏间留白、内容下方的 body)也当按压面:
+  // 计时开 = 同空格按住/松开;计时关 = 单击直接下一个。sidebar(看成绩要点来点去)、
+  // 弹窗、轮盘与一切交互控件除外;不 preventDefault,移动端滚动不受影响(轮盘手势仍只在 stage 内)。
+  useEffect(() => {
+    const isBlank = (t: EventTarget | null): boolean => {
+      if (shouldIgnoreTimerTarget(t)) return false;
+      if (!(t instanceof Element)) return false;
+      return t.closest('.trainer-stage, .trainer-sidebar, .alg-admin-modal-backdrop, .gesture-wheel') === null;
+    };
+    let pressed = false;
+    const down = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (!isBlank(e.target)) return;
+      pressed = true;
+      if (!useTrainerStore.getState().timing) return;
+      const st = useTrainerStore.getState().timerState;
+      if (st === TimerState.RUNNING) stopTimer();
+      else if (st === TimerState.NOT_RUNNING) getTimerReady(TIMER_DELAY_MS);
+    };
+    const up = () => {
+      if (!pressed) return;
+      pressed = false;
+      if (!useTrainerStore.getState().timing) { nextScramble(); return; }
+      const st = useTrainerStore.getState().timerState;
+      if (st === TimerState.READY) startTimer();
+      else if (st === TimerState.AWAITING_READY || st === TimerState.STOPPING) setTimerState(TimerState.NOT_RUNNING);
+    };
+    document.addEventListener('pointerdown', down);
+    document.addEventListener('pointerup', up);
+    return () => {
+      document.removeEventListener('pointerdown', down);
+      document.removeEventListener('pointerup', up);
+    };
+  }, [nextScramble, stopTimer, getTimerReady, startTimer, setTimerState]);
+
   if (!puzzle || !meta) {
     return (
       <div className="trainer-root">
@@ -293,6 +340,15 @@ export default function TrainerRunClient() {
   const observingCase = observingSolve
     ? findCaseByKey(cases, observingSolve.caseKey) ?? null
     : null;
+
+  // 侧栏卡片:计时模式跟随所观察的成绩;不计时没有成绩流,直接跟随当前题
+  //(否则右侧一直冻结在最后一条成绩上,左边打乱换了它一动不动)。
+  const currentCase = currentKey ? findCaseByKey(cases, currentKey) ?? null : null;
+  const cardCase = timing ? observingCase : currentCase;
+  const cardScramble = timing ? (observingSolve?.scramble ?? null) : currentScramble;
+  const cardHeader = timing && observingSolve
+    ? `#${observingSolve.i + 1}`
+    : tr({ zh: '当前', en: 'Current' });
 
   const onNextCase = () => {
     if (timerState === TimerState.NOT_RUNNING) nextScramble();
@@ -335,6 +391,98 @@ export default function TrainerRunClient() {
         <span style={{ fontSize: '1rem', color: 'var(--muted-foreground)' }}>
           {puzzle} · {tr(meta)}{scopeSlug ? ` · ${scopeSlug.toUpperCase()}` : ''}
         </span>
+        {/* 训练选项全收进齿轮弹出面板,齿轮居中吸在页面正上方
+            (data-no-timer:面板空白不触发按压计时) */}
+        <div className="trainer-opts trainer-opts--top" data-no-timer ref={optsRef}>
+          <button
+            type="button"
+            className="trainer-opts-gear"
+            onClick={() => setOptsOpen(o => !o)}
+            aria-expanded={optsOpen}
+            aria-label={tr({ zh: '训练设置', en: 'Trainer settings' })}
+          >
+            <Settings size={18} />
+          </button>
+          {optsOpen && (
+            <div className="trainer-opts-panel">
+              {kinds.length > 1 && (
+                <div className="trainer-opts-row">
+                  <span className="trainer-opts-label">{tr({ zh: '打乱类型', en: 'Scramble' })}</span>
+                  <select
+                    className="trainer-scramble-kind"
+                    value={scrambleKind}
+                    onChange={e => setScrambleKind(e.target.value as ScrambleKind)}
+                    disabled={timerState !== TimerState.NOT_RUNNING}
+                    aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
+                  >
+                    {kinds.map(k => <option key={k.id} value={k.id}>{k.label()}</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="trainer-opts-row">
+                <span className="trainer-opts-label">{tr({ zh: '模式', en: 'Mode' })}</span>
+                <PillToggle
+                  value={mode === 'train'}
+                  onChange={v => setMode(v ? 'train' : 'recap')}
+                  onLabel={tr({ zh: '训练', en: 'Train' })}
+                  offLabel={tr({ zh: '复习', en: 'Recap' })}
+                  ariaLabel={tr({ zh: '训练 / 复习模式', en: 'Train / recap mode' })}
+                />
+              </div>
+              <div className="trainer-opts-row">
+                <BoolToggle
+                  value={timing}
+                  onChange={setTiming}
+                  label={tr({ zh: '计时', en: 'Timing' })}
+                />
+              </div>
+              {preAufSupported && (
+                <div className="trainer-opts-row">
+                  <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
+                </div>
+              )}
+              {preAufSupported && (
+                <div className="trainer-opts-row">
+                  <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />
+                </div>
+              )}
+              {probSupported && mode === 'train' && (
+                <div className="trainer-opts-row">
+                  <span className="trainer-opts-label">{tr({ zh: '概率', en: 'Odds' })}</span>
+                  <PillToggle
+                    value={probMode === 'uniform'}
+                    onChange={v => setProbMode(v ? 'uniform' : 'real')}
+                    onLabel={tr({ zh: '均等概率', en: 'Uniform' })}
+                    offLabel={tr({ zh: '真实概率', en: 'Real odds' })}
+                    ariaLabel={tr({ zh: '出题概率模式', en: 'Case probability mode' })}
+                  />
+                </div>
+              )}
+              {timing && (
+                <div className="trainer-opts-row">
+                  <span className="trainer-opts-label">{tr({ zh: '计时字体', en: 'Timer font' })}</span>
+                  <TimerFontPicker value={timerFont} onChange={setTimerFont} />
+                </div>
+              )}
+              <div className="trainer-opts-row">
+                <span className="trainer-opts-label">{tr({ zh: '打乱字体', en: 'Scramble font' })}</span>
+                <TimerFontPicker
+                  value={scrambleFont}
+                  onChange={setScrambleFont}
+                  ariaLabel={tr({ zh: '打乱字体', en: 'Scramble font' })}
+                  preview="R U R' F2"
+                  options={['sans', 'mono', 'liberation']}
+                  previewWeight={400}
+                />
+              </div>
+              <div className="trainer-opts-help">
+                {timing
+                  ? tr({ zh: '空格开始/停止，按住拖动呼出轮盘', en: 'Space to start/stop, hold & drag for the wheel' })
+                  : tr({ zh: '单击、空格或 → 键切下一个打乱', en: 'Click, Space or → for the next scramble' })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="trainer-run">
@@ -342,72 +490,29 @@ export default function TrainerRunClient() {
           <ScrambleHeader
             scramble={currentScramble || ''}
             label={copied ? tr({ zh: '已复制', en: 'Copied' }) : undefined}
+            font={scrambleFont}
           />
           <div className="trainer-stage-actions">
-            <button
-              className="trainer-stage-btn"
-              onClick={onNextCase}
-              disabled={timerState !== TimerState.NOT_RUNNING}
-            >
-              <ArrowRight size={12} /> {tr({ zh: '下一个', en: 'Next'
-            })}
-            </button>
-            {kinds.length > 1 && (
-              <select
-                className="trainer-scramble-kind"
-                value={scrambleKind}
-                onChange={e => setScrambleKind(e.target.value as ScrambleKind)}
+            {/* 不计时模式下点哪都是「下一个」,按钮多余不显示 */}
+            {timing && (
+              <button
+                className="trainer-stage-btn"
+                onClick={onNextCase}
                 disabled={timerState !== TimerState.NOT_RUNNING}
-                aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
               >
-                {kinds.map(k => <option key={k.id} value={k.id}>{k.label()}</option>)}
-              </select>
+                {tr({ zh: '下一个', en: 'Next'
+              })}
+              </button>
             )}
           </div>
 
-          <div className="trainer-stage-opts">
-            <PillToggle
-              value={mode === 'train'}
-              onChange={v => setMode(v ? 'train' : 'recap')}
-              onLabel={tr({ zh: '训练', en: 'Train' })}
-              offLabel={tr({ zh: '复习', en: 'Recap' })}
-              ariaLabel={tr({ zh: '训练 / 复习模式', en: 'Train / recap mode' })}
-            />
-            <PillToggle
-              value={timing}
-              onChange={setTiming}
-              onLabel={tr({ zh: '计时', en: 'Timing' })}
-              offLabel={tr({ zh: '不计时', en: 'No timer' })}
-              ariaLabel={tr({ zh: '是否计时', en: 'Timing on/off' })}
-            />
-            {preAufSupported && (
-              <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
-            )}
-            {probSupported && mode === 'train' && (
-              <PillToggle
-                value={probMode === 'uniform'}
-                onChange={v => setProbMode(v ? 'uniform' : 'real')}
-                onLabel={tr({ zh: '均等概率', en: 'Uniform' })}
-                offLabel={tr({ zh: '真实概率', en: 'Real odds' })}
-                ariaLabel={tr({ zh: '出题概率模式', en: 'Case probability mode' })}
-              />
-            )}
-            {timing && (
-              <select
-                className="trainer-scramble-kind"
-                value={timerFont}
-                onChange={e => setTimerFont(e.target.value as TrainerTimerFont)}
-                aria-label={tr({ zh: '计时字体', en: 'Timer font' })}
-              >
-                {TIMER_FONTS.map(f => <option key={f.id} value={f.id}>{f.label()}</option>)}
-              </select>
-            )}
-            {recapShown && (
+          {recapShown && (
+            <div className="trainer-stage-opts">
               <span className="trainer-recap-progress">
                 {tr({ zh: '复习进度', en: 'Recap' })} {Math.min(recapPos, recapTotal)}/{recapTotal}
               </span>
-            )}
-          </div>
+            </div>
+          )}
 
           {timing && (
             <TimerDisplay
@@ -418,32 +523,17 @@ export default function TrainerRunClient() {
             />
           )}
 
-          {timing && solves.length === 0 && (
-            <div className="trainer-help">
-              {tr({ zh: '空格开始/停止，按住拖动呼出轮盘', en: 'Space to start/stop, hold & drag for the wheel'
-              })}
-            </div>
-          )}
-          {!timing && (
-            <div className="trainer-help">
-              {tr({ zh: '单击、空格或 → 键切下一个打乱', en: 'Click, Space or → for the next scramble'
-              })}
-            </div>
-          )}
         </div>
 
         <aside className="trainer-sidebar">
           <SolveCard
             puzzle={puzzle}
             set={setSlug}
-            solve={observingSolve}
-            c={observingCase}
+            scramble={cardScramble}
+            c={cardCase}
             isZh={isZh}
-            onShowCase={observingCase?.meta ? (c) => setMetaCase(c) : undefined}
-            header={observingSolve
-              ? `#${observingSolve.i + 1}`
-              : tr({ zh: '当前', en: 'Current'
-                            })}
+            onShowCase={cardCase?.meta ? (c) => setMetaCase(c) : undefined}
+            header={cardHeader}
           />
           <StatsList
             solves={solves}

@@ -38,6 +38,8 @@
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 20px;
+  /* run 页齿轮(.trainer-opts--top)以 topbar 为定位参照,水平居中吸顶 */
+  position: relative;
 }
 .trainer-topbar .trainer-back {
   display: inline-flex; align-items: center; gap: 6px;
@@ -237,10 +239,16 @@
 }
 .trainer-scramble-text {
   font-size: 1.6rem;
-  font-weight: 600;
+  /* 常规字重:与字体选择器预览(400)一致;LiberationMono 只有 Regular 档,
+     600 会触发假加粗合成,笔画发糊。 */
+  font-weight: 400;
   letter-spacing: 0.05em;
   margin-bottom: 24px;
   color: var(--foreground);
+}
+/* 打乱字体档位(sf-sans = 默认继承站字体) */
+.trainer-scramble-text.sf-mono { font-family: var(--font-mono); }
+.trainer-scramble-text.sf-liberation { font-family: 'LiberationMono', var(--font-mono);
 }
 .trainer-stage-actions {
   display: flex; justify-content: center; gap: 12px;
@@ -285,7 +293,7 @@
   margin-top: 12px;
 }
 
-/* 训练选项行(训练/复习 · 计时 · pre-AUF · 概率 · 字体):居中一行,窄屏折行 */
+/* 状态行(如复习进度):居中一行,窄屏折行 */
 .trainer-stage-opts {
   display: flex; flex-wrap: wrap;
   justify-content: center; align-items: center;
@@ -296,6 +304,63 @@
   font-size: 0.82rem;
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
+}
+
+/* ─── 齿轮设置弹出面板(训练选项全收纳:打乱类型/模式/计时/pre-AUF/概率/字体) ─── */
+.trainer-opts { position: relative; display: inline-flex; }
+/* 齿轮吸在页面正上方(topbar 水平居中) */
+.trainer-opts--top {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+/* 无外框裸图标按钮 */
+.trainer-opts-gear {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px;
+  border: none;
+  background: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.trainer-opts-gear:hover { color: var(--foreground); }
+.trainer-opts-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  background: var(--popover);
+  color: var(--foreground);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 14%, transparent);
+  width: max-content;
+  max-width: min(92vw, 360px);
+  text-align: left;
+}
+.trainer-opts-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.trainer-opts-label {
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  min-width: 4em;
+}
+.trainer-opts-help {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--faint-foreground);
+  max-width: 240px;
 }
 
 /* ─── sidebar (solve card + stats) ─── */

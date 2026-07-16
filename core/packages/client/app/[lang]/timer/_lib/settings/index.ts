@@ -56,6 +56,10 @@ export interface TimerSettings {
   /** Scale factor for the scramble strip text (0.6..2.5). */
   scrambleFontScale: number;
 
+  /** Scramble strip typeface. 'liberation' = LiberationMono (the long-standing
+   *  default); no 'lcd' here — 7-seg has no usable letterforms for notation. */
+  scrambleFont: TimerFontId;
+
   /** Hold-to-ready threshold in ms (cstimer default = 550). */
   holdMs: number;
 
@@ -219,6 +223,7 @@ export const DEFAULTS: TimerSettings = {
   timerFontScale: 1,
   timerFont: 'lcd',
   scrambleFontScale: 1,
+  scrambleFont: 'liberation',
   holdMs: 550,
   compactScramble: false,
   prefer3D: false,

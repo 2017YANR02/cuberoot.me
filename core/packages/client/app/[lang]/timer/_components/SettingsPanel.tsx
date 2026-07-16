@@ -6,7 +6,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, CloudDownload, CloudUpload, Download, FileSpreadsheet, LogIn, RefreshCw, Target, X } from 'lucide-react';
-import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings, type TimerFontId } from '../_lib/settings';
+import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
+import TimerFontPicker from '@/components/TimerFontPicker';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
@@ -1111,16 +1112,10 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           </Row>
           <Row label={tr({ zh: '计时器字体', en: 'Timer font'
         })}>
-            <select
-              className="settings-row-control-select"
+            <TimerFontPicker
               value={s.timerFont}
-              onChange={(e) => updateSettings({ timerFont: e.target.value as TimerFontId })}
-            >
-              <option value="lcd">{tr({ zh: 'LCD 七段', en: 'LCD' })}</option>
-              <option value="mono">Roboto Mono</option>
-              <option value="liberation">Liberation Mono</option>
-              <option value="sans">Inter</option>
-            </select>
+              onChange={(id) => updateSettings({ timerFont: id })}
+            />
           </Row>
           <Row label={tr({ zh: '计时器字号', en: 'Timer font scale'
         })}>
@@ -1130,6 +1125,17 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               onChange={(e) => updateSettings({ timerFontScale: Number(e.target.value) })}
             />
             <span className="hint">{s.timerFontScale.toFixed(2)}×</span>
+          </Row>
+          <Row label={tr({ zh: '打乱字体', en: 'Scramble font'
+        })}>
+            <TimerFontPicker
+              value={s.scrambleFont}
+              onChange={(id) => updateSettings({ scrambleFont: id })}
+              ariaLabel={tr({ zh: '打乱字体', en: 'Scramble font' })}
+              preview="R U R' F2"
+              options={['liberation', 'mono', 'sans']}
+              previewWeight={400}
+            />
           </Row>
           <Row label={tr({ zh: '打乱字号', en: 'Scramble font scale'
         })}>

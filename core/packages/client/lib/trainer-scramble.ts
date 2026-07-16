@@ -9,6 +9,48 @@ function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+const U_TURN_RE = /^(U2|U'|U)$/;
+function quarterOf(tok: string): number {
+  if (tok === 'U') return 1;
+  if (tok === 'U2') return 2;
+  if (tok === "U'") return 3;
+  return 0;
+}
+function turnOf(q: number): string {
+  const m = ((q % 4) + 4) % 4;
+  return m === 0 ? '' : m === 1 ? 'U' : m === 2 ? 'U2' : "U'";
+}
+
+/**
+ * 把随机 AUF 接到公式首尾时,若紧邻的那一端本来就是 U 层转动(常见 —— 打乱本身
+ * 收尾常是 U 系),直接拼接会出现「U' U」这种物理上互相抵消的来回转动。这里按
+ * 层转角度取模合并成一次转动(抵消为 0 就整段丢弃),而不是原样拼接两个 token。
+ */
+function joinWithAufMerge(pre: string, baseTokens: readonly string[], post: string): string {
+  const tokens = [...baseTokens];
+  const prefix: string[] = [];
+  if (pre) {
+    if (tokens.length > 0 && U_TURN_RE.test(tokens[0])) {
+      const merged = turnOf(quarterOf(pre) + quarterOf(tokens[0]));
+      tokens.shift();
+      if (merged) prefix.push(merged);
+    } else {
+      prefix.push(pre);
+    }
+  }
+  const suffix: string[] = [];
+  if (post) {
+    if (tokens.length > 0 && U_TURN_RE.test(tokens[tokens.length - 1])) {
+      const merged = turnOf(quarterOf(tokens[tokens.length - 1]) + quarterOf(post));
+      tokens.pop();
+      if (merged) suffix.push(merged);
+    } else {
+      suffix.push(post);
+    }
+  }
+  return [...prefix, ...tokens, ...suffix].join(' ').trim();
+}
+
 function inverseAlg(alg: string): string {
   return alg
     .split(/\s+/)
@@ -68,7 +110,7 @@ export function generateScramble(
   c: AlgCase,
   puzzle: AlgPuzzle,
   kind: ScrambleKind = 'inv',
-  opts?: { preAuf?: boolean },
+  opts?: { preAuf?: boolean; postAuf?: boolean },
 ): string {
   // 这个 case 没有选定的那种打乱 → 退回 inv(整个 set 里只有一部分 case 有)
   const base = baseForKind(c, kind) ?? baseForKind(c, 'inv');
@@ -83,16 +125,16 @@ export function generateScramble(
       const yPre = pick(Y);
       return [yPre, base].filter(Boolean).join(' ');
     }
-    // 收尾随机 AUF:同一个 case 每次呈现的朝向不同,练的是识别不是背图。
+    // 收尾随机 AUF(post-AUF,默认开):同一个 case 每次呈现的朝向不同,练的是识别不是背图。
     // 对最优打乱也一样加 —— 多一步 U 不影响「它是最短打乱」这件事(长度在元数据弹窗里看),
     // 但少了它,这个 case 永远长同一个样。
-    const post = pick(AUF);
-    return [pre, base, post].filter(Boolean).join(' ').trim();
+    const post = opts?.postAuf === false ? '' : pick(AUF);
+    return joinWithAufMerge(pre, base.split(/\s+/).filter(Boolean), post);
   }
 
   if (puzzle === '2x2') {
-    const post = pick(AUF);
-    return [pre, base, post].filter(Boolean).join(' ').trim();
+    const post = opts?.postAuf === false ? '' : pick(AUF);
+    return joinWithAufMerge(pre, base.split(/\s+/).filter(Boolean), post);
   }
 
   return base;
