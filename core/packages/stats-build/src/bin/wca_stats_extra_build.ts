@@ -179,12 +179,6 @@ async function main() {
     continentOf.set(c['id'] as string, c['continent_id'] as string);
     if (c['iso2']) iso2Of.set(c['id'] as string, (c['iso2'] as string).toUpperCase());
   }
-  // iso2 → country.id 反查(championships 用 iso2)
-  const countryByIso2 = new Map<string, string>();
-  for (const c of countries) {
-    if (c['iso2']) countryByIso2.set((c['iso2'] as string).toUpperCase(), c['id'] as string);
-  }
-
   const [persons] = await conn.query<mysql.RowDataPacket[]>(
     `SELECT wca_id, name, country_id FROM persons WHERE sub_id = 1`,
   );
@@ -285,12 +279,6 @@ async function main() {
   const [championships] = await conn.query<mysql.RowDataPacket[]>(
     `SELECT championship_type, competition_id FROM championships`,
   );
-  // World championship comp ids
-  const worldChampComps = new Set<string>();
-  // continental champ comp → continent_id
-  const continentalChampComps = new Map<string, string>();
-  // national champ comp → country_id (or "greater_china" → multi)
-  const nationalChampComps = new Map<string, string>();
   // championship eligibility(多国共享 championship: greater_china 等);schema: (championship_type, eligible_country_iso2)
   const [eligibles] = await conn.query<mysql.RowDataPacket[]>(
     `SELECT championship_type, eligible_country_iso2 FROM eligible_country_iso2s_for_championship`,
@@ -303,32 +291,7 @@ async function main() {
     arr.push((e['eligible_country_iso2'] as string).toUpperCase());
     eligByType.set(t, arr);
   }
-  // 多国 championship_type(greater_china 等)→ list of country_ids that this comp counts as their nat champ
-  const multiCountryNatComps = new Map<string, Set<string>>();
-  for (const ch of championships) {
-    const t = ch['championship_type'] as string;
-    const compId = ch['competition_id'] as string;
-    if (t === 'world') {
-      worldChampComps.add(compId);
-    } else if (t.startsWith('_')) {
-      // continental
-      continentalChampComps.set(compId, t);
-    } else if (/^[A-Z]{2}$/.test(t)) {
-      // national: t is iso2
-      const ctry = countryByIso2.get(t);
-      if (ctry) nationalChampComps.set(compId, ctry);
-    } else {
-      // 'greater_china' 等多国. 用 eligibles 反查
-      const isos = eligByType.get(t) ?? [];
-      const ctrySet = new Set<string>();
-      for (const iso of isos) {
-        const ctry = countryByIso2.get(iso);
-        if (ctry) ctrySet.add(ctry);
-      }
-      if (ctrySet.size > 0) multiCountryNatComps.set(compId, ctrySet);
-    }
-  }
-  console.log(`  WC=${worldChampComps.size} cont=${continentalChampComps.size} nat=${nationalChampComps.size} multi=${multiCountryNatComps.size}`);
+  console.log(`  championships=${championships.length} eligibleTypes=${eligByType.size}`);
 
   // ── 3b. championship podiums: 选手页「锦标赛领奖台」(资格内重排名次,见 core/championship_podiums) ──
   console.log('[champ-podium] computing championship podiums...');
@@ -437,6 +400,29 @@ async function main() {
   const gsAcc = new Map<string, Map<string, GsEntry>>(); // event -> pid -> entry
   for (const ev of ACTIVE_EVENTS) gsAcc.set(ev, new Map());
 
+  // 三条腿取 championship podiums(3b,资格内重排名次)——与选手页「锦标赛领奖台」tab 同口径。
+  // 决赛原始 pos≤3 会漏掉「外籍选手挤占原始前三」的本洲/本国选手(如 OC2022 三阶 Zemdegs 原始第 4、
+  // 大洋洲资格内第 2),还会把 DNF 上台(best≤0)误计为领奖台。取 place 最小,平手取最早的比赛。
+  {
+    const legDate = (compId: string) => compInfo.get(compId)?.startDate ?? '9999-12-31';
+    const better = (place: number, comp: string, curPos?: number, curComp?: string) =>
+      curPos == null || place < curPos || (place === curPos && legDate(comp) < legDate(curComp!));
+    for (const p of champPodiums) {
+      const m = gsAcc.get(p.eventId);
+      if (!m) continue; // 只 active 项目
+      let g = m.get(p.wcaId);
+      if (!g) { g = { hasWrSingle: false, hasWrAvg: false }; m.set(p.wcaId, g); }
+      if (p.level === 'world') {
+        if (better(p.place, p.compId, g.worldChampPos, g.worldChampComp)) { g.worldChampComp = p.compId; g.worldChampPos = p.place; }
+      } else if (p.level.startsWith('_')) {
+        if (better(p.place, p.compId, g.contChampPos, g.contChampComp)) { g.contChampComp = p.compId; g.contChampPos = p.place; }
+      } else {
+        // iso2 国家赛,或 greater_china 等多国 championship
+        if (better(p.place, p.compId, g.natChampPos, g.natChampComp)) { g.natChampComp = p.compId; g.natChampPos = p.place; }
+      }
+    }
+  }
+
   // person 当前 PB(用于 grand_slam 行的 best/avg 字段;最后从 concise_*_results 取也行)
   // 这里直接在事件循环里维护
 
@@ -540,7 +526,7 @@ async function main() {
     // ── (b) success_rate counters (only for active events) ──
     const sr = isActive ? successAcc.get(eventId)! : null;
 
-    // ── (c) grand_slam 的 finals 收集(只 active 项目) ──
+    // ── (c) grand_slam 的 hasWr 收集(只 active 项目;三条腿来自 championship podiums) ──
     const gsForEvent = isActive ? gsAcc.get(eventId)! : null;
 
     // 主迭代
@@ -644,48 +630,13 @@ async function main() {
         if (cur == null || r.pos < cur) bestFinalPos.set(r.pid, r.pos);
       }
 
-      // grand_slam: 只 finals + 领奖台(pos<=3)
-      if (gsForEvent) {
-        if (isFinal && r.pos > 0 && r.pos <= 3) {
-          let g = gsForEvent.get(r.pid);
-          if (!g) {
-            g = { hasWrSingle: false, hasWrAvg: false };
-            gsForEvent.set(r.pid, g);
-          }
-          // World
-          if (worldChampComps.has(r.compId)) {
-            if (g.worldChampPos == null || r.pos < g.worldChampPos) {
-              g.worldChampComp = r.compId; g.worldChampPos = r.pos;
-            }
-          }
-          // Continental(person 当前国籍 → continent;比较 comp 的 continent_type)
-          const personCtry = personCountry.get(r.pid);
-          const personCont = personCtry ? continentOf.get(personCtry) : undefined;
-          const compCont = continentalChampComps.get(r.compId);
-          if (compCont && personCont && compCont === personCont) {
-            if (g.contChampPos == null || r.pos < g.contChampPos) {
-              g.contChampComp = r.compId; g.contChampPos = r.pos;
-            }
-          }
-          // National(comp 的 nat country = 选手当前国籍)
-          const natCtry = nationalChampComps.get(r.compId);
-          const multiNat = multiCountryNatComps.get(r.compId);
-          let natMatch = false;
-          if (natCtry && personCtry && natCtry === personCtry) natMatch = true;
-          if (!natMatch && multiNat && personCtry && multiNat.has(personCtry)) natMatch = true;
-          if (natMatch) {
-            if (g.natChampPos == null || r.pos < g.natChampPos) {
-              g.natChampComp = r.compId; g.natChampPos = r.pos;
-            }
-          }
-        }
-        // hasWr — any time(不限 finals).从 acc 取/建 entry,与 podium 的 entry 合并
-        if (r.regSingleRecord === 'WR' || r.regAvgRecord === 'WR') {
-          let g2 = gsForEvent.get(r.pid);
-          if (!g2) { g2 = { hasWrSingle: false, hasWrAvg: false }; gsForEvent.set(r.pid, g2); }
-          if (r.regSingleRecord === 'WR') g2.hasWrSingle = true;
-          if (r.regAvgRecord === 'WR') g2.hasWrAvg = true;
-        }
+      // grand_slam: 三条腿已在主循环前由 championship podiums 灌入(资格内重排),这里只补 hasWr。
+      // hasWr — any time(不限 finals).从 acc 取/建 entry,与 podium 的 entry 合并
+      if (gsForEvent && (r.regSingleRecord === 'WR' || r.regAvgRecord === 'WR')) {
+        let g2 = gsForEvent.get(r.pid);
+        if (!g2) { g2 = { hasWrSingle: false, hasWrAvg: false }; gsForEvent.set(r.pid, g2); }
+        if (r.regSingleRecord === 'WR') g2.hasWrSingle = true;
+        if (r.regAvgRecord === 'WR') g2.hasWrAvg = true;
       }
 
       // ════════════ fun-stats per-row 累加 ════════════
