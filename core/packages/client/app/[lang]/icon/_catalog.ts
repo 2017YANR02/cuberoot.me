@@ -48,8 +48,6 @@ export const ICON_GROUPS: IconGroup[] = (() => {
   return CATEGORY_ORDER.map((category) => ({ category, entries: byCat[category] }));
 })();
 
-export const ICON_TOTAL = ICON_GROUPS.reduce((n, g) => n + g.entries.length, 0);
-
 export const CATEGORY_LABEL: Record<IconCategory, { en: string; zh: string }> = {
   event: { en: 'WCA events', zh: 'WCA 项目' },
   unofficial: { en: 'Unofficial events', zh: '非官方项目' },

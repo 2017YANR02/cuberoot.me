@@ -7,19 +7,19 @@
  * SVG_BY_KEY source (see _catalog.ts). Mirrors https://icons.cubing.net but is
  * display-first: monochrome (currentColor, theme-adaptive), each cell a real
  * download link so left-click OR right-click → "Save link as" saves the
- * original SVG. Click the class chip to copy the CubingIcon key.
+ * original SVG.
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Search, Check, Copy, ExternalLink } from 'lucide-react';
+import { Search, ExternalLink } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import { SearchInput } from '@/components/SearchInput';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useLang, tr } from '@/i18n/tr';
 import { eventDisplayName } from '@/lib/wca-events';
 import {
-  ICON_GROUPS, ICON_TOTAL, CATEGORY_LABEL, svgHref,
+  ICON_GROUPS, CATEGORY_LABEL, svgHref,
   type IconEntry, type IconCategory,
 } from './_catalog';
 import './icon.css';
@@ -30,20 +30,7 @@ function friendlyName(entry: IconEntry, isZh: boolean): string {
 }
 
 function IconCell({ entry, isZh }: { entry: IconEntry; isZh: boolean }) {
-  const [copied, setCopied] = useState(false);
   const name = friendlyName(entry, isZh);
-
-  const copyClass = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      void navigator.clipboard?.writeText(entry.key).then(() => {
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 1200);
-      });
-    },
-    [entry.key],
-  );
 
   return (
     <a
@@ -55,15 +42,6 @@ function IconCell({ entry, isZh }: { entry: IconEntry; isZh: boolean }) {
     >
       <span className="icon-cell-glyph" aria-hidden="true" dangerouslySetInnerHTML={{ __html: entry.svg }} />
       <span className="icon-cell-name">{name}</span>
-      <button
-        type="button"
-        className={`icon-cell-class${copied ? ' is-copied' : ''}`}
-        onClick={copyClass}
-        title={tr({ zh: `复制类名 ${entry.key}`, en: `Copy class ${entry.key}` })}
-      >
-        {copied ? <Check size={11} /> : <Copy size={11} />}
-        <span className="icon-cell-class-text">{entry.key}</span>
-      </button>
     </a>
   );
 }
@@ -100,12 +78,6 @@ export default function IconGalleryPage() {
 
       <header className="icon-header">
         <h1>{tr({ zh: '魔方图标库', en: 'Cube Icons' })}</h1>
-        <p className="icon-sub">
-          {tr({
-            zh: `全站 ${ICON_TOTAL} 枚魔方图标的统一来源 · 单色矢量,点击或右键即可下载 SVG`,
-            en: `The single source for all ${ICON_TOTAL} cube icons on the site · monochrome vectors, click or right-click to download the SVG`,
-          })}
-        </p>
         <a className="icon-credit" href="https://github.com/cubing/icons" target="_blank" rel="noopener noreferrer">
           <ExternalLink size={13} aria-hidden="true" />
           <span>cubing/icons</span>
