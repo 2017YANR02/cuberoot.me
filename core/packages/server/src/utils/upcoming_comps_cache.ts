@@ -20,6 +20,12 @@ export interface UpcomingComp {
   id: string;
   name: string;
   country?: string; // ISO2,如 'CN' / 'US'
+  // 以下字段 JSON 里都有,按需声明(monitors/watched_foreign_reg 用于筛报名窗口)
+  city?: string;
+  start_date?: string;        // yyyy-mm-dd(赛地本地)
+  end_date?: string;          // yyyy-mm-dd(赛地本地)
+  registration_open?: string; // ISO datetime
+  registration_close?: string; // ISO datetime
 }
 
 let cache: { data: UpcomingComp[]; expiresAt: number } | null = null;

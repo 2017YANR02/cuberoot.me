@@ -5,7 +5,8 @@ import i18n, { normalizeAppLang } from '@/i18n/i18n-client';
 export type NotificationKind =
   | 'recon_alt' | 'recon_comment' | 'recon_reply'
   | 'forum_thread' | 'forum_reply' | 'forum_report'
-  | 'forum_review' | 'forum_approved' | 'forum_rejected';
+  | 'forum_review' | 'forum_approved' | 'forum_rejected'
+  | 'comp_reg';
 
 export interface SiteNotification {
   id: number;
