@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import {
-  H, CUT, SEAM, TEETH, FAN_R, FAN_ROOT, HUB_R, HUB_DOME_R, PLATE_T,
+  H, CUT, SEAM, TEETH, FAN_R, HUB_DOME_R, PLATE_T,
   CROWN_BALL, EDGE_R, CORE_R, CAP_HALF,
   ARM_R0, ARM_R1, ARM_S, ARM_D, WASHER_IN, WASHER_OUT, WASHER_Y,
-  fanRadiusAt, gearFacetFrame, gearSlotApex, gearSlotFaces, gearWindowAngle,
+  SWEEP_RHO, SWEEP_WALL, TOOTH_HALF_ANG, TOOTH_ROOT, toothTrapezoid,
+  gearFacetFrame, gearSlotApex, gearSlotBasis, gearSlotFaces, gearWindowAngle,
   cornerStickerOutline, inCrownSweep,
 } from '@/app/[lang]/sim/engine/gear/gearGeometry';
 import { CORNER_POS, FACE_AXIS } from '@/app/[lang]/sim/engine/gear/gearState';
@@ -16,17 +17,21 @@ type V3 = [number, number, number];
 // slots used by the sweeps: UF = (ring 1, slot 0); FR = (0,0); FL = (0,3)
 const UF: [number, number] = [1, 0];
 
-/** Umbrella-crown boundary cloud (home frame, world coords) for a slot. */
+/** Umbrella-crown boundary cloud (home frame, world coords) for a slot: a grid
+ *  over each trapezoid tooth plate (legs, chord bases, interior) at the three
+ *  depths (sticker top / facet plane / plate back). */
 function crownCloud(r: number, s: number): V3[] {
   const E = gearSlotApex(r, s);
   const pts: V3[] = [];
-  const pitch = (2 * Math.PI) / TEETH;
+  const inY = TOOTH_ROOT * Math.cos(TOOTH_HALF_ANG);  // inner chord height
+  const outY = FAN_R * Math.cos(TOOTH_HALF_ANG);      // outer chord height
   for (let k = 0; k < TEETH; k++) {
     const { m, g, w } = gearFacetFrame(r, s, k);
     for (let bi = -10; bi <= 10; bi++) {
-      const beta = (bi / 10) * (pitch / 2);
-      const rr = fanRadiusAt(beta);
-      for (const a of [HUB_R, (HUB_R + rr) / 2, rr]) {
+      const beta = (bi / 10) * TOOTH_HALF_ANG;
+      const aIn = inY / Math.cos(beta);
+      const aOut = outY / Math.cos(beta);
+      for (const a of [aIn, (aIn + aOut) / 2, aOut]) {
         const x = a * Math.sin(beta), y = a * Math.cos(beta);
         for (const d of [0.5 + 2.6, 0, -PLATE_T]) { // sticker top, facet plane, plate back
           pts.push([
@@ -84,13 +89,21 @@ describe('gear geometry clearance invariants', () => {
 
   it('crown stays inside its sweep lathe (constructive corner clearance)', () => {
     // corners are carved by the lathe of the crown sweep about each axis; an
-    // equator crown (FR, y-turns) must live inside the about-y lathe with margin.
-    for (const p of crownCloud(0, 0)) {
-      expect(inCrownSweep(new THREE.Vector3(...p), 1, -1)).toBe(true);
+    // equator crown (FR, y-turns) must live inside the about-y lathe with margin,
+    // at EVERY spin phase (the 480°-per-flip whirl passes through all of them).
+    const spinAxis = gearSlotBasis(0, 0).n;
+    const base = crownCloud(0, 0);
+    const v = new THREE.Vector3();
+    for (let ph = 0; ph < 8; ph++) {
+      const q = new THREE.Quaternion().setFromAxisAngle(spinAxis, (ph / 8) * (Math.PI / 3));
+      for (const p of base) {
+        v.set(p[0], p[1], p[2]).applyQuaternion(q);
+        expect(inCrownSweep(v, 1, -0.5)).toBe(true);
+      }
     }
     // the hub dome bulges on the arris — inside too
     const E = gearSlotApex(0, 0);
-    expect(inCrownSweep(new THREE.Vector3(E.x + HUB_DOME_R, 0, E.z), 1, -1)).toBe(true);
+    expect(inCrownSweep(new THREE.Vector3(E.x + HUB_DOME_R, 0, E.z), 1, -0.5)).toBe(true);
   });
 
   it('face-layer crowns clear the equator crowns (orbit circles, ball-to-ball)', () => {
@@ -111,8 +124,10 @@ describe('gear geometry clearance invariants', () => {
   });
 
   it('face-layer crowns clear the middle caps, arms, axles and core mid-turn', () => {
-    // in the middle frame the UF crown orbits about y at the relative rate −tπ/2;
-    // the crown shape is 60°-spin invariant so no phase scan is needed.
+    // in the middle frame the UF crown orbits about y at the relative rate −tπ/2.
+    // A riding gear does not spin, but scan spin phases anyway (0..60°) so the
+    // invariant also covers the equator gears' own whirl (480°/flip sweeps every
+    // phase) — the crown repeats each 60° pitch, so one pitch of phases suffices.
     const AXES: V3[] = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
     const arms: Array<{ nf: V3; rh: V3; ee: V3 }> = [];
     for (const nf of AXES.filter((a) => a[1] === 0)) {
@@ -123,7 +138,17 @@ describe('gear geometry clearance invariants', () => {
         ] });
       }
     }
-    const cloud = crownCloud(...UF);
+    const baseCloud = crownCloud(...UF);
+    const spinAxis = gearSlotBasis(...UF).n;
+    const cloud: V3[] = [];
+    const v = new THREE.Vector3();
+    for (let ph = 0; ph < 6; ph++) {
+      const q = new THREE.Quaternion().setFromAxisAngle(spinAxis, (ph / 6) * (Math.PI / 3));
+      for (const p of baseCloud) {
+        v.set(p[0], p[1], p[2]).applyQuaternion(q);
+        cloud.push([v.x, v.y, v.z]);
+      }
+    }
     const M = 2;
     let worst = 0;
     for (let i = 0; i <= 32; i++) {
@@ -183,25 +208,42 @@ describe('gear geometry clearance invariants', () => {
     };
     expect(carved(new THREE.Vector3(0.7 * H, 0.7 * H, 0.7 * H))).toBe(false);
     expect(carved(new THREE.Vector3(H - 10, H - 10, H - 10))).toBe(false);
-    // and the fan channel on the face is wide enough to host the full fan
+    // and the fan channel on the face is wide enough to host the fan's reach
+    // along the edge (SWEEP_RHO) — but no wider than the sweep wall allows
     const channelAt = (y: number): number => {
       let x = 0;
       while (x < H && carved(new THREE.Vector3(x, y, H + 1))) x += 0.5;
       return x;
     };
-    expect(channelAt(H - 4)).toBeGreaterThan(FAN_R + 2);
+    expect(channelAt(H - 4)).toBeGreaterThan(SWEEP_RHO + 0.5);
+    expect(channelAt(H - 4)).toBeLessThan(SWEEP_RHO + SWEEP_WALL + 2);
   });
 
-  it('fan profile: 6 teeth, tip at the tooth center, root in the gullets', () => {
+  it('teeth: 6 isosceles trapezoids, radial legs through the center, gaps wider than both bases', () => {
     expect(TEETH).toBe(6);
-    expect(fanRadiusAt(0)).toBe(FAN_R);
-    expect(fanRadiusAt(Math.PI / TEETH)).toBe(FAN_ROOT); // sector edge = mid-gullet
-    for (let i = 0; i <= 60; i++) {
-      const b = -Math.PI / TEETH + (i / 60) * (2 * Math.PI) / TEETH;
-      expect(fanRadiusAt(b)).toBeGreaterThanOrEqual(FAN_ROOT);
-      expect(fanRadiusAt(b)).toBeLessThanOrEqual(FAN_R);
-      expect(fanRadiusAt(b)).toBeCloseTo(fanRadiusAt(-b), 9); // symmetric tooth
-    }
+    const trap = toothTrapezoid();
+    expect(trap.length).toBe(4);
+    const [oL, iL, iR, oR] = trap;
+    // legs pass through the gear center: corner vectors are collinear (cross = 0)
+    expect(oL[0] * iL[1] - oL[1] * iL[0]).toBeCloseTo(0, 9);
+    expect(oR[0] * iR[1] - oR[1] * iR[0]).toBeCloseTo(0, 9);
+    // isosceles: mirror-symmetric about the tooth axis
+    expect(oL[0]).toBeCloseTo(-oR[0], 9);
+    expect(oL[1]).toBeCloseTo(oR[1], 9);
+    // bases are chords at TOOTH_ROOT and FAN_R
+    expect(Math.hypot(oR[0], oR[1])).toBeCloseTo(FAN_R, 9);
+    expect(Math.hypot(iR[0], iR[1])).toBeCloseTo(TOOTH_ROOT, 9);
+    // the angular gap between neighbours beats the tooth width, so at EVERY
+    // radius the gap chord is wider than the tooth chord — hence wider than
+    // both bases compared at their own radii
+    const gapHalf = Math.PI / TEETH - TOOTH_HALF_ANG;
+    expect(gapHalf).toBeGreaterThan(TOOTH_HALF_ANG);
+    const outerBase = 2 * FAN_R * Math.sin(TOOTH_HALF_ANG);
+    const innerBase = 2 * TOOTH_ROOT * Math.sin(TOOTH_HALF_ANG);
+    const outerGap = 2 * FAN_R * Math.sin(gapHalf);
+    expect(outerGap).toBeGreaterThan(outerBase);
+    expect(outerGap).toBeGreaterThan(innerBase);
+    expect(2 * TOOTH_ROOT * Math.sin(gapHalf)).toBeGreaterThan(innerBase);
   });
 
   it('corner sticker outlines have no needle spikes (max turn angle bounded)', () => {

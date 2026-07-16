@@ -4,22 +4,22 @@
  * A cube [-H, H]³ with layer cut planes at ±CUT (fat outer layers like the real
  * puzzle, not 3x3 thirds). Pieces:
  *  - 12 EDGE GEARS: an UMBRELLA CROWN folded over the arris (user-verified against
- *    the real puzzle): 6 flat tooth plates, each tangent to the 45° cone whose apex
- *    is the edge midpoint E and whose axis is the slot's outward radial n̂. The two
- *    face-pointing plates (φ = ±90°) lie EXACTLY in the two adjacent face planes —
- *    at rest each half of the gear is a flat half-gear coplanar with its face
- *    (green half with the green corners, white half with the white corners), the
- *    hub dome bulging on the arris. Adjacent plates fold ~41° at the gullet
- *    valleys — a fully-flat half cannot exist: the shape must be invariant under
- *    the 60° spin (one move = one tooth pitch), and only the tangent-plane
- *    umbrella is. One flat decal per tooth plate (3 per face color); decals ride
- *    the spinning teeth, so a scrambled fan shows mixed colors like the real cube.
+ *    the real puzzle): 6 ISOSCELES-TRAPEZOID tooth plates (straight radial legs
+ *    through the gear center, chord bases, gullets wider than either base), each
+ *    tangent to the 45° cone whose apex is the edge midpoint E and whose axis is
+ *    the slot's outward radial n̂. The two face-pointing plates (φ = ±90°) lie
+ *    EXACTLY in the two adjacent face planes — at rest each half of the gear is a
+ *    flat half-gear coplanar with its face (green half with the green corners,
+ *    white half with the white corners), the hub dome bulging on the arris.
+ *    Adjacent plates fold ~41° — a fully-flat half cannot exist: the shape must
+ *    be invariant under the spin step (one move = one tooth pitch), and only the
+ *    tangent-plane umbrella is. One flat decal per tooth plate (3 per face
+ *    color); decals ride the spinning teeth, so a scrambled fan mixes colors.
  *  - 8 CORNERS: rounded blocks carved by (a) three CROWN-SWEEP LATHES — tight
- *    solids of revolution around the axes containing every crown's whole orbit
- *    sweep (each half-fan is a face-flush disc-slab; see crownSweepInnerRadius) —
- *    and (b) three thin WASHER rings that carve exactly the center-arms' swept
- *    shell. Both constructive: a turning crown/arm can never touch a corner.
- *    One splat-crown sticker per face.
+ *    solids of revolution around the axes containing every crown's whole
+ *    spin ∪ orbit sweep (see crownSweepInnerRadius) — and (b) three thin WASHER
+ *    rings that carve exactly the center-arms' swept shell. Both constructive:
+ *    a turning crown/arm can never touch a corner. One splat sticker per face.
  *  - 6 CENTERS: rounded cap + square sticker + 4 C-shaped spider arms (one toward
  *    each adjacent gear, stickered — the reference front view's brackets). The
  *    arms live entirely inside the washer rings; their radial reach is capped by
@@ -91,30 +91,39 @@ export const CUT = 0.25 * H;
 export const SEAM = 2.5;
 /** Edge-midpoint distance from the cube center — the crown apex E sits there. */
 export const EDGE_R = H * Math.SQRT2;
-/** Fan tip / gullet radii measured from the apex ALONG the facet plates, and the
- *  tooth count (6 fat teeth ⇒ one 60° spin = exactly 1 pitch — required for the
- *  crown shape to rest identically after every move). */
+/** Fan tip radius measured from the apex ALONG the facet plates, backing-cone
+ *  slant reach, and the tooth count (6 teeth ⇒ one spin step = exactly 1 pitch —
+ *  required for the crown shape to rest identically after every move). */
 export const FAN_R = 0.43 * H;
-export const FAN_ROOT = 0.30 * H;
+export const CONE_REACH = 0.30 * H;
 export const TEETH = 6;
-/** Facet inner arc (hub hole) + the hub dome on the arris + plate thickness. */
-export const HUB_R = 15;
+/** Hub dome on the arris + plate thickness. */
 export const HUB_DOME_R = 13;
 export const PLATE_T = 6;
+const STICKER_LIFT = 0.5;
+const STICKER_DEPTH = 2.6;
 /** Ball bound of a whole crown around its edge midpoint E. */
 export const CROWN_BALL = Math.hypot(FAN_R, PLATE_T) + 1.5;
-/** Crown sweep lathe: the crown is a thin face-hugging shell, so the solid it
- *  sweeps when its layer turns is a tight solid of revolution — NOT the fat
- *  ball tube. Each half-fan is a disc-slab flush at a face (in-plane radius
- *  ≤ SWEEP_HALF around the apex, depth down to H − PLATE_T); revolving that
- *  about the turn axis gives, at height `along`, an annulus starting at
- *  crownSweepInnerRadius(along). Corners are carved by exactly this lathe
- *  (constructive: a turning crown can never touch a corner), which keeps the
- *  corner plates fuller than a ball tube would (reference-matched). */
-export const SWEEP_HALF = FAN_R + 1;
+/** Crown sweep lathe. During a turn the crown both orbits (any angle) and spins
+ *  (any phase), so the swept solid about the turn axis is the revolve of the
+ *  crown's own SPIN-swept shell. That shell is axisymmetric about the spin axis
+ *  n̂: points E + a·ĝ(φ) + d·m̂(φ) with a ∈ [0, FAN_R], d ∈ [−PLATE_T, lift].
+ *  In (ρ = dist from n̂, h = depth along −n̂ from E) that is ρ = (a+d)/√2,
+ *  h = (a−d)/√2 — a 45° cone shell. Revolved about the turn axis (E sits at
+ *  horizontal radius EDGE_R, |along| = ρ·|sinφ| ≤ ρ):
+ *    min rad(along) = EDGE_R − h_max            while along ≤ ρ(a=FAN_R, d=−PLATE_T)
+ *                   = EDGE_R − (FAN_R·√2 − along)  beyond (the d>−PLATE_T lid)
+ *  Corners are carved by exactly this lathe + 1u margin (constructive: a
+ *  turning crown can never touch a corner) — far tighter than a ball tube,
+ *  which is what keeps the corner plates reference-matched full. */
+export const SWEEP_RHO = (FAN_R + STICKER_LIFT + STICKER_DEPTH) / Math.SQRT2; // max |along|
+const SWEEP_H = (FAN_R + PLATE_T) / Math.SQRT2;             // deepest reach from the arris
+const SWEEP_RHO0 = (FAN_R - PLATE_T) / Math.SQRT2;          // where the deep flat ends
+export const SWEEP_WALL = 1.5;                              // side margin of the carve
 export function crownSweepInnerRadius(along: number): number {
-  const reach = Math.sqrt(Math.max(0, SWEEP_HALF * SWEEP_HALF - along * along));
-  return Math.hypot(H - reach, H - PLATE_T - 1) - 1;
+  const a = Math.min(Math.abs(along), SWEEP_RHO);
+  const h = a <= SWEEP_RHO0 ? SWEEP_H : FAN_R * Math.SQRT2 - a;
+  return EDGE_R - h - 1;
 }
 /** Core sphere + center cap sizes (inside the middle slab). */
 export const CORE_R = 0.21 * H;
@@ -138,8 +147,6 @@ export const WASHER_OUT = 135;
 export const WASHER_Y = ARM_R1 + ARM_LIFT + 2.5;
 
 const BODY_COLOR = 0x141414;
-const STICKER_LIFT = 0.5;
-const STICKER_DEPTH = 2.6;
 
 const bodyMat = new THREE.MeshPhongMaterial({
   color: BODY_COLOR, specular: 0x222222, shininess: 25, side: THREE.DoubleSide,
@@ -178,18 +185,22 @@ export function gearSlotFaces(r: number, s: number): number[] {
     FACE_AXIS[f][0] * p[0] + FACE_AXIS[f][1] * p[1] + FACE_AXIS[f][2] * p[2] > 0);
 }
 
-// ── crown fan profile (per-tooth, fan-polar around the apex) ────────────────────────
-/** Fan radius at angle β from the tooth center (one 60° sector per tooth plate):
- *  trapezoid tooth between FAN_ROOT and FAN_R. */
-export function fanRadiusAt(beta: number): number {
-  const pitch = (2 * Math.PI) / TEETH;
-  let b = Math.abs(beta) % pitch;
-  if (b > pitch / 2) b = pitch - b;
-  const tipHalf = pitch * 0.20;
-  const flank = pitch * 0.15;
-  if (b <= tipHalf) return FAN_R;
-  if (b >= tipHalf + flank) return FAN_ROOT;
-  return FAN_R - (FAN_R - FAN_ROOT) * (b - tipHalf) / flank;
+// ── crown tooth shape (per-tooth, in facet-plane coords around the apex) ────────────
+/** Each tooth is an ISOSCELES TRAPEZOID (user-locked): straight radial legs whose
+ *  extensions pass through the gear center, straight chord bases at TOOTH_ROOT and
+ *  FAN_R. Teeth are 22° wide with 38° gullets, so the gap between neighbours is
+ *  wider than either base at every radius (gap chord 2r·sin19° > base 2r·sin11°). */
+export const TOOTH_HALF_ANG = (11 * Math.PI) / 180;
+export const TOOTH_ROOT = 16;
+/** The 4 trapezoid corners in (ŵ, ĝ) facet coords, CCW. */
+export function toothTrapezoid(): V2[] {
+  const s = Math.sin(TOOTH_HALF_ANG), c = Math.cos(TOOTH_HALF_ANG);
+  return [
+    [-FAN_R * s, FAN_R * c],
+    [-TOOTH_ROOT * s, TOOTH_ROOT * c],
+    [TOOTH_ROOT * s, TOOTH_ROOT * c],
+    [FAN_R * s, FAN_R * c],
+  ];
 }
 
 /** In-plane basis of gear slot (r,s): ê = edge direction (the slot's zero axis),
@@ -252,20 +263,10 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   const facePlus = faces.find((f) => Math.sin(gearWindowAngle(r, s, f)) > 0)!;
   const faceMinus = faces.find((f) => f !== facePlus)!;
 
-  const SEG = 48;
   for (let k = 0; k < TEETH; k++) {
     const { m, g, w } = gearFacetFrame(r, s, k);
-    // tooth plate polygon in (ŵ, ĝ) facet coords: toothed outer contour + hub arc
-    const poly: V2[] = [];
-    for (let i = 0; i <= SEG; i++) {
-      const beta = -pitch / 2 + (i / SEG) * pitch;
-      const rr = fanRadiusAt(beta);
-      poly.push([rr * Math.sin(beta), rr * Math.cos(beta)]);
-    }
-    for (let i = SEG; i >= 0; i--) {
-      const beta = -pitch / 2 + (i / SEG) * pitch;
-      poly.push([HUB_R * Math.sin(beta), HUB_R * Math.cos(beta)]);
-    }
+    // tooth plate = the isosceles trapezoid in (ŵ, ĝ) facet coords
+    const poly = toothTrapezoid();
     const ccw = polyArea2(poly) > 0 ? poly : poly.slice().reverse();
     const shape = new THREE.Shape(ccw.map(([a, b]) => new THREE.Vector2(a, b)));
     const plateGeo = new THREE.ExtrudeGeometry(shape, { depth: PLATE_T, bevelEnabled: false });
@@ -275,9 +276,10 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
     plate.userData.simRole = 'body';
     group.add(plate);
 
-    // per-tooth decal (rides the spinning tooth — scrambled fans mix colors)
+    // per-tooth decal (rides the spinning tooth — scrambled fans mix colors);
+    // small round then inset keeps the narrow root end positive-radius
     const face = Math.sin(Math.PI / 2 + k * pitch) > 0 ? facePlus : faceMinus;
-    const decal = offsetInward(roundCorners(ccw, 5), 2.2);
+    const decal = offsetInward(roundCorners(ccw, 2.5), 2);
     const decalGeo = extrudeOntoFace(decal,
       { u: w, v: g, n: m, origin: E.clone().add(m.clone().multiplyScalar(STICKER_LIFT)) },
       STICKER_DEPTH);
@@ -292,7 +294,7 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   dome.userData.simRole = 'body';
   group.add(dome);
 
-  const coneL = (FAN_ROOT + 6) * Math.SQRT1_2;
+  const coneL = (CONE_REACH + 6) * Math.SQRT1_2;
   const coneGeo = new THREE.ConeGeometry(coneL, coneL, 24, 1, false);
   coneGeo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), n));
   const cone = new THREE.Mesh(coneGeo, bodyMat);
@@ -308,18 +310,22 @@ let carveBrushes: Brush[] | null = null;
 function cornerCarves(ev: Evaluator): Brush[] {
   if (carveBrushes) return carveBrushes;
   const brushes: Brush[] = [];
-  const SWEEP_TOP = SWEEP_HALF + 2;
+  const SWEEP_TOP = SWEEP_RHO + SWEEP_WALL;
   for (const axis of [0, 1, 2]) {
     // crown sweep lathe: closed profile loop (inner edge follows
     // crownSweepInnerRadius, outer edge safely outside the cube), revolved
-    // about this axis. LatheGeometry revolves about local Y.
+    // about this axis. LatheGeometry revolves about local Y. The loop MUST
+    // wind CCW in the (r, y) half-plane — bottom out, up the outer wall, top
+    // in, down the inner wall — or the brush is inside-out and the CSG
+    // subtraction sprays sliver shards over the corner.
     const profile: THREE.Vector2[] = [];
     const N = 24;
+    profile.push(new THREE.Vector2(200, -SWEEP_TOP), new THREE.Vector2(200, SWEEP_TOP));
     for (let i = 0; i <= N; i++) {
-      const t = -SWEEP_TOP + (2 * SWEEP_TOP * i) / N;
-      profile.push(new THREE.Vector2(crownSweepInnerRadius(Math.abs(t)), t));
+      const t = SWEEP_TOP - (2 * SWEEP_TOP * i) / N;
+      profile.push(new THREE.Vector2(crownSweepInnerRadius(t), t));
     }
-    profile.push(new THREE.Vector2(200, SWEEP_TOP), new THREE.Vector2(200, -SWEEP_TOP), profile[0].clone());
+    profile.push(profile[0].clone());
     const latheGeo = new THREE.LatheGeometry(profile, 96);
     if (axis === 0) latheGeo.rotateZ(Math.PI / 2);       // revolve axis y → x
     else if (axis === 2) latheGeo.rotateX(Math.PI / 2);  // → z
@@ -346,9 +352,9 @@ function cornerCarves(ev: Evaluator): Brush[] {
 /** Is `p` inside the crown-sweep lathe about `axis` (0=x,1=y,2=z), inflated m? */
 export function inCrownSweep(p: THREE.Vector3, axis: number, m: number): boolean {
   const along = Math.abs(axis === 0 ? p.x : axis === 1 ? p.y : p.z);
-  if (along > SWEEP_HALF + 2 + m) return false;
+  if (along > SWEEP_RHO + SWEEP_WALL + m) return false;
   const rad = axis === 0 ? Math.hypot(p.y, p.z) : axis === 1 ? Math.hypot(p.x, p.z) : Math.hypot(p.x, p.y);
-  return rad > crownSweepInnerRadius(Math.min(along, SWEEP_HALF)) - m;
+  return rad > crownSweepInnerRadius(along) - m;
 }
 
 const BITE_INSET = 3;      // sticker stays this far outside the carved bite
