@@ -165,7 +165,7 @@ export default function CompPosterModal({ slug, compName, compIso2, info, isZh, 
                   )}
                   {info?.competitor_limit ? (
                     <div className="comp-poster-fact">
-                      <dt>{tr({ zh: '人数上限', en: 'Limit' })}</dt>
+                      <dt>{tr({ zh: '上限', en: 'Limit' })}</dt>
                       <dd>{info.competitor_limit}</dd>
                     </div>
                   ) : null}
