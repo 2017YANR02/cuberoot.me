@@ -231,6 +231,13 @@ html:not([data-palette-scheme=dark]) .wse-page {
 /* 名次和(SOR)表列多(项目逐列)同样会超 1180:页面按内容自适应并居中,sticky 列头随横向滚动对齐。 */
 .wse-page:has(.wse-sor-evcell) { width: fit-content; max-width: 100%; }
 .wse-page:has(.wse-sor-evcell) .wse-table-wrapper { width: fit-content; max-width: 100%; }
+/* 大满贯:三列锦标赛比赛名(.wse-detail-cell)把表撑过 1180 → 同样整页自适应(issue #23 表格穿出卡片)。
+   视口不够宽时的兜底由 .sticky-scroll 溢出守卫(StickyScrollGuard → .stk-overflow 自滚动)接管。 */
+.wse-page:has(.wse-detail-cell) { width: fit-content; max-width: 100%; }
+.wse-page:has(.wse-detail-cell) .wse-table-wrapper { width: fit-content; max-width: 100%; }
+/* fit-content 页宽由最宽子元素决定:副标题整段不折行的 max-content 可能远超表格,把整页顶满视口 →
+   给副标题封顶(= 常规页内容宽),让表格才是页宽的决定者。常规 1180 页上此值不改变现状。 */
+.wse-subtitle { max-width: 1148px; }
 /* 详细成绩:每把一列(真表格列,见 AttemptHeaderCells / AttemptCells)。表头数字 th 去掉通用表头的
    uppercase / letter-spacing / 12px,跟数据列同字号,数字与成绩同列居中对齐。 */
 .wse-table th.wse-attempts-col {
