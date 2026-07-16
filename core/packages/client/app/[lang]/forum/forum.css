@@ -669,6 +669,8 @@ a.forum-post-author-name:hover { color: var(--accent); }
   background: color-mix(in srgb, var(--foreground) 7%, transparent);
 }
 .forum-post-action.is-danger:hover { color: var(--destructive); }
+.forum-post-action.is-approve { color: var(--signal-success); }
+.forum-post-action.is-approve:hover { color: var(--signal-success); }
 
 /* --- reactions --- */
 

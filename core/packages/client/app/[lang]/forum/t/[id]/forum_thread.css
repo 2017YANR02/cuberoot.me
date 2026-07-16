@@ -26,6 +26,35 @@
   white-space: nowrap;
 }
 
+/* 审核状态徽章(楼层 meta 行)与主题横幅 —— 状态色走 signal token */
+.forum-badge-pending {
+  color: var(--signal-warning);
+  background: color-mix(in srgb, var(--signal-warning) 14%, transparent);
+}
+.forum-badge-rejected {
+  color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+}
+
+.forum-review-banner {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  padding: 8px 0;
+}
+.forum-review-banner.is-pending { color: var(--signal-warning); }
+.forum-review-banner.is-rejected { color: var(--destructive); }
+.forum-review-banner-actions { display: inline-flex; gap: 4px; }
+
+/* 驳回原因(楼内,仅作者/管理员可见) */
+.forum-review-note {
+  font-size: 0.8rem;
+  color: var(--destructive);
+  margin-bottom: 8px;
+}
+
 .forum-thread-headmeta {
   display: flex;
   align-items: center;

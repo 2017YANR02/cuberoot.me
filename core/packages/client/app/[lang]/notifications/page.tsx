@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   ChevronLeft, MessageSquare, Reply, GitBranch, LogIn, Check, MessagesSquare, Flag,
+  Hourglass, CircleCheck, CircleX,
 } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
@@ -29,6 +30,9 @@ const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   forum_thread: MessagesSquare,
   forum_reply: Reply,
   forum_report: Flag,
+  forum_review: Hourglass,
+  forum_approved: CircleCheck,
+  forum_rejected: CircleX,
 };
 
 /** TIMESTAMPTZ → 本地 `yyyy-mm-dd hh:mm`。 */
@@ -59,6 +63,9 @@ export default function NotificationsPage() {
     forum_thread: t('发布了新主题', 'started a new thread'),
     forum_reply: t('回复了你的主题', 'replied to your thread'),
     forum_report: t('举报了一个帖子', 'reported a post'),
+    forum_review: t('发布了待审核内容', 'posted content awaiting review'),
+    forum_approved: t('通过了你的帖子', 'approved your post'),
+    forum_rejected: t('驳回了你的帖子', 'declined your post'),
   }[k]);
 
   const load = useCallback(() => {

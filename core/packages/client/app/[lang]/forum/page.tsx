@@ -4,12 +4,13 @@
 // Structure modeled on classic forum landing (speedsolving-style taxonomy).
 
 import { useEffect, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, ShieldCheck } from 'lucide-react';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import WcaAuth from '@/components/WcaAuth';
 import { tr, T, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useIsAdmin } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import {
   fetchForumIndex, fetchLatestThreads,
@@ -24,6 +25,7 @@ export default function ForumIndexPage() {
   useDocumentTitle('论坛', 'Forum');
   const lang = useLang();
   const zh = lang === 'zh';
+  const isAdmin = useIsAdmin();
   const [data, setData] = useState<ForumIndexData | null>(null);
   const [latest, setLatest] = useState<LatestThread[]>([]);
   const [error, setError] = useState('');
@@ -50,6 +52,12 @@ export default function ForumIndexPage() {
           </p>
         </div>
         <div className="forum-header-actions">
+          {isAdmin && (
+            <Link href="/forum/review" prefetch={false} className="forum-btn-ghost" title={tr({ zh: '审核', en: 'Moderation' })}>
+              <ShieldCheck size={15} aria-hidden="true" />
+              <T zh="审核" en="Review" />
+            </Link>
+          )}
           <Link href="/forum/search" prefetch={false} className="forum-btn-ghost" title={tr({ zh: '搜索', en: 'Search' })}>
             <Search size={15} aria-hidden="true" />
             <T zh="搜索" en="Search" />

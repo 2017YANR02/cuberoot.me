@@ -6,14 +6,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger } from 'nuqs';
-import { Pin, PinOff, Lock, LockOpen, Trash2, Pencil } from 'lucide-react';
+import { Pin, PinOff, Lock, LockOpen, Trash2, Pencil, Hourglass, CircleX, Check } from 'lucide-react';
 import Paginator from '@/components/wca-stats/Paginator';
 import { tr, T, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
 import {
   fetchThread, createPost, updatePost, deletePost, deleteThread, updateThread,
-  reactToPost, trackThreadView, reportPost,
+  reactToPost, trackThreadView, reportPost, moderateReview,
   type ThreadPageData, type ForumPost, type ReactionKind,
 } from '@/lib/forum-api';
 import { ForumBreadcrumbs } from '../../_components/ForumBreadcrumbs';
@@ -226,6 +226,25 @@ export default function ThreadClient() {
     }
   };
 
+  // 管理员就地审核(单楼或整个主题)。驳回时 prompt 原因(会随通知发给作者)。
+  const handleModerate = async (type: 'thread' | 'post', id: number, action: 'approve' | 'reject') => {
+    let reason: string | undefined;
+    if (action === 'reject') {
+      const input = window.prompt(tr({
+        zh: '驳回原因(可留空,作者会收到):',
+        en: 'Rejection reason (optional, sent to the author):',
+      }));
+      if (input === null) return;
+      reason = input.trim().slice(0, 500) || undefined;
+    }
+    try {
+      await moderateReview(type, id, action, reason);
+      if (data) await load(data.thread.id, page, size);
+    } catch (e) {
+      alert((e as Error).message);
+    }
+  };
+
   const handleReact = async (post: ForumPost, kind: ReactionKind | null) => {
     const res = await reactToPost(post.id, kind);
     setData(d => {
@@ -317,6 +336,45 @@ export default function ThreadClient() {
             </div>
           </div>
 
+          {data.thread.status === 'pending' && (
+            <div className="forum-review-banner is-pending">
+              <Hourglass size={14} aria-hidden="true" />
+              <span>
+                <T
+                  zh="本主题待管理员审核,目前仅你和管理员可见。"
+                  en="This thread is awaiting moderator review — only you and moderators can see it."
+                />
+              </span>
+              {isAdmin && (
+                <span className="forum-review-banner-actions">
+                  <button
+                    type="button" className="forum-post-action is-approve"
+                    onClick={() => handleModerate('thread', data.thread.id, 'approve')}
+                  >
+                    <Check size={13} aria-hidden="true" /> <T zh="通过" en="Approve" />
+                  </button>
+                  <button
+                    type="button" className="forum-post-action is-danger"
+                    onClick={() => handleModerate('thread', data.thread.id, 'reject')}
+                  >
+                    <CircleX size={13} aria-hidden="true" /> <T zh="驳回" en="Reject" />
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
+          {data.thread.status === 'rejected' && (
+            <div className="forum-review-banner is-rejected">
+              <CircleX size={14} aria-hidden="true" />
+              <span>
+                <T zh="本主题未通过审核,不会公开显示。" en="This thread was rejected and is not publicly visible." />
+                {data.thread.reviewNote && (
+                  <> {tr({ zh: '原因:', en: 'Reason: ' })}{data.thread.reviewNote}</>
+                )}
+              </span>
+            </div>
+          )}
+
           {(totalPages > 1 || size !== SIZE_DEFAULT) && (
             <Paginator
               page={page} totalPages={totalPages} size={size}
@@ -344,6 +402,7 @@ export default function ThreadClient() {
                 onDelete={handleDeletePost}
                 onReact={handleReact}
                 onReport={handleReport}
+                onModerate={isAdmin ? (p, action) => handleModerate('post', p.id, action) : undefined}
                 bodyOverride={editingPost?.id === post.id ? (
                   <div className="forum-post-editwrap">
                     <ForumMarkdownEditor
@@ -380,7 +439,12 @@ export default function ThreadClient() {
           )}
 
           <div className="forum-reply-block">
-            {locked && !isAdmin ? (
+            {data.thread.status !== 'approved' && !isAdmin ? (
+              <div className="forum-locked-note">
+                <Hourglass size={14} aria-hidden="true" />
+                <T zh="主题未公开,暂不能回复。" en="This thread isn't public yet — replies are closed." />
+              </div>
+            ) : locked && !isAdmin ? (
               <div className="forum-locked-note">
                 <Lock size={14} aria-hidden="true" />
                 <T zh="主题已锁定,不能回复。" en="This thread is locked — replies are closed." />
