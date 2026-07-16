@@ -64,10 +64,19 @@ function baseForKind(c: AlgCase, kind: ScrambleKind): string | null {
   return (c.setup && c.setup.trim() ? c.setup.trim() : inverseAlg(baseAlg)) || null;
 }
 
-export function generateScramble(c: AlgCase, puzzle: AlgPuzzle, kind: ScrambleKind = 'inv'): string {
+export function generateScramble(
+  c: AlgCase,
+  puzzle: AlgPuzzle,
+  kind: ScrambleKind = 'inv',
+  opts?: { preAuf?: boolean },
+): string {
   // 这个 case 没有选定的那种打乱 → 退回 inv(整个 set 里只有一部分 case 有)
   const base = baseForKind(c, kind) ?? baseForKind(c, 'inv');
   if (!base) return '';
+
+  // 起手随机 AUF(pre-AUF):打乱前先 U^k,case 不变(起手/收尾 AUF 同属一条轨道),
+  // 但呈现相位不同。F2L 类 case 不加 —— 起手 U 会把 pair 挪走,变成另一个 case。
+  const pre = opts?.preAuf ? pick(AUF) : '';
 
   if (puzzle === '3x3') {
     if (c.sticker.kind === 'f2l') {
@@ -78,12 +87,12 @@ export function generateScramble(c: AlgCase, puzzle: AlgPuzzle, kind: ScrambleKi
     // 对最优打乱也一样加 —— 多一步 U 不影响「它是最短打乱」这件事(长度在元数据弹窗里看),
     // 但少了它,这个 case 永远长同一个样。
     const post = pick(AUF);
-    return [base, post].filter(Boolean).join(' ').trim();
+    return [pre, base, post].filter(Boolean).join(' ').trim();
   }
 
   if (puzzle === '2x2') {
     const post = pick(AUF);
-    return [base, post].filter(Boolean).join(' ').trim();
+    return [pre, base, post].filter(Boolean).join(' ').trim();
   }
 
   return base;

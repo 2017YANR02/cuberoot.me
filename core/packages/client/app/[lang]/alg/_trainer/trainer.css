@@ -14,6 +14,12 @@
   font-style: normal;
   font-display: swap;
 }
+/* Same scramble font as /timer & /scramble/gen sheet rows (计时字体选项之一) */
+@font-face {
+  font-family: 'LiberationMono';
+  src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
+  font-display: swap;
+}
 
 .trainer-root {
   /* --tr-sel: "selected/active" accent (blue), distinct from brand terracotta;
@@ -261,6 +267,11 @@
   line-height: 1.1;
   margin: 28px 0 12px;
 }
+/* 计时字体档位(tf-lcd = 默认,与 /timer 的 .timer-display 同一款 Segment7)。
+   其余三款均为站内已自托管字体(fonts.css / globals.css 注册),不引外链。 */
+.trainer-timer.tf-mono { font-family: var(--font-mono); font-weight: 600; }
+.trainer-timer.tf-liberation { font-family: 'LiberationMono', var(--font-mono); font-weight: 600; }
+.trainer-timer.tf-sans { font-family: var(--font-sans); font-weight: 700; }
 .trainer-timer.is-awaiting { color: var(--signal-warning); }
 .trainer-timer.is-ready    { color: var(--signal-success); }
 .trainer-timer.is-running  { color: var(--foreground); }
@@ -272,6 +283,19 @@
   font-size: 0.85rem;
   color: var(--faint-foreground);
   margin-top: 12px;
+}
+
+/* 训练选项行(训练/复习 · 计时 · pre-AUF · 概率 · 字体):居中一行,窄屏折行 */
+.trainer-stage-opts {
+  display: flex; flex-wrap: wrap;
+  justify-content: center; align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 8px;
+}
+.trainer-recap-progress {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ─── sidebar (solve card + stats) ─── */
@@ -317,6 +341,16 @@
   color: var(--muted-foreground);
   word-break: break-word;
 }
+/* case 名按钮 —— 点开该情况的元数据弹窗 */
+.trainer-case-link {
+  appearance: none; -webkit-appearance: none;
+  background: none; border: none; padding: 0;
+  font: inherit; font-weight: 600;
+  color: var(--tr-sel);
+  display: inline-flex; align-items: center; gap: 4px;
+  cursor: pointer;
+}
+.trainer-case-link:hover { text-decoration: underline; }
 
 .trainer-stats-list {
   display: flex; flex-wrap: wrap; gap: 6px;

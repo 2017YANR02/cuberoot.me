@@ -20,6 +20,7 @@ import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
 import { stm } from '@cuberoot/shared/alg-notation';
 import { CaseThumb } from '@/components/CaseThumb';
 import { useCopy } from '@/hooks/useCopy';
+import { ALG_SET_UNIVERSE, LL_UNIVERSE_TOTAL, caseOrbit, probabilityFraction } from '@/lib/alg_probability';
 import { ALG_TAG_LABEL } from '@/lib/alg_tags';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { algCaseHref } from '@/lib/alg_case_link';
@@ -164,6 +165,43 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
               {symFlags.map(f => <span key={f} className="alg-meta-chip">{f}</span>)}
             </Row>
           )}
+
+          {/* 出现概率:轨道大小(16/cn)÷ 全集状态数。非 1LLL set 同时给 1LLL 全集下的概率 ——
+              练 ZBLL 的人想知道「ZZ 到了顶层抽到它多大概率」,练 1LLL 的人想知道全局概率。
+              数学原理(轨道-稳定子)见 /math/probability。 */}
+          {(() => {
+            const orbit = caseOrbit(caseObj);
+            const uni = ALG_SET_UNIVERSE[set];
+            if (orbit == null || !uni) return null;
+            const pct = (o: number, total: number) => `${Number((100 * o / total).toPrecision(2))}%`;
+            return (
+              <Row label={tr({ zh: '出现概率', en: 'Probability' })}>
+                <span
+                  className="alg-meta-chip"
+                  title={tr({
+                    zh: `${uni.label} 全集 ${uni.total} 个状态中占 ${orbit} 个`,
+                    en: `${orbit} of ${uni.total} states in the ${uni.label} universe`,
+                  })}
+                >
+                  {uni.label} {probabilityFraction(orbit, uni.total)} ({pct(orbit, uni.total)})
+                </span>
+                {set !== '1lll' && (
+                  <span
+                    className="alg-meta-chip"
+                    title={tr({
+                      zh: `1LLL 全集 ${LL_UNIVERSE_TOTAL} 个状态中占 ${orbit} 个`,
+                      en: `${orbit} of ${LL_UNIVERSE_TOTAL} states in the 1LLL universe`,
+                    })}
+                  >
+                    1LLL {probabilityFraction(orbit, LL_UNIVERSE_TOTAL)} ({pct(orbit, LL_UNIVERSE_TOTAL)})
+                  </span>
+                )}
+                <Link href="/math/probability" className="alg-meta-prob-why" prefetch={false}>
+                  {tr({ zh: '原理', en: 'Why?' })}
+                </Link>
+              </Row>
+            );
+          })()}
 
           {/* 镜像 / 逆 / 镜像逆:给图,不给编号 —— 光一个 `O+U7` 你还得先在脑子里把它画出来。
               点图直接把弹窗换成那个 case(它多半在别的组,列表里翻不到)。 */}
