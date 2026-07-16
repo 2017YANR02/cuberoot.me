@@ -8,7 +8,7 @@
  *    teeth march along the edge, poking slightly proud of the two adjacent faces
  *    (the real Gear Cube is not a perfect cube at rest; its arris is replaced by the
  *    gear zigzag). Two tooth-contoured splat stickers per gear, diametrically
- *    opposite, one per adjacent face (photo-matched: colored fingers over ~3 teeth).
+ *    opposite, one per adjacent face (colored fingers over the ~4 front-visible teeth).
  *  - 8 CORNERS: rounded blocks with three concave channel bites (CSG: box − three
  *    tori). The bite torus for a ring = the tube swept by that ring's gears (wheel ⊂
  *    ball of radius R_BALL around its center, orbit+spin ⊂ tube around the ring
@@ -23,7 +23,9 @@
  * Clearance invariants (locked by tests/gear_geometry.test.ts):
  *  - corner/center/core bodies stay inside their move slabs (|coord| ≶ CUT ∓ SEAM);
  *  - gears are protected by the bite tubes (R_BITE ≥ R_BALL + GAP) instead of slabs;
- *  - face-riding gears pass equator gears with ≥ 2·R_BALL ball-to-ball separation.
+ *  - face-riding wheels vs equator wheels + wheels vs middle caps/axles/core are
+ *    verified by a numeric sweep with real tooth profiles over the whole turn and
+ *    all 3×3 spin-phase combos (ball bounds cannot clear wheels this large).
  */
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg';
@@ -79,14 +81,20 @@ export const H = SIZE * 2; // 128
 export const CUT = 0.25 * H;
 /** Half-seam between plane-separated slabs. */
 export const SEAM = 2.5;
-/** Gear wheel center = GEAR_B on each of its two nonzero coordinates. */
-export const GEAR_B = 0.735 * H;
+/** Gear wheel center = GEAR_B on each of its two nonzero coordinates. 2·GEAR_B − H
+ *  is where the wheel's inner teeth pierce the face plane in the front view (the
+ *  reference SVG's floating "bridge" fragments near the center). */
+export const GEAR_B = 0.72 * H;
 /** Wheel thickness along its (radial) axis. */
-export const WHEEL_T = 0.34 * H;
-/** Tooth tip / root radii + tooth count (18 ⇒ one 60° spin = exactly 3 pitches). */
-export const R_OUT = 0.30 * H;
-export const R_ROOT = 0.235 * H;
-export const TEETH = 18;
+export const WHEEL_T = 0.22 * H;
+/** Tooth tip / root radii + tooth count (12 fat teeth like the real puzzle ⇒ one
+ *  60° spin = exactly 2 pitches). R_OUT is at the free-phase clearance ceiling:
+ *  face-layer and equator wheels cross mid-turn at ~53u joint radius, and tooth
+ *  phases are independent state, so tips must stay below the crossing —
+ *  .tmp/gear/derive2.mjs bisects the max clearing radius (0.362H @ margin 1). */
+export const R_OUT = 0.345 * H;
+export const R_ROOT = 0.215 * H;
+export const TEETH = 12;
 /** Splat sticker lift + thickness above the tooth contour (rim band). */
 export const SPLAT_LIFT = 1.2;
 export const SPLAT_THICK = 2.6;
@@ -100,12 +108,12 @@ export const R_BALL = Math.hypot(
   WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH,
 );
 /** Corner bite tube radius (≥ R_BALL + clearance; test-locked). */
-export const R_BITE = 0.41 * H;
+export const R_BITE = 0.425 * H;
 /** Ring circle radius (gear centers' distance from their ring's axis). */
 export const RING_R = GEAR_B * Math.SQRT2;
 /** Core sphere + center cap sizes (inside the middle slab). */
 export const CORE_R = 0.21 * H;
-export const CAP_HALF = 0.22 * H;
+export const CAP_HALF = 0.19 * H;
 const CAP_T = 12;
 
 const BODY_COLOR = 0x141414;
@@ -151,8 +159,8 @@ export function gearSlotFaces(r: number, s: number): number[] {
 
 // ── gear wheel profile (2D polar, teeth) ────────────────────────────────────────────
 /** Wheel radius at polar angle θ: trapezoid teeth between R_ROOT and R_OUT. The
- *  profile is rotated so a tooth is centered at 90° (toward each face window; 18
- *  teeth ⇒ 90°+180° is also a tooth center, and one 60° move = exactly 3 pitches). */
+ *  profile is rotated so a tooth is centered at 90° (toward each face window; 12
+ *  teeth ⇒ 90°+180° is also a tooth center, and one 60° move = exactly 2 pitches). */
 export function wheelRadiusAt(theta: number): number {
   const pitch = (2 * Math.PI) / TEETH;
   // offset so θ = 90° is a tooth center
@@ -233,7 +241,7 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   // faces. Each splat = a rim band draped over ~3 teeth (the colored tooth tops)
   // + a flat cap on the wheel's OUTER disc face over the same arc (the dominant
   // visible surface — the photo's "fingers" wrap over the gear onto this side).
-  const SPAN = (2 * Math.PI / TEETH) * 3.3; // ~3 teeth + web
+  const SPAN = (2 * Math.PI / TEETH) * 4.0; // ~4 teeth — the whole front-visible fan
   const SPLAT_T = WHEEL_T - 9;              // rim band inset from both wheel sides
   const CAP_IN_R = R_ROOT * 0.45;           // side cap reaches down toward the hub
   for (const face of gearSlotFaces(r, s)) {
