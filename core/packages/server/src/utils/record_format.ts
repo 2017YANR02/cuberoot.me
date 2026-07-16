@@ -14,6 +14,9 @@
  * ⚠️ 移植不变量:Python 字符串切片按 code point;本文件所有 `slice(0, len - label.length)`
  * 去掉的都是真实后缀(label/flag 是字符串末尾真子串),边界与计数方式无关,UTF-16 .length
  * 与 Python len() 在「去后缀」语义下等价 —— 不要把这些改成按 code point 数组操作。
+ *
+ * 已与 Python 原版刻意分叉(issue #22):国旗只放在 NR 前;WR/CR/PR 的国旗一律放姓名后;
+ * 混合 PR(真破+非破)里真破 PR 追加 /WRn。golden fixtures 已同步改为新 baseline。
  */
 
 // === 项目名映射 ===
@@ -339,8 +342,9 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
       cn = `成绩快讯! ${timeStr}${cnEvent}${typeCn}PR${prRank} ${cnName} | ${cnCompLabel}`;
       en = `Result News! ${timeStr} PR${prRank} ${tEn} ${enEvent} ${enName} | ${enCompLabel}`;
     } else {
-      cn = `PR快讯! ${timeStr}${cnEvent}${typeCn}个人纪录${personFlag}PR${tiedCn} ${cnName} | ${cnCompLabel}`;
-      en = `PR News! ${timeStr} ${enEvent}${personFlag}PR${tiedEn} ${tEn} ${enName} | ${enCompLabel}`;
+      // 国旗规则(issue #22):PR 前不放国旗,国旗放姓名后;只有 NR 前才放国旗
+      cn = `PR快讯! ${timeStr}${cnEvent}${typeCn}个人纪录PR${tiedCn} ${cnName}${personFlag} | ${cnCompLabel}`;
+      en = `PR News! ${timeStr} ${enEvent} PR${tiedEn} ${tEn} ${enName}${personFlag} | ${enCompLabel}`;
     }
   } else {
     crAbbr = tag in CR_ABBR_CN ? tag : (ISO2_TO_CR[person_iso2] ?? 'CR');
@@ -358,8 +362,8 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
         cn = replaceFirst(cn, 'NR', `NR${suffix}`);
         en = replaceFirst(en, 'NR', `NR${suffix}`);
       } else if (tag === 'PR') {
-        const anchorCn = `${personFlag}PR${tiedCn}`;
-        const anchorEn = `${personFlag}PR${tiedEn}`;
+        const anchorCn = `个人纪录PR${tiedCn}`;
+        const anchorEn = `${enEvent} PR${tiedEn}`;
         cn = replaceFirst(cn, anchorCn, `${anchorCn}${suffix}`);
         en = replaceFirst(en, anchorEn, `${anchorEn}${suffix}`);
       } else if (crAbbr) {
@@ -443,10 +447,13 @@ function combineSameTag(eventsIn: RecordEvent[], getRank: RankFn): FormattedReco
       const npRank = sRank === 1 ? aRank : sRank;
       const prTime = formatTime(prEv.attempt_result, eventId);
       const npTime = formatTime(npEv.attempt_result, eventId);
+      // 真破 PR 追加世界排名 /WRn(issue #22)
+      const prWr = getRank(eventId, prEv.rec_type, prEv.attempt_result);
+      const prSuffix = prWr ? `/WR${prWr}` : '';
       const prTypeCn = prEv.rec_type === 'single' ? '单次' : '平均';
       const npTypeCn = npEv.rec_type === 'single' ? '单次' : '平均';
-      const cn = `成绩快讯! ${prTime}${cnEvent}${prTypeCn}PR ${cnName}${personFlag} | ${npTime}${npTypeCn}PR${npRank} | ${cnCompLabel}`;
-      const en = `Result News! ${prTime} ${enEvent} ${typeEn(eventId, prEv.rec_type)} PR ${enName}${personFlag} | ${npTime} ${typeEn(eventId, npEv.rec_type)} PR${npRank} | ${enCompLabel}`;
+      const cn = `成绩快讯! ${prTime}${cnEvent}${prTypeCn}PR${prSuffix} ${cnName}${personFlag} | ${npTime}${npTypeCn}PR${npRank} | ${cnCompLabel}`;
+      const en = `Result News! ${prTime} ${enEvent} ${typeEn(eventId, prEv.rec_type)} PR${prSuffix} ${enName}${personFlag} | ${npTime} ${typeEn(eventId, npEv.rec_type)} PR${npRank} | ${enCompLabel}`;
       return { cn, en, url: single.url };
     }
     const rsS = sRank > 1 ? `PR${sRank}` : 'PR';
@@ -483,8 +490,11 @@ function combineSameTag(eventsIn: RecordEvent[], getRank: RankFn): FormattedReco
   else enPrefix = 'Breaking News!';
   const cnPrefix = tag === 'PR' ? 'PR快讯!' : '纪录快讯!';
 
-  const cn = `${cnPrefix} ${tS}单次${rsS}, ${tA}平均${rsA}${cnEvent}双${typeCnLabel}${personFlag}${displayTag} ${cnName} | ${cnCompLabel}`;
-  const en = `${enPrefix} ${tS} Single${rsSEn}, ${tA} ${avgEn}${rsAEn} ${enEvent}${personFlag}Double ${typeEnLabel} ${enName} | ${enCompLabel}`;
+  // 国旗规则(issue #22):只有 NR 前放国旗;WR/CR/PR 的国旗放姓名后
+  const tagFlag = tag === 'NR' ? personFlag : '';
+  const nameFlag = tag === 'NR' ? '' : personFlag;
+  const cn = `${cnPrefix} ${tS}单次${rsS}, ${tA}平均${rsA}${cnEvent}双${typeCnLabel}${tagFlag}${displayTag} ${cnName}${nameFlag} | ${cnCompLabel}`;
+  const en = `${enPrefix} ${tS} Single${rsSEn}, ${tA} ${avgEn}${rsAEn} ${enEvent}${tagFlag || ' '}Double ${typeEnLabel} ${enName}${nameFlag} | ${enCompLabel}`;
   return { cn, en, url: single.url };
 }
 
