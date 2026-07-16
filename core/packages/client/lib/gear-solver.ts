@@ -304,3 +304,24 @@ export function gearGraphStats(): { total: number; histogram: number[] } {
   }
   return { total, histogram };
 }
+
+/**
+ * A uniform random-state scramble (cstimer `gearo` semantics): pick one of the 41,471
+ * non-trivial reachable states uniformly and return its shortest scramble (≤ 6 tokens,
+ * U/R/F alphabet). Used by /sim's gear scramble button.
+ */
+export function randomGearScramble(): string {
+  const g = graph();
+  for (;;) {
+    const k = g.states[Math.floor(Math.random() * g.states.length)];
+    if (k !== g.states[0]) return keyToScramble(g, k);
+  }
+}
+
+/** Apply ONE scramble token to a 4-int state (oracle use — /sim's piece-level state
+ *  model locks itself against this in tests/gear_state.test.ts). */
+export function gearApplyToken(state: ReadonlyArray<number>, token: string): number[] {
+  const mv = MOVE_BY_NAME.get(token);
+  if (!mv) throw new Error(`bad: ${token}`);
+  return applyMove(state, mv);
+}

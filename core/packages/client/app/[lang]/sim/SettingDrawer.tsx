@@ -240,7 +240,7 @@ export function mapFrames(v: number): number { return Math.max(6, Math.round(120
 /** The in-house Three.js engine puzzles (everything that is NOT an order-N NxN cube).
  *  Their geometry is baked at construction with no InstancedRenderer, so style toggles
  *  (立体贴片 / 镂空 / structure colors) are applied generically off userData tags. */
-const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'ivy', 'dino', 'redi', 'rex', 'heli', 'skewb', 'pyraminx', 'megaminx', 'fto']);
+const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'ivy', 'dino', 'redi', 'rex', 'heli', 'gear', 'skewb', 'pyraminx', 'megaminx', 'fto']);
 
 export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
   // 手指(指法演示):意愿写进 world,实际显隐由 world.syncHands 按拼图门控

@@ -57,6 +57,9 @@ import { rexMoveToString, type RexMove } from './engine/rex/rexState';
 import HeliCube from './engine/heli/HeliCube';
 import { heliPickHit, heliResolveMove, heliResolveLive, type HeliPickHit } from './engine/heli/heliDrag';
 import { heliMoveToString, type HeliMove } from './engine/heli/heliState';
+import GearCube from './engine/gear/GearCube';
+import { gearPickHit, gearResolveMove, gearResolveLive, type GearPickHit } from './engine/gear/gearDrag';
+import { gearMoveToString, type GearMove } from './engine/gear/gearState';
 import SkewbCube from './engine/skewb/SkewbCube';
 import { skewbPickHit, skewbResolveMove, skewbResolveLive, type SkewbPickHit } from './engine/skewb/skewbDrag';
 import { skewbMoveToString, type SkewbMove } from './engine/skewb/skewbState';
@@ -134,7 +137,7 @@ const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'me
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle. */
 function asNxN(world: World): Cube | null {
-  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex' || world.puzzleKind === 'heli' || world.puzzleKind === 'skewb' || world.puzzleKind === 'megaminx' || world.puzzleKind === 'fto') ? null : (world.cube as Cube);
+  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex' || world.puzzleKind === 'heli' || world.puzzleKind === 'gear' || world.puzzleKind === 'skewb' || world.puzzleKind === 'megaminx' || world.puzzleKind === 'fto') ? null : (world.cube as Cube);
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -223,6 +226,7 @@ export default function SimPage() {
     if (raw === 'redi') return 'redi';
     if (raw === 'rex') return 'rex';
     if (raw === 'heli') return 'heli';
+    if (raw === 'gear') return 'gear';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
     if (raw === 'fto') return 'fto';
     if (raw === 'custom') return 'custom';
@@ -724,6 +728,12 @@ export default function SimPage() {
       beginMove: (c, m, dir) => c.beginMove(m, dir), moveToString: heliMoveToString,
       fullPx: 200, threshold: 6,
     };
+    const gearAdapter: CornerTurnAdapter<GearCube, GearMove, GearPickHit> = {
+      match: (c): c is GearCube => c instanceof GearCube,
+      pickHit: gearPickHit, resolveLive: gearResolveLive, resolveMove: gearResolveMove,
+      beginMove: (c, m) => c.beginMove(m), moveToString: gearMoveToString,
+      fullPx: 260, threshold: 6, // one flip = 180° face + 90° middle — a long sweep
+    };
     const skewbAdapter: CornerTurnAdapter<SkewbCube, SkewbMove, SkewbPickHit> = {
       match: (c): c is SkewbCube => c instanceof SkewbCube,
       pickHit: skewbPickHit, resolveLive: skewbResolveLive, resolveMove: skewbResolveMove,
@@ -748,18 +758,19 @@ export default function SimPage() {
       beginMove: (c, m) => c.beginMove(m), moveToString: ftoMoveToString,
       fullPx: 140, threshold: 6,
     };
-    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto', CornerGestureHandle> = {
+    const cornerGestures: Record<'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto', CornerGestureHandle> = {
       dino: new CornerTurnGesture(dinoAdapter, cornerCtx),
       redi: new CornerTurnGesture(rediAdapter, cornerCtx),
       rex: new CornerTurnGesture(rexAdapter, cornerCtx),
       heli: new CornerTurnGesture(heliAdapter, cornerCtx),
+      gear: new CornerTurnGesture(gearAdapter, cornerCtx),
       skewb: new CornerTurnGesture(skewbAdapter, cornerCtx),
       pyraminx: new CornerTurnGesture(pyraAdapter, cornerCtx),
       megaminx: new CornerTurnGesture(megaAdapter, cornerCtx),
       fto: new CornerTurnGesture(ftoAdapter, cornerCtx),
     };
     const cornerGestureFor = (pk: unknown): CornerGestureHandle | null =>
-      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb' || pk === 'pyraminx' || pk === 'megaminx' || pk === 'fto' ? cornerGestures[pk] : null;
+      pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'gear' || pk === 'skewb' || pk === 'pyraminx' || pk === 'megaminx' || pk === 'fto' ? cornerGestures[pk] : null;
     const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
       Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -1107,7 +1118,7 @@ export default function SimPage() {
       if (pinching && activePointers.size < 2) {
         pinching = false;
         const pk = worldRef.current?.puzzleKind;
-        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'skewb' || pk === 'fto';
+        world.controller.disable = pk === 'sq1' || pk === 'ivy' || pk === 'dino' || pk === 'redi' || pk === 'rex' || pk === 'heli' || pk === 'gear' || pk === 'skewb' || pk === 'fto';
         syncScaleToSettings();
       }
     };

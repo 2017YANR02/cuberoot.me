@@ -52,6 +52,8 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   redi: { engine: 'always', carve: 'corner', imageStudio: false },
   rex: { engine: 'always', carve: 'corner', imageStudio: false },
   heli: { engine: 'always', carve: 'edge', imageStudio: false },
+  // Gear Cube — geared 180° face flips; carving lifts one face layer off the middle.
+  gear: { engine: 'always', carve: 'face', imageStudio: false },
   skewb: { engine: 'engineMode', carve: 'corner', imageStudio: true },
   pyraminx: { engine: 'engineMode', carve: 'corner', imageStudio: true },
   megaminx: { engine: 'engineMode', carve: 'face', imageStudio: true },
