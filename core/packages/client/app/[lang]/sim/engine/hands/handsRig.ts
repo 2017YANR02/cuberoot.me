@@ -37,6 +37,7 @@ import * as THREE from "three";
 import { SIZE } from "../define";
 import { buildForearm, makeSkinDetailTexture, HAND_SCALE, WRIST_LOCAL, type HandModel, type FingerName } from "./handModel";
 import { loadManoHand } from "./handModelMano";
+import { paintNailPolish, type NailPolishSpec } from "./handModelGltf";
 import { SmplxBody, loadSmplxOnePiece } from "./smplxBody";
 import { bakeHandTextures, type HandBakedMaps } from "./bakeHandTexture";
 import { addHandSkeleton, makeHandSkeletonMats, type SkeletonMatKey } from "./handSkeleton";
@@ -1037,6 +1038,7 @@ export default class HandsRig extends THREE.Group {
       for (const m of this.hands[s].model.meshes) m.layers.enable(1);
     }
     this.setNailsVisible(this.nailsVisible); // 手模晚于设置到位,补应用「指甲」显隐
+    this.setNailPolish(this.nailPolish);     // 同上,补应用「指甲配色」
     if (this.bodyWanted) this.ensureBody();  // 「全身人物」早于手模到位的回放
     // 加载期间开关已开 → 从 0 重新淡入(否则 fade 早到 1,手会瞬间蹦出来)。
     if (this.enabled) {
@@ -1152,6 +1154,15 @@ export default class HandsRig extends THREE.Group {
     for (const s of ["R", "L"] as const) {
       for (const m of this.hands[s].model.nailMeshes ?? []) m.visible = v;
     }
+  }
+
+  /** 「指甲配色」(SimSettings.nailColor* 驱动):null = 自然甲。重涂甲片顶点色
+   *  (paintNailPolish,可反复来回切);手模异步加载,加载完成处回放最后设置值。 */
+  private nailPolish: NailPolishSpec | null = null;
+  setNailPolish(p: NailPolishSpec | null): void {
+    this.nailPolish = p;
+    if (!this.hands) return;
+    for (const s of ["R", "L"] as const) paintNailPolish(this.hands[s].model, p);
   }
 
   /** @4 融合前臂的袖口:按手网格里前臂段的绑定态包络(手局部)造椭圆筒,

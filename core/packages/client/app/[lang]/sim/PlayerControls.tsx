@@ -2239,6 +2239,15 @@ const FACE_COLOR_PRESETS: string[] = dedupeColors([
   ...MEGAMINX_COLORS,
 ]);
 
+// 甲油预设(经典美甲色系:正红 / 酒红 / 粉 / 裸 / 白 / 黑 / 蓝 / 薄荷 / 丁香 / 金;
+// 物理甲油色,非主题灰阶)。底色与渐变第二色共用同一板。
+const NAIL_COLOR_PRESETS: string[] = dedupeColors([
+  '#C21807', '#7B1F3A', '#F48FB1', '#E8C4B0', '#F5F0EA', '#212121',
+  '#1565C0', '#7FD8C4', '#B39DDB', '#D4AF37',
+]);
+/** 从自然甲切到自定义时 trigger 色块的兜底显示色(未选前);选色即覆盖。 */
+const NAIL_DEFAULT_COLOR = '#C21807';
+
 const FACE_ORDER = ['U', 'L', 'F', 'R', 'B', 'D'] as const;
 const FACE_LABELS_ZH: Record<typeof FACE_ORDER[number], string> = {
   U: '顶', D: '底', L: '左', R: '右', F: '前', B: '后',
@@ -2800,6 +2809,54 @@ function PuzzleSettings({
                 />
               </span>
             ))}
+          </ColorRow>
+          {/* 指甲配色(甲油):自然甲 special + 甲油底色;选了底色后追加「渐变」第二色
+              (甲根→游离缘)与「深浅」滑杆(50 = 原色,低淡高深)。重涂手部立体甲片
+              顶点色(engine/hands paintNailPolish);门控同全身人物(需手指开启)。 */}
+          <ColorRow
+            label={t('指甲配色', 'Nail colour')}
+            disabled={!caps.supports.hands || settings.hands !== true}
+            title={hint(caps.supports.hands)}
+          >
+            <ModeColorSelect
+              special={!settings.nailColor}
+              color={settings.nailColor || NAIL_DEFAULT_COLOR}
+              presets={NAIL_COLOR_PRESETS}
+              specialTitle={t('自然甲', 'Natural')}
+              specialSwatchClass="sim-swatch-nail-box"
+              onPickColor={(c) => set('nailColor', c)}
+              onPickSpecial={() => set('nailColor', '')}
+              title={t('指甲配色', 'Nail colour')}
+              t={t}
+            />
+            {settings.nailColor !== '' && (
+              <>
+                <span className="sim-face-pick">
+                  <span className="sim-swatch-label">{t('渐变', 'Tip')}</span>
+                  <ModeColorSelect
+                    special={!settings.nailColorTip}
+                    color={settings.nailColorTip || settings.nailColor}
+                    presets={NAIL_COLOR_PRESETS}
+                    specialTitle={t('无渐变', 'No gradient')}
+                    specialSwatchClass="sim-swatch-nail-off-box"
+                    onPickColor={(c) => set('nailColorTip', c)}
+                    onPickSpecial={() => set('nailColorTip', '')}
+                    title={t('渐变第二色(甲根 → 指尖)', 'Gradient tip colour (root → tip)')}
+                    t={t}
+                  />
+                </span>
+                <label className="sim-nail-shade" title={t('深浅:左淡右深,中间原色', 'Depth: light ↔ dark, centre = as picked')}>
+                  <span className="sim-swatch-label">{t('深浅', 'Depth')}</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={settings.nailShade}
+                    onChange={(e) => set('nailShade', Number(e.target.value))}
+                  />
+                </label>
+              </>
+            )}
           </ColorRow>
         </div>
       <KeymapModal
