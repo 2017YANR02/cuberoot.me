@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
-import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
+import { deriveScrambleFromSolution, equivalentCleanScramble } from '@/lib/scramble-from-solution';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 
 let kpuzzle: KPuzzle;
@@ -81,5 +81,26 @@ describe('deriveScrambleFromSolution', () => {
   it('returns empty when the solution nets to solved (identity)', async () => {
     expect(await deriveScrambleFromSolution("R R'")).toBe('');
     expect(await deriveScrambleFromSolution('x y z')).toBe(''); // pure rotation → no scramble
+  });
+});
+
+// /alg 训练器 cstimer 风格打乱的底层:给 setup 找无转体等价打乱(issue #30)。
+describe('equivalentCleanScramble', () => {
+  it.each([
+    { name: 'ZBLL inv-scramble with AUF', setup: "U R U R' U R U2 R' U'" },
+    { name: 'F2L inv-scramble with leading rotation', setup: "y' R U R' U' F' U F U2" },
+  ])('reaches the same state via clean face moves: $name', async ({ setup }) => {
+    const scr = await equivalentCleanScramble(setup);
+    expect(scr.length).toBeGreaterThan(0);
+    expect(scr).not.toMatch(/[xyzMES]/);
+    // scr 与 setup 到达同一状态:scr · setup⁻¹ 应为纯整体旋转
+    const result = solved.applyAlg(new Alg(scr)).applyAlg(new Alg(setup).invert());
+    expect(rotationKeys.has(key(result))).toBe(true);
+  });
+
+  it('returns empty for solved / pure-rotation / unparseable setups', async () => {
+    expect(await equivalentCleanScramble("U U'")).toBe('');
+    expect(await equivalentCleanScramble('y2')).toBe('');
+    expect(await equivalentCleanScramble('not an alg %%')).toBe('');
   });
 });

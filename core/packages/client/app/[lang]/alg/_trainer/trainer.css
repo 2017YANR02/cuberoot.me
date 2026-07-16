@@ -219,6 +219,8 @@
   gap: 28px;
   align-items: start;
 }
+/* 极简模式:侧栏两块都被隐藏时不留空列 */
+.trainer-run--solo { grid-template-columns: 1fr; }
 @media (max-width: 900px) {
   .trainer-run { grid-template-columns: 1fr; }
 }
@@ -315,6 +317,20 @@
   top: 50%;
   transform: translate(-50%, -50%);
 }
+/* 窄屏标题(3×3 · ZBLL · U1)会伸过行中点,居中的齿轮直接压在字上(issue #30)
+   —— 改为行内元素靠右,面板也改右对齐(免得越出右缘)。 */
+@media (max-width: 768px) {
+  .trainer-opts--top {
+    position: static;
+    transform: none;
+    margin-left: auto;
+  }
+  .trainer-opts--top .trainer-opts-panel {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+}
 /* 无外框裸图标按钮 */
 .trainer-opts-gear {
   display: inline-flex;
@@ -326,6 +342,7 @@
   cursor: pointer;
 }
 .trainer-opts-gear:hover { color: var(--foreground); }
+/* anchored-panel: clamped (usePanelClamp in TrainerRunClient) */
 .trainer-opts-panel {
   position: absolute;
   top: calc(100% + 6px);
