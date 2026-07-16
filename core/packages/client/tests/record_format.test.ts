@@ -9,6 +9,9 @@
  * 抓 fixtures 的 driver:.tmp/wca-monitor-ref/_golden_driver.py(每 case 跑两遍 Python)。
  * 覆盖 24 分支:WR/NR/CR(洲际)/PR(真破/非破/平)、单双纪录、同 tag/异 tag 合并、
  * FMC/MBLD/Mean/分钟时间、中英比赛名、中文括号名拆分。
+ *
+ * issue #22 起与 Python 刻意分叉:国旗只留 NR 前,WR/CR/PR 国旗放姓名后,混合 PR 补
+ * /WRn —— 受影响 case 的 fixtures 已改成新 baseline,不再与 Python 输出逐字符相等。
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';

@@ -58,7 +58,8 @@ const inflight = new Map<string, Promise<CompWcif>>();
 
 const INFO_URL = (id: string) =>
   `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(id)}`;
-const INFO_CACHE_PREFIX = 'wca-comp-info-v4-';
+// v5: + competitor_limit
+const INFO_CACHE_PREFIX = 'wca-comp-info-v5-';
 const infoInflight = new Map<string, Promise<CompInfo | null>>();
 
 export interface CompInfo {
@@ -76,6 +77,8 @@ export interface CompInfo {
   waiting_list_deadline_date: string;
   /** WCA 权威取消时间戳(ISO);未取消为 ''。 */
   cancelled_at: string;
+  /** 比赛人数上限;无上限或未知为 null。 */
+  competitor_limit: number | null;
 }
 
 export async function fetchCompInfo(compId: string): Promise<CompInfo | null> {
@@ -97,6 +100,7 @@ export async function fetchCompInfo(compId: string): Promise<CompInfo | null> {
       if (!res.ok) return null;
       const d = await res.json() as Partial<Record<keyof CompInfo, unknown>>;
       const str = (k: keyof CompInfo) => typeof d[k] === 'string' ? d[k] as string : '';
+      const limit = typeof d.competitor_limit === 'number' && d.competitor_limit > 0 ? d.competitor_limit : null;
       if (!str('name')) return null;
       const info: CompInfo = {
         name: str('name'),
@@ -112,6 +116,7 @@ export async function fetchCompInfo(compId: string): Promise<CompInfo | null> {
         event_change_deadline_date: str('event_change_deadline_date'),
         waiting_list_deadline_date: str('waiting_list_deadline_date'),
         cancelled_at: str('cancelled_at'),
+        competitor_limit: limit,
       };
       if (typeof window !== 'undefined') {
         try { localStorage.setItem(INFO_CACHE_PREFIX + compId, JSON.stringify({ t: Date.now(), v: info })); }

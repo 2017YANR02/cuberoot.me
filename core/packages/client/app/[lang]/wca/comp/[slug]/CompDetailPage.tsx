@@ -10,7 +10,7 @@ import Link from '@/components/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, ImageDown } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
@@ -31,7 +31,7 @@ import { fetchPb, prefetchPbs, type PbByEvent } from '@/lib/wca-pb';
 import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '@/lib/comp-wcif';
 import { loadNoScrambleIds } from '@/lib/comp-no-scrambles';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
-import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
+import { formatDateRangeIso, toIsoDate, weekdayRangeLabel } from '@/lib/wca-date';
 import { localizeCity } from '@/lib/city-localize';
 import { getSimilarComps, type SeriesComp } from '@/lib/comp-series';
 import { compLinkProps } from '@/lib/comp-link';
@@ -46,6 +46,7 @@ import { rememberRecent } from '../page';
 import { useLiveStream, applyResultPatch, type LivePatch, type WsStatus } from '@/hooks/useLiveStream';
 import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStream';
 import ScheduleView, { ScheduleControls } from './ScheduleView';
+import CompPosterModal from './CompPosterModal';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
@@ -779,6 +780,7 @@ export default function CompDetailPage() {
   const [modal, setModal] = useState<ModalState | null>(null);
   const [compInfo, setCompInfo] = useState<CompInfo | null>(null);
   const [compInfoSettled, setCompInfoSettled] = useState(false);
+  const [posterOpen, setPosterOpen] = useState(false);
   useEffect(() => {
     if (!slug) return;
     let cancel = false;
@@ -1581,6 +1583,15 @@ export default function CompDetailPage() {
                   >
                     {nameCopied ? <Check size={16} /> : <Copy size={15} />}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setPosterOpen(true)}
+                    className="comp-title-icon comp-title-icon-lucide"
+                    title={tr({ zh: '生成分享图', en: 'Share image' })}
+                    aria-label={tr({ zh: '生成分享图', en: 'Share image' })}
+                  >
+                    <ImageDown size={16} />
+                  </button>
                   <FollowStar
                     variant="inline"
                     compId={slug}
@@ -1731,7 +1742,7 @@ export default function CompDetailPage() {
               isZh={isZh}
               onlyAvailable
               badges={(isPsych || isSchedule) ? {} : eventBadges}
-              topBadges={(isPsych || isSchedule) ? {} : eventTopBadges}
+              topBadges={isPsych ? {} : eventTopBadges}
               appendEvents={nonWcaEvents}
             />
             {/* 双轮合并开关与所选项目图标同行(currentIsDual 仅成绩视图为真,预排名/赛程不显示) */}
@@ -1877,6 +1888,8 @@ export default function CompDetailPage() {
           roundId={modal.roundId}
           data={data}
           compName={compNameTitle}
+          compStartDate={compInfo?.start_date ? compInfo.start_date.slice(0, 10) : ''}
+          compIso2={compInfo?.country_iso2?.toLowerCase() || compFlagIso2(slug)}
           isZh={isZh}
           pbMap={pbMap}
           changeMap={changeMap}
@@ -1904,6 +1917,16 @@ export default function CompDetailPage() {
           existingChanges={changeMap.get(personRoundChangeKey(editTarget.wcaId, editTarget.eventId, editTarget.roundTypeId)) ?? []}
           onClose={() => setEditTarget(null)}
           onSaved={() => refreshChanges()}
+        />
+      )}
+      {posterOpen && (
+        <CompPosterModal
+          slug={slug}
+          compName={compNameTitle}
+          compIso2={compInfo?.country_iso2?.toLowerCase() || compFlagIso2(slug)}
+          info={compInfo}
+          isZh={isZh}
+          onClose={() => setPosterOpen(false)}
         />
       )}
     </div>
@@ -1937,7 +1960,13 @@ function CompInfoPanel({
   const todayIso = toIsoDate(new Date());
   const isPast = (iso: string) => !!iso && iso.slice(0, 10) < todayIso;
   const rows: { label: string; value: React.ReactNode; past?: boolean }[] = [];
-  if (dateStr) rows.push({ label: tr({ zh: '日期', en: 'Date' }), value: dateStr });
+  if (dateStr) {
+    const wd = weekdayRangeLabel(info.start_date, info.end_date, isZh);
+    rows.push({ label: tr({ zh: '日期', en: 'Date' }), value: wd ? `${dateStr} ${wd}` : dateStr });
+  }
+  if (info.competitor_limit) {
+    rows.push({ label: tr({ zh: '人数上限', en: 'Competitor limit' }), value: info.competitor_limit });
+  }
   const regOpenIso = info.registration_open ? toIsoDate(new Date(info.registration_open)) : '';
   const regCloseIso = info.registration_close ? toIsoDate(new Date(info.registration_close)) : '';
   if (regOpenIso && regCloseIso) {
@@ -2051,6 +2080,11 @@ function PastRowsPopover({
   );
 }
 
+// 该轮赛制的把数:ao5/未知=5, mo3=3, boN=N。mo3 项目(6x6/7x7/FMC 等)只出 3 列,不渲染空的 4/5。
+function formatAttemptCount(f: string): number {
+  return f === 'a' || f === '' ? 5 : f === 'm' ? 3 : parseInt(f, 10) || 1;
+}
+
 // 详情列表头:每把一个数字列头 (1..count),与 /wca/persons 成绩表一致(取代单个「详情」合并表头)。
 // 右对齐对齐其下右对齐的成绩值。
 function attemptNumHeaders(count: number) {
@@ -2123,7 +2157,7 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
   const isMbldMo3 = isMbldEvent(round.e) && round.f === '3';
   const showAvg = isAverageFormat || isBlindAvgEvent(round.e) || isMbldMo3;
   const singleFirst = !isAverageFormat; // 按单次排名的项目 (含 3 盲 bo5 / 4/5 盲 bo3):单次列在平均列前
-  const formatAttempts = round.f === 'a' || round.f === '' ? 5 : round.f === 'm' ? 3 : parseInt(round.f, 10) || 1;
+  const formatAttempts = formatAttemptCount(round.f);
   // cubing.live 源把 v 补零到 5 列(Mo3 的最少步 = [21,24,24,0,0]),WCA 源则按赛制给实际长度。
   // 统一先砍尾部 0,否则 3 把项目会多出第 4/5 列,且长度=5 会被 isAo5Bracketed 误加去尾括号。
   const maxRowAttempts = results.reduce((m, r) => Math.max(m, trimEmptyAttempts(r.v).length), 0);
@@ -2504,7 +2538,7 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
     [ev, rows, data.resultsByRound, byAvg],
   );
 
-  const formatAttempts = r1.f === 'a' || r1.f === '' ? 5 : r1.f === 'm' ? 3 : parseInt(r1.f, 10) || 1;
+  const formatAttempts = formatAttemptCount(r1.f);
   const maxRowAttempts = [...r1res, ...r2res].reduce((m, r) => Math.max(m, trimEmptyAttempts(r.v).length), 0);
   const attemptCount = Math.max(formatAttempts, maxRowAttempts);
   const fixedCols = 3 + (showAvg ? 2 : 1); // place + person + round + best (+ avg)
@@ -3114,23 +3148,24 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
             <div className="comp-empty">{tr({ zh: '暂无成绩', en: 'No results'
             })}</div>
           ) : (
-            groups.map(g => (
+            groups.map(g => {
+              // mo3/bo3 项目只出实际把数列,不渲染空的 4/5(与主成绩表同口径)
+              const attemptCount = g.entries.reduce(
+                (m, en) => Math.max(m, formatAttemptCount(en.rd.f), trimEmptyAttempts(en.result.v).length),
+                1,
+              );
+              return (
               <div key={g.ev.i} className="comp-modal-group">
                 <h3 className="comp-modal-group-title">{eventDisplayName(g.ev.i, isZh)}</h3>
                 <table className="comp-modal-table">
                   <thead>
                     <tr>
-                      <th>
-                        <span className="wp-th-info">
-                          {tr({ zh: '轮次', en: 'Round' })}
-                          <InfoTooltip content={(isZh ? ROUND_HINT_ZH : ROUND_HINT_EN)} />
-                        </span>
-                      </th>
+                      <th>{tr({ zh: '轮次', en: 'Round' })}</th>
                       <th>{tr({ zh: '名次', en: 'Place' })}</th>
                       <th>{tr({ zh: '单次', en: 'Best'
                     })}</th>
                       <th>{tr({ zh: '平均', en: 'Average' })}</th>
-                      {attemptNumHeaders(5)}
+                      {attemptNumHeaders(attemptCount)}
                     </tr>
                   </thead>
                   <tbody>
@@ -3170,7 +3205,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                               ? <RecordBadge record={String(result.ar)} variant="inline" iso2={regionToIso2(u.region)} />
                               : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null)}
                           </td>
-                          {Array.from({ length: 5 }).map((_, i) => (
+                          {Array.from({ length: attemptCount }).map((_, i) => (
                             <td key={i} className={`td-attempt ${isAo5Bracketed(atts, i) ? 'td-attempt-trimmed' : ''}`}>
                               {formatLive(atts[i] ?? 0, result.e, false)}
                             </td>
@@ -3181,7 +3216,8 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                   </tbody>
                 </table>
               </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -3195,6 +3231,10 @@ interface RoundResultModalProps {
   roundId: string;
   data: CompData;
   compName: string;
+  /** 比赛首日 ISO 日期(yyyy-mm-dd),副标题第一行用 */
+  compStartDate?: string;
+  /** 比赛所在国家 iso2(小写),副标题第一行国旗用 */
+  compIso2?: string;
   isZh: boolean;
   pbMap: Record<string, PbByEvent | null>;
   changeMap?: Map<string, ResultChange[]>;
@@ -3202,7 +3242,7 @@ interface RoundResultModalProps {
   onClose: () => void;
 }
 
-function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMap, changeMap, onShowAll, onClose }: RoundResultModalProps) {
+function RoundResultModal({ number, eventId, roundId, data, compName, compStartDate, compIso2, isZh, pbMap, changeMap, onShowAll, onClose }: RoundResultModalProps) {
   const [copyState, setCopyState] = useState<'idle' | 'copying' | 'done' | 'nothing' | 'error'>('idle');
   const [downloadState, setDownloadState] = useState<'idle' | 'busy' | 'error'>('idle');
   const cardRef = useRef<HTMLDivElement>(null);
@@ -3439,7 +3479,15 @@ function RoundResultModal({ number, eventId, roundId, data, compName, isZh, pbMa
         </header>
         <div className="comp-round-modal-body">
           <div className="comp-round-modal-subtitle">
-            {compName}, {eventDisplayName(ev.i, isZh)}{(i18n.language.startsWith('zh') ? '' : ' ')}{roundDisplayName(rd.name, isZh)}
+            <span className="comp-round-modal-subtitle-line">
+              {compStartDate && <span>{compStartDate}</span>}
+              {compIso2 && <Flag iso2={compIso2} className="comp-flag" />}
+              <span>{compName}</span>
+            </span>
+            <span className="comp-round-modal-subtitle-line">
+              <EventIcon event={ev.i} className="comp-round-modal-subtitle-icon" />
+              <span>{eventDisplayName(ev.i, isZh)}{tr({ zh: '', en: ' ' })}{roundDisplayName(rd.name, isZh)}</span>
+            </span>
           </div>
           <section className="comp-round-modal-section">
             <div className="comp-round-modal-label">{tr({ zh: '详情', en: 'Attempts'
