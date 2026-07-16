@@ -968,6 +968,20 @@ td.is-pr {
   font-size: 0.95rem;
   font-weight: 400;
   color: var(--muted-foreground);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.comp-round-modal-subtitle-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.comp-round-modal-subtitle-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
 }
 .comp-round-modal-section {
   display: flex;
@@ -1004,6 +1018,188 @@ td.is-pr {
   display: flex;
   justify-content: flex-end;
   gap: 4px;
+}
+
+/* ── 9:16 竖版分享图(issue #22)───────────────────────────── */
+.comp-poster-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.comp-poster-viewport {
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px color-mix(in srgb, #000 50%, transparent);
+}
+.comp-poster {
+  width: 540px;
+  height: 960px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 36px 22px;
+  background: var(--background);
+  color: var(--foreground);
+  overflow: hidden;
+}
+.comp-poster-name {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.comp-poster-flag {
+  width: 30px;
+  flex: none;
+  margin-top: 5px;
+}
+.comp-poster-rule {
+  width: 44px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+  margin: 14px 0 16px;
+}
+.comp-poster-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+}
+.comp-poster-fact {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+}
+.comp-poster-fact dt {
+  color: var(--muted-foreground);
+  min-width: 4.5em;
+  flex: none;
+}
+.comp-poster-fact dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.comp-poster-events {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 14px;
+  margin: 18px 0 0;
+}
+.comp-poster-ev {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.comp-poster-ev-icon {
+  width: 22px;
+  height: 22px;
+}
+.comp-poster-ev-n {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.comp-poster-sched {
+  flex: 1;
+  min-height: 0;
+  margin-top: 16px;
+  overflow: hidden;
+}
+.comp-poster-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+.comp-poster-day-h {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  break-after: avoid;
+}
+.comp-poster-day {
+  margin-bottom: 12px;
+}
+.comp-poster-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  line-height: 1.7;
+  break-inside: avoid;
+}
+.comp-poster-row-time {
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.comp-poster-row-icon {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+.comp-poster-row-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 赛程行少时(小比赛):放大字号填满版面 */
+.comp-poster--roomy .comp-poster-name { font-size: 30px; }
+.comp-poster--roomy .comp-poster-fact { font-size: 16px; }
+.comp-poster--roomy .comp-poster-ev-icon { width: 28px; height: 28px; }
+.comp-poster--roomy .comp-poster-ev-n { font-size: 12px; }
+.comp-poster--roomy .comp-poster-events { gap: 14px 18px; margin-top: 24px; }
+.comp-poster--roomy .comp-poster-sched { margin-top: 26px; }
+.comp-poster--roomy .comp-poster-day-h { font-size: 16px; margin-bottom: 8px; }
+.comp-poster--roomy .comp-poster-day { margin-bottom: 20px; }
+.comp-poster--roomy .comp-poster-row { font-size: 16px; line-height: 2; gap: 9px; }
+.comp-poster--roomy .comp-poster-row-icon { width: 16px; height: 16px; }
+.comp-poster--roomy .comp-poster-foot { font-size: 13.5px; }
+
+/* 赛程行数多时:双栏 + 收紧字号,始终塞进 9:16 */
+.comp-poster--compact .comp-poster-days {
+  column-count: 2;
+  column-gap: 22px;
+}
+.comp-poster--compact .comp-poster-row { font-size: 11.5px; line-height: 1.6; gap: 5px; }
+.comp-poster--compact .comp-poster-row-icon { width: 11px; height: 11px; }
+.comp-poster--compact .comp-poster-day-h { font-size: 12px; }
+.comp-poster--compact .comp-poster-day { margin-bottom: 9px; }
+.comp-poster--dense .comp-poster-days {
+  column-count: 2;
+  column-gap: 18px;
+}
+.comp-poster--dense .comp-poster-row { font-size: 10px; line-height: 1.5; gap: 4px; }
+.comp-poster--dense .comp-poster-row-icon { width: 10px; height: 10px; }
+.comp-poster--dense .comp-poster-day-h { font-size: 11px; margin-bottom: 2px; }
+.comp-poster--dense .comp-poster-day { margin-bottom: 7px; }
+.comp-poster-foot {
+  margin-top: auto;
+  padding-top: 12px;
+  text-align: center;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.comp-poster-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--popover, var(--background));
+  border: 1px solid var(--border-default);
 }
 .comp-round-modal .comp-modal-close-btn {
   border: none;

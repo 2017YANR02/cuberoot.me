@@ -9,6 +9,7 @@ import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import luxonPlugin from '@fullcalendar/luxon3';
 import { eventDisplayName } from '@/lib/wca-events';
+import { EventIcon } from '@/components/EventIcon';
 import {
   localizeActivityName, eventOfActivity, readableTextColor, dayHeaderLabel,
   addDaysToKey,
@@ -74,7 +75,8 @@ export default function ScheduleCalendar({
     () => {
       const lanes = assignLabelLanes(data.activities.filter((a) => eventOfActivity(a) === ''));
       return data.activities.map((a) => {
-        const isOther = eventOfActivity(a) === '';
+        const evId = eventOfActivity(a);
+        const isOther = evId === '';
         const color = isOther ? OTHER_GREY : a.roomColor;
         const ln = isOther ? lanes.get(a.id) : undefined;
         return {
@@ -87,7 +89,7 @@ export default function ScheduleCalendar({
           backgroundColor: color,
           borderColor: color,
           textColor: readableTextColor(color),
-          extendedProps: { room: a.roomName, isOther, lane: ln?.lane ?? 0, lanes: ln?.lanes ?? 1 },
+          extendedProps: { room: a.roomName, isOther, eventId: evId, lane: ln?.lane ?? 0, lanes: ln?.lanes ?? 1 },
         };
       });
     },
@@ -133,6 +135,23 @@ export default function ScheduleCalendar({
             timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
           }).format(arg.date);
           return dayHeaderLabel(key, tz, isZh);
+        }}
+        eventContent={(arg) => {
+          // 轮次块标题前加项目图标(复刻默认 timegrid DOM 结构,短块 CSS 仍生效);
+          // 背景带(签到/午餐等)保持默认渲染。
+          const evId = arg.event.extendedProps.eventId as string;
+          if (!evId || arg.event.extendedProps.isOther) return true;
+          return (
+            <div className="fc-event-main-frame">
+              <div className="fc-event-time">{arg.timeText}</div>
+              <div className="fc-event-title-container">
+                <div className="fc-event-title fc-sticky">
+                  <EventIcon event={evId} className="sched-block-icon" />
+                  {arg.event.title}
+                </div>
+              </div>
+            </div>
+          );
         }}
         eventDidMount={(info) => {
           const room = info.event.extendedProps.room as string | undefined;
