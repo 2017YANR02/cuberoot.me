@@ -1239,6 +1239,13 @@ a.alg-community-author:hover {
   color: var(--muted-foreground);
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
+/* 概率行末尾的「原理」链接 → /math/probability */
+.alg-meta-prob-why {
+  font-size: 11px;
+  color: var(--signal-info);
+  text-decoration: none;
+}
+.alg-meta-prob-why:hover { text-decoration: underline; }
 /* 镜像 / 逆 / 镜像逆:三张图,点了换 case。编号(`#3021`)只在 byNo 里查不到时才退回。 */
 .alg-meta-related-grid {
   display: flex;

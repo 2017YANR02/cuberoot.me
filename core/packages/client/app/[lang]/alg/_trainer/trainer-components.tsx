@@ -2,7 +2,7 @@
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
 import { useMemo, useState, type ReactNode } from 'react';
-import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
@@ -29,8 +29,8 @@ export function formatSolveTime(solve: { ms: number; penalty?: TrainerPenalty })
 }
 
 export function TimerDisplay({
-  state, ms, penalty,
-}: { state: TimerState; ms: number; penalty?: TrainerPenalty }) {
+  state, ms, penalty, font = 'lcd',
+}: { state: TimerState; ms: number; penalty?: TrainerPenalty; font?: string }) {
   const cls =
     state === TimerState.AWAITING_READY ? 'is-awaiting' :
     state === TimerState.READY          ? 'is-ready'    :
@@ -44,40 +44,35 @@ export function TimerDisplay({
     isDnf ? 'DNF' :
     showResult && penalty === '+2' ? formatMs(ms + 2000) + '+' :
     formatMs(ms);
-  return <div className={`trainer-timer ${cls}${isDnf ? ' is-dnf' : ''}`}>{text}</div>;
+  return <div className={`trainer-timer tf-${font} ${cls}${isDnf ? ' is-dnf' : ''}`}>{text}</div>;
 }
 
-export function ScrambleHeader({ scramble, label }: { scramble: string; label: string }) {
+/** 打乱正文。label(如「已复制」反馈)可选 —— 没有就只渲染打乱本身。 */
+export function ScrambleHeader({ scramble, label }: { scramble: string; label?: string }) {
   return (
     <div>
-      <div className="trainer-scramble-label">{label}</div>
+      {label && <div className="trainer-scramble-label">{label}</div>}
       <div className="trainer-scramble-text">{scramble || '—'}</div>
     </div>
   );
 }
 
 export function SolveCard({
-  puzzle, set, solve, c, onDelete, header,
+  puzzle, set, solve, c, header, onShowCase,
 }: {
   puzzle: AlgPuzzle;
   set: string;
   solve: TrainerSolve | null;
   c: AlgCase | null;
   isZh: boolean;
-  onDelete?: () => void;
   header: ReactNode;
+  /** 点 case 名弹出该情况的详情弹窗(元数据 / 公式)。 */
+  onShowCase?: (c: AlgCase) => void;
 }) {
   return (
     <div className="trainer-solve-card">
       <div className="trainer-card-header">
         <span>{header}</span>
-        {onDelete && solve && (
-          <button className="trainer-icon-btn" onClick={onDelete}
-            title={tr({ zh: '删除', en: 'Remove'
-            })}>
-            <Trash2 size={14} />
-          </button>
-        )}
       </div>
       <hr className="trainer-card-divider" />
       {!solve || !c ? (
@@ -96,12 +91,19 @@ export function SolveCard({
             />
           </div>
           <div className="trainer-solve-row">
-            <span>{tr({ zh: '情况:', en: 'Case:'
-            })}</span>{primaryCaseName(puzzle, set, c)}
-          </div>
-          <div className="trainer-solve-row">
-            <span>{tr({ zh: '成绩:', en: 'Result:'
-            })}</span>{formatSolveTime(solve)}
+            {onShowCase ? (
+              <button
+                type="button"
+                className="trainer-case-link"
+                onClick={() => onShowCase(c)}
+                title={tr({ zh: '查看该情况', en: 'View this case' })}
+              >
+                {primaryCaseName(puzzle, set, c)}
+                <Info size={12} />
+              </button>
+            ) : (
+              primaryCaseName(puzzle, set, c)
+            )}
           </div>
           <div className="trainer-solve-row">
             <span>{tr({ zh: '打乱:', en: 'Scramble:'
