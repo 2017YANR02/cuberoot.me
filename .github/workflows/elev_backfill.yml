@@ -1,0 +1,70 @@
+# 一次性回填比赛场馆海拔(经纬度反查 Open-Meteo DEM,配额 5000 坐标/小时/IP)。
+# 每小时一轮增量续跑(GH runner 每次换 IP,配额基本每轮都是新的),
+# ELEV_REMAINING=0 时自动 disable 本 workflow —— 之后的日常增量由
+# update_upcoming.yml(日更 upcoming)+ stats.yml(周更 past)内建的 enrich 维持。
+# 手动重跑:gh workflow enable elev_backfill.yml && gh workflow run elev_backfill.yml
+name: Backfill Comp Elevations
+
+on:
+  schedule:
+    # 错开 update_upcoming(20:00)/stats.yml(周日 20:00)的整点,减少同分钟 push 撞车
+    - cron: '25 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: elev-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: pnpm/action-setup@v4
+        with:
+          # 版本单一源:core/package.json 的 packageManager(别在这里写 version,两处会打架)
+          package_json_file: core/package.json
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Backfill elevations
+        id: backfill
+        working-directory: core/packages/stats-build
+        run: |
+          set -o pipefail
+          npx tsx src/bin/backfill_comp_elevations.ts | tee /tmp/elev.log
+          REMAINING=$(grep -oP 'ELEV_REMAINING=\K\d+' /tmp/elev.log | tail -1)
+          echo "remaining=$REMAINING" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add stats/all_past_comps.json stats/all_upcoming_comps.json stats/comp_elevations.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            # [skip ci] 同 update_upcoming.yml:不触发重 workflow,但要显式触发 sync_toolkit 上 static
+            git commit -m "chore: backfill comp elevations [skip ci]"
+            git pull --rebase origin main
+            git push
+            gh workflow run sync_toolkit.yml
+          fi
+
+      - name: Disable self when complete
+        if: steps.backfill.outputs.remaining == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow disable elev_backfill.yml
