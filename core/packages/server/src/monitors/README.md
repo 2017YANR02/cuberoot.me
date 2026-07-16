@@ -14,6 +14,13 @@
 | WCA 比赛 | `wca_comp.ts` | `wca_comp_monitor.py` | 新公示的 WCA 比赛(全球) | 60s |
 | WCA Live PR | `wca_live_pr.ts` | `wca_pr_detector.py` / `wca_pr_cache.py` | 关注选手生涯 PR 检测(自管基线) | 60s |
 
+另有两个**独立门控**的慢周期监控(不在 `startMonitors()` 套件里,`src/index.ts` 单独启动):
+
+| 监控 | 文件 | 门控 | 作用 | 轮询 |
+|------|------|------|------|------|
+| 往期成绩变更 | `wca_past_results.ts` | `RESULT_WATCH_ENABLED` | diff 关注选手全生涯成绩,写 `wca_result_changes` | 6h |
+| 报名国外比赛 | `watched_foreign_reg.ts` | `FOREIGN_REG_WATCH_ENABLED` | 扫非 CN upcoming 比赛 registrations,命中关注选手(文件内 `WATCHED` 写死 wcaId+userId)发 站内通知+邮件(`utils/notify`→admin)+ Bark(issue #34) | 3h |
+
 ## 文件分工(monitors/)
 
 | 文件 | 内容 |
