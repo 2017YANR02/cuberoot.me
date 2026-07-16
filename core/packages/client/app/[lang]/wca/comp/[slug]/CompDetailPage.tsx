@@ -1965,7 +1965,7 @@ function CompInfoPanel({
     rows.push({ label: tr({ zh: '日期', en: 'Date' }), value: wd ? `${dateStr} ${wd}` : dateStr });
   }
   if (info.competitor_limit) {
-    rows.push({ label: tr({ zh: '人数上限', en: 'Competitor limit' }), value: info.competitor_limit });
+    rows.push({ label: tr({ zh: '上限', en: 'Limit' }), value: info.competitor_limit });
   }
   const regOpenIso = info.registration_open ? toIsoDate(new Date(info.registration_open)) : '';
   const regCloseIso = info.registration_close ? toIsoDate(new Date(info.registration_close)) : '';
