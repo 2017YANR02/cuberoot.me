@@ -1,0 +1,267 @@
+/* /math/probability — 情况概率与旋转对称。
+ * 结构沿用 /math/unit-distance 的 token 化写法:页面内全部走 theme token +
+ * color-mix 派生,双主题自动跟随。分类调色板只用于 SVG 数据色。 */
+
+.prob-page {
+  --prob-surface: var(--card);
+  --prob-border: var(--border-default);
+  --prob-text-sub: var(--muted-foreground);
+  --prob-text-mute: var(--faint-foreground);
+  --prob-accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ─── header ─────────────────────────────────────────── */
+.prob-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem max(1rem, calc((100vw - 980px) / 2));
+  border-bottom: 1px solid var(--prob-border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+.prob-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--prob-text-sub); text-decoration: none; font-size: 0.92rem;
+}
+.prob-back:hover { color: var(--foreground); }
+
+.prob-main {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+/* ─── hero ───────────────────────────────────────────── */
+.prob-hero { margin-bottom: 2.25rem; }
+.prob-eyebrow {
+  font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--prob-text-mute); font-weight: 600; margin-bottom: 8px;
+}
+.prob-title {
+  font-size: clamp(1.8rem, 4.5vw, 2.5rem);
+  font-weight: 700; letter-spacing: -0.02em;
+  margin: 0 0 0.6rem; line-height: 1.15;
+}
+.prob-title-sub {
+  display: block; margin-top: 6px;
+  font-size: 0.62em; font-weight: 500; color: var(--prob-text-sub);
+}
+.prob-lead {
+  font-size: 1.02rem; line-height: 1.8;
+  color: var(--prob-text-sub);
+  max-width: 800px;
+  margin: 0 0 1.25rem;
+}
+
+.prob-numbers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.9rem;
+  margin-top: 1.25rem;
+}
+.prob-num-card {
+  background: var(--prob-surface);
+  border: 1px solid var(--prob-border);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+.prob-num {
+  font-size: 1.55rem; font-weight: 700; letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.prob-num-label {
+  margin-top: 2px;
+  font-size: 0.82rem; color: var(--prob-text-sub); line-height: 1.4;
+}
+
+/* ─── sections ───────────────────────────────────────── */
+.prob-section { margin: 2.5rem 0; }
+.prob-h2 {
+  font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em;
+  margin: 0 0 0.75rem;
+}
+.prob-body {
+  line-height: 1.85; color: var(--prob-text-sub);
+  max-width: 800px; margin: 0 0 1rem;
+}
+.prob-body strong, .prob-lead strong { color: var(--foreground); }
+
+/* ─── panels ─────────────────────────────────────────── */
+.prob-panel {
+  background: var(--prob-surface);
+  border: 1px solid var(--prob-border);
+  border-radius: 12px;
+  padding: 1.1rem 1.2rem 1.2rem;
+  margin: 1rem 0;
+}
+.prob-panel-title { font-weight: 700; font-size: 1.05rem; margin-bottom: 4px; }
+.prob-panel-sub {
+  font-size: 0.88rem; color: var(--prob-text-sub); line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.prob-chip-row {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 6px 8px;
+  margin: 6px 0;
+}
+.prob-chip-row-label { font-size: 0.82rem; color: var(--prob-text-mute); }
+.prob-chip {
+  appearance: none; -webkit-appearance: none;
+  font: inherit; font-size: 0.84rem;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--prob-border);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.prob-chip:hover { border-color: var(--border-strong); }
+.prob-chip.is-active {
+  background: var(--prob-accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: color-mix(in srgb, var(--accent) 70%, var(--foreground));
+  font-weight: 600;
+}
+.prob-chip.is-ghost { color: var(--prob-text-sub); }
+.prob-chip.is-ghost.is-active { color: color-mix(in srgb, var(--accent) 70%, var(--foreground)); }
+
+.prob-btn {
+  appearance: none; -webkit-appearance: none;
+  font: inherit; font-size: 0.88rem; font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  background: var(--prob-accent-soft);
+  color: color-mix(in srgb, var(--accent) 70%, var(--foreground));
+  cursor: pointer;
+}
+.prob-btn:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.prob-btn:disabled { opacity: 0.55; cursor: default; }
+
+.prob-result {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 12px;
+  margin: 12px 0 6px;
+}
+.prob-result-num {
+  font-size: 1.9rem; font-weight: 700; letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.prob-result-label { font-size: 0.88rem; color: var(--prob-text-sub); }
+
+.prob-note {
+  font-size: 0.85rem; line-height: 1.7;
+  color: var(--prob-text-sub);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: 12px;
+}
+.prob-formula { margin-top: 12px; font-size: 0.95rem; }
+.prob-formula-note {
+  display: block; margin-top: 6px;
+  font-size: 0.83rem; color: var(--prob-text-mute); line-height: 1.6;
+}
+.prob-divider {
+  border-top: 1px solid var(--prob-border);
+  margin: 18px 0 14px;
+}
+
+/* ─── orbit explorer ─────────────────────────────────── */
+.prob-orbit-grid-wrap { overflow-x: auto; }
+.prob-orbit-grid {
+  display: grid;
+  grid-template-columns: auto repeat(4, min-content);
+  gap: 8px;
+  align-items: center;
+  justify-items: center;
+  width: fit-content;
+  margin-top: 10px;
+}
+.prob-orbit-axis {
+  font-size: 0.72rem; color: var(--prob-text-mute);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+.prob-orbit-cell { position: relative; }
+.prob-orbit-badge {
+  position: absolute; right: -5px; top: -5px;
+  min-width: 17px; height: 17px;
+  border-radius: 999px;
+  color: #fff; font-size: 11px; font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+}
+.prob-orbit-dedup {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  margin-top: 12px;
+}
+
+/* ─── burnside ───────────────────────────────────────── */
+.prob-heavy-gate { margin: 16px 0; }
+.prob-burnside { margin-top: 8px; }
+.prob-burnside-title { font-size: 0.85rem; color: var(--prob-text-sub); margin-bottom: 6px; }
+.prob-burnside-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(52px, 78px));
+  gap: 5px;
+}
+.prob-burnside-grid.is-row { grid-template-columns: repeat(4, minmax(52px, 78px)); }
+.prob-burnside-cell {
+  text-align: center;
+  padding: 6px 4px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--prob-text-mute);
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+}
+.prob-burnside-cell.is-hot {
+  color: var(--foreground);
+  font-weight: 600;
+  background: var(--prob-accent-soft);
+}
+.prob-burnside-sum { margin-top: 8px; font-size: 0.86rem; color: var(--prob-text-sub); }
+
+/* ─── accounting ─────────────────────────────────────── */
+.prob-audit { margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+.prob-audit-row {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline;
+  font-size: 0.86rem;
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  color: var(--prob-text-sub);
+}
+.prob-audit-row.is-ok { border-left: 3px solid var(--signal-success); }
+.prob-audit-row.is-bad { border-left: 3px solid var(--destructive); }
+.prob-audit-set { font-weight: 700; color: var(--foreground); min-width: 3.2em; }
+.prob-audit-total { font-size: 0.86rem; color: var(--prob-text-sub); padding: 4px 10px; }
+
+.prob-link { color: var(--signal-info); text-decoration: none; }
+.prob-link:hover { text-decoration: underline; }
+.prob-refs { line-height: 2; padding-left: 1.2em; color: var(--prob-text-sub); }
+
+/* KaTeX 展示公式:窄屏在自己的容器里横滚,不许把整页撑宽 */
+.prob-page .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  padding: 2px 0;
+}
+
+/* ─── mobile ─────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .prob-numbers { grid-template-columns: 1fr; }
+  .prob-main { padding: 1.25rem 0.9rem 3rem; }
+  .prob-panel { padding: 0.9rem 0.85rem 1rem; }
+  .prob-result-num { font-size: 1.5rem; }
+}
