@@ -6,7 +6,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, CloudDownload, CloudUpload, Download, FileSpreadsheet, LogIn, RefreshCw, Target, X } from 'lucide-react';
-import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
+import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings, type TimerFontId } from '../_lib/settings';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
@@ -1107,6 +1107,19 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
             })}</option>
               <option value="auto">{tr({ zh: '跟随系统', en: 'Auto'
             })}</option>
+            </select>
+          </Row>
+          <Row label={tr({ zh: '计时器字体', en: 'Timer font'
+        })}>
+            <select
+              className="settings-row-control-select"
+              value={s.timerFont}
+              onChange={(e) => updateSettings({ timerFont: e.target.value as TimerFontId })}
+            >
+              <option value="lcd">{tr({ zh: 'LCD 七段', en: 'LCD' })}</option>
+              <option value="mono">Roboto Mono</option>
+              <option value="liberation">Liberation Mono</option>
+              <option value="sans">Inter</option>
             </select>
           </Row>
           <Row label={tr({ zh: '计时器字号', en: 'Timer font scale'

@@ -216,6 +216,10 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   text-shadow: none;
   transition: color 120ms;
 }
+/* 计时字体档位(tf-lcd = 默认 Segment7;其余为站内自托管字体,与 /alg 训练器同四档)。 */
+.timing-surface .timer-display.tf-mono { font-family: var(--font-mono); font-weight: 600; }
+.timing-surface .timer-display.tf-liberation { font-family: 'LiberationMono', var(--font-mono); font-weight: 600; }
+.timing-surface .timer-display.tf-sans { font-family: var(--font-sans); font-weight: 700; }
 /* Sub-content (phase children: idle hint / running target / stopped
    quick-actions / rank) sits between the digits and the scramble in the
    centered column. */
