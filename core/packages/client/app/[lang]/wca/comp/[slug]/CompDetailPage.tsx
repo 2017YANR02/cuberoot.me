@@ -31,7 +31,7 @@ import { fetchPb, prefetchPbs, type PbByEvent } from '@/lib/wca-pb';
 import { fetchCompInfo, fetchCubingZh, type CompInfo, type CubingZhMeta } from '@/lib/comp-wcif';
 import { loadNoScrambleIds } from '@/lib/comp-no-scrambles';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
-import { formatDateRangeIso, toIsoDate, weekdayRangeLabel } from '@/lib/wca-date';
+import { formatDateRangeIso, formatDateTimeLocal, toIsoDate, weekdayRangeLabel } from '@/lib/wca-date';
 import { localizeCity } from '@/lib/city-localize';
 import { getSimilarComps, type SeriesComp } from '@/lib/comp-series';
 import { compLinkProps } from '@/lib/comp-link';
@@ -1950,18 +1950,26 @@ function CompInfoPanel({
   const regOpenIso = info.registration_open ? toIsoDate(new Date(info.registration_open)) : '';
   const regCloseIso = info.registration_close ? toIsoDate(new Date(info.registration_close)) : '';
   if (regOpenIso && regCloseIso) {
+    // 报名起止精确到秒(本地时区,与 cubing.com 展示对齐);截止侧压缩重复年份
+    const openDt = formatDateTimeLocal(info.registration_open);
+    const closeDt = formatDateTimeLocal(info.registration_close);
+    const closeLabel = regCloseIso === regOpenIso ? closeDt.slice(11)
+      : regCloseIso.slice(0, 4) === regOpenIso.slice(0, 4) ? `${regCloseIso.slice(5)} ${closeDt.slice(11)}`
+      : closeDt;
     rows.push({
       label: tr({ zh: '报名时间', en: 'Registration'
     }),
-      value: formatDateRangeIso(regOpenIso, regCloseIso),
+      value: `${openDt}~${closeLabel}`,
       past: isPast(regCloseIso),
     });
   }
+  // cubing.com 给的是 "2026-08-13 19:00:00" 原样串,展示统一剥秒(全站时间只到时分)
+  const stripSec = (s: string) => s.replace(/(\d{2}:\d{2}):\d{2}\b/, '$1');
   if (cubingZh?.withdrawDeadline) {
-    rows.push({ label: '退赛截止', value: cubingZh.withdrawDeadline, past: isPast(cubingZh.withdrawDeadline) });
+    rows.push({ label: '退赛截止', value: stripSec(cubingZh.withdrawDeadline), past: isPast(cubingZh.withdrawDeadline) });
   }
   if (cubingZh?.reopenAt) {
-    rows.push({ label: '重开报名', value: cubingZh.reopenAt, past: isPast(cubingZh.reopenAt) });
+    rows.push({ label: '重开报名', value: stripSec(cubingZh.reopenAt), past: isPast(cubingZh.reopenAt) });
   }
   if (info.event_change_deadline_date) {
     const d = toIsoDate(new Date(info.event_change_deadline_date));

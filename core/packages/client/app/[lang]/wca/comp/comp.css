@@ -1166,12 +1166,27 @@ td.is-pr {
   column-gap: 1.57em;
 }
 .comp-poster-foot {
-  padding-top: 0.9em;
-  text-align: center;
-  font-size: 0.89em;
+  position: relative;
+  min-height: 64px; /* 预留二维码高度,避免它压到赛程末行 */
+  /* 链接靠左、二维码靠右;右侧留出码宽(64+8);字号上限 13px,不随 fit 放大 */
+  padding: 0.9em 72px 0 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  text-align: left;
+  font-size: min(0.89em, 13px);
   letter-spacing: 0.02em;
   color: var(--accent);
   font-variant-numeric: tabular-nums;
+}
+/* 二维码固定像素(不随 fit 字号缩放),保证导出后可扫 */
+.comp-poster-qr {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 4px;
 }
 .comp-poster-actions {
   position: absolute;
