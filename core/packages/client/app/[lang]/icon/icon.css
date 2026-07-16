@@ -165,9 +165,8 @@
   color: var(--signal-success);
 }
 .icon-cell-class-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .icon-cell-class svg {
   flex: none;
