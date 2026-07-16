@@ -438,6 +438,11 @@ export default function TrainerRunClient() {
                 </div>
               )}
               <div className="trainer-opts-row">
+                <BoolToggle
+                  value={timing}
+                  onChange={setTiming}
+                  label={tr({ zh: '计时', en: 'Timing' })}
+                />
                 <PillToggle
                   value={mode === 'train'}
                   onChange={v => setMode(v ? 'train' : 'recap')}
@@ -465,20 +470,9 @@ export default function TrainerRunClient() {
                   />
                 </div>
               )}
-              <div className="trainer-opts-row">
-                <BoolToggle
-                  value={timing}
-                  onChange={setTiming}
-                  label={tr({ zh: '计时', en: 'Timing' })}
-                />
-              </div>
               {preAufSupported && (
                 <div className="trainer-opts-row">
                   <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
-                </div>
-              )}
-              {preAufSupported && (
-                <div className="trainer-opts-row">
                   <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />
                 </div>
               )}

@@ -81,13 +81,13 @@ export type ScrambleKind = 'inv' | 'cstimer' | 'stm' | 'sqtm' | 'htm' | 'qtm' | 
  * `cstimer` = 随机态求解器风格(同 cstimer 训练打乱:现算 ≈20 步全脸序列),仅 3x3。
  */
 export const SCRAMBLE_KINDS: ReadonlyArray<{ id: ScrambleKind; label: () => string }> = [
+  { id: 'htm', label: () => `H* (HTM)` },
   { id: 'inv', label: () => tr({ zh: '逆 case', en: 'Inv case' }) },
-  { id: 'cstimer', label: () => 'cstimer' },
   { id: 'stm', label: () => `SH* (STM)` },
   { id: 'sqtm', label: () => `SQ* (SQTM)` },
-  { id: 'htm', label: () => `H* (HTM)` },
   { id: 'qtm', label: () => `Q* (QTM)` },
   { id: 'coep', label: () => 'COEP' },
+  { id: 'cstimer', label: () => 'cstimer' },
 ];
 
 /** 这个 case 支持哪些打乱类型(`inv` 永远支持 —— 它就是 setup 的逆) */
