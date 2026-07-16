@@ -36,6 +36,8 @@ export interface UpcomingCompRecord {
   event_change_deadline?: string | null;
   latitude_degrees: number;
   longitude_degrees: number;
+  /** 场馆海拔(整数米,管道由经纬度反查 DEM,可为负);无有效坐标 / 尚未查到时缺省 */
+  elevation?: number;
   url: string;
   /** event 短码 → 该项目轮次数（来自 WCIF 公开端点）；老 dump 缺时为空对象 */
   rounds?: Record<string, number>;
@@ -57,6 +59,8 @@ export interface PastCompRecord {
   /** 多地代码（XW/XA/XE/...）为 null — 没有真实地理坐标，Globe 端按 != null 过滤 */
   latitude_degrees: number | null;
   longitude_degrees: number | null;
+  /** 场馆海拔(整数米,管道由经纬度反查 DEM,可为负);无有效坐标 / 尚未查到时缺省 */
+  elevation?: number;
   start_date: string;
   end_date: string;
   events: string[];

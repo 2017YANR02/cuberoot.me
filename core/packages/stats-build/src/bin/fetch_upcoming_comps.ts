@@ -28,6 +28,7 @@ import {
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as readline from 'node:readline/promises';
+import { enrichCompElevations } from '../elevation.js';
 
 // ================= Configuration ==================
 // NOTE: 位置定位仓库根（bin -> src -> stats-build -> packages -> core -> repo root，5 个 '..'），
@@ -40,6 +41,8 @@ const OUTPUT_JSON_PATH = resolve(ROOT_DIR, 'stats/upcoming_comps.json');
 const ALL_OUTPUT_JSON_PATH = resolve(ROOT_DIR, 'stats/all_upcoming_comps.json');
 // NOTE: 中国内地比赛全员注册名单（前端"搜索选手"非 top 时,作为静态 fallback;WCA API 不覆盖 cubing.com）
 const CN_REGISTRATIONS_JSON_PATH = resolve(ROOT_DIR, 'stats/cn_upcoming_registrations.json');
+// 场馆坐标 → 海拔(米)缓存,enrichCompElevations 读写;与 gen_all_comps.ts 共用同一份
+const ELEVATION_CACHE_PATH = resolve(ROOT_DIR, 'stats/comp_elevations.json');
 const CACHE_DIR = resolve(ROOT_DIR, '.upcoming_cache');
 
 // 默认直连 WCA;CI 上被 WCA 403(GH runner IP 段),改经服务器代理:
@@ -715,6 +718,8 @@ interface AllComp {
   registration_close: unknown;
   latitude_degrees: number;
   longitude_degrees: number;
+  /** 场馆海拔(整数米,经纬度反查 DEM,可为负);无有效坐标 / 查询失败时缺省 */
+  elevation?: number;
   url: string;
   // 项目修改截止时刻（ISO，单场端点专属，列表端点不返回）。94% 比赛有设；拉不到为 null。
   event_change_deadline?: string | null;
@@ -1269,6 +1274,8 @@ async function main(): Promise<void> {
     wcaListUnavailable = true;
     console.log('[GUARD] WCA all_comps 不可用,保留已有 upcoming_comps.json / all_upcoming_comps.json,跳过写入(绝不写空);本次将以非零码退出标红 CI');
   } else {
+    // 场馆海拔(经纬度反查 DEM):缓存命中免请求,只有新场馆走 API;失败仅缺字段不崩
+    await enrichCompElevations(allComps, ELEVATION_CACHE_PATH);
     const outputObj = {
       updated_at: utcIsoSeconds(new Date()),
       total_cubers_tracked: !DEBUG_LIMIT ? Object.keys(cubers).length : DEBUG_LIMIT,

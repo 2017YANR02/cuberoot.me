@@ -16,7 +16,7 @@ import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parse
 import Link from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, Ban, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon, Layers as DualIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, Ban, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, Mountain, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon, Flag as DebutIcon, Layers as DualIcon } from 'lucide-react';
 import { SortArrow } from '@/components/SortArrow';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import {
@@ -178,6 +178,8 @@ interface Competition {
   /** 经纬度（来自比赛 JSON，Globe 视图同源）；多地代码无真实坐标为 null/缺省 */
   latitude_degrees?: number | null;
   longitude_degrees?: number | null;
+  /** 场馆海拔(整数米,管道由经纬度反查 DEM,可为负如死海沿岸);无有效坐标 / 尚未查到时缺省 */
+  elevation?: number;
   registration_open?: string | null;   // ISO 8601 UTC
   registration_close?: string | null;
   /** 项目修改截止时刻（ISO，单场端点专属，列表数据由管道逐场回填）；缺为 null */
@@ -624,6 +626,7 @@ function adaptAllComp(w: UpcomingCompRecord, topCuberMap: Map<string, TopCuber[]
     event_change_deadline: w.event_change_deadline ?? undefined,
     latitude_degrees: w.latitude_degrees,
     longitude_degrees: w.longitude_degrees,
+    elevation: w.elevation,
     top_cubers: topCuberMap.get(w.id) ?? [],
   };
 }
@@ -646,6 +649,7 @@ function adaptPastComp(w: PastCompRecord): Competition {
     competitors: w.competitors,
     latitude_degrees: w.latitude_degrees,
     longitude_degrees: w.longitude_degrees,
+    elevation: w.elevation,
     top_cubers: [],
   };
 }
@@ -770,10 +774,12 @@ function eventCellContent(
 // 三列合并成一列，由左下拉选当前显示哪个；点列头按它升/降排序。
 // latlng = 经纬度,下拉里是一个选项,但表头/行渲染成「纬度 + 经度」两列(各自可排序)
 // 'peopleLimit' = 人数 + 上限合并成一个 metric,表头展开成两个子列（人数 | 上限），同 latlng 的双列模式
-type CompMetric = 'peopleLimit' | 'ratio' | 'nameLength' | 'cityLength' | 'latlng';
-const COMP_METRICS: CompMetric[] = ['peopleLimit', 'ratio', 'nameLength', 'cityLength', 'latlng'];
-// 经纬度可正可负、可为 0（赤道/本初子午线），不能套用 "<=0 视为缺失" 的计数列规则
-const SIGNED_METRICS = new Set<CompMetric>(['latlng']);
+// 'elevation' = 场馆海拔(米,管道由经纬度反查 DEM 烘进比赛 JSON,WCA 本身无此数据)
+type CompMetric = 'peopleLimit' | 'ratio' | 'nameLength' | 'cityLength' | 'latlng' | 'elevation';
+const COMP_METRICS: CompMetric[] = ['peopleLimit', 'ratio', 'nameLength', 'cityLength', 'latlng', 'elevation'];
+// 经纬度可正可负、可为 0（赤道/本初子午线），海拔可负（死海沿岸）可为 0（海平面），
+// 不能套用 "<=0 视为缺失" 的计数列规则
+const SIGNED_METRICS = new Set<CompMetric>(['latlng', 'elevation']);
 // 经纬度子列排序键：latlng 模式下点哪一列就按哪个坐标排
 type CoordKey = 'lat' | 'lng';
 // 双列 metric 的子列排序键：latlng → lat/lng；peopleLimit → people/limit
@@ -797,6 +803,7 @@ function compColTitle(m: CompMetric): string {
 });
   if (m === 'cityLength') return tr({ zh: '比赛城市名长度(字符数)', en: 'City name length (characters)'
 });
+  if (m === 'elevation') return tr({ zh: '场馆海拔(米,按坐标查 DEM,负值真实如死海沿岸)', en: 'Venue elevation (m, DEM lookup by coordinates; negative is real, e.g. Dead Sea)' });
   return '';
 }
 
@@ -1037,7 +1044,8 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
     compMetric === 'ratio' ? fillRate(c)
       : compMetric === 'nameLength' ? localizeName(c, isZh).length
         : compMetric === 'cityLength' ? displayCityOf(c, isZh).length
-          : null, [compMetric, isZh]);
+          : compMetric === 'elevation' ? (c.elevation ?? null)
+            : null, [compMetric, isZh]);
   // 默认按日期倒序。col='name'/'city' 按 locale 首字母排；col='comp' 按整场值排(latlng 看 coord 子列)，
   // 缺值恒沉底、同值再按日期倒序。计数列 <=0 视为缺失；经纬度可正可负可为 0，仅 null 视为缺失。
   const items = useMemo<RowItem[]>(() => {
@@ -1343,6 +1351,7 @@ function CompList({ comps, isZh, onSelect, onYearChange, outerRef, cancelledCuto
                     if (compMetric === 'ratio') { const r = fillRate(c); return r == null ? '' : `${Math.round(r * 100)}%`; }
                     if (compMetric === 'nameLength') return localizeName(c, isZh).length;
                     if (compMetric === 'cityLength') return displayCityOf(c, isZh).length;
+                    if (compMetric === 'elevation') return c.elevation ?? '';
                     return '';
                   })()}
                 </span>
@@ -2219,7 +2228,7 @@ function CalendarPageInner() {
               onChange={(e) => setCompMetric(e.target.value as CompMetric)}
               aria-label={tr({ zh: '整场列显示', en: 'Whole-comp column'
             })}
-              title={tr({ zh: '整场列显示什么（人数和上限 / 满员率 / 名称长度 / 城市名长度 / 纬度 / 经度），点列头可排序', en: 'What the whole-comp column shows (people & limit / fill rate / name length / city length / latitude / longitude); click header to sort'
+              title={tr({ zh: '整场列显示什么（人数和上限 / 满员率 / 名称长度 / 城市名长度 / 纬度 / 经度 / 海拔），点列头可排序', en: 'What the whole-comp column shows (people & limit / fill rate / name length / city length / latitude / longitude / elevation); click header to sort'
             })}
             >
               <option value="peopleLimit">{tr({ zh: '人数和上限', en: 'People & limit'
@@ -2231,6 +2240,8 @@ function CalendarPageInner() {
               <option value="cityLength">{tr({ zh: '城市名长度', en: 'City name length'
             })}</option>
               <option value="latlng">{tr({ zh: '经纬度', en: 'Coordinates'
+            })}</option>
+              <option value="elevation">{tr({ zh: '海拔', en: 'Elevation'
             })}</option>
             </select>
             <select
@@ -2445,7 +2456,7 @@ function CalendarPageInner() {
                   );
                 })
               ) : (() => {
-                const CompIcon = compMetric === 'nameLength' ? CaseSensitive : compMetric === 'cityLength' ? MapPin : Percent;
+                const CompIcon = compMetric === 'nameLength' ? CaseSensitive : compMetric === 'cityLength' ? MapPin : compMetric === 'elevation' ? Mountain : Percent;
                 const on = listSort?.col === 'comp';
                 return (
                   <button

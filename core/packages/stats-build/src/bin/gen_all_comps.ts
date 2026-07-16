@@ -11,9 +11,12 @@ import { fileURLToPath } from 'url';
 import { query, closePool } from '../core/database.js';
 import type { RowDataPacket } from 'mysql2';
 import { buildCompSeriesIndex, type SeriesComp } from '@cuberoot/shared/comp-series';
+import { enrichCompElevations } from '../elevation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_PATH = resolve(__dirname, '../../../../../stats/all_past_comps.json');
+// 场馆坐标 → 海拔(米)缓存,enrichCompElevations 读写;stats.yml 的 git add -A stats/ 顺带提交
+const ELEVATION_CACHE_PATH = resolve(__dirname, '../../../../../stats/comp_elevations.json');
 // round-1 WCIF 配置（限时/及格/晋级/资格）大文件，列表视图按需懒加载（不内联进 all_past_comps，避免它再涨 ~5MB）
 const META_OUTPUT_PATH = resolve(__dirname, '../../../../../stats/comp_round_meta.json');
 // 双轮权威标记小文件:{compId: [完整 WCA event id]},含未结束比赛(详情页对进行中/即将开始的双轮赛要它，
@@ -236,6 +239,9 @@ async function main() {
         ...(Number(r.competitor_limit) > 0 ? { competitor_limit: Number(r.competitor_limit) } : {}),
       };
     });
+
+  // 场馆海拔(WCA 无此数据,经纬度反查 DEM):缓存命中免请求,只有新场馆走 API;失败仅缺字段不崩
+  await enrichCompElevations(out, ELEVATION_CACHE_PATH);
 
   mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
   writeFileSync(OUTPUT_PATH, JSON.stringify(out), 'utf-8');
