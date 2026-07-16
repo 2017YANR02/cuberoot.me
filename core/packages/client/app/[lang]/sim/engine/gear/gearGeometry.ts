@@ -89,24 +89,26 @@ export const SEAM = 2.5;
 export const GEAR_B = 0.72 * H;
 /** Wheel thickness along its (radial) axis. */
 export const WHEEL_T = 0.22 * H;
-/** Tooth tip / root radii + tooth count (12 fat teeth like the real puzzle ⇒ one
- *  60° spin = exactly 2 pitches). R_OUT is at the free-phase clearance ceiling:
+/** Tooth tip / root radii + tooth count (6 fat teeth like the real puzzle ⇒ one
+ *  60° spin = exactly 1 pitch). R_OUT is at the free-phase clearance ceiling:
  *  face-layer and equator wheels cross mid-turn at ~53u joint radius, and tooth
  *  phases are independent state, so tips must stay below the crossing —
  *  .tmp/gear/derive2.mjs bisects the max clearing radius (0.362H @ margin 1). */
 export const R_OUT = 0.345 * H;
 export const R_ROOT = 0.215 * H;
-export const TEETH = 12;
-/** Splat sticker lift + thickness above the tooth contour (rim band). */
-export const SPLAT_LIFT = 1.2;
-export const SPLAT_THICK = 2.6;
-/** Splat cap on the wheel's OUTER disc face (the 45°-outward side — the dominant
- *  visible surface at the arris channel): lift off the face + plate thickness. */
+export const TEETH = 6;
+/** Splat decal arc: 3 of the 6 teeth per face — the two decals tile the wheel face
+ *  in halves, with a small seam at the edge-direction gullets. */
+export const SPLAT_SPAN = ((2 * Math.PI) / TEETH) * 2.94;
+/** Splat decal on the wheel's OUTER disc face (the 45°-outward side — the only
+ *  flat surface a sticker can live on, like the real puzzle): lift off the disc
+ *  face + decal thickness, and the decal's inset from the tooth silhouette. */
 export const SPLAT_SIDE_LIFT = 0.6;
 export const SPLAT_SIDE_DEPTH = 2.4;
-/** Ball bound of a whole gear (wheel + splat rim band + side cap) around its center. */
+export const SPLAT_EDGE_IN = 1.5;
+/** Ball bound of a whole gear (wheel + face decal) around its center. */
 export const R_BALL = Math.hypot(
-  R_OUT + SPLAT_LIFT + SPLAT_THICK,
+  R_OUT,
   WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH,
 );
 /** Corner bite tube radius (≥ R_BALL + clearance; test-locked). */
@@ -175,8 +177,8 @@ export function gearSlotFaces(r: number, s: number): number[] {
 
 // ── gear wheel profile (2D polar, teeth) ────────────────────────────────────────────
 /** Wheel radius at polar angle θ: trapezoid teeth between R_ROOT and R_OUT. The
- *  profile is rotated so a tooth is centered at 90° (toward each face window; 12
- *  teeth ⇒ 90°+180° is also a tooth center, and one 60° move = exactly 2 pitches). */
+ *  profile is rotated so a tooth is centered at 90° (toward each face window; 6
+ *  teeth ⇒ 90°+180° is also a tooth center, and one 60° move = exactly 1 pitch). */
 export function wheelRadiusAt(theta: number): number {
   const pitch = (2 * Math.PI) / TEETH;
   // offset so θ = 90° is a tooth center
@@ -189,7 +191,7 @@ export function wheelRadiusAt(theta: number): number {
   return R_OUT - (R_OUT - R_ROOT) * (t - tipHalf) / flank;
 }
 
-const WHEEL_SAMPLES = TEETH * 16;
+const WHEEL_SAMPLES = TEETH * 32;
 
 function wheelProfilePts(lift: number): V2[] {
   const pts: V2[] = [];
@@ -254,34 +256,21 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   group.add(wheel);
 
   // 2 splat stickers per gear, one per face window, colored by the slot's home
-  // faces. Each splat = a rim band draped over ~3 teeth (the colored tooth tops)
-  // + a flat cap on the wheel's OUTER disc face over the same arc (the dominant
-  // visible surface — the photo's "fingers" wrap over the gear onto this side).
-  const SPAN = (2 * Math.PI / TEETH) * 4.0; // ~4 teeth — the whole front-visible fan
-  const SPLAT_T = WHEEL_T - 9;              // rim band inset from both wheel sides
-  const CAP_IN_R = R_ROOT * 0.45;           // side cap reaches down toward the hub
+  // faces. Each splat = ONE flat fan decal on the wheel's OUTER disc face (like the
+  // real puzzle — a flat sticker cannot wrap the toothed rim; the reference fan is
+  // exactly this decal seen at 45°). Its outer edge follows the tooth contour:
+  // 3 of the 6 teeth per face — the face-pointing "stem" tooth + one per side.
+  const SPAN = SPLAT_SPAN;
+  const CAP_IN_R = R_ROOT * 0.45;           // decal reaches down toward the hub
   for (const face of gearSlotFaces(r, s)) {
     const cAng = gearWindowAngle(r, s, face);
-    const SEG = 64;
+    const SEG = 96;
     const mat = stickerMat(GEAR_FACE_NAMES[face]);
     const tag = { simStickerNormal: V(FACE_AXIS[face]) };
-    // rim band: between the tooth contour (+lift) and (+lift+thick)
-    const outer: V2[] = [];
-    const inner: V2[] = [];
-    for (let i = 0; i <= SEG; i++) {
-      const a = cAng - SPAN / 2 + (i / SEG) * SPAN;
-      outer.push([(wheelRadiusAt(a) + SPLAT_LIFT + SPLAT_THICK) * Math.cos(a), (wheelRadiusAt(a) + SPLAT_LIFT + SPLAT_THICK) * Math.sin(a)]);
-      inner.push([(wheelRadiusAt(a) + SPLAT_LIFT) * Math.cos(a), (wheelRadiusAt(a) + SPLAT_LIFT) * Math.sin(a)]);
-    }
-    const bandShape = new THREE.Shape([...outer, ...inner.reverse()].map(([x, y]) => new THREE.Vector2(x, y)));
-    const bandGeo = new THREE.ExtrudeGeometry(bandShape, { depth: SPLAT_T, bevelEnabled: false });
-    place(bandGeo, SPLAT_T / 2);
-    group.add(makeSticker(bandGeo, mat, bodyMat, tag));
-    // side cap: toothed outer edge + inner arc, on the outer disc face
     const capPts: V2[] = [];
     for (let i = 0; i <= SEG; i++) {
       const a = cAng - SPAN / 2 + (i / SEG) * SPAN;
-      const rr = wheelRadiusAt(a) + SPLAT_LIFT;
+      const rr = wheelRadiusAt(a) - SPLAT_EDGE_IN;
       capPts.push([rr * Math.cos(a), rr * Math.sin(a)]);
     }
     for (let i = SEG; i >= 0; i--) {
