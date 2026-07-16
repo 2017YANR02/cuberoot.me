@@ -90,6 +90,7 @@ pnpm --filter @cuberoot/client lint
 ## 代码风格
 
 - 优先编辑已有文件;改完跑 typecheck。
+- 改动先定位根因,禁止在症状点打补丁;根因定位后落地用最小实现,不臆造抽象层/翻译层。
 - UI 可用 lucide-react;不放页面级"返回"按钮(wizard 步骤间不算)。
 - 按钮式交互必须真 `<button>`(剥 UA 样式)或 `AppLink`,禁 `<div/span onClick>`(iOS Safari tap 不可靠);例外 div 加 `role="button"`+`tabIndex`+`onKeyDown`;豁免注释 `allow-static-onclick`。守卫:hook + CI ratchet。
 - 选择/搜索输入框非空时显示清除按钮,统一 `components/ClearButton`。
