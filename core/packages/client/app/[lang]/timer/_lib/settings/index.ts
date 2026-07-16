@@ -12,6 +12,9 @@ import { paletteScheme } from '@/lib/palettes';
 
 const KEY = 'cuberoot-timer.settings.v1';
 
+/** Big-digit typeface ids — shared vocabulary with the /alg trainer's picker. */
+export type TimerFontId = 'lcd' | 'mono' | 'liberation' | 'sans';
+
 export interface TimerSettings {
   /** Inspection time in seconds. 0 = disabled. WCA standard = 15. */
   inspection: number;
@@ -45,6 +48,10 @@ export interface TimerSettings {
 
   /** Scale factor for the big timer display (0.5..2). */
   timerFontScale: number;
+
+  /** Big-digit typeface. 'lcd' = 7-segment Segment7Standard (default);
+   *  the rest are self-hosted site fonts (same four options as the /alg trainer). */
+  timerFont: TimerFontId;
 
   /** Scale factor for the scramble strip text (0.6..2.5). */
   scrambleFontScale: number;
@@ -210,6 +217,7 @@ export const DEFAULTS: TimerSettings = {
   precision: 3,
   runningPrecision: 3,
   timerFontScale: 1,
+  timerFont: 'lcd',
   scrambleFontScale: 1,
   holdMs: 550,
   compactScramble: false,
