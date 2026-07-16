@@ -54,6 +54,7 @@ export default function TrainerRunClient() {
   const currentName = useTrainerStore(s => s.currentName);
   const currentKey = useTrainerStore(s => s.currentKey);
   const currentScramble = useTrainerStore(s => s.currentScramble);
+  const hist = useTrainerStore(s => s.hist);
   const timerState = useTrainerStore(s => s.timerState);
   const timerStarted = useTrainerStore(s => s.timerStarted);
   const observingIdx = useTrainerStore(s => s.observingIdx);
@@ -379,11 +380,16 @@ export default function TrainerRunClient() {
     ? findCaseByKey(cases, cardSolve.caseKey) ?? null
     : (timing ? null : currentCase);
   const cardScramble = cardSolve ? cardSolve.scramble : (timing ? null : currentScramble);
-  const cardHeader = cardSolve ? `#${cardSolve.i + 1}` : undefined;
+  // 计数:第几把 —— 不计时也要有(打乱历史里的位置,从 1 起);跟着一条已录成绩看
+  // 时改用该成绩的序号(两套编号在计时模式下重合,recap/不计时时只有前者)。
+  const cardHeader = cardSolve ? `#${cardSolve.i + 1}` : (hist.idx >= 0 ? `#${hist.idx + 1}` : undefined);
 
   const onNextCase = () => {
     if (timerState === TimerState.NOT_RUNNING) nextScramble();
   };
+
+  // 不计时没有用时可统计,统计卡片(和它的开关)整块不出现,不是留一个空/永远关着的卡片
+  const statsVisible = timing && showStats;
 
   // pre-AUF 只对「顶层 case + U 可作 AUF」的场景有意义(F2L 类打乱前加 U 会换 case)
   const preAufSupported = (puzzle === '3x3' || puzzle === '2x2') && cases[0]?.sticker.kind !== 'f2l';
@@ -439,6 +445,11 @@ export default function TrainerRunClient() {
                   offLabel={tr({ zh: '复习', en: 'Recap' })}
                   ariaLabel={tr({ zh: '训练 / 复习模式', en: 'Train / recap mode' })}
                 />
+              </div>
+              <div className="trainer-opts-hint">
+                {mode === 'train'
+                  ? tr({ zh: '随机抽取,同一 case 可能连续出现', en: 'Random draw, the same case may repeat' })
+                  : tr({ zh: '选中的 case 各出一遍不重复,出完重新打乱顺序', en: 'Each selected case once, no repeats until the round is done' })}
               </div>
               {mode === 'recap' && (
                 <div className="trainer-opts-row">
@@ -497,7 +508,8 @@ export default function TrainerRunClient() {
                   previewWeight={400}
                 />
               </div>
-              {/* 极简:侧栏两块各自可隐藏(issue #30) */}
+              {/* 极简:侧栏两块各自可隐藏(issue #30)。统计=成绩用时列表,不计时根本
+                  没有用时可统计 —— 不计时时连开关一起隐掉,而不是留一个永远关着的死开关。 */}
               <div className="trainer-opts-row">
                 <BoolToggle
                   value={showCaseCard}
@@ -505,13 +517,15 @@ export default function TrainerRunClient() {
                   label={tr({ zh: 'case 卡片', en: 'Case card' })}
                 />
               </div>
-              <div className="trainer-opts-row">
-                <BoolToggle
-                  value={showStats}
-                  onChange={setShowStats}
-                  label={tr({ zh: '统计', en: 'Stats' })}
-                />
-              </div>
+              {timing && (
+                <div className="trainer-opts-row">
+                  <BoolToggle
+                    value={showStats}
+                    onChange={setShowStats}
+                    label={tr({ zh: '统计', en: 'Stats' })}
+                  />
+                </div>
+              )}
               <div className="trainer-opts-help">
                 {timing
                   ? tr({ zh: '空格开始/停止，按住拖动呼出轮盘', en: 'Space to start/stop, hold & drag for the wheel' })
@@ -522,7 +536,7 @@ export default function TrainerRunClient() {
         </div>
       </div>
 
-      <div className={`trainer-run${showCaseCard || showStats ? '' : ' trainer-run--solo'}`}>
+      <div className={`trainer-run${showCaseCard || statsVisible ? '' : ' trainer-run--solo'}`}>
         <div className="trainer-stage" ref={stageRef}>
           <ScrambleHeader
             scramble={currentScramble || ''}
@@ -562,7 +576,7 @@ export default function TrainerRunClient() {
 
         </div>
 
-        {(showCaseCard || showStats) && (
+        {(showCaseCard || statsVisible) && (
           <aside className="trainer-sidebar">
             {showCaseCard && (
               <SolveCard
@@ -575,7 +589,7 @@ export default function TrainerRunClient() {
                 header={cardHeader}
               />
             )}
-            {showStats && (
+            {statsVisible && (
               <StatsList
                 solves={solves}
                 observingIdx={observingIdx}
