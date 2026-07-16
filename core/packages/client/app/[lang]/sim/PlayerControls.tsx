@@ -1017,6 +1017,9 @@ export default function PlayerControls({
   useEffect(() => {
     if (window.matchMedia('(max-width: 768px)').matches) setKbVariant('qwerty');
   }, []);
+  // 快捷键弹窗(查看 / 自定义按键映射)。按钮与虚拟键盘开关同排 —— 都是「键盘」主题,
+  // 放一起比藏在下方设置区里好找(设置区原按钮已移除)。
+  const [keymapOpen, setKeymapOpen] = useState(false);
 
   // The alg/setup props round-trip through the URL (nuqs): a local edit calls
   // onAlgChange → setQuery → the prop echoes back. That echo arrives in several waves
@@ -2204,29 +2207,54 @@ export default function PlayerControls({
       return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
       })()}
 
-      {!isTwistyMode && (
+      {/* 键盘行:左 = 两个虚拟键盘开关(toggle,点亮 = 展开),右 = 「快捷键」「恢复默认设置」
+          动作按钮(带文字,免得和左侧键盘图标混淆)。竖线分隔两组。twisty 拼图无虚拟键盘,
+          只剩右侧两个动作按钮(与原设置区位置时行为一致)。 */}
       <div className="sim-keyboard-section">
         <div className="sim-keyboard-switcher">
+          {!isTwistyMode && (
+            <>
+              <button
+                type="button"
+                className={'vkb-toggle' + (kbVariant === 'alg' ? ' active' : '')}
+                onClick={() => setKbVariant((v) => (v === 'alg' ? null : 'alg'))}
+                title={t('解法虚拟键盘', 'Alg virtual keyboard')}
+                aria-label={t('解法虚拟键盘', 'Alg virtual keyboard')}
+                aria-pressed={kbVariant === 'alg'}
+              >
+                <Keyboard size={14} />
+              </button>
+              <button
+                type="button"
+                className={'vkb-toggle' + (kbVariant === 'qwerty' ? ' active' : '')}
+                onClick={() => setKbVariant((v) => (v === 'qwerty' ? null : 'qwerty'))}
+                title={t('按键映射键盘(点击 = 转魔方)', 'Keymap keyboard (click = twist cube)')}
+                aria-label={t('按键映射键盘', 'Keymap keyboard')}
+                aria-pressed={kbVariant === 'qwerty'}
+              >
+                <Grid3x3 size={14} />
+              </button>
+              <span className="sim-kb-sep" aria-hidden />
+            </>
+          )}
           <button
             type="button"
-            className={'vkb-toggle' + (kbVariant === 'alg' ? ' active' : '')}
-            onClick={() => setKbVariant((v) => (v === 'alg' ? null : 'alg'))}
-            title={t('解法虚拟键盘', 'Alg virtual keyboard')}
-            aria-label={t('解法虚拟键盘', 'Alg virtual keyboard')}
+            className="sim-keymap-open-btn"
+            onClick={() => setKeymapOpen(true)}
+            title={t('键盘 / 鼠标快捷键(可自定义)', 'Keyboard / mouse shortcuts (customizable)')}
           >
-            <Keyboard size={14} />
+            {t('快捷键', 'Shortcuts')}
           </button>
           <button
             type="button"
-            className={'vkb-toggle' + (kbVariant === 'qwerty' ? ' active' : '')}
-            onClick={() => setKbVariant((v) => (v === 'qwerty' ? null : 'qwerty'))}
-            title={t('按键映射键盘(点击 = 转魔方)', 'Keymap keyboard (click = twist cube)')}
-            aria-label={t('按键映射键盘', 'Keymap keyboard')}
+            className="sim-drawer-reset"
+            onClick={() => { onSettingsChange(DEFAULT_SETTINGS); if (world) resetWorldView(world, DEFAULT_SETTINGS); }}
+            title={t('全部设置与视角恢复默认(不含快捷键)', 'Reset all settings & view to defaults (shortcuts unaffected)')}
           >
-            <Grid3x3 size={14} />
+            {t('恢复默认设置', 'Reset settings')}
           </button>
         </div>
-        {kbVariant === 'alg' && (
+        {!isTwistyMode && kbVariant === 'alg' && (
           <CubeVirtualKeyboard
             target={algElRef}
             onInput={() => {
@@ -2239,11 +2267,10 @@ export default function PlayerControls({
             }}
           />
         )}
-        {kbVariant === 'qwerty' && (
+        {!isTwistyMode && kbVariant === 'qwerty' && (
           <SimQwertyKeypad keymap={keymap} onMove={applyMove} />
         )}
       </div>
-      )}
 
       <div className="sim-player-tools">
         <button onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
@@ -2286,9 +2313,11 @@ export default function PlayerControls({
         onRendererChange={onRendererChange}
         settings={settings}
         onSettingsChange={onSettingsChange}
-        onResetView={() => { if (world) resetWorldView(world, DEFAULT_SETTINGS); }}
         t={t}
-        applyMove={applyMove}
+      />
+      <KeymapModal
+        open={keymapOpen}
+        onClose={() => setKeymapOpen(false)}
         keymap={keymap}
         onKeymapChange={onKeymapChange}
         onResetKeymap={onResetKeymap}
@@ -2545,8 +2574,7 @@ function ColorRow({
 function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   renderer, onRendererChange,
-  settings, onSettingsChange, onResetView, t,
-  keymap, onKeymapChange, onResetKeymap,
+  settings, onSettingsChange, t,
 }: {
   order: number;
   onOrderChange: (n: number) => void;
@@ -2556,13 +2584,7 @@ function PuzzleSettings({
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
-  /** 「恢复默认」附带的视角硬复位(整体朝向 / 平移 / 缩放),见 resetWorldView。 */
-  onResetView: () => void;
   t: (zh: string, en: string) => string;
-  applyMove: (m: KeyMove) => void;
-  keymap: Record<string, KeyMove>;
-  onKeymapChange: (km: Record<string, KeyMove>) => void;
-  onResetKeymap: () => void;
 }) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -2583,7 +2605,6 @@ function PuzzleSettings({
     ? t('该拼图暂不支持此功能(切到「群论内核」渲染可启用)', 'Not available for this puzzle (switch the renderer to "Group theory" to enable)')
     : t('该拼图暂不支持此功能', 'Not available for this puzzle');
   const hint = (ok: boolean) => (ok ? undefined : naHint);
-  const [keymapOpen, setKeymapOpen] = useState(false);
 
   const renderOrderSlot = useCallback((v: number) => (v >= 1 && v <= 400 ? String(v) : ''), []);
   const [orderDraft, setOrderDraft] = useState<string>(String(order));
@@ -2727,22 +2748,6 @@ function PuzzleSettings({
                 </select>
               </div>
             )}
-            <button
-              type="button"
-              className="sim-keymap-open-btn"
-              onClick={() => setKeymapOpen(true)}
-              title={t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}
-              aria-label={t('键盘 / 鼠标快捷键', 'Keyboard / mouse shortcuts')}
-            >
-              <Keyboard size={15} />
-            </button>
-            <button
-              type="button"
-              className="sim-drawer-reset"
-              onClick={() => { onSettingsChange(DEFAULT_SETTINGS); onResetView(); }}
-            >
-              {t('恢复默认', 'Reset to defaults')}
-            </button>
           </div>
 
           <div className="sim-puzzle-sliders">
@@ -2981,13 +2986,6 @@ function PuzzleSettings({
             )}
           </ColorRow>
         </div>
-      <KeymapModal
-        open={keymapOpen}
-        onClose={() => setKeymapOpen(false)}
-        keymap={keymap}
-        onKeymapChange={onKeymapChange}
-        onResetKeymap={onResetKeymap}
-      />
     </section>
   );
 }

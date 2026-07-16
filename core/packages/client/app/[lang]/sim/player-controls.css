@@ -272,12 +272,6 @@
   align-items: flex-end;
   gap: 12px;
 }
-.sim-puzzle-row .sim-keymap-open-btn,
-.sim-puzzle-row .sim-drawer-reset {
-  height: 32px;
-  margin-top: 0;
-  padding: 0 12px;
-}
 .sim-puzzle-section-grow {
   flex: 1;
   min-width: 0;
@@ -773,9 +767,28 @@
   flex-direction: column;
   gap: 6px;
 }
+/* 键盘行:左 = 虚拟键盘开关(图标 toggle),竖线,右 = 快捷键 / 恢复默认设置(文字动作按钮)。
+   上方 8px 间距原来自 .vkb-toggle 自带 margin-top,收编到行容器统一管。 */
 .sim-keyboard-switcher {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
+  margin-top: 8px;
+}
+.sim-keyboard-switcher .vkb-toggle {
+  margin-top: 0;
+}
+.sim-keyboard-switcher .sim-keymap-open-btn,
+.sim-keyboard-switcher .sim-drawer-reset {
+  margin-top: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.sim-kb-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border-default);
 }
 .sim-qwerty-keypad {
   font-size: 12px;

@@ -158,7 +158,7 @@
 .sim-keymap[open] > summary {
   margin-bottom: 8px;
 }
-/* 抽屉里那个"打开快捷键 modal"按钮 */
+/* "打开快捷键 modal"按钮(现位于键盘行,player-controls.css 有紧凑覆写) */
 .sim-keymap-open-btn {
   display: inline-flex;
   align-items: center;
