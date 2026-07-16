@@ -1170,14 +1170,30 @@ td.is-pr {
   height: 1em;
   flex: none;
 }
+/* 轮次标签必须显示全(issue #33 反馈):禁收缩/省略号,过宽由 CompPoster 的
+   schedFit 按整行溢出比例压字号解决 */
 .comp-poster-row-name {
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: none;
 }
-/* 多栏赛程(栏数 1-4 由 CompPoster 按行数算好走内联 columnCount;字号由 fit 缩放) */
+/* 多栏赛程(常规 ≤2 栏,5-6 天的比赛 3 栏):单日走内联 columnCount(1-2 栏按行数);
+   ≥2 天走一天一栏的对齐网格,超出栏数的天由 grid 行优先自动折回前排下方。字号由 fit 缩放 */
 .comp-poster-days {
   column-gap: 1.57em;
+}
+/* 单日分栏时日期头独占一行(横跨所有栏),赛程行从其下方开始分栏;
+   天网格里无 multicol 上下文,column-span 自动不生效 */
+.comp-poster-days:not(.comp-poster-days--grid) .comp-poster-day-h {
+  column-span: all;
+}
+.comp-poster-days--grid {
+  display: grid;
+  row-gap: 0.5em;
+  align-items: start;
+}
+.comp-poster-days--grid .comp-poster-day {
+  margin-bottom: 0; /* 网格行距由 row-gap 管 */
+  min-width: 0;
 }
 .comp-poster-foot {
   position: relative;

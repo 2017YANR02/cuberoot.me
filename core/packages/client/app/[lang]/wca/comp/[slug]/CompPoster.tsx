@@ -148,10 +148,16 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
       .filter(d => d.activities.length > 0);
   }, [data, tz]);
 
-  // 均衡多栏(issue #33):按行数(含日期头)选 1-4 栏,避免单栏时右侧大面积留白;
+  // 多栏(issue #33):常规最多 2 栏;仅 5-6 天的比赛放宽到 3 栏。
+  // ≥2 天 = 一天一栏的对齐网格(grid,行优先自动换行 —— 超出栏数的天
+  // 折回前排下方:2 栏时第 3/4 天在第 1/2 天下,3 栏时第 4/5/6 天在第 1/2/3 天下);
+  // 单日比赛按行数 1-2 栏连续分栏,避免右侧大面积留白。
   // 字号不分档,由下面的 fit 连续缩放铺满版面。
   const totalRows = days.reduce((n, d) => n + d.activities.length, 0) + days.length;
-  const schedCols = totalRows <= 8 ? 1 : totalRows <= 26 ? 2 : totalRows <= 48 ? 3 : 4;
+  const dayGrid = days.length >= 2;
+  const schedCols = dayGrid
+    ? (days.length >= 5 ? 3 : Math.min(days.length, 2))
+    : totalRows <= 8 ? 1 : 2;
 
   // 铺满版面:海报内字号/间距全部 em(基准 14px),渲染后实测内容高度,把基准字号
   // 乘上 (可用高 / 实际用高) 迭代逼近——内容刚好填满 960px 且不溢出(余量 ≤4% 收敛)。
@@ -169,18 +175,16 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
     const main = mainRef.current;
     const daysEl = daysRef.current;
     if (!main || !daysEl) return;
-    if (fitIter.current >= 10) return;
-    // 行宽:轮次标签(flex 收缩项)被截断的最大溢出比例 → 一次性把 schedFit 压回去
+    if (fitIter.current >= 12) return;
+    // 行宽:行内容全部 flex:none 不收缩(轮次标签必须显示全,禁省略号),
+    // 溢出栏宽时 row.scrollWidth > clientWidth,按最大溢出比例一次性把 schedFit 压回去
     let widthFactor = 1;
-    for (const name of Array.from(daysEl.querySelectorAll<HTMLElement>('.comp-poster-row-name'))) {
-      const row = name.parentElement;
-      if (!row || row.clientWidth <= 0) continue;
-      const need = row.clientWidth - name.clientWidth + name.scrollWidth;
-      widthFactor = Math.max(widthFactor, need / row.clientWidth);
+    for (const row of Array.from(daysEl.querySelectorAll<HTMLElement>('.comp-poster-row'))) {
+      if (row.clientWidth > 0) widthFactor = Math.max(widthFactor, row.scrollWidth / row.clientWidth);
     }
     if (widthFactor > 1.01) {
       fitIter.current += 1;
-      setSchedFit(s => Math.max(0.5, s / (widthFactor * 1.02)));
+      setSchedFit(s => Math.max(0.4, s / (widthFactor * 1.03)));
       return;
     }
     // offsetTop/offsetHeight 是布局值,不受预览 transform: scale 影响
@@ -304,10 +308,12 @@ export default function CompPoster({ slug, compName, compIso2, info, isZh }: Com
                   <div className="comp-poster-empty">{tr({ zh: '暂无赛程', en: 'No schedule available' })}</div>
                 ) : (
                   <div
-                    className="comp-poster-days"
+                    className={`comp-poster-days${dayGrid ? ' comp-poster-days--grid' : ''}`}
                     ref={daysRef}
                     style={{
-                      ...(schedCols > 1 ? { columnCount: schedCols } : null),
+                      ...(dayGrid
+                        ? { gridTemplateColumns: `repeat(${schedCols}, minmax(0, 1fr))` }
+                        : schedCols > 1 ? { columnCount: schedCols } : null),
                       ...(schedFit !== 1 ? { fontSize: `${schedFit.toFixed(3)}em` } : null),
                     }}
                   >
