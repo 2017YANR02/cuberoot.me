@@ -118,6 +118,10 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
           <h2>
             {m.ollcp}
             <span className="alg-meta-head-sub">{caseObj.name}</span>
+            {/* 标题旁直达 case 所在列表页(真 <a>,中键可新开) */}
+            <Link href={listHref} className="alg-meta-head-open" prefetch={false} title={tr({ zh: '跳转到 case 所在页面', en: 'Open the case in its list page' })}>
+              <ExternalLink size={14} />
+            </Link>
           </h2>
           <button type="button" className="alg-admin-modal-head-btn" onClick={onClose} title={tr({ zh: '关闭', en: 'Close' })}>
             <X size={16} />
@@ -146,9 +150,6 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
                   len={a.len}
                 />
               ))}
-              <Link href={listHref} className="alg-meta-open" prefetch={false}>
-                <ExternalLink size={12} /> {tr({ zh: '在列表中打开', en: 'Open in list' })}
-              </Link>
             </div>
           </div>
 
@@ -173,7 +174,6 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
             const orbit = caseOrbit(caseObj);
             const uni = ALG_SET_UNIVERSE[set];
             if (orbit == null || !uni) return null;
-            const pct = (o: number, total: number) => `${Number((100 * o / total).toPrecision(2))}%`;
             return (
               <Row label={tr({ zh: '出现概率', en: 'Probability' })}>
                 <span
@@ -183,7 +183,7 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
                     en: `${orbit} of ${uni.total} states in the ${uni.label} universe`,
                   })}
                 >
-                  {uni.label} {probabilityFraction(orbit, uni.total)} ({pct(orbit, uni.total)})
+                  {uni.label} {probabilityFraction(orbit, uni.total)}
                 </span>
                 {set !== '1lll' && (
                   <span
@@ -193,7 +193,7 @@ export default function AlgCaseMetaModal({ caseObj, puzzle, set, byNo, onClose, 
                       en: `${orbit} of ${LL_UNIVERSE_TOTAL} states in the 1LLL universe`,
                     })}
                   >
-                    1LLL {probabilityFraction(orbit, LL_UNIVERSE_TOTAL)} ({pct(orbit, LL_UNIVERSE_TOTAL)})
+                    1LLL {probabilityFraction(orbit, LL_UNIVERSE_TOTAL)}
                   </span>
                 )}
                 <Link href="/math/probability" className="alg-meta-prob-why" prefetch={false}>

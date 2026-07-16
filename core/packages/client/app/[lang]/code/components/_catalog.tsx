@@ -34,6 +34,7 @@ import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar'
 import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
 import { VARIANT_ORDER } from '@/lib/scramble-variants';
 import NumberCommitInput from '@/components/NumberCommitInput';
+import TimerFontPicker from '@/components/TimerFontPicker';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import MembershipBadge from '@/components/MembershipBadge';
 import { Flag } from '@/components/Flag';
@@ -165,6 +166,15 @@ function PillToggleDemo() {
       <PillToggle value={b} onChange={setB}
         onLabel={tr({ zh: '单次', en: 'Single' })}
         offLabel={tr({ zh: '平均', en: 'Average' })} />
+    </div>
+  );
+}
+
+function TimerFontPickerDemo() {
+  const [font, setFont] = useState<'lcd' | 'mono' | 'liberation' | 'sans'>('lcd');
+  return (
+    <div className="cg-row">
+      <TimerFontPicker value={font} onChange={setFont} />
     </div>
   );
 }
@@ -682,6 +692,15 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<PillToggle value={type === "single"} onChange={v => setType(v ? "single" : "average")} onLabel="单次" offLabel="平均" />',
     Demo: PillToggleDemo,
     note: { zh: '默认就贴合文字、并自动按较长标签预留宽度(切换 on/off 不跳变),无需再 page-scope 覆盖 min-width。当过滤器跟 select 同行时给它跟 select 同高(看 /wca/results 的 .wse-filter pill,34px 上下居中)。锁:tests/pilltoggle-default-fit.test.ts。', en: 'Hugs the text by default and auto-reserves the longer label’s width (no jump on toggle) — no page-scope min-width override needed. When used as a filter alongside selects, match the select height (see /wca/results .wse-filter pill — 34px, vertically centered). Locked by tests/pilltoggle-default-fit.test.ts.' },
+  },
+  {
+    name: 'TimerFontPicker',
+    import: "import TimerFontPicker from '@/components/TimerFontPicker';",
+    category: 'input',
+    zh: '计时数字字体下拉:trigger 与每个菜单项都用对应字体渲染 0123456789 数字预览,所见即所得(原生 <select> 的 option 无法跨浏览器按字体渲染)。四档(LCD 七段 / Roboto Mono / Liberation Mono / Inter)与 /timer 设置、/alg 训练器的持久化字段一致;两处均用它。',
+    en: 'Timer-digit font dropdown: the trigger and every menu item render a 0123456789 preview in their own face — WYSIWYG (native <select> options cannot be font-styled cross-browser). The four ids (LCD 7-seg / Roboto Mono / Liberation Mono / Inter) match the persisted fields of /timer settings and the /alg trainer, both of which use it.',
+    usage: '<TimerFontPicker value={font} onChange={setFont} />',
+    Demo: TimerFontPickerDemo,
   },
   {
     name: 'BoolToggle',

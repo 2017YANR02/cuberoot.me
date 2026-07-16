@@ -2,7 +2,7 @@
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
 import { useMemo, useState, type ReactNode } from 'react';
-import { Trash2, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
@@ -48,21 +48,22 @@ export function TimerDisplay({
 }
 
 /** 打乱正文。label(如「已复制」反馈)可选 —— 没有就只渲染打乱本身。 */
-export function ScrambleHeader({ scramble, label }: { scramble: string; label?: string }) {
+export function ScrambleHeader({ scramble, label, font = 'sans' }: { scramble: string; label?: string; font?: string }) {
   return (
     <div>
       {label && <div className="trainer-scramble-label">{label}</div>}
-      <div className="trainer-scramble-text">{scramble || '—'}</div>
+      <div className={`trainer-scramble-text sf-${font}`}>{scramble || '—'}</div>
     </div>
   );
 }
 
 export function SolveCard({
-  puzzle, set, solve, c, header, onShowCase,
+  puzzle, set, scramble, c, header, onShowCase,
 }: {
   puzzle: AlgPuzzle;
   set: string;
-  solve: TrainerSolve | null;
+  /** 展示的打乱(计时模式 = 所观察那条成绩的;不计时 = 当前题的)。 */
+  scramble: string | null;
   c: AlgCase | null;
   isZh: boolean;
   header: ReactNode;
@@ -75,7 +76,7 @@ export function SolveCard({
         <span>{header}</span>
       </div>
       <hr className="trainer-card-divider" />
-      {!solve || !c ? (
+      {!scramble || !c ? (
         <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet'
         })}</div>
       ) : (
@@ -99,7 +100,6 @@ export function SolveCard({
                 title={tr({ zh: '查看该情况', en: 'View this case' })}
               >
                 {primaryCaseName(puzzle, set, c)}
-                <Info size={12} />
               </button>
             ) : (
               primaryCaseName(puzzle, set, c)
@@ -108,7 +108,7 @@ export function SolveCard({
           <div className="trainer-solve-row">
             <span>{tr({ zh: '打乱:', en: 'Scramble:'
             })}</span>
-            <div className="trainer-solve-scramble">{solve.scramble}</div>
+            <div className="trainer-solve-scramble">{scramble}</div>
           </div>
         </>
       )}
