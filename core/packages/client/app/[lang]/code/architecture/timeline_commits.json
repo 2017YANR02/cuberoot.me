@@ -718,5 +718,35 @@
     "date": "2026-07-10",
     "zh": "复盘同赛表格加单轮步数与 TPS 的 Ao5 及整解复制 + /sim 手模第四五轮指法 + 斜转记号指南可点字母演示 + 论坛回复用富文本编辑器 + 打乱难度国家改为可搜索下拉",
     "en": "Recon's same-comp table gains a round-level moves/TPS Ao5 and a full-reconstruction copy; /sim hands rounds 4-5; a Skewb notation guide demos each letter on tap; forum replies use the rich editor; the scramble country filter becomes a searchable dropdown"
+  },
+  {
+    "date": "2026-07-11",
+    "zh": "刷新近期比赛数据、中文赛名与 WCA 统计",
+    "en": "Refresh upcoming-competition data, Chinese comp names and WCA statistics"
+  },
+  {
+    "date": "2026-07-12",
+    "zh": "/sim 手模多轮精修（对称、前臂融合）+ 邮箱密码登录与登录弹窗重做 + 计时器按步数打乱与自建二阶 / 金字塔状态枚举 + 复盘视频解码算法研究",
+    "en": "/sim hand-rig refinement (symmetry, fused forearm) + email/password login and login-modal redesign + timer move-count scrambles with home-grown 2x2/pyraminx state enumeration + recon-decode research"
+  },
+  {
+    "date": "2026-07-13",
+    "zh": "图像编辑器并入 /sim 图像面板 + 1LLL 公式表迁入公式库 + 密码重置上线 + 打乱库加二阶首面与金字塔 V 形图样画廊",
+    "en": "Visual cube image editor merges into /sim's image panel + 1LLL algorithm sheet migrated into the algorithm DB + password-reset flow launches + scramble library gains a 2x2 first-face and Pyraminx V-shape case gallery"
+  },
+  {
+    "date": "2026-07-14",
+    "zh": "站内通知系统上线（复盘评论 / 回复提醒，可关邮件）+ 公式库标记失效算法并上报管理员 + 打乱图样库加指标下拉，EOLine 并入 EO 方法",
+    "en": "Site-wide notification system launches (recon comment/reply alerts, opt-out emails) + algorithm DB flags failing algs and reports them to admins + scramble case gallery gains a metric dropdown; EOLine folds into the EO method"
+  },
+  {
+    "date": "2026-07-15",
+    "zh": "通知系统接入论坛并按收件人本地化邮件 + 训练器完全迁入 /alg（退役 /trainer）+ 页面公告栏（管理可编辑）上线 + 公式库管理加拖拽排序与失效追踪",
+    "en": "Notifications wire up forum triggers with per-recipient email localization + the trainer fully migrates into /alg (retiring /trainer) + admin-editable page notice bars launch + algorithm-DB admin gains drag-reorder and failing-alg tracking"
+  },
+  {
+    "date": "2026-07-16",
+    "zh": "/sim 加阶段染色遮罩与齿轮魔方模拟器 + /icon 图标画廊上线 + 计时器数字字体可选 + /math/probability 概率页上线",
+    "en": "/sim gains stage-stickering masks and a Gear Cube simulator + /icon icon gallery launches + timer gains selectable big-digit fonts + /math/probability page launches"
   }
 ]
