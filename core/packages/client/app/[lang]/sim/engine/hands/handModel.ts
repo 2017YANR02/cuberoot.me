@@ -47,7 +47,7 @@ export interface HandModel {
    *  手/臂粗细失配(2026-07-11 用户抓「手臂比手细」的根因)。 */
   unitScale: number;
   fingers: Record<FingerName, FingerJoints>;
-  /** 全部蒙皮网格(肤 + 袖口),供 rig 统一开层/透明度/禁 raycast。 */
+  /** 全部蒙皮网格,供 rig 统一开层/透明度/禁 raycast。 */
   meshes: THREE.Mesh[];
   /** 加载层自建材质(立体甲片等):rig 侧负责随手 fade / dispose。 */
   extraMats?: THREE.Material[];
@@ -209,11 +209,11 @@ export function makeSkinDetailTexture(): THREE.CanvasTexture {
  *  手端端点;GLTF 加载层把腕骨对齐到这里。 */
 export const WRIST_LOCAL = new THREE.Vector3(-84 * U, -1 * U, -3 * U);
 
-/** 独立前臂件:锥形骨 + 袖口,+x 端点在原点(= 贴腕处)。rig 每帧
- *  `position=腕点, quaternion=setFromUnitVectors(+x, 腕点-肘锚)`。 */
+/** 独立前臂件:锥形骨,+x 端点在原点(= 贴腕处)。rig 每帧
+ *  `position=腕点, quaternion=setFromUnitVectors(+x, 腕点-肘锚)`。
+ *  (灰袖口 2026-07-16 按用户要求移除,臂以肤色圆帽收尾。) */
 export function buildForearm(
   skinMat: THREE.Material,
-  cuffMat: THREE.Material,
 ): { group: THREE.Group; meshes: THREE.Mesh[] } {
   const group = new THREE.Group();
   const meshes: THREE.Mesh[] = [];
@@ -231,19 +231,5 @@ export function buildForearm(
   arm.raycast = noRaycast;
   group.add(arm);
   meshes.push(arm);
-  // 袖口:椭圆截面贴臂(圆环套扁臂会在 z 向留 ~15U 空隙,仰视看穿悬空环),
-  // 加长盖过臂端圆帽(旧 26U 短环,肘端裸皮圆帽从袖里伸出来一截)。腕侧开口
-  // 收到几乎贴臂(臂该处 y37.3/z26.1,开口 38.5/27):留缝会看进袖筒内腔,
-  // 顺臂轴视角读成「靶心」环。
-  const cuffGeo = new THREE.CylinderGeometry(38.5 * U, 44 * U, 64 * U, 22)
-    .rotateZ(-Math.PI / 2)
-    .scale(1, 1, 0.7);
-  const cuff = new THREE.Mesh(cuffGeo, cuffMat);
-  // 覆盖 [-188U,-124U],臂尖(≈-186U)埋进袖内;y/z 随臂同偏对中,否则贴臂
-  // 开口会被偏心的臂戳穿。
-  cuff.position.set(-LEN - 4 * U, 1.5 * U, 1 * U);
-  cuff.raycast = noRaycast;
-  group.add(cuff);
-  meshes.push(cuff);
   return { group, meshes };
 }
