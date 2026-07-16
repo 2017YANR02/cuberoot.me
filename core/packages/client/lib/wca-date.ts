@@ -17,16 +17,16 @@ export function toIsoDate(d: Date): string {
 const WEEKDAY_ZH = ['日', '一', '二', '三', '四', '五', '六'];
 const WEEKDAY_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/** ISO 日期(区间)的星期标签:单日 '星期日'/'Sun',跨日 '星期六~日'/'Sat~Sun'。非法输入返回 ''。 */
+/** ISO 日期(区间)的星期标签:单日 '周日'/'Sun',跨日 '周六~日'/'Sat~Sun'。非法输入返回 ''。 */
 export function weekdayRangeLabel(startISO: string, endISO: string | null | undefined, isZh: boolean): string {
   const parse = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00`);
   const s = parse(startISO);
   if (Number.isNaN(s.getTime())) return '';
   const sd = s.getDay();
-  const single = isZh ? `星期${WEEKDAY_ZH[sd]}` : WEEKDAY_EN[sd]!;
+  const single = isZh ? `周${WEEKDAY_ZH[sd]}` : WEEKDAY_EN[sd]!;
   if (!endISO || endISO.slice(0, 10) === startISO.slice(0, 10)) return single;
   const e = parse(endISO);
   if (Number.isNaN(e.getTime())) return single;
   const ed = e.getDay();
-  return isZh ? `星期${WEEKDAY_ZH[sd]}~${WEEKDAY_ZH[ed]}` : `${WEEKDAY_EN[sd]}~${WEEKDAY_EN[ed]}`;
+  return isZh ? `周${WEEKDAY_ZH[sd]}~${WEEKDAY_ZH[ed]}` : `${WEEKDAY_EN[sd]}~${WEEKDAY_EN[ed]}`;
 }

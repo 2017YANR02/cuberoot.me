@@ -10,7 +10,7 @@ import Link from '@/components/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, ImageDown } from 'lucide-react';
+import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
@@ -46,7 +46,7 @@ import { rememberRecent } from '../page';
 import { useLiveStream, applyResultPatch, type LivePatch, type WsStatus } from '@/hooks/useLiveStream';
 import { useWcaLiveStream, type WcaLiveRoundUpdate } from '@/hooks/useWcaLiveStream';
 import ScheduleView, { ScheduleControls } from './ScheduleView';
-import CompPosterModal from './CompPosterModal';
+import CompPoster from './CompPoster';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
@@ -725,7 +725,7 @@ export default function CompDetailPage() {
   );
   const [layoutParam, setLayoutParam] = useQueryState(
     'layout',
-    parseAsStringEnum<'calendar' | 'table'>(['calendar', 'table']).withOptions({ history: 'replace', scroll: false }),
+    parseAsStringEnum<'calendar' | 'table' | 'poster'>(['calendar', 'table', 'poster']).withOptions({ history: 'replace', scroll: false }),
   );
   const [sourceParam, setSourceParam] = useQueryState(
     'source',
@@ -780,7 +780,6 @@ export default function CompDetailPage() {
   const [modal, setModal] = useState<ModalState | null>(null);
   const [compInfo, setCompInfo] = useState<CompInfo | null>(null);
   const [compInfoSettled, setCompInfoSettled] = useState(false);
-  const [posterOpen, setPosterOpen] = useState(false);
   useEffect(() => {
     if (!slug) return;
     let cancel = false;
@@ -912,7 +911,7 @@ export default function CompDetailPage() {
     if (!hasResults && !compInfoSettled) return;
     setExplicitView(viewParam, { history: 'replace' });
   }, [explicitView, data, hasResults, compInfoSettled, viewParam, setExplicitView]);
-  const schedView: 'calendar' | 'table' = layoutParam === 'table' ? 'table' : 'calendar';
+  const schedView: 'calendar' | 'table' | 'poster' = layoutParam === 'table' || layoutParam === 'poster' ? layoutParam : 'calendar';
   // "Show round details" lives up in the view-tab row (next to the calendar/table
   // toggle); default on so Format / Time limit / Cutoff / Proceed show like WCA.
   const [schedDetailsExpanded, setSchedDetailsExpanded] = useState(true);
@@ -1375,7 +1374,7 @@ export default function CompDetailPage() {
     setExplicitView(value); // 显式记录:空成绩比赛点「成绩」不会被默认弹回预排名
   };
 
-  const onChangeSchedView = (value: 'calendar' | 'table') => {
+  const onChangeSchedView = (value: 'calendar' | 'table' | 'poster') => {
     setLayoutParam(value);
   };
 
@@ -1552,6 +1551,7 @@ export default function CompDetailPage() {
                     >
                       {localizeCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh })}
                     </button>
+                    {nameCopied && <Check size={18} className="comp-title-name-check" />}
                   </span>
                   <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="comp-title-icon" title="WCA">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1571,27 +1571,6 @@ export default function CompDetailPage() {
                       <img src="/icons/upstream/cubingcom.ico" alt="cubing.com" />
                     </a>
                   )}
-                  {/* 复制按钮放到 WCA / cubing.com 图标右侧(原在比赛名内,改到图标行尾) */}
-                  <button
-                    type="button"
-                    onClick={copyCompName}
-                    className={`comp-title-icon comp-title-icon-lucide comp-title-copy-btn${nameCopied ? ' is-copied' : ''}`}
-                    title={tr({ zh: '复制比赛名', en: 'Copy name'
-                    })}
-                    aria-label={tr({ zh: '复制比赛名', en: 'Copy name'
-                    })}
-                  >
-                    {nameCopied ? <Check size={16} /> : <Copy size={15} />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPosterOpen(true)}
-                    className="comp-title-icon comp-title-icon-lucide"
-                    title={tr({ zh: '生成分享图', en: 'Share image' })}
-                    aria-label={tr({ zh: '生成分享图', en: 'Share image' })}
-                  >
-                    <ImageDown size={16} />
-                  </button>
                   <FollowStar
                     variant="inline"
                     compId={slug}
@@ -1730,7 +1709,8 @@ export default function CompDetailPage() {
           {/* 编辑模式铅笔已移除:编辑 / 提议 / 复盘 / 视频全收进点成绩弹窗(AttemptPopover),与选手页一致。 */}
         </div>
 
-        {!isPodium && !isScramble && !isSimilar && (
+        {/* 分享图布局不吃项目筛选,项目条一并隐藏 */}
+        {!isPodium && !isScramble && !isSimilar && !(isSchedule && schedView === 'poster') && (
           <div className="comp-event-bar">
             <WcaEventSelector
               availableEvents={availableEventIds}
@@ -1764,14 +1744,24 @@ export default function CompDetailPage() {
         ) : isSimilar ? (
           <SimilarCompsView comps={similarComps} isZh={isZh} lang={isZh ? 'zh' : 'en'} />
         ) : isSchedule ? (
-          <ScheduleView
-            slug={slug}
-            isZh={isZh}
-            compName={compNameTitle}
-            view={schedView}
-            detailsExpanded={schedDetailsExpanded}
-            eventFilter={schedSelectedSet}
-          />
+          schedView === 'poster' ? (
+            <CompPoster
+              slug={slug}
+              compName={compNameTitle}
+              compIso2={compInfo?.country_iso2?.toLowerCase() || compFlagIso2(slug)}
+              info={compInfo}
+              isZh={isZh}
+            />
+          ) : (
+            <ScheduleView
+              slug={slug}
+              isZh={isZh}
+              compName={compNameTitle}
+              view={schedView}
+              detailsExpanded={schedDetailsExpanded}
+              eventFilter={schedSelectedSet}
+            />
+          )
         ) : isPodium ? (
           <>
             {compRecords.length > 0 && (
@@ -1917,16 +1907,6 @@ export default function CompDetailPage() {
           existingChanges={changeMap.get(personRoundChangeKey(editTarget.wcaId, editTarget.eventId, editTarget.roundTypeId)) ?? []}
           onClose={() => setEditTarget(null)}
           onSaved={() => refreshChanges()}
-        />
-      )}
-      {posterOpen && (
-        <CompPosterModal
-          slug={slug}
-          compName={compNameTitle}
-          compIso2={compInfo?.country_iso2?.toLowerCase() || compFlagIso2(slug)}
-          info={compInfo}
-          isZh={isZh}
-          onClose={() => setPosterOpen(false)}
         />
       )}
     </div>
