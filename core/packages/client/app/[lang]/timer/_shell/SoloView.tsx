@@ -1429,7 +1429,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       <div className="shell-main">
         <TimingSurface
           phase={timer.phase}
-          colorClass={colorClass}
+          colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
           fontSize={fontSize}
           digits={digitsText.split(':').map((part, i) => (
             <span key={i}>{i > 0 && <span className="timer-colon" aria-hidden="true" />}{part}</span>
