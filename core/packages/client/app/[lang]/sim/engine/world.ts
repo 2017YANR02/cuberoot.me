@@ -470,8 +470,15 @@ export default class World {
     // 的身体就站在相机位一带(胸口 z≈19×SIZE,过肩视角),继续开广角只会鱼眼
     // 穿胸 —— scale 低于常规下限 0.3 的部分改为「后拉相机」(dolly),FOV 封在
     // 0.3 档,apparent size 连续。
-    const fovScale = this.handsFullBodyWanted ? Math.max(this.scale, 0.3) : this.scale;
-    const dolly = this.handsFullBodyWanted ? fovScale / this.scale : 1; // ≥1
+    // 全身常显(2026-07-16 用户规格:开了「全身人物」任何缩放都必须看到人)——
+    // 常规缩放域(滑杆 0.5~1.5)相机 z 恰在躯干带里(胸 19×SIZE、头后 ~50×SIZE,
+    // 背面剔除下从体内看不到自己 = 「开了人也没有」,用户抓)。全身模式把整个
+    // 缩放域 ×0.07 重映射进后拉段:0.5~1.5 → 0.035~0.105,全域低于「相机整体
+    // 出体」阈 ≈0.11(头后余量,2026-07-12 实测),人必然全身入画;FOV 恒 0.3
+    // 档、纯 dolly,滑杆语义(大=近)不变。旧「变焦穿越带」淡出随之删除。
+    const scaleEff = this.handsFullBodyWanted ? this.scale * 0.07 : this.scale;
+    const fovScale = this.handsFullBodyWanted ? Math.max(scaleEff, 0.3) : scaleEff;
+    const dolly = this.handsFullBodyWanted ? fovScale / scaleEff : 1; // ≥1
     const min = this.height / Math.min(this.width, this.height) / fovScale / this.perspective;
     const fov = (2 * Math.atan(min) * 180) / Math.PI;
 
@@ -521,14 +528,6 @@ export default class World {
     // 图下人体在 far 侧(视深 ≈ distance + 42×SIZE,pitch/yaw 斜置再加成),
     // 64 会把上半身裁掉只剩腿(2026-07-12 swap 远景实测),放宽到 84。
     this.camera.far = distance + SIZE * (handsOn ? (this.handsFullBodyWanted ? 84 : 15.5) : 8);
-    // 全身穿越带:0.3 以下相机后拉穿过躯干(胸 z≈19×SIZE → 背/头 z≈42×SIZE),
-    // 穿越段身体淡出;再淡入必须等相机整体出体(头后余量 → scale≲0.11,
-    // distance>53×SIZE;旧 0.16 淡入时相机还在头颅里,2026-07-12 实测)。
-    if (this.handsFullBodyWanted) {
-      const s = this.scale;
-      const op = s >= 0.295 ? 1 : Math.max(0, Math.min(1, Math.max((s - 0.27) / 0.025, (0.13 - s) / 0.02)));
-      this.hands?.setBodyZoomFade(op);
-    }
     this._lookAtTarget.set(this.panX, this.panY, 0);
     this.camera.lookAt(this._lookAtTarget);
     this.camera.updateProjectionMatrix();

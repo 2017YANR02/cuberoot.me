@@ -604,9 +604,10 @@ export default function SimPage() {
     const ro = new ResizeObserver(resize);
     ro.observe(container);
 
-    // 全身人物开启时放宽下限:人体高 ~27×棱长,0.3 只够拉到胸口 —— 0.04 才装
-    // 得下整个人(默认取景不变,细节靠常规档,拉远才看全身)。
-    const scaleMin = (): number => (settingsRef.current.fullBody && settingsRef.current.hands ? 0.04 : 0.3);
+    // 全身模式下 world.resize 已把缩放域整体重映射进后拉段(×0.07,任何档位
+    // 都看到整个人),滚轮下限不再需要 0.04 特例(旧特例在重映射后 = 有效
+    // 0.0028,人缩成一个点)。
+    const scaleMin = (): number => 0.3;
     const SCALE_MAX = Infinity;
     const settingsFromScale = (s: number) => Math.round((s - 0.5) * 100);
     let scaleSyncTimer: number | null = null;
