@@ -1,14 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   H, CUT, SEAM, GEAR_B, WHEEL_T, R_OUT, R_ROOT, TEETH,
-  SPLAT_LIFT, SPLAT_THICK, SPLAT_SIDE_LIFT, SPLAT_SIDE_DEPTH,
+  SPLAT_SIDE_LIFT, SPLAT_SIDE_DEPTH, SPLAT_SPAN,
   R_BALL, R_BITE, RING_R, CORE_R, CAP_HALF,
   ARM_R0, ARM_R1, ARM_S, ARM_D,
   wheelRadiusAt, cornerStickerOutline,
 } from '@/app/[lang]/sim/engine/gear/gearGeometry';
 import { CORNER_POS, FACE_AXIS } from '@/app/[lang]/sim/engine/gear/gearState';
 
-const RIM_MAX = R_OUT + SPLAT_LIFT + SPLAT_THICK;
 const AXIAL_MAX = WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH;
 
 // ── numeric wheel sweep helpers (mirror .tmp/gear/derive2.mjs) ──────────────────────
@@ -16,27 +15,27 @@ const AXIAL_MAX = WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH;
 // with overlapping bounding balls, clearing only because the actual toothed solids
 // pass each other. Sample one wheel's boundary against the other's solid over the
 // whole turn and all 3×3 spin-phase combos (phases are independent state per ring).
-const SPLAT_T = WHEEL_T - 9;
 const CAP_IN_R = R_ROOT * 0.45;
 const CAP_T = 12;
 type V3 = [number, number, number];
 
 function inWindow(th: number): boolean {
-  const half = ((2 * Math.PI) / TEETH) * 2; // SPAN = 4 pitches
+  const half = SPLAT_SPAN / 2;
   const d1 = Math.abs((((th - Math.PI / 2 + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) - Math.PI);
   const d2 = Math.abs((((th + Math.PI / 2 + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) - Math.PI);
   return Math.min(d1, d2) < half;
 }
 
-/** Point-in-wheel-solid (wheel local frame, z = radial axis), spin s, inflated m. */
+/** Point-in-wheel-solid (wheel local frame, z = radial axis), spin s, inflated m.
+ *  Wheel body + the flat fan decal on the outer disc face (bounded by pr — the
+ *  decal is inset from the tooth silhouette). */
 function insideWheel(x: number, y: number, z: number, s: number, m: number): boolean {
   const th = Math.atan2(y, x) - s;
   const rho = Math.hypot(x, y);
   const pr = wheelRadiusAt(th);
   if (rho < pr + m && Math.abs(z) < WHEEL_T / 2 + m) return true;
   if (inWindow(th)) {
-    if (rho < pr + SPLAT_LIFT + SPLAT_THICK + m && Math.abs(z) < SPLAT_T / 2 + m) return true;
-    if (rho > CAP_IN_R - m && rho < pr + SPLAT_LIFT + m &&
+    if (rho > CAP_IN_R - m && rho < pr + m &&
         z > WHEEL_T / 2 + SPLAT_SIDE_LIFT - m && z < WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH + m) return true;
   }
   return false;
@@ -56,14 +55,11 @@ function wheelCloud(): V3[] {
       pts.push([rr * c, rr * sn, WHEEL_T / 2], [rr * c, rr * sn, -WHEEL_T / 2]);
     }
     if (inWindow(th)) {
-      const rb = pr + SPLAT_LIFT + SPLAT_THICK;
-      for (const z of [-SPLAT_T / 2, 0, SPLAT_T / 2]) pts.push([rb * c, rb * sn, z]);
       const zc = WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH;
       for (let k = 0; k <= 4; k++) {
-        const rr = CAP_IN_R + ((pr + SPLAT_LIFT - CAP_IN_R) * k) / 4;
+        const rr = CAP_IN_R + ((pr - CAP_IN_R) * k) / 4;
         pts.push([rr * c, rr * sn, zc]);
       }
-      pts.push([(pr + SPLAT_LIFT) * c, (pr + SPLAT_LIFT) * sn, zc]);
     }
   }
   return pts;
@@ -103,7 +99,7 @@ const PHASES = [0, Math.PI / 3, -Math.PI / 3];
 describe('gear geometry clearance invariants', () => {
   it('corner bite tube contains the whole gear sweep with clearance', () => {
     // wheel + splats ⊂ ball(R_BALL) around the center; orbit+spin sweep ⊂ tube(ring, R_BALL)
-    expect(R_BALL).toBeCloseTo(Math.hypot(RIM_MAX, AXIAL_MAX), 6);
+    expect(R_BALL).toBeCloseTo(Math.hypot(R_OUT, AXIAL_MAX), 6);
     expect(R_BITE).toBeGreaterThanOrEqual(R_BALL + 3);
   });
 
@@ -116,7 +112,7 @@ describe('gear geometry clearance invariants', () => {
   it('inner teeth pierce the face plane (the reference front view "bridge" fragments)', () => {
     // the wheel's face-side teeth must show through the face between the center cap
     // and the corner plates — the signature look of the real puzzle's front view.
-    const pierce = GEAR_B + (R_OUT + SPLAT_LIFT + SPLAT_THICK + WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH / 2) / Math.SQRT2;
+    const pierce = GEAR_B + (R_OUT + WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH / 2) / Math.SQRT2;
     expect(pierce).toBeGreaterThan(H + 2);
   });
 
@@ -231,8 +227,8 @@ describe('gear geometry clearance invariants', () => {
     expect(minD).toBeGreaterThan(R_BALL + 2);
   });
 
-  it('wheel profile: 12 teeth, tooth centered at 90°, 60° spin is a profile symmetry', () => {
-    expect(TEETH).toBe(12);
+  it('wheel profile: 6 teeth, tooth centered at 90°, 60° spin is a profile symmetry', () => {
+    expect(TEETH).toBe(6);
     expect(wheelRadiusAt(Math.PI / 2)).toBe(R_OUT);
     expect(wheelRadiusAt(Math.PI / 2 + Math.PI / TEETH)).toBe(R_ROOT); // mid-gullet
     for (let i = 0; i < 100; i++) {
