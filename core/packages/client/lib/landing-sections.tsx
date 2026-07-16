@@ -5,7 +5,7 @@
 import {
   Film, ScanSearch, BookOpen, Shuffle, Library, BookA,
   Compass, Grid2x2, Trophy, Timer as TimerIcon, ImagePlus, Code as CodeIcon,
-  Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, type LucideIcon,
+  Brain, Box, Sigma, Scale, Sprout, Brush, MessagesSquare, Shapes, type LucideIcon,
 } from 'lucide-react';
 import { type LandingSearchCard } from '@/components/LandingSearch';
 
@@ -63,6 +63,8 @@ export const TEXTS: Record<string, { en: string; zh: string
   code:            { en: 'Code', zh: '编程'
 },
   sim:             { en: 'Sim', zh: '模拟'
+},
+  icon:            { en: 'Icons', zh: '图标'
 },
   comp:            { en: 'Comp', zh: '比赛'
 },
@@ -150,6 +152,7 @@ export const SECTIONS: Section[] = [
       { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
       { id: 'paint',       href: '/paint',       internal: true, tier: 'medium', Icon: Brush,      nameKey: 'paint' },
       { id: 'sim',         href: '/sim',         internal: true, tier: 'medium', Icon: Box,        nameKey: 'sim' },
+      { id: 'icon',        href: '/icon',        internal: true, tier: 'medium', Icon: Shapes,     nameKey: 'icon' },
     ],
   },
   {

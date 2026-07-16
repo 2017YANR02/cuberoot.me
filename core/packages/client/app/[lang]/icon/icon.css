@@ -1,0 +1,194 @@
+/* /icon — cube icon gallery. Double-theme page: all colors via :root tokens,
+   so it flips light/dark automatically. Icons are fill-less SVGs → currentColor. */
+
+.icon-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 20px 64px;
+}
+
+.icon-header {
+  margin: 8px 0 20px;
+}
+.icon-header h1 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 650;
+  color: var(--foreground);
+}
+.icon-sub {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.icon-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+.icon-credit:hover {
+  color: var(--accent);
+}
+
+.icon-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.icon-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  width: min(360px, 100%);
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--muted-foreground);
+}
+.icon-search:focus-within {
+  border-color: var(--ring);
+}
+.icon-search-field {
+  flex: 1;
+  min-width: 0;
+}
+.icon-search-input {
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 0.9rem;
+  outline: none;
+}
+.icon-count {
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+
+.icon-section {
+  margin-bottom: 28px;
+}
+.icon-section-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.icon-section-count {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--faint-foreground);
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+}
+
+.icon-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--foreground);
+  text-decoration: none;
+  transition: border-color 0.12s, background 0.12s;
+}
+.icon-cell:hover {
+  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--foreground) 4%, var(--card));
+}
+
+.icon-cell-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--foreground);
+}
+.icon-cell-glyph > svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+
+.icon-cell-name {
+  max-width: 100%;
+  font-size: 0.76rem;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.icon-cell-class {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 100%;
+  padding: 2px 4px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--faint-foreground);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.64rem;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.icon-cell-class:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--muted-foreground);
+}
+.icon-cell-class.is-copied {
+  color: var(--signal-success);
+}
+.icon-cell-class-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.icon-cell-class svg {
+  flex: none;
+}
+
+.icon-empty {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 480px) {
+  .icon-page {
+    padding: 12px 14px 48px;
+  }
+  .icon-grid {
+    grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+    gap: 8px;
+  }
+  .icon-cell-glyph {
+    width: 34px;
+    height: 34px;
+  }
+}
