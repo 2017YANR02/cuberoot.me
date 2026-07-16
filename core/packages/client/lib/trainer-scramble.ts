@@ -73,14 +73,16 @@ function inverseAlg(alg: string): string {
  * 导入时已逐条过 16 折轨道判据,验不过的**不入库**(见 alg-build/import_1lll.mjs)——
  * 所以这里看到的都是真的。缺了就退回 `inv`,绝不猜。
  */
-export type ScrambleKind = 'inv' | 'stm' | 'sqtm' | 'htm' | 'qtm' | 'coep';
+export type ScrambleKind = 'inv' | 'cstimer' | 'stm' | 'sqtm' | 'htm' | 'qtm' | 'coep';
 
 /**
  * 选择器里的顺序与名字。`SH*` / `SQ*` / `H*` / `Q*` 是站长表里的列名(星号 = 最优),
  * 度量的学名在括号里 —— 表叫 SH/SQ,其实是 STM / SQTM(不是 HTM/QTM,那两个另有其列)。
+ * `cstimer` = 随机态求解器风格(同 cstimer 训练打乱:现算 ≈20 步全脸序列),仅 3x3。
  */
 export const SCRAMBLE_KINDS: ReadonlyArray<{ id: ScrambleKind; label: () => string }> = [
   { id: 'inv', label: () => tr({ zh: '逆 case', en: 'Inv case' }) },
+  { id: 'cstimer', label: () => 'cstimer' },
   { id: 'stm', label: () => `SH* (STM)` },
   { id: 'sqtm', label: () => `SQ* (SQTM)` },
   { id: 'htm', label: () => `H* (HTM)` },
@@ -101,9 +103,28 @@ export function availableKinds(c: AlgCase): ScrambleKind[] {
 /** 选定类型下的打乱本体(没有就 null —— 调用方退回 `inv`) */
 function baseForKind(c: AlgCase, kind: ScrambleKind): string | null {
   if (kind === 'coep') return c.meta?.coep?.scramble ?? null;
-  if (kind !== 'inv') return c.meta?.optimal?.[kind]?.scramble ?? null;
+  if (kind === 'stm' || kind === 'sqtm' || kind === 'htm' || kind === 'qtm') {
+    return c.meta?.optimal?.[kind]?.scramble ?? null;
+  }
+  // `inv`(以及 `cstimer` 求解完成前的同步占位)都用 setup / 首条公式的逆
   const baseAlg = c.algs.flat()[0]?.alg ?? c.standard ?? '';
   return (c.setup && c.setup.trim() ? c.setup.trim() : inverseAlg(baseAlg)) || null;
+}
+
+/**
+ * cstimer 风格打乱:把「逆 case 打乱」(pre/post-AUF 已并入)当作状态 setup,
+ * 交给两阶段求解器解出该状态再取逆 —— 得到一条 ≈20 步、全脸随机态风格的打乱,
+ * 与 cstimer 训练打乱同一造法(cstimer 用 min2phase 现算,不是硬编码公式表)。
+ * 求解器 chunk(cubing/search)按需懒加载;失败返回 null,调用方保留占位打乱。
+ */
+export async function cstimerStyleScramble(invScramble: string): Promise<string | null> {
+  try {
+    const { equivalentCleanScramble } = await import('./scramble-from-solution');
+    const s = await equivalentCleanScramble(invScramble);
+    return s || null;
+  } catch {
+    return null;
+  }
 }
 
 export function generateScramble(

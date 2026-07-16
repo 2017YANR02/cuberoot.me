@@ -53,6 +53,42 @@ async function rotationAlgs(kpuzzle: KPuzzle): Promise<string[]> {
 }
 
 /**
+ * 给「从还原态出发到某个状态的一段 setup(可含转体/宽转/slice)」找一条无转体、
+ * 纯面转的等价打乱(两阶段求解器解出该状态再取逆,≈20 步,cstimer 随机态风格)。
+ * 状态本身已还原(纯转体也算)或解析失败时返回 `''`。
+ */
+export async function equivalentCleanScramble(setupAlg: string): Promise<string> {
+  const kpuzzle = await getCube3();
+  const solved = kpuzzle.defaultPattern();
+
+  let alg: Alg;
+  try {
+    alg = new Alg(setupAlg);
+  } catch {
+    return '';
+  }
+
+  const centersKey = (p: KPattern) => JSON.stringify(p.patternData.CENTERS);
+  const solvedCentersKey = centersKey(solved);
+
+  // setup 里的转体会留下净整体旋转,中心不在家求解器会拒解 —— 找一个 *前置*
+  // 旋转 r(24 选一)把中心归位。前置(而非后置)保持棱角相对状态不变。
+  const rots = await rotationAlgs(kpuzzle);
+  let oriented: KPattern | null = null;
+  for (const r of rots) {
+    // state of (r · alg): apply r first, then the setup.
+    const base = r ? solved.applyAlg(new Alg(r)) : solved;
+    const cand = base.applyAlg(alg);
+    if (centersKey(cand) === solvedCentersKey) { oriented = cand; break; }
+  }
+  if (!oriented || oriented.isIdentical(solved)) return '';
+
+  const solution = await experimentalSolve3x3x3IgnoringCenters(oriented);
+  // min2phase prints inverted doubles as `R2'`; `R2` reads cleaner for a scramble.
+  return solution.invert().toString().replace(/2'/g, '2');
+}
+
+/**
  * @param solutionText raw reconstruction (any of the recon textarea formats)
  * @returns clean rotation-free scramble, or `''` if the solution is empty /
  *          unparseable / already-solved.
@@ -61,30 +97,13 @@ export async function deriveScrambleFromSolution(solutionText: string): Promise<
   const cleaned = cleanForPlayer(solutionText).replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
   if (!cleaned) return '';
 
-  const kpuzzle = await getCube3();
-  const solved = kpuzzle.defaultPattern();
-
   let inverted: Alg;
   try {
     inverted = new Alg(cleaned).invert();
   } catch {
     return '';
   }
-
-  const centersKey = (p: KPattern) => JSON.stringify(p.patternData.CENTERS);
-  const solvedCentersKey = centersKey(solved);
-
-  const rots = await rotationAlgs(kpuzzle);
-  let oriented: KPattern | null = null;
-  for (const r of rots) {
-    // state of (r · inverted): apply r first, then the inverted solution.
-    const base = r ? solved.applyAlg(new Alg(r)) : solved;
-    const cand = base.applyAlg(inverted);
-    if (centersKey(cand) === solvedCentersKey) { oriented = cand; break; }
-  }
-  if (!oriented || oriented.isIdentical(solved)) return '';
-
-  const solution = await experimentalSolve3x3x3IgnoringCenters(oriented);
-  // min2phase prints inverted doubles as `R2'`; `R2` reads cleaner for a scramble.
-  return solution.invert().toString().replace(/2'/g, '2');
+  // The scramble is whatever reaches the state the solution solves — i.e. the
+  // state of the *inverted* solution.
+  return equivalentCleanScramble(inverted.toString());
 }

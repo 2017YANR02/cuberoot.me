@@ -3,7 +3,7 @@
 
 import { create } from 'zustand';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
-import { generateScramble, type ScrambleKind } from './trainer-scramble';
+import { generateScramble, cstimerStyleScramble, type ScrambleKind } from './trainer-scramble';
 import { caseKey, findCaseByKey } from './trainer-case-key';
 import { histBack, histForward, histPush, type ScrambleHist } from './scramble-history';
 import { caseOrbit } from './alg_probability';
@@ -23,6 +23,8 @@ export type TrainerPenalty = 'ok' | '+2' | 'DNF';
 export type TrainerMode = 'train' | 'recap';
 /** uniform = 每个 case 1/N;real = 按数学真实概率(权重 = 轨道大小 16/cn)。 */
 export type TrainerProbMode = 'uniform' | 'real';
+/** recap 过一遍的顺序:shuffle = 洗牌(历史默认),seq = 按 set 里的 case 顺序。 */
+export type TrainerRecapOrder = 'shuffle' | 'seq';
 /** 计时数字字体(lcd 与 /timer 同款七段)。 */
 export type TrainerTimerFont = 'lcd' | 'mono' | 'liberation' | 'sans';
 
@@ -76,12 +78,17 @@ interface TrainerPrefs {
   timing: boolean;
   mode: TrainerMode;
   probMode: TrainerProbMode;
+  recapOrder: TrainerRecapOrder;
   timerFont: TrainerTimerFont;
   scrambleFont: TrainerTimerFont;
+  /** 极简开关:侧栏 case 卡片 / 统计卡片(issue #30,可各自隐藏)。 */
+  showCaseCard: boolean;
+  showStats: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
   preAuf: false, postAuf: true, timing: true, mode: 'train', probMode: 'uniform',
-  timerFont: 'lcd', scrambleFont: 'sans',
+  recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
+  showCaseCard: true, showStats: true,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -102,7 +109,9 @@ const persistPrefs = (p: TrainerPrefs) => {
 /** 从整个 store state 里只摘偏好字段(直接 stringify 整个 state 会把 cases/solves 一起写进去)。 */
 const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   preAuf: st.preAuf, postAuf: st.postAuf, timing: st.timing, mode: st.mode,
-  probMode: st.probMode, timerFont: st.timerFont, scrambleFont: st.scrambleFont,
+  probMode: st.probMode, recapOrder: st.recapOrder,
+  timerFont: st.timerFont, scrambleFont: st.scrambleFont,
+  showCaseCard: st.showCaseCard, showStats: st.showStats,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -135,6 +144,11 @@ interface TrainerState {
   timerState: TimerState;
   timerStarted: number;
   observingIdx: number;
+  /**
+   * 用户在统计里点选了某条成绩 —— 不计时模式下侧栏卡片也切到该成绩
+   * (计时模式本来就跟随 observingIdx);出下一题 / 翻历史时自动解除,回到当前题。
+   */
+  observingPinned: boolean;
 
   // 训练偏好(localStorage `trainer:prefs`;SSR 渲染默认值,挂载后 hydratePrefs 补水)
   preAuf: boolean;
@@ -142,8 +156,11 @@ interface TrainerState {
   timing: boolean;
   mode: TrainerMode;
   probMode: TrainerProbMode;
+  recapOrder: TrainerRecapOrder;
   timerFont: TrainerTimerFont;
   scrambleFont: TrainerTimerFont;
+  showCaseCard: boolean;
+  showStats: boolean;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
   recapQueue: string[];
@@ -160,8 +177,11 @@ interface TrainerState {
   setTiming: (v: boolean) => void;
   setMode: (m: TrainerMode) => void;
   setProbMode: (m: TrainerProbMode) => void;
+  setRecapOrder: (o: TrainerRecapOrder) => void;
   setTimerFont: (f: TrainerTimerFont) => void;
   setScrambleFont: (f: TrainerTimerFont) => void;
+  setShowCaseCard: (v: boolean) => void;
+  setShowStats: (v: boolean) => void;
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
   nextScramble: () => void;
@@ -174,6 +194,8 @@ interface TrainerState {
   setTimerState: (s: TimerState) => void;
 
   setObservingIdx: (i: number) => void;
+  /** 统计里点选成绩:设 observingIdx 并钉住(不计时模式卡片也跟随)。 */
+  pinObserving: (i: number) => void;
   setSolvePenalty: (idx: number, penalty: TrainerPenalty) => void;
   deleteSolve: (idx: number) => void;
   clearSolves: () => void;
@@ -189,6 +211,29 @@ export const trainerPool = (selected: string[], scope: string[] | null): string[
 const EMPTY_HIST: ScrambleHist<TrainerHistEntry> = { list: [], idx: -1 };
 
 export const useTrainerStore = create<TrainerState>((set, get) => {
+  /**
+   * cstimer 风格打乱是异步求解:同步先展示逆 case 占位,解出来后若还停在
+   * 同一道题(且没在计时)原地替换。token 防串:后发的题作废先前的解。
+   */
+  let cstimerToken = 0;
+  const cstimerize = () => {
+    const st = get();
+    if (st.scrambleKind !== 'cstimer' || st.puzzle !== '3x3') return;
+    const placeholder = st.currentScramble;
+    const forKey = st.currentKey;
+    if (!placeholder || !forKey) return;
+    const token = ++cstimerToken;
+    cstimerStyleScramble(placeholder).then(scr => {
+      if (!scr || token !== cstimerToken) return;
+      const cur = get();
+      // 已换题 / 打乱已被重出 → 这条解作废;计时准备/进行中不换题面
+      if (cur.currentKey !== forKey || cur.currentScramble !== placeholder) return;
+      if (cur.timerState !== TimerState.NOT_RUNNING && cur.timerState !== TimerState.STOPPING) return;
+      const list = cur.hist.list.map((e, i) => (i === cur.hist.idx ? { ...e, scramble: scr } : e));
+      set({ currentScramble: scr, hist: { list, idx: cur.hist.idx } });
+    }).catch(() => { /* 保留占位打乱 */ });
+  };
+
   /** 出一道新题并推进历史。pool 空时清空当前题。 */
   const pickFresh = () => {
     const st = get();
@@ -204,7 +249,13 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       const sig = [...pool].sort().join('|');
       let { recapQueue, recapPos } = st;
       if (st.recapSig !== sig || recapPos >= recapQueue.length) {
-        recapQueue = shuffle(pool);
+        if (st.recapOrder === 'seq') {
+          // 顺序:按 set 里 case 的原始顺序过一遍
+          const inPool = new Set(pool);
+          recapQueue = st.cases.map(caseKey).filter(k => inPool.has(k));
+        } else {
+          recapQueue = shuffle(pool);
+        }
         recapPos = 0;
       }
       key = recapQueue[recapPos];
@@ -239,7 +290,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       currentKey: key,
       currentName: c.name,
       currentScramble: scramble,
+      observingPinned: false,
     });
+    cstimerize();
   };
 
   /** 当前题的打乱重出一条(换打乱类型 / 切 pre-AUF 时),历史当前条同步替换。 */
@@ -251,6 +304,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     const scramble = generateScramble(c, puzzle, scrambleKind, { preAuf, postAuf });
     const list = hist.list.map((e, i) => (i === hist.idx ? { ...e, scramble } : e));
     set({ currentScramble: scramble, hist: { list, idx: hist.idx } });
+    cstimerize();
   };
 
   return {
@@ -268,6 +322,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     timerState: TimerState.NOT_RUNNING,
     timerStarted: 0,
     observingIdx: 0,
+    observingPinned: false,
     ...DEFAULT_PREFS,
     recapQueue: [],
     recapPos: 0,
@@ -292,6 +347,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         recapSig: '',
         timerState: TimerState.NOT_RUNNING,
         observingIdx: Math.max(0, persisted.solves.length - 1),
+        observingPinned: false,
       });
       if (trainerPool(selected, get().scope).length > 0) {
         pickFresh();
@@ -350,6 +406,19 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set({ probMode: m });
       persistPrefs(prefsOf(get()));
     },
+    setRecapOrder: (o) => {
+      set({ recapOrder: o, recapSig: '' }); // 清 sig ⟹ 下一题按新顺序重排队列
+      persistPrefs(prefsOf(get()));
+      if (get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
+    },
+    setShowCaseCard: (v) => {
+      set({ showCaseCard: v });
+      persistPrefs(prefsOf(get()));
+    },
+    setShowStats: (v) => {
+      set({ showStats: v });
+      persistPrefs(prefsOf(get()));
+    },
     setTimerFont: (f) => {
       set({ timerFont: f });
       persistPrefs(prefsOf(get()));
@@ -366,7 +435,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       const fwd = histForward(st.hist);
       if (fwd) {
         const cur = fwd.list[fwd.idx];
-        set({ hist: fwd, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble });
+        set({ hist: fwd, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false });
         return;
       }
       pickFresh();
@@ -378,7 +447,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       const back = histBack(st.hist);
       if (!back) return;
       const cur = back.list[back.idx];
-      set({ hist: back, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble });
+      set({ hist: back, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false });
     },
 
     getTimerReady: (delayMs) => {
@@ -431,6 +500,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     setObservingIdx: (i) => set({ observingIdx: i }),
 
+    pinObserving: (i) => set({ observingIdx: i, observingPinned: true }),
+
     setSolvePenalty: (idx, penalty) => {
       const { puzzle, set: setSlug, solves, selected } = get();
       if (!puzzle || !setSlug) return;
@@ -449,6 +520,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set({
         solves: newSolves,
         observingIdx: Math.max(0, newSolves.length - 1),
+        observingPinned: false,
       });
     },
 
@@ -456,7 +528,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       const { puzzle, set: setSlug, selected } = get();
       if (!puzzle || !setSlug) return;
       persist(puzzle, setSlug, { selected, solves: [] });
-      set({ solves: [], observingIdx: 0 });
+      set({ solves: [], observingIdx: 0, observingPinned: false });
     },
   };
 });
