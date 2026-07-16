@@ -15,7 +15,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, Flag, Info, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, GripVertical, Info, AlertTriangle } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -643,9 +643,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
             {availableTags.map(t => <option key={t} value={t}>{ALG_TAG_LABEL[t]()}</option>)}
           </select>
         )}
-        {data && !showSubgroupPicker && (
-          <Link href={`/alg/${puzzleParam}/${set}/select`} className="alg-train-cta" prefetch={false}>
-            <Flag size={14} /> {tr({ zh: '训练', en: 'Train' })}
+        {/* set 级(含 umbrella 落地页)从全集选;subgroup 页带 ?scope= 只从该组选 */}
+        {data && (
+          <Link
+            href={`/alg/${puzzleParam}/${set}/select${subgroupSlug ? `?scope=${encodeURIComponent(subgroupSlug)}` : ''}`}
+            className="alg-train-cta"
+            prefetch={false}
+          >
+            {tr({ zh: '训练', en: 'Train' })}
           </Link>
         )}
         {isAdmin && data && !showSubgroupPicker && (

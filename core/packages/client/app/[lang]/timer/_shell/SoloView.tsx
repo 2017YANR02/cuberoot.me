@@ -101,6 +101,7 @@ import LiveCubeState from '../_components/LiveCubeState';
 import TimingSurface from './TimingSurface';
 import GestureWheel from '@/components/GestureWheel';
 import { useGestureWheel } from '@/hooks/useGestureWheel';
+import { histBack, histForward, histPush } from '@/lib/scramble-history';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
@@ -113,9 +114,6 @@ import './shell.css';
 import { tr } from '@/i18n/tr';
 
 const TRAINER_KINDS = new Set<EventId>(['oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2']);
-
-/** Max scrambles kept for ←/→ back/forward navigation. */
-const SCRAMBLE_HISTORY_CAP = 50;
 
 /** Timer EventIds that map to a real WCA event (drive WcaEventSelector
  *  active state). The rest render via appendEvents. */
@@ -530,20 +528,12 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
   const nextScramble = useCallback(() => {
     const cur = scrambleHistRef.current;
-    if (cur.idx < cur.list.length - 1) {
-      applyScrambleHist({ list: cur.list, idx: cur.idx + 1 });
-      return;
-    }
-    let list = [...cur.list, genScramble()];
-    let idx = cur.idx + 1;
-    if (list.length > SCRAMBLE_HISTORY_CAP) { list = list.slice(1); idx = list.length - 1; }
-    applyScrambleHist({ list, idx });
+    applyScrambleHist(histForward(cur) ?? histPush(cur, genScramble()));
   }, [genScramble, applyScrambleHist]);
 
   const prevScramble = useCallback(() => {
-    const cur = scrambleHistRef.current;
-    if (cur.idx <= 0) return;
-    applyScrambleHist({ list: cur.list, idx: cur.idx - 1 });
+    const back = histBack(scrambleHistRef.current);
+    if (back) applyScrambleHist(back);
   }, [applyScrambleHist]);
 
   // Reset history when the generation context changes. Skip the very first
