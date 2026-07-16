@@ -449,7 +449,10 @@ export default function TrainerRunClient() {
               <div className="trainer-opts-hint">
                 {mode === 'train'
                   ? tr({ zh: '随机抽取,同一 case 可能连续出现', en: 'Random draw, the same case may repeat' })
-                  : tr({ zh: '选中的 case 各出一遍不重复,出完重新打乱顺序', en: 'Each selected case once, no repeats until the round is done' })}
+                  : tr({
+                      zh: '选中的 n 个 case 洗牌后各出一遍,出完重洗。轮内 ≤ n 把必出全部;跨轮看单个 case 最坏间隔 2n−1',
+                      en: 'All n selected cases once per shuffled round, reshuffle when done. Every case within ≤ n draws of a round; worst same-case gap across rounds is 2n−1',
+                    })}
               </div>
               {mode === 'recap' && (
                 <div className="trainer-opts-row">
@@ -480,16 +483,29 @@ export default function TrainerRunClient() {
                 </div>
               )}
               {probSupported && mode === 'train' && (
-                <div className="trainer-opts-row">
-                  <span className="trainer-opts-label">{tr({ zh: '概率', en: 'Odds' })}</span>
-                  <PillToggle
-                    value={probMode === 'uniform'}
-                    onChange={v => setProbMode(v ? 'uniform' : 'real')}
-                    onLabel={tr({ zh: '均等', en: 'Uniform' })}
-                    offLabel={tr({ zh: '真实', en: 'Real' })}
-                    ariaLabel={tr({ zh: '出题概率模式', en: 'Case probability mode' })}
-                  />
-                </div>
+                <>
+                  <div className="trainer-opts-row">
+                    <span className="trainer-opts-label">{tr({ zh: '概率', en: 'Odds' })}</span>
+                    <PillToggle
+                      value={probMode === 'uniform'}
+                      onChange={v => setProbMode(v ? 'uniform' : 'real')}
+                      onLabel={tr({ zh: '均等', en: 'Uniform' })}
+                      offLabel={tr({ zh: '真实', en: 'Real' })}
+                      ariaLabel={tr({ zh: '出题概率模式', en: 'Case probability mode' })}
+                    />
+                  </div>
+                  <div className="trainer-opts-hint">
+                    {probMode === 'uniform'
+                      ? tr({
+                          zh: '每题独立均匀抽取:P(case) = 1/n',
+                          en: 'Independent uniform draw: P(case) = 1/n',
+                        })
+                      : tr({
+                          zh: '按 AUF 轨道大小加权:P(case) ∝ 16/c(c = 该 case 的对称阶),即随机顶层中它的真实出现频率',
+                          en: 'Weighted by AUF orbit size: P(case) ∝ 16/c (c = symmetry order) — its true frequency in a random last layer',
+                        })}
+                  </div>
+                </>
               )}
               {timing && (
                 <div className="trainer-opts-row">
