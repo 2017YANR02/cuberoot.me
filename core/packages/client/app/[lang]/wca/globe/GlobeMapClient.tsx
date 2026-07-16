@@ -16,7 +16,7 @@ import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2, HelpCircle, Download } from 'lucide-react';
+import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2, HelpCircle, Download, LocateFixed } from 'lucide-react';
 import maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -1033,6 +1033,72 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     const countries = new Set(filteredComps.map((c) => c.country));
     return { comps: filteredComps.length, countries: countries.size };
   }, [filteredComps]);
+
+  // 用户定位 + 附近比赛(issue #35):浏览器 geolocation 打点,upcoming 按大圆距离升序列表
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [nearbyOpen, setNearbyOpen] = useState(false);
+  const [locState, setLocState] = useState<'idle' | 'locating' | 'error'>('idle');
+  const [locError, setLocError] = useState<string | null>(null);
+  const userMarkerRef = useRef<maplibregl.Marker | null>(null);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('globe.userPos.v1');
+      if (raw) {
+        const p = JSON.parse(raw) as { lat: number; lng: number };
+        if (Number.isFinite(p?.lat) && Number.isFinite(p?.lng)) setUserPos(p);
+      }
+    } catch { /* */ }
+  }, []);
+  const locate = useCallback(() => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      setLocState('error');
+      setLocError(tr({ zh: '当前浏览器不支持定位', en: 'Geolocation is not supported by this browser' }));
+      return;
+    }
+    setLocState('locating');
+    setLocError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserPos(p);
+        setLocState('idle');
+        try { localStorage.setItem('globe.userPos.v1', JSON.stringify(p)); } catch { /* */ }
+        const map = mapRef.current;
+        if (map) map.easeTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 4), duration: 900 });
+      },
+      (err) => {
+        setLocState('error');
+        setLocError(err.code === err.PERMISSION_DENIED
+          ? tr({ zh: '定位权限被拒绝,请在浏览器设置里允许本站获取位置后重试', en: 'Location permission denied — allow location access for this site and retry' })
+          : tr({ zh: '定位失败,请稍后重试', en: 'Failed to get your location, please retry' }));
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 },
+    );
+  }, []);
+  // 用户位置脉冲 marker(DOM Marker,style 重建后 mapLoaded 翻转会自动重挂)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapLoaded || !userPos) return;
+    const el = document.createElement('div');
+    el.className = 'user-loc-marker';
+    el.innerHTML = '<span class="user-loc-pulse"></span><span class="user-loc-dot"></span>';
+    const mk = new maplibregl.Marker({ element: el }).setLngLat([userPos.lng, userPos.lat]).addTo(map);
+    userMarkerRef.current = mk;
+    return () => { mk.remove(); userMarkerRef.current = null; };
+  }, [userPos, mapLoaded]);
+  const nearbyComps = useMemo(() => {
+    if (!userPos) return [];
+    const here: [number, number] = [userPos.lng, userPos.lat];
+    return (comps ?? [])
+      .map((c) => ({ comp: c, km: haversineKm(here, [c.longitude_degrees, c.latitude_degrees]) }))
+      .sort((a, b) => a.km - b.km)
+      .slice(0, 15);
+  }, [comps, userPos]);
+  const goToNearbyComp = useCallback((c: UpcomingCompRecord) => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.easeTo({ center: [c.longitude_degrees, c.latitude_degrees], zoom: 8, duration: 800 });
+  }, []);
 
   const filteredPast = useMemo(() => {
     if (!pastComps) return [];
@@ -3192,6 +3258,19 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         })}
           aria-label="Measure"
         ><Ruler size={14} strokeWidth={1.75} /></button>
+        <button
+          className={`topbar-tool-btn ${nearbyOpen ? 'is-active' : ''}`}
+          onClick={() => {
+            setNearbyOpen((o) => {
+              const next = !o;
+              if (next && !userPos && locState !== 'locating') locate();
+              return next;
+            });
+          }}
+          title={tr({ zh: '我的位置与附近比赛', en: 'My location and nearby competitions' })}
+          aria-label="Nearby competitions"
+          aria-expanded={nearbyOpen}
+        ><LocateFixed size={14} strokeWidth={1.75} /></button>
 
         <div className="globe-topbar-spacer" />
 
@@ -3434,6 +3513,60 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           </div>
         );
       })()}
+
+      {nearbyOpen && mode !== 'cuber' && (
+        <div className="nearby-card">
+          <div className="nearby-card-header">
+            <span className="nearby-card-icon" aria-hidden="true"><LocateFixed size={16} strokeWidth={1.75} /></span>
+            <span className="nearby-card-title">{tr({ zh: '附近比赛', en: 'Nearby competitions' })}</span>
+            <span className="draw-card-header-spacer" />
+            <button
+              className="draw-card-icon-btn"
+              onClick={locate}
+              disabled={locState === 'locating'}
+              title={tr({ zh: '重新定位', en: 'Re-locate' })}
+              aria-label="Re-locate"
+            ><RotateCw size={14} strokeWidth={1.75} /></button>
+            <button
+              className="draw-card-icon-btn"
+              onClick={() => setNearbyOpen(false)}
+              title={tr({ zh: '关闭', en: 'Close' })}
+              aria-label="Close"
+            ><X size={14} strokeWidth={1.75} /></button>
+          </div>
+          {userPos && (
+            <div className="nearby-card-coords">{formatDMS(userPos.lat, userPos.lng)}</div>
+          )}
+          {locState === 'locating' && (
+            <div className="nearby-card-status">{tr({ zh: '定位中…', en: 'Locating…' })}</div>
+          )}
+          {locState === 'error' && (
+            <div className="nearby-card-status is-error">
+              {locError}
+              <button className="nearby-retry" onClick={locate}>{tr({ zh: '重试', en: 'Retry' })}</button>
+            </div>
+          )}
+          {userPos && nearbyComps.length > 0 && (
+            <div className="nearby-list">
+              {nearbyComps.map(({ comp: c, km }) => (
+                <button key={c.id} className="nearby-item" onClick={() => goToNearbyComp(c)}>
+                  <span className="nearby-item-row">
+                    <span className="nearby-item-name">
+                      <Flag iso2={c.country} className="nearby-item-flag" />
+                      {localizeCompName(c.id, c.name)}
+                    </span>
+                    <span className="nearby-item-dist">{fmtDistance(km, isZh)}</span>
+                  </span>
+                  <span className="nearby-item-sub">{formatDateRangeIso(c.start_date, c.end_date)} · {(nameZhMap?.get(c.id)?.city_zh && isZh) ? nameZhMap.get(c.id)!.city_zh : localizeCity(c.city, isZh, c.country)}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {userPos && comps !== null && nearbyComps.length === 0 && (
+            <div className="nearby-card-status">{tr({ zh: '暂无可显示的近期比赛', en: 'No upcoming competitions to show' })}</div>
+          )}
+        </div>
+      )}
 
       {mode === 'cuber' && !loadProgress && cuberComps.length > 0 && currentComp && (
         <div

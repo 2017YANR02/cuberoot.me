@@ -391,6 +391,154 @@
     color: #FFFFFF;
 }
 
+/* ── 用户定位 + 附近比赛（issue #35） ── */
+.globe-page .user-loc-marker {
+    position: relative;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+}
+.globe-page .user-loc-dot {
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: #4A9EFF;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.globe-page .user-loc-pulse {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(74, 158, 255, 0.45);
+    animation: user-loc-pulse 2s ease-out infinite;
+}
+@keyframes user-loc-pulse {
+    0% { transform: scale(0.6); opacity: 0.9; }
+    70% { transform: scale(2.4); opacity: 0; }
+    100% { transform: scale(2.4); opacity: 0; }
+}
+.globe-page .nearby-card {
+    position: absolute;
+    top: 60px;
+    right: 14px;
+    z-index: 11;
+    width: 320px;
+    max-height: calc(100% - 175px);
+    display: flex;
+    flex-direction: column;
+    background: rgba(28, 33, 41, 0.96);
+    border: 1px solid #2F3540;
+    border-radius: 10px;
+    color: #ECEAE3;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+.globe-page .nearby-card-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+.globe-page .nearby-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: #4A9EFF;
+}
+.globe-page .nearby-card-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+.globe-page .nearby-card-coords {
+    padding: 8px 14px 0;
+    font-size: 0.72rem;
+    color: #9CA0A8;
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+.globe-page .nearby-card-status {
+    padding: 12px 14px;
+    font-size: 0.78rem;
+    color: #9CA0A8;
+    line-height: 1.5;
+}
+.globe-page .nearby-card-status.is-error { color: #E8A2A2; }
+.globe-page .nearby-retry {
+    display: block;
+    margin-top: 8px;
+    padding: 5px 12px;
+    background: transparent;
+    border: 1px solid #4A9EFF;
+    border-radius: 6px;
+    color: #4A9EFF;
+    font-family: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+.globe-page .nearby-retry:hover { background: rgba(74, 158, 255, 0.12); }
+.globe-page .nearby-list {
+    overflow-y: auto;
+    padding: 6px 0 8px;
+}
+.globe-page .nearby-item {
+    display: block;
+    width: 100%;
+    padding: 7px 14px;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.globe-page .nearby-item:hover { background: rgba(255, 255, 255, 0.06); }
+.globe-page .nearby-item-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.globe-page .nearby-item-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #ECEAE3;
+    line-height: 1.35;
+}
+.globe-page .nearby-item-flag { margin-right: 5px; }
+.globe-page .nearby-item-dist {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    color: #4A9EFF;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.globe-page .nearby-item-sub {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.72rem;
+    color: #9CA0A8;
+}
+@media (max-width: 720px) {
+    .globe-page .nearby-card {
+        top: auto;
+        bottom: 44px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-height: 46vh;
+    }
+}
+
 /* ── 朝向 / 俯仰 popover（参考谷歌地球） ── */
 .globe-page .nav-popover {
     position: absolute;
@@ -659,18 +807,15 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.3rem 0.65rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    padding: 0.3rem 0;
     font-size: 0.78rem;
     color: var(--text-dim);
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color 0.15s;
 }
-.globe-page .include-past-toggle:hover { color: var(--text); border-color: var(--border-strong, var(--border)); }
+.globe-page .include-past-toggle:hover { color: var(--text); }
 .globe-page .month-range {
     display: inline-flex;
     align-items: center;
