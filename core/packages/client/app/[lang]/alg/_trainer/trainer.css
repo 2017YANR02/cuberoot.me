@@ -368,10 +368,10 @@
   align-items: center;
   gap: 10px;
 }
+/* 标签宽度贴合文字(不设 min-width 撑对齐 —— 两字标签「概率」会和控件之间留一截空) */
 .trainer-opts-label {
   font-size: 0.8rem;
   color: var(--muted-foreground);
-  min-width: 4em;
 }
 /* 训练/复习差异说明,紧跟在切换器下方(常驻显示,不用 hover-only 提示 —— 移动端够不到 hover) */
 .trainer-opts-hint {
