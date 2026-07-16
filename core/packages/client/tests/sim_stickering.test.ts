@@ -187,6 +187,61 @@ describe('stickeringMaskFn 2x2 / 4x4', () => {
   });
 });
 
+describe('stickeringMaskFn 十字颜色重定向(crossColor)', () => {
+  it('Cross + white:十字落在 U 面(白),D 面变忽略', () => {
+    const m = stickeringMaskFn(3, 'Cross', 'white')!;
+    expect(m(P3.UF, FACE.U)).toBe(FM_REGULAR);   // U 棱 = 十字棱
+    expect(m(P3.UF, FACE.F)).toBe(FM_REGULAR);
+    expect(m(P3.Uc, FACE.U)).toBe(FM_REGULAR);
+    expect(m(P3.Dc, FACE.D)).toBe(FM_DIM);       // 原十字面退化成普通中心
+    expect(m(P3.DF, FACE.D)).toBe(FM_IGNORED);
+    expect(m(P3.UFR, FACE.U)).toBe(FM_IGNORED);  // 顶角不属于十字
+  });
+
+  it('Cross + green:十字落在 F 面(绿)', () => {
+    const m = stickeringMaskFn(3, 'Cross', 'green')!;
+    expect(m(P3.UF, FACE.F)).toBe(FM_REGULAR);   // F 面棱 = 十字棱,主贴纸在 F
+    expect(m(P3.UF, FACE.U)).toBe(FM_REGULAR);
+    expect(m(P3.Fc, FACE.F)).toBe(FM_REGULAR);
+    expect(m(P3.Dc, FACE.D)).toBe(FM_DIM);
+    expect(m(P3.DF, FACE.D)).toBe(FM_REGULAR);   // DF ∈ F 层 → 十字棱
+    expect(m(P3.BR, FACE.B)).toBe(FM_IGNORED);   // B 层棱与绿十字无关
+    expect(m(P3.UFR, FACE.F)).toBe(FM_IGNORED);
+  });
+
+  it('OLL + white:白十字 → 顶层阶段落在 D 面(黄)', () => {
+    const m = stickeringMaskFn(3, 'OLL', 'white')!;
+    expect(m(P3.DF, FACE.D)).toBe(FM_REGULAR);   // D 棱 = LL 棱,主贴纸 D
+    expect(m(P3.DF, FACE.F)).toBe(FM_IGNORED);
+    expect(m(P3.DFR, FACE.D)).toBe(FM_REGULAR);
+    expect(m(P3.DFR, FACE.R)).toBe(FM_IGNORED);
+    expect(m(P3.Dc, FACE.D)).toBe(FM_REGULAR);
+    expect(m(P3.UF, FACE.U)).toBe(FM_DIM);       // 原顶层归入 F2L 变暗
+    expect(m(P3.Fc, FACE.F)).toBe(FM_DIM);
+  });
+
+  it('FirstBlock + red:整套 Roux 随 z 旋转重定向(物理 L→遮罩 U,D→遮罩 L)', () => {
+    const m = stickeringMaskFn(3, 'FirstBlock', 'red')!;
+    expect(m(P3.Lc, FACE.L)).toBe(FM_IGNORED);   // 物理 L 中心 → 遮罩 LL 中心,忽略
+    expect(m(P3.UBL, FACE.U)).toBe(FM_IGNORED);  // 物理 L 层块同理
+    expect(m(P3.Uc, FACE.U)).toBe(FM_DIM);       // 物理 U 中心 → 遮罩 R 中心(暗)
+    expect(m(P3.DF, FACE.D)).toBe(FM_REGULAR);   // 物理 D 层非 L 列 → 遮罩 L 块成员
+    expect(m(P3.Dc, FACE.D)).toBe(FM_REGULAR);
+  });
+
+  it('默认 / 未知颜色 = yellow 恒等', () => {
+    const base = stickeringMaskFn(3, 'Cross')!;
+    const yellow = stickeringMaskFn(3, 'Cross', 'yellow')!;
+    const bogus = stickeringMaskFn(3, 'Cross', 'purple')!;
+    for (const [piece, face] of [
+      [P3.DF, FACE.D], [P3.DF, FACE.F], [P3.Uc, FACE.U], [P3.UFR, FACE.R],
+    ] as const) {
+      expect(yellow(piece, face)).toBe(base(piece, face));
+      expect(bogus(piece, face)).toBe(base(piece, face));
+    }
+  });
+});
+
 describe('stickeringGroupsFor', () => {
   it('阶数清单:1 阶隐藏,2/3/4+ 各有分组', () => {
     expect(stickeringGroupsFor(1)).toEqual([]);

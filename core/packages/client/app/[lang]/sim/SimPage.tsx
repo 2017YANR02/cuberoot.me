@@ -210,6 +210,9 @@ export default function SimPage() {
       // 值 = cubing.js 阶段名(OLL/Cross/CMLL…),NxN 走引擎遮罩,megaminx/fto 走
       // cubing.js 原生。不支持的拼图忽略(下拉也隐藏)。
       stickering: parseAsString.withDefault('full'),
+      // 十字(底面)颜色(cubedb 的 Cross Color):整套阶段遮罩旋转到所选颜色的面。
+      // 默认 yellow(=D,恒等)省略;仅 NxN 引擎遮罩消费,megaminx/fto 无此参数。
+      stickeringColor: parseAsString.withDefault('yellow'),
     },
     { history: 'replace', scroll: false },
   );
@@ -1287,9 +1290,9 @@ export default function SimPage() {
     const cube = asNxN(world);
     if (!cube) return;
     cube.instancedRenderer.setStickering(
-      typeof puzzleParam === 'number' ? stickeringMaskFn(cube.order, query.stickering) : null,
+      typeof puzzleParam === 'number' ? stickeringMaskFn(cube.order, query.stickering, query.stickeringColor) : null,
     );
-  }, [twisty, worldTick, puzzleParam, query.stickering]);
+  }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringColor]);
 
   const prevSettingsRef = useRef<SimSettings | null>(null);
   useEffect(() => {
@@ -1623,6 +1626,8 @@ export default function SimPage() {
             playbackSlot={playbackSlot}
             stickering={query.stickering}
             onStickeringChange={(v) => setQuery({ stickering: v === 'full' ? null : v })}
+            stickeringColor={query.stickeringColor}
+            onStickeringColorChange={(v) => setQuery({ stickeringColor: v === 'yellow' ? null : v })}
           />
           {imageStudioSupported && (
             <CollapsibleSection
