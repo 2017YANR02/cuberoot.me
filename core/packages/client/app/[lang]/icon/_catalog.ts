@@ -51,7 +51,7 @@ export const ICON_GROUPS: IconGroup[] = (() => {
 export const CATEGORY_LABEL: Record<IconCategory, { en: string; zh: string }> = {
   event: { en: 'WCA events', zh: 'WCA 项目' },
   unofficial: { en: 'Unofficial events', zh: '非官方项目' },
-  penalty: { en: 'Penalties', zh: '罚时' },
+  penalty: { en: 'Penalties', zh: '惩罚' },
 };
 
 /** Data URI of the original (fill-less) SVG — for download / right-click "Save link as". */
