@@ -122,6 +122,12 @@ export interface SimSettings {
   handsSkeleton: boolean;
   /** 手指的立体甲片显隐(调试区,mesh.visible 显隐不拆几何)。默认开。 */
   showNails: boolean;
+  /** 指甲配色(甲油):'' = 自然甲(默认);#rrggbb = 甲油底色(重涂甲片顶点色)。 */
+  nailColor: string;
+  /** 甲油渐变第二色(甲根→游离缘渐变的尖端色):'' = 不渐变。仅 nailColor 非空生效。 */
+  nailColorTip: string;
+  /** 甲油深浅:0~100,50 = 原色,低 = 淡(向白),高 = 深(向黑)。仅 nailColor 非空生效。 */
+  nailShade: number;
   /** 调试:SMPL-X 全身查看 —— 开 = 藏拼图与手,只显示原版 SMPL-X neutral
    *  T-pose 人体(手/前臂比例的上游真值参照)。资产逐机转换,缺失时无效果。 */
   showSmplxBody: boolean;
@@ -178,6 +184,9 @@ export const DEFAULT_SETTINGS: SimSettings = {
   fullBody: false,
   handsSkeleton: false,
   showNails: true,
+  nailColor: '',
+  nailColorTip: '',
+  nailShade: 50,
   showSmplxBody: false,
 };
 
@@ -203,6 +212,10 @@ export function loadSettings(): SimSettings {
     if (typeof merged.customLogo !== 'string') merged.customLogo = '';
     if (typeof merged.hands !== 'boolean') merged.hands = false;
     if (typeof merged.fullBody !== 'boolean') merged.fullBody = false;
+    // 指甲配色:非法值兜回默认(色值细校验在 paintNailPolish 入口,这里只保类型)。
+    if (typeof merged.nailColor !== 'string') merged.nailColor = '';
+    if (typeof merged.nailColorTip !== 'string') merged.nailColorTip = '';
+    if (typeof merged.nailShade !== 'number' || !Number.isFinite(merged.nailShade)) merged.nailShade = 50;
     return merged;
   } catch {
     return DEFAULT_SETTINGS;
@@ -250,6 +263,10 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   world.setHandsFullBody(s.hands === true && s.fullBody === true);
   world.hands?.setSkeletonVisible(s.handsSkeleton === true);
   world.hands?.setNailsVisible(s.showNails !== false);
+  // 指甲配色(甲油):'' = 自然甲。rig 内部存最后值,手模晚加载时回放。
+  world.hands?.setNailPolish(
+    s.nailColor ? { color: s.nailColor, tip: s.nailColorTip || '', shade: s.nailShade ?? 50 } : null,
+  );
   world.setSmplxBodyVisible(s.showSmplxBody === true);
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
