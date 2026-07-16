@@ -13,6 +13,10 @@ export interface Comp {
   events?: string[];
   /** 比赛场地经度 — 用来估算比赛当地时区,按比赛本地日期分桶(当前/未来/往期)。 */
   longitude_degrees?: number;
+  /** 比赛场地纬度 — 多地代码(XW/XA/…)为 null/缺省。地理之最统计用。 */
+  latitude_degrees?: number | null;
+  /** 场馆海拔(整数米,管道由经纬度反查 DEM,可为负);无坐标 / 尚未回填时缺省。 */
+  elevation?: number;
   /** 报名开放/截止时刻（ISO 8601 UTC）— 仅 upcoming JSON 有；首页「报名」标签用。 */
   registration_open?: string | null;
   registration_close?: string | null;

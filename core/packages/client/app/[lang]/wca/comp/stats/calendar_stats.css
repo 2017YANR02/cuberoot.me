@@ -393,6 +393,83 @@
   color: var(--muted);
 }
 
+/* ── 地理之最 ── */
+.cs-geo-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cs-geo-row {
+  display: grid;
+  grid-template-columns: 110px minmax(180px, 1.4fr) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.cs-geo-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.cs-geo-comp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cs-geo-comp > .fi,
+.cs-geo-comp > img {
+  width: 20px;
+  height: 14px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.cs-geo-name {
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-geo-name:hover { color: var(--accent); text-decoration: underline; }
+
+.cs-geo-meta {
+  color: var(--muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-geo-value {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.8rem;
+  text-align: right;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .cs-geo-row {
+    grid-template-columns: 82px 1fr auto;
+    font-size: 0.78rem;
+    row-gap: 2px;
+  }
+  .cs-geo-meta {
+    grid-column: 2 / -1;
+    grid-row: 2;
+  }
+}
+
 @media (max-width: 720px) {
   .cs-page { padding: 16px; }
   .cs-bar-row { grid-template-columns: 110px 1fr 48px; font-size: 0.78rem; }
