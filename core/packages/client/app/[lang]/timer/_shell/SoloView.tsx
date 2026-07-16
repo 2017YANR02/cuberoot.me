@@ -1441,7 +1441,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           onMouseUp={onCenterMouseUp}
           scrambleSlot={
             <div
-              className={`scramble-strip${settings.compactScramble ? ' compact' : ''}`}
+              className={`scramble-strip sf-${settings.scrambleFont}${settings.compactScramble ? ' compact' : ''}`}
               style={{ '--scramble-scale': settings.scrambleFontScale } as React.CSSProperties}
               onClick={() => {
                 const action = settings.scrambleClickAction;

@@ -68,16 +68,20 @@ const persist = (p: string, s: string, data: PersistedSession) => {
   localStorage.setItem(sessionKey(p, s), JSON.stringify(data));
 };
 
-/** 跨 set 的训练偏好(pre-AUF / 计时 / 模式 / 概率 / 字体),全局一份。 */
+/** 跨 set 的训练偏好(pre/post-AUF / 计时 / 模式 / 概率 / 字体),全局一份。 */
 interface TrainerPrefs {
   preAuf: boolean;
+  /** 打乱收尾随机 AUF(历史默认行为,关掉 = 打乱原样呈现)。 */
+  postAuf: boolean;
   timing: boolean;
   mode: TrainerMode;
   probMode: TrainerProbMode;
   timerFont: TrainerTimerFont;
+  scrambleFont: TrainerTimerFont;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
-  preAuf: false, timing: true, mode: 'train', probMode: 'uniform', timerFont: 'lcd',
+  preAuf: false, postAuf: true, timing: true, mode: 'train', probMode: 'uniform',
+  timerFont: 'lcd', scrambleFont: 'sans',
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -97,7 +101,8 @@ const persistPrefs = (p: TrainerPrefs) => {
 
 /** 从整个 store state 里只摘偏好字段(直接 stringify 整个 state 会把 cases/solves 一起写进去)。 */
 const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
-  preAuf: st.preAuf, timing: st.timing, mode: st.mode, probMode: st.probMode, timerFont: st.timerFont,
+  preAuf: st.preAuf, postAuf: st.postAuf, timing: st.timing, mode: st.mode,
+  probMode: st.probMode, timerFont: st.timerFont, scrambleFont: st.scrambleFont,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -133,10 +138,12 @@ interface TrainerState {
 
   // 训练偏好(localStorage `trainer:prefs`;SSR 渲染默认值,挂载后 hydratePrefs 补水)
   preAuf: boolean;
+  postAuf: boolean;
   timing: boolean;
   mode: TrainerMode;
   probMode: TrainerProbMode;
   timerFont: TrainerTimerFont;
+  scrambleFont: TrainerTimerFont;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
   recapQueue: string[];
@@ -149,10 +156,12 @@ interface TrainerState {
   setScrambleKind: (k: ScrambleKind) => void;
   hydratePrefs: () => void;
   setPreAuf: (v: boolean) => void;
+  setPostAuf: (v: boolean) => void;
   setTiming: (v: boolean) => void;
   setMode: (m: TrainerMode) => void;
   setProbMode: (m: TrainerProbMode) => void;
   setTimerFont: (f: TrainerTimerFont) => void;
+  setScrambleFont: (f: TrainerTimerFont) => void;
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
   nextScramble: () => void;
@@ -223,7 +232,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set({ currentKey: null, currentName: null, currentScramble: null });
       return;
     }
-    const scramble = generateScramble(c, st.puzzle, st.scrambleKind, { preAuf: st.preAuf });
+    const scramble = generateScramble(c, st.puzzle, st.scrambleKind, { preAuf: st.preAuf, postAuf: st.postAuf });
     set({
       ...recapPatch,
       hist: histPush(st.hist, { key, name: c.name, scramble }),
@@ -235,11 +244,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
   /** 当前题的打乱重出一条(换打乱类型 / 切 pre-AUF 时),历史当前条同步替换。 */
   const regenCurrent = () => {
-    const { currentKey, cases, puzzle, timerState, scrambleKind, preAuf, hist } = get();
+    const { currentKey, cases, puzzle, timerState, scrambleKind, preAuf, postAuf, hist } = get();
     if (!currentKey || !puzzle || timerState !== TimerState.NOT_RUNNING) return;
     const c = findCaseByKey(cases, currentKey);
     if (!c) return;
-    const scramble = generateScramble(c, puzzle, scrambleKind, { preAuf });
+    const scramble = generateScramble(c, puzzle, scrambleKind, { preAuf, postAuf });
     const list = hist.list.map((e, i) => (i === hist.idx ? { ...e, scramble } : e));
     set({ currentScramble: scramble, hist: { list, idx: hist.idx } });
   };
@@ -322,6 +331,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       persistPrefs(prefsOf(get()));
       regenCurrent(); // 立刻在当前题上生效,同 setScrambleKind
     },
+    setPostAuf: (v) => {
+      set({ postAuf: v });
+      persistPrefs(prefsOf(get()));
+      regenCurrent();
+    },
     setTiming: (v) => {
       set({ timing: v });
       persistPrefs(prefsOf(get()));
@@ -338,6 +352,10 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
     setTimerFont: (f) => {
       set({ timerFont: f });
+      persistPrefs(prefsOf(get()));
+    },
+    setScrambleFont: (f) => {
+      set({ scrambleFont: f });
       persistPrefs(prefsOf(get()));
     },
 

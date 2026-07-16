@@ -1208,6 +1208,15 @@ a.alg-community-author:hover {
   font-weight: 500;
   color: var(--muted-foreground);
 }
+/* 标题旁的「跳转到 case 所在页面」图标链接 */
+.alg-meta-head-open {
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  color: var(--muted-foreground);
+}
+.alg-meta-head-open:hover { color: var(--accent); }
 .alg-meta-body {
   display: flex;
   flex-direction: column;
@@ -1345,6 +1354,12 @@ a.alg-community-author:hover {
   color: var(--muted-foreground);
 }
 .alg-meta-optimal-len > strong { color: var(--foreground); }
+/* 让公式行撑满剩余宽度,复制按钮才能四行对齐在同一条右边线上,而不是各自贴着
+   长短不一的公式文字尾巴。 */
+.alg-meta-optimal .alg-meta-algline {
+  flex: 1;
+  min-width: 0;
+}
 /* 组卡副名:字母制 OLL 名当标题之后,原来的 `1LLL 06` 降到这里 */
 .alg-subgroup-card-sub {
   margin-right: 6px;
@@ -1375,18 +1390,6 @@ a.alg-community-author:hover {
   color: var(--faint-foreground);
   font-variant-numeric: tabular-nums;
 }
-.alg-meta-open {
-  align-self: flex-start;
-  margin-top: 2px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--muted-foreground);
-  text-decoration: none;
-}
-.alg-meta-open:hover { color: var(--accent); }
-
 /* 从 `#<case 名>` 锚点跳进来的那张卡,闪一下 —— 不然一组七十个 case,滚过去也认不出是哪张。
    闪光本身的色值在下面那组「边框优先级」里定(要压过红框 / 黄框,得排在它们后面)。 */
 @media (prefers-reduced-motion: no-preference) {

@@ -1,0 +1,91 @@
+/* TimerFontPicker — 字体下拉,trigger 与菜单项都用对应字体渲染数字预览。
+   自带两款非系统字体的 @font-face(与 /timer、/alg 训练器同 src,浏览器去重)。 */
+
+@font-face {
+  font-family: 'Segment7Standard';
+  src: url('/fonts/Segment7Standard.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'LiberationMono';
+  src: url('/fonts/LiberationMono-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+
+.tfp {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+}
+.tfp-trigger {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  /* /timer 设置模态是硬编码暗色(非 token),继承宿主文字色才两处都可读 */
+  color: inherit;
+}
+.tfp-trigger:hover { border-color: var(--border-strong); }
+.tfp-digits {
+  font-size: 0.95rem;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tfp-name {
+  font-size: 0.72rem;
+  opacity: 0.65;
+  white-space: nowrap;
+}
+.tfp-chevron { opacity: 0.6; flex: 0 0 auto; }
+
+.tfp-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  background: var(--popover);
+  color: var(--foreground);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 14%, transparent);
+  width: max-content;
+}
+.tfp-item {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.tfp-item:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); }
+.tfp-item.is-active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.tfp-item.is-active .tfp-name {
+  opacity: 1;
+  color: var(--accent);
+}
