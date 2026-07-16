@@ -5,6 +5,7 @@ import LoginModal from "@/components/LoginModal";
 import ThemeColorSync from "@/components/ThemeColorSync";
 import AuthTokenRefresher from "@/components/AuthTokenRefresher";
 import MembershipReminder from "@/components/MembershipReminder";
+import StickyScrollGuard from "@/components/StickyScrollGuard";
 import AppNuqsAdapter from "@/components/AppNuqsAdapter";
 import "./fonts.css";
 import "./globals.css";
@@ -57,6 +58,7 @@ export default function RootLayout({
           <LoginModal />
           <ThemeColorSync />
           <AuthTokenRefresher />
+          <StickyScrollGuard />
         </AppNuqsAdapter>
       </body>
     </html>
