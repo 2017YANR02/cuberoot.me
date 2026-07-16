@@ -111,8 +111,6 @@ export function SolveCard({
             )}
           </div>
           <div className="trainer-solve-row">
-            <span>{tr({ zh: '打乱:', en: 'Scramble:'
-            })}</span>
             <div className="trainer-solve-scramble">{scramble}</div>
           </div>
         </>
