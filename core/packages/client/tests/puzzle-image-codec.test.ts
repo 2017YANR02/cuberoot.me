@@ -41,6 +41,12 @@ const SPECS: Record<string, ImageSpec> = {
   'megaminx top': spec({ puzzleType: 'megaminx', puzzleVariant: 'top' }),
   'pyraminx iso case': spec({ puzzleType: 'pyraminx', algType: 'case', algorithm: "U R' L R B'" }),
   'skewb net': spec({ puzzleType: 'skewb', puzzleVariant: 'net', algorithm: "R U L' B" }),
+  'cube sticker mask': spec({ stickerMask: 'F:3-5;U:4,8', maskColor: '#202020' }),
+  'pyraminx sticker mask': spec({ puzzleType: 'pyraminx', stickerMask: 'D:0-8' }),
+  'cube painted net': spec({
+    cubeView: 'net',
+    paintedFacelet: 'X'.repeat(45) + 'UUUUUUUUU',
+  }),
 };
 
 describe('puzzle-image codec round-trip', () => {
@@ -51,6 +57,43 @@ describe('puzzle-image codec round-trip', () => {
       });
     }
   }
+});
+
+describe('puzzle-image codec — msk / mkc / fc discipline', () => {
+  it('defaults emit none of the three keys', () => {
+    const p = specToParams(spec({}), '');
+    expect(p.get('msk')).toBeNull();
+    expect(p.get('mkc')).toBeNull();
+    expect(p.get('fc')).toBeNull();
+  });
+
+  it('mkc only rides along with a mask', () => {
+    const p = specToParams(spec({ maskColor: '#123456' }), '');
+    expect(p.get('mkc')).toBeNull();
+  });
+
+  it('rejects a malformed fc (wrong length / alphabet)', () => {
+    const base = spec({});
+    expect(readSpecFromParams({ fc: 'UUU' }, '')).toEqual(base);
+    expect(readSpecFromParams({ fc: 'Z'.repeat(54) }, '')).toEqual(base);
+  });
+
+  it('a stray msk on the wire survives the inherit injection', () => {
+    const opts: CodecOptions = {
+      puzzle: { puzzleType: 'cube', cubeSize: 3 },
+      inherit: {
+        algType: 'alg', algorithm: "R U R'",
+        faceU: '#fff', faceR: '#f80', faceF: '#0a0',
+        faceD: '#ff0', faceL: '#d00', faceB: '#00c',
+      } satisfies InheritedFields,
+    };
+    const s = readSpecFromParams({ img_msk: 'U:0-2' }, 'img_', opts);
+    expect(s.stickerMask).toBe('U:0-2');
+    expect(s.algorithm).toBe("R U R'"); // inherit still wins for alg
+    const out = specToParams(s, 'img_', opts);
+    expect(out.get('img_msk')).toBe('U:0-2');
+    expect(out.get('img_alg')).toBeNull(); // host-owned, still never emitted
+  });
 });
 
 /** Decoded key=value pairs, order-insensitive (nuqs writes keys in its own order). */

@@ -14,7 +14,7 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Copy, Check, Download, RotateCcw, Plus, Trash2, Camera, Film } from 'lucide-react';
+import { Copy, Check, Download, MousePointerClick, RotateCcw, Plus, Trash2, Camera, Film } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 // Type-only imports (fully erased at build) — the concrete sim engine + export
 // module are dynamically imported inside the capture handler so /visualcube (which
@@ -28,6 +28,8 @@ import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
 import { publicApiUrl } from '@/lib/api-base';
 import { appendArrow, buildArrowEntry } from '@/lib/puzzle-image/arrows';
 import { pzlShort, specToParams } from '@/lib/puzzle-image/codec';
+import { formatMask, parseMask, type StickerId } from '@/lib/puzzle-image/mask-core';
+import { maskSupported, pieceOf } from '@/lib/puzzle-image/puzzle-mask';
 import {
   DEFAULTS, FACE_DEFAULTS,
   resetRotationsForPuzzle, rotationDefaultsFor,
@@ -318,6 +320,30 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   const syncAlgFromDom = useCallback(() => {
     if (algRef.current) set('algorithm', algRef.current.value);
   }, [set]);
+
+  // ── sticker-mask authoring (click-to-gray) ─────────────────────────────
+  // Only where a derived piece table exists (cube 2..7, pyra, skewb, mega — sq1
+  // never; see puzzle-mask.ts). Clicks land on a SOLVED unfolded render, where
+  // position id == origin id — the frame the mask is authored in.
+  const maskable = maskSupported(s.puzzleType, s.cubeSize);
+  const [maskEditing, setMaskEditing] = useState(false);
+  const [maskWholePiece, setMaskWholePiece] = useState(true);
+  const maskAuthoringSpec = useMemo<ImageSpec>(() => ({
+    ...s, algorithm: '', arrows: '', stageMask: '', maskAlg: '',
+    cubeView: 'wca', puzzleVariant: 'wca',
+  }), [s]);
+  const toggleMaskSticker = useCallback((sid: StickerId) => {
+    const ids = parseMask(s.stickerMask);
+    let group: readonly StickerId[];
+    try {
+      group = maskWholePiece ? pieceOf(s.puzzleType, sid, s.cubeSize) : [sid];
+    } catch {
+      group = [sid]; // sid outside the table — gated by maskSupported, but stay soft
+    }
+    const allIn = group.every((x) => ids.has(x));
+    for (const x of group) { if (allIn) ids.delete(x); else ids.add(x); }
+    set('stickerMask', formatMask(ids));
+  }, [s.stickerMask, s.puzzleType, s.cubeSize, maskWholePiece, set]);
 
   // ── live capture (sim panel only — moved out of the retired DirectorPanel) ──
   const [exporting, setExporting] = useState(false);
@@ -668,6 +694,64 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
                   <option key={r || 'none'} value={r}>{r || '— rot —'}</option>
                 ))}
               </select>
+            </div>
+          </div>
+        )}
+
+        {maskable && (
+          <div className="vc-row vc-row-block">
+            <label className="vc-label">{t('贴纸遮罩', 'Sticker Mask')}</label>
+            <div className="vc-row-controls vc-col">
+              <div className="vc-row-controls">
+                <input
+                  type="text" className="vc-text" value={s.stickerMask}
+                  placeholder="U:0,2;F:3-5"
+                  onChange={(e) => set('stickerMask', e.target.value)}
+                />
+                <button
+                  type="button" className="vc-btn-icon" title="Clear"
+                  onClick={() => set('stickerMask', '')}
+                >
+                  <Trash2 size={14} />
+                </button>
+                <button
+                  type="button"
+                  className={`vc-btn vc-btn-sm${maskEditing ? ' vc-btn-active' : ''}`}
+                  onClick={() => setMaskEditing((v) => !v)}
+                >
+                  <MousePointerClick size={14} /> {t('点选编辑', 'Pick')}
+                </button>
+              </div>
+              {maskEditing && (
+                <>
+                  <div className="vc-row-controls">
+                    <PillToggle
+                      value={maskWholePiece}
+                      onChange={setMaskWholePiece}
+                      onLabel={t('整块', 'Piece')}
+                      offLabel={t('单贴纸', 'Sticker')}
+                      ariaLabel={t('置灰粒度', 'Gray granularity')}
+                    />
+                    <span className="vc-mask-hint">
+                      {t('点击还原态展开图切换置灰', 'Click the solved net to toggle gray')}
+                    </span>
+                  </div>
+                  <PuzzleImage
+                    spec={maskAuthoringSpec}
+                    interactive={false}
+                    onStickerClick={toggleMaskSticker}
+                    className="vc-mask-editor"
+                  />
+                </>
+              )}
+              {s.stickerMask !== '' && (
+                <ColorRow
+                  label={t('遮罩色', 'Mask Color')}
+                  value={s.maskColor}
+                  onChange={(v) => set('maskColor', v)}
+                  onReset={() => set('maskColor', DEFAULTS.maskColor)}
+                />
+              )}
             </div>
           </div>
         )}
