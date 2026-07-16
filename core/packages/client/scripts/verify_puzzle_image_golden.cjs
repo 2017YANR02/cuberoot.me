@@ -9,10 +9,16 @@
  * 需要 dev server 常驻在 127.0.0.1:3000(项目规矩:别自己 pnpm dev / next build)。
  *
  *   node scripts/verify_puzzle_image_golden.cjs                     # 查 /visualcube(基线自证)
- *   node scripts/verify_puzzle_image_golden.cjs --route /sim --prefix img_ --sel .vc-preview
  *   node scripts/verify_puzzle_image_golden.cjs --update            # 重录(只有蓄意改渲染时才用)
  *
  * 不进 CI(要跑浏览器 + dev server),是本地迁移期的验收闸。
+ *
+ * 【/sim arm 已退役】`--route /sim --prefix img_` 的字节回放随 70e74e97d0 死亡:
+ * 面板模式蓄意不再渲染静态 .vc-preview(sim 左侧的活魔方即图像),oracle 的抓取
+ * 对象不存在了,跑出来只会是误导性的 0/28。面板侧的等价覆盖:
+ *   - 渲染字节锁 → tests/puzzle-image-render.test.ts(18 pure fixture toBe 锁)
+ *   - URL/codec 面板契约(puzzle/inherit 注入、img_ 键集)→ tests/puzzle-image-codec.test.ts
+ *   - SimPage 装配(面板挂载、镜像同步、遮罩点选)→ Playwright 手测
  */
 const fs = require('fs');
 const os = require('os');
@@ -36,6 +42,14 @@ const SEL = arg('--sel', '.vc-preview');
 const ORIGIN = arg('--origin', 'http://127.0.0.1:3000');
 const LANG = arg('--lang', '/zh');
 const UPDATE = process.argv.includes('--update');
+
+if (ROUTE !== '/visualcube') {
+  console.error(
+    '/sim arm 已退役(70e74e97d0 起面板不再渲染 .vc-preview,无 oracle 可抓)。\n' +
+    '面板侧覆盖走 tests/puzzle-image-{render,codec}.test.ts + Playwright;见文件头注。',
+  );
+  process.exit(2);
+}
 
 /** codec 的 pzl 短名 → sim 自己的 puzzle 取值(数字直接透传)。 */
 function simPuzzleValue(pzl) {
