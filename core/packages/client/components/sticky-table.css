@@ -8,6 +8,11 @@
         颜色取 --sticky-thead-border(各页/各表可设成自己的边框色,默认取通用前景描边)。*/
 .sticky-scroll { overflow: visible; }
 
+/* 内容超宽(StickyScrollGuard 全局观察打标):容器自滚动并卡住宽度,表格不再穿出卡片边框 /
+   把页面撑出横向滚动。自滚动容器的滚动上下文变成自身 → 相对视口吸顶在此状态自然失效,
+   containment 优先于吸顶;放得下时守卫摘除 class,吸顶恢复。 */
+.sticky-scroll.stk-overflow { overflow-x: auto; max-width: 100%; }
+
 .sticky-thead thead th {
   position: sticky;
   top: 0;

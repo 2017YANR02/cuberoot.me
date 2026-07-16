@@ -1644,6 +1644,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `纯副作用组件,return null,无任何视觉输出。`, en: `Side-effect-only component that returns null with no visual output.` },
   },
   {
+    name: 'StickyScrollGuard',
+    import: "import StickyScrollGuard from '@/components/StickyScrollGuard';",
+    category: 'more',
+    zh: `无 UI:全局观察所有 .sticky-scroll 统计表容器,内容超宽时打 .stk-overflow 让容器自滚动(表格不再穿出卡片),放得下时摘除恢复列头吸顶;挂在 root layout,新表零接入成本。`,
+    en: `No UI: globally watches every .sticky-scroll stats-table container and toggles .stk-overflow so overly wide tables scroll inside their card instead of spilling out, restoring sticky headers when content fits; mounted in the root layout so new tables need no wiring.`,
+    note: { zh: `纯副作用组件,return null;配套 CSS 在 components/sticky-table.css。`, en: `Side-effect-only component that returns null; companion CSS lives in components/sticky-table.css.` },
+  },
+  {
     name: 'ColFilter',
     import: "import { ColFilter } from '@/components/ColFilter/ColFilter';",
     category: 'more',
