@@ -1,156 +1,119 @@
 import { describe, it, expect } from 'vitest';
+import * as THREE from 'three';
 import {
-  H, CUT, SEAM, GEAR_B, WHEEL_T, R_OUT, R_ROOT, TEETH,
-  SPLAT_SIDE_LIFT, SPLAT_SIDE_DEPTH, SPLAT_SPAN,
-  R_BALL, R_BITE, RING_R, CORE_R, CAP_HALF,
-  ARM_R0, ARM_R1, ARM_S, ARM_D,
-  wheelRadiusAt, cornerStickerOutline,
+  H, CUT, SEAM, TEETH, FAN_R, FAN_ROOT, HUB_R, HUB_DOME_R, PLATE_T,
+  CROWN_BALL, EDGE_R, CORE_R, CAP_HALF,
+  ARM_R0, ARM_R1, ARM_S, ARM_D, WASHER_IN, WASHER_OUT, WASHER_Y,
+  fanRadiusAt, gearFacetFrame, gearSlotApex, gearSlotFaces, gearWindowAngle,
+  cornerStickerOutline, inCrownSweep,
 } from '@/app/[lang]/sim/engine/gear/gearGeometry';
 import { CORNER_POS, FACE_AXIS } from '@/app/[lang]/sim/engine/gear/gearState';
 
-const AXIAL_MAX = WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH;
-
-// ── numeric wheel sweep helpers (mirror .tmp/gear/derive2.mjs) ──────────────────────
-// Wheels are too large for ball bounds: face-layer and equator wheels cross mid-turn
-// with overlapping bounding balls, clearing only because the actual toothed solids
-// pass each other. Sample one wheel's boundary against the other's solid over the
-// whole turn and all 3×3 spin-phase combos (phases are independent state per ring).
-const CAP_IN_R = R_ROOT * 0.45;
 const CAP_T = 12;
+const ARM_LIFT = 3.5;
 type V3 = [number, number, number];
 
-function inWindow(th: number): boolean {
-  const half = SPLAT_SPAN / 2;
-  const d1 = Math.abs((((th - Math.PI / 2 + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) - Math.PI);
-  const d2 = Math.abs((((th + Math.PI / 2 + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) - Math.PI);
-  return Math.min(d1, d2) < half;
-}
+// slots used by the sweeps: UF = (ring 1, slot 0); FR = (0,0); FL = (0,3)
+const UF: [number, number] = [1, 0];
 
-/** Point-in-wheel-solid (wheel local frame, z = radial axis), spin s, inflated m.
- *  Wheel body + the flat fan decal on the outer disc face (bounded by pr — the
- *  decal is inset from the tooth silhouette). */
-function insideWheel(x: number, y: number, z: number, s: number, m: number): boolean {
-  const th = Math.atan2(y, x) - s;
-  const rho = Math.hypot(x, y);
-  const pr = wheelRadiusAt(th);
-  if (rho < pr + m && Math.abs(z) < WHEEL_T / 2 + m) return true;
-  if (inWindow(th)) {
-    if (rho > CAP_IN_R - m && rho < pr + m &&
-        z > WHEEL_T / 2 + SPLAT_SIDE_LIFT - m && z < WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH + m) return true;
-  }
-  return false;
-}
-
-/** Boundary sample cloud of a wheel (material frame). */
-function wheelCloud(): V3[] {
+/** Umbrella-crown boundary cloud (home frame, world coords) for a slot. */
+function crownCloud(r: number, s: number): V3[] {
+  const E = gearSlotApex(r, s);
   const pts: V3[] = [];
-  const N = TEETH * 14;
-  for (let i = 0; i < N; i++) {
-    const th = (i / N) * 2 * Math.PI;
-    const pr = wheelRadiusAt(th);
-    const c = Math.cos(th), sn = Math.sin(th);
-    for (const z of [-WHEEL_T / 2, 0, WHEEL_T / 2]) pts.push([pr * c, pr * sn, z]);
-    for (let k = 1; k <= 5; k++) {
-      const rr = (pr * k) / 5;
-      pts.push([rr * c, rr * sn, WHEEL_T / 2], [rr * c, rr * sn, -WHEEL_T / 2]);
-    }
-    if (inWindow(th)) {
-      const zc = WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH;
-      for (let k = 0; k <= 4; k++) {
-        const rr = CAP_IN_R + ((pr - CAP_IN_R) * k) / 4;
-        pts.push([rr * c, rr * sn, zc]);
+  const pitch = (2 * Math.PI) / TEETH;
+  for (let k = 0; k < TEETH; k++) {
+    const { m, g, w } = gearFacetFrame(r, s, k);
+    for (let bi = -10; bi <= 10; bi++) {
+      const beta = (bi / 10) * (pitch / 2);
+      const rr = fanRadiusAt(beta);
+      for (const a of [HUB_R, (HUB_R + rr) / 2, rr]) {
+        const x = a * Math.sin(beta), y = a * Math.cos(beta);
+        for (const d of [0.5 + 2.6, 0, -PLATE_T]) { // sticker top, facet plane, plate back
+          pts.push([
+            E.x + w.x * x + g.x * y + m.x * d,
+            E.y + w.y * x + g.y * y + m.y * d,
+            E.z + w.z * x + g.z * y + m.z * d,
+          ]);
+        }
       }
     }
   }
   return pts;
 }
 
-// slot frames (columns e, t, n) for the pairs exercised during a U turn
-const S2 = Math.SQRT1_2;
-const SLOT_UF = { C: [0, GEAR_B, GEAR_B] as V3, e: [1, 0, 0] as V3, t: [0, S2, -S2] as V3, n: [0, S2, S2] as V3 };
-const SLOT_FR = { C: [GEAR_B, 0, GEAR_B] as V3, e: [0, 1, 0] as V3, t: [-S2, 0, S2] as V3, n: [S2, 0, S2] as V3 };
-const SLOT_FL = { C: [-GEAR_B, 0, GEAR_B] as V3, e: [0, 1, 0] as V3, t: [-S2, 0, -S2] as V3, n: [-S2, 0, S2] as V3 };
-type Slot = typeof SLOT_UF;
-
 const rotY = (a: number) => {
   const c = Math.cos(a), s = Math.sin(a);
   return (p: V3): V3 => [c * p[0] + s * p[2], p[1], -s * p[0] + c * p[2]];
 };
-const frameMul = (F: Slot, p: V3): V3 => [
-  F.e[0] * p[0] + F.t[0] * p[1] + F.n[0] * p[2],
-  F.e[1] * p[0] + F.t[1] * p[1] + F.n[1] * p[2],
-  F.e[2] * p[0] + F.t[2] * p[1] + F.n[2] * p[2],
-];
-const frameMulT = (F: Slot, p: V3): V3 => [
-  F.e[0] * p[0] + F.e[1] * p[1] + F.e[2] * p[2],
-  F.t[0] * p[0] + F.t[1] * p[1] + F.t[2] * p[2],
-  F.n[0] * p[0] + F.n[1] * p[1] + F.n[2] * p[2],
-];
-const rotZp = (a: number, p: V3): V3 => {
-  const c = Math.cos(a), s = Math.sin(a);
-  return [c * p[0] - s * p[1], s * p[0] + c * p[1], p[2]];
-};
-const PHASES = [0, Math.PI / 3, -Math.PI / 3];
+const dot3 = (a: V3, b: V3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
 /**
- * Locks the zero-interpenetration dimension invariants derived in .tmp/gear/derive.mjs.
- * A dimension tweak that silently breaks a clearance fails here, not on screen.
+ * Locks the umbrella-crown clearance invariants derived in .tmp/gear/derive4.mjs
+ * (spec .tmp/gear/GEAR_FRONT_SPEC.md §6). A dimension tweak that silently breaks
+ * a clearance fails here, not on screen.
  */
 describe('gear geometry clearance invariants', () => {
-  it('corner bite tube contains the whole gear sweep with clearance', () => {
-    // wheel + splats ⊂ ball(R_BALL) around the center; orbit+spin sweep ⊂ tube(ring, R_BALL)
-    expect(R_BALL).toBeCloseTo(Math.hypot(R_OUT, AXIAL_MAX), 6);
-    expect(R_BITE).toBeGreaterThanOrEqual(R_BALL + 3);
+  it('face-pointing tooth plates lie EXACTLY in the two face planes at rest', () => {
+    // the user-verified signature of the real puzzle: each half of the gear is a
+    // flat half-gear coplanar with its face. Tooth k=0 (φ=90°) and k=3 (φ=270°)
+    // must have facet normal == face normal, with the plane through the apex E
+    // at offset H (E is the edge midpoint, on both face planes).
+    const faces = gearSlotFaces(...UF);
+    const fPlus = faces.find((f) => Math.sin(gearWindowAngle(...UF, f)) > 0)!;
+    const fMinus = faces.find((f) => f !== fPlus)!;
+    const E = gearSlotApex(...UF);
+    const m0 = gearFacetFrame(...UF, 0).m;
+    const m3 = gearFacetFrame(...UF, 3).m;
+    const n0 = new THREE.Vector3(...FACE_AXIS[fPlus]);
+    const n3 = new THREE.Vector3(...FACE_AXIS[fMinus]);
+    expect(m0.distanceTo(n0)).toBeLessThan(1e-12);
+    expect(m3.distanceTo(n3)).toBeLessThan(1e-12);
+    expect(E.dot(n0)).toBeCloseTo(H, 9);
+    expect(E.dot(n3)).toBeCloseTo(H, 9);
   });
 
-  it('teeth poke slightly proud of the faces (the real gear cube is not a cube at rest)', () => {
-    const tipMax = GEAR_B + (R_OUT + WHEEL_T / 2) / Math.SQRT2;
-    expect(tipMax).toBeGreaterThan(H);
-    expect(tipMax - H).toBeLessThan(0.12 * H); // but only slightly
-  });
-
-  it('inner teeth pierce the face plane (the reference front view "bridge" fragments)', () => {
-    // the wheel's face-side teeth must show through the face between the center cap
-    // and the corner plates — the signature look of the real puzzle's front view.
-    const pierce = GEAR_B + (R_OUT + WHEEL_T / 2 + SPLAT_SIDE_LIFT + SPLAT_SIDE_DEPTH / 2) / Math.SQRT2;
-    expect(pierce).toBeGreaterThan(H + 2);
-  });
-
-  it('face-layer wheels clear the equator wheels mid-turn (toothed-solid sweep)', () => {
-    // U turn: UF orbits about y at the face rate (−tπ, no spin); FR/FL orbit at the
-    // middle rate (−tπ/2) and spin +tπ/3. All 3×3 initial phase combos are legal
-    // states, so every combo must clear. Margin 1 unit.
-    const cloud = wheelCloud();
+  it('crown (plates + decals + hub) stays inside ball(CROWN_BALL) at its apex', () => {
+    const E = gearSlotApex(...UF);
     let worst = 0;
-    for (const B of [SLOT_FR, SLOT_FL]) {
-      for (const phA of PHASES) {
-        for (const phB of PHASES) {
-          for (let i = 0; i <= 24; i++) {
-            const t = i / 24;
-            const Rf = rotY(-t * Math.PI);
-            const Rback = rotY((t * Math.PI) / 2);
-            const sB = phB + (t * Math.PI) / 3;
-            for (const p of cloud) {
-              const lp = rotZp(phA, p);
-              const w0 = frameMul(SLOT_UF, lp);
-              const w = Rf([w0[0] + SLOT_UF.C[0], w0[1] + SLOT_UF.C[1], w0[2] + SLOT_UF.C[2]]);
-              const q = Rback(w);
-              const lb = frameMulT(B, [q[0] - B.C[0], q[1] - B.C[1], q[2] - B.C[2]]);
-              if (insideWheel(lb[0], lb[1], lb[2], sB, 1.0)) worst++;
-            }
-          }
-        }
+    for (const p of crownCloud(...UF)) {
+      worst = Math.max(worst, Math.hypot(p[0] - E.x, p[1] - E.y, p[2] - E.z));
+    }
+    worst = Math.max(worst, HUB_DOME_R + 2);
+    expect(worst).toBeLessThanOrEqual(CROWN_BALL);
+  });
+
+  it('crown stays inside its sweep lathe (constructive corner clearance)', () => {
+    // corners are carved by the lathe of the crown sweep about each axis; an
+    // equator crown (FR, y-turns) must live inside the about-y lathe with margin.
+    for (const p of crownCloud(0, 0)) {
+      expect(inCrownSweep(new THREE.Vector3(...p), 1, -1)).toBe(true);
+    }
+    // the hub dome bulges on the arris — inside too
+    const E = gearSlotApex(0, 0);
+    expect(inCrownSweep(new THREE.Vector3(E.x + HUB_DOME_R, 0, E.z), 1, -1)).toBe(true);
+  });
+
+  it('face-layer crowns clear the equator crowns (orbit circles, ball-to-ball)', () => {
+    // during U the face crowns ride the circle {radius H, height H} about y while
+    // the equator crowns ride {radius EDGE_R, height 0} — unlike the abandoned
+    // 45°-disc model, ball-to-ball now clears with margin.
+    let minD = Infinity;
+    for (let i = 0; i <= 180; i++) {
+      const a = (i / 180) * Math.PI;
+      const c: V3 = [H * Math.sin(a), H, H * Math.cos(a)];
+      for (let j = 0; j <= 360; j++) {
+        const b = (j / 360) * 2 * Math.PI;
+        const q: V3 = [EDGE_R * Math.sin(b), 0, EDGE_R * Math.cos(b)];
+        minD = Math.min(minD, Math.hypot(c[0] - q[0], c[1] - q[1], c[2] - q[2]));
       }
     }
-    expect(worst).toBe(0);
+    expect(minD).toBeGreaterThan(2 * CROWN_BALL + 2);
   });
 
-  it('face-layer wheels clear the middle caps, arms, axles and core mid-turn', () => {
-    // in the middle frame the UF wheel orbits about y at the relative rate −tπ/2;
-    // the 4 side center caps, their 16 spider arms, the axles and the core must
-    // never be touched.
+  it('face-layer crowns clear the middle caps, arms, axles and core mid-turn', () => {
+    // in the middle frame the UF crown orbits about y at the relative rate −tπ/2;
+    // the crown shape is 60°-spin invariant so no phase scan is needed.
     const AXES: V3[] = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
-    const dot3 = (a: V3, b: V3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
     const arms: Array<{ nf: V3; rh: V3; ee: V3 }> = [];
     for (const nf of AXES.filter((a) => a[1] === 0)) {
       for (const rh of AXES) {
@@ -160,53 +123,47 @@ describe('gear geometry clearance invariants', () => {
         ] });
       }
     }
-    const ARM_LIFT = 3.5;
-    const cloud = wheelCloud();
+    const cloud = crownCloud(...UF);
     const M = 2;
     let worst = 0;
-    for (const phA of PHASES) {
-      for (let i = 0; i <= 24; i++) {
-        const t = i / 24;
-        const Rf = rotY(-t * Math.PI);
-        const Rback = rotY((t * Math.PI) / 2);
-        for (const p of cloud) {
-          const lp = rotZp(phA, p);
-          const w0 = frameMul(SLOT_UF, lp);
-          const w = Rf([w0[0] + SLOT_UF.C[0], w0[1] + SLOT_UF.C[1], w0[2] + SLOT_UF.C[2]]);
-          const q = Rback(w);
-          const [x, y, z] = q;
-          for (const [a, b] of [[x, z], [z, x]]) {
-            if (Math.abs(a) > H - CAP_T - M && Math.abs(a) < H + 4 &&
-                Math.abs(b) < CAP_HALF + M && Math.abs(y) < CAP_HALF + M) worst++;
-          }
-          for (const arm of arms) {
-            const d = dot3(q, arm.nf);
-            if (d < H - ARM_D - M || d > H + ARM_LIFT + M) continue;
-            const r = dot3(q, arm.rh);
-            if (r > ARM_R0 - M && r < ARM_R1 + M && Math.abs(dot3(q, arm.ee)) < ARM_S + M) worst++;
-          }
-          if (Math.hypot(y, z) < 5.5 + M && Math.abs(x) > CORE_R && Math.abs(x) < H - CAP_T + 4) worst++;
-          if (Math.hypot(y, x) < 5.5 + M && Math.abs(z) > CORE_R && Math.abs(z) < H - CAP_T + 4) worst++;
-          if (Math.hypot(x, y, z) < CORE_R + M) worst++;
+    for (let i = 0; i <= 32; i++) {
+      const t = i / 32;
+      const Rf = rotY(-t * Math.PI);
+      const Rback = rotY((t * Math.PI) / 2);
+      for (const p0 of cloud) {
+        const q = Rback(Rf(p0));
+        const [x, y, z] = q;
+        for (const [a, b] of [[x, z], [z, x]]) {
+          if (Math.abs(a) > H - CAP_T - M && Math.abs(a) < H + 4 &&
+              Math.abs(b) < CAP_HALF + M && Math.abs(y) < CAP_HALF + M) worst++;
         }
+        for (const arm of arms) {
+          const d = dot3(q, arm.nf);
+          if (d < H - ARM_D - M || d > H + ARM_LIFT + M) continue;
+          const r = dot3(q, arm.rh);
+          if (r > ARM_R0 - M && r < ARM_R1 + ARM_LIFT + M && Math.abs(dot3(q, arm.ee)) < ARM_S + M) worst++;
+        }
+        if (Math.hypot(y, z) < 5.5 + M && Math.abs(x) > CORE_R && Math.abs(x) < H - CAP_T + 4) worst++;
+        if (Math.hypot(y, x) < 5.5 + M && Math.abs(z) > CORE_R && Math.abs(z) < H - CAP_T + 4) worst++;
+        if (Math.hypot(x, y, z) < CORE_R + M) worst++;
       }
     }
     expect(worst).toBe(0);
   });
 
-  it('spider arms sit inside the equator bite tube (constructive corner clearance)', () => {
-    // during a U turn the F-center's top arm swings with the middle; the corners
-    // are carved by the y-ring torus, which must contain the whole arm — then the
-    // same bites that let the gears pass let the arms pass.
-    let worst = 0;
+  it('spider arms sit inside the washer rings (constructive corner clearance)', () => {
+    // the washers carved out of the corners must contain the arms' whole swept
+    // shell (revolve about the face-turn axis).
     for (const s of [-ARM_S, 0, ARM_S]) {
       for (const r of [ARM_R0, ARM_R1]) {
-        for (const d of [H - ARM_D, H + 3.5]) {
-          worst = Math.max(worst, Math.hypot(Math.hypot(s, d) - RING_R, r));
+        for (const d of [H - ARM_D, H + ARM_LIFT]) {
+          const rad = Math.hypot(s, d);
+          expect(rad).toBeGreaterThan(WASHER_IN + 1);
+          expect(rad).toBeLessThan(WASHER_OUT - 1);
+          expect(r).toBeLessThan(WASHER_Y - 1);
         }
       }
     }
-    expect(worst).toBeLessThan(R_BITE - 1);
   });
 
   it('center caps + core stay inside every middle slab', () => {
@@ -214,28 +171,36 @@ describe('gear geometry clearance invariants', () => {
     expect(CORE_R).toBeLessThan(CUT - SEAM);
   });
 
-  it('center caps clear the face-gear sweep tube', () => {
-    // U-cap corner vs a face gear orbiting about z (F/B moves): tube around
-    // lat-circle {height GEAR_B about z, radius GEAR_B}.
-    const capPt = [CAP_HALF, H, CAP_HALF];
-    let minD = Infinity;
-    for (let i = 0; i <= 400; i++) {
-      const th = (i / 400) * 2 * Math.PI;
-      const c = [GEAR_B * Math.cos(th), GEAR_B * Math.sin(th), GEAR_B];
-      minD = Math.min(minD, Math.hypot(capPt[0] - c[0], capPt[1] - c[1], capPt[2] - c[2]));
-    }
-    expect(minD).toBeGreaterThan(R_BALL + 2);
+  it('corner keeps its bulk and its sticker anchor under the carves', () => {
+    const carved = (p: THREE.Vector3): boolean => {
+      for (const ax of [0, 1, 2]) {
+        if (inCrownSweep(p, ax, 0)) return true;
+        const along = ax === 0 ? p.x : ax === 1 ? p.y : p.z;
+        const rad = ax === 0 ? Math.hypot(p.y, p.z) : ax === 1 ? Math.hypot(p.x, p.z) : Math.hypot(p.x, p.y);
+        if (rad > WASHER_IN && rad < WASHER_OUT && Math.abs(along) < WASHER_Y) return true;
+      }
+      return false;
+    };
+    expect(carved(new THREE.Vector3(0.7 * H, 0.7 * H, 0.7 * H))).toBe(false);
+    expect(carved(new THREE.Vector3(H - 10, H - 10, H - 10))).toBe(false);
+    // and the fan channel on the face is wide enough to host the full fan
+    const channelAt = (y: number): number => {
+      let x = 0;
+      while (x < H && carved(new THREE.Vector3(x, y, H + 1))) x += 0.5;
+      return x;
+    };
+    expect(channelAt(H - 4)).toBeGreaterThan(FAN_R + 2);
   });
 
-  it('wheel profile: 6 teeth, tooth centered at 90°, 60° spin is a profile symmetry', () => {
+  it('fan profile: 6 teeth, tip at the tooth center, root in the gullets', () => {
     expect(TEETH).toBe(6);
-    expect(wheelRadiusAt(Math.PI / 2)).toBe(R_OUT);
-    expect(wheelRadiusAt(Math.PI / 2 + Math.PI / TEETH)).toBe(R_ROOT); // mid-gullet
-    for (let i = 0; i < 100; i++) {
-      const a = (i / 100) * 2 * Math.PI;
-      expect(wheelRadiusAt(a + Math.PI / 3)).toBeCloseTo(wheelRadiusAt(a), 9);
-      expect(wheelRadiusAt(a)).toBeGreaterThanOrEqual(R_ROOT);
-      expect(wheelRadiusAt(a)).toBeLessThanOrEqual(R_OUT);
+    expect(fanRadiusAt(0)).toBe(FAN_R);
+    expect(fanRadiusAt(Math.PI / TEETH)).toBe(FAN_ROOT); // sector edge = mid-gullet
+    for (let i = 0; i <= 60; i++) {
+      const b = -Math.PI / TEETH + (i / 60) * (2 * Math.PI) / TEETH;
+      expect(fanRadiusAt(b)).toBeGreaterThanOrEqual(FAN_ROOT);
+      expect(fanRadiusAt(b)).toBeLessThanOrEqual(FAN_R);
+      expect(fanRadiusAt(b)).toBeCloseTo(fanRadiusAt(-b), 9); // symmetric tooth
     }
   });
 
@@ -243,8 +208,8 @@ describe('gear geometry clearance invariants', () => {
     // Skill hard requirement for curved sticker outlines: a needle spike is a
     // 120–180° reversal between consecutive segments; healthy rounded outlines
     // stay well below. Segments shorter than 0.75 units are merged first (the
-    // ray-march + roundCorners sampling can emit near-duplicate points whose
-    // direction is numeric noise, not geometry).
+    // ray-march sampling can emit near-duplicate points whose direction is
+    // numeric noise, not geometry).
     for (let ci = 0; ci < 8; ci++) {
       const signs = CORNER_POS[ci];
       const faces = FACE_AXIS.map((_, f) => f).filter((f) =>
@@ -271,21 +236,6 @@ describe('gear geometry clearance invariants', () => {
         }
         expect((maxTurn * 180) / Math.PI).toBeLessThan(60);
       }
-    }
-  });
-
-  it('bite tube reaches under the corner blocks (the visible concave scoop exists)', () => {
-    // the ring circle passes at radius RING_R ≈ 1.02H; a corner's inner-bottom edge
-    // point must be inside the tube (carved), its center region outside (survives).
-    const carved = [0.9 * H, CUT + SEAM + 2, 0.9 * H];   // just above the cut plane, near the ring
-    const carvedDist = Math.hypot(Math.hypot(carved[0], carved[2]) - RING_R, carved[1]);
-    expect(carvedDist).toBeLessThan(R_BITE);
-    const kept = [0.7 * H, 0.7 * H, 0.7 * H];
-    for (const axis of [0, 1, 2]) {
-      const along = kept[axis];
-      const others = kept.filter((_, i) => i !== axis);
-      const d = Math.hypot(Math.hypot(others[0], others[1]) - RING_R, along);
-      expect(d).toBeGreaterThan(R_BITE);
     }
   });
 });
