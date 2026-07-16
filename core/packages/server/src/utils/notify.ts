@@ -39,7 +39,8 @@ export function verifyUnsubToken(token: string): string | null {
 
 export type NotificationKind =
   | 'recon_alt' | 'recon_comment' | 'recon_reply'
-  | 'forum_thread' | 'forum_reply' | 'forum_report';
+  | 'forum_thread' | 'forum_reply' | 'forum_report'
+  | 'forum_review' | 'forum_approved' | 'forum_rejected';
 
 /** 邮件语言。站点只有 en / zh-Hans 两种。 */
 export type MailLang = 'zh' | 'en';
@@ -71,6 +72,9 @@ const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
   forum_thread: { zh: '发布了新主题', en: 'started a new thread' },
   forum_reply: { zh: '回复了你的主题', en: 'replied to your thread' },
   forum_report: { zh: '举报了一个帖子', en: 'reported a post' },
+  forum_review: { zh: '发布了待审核内容', en: 'posted content awaiting review' },
+  forum_approved: { zh: '通过了你的帖子', en: 'approved your post' },
+  forum_rejected: { zh: '驳回了你的帖子', en: 'declined your post' },
 };
 
 /** 邮件里的固定文案。 */

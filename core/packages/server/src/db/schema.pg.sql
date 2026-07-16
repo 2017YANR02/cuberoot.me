@@ -570,10 +570,14 @@ CREATE TABLE forum_threads (
   view_count            INT          NOT NULL DEFAULT 0,
   is_pinned             BOOLEAN      NOT NULL DEFAULT FALSE,
   is_locked             BOOLEAN      NOT NULL DEFAULT FALSE,
-  is_deleted            BOOLEAN      NOT NULL DEFAULT FALSE
+  is_deleted            BOOLEAN      NOT NULL DEFAULT FALSE,
+  -- 0074 审核:approved / pending(仅作者+管理员可见)/ rejected(review_note = 驳回原因)
+  status                VARCHAR(12)  NOT NULL DEFAULT 'approved',
+  review_note           VARCHAR(500)
 );
 CREATE INDEX idx_forum_threads_list ON forum_threads(forum_id, is_pinned DESC, last_post_at DESC)
   WHERE NOT is_deleted;
+CREATE INDEX idx_forum_threads_pending ON forum_threads(created_at) WHERE status = 'pending';
 CREATE TRIGGER forum_threads_updated_at BEFORE UPDATE ON forum_threads
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
@@ -586,9 +590,15 @@ CREATE TABLE forum_posts (
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   edited_at   TIMESTAMPTZ,
-  is_deleted  BOOLEAN      NOT NULL DEFAULT FALSE
+  is_deleted  BOOLEAN      NOT NULL DEFAULT FALSE,
+  -- 0074 审核:同 forum_threads.status;待审楼层对他人只露占位(postNo 稳定)
+  status      VARCHAR(12)  NOT NULL DEFAULT 'approved',
+  review_note VARCHAR(500)
 );
 CREATE INDEX idx_forum_posts_thread ON forum_posts(thread_id, id);
+CREATE INDEX idx_forum_posts_pending ON forum_posts(created_at) WHERE status = 'pending';
+CREATE INDEX idx_forum_posts_author_approved ON forum_posts(author_id)
+  WHERE status = 'approved' AND NOT is_deleted;
 CREATE TRIGGER forum_posts_updated_at BEFORE UPDATE ON forum_posts
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 

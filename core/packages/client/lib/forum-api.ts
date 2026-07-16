@@ -57,6 +57,9 @@ export interface ForumIndexData {
   stats: ForumStats;
 }
 
+/** 审核状态(0074):pending 仅作者与管理员可见,rejected 对他人等同删除。 */
+export type ForumReviewStatus = 'approved' | 'pending' | 'rejected';
+
 export interface ForumThread {
   id: number;
   title: string;
@@ -70,7 +73,8 @@ export interface ForumThread {
   lastPostAuthorName: string;
   isPinned: boolean;
   isLocked: boolean;
-  /** 全部楼层数(含软删占位)——「跳到最后一页」按它算,不用 replyCount */
+  status: ForumReviewStatus;
+  /** 全部楼层数(含软删/待审占位)——「跳到最后一页」按它算,不用 replyCount */
   postTotal: number;
 }
 
@@ -100,10 +104,14 @@ export interface ForumPost {
   id: number;
   authorId: string;
   authorName: string;
+  /** 待审/驳回楼层对非作者非管理员掩码为 ''(占位显示) */
   content: string;
   createdAt: string;
   editedAt: string | null;
   isDeleted: boolean;
+  status: ForumReviewStatus;
+  /** 驳回原因,仅本楼作者与管理员可见 */
+  reviewNote: string | null;
   postNo: number;
   reactions: PostReaction[];
 }
@@ -128,6 +136,9 @@ export interface ThreadDetail {
   viewCount: number;
   isPinned: boolean;
   isLocked: boolean;
+  status: ForumReviewStatus;
+  /** 驳回原因(仅作者/管理员能打开非公开主题,故拿到即可见) */
+  reviewNote: string | null;
 }
 
 export interface ThreadPageData {
@@ -205,13 +216,13 @@ export async function searchForum(q: string, page: number, size: number): Promis
 
 export async function createThread(
   forumSlug: string, title: string, content: string,
-): Promise<{ ok: boolean; id: number }> {
+): Promise<{ ok: boolean; id: number; status: ForumReviewStatus }> {
   return apiSend('POST', '/threads', { forumSlug, title, content });
 }
 
 export async function createPost(
   threadId: number, content: string,
-): Promise<{ ok: boolean; id: number; postNo: number }> {
+): Promise<{ ok: boolean; id: number; postNo: number; status: ForumReviewStatus }> {
   return apiSend('POST', '/posts', { threadId, content });
 }
 
@@ -270,6 +281,31 @@ export async function fetchReports(all: boolean): Promise<{ reports: ForumReport
 
 export async function resolveReport(id: number): Promise<{ ok: boolean }> {
   return apiSend('POST', `/reports/${id}/resolve`);
+}
+
+// ── 审核队列(管理员)─────────────────────────────────────────────────────────
+export interface ReviewItem {
+  type: 'thread' | 'post';
+  /** thread 时 = 主题 id;post 时 = 帖子 id */
+  id: number;
+  threadId: number;
+  threadTitle: string;
+  forumNameEn: string | null;
+  forumNameZh: string | null;
+  authorId: string;
+  authorName: string;
+  content: string;
+  createdAt: string;
+}
+
+export async function fetchReviewQueue(): Promise<{ items: ReviewItem[] }> {
+  return apiGet<{ items: ReviewItem[] }>('/review');
+}
+
+export async function moderateReview(
+  type: 'thread' | 'post', id: number, action: 'approve' | 'reject', reason?: string,
+): Promise<{ ok: boolean }> {
+  return apiSend('POST', `/review/${type}/${id}/${action}`, action === 'reject' ? { reason } : undefined);
 }
 
 // ── 图片上传 ────────────────────────────────────────────────────────────────

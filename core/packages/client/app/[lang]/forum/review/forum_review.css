@@ -1,0 +1,86 @@
+/* /forum/review — 管理员审核台。列表项之间靠分隔线,不包卡片框。 */
+
+.forum-review-list { display: flex; flex-direction: column; }
+
+.forum-review-item {
+  padding: 14px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 55%, transparent);
+}
+.forum-review-item.is-resolved { opacity: 0.6; }
+
+.forum-review-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  margin-bottom: 4px;
+}
+.forum-review-item-author { color: var(--foreground); font-weight: 500; }
+.forum-review-item-time,
+.forum-review-item-forum { color: var(--faint-foreground); }
+.forum-review-item-resolved {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--signal-success);
+}
+
+.forum-review-item-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--foreground);
+  text-decoration: none;
+}
+.forum-review-item-title:hover { color: var(--accent); }
+
+/* 审核徽章在本页复用 forum_thread.css 的 .forum-badge-*,但该文件不随本页加载 —— 本页自带一份 */
+.forum-review-page .forum-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+.forum-review-page .forum-badge-pending {
+  color: var(--signal-warning);
+  background: color-mix(in srgb, var(--signal-warning) 14%, transparent);
+}
+.forum-review-page .forum-badge-rejected {
+  color: var(--destructive);
+  background: color-mix(in srgb, var(--destructive) 12%, transparent);
+}
+
+.forum-review-item-body {
+  margin-top: 6px;
+  font-size: 0.88rem;
+  /* 长帖审核不至于把队列撑爆:限高可滚 */
+  max-height: 320px;
+  overflow-y: auto;
+}
+.forum-review-item-excerpt {
+  color: var(--muted-foreground);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.forum-review-item-reason {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--destructive);
+}
+
+.forum-review-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.forum-review-showall { margin-bottom: 8px; }

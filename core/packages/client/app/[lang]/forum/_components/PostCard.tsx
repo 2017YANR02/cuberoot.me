@@ -5,7 +5,7 @@
 // (react / quote / edit / delete).
 
 import { useState } from 'react';
-import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck } from 'lucide-react';
+import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, CircleX } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { tr, useLang } from '@/i18n/tr';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -16,7 +16,7 @@ import { ReactionBar } from './ReactionBar';
 
 export function PostCard({
   post, author, myKind, permalink, canEdit, canDelete, canQuote, canReport,
-  onQuote, onEdit, onDelete, onReact, onReport, bodyOverride,
+  onQuote, onEdit, onDelete, onReact, onReport, onModerate, bodyOverride,
 }: {
   post: ForumPost;
   author: PostAuthor | undefined;
@@ -33,6 +33,8 @@ export function PostCard({
   onDelete: (post: ForumPost) => void;
   onReact: (post: ForumPost, kind: ReactionKind | null) => Promise<void>;
   onReport: (post: ForumPost) => void;
+  /** 管理员对待审楼层就地过审/驳回;不传 = 非管理员,不显按钮。 */
+  onModerate?: (post: ForumPost, action: 'approve' | 'reject') => void;
   /** Replaces body + footer while keeping the post frame (inline edit). */
   bodyOverride?: React.ReactNode;
 }) {
@@ -58,6 +60,21 @@ export function PostCard({
       </article>
     );
   }
+
+  // 待审/驳回楼层:非作者非管理员拿到的是掩码空内容 → 只render占位,楼号不塌
+  if (post.status !== 'approved' && !post.content) {
+    return (
+      <article className="forum-post is-deleted" id={`post-${post.id}`}>
+        <div className="forum-post-deleted">
+          #{post.postNo} {post.status === 'pending'
+            ? tr({ zh: '该帖待审核', en: 'This post is awaiting review' })
+            : tr({ zh: '该帖已删除', en: 'This post was deleted' })}
+        </div>
+      </article>
+    );
+  }
+
+  const published = post.status === 'approved';
 
   return (
     <article className="forum-post" id={`post-${post.id}`}>
@@ -105,6 +122,18 @@ export function PostCard({
           {post.editedAt && (
             <span className="forum-post-edited">{tr({ zh: '(已编辑)', en: '(edited)' })}</span>
           )}
+          {post.status === 'pending' && (
+            <span className="forum-badge forum-badge-pending">
+              <Hourglass size={11} aria-hidden="true" />
+              {tr({ zh: '待审核', en: 'Pending review' })}
+            </span>
+          )}
+          {post.status === 'rejected' && (
+            <span className="forum-badge forum-badge-rejected">
+              <CircleX size={11} aria-hidden="true" />
+              {tr({ zh: '未通过审核', en: 'Rejected' })}
+            </span>
+          )}
           <span className="forum-composer-spacer" />
           <button
             type="button"
@@ -120,18 +149,41 @@ export function PostCard({
         </div>
         {bodyOverride ?? (
         <div className="forum-post-body">
+          {post.status === 'rejected' && post.reviewNote && (
+            <div className="forum-review-note">
+              {tr({ zh: '驳回原因:', en: 'Reason: ' })}{post.reviewNote}
+            </div>
+          )}
           {renderArticleMarkdown(post.content)}
         </div>
         )}
         {!bodyOverride && (
         <div className="forum-post-footer">
+          {published && (
           <ReactionBar
             reactions={post.reactions}
             myKind={myKind}
             onReact={kind => onReact(post, kind)}
           />
+          )}
           <span className="forum-composer-spacer" />
-          {canReport && (
+          {post.status === 'pending' && onModerate && (
+            <>
+              <button
+                type="button" className="forum-post-action is-approve"
+                onClick={() => onModerate(post, 'approve')}
+              >
+                <Check size={13} aria-hidden="true" /> {tr({ zh: '通过', en: 'Approve' })}
+              </button>
+              <button
+                type="button" className="forum-post-action is-danger"
+                onClick={() => onModerate(post, 'reject')}
+              >
+                <CircleX size={13} aria-hidden="true" /> {tr({ zh: '驳回', en: 'Reject' })}
+              </button>
+            </>
+          )}
+          {published && canReport && (
             <button
               type="button" className="forum-post-action"
               title={tr({ zh: '向管理员举报此帖', en: 'Report this post to moderators' })}
@@ -140,7 +192,7 @@ export function PostCard({
               <Flag size={13} aria-hidden="true" /> {tr({ zh: '举报', en: 'Report' })}
             </button>
           )}
-          {canQuote && (
+          {published && canQuote && (
             <button type="button" className="forum-post-action" onClick={() => onQuote(post)}>
               <Quote size={13} aria-hidden="true" /> {tr({ zh: '引用', en: 'Quote' })}
             </button>
