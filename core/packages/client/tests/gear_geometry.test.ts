@@ -3,6 +3,7 @@ import {
   H, CUT, SEAM, GEAR_B, WHEEL_T, R_OUT, R_ROOT, TEETH,
   SPLAT_LIFT, SPLAT_THICK, SPLAT_SIDE_LIFT, SPLAT_SIDE_DEPTH,
   R_BALL, R_BITE, RING_R, CORE_R, CAP_HALF,
+  ARM_R0, ARM_R1, ARM_S, ARM_D,
   wheelRadiusAt, cornerStickerOutline,
 } from '@/app/[lang]/sim/engine/gear/gearGeometry';
 import { CORNER_POS, FACE_AXIS } from '@/app/[lang]/sim/engine/gear/gearState';
@@ -148,9 +149,22 @@ describe('gear geometry clearance invariants', () => {
     expect(worst).toBe(0);
   });
 
-  it('face-layer wheels clear the middle caps, axles and core mid-turn', () => {
+  it('face-layer wheels clear the middle caps, arms, axles and core mid-turn', () => {
     // in the middle frame the UF wheel orbits about y at the relative rate −tπ/2;
-    // the 4 side center caps, their axles and the core must never be touched.
+    // the 4 side center caps, their 16 spider arms, the axles and the core must
+    // never be touched.
+    const AXES: V3[] = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+    const dot3 = (a: V3, b: V3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const arms: Array<{ nf: V3; rh: V3; ee: V3 }> = [];
+    for (const nf of AXES.filter((a) => a[1] === 0)) {
+      for (const rh of AXES) {
+        if (Math.abs(dot3(rh, nf)) > 0.5) continue;
+        arms.push({ nf, rh, ee: [
+          nf[1] * rh[2] - nf[2] * rh[1], nf[2] * rh[0] - nf[0] * rh[2], nf[0] * rh[1] - nf[1] * rh[0],
+        ] });
+      }
+    }
+    const ARM_LIFT = 3.5;
     const cloud = wheelCloud();
     const M = 2;
     let worst = 0;
@@ -163,10 +177,17 @@ describe('gear geometry clearance invariants', () => {
           const lp = rotZp(phA, p);
           const w0 = frameMul(SLOT_UF, lp);
           const w = Rf([w0[0] + SLOT_UF.C[0], w0[1] + SLOT_UF.C[1], w0[2] + SLOT_UF.C[2]]);
-          const [x, y, z] = Rback(w);
+          const q = Rback(w);
+          const [x, y, z] = q;
           for (const [a, b] of [[x, z], [z, x]]) {
             if (Math.abs(a) > H - CAP_T - M && Math.abs(a) < H + 4 &&
                 Math.abs(b) < CAP_HALF + M && Math.abs(y) < CAP_HALF + M) worst++;
+          }
+          for (const arm of arms) {
+            const d = dot3(q, arm.nf);
+            if (d < H - ARM_D - M || d > H + ARM_LIFT + M) continue;
+            const r = dot3(q, arm.rh);
+            if (r > ARM_R0 - M && r < ARM_R1 + M && Math.abs(dot3(q, arm.ee)) < ARM_S + M) worst++;
           }
           if (Math.hypot(y, z) < 5.5 + M && Math.abs(x) > CORE_R && Math.abs(x) < H - CAP_T + 4) worst++;
           if (Math.hypot(y, x) < 5.5 + M && Math.abs(z) > CORE_R && Math.abs(z) < H - CAP_T + 4) worst++;
@@ -175,6 +196,21 @@ describe('gear geometry clearance invariants', () => {
       }
     }
     expect(worst).toBe(0);
+  });
+
+  it('spider arms sit inside the equator bite tube (constructive corner clearance)', () => {
+    // during a U turn the F-center's top arm swings with the middle; the corners
+    // are carved by the y-ring torus, which must contain the whole arm — then the
+    // same bites that let the gears pass let the arms pass.
+    let worst = 0;
+    for (const s of [-ARM_S, 0, ARM_S]) {
+      for (const r of [ARM_R0, ARM_R1]) {
+        for (const d of [H - ARM_D, H + 3.5]) {
+          worst = Math.max(worst, Math.hypot(Math.hypot(s, d) - RING_R, r));
+        }
+      }
+    }
+    expect(worst).toBeLessThan(R_BITE - 1);
   });
 
   it('center caps + core stay inside every middle slab', () => {
