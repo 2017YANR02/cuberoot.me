@@ -10,7 +10,7 @@
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useTranslation } from 'react-i18next';
-import { Infinity as InfinityIcon, Sigma, Dices, Ruler, Boxes } from 'lucide-react';
+import { Infinity as InfinityIcon, Sigma, Dices, Ruler, Boxes, Percent } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
@@ -46,6 +46,12 @@ const CARDS: Card[] = [
     Icon: Boxes,
     zh: { title: '群论内核', desc: '模拟器怎么把每个魔方变成真实的群 G:PG 与置换两条路、BSGS、忠实的 |G|,14 个魔方实时数据' },
     en: { title: 'Group-theory kernel', desc: 'How the simulator turns each puzzle into its real group G: the PG & permutation paths, BSGS, faithful |G|, live data for 14 puzzles' }
+},
+  {
+    to: '/math/probability',
+    Icon: Percent,
+    zh: { title: '情况概率与旋转对称', desc: '为什么 H perm 是 1/72:AUF 轨道、Burnside 计数,62208 个顶层状态现场枚举自证' },
+    en: { title: 'Case probability & symmetry', desc: 'Why H perm is 1/72: AUF orbits, Burnside counting, all 62,208 last-layer states enumerated live' }
 },
   {
     to: '/math/unit-distance',
