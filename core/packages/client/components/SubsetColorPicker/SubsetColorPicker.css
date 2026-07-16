@@ -40,6 +40,7 @@
 
 /* 菜单:两列网格(模式名 | 该模式的全部色块) */
 .subset-picker-panel {
+  /* anchored-panel: clamped (usePanelClamp in SubsetColorPicker) */
   position: absolute;
   top: calc(100% + 6px);
   left: 0;

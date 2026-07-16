@@ -98,6 +98,7 @@ pnpm --filter @cuberoot/client lint
 - 布尔开关用 `BoolToggle`,二选一用 `PillToggle`(主项置绿);禁裸 checkbox,特例注释 `allow-checkbox: <理由>`。守卫:hook + CI ratchet。
 - 表头排序一律 `components/SortArrow`(文字右侧,仅当前列显示)。CI 守卫。
 - 下拉/菜单宽度 fit-content,column flex 加 `align-self:flex-start`;禁钉 `min-width`。
+- 锚定下拉面板(absolute + top:100%)必挂 `hooks/usePanelClamp` 钳视口,CSS 注明 `anchored-panel: clamped`;确证安全注明 `anchored-panel: safe (<理由>)`。守卫:hook + CI ratchet;实测 `audit:overflow` popup pass。
 - 吸顶表头走 `components/sticky-table.css`(`.sticky-scroll` + `.sticky-thead`),禁手写 sticky thead;契约见文件头注。
 - 新可复用组件/hook 登记 `/code` catalog(`_catalog.tsx`)。CI 守卫:`code-catalog-sync` + `code-tokens-drift`。
 - 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
