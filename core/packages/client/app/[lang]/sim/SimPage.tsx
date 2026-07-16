@@ -94,6 +94,7 @@ import type { InheritedFields } from '@/lib/puzzle-image/codec';
 import type { ImageSpec, PuzzleType } from '@/lib/puzzle-image/types';
 import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
+import { stickeringMaskFn } from './engine/nxn/stickering';
 import SimCubeNet from './_SimCubeNet';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
@@ -202,6 +203,10 @@ export default function SimPage() {
       // explicitly. 'engine' is the retired engine-without-panel mode — still parsed so old
       // links degrade to the engine view (treated as 'group' everywhere), no longer in the UI.
       renderer: parseAsStringEnum(['cubing', 'engine', 'group'] as const).withDefault('group'),
+      // 按阶段展示色块(twizzle edit 的 Stickering,issue #27)。默认 'full' 省略;
+      // 值 = cubing.js 阶段名(OLL/Cross/CMLL…),NxN 走引擎遮罩,megaminx/fto 走
+      // cubing.js 原生。不支持的拼图忽略(下拉也隐藏)。
+      stickering: parseAsString.withDefault('full'),
     },
     { history: 'replace', scroll: false },
   );
@@ -1260,6 +1265,21 @@ export default function SimPage() {
     handlePuzzle(puzzleParam);
   }, [twisty, puzzleParam, handlePuzzle, worldTick]);
 
+  // 按阶段展示色块 → NxN 引擎(镜面单色不适用;twisty 的 megaminx/fto 由下方
+  // TwistySection 的 experimentalStickering prop 接管)。依赖 puzzleParam / worldTick:
+  // 换拼图 / 换阶数(world.setPuzzle 造新 Cube = 新 InstancedRenderer)与 world 重建后
+  // 都要重挂遮罩。上面的 URL-sync effect 先跑(声明在前),这里读到的已是新 cube。
+  useEffect(() => {
+    if (twisty) return;
+    const world = worldRef.current;
+    if (!world) return;
+    const cube = asNxN(world);
+    if (!cube) return;
+    cube.instancedRenderer.setStickering(
+      typeof puzzleParam === 'number' ? stickeringMaskFn(cube.order, query.stickering) : null,
+    );
+  }, [twisty, worldTick, puzzleParam, query.stickering]);
+
   const prevSettingsRef = useRef<SimSettings | null>(null);
   useEffect(() => {
     saveSettings(settings);
@@ -1497,6 +1517,9 @@ export default function SimPage() {
               fillPane
               twistOnClick
               playerRef={twistyPlayerRef}
+              // 按阶段展示色块:cubing.js 原生支持的拼图直接透传阶段名(其余拼图
+              // 不传 — undefined = TwistySection 不接管该属性)。
+              experimentalStickering={(puzzleParam === 'megaminx' || puzzleParam === 'fto') ? query.stickering : undefined}
               settings={settings}
               onUserMove={(moveText) => {
                 // moveText is already cubing.js canonical (`Uv`/`BL2`); pass raw
@@ -1587,6 +1610,8 @@ export default function SimPage() {
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}
+            stickering={query.stickering}
+            onStickeringChange={(v) => setQuery({ stickering: v === 'full' ? null : v })}
           />
           {imageStudioSupported && (
             <CollapsibleSection

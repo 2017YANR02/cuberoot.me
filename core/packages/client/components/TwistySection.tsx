@@ -107,7 +107,7 @@ export interface TwistySettings {
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, puzzleDescription, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, hideControls = false,
+  puzzle, puzzleDescription, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, hideControls = false, experimentalStickering,
 }: {
   puzzle: string;
   /** cubing.js PuzzleGeometry description string (e.g. "c e 0"). When set, the
@@ -139,6 +139,10 @@ export default function TwistySection({
   /** sim 的 PuzzleSettings 子集:scale / yaw / pitch / speed / hint。
    *  其它 NxN-only 项 (thickness / hollow / arrow / coreColor / faceColors) 不传。 */
   settings?: TwistySettings;
+  /** 按阶段展示色块(cubing.js 原生 experimentalStickering,如 'OLL'/'Cross')。
+   *  undefined = 不接管(保持 player 默认 full);仅 cubing.js 注册了 stickerings
+   *  的拼图(megaminx / fto / 3x3 等)有效,其它拼图传了也只是 console.warn + 全暗。 */
+  experimentalStickering?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: MutableRefObject<any>;
 }) {
@@ -366,6 +370,14 @@ export default function TwistySection({
     if (!player) return;
     try { player.experimentalSetupAlg = scramble; } catch { /* ignore */ }
   }, [scramble]);
+
+  // 按阶段展示色块 — cubing.js 原生 experimentalStickering。依赖 playerNonce:
+  // player 重建(换拼图)后默认回 full,非 full 值要立刻补挂。undefined = 不接管。
+  useEffect(() => {
+    const player = playerInstRef.current;
+    if (!player || experimentalStickering === undefined) return;
+    try { player.experimentalStickering = experimentalStickering; } catch { /* ignore */ }
+  }, [experimentalStickering, playerNonce]);
 
   // settings 同步:把 yaw/pitch/scale/speed/hint 映到 TwistyPlayer 属性。
   // 跟 SettingDrawer 里 NxN 的 applySettings 行为一致 — 滑条 0..100 同一坐标系。
