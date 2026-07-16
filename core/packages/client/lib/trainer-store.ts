@@ -318,7 +318,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     currentName: null,
     currentScramble: null,
     hist: EMPTY_HIST,
-    scrambleKind: 'inv',
+    // 默认 H*(最优 HTM 打乱);case/set 没有这列时组件的回退 effect 会落回 `inv`
+    scrambleKind: 'htm',
     timerState: TimerState.NOT_RUNNING,
     timerStarted: 0,
     observingIdx: 0,
