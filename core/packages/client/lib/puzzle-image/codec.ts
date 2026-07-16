@@ -11,11 +11,17 @@ import { DEFAULTS, FACE_DEFAULTS, rotationDefaultsFor, rotationsMatchDefault } f
 import { MASK_ROTATIONS } from './masks';
 import type { ImageSpec, PuzzleType, SpecialView, PuzzleVariant } from './types';
 
-/** Keys specToParams can emit, in emission order. */
+/** Keys specToParams can emit, in emission order. The three mask/paint keys
+ *  (`msk` sticker-mask DSL, `mkc` mask colour, `fc` painted facelet) sit LAST so
+ *  every pre-mask URL — including the 28 golden fixtures — emits byte-identically. */
 const WRITE_KEYS = [
   'pzl', 'size', 'alg', 'case', 'arw', 'ac', 'view', 'stage',
-  'sch', 'r', 'bg', 'cc', 'co', 'fo', 'dist',
+  'sch', 'r', 'bg', 'cc', 'co', 'fo', 'dist', 'msk', 'mkc', 'fc',
 ] as const;
+
+/** `fc` must be a full painted-net facelet string: 54 stickers over U R F D L B
+ *  plus X (= unpainted), the alphabet of `PaintColor`. Anything else is dropped. */
+const FC_RE = /^[URFDLBX]{54}$/;
 
 /**
  * Panel-mode fields the HOST (sim) owns: the studio drops its own 公式 / 六面配色
@@ -192,6 +198,13 @@ export function readSpecFromParams(params: ParamsInput, prefix: string, opts?: C
   s.stickerOpacity = num('fo', DEFAULTS.stickerOpacity, 0, 100);
   s.dist = num('dist', DEFAULTS.dist, 1, 100);
 
+  // Per-sticker mask (`U:0,2;F:3-5` DSL) + its fill. Stored verbatim — parseMask
+  // tolerates junk chunks, so a hand-mangled msk degrades to fewer grays, not a throw.
+  if (get('msk') != null) s.stickerMask = get('msk') ?? '';
+  if (get('mkc')) s.maskColor = get('mkc') as string;
+  const fc = get('fc');
+  if (fc != null && FC_RE.test(fc)) s.paintedFacelet = fc;
+
   // Panel mode: the host owns the alg + colour scheme — inject LAST so it wins over
   // any stray `alg`/`case`/`sch` still in the URL (same clobber-proofing as `puzzle`).
   if (opts?.inherit) {
@@ -242,5 +255,11 @@ export function specToParams(s: ImageSpec, prefix: string, opts?: CodecOptions):
   if (s.cubeOpacity !== DEFAULTS.cubeOpacity) set('co', String(s.cubeOpacity));
   if (s.stickerOpacity !== DEFAULTS.stickerOpacity) set('fo', String(s.stickerOpacity));
   if (s.dist !== DEFAULTS.dist) set('dist', String(s.dist));
+  if (s.stickerMask) set('msk', s.stickerMask);
+  // mkc rides along only when a mask exists — a bare colour grays nothing.
+  if (s.stickerMask && s.maskColor !== DEFAULTS.maskColor) set('mkc', s.maskColor);
+  if (s.paintedFacelet !== DEFAULTS.paintedFacelet && FC_RE.test(s.paintedFacelet)) {
+    set('fc', s.paintedFacelet);
+  }
   return p;
 }

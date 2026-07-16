@@ -51,10 +51,11 @@ export interface ImageSpec {
   arrowScale: number | null;
   arrowInfluence: number | null;
   arrowColor: string;
+  /** 3x3 paint-editor net (54 chars over URFDLBX). URL key `fc`. */
   paintedFacelet: string;
   netActiveColor: PaintColor;
-  /** Per-sticker mask string (facelet-shaped). Not URL-encoded yet. */
+  /** Per-sticker mask DSL (`U:0,2;F:3-5`, see mask-core). URL key `msk`. */
   stickerMask: string;
-  /** Fill for masked stickers. Puzzle sticker data, not a theme token. */
+  /** Fill for masked stickers. Puzzle sticker data, not a theme token. URL key `mkc`. */
   maskColor: string;
 }
