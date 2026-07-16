@@ -440,6 +440,9 @@
 .sim-player-scramble:disabled:hover {
   background: transparent;
 }
+.sim-player-scramble-optimal:hover {
+  background: transparent;
+}
 .sim-spin {
   animation: sim-spin 0.8s linear infinite;
 }
