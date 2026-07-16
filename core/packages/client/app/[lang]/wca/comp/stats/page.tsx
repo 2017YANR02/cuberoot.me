@@ -4,16 +4,20 @@
  * /wca/calendar/stats — WCA 比赛随时间分布的可视化。
  * 数据源:loadComps()(all_past + all_upcoming, 按 id 去重)。
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowUp, ArrowDown, ArrowRight, Mountain, Waves, Ghost } from 'lucide-react';
 import { CountryInput } from '@/components/CountryInput';
 import { EventSelect } from '@/components/EventSelect';
 import { Flag } from '@/components/Flag';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import { countryName } from '@/lib/country-name';
+import { localizeCompName } from '@/lib/comp-localize';
+import { localizeCity } from '@/lib/city-localize';
+import { compHref } from '@/lib/comp-link';
+import { formatDateRangeIso } from '@/lib/wca-date';
 import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -373,7 +377,127 @@ export default function CalendarStatsPage() {
           )}
         </section>
       )}
+
+      {totalComps > 0 && <GeoExtremesSection comps={filtered} isZh={isZh} />}
     </div>
+  );
+}
+
+// ── 地理之最(issue #35):最北/南/东/西、海拔最高/最低、最孤独(最近邻距离最大) ──
+
+type GeoComp = Comp & { latitude_degrees: number; longitude_degrees: number };
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * toRad;
+  const dLng = (lng2 - lng1) * toRad;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(a));
+}
+
+/**
+ * 每场比赛到最近另一场比赛的距离,取最大者。
+ * 按纬度排序 + 滑窗剪枝(纬向 1° ≈ 111km,|Δlat|·111 ≥ 当前最近距离即可停):
+ * 密集区窗口极小,孤点窗口大但数量少,~1.8 万场毫秒级。
+ */
+function findLoneliest(geo: GeoComp[]): { comp: GeoComp; km: number } | null {
+  if (geo.length < 2) return null;
+  const pts = geo.map((c) => ({ c, lat: c.latitude_degrees, lng: c.longitude_degrees }));
+  pts.sort((a, b) => a.lat - b.lat);
+  let bestComp: GeoComp | null = null;
+  let bestKm = -1;
+  for (let i = 0; i < pts.length; i++) {
+    let nearest = Infinity;
+    for (let j = i - 1; j >= 0 && (pts[i].lat - pts[j].lat) * 111 < nearest; j--) {
+      const d = haversineKm(pts[i].lat, pts[i].lng, pts[j].lat, pts[j].lng);
+      if (d < nearest) nearest = d;
+    }
+    for (let j = i + 1; j < pts.length && (pts[j].lat - pts[i].lat) * 111 < nearest; j++) {
+      const d = haversineKm(pts[i].lat, pts[i].lng, pts[j].lat, pts[j].lng);
+      if (d < nearest) nearest = d;
+    }
+    if (nearest > bestKm && Number.isFinite(nearest)) {
+      bestKm = nearest;
+      bestComp = pts[i].c;
+    }
+  }
+  return bestComp ? { comp: bestComp, km: bestKm } : null;
+}
+
+function fmtLat(deg: number): string {
+  return `${Math.abs(deg).toFixed(2)}° ${deg >= 0 ? 'N' : 'S'}`;
+}
+function fmtLng(deg: number): string {
+  return `${Math.abs(deg).toFixed(2)}° ${deg >= 0 ? 'E' : 'W'}`;
+}
+
+function GeoExtremesSection({ comps, isZh }: { comps: Comp[]; isZh: boolean }) {
+  const geo = useMemo(
+    () => comps.filter((c): c is GeoComp => c.latitude_degrees != null && c.longitude_degrees != null),
+    [comps],
+  );
+  const rows = useMemo(() => {
+    if (geo.length === 0) return [];
+    const pick = (cmp: (a: GeoComp, b: GeoComp) => GeoComp) => geo.reduce(cmp);
+    const out: { key: string; icon: ReactNode; label: string; comp: GeoComp; value: string }[] = [];
+    const north = pick((a, b) => (b.latitude_degrees > a.latitude_degrees ? b : a));
+    const south = pick((a, b) => (b.latitude_degrees < a.latitude_degrees ? b : a));
+    const east = pick((a, b) => (b.longitude_degrees > a.longitude_degrees ? b : a));
+    const west = pick((a, b) => (b.longitude_degrees < a.longitude_degrees ? b : a));
+    out.push(
+      { key: 'north', icon: <ArrowUp size={15} />, label: tr({ zh: '最北', en: 'Northernmost' }), comp: north, value: fmtLat(north.latitude_degrees) },
+      { key: 'south', icon: <ArrowDown size={15} />, label: tr({ zh: '最南', en: 'Southernmost' }), comp: south, value: fmtLat(south.latitude_degrees) },
+      { key: 'east', icon: <ArrowRight size={15} />, label: tr({ zh: '最东', en: 'Easternmost' }), comp: east, value: fmtLng(east.longitude_degrees) },
+      { key: 'west', icon: <ArrowLeft size={15} />, label: tr({ zh: '最西', en: 'Westernmost' }), comp: west, value: fmtLng(west.longitude_degrees) },
+    );
+    const withElev = geo.filter((c) => c.elevation != null);
+    if (withElev.length > 0) {
+      const hi = withElev.reduce((a, b) => ((b.elevation ?? 0) > (a.elevation ?? 0) ? b : a));
+      const lo = withElev.reduce((a, b) => ((b.elevation ?? 0) < (a.elevation ?? 0) ? b : a));
+      out.push(
+        { key: 'hi', icon: <Mountain size={15} />, label: tr({ zh: '海拔最高', en: 'Highest' }), comp: hi, value: `${hi.elevation!.toLocaleString()} m` },
+        { key: 'lo', icon: <Waves size={15} />, label: tr({ zh: '海拔最低', en: 'Lowest' }), comp: lo, value: `${lo.elevation!.toLocaleString()} m` },
+      );
+    }
+    const lonely = findLoneliest(geo);
+    if (lonely) {
+      const kmStr = Math.round(lonely.km).toLocaleString();
+      out.push({
+        key: 'lonely',
+        icon: <Ghost size={15} />,
+        label: tr({ zh: '最孤独', en: 'Loneliest' }),
+        comp: lonely.comp,
+        value: tr({ zh: `距最近比赛 ${kmStr} km`, en: `${kmStr} km to nearest` }),
+      });
+    }
+    return out;
+    // isZh 驱动 tr() 文案随语言切换重算
+  }, [geo, isZh]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (rows.length === 0) return null;
+
+  return (
+    <section className="cs-section">
+      <h2 className="cs-section-title">{tr({ zh: '地理之最', en: 'Geographic extremes' })}</h2>
+      <div className="cs-geo-rows">
+        {rows.map((r) => (
+          <div key={r.key} className="cs-geo-row">
+            <span className="cs-geo-label">{r.icon}{r.label}</span>
+            <span className="cs-geo-comp">
+              <Flag iso2={r.comp.country} />
+              <Link href={compHref(r.comp.id)} className="cs-geo-name">
+                {localizeCompName(r.comp.id, r.comp.name, isZh)}
+              </Link>
+            </span>
+            <span className="cs-geo-meta">
+              {[localizeCity(r.comp.city ?? '', isZh, r.comp.country), countryName(r.comp.country, isZh)].filter(Boolean).join(', ')} · {formatDateRangeIso(r.comp.start_date, r.comp.end_date)}
+            </span>
+            <span className="cs-geo-value">{r.value}</span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
