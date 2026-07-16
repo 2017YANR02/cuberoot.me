@@ -240,6 +240,104 @@ export interface TLEntry {
 }
 export const TIMELINE: TLEntry[] = [
   {
+    date: '2026-07-16',
+    tag: 'feature',
+    zh: {
+      title: '/icon 图标画廊上线，/math/probability 概率页上线',
+      body: '新增 /icon 图标画廊，收录站内全部魔方图标，可搜索、点击直接下载；新增 /math/probability 页，交互演示公式情形概率与旋转对称。',
+      expand: '图标画廊单一数据源，站内其余图标引用同一份 SVG，杜绝各处各画一份走样。',
+    },
+    en: {
+      title: 'An /icon gallery and a /math/probability page launch',
+      body: 'A new /icon gallery collects every cube icon on the site, searchable and click-to-download; a new /math/probability page interactively demos case probability and rotational symmetry.',
+      expand: 'The icon gallery is a single source of truth — every other icon on the site references the same SVGs, so no page can drift with its own hand-drawn copy.',
+    }
+},
+  {
+    date: '2026-07-16',
+    tag: 'feature',
+    zh: {
+      title: '/sim 加阶段染色遮罩与齿轮魔方模拟器',
+      body: '虚拟魔方 /sim 新增阶段染色（按 OLL / PLL / F2L 等训练阶段把无关块调暗，类似 Twizzle）；同时新增齿轮魔方（Gear Cube）模拟器，支持拖拽转动和打乱。',
+      expand: '齿轮魔方引擎基于带齿轮联动的三阶状态模型，转动会带动相邻层同步转半格。',
+    },
+    en: {
+      title: '/sim gains stage-stickering masks and a Gear Cube simulator',
+      body: 'The virtual cube /sim added stage stickering (dims pieces irrelevant to a training stage like OLL/PLL/F2L, Twizzle-style) and a Gear Cube simulator with drag-to-turn and scrambling.',
+      expand: 'The Gear Cube engine models geared 3x3 state where a turn drives the linked adjacent layer through a synchronized half-step.',
+    }
+},
+  {
+    date: '2026-07-14 ~ 07-15',
+    tag: 'feature',
+    zh: {
+      title: '站内通知系统上线',
+      body: '新增站内通知：复盘收到评论、回复或另解时提醒作者，论坛帖子被回复也会提醒；通知同步邮件推送，按收件人语言本地化，可在设置里关闭邮件。',
+      expand: '桌宠肩上挂蓝色角标提示未读通知，点开查看后台清零。',
+    },
+    en: {
+      title: 'A site-wide notification system launches',
+      body: 'New in-site notifications: recon authors are alerted on comments, replies, and alternative solutions, and forum threads notify on replies; notifications also push matching emails, localized per recipient, with an opt-out in settings.',
+      expand: 'The desk pet shows a blue badge for unread notifications, clearing once opened.',
+    }
+},
+  {
+    date: '2026-07-15',
+    tag: 'dx',
+    zh: {
+      title: '公式训练器完全迁入 /alg',
+      body: '旧的独立公式训练器路由退役，功能全部并入公式库 /alg 内的训练模式，公式库和训练不再是两套界面。',
+      expand: '',
+    },
+    en: {
+      title: 'The algorithm trainer fully migrates into /alg',
+      body: 'The old standalone trainer route was retired; its features moved entirely into the training mode built into the algorithm library /alg, so the library and trainer are no longer two separate UIs.',
+      expand: '',
+    }
+},
+  {
+    date: '2026-07-13',
+    tag: 'feature',
+    zh: {
+      title: '图像编辑器并入 /sim，打乱库加两个案例画廊',
+      body: '独立的魔方图像编辑器页并入虚拟魔方 /sim 的图像面板，共用同一份公式和配色；打乱难度库新增二阶首面案例画廊和金字塔 V 形案例画廊。',
+      expand: '',
+    },
+    en: {
+      title: 'The image editor merges into /sim; two new case galleries land in scramble stats',
+      body: 'The standalone cube-image editor page merged into the virtual cube /sim\'s image panel, sharing its algorithm and colour scheme; the scramble-difficulty library gained a 2x2 first-face case gallery and a Pyraminx V-shape case gallery.',
+      expand: '',
+    }
+},
+  {
+    date: '2026-07-13',
+    tag: 'migration',
+    zh: {
+      title: '1LLL 公式表并入公式库',
+      body: '把最后一层公式表（5059 条）从外部表格迁移进站内公式库数据库，统一记号、补齐镜像 / 逆解关系和收尾 AUF，成为一等公民数据。',
+      expand: '迁移过程中顺带修正了 4 条表格里的错误公式，并统一了公式的旋转规范化写法。',
+    },
+    en: {
+      title: '1LLL algorithms migrate into the algorithm database',
+      body: 'The last-layer algorithm sheet (5,059 rows) was migrated from an external spreadsheet into the site\'s algorithm database, unifying notation and filling in mirror/inverse relations and finishing AUF as first-class data.',
+      expand: 'The migration also fixed 4 corrupted algorithms found in the sheet and standardized how algorithms are rotation-normalized.',
+    }
+},
+  {
+    date: '2026-07-12',
+    tag: 'feature',
+    zh: {
+      title: '登录改版：邮箱密码登录，登录弹窗重做',
+      body: '账号系统新增邮箱 + 密码登录方式；登录弹窗改版成业界标准布局（邮箱优先，第三方登录作为按钮排在下方）。',
+      expand: '',
+    },
+    en: {
+      title: 'Login revamp: email/password sign-in, redesigned modal',
+      body: 'The account system added email + password sign-in; the login modal was redesigned to an industry-standard layout (email-primary, social sign-in as buttons below).',
+      expand: '',
+    }
+},
+  {
     date: '2026-07-09',
     tag: 'feature',
     zh: {
