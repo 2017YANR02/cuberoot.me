@@ -373,6 +373,13 @@
   color: var(--muted-foreground);
   min-width: 4em;
 }
+/* 训练/复习差异说明,紧跟在切换器下方(常驻显示,不用 hover-only 提示 —— 移动端够不到 hover) */
+.trainer-opts-hint {
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--faint-foreground);
+  margin-top: -6px;
+}
 .trainer-opts-help {
   font-size: 0.78rem;
   line-height: 1.5;
@@ -412,10 +419,7 @@
 .trainer-solve-row {
   font-size: 0.85rem;
   margin: 4px 0;
-}
-.trainer-solve-row > span:first-child {
-  color: var(--faint-foreground);
-  margin-right: 4px;
+  text-align: center;
 }
 .trainer-solve-scramble {
   font-family: 'Inter', monospace;
