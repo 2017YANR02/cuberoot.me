@@ -783,6 +783,10 @@ export default function CompDetailPage() {
   useEffect(() => {
     if (!slug) return;
     let cancel = false;
+    // 切比赛先清上一场的 info:站内 A→B 导航时 B 的 data 先到而 compInfo/cubingZh 还是 A 的,
+    // 会把 A 的中文名/国旗写进 B 的「最近浏览」(issue #33)。compInfo 归 null 也会让下面的
+    // cubingZh effect 立即清掉旧中文名。
+    setCompInfo(null);
     setCompInfoSettled(false);
     fetchCompInfo(slug)
       .then(info => { if (!cancel) setCompInfo(info); })

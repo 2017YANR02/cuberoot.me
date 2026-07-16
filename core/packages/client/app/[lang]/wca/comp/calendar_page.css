@@ -201,7 +201,12 @@
     color: var(--accent);
 }
 
-.calendar-page .cancelled-toggle {
+/* ── 合并筛选菜单(issue #33:已取消 / 首秀 / 双轮 +(列表视图)整场列 / 项目格)── */
+.calendar-page .comp-filters-wrap {
+    position: relative;
+    align-self: center;
+}
+.calendar-page .comp-filters-btn {
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -216,68 +221,46 @@
     cursor: pointer;
     transition: all 0.15s;
 }
-.calendar-page .cancelled-toggle:hover {
-    border-color: #C97A5C;
-    color: #A04A2E;
-}
-.calendar-page .cancelled-toggle.is-active {
-    background: #FCE9E3;
-    border-color: #C97A5C;
-    color: #A04A2E;
-}
-
-.calendar-page .debuts-select-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 0.35rem 0.2rem;
-    color: var(--text-sub);
-    transition: color 0.15s;
-}
-.calendar-page .debuts-select-wrap:hover {
-    color: var(--accent);
-}
-.calendar-page .debuts-select-wrap.is-active {
-    color: var(--accent);
-}
-.calendar-page .debuts-select {
-    border: none;
-    background: transparent;
-    color: inherit;
-    font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 0;
-}
-.calendar-page .debuts-select:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-}
-.calendar-page .dual-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 0.35rem 0.7rem;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--text-sub);
-    font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 500;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-.calendar-page .dual-toggle:hover {
+.calendar-page .comp-filters-btn:hover {
     border-color: var(--accent);
     color: var(--accent);
 }
-.calendar-page .dual-toggle.is-active {
+.calendar-page .comp-filters-btn.is-active {
     background: var(--accent-soft);
     border-color: var(--accent);
     color: var(--accent);
 }
+.calendar-page .comp-filters-count {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+.calendar-page .comp-filters-caret { font-size: 0.7em; }
+/* anchored-panel: clamped(usePanelClamp,超出视口右缘时左移) */
+.calendar-page .comp-filters-panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+    width: max-content;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    box-shadow: 0 10px 28px rgba(24, 23, 22, 0.16);
+}
+.calendar-page .comp-filters-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+.calendar-page .comp-filters-row--select { justify-content: space-between; }
+.calendar-page .comp-filters-label { color: var(--text-sub); }
 
 .calendar-page .mode-status {
     padding: 0.5rem 0.75rem;
@@ -783,9 +766,10 @@
     -webkit-backdrop-filter: blur(4px);
     z-index: 100;
     display: flex;
-    align-items: flex-start;
+    /* 弹窗在视口内垂直居中(issue #33;原 flex-start + 8vh 顶部偏置贴着顶) */
+    align-items: center;
     justify-content: center;
-    padding: 8vh 1rem 2rem;
+    padding: 1rem;
     animation: modal-fade 0.18s ease-out;
 }
 @keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
