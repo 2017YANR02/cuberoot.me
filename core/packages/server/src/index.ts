@@ -42,6 +42,7 @@ import { forumRoutes } from './routes/forum.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
+import { startWatchedForeignRegMonitor } from './monitors/watched_foreign_reg.js';
 import { loadNemesizerDataset } from './nemesizer/loader.js';
 import { getCurrentRecords } from './utils/current_records.js';
 import { warmCnCompZh } from './utils/cn_comp_zh_cache.js';
@@ -188,6 +189,10 @@ startAnnouncedCompsPoller();
 // 关注选手「往期成绩变更」监控(成绩取消 / 修正 / 纪录标记变动).独立门控 RESULT_WATCH_ENABLED,
 // 慢周期(默认 6h)diff WCA /persons/:id/results 写入 wca_result_changes 供 /wca/result-watch 页只读.
 startWcaPastResultsMonitor();
+
+// 关注选手「报名国外比赛」监控(issue #34)。独立门控 FOREIGN_REG_WATCH_ENABLED,
+// 慢周期(默认 3h)扫非 CN upcoming 比赛的 registrations,命中发站内通知+邮件+Bark。
+startWatchedForeignRegMonitor();
 
 const PORT = Number(process.env.PORT) || 3001;
 
