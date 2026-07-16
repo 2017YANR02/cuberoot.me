@@ -90,7 +90,7 @@ export default class GearCube extends THREE.Group implements TweenCube<GearMove>
   centerSlotOf(pieceId: number): number { return this.state.cent.indexOf(pieceId); }
 
   /** Animation plan for one move: three fixed-axis groups (face −amt·π, middle
-   *  −amt·π/2, equator-gear spins +amt·π/3), pieces read off the LIVE state. */
+   *  −amt·π/2, equator-gear spins +amt·8π/3), pieces read off the LIVE state. */
   beginMove(move: GearMove): PieceAnim[] {
     const f = move.face;
     const n = _axis.set(FACE_AXIS[f][0], FACE_AXIS[f][1], FACE_AXIS[f][2]);
