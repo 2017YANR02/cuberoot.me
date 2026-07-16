@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { CalendarDays, Table as TableIcon, Loader2, CalendarPlus } from 'lucide-react';
+import { CalendarDays, Table as TableIcon, ImageDown, Loader2, CalendarPlus } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -35,7 +35,8 @@ const ScheduleCalendar = dynamic(() => import('./ScheduleCalendar'), {
   ),
 });
 
-type View = 'calendar' | 'table';
+// poster = 9:16 分享图(CompPoster,由 CompDetailPage 在赛程 tab 下直接渲染,不进本组件)
+type View = 'calendar' | 'table' | 'poster';
 
 export default function ScheduleView({ slug, isZh, compName, view, detailsExpanded, eventFilter }: {
   slug: string; isZh: boolean; compName: string;
@@ -167,6 +168,15 @@ function ScheduleToolbar({ view, onChange }: {
         })}
       >
         <CalendarDays size={16} />
+      </button>
+      <button
+        type="button"
+        className={`sched-subtoggle-btn${view === 'poster' ? ' is-active' : ''}`}
+        onClick={() => onChange('poster')}
+        aria-label={tr({ zh: '分享图', en: 'Share image' })}
+        title={tr({ zh: '分享图', en: 'Share image' })}
+      >
+        <ImageDown size={16} />
       </button>
       <button
         type="button"
