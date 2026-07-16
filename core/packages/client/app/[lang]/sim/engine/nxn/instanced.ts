@@ -21,6 +21,7 @@ import CubeGroup from "./group";
 import { FACE, COLORS } from "../define";
 import { rawMaterial, rawMaterialBasic, buildRawAttributes, attachRawAttributes, setRawCoreBorder, type RawAttrs } from "./rawCore";
 import { mirrorTables } from "../mirror/mirrorGeometry";
+import { FM_DIM, FM_IGNORED, FM_ORIENTED, FM_ORIENTED2, type StickeringMaskFn } from "./stickering";
 
 const HALF = Cubelet.SIZE / 2;
 const HIDE_MAT = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -109,6 +110,11 @@ export default class InstancedRenderer extends THREE.Group {
    * 替代两个 Map (slotLookup + cubeletSlots),N=250 省 ~70 MB:
    * 之前 375k Map 项 + 372k 小 Array,现在 = visCount*6*4B = ~9 MB。 */
   private cubeletFaceSlot!: Int32Array;
+  /** 按阶段展示色块(stickering,issue #27):per-slot facelet 遮罩码(FM_*),
+   * null = full(全原色)。定义在 SOLVED 帧 (initial, face) 上 → 颜色随块走,
+   * 打乱 / slice 动画中标注的始终是同一批实体块。只改 instance color,不动矩阵,
+   * 与 strip(remove)/ 镜面 / rebuildAll 正交。 */
+  private stickeringCodes: Uint8Array | null = null;
 
   // toggles
   private _thickness = true;
@@ -767,11 +773,11 @@ export default class InstancedRenderer extends THREE.Group {
       this.staticHint.instanceMatrix.needsUpdate = true;
     }
     const effective = label && label.length > 0 ? label : (cubelet.colors[face] ?? "Gray");
-    this.tmpColor.set(COLORS[effective] ?? COLORS.Gray);
+    this.resolveStickerColor(slot, effective);
     this.staticSticker.setColorAt(slot, this.tmpColor);
     this.movingSticker.setColorAt(slot, this.tmpColor);
     // hint 走预混 (不透明,避免 checker 透过); sticker 用原色
-    this.computeHintColor(effective);
+    this.computeHintColor(slot, effective);
     this.staticHint.setColorAt(slot, this.tmpColor);
     this.movingHint.setColorAt(slot, this.tmpColor);
     if (this.staticSticker.instanceColor) this.staticSticker.instanceColor.needsUpdate = true;
@@ -919,32 +925,49 @@ export default class InstancedRenderer extends THREE.Group {
   }
   get hint(): boolean { return this._hint; }
 
-  /** 算 face 色与 bg 预混的 hint 实际显示色,写入 this.tmpColor。
-   * 不透明 + 预混等效原 opacity=0.35 的视觉,但 canvas alpha=1,避免 checker bg 透过 hint。 */
-  private computeHintColor(faceLabel: string | undefined): void {
+  /** slot 的实际贴片显示色写入 this.tmpColor:base = COLORS[label],再按阶段遮罩码变换。
+   * dim = 原色 ×0.5(纯白特判 #dddddd)与 cubing.js PG3D 一致,自动跟随自定义面色;
+   * ignored 灰 / oriented 青 / oriented2 黄用 cubing.js 的固定常量。 */
+  private resolveStickerColor(slotIdx: number, faceLabel: string | undefined): void {
+    const code = this.stickeringCodes ? this.stickeringCodes[slotIdx] : 0;
+    if (code === FM_IGNORED) { this.tmpColor.set(0x666666); return; }
+    if (code === FM_ORIENTED) { this.tmpColor.set(0x44ddcc); return; }
+    if (code === FM_ORIENTED2) { this.tmpColor.set(0xfffdaa); return; }
     this.tmpColor.set(COLORS[faceLabel ?? "Gray"] ?? COLORS.Gray);
+    if (code === FM_DIM) {
+      if (this.tmpColor.getHex() === 0xffffff) {
+        this.tmpColor.set(0xdddddd);
+      } else {
+        // ×0.5 要在 sRGB 分量上做(twizzle 的暗度):ColorManagement 下 set(hex)
+        // 已转线性,直接 multiplyScalar 是线性域减半,视觉只暗 ~27% 看不出来。
+        this.tmpColor.convertLinearToSRGB();
+        this.tmpColor.multiplyScalar(0.5);
+        this.tmpColor.convertSRGBToLinear();
+      }
+    }
+  }
+
+  /** 算 face 色与 bg 预混的 hint 实际显示色,写入 this.tmpColor。
+   * 不透明 + 预混等效原 opacity=0.35 的视觉,但 canvas alpha=1,避免 checker bg 透过 hint。
+   * 底色走 resolveStickerColor → hint 跟随阶段遮罩(cubing.js hint facelets 同款)。 */
+  private computeHintColor(slotIdx: number, faceLabel: string | undefined): void {
+    this.resolveStickerColor(slotIdx, faceLabel);
     this.tmpColor.lerp(this.hintBgColor, 1 - InstancedRenderer.HINT_FACE_MIX);
   }
 
-  /** 用户改了 6 面色:写 COLORS map + 重刷所有 sticker / hint instance color。
-   * sticker 用原色,hint 走 computeHintColor 跟当前 bg 预混。
-   * cubelet.colors[face] 是 logical label ("L"/"R"/"U"/"D"/"F"/"B"),COLORS 改了下次 applyStick 也自动走新色。 */
-  setFaceColors(map: Partial<Record<"U" | "D" | "L" | "R" | "F" | "B", string>>): void {
-    for (const k of ["U", "D", "L", "R", "F", "B"] as const) {
-      const v = map[k];
-      if (v) COLORS[k] = v;
-    }
+  /** 按当前 COLORS + 阶段遮罩重刷所有 sticker / hint instance 颜色。 */
+  private refreshStickerColors(): void {
     const updateHint = !this.hintNeedsPopulate;
     for (let i = 0; i < this.stickerSlots.length; i++) {
       const slot = this.stickerSlots[i];
       const cubelet = this.cube.initials.get(slot.cubeletInitial);
       if (!cubelet) continue;
       const label = cubelet.colors[slot.face];
-      this.tmpColor.set(COLORS[label ?? "Gray"] ?? COLORS.Gray);
+      this.resolveStickerColor(i, label);
       this.staticSticker.setColorAt(i, this.tmpColor);
       this.movingSticker.setColorAt(i, this.tmpColor);
       if (updateHint) {
-        this.computeHintColor(label);
+        this.computeHintColor(i, label);
         this.staticHint.setColorAt(i, this.tmpColor);
         this.movingHint.setColorAt(i, this.tmpColor);
       }
@@ -955,6 +978,34 @@ export default class InstancedRenderer extends THREE.Group {
       if (this.staticHint.instanceColor) this.staticHint.instanceColor.needsUpdate = true;
       if (this.movingHint.instanceColor) this.movingHint.instanceColor.needsUpdate = true;
     }
+    this.cube.dirty = true;
+  }
+
+  /** 应用 / 清除阶段遮罩(mask 来自 engine/nxn/stickering.ts;null = full 恢复原色)。 */
+  setStickering(maskFn: StickeringMaskFn | null): void {
+    if (!maskFn) {
+      if (!this.stickeringCodes) return; // full → full,免整轮重刷
+      this.stickeringCodes = null;
+    } else {
+      const codes = new Uint8Array(this.stickerSlots.length);
+      for (let i = 0; i < this.stickerSlots.length; i++) {
+        const slot = this.stickerSlots[i];
+        codes[i] = maskFn(slot.cubeletInitial, slot.face);
+      }
+      this.stickeringCodes = codes;
+    }
+    this.refreshStickerColors();
+  }
+
+  /** 用户改了 6 面色:写 COLORS map + 重刷所有 sticker / hint instance color。
+   * sticker 用原色,hint 走 computeHintColor 跟当前 bg 预混。
+   * cubelet.colors[face] 是 logical label ("L"/"R"/"U"/"D"/"F"/"B"),COLORS 改了下次 applyStick 也自动走新色。 */
+  setFaceColors(map: Partial<Record<"U" | "D" | "L" | "R" | "F" | "B", string>>): void {
+    for (const k of ["U", "D", "L", "R", "F", "B"] as const) {
+      const v = map[k];
+      if (v) COLORS[k] = v;
+    }
+    this.refreshStickerColors();
     // 原核激活时块身颜色与贴片同源,面色变了同步重建 raw per-instance 属性。
     // (扇形横截面 panelFan 的颜色在每次 group.hold 时按当前态重刷,自动跟上新面色,无需在此处理。)
     if (this._rawCore && this._rawAttrs) {
@@ -962,7 +1013,6 @@ export default class InstancedRenderer extends THREE.Group {
         U: COLORS.U, D: COLORS.D, L: COLORS.L, R: COLORS.R, F: COLORS.F, B: COLORS.B,
       }, this._rawAttrs);
     }
-    this.cube.dirty = true;
   }
 
   /** 主题/背景色变了时调:刷新 hint 预混颜色 + bg 色字段。
@@ -975,7 +1025,7 @@ export default class InstancedRenderer extends THREE.Group {
         const slot = this.stickerSlots[i];
         const cubelet = this.cube.initials.get(slot.cubeletInitial);
         if (!cubelet) continue;
-        this.computeHintColor(cubelet.colors[slot.face]);
+        this.computeHintColor(i, cubelet.colors[slot.face]);
         this.staticHint.setColorAt(i, this.tmpColor);
         this.movingHint.setColorAt(i, this.tmpColor);
       }
@@ -994,7 +1044,7 @@ export default class InstancedRenderer extends THREE.Group {
       this.tmpMat.multiplyMatrices(this._mirrorCenters ? this.mirrorMat(cubelet._instIdx, cubelet, this.tmpMirrorMat) : cubelet.matrix, this.hintLocalMats[i]);
       this.staticHint.setMatrixAt(i, this.tmpMat);
       this.movingHint.setMatrixAt(i, HIDE_MAT);
-      this.computeHintColor(cubelet.colors[slot.face]);
+      this.computeHintColor(i, cubelet.colors[slot.face]);
       this.staticHint.setColorAt(i, this.tmpColor);
       this.movingHint.setColorAt(i, this.tmpColor);
     }

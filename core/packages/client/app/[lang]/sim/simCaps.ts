@@ -101,6 +101,12 @@ export interface ControlSupport {
   hands: boolean;
   /** 调试:手部 MediaPipe 风格骨架叠加线(关节点+连线)。同 hands 一样仅 3x3。 */
   handsSkeleton: boolean;
+  /** 按阶段展示色块(twizzle edit 的 Stickering 下拉,issue #27)。NxN(order≥2)走
+   *  引擎遮罩(engine/nxn/stickering.ts);megaminx / fto 在 cubing.js 渲染下走原生
+   *  experimentalStickering。镜面(单色)/ 其余拼图(cubing.js 只有 full)不支持。
+   *  例外约定:false 时播放条**隐藏**该下拉(不是置灰)—— 它住在魔方下方的播放条,
+   *  不在设置抽屉,置灰只会占掉窄屏播放条的空间。 */
+  stickering: boolean;
 }
 
 export interface ResolvedCaps {
@@ -158,6 +164,9 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       // table.groups 逐层 angle 可轮询 → 仅 3x3(镜面走 'mirror' kind,不含)。
       hands: kind === 3,
       handsSkeleton: kind === 3,
+      // 阶段色块:NxN 引擎(1 阶无层可分)或 cubing.js 原生支持的 megaminx / fto。
+      stickering: (isNxN && (kind as number) >= 2)
+        || (!engineActive && (kind === 'megaminx' || kind === 'fto')),
     },
   };
 }

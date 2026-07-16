@@ -111,6 +111,7 @@ import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
+import StickeringSelect from './StickeringSelect';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { stripGripMarks } from '@cuberoot/shared/alg-notation';
@@ -866,6 +867,10 @@ interface Props {
   /** DOM node below the cube canvas to portal the playback control row into
    *  (twizzle-style bar under the puzzle). Falls back to inline when absent. */
   playbackSlot?: HTMLElement | null;
+  /** 按阶段展示色块(twizzle stickering,issue #27)。URL 状态归 SimPage(nuqs),
+   *  这里只渲染播放条最左的下拉。支持与否走 simCaps.supports.stickering(不支持隐藏)。 */
+  stickering?: string;
+  onStickeringChange?: (v: string) => void;
 }
 
 export default function PlayerControls({
@@ -877,6 +882,7 @@ export default function PlayerControls({
   skewbNotation, onSkewbNotationChange,
   renderer = 'cubing', onRendererChange,
   playbackSlot,
+  stickering = 'full', onStickeringChange,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const isIvy = puzzleKind === 'ivy';
@@ -1929,6 +1935,12 @@ export default function PlayerControls({
     </select>
   );
 
+  // 按阶段展示色块(twizzle edit 同款,issue #27)— 播放条最左。支持面走 simCaps
+  // (NxN 引擎 ≥2 阶 / cubing.js megaminx·fto),不支持的拼图整个隐藏。
+  const stickeringSelect = resolveCaps(puzzleKind, renderer).supports.stickering && onStickeringChange
+    ? <StickeringSelect puzzleKind={puzzleKind} value={stickering} onChange={onStickeringChange} />
+    : null;
+
   return (
     <div className="sim-player">
       <div className="sim-player-row sim-player-row--top">
@@ -2095,6 +2107,7 @@ export default function PlayerControls({
       // 播放控制排(twizzle alpha.twizzle.net/edit 同款):跳到起点 |◀ / 上一步 ↩ /
       // 播放 ▶ / 下一步 ↪ / 跳到末尾 ▶|。单步用弧形箭头,跳首尾用带竖线的双三角。
       <div className="sim-player-row">
+        {stickeringSelect}
         <button onClick={() => { setCaretChar(null); jumpToStep(0); }} disabled={step === 0} title={t('回到起点', 'Skip to start')} aria-label={t('回到起点', 'Skip to start')}><SkipBack size={14} /></button>
         <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')} aria-label={t('上一步', 'Step back')}><Undo2 size={14} /></button>
         <button
@@ -2126,7 +2139,7 @@ export default function PlayerControls({
       // (TwistySection's bottom-row controlPanel); only the anchor select is ours to add —
       // TwistySection already reads settings.playbackMode into experimentalSetupAnchor, it
       // just had no control to change it in this mode.
-      <div className="sim-player-row">{anchorSelect}</div>
+      <div className="sim-player-row">{stickeringSelect}{anchorSelect}</div>
       );
       return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
       })()}
