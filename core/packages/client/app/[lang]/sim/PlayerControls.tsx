@@ -59,6 +59,9 @@ import {
   parseHeliMoves, heliMovesToString, randomHeliScrambleMoves, type HeliMove,
 } from './engine/heli/heliState';
 import {
+  parseGearMoves, gearMovesToString, invertGearMoves, reduceGearAlg, randomGearScrambleMoves, type GearMove,
+} from './engine/gear/gearState';
+import {
   parseSkewbMoves, skewbMovesToString, randomSkewbScramble, isSkewbRot, type SkewbMove,
 } from './engine/skewb/skewbState';
 import {
@@ -284,6 +287,7 @@ const PUZZLE_TYPE_OPTIONS = [
   { value: 'redi',     iconClass: 'unofficial-redi', labelZh: 'Redi', labelEn: 'Redi' },
   { value: 'rex',      iconClass: 'unofficial-rex', labelZh: 'Rex', labelEn: 'Rex Cube' },
   { value: 'heli',     iconClass: 'unofficial-helicopter', labelZh: '直升机', labelEn: 'Helicopter' },
+  { value: 'gear',     iconClass: 'unofficial-gear', labelZh: '齿轮', labelEn: 'Gear Cube' },
   { value: 'mirror',   iconClass: 'event-333', labelZh: '镜面', labelEn: 'Mirror' },
 ] as const;
 
@@ -379,7 +383,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'custom' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'custom' | PgPuzzleId;
 
 function isTwistyPuzzle(p: SimPuzzle): p is 'pyraminx' | 'skewb' | 'megaminx' | 'fto' {
   return p === 'pyraminx' || p === 'skewb' || p === 'megaminx' || p === 'fto';
@@ -524,7 +528,7 @@ function reduceSkewbAlg(s: string): string {
 // per puzzle in one descriptor collapses what used to be ~13 parallel `isDino||isRedi
 // ||…` branches into a single `corner` lookup. Adding a corner-turn puzzle = one entry
 // here + one line in `cornerKind` below (mirrors the engine/cornerTurnGesture adapters).
-type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto';
+type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto';
 
 interface CornerSpec {
   /** Parse alg / scramble text → the puzzle's move list. */
@@ -579,6 +583,14 @@ const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
     invert: (m) => invertHeliMoves(m as HeliMove[]),
     reduce: reduceHeliAlg,
     scramble: () => heliMovesToString(randomHeliScrambleMoves(20)),
+  },
+  gear: {
+    parse: parseGearMoves,
+    toString: (m) => gearMovesToString(m as GearMove[]),
+    invert: (m) => invertGearMoves(m as GearMove[]),
+    reduce: reduceGearAlg,
+    // uniform random state + optimal path (lib/gear-solver, cstimer gearo semantics)
+    scramble: () => gearMovesToString(randomGearScrambleMoves()),
   },
   skewb: {
     parse: parseSkewbMoves,
@@ -910,6 +922,7 @@ export default function PlayerControls({
       : puzzleKind === 'redi' ? 'redi'
         : puzzleKind === 'rex' ? 'rex'
           : puzzleKind === 'heli' ? 'heli'
+          : puzzleKind === 'gear' ? 'gear'
             : isSkewbEngine ? 'skewb'
               : isPyraEngine ? 'pyraminx'
                 : isMegaEngine ? 'megaminx'
@@ -2509,7 +2522,7 @@ function PuzzleSettings({
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'custom') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'custom') onPuzzleChange(v);
                   else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}
