@@ -201,6 +201,12 @@ export interface TimerSettings {
   dailySolveGoal?: number | null;
 
   /**
+   * 是否显示排名徽章(停表后成绩旁的 WR / CR / NR 名次药丸)。默认开;关掉则完全隐去,
+   * 连占位高度也不保留。旧存档无此键 -> 视为 true。
+   */
+  showRankBadge?: boolean;
+
+  /**
    * 排名徽章的「用户国家」(ISO2,如 'US' / 'CN')。空 = 不限定,徽章只显 WR(世界);
    * 设了才额外显 CR(大洲)/ NR(国家)。未设时前端回退登录 WCA 账号的国家。
    */
@@ -266,6 +272,7 @@ export const DEFAULTS: TimerSettings = {
   inspectionTrigger: 'down',
   targetMsByEvent: {},
   dailySolveGoal: null,
+  showRankBadge: true,
   rankCountry: '',
 };
 

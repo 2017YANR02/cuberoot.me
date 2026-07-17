@@ -517,6 +517,7 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const rankCountry = useRankCountry();
+  const showRankBadge = useSettings().showRankBadge !== false;
 
   // NOTE: 高频计时器动画（不走 React re-render）
   useTimerAnimation(playerId, timeRef);
@@ -647,8 +648,8 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
         dangerouslySetInnerHTML={{ __html: renderTimeContent() }}
       />
 
-      {/* 排名徽章(回合结束后,本方有效成绩) */}
-      {showRank && !player.isInspecting && (
+      {/* 排名徽章(回合结束后,本方有效成绩;设置里可整体关闭) */}
+      {showRankBadge && showRank && !player.isInspecting && (
         <div className="battle-rank-slot" data-no-timer>
           <RankBadge eventId={myPuzzle} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} />
         </div>
