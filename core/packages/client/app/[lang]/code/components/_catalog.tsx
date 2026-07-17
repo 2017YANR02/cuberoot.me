@@ -56,7 +56,6 @@ import { TeX } from '@/components/math/Tex';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
-import ShowToggle from '@/components/wca-stats/ShowToggle';
 import Paginator from '@/components/wca-stats/Paginator';
 import { EventSelect } from '@/components/EventSelect/EventSelect';
 import { RecordSelect } from '@/components/RecordSelect/RecordSelect';
@@ -533,16 +532,6 @@ function LiquidGlassChipsDemo() {
   );
 }
 
-function ShowToggleDemo() {
-  const isZh = useIsZh();
-  const [value, setValue] = useState<'persons' | 'results'>('persons');
-  return (
-    <div className="cg-row">
-      <ShowToggle value={value} onChange={setValue} isZh={isZh} />
-    </div>
-  );
-}
-
 function PaginatorDemo() {
   const isZh = useIsZh();
   const [page, setPage] = useState(3);
@@ -671,7 +660,6 @@ function SubsetColorPickerDemo() {
 export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
   CubeRootLogo: CubeRootLogoDemo,
   LiquidGlassChips: LiquidGlassChipsDemo,
-  ShowToggle: ShowToggleDemo,
   Paginator: PaginatorDemo,
   EventSelect: EventSelectDemo,
   RecordSelect: RecordSelectDemo,
@@ -1048,14 +1036,6 @@ export const CATALOG: ComponentEntry[] = [
     zh: `iOS 分段控件风的胶囊切换器,active thumb 用 liquid-glass 渲染并跟手滑动,横滑过界即切,泛型单选。`,
     en: `iOS segmented-control-style chip switcher with a liquid-glass thumb that follows the finger and switches on drag-over; generic single-select.`,
     note: { zh: `Safari / iOS 自动退回 CSS frosted thumb;依赖 liquid-glass-react。`, en: `Falls back to a CSS frosted thumb on Safari/iOS; depends on liquid-glass-react.` },
-  },
-  {
-    name: 'ShowToggle',
-    import: "import ShowToggle from '@/components/wca-stats/ShowToggle';",
-    category: 'toggle',
-    zh: `「选手 / 成绩」两态切换按钮组(ShowMode = persons | results);WCA 排名页切换展示口径时用。`,
-    en: `A two-state toggle button group for Persons / Results (ShowMode = persons | results); used to switch the display mode on WCA ranking pages.`,
-    note: { zh: `受控,值与 onChange 由父级提供;样式靠 .wse-show-toggle。`, en: `Controlled; value and onChange come from the parent, styled via .wse-show-toggle.` },
   },
   {
     name: 'Scramble333ModePicker',
