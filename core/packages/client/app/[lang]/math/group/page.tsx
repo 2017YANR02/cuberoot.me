@@ -18,6 +18,7 @@ import Link from '@/components/AppLink';
 import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { SlugContext, GTSec, L, useLang, TeX, TeXBlock, type Lang } from './_components/primitives';
+import { TwistyMini } from './_components/TwistyMini';
 import HomeLink from '@/components/HomeLink';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import {
@@ -89,71 +90,10 @@ function NewSectionMount({ slug }: { slug: string }) {
   return C ? <C /> : null;
 }
 
-// ── Inline TwistyPlayer (local, non-exported — see _components/primitives.tsx note) ──
-function TwistyMini({
-  alg,
-  setupAlg,
-  visualization = '3D',
-  onPlayerReady,
-}: {
-  alg: string;
-  setupAlg?: string;
-  visualization?: '2D' | '3D' | 'PG3D';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onPlayerReady?: (player: any) => void;
-}) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [Ctor, setCtor] = useState<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const readyRef = useRef(onPlayerReady);
-  readyRef.current = onPlayerReady;
-
-  useEffect(() => {
-    let cancelled = false;
-    import('cubing/twisty').then((mod) => {
-      if (cancelled) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const C = (mod as any).TwistyPlayer;
-      setCtor(() => C);
-    });
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    if (!Ctor || !containerRef.current) return;
-    const container = containerRef.current;
-    container.innerHTML = '';
-    const player = new Ctor({
-      puzzle: '3x3x3',
-      alg,
-      experimentalSetupAlg: setupAlg ?? '',
-      visualization,
-      controlPanel: 'bottom-row',
-      background: 'none',
-      hintFacelets: 'none',
-    });
-    player.style.width = '100%';
-    player.style.height = '100%';
-    container.appendChild(player);
-    readyRef.current?.(player);
-  }, [Ctor, alg, setupAlg, visualization]);
-
-  return <div ref={containerRef} className="gt-cube-host" />;
-}
-
-// ── LaTeX rendering via KaTeX ───────────────────────────────────────────────
-// TeX, TeXBlock, SlugContext, GTSec, L, useLang, TwistyMini moved to ./_components/primitives
-
-// ── Slug context for per-section pages ─────────────────────────────────────
-// Slug is undefined on the index page (just hero + TOC), or one of the TOC ids
-// on a section sub-page. GTSec renders only when its id matches the slug — so
-// a single big return body can serve both modes.
-
-// ── i18n helpers ────────────────────────────────────────────────────────────
-
-// ── Inline TwistyPlayer ─────────────────────────────────────────────────────
-// Self-contained wrapper around cubing.js. Imported lazily to keep first paint
-// quick. Each instance has its own player.
+// TeX / TeXBlock / SlugContext / GTSec / L / useLang live in ./_components/primitives;
+// the TwistyMini cube player lives in ./_components/TwistyMini. Slug is undefined on
+// the index page or one of the TOC ids on a section sub-page; GTSec renders only when
+// its id matches the slug, so one return body serves both modes.
 
 function GeneratorRow() {
   const faces: { f: string; zh: string; en: string
