@@ -215,11 +215,12 @@ export default function SimPage() {
   useDocumentTitle('模拟器', 'Sim');
 
   // Sim editor state in the URL (replace semantics — not navigation).
-  // puzzle defaults to '3' (absent reads as 3, and '3' is auto-omitted from
-  // the URL by clearOnDefault, so no explicit default-write effect is needed).
+  // puzzle ALWAYS appears in the URL (clearOnDefault:false keeps even '3'); a mount
+  // effect force-writes it so a bare /sim resolves to /sim?puzzle=3 — the puzzle
+  // identity is never silently dropped (which used to read back as a 3x3 fallback).
   const [query, setQuery] = useQueryStates(
     {
-      puzzle: parseAsString.withDefault('3'),
+      puzzle: parseAsString.withDefault('3').withOptions({ clearOnDefault: false }),
       // Custom-cut PuzzleGeometry description for the Puzzle Cuts editor (e.g. "c f 0.255").
       cuts: parseAsString,
       alg: parseAsString,
@@ -264,6 +265,14 @@ export default function SimPage() {
     if (!Number.isFinite(n) || n < 1 || n > 400) return 3;
     return n;
   }, [query.puzzle]);
+
+  // Force the puzzle id into the URL on mount (clearOnDefault:false keeps it there):
+  // a bare /sim becomes /sim?puzzle=3 so the project is always explicit and never
+  // silently resolves to the 3x3 fallback.
+  useEffect(() => {
+    setQuery({ puzzle: String(puzzleParam) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // The puzzle-image studio is mounted as the /sim 图像 panel. Its puzzle is NOT chosen
   // inside the panel — the sim's own puzzle dropdown is the single selector, mapped here
@@ -1262,8 +1271,9 @@ export default function SimPage() {
     // scramble/play path (which reads `order`) drives a standard 3x3.
     else if (kind === 'mirror') setOrder(3);
     const world = worldRef.current;
-    // kind === 3 → null clears `puzzle` (it's the default, auto-omitted anyway).
-    const writeUrl = () => setQuery({ puzzle: kind === 3 ? null : String(kind) });
+    // Always write the puzzle id (incl. '3') so it's forced into the URL — never
+    // omit it, or the selection reads back as the 3x3 default on reload/share.
+    const writeUrl = () => setQuery({ puzzle: String(kind) });
     // A twisty puzzle on the cubing.js renderer doesn't use World — just update URL.
     // The world-init effect's [twisty] dep tears down any live cuber instance.
     // An ENGINE_TWISTY puzzle (skewb) with renderer='engine' falls through to World.
