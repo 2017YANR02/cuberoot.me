@@ -19,7 +19,6 @@
  * 其它用 var(--accent) + 地域图标.
  */
 import { Fragment, useEffect, useState } from 'react';
-import { Globe } from 'lucide-react';
 import { fetchRankFor, type RankResult, type RegionRank } from '@/lib/rank-client';
 import { toWcaEventForRank, eventDisplayName } from '@/app/[lang]/timer/_shared/event-bridge';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
@@ -87,17 +86,9 @@ export default function RankBadge({
 
   if (!valid || state === 'none') return null;
 
-  // loading:低调占位药丸,不闪
-  if (state === 'loading' || !result) {
-    return (
-      <span className={`rank-badge-row${className ? ` ${className}` : ''}`} aria-busy="true">
-        <span className="rank-pill rank-pill--loading">
-          <Globe size="1em" aria-hidden />
-          {isZh ? 'WR …' : 'WR …'}
-        </span>
-      </span>
-    );
-  }
+  // loading / 未就绪:不显占位药丸(用户不想看到「WR …」加载态),
+  // 排名徽标查到后(state==='done')直接出现。
+  if (state === 'loading' || !result) return null;
 
   const eventName = eventDisplayName(wcaEvent, isZh);
   const typeWord = (isZh
