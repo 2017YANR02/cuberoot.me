@@ -44,4 +44,38 @@
 
 ---
 
+## P0 深挖校验（2026-07-17 续 — 逐文件实测，供开工前定方案）
+
+上面 P0 是审查产出的方向；这一节是**按文件读过源码后的精确核对 + 具体改法**。结论：原方向都对，数字补精确，另纠一处 util 归属错认。
+
+### A. `math/group/page.tsx`（16,508 行）— **唯一真·巨石，且已拆一半**
+
+- 现状实测：page.tsx 里 **33 个 `<GTSec id=...>` 内联节** + **92 个 `function Xxx(` 内联 demo 组件**（`grep -c`）。而 `_components/sections/` 下**已抽出 30 节**，由 page.tsx 第 33–64 行的 `EXT_COMPONENTS` map `dynamic(() => import(...), { ssr:false })` **按 slug 懒加载**（`NewSectionMount`）。即 §33–§62 走的是现代懒加载 pattern，§1–§32+refs 这 33 节还整坨内联、靠一个巨型 return + `GTSec`（id 命中 slug 才渲染）伺候。
+- 改法：把剩下的 **33 个内联节**逐个搬进 `_components/sections/Xxx.tsx`，在 `EXT_COMPONENTS` 加一行 import。**有现成、已上线验证的模子照抄**，非从零设计。
+- 风险/收益：**风险最低**（每节自包含、slug 隔离，搬一节 Playwright 开一节比对，不牵连）；**收益最大**（16.5k → 预计 <2k 索引壳 + 首屏 chunk 变小）；`/math` **无别的 AI 在动**。33 节是耐心活不是难活。
+- 内联节 slug 清单（迁移单位）：`what-is-a-group` `cube-group` `state-vector` `order` `invariants` `structure` `order-of-element` `conjugation` `commutators` `thistlethwaite` `gods-number` `beyond` `patterns` `cayley` `other-puzzles` `open-problems` `homomorphisms` `actions-burnside` `lagrange` `quotient` `permutation-groups` `algorithms` `distance` `random-walks` `computational` `representations` `lights-out` `peg-solitaire` `hamiltonian` `two-face-pgl` `rotational-puzzles` `useful-math` `refs`。
+
+### B. 29 个 `*DistView`（各 ~200 行）— **不是巨石，是复制粘贴家族**
+
+- 实测同构证据：29/29 全 import 同 5 基座（react / `@/i18n/tr` / `ScramblePreview2D` / `AppLink` / `./DiscreteHistogram`）；结构签名一致（Cuboid223/Gear/Ivy 均 `DiscreteHistogram:2 useState:4 useMemo:6`）；唯一差异是各自 `@/lib/{puzzle}-solver` + 数据 key + 步数标签 + 文案。
+- **两个家族**（原方向的 `SampledDistView` + `EnumeratedDistView` 拆法**正确**）：
+  - **Sampled（WCA 采样）家族**：只有 `PuzzleDistView.tsx`（528 行）1 个是 `await fetch` 型——它**已经是** config 驱动的通用基座，一个组件吃 222/pyra/skewb/sq1（真比赛示例带国旗/城市）。
+  - **Enumerated（全空间枚举）家族**：其余 **28 个**全是 sync `import {…} from '@/lib/{puzzle}-solver'`（全状态空间 BFS、自己反推示例、下载全部）→ 应合成**一个 config 驱动组件 + 28 条 per-puzzle spec**（solver 三函数、event_id、色、god number、下载语义、文案）。`Slide8/Slide15`（`useState:8`，滑块无旋转）是异类，留独立或做第三 variant。
+- **顺带的低风险子赢**（不做完整合并也该做）：`function stats(` (均值/中位/众数) **内联 11 次**、下载逻辑 **28 个各自造**（其中 6 个各定义 `function downloadBlob`、**0 共享**）→ 抽 `lib/dist-stats.ts` + `lib/download.ts`。**纠错**：`lib/stats-base.ts` 只导出 `statsUrl`/`staticUrl`（数据 URL helper），**不含**统计函数——共享统计 util 是**新建**，不是 repoint 现有的。
+- 风险：中。需逐魔方核视觉一致（直方图 + 示例卡 ×28）。scramble/stats 偶有人动，搬前 `git status` 扫。
+
+### C. 大但**不重复**的单页组件 — 拆价值低、风险高，建议先放
+
+`CompDetailPage 3608` / `wca/comp/page 2966` / `FrameCountPage 2820` / `ReconSubmitForm 2126` / `ReconDetailClient 1898` / `WcaStatView 1290` / `wca/results/page 1027`（4 视图挤一函数）/ `LandingSearch 744`。这些是「一个复杂页写成一个大文件」，非复制粘贴；拆只能靠抽 section/hook 提可读性——功能正常、收益纯美观、动的是线上复杂交互 UI 回归面大，且 comp/recon 那片别的 AI 常碰。**除非特别嫌某个，先不动。**
+
+### 不列入重构（行数高但天经地义）
+
+`/sim` 全家（禁区）；`timer/_shell/SoloView 1815`、`BattleView 1556`（别的 AI 脏 WIP）；`scramble_444_rs 2343`、`wca/about/.../journey 1644`、`records_countries 1578`、`prediction/.../algorithms_catalog 1540`（**数据/生成文件，不是组件**）。
+
+### 建议开工顺序
+
+**A（math/group 续拆）** 最值：低风险、收益最大、不撞车、有现成模子 → **B（DistView 模板化）**：最治洁癖但耗 28 次视觉核对，可先只做「抽 `stats()`/`download` 共享 util」这半步 → **C 放着**。
+
+---
+
 *本文件随整改推进勾选。P0/P1 大项建议等 WIP 稳定后单独开 agent 逐个做。*
