@@ -574,10 +574,8 @@ function CompModal({ comp, isZh, onClose, t, cancelled, loggedIn, followed, onTo
   const lang = isZh ? 'zh' : 'en';
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startPast = parseLocalDate(comp.start_date) < todayStart;
-  // 报名状态 pill — 与卡片视图同口径(下一个里程碑;已过且无字段补「报名已截止」)
-  const reg = regMilestone(comp.registration_open, comp.registration_close, comp.event_change_deadline, undefined)
-    ?? (startPast ? { when: '', word: tr({ zh: '报名已截止', en: 'Closed' }), tone: 'closed' as const } : null);
+  // 报名状态 pill — 与卡片/列表同口径(已结束→「比赛已结束」;否则下一个里程碑;已过且无字段补「报名已截止」)
+  const reg = regCardPill(comp, todayStart);
 
   // 单场弹窗 = 一张卡片(CompCard 同款),底部嵌纪录区(过去比赛才有);轮次缺省时单场可懒拉 WCIF。
   return (
@@ -926,6 +924,21 @@ function regMilestone(
   const n = future[0]!;
   const tone = n.opening ? 'open' : (n.t - now <= 86_400_000 ? 'urgent' : 'close');
   return { when: fmtWhen(new Date(n.t)), word: n.word, tone };
+}
+
+/** 卡片/弹窗报名胶囊(与列表视图同口径):
+ *  比赛已结束(最后一天在今天之前)→「比赛已结束」,盖过报名状态;
+ *  否则取下一个报名里程碑;已开赛但无报名字段 →「报名已截止」;未来比赛无字段 → null(不显胶囊)。 */
+function regCardPill(
+  c: { start_date: string; end_date?: string; registration_open?: string | null; registration_close?: string | null; event_change_deadline?: string | null },
+  todayStart: Date,
+): { when: string; word: string; tone: 'open' | 'close' | 'urgent' | 'closed' } | null {
+  if (parseLocalDate(c.end_date || c.start_date) < todayStart) {
+    return { when: '', word: tr({ zh: '比赛已结束', en: 'Ended' }), tone: 'closed' };
+  }
+  const startPast = parseLocalDate(c.start_date) < todayStart;
+  return regMilestone(c.registration_open, c.registration_close, c.event_change_deadline, undefined)
+    ?? (startPast ? { when: '', word: tr({ zh: '报名已截止', en: 'Closed' }), tone: 'closed' } : null);
 }
 
 /** 日历胶囊填充色用的「当前报名状态」(本地此刻):未开放 / 报名中 / 满员 / 即将截止(<24h) / 已截止·无字段。
@@ -2570,10 +2583,8 @@ function CalendarPageInner() {
           ) : (
             <div className="reg-cards">
               {cardComps.map((c) => {
-                // 已过比赛即便没有报名字段也补「报名已截止」灰胶囊,避免卡片裸着没胶囊(与首页报名卡片视觉一致)。
-                const startPast = parseLocalDate(c.start_date) < cardTodayStart;
-                const reg = regMilestone(c.registration_open, c.registration_close, c.event_change_deadline, undefined)
-                  ?? (startPast ? { when: '', word: tr({ zh: '报名已截止', en: 'Closed' }), tone: 'closed' as const } : null);
+                // 已结束→「比赛已结束」;已开赛无字段补「报名已截止」灰胶囊,避免卡片裸着没胶囊(与列表/首页同口径)。
+                const reg = regCardPill(c, cardTodayStart);
                 return (
                   <CompCardWithRounds
                     key={c.id}
@@ -2843,10 +2854,8 @@ function CalendarPageInner() {
                   return s <= dayListDate && dayListDate <= e;
                 })
                 .map((c) => {
-                  // 与卡片视图同口径:已过比赛补「报名已截止」灰胶囊,避免卡片裸着没胶囊
-                  const startPast = parseLocalDate(c.start_date) < cardTodayStart;
-                  const reg = regMilestone(c.registration_open, c.registration_close, c.event_change_deadline, undefined)
-                    ?? (startPast ? { when: '', word: tr({ zh: '报名已截止', en: 'Closed' }), tone: 'closed' as const } : null);
+                  // 与卡片视图同口径:已结束→「比赛已结束」;已开赛无字段补「报名已截止」灰胶囊
+                  const reg = regCardPill(c, cardTodayStart);
                   return (
                     <CompCardWithRounds
                       key={c.id}
