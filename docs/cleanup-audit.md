@@ -19,7 +19,7 @@
 
 ## P1 跨区收口
 
-- [x] **`getIp(c)` 复制进 21 个后端 route**，都保留可伪造 `X-Forwarded-For` 回退 → 已加共享 `getIp(c)`（`analytics_helpers.ts`，委托权威 `getClientIp`、去 XFF 回退），21 route 删本地 def 改 import，111 调用点不变。server typecheck 绿。**★安全硬化，commit 未 push（需上线才生效）**
+- [x] **`getIp(c)` 复制进 21 个后端 route**，都保留可伪造 `X-Forwarded-For` 回退 → 已加共享 `getIp(c)`（`analytics_helpers.ts`，委托权威 `getClientIp`、去 XFF 回退），21 route 删本地 def 改 import，111 调用点不变。server typecheck 绿。**★安全硬化，commit 未 push（需上线才生效）**。**分层防回归**（「立约束要分层」）：写入态 hook `.claude/hooks/block-server-forwarded-for.ps1`（→ `hook-detect-server-forwarded-for.mjs`，实活验证真拦）+ CI 兜底 `tests/server-no-forwarded-for.test.ts`，已登记 `/code/guards`（`_guards.ts` PAIRED_GUARDS）；新 route 再抄回 XFF 回退会被写入即拦 + CI 红。行内 `allow-forwarded-for` 豁免正当用途
 - [ ] **`lib/name-utils.ts` 与 `lib/cuber-name-display.ts` 重复**（三导出函数代码相同，仅注释差一行；消费者 17 vs 33）→ 保留有测试的 `cuber-name-display`，repoint 17 个后删 `name-utils`。**暂缓**：17 消费者之一 `timer/_shell/SoloView.tsx` 正被 timer AI 改（dirty），现在 repoint 会撞车 / 半途留 `name-utils`。等其 commit 后一次做完
 - [ ] 内联 `isZh ? '中' : 'EN'` 文案三元 → `tr({en,zh})` / `<T>`。**审查严重低估**：实测 **80+ 处**（非 ~15），密集落在正被改的 `alg/3bld|_roux|skewb-trainer` 树 + 暗锁 `WcaStatView`/`wiki`/`battle_store`，且混着**合法非文案** `isZh`（`'/zh'` 前缀、`u.lang='zh-CN'`、`countryName(t,isZh)` util 参数）不能一刀切。**暂缓**：全站 i18n 迁移撞 3 个 AI 的 alg/timer WIP，应等树静下来单独一轮 + 保留 `<T>` 订阅防切语言不重渲染。注：`code/architecture/arch-data.tsx` 还把旧 `isZh` 三元写成「推荐做法」，与现 CLAUDE.md 矛盾，属过期文案
 - [ ] 本地 `t=(zh,en)=>isZh?zh:en` shim **56 文件/66 处** → 先补导出 positional `t(zh,en)` 的响应式 `useT()`，再全仓收敛。**暂缓**：与上条同批(同是 isZh 家族、同撞 WIP)，一次做

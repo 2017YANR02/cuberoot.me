@@ -77,6 +77,14 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     zh: { title: '手写繁体 / 内联语言三元', desc: '全站只服 en + 简体。禁手敲繁体字(繁体走 OpenCC 生成器),禁残留 zh-Hant 标识符,禁新写 isZh 驱动的内联中英文案三元(一边中文一边英文那种写法)—— 一律 tr() / <T> / useT() / t() 收口。' },
     en: { title: 'Handwritten Traditional / inline language ternary', desc: 'The site serves only en + Simplified. No hand-typed Traditional characters (generated via OpenCC), no leftover zh-Hant identifiers, no new isZh-driven inline ternary that branches directly between a CJK string and an English string — all text funnels through tr() / <T> / useT() / t().' },
   },
+  {
+    id: 'forwarded-for',
+    hook: 'block-server-forwarded-for.ps1 → hook-detect-server-forwarded-for.mjs',
+    test: 'server-no-forwarded-for.test.ts',
+    baseline: '0（21→0）',
+    zh: { title: '可伪造 X-Forwarded-For 作 IP', desc: '禁在 server 源码读取 X-Forwarded-For 头作请求 IP 来源 —— XFF 由客户端自填,谁都能伪造 → IP / visitor_id / 国家 spoofing、绕限流、污染统计。请求 IP 统一走 getIp(c)(utils/analytics_helpers.ts 单一源,只读 nginx 写入的可信 x-real-ip);原来 21 个 route 各抄一份带 XFF 回退的本地 getIp,已收敛成这一份。确有正当用途(仅记录原始 XFF 链、绝不用于身份判定)行内 allow-forwarded-for 豁免。' },
+    en: { title: 'Forgeable X-Forwarded-For as IP', desc: 'No reading the X-Forwarded-For header as the request IP source in server code — XFF is client-set and anyone can forge it → IP / visitor_id / country spoofing, rate-limit bypass, polluted analytics. Request IP funnels through getIp(c) (utils/analytics_helpers.ts, the single source, reads only nginx’s trusted x-real-ip); 21 routes each had their own local getIp with an XFF fallback, now collapsed to this one. Genuine uses (logging the raw XFF chain, never for identity) are exempt via inline allow-forwarded-for.' },
+  },
 ];
 
 export interface CiGuard {
