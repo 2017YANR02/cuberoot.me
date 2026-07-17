@@ -609,7 +609,7 @@ export function inCrownSweep(p: THREE.Vector3, axis: number, m: number): boolean
  *  full 360°, 0.5° frames). ABSOLUTE face coords for the (+,+) corner, CCW.
  *
  *  The corner is a GEAR here — its spikes interdigitate with the crown teeth
- *  and only phase sync keeps them apart (rest clearance +8.07, transit +0.93,
+ *  and only phase sync keeps them apart (rest clearance +8.49, transit +1.07,
  *  center-arm swept annuli 0 hits — all re-locked in tests/gear_geometry.test.ts).
  *  Built by MINIMAL SMOOTH DEFORMATION of the SVG outline: safe stretches are
  *  the SVG verbatim; offending stretches shift inward along a window-smoothed
@@ -617,20 +617,28 @@ export function inCrownSweep(p: THREE.Vector3, axis: number, m: number): boolean
  *  never less than required); the two wing-knob pockets (a gliding tooth
  *  reaches |along| ≤ 62.75 at plate heights, so their inner reaches are
  *  impossible with 6-tooth crowns) are bridged along the safety level set,
- *  leaving smooth stubs. */
+ *  leaving smooth stubs. A final CONSTRAINED FAIRING pass (normal-only
+ *  curvature diffusion, floored at the safety field, erosion capped 0.9)
+ *  melts every verbatim↔deformed junction into one continuous fillet —
+ *  without it the spike flanks keep an S-shaped shoulder where the warp
+ *  ramps in (reads as a notch up close). */
 export const CORNER_POLY: V2[] = [
-  [44.8, 65.4], [46.7, 64.2], [59.5, 62.4], [61.3, 61.3], [62.4, 59.4],
-  [64.2, 46.7], [65.3, 44.9], [66.1, 44.8], [66.9, 44.9], [67.6, 46],
-  [69, 46.6], [69.8, 47.4], [70.4, 48.5], [70.7, 49.4], [72.8, 59.8],
-  [73.5, 61.8], [74.4, 62.9], [81.3, 65.4], [106, 72.9], [108.5, 72.8],
-  [110.8, 71.1], [111.8, 68.3], [112.3, 66.2], [112.8, 65.3], [113.6, 64.4],
-  [115, 63.5], [115.6, 63.3], [116.1, 63.6], [117.1, 64.4], [117.9, 65.4],
-  [118.3, 66.4], [118.4, 67.4], [118.6, 106.3], [118.3, 113.5], [116.8, 116.8],
-  [113.7, 118.3], [109, 118.5], [69.4, 118.6], [66.6, 118.5], [65.3, 117.9],
-  [64.3, 117], [63.3, 115.7], [64.1, 114], [64.8, 113], [65.7, 112.3],
-  [70.9, 110.9], [71.9, 110], [72.8, 108.5], [72.8, 105.9], [65.4, 81.2],
-  [63, 74.6], [61.8, 73.5], [60.2, 72.9], [49.5, 70.7], [48.2, 70.3],
-  [46.8, 69.3], [45.9, 67.5], [45.2, 67.1], [44.8, 66.7],
+  [45.5, 65.6], [46.4, 64.8], [47.7, 64.2], [58.1, 62.5], [59.7, 62],
+  [60.9, 61.1], [61.9, 59.8], [62.5, 58.2], [63.9, 49.2], [64.3, 47.3],
+  [64.7, 46.5], [65.2, 45.8], [65.7, 45.5], [66.3, 45.4], [67.3, 45.7],
+  [68.8, 46.8], [69.6, 47.7], [70.3, 48.9], [71, 51.2], [72.7, 59],
+  [73.7, 61.5], [74.3, 62.3], [75.1, 62.9], [77.8, 64.1], [83, 65.9],
+  [102.6, 71.9], [105.1, 72.5], [106.8, 72.7], [108.5, 72.3], [110, 71.4],
+  [111, 69.9], [112.3, 66.8], [112.9, 65.8], [113.9, 64.8], [115.6, 63.8],
+  [117.1, 65.1], [117.9, 66.3], [118.3, 67.8], [118.4, 70.2], [118.6, 103.7],
+  [118.5, 109.2], [118.3, 111.9], [118, 113.6], [117.4, 115.2], [116.5, 116.5],
+  [115.2, 117.4], [113.5, 118.1], [111.5, 118.4], [108.4, 118.5], [70, 118.6],
+  [67.3, 118.3], [66.2, 117.9], [65.3, 117.4], [63.4, 115.7], [64.2, 114.4],
+  [65.1, 113.3], [66, 112.5], [70.1, 110.9], [71.4, 110], [72.3, 108.5],
+  [72.6, 106.5], [72.4, 104.8], [71.7, 102.1], [65.9, 82.9], [64.1, 77.5],
+  [63.4, 75.9], [62.7, 74.8], [61.9, 74], [60.8, 73.3], [58.4, 72.6],
+  [50.5, 70.9], [49, 70.4], [48, 69.8], [46.8, 68.8], [45.8, 67.4],
+  [45.3, 66.4],
 ];
 
 /** CORNER_POLY mirrored into corner `ci`'s quadrant on face `face`, CCW, plus
