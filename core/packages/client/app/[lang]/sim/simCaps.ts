@@ -21,6 +21,11 @@ export type CarveElement = 'corner' | 'face' | 'edge';
  *  it tags + implements `setIsolate` for. */
 export type IsolateKind = 'corner' | 'edge' | 'center' | 'core';
 
+/** One isolate-able kind + how many pieces of it there are, so the UI can offer a
+ *  「全部 / 第 1…count 个」index picker (user wants to view a single piece, or all).
+ *  `setIsolate(kind, index)` — index −1 = all, 0…count−1 = that one piece. */
+export interface IsolateSpec { kind: IsolateKind; count: number; }
+
 export interface SimPuzzleCaps {
   /** Who renders it → which controls apply.
    *  - `always`     in-house Three.js engine only (nxn / sq1 / ivy / dino / redi / rex / heli)
@@ -38,11 +43,12 @@ export interface SimPuzzleCaps {
    *  uniform `setCarve(on)` regardless of element. */
   carve?: CarveElement;
   /** Debug "isolate": the piece kinds this puzzle can show alone (hiding the rest) —
-   *  the inverse of carve. Requires the cube to implement `setIsolate(kind|null)` and
-   *  tag its pieces by kind. The dropdown lists exactly these (+ 关). Omitted = the
-   *  puzzle has no per-kind isolation → the control grays out. Gear (corner/edge gear/
-   *  center/core) is the first; other engines opt in by declaring their subset. */
-  isolate?: IsolateKind[];
+   *  the inverse of carve — each with its piece count for the index picker. Requires
+   *  the cube to implement `setIsolate(kind|null, index)` and tag its pieces by kind.
+   *  The dropdown lists exactly these kinds (+ 关). Omitted = the puzzle has no
+   *  per-kind isolation → the control grays out. Gear (corner/edge gear/center) is
+   *  the first; other engines opt in by declaring their subset. */
+  isolate?: IsolateSpec[];
   /** Whether the static puzzle-image studio (/visualcube's control surface, mounted as
    *  the /sim 图像 panel) can render this puzzle. True only for the types in the studio's
    *  registry — NxN cube (numeric kind), sq1, skewb, pyraminx, megaminx, and mirror (an
@@ -64,9 +70,13 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   rex: { engine: 'always', carve: 'corner', imageStudio: false },
   heli: { engine: 'always', carve: 'edge', imageStudio: false },
   // Gear Cube — geared 180° face flips; carving lifts one face layer off the middle.
-  // Isolate: inspect one block kind alone (角/棱/中心) — user request. 中心块 shows the
-  // center pieces + core together (merged 中心块 + 骨架, they form one skeleton unit).
-  gear: { engine: 'always', carve: 'face', isolate: ['corner', 'edge', 'center'], imageStudio: false },
+  // Isolate: inspect one block kind alone (角 8 / 棱 12 / 中心 6) — user request. 中心块
+  // shows the center pieces + core together (merged 中心块 + 骨架, one skeleton unit).
+  gear: {
+    engine: 'always', carve: 'face',
+    isolate: [{ kind: 'corner', count: 8 }, { kind: 'edge', count: 12 }, { kind: 'center', count: 6 }],
+    imageStudio: false,
+  },
   skewb: { engine: 'engineMode', carve: 'corner', imageStudio: true },
   pyraminx: { engine: 'engineMode', carve: 'corner', imageStudio: true },
   megaminx: { engine: 'engineMode', carve: 'face', imageStudio: true },
@@ -133,8 +143,9 @@ export interface ResolvedCaps {
   engineActive: boolean;
   /** The carve element to show a 挖角 / 挖面 / 挖棱 toggle for, or null (no carve). */
   carve: CarveElement | null;
-  /** The piece kinds the 隔离 dropdown offers (empty = unsupported → control grays). */
-  isolate: IsolateKind[];
+  /** The isolate-able kinds (+ counts) the 隔离 dropdown offers (empty = unsupported
+   *  → control grays). Count drives the 「全部 / 第 N 个」 index picker. */
+  isolate: IsolateSpec[];
   /** Show the cubing.js ↔ 群论内核 renderer dropdown. Always true: every puzzle exposes
    *  the dropdown so 群论内核 is offered everywhere — even on puzzles whose group kernel
    *  isn't built yet (a forward placeholder; selecting an unimplemented renderer is a safe

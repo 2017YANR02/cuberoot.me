@@ -183,32 +183,46 @@ export default class GearCube extends THREE.Group implements TweenCube<GearMove>
   /** Debug "isolate": show ONLY this piece kind, hide all others (inverse of carve).
    *  null = show every kind. */
   private _isolate: GearIsolateKind | null = null;
+  /** Which piece of the isolated kind: −1 = all of the kind, else that index only. */
+  private _isolateIndex = -1;
 
   setCarve(on: boolean): void {
     this._carve = on;
     this._applyDebugVisibility();
   }
 
-  /** Isolate one piece kind (corner / edge gear / center / core) — the user's
-   *  "keep one block, carve the rest" view. Carve and isolate both drive
-   *  pivot.visible, so BOTH funnel through _applyDebugVisibility as a union
-   *  (start all-visible, isolate hides the other kinds, carve then hides the
-   *  U-layer group on top) — neither stomps the other's state. */
-  setIsolate(kind: GearIsolateKind | null): void {
+  /** Isolate one piece kind (corner / edge gear / center) — the user's "keep one
+   *  block, carve the rest" view. `index` −1 shows the whole kind; 0…n−1 shows just
+   *  that one piece (indexed by stable pieceId — in solved state pieceId k sits at
+   *  slot k). Carve and isolate both drive pivot.visible, so BOTH funnel through
+   *  _applyDebugVisibility as a union (start all-visible, isolate hides the other
+   *  kinds + the non-picked pieces, carve then hides the U-layer group on top) —
+   *  neither stomps the other's state. */
+  setIsolate(kind: GearIsolateKind | null, index = -1): void {
     this._isolate = kind;
+    this._isolateIndex = index;
     this._applyDebugVisibility();
   }
 
   private _applyDebugVisibility(): void {
     const iso = this._isolate;
+    const idx = this._isolateIndex;
+    // per-kind "is piece i visible": the kind must match (or no isolation), AND
+    // when a single index is picked only that piece of the kind shows.
+    const show = (kind: GearIsolateKind, i: number): boolean =>
+      iso === null || (iso === kind && (idx < 0 || idx === i));
     // 中心块 isolates the whole center-and-core assembly: the 6 center pieces
     // (each with an axle stub reaching inward) PLUS the core. A lone center cap
     // or a bare core reads as nothing on its own — together they are the
     // recognizable internal skeleton (user-merged 中心块 + 骨架 into one option).
-    for (const p of this.cornerPieces) p.pivot.visible = iso === null || iso === 'corner';
-    for (const p of this.centerPieces) p.pivot.visible = iso === null || iso === 'center';
-    for (const ring of this.gearPieces) for (const p of ring) p.pivot.visible = iso === null || iso === 'edge';
-    this.corePiece.pivot.visible = iso === null || iso === 'center' || iso === 'core';
+    // With a single center index the core stays hidden (one clean center block).
+    this.cornerPieces.forEach((p, i) => { p.pivot.visible = show('corner', i); });
+    this.centerPieces.forEach((p, i) => { p.pivot.visible = show('center', i); });
+    // edge gears are gearPieces[ring][id] (id 0…3 per ring, NOT unique) — flatten to
+    // a stable 0…11 index (ring·4 + id) so "第 N 个棱块" picks exactly one of the 12.
+    let e = 0;
+    for (const ring of this.gearPieces) for (const p of ring) { p.pivot.visible = show('edge', e); e++; }
+    this.corePiece.pivot.visible = iso === null || (iso === 'center' && idx < 0) || iso === 'core';
     if (this._carve) {
       for (const s of FACE_CORNER_SLOTS[0]) this.cornerPieces[this.state.cp[s]].pivot.visible = false;
       for (const [r, s] of FACE_GEAR_SLOTS[0]) this.gearPieces[r][this.state.ring[r][s]].pivot.visible = false;
