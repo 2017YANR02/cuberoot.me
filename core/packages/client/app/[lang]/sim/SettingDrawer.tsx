@@ -86,6 +86,9 @@ export interface SimSettings {
    *  挖掉其余全部(挖块的反操作)。`setIsolate(kind|null)`;下拉选项来自 simCaps 各魔方声明的
    *  kind 列表,未声明的魔方置灰。 */
   debugIsolate: 'off' | IsolateKind;
+  /** 隔离时看第几个:−1 = 全部(该类块整组),0…count−1 = 只看该类中的某一个(用户要单独看
+   *  一个块)。切换 debugIsolate 类别时复位为 −1;超出当前类数量时 apply 端兜回 −1。 */
+  debugIsolateIndex: number;
   /** 内核色 (frame + 内层 slice 填充板的颜色) */
   coreColor: string;
   /** 6 面色 (WCA 默认) */
@@ -178,6 +181,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   debugStructureColor: false,
   debugCarve: 'off',
   debugIsolate: 'off',
+  debugIsolateIndex: -1,
   coreColor: '#202020',
   faceColors: { ...DEFAULT_FACE_COLORS },
   coreStyle: 'normal',
@@ -214,6 +218,7 @@ export function loadSettings(): SimSettings {
     if (typeof merged.debugCarve !== 'string') merged.debugCarve = 'off';
     // debugIsolate: 旧版本无此键 → spread 已给 'off';非法值兜回 'off'。
     if (!['off', 'corner', 'edge', 'center', 'core'].includes(merged.debugIsolate)) merged.debugIsolate = 'off';
+    if (typeof merged.debugIsolateIndex !== 'number' || !Number.isInteger(merged.debugIsolateIndex)) merged.debugIsolateIndex = -1;
     // 原核 / logo: 旧版本无此键 → spread 已给默认值;非法值兜回默认。
     if (merged.coreStyle !== 'raw' && merged.coreStyle !== 'normal') merged.coreStyle = 'normal';
     if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
@@ -366,13 +371,18 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   const nativeCarve = puzzleCaps(world.puzzleKind).carve ?? null;
   (world.cube as { setCarve?: (on: boolean) => void })
     .setCarve?.(s.debugCarve !== 'off' && s.debugCarve === nativeCarve);
-  // Isolate: keep one piece kind, hide the rest (inverse of carve). Only puzzles that
-  // declare isolate kinds + implement setIsolate respond; the value is gated to a
-  // declared kind so a stale/unsupported pick is a safe no-op (null = show all).
-  const isolateKinds = puzzleCaps(world.puzzleKind).isolate ?? [];
-  const isolateKind = s.debugIsolate !== 'off' && isolateKinds.includes(s.debugIsolate)
-    ? s.debugIsolate : null;
-  (world.cube as { setIsolate?: (kind: IsolateKind | null) => void }).setIsolate?.(isolateKind);
+  // Isolate: keep one piece kind, hide the rest (inverse of carve); the index picks a
+  // single piece of that kind or −1 = all. Only puzzles that declare isolate specs +
+  // implement setIsolate respond; the kind is gated to a declared spec and the index
+  // clamped to its count so a stale/unsupported pick is a safe no-op (null = show all).
+  const isolateSpecs = puzzleCaps(world.puzzleKind).isolate ?? [];
+  const isolateSpec = s.debugIsolate !== 'off'
+    ? isolateSpecs.find((x) => x.kind === s.debugIsolate) ?? null : null;
+  const isolateKind = isolateSpec ? isolateSpec.kind : null;
+  const isolateIndex = isolateSpec && s.debugIsolateIndex >= 0 && s.debugIsolateIndex < isolateSpec.count
+    ? s.debugIsolateIndex : -1;
+  (world.cube as { setIsolate?: (kind: IsolateKind | null, index: number) => void })
+    .setIsolate?.(isolateKind, isolateIndex);
   world.dirty = true;
   world.cube.dirty = true;
   world.resize();
