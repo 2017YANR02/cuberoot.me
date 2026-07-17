@@ -250,6 +250,12 @@
   font-size: 0.8rem;
   color: var(--muted-foreground);
 }
+.trainer-progress-link {
+  margin-left: 10px;
+  color: var(--accent);
+  text-decoration: none;
+}
+.trainer-progress-link:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 .trainer-marks-toolbar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
