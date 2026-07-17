@@ -17,6 +17,7 @@ import { GROUPS } from './data/categories';
 import type { GroupId, Site } from './data/types';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { isAdmin } from '@/lib/auth-store';
+import { firstGlyph } from '@/lib/first-glyph';
 import BackHome from '@/components/BackHome';
 import { listSites, deleteSite, reorderGroup } from './nav_sites_api';
 import SiteEditor from './SiteEditor';
@@ -46,13 +47,6 @@ const GROUP_COLOR: Record<GroupId, string> = {
   cubers:      '#c2185b',
   shop:        '#8b6f18',
 };
-
-function firstGlyph(name: string): string {
-  const trimmed = name.trim();
-  if (!trimmed) return '?';
-  const cp = trimmed.codePointAt(0) ?? 63;
-  return String.fromCodePoint(cp).toUpperCase();
-}
 
 const TEXTS = {
   title:       { en: 'Web Directory', zh: '魔方导航'

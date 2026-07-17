@@ -11,6 +11,7 @@ import { X, Loader2, Smartphone, Check } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { createOrder, getOrderStatus, type MembershipPlan, type OrderInfo, type PayChannels } from '@/lib/membership-api';
+import { fmtPrice } from '@/lib/membership-format';
 
 type Channel = 'alipay' | 'wechat';
 
@@ -20,12 +21,6 @@ interface Props {
   isZh: boolean;
   onClose: () => void;
   onPaid: () => void;
-}
-
-function price(plan: MembershipPlan): string {
-  const sym = plan.currency === 'CNY' ? '¥' : plan.currency === 'USD' ? '$' : plan.currency === 'EUR' ? '€' : '';
-  const n = plan.priceCents / 100;
-  return sym + (Number.isInteger(n) ? String(n) : n.toFixed(2));
 }
 
 export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Props) {
@@ -91,7 +86,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
         <button className="mem-pay-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close'
         })}><X size={18} /></button>
         <h2 className="mem-pay-title">{isZh ? plan.nameZh : plan.nameEn}</h2>
-        <div className="mem-pay-price">{price(plan)}</div>
+        <div className="mem-pay-price">{fmtPrice(plan.priceCents, plan.currency)}</div>
 
         {!order ? (
           <>
