@@ -10,6 +10,7 @@ import { Info, AlertTriangle, Wrench, X, Pencil, Plus, Trash2 } from 'lucide-rea
 import { useIsAdmin } from '@/lib/auth-store';
 import { tr, T, useLang } from '@/i18n/tr';
 import BoolToggle from './BoolToggle';
+import { persistItem } from '@/lib/safe-storage';
 import {
   type PageNotice, type NoticeLevel, type PageNoticeInput,
   fetchPageNotices, fetchAllPageNotices, savePageNotice, deletePageNotice,
@@ -93,7 +94,7 @@ export default function PageNoticeBar() {
   const dismiss = (n: PageNotice) => {
     setDismissed((prev) => {
       const next = { ...prev, [n.id]: n.updatedAt };
-      try { localStorage.setItem(DISMISS_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      persistItem(DISMISS_KEY, JSON.stringify(next));
       return next;
     });
   };

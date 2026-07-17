@@ -17,6 +17,7 @@ import {
 } from '../_lib/solver/methods';
 import SolverCompareModal from './SolverCompareModal';
 import TwistySection from '@/components/TwistySection';
+import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
 
 const METHOD_LS_KEY = 'timer.solverHints.method';
@@ -51,7 +52,7 @@ export default function StepSolve({ scramble, isZh }: Props) {
   const playerRef = useRef<any>(null);
 
   useEffect(() => {
-    try { localStorage.setItem(METHOD_LS_KEY, methodId); } catch { /* ignore */ }
+    persistItem(METHOD_LS_KEY, methodId);
   }, [methodId]);
 
   // 打乱变了 → 清缓存(各方法重算)。

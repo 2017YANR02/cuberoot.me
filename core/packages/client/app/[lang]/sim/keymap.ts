@@ -1,5 +1,7 @@
 // 键盘快捷键:e.code → 转动。默认对齐 cstimer 标准布局 + 方向键。
 // 用户可在 SettingDrawer 中自定义,持久化到 localStorage 'sim.keymap'。
+import { persistItem } from '@/lib/safe-storage';
+
 export interface KeyMove { sign: string; reverse?: boolean }
 
 export const DEFAULT_KEYMAP: Record<string, KeyMove> = {
@@ -46,7 +48,7 @@ export function loadKeymap(): Record<string, KeyMove> {
 
 export function saveKeymap(km: Record<string, KeyMove>): void {
   if (typeof window === 'undefined') return;
-  try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(km)); } catch { /* ignore */ }
+  persistItem(STORAGE_KEY, JSON.stringify(km));
 }
 
 export function resetKeymap(): Record<string, KeyMove> {

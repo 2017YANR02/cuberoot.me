@@ -103,6 +103,7 @@ import GestureWheel from '@/components/GestureWheel';
 import { useGestureWheel } from '@/hooks/useGestureWheel';
 import { histBack, histForward, histPush } from '@/lib/scramble-history';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
+import { persistItem } from '@/lib/safe-storage';
 import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
@@ -250,7 +251,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     void setEvent(valid ? (stored as EventId) : event, { history: 'replace' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => { localStorage.setItem('cuberoot-timer.event', event); }, [event]);
+  useEffect(() => { persistItem('cuberoot-timer.event', event); }, [event]);
 
   const solves = useMemo(() => byEvent[event] ?? [], [byEvent, event]);
 

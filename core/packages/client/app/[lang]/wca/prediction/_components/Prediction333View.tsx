@@ -9,6 +9,7 @@
 import { useEffect, useState, useContext, createContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
+import { persistItem } from '@/lib/safe-storage';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight as ArrowRightIcon, Menu, X as XIcon } from 'lucide-react';
 
@@ -150,7 +151,7 @@ export default function Prediction333View({ sectionId }: { sectionId?: string })
   const toggleLang = () => {
     const n = (i18n.language.startsWith('zh') ? 'en' : 'zh');
     i18n.changeLanguage(n);
-    localStorage.setItem('trainer-lang', n);
+    persistItem('trainer-lang', n);
   };
 
   // ── WR 时间序列 ─────────────────────

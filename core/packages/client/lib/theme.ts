@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import { PALETTE_KEY, isPaletteId, paletteScheme } from './palettes';
+import { persistItem } from './safe-storage';
 
 export type Theme = 'system' | 'light' | 'dark';
 export type EffectiveTheme = 'light' | 'dark';
@@ -62,7 +63,7 @@ export function applyTheme(theme: Theme, animate = false, clearPalette = false) 
 export function applyPalette(id: string | null, animate = false) {
   const root = document.documentElement;
   if (isPaletteId(id)) {
-    try { localStorage.setItem(PALETTE_KEY, id); } catch { /* ignore */ }
+    persistItem(PALETTE_KEY, id);
   } else {
     try { localStorage.removeItem(PALETTE_KEY); } catch { /* ignore */ }
   }

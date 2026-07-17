@@ -3,6 +3,7 @@
  * Ported 1:1 from packages/client-vite/src/utils/recon_cache.ts.
  */
 import type { ReconSolve } from '@cuberoot/shared';
+import { persistItem } from './safe-storage';
 
 const CACHE_VERSION = 2;
 const CACHE_KEY = `recon_list_cache:v${CACHE_VERSION}`;
@@ -36,7 +37,7 @@ export function saveCachedSolves(solves: ReconSolve[], wcaId?: string): void {
       wcaId: wcaId ?? '',
       data: solves,
     };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+    persistItem(CACHE_KEY, JSON.stringify(entry));
   } catch {
     // Quota exceeded → silent
   }

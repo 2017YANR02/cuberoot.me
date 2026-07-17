@@ -62,6 +62,14 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     en: { title: 'Anchored panel without viewport clamp', desc: 'A panel anchored under its trigger (position:absolute + top:~100%) gets clipped at the right viewport edge when the trigger sits near it (issue #29: both homepage pickers on phones). New panels must wire usePanelClamp and declare anchored-panel: clamped in the CSS (or anchored-panel: safe with a reason); left+right-pinned / width:100% shapes are auto-exempt. Runtime verification via the audit:overflow popup pass.' },
   },
   {
+    id: 'raw-localstorage',
+    hook: 'block-raw-localstorage-setitem.ps1',
+    test: 'no-raw-localstorage-setitem.test.ts',
+    baseline: '0（95→0）',
+    zh: { title: '裸 localStorage.setItem', desc: '禁裸 localStorage.setItem / window.localStorage.setItem —— 线上源的 ~5MB 配额常被 timer 自动备份塞满,裸写在事件处理器里抛 QuotaExceededError 会把后续状态更新一起炸掉(2026-07 trainer 全选线上点了没反应就是这个)。一律走 lib/safe-storage 的 persistItem(捕获配额错、驱逐可再生缓存后重试、永不抛)。自带驱逐-重试循环的兜底行内 allow-raw-localstorage 豁免。' },
+    en: { title: 'Raw localStorage.setItem', desc: 'No bare localStorage.setItem / window.localStorage.setItem — the origin’s ~5MB quota is routinely packed by timer auto-backups, so a raw write throws QuotaExceededError inside an event handler and takes the following state update down with it (that’s exactly why trainer select-all silently did nothing on prod in 2026-07). All writes funnel through lib/safe-storage’s persistItem (catches the quota error, evicts regenerable caches, retries, never throws). Fallbacks with their own evict-retry loop are exempt via inline allow-raw-localstorage.' },
+  },
+  {
     id: 'traditional',
     hook: 'block-handwritten-trad.ps1 → hook-detect-traditional.mjs',
     test: 'i18n-removal-guard.test.ts + i18n-no-isz-text-ternary.test.ts',

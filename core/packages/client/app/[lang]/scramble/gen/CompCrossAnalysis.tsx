@@ -17,6 +17,7 @@ import { reduceDigits, type ColorLetter } from '@/lib/cross-color-subset';
 import type { StepMapState, StepMetric } from './useStepMap';
 import { normScramble, type CompStepsState } from './useCompSteps';
 import { stageLabel } from '@/lib/scramble-variants';
+import { persistItem } from '@/lib/safe-storage';
 import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import type { RoundSheet } from './SheetView';
 
@@ -107,7 +108,7 @@ export default function CompCrossAnalysis({ sheets333, crossMap, ready, pre, ste
   const [view, setViewState] = useState<View>(readView);
   const setView = (v: View) => {
     setViewState(v);
-    try { localStorage.setItem(VIEW_KEY, v); } catch { /* swallow */ }
+    persistItem(VIEW_KEY, v);
   };
   const [selStep, setSelStep] = useState<number | null>(null);
   const toggleStep = (s: number) => setSelStep((cur) => (cur === s ? null : s));

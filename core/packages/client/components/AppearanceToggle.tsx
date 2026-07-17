@@ -13,6 +13,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sun, Moon, Check } from 'lucide-react';
+import { persistItem } from '@/lib/safe-storage';
 import {
   THEME_KEY,
   applyTheme,
@@ -89,7 +90,7 @@ export default function AppearanceToggle({ className }: { className?: string }) 
   // 选明暗:清掉配色回经典明暗(在同一次淡出里清),并持久化 theme。
   const pickTheme = (choice: 'light' | 'dark') => {
     setOpen(false);
-    try { localStorage.setItem(THEME_KEY, choice); } catch { /* ignore */ }
+    persistItem(THEME_KEY, choice);
     applyTheme(choice, true, true);
     window.dispatchEvent(new Event('theme-change'));
   };

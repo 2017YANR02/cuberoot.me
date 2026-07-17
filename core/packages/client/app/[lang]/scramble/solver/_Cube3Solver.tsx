@@ -23,6 +23,7 @@ import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { Loader2, Download, X, HelpCircle } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { streamApiUrl } from '@/lib/api-base';
+import { persistItem } from '@/lib/safe-storage';
 import { authHeaders } from '@/lib/admin-api';
 import { useAuthStore } from '@/lib/auth-store';
 import { faceletToCubie, validateFacelet, cubieToFacelet } from './facelet';
@@ -254,7 +255,7 @@ export default function Cube3Solver() {
       if (ad !== null) setAutoDownloadTable(ad === '1');
     } catch { /* corrupt entries */ }
   }, []);
-  useEffect(() => { if (mounted) try { localStorage.setItem('cubeopt.autoDownload', autoDownloadTable ? '1' : '0'); } catch { /* */ } }, [mounted, autoDownloadTable]);
+  useEffect(() => { if (mounted) persistItem('cubeopt.autoDownload', autoDownloadTable ? '1' : '0'); }, [mounted, autoDownloadTable]);
 
   const workerRef = useRef<Worker | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);

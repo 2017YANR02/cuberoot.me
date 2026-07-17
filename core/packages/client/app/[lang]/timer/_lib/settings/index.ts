@@ -9,6 +9,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { readPalette } from '@/lib/theme';
 import { paletteScheme } from '@/lib/palettes';
+import { persistItem } from '@/lib/safe-storage';
 
 const KEY = 'cuberoot-timer.settings.v1';
 
@@ -353,11 +354,7 @@ function load(): TimerSettings {
 }
 
 function save(s: TimerSettings): void {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(s));
-  } catch {
-    /* quota / privacy mode — ignore */
-  }
+  persistItem(KEY, JSON.stringify(s));
 }
 
 export function getSettings(): TimerSettings {

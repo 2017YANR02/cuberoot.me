@@ -32,6 +32,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { displayCuberName } from '@/lib/name-utils';
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
+import { persistItem } from '@/lib/safe-storage';
 import { Flag as SharedFlag } from '@/components/Flag';
 import { YearMonthPickerPopover } from '@/components/YearMonthPickerPopover';
 import { RecordBadge } from '@/components/RecordBadge';
@@ -118,7 +119,7 @@ function loadRecent(ownerKey: string): RecentEntry[] {
       // 老共享桶一次性迁移到当前用户桶(仅设备上第一个登录用户继承,随后删除)
       raw = localStorage.getItem(RECENT_KEY_LEGACY);
       if (!raw) return [];
-      localStorage.setItem(recentKeyFor(ownerKey), raw);
+      persistItem(recentKeyFor(ownerKey), raw);
       localStorage.removeItem(RECENT_KEY_LEGACY);
     }
     const arr = JSON.parse(raw);
@@ -151,7 +152,7 @@ export function rememberRecent(slug: string, name: string, nameZh?: string, iso2
     const cur = all.filter(r => r.slug !== norm);
     const entry: RecentEntry = { slug: norm, name, nameZh: nameZh ?? prev?.nameZh, iso2: iso2 ?? prev?.iso2, viewedAt: Date.now() };
     const next: RecentEntry[] = [entry, ...cur].slice(0, RECENT_MAX);
-    localStorage.setItem(recentKeyFor(ownerKey), JSON.stringify(next));
+    persistItem(recentKeyFor(ownerKey), JSON.stringify(next));
   } catch { /* quota */ }
 }
 
@@ -1421,7 +1422,7 @@ function CalendarPageInner() {
   const removeRecent = (slug: string) => {
     setRecent((cur) => {
       const next = cur.filter(r => r.slug !== slug);
-      try { localStorage.setItem(recentKeyFor(recentOwnerKey), JSON.stringify(next)); } catch { /* quota */ }
+      persistItem(recentKeyFor(recentOwnerKey), JSON.stringify(next));
       return next;
     });
   };
