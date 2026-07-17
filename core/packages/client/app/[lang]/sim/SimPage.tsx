@@ -144,6 +144,14 @@ const SR_ANGLE_BASE: Partial<Record<PuzzleType, {
 }>> = {
   // sr identity shows the R-face where the sim shows F → +90 yaw; both signs match the sim.
   skewb: { yaw: 90, pitch: 0, yawSign: 1, pitchSign: 1 },
+  // sq1 identity = bird's-eye on top (spin axis z); yaw maps straight (z = sim yaw), pitch
+  // offsets −90 (front-on is 90° from bird's-eye): x = pitch_sim − 90. Verified z−36/x−59 = left.
+  sq1: { yaw: 0, pitch: -90, yawSign: 1, pitchSign: 1 },
+  // pyraminx (spin axis y, apex-up). At the default the sim shows the R face flat-on & upright
+  // (apex-up, horizontal base) — in sr that's an x-tilt of the identity (sr `right`=R flat-on
+  // ≈ [{y:0},{x:-20}]), NOT a y-spin. Pinned exactly at default (a1=0, a2=-20); the sim's
+  // yaw/pitch map to different sr axes for the tetra, so off-default tracking is approximate.
+  pyraminx: { yaw: 36, pitch: -51, yawSign: 1, pitchSign: 1 },
 };
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
