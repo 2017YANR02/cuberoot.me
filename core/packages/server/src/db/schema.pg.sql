@@ -546,6 +546,23 @@ CREATE INDEX idx_contributors_score ON contributors(score DESC, created_at);
 CREATE TRIGGER contributors_updated_at BEFORE UPDATE ON contributors
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
+-- ── 26c. alg_case_marks (公式训练器 per-case 学习标记) ──
+-- migration 0076_alg_case_marks.sql。状态(学习中/已掌握/搁置)+ 难点星标,登录用户跨设备同步。
+-- 身份 = ownerKey(requireAuth);case 身份 = (puzzle, set_slug, case_key),case_key 是客户端
+-- trainer 全链路的 `subgroup|name`(不 FK alg_cases.id:legacy 路径 id 可能缺失)。
+-- 「未学」= 无行;status 与 starred 全空时删行。
+CREATE TABLE alg_case_marks (
+  wca_id      VARCHAR(20)  NOT NULL,
+  puzzle      VARCHAR(16)  NOT NULL,
+  set_slug    VARCHAR(32)  NOT NULL,
+  case_key    VARCHAR(128) NOT NULL,
+  status      VARCHAR(16)  CHECK (status IN ('learning', 'mastered', 'paused')),
+  starred     BOOLEAN      NOT NULL DEFAULT FALSE,
+  updated_at  BIGINT       NOT NULL,
+  PRIMARY KEY (wca_id, puzzle, set_slug, case_key)
+);
+CREATE INDEX idx_alg_case_marks_user_set ON alg_case_marks(wca_id, puzzle, set_slug);
+
 -- ── 27. forum_* (/forum 论坛:分类/子版/主题/帖子/反应) ──
 -- migration 0066_forum.sql。作者键 = ownerKey(真 wca_id 或 u<uid>),同 comments.author_id 语义。
 -- 子版计数查询时现算;主题上缓存 reply_count/view_count/last_post_*。软删除保 postNo 稳定。

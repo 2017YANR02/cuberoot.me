@@ -33,6 +33,7 @@ import { announcedCompsRoutes, startAnnouncedCompsPoller } from './routes/announ
 import { sponsorsRoutes } from './routes/sponsors.js';
 import { membershipRoutes } from './routes/membership.js';
 import { compFollowsRoutes } from './routes/comp_follows.js';
+import { algMarksRoutes } from './routes/alg_marks.js';
 import { wcaProxyRoutes } from './routes/wca_proxy.js';
 import { wcaResultWatchRoutes } from './routes/wca_result_watch.js';
 import { feedbackRoutes } from './routes/feedback.js';
@@ -124,6 +125,7 @@ app.route('/v1', announcedCompsRoutes);
 app.route('/v1', sponsorsRoutes);
 app.route('/v1', membershipRoutes);
 app.route('/v1', compFollowsRoutes);
+app.route('/v1', algMarksRoutes);
 app.route('/v1', wcaProxyRoutes);
 app.route('/v1', wcaResultWatchRoutes);
 app.route('/v1', feedbackRoutes);
