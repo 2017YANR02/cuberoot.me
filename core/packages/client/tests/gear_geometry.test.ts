@@ -6,7 +6,7 @@ import {
   CROWN_BALL, EDGE_R, CORE_R, CAP_HALF,
   ARM_R0, ARM_R1, ARM_S, ARM_D, WASHER_IN, WASHER_OUT, WASHER_Y,
   SWEEP_RHO, SWEEP_WALL, RIM_R, TOOTH_HALF_W, TOOTH_FILLET_R, FOLD_LINE_R, FOLD_LINE_HW,
-  COIN_R, CORNER_DROP,
+  COIN_R, CORNER_PLATE_T,
   crownSectorOutline, buildCornerPiece,
   gearSlotApex, gearSlotBasis, gearSlotFaces, gearWindowAngle,
   cornerStickerOutline, inCrownSweep, CORNER_POLY,
@@ -371,40 +371,35 @@ describe('gear geometry clearance invariants', () => {
     expect(channelAt(H - 4)).toBeLessThan(SWEEP_RHO + SWEEP_WALL + 2);
   });
 
-  it('corner full-prism body: columns reach the plates, arris bands are gone, no burr shards', () => {
-    // v2 base-face prism construction: the body is the UNION of the three
-    // sticker-outline prisms extruded straight through the block. Each
-    // column's flat top cap (H − CORNER_DROP − 0.2) must land INSIDE its
-    // plate band (above H − PLATE_T), or the column detaches from its plate.
-    const A = H - CORNER_DROP;
-    expect(CORNER_DROP + 0.2).toBeLessThan(PLATE_T);
-    // Build one corner and audit every CSG vertex:
-    //  - |coord| bounds: an inside-out brush historically sprayed lathe shards
-    //    far outside the block (the r=200 profile wall) — the whole burr-shard
-    //    failure class trips the hi bound;
-    //  - hi must also REACH the box cap (columns must rise past the plate
-    //    bottom and hide their top caps inside the plates — connectivity);
-    //  - the SECOND-largest |coord| of any vertex stays inside the outline's
-    //    max reach: material beyond it near an arris would mean the old box
-    //    arris band survived — the prism cuts really ran (the arris is now an
-    //    open square groove between neighbouring columns).
+  it('corner strict-intersection body: inside every outline, roots the plates, no burr shards', () => {
+    // v3 base-face construction: the body is the INTERSECTION of the three
+    // sticker-outline prisms — nothing may poke past ANY face's die-cut
+    // silhouette (round 2's union showed neighbouring columns through each
+    // face view, user-rejected). The deepened plate bottom must reach below
+    // the intersection roof (H − FOLD_LINE_HW − max inset 0.14), or the tile
+    // assembly floats on a see-through slit.
+    expect(H - CORNER_PLATE_T).toBeLessThan(H - FOLD_LINE_HW - 0.14);
     const ev = new Evaluator();
     ev.useGroups = false;
     const { group } = buildCornerPiece(0, ev);
     const body = group.children[0] as THREE.Mesh;
     const pos = body.geometry.getAttribute('position') as THREE.BufferAttribute;
-    let lo = Infinity, hi = -Infinity, second = 0;
+    let lo = Infinity, hi = -Infinity;
     for (let i = 0; i < pos.count; i++) {
-      const a = [Math.abs(pos.getX(i)), Math.abs(pos.getY(i)), Math.abs(pos.getZ(i))]
-        .sort((x, y) => y - x);
-      if (a[2] < lo) lo = a[2];
-      if (a[0] > hi) hi = a[0];
-      if (a[1] > second) second = a[1];
+      for (const c of [Math.abs(pos.getX(i)), Math.abs(pos.getY(i)), Math.abs(pos.getZ(i))]) {
+        if (c < lo) lo = c;
+        if (c > hi) hi = c;
+      }
     }
-    expect(hi).toBeLessThan(A + 0.1);
-    expect(hi).toBeGreaterThan(H - PLATE_T); // column tops overlap the plate band
-    expect(lo).toBeGreaterThan(CUT + SEAM - 0.1);
-    expect(second).toBeLessThan(Math.max(...CORNER_POLY.flat()) + 0.1);
+    // EVERY |coord| inside the outline's max reach — the intersection really
+    // ran on all three axes (and any burr shard sprayed outside trips it: the
+    // round-2 rounded-box INTERSECTION emitted a sliver vertex 0.19 out).
+    expect(hi).toBeLessThan(H - FOLD_LINE_HW + 0.2);
+    // …the body must still RISE past the deepened plate bottom (tile roots
+    // in), and its inner reach starts at the outline minimum — the sub-47
+    // inner bulk of the old box is really stripped.
+    expect(hi).toBeGreaterThan(H - CORNER_PLATE_T);
+    expect(lo).toBeGreaterThan(Math.min(...CORNER_POLY.flat()) - 0.2);
   });
 
   it('teeth: 6 SVG-shaped tentacles, parallel flanks, gullet scallop between them', () => {
@@ -487,13 +482,14 @@ describe('gear geometry clearance invariants', () => {
 
   /** Min signed distance from a world point to any corner plate prism:
    *  polygon CORNER_POLY (per |in-plane| quadrant fold) × band
-   *  [H − PLATE_T, H + sticker top]. Negative = inside a plate. */
+   *  [H − CORNER_PLATE_T, H + sticker top] (v3 deepened plates — the band the
+   *  phase-sync claim must now cover). Negative = inside a plate. */
   function plateClearance(x: number, y: number, z: number): number {
     const co = [x, y, z];
     let best = Infinity;
     for (let j = 0; j < 3; j++) {
       const h = Math.abs(co[j]);
-      const dz = h < H - PLATE_T ? H - PLATE_T - h : h > H + STICKER_TOP ? h - (H + STICKER_TOP) : 0;
+      const dz = h < H - CORNER_PLATE_T ? H - CORNER_PLATE_T - h : h > H + STICKER_TOP ? h - (H + STICKER_TOP) : 0;
       if (dz > 4) continue;
       const a = Math.abs(co[(j + 1) % 3]), b = Math.abs(co[(j + 2) % 3]);
       let inside = false;
@@ -576,7 +572,7 @@ describe('gear geometry clearance invariants', () => {
     for (let a = Math.min(...xs); a <= Math.max(...xs); a += 1) {
       for (let b = Math.min(...ys); b <= Math.max(...ys); b += 1) {
         if (!inPoly(a, b)) continue;
-        for (let z = H - PLATE_T; z <= H + STICKER_TOP; z += 1) {
+        for (let z = H - CORNER_PLATE_T; z <= H + STICKER_TOP; z += 1) {
           expect(hit(a, b, z, 0.5)).toBe(false);
         }
       }
