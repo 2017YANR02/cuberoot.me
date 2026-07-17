@@ -9,19 +9,13 @@ import { useTranslation } from 'react-i18next';
 import { useCalcStore, solveCountForEvent } from '../stores/calc_store';
 import { setCurrentEvent } from '../engine/calc_engine';
 import { eventDisplayName } from '@/lib/wca-events';
-import { CANCELLED_EVENT_IDS } from '@/lib/event-constants';
+import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
 import { tr } from '@/i18n/tr';
 
-const EVENT_IDS = [
-  '333', '222', '444', '555', '666', '777',
-  '333bf', '333fm', '333oh', 'minx', 'pyram', 'clock',
-  'skewb', 'sq1', '444bf', '555bf', '333mbf',
-  '333ft', 'magic', 'mmagic', '333mbo',
-] as const;
-
-const OFFICIAL_IDS = EVENT_IDS.filter(id => !CANCELLED_EVENT_IDS.has(id));
-const CANCELLED_IDS = EVENT_IDS.filter(id => CANCELLED_EVENT_IDS.has(id));
+// 项目列表走共享的 ALL_EVENT_IDS 单一源(与 CANCELLED_EVENT_IDS 同一文件),不再本地重抄。
+const OFFICIAL_IDS = ALL_EVENT_IDS.filter(id => !CANCELLED_EVENT_IDS.has(id));
+const CANCELLED_IDS = ALL_EVENT_IDS.filter(id => CANCELLED_EVENT_IDS.has(id));
 
 export function EventSelector() {
   const { i18n } = useTranslation();
