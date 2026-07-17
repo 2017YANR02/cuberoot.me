@@ -22,7 +22,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InteractiveCubeNet from '@/app/[lang]/scramble/solver/_InteractiveCubeNet';
-import { PuzzleSVG } from '@/components/PuzzleSVG';
+import { PuzzleSVG, type SrColor } from '@/components/PuzzleSVG';
 import { invertAlg } from '@/lib/cube3';
 import { rotationDefaultsFor, rotationsMatchDefault } from '@/lib/puzzle-image/defaults';
 import { renderSpecSvg, srKindOf } from '@/lib/puzzle-image/render';
@@ -144,6 +144,31 @@ function entryFor(s: ImageSpec): { renderer: RendererId; draggable: boolean; ext
 /** sr-puzzlegen's own axis naming: sq1 / pyraminx spin about z where we say y. */
 function srPuzzleAxis(type: PuzzleType, axis: string): string {
   return (type === 'sq1' || type === 'pyraminx') && axis === 'y' ? 'z' : axis;
+}
+
+/**
+ * sr-puzzlegen `scheme` (per-face colours) mirroring the sim's own face palette so
+ * the panel image is colour-consistent with the left 3D — the sr renderer defaults
+ * to its OWN scheme (yellow-top skewb etc.), which is why the colours never matched.
+ * Each sr face key maps to the sim face that occupies the same physical position.
+ * Only the puzzles whose colours come from the sim's 6-face palette (spec.faceU..B)
+ * are mapped here; megaminx uses a fixed 12-colour scheme handled separately.
+ */
+function srSchemeFor(type: PuzzleType, s: ImageSpec): Record<string, SrColor> | undefined {
+  const c = (hex: string): SrColor => ({ value: hex });
+  if (type === 'skewb') {
+    return {
+      top: c(s.faceU), front: c(s.faceF), right: c(s.faceR),
+      back: c(s.faceB), left: c(s.faceL), bottom: c(s.faceD),
+    };
+  }
+  if (type === 'sq1') {
+    return {
+      top: c(s.faceU), front: c(s.faceF), bottom: c(s.faceD),
+      left: c(s.faceL), right: c(s.faceR), back: c(s.faceB),
+    };
+  }
+  return undefined;
 }
 
 // ── component ───────────────────────────────────────────────────────────────
@@ -328,6 +353,7 @@ export default function PuzzleImage({
           size={spec.imageSize}
           rotations={rotations}
           mask={spec.stickerMask || undefined}
+          scheme={srSchemeFor(spec.puzzleType, spec)}
         />
       </div>
     );
