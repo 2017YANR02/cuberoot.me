@@ -15,11 +15,11 @@
 
 import type { EventId, Solve } from '../types';
 import { getSettings } from '../settings';
+import { BACKUP_LS_PREFIX, idbBackupGet, idbBackupList, idbBackupPut } from './backup-idb';
 
 const KEY = 'cuberoot-timer.v3';
 const LEGACY_V2_KEY = 'cuberoot-timer.v2';
 const LEGACY_V1_KEY = 'cuberoot-timer.v1';
-const BACKUP_KEY_PREFIX = 'cuberoot-timer.backup.v1.';
 const BACKUP_KEEP = 10;
 
 type ByEvent = Partial<Record<EventId, Solve[]>>;
@@ -177,7 +177,7 @@ export function saveAll(byEvent: Record<string, Solve[]>): void {
   _saveCounter++;
   const every = getSettings().autoBackupEvery | 0;
   if (every > 0 && _saveCounter % every === 0) {
-    pushBackup();
+    void pushBackup(); // fire-and-forget:备份失败不影响保存本体
   }
 }
 
@@ -299,27 +299,65 @@ export function moveSolveToSession(solveId: string, targetSessionId: string): bo
   return true;
 }
 
-/* ---------- Auto-backup ---------- */
+/* ---------- Auto-backup ----------
+ * 主路径 IndexedDB(backup-idb.ts,含存量 localStorage 备份的一次性迁移);
+ * IDB 不可用(隐私模式等)才退回老的 localStorage 配额循环。
+ * BackupEntry.key:IDB 条目 = String(ts)(纯数字);legacy = 完整 LS key。 */
 
 export interface BackupEntry { key: string; ts: number; size: number; }
 
-export function pushBackup(): void {
+export async function pushBackup(): Promise<void> {
   let json: string;
   try { json = exportJson(); } catch { return; }
-  const key = BACKUP_KEY_PREFIX + Date.now();
+  try {
+    await idbBackupPut(Date.now(), json, BACKUP_KEEP);
+  } catch {
+    pushBackupLS(json);
+  }
+}
+
+export async function listBackups(): Promise<BackupEntry[]> {
+  try {
+    const list = await idbBackupList();
+    return list.map(e => ({ key: String(e.ts), ts: e.ts, size: e.size }));
+  } catch {
+    return listBackupsLS();
+  }
+}
+
+export async function restoreBackup(key: string): Promise<boolean> {
+  if (/^\d+$/.test(key)) {
+    try {
+      const v = await idbBackupGet(Number(key));
+      if (v != null) return importJson(v);
+    } catch { /* fall through to legacy */ }
+  }
+  try {
+    const v = localStorage.getItem(key);
+    if (!v) return false;
+    return importJson(v);
+  } catch {
+    return false;
+  }
+}
+
+/* ----- legacy localStorage fallback ----- */
+
+function pushBackupLS(json: string): void {
+  const key = BACKUP_LS_PREFIX + Date.now();
   // Quota loop: drop oldest backup until setItem succeeds, or no more to drop.
   for (let attempts = 0; attempts < 16; attempts++) {
     try {
       localStorage.setItem(key, json);
       break;
     } catch {
-      const all = listBackups();
+      const all = listBackupsLS();
       if (all.length === 0) return; // nothing left to drop, quota truly full
       try { localStorage.removeItem(all[all.length - 1]!.key); } catch { return; }
     }
   }
   // Rotate: keep only the most-recent BACKUP_KEEP entries.
-  const all = listBackups();
+  const all = listBackupsLS();
   if (all.length > BACKUP_KEEP) {
     for (const e of all.slice(BACKUP_KEEP)) {
       try { localStorage.removeItem(e.key); } catch { /* ignore */ }
@@ -327,13 +365,13 @@ export function pushBackup(): void {
   }
 }
 
-export function listBackups(): BackupEntry[] {
+function listBackupsLS(): BackupEntry[] {
   const out: BackupEntry[] = [];
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (!k || !k.startsWith(BACKUP_KEY_PREFIX)) continue;
-      const tsStr = k.slice(BACKUP_KEY_PREFIX.length);
+      if (!k || !k.startsWith(BACKUP_LS_PREFIX)) continue;
+      const tsStr = k.slice(BACKUP_LS_PREFIX.length);
       const ts = Number(tsStr);
       if (!Number.isFinite(ts)) continue;
       const v = localStorage.getItem(k) ?? '';
@@ -342,16 +380,6 @@ export function listBackups(): BackupEntry[] {
   } catch { /* ignore */ }
   out.sort((a, b) => b.ts - a.ts);
   return out;
-}
-
-export function restoreBackup(key: string): boolean {
-  try {
-    const v = localStorage.getItem(key);
-    if (!v) return false;
-    return importJson(v);
-  } catch {
-    return false;
-  }
 }
 
 export function newId(): string {

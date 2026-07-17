@@ -452,8 +452,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
     }));
   }
 
-  function showBackupPicker(): void {
-    const list = listBackups();
+  async function showBackupPicker(): Promise<void> {
+    const list = await listBackups();
     if (list.length === 0) {
       alert(tr({ zh: '尚无自动备份。', en: 'No auto-backups yet.'
     }));
@@ -480,7 +480,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
     if (!confirm((isZh
               ? `确认用 ${new Date(target.ts).toLocaleString()} 的备份覆盖当前数据？`
               : `Restore backup from ${new Date(target.ts).toLocaleString()} (overwrites current data)?`))) return;
-    const ok = restoreBackup(target.key);
+    const ok = await restoreBackup(target.key);
     alert(ok
       ? tr({ zh: '已恢复。请刷新页面。', en: 'Restored. Please reload the page.'
             })
@@ -882,12 +882,12 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               : tr({ zh: '保留最近 10 份', en: 'keeps last 10' })}</span>
           </Row>
           <Row label={tr({ zh: '操作', en: 'Actions' })}>
-            <button className="hint-btn" onClick={() => { pushBackup(); alert(tr({ zh: '已写入备份。', en: 'Backup written.'
-            })); }}>
+            <button className="hint-btn" onClick={() => { void pushBackup().then(() => alert(tr({ zh: '已写入备份。', en: 'Backup written.'
+            }))); }}>
               {tr({ zh: '立即备份', en: 'Back up now'
             })}
             </button>
-            <button className="hint-btn" onClick={showBackupPicker}>
+            <button className="hint-btn" onClick={() => { void showBackupPicker(); }}>
               {tr({ zh: '查看备份', en: 'View backups'
             })}
             </button>
