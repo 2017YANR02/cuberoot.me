@@ -136,6 +136,7 @@ const TABLES: Table[] = [
   { name: 'membership_orders', domain: 'commerce', origin: '0046', purpose: { zh: '会员订单(我方单号 + provider / channel)', en: 'Membership orders (out_trade_no + provider/channel)' } },
   { name: 'memberships', domain: 'commerce', origin: '0046', purpose: { zh: '会员有效期', en: 'Active membership validity' } },
   { name: 'sponsors', domain: 'commerce', origin: '0043', purpose: { zh: '/support 致谢 / 赞助墙(admin 手录)', en: 'Sponsor / support wall (admin-entered)' } },
+  { name: 'contributors', domain: 'commerce', origin: '0075', purpose: { zh: '/support 贡献者名单:score = 贡献次数(admin 点数字 +1)', en: 'Contributor wall on /support: score = contribution count (admin clicks to +1)' } },
   { name: 'feedback', domain: 'commerce', origin: '0049', evolved: [58], purpose: { zh: '桌宠反馈帖:类型 / 正文 / 环境快照', en: 'Desk-pet feedback threads: kind, body, environment' }, cols: [
     { name: 'kind', note: { zh: 'need | bug | other', en: 'need | bug | other' } }, { name: 'body, wca_id, contact' }, { name: 'page_url, lang, theme, viewport' }, { name: 'status', note: { zh: 'new | triaged | done', en: 'new | triaged | done' } },
   ] },
@@ -250,6 +251,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 72, slug: 'user_lang', desc: { zh: 'app_users 加 lang:通知邮件按收件人语言发;未读角标轮询搭车上报,NULL(没见过这人)回落双语', en: 'app_users gains lang: notification emails follow the recipient’s language; reported by the unread-badge poll, NULL (never seen) falls back to bilingual' } },
   { n: 73, slug: 'page_notices', desc: { zh: '新表 page_notices:每页顶部管理员通知条(维护中/WIP/bug),按路径匹配(精确/前缀 /*),分级 info/warning/维护', en: 'New page_notices table: per-page admin notice bars (maintenance/WIP/bug), matched by path (exact or /* prefix), levels info/warning/maintenance' } },
   { n: 74, slug: 'forum_review', desc: { zh: 'forum_threads / forum_posts 加 status(approved/pending/rejected)+ review_note:新用户前 N 帖先审后发,待审仅作者与管理员可见', en: 'forum_threads / forum_posts gain status (approved/pending/rejected) + review_note: new users’ first N posts are held for review, visible only to the author and admins' } },
+  { n: 75, slug: 'contributors', desc: { zh: '新表 contributors:/support 贡献者名单,score = 贡献次数(admin 点数字 +1)', en: 'New contributors table: the /support contributor wall, score = contribution count (admin clicks the number to +1)' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

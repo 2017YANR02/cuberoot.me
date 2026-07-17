@@ -2,8 +2,10 @@
 
 /**
  * /support — 致谢 / 赞助墙。
- * 公开展示赞助者(头像 + 名字 + WCA ID + 金额,金额降序),顶部「支持本站」开打赏弹窗
- * (复用 DonateModal)。admin 登录后行内 + 新增 / 编辑 / 删除,数据走 /v1/sponsors。
+ * 公开展示赞助者(头像 + 名字 + 金额,金额降序)与贡献者(头像 + 名字 + 贡献次数,
+ * 次数降序,issue #28)。顶部「支持本站」开打赏弹窗(复用 DonateModal)。
+ * admin 登录后行内 + 新增 / 编辑 / 删除;贡献者卡片上点次数数字即 +1。
+ * 数据走 /v1/sponsors + /v1/contributors。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { Heart, Plus, Pencil, Trash2, Crown } from 'lucide-react';
@@ -13,8 +15,11 @@ import AppLink from '@/components/AppLink';
 import DonateModal from '@/components/DonateModal';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { isAdmin } from '@/lib/auth-store';
-import { listSponsors, deleteSponsor, type Sponsor } from '@/lib/sponsors-api';
-import SponsorEditor from './SponsorEditor';
+import {
+  listSponsors, deleteSponsor, type Sponsor,
+  listContributors, deleteContributor, bumpContributor, type Contributor,
+} from '@/lib/sponsors-api';
+import SupportEditor, { type EditorTarget } from './SupportEditor';
 import './support.css';
 
 const INITIAL_VISIBLE = 18;
@@ -32,6 +37,34 @@ function firstGlyph(name: string): string {
   return String.fromCodePoint(t.codePointAt(0) ?? 63).toUpperCase();
 }
 
+function PersonAvatar({ name, wcaId, avatarUrl }: { name: string; wcaId?: string; avatarUrl?: string }) {
+  const avatar = (
+    <span className="sponsor-avatar">
+      {avatarUrl
+        ? <img src={avatarUrl} alt="" loading="lazy" decoding="async" />
+        : <span className="sponsor-avatar-fb">{firstGlyph(name)}</span>}
+    </span>
+  );
+  return wcaId
+    ? <AppLink href={`/person/${wcaId}`} className="sponsor-avatar-link" aria-label={name}>{avatar}</AppLink>
+    : avatar;
+}
+
+function PersonName({ name, wcaId }: { name: string; wcaId?: string }) {
+  return wcaId
+    ? <AppLink href={`/person/${wcaId}`} className="sponsor-name sponsor-name-link">{name}</AppLink>
+    : <span className="sponsor-name">{name}</span>;
+}
+
+function AdminBtns<T>({ item, onEdit, onDelete }: { item: T; onEdit: (x: T) => void; onDelete: (x: T) => void }) {
+  return (
+    <div className="sponsor-admin">
+      <button className="sponsor-admin-btn" onClick={() => onEdit(item)} aria-label="edit"><Pencil size={13} /></button>
+      <button className="sponsor-admin-del sponsor-admin-btn" onClick={() => onDelete(item)} aria-label="delete"><Trash2 size={13} /></button>
+    </div>
+  );
+}
+
 function SponsorCard({ sponsor, isZh, admin, onEdit, onDelete }: {
   sponsor: Sponsor;
   isZh: boolean;
@@ -40,31 +73,43 @@ function SponsorCard({ sponsor, isZh, admin, onEdit, onDelete }: {
   onDelete: (s: Sponsor) => void;
 }) {
   const name = displayCuberName(sponsor.name, isZh);
-  const avatar = (
-    <span className="sponsor-avatar">
-      {sponsor.avatarUrl
-        ? <img src={sponsor.avatarUrl} alt="" loading="lazy" decoding="async" />
-        : <span className="sponsor-avatar-fb">{firstGlyph(name)}</span>}
-    </span>
-  );
-
   return (
     <div className="sponsor-card" title={sponsor.message || undefined}>
-      {sponsor.wcaId
-        ? <AppLink href={`/person/${sponsor.wcaId}`} className="sponsor-avatar-link" aria-label={name}>{avatar}</AppLink>
-        : avatar}
-      {sponsor.wcaId
-        ? <AppLink href={`/person/${sponsor.wcaId}`} className="sponsor-name sponsor-name-link">{name}</AppLink>
-        : <span className="sponsor-name">{name}</span>}
-      {sponsor.wcaId && <span className="sponsor-wcaid">{sponsor.wcaId}</span>}
+      <PersonAvatar name={name} wcaId={sponsor.wcaId} avatarUrl={sponsor.avatarUrl} />
+      <PersonName name={name} wcaId={sponsor.wcaId} />
       <span className="sponsor-amount">{fmtAmount(sponsor.amount, sponsor.currency)}</span>
       {sponsor.message && <span className="sponsor-message">{sponsor.message}</span>}
-      {admin && (
-        <div className="sponsor-admin">
-          <button className="sponsor-admin-btn" onClick={() => onEdit(sponsor)} aria-label="edit"><Pencil size={13} /></button>
-          <button className="sponsor-admin-del sponsor-admin-btn" onClick={() => onDelete(sponsor)} aria-label="delete"><Trash2 size={13} /></button>
-        </div>
+      {admin && <AdminBtns item={sponsor} onEdit={onEdit} onDelete={onDelete} />}
+    </div>
+  );
+}
+
+function ContributorCard({ contributor, isZh, admin, onEdit, onDelete, onBump }: {
+  contributor: Contributor;
+  isZh: boolean;
+  admin: boolean;
+  onEdit: (ct: Contributor) => void;
+  onDelete: (ct: Contributor) => void;
+  onBump: (ct: Contributor) => void;
+}) {
+  const name = displayCuberName(contributor.name, isZh);
+  const countTitle = tr({ zh: '贡献 {n} 次', en: '{n} contributions' }).replace('{n}', String(contributor.score));
+  return (
+    <div className="sponsor-card">
+      <PersonAvatar name={name} wcaId={contributor.wcaId} avatarUrl={contributor.avatarUrl} />
+      <PersonName name={name} wcaId={contributor.wcaId} />
+      {admin ? (
+        <button
+          className="contrib-score contrib-score-btn"
+          onClick={() => onBump(contributor)}
+          title={tr({ zh: '点击 +1', en: 'Click to +1' })}
+        >
+          {contributor.score}
+        </button>
+      ) : (
+        <span className="contrib-score" title={countTitle}>{contributor.score}</span>
       )}
+      {admin && <AdminBtns item={contributor} onEdit={onEdit} onDelete={onDelete} />}
     </div>
   );
 }
@@ -80,17 +125,22 @@ export default function SupportPage() {
   const admin = mounted && isAdmin();
 
   const [sponsors, setSponsors] = useState<Sponsor[] | null>(null);
+  const [contributors, setContributors] = useState<Contributor[] | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [contribErr, setContribErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
-  const [editing, setEditing] = useState<Sponsor | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
 
   useEffect(() => {
     let cancel = false;
     listSponsors()
       .then(rows => { if (!cancel) setSponsors(rows); })
       .catch(e => { if (!cancel) setLoadErr(e instanceof Error ? e.message : String(e)); });
+    // 贡献者拉不到不拖累赞助区:公开视图静默隐藏,admin 视图显示错误。
+    listContributors()
+      .then(rows => { if (!cancel) setContributors(rows); })
+      .catch(e => { if (!cancel) setContribErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancel = true; };
   }, []);
 
@@ -101,16 +151,30 @@ export default function SupportPage() {
   );
   const remaining = total - visible.length;
 
-  function applySaved(saved: Sponsor) {
-    setSponsors(prev => {
+  function applySavedContributor(saved: Contributor) {
+    setContributors(prev => {
       const list = prev ? prev.slice() : [];
-      const i = list.findIndex(s => s.id === saved.id);
+      const i = list.findIndex(ct => ct.id === saved.id);
       if (i >= 0) list[i] = saved; else list.push(saved);
-      list.sort((a, b) => b.amount - a.amount);
+      list.sort((a, b) => b.score - a.score);
       return list;
     });
-    setEditing(null);
-    setCreating(false);
+  }
+
+  function handleSaved(saved: Sponsor | Contributor) {
+    if (editorTarget?.kind === 'contributor') {
+      applySavedContributor(saved as Contributor);
+    } else {
+      const s = saved as Sponsor;
+      setSponsors(prev => {
+        const list = prev ? prev.slice() : [];
+        const i = list.findIndex(x => x.id === s.id);
+        if (i >= 0) list[i] = s; else list.push(s);
+        list.sort((a, b) => b.amount - a.amount);
+        return list;
+      });
+    }
+    setEditorTarget(null);
   }
 
   async function handleDelete(s: Sponsor) {
@@ -123,6 +187,27 @@ export default function SupportPage() {
       window.alert(e instanceof Error ? e.message : String(e));
     }
   }
+
+  async function handleDeleteContributor(ct: Contributor) {
+    if (!window.confirm(tr({ zh: '删除「{n}」?', en: 'Delete "{n}"?'
+    }).replace('{n}', ct.name))) return;
+    try {
+      await deleteContributor(ct.id);
+      setContributors(prev => prev?.filter(x => x.id !== ct.id) ?? null);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function handleBump(ct: Contributor) {
+    try {
+      applySavedContributor(await bumpContributor(ct.id));
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  const showContribSection = (contributors?.length ?? 0) > 0 || admin;
 
   return (
     <div className="support-page">
@@ -166,7 +251,7 @@ export default function SupportPage() {
                 })}
             </span>
             {admin && (
-              <button className="support-add" onClick={() => setCreating(true)}>
+              <button className="support-add" onClick={() => setEditorTarget({ kind: 'sponsor', initial: null })}>
                 <Plus size={13} /> {tr({ zh: '新增', en: 'Add' })}
               </button>
             )}
@@ -180,7 +265,7 @@ export default function SupportPage() {
                   sponsor={s}
                   isZh={isZh}
                   admin={admin}
-                  onEdit={setEditing}
+                  onEdit={x => setEditorTarget({ kind: 'sponsor', initial: x })}
                   onDelete={handleDelete}
                 />
               ))}
@@ -196,12 +281,51 @@ export default function SupportPage() {
         </>
       )}
 
+      {showContribSection && (
+        <section className="support-contrib">
+          <h2 className="support-contrib-title">{tr({ zh: '贡献者', en: 'Contributors'
+          })}</h2>
+          <p className="support-sub">
+            {tr({
+              zh: '感谢每一位提交反馈、建议与 bug 的朋友，数字是贡献次数。',
+              en: 'Thanks to everyone who filed feedback, ideas and bug reports — the number is their contribution count.'
+          })}
+          </p>
+          {admin && (
+            <div className="support-count">
+              <button className="support-add" onClick={() => setEditorTarget({ kind: 'contributor', initial: null })}>
+                <Plus size={13} /> {tr({ zh: '新增', en: 'Add' })}
+              </button>
+            </div>
+          )}
+          {admin && contribErr && (
+            <div className="support-empty">{tr({ zh: '加载失败', en: 'Failed to load'
+            })}: {contribErr}</div>
+          )}
+          {contributors && contributors.length > 0 && (
+            <div className="support-grid">
+              {contributors.map(ct => (
+                <ContributorCard
+                  key={ct.id}
+                  contributor={ct}
+                  isZh={isZh}
+                  admin={admin}
+                  onEdit={x => setEditorTarget({ kind: 'contributor', initial: x })}
+                  onDelete={handleDeleteContributor}
+                  onBump={handleBump}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
       {donateOpen && <DonateModal lang={isZh ? 'zh' : 'en'} onClose={() => setDonateOpen(false)} />}
-      {(editing || creating) && (
-        <SponsorEditor
-          initial={editing}
-          onClose={() => { setEditing(null); setCreating(false); }}
-          onSaved={applySaved}
+      {editorTarget && (
+        <SupportEditor
+          target={editorTarget}
+          onClose={() => setEditorTarget(null)}
+          onSaved={handleSaved}
         />
       )}
     </div>
