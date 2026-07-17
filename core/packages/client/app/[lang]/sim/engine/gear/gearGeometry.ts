@@ -7,9 +7,10 @@
  *    (a) SPINNING CROWN — 6 ISOSCELES-TRAPEZOID tooth plates (straight radial
  *    legs through the gear center, chord bases, 38° gullets wider than the
  *    22° teeth) tangent to the 45° cone of apex E (edge midpoint) and axis n̂
- *    (outward radial), every plate lifted D0 along its cone normal (plateau
- *    PLATEAU/√2 ≈ 8.5 proud of both faces), plus a palm web filling the
- *    middle. Mod-3 spin phases force this plastic to be 120°-invariant about
+ *    (outward radial), every plate's TOP riding exactly ON the face planes
+ *    (D0 = 0), so the tooth decals sit in the same band as every block
+ *    sticker — plus a small palm hub under the disc slab. Mod-3 spin phases
+ *    force this plastic to be 120°-invariant about
  *    n̂; 120° = 2 pitches, so the crown rests identically after every move.
  *    At rest one tooth lies flat over each face (φ = ±90°) and four splay
  *    through the trench openings — 3 TENTACLE TIPS per face half poke out
@@ -19,9 +20,14 @@
  *    edge": two half-discs of radius COIN_R, one parallel to each face,
  *    meeting in a V-groove fold on the arris. It must NOT spin: the fold hugs
  *    the arris at every rest state, but a folded disc is only 180°-symmetric,
- *    so on the real puzzle it is an axle cap the crown whirls under. It
- *    floats COIN_GAP above the teeth's sticker ceiling D_MAX — wholly outside
- *    the cube surface — hence touches nothing, constructively.
+ *    so on the real puzzle it is an axle cap the crown whirls around. Its slab
+ *    top rides exactly ON the face planes, SHARING the surface band with the
+ *    tooth plates — disc + tentacles read as ONE flush gear, stickers level
+ *    with every block sticker (unified skyline). Separation from its own
+ *    crown is purely in-plane: tooth roots stay outside COIN_R + COIN_GAP at
+ *    every spin phase (a bearing — the crown whirls around the static disc),
+ *    and it spans |edge| ≤ COIN_R < CUT + SEAM, so every relative edge-axis
+ *    rotation keeps it clear of the corner walls, constructively.
  *  - 8 CORNERS: rounded blocks carved by (a) three CROWN-SWEEP LATHES — tight
  *    solids of revolution around the axes containing every crown's whole
  *    spin ∪ orbit sweep (see crownSweepInnerRadius) — and (b) three thin WASHER
@@ -36,8 +42,11 @@
  * Clearance invariants (locked by tests/gear_geometry.test.ts):
  *  - corner/center/core bodies stay inside their move slabs (|coord| ≶ CUT ∓ SEAM);
  *  - crowns + coin caps ⊂ ball(CROWN_BALL) at their edge midpoint, crowns ⊂
- *    their sweep lathe; coin caps float above the D_MAX teeth ceiling and
- *    keep their fold ends radially clear of the corner diagonal;
+ *    their sweep lathe; coin caps top out level with the block stickers, keep
+ *    an in-plane ring gap to their crown at every spin phase (crown points in
+ *    the slab band stay outside COIN_R + gap), and stay inside |edge| <
+ *    CUT + SEAM (clear of the corner walls under every relative edge-axis
+ *    rotation);
  *    face-layer and equator crown orbit circles pass ≥ 2·CROWN_BALL + 2 apart
  *    (ball-to-ball suffices — unlike the abandoned 45°-disc wheel model, crowns
  *    hug the arris);
@@ -105,25 +114,36 @@ export const EDGE_R = H * Math.SQRT2;
  *  2 pitches, so the crown rests identically after every move. */
 export const TEETH = 6;
 export const TOOTH_TIP = 62;
-/** Palm web slant radius (teeth spring from under its rim at TOOTH_ROOT). */
-export const WEB_R = 36;
-/** Plateau intercept: every crown surface rides the 45° cone t = PLATEAU − rad
- *  (t along n̂, rad ⊥ n̂), i.e. all plates are lifted D0 = PLATEAU/√2 along
- *  their cone normals and the crown sits PLATEAU/√2 ≈ 8.5 proud of each face. */
-export const PLATEAU = 12;
-export const D0 = PLATEAU / Math.SQRT2;
-/** Plate thickness (below the plateau surface, along the facet normal). */
-export const PLATE_T = 7;
+/** Palm hub rim radius (⊥ n̂) — a small black hub fully under the disc slab;
+ *  it rides the lower cone t = HUB_T − rad and even its bottom rim's in-face
+ *  reach hides inside the disc footprint (test-locked). */
+export const WEB_R = 13;
 const STICKER_LIFT = 0.5;
 const STICKER_DEPTH = 2.6;
+/** Bent-coin cap slab: in-plane ring gap to the tooth roots + slab thickness. */
+export const COIN_GAP = 0.6;
+export const COIN_T = 4;
+/** ONE-PIECE GEAR + UNIFIED SKYLINE (user-locked): tentacles and disc must
+ *  read as ONE body. The cap slab top AND every tooth plate top ride exactly
+ *  ON the face planes (D0 = 0), so the cap sticker, the tooth decals and
+ *  every block sticker share one band — flush tops, nothing rises above the
+ *  blocks. Disc↔teeth separation is purely IN-PLANE: an annular ring gap at
+ *  the rim (tooth roots start outside COIN_R + COIN_GAP at every spin phase;
+ *  the crown whirls around the static disc like a bearing — test-locked). */
+export const D0 = 0;
+/** Plate thickness (below the face planes, along the facet normal). */
+export const PLATE_T = 7;
 /** Depth window of the whole crown slab along its facet normals. */
 const D_MIN = D0 - PLATE_T;
 const D_MAX = D0 + STICKER_LIFT + STICKER_DEPTH;
-/** Bent-coin cap: hover gap above the teeth ceiling D_MAX, slab thickness,
- *  half-disc radius (= fold half-length; face reach is COIN_R − cap top). */
-export const COIN_GAP = 0.6;
-export const COIN_T = 4;
-export const COIN_R = 59;
+/** Hub cone intercept along n̂: hub top proud = HUB_T/√2 = −COIN_T − COIN_GAP,
+ *  a hover gap under the disc slab. */
+const HUB_T = -(COIN_T + COIN_GAP) * Math.SQRT2;
+/** Half-disc radius — user-locked: the disc radius EQUALS the visible tentacle
+ *  length. The disc center sits ON the arris (cap top on the face plane), its
+ *  in-face reach is exactly COIN_R, and the flat tooth's tip chord reaches
+ *  TOOTH_TIP·cos11° ≈ 60.9 — so COIN_R = tipReach/2 (test-locked). */
+export const COIN_R = 30.4;
 /** Ball bound of a whole crown around its edge midpoint E. */
 export const CROWN_BALL = Math.hypot(TOOTH_TIP, Math.max(Math.abs(D_MIN), D_MAX)) + 1.5;
 /** Crown sweep lathe. During a turn the crown both orbits (any angle) and spins
@@ -213,7 +233,7 @@ export function gearSlotFaces(r: number, s: number): number[] {
  *  the tip. Teeth are 22° wide with 38° gullets, so the gap between neighbours is
  *  wider than either base at every radius (gap chord 2r·sin19° > base 2r·sin11°). */
 export const TOOTH_HALF_ANG = (11 * Math.PI) / 180;
-export const TOOTH_ROOT = 30;
+export const TOOTH_ROOT = 32;
 /** The 4 trapezoid corners in (ŵ, ĝ) facet coords, CCW. */
 export function toothTrapezoid(tip: number): V2[] {
   const s = Math.sin(TOOTH_HALF_ANG), c = Math.cos(TOOTH_HALF_ANG);
@@ -303,9 +323,12 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
     group.add(plate);
 
     // per-tooth decal (rides the spinning tooth — scrambled fans mix colors);
-    // small round then inset keeps the narrow root end positive-radius
+    // it covers the WHOLE plate top: real tentacles are solid-colored plastic,
+    // and any black margin here widens the ring between disc and tentacles,
+    // breaking the one-piece read. Only a hair of inset + round so the decal
+    // side walls don't z-fight the plate side walls.
     const face = toothFace(k);
-    const decal = offsetInward(roundCorners(ccw, 1.2), 0.8);
+    const decal = offsetInward(roundCorners(ccw, 0.5), 0.25);
     const decalGeo = extrudeOntoFace(decal,
       { u: w, v: g, n: m, origin: E.clone().add(m.clone().multiplyScalar(D0 + STICKER_LIFT)) },
       STICKER_DEPTH);
@@ -314,17 +337,17 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
     }));
   }
 
-  // palm web: full-revolution frustum of the plateau cone out to WEB_R (the
-  // teeth spring from under its rim), PLATE_T·√2 thick along n̂. Lathe profile
+  // palm hub: full-revolution frustum of the lower cone t = HUB_T − rad out to
+  // WEB_R, fully under the disc slab (top proud ≤ −COIN_T − COIN_GAP; in-face
+  // reach inside the disc footprint), PLATE_T·√2 thick along n̂. Lathe profile
   // in (rad ⊥ n̂, y ∥ n̂) — CCW loop (see cornerCarves for the winding gotcha).
-  const rimRad = (WEB_R + D0) / Math.SQRT2;
-  const webTop = (rad: number): number => PLATEAU - rad;
-  const webBot = (rad: number): number => PLATEAU - PLATE_T * Math.SQRT2 - rad;
+  const webTop = (rad: number): number => HUB_T - rad;
+  const webBot = (rad: number): number => HUB_T - PLATE_T * Math.SQRT2 - rad;
   const latheBasis = new THREE.Matrix4().makeBasis(t, n, e).setPosition(E);
   const webProfile = [
     new THREE.Vector2(0.01, webBot(0.01)),
-    new THREE.Vector2(rimRad, webBot(rimRad)),
-    new THREE.Vector2(rimRad, webTop(rimRad)),
+    new THREE.Vector2(WEB_R, webBot(WEB_R)),
+    new THREE.Vector2(WEB_R, webTop(WEB_R)),
     new THREE.Vector2(0.01, webTop(0.01)),
   ];
   webProfile.push(webProfile[0].clone());
@@ -339,15 +362,20 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   // arris. Mounted on the ORBIT pivot, NOT the spin pivot: the fold must hug
   // the arris at every rest state, but a folded disc is only 180°-symmetric
   // while spin phases are mod 3 — on the real puzzle it is an axle cap the
-  // crown whirls under. Clearance is constructive: every cap point floats
-  // COIN_GAP above the teeth's sticker ceiling D_MAX along its own face
-  // normal (wholly outside the cube surface), so the spinning crown — whose
-  // points all sit ≤ D_MAX proud of both faces — can never touch it. The
-  // tooth tips poke out from under the rim: 3 tentacles per face half.
+  // crown whirls around. The slab top rides ON the face plane, SHARING the
+  // surface band with the tooth plates: disc + tentacles read as ONE flush
+  // gear (user-locked), stickers level with every block sticker. Clearance is
+  // constructive and purely in-plane: at every spin phase every crown point
+  // inside the slab band keeps in-plane distance > COIN_R + COIN_GAP from the
+  // gear center (a bearing), and along the edge the cap stays inside
+  // |edge| ≤ COIN_R < CUT + SEAM, clear of the corner walls under every
+  // relative edge-axis rotation. 3 tentacles per face half emerge flush from
+  // the rim ring gap.
   const coinGroup = new THREE.Group();
   coinGroup.userData.gearPiece = { type: 'gear', ring: r, id: s };
-  const coinBot = D_MAX + COIN_GAP;
-  const coinTop = coinBot + COIN_T;
+  const coinTop = 0;          // slab top exactly ON the face plane — the disc
+                              // sticker shares the band of every block sticker
+  const coinBot = -COIN_T;
   const FOLD_IN = 0.45; // halves stop short of the diameter — the walls tuck
                         // inside each other's slab (no coplanar z-fighting)
                         // leaving a thin V-groove that reads as the fold line
@@ -380,12 +408,14 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   }
   pivot.add(coinGroup);
 
-  // backing cone filling the slot throat behind the web
+  // backing cone filling the slot throat behind the web; its apex starts deep
+  // enough that it stays under the cap slab (which now dips COIN_T below the
+  // face planes near the fold): proud = −6.5/√2 ≈ −4.6 < −COIN_T
   const coneL = 34;
   const coneGeo = new THREE.ConeGeometry(coneL, coneL, 24, 1, false);
   coneGeo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), n));
   const cone = new THREE.Mesh(coneGeo, bodyMat);
-  cone.position.copy(E.clone().sub(n.clone().multiplyScalar(2 + coneL / 2)));
+  cone.position.copy(E.clone().sub(n.clone().multiplyScalar(6.5 + coneL / 2)));
   cone.userData.simRole = 'body';
   group.add(cone);
 
