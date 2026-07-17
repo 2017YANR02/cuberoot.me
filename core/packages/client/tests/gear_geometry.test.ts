@@ -375,7 +375,7 @@ describe('gear geometry clearance invariants', () => {
     // v3 base-face construction: the body is the INTERSECTION of the three
     // sticker-outline prisms — nothing may poke past ANY face's die-cut
     // silhouette (round 2's union showed neighbouring columns through each
-    // face view, user-rejected). The deepened plate bottom must reach below
+    // face view, user-rejected). The die-cut plate bottom must reach below
     // the intersection roof (H − FOLD_LINE_HW − max inset 0.14), or the tile
     // assembly floats on a see-through slit.
     expect(H - CORNER_PLATE_T).toBeLessThan(H - FOLD_LINE_HW - 0.14);
@@ -480,31 +480,40 @@ describe('gear geometry clearance invariants', () => {
   // derivation + finer 0.5° sweep in scripts/gear/mesh_check.mjs +
   // scripts/gear/rigid_check.mjs.
 
+  /** Signed in-plane distance to a quadrant polygon (+ outside, − inside). */
+  function polySigned(poly: Array<readonly [number, number]>, a: number, b: number): number {
+    let inside = false;
+    let dEdge = Infinity;
+    for (let i = 0, k = poly.length - 1; i < poly.length; k = i++) {
+      const [xi, yi] = poly[i], [xj, yj] = poly[k];
+      if ((yi > b) !== (yj > b) && a < ((xj - xi) * (b - yi)) / (yj - yi) + xi) inside = !inside;
+      const ex = xj - xi, ey = yj - yi;
+      const L2 = ex * ex + ey * ey;
+      const t = L2 ? Math.max(0, Math.min(1, ((a - xi) * ex + (b - yi) * ey) / L2)) : 0;
+      dEdge = Math.min(dEdge, Math.hypot(a - xi - t * ex, b - yi - t * ey));
+    }
+    return inside ? -dEdge : dEdge;
+  }
+
   /** Min signed distance from a world point to any corner plate prism:
-   *  polygon CORNER_POLY (per |in-plane| quadrant fold) × band
-   *  [H − CORNER_PLATE_T, H + sticker top] (v3 deepened plates — the band the
-   *  phase-sync claim must now cover). Negative = inside a plate. */
+   *  CORNER_POLY (per |in-plane| quadrant fold) × band [H − CORNER_PLATE_T,
+   *  H + sticker top]. Negative = inside a plate. */
+  const PLATE_PRISMS = [
+    { poly: CORNER_POLY, lo: H - CORNER_PLATE_T, hi: H + STICKER_TOP },
+  ];
   function plateClearance(x: number, y: number, z: number): number {
     const co = [x, y, z];
     let best = Infinity;
     for (let j = 0; j < 3; j++) {
       const h = Math.abs(co[j]);
-      const dz = h < H - CORNER_PLATE_T ? H - CORNER_PLATE_T - h : h > H + STICKER_TOP ? h - (H + STICKER_TOP) : 0;
-      if (dz > 4) continue;
       const a = Math.abs(co[(j + 1) % 3]), b = Math.abs(co[(j + 2) % 3]);
-      let inside = false;
-      let dEdge = Infinity;
-      for (let i = 0, k = CORNER_POLY.length - 1; i < CORNER_POLY.length; k = i++) {
-        const [xi, yi] = CORNER_POLY[i], [xj, yj] = CORNER_POLY[k];
-        if ((yi > b) !== (yj > b) && a < ((xj - xi) * (b - yi)) / (yj - yi) + xi) inside = !inside;
-        const ex = xj - xi, ey = yj - yi;
-        const L2 = ex * ex + ey * ey;
-        const t = L2 ? Math.max(0, Math.min(1, ((a - xi) * ex + (b - yi) * ey) / L2)) : 0;
-        dEdge = Math.min(dEdge, Math.hypot(a - xi - t * ex, b - yi - t * ey));
+      for (const pr of PLATE_PRISMS) {
+        const dz = h < pr.lo ? pr.lo - h : h > pr.hi ? h - pr.hi : 0;
+        if (dz > 4) continue;
+        const dIn = polySigned(pr.poly, a, b);
+        const dd = dz === 0 ? dIn : dIn <= 0 ? dz : Math.hypot(dz, dIn);
+        best = Math.min(best, dd);
       }
-      const dIn = inside ? -dEdge : dEdge;
-      const dd = dz === 0 ? dIn : dIn <= 0 ? dz : Math.hypot(dz, dIn);
-      best = Math.min(best, dd);
     }
     return best;
   }
@@ -536,10 +545,14 @@ describe('gear geometry clearance invariants', () => {
         }
       }
     }
-    // offline fine-grained (0.5°, denser cloud) minimum: see rigid_check.mjs /
-    // mesh_check.mjs re-verify — the coarser test grid must stay positive; a
-    // real regression (e.g. a spike regrowing into the transit band) goes ~−1
-    expect(worst).toBeGreaterThan(0.3);
+    // The fins are re-baked to the transit LIMIT (mesh_check MARGIN 0.5) —
+    // they reach the gear with just the tiny meshing gap the user asked for.
+    // The authoritative fine sweep (rigid_check.mjs, 0.25° + denser cloud +
+    // the fold-bar-top depth) bottoms at ~0.27; this coarser 2° grid must
+    // stay clearly POSITIVE (a real regression — a spike regrowing into the
+    // transit band — goes ~−1). Threshold 0.15 < the true 0.27 so the coarse
+    // grid never claims a clearance the fine oracle can't back.
+    expect(worst).toBeGreaterThan(0.15);
   });
 
   it('MESH: center-arm swept annuli never enter a corner plate (static, all phases)', () => {
@@ -560,20 +573,14 @@ describe('gear geometry clearance invariants', () => {
       }
       return false;
     };
-    const xs = CORNER_POLY.map((p) => p[0]), ys = CORNER_POLY.map((p) => p[1]);
-    const inPoly = (a: number, b: number): boolean => {
-      let inside = false;
-      for (let i = 0, k = CORNER_POLY.length - 1; i < CORNER_POLY.length; k = i++) {
-        const [xi, yi] = CORNER_POLY[i], [xj, yj] = CORNER_POLY[k];
-        if ((yi > b) !== (yj > b) && a < ((xj - xi) * (b - yi)) / (yj - yi) + xi) inside = !inside;
-      }
-      return inside;
-    };
-    for (let a = Math.min(...xs); a <= Math.max(...xs); a += 1) {
-      for (let b = Math.min(...ys); b <= Math.max(...ys); b += 1) {
-        if (!inPoly(a, b)) continue;
-        for (let z = H - CORNER_PLATE_T; z <= H + STICKER_TOP; z += 1) {
-          expect(hit(a, b, z, 0.5)).toBe(false);
+    for (const pr of PLATE_PRISMS) {
+      const xs = pr.poly.map((p) => p[0]), ys = pr.poly.map((p) => p[1]);
+      for (let a = Math.min(...xs); a <= Math.max(...xs); a += 1) {
+        for (let b = Math.min(...ys); b <= Math.max(...ys); b += 1) {
+          if (polySigned(pr.poly, a, b) >= 0) continue;
+          for (let z = pr.lo; z <= pr.hi + 1; z += 1) {
+            expect(hit(a, b, z, 0.5)).toBe(false);
+          }
         }
       }
     }
