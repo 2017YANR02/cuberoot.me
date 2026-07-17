@@ -20,9 +20,9 @@
 ## P1 跨区收口
 
 - [x] **`getIp(c)` 复制进 21 个后端 route**，都保留可伪造 `X-Forwarded-For` 回退 → 已加共享 `getIp(c)`（`analytics_helpers.ts`，委托权威 `getClientIp`、去 XFF 回退），21 route 删本地 def 改 import，111 调用点不变。server typecheck 绿。**★安全硬化，commit 未 push（需上线才生效）**
-- [ ] **`lib/name-utils.ts` 与 `lib/cuber-name-display.ts` 重复**（三导出函数代码相同，仅注释差一行；消费者 17 vs 33）→ 保留有测试的 `cuber-name-display`，repoint 17 个后删 `name-utils`
-- [ ] 内联 `isZh ? '中' : 'EN'` 文案三元 ~15 处 → `tr({en,zh})`（`wca/results:785/792/827`、calc、`membership:41`、recognize、memo/colpi、`LandingSearch:267` 等）
-- [ ] 本地 `t=(zh,en)=>isZh?zh:en` shim **56 文件/66 处** → 先补导出 positional `t(zh,en)` 的响应式 `useT()`，再全仓收敛
+- [ ] **`lib/name-utils.ts` 与 `lib/cuber-name-display.ts` 重复**（三导出函数代码相同，仅注释差一行；消费者 17 vs 33）→ 保留有测试的 `cuber-name-display`，repoint 17 个后删 `name-utils`。**暂缓**：17 消费者之一 `timer/_shell/SoloView.tsx` 正被 timer AI 改（dirty），现在 repoint 会撞车 / 半途留 `name-utils`。等其 commit 后一次做完
+- [ ] 内联 `isZh ? '中' : 'EN'` 文案三元 → `tr({en,zh})` / `<T>`。**审查严重低估**：实测 **80+ 处**（非 ~15），密集落在正被改的 `alg/3bld|_roux|skewb-trainer` 树 + 暗锁 `WcaStatView`/`wiki`/`battle_store`，且混着**合法非文案** `isZh`（`'/zh'` 前缀、`u.lang='zh-CN'`、`countryName(t,isZh)` util 参数）不能一刀切。**暂缓**：全站 i18n 迁移撞 3 个 AI 的 alg/timer WIP，应等树静下来单独一轮 + 保留 `<T>` 订阅防切语言不重渲染。注：`code/architecture/arch-data.tsx` 还把旧 `isZh` 三元写成「推荐做法」，与现 CLAUDE.md 矛盾，属过期文案
+- [ ] 本地 `t=(zh,en)=>isZh?zh:en` shim **56 文件/66 处** → 先补导出 positional `t(zh,en)` 的响应式 `useT()`，再全仓收敛。**暂缓**：与上条同批(同是 isZh 家族、同撞 WIP)，一次做
 - [ ] 重复小 util：`fmtDate`、货币格式化 ×3、`firstGlyph` ×2、`statsUrl`（shared/client 双份**已漂移**）、MBLD decode ×2、`no-cache,no-store` 字面量 56 处
 - [ ] calc 重造的 `EventSelector` → 共享 `WcaEventSelector`（`calc/_components/components/EventSelector.tsx:26`）
 - [ ] `CountrySelect` / `RegionCountrySelect` 半截迁移收尾
@@ -36,7 +36,7 @@
 
 - [x] `shared/src/types.ts:4` 五个旧训练器类型全死（`TrainerCase`/`TrainerSet`/`TrainResult`/`UserProgress`/`UserSettings`）→ 已删（0 真实消费者：alg-select 命中是 `TrainerSetClient` 文件名子串、test 命中是 allowlist 路径串）；shared rebuild + client/server typecheck 绿
 - [x] `components/wca-stats/ShowToggle.tsx` 死组件（仅 /code 画廊引用；`ShowMode` type 被 wca/results 用）→ 已把 `ShowMode` 内联进唯一消费者 wca/results，删组件 + 去画廊 import/demo/registry/metadata 四处。`code-catalog-sync` 测试 5/5 绿，typecheck 无新错
-- [ ] `/code` `cuberootDesc` 字段 49 文件填充但无渲染器读取（死语料）→ 确认后删
+- [ ] `/code` `cuberootDesc` 字段 49 文件填充但无渲染器读取（`.cuberootDesc` 读取 = 0，已核实）→ **但这是你写的双语内容（「cuberoot 如何用这工具」），非代码 cruft，不单方面删**。三选一等你拍板：①保留不动 ②删字段+49 处 ③补渲染器把内容显示到工具页（旁边 whyDesc/adoptersDesc/outlookDesc 都已渲染，它像漏接的一节）
 - [x] untrack `.playwright-mcp/` 下 5 个 debug session dump（整目录已 gitignore，误 force-add）
 - [x] 删 `core/packages/client/HANDOFF.md`（已完成的 Vite→Next 移交文档，零引用）
 - [x] 删 23 个死 ts-morph 一次性迁移脚本（`scripts/codemod-*` / `revert-*` / `scan-residual-isz` / `scan-gaps` / `cleanup-orphan-isz` / `fix-domain-terms` / `fix-use-client-order`；全 import 未安装的 ts-morph = 跑不起来，且无引用）
