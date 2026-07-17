@@ -4,7 +4,7 @@ import {
   H, CUT, SEAM, TEETH, TOOTH_TIP, WEB_R, PLATE_T, FOLD_R,
   CROWN_BALL, EDGE_R, CORE_R, CAP_HALF,
   ARM_R0, ARM_R1, ARM_S, ARM_D, WASHER_IN, WASHER_OUT, WASHER_Y,
-  SWEEP_RHO, SWEEP_WALL, RIM_R, TOOTH_HALF_W, FOLD_LINE_R, FOLD_LINE_HW,
+  SWEEP_RHO, SWEEP_WALL, RIM_R, TOOTH_HALF_W, TOOTH_FILLET_R, FOLD_LINE_R, FOLD_LINE_HW,
   COIN_R,
   crownSectorOutline,
   gearSlotApex, gearSlotBasis, gearSlotFaces, gearWindowAngle,
@@ -196,12 +196,20 @@ describe('gear geometry clearance invariants', () => {
     // The crease lives at dev q=0; the bar spans |q| ≤ FOLD_LINE_HW, |p| ≤
     // FOLD_LINE_R and rides the same rigid body — coincidence is constructive.
     // The bar must cover the whole crease bend arc (so no colored decal sliver
-    // peeks out along the fold) and reach just shy of the web rim (user-locked
-    // fat bar), staying inside the material under it at rest (gullet midlines
-    // carry web out to RIM_R).
+    // peeks out along the fold) and its rim-hugging end arcs must run FLUSH
+    // with the decal rim reach (RIM_R − 0.25 decal inset — user-locked: a
+    // shorter bar leaves a colored sliver between its end and the rim).
     expect(FOLD_LINE_HW).toBeGreaterThan(FOLD_R + 1);
     expect(FOLD_LINE_R).toBeGreaterThan(COIN_R + 2);
-    expect(FOLD_LINE_R).toBeLessThanOrEqual(RIM_R - 2);
+    expect(FOLD_LINE_R).toBeCloseTo(RIM_R - 0.25, 6);
+    // fat-bar parity (user-locked): half-width = the corner stickers' arris
+    // setback, so the bar reads exactly as fat as the corners' black band
+    expect(FOLD_LINE_HW).toBeCloseTo(H - Math.max(...CORNER_POLY.flat()), 6);
+    // the end arcs must stay on the gullet rim arc (material out to RIM_R
+    // underneath — no floating overhang): polar half-span < gullet half-span
+    const fcx = TOOTH_HALF_W + TOOTH_FILLET_R;
+    const rimEnd = Math.atan2(Math.sqrt((RIM_R + TOOTH_FILLET_R) ** 2 - fcx ** 2), fcx);
+    expect(Math.asin(FOLD_LINE_HW / FOLD_LINE_R)).toBeLessThan(rimEnd - Math.PI / 3);
   });
 
   it('crown (wedges + hub) stays inside ball(CROWN_BALL) at the apex', () => {
