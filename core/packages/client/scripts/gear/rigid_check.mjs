@@ -92,10 +92,9 @@ function buildCloud(bStep, gStep) {
 // ── corner plate field: signed clearance (negative = inside a plate prism) ──
 // Prism per axis j: |coord_j| ∈ [H − CORNER_PLATE_T, H + STICKER_TOP + 0.52],
 // in-plane |a|,|b| inside CORNER_POLY (quadrant fold = all 4 corners of both
-// faces). CORNER_PLATE_T (v3 strict-intersection corners: the plates dig
-// below the crown-standard PLATE_T to root into the intersection body's
-// roof) is parsed from the engine source so the oracle always judges the
-// shipped band.
+// faces). CORNER_PLATE_T (the corner die-cut plate digs below the crown-
+// standard PLATE_T to root into the intersection body's roof) is parsed from
+// the engine source so the oracle always judges the shipped band.
 const cptMatch = engineSrc.match(/export const CORNER_PLATE_T = ([\d.]+)/);
 if (!cptMatch) throw new Error('CORNER_PLATE_T not found in gearGeometry.ts');
 const CORNER_PLATE_T = Number(cptMatch[1]);
