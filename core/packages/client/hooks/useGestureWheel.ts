@@ -6,8 +6,15 @@
  * Extracted from /timer SoloView so /timer and the /alg trainer run page share one implementation
  * (cstimer-style dial). Attaches native pointer listeners ({ passive:false } so
  * preventDefault works on iOS) to `surfaceRef`. A plain press/hold still times
- * (onPressDown → onPressUp); only a drag past the dead-zone switches to gesture
- * mode, cancels the arm, and fires the nearest direction on release.
+ * (onPressDown → onPressUp); only a real drag switches to gesture mode, cancels
+ * the arm, and fires the nearest direction on release.
+ *
+ * Mouse is precise, so a 10px wobble already means "drag". Touch is not: holding
+ * a finger planted through the hold-to-ready window naturally rolls past 10px,
+ * which used to cancel the arm AND flash the wheel (the accidental-menu bug). So
+ * touch uses far larger thresholds plus a time gate — a drag counts as a gesture
+ * only if it leaves the slop *fast* (a flick within GRACE_MS) or travels a *long*
+ * way (past the dead-zone). A slow small drift in between is a planted hold.
  *
  * Callbacks are read through a ref refreshed every render, so the listeners
  * attach once and always see current state. The surface needs `touch-action:
@@ -51,18 +58,29 @@ export function useGestureWheel(opts: UseGestureWheelOptions): {
     const el = surfaceRef.current;
     if (!el || !active) return;
 
-    const TAP_SLOP = 10;   // px wobble still counts as a press, not a drag
-    const DEAD_ZONE = 44;  // px the drag must travel before a direction locks in
+    // Precise mouse vs. jittery touch — see the file header. TAP_SLOP: px wobble
+    // still counts as a press, not a drag. DEAD_ZONE: px the drag must travel
+    // before a direction locks in (and how far the wheel fades in over).
+    const MOUSE_SLOP = 10, MOUSE_DEAD = 44;
+    const TOUCH_SLOP = 18, TOUCH_DEAD = 90;
+    // Touch only: a drag out of the slop is a gesture (flick) if it happens
+    // within this window of press-down; later it must reach the dead-zone to
+    // count — so a planted hold's slow finger-roll stays a hold.
+    const GRACE_MS = 200;
 
     let touchActive = false;
     let swipeStart: { x: number; y: number } | null = null;
     let swipeMoved = false;
     let gestureHit = -1;
+    let isTouch = false;
+    let tapSlop = MOUSE_SLOP;
+    let deadZone = MOUSE_DEAD;
+    let downTime = 0;
 
     // Direction index from a drag delta: 0=right, then counter-clockwise
     // (matches GestureWheel's label order). -1 inside the dead-zone.
     const hitFor = (dx: number, dy: number): number => {
-      if (Math.hypot(dx, dy) < DEAD_ZONE) return -1;
+      if (Math.hypot(dx, dy) < deadZone) return -1;
       const theta = -Math.atan2(dy, dx);
       return ((Math.floor((theta / Math.PI) * 4 + 8.5) % 8) + 8) % 8;
     };
@@ -75,8 +93,12 @@ export function useGestureWheel(opts: UseGestureWheelOptions): {
       touchActive = true;
       swipeMoved = false;
       gestureHit = -1;
-      // Works for mouse too: a plain click/hold still times — only a drag past
-      // TAP_SLOP switches to gesture mode.
+      isTouch = e.pointerType !== 'mouse';
+      tapSlop = isTouch ? TOUCH_SLOP : MOUSE_SLOP;
+      deadZone = isTouch ? TOUCH_DEAD : MOUSE_DEAD;
+      downTime = e.timeStamp;
+      // Works for mouse too: a plain click/hold still times — only a drag that
+      // qualifies as a gesture (see handlePointerMove) switches modes.
       const canGesture = o.canGesture();
       swipeStart = canGesture ? { x: e.clientX, y: e.clientY } : null;
       if (canGesture) wheelRef.current?.show(e.clientX, e.clientY, o.enabledFor());
@@ -88,18 +110,23 @@ export function useGestureWheel(opts: UseGestureWheelOptions): {
       const dx = e.clientX - swipeStart.x;
       const dy = e.clientY - swipeStart.y;
       const dist = Math.hypot(dx, dy);
-      if (!swipeMoved && dist > TAP_SLOP) {
-        // Crossed the tap-slop: this is a drag, not a hold. Soft-cancel the arm
-        // so we never start the timer on a gesture (host keeps the last result).
+      if (!swipeMoved) {
+        // Mouse: any move past the slop is a drag (unchanged). Touch: a quick
+        // flick out of the slop, OR a long drag past the dead-zone — never a
+        // slow small finger-roll while holding to time.
+        const isGesture = isTouch
+          ? (dist > tapSlop && e.timeStamp - downTime <= GRACE_MS) || dist >= deadZone
+          : dist > tapSlop;
+        if (!isGesture) return;
+        // Confirmed a drag, not a hold. Soft-cancel the arm so we never start
+        // the timer on a gesture (host keeps the last result).
         swipeMoved = true;
         touchActive = false;
         optsRef.current.onArmCancel();
       }
-      if (swipeMoved) {
-        const hit = hitFor(dx, dy);
-        gestureHit = hit;
-        wheelRef.current?.update(hit, Math.min(1, dist / DEAD_ZONE));
-      }
+      const hit = hitFor(dx, dy);
+      gestureHit = hit;
+      wheelRef.current?.update(hit, Math.min(1, dist / deadZone));
     };
 
     const handlePointerUp = (e: PointerEvent) => {
