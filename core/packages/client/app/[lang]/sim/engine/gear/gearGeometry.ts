@@ -88,23 +88,6 @@ function resampleClosed(pts: V2[], s: number): V2[] {
   return out;
 }
 
-/** Chaikin corner-cutting (¼–¾), `iters` rounds. A convex combination of the
- *  input, so it can never create the needle reversals a setback fillet can —
- *  used for the ray-marched corner outlines (dense, noisy input). */
-function chaikinClosed(pts: V2[], iters: number): V2[] {
-  let cur = pts;
-  for (let k = 0; k < iters; k++) {
-    const next: V2[] = [];
-    for (let i = 0; i < cur.length; i++) {
-      const a = cur[i];
-      const b = cur[(i + 1) % cur.length];
-      next.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25]);
-      next.push([a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
-    }
-    cur = next;
-  }
-  return cur;
-}
 import {
   FACE_AXIS, GEAR_FACE_NAMES, CORNER_POS, CENTER_POS, RING_SLOT_POS,
 } from './gearState';
@@ -619,69 +602,51 @@ export function inCrownSweep(p: THREE.Vector3, axis: number, m: number): boolean
   return rad > crownSweepInnerRadius(along) - m;
 }
 
-const BITE_INSET = 3;      // sticker stays this far outside the carved bite
-const STICKER_EDGE_IN = 4; // sticker inset from block borders
-
-/** FISH corner sticker (the real cube's die-cut sticker shape, traced from the
- *  site icon `unofficial/gear.svg`): head block hugging the cube corner, two
- *  tail prongs pointing at the face center with a notch between, symmetric
- *  about the quadrant diagonal. Coordinates are (inward-a, inward-b) distances
- *  from the cube corner, in world units (icon × 256/440). */
-const FISH_REL: V2[] = [
-  [0, 36.7], [0, 0], [36.7, 0],
-  [41, 9], [52.4, 19.8], [78.3, 39],
-  [59.4, 46], [51.8, 51.8], [46, 59.4],
-  [39, 78.3], [19.8, 52.4], [9, 41],
+/** Corner sticker/plate outline — traced 1:1 from the user's reference SVG
+ *  (`.tmp/gear/gear cube.svg`, F face, top-right corner path M7386 9900) and
+ *  CONJUGATE-CLIPPED against the fold-glide crown's synced transit footprint
+ *  by `.tmp/gear/mesh_check.mjs` (spin/orbit locked at ±480°/90°, both branches,
+ *  full 360°, 0.5° frames). ABSOLUTE face coords for the (+,+) corner, CCW.
+ *
+ *  The corner is a GEAR here — its spikes interdigitate with the crown teeth
+ *  and only phase sync keeps them apart (rest clearance +7.83, transit +1.28,
+ *  center-arm swept annuli 0 hits — all re-locked in tests/gear_geometry.test.ts).
+ *  vs the raw SVG: the two edge-hugging wing knobs stop at |along| ≈ 64
+ *  (a gliding tooth reaches |along| ≤ 62.75 at plate heights mid-transit, so
+ *  the knobs' inner reaches are physically impossible with 6-tooth crowns)
+ *  and the two thin face-center spikes lose ~2 off their gear-side flanks
+ *  (smooth conjugate cap curves, marching-squares + snap-back — untrimmed
+ *  stretches are the SVG verbatim). */
+export const CORNER_POLY: V2[] = [
+  [116.7, 116.8], [118.3, 113.2], [118.5, 108.3], [118.5, 82.8], [118.3, 72.2],
+  [117.8, 66.8], [117.2, 64.1], [114.3, 64.1], [113.7, 64.1], [113.1, 64.4],
+  [112.7, 64.9], [112.3, 66], [111.5, 68.9], [110.7, 71.2], [108.6, 72.7],
+  [106.2, 72.9], [81.7, 65.5], [74.7, 63], [73.5, 61.7], [73, 60.2],
+  [70.9, 51], [70.2, 49.3], [69.6, 48.1], [67.8, 46.2], [67.3, 45],
+  [66.5, 44.6], [66, 44.6], [65.4, 45], [64.2, 46.7], [62.4, 59.2],
+  [61.2, 61.4], [59.2, 62.4], [46.7, 64.2], [44.6, 65.6], [44.5, 66.1],
+  [45.1, 67.3], [46.2, 67.8], [48.1, 69.6], [49.3, 70.3], [51.1, 70.9],
+  [54, 71.7], [60.6, 73], [61.7, 73.5], [63, 74.7], [65.4, 81.2],
+  [72.8, 106.2], [72.7, 108.6], [71.5, 110.2], [69.8, 111.1], [67.2, 111.8],
+  [65.4, 112.4], [64.6, 113], [64.1, 113.6], [64.1, 117.2], [64.5, 117.8],
+  [65.2, 118.3], [66.6, 118.5], [68.7, 118.6], [109.2, 118.5], [113.7, 118.3],
 ];
 
-/** Fish sticker outline for corner `ci` on face `face` — the FISH_REL polygon
- *  anchored at the block's outer vertex, auto-shrunk until every vertex clears
- *  the carve bites (probed with the same predicate that bounds the plastic).
- *  Returned in cubeFaceBasis(face) (u,v) coordinates, CCW. Exported for the
- *  max-turn-angle regression test (needle spikes = 120–180° reversals that a
- *  visual check misses — see tests/gear_geometry.test.ts). */
+/** CORNER_POLY mirrored into corner `ci`'s quadrant on face `face`, CCW, plus
+ *  the face basis. Fixed shape — no runtime shrinking: the polygon is verified
+ *  offline (and test-locked) against every carve and every synced crown/arm
+ *  sweep, so a misfit is a geometry regression, not a layout fallback. */
 export function cornerStickerOutline(ci: number, face: number): { outline: V2[]; basis: { u: THREE.Vector3; v: THREE.Vector3; n: THREE.Vector3; origin: THREE.Vector3 } } {
   const signs = CORNER_POS[ci];
   const n = V(FACE_AXIS[face]);
   const { u, v } = cubeFaceBasis(FACE_AXIS[face] as unknown as number[]);
-  const lift = H + STICKER_LIFT;
-  const p3 = new THREE.Vector3();
-  const at = (a: number, b: number, h: number): THREE.Vector3 =>
-    p3.copy(n).multiplyScalar(h).addScaledVector(u, a).addScaledVector(v, b);
-  const inPlaneAxes = [0, 1, 2].filter((ax) => FACE_AXIS[face][ax] === 0);
-  const inside = (a: number, b: number): boolean => {
-    for (const h of [lift, H - 6]) { // sticker plane + a body probe (washers carve deeper)
-      const p = at(a, b, h);
-      for (const ax of inPlaneAxes) {
-        const c = ax === 0 ? p.x : ax === 1 ? p.y : p.z;
-        const sc = c * signs[ax]; // toward this corner = positive
-        if (sc < CUT + SEAM + STICKER_EDGE_IN || sc > H - STICKER_EDGE_IN) return false;
-        if (inCrownSweep(p, ax, BITE_INSET)) return false;
-        const rad = ax === 0 ? Math.hypot(p.y, p.z) : ax === 1 ? Math.hypot(p.x, p.z) : Math.hypot(p.x, p.y);
-        if (rad > WASHER_IN - BITE_INSET && rad < WASHER_OUT + BITE_INSET && Math.abs(c) < WASHER_Y + BITE_INSET) return false;
-      }
-    }
-    return true;
+  const vert = new THREE.Vector3(signs[0], signs[1], signs[2]);
+  const sgnA = Math.sign(vert.dot(u)), sgnB = Math.sign(vert.dot(v));
+  const poly: V2[] = CORNER_POLY.map(([a, b]) => [sgnA * a, sgnB * b]);
+  return {
+    outline: polyArea2(poly) > 0 ? poly : poly.slice().reverse(),
+    basis: { u, v, n, origin: n.clone().multiplyScalar(H + STICKER_LIFT) },
   };
-  // anchor at the outer vertex corner of the plate
-  const vert = new THREE.Vector3(signs[0], signs[1], signs[2]).multiplyScalar(H - STICKER_EDGE_IN - 3);
-  const a0 = vert.dot(u);
-  const b0 = vert.dot(v);
-  const sgnA = Math.sign(a0), sgnB = Math.sign(b0);
-  // shrink until the whole fish clears the bites (vertices + edge midpoints)
-  for (const s of [0.8, 0.74, 0.68, 0.62, 0.56, 0.5]) {
-    const poly: V2[] = FISH_REL.map(([ra, rb]) => [a0 - sgnA * ra * s, b0 - sgnB * rb * s]);
-    const ccw = polyArea2(poly) > 0 ? poly : poly.slice().reverse();
-    const outline = resampleClosed(roundCorners(ccw, 4), 4);
-    if (outline.every(([a, b]) => inside(a, b))) {
-      return {
-        outline: chaikinClosed(outline, 1),
-        basis: { u, v, n, origin: n.clone().multiplyScalar(lift) },
-      };
-    }
-  }
-  // dimensions that swallow even the smallest fish are a layout bug — test-locked
-  throw new Error('gear corner fish sticker does not fit');
 }
 
 export function buildCornerPiece(ci: number, ev: Evaluator): { pivot: THREE.Object3D; group: THREE.Group } {
@@ -705,6 +670,15 @@ export function buildCornerPiece(ci: number, ev: Evaluator): { pivot: THREE.Obje
   for (const face of FACE_AXIS.map((_, f) => f).filter((f) =>
     FACE_AXIS[f][0] * signs[0] + FACE_AXIS[f][1] * signs[1] + FACE_AXIS[f][2] * signs[2] > 0)) {
     const { outline, basis } = cornerStickerOutline(ci, face);
+    // die-cut face plate: the corner's own gear profile, tooth-plate deep, added
+    // AFTER the carve subtractions so the spikes survive the (worst-case) lathe —
+    // phase sync is what really keeps the crown out of them (test-locked). Top
+    // pokes 0.52 above the face so the sticker bottom embeds without a gap.
+    const plateGeo = extrudeOntoFace(outline,
+      { ...basis, origin: basis.n.clone().multiplyScalar(H - PLATE_T) }, PLATE_T + 0.52);
+    const plate = new THREE.Mesh(plateGeo, bodyMat);
+    plate.userData.simRole = 'body';
+    group.add(plate);
     const geo = extrudeOntoFace(outline, basis, STICKER_DEPTH);
     group.add(makeSticker(geo, stickerMat(GEAR_FACE_NAMES[face]), bodyMat, {
       simStickerNormal: V(FACE_AXIS[face]),
