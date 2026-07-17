@@ -1610,14 +1610,17 @@ export default function SoloView({ playersControl }: SoloViewProps) {
               )}
             </div>
           )}
-          {/* 始终渲染该行占位(min-height),计时途中 badge 不显示但保留高度,避免长按时布局跳动。 */}
-          <div className="shell-stopped-row">
-            <div className="shell-rank-slot">
-              {timer.phase === 'stopped' && solves.length > 0 && (
-                <RankBadge eventId={event} centis={stoppedCentis} type="single" country={rankCountry} isZh={isZh} />
-              )}
+          {/* 开启排名时始终渲染该行占位(min-height),计时途中 badge 不显示但保留高度,避免长按时布局
+              跳动;关掉排名则整行不渲染,不留空隙。 */}
+          {settings.showRankBadge !== false && (
+            <div className="shell-stopped-row">
+              <div className="shell-rank-slot">
+                {timer.phase === 'stopped' && solves.length > 0 && (
+                  <RankBadge eventId={event} centis={stoppedCentis} type="single" country={rankCountry} isZh={isZh} />
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </TimingSurface>
 
         {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}

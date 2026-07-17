@@ -1187,17 +1187,25 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         })}>
             <BoolToggle value={s.hideAllUiWhileRunning} onChange={(v) => updateSettings({ hideAllUiWhileRunning: v })} />
           </Row>
-          <Row label={tr({ zh: '地区排名', en: 'Ranking region'
+          <Row label={tr({ zh: '显示排名', en: 'Show ranks'
         })}>
-            <CountryInput
-              value={(s.rankCountry ?? '').toLowerCase()}
-              onChange={(iso2) => updateSettings({ rankCountry: iso2.toUpperCase() })}
-              placeholder={tr({ zh: '国家(留空只显 WR)', en: 'Country (blank = WR only)'
-            })}
-            />
-            <span className="hint">{tr({ zh: '设国家后停表额外显示 CR(大洲)/ NR(全国)排名;登录 WCA 自动带入', en: 'adds CR (continent) / NR (national) ranks; auto-filled when signed in'
+            <BoolToggle value={s.showRankBadge !== false} onChange={(v) => updateSettings({ showRankBadge: v })} />
+            <span className="hint">{tr({ zh: '停表后在成绩旁显示 WR / CR / NR 名次;关掉则完全隐去', en: 'shows WR / CR / NR rank pills after each solve; off hides them entirely'
             })}</span>
           </Row>
+          {s.showRankBadge !== false && (
+            <Row label={tr({ zh: '地区排名', en: 'Ranking region'
+          })}>
+              <CountryInput
+                value={(s.rankCountry ?? '').toLowerCase()}
+                onChange={(iso2) => updateSettings({ rankCountry: iso2.toUpperCase() })}
+                placeholder={tr({ zh: '国家(留空只显 WR)', en: 'Country (blank = WR only)'
+              })}
+              />
+              <span className="hint">{tr({ zh: '设国家后停表额外显示 CR(大洲)/ NR(全国)排名;登录 WCA 自动带入', en: 'adds CR (continent) / NR (national) ranks; auto-filled when signed in'
+              })}</span>
+            </Row>
+          )}
         </AccordionSection>
 
         <AccordionSection
