@@ -95,7 +95,7 @@ import {
 /** Cube half-side (world units). Frames like the other engine cubes (Dino/Heli). */
 export const H = SIZE * 2; // 128
 
-// ── dimensions (derived + verified in .tmp/gear/derive4.mjs; spec §6) ──────────────
+// ── dimensions (derived + verified; scripts/gear/GEAR_FRONT_SPEC.md §6) ──────────────
 /** Layer cut planes at ±CUT — fat outer layers (photo-matched), NOT 3x3 thirds. */
 export const CUT = 0.25 * H;
 /** Half-seam between plane-separated slabs. */
@@ -159,7 +159,7 @@ export const CAP_HALF = 0.19 * H;
 const CAP_T = 12;
 /** Center spider arms — the reference front view's C-brackets between the cap and
  *  each gear. They belong to the CENTER piece (an edge-mounted plate would sweep
- *  through other pieces mid-turn — refuted numerically in .tmp/gear/derive3.mjs).
+ *  through other pieces mid-turn — refuted numerically; spec §6).
  *  Their whole swept shell is carved out of the corners by the washer rings. */
 export const ARM_R0 = 0.30 * H;   // feet inner edge (radial, from face center)
 export const ARM_R1 = 0.375 * H;  // bar outer edge — capped by the corner tab shell
@@ -603,9 +603,9 @@ export function inCrownSweep(p: THREE.Vector3, axis: number, m: number): boolean
 }
 
 /** Corner sticker/plate outline — traced 1:1 from the user's reference SVG
- *  (`.tmp/gear/gear cube.svg`, F face, top-right corner path M7386 9900) and
- *  CONJUGATE-CLIPPED against the fold-glide crown's synced transit footprint
- *  by `.tmp/gear/mesh_check.mjs` (spin/orbit locked at ±480°/90°, both branches,
+ *  (`scripts/gear/gear-cube-reference.svg`, F face, top-right corner path
+ *  M7386 9900) and CONJUGATE-CLIPPED against the fold-glide crown's synced
+ *  transit footprint by `scripts/gear/mesh_check.mjs` (spin/orbit ±480°/90°, both branches,
  *  full 360°, 0.5° frames). ABSOLUTE face coords for the (+,+) corner, CCW.
  *
  *  The corner is a GEAR here — its spikes interdigitate with the crown teeth

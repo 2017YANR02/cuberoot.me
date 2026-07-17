@@ -143,7 +143,7 @@ const rotY = (a: number) => {
 const dot3 = (a: V3, b: V3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
 /**
- * Locks the fold-glide crown invariants (spec .tmp/gear/GEAR_FRONT_SPEC.md §0/§6).
+ * Locks the fold-glide crown invariants (spec scripts/gear/GEAR_FRONT_SPEC.md §0/§6).
  * A dimension tweak that silently breaks a clearance fails here, not on screen.
  */
 describe('gear geometry clearance invariants', () => {
@@ -475,7 +475,7 @@ describe('gear geometry clearance invariants', () => {
   // ── the corner is a GEAR: phase-synced meshing, not swept-volume avoidance ──
   // Its die-cut plates (CORNER_POLY prisms, tooth-plate deep) interdigitate
   // with the crown teeth; only the locked spin/orbit ratio (±480°/90°, issue
-  // #32) keeps them apart. Derivation + finer 0.5° sweep in .tmp/gear/mesh_check.mjs
+  // #32) keeps them apart. Derivation + finer 0.5° sweep in scripts/gear/mesh_check.mjs
   // (offline: transit +1.08, rest +8.43, arms 0 hits).
 
   /** Min signed distance from a world point to any corner plate prism:
