@@ -90,9 +90,17 @@ function buildCloud(bStep, gStep) {
 }
 
 // ── corner plate field: signed clearance (negative = inside a plate prism) ──
-// Prism per axis j: |coord_j| ∈ [H − PLATE_T, H + STICKER_TOP + 0.52], in-plane
-// |a|,|b| inside CORNER_POLY (quadrant fold = all 4 corners of both faces).
-const BAND_LO = H - PLATE_T, BAND_HI = H + STICKER_TOP + 0.52;
+// Prism per axis j: |coord_j| ∈ [H − CORNER_PLATE_T, H + STICKER_TOP + 0.52],
+// in-plane |a|,|b| inside CORNER_POLY (quadrant fold = all 4 corners of both
+// faces). CORNER_PLATE_T (v3 strict-intersection corners: the plates dig
+// below the crown-standard PLATE_T to root into the intersection body's
+// roof) is parsed from the engine source so the oracle always judges the
+// shipped band.
+const cptMatch = engineSrc.match(/export const CORNER_PLATE_T = ([\d.]+)/);
+if (!cptMatch) throw new Error('CORNER_PLATE_T not found in gearGeometry.ts');
+const CORNER_PLATE_T = Number(cptMatch[1]);
+console.log(`CORNER_PLATE_T: ${CORNER_PLATE_T} (from engine source)`);
+const BAND_LO = H - CORNER_PLATE_T, BAND_HI = H + STICKER_TOP + 0.52;
 const PX = CORNER_POLY.map((p) => p[0]), PY = CORNER_POLY.map((p) => p[1]);
 const PMINX = Math.min(...PX), PMAXX = Math.max(...PX);
 const PMINY = Math.min(...PY), PMAXY = Math.max(...PY);

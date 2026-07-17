@@ -26,13 +26,13 @@
  *    can never enter (each crown point keeps its axial height along n̂ and its
  *    axis distance — the swept solid is the revolve of the rest shape about
  *    n̂, strictly outside that cone).
- *  - 8 CORNERS: the block IS its three sticker prisms (user's base-face
- *    construction, 2026-07-17 round 2 "贯穿整个角块"): each face's die-cut
- *    outline extrudes from the sticker plane straight THROUGH the block, and
- *    the body is the UNION of the three full-depth columns (each ∩ rounded
- *    box, then − carves), so the generatrix runs unbroken from deep body to
- *    sticker cap and every side silhouette follows the outline. Strictly ⊂
- *    the old carved box, so all clearances inherit. Carves: (a) three
+ *  - 8 CORNERS: the block IS the INTERSECTION of its three sticker prisms
+ *    (user's base-face construction, 2026-07-17 round 3): every body point
+ *    projects into all three die-cut outlines, so NO view shows anything
+ *    beyond that face's sticker silhouette (round 2's union let each column
+ *    poke through the neighbouring views — user-rejected), and the deepened
+ *    die-cut plates root the tile slabs into the intersection roof.
+ *    Strictly ⊂ the old carved box, so all clearances inherit. Carves: (a) three
  *    RIGID-SWEEP LATHES — tight solids of revolution around the axes
  *    containing every crown's whole spin ∪ orbit sweep, DEEP because a
  *    tilted crown dives ~44 into the slot throat (crownSweepInnerRadius) —
@@ -66,7 +66,7 @@
  *    only 180°-periodic, not 60°).
  */
 import * as THREE from 'three';
-import { ADDITION, Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg';
+import { Brush, Evaluator, INTERSECTION, SUBTRACTION } from 'three-bvh-csg';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { SIZE } from '../define';
 import { CUBE_FILL } from '@/lib/cube-colors';
@@ -127,15 +127,17 @@ export const COIN_GAP = 0.6;
 export const COIN_T = 4;
 /** Tooth plate thickness (below the face planes). */
 export const PLATE_T = 7;
-/** Corner column-top drop. v2 full-prism construction: each sticker column's
- *  flat top cap sits at H − CORNER_DROP − 0.2, i.e. INSIDE its plate band
- *  (plate spans H − PLATE_T … H + 0.52), so the cap is never visible and the
- *  visible wall runs deep-body → plate → sticker as one generatrix. Bound:
- *  CORNER_DROP + 0.2 < PLATE_T, or the column top detaches from its plate
- *  (test-locked). The arris black band becomes an open square groove between
- *  neighbouring columns, still FOLD_LINE_HW per face — fold-bar fat parity
- *  (width) is undisturbed. */
-export const CORNER_DROP = 5;
+/** Corner plate depth (v3 strict-intersection body) — deeper than the crown
+ *  tooth plates (PLATE_T): the intersection body's roof is formed by the
+ *  neighbouring outlines' top-edge walls at H − FOLD_LINE_HW − inset
+ *  (≈ H − 9.5), so a PLATE_T-deep plate would float on a see-through slit.
+ *  The die-cut plate digs to H − 9.8, embedding ~0.3 under the roof — the
+ *  tile assembly (plate + sticker) roots into the body and the visible wall
+ *  runs body → plate → sticker as one generatrix. The extended slab
+ *  [H − CORNER_PLATE_T, H − PLATE_T] enlarges the phase-sync band; it is
+ *  re-verified with THIS constant by scripts/gear/rigid_check.mjs (parses it
+ *  from this source) + the MESH vitest. */
+export const CORNER_PLATE_T = 9.8;
 /** Slot-throat setback along n̂ (v12): the rigid crown's spin sweep reaches
  *  ρ = a − PLATE_T·√2 at axial depth a (the tilted plate's UNDERSIDE at p=0),
  *  so everything living in the throat — hub + backing cone, both slope-1
@@ -281,8 +283,8 @@ export const TOOTH_FILLET_R = 5;
  *  stickers' arris setback (H − max CORNER_POLY coord = 128 − 118.6), so the
  *  bar reads exactly as fat as the corners' black arris band (user-locked
  *  2026-07-17: 4.5 was visibly thinner than the corner band) — both
- *  test-locked. v2 full-prism corners: the arris band is an open square
- *  groove between neighbouring sticker columns — its across-arris width is
+ *  test-locked. Strict-intersection corners: the arris band is an open
+ *  notch between neighbouring tile plates — its across-arris width is
  *  still 2× this setback, so the parity is invariant. */
 export const FOLD_LINE_R = RIM_R - 0.25;
 export const FOLD_LINE_HW = 9.4;
@@ -820,34 +822,33 @@ export function buildCornerPiece(ci: number, ev: Evaluator): { pivot: THREE.Obje
   const faces = FACE_AXIS.map((_, f) => f).filter((f) =>
     FACE_AXIS[f][0] * signs[0] + FACE_AXIS[f][1] * signs[1] + FACE_AXIS[f][2] * signs[2] > 0);
 
-  // FULL-DEPTH BASE-FACE PRISMS (user-locked 2026-07-17 round 2, "柱体贯穿
-  // 整个角块"): the body is the UNION of the three sticker-outline prisms,
-  // each extruded straight through the block — the generatrix runs unbroken
-  // from deep body to sticker, and every side silhouette IS an outline. Each
-  // column is a single clean ExtrudeGeometry spanning the inner slab face
-  // (lo) up to just under the box-top level, so its top cap hides INSIDE its
-  // plate band; the union then takes the standard carves. STRICT MATERIAL
-  // REMOVAL vs the old carved box (each prism ⊂ the old box), so every
-  // crown/arm clearance argument is inherited verbatim — including the
-  // arris bands and the inner bulk this now strips away.
-  // Burr guards: NO box brush at all — a rounded-box ∩ prism intersection
-  // let a cap-plane × wall-edge split spray a sliver vertex 0.19 outside the
-  // block (caught by the bounds test); analytic end caps remove that whole
-  // interaction class. And anti-coplanar staggering: three-bvh-csg is
-  // unreliable on exactly-coplanar operand faces, so each prism gets its OWN
-  // inset (0.06/0.10/0.14 — which also keeps every column wall a hair behind
-  // its uninset plate wall, no wall z-fight): no two column walls can
-  // coincide even where the outline carries the same coordinate on both
-  // axes, and cap planes of different columns lie on different axes.
+  // STRICT-INTERSECTION BASE-FACE PRISMS (user-locked 2026-07-17 round 3,
+  // "凸出来的部分根本就不是轮廓柱体的部分"): the body is the INTERSECTION
+  // of the three sticker-outline prisms — round 2's UNION let every column
+  // show through the other faces' silhouettes, exactly the protrusions the
+  // user rejected. Now every body point projects into all three die-cut
+  // shapes, so no view shows anything past that face's sticker outline; the
+  // arris bands, the inner bulk and the old box are all gone (strictly ⊂
+  // round 2 ⊂ the original carved box — every clearance inherits verbatim).
+  // The intersection's roof is the neighbouring outlines' top-edge walls
+  // (H − FOLD_LINE_HW − inset), which is why the plates below dig to
+  // CORNER_PLATE_T — the tile assembly roots into the roof instead of
+  // floating on a see-through slit.
+  // Burr guards (kept from round 2): each prism is a single clean
+  // ExtrudeGeometry whose end caps lie OUTSIDE every other prism's plan
+  // range (caps get discarded whole — no cap ever splits against another
+  // operand), and per-prism staggered insets (0.06/0.10/0.14) keep any two
+  // operand faces off-plane even where the outline repeats a coordinate on
+  // both axes — and every body wall a hair behind its uninset plate wall.
   let merged: Brush | null = null;
   for (let i = 0; i < faces.length; i++) {
     const face = faces[i];
     const { outline, basis } = cornerStickerOutline(ci, face);
     const prismGeo = extrudeOntoFace(offsetInward(outline, 0.06 + 0.04 * i),
-      { ...basis, origin: basis.n.clone().multiplyScalar(lo) }, H - CORNER_DROP - 0.2 - lo);
+      { ...basis, origin: basis.n.clone().multiplyScalar(lo) }, H - lo);
     const prism = new Brush(prismGeo);
     prism.updateMatrixWorld();
-    merged = merged ? ev.evaluate(merged, prism, ADDITION) : prism;
+    merged = merged ? ev.evaluate(merged, prism, INTERSECTION) : prism;
   }
   let brush = merged!;
   for (const carve of cornerCarves(ev)) brush = ev.evaluate(brush, carve, SUBTRACTION);
@@ -857,14 +858,15 @@ export function buildCornerPiece(ci: number, ev: Evaluator): { pivot: THREE.Obje
 
   for (const face of faces) {
     const { outline, basis } = cornerStickerOutline(ci, face);
-    // die-cut face plate: the corner's own gear profile, tooth-plate deep, added
-    // AFTER the carve subtractions so the spikes survive the (worst-case) lathe —
-    // phase sync is what really keeps the crown out of them (test-locked). Top
-    // pokes 0.52 above the face so the sticker bottom embeds without a gap; the
-    // bottom stays buried under the sunken shelf (CORNER_DROP bound), so the
-    // exposed wall runs shelf → sticker as one outline-shaped plinth.
+    // die-cut face plate: the corner's own gear profile, CORNER_PLATE_T deep,
+    // added AFTER the carve subtractions so the spikes survive the (worst-case)
+    // lathe — phase sync is what really keeps the crown out of it (test-locked,
+    // band re-verified at this depth). Top pokes 0.52 above the face so the
+    // sticker bottom embeds without a gap; the bottom embeds under the
+    // intersection body's roof, so the exposed wall runs body → plate →
+    // sticker as one outline-shaped generatrix.
     const plateGeo = extrudeOntoFace(outline,
-      { ...basis, origin: basis.n.clone().multiplyScalar(H - PLATE_T) }, PLATE_T + 0.52);
+      { ...basis, origin: basis.n.clone().multiplyScalar(H - CORNER_PLATE_T) }, CORNER_PLATE_T + 0.52);
     const plate = new THREE.Mesh(plateGeo, bodyMat);
     plate.userData.simRole = 'body';
     group.add(plate);
