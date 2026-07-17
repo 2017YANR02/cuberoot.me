@@ -49,6 +49,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Vercel CLI 本机已登录:`vercel logs https://www.cuberoot.me` 自查 5xx,免截图。
 - CORS allowlist:server `src/index.ts`,函数式放行 `*.vercel.app` + 主域。
 - 后端 Hono 服 api.cuberoot.me(nginx→127.0.0.1:3001)。
+- DB 迁移随 push 自动跑(`deploy_core.yml` reload 前 `apply_migrations.sh`),禁说要手动 ssh。
 - 主域 `/blog` redirect → blog.cuberoot.me(独立 repo)。
 - 前端调 API 必用 `apiUrl()`(client `lib/api-base.ts`),禁硬编码 origin;`/stats/*.json` 走 `statsUrl()`,禁相对路径。
 - API 缓存头:可变数据浏览器 `max-age≤3600`,长缓存只给 nginx `s-maxage`;空/暂态 `no-store`;改响应 shape 必 bump `v=`。CI `tests/server-cache-headers.test.ts`。
