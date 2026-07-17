@@ -133,6 +133,19 @@ const ENGINE_TWISTY_DEF: Record<string, string> = { fto: 'o f 0.333333333333333'
 // alpha.twizzle.net/explore landing example `c f 0.255`.
 const DEFAULT_CUSTOM_CUTS = 'c f 0.255';
 
+/** Per-puzzle calibration (degrees) that makes the exotic image-panel preview show the SAME
+ *  orientation as the left 3D: sr rotation = yawSign·yaw + yaw offset (about world-y; sr remaps
+ *  to z for sq1/pyraminx) and pitchSign·pitch + pitch offset (about world-x), where yaw/pitch
+ *  are the sim's own scene.rotation (SettingDrawer mapYaw/mapPitch). Calibrated against the left
+ *  via Playwright. A puzzle ABSENT here is not yet calibrated and falls back to the sr-iso anchor
+ *  (no regression) — see the mirror effect. */
+const SR_ANGLE_BASE: Partial<Record<PuzzleType, {
+  yaw: number; pitch: number; yawSign: 1 | -1; pitchSign: 1 | -1;
+}>> = {
+  // sr identity shows the R-face where the sim shows F → +90 yaw; both signs match the sim.
+  skewb: { yaw: 90, pitch: 0, yawSign: 1, pitchSign: 1 },
+};
+
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
 const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror']);
@@ -1513,21 +1526,31 @@ export default function SimPage() {
       if (imgSpec.rotateAngle1 !== a1) patch.rotateAngle1 = a1;
       if (imgSpec.rotateAngle2 !== a2) patch.rotateAngle2 = a2;
     } else {
-      // sr-puzzlegen exotics (sq1 / pyraminx / megaminx / skewb). We tried mirroring the
-      // sim's own 3D as a live vector projection, but without a per-pixel depth test the
-      // painter bleeds far faces through the inter-piece gaps (black wedges on skewb /
-      // mega, colour bleed on pyra) and the depth-map path is too heavy + still bleeds at
-      // grazing faces — so the panel stays on the clean flat sr render. sr can't share the
-      // sim's camera (no perspective knob; sq1/pyra route yaw through z; own colours), so
-      // instead anchor at the puzzle's canonical sr iso and add the sim's deviation from
-      // its default sliders — the image stays clean and still tracks 左右/上下 (透视 can't).
-      const def = rotationDefaultsFor({ puzzleType: imgPuzzle.puzzleType, puzzleVariant: imgSpec.puzzleVariant });
-      const a1 = Math.round(def.angle1 + (settings.viewAngle - 30) * 1.8);
-      const a2 = Math.round(def.angle2 + (33 - settings.viewGradient) * 1.8);
-      if (imgSpec.rotateAxis1 !== def.axis1) patch.rotateAxis1 = def.axis1;
-      if (imgSpec.rotateAxis2 !== def.axis2) patch.rotateAxis2 = def.axis2;
-      if (imgSpec.rotateAngle1 !== a1) patch.rotateAngle1 = a1;
-      if (imgSpec.rotateAngle2 !== a2) patch.rotateAngle2 = a2;
+      // sr-puzzlegen exotics (sq1 / pyraminx / megaminx / skewb) — a visualcube-style clean
+      // vector companion whose colours (PuzzleImage srSchemeFor) + orientation mirror the left.
+      const base = SR_ANGLE_BASE[imgPuzzle.puzzleType];
+      if (base) {
+        // CALIBRATED: feed the sim's ABSOLUTE world angle (scene.rotation = Euler(pitch, yaw, 0),
+        // yaw = (viewAngle/50−1)·90 about world-y, pitch = (1−viewGradient/50)·90 about world-x —
+        // SettingDrawer mapYaw/mapPitch) with the puzzle's base offset/sign, so 左右/上下 track the
+        // left exactly. PuzzleImage remaps y→z for sq1/pyraminx (their spin axis). (透视 TODO.)
+        const a1 = Math.round((settings.viewAngle / 50 - 1) * 90 * base.yawSign + base.yaw);
+        const a2 = Math.round((1 - settings.viewGradient / 50) * 90 * base.pitchSign + base.pitch);
+        if (imgSpec.rotateAxis1 !== 'y') patch.rotateAxis1 = 'y';
+        if (imgSpec.rotateAxis2 !== 'x') patch.rotateAxis2 = 'x';
+        if (imgSpec.rotateAngle1 !== a1) patch.rotateAngle1 = a1;
+        if (imgSpec.rotateAngle2 !== a2) patch.rotateAngle2 = a2;
+      } else {
+        // NOT yet calibrated → anchor at the puzzle's canonical sr iso + the sim's slider
+        // deviation (slope 1.8 = the sim's 90°/50-unit); tracks 左右/上下 approximately.
+        const def = rotationDefaultsFor({ puzzleType: imgPuzzle.puzzleType, puzzleVariant: imgSpec.puzzleVariant });
+        const a1 = Math.round(def.angle1 + (settings.viewAngle - 30) * 1.8);
+        const a2 = Math.round(def.angle2 + (33 - settings.viewGradient) * 1.8);
+        if (imgSpec.rotateAxis1 !== def.axis1) patch.rotateAxis1 = def.axis1;
+        if (imgSpec.rotateAxis2 !== def.axis2) patch.rotateAxis2 = def.axis2;
+        if (imgSpec.rotateAngle1 !== a1) patch.rotateAngle1 = a1;
+        if (imgSpec.rotateAngle2 !== a2) patch.rotateAngle2 = a2;
+      }
     }
     if (Object.keys(patch).length > 0) setImgSpec(patch);
   }, [imageStudioSupported, imgPuzzle, imgInherit, imgSpec,
