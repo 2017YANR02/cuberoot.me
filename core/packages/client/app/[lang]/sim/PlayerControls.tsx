@@ -2885,7 +2885,7 @@ function PuzzleSettings({
                 </select>
               </label>
               {/* 隔离:只保留某类块、挖掉其余(挖块的反操作)。选项由 simCaps 各魔方声明的
-                  isolate kind 列表驱动(目前仅齿轮:角/棱/中心/骨架),未声明的魔方置灰。 */}
+                  isolate kind 列表驱动(目前仅齿轮:角/棱/中心 —— 中心块含核心骨架),未声明置灰。 */}
               <label className={'sim-toggle' + (caps.supports.isolate ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.isolate)}>
                 <span>{t('隔离', 'Isolate')}</span>
                 <select

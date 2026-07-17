@@ -64,8 +64,9 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   rex: { engine: 'always', carve: 'corner', imageStudio: false },
   heli: { engine: 'always', carve: 'edge', imageStudio: false },
   // Gear Cube — geared 180° face flips; carving lifts one face layer off the middle.
-  // Isolate: inspect one block kind alone (角/棱/中心/骨架) — user request.
-  gear: { engine: 'always', carve: 'face', isolate: ['corner', 'edge', 'center', 'core'], imageStudio: false },
+  // Isolate: inspect one block kind alone (角/棱/中心) — user request. 中心块 shows the
+  // center pieces + core together (merged 中心块 + 骨架, they form one skeleton unit).
+  gear: { engine: 'always', carve: 'face', isolate: ['corner', 'edge', 'center'], imageStudio: false },
   skewb: { engine: 'engineMode', carve: 'corner', imageStudio: true },
   pyraminx: { engine: 'engineMode', carve: 'corner', imageStudio: true },
   megaminx: { engine: 'engineMode', carve: 'face', imageStudio: true },

@@ -201,10 +201,14 @@ export default class GearCube extends THREE.Group implements TweenCube<GearMove>
 
   private _applyDebugVisibility(): void {
     const iso = this._isolate;
+    // 中心块 isolates the whole center-and-core assembly: the 6 center pieces
+    // (each with an axle stub reaching inward) PLUS the core. A lone center cap
+    // or a bare core reads as nothing on its own — together they are the
+    // recognizable internal skeleton (user-merged 中心块 + 骨架 into one option).
     for (const p of this.cornerPieces) p.pivot.visible = iso === null || iso === 'corner';
     for (const p of this.centerPieces) p.pivot.visible = iso === null || iso === 'center';
     for (const ring of this.gearPieces) for (const p of ring) p.pivot.visible = iso === null || iso === 'edge';
-    this.corePiece.pivot.visible = iso === null || iso === 'core';
+    this.corePiece.pivot.visible = iso === null || iso === 'center' || iso === 'core';
     if (this._carve) {
       for (const s of FACE_CORNER_SLOTS[0]) this.cornerPieces[this.state.cp[s]].pivot.visible = false;
       for (const [r, s] of FACE_GEAR_SLOTS[0]) this.gearPieces[r][this.state.ring[r][s]].pivot.visible = false;
