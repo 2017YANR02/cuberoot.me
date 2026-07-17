@@ -143,10 +143,24 @@ function entryFor(s: ImageSpec): { renderer: RendererId; draggable: boolean; ext
   return { renderer, draggable: e.draggable, extraClass: RENDERER_CLASS[renderer] };
 }
 
-/** sr-puzzlegen's own axis naming: sq1 spins about z where we say y (bird's-eye top
- *  layer). pyraminx/megaminx/skewb keep y as the vertical spin axis. */
+/** sr-puzzlegen's own axis naming. sq1 spins about z where we say y (bird's-eye top layer).
+ *  pyraminx's sr default view is a z-roll ([{z:60},{x:-60}] in defaultPyraminxOptions) — the
+ *  apex-up kite that matches the cubing.js left — so we map our y→z too, letting the explicit
+ *  rotation REPRODUCE that default (rather than override it with a bare identity) and track
+ *  continuously off it. megaminx/skewb keep y as the vertical spin axis. */
 function srPuzzleAxis(type: PuzzleType, axis: string): string {
-  return type === 'sq1' && axis === 'y' ? 'z' : axis;
+  return (type === 'sq1' || type === 'pyraminx') && axis === 'y' ? 'z' : axis;
+}
+
+// Perspective calibration: map the shared visualcube `dist` (透视 slider → 2..10, default 6
+// via SimPage's `2+persp/100*8`) to sr's camera distance. Larger = flatter (camera farther);
+// smaller = stronger perspective. Tuned so the default (dist 6) matches the sim's left 3D
+// foreshortening — sr's native 5 renders slightly flatter than the sim, so the base sits a bit
+// closer. sr consumes this via setSrPerspective; the cube preview uses `dist` directly.
+const SR_DIST_BASE = 3.9; // sr camera distance at the default perspective (spec.dist === 6)
+const SR_DIST_GAIN = 0.55; // sr distance change per unit of visualcube dist
+function srCameraDist(specDist: number): number {
+  return Math.round((SR_DIST_BASE + (specDist - 6) * SR_DIST_GAIN) * 100) / 100;
 }
 
 /**
@@ -184,6 +198,19 @@ function srSchemeFor(type: PuzzleType): Record<string, SrColor> | undefined {
     // (yaw0) shows F(green) left / R(red) right, so left=F, right=R; top=B apex, back=D bottom.
     return {
       left: c(CUBE_FILL.F), right: c(CUBE_FILL.R), top: c(CUBE_FILL.B), back: c(CUBE_FILL.D),
+    };
+  }
+  if (type === 'megaminx') {
+    // sim megaminx = cubing.js TwistyPlayer, whose default scheme is defaultPlatonicColorSchemes()[12]
+    // keyed {U F R C A L E BF BR BL I D}. sr's 12 keys {U F R dr dl L d br BR BL bl b} are the SAME
+    // face-naming convention with 6 faces renamed. Anchoring U↔U + F↔F (both physically top/front,
+    // both same hex) fixes the whole dodecahedron with matching chirality, forcing this unique
+    // sr-key → cubing-hex map (code-verified via both hex tables + both adjacency graphs; see the
+    // TODO). So the right preview's colours exactly match the left's cubing.js render.
+    return {
+      U: c('#ffffff'), F: c('#008800'), R: c('#ff0000'), dr: c('#e8d0a0'),
+      dl: c('#3399ff'), L: c('#8800dd'), d: c('#888888'), br: c('#ff66cc'),
+      BR: c('#0000ff'), BL: c('#f4f400'), bl: c('#ff8000'), b: c('#99ff00'),
     };
   }
   return undefined;
@@ -370,6 +397,7 @@ export default function PuzzleImage({
           case={spec.algType === 'case' ? spec.algorithm : undefined}
           size={spec.imageSize}
           rotations={rotations}
+          cameraDist={srCameraDist(spec.dist)}
           mask={spec.stickerMask || undefined}
           scheme={srSchemeFor(spec.puzzleType)}
         />

@@ -147,11 +147,22 @@ const SR_ANGLE_BASE: Partial<Record<PuzzleType, {
   // sq1 identity = bird's-eye on top (spin axis z); yaw maps straight (z = sim yaw), pitch
   // offsets −90 (front-on is 90° from bird's-eye): x = pitch_sim − 90. Verified z−36/x−59 = left.
   sq1: { yaw: 0, pitch: -90, yawSign: 1, pitchSign: 1 },
-  // pyraminx (spin axis y, apex-up). At the default the sim shows the R face flat-on & upright
-  // (apex-up, horizontal base) — in sr that's an x-tilt of the identity (sr `right`=R flat-on
-  // ≈ [{y:0},{x:-20}]), NOT a y-spin. Pinned exactly at default (a1=0, a2=-20); the sim's
-  // yaw/pitch map to different sr axes for the tetra, so off-default tracking is approximate.
-  pyraminx: { yaw: 36, pitch: -51, yawSign: 1, pitchSign: 1 },
+  // pyraminx. sim = cubing.js TwistyPlayer default: apex-up tetra with an EDGE toward the camera —
+  // a kite silhouette (U top, R left, L right, B bottom), F(green) left face, R(red) right face.
+  // That IS sr's own default view: defaultPyraminxOptions.rotations = [{z:60},{x:-60}]. So the base
+  // resolves to a1=60 (→ z via srPuzzleAxis' y→z), a2=-60 (→ x), i.e. exactly sr's default — which
+  // also equals rotationDefaultsFor(pyraminx)={y:60,x:-60}, so the default passes `undefined`
+  // (sr's baked pose) and the first slider nudge continues from the SAME [{z:60},{x:-60}] with no
+  // jump. (An earlier calibration targeted the sim's in-house pyra engine — a flat single face —
+  // which is NOT the default renderer.) Colours: PuzzleImage srSchemeFor(pyraminx). Default exact.
+  pyraminx: { yaw: 60, pitch: -91, yawSign: 1, pitchSign: 1 },
+  // megaminx (spin axis y). sim = cubing.js edge-forward view: U on top, the F–R vertical edge at
+  // the camera, C on the bottom. sr identity is FACE-forward (F flat-on), so a1≈−36 (yaw 0) swings
+  // the F–R edge to front; the tilt is gentler than the sim's nominal pitch (cubing's camera gain
+  // differs, like pyraminx) so pitch offsets −12.6 → a2≈18 at default = the near-equatorial left.
+  // Colours: PuzzleImage srSchemeFor(megaminx) maps sr's 12 keys → cubing's scheme. Default exact;
+  // off-default tracking approximate.
+  megaminx: { yaw: 0, pitch: -12.6, yawSign: 1, pitchSign: 1 },
 };
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
@@ -420,12 +431,18 @@ export default function SimPage() {
   // right puzzle and the panel never holds a second, conflicting copy of the sim's state.
   const imgInherit = useMemo<InheritedFields>(() => {
     const fc = settings.faceColors;
-    const applied = [setupParam, algParam].filter((x) => x && x.trim()).join(' ');
+    const raw = [setupParam, algParam].filter((x) => x && x.trim()).join(' ');
+    // Skewb: translate Sarah → WCA (as the left TwistyPlayer does) before the sr preview parses it,
+    // so both sides read the notation identically. sr's skewb parser only knows R/U/L/B and would
+    // mis-split Sarah's UL/UR into U+L; toWcaSkewb is identity for the default WCA notation, so this
+    // only changes anything for Sarah users. (No chirality translation is needed — sr and cubing.js
+    // agree on R/U/L/B move semantics, verified.)
+    const applied = puzzleParam === 'skewb' ? toWcaSkewb(raw, skewbNotation) : raw;
     return {
       algType: 'alg', algorithm: applied,
       faceU: fc.U, faceR: fc.R, faceF: fc.F, faceD: fc.D, faceL: fc.L, faceB: fc.B,
     };
-  }, [settings.faceColors, setupParam, algParam]);
+  }, [settings.faceColors, setupParam, algParam, puzzleParam, skewbNotation]);
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
 
   // Lay out the back-view mini window: size it ~30% of the smaller container
@@ -1546,12 +1563,17 @@ export default function SimPage() {
     } else {
       // sr-puzzlegen exotics (sq1 / pyraminx / megaminx / skewb) — a visualcube-style clean
       // vector companion whose colours (PuzzleImage srSchemeFor) + orientation mirror the left.
+      // 透视 also drives the sr preview camera (PuzzleImage srCameraDist reads `dist`), so keep
+      // img_dist live and in step with the slider — it used to go stale here (never consumed).
+      const distVal = Math.round((2 + (settings.perspective / 100) * 8) * 10) / 10;
+      if (imgSpec.dist !== distVal) patch.dist = distVal;
       const base = SR_ANGLE_BASE[imgPuzzle.puzzleType];
       if (base) {
         // CALIBRATED: feed the sim's ABSOLUTE world angle (scene.rotation = Euler(pitch, yaw, 0),
         // yaw = (viewAngle/50−1)·90 about world-y, pitch = (1−viewGradient/50)·90 about world-x —
         // SettingDrawer mapYaw/mapPitch) with the puzzle's base offset/sign, so 左右/上下 track the
-        // left exactly. PuzzleImage remaps y→z for sq1/pyraminx (their spin axis). (透视 TODO.)
+        // left exactly. PuzzleImage remaps y→z for sq1/pyraminx (their spin axis) and drives the
+        // sr camera distance from 透视 (img_dist) via srCameraDist.
         const a1 = Math.round((settings.viewAngle / 50 - 1) * 90 * base.yawSign + base.yaw);
         const a2 = Math.round((1 - settings.viewGradient / 50) * 90 * base.pitchSign + base.pitch);
         if (imgSpec.rotateAxis1 !== 'y') patch.rotateAxis1 = 'y';
