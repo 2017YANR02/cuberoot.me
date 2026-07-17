@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import {
-  H, CUT, SEAM, TEETH, SHORT_TIP, LONG_TIP, WEB_R, PLATEAU, D0, HUB_DOME_R, PLATE_T,
+  H, CUT, SEAM, TEETH, TOOTH_TIP, WEB_R, PLATEAU, D0, PLATE_T,
   CROWN_BALL, EDGE_R, CORE_R, CAP_HALF,
   ARM_R0, ARM_R1, ARM_S, ARM_D, WASHER_IN, WASHER_OUT, WASHER_Y,
   SWEEP_RHO, SWEEP_WALL, TOOTH_HALF_ANG, TOOTH_ROOT, toothTrapezoid,
@@ -20,7 +20,7 @@ const UF: [number, number] = [1, 0];
 /** Crown boundary cloud (home frame, world coords) for a slot: a grid over each
  *  trapezoid tooth plate (legs, chord bases, interior) at the three slab depths
  *  (sticker top / plateau plane / plate back), plus the palm web + sector decal
- *  lathe profile revolved, plus the hub dome sphere. */
+ *  lathe profile revolved. */
 function crownCloud(r: number, s: number): V3[] {
   const E = gearSlotApex(r, s);
   const { e, t, n } = gearSlotBasis(r, s);
@@ -30,8 +30,7 @@ function crownCloud(r: number, s: number): V3[] {
   const inY = TOOTH_ROOT * Math.cos(TOOTH_HALF_ANG);  // inner chord height
   for (let k = 0; k < TEETH; k++) {
     const { m, g, w } = gearFacetFrame(r, s, k);
-    const tip = k % 2 === 0 ? SHORT_TIP : LONG_TIP;
-    const outY = tip * Math.cos(TOOTH_HALF_ANG);      // outer chord height
+    const outY = TOOTH_TIP * Math.cos(TOOTH_HALF_ANG); // outer chord height
     for (let bi = -6; bi <= 6; bi++) {
       const beta = (bi / 6) * TOOTH_HALF_ANG;
       const aIn = inY / Math.cos(beta);
@@ -51,7 +50,7 @@ function crownCloud(r: number, s: number): V3[] {
   }
   // palm web body + sector decals: lathe profile extremes revolved about n̂
   const rimRad = (WEB_R + D0) / Math.SQRT2;
-  const secIn = HUB_DOME_R - 6;
+  const secIn = 1.2;
   const prof: Array<[number, number]> = [
     [0.01, PLATEAU - PLATE_T * Math.SQRT2 - 0.01],
     [rimRad, PLATEAU - PLATE_T * Math.SQRT2 - rimRad],
@@ -66,16 +65,6 @@ function crownCloud(r: number, s: number): V3[] {
       v.copy(E).addScaledVector(u, rad).addScaledVector(n, ty);
       push();
     }
-  }
-  // hub dome: sphere at E + 6·n̂, radius HUB_DOME_R (fibonacci sampling)
-  for (let i = 0; i < 48; i++) {
-    const y = 1 - (2 * i + 1) / 48;
-    const rr = Math.sqrt(1 - y * y);
-    const phi = i * 2.399963;
-    const u = e.clone().multiplyScalar(rr * Math.cos(phi))
-      .addScaledVector(t, rr * Math.sin(phi)).addScaledVector(n, y);
-    v.copy(E).addScaledVector(n, 6).addScaledVector(u, HUB_DOME_R);
-    push();
   }
   return pts;
 }
@@ -94,24 +83,24 @@ const dot3 = (a: V3, b: V3): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 describe('gear geometry clearance invariants', () => {
   it('face-pointing teeth ride flat plateaus parallel to the two face planes', () => {
     // the folded-circle signature of the real puzzle: at rest each half of the
-    // gear shows a flat half-gear over its face. Tooth k=0 (φ=90°) and k=6
-    // (φ=270°) — both SHORT (even k) — must have facet normal == face normal,
-    // so their plates sit D0 above the face planes through the apex E.
+    // gear shows a flat half-gear over its face (3 tentacles per half). Tooth
+    // k=0 (φ=90°) and k=3 (φ=270°) must have facet normal == face normal, so
+    // their plates sit D0 above the face planes through the apex E.
     const faces = gearSlotFaces(...UF);
     const fPlus = faces.find((f) => Math.sin(gearWindowAngle(...UF, f)) > 0)!;
     const fMinus = faces.find((f) => f !== fPlus)!;
     const E = gearSlotApex(...UF);
     const m0 = gearFacetFrame(...UF, 0).m;
-    const m6 = gearFacetFrame(...UF, 6).m;
+    const m3 = gearFacetFrame(...UF, 3).m;
     const n0 = new THREE.Vector3(...FACE_AXIS[fPlus]);
-    const n6 = new THREE.Vector3(...FACE_AXIS[fMinus]);
+    const n3 = new THREE.Vector3(...FACE_AXIS[fMinus]);
     expect(m0.distanceTo(n0)).toBeLessThan(1e-12);
-    expect(m6.distanceTo(n6)).toBeLessThan(1e-12);
+    expect(m3.distanceTo(n3)).toBeLessThan(1e-12);
     expect(E.dot(n0)).toBeCloseTo(H, 9);
-    expect(E.dot(n6)).toBeCloseTo(H, 9);
-    // one spin step (120°) = 4 pitches: even stays even — the short/long
-    // alternation (short over the faces, long diagonals) survives every phase
-    expect((120 / (360 / TEETH)) % 2).toBe(0);
+    expect(E.dot(n3)).toBeCloseTo(H, 9);
+    // one spin step (120°) = a whole number of pitches, so the crown rests
+    // identically after every move
+    expect((120 % (360 / TEETH))).toBe(0);
   });
 
   it('crown (plates + decals + hub) stays inside ball(CROWN_BALL) at its apex', () => {
@@ -120,7 +109,6 @@ describe('gear geometry clearance invariants', () => {
     for (const p of crownCloud(...UF)) {
       worst = Math.max(worst, Math.hypot(p[0] - E.x, p[1] - E.y, p[2] - E.z));
     }
-    worst = Math.max(worst, HUB_DOME_R + 2);
     expect(worst).toBeLessThanOrEqual(CROWN_BALL);
   });
 
@@ -161,8 +149,7 @@ describe('gear geometry clearance invariants', () => {
     // in the middle frame the UF crown orbits about y at the relative rate −tπ/2.
     // A riding gear does not spin, but scan spin phases anyway (0..60°) so the
     // invariant also covers the equator gears' own whirl (480°/flip sweeps every
-    // phase) — the short/long crown repeats each 60° (two pitches), so that range
-    // of phases suffices.
+    // phase) — the crown repeats each 60° pitch, so one pitch of phases suffices.
     const AXES: V3[] = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
     const arms: Array<{ nf: V3; rh: V3; ee: V3 }> = [];
     for (const nf of AXES.filter((a) => a[1] === 0)) {
@@ -254,36 +241,33 @@ describe('gear geometry clearance invariants', () => {
     expect(channelAt(H - 4)).toBeLessThan(SWEEP_RHO + SWEEP_WALL + 2);
   });
 
-  it('teeth: 12 isosceles trapezoids, radial legs through the center, gaps wider than both bases', () => {
-    expect(TEETH).toBe(12);
-    for (const tip of [SHORT_TIP, LONG_TIP]) {
-      const trap = toothTrapezoid(tip);
-      expect(trap.length).toBe(4);
-      const [oL, iL, iR, oR] = trap;
-      // legs pass through the gear center: corner vectors are collinear (cross = 0)
-      expect(oL[0] * iL[1] - oL[1] * iL[0]).toBeCloseTo(0, 9);
-      expect(oR[0] * iR[1] - oR[1] * iR[0]).toBeCloseTo(0, 9);
-      // isosceles: mirror-symmetric about the tooth axis
-      expect(oL[0]).toBeCloseTo(-oR[0], 9);
-      expect(oL[1]).toBeCloseTo(oR[1], 9);
-      // bases are chords at TOOTH_ROOT and the tip radius
-      expect(Math.hypot(oR[0], oR[1])).toBeCloseTo(tip, 9);
-      expect(Math.hypot(iR[0], iR[1])).toBeCloseTo(TOOTH_ROOT, 9);
-      // the angular gap between neighbours beats the tooth width, so at EVERY
-      // radius the gap chord is wider than the tooth chord — hence wider than
-      // both bases compared at their own radii
-      const gapHalf = Math.PI / TEETH - TOOTH_HALF_ANG;
-      expect(gapHalf).toBeGreaterThan(TOOTH_HALF_ANG);
-      const outerBase = 2 * tip * Math.sin(TOOTH_HALF_ANG);
-      const innerBase = 2 * TOOTH_ROOT * Math.sin(TOOTH_HALF_ANG);
-      const outerGap = 2 * tip * Math.sin(gapHalf);
-      expect(outerGap).toBeGreaterThan(outerBase);
-      expect(outerGap).toBeGreaterThan(innerBase);
-      expect(2 * TOOTH_ROOT * Math.sin(gapHalf)).toBeGreaterThan(innerBase);
-    }
+  it('teeth: 6 isosceles trapezoids, radial legs through the center, gaps wider than both bases', () => {
+    expect(TEETH).toBe(6);
+    const trap = toothTrapezoid(TOOTH_TIP);
+    expect(trap.length).toBe(4);
+    const [oL, iL, iR, oR] = trap;
+    // legs pass through the gear center: corner vectors are collinear (cross = 0)
+    expect(oL[0] * iL[1] - oL[1] * iL[0]).toBeCloseTo(0, 9);
+    expect(oR[0] * iR[1] - oR[1] * iR[0]).toBeCloseTo(0, 9);
+    // isosceles: mirror-symmetric about the tooth axis
+    expect(oL[0]).toBeCloseTo(-oR[0], 9);
+    expect(oL[1]).toBeCloseTo(oR[1], 9);
+    // bases are chords at TOOTH_ROOT and TOOTH_TIP
+    expect(Math.hypot(oR[0], oR[1])).toBeCloseTo(TOOTH_TIP, 9);
+    expect(Math.hypot(iR[0], iR[1])).toBeCloseTo(TOOTH_ROOT, 9);
+    // the angular gap between neighbours beats the tooth width, so at EVERY
+    // radius the gap chord is wider than the tooth chord — hence wider than
+    // both bases compared at their own radii
+    const gapHalf = Math.PI / TEETH - TOOTH_HALF_ANG;
+    expect(gapHalf).toBeGreaterThan(TOOTH_HALF_ANG);
+    const outerBase = 2 * TOOTH_TIP * Math.sin(TOOTH_HALF_ANG);
+    const innerBase = 2 * TOOTH_ROOT * Math.sin(TOOTH_HALF_ANG);
+    const outerGap = 2 * TOOTH_TIP * Math.sin(gapHalf);
+    expect(outerGap).toBeGreaterThan(outerBase);
+    expect(outerGap).toBeGreaterThan(innerBase);
+    expect(2 * TOOTH_ROOT * Math.sin(gapHalf)).toBeGreaterThan(innerBase);
     // teeth spring from under the palm rim
     expect(TOOTH_ROOT).toBeLessThan(WEB_R);
-    expect(SHORT_TIP).toBeLessThan(LONG_TIP);
   });
 
   it('corner sticker outlines have no needle spikes (max turn angle bounded)', () => {
