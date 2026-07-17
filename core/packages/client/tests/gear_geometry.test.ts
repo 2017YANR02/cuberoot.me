@@ -4,7 +4,9 @@ import {
   H, CUT, SEAM, TEETH, TOOTH_TIP, WEB_R, PLATE_T, FOLD_R,
   CROWN_BALL, EDGE_R, CORE_R, CAP_HALF,
   ARM_R0, ARM_R1, ARM_S, ARM_D, WASHER_IN, WASHER_OUT, WASHER_Y,
-  SWEEP_RHO, SWEEP_WALL, TOOTH_HALF_ANG, TOOTH_ROOT, COIN_GAP, COIN_T, COIN_R, toothTrapezoid,
+  SWEEP_RHO, SWEEP_WALL, TOOTH_ROOT, RIM_R, TOOTH_HALF_W, FOLD_LINE_R,
+  COIN_GAP, COIN_T, COIN_R,
+  crownSectorOutline,
   gearSlotApex, gearSlotBasis, gearSlotFaces, gearWindowAngle,
   cornerStickerOutline, inCrownSweep, CORNER_POLY,
 } from '@/app/[lang]/sim/engine/gear/gearGeometry';
@@ -45,23 +47,30 @@ function makeFold(r: number, s: number): (p: number, q: number, d: number) => V3
   };
 }
 
-/** Developed-plane samples of ONE canonical tooth (rest angle 90°): a polar
- *  grid over the trapezoid (conservative superset at the chord bases) PLUS the
- *  exact root/tip chord rows (the chords dip INSIDE the polar arcs — the root
- *  chord is the bearing's binding constraint). */
+/** Developed-plane samples of ONE canonical crown SECTOR (tooth axis at rest
+ *  angle 90°, spanning polar 60°..120° — six of these tile the whole crown,
+ *  scalloped web included): the engine's exact die-cut boundary (dense) plus
+ *  an interior grid. The boundary carries the binding constraints (inner arc
+ *  = the bearing ring, tip corners = the deepest transit reach). */
 function toothDevSamples(): Array<[number, number]> {
+  const outline = crownSectorOutline(0);
   const pts: Array<[number, number]> = [];
-  for (let bi = -6; bi <= 6; bi++) {
-    const beta = (bi / 6) * TOOTH_HALF_ANG;
-    for (let ai = 0; ai <= 6; ai++) {
-      const rad = TOOTH_ROOT + ((TOOTH_TIP - TOOTH_ROOT) * ai) / 6;
-      pts.push([rad * Math.sin(beta), rad * Math.cos(beta)]);
-    }
+  for (let i = 0; i < outline.length; i++) {
+    const A = outline[i], B = outline[(i + 1) % outline.length];
+    const L = Math.hypot(B[0] - A[0], B[1] - A[1]);
+    const n = Math.max(1, Math.ceil(L / 1.2));
+    for (let k = 0; k < n; k++) pts.push([A[0] + ((B[0] - A[0]) * k) / n, A[1] + ((B[1] - A[1]) * k) / n]);
   }
-  const sinA = Math.sin(TOOTH_HALF_ANG), cosA = Math.cos(TOOTH_HALF_ANG);
-  for (let t = -6; t <= 6; t++) {
-    pts.push([(t / 6) * TOOTH_ROOT * sinA, TOOTH_ROOT * cosA]); // root chord
-    pts.push([(t / 6) * TOOTH_TIP * sinA, TOOTH_TIP * cosA]);   // tip chord
+  const inPoly = (x: number, y: number): boolean => {
+    let inside = false;
+    for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
+      const [xi, yi] = outline[i], [xj, yj] = outline[j];
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  };
+  for (let x = -22; x <= 22; x += 2.2) {
+    for (let y = 0.8; y <= TOOTH_TIP; y += 2.2) if (inPoly(x, y)) pts.push([x, y]);
   }
   return pts;
 }
@@ -106,36 +115,6 @@ function crownCloud(r: number, s: number, theta: number, base: Array<[number, nu
   return pts;
 }
 
-/** Bent-coin cap cloud (home frame, world coords): rim + interior + sticker top
- *  of both half-discs. Rides the ORBIT pivot only — no spin phases apply. */
-function coinCloud(r: number, s: number): V3[] {
-  const E = gearSlotApex(r, s);
-  const { e } = gearSlotBasis(r, s);
-  const faces = gearSlotFaces(r, s);
-  const fPlus = faces.find((f) => Math.sin(gearWindowAngle(r, s, f)) > 0)!;
-  const fMinus = faces.find((f) => f !== fPlus)!;
-  const coinTop = 0;          // slab top ON the face plane (unified skyline)
-  const coinBot = -COIN_T;
-  const pts: V3[] = [];
-  const v = new THREE.Vector3();
-  for (const [face, other] of [[fPlus, fMinus], [fMinus, fPlus]]) {
-    const fHat = new THREE.Vector3(...FACE_AXIS[face]);
-    const hHat = new THREE.Vector3(...FACE_AXIS[other]);
-    for (let i = 0; i <= 16; i++) {
-      const psi = -Math.PI / 2 + (Math.PI * i) / 16;
-      for (const rf of [1, 0.6]) {
-        const z = COIN_R * rf * Math.sin(psi);
-        const a = Math.max(0.45, COIN_R * rf * Math.cos(psi));
-        for (const h of [coinBot, coinTop, coinTop + STICKER_TOP]) {
-          v.copy(E).addScaledVector(e, z).addScaledVector(hHat, coinTop - a).addScaledVector(fHat, h);
-          pts.push([v.x, v.y, v.z]);
-        }
-      }
-    }
-  }
-  return pts;
-}
-
 const rotY = (a: number) => {
   const c = Math.cos(a), s = Math.sin(a);
   return (p: V3): V3 => [c * p[0] + s * p[2], p[1], -s * p[0] + c * p[2]];
@@ -154,8 +133,10 @@ describe('gear geometry clearance invariants', () => {
     // one face plane (the disc slab top is the face plane itself, its sticker
     // top the same STICKER_TOP offset), and each tooth entirely on ONE face.
     const fold = makeFold(...UF);
-    const faces = gearSlotFaces(...UF).map((f) => new THREE.Vector3(...FACE_AXIS[f]));
-    const base = toothDevSamples();
+    const facesRaw = gearSlotFaces(...UF);
+    const faces = facesRaw.map((f) => new THREE.Vector3(...FACE_AXIS[f]));
+    // q > 0 rests on facePlus (the fold map's own convention)
+    const fpIdx = facesRaw.findIndex((f) => Math.sin(gearWindowAngle(...UF, f)) > 0);
     for (let phase = 0; phase < 3; phase++) {
       const theta = (phase * 2 * Math.PI) / 3;
       const ownerFaces: number[] = [];
@@ -163,20 +144,26 @@ describe('gear geometry clearance invariants', () => {
         const a0 = k * ((2 * Math.PI) / TEETH) + theta;
         const ca = Math.cos(a0), sa = Math.sin(a0);
         const owner = new Set<number>();
-        for (const [x, y] of base) {
+        let tentacleQ = Infinity; // min |q| over the tentacle zone (y > 46)
+        for (const [x, y] of toothDevSamples()) {
           const p = x * ca - y * sa, q = x * sa + y * ca;
-          // rest teeth stay far clear of the crease zone — EXACTLY flat
-          expect(Math.abs(q)).toBeGreaterThan(FOLD_R + 5);
+          if (y > 46) tentacleQ = Math.min(tentacleQ, Math.abs(q));
+          // the pie wedge reaches the fold at its radial edges (the disc spins
+          // WITH the crown — its arris strip wraps the crease by design); the
+          // exact-flat guarantee applies to everything outside the crease arc
+          if (Math.abs(q) < FOLD_R + 0.01) continue;
+          const fi = q > 0 ? fpIdx : 1 - fpIdx; // fold convention: q>0 → facePlus
+          const f = faces[fi];
           for (const d of TOOTH_DEPTHS) {
             const P = fold(p, q, d);
-            const on = faces
-              .map((f, i) => [i, P[0] * f.x + P[1] * f.y + P[2] * f.z - H] as const)
-              .filter(([, proud]) => Math.abs(proud - d) < 1e-9);
-            expect(on.length).toBe(1); // exactly in ONE face's offset plane
-            owner.add(on[0][0]);
+            // EXACTLY at its depth offset from its owner face's plane
+            expect(Math.abs(P[0] * f.x + P[1] * f.y + P[2] * f.z - H - d)).toBeLessThan(1e-9);
           }
+          owner.add(fi);
         }
-        expect(owner.size).toBe(1); // the whole tooth lies on a single face
+        expect(owner.size).toBe(1); // the whole wedge rests on a single face
+        // the TENTACLE itself still sits far clear of the crease at rest
+        expect(tentacleQ).toBeGreaterThan(FOLD_R + 5);
         ownerFaces.push([...owner][0]);
       }
       // 3 tentacles per face half at every rest phase
@@ -191,10 +178,10 @@ describe('gear geometry clearance invariants', () => {
     expect(120 % (360 / TEETH)).toBe(0);
   });
 
-  it('crown (teeth + web) + coin cap stay inside ball(CROWN_BALL) at the apex', () => {
+  it('crown (wedges + hub) stays inside ball(CROWN_BALL) at the apex', () => {
     const E = gearSlotApex(...UF);
     let worst = 0;
-    for (const p of [...crownCloud(...UF, 0), ...coinCloud(...UF)]) {
+    for (const p of crownCloud(...UF, 0)) {
       worst = Math.max(worst, Math.hypot(p[0] - E.x, p[1] - E.y, p[2] - E.z));
     }
     expect(worst).toBeLessThanOrEqual(CROWN_BALL);
@@ -214,73 +201,42 @@ describe('gear geometry clearance invariants', () => {
     }
   });
 
-  it('bent-coin cap: flush with the blocks, clear of corners and neighbours', () => {
-    const axes = gearSlotFaces(...UF).map((f) => new THREE.Vector3(...FACE_AXIS[f]));
-    // corner bodies+stickers can reach at most this far from the edge axis
-    const cornerReach = Math.hypot(H + STICKER_TOP, H - 4) + 2;
-    const v = new THREE.Vector3();
-    for (const p of coinCloud(...UF)) {
-      v.set(p[0], p[1], p[2]);
-      // the slab never dips below −COIN_T nor rises above the sticker band —
-      // the disc tops out level with every block sticker (unified skyline)
-      const proud = Math.max(...axes.map((a) => v.dot(a) - H));
-      expect(proud).toBeGreaterThanOrEqual(-COIN_T - 0.01);
-      expect(proud).toBeLessThanOrEqual(STICKER_TOP + 0.01);
-      // inside the trench the shelf lathe has already hollowed the corners
-      // deeper than the cap dips; the fold ends stay clear of the corner
-      // walls by the |edge| ≤ COIN_R < CUT + SEAM slab bound below
-      expect(inCrownSweep(v, 0, -0.5) || Math.hypot(v.y, v.z) > cornerReach).toBe(true);
+  it('pie-wedge crown: disc spins with the teeth, tiling + corner-wall clearance are constructive', () => {
+    // The disc is NOT a static axle cap any more (user-locked 2026-07-17): six
+    // full pie wedges tile disc + web + tentacles as ONE spinning fold-glide
+    // surface, so there is no bearing ring and no seam circle on the face.
+    const o = crownSectorOutline(0);
+    const rs = o.map(([x, y]) => Math.hypot(x, y));
+    // max reach keys the carve lathe / arm clearance / CROWN_BALL invariants
+    expect(Math.max(...rs)).toBeLessThanOrEqual(TOOTH_TIP + 1e-6);
+    expect(Math.max(...rs)).toBeGreaterThan(TOOTH_TIP - 0.1);
+    // full wedge: reaches the gear center (the disc region spins too)
+    expect(Math.min(...rs)).toBeLessThan(1e-9);
+    // every non-apex vertex stays inside polar [60°, 120°] — six wedges tile
+    // the disc exactly and neighbouring decals share their radial boundaries
+    for (const [x, y] of o) {
+      if (Math.hypot(x, y) < 1e-9) continue;
+      const phi = (Math.atan2(y, x) * 180) / Math.PI;
+      expect(phi).toBeGreaterThanOrEqual(60 - 1e-6);
+      expect(phi).toBeLessThanOrEqual(120 + 1e-6);
     }
-    // two caps over the same face (perpendicular edges) stay apart in-plane
-    expect(H).toBeGreaterThan(2 * COIN_R + 2);
-    // the cap never leaves its middle slab along the edge axis: every relative
-    // edge-axis rotation (R/L for a UF gear) preserves that coordinate, so
-    // |edge| ≤ COIN_R < CUT + SEAM keeps it clear of the corner walls
-    expect(COIN_R).toBeLessThan(CUT + SEAM - 2);
-    // user-locked: the disc radius EQUALS the visible tentacle length — the
-    // disc center sits ON the arris (cap top on the face plane), so the rim
-    // is at COIN_R in-face and the flat tooth's tip chord at TOOTH_TIP·cos11°
-    expect(TOOTH_TIP * Math.cos(TOOTH_HALF_ANG) - COIN_R).toBeCloseTo(COIN_R, 0);
-  });
-
-  it('one-piece bearing: teeth hug the disc rim but stay outside it at every spin angle', () => {
-    // ring gap: the root chord sits COIN_GAP..2 outside the rim, so each
-    // tentacle reads as grown on the disc with only a hairline seam
-    const rootChord = TOOTH_ROOT * Math.cos(TOOTH_HALF_ANG);
-    expect(rootChord - COIN_R).toBeGreaterThanOrEqual(COIN_GAP);
-    expect(rootChord - COIN_R).toBeLessThan(2);
-    // fold-crossing teeth also miss the OTHER half-slab: any tooth point that
-    // enters a face's slab band (depth ≤ COIN_T) keeps in-plane distance
-    // √(rootChord² − COIN_T²) > COIN_R from the gear center — analytic bound
-    expect(Math.sqrt(rootChord * rootChord - COIN_T * COIN_T) - COIN_R).toBeGreaterThan(0.3);
-    // numeric scan: at every spin angle, every tooth point inside either
-    // face's slab band keeps in-plane distance > COIN_R + 0.25 — the crown
-    // whirls around the static disc like a bearing
-    const E = gearSlotApex(...UF);
-    const faces = gearSlotFaces(...UF).map((f) => new THREE.Vector3(...FACE_AXIS[f]));
-    const fold = makeFold(...UF);
-    const base = toothDevSamples();
-    const v = new THREE.Vector3();
-    for (let ph = 0; ph <= 24; ph++) {
-      const theta = (ph / 24) * (Math.PI / 3);
-      for (let k = 0; k < TEETH; k++) {
-        const a0 = k * ((2 * Math.PI) / TEETH) + theta;
-        const ca = Math.cos(a0), sa = Math.sin(a0);
-        for (const [x, y] of base) {
-          const p = x * ca - y * sa, q = x * sa + y * ca;
-          for (const d of TOOTH_DEPTHS) {
-            const P = fold(p, q, d);
-            v.set(P[0] - E.x, P[1] - E.y, P[2] - E.z);
-            for (const fHat of faces) {
-              const proud = v.dot(fHat);
-              if (proud < -COIN_T - 0.25) continue; // under the slab — clear
-              const inPlane = Math.sqrt(Math.max(0, v.lengthSq() - proud * proud));
-              expect(inPlane).toBeGreaterThan(COIN_R + 0.25);
-            }
-          }
-        }
-      }
+    // mirror-symmetric about the tooth axis
+    for (const [x, y] of o) {
+      let best = Infinity;
+      for (const [u, w] of o) best = Math.min(best, Math.hypot(u + x, w - y));
+      expect(best).toBeLessThan(1e-6);
     }
+    // the scalloped web rim spans the gullets; the fold-line mark pokes past
+    // the disc's visual radius but stays well inside the rim
+    expect(RIM_R).toBeGreaterThan(COIN_R + 10);
+    expect(FOLD_LINE_R).toBeGreaterThan(COIN_R + 2);
+    expect(FOLD_LINE_R).toBeLessThan(RIM_R - 2);
+    // corner-wall clearance for the new center material is constructive:
+    // |edge| ≤ dev radius under EVERY spin angle, corner slabs start at
+    // CUT + SEAM, and everything at dev radius ≥ TOOTH_ROOT lives inside the
+    // crown-sweep lathe annulus the corners were already carved by — the two
+    // bounds overlap, so no radius falls through the gap
+    expect(CUT + SEAM).toBeGreaterThan(TOOTH_ROOT + 2);
   });
 
   it('face-layer crowns clear the equator crowns (orbit circles, ball-to-ball)', () => {
@@ -319,9 +275,6 @@ describe('gear geometry clearance invariants', () => {
     for (let ph = 0; ph < 6; ph++) {
       for (const p of crownCloud(...UF, (ph / 6) * (Math.PI / 3))) cloud.push(p);
     }
-    // the coin cap rides the same orbit spin-free — scan it through the same
-    // relative turn (it hugs the arris far above every cap/arm/axle)
-    for (const p of coinCloud(...UF)) cloud.push(p);
     const M = 2;
     let worst = 0;
     for (let i = 0; i <= 32; i++) {
@@ -393,34 +346,30 @@ describe('gear geometry clearance invariants', () => {
     expect(channelAt(H - 4)).toBeLessThan(SWEEP_RHO + SWEEP_WALL + 2);
   });
 
-  it('teeth: 6 isosceles trapezoids, radial legs through the center, gaps wider than both bases', () => {
+  it('teeth: 6 SVG-shaped tentacles, parallel flanks, gullet scallop between them', () => {
     expect(TEETH).toBe(6);
-    const trap = toothTrapezoid(TOOTH_TIP);
-    expect(trap.length).toBe(4);
-    const [oL, iL, iR, oR] = trap;
-    // legs pass through the gear center: corner vectors are collinear (cross = 0)
-    expect(oL[0] * iL[1] - oL[1] * iL[0]).toBeCloseTo(0, 9);
-    expect(oR[0] * iR[1] - oR[1] * iR[0]).toBeCloseTo(0, 9);
-    // isosceles: mirror-symmetric about the tooth axis
-    expect(oL[0]).toBeCloseTo(-oR[0], 9);
-    expect(oL[1]).toBeCloseTo(oR[1], 9);
-    // bases are chords at TOOTH_ROOT and TOOTH_TIP
-    expect(Math.hypot(oR[0], oR[1])).toBeCloseTo(TOOTH_TIP, 9);
-    expect(Math.hypot(iR[0], iR[1])).toBeCloseTo(TOOTH_ROOT, 9);
-    // the angular gap between neighbours beats the tooth width, so at EVERY
-    // radius the gap chord is wider than the tooth chord — hence wider than
-    // both bases compared at their own radii
-    const gapHalf = Math.PI / TEETH - TOOTH_HALF_ANG;
-    expect(gapHalf).toBeGreaterThan(TOOTH_HALF_ANG);
-    const outerBase = 2 * TOOTH_TIP * Math.sin(TOOTH_HALF_ANG);
-    const innerBase = 2 * TOOTH_ROOT * Math.sin(TOOTH_HALF_ANG);
-    const outerGap = 2 * TOOTH_TIP * Math.sin(gapHalf);
-    expect(outerGap).toBeGreaterThan(outerBase);
-    expect(outerGap).toBeGreaterThan(innerBase);
-    expect(2 * TOOTH_ROOT * Math.sin(gapHalf)).toBeGreaterThan(innerBase);
-    // rest teeth sit 30° − 11° = 19° clear of the fold line, far outside the
-    // FOLD_R crease zone: the rest geometry is EXACTLY flat (spec §0)
-    expect(TOOTH_ROOT * Math.sin(Math.PI / 6 - TOOTH_HALF_ANG)).toBeGreaterThan(FOLD_R + 5);
+    const o = crownSectorOutline(0);
+    // parallel-sided tentacle: the flank runs at |x| = TOOTH_HALF_W over a
+    // real span (SVG: constant width 17 from r≈52 to the tip zone)
+    const flankPts = o.filter(([x, y]) => Math.abs(Math.abs(x) - TOOTH_HALF_W) < 1e-6 && y > 46);
+    expect(Math.max(...flankPts.map((p) => p[1])) - Math.min(...flankPts.map((p) => p[1]))).toBeGreaterThan(8);
+    // the scallop rim shows between tentacles: a real arc run at RIM_R
+    const rimPts = o.filter(([x, y]) => Math.abs(Math.hypot(x, y) - RIM_R) < 1e-6);
+    expect(rimPts.length).toBeGreaterThan(8);
+    // the tentacle stands proud of the rim by a visible margin
+    expect(TOOTH_TIP - RIM_R).toBeGreaterThan(12);
+    // the decal outline insets material boundaries but SHARES the radial
+    // wedge edges (no background hairline between neighbouring decals)
+    const d = crownSectorOutline(0.25);
+    const rMaxD = Math.max(...d.map(([x, y]) => Math.hypot(x, y)));
+    expect(rMaxD).toBeLessThan(TOOTH_TIP - 0.2);
+    const onEdge = (pts: Array<[number, number]>, ang: number): number =>
+      pts.filter(([x, y]) => Math.hypot(x, y) > 1e-9 &&
+        Math.abs(Math.atan2(y, x) - ang) < 1e-9).length;
+    for (const ang of [Math.PI / 3, (2 * Math.PI) / 3]) {
+      expect(onEdge(d, ang)).toBeGreaterThan(0);
+      expect(onEdge(o, ang)).toBeGreaterThan(0);
+    }
     // the palm hub hides fully inside the disc footprint: its bottom rim's
     // in-face reach (2·WEB_R + |HUB_T| + PLATE_T·√2)/√2 stays under COIN_R
     const hubT = (COIN_T + COIN_GAP) * Math.SQRT2;
@@ -476,7 +425,7 @@ describe('gear geometry clearance invariants', () => {
   // Its die-cut plates (CORNER_POLY prisms, tooth-plate deep) interdigitate
   // with the crown teeth; only the locked spin/orbit ratio (±480°/90°, issue
   // #32) keeps them apart. Derivation + finer 0.5° sweep in scripts/gear/mesh_check.mjs
-  // (offline: transit +1.08, rest +8.43, arms 0 hits).
+  // (offline: transit +0.64, rest +12.21, arms 0 hits).
 
   /** Min signed distance from a world point to any corner plate prism:
    *  polygon CORNER_POLY (per |in-plane| quadrant fold) × band
@@ -513,11 +462,8 @@ describe('gear geometry clearance invariants', () => {
     // step = 2 tooth pitches = tooth-identical). ω = 0 is the rest phase.
     const { e } = gearSlotBasis(...UF);
     expect(e.x).toBe(1); // UF edge direction is x̂ — the orbit axis below
-    // exact-shape tooth samples: clamp the polar grid's tip arc onto the tip
-    // chord (the default superset would bill the mesh for fictional material
-    // bulging ≤ 1.14 past the chord and eat the real margin)
-    const tipY = TOOTH_TIP * Math.cos(TOOTH_HALF_ANG);
-    const exact = toothDevSamples().map(([x, y]): [number, number] => [x, Math.min(y, tipY)]);
+    // the sampler traces the engine's exact wedge boundary (plus an interior
+    // grid), so the cloud carries no fictional material — no clamping needed
     const q = new THREE.Quaternion();
     const v = new THREE.Vector3();
     let worst = Infinity;
@@ -525,17 +471,18 @@ describe('gear geometry clearance invariants', () => {
       for (let wDeg = 0; wDeg < 360; wDeg += 2) {
         const theta = (ratio * wDeg * Math.PI) / 180;
         q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), (wDeg * Math.PI) / 180);
-        for (const [px, py, pz] of crownCloud(...UF, theta, exact)) {
+        for (const [px, py, pz] of crownCloud(...UF, theta)) {
           v.set(px, py, pz).applyQuaternion(q);
           const c = plateClearance(v.x, v.y, v.z);
           if (c < worst) worst = c;
         }
       }
     }
-    // offline fine-grained (0.5°, denser cloud) minimum is +1.08 — the
-    // coarser test grid must stay comfortably positive; a real regression
-    // (e.g. a wing regrowing into the transit band) goes ~−2
-    expect(worst).toBeGreaterThan(0.5);
+    // offline fine-grained (0.5°, denser cloud) minimum is +0.64 (the SVG
+    // wedge crown trades some transit margin for the scalloped web) — the
+    // coarser test grid must stay positive; a real regression (e.g. a wing
+    // regrowing into the transit band) goes ~−2
+    expect(worst).toBeGreaterThan(0.35);
   });
 
   it('MESH: center-arm swept annuli never enter a corner plate (static, all phases)', () => {
