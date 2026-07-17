@@ -31,6 +31,9 @@ runtime patch sr `Camera` 距离,由 `mapPerspective(v)=2+(v/100)*8` 驱动。sr
 ### pyra/mega 跟踪精度
 sq1/skewb 滑杆跟踪 1:1;pyra 因 tetra 几何 gain 不同,只在默认精确、偏离近似(已在 `SR_ANGLE_BASE` 注释)。mega 同理待定。
 
+### 残留 URL 参数(小,非阻塞)
+从三阶切到异形后,URL 残留三阶专属的 `img_dist=6`(异形不消费,无害不报错)。可在切非 cube 时清掉 `img_dist`(mirror effect 里 `patch.dist` 分支只在 cube 写,未清)。
+
 ## 已知 BUG(follow-up,非阻塞)
 - **skewb 两图转动记号不统一**:同一 alg/scramble 喂左(sim WCA skewb 记号,`project_sim_skewb_wca_notation.md`)和右(sr 自有 skewb 记号)得到**不同状态**——solved 一致,一转即分叉。修法:喂 sr 前把 WCA skewb 记号翻译成 sr 记号。sq1/pyra/mega 同样需核对记号对齐。
 
