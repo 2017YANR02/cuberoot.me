@@ -13,6 +13,7 @@ import Sq1ReconPlayer from './Sq1ReconPlayer';
 import CuberReconPlayer from './CuberReconPlayer';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import { getPuzzleId } from '@/lib/recon-utils';
+import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
 
 interface Props {
@@ -40,7 +41,7 @@ export default function ReconPlayerPane({
   });
   const pickEngine = useCallback((e: 'cuber' | 'cubing') => {
     setReconEngine(e);
-    try { localStorage.setItem('recon.player.engine', e); } catch { /* private */ }
+    persistItem('recon.player.engine', e);
   }, []);
 
   const [debouncedScramble, setDebouncedScramble] = useState(scramble);

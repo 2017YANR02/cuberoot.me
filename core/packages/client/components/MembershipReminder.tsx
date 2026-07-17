@@ -13,6 +13,7 @@ import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { useMembership } from '@/hooks/useMembership';
 import { membershipExpiry } from '@/lib/membership-api';
+import { persistItem } from '@/lib/safe-storage';
 import './membership-reminder.css';
 
 const DISMISS_KEY = 'cuberoot_mem_reminder_dismissed';
@@ -37,7 +38,7 @@ export default function MembershipReminder() {
   if (dismissedFor === dismissKey) return null;
 
   const dismiss = () => {
-    try { localStorage.setItem(DISMISS_KEY, dismissKey); } catch { /* ignore */ }
+    persistItem(DISMISS_KEY, dismissKey);
     setDismissedFor(dismissKey);
   };
 

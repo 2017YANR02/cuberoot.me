@@ -7,6 +7,7 @@
 
 import { eventDisplayName } from './wca-events';
 import { apiUrl } from './api-base';
+import { persistItem } from './safe-storage';
 import {
   parseActivityCode, trimWcif,
   type RawWcif, type ScheduleData, type ScheduleActivity, type RoundInfo,
@@ -53,8 +54,7 @@ function cacheGet(id: string): ScheduleData | null {
 
 function cacheSet(id: string, v: ScheduleData): void {
   if (typeof window === 'undefined') return;
-  try { localStorage.setItem(CACHE_PREFIX + id, JSON.stringify({ t: Date.now(), v })); }
-  catch { /* quota / private mode */ }
+  persistItem(CACHE_PREFIX + id, JSON.stringify({ t: Date.now(), v }));
 }
 
 // Direct WCA WCIF + client-side trim — resilience fallback only (slow ~10MB).

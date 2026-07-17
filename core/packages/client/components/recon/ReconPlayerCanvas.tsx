@@ -18,6 +18,7 @@ import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
 import CuberReconPlayer from '@/components/CuberReconPlayer';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { tr } from '@/i18n/tr';
+import { persistItem } from '@/lib/safe-storage';
 
 export type ReconEngine = 'cuber' | 'cubing';
 const ENGINE_KEY = 'recon.player.engine';
@@ -28,7 +29,7 @@ export function loadReconEngine(): ReconEngine {
   catch { return 'cuber'; }
 }
 export function saveReconEngine(e: ReconEngine): void {
-  try { localStorage.setItem(ENGINE_KEY, e); } catch { /* private mode */ }
+  persistItem(ENGINE_KEY, e);
 }
 
 export default function ReconPlayerCanvas({

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import BoolToggle from '@/components/BoolToggle';
+import { persistItem } from '@/lib/safe-storage';
 
 interface VideoInfo {
   videoFile: File;
@@ -246,7 +247,7 @@ export function DecodeErrorCard({
   });
   const toggleGpu = (v: boolean) => {
     setGpuDecode(v);
-    try { localStorage.setItem(GPU_DECODE_STORAGE_KEY, v ? '1' : '0'); } catch { /* private mode etc. */ }
+    persistItem(GPU_DECODE_STORAGE_KEY, v ? '1' : '0');
   };
 
   // NVIDIA 两条命令受 toggle 影响; libx264 纯软件版与显卡无关始终 CPU 软解.

@@ -21,6 +21,7 @@ import {
 import WcaAuth from '@/components/WcaAuth';
 import { Flag } from '@/components/Flag';
 import { displayCuberName } from '@/lib/name-utils';
+import { persistItem } from '@/lib/safe-storage';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import {
@@ -164,11 +165,11 @@ export default function ColpiClient() {
   const [viewMode, setViewModeState] = useState<ViewMode>(() => readViewMode());
   const setLangFilter = (v: LangFilter) => {
     setLangFilterState(v);
-    try { localStorage.setItem(LANG_FILTER_KEY, v); } catch { /* quota */ }
+    persistItem(LANG_FILTER_KEY, v);
   };
   const setViewMode = (v: ViewMode) => {
     setViewModeState(v);
-    try { localStorage.setItem(VIEW_MODE_KEY, v); } catch { /* quota */ }
+    persistItem(VIEW_MODE_KEY, v);
   };
   // 未登录强制 'all',登录回 localStorage 选择
   useEffect(() => {

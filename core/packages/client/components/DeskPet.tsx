@@ -17,6 +17,7 @@ import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread'
 import { useAlgSubmissionUnread, refreshAlgSubmissionUnread } from '@/lib/alg-submission-unread';
 import { useNotificationsUnread, refreshNotificationsUnread } from '@/lib/notifications-unread';
 import AppLink from '@/components/AppLink';
+import { persistItem } from '@/lib/safe-storage';
 // SSR-safe layout effect (DeskPet is rendered in the root layout).
 const useIsoLayout = typeof document !== 'undefined' ? useLayoutEffect : useEffect;
 
@@ -433,7 +434,7 @@ export default function DeskPet() {
       r.width, r.height, fx, fy);
     root.style.right = c.right + 'px';
     root.style.bottom = c.bottom + 'px';
-    try { localStorage.setItem(POS_KEY, JSON.stringify({ right: c.right, bottom: c.bottom })); } catch {}
+    persistItem(POS_KEY, JSON.stringify({ right: c.right, bottom: c.bottom }));
   }, [size, character]);
 
   useEffect(() => {
@@ -569,7 +570,7 @@ export default function DeskPet() {
         peeked ? MINI_PEEK_FRAC * root.getBoundingClientRect().width : 0);
 
     const persistMini = () => {
-      try { localStorage.setItem(MINI_KEY, JSON.stringify({ edge: miniEdge, preRight: preMiniRight, preBottom: preMiniBottom })); } catch {}
+      persistItem(MINI_KEY, JSON.stringify({ edge: miniEdge, preRight: preMiniRight, preBottom: preMiniBottom }));
     };
 
     // Enter cling. viaMenu → crabwalk sideways to the edge first; drag-drop →
@@ -775,12 +776,10 @@ export default function DeskPet() {
         suppressClick = true; // a real drag fires a trailing click — don't open search
         const edge = snapEdge();
         if (edge) { enterMini(edge, false); return; } // cling instead of free-floating
-        try {
-          localStorage.setItem(POS_KEY, JSON.stringify({
-            right: parseInt(root.style.right || '20', 10),
-            bottom: parseInt(root.style.bottom || '20', 10),
-          }));
-        } catch {}
+        persistItem(POS_KEY, JSON.stringify({
+          right: parseInt(root.style.right || '20', 10),
+          bottom: parseInt(root.style.bottom || '20', 10),
+        }));
       }
       if (!dnd && !mini) { setState('idle', true); resetIdle(); }
     };
@@ -894,7 +893,7 @@ export default function DeskPet() {
     captureCenter();
     const next = SIZE_ORDER[(SIZE_ORDER.indexOf(size) + 1) % SIZE_ORDER.length];
     setSize(next);
-    try { localStorage.setItem(SIZE_KEY, next); } catch {}
+    persistItem(SIZE_KEY, next);
   };
   const sizeLabel = size === 's' ? t('小', 'S') : size === 'l' ? t('大', 'L') : t('中', 'M');
 
@@ -902,14 +901,14 @@ export default function DeskPet() {
     captureCenter(); // capture with the OLD character's fractions before switching
     const next = THEME_IDS[(THEME_IDS.indexOf(character) + 1) % THEME_IDS.length];
     setCharacter(next);
-    try { localStorage.setItem(CHAR_KEY, next); } catch {}
+    persistItem(CHAR_KEY, next);
   };
   const charLabel = zh ? THEMES[character].label.zh : THEMES[character].label.en;
 
   const toggleRandom = () => {
     setRandomMode(m => {
       const next = !m;
-      try { localStorage.setItem('clawd-deskpet-mode', next ? 'random' : 'default'); } catch {}
+      persistItem('clawd-deskpet-mode', next ? 'random' : 'default');
       return next;
     });
   };

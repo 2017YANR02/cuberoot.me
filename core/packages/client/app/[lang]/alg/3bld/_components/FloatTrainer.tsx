@@ -26,6 +26,7 @@ import {
   type JSX,
 } from 'react';
 import Link from '@/components/AppLink';
+import { persistItem } from '@/lib/safe-storage';
 import { useTranslation } from 'react-i18next';
 import { Play, Timer, X } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -307,7 +308,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
     }
 
     const finalList = shuffle(padded);
-    localStorage.setItem(BLD_TIMER_SCRAMBLES_KEY, JSON.stringify(finalList));
+    persistItem(BLD_TIMER_SCRAMBLES_KEY, JSON.stringify(finalList));
     return finalList.length;
   }, [percent, scrambles, jumpParity, jumpCorner, jumpEdge]);
 

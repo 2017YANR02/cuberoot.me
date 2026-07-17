@@ -2,6 +2,7 @@
 // CORS-enabled; cached in localStorage 24h to keep repeat visits instant.
 
 import { API_ORIGIN } from './api-base';
+import { persistItem } from './safe-storage';
 
 const BASE = 'https://www.worldcubeassociation.org/api/v0';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
@@ -19,8 +20,7 @@ function cacheGet<T>(key: string): T | null {
 }
 
 function cacheSet<T>(key: string, value: T): void {
-  try { localStorage.setItem(key, JSON.stringify({ t: Date.now(), v: value })); }
-  catch { /* quota / private mode */ }
+  persistItem(key, JSON.stringify({ t: Date.now(), v: value }));
 }
 
 export interface WcaPersonRecord {

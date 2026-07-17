@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { statsUrl } from '@/lib/stats-base';
+import { persistItem } from '@/lib/safe-storage';
 import { ArrowLeft, Menu, X as XIcon, HelpCircle } from 'lucide-react';
 import { LineChart, type Series } from './_components/charts';
 import { fitExpFloor, type DataPoint } from './_components/models';
@@ -133,7 +134,7 @@ export default function PredictionPage() {
   const toggleLang = () => {
     const n = isZh ? 'en' : 'zh';
     i18n.changeLanguage(n);
-    localStorage.setItem('trainer-lang', n);
+    persistItem('trainer-lang', n);
   };
 
   const currentYear = new Date().getFullYear();

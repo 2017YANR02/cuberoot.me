@@ -15,6 +15,7 @@ import {
 } from 'react';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import HomeLink from '@/components/HomeLink';
+import { persistItem } from '@/lib/safe-storage';
 // THREE is type-only at module scope — runtime instance is dynamically imported
 // inside the world-init effect so the ~1.2MB three bundle doesn't ship with
 // pyraminx/skewb/megaminx (which use cubing.js TwistyPlayer, not THREE).
@@ -338,11 +339,11 @@ export default function SimPage() {
   });
   const setSkewbNotation = useCallback((n: SkewbNotation) => {
     setSkewbNotationState(n);
-    try { localStorage.setItem('sim.skewb.notation', n); } catch { /* private */ }
+    persistItem('sim.skewb.notation', n);
   }, []);
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try { localStorage.setItem('sim.fullscreen', fullscreen ? '1' : '0'); } catch { /* private */ }
+    persistItem('sim.fullscreen', fullscreen ? '1' : '0');
   }, [fullscreen]);
 
   const [worldTick, setWorldTick] = useState(0);
@@ -357,7 +358,7 @@ export default function SimPage() {
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try { localStorage.setItem('sim.panel.algs', algsOpen ? '1' : '0'); } catch { /* private */ }
+    persistItem('sim.panel.algs', algsOpen ? '1' : '0');
   }, [algsOpen]);
 
   // Image studio panel: auto-open when a shared /sim?img_… link carries ANY image state
@@ -376,7 +377,7 @@ export default function SimPage() {
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try { localStorage.setItem('sim.panel.image', imageOpen ? '1' : '0'); } catch { /* private */ }
+    persistItem('sim.panel.image', imageOpen ? '1' : '0');
   }, [imageOpen]);
 
   const settingsRef = useRef(settings);

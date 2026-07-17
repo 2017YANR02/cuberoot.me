@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { persistItem } from '@/lib/safe-storage';
 import { EVENTS, formatVal } from '../_components/events';
 import {
   LUCKY_EVENTS,
@@ -130,7 +131,7 @@ function LuckyLimitPageInner() {
   const toggleLang = () => {
     const n = (i18n.language.startsWith('zh') ? 'en' : 'zh');
     i18n.changeLanguage(n);
-    localStorage.setItem('trainer-lang', n);
+    persistItem('trainer-lang', n);
   };
 
   // Per-event rows

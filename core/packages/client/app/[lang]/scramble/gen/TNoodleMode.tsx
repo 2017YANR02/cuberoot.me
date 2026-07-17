@@ -63,6 +63,7 @@ import { displaySq1ForEvent } from './_svg/sq1_svg';
 import { useF2leoStepMap } from './useF2leoStepMap';
 import { useRoux223StepMap, useVariantStepMap, VARIANT_WASM_ID } from './useVariantStepMap';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
+import { persistItem } from '@/lib/safe-storage';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -845,14 +846,14 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const [showCross, setShowCrossState] = useState<boolean>(readShowCross);
   const setShowCross = (v: boolean) => {
     setShowCrossState(v);
-    try { localStorage.setItem(SHOW_CROSS_KEY, v ? '1' : '0'); } catch { /* swallow */ }
+    persistItem(SHOW_CROSS_KEY, v ? '1' : '0');
   };
   const [includeExtras, setIncludeExtras] = useState(true);
   // 分析范围:false=本轮(默认) / true=全部轮次。
   const [analysisAll, setAnalysisAllState] = useState<boolean>(readScopeAll);
   const setAnalysisAll = (v: boolean) => {
     setAnalysisAllState(v);
-    try { localStorage.setItem(SCOPE_ALL_KEY, v ? '1' : '0'); } catch { /* swallow */ }
+    persistItem(SCOPE_ALL_KEY, v ? '1' : '0');
   };
   // 十字分析里点某步 → 把命中打乱集合提上来,过滤下方打乱表(只渲染含命中打乱的 sheet)。
   const [crossFilter, setCrossFilter] = useState<CrossFilter | null>(null);
