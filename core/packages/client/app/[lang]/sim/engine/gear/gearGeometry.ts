@@ -4,36 +4,35 @@
  * A cube [-H, H]³ with layer cut planes at ±CUT (fat outer layers like the real
  * puzzle, not 3x3 thirds). Pieces:
  *  - 12 EDGE GEARS, two nested parts (photo matched, user-locked):
- *    (a) FOLD-GLIDE CROWN — 6 ISOSCELES-TRAPEZOID teeth (straight radial legs
- *    through the gear center, chord bases, 38° gullets wider than the 22°
- *    teeth) defined in the DEVELOPED disc plane: the bent coin unrolled flat,
- *    fold line = the arris direction. HARD REQUIREMENT (spec §0, user-locked):
+ *    (a) FOLD-GLIDE CROWN — six 60° SECTORS (SVG-traced tentacle + half
+ *    gullets of a scalloped web each, see crownSectorOutline) defined in the
+ *    DEVELOPED disc plane: the bent coin unrolled flat, fold line = the arris
+ *    direction. HARD REQUIREMENT (spec §0, user-locked):
  *    at every rest phase the half-disc and its 3 tentacles must lie IN the
  *    face sticker planes. A rigid spinning crown can NEVER satisfy that —
- *    R(n̂, 120°) maps no face normal onto a face normal — so the teeth are NOT
- *    rigid children of the spin pivot: the spin angle θ (read off the spin
- *    pivot's quaternion each frame) rotates the teeth in developed coords
+ *    R(n̂, 120°) maps no face normal onto a face normal — so the sectors are
+ *    NOT rigid children of the spin pivot: the spin angle θ (read off the spin
+ *    pivot's quaternion each frame) rotates them in developed coords
  *    only, then foldPoint() bends the developed plane 90° over the arris
- *    (a tiny FOLD_R arc at the crease). At rest (θ ≡ 0 mod 120°; teeth sit
- *    19° clear of the fold) every tooth lies FLAT on one face, its top and
+ *    (a tiny FOLD_R arc at the crease). At rest (θ ≡ 0 mod 120°) every
+ *    tentacle lies FLAT on one face, its top and
  *    decal exactly coplanar with the disc slab and every block sticker; mid-
  *    turn the teeth glide around the static disc like a tank tread, creasing
  *    over the edge — the real puzzle's bent teeth rolling over the arris.
  *    120° = 2 pitches, so the crown rests identically after every move, and
- *    the decals ride their teeth, so scrambled fans mix colors. A small palm
+ *    the decals ride their sectors, so scrambled fans mix colors. A small palm
  *    hub + backing cone (axisymmetric about n̂) stay on the spin pivot proper.
- *    (b) BENT-COIN CAP on the ORBIT pivot — the fat disc "folded 90° over the
- *    edge": two half-discs of radius COIN_R, one parallel to each face,
- *    meeting in a V-groove fold on the arris. It must NOT spin: the fold hugs
- *    the arris at every rest state, but a folded disc is only 180°-symmetric,
- *    so on the real puzzle it is an axle cap the crown whirls around. Its slab
- *    top rides exactly ON the face planes, SHARING the surface band with the
- *    tooth plates — disc + tentacles read as ONE flush gear, stickers level
- *    with every block sticker (unified skyline). Separation from its own
- *    crown is purely in-plane: tooth roots stay outside COIN_R + COIN_GAP at
- *    every spin phase (a bearing — the crown whirls around the static disc),
- *    and it spans |edge| ≤ COIN_R < CUT + SEAM, so every relative edge-axis
- *    rotation keeps it clear of the corner walls, constructively.
+ *    (b) THE DISC SPINS TOO (user-locked 2026-07-17, superseding the static
+ *    axle-cap model): each sector is a full PIE WEDGE down to the gear center,
+ *    so disc + web + tentacles are ONE fold-glide surface spinning its 480°
+ *    together — a wedge silhouette is 60°-periodic, so rest invariance is
+ *    free, and with no relative disc↔crown rotation there is no bearing ring
+ *    and no seam circle on the face. The disc region's decoration = the black
+ *    FOLD-LINE mark (its ends poke past the disc zone), riding the same
+ *    re-bake. Corner clearance for the new center material is constructive:
+ *    |edge| ≤ dev radius under every spin angle, so material at r < CUT + SEAM
+ *    never reaches a corner slab, and material at r ≥ TOOTH_ROOT lives inside
+ *    the crown-sweep lathe shell the corners were already carved by.
  *  - 8 CORNERS: rounded blocks carved by (a) three CROWN-SWEEP LATHES — tight
  *    solids of revolution around the axes containing every crown's whole
  *    spin ∪ orbit sweep (see crownSweepInnerRadius) — and (b) three thin WASHER
@@ -51,13 +50,9 @@
  *    its decal top exactly IN that face's sticker plane — coplanar with the
  *    disc sticker (verified per-vertex through an independently re-derived
  *    fold map);
- *  - crowns + coin caps ⊂ ball(CROWN_BALL) at their edge midpoint; the gliding
- *    teeth ⊂ the glide shelf (the two face-plane slabs) at EVERY spin angle,
- *    so the shelf lathe carved out of the corners is constructive; coin caps
- *    keep an in-plane ring gap to the tooth roots at every spin angle (the
- *    crown whirls around the static disc like a bearing) and stay inside
- *    |edge| ≤ COIN_R < CUT + SEAM (clear of the corner walls under every
- *    relative edge-axis rotation);
+ *  - crowns ⊂ ball(CROWN_BALL) at their edge midpoint; the gliding wedges ⊂
+ *    the glide shelf (the two face-plane slabs) at EVERY spin angle, so the
+ *    shelf lathe carved out of the corners is constructive;
  *    face-layer and equator crown orbit circles pass ≥ 2·CROWN_BALL + 2 apart
  *    (ball-to-ball suffices — crowns hug the arris);
  *  - crowns vs middle caps/arms/axles/core verified by a numeric sweep over the
@@ -68,7 +63,7 @@ import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { SIZE } from '../define';
 import { CUBE_FILL } from '@/lib/cube-colors';
-import { makeSticker, cubeFaceBasis, extrudeOntoFace, roundCorners, offsetInward, polyArea2, type V2 } from '../stickerGeom';
+import { makeSticker, cubeFaceBasis, extrudeOntoFace, roundCorners, polyArea2, type V2 } from '../stickerGeom';
 
 /** Uniform arc-length resample of a closed outline (spacing `s`). */
 function resampleClosed(pts: V2[], s: number): V2[] {
@@ -121,15 +116,16 @@ export const PLATE_T = 7;
 /** Hub cone intercept along n̂: hub top proud = HUB_T/√2 = −COIN_T − COIN_GAP,
  *  a hover gap under the disc slab. */
 const HUB_T = -(COIN_T + COIN_GAP) * Math.SQRT2;
-/** Half-disc radius — user-locked: the disc radius EQUALS the visible tentacle
- *  length. The disc center sits ON the arris (cap top on the face plane), its
- *  in-face reach is exactly COIN_R, and the flat tooth's tip chord reaches
- *  TOOTH_TIP·cos11° ≈ 60.9 — so COIN_R = tipReach/2 (test-locked). */
+/** Half-disc radius — user-locked: the disc center sits ON the arris (cap top
+ *  on the face plane), its in-face reach is exactly COIN_R, and the round
+ *  tooth tip reaches TOOTH_TIP = 62 — so COIN_R ≈ tipReach/2 (test-locked). */
 export const COIN_R = 30.4;
-/** Fold-glide bend radius: mid-crossing teeth wrap this tiny arc at the crease
+/** Fold-glide bend radius: crease-crossing material wraps this tiny arc
  *  instead of tearing (the map stays continuous through the fold). Rest teeth
- *  never enter |q| < FOLD_R (they sit 19° clear of the fold), so the rest
- *  geometry is EXACTLY flat — the spec §0 hard requirement. */
+ *  sit clear of the fold and are EXACTLY flat (the spec §0 hard requirement);
+ *  the scalloped web's sector edges do reach the fold at rest — they wrap the
+ *  arris through the same continuous crease arc the mid-glide crown uses
+ *  (matches the real gear's rim wrapping the cube edge). */
 export const FOLD_R = 1.2;
 /** Ball bound of a whole crown around its edge midpoint E. */
 export const CROWN_BALL = Math.hypot(TOOTH_TIP, STICKER_LIFT + STICKER_DEPTH) + 1.5;
@@ -213,22 +209,85 @@ export function gearSlotFaces(r: number, s: number): number[] {
     FACE_AXIS[f][0] * p[0] + FACE_AXIS[f][1] * p[1] + FACE_AXIS[f][2] * p[2] > 0);
 }
 
-// ── crown tooth shape (per-tooth, in facet-plane coords around the apex) ────────────
-/** Each tooth is an ISOSCELES TRAPEZOID (user-locked): straight radial legs whose
- *  extensions pass through the gear center, straight chord bases at TOOTH_ROOT and
- *  the tip. Teeth are 22° wide with 38° gullets, so the gap between neighbours is
- *  wider than either base at every radius (gap chord 2r·sin19° > base 2r·sin11°). */
-export const TOOTH_HALF_ANG = (11 * Math.PI) / 180;
+// ── crown silhouette (per 60° sector, in facet-plane coords around the apex) ────────
+/** The crown's die-cut plate is 6 identical 60° SECTORS (tooth axis centered),
+ *  traced from the user's reference SVG (scripts/gear/gear-cube-reference.svg,
+ *  measured by scripts/gear/edge_trace.mjs): a scalloped WEB rim at RIM_R
+ *  between parallel-sided round-tipped tentacles (constant half-width
+ *  TOOTH_HALF_W — the SVG teeth are NOT trapezoids: slimmer at the tip, wider
+ *  at the root than the old 22° wedge). Everything is 60°-periodic, so the
+ *  mod-3 rest phases keep an identical silhouette (issue #32 invariant); the
+ *  SVG's own 45/135° tentacle angles would need an 8-tooth crown and are
+ *  mechanism-locked out. Sector boundaries sit at the gullet midlines
+ *  (0°/180° land exactly ON the arris), so every sector stays on one face at
+ *  rest — per-sector decals never straddle the fold.
+ *  Radial invariants are untouched: inner arc = TOOTH_ROOT (the in-plane
+ *  bearing ring vs the static coin cap), max reach = TOOTH_TIP (corner-carve
+ *  lathe, center-arm clearance, CROWN_BALL all keyed to it). */
 export const TOOTH_ROOT = 32;
-/** The 4 trapezoid corners in (ŵ, ĝ) facet coords, CCW. */
-export function toothTrapezoid(tip: number): V2[] {
-  const s = Math.sin(TOOTH_HALF_ANG), c = Math.cos(TOOTH_HALF_ANG);
-  return [
-    [-tip * s, tip * c],
-    [-TOOTH_ROOT * s, TOOTH_ROOT * c],
-    [TOOTH_ROOT * s, TOOTH_ROOT * c],
-    [tip * s, tip * c],
-  ];
+/** Scalloped web rim radius between tentacles (SVG: 43–45). */
+export const RIM_R = 44;
+/** Tentacle half-width — constant along the flank (SVG: width 17 from r≈52 to the tip). */
+export const TOOTH_HALF_W = 8.5;
+/** Tentacle tip corner radius (SVG: rounded-rectangle tip, not a semicircle). */
+export const TOOTH_TIP_CR = 3.5;
+/** Concave fillet radius where a flank meets the web rim. */
+export const TOOTH_FILLET_R = 5;
+/** Fold-line mark: half-length and half-width of the black groove between the
+ *  disc's two colored halves (user-locked: both ends poke a little past the
+ *  disc zone; the mark spins with the crown like the real puzzle's). */
+export const FOLD_LINE_R = 34;
+export const FOLD_LINE_HW = 1.8;
+
+/** One crown sector outline — a full PIE WEDGE from the gear center (tooth
+ *  axis at 90°, spanning polar 60°..120°), dense CCW polygon in (ŵ, ĝ) facet
+ *  coords. Six wedges tile disc + web + tentacles as ONE spinning surface:
+ *  the disc is NOT a separate static axle cap (user-locked 2026-07-17: the
+ *  folded half-disc spins its 480° with the crown, so there is no relative
+ *  disc↔web rotation, no bearing ring, and no black seam circle on the face).
+ *  `inset` shrinks the material boundary (rim/flanks/tip) for the decal — the
+ *  radial wedge edges stay put so neighbouring decals share their boundary
+ *  exactly (no hairline background seam at rest). */
+export function crownSectorOutline(inset = 0): V2[] {
+  const RIM = RIM_R - inset;
+  const W = TOOTH_HALF_W - inset;
+  const TIP = TOOTH_TIP - inset;
+  const FR = TOOTH_FILLET_R;
+  const CR = TOOTH_TIP_CR;
+  const STEP = 0.05; // radians ≈ 0.6–2.2 units of arc, fine enough for the grid
+  const pts: V2[] = [];
+  const arc = (cx: number, cy: number, r: number, a0: number, a1: number): void => {
+    const n = Math.max(2, Math.ceil(Math.abs(a1 - a0) / STEP));
+    for (let i = 0; i <= n; i++) {
+      const a = a0 + ((a1 - a0) * i) / n;
+      pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]);
+    }
+  };
+  // fillet circle tangent to the rim (externally) and the flank line x = ±W
+  const fcx = W + FR;
+  const fcy = Math.sqrt((RIM + FR) * (RIM + FR) - fcx * fcx);
+  const rimEnd = Math.atan2(fcy, fcx); // polar angle of the rim↔fillet tangency
+  // tip chord height chosen so the CORNER ARCS peak exactly at radius TIP —
+  // the max-reach invariants (carve lathe, arms, CROWN_BALL) key off TOOTH_TIP
+  const tipY = CR + Math.sqrt((TIP - CR) * (TIP - CR) - (W - CR) * (W - CR));
+  const D60 = Math.PI / 3, D120 = (2 * Math.PI) / 3;
+  // outer boundary, φ increasing (CCW about the origin):
+  arc(0, 0, RIM, D60, rimEnd);                                   // right gullet rim
+  arc(fcx, fcy, FR, rimEnd + Math.PI, Math.PI);                  // right fillet (concave)
+  pts.push([W, tipY - CR]);                                      // right flank up
+  arc(W - CR, tipY - CR, CR, 0, Math.PI / 2);                    // right tip corner
+  pts.push([-(W - CR), tipY]);                                   // tip chord
+  arc(-(W - CR), tipY - CR, CR, Math.PI / 2, Math.PI);           // left tip corner
+  pts.push([-W, fcy]);                                           // left flank down
+  arc(-fcx, fcy, FR, 2 * Math.PI, 2 * Math.PI - rimEnd);         // left fillet (concave)
+  arc(0, 0, RIM, Math.PI - rimEnd, D120);                        // left gullet rim
+  pts.push([0, 0]);                                              // pie apex (gear center)
+  const out: V2[] = [];
+  for (const p of pts) {
+    const q = out[out.length - 1];
+    if (!q || Math.hypot(p[0] - q[0], p[1] - q[1]) > 1e-6) out.push(p);
+  }
+  return polyArea2(out) > 0 ? out : out.slice().reverse();
 }
 
 /** In-plane basis of gear slot (r,s): ê = edge direction (the slot's zero axis),
@@ -293,11 +352,12 @@ export function foldPoint(F: FoldFrame, p: number, q: number, d: number, out: TH
     .addScaledVector(F.h, (FOLD_R + d) * Math.sin(a));
 }
 
-/** Grid-subdivided prism over a CONVEX developed outline: the caps are cut into
- *  ~cell² tiles so the fold-glide crease can pass ANYWHERE through the middle
- *  (a coarse cap would chord straight across the arris mid-crossing). Fixed
- *  topology — positions start at zero and are (re)written from the returned
- *  developed (p,q,d) triples by foldPoint() on every spin-angle change.
+/** Grid-subdivided prism over a developed outline (CONCAVE OK — the crown
+ *  sectors have an inner arc and fillets): the caps are cut into ~cell² tiles
+ *  so the fold-glide crease can pass ANYWHERE through the middle (a coarse cap
+ *  would chord straight across the arris mid-crossing). Fixed topology —
+ *  positions start at zero and are (re)written from the returned developed
+ *  (p,q,d) triples by foldPoint() on every spin-angle change.
  *  Groups follow the makeSticker convention: [0] caps, [1] side walls. */
 function gridPrism(outline: V2[], dTop: number, dBot: number, cell: number): { geo: THREE.BufferGeometry; dev: Float32Array } {
   const ccw = polyArea2(outline) > 0 ? outline : outline.slice().reverse();
@@ -305,13 +365,17 @@ function gridPrism(outline: V2[], dTop: number, dBot: number, cell: number): { g
   const tri = (a: V2, b: V2, c: V2, d: number): void => {
     dev.push(a[0], a[1], d, b[0], b[1], d, c[0], c[1], d);
   };
-  // clip one grid cell (rect) against the convex outline — Sutherland–Hodgman
+  // clip the (possibly concave) outline against one convex cell rect —
+  // Sutherland–Hodgman with the RECT as the clip region, so outline concavity
+  // is fine (the old convex-outline-as-clipper form shaved cells near the
+  // sector's inner arc: a far edge's half-plane wrongly clips local cells)
   const clipCell = (x0: number, y0: number, x1: number, y1: number): V2[] => {
-    let poly: V2[] = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
-    for (let i = 0; i < ccw.length && poly.length; i++) {
-      const A = ccw[i], B = ccw[(i + 1) % ccw.length];
-      const ex = B[0] - A[0], ey = B[1] - A[1];
-      const side = (P: V2): number => ex * (P[1] - A[1]) - ey * (P[0] - A[0]);
+    let poly: V2[] = ccw;
+    const planes: Array<(P: V2) => number> = [
+      (P) => P[0] - x0, (P) => x1 - P[0], (P) => P[1] - y0, (P) => y1 - P[1],
+    ];
+    for (const side of planes) {
+      if (!poly.length) break;
       const next: V2[] = [];
       for (let j = 0; j < poly.length; j++) {
         const P = poly[j], Q = poly[(j + 1) % poly.length];
@@ -326,6 +390,42 @@ function gridPrism(outline: V2[], dTop: number, dBot: number, cell: number): { g
     }
     return poly;
   };
+  // ear-clip triangulation (cell polys are small but can be concave where a
+  // fillet or the inner arc crosses the cell); falls back to a fan on the
+  // degenerate slivers SH bridging can produce
+  const earClip = (poly: V2[], d: number, flip: boolean): void => {
+    const emit = (a: V2, b: V2, c: V2): void => (flip ? tri(a, c, b, d) : tri(a, b, c, d));
+    const idx = poly.map((_, i) => i);
+    const cross = (a: V2, b: V2, c: V2): number =>
+      (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    let guard = poly.length * poly.length + 8;
+    while (idx.length > 3 && guard-- > 0) {
+      let clipped = false;
+      for (let k = 0; k < idx.length; k++) {
+        const ia = idx[(k + idx.length - 1) % idx.length], ib = idx[k], ic = idx[(k + 1) % idx.length];
+        const A = poly[ia], B = poly[ib], C = poly[ic];
+        if (cross(A, B, C) <= 1e-12) continue; // reflex or degenerate
+        let blocked = false;
+        for (const io of idx) {
+          if (io === ia || io === ib || io === ic) continue;
+          const P = poly[io];
+          if (cross(A, B, P) >= -1e-12 && cross(B, C, P) >= -1e-12 && cross(C, A, P) >= -1e-12) {
+            blocked = true;
+            break;
+          }
+        }
+        if (blocked) continue;
+        emit(A, B, C);
+        idx.splice(k, 1);
+        clipped = true;
+        break;
+      }
+      if (!clipped) break; // numerically stuck — fan out the rest below
+    }
+    if (idx.length >= 3) {
+      for (let k = 1; k + 1 < idx.length; k++) emit(poly[idx[0]], poly[idx[k]], poly[idx[k + 1]]);
+    }
+  };
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const [x, y] of ccw) {
     x0 = Math.min(x0, x); y0 = Math.min(y0, y);
@@ -339,10 +439,9 @@ function gridPrism(outline: V2[], dTop: number, dBot: number, cell: number): { g
         x0 + (i * (x1 - x0)) / nx, y0 + (j * (y1 - y0)) / ny,
         x0 + ((i + 1) * (x1 - x0)) / nx, y0 + ((j + 1) * (y1 - y0)) / ny,
       );
-      for (let v = 1; v + 1 < poly.length; v++) {
-        tri(poly[0], poly[v], poly[v + 1], dTop); // top cap — CCW seen from +d
-        tri(poly[0], poly[v + 1], poly[v], dBot); // bottom cap — flipped
-      }
+      if (poly.length < 3) continue;
+      earClip(poly, dTop, false); // top cap — CCW seen from +d
+      earClip(poly, dBot, true);  // bottom cap — flipped
     }
   }
   const capEnd = dev.length / 3;
@@ -395,30 +494,33 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   const toothFace = (k: number): number =>
     Math.sin(Math.PI / 2 + k * pitch) > 0 ? facePlus : faceMinus;
 
-  // FOLD-GLIDE TEETH (spec §0 hard requirement — see the header): geometry
+  // FOLD-GLIDE CROWN (spec §0 hard requirement — see the header): geometry
   // lives in developed disc coords; the spin pivot's ANGLE (not its transform)
-  // drives a per-vertex re-bake through foldPoint(), so at rest every tooth
+  // drives a per-vertex re-bake through foldPoint(), so at rest every sector
   // lies flat IN a face sticker plane, coplanar with the disc, and mid-turn
   // the crown glides around the static disc, creasing over the arris. The
-  // teeth are children of the ORBIT pivot — only the axisymmetric hub + cone
-  // ride the spin pivot as rigid bodies.
+  // sectors are children of the ORBIT pivot — only the axisymmetric hub + cone
+  // ride the spin pivot as rigid bodies. Six 60° sectors (SVG tentacle + half
+  // gullets of the scalloped web each) tile the whole annulus [TOOTH_ROOT,
+  // RIM_R/TOOTH_TIP], abutting at the gullet midlines.
   const F = slotFoldFrame(r, s);
   const crown = new THREE.Group();
   crown.userData.gearPiece = { type: 'gear', ring: r, id: s };
   pivot.add(crown);
-  const trap = toothTrapezoid(TOOTH_TIP);
-  const trapCcw = polyArea2(trap) > 0 ? trap : trap.slice().reverse();
+  const sectorCcw = crownSectorOutline(0);
   // the decal covers the WHOLE plate top (real tentacles are solid-colored
   // plastic — any black margin here reads as a collar between disc and
-  // teeth); only a hair of inset so the walls don't z-fight the plate walls
-  const decalCcw = offsetInward(roundCorners(trapCcw, 0.5), 0.25);
+  // teeth); only a hair of inset so the walls don't z-fight the plate walls.
+  // The generator leaves the radial sector edges un-inset, so neighbouring
+  // decals share those boundaries exactly — no background hairline mid-gullet.
+  const decalCcw = crownSectorOutline(0.25);
   const CELL = 1.8;
   const crownMeshes: Array<{ mesh: THREE.Mesh; dev: Float32Array }> = [];
   for (let k = 0; k < TEETH; k++) {
-    const rot = k * pitch; // tooth k rests at developed angle 90° + k·60°
+    const rot = k * pitch; // sector k's tooth rests at developed angle 90° + k·60°
     const cr = Math.cos(rot), sr = Math.sin(rot);
     const spun = (pts: V2[]): V2[] => pts.map(([x, y]) => [x * cr - y * sr, x * sr + y * cr]);
-    const body = gridPrism(spun(trapCcw), 0, -PLATE_T, CELL);
+    const body = gridPrism(spun(sectorCcw), 0, -PLATE_T, CELL);
     // positions are re-baked in place — keep a fixed generous bound (raycast)
     // instead of per-frame recomputes, and skip frustum culling entirely
     body.geo.boundingSphere = new THREE.Sphere(E.clone(), CROWN_BALL);
@@ -428,7 +530,9 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
     crown.add(plate);
     crownMeshes.push({ mesh: plate, dev: body.dev });
 
-    // per-tooth decal (rides its gliding tooth — scrambled fans mix colors)
+    // per-sector decal (rides its gliding sector — scrambled fans mix colors;
+    // sector boundaries land ON the arris at rest, so no decal straddles the
+    // fold and each sector is single-colored)
     const face = toothFace(k);
     const dec = gridPrism(spun(decalCcw), STICKER_LIFT + STICKER_DEPTH, STICKER_LIFT, CELL);
     dec.geo.boundingSphere = new THREE.Sphere(E.clone(), CROWN_BALL);
@@ -439,6 +543,22 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
     crown.add(decal);
     crownMeshes.push({ mesh: decal, dev: dec.dev });
   }
+  // FOLD-LINE MARK — the black groove between the disc's two colored halves.
+  // A decoration OF the piece: it rides the same fold-glide re-bake, so it
+  // spins its 480° with the crown and rests rotated after moves like the real
+  // puzzle's. Slightly longer than the disc's visual radius so both ends poke
+  // a little past it into the web (user-locked); proud of the wedge decals by
+  // a hair so the overlap never z-fights.
+  const lineDec = gridPrism(
+    [[-FOLD_LINE_R, -FOLD_LINE_HW], [FOLD_LINE_R, -FOLD_LINE_HW],
+     [FOLD_LINE_R, FOLD_LINE_HW], [-FOLD_LINE_R, FOLD_LINE_HW]],
+    STICKER_LIFT + STICKER_DEPTH + 0.12, STICKER_LIFT, CELL);
+  lineDec.geo.boundingSphere = new THREE.Sphere(E.clone(), CROWN_BALL);
+  const lineMesh = new THREE.Mesh(lineDec.geo, bodyMat);
+  lineMesh.userData.simRole = 'body';
+  lineMesh.frustumCulled = false;
+  crown.add(lineMesh);
+  crownMeshes.push({ mesh: lineMesh, dev: lineDec.dev });
   // spin angle → vertex re-bake. The spin pivot only ever rotates about the
   // piece-local n̂ (GearCube's live local axis P₀⁻¹·r̂_slot equals n̂ in every
   // legal state — the crown always points outward), so the angle reads
@@ -484,57 +604,6 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   const web = new THREE.Mesh(webGeo, bodyMat);
   web.userData.simRole = 'body';
   group.add(web);
-
-  // BENT-COIN CAP — the real puzzle's fat disc "folded 90° over the edge": two
-  // half-discs, one parallel to each face, meeting in a V-groove fold on the
-  // arris. Mounted on the ORBIT pivot, NOT the spin pivot: the fold must hug
-  // the arris at every rest state, but a folded disc is only 180°-symmetric
-  // while spin phases are mod 3 — on the real puzzle it is an axle cap the
-  // crown whirls around. The slab top rides ON the face plane, SHARING the
-  // surface band with the tooth plates: disc + tentacles read as ONE flush
-  // gear (user-locked), stickers level with every block sticker. Clearance is
-  // constructive and purely in-plane: at every spin phase every crown point
-  // inside the slab band keeps in-plane distance > COIN_R + COIN_GAP from the
-  // gear center (a bearing), and along the edge the cap stays inside
-  // |edge| ≤ COIN_R < CUT + SEAM, clear of the corner walls under every
-  // relative edge-axis rotation. 3 tentacles per face half emerge flush from
-  // the rim ring gap.
-  const coinGroup = new THREE.Group();
-  coinGroup.userData.gearPiece = { type: 'gear', ring: r, id: s };
-  const coinTop = 0;          // slab top exactly ON the face plane — the disc
-                              // sticker shares the band of every block sticker
-  const coinBot = -COIN_T;
-  const FOLD_IN = 0.45; // halves stop short of the diameter — the walls tuck
-                        // inside each other's slab (no coplanar z-fighting)
-                        // leaving a thin V-groove that reads as the fold line
-  const psiM = Math.acos(FOLD_IN / COIN_R);
-  const halfDisc: V2[] = [];
-  for (let i = 0; i <= 40; i++) {
-    const psi = -psiM + (2 * psiM * i) / 40;
-    halfDisc.push([COIN_R * Math.sin(psi), COIN_R * Math.cos(psi)]);
-  }
-  const ccwDisc = polyArea2(halfDisc) > 0 ? halfDisc : halfDisc.slice().reverse();
-  for (const face of [facePlus, faceMinus]) {
-    const other = face === facePlus ? faceMinus : facePlus;
-    const fHat = V(FACE_AXIS[face]);   // this half's face normal
-    const hHat = V(FACE_AXIS[other]);  // toward the fold ridge (in-plane)
-    const vDown = hHat.clone().negate();
-    const uHat = face === facePlus ? e.clone() : e.clone().negate(); // keep right-handed
-    const shape = new THREE.Shape(ccwDisc.map(([a, b]) => new THREE.Vector2(a, b)));
-    const slabGeo = new THREE.ExtrudeGeometry(shape, { depth: COIN_T, bevelEnabled: false });
-    slabGeo.applyMatrix4(new THREE.Matrix4().makeBasis(uHat, vDown, fHat)
-      .setPosition(E.clone().addScaledVector(fHat, coinBot).addScaledVector(hHat, coinTop)));
-    const slab = new THREE.Mesh(slabGeo, bodyMat);
-    slab.userData.simRole = 'body';
-    coinGroup.add(slab);
-    const stGeo = extrudeOntoFace(offsetInward(ccwDisc, 0.9),
-      { u: uHat, v: vDown, n: fHat, origin: E.clone().addScaledVector(fHat, coinTop + STICKER_LIFT).addScaledVector(hHat, coinTop) },
-      STICKER_DEPTH);
-    coinGroup.add(makeSticker(stGeo, stickerMat(GEAR_FACE_NAMES[face]), bodyMat, {
-      simStickerNormal: fHat.clone(),
-    }));
-  }
-  pivot.add(coinGroup);
 
   // backing cone filling the slot throat behind the web; its apex starts deep
   // enough that it stays under the cap slab (which now dips COIN_T below the
@@ -609,8 +678,10 @@ export function inCrownSweep(p: THREE.Vector3, axis: number, m: number): boolean
  *  full 360°, 0.5° frames). ABSOLUTE face coords for the (+,+) corner, CCW.
  *
  *  The corner is a GEAR here — its spikes interdigitate with the crown teeth
- *  and only phase sync keeps them apart (rest clearance +8.43, transit +1.08,
- *  center-arm swept annuli 0 hits — all re-locked in tests/gear_geometry.test.ts).
+ *  and only phase sync keeps them apart (rest clearance +12.21, transit +0.64,
+ *  center-arm swept annuli 0 hits — all re-locked in tests/gear_geometry.test.ts;
+ *  baked against the SVG-shaped SECTOR crown: scalloped web + parallel-sided
+ *  tentacles, see crownSectorOutline).
  *  Built by MINIMAL SMOOTH DEFORMATION of the SVG outline: safe stretches are
  *  the SVG verbatim; offending stretches shift inward along a window-smoothed
  *  normal field by a smoothed upper envelope of the required clearance (G1,
@@ -631,12 +702,13 @@ export const CORNER_POLY: V2[] = [
   [65.1, 114.2], [65.7, 112.4], [69.7, 111.1], [71.3, 110.1], [71.8, 109.5],
   [72.3, 108.5], [72.6, 107.5], [72.6, 106.3], [72.3, 104.4], [71.4, 101.1],
   [65.8, 82.7], [63.8, 77], [63.2, 75.6], [62.5, 74.6], [61.8, 73.9],
-  [60.7, 73.3], [58.4, 72.6], [50.5, 70.9], [48.1, 69.9], [46.8, 68.8],
-  [45.8, 67.4], [45.3, 66.4], [45.5, 65.6], [46.4, 64.8], [47.7, 64.2],
-  [58.1, 62.5], [59.7, 62], [60.9, 61.1], [61.9, 59.8], [62.5, 58.2],
-  [63.9, 49.2], [64.3, 47.3], [64.7, 46.5], [65.2, 45.8], [65.7, 45.5],
-  [66.4, 45.4], [67.3, 45.7], [68.6, 46.6], [70, 48.2], [70.9, 50.6],
-  [72.5, 58.2], [73.3, 60.7], [73.9, 61.8], [74.5, 62.5], [76.8, 63.8],
+  [60.7, 73.3], [58.4, 72.6], [49.9, 70.8], [48.4, 70.3], [47.2, 69.6],
+  [46.2, 68.8], [45.4, 67.6], [45.3, 66.5], [45.5, 65.6], [46.4, 64.8],
+  [47.7, 64.2], [58.1, 62.5], [59.7, 62], [60.9, 61.1], [61.9, 59.8],
+  [62.5, 58.2], [63.9, 49.2], [64.3, 47.3], [64.8, 46.4], [65.3, 45.8],
+  [65.9, 45.4], [66.7, 45.3], [67.6, 45.5], [68.9, 46.3], [69.6, 47.1],
+  [70.2, 48.3], [71, 50.8], [72.7, 58.8], [73.5, 61.2], [74.6, 62.6],
+  [76.8, 63.8],
   [82.6, 65.8], [101.1, 71.4], [104.3, 72.3], [106.2, 72.7], [107.3, 72.6],
   [108.4, 72.4], [109.3, 71.9], [110, 71.4], [111, 70.1], [112.5, 66.7],
   [113, 66.1], [113.8, 65.5], [114.6, 65.3], [116.1, 65.3], [117.1, 65.7],
