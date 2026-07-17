@@ -371,34 +371,40 @@ describe('gear geometry clearance invariants', () => {
     expect(channelAt(H - 4)).toBeLessThan(SWEEP_RHO + SWEEP_WALL + 2);
   });
 
-  it('corner plinth: plate stays embedded under the sunken shelf; CSG body inside bounds (no burr shards)', () => {
-    // Base-face prism construction: the box's outer faces sink CORNER_DROP so
-    // each die-cut plate column stands proud as the sticker's own plinth. The
-    // plate bottom (H − PLATE_T) must stay embedded under the box's r7 arris
-    // roll-off at the outline's closest arris approach — any deeper drop and
-    // the near-arris plinth wall floats off the shelf.
+  it('corner full-prism body: columns reach the plates, arris bands are gone, no burr shards', () => {
+    // v2 base-face prism construction: the body is the UNION of the three
+    // sticker-outline prisms extruded straight through the block. Each
+    // column's flat top cap (H − CORNER_DROP − 0.2) must land INSIDE its
+    // plate band (above H − PLATE_T), or the column detaches from its plate.
     const A = H - CORNER_DROP;
-    const over = Math.max(...CORNER_POLY.flat()) - (A - 7);
-    const shelf = over <= 0 ? A : A - 7 + Math.sqrt(49 - over * over);
-    expect(H - PLATE_T).toBeLessThan(shelf - 1);
-    // And the carved body itself: an inside-out brush historically sprayed
-    // lathe shards far outside the block (the r=200 profile wall), so lock
-    // every CSG vertex inside the sunken box's |coord| bounds — the whole
-    // burr-shard failure class trips this after any box/carve change.
+    expect(CORNER_DROP + 0.2).toBeLessThan(PLATE_T);
+    // Build one corner and audit every CSG vertex:
+    //  - |coord| bounds: an inside-out brush historically sprayed lathe shards
+    //    far outside the block (the r=200 profile wall) — the whole burr-shard
+    //    failure class trips the hi bound;
+    //  - hi must also REACH the box cap (columns must rise past the plate
+    //    bottom and hide their top caps inside the plates — connectivity);
+    //  - the SECOND-largest |coord| of any vertex stays inside the outline's
+    //    max reach: material beyond it near an arris would mean the old box
+    //    arris band survived — the prism cuts really ran (the arris is now an
+    //    open square groove between neighbouring columns).
     const ev = new Evaluator();
     ev.useGroups = false;
     const { group } = buildCornerPiece(0, ev);
     const body = group.children[0] as THREE.Mesh;
     const pos = body.geometry.getAttribute('position') as THREE.BufferAttribute;
-    let lo = Infinity, hi = -Infinity;
+    let lo = Infinity, hi = -Infinity, second = 0;
     for (let i = 0; i < pos.count; i++) {
-      for (const c of [Math.abs(pos.getX(i)), Math.abs(pos.getY(i)), Math.abs(pos.getZ(i))]) {
-        if (c < lo) lo = c;
-        if (c > hi) hi = c;
-      }
+      const a = [Math.abs(pos.getX(i)), Math.abs(pos.getY(i)), Math.abs(pos.getZ(i))]
+        .sort((x, y) => y - x);
+      if (a[2] < lo) lo = a[2];
+      if (a[0] > hi) hi = a[0];
+      if (a[1] > second) second = a[1];
     }
     expect(hi).toBeLessThan(A + 0.1);
+    expect(hi).toBeGreaterThan(H - PLATE_T); // column tops overlap the plate band
     expect(lo).toBeGreaterThan(CUT + SEAM - 0.1);
+    expect(second).toBeLessThan(Math.max(...CORNER_POLY.flat()) + 0.1);
   });
 
   it('teeth: 6 SVG-shaped tentacles, parallel flanks, gullet scallop between them', () => {
