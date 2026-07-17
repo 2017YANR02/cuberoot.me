@@ -331,15 +331,15 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
 
   return (
     <div className={`vc-studio vc-studio-${mode}${className ? ` ${className}` : ''}`}>
-      {/* Preview cube — only the /visualcube page (page mode). In the /sim 图像 panel
-          the live interactive cube on the left IS the image, so the panel drops this
-          redundant re-render; SVG/PNG/share export still work off `spec` (which SimPage
-          keeps mirrored to the sim) via renderSpecSvg. */}
-      {mode === 'page' && (
-        <section className="vc-preview-wrap" ref={previewRef}>
-          <PuzzleImage spec={s} onSpecChange={onSpecChange} />
-        </section>
-      )}
+      {/* Preview cube — the visualcube (2D vector) render of the current state.
+          On the /visualcube page it's the main image; in the /sim 图像 panel it's the
+          clean, zoom-crisp vector companion to the live 3D cube on the left (the 3D
+          snapshot bakes its occlusion edges at raster resolution, this one is true
+          vector). Only ever mounts for spec-renderable puzzles: SimPage gates the whole
+          panel behind imageStudioSupported, so gear/rex/etc never reach here. */}
+      <section className="vc-preview-wrap" ref={previewRef}>
+        <PuzzleImage spec={s} onSpecChange={onSpecChange} />
+      </section>
 
       <section className="vc-exports">
         <CopyButton label={t('分享链接', 'Share URL')} getValue={() => shareUrl} />
