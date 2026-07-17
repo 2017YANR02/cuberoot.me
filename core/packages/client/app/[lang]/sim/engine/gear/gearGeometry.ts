@@ -201,7 +201,7 @@ export const ARM_R0 = 0.30 * H;   // feet inner edge (radial, from face center)
 export const ARM_R1 = 0.375 * H;  // bar outer edge — capped by the corner tab shell
 export const ARM_S = 24;          // tangent half-width
 export const ARM_SFOOT = 12;      // feet span |s| ∈ [ARM_SFOOT, ARM_S]
-export const ARM_BAR = 44;        // feet→bar radial boundary
+export const ARM_BAR = 41.5;      // notch floor (bar ≈3 thick under the concave arc mid)
 export const ARM_D = 5;           // plate depth below the surface
 const ARM_LIFT = 3.5;             // sticker top above the surface
 /** Washer rings (one per axis) that carve the arms' swept shell out of the corners:
@@ -926,10 +926,27 @@ export function buildCenterPiece(f: number): { pivot: THREE.Object3D; group: THR
   // are unstickered, and colored feet read as stray dots around the center
   // (user-rejected). (r, s) = (radial from face center toward the gear,
   // tangent along the edge).
-  const armPoly: V2[] = [
-    [ARM_R1, -ARM_S], [ARM_R1, ARM_S], [ARM_R0, ARM_S], [ARM_R0, ARM_SFOOT],
+  // The OUTER edge is CONCAVE, not a straight bar: the reference front view
+  // (gear-clean.svg path M4083 7520, traced) shows it as an arc CONCENTRIC
+  // with the edge gear — SVG mid (0,56.1) and ends (±24,60.4) all sit R≈71.8
+  // from the gear center, i.e. the bracket wraps the whirling tooth circle
+  // with even clearance. Same construction at engine scale, ends pinned to
+  // the envelope corners (ARM_R1, ±ARM_S — the corner-tab cap): center = the
+  // slot apex (r = H, s = 0), R = hypot(H − ARM_R1, ARM_S), mid dips to
+  // H − R ≈ 44.5 (ARM_BAR keeps a ~3-thick bar below, SVG proportion). All
+  // material stays inside the [ARM_R0, ARM_R1] × ±ARM_S envelope that the
+  // washer rings + MESH sweeps bound, so clearances are untouched.
+  const ARC_R = Math.hypot(H - ARM_R1, ARM_S);
+  const phi0 = Math.asin(ARM_S / ARC_R);
+  const armPoly: V2[] = [];
+  for (let k = 0; k <= 16; k++) {
+    const phi = -phi0 + (2 * phi0 * k) / 16;
+    armPoly.push([H - ARC_R * Math.cos(phi), ARC_R * Math.sin(phi)]);
+  }
+  armPoly.push(
+    [ARM_R0, ARM_S], [ARM_R0, ARM_SFOOT],
     [ARM_BAR, ARM_SFOOT], [ARM_BAR, -ARM_SFOOT], [ARM_R0, -ARM_SFOOT], [ARM_R0, -ARM_S],
-  ];
+  );
   for (const [ru, rv] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
     const rHat = u.clone().multiplyScalar(ru).add(v.clone().multiplyScalar(rv));
     const eHat = new THREE.Vector3().crossVectors(n, rHat);
