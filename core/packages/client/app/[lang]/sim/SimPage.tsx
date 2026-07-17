@@ -133,6 +133,20 @@ const ENGINE_TWISTY_DEF: Record<string, string> = { fto: 'o f 0.333333333333333'
 // alpha.twizzle.net/explore landing example `c f 0.255`.
 const DEFAULT_CUSTOM_CUTS = 'c f 0.255';
 
+/** Non-cube puzzles whose image-panel preview is a LIVE VECTOR projection of the sim's
+ *  own 3D scene (via sim_svg_export). Their spec renderer (sr-puzzlegen) structurally
+ *  cannot match the sim — no yaw axis, no perspective knob, its own colours — so instead
+ *  of tracking it we mirror the left 3D exactly: SimPage regenerates the SVG on camera
+ *  settle and hands it to PuzzleImageStudio. Orientation / 透视 / colours / labels all come
+ *  from the live camera → an exact, zoom-crisp mirror of the left that 左右/上下/透视 (and
+ *  direct drag) all drive for free. The export runs the GPU DEPTH-MAP occlusion path
+ *  (renderer passed — the SAME path as the 截图 SVG button), NOT the depth-map-free painter:
+ *  without a per-pixel depth test the painter bleeds far faces through the inter-piece gaps
+ *  (black wedges on skewb/mega, colour bleed on sq1/pyra); the depth map culls that cleanly
+ *  (verified via GL-vs-SVG A/B on all four). The cube keeps visualcube (shares the sim's
+ *  coords + has `dist`, so it already links all three). */
+const LIVE_VECTOR_PUZZLES = new Set<string>(['sq1', 'pyraminx', 'megaminx', 'skewb']);
+
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
 const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror']);
@@ -1513,14 +1527,13 @@ export default function SimPage() {
       if (imgSpec.rotateAngle1 !== a1) patch.rotateAngle1 = a1;
       if (imgSpec.rotateAngle2 !== a2) patch.rotateAngle2 = a2;
     } else {
-      // sr-puzzlegen exotics (sq1 / pyraminx / megaminx / skewb). We tried mirroring the
-      // sim's own 3D as a live vector projection, but without a per-pixel depth test the
-      // painter bleeds far faces through the inter-piece gaps (black wedges on skewb /
-      // mega, colour bleed on pyra) and the depth-map path is too heavy + still bleeds at
-      // grazing faces — so the panel stays on the clean flat sr render. sr can't share the
-      // sim's camera (no perspective knob; sq1/pyra route yaw through z; own colours), so
-      // instead anchor at the puzzle's canonical sr iso and add the sim's deviation from
-      // its default sliders — the image stays clean and still tracks 左右/上下 (透视 can't).
+      // sr-puzzlegen exotics (sq1 / pyraminx / megaminx / skewb). These are LIVE_VECTOR
+      // puzzles: their real preview is a depth-map projection of the sim's own scene (see
+      // the live-vector effect below), an exact mirror of the left. sr-puzzlegen can't share
+      // the sim's camera (no perspective knob; sq1/pyra route yaw through z; own colours), so
+      // this spec render is only the FALLBACK shown before the first live SVG lands (or if the
+      // export throws) — anchor at the puzzle's canonical sr iso + the sim's slider deviation
+      // so even the fallback roughly tracks 左右/上下 and doesn't flash a stale pose.
       const def = rotationDefaultsFor({ puzzleType: imgPuzzle.puzzleType, puzzleVariant: imgSpec.puzzleVariant });
       const a1 = Math.round(def.angle1 + (settings.viewAngle - 30) * 1.8);
       const a2 = Math.round(def.angle2 + (33 - settings.viewGradient) * 1.8);
@@ -1532,6 +1545,58 @@ export default function SimPage() {
     if (Object.keys(patch).length > 0) setImgSpec(patch);
   }, [imageStudioSupported, imgPuzzle, imgInherit, imgSpec,
       settings.viewAngle, settings.viewGradient, settings.perspective, setImgSpec]);
+
+  // ── live vector preview (sq1 / mega / pyra / skewb) ──────────────────────────
+  // These puzzles' spec renderer (sr-puzzlegen) can't match the sim, so the panel shows a
+  // VECTOR projection of the sim's own scene instead: exportSimSvg WITH the renderer = GPU
+  // depth-map occlusion (the same path as the 截图 SVG button), so far faces don't bleed
+  // through the inter-piece gaps and orientation / 透视 / colours / labels all come from the
+  // live camera — an exact, zoom-crisp mirror of the left 3D that tracks 左右/上下/透视 AND
+  // direct drag. Regenerated ONLY on camera settle (the depth path is 170–670ms, too heavy
+  // per-frame), so a drag/slider spins the cheap fallback spec render, then the crisp mirror
+  // lands once motion stops.
+  const useLiveVector = imageStudioSupported
+    && LIVE_VECTOR_PUZZLES.has(String(imgPuzzle.puzzleType));
+  const [liveSvg, setLiveSvg] = useState<string | null>(null);
+  // Bumped whenever the puzzle's APPEARANCE changes without moving the camera (alg,
+  // colours, stickering, thickness, hollow, labels, hands…) — the rAF loop below can't
+  // see those via the camera signature, so this forces a regenerate on the next settle.
+  const liveDirtyRef = useRef(0);
+  useEffect(() => { liveDirtyRef.current += 1; },
+    [imgInherit, algParam, setupParam, worldTick, settings]);
+  useEffect(() => {
+    if (!useLiveVector) { setLiveSvg(null); return; }
+    let raf = 0;
+    let disposed = false;
+    let exportFn: ((o: { world: World; renderer: THREE.WebGLRenderer | null }) => string) | null = null;
+    void import('./sim_svg_export').then((m) => { if (!disposed) exportFn = m.exportSimSvg; });
+    let lastSig = '';
+    let lastDirty = -1;
+    let settleAt = 0;
+    let lastPoll = 0;
+    const tick = (now: number) => {
+      raf = requestAnimationFrame(tick);
+      if (now - lastPoll < 66) return;            // ~15Hz poll — cheap
+      lastPoll = now;
+      const w = worldRef.current;
+      if (!w || !exportFn || !imageOpen || document.hidden) return;
+      const sc = w.scene, cam = w.camera as THREE.PerspectiveCamera;
+      const sig = `${sc.rotation.x.toFixed(4)},${sc.rotation.y.toFixed(4)},${sc.rotation.z.toFixed(4)}`
+        + `,${cam.position.x.toFixed(1)},${cam.position.y.toFixed(1)},${cam.position.z.toFixed(1)},${cam.fov ?? 0}`;
+      const dirty = liveDirtyRef.current;
+      if (sig !== lastSig || dirty !== lastDirty) {   // still moving / just changed → wait
+        lastSig = sig; lastDirty = dirty; settleAt = now + 140;
+        return;
+      }
+      if (settleAt && now >= settleAt) {              // settled → regenerate once (depth path)
+        settleAt = 0;
+        try { setLiveSvg(exportFn({ world: w, renderer: rendererRef.current })); }
+        catch { /* keep last frame — a transient export failure shouldn't blank the panel */ }
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { disposed = true; cancelAnimationFrame(raf); };
+  }, [useLiveVector, imageOpen]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
@@ -1680,6 +1745,7 @@ export default function SimPage() {
                 spec={imgSpec}
                 onSpecChange={setImgSpec}
                 simBridge={simBridge}
+                livePreviewSvg={useLiveVector ? liveSvg : null}
               />
             </CollapsibleSection>
           ) : (
