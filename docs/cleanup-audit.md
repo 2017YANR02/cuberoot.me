@@ -36,7 +36,7 @@
 
 - [x] `shared/src/types.ts:4` 五个旧训练器类型全死（`TrainerCase`/`TrainerSet`/`TrainResult`/`UserProgress`/`UserSettings`）→ 已删（0 真实消费者：alg-select 命中是 `TrainerSetClient` 文件名子串、test 命中是 allowlist 路径串）；shared rebuild + client/server typecheck 绿
 - [x] `components/wca-stats/ShowToggle.tsx` 死组件（仅 /code 画廊引用；`ShowMode` type 被 wca/results 用）→ 已把 `ShowMode` 内联进唯一消费者 wca/results，删组件 + 去画廊 import/demo/registry/metadata 四处。`code-catalog-sync` 测试 5/5 绿，typecheck 无新错
-- [ ] `/code` `cuberootDesc` 字段 49 文件填充但无渲染器读取（`.cuberootDesc` 读取 = 0，已核实）→ **但这是你写的双语内容（「cuberoot 如何用这工具」），非代码 cruft，不单方面删**。三选一等你拍板：①保留不动 ②删字段+49 处 ③补渲染器把内容显示到工具页（旁边 whyDesc/adoptersDesc/outlookDesc 都已渲染，它像漏接的一节）
+- [x] `/code` `cuberootDesc` 字段（49 文件填充但 0 渲染器读）→ **已删**。核实真相：它是被取代的短草稿——每个工具另有一个**已渲染**的长版 `cuberoot: {zh,en}`（页面「它在 cuberoot.me 上做什么」那节），短版 `cuberootDesc` 内容长版都有,删掉不丢信息。sed 逐行删 50 文件 / −100 行(98 内容 + 2 类型,全单行),grep 归零 + client typecheck 绿
 - [x] untrack `.playwright-mcp/` 下 5 个 debug session dump（整目录已 gitignore，误 force-add）
 - [x] 删 `core/packages/client/HANDOFF.md`（已完成的 Vite→Next 移交文档，零引用）
 - [x] 删 23 个死 ts-morph 一次性迁移脚本（`scripts/codemod-*` / `revert-*` / `scan-residual-isz` / `scan-gaps` / `cleanup-orphan-isz` / `fix-domain-terms` / `fix-use-client-order`；全 import 未安装的 ts-morph = 跑不起来，且无引用）
