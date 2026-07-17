@@ -10,7 +10,7 @@ import { CUBE_FILL } from '@/lib/cube-colors';
 import { persistItem } from '@/lib/safe-storage';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import World from './engine/world';
-import { puzzleCaps } from './simCaps';
+import { puzzleCaps, type IsolateKind } from './simCaps';
 import { timing } from './engine/tweenTiming';
 import Cubelet from './engine/nxn/cubelet';
 import { applyDebugStructureColors, applyEngineBodyOverlay } from './engine/debugColors';
@@ -82,6 +82,10 @@ export interface SimSettings {
    *  转动元素(`setCarve(on)` 布尔),所以选了非原生元素时是占位空操作,等引擎补上按元素挖块;
    *  NxN/SQ1 无可掀起的转动块组 → 任何选项都空操作。 */
   debugCarve: 'off' | 'corner' | 'face' | 'edge';
+  /** 开发者调试(声明 isolate 的魔方,目前齿轮):隔离 —— 只保留某一类块(角/棱/中心/骨架),
+   *  挖掉其余全部(挖块的反操作)。`setIsolate(kind|null)`;下拉选项来自 simCaps 各魔方声明的
+   *  kind 列表,未声明的魔方置灰。 */
+  debugIsolate: 'off' | IsolateKind;
   /** 内核色 (frame + 内层 slice 填充板的颜色) */
   coreColor: string;
   /** 6 面色 (WCA 默认) */
@@ -173,6 +177,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   holdPartialTurn: false,
   debugStructureColor: false,
   debugCarve: 'off',
+  debugIsolate: 'off',
   coreColor: '#202020',
   faceColors: { ...DEFAULT_FACE_COLORS },
   coreStyle: 'normal',
@@ -207,6 +212,8 @@ export function loadSettings(): SimSettings {
     // debugCarve was a boolean (carve the puzzle's native element on/off); it's now a
     // 3-way element pick. Old boolean values → reset to 'off'.
     if (typeof merged.debugCarve !== 'string') merged.debugCarve = 'off';
+    // debugIsolate: 旧版本无此键 → spread 已给 'off';非法值兜回 'off'。
+    if (!['off', 'corner', 'edge', 'center', 'core'].includes(merged.debugIsolate)) merged.debugIsolate = 'off';
     // 原核 / logo: 旧版本无此键 → spread 已给默认值;非法值兜回默认。
     if (merged.coreStyle !== 'raw' && merged.coreStyle !== 'normal') merged.coreStyle = 'normal';
     if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
@@ -359,6 +366,13 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   const nativeCarve = puzzleCaps(world.puzzleKind).carve ?? null;
   (world.cube as { setCarve?: (on: boolean) => void })
     .setCarve?.(s.debugCarve !== 'off' && s.debugCarve === nativeCarve);
+  // Isolate: keep one piece kind, hide the rest (inverse of carve). Only puzzles that
+  // declare isolate kinds + implement setIsolate respond; the value is gated to a
+  // declared kind so a stale/unsupported pick is a safe no-op (null = show all).
+  const isolateKinds = puzzleCaps(world.puzzleKind).isolate ?? [];
+  const isolateKind = s.debugIsolate !== 'off' && isolateKinds.includes(s.debugIsolate)
+    ? s.debugIsolate : null;
+  (world.cube as { setIsolate?: (kind: IsolateKind | null) => void }).setIsolate?.(isolateKind);
   world.dirty = true;
   world.cube.dirty = true;
   world.resize();
