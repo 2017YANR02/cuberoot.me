@@ -17,6 +17,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { crownSectorOutline } from './sector_check.mjs';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TMP = 'D:/cube/cuberoot.me/.tmp/gear'; // regenerable bake outputs (gitignored)
 const PNG = 'D:/cube/cuberoot.me/.tmp/png'; // user-facing overlay (gitignored)
@@ -25,7 +26,7 @@ mkdirSync(PNG, { recursive: true });
 // (readFileSync reused for the overlay diff at the end)
 
 const H = 128;
-const TEETH = 6, TOOTH_TIP = 62, TOOTH_ROOT = 32, TOOTH_HALF_ANG = (11 * Math.PI) / 180;
+const TEETH = 6, TOOTH_TIP = 62;
 const PLATE_T = 7, FOLD_R = 1.2;
 const STICKER_LIFT = 0.5, STICKER_DEPTH = 2.6;
 
@@ -271,10 +272,18 @@ function fold(p, q, dd, out) {
   if (Math.abs(o[1] - (H + 2)) > 1e-9 || Math.abs(o[2] - (H - 50)) > 1e-9) throw new Error(`fold sanity+: ${o}`);
 }
 
-// un-spun tooth sample points (local coords, tooth pointing along +q at rest 90°)
-const sT = Math.sin(TOOTH_HALF_ANG), cT = Math.cos(TOOTH_HALF_ANG);
-const trap = [[-TOOTH_TIP * sT, TOOTH_TIP * cT], [-TOOTH_ROOT * sT, TOOTH_ROOT * cT], [TOOTH_ROOT * sT, TOOTH_ROOT * cT], [TOOTH_TIP * sT, TOOTH_TIP * cT]];
-const TIP_CORNERS = [[-TOOTH_TIP * sT, TOOTH_TIP * cT], [TOOTH_TIP * sT, TOOTH_TIP * cT]];
+// un-spun crown SECTOR sample points (local coords, tooth axis along +y = rest
+// 90°; the sector spans local polar 60°..120° with half a scalloped gullet on
+// each side — six of these tile the whole crown, so the per-tooth rotation
+// loop below covers web AND tentacles). Shape = crownSectorOutline (SVG-traced
+// tentacle + RIM_R scallop), shared with sector_check.mjs.
+const trap = crownSectorOutline(0);
+const TIP_CORNERS = (() => {
+  const rMax = Math.max(...trap.map(([x, y]) => Math.hypot(x, y)));
+  const near = trap.filter(([x, y]) => Math.hypot(x, y) > rMax - 0.05);
+  const xs2 = near.map((p) => p[0]);
+  return [near[xs2.indexOf(Math.min(...xs2))], near[xs2.indexOf(Math.max(...xs2))]];
+})();
 function polyArea2(pts) {
   let s = 0;
   for (let i = 0; i < pts.length; i++) {
@@ -297,7 +306,9 @@ function rebuildToothSamples() {
   toothSamples = [];
   const ys = toothOutline.map((p) => p[1]);
   const y0 = Math.min(...ys), y1 = Math.max(...ys);
-  for (let x = -TOOTH_TIP * sT - 0.5; x <= TOOTH_TIP * sT + 0.5; x += 1.4) {
+  const xsAll = toothOutline.map((p) => p[0]);
+  const bx0 = Math.min(...xsAll) - 0.5, bx1 = Math.max(...xsAll) + 0.5;
+  for (let x = bx0; x <= bx1; x += 1.4) {
     for (let y = y0; y <= y1; y += 1.4) if (inClosed(toothOutline, x, y)) toothSamples.push([x, y]);
   }
   for (let i = 0; i < toothOutline.length; i++) {
