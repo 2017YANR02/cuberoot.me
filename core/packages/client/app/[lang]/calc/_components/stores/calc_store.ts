@@ -336,7 +336,7 @@ export const useCalcStore = create<CalcState>((set, get) => ({
 // NOTE: 初始化排序
 useCalcStore.getState().updateSort();
 
-// NOTE: dev 模式暴露到 window 给 playwright 自动化测试用（tests/calc-interactions.ts）
+// NOTE: dev 模式暴露到 window 给 Playwright 手动验证用（改 calc/ 后 browser_evaluate 读 __calcStore；无自动化测试)
 if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   (globalThis as unknown as { __calcStore?: typeof useCalcStore }).__calcStore = useCalcStore;
 }
