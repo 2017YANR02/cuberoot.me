@@ -84,6 +84,16 @@ export default class GearCube extends THREE.Group implements TweenCube<GearMove>
     this.twister = new GearTwister(this);
   }
 
+  /** The fold-glide crowns are NOT rigid children of the spin pivots (spec §0:
+   *  at rest disc + tentacles must lie IN the face planes, which no rigid
+   *  crown can do at every mod-3 phase) — each gear re-bakes its tooth
+   *  vertices from its spin angle. Hook the once-per-render matrix pass so
+   *  tween frames morph and rest frames cost a no-op angle check. */
+  override updateMatrixWorld(force?: boolean): void {
+    for (const ring of this.gearPieces) for (const p of ring) p.refreshCrown();
+    super.updateMatrixWorld(force);
+  }
+
   /** Current slot of a corner / gear piece — for drag candidate lookup. */
   cornerSlotOf(pieceId: number): number { return this.state.cp.indexOf(pieceId); }
   gearSlotOf(ring: number, pieceId: number): number { return this.state.ring[ring].indexOf(pieceId); }
