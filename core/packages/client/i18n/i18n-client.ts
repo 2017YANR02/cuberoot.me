@@ -92,10 +92,4 @@ export function syncLangToUrl(lang: string): void {
   history.replaceState(null, '', url.toString());
 }
 
-export function getLangQuery(): string {
-  if (typeof window === 'undefined') return '?lang=en';
-  const params = new URLSearchParams(window.location.search);
-  return `?lang=${params.get('lang') || i18n.language || 'en'}`;
-}
-
 export default i18n;
