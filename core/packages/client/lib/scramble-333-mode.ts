@@ -7,6 +7,7 @@
  * 共用 cubing.js 路径的事件 pool。
  */
 import { useEffect, useState } from 'react';
+import { persistItem } from './safe-storage';
 
 export type Scramble333Mode = 'wca' | 'm2p';
 
@@ -23,7 +24,7 @@ export function get333Mode(): Scramble333Mode {
 export function set333Mode(mode: Scramble333Mode): void {
   if (typeof localStorage === 'undefined') return;
   if (get333Mode() === mode) return;
-  localStorage.setItem(KEY, mode);
+  persistItem(KEY, mode);
   window.dispatchEvent(new CustomEvent(EVENT));
 }
 

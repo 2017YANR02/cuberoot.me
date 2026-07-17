@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { apiUrl } from './api-base';
+import { persistItem } from './safe-storage';
 
 export { ADMIN_WCA_IDS };
 
@@ -58,56 +59,12 @@ function readUser(): WcaUser | null {
 }
 
 /**
- * Evict regenerable / redundant localStorage entries to reclaim quota.
- * Targets timer auto-backups (up to 10 full-export snapshots — the biggest hog
- * on iOS Safari's ~5MB quota) and regenerable list caches. Never touches the
- * live timer DB (`cuberoot-timer.v3`) or other real user data. Returns whether
- * anything was freed.
- */
-function reclaimQuota(): boolean {
-  if (typeof window === 'undefined') return false;
-  const evictable: string[] = [];
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (k.startsWith('cuberoot-timer.backup.v1.') || k.startsWith('recon_list_cache:')) {
-        evictable.push(k);
-      }
-    }
-  } catch {
-    return false;
-  }
-  if (evictable.length === 0) return false;
-  evictable.sort(); // backup keys end with Date.now() → oldest first
-  let freed = false;
-  for (const k of evictable) {
-    try { localStorage.removeItem(k); freed = true; } catch { /* ignore */ }
-  }
-  return freed;
-}
-
-/**
  * Persist an auth key, surviving a (near-)full localStorage. On a quota error
  * (common on iOS Safari when timer backups fill the ~5MB budget), evict
  * regenerable caches once and retry. Returns false if the value still couldn't
  * be stored (e.g. Safari private browsing, 0 quota).
  */
-export function persistAuthItem(key: string, value: string): boolean {
-  if (typeof window === 'undefined') return false;
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch {
-    if (!reclaimQuota()) return false;
-    try {
-      localStorage.setItem(key, value);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-}
+export const persistAuthItem = persistItem;
 
 export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
   user: readUser(),

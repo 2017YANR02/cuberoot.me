@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import i18n, { detectLanguage, ensureLangInUrl, changeAppLanguage } from './i18n-client';
+import { persistItem } from '@/lib/safe-storage';
 
 // `initialLang`: when provided (e.g. from app/[lang]/layout reading URL param),
 // skip the post-hydration detect → changeLanguage dance. No en→zh flash for
@@ -30,13 +31,13 @@ export default function I18nProvider({
   useEffect(() => {
     if (initialLang) {
       // [lang]-prefixed route: just persist for cross-visit consistency.
-      localStorage.setItem('trainer-lang', initialLang);
+      persistItem('trainer-lang', initialLang);
       return;
     }
     // Legacy bare-path route: detect from URL/localStorage/navigator.
     const lang = detectLanguage();
     ensureLangInUrl(lang);
-    localStorage.setItem('trainer-lang', lang);
+    persistItem('trainer-lang', lang);
     if (instance.language !== lang) changeAppLanguage(lang);
   }, [instance, initialLang]);
 
