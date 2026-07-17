@@ -270,7 +270,7 @@ export default function RecognizeClient() {
 
       <div
         style={{
-          color: '#adb5bd',
+          color: 'var(--muted-foreground)',
           textAlign: 'center',
           margin: '0.75rem 0',
           animation: shakeHint ? 'headShake 1s ease' : undefined,
@@ -310,11 +310,11 @@ export default function RecognizeClient() {
 
       {gameState === 'playing' && mistake && currentCase && (
         <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-          <hr style={{ borderColor: 'rgba(255,255,255,0.15)' }} />
+          <hr style={{ borderColor: 'color-mix(in srgb, var(--foreground) 15%, transparent)' }} />
           <div style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
             {currentCase.name}
           </div>
-          <div style={{ color: '#adb5bd', fontSize: '0.9rem' }}>
+          <div style={{ color: 'var(--muted-foreground)', fontSize: '0.9rem' }}>
             {(pllMap as Record<string, Record<string, string>>)[currentCase.name]?.noAuf || ''}
           </div>
         </div>

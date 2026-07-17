@@ -26,7 +26,7 @@
 - [ ] 重复小 util：`fmtDate`、货币格式化 ×3、`firstGlyph` ×2、`statsUrl`（shared/client 双份**已漂移**）、MBLD decode ×2、`no-cache,no-store` 字面量 56 处
 - [ ] calc 重造的 `EventSelector` → 共享 `WcaEventSelector`（`calc/_components/components/EventSelector.tsx:26`）
 - [ ] `CountrySelect` / `RegionCountrySelect` 半截迁移收尾
-- [ ] 硬编码色值 → token：`recon-utils.ts:244` FACE_COLORS、`recognize:273` `#adb5bd`、`prediction/lucky:213` `#888`
+- [x] 硬编码色值 → token（部分）：`recognize:273/317` `#adb5bd`→`var(--muted-foreground)` + 同块 `rgba(255,255,255,.15)` hr→`color-mix`。**误报排除**：`recon-utils.ts:244` FACE_COLORS 是十字色块(色字母键+Tailwind 盘)非 UI token、也不等于 face 键的 `cube-colors`,留;`prediction/lucky:213` `#888` 是图表 series fallback 色(旁边 6 个 series 色也是硬码 hex),data-viz 非 chrome,留(真要收口是事件配色单一源,另立项)
 - [x] 命名：`CompPicker.extractWcaIdFromUrl` 实返比赛 id（非选手 WCA ID） → 已改 `extractCompIdFromUrl`（函数名+文档+2 调用点局部变量+`onUrlPaste` 形参，4 refs；`CompCuberPicker` 里真指选手 id 的 `wcaId` 没动）
 - [ ] 命名：`components/*.css` 三风格统一（cosmetic）
 - [x] Vite 残渣（注释部分）:`tr.tsx:18` "3 canonical locales" → "two locales (en, zh)"(繁体早移除)
@@ -34,7 +34,7 @@
 
 ## P2 简单清理（本次做）
 
-- [ ] `shared/src/types.ts:4` 五个旧训练器类型全死（`TrainerCase`/`TrainerSet`/`TrainResult`/`UserProgress`/`UserSettings`）→ 删（触 shared，需 rebuild，暂缓到能验的时候）
+- [x] `shared/src/types.ts:4` 五个旧训练器类型全死（`TrainerCase`/`TrainerSet`/`TrainResult`/`UserProgress`/`UserSettings`）→ 已删（0 真实消费者：alg-select 命中是 `TrainerSetClient` 文件名子串、test 命中是 allowlist 路径串）；shared rebuild + client/server typecheck 绿
 - [ ] `components/wca-stats/ShowToggle.tsx` 死组件（仅 /code 画廊引用）→ 删并去画廊 demo（需过 `code-catalog-sync` CI，暂缓）
 - [ ] `/code` `cuberootDesc` 字段 49 文件填充但无渲染器读取（死语料）→ 确认后删
 - [x] untrack `.playwright-mcp/` 下 5 个 debug session dump（整目录已 gitignore，误 force-add）
