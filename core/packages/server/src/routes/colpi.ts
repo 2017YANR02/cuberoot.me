@@ -10,6 +10,7 @@
  *   编辑/删除任意词(含上游) → admin (ADMIN_WCA_IDS / X-Admin-Key)
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
   ADMIN_WCA_IDS, requireAuth, authenticateUser, checkRateLimit,
@@ -38,10 +39,6 @@ const ALPHABET = new Set([
   'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
   'ʧ',
 ]);
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 function isValidPair(s: unknown): s is string {
   if (typeof s !== 'string') return false;

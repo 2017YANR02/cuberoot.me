@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 
@@ -16,10 +17,6 @@ import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
  * (禁走 progress.ts 那种客户端报 userId 的 legacy 模式)。
  */
 export const algMarksRoutes = new Hono();
-
-function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 /** 单用户标记上限(1LLL 全 set 3915 条,全站所有 set 全标也远到不了)。 */
 const MAX_MARKS_PER_USER = 20000;

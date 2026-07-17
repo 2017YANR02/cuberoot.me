@@ -14,6 +14,7 @@
  * Schema 见 migrations/0043_sponsors.sql + 0075_contributors.sql。
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 
@@ -47,10 +48,6 @@ function rowToJson(r: SponsorRow): Record<string, unknown> {
   if (r.avatar_url) o.avatarUrl = r.avatar_url;
   if (r.message) o.message = r.message;
   return o;
-}
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
 }
 
 interface SponsorInput {

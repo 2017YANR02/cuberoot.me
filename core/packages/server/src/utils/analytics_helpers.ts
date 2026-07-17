@@ -134,6 +134,16 @@ export function getClientIp(headerLookup: (name: string) => string | undefined):
 }
 
 /**
+ * Hono-context convenience over getClientIp — the single source for request-IP
+ * extraction across all routes. Deliberately NO X-Forwarded-For fallback (see
+ * getClientIp): every route sits behind the same nginx, which sets x-real-ip,
+ * and XFF is client-forgeable → IP/visitor_id/country spoofing.
+ */
+export function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
+  return getClientIp((n) => c.req.header(n));
+}
+
+/**
  * Truncate string to a max byte length, for safe storage.
  */
 export function truncate(s: string | null | undefined, max: number): string | null {

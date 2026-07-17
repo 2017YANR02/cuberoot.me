@@ -9,6 +9,7 @@
  * Schema 见 migrations/0001_nav_sites.sql。
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 
@@ -50,10 +51,6 @@ function rowToJson(r: NavSiteRow): Record<string, unknown> {
   if (r.tags) o.tags = r.tags;
   if (r.status) o.status = r.status;
   return o;
-}
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
 }
 
 const NAME_MAX = 200;

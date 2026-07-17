@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { bodyLimit } from 'hono/body-limit';
 import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
@@ -17,11 +18,6 @@ import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
  * Upsert is keyed by wca_id alone — one snapshot per user (whole DB, not per-session).
  */
 export const timerBackupsRoutes = new Hono();
-
-/** Client IP for rate limiting (Nginx reverse-proxy sets X-Real-IP). */
-function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 // 16 MB — full DBs run ~0.7-3.5 MB, tens of MB with Bluetooth move streams.
 // (A single event/session is far smaller; this snapshot holds the whole timer DB.)

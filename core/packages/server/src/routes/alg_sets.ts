@@ -9,6 +9,7 @@
  * 路径前缀 /v1/alg/sets/... 跟现有 /v1/alg/:puzzle/:set/submissions 不冲突。
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 
@@ -54,10 +55,6 @@ function caseRowToJson(c: AlgCaseRow): Record<string, unknown> {
   if (c.trainer_key) out.trainerKey = c.trainer_key;
   if (c.meta) out.meta = c.meta;
   return out;
-}
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
 }
 
 const CASE_NAME_MAX = 128;
