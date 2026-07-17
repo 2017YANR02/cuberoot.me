@@ -35,7 +35,6 @@ import { compLinkProps } from '@/lib/comp-link';
 import { useCountries } from '@/components/wca-stats/CountrySelect';
 import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { countryName } from '@/lib/country-name';
-import { type ShowMode } from '@/components/wca-stats/ShowToggle';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { SortArrow } from '@/components/SortArrow';
@@ -47,6 +46,10 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
 import '@/i18n/i18n-client';
+
+// Persons / Results display mode for the WCA ranking view — was exported by the
+// (now removed) ShowToggle component; this page is its sole consumer.
+type ShowMode = 'persons' | 'results';
 
 // echarts-for-react / SorRace 仅客户端,名次和的名人堂时间线 + 排名演化用,懒挂.
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
