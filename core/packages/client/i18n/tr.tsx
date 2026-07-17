@@ -18,12 +18,6 @@ export type Lang = AppLang;
 // Map any incoming language string to one of our 3 canonical locales.
 export const normalizeLang = normalizeAppLang;
 
-// "Is this Chinese?" — for NON-text conditionals (Chinese font stack, CJK
-// date/number format, layout). Do NOT use this to pick text; use tr()/<T>.
-export function isZhAny(l: string | undefined | null): boolean {
-  return !!l && l.startsWith('zh');
-}
-
 export interface Msg {
   en: string;
   zh: string;

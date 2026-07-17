@@ -1,2 +1,0 @@
-[    4580ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5173/node_modules/.vite/deps/react-dom_client.js?v=711850c2:14337
-[    5373ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: http://localhost:5173/vendor/cubing-icons/cubing-icons.woff2?e137204355a6707272471108c5a353e5 @ http://localhost:5173/recon?lang=en:0
