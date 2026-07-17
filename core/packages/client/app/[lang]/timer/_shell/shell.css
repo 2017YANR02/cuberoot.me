@@ -449,7 +449,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   white-space: nowrap;
   cursor: pointer;
 }
-.rank-pill--loading { color: var(--muted-foreground); opacity: 0.6; cursor: default; }
 /* WR12/AsR9/NR9 segments: center-align text + any inline RecordBadge, even gaps
    around the "/" separators. 字体继承 .rank-pill 的 Inter(已非 mono). */
 .rank-chip-inner { display: inline-flex; align-items: center; gap: 3px; }
