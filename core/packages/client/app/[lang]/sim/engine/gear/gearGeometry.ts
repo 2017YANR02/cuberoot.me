@@ -191,13 +191,6 @@ const bodyMat = new THREE.MeshPhongMaterial({
   color: BODY_COLOR, specular: 0x222222, shininess: 25, side: THREE.DoubleSide,
 });
 const coreMat = new THREE.MeshPhongMaterial({ color: 0x0d0d0d, specular: 0x111111, shininess: 10 });
-/** Fold-line bar: MATTE black. The bar wraps the crease arc, and a specular
- *  material paints a bright streak along the bend (normals sweep through the
- *  highlight angle) — the user wants the bar to read as ONE evenly-lit piece
- *  with its two flat halves at the solved state. */
-const lineMat = new THREE.MeshPhongMaterial({
-  color: 0x141414, specular: 0x151515, shininess: 12, side: THREE.DoubleSide,
-});
 
 const stickerMats = new Map<string, THREE.MeshPhongMaterial>();
 function stickerMat(face: string): THREE.MeshPhongMaterial {
@@ -378,11 +371,14 @@ export function foldPoint(F: FoldFrame, p: number, q: number, d: number, out: TH
 /** Grid-subdivided prism over a developed outline (CONCAVE OK — the crown
  *  sectors have an inner arc and fillets): the caps are cut into ~cell² tiles
  *  so the crease can pass anywhere through the middle at the build-time bake
- *  (a coarse cap would chord straight across the fold arc). Positions start at
+ *  (a coarse cap would chord straight across the fold arc). `cellY` refines the
+ *  q rows independently — a fold-straddling mesh needs rows dense against
+ *  FOLD_R (and one exactly ON q=0) or its caps sag under neighbours that do
+ *  sample the crease. Positions start at
  *  zero; buildGearPiece writes them once from the returned developed (p,q,d)
  *  triples through foldPoint().
  *  Groups follow the makeSticker convention: [0] caps, [1] side walls. */
-function gridPrism(outline: V2[], dTop: number, dBot: number, cell: number): { geo: THREE.BufferGeometry; dev: Float32Array } {
+function gridPrism(outline: V2[], dTop: number, dBot: number, cell: number, cellY = cell): { geo: THREE.BufferGeometry; dev: Float32Array } {
   const ccw = polyArea2(outline) > 0 ? outline : outline.slice().reverse();
   const dev: number[] = [];
   const tri = (a: V2, b: V2, c: V2, d: number): void => {
@@ -455,7 +451,7 @@ function gridPrism(outline: V2[], dTop: number, dBot: number, cell: number): { g
     x1 = Math.max(x1, x); y1 = Math.max(y1, y);
   }
   const nx = Math.max(1, Math.ceil((x1 - x0) / cell));
-  const ny = Math.max(1, Math.ceil((y1 - y0) / cell));
+  const ny = Math.max(1, Math.ceil((y1 - y0) / cellY));
   for (let i = 0; i < nx; i++) {
     for (let j = 0; j < ny; j++) {
       const poly = clipCell(
@@ -468,7 +464,7 @@ function gridPrism(outline: V2[], dTop: number, dBot: number, cell: number): { g
     }
   }
   const capEnd = dev.length / 3;
-  const ring = resampleClosed(ccw, cell);
+  const ring = resampleClosed(ccw, Math.min(cell, cellY));
   for (let i = 0; i < ring.length; i++) {
     const a = ring[i], b = ring[(i + 1) % ring.length];
     // outward side wall (interior sits on the left of a→b seen from +d)
@@ -532,7 +528,31 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
       foldPoint(F, prism.dev[i], prism.dev[i + 1], prism.dev[i + 2], vTmp);
       arr[i] = vTmp.x; arr[i + 1] = vTmp.y; arr[i + 2] = vTmp.z;
     }
+    // Walls keep the flat normals this computes; cap normals are then rewritten
+    // with the fold map's ANALYTIC surface normal (flat zones = face normal,
+    // arc zone = arc radial) — the non-indexed soup otherwise flat-shades the
+    // crease roll-over into hard facet bands, where the corners' rounded
+    // arrises (CSG, interpolated normals) shade as one smooth Phong bend.
     prism.geo.computeVertexNormals();
+    const narr = (prism.geo.getAttribute('normal') as THREE.BufferAttribute).array as Float32Array;
+    const capVerts = prism.geo.groups[0].count;
+    let dTop = -Infinity, dBot = Infinity;
+    for (let v = 0; v < capVerts; v++) {
+      const d = prism.dev[v * 3 + 2];
+      if (d > dTop) dTop = d;
+      if (d < dBot) dBot = d;
+    }
+    for (let v = 0; v < capVerts; v++) {
+      const q = prism.dev[v * 3 + 1];
+      const up = prism.dev[v * 3 + 2] > (dTop + dBot) / 2 ? 1 : -1;
+      if (q >= FOLD_R) vTmp.copy(F.fPlus);
+      else if (q <= -FOLD_R) vTmp.copy(F.fMinus);
+      else {
+        const a = (q / FOLD_R) * (Math.PI / 4);
+        vTmp.copy(F.n).multiplyScalar(Math.cos(a)).addScaledVector(F.h, Math.sin(a));
+      }
+      narr[v * 3] = vTmp.x * up; narr[v * 3 + 1] = vTmp.y * up; narr[v * 3 + 2] = vTmp.z * up;
+    }
     // tight rigid bound in geometry space — spin preserves distances to E
     prism.geo.boundingSphere = new THREE.Sphere(E.clone(), CROWN_BALL);
     return prism.geo;
@@ -571,13 +591,21 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   // visible black line IS the fold line (user-locked), and both whirl together
   // as one rigid feature. Its ends run out to just shy of the web rim (the
   // gullet material under the rest crease reaches RIM_R); proud of the wedge
-  // decals by a hair so the overlap never z-fights.
+  // decals by a hair so the overlap never z-fights. Plain bodyMat — the bar
+  // must read as the SAME plastic as the corner bodies (user-locked).
+  // Fine q rows are load-bearing: the crease-adjacent decals hold EXACT
+  // vertices on q=0 (their radial edges lie on the crease), so any bar cap
+  // that chords the fold arc sags under them and the colored decals surface
+  // through the bar's mid-line, splitting it into two strips. LINE_CELL_Q
+  // must land a row exactly ON q=0 (0.5 divides 2·FOLD_LINE_HW=9 into 18
+  // float-exact rows) and keep the chord sag (≈0.06) under the 0.12 proudness.
+  const LINE_CELL_Q = 0.5;
   const lineMesh = new THREE.Mesh(
     bake(gridPrism(
       [[-FOLD_LINE_R, -FOLD_LINE_HW], [FOLD_LINE_R, -FOLD_LINE_HW],
        [FOLD_LINE_R, FOLD_LINE_HW], [-FOLD_LINE_R, FOLD_LINE_HW]],
-      STICKER_LIFT + STICKER_DEPTH + 0.12, STICKER_LIFT, CELL)),
-    lineMat);
+      STICKER_LIFT + STICKER_DEPTH + 0.12, STICKER_LIFT, CELL, LINE_CELL_Q)),
+    bodyMat);
   lineMesh.userData.simRole = 'body';
   crown.add(lineMesh);
 
