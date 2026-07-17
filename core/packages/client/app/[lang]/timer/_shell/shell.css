@@ -258,7 +258,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   border: 0;
   background: transparent;
   font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-  font-size: calc(clamp(13px, 2.2vw, 18px) * var(--scramble-scale, 1));
+  --scramble-fs: calc(clamp(26px, 4.4vw, 36px) * var(--scramble-scale, 1));
+  font-size: var(--scramble-fs);
   line-height: 1.5;
   text-align: center;
   cursor: pointer;
@@ -271,12 +272,15 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .timing-surface-scramble .scramble-strip.sf-mono .scramble-text { font-family: var(--font-mono); }
 .timing-surface-scramble .scramble-strip.sf-sans,
 .timing-surface-scramble .scramble-strip.sf-sans .scramble-text { font-family: var(--font-sans); }
-.timing-surface-scramble .scramble-strip.compact { font-size: calc(clamp(12px, 1.8vw, 15px) * var(--scramble-scale, 1)); }
-/* Visible text lives in .scramble-text; battle.css (co-loaded) paints it gray
-   via --muted-foreground, so set the pure token directly to win (0,2,0 > 0,1,0). */
+.timing-surface-scramble .scramble-strip.compact { --scramble-fs: calc(clamp(24px, 3.6vw, 30px) * var(--scramble-scale, 1)); }
+/* Visible text lives in .scramble-text; battle.css (co-loaded) sets BOTH its
+   color (gray via --muted-foreground) AND its own font-size on the bare
+   `.scramble-text` selector, so the strip's font-size never reaches the glyphs.
+   Set both here (0,2,0 > battle's 0,1,0): color from the token, size from the
+   strip's --scramble-fs var (same trap the sf-* font-family rules work around). */
 .timing-surface-scramble .scramble-text {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-  gap: 0 8px; color: var(--scramble-fg);
+  gap: 0 8px; color: var(--scramble-fg); font-size: var(--scramble-fs);
 }
 /* Moves wrap internally as one block, so the "non-optimal" tag always sits AFTER
    the whole scramble (to its right, or below when the scramble wraps) — never
