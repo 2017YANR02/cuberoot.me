@@ -57,24 +57,35 @@ const VIS_SPLIT_MAX_DEPTH = 8;
 /** pts = 扁平 (x, y, viewZ) 三元组序列;viewZ 供深度图遮挡测试。
  *  seq = 采集顺序(≈ GL 提交顺序);plane = 世界平面签名:同一平面的面片共享
  *  代表深度并按 seq 倒序画 —— 模拟 GL「共面先画先赢」。近共面分层两处都靠它:
- *  cubing.js PG3D 贴纸与黑底严格共面(无深度图,排序全靠平面组);引擎平贴纸
- *  (立体贴片关)只比黑框高 0.1,小于深度剔除容差剔不掉,幸存碎片同样只有按
- *  平面组才排得对(倾斜面上碎片质心 z 摆动远大于 0.1 抬升)。 */
-interface PolyPrim { kind: 0; z: number; ro: number; seq: number; pts: number[]; fill: string; opacity: number; plane?: string; pz?: number; }
+ *  cubing.js PG3D 贴纸与黑底严格共面(无深度图,排序全靠平面组);引擎近共面
+ *  堆叠(平贴纸 0.1 / logo 0.9)落在遮挡带宽内整块保留,同样只有按平面组才
+ *  排得对(倾斜面上碎片质心 z 摆动远大于 0.1 抬升)。 */
+/** soft = 纯软遮蔽碎片(全部采样点被近层盖住,见 OCCL_BAND):不剔除,painter
+ *  深度整体压后 occlBand 先画,由其上方图层的精确矢量轮廓覆盖。 */
+interface PolyPrim { kind: 0; z: number; ro: number; seq: number; pts: number[]; fill: string; opacity: number; plane?: string; pz?: number; soft?: boolean; }
 interface ImgPrim { kind: 1; z: number; ro: number; seq: number; markup: string; clipPts?: number[]; plane?: string; pz?: number; }
 type Prim = PolyPrim | ImgPrim;
 
 /** 深度相关常量,按相机距离缩放(场景尺度无关:引擎场景 cubelet=64、相机距
  *  ≈1248;twisty(cubing.js)整体半径 ≈1.5、相机距 ≈6),比例分母取引擎标定值。
- *  遮挡容差是逐像素自适应的:tol = 基底 + 邻域深度梯度 × GRAD —— 采样点最多偏
- *  半个像素,插值误差正比于局部深度坡度;平坦区域容差收紧(齿轮贴纸抬升 0.5
- *  也能剔掉其下塑料),陡坡/掠射区域自动放宽。CAP 防轮廓边缘(与背景相邻,
- *  梯度→∞)容差失控。 */
+ *
+ *  采样点三档判定(修贴纸/黑框接缝锯齿的核心,两套阈值缺一不可):
+ *  - 严格可见:落后 ≤ 逐像素容差 tol = TOL_BASE + 邻域深度梯度 × TOL_GRAD(cap
+ *    TOL_CAP)。采样点最多偏半像素,插值误差正比局部坡度;平坦区收紧(齿轮贴纸
+ *    抬升 0.5 下的塑料也判得出被盖),陡坡自动放宽,CAP 防轮廓边缘梯度→∞。
+ *  - 软遮蔽:落后 ≤ OCCL_BAND 带宽 —— 被「同一表面堆叠」的近层盖住(黑框上的
+ *    平贴纸 0.1 / 齿轮贴纸 0.5 / logo 0.9 / 立体贴片顶面 ≈3.1)。**不剔除**:纯软
+ *    碎片深度压后先画,被上层的精确矢量轮廓盖住 —— 接缝因此是上层几何自身的
+ *    轮廓(任意放大不锯齿),而不是逐像素剔除边界。严格/软混合碎片仍细分
+ *    (切口藏在上层轮廓之下);曲面(齿轮/枕形)无平面簇可依,若把软碎片整块
+ *    保留在原深度,质心 z 排序在 0.5 抬升尺度上是抛硬币 → 必须压后。
+ *  - 硬遮挡:落后 > 带宽,真被挡(剔除;真遮挡轮廓的细分边界仍是像素级)。 */
 const TOL_BASE_RATIO = 0.15 / 1248;
 const TOL_CAP_RATIO = 2.4 / 1248;
 /** ×3:凹谷(曲面枕形贴纸裙边)两侧斜率反号,采样点误差 ≈ 两侧斜率之和 ×
  *  对角亚像素偏移,单侧梯度 ×1.5 不够 → 贴纸面上沿三角边成片缺牙。 */
 const TOL_GRAD_MULT = 3.0;
+const OCCL_BAND_RATIO = 4.0 / 1248;
 const Z_QUANT_RATIO = 0.05 / 1248;
 
 /** GPU 深度图:MeshDepthMaterial(RGBADepthPacking)渲到 RenderTarget 读回,解包成
@@ -134,7 +145,7 @@ function buildDepthMap(
       // perspectiveDepthToViewZ(负值;d=0 → −near, d=1 → −far)
       out[i] = (near * far) / ((far - near) * d - far);
     }
-    // 逐像素遮挡容差 = 基底 + 4 邻域最大深度差 × GRAD(见 RATIO 注释)
+    // 逐像素严格容差 = 基底 + 4 邻域最大深度差 × GRAD(见 RATIO 注释)
     const tol = new Float32Array(W * H);
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
@@ -349,38 +360,52 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
     (window as unknown as { __depthDbg?: unknown }).__depthDbg = { W, H, depthMap, near, far: camera.far };
   }
 
-  /** 深度图单点测试:该点是否不被更近表面遮挡(容差逐像素自适应)。 */
+  /** 深度图单点测试(sprite / logo 用):可见 or 软遮蔽(落后 ≤ 带宽)。 */
+  const occlBand = camDist * OCCL_BAND_RATIO;
   function depthPass(x: number, y: number, z: number): boolean {
     const px = Math.min(W - 1, Math.max(0, Math.floor(x)));
     const py = Math.min(H - 1, Math.max(0, Math.floor(y)));
     const i = (H - 1 - py) * W + px;
-    return z >= depthMap!.depth[i] - depthMap!.tol[i];
+    return z >= depthMap!.depth[i] - occlBand;
   }
 
-  /** 采样计数:质心 + 各顶点向质心收 30%。返回 [可见数, 总数]。 */
-  function sampleVisibility(pts: number[]): [number, number] {
+  /** 单点三档:2 = 严格可见(≤ 逐像素 tol),1 = 软遮蔽(≤ 带宽),0 = 硬遮挡。 */
+  function depthClass(x: number, y: number, z: number): number {
+    const px = Math.min(W - 1, Math.max(0, Math.floor(x)));
+    const py = Math.min(H - 1, Math.max(0, Math.floor(y)));
+    const i = (H - 1 - py) * W + px;
+    const d = depthMap!.depth[i];
+    if (z >= d - depthMap!.tol[i]) return 2;
+    return z >= d - occlBand ? 1 : 0;
+  }
+
+  /** 采样分档计数:质心 + 各顶点向质心收 30%。返回 [严格数, 软数, 总数]。 */
+  function sampleVisibility(pts: number[]): [number, number, number] {
     const n = pts.length / 3;
     let cx = 0, cy = 0, cz = 0;
     for (let i = 0; i < n; i++) { cx += pts[i * 3]; cy += pts[i * 3 + 1]; cz += pts[i * 3 + 2]; }
     cx /= n; cy /= n; cz /= n;
-    let vis = 0;
-    if (depthPass(cx, cy, cz)) vis++;
+    let strict = 0, soft = 0;
+    const c0 = depthClass(cx, cy, cz);
+    if (c0 === 2) strict++; else if (c0 === 1) soft++;
     for (let i = 0; i < n; i++) {
-      if (depthPass(pts[i * 3] * 0.7 + cx * 0.3, pts[i * 3 + 1] * 0.7 + cy * 0.3, pts[i * 3 + 2] * 0.7 + cz * 0.3)) vis++;
+      const c = depthClass(pts[i * 3] * 0.7 + cx * 0.3, pts[i * 3 + 1] * 0.7 + cy * 0.3, pts[i * 3 + 2] * 0.7 + cz * 0.3);
+      if (c === 2) strict++; else if (c === 1) soft++;
     }
-    return [vis, n + 1];
+    return [strict, soft, n + 1];
   }
 
-  /** 面片遮挡测试(整片版,logo 贴图三角用):任一采样可见即保留。 */
+  /** 面片遮挡测试(整片版,logo 贴图三角用):任一采样非硬遮挡即保留。 */
   function pieceVisible(pts: number[]): boolean {
     if (!depthMap) return true;
-    return sampleVisibility(pts)[0] > 0;
+    const [strict, soft] = sampleVisibility(pts);
+    return strict + soft > 0;
   }
 
-  /** 混合可见性面片的定向细分:全遮挡剔除,全可见直接收,部分可见递归对半切
-   *  (屏幕空间中点 + z 线性插值,此尺度误差可忽略)。被更近表面挡住的部分被
-   *  裁掉后,painter 排序不再有大面积重叠 —— 贴纸边上的暗色塑料坡面不会再整片
-   *  压到贴纸上。 */
+  /** 混合可见性面片的定向细分:全硬遮挡剔除,档位纯净直接收(纯软碎片标 soft
+   *  = painter 压后先画,由上层精确轮廓覆盖),混档递归对半切(屏幕空间中点 +
+   *  z 线性插值,此尺度误差可忽略)。严格/软切口藏在上层轮廓之下;硬遮挡边界
+   *  (真轮廓)裁掉后 painter 排序不再有大面积重叠。 */
   function pushVisiblePieces(pts: number[], ro: number, fill: string, opacity: number, depth: number, plane?: string): void {
     const n = pts.length / 3;
     let z = 0;
@@ -391,8 +416,8 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
       prims.push({ kind: 0, z, ro, seq: prims.length, pts, fill, opacity, plane });
       return;
     }
-    const [vis, total] = sampleVisibility(pts);
-    if (vis === 0) return;
+    const [strict, soft, total] = sampleVisibility(pts);
+    if (strict + soft === 0) return;
     let area2 = 0;
     for (let i = 0; i < n; i++) {
       const j = (i + 1) % n;
@@ -400,12 +425,14 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
     }
     area2 = Math.abs(area2);
     if (area2 < MIN_AREA2) return;
-    if (vis === total || depth >= VIS_SPLIT_MAX_DEPTH || area2 <= VIS_SPLIT_MIN_AREA2) {
-      // 细分到底仍是混合可见性的残片:多数采样被挡 = 大概率是压在贴纸边上的
+    const pure = strict === total || soft === total;
+    if (pure || depth >= VIS_SPLIT_MAX_DEPTH || area2 <= VIS_SPLIT_MIN_AREA2) {
+      // 细分到底仍是混档的残片:多数采样硬遮挡 = 大概率是压在贴纸边上的
       // 塑料坡面碎屑,剔除保边缘干净(缝隙由同色描边兜底)。
-      if (vis * 2 < total) return;
+      if ((total - strict - soft) * 2 > total) return;
       if (++triCount > maxTris) throw new Error(`SVG_TOO_COMPLEX:${triCount}`);
-      prims.push({ kind: 0, z, ro, seq: prims.length, pts, fill, opacity, plane });
+      // 无严格采样 = 整片被近层盖住 → soft(压后);有严格采样保原深度。
+      prims.push({ kind: 0, z, ro, seq: prims.length, pts, fill, opacity, plane, soft: strict === 0 });
       return;
     }
     if (n > 3) {
@@ -930,8 +957,11 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
   for (const p of prims) {
     if (p.plane) {
       const v = pzOf.get(p.plane);
-      if (v !== undefined) p.pz = v;
+      if (v !== undefined) { p.pz = v; continue; }
     }
+    // 纯软碎片且无平面簇可依(曲面):painter 深度压后一个带宽,保证先画、
+    // 被盖住 —— 否则与其上近层的质心 z 排序在亚带宽尺度上是抛硬币。
+    if (p.kind === 0 && p.soft) p.pz = p.z - occlBand;
   }
 
   // painter: 远(z 更负)→ 近;深度并档内 renderOrder 小的先画(logo 压贴纸),
@@ -975,9 +1005,9 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
 
   for (const p of prims) {
     if (p.kind === 0) {
-      // 纤条状碎片(面积 < 周长 ⇔ 平均宽 < 0.5px,如近侧视的贴纸侧壁)单独输出
-      // 且不描边:1.2px 同色描边会把细缝(镜面沟槽的黑底)整条盖掉。大面片保留
-      // 描边盖抗锯齿缝。
+      // 纤条状碎片(面积 < 周长 ⇔ 平均宽 < 0.5px,如近侧视的贴纸侧壁)单独输出,
+      // 描边宽自适应 ≈ 自身平均宽:封住相邻纤条间的 AA 发丝缝(1:1 不可见,高倍
+      // 放大成品红虚线),又不像统一 1.2px 那样把镜面沟槽暗线整条吹胖。
       let area2 = 0, perim = 0;
       const n = p.pts.length / 3;
       for (let i = 0; i < n; i++) {
@@ -991,7 +1021,9 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
       if (Math.abs(area2) < perim) {
         flush();
         const op = p.opacity < 1 ? ` fill-opacity="${fmt(p.opacity)}"` : '';
-        body.push(`<path d="${d}" fill="${p.fill}"${op}/>`);
+        const sw = Math.min(0.8, Math.max(0.25, 0.5 * Math.abs(area2) / Math.max(1e-6, perim)));
+        const st = p.opacity < 1 ? '' : ` stroke="${p.fill}" stroke-width="${fmt(sw)}" stroke-linejoin="round"`;
+        body.push(`<path d="${d}" fill="${p.fill}"${op}${st}/>`);
         continue;
       }
       if (p.fill !== curFill || p.opacity !== curOp) {
