@@ -16,8 +16,8 @@ export interface CompPickerPreset {
   value: string;
 }
 
-/** Normalize cubing.com / WCA competition URLs to a bare WCA ID. */
-export function extractWcaIdFromUrl(input: string): string | null {
+/** Normalize cubing.com / WCA competition URLs to a bare competition ID. */
+export function extractCompIdFromUrl(input: string): string | null {
   const t = input.trim().replace(/×/g, 'x');
   const cubing = t.match(/cubing\.com\/(?:live|competition)\/([A-Za-z0-9_-]+)/i);
   if (cubing) return cubing[1].replace(/-/g, '');
@@ -35,7 +35,7 @@ interface Props {
   className?: string;
   disableSuggestions?: boolean;
   presets?: CompPickerPreset[];
-  onUrlPaste?: (wcaId: string) => void;
+  onUrlPaste?: (compId: string) => void;
   /** Hide competitions that haven't started yet (start_date > today). For
    *  reconstructing past solves, an upcoming comp is never a valid pick. */
   hideFuture?: boolean;
@@ -137,8 +137,8 @@ export function CompPicker({ value, onChange, onPick, placeholder, isZh, classNa
         onChange={e => {
           const v = e.target.value;
           if (onUrlPaste) {
-            const wcaId = extractWcaIdFromUrl(v);
-            if (wcaId) { onUrlPaste(wcaId); return; }
+            const compId = extractCompIdFromUrl(v);
+            if (compId) { onUrlPaste(compId); return; }
           }
           onChange(v);
           setOpen(true);
