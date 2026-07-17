@@ -91,6 +91,7 @@ import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
 import { puzzleCaps } from './simCaps';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
+import SimCaptureGroup from '@/components/puzzle-image/SimCaptureGroup';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
 import type { InheritedFields } from '@/lib/puzzle-image/codec';
@@ -135,9 +136,11 @@ const DEFAULT_CUSTOM_CUTS = 'c f 0.255';
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
 const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror']);
 
-/** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle. */
+/** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle.
+ *  正向判断(NxN = 数字阶数 或 mirror),不再用排除法枚举 —— 旧写法漏了 'pyraminx',
+ *  stickering effect 对 PyraCube 取 instancedRenderer 直接崩整页(?puzzle=pyraminx 白屏)。 */
 function asNxN(world: World): Cube | null {
-  return (world.puzzleKind === 'sq1' || world.puzzleKind === 'ivy' || world.puzzleKind === 'dino' || world.puzzleKind === 'redi' || world.puzzleKind === 'rex' || world.puzzleKind === 'heli' || world.puzzleKind === 'gear' || world.puzzleKind === 'skewb' || world.puzzleKind === 'megaminx' || world.puzzleKind === 'fto') ? null : (world.cube as Cube);
+  return (typeof world.puzzleKind === 'number' || world.puzzleKind === 'mirror') ? (world.cube as Cube) : null;
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -1466,6 +1469,9 @@ export default function SimPage() {
 
   const simBridge = useMemo<SimBridge>(() => ({
     getCanvas, getWorld, getRenderer,
+    // cubing.js TwistyPlayer(自定义切割 / PG 目录拼图 / renderer='cubing'):
+    // 引擎 world 不在场时,截图组从它的 vantage 取 scene+camera 做 SVG 投影 / PNG。
+    getTwistyPlayer: () => twistyPlayerRef.current,
     setup: setupParam, alg: algParam,
   }), [getCanvas, getWorld, getRenderer, setupParam, algParam]);
 
@@ -1630,7 +1636,7 @@ export default function SimPage() {
             stickeringColor={query.stickeringColor}
             onStickeringColorChange={(v) => setQuery({ stickeringColor: v === 'yellow' ? null : v })}
           />
-          {imageStudioSupported && (
+          {imageStudioSupported ? (
             <CollapsibleSection
               open={imageOpen}
               onToggle={() => setImageOpen((o) => !o)}
@@ -1643,6 +1649,17 @@ export default function SimPage() {
                 onSpecChange={setImgSpec}
                 simBridge={simBridge}
               />
+            </CollapsibleSection>
+          ) : (
+            // spec 渲染器不支持的拼图(枫叶 / 恐龙 / 齿轮 / PG 骨架族等)仍给
+            // 实时截图组(PNG / SVG / MP4)—— 截图能力覆盖菜单里的所有拼图。
+            <CollapsibleSection
+              open={imageOpen}
+              onToggle={() => setImageOpen((o) => !o)}
+              icon={ImagePlus}
+              label={t('图像', 'Image')}
+            >
+              <SimCaptureGroup simBridge={simBridge} />
             </CollapsibleSection>
           )}
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any

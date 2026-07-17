@@ -22,6 +22,8 @@ const STICKER_HALF = STICKER_INNER / 2;
  *  0 = 普通原核 —— 不染缝,连续实色无黑线(还原真实 stickerless 魔方,见图参考)。 */
 const rawCoreBorder = { value: 0 };
 export function setRawCoreBorder(on: boolean): void { rawCoreBorder.value = on ? 1 : 0; }
+/** 当前缝门控状态(SVG 导出器 CPU 复算 shader 的 SDF 缝需要读它)。 */
+export function getRawCoreBorder(): boolean { return rawCoreBorder.value > 0.5; }
 
 /** 每个面在 cubelet 本地坐标系的外法向(与 makeStickerLocalMatrix 一致)。 */
 const FACE_NORMAL: Record<number, [number, number, number]> = {

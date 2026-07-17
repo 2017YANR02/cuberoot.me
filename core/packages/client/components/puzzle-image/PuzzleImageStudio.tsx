@@ -14,14 +14,8 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Copy, Check, Download, MousePointerClick, RotateCcw, Plus, Trash2, Camera, Film } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-// Type-only imports (fully erased at build) — the concrete sim engine + export
-// module are dynamically imported inside the capture handler so /visualcube (which
-// passes no simBridge) never bundles the ~1.2MB three/cuber engine.
-import type * as THREE from 'three';
-import type World from '@/app/[lang]/sim/engine/world';
-import type { ExportProgress } from '@/app/[lang]/sim/sim_export';
+import { Copy, Check, Download, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
@@ -161,22 +155,14 @@ function CopyButton({ getValue, label }: { getValue: () => string; label: string
 // ── studio ──────────────────────────────────────────────────────────────────
 
 /**
- * Live-simulator bridge — present ONLY when the studio is the /sim 图像 panel.
- * Absent on the /visualcube page (page mode), so the capture subgroup never
- * renders there and the golden fixtures stay byte-identical.
- *
- * It carries the sim's live handles (for the canvas PNG snapshot + offline-render
- * mp4) and its current setup + alg (the mp4 export animates the alg). The image's
- * puzzle / alg / colours are NOT pulled through here — the sim injects them into the
- * spec via the codec (see SimPage), so the panel always mirrors the sim automatically.
+ * SimBridge — present ONLY when the studio is the /sim 图像 panel. Absent on the
+ * /visualcube page (page mode), so the capture subgroup never renders there and
+ * the golden fixtures stay byte-identical. The image's puzzle / alg / colours are
+ * NOT pulled through here — the sim injects them into the spec via the codec (see
+ * SimPage), so the panel always mirrors the sim automatically. Type lives with the
+ * capture UI in SimCaptureGroup (re-exported here for existing importers).
  */
-export interface SimBridge {
-  getCanvas: () => HTMLCanvasElement | null;
-  getWorld: () => World | null;
-  getRenderer: () => THREE.WebGLRenderer | null;
-  setup: string;
-  alg: string;
-}
+export type { SimBridge };
 
 export interface PuzzleImageStudioProps {
   spec: ImageSpec;
@@ -189,8 +175,6 @@ export interface PuzzleImageStudioProps {
 
 export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge }: PuzzleImageStudioProps) {
   const t = useT();
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
     onSpecChange({ [key]: value } as Partial<ImageSpec>);
@@ -345,62 +329,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     set('stickerMask', formatMask(ids));
   }, [s.stickerMask, s.puzzleType, s.cubeSize, maskWholePiece, set]);
 
-  // ── live capture (sim panel only — moved out of the retired DirectorPanel) ──
-  const [exporting, setExporting] = useState(false);
-  const [progress, setProgress] = useState<ExportProgress | null>(null);
-  const capturePreviewRef = useRef<HTMLCanvasElement | null>(null);
-  const abortRef = useRef<{ aborted: boolean }>({ aborted: false });
-
-  const snapshot = useCallback(() => {
-    const cv = simBridge?.getCanvas();
-    if (!cv) return;
-    cv.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `sim-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }, 'image/png');
-  }, [simBridge]);
-
-  const startExport = useCallback(async () => {
-    if (!simBridge) return;
-    const world = simBridge.getWorld();
-    const renderer = simBridge.getRenderer();
-    if (!world || !renderer || exporting) return;
-    setExporting(true);
-    abortRef.current = { aborted: false };
-    setProgress({ phase: t('准备...', 'Preparing...'), pct: 0, framesDone: 0, framesTotal: 0 });
-    // wait a frame so the overlay mounts and capturePreviewRef is live
-    await new Promise<void>((r) => requestAnimationFrame(() => r()));
-    try {
-      const { exportSimVideo } = await import('@/app/[lang]/sim/sim_export');
-      await exportSimVideo({
-        world, renderer, setup: simBridge.setup, alg: simBridge.alg, isZh,
-        abortRef: abortRef.current,
-        onProgress: setProgress,
-        previewCanvas: capturePreviewRef.current,
-      });
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (msg !== 'aborted') {
-        console.error('[Sim Export] failed:', e);
-        // eslint-disable-next-line no-alert
-        alert(t('导出失败:', 'Export failed: ') + msg);
-      }
-    } finally {
-      setExporting(false);
-      setProgress(null);
-    }
-  }, [simBridge, exporting, isZh, t]);
-
-  const cancelExport = useCallback(() => { abortRef.current.aborted = true; }, []);
-  const canRecord = !!simBridge && simBridge.alg.trim().length > 0;
-
   return (
     <div className={`vc-studio vc-studio-${mode}${className ? ` ${className}` : ''}`}>
       {/* Preview cube — only the /visualcube page (page mode). In the /sim 图像 panel
@@ -428,42 +356,8 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
         />
         <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />
 
-        {simBridge && (
-          <div className="vc-capture-group">
-            <span className="vc-capture-label">{t('实时', 'Live')}</span>
-            <button type="button" className="vc-btn" onClick={snapshot}>
-              <Camera size={14} /> {t('截图', 'Snapshot')}
-            </button>
-            <button
-              type="button"
-              className="vc-btn"
-              onClick={startExport}
-              disabled={!canRecord || exporting}
-              title={!canRecord
-                ? t('解法为空, 无可导出动画', 'Alg is empty — nothing to record')
-                : t('导出 mp4 1080p:离线渲染当前解法动画', 'Export mp4 1080p: offline render of the solution animation')}
-            >
-              <Film size={14} /> {t('录制 MP4', 'Record MP4')}
-            </button>
-          </div>
-        )}
+        {simBridge && <SimCaptureGroup simBridge={simBridge} />}
       </section>
-
-      {simBridge && exporting && progress && (
-        <div className="sim-export-overlay">
-          <div className="sim-export-card">
-            <div className="sim-export-title">{t('导出视频中', 'Exporting video')}</div>
-            <canvas ref={capturePreviewRef} className="sim-export-preview" />
-            <div className="sim-export-bar">
-              <div className="sim-export-bar-fill" style={{ width: `${(progress.pct * 100).toFixed(1)}%` }} />
-            </div>
-            <div className="sim-export-msg">{progress.phase}</div>
-            <button type="button" className="sim-export-cancel" onClick={cancelExport}>
-              {t('取消', 'Cancel')}
-            </button>
-          </div>
-        </div>
-      )}
 
       <section className="vc-controls">
         {showPuzzleControls && (
