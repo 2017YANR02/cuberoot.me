@@ -8,6 +8,9 @@
  * PieceAnims — the orbit anim premultiplies in world space, the spin anim
  * premultiplies the child's LOCAL quaternion about axis (outerQuat₀⁻¹ · r̂_slot),
  * constant for the whole tween — so the shared applyAnimFrame drives both untouched.
+ * The creased crown is a RIGID child of the spin pivot (v12): its fold is baked
+ * once at build, so a scrambled gear rests TILTED off the faces like the real
+ * puzzle — no per-frame vertex work anywhere.
  *
  * One move (face f, amt): face layer −amt·180° about the face axis, middle slab
  * (4 centers + core + the equator ring's 4 gears) −amt·90°, equator gears ALSO spin
@@ -82,16 +85,6 @@ export default class GearCube extends THREE.Group implements TweenCube<GearMove>
     this.corePiece = buildCore();
     this.add(this.corePiece.pivot);
     this.twister = new GearTwister(this);
-  }
-
-  /** The fold-glide crowns are NOT rigid children of the spin pivots (spec §0:
-   *  at rest disc + tentacles must lie IN the face planes, which no rigid
-   *  crown can do at every mod-3 phase) — each gear re-bakes its tooth
-   *  vertices from its spin angle. Hook the once-per-render matrix pass so
-   *  tween frames morph and rest frames cost a no-op angle check. */
-  override updateMatrixWorld(force?: boolean): void {
-    for (const ring of this.gearPieces) for (const p of ring) p.refreshCrown();
-    super.updateMatrixWorld(force);
   }
 
   /** Current slot of a corner / gear piece — for drag candidate lookup. */
