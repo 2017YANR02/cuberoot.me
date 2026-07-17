@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { renderSkewbPyramidSvgParametric } from '@cuberoot/shared/skewb-pyramid-svg';
 import { canonicalSq1Alg } from '@/lib/sq1-svg';
-import { patchSrPuzzlegen } from '@/components/sr-puzzlegen-patch';
+import { patchSrPuzzlegen, setSrPerspective } from '@/components/sr-puzzlegen-patch';
 import { parseMask, toSrMask, type StickerId } from '@/lib/puzzle-image/puzzle-mask';
 import type { PuzzleType } from '@/lib/puzzle-image/types';
 
@@ -65,6 +65,9 @@ interface PuzzleSVGBaseProps {
   svgWidth?: number;
   svgHeight?: number;
   rotations?: { x?: number; y?: number; z?: number }[];
+  /** sr camera distance (透视). Omit → sr native (5). Larger = flatter, smaller = stronger
+   *  perspective; on-screen size stays constant. See setSrPerspective. */
+  cameraDist?: number;
   /** Per-face colors. Honored ALONGSIDE a mask (sr applies the scheme after its
    *  simulator, so mask + alg survive) — prefer this over `stickerColors`. */
   scheme?: Record<string, SrColor>;
@@ -97,7 +100,7 @@ export type PuzzleSVGProps = PuzzleSVGBaseProps & (
 
 export function PuzzleSVG({
   kind, alg, case: caseAlg, size = 88, strokeWidth, className,
-  minx, miny, svgWidth, svgHeight, rotations,
+  minx, miny, svgWidth, svgHeight, rotations, cameraDist,
   mask, stickerColors, scheme, arrows, arrowColor,
 }: PuzzleSVGProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -150,6 +153,9 @@ export function PuzzleSVG({
       }
       if (scheme) puzzle.scheme = scheme;
       if (arrows && arrows.length > 0) puzzle.arrows = arrows;
+      // Drive the sr camera distance (透视) for THIS render. Set right before SVG() so it
+      // wins the synchronous render; every PuzzleSVG render sets it (native when unset).
+      setSrPerspective(cameraDist ?? null);
       try {
         (mod as { SVG: (host: HTMLElement, type: string, opts: unknown) => void }).SVG(host, TYPE_MAP[kind], {
           width: size, height: size,
@@ -171,7 +177,7 @@ export function PuzzleSVG({
 
     return () => { cancelled = true; };
   }, [kind, alg, caseAlg, size, strokeWidth, minx, miny, svgWidth, svgHeight, rotations,
-      srMask, stickerColors, scheme, arrows, arrowColor]);
+      cameraDist, srMask, stickerColors, scheme, arrows, arrowColor]);
 
   if (customSvg !== null) {
     return (
