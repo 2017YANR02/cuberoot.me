@@ -6,7 +6,7 @@ import {
   ARM_R0, ARM_R1, ARM_S, ARM_D, WASHER_IN, WASHER_OUT, WASHER_Y,
   SWEEP_RHO, SWEEP_WALL, TOOTH_HALF_ANG, TOOTH_ROOT, COIN_GAP, COIN_T, COIN_R, toothTrapezoid,
   gearSlotApex, gearSlotBasis, gearSlotFaces, gearWindowAngle,
-  cornerStickerOutline, inCrownSweep,
+  cornerStickerOutline, inCrownSweep, CORNER_POLY,
 } from '@/app/[lang]/sim/engine/gear/gearGeometry';
 import { CORNER_POS, FACE_AXIS } from '@/app/[lang]/sim/engine/gear/gearState';
 
@@ -430,29 +430,35 @@ describe('gear geometry clearance invariants', () => {
     expect(Math.max(WEB_R + 2, 34)).toBeLessThan(CUT + SEAM);
   });
 
-  it('corner sticker outlines have no needle spikes (max turn angle bounded)', () => {
-    // Skill hard requirement for curved sticker outlines: a needle spike is a
-    // 120–180° reversal between consecutive segments; healthy rounded outlines
-    // stay well below. Segments shorter than 0.75 units are merged first (the
-    // ray-march sampling can emit near-duplicate points whose direction is
-    // numeric noise, not geometry).
+  it('corner sticker outlines: CCW in-quadrant polygons, no needle reversals', () => {
+    // The outline is now an exact die-cut polygon (traced from the reference
+    // SVG + conjugate-clipped), so honest 90°-ish die-cut corners are fine;
+    // what must never appear is a needle REVERSAL (≥ 120° turn) — those render
+    // as hairline cracks. Also every vertex must stay on the corner block
+    // (inside [CUT+SEAM, H]²) in the right quadrant, wound CCW.
     for (let ci = 0; ci < 8; ci++) {
       const signs = CORNER_POS[ci];
       const faces = FACE_AXIS.map((_, f) => f).filter((f) =>
         FACE_AXIS[f][0] * signs[0] + FACE_AXIS[f][1] * signs[1] + FACE_AXIS[f][2] * signs[2] > 0);
       for (const face of faces) {
         const { outline } = cornerStickerOutline(ci, face);
-        expect(outline.length).toBeGreaterThan(40);
-        const pts: Array<[number, number]> = [];
-        for (const p of outline) {
-          const prev = pts[pts.length - 1];
-          if (!prev || Math.hypot(p[0] - prev[0], p[1] - prev[1]) > 0.75) pts.push([p[0], p[1]]);
+        expect(outline.length).toBeGreaterThanOrEqual(30);
+        let area2 = 0;
+        for (let i = 0; i < outline.length; i++) {
+          const [x0, y0] = outline[i];
+          const [x1, y1] = outline[(i + 1) % outline.length];
+          area2 += x0 * y1 - x1 * y0;
+          expect(Math.abs(x0)).toBeGreaterThan(CUT + SEAM + 2);
+          expect(Math.abs(x0)).toBeLessThan(H - 4);
+          expect(Math.abs(y0)).toBeGreaterThan(CUT + SEAM + 2);
+          expect(Math.abs(y0)).toBeLessThan(H - 4);
         }
+        expect(area2).toBeGreaterThan(0);
         let maxTurn = 0;
-        for (let i = 0; i < pts.length; i++) {
-          const a = pts[(i - 1 + pts.length) % pts.length];
-          const b = pts[i];
-          const c = pts[(i + 1) % pts.length];
+        for (let i = 0; i < outline.length; i++) {
+          const a = outline[(i - 1 + outline.length) % outline.length];
+          const b = outline[i];
+          const c = outline[(i + 1) % outline.length];
           const v1 = [b[0] - a[0], b[1] - a[1]];
           const v2 = [c[0] - b[0], c[1] - b[1]];
           const dot = v1[0] * v2[0] + v1[1] * v2[1];
@@ -460,7 +466,107 @@ describe('gear geometry clearance invariants', () => {
           const turn = Math.acos(Math.max(-1, Math.min(1, dot / l)));
           maxTurn = Math.max(maxTurn, turn);
         }
-        expect((maxTurn * 180) / Math.PI).toBeLessThan(60);
+        expect((maxTurn * 180) / Math.PI).toBeLessThan(120);
+      }
+    }
+  });
+
+  // ── the corner is a GEAR: phase-synced meshing, not swept-volume avoidance ──
+  // Its die-cut plates (CORNER_POLY prisms, tooth-plate deep) interdigitate
+  // with the crown teeth; only the locked spin/orbit ratio (±480°/90°, issue
+  // #32) keeps them apart. Derivation + finer 0.5° sweep in .tmp/gear/mesh_check.mjs
+  // (offline: transit +1.28, rest +7.83, arms 0 hits).
+
+  /** Min signed distance from a world point to any corner plate prism:
+   *  polygon CORNER_POLY (per |in-plane| quadrant fold) × band
+   *  [H − PLATE_T, H + sticker top]. Negative = inside a plate. */
+  function plateClearance(x: number, y: number, z: number): number {
+    const co = [x, y, z];
+    let best = Infinity;
+    for (let j = 0; j < 3; j++) {
+      const h = Math.abs(co[j]);
+      const dz = h < H - PLATE_T ? H - PLATE_T - h : h > H + STICKER_TOP ? h - (H + STICKER_TOP) : 0;
+      if (dz > 4) continue;
+      const a = Math.abs(co[(j + 1) % 3]), b = Math.abs(co[(j + 2) % 3]);
+      let inside = false;
+      let dEdge = Infinity;
+      for (let i = 0, k = CORNER_POLY.length - 1; i < CORNER_POLY.length; k = i++) {
+        const [xi, yi] = CORNER_POLY[i], [xj, yj] = CORNER_POLY[k];
+        if ((yi > b) !== (yj > b) && a < ((xj - xi) * (b - yi)) / (yj - yi) + xi) inside = !inside;
+        const ex = xj - xi, ey = yj - yi;
+        const L2 = ex * ex + ey * ey;
+        const t = L2 ? Math.max(0, Math.min(1, ((a - xi) * ex + (b - yi) * ey) / L2)) : 0;
+        dEdge = Math.min(dEdge, Math.hypot(a - xi - t * ex, b - yi - t * ey));
+      }
+      const dIn = inside ? -dEdge : dEdge;
+      const dd = dz === 0 ? dIn : dIn <= 0 ? dz : Math.hypot(dz, dIn);
+      best = Math.min(best, dd);
+    }
+    return best;
+  }
+
+  it('MESH: the synced gliding crown clears every corner plate through full turns', () => {
+    // Relative crown motion vs a corner: orbit ω about the edge axis with spin
+    // θ = ±(480/90)·ω (the two relative branches: corner in / out of the
+    // turning layer). A full 360° of ω covers all 4 start slots (120° per slot
+    // step = 2 tooth pitches = tooth-identical). ω = 0 is the rest phase.
+    const { e } = gearSlotBasis(...UF);
+    expect(e.x).toBe(1); // UF edge direction is x̂ — the orbit axis below
+    const q = new THREE.Quaternion();
+    const v = new THREE.Vector3();
+    let worst = Infinity;
+    for (const ratio of [480 / 90, -480 / 90]) {
+      for (let wDeg = 0; wDeg < 360; wDeg += 2) {
+        const theta = (ratio * wDeg * Math.PI) / 180;
+        q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), (wDeg * Math.PI) / 180);
+        for (const [px, py, pz] of crownCloud(...UF, theta)) {
+          v.set(px, py, pz).applyQuaternion(q);
+          const c = plateClearance(v.x, v.y, v.z);
+          if (c < worst) worst = c;
+        }
+      }
+    }
+    // offline fine-grained (0.5°, exact-shape cloud) minimum is +1.30; this
+    // cloud is a conservative SUPERSET (polar arcs bulge ≤ 1.14 outside the
+    // tip/root chords), so it reads lower — +0.64 at bake time. Staying
+    // positive proves the true mesh clears by ≥ that margin; a real
+    // regression (e.g. a wing regrowing into the transit band) goes ~−2.
+    expect(worst).toBeGreaterThan(0.4);
+  });
+
+  it('MESH: center-arm swept annuli never enter a corner plate (static, all phases)', () => {
+    // Arms (C-plates z ∈ [H−ARM_D, H], r ∈ [ARM_R0, ARM_R1], |s| ≤ ARM_S) and
+    // the center cap orbit about each cube axis; their swept shells are true
+    // annuli (no phase escape — centers reach every relative angle), so the
+    // plates must clear them STATICALLY, margin included.
+    const hit = (x: number, y: number, z: number, m: number): boolean => {
+      const co = [x, y, z];
+      for (let ax = 0; ax < 3; ax++) {
+        const along = Math.abs(co[ax]);
+        const rad = Math.hypot(co[(ax + 1) % 3], co[(ax + 2) % 3]);
+        if (along <= ARM_R1 + m && along >= ARM_R0 - m &&
+            rad >= H - ARM_D - m && rad <= Math.hypot(ARM_S, H) + m) return true;
+        if (along <= ARM_S + m &&
+            rad >= Math.hypot(ARM_R0, H - ARM_D) - m && rad <= Math.hypot(ARM_R1, H) + m) return true;
+        if (along <= CAP_HALF + m && rad >= H - CAP_T - m && rad <= Math.hypot(CAP_HALF, H) + m) return true;
+      }
+      return false;
+    };
+    const xs = CORNER_POLY.map((p) => p[0]), ys = CORNER_POLY.map((p) => p[1]);
+    const inPoly = (a: number, b: number): boolean => {
+      let inside = false;
+      for (let i = 0, k = CORNER_POLY.length - 1; i < CORNER_POLY.length; k = i++) {
+        const [xi, yi] = CORNER_POLY[i], [xj, yj] = CORNER_POLY[k];
+        if ((yi > b) !== (yj > b) && a < ((xj - xi) * (b - yi)) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    };
+    for (let a = Math.min(...xs); a <= Math.max(...xs); a += 1) {
+      for (let b = Math.min(...ys); b <= Math.max(...ys); b += 1) {
+        if (!inPoly(a, b)) continue;
+        for (let z = H - PLATE_T; z <= H + STICKER_TOP; z += 1) {
+          expect(hit(a, b, z, 0.5)).toBe(false);
+        }
       }
     }
   });
