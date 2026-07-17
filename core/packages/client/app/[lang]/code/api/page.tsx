@@ -228,6 +228,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'alg', m: 'GET', p: '/v1/alg/submissions/admin/unread', g: 'admin', zh: '未读投稿', en: 'Unread submissions' },
   { d: 'alg', m: 'GET', p: '/v1/alg/submissions/admin/recent', g: 'admin', zh: '最近投稿', en: 'Recent submissions' },
   { d: 'alg', m: 'POST', p: '/v1/alg/submissions/admin/seen', g: 'admin', zh: '标记已读', en: 'Mark seen' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/marks', g: 'login', zh: '跨 set 标记聚合(进度总览)', en: 'Cross-set mark summary' },
   { d: 'alg', m: 'GET', p: '/v1/alg/marks/:puzzle/:set', g: 'login', zh: '我的 case 学习标记', en: 'My case learning marks' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/marks/:puzzle/:set', g: 'login', zh: '批量写 case 标记', en: 'Bulk-write case marks' },
   { d: 'alg', m: 'GET', p: '/v1/progress/:algSetId', g: 'login', zh: '读取训练进度', en: 'Read training progress' },

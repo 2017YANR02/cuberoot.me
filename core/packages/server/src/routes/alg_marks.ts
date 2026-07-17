@@ -41,6 +41,42 @@ function validCaseKey(k: unknown): k is string {
 
 interface MarkRow { case_key: string; status: string | null; starred: boolean; updated_at: string }
 
+/**
+ * GET /alg/marks — 当前用户跨全部 set 的标记聚合(/alg/progress 学习进度页用)。
+ *   { sets: [{ puzzle, set, learning, mastered, paused, starred }] }
+ * 只回计数,不回 case_key(明细走 per-set GET);单次 GROUP BY,便宜。
+ * 注意:此路由必须在 /alg/marks/:puzzle/:set 之前不敏感——Hono 按精确路径匹配,
+ * /alg/marks 与 /alg/marks/:p/:s 是两条不同路径,顺序无关。
+ */
+interface MarkAggRow { puzzle: string; set_slug: string; learning: number; mastered: number; paused: number; starred: number }
+
+algMarksRoutes.get('/alg/marks', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  const authUser = await requireAuth(c);
+  const rows = await query<MarkAggRow>(
+    `SELECT puzzle, set_slug,
+            COUNT(*) FILTER (WHERE status = 'learning')::int AS learning,
+            COUNT(*) FILTER (WHERE status = 'mastered')::int AS mastered,
+            COUNT(*) FILTER (WHERE status = 'paused')::int  AS paused,
+            COUNT(*) FILTER (WHERE starred)::int            AS starred
+       FROM alg_case_marks WHERE wca_id = ?
+      GROUP BY puzzle, set_slug
+      ORDER BY puzzle, set_slug`,
+    [authUser.wcaId],
+  );
+  return c.json({
+    sets: rows.map(r => ({
+      puzzle: r.puzzle,
+      set: r.set_slug,
+      learning: Number(r.learning),
+      mastered: Number(r.mastered),
+      paused: Number(r.paused),
+      starred: Number(r.starred),
+    })),
+  });
+});
+
 algMarksRoutes.get('/alg/marks/:puzzle/:set', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   checkRateLimit(getIp(c));

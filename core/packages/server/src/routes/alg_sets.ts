@@ -81,11 +81,18 @@ function validateCaseInput(body: {
   return {};
 }
 
-// GET /v1/alg/sets — 列所有 (puzzle, set_slug)
+// GET /v1/alg/sets — 列所有 (puzzle, set_slug) + 每套 case 数(count)。
+// count 是 /alg/progress 学习进度页的分母(已掌握 N / count);站内搜索忽略多余字段。
 algSetsRoutes.get('/alg/sets', async (c) => {
   c.header('Cache-Control', 'public, max-age=3600');
-  const rows = await query<AlgSetRow>(
-    'SELECT puzzle, set_slug, source, scraped_at, updated_at FROM alg_sets ORDER BY puzzle, set_slug'
+  const rows = await query<AlgSetRow & { count: number | string }>(
+    `SELECT s.puzzle, s.set_slug, s.source, s.scraped_at, s.updated_at,
+            COALESCE(cc.n, 0)::int AS count
+       FROM alg_sets s
+       LEFT JOIN (
+         SELECT puzzle, set_slug, COUNT(*) AS n FROM alg_cases GROUP BY puzzle, set_slug
+       ) cc ON cc.puzzle = s.puzzle AND cc.set_slug = s.set_slug
+      ORDER BY s.puzzle, s.set_slug`
   );
   return c.json(rows.map(r => ({
     puzzle: r.puzzle,
@@ -93,6 +100,7 @@ algSetsRoutes.get('/alg/sets', async (c) => {
     source: r.source,
     scrapedAt: r.scraped_at,
     updatedAt: r.updated_at,
+    count: Number(r.count),
   })));
 });
 

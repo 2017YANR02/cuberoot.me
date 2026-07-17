@@ -1,0 +1,121 @@
+/* /alg/progress — 学习进度总览。配色全走 globals token,派生色用 color-mix。 */
+
+.alg-prog-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin: 14px 0 6px;
+}
+.alg-prog-summary-stat {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.alg-prog-summary-stat b {
+  font-size: 1.5rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+.alg-prog-summary-stat span {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.alg-prog-note {
+  margin: 4px 0 8px;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.alg-prog-group { margin-top: 22px; }
+.alg-prog-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.alg-prog-group-icon { width: 20px; height: 20px; flex: none; }
+
+.alg-prog-sets { display: flex; flex-direction: column; }
+
+.alg-prog-row {
+  padding: 11px 0 12px;
+  border-top: 1px solid color-mix(in srgb, var(--foreground) 9%, transparent);
+}
+.alg-prog-row:first-child { border-top: none; }
+
+.alg-prog-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.alg-prog-set-name {
+  font-size: 0.92rem;
+  font-weight: 550;
+  color: var(--foreground);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+@media (hover: hover) {
+  .alg-prog-set-name:hover { color: var(--accent); }
+}
+.alg-prog-frac {
+  flex: none;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.alg-prog-frac b { font-size: 1rem; color: var(--signal-success); font-weight: 650; }
+.alg-prog-frac-label { margin-left: 5px; }
+
+.alg-prog-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 7px 0;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+.alg-prog-bar .is-mastered { background: var(--signal-success); }
+.alg-prog-bar .is-learning { background: var(--signal-warning); }
+.alg-prog-bar .is-paused { background: var(--faint-foreground); }
+
+/* 分类跳转:纯文字 stat-link(非 chip;数字是进度数据本身),点了跳到该 set 的 ?mark= 过滤 */
+.alg-prog-stats { display: flex; flex-wrap: wrap; gap: 2px 16px; }
+.alg-prog-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  line-height: 1;
+  padding: 4px 0;
+  text-decoration: none;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+@media (hover: hover) {
+  .alg-prog-stat:hover { color: var(--accent); }
+}
+.alg-prog-stat.is-star,
+.alg-prog-stat.is-learning { color: var(--signal-warning); }
+.alg-prog-stat-star { fill: var(--signal-warning); }
+
+.alg-prog-empty { margin: 40px 0; max-width: 460px; }
+.alg-prog-empty p { margin: 0 0 8px; color: var(--foreground); }
+.alg-prog-empty-hint { font-size: 0.85rem; color: var(--muted-foreground); }
+.alg-prog-cta {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.88rem;
+  padding: 7px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
