@@ -69,10 +69,11 @@ function toothDevSamples(): Array<[number, number]> {
 const TOOTH_DEPTHS = [STICKER_TOP, 0, -PLATE_T];
 
 /** World-space cloud of the whole gliding crown at developed spin angle θ:
- *  all 6 teeth through the fold map + the palm hub lathe revolved about n̂. */
-function crownCloud(r: number, s: number, theta: number): V3[] {
+ *  all 6 teeth through the fold map + the palm hub lathe revolved about n̂.
+ *  Pass `base` to override the tooth samples (the default polar grid is a
+ *  conservative superset that bulges past the tip chord). */
+function crownCloud(r: number, s: number, theta: number, base: Array<[number, number]> = toothDevSamples()): V3[] {
   const fold = makeFold(r, s);
-  const base = toothDevSamples();
   const pts: V3[] = [];
   for (let k = 0; k < TEETH; k++) {
     const a0 = k * ((2 * Math.PI) / TEETH) + theta;
@@ -475,7 +476,7 @@ describe('gear geometry clearance invariants', () => {
   // Its die-cut plates (CORNER_POLY prisms, tooth-plate deep) interdigitate
   // with the crown teeth; only the locked spin/orbit ratio (±480°/90°, issue
   // #32) keeps them apart. Derivation + finer 0.5° sweep in .tmp/gear/mesh_check.mjs
-  // (offline: transit +1.28, rest +7.83, arms 0 hits).
+  // (offline: transit +0.93, rest +8.07, arms 0 hits).
 
   /** Min signed distance from a world point to any corner plate prism:
    *  polygon CORNER_POLY (per |in-plane| quadrant fold) × band
@@ -512,6 +513,11 @@ describe('gear geometry clearance invariants', () => {
     // step = 2 tooth pitches = tooth-identical). ω = 0 is the rest phase.
     const { e } = gearSlotBasis(...UF);
     expect(e.x).toBe(1); // UF edge direction is x̂ — the orbit axis below
+    // exact-shape tooth samples: clamp the polar grid's tip arc onto the tip
+    // chord (the default superset would bill the mesh for fictional material
+    // bulging ≤ 1.14 past the chord and eat the real margin)
+    const tipY = TOOTH_TIP * Math.cos(TOOTH_HALF_ANG);
+    const exact = toothDevSamples().map(([x, y]): [number, number] => [x, Math.min(y, tipY)]);
     const q = new THREE.Quaternion();
     const v = new THREE.Vector3();
     let worst = Infinity;
@@ -519,19 +525,17 @@ describe('gear geometry clearance invariants', () => {
       for (let wDeg = 0; wDeg < 360; wDeg += 2) {
         const theta = (ratio * wDeg * Math.PI) / 180;
         q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), (wDeg * Math.PI) / 180);
-        for (const [px, py, pz] of crownCloud(...UF, theta)) {
+        for (const [px, py, pz] of crownCloud(...UF, theta, exact)) {
           v.set(px, py, pz).applyQuaternion(q);
           const c = plateClearance(v.x, v.y, v.z);
           if (c < worst) worst = c;
         }
       }
     }
-    // offline fine-grained (0.5°, exact-shape cloud) minimum is +1.30; this
-    // cloud is a conservative SUPERSET (polar arcs bulge ≤ 1.14 outside the
-    // tip/root chords), so it reads lower — +0.64 at bake time. Staying
-    // positive proves the true mesh clears by ≥ that margin; a real
-    // regression (e.g. a wing regrowing into the transit band) goes ~−2.
-    expect(worst).toBeGreaterThan(0.4);
+    // offline fine-grained (0.5°, denser cloud) minimum is +0.93 — the
+    // coarser test grid must stay comfortably positive; a real regression
+    // (e.g. a wing regrowing into the transit band) goes ~−2
+    expect(worst).toBeGreaterThan(0.5);
   });
 
   it('MESH: center-arm swept annuli never enter a corner plate (static, all phases)', () => {
