@@ -3,24 +3,25 @@
  *
  * A cube [-H, H]³ with layer cut planes at ±CUT (fat outer layers like the real
  * puzzle, not 3x3 thirds). Pieces:
- *  - 12 EDGE GEARS: a 6-tooth crown wheel folded over the arris (photo matched —
- *    the face view reads as HALF A CIRCLE folded 90° over the edge, exactly
- *    3 TENTACLES PER HALF, user-locked): each tooth an ISOSCELES-TRAPEZOID
- *    plate (straight radial legs through the gear center, chord bases, 38°
- *    gullets wider than the 22° teeth) tangent to the 45° cone of apex E (edge
- *    midpoint) and axis n̂ (outward radial), every plate lifted D0 along its
- *    cone normal so the crown rests a flat plateau PLATEAU/√2 ≈ 8.5 proud of
- *    both faces. Mod-3 spin phases force the plastic to be 120°-invariant
- *    about n̂ (a literal folded disc is impossible); 120° = 2 pitches, so the
- *    crown rests identically after every move. At rest one tooth lies flat
- *    over each face (φ = ±90°) and the other four splay at ±30°/±150°,
- *    recessed through the trench openings — 3 visible tentacles per face half.
- *    A palm web (full-revolution plateau-cone frustum out to WEB_R) fills the
- *    middle; the sector decals converge at the apex (no hub dome — the real
- *    puzzle shows the two colored halves meeting at the fold, user-locked).
- *    Per-tooth plus per-palm-sector decals ride the spinning crown, so
- *    scrambled gears mix colors while the solved cube shows 3 teeth + half
- *    the palm per face color.
+ *  - 12 EDGE GEARS, two nested parts (photo matched, user-locked):
+ *    (a) SPINNING CROWN — 6 ISOSCELES-TRAPEZOID tooth plates (straight radial
+ *    legs through the gear center, chord bases, 38° gullets wider than the
+ *    22° teeth) tangent to the 45° cone of apex E (edge midpoint) and axis n̂
+ *    (outward radial), every plate lifted D0 along its cone normal (plateau
+ *    PLATEAU/√2 ≈ 8.5 proud of both faces), plus a palm web filling the
+ *    middle. Mod-3 spin phases force this plastic to be 120°-invariant about
+ *    n̂; 120° = 2 pitches, so the crown rests identically after every move.
+ *    At rest one tooth lies flat over each face (φ = ±90°) and four splay
+ *    through the trench openings — 3 TENTACLE TIPS per face half poke out
+ *    from under the cap rim, and the per-tooth decals mix colors when
+ *    scrambled.
+ *    (b) BENT-COIN CAP on the ORBIT pivot — the fat disc "folded 90° over the
+ *    edge": two half-discs of radius COIN_R, one parallel to each face,
+ *    meeting in a V-groove fold on the arris. It must NOT spin: the fold hugs
+ *    the arris at every rest state, but a folded disc is only 180°-symmetric,
+ *    so on the real puzzle it is an axle cap the crown whirls under. It
+ *    floats COIN_GAP above the teeth's sticker ceiling D_MAX — wholly outside
+ *    the cube surface — hence touches nothing, constructively.
  *  - 8 CORNERS: rounded blocks carved by (a) three CROWN-SWEEP LATHES — tight
  *    solids of revolution around the axes containing every crown's whole
  *    spin ∪ orbit sweep (see crownSweepInnerRadius) — and (b) three thin WASHER
@@ -34,7 +35,9 @@
  *
  * Clearance invariants (locked by tests/gear_geometry.test.ts):
  *  - corner/center/core bodies stay inside their move slabs (|coord| ≶ CUT ∓ SEAM);
- *  - crowns ⊂ ball(CROWN_BALL) at their edge midpoint AND ⊂ their sweep lathe;
+ *  - crowns + coin caps ⊂ ball(CROWN_BALL) at their edge midpoint, crowns ⊂
+ *    their sweep lathe; coin caps float above the D_MAX teeth ceiling and
+ *    keep their fold ends radially clear of the corner diagonal;
  *    face-layer and equator crown orbit circles pass ≥ 2·CROWN_BALL + 2 apart
  *    (ball-to-ball suffices — unlike the abandoned 45°-disc wheel model, crowns
  *    hug the arris);
@@ -116,6 +119,11 @@ const STICKER_DEPTH = 2.6;
 /** Depth window of the whole crown slab along its facet normals. */
 const D_MIN = D0 - PLATE_T;
 const D_MAX = D0 + STICKER_LIFT + STICKER_DEPTH;
+/** Bent-coin cap: hover gap above the teeth ceiling D_MAX, slab thickness,
+ *  half-disc radius (= fold half-length; face reach is COIN_R − cap top). */
+export const COIN_GAP = 0.6;
+export const COIN_T = 4;
+export const COIN_R = 59;
 /** Ball bound of a whole crown around its edge midpoint E. */
 export const CROWN_BALL = Math.hypot(TOOTH_TIP, Math.max(Math.abs(D_MIN), D_MAX)) + 1.5;
 /** Crown sweep lathe. During a turn the crown both orbits (any angle) and spins
@@ -326,32 +334,51 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   web.userData.simRole = 'body';
   group.add(web);
 
-  // palm sector decals: 6 cone-band sectors (one per tooth, same color rule),
-  // riding the spin and converging at the apex — no hub dome, the colored
-  // halves meet at the fold like the real puzzle. Lathe φ is measured from ê
-  // toward t̂ (basis Z = ê, X = t̂), matching gearWindowAngle's convention.
-  const secIn = 1.2;
-  const secOut = rimRad - 0.6;
-  const secHalf = pitch / 2 - 0.8 / rimRad; // ≈1.6u seam between sectors at the rim
-  const decTop = (rad: number): number => PLATEAU + (STICKER_LIFT + STICKER_DEPTH) * Math.SQRT2 - rad;
-  const decBot = (rad: number): number => PLATEAU + STICKER_LIFT * Math.SQRT2 - rad;
-  const decProfile = [
-    new THREE.Vector2(secIn, decBot(secIn)),
-    new THREE.Vector2(secOut, decBot(secOut)),
-    new THREE.Vector2(secOut, decTop(secOut)),
-    new THREE.Vector2(secIn, decTop(secIn)),
-  ];
-  decProfile.push(decProfile[0].clone());
-  for (let k = 0; k < TEETH; k++) {
-    const face = toothFace(k);
-    const phi = Math.PI / 2 + k * pitch;
-    const secGeo = new THREE.LatheGeometry(decProfile, 6, phi - secHalf, 2 * secHalf);
-    secGeo.applyMatrix4(latheBasis);
-    const sec = new THREE.Mesh(secGeo, stickerMat(GEAR_FACE_NAMES[face]));
-    sec.userData.simRole = 'sticker';
-    sec.userData.simStickerNormal = V(FACE_AXIS[face]);
-    group.add(sec);
+  // BENT-COIN CAP — the real puzzle's fat disc "folded 90° over the edge": two
+  // half-discs, one parallel to each face, meeting in a V-groove fold on the
+  // arris. Mounted on the ORBIT pivot, NOT the spin pivot: the fold must hug
+  // the arris at every rest state, but a folded disc is only 180°-symmetric
+  // while spin phases are mod 3 — on the real puzzle it is an axle cap the
+  // crown whirls under. Clearance is constructive: every cap point floats
+  // COIN_GAP above the teeth's sticker ceiling D_MAX along its own face
+  // normal (wholly outside the cube surface), so the spinning crown — whose
+  // points all sit ≤ D_MAX proud of both faces — can never touch it. The
+  // tooth tips poke out from under the rim: 3 tentacles per face half.
+  const coinGroup = new THREE.Group();
+  coinGroup.userData.gearPiece = { type: 'gear', ring: r, id: s };
+  const coinBot = D_MAX + COIN_GAP;
+  const coinTop = coinBot + COIN_T;
+  const FOLD_IN = 0.45; // halves stop short of the diameter — the walls tuck
+                        // inside each other's slab (no coplanar z-fighting)
+                        // leaving a thin V-groove that reads as the fold line
+  const psiM = Math.acos(FOLD_IN / COIN_R);
+  const halfDisc: V2[] = [];
+  for (let i = 0; i <= 40; i++) {
+    const psi = -psiM + (2 * psiM * i) / 40;
+    halfDisc.push([COIN_R * Math.sin(psi), COIN_R * Math.cos(psi)]);
   }
+  const ccwDisc = polyArea2(halfDisc) > 0 ? halfDisc : halfDisc.slice().reverse();
+  for (const face of [facePlus, faceMinus]) {
+    const other = face === facePlus ? faceMinus : facePlus;
+    const fHat = V(FACE_AXIS[face]);   // this half's face normal
+    const hHat = V(FACE_AXIS[other]);  // toward the fold ridge (in-plane)
+    const vDown = hHat.clone().negate();
+    const uHat = face === facePlus ? e.clone() : e.clone().negate(); // keep right-handed
+    const shape = new THREE.Shape(ccwDisc.map(([a, b]) => new THREE.Vector2(a, b)));
+    const slabGeo = new THREE.ExtrudeGeometry(shape, { depth: COIN_T, bevelEnabled: false });
+    slabGeo.applyMatrix4(new THREE.Matrix4().makeBasis(uHat, vDown, fHat)
+      .setPosition(E.clone().addScaledVector(fHat, coinBot).addScaledVector(hHat, coinTop)));
+    const slab = new THREE.Mesh(slabGeo, bodyMat);
+    slab.userData.simRole = 'body';
+    coinGroup.add(slab);
+    const stGeo = extrudeOntoFace(offsetInward(ccwDisc, 0.9),
+      { u: uHat, v: vDown, n: fHat, origin: E.clone().addScaledVector(fHat, coinTop + STICKER_LIFT).addScaledVector(hHat, coinTop) },
+      STICKER_DEPTH);
+    coinGroup.add(makeSticker(stGeo, stickerMat(GEAR_FACE_NAMES[face]), bodyMat, {
+      simStickerNormal: fHat.clone(),
+    }));
+  }
+  pivot.add(coinGroup);
 
   // backing cone filling the slot throat behind the web
   const coneL = 34;

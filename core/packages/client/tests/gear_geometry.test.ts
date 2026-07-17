@@ -4,7 +4,7 @@ import {
   H, CUT, SEAM, TEETH, TOOTH_TIP, WEB_R, PLATEAU, D0, PLATE_T,
   CROWN_BALL, EDGE_R, CORE_R, CAP_HALF,
   ARM_R0, ARM_R1, ARM_S, ARM_D, WASHER_IN, WASHER_OUT, WASHER_Y,
-  SWEEP_RHO, SWEEP_WALL, TOOTH_HALF_ANG, TOOTH_ROOT, toothTrapezoid,
+  SWEEP_RHO, SWEEP_WALL, TOOTH_HALF_ANG, TOOTH_ROOT, COIN_GAP, COIN_T, COIN_R, toothTrapezoid,
   gearFacetFrame, gearSlotApex, gearSlotBasis, gearSlotFaces, gearWindowAngle,
   cornerStickerOutline, inCrownSweep,
 } from '@/app/[lang]/sim/engine/gear/gearGeometry';
@@ -17,10 +17,11 @@ type V3 = [number, number, number];
 // slots used by the sweeps: UF = (ring 1, slot 0); FR = (0,0); FL = (0,3)
 const UF: [number, number] = [1, 0];
 
-/** Crown boundary cloud (home frame, world coords) for a slot: a grid over each
- *  trapezoid tooth plate (legs, chord bases, interior) at the three slab depths
- *  (sticker top / plateau plane / plate back), plus the palm web + sector decal
- *  lathe profile revolved. */
+/** SPINNING crown boundary cloud (home frame, world coords) for a slot: a grid
+ *  over each trapezoid tooth plate (legs, chord bases, interior) at the three
+ *  slab depths (sticker top / plateau plane / plate back), plus the palm web
+ *  lathe profile revolved. The bent-coin cap is NOT here — it rides the orbit
+ *  pivot and never spins (see coinCloud). */
 function crownCloud(r: number, s: number): V3[] {
   const E = gearSlotApex(r, s);
   const { e, t, n } = gearSlotBasis(r, s);
@@ -48,15 +49,13 @@ function crownCloud(r: number, s: number): V3[] {
       }
     }
   }
-  // palm web body + sector decals: lathe profile extremes revolved about n̂
+  // palm web body: lathe profile extremes (incl. the apex) revolved about n̂
   const rimRad = (WEB_R + D0) / Math.SQRT2;
-  const secIn = 1.2;
   const prof: Array<[number, number]> = [
     [0.01, PLATEAU - PLATE_T * Math.SQRT2 - 0.01],
     [rimRad, PLATEAU - PLATE_T * Math.SQRT2 - rimRad],
     [rimRad, PLATEAU - rimRad],
-    [rimRad - 0.6, PLATEAU + (0.5 + 2.6) * Math.SQRT2 - (rimRad - 0.6)],
-    [secIn, PLATEAU + (0.5 + 2.6) * Math.SQRT2 - secIn],
+    [0.01, PLATEAU - 0.01],
   ];
   for (let i = 0; i < 24; i++) {
     const phi = (i / 24) * 2 * Math.PI;
@@ -64,6 +63,36 @@ function crownCloud(r: number, s: number): V3[] {
     for (const [rad, ty] of prof) {
       v.copy(E).addScaledVector(u, rad).addScaledVector(n, ty);
       push();
+    }
+  }
+  return pts;
+}
+
+/** Bent-coin cap cloud (home frame, world coords): rim + interior + sticker top
+ *  of both half-discs. Rides the ORBIT pivot only — no spin phases apply. */
+function coinCloud(r: number, s: number): V3[] {
+  const E = gearSlotApex(r, s);
+  const { e } = gearSlotBasis(r, s);
+  const faces = gearSlotFaces(r, s);
+  const fPlus = faces.find((f) => Math.sin(gearWindowAngle(r, s, f)) > 0)!;
+  const fMinus = faces.find((f) => f !== fPlus)!;
+  const coinBot = D0 + 0.5 + 2.6 + COIN_GAP;
+  const coinTop = coinBot + COIN_T;
+  const pts: V3[] = [];
+  const v = new THREE.Vector3();
+  for (const [face, other] of [[fPlus, fMinus], [fMinus, fPlus]]) {
+    const fHat = new THREE.Vector3(...FACE_AXIS[face]);
+    const hHat = new THREE.Vector3(...FACE_AXIS[other]);
+    for (let i = 0; i <= 16; i++) {
+      const psi = -Math.PI / 2 + (Math.PI * i) / 16;
+      for (const rf of [1, 0.6]) {
+        const z = COIN_R * rf * Math.sin(psi);
+        const a = Math.max(0.45, COIN_R * rf * Math.cos(psi));
+        for (const h of [coinBot, coinTop, coinTop + 0.5 + 2.6]) {
+          v.copy(E).addScaledVector(e, z).addScaledVector(hHat, coinTop - a).addScaledVector(fHat, h);
+          pts.push([v.x, v.y, v.z]);
+        }
+      }
     }
   }
   return pts;
@@ -103,10 +132,10 @@ describe('gear geometry clearance invariants', () => {
     expect((120 % (360 / TEETH))).toBe(0);
   });
 
-  it('crown (plates + decals + hub) stays inside ball(CROWN_BALL) at its apex', () => {
+  it('crown (plates + decals + web) + coin cap stay inside ball(CROWN_BALL) at the apex', () => {
     const E = gearSlotApex(...UF);
     let worst = 0;
-    for (const p of crownCloud(...UF)) {
+    for (const p of [...crownCloud(...UF), ...coinCloud(...UF)]) {
       worst = Math.max(worst, Math.hypot(p[0] - E.x, p[1] - E.y, p[2] - E.z));
     }
     expect(worst).toBeLessThanOrEqual(CROWN_BALL);
@@ -126,6 +155,30 @@ describe('gear geometry clearance invariants', () => {
         expect(inCrownSweep(v, 1, -0.5)).toBe(true);
       }
     }
+  });
+
+  it('bent-coin cap floats above the spinning crown and clears every neighbour', () => {
+    const D_MAX = D0 + 0.5 + 2.6;
+    const axes = gearSlotFaces(...UF).map((f) => new THREE.Vector3(...FACE_AXIS[f]));
+    // corner bodies+stickers can reach at most this far from the edge axis
+    const cornerReach = Math.hypot(H + 0.5 + 2.6, H - 4) + 2;
+    const v = new THREE.Vector3();
+    for (const p of coinCloud(...UF)) {
+      v.set(p[0], p[1], p[2]);
+      // above the teeth ceiling along its own face normal ⇒ the spinning
+      // crown (all points ≤ D_MAX proud of both faces) can never touch it,
+      // nor can anything living at ≤ sticker height over a face
+      const proud = Math.max(...axes.map((a) => v.dot(a) - H));
+      expect(proud).toBeGreaterThanOrEqual(D_MAX + COIN_GAP - 0.01);
+      // R/L turns sweep corners around the UF edge axis (x) relative to the
+      // cap. Inside the carve span the crown-sweep lathe has already hollowed
+      // the corners far deeper than the cap dips; past it (the fold ends) the
+      // cap must stay radially outside the corner diagonal.
+      expect(inCrownSweep(v, 0, -0.5) || Math.hypot(v.y, v.z) > cornerReach).toBe(true);
+    }
+    // two caps over the same face (perpendicular edges): one hugs its ridge at
+    // in-face depth ≥ H + capTop − COIN_R, the other spans |along| ≤ COIN_R
+    expect(H + D_MAX + COIN_GAP + COIN_T).toBeGreaterThan(2 * COIN_R + 2);
   });
 
   it('face-layer crowns clear the equator crowns (orbit circles, ball-to-ball)', () => {
@@ -171,6 +224,9 @@ describe('gear geometry clearance invariants', () => {
         cloud.push([v.x, v.y, v.z]);
       }
     }
+    // the coin cap rides the same orbit spin-free — scan it through the same
+    // relative turn (it hovers far above every cap/arm/axle, locked here)
+    for (const p of coinCloud(...UF)) cloud.push(p);
     const M = 2;
     let worst = 0;
     for (let i = 0; i <= 32; i++) {
