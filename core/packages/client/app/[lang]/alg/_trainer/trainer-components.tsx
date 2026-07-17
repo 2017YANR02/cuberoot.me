@@ -1,13 +1,18 @@
 'use client';
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
-import { useMemo, useState, type ReactNode } from 'react';
-import { Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Trash2, ChevronDown, ChevronRight, Check, Pause, Star } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
 import { TimerState } from '@/lib/trainer-store';
 import type { TrainerSolve, TrainerPenalty } from '@/lib/trainer-store';
+import {
+  useTrainerMarks, markStatus, markStarred, MARK_STATUS_LABEL,
+  type CaseMarks, type CaseMarkStatus, type TrainerMarkBrush,
+} from '@/lib/trainer-marks';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { caseKey } from '@/lib/trainer-case-key';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { tr } from '@/i18n/tr';
@@ -58,7 +63,7 @@ export function ScrambleHeader({ scramble, label, font = 'sans' }: { scramble: s
 }
 
 export function SolveCard({
-  puzzle, set, scramble, c, header, onShowCase,
+  puzzle, set, scramble, c, header, markSlot, onShowCase,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -68,15 +73,18 @@ export function SolveCard({
   isZh: boolean;
   /** 卡片标题(如 `#3`)。省略 = 不渲染标题行(跟随当前题时无需「当前」字样)。 */
   header?: ReactNode;
+  /** 标题行右侧的学习标记 pill(CaseMarkPill)。 */
+  markSlot?: ReactNode;
   /** 点 case 名弹出该情况的详情弹窗(元数据 / 公式)。 */
   onShowCase?: (c: AlgCase) => void;
 }) {
   return (
     <div className="trainer-solve-card">
-      {header != null && (
+      {(header != null || markSlot != null) && (
         <>
           <div className="trainer-card-header">
             <span>{header}</span>
+            {markSlot}
           </div>
           <hr className="trainer-card-divider" />
         </>
@@ -171,6 +179,86 @@ function TriCheckbox({ checked, indeterminate }: { checked: boolean; indetermina
   return <span className={`trainer-checkbox${cls}`} aria-hidden />;
 }
 
+/**
+ * 当前 case 的学习标记 pill(run 页卡片标题行):显示现状,点开小面板改状态 / 星标。
+ * data-no-timer:pill 与面板上的按压不得触发计时。
+ */
+export function CaseMarkPill({ k }: { k: string }) {
+  const marks = useTrainerMarks(s => s.marks);
+  const applyMarks = useTrainerMarks(s => s.applyMarks);
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLSpanElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  usePanelClamp(open, panelRef);
+  useEffect(() => {
+    if (!open) return;
+    // pointerdown 而非 mousedown:与 run 页齿轮面板同因(stage 手势层抑制兼容 mousedown)
+    const handler = (e: PointerEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [open]);
+  const st = markStatus(marks, k);
+  const starred = markStarred(marks, k);
+  return (
+    <span className="trainer-mark-pill-root" ref={rootRef} data-no-timer>
+      <button
+        type="button"
+        className={`trainer-mark-pill is-${st ?? 'none'}`}
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-label={tr({ zh: '学习标记', en: 'Learning mark' })}
+      >
+        {starred && <Star size={11} className="trainer-mark-pill-star" aria-hidden />}
+        {st ? MARK_STATUS_LABEL[st]() : tr({ zh: '标记', en: 'Mark' })}
+      </button>
+      {open && (
+        <div className="trainer-mark-menu" ref={panelRef}>
+          {(['learning', 'mastered', 'paused'] as CaseMarkStatus[]).map(s => (
+            <button
+              key={s}
+              type="button"
+              className={`trainer-mark-menu-item${st === s ? ' is-active' : ''}`}
+              onClick={() => { applyMarks([k], { s: st === s ? null : s }); setOpen(false); }}
+            >
+              <span className={`trainer-mark-dot is-${s}`} aria-hidden />
+              {MARK_STATUS_LABEL[s]()}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`trainer-mark-menu-item${starred ? ' is-active' : ''}`}
+            onClick={() => { applyMarks([k], { f: !starred }); setOpen(false); }}
+          >
+            <Star size={12} className="trainer-mark-pill-star" aria-hidden />
+            {tr({ zh: '星标', en: 'Star' })}
+          </button>
+        </div>
+      )}
+    </span>
+  );
+}
+
+/** case 图上的学习标记角标:右上状态(✓ 已掌握 / ● 学习中 / ⏸ 搁置),左上星标。 */
+export function CaseMarkBadges({ marks, k }: { marks: CaseMarks; k: string }) {
+  const st = markStatus(marks, k);
+  const starred = markStarred(marks, k);
+  if (!st && !starred) return null;
+  return (
+    <>
+      {st && (
+        <span className={`trainer-mark-badge is-${st}`} aria-hidden>
+          {st === 'mastered' ? <Check size={11} strokeWidth={3.5} />
+            : st === 'paused' ? <Pause size={9} strokeWidth={3} />
+            : null /* learning = 纯色圆点 */}
+        </span>
+      )}
+      {starred && <Star className="trainer-mark-star" size={13} aria-hidden />}
+    </>
+  );
+}
+
 interface TopGroup {
   label: string;
   subs: Map<string, AlgCase[]>;
@@ -179,7 +267,7 @@ interface TopGroup {
 }
 
 export function CaseTreePicker({
-  puzzle, set, cases, selected, onChange,
+  puzzle, set, cases, selected, onChange, marks, brush, onPaint,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -187,6 +275,11 @@ export function CaseTreePicker({
   selected: Set<string>;
   onChange: (next: Set<string>) => void;
   isZh: boolean;
+  /** per-case 学习标记(角标显示)。 */
+  marks?: CaseMarks;
+  /** 画笔模式:非空时,点 cell / 组头 = 涂标记而不是改选择(由 onPaint 落地)。 */
+  brush?: TrainerMarkBrush | null;
+  onPaint?: (keys: string[]) => void;
 }) {
   const { tops, hasSubLevel } = useMemo(() => {
     const map = new Map<string, TopGroup>();
@@ -228,10 +321,13 @@ export function CaseTreePicker({
     return next;
   });
 
+  const painting = !!brush && !!onPaint;
+
   const totalSelected = cases.filter(c => selected.has(caseKey(c))).length;
   const allSelected = cases.length > 0 && totalSelected === cases.length;
   const noneSelected = totalSelected === 0;
   const toggleAll = () => {
+    if (painting) { onPaint!(cases.map(caseKey)); return; }
     const next = new Set(selected);
     if (allSelected) {
       for (const c of cases) next.delete(caseKey(c));
@@ -242,6 +338,7 @@ export function CaseTreePicker({
   };
 
   const toggleBulk = (bulk: AlgCase[]) => {
+    if (painting) { onPaint!(bulk.map(caseKey)); return; }
     const allOn = bulk.every(c => selected.has(caseKey(c)));
     const next = new Set(selected);
     if (allOn) {
@@ -271,7 +368,7 @@ export function CaseTreePicker({
   }
 
   return (
-    <div className="trainer-set-block">
+    <div className={`trainer-set-block${painting ? ' is-painting' : ''}`}>
       <button type="button" className="trainer-set-header" onClick={toggleAll}>
         <TriCheckbox checked={allSelected} indeterminate={!allSelected && !noneSelected} />
         <span>{tr({ zh: '全选', en: 'Select all'
@@ -363,7 +460,8 @@ export function CaseTreePicker({
                         {subExpanded && (
                           <div className="trainer-case-grid">
                             {subCases.map(c => <CaseCell key={caseKey(c)}
-                              c={c} puzzle={puzzle} set={set} selected={selected} onChange={onChange} />)}
+                              c={c} puzzle={puzzle} set={set} selected={selected} onChange={onChange}
+                              marks={marks} painting={painting} onPaint={onPaint} />)}
                           </div>
                         )}
                       </div>
@@ -373,7 +471,8 @@ export function CaseTreePicker({
               ) : (
                 <div className="trainer-case-grid">
                   {top.allCases.map(c => <CaseCell key={caseKey(c)}
-                    c={c} puzzle={puzzle} set={set} selected={selected} onChange={onChange} />)}
+                    c={c} puzzle={puzzle} set={set} selected={selected} onChange={onChange}
+                    marks={marks} painting={painting} onPaint={onPaint} />)}
                 </div>
               )
             )}
@@ -385,17 +484,21 @@ export function CaseTreePicker({
 }
 
 function CaseCell({
-  c, puzzle, set, selected, onChange,
+  c, puzzle, set, selected, onChange, marks, painting, onPaint,
 }: {
   c: AlgCase;
   puzzle: AlgPuzzle;
   set: string;
   selected: Set<string>;
   onChange: (next: Set<string>) => void;
+  marks?: CaseMarks;
+  painting?: boolean;
+  onPaint?: (keys: string[]) => void;
 }) {
   const k = caseKey(c);
   const isOn = selected.has(k);
   const toggle = () => {
+    if (painting && onPaint) { onPaint([k]); return; }
     const next = new Set(selected);
     if (isOn) next.delete(k); else next.add(k);
     onChange(next);
@@ -412,6 +515,7 @@ function CaseCell({
           setup={c.setup}
           size={64}
         />
+        {marks && <CaseMarkBadges marks={marks} k={k} />}
       </span>
       <span className="trainer-case-cell-name">{primaryCaseName(puzzle, set, c)}</span>
     </button>

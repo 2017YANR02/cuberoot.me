@@ -125,6 +125,9 @@ const TABLES: Table[] = [
   ] },
   { name: 'timer_sessions', domain: 'studio', origin: 'snapshot', purpose: { zh: '计时器分组 / 分段', en: 'Timer sessions / groups' } },
   { name: 'train_results', domain: 'studio', origin: 'snapshot', purpose: { zh: '公式计时训练成绩', en: 'Trainer (timed-alg) results' } },
+  { name: 'alg_case_marks', domain: 'studio', origin: '0076', naturalKey: true, purpose: { zh: '训练器 per-case 学习标记(学习中/已掌握/搁置 + 星标)', en: 'Per-case learning marks in the alg trainer (learning/mastered/paused + star)' }, cols: [
+    { name: 'wca_id, puzzle, set_slug, case_key', note: { zh: '自然键;case_key = subgroup|name', en: 'natural key; case_key = subgroup|name' } }, { name: 'status, starred, updated_at' },
+  ] },
   { name: 'paint_drawings', domain: 'studio', origin: '0055', purpose: { zh: '/paint 矢量画作云存(doc + 缩略图)', en: 'Cloud-stored /paint vector drawings' }, cols: [
     { name: 'wca_id, title' }, { name: 'doc', note: { zh: '扁平文档 JSON', en: 'flat document JSON' } }, { name: 'thumbnail, byte_size' },
   ] },
@@ -252,6 +255,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 73, slug: 'page_notices', desc: { zh: '新表 page_notices:每页顶部管理员通知条(维护中/WIP/bug),按路径匹配(精确/前缀 /*),分级 info/warning/维护', en: 'New page_notices table: per-page admin notice bars (maintenance/WIP/bug), matched by path (exact or /* prefix), levels info/warning/maintenance' } },
   { n: 74, slug: 'forum_review', desc: { zh: 'forum_threads / forum_posts 加 status(approved/pending/rejected)+ review_note:新用户前 N 帖先审后发,待审仅作者与管理员可见', en: 'forum_threads / forum_posts gain status (approved/pending/rejected) + review_note: new users’ first N posts are held for review, visible only to the author and admins' } },
   { n: 75, slug: 'contributors', desc: { zh: '新表 contributors:/support 贡献者名单,score = 贡献次数(admin 点数字 +1)', en: 'New contributors table: the /support contributor wall, score = contribution count (admin clicks the number to +1)' } },
+  { n: 76, slug: 'alg_case_marks', desc: { zh: '新表 alg_case_marks:公式训练器 per-case 学习标记(学习中/已掌握/搁置 + 星标),登录用户跨设备同步', en: 'New alg_case_marks table: per-case learning marks in the alg trainer (learning/mastered/paused + star), synced across devices for signed-in users' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
