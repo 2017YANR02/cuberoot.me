@@ -32,7 +32,10 @@
  *    slot throat (see crownSweepInnerRadius) — and (b) three thin WASHER
  *    rings that carve exactly the center-arms' swept shell. Both constructive:
  *    a turning crown/arm can never touch a corner block. One splat sticker
- *    per face.
+ *    per face, topping its own die-cut PLINTH: the box's outer faces sink
+ *    CORNER_DROP below the face planes, so each face plate column stands
+ *    proud — the sticker is the cap of its own base-face prism, not a decal
+ *    floating on a flat face (user's prism construction, 2026-07-17).
  *  - 6 CENTERS: rounded cap + square sticker + 4 C-shaped spider arms (one toward
  *    each adjacent gear; bare black plastic — colored feet read as stray dots,
  *    user-rejected). The arms live entirely inside the washer rings; their
@@ -108,11 +111,33 @@ export const TOOTH_TIP = 62;
 export const WEB_R = 13;
 const STICKER_LIFT = 0.5;
 const STICKER_DEPTH = 2.6;
+/** Tile-on-column embed: crown decals / fold bar / center sticker sink this
+ *  far INTO their supporting column top, so no air slit shows edge-on (the
+ *  old bottoms hovered at STICKER_LIFT over a top at 0 — a 0.5 background
+ *  slit under every tile read as a floating decal). The corner sticker
+ *  already embeds into its plate's 0.52 lip. Tops stay on the cube-wide
+ *  sticker plane H + STICKER_LIFT + STICKER_DEPTH. */
+const TILE_EMBED = 0.02;
 /** Bent-coin cap slab: in-plane ring gap to the tooth roots + slab thickness. */
 export const COIN_GAP = 0.6;
 export const COIN_T = 4;
 /** Tooth plate thickness (below the face planes). */
 export const PLATE_T = 7;
+/** Corner plinth drop (user's base-face prism construction, 2026-07-17): each
+ *  corner sticker is a BASE FACE whose die-cut prism — the existing face
+ *  plate column — forms the block's own outer wall. The rounded box's outer
+ *  faces sink by this much, so the column stands proud of the shelf and the
+ *  colored cap tops its own outline-shaped plinth instead of reading as a
+ *  decal glued onto an unrelated flat face. Strictly material REMOVAL (the
+ *  box only shrinks; plates/stickers/carves untouched), so every carve /
+ *  mesh / phase-sync clearance is preserved verbatim — no new CSG either, so
+ *  no new burr risk. Depth bound ≈ 5.5: the plate bottom (H − PLATE_T) must
+ *  stay embedded under the box's r7 arris roll-off where the outline comes
+ *  closest to an arris (max CORNER_POLY = H − FOLD_LINE_HW); deeper and the
+ *  near-arris plinth wall floats off the shelf (test-locked). The DEVELOPED
+ *  black band from sticker wall to arris keeps its 9.4 width (shelf + wall
+ *  trade 1:1), so the fold-bar fat parity (FOLD_LINE_HW) is undisturbed. */
+export const CORNER_DROP = 5;
 /** Slot-throat setback along n̂ (v12): the rigid crown's spin sweep reaches
  *  ρ = a − PLATE_T·√2 at axial depth a (the tilted plate's UNDERSIDE at p=0),
  *  so everything living in the throat — hub + backing cone, both slope-1
@@ -258,7 +283,8 @@ export const TOOTH_FILLET_R = 5;
  *  stickers' arris setback (H − max CORNER_POLY coord = 128 − 118.6), so the
  *  bar reads exactly as fat as the corners' black arris band (user-locked
  *  2026-07-17: 4.5 was visibly thinner than the corner band) — both
- *  test-locked. */
+ *  test-locked. The setback is DEVELOPED width now: CORNER_DROP trades shelf
+ *  for plinth wall 1:1, so the band total (and this parity) is invariant. */
 export const FOLD_LINE_R = RIM_R - 0.25;
 export const FOLD_LINE_HW = 9.4;
 
@@ -584,10 +610,17 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
 
     // per-sector decal (rigid with its sector — scrambled fans mix colors and
     // tilt together; sector boundaries land ON the crease, so no decal
-    // straddles it and each sector is single-colored)
+    // straddles it and each sector is single-colored). Its bottom sinks
+    // TILE_EMBED into the plate top (d=0) — base-face prism model: the tile
+    // roots into its own column instead of hovering a 0.5 slit above it. The
+    // near-coincident caps only sag apart inside the fold-arc band (|q| <
+    // FOLD_R), which the fold bar buries entirely, so no cap ever peeks
+    // through; everywhere else both caps are exactly flat. Filling the slit
+    // adds no in-plane silhouette (decal ⊂ plate) inside the crown's verified
+    // height band, so the phase-sync clearances are untouched.
     const face = toothFace(k);
     const decal = makeSticker(
-      bake(gridPrism(spun(decalCcw), STICKER_LIFT + STICKER_DEPTH, STICKER_LIFT, CELL)),
+      bake(gridPrism(spun(decalCcw), STICKER_LIFT + STICKER_DEPTH, -TILE_EMBED, CELL)),
       stickerMat(GEAR_FACE_NAMES[face]), bodyMat,
       { simStickerNormal: V(FACE_AXIS[face]) },
     );
@@ -620,7 +653,7 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   }
   const lineMesh = new THREE.Mesh(
     bake(gridPrism(barOutline,
-      STICKER_LIFT + STICKER_DEPTH + 0.12, STICKER_LIFT, CELL, LINE_CELL_Q)),
+      STICKER_LIFT + STICKER_DEPTH + 0.12, -TILE_EMBED, CELL, LINE_CELL_Q)),
     bodyMat);
   lineMesh.userData.simRole = 'body';
   crown.add(lineMesh);
@@ -785,7 +818,8 @@ export function buildCornerPiece(ci: number, ev: Evaluator): { pivot: THREE.Obje
 
   const signs = CORNER_POS[ci];
   const lo = CUT + SEAM;
-  const L = H - lo;
+  // outer faces at H − CORNER_DROP: the sunken shelf the plate plinths rise from
+  const L = H - CORNER_DROP - lo;
   const boxGeo = new RoundedBoxGeometry(L, L, L, 3, 7);
   boxGeo.translate(signs[0] * (lo + L / 2), signs[1] * (lo + L / 2), signs[2] * (lo + L / 2));
   let brush: Brush = new Brush(boxGeo);
@@ -801,7 +835,9 @@ export function buildCornerPiece(ci: number, ev: Evaluator): { pivot: THREE.Obje
     // die-cut face plate: the corner's own gear profile, tooth-plate deep, added
     // AFTER the carve subtractions so the spikes survive the (worst-case) lathe —
     // phase sync is what really keeps the crown out of them (test-locked). Top
-    // pokes 0.52 above the face so the sticker bottom embeds without a gap.
+    // pokes 0.52 above the face so the sticker bottom embeds without a gap; the
+    // bottom stays buried under the sunken shelf (CORNER_DROP bound), so the
+    // exposed wall runs shelf → sticker as one outline-shaped plinth.
     const plateGeo = extrudeOntoFace(outline,
       { ...basis, origin: basis.n.clone().multiplyScalar(H - PLATE_T) }, PLATE_T + 0.52);
     const plate = new THREE.Mesh(plateGeo, bodyMat);
@@ -848,7 +884,12 @@ export function buildCenterPiece(f: number): { pivot: THREE.Object3D; group: THR
   const inset = CAP_HALF - 4;
   const sq: V2[] = [[inset, inset], [-inset, inset], [-inset, -inset], [inset, -inset]];
   const outline = roundCorners(polyArea2(sq) > 0 ? sq : sq.reverse(), 8);
-  const geo = extrudeOntoFace(outline, { u, v, n, origin: n.clone().multiplyScalar(H + STICKER_LIFT) }, STICKER_DEPTH);
+  // outline inset = the cap's r4 roll-off start, so the cap top is exactly flat
+  // at H under the whole tile — root the tile TILE_EMBED into it (no 0.5 slit),
+  // top on the cube-wide sticker plane
+  const geo = extrudeOntoFace(outline,
+    { u, v, n, origin: n.clone().multiplyScalar(H - TILE_EMBED) },
+    STICKER_LIFT + STICKER_DEPTH + TILE_EMBED);
   group.add(makeSticker(geo, stickerMat(GEAR_FACE_NAMES[f]), bodyMat, {
     simStickerNormal: n.clone(),
   }));

@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
+import { Evaluator } from 'three-bvh-csg';
 import {
   H, CUT, SEAM, TEETH, TOOTH_TIP, WEB_R, PLATE_T, FOLD_R,
   CROWN_BALL, EDGE_R, CORE_R, CAP_HALF,
   ARM_R0, ARM_R1, ARM_S, ARM_D, WASHER_IN, WASHER_OUT, WASHER_Y,
   SWEEP_RHO, SWEEP_WALL, RIM_R, TOOTH_HALF_W, TOOTH_FILLET_R, FOLD_LINE_R, FOLD_LINE_HW,
-  COIN_R,
-  crownSectorOutline,
+  COIN_R, CORNER_DROP,
+  crownSectorOutline, buildCornerPiece,
   gearSlotApex, gearSlotBasis, gearSlotFaces, gearWindowAngle,
   cornerStickerOutline, inCrownSweep, CORNER_POLY,
 } from '@/app/[lang]/sim/engine/gear/gearGeometry';
@@ -368,6 +369,36 @@ describe('gear geometry clearance invariants', () => {
     };
     expect(channelAt(H - 4)).toBeGreaterThan(TOOTH_TIP);
     expect(channelAt(H - 4)).toBeLessThan(SWEEP_RHO + SWEEP_WALL + 2);
+  });
+
+  it('corner plinth: plate stays embedded under the sunken shelf; CSG body inside bounds (no burr shards)', () => {
+    // Base-face prism construction: the box's outer faces sink CORNER_DROP so
+    // each die-cut plate column stands proud as the sticker's own plinth. The
+    // plate bottom (H − PLATE_T) must stay embedded under the box's r7 arris
+    // roll-off at the outline's closest arris approach — any deeper drop and
+    // the near-arris plinth wall floats off the shelf.
+    const A = H - CORNER_DROP;
+    const over = Math.max(...CORNER_POLY.flat()) - (A - 7);
+    const shelf = over <= 0 ? A : A - 7 + Math.sqrt(49 - over * over);
+    expect(H - PLATE_T).toBeLessThan(shelf - 1);
+    // And the carved body itself: an inside-out brush historically sprayed
+    // lathe shards far outside the block (the r=200 profile wall), so lock
+    // every CSG vertex inside the sunken box's |coord| bounds — the whole
+    // burr-shard failure class trips this after any box/carve change.
+    const ev = new Evaluator();
+    ev.useGroups = false;
+    const { group } = buildCornerPiece(0, ev);
+    const body = group.children[0] as THREE.Mesh;
+    const pos = body.geometry.getAttribute('position') as THREE.BufferAttribute;
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i < pos.count; i++) {
+      for (const c of [Math.abs(pos.getX(i)), Math.abs(pos.getY(i)), Math.abs(pos.getZ(i))]) {
+        if (c < lo) lo = c;
+        if (c > hi) hi = c;
+      }
+    }
+    expect(hi).toBeLessThan(A + 0.1);
+    expect(lo).toBeGreaterThan(CUT + SEAM - 0.1);
   });
 
   it('teeth: 6 SVG-shaped tentacles, parallel flanks, gullet scallop between them', () => {
