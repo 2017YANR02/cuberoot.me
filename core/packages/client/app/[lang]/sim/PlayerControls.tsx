@@ -2885,21 +2885,44 @@ function PuzzleSettings({
                 </select>
               </label>
               {/* 隔离:只保留某类块、挖掉其余(挖块的反操作)。选项由 simCaps 各魔方声明的
-                  isolate kind 列表驱动(目前仅齿轮:角/棱/中心 —— 中心块含核心骨架),未声明置灰。 */}
+                  isolate 列表驱动(目前仅齿轮:角/棱/中心 —— 中心块含核心骨架),未声明置灰。
+                  选了某类后旁边出「编号」下拉:全部 / 第 1…count 个(用户要单独看一个块)。 */}
               <label className={'sim-toggle' + (caps.supports.isolate ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.isolate)}>
                 <span>{t('隔离', 'Isolate')}</span>
                 <select
                   value={settings.debugIsolate}
                   disabled={!caps.supports.isolate}
-                  onChange={(e) => set('debugIsolate', e.target.value as SimSettings['debugIsolate'])}
+                  onChange={(e) => onSettingsChange({
+                    ...settings,
+                    debugIsolate: e.target.value as SimSettings['debugIsolate'],
+                    debugIsolateIndex: -1, // 换类别复位到「全部」,免旧编号越界
+                  })}
                 >
                   <option value="off">{t('关', 'Off')}</option>
-                  {caps.isolate.includes('corner') && <option value="corner">{t('角块', 'Corner')}</option>}
-                  {caps.isolate.includes('edge') && <option value="edge">{t('棱块', 'Edge')}</option>}
-                  {caps.isolate.includes('center') && <option value="center">{t('中心块', 'Center')}</option>}
-                  {caps.isolate.includes('core') && <option value="core">{t('骨架', 'Frame')}</option>}
+                  {caps.isolate.some((x) => x.kind === 'corner') && <option value="corner">{t('角块', 'Corner')}</option>}
+                  {caps.isolate.some((x) => x.kind === 'edge') && <option value="edge">{t('棱块', 'Edge')}</option>}
+                  {caps.isolate.some((x) => x.kind === 'center') && <option value="center">{t('中心块', 'Center')}</option>}
+                  {caps.isolate.some((x) => x.kind === 'core') && <option value="core">{t('骨架', 'Frame')}</option>}
                 </select>
               </label>
+              {(() => {
+                const spec = caps.isolate.find((x) => x.kind === settings.debugIsolate);
+                if (!caps.supports.isolate || !spec) return null;
+                return (
+                  <label className="sim-toggle">
+                    <span>{t('编号', 'Piece')}</span>
+                    <select
+                      value={String(settings.debugIsolateIndex)}
+                      onChange={(e) => set('debugIsolateIndex', Number(e.target.value))}
+                    >
+                      <option value="-1">{t('全部', 'All')}</option>
+                      {Array.from({ length: spec.count }, (_, i) => (
+                        <option key={i} value={String(i)}>{i + 1}</option>
+                      ))}
+                    </select>
+                  </label>
+                );
+              })()}
             </div>
           </div>
           {isMirror && (
