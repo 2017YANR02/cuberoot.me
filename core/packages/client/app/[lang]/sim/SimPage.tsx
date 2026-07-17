@@ -1499,8 +1499,25 @@ export default function SimPage() {
       patch.rotateAxis1 = d.axis1; patch.rotateAngle1 = d.angle1;
       patch.rotateAxis2 = d.axis2; patch.rotateAngle2 = d.angle2;
     }
+    // Mirror the sim's 左右 / 上下 / 透视 onto the visualcube preview so it tracks the
+    // live cube. sim scene.rotation (radians, mapYaw/mapPitch) ↔ visualcube rotateAngle
+    // (degrees) is equal-magnitude, opposite-sign — compare the cube defaults: sim yaw
+    // −36° / pitch +31° ↔ preview axis y=30 / x=−30. sim perspective and visualcube dist
+    // both grow toward flatter/orthographic, so map straight across. NxN only: a pyra /
+    // mega / skewb neutral pose is a different iso, so those keep their own defaults.
+    if (imgPuzzle.puzzleType === 'cube') {
+      const yawDeg = Math.round((1 - settings.viewAngle / 50) * 90);         // 左右 → axis y
+      const pitchDeg = Math.round((settings.viewGradient / 50 - 1) * 90);    // 上下 → axis x
+      const distVal = Math.round((2 + (settings.perspective / 100) * 8) * 10) / 10; // 透视 → dist
+      if (imgSpec.rotateAxis1 !== 'y') patch.rotateAxis1 = 'y';
+      if (imgSpec.rotateAxis2 !== 'x') patch.rotateAxis2 = 'x';
+      if (imgSpec.rotateAngle1 !== yawDeg) patch.rotateAngle1 = yawDeg;
+      if (imgSpec.rotateAngle2 !== pitchDeg) patch.rotateAngle2 = pitchDeg;
+      if (imgSpec.dist !== distVal) patch.dist = distVal;
+    }
     if (Object.keys(patch).length > 0) setImgSpec(patch);
-  }, [imageStudioSupported, imgPuzzle, imgInherit, imgSpec, setImgSpec]);
+  }, [imageStudioSupported, imgPuzzle, imgInherit, imgSpec,
+      settings.viewAngle, settings.viewGradient, settings.perspective, setImgSpec]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';

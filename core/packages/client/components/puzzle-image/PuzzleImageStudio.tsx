@@ -338,7 +338,10 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           vector). Only ever mounts for spec-renderable puzzles: SimPage gates the whole
           panel behind imageStudioSupported, so gear/rex/etc never reach here. */}
       <section className="vc-preview-wrap" ref={previewRef}>
-        <PuzzleImage spec={s} onSpecChange={onSpecChange} />
+        {/* Page mode: interactive (drag-to-rotate, paint editor). Panel mode: a
+            passive mirror — the sim's own 左右 / 上下 / 透视 drive it via imgSpec, so
+            drag is off (it would fight the camera sync and snap back). */}
+        <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} />
       </section>
 
       <section className="vc-exports">
