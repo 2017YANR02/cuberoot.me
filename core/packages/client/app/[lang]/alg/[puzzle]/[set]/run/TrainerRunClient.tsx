@@ -450,6 +450,15 @@ export default function TrainerRunClient() {
                   offLabel={tr({ zh: '复习', en: 'Recap' })}
                   ariaLabel={tr({ zh: '训练 / 复习模式', en: 'Train / recap mode' })}
                 />
+                {mode === 'recap' && (
+                  <PillToggle
+                    value={recapOrder === 'seq'}
+                    onChange={v => setRecapOrder(v ? 'seq' : 'shuffle')}
+                    onLabel={tr({ zh: '顺序', en: 'In order' })}
+                    offLabel={tr({ zh: '乱序', en: 'Shuffled' })}
+                    ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
+                  />
+                )}
               </div>
               <div className="trainer-opts-hint">
                 {mode === 'train'
@@ -459,17 +468,6 @@ export default function TrainerRunClient() {
                       en: 'All n selected cases once per shuffled round, reshuffle when done. Every case within ≤ n draws of a round; worst same-case gap across rounds is 2n−1',
                     })}
               </div>
-              {mode === 'recap' && (
-                <div className="trainer-opts-row">
-                  <PillToggle
-                    value={recapOrder === 'seq'}
-                    onChange={v => setRecapOrder(v ? 'seq' : 'shuffle')}
-                    onLabel={tr({ zh: '顺序', en: 'In order' })}
-                    offLabel={tr({ zh: '乱序', en: 'Shuffled' })}
-                    ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
-                  />
-                </div>
-              )}
               {preAufSupported && (
                 <div className="trainer-opts-row">
                   <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
@@ -526,16 +524,14 @@ export default function TrainerRunClient() {
                   onChange={setShowCaseCard}
                   label={tr({ zh: 'case 卡片', en: 'Case card' })}
                 />
-              </div>
-              {timing && (
-                <div className="trainer-opts-row">
+                {timing && (
                   <BoolToggle
                     value={showStats}
                     onChange={setShowStats}
                     label={tr({ zh: '统计', en: 'Stats' })}
                   />
-                </div>
-              )}
+                )}
+              </div>
               <div className="trainer-opts-help">
                 {timing
                   ? tr({ zh: '空格开始/停止，按住拖动呼出轮盘', en: 'Space to start/stop, hold & drag for the wheel' })
