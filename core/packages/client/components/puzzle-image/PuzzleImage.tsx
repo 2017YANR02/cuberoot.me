@@ -23,6 +23,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import InteractiveCubeNet from '@/app/[lang]/scramble/solver/_InteractiveCubeNet';
 import { PuzzleSVG, type SrColor } from '@/components/PuzzleSVG';
+import { CUBE_FILL } from '@/lib/cube-colors';
+import { SQ1_COLORS } from '@/app/[lang]/sim/engine/sq1/sq1Colors';
 import { invertAlg } from '@/lib/cube3';
 import { rotationDefaultsFor, rotationsMatchDefault } from '@/lib/puzzle-image/defaults';
 import { renderSpecSvg, srKindOf } from '@/lib/puzzle-image/render';
@@ -141,31 +143,47 @@ function entryFor(s: ImageSpec): { renderer: RendererId; draggable: boolean; ext
   return { renderer, draggable: e.draggable, extraClass: RENDERER_CLASS[renderer] };
 }
 
-/** sr-puzzlegen's own axis naming: sq1 / pyraminx spin about z where we say y. */
+/** sr-puzzlegen's own axis naming: sq1 spins about z where we say y (bird's-eye top
+ *  layer). pyraminx/megaminx/skewb keep y as the vertical spin axis. */
 function srPuzzleAxis(type: PuzzleType, axis: string): string {
-  return (type === 'sq1' || type === 'pyraminx') && axis === 'y' ? 'z' : axis;
+  return type === 'sq1' && axis === 'y' ? 'z' : axis;
 }
 
 /**
- * sr-puzzlegen `scheme` (per-face colours) mirroring the sim's own face palette so
- * the panel image is colour-consistent with the left 3D — the sr renderer defaults
- * to its OWN scheme (yellow-top skewb etc.), which is why the colours never matched.
- * Each sr face key maps to the sim face that occupies the same physical position.
- * Only the puzzles whose colours come from the sim's 6-face palette (spec.faceU..B)
- * are mapped here; megaminx uses a fixed 12-colour scheme handled separately.
+ * sr-puzzlegen `scheme` (per-face colours) mirroring the sim's own 3D scheme so the
+ * panel image is colour-consistent with the left — the sr renderer defaults to its OWN
+ * scheme (yellow-top skewb etc.), which is why the colours never matched. Each sr face
+ * key maps to the sim face at the same physical position.
+ *
+ * IMPORTANT: the sim's EXOTIC engines use FIXED schemes, NOT the user's `faceColors`
+ * palette (only NxN cubes follow the palette): skewb → CUBE_FILL (WCA standard),
+ * sq1 → SQ1_COLORS (F=red, R=green, U=black…). So we source those constants directly;
+ * driving the preview off spec.faceU..B would only match when the palette equals the
+ * fixed scheme (i.e. at default) and diverge once the user recolours. megaminx/pyraminx
+ * likewise use fixed schemes — mapped here as they get calibrated.
  */
-function srSchemeFor(type: PuzzleType, s: ImageSpec): Record<string, SrColor> | undefined {
+function srSchemeFor(type: PuzzleType): Record<string, SrColor> | undefined {
   const c = (hex: string): SrColor => ({ value: hex });
+  const n = (v: number): SrColor => ({ value: '#' + v.toString(16).padStart(6, '0') });
   if (type === 'skewb') {
     return {
-      top: c(s.faceU), front: c(s.faceF), right: c(s.faceR),
-      back: c(s.faceB), left: c(s.faceL), bottom: c(s.faceD),
+      top: c(CUBE_FILL.U), front: c(CUBE_FILL.F), right: c(CUBE_FILL.R),
+      back: c(CUBE_FILL.B), left: c(CUBE_FILL.L), bottom: c(CUBE_FILL.D),
     };
   }
   if (type === 'sq1') {
     return {
-      top: c(s.faceU), front: c(s.faceF), bottom: c(s.faceD),
-      left: c(s.faceL), right: c(s.faceR), back: c(s.faceB),
+      top: n(SQ1_COLORS.U), front: n(SQ1_COLORS.F), bottom: n(SQ1_COLORS.D),
+      left: n(SQ1_COLORS.L), right: n(SQ1_COLORS.R), back: n(SQ1_COLORS.B),
+    };
+  }
+  if (type === 'pyraminx') {
+    // sim pyra uses CUBE_FILL by face index (0=D bottom, 1=F, 2=R, 3=B). sr's 4 keys are the
+    // 3 apex faces {left,right,top} + the bottom {back}. Verified vs the left: sr `right`=R(red)
+    // goes flat-on upright at the base orientation [{y:0},{x:-20}] = the sim default; identity
+    // (yaw0) shows F(green) left / R(red) right, so left=F, right=R; top=B apex, back=D bottom.
+    return {
+      left: c(CUBE_FILL.F), right: c(CUBE_FILL.R), top: c(CUBE_FILL.B), back: c(CUBE_FILL.D),
     };
   }
   return undefined;
@@ -353,7 +371,7 @@ export default function PuzzleImage({
           size={spec.imageSize}
           rotations={rotations}
           mask={spec.stickerMask || undefined}
-          scheme={srSchemeFor(spec.puzzleType, spec)}
+          scheme={srSchemeFor(spec.puzzleType)}
         />
       </div>
     );

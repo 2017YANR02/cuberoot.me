@@ -42,15 +42,8 @@ const SIDE_INSET_H = 3;
 const SIDE_INSET_V = 3;
 const CORNER_FACE_CENTER = (W + WEDGE_HALF_CHORD) / 2;
 
-export const SQ1_COLORS = {
-  L: 0x1f4dff,
-  B: 0xff8000,
-  R: 0x00b53d,
-  F: 0xd0021b,
-  U: 0x141414,
-  D: 0xf0f0f0,
-  BODY: 0x0a0a0a,
-};
+export { SQ1_COLORS } from './sq1Colors';
+import { SQ1_COLORS } from './sq1Colors';
 
 export const FACE_ORDER = ['L', 'B', 'R', 'F'] as const;
 type FaceKey = keyof typeof SQ1_COLORS;
