@@ -1200,6 +1200,16 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
                 placeholder={tr({ zh: '国家(留空只显 WR)', en: 'Country (blank = WR only)'
               })}
               />
+              {!user && (
+                <button
+                  className="hint-btn"
+                  onClick={() => login()}
+                  title={tr({ zh: '登录 WCA 自动带入账号国家', en: 'Sign in with WCA to auto-fill your country' })}
+                >
+                  <LogIn size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
+                  {tr({ zh: '登录', en: 'Sign in' })}
+                </button>
+              )}
               <span className="hint">{tr({ zh: '设国家后停表额外显示 CR(大洲)/ NR(全国)排名;登录 WCA 自动带入', en: 'adds CR (continent) / NR (national) ranks; auto-filled when signed in'
               })}</span>
             </Row>
