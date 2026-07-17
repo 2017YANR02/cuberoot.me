@@ -127,16 +127,16 @@ export const COIN_GAP = 0.6;
 export const COIN_T = 4;
 /** Tooth plate thickness (below the face planes). */
 export const PLATE_T = 7;
-/** Corner plate depth (v3 strict-intersection body) — deeper than the crown
- *  tooth plates (PLATE_T): the intersection body's roof is formed by the
- *  neighbouring outlines' top-edge walls at H − FOLD_LINE_HW − inset
+/** Corner die-cut plate depth — deeper than the crown tooth plates (PLATE_T):
+ *  the intersection body's roof is the neighbouring outlines' top-edge walls
  *  (≈ H − 9.5), so a PLATE_T-deep plate would float on a see-through slit.
- *  The die-cut plate digs to H − 9.8, embedding ~0.3 under the roof — the
- *  tile assembly (plate + sticker) roots into the body and the visible wall
- *  runs body → plate → sticker as one generatrix. The extended slab
- *  [H − CORNER_PLATE_T, H − PLATE_T] enlarges the phase-sync band; it is
- *  re-verified with THIS constant by scripts/gear/rigid_check.mjs (parses it
- *  from this source) + the MESH vitest. */
+ *  The plate digs to H − 9.8 to embed under the roof, rooting the tile
+ *  assembly (plate + sticker) into the body. The transit footprint at these
+ *  extra depths is provably no wider than at plate heights (mesh_check: the
+ *  shallow-band and deep-band bakes came out byte-identical), so ONE outline
+ *  at this depth clears the whirling teeth — no stratified second plate.
+ *  Re-verified by scripts/gear/rigid_check.mjs (parses this constant) + the
+ *  MESH vitest over the full [H − CORNER_PLATE_T, top] band. */
 export const CORNER_PLATE_T = 9.8;
 /** Slot-throat setback along n̂ (v12): the rigid crown's spin sweep reaches
  *  ρ = a − PLATE_T·√2 at axial depth a (the tilted plate's UNDERSIDE at p=0),
@@ -779,19 +779,18 @@ export const CORNER_POLY: V2[] = [
   [116.5, 116.5], [115, 117.5], [113.3, 118.1], [111.2, 118.4], [107.6, 118.5],
   [68.4, 118.6], [65.5, 118.2], [64.8, 117.9], [64, 117.1], [63.6, 116.4],
   [63.5, 114.8], [63.6, 114], [64.2, 112.7], [69.1, 111.3], [70.8, 110.5],
-  [71.6, 109.8], [72.1, 109], [72.4, 108.2], [72.6, 107.1], [72.5, 105.4],
-  [72, 103.2], [65.4, 81.2], [63.5, 76.1], [62.7, 74.8], [61.9, 74],
-  [60.3, 73.1], [56.6, 72], [53.5, 70.8], [50.5, 70.5], [49.3, 70.1],
-  [48.5, 69.6], [47.9, 68.8], [47.5, 68], [47.4, 67.2], [47.5, 66.2],
-  [47.8, 65.3], [48.4, 64.7], [49.2, 64.2], [51.2, 63.6], [58.5, 62.4],
-  [60, 61.8], [61.1, 60.9], [62, 59.6], [62.5, 58.2], [63.9, 49.9],
-  [64.5, 48.7], [65.2, 47.9], [66.5, 47.4], [68, 47.4], [69.1, 48],
-  [69.9, 48.9], [70.5, 50.5], [70.7, 53.5], [71.9, 56.5], [73.2, 60.5],
-  [73.7, 61.5], [74.3, 62.3], [75.2, 63], [76.7, 63.7],
-  [82.8, 65.9], [103.2, 72], [105.3, 72.5], [106.8, 72.7], [107.9, 72.5],
-  [108.8, 72.2], [109.7, 71.6], [110.6, 70.7], [111.6, 68.6], [112.8, 64.3],
-  [114.4, 63.7], [115.6, 63.7], [116.8, 63.9], [118.3, 64.6], [118.4, 69.6],
-  [118.5, 108.1], [118.3, 111.6], [118, 113.4], [117.4, 115.2],
+  [71.6, 109.8], [72.1, 109], [72.4, 108.2], [72.6, 107.1], [72.5, 105.5],
+  [72, 103.4], [65.7, 82.4], [63.6, 76.5], [62.9, 75.1], [62.1, 74.2],
+  [61.2, 73.5], [59.8, 72.9], [51.9, 71], [50.3, 70.4], [49.3, 69.7],
+  [48.6, 68.8], [48.1, 67.6], [48, 66.4], [48.1, 65.7], [48.4, 65.2],
+  [49.1, 64.5], [49.9, 64], [51.8, 63.5], [58.5, 62.4], [59.9, 61.9],
+  [61, 61], [61.9, 59.8], [62.4, 58.4], [63.9, 50.3], [64.5, 49.1],
+  [65.3, 48.2], [66.3, 47.9], [67.6, 48], [69.2, 48.8], [70.2, 49.9],
+  [71, 51.6], [72.9, 59.8], [73.5, 61.2], [74.3, 62.3], [75.2, 63],
+  [76.8, 63.8], [83.6, 66.1], [103.3, 72.1], [105.5, 72.6], [107, 72.7],
+  [108, 72.5], [109, 72.1], [109.9, 71.5], [110.6, 70.7], [111.6, 68.6],
+  [112.8, 64.3], [114.4, 63.7], [115.6, 63.7], [116.8, 63.9], [118.3, 64.6],
+  [118.4, 69.6], [118.5, 108.1], [118.3, 111.6], [118, 113.4], [117.4, 115.2],
 ];
 
 /** CORNER_POLY mirrored into corner `ci`'s quadrant on face `face`, CCW, plus
@@ -861,10 +860,11 @@ export function buildCornerPiece(ci: number, ev: Evaluator): { pivot: THREE.Obje
     // die-cut face plate: the corner's own gear profile, CORNER_PLATE_T deep,
     // added AFTER the carve subtractions so the spikes survive the (worst-case)
     // lathe — phase sync is what really keeps the crown out of it (test-locked,
-    // band re-verified at this depth). Top pokes 0.52 above the face so the
-    // sticker bottom embeds without a gap; the bottom embeds under the
-    // intersection body's roof, so the exposed wall runs body → plate →
-    // sticker as one outline-shaped generatrix.
+    // band re-verified at this depth). The fins are re-baked to the transit
+    // limit (mesh_check MARGIN 0.5): they reach the gear with just the tiny
+    // meshing gap. Top pokes 0.52 above the face so the sticker bottom embeds
+    // without a gap; the bottom embeds under the intersection body's roof, so
+    // the exposed wall runs body → plate → sticker as one generatrix.
     const plateGeo = extrudeOntoFace(outline,
       { ...basis, origin: basis.n.clone().multiplyScalar(H - CORNER_PLATE_T) }, CORNER_PLATE_T + 0.52);
     const plate = new THREE.Mesh(plateGeo, bodyMat);

@@ -6,11 +6,15 @@
 // corner plate prisms (traced polygon × depth band). Negative = interpenetration.
 //
 // THIS IS THE GEAR CORNER BAKE PIPELINE — durable, not throwaway. It is the
-// offline oracle that produces gearGeometry.ts's CORNER_POLY from the reference
-// SVG. Re-run whenever the corner shape needs adjusting:
+// offline oracle that produces gearGeometry.ts's CORNER_POLY from the
+// reference SVG. Re-run whenever the corner shape needs adjusting:
 //     node core/packages/client/scripts/gear/mesh_check.mjs
 // It prints the CORNER_POLY table to paste into gearGeometry.ts and the three
-// clearance gates (transit / rest / arms). Design notes: GEAR_FRONT_SPEC.md §9
+// clearance gates (transit / rest / arms); rigid_check.mjs then re-judges the
+// composite. The plate band is [H − CORNER_PLATE_T, top] — DEEP_LO below.
+// (A GEAR_BAND=7 run once confirmed the shallow-band bake is byte-identical:
+// the deep dive doesn't clip the fins, so no stratified second plate.)
+// Design notes: GEAR_FRONT_SPEC.md §9
 // (same folder). Input is self-contained (script-relative SVG); regenerable
 // outputs (corner_poly*.json + the overlay SVG) go under .tmp/ and the dirs are
 // re-created on the fly, so clearing .tmp never breaks a re-run.
@@ -150,7 +154,11 @@ writeFileSync(join(TMP, 'corner_poly.json'), JSON.stringify(poly));
 //   ledge (full polygon):     z ∈ [LEDGE_LO, TOP]   — thin tongue, arms sweep under it
 //   deep  (a ≥ DEEP_SPLIT or b ≥ DEEP_SPLIT): z ∈ [DEEP_LO, TOP] — full tooth-plate depth
 //   sticker sits flush (same polygon) up to TOP.
-const DEEP_LO = H - PLATE_T;         // 121 — matches the gear tooth plate depth
+// Plate-band bottom = engine CORNER_PLATE_T (the corner die-cut plate roots
+// into the strict-intersection body's roof, deeper than the crown PLATE_T).
+// GEAR_BAND overrides it for the one-off shallow-band confirmation run.
+const BAND_T = process.env.GEAR_BAND ? Number(process.env.GEAR_BAND) : 9.8;
+const DEEP_LO = H - BAND_T;
 const LEDGE_LO = 123.6;              // tail tongue underside (clears arm sweep r≤130.3)
 const TOP = H + STICKER_LIFT + STICKER_DEPTH + 0.1; // 131.2
 const DEEP_SPLIT = 52;
@@ -352,7 +360,10 @@ function sweep(ratio, stepDeg, collect, phi0 = 0) {
         const p = lx * cr - ly * sr, q = lx * sr + ly * cr;
         const r = Math.hypot(lx, ly);
         const db = dBot(r);
-        for (const dd of [db, db / 2, 0, STICKER_LIFT, 1.8, STICKER_LIFT + STICKER_DEPTH]) {
+        // top sample 3.34 = the fold-line bar top (LIFT+DEPTH+0.12) + 0.12 —
+        // the bar rides proud of the decals and its tilted top governs the
+        // plate-band ceiling encounter (rigid_check's global offender)
+        for (const dd of [db, db / 2, 0, STICKER_LIFT, 1.8, STICKER_LIFT + STICKER_DEPTH, STICKER_LIFT + STICKER_DEPTH + 0.24]) {
           fold(p, q, dd, out);
           // rigid spin about n̂: cylindrical (u along x̂, w along t̂=(0,1,−1)/√2)
           const alpha = (out[1] + out[2]) * Math.SQRT1_2;
@@ -441,7 +452,11 @@ console.log('transit footprint: q\' reach by |along| (max per unit bin):');
 }
 
 // ── 7. conjugate clip: polygon ∩ safe region, re-verify ──────────────────────
-const MARGIN = 1.2; // safety margin (units) beyond the pooled footprint
+const MARGIN = 0.5; // safety margin (units) beyond the pooled footprint —
+                    // user-locked 2026-07-17: the corner fins reach as close
+                    // to the gear as the transit sweep allows, a hair of gap
+                    // only (was 1.2; the half-unit bin pooling + SAFE_LVL
+                    // still add ~0.5 of implicit conservatism on top)
 {
   // FIELD-BASED clip (no raster staircase): region = { sdOrig ≥ 0 ∧ sdSafe ≥ 0 },
   // extracted by marching squares WITH sub-cell interpolation, then every vertex
