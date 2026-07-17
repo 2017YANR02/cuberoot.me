@@ -11,7 +11,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Flag } from './Flag';
 import { ClearButton } from './ClearButton';
 import AppLink from './AppLink';
-import { extractWcaIdFromUrl } from './CompPicker';
+import { extractCompIdFromUrl } from './CompPicker';
 import { loadComps, searchComps, isCancelledComp, type Comp } from '@/lib/comp-search';
 import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -196,8 +196,8 @@ export function CompCuberPicker({
         onChange={e => {
           const v = e.target.value;
           if (onUrlPaste) {
-            const wcaId = extractWcaIdFromUrl(v);
-            if (wcaId) { onUrlPaste(wcaId); return; }
+            const compId = extractCompIdFromUrl(v);
+            if (compId) { onUrlPaste(compId); return; }
           }
           onQueryChange(v);
           setOpen(true);

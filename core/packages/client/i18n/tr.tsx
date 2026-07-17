@@ -15,7 +15,7 @@ import i18n, { normalizeAppLang, type AppLang } from './i18n-client';
 
 export type Lang = AppLang;
 
-// Map any incoming language string to one of our 3 canonical locales.
+// Map any incoming language string to one of our two locales (en, zh).
 export const normalizeLang = normalizeAppLang;
 
 export interface Msg {

@@ -19,7 +19,7 @@
 
 ## P1 跨区收口
 
-- [ ] **`getIp(c)` 复制进 21 个后端 route**，且都保留可伪造 `X-Forwarded-For` 回退，与权威 `getClientIp` 语义矛盾 → 提共享 helper、去 XFF 回退。**★安全相关，后端第一优先**（`server/src/routes/account_auth.ts:32`）
+- [x] **`getIp(c)` 复制进 21 个后端 route**，都保留可伪造 `X-Forwarded-For` 回退 → 已加共享 `getIp(c)`（`analytics_helpers.ts`，委托权威 `getClientIp`、去 XFF 回退），21 route 删本地 def 改 import，111 调用点不变。server typecheck 绿。**★安全硬化，commit 未 push（需上线才生效）**
 - [ ] **`lib/name-utils.ts` 与 `lib/cuber-name-display.ts` 重复**（三导出函数代码相同，仅注释差一行；消费者 17 vs 33）→ 保留有测试的 `cuber-name-display`，repoint 17 个后删 `name-utils`
 - [ ] 内联 `isZh ? '中' : 'EN'` 文案三元 ~15 处 → `tr({en,zh})`（`wca/results:785/792/827`、calc、`membership:41`、recognize、memo/colpi、`LandingSearch:267` 等）
 - [ ] 本地 `t=(zh,en)=>isZh?zh:en` shim **56 文件/66 处** → 先补导出 positional `t(zh,en)` 的响应式 `useT()`，再全仓收敛
@@ -27,8 +27,10 @@
 - [ ] calc 重造的 `EventSelector` → 共享 `WcaEventSelector`（`calc/_components/components/EventSelector.tsx:26`）
 - [ ] `CountrySelect` / `RegionCountrySelect` 半截迁移收尾
 - [ ] 硬编码色值 → token：`recon-utils.ts:244` FACE_COLORS、`recognize:273` `#adb5bd`、`prediction/lucky:213` `#888`
-- [ ] 命名：`CompPicker.extractWcaIdFromUrl` 实返比赛 id → 改 `extractCompIdFromUrl`；`components/*.css` 三风格统一（cosmetic）
-- [ ] Vite 残渣：`viteDev` 死分支（`shared/src/api/stats-base.ts:20`、`shared/src/alg.ts:226`）、`tr.tsx:18` "3 canonical locales" 注释（实只 2 语）
+- [x] 命名：`CompPicker.extractWcaIdFromUrl` 实返比赛 id（非选手 WCA ID） → 已改 `extractCompIdFromUrl`（函数名+文档+2 调用点局部变量+`onUrlPaste` 形参，4 refs；`CompCuberPicker` 里真指选手 id 的 `wcaId` 没动）
+- [ ] 命名：`components/*.css` 三风格统一（cosmetic）
+- [x] Vite 残渣（注释部分）:`tr.tsx:18` "3 canonical locales" → "two locales (en, zh)"(繁体早移除)
+- [ ] Vite 残渣（代码分支）:`viteDev` 死分支（`shared/src/api/stats-base.ts:20`、`shared/src/alg.ts:226`）→ **暂缓**:触 shared 需 rebuild,且 `alg.ts` 是 alg trainer AI 在改的 dev 路由检测,等其 WIP 落定再动
 
 ## P2 简单清理（本次做）
 
