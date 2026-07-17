@@ -67,7 +67,6 @@ export interface StackTool {
     whyDesc: ReactNode;
     adoptersTitle: string;
     adoptersDesc: ReactNode;
-    cuberootDesc: ReactNode;
     outlookTitle: string;
     outlookDesc: ReactNode;
   };
@@ -82,7 +81,6 @@ export interface StackTool {
     whyDesc: ReactNode;
     adoptersTitle: string;
     adoptersDesc: ReactNode;
-    cuberootDesc: ReactNode;
     outlookTitle: string;
     outlookDesc: ReactNode;
   };
