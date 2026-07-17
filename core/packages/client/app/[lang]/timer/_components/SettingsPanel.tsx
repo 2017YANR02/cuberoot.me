@@ -1190,8 +1190,6 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           <Row label={tr({ zh: '显示排名', en: 'Show ranks'
         })}>
             <BoolToggle value={s.showRankBadge !== false} onChange={(v) => updateSettings({ showRankBadge: v })} />
-            <span className="hint">{tr({ zh: '停表后在成绩旁显示 WR / CR / NR 名次;关掉则完全隐去', en: 'shows WR / CR / NR rank pills after each solve; off hides them entirely'
-            })}</span>
           </Row>
           {s.showRankBadge !== false && (
             <Row label={tr({ zh: '地区排名', en: 'Ranking region'
