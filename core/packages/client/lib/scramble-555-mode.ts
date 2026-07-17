@@ -9,6 +9,7 @@
  */
 'use client';
 import { useEffect, useState } from 'react';
+import { persistItem } from './safe-storage';
 
 export type Scramble555Mode = 'rs' | 'rm';
 
@@ -25,7 +26,7 @@ export function get555Mode(): Scramble555Mode {
 export function set555Mode(mode: Scramble555Mode): void {
   if (typeof localStorage === 'undefined') return;
   if (get555Mode() === mode) return;
-  localStorage.setItem(KEY, mode);
+  persistItem(KEY, mode);
   window.dispatchEvent(new CustomEvent(EVENT));
 }
 

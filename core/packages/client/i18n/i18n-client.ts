@@ -13,6 +13,7 @@
 // hydration mismatch, no flash.
 
 import i18n from 'i18next';
+import { persistItem } from '@/lib/safe-storage';
 import { initReactI18next } from 'react-i18next';
 import zh from './zh.json';
 import en from './en.json';
@@ -79,7 +80,7 @@ export function ensureLangInUrl(lang: string): void {
 
 export function syncLangToUrl(lang: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('trainer-lang', lang);
+  persistItem('trainer-lang', lang);
   document.documentElement.lang = lang;
   // Mirror to cookie so proxy.ts can read it on the next SSR request and
   // render in the right language from the first paint (no en→zh flash).
