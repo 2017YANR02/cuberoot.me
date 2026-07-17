@@ -246,7 +246,7 @@ function armSweepHit(X, Y, Z, m) {
   return null;
 }
 
-// ── 3. fold-glide crown cloud for gear E=(0,H,H), ê=x̂ ───────────────────────
+// ── 3. crease-baked crown cloud for gear E=(0,H,H), ê=x̂ (v12: fold ONCE, rigid) ──
 // frame (derived like slotFoldFrame): facePlus=U(0,1,0), faceMinus=F(0,0,1)
 // foldPoint in these coords: p along x; q>0 → U; q<0 → F.
 // E=(0,H,H); vPlus=(0,0,-1); fPlus=(0,1,0); vMinus=(0,-1,0); fMinus=(0,0,1);
@@ -330,17 +330,23 @@ function dBot(r) {
 }
 
 // ── 4. the sweep ─────────────────────────────────────────────────────────────
-// branch ratio: spin θ = ratio·ω (deg), ω = orbit about x̂. ratio = ±480/90.
-function sweep(ratio, stepDeg, collect) {
+// v12 RIGID crown: the crease is baked, the whole piece spins as a rigid body
+// about its axis n̂ = (0,1,1)/√2 (through the origin — E ∥ n̂), so a frame is
+// fold(rest) → rigid spin θ → orbit ω about x̂. θ = φ0 + ratio·ω with
+// ratio = ±480/90 (the two relative branches) and φ0 ∈ {0,120,240} — a tilted
+// START phase changes the transit geometry now, unlike the old fold-glide
+// whose dev shape was 120°-periodic.
+function sweep(ratio, stepDeg, collect, phi0 = 0) {
   let worst = Infinity, worstAt = null;
   const viol = [];
   const out = [0, 0, 0];
   for (let wDeg = 0; wDeg < 360; wDeg += stepDeg) {
     const w = (wDeg * Math.PI) / 180;
     const cw = Math.cos(w), sw = Math.sin(w);
-    const th = (((ratio * wDeg) % 360) * Math.PI) / 180;
+    const th = ((phi0 + ratio * wDeg) * Math.PI) / 180;
+    const ct = Math.cos(th), st = Math.sin(th);
     for (let k = 0; k < TEETH; k++) {
-      const rot = th + (k * 2 * Math.PI) / TEETH; // rest 90°+k·60°, local +q = 90°
+      const rot = (k * 2 * Math.PI) / TEETH; // REST orientation (90°+k·60°)
       const cr = Math.cos(rot), sr = Math.sin(rot);
       for (const [lx, ly] of toothSamples) {
         const p = lx * cr - ly * sr, q = lx * sr + ly * cr;
@@ -348,17 +354,35 @@ function sweep(ratio, stepDeg, collect) {
         const db = dBot(r);
         for (const dd of [db, db / 2, 0, STICKER_LIFT, 1.8, STICKER_LIFT + STICKER_DEPTH]) {
           fold(p, q, dd, out);
+          // rigid spin about n̂: cylindrical (u along x̂, w along t̂=(0,1,−1)/√2)
+          const alpha = (out[1] + out[2]) * Math.SQRT1_2;
+          const wq = (out[1] - out[2]) * Math.SQRT1_2;
+          const u2 = out[0] * ct - wq * st, w2 = out[0] * st + wq * ct;
+          const X = u2, ys = (alpha + w2) * Math.SQRT1_2, zs = (alpha - w2) * Math.SQRT1_2;
           // orbit about x̂: (y,z) → (y·cw − z·sw, y·sw + z·cw)
-          const Y = out[1] * cw - out[2] * sw, Z = out[1] * sw + out[2] * cw;
-          const c = cornerClearance(out[0], Y, Z);
-          if (c < worst) { worst = c; worstAt = { wDeg, k, p: +p.toFixed(1), q: +q.toFixed(1), d: +dd.toFixed(1), X: +out[0].toFixed(1), Y: +Y.toFixed(1), Z: +Z.toFixed(1) }; }
+          const Y = ys * cw - zs * sw, Z = ys * sw + zs * cw;
+          const c = cornerClearance(X, Y, Z);
+          if (c < worst) { worst = c; worstAt = { wDeg, phi0, k, p: +p.toFixed(1), q: +q.toFixed(1), d: +dd.toFixed(1), X: +X.toFixed(1), Y: +Y.toFixed(1), Z: +Z.toFixed(1) }; }
           if (collect) {
-            trackMinH(out[0], Y, Z);
-            trackFootprint(out[0], Y, Z);
+            trackMinH(X, Y, Z);
+            trackFootprint(X, Y, Z);
             if (c < 0) viol.push({ wDeg, r, d: dd, p, q, c, lx, ly, pa: probeInfo?.a, pb: probeInfo?.b, ph: probeInfo?.h });
           }
         }
       }
+    }
+  }
+  return { worst, worstAt, viol };
+}
+// worst over both branches and all three start phases
+function sweepAll(stepDeg, collect) {
+  let worst = Infinity, worstAt = null;
+  const viol = [];
+  for (const ratio of [-480 / 90, 480 / 90]) {
+    for (const phi0 of [0, 120, 240]) {
+      const r = sweep(ratio, stepDeg, collect, phi0);
+      if (r.worst < worst) { worst = r.worst; worstAt = r.worstAt; }
+      viol.push(...r.viol);
     }
   }
   return { worst, worstAt, viol };
@@ -384,9 +408,8 @@ function sweep(ratio, stepDeg, collect) {
 // ── 6. tooth violation envelope + tip-corner distance, then tip-rounding scan ─
 const t0 = Date.now();
 {
-  const A = sweep(-480 / 90, 0.5, true), B = sweep(+480 / 90, 0.5, true);
-  const viol = A.viol.concat(B.viol);
-  console.log(`sharp trapezoid: min ${Math.min(A.worst, B.worst).toFixed(2)}  (${viol.length} violating samples)`);
+  const { worst, viol } = sweepAll(0.5, true);
+  console.log(`rigid crown vs SVG plates: min ${worst.toFixed(2)}  (${viol.length} violating samples)`);
   if (viol.length) {
     const rs = viol.map((v) => v.r), ds = viol.map((v) => v.d), cs = viol.map((v) => v.c);
     const ws = viol.map((v) => ((v.wDeg + 45) % 90) - 45);
@@ -719,24 +742,30 @@ const MARGIN = 1.2; // safety margin (units) beyond the pooled footprint
   }
   toothOutline = trap;
   rebuildToothSamples();
-  const A = sweep(-480 / 90, 0.5, false), B = sweep(+480 / 90, 0.5, false);
-  console.log(`re-verify transit: min clearance ${Math.min(A.worst, B.worst).toFixed(2)}  at ${JSON.stringify((A.worst < B.worst ? A : B).worstAt)}`);
+  const R = sweepAll(0.5, false);
+  console.log(`re-verify transit: min clearance ${R.worst.toFixed(2)}  at ${JSON.stringify(R.worstAt)}`);
 
-  // REST-phase clearance with the final polygon
+  // REST-phase clearance with the final polygon — the three RIGID rest tilts
   {
     let worst = Infinity;
     const out = [0, 0, 0];
-    for (let k = 0; k < TEETH; k++) {
-      const rot = (k * 2 * Math.PI) / TEETH;
-      const cr = Math.cos(rot), sr = Math.sin(rot);
-      for (const [lx, ly] of toothSamples) {
-        for (const dd of [-PLATE_T, 0, 3.1]) {
-          fold(lx * cr - ly * sr, lx * sr + ly * cr, dd, out);
-          worst = Math.min(worst, cornerClearance(out[0], out[1], out[2]));
+    for (const phi0 of [0, 120, 240]) {
+      const th = (phi0 * Math.PI) / 180, ct = Math.cos(th), st = Math.sin(th);
+      for (let k = 0; k < TEETH; k++) {
+        const rot = (k * 2 * Math.PI) / TEETH;
+        const cr = Math.cos(rot), sr = Math.sin(rot);
+        for (const [lx, ly] of toothSamples) {
+          for (const dd of [-PLATE_T, 0, 3.1]) {
+            fold(lx * cr - ly * sr, lx * sr + ly * cr, dd, out);
+            const alpha = (out[1] + out[2]) * Math.SQRT1_2;
+            const wq = (out[1] - out[2]) * Math.SQRT1_2;
+            const u2 = out[0] * ct - wq * st, w2 = out[0] * st + wq * ct;
+            worst = Math.min(worst, cornerClearance(u2, (alpha + w2) * Math.SQRT1_2, (alpha - w2) * Math.SQRT1_2));
+          }
         }
       }
     }
-    console.log(`re-verify REST: min clearance ${worst.toFixed(2)}`);
+    console.log(`re-verify REST (θ=0/120/240 rigid tilts): min clearance ${worst.toFixed(2)}`);
   }
 
   // ── bake engine tables ──────────────────────────────────────────────────────
@@ -780,7 +809,7 @@ const MARGIN = 1.2; // safety margin (units) beyond the pooled footprint
 <polygon points="${pl(poly)}" fill="#2a2" fill-opacity="0.25" stroke="#c00" stroke-width="1.5"/>
 <polyline points="${pl(fpCurve)}" fill="none" stroke="#f80" stroke-width="1.5" stroke-dasharray="7 4"/>
 <polyline points="${pl(fpCurve.map(([a, b]) => [b, a]))}" fill="none" stroke="#f80" stroke-width="1.5" stroke-dasharray="7 4"/>
-<text x="650" y="405" font-size="15" fill="#333">gray=SVG original  green/red=final feasible sticker  orange-dash=tooth transit envelope (fold-glide, verified +2.11)</text>
+<text x="650" y="405" font-size="15" fill="#333">gray=SVG original  green/red=final feasible sticker  orange-dash=tooth transit envelope (v12 rigid crown, all start phases)</text>
 </svg>`;
   writeFileSync(join(PNG, 'gear_corner_final.svg'), svgOut);
   console.log(`overlay: ${join(PNG, 'gear_corner_final.svg')}`);
