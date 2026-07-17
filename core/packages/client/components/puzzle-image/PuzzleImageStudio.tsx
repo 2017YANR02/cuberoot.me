@@ -13,7 +13,7 @@
  * it drops no control.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Copy, Check, Download, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -171,49 +171,9 @@ export interface PuzzleImageStudioProps {
   className?: string;
   /** Present only in /sim panel mode → shows the live capture subgroup + 从模拟器取. */
   simBridge?: SimBridge;
-  /**
-   * /sim panel: a live VECTOR projection of the sim's OWN 3D scene, for the puzzles
-   * whose spec renderer (sr-puzzlegen) structurally cannot match the sim — no yaw axis,
-   * no perspective knob, its own colours. When set, it replaces the PuzzleImage preview
-   * (and the SVG/PNG export) with an exact, zoom-crisp mirror of the left 3D: orientation
-   * / 透视 / colours all come from the sim camera, so 左右/上下/透视 drive it for free.
-   * SimPage regenerates it on camera settle. null ⇒ fall back to PuzzleImage.
-   */
-  livePreviewSvg?: string | null;
 }
 
-/**
- * Renders a raw scene-export SVG string and re-crops its viewBox to the drawn content
- * (the export's viewBox is the full sim canvas, so the puzzle would sit tiny in a margin).
- * getBBox is geometry-based, so it works regardless of the container's CSS size.
- */
-function LiveVectorPreview({ svg, className }: { svg: string; className?: string }) {
-  const ref = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const host = ref.current;
-    if (!host) return;
-    host.innerHTML = svg;
-    const el = host.querySelector('svg');
-    if (!el) return;
-    // Re-crop viewBox + intrinsic size to the drawn content, so the .vc-preview CSS
-    // (max-height + width:auto) scales it exactly like the visualcube / sr previews
-    // instead of leaving the puzzle tiny inside the full-canvas viewBox.
-    try {
-      const bb = el.getBBox();
-      if (bb.width > 0 && bb.height > 0) {
-        const pad = Math.max(bb.width, bb.height) * 0.04;
-        const vw = bb.width + 2 * pad, vh = bb.height + 2 * pad;
-        el.setAttribute('viewBox', `${bb.x - pad} ${bb.y - pad} ${vw} ${vh}`);
-        el.setAttribute('width', String(Math.round(vw)));
-        el.setAttribute('height', String(Math.round(vh)));
-      }
-    } catch { /* getBBox can throw on a zero-box svg — leave the full-canvas viewBox */ }
-    (el as unknown as HTMLElement).style.display = 'block';
-  }, [svg]);
-  return <div ref={ref} className={className} />;
-}
-
-export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge, livePreviewSvg }: PuzzleImageStudioProps) {
+export default function PuzzleImageStudio({ spec, onSpecChange, mode, className, simBridge }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
   const set = useCallback(<K extends keyof ImageSpec>(key: K, value: ImageSpec[K]) => {
@@ -240,9 +200,6 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
   // no <svg> at all). Only the genuinely DOM-only renderers fall back to
   // serializing the live DOM.
   const getCurrentSvg = useCallback((): string => {
-    // Live-vector puzzles: the SVG shown IS the accurate scene projection — export that,
-    // not the sr-puzzlegen spec render (which is the mismatched view we're replacing).
-    if (livePreviewSvg != null) return livePreviewSvg;
     try {
       const pure = renderSpecSvg(s);
       if (pure) return pure;
@@ -254,7 +211,7 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
     // layout, so a tnoodle-net fallback would export a picture unlike the preview.
     const node = previewRef.current?.querySelector('svg');
     return node ? new XMLSerializer().serializeToString(node) : '';
-  }, [s, livePreviewSvg]);
+  }, [s]);
 
   const downloadSvg = () => {
     const out = getCurrentSvg();
@@ -381,14 +338,9 @@ export default function PuzzleImageStudio({ spec, onSpecChange, mode, className,
           vector). Only ever mounts for spec-renderable puzzles: SimPage gates the whole
           panel behind imageStudioSupported, so gear/rex/etc never reach here. */}
       <section className="vc-preview-wrap" ref={previewRef}>
-        {/* Page mode: interactive (drag-to-rotate, paint editor). Panel mode: a
-            passive mirror — the sim's own 左右 / 上下 / 透视 drive it. For the
-            sr-puzzlegen puzzles (sq1/mega/pyra/skewb) that can't track the sim, SimPage
-            feeds a live vector projection of the sim's own scene (livePreviewSvg), an
-            exact zoom-crisp mirror of the left 3D; everything else uses PuzzleImage. */}
-        {livePreviewSvg != null
-          ? <LiveVectorPreview svg={livePreviewSvg} className="vc-preview vc-preview-live" />
-          : <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} />}
+        {/* Page mode: interactive (drag-to-rotate, paint editor). Panel mode: a passive
+            mirror — the sim's own 左右 / 上下 (and 透视 for the cube) drive the spec. */}
+        <PuzzleImage spec={s} onSpecChange={onSpecChange} interactive={mode === 'page'} />
       </section>
 
       <section className="vc-exports">
