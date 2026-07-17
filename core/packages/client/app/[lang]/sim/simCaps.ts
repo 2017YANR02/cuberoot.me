@@ -16,6 +16,11 @@ export type SimRenderer = 'cubing' | 'engine' | 'group';
 /** Which element a puzzle turns — sets the debug "carve" toggle's label/semantics. */
 export type CarveElement = 'corner' | 'face' | 'edge';
 
+/** Debug "isolate" piece kinds a puzzle can show one-at-a-time (inverse of carve:
+ *  keep this kind, hide the rest). The cube taxonomy; a puzzle declares the subset
+ *  it tags + implements `setIsolate` for. */
+export type IsolateKind = 'corner' | 'edge' | 'center' | 'core';
+
 export interface SimPuzzleCaps {
   /** Who renders it → which controls apply.
    *  - `always`     in-house Three.js engine only (nxn / sq1 / ivy / dino / redi / rex / heli)
@@ -32,6 +37,12 @@ export interface SimPuzzleCaps {
    *  exactly one kind of element, so this is one value, not a set. The cube implements a
    *  uniform `setCarve(on)` regardless of element. */
   carve?: CarveElement;
+  /** Debug "isolate": the piece kinds this puzzle can show alone (hiding the rest) —
+   *  the inverse of carve. Requires the cube to implement `setIsolate(kind|null)` and
+   *  tag its pieces by kind. The dropdown lists exactly these (+ 关). Omitted = the
+   *  puzzle has no per-kind isolation → the control grays out. Gear (corner/edge gear/
+   *  center/core) is the first; other engines opt in by declaring their subset. */
+  isolate?: IsolateKind[];
   /** Whether the static puzzle-image studio (/visualcube's control surface, mounted as
    *  the /sim 图像 panel) can render this puzzle. True only for the types in the studio's
    *  registry — NxN cube (numeric kind), sq1, skewb, pyraminx, megaminx, and mirror (an
@@ -53,7 +64,8 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   rex: { engine: 'always', carve: 'corner', imageStudio: false },
   heli: { engine: 'always', carve: 'edge', imageStudio: false },
   // Gear Cube — geared 180° face flips; carving lifts one face layer off the middle.
-  gear: { engine: 'always', carve: 'face', imageStudio: false },
+  // Isolate: inspect one block kind alone (角/棱/中心/骨架) — user request.
+  gear: { engine: 'always', carve: 'face', isolate: ['corner', 'edge', 'center', 'core'], imageStudio: false },
   skewb: { engine: 'engineMode', carve: 'corner', imageStudio: true },
   pyraminx: { engine: 'engineMode', carve: 'corner', imageStudio: true },
   megaminx: { engine: 'engineMode', carve: 'face', imageStudio: true },
@@ -98,6 +110,9 @@ export interface ControlSupport {
   faceColors: boolean;
   logo: boolean;
   carve: boolean;
+  /** 隔离(只看某类块):inverse of carve. True iff the engine is active and the puzzle
+   *  declares isolate kinds. The kinds themselves are in ResolvedCaps.isolate. */
+  isolate: boolean;
   /** 手指(指法演示):双手握持 + 腕转/弹指跟层动画。仅 3x3(手势姿态按
    *  order-3 的几何标定;镜面块形不均不贴手)。 */
   hands: boolean;
@@ -117,6 +132,8 @@ export interface ResolvedCaps {
   engineActive: boolean;
   /** The carve element to show a 挖角 / 挖面 / 挖棱 toggle for, or null (no carve). */
   carve: CarveElement | null;
+  /** The piece kinds the 隔离 dropdown offers (empty = unsupported → control grays). */
+  isolate: IsolateKind[];
   /** Show the cubing.js ↔ 群论内核 renderer dropdown. Always true: every puzzle exposes
    *  the dropdown so 群论内核 is offered everywhere — even on puzzles whose group kernel
    *  isn't built yet (a forward placeholder; selecting an unimplemented renderer is a safe
@@ -131,6 +148,7 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
   const c = puzzleCaps(kind);
   const engineActive = c.engine === 'always' || (c.engine === 'engineMode' && renderer !== 'cubing');
   const carve = engineActive ? (c.carve ?? null) : null;
+  const isolate = engineActive ? (c.isolate ?? []) : [];
   const isNxN = typeof kind === 'number';
   const isMirror = kind === 'mirror';
   // 方位字母 overlay 仅这三个拼图在 cubing.js 渲染下有(FACE_TABLES);engine 渲染走自有 faceHints。
@@ -139,6 +157,7 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
   return {
     engineActive,
     carve,
+    isolate,
     hasRendererChoice: true,
     supports: {
       sensitivity: engineActive,
@@ -162,6 +181,7 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       // 走同一条 cube.setLogo() 路径,有正中心块)。其它 engine-body 拼图无中心贴片不支持。
       logo: isNxN || isMirror,
       carve: carve !== null,
+      isolate: isolate.length > 0,
       // 手指(指法演示): rig 的握持/手势按 order-3 标定,且要求 NxN 引擎的
       // table.groups 逐层 angle 可轮询 → 仅 3x3(镜面走 'mirror' kind,不含)。
       hands: kind === 3,
