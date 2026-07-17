@@ -250,10 +250,17 @@ export const TOOTH_TIP_CR = 3.5;
 export const TOOTH_FILLET_R = 5;
 /** Fold-line mark: half-length and half-width of the black groove between the
  *  disc's two colored halves (user-locked: a FAT bar — matching the real
- *  puzzle's groove — whose ends run out to just shy of the web rim; the mark
- *  spins with the crown like the real puzzle's). */
-export const FOLD_LINE_R = 42;
-export const FOLD_LINE_HW = 4.5;
+ *  puzzle's groove — that spins with the crown like the real puzzle's).
+ *  Ends are ARCS of radius FOLD_LINE_R = the decal rim reach (RIM_R − the
+ *  0.25 decal inset, user-locked 2026-07-17: a shorter bar leaves a colored
+ *  decal sliver between its end and the rim; an arc end hugs the rim so the
+ *  widened bar never overhangs the gullet plate). Half-width = the corner
+ *  stickers' arris setback (H − max CORNER_POLY coord = 128 − 118.6), so the
+ *  bar reads exactly as fat as the corners' black arris band (user-locked
+ *  2026-07-17: 4.5 was visibly thinner than the corner band) — both
+ *  test-locked. */
+export const FOLD_LINE_R = RIM_R - 0.25;
+export const FOLD_LINE_HW = 9.4;
 
 /** One crown sector outline — a full PIE WEDGE from the gear center (tooth
  *  axis at 90°, spanning polar 60°..120°), dense CCW polygon in (ŵ, ĝ) facet
@@ -589,21 +596,30 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   // FOLD-LINE MARK — the fat black groove between the disc's two colored
   // halves, straddling dev q=0: it sits exactly ON the baked crease, so the
   // visible black line IS the fold line (user-locked), and both whirl together
-  // as one rigid feature. Its ends run out to just shy of the web rim (the
-  // gullet material under the rest crease reaches RIM_R); proud of the wedge
-  // decals by a hair so the overlap never z-fights. Plain bodyMat — the bar
-  // must read as the SAME plastic as the corner bodies (user-locked).
+  // as one rigid feature. Its ends are rim-hugging ARCS flush with the decal
+  // rim reach (see FOLD_LINE_R/HW); proud of the wedge decals by a hair so
+  // the overlap never z-fights. Plain bodyMat — the bar must read as the
+  // SAME plastic as the corner bodies (user-locked).
   // Fine q rows are load-bearing: the crease-adjacent decals hold EXACT
   // vertices on q=0 (their radial edges lie on the crease), so any bar cap
   // that chords the fold arc sags under them and the colored decals surface
   // through the bar's mid-line, splitting it into two strips. LINE_CELL_Q
-  // must land a row exactly ON q=0 (0.5 divides 2·FOLD_LINE_HW=9 into 18
-  // float-exact rows) and keep the chord sag (≈0.06) under the 0.12 proudness.
+  // must make ceil(2·FOLD_LINE_HW / cellY) EVEN (a row lands ON the crease,
+  // float-ε) and keep the chord sag (≈0.06) under the 0.12 proudness.
   const LINE_CELL_Q = 0.5;
+  const endA = Math.asin(FOLD_LINE_HW / FOLD_LINE_R);
+  const barOutline: V2[] = [];
+  const ARC_N = 12;
+  for (let i = 0; i <= ARC_N; i++) {   // right end arc, CCW (−endA → +endA)
+    const a = -endA + (2 * endA * i) / ARC_N;
+    barOutline.push([FOLD_LINE_R * Math.cos(a), FOLD_LINE_R * Math.sin(a)]);
+  }
+  for (let i = 0; i <= ARC_N; i++) {   // left end arc, CCW (π−endA → π+endA)
+    const a = Math.PI - endA + (2 * endA * i) / ARC_N;
+    barOutline.push([FOLD_LINE_R * Math.cos(a), FOLD_LINE_R * Math.sin(a)]);
+  }
   const lineMesh = new THREE.Mesh(
-    bake(gridPrism(
-      [[-FOLD_LINE_R, -FOLD_LINE_HW], [FOLD_LINE_R, -FOLD_LINE_HW],
-       [FOLD_LINE_R, FOLD_LINE_HW], [-FOLD_LINE_R, FOLD_LINE_HW]],
+    bake(gridPrism(barOutline,
       STICKER_LIFT + STICKER_DEPTH + 0.12, STICKER_LIFT, CELL, LINE_CELL_Q)),
     bodyMat);
   lineMesh.userData.simRole = 'body';
