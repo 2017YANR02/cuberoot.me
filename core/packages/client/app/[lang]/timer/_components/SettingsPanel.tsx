@@ -1187,7 +1187,7 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
         })}>
             <BoolToggle value={s.hideAllUiWhileRunning} onChange={(v) => updateSettings({ hideAllUiWhileRunning: v })} />
           </Row>
-          <Row className="settings-row--rank-region" label={tr({ zh: '地区排名', en: 'Ranking region'
+          <Row label={tr({ zh: '地区排名', en: 'Ranking region'
         })}>
             <CountryInput
               value={(s.rankCountry ?? '').toLowerCase()}
@@ -1252,9 +1252,9 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
   );
 }
 
-function Row({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
+function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className={`settings-row${className ? ` ${className}` : ''}`}>
+    <div className="settings-row">
       <span className="settings-row-label">{label}</span>
       <span className="settings-row-control">{children}</span>
     </div>
