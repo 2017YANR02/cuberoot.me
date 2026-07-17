@@ -2884,6 +2884,22 @@ function PuzzleSettings({
                   <option value="edge">{t('挖棱', 'Edge')}</option>
                 </select>
               </label>
+              {/* 隔离:只保留某类块、挖掉其余(挖块的反操作)。选项由 simCaps 各魔方声明的
+                  isolate kind 列表驱动(目前仅齿轮:角/棱/中心/骨架),未声明的魔方置灰。 */}
+              <label className={'sim-toggle' + (caps.supports.isolate ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.isolate)}>
+                <span>{t('隔离', 'Isolate')}</span>
+                <select
+                  value={settings.debugIsolate}
+                  disabled={!caps.supports.isolate}
+                  onChange={(e) => set('debugIsolate', e.target.value as SimSettings['debugIsolate'])}
+                >
+                  <option value="off">{t('关', 'Off')}</option>
+                  {caps.isolate.includes('corner') && <option value="corner">{t('角块', 'Corner')}</option>}
+                  {caps.isolate.includes('edge') && <option value="edge">{t('棱块', 'Edge')}</option>}
+                  {caps.isolate.includes('center') && <option value="center">{t('中心块', 'Center')}</option>}
+                  {caps.isolate.includes('core') && <option value="core">{t('骨架', 'Frame')}</option>}
+                </select>
+              </label>
             </div>
           </div>
           {isMirror && (

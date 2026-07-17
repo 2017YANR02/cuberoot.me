@@ -37,6 +37,11 @@ import GearTwister from './GearTwister';
 
 export type { PieceAnim };
 
+/** Debug "isolate" piece kinds — keep one, hide the rest. `edge` = the 12 edge
+ *  GEARS; `core` = the skeleton/core. Mirrors the corner/edge/center/core cube
+ *  taxonomy the UI dropdown offers. */
+export type GearIsolateKind = 'corner' | 'edge' | 'center' | 'core';
+
 interface PieceEntry { pivot: THREE.Object3D; group: THREE.Group; }
 
 const _axis = new THREE.Vector3();
@@ -173,16 +178,37 @@ export default class GearCube extends THREE.Group implements TweenCube<GearMove>
   }
 
   /** Debug "carve face": hide the U-face layer's moving group (4 corners + 4 riding
-   *  gears + the U center) to reveal the middle slab + core. OFF restores all. */
+   *  gears + the U center) to reveal the middle slab + core. */
+  private _carve = false;
+  /** Debug "isolate": show ONLY this piece kind, hide all others (inverse of carve).
+   *  null = show every kind. */
+  private _isolate: GearIsolateKind | null = null;
+
   setCarve(on: boolean): void {
-    if (on) {
+    this._carve = on;
+    this._applyDebugVisibility();
+  }
+
+  /** Isolate one piece kind (corner / edge gear / center / core) — the user's
+   *  "keep one block, carve the rest" view. Carve and isolate both drive
+   *  pivot.visible, so BOTH funnel through _applyDebugVisibility as a union
+   *  (start all-visible, isolate hides the other kinds, carve then hides the
+   *  U-layer group on top) — neither stomps the other's state. */
+  setIsolate(kind: GearIsolateKind | null): void {
+    this._isolate = kind;
+    this._applyDebugVisibility();
+  }
+
+  private _applyDebugVisibility(): void {
+    const iso = this._isolate;
+    for (const p of this.cornerPieces) p.pivot.visible = iso === null || iso === 'corner';
+    for (const p of this.centerPieces) p.pivot.visible = iso === null || iso === 'center';
+    for (const ring of this.gearPieces) for (const p of ring) p.pivot.visible = iso === null || iso === 'edge';
+    this.corePiece.pivot.visible = iso === null || iso === 'core';
+    if (this._carve) {
       for (const s of FACE_CORNER_SLOTS[0]) this.cornerPieces[this.state.cp[s]].pivot.visible = false;
       for (const [r, s] of FACE_GEAR_SLOTS[0]) this.gearPieces[r][this.state.ring[r][s]].pivot.visible = false;
       this.centerPieces[this.state.cent[0]].pivot.visible = false;
-    } else {
-      for (const p of this.cornerPieces) p.pivot.visible = true;
-      for (const p of this.centerPieces) p.pivot.visible = true;
-      for (const ring of this.gearPieces) for (const p of ring) p.pivot.visible = true;
     }
     this.dirty = true;
   }
