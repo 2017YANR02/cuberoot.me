@@ -14,6 +14,7 @@ import type {
   Shape,
   TextShape,
 } from './types';
+import { persistItem } from '@/lib/safe-storage';
 import { aabbOfRotated, boundsCenter, unionBounds } from './geometry';
 import { smoothPath, translatePathD } from './registry';
 import { DEFAULT_PAPER } from './paper';
@@ -347,11 +348,7 @@ export function fromSvgString(svg: string): Partial<PaintDoc> {
 
 // --- localStorage -------------------------------------------------------
 export function saveDoc(doc: PaintDoc, key = DOC_KEY): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(doc));
-  } catch {
-    /* quota / unavailable */
-  }
+  persistItem(key, JSON.stringify(doc));
 }
 
 export function loadDoc(key = DOC_KEY): PaintDoc | null {

@@ -17,6 +17,7 @@ import Link from '@/components/AppLink';
 import { Shuffle, HelpCircle } from 'lucide-react';
 import LiquidGlassChips from '@/components/LiquidGlassChips';
 import { prewarmScramble } from '@/lib/cubing-scramble';
+import { persistItem } from '@/lib/safe-storage';
 import { get333Mode } from '@/lib/scramble-333-mode';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from '@/hooks/useT';
@@ -103,13 +104,13 @@ function GenPageInner() {
   const [showPreview, setShowPreviewState] = useState<boolean>(readShowPreview);
   const setShowPreview = (v: boolean) => {
     setShowPreviewState(v);
-    try { localStorage.setItem(SHOW_PREVIEW_KEY, v ? '1' : '0'); } catch { /* swallow */ }
+    persistItem(SHOW_PREVIEW_KEY, v ? '1' : '0');
   };
 
   const [sq1Compact, setSq1CompactState] = useState<boolean>(readSq1Compact);
   const setSq1Compact = (v: boolean) => {
     setSq1CompactState(v);
-    try { localStorage.setItem(SQ1_COMPACT_KEY, v ? '1' : '0'); } catch { /* swallow */ }
+    persistItem(SQ1_COMPACT_KEY, v ? '1' : '0');
   };
 
   // mode 走 nuqs(replace);raw 字符串读出后做 legacy alias 归一(parseAsStringEnum

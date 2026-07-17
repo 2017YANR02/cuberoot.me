@@ -221,7 +221,7 @@ export async function ensureFreshToken(): Promise<void> {
     });
     if (!r.ok) return;
     const data = (await r.json()) as { token?: string };
-    if (data.token) localStorage.setItem(JWT_KEY, data.token);
+    if (data.token) persistItem(JWT_KEY, data.token);
   } catch {
     // 网络/后端不可用 — 保留旧 token,下次启动再试。
   }

@@ -26,6 +26,7 @@ import { stripWcaPrefix } from '@/lib/comp-localize';
 import { compNameZh } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
 import { statsUrl } from '@/lib/stats-base';
+import { persistItem } from '@/lib/safe-storage';
 import { VectorTile } from '@mapbox/vector-tile';
 import Protobuf from 'pbf';
 import vtpbf from 'vt-pbf';
@@ -695,7 +696,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     if (stored) setTheme(stored);
   }, []);
   useEffect(() => {
-    if (typeof window !== 'undefined') window.localStorage.setItem('globeTheme', theme);
+    if (typeof window !== 'undefined') persistItem('globeTheme', theme);
   }, [theme]);
 
   const [projection, setProjection] = useState<MapProjection>('globe');
@@ -709,7 +710,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     }
   }, []);
   useEffect(() => {
-    if (typeof window !== 'undefined') window.localStorage.setItem('globeProjection', projection);
+    if (typeof window !== 'undefined') persistItem('globeProjection', projection);
   }, [projection]);
   const projectionRef = useRef<MapProjection>(projection);
   useEffect(() => { projectionRef.current = projection; }, [projection]);
@@ -720,7 +721,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     if (v === 'heat' || v === 'country' || v === 'scale') setDensityStyle(v);
   }, []);
   useEffect(() => {
-    if (typeof window !== 'undefined') window.localStorage.setItem('globeDensityStyle', densityStyle);
+    if (typeof window !== 'undefined') persistItem('globeDensityStyle', densityStyle);
   }, [densityStyle]);
   const cameraRef = useRef<{ center: [number, number]; zoom: number; bearing: number; pitch: number } | null>(null);
 
@@ -961,7 +962,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     } catch { /* */ }
   }, []);
   useEffect(() => {
-    try { localStorage.setItem('globe.shapes.v1', JSON.stringify(savedShapes)); } catch { /* */ }
+    persistItem('globe.shapes.v1', JSON.stringify(savedShapes));
   }, [savedShapes]);
 
   useEffect(() => {
@@ -1062,7 +1063,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setUserPos(p);
         setLocState('idle');
-        try { localStorage.setItem('globe.userPos.v1', JSON.stringify(p)); } catch { /* */ }
+        persistItem('globe.userPos.v1', JSON.stringify(p));
         const map = mapRef.current;
         if (map) map.easeTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 4), duration: 900 });
       },
@@ -2956,7 +2957,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
   }, []);
   useEffect(() => {
     if (cardPos) {
-      try { window.localStorage.setItem('globeCuberCardPos', JSON.stringify(cardPos)); } catch { /* */ }
+      persistItem('globeCuberCardPos', JSON.stringify(cardPos));
     }
   }, [cardPos]);
   useEffect(() => {

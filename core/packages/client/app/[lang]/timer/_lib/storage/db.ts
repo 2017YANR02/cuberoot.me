@@ -16,6 +16,7 @@
 import type { EventId, Solve } from '../types';
 import { getSettings } from '../settings';
 import { BACKUP_LS_PREFIX, idbBackupGet, idbBackupList, idbBackupPut } from './backup-idb';
+import { persistItem } from '@/lib/safe-storage';
 
 const KEY = 'cuberoot-timer.v3';
 const LEGACY_V2_KEY = 'cuberoot-timer.v2';
@@ -149,11 +150,8 @@ function loadRaw(): DbShapeV3 {
 }
 
 function saveRaw(db: DbShapeV3): void {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(db));
-  } catch {
-    // localStorage quota exceeded or unavailable — ignore.
-  }
+  // 活库写入:配额满时 persistItem 会先驱逐可再生缓存再重试,尽量保住真实数据。
+  persistItem(KEY, JSON.stringify(db));
 }
 
 /** Read the active session's byEvent map (always an object). */
@@ -348,6 +346,7 @@ function pushBackupLS(json: string): void {
   // Quota loop: drop oldest backup until setItem succeeds, or no more to drop.
   for (let attempts = 0; attempts < 16; attempts++) {
     try {
+      // allow-raw-localstorage: 自带驱逐-重试循环,不能走吞异常的 persistItem
       localStorage.setItem(key, json);
       break;
     } catch {

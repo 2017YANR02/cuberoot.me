@@ -19,6 +19,8 @@
  *   - the "last 6 manufacturer-data bytes, reversed" MAC layout.
  */
 
+import { persistItem } from '@/lib/safe-storage';
+
 /**
  * Company Identifier Codes GAN cubes may advertise under. cstimer fills the
  * full range [0x0001, 0xFF01] stepping by 0x0100 (256 values), because GAN's
@@ -162,7 +164,7 @@ export function saveMac(deviceName: string | null | undefined, mac: string): voi
   const map = readMap();
   if (map[deviceName] === norm) return;
   map[deviceName] = norm;
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(map)); } catch { /* ignore */ }
+  persistItem(STORE_KEY, JSON.stringify(map));
 }
 
 /** Forget a stored MAC (used after a wrong-MAC re-prompt). */
@@ -171,5 +173,5 @@ export function clearMac(deviceName: string | null | undefined): void {
   const map = readMap();
   if (!(deviceName in map)) return;
   delete map[deviceName];
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(map)); } catch { /* ignore */ }
+  persistItem(STORE_KEY, JSON.stringify(map));
 }

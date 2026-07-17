@@ -18,6 +18,7 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Copy, Loader2, Check } from 'lucide-react';
 import { normalizeScramble } from '@/lib/cross-solver';
+import { persistItem } from '@/lib/safe-storage';
 import {
   Analyzer,
   CROSS_COLORS,
@@ -258,10 +259,10 @@ function AnalyzePageInner() {
     return Object.fromEntries(CROSS_COLORS.map((c) => [c, true])) as Record<CrossColor, boolean>;
   });
 
-  useEffect(() => { try { localStorage.setItem('analyze.howfar', String(howfar)); } catch { /* */ } }, [howfar]);
-  useEffect(() => { try { localStorage.setItem('analyze.stage', stage); } catch { /* */ } }, [stage]);
-  useEffect(() => { try { localStorage.setItem('analyze.variant', variant); } catch { /* */ } }, [variant]);
-  useEffect(() => { try { localStorage.setItem('analyze.colors', JSON.stringify(colors)); } catch { /* */ } }, [colors]);
+  useEffect(() => { persistItem('analyze.howfar', String(howfar)); }, [howfar]);
+  useEffect(() => { persistItem('analyze.stage', stage); }, [stage]);
+  useEffect(() => { persistItem('analyze.variant', variant); }, [variant]);
+  useEffect(() => { persistItem('analyze.colors', JSON.stringify(colors)); }, [colors]);
 
   // Sync URL params (replace, not push). nuqs omits keys set to null.
   useEffect(() => {
@@ -287,7 +288,7 @@ function AnalyzePageInner() {
   // 打乱来源综合配置(复用计时器 WcaSourceConfig UI + wca_pool 引擎;analyzer 自持一份,
   // 独立于计时器设置,存 localStorage)。抽题走 nextWca(spec),来源元数据走 wcaMetaFor()。
   const [wcaSrc, setWcaSrc] = useState<WcaSourceSettings>(() => loadWcaSrc());
-  useEffect(() => { try { localStorage.setItem(WCA_SRC_KEY, JSON.stringify(wcaSrc)); } catch { /* */ } }, [wcaSrc]);
+  useEffect(() => { persistItem(WCA_SRC_KEY, JSON.stringify(wcaSrc)); }, [wcaSrc]);
   const patchWcaSrc = useCallback((patch: Partial<WcaSourceSettings>) => setWcaSrc((p) => ({ ...p, ...patch })), []);
   const [wcaMeta, setWcaMeta] = useState<WcaScrambleMeta | null>(null);
   const [wcaLoading, setWcaLoading] = useState(false);

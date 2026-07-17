@@ -12,6 +12,7 @@ import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
 import { CUBE_FILL } from '@/lib/cube-colors';
+import { persistItem } from '@/lib/safe-storage';
 import TNoodleMode from '@/app/[lang]/scramble/gen/TNoodleMode';
 // gen.css 平时由 /scramble/gen 的 page.tsx 引入;内嵌进比赛页时必须自带,否则 .gen-* 样式全丢。
 import '@/app/[lang]/scramble/gen/gen.css';
@@ -44,13 +45,13 @@ export default function CompScramblesTab({ slug }: { slug: string }) {
   const [showPreview, setShowPreviewState] = useState<boolean>(readShowPreview);
   const setShowPreview = (v: boolean) => {
     setShowPreviewState(v);
-    try { localStorage.setItem(SHOW_PREVIEW_KEY, v ? '1' : '0'); } catch { /* swallow */ }
+    persistItem(SHOW_PREVIEW_KEY, v ? '1' : '0');
   };
 
   const [sq1Compact, setSq1CompactState] = useState<boolean>(readSq1Compact);
   const setSq1Compact = (v: boolean) => {
     setSq1CompactState(v);
-    try { localStorage.setItem(SQ1_COMPACT_KEY, v ? '1' : '0'); } catch { /* swallow */ }
+    persistItem(SQ1_COMPACT_KEY, v ? '1' : '0');
   };
 
   return (

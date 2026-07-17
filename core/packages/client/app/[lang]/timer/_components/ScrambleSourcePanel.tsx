@@ -19,6 +19,7 @@ import type { EventId } from '../_lib/types';
 import WcaSourceConfig, { AutoMarkToggle } from '@/components/WcaSourceConfig';
 import GenStepsConfig from './GenStepsConfig';
 import { stepPuzzleOf } from '../_lib/scramble/step-metrics';
+import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
 
 const LS_KEY = 'timer.scrambleSource.panelOpen';
@@ -43,7 +44,7 @@ export default function ScrambleSourcePanel({ event, isZh }: Props) {
   const toggle = () => {
     setOpen((o) => {
       const next = !o;
-      try { localStorage.setItem(LS_KEY, next ? '1' : '0'); } catch { /* ignore */ }
+      persistItem(LS_KEY, next ? '1' : '0');
       return next;
     });
   };

@@ -16,6 +16,7 @@ import { ExternalLink, HelpCircle, Copy, Check } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { search as cmtSearch, expand as cmtExpand } from './engine';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { persistItem } from '@/lib/safe-storage';
 import './commutator.css';
 import { useT } from "@/hooks/useT";
 
@@ -60,7 +61,7 @@ function loadSettings(): Settings {
 }
 
 function saveSettings(s: Settings) {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch { /* swallow */ }
+    persistItem(LS_KEY, JSON.stringify(s));
 }
 
 function buildSearchOpts(s: Settings, algorithm: string) {

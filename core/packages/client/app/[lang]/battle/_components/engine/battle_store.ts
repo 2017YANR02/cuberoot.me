@@ -14,6 +14,7 @@ import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from '@/app/[la
 import { getSettings } from '@/app/[lang]/timer/_lib/settings';
 import { peekWca, nextWca, prefetchWca, hasWcaSource, type WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
+import { persistItem } from '@/lib/safe-storage';
 
 // Battle puzzle id → timer EventId (so the shared wca_pool, keyed by timer
 // EventId, accepts battle's WCA-native ids). Unmapped ids pass through; events
@@ -369,7 +370,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       localStorage.removeItem(LS_PREFIX + 'puzzle_1');
       localStorage.removeItem(LS_PREFIX + 'puzzle');
       localStorage.removeItem(LS_PREFIX + 'splitPuzzles');
-      localStorage.setItem(VERSION_KEY, 'done');
+      persistItem(VERSION_KEY, 'done');
       set({ puzzleIds: Array.from({ length: MAX_PLAYERS }, () => '333') });
     }
     get().loadSolveHistory();
@@ -881,7 +882,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   toggleShowTime: () => {
     const s = get();
     const newVal = !s.showTime;
-    localStorage.setItem(LS_PREFIX + 'showTime', String(newVal));
+    persistItem(LS_PREFIX + 'showTime', String(newVal));
     set({ showTime: newVal });
   },
 
@@ -908,9 +909,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
     const newPuzzleIds: string[] = [...s.puzzleIds];
     newPuzzleIds[target] = newPuzzleId;
-    localStorage.setItem(LS_PREFIX + `puzzle_${target}`, newPuzzleId);
+    persistItem(LS_PREFIX + `puzzle_${target}`, newPuzzleId);
     if (newPuzzleIds.slice(0, s.playerCount).every(p => p === newPuzzleIds[0])) {
-      localStorage.setItem(LS_PREFIX + 'puzzle', newPuzzleIds[0]);
+      persistItem(LS_PREFIX + 'puzzle', newPuzzleIds[0]);
     }
 
     // 重置受影响玩家的当前回合（保留 points，loadSolveHistory 会替换 history）
@@ -956,10 +957,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (conflictIdx !== -1) {
       // 冲突:和目标玩家互换,谁都不会丢键
       newKeys[conflictIdx] = s.playerKeys[target];
-      localStorage.setItem(LS_PREFIX + `key_${conflictIdx}`, newKeys[conflictIdx]);
+      persistItem(LS_PREFIX + `key_${conflictIdx}`, newKeys[conflictIdx]);
     }
     newKeys[target] = key;
-    localStorage.setItem(LS_PREFIX + `key_${target}`, key);
+    persistItem(LS_PREFIX + `key_${target}`, key);
     set({ playerKeys: newKeys });
   },
 
@@ -969,7 +970,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
   setMode: (mode: BattleMode) => {
     get().saveSolveHistory();
-    localStorage.setItem(LS_PREFIX + 'mode', mode);
+    persistItem(LS_PREFIX + 'mode', mode);
     const newPlayers = freshPlayers();
     set({
       mode,
@@ -983,7 +984,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   setLayout: (layout: BattleLayout) => {
     const s = get();
     if (s.layout === layout) return; // NOTE: 避免重复设置
-    localStorage.setItem(LS_PREFIX + 'layout', layout);
+    persistItem(LS_PREFIX + 'layout', layout);
     // NOTE: 保留玩家累积数据（solveHistory, points），仅重置当前回合状态
     const newPlayers = [...s.players];
     for (let i = 0; i < s.playerCount; i++) {
@@ -1024,22 +1025,22 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   setInspectionTime: (time: number) => {
-    localStorage.setItem(LS_PREFIX + 'inspectionTime', String(time));
+    persistItem(LS_PREFIX + 'inspectionTime', String(time));
     set({ inspectionTime: time });
   },
 
   setVoice: (voice: boolean) => {
-    localStorage.setItem(LS_PREFIX + 'voice', String(voice));
+    persistItem(LS_PREFIX + 'voice', String(voice));
     set({ voice });
   },
 
   setPhases: (phases: number) => {
-    localStorage.setItem(LS_PREFIX + 'phases', String(phases));
+    persistItem(LS_PREFIX + 'phases', String(phases));
     set({ phases });
   },
 
   setShowImage: (show: boolean) => {
-    localStorage.setItem(LS_PREFIX + 'showImage', String(show));
+    persistItem(LS_PREFIX + 'showImage', String(show));
     set({ showImage: show });
     if (show) {
       const s = get();
@@ -1058,19 +1059,19 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   setFlipTopRow: (flip: boolean) => {
-    localStorage.setItem(LS_PREFIX + 'flipTopRow', String(flip));
+    persistItem(LS_PREFIX + 'flipTopRow', String(flip));
     set({ flipTopRow: flip });
   },
 
   setScrambleScale: (scale: number) => {
-    localStorage.setItem(LS_PREFIX + 'scrambleScale', String(scale));
+    persistItem(LS_PREFIX + 'scrambleScale', String(scale));
     set({ scrambleScale: scale });
     // NOTE: 同步更新 CSS 变量，确保 .scramble-text 的 calc() 立即生效
     document.documentElement.style.setProperty('--scramble-scale', String(scale));
   },
 
   setBgOpacity: (opacity: number) => {
-    localStorage.setItem(LS_PREFIX + 'bgOpacity', String(opacity));
+    persistItem(LS_PREFIX + 'bgOpacity', String(opacity));
     set({ bgOpacity: opacity });
   },
 
@@ -1081,7 +1082,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const newImages: (string | null)[] = [...s.bgImages];
     newColors[playerId] = color;
     newImages[playerId] = null;
-    if (color) localStorage.setItem(LS_PREFIX + `bg_color_${playerId}`, color);
+    if (color) persistItem(LS_PREFIX + `bg_color_${playerId}`, color);
     else localStorage.removeItem(LS_PREFIX + `bg_color_${playerId}`);
     localStorage.removeItem(LS_PREFIX + `bg_img_${playerId}`);
     set({ bgColors: newColors, bgImages: newImages });
@@ -1096,7 +1097,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     if (dataUrl) {
       newColors[playerId] = '';
       try {
-        localStorage.setItem(LS_PREFIX + `bg_img_${playerId}`, dataUrl);
+        persistItem(LS_PREFIX + `bg_img_${playerId}`, dataUrl);
         localStorage.removeItem(LS_PREFIX + `bg_color_${playerId}`);
       } catch (e) {
         console.warn('Failed to save bg image:', e);
@@ -1126,22 +1127,22 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   setTimerPrecision: (precision: number) => {
-    localStorage.setItem(LS_PREFIX + 'timerPrecision', String(precision));
+    persistItem(LS_PREFIX + 'timerPrecision', String(precision));
     set({ timerPrecision: precision });
   },
 
   setStartDelay: (delay: number) => {
-    localStorage.setItem(LS_PREFIX + 'startDelay', String(delay));
+    persistItem(LS_PREFIX + 'startDelay', String(delay));
     set({ startDelay: delay });
   },
 
   setGoalTime: (goal: number) => {
-    localStorage.setItem(LS_PREFIX + 'goalTime', String(goal));
+    persistItem(LS_PREFIX + 'goalTime', String(goal));
     set({ goalTime: goal });
   },
 
   setEnabledAverages: (averages: number[]) => {
-    localStorage.setItem(LS_PREFIX + 'enabledAverages', JSON.stringify(averages));
+    persistItem(LS_PREFIX + 'enabledAverages', JSON.stringify(averages));
     set({ enabledAverages: averages });
   },
 
@@ -1159,7 +1160,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   switchSession: (newSessionId: string) => {
     const s = get();
     s.saveSolveHistory();
-    localStorage.setItem(LS_PREFIX + 'sessionId', newSessionId);
+    persistItem(LS_PREFIX + 'sessionId', newSessionId);
     const newPlayers = freshPlayers();
     set({
       sessionId: newSessionId,
@@ -1176,8 +1177,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const newId = String(Date.now());
     const name = `Session ${s.sessions.length + 1}`;
     const newSessions = [...s.sessions, { id: newId, name }];
-    localStorage.setItem(LS_PREFIX + 'sessions', JSON.stringify(newSessions));
-    localStorage.setItem(LS_PREFIX + 'sessionId', newId);
+    persistItem(LS_PREFIX + 'sessions', JSON.stringify(newSessions));
+    persistItem(LS_PREFIX + 'sessionId', newId);
     const newPlayers = freshPlayers();
     set({
       sessions: newSessions,
@@ -1197,7 +1198,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const newSessions = s.sessions.map(ses =>
       ses.id === s.sessionId ? { ...ses, name: newName.trim() } : ses
     );
-    localStorage.setItem(LS_PREFIX + 'sessions', JSON.stringify(newSessions));
+    persistItem(LS_PREFIX + 'sessions', JSON.stringify(newSessions));
     set({ sessions: newSessions });
   },
 
@@ -1215,9 +1216,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
     }
     const newSessions = s.sessions.filter(ses => ses.id !== s.sessionId);
-    localStorage.setItem(LS_PREFIX + 'sessions', JSON.stringify(newSessions));
+    persistItem(LS_PREFIX + 'sessions', JSON.stringify(newSessions));
     const newSessionId = newSessions[0].id;
-    localStorage.setItem(LS_PREFIX + 'sessionId', newSessionId);
+    persistItem(LS_PREFIX + 'sessionId', newSessionId);
     const newPlayers = freshPlayers();
     set({
       sessions: newSessions,
@@ -1318,13 +1319,13 @@ export const useBattleStore = create<BattleState>((set, get) => ({
         const key = `${LS_PREFIX}solo_history_${s.sessionId}_${s.puzzleIds[0]}`;
         const h = s.players[0].solveHistory;
         const toSave = h.length > 1000 ? h.slice(-1000) : h;
-        localStorage.setItem(key, JSON.stringify(toSave));
+        persistItem(key, JSON.stringify(toSave));
       } else {
         for (let i = 0; i < s.playerCount; i++) {
           const key = `${LS_PREFIX}1v1_history_${s.sessionId}_${s.puzzleIds[i]}_${i}`;
           const h = s.players[i].solveHistory;
           const toSave = h.length > 1000 ? h.slice(-1000) : h;
-          localStorage.setItem(key, JSON.stringify(toSave));
+          persistItem(key, JSON.stringify(toSave));
         }
       }
     } catch (e) {

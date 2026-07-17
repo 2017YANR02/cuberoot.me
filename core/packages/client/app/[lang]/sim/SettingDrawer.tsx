@@ -7,6 +7,7 @@
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
+import { persistItem } from '@/lib/safe-storage';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import World from './engine/world';
 import { puzzleCaps } from './simCaps';
@@ -224,11 +225,7 @@ export function loadSettings(): SimSettings {
 
 export function saveSettings(s: SimSettings): void {
   if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  } catch {
-    // ignore
-  }
+  persistItem(STORAGE_KEY, JSON.stringify(s));
 }
 
 // 把 0~100 → 实际数值。scale 50 = 1.0 (upstream 默认), 范围 0.5 ~ 1.5。

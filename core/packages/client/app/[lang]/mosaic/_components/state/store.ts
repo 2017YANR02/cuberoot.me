@@ -10,6 +10,7 @@ import type {
 } from './types';
 import { DEFAULT_EFFECTS, DEFAULT_PDF_CONFIG } from './types';
 import { DEFAULT_PALETTE } from '../engine/palette';
+import { persistItem } from '@/lib/safe-storage';
 
 const LS_PREFIX = 'mosaic.';
 const LS_PALETTE = LS_PREFIX + 'palette';
@@ -27,7 +28,7 @@ function lsLoad<T>(key: string, fallback: T): T {
 }
 function lsSave(key: string, value: unknown) {
   if (typeof window === 'undefined') return;
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
+  persistItem(key, JSON.stringify(value));
 }
 
 interface State {

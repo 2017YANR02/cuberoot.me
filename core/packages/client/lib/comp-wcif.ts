@@ -2,6 +2,7 @@
 // Ported from packages/client-vite/src/utils/comp_wcif.ts.
 
 import { apiUrl } from './api-base';
+import { persistItem } from './safe-storage';
 
 const WCIF_URL = (id: string) =>
   `https://www.worldcubeassociation.org/api/v0/competitions/${encodeURIComponent(id)}/wcif/public`;
@@ -50,8 +51,7 @@ function cacheGet(id: string): CompWcif | null {
 
 function cacheSet(id: string, v: CompWcif): void {
   if (typeof window === 'undefined') return;
-  try { localStorage.setItem(CACHE_PREFIX + id, JSON.stringify({ t: Date.now(), v })); }
-  catch { /* quota / private mode */ }
+  persistItem(CACHE_PREFIX + id, JSON.stringify({ t: Date.now(), v }));
 }
 
 const inflight = new Map<string, Promise<CompWcif>>();
@@ -119,8 +119,7 @@ export async function fetchCompInfo(compId: string): Promise<CompInfo | null> {
         competitor_limit: limit,
       };
       if (typeof window !== 'undefined') {
-        try { localStorage.setItem(INFO_CACHE_PREFIX + compId, JSON.stringify({ t: Date.now(), v: info })); }
-        catch { /* quota / private mode */ }
+        persistItem(INFO_CACHE_PREFIX + compId, JSON.stringify({ t: Date.now(), v: info }));
       }
       return info;
     } catch {
@@ -182,8 +181,7 @@ export async function fetchCubingZh(wcaId: string): Promise<CubingZhMeta> {
         nameZh: typeof data.nameZh === 'string' && data.nameZh ? data.nameZh : null,
       };
       if (typeof window !== 'undefined') {
-        try { localStorage.setItem(ZH_CACHE_PREFIX + wcaId, JSON.stringify({ t: Date.now(), v: meta })); }
-        catch { /* ignore */ }
+        persistItem(ZH_CACHE_PREFIX + wcaId, JSON.stringify({ t: Date.now(), v: meta }));
       }
       return meta;
     } catch {

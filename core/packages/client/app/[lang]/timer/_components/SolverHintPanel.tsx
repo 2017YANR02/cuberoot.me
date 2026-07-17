@@ -15,6 +15,7 @@ import dynamic from 'next/dynamic';
 import { Loader2, ChevronRight } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import StepSolve from './StepSolve';
+import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
 
 const StageSolver = dynamic(() => import('@/components/StageSolver'), {
@@ -50,7 +51,7 @@ export default function SolverHintPanel({ scramble, isZh }: Props) {
   const toggle = () => {
     setOpen((o) => {
       const next = !o;
-      try { localStorage.setItem(LS_KEY, next ? '1' : '0'); } catch { /* ignore */ }
+      persistItem(LS_KEY, next ? '1' : '0');
       return next;
     });
   };
