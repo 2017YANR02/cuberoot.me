@@ -150,13 +150,6 @@
 .sponsor-name-link { text-decoration: none; transition: color 0.15s; }
 .sponsor-name-link:hover { color: var(--accent); }
 
-.sponsor-wcaid {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.68rem;
-  letter-spacing: 0.02em;
-  color: var(--faint-foreground);
-}
-
 .sponsor-amount {
   font-size: 0.82rem;
   font-weight: 600;
@@ -202,6 +195,36 @@
 }
 .sponsor-admin .sponsor-admin-btn:hover { color: var(--foreground); border-color: var(--border-strong); }
 .sponsor-admin-del:hover { color: var(--destructive) !important; border-color: var(--destructive) !important; }
+
+/* ── 贡献者(issue #28)── */
+.support-contrib { margin-top: 3.25rem; }
+
+.support-contrib-title {
+  margin: 0 0 0.55rem;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 650;
+  color: var(--foreground);
+}
+.support-contrib .support-sub { text-align: center; }
+
+/* 贡献次数:admin 视图是可点的 +1 按钮,公开视图是纯文本 */
+.contrib-score {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.contrib-score-btn {
+  padding: 0 8px;
+  border: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.contrib-score-btn:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.contrib-score-btn:active { transform: translateY(1px); }
 
 .support-more {
   display: block;
