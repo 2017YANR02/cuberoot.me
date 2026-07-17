@@ -8,6 +8,7 @@ import { caseKey, findCaseByKey } from './trainer-case-key';
 import { histBack, histForward, histPush, type ScrambleHist } from './scramble-history';
 import { caseOrbit } from './alg_probability';
 import { petReact } from './deskpet';
+import { persistItem } from './safe-storage';
 
 export const TimerState = {
   NOT_RUNNING: 0,
@@ -65,9 +66,11 @@ const loadPersisted = (p: string, s: string): PersistedSession => {
   return { selected: [], solves: [] };
 };
 
+// persistItem:localStorage 满(timer 备份塞爆配额)时驱逐可再生缓存重试,
+// 仍失败也不抛 —— 落盘失败绝不能把调用方的 set() 状态更新一起炸掉。
 const persist = (p: string, s: string, data: PersistedSession) => {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(sessionKey(p, s), JSON.stringify(data));
+  persistItem(sessionKey(p, s), JSON.stringify(data));
 };
 
 /** 跨 set 的训练偏好(pre/post-AUF / 计时 / 模式 / 概率 / 字体),全局一份。 */
@@ -103,7 +106,7 @@ const loadPrefs = (): TrainerPrefs => {
 
 const persistPrefs = (p: TrainerPrefs) => {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(PREFS_KEY, JSON.stringify(p));
+  persistItem(PREFS_KEY, JSON.stringify(p));
 };
 
 /** 从整个 store state 里只摘偏好字段(直接 stringify 整个 state 会把 cases/solves 一起写进去)。 */
