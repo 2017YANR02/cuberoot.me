@@ -1,12 +1,17 @@
 /**
- * /v1/sponsors — 致谢/赞助墙 (admin 录入) API。
- *   - GET    /v1/sponsors        — 全表,按金额降序(1h cache),前端一次拉完
- *   - POST   /v1/sponsors        — admin 新增
- *   - PUT    /v1/sponsors/:id     — admin 编辑
- *   - DELETE /v1/sponsors/:id     — admin 删
+ * /v1/sponsors + /v1/contributors — /support 致谢墙 (admin 录入) API。
+ *   - GET    /v1/sponsors             — 全表,按金额降序(1h cache),前端一次拉完
+ *   - POST   /v1/sponsors             — admin 新增
+ *   - PUT    /v1/sponsors/:id          — admin 编辑
+ *   - DELETE /v1/sponsors/:id          — admin 删
+ *   - GET    /v1/contributors         — 全表,按 score 降序(1h cache)
+ *   - POST   /v1/contributors         — admin 新增
+ *   - PUT    /v1/contributors/:id      — admin 编辑
+ *   - POST   /v1/contributors/:id/bump — admin score 原子 +1(issue #28:点数字自增)
+ *   - DELETE /v1/contributors/:id
  *
  * 鉴权走 requireAdminOrApiKey(WCA OAuth Bearer 或 X-Admin-Key)。
- * Schema 见 migrations/0043_sponsors.sql。
+ * Schema 见 migrations/0043_sponsors.sql + 0075_contributors.sql。
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
@@ -66,6 +71,24 @@ interface NormalizedSponsor {
   message: string | null;
 }
 
+// wcaId / avatarUrl 可选字段校验 —— sponsors 与 contributors 共用。
+function parseWcaId(v: unknown): { error: string } | { value: string | null } {
+  if (v == null || v === '') return { value: null };
+  if (typeof v !== 'string') return { error: 'wcaId must be a string' };
+  const wca_id = v.trim().toUpperCase();
+  if (!WCA_ID_RE.test(wca_id)) return { error: 'invalid WCA ID' };
+  return { value: wca_id };
+}
+
+function parseAvatarUrl(v: unknown): { error: string } | { value: string | null } {
+  if (v == null || v === '') return { value: null };
+  if (typeof v !== 'string') return { error: 'avatarUrl must be a string' };
+  const avatar_url = v.trim();
+  if (avatar_url.length > URL_MAX) return { error: 'avatarUrl too long' };
+  if (!/^https?:\/\//i.test(avatar_url)) return { error: 'avatarUrl must be http(s)' };
+  return { value: avatar_url };
+}
+
 function validateAndNormalize(b: SponsorInput): { error: string } | { value: NormalizedSponsor } {
   if (typeof b.name !== 'string' || !b.name.trim()) return { error: 'name required' };
   if (b.name.length > NAME_MAX) return { error: 'name too long' };
@@ -74,20 +97,13 @@ function validateAndNormalize(b: SponsorInput): { error: string } | { value: Nor
   if (!Number.isFinite(amount) || amount < 0) return { error: 'amount must be a non-negative number' };
   if (amount > AMOUNT_MAX) return { error: 'amount too large' };
 
-  let wca_id: string | null = null;
-  if (b.wcaId != null && b.wcaId !== '') {
-    if (typeof b.wcaId !== 'string') return { error: 'wcaId must be a string' };
-    wca_id = b.wcaId.trim().toUpperCase();
-    if (!WCA_ID_RE.test(wca_id)) return { error: 'invalid WCA ID' };
-  }
+  const wcaRes = parseWcaId(b.wcaId);
+  if ('error' in wcaRes) return wcaRes;
+  const wca_id = wcaRes.value;
 
-  let avatar_url: string | null = null;
-  if (b.avatarUrl != null && b.avatarUrl !== '') {
-    if (typeof b.avatarUrl !== 'string') return { error: 'avatarUrl must be a string' };
-    avatar_url = b.avatarUrl.trim();
-    if (avatar_url.length > URL_MAX) return { error: 'avatarUrl too long' };
-    if (!/^https?:\/\//i.test(avatar_url)) return { error: 'avatarUrl must be http(s)' };
-  }
+  const avatarRes = parseAvatarUrl(b.avatarUrl);
+  if ('error' in avatarRes) return avatarRes;
+  const avatar_url = avatarRes.value;
 
   let currency = 'CNY';
   if (b.currency != null && b.currency !== '') {
@@ -169,6 +185,150 @@ sponsorsRoutes.delete('/sponsors/:id', async (c) => {
 
   const deleted = await query<{ id: number | string }>(
     'DELETE FROM sponsors WHERE id = ? RETURNING id',
+    [id],
+  );
+  if (deleted.length === 0) return c.json({ error: 'Not found' }, 404);
+  return c.json({ ok: true });
+});
+
+// ══ /v1/contributors — /support 贡献者名单(issue #28)══
+// score = 贡献次数,admin 每收到一次反馈/bug/建议点数字 +1(/:id/bump)。
+
+const SCORE_MAX = 1_000_000;
+
+interface ContributorRow {
+  id: number | string;
+  name: string;
+  wca_id: string | null;
+  avatar_url: string | null;
+  score: number | string;
+}
+
+function contributorToJson(r: ContributorRow): Record<string, unknown> {
+  const o: Record<string, unknown> = {
+    id: Number(r.id),
+    name: r.name,
+    score: Number(r.score),
+  };
+  if (r.wca_id) o.wcaId = r.wca_id;
+  if (r.avatar_url) o.avatarUrl = r.avatar_url;
+  return o;
+}
+
+interface ContributorInput {
+  name?: string;
+  wcaId?: string | null;
+  avatarUrl?: string | null;
+  score?: number;
+}
+
+interface NormalizedContributor {
+  name: string;
+  wca_id: string | null;
+  avatar_url: string | null;
+  score: number;
+}
+
+function validateContributor(b: ContributorInput): { error: string } | { value: NormalizedContributor } {
+  if (typeof b.name !== 'string' || !b.name.trim()) return { error: 'name required' };
+  if (b.name.length > NAME_MAX) return { error: 'name too long' };
+
+  let score = 1;
+  if (b.score != null) {
+    score = Number(b.score);
+    if (!Number.isInteger(score) || score < 0) return { error: 'score must be a non-negative integer' };
+    if (score > SCORE_MAX) return { error: 'score too large' };
+  }
+
+  const wcaRes = parseWcaId(b.wcaId);
+  if ('error' in wcaRes) return wcaRes;
+
+  const avatarRes = parseAvatarUrl(b.avatarUrl);
+  if ('error' in avatarRes) return avatarRes;
+
+  return { value: { name: b.name.trim(), wca_id: wcaRes.value, avatar_url: avatarRes.value, score } };
+}
+
+// GET /v1/contributors — 全表,score 降序
+sponsorsRoutes.get('/contributors', async (c) => {
+  c.header('Cache-Control', 'public, max-age=3600');
+  const rows = await query<ContributorRow>(
+    'SELECT * FROM contributors ORDER BY score DESC, created_at',
+  );
+  return c.json(rows.map(contributorToJson));
+});
+
+// POST /v1/contributors — 新增
+sponsorsRoutes.post('/contributors', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+
+  const res = validateContributor(await c.req.json<ContributorInput>());
+  if ('error' in res) return c.json({ error: res.error }, 400);
+  const f = res.value;
+
+  const inserted = await query<ContributorRow>(
+    `INSERT INTO contributors (name, wca_id, avatar_url, score)
+     VALUES (?, ?, ?, ?)
+     RETURNING *`,
+    [f.name, f.wca_id, f.avatar_url, f.score],
+  );
+  return c.json(contributorToJson(inserted[0]));
+});
+
+// PUT /v1/contributors/:id — 编辑
+sponsorsRoutes.put('/contributors/:id', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
+
+  const res = validateContributor(await c.req.json<ContributorInput>());
+  if ('error' in res) return c.json({ error: res.error }, 400);
+  const f = res.value;
+
+  const updated = await query<ContributorRow>(
+    `UPDATE contributors SET
+       name = ?, wca_id = ?, avatar_url = ?, score = ?
+     WHERE id = ?
+     RETURNING *`,
+    [f.name, f.wca_id, f.avatar_url, f.score, id],
+  );
+  if (updated.length === 0) return c.json({ error: 'Not found' }, 404);
+  return c.json(contributorToJson(updated[0]));
+});
+
+// POST /v1/contributors/:id/bump — score 原子 +1(admin 点卡片上的数字)
+sponsorsRoutes.post('/contributors/:id/bump', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
+
+  const updated = await query<ContributorRow>(
+    'UPDATE contributors SET score = score + 1 WHERE id = ? RETURNING *',
+    [id],
+  );
+  if (updated.length === 0) return c.json({ error: 'Not found' }, 404);
+  return c.json(contributorToJson(updated[0]));
+});
+
+// DELETE /v1/contributors/:id
+sponsorsRoutes.delete('/contributors/:id', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+  checkRateLimit(getIp(c));
+  await requireAdminOrApiKey(c);
+
+  const id = Number(c.req.param('id'));
+  if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
+
+  const deleted = await query<{ id: number | string }>(
+    'DELETE FROM contributors WHERE id = ? RETURNING id',
     [id],
   );
   if (deleted.length === 0) return c.json({ error: 'Not found' }, 404);

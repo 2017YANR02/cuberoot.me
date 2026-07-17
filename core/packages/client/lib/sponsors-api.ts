@@ -1,5 +1,5 @@
 /**
- * /v1/sponsors — 致谢/赞助墙 API。
+ * /v1/sponsors + /v1/contributors — /support 致谢墙(赞助者 + 贡献者)API。
  * server 实现 routes/sponsors.ts;写操作走 ADMIN_WCA_IDS WCA OAuth Bearer / X-Admin-Key。
  */
 import { API_ORIGIN } from './api-base';
@@ -37,4 +37,40 @@ export async function updateSponsor(id: number, body: SponsorInput): Promise<Spo
 }
 export async function deleteSponsor(id: number): Promise<{ ok: boolean }> {
   return handleApi<{ ok: boolean }>(await fetch(`${BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
+}
+
+// ── 贡献者(issue #28:score = 贡献次数,admin 点数字 +1)──
+
+const CONTRIB_BASE = API_ORIGIN + '/v1/contributors';
+
+export interface Contributor {
+  id: number;
+  name: string;
+  score: number;
+  wcaId?: string;
+  avatarUrl?: string;
+}
+
+export interface ContributorInput {
+  name: string;
+  score?: number;
+  wcaId?: string | null;
+  avatarUrl?: string | null;
+}
+
+export async function listContributors(): Promise<Contributor[]> {
+  return handleApi<Contributor[]>(await fetch(CONTRIB_BASE));
+}
+export async function createContributor(body: ContributorInput): Promise<Contributor> {
+  return handleApi<Contributor>(await fetch(CONTRIB_BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
+}
+export async function updateContributor(id: number, body: ContributorInput): Promise<Contributor> {
+  return handleApi<Contributor>(await fetch(`${CONTRIB_BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
+}
+/** score 原子 +1(admin 点卡片上的数字)。 */
+export async function bumpContributor(id: number): Promise<Contributor> {
+  return handleApi<Contributor>(await fetch(`${CONTRIB_BASE}/${id}/bump`, { method: 'POST', headers: authHeaders() }));
+}
+export async function deleteContributor(id: number): Promise<{ ok: boolean }> {
+  return handleApi<{ ok: boolean }>(await fetch(`${CONTRIB_BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
 }
