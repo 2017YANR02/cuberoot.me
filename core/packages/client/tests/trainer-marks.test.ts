@@ -1,8 +1,11 @@
 // 训练器学习标记的本地/云端合并(单条 last-write-wins)。
 // mergeMarks 是纯函数:每个 key 取 t 大的一边;本地较新的差异回传;
 // 本地墓碑(s/f 全空)在云端无对应行时不回传。
-import { describe, it, expect } from 'vitest';
-import { mergeMarks, type CaseMarks } from '@/lib/trainer-marks';
+import { describe, it, expect, afterEach } from 'vitest';
+import {
+  mergeMarks, summarizeMarks, scanLocalOverview, combineOverviews,
+  type CaseMarks, type MarkOverview,
+} from '@/lib/trainer-marks';
 
 describe('mergeMarks (LWW)', () => {
   it('local newer wins and is uploaded', () => {
@@ -69,5 +72,70 @@ describe('mergeMarks (LWW)', () => {
     const { merged, toUpload } = mergeMarks(local, cloud);
     expect(Object.keys(merged).sort()).toEqual(['A|1', 'B|2']);
     expect(toUpload.map(i => i.k)).toEqual(['A|1']);
+  });
+});
+
+describe('summarizeMarks', () => {
+  it('counts each status plus starred; tombstones ignored', () => {
+    const marks: CaseMarks = {
+      'T|1': { s: 'mastered', t: 1 },
+      'T|2': { s: 'mastered', f: 1, t: 1 }, // mastered AND starred → both +1
+      'T|3': { s: 'learning', t: 1 },
+      'T|4': { s: 'paused', t: 1 },
+      'T|5': { f: 1, t: 1 },  // 只星标(未定状态)→ starred +1,状态 0
+      'T|6': { t: 1 },        // 墓碑 → 全不计
+    };
+    // starred = T|2 + T|5 = 2(星标与状态独立计)
+    expect(summarizeMarks(marks)).toEqual({ learning: 1, mastered: 2, paused: 1, starred: 2 });
+  });
+
+  it('empty marks → all zero', () => {
+    expect(summarizeMarks({})).toEqual({ learning: 0, mastered: 0, paused: 0, starred: 0 });
+  });
+});
+
+describe('combineOverviews', () => {
+  it('cloud wins per set; local-only sets are kept', () => {
+    const cloud: MarkOverview = { '3x3/pll': { learning: 0, mastered: 5, paused: 0, starred: 1 } };
+    const local: MarkOverview = {
+      '3x3/pll': { learning: 3, mastered: 1, paused: 0, starred: 0 }, // 被云端覆盖
+      '3x3/oll': { learning: 2, mastered: 0, paused: 0, starred: 0 }, // 云端没有 → 保留
+    };
+    expect(combineOverviews(cloud, local)).toEqual({
+      '3x3/pll': { learning: 0, mastered: 5, paused: 0, starred: 1 },
+      '3x3/oll': { learning: 2, mastered: 0, paused: 0, starred: 0 },
+    });
+  });
+});
+
+describe('scanLocalOverview', () => {
+  const g = globalThis as unknown as { window?: unknown; localStorage?: unknown };
+  const install = (data: Record<string, string>) => {
+    const keys = Object.keys(data);
+    g.window = {};
+    g.localStorage = {
+      get length() { return keys.length; },
+      key: (i: number) => keys[i] ?? null,
+      getItem: (k: string) => (k in data ? data[k] : null),
+    };
+  };
+  afterEach(() => { delete g.window; delete g.localStorage; });
+
+  it('aggregates only trainer:marks:* keys, skips other keys and empty/garbage sets', () => {
+    install({
+      'trainer:marks:3x3/pll': JSON.stringify({
+        'T|1': { s: 'mastered', t: 1 }, 'T|2': { s: 'learning', f: 1, t: 1 },
+      }),
+      'trainer:marks:3x3/oll': JSON.stringify({ 'X|1': { t: 1 } }), // 全墓碑 → 不收
+      'trainer:marks:2x2/cll': 'not-json',                         // 坏 JSON → 跳过
+      'cuberoot-timer.v3': 'unrelated',                            // 非标记键 → 忽略
+    });
+    expect(scanLocalOverview()).toEqual({
+      '3x3/pll': { learning: 1, mastered: 1, paused: 0, starred: 1 },
+    });
+  });
+
+  it('no window → empty', () => {
+    expect(scanLocalOverview()).toEqual({});
   });
 });

@@ -42,6 +42,23 @@ html[data-theme=dark] .alg-root {
   align-items: center;
   gap: 8px;
 }
+.alg-index-progress-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 13%, transparent);
+  white-space: nowrap;
+}
+.alg-index-progress-link:hover {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
 .alg-index-title {
   font-size: 28px;
   font-weight: 700;

@@ -14,7 +14,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import BackHome from '@/components/BackHome';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
-import { Eye, Blocks, type LucideIcon } from 'lucide-react';
+import { Eye, Blocks, GraduationCap, type LucideIcon } from 'lucide-react';
 import './alg.css';
 import { tr } from '@/i18n/tr';
 
@@ -39,6 +39,12 @@ export default function AlgIndexPage() {
         <div className="alg-index-header-row">
           <h1 className="alg-index-title">{tr({ zh: '公式库', en: 'Algorithm DB'
         })}</h1>
+          <div className="alg-index-header-actions">
+            <Link href="/alg/progress" className="alg-index-progress-link" prefetch={false}>
+              <GraduationCap size={16} aria-hidden="true" />
+              {tr({ zh: '学习进度', en: 'Progress' })}
+            </Link>
+          </div>
         </div>
       </div>
 

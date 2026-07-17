@@ -168,7 +168,7 @@ export default function TrainerSetClient() {
         })}</div>
       ) : (
         <>
-          {/* 学习进度:已掌握绿段 + 学习中橙段;数字给成就感,也是全 set 唯一总览 */}
+          {/* 本 set 学习进度:已掌握绿段 + 学习中橙段;跨 set 汇总在 /alg/progress */}
           <div className="trainer-progress">
             <div className="trainer-progress-bar" aria-hidden>
               <span className="is-mastered" style={{ width: `${pct(progress.mastered)}%` }} />
@@ -179,6 +179,9 @@ export default function TrainerSetClient() {
               {progress.learning > 0 && <> {tr({ zh: '学习中', en: 'learning' })} {progress.learning}</>}
               {progress.paused > 0 && <> {tr({ zh: '搁置', en: 'paused' })} {progress.paused}</>}
               {' / '}{progress.total}
+              <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
+                {tr({ zh: '进度总览', en: 'All progress' })}
+              </Link>
             </div>
           </div>
 
