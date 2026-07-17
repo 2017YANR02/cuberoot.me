@@ -170,6 +170,8 @@ main { position: relative; z-index: 1; }
   flex-wrap: wrap;
   gap: 0 .15em;
 }
+/* keep the title clear of the floating hero logo on wide screens */
+@media (min-width: 1101px) { .hero-title { max-width: calc(100% - 340px); } }
 .hero-name {
   background: linear-gradient(180deg, var(--moon-warm) 0%, var(--moon) 100%);
   -webkit-background-clip: text;
