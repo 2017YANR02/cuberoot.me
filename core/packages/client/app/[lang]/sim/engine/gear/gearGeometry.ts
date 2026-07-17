@@ -3,60 +3,60 @@
  *
  * A cube [-H, H]³ with layer cut planes at ±CUT (fat outer layers like the real
  * puzzle, not 3x3 thirds). Pieces:
- *  - 12 EDGE GEARS, two nested parts (photo matched, user-locked):
- *    (a) FOLD-GLIDE CROWN — six 60° SECTORS (SVG-traced tentacle + half
- *    gullets of a scalloped web each, see crownSectorOutline) defined in the
- *    DEVELOPED disc plane: the bent coin unrolled flat, fold line = the arris
- *    direction. HARD REQUIREMENT (spec §0, user-locked):
- *    at every rest phase the half-disc and its 3 tentacles must lie IN the
- *    face sticker planes. A rigid spinning crown can NEVER satisfy that —
- *    R(n̂, 120°) maps no face normal onto a face normal — so the sectors are
- *    NOT rigid children of the spin pivot: the spin angle θ (read off the spin
- *    pivot's quaternion each frame) rotates them in developed coords
- *    only, then foldPoint() bends the developed plane 90° over the arris
- *    (a tiny FOLD_R arc at the crease). At rest (θ ≡ 0 mod 120°) every
- *    tentacle lies FLAT on one face, its top and
- *    decal exactly coplanar with the disc slab and every block sticker; mid-
- *    turn the teeth glide around the static disc like a tank tread, creasing
- *    over the edge — the real puzzle's bent teeth rolling over the arris.
- *    120° = 2 pitches, so the crown rests identically after every move, and
- *    the decals ride their sectors, so scrambled fans mix colors. A small palm
- *    hub + backing cone (axisymmetric about n̂) stay on the spin pivot proper.
- *    (b) THE DISC SPINS TOO (user-locked 2026-07-17, superseding the static
- *    axle-cap model): each sector is a full PIE WEDGE down to the gear center,
- *    so disc + web + tentacles are ONE fold-glide surface spinning its 480°
- *    together — a wedge silhouette is 60°-periodic, so rest invariance is
- *    free, and with no relative disc↔crown rotation there is no bearing ring
- *    and no seam circle on the face. The disc region's decoration = the black
- *    FOLD-LINE mark (its ends poke past the disc zone), riding the same
- *    re-bake. Corner clearance for the new center material is constructive:
- *    |edge| ≤ dev radius under every spin angle, so material at r < CUT + SEAM
- *    never reaches a corner slab, and material at r ≥ TOOTH_ROOT lives inside
- *    the crown-sweep lathe shell the corners were already carved by.
- *  - 8 CORNERS: rounded blocks carved by (a) three CROWN-SWEEP LATHES — tight
+ *  - 12 EDGE GEARS — ONE RIGID PIECE each (v12, user-locked 2026-07-17 with
+ *    real-machine evidence, superseding the fold-glide tank-tread): a disc
+ *    creased 90° over the arris. Six 60° PIE WEDGES (SVG-traced tentacle +
+ *    half gullets of a scalloped web each, see crownSectorOutline) are
+ *    fold-baked ONCE at build time and ride the SPIN pivot as a rigid body,
+ *    whirling ±480° per flip about the slot's outward radial n̂. The crease
+ *    is a MATERIAL feature on the dev q=0 diameter, directly under the black
+ *    FOLD-LINE mark — fold line ≡ black line by construction. The user's
+ *    physical puzzle settled this: in scrambled states the groove line leaves
+ *    the arris (sharp 90° fold riding along with it), so at rest phases ±120°
+ *    the piece does NOT hug the faces — it rests tilted, tentacle tips proud
+ *    of the surface, the far half sunk into the slot throat, exactly like the
+ *    bristling scrambled real cube. A rigid crease can only hug at 0°/180°
+ *    (R(n̂,120°) maps no face plane onto a face plane), so the old spec §0
+ *    "coplanar at every rest" hard rule was impossible on the real machine
+ *    too; the machine tilts instead. 120° = 2 pitches, so rest SILHOUETTES
+ *    repeat mod 120° in dev coords, and the per-wedge decals ride the rigid
+ *    body, so scrambled fans mix colors and tilt together.
+ *    A small palm hub + backing cone (axisymmetric about n̂) also ride the
+ *    spin pivot; both hug the 45° slot-throat cone, which the spinning crown
+ *    can never enter (each crown point keeps its axial height along n̂ and its
+ *    axis distance — the swept solid is the revolve of the rest shape about
+ *    n̂, strictly outside that cone).
+ *  - 8 CORNERS: rounded blocks carved by (a) three RIGID-SWEEP LATHES — tight
  *    solids of revolution around the axes containing every crown's whole
- *    spin ∪ orbit sweep (see crownSweepInnerRadius) — and (b) three thin WASHER
+ *    spin ∪ orbit sweep, DEEP now because a tilted crown dives ~44 into the
+ *    slot throat (see crownSweepInnerRadius) — and (b) three thin WASHER
  *    rings that carve exactly the center-arms' swept shell. Both constructive:
- *    a turning crown/arm can never touch a corner. One splat sticker per face.
+ *    a turning crown/arm can never touch a corner block. One splat sticker
+ *    per face.
  *  - 6 CENTERS: rounded cap + square sticker + 4 C-shaped spider arms (one toward
  *    each adjacent gear; bare black plastic — colored feet read as stray dots,
  *    user-rejected). The arms live entirely inside the washer rings; their
  *    radial reach is capped by the corner-tab shell (spec §3/§6).
  *  - CORE: a dark sphere riding the middle slab.
  *
- * Clearance invariants (locked by tests/gear_geometry.test.ts):
+ * Clearance invariants (locked by tests/gear_geometry.test.ts, fine-grained
+ * offline sweep in scripts/gear/rigid_check.mjs):
  *  - corner/center/core bodies stay inside their move slabs (|coord| ≶ CUT ∓ SEAM);
- *  - HARD (spec §0): at every rest phase every tooth lies flat on ONE face,
- *    its decal top exactly IN that face's sticker plane — coplanar with the
- *    disc sticker (verified per-vertex through an independently re-derived
- *    fold map);
- *  - crowns ⊂ ball(CROWN_BALL) at their edge midpoint; the gliding wedges ⊂
- *    the glide shelf (the two face-plane slabs) at EVERY spin angle, so the
- *    shelf lathe carved out of the corners is constructive;
+ *  - at phase 0 the whole crown is coplanar with the faces (verified per-vertex
+ *    through an independently re-derived fold map); phases ±120° rest TILTED
+ *    by design (locked so nobody "fixes" them flush again);
+ *  - crowns ⊂ ball(CROWN_BALL) at their edge midpoint E, and ⊂ the rigid-sweep
+ *    lathe about their edge axis at EVERY spin angle (constructive corner-block
+ *    clearance, orbit included — every crown↔block encounter is a relative
+ *    rotation about the crown's own ê);
  *    face-layer and equator crown orbit circles pass ≥ 2·CROWN_BALL + 2 apart
  *    (ball-to-ball suffices — crowns hug the arris);
- *  - crowns vs middle caps/arms/axles/core verified by a numeric sweep over the
- *    whole turn with a spin-angle scan (the glide repeats each 60° pitch).
+ *  - crown vs corner die-cut PLATES (the interdigitation zone) is phase-sync
+ *    territory: a 3D numeric sweep covers rest tilts + full transits from
+ *    every start phase;
+ *  - crowns vs middle caps/arms/axles/core verified by the same numeric sweep
+ *    over the whole turn with a full 360° spin scan (a rigid tilted crown is
+ *    only 180°-periodic, not 60°).
  */
 import * as THREE from 'three';
 import { Brush, Evaluator, SUBTRACTION } from 'three-bvh-csg';
@@ -113,42 +113,57 @@ export const COIN_GAP = 0.6;
 export const COIN_T = 4;
 /** Tooth plate thickness (below the face planes). */
 export const PLATE_T = 7;
-/** Hub cone intercept along n̂: hub top proud = HUB_T/√2 = −COIN_T − COIN_GAP,
- *  a hover gap under the disc slab. */
-const HUB_T = -(COIN_T + COIN_GAP) * Math.SQRT2;
+/** Slot-throat setback along n̂ (v12): the rigid crown's spin sweep reaches
+ *  ρ = a − PLATE_T·√2 at axial depth a (the tilted plate's UNDERSIDE at p=0),
+ *  so everything living in the throat — hub + backing cone, both slope-1
+ *  cones about n̂ — must start at least this far in plus a margin, or the
+ *  tilted crown shaves them (numerically −3.4 with the old 6.5 intercept). */
+const THROAT_OFF = PLATE_T * Math.SQRT2 + 1.8;
+/** Hub cone intercept along n̂ (hub top proud = −THROAT_OFF at the axis). */
+const HUB_T = -THROAT_OFF;
 /** Half-disc radius — user-locked: the disc center sits ON the arris (cap top
  *  on the face plane), its in-face reach is exactly COIN_R, and the round
  *  tooth tip reaches TOOTH_TIP = 62 — so COIN_R ≈ tipReach/2 (test-locked). */
 export const COIN_R = 30.4;
-/** Fold-glide bend radius: crease-crossing material wraps this tiny arc
- *  instead of tearing (the map stays continuous through the fold). Rest teeth
- *  sit clear of the fold and are EXACTLY flat (the spec §0 hard requirement);
- *  the scalloped web's sector edges do reach the fold at rest — they wrap the
- *  arris through the same continuous crease arc the mid-glide crown uses
- *  (matches the real gear's rim wrapping the cube edge). */
+/** Crease bend radius: material crossing dev q=0 wraps this tiny arc instead
+ *  of tearing at the build-time bake — the real piece's sharp 90° fold with
+ *  just enough roundover to shade cleanly. Teeth sit clear of it (exactly
+ *  flat); only the wedge radial edges wrap it. */
 export const FOLD_R = 1.2;
-/** Ball bound of a whole crown around its edge midpoint E. */
-export const CROWN_BALL = Math.hypot(TOOTH_TIP, STICKER_LIFT + STICKER_DEPTH) + 1.5;
-/** Glide-shelf lathe. The gliding teeth stay inside the two face-plane slabs
- *  (depth ∈ [−PLATE_T, sticker top], in-plane radius ≤ TOOTH_TIP around E) at
- *  EVERY spin angle — flat teeth never dive below the slabs, unlike the old
- *  tilted 45°-cone plates. Revolved about a turn axis (the gear's edge
- *  direction ê ∥ that axis; along = the ê coordinate), the swept solid is a
- *  shallow SHELF hugging the arris: at |along| = a the slab still reaches
- *  in-plane b ≤ √(SWEEP_RHO² − a²), so its closest approach to the axis is
- *  hypot(H − PLATE_T, H − bMax). Corners are carved by exactly this lathe +
- *  margin (constructive: a gliding crown can never touch a corner) — far
- *  shallower than the old cone trench, so the corners keep more plastic and
- *  the carve reads as the real cube's scalloped arc around each gear. The
- *  hub/cone stay at |along| < CUT + SEAM (never inside a corner slab), so
- *  they need no carve at all. */
-export const SWEEP_RHO = TOOTH_TIP + 0.75;  // max |along| of the glide shelf
-export const SWEEP_WALL = 1.5;              // side margin of the carve
+/** Ball bound of a whole crown around its edge midpoint E — a RIGID bound now:
+ *  spin is a rotation about the axis through E, so it preserves every point's
+ *  distance to E. */
+export const CROWN_BALL = Math.hypot(TOOTH_TIP, PLATE_T) + 1.5;
+/** RIGID-SWEEP LATHE (v12). The spinning crown's swept solid is the revolve of
+ *  the creased rest shape about its own axis n̂: a point at dev (p,q,d) sits at
+ *  axial depth a = (q−d)/√2 into the throat with transverse radius
+ *  ρ = √(p² + (q+d)²/2), so ρ² + a² = p² + q² + d² — an EXACT ball
+ *  BALL_S = hypot(TOOTH_TIP, PLATE_T), saturated by the deepest dive
+ *  (p=0, q=TOOTH_TIP, d=−PLATE_T at AD = (TIP+PT)/√2 deep, ρ = RD =
+ *  (TIP−PT)/√2). Every crown↔corner encounter is a relative rotation about
+ *  the crown's own edge direction ê (equator gears have ê ∥ the turn axis;
+ *  riding gears co-move with their layer's corners and never reach the far
+ *  layer), so revolving the spin sweep about ê bounds ALL relative motion:
+ *  min R about ê at |along| = x is
+ *    x ≤ RD:      √((EDGE_R − AD)² + RD² − x²)   (the deep dive governs)
+ *    RD < x ≤ B:  EDGE_R − √(BALL_S² − x²)       (the ball rim governs)
+ *  (continuous at RD since AD² + RD² = BALL_S²). Corners are carved by exactly
+ *  this lathe + wall margin — constructive: a whirling TILTED crown can never
+ *  touch a corner block, mid-orbit included. The die-cut corner PLATES are
+ *  added AFTER the carve and live inside the sweep on purpose — phase sync is
+ *  what keeps the crown out of them (mesh_check/rigid_check verified). */
+export const SWEEP_WALL = 1.5;
 export function crownSweepInnerRadius(along: number): number {
-  const a = Math.min(Math.abs(along), SWEEP_RHO);
-  const bMax = Math.sqrt(Math.max(0, SWEEP_RHO * SWEEP_RHO - a * a));
-  return Math.hypot(H - PLATE_T - 1, H - bMax) - 1;
+  const AD = (TOOTH_TIP + PLATE_T) / Math.SQRT2;
+  const RD = (TOOTH_TIP - PLATE_T) / Math.SQRT2;
+  const BALL_S = Math.hypot(TOOTH_TIP, PLATE_T);
+  const x = Math.min(Math.abs(along), BALL_S);
+  return x <= RD
+    ? Math.sqrt((EDGE_R - AD) * (EDGE_R - AD) + RD * RD - x * x)
+    : EDGE_R - Math.sqrt(BALL_S * BALL_S - x * x);
 }
+/** Max |along| of the rigid sweep (the lathe's half-height before the wall). */
+export const SWEEP_RHO = Math.hypot(TOOTH_TIP, PLATE_T);
 /** Core sphere + center cap sizes (inside the middle slab). */
 export const CORE_R = 0.21 * H;
 export const CAP_HALF = 0.19 * H;
@@ -176,6 +191,13 @@ const bodyMat = new THREE.MeshPhongMaterial({
   color: BODY_COLOR, specular: 0x222222, shininess: 25, side: THREE.DoubleSide,
 });
 const coreMat = new THREE.MeshPhongMaterial({ color: 0x0d0d0d, specular: 0x111111, shininess: 10 });
+/** Fold-line bar: MATTE black. The bar wraps the crease arc, and a specular
+ *  material paints a bright streak along the bend (normals sweep through the
+ *  highlight angle) — the user wants the bar to read as ONE evenly-lit piece
+ *  with its two flat halves at the solved state. */
+const lineMat = new THREE.MeshPhongMaterial({
+  color: 0x141414, specular: 0x151515, shininess: 12, side: THREE.DoubleSide,
+});
 
 const stickerMats = new Map<string, THREE.MeshPhongMaterial>();
 function stickerMat(face: string): THREE.MeshPhongMaterial {
@@ -234,10 +256,11 @@ export const TOOTH_TIP_CR = 3.5;
 /** Concave fillet radius where a flank meets the web rim. */
 export const TOOTH_FILLET_R = 5;
 /** Fold-line mark: half-length and half-width of the black groove between the
- *  disc's two colored halves (user-locked: both ends poke a little past the
- *  disc zone; the mark spins with the crown like the real puzzle's). */
-export const FOLD_LINE_R = 34;
-export const FOLD_LINE_HW = 1.8;
+ *  disc's two colored halves (user-locked: a FAT bar — matching the real
+ *  puzzle's groove — whose ends run out to just shy of the web rim; the mark
+ *  spins with the crown like the real puzzle's). */
+export const FOLD_LINE_R = 42;
+export const FOLD_LINE_HW = 4.5;
 
 /** One crown sector outline — a full PIE WEDGE from the gear center (tooth
  *  axis at 90°, spanning polar 60°..120°), dense CCW polygon in (ŵ, ĝ) facet
@@ -354,10 +377,10 @@ export function foldPoint(F: FoldFrame, p: number, q: number, d: number, out: TH
 
 /** Grid-subdivided prism over a developed outline (CONCAVE OK — the crown
  *  sectors have an inner arc and fillets): the caps are cut into ~cell² tiles
- *  so the fold-glide crease can pass ANYWHERE through the middle (a coarse cap
- *  would chord straight across the arris mid-crossing). Fixed topology —
- *  positions start at zero and are (re)written from the returned developed
- *  (p,q,d) triples by foldPoint() on every spin-angle change.
+ *  so the crease can pass anywhere through the middle at the build-time bake
+ *  (a coarse cap would chord straight across the fold arc). Positions start at
+ *  zero; buildGearPiece writes them once from the returned developed (p,q,d)
+ *  triples through foldPoint().
  *  Groups follow the makeSticker convention: [0] caps, [1] side walls. */
 function gridPrism(outline: V2[], dTop: number, dBot: number, cell: number): { geo: THREE.BufferGeometry; dev: Float32Array } {
   const ccw = polyArea2(outline) > 0 ? outline : outline.slice().reverse();
@@ -464,16 +487,13 @@ export interface GearPieceHandle {
   /** Orbit pivot (origin) — rotated by face/middle turns. */
   pivot: THREE.Object3D;
   /** Spin pivot (origin, child of pivot) — rotated about the slot's radial axis
-   *  (which passes through the apex E, so the crown spins in place). */
+   *  (which passes through the apex E, so the crown spins in place). The whole
+   *  crease-baked crown rides it rigidly (v12). */
   spin: THREE.Object3D;
   group: THREE.Group;
-  /** Re-bake the fold-glide teeth from the spin pivot's current angle (reads
-   *  the quaternion; cheap no-op when unchanged). GearCube calls this every
-   *  updateMatrixWorld, so tween frames morph and rest frames cost nothing. */
-  refreshCrown: () => void;
 }
 
-/** Build gear piece for HOME slot (r,s): fold-glide crown + per-tooth decals. */
+/** Build gear piece for HOME slot (r,s): rigid creased crown + per-wedge decals. */
 export function buildGearPiece(r: number, s: number): GearPieceHandle {
   const pivot = new THREE.Object3D();
   const spin = new THREE.Object3D();
@@ -494,19 +514,31 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   const toothFace = (k: number): number =>
     Math.sin(Math.PI / 2 + k * pitch) > 0 ? facePlus : faceMinus;
 
-  // FOLD-GLIDE CROWN (spec §0 hard requirement — see the header): geometry
-  // lives in developed disc coords; the spin pivot's ANGLE (not its transform)
-  // drives a per-vertex re-bake through foldPoint(), so at rest every sector
-  // lies flat IN a face sticker plane, coplanar with the disc, and mid-turn
-  // the crown glides around the static disc, creasing over the arris. The
-  // sectors are children of the ORBIT pivot — only the axisymmetric hub + cone
-  // ride the spin pivot as rigid bodies. Six 60° sectors (SVG tentacle + half
-  // gullets of the scalloped web each) tile the whole annulus [TOOTH_ROOT,
-  // RIM_R/TOOTH_TIP], abutting at the gullet midlines.
+  // RIGID CREASED CROWN (v12 — see the header): the fold map runs ONCE here,
+  // baking the developed pie wedges into the bent-coin rest shape, and the
+  // whole crown rides the SPIN pivot as a rigid body (E lies on the spin axis
+  // through the origin along n̂, so the origin-anchored spin rotates the crown
+  // in place). The crease is baked along dev q=0 — a MATERIAL diameter that
+  // whirls with the piece and rests rotated off the arris at phases ±120°,
+  // exactly like the user's physical puzzle. Six 60° sectors (SVG tentacle +
+  // half gullets of the scalloped web each) tile the whole disc, abutting at
+  // the gullet midlines.
   const F = slotFoldFrame(r, s);
+  const vTmp = new THREE.Vector3();
+  const bake = (prism: { geo: THREE.BufferGeometry; dev: Float32Array }): THREE.BufferGeometry => {
+    const pos = prism.geo.getAttribute('position') as THREE.BufferAttribute;
+    const arr = pos.array as Float32Array;
+    for (let i = 0; i < prism.dev.length; i += 3) {
+      foldPoint(F, prism.dev[i], prism.dev[i + 1], prism.dev[i + 2], vTmp);
+      arr[i] = vTmp.x; arr[i + 1] = vTmp.y; arr[i + 2] = vTmp.z;
+    }
+    prism.geo.computeVertexNormals();
+    // tight rigid bound in geometry space — spin preserves distances to E
+    prism.geo.boundingSphere = new THREE.Sphere(E.clone(), CROWN_BALL);
+    return prism.geo;
+  };
   const crown = new THREE.Group();
-  crown.userData.gearPiece = { type: 'gear', ring: r, id: s };
-  pivot.add(crown);
+  group.add(crown);
   const sectorCcw = crownSectorOutline(0);
   // the decal covers the WHOLE plate top (real tentacles are solid-colored
   // plastic — any black margin here reads as a collar between disc and
@@ -515,80 +547,44 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   // decals share those boundaries exactly — no background hairline mid-gullet.
   const decalCcw = crownSectorOutline(0.25);
   const CELL = 1.8;
-  const crownMeshes: Array<{ mesh: THREE.Mesh; dev: Float32Array }> = [];
   for (let k = 0; k < TEETH; k++) {
     const rot = k * pitch; // sector k's tooth rests at developed angle 90° + k·60°
     const cr = Math.cos(rot), sr = Math.sin(rot);
     const spun = (pts: V2[]): V2[] => pts.map(([x, y]) => [x * cr - y * sr, x * sr + y * cr]);
-    const body = gridPrism(spun(sectorCcw), 0, -PLATE_T, CELL);
-    // positions are re-baked in place — keep a fixed generous bound (raycast)
-    // instead of per-frame recomputes, and skip frustum culling entirely
-    body.geo.boundingSphere = new THREE.Sphere(E.clone(), CROWN_BALL);
-    const plate = new THREE.Mesh(body.geo, bodyMat);
+    const plate = new THREE.Mesh(bake(gridPrism(spun(sectorCcw), 0, -PLATE_T, CELL)), bodyMat);
     plate.userData.simRole = 'body';
-    plate.frustumCulled = false;
     crown.add(plate);
-    crownMeshes.push({ mesh: plate, dev: body.dev });
 
-    // per-sector decal (rides its gliding sector — scrambled fans mix colors;
-    // sector boundaries land ON the arris at rest, so no decal straddles the
-    // fold and each sector is single-colored)
+    // per-sector decal (rigid with its sector — scrambled fans mix colors and
+    // tilt together; sector boundaries land ON the crease, so no decal
+    // straddles it and each sector is single-colored)
     const face = toothFace(k);
-    const dec = gridPrism(spun(decalCcw), STICKER_LIFT + STICKER_DEPTH, STICKER_LIFT, CELL);
-    dec.geo.boundingSphere = new THREE.Sphere(E.clone(), CROWN_BALL);
-    const decal = makeSticker(dec.geo, stickerMat(GEAR_FACE_NAMES[face]), bodyMat, {
-      simStickerNormal: V(FACE_AXIS[face]),
-    });
-    decal.frustumCulled = false;
+    const decal = makeSticker(
+      bake(gridPrism(spun(decalCcw), STICKER_LIFT + STICKER_DEPTH, STICKER_LIFT, CELL)),
+      stickerMat(GEAR_FACE_NAMES[face]), bodyMat,
+      { simStickerNormal: V(FACE_AXIS[face]) },
+    );
     crown.add(decal);
-    crownMeshes.push({ mesh: decal, dev: dec.dev });
   }
-  // FOLD-LINE MARK — the black groove between the disc's two colored halves.
-  // A decoration OF the piece: it rides the same fold-glide re-bake, so it
-  // spins its 480° with the crown and rests rotated after moves like the real
-  // puzzle's. Slightly longer than the disc's visual radius so both ends poke
-  // a little past it into the web (user-locked); proud of the wedge decals by
-  // a hair so the overlap never z-fights.
-  const lineDec = gridPrism(
-    [[-FOLD_LINE_R, -FOLD_LINE_HW], [FOLD_LINE_R, -FOLD_LINE_HW],
-     [FOLD_LINE_R, FOLD_LINE_HW], [-FOLD_LINE_R, FOLD_LINE_HW]],
-    STICKER_LIFT + STICKER_DEPTH + 0.12, STICKER_LIFT, CELL);
-  lineDec.geo.boundingSphere = new THREE.Sphere(E.clone(), CROWN_BALL);
-  const lineMesh = new THREE.Mesh(lineDec.geo, bodyMat);
+  // FOLD-LINE MARK — the fat black groove between the disc's two colored
+  // halves, straddling dev q=0: it sits exactly ON the baked crease, so the
+  // visible black line IS the fold line (user-locked), and both whirl together
+  // as one rigid feature. Its ends run out to just shy of the web rim (the
+  // gullet material under the rest crease reaches RIM_R); proud of the wedge
+  // decals by a hair so the overlap never z-fights.
+  const lineMesh = new THREE.Mesh(
+    bake(gridPrism(
+      [[-FOLD_LINE_R, -FOLD_LINE_HW], [FOLD_LINE_R, -FOLD_LINE_HW],
+       [FOLD_LINE_R, FOLD_LINE_HW], [-FOLD_LINE_R, FOLD_LINE_HW]],
+      STICKER_LIFT + STICKER_DEPTH + 0.12, STICKER_LIFT, CELL)),
+    lineMat);
   lineMesh.userData.simRole = 'body';
-  lineMesh.frustumCulled = false;
   crown.add(lineMesh);
-  crownMeshes.push({ mesh: lineMesh, dev: lineDec.dev });
-  // spin angle → vertex re-bake. The spin pivot only ever rotates about the
-  // piece-local n̂ (GearCube's live local axis P₀⁻¹·r̂_slot equals n̂ in every
-  // legal state — the crown always points outward), so the angle reads
-  // straight off the quaternion.
-  let lastTheta = Number.NaN;
-  const vTmp = new THREE.Vector3();
-  const refreshCrown = (): void => {
-    const q = spin.quaternion;
-    const theta = 2 * Math.atan2(q.x * n.x + q.y * n.y + q.z * n.z, q.w);
-    if (theta === lastTheta) return;
-    lastTheta = theta;
-    const ct = Math.cos(theta), st = Math.sin(theta);
-    for (const { mesh, dev } of crownMeshes) {
-      const pos = mesh.geometry.getAttribute('position') as THREE.BufferAttribute;
-      const arr = pos.array as Float32Array;
-      for (let i = 0; i < dev.length; i += 3) {
-        const p0 = dev[i], q0 = dev[i + 1];
-        foldPoint(F, p0 * ct - q0 * st, p0 * st + q0 * ct, dev[i + 2], vTmp);
-        arr[i] = vTmp.x; arr[i + 1] = vTmp.y; arr[i + 2] = vTmp.z;
-      }
-      pos.needsUpdate = true;
-      mesh.geometry.computeVertexNormals();
-    }
-  };
-  refreshCrown();
 
   // palm hub: full-revolution frustum of the lower cone t = HUB_T − rad out to
-  // WEB_R, fully under the disc slab (top proud ≤ −COIN_T − COIN_GAP; in-face
-  // reach inside the disc footprint), PLATE_T·√2 thick along n̂. Lathe profile
-  // in (rad ⊥ n̂, y ∥ n̂) — CCW loop (see cornerCarves for the winding gotcha).
+  // WEB_R — sunk past THROAT_OFF so the tilted crown's underside clears it,
+  // PLATE_T·√2 thick along n̂. Lathe profile in (rad ⊥ n̂, y ∥ n̂) — the loop
+  // MUST wind CCW in the (r, y) half-plane or the mesh is inside-out.
   const webTop = (rad: number): number => HUB_T - rad;
   const webBot = (rad: number): number => HUB_T - PLATE_T * Math.SQRT2 - rad;
   const latheBasis = new THREE.Matrix4().makeBasis(t, n, e).setPosition(E);
@@ -605,39 +601,39 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   web.userData.simRole = 'body';
   group.add(web);
 
-  // backing cone filling the slot throat behind the web; its apex starts deep
-  // enough that it stays under the cap slab (which now dips COIN_T below the
-  // face planes near the fold): proud = −6.5/√2 ≈ −4.6 < −COIN_T
+  // backing cone filling the slot throat behind the web; slope-1 about n̂ from
+  // the THROAT_OFF intercept, so the tilted crown's underside (ρ = a −
+  // PLATE_T·√2) always clears it by the 1.8 margin (rigid_check.mjs verifies)
   const coneL = 34;
   const coneGeo = new THREE.ConeGeometry(coneL, coneL, 24, 1, false);
   coneGeo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), n));
   const cone = new THREE.Mesh(coneGeo, bodyMat);
-  cone.position.copy(E.clone().sub(n.clone().multiplyScalar(6.5 + coneL / 2)));
+  cone.position.copy(E.clone().sub(n.clone().multiplyScalar(THROAT_OFF + coneL / 2)));
   cone.userData.simRole = 'body';
   group.add(cone);
 
-  return { pivot, spin, group, refreshCrown };
+  return { pivot, spin, group };
 }
 
-// ── corners (CSG: rounded box − 3 edge tori − 3 arm washers) ────────────────────────
+// ── corners (CSG: rounded box − 3 rigid-sweep lathes − 3 arm washers) ───────────────
 let carveBrushes: Brush[] | null = null;
 function cornerCarves(ev: Evaluator): Brush[] {
   if (carveBrushes) return carveBrushes;
   const brushes: Brush[] = [];
   const SWEEP_TOP = SWEEP_RHO + SWEEP_WALL;
   for (const axis of [0, 1, 2]) {
-    // crown sweep lathe: closed profile loop (inner edge follows
+    // rigid-sweep lathe: closed profile loop (inner edge follows
     // crownSweepInnerRadius, outer edge safely outside the cube), revolved
     // about this axis. LatheGeometry revolves about local Y. The loop MUST
     // wind CCW in the (r, y) half-plane — bottom out, up the outer wall, top
     // in, down the inner wall — or the brush is inside-out and the CSG
     // subtraction sprays sliver shards over the corner.
     const profile: THREE.Vector2[] = [];
-    const N = 24;
+    const N = 48;
     profile.push(new THREE.Vector2(200, -SWEEP_TOP), new THREE.Vector2(200, SWEEP_TOP));
     for (let i = 0; i <= N; i++) {
       const t = SWEEP_TOP - (2 * SWEEP_TOP * i) / N;
-      profile.push(new THREE.Vector2(crownSweepInnerRadius(t), t));
+      profile.push(new THREE.Vector2(crownSweepInnerRadius(t) - SWEEP_WALL, t));
     }
     profile.push(profile[0].clone());
     const latheGeo = new THREE.LatheGeometry(profile, 96);
@@ -663,25 +659,30 @@ function cornerCarves(ev: Evaluator): Brush[] {
   return brushes;
 }
 
-/** Is `p` inside the crown-sweep lathe about `axis` (0=x,1=y,2=z), inflated m? */
+/** Is `p` inside the rigid-sweep lathe about `axis` (0=x,1=y,2=z), inflated m?
+ *  (m < 0 shrinks the region — the containment test uses it to prove the crown
+ *  stays inside the carve with margin at every spin angle.) */
 export function inCrownSweep(p: THREE.Vector3, axis: number, m: number): boolean {
   const along = Math.abs(axis === 0 ? p.x : axis === 1 ? p.y : p.z);
   if (along > SWEEP_RHO + SWEEP_WALL + m) return false;
   const rad = axis === 0 ? Math.hypot(p.y, p.z) : axis === 1 ? Math.hypot(p.x, p.z) : Math.hypot(p.x, p.y);
-  return rad > crownSweepInnerRadius(along) - m;
+  return rad > crownSweepInnerRadius(along) - SWEEP_WALL - m;
 }
 
 /** Corner sticker/plate outline — traced 1:1 from the user's reference SVG
  *  (`scripts/gear/gear-cube-reference.svg`, F face, top-right corner path
- *  M7386 9900) and CONJUGATE-CLIPPED against the fold-glide crown's synced
- *  transit footprint by `scripts/gear/mesh_check.mjs` (spin/orbit ±480°/90°, both branches,
- *  full 360°, 0.5° frames). ABSOLUTE face coords for the (+,+) corner, CCW.
+ *  M7386 9900) and CONJUGATE-CLIPPED against the v12 RIGID crown's synced
+ *  transit sweep by `scripts/gear/mesh_check.mjs` (spin θ = φ0 ± (480/90)·ω,
+ *  BOTH branches, ALL THREE start tilts φ0 ∈ {0,120,240}, full 360° of ω,
+ *  0.5° frames — a tilted crown leans through 3D, so the old flat-footprint
+ *  reasoning is gone). ABSOLUTE face coords for the (+,+) corner, CCW.
  *
  *  The corner is a GEAR here — its spikes interdigitate with the crown teeth
- *  and only phase sync keeps them apart (rest clearance +12.21, transit +0.64,
- *  center-arm swept annuli 0 hits — all re-locked in tests/gear_geometry.test.ts;
- *  baked against the SVG-shaped SECTOR crown: scalloped web + parallel-sided
- *  tentacles, see crownSectorOutline).
+ *  and only phase sync keeps them apart (rest clearance +11.21 over all three
+ *  tilts, transit +0.91, center-arm swept annuli 0 hits — re-locked in
+ *  tests/gear_geometry.test.ts + scripts/gear/rigid_check.mjs; baked against
+ *  the SVG-shaped SECTOR crown: scalloped web + parallel-sided tentacles, see
+ *  crownSectorOutline).
  *  Built by MINIMAL SMOOTH DEFORMATION of the SVG outline: safe stretches are
  *  the SVG verbatim; offending stretches shift inward along a window-smoothed
  *  normal field by a smoothed upper envelope of the required clearance (G1,
@@ -697,23 +698,22 @@ export function inCrownSweep(p: THREE.Vector3, axis: number, m: number): boolean
  *  spike flanks keep an S-shaped shoulder where the warp ramps in (reads
  *  as a notch up close). */
 export const CORNER_POLY: V2[] = [
-  [116.5, 116.5], [115.3, 117.3], [113.8, 118], [111.9, 118.3], [109.4, 118.5],
-  [70.6, 118.6], [68.2, 118.4], [66.6, 117.9], [65.6, 116.9], [65, 115.6],
-  [65.1, 114.2], [65.7, 112.4], [69.7, 111.1], [71.3, 110.1], [71.8, 109.5],
-  [72.3, 108.5], [72.6, 107.5], [72.6, 106.3], [72.3, 104.4], [71.4, 101.1],
-  [65.8, 82.7], [63.8, 77], [63.2, 75.6], [62.5, 74.6], [61.8, 73.9],
-  [60.7, 73.3], [58.4, 72.6], [49.9, 70.8], [48.4, 70.3], [47.2, 69.6],
-  [46.2, 68.8], [45.4, 67.6], [45.3, 66.5], [45.5, 65.6], [46.4, 64.8],
-  [47.7, 64.2], [58.1, 62.5], [59.7, 62], [60.9, 61.1], [61.9, 59.8],
-  [62.5, 58.2], [63.9, 49.2], [64.3, 47.3], [64.8, 46.4], [65.3, 45.8],
-  [65.9, 45.4], [66.7, 45.3], [67.6, 45.5], [68.9, 46.3], [69.6, 47.1],
-  [70.2, 48.3], [71, 50.8], [72.7, 58.8], [73.5, 61.2], [74.6, 62.6],
-  [76.8, 63.8],
-  [82.6, 65.8], [101.1, 71.4], [104.3, 72.3], [106.2, 72.7], [107.3, 72.6],
-  [108.4, 72.4], [109.3, 71.9], [110, 71.4], [111, 70.1], [112.5, 66.7],
-  [113, 66.1], [113.8, 65.5], [114.6, 65.3], [116.1, 65.3], [117.1, 65.7],
-  [118.3, 66.4], [118.5, 71.6], [118.5, 108.2], [118.3, 111.6], [118, 113.4],
-  [117.4, 115.2],
+  [116.5, 116.5], [115, 117.5], [113.3, 118.1], [111.2, 118.4], [107.6, 118.5],
+  [68.4, 118.6], [65.5, 118.2], [64.8, 117.9], [64, 117.1], [63.6, 116.4],
+  [63.5, 114.8], [63.6, 114], [64.2, 112.7], [69.1, 111.3], [70.8, 110.5],
+  [71.6, 109.8], [72.1, 109], [72.4, 108.2], [72.6, 107.1], [72.5, 105.4],
+  [72, 103.2], [65.4, 81.2], [63.5, 76.1], [62.7, 74.8], [61.9, 74],
+  [60.3, 73.1], [56.6, 72], [53.5, 70.8], [50.5, 70.5], [49.3, 70.1],
+  [48.5, 69.6], [47.9, 68.8], [47.5, 68], [47.4, 67.2], [47.5, 66.2],
+  [47.8, 65.3], [48.4, 64.7], [49.2, 64.2], [51.2, 63.6], [58.5, 62.4],
+  [60, 61.8], [61.1, 60.9], [62, 59.6], [62.5, 58.2], [63.9, 49.9],
+  [64.5, 48.7], [65.2, 47.9], [66.5, 47.4], [68, 47.4], [69.1, 48],
+  [69.9, 48.9], [70.5, 50.5], [70.7, 53.5], [71.9, 56.5], [73.2, 60.5],
+  [73.7, 61.5], [74.3, 62.3], [75.2, 63], [76.7, 63.7],
+  [82.8, 65.9], [103.2, 72], [105.3, 72.5], [106.8, 72.7], [107.9, 72.5],
+  [108.8, 72.2], [109.7, 71.6], [110.6, 70.7], [111.6, 68.6], [112.8, 64.3],
+  [114.4, 63.7], [115.6, 63.7], [116.8, 63.9], [118.3, 64.6], [118.4, 69.6],
+  [118.5, 108.1], [118.3, 111.6], [118, 113.4], [117.4, 115.2],
 ];
 
 /** CORNER_POLY mirrored into corner `ci`'s quadrant on face `face`, CCW, plus
