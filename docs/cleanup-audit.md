@@ -35,7 +35,7 @@
 ## P2 简单清理（本次做）
 
 - [x] `shared/src/types.ts:4` 五个旧训练器类型全死（`TrainerCase`/`TrainerSet`/`TrainResult`/`UserProgress`/`UserSettings`）→ 已删（0 真实消费者：alg-select 命中是 `TrainerSetClient` 文件名子串、test 命中是 allowlist 路径串）；shared rebuild + client/server typecheck 绿
-- [ ] `components/wca-stats/ShowToggle.tsx` 死组件（仅 /code 画廊引用）→ 删并去画廊 demo（需过 `code-catalog-sync` CI，暂缓）
+- [x] `components/wca-stats/ShowToggle.tsx` 死组件（仅 /code 画廊引用；`ShowMode` type 被 wca/results 用）→ 已把 `ShowMode` 内联进唯一消费者 wca/results，删组件 + 去画廊 import/demo/registry/metadata 四处。`code-catalog-sync` 测试 5/5 绿，typecheck 无新错
 - [ ] `/code` `cuberootDesc` 字段 49 文件填充但无渲染器读取（死语料）→ 确认后删
 - [x] untrack `.playwright-mcp/` 下 5 个 debug session dump（整目录已 gitignore，误 force-add）
 - [x] 删 `core/packages/client/HANDOFF.md`（已完成的 Vite→Next 移交文档，零引用）
