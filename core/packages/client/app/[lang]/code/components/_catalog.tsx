@@ -958,6 +958,14 @@ export const CATALOG: ComponentEntry[] = [
     },
   },
   {
+    name: 'SimCaptureGroup',
+    import: "import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';",
+    category: 'more',
+    zh: '/sim 的「实时」捕获按钮组:PNG 截图 / SVG 截图(场景投影矢量导出 sim_svg_export)/ 录制 MP4(离线渲染 sim_export),附导出进度浮层。挂在图像面板内(PuzzleImageStudio)与不支持 spec 渲染的拼图侧栏两处 —— 截图能力覆盖 /sim 菜单全部拼图。引擎模块全部动态 import,不拖大 bundle。',
+    en: "The /sim 'Live' capture row: PNG snapshot / SVG snapshot (scene-projection vector export, sim_svg_export) / MP4 recording (offline render, sim_export), plus the export-progress overlay. Mounted both inside the image panel (PuzzleImageStudio) and standalone for puzzles the spec renderer doesn't cover — capture works for every puzzle in the /sim menu. All engine modules are dynamically imported.",
+    usage: '<SimCaptureGroup simBridge={simBridge} />',
+  },
+  {
     name: 'MaskCatalogGrid',
     import: "import MaskCatalogGrid from '@/components/puzzle-image/MaskCatalogGrid';",
     category: 'more',
