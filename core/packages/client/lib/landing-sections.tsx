@@ -121,6 +121,25 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
+    id: 'tool',
+    eyebrow: { en: 'TOOL · 工具', zh: 'TOOL · 工具' },
+    title:   { en: 'From scramble to solution.', zh: '从打乱到解法。'
+    },
+    sub:     { en: 'Recon, frame-count, visualizers, solvers — a tool for every step of the solve.', zh: '复盘、数帧、可视化、求解 — 每个解法环节都有专门工具。'
+    },
+    cards: [
+      { id: 'sim',         href: '/sim',         internal: true, tier: 'medium', Icon: Box,        nameKey: 'sim' },
+      { id: 'scramble',    href: '/scramble',    internal: true, tier: 'medium', Icon: Shuffle,    nameKey: 'scramble' },
+      { id: 'recon',       href: '/recon',       internal: true, tier: 'medium', Icon: ScanSearch, nameKey: 'recon' },
+      { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
+      { id: 'visualcube',  href: '/visualcube',  internal: true, tier: 'medium', Icon: ImagePlus,  nameKey: 'visualcubeEditor' },
+      { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
+      { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
+      { id: 'paint',       href: '/paint',       internal: true, tier: 'medium', Icon: Brush,      nameKey: 'paint' },
+      { id: 'icon',        href: '/icon',        internal: true, tier: 'medium', Icon: Shapes,     nameKey: 'icon' },
+    ],
+  },
+  {
     id: 'learn',
     eyebrow: { en: 'LEARN · 学习', zh: 'LEARN · 学习'
     },
@@ -134,25 +153,6 @@ export const SECTIONS: Section[] = [
       { id: 'regulation', href: '/regulation', internal: true, tier: 'medium', Icon: Scale, nameKey: 'regulation' },
       { id: 'math-hub', href: '/math', internal: true, tier: 'medium', Icon: Sigma, nameKey: 'theoryGroup' },
       { id: 'why-cube', href: '/why-cube', internal: true, tier: 'medium', Icon: Sprout, nameKey: 'whyCube' },
-    ],
-  },
-  {
-    id: 'tool',
-    eyebrow: { en: 'TOOL · 工具', zh: 'TOOL · 工具' },
-    title:   { en: 'From scramble to solution.', zh: '从打乱到解法。'
-    },
-    sub:     { en: 'Recon, frame-count, visualizers, solvers — a tool for every step of the solve.', zh: '复盘、数帧、可视化、求解 — 每个解法环节都有专门工具。'
-    },
-    cards: [
-      { id: 'recon',       href: '/recon',       internal: true, tier: 'medium', Icon: ScanSearch, nameKey: 'recon' },
-      { id: 'frame-count', href: '/frame-count', internal: true, tier: 'medium', Icon: Film,       nameKey: 'frameCount' },
-      { id: 'visualcube',  href: '/visualcube',  internal: true, tier: 'medium', Icon: ImagePlus,  nameKey: 'visualcubeEditor' },
-      { id: 'scramble',    href: '/scramble',    internal: true, tier: 'medium', Icon: Shuffle,    nameKey: 'scramble' },
-      { id: 'solver',      href: '/solver',      internal: true, tier: 'medium', iconImg: '/icons/upstream/solver.png', nameKey: 'solver' },
-      { id: 'mosaic',      href: '/mosaic',      internal: true, tier: 'medium', Icon: Grid2x2,    nameKey: 'mosaic' },
-      { id: 'paint',       href: '/paint',       internal: true, tier: 'medium', Icon: Brush,      nameKey: 'paint' },
-      { id: 'sim',         href: '/sim',         internal: true, tier: 'medium', Icon: Box,        nameKey: 'sim' },
-      { id: 'icon',        href: '/icon',        internal: true, tier: 'medium', Icon: Shapes,     nameKey: 'icon' },
     ],
   },
   {

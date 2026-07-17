@@ -18,6 +18,7 @@ import {
   Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin, Wrench,
   TrendingDown, Target, Calculator, Search,
   Users, Percent, LayoutGrid, Crown, Sparkles, BellRing,
+  Radio, ListOrdered,
   type LucideIcon,
 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -47,15 +48,21 @@ const WCA_TOOLS: { path: string; zh: string; en: string; Icon: LucideIcon
   // 成绩分布(原 /wca/viz)已退役,移入选手页「动态分布」子 tab
   { path: '/wca/prediction', zh: '预测',     en: 'Prediction',   Icon: TrendingDown
 },
-  { path: '/nemesizer',      zh: '宿敌',     en: 'Nemesizer',    Icon: Target
-},
   { path: '/calc',           zh: '计算器',   en: 'Calculator',   Icon: Calculator
 },
 ];
 
 const LOOKUP_ITEMS: { path: string; zh: string; en: string; Icon: LucideIcon; extraQuery?: string; adminOnly?: boolean
  }[] = [
-  // 纪录 / 排名 已上移到首页直达卡,这里不再重复
+  // 首页直达卡(比赛 / 纪录 / 排名)同时并入查询区,方便从 /wca 直接进
+  { path: '/wca/comp',            zh: '比赛',         en: 'Competitions',    Icon: Radio
+},
+  { path: '/wca/records',         zh: '纪录',         en: 'Records',         Icon: Trophy
+},
+  { path: '/wca/results',         zh: '排名',         en: 'Rankings',        Icon: ListOrdered
+},
+  { path: '/nemesizer',           zh: '宿敌',         en: 'Nemesizer',       Icon: Target
+},
   { path: '/wca/cohort-ranks',    zh: '届别排名',     en: 'Cohort Ranks',    Icon: Users
 },
   { path: '/wca/success-rate',    zh: '完成率',       en: 'Success Rate',    Icon: Percent },
@@ -75,7 +82,7 @@ export default function WcaStatsIndex() {
   const [data, setData] = useState<IndexData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeKey, setActiveKey] = useState<string>(TOOLS);
+  const [activeKey, setActiveKey] = useState<string>(LOOKUP);
   const sectionEls = useRef<Map<string, HTMLElement>>(new Map());
   const tabsRef = useRef<HTMLDivElement>(null);
   const lockUntil = useRef(0); // 点 chip 后短暂锁定高亮,别被平滑滚动途中的 scroll-spy 改掉
@@ -178,9 +185,9 @@ export default function WcaStatsIndex() {
   type Section ={ key: string; zh: string; en: string; Icon?: LucideIcon; cat?: StatCategory
  };
   const sections: Section[] = [
-    { key: TOOLS, zh: '工具', en: 'Tools', Icon: Wrench },
     { key: LOOKUP, zh: '查询', en: 'Lookup', Icon: Search
     },
+    { key: TOOLS, zh: '工具', en: 'Tools', Icon: Wrench },
     ...data.categories.map(cat => ({
       key: cat.nameEn, zh: cat.nameZh, en: cat.nameEn, Icon: ICON_MAP[cat.iconName || ''], cat,
     })),
