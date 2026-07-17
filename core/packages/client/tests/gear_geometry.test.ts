@@ -476,7 +476,7 @@ describe('gear geometry clearance invariants', () => {
   // Its die-cut plates (CORNER_POLY prisms, tooth-plate deep) interdigitate
   // with the crown teeth; only the locked spin/orbit ratio (±480°/90°, issue
   // #32) keeps them apart. Derivation + finer 0.5° sweep in .tmp/gear/mesh_check.mjs
-  // (offline: transit +1.07, rest +8.49, arms 0 hits).
+  // (offline: transit +1.08, rest +8.43, arms 0 hits).
 
   /** Min signed distance from a world point to any corner plate prism:
    *  polygon CORNER_POLY (per |in-plane| quadrant fold) × band
@@ -532,7 +532,7 @@ describe('gear geometry clearance invariants', () => {
         }
       }
     }
-    // offline fine-grained (0.5°, denser cloud) minimum is +1.07 — the
+    // offline fine-grained (0.5°, denser cloud) minimum is +1.08 — the
     // coarser test grid must stay comfortably positive; a real regression
     // (e.g. a wing regrowing into the transit band) goes ~−2
     expect(worst).toBeGreaterThan(0.5);
