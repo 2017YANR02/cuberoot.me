@@ -210,6 +210,118 @@
 }
 .trainer-case-cell-thumb {
   pointer-events: none;
+  position: relative;
+}
+
+/* ─── 学习标记(角标 / 画笔 / 进度 / 工具栏) ─── */
+/* 右上状态角标:✓ 已掌握(绿)/ ● 学习中(橙)/ ⏸ 搁置(灰)。
+   角标压在图外沿,cell 无 overflow:hidden,负偏移安全。 */
+.trainer-mark-badge {
+  position: absolute; top: -5px; right: -5px;
+  width: 16px; height: 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--signal-success);
+  color: var(--background);
+  box-shadow: 0 0 0 2px var(--background);
+}
+.trainer-mark-badge.is-learning { background: var(--signal-warning); width: 12px; height: 12px; top: -3px; right: -3px; }
+.trainer-mark-badge.is-paused { background: var(--faint-foreground); }
+.trainer-mark-star {
+  position: absolute; top: -6px; left: -6px;
+  color: var(--signal-warning);
+  fill: var(--signal-warning);
+  filter: drop-shadow(0 0 1px var(--background));
+}
+/* 画笔模式:格子光标提示「点了是涂不是选」 */
+.trainer-set-block.is-painting .trainer-case-cell,
+.trainer-set-block.is-painting .trainer-bulk-toggle,
+.trainer-set-block.is-painting .trainer-set-header { cursor: crosshair; }
+
+.trainer-progress { margin: 10px 0 2px; }
+.trainer-progress-bar {
+  display: flex; height: 6px; border-radius: 3px; overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  max-width: 480px;
+}
+.trainer-progress-bar .is-mastered { background: var(--signal-success); }
+.trainer-progress-bar .is-learning { background: var(--signal-warning); }
+.trainer-progress-text {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.trainer-marks-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px;
+  margin: 8px 0 12px;
+}
+.trainer-marks-tool { display: inline-flex; align-items: center; gap: 6px; }
+.trainer-quick-btn {
+  appearance: none; -webkit-appearance: none;
+  font: inherit; font-size: 0.82rem; color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  border-radius: 6px;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .trainer-quick-btn:hover { background: color-mix(in srgb, var(--foreground) 9%, transparent); }
+}
+
+/* run 页当前 case 的标记 pill + 弹出菜单 */
+.trainer-mark-pill-root { position: relative; display: inline-flex; }
+.trainer-mark-pill {
+  appearance: none; -webkit-appearance: none;
+  display: inline-flex; align-items: center; gap: 4px;
+  font: inherit; font-size: 0.78rem;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  border-radius: 999px;
+  padding: 1px 9px;
+  cursor: pointer;
+}
+.trainer-mark-pill.is-learning { color: var(--signal-warning); border-color: color-mix(in srgb, var(--signal-warning) 45%, transparent); }
+.trainer-mark-pill.is-mastered { color: var(--signal-success); border-color: color-mix(in srgb, var(--signal-success) 45%, transparent); }
+.trainer-mark-pill.is-paused { color: var(--faint-foreground); }
+.trainer-mark-pill-star { color: var(--signal-warning); fill: var(--signal-warning); }
+/* anchored-panel: clamped (usePanelClamp in CaseMarkPill) */
+.trainer-mark-menu {
+  position: absolute; top: 100%; right: 0; z-index: 30;
+  margin-top: 4px;
+  display: flex; flex-direction: column;
+  width: max-content;
+  background: var(--popover);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+.trainer-mark-menu-item {
+  appearance: none; -webkit-appearance: none;
+  display: flex; align-items: center; gap: 7px;
+  font: inherit; font-size: 0.84rem; color: var(--foreground);
+  background: none; border: none; border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+@media (hover: hover) {
+  .trainer-mark-menu-item:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); }
+}
+.trainer-mark-menu-item.is-active { background: color-mix(in srgb, var(--foreground) 9%, transparent); }
+.trainer-mark-dot { width: 9px; height: 9px; border-radius: 50%; }
+.trainer-mark-dot.is-learning { background: var(--signal-warning); }
+.trainer-mark-dot.is-mastered { background: var(--signal-success); }
+.trainer-mark-dot.is-paused { background: var(--faint-foreground); }
+
+/* 成绩驱动的升降级建议条(stage 内,data-no-timer) */
+.trainer-mark-suggest {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+  margin-top: 14px;
+  font-size: 0.84rem;
+  color: var(--muted-foreground);
 }
 
 /* ─── run page (timer) ─── */

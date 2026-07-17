@@ -20,9 +20,10 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { availableKinds, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
+import { useTrainerMarks, markStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
-  TimerDisplay, ScrambleHeader, SolveCard, StatsList,
+  TimerDisplay, ScrambleHeader, SolveCard, StatsList, CaseMarkPill,
 } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -114,6 +115,13 @@ export default function TrainerRunClient() {
   // 偏好(pre-AUF / 计时 / 模式 / 字体)只在挂载后补水 —— SSG 壳渲染默认值,避免水合不一致
   useEffect(() => { hydratePrefs(); }, [hydratePrefs]);
 
+  // per-case 学习标记(pill / 轮盘掌握位 / M 键):本地 + 登录后云端合并
+  const loadMarks = useTrainerMarks(s => s.loadMarks);
+  useEffect(() => {
+    if (!puzzle || !meta) return;
+    loadMarks(puzzle, setSlug);
+  }, [puzzle, setSlug, meta, loadMarks]);
+
   useEffect(() => {
     if (!puzzle || !meta) return;
     if (storePuzzle === puzzle && storeSet === setSlug && cases.length > 0) return;
@@ -187,6 +195,17 @@ export default function TrainerRunClient() {
         || target.tagName === 'SELECT' || target.isContentEditable)) return;
       if (e.code === 'ArrowLeft') { e.preventDefault(); prevScramble(); return; }
       if (e.code === 'ArrowRight') { e.preventDefault(); nextScramble(); return; }
+      // M:当前 case 标记循环 学习中 → 已掌握 → 清除(搁置态按 M 回到学习中)
+      if (e.code === 'KeyM' && !e.repeat) {
+        const st = useTrainerStore.getState();
+        if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
+        const k = st.currentKey;
+        if (!k) return;
+        const mk = useTrainerMarks.getState();
+        const cur = markStatus(mk.marks, k);
+        mk.applyMarks([k], { s: !cur || cur === 'paused' ? 'learning' : cur === 'learning' ? 'mastered' : null });
+        return;
+      }
       if (e.code === 'Space' && !useTrainerStore.getState().timing) {
         e.preventDefault();
         if (!e.repeat) nextScramble();
@@ -225,14 +244,15 @@ export default function TrainerRunClient() {
     return m;
   }, [cases]);
 
-  // index: 0 next · 1 OK · 2 +2 · 3 DNF · 4 prev · 5 (空) · 6 del · 7 copy
+  // index: 0 next · 1 OK · 2 +2 · 3 DNF · 4 prev · 5 掌握 · 6 del · 7 copy
   // 4/5 原是「看上次/看下次」(翻成绩) —— 与 /timer 对齐改为「上一个」= 上一条打乱
   //(同 ← 键),「看下次」与「下一个」语义重复,删(issue #30)。
+  // 5 = 当前 case 标「已掌握」(已掌握则降回学习中),计时流程中手不离开就能标。
   const wheelLabels = [
     tr({ zh: '下一个', en: 'Next' }),
     'OK', '+2', 'DNF',
     tr({ zh: '上一个', en: 'Prev' }),
-    '',
+    tr({ zh: '掌握', en: 'Got it' }),
     tr({ zh: '删除', en: 'Del' }),
     tr({ zh: '复制', en: 'Copy' }),
   ];
@@ -253,7 +273,7 @@ export default function TrainerRunClient() {
         st.timerState === TimerState.NOT_RUNNING,
         hasLast, hasLast, hasLast,
         st.hist.idx > 0,
-        false,
+        !!st.currentKey,
         hasLast,
         !!st.currentScramble,
       ];
@@ -268,6 +288,13 @@ export default function TrainerRunClient() {
         case 2: if (last) setSolvePenalty(lastIdx, last.penalty === '+2' ? 'ok' : '+2'); break;
         case 3: if (last) setSolvePenalty(lastIdx, last.penalty === 'DNF' ? 'ok' : 'DNF'); break;
         case 4: prevScramble(); break;
+        case 5: {
+          const k = st.currentKey;
+          if (!k) break;
+          const mk = useTrainerMarks.getState();
+          mk.applyMarks([k], { s: markStatus(mk.marks, k) === 'mastered' ? 'learning' : 'mastered' });
+          break;
+        }
         case 6: if (last) deleteSolve(lastIdx); break;
         case 7: {
           const scr = st.currentScramble;
@@ -335,6 +362,45 @@ export default function TrainerRunClient() {
     };
   }, [nextScramble, stopTimer, getTimerReady, startTimer, setTimerState]);
 
+  // ── 成绩驱动的标记升降级建议(只建议不自动改,标记主权在用户)──
+  // 升:该 case 近 5 把全成功,且这 5 把的中位数不慢于本 session 全部成功成绩的中位数
+  // 降:已掌握的 case 连续 2 把 DNF。每个 (case, 方向) 一个 session 只提一次。
+  const applyMarks = useTrainerMarks(s => s.applyMarks);
+  const [suggest, setSuggest] = useState<{ k: string; name: string; kind: 'master' | 'demote' } | null>(null);
+  const suggestDismissed = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (solves.length === 0) return;
+    const last = solves[solves.length - 1];
+    const k = last.caseKey;
+    const st = markStatus(useTrainerMarks.getState().marks, k);
+    const attempts = solves.filter(s => s.caseKey === k);
+    const effMs = (s: { ms: number; penalty: string }) => s.ms + (s.penalty === '+2' ? 2000 : 0);
+    const median = (xs: number[]) => {
+      const a = [...xs].sort((x, y) => x - y);
+      return a.length > 0 ? a[Math.floor(a.length / 2)] : Infinity;
+    };
+    if (st === 'mastered') {
+      const last2 = attempts.slice(-2);
+      if (last2.length === 2 && last2.every(s => s.penalty === 'DNF') && !suggestDismissed.current.has(`${k}|demote`)) {
+        setSuggest({ k, name: last.caseName, kind: 'demote' });
+      }
+      return;
+    }
+    if (st === 'paused') return;
+    const last5 = attempts.slice(-5);
+    if (last5.length < 5 || !last5.every(s => s.penalty === 'ok')) return;
+    const allOk = solves.filter(s => s.penalty === 'ok');
+    if (median(last5.map(effMs)) > median(allOk.map(effMs))) return;
+    if (suggestDismissed.current.has(`${k}|master`)) return;
+    setSuggest({ k, name: last.caseName, kind: 'master' });
+  }, [solves]);
+  const resolveSuggest = (accept: boolean) => {
+    if (!suggest) return;
+    if (accept) applyMarks([suggest.k], { s: suggest.kind === 'master' ? 'mastered' : 'learning' });
+    suggestDismissed.current.add(`${suggest.k}|${suggest.kind}`);
+    setSuggest(null);
+  };
+
   if (!puzzle || !meta) {
     return (
       <div className="trainer-root">
@@ -380,6 +446,8 @@ export default function TrainerRunClient() {
     ? findCaseByKey(cases, cardSolve.caseKey) ?? null
     : (timing ? null : currentCase);
   const cardScramble = cardSolve ? cardSolve.scramble : (timing ? null : currentScramble);
+  // 标记 pill 跟卡片同一个 case;计时模式还没有成绩时回落到当前题(不然第一把之前没法标)
+  const pillCase = cardCase ?? currentCase;
   // 计数:第几把 —— 不计时也要有(打乱历史里的位置,从 1 起);跟着一条已录成绩看
   // 时改用该成绩的序号(两套编号在计时模式下重合,recap/不计时时只有前者)。
   const cardHeader = cardSolve ? `#${cardSolve.i + 1}` : (hist.idx >= 0 ? `#${hist.idx + 1}` : undefined);
@@ -534,8 +602,8 @@ export default function TrainerRunClient() {
               </div>
               <div className="trainer-opts-help">
                 {timing
-                  ? tr({ zh: '空格开始/停止，按住拖动呼出轮盘', en: 'Space to start/stop, hold & drag for the wheel' })
-                  : tr({ zh: '单击、空格或 → 键切下一个打乱', en: 'Click, Space or → for the next scramble' })}
+                  ? tr({ zh: '空格开始/停止，按住拖动呼出轮盘，M 循环标记', en: 'Space to start/stop, hold & drag for the wheel, M cycles the mark' })
+                  : tr({ zh: '单击、空格或 → 键切下一个打乱，M 循环标记', en: 'Click, Space or → for the next scramble, M cycles the mark' })}
               </div>
             </div>
           )}
@@ -580,6 +648,27 @@ export default function TrainerRunClient() {
             />
           )}
 
+          {suggest && (
+            <div className="trainer-mark-suggest" data-no-timer>
+              <span>
+                {suggest.kind === 'master'
+                  ? tr({
+                      zh: `${suggest.name} 近 5 把全部顺利,标为已掌握?`,
+                      en: `Last 5 of ${suggest.name} all clean — mark as mastered?`,
+                    })
+                  : tr({
+                      zh: `已掌握的 ${suggest.name} 连挂 2 把,降回学习中?`,
+                      en: `${suggest.name} (mastered) failed twice in a row — back to learning?`,
+                    })}
+              </span>
+              <button type="button" className="trainer-quick-btn" onClick={() => resolveSuggest(true)}>
+                {tr({ zh: '标记', en: 'Mark' })}
+              </button>
+              <button type="button" className="trainer-quick-btn" onClick={() => resolveSuggest(false)}>
+                {tr({ zh: '忽略', en: 'Dismiss' })}
+              </button>
+            </div>
+          )}
         </div>
 
         {(showCaseCard || statsVisible) && (
@@ -593,6 +682,7 @@ export default function TrainerRunClient() {
                 isZh={isZh}
                 onShowCase={cardCase?.meta ? (c) => setMetaCase(c) : undefined}
                 header={cardHeader}
+                markSlot={pillCase ? <CaseMarkPill k={caseKey(pillCase)} /> : undefined}
               />
             )}
             {statsVisible && (
