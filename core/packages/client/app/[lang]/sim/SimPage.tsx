@@ -138,8 +138,13 @@ const DEFAULT_CUSTOM_CUTS = 'c f 0.255';
  *  Their spec renderer (sr-puzzlegen) can't match the sim — no yaw axis, no perspective
  *  knob, own colours — so instead of tracking it we mirror the left 3D exactly: SimPage
  *  regenerates the SVG on camera settle and hands it to PuzzleImageStudio. The cube keeps
- *  visualcube (shares the sim's coords + has `dist`, so it already links all three). */
-const LIVE_VECTOR_PUZZLES = new Set<string>(['sq1', 'pyraminx', 'megaminx', 'skewb']);
+ *  visualcube (shares the sim's coords + has `dist`, so it already links all three).
+ *  sq1 is EXCLUDED on purpose: its irregular kite top-layer leaves wide inter-piece gaps
+ *  that a depth-map-free painter can't resolve — far-side pieces + edge-on slivers bleed
+ *  through (black wedges / hairlines). So sq1 stays on the clean flat sr-puzzlegen render
+ *  (angle-tracked below), trading 透视 for a clean picture. pyra/mega/skewb tile tightly
+ *  enough that only sub-pixel gap specks show, so they keep the full live-vector link. */
+const LIVE_VECTOR_PUZZLES = new Set<string>(['pyraminx', 'megaminx', 'skewb']);
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
@@ -1519,6 +1524,18 @@ export default function SimPage() {
       const a2 = Math.round((settings.viewGradient / 50 - 1) * 90);     // 上下
       const distVal = Math.round((2 + (settings.perspective / 100) * 8) * 10) / 10; // 透视 → dist
       if (imgSpec.dist !== distVal) patch.dist = distVal;
+      if (imgSpec.rotateAxis1 !== 'y') patch.rotateAxis1 = 'y';
+      if (imgSpec.rotateAxis2 !== 'x') patch.rotateAxis2 = 'x';
+      if (imgSpec.rotateAngle1 !== a1) patch.rotateAngle1 = a1;
+      if (imgSpec.rotateAngle2 !== a2) patch.rotateAngle2 = a2;
+    } else if (imgPuzzle.puzzleType === 'sq1') {
+      // sq1 is NOT live-vector (see LIVE_VECTOR_PUZZLES) — it stays on sr-puzzlegen. That
+      // renderer's canonical iso happens to match the sim's default sq1 view, so anchor
+      // there and add the sim's deviation from its default sliders to track 左右/上下.
+      // (sr has no perspective knob, so 透视 doesn't follow; sr routes yaw through z.)
+      const def = rotationDefaultsFor({ puzzleType: 'sq1', puzzleVariant: imgSpec.puzzleVariant });
+      const a1 = Math.round(def.angle1 + (settings.viewAngle - 30) * 1.8);
+      const a2 = Math.round(def.angle2 + (33 - settings.viewGradient) * 1.8);
       if (imgSpec.rotateAxis1 !== 'y') patch.rotateAxis1 = 'y';
       if (imgSpec.rotateAxis2 !== 'x') patch.rotateAxis2 = 'x';
       if (imgSpec.rotateAngle1 !== a1) patch.rotateAngle1 = a1;
