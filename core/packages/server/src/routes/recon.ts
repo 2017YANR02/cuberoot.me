@@ -6,6 +6,7 @@
  * NOTE: 迁移自 PHP recon/api/index.php → Hono
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
   rowToJson, jsonToRow, validateRow,
@@ -17,11 +18,6 @@ import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slu
 import { notify, adminRecipients } from '../utils/notify.js';
 
 export const reconRoutes = new Hono();
-
-/** 从 Hono Context 提取客户端 IP（Nginx 反代场景用 X-Real-IP） */
-function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 /** 通知用的 recon 抬头 + 站内链接。id 段即可打开详情页(前端 parseReconId 兼容 slug)。 */
 async function reconNotifyMeta(reconId: number): Promise<{ title: string; link: string }> {

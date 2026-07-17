@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 
@@ -13,10 +14,6 @@ import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
  * comp_id 是 WCA competitionId（[A-Za-z0-9_]，长度有限），写前做 shape 校验。
  */
 export const compFollowsRoutes = new Hono();
-
-function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 /** 单用户关注上限（防滥写；正常用户远到不了）。 */
 const MAX_FOLLOWS_PER_USER = 500;

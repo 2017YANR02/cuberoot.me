@@ -18,6 +18,7 @@
  */
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
 import { isPenaltyOnlyFields } from '@cuberoot/shared/result-penalty';
@@ -37,10 +38,6 @@ const ALLOWED_FIELDS = new Set([
 ]);
 
 interface ChangeField { field: string; old: unknown; new: unknown }
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 interface PersonRow {
   wca_id: string;

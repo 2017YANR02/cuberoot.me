@@ -10,6 +10,7 @@
  * 软删: deleted_at IS NULL 表"活跃";admin 可硬删 (这里没暴露;走 SQL)。
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
   requireAuth,
@@ -23,10 +24,6 @@ export const wikiRoutes = new Hono();
 
 const HEAD_MAX = 200;
 const BODY_MAX = 8192;
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 interface TermRow {
   id: number | string;

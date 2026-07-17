@@ -9,6 +9,7 @@
  */
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { signSession, hasFreshEmailGrant } from '../utils/session.js';
@@ -28,10 +29,6 @@ import {
 } from '../utils/social_login.js';
 
 export const accountAuthRoutes = new Hono();
-
-function getIp(c: Context): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 // 语言(仅用于验证码邮件文案),从 Accept-Language 粗判。
 function langOf(c: Context): 'zh' | 'en' {

@@ -7,6 +7,7 @@
  * 表 `alg_submissions` schema 见 server-deploy 文档 / .password.md 旁的迁移说明。
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
   requireAuth, requireAdmin, checkRateLimit, ADMIN_WCA_IDS,
@@ -38,10 +39,6 @@ function rowToJson(row: AlgSubmissionRow) {
     authorName: row.author_name,
     createdAt: typeof row.created_at === 'string' ? row.created_at : row.created_at.toISOString(),
   };
-}
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
 }
 
 const ALG_MAX_BYTES = 4096;

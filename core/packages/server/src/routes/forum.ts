@@ -5,6 +5,7 @@
  * 表:forum_categories / forum_forums / forum_threads / forum_posts / forum_reactions / forum_reports(0066)。
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
   requireAuth, authenticateUser, checkRateLimit, ADMIN_WCA_IDS,
@@ -26,11 +27,6 @@ async function notifyBestEffort(input: Parameters<typeof notify>[0]): Promise<vo
   } catch (e) {
     console.warn('[forum] notify failed:', (e as Error).message);
   }
-}
-
-/** 从 Hono Context 提取客户端 IP(Nginx 反代场景用 X-Real-IP) */
-function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
 }
 
 const REACTION_KINDS = ['like', 'love', 'haha', 'wow', 'sad'];
