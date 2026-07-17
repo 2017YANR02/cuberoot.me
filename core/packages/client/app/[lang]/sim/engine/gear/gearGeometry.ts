@@ -3,23 +3,24 @@
  *
  * A cube [-H, H]³ with layer cut planes at ±CUT (fat outer layers like the real
  * puzzle, not 3x3 thirds). Pieces:
- *  - 12 EDGE GEARS: a 12-tooth crown wheel folded over the arris (icon/photo
- *    matched — the face view reads as HALF A CIRCLE folded 90° over the edge):
- *    teeth alternate SHORT/LONG, each an ISOSCELES-TRAPEZOID plate (straight
- *    radial legs through the gear center, chord bases, 17° gullets wider than
- *    the 13° teeth) tangent to the 45° cone of apex E (edge midpoint) and axis
- *    n̂ (outward radial), every plate lifted D0 along its cone normal so the
- *    crown rests a flat plateau PLATEAU/√2 ≈ 8.5 proud of both faces. Mod-3
- *    spin phases force the plastic to be 120°-invariant about n̂ (a literal
- *    folded disc is impossible); 120° = 4 pitches, so the short/long
- *    alternation survives every rest phase. At rest the SHORT teeth sit at
- *    φ = ±90° (flat over each face) and the LONG teeth at φ = ±60°/±120° (the
- *    splayed diagonal fingers crossing the corner trenches — they give the
- *    corner sticker its fish flanks) and φ = 0/180° (hidden inside the corner
- *    grooves along the arris). A palm web (full-revolution plateau-cone frustum
- *    out to WEB_R) + hub dome fill the middle. Per-tooth plus per-palm-sector
- *    decals ride the spinning crown, so scrambled gears mix colors while the
- *    solved cube shows 3 teeth + half the palm per face color.
+ *  - 12 EDGE GEARS: a 6-tooth crown wheel folded over the arris (photo matched —
+ *    the face view reads as HALF A CIRCLE folded 90° over the edge, exactly
+ *    3 TENTACLES PER HALF, user-locked): each tooth an ISOSCELES-TRAPEZOID
+ *    plate (straight radial legs through the gear center, chord bases, 38°
+ *    gullets wider than the 22° teeth) tangent to the 45° cone of apex E (edge
+ *    midpoint) and axis n̂ (outward radial), every plate lifted D0 along its
+ *    cone normal so the crown rests a flat plateau PLATEAU/√2 ≈ 8.5 proud of
+ *    both faces. Mod-3 spin phases force the plastic to be 120°-invariant
+ *    about n̂ (a literal folded disc is impossible); 120° = 2 pitches, so the
+ *    crown rests identically after every move. At rest one tooth lies flat
+ *    over each face (φ = ±90°) and the other four splay at ±30°/±150°,
+ *    recessed through the trench openings — 3 visible tentacles per face half.
+ *    A palm web (full-revolution plateau-cone frustum out to WEB_R) fills the
+ *    middle; the sector decals converge at the apex (no hub dome — the real
+ *    puzzle shows the two colored halves meeting at the fold, user-locked).
+ *    Per-tooth plus per-palm-sector decals ride the spinning crown, so
+ *    scrambled gears mix colors while the solved cube shows 3 teeth + half
+ *    the palm per face color.
  *  - 8 CORNERS: rounded blocks carved by (a) three CROWN-SWEEP LATHES — tight
  *    solids of revolution around the axes containing every crown's whole
  *    spin ∪ orbit sweep (see crownSweepInnerRadius) — and (b) three thin WASHER
@@ -96,12 +97,11 @@ export const CUT = 0.25 * H;
 export const SEAM = 2.5;
 /** Edge-midpoint distance from the cube center — the crown apex E sits there. */
 export const EDGE_R = H * Math.SQRT2;
-/** 12 teeth (30° pitch), SHORT/LONG alternating slant tips measured from the
- *  apex along the facet plates. One spin step (120°) = 4 pitches, so the
- *  alternation rests identically after every move. */
-export const TEETH = 12;
-export const SHORT_TIP = 46;
-export const LONG_TIP = 62;
+/** 6 teeth (60° pitch, 3 per face half — user-locked), uniform slant tip
+ *  measured from the apex along the facet plates. One spin step (120°) =
+ *  2 pitches, so the crown rests identically after every move. */
+export const TEETH = 6;
+export const TOOTH_TIP = 62;
 /** Palm web slant radius (teeth spring from under its rim at TOOTH_ROOT). */
 export const WEB_R = 36;
 /** Plateau intercept: every crown surface rides the 45° cone t = PLATEAU − rad
@@ -109,8 +109,7 @@ export const WEB_R = 36;
  *  their cone normals and the crown sits PLATEAU/√2 ≈ 8.5 proud of each face. */
 export const PLATEAU = 12;
 export const D0 = PLATEAU / Math.SQRT2;
-/** Hub dome on the arris + plate thickness. */
-export const HUB_DOME_R = 14;
+/** Plate thickness (below the plateau surface, along the facet normal). */
 export const PLATE_T = 7;
 const STICKER_LIFT = 0.5;
 const STICKER_DEPTH = 2.6;
@@ -118,26 +117,26 @@ const STICKER_DEPTH = 2.6;
 const D_MIN = D0 - PLATE_T;
 const D_MAX = D0 + STICKER_LIFT + STICKER_DEPTH;
 /** Ball bound of a whole crown around its edge midpoint E. */
-export const CROWN_BALL = Math.hypot(LONG_TIP, Math.max(Math.abs(D_MIN), D_MAX)) + 1.5;
+export const CROWN_BALL = Math.hypot(TOOTH_TIP, Math.max(Math.abs(D_MIN), D_MAX)) + 1.5;
 /** Crown sweep lathe. During a turn the crown both orbits (any angle) and spins
  *  (any phase), so the swept solid about the turn axis is the revolve of the
  *  crown's own SPIN-swept shell. That shell is axisymmetric about the spin axis
- *  n̂: points E + a·ĝ(φ) + d·m̂(φ) with a ∈ [0, LONG_TIP], d ∈ [D_MIN, D_MAX].
+ *  n̂: points E + a·ĝ(φ) + d·m̂(φ) with a ∈ [0, TOOTH_TIP], d ∈ [D_MIN, D_MAX].
  *  In (ρ = dist from n̂, h = depth along −n̂ from E) that is ρ = (a+d)/√2,
  *  h = (a−d)/√2 — a 45° cone shell. Revolved about the turn axis (E sits at
  *  horizontal radius EDGE_R, |along| = ρ·|sinφ| ≤ ρ):
- *    min rad(along) = EDGE_R − h_max         while along ≤ (LONG_TIP + D_MIN)/√2
- *                   = EDGE_R − (LONG_TIP·√2 − along)  beyond (the d > D_MIN lid)
+ *    min rad(along) = EDGE_R − h_max         while along ≤ (TOOTH_TIP + D_MIN)/√2
+ *                   = EDGE_R − (TOOTH_TIP·√2 − along)  beyond (the d > D_MIN lid)
  *  Corners are carved by exactly this lathe + 1u margin (constructive: a
  *  turning crown can never touch a corner) — far tighter than a ball tube,
  *  which is what keeps the corner plates reference-matched full. */
-export const SWEEP_RHO = (LONG_TIP + D_MAX) / Math.SQRT2;   // max |along|
-const SWEEP_H = (LONG_TIP - D_MIN) / Math.SQRT2;            // deepest reach from the arris
-const SWEEP_RHO0 = (LONG_TIP + D_MIN) / Math.SQRT2;         // where the deep flat ends
+export const SWEEP_RHO = (TOOTH_TIP + D_MAX) / Math.SQRT2;  // max |along|
+const SWEEP_H = (TOOTH_TIP - D_MIN) / Math.SQRT2;           // deepest reach from the arris
+const SWEEP_RHO0 = (TOOTH_TIP + D_MIN) / Math.SQRT2;        // where the deep flat ends
 export const SWEEP_WALL = 1.5;                              // side margin of the carve
 export function crownSweepInnerRadius(along: number): number {
   const a = Math.min(Math.abs(along), SWEEP_RHO);
-  const h = a <= SWEEP_RHO0 ? SWEEP_H : LONG_TIP * Math.SQRT2 - a;
+  const h = a <= SWEEP_RHO0 ? SWEEP_H : TOOTH_TIP * Math.SQRT2 - a;
   return EDGE_R - h - 1;
 }
 /** Core sphere + center cap sizes (inside the middle slab). */
@@ -203,9 +202,9 @@ export function gearSlotFaces(r: number, s: number): number[] {
 // ── crown tooth shape (per-tooth, in facet-plane coords around the apex) ────────────
 /** Each tooth is an ISOSCELES TRAPEZOID (user-locked): straight radial legs whose
  *  extensions pass through the gear center, straight chord bases at TOOTH_ROOT and
- *  the tip. Teeth are 14.8° wide with 15.2° gullets, so the gap between neighbours
- *  is wider than either base at every radius (gap chord > tooth chord ∀r). */
-export const TOOTH_HALF_ANG = (7.4 * Math.PI) / 180;
+ *  the tip. Teeth are 22° wide with 38° gullets, so the gap between neighbours is
+ *  wider than either base at every radius (gap chord 2r·sin19° > base 2r·sin11°). */
+export const TOOTH_HALF_ANG = (11 * Math.PI) / 180;
 export const TOOTH_ROOT = 30;
 /** The 4 trapezoid corners in (ŵ, ĝ) facet coords, CCW. */
 export function toothTrapezoid(tip: number): V2[] {
@@ -238,9 +237,9 @@ export function gearWindowAngle(r: number, s: number, face: number): number {
   return Math.atan2(inPlane.dot(t), inPlane.dot(e));
 }
 
-/** Facet frame of tooth k (k = 0..11, tooth center at φ = 90° + k·30°): m̂ = outer
+/** Facet frame of tooth k (k = 0..5, tooth center at φ = 90° + k·60°): m̂ = outer
  *  plate normal (tangent to the 45° cone), ĝ = down-the-facet from the apex,
- *  ŵ = m̂ × ĝ. For k = 0 and k = 6, m̂ is exactly the two face normals. */
+ *  ŵ = m̂ × ĝ. For k = 0 and k = 3, m̂ is exactly the two face normals. */
 export function gearFacetFrame(r: number, s: number, k: number): { m: THREE.Vector3; g: THREE.Vector3; w: THREE.Vector3 } {
   const { e, t, n } = gearSlotBasis(r, s);
   const phi = Math.PI / 2 + k * ((2 * Math.PI) / TEETH);
@@ -273,22 +272,19 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   const E = gearSlotApex(r, s);
   const pitch = (2 * Math.PI) / TEETH;
 
-  // which face colors the sin>0 / sin<0 teeth and palm sectors; the two fold
-  // teeth (φ = 0/180°, hidden inside the corner grooves at rest) take one each
+  // which face colors the sin>0 / sin<0 teeth and palm sectors (no tooth ever
+  // sits at φ = 0/180°: centers are 90° + k·60°, so sin never vanishes)
   const faces = gearSlotFaces(r, s);
   const facePlus = faces.find((f) => Math.sin(gearWindowAngle(r, s, f)) > 0)!;
   const faceMinus = faces.find((f) => f !== facePlus)!;
-  const toothFace = (k: number): number => {
-    const sn = Math.sin(Math.PI / 2 + k * pitch);
-    if (Math.abs(sn) < 1e-9) return k === TEETH / 4 ? faceMinus : facePlus;
-    return sn > 0 ? facePlus : faceMinus;
-  };
+  const toothFace = (k: number): number =>
+    Math.sin(Math.PI / 2 + k * pitch) > 0 ? facePlus : faceMinus;
 
   for (let k = 0; k < TEETH; k++) {
     const { m, g, w } = gearFacetFrame(r, s, k);
     // tooth plate = the isosceles trapezoid in (ŵ, ĝ) facet coords, lifted D0
     // along the cone normal so the whole crown rides the plateau cone
-    const poly = toothTrapezoid(k % 2 === 0 ? SHORT_TIP : LONG_TIP);
+    const poly = toothTrapezoid(TOOTH_TIP);
     const ccw = polyArea2(poly) > 0 ? poly : poly.slice().reverse();
     const shape = new THREE.Shape(ccw.map(([a, b]) => new THREE.Vector2(a, b)));
     const plateGeo = new THREE.ExtrudeGeometry(shape, { depth: PLATE_T, bevelEnabled: false });
@@ -330,10 +326,11 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
   web.userData.simRole = 'body';
   group.add(web);
 
-  // palm sector decals: 12 cone-band sectors (one per tooth, same color rule),
-  // riding the spin. Lathe φ is measured from ê toward t̂ (basis Z = ê, X = t̂),
-  // matching gearWindowAngle's polar convention.
-  const secIn = HUB_DOME_R - 6;
+  // palm sector decals: 6 cone-band sectors (one per tooth, same color rule),
+  // riding the spin and converging at the apex — no hub dome, the colored
+  // halves meet at the fold like the real puzzle. Lathe φ is measured from ê
+  // toward t̂ (basis Z = ê, X = t̂), matching gearWindowAngle's convention.
+  const secIn = 1.2;
   const secOut = rimRad - 0.6;
   const secHalf = pitch / 2 - 0.8 / rimRad; // ≈1.6u seam between sectors at the rim
   const decTop = (rad: number): number => PLATEAU + (STICKER_LIFT + STICKER_DEPTH) * Math.SQRT2 - rad;
@@ -356,13 +353,7 @@ export function buildGearPiece(r: number, s: number): GearPieceHandle {
     group.add(sec);
   }
 
-  // hub dome proud of the plateau on the arris + a backing cone filling the
-  // slot throat behind the web
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(HUB_DOME_R, 24, 16), bodyMat);
-  dome.position.copy(E.clone().add(n.clone().multiplyScalar(6)));
-  dome.userData.simRole = 'body';
-  group.add(dome);
-
+  // backing cone filling the slot throat behind the web
   const coneL = 34;
   const coneGeo = new THREE.ConeGeometry(coneL, coneL, 24, 1, false);
   coneGeo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), n));
