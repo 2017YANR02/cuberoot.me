@@ -1,41 +1,33 @@
-# /sim 图像面板 异形拼图 sr 精确一致 — 待办
+# /sim 图像面板 异形拼图 sr 精确一致 — 进度
 
 方案 A:异形(sq1/pyraminx/megaminx/skewb)右侧 sr 预览 = 朝向 + 配色 + 透视 + 状态 与左边 3D 一致(风格用 sr,不复刻 sim 网格外观)。详见 memory `project_sim_exotic_sr_exact_match.md`。
 
-## 关键发现:sim 异形引擎用「固定配色」,不是 faceColors 面板
-- **skewb** → `CUBE_FILL`(WCA 标准,`@/lib/cube-colors`)
-- **sq1** → `SQ1_COLORS`(F=红 R=绿 U=黑…,`engine/sq1/sq1Colors.ts`)
-- **pyraminx** → `CUBE_FILL` 按面 index(0=D 1=F 2=R 3=B)
-- **megaminx** → cubing.js `defaultPlatonicColorSchemes()[12]`(twizzle scheme,键 `{U,F,R,C,A,L,E,BF,BR,BL,I,D}`)
+## 关键发现
+1. **sim 异形引擎用「固定配色」,不是 faceColors 面板**
+   - **skewb** → `CUBE_FILL`(WCA 标准,`@/lib/cube-colors`)
+   - **sq1** → `SQ1_COLORS`(`engine/sq1/sq1Colors.ts`)
+   - **pyraminx** → `CUBE_FILL` 按面 index
+   - **megaminx** → cubing.js `defaultPlatonicColorSchemes()[12]`
+   `srSchemeFor` 必须喂这些固定色,不能喂 `spec.faceU..B`(改色即分叉)。
+2. **异形默认左边 = cubing.js TwistyPlayer**(不是自有 3D 引擎;`ENGINE_TWISTY={skewb,pyraminx,megaminx,fto}`)。**sq1 例外**,左边是自有 sq1 3D 引擎。标定判据必须用**实际默认渲染器**。
+3. **sr 各拼图有自带默认 `rotations`**(`sr/dist/lib/visualizer/options.js`):cube/skewb `[{y:45},{x:34}]`、sq1 `[{z:-34},{x:-56}]`、**pyraminx `[{z:60},{x:-60}]`**、megaminx **无**(identity=F 面朝前)。传显式 rotations 会**覆盖**这个默认。
 
-`srSchemeFor` 必须喂这些固定色,**不能**喂 `spec.faceU..B`(只有默认调色板 = 固定 scheme 时才凑巧对上,用户改色即分叉)。
+## 已完成(全部实证对齐左边)
+| 拼图 | 配色 | 朝向(SR_ANGLE_BASE) | 透视 | 状态 |
+|---|---|---|---|---|
+| **skewb** | `CUBE_FILL` ✅ | `{yaw:90}` ✅ | ✅ | 完成 |
+| **sq1** | `SQ1_COLORS` ✅ | `{yaw:0,pitch:-90}` ✅ | ✅ | 完成 |
+| **pyraminx** | `CUBE_FILL` ✅ | `{yaw:60,pitch:-91}`→显式 `[{z:60},{x:-60}]`=sr 默认菱形(尖朝上风筝),srPuzzleAxis y→z ✅ | ✅ | 完成(默认精确;旧标定错对着自有引擎的平面单面,已修) |
+| **megaminx** | sr12键→cubing 映射(代码钉死同手性)✅ | `{yaw:0,pitch:-12.6}`→棱朝前 U 顶 ✅ | ✅ | 完成(配色精确 + 朝向对齐 + **yaw 1:1 跟踪**) |
 
-## 已完成
-| 拼图 | 配色 | 朝向(SR_ANGLE_BASE) | 状态 |
-|---|---|---|---|
-| **skewb** | `CUBE_FILL` ✅ | `{yaw:90}` ✅ | 完成 |
-| **sq1** | `SQ1_COLORS` ✅ | `{yaw:0,pitch:-90}` → z-36/x-59 ✅ | 完成 |
-| **pyraminx** | `CUBE_FILL`(left=F right=R top=B back=D)✅ | `{yaw:36,pitch:-51,yawSign:-1}` → y0/x-20 ✅ | 默认对上;跟踪近似 |
+- **透视 P2 ✅**:`sr-puzzlegen-patch.ts` patch `PolygonRenderer.render` 重建 camera.matrix,距离由 `PuzzleImage.srCameraDist(spec.dist)` 驱(SR_DIST_BASE=3.9),scale∝dist 保尺寸。四拼图透视滑杆实时驱动、方向跟左边。
+- **img_dist ✅**:非 cube 分支现也写 `patch.dist`,sr 消费它当透视 —— 不再是死参(原「切异形后残留」问题解决)。
+- **skewb 记号 ✅(实证无手性 bug)**:`setup=R` 左右**状态完全一致** —— sr 的 skewb `R`==cubing 的 `R`,不需要记号翻译。之前误判的「分叉」= `alg=`(左边 twisty 当**待播放动画**显起始态)vs sr(**应用**显末态)的语义差,不是记号问题。另加 `toWcaSkewb`(imgInherit 里,与左边一致)修 Sarah 记号:sr 正则会把 `UL/UR` 拆成 U+L,翻成 WCA 后两边一致(默认 WCA 时是恒等,只影响 Sarah 用户)。
 
-## 待办
-### megaminx ⛔(需专门一轮)
-两难点:
-1. **配色 12 面命名不一致**:sim/cubing.js scheme 键 `{U,F,R,C,A,L,E,BF,BR,BL,I,D}` vs sr 键 `{U,F,R,dr,dl,L,d,br,BR,BL,bl,b}` —— 非恒等映射,要逐面几何对齐(sr debug-color 大图单独读键位,再对 cubing.js 面名)。sr 默认色也不等于 sim(sim 底面 C=Cream 奶油,sr 默认底是黄/粉)。
-2. **正十二面体朝向**:sim 默认 = twizzle canonical(U 顶面 / F-R 前棱)+ yaw-36 转角视图;sr identity = F 正对相机(canonical face-front),但五边形几何使 {y} 自旋非线性滑动,y36/y54/y72 扫描面位跳变难读。
-- 现状:mega 落回旧 sr-iso 锚(不回归,但配色/朝向不精确匹配)。
-- 建议:单开一轮,先 300px 大图 debug-color 读 sr 全 12 键位建映射表,再定朝向;透视另计。
+## 残留(非阻塞,已知)
+- **pitch 偏离默认后近似跟踪**:pyra/mega 的 pitch 有常量偏移(additive 角度模型,tilt 基座不与 yaw/pitch 交换),默认精确、偏离近似。yaw 对 mega 是 1:1、对 pyra 连续。根治需把基座姿态改成「前置固定旋转 + 世界系 yaw/pitch」模型(改 SimPage↔PuzzleImage 契约,风险高),暂不做。
+- **alg vs setup 语义**:面板对 `alg` 显**末态**(应用 setup+alg),左边 twisty 对 `alg` 显**起始态**(待播放)。有 `alg`(非 setup)时两图天然不同 —— 这是交互播放器 vs 静态快照的固有区别,非 bug。`setup`(打乱)两边都应用、一致。
+- **sq1/mega 记号未逐一 live 核**:sq1 经 `canonicalSq1Alg` 桥接、mega 喂 Pochmann 两边都解析(research 判定一致);skewb+pyra 已实测。如需可后续对 sq1/mega 各做一次 `setup=<move>` 左右比对。
 
-### 透视 P2 ⛔(全部)
-runtime patch sr `Camera` 距离,由 `mapPerspective(v)=2+(v/100)*8` 驱动。sr 现在相机写死,预览比左边略扁。
-
-### pyra/mega 跟踪精度
-sq1/skewb 滑杆跟踪 1:1;pyra 因 tetra 几何 gain 不同,只在默认精确、偏离近似(已在 `SR_ANGLE_BASE` 注释)。mega 同理待定。
-
-### 残留 URL 参数(小,非阻塞)
-从三阶切到异形后,URL 残留三阶专属的 `img_dist=6`(异形不消费,无害不报错)。可在切非 cube 时清掉 `img_dist`(mirror effect 里 `patch.dist` 分支只在 cube 写,未清)。
-
-## 已知 BUG(follow-up,非阻塞)
-- **skewb 两图转动记号不统一**:同一 alg/scramble 喂左(sim WCA skewb 记号,`project_sim_skewb_wca_notation.md`)和右(sr 自有 skewb 记号)得到**不同状态**——solved 一致,一转即分叉。修法:喂 sr 前把 WCA skewb 记号翻译成 sr 记号。sq1/pyra/mega 同样需核对记号对齐。
-
-## 标定法
-temp 在 `PuzzleSVG.tsx` `patchSrPuzzlegen(mod)` 后挂 `window.__srMod=mod`,浏览器 eval `mod.SVG(host,type,{width,height,puzzle:{rotations,scheme}})` 扫候选栅格对左边 sim GL canvas(默认 viewAngle=30/viewGradient=33 → yaw=-36/pitch=30.6)。**判据 = 左边**。标定完删 hook。左右滑杆(input[type=range])index:灵敏度0 缩放1 透视2 Yaw(左右)3 Pitch(上下)4 转速5。
+## 标定法(如需再标)
+temp 在 `PuzzleSVG.tsx` `patchSrPuzzlegen(mod)` 后挂 `window.__srMod=mod`(用完删),浏览器 eval `mod.SVG(host, mod.Type.XXX, {width,height,puzzle:{scheme,rotations}})` 扫候选栅格对左边 GL canvas 目视选。判据=左边(实际默认渲染器)。彩虹 scheme 读键位:megaminx 12 键 `{U F R dr dl L d br BR BL bl b}`、pyraminx 4 键 `{left right top back}`。滑杆 index:灵敏0 缩放1 透视2 Yaw(左右)3 Pitch(上下)4 转速5。
