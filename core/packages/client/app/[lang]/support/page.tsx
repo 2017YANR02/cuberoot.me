@@ -15,6 +15,7 @@ import AppLink from '@/components/AppLink';
 import DonateModal from '@/components/DonateModal';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { isAdmin } from '@/lib/auth-store';
+import { firstGlyph } from '@/lib/first-glyph';
 import {
   listSponsors, deleteSponsor, type Sponsor,
   listContributors, deleteContributor, bumpContributor, type Contributor,
@@ -29,12 +30,6 @@ function fmtAmount(amount: number, currency: string): string {
   const sym = CURRENCY_SYMBOL[currency] || '';
   const n = Number.isInteger(amount) ? String(amount) : amount.toFixed(2).replace(/\.?0+$/, '');
   return `${sym}${n}`;
-}
-
-function firstGlyph(name: string): string {
-  const t = name.trim();
-  if (!t) return '?';
-  return String.fromCodePoint(t.codePointAt(0) ?? 63).toUpperCase();
 }
 
 function PersonAvatar({ name, wcaId, avatarUrl }: { name: string; wcaId?: string; avatarUrl?: string }) {

@@ -12,16 +12,13 @@ import { tr } from '@/i18n/tr';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { fetchPersonCard, type WcaPersonLite } from '@/lib/wca-api';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { fmtDate } from '@/lib/membership-format';
 import {
   adminGrant, adminList, adminRevoke, adminUpdatePlan,
   type MembershipPlan, type Membership,
 } from '@/lib/membership-api';
 
 interface Props { plans: MembershipPlan[]; isZh: boolean; }
-
-function fmtDate(iso: string | null): string {
-  return iso ? new Date(iso).toISOString().slice(0, 10) : '';
-}
 
 export default function AdminPanel({ plans, isZh }: Props) {
   const [picked, setPicked] = useState<WcaPersonLite | null>(null);
