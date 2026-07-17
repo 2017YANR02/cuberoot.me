@@ -15,6 +15,7 @@
  * (Authentication→401, Cannot→403, Rate limit→429, Validation/invalid→400)。
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { bodyLimit } from 'hono/body-limit';
 import { query } from '../db/connection.js';
 import {
@@ -37,11 +38,6 @@ const ALLOWED_IMG_MIME = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const MAX_ARTICLES_PER_USER = 200;
 const MAX_IMAGES_PER_USER = 1000;
 const REPORT_REASON_MAX = 500;
-
-/** Client IP for rate limiting (Nginx reverse-proxy sets X-Real-IP). */
-function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 interface ArticleRow {
   id: number | string;

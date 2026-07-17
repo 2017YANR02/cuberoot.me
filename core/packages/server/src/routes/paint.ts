@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { bodyLimit } from 'hono/body-limit';
 import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
@@ -18,10 +19,6 @@ import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
  * JSON.stringify(PaintDoc) string (stored TEXT, never parsed server-side).
  */
 export const paintRoutes = new Hono();
-
-function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 const MAX_DOC_BYTES = 4 * 1024 * 1024;     // 4 MB doc JSON (a big drawing is far smaller)
 const MAX_THUMB_BYTES = 512 * 1024;        // 512 KB thumbnail dataURL (downscaled PNG)

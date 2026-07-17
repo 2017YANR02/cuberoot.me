@@ -10,6 +10,7 @@
  * Schema 见 migrations/0010_ops_commands.sql.
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 
@@ -47,10 +48,6 @@ function rowToJson(r: OpsRow): Record<string, unknown> {
   };
   if (r.cwd) o.cwd = r.cwd;
   return o;
-}
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
 }
 
 const ID_MAX = 80;

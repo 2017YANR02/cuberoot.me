@@ -21,6 +21,7 @@
  * GET  /v1/scramble/optimal-solve/ready → { enabled, ready }
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { streamSSE } from 'hono/streaming';
 import { requireAuth, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
 import { solveOptimal, isEnabled, isReady, ensureDaemon, getLastLoadMs } from '../cubeopt/daemon.js';
@@ -44,10 +45,6 @@ function checkSolveRateLimit(ip: string): void {
   if (hits.length >= POST_MAX) throw new Error('Rate limit exceeded for cloud solve');
   hits.push(now);
   ipHits.set(ip, hits);
-}
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
 }
 
 /** Normalise a scramble to plain HTM face turns, or null if it isn't one. */

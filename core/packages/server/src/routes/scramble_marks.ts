@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpers.js';
 
@@ -17,10 +18,6 @@ import { requireAuth, checkRateLimit, ADMIN_WCA_IDS } from '../utils/recon_helpe
  * country 客户端报(纯装饰旗帜)。feed 联 wca_scrambles 取打乱原文、wca_competitions 取赛名。
  */
 export const scrambleMarksRoutes = new Hono();
-
-function getIp(c: { req: { header: (name: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 /** 单用户标记总量上限(防滥写;正常使用远到不了)。 */
 const MAX_MARKS_PER_USER = 20000;

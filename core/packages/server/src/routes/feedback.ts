@@ -17,6 +17,7 @@
  * (Authentication→401, Cannot→403, Rate limit→429, Validation/invalid→400)。
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { bodyLimit } from 'hono/body-limit';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -39,10 +40,6 @@ const MAX_VIDEOS_PER_FEEDBACK = 2;
 
 // 视频落盘目录;prod 须设成持久路径(随重部署存活),local 退到 cwd 下。
 const MEDIA_DIR = process.env.FEEDBACK_MEDIA_DIR || path.join(process.cwd(), '.feedback-media');
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 function isAdmin(wcaId: string): boolean {
   return ADMIN_WCA_IDS.includes(wcaId);

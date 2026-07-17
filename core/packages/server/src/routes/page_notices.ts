@@ -9,6 +9,7 @@
  * Schema 见 migrations/0073_page_notices.sql。
  */
 import { Hono } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 
@@ -41,10 +42,6 @@ function rowToJson(r: NoticeRow) {
     dismissible: r.dismissible,
     updatedAt: r.updated_at,
   };
-}
-
-function getIp(c: { req: { header: (n: string) => string | undefined } }): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
 }
 
 // 归一化匹配模式:补前导 '/',去尾部 '/'(根 '/' 与 '/*' glob 除外)。lang 前缀由前端 strip。

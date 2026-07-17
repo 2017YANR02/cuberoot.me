@@ -23,6 +23,7 @@
  */
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { getIp } from '../utils/analytics_helpers.js';
 import { createHash, randomUUID } from 'node:crypto';
 import QRCode from 'qrcode';
 import { query } from '../db/connection.js';
@@ -84,10 +85,6 @@ function secretForAppid(appid: string | undefined): string {
 
 const PLAN_SLUG_RE = /^[a-z0-9_]{1,40}$/;
 const CONTACT_KINDS = new Set(['email', 'wechat', 'qq', 'phone', 'other']);
-
-function getIp(c: Context): string {
-  return c.req.header('X-Real-IP') ?? c.req.header('X-Forwarded-For') ?? '0.0.0.0';
-}
 
 // 我方单号:M + base36 时间 + 8 位随机,定长 ≤ 30,纯 ascii。
 function genOutTradeNo(): string {
