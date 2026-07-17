@@ -19,14 +19,12 @@
  * 其它用 var(--accent) + 地域图标.
  */
 import { Fragment, useEffect, useState } from 'react';
-import { Globe, LogIn } from 'lucide-react';
+import { Globe } from 'lucide-react';
 import { fetchRankFor, type RankResult, type RegionRank } from '@/lib/rank-client';
 import { toWcaEventForRank, eventDisplayName } from '@/app/[lang]/timer/_shared/event-bridge';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
-import { useAuthStore } from '@/lib/auth-store';
 import { ISO2_TO_CONTINENT, CONTINENT_RECORD_ABBR } from '@/lib/continent';
 import { RecordBadge } from '@/components/RecordBadge';
-import { tr } from '@/i18n/tr';
 
 export interface RankBadgeProps {
   /** 计时器内部 EventId */
@@ -56,11 +54,6 @@ export default function RankBadge({
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'none'>('idle');
   const [result, setResult] = useState<RankResult | null>(null);
   const [expanded, setExpanded] = useState(false);
-
-  // 未登录 + 没设国家 -> WR 旁给个登录按钮(登录后自动带入账号国家 -> 出 CR/NR).
-  const user = useAuthStore((s) => s.user);
-  const login = useAuthStore((s) => s.login);
-  const showLogin = !user && !country;
 
   useEffect(() => {
     if (!valid) {
@@ -170,20 +163,6 @@ export default function RankBadge({
             ))}
           </span>
         </button>
-        {showLogin && (
-          <button
-            type="button"
-            className="rank-login-btn"
-            data-no-timer
-            onClick={() => login()}
-            title={tr({ zh: '登录 WCA 显示全国 / 大洲排名', en: 'Sign in with WCA for national / continental ranks'
-            })}
-          >
-            <LogIn size="1em" aria-hidden />
-            {tr({ zh: '登录', en: 'Sign in'
-            })}
-          </button>
-        )}
       </span>
       {expanded && <span className="rank-detail">{detail}</span>}
     </span>
