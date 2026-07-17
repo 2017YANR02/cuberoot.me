@@ -12,6 +12,7 @@ import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
+import { fmtPrice, fmtDate } from '@/lib/membership-format';
 import AppLink from '@/components/AppLink';
 import DonateModal from '@/components/DonateModal';
 import MembershipBadge from '@/components/MembershipBadge';
@@ -31,12 +32,6 @@ const PERK_LABEL: Record<string, { zh: string; en: string }> = {
   lifetime: { zh: '一次付费,永久有效', en: 'Pay once, valid forever' },
 };
 
-function fmtPrice(cents: number, currency: string): string {
-  const sym = currency === 'CNY' ? '¥' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '';
-  const n = cents / 100;
-  return sym + (Number.isInteger(n) ? String(n) : n.toFixed(2));
-}
-
 function planUnit(plan: MembershipPlan, isZh: boolean): string {
   if (plan.period === 'lifetime') return isZh ? '一次性' : 'one-time';
   const u: Record<string, { zh: string; en: string }> = {
@@ -47,11 +42,6 @@ function planUnit(plan: MembershipPlan, isZh: boolean): string {
   const n = plan.periodCount;
   if (isZh) return n > 1 ? `${n} ${unit.zh}` : unit.zh;
   return n > 1 ? `${n} ${unit.en}` : unit.en;
-}
-
-function fmtDate(iso: string | null): string {
-  if (!iso) return '';
-  return new Date(iso).toISOString().slice(0, 10);
 }
 
 export default function MembershipPage() {
