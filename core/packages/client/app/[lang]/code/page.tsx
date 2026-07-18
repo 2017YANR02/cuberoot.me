@@ -339,6 +339,40 @@ const CARDS: Card[] = [
       meta: 'Static JSON · daily · 9 resources',
     },
   },
+  {
+    href: '/code/wca-site',
+    glyph: '◉',
+    accent: '#0051BA',
+    zh: {
+      title: 'WCA 官网',
+      sub: 'worldcubeassociation.org',
+      tagline: '世界魔方协会官网源码:官方成绩 / 排名 / 纪录的唯一真相源。一个 2008 年起、GPL-3.0 开源的 Ruby on Rails 单体,由 WCA 软件团队领着 200 多人维护,正把前端迁往 Next.js',
+      meta: '2008 起 · Rails · GPL-3.0 · 迁往 Next.js',
+    },
+    en: {
+      title: 'WCA Website',
+      sub: 'worldcubeassociation.org',
+      tagline: 'The World Cube Association’s codebase: the single source of truth for official results / rankings / records. A GPL-3.0 Ruby on Rails monolith since 2008, maintained by the WST and 200+ contributors, migrating its frontend to Next.js',
+      meta: 'Since 2008 · Rails · GPL-3.0 · → Next.js',
+    },
+  },
+  {
+    href: '/code/cubingchina',
+    glyph: '⬢',
+    accent: '#E23B3B',
+    zh: {
+      title: '粗饼网',
+      sub: 'CubingChina · cubing.com',
+      tagline: '中国 WCA 比赛的报名 / 日历 / 成绩镜像 / 直播平台。对一个 GPL-2.0 开源、Yii 1.1 PHP、主要靠一人维护十二年的同行站点做的技术侧写',
+      meta: '2014 成立 · Yii 1.1 · GPL-2.0 · 蓝绿 WCA 镜像',
+    },
+    en: {
+      title: 'CubingChina',
+      sub: 'cubing.com',
+      tagline: 'Registration, calendar, results mirror and live-streaming for China’s WCA competitions — a technical profile of a GPL-2.0, Yii 1.1 PHP peer site maintained largely by one person for twelve years',
+      meta: 'Est. 2014 · Yii 1.1 · GPL-2.0 · blue-green WCA mirror',
+    },
+  },
 ];
 
 export default function CodeIndexPage() {
