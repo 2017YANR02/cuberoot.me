@@ -7,6 +7,7 @@
 // — this page is just the browsable management view of that shared set.
 
 import { SVG_BY_KEY } from '@/components/EventIcon/svg-map';
+import { SITE_ICONS } from './_site-icons';
 
 export type IconCategory = 'event' | 'unofficial' | 'penalty';
 
@@ -44,6 +45,13 @@ export const ICON_GROUPS: IconGroup[] = (() => {
     const parsed = parseKey(key);
     if (!parsed) continue;
     byCat[parsed.category].push({ key, category: parsed.category, slug: parsed.slug, svg });
+  }
+  // Splice in site-owned icons (not part of the cubing/icons set) at their
+  // declared anchor — before `anchor` in-category, or appended if absent.
+  for (const { entry, before } of SITE_ICONS) {
+    const list = byCat[entry.category];
+    const i = list.findIndex((e) => e.key === before);
+    list.splice(i < 0 ? list.length : i, 0, entry);
   }
   return CATEGORY_ORDER.map((category) => ({ category, entries: byCat[category] }));
 })();
