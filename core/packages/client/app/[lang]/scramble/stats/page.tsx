@@ -7,34 +7,11 @@ import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
 import PuzzleDistView from './_components/PuzzleDistView';
-import IvyDistView from './_components/IvyDistView';
-import FloppyDistView from './_components/FloppyDistView';
-import Cuboid223DistView from './_components/Cuboid223DistView';
-import Cuboid233DistView from './_components/Cuboid233DistView';
-import Cuboid334DistView from './_components/Cuboid334DistView';
-import Cuboid335DistView from './_components/Cuboid335DistView';
-import Cuboid336DistView from './_components/Cuboid336DistView';
-import Cuboid337DistView from './_components/Cuboid337DistView';
-import Slide8DistView from './_components/Slide8DistView';
+import EnumeratedDistView from './_components/EnumeratedDistView';
+import { ENUM_SPECS } from './_components/enumerated-specs';
 import Slide15DistView from './_components/Slide15DistView';
 import SuperFloppyDistView from './_components/SuperFloppyDistView';
-import UfoDistView from './_components/UfoDistView';
-import Cm2DistView from './_components/Cm2DistView';
-import Cm3DistView from './_components/Cm3DistView';
-import HeliDistView from './_components/HeliDistView';
-import HelicvDistView from './_components/HelicvDistView';
-import CticoDistView from './_components/CticoDistView';
-import DiamondDistView from './_components/DiamondDistView';
-import GearDistView from './_components/GearDistView';
-import MpyrDistView from './_components/MpyrDistView';
-import DinoDistView from './_components/DinoDistView';
-import Crz3aDistView from './_components/Crz3aDistView';
-import Sq2DistView from './_components/Sq2DistView';
-import Ssq1DistView from './_components/Ssq1DistView';
-import BsqDistView from './_components/BsqDistView';
 import BicDistView from './_components/BicDistView';
-import Sia123DistView from './_components/Sia123DistView';
-import Sia222DistView from './_components/Sia222DistView';
 import Essential2x2View from './_components/Essential2x2View';
 import { ESS_STAT_DATASETS, ESS_STAT_SLUGS, type EssStatSlug } from '@/lib/essential-2x2';
 import PyraminxEssentialView from './_components/PyraminxEssentialView';
@@ -1056,7 +1033,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <IvyDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.ivy} isZh={isZh} />
         )}
       </div>
     );
@@ -1076,7 +1053,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <FloppyDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS['133']} isZh={isZh} />
         )}
       </div>
     );
@@ -1096,7 +1073,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Cuboid223DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS['223']} isZh={isZh} />
         )}
       </div>
     );
@@ -1114,7 +1091,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Cuboid233DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS['233']} isZh={isZh} />
         )}
       </div>
     );
@@ -1134,7 +1111,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Cuboid334DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS['334']} isZh={isZh} />
         )}
       </div>
     );
@@ -1154,7 +1131,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Cuboid335DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS['335']} isZh={isZh} />
         )}
       </div>
     );
@@ -1174,7 +1151,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Cuboid336DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS['336']} isZh={isZh} />
         )}
       </div>
     );
@@ -1194,7 +1171,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Cuboid337DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS['337']} isZh={isZh} />
         )}
       </div>
     );
@@ -1214,7 +1191,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Slide8DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS['8p']} isZh={isZh} />
         )}
       </div>
     );
@@ -1274,7 +1251,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <UfoDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.ufo} isZh={isZh} />
         )}
       </div>
     );
@@ -1294,7 +1271,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Cm2DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.cm2} isZh={isZh} />
         )}
       </div>
     );
@@ -1334,7 +1311,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Sia123DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.sia123} isZh={isZh} />
         )}
       </div>
     );
@@ -1354,7 +1331,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Sia222DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.sia222} isZh={isZh} />
         )}
       </div>
     );
@@ -1374,7 +1351,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Cm3DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.cm3} isZh={isZh} />
         )}
       </div>
     );
@@ -1394,7 +1371,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <HeliDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.heli} isZh={isZh} />
         )}
       </div>
     );
@@ -1414,7 +1391,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <HelicvDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.helicv} isZh={isZh} />
         )}
       </div>
     );
@@ -1434,7 +1411,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <CticoDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.ctico} isZh={isZh} />
         )}
       </div>
     );
@@ -1454,7 +1431,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <DiamondDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.dmd} isZh={isZh} />
         )}
       </div>
     );
@@ -1474,7 +1451,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <GearDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.gear} isZh={isZh} />
         )}
       </div>
     );
@@ -1494,7 +1471,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <MpyrDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.mpyrso} isZh={isZh} />
         )}
       </div>
     );
@@ -1515,7 +1492,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <DinoDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.dino} isZh={isZh} />
         )}
       </div>
     );
@@ -1536,7 +1513,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Crz3aDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.crz3a} isZh={isZh} />
         )}
       </div>
     );
@@ -1556,7 +1533,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Sq2DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.sq2} isZh={isZh} />
         )}
       </div>
     );
@@ -1576,7 +1553,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <Ssq1DistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.ssq1} isZh={isZh} />
         )}
       </div>
     );
@@ -1597,7 +1574,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             })}
           </div>
         ) : (
-          <BsqDistView isZh={isZh} />
+          <EnumeratedDistView spec={ENUM_SPECS.bsq} isZh={isZh} />
         )}
       </div>
     );
