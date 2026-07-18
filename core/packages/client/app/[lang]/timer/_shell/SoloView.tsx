@@ -100,6 +100,7 @@ import LiveCubeState from '../_components/LiveCubeState';
 
 import TimingSurface from './TimingSurface';
 import GestureWheel from '@/components/GestureWheel';
+import { SegmentTime } from '@/components/SegmentTime';
 import { useGestureWheel } from '@/hooks/useGestureWheel';
 import { histBack, histForward, histPush } from '@/lib/scramble-history';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
@@ -1432,9 +1433,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           phase={timer.phase}
           colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
           fontSize={fontSize}
-          digits={digitsText.split(':').map((part, i) => (
-            <span key={i}>{i > 0 && <span className="timer-colon" aria-hidden="true" />}{part}</span>
-          ))}
+          digits={<SegmentTime text={digitsText} />}
           digitsRef={digitsRef}
           surfaceRef={surfaceRef}
           className={`${isOvershot ? 'target-overshot' : ''} ${stopPulse ? `target-pulse-${stopPulse}` : ''}`.trim()}
