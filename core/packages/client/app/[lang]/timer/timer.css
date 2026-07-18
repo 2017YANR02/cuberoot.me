@@ -249,30 +249,8 @@
   transition: color 0.15s;
   line-height: 1;
 }
-/* Minute separator. The Segment7 font draws ':' as a dash, and a normal-font
-   colon's dots are far bigger than this font's decimal point — so draw the colon
-   as two square dots sized to match the Segment7 '.' exactly (0.1em, measured),
-   centred between the digits and vertically symmetric about the digit midline. */
-.timer-display .timer-colon {
-  display: inline-block;
-  position: relative;
-  width: 0.28em;
-  height: 0;
-  vertical-align: baseline;
-}
-.timer-display .timer-colon::before,
-.timer-display .timer-colon::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  width: 0.1em;
-  height: 0.1em;
-  margin-left: -0.05em;
-  border-radius: 50%;
-  background: currentColor;
-}
-.timer-display .timer-colon::before { bottom: 0.48em; } /* upper dot */
-.timer-display .timer-colon::after  { bottom: 0.20em; } /* lower dot */
+/* 分钟冒号(Segment7 的 ':' 是横杠)统一走 components/SegmentTime + globals.css 的
+   .timer-colon —— /timer 与训练器共用一份,不再各存一份。 */
 
 .timer-display.holding { color: #ef5350; text-shadow: 0 0 30px rgba(239, 83, 80, 0.5); }
 .timer-display.ready   { color: #66bb6a; text-shadow: 0 0 40px rgba(102, 187, 106, 0.6); }
