@@ -18,12 +18,13 @@ import GestureWheel from '@/components/GestureWheel';
 import BoolToggle from '@/components/BoolToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
+import { CaseThumb } from '@/components/CaseThumb';
 import { caseKey, findCaseByKey } from '@/lib/trainer-case-key';
 import { availableKinds, SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
-import { useTrainerMarks, markStatus } from '@/lib/trainer-marks';
+import { useTrainerMarks, markStatus, markStarred, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
-  TimerDisplay, ScrambleHeader, SolveCard, StatsList, CaseMarkPill,
+  TimerDisplay, ScrambleHeader, SolveCard, StatsList, CaseMarkBar,
 } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -55,6 +56,10 @@ export default function TrainerRunClient() {
   const currentName = useTrainerStore(s => s.currentName);
   const currentKey = useTrainerStore(s => s.currentKey);
   const currentScramble = useTrainerStore(s => s.currentScramble);
+  const peek = useTrainerStore(s => s.peek);
+  const peek2 = useTrainerStore(s => s.peek2);
+  // 标记快捷键的目标 = 卡片当前显示的 case(pillCase),用 ref 让 keydown 闭包读到最新值
+  const pillKeyRef = useRef<string | null>(null);
   const hist = useTrainerStore(s => s.hist);
   const timerState = useTrainerStore(s => s.timerState);
   const timerStarted = useTrainerStore(s => s.timerStarted);
@@ -82,14 +87,16 @@ export default function TrainerRunClient() {
   const setTimerFont = useTrainerStore(s => s.setTimerFont);
   const scrambleFont = useTrainerStore(s => s.scrambleFont);
   const setScrambleFont = useTrainerStore(s => s.setScrambleFont);
-  const showCaseCard = useTrainerStore(s => s.showCaseCard);
-  const setShowCaseCard = useTrainerStore(s => s.setShowCaseCard);
+  const showPrevCard = useTrainerStore(s => s.showPrevCard);
+  const setShowPrevCard = useTrainerStore(s => s.setShowPrevCard);
+  const showNextCard = useTrainerStore(s => s.showNextCard);
+  const setShowNextCard = useTrainerStore(s => s.setShowNextCard);
   const showStats = useTrainerStore(s => s.showStats);
   const setShowStats = useTrainerStore(s => s.setShowStats);
+  const showStageThumb = useTrainerStore(s => s.showStageThumb);
+  const setShowStageThumb = useTrainerStore(s => s.setShowStageThumb);
   const observingPinned = useTrainerStore(s => s.observingPinned);
   const pinObserving = useTrainerStore(s => s.pinObserving);
-  const recapQueue = useTrainerStore(s => s.recapQueue);
-  const recapPos = useTrainerStore(s => s.recapPos);
   const nextScramble = useTrainerStore(s => s.nextScramble);
   const prevScramble = useTrainerStore(s => s.prevScramble);
   const getTimerReady = useTrainerStore(s => s.getTimerReady);
@@ -195,15 +202,20 @@ export default function TrainerRunClient() {
         || target.tagName === 'SELECT' || target.isContentEditable)) return;
       if (e.code === 'ArrowLeft') { e.preventDefault(); prevScramble(); return; }
       if (e.code === 'ArrowRight') { e.preventDefault(); nextScramble(); return; }
-      // M:当前 case 标记循环 学习中 → 已掌握 → 清除(搁置态按 M 回到学习中)
-      if (e.code === 'KeyM' && !e.repeat) {
+      // 1-4:直接给卡片当前 case 打标记(1 学习中 / 2 已掌握 / 3 搁置 / 4 星标);再按同键取消
+      if (!e.repeat && (e.code === 'Digit1' || e.code === 'Digit2' || e.code === 'Digit3' || e.code === 'Digit4')) {
         const st = useTrainerStore.getState();
         if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
-        const k = st.currentKey;
+        const k = pillKeyRef.current;
         if (!k) return;
+        e.preventDefault();
         const mk = useTrainerMarks.getState();
-        const cur = markStatus(mk.marks, k);
-        mk.applyMarks([k], { s: !cur || cur === 'paused' ? 'learning' : cur === 'learning' ? 'mastered' : null });
+        if (e.code === 'Digit4') {
+          mk.applyMarks([k], { f: !markStarred(mk.marks, k) });
+        } else {
+          const target: CaseMarkStatus = e.code === 'Digit1' ? 'learning' : e.code === 'Digit2' ? 'mastered' : 'paused';
+          mk.applyMarks([k], { s: markStatus(mk.marks, k) === target ? null : target });
+        }
         return;
       }
       if (e.code === 'Space' && !useTrainerStore.getState().timing) {
@@ -435,22 +447,38 @@ export default function TrainerRunClient() {
     timerState === TimerState.READY || timerState === TimerState.AWAITING_READY ? 0 :
     solves.length > 0 ? solves[solves.length - 1].ms : 0;
 
-  const observingSolve = solves[observingIdx] ?? null;
-
-  // 侧栏卡片:计时模式跟随所观察的成绩;不计时默认跟随当前题(否则右侧一直冻结在
-  // 最后一条成绩上),但统计里点选了成绩(pinned)时也切到那条 —— 打乱图与打乱
-  // 公式一同更改(issue #30),出下一题自动回落。
+  // 当前题(左栏大打乱 + 下方 case 图)。
   const currentCase = currentKey ? findCaseByKey(cases, currentKey) ?? null : null;
-  const cardSolve = timing ? observingSolve : (observingPinned ? observingSolve : null);
-  const cardCase = cardSolve
-    ? findCaseByKey(cases, cardSolve.caseKey) ?? null
-    : (timing ? null : currentCase);
-  const cardScramble = cardSolve ? cardSolve.scramble : (timing ? null : currentScramble);
-  // 标记 pill 跟卡片同一个 case;计时模式还没有成绩时回落到当前题(不然第一把之前没法标)
-  const pillCase = cardCase ?? currentCase;
-  // 计数:第几把 —— 不计时也要有(打乱历史里的位置,从 1 起);跟着一条已录成绩看
-  // 时改用该成绩的序号(两套编号在计时模式下重合,recap/不计时时只有前者)。
-  const cardHeader = cardSolve ? `#${cardSolve.i + 1}` : (hist.idx >= 0 ? `#${hist.idx + 1}` : undefined);
+
+  // 「下一个」卡片(预览):← 回看过就是历史里 idx+1 那条,否则是预抽的 peek。
+  const nextEntry = (hist.idx >= 0 && hist.idx < hist.list.length - 1)
+    ? hist.list[hist.idx + 1]
+    : peek;
+  const nextCase = nextEntry ? findCaseByKey(cases, nextEntry.key) ?? null : null;
+  const nextScrambleStr = nextEntry?.scramble ?? null;
+
+  // 「下一个」卡片换题后将显示的那格(再往后一格):在队尾 = 二级预抽 peek2,队尾前一格 = peek,
+  // 更靠前 = 历史里 idx+2 那条(已看过、已缓存)。据此提前一格离屏预取,右卡换图也秒出。
+  const next2Entry =
+    (hist.idx >= 0 && hist.idx + 2 <= hist.list.length - 1) ? hist.list[hist.idx + 2]
+    : (hist.idx >= 0 && hist.idx + 1 <= hist.list.length - 1) ? peek
+    : peek2;
+  const next2Case = next2Entry ? findCaseByKey(cases, next2Entry.key) ?? null : null;
+
+  // 「上一个」卡片(回看 + 标记):默认 = 打乱历史里的上一条,与「下一个」= 下一条对称 ——
+  // 换题(计时停表 / 空格 / →)时光标一起走,两张卡片同步更新(计时停表后的上一条正好是
+  // 你刚做完那把)。在统计里点选某条成绩(pinned)则临时切到那把,标题显示 #N,换题自动解除。
+  const pinnedSolve = observingPinned ? (solves[observingIdx] ?? null) : null;
+  const prevHistEntry = hist.idx > 0 ? hist.list[hist.idx - 1] : null;
+  const prevKey = pinnedSolve?.caseKey ?? prevHistEntry?.key ?? null;
+  const prevCase = prevKey ? findCaseByKey(cases, prevKey) ?? null : null;
+  const prevSolveScramble = pinnedSolve?.scramble ?? prevHistEntry?.scramble ?? null;
+  const prevHeader = pinnedSolve
+    ? `#${pinnedSolve.i + 1}`
+    : tr({ zh: '上一个', en: 'Previous' });
+  // 标记目标 = 上一个这把(你刚做完 / 刚切过的),数字键 1-4 也打在它上面。
+  const pillCase = prevCase;
+  pillKeyRef.current = pillCase ? caseKey(pillCase) : null;
 
   const onNextCase = () => {
     if (timerState === TimerState.NOT_RUNNING) nextScramble();
@@ -463,9 +491,10 @@ export default function TrainerRunClient() {
   const preAufSupported = (puzzle === '3x3' || puzzle === '2x2') && cases[0]?.sticker.kind !== 'f2l';
   // 真实概率只有带 meta 的 LL set(zbll / pll / ell / 1lll)有数学定义
   const probSupported = puzzle === '3x3' && !!ALG_SET_UNIVERSE[setSlug];
-  // recap 进度:pickFresh 已把 recapPos 推到「当前题序号」,直接显示 pos/total
-  const recapTotal = recapQueue.length;
-  const recapShown = mode === 'recap' && recapTotal > 0;
+  // recap 进度:进度随「当前题」走(store 的 recapPos 因预抽下一题已领先一格),
+  // 直接读当前历史条目上记的 pos/total。
+  const recapCur = hist.idx >= 0 ? hist.list[hist.idx]?.recap : undefined;
+  const recapShown = mode === 'recap' && !!recapCur;
 
   return (
     <div className="trainer-root">
@@ -487,7 +516,7 @@ export default function TrainerRunClient() {
             aria-expanded={optsOpen}
             aria-label={tr({ zh: '训练设置', en: 'Trainer settings' })}
           >
-            <Settings size={18} />
+            <Settings size={22} />
           </button>
           {optsOpen && (
             <div className="trainer-opts-panel" ref={optsPanelRef}>
@@ -536,12 +565,6 @@ export default function TrainerRunClient() {
                       en: 'All n selected cases once per shuffled round, reshuffle when done. Every case within ≤ n draws of a round; worst same-case gap across rounds is 2n−1',
                     })}
               </div>
-              {preAufSupported && (
-                <div className="trainer-opts-row">
-                  <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
-                  <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />
-                </div>
-              )}
               {probSupported && mode === 'train' && (
                 <>
                   <div className="trainer-opts-row">
@@ -567,6 +590,40 @@ export default function TrainerRunClient() {
                   </div>
                 </>
               )}
+              {preAufSupported && (
+                <div className="trainer-opts-row">
+                  <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
+                  <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />
+                </div>
+              )}
+              {/* 极简:侧栏两块各自可隐藏(issue #30)。统计=成绩用时列表,不计时根本
+                  没有用时可统计 —— 不计时时连开关一起隐掉,而不是留一个永远关着的死开关。 */}
+              <div className="trainer-opts-row">
+                <BoolToggle
+                  value={showStageThumb}
+                  onChange={setShowStageThumb}
+                  label={tr({ zh: '打乱图', en: 'Cube image' })}
+                />
+                {timing && (
+                  <BoolToggle
+                    value={showStats}
+                    onChange={setShowStats}
+                    label={tr({ zh: '统计', en: 'Stats' })}
+                  />
+                )}
+              </div>
+              <div className="trainer-opts-row">
+                <BoolToggle
+                  value={showPrevCard}
+                  onChange={setShowPrevCard}
+                  label={tr({ zh: '上一个', en: 'Previous' })}
+                />
+                <BoolToggle
+                  value={showNextCard}
+                  onChange={setShowNextCard}
+                  label={tr({ zh: '下一个', en: 'Next' })}
+                />
+              </div>
               {timing && (
                 <div className="trainer-opts-row">
                   <span className="trainer-opts-label">{tr({ zh: '计时字体', en: 'Timer font' })}</span>
@@ -584,33 +641,23 @@ export default function TrainerRunClient() {
                   previewWeight={400}
                 />
               </div>
-              {/* 极简:侧栏两块各自可隐藏(issue #30)。统计=成绩用时列表,不计时根本
-                  没有用时可统计 —— 不计时时连开关一起隐掉,而不是留一个永远关着的死开关。 */}
-              <div className="trainer-opts-row">
-                <BoolToggle
-                  value={showCaseCard}
-                  onChange={setShowCaseCard}
-                  label={tr({ zh: 'case 卡片', en: 'Case card' })}
-                />
-                {timing && (
-                  <BoolToggle
-                    value={showStats}
-                    onChange={setShowStats}
-                    label={tr({ zh: '统计', en: 'Stats' })}
-                  />
-                )}
-              </div>
               <div className="trainer-opts-help">
                 {timing
-                  ? tr({ zh: '空格开始/停止，按住拖动呼出轮盘，M 循环标记', en: 'Space to start/stop, hold & drag for the wheel, M cycles the mark' })
-                  : tr({ zh: '单击、空格或 → 键切下一个打乱，M 循环标记', en: 'Click, Space or → for the next scramble, M cycles the mark' })}
+                  ? tr({ zh: '空格开始/停止，按住拖动呼出轮盘', en: 'Space to start/stop, hold & drag for the wheel' })
+                  : tr({ zh: '单击、空格或 → 键切下一个打乱', en: 'Click, Space or → for the next scramble' })}
+              </div>
+              <div className="trainer-opts-help">
+                {tr({
+                  zh: '数字键 1 学习中、2 已掌握、3 搁置、4 星标,标在「上一个」case',
+                  en: 'Keys 1 learning, 2 mastered, 3 paused, 4 star — mark the “Previous” case',
+                })}
               </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className={`trainer-run${showCaseCard || statsVisible ? '' : ' trainer-run--solo'}`}>
+      <div className={`trainer-run${showPrevCard || showNextCard || statsVisible ? '' : ' trainer-run--solo'}`}>
         <div className="trainer-stage" ref={stageRef}>
           <ScrambleHeader
             scramble={currentScramble || ''}
@@ -631,10 +678,10 @@ export default function TrainerRunClient() {
             )}
           </div>
 
-          {recapShown && (
+          {recapShown && recapCur && (
             <div className="trainer-stage-opts">
               <span className="trainer-recap-progress">
-                {Math.min(recapPos, recapTotal)}/{recapTotal}
+                {recapCur.pos}/{recapCur.total}
               </span>
             </div>
           )}
@@ -646,6 +693,49 @@ export default function TrainerRunClient() {
               penalty={solves.length > 0 ? solves[solves.length - 1].penalty : undefined}
               font={timerFont}
             />
+          )}
+
+          {/* 当前这道题的 case 图(左栏下方):看得见正在练的这一把。
+              图从「实际打乱」渲染(含 pre/post-AUF),与上方打乱公式朝向一致。 */}
+          {showStageThumb && currentCase && (
+            <div className="trainer-stage-thumb">
+              <CaseThumb
+                puzzle={puzzle}
+                set={setSlug}
+                sticker={currentCase.sticker}
+                alg={currentCase.algs.flat()[0]?.alg ?? currentCase.standard ?? ''}
+                setup={currentScramble ?? currentCase.setup}
+                size={140}
+              />
+            </div>
+          )}
+          {/* 离屏预取即将要显示的图(全部 size=140,与左栏/卡片同一 URL → 共用浏览器缓存):
+              ① next(换题后 = 左栏当前图 / 也是「上一个」卡片的图);② next2(换题后 =「下一个」
+              卡片的图,靠二级预抽 peek2 提前一格备好)。换题时三处都命中缓存秒出,不等网络往返
+              (打乱公式是本地状态所以本就瞬间出)。任一缩略图开着就预取。 */}
+          {(showStageThumb || showNextCard || showPrevCard) && (
+            <div className="trainer-thumb-prefetch" aria-hidden>
+              {nextCase && nextScrambleStr && (
+                <CaseThumb
+                  puzzle={puzzle}
+                  set={setSlug}
+                  sticker={nextCase.sticker}
+                  alg={nextCase.algs.flat()[0]?.alg ?? nextCase.standard ?? ''}
+                  setup={nextScrambleStr}
+                  size={140}
+                />
+              )}
+              {next2Case && next2Entry?.scramble && (
+                <CaseThumb
+                  puzzle={puzzle}
+                  set={setSlug}
+                  sticker={next2Case.sticker}
+                  alg={next2Case.algs.flat()[0]?.alg ?? next2Case.standard ?? ''}
+                  setup={next2Entry.scramble}
+                  size={140}
+                />
+              )}
+            </div>
           )}
 
           {suggest && (
@@ -671,18 +761,31 @@ export default function TrainerRunClient() {
           )}
         </div>
 
-        {(showCaseCard || statsVisible) && (
+        {(showPrevCard || showNextCard || statsVisible) && (
           <aside className="trainer-sidebar">
-            {showCaseCard && (
+            {/* 上一个:刚做完那把(图+名+打乱)+ 标记条,标记打在这把上。第一把之前无成绩,不出。 */}
+            {showPrevCard && prevCase && (
               <SolveCard
                 puzzle={puzzle}
                 set={setSlug}
-                scramble={cardScramble}
-                c={cardCase}
+                scramble={prevSolveScramble}
+                c={prevCase}
                 isZh={isZh}
-                onShowCase={cardCase?.meta ? (c) => setMetaCase(c) : undefined}
-                header={cardHeader}
-                markSlot={pillCase ? <CaseMarkPill k={caseKey(pillCase)} /> : undefined}
+                onShowCase={prevCase.meta ? (c) => setMetaCase(c) : undefined}
+                header={prevHeader}
+                markSlot={<CaseMarkBar k={caseKey(prevCase)} />}
+              />
+            )}
+            {/* 下一个:预览待做那把(图+名+打乱),不带标记。 */}
+            {showNextCard && (
+              <SolveCard
+                puzzle={puzzle}
+                set={setSlug}
+                scramble={nextScrambleStr}
+                c={nextCase}
+                isZh={isZh}
+                onShowCase={nextCase?.meta ? (c) => setMetaCase(c) : undefined}
+                header={tr({ zh: '下一个', en: 'Next up' })}
               />
             )}
             {statsVisible && (

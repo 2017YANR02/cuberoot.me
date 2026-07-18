@@ -43,6 +43,9 @@ interface TrainerHistEntry {
   key: string;
   name: string;
   scramble: string;
+  /** recap 模式下该条在本轮的位置(1 起)/ 本轮总数 —— 进度条随「当前题」而非预抽的
+   *  下一题走(有 lookahead 后 store 的 recapPos 已领先当前题一格)。 */
+  recap?: { pos: number; total: number };
 }
 
 interface PersistedSession {
@@ -84,14 +87,17 @@ interface TrainerPrefs {
   recapOrder: TrainerRecapOrder;
   timerFont: TrainerTimerFont;
   scrambleFont: TrainerTimerFont;
-  /** 极简开关:侧栏 case 卡片 / 统计卡片(issue #30,可各自隐藏)。 */
-  showCaseCard: boolean;
+  /** 极简开关:侧栏「上一个 / 下一个」卡片、统计卡片,可各自隐藏。 */
+  showPrevCard: boolean;
+  showNextCard: boolean;
   showStats: boolean;
+  /** 左栏计时数字下方的当前 case 图,可隐藏。 */
+  showStageThumb: boolean;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
   preAuf: false, postAuf: true, timing: true, mode: 'train', probMode: 'uniform',
   recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
-  showCaseCard: true, showStats: true,
+  showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -114,7 +120,8 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   preAuf: st.preAuf, postAuf: st.postAuf, timing: st.timing, mode: st.mode,
   probMode: st.probMode, recapOrder: st.recapOrder,
   timerFont: st.timerFont, scrambleFont: st.scrambleFont,
-  showCaseCard: st.showCaseCard, showStats: st.showStats,
+  showPrevCard: st.showPrevCard, showNextCard: st.showNextCard, showStats: st.showStats,
+  showStageThumb: st.showStageThumb,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
@@ -140,6 +147,17 @@ interface TrainerState {
   currentKey: string | null;
   currentName: string | null;
   currentScramble: string | null;
+  /**
+   * 预抽的「下一题」(lookahead):侧栏「下一个」卡片显示它,出下一题时把它扶正为 current
+   * 再预抽一条 —— 预览的打乱与将来实际要做的完全一致(train 随机也不会重roll)。
+   * pool 空 / 历史中段(← 回看过)时为 null,此时「下一题」= 历史里 idx+1 那条。
+   */
+  peek: TrainerHistEntry | null;
+  /**
+   * 再下一题(二级 lookahead):出下一题时它递补为 peek。UI 据此把「下一个」卡片将要显示的
+   * 图提前一格离屏预取 —— 换题时右卡也秒出图,与左栏(靠预取 peek)同速,不再等网络往返。
+   */
+  peek2: TrainerHistEntry | null;
   /** ←/→ 打乱历史(与 /timer 同一套环形队列,lib/scramble-history)。 */
   hist: ScrambleHist<TrainerHistEntry>;
   /** 出题用哪一种打乱。非 `inv` 的几套来自站长 1LLL 表的 meta,只有部分 set 有。 */
@@ -162,8 +180,10 @@ interface TrainerState {
   recapOrder: TrainerRecapOrder;
   timerFont: TrainerTimerFont;
   scrambleFont: TrainerTimerFont;
-  showCaseCard: boolean;
+  showPrevCard: boolean;
+  showNextCard: boolean;
   showStats: boolean;
+  showStageThumb: boolean;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
   recapQueue: string[];
@@ -183,8 +203,10 @@ interface TrainerState {
   setRecapOrder: (o: TrainerRecapOrder) => void;
   setTimerFont: (f: TrainerTimerFont) => void;
   setScrambleFont: (f: TrainerTimerFont) => void;
-  setShowCaseCard: (v: boolean) => void;
+  setShowPrevCard: (v: boolean) => void;
+  setShowNextCard: (v: boolean) => void;
   setShowStats: (v: boolean) => void;
+  setShowStageThumb: (v: boolean) => void;
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
   nextScramble: () => void;
@@ -237,32 +259,42 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     }).catch(() => { /* 保留占位打乱 */ });
   };
 
-  /** 出一道新题并推进历史。pool 空时清空当前题。 */
-  const pickFresh = () => {
-    const st = get();
+  /**
+   * 纯抽题:按当前模式选一个 case、生成打乱,返回条目 + 推进后的 recap 队列状态。
+   * 不落 current —— 供 current 与 peek(下一题预览)在一次操作里连抽两次复用。
+   * pool 空 / 找不到 case 时返 null。
+   */
+  const draw = (
+    st: TrainerState,
+  ): { entry: TrainerHistEntry; recapQueue: string[]; recapPos: number; recapSig: string } | null => {
     const pool = trainerPool(st.selected, st.scope);
-    if (pool.length === 0 || !st.puzzle) {
-      set({ currentKey: null, currentName: null, currentScramble: null });
-      return;
-    }
+    if (pool.length === 0 || !st.puzzle) return null;
 
     let key: string;
-    let recapPatch: Partial<TrainerState> = {};
+    let recapQueue = st.recapQueue;
+    let recapPos = st.recapPos;
+    let recapSig = st.recapSig;
+    let entryRecap: { pos: number; total: number } | undefined;
+
     if (st.mode === 'recap') {
       const sig = [...pool].sort().join('|');
-      let { recapQueue, recapPos } = st;
-      if (st.recapSig !== sig || recapPos >= recapQueue.length) {
+      let q = st.recapQueue;
+      let pos = st.recapPos;
+      if (st.recapSig !== sig || pos >= q.length) {
         if (st.recapOrder === 'seq') {
           // 顺序:按 set 里 case 的原始顺序过一遍
           const inPool = new Set(pool);
-          recapQueue = st.cases.map(caseKey).filter(k => inPool.has(k));
+          q = st.cases.map(caseKey).filter(k => inPool.has(k));
         } else {
-          recapQueue = shuffle(pool);
+          q = shuffle(pool);
         }
-        recapPos = 0;
+        pos = 0;
       }
-      key = recapQueue[recapPos];
-      recapPatch = { recapQueue, recapPos: recapPos + 1, recapSig: sig };
+      key = q[pos];
+      entryRecap = { pos: pos + 1, total: q.length };
+      recapQueue = q;
+      recapPos = pos + 1;
+      recapSig = sig;
     } else if (st.probMode === 'real') {
       // 真实概率:权重 = 轨道大小(16/cn)。无 meta 的 case 当权重 16(≈无对称)。
       const weights = pool.map(k => {
@@ -282,31 +314,53 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     }
 
     const c = findCaseByKey(st.cases, key);
-    if (!c) {
-      set({ currentKey: null, currentName: null, currentScramble: null });
+    if (!c) return null;
+    const scramble = generateScramble(c, st.puzzle, st.scrambleKind, { preAuf: st.preAuf, postAuf: st.postAuf });
+    return { entry: { key, name: c.name, scramble, recap: entryRecap }, recapQueue, recapPos, recapSig };
+  };
+
+  /** 出一道新题(current)并预抽下一题(peek)、再下一题(peek2)、推进历史。pool 空时清空。 */
+  const pickFresh = () => {
+    const st = get();
+    const a = draw(st);
+    if (!a) {
+      set({ currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null });
       return;
     }
-    const scramble = generateScramble(c, st.puzzle, st.scrambleKind, { preAuf: st.preAuf, postAuf: st.postAuf });
+    // 依次从上一抽推进后的 recap 状态继续抽(三次抽题共享同一队列推进,不重复过同一格)
+    const b = draw({ ...st, recapQueue: a.recapQueue, recapPos: a.recapPos, recapSig: a.recapSig });
+    const c = b ? draw({ ...st, recapQueue: b.recapQueue, recapPos: b.recapPos, recapSig: b.recapSig }) : null;
+    const rec = c ?? b ?? a;
     set({
-      ...recapPatch,
-      hist: histPush(st.hist, { key, name: c.name, scramble }),
-      currentKey: key,
-      currentName: c.name,
-      currentScramble: scramble,
+      recapQueue: rec.recapQueue,
+      recapPos: rec.recapPos,
+      recapSig: rec.recapSig,
+      hist: histPush(st.hist, a.entry),
+      currentKey: a.entry.key,
+      currentName: a.entry.name,
+      currentScramble: a.entry.scramble,
+      peek: b ? b.entry : null,
+      peek2: c ? c.entry : null,
       observingPinned: false,
     });
     cstimerize();
   };
 
-  /** 当前题的打乱重出一条(换打乱类型 / 切 pre-AUF 时),历史当前条同步替换。 */
+  /** 当前题的打乱重出一条(换打乱类型 / 切 pre-AUF 时),历史当前条 + 预览的下两题同步替换。 */
   const regenCurrent = () => {
-    const { currentKey, cases, puzzle, timerState, scrambleKind, preAuf, postAuf, hist } = get();
+    const { currentKey, cases, puzzle, timerState, scrambleKind, preAuf, postAuf, hist, peek, peek2 } = get();
     if (!currentKey || !puzzle || timerState !== TimerState.NOT_RUNNING) return;
     const c = findCaseByKey(cases, currentKey);
     if (!c) return;
     const scramble = generateScramble(c, puzzle, scrambleKind, { preAuf, postAuf });
     const list = hist.list.map((e, i) => (i === hist.idx ? { ...e, scramble } : e));
-    set({ currentScramble: scramble, hist: { list, idx: hist.idx } });
+    // 预览的下两题也用新打乱类型重出,保证预览 == 将来实际要做的
+    const regenPeek = (pk: TrainerHistEntry | null): TrainerHistEntry | null => {
+      if (!pk) return pk;
+      const pc = findCaseByKey(cases, pk.key);
+      return pc ? { ...pk, scramble: generateScramble(pc, puzzle, scrambleKind, { preAuf, postAuf }) } : pk;
+    };
+    set({ currentScramble: scramble, hist: { list, idx: hist.idx }, peek: regenPeek(peek), peek2: regenPeek(peek2) });
     cstimerize();
   };
 
@@ -320,6 +374,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     currentKey: null,
     currentName: null,
     currentScramble: null,
+    peek: null,
+    peek2: null,
     hist: EMPTY_HIST,
     // 默认 H*(最优 HTM 打乱);case/set 没有这列时组件的回退 effect 会落回 `inv`
     scrambleKind: 'htm',
@@ -345,6 +401,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         currentKey: null,
         currentName: null,
         currentScramble: null,
+        peek: null,
+        peek2: null,
         hist: EMPTY_HIST,
         recapQueue: [],
         recapPos: 0,
@@ -415,12 +473,20 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       persistPrefs(prefsOf(get()));
       if (get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
     },
-    setShowCaseCard: (v) => {
-      set({ showCaseCard: v });
+    setShowPrevCard: (v) => {
+      set({ showPrevCard: v });
+      persistPrefs(prefsOf(get()));
+    },
+    setShowNextCard: (v) => {
+      set({ showNextCard: v });
       persistPrefs(prefsOf(get()));
     },
     setShowStats: (v) => {
       set({ showStats: v });
+      persistPrefs(prefsOf(get()));
+    },
+    setShowStageThumb: (v) => {
+      set({ showStageThumb: v });
       persistPrefs(prefsOf(get()));
     },
     setTimerFont: (f) => {
@@ -438,11 +504,31 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
       const fwd = histForward(st.hist);
       if (fwd) {
+        // 历史中段(← 回看过)向前翻:current 前进一格,peek 不动(它仍是队尾之后的预览)
         const cur = fwd.list[fwd.idx];
         set({ hist: fwd, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false });
+        cstimerize();
         return;
       }
-      pickFresh();
+      // 已在队尾:把预抽的下一题(peek)扶正为当前题,peek2 递补为新 peek,再预抽新的 peek2。
+      // 这样「你先前看到的下一题」就是「现在要做的这一题」,预览稳定不重roll;右卡预览也提前
+      // 一格备好(peek2),换题时右图秒出。
+      if (!st.peek) { pickFresh(); return; }
+      const committed = st.peek;
+      const c = draw(st); // st.recap* 已反映 peek2 抽取后的状态 → 抽 peek2 之后的那一题
+      set({
+        recapQueue: c ? c.recapQueue : st.recapQueue,
+        recapPos: c ? c.recapPos : st.recapPos,
+        recapSig: c ? c.recapSig : st.recapSig,
+        hist: histPush(st.hist, committed),
+        currentKey: committed.key,
+        currentName: committed.name,
+        currentScramble: committed.scramble,
+        peek: st.peek2,
+        peek2: c ? c.entry : null,
+        observingPinned: false,
+      });
+      cstimerize();
     },
 
     prevScramble: () => {
@@ -497,6 +583,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       });
       // Celebrate a new fastest single across the session.
       if (solves.length > 0 && ms < Math.min(...solves.map(s => s.ms))) petReact('happy');
+      // 停表即自动出下一题(cstimer 式):把预览的下一题(peek)扶正为 current 再预抽一条。
+      // 左栏随之显示「下一个要 solve 的把 + 它的图」,计时数字停留在刚做完这把的成绩,
+      // 右栏「下一把」也跟着滚到再下一个 —— 不然连续 solve 时 current/peek 都不动,右卡冻住。
       setTimeout(() => get().nextScramble(), 0);
     },
 

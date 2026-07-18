@@ -1,18 +1,18 @@
 'use client';
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Trash2, ChevronDown, ChevronRight, Check, Pause, Star } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import { CaseThumb } from '@/components/CaseThumb';
 import { VisualCube } from '@/components/VisualCube';
+import { SegmentTime } from '@/components/SegmentTime';
 import { TimerState } from '@/lib/trainer-store';
 import type { TrainerSolve, TrainerPenalty } from '@/lib/trainer-store';
 import {
   useTrainerMarks, markStatus, markStarred, MARK_STATUS_LABEL,
   type CaseMarks, type CaseMarkStatus, type TrainerMarkBrush,
 } from '@/lib/trainer-marks';
-import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { caseKey } from '@/lib/trainer-case-key';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { tr } from '@/i18n/tr';
@@ -49,7 +49,12 @@ export function TimerDisplay({
     isDnf ? 'DNF' :
     showResult && penalty === '+2' ? formatMs(ms + 2000) + '+' :
     formatMs(ms);
-  return <div className={`trainer-timer tf-${font} ${cls}${isDnf ? ' is-dnf' : ''}`}>{text}</div>;
+  // 分钟冒号统一走 SegmentTime(Segment7 的 ':' 是横杠,换成 CSS 两点),与 /timer 共用。
+  return (
+    <div className={`trainer-timer tf-${font} ${cls}${isDnf ? ' is-dnf' : ''}`}>
+      <SegmentTime text={text} />
+    </div>
+  );
 }
 
 /** 打乱正文。label(如「已复制」反馈)可选 —— 没有就只渲染打乱本身。 */
@@ -84,8 +89,8 @@ export function SolveCard({
         <>
           <div className="trainer-card-header">
             <span>{header}</span>
-            {markSlot}
           </div>
+          {markSlot && <div className="trainer-mark-row">{markSlot}</div>}
           <hr className="trainer-card-divider" />
         </>
       )}
@@ -100,8 +105,11 @@ export function SolveCard({
               set={set}
               sticker={c.sticker}
               alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
-              setup={c.setup}
-              size={120}
+              // 图从「实际打乱」渲染(含 pre/post-AUF),而非 case 规范 setup —— 否则
+              // 图与卡片上的打乱公式朝向对不上(3x3/2x2 才有 AUF;其余打乱==规范 setup)。
+              setup={scramble ?? c.setup}
+              // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
+              size={140}
             />
           </div>
           <div className="trainer-solve-row">
@@ -179,63 +187,44 @@ function TriCheckbox({ checked, indeterminate }: { checked: boolean; indetermina
   return <span className={`trainer-checkbox${cls}`} aria-hidden />;
 }
 
-/**
- * 当前 case 的学习标记 pill(run 页卡片标题行):显示现状,点开小面板改状态 / 星标。
- * data-no-timer:pill 与面板上的按压不得触发计时。
- */
-export function CaseMarkPill({ k }: { k: string }) {
+/** run 页卡片头的学习标记直选条:4 个可直接点的按钮(学习中 / 已掌握 / 搁置 / 星标),
+ *  每行 2 个;再点同一个 = 取消该标记。数字键 1-4 仍是快捷键(绑定在 TrainerRunClient 的
+ *  keydown 里,title 里带提示),但不再渲染可见的数字小标。data-no-timer:按压不触发计时。 */
+const MARK_ACTIONS: { digit: string; s?: CaseMarkStatus; star?: boolean }[] = [
+  { digit: '1', s: 'learning' },
+  { digit: '2', s: 'mastered' },
+  { digit: '3', s: 'paused' },
+  { digit: '4', star: true },
+];
+
+export function CaseMarkBar({ k }: { k: string }) {
   const marks = useTrainerMarks(s => s.marks);
   const applyMarks = useTrainerMarks(s => s.applyMarks);
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLSpanElement | null>(null);
-  const panelRef = useRef<HTMLDivElement | null>(null);
-  usePanelClamp(open, panelRef);
-  useEffect(() => {
-    if (!open) return;
-    // pointerdown 而非 mousedown:与 run 页齿轮面板同因(stage 手势层抑制兼容 mousedown)
-    const handler = (e: PointerEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('pointerdown', handler);
-    return () => document.removeEventListener('pointerdown', handler);
-  }, [open]);
   const st = markStatus(marks, k);
   const starred = markStarred(marks, k);
   return (
-    <span className="trainer-mark-pill-root" ref={rootRef} data-no-timer>
-      <button
-        type="button"
-        className={`trainer-mark-pill is-${st ?? 'none'}`}
-        onClick={() => setOpen(o => !o)}
-        aria-expanded={open}
-        aria-label={tr({ zh: '学习标记', en: 'Learning mark' })}
-      >
-        {starred && <Star size={11} className="trainer-mark-pill-star" aria-hidden />}
-        {st ? MARK_STATUS_LABEL[st]() : tr({ zh: '标记', en: 'Mark' })}
-      </button>
-      {open && (
-        <div className="trainer-mark-menu" ref={panelRef}>
-          {(['learning', 'mastered', 'paused'] as CaseMarkStatus[]).map(s => (
-            <button
-              key={s}
-              type="button"
-              className={`trainer-mark-menu-item${st === s ? ' is-active' : ''}`}
-              onClick={() => { applyMarks([k], { s: st === s ? null : s }); setOpen(false); }}
-            >
-              <span className={`trainer-mark-dot is-${s}`} aria-hidden />
-              {MARK_STATUS_LABEL[s]()}
-            </button>
-          ))}
+    <span className="trainer-mark-bar" data-no-timer>
+      {MARK_ACTIONS.map((a) => {
+        const active = a.star ? starred : st === a.s;
+        const label = a.star ? tr({ zh: '星标', en: 'Star' }) : MARK_STATUS_LABEL[a.s!]();
+        return (
           <button
+            key={a.digit}
             type="button"
-            className={`trainer-mark-menu-item${starred ? ' is-active' : ''}`}
-            onClick={() => { applyMarks([k], { f: !starred }); setOpen(false); }}
+            className={`trainer-mark-btn ${a.star ? 'is-star' : `is-${a.s}`}${active ? ' is-active' : ''}`}
+            aria-pressed={active}
+            title={`${label} (${a.digit})`}
+            onClick={() => (a.star
+              ? applyMarks([k], { f: !starred })
+              : applyMarks([k], { s: st === a.s ? null : a.s }))}
           >
-            <Star size={12} className="trainer-mark-pill-star" aria-hidden />
-            {tr({ zh: '星标', en: 'Star' })}
+            {a.star
+              ? <Star size={12} className="trainer-mark-btn-star" aria-hidden />
+              : <span className={`trainer-mark-dot is-${a.s}`} aria-hidden />}
+            <span className="trainer-mark-btn-label">{label}</span>
           </button>
-        </div>
-      )}
+        );
+      })}
     </span>
   );
 }

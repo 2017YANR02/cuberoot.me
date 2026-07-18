@@ -1,5 +1,12 @@
 /* /alg/progress — 学习进度总览。配色全走 globals token,派生色用 color-mix。 */
 
+/* 与 .alg-cat-header 同宽同边距,内容不贴左边 */
+.alg-prog-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
 .alg-prog-summary {
   display: flex;
   flex-wrap: wrap;
@@ -73,6 +80,14 @@
 }
 .alg-prog-frac b { font-size: 1rem; color: var(--signal-success); font-weight: 650; }
 .alg-prog-frac-label { margin-left: 5px; }
+.alg-prog-frac.is-link { text-decoration: none; cursor: pointer; }
+@media (hover: hover) {
+  .alg-prog-frac.is-link:hover .alg-prog-frac-label {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
 
 .alg-prog-bar {
   display: flex;

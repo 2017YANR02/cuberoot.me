@@ -276,47 +276,35 @@
 }
 
 /* run 页当前 case 的标记 pill + 弹出菜单 */
-.trainer-mark-pill-root { position: relative; display: inline-flex; }
-.trainer-mark-pill {
+/* 学习标记直选条:4 个直接可点的按钮 + 数字快捷键提示(取代旧下拉菜单) */
+/* 标记条自成一行、整体居中(卡片标题下方) */
+.trainer-mark-row { display: flex; justify-content: center; margin-bottom: 10px; }
+/* 每行 2 个(圆点+文字),2 列网格 */
+.trainer-mark-bar {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  align-items: center;
+  gap: 6px 16px;
+}
+/* 无外框:圆点 + 文字,靠颜色区分选中,不用 border/background 包成胶囊 */
+.trainer-mark-btn {
   appearance: none; -webkit-appearance: none;
-  display: inline-flex; align-items: center; gap: 4px;
-  font: inherit; font-size: 0.78rem;
+  display: inline-flex; align-items: center; gap: 5px;
+  font: inherit; font-size: 0.78rem; font-weight: 500; line-height: 1;
   color: var(--muted-foreground);
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
-  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-  border-radius: 999px;
-  padding: 1px 9px;
+  background: none;
+  border: none;
+  padding: 3px 0;
   cursor: pointer;
-}
-.trainer-mark-pill.is-learning { color: var(--signal-warning); border-color: color-mix(in srgb, var(--signal-warning) 45%, transparent); }
-.trainer-mark-pill.is-mastered { color: var(--signal-success); border-color: color-mix(in srgb, var(--signal-success) 45%, transparent); }
-.trainer-mark-pill.is-paused { color: var(--faint-foreground); }
-.trainer-mark-pill-star { color: var(--signal-warning); fill: var(--signal-warning); }
-/* anchored-panel: clamped (usePanelClamp in CaseMarkPill) */
-.trainer-mark-menu {
-  position: absolute; top: 100%; right: 0; z-index: 30;
-  margin-top: 4px;
-  display: flex; flex-direction: column;
-  width: max-content;
-  background: var(--popover);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  padding: 4px;
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--foreground) 12%, transparent);
-}
-.trainer-mark-menu-item {
-  appearance: none; -webkit-appearance: none;
-  display: flex; align-items: center; gap: 7px;
-  font: inherit; font-size: 0.84rem; color: var(--foreground);
-  background: none; border: none; border-radius: 5px;
-  padding: 5px 10px;
-  cursor: pointer;
-  text-align: left;
 }
 @media (hover: hover) {
-  .trainer-mark-menu-item:hover { background: color-mix(in srgb, var(--foreground) 7%, transparent); }
+  .trainer-mark-btn:hover { color: var(--foreground); }
 }
-.trainer-mark-menu-item.is-active { background: color-mix(in srgb, var(--foreground) 9%, transparent); }
+.trainer-mark-btn.is-active.is-learning { color: var(--signal-warning); }
+.trainer-mark-btn.is-active.is-mastered { color: var(--signal-success); }
+.trainer-mark-btn.is-active.is-paused   { color: var(--foreground); }
+.trainer-mark-btn.is-active.is-star      { color: var(--signal-warning); }
+.trainer-mark-btn-star { fill: currentColor; }
 .trainer-mark-dot { width: 9px; height: 9px; border-radius: 50%; }
 .trainer-mark-dot.is-learning { background: var(--signal-warning); }
 .trainer-mark-dot.is-mastered { background: var(--signal-success); }
@@ -386,6 +374,20 @@
 }
 .trainer-stage-btn:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
 
+/* 当前题的 case 图 —— 左栏计时数字下方居中,看得见正在练的这一把 */
+.trainer-stage-thumb {
+  display: flex; justify-content: center;
+  margin: 20px 0 4px;
+}
+/* 「下一个」图的离屏预取:渲染但移出视口(仍会加载 → 进浏览器缓存),换题秒出 */
+.trainer-thumb-prefetch {
+  position: fixed;
+  left: -9999px; top: 0;
+  width: 140px; height: 140px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .trainer-timer {
   font-family: 'Segment7Standard', 'SF Mono', Menlo, Consolas, 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-weight: 700;
@@ -406,6 +408,8 @@
 .trainer-timer.is-stopping,
 .trainer-timer.is-idle     { color: var(--foreground); }
 .trainer-timer.is-dnf      { color: var(--faint-foreground); }
+
+/* 分钟冒号统一走 components/SegmentTime + globals.css 的 .timer-colon(与 /timer 共用)。 */
 
 .trainer-help {
   font-size: 0.85rem;
@@ -518,6 +522,7 @@
 }
 .trainer-card-header {
   display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px 12px;
   font-size: 0.95rem; font-weight: 600;
   margin-bottom: 10px;
 }
