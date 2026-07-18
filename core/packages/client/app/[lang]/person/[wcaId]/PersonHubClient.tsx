@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Mars, Venus, Rewind, IdCard, LogOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Mars, Venus, Rewind, IdCard, LogOut, GraduationCap } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import FollowedComps from '@/components/FollowedComps';
@@ -73,6 +73,14 @@ export default function PersonHubClient() {
       title: tr({ zh: 'WCA 档案', en: 'WCA Profile' }),
       desc: tr({ zh: '个人纪录 / 比赛历史 / 奖牌', en: 'Records, competition history, medals' }),
     },
+    // 学习进度是「登录用户自己」的公式标记聚合(与被查看的选手无关),只在自己的 hub 出现
+    ...(isSelf ? [{
+      key: 'progress',
+      href: '/alg/progress',
+      Icon: GraduationCap,
+      title: tr({ zh: '学习进度', en: 'Learning Progress' }),
+      desc: tr({ zh: '跨公式集的掌握进度总览', en: 'Mastery progress across all sets' }),
+    }] : []),
   ];
 
   return (
