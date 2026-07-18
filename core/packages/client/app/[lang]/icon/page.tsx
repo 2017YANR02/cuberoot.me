@@ -24,9 +24,16 @@ import {
 } from './_catalog';
 import './icon.css';
 
+// Display-name overrides for non-event icons whose upstream slug reads
+// ambiguously in the gallery (e.g. 'gear' alone doesn't distinguish it
+// from the site's Gear Cube puzzle name).
+const NAME_OVERRIDES: Record<string, string> = {
+  'unofficial-gear': 'super gear',
+};
+
 function friendlyName(entry: IconEntry, isZh: boolean): string {
   if (entry.category === 'event') return eventDisplayName(entry.slug, isZh);
-  return entry.slug.replace(/_/g, ' ');
+  return NAME_OVERRIDES[entry.key] ?? entry.slug.replace(/_/g, ' ');
 }
 
 function IconCell({ entry, isZh }: { entry: IconEntry; isZh: boolean }) {
