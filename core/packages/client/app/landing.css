@@ -30,6 +30,61 @@
     /* PWA standalone 下顶/左/右让位刘海/灵动岛,见 index.css 的 --sat/--sar/--sal */
     padding: calc(4rem + var(--sat)) max(2rem, var(--sar)) calc(2rem + var(--sab)) max(2rem, var(--sal));
     box-sizing: border-box;
+    position: relative;   /* 锚定右上角 auth 入口 */
+}
+
+/* ── 右上角 登录 / 我的主页 入口 ── */
+.landing-page .landing-auth {
+    position: absolute;
+    top: calc(1.1rem + var(--sat));
+    right: max(1rem, var(--sar));
+    z-index: 5;
+}
+.landing-page .landing-auth-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s;
+}
+.landing-page .landing-auth-btn:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+}
+/* 未登录时更显著:实心 accent 底(配对 accent-foreground,随主题走) */
+.landing-page .landing-auth-btn.is-login {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-foreground);
+}
+.landing-page .landing-auth-btn.is-login:hover {
+    filter: brightness(1.08);
+}
+.landing-page .landing-auth-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    object-fit: cover;
+    background: var(--accent-soft);
+}
+.landing-page .landing-auth-name {
+    max-width: 9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+@media (max-width: 480px) {
+    /* 窄屏只留头像/图标,名字省掉,避免挤压顶栏 */
+    .landing-page .landing-auth-name { display: none; }
 }
 
 /* ── 品牌行 ── */
