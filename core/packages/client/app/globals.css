@@ -760,3 +760,28 @@ a {
   cursor: help;
   white-space: nowrap;
 }
+
+/* 七段计时读数的分钟冒号(components/SegmentTime)。Segment7 把 ':' 画成横杠,改用两个
+   方点替代:尺寸对齐该字体的 '.'(0.1em,实测),居中于两位数字之间、相对数字中线对称。
+   用 em + currentColor,所以在 /timer(.timer-display)与训练器(.trainer-timer)任意字号
+   下都自适应 —— 单一源,两处共用。 */
+.timer-colon {
+  display: inline-block;
+  position: relative;
+  width: 0.28em;
+  height: 0;
+  vertical-align: baseline;
+}
+.timer-colon::before,
+.timer-colon::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 0.1em;
+  height: 0.1em;
+  margin-left: -0.05em;
+  border-radius: 50%;
+  background: currentColor;
+}
+.timer-colon::before { bottom: 0.48em; } /* 上点 */
+.timer-colon::after  { bottom: 0.20em; } /* 下点 */
