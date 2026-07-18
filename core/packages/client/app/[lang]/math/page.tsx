@@ -10,7 +10,7 @@
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { useTranslation } from 'react-i18next';
-import { Infinity as InfinityIcon, Sigma, Dices, Ruler, Boxes, Percent } from 'lucide-react';
+import { Infinity as InfinityIcon, Sigma, Dices, Ruler, Boxes, Percent, ListOrdered } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
@@ -58,6 +58,12 @@ const CARDS: Card[] = [
     Icon: Ruler,
     zh: { title: '单位距离问题', desc: 'OpenAI 2026:AI 自主推翻 Erdős 1946 平面单位距离猜想,5 个互动可视化' },
     en: { title: 'Unit distance problem', desc: 'OpenAI 2026: AI autonomously disproves Erdős 1946 planar unit-distance conjecture — 5 interactive visualisations' }
+},
+  {
+    to: '/math/gcd-sequence',
+    Icon: ListOrdered,
+    zh: { title: '公因子数列', desc: '一道数论证明题:每一项都与之前所有项有公因子的贪心数列,最终满足 a(n+T) = a(n) + L' },
+    en: { title: 'Common-factor sequence', desc: 'A number-theory proof: a greedy sequence sharing a factor with every earlier term is eventually linear-periodic a(n+T) = a(n) + L' }
 },
 ];
 
