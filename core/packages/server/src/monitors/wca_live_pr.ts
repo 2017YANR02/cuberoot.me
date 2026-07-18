@@ -16,7 +16,7 @@
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
 import { getWatchedWcaIds } from './watched.js';
-import { setPr, isNewPr, isTiedPr, warmBaseline } from './pr_baseline.js';
+import { setPr, isNewPr, reconcilePr, warmBaseline } from './pr_baseline.js';
 import { POLL_INTERVAL_MS, siteCompUrl, isChineseRegion } from './config.js';
 import { startPoller } from './poll.js';
 import { enrichName } from './names.js';
@@ -391,7 +391,11 @@ async function runOnce(): Promise<void> {
 
     if (!(await isNewPr(cand.wcaid, cand.eventId, cand.recType, cand.value))) continue;
 
-    cand.tied = await isTiedPr(cand.wcaid, cand.eventId, cand.recType, cand.value);
+    // 本地基线可能陈旧/缺失,拉官方生涯最优二次确认破/平(见 reconcilePr 注释);
+    // 官方已有更优成绩 → 非真 PR,跳过不推。
+    const verdict = await reconcilePr(cand.wcaid, cand.eventId, cand.recType, cand.value);
+    if (!verdict.isPr) continue;
+    cand.tied = verdict.tied;
     const k = groupKey(cand);
     let g = freshByGroup.get(k);
     if (!g) {

@@ -7,7 +7,6 @@
  * 也算(WCA Live 持平 PR 仍亮橙色 PR 徽章)。
  */
 import { query } from '../db/connection.js';
-import { isTiedValue } from '../utils/record_format.js';
 
 type RecType = 'single' | 'average';
 
@@ -39,20 +38,77 @@ export async function isNewPr(wcaId: string, eventId: string, recType: RecType, 
   return current === null || value <= current;
 }
 
-/** 与历史最优持平(非破)。复用 record_format.isTiedValue。 */
-export async function isTiedPr(wcaId: string, eventId: string, recType: RecType, value: number): Promise<boolean> {
-  const current = await getPr(wcaId, eventId, recType);
-  return isTiedValue(value, current);
-}
-
 interface ApiRecord {
   eventId: string;
   type: RecType;
   best: number;
 }
 
+const WCA_PR_API = 'https://www.worldcubeassociation.org/api/v0/persons';
+
+/** 拉某选手 personal_records 数组(官方生涯 PR)。失败/超时返回 null。 */
+async function fetchPersonalRecords(wcaId: string): Promise<ApiRecord[] | null> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const res = await fetch(`${WCA_PR_API}/${encodeURIComponent(wcaId)}/personal_records`, {
+      signal: ctrl.signal,
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { personal_records?: ApiRecord[] } | ApiRecord[];
+    return Array.isArray(data) ? data : data.personal_records ?? [];
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 /**
- * 从 WCA API 拉每个选手生涯个人最优,upsert 进基线表。本文件唯一联网调用,供 seeding(Phase 4)用。
+ * 官方生涯最优(厘秒)—— 单人单事件单类型;失败/无记录返回 null。
+ * 直播比赛的当前成绩尚未导出官方库,故该值 = 本场之前的生涯最优,天然可用来判「平/破」。
+ */
+export async function fetchCareerBest(wcaId: string, eventId: string, recType: RecType): Promise<number | null> {
+  const records = await fetchPersonalRecords(wcaId);
+  if (!records) return null;
+  for (const r of records) {
+    if (r.eventId === eventId && r.type === recType) return r.best;
+  }
+  return null;
+}
+
+/**
+ * 权威判定「破/平/非 PR」—— 本地基线(watched_pr_baseline)可能陈旧或缺失(选手晚于上次
+ * warm 才加入 watchlist、进程久未重启漏掉近期比赛的 live PR、基线被 warm 覆盖回退等),仅凭
+ * 本地基线会把「持平生涯 PR」误判成「真破」漏掉 (平) 角标(见 Yufang Du @ NanchangSummer2026:
+ * 4.36 平 Hangzhou 2026 的 4.36 却推成纯 PR)。这里再拉一次官方生涯最优做二次确认,并顺手把
+ * 本地基线只降不升地校正(PR 单调,永不回退)。官方 API 失败时回退纯本地判定(优雅降级)。
+ *
+ * 仅对已通过 isNewPr(本地便宜预筛)的候选调用,故每场 PR 至多一次联网,不会 hammer 官方。
+ */
+export async function reconcilePr(
+  wcaId: string,
+  eventId: string,
+  recType: RecType,
+  value: number,
+): Promise<{ isPr: boolean; tied: boolean }> {
+  if (value <= 0) return { isPr: false, tied: false };
+  const local = await getPr(wcaId, eventId, recType);
+  const official = await fetchCareerBest(wcaId, eventId, recType);
+
+  let best = local;
+  if (official != null && official > 0) best = best == null ? official : Math.min(best, official);
+  // 校正本地基线(只降不升);best 恒 <= local 或 local===null。
+  if (best != null && best !== local) await setPr(wcaId, eventId, recType, best);
+
+  if (best == null) return { isPr: true, tied: false };  // 生涯首个有效成绩 → 真 PR
+  if (value < best) return { isPr: true, tied: false };   // 真破
+  if (value === best) return { isPr: true, tied: true };  // 持平 → (平)
+  return { isPr: false, tied: false };                    // 官方已有更优成绩 → 非 PR
+}
+
+/**
+ * 从 WCA API 拉每个选手生涯个人最优,upsert 进基线表。进程首扫一次性预热全部 watchlist。
  * 并发<=8、温和;返回成功预热的选手数。
  */
 export async function warmBaseline(wcaIds: string[]): Promise<number> {
@@ -64,12 +120,8 @@ export async function warmBaseline(wcaIds: string[]): Promise<number> {
       const id = queue.shift();
       if (!id) return;
       try {
-        const res = await fetch(
-          `https://www.worldcubeassociation.org/api/v0/persons/${encodeURIComponent(id)}/personal_records`,
-        );
-        if (!res.ok) continue;
-        const data = (await res.json()) as { personal_records?: ApiRecord[] } | ApiRecord[];
-        const records = Array.isArray(data) ? data : data.personal_records ?? [];
+        const records = await fetchPersonalRecords(id);
+        if (!records) continue;
         for (const rec of records) {
           if (rec.type !== 'single' && rec.type !== 'average') continue;
           await setPr(id, rec.eventId, rec.type, rec.best);
