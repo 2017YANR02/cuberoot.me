@@ -95,11 +95,19 @@ function SetProgressRow({ row }: { row: SetRow }) {
     <div className="alg-prog-row">
       <div className="alg-prog-row-head">
         <Link href={base} className="alg-prog-set-name" prefetch={false}>{row.name}</Link>
-        <span className="alg-prog-frac">
-          <b>{row.sum.mastered}</b>
-          {row.total != null ? ` / ${row.total}` : ''}
-          <span className="alg-prog-frac-label">{tr({ zh: '已掌握', en: 'mastered' })}</span>
-        </span>
+        {row.sum.mastered > 0 ? (
+          <Link href={`${base}?mark=mastered`} className="alg-prog-frac is-link" prefetch={false}>
+            <b>{row.sum.mastered}</b>
+            {row.total != null ? ` / ${row.total}` : ''}
+            <span className="alg-prog-frac-label">{tr({ zh: '已掌握', en: 'mastered' })}</span>
+          </Link>
+        ) : (
+          <span className="alg-prog-frac">
+            <b>{row.sum.mastered}</b>
+            {row.total != null ? ` / ${row.total}` : ''}
+            <span className="alg-prog-frac-label">{tr({ zh: '已掌握', en: 'mastered' })}</span>
+          </span>
+        )}
       </div>
       <ProgressBar sum={row.sum} total={row.total} />
       <div className="alg-prog-stats">
@@ -166,6 +174,7 @@ export default function AlgProgressPage() {
         </h1>
       </div>
 
+      <div className="alg-prog-body">
       {overview == null ? (
         <div className="alg-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div>
       ) : totals.sets === 0 ? (
@@ -224,6 +233,7 @@ export default function AlgProgressPage() {
           ))}
         </>
       )}
+      </div>
     </div>
   );
 }
