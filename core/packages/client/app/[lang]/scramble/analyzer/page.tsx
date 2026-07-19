@@ -96,7 +96,6 @@ const DEFAULT_WCA_SRC: WcaSourceSettings = {
   wcaUseOptimal: false,
   wcaDifficultyOn: false,
   wcaDiffVariant: 'std', wcaDiffStage: 'cross', wcaDiffColors: 'BGORWY', wcaDiffSteps: [],
-  autoMarkWcaScramble: false, // analyzer 无「打卡」概念(隐藏该开关)
 };
 function loadWcaSrc(): WcaSourceSettings {
   if (typeof localStorage === 'undefined') return { ...DEFAULT_WCA_SRC };
@@ -477,7 +476,6 @@ function AnalyzePageInner() {
               event={'333' as EventId}
               settings={wcaSrc}
               updateSettings={patchWcaSrc}
-              showAutoMark={false}
             />
           </div>
         )}

@@ -399,7 +399,7 @@ function PenaltyDropdown({ playerId }: { playerId: number }) {
 // 打乱文字(点击复制) + 打乱图 + WCA 来源行。可被同排一对玩家共用:
 //   ids = 参与共享的玩家槽位,取 ids[0] 为代表读打乱(同 puzzle 时全组打乱相等);
 //   任一玩家计时中则整条隐藏。单人格传 [playerId],共享行传该排的一对(如 [0,1] / [2,3])。
-function ScramblePanel({ ids }: { ids: number[] }) {
+function ScramblePanel({ ids, imgHeight }: { ids: number[]; imgHeight?: string }) {
   const store = useBattleStore();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -489,7 +489,7 @@ function ScramblePanel({ ids }: { ids: number[] }) {
       {/* 打乱图 — 复用 timer 的 CubingPreview（scramble-display） */}
       <div className={`scramble-img${anyTiming ? ' hidden' : ''}`}>
         {myScramble && !myScramble.startsWith('⚠️') && store.showImage && (
-          <CubingPreview event={myPuzzle} scramble={myScramble} className="scramble-svg-img" />
+          <CubingPreview event={myPuzzle} scramble={myScramble} className="scramble-svg-img" height={imgHeight} />
         )}
       </div>
 
@@ -1061,7 +1061,9 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
             })}</span>
             <select
               className="settings-select"
-              value={settings.scrambleSource}
+              // 'manual'(手动输入队列)是 Solo 专属的共享设置;对战无此模式,当随机处理
+              //(battle_store 也把非 wca 一律当随机),避免下拉显示 'manual' 无匹配项而错显首项。
+              value={settings.scrambleSource === 'wca' ? 'wca' : 'random'}
               onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
             >
               <option value="wca">{tr({ zh: 'WCA 真题', en: 'WCA real'
@@ -1481,7 +1483,10 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
           </div>
           {bottomSame && (
             <div className="side-scramble-row">
-              <ScramblePanel ids={[0, 1]} />
+              {/* imgHeight 走共享令牌 --timer-cube-h(shell.css,单人 --cube-h 同源):
+                  CubingPreview 无 height 时按 size*14 出固定小尺寸、CSS max-height 只能缩
+                  不能放大 → 必须传显式 height 才能对齐单人。 */}
+              <ScramblePanel ids={[0, 1]} imgHeight="var(--timer-cube-h)" />
             </div>
           )}
         </>

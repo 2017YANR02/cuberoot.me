@@ -56,7 +56,7 @@ import {
   importCstimerJson, exportCsv, exportSpeedstacks,
   listSessions, getActiveSessionId, moveSolveToSession,
 } from '../_lib/storage/db';
-import { formatTargetTime, useApplyTheme, useSettings, getSettings } from '../_lib/settings';
+import { formatTargetTime, useApplyTheme, useSettings, getSettings, updateSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
 import { getMetronome } from '../_lib/sound/metronome';
 import { useBluetoothCube } from '../_lib/bluetooth';
@@ -87,7 +87,7 @@ import DrillModal from '../_components/DrillModal';
 import { generateDrillScramble, type DrillType } from '../_lib/scramble/drill';
 import SolverHints from '../_components/SolverHints';
 import SolverHintPanel from '../_components/SolverHintPanel';
-import ScrambleSourcePanel from '../_components/ScrambleSourcePanel';
+import ScrambleSourceBar from '../_components/ScrambleSourceBar';
 import { OLL_CASES } from '../_lib/scramble/algs/oll_cases';
 import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
 import HistogramChart from '../_components/charts/HistogramChart';
@@ -323,6 +323,20 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     ? genByStepsSig(event, settings)
     : '';
 
+  // 手动输入队列:每行一条打乱(去空行);source==='manual' 时按游标顺序取用(走完循环回队首),
+  // ←/→ 仍走 scrambleHist 历史。队列内容变了即重置打乱历史(经 genScramble 身份变化)+ 游标。
+  const manualQueue = useMemo(
+    () => settings.manualScrambles.split('\n').map((l) => l.trim()).filter(Boolean),
+    [settings.manualScrambles],
+  );
+  const manualQueueRef = useRef(manualQueue);
+  manualQueueRef.current = manualQueue;
+  const manualSig = settings.scrambleSource === 'manual' ? manualQueue.join('\n') : '';
+  const manualCursorRef = useRef(0);
+  // 队列内容变化 → 游标归零(下次生成从队首开始)。声明在打乱历史重置 effect 之前,
+  // 同一次提交里先跑,保证重置历史时 genScramble() 取到的是 queue[0]。
+  useEffect(() => { manualCursorRef.current = 0; }, [manualSig]);
+
   // Live timer phase (written through after useTimer below) — read by the scramble
   // buffer's safety gate so background generation never blocks a running solve.
   const phaseRef = useRef<TimerPhase>('idle');
@@ -336,6 +350,15 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, []);
 
   const genScramble = useCallback((): string => {
+    // Manual queue: walk the user-typed lines in order, wrapping at the end.
+    // Empty queue → '' placeholder (the strip shows a "paste scrambles" hint).
+    if (settings.scrambleSource === 'manual') {
+      const q = manualQueueRef.current;
+      if (q.length === 0) return '';
+      const s = q[manualCursorRef.current % q.length];
+      manualCursorRef.current += 1;
+      return s;
+    }
     if (drillTarget && drillAllowed) {
       const ds = generateDrillScramble(drillTarget.type, drillTarget.id);
       if (ds) return ds.scramble;
@@ -355,7 +378,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (byStepsScr) return takeScramble(byStepsScr.key, byStepsScr.gen, canGenScramble);
     return takeScramble(`${event}|${s.cnMode}`, () => generateScramble(event), canGenScramble);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, genStepsSig, canGenScramble]);
+  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, genStepsSig, manualSig, canGenScramble]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: string[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
@@ -663,6 +686,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     enabled: settings.bluetoothAutoReady !== 'off' && bluetoothCube.status.connected,
     mode: settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
     onReady: () => {
+      if (!getSettings().timingEnabled) return; // 练习模式不自动预备计时
       const ph = timer.phase;
       if (ph === 'idle' || ph === 'inspecting' || ph === 'stopped') {
         warmupSound();
@@ -773,8 +797,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       return [true, hasLast, hasLast, hasLast, canPrev, hasLast, hasLast, true];
     },
     fireAction: (i) => gestureActionsRef.current[i]?.(),
-    onPressDown: () => { warmupSound(); onPressDown(); },
-    onPressUp: () => onPressUp(),
+    // 计时关(练习模式):按下不预备,松开(未拖动)直接下一个打乱,不计时不记成绩。同 /alg 训练器。
+    onPressDown: () => { if (!getSettings().timingEnabled) return; warmupSound(); onPressDown(); },
+    onPressUp: () => { if (!getSettings().timingEnabled) { nextScramble(); return; } onPressUp(); },
     onArmCancel: () => cancelArm(),
     ignoreTarget: shouldIgnoreTimerTarget,
   });
@@ -989,7 +1014,13 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       if (target && target.closest('[data-no-timer]')) return;
       // Holding Space auto-repeats keydown; swallow the page-scroll default on
       // every repeat, but only arm the timer once (first non-repeat keydown).
-      if (e.code === 'Space') { e.preventDefault(); if (e.repeat) return; warmupSound(); onPressDown(); return; }
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (e.repeat) return;
+        // 计时关(练习模式):空格 = 下一个打乱,不预备/不计时。
+        if (!getSettings().timingEnabled) { nextScramble(); return; }
+        warmupSound(); onPressDown(); return;
+      }
       if (e.repeat) return;
       if (e.code === 'Escape') { reset(); return; }
       const ph = phaseRef.current;
@@ -1035,7 +1066,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
       if (target && target.closest('[data-no-timer]')) return;
-      if (e.code === 'Space') { e.preventDefault(); onPressUp(); }
+      if (e.code === 'Space') { e.preventDefault(); if (!getSettings().timingEnabled) return; onPressUp(); }
     };
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
@@ -1214,7 +1245,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     return formatMs(timer.displayMs, settings.precision);
   }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, lastPenalty, settings.hideTime, settings.precision, settings.runningPrecision]);
 
-  const fontSize = `calc(clamp(64px, 14vw, 192px) * ${settings.timerFontScale})`;
+  const fontSize = `calc(clamp(48px, 10vw, 132px) * ${settings.timerFontScale})`;
 
   // Rank badge centis from the last effective time (DNF -> null).
   const stoppedCentis = useMemo<number | null>(() => {
@@ -1397,6 +1428,20 @@ export default function SoloView({ playersControl }: SoloViewProps) {
               </>
             )}
           </div>
+          {/* 打乱来源:随机 / WCA 真题 / 手动输入。放在项目选择器右侧,和「人数」下拉同一组。
+              data-no-timer:聚焦此下拉时空格不触发计时(见 lib/timer-ignore-target / 键盘处理)。 */}
+          <select
+            className="shell-players-select"
+            data-no-timer
+            value={settings.scrambleSource}
+            onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' | 'manual' })}
+            aria-label={tr({ zh: '打乱来源', en: 'Scramble source' })}
+            title={tr({ zh: '打乱来源', en: 'Scramble source' })}
+          >
+            <option value="wca">{tr({ zh: 'WCA 真题', en: 'WCA real' })}</option>
+            <option value="random">{tr({ zh: '随机状态', en: 'Random' })}</option>
+            <option value="manual">{tr({ zh: '手动输入', en: 'Manual' })}</option>
+          </select>
         </div>
         <div className="shell-topbar-right">
           <a
@@ -1429,6 +1474,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
 
       {/* ── Main column ─────────────────────────────────────── */}
       <div className="shell-main">
+        {/* 打乱来源配置条 —— 常驻计时读数上方(全项目)。计时中随 surface-chrome 淡出。 */}
+        <ScrambleSourceBar event={event} isZh={isZh} />
         <TimingSurface
           phase={timer.phase}
           colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
@@ -1481,7 +1528,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                           title={tr({ zh: '该难度档暂无最优等态打乱,显示原始 WCA 打乱', en: 'No optimal-equivalent scramble for this difficulty — showing the original WCA scramble' })}
                         >{tr({ zh: '非最优', en: 'non-optimal' })}</span>
                       )}</>
-                    : <span className="scramble-empty">—</span>}</span>
+                    : settings.scrambleSource === 'manual' && manualQueue.length === 0
+                      ? <span className="scramble-empty">{tr({ zh: '在上方「打乱来源」粘贴打乱,每行一条', en: 'Paste scrambles above — one per line' })}</span>
+                      : <span className="scramble-empty">—</span>}</span>
               {scrambleCopied && (
                 <span className="scramble-copied-flash" data-no-timer>{tr({ zh: '已复制', en: 'Copied'
                 })}</span>
@@ -1641,10 +1690,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
-        {/* 右侧配置栏:打乱来源(全项目)+ 解法提示(仅 333,逐阶段最优 + 分步解法)。
-            两块常驻可折叠面板同栏堆叠 —— 桌面收成主区右侧竖栏,手机落在打乱图下方。 */}
+        {/* 右侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
+            桌面收成主区右侧竖栏,手机落在打乱图下方。打乱来源已移到计时读数上方(见 ScrambleSourceBar)。 */}
         <div className="shell-rail" data-no-timer>
-          <ScrambleSourcePanel event={event} isZh={isZh} />
           {event === '333' && <SolverHintPanel scramble={scramble} isZh={isZh} />}
         </div>
 

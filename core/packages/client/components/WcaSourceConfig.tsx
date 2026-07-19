@@ -48,9 +48,6 @@ interface DiffDistJson {
   sets: Record<string, { variants: Record<string, { data: Record<string, Record<string, DiffHist>> }> }>;
 }
 
-// 同态项目集合的唯一来源在 wca_pool.ts(WCA_OPTIMAL_EVENTS)——那里才是实际过滤发生的地方,
-// 这里只复用同一份判定来决定「最优打乱」开关是否显示,避免两处判据不一致。
-
 /**
  * The slice of settings this config reads / writes. Decoupled from the timer's
  * full TimerSettings so the same component can be reused by any host that holds
@@ -72,7 +69,6 @@ export interface WcaSourceSettings {
   wcaDiffStage: string;
   wcaDiffColors: string;
   wcaDiffSteps: number[];
-  autoMarkWcaScramble: boolean;
 }
 
 interface Props {
@@ -80,35 +76,15 @@ interface Props {
   event: EventId;
   settings: WcaSourceSettings;
   updateSettings: (patch: Partial<WcaSourceSettings>) => void;
-  /** 自动打卡(做完标记为「做过」)只对会记成绩的计时器有意义;分析器等场景传 false 隐藏。 */
-  showAutoMark?: boolean;
-  /** 该项目还有「按步数」面板(GenStepsConfig)时,自动打卡改由那边的顶行合并渲染(见 AutoMarkToggle
-   *  导出),这里跳过自己那行,避免同一开关两处重复出现。 */
-  mergeAutoMarkIntoSteps?: boolean;
-}
-
-/** 「自动打卡」标签+开关,紧凑一组(标签贴开关,不用 flex:1 撑开)。独立导出供 ScrambleSourcePanel
- *  在有「按步数」面板时把它并进 GenStepsConfig 的顶行(两个开关合一行,不再各占一行)。 */
-export function AutoMarkToggle({ settings, updateSettings }: {
-  settings: Pick<WcaSourceSettings, 'autoMarkWcaScramble'>;
-  updateSettings: (patch: Partial<WcaSourceSettings>) => void;
-}) {
-  return (
-    <span className="settings-row-tight-group">
-      <span className="settings-row-label">{tr({ zh: '自动打卡', en: 'Auto-mark done' })}</span>
-      <PillToggle
-        value={settings.autoMarkWcaScramble}
-        onChange={(v) => updateSettings({ autoMarkWcaScramble: v })}
-      />
-    </span>
-  );
 }
 
 export default function WcaSourceConfig({
-  isZh, event, settings, updateSettings, showAutoMark = true, mergeAutoMarkIntoSteps = false,
+  isZh, event, settings, updateSettings,
 }: Props) {
   const wev = wcaEventId(event);
-  const hasOptimal = !!wev && WCA_OPTIMAL_EVENTS.has(wev); // 同态项目才显示「最优打乱」开关
+  // 同态项目集合唯一来源(WCA_OPTIMAL_EVENTS)——「最优打乱」开关本身渲染在设置弹层(SettingsPanel),
+  // 这里只用同一份判定复位越界值(见下方 effect),避免两处判据不一致。
+  const hasOptimal = !!wev && WCA_OPTIMAL_EVENTS.has(wev);
   const mode = settings.wcaScrambleMode;
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
@@ -319,15 +295,6 @@ export default function WcaSourceConfig({
             </span>
           </span>
         )}
-        {hasOptimal && (
-          <span className="settings-row-tight-group">
-            <span className="settings-row-label">{tr({ zh: '最优', en: 'Optimal' })}</span>
-            <PillToggle
-              value={settings.wcaUseOptimal}
-              onChange={(v) => updateSettings({ wcaUseOptimal: v })}
-            />
-          </span>
-        )}
         {canDifficulty && (
           <span className="settings-row-tight-group">
             <span className="settings-row-label">{tr({ zh: '难度', en: 'Difficulty' })}</span>
@@ -424,12 +391,6 @@ export default function WcaSourceConfig({
             </>
           )}
         </>
-      )}
-
-      {showAutoMark && !mergeAutoMarkIntoSteps && (
-        <div className="settings-row wca-src-automark">
-          <AutoMarkToggle settings={settings} updateSettings={updateSettings} />
-        </div>
       )}
     </div>
   );
