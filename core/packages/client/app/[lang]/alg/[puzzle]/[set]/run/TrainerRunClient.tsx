@@ -85,6 +85,13 @@ export default function TrainerRunClient() {
   const setRecapOrder = useTrainerStore(s => s.setRecapOrder);
   const coop = useTrainerStore(s => s.coop);
   const setCoop = useTrainerStore(s => s.setCoop);
+  const room = useTrainerStore(s => s.room);
+  const roomBusy = useTrainerStore(s => s.roomBusy);
+  const roomClaimed = useTrainerStore(s => s.roomClaimed);
+  const roomError = useTrainerStore(s => s.roomError);
+  const createRoom = useTrainerStore(s => s.createRoom);
+  const joinRoom = useTrainerStore(s => s.joinRoom);
+  const leaveRoom = useTrainerStore(s => s.leaveRoom);
   const timerFont = useTrainerStore(s => s.timerFont);
   const setTimerFont = useTrainerStore(s => s.setTimerFont);
   const scrambleFont = useTrainerStore(s => s.scrambleFont);
@@ -247,6 +254,7 @@ export default function TrainerRunClient() {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [copied, setCopied] = useState(false);
   const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
+  const [joinCode, setJoinCode] = useState('');
 
   // 齿轮设置弹出面板(训练选项全收在里面),点外部关闭。
   // 监听 pointerdown 而非 mousedown:stage 手势层在 pointerdown 里 preventDefault,
@@ -562,6 +570,7 @@ export default function TrainerRunClient() {
                   onLabel={tr({ zh: '训练', en: 'Train' })}
                   offLabel={tr({ zh: '复习', en: 'Recap' })}
                   ariaLabel={tr({ zh: '训练 / 复习模式', en: 'Train / recap mode' })}
+                  disabled={!!room}
                 />
                 {mode === 'recap' && (
                   <PillToggle
@@ -570,6 +579,7 @@ export default function TrainerRunClient() {
                     onLabel={tr({ zh: '顺序', en: 'In order' })}
                     offLabel={tr({ zh: '乱序', en: 'Shuffled' })}
                     ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
+                    disabled={!!room}
                   />
                 )}
               </div>
@@ -581,14 +591,75 @@ export default function TrainerRunClient() {
                       en: 'All n selected cases once per shuffled round, reshuffle when done. Every case within ≤ n draws of a round; worst same-case gap across rounds is 2n−1',
                     })}
               </div>
-              {/* 协同刷题:多台设备帮同一选手打乱时,把复习队列切成 n 份各做一份,合起来覆盖全集不重不漏 */}
+              {/* 在线房间:后端共享队列,多设备原子领取 —— 不重不漏、动态均衡、真·合并进度 */}
               {mode === 'recap' && (
+                <>
+                  <div className="trainer-opts-row trainer-room-row">
+                    {room ? (
+                      <>
+                        <span className="trainer-room-badge">{tr({ zh: '房间', en: 'Room' })} {room.code}</span>
+                        <span className="trainer-opts-label">
+                          {tr({ zh: '全队', en: 'Team' })} {roomClaimed}/{room.total}
+                        </span>
+                        <button type="button" className="trainer-room-btn is-ghost" onClick={leaveRoom}>
+                          {tr({ zh: '离开', en: 'Leave' })}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="trainer-room-btn"
+                          onClick={() => void createRoom()}
+                          disabled={roomBusy}
+                        >
+                          {tr({ zh: '创建房间', en: 'Create room' })}
+                        </button>
+                        <span className="trainer-opts-label">{tr({ zh: '或', en: 'or' })}</span>
+                        <input
+                          className="trainer-coop-code"
+                          type="text"
+                          value={joinCode}
+                          onChange={e => setJoinCode(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter' && joinCode.trim()) void joinRoom(joinCode).then(r => { if (r.ok) setJoinCode(''); }); }}
+                          placeholder={tr({ zh: '房间码', en: 'Code' })}
+                          autoComplete="off"
+                          spellCheck={false}
+                          aria-label={tr({ zh: '房间码', en: 'Room code' })}
+                        />
+                        <button
+                          type="button"
+                          className="trainer-room-btn"
+                          onClick={() => void joinRoom(joinCode).then(r => { if (r.ok) setJoinCode(''); })}
+                          disabled={roomBusy || !joinCode.trim()}
+                        >
+                          {tr({ zh: '加入', en: 'Join' })}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  {roomError && <div className="trainer-opts-hint trainer-room-err">{roomError}</div>}
+                  <div className="trainer-opts-hint">
+                    {room
+                      ? tr({
+                          zh: '在线协同:全队共享一条队列,各设备领到的 case 互不重复,合起来正好覆盖全部一次;全队领完自动一起进下一轮',
+                          en: 'Online coop: the team shares one queue, each device gets distinct cases that together cover the set exactly once; the round ends for everyone at once',
+                        })
+                      : tr({
+                          zh: '创建房间把当前选中的 case 作为全队题库(按上方顺序/乱序),其他设备输房间码加入,自动分工不重不漏',
+                          en: 'Create a room to share the selected cases as the team pool (using the order above); others join by code for automatic, no-overlap division',
+                        })}
+                  </div>
+                </>
+              )}
+              {/* 本地分片:多台设备帮同一选手打乱时,把复习队列切成 n 份各做一份(离线可用,进房间则隐藏) */}
+              {mode === 'recap' && !room && (
                 <>
                   <div className="trainer-opts-row">
                     <BoolToggle
                       value={coop.on}
                       onChange={v => setCoop({ ...coop, on: v })}
-                      label={tr({ zh: '协同刷题', en: 'Team drill' })}
+                      label={tr({ zh: '本地分片', en: 'Local split' })}
                     />
                   </div>
                   {coop.on && (
@@ -765,11 +836,15 @@ export default function TrainerRunClient() {
             <div className="trainer-stage-opts">
               <span className="trainer-recap-progress">
                 {recapCur.pos}/{recapCur.total}
-                {coop.on && coop.n >= 2 && (
+                {room ? (
+                  <span className="trainer-recap-coop">
+                    {tr({ zh: `房间 ${room.code} 全队`, en: `room ${room.code} team` })}
+                  </span>
+                ) : coop.on && coop.n >= 2 ? (
                   <span className="trainer-recap-coop">
                     {tr({ zh: `协同 ${coop.k + 1}/${coop.n} 台`, en: `team ${coop.k + 1}/${coop.n}` })}
                   </span>
-                )}
+                ) : null}
               </span>
             </div>
           )}
@@ -918,10 +993,15 @@ export default function TrainerRunClient() {
           <div className="trainer-round-modal" onClick={e => e.stopPropagation()}>
             <h2>{tr({ zh: '本轮复习结束', en: 'Round complete' })}</h2>
             <p>
-              {tr({
-                zh: `本机第 ${coop.k + 1}/${coop.n} 份已全部过完${recapCur ? `(${recapCur.total} 把)` : ''}。各设备刷完自己那份即完成本轮 —— 大家一起进下一轮。`,
-                en: `This device finished its share (#${coop.k + 1} of ${coop.n}${recapCur ? `, ${recapCur.total} cases` : ''}). Every device completes its own share — start the next round together.`,
-              })}
+              {room
+                ? tr({
+                    zh: `全队已刷完本轮全部 ${room.total} 个 case!点「继续下一轮」大家一起开新一轮${room.order === 'shuffle' ? '(重新洗牌)' : ''}。`,
+                    en: `The team finished all ${room.total} cases this round! Hit “Next round” to start a fresh round together${room.order === 'shuffle' ? ' (reshuffled)' : ''}.`,
+                  })
+                : tr({
+                    zh: `本机第 ${coop.k + 1}/${coop.n} 份已全部过完${recapCur ? `(${recapCur.total} 把)` : ''}。各设备刷完自己那份即完成本轮 —— 大家一起进下一轮。`,
+                    en: `This device finished its share (#${coop.k + 1} of ${coop.n}${recapCur ? `, ${recapCur.total} cases` : ''}). Every device completes its own share — start the next round together.`,
+                  })}
             </p>
             <button
               type="button"
