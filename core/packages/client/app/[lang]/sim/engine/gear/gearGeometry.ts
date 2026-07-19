@@ -8,7 +8,8 @@
  *    creased 90° over the arris. Six 60° PIE WEDGES (SVG-traced tentacle +
  *    half gullets of a scalloped web each, see crownSectorOutline) are
  *    fold-baked ONCE at build time and ride the SPIN pivot as a rigid body,
- *    whirling ±480° per flip about the slot's outward radial n̂. The crease
+ *    whirling ±300° per flip about the slot's outward radial n̂ (Jaap's GT
+ *    sheet: "each adjoining edge piece turns 300°"; net −60°/flip). The crease
  *    is a MATERIAL feature on the dev q=0 diameter, directly under the black
  *    FOLD-LINE mark — fold line ≡ black line by construction. The user's
  *    physical puzzle settled this: in scrambled states the groove line leaves
@@ -293,7 +294,7 @@ export const FOLD_LINE_HW = 9.4;
  *  axis at 90°, spanning polar 60°..120°), dense CCW polygon in (ŵ, ĝ) facet
  *  coords. Six wedges tile disc + web + tentacles as ONE spinning surface:
  *  the disc is NOT a separate static axle cap (user-locked 2026-07-17: the
- *  folded half-disc spins its 480° with the crown, so there is no relative
+ *  folded half-disc spins its 300° with the crown, so there is no relative
  *  disc↔web rotation, no bearing ring, and no black seam circle on the face).
  *  `inset` shrinks the material boundary (rim/flanks/tip) for the decal — the
  *  radial wedge edges stay put so neighbouring decals share their boundary
@@ -750,17 +751,17 @@ export function inCrownSweep(p: THREE.Vector3, axis: number, m: number): boolean
 /** Corner sticker/plate outline — traced 1:1 from the user's reference SVG
  *  (`scripts/gear/gear-cube-reference.svg`, F face, top-right corner path
  *  M7386 9900) and CONJUGATE-CLIPPED against the v12 RIGID crown's synced
- *  transit sweep by `scripts/gear/mesh_check.mjs` (spin θ = φ0 ± (480/90)·ω,
- *  BOTH branches, ALL THREE start tilts φ0 ∈ {0,120,240}, full 360° of ω,
+ *  transit sweep by `scripts/gear/mesh_check.mjs` (spin θ = φ0 ± (300/90)·ω,
+ *  BOTH branches, ALL THREE start shapes φ0 ∈ {0,60,120}, full 360° of ω,
  *  0.5° frames — a tilted crown leans through 3D, so the old flat-footprint
  *  reasoning is gone). ABSOLUTE face coords for the (+,+) corner, CCW.
  *
  *  The corner is a GEAR here — its spikes interdigitate with the crown teeth
  *  and only phase sync keeps them apart (rest clearance +11.21 over all three
- *  tilts, transit +0.91, center-arm swept annuli 0 hits — re-locked in
- *  tests/gear_geometry.test.ts + scripts/gear/rigid_check.mjs; baked against
- *  the SVG-shaped SECTOR crown: scalloped web + parallel-sided tentacles, see
- *  crownSectorOutline).
+ *  rest shapes, transit +0.85 at the 300°/flip GT ratio, center-arm swept
+ *  annuli 0 hits — re-locked in tests/gear_geometry.test.ts +
+ *  scripts/gear/rigid_check.mjs; baked against the SVG-shaped SECTOR crown:
+ *  scalloped web + parallel-sided tentacles, see crownSectorOutline).
  *  Built by MINIMAL SMOOTH DEFORMATION of the SVG outline: safe stretches are
  *  the SVG verbatim; offending stretches shift inward along a window-smoothed
  *  normal field by a smoothed upper envelope of the required clearance (G1,
@@ -780,17 +781,18 @@ export const CORNER_POLY: V2[] = [
   [68.4, 118.6], [65.5, 118.2], [64.8, 117.9], [64, 117.1], [63.6, 116.4],
   [63.5, 114.8], [63.6, 114], [64.2, 112.7], [69.1, 111.3], [70.8, 110.5],
   [71.6, 109.8], [72.1, 109], [72.4, 108.2], [72.6, 107.1], [72.5, 105.5],
-  [72, 103.4], [65.7, 82.4], [63.6, 76.5], [62.9, 75.1], [62.1, 74.2],
-  [61.2, 73.5], [59.8, 72.9], [51.9, 71], [50.3, 70.4], [49.3, 69.7],
-  [48.6, 68.8], [48.1, 67.6], [48, 66.4], [48.1, 65.7], [48.4, 65.2],
-  [49.1, 64.5], [49.9, 64], [51.8, 63.5], [58.5, 62.4], [59.9, 61.9],
-  [61, 61], [61.9, 59.8], [62.4, 58.4], [63.9, 50.3], [64.5, 49.1],
-  [65.3, 48.2], [66.3, 47.9], [67.6, 48], [69.2, 48.8], [70.2, 49.9],
-  [71, 51.6], [72.9, 59.8], [73.5, 61.2], [74.3, 62.3], [75.2, 63],
-  [76.8, 63.8], [83.6, 66.1], [103.3, 72.1], [105.5, 72.6], [107, 72.7],
-  [108, 72.5], [109, 72.1], [109.9, 71.5], [110.6, 70.7], [111.6, 68.6],
-  [112.8, 64.3], [114.4, 63.7], [115.6, 63.7], [116.8, 63.9], [118.3, 64.6],
-  [118.4, 69.6], [118.5, 108.1], [118.3, 111.6], [118, 113.4], [117.4, 115.2],
+  [72, 103.4], [65.8, 82.5], [63.6, 76.5], [62.9, 75.1], [62.1, 74.2],
+  [61.2, 73.5], [59.8, 72.9], [52.6, 71.3], [50.6, 70.6], [49.7, 69.9],
+  [48.8, 68.8], [48.3, 67.5], [48.1, 66.4], [48.2, 65.8], [48.7, 65],
+  [50.1, 64], [52, 63.5], [58.5, 62.4], [59.9, 61.9],
+  [61, 61], [61.9, 59.8], [62.4, 58.4], [63.5, 52.2], [63.9, 50.5],
+  [64.5, 49.3], [65.3, 48.4], [66.2, 48], [67.5, 48.1], [69.2, 49],
+  [70.4, 50.2], [71.3, 52.4], [73, 59.9], [73.6, 61.3], [74.4, 62.4],
+  [75.4, 63.1], [77, 63.8], [84.7, 66.4], [103.3, 72.1], [105.5, 72.6],
+  [107, 72.7], [108, 72.5], [109, 72.1], [109.9, 71.5], [110.6, 70.7],
+  [111.6, 68.6], [112.8, 64.3], [114.4, 63.7], [115.6, 63.7], [116.8, 63.9],
+  [118.3, 64.6], [118.4, 69.6], [118.5, 108.1], [118.3, 111.6], [118, 113.4],
+  [117.4, 115.2],
 ];
 
 /** CORNER_POLY mirrored into corner `ci`'s quadrant on face `face`, CCW, plus

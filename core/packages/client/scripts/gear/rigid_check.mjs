@@ -1,13 +1,15 @@
 // rigid_check.mjs — 3D clearance oracle for the v12 RIGID creased crown.
 //
 // v12 (user-locked with real-machine evidence): the edge gear is ONE rigid
-// piece — the creased disc spins ±480°/flip about its outward radial n̂ and
-// RESTS TILTED at phases ±120° (the scrambled real cube bristles). The old 2D
+// piece — the creased disc spins ±300°/flip about its outward radial n̂ (GT:
+// Jaap's sheet, net −60°/flip) and RESTS TILTED at any multiple of 60° (the
+// scrambled real cube bristles; crease shape is 180°-symmetric, so the three
+// distinct rest SHAPES are θ ∈ {0°,60°,120°}). The old 2D
 // footprint reasoning (mesh_check.mjs) assumed the crown never leaves the two
 // face-plane slabs; a rigid crown does — so every crown↔corner-plate
 // interaction must be re-verified in 3D:
-//   REST    θ ∈ {0°,120°,240°}          crown vs the 4 surrounding corner plates
-//   TRANSIT θ = φ0 ± (480/90)·ω, ω∈[0,360°)  synced flip from EVERY start phase
+//   REST    θ ∈ {0°,60°,120°}           crown vs the 4 surrounding corner plates
+//   TRANSIT θ = φ0 ± (300/90)·ω, ω∈[0,360°)  synced flip from EVERY start phase
 // plus the constructive bounds (ball vs corner slab, hub throat cone).
 // Prints min clearances; negative = interpenetration (geometry regression).
 //
@@ -25,7 +27,7 @@ const TEETH = 6, PLATE_T = 7, FOLD_R = 1.2;
 const LIFT = 0.5, DEPTH = 2.6;
 const STICKER_TOP = LIFT + DEPTH;            // 3.1
 const LINE_TOP = STICKER_TOP + 0.12;         // fold-line mark top
-const RATIO = 480 / 90;
+const RATIO = 300 / 90;
 
 // CORNER_POLY: parse the shipped values straight out of the engine source, so
 // the oracle always judges what actually renders.
@@ -180,9 +182,10 @@ function frameMin(thetaDeg, omegaDeg, track) {
   return worst;
 }
 
-// REST: the three physical rest phases
+// REST: rest tilts are any multiple of 60° (net −60°/flip); the creased crown
+// shape is 180°-symmetric, so {0,60,120} covers every distinct rest shape
 console.log('\nREST (tilted phases are physical states now):');
-for (const th of [0, 120, 240]) {
+for (const th of [0, 60, 120]) {
   const track = { c: Infinity };
   const worst = frameMin(th, 0, track);
   console.log(`  θ=${th}°: min plate clearance ${worst.toFixed(2)}` +
@@ -193,7 +196,7 @@ for (const th of [0, 120, 240]) {
 console.log('\nTRANSIT (θ = φ0 ± RATIO·ω):');
 let globalMin = Infinity, globalArg = null;
 for (const sgn of [1, -1]) {
-  for (const phi0 of [0, 120, 240]) {
+  for (const phi0 of [0, 60, 120]) {
     let min1 = Infinity, argW = 0;
     for (let w = 0; w < 360; w += 2) {
       const c = frameMin(phi0 + sgn * RATIO * w, w, null);
