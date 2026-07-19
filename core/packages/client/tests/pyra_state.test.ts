@@ -115,7 +115,16 @@ describe('Pyraminx notation', () => {
     expect(pyraMovesToString(parsePyraMoves("Uv' Lv Rv' Bv"))).toBe("y' Lv Rv' Bv");
     expect(reducePyraAlg('y y')).toBe("y'");
     expect(reducePyraAlg("y Uv'")).toBe('');
-    expect(parsePyraMoves('x z yv Yv').length).toBe(0); // no x/z on a tetra (cubing.js agrees)
+    expect(parsePyraMoves('x yv Yv').length).toBe(0); // no x on a tetra; z is a site alias (below)
+  });
+  it("z is a site alias for Bv' (so z' = Bv); round-trips to the Bv form", () => {
+    expect(parsePyraMoves('z')).toEqual(parsePyraMoves("Bv'"));
+    expect(parsePyraMoves("z'")).toEqual(parsePyraMoves('Bv'));
+    expect(parsePyraMoves('z')[0]).toEqual({ vertex: 3, part: 'rot', dir: 1 });
+    expect(pyraMovesToString(parsePyraMoves('z'))).toBe("Bv'");   // canonical print
+    expect(pyraMovesToString(parsePyraMoves("z'"))).toBe('Bv');
+    expect(reducePyraAlg("z Bv")).toBe('');    // z = Bv' cancels Bv
+    expect(reducePyraAlg('z z')).toBe('Bv');   // (Bv')² = Bv
   });
   it('rotateLetterMap: after bare y (cw from above) the L slot holds old R, R holds old B', () => {
     // R(V0, −120°) cycles the base vertices front→back-left: physical R(2) leaves the

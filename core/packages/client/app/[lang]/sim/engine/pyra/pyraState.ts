@@ -11,12 +11,14 @@
  *     the axis one). Unlike tip/corner turns (which only spin pieces in place), face
  *     turns PERMUTE corners and tips between vertices.
  *
- * Whole-puzzle rotations (y = Uv, Lv, Rv, Bv — cubing.js's pyraminx rotation set; it
- * has no z/x) use part 'rot': a ±120° re-hold about a vertex axis. A rotation permutes
- * NO piece — the engine bakes it into the render group's quaternion — and, like WCA
- * algs, it makes the letters WORLD-fixed: after `y`, a typed `L` turns whatever vertex
- * now sits at the L position. The letter→physical remap both the engine and the PG
- * bridge apply is driven by ROT_SIGMA / rotateLetterMap below (one shared table).
+ * Whole-puzzle rotations (y = Uv, Lv, Rv, Bv — cubing.js's pyraminx rotation set) use
+ * part 'rot': a ±120° re-hold about a vertex axis. Site alias: z := Bv' (cubing.js's own
+ * def has no z/x — a tetra has no 90° axis — so `z` here is just a friendly name for the
+ * B-axis re-hold, expanded to Bv'/Bv on output). A rotation permutes NO piece — the
+ * engine bakes it into the render group's quaternion — and, like WCA algs, it makes the
+ * letters WORLD-fixed: after `y`, a typed `L` turns whatever vertex now sits at the L
+ * position. The letter→physical remap both the engine and the PG bridge apply is driven
+ * by ROT_SIGMA / rotateLetterMap below (one shared table).
  *
  * Direction: bare = clockwise looking at what you grab from outside — at the VERTEX for
  * tip/corner/rot moves (dir −1 = R(axis, −120°)), at the FACE for face moves (the
@@ -58,9 +60,14 @@ const FACE_TO_VERTEX: Record<string, number> = { D: 0, Dw: 0, Lw: 2, Rw: 1, Fw: 
 /** Canonical face token per axis vertex 0..3 (w-form; bare D accepted on input). */
 const FACE_NAMES = ['Dw', 'Rw', 'Lw', 'Fw'] as const;
 /** Whole-puzzle rotation tokens: y (= Uv) about the U axis, plus Lv / Rv / Bv. */
-const ROT_RE = /^(y|Uv|Lv|Rv|Bv)(')?$/;
-const ROT_TO_VERTEX: Record<string, number> = { y: 0, Uv: 0, Lv: 1, Rv: 2, Bv: 3 };
-/** Canonical rotation token per axis vertex 0..3 (y preferred over its Uv alias). */
+const ROT_RE = /^(y|Uv|Lv|Rv|Bv|z)(')?$/;
+const ROT_TO_VERTEX: Record<string, number> = { y: 0, Uv: 0, Lv: 1, Rv: 2, Bv: 3, z: 3 };
+/** Rotation tokens whose BARE form is the PRIME of their vertex re-hold. `z` is defined
+ *  (site alias) as Bv', so bare `z` = R(B axis, +120°) and `z'` = Bv. Every other token's
+ *  bare form is R(axis, −120°) (clockwise from the vertex, like the corner turns). */
+const ROT_BARE_INVERTED = new Set(['z']);
+/** Canonical rotation token per axis vertex 0..3 (y preferred over its Uv alias; the
+ *  B-axis re-hold prints as Bv/Bv', so `z` round-trips to "Bv'" and `z'` to "Bv"). */
 const ROT_NAMES = ['y', 'Lv', 'Rv', 'Bv'] as const;
 
 /** Vertex permutation of R(V̂_k, +120°): ROT_SIGMA[k][a] = the vertex direction V_a
@@ -99,7 +106,8 @@ export function parsePyraMoves(text: string): PyraMove[] {
     }
     const r = ROT_RE.exec(raw);
     if (r) {
-      out.push({ vertex: ROT_TO_VERTEX[r[1]], part: 'rot', dir: r[2] ? 1 : -1 });
+      const bare = ROT_BARE_INVERTED.has(r[1]) ? 1 : -1; // z's bare form is Bv' (+1)
+      out.push({ vertex: ROT_TO_VERTEX[r[1]], part: 'rot', dir: (r[2] ? -bare : bare) as 1 | -1 });
       continue;
     }
     const m = TOKEN_RE.exec(raw);
@@ -118,7 +126,7 @@ export function parsePyraMoves(text: string): PyraMove[] {
 
 /** Render one move to its canonical token: uppercase=corner / lowercase=tip / w=face /
  *  y·v=rotation; bare = clockwise (from the grabbed end), primed = its inverse. Exact
- *  inverse of parsePyraMoves (modulo the D → Dw and Uv → y aliases). */
+ *  inverse of parsePyraMoves (modulo the D → Dw, Uv → y and z → Bv' aliases). */
 export function pyraMoveToString(move: PyraMove): string {
   if (move.part === 'face') return FACE_NAMES[move.vertex] + (move.dir === -1 ? "'" : '');
   if (move.part === 'rot') return ROT_NAMES[move.vertex] + (move.dir === 1 ? "'" : '');
