@@ -39,6 +39,12 @@ interface WcaEventSelectorProps {
    * 保留中键 / Ctrl 新开;供「求解」中心复用同一选择器跳页(/scramble/solver|pocket|...)。
    */
   linkFor?: (id: string) => { href: string; hard?: boolean } | null;
+  /**
+   * 网格容器 class,默认 'wca-stats-event-selector'(WcaEventSelector.css 全部规则挂它)。
+   * art-directed 页(如 /calc 奶油纸)传自己的容器名,让本组件的 css 不渗入、页面自带的
+   * `.event-btn` 皮肤接管。
+   */
+  containerClassName?: string;
 }
 
 type AppendItem = { id: string; iconClass: string; label?: string; textLabel?: string };
@@ -47,6 +53,7 @@ export default function WcaEventSelector({
   availableEvents, selectedEvent, onSelect, isZh, allowAll,
   selectedEvents, onToggle, badges, topBadges, onlyAvailable, onRemove, appendEvents,
   collapsibleAppend, onExpandedChange, linkFor, searchable,
+  containerClassName = 'wca-stats-event-selector',
 }: WcaEventSelectorProps) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -243,7 +250,7 @@ export default function WcaEventSelector({
     </>
   );
 
-  const grid = <div className="wca-stats-event-selector">{gridChildren}</div>;
+  const grid = <div className={containerClassName}>{gridChildren}</div>;
   if (!searchable) return grid;
 
   const noResults = searching
