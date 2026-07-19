@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Heart, Radio, Trophy, ListOrdered, LogIn, User, type LucideIcon } from 'lucide-react';
 import Link from '@/components/AppLink';
+import LangToggle from '@/components/LangToggle';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, useAuthStore } from '@/lib/auth-store';
 import LandingCubeHero from '../_components/LandingCubeHero';
@@ -67,29 +68,28 @@ export default function LandingPage() {
   // 账号(无 wcaId、无 person 页)退回打开账号面板。
   const user = useAuthUser();
   const openLogin = () => useAuthStore.getState().login();
+  // 已登录时右上角只保留头像(去掉名字);无头像退回 User 图标。
   const authInner = user && (
-    <>
-      {user.avatar
-        ? <img src={user.avatar} alt="" className="landing-auth-avatar" />
-        : <User size={16} aria-hidden />}
-      <span className="landing-auth-name">{user.name}</span>
-    </>
+    user.avatar
+      ? <img src={user.avatar} alt="" className="landing-auth-avatar" />
+      : <User size={16} aria-hidden />
   );
 
   return (
     <div className="landing-page">
       <div className="landing-auth">
+        <LangToggle />
         {!user ? (
           <button type="button" className="landing-auth-btn is-login" onClick={openLogin}>
             <LogIn size={16} aria-hidden />
             <span>{tr({ zh: '登录', en: 'Log in' })}</span>
           </button>
         ) : user.wcaId ? (
-          <Link href={`/person/${user.wcaId}`} className="landing-auth-btn" prefetch={false}>
+          <Link href={`/person/${user.wcaId}`} className="landing-auth-btn is-avatar" prefetch={false}>
             {authInner}
           </Link>
         ) : (
-          <button type="button" className="landing-auth-btn" onClick={openLogin}>
+          <button type="button" className="landing-auth-btn is-avatar" onClick={openLogin}>
             {authInner}
           </button>
         )}
