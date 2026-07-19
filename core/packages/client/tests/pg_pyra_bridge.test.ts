@@ -16,18 +16,28 @@ describe('pyraminx PG binding — closed loop vs the rendered engine', () => {
   });
 
   // Corner turns + FACE turns (Dw/Lw/Rw/Fw — they permute corners/tips between
-  // vertices and reach the reorientation coset), then trailing tips — so the loop
-  // certifies every generator family of the bridge.
+  // vertices and reach the reorientation coset) + whole-puzzle ROTATIONS sprinkled in
+  // (letters after a rotation are world-fixed, so this certifies the engine's
+  // letter→physical remap ≡ the bridge's φ-fold — a mismatch desyncs the mirror and
+  // the PG solution fails to solve). Rotations are neutralized (exact inverses, LIFO)
+  // before the tips so the PG solution replays at the home orientation.
   const randScramble = (n: number): PyraMove[] => {
     const out: PyraMove[] = [];
+    const rots: PyraMove[] = [];
     let last = -1;
     for (let i = 0; i < n; i++) {
+      if (Math.random() < 0.3) {
+        const r: PyraMove = { vertex: Math.floor(Math.random() * 4), part: 'rot', dir: Math.random() < 0.5 ? 1 : -1 };
+        out.push(r); rots.push(r);
+        continue;
+      }
       let v: number;
       do { v = Math.floor(Math.random() * 4); } while (v === last);
       last = v;
       const part = Math.random() < 0.4 ? 'face' : 'corner';
       out.push({ vertex: v, part, dir: Math.random() < 0.5 ? 1 : -1 });
     }
+    for (const r of rots.reverse()) out.push({ ...r, dir: r.dir === 1 ? -1 : 1 });
     for (let v = 0; v < 4; v++) {
       const t = Math.floor(Math.random() * 3);
       for (let i = 0; i < t; i++) out.push({ vertex: v, part: 'tip', dir: 1 });
@@ -39,7 +49,6 @@ describe('pyraminx PG binding — closed loop vs the rendered engine', () => {
     const { default: PyraCube } = await import('@/app/[lang]/sim/engine/pyra/PyraCube');
     const { PgEngineBinding } = await import('@/app/[lang]/sim/engine/pgBinding');
     const { pyraPgBridge } = await import('@/app/[lang]/sim/engine/pyra/pyraPgBridge');
-    const { parsePyraMoves } = await import('@/app/[lang]/sim/engine/pyra/pyraState');
 
     const binding = new PgEngineBinding(pyraPgBridge);
     // Full pyraminx group: the face-turn generators (Dw/Lw/Rw/Fw) reach the 12 whole-
@@ -51,18 +60,42 @@ describe('pyraminx PG binding — closed loop vs the rendered engine', () => {
       const cube = new PyraCube();
       for (const m of randScramble(14)) cube.applyMoveInstant(m);
 
-      // mirror from the engine's own move record, then assert faithfulness
-      binding.rebuild(parsePyraMoves(cube.history.moves.join(' ')));
+      // mirror from the engine's own move record via the bridge's φ-parse (the
+      // production path — rotations fold into the letter remap), assert faithfulness
+      binding.rebuildFromString(cube.history.moves.join(' '));
       expect(binding.solved).toBe(cube.complete);
 
       const solution = binding.solveMoves();
       for (const m of solution) cube.applyMoveInstant(m);
       expect(cube.complete).toBe(true);
 
-      binding.rebuild(parsePyraMoves(cube.history.moves.join(' ')));
+      binding.rebuildFromString(cube.history.moves.join(' '));
       expect(binding.solved).toBe(true);
     }
   }, 60000);
+
+  it('rotations: re-holds are complete-immune and the bridge mirrors letters faithfully', async () => {
+    const { default: PyraCube } = await import('@/app/[lang]/sim/engine/pyra/PyraCube');
+    const { PgEngineBinding } = await import('@/app/[lang]/sim/engine/pgBinding');
+    const { pyraPgBridge } = await import('@/app/[lang]/sim/engine/pyra/pyraPgBridge');
+    const binding = new PgEngineBinding(pyraPgBridge);
+
+    // A pure re-hold sequence: solved geometrically (pieces untouched) AND in the group.
+    const c1 = new PyraCube();
+    c1.twister.setup("y Lv Rv' Bv y'");
+    expect(c1.complete).toBe(true);
+    binding.rebuild(pyraPgBridge.parse("y Lv Rv' Bv y'"));
+    expect(binding.solved).toBe(true);
+
+    // y L y' L': the two L letters hit DIFFERENT physical vertices, so this is NOT the
+    // identity. Engine and group mirror must agree — a naive "drop the rotations"
+    // bridge (the skewb shortcut) would wrongly cancel it to solved.
+    const c2 = new PyraCube();
+    c2.twister.setup("y L y' L'");
+    expect(c2.complete).toBe(false);
+    binding.rebuild(pyraPgBridge.parse("y L y' L'"));
+    expect(binding.solved).toBe(false);
+  });
 
   it('face turns on the engine: order 3, and Dw really leaves solved', async () => {
     const { default: PyraCube } = await import('@/app/[lang]/sim/engine/pyra/PyraCube');
@@ -80,7 +113,6 @@ describe('pyraminx PG binding — closed loop vs the rendered engine', () => {
     const { default: PyraCube } = await import('@/app/[lang]/sim/engine/pyra/PyraCube');
     const { PgEngineBinding } = await import('@/app/[lang]/sim/engine/pgBinding');
     const { pyraPgBridge } = await import('@/app/[lang]/sim/engine/pyra/pyraPgBridge');
-    const { parsePyraMoves } = await import('@/app/[lang]/sim/engine/pyra/pyraState');
 
     const binding = new PgEngineBinding(pyraPgBridge);
     let scrambledCount = 0;
@@ -90,7 +122,7 @@ describe('pyraminx PG binding — closed loop vs the rendered engine', () => {
       for (const m of scramble) cube.applyMoveInstant(m);
       if (!cube.complete) scrambledCount++;
       // solve it back
-      binding.rebuild(parsePyraMoves(cube.history.moves.join(' ')));
+      binding.rebuildFromString(cube.history.moves.join(' '));
       for (const m of binding.solveMoves()) cube.applyMoveInstant(m);
       expect(cube.complete).toBe(true);
     }

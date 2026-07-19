@@ -11,6 +11,11 @@
  * the tip currently at the vertex. No discrete permutation state — `complete` is "every
  * pivot is back at identity", which is exact because each piece's geometry is baked in
  * home coords and turns are pure SO(3).
+ *
+ * Whole-puzzle rotations (y / Lv / Rv / Bv) are re-holds: they ride the group's OWN
+ * quaternion (pieces untouched → `complete` is rotation-immune) and advance a
+ * letter→physical remap so subsequent letters stay world-fixed, WCA-style — the same
+ * shared table the PG bridge folds rotations with.
  */
 import * as THREE from 'three';
 import MoveHistory from '../MoveHistory';
@@ -19,7 +24,7 @@ import type { TweenCube } from '../TweenTwister';
 import {
   buildPyraPiece, buildCore, VDIR, EDGE_PAIRS, PYRA_A, APEX_UP_QUAT, vertexAxis,
 } from './pyraGeometry';
-import { type PyraMove, pyraMoveToString } from './pyraState';
+import { type PyraMove, pyraMoveToString, rotateLetterMap } from './pyraState';
 import PyraTwister from './PyraTwister';
 
 interface PyraPiece {
@@ -47,6 +52,10 @@ export default class PyraCube extends THREE.Group implements TweenCube<PyraMove>
   private readonly vdir = VDIR.map(([x, y, z]) => new THREE.Vector3(x, y, z));
   /** Unit twist axes per vertex. */
   private readonly axes = [0, 1, 2, 3].map((k) => vertexAxis(k));
+  /** Letter → physical vertex under the accumulated whole-puzzle rotations. Rotations
+   *  re-hold the puzzle (WCA semantics): after `y`, a typed `L` turns whatever vertex
+   *  now sits at the L position. Identity until a 'rot' move bakes in. */
+  private l2p = [0, 1, 2, 3];
 
   constructor() {
     super();
@@ -113,16 +122,48 @@ export default class PyraCube extends THREE.Group implements TweenCube<PyraMove>
     return this.allPieces.filter((p) => this.inLayer(p, k) === inside).map((p) => p.pivot);
   }
 
+  /** Letter-space → physical-space move under the current re-hold (identity at home). */
+  private remap(move: PyraMove): PyraMove {
+    const phys = this.l2p[move.vertex];
+    return phys === move.vertex ? move : { ...move, vertex: phys };
+  }
+
+  /** The world-fixed letter currently sitting at physical vertex `phys` — what a drag
+   *  on that vertex should record so replay (which re-derives the remap) matches. */
+  letterFor(phys: number): number {
+    return this.l2p.indexOf(phys);
+  }
+
+  /** Fold a rotation into the group's own quaternion (a re-hold: pieces untouched, so
+   *  `complete` is rotation-immune) and advance the letter remap in lockstep. */
+  private bakeRotation(phys: PyraMove): void {
+    const angle = phys.dir * (2 * Math.PI) / 3;
+    this.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(this.axes[phys.vertex], angle));
+    this.l2p = rotateLetterMap(this.l2p, phys.vertex, phys.dir);
+  }
+
   beginMove(move: PyraMove): PieceAnim[] {
-    const axis = this.axes[move.vertex];
-    const angle = move.dir * (2 * Math.PI) / 3;
+    const phys = this.remap(move);
+    const axis = this.axes[phys.vertex];
+    const angle = phys.dir * (2 * Math.PI) / 3;
     const delta = new THREE.Quaternion().setFromAxisAngle(axis, angle);
-    return this.pivotsForMove(move).map((pivot) => makeAnim(pivot, delta, axis, angle));
+    // A rotation animates as every pivot spinning about the local axis — identical in
+    // world space to rotating the group — then finishMove swaps it for the real bake.
+    const pivots = phys.part === 'rot'
+      ? this.allPieces.map((p) => p.pivot)
+      : this.pivotsForMove(phys);
+    return pivots.map((pivot) => makeAnim(pivot, delta, axis, angle));
   }
 
   finishMove(anims: PieceAnim[], move: PyraMove): void {
-    for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
-    this.history.record(pyraMoveToString(move));
+    const phys = this.remap(move);
+    if (phys.part === 'rot') {
+      for (const a of anims) a.pivot.quaternion.copy(a.startQuat); // undo the spin…
+      this.bakeRotation(phys); // …the re-hold rides the group quaternion instead
+    } else {
+      for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
+    }
+    this.history.record(pyraMoveToString(move)); // the typed LETTER, not the physical
     this.dirty = true;
     for (const cb of this.callbacks) cb();
   }
@@ -133,8 +174,9 @@ export default class PyraCube extends THREE.Group implements TweenCube<PyraMove>
   }
 
   applyMoveSilent(move: PyraMove): void {
-    const anims = this.beginMove(move);
-    for (const a of anims) a.pivot.quaternion.copy(a.endQuat);
+    const phys = this.remap(move);
+    if (phys.part === 'rot') { this.bakeRotation(phys); this.dirty = true; return; }
+    for (const a of this.beginMove(move)) a.pivot.quaternion.copy(a.endQuat);
     this.dirty = true;
   }
 
@@ -148,6 +190,8 @@ export default class PyraCube extends THREE.Group implements TweenCube<PyraMove>
       p.pivot.quaternion.identity();
       p.pivot.position.set(0, 0, 0);
     }
+    this.quaternion.copy(APEX_UP_QUAT); // drop any baked re-holds back to the home pose
+    this.l2p = [0, 1, 2, 3];
     this.dirty = true;
   }
 

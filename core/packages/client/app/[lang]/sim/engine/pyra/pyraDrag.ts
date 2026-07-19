@@ -102,8 +102,11 @@ export function pyraResolveLive(
   );
   if (!score) return null;
   const part: PyraPart = tip ? 'tip' : hit.inLayer[score.corner] ? 'corner' : 'face';
+  // score.corner is the PHYSICAL vertex (from live geometry); record the world-fixed
+  // LETTER at that position so history reads like a typed alg and replay (which
+  // re-derives the letter→physical remap) lands on the same piece.
   return {
-    move: { vertex: score.corner, part, dir: score.dir },
+    move: { vertex: cube.letterFor(score.corner), part, dir: score.dir },
     tangentX: score.tangentX, tangentY: score.tangentY,
   };
 }
