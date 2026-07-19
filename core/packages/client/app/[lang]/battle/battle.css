@@ -1781,12 +1781,16 @@ body.solo .scramble-img {
    NOTE: 两人坐在相邻位置，共享打乱，左右各一个计时区
    ========================================================== */
 
-/* 容器切换为网格布局。第 3 条 auto 行放同项目时的底部共享打乱横带;不共享时
-   该行无子元素 → 0 高塌陷,与旧两行布局等价。 */
+/* 容器切换为网格布局(2 行:中间栏 auto + 双人区 1fr)。同项目共享打乱时加
+   .side-shared 变体:插一条 auto 打乱行 + 一条 0.5fr 底部留白(空 track),把共享
+   打乱从贴底抬到「中部靠下」。不共享时保持 2 行,双人区占满全高不留空。 */
 .battle-container.side-layout {
     display: grid;
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto 1fr;
     grid-template-columns: 1fr;
+}
+.battle-container.side-layout.side-shared {
+    grid-template-rows: auto 1fr auto 0.5fr;
 }
 
 /* 左右双人区域容器 */
@@ -1821,10 +1825,10 @@ body.solo .scramble-img {
     flex-shrink: 0;
 }
 
-/* side 同项目:两侧共用一份打乱,落在页面底部一条横带(全宽居中,时间在上、打乱
-   在下,与旧 side 每侧「时间上/打乱下」的纵向次序一致)。ScramblePanel 在
-   .player-area 之外,基类 .scramble-text 是 pointer-events:none(避免误触发计时),
-   这里恢复可点复制(同 .grid-scramble-row 共享行的处理)。 */
+/* side 同项目:两侧共用一份打乱,全宽居中的一条打乱行(时间在上、打乱在下,与旧
+   side 每侧「时间上/打乱下」的纵向次序一致);由 .side-shared 的 0.5fr 底部留白
+   托到「中部靠下」。ScramblePanel 在 .player-area 之外,基类 .scramble-text 是
+   pointer-events:none(避免误触发计时),这里恢复可点复制(同 .grid-scramble-row)。 */
 .side-scramble-row {
     min-width: 0;
     display: flex;
@@ -1832,8 +1836,7 @@ body.solo .scramble-img {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    padding: 8px 16px 12px;
-    border-top: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+    padding: 8px 16px;
     overflow: hidden;
 }
 .side-scramble-row .scramble-text {
