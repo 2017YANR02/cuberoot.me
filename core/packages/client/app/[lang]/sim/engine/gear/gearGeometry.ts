@@ -825,6 +825,19 @@ export const CORNER_POLY_EXT: V2[] = [
   [45.8, 70], [44.8, 69.1], [44.3, 68], [44.2, 66.6],
 ];
 
+/** BLACK shelf outline = CORNER_POLY_EXT with the arris-adjacent runs pushed
+ *  out to the block edge (user-directed 2026-07-19: "先做翼钮上方那道缝" —
+ *  the black band continues over the wing knobs to the arris, closing the
+ *  isolation-view slit). NOTE this collar deliberately sits inside the docked
+ *  crown's near-fold lane: the crown's plate strip passes THROUGH it during
+ *  every equator turn — both are the same black bodyMat, so the overlap is
+ *  black-on-black (the user owns the visual call; excluded from the
+ *  clearance oracles, which keep judging the guaranteed-clean EXT stack). */
+export const CORNER_SHELF_POLY: V2[] = CORNER_POLY_EXT.map(([a, b]) => [
+  a >= 118 ? H : a,
+  b >= 118 ? H : b,
+]);
+
 /** CORNER_POLY mirrored into corner `ci`'s quadrant on face `face`, CCW, plus
  *  the face basis. Fixed shape — no runtime shrinking: the polygon is verified
  *  offline (and test-locked) against every carve and every synced crown/arm
@@ -905,7 +918,8 @@ export function buildCornerPiece(ci: number, ev: Evaluator): { pivot: THREE.Obje
     const plate = new THREE.Mesh(plateGeo, bodyMat);
     plate.userData.simRole = 'body';
     group.add(plate);
-    const shelfGeo = extrudeOntoFace(extOutline,
+    const { outline: shelfOutline } = cornerStickerOutline(ci, face, CORNER_SHELF_POLY);
+    const shelfGeo = extrudeOntoFace(shelfOutline,
       { ...basis, origin: basis.n.clone().multiplyScalar(H - CORNER_SHELF_T) }, CORNER_SHELF_T + 0.52);
     const shelf = new THREE.Mesh(shelfGeo, bodyMat);
     shelf.userData.simRole = 'body';
