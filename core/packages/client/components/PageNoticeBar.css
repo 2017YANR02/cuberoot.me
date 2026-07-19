@@ -46,6 +46,44 @@
   background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 
+/* admin:通知入口 + 环境切换同处一行 */
+.page-notice-adminbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+/* admin:本地 ↔ 线上 环境切换(高亮当前所在环境,兼作指示) */
+.env-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 2px 0;
+  padding: 2px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+}
+.env-switch-opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: var(--faint-foreground);
+  border-radius: 999px;
+}
+.env-switch-opt:hover {
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+.env-switch-opt.is-active { color: var(--foreground); font-weight: 500; }
+.env-switch-opt.is-active[data-env="local"] { background: color-mix(in srgb, var(--signal-warning) 22%, transparent); }
+.env-switch-opt.is-active[data-env="prod"] { background: color-mix(in srgb, var(--signal-success) 22%, transparent); }
+.env-switch-opt.is-active:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+.env-switch-opt.is-active[data-env="local"]:hover { background: color-mix(in srgb, var(--signal-warning) 28%, transparent); }
+.env-switch-opt.is-active[data-env="prod"]:hover { background: color-mix(in srgb, var(--signal-success) 28%, transparent); }
+
 /* admin:本页尚无精确通知时的「添加本页通知」低调入口 */
 .page-notice-add {
   display: inline-flex;

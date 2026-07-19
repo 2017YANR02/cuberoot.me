@@ -4,9 +4,9 @@
 //   - 访客:看到匹配当前页的 enabled 通知,可关闭(内容变更后重新出现)。
 //   - 管理员:任意页顶部直接 添加 / 编辑 / 删除本页通知,作用路径默认当前页、可改 /* 覆盖全站。
 // 数据走 /v1/page-notices(公开读 + admin 写),鉴权 authHeaders(WCA OAuth / X-Admin-Key)。
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Info, AlertTriangle, Wrench, X, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Info, AlertTriangle, Wrench, X, Pencil, Plus, Trash2, Laptop, Globe } from 'lucide-react';
 import { useIsAdmin } from '@/lib/auth-store';
 import { tr, T, useLang } from '@/i18n/tr';
 import BoolToggle from './BoolToggle';
@@ -25,6 +25,36 @@ const LEVEL_ICON: Record<NoticeLevel, typeof Info> = {
 };
 
 const DISMISS_KEY = 'pn-dismissed';
+
+// 管理员本地 / 线上环境切换目标 origin(切换时保留当前 path+query+hash)。
+const LOCAL_ORIGIN = 'http://localhost:3000';
+const PROD_ORIGIN = 'https://cuberoot.me';
+
+// 管理员专用:在任意页原地切换 本地 ↔ 线上,便于调试对照。
+// 高亮当前所在环境(本地=琥珀、线上=绿),同时充当「我现在在哪个环境」的指示。
+// 两端都用真 <a>(跨 origin,故非 AppLink):支持中键 / Ctrl 点在新标签打开,本地与线上并排对比。
+function EnvSwitch() {
+  if (typeof window === 'undefined') return null; // 仅管理员挂载(见调用处),此时已在 client
+  const { pathname, search, hash, hostname } = window.location;
+  const rest = pathname + search + hash;
+  const active: 'local' | 'prod' = hostname === 'localhost' || hostname === '127.0.0.1' ? 'local' : 'prod';
+  const opts = [
+    { env: 'local' as const, href: LOCAL_ORIGIN + rest, label: { en: 'Local', zh: '本地' }, Icon: Laptop },
+    { env: 'prod' as const, href: PROD_ORIGIN + rest, label: { en: 'Live', zh: '线上' }, Icon: Globe },
+  ];
+  return (
+    <div className="env-switch" role="group" aria-label={tr({ en: 'Switch environment', zh: '切换环境' })}>
+      {opts.map(({ env, href, label, Icon }) => (
+        <a key={env} href={href} data-env={env} title={tr(label)}
+          className={`env-switch-opt${env === active ? ' is-active' : ''}`}
+          aria-current={env === active ? 'page' : undefined}
+          aria-label={tr(label)}>
+          <Icon size={13} aria-hidden />
+        </a>
+      ))}
+    </div>
+  );
+}
 
 // 常用模板:点一下填 级别 + 中英文,填完仍可自由改。
 const PRESETS: { label: { en: string; zh: string }; level: NoticeLevel; bodyZh: string; bodyEn: string }[] = [
@@ -160,12 +190,28 @@ export default function PageNoticeBar() {
   const visible = matched.filter((n) => isAdmin || !(n.dismissible && dismissed[n.id] === n.updatedAt));
   const hasExact = notices.some((n) => n.path === key); // 本页是否已有精确通知 → 决定显 编辑 还是 添加
 
-  if (!isAdmin && visible.length === 0) return null;
+  const renders = isAdmin || visible.length > 0;
+
+  // 把本条实际高度写进 --page-notice-h,供全屏页(position:fixed;inset:0,如 /sim /paint)
+  // 顶部让位——否则那些页会盖住整条通知栏(含管理员的 添加 / 环境切换)。无内容时置 0。
+  const wrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = document.documentElement;
+    const el = wrapRef.current;
+    if (!el) { root.style.setProperty('--page-notice-h', '0px'); return; }
+    const write = () => root.style.setProperty('--page-notice-h', `${el.offsetHeight}px`);
+    write();
+    const ro = new ResizeObserver(write);
+    ro.observe(el);
+    return () => { ro.disconnect(); root.style.setProperty('--page-notice-h', '0px'); };
+  }, [renders]);
+
+  if (!renders) return null;
 
   const canSave = form != null && form.path.trim() !== '' && (form.bodyZh.trim() !== '' || form.bodyEn.trim() !== '');
 
   return (
-    <div className="page-notice-wrap">
+    <div className="page-notice-wrap" ref={wrapRef}>
       {visible.map((n) => {
         const Icon = LEVEL_ICON[n.level];
         return (
@@ -190,11 +236,16 @@ export default function PageNoticeBar() {
         );
       })}
 
-      {isAdmin && !form && !hasExact && (
-        <button type="button" className="page-notice-add" onClick={openNew}>
-          <Plus size={13} aria-hidden />
-          <T en="Add notice for this page" zh="添加本页通知" />
-        </button>
+      {isAdmin && !form && (
+        <div className="page-notice-adminbar">
+          {!hasExact && (
+            <button type="button" className="page-notice-add" onClick={openNew}>
+              <Plus size={13} aria-hidden />
+              <T en="Add notice for this page" zh="添加本页通知" />
+            </button>
+          )}
+          <EnvSwitch />
+        </div>
       )}
 
       {isAdmin && form && (
