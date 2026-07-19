@@ -12,7 +12,7 @@
 - [ ] `scramble/solver` **15 个 `*Solver` 各自重造** `SolveState`+`reqRef`+renderSingle → `useAsyncSolve()` hook + `<NearOptimalSolver>`（`scramble/solver/_DinoSolver.tsx:32`）
 - [ ] `math/group/page.tsx` **16,508 行 god component**（~92 内联 demo）→ 按 `_components/sections/` 拆分
 - [ ] 其它 god component：`components/WcaStatView.tsx`（1290）、`wca/results/page.tsx:122`（1027，4 视图塞一函数）、`FrameCountPage.tsx`（2820）、`components/LandingSearch.tsx`（744）
-- [ ] **4 个 WCA 统计表页复制同一份脚手架** → 抽 `WcaStatsTablePage` / `useWcaStatsTable`（`wca/success-rate/page.tsx:34` + cohort-ranks / all-events-done / grand-slam）
+- [~] **4 个 WCA 统计表页复制同一份脚手架**(`wca/success-rate` + cohort-ranks / all-events-done / grand-slam)。**逐文件核对后否掉「抽 `WcaStatsTablePage` 大模板」**:grand-slam 一家就四轴破格(无分页 / 无 `{rows,total}` 信封 / flag 并进选手格 / champ+RecordBadge 列),泛型表会退化成一堆条件 slot,比现状更难读。**只抽真正字节相同的页头** → `<WcaStatsPageHeader slug title subtitle>`(4 页各删 18 行重复页头,commit `8b6adaf4e1`,Playwright 4 页头逐一验)。剩下 fetch/筛选/列按页保留。`<PersonLink>`/`<CountryCell>`(选手/国家格)跨 **23 个 wca 文件**,留作单独一轮全量 sweep(不做 4/23 半迁移)。
 - [ ] recon 双播放器合并：`ReconPlayerPane`↔`ReconPlayerCanvas`、`Sq1ReconPlayer`↔`CuberReconPlayer`
 - [ ] 无共享 `ModalShell`：Donate/Feedback/Login/AlgCaseMeta 各搓 Escape+overlay → 抽公共壳
 - [ ] `/code` intro 三套并存范式（数据驱动壳 vs 28 个 bespoke language/*/page vs algorithms 手写）统一
