@@ -3,7 +3,7 @@
 // 姓名口径(英文名 / 全名 / 本地名 / 含曾用名)——姓名分布 + 排名页名录共用。
 // WCA 名形如 "Latin (本地名)";含曾用名口径下现名为全名、曾用名(改名前)单独带标签弱化显示。
 import { tr } from '@/i18n/tr';
-import { stripChineseParens } from '@/lib/name-utils';
+import { stripChineseParens } from '@/lib/cuber-name-display';
 import './name-mode.css';
 
 export type NameMode = 'latin' | 'full' | 'local' | 'aka';

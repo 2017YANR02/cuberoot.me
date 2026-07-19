@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Flag } from './Flag';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { searchPersons, getPerson, WCA_ID_REGEX, type WcaPersonLite } from '@/lib/wca-api';
 import { loadPersonsIndex, searchLocalPersons, isPersonsIndexReady } from '@cuberoot/shared';
 import { ClearButton } from './ClearButton';

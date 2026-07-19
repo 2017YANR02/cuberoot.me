@@ -48,7 +48,7 @@ import {
 } from '@cuberoot/shared';
 import { ClearButton } from '@/components/ClearButton';
 import { YearMonthPickerPopover } from '@/components/YearMonthPickerPopover';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { Flag, flagHtml } from '@/components/Flag';
 import { compHref, prefetchComp } from '@/lib/comp-link';
