@@ -218,21 +218,17 @@ function nodeProcessEnv(): string | undefined {
 }
 
 export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: boolean }): Promise<AlgFile> {
-  // NOTE: 用 import.meta.env.DEV 而不是 hostname 检查 — 走 LAN IP / 隧道域名(dev.cuberoot.me)
+  // NOTE: 用 build-time NODE_ENV 而不是 hostname 检查 — 走 LAN IP / 隧道域名(dev.cuberoot.me)
   // 等其它 dev host 时,hostname 检查会错判成 prod 直接打 api.cuberoot.me 跨域,
-  // 而 api 的 CORS allowlist 没那些 host → 浏览器拦截。vite 在 client build 时
-  // 替换 import.meta.env.DEV;server 端 loadAlg 不被调,?.DEV undefined 走 prod 分支也无害。
-  // Next.js (client) 用 process.env.NODE_ENV — 同样在 client build 时被替换。
-  const viteDev = Boolean((import.meta as { env?: { DEV?: boolean } }).env?.DEV);
+  // 而 api 的 CORS allowlist 没那些 host → 浏览器拦截。server 端 loadAlg 不被调,
+  // NODE_ENV 非 development 走 prod 分支也无害。
   // Webpack/Turbopack replace `process.env.NODE_ENV` as a string literal at build time,
-  // but only when accessed by that literal token sequence. Vite browsers don't replace
-  // it, and `process` isn't defined globally — wrap in try so it doesn't ReferenceError.
-  // process.env.NODE_ENV is replaced by Webpack/Turbopack as a string literal at build
-  // time; in Vite browser bundles process doesn't exist, so guard with try/catch.
+  // but only when accessed by that literal token sequence, and `process` isn't defined
+  // in browser bundles — wrap in try so it doesn't ReferenceError.
   // `declare const process` keeps the literal token sequence so the bundler replaces it.
   let nodeEnv: string | undefined;
   try { nodeEnv = nodeProcessEnv(); } catch { /* not in Node/bundler context */ }
-  const isDev = viteDev || nodeEnv === 'development';
+  const isDev = nodeEnv === 'development';
   const base = isDev
     ? '/v1/alg/sets'  // dev: vite proxy
     : 'https://api.cuberoot.me/v1/alg/sets';  // prod: 跨域到 API 子域
