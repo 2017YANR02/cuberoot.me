@@ -290,7 +290,8 @@ export default function WcaSourceConfig({
           </span>
         )}
         {mode === 'comp' && (
-          <span className="settings-row-control wca-src-comp-inline">
+          // 已选中一场:短名不撑满行(不留大片空白把「难度」推到行尾);未选中(搜索框态)仍占满可用宽度。
+          <span className={`settings-row-control wca-src-comp-inline${settings.wcaComp ? ' wca-src-comp-inline--picked' : ''}`}>
             <span className="wca-src-comppick">
               {settings.wcaComp ? (
                 // 已锁定一场:展示「国旗 + 比赛名(省略号截断)+ 清除」,避免长名溢出。
@@ -335,7 +336,7 @@ export default function WcaSourceConfig({
 
       {diffLocked && showDiffWhy && (
         <p className="wca-src-hint wca-src-warn">
-          {tr({ zh: '这场比赛的打乱还没算进难度库(新赛数据滞后),暂时无法按难度筛', en: "This competition's scrambles aren't in the difficulty index yet (recent comps lag) — filtering by difficulty isn't available here" })}
+          {tr({ zh: '难度库待更新', en: 'Difficulty index not updated yet' })}
         </p>
       )}
 
@@ -384,39 +385,37 @@ export default function WcaSourceConfig({
           )}
 
           {settings.wcaComp && hasEvent && (
-            <>
-              <div className="settings-row">
+            <div className="settings-row wca-src-comp-rounds">
+              <span className="settings-row-tight-group">
                 <span className="settings-row-label">{tr({ zh: '轮次', en: 'Round' })}</span>
-                <span className="settings-row-control">
-                  <select
-                    className="settings-row-control-select"
-                    value={settings.wcaRound}
-                    onChange={(e) => updateSettings({ wcaRound: e.target.value, wcaGroup: '' })}
-                  >
-                    <option value="">{tr({ zh: '全部轮次', en: 'All rounds' })}</option>
-                    {rounds.map((rt) => (
-                      <option key={rt} value={rt}>{roundTypeShort(rt, isZh)}</option>
-                    ))}
-                  </select>
-                </span>
-              </div>
-              <div className="settings-row">
+                <select
+                  className="settings-row-control-select"
+                  value={settings.wcaRound}
+                  onChange={(e) => updateSettings({ wcaRound: e.target.value, wcaGroup: '' })}
+                  aria-label={tr({ zh: '轮次', en: 'Round' })}
+                >
+                  <option value="">{tr({ zh: '全部', en: 'All' })}</option>
+                  {rounds.map((rt) => (
+                    <option key={rt} value={rt}>{roundTypeShort(rt, isZh)}</option>
+                  ))}
+                </select>
+              </span>
+              <span className="settings-row-tight-group">
                 <span className="settings-row-label">{tr({ zh: '组别', en: 'Group' })}</span>
-                <span className="settings-row-control">
-                  <select
-                    className="settings-row-control-select"
-                    value={settings.wcaGroup}
-                    onChange={(e) => updateSettings({ wcaGroup: e.target.value })}
-                    disabled={groups.length === 0}
-                  >
-                    <option value="">{tr({ zh: '全部组别', en: 'All groups' })}</option>
-                    {groups.map((g) => (
-                      <option key={g} value={g}>{isZh ? `${g} 组` : `Group ${g}`}</option>
-                    ))}
-                  </select>
-                </span>
-              </div>
-            </>
+                <select
+                  className="settings-row-control-select"
+                  value={settings.wcaGroup}
+                  onChange={(e) => updateSettings({ wcaGroup: e.target.value })}
+                  disabled={groups.length === 0}
+                  aria-label={tr({ zh: '组别', en: 'Group' })}
+                >
+                  <option value="">{tr({ zh: '全部', en: 'All' })}</option>
+                  {groups.map((g) => (
+                    <option key={g} value={g}>{tr({ zh: `${g} 组`, en: `Group ${g}` })}</option>
+                  ))}
+                </select>
+              </span>
+            </div>
           )}
         </>
       )}
