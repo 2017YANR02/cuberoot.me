@@ -3,24 +3,27 @@
  *
  * Pointerdown raycasts the whole puzzle. Hitting any piece (or the core) starts a
  * pending drag; missing falls back to view rotation (SimPage / the shared gesture
- * controller). On the first move past a threshold we resolve which vertex to twist
+ * controller). On the first move past a threshold we resolve which axis to twist
  * and the direction from the drag vector, then fire the 120° turn.
  *
  * Which layer turns follows the physical puzzle: grabbing a TIP cap (the small apex
- * piece) does the tip-only turn (lowercase u/l/r/b); grabbing the corner / an edge /
- * the core does the whole corner layer (uppercase). Both spin about the same vertex
- * axis, so direction scoring is identical — only the affected pieces differ.
+ * piece) does the tip-only turn (lowercase u/l/r/b) at the tip's CURRENT vertex.
+ * Grabbing a corner / an edge scores the drag against ALL 4 vertex axes: on the axes
+ * whose layer currently holds the piece the turn is the corner layer (uppercase); on
+ * the others it's the complementary FACE layer (Dw/Lw/Rw/Fw) — so dragging the bottom
+ * ring sideways naturally fires Dw. The core turns corner layers only. All spins share
+ * the vertex-axis direction scoring; only the affected pieces differ.
  *
- * Candidate vertices: a tip/corner piece → its own vertex; an edge → the 2 vertices
- * its layer currently spans (read live); the core → all 4. The tangential-projection
- * scoring lives in the shared cuberDrag, same as Dino — vertex axes are in cube-local
- * space, so they're transformed by the cube's matrixWorld (the puzzle group carries an
- * apex-up rotation, unlike the cube-frame engines).
+ * Layer membership is read live from PyraCube (face turns permute corners/tips between
+ * vertices, so home indices can't be trusted). The tangential-projection scoring lives
+ * in the shared cuberDrag, same as Dino — vertex axes are in cube-local space, so
+ * they're transformed by the cube's matrixWorld (the puzzle group carries an apex-up
+ * rotation, unlike the cube-frame engines).
  */
 import * as THREE from 'three';
 import type PyraCube from './PyraCube';
 import { vertexAxis } from './pyraGeometry';
-import { type PyraMove } from './pyraState';
+import { type PyraMove, type PyraPart } from './pyraState';
 import { scoreCornerTwist } from '../cuberDrag';
 
 export { applyPartial as pyraApplyPartial, snapBack as pyraSnapBack } from '../cuberDrag';
@@ -29,12 +32,17 @@ const _ndc = new THREE.Vector2();
 const _raycaster = new THREE.Raycaster();
 const _axis = new THREE.Vector3();
 
+const ALL_AXES = [0, 1, 2, 3];
+
 export interface PyraPickHit {
   point: THREE.Vector3;
-  /** Vertex indices (0..3) that can move the hit piece (corner-layer turn). */
+  /** Candidate axis vertices (0..3) to score the drag against. */
   candidates: number[];
-  /** If the grabbed piece was a tip cap, its vertex — a drag on it turns the tip only.
-   *  null for corner / edge / core hits (they turn the whole corner layer). */
+  /** Per-axis: is the grabbed piece currently IN that vertex's corner layer? (in →
+   *  corner-layer turn about it, out → face-layer turn). Core hits: all true. */
+  inLayer: boolean[];
+  /** If the grabbed piece was a tip cap, its CURRENT vertex — a drag on it turns the
+   *  tip only. null for corner / edge / core hits. */
   tipVertex: number | null;
 }
 
@@ -54,14 +62,22 @@ export function pyraPickHit(
   while (obj && obj !== cube) {
     const ud = obj.userData;
     if (ud && typeof ud.pyraKind === 'string') {
-      if (ud.pyraKind === 'edge') return { point, candidates: cube.edgeVertices(ud.pyraEdge as number), tipVertex: null };
-      const vertex = ud.pyraVertex as number;
-      return { point, candidates: [vertex], tipVertex: ud.pyraKind === 'tip' ? vertex : null };
+      if (ud.pyraKind === 'edge') {
+        return { point, candidates: ALL_AXES, inLayer: cube.layersOf('edge', ud.pyraEdge as number), tipVertex: null };
+      }
+      const inLayer = cube.layersOf(ud.pyraKind as 'tip' | 'corner', ud.pyraVertex as number);
+      if (ud.pyraKind === 'tip') {
+        // The tip's CURRENT vertex (face turns migrate tips between vertices). A frozen
+        // hold-partial pose can leave it in no layer → no candidates → orbit fallback.
+        const cur = inLayer.indexOf(true);
+        return { point, candidates: cur < 0 ? [] : [cur], inLayer, tipVertex: cur < 0 ? null : cur };
+      }
+      return { point, candidates: ALL_AXES, inLayer, tipVertex: null };
     }
     obj = obj.parent;
   }
   // core hit — any vertex is a candidate (corner-layer turn only)
-  return { point, candidates: [0, 1, 2, 3], tipVertex: null };
+  return { point, candidates: ALL_AXES, inLayer: [true, true, true, true], tipVertex: null };
 }
 
 export interface PyraLivePlan {
@@ -79,15 +95,15 @@ export function pyraResolveLive(
   scene.updateMatrixWorld();
   const originWorld = new THREE.Vector3().setFromMatrixPosition(cube.matrixWorld);
   const tip = hit.tipVertex !== null;
-  const candidates = tip ? [hit.tipVertex as number] : hit.candidates;
   const score = scoreCornerTwist(
-    candidates,
+    hit.candidates,
     (vertex) => _axis.copy(vertexAxis(vertex)).transformDirection(cube.matrixWorld),
     hit.point, originWorld, dxPx, dyPx, camera, width, height, 0.2,
   );
   if (!score) return null;
+  const part: PyraPart = tip ? 'tip' : hit.inLayer[score.corner] ? 'corner' : 'face';
   return {
-    move: { vertex: score.corner, tip, dir: score.dir },
+    move: { vertex: score.corner, part, dir: score.dir },
     tangentX: score.tangentX, tangentY: score.tangentY,
   };
 }

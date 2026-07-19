@@ -11,6 +11,6 @@ import { parsePyraMoves, type PyraMove } from './pyraState';
 export default class PyraTwister extends TweenTwister<PyraMove> {
   constructor(cube: PyraCube) { super(cube); }
   protected parse(scramble: string): PyraMove[] { return parsePyraMoves(scramble); }
-  // Every pyraminx turn (corner or tip) is 120° ≈ 4/3 of a 90° turn.
+  // Every pyraminx turn (corner, tip or face layer) is 120° ≈ 4/3 of a 90° turn.
   protected framesFor(): number { return tweenDuration(4 / 3); }
 }

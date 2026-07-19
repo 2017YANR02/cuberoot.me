@@ -80,19 +80,34 @@ describe('Pyraminx notation', () => {
   });
   it('uppercase = corner layer, lowercase = tip', () => {
     const [big, tip] = parsePyraMoves('U u');
-    expect(big.tip).toBe(false);
-    expect(tip.tip).toBe(true);
+    expect(big.part).toBe('corner');
+    expect(tip.part).toBe('tip');
   });
   it('skips unknown tokens', () => {
     expect(parsePyraMoves('U foo R2 L x').length).toBe(2); // U, L
   });
   it('bare = clockwise (dir -1), primed = +120 (dir +1)', () => {
-    expect(pyraMoveToString({ vertex: 0, tip: false, dir: -1 })).toBe('U');
-    expect(pyraMoveToString({ vertex: 0, tip: false, dir: 1 })).toBe("U'");
-    expect(pyraMoveToString({ vertex: 1, tip: true, dir: -1 })).toBe('l');
+    expect(pyraMoveToString({ vertex: 0, part: 'corner', dir: -1 })).toBe('U');
+    expect(pyraMoveToString({ vertex: 0, part: 'corner', dir: 1 })).toBe("U'");
+    expect(pyraMoveToString({ vertex: 1, part: 'tip', dir: -1 })).toBe('l');
   });
   it('four vertex letters U/L/R/B', () => {
     expect([...VERTEX_NAMES]).toEqual(['U', 'L', 'R', 'B']);
+  });
+  it('face layers: Dw/Lw/Rw/Fw turn about the OPPOSITE vertex axis; bare = dir +1', () => {
+    const [dw, lw, rw, fw] = parsePyraMoves("Dw Lw Rw Fw'");
+    expect(dw).toEqual({ vertex: 0, part: 'face', dir: 1 });  // D face ↔ U vertex
+    expect(lw).toEqual({ vertex: 2, part: 'face', dir: 1 });  // L face ↔ R vertex
+    expect(rw).toEqual({ vertex: 1, part: 'face', dir: 1 });  // R face ↔ L vertex
+    expect(fw).toEqual({ vertex: 3, part: 'face', dir: -1 }); // F face ↔ B vertex
+    expect(pyraMovesToString(parsePyraMoves("Dw Lw' Rw Fw'"))).toBe("Dw Lw' Rw Fw'");
+  });
+  it('bare D is an input alias for Dw (canonical output = Dw)', () => {
+    expect(parsePyraMoves("D D'")).toEqual(parsePyraMoves("Dw Dw'"));
+    expect(pyraMovesToString(parsePyraMoves('D'))).toBe('Dw');
+  });
+  it('no Uw/Bw faces, no lowercase face tokens', () => {
+    expect(parsePyraMoves('Uw Bw dw lw').length).toBe(0);
   });
 });
 
@@ -102,13 +117,17 @@ describe('Pyraminx algebra (notation-level)', () => {
     expect(pyraMovesToString(invertPyraMoves(m))).toBe("u R' L U'");
     expect(invertPyraMoves(invertPyraMoves(m))).toEqual(m);
   });
-  it('reduce folds same-vertex/same-layer runs mod 3', () => {
+  it('reduce folds same-vertex/same-part runs mod 3', () => {
     expect(reducePyraAlg('U U')).toBe("U'");   // -240° ≡ +120°
     expect(reducePyraAlg("U' U'")).toBe('U');   // +240° ≡ -120°
     expect(reducePyraAlg("U U'")).toBe('');     // cancels
     expect(reducePyraAlg('U U U')).toBe('');    // order 3
     expect(reducePyraAlg('U u')).toBe('U u');   // corner + tip don't merge
     expect(reducePyraAlg('U L')).toBe('U L');   // different vertices don't merge
+    expect(reducePyraAlg('Dw Dw')).toBe("Dw'"); // +240° ≡ -120°
+    expect(reducePyraAlg("Dw Dw'")).toBe('');
+    expect(reducePyraAlg('Dw Dw Dw')).toBe(''); // order 3
+    expect(reducePyraAlg('U Dw')).toBe('U Dw'); // same axis, different part — never merge
   });
 });
 
@@ -116,12 +135,12 @@ describe('Pyraminx scramble', () => {
   it('big turns never repeat a vertex consecutively; tips trail', () => {
     for (let trial = 0; trial < 50; trial++) {
       const moves = randomPyraScramble(10);
-      const big = moves.filter((m) => !m.tip);
+      const big = moves.filter((m) => m.part === 'corner');
       expect(big.length).toBe(10);
       for (let i = 1; i < big.length; i++) expect(big[i].vertex).not.toBe(big[i - 1].vertex);
-      // tips (if any) come after the big block
-      const firstTip = moves.findIndex((m) => m.tip);
-      if (firstTip >= 0) expect(moves.slice(firstTip).every((m: PyraMove) => m.tip)).toBe(true);
+      // tips (if any) come after the big block — face turns never appear in scrambles
+      const firstTip = moves.findIndex((m) => m.part === 'tip');
+      if (firstTip >= 0) expect(moves.slice(firstTip).every((m: PyraMove) => m.part === 'tip')).toBe(true);
     }
   });
 });
