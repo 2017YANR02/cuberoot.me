@@ -51,9 +51,12 @@ interface AccordionSectionProps {
   expanded: Set<string>;
   setExpanded: (next: Set<string>) => void;
   children: React.ReactNode;
+  /** 挂在标题同一行末尾的控件(如整节的总开关),不占单独一行。是展开/折叠按钮的兄弟节点
+   *  (不嵌在按钮内),点它不会触发手风琴折叠。 */
+  headerControl?: React.ReactNode;
 }
 
-function AccordionSection({ id, title, defaultExpanded, useMobile, expanded, setExpanded, children }: AccordionSectionProps) {
+function AccordionSection({ id, title, defaultExpanded, useMobile, expanded, setExpanded, children, headerControl }: AccordionSectionProps) {
   // Initialize expansion state on mount.
   useEffect(() => {
     if (defaultExpanded && !expanded.has(id)) {
@@ -67,7 +70,10 @@ function AccordionSection({ id, title, defaultExpanded, useMobile, expanded, set
   if (!useMobile) {
     return (
       <div className="modal-section">
-        <h3 className="settings-h3">{title}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <h3 className="settings-h3" style={{ margin: '0 0 8px' }}>{title}</h3>
+          {headerControl && <span style={{ marginLeft: 'auto', marginBottom: 8 }}>{headerControl}</span>}
+        </div>
         {children}
       </div>
     );
@@ -83,32 +89,42 @@ function AccordionSection({ id, title, defaultExpanded, useMobile, expanded, set
 
   return (
     <div className="modal-section">
-      <button
-        type="button"
-        className="settings-accordion-header"
-        aria-expanded={isOpen}
-        onClick={toggle}
+      <div
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          width: '100%',
           minHeight: 44,
-          padding: '10px 4px',
-          background: 'transparent',
-          border: 'none',
           borderBottom: '1px solid var(--border, rgba(255,255,255,0.08))',
-          color: 'inherit',
-          font: 'inherit',
-          textAlign: 'left',
-          cursor: 'pointer',
         }}
       >
-        {isOpen
-          ? <ChevronDown size={16} aria-hidden />
-          : <ChevronRight size={16} aria-hidden />}
-        <span className="settings-h3" style={{ margin: 0 }}>{title}</span>
-      </button>
+        <button
+          type="button"
+          className="settings-accordion-header"
+          aria-expanded={isOpen}
+          onClick={toggle}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flex: 1,
+            minHeight: 44,
+            padding: '10px 4px',
+            background: 'transparent',
+            border: 'none',
+            color: 'inherit',
+            font: 'inherit',
+            textAlign: 'left',
+            cursor: 'pointer',
+          }}
+        >
+          {isOpen
+            ? <ChevronDown size={16} aria-hidden />
+            : <ChevronRight size={16} aria-hidden />}
+          <span className="settings-h3" style={{ margin: 0 }}>{title}</span>
+        </button>
+        {headerControl && <span style={{ paddingRight: 4 }}>{headerControl}</span>}
+      </div>
       {isOpen && <div style={{ paddingTop: 8 }}>{children}</div>}
     </div>
   );
@@ -528,13 +544,8 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           useMobile={isMobile}
           expanded={expandedSections}
           setExpanded={setExpandedSections}
+          headerControl={<BoolToggle value={s.timingEnabled} onChange={(v) => updateSettings({ timingEnabled: v })} />}
         >
-          <Row label={tr({ zh: '计时', en: 'Timing'
-        })}>
-            <BoolToggle value={s.timingEnabled} onChange={(v) => updateSettings({ timingEnabled: v })} />
-            <span className="hint">{tr({ zh: '关闭 = 练习模式:空格 / 点击 / 按下只换下一个打乱,不计时、不记成绩', en: 'off = practice mode: space / tap / press only advances to the next scramble — no timing, no solve recorded'
-        })}</span>
-          </Row>
           <Row label={tr({ zh: '观察时间（秒）', en: 'Inspection (sec)'
         })}>
             <input

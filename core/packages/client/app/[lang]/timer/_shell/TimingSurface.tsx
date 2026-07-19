@@ -40,8 +40,12 @@ export interface TimingSurfaceProps {
    *  as the first item of the sub area. Host renders CubePreview / toggle. */
   cornerSlot?: ReactNode;
   /** Hint / sub-content below the digits (idle hint, stage splits, quick
-   *  actions, rank badge, target indicator…). */
+   *  actions, target indicator…). */
   children?: ReactNode;
+  /** Corner badge overlaid top-right of the digits themselves (e.g. WR/CR/NR
+   *  rank badge) — absolutely positioned, never shifts the digits or the
+   *  centered column below them. */
+  digitsCorner?: ReactNode;
   /** Extra class on the surface (e.g. target overshot / pulse). */
   className?: string;
   /** Pointer handlers (mouse fallback) — host owns the guard logic. */
@@ -59,6 +63,7 @@ export default function TimingSurface({
   scrambleSlot,
   cornerSlot,
   children,
+  digitsCorner,
   className,
   onMouseDown,
   onMouseUp,
@@ -72,12 +77,15 @@ export default function TimingSurface({
       onMouseUp={onMouseUp}
     >
       <div className="timing-surface-core">
-        <div
-          ref={digitsRef}
-          className={`timer-display ${colorClass}`}
-          style={{ fontSize }}
-        >
-          {digits}
+        <div className="timer-display-wrap">
+          <div
+            ref={digitsRef}
+            className={`timer-display ${colorClass}`}
+            style={{ fontSize }}
+          >
+            {digits}
+          </div>
+          {digitsCorner && <div className="timer-display-corner surface-chrome">{digitsCorner}</div>}
         </div>
         {/* Sub-content floats below the digits (absolutely positioned in CSS)
             so the giant readout never shifts as the phase swaps what's here.
