@@ -14,7 +14,7 @@
 // in its own file — only the render skeleton and the solve-state hook are
 // shared (hooks/useSingleLineSolve.ts).
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import { LoaderCircle } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -57,6 +57,10 @@ export interface SolverSpec<R extends SolverResultBase> {
 
   validate: (line: string) => string | null;
   randomOne: () => Promise<string | null>;
+  /** Sync table-lookup engines (ivy/gear/heli/…) lazily build their in-memory
+   *  graph on first solve; call this once on mount (deferred 200ms) so the first
+   *  real solve is instant. Errors are swallowed. */
+  prewarm?: () => void;
 }
 
 // ---- shared metricLabel / badge / caveatTitle building blocks ----
@@ -72,6 +76,9 @@ export const METRIC_FIXED_OPTIMAL = <R extends SolverResultBase>(r: R): TrText =
 export const METRIC_FIXED_NEAR_OPTIMAL = <R extends SolverResultBase>(r: R): TrText => ({
   zh: '步 近最优解', en: `${moveNoun(r.length)} (near-optimal)`,
 });
+export const METRIC_FIXED_BOUNDED = <R extends SolverResultBase>(r: R): TrText => ({
+  zh: '步 (有界, 非最优)', en: `${moveNoun(r.length)} (bounded, not optimal)`,
+});
 export const METRIC_TERNARY_OPTIMAL_NEAR = <R extends SolverResultBase & { optimal: boolean }>(r: R): TrText => (
   r.optimal ? METRIC_FIXED_OPTIMAL(r) : METRIC_FIXED_NEAR_OPTIMAL(r)
 );
@@ -82,12 +89,16 @@ export const METRIC_TERNARY_OPTIMAL_BOUNDED = <R extends SolverResultBase & { op
 export const badgeGodsNumber = (n: number) => (): TrText => ({
   zh: `上帝之数 ${n}`, en: `God's number ${n}`,
 });
+export const badgeCap = (n: number) => (): TrText => ({
+  zh: `上界 ${n}`, en: `cap ${n}`,
+});
 export const badgeHalfLengths = <R extends SolverResultBase>(r: R): TrText | null => (
   r.halfLengths ? { zh: `A ${r.halfLengths[0]} + B ${r.halfLengths[1]}`, en: `A ${r.halfLengths[0]} + B ${r.halfLengths[1]}` } : null
 );
 
 export const CAVEAT_TITLE_OPTIMAL: TrText = { zh: '关于「最优」', en: 'About "optimal"' };
 export const CAVEAT_TITLE_NEAR_OPTIMAL: TrText = { zh: '关于「近最优」', en: 'About "near-optimal"' };
+export const CAVEAT_TITLE_BOUNDED: TrText = { zh: '关于「有界」', en: 'About "bounded"' };
 
 export default function PuzzleSolverPage<R extends SolverResultBase>({ spec }: { spec: SolverSpec<R> }) {
   useDocumentTitle(spec.titleZh, spec.titleEn);
@@ -99,6 +110,16 @@ export default function PuzzleSolverPage<R extends SolverResultBase>({ spec }: {
   const gateOk = !spec.hasTokensGate || HAS_TOKENS.test(trimmed);
 
   const state = useSingleLineSolve(trimmed, lineCount, gateOk, spec.invocation);
+
+  // Warm the sync engine's lazy graph so the first real solve is instant.
+  useEffect(() => {
+    const warm = spec.prewarm;
+    if (!warm) return;
+    const id = window.setTimeout(() => { try { warm(); } catch { /* noop */ } }, 200);
+    return () => window.clearTimeout(id);
+    // spec identity is stable (module-scope literal in each _*Solver.tsx)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const batchSpec: BatchSpec = useMemo(() => ({
     event: spec.event,
