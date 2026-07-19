@@ -7,6 +7,7 @@
 .sim-page {
   position: fixed;
   inset: 0;
+  top: var(--page-notice-h, 0); /* 给全局通知条(管理员 添加/环境切换、访客通知)让位,否则全屏基座会盖住它 */
   display: flex;
   flex-direction: column;
   background: var(--background);
@@ -336,6 +337,7 @@
 }
 
 /* 全屏模式:藏 header + side,canvas 占满 */
+.sim-page--fullscreen { top: 0; } /* 沉浸全屏:铺满,不为通知条让位 */
 .sim-page--fullscreen .sim-header,
 .sim-page--fullscreen .sim-side {
   display: none;
