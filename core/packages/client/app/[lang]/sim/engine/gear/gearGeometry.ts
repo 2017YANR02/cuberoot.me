@@ -139,6 +139,19 @@ export const PLATE_T = 7;
  *  Re-verified by scripts/gear/rigid_check.mjs (parses this constant) + the
  *  MESH vitest over the full [H − CORNER_PLATE_T, top] band. */
 export const CORNER_PLATE_T = 9.8;
+/** Shallow shelf depth under the full-SVG sticker overhang (2026-07-19,
+ *  user-directed): in the fin/wing zones the transiting crown tops out at
+ *  h = 125.20 (mesh_check SHELF gate, dense sweep over both branches and all
+ *  rest shapes), while the sticker band starts at H + 0.5. So the VISIBLE
+ *  sticker + this thin shelf carry the FULL SVG outline (CORNER_POLY_EXT),
+ *  overhanging the transit lanes exactly like the real puzzle's corner spurs
+ *  — the teeth glide UNDER the spur plates. Shelf bottom = H − 2.0 = 126.0
+ *  = ceiling + 0.8 (the SAMPLED sweep bottomed the stack at +0.15 with a
+ *  125.7 bottom — cloud/step discretization can hide ~0.2, so the bottom
+ *  keeps 0.8 sampled ≈ ≥0.5 true; rigid_check re-judges the shipped stack).
+ *  Only the deep die-cut plate keeps the transit-clipped CORNER_POLY
+ *  shape. */
+export const CORNER_SHELF_T = 2.0;
 /** Slot-throat setback along n̂ (v12): the rigid crown's spin sweep reaches
  *  ρ = a − PLATE_T·√2 at axial depth a (the tilted plate's UNDERSIDE at p=0),
  *  so everything living in the throat — hub + backing cone, both slope-1
@@ -777,35 +790,52 @@ export function inCrownSweep(p: THREE.Vector3, axis: number, m: number): boolean
  *  spike flanks keep an S-shaped shoulder where the warp ramps in (reads
  *  as a notch up close). */
 export const CORNER_POLY: V2[] = [
-  [116.5, 116.5], [115, 117.5], [113.3, 118.1], [111.2, 118.4], [107.6, 118.5],
-  [68.4, 118.6], [65.5, 118.2], [64.8, 117.9], [64, 117.1], [63.6, 116.4],
-  [63.5, 114.8], [63.6, 114], [64.2, 112.7], [69.1, 111.3], [70.8, 110.5],
-  [71.6, 109.8], [72.1, 109], [72.4, 108.2], [72.6, 107.1], [72.5, 105.5],
-  [72, 103.4], [65.8, 82.5], [63.6, 76.5], [62.9, 75.1], [62.1, 74.2],
-  [61.2, 73.5], [59.8, 72.9], [52.6, 71.3], [50.6, 70.6], [49.7, 69.9],
-  [48.8, 68.8], [48.3, 67.5], [48.1, 66.4], [48.2, 65.8], [48.7, 65],
-  [50.1, 64], [52, 63.5], [58.5, 62.4], [59.9, 61.9],
-  [61, 61], [61.9, 59.8], [62.4, 58.4], [63.5, 52.2], [63.9, 50.5],
-  [64.5, 49.3], [65.3, 48.4], [66.2, 48], [67.5, 48.1], [69.2, 49],
-  [70.4, 50.2], [71.3, 52.4], [73, 59.9], [73.6, 61.3], [74.4, 62.4],
-  [75.4, 63.1], [77, 63.8], [84.7, 66.4], [103.3, 72.1], [105.5, 72.6],
-  [107, 72.7], [108, 72.5], [109, 72.1], [109.9, 71.5], [110.6, 70.7],
-  [111.6, 68.6], [112.8, 64.3], [114.4, 63.7], [115.6, 63.7], [116.8, 63.9],
-  [118.3, 64.6], [118.4, 69.6], [118.5, 108.1], [118.3, 111.6], [118, 113.4],
-  [117.4, 115.2],
+  [116, 116.9], [114.3, 117.8], [112.5, 118.2], [109.8, 118.4], [105, 118.5],
+  [66.6, 118.5], [63.6, 118.1], [62.7, 117.8], [62.1, 117.2], [61.9, 116.5],
+  [62, 115.3], [62.4, 114.2], [62.9, 113.7], [64.8, 112.7], [69.9, 111],
+  [71, 110.4], [71.8, 109.5], [72.4, 108.4], [72.6, 106.9], [72.5, 105.3],
+  [72.1, 103.4], [65.5, 81.8], [63.9, 77.2], [62.9, 75.1], [61.8, 73.9],
+  [60.2, 73.1], [52.2, 71.2], [50.3, 70.5], [49.3, 69.7], [48.6, 68.8],
+  [48.1, 67.5], [47.9, 66.5], [48.1, 65.8], [48.5, 65.1], [49.9, 64.1],
+  [51.8, 63.5], [58.5, 62.4], [59.9, 61.9], [61, 61], [61.9, 59.8],
+  [62.4, 58.4], [63.5, 52], [63.9, 50.3], [64.6, 49], [65.7, 48.1],
+  [66.8, 47.9], [68.3, 48.4], [69.5, 49.1], [70.4, 50.2], [71.2, 52.2],
+  [73.1, 60.1], [73.9, 61.8], [75.1, 62.9], [77.2, 63.9], [81.9, 65.6],
+  [103.4, 72.1], [105.3, 72.5], [106.8, 72.6], [108.2, 72.4], [109.3, 71.9],
+  [110.3, 71.1], [110.9, 70.1], [112.7, 64.6], [113.2, 63.6], [114, 62.6],
+  [115.1, 62.1], [116.6, 61.9], [117.8, 62.7], [118.3, 64.6], [118.5, 68.2],
+  [118.5, 109.2], [118.3, 112.1], [117.9, 114], [117.1, 115.7],
+];
+
+/** FULL SVG corner outline — the user's reference shape VERBATIM (symmetrized
+ *  + quantized, no transit clipping). Carried by the visible sticker + the
+ *  CORNER_SHELF_T shelf, which overhang the transit lanes (crown material in
+ *  the fin/wing zones never rises above h = 125.2 — SHELF gate). The wing
+ *  knobs and fin feet the deep plate must shed live HERE, so the on-screen
+ *  sticker is the real puzzle's complete spur shape. */
+export const CORNER_POLY_EXT: V2[] = [
+  [44.7, 65.4], [46.7, 64.2], [59.5, 62.4], [61.3, 61.3], [62.4, 59.4],
+  [64.2, 46.7], [65.3, 44.9], [66.8, 44.2], [68.8, 44.6], [70, 45.9],
+  [72.8, 59.8], [73.5, 61.8], [74.4, 62.9], [81.3, 65.4], [106, 72.9],
+  [108.5, 72.8], [110.8, 71.1], [111.8, 68.3], [114.5, 56.3], [115.9, 55.3],
+  [117.4, 55.5], [118.3, 56.4], [118.4, 58], [118.6, 106.3], [118.3, 113.5],
+  [116.8, 116.8], [113.7, 118.3], [109, 118.5], [69.4, 118.6], [56.4, 118.2],
+  [55.3, 116.6], [56, 114.7], [70.9, 110.9], [71.9, 110], [72.8, 108.5],
+  [72.8, 105.9], [65.4, 81.2], [63, 74.6], [61.8, 73.5], [60.2, 72.9],
+  [45.8, 70], [44.8, 69.1], [44.3, 68], [44.2, 66.6],
 ];
 
 /** CORNER_POLY mirrored into corner `ci`'s quadrant on face `face`, CCW, plus
  *  the face basis. Fixed shape — no runtime shrinking: the polygon is verified
  *  offline (and test-locked) against every carve and every synced crown/arm
  *  sweep, so a misfit is a geometry regression, not a layout fallback. */
-export function cornerStickerOutline(ci: number, face: number): { outline: V2[]; basis: { u: THREE.Vector3; v: THREE.Vector3; n: THREE.Vector3; origin: THREE.Vector3 } } {
+export function cornerStickerOutline(ci: number, face: number, table: V2[] = CORNER_POLY): { outline: V2[]; basis: { u: THREE.Vector3; v: THREE.Vector3; n: THREE.Vector3; origin: THREE.Vector3 } } {
   const signs = CORNER_POS[ci];
   const n = V(FACE_AXIS[face]);
   const { u, v } = cubeFaceBasis(FACE_AXIS[face] as unknown as number[]);
   const vert = new THREE.Vector3(signs[0], signs[1], signs[2]);
   const sgnA = Math.sign(vert.dot(u)), sgnB = Math.sign(vert.dot(v));
-  const poly: V2[] = CORNER_POLY.map(([a, b]) => [sgnA * a, sgnB * b]);
+  const poly: V2[] = table.map(([a, b]) => [sgnA * a, sgnB * b]);
   return {
     outline: polyArea2(poly) > 0 ? poly : poly.slice().reverse(),
     basis: { u, v, n, origin: n.clone().multiplyScalar(H + STICKER_LIFT) },
@@ -859,20 +889,28 @@ export function buildCornerPiece(ci: number, ev: Evaluator): { pivot: THREE.Obje
 
   for (const face of faces) {
     const { outline, basis } = cornerStickerOutline(ci, face);
-    // die-cut face plate: the corner's own gear profile, CORNER_PLATE_T deep,
-    // added AFTER the carve subtractions so the spikes survive the (worst-case)
-    // lathe — phase sync is what really keeps the crown out of it (test-locked,
-    // band re-verified at this depth). The fins are re-baked to the transit
-    // limit (mesh_check MARGIN 0.5): they reach the gear with just the tiny
-    // meshing gap. Top pokes 0.52 above the face so the sticker bottom embeds
-    // without a gap; the bottom embeds under the intersection body's roof, so
-    // the exposed wall runs body → plate → sticker as one generatrix.
-    const plateGeo = extrudeOntoFace(outline,
-      { ...basis, origin: basis.n.clone().multiplyScalar(H - CORNER_PLATE_T) }, CORNER_PLATE_T + 0.52);
+    const { outline: extOutline } = cornerStickerOutline(ci, face, CORNER_POLY_EXT);
+    // Three-layer stack (2026-07-19, real-puzzle overhang):
+    //   deep die-cut plate — transit-clipped CORNER_POLY, roots under the
+    //     intersection body's roof; the whirling teeth pass BESIDE it.
+    //     Inset 0.04 so its wall never goes coplanar with the shelf wall on
+    //     verbatim stretches (both snap to the same SVG there).
+    //   shallow shelf + sticker — FULL SVG CORNER_POLY_EXT; the teeth pass
+    //     UNDER them (material ceiling h = 125.2 < shelf bottom 125.7 — the
+    //     SHELF gate in mesh_check + rigid_check verify the exact stack).
+    // Shelf top pokes 0.52 above the face so the sticker bottom embeds.
+    const plateGeo = extrudeOntoFace(offsetInward(outline, 0.04),
+      { ...basis, origin: basis.n.clone().multiplyScalar(H - CORNER_PLATE_T) },
+      CORNER_PLATE_T - CORNER_SHELF_T + 0.1);
     const plate = new THREE.Mesh(plateGeo, bodyMat);
     plate.userData.simRole = 'body';
     group.add(plate);
-    const geo = extrudeOntoFace(outline, basis, STICKER_DEPTH);
+    const shelfGeo = extrudeOntoFace(extOutline,
+      { ...basis, origin: basis.n.clone().multiplyScalar(H - CORNER_SHELF_T) }, CORNER_SHELF_T + 0.52);
+    const shelf = new THREE.Mesh(shelfGeo, bodyMat);
+    shelf.userData.simRole = 'body';
+    group.add(shelf);
+    const geo = extrudeOntoFace(extOutline, basis, STICKER_DEPTH);
     group.add(makeSticker(geo, stickerMat(GEAR_FACE_NAMES[face]), bodyMat, {
       simStickerNormal: V(FACE_AXIS[face]),
     }));

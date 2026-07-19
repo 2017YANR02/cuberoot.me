@@ -460,34 +460,141 @@ const MARGIN = 0.5; // safety margin (units) beyond the pooled footprint —
                     // only (was 1.2; the half-unit bin pooling + SAFE_LVL
                     // still add ~0.5 of implicit conservatism on top)
 {
-  // FIELD-BASED clip (no raster staircase): region = { sdOrig ≥ 0 ∧ sdSafe ≥ 0 },
-  // extracted by marching squares WITH sub-cell interpolation, then every vertex
-  // that lies on the original outline is snapped back to it exactly — untrimmed
-  // stretches reproduce the user's SVG verbatim, trimmed stretches follow the
-  // smooth conjugate cap curve b = H − F(a) − MARGIN.
-  const FMAX = new Float64Array(FP_NA).fill(-1);
-  for (let i = 0; i < FP_NA; i++) {
-    for (let qb = 0; qb < FP_NQ; qb++) if (FP[qb * FP_NA + i]) FMAX[i] = qb;
-  }
-  const G3 = (k) => Math.max(FMAX[Math.max(0, k - 1)] ?? -1, FMAX[k] ?? -1, FMAX[Math.min(FP_NA - 1, k + 1)] ?? -1);
-  const Finterp = (a) => { // units in, units out (bins are half-units)
-    let x = a * FP_SCALE;
-    if (x < 0) x = 0;
-    const k = Math.floor(x);
-    if (k >= FP_NA - 1) return G3(FP_NA - 1) / FP_SCALE;
-    const g0 = G3(k), g1 = G3(k + 1);
-    if (g0 < 0 && g1 < 0) return -1;
-    const bins = g0 < 0 ? g1 : g1 < 0 ? g0 : g0 + (g1 - g0) * (x - k);
-    return bins / FP_SCALE;
+  const ORIG_POLY = poly.map((p) => p.slice()); // SVG verbatim (symmetrized+quantized)
+  // RAW-FIELD clip (2026-07-18, with the 300°/flip GT ratio): the old cap
+  // curve pooled each along-column to its MAX q' reach — right at the fin
+  // flanks (the local reach IS the max) but it walls off the whole column,
+  // spuriously clipping the wing stubs above lanes that only run DEEP
+  // (q' ≈ 30–55, probe-verified: the band a ∈ [60.5, 63.5] × b ∈ [100, 118.6]
+  // is never touched). The clip now uses the exact 2D occupancy: a dedicated
+  // DENSE footprint sweep (0.7-grid + 0.5-boundary sector samples — the main
+  // clearance sweep's 1.4 grid could alias thin lanes into false holes),
+  // dilated by 1 bin (0.5 ≥ half the sample spacing keeps the raster a
+  // superset of the true sweep), then an exact distance transform;
+  // sdSafe = EDT − MARGIN. Total conservatism matches the old model
+  // (dilation 0.5 + MARGIN 0.5 ≈ the old 3-bin pooling + MARGIN); the wing
+  // stubs just stop paying for lanes that never touch them.
+  const FPD = (() => {
+    const FP2 = new Uint8Array(FP_NA * FP_NQ);
+    const dSamples = [];
+    {
+      const inTrap = (x, y) => inClosed(trap, x, y);
+      const txs = trap.map((p) => p[0]), tys = trap.map((p) => p[1]);
+      for (let x = Math.min(...txs) - 0.3; x <= Math.max(...txs) + 0.3; x += 0.7) {
+        for (let y = Math.min(...tys); y <= Math.max(...tys); y += 0.7) if (inTrap(x, y)) dSamples.push([x, y]);
+      }
+      for (let i = 0; i < trap.length; i++) {
+        const A = trap[i], B = trap[(i + 1) % trap.length];
+        const L = Math.hypot(B[0] - A[0], B[1] - A[1]);
+        const n = Math.max(1, Math.ceil(L / 0.5));
+        for (let k = 0; k < n; k++) dSamples.push([A[0] + ((B[0] - A[0]) * k) / n, A[1] + ((B[1] - A[1]) * k) / n]);
+      }
+    }
+    const DEPTHS2 = [-PLATE_T, -PLATE_T / 2, 0, STICKER_LIFT, 1.8, STICKER_LIFT + STICKER_DEPTH, STICKER_LIFT + STICKER_DEPTH + 0.24];
+    const out2 = [0, 0, 0];
+    for (const ratio of [-300 / 90, 300 / 90]) {
+      for (const phi0 of [0, 60, 120]) {
+        for (let wDeg = 0; wDeg < 360; wDeg += 0.5) {
+          const w = (wDeg * Math.PI) / 180;
+          const cw = Math.cos(w), sw = Math.sin(w);
+          const th = ((phi0 + ratio * wDeg) * Math.PI) / 180;
+          const ct = Math.cos(th), st = Math.sin(th);
+          for (let k = 0; k < TEETH; k++) {
+            const rot = (k * 2 * Math.PI) / TEETH;
+            const cr = Math.cos(rot), sr = Math.sin(rot);
+            for (const [lx, ly] of dSamples) {
+              const p = lx * cr - ly * sr, q = lx * sr + ly * cr;
+              for (const dd of DEPTHS2) {
+                fold(p, q, dd, out2);
+                const alpha = (out2[1] + out2[2]) * Math.SQRT1_2;
+                const wq = (out2[1] - out2[2]) * Math.SQRT1_2;
+                const u2 = out2[0] * ct - wq * st, w2 = out2[0] * st + wq * ct;
+                const X = u2, ys2 = (alpha + w2) * Math.SQRT1_2, zs = (alpha - w2) * Math.SQRT1_2;
+                const Y = ys2 * cw - zs * sw, Z = ys2 * sw + zs * cw;
+                const ab = Math.round(Math.abs(X) * FP_SCALE);
+                if (ab >= FP_NA) continue;
+                const hy = Math.abs(Y), hz = Math.abs(Z);
+                if (hy >= DEEP_LO - 0.4 && hy <= TOP + 0.4) {
+                  const qb = Math.round((H - hz) * FP_SCALE);
+                  if (qb >= 0 && qb < FP_NQ) FP2[qb * FP_NA + ab] = 1;
+                }
+                if (hz >= DEEP_LO - 0.4 && hz <= TOP + 0.4) {
+                  const qb = Math.round((H - hy) * FP_SCALE);
+                  if (qb >= 0 && qb < FP_NQ) FP2[qb * FP_NA + ab] = 1;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    // dilate by 1 bin (8-neighbourhood)
+    const D = new Uint8Array(FP_NA * FP_NQ);
+    for (let qb = 0; qb < FP_NQ; qb++) {
+      for (let ab = 0; ab < FP_NA; ab++) {
+        if (!FP2[qb * FP_NA + ab]) continue;
+        for (let dy = -1; dy <= 1; dy++) {
+          const y2 = qb + dy;
+          if (y2 < 0 || y2 >= FP_NQ) continue;
+          for (let dx = -1; dx <= 1; dx++) {
+            const x2 = ab + dx;
+            if (x2 >= 0 && x2 < FP_NA) D[y2 * FP_NA + x2] = 1;
+          }
+        }
+      }
+    }
+    return D;
+  })();
+  // exact Euclidean distance transform (Felzenszwalb, two 1D passes) in bins
+  const DT = (() => {
+    const INF = 1e12;
+    const g = new Float64Array(FP_NA * FP_NQ);
+    const edt1d = (f, n, out) => {
+      const v = new Int32Array(n), z = new Float64Array(n + 1);
+      let k = 0;
+      v[0] = 0; z[0] = -Infinity; z[1] = Infinity;
+      for (let q = 1; q < n; q++) {
+        let s;
+        for (;;) {
+          const vk = v[k];
+          s = (f[q] + q * q - (f[vk] + vk * vk)) / (2 * q - 2 * vk);
+          if (k > 0 && s <= z[k]) k--; else break;
+        }
+        k++; v[k] = q; z[k] = s; z[k + 1] = Infinity;
+      }
+      k = 0;
+      for (let q = 0; q < n; q++) {
+        while (z[k + 1] < q) k++;
+        const vk = v[k];
+        out[q] = (q - vk) * (q - vk) + f[vk];
+      }
+    };
+    const col = new Float64Array(FP_NQ), colOut = new Float64Array(FP_NQ);
+    for (let ab = 0; ab < FP_NA; ab++) {
+      for (let qb = 0; qb < FP_NQ; qb++) col[qb] = FPD[qb * FP_NA + ab] ? 0 : INF;
+      edt1d(col, FP_NQ, colOut);
+      for (let qb = 0; qb < FP_NQ; qb++) g[qb * FP_NA + ab] = colOut[qb];
+    }
+    const row = new Float64Array(FP_NA), rowOut = new Float64Array(FP_NA);
+    const dt = new Float64Array(FP_NA * FP_NQ);
+    for (let qb = 0; qb < FP_NQ; qb++) {
+      for (let ab = 0; ab < FP_NA; ab++) row[ab] = g[qb * FP_NA + ab];
+      edt1d(row, FP_NA, rowOut);
+      for (let ab = 0; ab < FP_NA; ab++) dt[qb * FP_NA + ab] = Math.sqrt(rowOut[ab]) / FP_SCALE;
+    }
+    return dt;
+  })();
+  const dtAt = (along, qp) => { // bilinear sample, units in/out; off-grid = free
+    if (along * FP_SCALE >= FP_NA - 1 || qp * FP_SCALE >= FP_NQ - 1) return 99;
+    const x = Math.max(0, along * FP_SCALE), y = Math.max(0, qp * FP_SCALE);
+    const x0 = Math.floor(x), y0 = Math.floor(y);
+    const fx = x - x0, fy = y - y0;
+    const v00 = DT[y0 * FP_NA + x0], v10 = DT[y0 * FP_NA + x0 + 1];
+    const v01 = DT[(y0 + 1) * FP_NA + x0], v11 = DT[(y0 + 1) * FP_NA + x0 + 1];
+    return (v00 * (1 - fx) + v10 * fx) * (1 - fy) + (v01 * (1 - fx) + v11 * fx) * fy;
   };
-  const sdSafe = (a, b) => {
-    let sd = Infinity;
-    const fa = Finterp(a);
-    if (fa >= 0) sd = Math.min(sd, H - fa - MARGIN - b);
-    const fb = Finterp(b);
-    if (fb >= 0) sd = Math.min(sd, H - fb - MARGIN - a);
-    return sd;
-  };
+  // clearance to the top gear (along=a, q'=H−b) and the right gear (transpose)
+  const sdSafe = (a, b) => Math.min(dtAt(a, H - b), dtAt(b, H - a)) - MARGIN;
   // MINIMAL SMOOTH DEFORMATION (no boolean-clip artifacts): walk the ORIGINAL
   // dense outline; safe points stay VERBATIM (the SVG's own curves); shallow
   // offenders shift inward along their normal by a smoothed upper envelope
@@ -530,9 +637,14 @@ const MARGIN = 0.5; // safety margin (units) beyond the pooled footprint —
     }
     return Infinity; // deep pocket
   });
-  // smoothed upper envelope of the shifts (deep counted as DEEP for the bleed
-  // so bridge junctions ease in; the deep points themselves are dropped)
-  let vs = vRaw.map((v) => (v === Infinity ? DEEP : v));
+  // smoothed upper envelope of the shifts. Deep-dropped points seed ZERO
+  // (2026-07-18): they are replaced by the level-set bridge anyway, and
+  // seeding them as DEEP bled a ~0.02/unit skirt tens of units wide into
+  // verbatim-safe neighbours — that skirt alone dragged the wing stubs
+  // ~2 units short of the raw field's legal boundary (probe: legal a ≈ 61,
+  // DEEP-seeded bake stopped at 63.3). Bridge junctions are smoothed by the
+  // fairing pass instead.
+  let vs = vRaw.map((v) => (v === Infinity ? 0 : v));
   const vBase = vs.slice();
   for (let it = 0; it < 120; it++) {
     const nxt = vs.slice();
@@ -718,6 +830,26 @@ const MARGIN = 0.5; // safety margin (units) beyond the pooled footprint —
     contour = fine;
     console.log(`faired contour: ${M} pts  (last-iter max step ${moved.toFixed(4)})`);
   }
+  // DIAGONAL RESYMMETRIZE (2026-07-19): the fillet/fairing passes are
+  // order-dependent and can break the sticker's a=b mirror symmetry by ~1.5
+  // at the stub corners (a corner 0.5 off the original gets filleted while
+  // its mirror twin doesn't). The safety field is diagonally symmetric
+  // (sd(a,b) = sd(b,a)), so averaging each point with its nearest mirrored
+  // counterpart restores symmetry inside the legal region up to curvature;
+  // the exact re-verify gates below re-judge the result either way.
+  for (let round = 0; round < 3; round++) {
+    const mir = contour.map(([a2, b2]) => [b2, a2]);
+    contour = contour.map((p) => {
+      const [mx, my] = nearestOnPolyline(p, mir);
+      return [(p[0] + mx) / 2, (p[1] + my) / 2];
+    });
+  }
+  {
+    const mir = contour.map(([a2, b2]) => [b2, a2]);
+    let dev = 0;
+    for (const p of contour) dev = Math.max(dev, distToPolyline(p, mir));
+    console.log(`resymmetrized: residual diagonal deviation ${dev.toFixed(3)}`);
+  }
   // reuse the closed-RDP (two farthest anchors)
   let cp = contour;
   {
@@ -809,6 +941,137 @@ const MARGIN = 0.5; // safety margin (units) beyond the pooled footprint —
   console.log(`CORNER_POLY (${poly.length}): [${fmt(poly)}]`);
   console.log(`CORNER_DEEP_A (${deepA.length}): [${fmt(deepA)}]`);
   console.log(`CORNER_DEEP_B (${deepB.length}): [${fmt(deepB)}]`);
+
+  // ── SHELF EXTENSION GATE (2026-07-19, user-directed "别太保守"): the
+  // transiting crown tops out far below the sticker surface in the fin/wing
+  // zones (violation hit zone caps at h ≈ 125.2; the sticker band starts at
+  // 128.5) — the real puzzle's corner spurs OVERHANG the gear the same way.
+  // So the VISIBLE sticker + a thin shelf under it carry the FULL SVG
+  // outline (CORNER_POLY_EXT); only the deep die-cut plate keeps the
+  // transit-clipped shape. This gate proves it: dense sweep, every material
+  // point in the shelf band must stay MARGIN clear of the SVG outline
+  // in-plane; it also prints the empirical material ceiling inside the
+  // outline (which picks the engine CORNER_SHELF_T = H − ceiling − 0.5).
+  {
+    const SHELF_T = 2.0; // engine CORNER_SHELF_T (shelf bottom H − 2.0 = 126.0)
+    const SHELF_LO = H - SHELF_T;
+    // distance-to-outline raster over the (+,+) quadrant, 0.5 bins:
+    // inside → 0, outside → exact EDT to the inside mask
+    const QS = 2, QN = 125 * QS;
+    const mask = new Uint8Array(QN * QN);
+    for (let yb = 0; yb < QN; yb++) {
+      for (let xb = 0; xb < QN; xb++) {
+        const a = xb / QS, b = yb / QS;
+        let inside = false;
+        for (let i = 0, j = ORIG_POLY.length - 1; i < ORIG_POLY.length; j = i++) {
+          const [xi, yi] = ORIG_POLY[i], [xj, yj] = ORIG_POLY[j];
+          if ((yi > b) !== (yj > b) && a < ((xj - xi) * (b - yi)) / (yj - yi) + xi) inside = !inside;
+        }
+        if (inside) mask[yb * QN + xb] = 1;
+      }
+    }
+    const distOut = (() => {
+      const INF = 1e12;
+      const g = new Float64Array(QN * QN);
+      const edt1d = (f, n, o) => {
+        const v = new Int32Array(n), z = new Float64Array(n + 1);
+        let k = 0;
+        v[0] = 0; z[0] = -Infinity; z[1] = Infinity;
+        for (let q = 1; q < n; q++) {
+          let s;
+          for (;;) {
+            const vk = v[k];
+            s = (f[q] + q * q - (f[vk] + vk * vk)) / (2 * q - 2 * vk);
+            if (k > 0 && s <= z[k]) k--; else break;
+          }
+          k++; v[k] = q; z[k] = s; z[k + 1] = Infinity;
+        }
+        k = 0;
+        for (let q = 0; q < n; q++) {
+          while (z[k + 1] < q) k++;
+          const vk = v[k];
+          o[q] = (q - vk) * (q - vk) + f[vk];
+        }
+      };
+      const col = new Float64Array(QN), co2 = new Float64Array(QN);
+      for (let xb = 0; xb < QN; xb++) {
+        for (let yb = 0; yb < QN; yb++) col[yb] = mask[yb * QN + xb] ? 0 : INF;
+        edt1d(col, QN, co2);
+        for (let yb = 0; yb < QN; yb++) g[yb * QN + xb] = co2[yb];
+      }
+      const row = new Float64Array(QN), ro2 = new Float64Array(QN);
+      const dt = new Float64Array(QN * QN);
+      for (let yb = 0; yb < QN; yb++) {
+        for (let xb = 0; xb < QN; xb++) row[xb] = g[yb * QN + xb];
+        edt1d(row, QN, ro2);
+        for (let xb = 0; xb < QN; xb++) dt[yb * QN + xb] = Math.sqrt(ro2[xb]) / QS;
+      }
+      return (a, b) => {
+        const xb = Math.round(a * QS), yb = Math.round(b * QS);
+        if (xb < 0 || xb >= QN || yb < 0 || yb >= QN) return 99;
+        return dt[yb * QN + xb];
+      };
+    })();
+    // dense sweep (0.7 grid + 0.5 boundary), 3-axis quadrant fold
+    const gSamples = [];
+    {
+      const txs = trap.map((p) => p[0]), tys = trap.map((p) => p[1]);
+      for (let x = Math.min(...txs) - 0.3; x <= Math.max(...txs) + 0.3; x += 0.7) {
+        for (let y = Math.min(...tys); y <= Math.max(...tys); y += 0.7) if (inClosed(trap, x, y)) gSamples.push([x, y]);
+      }
+      for (let i = 0; i < trap.length; i++) {
+        const A = trap[i], B = trap[(i + 1) % trap.length];
+        const L = Math.hypot(B[0] - A[0], B[1] - A[1]);
+        const n = Math.max(1, Math.ceil(L / 0.5));
+        for (let k = 0; k < n; k++) gSamples.push([A[0] + ((B[0] - A[0]) * k) / n, A[1] + ((B[1] - A[1]) * k) / n]);
+      }
+    }
+    const DEPTHS3 = [-PLATE_T, -PLATE_T / 2, 0, STICKER_LIFT, 1.8, STICKER_LIFT + STICKER_DEPTH, STICKER_LIFT + STICKER_DEPTH + 0.24];
+    let minBand = Infinity, ceil = -Infinity, viol = 0;
+    const out3 = [0, 0, 0];
+    for (const ratio of [-300 / 90, 300 / 90]) {
+      for (const phi0 of [0, 60, 120]) {
+        for (let wDeg = 0; wDeg < 360; wDeg += 0.5) {
+          const w = (wDeg * Math.PI) / 180;
+          const cw = Math.cos(w), sw = Math.sin(w);
+          const th = ((phi0 + ratio * wDeg) * Math.PI) / 180;
+          const ct = Math.cos(th), st = Math.sin(th);
+          for (let k = 0; k < TEETH; k++) {
+            const rot = (k * 2 * Math.PI) / TEETH;
+            const cr = Math.cos(rot), sr = Math.sin(rot);
+            for (const [lx, ly] of gSamples) {
+              const p = lx * cr - ly * sr, q = lx * sr + ly * cr;
+              for (const dd of DEPTHS3) {
+                fold(p, q, dd, out3);
+                const alpha = (out3[1] + out3[2]) * Math.SQRT1_2;
+                const wq = (out3[1] - out3[2]) * Math.SQRT1_2;
+                const u2 = out3[0] * ct - wq * st, w2 = out3[0] * st + wq * ct;
+                const co = [u2, 0, 0];
+                const ys2 = (alpha + w2) * Math.SQRT1_2, zs = (alpha - w2) * Math.SQRT1_2;
+                co[1] = ys2 * cw - zs * sw; co[2] = ys2 * sw + zs * cw;
+                for (let j = 0; j < 3; j++) {
+                  const h = Math.abs(co[j]);
+                  if (h < 100 || h > TOP + 0.4) continue;
+                  const a = Math.abs(co[(j + 1) % 3]), b = Math.abs(co[(j + 2) % 3]);
+                  const d = distOut(a, b);
+                  if (d === 0 && h > ceil) ceil = h;
+                  if (h >= SHELF_LO - 0.4) {
+                    if (d < minBand) minBand = d;
+                    if (d < 0.25) viol++;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    console.log(`\nSHELF gate (band [${SHELF_LO.toFixed(1)}, ${(TOP + 0.4).toFixed(1)}], full-SVG outline):`);
+    console.log(`  material ceiling inside outline: h = ${ceil.toFixed(2)}  (shelf bottom ${SHELF_LO.toFixed(1)} must exceed +0.5 → CORNER_SHELF_T ≤ ${(H - ceil - 0.5).toFixed(2)})`);
+    console.log(`  min in-plane distance of band material to outline: ${minBand.toFixed(2)}  (${viol} samples < 0.25)`);
+    console.log(`  ${viol === 0 && ceil + 0.5 <= SHELF_LO ? 'PASS' : 'FAIL'} — full SVG legal as sticker+shelf at T=${SHELF_T}`);
+    console.log(`CORNER_POLY_EXT (${ORIG_POLY.length}): [${fmt(ORIG_POLY)}]`);
+  }
 
   // overlay for the user: original trace (gray) vs clipped (red) + footprint edge
   const orig = JSON.parse(readFileSync(join(TMP, 'corner_poly.json'), 'utf8'));

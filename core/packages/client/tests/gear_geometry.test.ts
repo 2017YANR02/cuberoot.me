@@ -6,10 +6,10 @@ import {
   CROWN_BALL, EDGE_R, CORE_R, CAP_HALF,
   ARM_R0, ARM_R1, ARM_S, ARM_D, WASHER_IN, WASHER_OUT, WASHER_Y,
   SWEEP_RHO, SWEEP_WALL, RIM_R, TOOTH_HALF_W, TOOTH_FILLET_R, FOLD_LINE_R, FOLD_LINE_HW,
-  COIN_R, CORNER_PLATE_T,
+  COIN_R, CORNER_PLATE_T, CORNER_SHELF_T,
   crownSectorOutline, buildCornerPiece,
   gearSlotApex, gearSlotBasis, gearSlotFaces, gearWindowAngle,
-  cornerStickerOutline, inCrownSweep, CORNER_POLY,
+  cornerStickerOutline, inCrownSweep, CORNER_POLY, CORNER_POLY_EXT,
 } from '@/app/[lang]/sim/engine/gear/gearGeometry';
 import { CORNER_POS, FACE_AXIS } from '@/app/[lang]/sim/engine/gear/gearState';
 
@@ -204,8 +204,11 @@ describe('gear geometry clearance invariants', () => {
     expect(FOLD_LINE_R).toBeGreaterThan(COIN_R + 2);
     expect(FOLD_LINE_R).toBeCloseTo(RIM_R - 0.25, 6);
     // fat-bar parity (user-locked): half-width = the corner stickers' arris
-    // setback, so the bar reads exactly as fat as the corners' black band
-    expect(FOLD_LINE_HW).toBeCloseTo(H - Math.max(...CORNER_POLY.flat()), 6);
+    // setback — the VISIBLE sticker edge is the full-SVG CORNER_POLY_EXT now
+    // (the deep plate recedes a hair further, hidden under the shelf)
+    expect(FOLD_LINE_HW).toBeCloseTo(H - Math.max(...CORNER_POLY_EXT.flat()), 6);
+    // shelf bottom stays above the swept material ceiling (125.2 + margin)
+    expect(H - CORNER_SHELF_T).toBeGreaterThanOrEqual(125.2 + 0.45);
     // the end arcs must stay on the gullet rim arc (material out to RIM_R
     // underneath — no floating overhang): polar half-span < gullet half-span
     const fcx = TOOTH_HALF_W + TOOTH_FILLET_R;
@@ -495,11 +498,14 @@ describe('gear geometry clearance invariants', () => {
     return inside ? -dEdge : dEdge;
   }
 
-  /** Min signed distance from a world point to any corner plate prism:
-   *  CORNER_POLY (per |in-plane| quadrant fold) × band [H − CORNER_PLATE_T,
-   *  H + sticker top]. Negative = inside a plate. */
+  /** Min signed distance from a world point to any corner plate prism
+   *  (per |in-plane| quadrant fold): the deep transit-clipped die-cut plate
+   *  plus the shallow full-SVG sticker/shelf overhang (the teeth glide UNDER
+   *  it — its band bottom sits above the swept material's ceiling).
+   *  Negative = inside a plate. */
   const PLATE_PRISMS = [
     { poly: CORNER_POLY, lo: H - CORNER_PLATE_T, hi: H + STICKER_TOP },
+    { poly: CORNER_POLY_EXT, lo: H - CORNER_SHELF_T, hi: H + STICKER_TOP },
   ];
   function plateClearance(x: number, y: number, z: number): number {
     const co = [x, y, z];
