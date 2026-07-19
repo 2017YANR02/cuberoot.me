@@ -673,3 +673,49 @@
   margin-left: 8px;
   color: var(--faint-foreground);
 }
+
+/* ─── 协同「本轮复习结束」弹窗 ─── */
+.trainer-round-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--background) 55%, transparent);
+  backdrop-filter: blur(2px);
+}
+.trainer-round-modal {
+  max-width: min(92vw, 360px);
+  padding: 24px 22px 20px;
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.28);
+  text-align: center;
+}
+.trainer-round-modal h2 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+  color: var(--foreground);
+}
+.trainer-round-modal p {
+  margin: 0 0 18px;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+}
+.trainer-round-modal-btn {
+  padding: 9px 22px;
+  border: none;
+  border-radius: 9px;
+  /* 「有文字的绿」:纯 iOS 亮绿配白字发糊,压暗一档(同 PillToggle 带文字轨道) */
+  background: color-mix(in srgb, var(--toggle-on) 72%, black);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.trainer-round-modal-btn:hover { background: color-mix(in srgb, var(--toggle-on) 64%, black); }
+.trainer-round-modal-btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
