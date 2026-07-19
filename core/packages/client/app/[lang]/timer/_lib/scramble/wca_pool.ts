@@ -16,7 +16,9 @@
  * scramble string and looked up via wcaMetaFor().
  */
 import { apiUrl } from '@/lib/api-base';
+import { statsUrl } from '@/lib/stats-base';
 import { fetchWcaScrambles } from '@/lib/wca-results-api';
+import { fetchByDifficulty } from '@/lib/scramble-by-difficulty';
 import { groupIdxOf } from '@/lib/wca-scramble-group';
 import { fetchPuzzleExamples, type PuzzleExamplesJson } from '@/lib/puzzle-examples';
 import { scrambleStepMetric } from './gen-by-steps';
@@ -62,7 +64,7 @@ export interface WcaSourceSpec {
   from: string;        // 'YYYY-MM-DD', '' = no lower bound (date mode)
   to: string;          // 'YYYY-MM-DD', '' = no upper bound (date mode)
   optimal: boolean;    // 用 God's-number 最短等态打乱(同态项目 333/oh/ft/fm 才有,无则回退原打乱)
-  // 按难度过滤:只在 date 模式生效(随机采样端点支持);comp 模式按比赛原序,忽略。
+  // 按难度过滤(3x3 族):date 模式服务端 /random 直接筛;comp 模式走 by-difficulty 端点按本场逐 bin 拉。
   // steps 为空 = 不过滤。variant/stage/colors 同 /scramble/stats 的口径。
   diff?: { variant: string; stage: string; colors: string; steps: number[] };
   // 「按步数」过滤(2×2 / 金字塔):客户端算每条真题的度量步数,只留 [lo,hi] 内的。
@@ -87,6 +89,10 @@ const compRows: Record<string, { scramble: string; meta: WcaScrambleMeta }[]> = 
 // 用于让 UI 显式提示,而不是悄悄伪造一条本地生成打乱(无比赛来源、且不符所选难度)。
 // 与「瞬时空(还在加载 / 网络失败)」区分:后者不进此集合,稍后重取。
 const knownEmpty = new Set<string>();
+// comp + 难度:某场比赛此(方法/阶段/配色)在难度库(wca_scramble_steps)是否有任何步数数据。
+// true=已入库(空只是此难度档无匹配)/ false=未入库(离线管道还没算这场,常见于新赛)。
+// 让 UI 区分「换步数/配色」与「改用日期模式/等回填」两种提示(见 compHasAnyStepData)。undetermined 不入。
+const compCoverage = new Map<string, boolean>();
 // 「按步数」date 模式客户端过滤:一次 fillDate 内最多连抓这么多批(每批 FETCH_COUNT 条)找匹配,
 // 命中即停(常见区间一批即够,秒出);全空才判 knownEmpty。放在同一次 fill 内连抓(而非拆成
 // SoloView 的退避重试)避免累计几秒才提示。批数上限要够大以覆盖稀有但真实存在的区间:实测 2000 条
@@ -110,6 +116,23 @@ function loadExamples(): Promise<PuzzleExamplesJson | null> {
   }
   return examplesPromise;
 }
+// 难度直方图(distribution.json):每 (方法,阶段,底色) 的真实步数 min/max —— 用作 comp 覆盖探测的 bin 全域。
+// 与 WcaSourceConfig 用同一份 JSON(浏览器缓存命中),这里只在 comp+难度为空的兜底路径按需拉一次(模块缓存)。
+interface DiffHist { min: number; max: number }
+interface DiffDistJson { sets: Record<string, { variants: Record<string, { data: Record<string, Record<string, DiffHist>> }> }> }
+let distCache: DiffDistJson | null = null;
+let distPromise: Promise<DiffDistJson | null> | null = null;
+function loadDist(): Promise<DiffDistJson | null> {
+  if (distCache) return Promise.resolve(distCache);
+  if (!distPromise) {
+    distPromise = fetch(statsUrl('/stats/scramble/distribution.json'))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => { if (j?.sets) distCache = j as DiffDistJson; return distCache; })
+      .catch(() => { distPromise = null; return null; }); // 失败重置,下次可重试
+  }
+  return distPromise;
+}
+
 const precomputedSeeded = new Set<string>();       // 已建过预计算桶的 key(每 key 只 seed 一次)
 const precomputedFor = new Map<string, string[]>(); // key -> 区间内预计算真题打乱串(refill 洗牌灌回池)
 
@@ -186,11 +209,11 @@ function specKey(spec: WcaSourceSpec): string | null {
   const opt = spec.optimal && supportsOptimal(w) ? '|opt' : ''; // 原始/最优打乱用不同池,切换即重灌
   // 「按步数」过滤两种模式都生效,进 key(切换度量/区间即重灌)。
   const sf = spec.stepFilter ? `|S:${spec.stepFilter.metric}:${spec.stepFilter.lo}.${spec.stepFilter.hi}` : '';
-  if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}${sf}` : null;
-  // 难度过滤只在 date 模式生效;steps 非空才计入池 key(切换难度即重灌)。
+  // 难度过滤 date + comp 两模式都生效;steps 非空才计入池 key(切换难度即重灌)。
   const d = spec.diff && spec.diff.steps.length > 0
     ? `|D:${spec.diff.variant}:${spec.diff.stage}:${spec.diff.colors}:${[...spec.diff.steps].sort((a, b) => a - b).join('.')}`
     : '';
+  if (spec.mode === 'comp') return spec.comp ? `c|${spec.comp}|${w}|${spec.round}|${spec.group}${opt}${sf}${d}` : null;
   return `d|${w}|${spec.from}|${spec.to}${opt}${d}${sf}`;
 }
 
@@ -212,7 +235,93 @@ function stepPass(spec: WcaSourceSpec, scramble: string): boolean {
   return d >= spec.stepFilter.lo && d <= spec.stepFilter.hi;
 }
 
-/** comp mode: load the comp once (cached), filter to event + round + group,
+type CompRow = { scramble: string; meta: WcaScrambleMeta };
+
+/** 比赛序比较器(初赛→决赛 → 组别 → 正式在前额外在后 → 把序号)。 */
+function compOrder(a: WcaScrambleMeta, b: WcaScrambleMeta): number {
+  const ra = ROUND_SEQ[a.r] ?? 9, rb = ROUND_SEQ[b.r] ?? 9;
+  if (ra !== rb) return ra - rb;
+  if (a.g !== b.g) return groupIdxOf(a.g) - groupIdxOf(b.g);
+  if (a.x !== b.x) return a.x ? 1 : -1;
+  return a.n - b.n;
+}
+
+/** comp 全量(默认):拉整场打乱 → 过滤 event/round/group(+ 可选最优)→ 竞赛序。 */
+async function compRowsAll(spec: WcaSourceSpec, w: string, useOptimal: boolean): Promise<CompRow[]> {
+  const all = await fetchWcaScrambles(spec.comp);
+  return (all ?? [])
+    .filter((r) => r.event_id === w
+      && (!spec.round || r.round_type_id === spec.round)
+      && (!spec.group || r.group_id === spec.group)
+      // 最优模式:只留有最优等态的真题,不再静默回退原打乱(无则该比赛队列空 -> 回退随机生成)。
+      && (!useOptimal || !!r.optimal_scramble))
+    .map((r) => ({
+      // 最优模式且该打乱有最优等态(同态项目)→ 用最优打乱,否则原打乱。
+      scramble: normalize(useOptimal && r.optimal_scramble ? r.optimal_scramble : r.scramble),
+      meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: w, r: r.round_type_id, g: r.group_id, n: r.scramble_num, x: (r.is_extra ? 1 : 0) as 0 | 1 },
+    }))
+    .filter((it) => stepPass(spec, it.scramble)) // 「按步数」过滤(该比赛此步数无匹配 → rows 空 → 提示)
+    .sort((A, B) => compOrder(A.meta, B.meta));
+}
+
+/** comp + 难度(3x3 族):by-difficulty 端点按 (方法,阶段,底色) 逐 bin 拉本场真题 → 过滤 round/group → 竞赛序。
+ *  端点按精确官方名(names)+ event + bin 查;再用 ci===comp 收敛到本场(防撞名),用 o 支持最优模式。
+ *  全部请求失败(网络)→ 抛出让 fill 不缓存、不判空,稍后重取;只要有一个成功即视作权威(可为空)。 */
+async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: boolean): Promise<CompRow[]> {
+  const d = spec.diff!;
+  const bins = [...new Set(d.steps)].sort((a, b) => a - b);
+  const results = await Promise.all(bins.map((bin) => fetchByDifficulty({
+    variant: d.variant, stage: d.stage, colors: d.colors, bin, event: w,
+    names: spec.compName ? [spec.compName] : undefined, pageSize: 200,
+  })));
+  if (results.every((r) => r == null)) throw new Error('by-difficulty unavailable');
+  const seen = new Set<string>();
+  const out: CompRow[] = [];
+  for (const res of results) {
+    for (const row of res?.scrambles ?? []) {
+      if (row.ci !== spec.comp) continue;                    // 精确到本场(names 可能撞号)
+      if (spec.round && row.r !== spec.round) continue;
+      if (spec.group && row.g !== spec.group) continue;
+      if (useOptimal && !row.o) continue;                    // 最优模式:只留有最优等态的
+      const dk = `${row.r}|${row.g}|${row.x}|${row.n}`;
+      if (seen.has(dk)) continue;
+      seen.add(dk);
+      out.push({
+        scramble: normalize(useOptimal && row.o ? row.o : row.scramble),
+        meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: w, r: row.r, g: row.g, n: row.n, x: row.x },
+      });
+    }
+  }
+  return out.sort((A, B) => compOrder(A.meta, B.meta));
+}
+
+/** comp 覆盖探测 key(与所选步数无关:同一场 + 同一 方法/阶段/配色 覆盖情况相同)。 */
+function coverageKey(spec: WcaSourceSpec): string | null {
+  const w = wev(spec);
+  if (!w || spec.mode !== 'comp' || !spec.comp || !spec.diff) return null;
+  return `${spec.comp}|${w}|${spec.diff.variant}|${spec.diff.stage}|${spec.diff.colors}`;
+}
+
+/** 该场此 (方法,阶段,配色) 在难度库里是否有任何步数数据(与所选步数档无关)。
+ *  探测直方图全域 [min,max] 的每个 bin(限本场官方名);任一 bin 有真题即已入库。
+ *  true=已入库 / false=未入库(离线难度管道还没算这场)/ null=判不了(直方图或全部请求不可用)。 */
+async function compHasAnyStepData(spec: WcaSourceSpec, w: string): Promise<boolean | null> {
+  const d = spec.diff!;
+  const dist = await loadDist();
+  const subset = d.variant === '333' ? 'ALL' : d.colors; // 整解无配色维度,数据落伪子集 'ALL'
+  const h = dist?.sets?.wca?.variants?.[d.variant]?.data?.[d.stage]?.[subset];
+  if (!h || !Number.isFinite(h.min) || !Number.isFinite(h.max) || h.max < h.min) return null;
+  const bins: number[] = [];
+  for (let b = h.min; b <= h.max; b++) bins.push(b);
+  const results = await Promise.all(bins.map((bin) => fetchByDifficulty({
+    variant: d.variant, stage: d.stage, colors: d.colors, bin, event: w,
+    names: spec.compName ? [spec.compName] : undefined, pageSize: 1, // 只判有无 → 拿 total 即可
+  })));
+  if (results.every((r) => r == null)) return null;      // 全失败 → 判不了,稍后重试
+  return results.some((r) => (r?.total ?? 0) > 0);        // 官方名唯一,total>0 即本场有数据
+}
+
+/** comp mode: load the comp once (cached), filter to event + round + group (+ 可选难度),
  *  sort in competition order, and (re)fill the queue — loops indefinitely. */
 async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
   const w = wev(spec);
@@ -220,29 +329,23 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
   const useOptimal = spec.optimal && supportsOptimal(w);
   let rows = compRows[key];
   if (!rows) {
-    const all = await fetchWcaScrambles(spec.comp);
-    rows = (all ?? [])
-      .filter((r) => r.event_id === w
-        && (!spec.round || r.round_type_id === spec.round)
-        && (!spec.group || r.group_id === spec.group)
-        // 最优模式:只留有最优等态的真题,不再静默回退原打乱(无则该比赛队列空 -> 回退随机生成)。
-        && (!useOptimal || !!r.optimal_scramble))
-      .sort((a, b) => {
-        const ra = ROUND_SEQ[a.round_type_id] ?? 9, rb = ROUND_SEQ[b.round_type_id] ?? 9;
-        if (ra !== rb) return ra - rb;
-        if (a.group_id !== b.group_id) return groupIdxOf(a.group_id) - groupIdxOf(b.group_id);
-        if (a.is_extra !== b.is_extra) return a.is_extra ? 1 : -1;
-        return a.scramble_num - b.scramble_num;
-      })
-      .map((r) => ({
-        // 最优模式且该打乱有最优等态(同态项目)→ 用最优打乱,否则原打乱。
-        scramble: normalize(useOptimal && r.optimal_scramble ? r.optimal_scramble : r.scramble),
-        meta: { ci: spec.comp, cn: spec.compName || spec.comp, e: w, r: r.round_type_id, g: r.group_id, n: r.scramble_num, x: (r.is_extra ? 1 : 0) as 0 | 1 },
-      }))
-      .filter((it) => stepPass(spec, it.scramble)); // 「按步数」过滤(该比赛此步数无匹配 → rows 空 → 提示)
+    rows = spec.diff && spec.diff.steps.length > 0
+      ? await compRowsByDifficulty(spec, w, useOptimal)
+      : await compRowsAll(spec, w, useOptimal);
     compRows[key] = rows;
   }
-  if (rows.length === 0) { knownEmpty.add(key); return; } // 该比赛没有此 event → 显式提示,不伪造生成
+  if (rows.length === 0) {
+    // comp + 难度为空:探测该场在难度库有无任何步数数据,区分「已入库但此难度无匹配」vs「新赛未入库」。
+    // 探测键不含所选步数(覆盖情况与步数档无关),只做一次;跨步数档改动复用结论。
+    if (spec.diff && spec.diff.steps.length > 0) {
+      const ck = coverageKey(spec);
+      if (ck && !compCoverage.has(ck)) {
+        const has = await compHasAnyStepData(spec, w);
+        if (has !== null) compCoverage.set(ck, has);
+      }
+    }
+    knownEmpty.add(key); return; // 该比赛没有此 event / 该难度无匹配 → 显式提示,不伪造生成
+  }
   knownEmpty.delete(key);
   const q = (pools[key] ??= []);
   for (const it of rows) { q.push(it.scramble); rememberMeta(it.scramble, it.meta); }
@@ -403,6 +506,14 @@ export function hasWcaSource(spec: WcaSourceSpec): boolean {
 export function isWcaSourceEmpty(spec: WcaSourceSpec): boolean {
   const key = specKey(spec);
   return key !== null && knownEmpty.has(key);
+}
+
+/** comp + 难度为空时,该场是否「压根没进难度库」(离线管道还没算,常见于新赛)——用于把提示
+ *  从「换步数/配色」升级为「改用日期模式/等回填」。仅在 fillComp 探测确认 false(无数据)后为真;
+ *  已入库(空只是此难度档无匹配)或尚未探测 → false(走默认「换步数/配色」提示)。 */
+export function isWcaCompUnindexed(spec: WcaSourceSpec): boolean {
+  const ck = coverageKey(spec);
+  return ck !== null && compCoverage.get(ck) === false;
 }
 
 /** Warm the pool ahead of time (on spec change / when WCA mode turns on). */

@@ -33,7 +33,7 @@ import { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
-import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
+import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCompUnindexed, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
 import { takeScramble } from '../_lib/scramble/scramble_pool';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
@@ -1534,12 +1534,19 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                       // 「按步数」过滤在 comp/date 两模式都生效,先判——真题近上帝数,低步数常无匹配。
                       wcaStep
                         ? tr({ zh: '该步数范围没有匹配的 WCA 真题,换个步数试试', en: 'No WCA scramble matches this move-count range — try another range' })
-                        // 难度过滤只在 date 模式生效(见 wca_pool.ts fillComp 注释),comp 模式必须
-                        // 先判——否则残留的 date 模式难度设置会在 comp 模式下显示错误的提示文案。
-                        : settings.wcaScrambleMode === 'comp'
-                          ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
-                          : settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
-                            ? tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
+                        // 难度过滤 date/comp 两模式都生效(wcaSpec.diff 仅在难度实际生效时有值)——
+                        // 先判难度,再判 comp 缺项目,避免 comp+难度为空时误报「该比赛没有此项目」。
+                        // comp 模式再按覆盖探测(isWcaCompUnindexed)细分:该场压根没进难度库(离线管道
+                        // 还没算,常见新赛)→ 换步数/配色也没用,提示改用日期模式;已入库只是此难度档无匹配
+                        // → 提示换步数/配色。
+                        : wcaSpec.diff
+                          ? settings.wcaScrambleMode === 'comp'
+                            ? isWcaCompUnindexed(wcaSpec)
+                              ? tr({ zh: '该比赛的打乱还没算进难度库(新赛数据滞后),暂时无法按难度筛;可改用「日期」模式', en: "This competition's scrambles aren't in the difficulty index yet (recent comps lag) — filtering by difficulty isn't available; switch to Date mode" })
+                              : tr({ zh: '该比赛没有匹配此难度的真题,换个步数或配色试试', en: 'This competition has no scramble at this difficulty — try other step counts or colors' })
+                            : tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
+                          : settings.wcaScrambleMode === 'comp'
+                            ? tr({ zh: '该比赛没有此项目的打乱', en: 'This competition has no scrambles for this event' })
                             : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
                     }</span>
                   : displayScramble
