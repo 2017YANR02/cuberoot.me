@@ -51,6 +51,20 @@ function shard(names: string[], order: TrainerRecapOrder, code: string, n: numbe
   return [...useTrainerStore.getState().recapQueue];
 }
 
+/** 同上,但显式指定「勾选顺序」(setSelected 的 key 顺序)—— 验分片与勾选先后无关。 */
+function shardWithSelectionOrder(
+  names: string[], selectedOrder: string[], order: TrainerRecapOrder, code: string, n: number, k: number,
+): string[] {
+  const cases = names.map(mkCase);
+  const st = useTrainerStore.getState();
+  st.loadSession('3x3', 'pll', cases);
+  st.setSelected(selectedOrder);
+  st.setMode('recap');
+  st.setRecapOrder(order);
+  st.setCoop({ on: true, code, n, k });
+  return [...useTrainerStore.getState().recapQueue];
+}
+
 describe('trainer-store coop sharding', () => {
   beforeEach(() => { g.localStorage = makeLocalStorage(); });
 
@@ -91,6 +105,19 @@ describe('trainer-store coop sharding', () => {
     const b = shard(names, 'shuffle', 'ROOM9', 2, 1);
     // 两台合起来 = 该 seed 洗出的完整队列(顺序无关,集合相等即证明切在同一全序)
     expect(new Set([...a, ...b]).size).toBe(names.length);
+  });
+
+  it('乱序:同批 case 但两台勾选顺序不同,仍不重不漏(分片基于规范序,非勾选序)', () => {
+    const names = ['A', 'B', 'C', 'D', 'E', 'F'];
+    const keys = names.map(n => caseKey(mkCase(n)));
+    const forward = keys;                 // A 按 A→F 勾选
+    const reversed = [...keys].reverse();  // B 按 F→A 勾选(同一批 case,顺序相反)
+    const a = shardWithSelectionOrder(names, forward, 'shuffle', 'TEAM', 2, 0);
+    const b = shardWithSelectionOrder(names, reversed, 'shuffle', 'TEAM', 2, 1);
+    expect(a.length + b.length).toBe(names.length); // 无交集
+    expect(new Set([...a, ...b]).size).toBe(names.length); // 覆盖全集
+    const setA = new Set(a);
+    expect(b.some(k => setA.has(k))).toBe(false);
   });
 
   it('关闭协同回到单机整集', () => {
