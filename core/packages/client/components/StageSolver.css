@@ -372,15 +372,16 @@ html[data-theme='dark'] .stsv {
   gap: 8px;
   margin: 2px 0 10px;
 }
-/* 视角格 = 该底面十字色填充(--face-bg / --face-fg 由组件注入),不再写字母。 */
+/* 视角格 = 该底面十字色填充(--face-bg / --face-fg 由组件注入),不再写字母。
+   固定正方形,边长对齐工具栏「底色」picker 按钮的高度(33px,见 .stsv-control-subset .subset-picker)。 */
 .stsv-angle {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 52px;
-  min-height: 46px;
-  padding: 8px 12px;
+  width: 33px;
+  height: 33px;
+  padding: 0;
   background: var(--face-bg, var(--sv-surface));
   /* 边框 = 自身色压暗一档,白格也有清晰边缘 */
   border: 1px solid color-mix(in srgb, var(--face-bg, var(--sv-border)) 72%, black);
@@ -393,8 +394,8 @@ html[data-theme='dark'] .stsv {
 .stsv-angle:hover { filter: brightness(1.07); }
 /* 选中:用 accent 描边而非改背景,保留底面色可辨 */
 .stsv-angle.is-sel { outline: 3px solid var(--sv-accent); outline-offset: 2px; }
-.stsv-angle-n { font-size: 18px; font-weight: 700; line-height: 1; color: var(--face-fg, var(--sv-text)); }
-.stsv-angle-dot { color: var(--face-fg, var(--sv-text-mute)); font-size: 16px; line-height: 1; }
+.stsv-angle-n { font-size: 14px; font-weight: 700; line-height: 1; color: var(--face-fg, var(--sv-text)); }
+.stsv-angle-dot { color: var(--face-fg, var(--sv-text-mute)); font-size: 12px; line-height: 1; }
 .stsv-angle-best {
   position: absolute;
   top: -7px;
@@ -440,6 +441,9 @@ html[data-theme='dark'] .stsv {
   color: var(--sv-text);
   white-space: nowrap;
   overflow-x: auto;
+  /* 显式钉 hidden:只设 overflow-x 时 CSS 会把默认 visible 的 overflow-y 隐式提升成 auto,
+     inline 的 y 方框(固定 16px 高)比行高略高就足以触发一条多余的纵向滚动条(Win 经典滚动条箭头)。 */
+  overflow-y: hidden;
 }
 .stsv-sol-num { color: var(--sv-text-mute); font-size: 11px; min-width: 14px; text-align: right; font-variant-numeric: tabular-nums; }
 .stsv-sol-len { color: var(--sv-text-mute); font-size: 11px; min-width: 16px; text-align: right; }
@@ -469,41 +473,32 @@ html[data-theme='dark'] .stsv {
   border-radius: 4px;
   white-space: nowrap;
 }
-.stsv-sol-copy {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--sv-text-mute);
+/* 复制成功提示:点行即复制,无独立复制按钮 → 解法末尾短暂浮现的对勾(1.2s 后随 copiedIdx 清空消失)。
+   display 显式 inline-block 覆盖 Tailwind preflight 的 `svg { display: block }`(否则对勾会掉到下一行)。 */
+.stsv-sol-copied { display: inline-block; color: var(--signal-success); margin-left: 6px; vertical-align: middle; flex: 0 0 auto; }
+
+/* y 预转体:alg 里内联的橙色方框按钮,常驻(不再另设左侧徽标)。
+   rot≠0 框里显示 y / y2 / y′;rot=0 是个空橙框,点它开始加预转体。 */
+.stsv-sol-yrot {
+  appearance: none;
   display: inline-flex;
   align-items: center;
-  padding: 2px;
-  flex: 0 0 auto;
-}
-.stsv-sol-copy:hover { color: var(--sv-accent); }
-
-/* y 预转体循环按钮:文字 token 样式,启用时高亮 */
-.stsv-sol-rot {
-  flex: 0 0 auto;
-  appearance: none;
-  background: none;
-  border: 1px solid var(--sv-border);
-  border-radius: 4px;
+  justify-content: center;
+  vertical-align: middle;
+  width: 24px;                   /* 恒定宽度,按最长态 "y2" 算,四态(含空框)不因内容变宽 */
+  height: 16px;
+  padding: 0;
+  margin: 0;
   cursor: pointer;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 11px;
-  line-height: 1;
-  min-width: 22px;
-  padding: 3px 5px;
-  color: var(--sv-text-mute);
-  text-align: center;
-}
-.stsv-sol-rot:hover { color: var(--sv-accent); border-color: var(--sv-accent); }
-.stsv-sol-rot.is-on {
-  color: var(--sv-accent);
-  border-color: var(--sv-accent);
-  background: var(--sv-accent-soft);
+  font: inherit;                 /* 继承 <code> 等宽字,融进 alg */
   font-weight: 600;
+  line-height: 1;
+  border: 1px solid var(--sv-accent);
+  border-radius: 4px;
+  background: var(--sv-accent-soft);
+  color: var(--sv-accent);
 }
+.stsv-sol-yrot:hover { background: color-mix(in srgb, var(--sv-accent) 20%, transparent); }
 
 /* 共享播放器:右侧固定,跟随页面滚动黏顶 */
 .stsv-player {
@@ -521,5 +516,4 @@ html[data-theme='dark'] .stsv {
 }
 @media (max-width: 480px) {
   .stsv-controls { gap: 10px; }
-  .stsv-angle { min-width: 48px; padding: 6px 8px 8px; }
 }
