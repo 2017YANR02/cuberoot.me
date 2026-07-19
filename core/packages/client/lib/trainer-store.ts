@@ -349,16 +349,18 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       let q = st.recapQueue;
       let pos = st.recapPos;
       if (st.recapSig !== sig || pos >= q.length) {
+        // 规范序:按 set 里 case 的原始顺序(与本机的勾选先后无关)—— 协同分片对齐的基准。
+        // 乱序协同必须在这条规范序上洗牌,否则两台「同一批 case 但勾选顺序不同」洗出的全序
+        // 就不一致,分片会既重叠又漏。单机乱序用不到规范序(自己一台无需对齐),仍随机洗 pool。
+        const inPool = new Set(pool);
+        const ordered = st.cases.map(caseKey).filter(k => inPool.has(k));
         let full: string[];
         if (st.recapOrder === 'seq') {
-          // 顺序:按 set 里 case 的原始顺序过一遍(本身确定,协同无需 code)
-          const inPool = new Set(pool);
-          full = st.cases.map(caseKey).filter(k => inPool.has(k));
+          full = ordered;                                   // 顺序:规范序本身(协同无需 code)
         } else if (active) {
-          // 协同乱序:用协同码做确定性洗牌,各设备同码 → 同一条全序 → 分片对齐
-          full = seededShuffle(pool, seedFromString(coop.code));
+          full = seededShuffle(ordered, seedFromString(coop.code)); // 协同乱序:规范序上确定性洗牌
         } else {
-          full = shuffle(pool);
+          full = shuffle(pool);                             // 单机乱序:随机洗,无需对齐
         }
         // 协同:在同一条全序上按 i % n === kk 切到本机那一份(顺序/乱序同理,不重不漏)
         if (active) {
