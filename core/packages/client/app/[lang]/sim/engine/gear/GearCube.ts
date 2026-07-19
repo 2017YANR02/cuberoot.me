@@ -14,7 +14,7 @@
  *
  * One move (face f, amt): face layer −amt·180° about the face axis, middle slab
  * (4 centers + core + the equator ring's 4 gears) −amt·90°, equator gears ALSO spin
- * +amt·480° about their outward radials (net +amt·120°, matching the mod-3 spin
+ * +amt·300° about their outward radials (net −amt·60°, consistent with the mod-3 spin
  * phase — issue #32); the opposite layer holds still. The face's own 4 riding gears
  * do NOT spin (verified vs cstimer's facelet maps — see gearState). A discrete
  * piece state advances in finishMove for `complete`/history.
@@ -105,12 +105,16 @@ export default class GearCube extends THREE.Group implements TweenCube<GearMove>
     const anims: PieceAnim[] = [];
     const faceAngle = -move.amt * Math.PI;
     const midAngle = -move.amt * (Math.PI / 2);
-    // 480° per 180° flip (issue #32): the real puzzle's gearing whirls the
-    // equator gears a full extra revolution — net 120° (mod 360°), which is
-    // what the mod-3 spin phase renders (3 flips → 360° → visually solved;
-    // a 60°-per-flip render desyncs from the discrete state at phase 0).
-    // applyAnimFrame interpolates axis·angle, so angles > 2π animate fully.
-    const spinAngle = move.amt * (8 * Math.PI / 3);
+    // 300° per 180° flip (GT: Jaap's official sheet, .tmp/gear/Gear Cube.pdf —
+    // "each adjoining edge piece turns 300°"; his "two complete rounds ...
+    // twists them by 120°" cross-checks: 4·300 ≡ 120 (mod 360°)). Net −60° per
+    // flip does NOT desync the Z3 discrete phase: a gear returns to its slot
+    // only after 4k flips, and 4k·300 ≡ 120k — at a fixed slot only 3
+    // orientations are reachable (Jaap/cstimer's mod-3 phase); the extra ±60°
+    // parity is slaved to the ring position (net flips mod 2), so the
+    // accumulated spin pivot always agrees with the discrete state.
+    // applyAnimFrame interpolates axis·angle, so any magnitude animates fully.
+    const spinAngle = move.amt * (5 * Math.PI / 3);
     const faceDelta = _q.setFromAxisAngle(n, faceAngle).clone();
     // face layer: corners + riding gears (orbit pivots only) + the face's center
     for (const s of FACE_CORNER_SLOTS[f]) {

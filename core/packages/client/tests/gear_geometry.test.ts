@@ -475,8 +475,8 @@ describe('gear geometry clearance invariants', () => {
 
   // ── the corner is a GEAR: phase-synced meshing, not swept-volume avoidance ──
   // Its die-cut plates (CORNER_POLY prisms, tooth-plate deep) interdigitate
-  // with the crown teeth; only the locked spin/orbit ratio (±480°/90°, issue
-  // #32) keeps them apart. v12: transits start from every rest tilt φ0 —
+  // with the crown teeth; only the locked spin/orbit ratio (±300°/90°, Jaap's
+  // GT sheet) keeps them apart. v12: transits start from every rest tilt φ0 —
   // derivation + finer 0.5° sweep in scripts/gear/mesh_check.mjs +
   // scripts/gear/rigid_check.mjs.
 
@@ -520,9 +520,10 @@ describe('gear geometry clearance invariants', () => {
 
   it('MESH: the synced rigid crown clears every corner plate through full turns from every rest tilt', () => {
     // Relative crown motion vs a corner: orbit ω about the edge axis with
-    // rigid spin θ = φ0 ± (480/90)·ω (the two relative branches; φ0 = the
-    // scrambled start tilt — it changes the 3D transit geometry now). A full
-    // 360° of ω covers all 4 start slots; ω = 0 is the rest phase itself.
+    // rigid spin θ = φ0 ± (300/90)·ω (the two relative branches; φ0 = the
+    // scrambled start tilt — rest tilts are multiples of 60°, and the creased
+    // crown shape is 180°-symmetric, so {0,60,120} covers every start shape).
+    // A full 360° of ω covers all 4 start slots; ω = 0 is the rest phase.
     const { e } = gearSlotBasis(...UF);
     expect(e.x).toBe(1); // UF edge direction is x̂ — the orbit axis below
     const rest = restCloud(...UF, toothDevSamples(1.6));
@@ -532,8 +533,8 @@ describe('gear geometry clearance invariants', () => {
     const v = new THREE.Vector3();
     const X = new THREE.Vector3(1, 0, 0);
     let worst = Infinity;
-    for (const ratio of [480 / 90, -480 / 90]) {
-      for (const phi0 of [0, 120, 240]) {
+    for (const ratio of [300 / 90, -300 / 90]) {
+      for (const phi0 of [0, 60, 120]) {
         for (let wDeg = 0; wDeg < 360; wDeg += 2) {
           spinQ.setFromAxisAngle(n, ((phi0 + ratio * wDeg) * Math.PI) / 180);
           orbitQ.setFromAxisAngle(X, (wDeg * Math.PI) / 180);
