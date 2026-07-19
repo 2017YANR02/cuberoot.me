@@ -45,9 +45,9 @@ export interface TrainerCoop {
 }
 const DEFAULT_COOP: TrainerCoop = { on: false, code: '', n: 2, k: 0 };
 /** 分片生效条件:开了且至少 2 台。 */
-export const coopActive = (c: TrainerCoop): boolean => c.on && c.n >= 2;
+const coopActive = (c: TrainerCoop): boolean => c.on && c.n >= 2;
 /** 本机分片号(钳到 [0, n)),用于 `i % n === kk` 过滤。 */
-export const coopShard = (c: TrainerCoop): number => ((c.k % c.n) + c.n) % c.n;
+const coopShard = (c: TrainerCoop): number => ((c.k % c.n) + c.n) % c.n;
 
 export interface TrainerSolve {
   i: number;
@@ -225,6 +225,12 @@ interface TrainerState {
    * (计时模式本来就跟随 observingIdx);出下一题 / 翻历史时自动解除,回到当前题。
    */
   observingPinned: boolean;
+  /**
+   * 协同复习:本机这一份刚出完(当前题是本轮最后一题)时置 true —— 出下一题被拦住,
+   * 弹「本轮复习结束」提示,`continueRecapRound()` 才进下一轮。仅协同模式生效(单机整集
+   * 每轮无缝重洗不打断)。零后端 ⟹ 各设备各自在自己那份出完时弹,不跨设备等齐。
+   */
+  recapRoundDone: boolean;
 
   // 训练偏好(localStorage `trainer:prefs`;SSR 渲染默认值,挂载后 hydratePrefs 补水)
   preAuf: boolean;
@@ -267,6 +273,8 @@ interface TrainerState {
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
   nextScramble: () => void;
+  /** 协同「本轮结束」弹窗点「继续下一轮」:清标志并真正进下一轮。 */
+  continueRecapRound: () => void;
   /** 上一个打乱(可连按,直到最旧一条)。 */
   prevScramble: () => void;
 
@@ -394,7 +402,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     const st = get();
     const a = draw(st);
     if (!a) {
-      set({ currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null });
+      set({ currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null, recapRoundDone: false });
       return;
     }
     // 依次从上一抽推进后的 recap 状态继续抽(三次抽题共享同一队列推进,不重复过同一格)
@@ -412,6 +420,32 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       peek: b ? b.entry : null,
       peek2: c ? c.entry : null,
       observingPinned: false,
+      recapRoundDone: false,
+    });
+    cstimerize();
+  };
+
+  /**
+   * 队尾把预抽的下一题(peek)扶正为当前题、peek2 递补为 peek、再预抽新的 peek2。
+   * nextScramble(过了「本轮结束」拦截后)与 continueRecapRound 共用这段推进。
+   */
+  const promoteNext = () => {
+    const st = get();
+    if (!st.peek) { pickFresh(); return; }
+    const committed = st.peek;
+    const c = draw(st); // st.recap* 已反映 peek2 抽取后的状态 → 抽 peek2 之后的那一题
+    set({
+      recapQueue: c ? c.recapQueue : st.recapQueue,
+      recapPos: c ? c.recapPos : st.recapPos,
+      recapSig: c ? c.recapSig : st.recapSig,
+      hist: histPush(st.hist, committed),
+      currentKey: committed.key,
+      currentName: committed.name,
+      currentScramble: committed.scramble,
+      peek: st.peek2,
+      peek2: c ? c.entry : null,
+      observingPinned: false,
+      recapRoundDone: false,
     });
     cstimerize();
   };
@@ -453,6 +487,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     timerStarted: 0,
     observingIdx: 0,
     observingPinned: false,
+    recapRoundDone: false,
     ...DEFAULT_PREFS,
     recapQueue: [],
     recapPos: 0,
@@ -480,6 +515,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         timerState: TimerState.NOT_RUNNING,
         observingIdx: Math.max(0, persisted.solves.length - 1),
         observingPinned: false,
+        recapRoundDone: false,
       });
       if (trainerPool(selected, get().scope).length > 0) {
         pickFresh();
@@ -580,6 +616,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       const st = get();
       // 计时进行中 / 蓄力中不换题;STOPPING 放行(stopTimer 收尾就是在这个状态里出下一题)
       if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
+      // 「本轮结束」弹窗开着时拦住一切换题 —— 只有弹窗里的「继续下一轮」能推进(见 continueRecapRound)
+      if (st.recapRoundDone) return;
       const fwd = histForward(st.hist);
       if (fwd) {
         // 历史中段(← 回看过)向前翻:current 前进一格,peek 不动(它仍是队尾之后的预览)
@@ -588,25 +626,22 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         cstimerize();
         return;
       }
+      // 协同:本机这一份的最后一题刚做完(当前题 pos === total)⟹ 暂停,弹「本轮复习结束」,
+      // 等用户点「继续下一轮」再进下一轮(单机整集不打断,每轮无缝重洗)。
+      const cur = st.hist.idx >= 0 ? st.hist.list[st.hist.idx] : null;
+      if (coopActive(st.coop) && cur?.recap && cur.recap.pos >= cur.recap.total) {
+        set({ recapRoundDone: true });
+        return;
+      }
       // 已在队尾:把预抽的下一题(peek)扶正为当前题,peek2 递补为新 peek,再预抽新的 peek2。
       // 这样「你先前看到的下一题」就是「现在要做的这一题」,预览稳定不重roll;右卡预览也提前
       // 一格备好(peek2),换题时右图秒出。
-      if (!st.peek) { pickFresh(); return; }
-      const committed = st.peek;
-      const c = draw(st); // st.recap* 已反映 peek2 抽取后的状态 → 抽 peek2 之后的那一题
-      set({
-        recapQueue: c ? c.recapQueue : st.recapQueue,
-        recapPos: c ? c.recapPos : st.recapPos,
-        recapSig: c ? c.recapSig : st.recapSig,
-        hist: histPush(st.hist, committed),
-        currentKey: committed.key,
-        currentName: committed.name,
-        currentScramble: committed.scramble,
-        peek: st.peek2,
-        peek2: c ? c.entry : null,
-        observingPinned: false,
-      });
-      cstimerize();
+      promoteNext();
+    },
+
+    continueRecapRound: () => {
+      if (!get().recapRoundDone) return;
+      promoteNext(); // 内部 set 会清 recapRoundDone,并把 peek(下一轮首题)扶正为当前题
     },
 
     prevScramble: () => {
@@ -615,7 +650,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       const back = histBack(st.hist);
       if (!back) return;
       const cur = back.list[back.idx];
-      set({ hist: back, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false });
+      set({ hist: back, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false, recapRoundDone: false });
     },
 
     getTimerReady: (delayMs) => {
