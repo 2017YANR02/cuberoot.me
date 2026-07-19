@@ -10,6 +10,7 @@ import { Pin, PinOff, Lock, LockOpen, Trash2, Pencil, Hourglass, CircleX, Check 
 import Paginator from '@/components/wca-stats/Paginator';
 import { tr, T, useLang } from '@/i18n/tr';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useAuthStore, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
 import {
   fetchThread, createPost, updatePost, deletePost, deleteThread, updateThread,
@@ -23,6 +24,7 @@ import { ForumMarkdownEditor } from '../../_components/ForumMarkdownEditor';
 import { formatCount } from '../../_lib/forum-format';
 import '../../forum.css';
 import './forum_thread.css';
+import '@/components/hash-highlight.css';
 
 const SIZE_DEFAULT = 20;
 
@@ -86,18 +88,23 @@ export default function ThreadClient() {
         requestAnimationFrame(() => {
           document.getElementById(`post-${id}`)?.scrollIntoView({ block: 'center' });
         });
-        return;
-      }
-      // Scroll to #post-N when arriving via permalink.
-      const hash = window.location.hash;
-      if (hash.startsWith('#post-')) {
-        requestAnimationFrame(() => {
-          document.querySelector(hash)?.scrollIntoView({ block: 'start' });
-        });
       }
     })();
     return () => { cancelled = true; };
   }, [threadId, page, size, load]);
+
+  // #post-N 永久链接(分享 / 从列表点进):滚到该帖并闪一下。帖子随分页异步加载,故 deps:[data];
+  // resolve 只认 post-*。(刚发的回复落到本页那种滚动是自己发的、非锚点导航,仍走 pendingScrollRef。)
+  useHashHighlight({
+    highlightClass: 'hash-flash-target',
+    block: 'start',
+    linger: 1800,
+    deps: [data],
+    resolve: (h) => {
+      const id = h.replace(/^#/, '');
+      return id.startsWith('post-') ? document.getElementById(id) : null;
+    },
+  });
 
   // View counter: once per thread id per mount.
   useEffect(() => {

@@ -1,0 +1,12 @@
+/* 全站「跳转到某项后闪一下」的统一高亮 —— useHashHighlight 挂 .hash-flash-target,
+   动画结束由 hook 的 linger 定时移除。用于块级锚点目标:/wiki 词条、/alg 公式卡、
+   /wca/prediction 项目段、论坛帖子。
+   用 box-shadow 描一圈而非改 background:不覆盖目标自身底色(公式卡等有底色),且自动
+   贴合各元素既有圆角。表格行的「持续选中」态是另一种语义,见 persons.css 的 .wp-row-target。 */
+@keyframes hash-flash {
+  0%   { box-shadow: 0 0 0 3px var(--accent-soft); }
+  100% { box-shadow: 0 0 0 3px transparent; }
+}
+.hash-flash-target {
+  animation: hash-flash 1.8s ease-out;
+}

@@ -297,15 +297,6 @@
   .wiki-entry-anchor-icon { opacity: 0.5; }
 }
 
-/* 从 URL / 搜索跳转到的词条:落点后短暂高亮,让用户一眼看到定位到哪条。 */
-.wiki-entry--target {
-  animation: wiki-entry-flash 2.2s ease-out;
-}
-@keyframes wiki-entry-flash {
-  0%, 12% { background: var(--accent-soft); }
-  100% { background: transparent; }
-}
-
 /* additions */
 .wiki-additions {
   list-style: none;

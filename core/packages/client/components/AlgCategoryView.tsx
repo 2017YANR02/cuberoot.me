@@ -11,7 +11,7 @@
  * Keeps: subgroup picker (umbrella sets), second-level picker, ori switcher,
  * per-case ori cycle, subgroup collapse, sticker/setup/HTML alg rendering.
  */
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -44,6 +44,7 @@ import { displayAlgCaseName, primaryCaseName, renameZbllGroupToken } from '@/lib
 import { ALG_TAG_LABEL, ALG_TAGS } from '@/lib/alg_tags';
 import { displayAlg } from '@/lib/alg_display';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { tr } from '@/i18n/tr';
 
 const ORI_SUFFIX = ['', 'y', 'y2', "y'"];
@@ -292,8 +293,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
   const [flashId, setFlashId] = useState<number | null>(null);
   /** 点中的那张卡(黄框)。它同时是 URL 片段的来源 —— 复制地址栏就能把这张卡发给别人。 */
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  /** 已经为哪个片段滚过了 —— 同一个锚点只滚一次,免得展开 / 折叠某组时被拽回选中的卡 */
-  const scrolledFor = useRef<string | null>(null);
   /**
    * 校验不过的**公式**:`${caseId}:${oriIdx}:${algIdx}` → 原因。卡片红框由它推出来。
    * 存到公式这一级,是因为「这张卡有问题」不够用 —— 一张卡挂四条公式,得指出是哪条。
@@ -479,33 +478,34 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
    * 目标卡在**折叠的组**里(>100 个 case 的 set 默认全折)⟹ 先把那组展开,否则
    * `getElementById` 拿到 null,跳转静默失败。
    */
-  useEffect(() => {
-    if (!data) return;
-    const hit = () => findCaseByHash(data.cases, window.location.hash, puzzleParam, set);
-    const jump = () => {
-      const c = hit();
+  // `#<case 名>` 锚点(分享链接 / 元数据弹窗「在列表中打开」/ 个人页校验汇总都落这儿,目标多半
+  // 在别的、可能还折叠着的组):选中它(黄框)+ 滚过去 + 闪一下。走共享 useHashHighlight ——
+  // reveal 负责选中并展开目标所在折叠组(展开后返回 false,collapsedGroups 进 deps 触发重试);
+  // 闪一下用 flashId(React state,免得卡片重渲染把命令式 class 冲掉),故不传 highlightClass。
+  const { setHash } = useHashHighlight({
+    block: 'center',
+    linger: 1800, // 闪一下语义(同一锚点不重放);实际的闪由下面 onScroll→flashId 渲染
+    deps: [data, collapsedGroups, puzzleParam, set, subgroupParam],
+    resolve: (h) => {
+      const c = findCaseByHash(data?.cases ?? [], h, puzzleParam, set);
+      return c?.id != null ? document.getElementById(`case-${c.id}`) : null;
+    },
+    reveal: (h) => {
+      const c = findCaseByHash(data?.cases ?? [], h, puzzleParam, set);
       if (c?.id == null) return;
       setSelectedId(c.id);
-      const el = document.getElementById(`case-${c.id}`);
-      if (!el) return;
-      if (scrolledFor.current === window.location.hash) return; // 这个锚点已经滚过了
-      scrolledFor.current = window.location.hash;
-      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      setFlashId(c.id);
-      window.setTimeout(() => setFlashId(cur => (cur === c.id ? null : cur)), 1800);
-    };
-    const target = hit();
-    if (target) setCollapsedGroups(prev => {
-      const g = target.subgroup || '';
-      if (!prev.has(g)) return prev;
-      const next = new Set(prev);
-      next.delete(g);
-      return next;
-    });
-    const t = window.setTimeout(jump, 80); // 等卡片渲染完(缩略图是异步的,但布局已定)
-    window.addEventListener('hashchange', jump);
-    return () => { window.clearTimeout(t); window.removeEventListener('hashchange', jump); };
-  }, [data, subgroupParam, collapsedGroups, puzzleParam, set]);
+      const g = c.subgroup || '';
+      if (collapsedGroups.has(g)) {
+        setCollapsedGroups(prev => { const next = new Set(prev); next.delete(g); return next; });
+        return false; // 组刚展开,卡还没挂 → 等 collapsedGroups 变化后重试
+      }
+    },
+    onScroll: (el) => {
+      const id = Number(el.id.slice('case-'.length));
+      setFlashId(id);
+      window.setTimeout(() => setFlashId(cur => (cur === id ? null : cur)), 1800);
+    },
+  });
 
   /**
    * 点卡片 = 选中它,URL 片段同步成这张卡的名字(`#Sune`)—— 地址栏直接可以复制去分享。
@@ -521,8 +521,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
     setSelectedId(on ? c.id : null);
     const frag = on ? caseAnchor(c.name) : '';
     replaceHash(frag);
-    scrolledFor.current = frag ? `#${frag}` : null; // 自己点的,别再自动滚一次
-  }, [selectedId]);
+    // 自己点的:同步给 hook 并标记已处理,别再自动滚/闪一次
+    setHash(frag ? `#${frag}` : '', { markActed: true });
+  }, [selectedId, setHash]);
 
   const subgroupSlug = subgroupParam ? decodeURIComponent(subgroupParam).toLowerCase() : null;
   const slugLevel: 'top' | 'sub' | null = useMemo(() => {
@@ -934,12 +935,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam }: Alg
               if (selectedId === action.updated.id) {
                 const frag = caseAnchor(action.updated.name);
                 replaceHash(frag);
-                scrolledFor.current = `#${frag}`;
+                setHash(`#${frag}`, { markActed: true });
               }
             } else {
               setData({ ...data, cases: data.cases.filter(c => c.id !== action.id) });
               clearInvalidFor(action.id); // case 没了,它的红标也别留着
-              if (selectedId === action.id) { setSelectedId(null); replaceHash(''); }
+              if (selectedId === action.id) { setSelectedId(null); replaceHash(''); setHash('', { markActed: true }); }
             }
             // 校验报告打开时,case saved 后让它重跑刷新结果
             if (validationOpen) setValidationRefreshKey(k => k + 1);
