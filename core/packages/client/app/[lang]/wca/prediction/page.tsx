@@ -28,6 +28,8 @@ import { MethodCompareSection } from './_components/components/MethodCompare';
 import { CrossSportSection } from './_components/components/CrossSport';
 import { MilestoneTableSection } from './_components/components/MilestoneTable';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useHashHighlight } from '@/hooks/useHashHighlight';
+import '@/components/hash-highlight.css';
 import './_components/prediction.css';
 import { tr } from '@/i18n/tr';
 
@@ -110,22 +112,24 @@ export default function PredictionPage() {
     return () => obs.disconnect();
   }, [data]);
 
-  useEffect(() => {
-    if (!data) return;
-    const openByHash = () => {
-      const id = window.location.hash.replace(/^#/, '');
+  // #event-* 锚点(TOC / 分享链接):展开该项目的 <details> + 滚过去 + 闪一下。走共享
+  // useHashHighlight —— reveal 打开折叠的 details,resolve 只认 event-* 段,免得别的锚点误命中。
+  useHashHighlight({
+    highlightClass: 'hash-flash-target',
+    block: 'start',
+    linger: 1800,
+    deps: [data],
+    resolve: (h) => {
+      const id = h.replace(/^#/, '');
+      return id.startsWith('event-') ? document.getElementById(id) : null;
+    },
+    reveal: (h) => {
+      const id = h.replace(/^#/, '');
       if (!id.startsWith('event-')) return;
-      const el = document.getElementById(id);
-      const det = el?.querySelector('details.pred-event-details') as HTMLDetailsElement | null;
-      if (det && !det.open) {
-        det.open = true;
-        requestAnimationFrame(() => el?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-      }
-    };
-    openByHash();
-    window.addEventListener('hashchange', openByHash);
-    return () => window.removeEventListener('hashchange', openByHash);
-  }, [data]);
+      const det = document.getElementById(id)?.querySelector('details.pred-event-details') as HTMLDetailsElement | null;
+      if (det && !det.open) det.open = true;
+    },
+  });
 
   if (err) return <div className="pred-loading">Failed to load: {err}</div>;
   if (!data) return <div className="pred-loading">Loading {tr({ zh: '加载中…', en: '…'

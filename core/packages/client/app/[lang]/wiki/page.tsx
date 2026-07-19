@@ -25,7 +25,9 @@ import {
   createAddition, updateAddition, deleteAddition,
   type WikiList,
 } from '@/lib/wiki-api';
+import { useHashHighlight } from '@/hooks/useHashHighlight';
 import './wiki.css';
+import '@/components/hash-highlight.css';
 import { tr } from '@/i18n/tr';
 
 const LETTERS = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
@@ -140,34 +142,10 @@ export default function WikiPage() {
     return () => observer.disconnect();
   }, [q, data]);
 
-  // 深链:URL hash 指向某个词条的 slug(如 #lsll-…,搜索跳转/分享链接都用它)。
-  // 词条是异步 fetch 后才渲染的,浏览器原生的 hash 滚动在导航那一刻触发——那时
-  // <li> 还不存在,所以什么都不会滚。数据到位后我们自己把目标滚进视野,之后 hash
-  // 变化(点词条锚点)也同样处理。
-  const deepLinkedRef = useRef(false);
-  useEffect(() => {
-    const scrollToHash = (smooth: boolean) => {
-      const raw = window.location.hash.slice(1);
-      if (!raw) return;
-      let id = raw;
-      try { id = decodeURIComponent(raw); } catch { /* 非法编码 → 用原串 */ }
-      const el = document.getElementById(id);
-      if (!el) return;
-      // .wiki-entry 自带 scroll-margin-top:100px,block:'start' 会留出顶部余量。
-      el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
-      el.classList.add('wiki-entry--target');
-      window.setTimeout(() => el.classList.remove('wiki-entry--target'), 2200);
-    };
-    const onHashChange = () => scrollToHash(true);
-    window.addEventListener('hashchange', onHashChange);
-    // 首次数据到位 → 深链一次(编辑/增补后的 reload 不再重复跳)。整页较长,初次
-    // 用瞬时定位而非 smooth,免得从顶部一路滚过几百条。
-    if (data && !deepLinkedRef.current) {
-      deepLinkedRef.current = true;
-      requestAnimationFrame(() => scrollToHash(false));
-    }
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, [data]);
+  // 深链:URL hash 指向某个词条的 slug(如 #lsll-…,搜索跳转/分享链接/点标题都用它)。
+  // 词条异步 fetch 后才渲染,故 deps:[data] —— 数据到位再定位;.wiki-entry 自带
+  // scroll-margin-top:100px,block:'start' 留出顶部余量;落点闪 1.8s。
+  useHashHighlight({ highlightClass: 'hash-flash-target', block: 'start', linger: 1800, deps: [data] });
 
   const onSaveTerm = async (id: number, head: string, body: string) => {
     await updateTerm(id, { head, body });

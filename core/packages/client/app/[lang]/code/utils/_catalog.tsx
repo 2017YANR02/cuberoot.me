@@ -100,6 +100,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Sets the document title (CubeRoot suffix, resets on unmount), SSR-safe.',
   },
   {
+    name: 'useHashHighlight',
+    sig: 'useHashHighlight(opts: { highlightClass?, resolve?, reveal?, onScroll?, block?, linger?, deps? }): { hash, setHash }',
+    imp: "import { useHashHighlight } from '@/hooks/useHashHighlight';",
+    usage: "useHashHighlight({ highlightClass: 'hash-flash-target', block: 'start', linger: 1800, deps: [data] });",
+    category: 'hook',
+    zh: '「点某项 → URL 片段更新 → 滚到它并高亮」的单一实现。全站原有 6 处各写一份(/wiki 词条、person 两张成绩表、/alg 公式卡、/wca/prediction 项目段、论坛帖子),差异点做成参数:resolve(hash→元素)/reveal(滚前展开折叠组·渐进渲染补行·开 details,返 false 稍后重试)/linger(sticky 持续 vs 数字闪一下)/highlightClass(命令式 class,省略则在 onScroll 里用 React state 打)/deps(异步就绪信号)。setHash 给 replaceHash/router 静默改片段的调用方同步(可 markActed 抑制自动跳)。闪一下的视觉走 components/hash-highlight.css 的 .hash-flash-target。',
+    en: '"Click a thing → URL fragment updates → scroll to it and highlight" in one place. Unifies 6 hand-rolled copies (wiki entries, the two person result tables, alg cards, prediction event sections, forum posts). Differences become options: resolve / reveal (expand a collapsed group, force-render a virtualized row, open <details>; return false to retry) / linger (sticky vs flash) / highlightClass / deps.',
+  },
+  {
     name: 'useModalDismiss',
     sig: 'useModalDismiss(onClose: () => void, disabled?: boolean): void',
     imp: "import { useModalDismiss } from '@/hooks/useModalDismiss';",
