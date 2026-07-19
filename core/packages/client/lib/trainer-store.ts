@@ -29,6 +29,26 @@ export type TrainerRecapOrder = 'shuffle' | 'seq';
 /** 计时数字字体(lcd 与 /timer 同款七段)。 */
 export type TrainerTimerFont = 'lcd' | 'mono' | 'liberation' | 'sans';
 
+/**
+ * 协同刷题(零后端分片):一个选手旁边多台设备各开一个账号帮忙打乱时,把复习队列
+ * 按 `i % n === k` 切成 n 份,本机只出第 k 份(0 起),合起来正好覆盖全集不重不漏。
+ * `code` 仅乱序模式用作确定性洗牌种子 —— 各设备同码 → 同一条全序 → 分片对齐;
+ * 顺序模式(按 set 原序)本身确定,不需要 code。off = 单机整集。
+ */
+export interface TrainerCoop {
+  on: boolean;
+  code: string;
+  /** 共几台(≥2 才生效)。 */
+  n: number;
+  /** 本机第几台,0 起(< n)。 */
+  k: number;
+}
+const DEFAULT_COOP: TrainerCoop = { on: false, code: '', n: 2, k: 0 };
+/** 分片生效条件:开了且至少 2 台。 */
+export const coopActive = (c: TrainerCoop): boolean => c.on && c.n >= 2;
+/** 本机分片号(钳到 [0, n)),用于 `i % n === kk` 过滤。 */
+export const coopShard = (c: TrainerCoop): number => ((c.k % c.n) + c.n) % c.n;
+
 export interface TrainerSolve {
   i: number;
   caseKey: string;
@@ -93,11 +113,14 @@ interface TrainerPrefs {
   showStats: boolean;
   /** 左栏计时数字下方的当前 case 图,可隐藏。 */
   showStageThumb: boolean;
+  /** 复习模式多设备协同分片配置(记住搭档 = 存进 prefs 下次自动恢复)。 */
+  coop: TrainerCoop;
 }
 const DEFAULT_PREFS: TrainerPrefs = {
-  preAuf: false, postAuf: true, timing: true, mode: 'train', probMode: 'uniform',
+  preAuf: true, postAuf: true, timing: true, mode: 'train', probMode: 'uniform',
   recapOrder: 'shuffle', timerFont: 'lcd', scrambleFont: 'sans',
   showPrevCard: true, showNextCard: true, showStats: true, showStageThumb: true,
+  coop: DEFAULT_COOP,
 };
 const PREFS_KEY = 'trainer:prefs';
 
@@ -121,13 +144,45 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   probMode: st.probMode, recapOrder: st.recapOrder,
   timerFont: st.timerFont, scrambleFont: st.scrambleFont,
   showPrevCard: st.showPrevCard, showNextCard: st.showNextCard, showStats: st.showStats,
-  showStageThumb: st.showStageThumb,
+  showStageThumb: st.showStageThumb, coop: st.coop,
 });
 
 const shuffle = <T,>(arr: T[]): T[] => {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+/** 字符串 → 32 位种子(FNV-1a),空串也有确定值。 */
+const seedFromString = (s: string): number => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+};
+
+/** mulberry32:确定性 PRNG。 */
+const mulberry32 = (seed: number): (() => number) => {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+/** 确定性洗牌(同 seed 同序):协同乱序模式各设备必须切在同一条全序上。 */
+const seededShuffle = <T,>(arr: T[], seed: number): T[] => {
+  const a = [...arr];
+  const rnd = mulberry32(seed);
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -184,6 +239,7 @@ interface TrainerState {
   showNextCard: boolean;
   showStats: boolean;
   showStageThumb: boolean;
+  coop: TrainerCoop;
 
   /** recap 模式的洗牌队列:pool 变了(recapSig 失配)重洗。 */
   recapQueue: string[];
@@ -207,6 +263,7 @@ interface TrainerState {
   setShowNextCard: (v: boolean) => void;
   setShowStats: (v: boolean) => void;
   setShowStageThumb: (v: boolean) => void;
+  setCoop: (c: TrainerCoop) => void;
 
   /** 下一个打乱:历史中段先前进,到队尾才出新题(train 随机 / recap 逐个)。 */
   nextScramble: () => void;
@@ -277,17 +334,30 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     let entryRecap: { pos: number; total: number } | undefined;
 
     if (st.mode === 'recap') {
-      const sig = [...pool].sort().join('|');
+      const coop = st.coop;
+      const active = coopActive(coop);
+      // sig 纳入协同配置:改「共几台/第几台/码/开关」都要重建队列(重新分片)
+      const sig = [...pool].sort().join('|') + (active ? `#${coop.code}/${coop.n}/${coop.k}` : '');
       let q = st.recapQueue;
       let pos = st.recapPos;
       if (st.recapSig !== sig || pos >= q.length) {
+        let full: string[];
         if (st.recapOrder === 'seq') {
-          // 顺序:按 set 里 case 的原始顺序过一遍
+          // 顺序:按 set 里 case 的原始顺序过一遍(本身确定,协同无需 code)
           const inPool = new Set(pool);
-          q = st.cases.map(caseKey).filter(k => inPool.has(k));
+          full = st.cases.map(caseKey).filter(k => inPool.has(k));
+        } else if (active) {
+          // 协同乱序:用协同码做确定性洗牌,各设备同码 → 同一条全序 → 分片对齐
+          full = seededShuffle(pool, seedFromString(coop.code));
         } else {
-          q = shuffle(pool);
+          full = shuffle(pool);
         }
+        // 协同:在同一条全序上按 i % n === kk 切到本机那一份(顺序/乱序同理,不重不漏)
+        if (active) {
+          const kk = coopShard(coop);
+          full = full.filter((_, i) => i % coop.n === kk);
+        }
+        q = full;
         pos = 0;
       }
       key = q[pos];
@@ -470,6 +540,14 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
     setRecapOrder: (o) => {
       set({ recapOrder: o, recapSig: '' }); // 清 sig ⟹ 下一题按新顺序重排队列
+      persistPrefs(prefsOf(get()));
+      if (get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
+    },
+    setCoop: (c) => {
+      // k 越界钳回 [0, n)(改 n 时上层已收敛,这里兜底防持久化里的脏值)
+      const n = Math.max(2, Math.floor(c.n) || 2);
+      const coop: TrainerCoop = { on: c.on, code: c.code, n, k: Math.min(Math.max(0, Math.floor(c.k) || 0), n - 1) };
+      set({ coop, recapSig: '' }); // 清 sig ⟹ 下一题按新分片重建队列
       persistPrefs(prefsOf(get()));
       if (get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
     },
