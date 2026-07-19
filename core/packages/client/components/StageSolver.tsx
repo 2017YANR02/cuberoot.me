@@ -215,24 +215,38 @@ function slotTitle(viewIdx: number | null, slotIdx: number): string {
   return `${label} ${faces.map((f) => tr(COLOR_NAME[FACE_LETTER[f]])).join(' ')}`;
 }
 
+// 4 槽里选中 3 槽(xxxc)时,补集恰是那 1 个「未解、留到最后」的槽。返回它;非 3 槽返回 null。
+function complementSlot(slots: number[]): number | null {
+  if (slots.length !== 3) return null;
+  const set = new Set(slots);
+  const rest = [0, 1, 2, 3].filter((i) => !set.has(i));
+  return rest.length === 1 ? rest[0] : null;
+}
+
 // 单个槽位色标:两片侧贴纸颜色左右竖分(竖线分隔),对应 F2L 槽的两片侧面。
-// 定不了颜色(无视角)时退回方位文字,不留空。
-function SlotChip({ viewIdx, slotIdx }: { viewIdx: number | null; slotIdx: number }) {
+// 定不了颜色(无视角)时退回方位文字,不留空。struck = 划掉(表示这是留到最后的未解槽)。
+function SlotChip({ viewIdx, slotIdx, struck = false }: { viewIdx: number | null; slotIdx: number; struck?: boolean }) {
   const faces = slotFaces(viewIdx, slotIdx);
-  const title = slotTitle(viewIdx, slotIdx);
-  if (!faces) return <span className="stsv-slot-fallback" title={title}>{SLOT_LABELS[slotIdx]}</span>;
+  const base = slotTitle(viewIdx, slotIdx);
+  const title = struck ? `${tr({ zh: '留到最后(未解)', en: 'Left last (unsolved)' })}: ${base}` : base;
+  if (!faces) return <span className={`stsv-slot-fallback${struck ? ' is-struck' : ''}`} title={title}>{SLOT_LABELS[slotIdx]}</span>;
   return (
-    <span className="stsv-slot-chip" title={title} aria-label={title} role="img">
+    <span className={`stsv-slot-chip${struck ? ' is-struck' : ''}`} title={title} aria-label={title} role="img">
       <span style={{ background: CUBE_FILL[faces[0]] }} />
       <span style={{ background: CUBE_FILL[faces[1]] }} />
     </span>
   );
 }
 // 一个槽位组合(1~3 个槽)的色标行:每槽一个 chip 顺排。
-function SlotChips({ viewIdx, slots }: { viewIdx: number | null; slots: number[] }) {
+// complement:已解满 3 槽(xxxc)时,不画 3 个已解格,改画那 1 个未解槽并划掉(仅无自由对的方法用,
+// pair/pseudo_pair 的补集是自由对而非未解槽,不适用)。
+function SlotChips({ viewIdx, slots, complement = false }: { viewIdx: number | null; slots: number[]; complement?: boolean }) {
+  const comp = complement ? complementSlot(slots) : null;
   return (
     <span className="stsv-slot-chips">
-      {slots.map((s, i) => <SlotChip key={`${s}-${i}`} viewIdx={viewIdx} slotIdx={s} />)}
+      {comp != null
+        ? <SlotChip viewIdx={viewIdx} slotIdx={comp} struck />
+        : slots.map((s, i) => <SlotChip key={`${s}-${i}`} viewIdx={viewIdx} slotIdx={s} />)}
     </span>
   );
 }
@@ -241,7 +255,7 @@ function SlotChips({ viewIdx, slots }: { viewIdx: number | null; slots: number[]
 // 结构/交互对齐 SubsetColorPicker(usePanelClamp 钳视口 + 点外/Esc 关);value=''=自动(最优)。
 interface SlotSelectOption { value: string; slots: number[] }
 function SlotChipSelect({
-  label, value, autoLabel, options, viewIdx, onChange,
+  label, value, autoLabel, options, viewIdx, onChange, complement = false,
 }: {
   label: string;
   value: string;
@@ -249,6 +263,7 @@ function SlotChipSelect({
   options: SlotSelectOption[];
   viewIdx: number | null;
   onChange: (v: string) => void;
+  complement?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -279,7 +294,7 @@ function SlotChipSelect({
         aria-expanded={open}
         aria-label={label}
       >
-        {cur ? <SlotChips viewIdx={viewIdx} slots={cur.slots} /> : <span className="stsv-slotsel-auto">{autoLabel}</span>}
+        {cur ? <SlotChips viewIdx={viewIdx} slots={cur.slots} complement={complement} /> : <span className="stsv-slotsel-auto">{autoLabel}</span>}
         <ChevronDown size={13} className="stsv-slotsel-caret" />
       </button>
       {open && (
@@ -302,7 +317,7 @@ function SlotChipSelect({
               className={`stsv-slotsel-opt${o.value === value ? ' is-active' : ''}`}
               onClick={() => pick(o.value)}
             >
-              <SlotChips viewIdx={viewIdx} slots={o.slots} />
+              <SlotChips viewIdx={viewIdx} slots={o.slots} complement={complement} />
             </button>
           ))}
         </div>
@@ -938,7 +953,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     labels.map((l) => SLOT_LABELS.indexOf(l as typeof SLOT_LABELS[number])).filter((i) => i >= 0);
   const renderSolSlots = (c: string) => {
     const toks = c.split(/\s+/).filter(Boolean);
-    if (!hasBase(method)) return <SlotChips viewIdx={selFace} slots={labelToSlots(toks)} />;
+    if (!hasBase(method)) return <SlotChips viewIdx={selFace} slots={labelToSlots(toks)} complement />;
     const free = toks[0];
     const fixed = toks.slice(1);
     return (
@@ -989,11 +1004,12 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             <span>{t('槽位', 'Slot')}</span>
             <SlotChipSelect
               label={t('槽位', 'Slot')}
-              autoLabel={t('自动(最优)', 'Auto (best)')}
+              autoLabel={t('最优', 'Best')}
               value={selSlot}
               viewIdx={selFace}
               options={slotCombos.map((c) => ({ value: c.join(','), slots: c }))}
               onChange={changeSlot}
+              complement={!hasBase(method)}
             />
           </div>
         )}
@@ -1003,7 +1019,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             <span>{t('基态', 'Free Pair')}</span>
             <SlotChipSelect
               label={t('基态', 'Free Pair')}
-              autoLabel={t('自动(最优)', 'Auto (best)')}
+              autoLabel={t('最优', 'Best')}
               value={selBase}
               viewIdx={selFace}
               options={baseOptions.map((i) => ({ value: String(i), slots: [i] }))}

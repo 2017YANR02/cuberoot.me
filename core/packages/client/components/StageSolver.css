@@ -154,7 +154,23 @@ html[data-theme='dark'] .stsv {
   flex: 0 0 auto;
 }
 .stsv-slot-chip > span { flex: 1 1 0; min-width: 0; }
+/* 划掉:xxxc 只画那 1 个未解(留到最后)的槽,一条对角线划过 = 「这格空着」。
+   白线 + 深色描边 → 任意底色都看得清;overflow:hidden 把两端裁到格子边框内,看着像角到角。 */
+.stsv-slot-chip.is-struck { position: relative; }
+.stsv-slot-chip.is-struck::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: calc(50% - 1px);
+  height: 2px;
+  transform: rotate(-30deg);
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
 .stsv-slot-fallback { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; color: var(--sv-text-mute); }
+.stsv-slot-fallback.is-struck { text-decoration: line-through; }
 
 .stsv-slotsel { position: relative; align-self: flex-start; }
 .stsv-slotsel-btn {
