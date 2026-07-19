@@ -1158,6 +1158,12 @@ html[data-theme=dark] .gen-page {
     flex-wrap: wrap;
     margin: 0.25rem 0 0.75rem;
 }
+/* 「分析」标签(.gen-sq1-format-label 默认 0.8rem)与「本轮/全部」(PillToggle 默认 13px)
+   都比「备打/最优」(BoolToggle,无覆写 = 继承环境默认字号)偏小 —— 统一 inherit,以备打为准。 */
+.gen-cx-switchrow .gen-sq1-format-label,
+.gen-cx-switchrow .pill-toggle {
+    font-size: inherit;
+}
 
 /* 内嵌模式(forcedCompId):打乱图/下载图标并入本行最前(靠左),复刻原
    .gen-tn-controls.is-loaded 的无边框图标样式。 */
