@@ -12,6 +12,7 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import BoolToggle from '@/components/BoolToggle';
+import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 import { validateFacelet } from './facelet';
 import {
@@ -28,9 +29,7 @@ export interface PaintPaletteProps {
 }
 
 export function PaintPalette({ activeColor, onActiveColorChange }: PaintPaletteProps) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
-  const t = (zh: string, en: string) => (isZh ? zh : en);
+  const t = useT();
 
   return (
     <div className="vc-paint-palette">
