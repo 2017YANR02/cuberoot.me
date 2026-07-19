@@ -34,10 +34,12 @@
 }
 
 /* ── 右上角 语言切换 + 登录 / 我的主页 入口 ── */
+/* 对齐内容列右沿(内容列 max-width 1100px,见 .cards-sections / .recent-scrambles),
+   宽屏不贴浏览器最右侧;窄屏退回页面自身的 padding 地板。 */
 .landing-page .landing-auth {
     position: absolute;
     top: calc(1.1rem + var(--sat));
-    right: max(1rem, var(--sar));
+    right: max(2rem, var(--sar), calc((100vw - 1100px) / 2));
     z-index: 5;
     display: flex;
     align-items: center;
