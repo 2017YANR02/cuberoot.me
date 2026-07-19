@@ -56,13 +56,15 @@ const FACE_COLOR: Record<number, number> = {
 
 function hex(s: string): number { return parseInt(s.replace('#', ''), 16); }
 
-/** Display rotation: bring V0=(1,1,1) to +Y (apex up), then yaw +135° about Y so the
- *  U-R edge faces the camera — R vertex front, L back-left, B back-right (azimuths
- *  0°/−120°/+120°, exact). The visible faces are then F {U,L,R} (green) front-left and
- *  R {U,R,B} (red) front-right: the standard pyraminx pose, matching the WCA holding
- *  the vertex letters imply. Applied to the whole cube group, not the pieces. */
+/** Display rotation: bring V0=(1,1,1) to +Y (apex up), then yaw 195° (13π/12) about Y.
+ *  Calibrated against the actual render, NOT model azimuth — the sim camera sits ~60°
+ *  off the +Z axis, so the yaw is set by what shows on screen: the R vertex faces the
+ *  camera with the U-R edge running down the middle, so the two visible faces are
+ *  F {U,L,R} (green) on the LEFT and R {U,R,B} (red) on the RIGHT, U apex up, L bottom-
+ *  left, B to the right — the standard pyraminx product pose (green front-left, red
+ *  front-right). Applied to the whole cube group, not the pieces. */
 export const APEX_UP_QUAT = new THREE.Quaternion()
-  .setFromAxisAngle(new THREE.Vector3(0, 1, 0), 3 * Math.PI / 4)
+  .setFromAxisAngle(new THREE.Vector3(0, 1, 0), 13 * Math.PI / 12)
   .multiply(new THREE.Quaternion().setFromUnitVectors(
     new THREE.Vector3(1, 1, 1).normalize(), new THREE.Vector3(0, 1, 0),
   ));
