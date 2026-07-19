@@ -16,10 +16,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, Copy, Check, Info, X, ChevronRight } from 'lucide-react';
+import { Loader2, Copy, Check, Info, X, ChevronRight, ChevronDown } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
-import { SubsetColorPicker, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
+import { SubsetColorPicker, useSubsetSelection, COLOR_NAME, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { tr } from '@/i18n/tr';
 import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS } from '@/lib/rust-cross-client';
 import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
@@ -164,7 +166,148 @@ function kCombos(k: number): number[][] {
   return res;
 }
 const comboArity = (c: string): number => (c ? c.split(',').length : 0);
-const comboLabel = (c: string): string => c.split(',').map((i) => SLOT_LABELS[Number(i)]).join(' ');
+
+// ── 槽位 → 两侧贴纸颜色 ─────────────────────────────────────────────────
+// 槽位标签 BL/BR/FR/FL 是方位(后左/后右/前右/前左);要展示的是该槽两片侧面贴纸的颜色。
+// 颜色随视角变:每个视角(FACES[i].rot 把该底面转到 D)转动后,F/R/B/L 位各落在标准配色的哪一面。
+// 例:白底(视角 U,rot z2)下 BL = 蓝+红,与现场解法一致。
+// 旋转记号 → 面置换(新位 ← 旧位来源;未列出的位不变)。
+const ROT_PERM: Record<string, Partial<Record<CubeFace, CubeFace>>> = {
+  x: { U: 'F', F: 'D', D: 'B', B: 'U' },
+  "x'": { U: 'B', B: 'D', D: 'F', F: 'U' },
+  x2: { U: 'D', D: 'U', F: 'B', B: 'F' },
+  y: { F: 'R', R: 'B', B: 'L', L: 'F' },
+  "y'": { F: 'L', L: 'B', B: 'R', R: 'F' },
+  y2: { F: 'B', B: 'F', L: 'R', R: 'L' },
+  z: { U: 'L', L: 'D', D: 'R', R: 'U' },
+  "z'": { U: 'R', R: 'D', D: 'L', L: 'U' },
+  z2: { U: 'D', D: 'U', L: 'R', R: 'L' },
+};
+const ALL_POS: CubeFace[] = ['U', 'D', 'F', 'B', 'L', 'R'];
+// 视角 i 转动后,读出 F/R/B/L 四个侧位各是标准配色里的哪一面。
+function viewSideFaces(viewIdx: number): Record<'F' | 'R' | 'B' | 'L', CubeFace> {
+  let o: Record<CubeFace, CubeFace> = { U: 'U', D: 'D', F: 'F', B: 'B', L: 'L', R: 'R' };
+  for (const tok of (FACES[viewIdx]?.rot ?? '').split(/\s+/).filter(Boolean)) {
+    const perm = ROT_PERM[tok];
+    if (!perm) continue;
+    const next = { ...o };
+    for (const p of ALL_POS) next[p] = o[perm[p] ?? p];
+    o = next;
+  }
+  return { F: o.F, R: o.R, B: o.B, L: o.L };
+}
+// 槽位索引 → 两个侧位(BL=后+左, BR=后+右, FR=前+右, FL=前+左),第一位取前/后轴、第二位取左/右轴。
+const SLOT_SIDE_POS: ['F' | 'B', 'L' | 'R'][] = [['B', 'L'], ['B', 'R'], ['F', 'R'], ['F', 'L']];
+// (视角, 槽位) → 该槽两片侧贴纸的面。viewIdx 为 null(尚未选视角)时无法定色 → null。
+function slotFaces(viewIdx: number | null, slotIdx: number): [CubeFace, CubeFace] | null {
+  if (viewIdx == null) return null;
+  const sides = viewSideFaces(viewIdx);
+  const [a, b] = SLOT_SIDE_POS[slotIdx];
+  return [sides[a], sides[b]];
+}
+// 无障碍/悬浮标题:槽位方位 + 两侧颜色名(如 "BL Blue Red" / "BL 蓝 红")。
+function slotTitle(viewIdx: number | null, slotIdx: number): string {
+  const label = SLOT_LABELS[slotIdx];
+  const faces = slotFaces(viewIdx, slotIdx);
+  if (!faces) return label;
+  return `${label} ${faces.map((f) => tr(COLOR_NAME[FACE_LETTER[f]])).join(' ')}`;
+}
+
+// 单个槽位色标:两片侧贴纸颜色左右竖分(竖线分隔),对应 F2L 槽的两片侧面。
+// 定不了颜色(无视角)时退回方位文字,不留空。
+function SlotChip({ viewIdx, slotIdx }: { viewIdx: number | null; slotIdx: number }) {
+  const faces = slotFaces(viewIdx, slotIdx);
+  const title = slotTitle(viewIdx, slotIdx);
+  if (!faces) return <span className="stsv-slot-fallback" title={title}>{SLOT_LABELS[slotIdx]}</span>;
+  return (
+    <span className="stsv-slot-chip" title={title} aria-label={title} role="img">
+      <span style={{ background: CUBE_FILL[faces[0]] }} />
+      <span style={{ background: CUBE_FILL[faces[1]] }} />
+    </span>
+  );
+}
+// 一个槽位组合(1~3 个槽)的色标行:每槽一个 chip 顺排。
+function SlotChips({ viewIdx, slots }: { viewIdx: number | null; slots: number[] }) {
+  return (
+    <span className="stsv-slot-chips">
+      {slots.map((s, i) => <SlotChip key={`${s}-${i}`} viewIdx={viewIdx} slotIdx={s} />)}
+    </span>
+  );
+}
+
+// 槽位/基态选择器:原生 <select> 无法在 <option> 里画色块 → 自绘下拉,选项用 SlotChips 展示。
+// 结构/交互对齐 SubsetColorPicker(usePanelClamp 钳视口 + 点外/Esc 关);value=''=自动(最优)。
+interface SlotSelectOption { value: string; slots: number[] }
+function SlotChipSelect({
+  label, value, autoLabel, options, viewIdx, onChange,
+}: {
+  label: string;
+  value: string;
+  autoLabel: string;
+  options: SlotSelectOption[];
+  viewIdx: number | null;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(open, panelRef);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => { if (!rootRef.current?.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); btnRef.current?.focus(); } };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
+  }, [open]);
+
+  const cur = options.find((o) => o.value === value);
+  const pick = (v: string) => { onChange(v); setOpen(false); btnRef.current?.focus(); };
+
+  return (
+    <div ref={rootRef} className="stsv-slotsel">
+      <button
+        ref={btnRef}
+        type="button"
+        className={`stsv-slotsel-btn${open ? ' is-open' : ''}`}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={label}
+      >
+        {cur ? <SlotChips viewIdx={viewIdx} slots={cur.slots} /> : <span className="stsv-slotsel-auto">{autoLabel}</span>}
+        <ChevronDown size={13} className="stsv-slotsel-caret" />
+      </button>
+      {open && (
+        <div ref={panelRef} className="stsv-slotsel-panel" role="listbox" aria-label={label}>
+          <button
+            type="button"
+            role="option"
+            aria-selected={value === ''}
+            className={`stsv-slotsel-opt${value === '' ? ' is-active' : ''}`}
+            onClick={() => pick('')}
+          >
+            <span className="stsv-slotsel-auto">{autoLabel}</span>
+          </button>
+          {options.map((o) => (
+            <button
+              key={o.value}
+              type="button"
+              role="option"
+              aria-selected={o.value === value}
+              className={`stsv-slotsel-opt${o.value === value ? ' is-active' : ''}`}
+              onClick={() => pick(o.value)}
+            >
+              <SlotChips viewIdx={viewIdx} slots={o.slots} />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // 步骤前缀可能含 1~2 个旋转 token(eo/f2leo 破 y 对称时如 "x' y")。算实际转动数(HTM)时剥掉。
 const moveLen = (sol: string) => sol.replace(/^([xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
@@ -788,17 +931,24 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   // 解法行槽位标签。pair/pseudo_pair:combo 约定首位 = 自由对 tgt、其后 = 固定 xcross 槽
   // (见 enumerate_small),拆成「固定槽(槽位)」+「自由对(基态)」两段区分显示(固定在前)。
   // 其余方法:整串一个 accent pill(无自由对语义)。
+  // c = 空格分隔的槽位标签(BL/BR/FR/FL);转成 slot 索引后用 SlotChips 画侧贴纸色标(替代方位字母)。
+  const labelToSlots = (labels: string[]) =>
+    labels.map((l) => SLOT_LABELS.indexOf(l as typeof SLOT_LABELS[number])).filter((i) => i >= 0);
   const renderSolSlots = (c: string) => {
-    if (!hasBase(method)) return <span className="stsv-sol-slot">{c}</span>;
     const toks = c.split(/\s+/).filter(Boolean);
+    if (!hasBase(method)) return <SlotChips viewIdx={selFace} slots={labelToSlots(toks)} />;
     const free = toks[0];
     const fixed = toks.slice(1);
     return (
       <span className="stsv-sol-slots">
         {fixed.length > 0 && (
-          <span className="stsv-sol-slot-fixed" title={t('已解固定槽(槽位)', 'Fixed solved slots')}>{fixed.join(' ')}</span>
+          <span className="stsv-sol-slot-fixed" title={t('已解固定槽(槽位)', 'Fixed solved slots')}>
+            <SlotChips viewIdx={selFace} slots={labelToSlots(fixed)} />
+          </span>
         )}
-        <span className="stsv-sol-slot" title={t('基态(正在配的自由对)', 'Free pair (基态)')}>{free}</span>
+        <span className="stsv-sol-slot" title={t('基态(正在配的自由对)', 'Free pair (基态)')}>
+          <SlotChips viewIdx={selFace} slots={labelToSlots([free])} />
+        </span>
       </span>
     );
   };
@@ -830,30 +980,34 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           </select>
         </label>
         {/* 槽位选择器仅在「有得选」时显示:k=4(满 F2L,唯一组合 BL BR FR FL,等于自动)
-            和 k=0(纯十字无槽)都只有 ≤1 个组合,不显示。 */}
+            和 k=0(纯十字无槽)都只有 ≤1 个组合,不显示。选项用侧贴纸色标(SlotChips)替代方位字母,
+            视角(selFace)定色 —— 原生 <select> 无法在 <option> 里画色块,故走自绘下拉。 */}
         {slotCombos.length >= 2 && (
-          <label className="stsv-control">
+          <div className="stsv-control">
             <span>{t('槽位', 'Slot')}</span>
-            <select className="stsv-control-select" value={selSlot} onChange={(e) => changeSlot(e.target.value)}>
-              <option value="">{t('自动(最优)', 'Auto (best)')}</option>
-              {slotCombos.map((c) => {
-                const v = c.join(',');
-                return <option key={v} value={v}>{comboLabel(v)}</option>;
-              })}
-            </select>
-          </label>
+            <SlotChipSelect
+              label={t('槽位', 'Slot')}
+              autoLabel={t('自动(最优)', 'Auto (best)')}
+              value={selSlot}
+              viewIdx={selFace}
+              options={slotCombos.map((c) => ({ value: c.join(','), slots: c }))}
+              onChange={changeSlot}
+            />
+          </div>
         )}
         {/* 基态(自由对):仅 pair/pseudo_pair。选哪个槽是「正在配的那一对」,其余槽自动当固定已解。 */}
         {hasBase(method) && (
-          <label className="stsv-control">
+          <div className="stsv-control">
             <span>{t('基态', 'Free Pair')}</span>
-            <select className="stsv-control-select" value={selBase} onChange={(e) => changeBase(e.target.value)}>
-              <option value="">{t('自动(最优)', 'Auto (best)')}</option>
-              {baseOptions.map((i) => (
-                <option key={i} value={String(i)}>{SLOT_LABELS[i]}</option>
-              ))}
-            </select>
-          </label>
+            <SlotChipSelect
+              label={t('基态', 'Free Pair')}
+              autoLabel={t('自动(最优)', 'Auto (best)')}
+              value={selBase}
+              viewIdx={selFace}
+              options={baseOptions.map((i) => ({ value: String(i), slots: [i] }))}
+              onChange={changeBase}
+            />
+          </div>
         )}
         {/* 最大步数 = 比该面最优多几步(相对最优,跨面一致;cross 阶段也不会因绝对大值爆炸)。 */}
         <label className="stsv-control">
