@@ -284,7 +284,21 @@ export function isTiedValue(value: number, current: number | null | undefined): 
   return current != null && value === current;
 }
 
-/** 给前端少传的字段补全:event_name / person_country_en / tied(由 previous_pr 推)。 */
+// WCA Live GraphQL 的 competition.name 有时带 HTML 实体(组织者录入侧的编码遗留,如
+// "Xi&#039;an Summer 2026"),客户端 wca/comp 页早有同款 decodeEntities 兜底,这里补齐
+// server 推送侧(否则 Bark 文案原样透出实体给用户)。
+function decodeEntities(s: string): string {
+  if (!s) return s;
+  return s
+    .replace(/&#0?39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
+}
+
+/** 给前端少传的字段补全:event_name / person_country_en / tied(由 previous_pr 推);比赛名解 HTML 实体。 */
 export function enrich(evIn: RecordEvent): RecordEvent {
   const ev: RecordEvent = { ...evIn };
   if (!ev.event_name && ev.event_id) {
@@ -293,6 +307,8 @@ export function enrich(evIn: RecordEvent): RecordEvent {
   if (!ev.person_country_en) {
     ev.person_country_en = COUNTRY_CN_MAP[ev.person_iso2 ?? ''] ?? '';
   }
+  ev.comp_name = decodeEntities(ev.comp_name);
+  if (ev.comp_name_en) ev.comp_name_en = decodeEntities(ev.comp_name_en);
   const prev = ev.previous_pr;
   delete ev.previous_pr;
   if (ev.tied === undefined) {
