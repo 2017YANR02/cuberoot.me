@@ -43,22 +43,29 @@ export const EDGE_PAIRS: ReadonlyArray<readonly [number, number]> = [
   [0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3],
 ];
 
-/** Face m (opposite vertex m) → fill color. Bottom (face 0, under the apex) yellow;
- *  the three slanted visible faces green / red / blue, matching a standard pyraminx. */
+/** Face m (opposite vertex m) → fill color, WCA-consistent with the vertex letters
+ *  U/L/R/B (face X touches every vertex except its opposite): D↔U yellow, R↔L red,
+ *  L↔R blue, F↔B green — the standard scheme (green front, red right, blue left,
+ *  yellow down in the default pose). CUBE_FILL keys are cube faces, reused for hue. */
 const FACE_COLOR: Record<number, number> = {
-  0: hex(CUBE_FILL.D), // yellow
-  1: hex(CUBE_FILL.F), // green
-  2: hex(CUBE_FILL.R), // red
-  3: hex(CUBE_FILL.B), // blue
+  0: hex(CUBE_FILL.D), // D face (opp U) yellow
+  1: hex(CUBE_FILL.R), // R face (opp L) red
+  2: hex(CUBE_FILL.B), // L face (opp R) blue
+  3: hex(CUBE_FILL.F), // F face (opp B) green
 };
 
 function hex(s: string): number { return parseInt(s.replace('#', ''), 16); }
 
-/** Apex-up display rotation: bring V0=(1,1,1) to +Y so the puzzle sits on a vertex
- *  like the cubing.js render. Applied to the whole cube group, not the pieces. */
-export const APEX_UP_QUAT = new THREE.Quaternion().setFromUnitVectors(
-  new THREE.Vector3(1, 1, 1).normalize(), new THREE.Vector3(0, 1, 0),
-);
+/** Display rotation: bring V0=(1,1,1) to +Y (apex up), then yaw +135° about Y so the
+ *  U-R edge faces the camera — R vertex front, L back-left, B back-right (azimuths
+ *  0°/−120°/+120°, exact). The visible faces are then F {U,L,R} (green) front-left and
+ *  R {U,R,B} (red) front-right: the standard pyraminx pose, matching the WCA holding
+ *  the vertex letters imply. Applied to the whole cube group, not the pieces. */
+export const APEX_UP_QUAT = new THREE.Quaternion()
+  .setFromAxisAngle(new THREE.Vector3(0, 1, 0), 3 * Math.PI / 4)
+  .multiply(new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(1, 1, 1).normalize(), new THREE.Vector3(0, 1, 0),
+  ));
 
 /** Unit twist axis for vertex k. */
 export function vertexAxis(k: number): THREE.Vector3 {
