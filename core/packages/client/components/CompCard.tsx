@@ -16,7 +16,7 @@ import { toWcaEventId } from '@/lib/wca-events';
 import { Flag } from '@/components/Flag';
 import { CubingIcon } from '@/components/EventIcon';
 import { formatDateRangeIso } from '@/lib/wca-date';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { personFlagIso2 } from '@/lib/country-flags';
 import { tr } from '@/i18n/tr';
 import './registration_comps.css';

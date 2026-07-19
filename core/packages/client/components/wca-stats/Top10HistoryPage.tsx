@@ -8,7 +8,7 @@ import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Play, Pause, Download } from 'lucide-react';
 import { Flag } from '@/components/Flag';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { wcaPersonUrl } from '@/lib/recon-utils';

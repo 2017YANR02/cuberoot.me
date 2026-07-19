@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import WcaAuth from '@/components/WcaAuth';
 import { Flag } from '@/components/Flag';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { persistItem } from '@/lib/safe-storage';
 import { useAuthStore, ADMIN_WCA_IDS } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';

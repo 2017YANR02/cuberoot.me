@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Play, Pause } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compLinkProps } from '@/lib/comp-link';

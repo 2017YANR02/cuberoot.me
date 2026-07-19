@@ -1,7 +1,7 @@
 // NOTE: Top 10 History 视频导出 — WebCodecs (H.264) + OffscreenCanvas + mp4-muxer
 //   1080p / 30fps / 12Mbps,avc1.640033 (H.264 High Profile Level 5.1)
 //   渲染逻辑独立于 React,纯 Canvas2D 重画 stage(banner / axis / 10 行 bars)
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { compFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { formatWcaResult } from '@/lib/wca-format-result';
