@@ -13,7 +13,7 @@
  * form's caret handler can scrub the cube as the user clicks the solution text.
  */
 
-import { type RefObject } from 'react';
+import { type ReactNode, type RefObject } from 'react';
 import type World from '@/app/[lang]/sim/engine/world';
 import type Sq1Cube from '@/app/[lang]/sim/engine/sq1/Sq1Cube';
 import type { Sq1Move } from '@/app/[lang]/sim/engine/sq1/sq1State';
@@ -21,7 +21,7 @@ import { parseSq1Tokens } from '@/lib/sq1-svg';
 import ReconPlayerBase, { type ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
 
 export default function Sq1ReconPlayer({
-  scramble, alg, fillPane = false, playerRef, backView = false, hideControls = false,
+  scramble, alg, fillPane = false, playerRef, backView = false, hideControls = false, fullscreenButton,
 }: {
   scramble: string;
   alg: string;
@@ -32,6 +32,7 @@ export default function Sq1ReconPlayer({
   hideControls?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
+  fullscreenButton?: ReactNode;
 }) {
   const adapter: ReconPlayerAdapter<Sq1Move> = {
     kind: 'sq1',
@@ -65,6 +66,7 @@ export default function Sq1ReconPlayer({
       fillPane={fillPane}
       hideControls={hideControls}
       playerRef={playerRef}
+      fullscreenButton={fullscreenButton}
     />
   );
 }

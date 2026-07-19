@@ -1,0 +1,66 @@
+/* PlaybackBar — twizzle-style two-row transport (scrubber row on top, buttons
+   below). Shared by recon (ReconPlayerBase) and /sim engine playback so both
+   render identically. Sizing: fills its container up to a tidy cap, centered. */
+
+.playback-bar {
+  --pb-thumb: 14px; /* native range thumb width — keeps the value bubble over the thumb */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Scrubber row: the slider fills edge-to-edge; the current-step value floats
+   above the moving thumb (no trailing counter). Top padding reserves room for it. */
+.playback-bar-scrub {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-top: 26px;
+}
+.playback-bar-scrub .playback-scrubber {
+  flex: 1;
+  width: 100%;
+}
+
+.playback-bar-bubble {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.playback-bar-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.playback-bar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.playback-bar-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.playback-bar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

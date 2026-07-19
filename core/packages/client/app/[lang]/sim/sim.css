@@ -365,26 +365,8 @@
   display: none;
 }
 
-/* 全屏 toggle 按钮:浮在 canvas 右上角,进入/退出共用 */
-.sim-fullscreen-exit {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  cursor: pointer;
-  z-index: 10;
-}
-.sim-fullscreen-exit:hover {
-  background: rgba(0, 0, 0, 0.75);
-}
+/* 全屏 toggle 按钮现居播放条按钮排最左(twizzle 式),复用 .playback-bar-btn 样式,
+   不再浮在 canvas 上;原 .sim-fullscreen-exit 覆盖样式已随之移除。 */
 
 /* 背面视图小窗 — 右上角浮一个第二渲染器画布,从背后看魔方。
    尺寸 + fullscreen 按钮的让位偏移由 JS (layoutBackView) 写 inline style。

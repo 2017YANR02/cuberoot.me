@@ -32,11 +32,11 @@ import {
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  Play, Pause, SkipBack, SkipForward,
+  Play,
   FlipHorizontal2, FlipVertical2, Eraser,
   Shuffle, Link2, Check,
   Search, Loader2, Pipette,
-  Undo2, Redo2, Keyboard, Grid3x3,
+  Keyboard, Grid3x3,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
@@ -125,6 +125,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { CubingIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import AlgInput from '@/components/AlgInput';
+import PlaybackBar from '@/components/PlaybackBar';
 import './player-controls.css';
 
 /**
@@ -880,6 +881,9 @@ interface Props {
   /** DOM node below the cube canvas to portal the playback control row into
    *  (twizzle-style bar under the puzzle). Falls back to inline when absent. */
   playbackSlot?: HTMLElement | null;
+  /** 全屏/退出全屏按钮(SimPage 持有 fullscreen 状态),渲染在播放条按钮排最左
+   *  (twizzle alpha.twizzle.net/edit 同款,全屏钮居首)。 */
+  fullscreenButton?: ReactNode;
   /** 按阶段展示色块(twizzle stickering,issue #27)。URL 状态归 SimPage(nuqs),
    *  这里只渲染播放条最左的下拉。支持与否走 simCaps.supports.stickering(不支持隐藏)。 */
   stickering?: string;
@@ -897,7 +901,7 @@ export default function PlayerControls({
   userMoveRef, twistyPlayerRef,
   skewbNotation, onSkewbNotationChange,
   renderer = 'cubing', onRendererChange,
-  playbackSlot,
+  playbackSlot, fullscreenButton,
   stickering = 'full', onStickeringChange,
   stickeringColor = 'yellow', onStickeringColorChange,
 }: Props) {
@@ -1455,6 +1459,19 @@ export default function PlayerControls({
     }
     jumpToStep(step - 1);
   }, [jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSq1, isIvy, corner, world, nxnItems]);
+
+  // Play/pause toggle for the shared PlaybackBar. Pausing is instant; starting
+  // from the end first复位到第 0 步(并同步 stepRef,否则播放轮询读到 step≥total
+  // 会立刻停),复位完成后再开播 — 与旧内联 handler 行为一致。
+  const handleTogglePlay = useCallback(async () => {
+    if (playing) { setPlaying(false); return; }
+    setCaretChar(null); // playback owns the highlight from here
+    if (step >= totalSteps) {
+      await jumpToStep(0);
+      stepRef.current = 0;
+    }
+    setPlaying(true);
+  }, [playing, step, totalSteps, jumpToStep]);
 
   useEffect(() => {
     if (!playing) {
@@ -2151,42 +2168,37 @@ export default function PlayerControls({
 
       {(() => {
       const playbackBar = !isTwistyMode ? (
-      // 播放控制排(twizzle alpha.twizzle.net/edit 同款):跳到起点 |◀ / 上一步 ↩ /
-      // 播放 ▶ / 下一步 ↪ / 跳到末尾 ▶|。单步用弧形箭头,跳首尾用带竖线的双三角。
-      <div className="sim-player-row">
-        {stickeringSelect}
-        <button onClick={() => { setCaretChar(null); jumpToStep(0); }} disabled={step === 0} title={t('回到起点', 'Skip to start')} aria-label={t('回到起点', 'Skip to start')}><SkipBack size={14} /></button>
-        <button onClick={stepBack} disabled={step === 0} title={t('上一步', 'Step back')} aria-label={t('上一步', 'Step back')}><Undo2 size={14} /></button>
-        <button
-          onClick={async () => {
-            if (playing) { setPlaying(false); return; }
-            setCaretChar(null); // playback owns the highlight from here
-            // 已在末尾时再点播放 = 从头重播:先把魔方复位到第 0 步(并同步 stepRef,
-            // 否则播放轮询读到 step≥total 会立刻停),复位完成后再开播。
-            if (step >= totalSteps) {
-              await jumpToStep(0);
-              stepRef.current = 0;
-            }
-            setPlaying(true);
-          }}
-          disabled={totalSteps === 0}
-          title={playing ? t('暂停', 'Pause') : t('播放', 'Play')}
-          aria-label={playing ? t('暂停', 'Pause') : t('播放', 'Play')}
-        >
-          {playing ? <Pause size={14} /> : <Play size={14} />}
-        </button>
-        <button onClick={stepForward} disabled={step >= totalSteps} title={t('下一步', 'Step forward')} aria-label={t('下一步', 'Step forward')}><Redo2 size={14} /></button>
-        <button onClick={() => { setCaretChar(null); jumpToStep(totalSteps); }} disabled={step >= totalSteps} title={t('跳到末尾', 'Skip to end')} aria-label={t('跳到末尾', 'Skip to end')}><SkipForward size={14} /></button>
-        <span className="sim-player-progress">{step} / {totalSteps}</span>
-        {anchorSelect}
-      </div>
+      // 播放控制排:twizzle alpha.twizzle.net/edit 同款两排布局(进度条在上、传输按钮在下),
+      // 与 /recon 播放条共用同一份 <PlaybackBar>。stickering / 锚点两个下拉挂在按钮排两端。
+      <PlaybackBar
+        step={step}
+        total={totalSteps}
+        playing={playing}
+        onScrub={(n) => { setCaretChar(null); jumpToStep(n); }}
+        onSkipStart={() => { setCaretChar(null); jumpToStep(0); }}
+        onStepBack={stepBack}
+        onTogglePlay={handleTogglePlay}
+        onStepForward={stepForward}
+        onSkipEnd={() => { setCaretChar(null); jumpToStep(totalSteps); }}
+        leading={<>{fullscreenButton}{stickeringSelect}</>}
+        trailing={anchorSelect}
+        labels={{
+          skipStart: t('回到起点', 'Skip to start'),
+          stepBack: t('上一步', 'Step back'),
+          play: t('播放', 'Play'),
+          pause: t('暂停', 'Pause'),
+          stepForward: t('下一步', 'Step forward'),
+          skipEnd: t('跳到末尾', 'Skip to end'),
+          scrub: t('拖动播放进度', 'Scrub playback'),
+        }}
+      />
       ) : (
       // Twisty puzzles (pyraminx/skewb/megaminx/fto/PG explore — cubing.js TwistyPlayer,
       // alpha.twizzle.net/edit's actual engine) already show a native play/pause/scrub bar
       // (TwistySection's bottom-row controlPanel); only the anchor select is ours to add —
       // TwistySection already reads settings.playbackMode into experimentalSetupAnchor, it
       // just had no control to change it in this mode.
-      <div className="sim-player-row">{stickeringSelect}{anchorSelect}</div>
+      <div className="sim-player-row">{fullscreenButton}{stickeringSelect}{anchorSelect}</div>
       );
       return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
       })()}

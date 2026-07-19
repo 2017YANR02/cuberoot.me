@@ -24,7 +24,7 @@
  * The selection switch itself lives here so it isn't copy-pasted between them.
  */
 
-import { type RefObject } from 'react';
+import { type ReactNode, type RefObject } from 'react';
 import { getPuzzleId } from '@/lib/recon-utils';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import { parseSkewbMoves } from '@/app/[lang]/sim/engine/skewb/skewbState';
@@ -33,12 +33,13 @@ import TwistySection from '@/components/TwistySection';
 import Sq1ReconPlayer from '@/components/Sq1ReconPlayer';
 import CuberReconPlayer from '@/components/CuberReconPlayer';
 import TweenReconPlayer from './TweenReconPlayer';
+import './recon-engine-player.css';
 
 /** 2..7-order NxN cube ids (2x2x2 .. 7x7x7). */
 const NXN_RE = /^[2-7]x[2-7]x[2-7]$/;
 
 export default function ReconEnginePlayer({
-  event, scramble, solution, playerRef, fillPane = false, backView, hideControls = false,
+  event, scramble, solution, playerRef, fillPane = false, backView, hideControls = false, fullscreenButton,
 }: {
   event: string;
   scramble: string;
@@ -52,6 +53,10 @@ export default function ReconEnginePlayer({
    *  skewb / pyra omit it — ReconPlayerBase's face-hint letters are NxN-shaped). */
   backView?: boolean;
   hideControls?: boolean;
+  /** 全屏/退出全屏按钮(调用方持有 fullscreen 状态)。cuber 引擎拼图渲在 <PlaybackBar>
+   *  按钮排最左;cubing.js 回退(megaminx/clock,原生控制条无法挂自定义按钮)浮层
+   *  叠在画布左上角。 */
+  fullscreenButton?: ReactNode;
 }) {
   const puzzleId = getPuzzleId(event);
 
@@ -64,6 +69,7 @@ export default function ReconEnginePlayer({
         fillPane={fillPane}
         backView={backView}
         hideControls={hideControls}
+        fullscreenButton={fullscreenButton}
       />
     );
   }
@@ -76,6 +82,7 @@ export default function ReconEnginePlayer({
         playerRef={playerRef}
         fillPane={fillPane}
         hideControls={hideControls}
+        fullscreenButton={fullscreenButton}
       />
     );
   }
@@ -91,6 +98,7 @@ export default function ReconEnginePlayer({
         playerRef={playerRef}
         fillPane={fillPane}
         hideControls={hideControls}
+        fullscreenButton={fullscreenButton}
       />
     );
   }
@@ -106,18 +114,27 @@ export default function ReconEnginePlayer({
         playerRef={playerRef}
         fillPane={fillPane}
         hideControls={hideControls}
+        fullscreenButton={fullscreenButton}
       />
     );
   }
   return (
-    <TwistySection
-      puzzle={puzzleId}
-      scramble={scramble}
-      alg={cleanForPlayer(solution)}
-      playerRef={playerRef}
-      fillPane={fillPane}
-      backView={backView}
-      hideControls={hideControls}
-    />
+    <div className="recon-engine-fallback">
+      <TwistySection
+        puzzle={puzzleId}
+        scramble={scramble}
+        alg={cleanForPlayer(solution)}
+        playerRef={playerRef}
+        fillPane={fillPane}
+        backView={backView}
+        hideControls={hideControls}
+      />
+      {/* cubing.js's native bottom-row control panel has no slot for extra buttons
+          (unlike the shared <PlaybackBar> the other puzzles use), so the fullscreen
+          toggle floats over the canvas here instead. */}
+      {!hideControls && fullscreenButton && (
+        <div className="recon-engine-fallback-fs">{fullscreenButton}</div>
+      )}
+    </div>
   );
 }

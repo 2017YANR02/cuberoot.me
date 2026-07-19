@@ -40,55 +40,8 @@
   height: 100% !important;
 }
 
+/* Thin padded wrapper around the shared <PlaybackBar> (buttons + scrubber styling
+   live in PlaybackBar.css — same bar /sim renders). */
 .recon-player-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  flex-wrap: nowrap;
-}
-
-.recon-player-controls .recon-player-ctrl-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 auto;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--foreground);
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
-  transition: background 0.15s;
-}
-
-.recon-player-controls .recon-player-ctrl-btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--foreground) 16%, transparent);
-}
-
-.recon-player-controls .recon-player-ctrl-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.recon-player-scrubber {
-  flex: 1;
-  min-width: 60px;
-  height: 4px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.recon-player-scrubber:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.recon-player-progress {
-  flex: 0 0 auto;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted-foreground);
-  white-space: nowrap;
+  padding: 8px 10px;
 }
