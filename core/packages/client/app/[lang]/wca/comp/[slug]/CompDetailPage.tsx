@@ -3401,11 +3401,14 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
     </span>
   );
 
-  // 地区纪录标签(NR/CR/AsR…)后附世界名次 /WRn(与 Bark 纪录文案同口径);WR 本身=世界第一不附。
-  const renderRecordWr = (tag: string, info: RankResult | null | undefined) =>
-    info?.world && tag.toUpperCase() !== 'WR'
-      ? <span className="comp-pr-mark-rank">/WR{info.world.rank}</span>
-      : null;
+  // 地区纪录标签(NR/CR/AsR…)+ 世界名次拼成右上角标组「AsR/WR3」(与 PR mark 同款整体上标,
+  // 内部 badge 归 baseline,名次纯文本紧随其后);WR 本身=世界第一不附 /WRn。
+  const renderRecordMark = (tag: string, info: RankResult | null | undefined) => (
+    <span className="comp-pr-mark">
+      <RecordBadge record={tag} variant="inline" iso2={iso2} />
+      {info?.world && tag.toUpperCase() !== 'WR' && <span className="comp-pr-mark-rank">/WR{info.world.rank}</span>}
+    </span>
+  );
 
   async function handleCopy() {
     if (!hasEventsRef.current || !prefetchRef.current) {
@@ -3541,15 +3544,15 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
                     {formatLive(effectiveAvg(result), result.e, true)}
                     {renderPrMark(avgRankInfo)}
                   </span>
+                ) : result.ar ? (
+                  <span className="comp-pr-value">
+                    {formatLive(effectiveAvg(result), result.e, true)}
+                    {renderRecordMark(String(result.ar), avgRankInfo)}
+                  </span>
                 ) : (
                   <span className="record-num-cell">
                     {formatLive(effectiveAvg(result), result.e, true)}
-                    {result.ar
-                      ? <>
-                          <RecordBadge record={String(result.ar)} variant="inline" iso2={iso2} />
-                          {renderRecordWr(String(result.ar), avgRankInfo)}
-                        </>
-                      : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
+                    {averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
                   </span>
                 )
               ) : '—'}
@@ -3565,15 +3568,15 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
                     {formatLive(result.b, result.e, false)}
                     {renderPrMark(singleRankInfo)}
                   </span>
+                ) : result.sr ? (
+                  <span className="comp-pr-value">
+                    {formatLive(result.b, result.e, false)}
+                    {renderRecordMark(String(result.sr), singleRankInfo)}
+                  </span>
                 ) : (
                   <span className="record-num-cell">
                     {formatLive(result.b, result.e, false)}
-                    {result.sr
-                      ? <>
-                          <RecordBadge record={result.sr} variant="inline" iso2={iso2} />
-                          {renderRecordWr(String(result.sr), singleRankInfo)}
-                        </>
-                      : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
+                    {singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
                   </span>
                 )
               ) : '—'}
