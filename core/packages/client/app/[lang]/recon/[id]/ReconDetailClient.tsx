@@ -5,7 +5,7 @@
  * Restored features: SameRound nav, SameCompEvent table, normalized-cross block, full StatsGrid,
  * comment reply tree, pin/edit/delete, alternatives section.
  */
-import { useEffect, useState, useCallback, useMemo, useRef, Fragment } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, Fragment, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,7 @@ import {
   ChartColumn, Video, MessageCircle, TriangleAlert,
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   Globe, Radio, ClipboardPaste, ChevronDown, ChevronUp,
-  GitFork, ArrowLeft, Copy, Check,
+  GitFork, ArrowLeft, Copy, Check, Maximize2, Minimize2,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import {
@@ -107,6 +107,19 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   const [comments, setComments] = useState<ReconComment[]>([]);
   const [loading, setLoading] = useState(!initialSolve);
   const [error, setError] = useState<string | null>(null);
+  // 全屏(隐藏头部/统计栏,player 铺满整页,与 /sim 的「全屏魔方」同款)。
+  const [fullscreen, setFullscreen] = useState(false);
+  const fullscreenButton = (
+    <button
+      type="button"
+      className="playback-bar-btn"
+      onClick={() => setFullscreen(f => !f)}
+      title={fullscreen ? tr({ zh: '退出全屏', en: 'Exit fullscreen' }) : tr({ zh: '全屏魔方', en: 'Fullscreen cube' })}
+      aria-label={fullscreen ? tr({ zh: '退出全屏', en: 'Exit fullscreen' }) : tr({ zh: '全屏魔方', en: 'Fullscreen cube' })}
+    >
+      {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+    </button>
+  );
 
   const reconTitle = (() => {
     const fallback = tr({ zh: '复盘', en: 'Reconstruction'
@@ -166,7 +179,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   ].filter(c => c.name);
 
   return (
-    <div className="recon-page detail-page">
+    <div className={`recon-page detail-page${fullscreen ? ' detail-page--fullscreen' : ''}`}>
       <div className="detail-header-block">
         <div className="detail-header-nav">
           <Link href="/recon" className="recon-back-link">
@@ -233,18 +246,20 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
         comments={comments}
         onUpdate={loadData}
         initialSameScramble={initialSameScramble}
+        fullscreenButton={fullscreenButton}
       />
     </div>
   );
 }
 
-function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble }: {
+function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble, fullscreenButton }: {
   scramble: string;
   solutionText: string;
   solve: ReconSolve;
   comments: ReconComment[];
   onUpdate: () => void;
   initialSameScramble?: ReconSolve[];
+  fullscreenButton?: ReactNode;
 }) {
   const [sameCompHasRows, setSameCompHasRows] = useState(false);
   const [sameSessionHasRows, setSameSessionHasRows] = useState(false);
@@ -331,6 +346,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           displayText={displayText}
           playerRef={playerRef}
           fillPane
+          fullscreenButton={fullscreenButton}
         />
       </div>
 

@@ -109,9 +109,8 @@ import {
 import './sim.css';
 import { useT } from "@/hooks/useT";
 
-/** Gap (px) between the back-view window / fullscreen button and the canvas
- *  top-right corner. Must match the `top`/`right` in `.sim-backview` +
- *  `.sim-fullscreen-exit` (sim.css). */
+/** Gap (px) between the back-view window and the canvas top-right corner.
+ *  Must match the `top`/`right` in `.sim-backview` (sim.css). */
 const BACKVIEW_MARGIN = 8;
 
 /** Twisty puzzles rendered by cubing.js (not the local cuber engine). */
@@ -352,7 +351,6 @@ export default function SimPage() {
   // Back-view mini window (NxN / SQ1 only — twisty puzzles use cubing.js native
   // backView). Second renderer shares world.scene with a camera mirrored 180°
   // about Y, rendered into an overlay canvas so snapshots/exports stay clean.
-  const fsButtonRef = useRef<HTMLButtonElement>(null);
   // Swap button (main view ↔ back-view mini window). Anchored over the back-view
   // window's bottom-right corner via layoutBackView; only mounted when backView on.
   const swapButtonRef = useRef<HTMLButtonElement>(null);
@@ -457,13 +455,11 @@ export default function SimPage() {
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
 
   // Lay out the back-view mini window: size it ~30% of the smaller container
-  // dimension (clamped), and shift the fullscreen button left of it so they
-  // don't overlap in the top-right corner. Single source of truth for the
-  // square pixel size consumed by the back renderer's setSize.
+  // dimension (clamped). Single source of truth for the square pixel size
+  // consumed by the back renderer's setSize.
   const layoutBackView = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
-    const on = settingsRef.current.backView;
     const W = container.clientWidth;
     const H = container.clientHeight;
     const size = Math.round(Math.min(184, Math.max(104, Math.min(W, H) * 0.3)));
@@ -474,8 +470,6 @@ export default function SimPage() {
       frame.style.height = `${size}px`;
     }
     backViewRef.current?.setSize(size);
-    const btn = fsButtonRef.current;
-    if (btn) btn.style.right = on ? `${size + BACKVIEW_MARGIN * 2}px` : '';
     // Pin the swap button to the back-view window's bottom-right inner corner.
     const swapBtn = swapButtonRef.current;
     if (swapBtn) {
@@ -1679,15 +1673,6 @@ export default function SimPage() {
               aria-hidden
             />
           )}
-          <button
-            ref={fsButtonRef}
-            className="sim-fullscreen-exit"
-            onClick={() => setFullscreen(!fullscreen)}
-            title={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
-            aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
-          >
-            {fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-          </button>
           {/* Swap main view ↔ back-view mini window. Only while the cuber engine
               back-view is on (NxN / SQ1); twisty puzzles use cubing.js native
               back-view and aren't covered here. */}
@@ -1746,6 +1731,17 @@ export default function SimPage() {
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}
+            fullscreenButton={
+              <button
+                type="button"
+                className="playback-bar-btn"
+                onClick={() => setFullscreen(!fullscreen)}
+                title={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
+                aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏魔方', 'Fullscreen cube')}
+              >
+                {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+              </button>
+            }
             stickering={query.stickering}
             onStickeringChange={(v) => setQuery({ stickering: v === 'full' ? null : v })}
             stickeringColor={query.stickeringColor}

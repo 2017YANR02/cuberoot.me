@@ -9,11 +9,11 @@
  * 控制条,改用画面内播放/暂停浮层(成绩弹窗内嵌预览用;仍可点解法 scrub)。
  */
 
-import { type RefObject } from 'react';
+import { type ReactNode, type RefObject } from 'react';
 import ReconEnginePlayer from './ReconEnginePlayer';
 
 export default function ReconPlayerCanvas({
-  event, scramble, displayText, playerRef, fillPane = false, hideControls = false,
+  event, scramble, displayText, playerRef, fillPane = false, hideControls = false, fullscreenButton,
 }: {
   event: string;
   /** 原始打乱(各 player 内部自行处理紧凑/canonical 形) */
@@ -25,6 +25,8 @@ export default function ReconPlayerCanvas({
   fillPane?: boolean;
   /** 隐藏播放器自带完整控制条,改用画面内播放/暂停浮层(成绩弹窗内嵌预览用;仍可点解法 scrub) */
   hideControls?: boolean;
+  /** 全屏/退出全屏按钮(详情页持有 fullscreen 状态)。 */
+  fullscreenButton?: ReactNode;
 }) {
   if (!scramble) return null;
 
@@ -36,6 +38,7 @@ export default function ReconPlayerCanvas({
       playerRef={playerRef}
       fillPane={fillPane}
       hideControls={hideControls}
+      fullscreenButton={fullscreenButton}
     />
   );
 }

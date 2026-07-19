@@ -17,12 +17,12 @@
  */
 
 import {
-  useCallback, useEffect, useRef, useState, type RefObject,
+  useCallback, useEffect, useRef, useState, type ReactNode, type RefObject,
 } from 'react';
-import { Play, Pause, SkipBack, SkipForward, RotateCcw } from 'lucide-react';
 import type World from '@/app/[lang]/sim/engine/world';
 import type { BackView } from '@/app/[lang]/sim/engine/backView';
 import ReconPlayOverlay from '@/components/recon/ReconPlayOverlay';
+import PlaybackBar from '@/components/PlaybackBar';
 import './recon-player.css';
 
 const PLAY_INTERVAL_MS = 520;
@@ -50,7 +50,7 @@ export interface ReconPlayerAdapter<M> {
 }
 
 export default function ReconPlayerBase<M>({
-  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef,
+  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton,
 }: {
   scramble: string;
   alg: string;
@@ -60,6 +60,9 @@ export default function ReconPlayerBase<M>({
   hideControls?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
+  /** 全屏/退出全屏按钮(调用方持有 fullscreen 状态),渲染在播放条按钮排最左
+   *  (与 /sim 的 <PlaybackBar> 同款位置)。 */
+  fullscreenButton?: ReactNode;
 }) {
   // Latest adapter — the mount effect / loops run once but must always call the
   // current puzzle closures (which close over the latest order / props).
@@ -325,35 +328,19 @@ export default function ReconPlayerBase<M>({
       </div>
       {!hideControls && (
       <div className="recon-player-controls">
-        <button type="button" className="recon-player-ctrl-btn" onClick={() => jumpToStep(0)} disabled={step === 0} aria-label="Reset">
-          <RotateCcw size={14} />
-        </button>
-        <button type="button" className="recon-player-ctrl-btn" onClick={() => jumpToStep(step - 1)} disabled={step === 0} aria-label="Step back">
-          <SkipBack size={14} />
-        </button>
-        <button
-          type="button"
-          className="recon-player-ctrl-btn"
-          onClick={() => { if (atEnd) jumpToStep(0); setPlaying(p => !p); }}
-          disabled={total === 0}
-          aria-label={playing ? 'Pause' : 'Play'}
-        >
-          {playing ? <Pause size={14} /> : <Play size={14} />}
-        </button>
-        <button type="button" className="recon-player-ctrl-btn" onClick={() => jumpToStep(step + 1)} disabled={atEnd} aria-label="Step forward">
-          <SkipForward size={14} />
-        </button>
-        <input
-          type="range"
-          className="recon-player-scrubber"
-          min={0}
-          max={Math.max(total, 1)}
-          value={step}
-          disabled={total === 0}
-          onChange={e => jumpToStep(Number(e.target.value))}
-          aria-label="Scrub solution"
+        <PlaybackBar
+          step={step}
+          total={total}
+          playing={playing}
+          onScrub={jumpToStep}
+          onSkipStart={() => jumpToStep(0)}
+          onStepBack={() => jumpToStep(step - 1)}
+          onTogglePlay={() => { if (atEnd) jumpToStep(0); setPlaying(p => !p); }}
+          onStepForward={() => jumpToStep(step + 1)}
+          onSkipEnd={() => jumpToStep(total)}
+          leading={fullscreenButton}
+          labels={{ scrub: 'Scrub solution' }}
         />
-        <span className="recon-player-progress">{step} / {total}</span>
       </div>
       )}
     </div>
