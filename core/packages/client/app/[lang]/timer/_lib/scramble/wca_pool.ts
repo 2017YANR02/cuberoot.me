@@ -295,30 +295,49 @@ async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: 
   return out.sort((A, B) => compOrder(A.meta, B.meta));
 }
 
-/** comp 覆盖探测 key(与所选步数无关:同一场 + 同一 方法/阶段/配色 覆盖情况相同)。 */
-function coverageKey(spec: WcaSourceSpec): string | null {
-  const w = wev(spec);
-  if (!w || spec.mode !== 'comp' || !spec.comp || !spec.diff) return null;
-  return `${spec.comp}|${w}|${spec.diff.variant}|${spec.diff.stage}|${spec.diff.colors}`;
-}
+// comp 覆盖探测用 canonical std/cross/六色:难度库对一场比赛要么全有(所有 方法/阶段 同布局一起回填)、
+// 要么全无,用最基础的 std/cross 即可判「这场是否入库」,不必逐 变体/阶段 探。键只按 (comp, event)。
+const COV_VARIANT = 'std', COV_STAGE = 'cross', COV_COLORS = 'BGORWY';
+function coverageKey(comp: string, w: string): string { return `${comp}|${w}`; }
+const coverageInflight = new Map<string, Promise<boolean | null>>();
 
-/** 该场此 (方法,阶段,配色) 在难度库里是否有任何步数数据(与所选步数档无关)。
- *  探测直方图全域 [min,max] 的每个 bin(限本场官方名);任一 bin 有真题即已入库。
- *  true=已入库 / false=未入库(离线难度管道还没算这场)/ null=判不了(直方图或全部请求不可用)。 */
-async function compHasAnyStepData(spec: WcaSourceSpec, w: string): Promise<boolean | null> {
-  const d = spec.diff!;
+/** 该场此 event 在难度库(wca_scramble_steps)里有无任何步数数据。拉直方图全域 [min,max]、按本场官方名
+ *  逐 bin 探(pageSize=1 只判有无),任一 bin 有真题即已入库。
+ *  true=已入库 / false=未入库(离线难度管道还没算这场)/ null=判不了(直方图或全部请求不可用,不缓存)。 */
+async function fetchCompCoverage(compName: string, w: string): Promise<boolean | null> {
   const dist = await loadDist();
-  const subset = d.variant === '333' ? 'ALL' : d.colors; // 整解无配色维度,数据落伪子集 'ALL'
-  const h = dist?.sets?.wca?.variants?.[d.variant]?.data?.[d.stage]?.[subset];
+  const h = dist?.sets?.wca?.variants?.[COV_VARIANT]?.data?.[COV_STAGE]?.[COV_COLORS];
   if (!h || !Number.isFinite(h.min) || !Number.isFinite(h.max) || h.max < h.min) return null;
   const bins: number[] = [];
   for (let b = h.min; b <= h.max; b++) bins.push(b);
   const results = await Promise.all(bins.map((bin) => fetchByDifficulty({
-    variant: d.variant, stage: d.stage, colors: d.colors, bin, event: w,
-    names: spec.compName ? [spec.compName] : undefined, pageSize: 1, // 只判有无 → 拿 total 即可
+    variant: COV_VARIANT, stage: COV_STAGE, colors: COV_COLORS, bin, event: w,
+    names: compName ? [compName] : undefined, pageSize: 1,
   })));
   if (results.every((r) => r == null)) return null;      // 全失败 → 判不了,稍后重试
   return results.some((r) => (r?.total ?? 0) > 0);        // 官方名唯一,total>0 即本场有数据
+}
+
+/** 主动探测并缓存 comp 覆盖(inflight 去重,已缓存直接返回)。UI 在选中比赛时提前调,好在难度开关上分诊。 */
+export async function probeCompCoverage(comp: string, compName: string, wcaEvent: string): Promise<boolean | null> {
+  if (!comp || !wcaEvent) return null;
+  const ck = coverageKey(comp, wcaEvent);
+  if (compCoverage.has(ck)) return compCoverage.get(ck)!;
+  let p = coverageInflight.get(ck);
+  if (!p) {
+    p = fetchCompCoverage(compName, wcaEvent)
+      .then((r) => { if (r !== null) compCoverage.set(ck, r); return r; })
+      .catch(() => null)
+      .finally(() => { coverageInflight.delete(ck); });
+    coverageInflight.set(ck, p);
+  }
+  return p;
+}
+
+/** 同步读已探测的 comp 覆盖:true=已入库 / false=未入库 / null=未知(尚未探测 / 判不了)。 */
+export function getCompCoverage(comp: string, wcaEvent: string): boolean | null {
+  const v = compCoverage.get(coverageKey(comp, wcaEvent));
+  return v === undefined ? null : v;
 }
 
 /** comp mode: load the comp once (cached), filter to event + round + group (+ 可选难度),
@@ -336,14 +355,8 @@ async function fillComp(spec: WcaSourceSpec, key: string): Promise<void> {
   }
   if (rows.length === 0) {
     // comp + 难度为空:探测该场在难度库有无任何步数数据,区分「已入库但此难度无匹配」vs「新赛未入库」。
-    // 探测键不含所选步数(覆盖情况与步数档无关),只做一次;跨步数档改动复用结论。
-    if (spec.diff && spec.diff.steps.length > 0) {
-      const ck = coverageKey(spec);
-      if (ck && !compCoverage.has(ck)) {
-        const has = await compHasAnyStepData(spec, w);
-        if (has !== null) compCoverage.set(ck, has);
-      }
-    }
+    // 覆盖按 (comp, event) 缓存(与步数/方法档无关),与 UI 的主动探测共用结论,只做一次。
+    if (spec.diff && spec.diff.steps.length > 0) await probeCompCoverage(spec.comp, spec.compName, w);
     knownEmpty.add(key); return; // 该比赛没有此 event / 该难度无匹配 → 显式提示,不伪造生成
   }
   knownEmpty.delete(key);
@@ -512,8 +525,9 @@ export function isWcaSourceEmpty(spec: WcaSourceSpec): boolean {
  *  从「换步数/配色」升级为「改用日期模式/等回填」。仅在 fillComp 探测确认 false(无数据)后为真;
  *  已入库(空只是此难度档无匹配)或尚未探测 → false(走默认「换步数/配色」提示)。 */
 export function isWcaCompUnindexed(spec: WcaSourceSpec): boolean {
-  const ck = coverageKey(spec);
-  return ck !== null && compCoverage.get(ck) === false;
+  const w = wev(spec);
+  if (!w || spec.mode !== 'comp' || !spec.comp) return false;
+  return compCoverage.get(coverageKey(spec.comp, w)) === false;
 }
 
 /** Warm the pool ahead of time (on spec change / when WCA mode turns on). */
