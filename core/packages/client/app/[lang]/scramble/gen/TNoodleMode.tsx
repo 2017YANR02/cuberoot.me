@@ -51,11 +51,7 @@ import TranslationsPicker from './TranslationsPicker';
 import SheetView, { type AttemptScramble, type RoundSheet } from './SheetView';
 import CompCrossAnalysis, { type CrossFilter, type Metric, METRIC_OFFSET } from './CompCrossAnalysis';
 import { useStepMap, type StepMetric, type StepMapState } from './useStepMap';
-import {
-  activeLetters, COLOR_MODES, MODE_LABEL, BADGE_LETTERS,
-  OPPOSITE_PAIRS, COLOR_NAME, CX_CLASS, DEFAULT_COLOR_SEL,
-  type ColorMode, type ColorLetter,
-} from '@/lib/cross-color-subset';
+import { SubsetColorPicker, useSubsetSelection } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCrossMap } from './useCrossMap';
 import { useCompSteps, normScramble } from './useCompSteps';
@@ -64,6 +60,7 @@ import { useF2leoStepMap } from './useF2leoStepMap';
 import { useRoux223StepMap, useVariantStepMap, VARIANT_WASM_ID } from './useVariantStepMap';
 import { getRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { persistItem } from '@/lib/safe-storage';
+import BoolToggle from '@/components/BoolToggle';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -145,6 +142,12 @@ const SCOPE_ALL_KEY = 'gen:cxScopeAll';
 function readScopeAll(): boolean {
   if (typeof localStorage === 'undefined') return false;
   return localStorage.getItem(SCOPE_ALL_KEY) === '1';
+}
+// 最优等态打乱:把展示的比赛打乱换成预计算的同态最短打乱(server optimal_scramble)。默认开,localStorage 记忆。
+const SHOW_OPTIMAL_KEY = 'gen:cxShowOptimal';
+function readShowOptimal(): boolean {
+  if (typeof localStorage === 'undefined') return true;
+  return localStorage.getItem(SHOW_OPTIMAL_KEY) !== '0';
 }
 const NO_SCRAMBLES: string[] = [];
 // 用 3x3 打乱、可做十字步数分析的项目。多盲(mbf/mbo)拆成逐方块行后,每个方块就是
@@ -245,8 +248,8 @@ function buildSheetsFromWca(rows: WcaScrambleRow[]): RoundSheet[] {
       continue;
     }
     const attempts: AttemptScramble[] = [
-      ...main.map((r, i) => ({ label: String(i + 1), scramble: r.scramble, isExtra: false })),
-      ...extras.map((r, i) => ({ label: `E${i + 1}`, scramble: r.scramble, isExtra: true })),
+      ...main.map((r, i) => ({ label: String(i + 1), scramble: r.scramble, isExtra: false, optimalScramble: r.optimal_scramble ?? undefined })),
+      ...extras.map((r, i) => ({ label: `E${i + 1}`, scramble: r.scramble, isExtra: true, optimalScramble: r.optimal_scramble ?? undefined })),
     ];
     sheets.push({
       event,
@@ -327,6 +330,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const autoLoadedRef = useRef<string | null>(null);
   // 用户点垃圾桶可以中途取消生成 — generate() 每轮 tick 检一下,被置 true 就早退。
   const generateAbortRef = useRef(false);
+  // loadWca() 过期请求守卫:每次调用领一个新世代号,reset() / 新一次 loadWca 都会递增它,
+  // 让旧请求 resolve 时发现自己已过期而放弃 —— 否则「点 × 清空」和一个仍在途的 fetch 竞态,
+  // fetch 慢慢回来后会把刚清掉的 loadedCompId / URL 悄悄写回去(bug:点 clear 又变回原比赛)。
+  const loadGenRef = useRef(0);
 
   // 后台预生成 cache。用户调 event / rounds / sets 时,后台默默按当前配置 top up
   // 对应 scramble type 的 pool;点击 生成 时直接 drain pool 而不是现场算。
@@ -606,6 +613,9 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   // 或 upcoming 比赛延迟上线,本地拿到就直接用,绕开兜底成 slug "PleaseDontDNF..." 的坑。
   const loadWca = async (compId: string, nameOverride?: string) => {
     if (!compId) return;
+    // 领一个世代号:reset() / 另一次 loadWca 会让它作废,resolve 时对比发现过期就整段放弃
+    // (不 setError/setSheets/写 URL),避免旧请求盖掉用户已经 clear 掉的状态。
+    const myGen = ++loadGenRef.current;
     setLoading(true);
     setLoadProgress({ done: 0, total: 0 });
     setError(null);
@@ -621,6 +631,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         streamFetchScrambles(compId, (done, total) => setLoadProgress({ done, total })),
         resolveName(),
       ]);
+      if (myGen !== loadGenRef.current) return; // 过期:已被 reset() 或更新的 loadWca 取代
       if (!data || data.length === 0) {
         setError(t('未找到该比赛或暂无已公布的打乱', 'Competition not found or no published scrambles'));
         return;
@@ -635,10 +646,13 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       // 内嵌模式(forcedCompId)不往 URL 写 ?comp —— 比赛页自己的 slug 已在路径里。
       if (!forcedCompId) setUrlQuery({ comp: compId });
     } catch (err) {
+      if (myGen !== loadGenRef.current) return;
       setError(t('网络错误', 'Network error') + ': ' + (err instanceof Error ? err.message : String(err)));
     } finally {
-      setLoading(false);
-      setLoadProgress(null);
+      if (myGen === loadGenRef.current) {
+        setLoading(false);
+        setLoadProgress(null);
+      }
     }
   };
 
@@ -689,6 +703,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
   // ── 重置回配置模式 ─────────────────────────────────────────
   const reset = () => {
+    loadGenRef.current++; // 作废任何仍在途的 loadWca(),防它 resolve 后把清空的状态写回来
     setSheets(null);
     setViewedEvent(null);
     setViewedRoundIdx(null);
@@ -855,19 +870,20 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     setAnalysisAllState(v);
     persistItem(SCOPE_ALL_KEY, v ? '1' : '0');
   };
+  // 最优等态打乱开关:开后把展示的打乱换成预计算的同态最短打乱(server optimal_scramble)。
+  const [showOptimal, setShowOptimalState] = useState<boolean>(readShowOptimal);
+  const setShowOptimal = (v: boolean) => {
+    setShowOptimalState(v);
+    persistItem(SHOW_OPTIMAL_KEY, v ? '1' : '0');
+  };
   // 十字分析里点某步 → 把命中打乱集合提上来,过滤下方打乱表(只渲染含命中打乱的 sheet)。
   const [crossFilter, setCrossFilter] = useState<CrossFilter | null>(null);
   // 指标 + 底色子集(原在 CompCrossAnalysis,提上来跟 toggles 同一行)。
   const [variant, setVariant] = useState<VariantKey>('std');
   const [metric, setMetric] = useState<Metric>('cross');
-  const [colorMode, setColorMode] = useState<ColorMode>(DEFAULT_COLOR_SEL.mode);
-  const [cxSingle, setCxSingle] = useState<ColorLetter>(DEFAULT_COLOR_SEL.single);
-  const [cxPair, setCxPair] = useState(DEFAULT_COLOR_SEL.pair);
-  const [cxQuadExcl, setCxQuadExcl] = useState(DEFAULT_COLOR_SEL.quadExcl);
-  const cxLetters = useMemo(
-    () => activeLetters({ mode: colorMode, single: cxSingle, pair: cxPair, quadExcl: cxQuadExcl }),
-    [colorMode, cxSingle, cxPair, cxQuadExcl],
-  );
+  // 底色子集:复用首页 / stats 同款 SubsetColorPicker(单一来源,勿再造),默认双色。
+  const colorSel = useSubsetSelection('dual');
+  const cxLetters = colorSel.selectedColors;
   const vspec = VARIANT_SPEC[variant];
   // metric 落在当前变体阶段集外(切变体后)→ 视为该变体首阶段(std=cross),避免越界取数。
   const safeMetric: Metric = vspec.stages.includes(metric) ? metric : vspec.stages[0];
@@ -1022,13 +1038,27 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       .map((sh) => ({ ...sh, attempts: sh.attempts.filter((a) => activeCrossFilter.scrambles.has(a.scramble)) }))
       .filter((sh) => sh.attempts.length > 0);
   }, [activeCrossFilter, analysisSheets, visibleSheets]);
-  // SQ1 显示/PDF 按「简写 / 完整」开关转换记号;原始 sheets 保持不动(分析/选中/深链都用原始)。
+  // 最优等态打乱:数据(optimalScramble)来自 server 预计算(wca_scramble_optimal),随打乱一并拉到,
+  // 前端零求解。本轮有任一把带最优数据时才给开关(否则开了也没得换)。
+  const hasOptimal = useMemo(
+    () => sheetsToRender.some((sh) => sh.attempts.some((a) => a.optimalScramble)),
+    [sheetsToRender],
+  );
+  const optimalActive = showOptimal && showCross && is333Family && hasOptimal;
+  // SQ1 显示/PDF 按「简写 / 完整」开关转换记号;最优开时把预计算的 optimalScramble 当 displayScramble
+  // (展示换成同态最短打乱,分析/选中/深链仍走原始 scramble)。原始 sheets 保持不动。
   const convSheet = useCallback(
-    (sh: RoundSheet): RoundSheet =>
-      sh.event !== 'sq1'
+    (sh: RoundSheet): RoundSheet => {
+      const base: RoundSheet = sh.event !== 'sq1'
         ? sh
-        : { ...sh, attempts: sh.attempts.map((a) => ({ ...a, scramble: displaySq1ForEvent('sq1', a.scramble, sq1Compact) })) },
-    [sq1Compact],
+        : { ...sh, attempts: sh.attempts.map((a) => ({ ...a, scramble: displaySq1ForEvent('sq1', a.scramble, sq1Compact) })) };
+      if (!optimalActive) return base;
+      return {
+        ...base,
+        attempts: base.attempts.map((a) => (a.optimalScramble ? { ...a, displayScramble: a.optimalScramble } : a)),
+      };
+    },
+    [sq1Compact, optimalActive],
   );
   // icon 角标:多轮时显示当前轮次的位置编号 (1/2/3/…),与 URL round= 一致,提示再次点击会循环。
   const roundBadges = activeView && roundIdxsInEvent.length > 1 && activeRoundIdx !== null
@@ -1490,6 +1520,14 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                   ariaLabel={t('含备用打乱', 'Include extra scrambles')}
                 />
               )}
+              {showCross && hasOptimal && (
+                <BoolToggle
+                  value={showOptimal}
+                  onChange={setShowOptimal}
+                  label={t('最优', 'Optimal')}
+                  ariaLabel={t('展示最优等态打乱(同一魔方态、步数最短)', 'Show optimal-equivalent scramble (same state, fewest moves)')}
+                />
+              )}
               {showCross && (
                 <select
                   className="gen-cx-modesel"
@@ -1516,56 +1554,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
               )}
               {showCross && (
                 <div className="gen-cx-colorsel">
-                  <select
-                    className="gen-cx-modesel"
-                    value={colorMode}
-                    onChange={(e) => setColorMode(e.target.value as ColorMode)}
-                    aria-label={t('底色模式', 'Bottom-colour mode')}
-                  >
-                    {COLOR_MODES.map((m) => (
-                      <option key={m} value={m}>{t(MODE_LABEL[m].zh, MODE_LABEL[m].en)}</option>
-                    ))}
-                  </select>
-                  <div className="gen-cx-swatches">
-                    {colorMode === 'cn' && BADGE_LETTERS.map((c) => (
-                      <i key={c} className={`gen-cx-sw ${CX_CLASS[c]}`} title={t(COLOR_NAME[c].zh, COLOR_NAME[c].en)} />
-                    ))}
-                    {colorMode === 'single' && BADGE_LETTERS.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        className={`gen-cx-swbtn${cxSingle === c ? ' is-on' : ''}`}
-                        onClick={() => setCxSingle(c)}
-                        title={t(COLOR_NAME[c].zh, COLOR_NAME[c].en)}
-                      >
-                        <i className={`gen-cx-sw ${CX_CLASS[c]}`} />
-                      </button>
-                    ))}
-                    {colorMode === 'dual' && OPPOSITE_PAIRS.map((p, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        className={`gen-cx-swbtn${cxPair === i ? ' is-on' : ''}`}
-                        onClick={() => setCxPair(i)}
-                        title={p.map((c) => t(COLOR_NAME[c].zh, COLOR_NAME[c].en)).join(' / ')}
-                      >
-                        {p.map((c) => <i key={c} className={`gen-cx-sw ${CX_CLASS[c]}`} />)}
-                      </button>
-                    ))}
-                    {colorMode === 'quad' && OPPOSITE_PAIRS.map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        className={`gen-cx-swbtn is-quad${cxQuadExcl === i ? ' is-on' : ''}`}
-                        onClick={() => setCxQuadExcl(i)}
-                        title={`${t('排除', 'Exclude')} ${OPPOSITE_PAIRS[i].map((c) => t(COLOR_NAME[c].zh, COLOR_NAME[c].en)).join('/')}`}
-                      >
-                        {BADGE_LETTERS.filter((c) => !OPPOSITE_PAIRS[i].includes(c)).map((c) => (
-                          <i key={c} className={`gen-cx-sw ${CX_CLASS[c]}`} />
-                        ))}
-                      </button>
-                    ))}
-                  </div>
+                  <SubsetColorPicker sel={colorSel} isZh={isZh} />
                 </div>
               )}
             </div>

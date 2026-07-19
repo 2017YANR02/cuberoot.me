@@ -64,8 +64,16 @@ const METRIC_STAGE: Record<Metric, string> = {
 export interface AttemptScramble {
   /** Display label, e.g. "1", "2", "E1", "E2". For MBLD this is the cube number. */
   label: string;
-  /** Single scramble move sequence (one row in the PDF). */
+  /** Single scramble move sequence (one row in the PDF). Stays the canonical
+   *  key for cross analysis / selection / deep links even when overridden below. */
   scramble: string;
+  /** Optional display-only override for the shown move sequence (e.g. the 最优等态打乱:
+   *  same cube state, fewest moves). Only the visible text / preview / copy / analyzer link
+   *  use it; the badge digits + selection still key off `scramble` (same state ⇒ same digits). */
+  displayScramble?: string;
+  /** Precomputed God's-number 最优等态打乱(server 从 wca_scramble_optimal join 出;同态项目才有)。
+   *  数据字段;是否拿它当 displayScramble 由上层「最优」开关决定,前端不参与求解。 */
+  optimalScramble?: string;
   /** Whether this is an extra-scramble (E1/E2 …); always false for MBLD. */
   isExtra: boolean;
 }
@@ -180,7 +188,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
   const onRowClick = (a: AttemptScramble, i: number) => {
     if (typeof window !== 'undefined' && window.getSelection()?.toString()) return;
     if (!a.scramble) return;
-    if (copyOnClick) void copyAttempt(i, a.scramble);
+    if (copyOnClick) void copyAttempt(i, a.displayScramble ?? a.scramble);
     if (analyzable && isAnalysableScramble(a.scramble)) {
       // 分析开 + 可解析:展开解法器,选中态跟随展开。
       const next = expanded === a.scramble ? null : a.scramble;
@@ -223,6 +231,8 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     const canAnalyze = analyzable && parseable;
     // 有打乱就可点:点击永远选中(写深链 + 高亮);canAnalyze 时额外展开解法器。
     const rowInteractive = !!a.scramble;
+    // 展示用记号:有 displayScramble(最优等态打乱)时显示它,否则原打乱。徽标 / 选中仍走原打乱。
+    const shownScr = a.displayScramble ?? a.scramble;
     rows.push(
       <tr
         key={i}
@@ -237,12 +247,15 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
         style={{ cursor: rowInteractive ? 'pointer' : 'default' }}
       >
         <td className="gen-tn-attempt-num">
-          <span className="gen-tn-attempt-label">{a.label}</span>
+          {/* 复制成功后短暂(1.2s)用绿勾临时覆盖序号,随 copiedIdx 清空自然复原。 */}
+          {copiedIdx === i
+            ? <Check size={14} className="gen-tn-num-copied" aria-label={t('已复制', 'Copied')} />
+            : <span className="gen-tn-attempt-label">{a.label}</span>}
         </td>
         <td className="gen-tn-attempt-scramble">
           <div className="gen-tn-scr-line">
             <ScrambleLines
-              scramble={a.scramble}
+              scramble={shownScr}
               className="gen-tn-attempt-line"
               trailing={(() => {
                 // cross 数据存在 = 可分析的 333 行 → 显示徽标(可点击循环指标)。
@@ -269,10 +282,6 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
               })()}
             />
           </div>
-          {/* 复制成功后短暂浮现绿勾(1.2s),锚在打乱格右缘;与 StageSolver 的 .stsv-sol-copied 同款交互。 */}
-          {copiedIdx === i && (
-            <Check size={14} className="gen-tn-scr-copied" aria-label={t('已复制', 'Copied')} />
-          )}
         </td>
         {showPreview && (
           <td className="gen-tn-attempt-preview">
@@ -282,7 +291,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
               return (
                 <ScramblePreview2D
                   event={event}
-                  scramble={a.scramble}
+                  scramble={shownScr}
                   size={previewSize}
                   clockColors={clockColors}
                   sq1Colors={sq1Colors}
@@ -309,12 +318,12 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
             >
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <a
-                  href={analyzerHref(a.scramble, em)}
+                  href={analyzerHref(shownScr, em)}
                   onClick={(e) => {
                     // 普通左键走 client 导航;中键/Ctrl/Cmd/Shift 保留浏览器新开页默认行为
                     if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
                     e.preventDefault();
-                    router.push(analyzerHref(a.scramble, em));
+                    router.push(analyzerHref(shownScr, em));
                   }}
                   title={t('在分析器中打开', 'Open in analyzer')}
                   style={{
@@ -328,7 +337,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
                 </a>
               </div>
               <StageSolver
-                scramble={a.scramble}
+                scramble={shownScr}
                 lang={isZh ? 'zh' : 'en'}
                 initialMethod={variantToMethod(variant)}
                 initialStage={METRIC_STAGE_IDX[em]}

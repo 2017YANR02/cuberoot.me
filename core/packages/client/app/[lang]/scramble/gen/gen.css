@@ -952,15 +952,12 @@
        受 max-width 兜在 560px 内,table 自然收窄到内容宽。 */
     width: 100%;
     max-width: 560px;       /* matches the ~550pt scramble column on A4 */
-    position: relative;      /* anchor the click-to-copy 绿勾 .gen-tn-scr-copied */
 }
-/* 点击复制成功后的绿勾:锚在打乱格右缘垂直居中,1.2s 后随 copiedIdx 清空自然消失。
+/* 点击复制成功后的绿勾:临时覆盖左侧序号(1.2s 后随 copiedIdx 清空自然复原)。
    复用全局 --signal-success,和 StageSolver 的 .stsv-sol-copied 同色。 */
-.gen-tn-scr-copied {
-    position: absolute;
-    right: 6px;
-    top: 50%;
-    transform: translateY(-50%);
+.gen-tn-num-copied {
+    display: inline-block;
+    vertical-align: middle;
     color: var(--signal-success);
     pointer-events: none;
 }
@@ -1177,7 +1174,7 @@ html[data-theme=dark] .gen-page {
     background: var(--gen-accent-soft);
 }
 
-/* 底色选择:模式下拉(六/四/双/单)+ swatch 选择器(单色 6 选 1 等) */
+/* 底色选择:变体/阶段下拉 + 底色子集选择器(SubsetColorPicker,与首页/stats 共用) */
 .gen-cx-colorsel { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .gen-cx-modesel {
     border: 1px solid var(--gen-border);
@@ -1189,26 +1186,6 @@ html[data-theme=dark] .gen-page {
     cursor: pointer;
 }
 .gen-cx-modesel:hover { border-color: var(--gen-border-strong); color: var(--gen-text); }
-.gen-cx-swatches { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-.gen-cx-sw {
-    width: 15px; height: 15px; border-radius: 4px; display: inline-block;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gen-text) 22%, transparent);
-}
-.gen-cx-sw.cx-w { background: var(--gen-cx-w); }
-.gen-cx-sw.cx-y { background: var(--gen-cx-y); }
-.gen-cx-sw.cx-r { background: var(--gen-cx-r); }
-.gen-cx-sw.cx-o { background: var(--gen-cx-o); }
-.gen-cx-sw.cx-b { background: var(--gen-cx-b); }
-.gen-cx-sw.cx-g { background: var(--gen-cx-g); }
-.gen-cx-swbtn {
-    display: inline-flex; align-items: center; gap: 2px; line-height: 0;
-    padding: 4px; border: 1px solid transparent; border-radius: 7px;
-    background: none; cursor: pointer;
-}
-.gen-cx-swbtn:hover { border-color: var(--gen-border-strong); }
-.gen-cx-swbtn.is-on { border-color: var(--gen-accent); background: var(--gen-accent-soft); }
-/* 四色:4 个底色排成 2x2,不再一长条 */
-.gen-cx-swbtn.is-quad { display: inline-grid; grid-template-columns: repeat(2, 15px); gap: 2px; }
 
 .gen-cx-pending,
 .gen-cx-loading {
