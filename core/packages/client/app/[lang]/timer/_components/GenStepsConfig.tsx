@@ -27,8 +27,8 @@ interface Props {
   source: 'random' | 'wca';
   settings: Settings;
   updateSettings: (patch: Partial<Settings>) => void;
-  /** WCA 真题来源时,ScrambleSourcePanel 把「自动打卡」开关并进来同占顶行(见 WcaSourceConfig 的
-   *  AutoMarkToggle 导出),两个开关合一行、不再各占一行。 */
+  /** ScrambleSourceBar 把「来源」下拉塞进本面板顶行:有「按步数」面板时来源选择器不再独占一行,
+   *  和「按步数」开关合一行。 */
   extraToprow?: ReactNode;
 }
 

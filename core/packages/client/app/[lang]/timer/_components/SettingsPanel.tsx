@@ -20,6 +20,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { eventInfo, type EventId } from '../_lib/types';
 import { WCA_COLORS } from '../_lib/cube/colors';
+import { wcaEventId, WCA_OPTIMAL_EVENTS } from '../_lib/scramble/wca_pool';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { CountryInput } from '@/components/CountryInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
@@ -121,6 +122,10 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
   const [seedDraft, setSeedDraft] = useState<string>(() => s.syncSeed ?? '');
   // Keep draft in sync when the active seed changes externally (e.g. settings reset).
   useEffect(() => { setSeedDraft(s.syncSeed ?? ''); }, [s.syncSeed]);
+
+  // 「最优打乱」只对同态项目(WCA_OPTIMAL_EVENTS)有意义,判据同 WcaSourceConfig。
+  const wev = wcaEventId(event);
+  const hasOptimal = !!wev && WCA_OPTIMAL_EVENTS.has(wev);
 
   // Target-time input is a free-form string while editing; commit on blur /
   // Enter. Empty / invalid / non-positive → clear the per-event target.
@@ -524,6 +529,12 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
           expanded={expandedSections}
           setExpanded={setExpandedSections}
         >
+          <Row label={tr({ zh: '计时', en: 'Timing'
+        })}>
+            <BoolToggle value={s.timingEnabled} onChange={(v) => updateSettings({ timingEnabled: v })} />
+            <span className="hint">{tr({ zh: '关闭 = 练习模式:空格 / 点击 / 按下只换下一个打乱,不计时、不记成绩', en: 'off = practice mode: space / tap / press only advances to the next scramble — no timing, no solve recorded'
+        })}</span>
+          </Row>
           <Row label={tr({ zh: '观察时间（秒）', en: 'Inspection (sec)'
         })}>
             <input
@@ -625,6 +636,20 @@ export default function SettingsPanel({ isZh, onClose, event, onDataReplaced }: 
               ? tr({ zh: '关闭', en: 'off'
                                       })
               : ((isZh ? `每天 ${currentDailyGoal} 次（全部项目合计）` : `${currentDailyGoal} solves/day (all events)`))}</span>
+          </Row>
+          {hasOptimal && (
+            <Row label={tr({ zh: '最优打乱', en: 'Optimal scramble'
+          })}>
+              <BoolToggle value={s.wcaUseOptimal} onChange={(v) => updateSettings({ wcaUseOptimal: v })} />
+              <span className="hint">{tr({ zh: '同态项目(如二阶/斜转/金字塔)优先用消歧后的唯一最优打乱,仅对 WCA 真题生效', en: 'for isomorphic puzzles (e.g. 2x2/Skewb/Pyraminx), prefer the disambiguated canonical scramble — WCA real scrambles only'
+          })}</span>
+            </Row>
+          )}
+          <Row label={tr({ zh: '自动打卡', en: 'Auto-mark done'
+        })}>
+            <BoolToggle value={s.autoMarkWcaScramble} onChange={(v) => updateSettings({ autoMarkWcaScramble: v })} />
+            <span className="hint">{tr({ zh: '做完 WCA 真题后自动把成绩记到该打乱的公开打卡', en: 'after a WCA real-scramble solve, auto-record your result to its public marks'
+        })}</span>
           </Row>
           <Row label={tr({ zh: '计时途中', en: 'Live'
         })}>
