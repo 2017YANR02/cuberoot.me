@@ -101,42 +101,66 @@ const cptMatch = engineSrc.match(/export const CORNER_PLATE_T = ([\d.]+)/);
 if (!cptMatch) throw new Error('CORNER_PLATE_T not found in gearGeometry.ts');
 const CORNER_PLATE_T = Number(cptMatch[1]);
 console.log(`CORNER_PLATE_T: ${CORNER_PLATE_T} (from engine source)`);
-const BAND_LO = H - CORNER_PLATE_T, BAND_HI = H + STICKER_TOP + 0.52;
-const PX = CORNER_POLY.map((p) => p[0]), PY = CORNER_POLY.map((p) => p[1]);
-const PMINX = Math.min(...PX), PMAXX = Math.max(...PX);
-const PMINY = Math.min(...PY), PMAXY = Math.max(...PY);
+// shelf extension: the FULL-SVG sticker + thin shelf overhang the transit
+// lanes (crown material tops out ≈125.2 in the fin zones); parse its outline
+// and depth so the oracle judges the exact shipped two-prism stack.
+const shelfMatch = engineSrc.match(/export const CORNER_SHELF_T = ([\d.]+)/);
+if (!shelfMatch) throw new Error('CORNER_SHELF_T not found in gearGeometry.ts');
+const CORNER_SHELF_T = Number(shelfMatch[1]);
+console.log(`CORNER_SHELF_T: ${CORNER_SHELF_T} (from engine source)`);
+const extMatch = engineSrc.match(/export const CORNER_POLY_EXT: V2\[\] = \[([\s\S]*?)\n\];/);
+if (!extMatch) throw new Error('CORNER_POLY_EXT not found in gearGeometry.ts');
+const extNums = extMatch[1].match(/-?\d+(?:\.\d+)?/g).map(Number);
+const CORNER_POLY_EXT = [];
+for (let i = 0; i < extNums.length; i += 2) CORNER_POLY_EXT.push([extNums[i], extNums[i + 1]]);
+console.log(`CORNER_POLY_EXT: ${CORNER_POLY_EXT.length} pts (from engine source)`);
+const BAND_HI = H + STICKER_TOP + 0.52;
 
-function polySigned(a, b) {
-  // quick reject far outside the poly bbox
-  const bb = Math.max(PMINX - a, a - PMAXX, PMINY - b, b - PMAXY);
-  if (bb > 6) return bb; // lower bound on the true distance, enough to cull
-  let inside = false;
-  let dEdge = Infinity;
-  for (let i = 0, k = CORNER_POLY.length - 1; i < CORNER_POLY.length; k = i++) {
-    const xi = PX[i], yi = PY[i], xj = PX[k], yj = PY[k];
-    if ((yi > b) !== (yj > b) && a < ((xj - xi) * (b - yi)) / (yj - yi) + xi) inside = !inside;
-    const ex = xj - xi, ey = yj - yi;
-    const L2 = ex * ex + ey * ey;
-    const t = L2 ? Math.max(0, Math.min(1, ((a - xi) * ex + (b - yi) * ey) / L2)) : 0;
-    const dx = a - xi - t * ex, dy = b - yi - t * ey;
-    const d2 = dx * dx + dy * dy;
-    if (d2 < dEdge) dEdge = d2;
-  }
-  dEdge = Math.sqrt(dEdge);
-  return inside ? -dEdge : dEdge;
+function makePolySigned(POLY) {
+  const PX = POLY.map((p) => p[0]), PY = POLY.map((p) => p[1]);
+  const PMINX = Math.min(...PX), PMAXX = Math.max(...PX);
+  const PMINY = Math.min(...PY), PMAXY = Math.max(...PY);
+  return (a, b) => {
+    // quick reject far outside the poly bbox
+    const bb = Math.max(PMINX - a, a - PMAXX, PMINY - b, b - PMAXY);
+    if (bb > 6) return bb; // lower bound on the true distance, enough to cull
+    let inside = false;
+    let dEdge = Infinity;
+    for (let i = 0, k = POLY.length - 1; i < POLY.length; k = i++) {
+      const xi = PX[i], yi = PY[i], xj = PX[k], yj = PY[k];
+      if ((yi > b) !== (yj > b) && a < ((xj - xi) * (b - yi)) / (yj - yi) + xi) inside = !inside;
+      const ex = xj - xi, ey = yj - yi;
+      const L2 = ex * ex + ey * ey;
+      const t = L2 ? Math.max(0, Math.min(1, ((a - xi) * ex + (b - yi) * ey) / L2)) : 0;
+      const dx = a - xi - t * ex, dy = b - yi - t * ey;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < dEdge) dEdge = d2;
+    }
+    dEdge = Math.sqrt(dEdge);
+    return inside ? -dEdge : dEdge;
+  };
 }
+// two prisms: deep die-cut plate (transit-clipped shape) + shallow shelf
+// (full-SVG sticker overhang). Their union bounds the shipped stack.
+const PRISMS = [
+  { sd: makePolySigned(CORNER_POLY), lo: H - CORNER_PLATE_T },
+  { sd: makePolySigned(CORNER_POLY_EXT), lo: H - CORNER_SHELF_T },
+];
+const BAND_LO = H - CORNER_PLATE_T; // deepest band (frame cull)
 
 function plateClearance(x, y, z) {
   let best = Infinity;
   const co = [x, y, z];
   for (let j = 0; j < 3; j++) {
     const h = Math.abs(co[j]);
-    const dz = h < BAND_LO ? BAND_LO - h : h > BAND_HI ? h - BAND_HI : 0;
-    if (dz > 4) continue;
     const a = Math.abs(co[(j + 1) % 3]), b = Math.abs(co[(j + 2) % 3]);
-    const dIn = polySigned(a, b);
-    const dd = dz === 0 ? dIn : dIn <= 0 ? dz : Math.hypot(dz, dIn);
-    if (dd < best) best = dd;
+    for (const pr of PRISMS) {
+      const dz = h < pr.lo ? pr.lo - h : h > BAND_HI ? h - BAND_HI : 0;
+      if (dz > 4) continue;
+      const dIn = pr.sd(a, b);
+      const dd = dz === 0 ? dIn : dIn <= 0 ? dz : Math.hypot(dz, dIn);
+      if (dd < best) best = dd;
+    }
   }
   return best;
 }
