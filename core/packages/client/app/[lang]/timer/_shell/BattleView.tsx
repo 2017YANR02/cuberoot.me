@@ -1422,7 +1422,7 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
   );
 
   return (
-    <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${isGrid ? ' grid-layout' : ''}`}>
+    <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${mode === '1v1' && !isGrid && store.layout === 'side' && bottomSame ? ' side-shared' : ''}${isGrid ? ' grid-layout' : ''}`}>
 
       {/* === 田字格布局：上排旋转 180° 面向对面;3 人时上排单区跨两列 ===
           同排一对玩家共用一条打乱时,由 .grid-scramble-row 统一渲染,各 TimerArea 传
