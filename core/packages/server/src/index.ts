@@ -41,6 +41,7 @@ import { cubeoptSolveRoutes } from './routes/cubeopt_solve.js';
 import { paintRoutes } from './routes/paint.js';
 import { forumRoutes } from './routes/forum.js';
 import { notificationRoutes } from './routes/notifications.js';
+import { trainerRoomsRoutes } from './routes/trainer_rooms.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
 import { startWatchedForeignRegMonitor } from './monitors/watched_foreign_reg.js';
@@ -133,6 +134,7 @@ app.route('/v1', cubeoptSolveRoutes);
 app.route('/v1', paintRoutes);
 app.route('/v1', forumRoutes);
 app.route('/v1', notificationRoutes);
+app.route('/v1', trainerRoomsRoutes);
 
 // Kick off nemesizer dataset load asynchronously — the worker would otherwise
 // block the listener from coming up. Routes return 503 until ready (~5s).
