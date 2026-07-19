@@ -644,3 +644,32 @@
   width: fit-content;
 }
 .trainer-scramble-kind:disabled { opacity: 0.5; }
+
+/* ─── 协同刷题(复习分片)控件 ─── */
+.trainer-coop-row { flex-wrap: wrap; gap: 8px 12px; }
+.trainer-coop-field { display: inline-flex; align-items: center; gap: 5px; }
+.trainer-coop-code {
+  width: 5.5em;
+  padding: 3px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+.trainer-coop-sel {
+  padding: 3px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 12px;
+  width: fit-content;
+}
+/* 进度旁的协同分片提示,弱化一档 */
+.trainer-recap-coop {
+  margin-left: 8px;
+  color: var(--faint-foreground);
+}

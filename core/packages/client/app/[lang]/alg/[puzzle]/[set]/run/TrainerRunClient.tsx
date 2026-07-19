@@ -83,6 +83,8 @@ export default function TrainerRunClient() {
   const setProbMode = useTrainerStore(s => s.setProbMode);
   const recapOrder = useTrainerStore(s => s.recapOrder);
   const setRecapOrder = useTrainerStore(s => s.setRecapOrder);
+  const coop = useTrainerStore(s => s.coop);
+  const setCoop = useTrainerStore(s => s.setCoop);
   const timerFont = useTrainerStore(s => s.timerFont);
   const setTimerFont = useTrainerStore(s => s.setTimerFont);
   const scrambleFont = useTrainerStore(s => s.scrambleFont);
@@ -170,9 +172,12 @@ export default function TrainerRunClient() {
 
   // 改了选中的 case 之后,原先选的那种打乱可能一个 case 都不再支持 —— 此时 <select> 的
   // value 落空、显示成一片空白。退回 `inv`(它永远支持)。
+  // pool 为空(还没选 case / cases 未加载)时 kinds 只是过渡态(仅 cstimer),此时 htm 尚未
+  // 「入列」不代表不被支持 —— 据此重置会把默认 htm 误打回 inv,且之后 htm 可用也不再扶回。
   useEffect(() => {
+    if (pool.length === 0) return;
     if (kinds.length && !kinds.some(k => k.id === scrambleKind)) setScrambleKind('inv');
-  }, [kinds, scrambleKind, setScrambleKind]);
+  }, [kinds, scrambleKind, setScrambleKind, pool.length]);
 
   useEffect(() => {
     // 读 live 状态而不是闭包值:setScope 的 effect 可能在同一个 commit 里已经出过题了,
@@ -565,6 +570,73 @@ export default function TrainerRunClient() {
                       en: 'All n selected cases once per shuffled round, reshuffle when done. Every case within ≤ n draws of a round; worst same-case gap across rounds is 2n−1',
                     })}
               </div>
+              {/* 协同刷题:多台设备帮同一选手打乱时,把复习队列切成 n 份各做一份,合起来覆盖全集不重不漏 */}
+              {mode === 'recap' && (
+                <>
+                  <div className="trainer-opts-row">
+                    <BoolToggle
+                      value={coop.on}
+                      onChange={v => setCoop({ ...coop, on: v })}
+                      label={tr({ zh: '协同刷题', en: 'Team drill' })}
+                    />
+                  </div>
+                  {coop.on && (
+                    <>
+                      <div className="trainer-opts-row trainer-coop-row">
+                        {recapOrder === 'shuffle' && (
+                          <span className="trainer-coop-field">
+                            <span className="trainer-opts-label">{tr({ zh: '协同码', en: 'Code' })}</span>
+                            <input
+                              className="trainer-coop-code"
+                              type="text"
+                              value={coop.code}
+                              onChange={e => setCoop({ ...coop, code: e.target.value })}
+                              placeholder="TEAM"
+                              autoComplete="off"
+                              spellCheck={false}
+                              aria-label={tr({ zh: '协同码', en: 'Team code' })}
+                            />
+                          </span>
+                        )}
+                        <span className="trainer-coop-field">
+                          <span className="trainer-opts-label">{tr({ zh: '共', en: 'Of' })}</span>
+                          <select
+                            className="trainer-coop-sel"
+                            value={coop.n}
+                            onChange={e => setCoop({ ...coop, n: Number(e.target.value) })}
+                            aria-label={tr({ zh: '协同设备总数', en: 'Total devices' })}
+                          >
+                            {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                          <span className="trainer-opts-label">{tr({ zh: '台', en: 'devices' })}</span>
+                        </span>
+                        <span className="trainer-coop-field">
+                          <span className="trainer-opts-label">{tr({ zh: '本机第', en: 'This is #' })}</span>
+                          <select
+                            className="trainer-coop-sel"
+                            value={coop.k}
+                            onChange={e => setCoop({ ...coop, k: Number(e.target.value) })}
+                            aria-label={tr({ zh: '本机分片序号', en: 'This device index' })}
+                          >
+                            {Array.from({ length: coop.n }, (_, i) => <option key={i} value={i}>{i + 1}</option>)}
+                          </select>
+                        </span>
+                      </div>
+                      <div className="trainer-opts-hint">
+                        {recapOrder === 'shuffle'
+                          ? tr({
+                              zh: '各设备输入相同协同码 + 相同「共几台」,各选不同「本机第几台」;乱序两台同码才对齐,合起来覆盖全部各一次',
+                              en: 'Every device: same code + same total, each picks a distinct index. Shuffled order aligns only when codes match; together they cover every case once',
+                            })
+                          : tr({
+                              zh: '各设备选相同「共几台」+ 不同「本机第几台」,按 set 顺序切分,合起来覆盖全部各一次(顺序模式无需协同码)',
+                              en: 'Every device: same total, distinct index. Split by set order covers every case once; no code needed in order mode',
+                            })}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
               {probSupported && mode === 'train' && (
                 <>
                   <div className="trainer-opts-row">
@@ -682,6 +754,11 @@ export default function TrainerRunClient() {
             <div className="trainer-stage-opts">
               <span className="trainer-recap-progress">
                 {recapCur.pos}/{recapCur.total}
+                {coop.on && coop.n >= 2 && (
+                  <span className="trainer-recap-coop">
+                    {tr({ zh: `协同 ${coop.k + 1}/${coop.n} 台`, en: `team ${coop.k + 1}/${coop.n}` })}
+                  </span>
+                )}
               </span>
             </div>
           )}
