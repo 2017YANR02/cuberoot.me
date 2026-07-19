@@ -35,6 +35,7 @@ import ReconPlayerPane from '@/components/ReconPlayerPane';
 import ReconSolutionField, { type ReconSolutionFieldHandle } from '@/components/ReconSolutionField';
 import ReconReuseModal from './ReconReuseModal';
 import ScramblePicker from './ScramblePicker';
+import GroupScramblePicker from './GroupScramblePicker';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -65,7 +66,7 @@ import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, Box, History, Home, Loader2, LogIn, UserPlus, ListPlus, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, History, Home, Loader2, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3 } from 'lucide-react';
 import '../recon.css';
 import './recon_submit.css';
 import { tr } from '@/i18n/tr';
@@ -268,6 +269,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const [reusedFields, setReusedFields] = useState<Set<string>>(() => new Set());
   // 「从已有打乱选择」弹窗:null 关闭,否则标记打开的是哪个框。
   const [scramblePickerFor, setScramblePickerFor] = useState<null | 'wca' | 'optimal'>(null);
+  // 「对照各组打乱」弹窗:拿不准分组时列出各组同把打乱比对认领。
+  const [groupCompareOpen, setGroupCompareOpen] = useState(false);
 
   const pruneReused = useCallback((keys: string | string[]) => {
     setReusedFields(prev => {
@@ -1386,7 +1389,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               title={tr({ zh: '把当前打乱 / 解法带到模拟器里玩', en: 'Play this scramble / solution in the simulator'
             })}
             >
-              <Box size={14} /> {tr({ zh: '去模拟器', en: 'Open in Sim'
+              {tr({ zh: '去模拟器', en: 'Open in Sim'
             })}
             </Link>
           )}
@@ -1432,7 +1435,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               title={tr({ zh: '把当前打乱 / 解法带到模拟器里玩', en: 'Play this scramble / solution in the simulator'
             })}
             >
-              <Box size={14} /> {tr({ zh: '去模拟器', en: 'Open in Sim'
+              {tr({ zh: '去模拟器', en: 'Open in Sim'
             })}
             </Link>
           )}
@@ -1484,6 +1487,17 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 }}
               />
             )}
+            {groupCompareOpen && form.compWcaId && form.event && form.round && (
+              <GroupScramblePicker
+                compWcaId={form.compWcaId}
+                event={form.event}
+                round={form.round}
+                solveNum={form.solveNum}
+                currentGroup={form.groupId || undefined}
+                onPick={g => setField('groupId', g)}
+                onClose={() => setGroupCompareOpen(false)}
+              />
+            )}
             {/* Hero row: solver / event / time */}
               <div className="submit-hero">
                 <div className={`submit-field ${form.personId ? 'submit-field-shrink' : ''}${reusedCls('person')}`}>
@@ -1504,7 +1518,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 </div>
                 {solverLite && (
                   <div className={`submit-field submit-field-shrink${reusedCls('coPersons')}`}>
-                    <span className="submit-label">{tr({ zh: '共同完成者', en: 'Co-solvers' })}</span>
+                    <span className="submit-label">{tr({ zh: '共创', en: 'Co-creation' })}</span>
                     <div className="submit-cosolvers">
                       {(form.coPersons ?? []).map((c, i) => (
                         <div key={`${c.id || c.name}-${i}`} className="submit-solver-pill submit-cosolver-pill">
@@ -1690,6 +1704,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                         </select>
                         {needPick &&
                           <span className="submit-hint submit-hint-warn">{tr({ zh: '请先选择分组', en: 'Select a group first' })}</span>}
+                        {published && groupOptions!.length > 1 && (
+                          <button
+                            type="button"
+                            className="submit-group-compare"
+                            onClick={e => { e.preventDefault(); setGroupCompareOpen(true); }}
+                          >
+                            <Rows3 size={12} /> {tr({ zh: '不确定?查打乱', en: 'Unsure? View scrambles' })}
+                          </button>
+                        )}
                       </>
                     );
                   })()}

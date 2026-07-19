@@ -99,7 +99,7 @@
   "recon": {
     "title": "复盘",
     "subtitle": "魔方比赛的复盘与分析",
-    "solver": "选手/WCAID",
+    "solver": "选手",
     "date": "日期",
     "competition": "比赛",
     "event": "项目",

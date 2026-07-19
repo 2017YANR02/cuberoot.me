@@ -1583,6 +1583,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 showPreview={showPreview}
                 rowDigits={showCross && is333Family ? rowDigits : undefined}
                 analyzable={showCross && is333Family}
+                copyOnClick
                 metric={metric}
                 variant={dataVariant}
                 selectedLabel={selected && sh.groupIdx === selected.groupIdx ? selected.label : null}

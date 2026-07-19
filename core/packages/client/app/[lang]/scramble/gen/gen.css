@@ -946,62 +946,28 @@
     text-align: center;
 }
 .gen-tn-attempt-label { display: block; }
-/* 复制图标:序号下方,单击复制该行打乱(整行单击改为跳分析器)。 */
-.gen-tn-copy-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 5px;
-    padding: 2px;
-    border: none;
-    border-radius: 5px;
-    background: none;
-    color: var(--gen-text-sub);
-    cursor: pointer;
-}
-.gen-tn-copy-btn:hover {
-    color: var(--gen-accent);
-    background: color-mix(in srgb, var(--gen-text) 8%, transparent);
-}
 .gen-tn-attempt-scramble {
     /* width:100% + auto-layout = 拿走 preview cell 之外的全部剩余宽度。
        preview cell 固定 96px(见下方);scramble 列实际宽 = table - 32 - 96 = ~852px,
        受 max-width 兜在 560px 内,table 自然收窄到内容宽。 */
     width: 100%;
     max-width: 560px;       /* matches the ~550pt scramble column on A4 */
-    position: relative;      /* anchor the click-to-copy "已复制" toast */
+    position: relative;      /* anchor the click-to-copy 绿勾 .gen-tn-scr-copied */
+}
+/* 点击复制成功后的绿勾:锚在打乱格右缘垂直居中,1.2s 后随 copiedIdx 清空自然消失。
+   复用全局 --signal-success,和 StageSolver 的 .stsv-sol-copied 同色。 */
+.gen-tn-scr-copied {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--signal-success);
+    pointer-events: none;
 }
 /* 含步数徽标的 333 系列 scramble cell:在 PDF 560 cap 基础上再留出徽标(~80px)的宽,
    让 inline 徽标落在打乱最后一行末尾、不因 cell 太窄掉到下一行(只命中带徽标的行,
    其它项目仍守 560 对齐 PDF)。max-width 只是上限,列宽仍按内容收窄到 文本+徽标。 */
 .gen-tn-attempt-scramble:has(.gen-tn-cross-badge) { max-width: 680px; }
-/* "已复制 / Copied" 浮层 —— 点击 row 复制后,在 scramble 单元格中央弹出一个
-   accent-色小药丸,1.2s fade-in/out。pointer-events:none 防止挡住下一次点击。 */
-.gen-tn-copy-toast {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.92);
-    background: var(--gen-accent);
-    color: #FFF;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-family: 'NotoSans', 'WQYMicroHei', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-    pointer-events: none;
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--gen-accent) 40%, transparent);
-    animation: gen-copy-toast 1.2s ease-out forwards;
-    z-index: 5;
-}
-@keyframes gen-copy-toast {
-    0%   { opacity: 0; transform: translate(-50%, calc(-50% + 6px)) scale(0.92); }
-    15%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    75%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, calc(-50% - 6px)) scale(0.96); }
-}
 .gen-tn-attempt-line {
     display: block;
     /* 打乱步骤永远是 ASCII,不要把 WQYMicroHei 放进 fallback ——

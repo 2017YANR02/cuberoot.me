@@ -577,6 +577,30 @@
 }
 .sp-sentinel { height: 1px; }
 
+/* 「不确定?对照各组打乱」触发按钮(分组下拉下方) */
+.submit-group-compare {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.submit-group-compare:hover { text-decoration: underline; }
+
+/* GroupScramblePicker 内嵌 SheetView:.gen-page 供 --gen-* 变量 + 明暗主题,但它
+   自带整页 background + min-height:100vh,弹窗里必须抹掉,否则撑爆并盖住 popover 底。 */
+.gsp-body .gen-page {
+  min-height: 0;
+  background: transparent;
+}
+.gsp-body .gen-tn-sheet { margin: 0; }
+
 /* WcaPersonPicker (cuber-search) 默认 max-width:320px 是给独立行内场景用的;
    recon 表单里要跟同行其他字段一样铺满所在列 */
 .submit-field .cuber-search {

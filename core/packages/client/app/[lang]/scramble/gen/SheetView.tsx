@@ -11,7 +11,7 @@
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
-import { Copy, ExternalLink } from 'lucide-react';
+import { Check, ExternalLink } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -111,11 +111,14 @@ interface SheetViewProps {
   /** 是否允许行内展开解法分析器(跟随顶部「分析」开关)。false 时可分析打乱点击无任何反应
    *  —— 没开「分析」就完全不出分析器画面。SQ1 等不可分析事件不受影响(本就只选中)。 */
   analyzable?: boolean;
+  /** 点击整行即复制该行打乱(复制成功后打乱末尾短暂浮现绿色对勾),复制与既有的选中/展开叠加。
+   *  展示型场景(/scramble/gen、/wca/comp)开;纯选择器场景(如 recon 分组认领)关,点行只选。 */
+  copyOnClick?: boolean;
   /** 卡片标题行左侧附加内容(如 SQ1 记号简写/完整开关),紧贴在事件图标之前。 */
   headerExtra?: ReactNode;
 }
 
-export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, analyzable = true, headerExtra }: SheetViewProps) {
+export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, analyzable = true, copyOnClick = false, headerExtra }: SheetViewProps) {
   const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
   const router = useRouter();
   const params = useParams();
@@ -167,12 +170,14 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
       setTimeout(() => setCopiedIdx((cur) => (cur === idx ? null : cur)), 1200);
     } catch { /* swallow */ }
   };
-  // 单击打乱:永远选中该行(父级写 URL group+attempt + 高亮 + 滚动),与「分析」开关无关 ——
-  // 选中/深链定位不算「分析」。仅当「分析」开 + 该打乱可解析时,额外就地展开 StageSolver。
+  // 单击打乱:copyOnClick 时先复制该行打乱(末尾浮现绿勾),再叠加既有的选中/展开。
+  // 选中会写 URL group+attempt + 高亮 + 滚动,与「分析」开关无关 —— 选中/深链定位不算「分析」。
+  // 仅当「分析」开 + 该打乱可解析时,额外就地展开 StageSolver。
   // 选中文字时不触发,避免误触。手风琴:再点同一条收起/取消,点别条切换。
-  const onRowClick = (a: AttemptScramble) => {
+  const onRowClick = (a: AttemptScramble, i: number) => {
     if (typeof window !== 'undefined' && window.getSelection()?.toString()) return;
     if (!a.scramble) return;
+    if (copyOnClick) void copyAttempt(i, a.scramble);
     if (analyzable && isAnalysableScramble(a.scramble)) {
       // 分析开 + 可解析:展开解法器,选中态跟随展开。
       const next = expanded === a.scramble ? null : a.scramble;
@@ -220,28 +225,16 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
         key={i}
         ref={isSelected ? selectedRowRef : undefined}
         className={rowCls}
-        onClick={rowInteractive ? () => onRowClick(a) : undefined}
-        title={rowInteractive ? (canAnalyze ? t('点击展开解法', 'Click to expand solutions') : t('点击选中(链接定位)', 'Click to select (deep link)')) : undefined}
+        onClick={rowInteractive ? () => onRowClick(a, i) : undefined}
+        title={rowInteractive
+          ? (copyOnClick
+              ? (canAnalyze ? t('点击复制打乱并展开解法', 'Click to copy & expand solutions') : t('点击复制打乱', 'Click to copy scramble'))
+              : (canAnalyze ? t('点击展开解法', 'Click to expand solutions') : t('点击选中(链接定位)', 'Click to select (deep link)')))
+          : undefined}
         style={{ cursor: rowInteractive ? 'pointer' : 'default' }}
       >
-        <td
-          className="gen-tn-attempt-num"
-          onClick={a.scramble ? (e) => { e.stopPropagation(); copyAttempt(i, a.scramble); } : undefined}
-          title={a.scramble ? t('复制打乱', 'Copy scramble') : undefined}
-          style={{ cursor: a.scramble ? 'pointer' : undefined }}
-        >
+        <td className="gen-tn-attempt-num">
           <span className="gen-tn-attempt-label">{a.label}</span>
-          {a.scramble && (
-            <button
-              type="button"
-              className="gen-tn-copy-btn"
-              onClick={(e) => { e.stopPropagation(); copyAttempt(i, a.scramble); }}
-              title={t('复制打乱', 'Copy scramble')}
-              aria-label={t('复制打乱', 'Copy scramble')}
-            >
-              <Copy size={13} />
-            </button>
-          )}
         </td>
         <td className="gen-tn-attempt-scramble">
           <div className="gen-tn-scr-line">
@@ -273,8 +266,9 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
               })()}
             />
           </div>
+          {/* 复制成功后短暂浮现绿勾(1.2s),锚在打乱格右缘;与 StageSolver 的 .stsv-sol-copied 同款交互。 */}
           {copiedIdx === i && (
-            <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied')}</span>
+            <Check size={14} className="gen-tn-scr-copied" aria-label={t('已复制', 'Copied')} />
           )}
         </td>
         {showPreview && (

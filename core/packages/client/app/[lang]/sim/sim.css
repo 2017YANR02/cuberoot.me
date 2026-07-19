@@ -51,6 +51,28 @@
   flex: 1;
 }
 
+/* 「去复盘」头部链接 — 与 /recon/submit 头部的「去模拟器」(.submit-open-sim)同款药丸,互为往返。 */
+.sim-open-recon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.sim-open-recon:hover {
+  background: color-mix(in srgb, var(--foreground) 12%, transparent);
+  color: var(--foreground);
+  border-color: var(--accent);
+}
+
 .sim-counter {
   font-variant-numeric: tabular-nums;
   font-size: 14px;
