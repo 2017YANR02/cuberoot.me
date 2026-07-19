@@ -58,7 +58,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   account_auth alg alg_marks alg_sets analytics announced_comps article auth cn_comp_names colpi
 //   comp_follows cube cubeopt_solve cubing_live feedback forum health historical_ranks
 //   membership nav_sites nemesizer notifications ops page_notices paint progress recon scramble_555
-//   scramble_marks sponsors timer_backups wca_format wca_fun_stats wca_proxy
+//   scramble_marks sponsors timer_backups trainer_rooms wca_format wca_fun_stats wca_proxy
 //   wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wiki
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
@@ -233,6 +233,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'alg', m: 'PUT', p: '/v1/alg/marks/:puzzle/:set', g: 'login', zh: '批量写 case 标记', en: 'Bulk-write case marks' },
   { d: 'alg', m: 'GET', p: '/v1/progress/:algSetId', g: 'login', zh: '读取训练进度', en: 'Read training progress' },
   { d: 'alg', m: 'POST', p: '/v1/progress/:algSetId', g: 'login', zh: '保存训练进度', en: 'Save training progress' },
+  { d: 'alg', m: 'POST', p: '/v1/trainer/rooms', g: 'public', zh: '建协同房间(多设备复习分工),返回房间码', en: 'Create a coop room (multi-device recap split); returns a room code' },
+  { d: 'alg', m: 'GET', p: '/v1/trainer/rooms/:code', g: 'public', zh: '房间状态(合并进度 / 当前轮)', en: 'Room status (combined progress / current round)' },
+  { d: 'alg', m: 'POST', p: '/v1/trainer/rooms/:code/claim', g: 'public', zh: '原子领取下一题(不重不漏)', en: 'Atomically claim the next case (no overlap/gaps)' },
+  { d: 'alg', m: 'POST', p: '/v1/trainer/rooms/:code/next-round', g: 'public', zh: '开下一轮(CAS,只第一个推进)', en: 'Start the next round (CAS; only the first advances)' },
 
   // ---- membership ----
   { d: 'membership', m: 'GET', p: '/v1/membership/plans', g: 'public', zh: '会员套餐', en: 'Membership plans' },

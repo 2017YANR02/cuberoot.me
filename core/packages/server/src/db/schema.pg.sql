@@ -563,6 +563,25 @@ CREATE TABLE alg_case_marks (
 );
 CREATE INDEX idx_alg_case_marks_user_set ON alg_case_marks(wca_id, puzzle, set_slug);
 
+-- ── 26d. trainer_rooms (公式训练器协同房间:多设备在线复习分工) ──
+-- migration 0077_trainer_rooms.sql。房间持有共享 case 队列 + 领取游标,多台设备各自「领取
+-- 下一题」原子出队 → 不重不漏、动态均衡、支持乱序(队列服务端洗)。无需登录,房间码即身份。
+-- round 递增 = 一轮领完开新一轮;next_index >= total 即本轮领完。keys/queue 存 case_key。
+CREATE TABLE trainer_rooms (
+  code        VARCHAR(12)  PRIMARY KEY,
+  puzzle      VARCHAR(16)  NOT NULL,
+  set_slug    VARCHAR(48)  NOT NULL,
+  order_mode  VARCHAR(8)   NOT NULL DEFAULT 'shuffle' CHECK (order_mode IN ('seq', 'shuffle')),
+  keys        JSONB        NOT NULL,
+  round       INT          NOT NULL DEFAULT 1,
+  queue       JSONB        NOT NULL,
+  next_index  INT          NOT NULL DEFAULT 0,
+  total       INT          NOT NULL,
+  created_at  BIGINT       NOT NULL,
+  updated_at  BIGINT       NOT NULL
+);
+CREATE INDEX idx_trainer_rooms_updated ON trainer_rooms(updated_at);
+
 -- ── 27. forum_* (/forum 论坛:分类/子版/主题/帖子/反应) ──
 -- migration 0066_forum.sql。作者键 = ownerKey(真 wca_id 或 u<uid>),同 comments.author_id 语义。
 -- 子版计数查询时现算;主题上缓存 reply_count/view_count/last_post_*。软删除保 postNo 稳定。
