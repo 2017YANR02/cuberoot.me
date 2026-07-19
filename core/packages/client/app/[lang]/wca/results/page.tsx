@@ -32,7 +32,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import { RecordBadge } from '@/components/RecordBadge';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
-import { useCountries } from '@/components/wca-stats/CountrySelect';
+import { useCountries } from '@/components/wca-stats/useCountries';
 import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { countryName } from '@/lib/country-name';
 import { EventIcon } from '@/components/EventIcon';

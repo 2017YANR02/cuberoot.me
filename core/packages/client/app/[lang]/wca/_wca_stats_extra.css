@@ -128,88 +128,8 @@ html:not([data-palette-scheme=dark]) .wse-page {
 .wse-len-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .wse-len-dash { color: var(--muted-foreground); }
 
-/* CountrySelect */
+/* Country / region filter wrapper (RegionCountrySelect → RegionPicker draws its own popup). */
 .wse-country { position: relative; }
-.wse-country-trigger {
-  display: flex;
-  align-items: center;
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  background: color-mix(in srgb, var(--foreground) 4%, transparent);
-  border-radius: 6px;
-  height: 34px;
-  overflow: hidden;
-}
-.wse-country-trigger:hover { border-color: color-mix(in srgb, var(--foreground) 25%, transparent); }
-.wse-country-trigger-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  text-align: left;
-  border: none;
-  background: transparent;
-  height: auto;
-  padding: 6px 10px;
-  border-radius: 0;
-  color: inherit;
-  font-size: 14px;
-}
-/* ClearButton(共享组件)间距;用 class 选择器,不会穿透/误伤其他组件 */
-.wse-country-trigger .clear-btn { margin-right: 6px; }
-.wse-country-popup {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: var(--popover);
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  border-radius: 6px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  z-index: 10;
-  min-width: 220px;
-  max-height: 360px;
-  display: flex;
-  flex-direction: column;
-}
-.wse-country-search {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
-  color: var(--muted-foreground);
-}
-.wse-country-search .wse-country-search-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 14px;
-  color: inherit;
-}
-.wse-country-list {
-  overflow-y: auto;
-  flex: 1;
-  padding: 4px 0;
-}
-.wse-country-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  border: none !important;
-  background: transparent !important;
-  padding: 6px 12px !important;
-  border-radius: 0 !important;
-  cursor: pointer;
-  color: inherit;
-  font-size: 13px;
-  text-align: left;
-  height: auto !important;
-}
-.wse-country-item:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent) !important; }
-.wse-country-item.active { background: var(--accent-soft) !important; }
 
 /* Table */
 .wse-table-wrapper {

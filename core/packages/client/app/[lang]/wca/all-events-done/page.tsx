@@ -11,7 +11,8 @@ import { loadFlagData } from '@/lib/country-flags';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
 import { apiUrl } from '@/lib/api-base';
-import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
+import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
+import { useCountries } from '@/components/wca-stats/useCountries';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
@@ -81,7 +82,7 @@ function AllEventsDonePageInner() {
       />
 
       <div className="wse-filters">
-        <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+        <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
           <label>{tr({ zh: '视图', en: 'View'
         })}</label>

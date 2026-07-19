@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { X, Loader2, Smartphone, Check } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { createOrder, getOrderStatus, type MembershipPlan, type OrderInfo, type PayChannels } from '@/lib/membership-api';
 import { fmtPrice } from '@/lib/membership-format';
 
@@ -33,17 +34,9 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   const [err, setErr] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
-      if (pollRef.current !== null) window.clearTimeout(pollRef.current);
-    };
-  }, [onClose]);
+  useModalDismiss(onClose);
+  // Stop the pending查单 poll when the modal unmounts (its own concern, not part of dismiss).
+  useEffect(() => () => { if (pollRef.current !== null) window.clearTimeout(pollRef.current); }, []);
 
   async function start(ch: Channel) {
     setChannel(ch);

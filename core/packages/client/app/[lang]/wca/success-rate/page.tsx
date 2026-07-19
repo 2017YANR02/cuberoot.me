@@ -10,7 +10,8 @@ import Paginator from '@/components/wca-stats/Paginator';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
 import { apiUrl } from '@/lib/api-base';
-import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
+import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
+import { useCountries } from '@/components/wca-stats/useCountries';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
@@ -90,7 +91,7 @@ function SuccessRatePageInner() {
       />
 
       <div className="wse-filters">
-        <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+        <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
           <label>{tr({ zh: '最小尝试数', en: 'Min attempts'
         })}</label>

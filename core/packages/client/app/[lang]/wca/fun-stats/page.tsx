@@ -11,7 +11,7 @@ import { RegionPicker } from '@/components/RegionPicker';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import Paginator from '@/components/wca-stats/Paginator';
-import { useCountries } from '@/components/wca-stats/CountrySelect';
+import { useCountries } from '@/components/wca-stats/useCountries';
 import { EventIcon } from '@/components/EventIcon';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
