@@ -674,6 +674,35 @@
   color: var(--faint-foreground);
 }
 
+/* ─── 在线协同房间控件 ─── */
+.trainer-room-row { flex-wrap: wrap; gap: 8px 10px; }
+.trainer-room-badge {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--foreground);
+}
+.trainer-room-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--toggle-on) 72%, black);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.trainer-room-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--toggle-on) 64%, black); }
+.trainer-room-btn:disabled { opacity: 0.5; cursor: default; }
+.trainer-room-btn.is-ghost {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
+}
+.trainer-room-btn.is-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.trainer-room-err { color: color-mix(in srgb, var(--destructive) 90%, var(--foreground)); }
+
 /* ─── 协同「本轮复习结束」弹窗 ─── */
 .trainer-round-modal-backdrop {
   position: fixed;
