@@ -24,6 +24,7 @@
  */
 import { Hono } from 'hono';
 import { query } from '../db/connection.js';
+import { getOverlayEntries, overlayDeltaPure } from '../utils/wca_live_overlay.js';
 
 export const wcaStatsExtraRoutes = new Hono();
 
@@ -691,23 +692,80 @@ function lowerBound(arr: Int32Array, target: number): number {
   return lo;
 }
 
+// ── 近期纪录 overlay:修快照滞后导致的 /WRn 偏小(见 utils/wca_live_overlay 注释)──
+// 快照(wca_results_flat)周更,不含刚结束的比赛。overlayDelta 用 WCA Live recentRecords 补上
+// 「快照缺、成绩严格更快、且该选手快照 PB 未 < value(否则官方榜已计入,不重复加)」的不同选手数。
+// 每人快照 PB(overlay 涉及的选手,一般几个)按 event 60s 缓存,一次批量查,rank-for-batch 不放大。
+
+interface OverlayBests {
+  bests: Map<string, number>; // wcaId → 快照个人最佳(centiseconds);缺席 = 该选手快照无成绩
+  builtAt: number;
+}
+const overlayBestsCache = new Map<string, OverlayBests>();
+const OVERLAY_BESTS_TTL_MS = 60_000;
+
+// overlay 涉及选手的快照 PB(全局个人最佳,世界/全国去重共用同一值)。无 overlay 选手 → 空 Map。
+async function overlayPeopleBests(event: string, isAvg: boolean): Promise<Map<string, number>> {
+  const entries = await getOverlayEntries(event, isAvg);
+  if (entries.length === 0) return new Map();
+  const key = `${event}|${isAvg ? 1 : 0}`;
+  const cur = overlayBestsCache.get(key);
+  if (cur && Date.now() - cur.builtAt < OVERLAY_BESTS_TTL_MS) return cur.bests;
+
+  const ids = [...new Set(entries.map((e) => e.wcaId))];
+  const placeholders = ids.map(() => '?').join(', ');
+  const bests = new Map<string, number>();
+  try {
+    const rows = await query<{ wca_id: string; m: number }>(
+      `SELECT wca_id, MIN(value)::int AS m FROM wca_results_flat
+       WHERE event_id = ? AND is_avg = ? AND value > 0 AND wca_id IN (${placeholders})
+       GROUP BY wca_id`,
+      [event, isAvg, ...ids],
+    );
+    for (const r of rows) bests.set(r.wca_id, Number(r.m));
+  } catch (e) {
+    console.warn(`[rank-overlay] snapshot bests failed ${key}:`, (e as Error).message);
+    // 查失败 → 空 Map:所有 overlay 候选都当「快照未计入」加进去(宁可偏大不偏小,与用户诉求同向)。
+  }
+  overlayBestsCache.set(key, { bests, builtAt: Date.now() });
+  return bests;
+}
+
+/**
+ * 近期纪录对某成绩名次的增量(I/O 包装,去重数学见 overlayDeltaPure)。
+ * continental 暂不订正(rank-for 的 continental 不进 /WRn 展示,可接受微陈旧)。
+ * 失败/无 overlay → 全 0(回退纯快照)。
+ */
+async function overlayDelta(
+  event: string,
+  isAvg: boolean,
+  value: number,
+  opts: { excludeComp?: string; countryIso2?: string } = {},
+): Promise<{ world: number; national: number }> {
+  if (!(value > 0)) return { world: 0, national: 0 };
+  const entries = await getOverlayEntries(event, isAvg);
+  if (entries.length === 0) return { world: 0, national: 0 };
+  const bests = await overlayPeopleBests(event, isAvg);
+  return overlayDeltaPure(entries, bests, value, opts);
+}
+
 // 世界排名(Top 100 门控)—— 给 utils/record_format 的纪录文案 /WRn 后缀用.
 // 复刻退役 Python wca_rankings.get_world_rank:成绩进世界前 100 返名次,否则 null.
 // rank = (个人最佳严格小于 value 的选手数) + 1 = WCA 官方按选手 PB 去重的名次,
 // 与 /wca/rank-for 共用 getRankIndex 缓存(同一份 Int32Array,内存零额外).
-// ⚠️ 行为变更:数据源从「WCA 官网实时 Top100」变成本地 wca_results_flat(stats-build 周更).
-//   两次周更间的新破纪录,/WRn 分母缺最近一周 → 名次可能系统性偏小几名(WR/Top10 无感,
-//   NR/CR 的 /WRnn 偶尔偏小且无人察觉).可接受 —— 换来彻底脱离 spawn/联网/超时/熔断脆链.
-//   333fm average 这里走得通(getRankIndex 不像 /wca/rank-for 端点那样拒它).
+// 快照(stats-build 周更)缺刚结束的比赛,叠加 overlayDelta 用 WCA Live 近期纪录补上跨赛事滞后.
 export async function worldRankTop100(
   eventId: string,
   recType: string,
   value: number,
 ): Promise<number | null> {
   if (!value || value <= 0) return null;
-  const idx = await getRankIndex(eventId.toLowerCase(), recType === 'average', 'W');
+  const event = eventId.toLowerCase();
+  const isAvg = recType === 'average';
+  const idx = await getRankIndex(event, isAvg, 'W');
   if (!idx) return null;
-  const rank = lowerBound(idx.values, value) + 1;
+  const { world: dWorld } = await overlayDelta(event, isAvg, value);
+  const rank = lowerBound(idx.values, value) + 1 + dWorld;
   return rank <= 100 ? rank : null;
 }
 
@@ -736,29 +794,36 @@ wcaStatsExtraRoutes.get('/wca/rank-for', async (c) => {
   const worldIdx = await getRankIndex(event, isAvg, 'W');
   if (!worldIdx) return c.json({ error: 'Rank index unavailable' }, 503);
 
-  // rank = (PR 严格小于 value 的人数) + 1;total = 上榜选手数.精确,无饱和.
-  const rank = lowerBound(worldIdx.values, centis) + 1;
+  // exclude_comp:调用方(比赛页弹窗)已就本场实时成绩自行订正名次,这里把该场排除,避免与
+  // 客户端的同场订正重复计数;overlay 只补【其它】刚结束比赛的滞后。Bark 无此参数(要全量)。
+  const excludeComp = (c.req.query('exclude_comp') ?? '').trim() || undefined;
+  const countryInput = (c.req.query('country') ?? '').trim();
+  const cn = countryInput ? await resolveCountryFull(countryInput) : null;
+  const { world: dWorld, national: dNat } = await overlayDelta(event, isAvg, centis, {
+    excludeComp,
+    countryIso2: cn?.iso2,
+  });
+
+  // rank = (PR 严格小于 value 的人数) + 1 + 近期纪录 overlay 增量;total = 上榜选手数.
+  const rank = lowerBound(worldIdx.values, centis) + 1 + dWorld;
   const total = worldIdx.values.length;
 
   const resp: Record<string, unknown> = { event, type, value: centis, rank, total };
 
   // 可选 country -> 额外给 NR(国家)/ CR(大洲)排名.查不到国家就只返世界排名.
-  const countryInput = (c.req.query('country') ?? '').trim();
-  if (countryInput) {
-    const cn = await resolveCountryFull(countryInput);
-    if (cn) {
-      const [natIdx, contIdx] = await Promise.all([
-        getRankIndex(event, isAvg, `N:${cn.id}`),
-        getRankIndex(event, isAvg, `K:${cn.continentId}`),
-      ]);
-      resp.country = cn.iso2 || cn.id;
-      resp.continent = cn.continentId;
-      if (natIdx) {
-        resp.national = { rank: lowerBound(natIdx.values, centis) + 1, total: natIdx.values.length };
-      }
-      if (contIdx) {
-        resp.continental = { rank: lowerBound(contIdx.values, centis) + 1, total: contIdx.values.length };
-      }
+  if (cn) {
+    const [natIdx, contIdx] = await Promise.all([
+      getRankIndex(event, isAvg, `N:${cn.id}`),
+      getRankIndex(event, isAvg, `K:${cn.continentId}`),
+    ]);
+    resp.country = cn.iso2 || cn.id;
+    resp.continent = cn.continentId;
+    if (natIdx) {
+      resp.national = { rank: lowerBound(natIdx.values, centis) + 1 + dNat, total: natIdx.values.length };
+    }
+    if (contIdx) {
+      // 大洲名次不进 /WRn 展示,暂不叠加 overlay(可接受微陈旧)。
+      resp.continental = { rank: lowerBound(contIdx.values, centis) + 1, total: contIdx.values.length };
     }
   }
 
@@ -777,6 +842,10 @@ wcaStatsExtraRoutes.post('/wca/rank-for-batch', async (c) => {
   const items = (body as { items?: unknown })?.items;
   if (!Array.isArray(items)) return c.json({ error: 'items array required' }, 400);
   if (items.length > 400) return c.json({ error: 'too many items (max 400)' }, 400);
+  // 整批同属一场比赛(比赛页预热),用 excludeComp 排除本场,避免与客户端同场订正重复计数。
+  const excludeComp = ((body as { excludeComp?: unknown })?.excludeComp
+    ? String((body as { excludeComp?: unknown }).excludeComp)
+    : '').trim() || undefined;
 
   // 同一批里相同国家只解析一次(resolveCountryFull 不带缓存)。
   const countryMemo = new Map<string, Awaited<ReturnType<typeof resolveCountryFull>>>();
@@ -802,14 +871,16 @@ wcaStatsExtraRoutes.post('/wca/rank-for-batch', async (c) => {
     const isAvg = type === 'average';
     const worldIdx = await getRankIndex(event, isAvg, 'W');
     if (!worldIdx) return null;
-    const out: Record<string, unknown> = { rank: lowerBound(worldIdx.values, value) + 1, total: worldIdx.values.length };
-    if (countryInput) {
-      const cn = await resolveCountry(countryInput);
-      if (cn) {
-        out.country = cn.iso2 || cn.id;
-        const natIdx = await getRankIndex(event, isAvg, `N:${cn.id}`);
-        if (natIdx) out.national = { rank: lowerBound(natIdx.values, value) + 1, total: natIdx.values.length };
-      }
+    const cn = countryInput ? await resolveCountry(countryInput) : null;
+    const { world: dWorld, national: dNat } = await overlayDelta(event, isAvg, value, {
+      excludeComp,
+      countryIso2: cn?.iso2,
+    });
+    const out: Record<string, unknown> = { rank: lowerBound(worldIdx.values, value) + 1 + dWorld, total: worldIdx.values.length };
+    if (cn) {
+      out.country = cn.iso2 || cn.id;
+      const natIdx = await getRankIndex(event, isAvg, `N:${cn.id}`);
+      if (natIdx) out.national = { rank: lowerBound(natIdx.values, value) + 1 + dNat, total: natIdx.values.length };
     }
     return out;
   }));
