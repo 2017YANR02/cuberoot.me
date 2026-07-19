@@ -6,6 +6,7 @@
 import { useMemo, type ReactNode } from 'react';
 import { Users } from 'lucide-react';
 import Link from '@/components/AppLink';
+import PersonLink from '@/components/PersonLink';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import { FollowStar } from '@/components/CompFollow';
 import { compLinkProps } from '@/lib/comp-link';
@@ -143,7 +144,7 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
           <div className="rc-cubers-title">{tr({ zh: `顶尖选手 (${topCubers.length})`, en: `Top cubers (${topCubers.length})` })}</div>
           <div className="rc-cuber-list">
             {topCubers.map((c) => (
-              <Link key={c.id} href={`/wca/persons/${c.id}`} prefetch={false} className="rc-cuber-tag">
+              <PersonLink key={c.id} wcaId={c.id} className="rc-cuber-tag">
                 <Flag iso2={personFlagIso2(c.id)} spanClassName="rc-cuber-flag" imgClassName="rc-cuber-flag-img" />
                 <span>{displayCuberName(c.name, isZh)}</span>
                 {c.events && c.events.length > 0 && (
@@ -154,7 +155,7 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
                     })}
                   </span>
                 )}
-              </Link>
+              </PersonLink>
             ))}
           </div>
         </div>

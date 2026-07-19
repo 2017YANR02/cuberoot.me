@@ -21,6 +21,7 @@ import {
   checkDuplicate, listRecons, resolveShortUrl, fetchMethodCubeHistory,
 } from '@/lib/recon-api';
 import AppLink from '@/components/AppLink';
+import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
 import { ClearButton } from '@/components/ClearButton';
 import { CompPicker } from '@/components/CompPicker';
@@ -1490,9 +1491,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                   {solverLite ? (
                     <div className="submit-solver-pill">
                       <Flag iso2={solverLite.country_iso2} />
-                      <AppLink href={`/wca/persons/${encodeURIComponent(solverLite.id)}`} className="submit-solver-name">
-                        {displayCuberName(solverLite.name, isZh)}
-                      </AppLink>
+                      <PersonLink wcaId={solverLite.id} name={solverLite.name} isZh={isZh} className="submit-solver-name" />
                       <ClearButton onClick={clearSolver} isZh={isZh} variant="standalone" preserveFocus />
                     </div>
                   ) : (

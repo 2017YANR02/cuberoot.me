@@ -4,9 +4,8 @@
 // 复刻 cubingchina results/p 的 closestCubers / seenCubers / visitedProvinces.
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from '@/components/AppLink';
+import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
-import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchWcaPersonMisc } from '@/lib/wca-person-api';
 import type { WcaPersonMisc, WcaPersonProfile, WcaCompetition } from '@/lib/wca-person-api';
 import { buildRegionStats } from '../logic/person-misc-region';
@@ -58,7 +57,7 @@ export default function MiscTab({ profile, comps, isZh }: Props) {
                   <tr key={p.wcaId}>
                     <td className="wp-misc-cuber">
                       {p.iso2 ? <Flag iso2={p.iso2} className="wp-flag-sm" /> : null}
-                      <Link href={`/wca/persons/${p.wcaId}`} prefetch={false}>{displayCuberName(p.name, isZh)}</Link>
+                      <PersonLink wcaId={p.wcaId} name={p.name} isZh={isZh} />
                     </td>
                     <td className="wp-cell-num">{p.shared}</td>
                   </tr>

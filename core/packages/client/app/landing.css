@@ -33,12 +33,15 @@
     position: relative;   /* 锚定右上角 auth 入口 */
 }
 
-/* ── 右上角 登录 / 我的主页 入口 ── */
+/* ── 右上角 语言切换 + 登录 / 我的主页 入口 ── */
 .landing-page .landing-auth {
     position: absolute;
     top: calc(1.1rem + var(--sat));
     right: max(1rem, var(--sar));
     z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 .landing-page .landing-auth-btn {
     display: inline-flex;
@@ -76,15 +79,38 @@
     object-fit: cover;
     background: var(--accent-soft);
 }
-.landing-page .landing-auth-name {
-    max-width: 9rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+/* 已登录:仅头像,按钮收成圆形贴合头像(去掉胶囊边框/内边距) */
+.landing-page .landing-auth-btn.is-avatar {
+    padding: 0;
+    border: none;
+    background: transparent;
+    gap: 0;
 }
-@media (max-width: 480px) {
-    /* 窄屏只留头像/图标,名字省掉,避免挤压顶栏 */
-    .landing-page .landing-auth-name { display: none; }
+.landing-page .landing-auth-btn.is-avatar:hover {
+    background: transparent;
+}
+.landing-page .landing-auth-btn.is-avatar .landing-auth-avatar {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border);
+    transition: border-color 0.15s;
+}
+.landing-page .landing-auth-btn.is-avatar:hover .landing-auth-avatar {
+    border-color: var(--accent);
+}
+/* 无头像的兜底 User 图标同尺寸圆形 */
+.landing-page .landing-auth-btn.is-avatar > svg {
+    width: 28px;
+    height: 28px;
+    padding: 5px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.15s;
+}
+.landing-page .landing-auth-btn.is-avatar:hover > svg {
+    border-color: var(--accent);
 }
 
 /* ── 品牌行 ── */

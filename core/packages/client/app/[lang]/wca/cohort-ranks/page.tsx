@@ -2,7 +2,7 @@
 
 // Ported from packages/client-vite/src/pages/wca_stats/CohortRanksPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import Link from '@/components/AppLink';
+import PersonLink from '@/components/PersonLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { WcaStatsPageHeader } from '@/components/wca-stats/WcaStatsPageHeader';
@@ -10,7 +10,6 @@ import Paginator from '@/components/wca-stats/Paginator';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { displayCuberName } from '@/lib/cuber-name-display';
 import { apiUrl } from '@/lib/api-base';
 import CountrySelect, { useCountries } from '@/components/wca-stats/CountrySelect';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -144,7 +143,7 @@ function CohortRanksPageInner() {
                   <tr key={r.wcaId}>
                     <td className="wse-rank-col">{r.rank}</td>
                     <td>
-                      <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.wcaId}`}>{displayCuberName(r.name, isZh)}</Link>
+                      <PersonLink wcaId={r.wcaId} name={r.name} isZh={isZh} />
                     </td>
                     <td className="wse-value-col">{formatWcaResult(r.value, event, type)}</td>
                     {!country && (
