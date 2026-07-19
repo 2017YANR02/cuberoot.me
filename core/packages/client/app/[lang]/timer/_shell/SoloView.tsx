@@ -22,7 +22,7 @@ import {
   Download, Upload, Trash2, Settings as SettingsIcon, Maximize2, Minimize2,
   Bluetooth, Mic, BarChart3, Plus, Wrench, ListPlus, Printer, FileText,
   FileSpreadsheet, AlertTriangle, Target, Crosshair, Keyboard, Link2, Globe,
-  ListOrdered, LineChart, Brain, X, CheckCircle2, Footprints,
+  ListOrdered, LineChart, Brain, X, Check, CheckCircle2, Footprints,
 } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CubingIcon, EventIcon } from '@/components/EventIcon/EventIcon';
@@ -297,22 +297,29 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // 「按步数」WCA 过滤(2×2 / 金字塔):把真实打乱按度量步数筛到 [lo,hi]。与随机来源共用同一组设置。
   const wcaStep = wcaStepFilter(event, settings);
   const wcaStepSig = wcaStep ? `${wcaStep.metric}:${wcaStep.lo}.${wcaStep.hi}` : '';
-  const wcaSpec = useMemo<WcaSourceSpec>(() => ({
-    event,
-    mode: settings.wcaScrambleMode,
-    comp: settings.wcaComp,
-    compName: settings.wcaCompName,
-    round: settings.wcaRound,
-    group: settings.wcaGroup,
-    from: settings.wcaDateFrom,
-    to: settings.wcaDateTo,
-    optimal: settings.wcaUseOptimal,
-    diff: settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
-      ? { variant: settings.wcaDiffVariant, stage: settings.wcaDiffStage, colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps }
-      : undefined,
-    stepFilter: wcaStep ?? undefined,
+  // 比赛模式但没选比赛 → 回退成「日期全时段随机真题」:仍出真实 WCA 打乱(随机抽),不落本地
+  // 随机生成。走 date 池(fillDate,空 from/to = 全时段),经预热后秒出。否则 specKey 对空 comp
+  // 返回 null,会静默变成本地生成打乱(见 wca_pool.specKey / fillDate)。
+  const wcaSpec = useMemo<WcaSourceSpec>(() => {
+    const compMissing = settings.wcaScrambleMode === 'comp' && !settings.wcaComp;
+    return {
+      event,
+      mode: compMissing ? 'date' : settings.wcaScrambleMode,
+      comp: settings.wcaComp,
+      compName: settings.wcaCompName,
+      round: compMissing ? '' : settings.wcaRound,
+      group: compMissing ? '' : settings.wcaGroup,
+      from: compMissing ? '' : settings.wcaDateFrom,
+      to: compMissing ? '' : settings.wcaDateTo,
+      optimal: settings.wcaUseOptimal,
+      // 难度过滤只在(真正的)date 模式生效;回退的空比赛出纯随机真题,不套残留难度设置。
+      diff: !compMissing && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
+        ? { variant: settings.wcaDiffVariant, stage: settings.wcaDiffStage, colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps }
+        : undefined,
+      stepFilter: wcaStep ?? undefined,
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps, wcaStepSig]);
+  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps, wcaStepSig]);
   const wcaSpecRef = useRef(wcaSpec);
   wcaSpecRef.current = wcaSpec;
   const wcaSourceSig = settings.scrambleSource === 'wca'
@@ -1009,9 +1016,20 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       if (anyModalOpenRef.current) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
-      // Focus inside an always-present in-page control region (e.g. the 解法提示
-      // panel's selects/buttons) must not arm the timer on Space.
-      if (target && target.closest('[data-no-timer]')) return;
+      // Focus inside an always-present in-page control region (解法提示面板 / 打乱来源栏的
+      // selects/buttons) must not arm the timer or fire other shortcuts —— 唯独左右键仍要能
+      // 切上一个/下一个打乱:面板常驻且可竖向滚动,不该把换题键吞给滚动条。原生 <select>
+      // (左右键=切换选项)与计时进行中例外。
+      if (target && target.closest('[data-no-timer]')) {
+        const ph = phaseRef.current;
+        const busy = ph === 'running' || ph === 'holding' || ph === 'ready' || ph === 'inspecting';
+        if (!busy && !e.repeat && target.tagName !== 'SELECT'
+            && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')) {
+          e.preventDefault();
+          (e.code === 'ArrowLeft' ? prevScramble : nextScramble)();
+        }
+        return;
+      }
       // Holding Space auto-repeats keydown; swallow the page-scroll default on
       // every repeat, but only arm the timer once (first non-repeat keydown).
       if (e.code === 'Space') {
@@ -1231,6 +1249,8 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   }, [timer.phase, timer.inspectionDisplayMs, inspectionLimit, lastPenalty]);
 
   const digitsText = useMemo(() => {
+    // 练习模式(计时关):不显示任何读数 —— 按压只换打乱,没有时间可言。
+    if (!settings.timingEnabled) return '';
     if (timer.phase === 'inspecting') {
       const remaining = Math.max(0, Math.ceil((inspectionLimit * 1000 - timer.inspectionDisplayMs) / 1000));
       if (timer.inspectionDisplayMs > inspectionLimit * 1000 + 2000) return 'DNF';
@@ -1243,17 +1263,19 @@ export default function SoloView({ playersControl }: SoloViewProps) {
     if (timer.phase === 'stopped' && lastPenalty === 'DNF') return 'DNF';
     if (timer.phase === 'stopped' && lastPenalty === '+2') return formatMs(timer.displayMs + 2000, settings.precision) + '+';
     return formatMs(timer.displayMs, settings.precision);
-  }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, lastPenalty, settings.hideTime, settings.precision, settings.runningPrecision]);
+  }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, lastPenalty, settings.hideTime, settings.precision, settings.runningPrecision, settings.timingEnabled]);
 
   const fontSize = `calc(clamp(48px, 10vw, 132px) * ${settings.timerFontScale})`;
 
-  // Rank badge centis from the last effective time (DNF -> null).
+  // Rank badge centis from the last effective time (DNF -> null). 练习模式(计时关)下
+  // timer.phase/displayMs 可能还残留关闭前最后一次真实成绩 —— 没有新成绩产生,徽章不该显示。
   const stoppedCentis = useMemo<number | null>(() => {
+    if (!settings.timingEnabled) return null;
     if (timer.phase !== 'stopped') return null;
     if (lastPenalty === 'DNF' || !Number.isFinite(timer.displayMs)) return null;
     const ms = lastPenalty === '+2' ? timer.displayMs + 2000 : timer.displayMs;
     return Math.round(ms / 10);
-  }, [timer.phase, timer.displayMs, lastPenalty]);
+  }, [timer.phase, timer.displayMs, lastPenalty, settings.timingEnabled]);
 
   const eventInfoCurrent = EVENTS.find(e => e.id === event);
   const printEventName = eventInfoCurrent ? ((isZh ? eventInfoCurrent.nameZh : eventInfoCurrent.nameEn)) : event;
@@ -1521,7 +1543,19 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                             : tr({ zh: '该时间段内没有 WCA 真题', en: 'No WCA scrambles in this date range' })
                     }</span>
                   : displayScramble
-                    ? <><span className="scramble-moves">{displayScramble}</span>{wcaNonOptimal && (
+                    ? <><span className="scramble-moves">{(() => {
+                        // 复制成功的绿勾必须绝对不换行(即使不另起、也不能把最后一步挤下去)。
+                        // 做法:把最后一步单独包进 .scramble-copied-tail(relative),绿勾在其中
+                        // 绝对定位(left:100%),完全脱离文本流 → 既不新增断行点、也不占宽度,永不换行。
+                        const i = displayScramble.lastIndexOf(' ');
+                        const head = i >= 0 ? displayScramble.slice(0, i + 1) : '';
+                        const tail = i >= 0 ? displayScramble.slice(i + 1) : displayScramble;
+                        return (
+                          <>{head}<span className="scramble-copied-tail">{tail}{scrambleCopied && (
+                            <Check className="scramble-copied-check" aria-label={tr({ zh: '已复制', en: 'Copied' })} />
+                          )}</span></>
+                        );
+                      })()}</span>{wcaNonOptimal && (
                         <span
                           className="scramble-nonopt"
                           data-no-timer
@@ -1531,10 +1565,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                     : settings.scrambleSource === 'manual' && manualQueue.length === 0
                       ? <span className="scramble-empty">{tr({ zh: '在上方「打乱来源」粘贴打乱,每行一条', en: 'Paste scrambles above — one per line' })}</span>
                       : <span className="scramble-empty">—</span>}</span>
-              {scrambleCopied && (
-                <span className="scramble-copied-flash" data-no-timer>{tr({ zh: '已复制', en: 'Copied'
-                })}</span>
-              )}
               {wcaSrcDisplay && (
                 <div className="scramble-src-row">
                 <a
@@ -1595,6 +1625,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                 </div>
               </div>
             </div>
+          ) : undefined}
+          digitsCorner={settings.showRankBadge !== false && timer.phase === 'stopped' && solves.length > 0 ? (
+            <RankBadge eventId={event} centis={stoppedCentis} type="single" country={rankCountry} isZh={isZh} />
           ) : undefined}
         >
           {/* sub-content under the digits */}
@@ -1658,17 +1691,6 @@ export default function SoloView({ playersControl }: SoloViewProps) {
               )}
             </div>
           )}
-          {/* 开启排名时始终渲染该行占位(min-height),计时途中 badge 不显示但保留高度,避免长按时布局
-              跳动;关掉排名则整行不渲染,不留空隙。 */}
-          {settings.showRankBadge !== false && (
-            <div className="shell-stopped-row">
-              <div className="shell-rank-slot">
-                {timer.phase === 'stopped' && solves.length > 0 && (
-                  <RankBadge eventId={event} centis={stoppedCentis} type="single" country={rankCountry} isZh={isZh} />
-                )}
-              </div>
-            </div>
-          )}
         </TimingSurface>
 
         {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}
@@ -1700,8 +1722,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
             area. Only once there's data (no bare dashes at idle). */}
         {solves.length > 0 && (
           <div className="shell-stat-rail surface-chrome">
-            <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '次数', en: 'count'
-            })}</span> <span className="shell-stat-val">{stats.count}</span></span>
+            {/* 「次数」单独一行去掉了 —— 总次数已含在下面「成功」的分母(solved/count)里,不用重复占一行。 */}
             <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '成功', en: 'solved' })}</span> <span className="shell-stat-val">{stats.solved}/{stats.count}</span></span>
             <span className="shell-stat"><span className="shell-stat-lbl">mean</span> <span className="shell-stat-val">{stats.mean}</span></span>
             <span className="shell-stat"><span className="shell-stat-lbl">{tr({ zh: '最佳', en: 'best' })}</span> <span className="shell-stat-val">{stats.best}</span></span>

@@ -243,8 +243,8 @@ export default function WcaSourceConfig({
             value={mode}
             onChange={(e) => updateSettings({ wcaScrambleMode: e.target.value as 'date' | 'comp' })}
           >
-            <option value="date">{tr({ zh: '日期', en: 'Date' })}</option>
             <option value="comp">{tr({ zh: '比赛', en: 'Comp' })}</option>
+            <option value="date">{tr({ zh: '日期', en: 'Date' })}</option>
           </select>
         </span>
         {mode === 'date' && (
