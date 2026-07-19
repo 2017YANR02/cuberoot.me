@@ -74,6 +74,8 @@
 /* flex-basis 故意压低(不是理想展示宽):换行判定用的是各项基准宽之和,基准太大会把
    同行的「最优/生成」挤到下一行;真正的展示宽靠 flex-grow:1 在有余量时再撑开。 */
 .wca-src-comp-inline { flex: 1 1 140px; min-width: 100px; }
+/* 已选中一场:别撑满整行(短名会把「难度」开关推到行尾留空),按内容宽度紧凑排列。 */
+.wca-src-comp-inline--picked { flex: 0 1 auto; min-width: 0; max-width: 60%; }
 .wca-src-comppick { position: relative; flex: 1; min-width: 0; }
 .wca-src-comppick > :first-child { width: 100%; }
 .wca-src-comppick .comp-picker-input {
@@ -126,6 +128,9 @@
 
 /* 难度开关灰锁(该场未入库):整体压暗读作「不可用」,但仍可点(点击展开原因,故用 help 光标)。 */
 .pill-toggle--locked { opacity: 0.4; cursor: help; }
+
+/* 轮次 + 组别:并成紧凑一行(标签紧挨下拉、左对齐,不两端撑开);窄屏才折行。 */
+.wca-src-comp-rounds { flex-wrap: wrap; column-gap: 18px; row-gap: 8px; }
 
 @media (max-width: 540px) {
   .settings-row { flex-wrap: wrap; }

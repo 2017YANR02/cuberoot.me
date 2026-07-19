@@ -1557,7 +1557,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                         : wcaSpec.diff
                           ? settings.wcaScrambleMode === 'comp'
                             ? isWcaCompUnindexed(wcaSpec)
-                              ? tr({ zh: '该比赛的打乱还没算进难度库(新赛数据滞后),暂时无法按难度筛', en: "This competition's scrambles aren't in the difficulty index yet (recent comps lag) — filtering by difficulty isn't available" })
+                              ? tr({ zh: '难度库待更新', en: 'Difficulty index not updated yet' })
                               : tr({ zh: '该比赛没有匹配此难度的真题,换个步数或配色试试', en: 'This competition has no scramble at this difficulty — try other step counts or colors' })
                             : tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
                           : settings.wcaScrambleMode === 'comp'
