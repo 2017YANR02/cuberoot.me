@@ -98,8 +98,19 @@ export interface TimerSettings {
    */
   statsAoWindows: number[];
 
-  /** Scramble source: 'random' = locally generated, 'wca' = real past WCA competition scrambles. */
-  scrambleSource: 'random' | 'wca';
+  /** Scramble source: 'random' = locally generated, 'wca' = real past WCA competition
+   *  scrambles, 'manual' = a user-typed queue (manualScrambles), walked one per solve. */
+  scrambleSource: 'random' | 'wca' | 'manual';
+
+  /** Manual-source queue: raw textarea text, one scramble per line. Blank lines are
+   *  ignored; the timer walks the non-empty lines in order (wrapping) as the scramble
+   *  queue when scrambleSource === 'manual'. ←/→ navigate the shown history as usual. */
+  manualScrambles: string;
+
+  /** Timing on/off. Off = practice mode: press / space / tap just advances to the next
+   *  scramble, no timer runs and no solve is recorded (mirrors the /alg trainer run page).
+   *  Default on. */
+  timingEnabled: boolean;
 
   /** WCA sub-mode: 'date' = uniformly random within a date range, 'comp' = a specific
    *  competition (optionally narrowed to one round / group). */
@@ -241,6 +252,8 @@ export const DEFAULTS: TimerSettings = {
   voiceInspection: 'none',
   statsAoWindows: [5, 12],
   scrambleSource: 'wca',
+  manualScrambles: '',
+  timingEnabled: true,
   wcaScrambleMode: 'date',
   wcaComp: '',
   wcaCompName: '',

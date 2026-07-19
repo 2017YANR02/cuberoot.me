@@ -242,6 +242,17 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 .timing-surface .timer-display.inspection-dnf     { color: var(--timer-dnf); }
 
 /* Scramble slot — sits in the sub stack directly above the cube net. */
+/* /timer 打乱展示的共享尺寸令牌 —— 单人(.timing-surface 内 .scramble-strip /
+   .shell-corner-net / .scramble-src)与双人 side 共享打乱(battle.css 的
+   .side-scramble-row)引用同一套尺寸的唯一真源。两棵子树不共享 DOM 祖先(TimerShell
+   只渲染其一),故挂在各自根(.timing-surface / .battle-container)上,一处改两边一起变。 */
+.timing-surface,
+.battle-container {
+  --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
+  --timer-cube-h: min(30vw, 26dvh, 260px);
+  --timer-scramble-src-fs: 24px;
+}
+
 .timing-surface-scramble {
   width: 100%;
   display: flex;
@@ -258,7 +269,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   border: 0;
   background: transparent;
   font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-  --scramble-fs: calc(clamp(26px, 4.4vw, 36px) * var(--scramble-scale, 1));
+  --scramble-fs: calc(var(--timer-scramble-fs) * var(--scramble-scale, 1));
   font-size: var(--scramble-fs);
   line-height: 1.5;
   text-align: center;
@@ -325,7 +336,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
    (small + subtle); when hidden only the eye button remains, still centered. */
 /* --cube-h drives both the preview box AND its always-present reserve box, so
    the eye toggle (below) never shifts whether the cube is shown or hidden. */
-.shell-corner-net { display: flex; flex-direction: column; align-items: center; gap: 6px; --cube-h: min(30vw, 26dvh, 260px); }
+.shell-corner-net { display: flex; flex-direction: column; align-items: center; gap: 6px; --cube-h: var(--timer-cube-h); }
 .shell-corner-net-imgbox { height: var(--cube-h); display: flex; align-items: center; justify-content: center; }
 .shell-corner-net .cube-preview-toggle {
   display: inline-flex;
@@ -871,6 +882,45 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   --rs-mark-fg: var(--muted-foreground);
 }
 
+/* ── 打乱来源常驻配置条 (ScrambleSourceBar) ───────────────
+   固定在计时读数上方(取代旧的右栏可折叠面板)。居中限宽;短屏内部滚动,
+   不把读数挤出视口。计时中随 .surface-chrome 淡出但保留占位,读数不跳。 */
+.scramble-src-bar {
+  width: 100%;
+  max-width: min(96vw, 680px);
+  margin: 0 auto;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* 内容完整展开,不裁剪、不出滚动条(用户要求)。整块靠自然高度,把计时读数往下挤。 */
+  flex: none;
+}
+/* 来源下拉已移到顶栏;random 无「按步数」时本条无细项 → 整条为空,收起不占位。 */
+.scramble-src-bar:empty { display: none; }
+/* 配置行内容水平居中,和顶栏控件对齐。带 flex:1 标签的行(comp 模式 轮次/组别、难度子行)
+   标签已吃满剩余空间,justify-content 对其无副作用;手动输入行是 display:block,不受影响。 */
+.scramble-src-bar .settings-row,
+.scramble-src-bar .wca-src-diff { justify-content: center; }
+/* 手动输入队列:整行让位给全宽文本域(不走 label+control 两列)。 */
+.scramble-src-bar .scramble-src-manual { display: block; }
+.scramble-src-manual-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 3.4em;
+  padding: 8px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.scramble-src-manual-input:focus { outline: none; border-color: var(--accent); }
+.scramble-src-manual-input::placeholder { color: var(--faint-foreground); }
+
 /* ── Distraction-free fade while running ────────────────── */
 .timer-shell.is-solving .surface-chrome {
   opacity: 0;
@@ -1327,15 +1377,16 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid var(--shell-divider);
+  border: 0;
   border-radius: 8px;
-  background: var(--shell-chip);
+  /* 无边框、无静置底色(用户要求):裸图标,只在 hover 时给一点底色反馈。 */
+  background: transparent;
   color: var(--muted-foreground);
   cursor: pointer;
   transition: background 120ms, color 120ms;
 }
 .shell-topbar .tb-btn:hover { background: var(--shell-hover); color: var(--foreground); }
-.shell-topbar .tb-btn.connected { color: var(--signal-success); border-color: color-mix(in srgb, var(--signal-success) 40%, transparent); }
+.shell-topbar .tb-btn.connected { color: var(--signal-success); }
 
 /* Keyboard focus ring — the shell had none, so tab-focus fell back to the
    near-invisible UA outline on the dark surface. Token-only, both themes. */
@@ -1417,6 +1468,7 @@ body:has(.battle-container .penalty-dropdown.open) .clawd-deskpet {
 .timer-shell.fullscreen .shell-bottombar,
 .timer-shell.fullscreen .shell-stat-rail,
 .timer-shell.fullscreen .shell-undersurface,
+.timer-shell.fullscreen .scramble-src-bar,
 .timer-shell.fullscreen .shell-rail {
   display: none;
 }
