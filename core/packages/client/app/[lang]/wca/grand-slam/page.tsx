@@ -9,7 +9,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, HelpCircle } from 'lucide-react';
+import { WcaStatsPageHeader } from '@/components/wca-stats/WcaStatsPageHeader';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
@@ -86,31 +86,11 @@ function GrandSlamPageInner() {
 
   return (
     <div className="wse-page">
-      <header className="wse-header">
-        <div className="wse-header-row">
-          <Link href={`/wca?lang=${i18n.language}`} className="wse-back">
-            <ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}
-          </Link>
-        </div>
-        <h1 className="wse-title-row">
-          {tr({ zh: '大满贯', en: 'Grand Slam'
-        })}
-          <Link
-            href="/wca/about/grand-slam"
-            className="wse-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
-            })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page'
-            })}
-          >
-            <HelpCircle size={18} strokeWidth={1.75} />
-          </Link>
-        </h1>
-        <p className="wse-subtitle">
-          {tr({ zh: '单个项目里,某位选手同时获得世锦赛领奖台、所属洲际赛领奖台、所属国家赛领奖台,且打破过该项目 WR,即达成该项目大满贯。默认采用领奖台最佳且最早的比赛。注意:部分世锦赛 / 洲际赛可能同时被算作举办国的国家锦标赛。', en: 'For a single event, a cuber achieves Grand Slam by podium at Worlds + their Continental + their National championship AND having broken WR. Defaults to the best & earliest podium. Note: some World/Continental championships also count as the host country’s nationals.'
-        })}
-        </p>
-      </header>
+      <WcaStatsPageHeader
+        slug="grand-slam"
+        title={{ zh: '大满贯', en: 'Grand Slam' }}
+        subtitle={{ zh: '单个项目里,某位选手同时获得世锦赛领奖台、所属洲际赛领奖台、所属国家赛领奖台,且打破过该项目 WR,即达成该项目大满贯。默认采用领奖台最佳且最早的比赛。注意:部分世锦赛 / 洲际赛可能同时被算作举办国的国家锦标赛。', en: 'For a single event, a cuber achieves Grand Slam by podium at Worlds + their Continental + their National championship AND having broken WR. Defaults to the best & earliest podium. Note: some World/Continental championships also count as the host country’s nationals.' }}
+      />
 
       <WcaEventSelector
         availableEvents={EVENTS_SET}

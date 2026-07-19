@@ -5,7 +5,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, HelpCircle } from 'lucide-react';
+import { WcaStatsPageHeader } from '@/components/wca-stats/WcaStatsPageHeader';
 import Paginator from '@/components/wca-stats/Paginator';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { Flag } from '@/components/Flag';
@@ -88,27 +88,11 @@ function CohortRanksPageInner() {
 
   return (
     <div className="wse-page">
-      <header className="wse-header">
-        <div className="wse-header-row">
-          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
-        </div>
-        <h1 className="wse-title-row">
-          {tr({ zh: '参赛届别排名', en: 'Cohort Ranks'
-        })}
-          <Link
-            href="/wca/about/cohort-ranks"
-            className="wse-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
-            })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page'
-            })}
-          >
-            <HelpCircle size={18} strokeWidth={1.75} />
-          </Link>
-        </h1>
-        <p className="wse-subtitle">{tr({ zh: '按选手首次参赛年份分组,组内 PB 排名', en: 'PB ranking among cubers whose first WCA competition was in the chosen year'
-        })}</p>
-      </header>
+      <WcaStatsPageHeader
+        slug="cohort-ranks"
+        title={{ zh: '参赛届别排名', en: 'Cohort Ranks' }}
+        subtitle={{ zh: '按选手首次参赛年份分组,组内 PB 排名', en: 'PB ranking among cubers whose first WCA competition was in the chosen year' }}
+      />
 
       <WcaEventSelector
         availableEvents={EVENTS_SET}
