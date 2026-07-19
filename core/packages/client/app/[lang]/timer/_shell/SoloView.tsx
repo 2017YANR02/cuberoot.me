@@ -33,7 +33,7 @@ import { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { generateScramble, registerScramble } from '../_lib/scramble';
-import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCompUnindexed, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
+import { peekWca, nextWca, prefetchWca, hasWcaSource, isWcaSourceEmpty, isWcaCompUnindexed, probeCompCoverage, getCompCoverage, wcaEventId, wcaMetaFor, type WcaSourceSpec } from '../_lib/scramble/wca_pool';
 import { takeScramble } from '../_lib/scramble/scramble_pool';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
@@ -297,6 +297,21 @@ export default function SoloView({ playersControl }: SoloViewProps) {
   // 「按步数」WCA 过滤(2×2 / 金字塔):把真实打乱按度量步数筛到 [lo,hi]。与随机来源共用同一组设置。
   const wcaStep = wcaStepFilter(event, settings);
   const wcaStepSig = wcaStep ? `${wcaStep.metric}:${wcaStep.lo}.${wcaStep.hi}` : '';
+  // comp + 难度:该场若还没进难度库(离线管道对新赛滞后),难度过滤旁路(出正常整场打乱,不产生空结果),
+  // 同时 WcaSourceConfig 会把「难度」开关灰锁。用户的 wcaDifficultyOn 偏好保留(切回已入库比赛/日期即恢复)。
+  const [wcaCompUnindexed, setWcaCompUnindexed] = useState(false);
+  useEffect(() => {
+    const w = wcaEventId(event);
+    if (settings.scrambleSource !== 'wca' || settings.wcaScrambleMode !== 'comp'
+        || !settings.wcaComp || !settings.wcaDifficultyOn || !w) { setWcaCompUnindexed(false); return; }
+    const cached = getCompCoverage(settings.wcaComp, w);
+    if (cached !== null) { setWcaCompUnindexed(cached === false); return; }
+    let cancelled = false;
+    void probeCompCoverage(settings.wcaComp, settings.wcaCompName, w).then((r) => {
+      if (!cancelled) setWcaCompUnindexed(r === false);
+    });
+    return () => { cancelled = true; };
+  }, [settings.scrambleSource, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaDifficultyOn, event]);
   // 比赛模式但没选比赛 → 回退成「日期全时段随机真题」:仍出真实 WCA 打乱(随机抽),不落本地
   // 随机生成。走 date 池(fillDate,空 from/to = 全时段),经预热后秒出。否则 specKey 对空 comp
   // 返回 null,会静默变成本地生成打乱(见 wca_pool.specKey / fillDate)。
@@ -312,18 +327,18 @@ export default function SoloView({ playersControl }: SoloViewProps) {
       from: compMissing ? '' : settings.wcaDateFrom,
       to: compMissing ? '' : settings.wcaDateTo,
       optimal: settings.wcaUseOptimal,
-      // 难度过滤只在(真正的)date 模式生效;回退的空比赛出纯随机真题,不套残留难度设置。
-      diff: !compMissing && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
+      // 难度过滤:回退的空比赛出纯随机真题、未入库的比赛旁路(见 wcaCompUnindexed)——都不套残留难度设置。
+      diff: !compMissing && !wcaCompUnindexed && settings.wcaDifficultyOn && settings.wcaDiffSteps.length > 0
         ? { variant: settings.wcaDiffVariant, stage: settings.wcaDiffStage, colors: settings.wcaDiffColors, steps: settings.wcaDiffSteps }
         : undefined,
       stepFilter: wcaStep ?? undefined,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps, wcaStepSig]);
+  }, [event, settings.wcaScrambleMode, settings.wcaComp, settings.wcaCompName, settings.wcaRound, settings.wcaGroup, settings.wcaDateFrom, settings.wcaDateTo, settings.wcaUseOptimal, settings.wcaDifficultyOn, settings.wcaDiffVariant, settings.wcaDiffStage, settings.wcaDiffColors, settings.wcaDiffSteps, wcaStepSig, wcaCompUnindexed]);
   const wcaSpecRef = useRef(wcaSpec);
   wcaSpecRef.current = wcaSpec;
   const wcaSourceSig = settings.scrambleSource === 'wca'
-    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}|${wcaStepSig}`
+    ? `${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${event}|${wcaDiffSig}|${wcaStepSig}|${wcaCompUnindexed ? 'U' : ''}`
     : 'random';
   // 按步数生成签名(2×2 / 金字塔,随机来源):开启且选了步数才生效,变了即重置打乱队列(同 wcaSourceSig 机制)。
   const genStepsSig = settings.scrambleSource === 'random'
@@ -1542,7 +1557,7 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                         : wcaSpec.diff
                           ? settings.wcaScrambleMode === 'comp'
                             ? isWcaCompUnindexed(wcaSpec)
-                              ? tr({ zh: '该比赛的打乱还没算进难度库(新赛数据滞后),暂时无法按难度筛;可改用「日期」模式', en: "This competition's scrambles aren't in the difficulty index yet (recent comps lag) — filtering by difficulty isn't available; switch to Date mode" })
+                              ? tr({ zh: '该比赛的打乱还没算进难度库(新赛数据滞后),暂时无法按难度筛', en: "This competition's scrambles aren't in the difficulty index yet (recent comps lag) — filtering by difficulty isn't available" })
                               : tr({ zh: '该比赛没有匹配此难度的真题,换个步数或配色试试', en: 'This competition has no scramble at this difficulty — try other step counts or colors' })
                             : tr({ zh: '该难度组合没有匹配的 WCA 真题,换个步数或配色试试', en: 'No WCA scramble matches this difficulty — try other step counts or colors' })
                           : settings.wcaScrambleMode === 'comp'

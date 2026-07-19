@@ -124,6 +124,9 @@
   --rs-mark-fg: #777;
 }
 
+/* 难度开关灰锁(该场未入库):整体压暗读作「不可用」,但仍可点(点击展开原因,故用 help 光标)。 */
+.pill-toggle--locked { opacity: 0.4; cursor: help; }
+
 @media (max-width: 540px) {
   .settings-row { flex-wrap: wrap; }
 }

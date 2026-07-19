@@ -17,7 +17,7 @@ import type { Comp } from '@/lib/comp-search';
 import { fetchWcaScrambles, type WcaScrambleRow } from '@/lib/wca-results-api';
 import { roundTypeShort } from '@/lib/comp-schedule';
 import { ROUND_ORDER } from '@/lib/wca-round-meta';
-import { wcaEventId, WCA_OPTIMAL_EVENTS } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
+import { wcaEventId, WCA_OPTIMAL_EVENTS, probeCompCoverage, getCompCoverage } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import { groupIdxOf } from '@/lib/wca-scramble-group';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import { VariantSelect } from '@/components/VariantSelect';
@@ -144,6 +144,26 @@ export default function WcaSourceConfig({
   // 可用方法/阶段来自 steps_layout.json(哪些 (方法,阶段) 已回填);拿不到则回退静态 VARIANT 定义。
   // date 模式服务端 /random 直接筛;comp 模式走 by-difficulty 端点按本场逐 bin 拉(见 wca_pool.fillComp)。
   const canDifficulty = !!wev && DIFFICULTY_EVENTS.has(wev);
+
+  // comp 模式选中比赛后,提前探测该场在难度库有无步数数据(离线管道对新赛滞后)。没有 → 把「难度」开关灰锁,
+  // 点击给原因,并让难度过滤对该场旁路(见 SoloView 的 wcaCompUnindexed)。'loading' 期间不灰(乐观)。
+  const [compDiffCov, setCompDiffCov] = useState<'loading' | 'ok' | 'none'>('ok');
+  useEffect(() => {
+    if (mode !== 'comp' || !settings.wcaComp || !canDifficulty || !wev) { setCompDiffCov('ok'); return; }
+    const cached = getCompCoverage(settings.wcaComp, wev);
+    if (cached !== null) { setCompDiffCov(cached ? 'ok' : 'none'); return; }
+    let cancelled = false;
+    setCompDiffCov('loading');
+    void probeCompCoverage(settings.wcaComp, settings.wcaCompName, wev).then((r) => {
+      if (!cancelled) setCompDiffCov(r === false ? 'none' : 'ok'); // null(判不了)→ 不灰
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, settings.wcaComp, wev, canDifficulty]);
+  const diffLocked = compDiffCov === 'none';
+  const [showDiffWhy, setShowDiffWhy] = useState(false);
+  useEffect(() => { setShowDiffWhy(false); }, [settings.wcaComp, diffLocked]); // 换比赛 / 状态变即收起原因
+
   const [layout, setLayout] = useState<StepsLayout | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -300,15 +320,27 @@ export default function WcaSourceConfig({
           <span className="settings-row-tight-group">
             <span className="settings-row-label">{tr({ zh: '难度', en: 'Difficulty' })}</span>
             <PillToggle
-              value={settings.wcaDifficultyOn}
-              onChange={(v) => updateSettings({ wcaDifficultyOn: v })}
+              value={diffLocked ? false : settings.wcaDifficultyOn}
+              onChange={(v) => {
+                // 灰锁(该场未入库):任何点击/拖动都不切换,只弹出原因说明(拖动多次触发也只是保持展开)。
+                if (diffLocked) { setShowDiffWhy(true); return; }
+                updateSettings({ wcaDifficultyOn: v });
+              }}
+              className={diffLocked ? 'pill-toggle--locked' : undefined}
+              ariaLabel={tr({ zh: '难度过滤', en: 'Difficulty filter' })}
             />
           </span>
         )}
       </div>
 
-      {/* 难度过滤:date + comp 两模式共用同一组控件(方法/阶段/配色 + 步数范围)。 */}
-      {canDifficulty && settings.wcaDifficultyOn && (
+      {diffLocked && showDiffWhy && (
+        <p className="wca-src-hint wca-src-warn">
+          {tr({ zh: '这场比赛的打乱还没算进难度库(新赛数据滞后),暂时无法按难度筛', en: "This competition's scrambles aren't in the difficulty index yet (recent comps lag) — filtering by difficulty isn't available here" })}
+        </p>
+      )}
+
+      {/* 难度过滤:date + comp 两模式共用同一组控件(方法/阶段/配色 + 步数范围)。该场未入库时灰锁 → 隐藏。 */}
+      {canDifficulty && settings.wcaDifficultyOn && !diffLocked && (
         <div className="wca-src-diff">
           <div className="wca-src-diff-row">
             <SubsetColorPicker sel={diffSel} isZh={isZh} />
