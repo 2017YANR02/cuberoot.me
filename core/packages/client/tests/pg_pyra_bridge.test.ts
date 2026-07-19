@@ -101,6 +101,24 @@ describe('pyraminx PG binding — closed loop vs the rendered engine', () => {
     expect(c2.complete).toBe(false);
     binding.rebuild(pyraPgBridge.parse("y L y' L'"));
     expect(binding.solved).toBe(false);
+
+    // z is the Bv' alias end-to-end: z Bv = Bv' Bv = identity re-hold on both sides.
+    const c3 = new PyraCube();
+    c3.twister.setup('z Bv');
+    expect(c3.complete).toBe(true);
+    binding.rebuild(pyraPgBridge.parse('z Bv'));
+    expect(binding.solved).toBe(true);
+    // z alone is a re-hold: like y/Bv' it folds out of the group mirror (empty word),
+    // and the engine stays complete (pieces untouched).
+    const c4 = new PyraCube();
+    c4.twister.setup('z');
+    expect(c4.complete).toBe(true);
+    binding.rebuild(pyraPgBridge.parse('z'));
+    expect(binding.solved).toBe(true);
+    // its two-layer expansion Fw B' (= Bv') IS the order-3 reorientation element
+    binding.rebuild(pyraPgBridge.parse("Fw B'"));
+    expect(binding.solved).toBe(false);
+    expect(binding.currentOrder()).toBe(3);
   });
 
   it("user spec: a rotation IS its two-layer expansion — y ≡ U Dw', Lv ≡ L Rw', Rv ≡ R Lw', Bv ≡ B Fw'", async () => {
