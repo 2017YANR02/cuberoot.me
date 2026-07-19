@@ -9,6 +9,7 @@ import { histBack, histForward, histPush, type ScrambleHist } from './scramble-h
 import { caseOrbit } from './alg_probability';
 import { petReact } from './deskpet';
 import { persistItem } from './safe-storage';
+import { createRoom as apiCreateRoom, getRoom as apiGetRoom, claimRoom, nextRoundRoom, type RoomOrder } from './trainer-room-api';
 
 export const TimerState = {
   NOT_RUNNING: 0,
@@ -48,6 +49,18 @@ const DEFAULT_COOP: TrainerCoop = { on: false, code: '', n: 2, k: 0 };
 const coopActive = (c: TrainerCoop): boolean => c.on && c.n >= 2;
 /** 本机分片号(钳到 [0, n)),用于 `i % n === kk` 过滤。 */
 const coopShard = (c: TrainerCoop): number => ((c.k % c.n) + c.n) % c.n;
+
+/**
+ * 在线协同房间(后端 trainer_rooms):房间持有共享 case 队列 + 领取游标,本机「下一题」向
+ * 服务器原子领取 —— 多设备不重不漏、动态均衡、支持乱序(队列服务端洗)。房间态是运行时的,
+ * 不落 prefs / localStorage(刷新即离开;要续会话再重新加入)。room 非空时压过本地分片。
+ */
+export interface TrainerRoom {
+  code: string;
+  order: RoomOrder;
+  round: number;
+  total: number;
+}
 
 export interface TrainerSolve {
   i: number;
@@ -227,10 +240,19 @@ interface TrainerState {
   observingPinned: boolean;
   /**
    * 协同复习:本机这一份刚出完(当前题是本轮最后一题)时置 true —— 出下一题被拦住,
-   * 弹「本轮复习结束」提示,`continueRecapRound()` 才进下一轮。仅协同模式生效(单机整集
-   * 每轮无缝重洗不打断)。零后端 ⟹ 各设备各自在自己那份出完时弹,不跨设备等齐。
+   * 弹「本轮复习结束」提示,`continueRecapRound()` 才进下一轮。本地分片模式各设备各自弹;
+   * 在线房间模式队列服务端共享,领完对全员同时弹(真·多方共同刷完)。
    */
   recapRoundDone: boolean;
+
+  // 在线协同房间(运行时态,不持久化)
+  room: TrainerRoom | null;
+  /** 领取请求在途(串行化,防连点重复领)。 */
+  roomBusy: boolean;
+  /** 全队已领取数(= 最近一次领取的全局序号),房间模式下作合并进度分子。 */
+  roomClaimed: number;
+  /** 最近一次房间操作的错误(网络/房间不存在),UI 展示后自愈。 */
+  roomError: string | null;
 
   // 训练偏好(localStorage `trainer:prefs`;SSR 渲染默认值,挂载后 hydratePrefs 补水)
   preAuf: boolean;
@@ -277,6 +299,13 @@ interface TrainerState {
   continueRecapRound: () => void;
   /** 上一个打乱(可连按,直到最旧一条)。 */
   prevScramble: () => void;
+
+  /** 用当前池 + 复习顺序建在线房间,建成即进房间模式并领第一题。 */
+  createRoom: () => Promise<{ ok: boolean; code?: string; error?: string }>;
+  /** 加入房间(需与房间同 puzzle/set)。 */
+  joinRoom: (code: string) => Promise<{ ok: boolean; error?: string }>;
+  /** 离开房间,回到本机模式。 */
+  leaveRoom: () => void;
 
   getTimerReady: (delayMs: number) => void;
   startTimer: () => void;
@@ -452,6 +481,79 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     cstimerize();
   };
 
+  /**
+   * 房间模式「下一题」:向服务器原子领取。三态:
+   *   - case:找 case → 本地生成打乱 → 落 current(recap.pos = 全局领取序号,即合并进度)
+   *   - done:本轮领完(队列对全员同时空)→ 弹「本轮结束」
+   *   - advanced:本机落后(别人已开新一轮)→ 同步 round 再领
+   * 无本地预抽(peek/peek2 = null):领取是网络往返,预抽等于替对方多占格,故房间模式不预抽。
+   * roomBusy 串行化:一次只在途一个领取,防连点重复推进。
+   */
+  const roomNext = async (): Promise<void> => {
+    const st0 = get();
+    if (!st0.room || st0.roomBusy || !st0.puzzle) return;
+    set({ roomBusy: true, roomError: null });
+    try {
+      const res = await claimRoom(st0.room.code, st0.room.round);
+      const st = get();
+      if (!st.room) return; // 期间离开了房间
+      if (res.kind === 'advanced') {
+        set({ room: { ...st.room, round: res.round, total: res.total }, roomBusy: false });
+        void roomNext(); // 重同步到新一轮再领
+        return;
+      }
+      if (res.kind === 'done') {
+        set({ room: { ...st.room, total: res.total }, roomClaimed: res.total, recapRoundDone: true, roomBusy: false });
+        return;
+      }
+      const c = findCaseByKey(st.cases, res.caseKey);
+      if (!c) { set({ roomBusy: false, roomError: 'unknown case' }); return; }
+      const scramble = generateScramble(c, st.puzzle!, st.scrambleKind, { preAuf: st.preAuf, postAuf: st.postAuf });
+      const entry: TrainerHistEntry = {
+        key: res.caseKey, name: c.name, scramble, recap: { pos: res.index + 1, total: res.total },
+      };
+      set({
+        hist: histPush(st.hist, entry),
+        currentKey: entry.key,
+        currentName: entry.name,
+        currentScramble: entry.scramble,
+        peek: null,
+        peek2: null,
+        roomClaimed: res.index + 1,
+        room: { ...st.room, round: res.round, total: res.total },
+        observingPinned: false,
+        recapRoundDone: false,
+        roomBusy: false,
+      });
+      cstimerize();
+    } catch (e) {
+      set({ roomBusy: false, roomError: (e as Error).message });
+    }
+  };
+
+  /** 房间模式「继续下一轮」:请求开新一轮(CAS,第一个真开,其余读到已开的轮)→ 领第一题。 */
+  const roomContinue = async (): Promise<void> => {
+    const st0 = get();
+    if (!st0.room || st0.roomBusy) return;
+    set({ roomBusy: true, roomError: null });
+    try {
+      const res = await nextRoundRoom(st0.room.code, st0.room.round);
+      const st = get();
+      if (!st.room) return;
+      set({
+        room: { ...st.room, round: res.round, total: res.total },
+        recapRoundDone: false,
+        roomClaimed: 0,
+        hist: EMPTY_HIST,
+        currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
+        roomBusy: false,
+      });
+      void roomNext();
+    } catch (e) {
+      set({ roomBusy: false, roomError: (e as Error).message });
+    }
+  };
+
   /** 当前题的打乱重出一条(换打乱类型 / 切 pre-AUF 时),历史当前条 + 预览的下两题同步替换。 */
   const regenCurrent = () => {
     const { currentKey, cases, puzzle, timerState, scrambleKind, preAuf, postAuf, hist, peek, peek2 } = get();
@@ -490,6 +592,10 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     observingIdx: 0,
     observingPinned: false,
     recapRoundDone: false,
+    room: null,
+    roomBusy: false,
+    roomClaimed: 0,
+    roomError: null,
     ...DEFAULT_PREFS,
     recapQueue: [],
     recapPos: 0,
@@ -518,6 +624,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         observingIdx: Math.max(0, persisted.solves.length - 1),
         observingPinned: false,
         recapRoundDone: false,
+        room: null, roomBusy: false, roomClaimed: 0, roomError: null,
       });
       if (trainerPool(selected, get().scope).length > 0) {
         pickFresh();
@@ -542,6 +649,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set({ scope: keys });
       // 当前题落在范围外(或还没有题)⟹ 清掉历史、立刻按新范围出一道
       const st = get();
+      if (st.room) return; // 房间模式题面由服务端领取,scope 不本地出题
       const pool = trainerPool(st.selected, st.scope);
       if (pool.length > 0 && (!st.currentKey || !pool.includes(st.currentKey))) {
         if (st.timerState === TimerState.NOT_RUNNING) {
@@ -567,6 +675,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       persistPrefs(prefsOf(get()));
     },
     setMode: (m) => {
+      if (get().room) return; // 房间是复习专用,离开房间才切模式
       set({ mode: m, recapSig: '' }); // 清 sig ⟹ 下一题重洗队列
       persistPrefs(prefsOf(get()));
       // 切到 recap 立刻从头开始过一遍(空闲时)
@@ -579,7 +688,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     setRecapOrder: (o) => {
       set({ recapOrder: o, recapSig: '' }); // 清 sig ⟹ 下一题按新顺序重排队列
       persistPrefs(prefsOf(get()));
-      if (get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
+      // 房间模式顺序由服务端队列定,本地不重出(改 recapOrder 只影响下次建房)
+      if (!get().room && get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
     },
     setCoop: (c) => {
       // k 越界钳回 [0, n)(改 n 时上层已收敛,这里兜底防持久化里的脏值)
@@ -587,7 +697,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       const coop: TrainerCoop = { on: c.on, code: c.code, n, k: Math.min(Math.max(0, Math.floor(c.k) || 0), n - 1) };
       set({ coop, recapSig: '' }); // 清 sig ⟹ 下一题按新分片重建队列
       persistPrefs(prefsOf(get()));
-      if (get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
+      if (!get().room && get().mode === 'recap' && get().timerState === TimerState.NOT_RUNNING) pickFresh();
     },
     setShowPrevCard: (v) => {
       set({ showPrevCard: v });
@@ -628,7 +738,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         cstimerize();
         return;
       }
-      // 协同:本机这一份的最后一题刚做完(当前题 pos === total)⟹ 暂停,弹「本轮复习结束」,
+      // 在线房间:队尾向服务器领取下一题(异步,不预抽)
+      if (st.room) { void roomNext(); return; }
+      // 本地分片:本机这一份的最后一题刚做完(当前题 pos === total)⟹ 暂停,弹「本轮复习结束」,
       // 等用户点「继续下一轮」再进下一轮(单机整集不打断,每轮无缝重洗)。
       const cur = st.hist.idx >= 0 ? st.hist.list[st.hist.idx] : null;
       if (coopActive(st.coop) && cur?.recap && cur.recap.pos >= cur.recap.total) {
@@ -643,7 +755,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     continueRecapRound: () => {
       if (!get().recapRoundDone) return;
-      promoteNext(); // 内部 set 会清 recapRoundDone,并把 peek(下一轮首题)扶正为当前题
+      if (get().room) { void roomContinue(); return; } // 房间:请求开新一轮再领第一题
+      promoteNext(); // 本地:内部 set 会清 recapRoundDone,并把 peek(下一轮首题)扶正为当前题
     },
 
     prevScramble: () => {
@@ -653,6 +766,71 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       if (!back) return;
       const cur = back.list[back.idx];
       set({ hist: back, currentKey: cur.key, currentName: cur.name, currentScramble: cur.scramble, observingPinned: false, recapRoundDone: false });
+    },
+
+    createRoom: async () => {
+      const st = get();
+      if (!st.puzzle || !st.set) return { ok: false, error: 'no set loaded' };
+      // 规范序全集(与本地分片同基准)——池为空不建房
+      const pool = new Set(trainerPool(st.selected, st.scope));
+      const keys = st.cases.map(caseKey).filter(k => pool.has(k));
+      if (keys.length === 0) return { ok: false, error: 'empty pool' };
+      set({ roomBusy: true, roomError: null });
+      try {
+        const info = await apiCreateRoom(st.puzzle, st.set, st.recapOrder, keys);
+        set({
+          mode: 'recap',
+          room: { code: info.code, order: info.order, round: info.round, total: info.total },
+          roomClaimed: 0, recapRoundDone: false, roomBusy: false,
+          hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
+        });
+        persistPrefs(prefsOf(get()));
+        void roomNext();
+        return { ok: true, code: info.code };
+      } catch (e) {
+        set({ roomBusy: false, roomError: (e as Error).message });
+        return { ok: false, error: (e as Error).message };
+      }
+    },
+
+    joinRoom: async (rawCode) => {
+      const st = get();
+      const code = rawCode.trim().toUpperCase();
+      if (!/^[A-Z0-9]{4,12}$/.test(code)) return { ok: false, error: 'invalid code' };
+      if (!st.puzzle || !st.set) return { ok: false, error: 'no set loaded' };
+      set({ roomBusy: true, roomError: null });
+      try {
+        const info = await apiGetRoom(code);
+        // 房间绑定 (puzzle,set):不同集不能混(领来的 case_key 不在本集里)
+        if (info.puzzle !== st.puzzle || info.set !== st.set) {
+          set({ roomBusy: false });
+          return { ok: false, error: `room is for ${info.puzzle}/${info.set}` };
+        }
+        set({
+          mode: 'recap',
+          room: { code: info.code, order: info.order, round: info.round, total: info.total },
+          roomClaimed: info.claimed, recapRoundDone: false, roomBusy: false,
+          hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
+        });
+        persistPrefs(prefsOf(get()));
+        void roomNext();
+        return { ok: true };
+      } catch (e) {
+        set({ roomBusy: false, roomError: (e as Error).message });
+        return { ok: false, error: (e as Error).message };
+      }
+    },
+
+    leaveRoom: () => {
+      set({
+        room: null, roomBusy: false, roomClaimed: 0, roomError: null, recapRoundDone: false,
+        hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
+        recapSig: '',
+      });
+      // 回本机模式:按当前选择重新出题
+      if (trainerPool(get().selected, get().scope).length > 0 && get().timerState === TimerState.NOT_RUNNING) {
+        pickFresh();
+      }
     },
 
     getTimerReady: (delayMs) => {
