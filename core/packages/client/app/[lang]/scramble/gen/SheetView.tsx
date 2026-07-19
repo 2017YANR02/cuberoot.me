@@ -116,9 +116,12 @@ interface SheetViewProps {
   copyOnClick?: boolean;
   /** 卡片标题行左侧附加内容(如 SQ1 记号简写/完整开关),紧贴在事件图标之前。 */
   headerExtra?: ReactNode;
+  /** 标题行末尾追加文字(紧跟 roundLabel/groupSuffix/attemptSuffix,无分隔空格),
+   *  如「第 1 把」——group-compare 弹窗用它标出对照的是哪一把,替代弹窗自带标题。 */
+  titleSuffix?: string;
 }
 
-export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, analyzable = true, copyOnClick = false, headerExtra }: SheetViewProps) {
+export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, analyzable = true, copyOnClick = false, headerExtra, titleSuffix = '' }: SheetViewProps) {
   const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
   const router = useRouter();
   const params = useParams();
@@ -342,7 +345,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
       <div className="gen-tn-sheet-header">
         {headerExtra && <span className="gen-tn-sheet-header-extra">{headerExtra}</span>}
         <EventIcon event={event} />
-        <span>{eventDisplayName(event, isZh)} {roundLabel}{groupSuffix}{attemptSuffix}</span>
+        <span>{eventDisplayName(event, isZh)} {roundLabel}{groupSuffix}{attemptSuffix}{titleSuffix}</span>
       </div>
       <table className="gen-tn-sheet-table"><tbody>{rows}</tbody></table>
     </div>
