@@ -74,10 +74,13 @@ interface NewMeta { scramble: string; compId: string; event: string; round: stri
 // step(字符串) -> 该步数的样例 [id, 取最少步的底色字母] 列表（每桶 ≤ PER_STEP）
 type StepBuckets = Record<string, [string, string][]>;
 
-// 最优等态打乱(首页强制显示的那份,与 /timer「最优打乱」同源):invert(333opt 整解最优解) =
-// 到达同一魔方态的最短打乱。同态项目才可替身 —— 盲拧/多盲的 WCA 打乱带宽块定向后缀,master 语料已剥离,
-// 最优打乱不是同一态。口径与 solver/333opt/export_optimal.mjs 一致。
-const SAME_STATE_EVENTS = new Set(['333', '333oh', '333ft', '333fm']);
+// 最优打乱(首页强制显示的那份,与 /timer「最优打乱」同源):invert(333opt 整解最优解) =
+// 到达该核心态的最短打乱(纯面转,故 invert 也是纯面转、无宽块后缀)。
+//  - 333/单手/脚拧/最少步:纯面转打乱 → invert 与原打乱严格同态。
+//  - 三盲/多盲:WCA 打乱末尾带宽块定向后缀(整体旋转中心),master 语料已剥离 → 我们解的是剥后的核心态,
+//    invert 到达的态与原打乱相差一个整体旋转(中心朝向不同,拧解难度 / 各阶段步数完全相同);首页按核心态
+//    展示即可(点进 analyzer 的分析也据核心态,与卡片标注的阶段步数一致),故一并纳入、直接用纯面转最优。
+const OPTIMAL_EVENTS = new Set(['333', '333oh', '333ft', '333fm', '333bf', '333mbf']);
 const invertAlg = (alg: string) => alg.trim().split(/\s+/).filter(Boolean).reverse()
   .map((m) => (m.endsWith("'") ? m.slice(0, -1) : m.endsWith('2') ? m : `${m}'`)).join(' ');
 
@@ -290,7 +293,7 @@ async function main() {
   //     -> 单一子集键 'ALL',与 distribution.json 的 sets.wca.variants['333'].data['333'].ALL 同键
   //     (客户端对该变体固定用 'ALL',不走底色选择)。桶里的颜色字母留空 = 无底色语义。
   const same333 = new Set<string>();
-  for (const [id, nm] of newMeta) if (SAME_STATE_EVENTS.has(nm.event)) same333.add(id);
+  for (const [id, nm] of newMeta) if (OPTIMAL_EVENTS.has(nm.event)) same333.add(id);
   const optMap = await loadOptimal333(path.join(repoRoot, 'solver', '333opt', 'out.0.csv'), same333);
   if (optMap.size > 0) {
     const buckets: StepBuckets = {};
@@ -315,7 +318,7 @@ async function main() {
   for (const id of [...usedIds].sort()) {
     const nm = newMeta.get(id)!;
     scr[id] = nm.scramble;
-    if (SAME_STATE_EVENTS.has(nm.event)) optWanted.add(id);
+    if (OPTIMAL_EVENTS.has(nm.event)) optWanted.add(id);
     const cm = compMeta.get(nm.compId);
     meta[id] = { ci: nm.compId, cn: cm?.name ?? nm.compId, cd: cm?.date ?? '', r: nm.round, g: nm.group, n: nm.num, e: nm.event, x: nm.extra ? 1 : 0 };
   }
@@ -327,7 +330,7 @@ async function main() {
     if (o) opt[id] = o.scr;
   }
   const optHit = Object.keys(opt).length;
-  console.log(`[recent-scrambles] optimal: ${optHit}/${optWanted.size} same-state ids solved${optHit < optWanted.size ? ' (rest fall back to the raw scramble)' : ''}`);
+  console.log(`[recent-scrambles] optimal: ${optHit}/${optWanted.size} 3x3-family ids solved${optHit < optWanted.size ? ' (rest fall back to the raw scramble)' : ''}`);
 
   const stamp = process.env.SCRAMBLE_STATS_STAMP || new Date().toISOString().slice(0, 10);
   const out = { export_date: stamp, generated_at: stamp, new_count: newCount, scr, opt, meta, rank };

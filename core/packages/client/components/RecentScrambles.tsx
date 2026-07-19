@@ -9,6 +9,9 @@
 //    222 / pyraminx / skewb also offer a difficulty (whole-solve optimal step) mode. Fed by
 //    stats/scramble/recent_scrambles_events.json (RecentEventBody).
 //    222 / skewb have a fixed WCA scramble length, so they only get the difficulty view;
+//    单手 / 脚拧 / 最少步 / 三盲 (333oh/333ft/333fm/333bf) also get a difficulty view (whole-solve
+//    optimal HTM); its cards show the 最优等态打乱, same source as 333 above. Length still varies so
+//    they keep the length toggle too.
 //    4x4–7x7 / megaminx / clock are fixed-length with no difficulty data → not listed at all.
 // 显示的打乱一律是**最优等态打乱**(同 /timer 真题的「最优打乱」,无 toggle):与该场原打乱同一魔方态、
 // 步数最短。同态 ⇒ 各阶段步数 / 难度值不变。仅「打乱长度」视图例外(那按的就是原打乱长度)。
@@ -67,7 +70,8 @@ interface DistributionJson {
 const METRIC_ORDER = ['333', 'eo', 'eoline', 'cross', 'xc', 'xxc', 'xxxc', 'xxxxc', 'fbsquare', 'rouxs1', 'block222', 'block223', 'f2b', 'dr'];
 
 // 难度模式的项目(整解最优步数);其余项目只按打乱长度。
-const DIFFICULTY_EVENTS = new Set(['222', 'pyram', 'skewb']);
+// 222/金字塔/斜转走 puzzle 管道;单手/脚拧/最少步/三盲走 333opt(难度视图显示最优等态打乱,同 333 富控件)。
+const DIFFICULTY_EVENTS = new Set(['222', 'pyram', 'skewb', '333oh', '333ft', '333fm', '333bf']);
 // WCA 官方打乱是固定长度(非随机态变长),打乱长度分布无意义 → 不给长度切换,只留难度。
 const FIXED_LENGTH_NO_TOGGLE = new Set(['222', 'skewb']);
 // 打乱长度固定且无难度数据(4/5/6/7 阶、五魔、魔表)→ 整个项目在本栏不展示。
