@@ -55,8 +55,8 @@ export function SubsetSwatch({ colors }: { colors: ColorLetter[] }) {
   return <span className="subset-swatch-tile" style={{ background: `conic-gradient(from -90deg, ${stops})` }} />;
 }
 
-// 菜单里的行序:按底色数从多到少(六 → 四 → 双 → 单),色块行也随之从 1 个铺到 6 个。
-const MODE_ORDER: ColorMode[] = ['cn', 'quad', 'dual', 'single'];
+// 菜单里的行序(用户指定):双 → 六 → 单 → 四。
+const MODE_ORDER: ColorMode[] = ['dual', 'cn', 'single', 'quad'];
 const MODE_LABEL: Record<ColorMode, { zh: string; en: string
  }> = {
   cn: { zh: '六色', en: 'CN' },
