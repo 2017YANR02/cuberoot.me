@@ -807,22 +807,28 @@ export const CORNER_POLY: V2[] = [
   [118.5, 109.2], [118.3, 112.1], [117.9, 114], [117.1, 115.7],
 ];
 
-/** FULL SVG corner outline — the user's reference shape VERBATIM (symmetrized
- *  + quantized, no transit clipping). Carried by the visible sticker + the
- *  CORNER_SHELF_T shelf, which overhang the transit lanes (crown material in
- *  the fin/wing zones never rises above h = 125.2 — SHELF gate). The wing
- *  knobs and fin feet the deep plate must shed live HERE, so the on-screen
- *  sticker is the real puzzle's complete spur shape. */
+/** FIN-EXTENDED corner outline (plan-approved by the user 2026-07-19, SVG
+ *  preview first): the reference SVG VERBATIM everywhere EXCEPT the two fin
+ *  knees — per fin, 4 old knob verts are replaced by 4 new ones extending the
+ *  arm's outer curve tangent-continuously (slopes −0.225 → −0.32 → −0.53 →
+ *  −0.64 → −1, monotone-steepening convex arc, zero jitter) down to a 45°
+ *  chamfer on the arris band at b≈47.4, and the arris-side edge becomes ONE
+ *  straight 118.6 run. Field-sampled ≥ +0.05 everywhere on the added area at
+ *  the 0.4 shallow-band margin (.tmp/gear/fins_spear.mjs over the baked FP_SH
+ *  raster); the fin waist gives up ~0.5 width vs the theoretical max where a
+ *  tooth sweeps under the old knob (free-corridor bulge at b≈51–53) — the
+ *  price of a smooth curve. rigid_check judges the shipped stack. */
 export const CORNER_POLY_EXT: V2[] = [
   [44.7, 65.4], [46.7, 64.2], [59.5, 62.4], [61.3, 61.3], [62.4, 59.4],
   [64.2, 46.7], [65.3, 44.9], [66.8, 44.2], [68.8, 44.6], [70, 45.9],
   [72.8, 59.8], [73.5, 61.8], [74.4, 62.9], [81.3, 65.4], [106, 72.9],
-  [108.5, 72.8], [110.8, 71.1], [111.8, 68.3], [114.5, 56.3], [115.9, 55.3],
-  [117.4, 55.5], [118.3, 56.4], [118.4, 58], [118.6, 106.3], [118.3, 113.5],
-  [116.8, 116.8], [113.7, 118.3], [109, 118.5], [69.4, 118.6], [56.4, 118.2],
-  [55.3, 116.6], [56, 114.7], [70.9, 110.9], [71.9, 110], [72.8, 108.5],
-  [72.8, 105.9], [65.4, 81.2], [63, 74.6], [61.8, 73.5], [60.2, 72.9],
-  [45.8, 70], [44.8, 69.1], [44.3, 68], [44.2, 66.6],
+  [108.5, 72.8], [110.8, 71.1], [111.8, 68.3], [114.5, 56.3], [116.2, 51],
+  [117, 49.5], [117.9, 48.1], [118.6, 47.4], [118.6, 106.3], [118.3, 113.5],
+  [116.8, 116.8], [113.7, 118.3], [109, 118.5], [69.4, 118.6], [47.4, 118.6],
+  [48.1, 117.9], [49.5, 117], [51, 116.2], [56, 114.7], [70.9, 110.9],
+  [71.9, 110], [72.8, 108.5], [72.8, 105.9], [65.4, 81.2], [63, 74.6],
+  [61.8, 73.5], [60.2, 72.9], [45.8, 70], [44.8, 69.1], [44.3, 68],
+  [44.2, 66.6],
 ];
 
 /** BLACK shelf outline = CORNER_POLY_EXT with the arris-adjacent runs pushed
