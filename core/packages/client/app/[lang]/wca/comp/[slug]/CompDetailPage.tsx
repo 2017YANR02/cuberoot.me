@@ -754,7 +754,7 @@ export default function CompDetailPage() {
   // cubingZh 实时给当天公示的 CN 比赛提供中文名(绕开 comp_names_zh.json 日更延迟);
   // 提前声明以便标题 / 复制都能取 nameZh。fetch 在下方 effect(依赖 compInfo)。
   const [cubingZh, setCubingZh] = useState<CubingZhMeta | null>(null);
-  const compNameTitle = data ? localizeCompName(slug, data.name, isZh, { explicitNameZh: cubingZh?.nameZh }) : slug;
+  const compNameTitle = data ? localizeCompName(slug, decodeEntities(data.name), isZh, { explicitNameZh: cubingZh?.nameZh }) : slug;
   useDocumentTitle(compNameTitle, compNameTitle);
   const [nameCopied, setNameCopied] = useState(false);
   const copyCompName = useCallback(() => {
