@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   VERTEX_NAMES,
   parsePyraMoves, pyraMoveToString, pyraMovesToString,
-  invertPyraMoves, reducePyraAlg, randomPyraScramble, type PyraMove,
+  invertPyraMoves, reducePyraAlg, randomPyraScramble, rotateLetterMap, type PyraMove,
 } from '@/app/[lang]/sim/engine/pyra/pyraState';
 
 // ── Independent geometry anchor ───────────────────────────────────────────────
@@ -108,6 +108,21 @@ describe('Pyraminx notation', () => {
   });
   it('no Uw/Bw faces, no lowercase face tokens', () => {
     expect(parsePyraMoves('Uw Bw dw lw').length).toBe(0);
+  });
+  it("rotations: y (= Uv) / Lv / Rv / Bv re-holds; bare = clockwise at the vertex", () => {
+    expect(parsePyraMoves('y')[0]).toEqual({ vertex: 0, part: 'rot', dir: -1 });
+    expect(parsePyraMoves('Uv')).toEqual(parsePyraMoves('y')); // alias
+    expect(pyraMovesToString(parsePyraMoves("Uv' Lv Rv' Bv"))).toBe("y' Lv Rv' Bv");
+    expect(reducePyraAlg('y y')).toBe("y'");
+    expect(reducePyraAlg("y Uv'")).toBe('');
+    expect(parsePyraMoves('x z yv Yv').length).toBe(0); // no x/z on a tetra (cubing.js agrees)
+  });
+  it('rotateLetterMap: after bare y (cw from above) the L slot holds old R, R holds old B', () => {
+    // R(V0, −120°) cycles the base vertices front→back-left: physical R(2) leaves the
+    // front slot, physical B(3) arrives there.
+    expect(rotateLetterMap([0, 1, 2, 3], 0, -1)).toEqual([0, 2, 3, 1]);
+    // and the inverse rotation undoes it
+    expect(rotateLetterMap([0, 2, 3, 1], 0, 1)).toEqual([0, 1, 2, 3]);
   });
 });
 
