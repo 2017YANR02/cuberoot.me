@@ -267,27 +267,34 @@
   padding: 2px;
 }
 
-/* 词条锚点:每个词条可经 URL #slug 直达并分享。桌面 hover 才显,触屏常显(淡)。 */
-.wiki-entry-anchor {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  padding: 4px;
-  border-radius: 4px;
+/* 词条标题即链接:点击标题把 URL 更新到该词条的 #slug,可直达/分享;标题末尾的
+   锚点图标桌面 hover 才显、触屏常显(淡),作为「可复制链接」的提示。 */
+.wiki-entry-head-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.12s;
+}
+.wiki-entry-head-link:hover {
+  color: var(--accent);
+}
+.wiki-entry-anchor-icon {
+  display: inline-block;
+  vertical-align: -1px;
+  margin-left: 5px;
   color: var(--muted-foreground);
   opacity: 0;
-  transition: color 0.12s, background 0.12s, opacity 0.12s;
+  transition: opacity 0.12s, color 0.12s;
 }
-.wiki-entry:hover .wiki-entry-anchor,
-.wiki-entry-anchor:focus-visible {
+.wiki-entry:hover .wiki-entry-anchor-icon,
+.wiki-entry-head-link:focus-visible .wiki-entry-anchor-icon {
   opacity: 1;
 }
-.wiki-entry-anchor:hover {
+.wiki-entry-head-link:hover .wiki-entry-anchor-icon {
   color: var(--accent);
-  background: var(--accent-soft);
 }
 @media (hover: none) {
-  .wiki-entry-anchor { opacity: 0.55; }
+  .wiki-entry-anchor-icon { opacity: 0.5; }
 }
 
 /* 从 URL / 搜索跳转到的词条:落点后短暂高亮,让用户一眼看到定位到哪条。 */

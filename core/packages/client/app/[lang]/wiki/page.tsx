@@ -308,15 +308,16 @@ export default function WikiPage() {
                     ) : (
                       <>
                         <div className="wiki-entry-head-row">
-                          <h3 className="wiki-entry-head">{e.head}</h3>
-                          <a
-                            className="wiki-entry-anchor"
-                            href={`#${slug}`}
-                            title={tr({ zh: '该词条链接', en: 'Link to this term' })}
-                            aria-label={tr({ zh: '该词条链接', en: 'Link to this term' })}
-                          >
-                            <Link2 size={13} />
-                          </a>
+                          <h3 className="wiki-entry-head">
+                            <a
+                              className="wiki-entry-head-link"
+                              href={`#${slug}`}
+                              title={tr({ zh: '该词条链接', en: 'Link to this term' })}
+                            >
+                              {e.head}
+                              <Link2 size={12} className="wiki-entry-anchor-icon" aria-hidden="true" />
+                            </a>
+                          </h3>
                           {(isAdmin || (isLoggedIn && myKey === e.ownerWcaId)) && (
                             <button
                               type="button"
