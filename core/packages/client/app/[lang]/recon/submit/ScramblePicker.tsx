@@ -16,6 +16,7 @@ import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import { localizeCompName } from '@/lib/comp-localize';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { formatTime } from '@/lib/recon-utils';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 
 interface Props {
@@ -43,13 +44,7 @@ export default function ScramblePicker({ isZh, event, onClose, onPick }: Props) 
   const [q, setQ] = useState('');
   const [count, setCount] = useState(PAGE);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
-  }, [onClose]);
+  useModalDismiss(onClose);
 
   useEffect(() => {
     let alive = true;
