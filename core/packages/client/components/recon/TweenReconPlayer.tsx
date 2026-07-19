@@ -17,7 +17,7 @@
  * puzzle switch remounts (rebuilding the world + re-parsing with the new parser).
  */
 
-import { type RefObject } from 'react';
+import { type ReactNode, type RefObject } from 'react';
 import type { PuzzleKind } from '@/app/[lang]/sim/engine/world';
 import ReconPlayerBase, { type ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
 
@@ -33,7 +33,7 @@ interface TweenTwisterCube<M> {
 
 export default function TweenReconPlayer<M>({
   scramble, alg, puzzleKind, parseMoves, kind,
-  fillPane = false, backView = false, hideControls = false, playerRef,
+  fillPane = false, backView = false, hideControls = false, playerRef, fullscreenButton,
 }: {
   scramble: string;
   alg: string;
@@ -48,6 +48,7 @@ export default function TweenReconPlayer<M>({
   hideControls?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
+  fullscreenButton?: ReactNode;
 }) {
   const adapter: ReconPlayerAdapter<M> = {
     kind,
@@ -82,6 +83,7 @@ export default function TweenReconPlayer<M>({
       fillPane={fillPane}
       hideControls={hideControls}
       playerRef={playerRef}
+      fullscreenButton={fullscreenButton}
     />
   );
 }

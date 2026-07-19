@@ -30,6 +30,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { ListSelect } from '@/components/ListSelect';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
+import PlaybackBar from '@/components/PlaybackBar';
 import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
 import { VARIANT_ORDER } from '@/lib/scramble-variants';
@@ -230,6 +231,27 @@ function RangeSliderDemo() {
         onChange={setV}
         marks={[0, 7, 14]}
         ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
+      />
+    </div>
+  );
+}
+
+function PlaybackBarDemo() {
+  const [step, setStep] = useState(17);
+  const [playing, setPlaying] = useState(false);
+  const total = 49;
+  return (
+    <div style={{ width: 340, maxWidth: '100%' }}>
+      <PlaybackBar
+        step={step}
+        total={total}
+        playing={playing}
+        onScrub={setStep}
+        onSkipStart={() => setStep(0)}
+        onStepBack={() => setStep((s) => Math.max(0, s - 1))}
+        onTogglePlay={() => setPlaying((p) => !p)}
+        onStepForward={() => setStep((s) => Math.min(total, s + 1))}
+        onSkipEnd={() => setStep(total)}
       />
     </div>
   );
@@ -766,6 +788,16 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<RangeSlider min={0} max={14} value={[lo, hi]} onChange={setRange} marks={[0, 7, 14]} />',
     Demo: RangeSliderDemo,
     note: { zh: '需要 min–max 双端选择就用它,别再叠两个 <input type=range> 手撸。', en: 'Use it for any min–max dual selection — don’t hand-stack two <input type=range> again.' },
+  },
+  {
+    name: 'PlaybackBar',
+    import: "import PlaybackBar from '@/components/PlaybackBar';",
+    category: 'input',
+    zh: '魔方解法播放控制条(twizzle alpha.twizzle.net/edit 两排式:进度条 + 计数在上,传输按钮在下)。recon 的 ReconPlayerBase 与 /sim 引擎播放条共用同一份,像素一致 —— 不要各页手写一排按钮/滑条。leading / trailing 往按钮排两端塞额外控件(/sim 的阶段色块 + 锚点下拉)。内部滑条用 PlaybackScrubber。',
+    en: 'Cube alg-playback transport (twizzle alpha.twizzle.net/edit two-row layout: scrubber + counter on top, transport buttons below). Shared pixel-for-pixel by recon’s ReconPlayerBase and /sim’s engine playback bar — don’t hand-roll a per-page control row. leading / trailing slot extra controls into the button row (/sim’s stickering + anchor selects). Wraps PlaybackScrubber internally.',
+    usage: '<PlaybackBar step={step} total={total} playing={playing} onScrub={jumpToStep} onSkipStart={…} onStepBack={…} onTogglePlay={…} onStepForward={…} onSkipEnd={…} />',
+    Demo: PlaybackBarDemo,
+    note: { zh: '任何“播放一段魔方解法/打乱”的界面都走它,别再各写一排 <button> + <input range>。', en: 'Any “play back a cube alg / scramble” surface routes through it — don’t hand-roll another <button> row + <input range>.' },
   },
   {
     name: 'WcaEventSelector',

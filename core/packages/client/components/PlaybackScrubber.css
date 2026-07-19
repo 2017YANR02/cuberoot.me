@@ -1,0 +1,12 @@
+.playback-scrubber {
+  flex: 1;
+  min-width: 60px;
+  height: 4px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.playback-scrubber:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

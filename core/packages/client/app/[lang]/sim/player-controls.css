@@ -125,13 +125,6 @@
   cursor: not-allowed;
 }
 
-.sim-player-progress {
-  font-variant-numeric: tabular-nums;
-  font-size: 14px;
-  color: var(--muted-foreground);
-  margin-left: 6px;
-}
-
 .sim-player-moves {
   display: flex;
   flex-wrap: wrap;

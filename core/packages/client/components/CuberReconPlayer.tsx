@@ -12,7 +12,7 @@
  * so the form's caret handler can scrub the cube as the user clicks the solution.
  */
 
-import { type RefObject } from 'react';
+import { type ReactNode, type RefObject } from 'react';
 import type World from '@/app/[lang]/sim/engine/world';
 import type NxnCube from '@/app/[lang]/sim/engine/nxn/cube';
 import ReconPlayerBase, { type ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
@@ -24,7 +24,7 @@ function tokenize(alg: string): string[] {
 }
 
 export default function CuberReconPlayer({
-  scramble, alg, order, fillPane = false, playerRef, hideControls = false,
+  scramble, alg, order, fillPane = false, playerRef, hideControls = false, fullscreenButton,
 }: {
   scramble: string;
   alg: string;
@@ -35,6 +35,7 @@ export default function CuberReconPlayer({
   hideControls?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
+  fullscreenButton?: ReactNode;
 }) {
   const adapter: ReconPlayerAdapter<string> = {
     kind: 'nxn-cuber',
@@ -68,6 +69,7 @@ export default function CuberReconPlayer({
       fillPane={fillPane}
       hideControls={hideControls}
       playerRef={playerRef}
+      fullscreenButton={fullscreenButton}
     />
   );
 }
