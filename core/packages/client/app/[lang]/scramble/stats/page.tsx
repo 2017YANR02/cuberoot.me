@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
@@ -263,7 +263,11 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     parseAsString.withDefault('333').withOptions({ history: 'replace' }),
   );
   // 合并同打乱项目(?merge):filter 性质 → replace,不堆历史。
-  const [merged, setMerged] = useQueryState(k('merge'), parseAsBoolean.withDefault(true));
+  // 默认合并(三阶族折叠成 333 一个池)——但若挂载时 URL 已显式指向某个三阶族成员
+  //(333bf/oh/ft/mbf/fm,常来自顶部 SolveTabs 直接选「三盲」等),说明用户就是要看该项目本身,
+  // 默认改为分开,否则难度 tab 的 fold 效应(见下)会立刻把它折回 333。显式 ?merge= 仍优先。
+  const mergedDefaultRef = useRef(!(event !== '333' && DIFFICULTY_EVENTS.has(event)));
+  const [merged, setMerged] = useQueryState(k('merge'), parseAsBoolean.withDefault(mergedDefaultRef.current));
   const [lengthsData, setLengthsData] = useState<EventLengthsJson | null>(null);
   const [lengthsError, setLengthsError] = useState<string | null>(null);
   // Difficulty data source (top-level set: wca / xcross_2_col_10f). The actually
