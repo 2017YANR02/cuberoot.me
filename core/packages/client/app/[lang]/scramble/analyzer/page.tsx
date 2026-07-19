@@ -38,6 +38,7 @@ import { nextWca, prefetchWca, wcaMetaFor, isWcaSourceEmpty, type WcaSourceSpec,
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import ChainExplorer from '@/components/ChainExplorer';
 import PillToggle from '@/components/PillToggle/PillToggle';
+import { ClearButton } from '@/components/ClearButton';
 import { Flag } from '@/components/Flag';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
@@ -500,19 +501,31 @@ function AnalyzePageInner() {
             linkTitle={t('查看大图', 'View full size')}
           />
         </div>
-        <textarea
-          ref={scrambleRef}
-          className="analyze-scramble"
-          rows={1}
-          value={scramble}
-          onChange={(e) => { setScramble(e.target.value.replace(/\n/g, ' ')); setWcaMeta(null); }}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void setTool('cfop'); runAnalyze(); } }}
-          placeholder={t('输入打乱（标准 WCA 记号）', 'Scramble (WCA notation)')}
-          spellCheck={false}
-          autoCapitalize="off"
-          autoCorrect="off"
-          inputMode="text"
-        />
+        {/* 输入框 + 右侧清除按钮:非空才显示,点击清空并保持焦点(统一 components/ClearButton)。 */}
+        <div className="analyze-scramble-wrap">
+          <textarea
+            ref={scrambleRef}
+            className="analyze-scramble"
+            rows={1}
+            value={scramble}
+            onChange={(e) => { setScramble(e.target.value.replace(/\n/g, ' ')); setWcaMeta(null); }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void setTool('cfop'); runAnalyze(); } }}
+            placeholder={t('输入打乱（标准 WCA 记号）', 'Scramble (WCA notation)')}
+            spellCheck={false}
+            autoCapitalize="off"
+            autoCorrect="off"
+            inputMode="text"
+          />
+          {scramble.trim() && (
+            <ClearButton
+              className="analyze-scramble-clear"
+              preserveFocus
+              onClick={() => { setScramble(''); setWcaMeta(null); scrambleRef.current?.focus(); }}
+              ariaLabel={t('清空打乱', 'Clear scramble')}
+              title={t('清空打乱', 'Clear scramble')}
+            />
+          )}
+        </div>
       </div>
 
       {/* 来源信息行:WCA 真实打乱显示比赛出处 / 无匹配提示;随机无出处不显示。 */}
