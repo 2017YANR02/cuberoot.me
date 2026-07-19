@@ -140,9 +140,10 @@ export default function WcaSourceConfig({
   };
   const clearComp = () => updateSettings({ wcaComp: '', wcaCompName: '', wcaCompCountry: '', wcaRound: '', wcaGroup: '' });
 
-  // ── 按难度出题(date 模式 + 3x3-family) ────────────────────────────────
+  // ── 按难度出题(3x3-family;date 随机采样 + comp 单场过滤) ─────────────────
   // 可用方法/阶段来自 steps_layout.json(哪些 (方法,阶段) 已回填);拿不到则回退静态 VARIANT 定义。
-  const canDifficulty = mode === 'date' && !!wev && DIFFICULTY_EVENTS.has(wev);
+  // date 模式服务端 /random 直接筛;comp 模式走 by-difficulty 端点按本场逐 bin 拉(见 wca_pool.fillComp)。
+  const canDifficulty = !!wev && DIFFICULTY_EVENTS.has(wev);
   const [layout, setLayout] = useState<StepsLayout | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -306,48 +307,43 @@ export default function WcaSourceConfig({
         )}
       </div>
 
-      {mode === 'date' ? (
-        <>
-          {canDifficulty && (
-            <>
-              {settings.wcaDifficultyOn && (
-                <div className="wca-src-diff">
-                  <div className="wca-src-diff-row">
-                    <SubsetColorPicker sel={diffSel} isZh={isZh} />
-                    <VariantSelect
-                      className="settings-row-control-select"
-                      value={settings.wcaDiffVariant}
-                      options={variantOpts}
-                      onChange={(v) => updateSettings({ wcaDiffVariant: v })}
-                      isZh={isZh}
-                      ariaLabel={tr({ zh: '方法', en: 'Method' })}
-                    />
-                    <VariantSelect
-                      className="settings-row-control-select"
-                      value={settings.wcaDiffStage}
-                      options={stageOpts}
-                      onChange={(s) => updateSettings({ wcaDiffStage: s })}
-                      isZh={isZh}
-                      label={stageLabel}
-                      ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
-                    />
-                  </div>
-                  <div className="wca-src-steps-range">
-                    <RangeSlider
-                      min={stepLo}
-                      max={stepHi}
-                      value={[shownLo, shownHi]}
-                      onChange={([a, b]) => updateSettings({ wcaDiffSteps: stepRange(a, b) })}
-                      marks={stepMarks}
-                      ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
-                    />
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </>
-      ) : (
+      {/* 难度过滤:date + comp 两模式共用同一组控件(方法/阶段/配色 + 步数范围)。 */}
+      {canDifficulty && settings.wcaDifficultyOn && (
+        <div className="wca-src-diff">
+          <div className="wca-src-diff-row">
+            <SubsetColorPicker sel={diffSel} isZh={isZh} />
+            <VariantSelect
+              className="settings-row-control-select"
+              value={settings.wcaDiffVariant}
+              options={variantOpts}
+              onChange={(v) => updateSettings({ wcaDiffVariant: v })}
+              isZh={isZh}
+              ariaLabel={tr({ zh: '方法', en: 'Method' })}
+            />
+            <VariantSelect
+              className="settings-row-control-select"
+              value={settings.wcaDiffStage}
+              options={stageOpts}
+              onChange={(s) => updateSettings({ wcaDiffStage: s })}
+              isZh={isZh}
+              label={stageLabel}
+              ariaLabel={tr({ zh: '阶段', en: 'Stage' })}
+            />
+          </div>
+          <div className="wca-src-steps-range">
+            <RangeSlider
+              min={stepLo}
+              max={stepHi}
+              value={[shownLo, shownHi]}
+              onChange={([a, b]) => updateSettings({ wcaDiffSteps: stepRange(a, b) })}
+              marks={stepMarks}
+              ariaLabel={tr({ zh: '步数范围', en: 'Step range' })}
+            />
+          </div>
+        </div>
+      )}
+
+      {mode === 'comp' && (
         <>
           {settings.wcaComp && hasEvent === false && (
             <p className="wca-src-hint wca-src-warn">
