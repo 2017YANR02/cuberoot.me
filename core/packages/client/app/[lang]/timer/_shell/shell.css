@@ -202,6 +202,20 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   align-items: center;
   gap: clamp(10px, 2vh, 20px);
 }
+.timer-display-wrap {
+  position: relative;
+}
+/* WR/CR/NR 排名徽章:数字右上角标,绝对定位,不占布局、不随成绩显隐挤动下方内容。 */
+.timer-display-corner {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  transform: translate(100%, -50%);
+  animation: shell-fade-up 200ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .timer-display-corner { animation: none; }
+}
 .timing-surface .timer-display {
   /* Segment7Standard = battle's 7-segment LCD digits; var(--font-mono) is the
      self-contained per-glyph fallback for colon / DNF / + (no CDN). */
@@ -315,17 +329,22 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   cursor: default;
 }
 
-/* Click-to-copy flash badge, sits inline next to the scramble. */
-.scramble-copied-flash {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  white-space: nowrap;
+/* Click-to-copy success: a green check pinned to the LAST move. The last move sits
+   in .scramble-copied-tail (position:relative, nowrap) and the check is absolutely
+   positioned at its right edge — fully OUT of the text flow, so it adds neither a
+   wrap opportunity nor width. Verified (playwright): an inline/inline-block check
+   forces an extra line when the last text line is near-full; absolute never does.
+   Sizes with the scramble font; reuses --signal-success (same as analyzer copied). */
+.scramble-copied-tail { position: relative; white-space: nowrap; }
+.scramble-copied-check {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: 0.25em;
+  color: var(--signal-success);
 }
 
 /* Cube net — centered directly under the digits (Battle-style). Lives inside
@@ -420,17 +439,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 }
 .timing-surface .timer-target-indicator.overshot { color: var(--destructive); }
 
-/* Stopped row: quick actions + rank badge */
-.shell-stopped-row {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  animation: shell-fade-up 200ms ease;
-}
-.shell-rank-slot { display: flex; justify-content: center; min-height: 24px; }
-
-/* Rank badge — WR / CR / NR pills (shared by Solo stopped-row + Battle player).
+/* Rank badge — WR / CR / NR pills (shared by Solo digits corner + Battle player).
    Token-only: accent-soft pill, accent text; top-tier names go signal-success. */
 .rank-badge-row {
   display: inline-flex;
@@ -936,7 +945,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
 @media (prefers-reduced-motion: reduce) {
   .surface-chrome,
   .timer-shell.is-solving .surface-chrome { transition: none; }
-  .shell-stopped-row { animation: none; }
   .timer-display { transition: none; }
 }
 
