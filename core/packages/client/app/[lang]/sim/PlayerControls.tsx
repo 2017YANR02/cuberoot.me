@@ -31,11 +31,10 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { useRouter, useParams } from 'next/navigation';
 import {
   Play, Pause, SkipBack, SkipForward,
-  FlipHorizontal2, FlipVertical2, Eraser, RotateCw,
-  Shuffle, Link2, Check, Upload,
+  FlipHorizontal2, FlipVertical2, Eraser,
+  Shuffle, Link2, Check,
   Search, Loader2, Pipette,
   Undo2, Redo2, Keyboard, Grid3x3,
 } from 'lucide-react';
@@ -118,7 +117,6 @@ import { fileToLogoDataUrl } from './engine/nxn/logo';
 import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
-import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { stripGripMarks } from '@cuberoot/shared/alg-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
@@ -161,7 +159,7 @@ const stripPushMarks = (s: string): string =>
   s.split(/(\s+)/).map((tok) => { const m = PUSH_TOKEN.exec(tok); return m ? m[1] : tok; }).join('');
 /** 变换/导出前剥全部手部记号(FTN 注解块 + 换握 ↑↓· + 推法 p 后缀;块先剥,
  *  `U'p[…]` 先塌成 `U'p` 再剥 p)。 */
-const stripHandMarks = (s: string): string => stripPushMarks(stripGripMarks(stripFtnBlocks(s)));
+export const stripHandMarks = (s: string): string => stripPushMarks(stripGripMarks(stripFtnBlocks(s)));
 
 type NxnPlayItem = { kind: 'move'; action: TwistAction; push?: boolean; pin?: PinSpec } | { kind: 'grip'; grip: GripName; side: HandSide };
 
@@ -970,13 +968,6 @@ export default function PlayerControls({
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
 
-  const router = useRouter();
-  const params = useParams<{ lang?: string }>();
-  const langPrefix = params?.lang === 'zh' || params?.lang === 'en'
-    ? `/${params.lang}` : ((i18n.language.startsWith('zh') ? '/zh' : '/en'));
-  // Engine-skewb uses the self-contained engine notation (UFR/UFL…), which /recon
-  // (WCA skewb notation) can't parse — suppress the recon hand-off there.
-  const reconEvent = isEngineTwisty ? null : reconEventForSim(puzzleKind);
   const authUser = useAuthStore((s) => s.user);
   const authLogin = useAuthStore((s) => s.login);
 
@@ -1620,13 +1611,6 @@ export default function PlayerControls({
       copyTimerRef.current = window.setTimeout(() => setLinkCopied(false), 1500);
     }).catch(() => { /* clipboard denied */ });
   }, [flushAlgCommit]);
-
-  // Hand off the current scramble + solution to /recon/submit (matching event).
-  const handlePublishRecon = useCallback(() => {
-    if (!reconEvent) return;
-    const qs = buildReconSubmitQuery(reconEvent, setupDraft, stripHandMarks(algDraft));
-    router.push(`${langPrefix}/recon/submit?${qs}`);
-  }, [reconEvent, setupDraft, algDraft, router, langPrefix]);
 
   const appendUserMove = useCallback((action: TwistAction | string) => {
     let moveText = typeof action === 'string' ? action : action.value;
@@ -2273,7 +2257,7 @@ export default function PlayerControls({
       </div>
 
       <div className="sim-player-tools">
-        <button onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}><RotateCw size={13} />{t('逆', 'Invert')}</button>
+        <button onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('逆', 'Invert')}</button>
         {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
             并对当前解法消一次步;关 = 原样保留。取代原一次性「消步」按钮。 */}
         {!isIvy && (
@@ -2294,14 +2278,6 @@ export default function PlayerControls({
           {linkCopied ? <Check size={13} /> : <Link2 size={13} />}
           {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
         </button>
-        {reconEvent && (
-          <button
-            onClick={handlePublishRecon}
-            title={t('用当前打乱 / 解法去发布复盘', 'Take this scramble / solution to publish a reconstruction')}
-          >
-            <Upload size={13} />{t('发布', 'Publish')}
-          </button>
-        )}
       </div>
 
       <PuzzleSettings
