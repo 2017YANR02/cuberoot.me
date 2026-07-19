@@ -1343,11 +1343,13 @@ export default function CompDetailPage() {
       const pb = u.wcaid ? pbMap[u.wcaid] : null;
       const { singleRank, averageRank } = classifyPr(r, pb ?? null);
       const country = regionToIso2(u.region).toUpperCase();
-      if (singleRank === 1 && !r.sr && r.b > 0) items.push({ event: r.e, type: 'single', value: r.b, country });
+      // PR(rank 1)或带地区纪录标签(sr/ar)的成绩弹窗都要显示 /WRn,预热两者。
+      if ((singleRank === 1 || r.sr) && r.b > 0) items.push({ event: r.e, type: 'single', value: r.b, country });
       const avgVal = effectiveAvg(r);
-      if (averageRank === 1 && !r.ar && isAvgFmt && avgVal > 0) items.push({ event: r.e, type: 'average', value: avgVal, country });
+      if ((averageRank === 1 || r.ar) && isAvgFmt && avgVal > 0) items.push({ event: r.e, type: 'average', value: avgVal, country });
     }
-    if (items.length > 0) void prefetchRanksForWca(items);
+    // excludeComp=本场:服务端 overlay 排除本场,避免与客户端同场订正重复计数。
+    if (items.length > 0) void prefetchRanksForWca(items, data.slug);
   }, [data, currentRound, pbMap]);
 
   useEffect(() => {
@@ -3332,15 +3334,17 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
     const country = regionToIso2(u.region).toUpperCase();
     const isAvgFmt = isAvgRankedFormat(rd.f) || isBlindAvgEvent(eventId);
     const avgVal = effectiveAvg(result);
-    const wantSingle = singleRank === 1 && !result.sr && result.b > 0;
-    const wantAvg = averageRank === 1 && !result.ar && isAvgFmt && avgVal > 0;
-    // 只在缓存未命中(undefined)时才单查;命中(含确定无名次的 null)直接跳过。
+    // PR(rank 1)或带地区纪录标签(sr/ar)都要世界名次:前者显示 PR/WRn,后者显示 记录/WRn。
+    const wantSingle = (singleRank === 1 || !!result.sr) && result.b > 0;
+    const wantAvg = (averageRank === 1 || !!result.ar) && isAvgFmt && avgVal > 0;
+    // 只在缓存未命中(undefined)时才单查;命中(含确定无名次的 null)直接跳过。excludeComp=本场:
+    // 服务端 overlay 排除本场(客户端已就本场实时成绩自订正,避免重复计数)。
     const tasks: Promise<unknown>[] = [];
-    if (wantSingle && getCachedRankForWca(result.e, result.b, 'single', country) === undefined) {
-      tasks.push(fetchRankForWca(result.e, result.b, 'single', country));
+    if (wantSingle && getCachedRankForWca(result.e, result.b, 'single', country, data.slug) === undefined) {
+      tasks.push(fetchRankForWca(result.e, result.b, 'single', country, data.slug));
     }
-    if (wantAvg && getCachedRankForWca(result.e, avgVal, 'average', country) === undefined) {
-      tasks.push(fetchRankForWca(result.e, avgVal, 'average', country));
+    if (wantAvg && getCachedRankForWca(result.e, avgVal, 'average', country, data.slug) === undefined) {
+      tasks.push(fetchRankForWca(result.e, avgVal, 'average', country, data.slug));
     }
     if (tasks.length === 0) return;
     let cancelled = false;
@@ -3378,8 +3382,8 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
 
   // 渲染期同步读名次缓存(命中则秒出;未命中=undefined,上面的 effect 会单查后 bump 重渲染)。
   const country = iso2.toUpperCase();
-  const singleRankBase = getCachedRankForWca(result.e, result.b, 'single', country);
-  const avgRankBase = getCachedRankForWca(result.e, effectiveAvg(result), 'average', country);
+  const singleRankBase = getCachedRankForWca(result.e, result.b, 'single', country, data.slug);
+  const avgRankBase = getCachedRankForWca(result.e, effectiveAvg(result), 'average', country, data.slug);
   // 把本场实时成绩并进官方名次,修掉「官方 dump 滞后 → 假全国/世界第几」(同场更快成绩官方未计入)。
   const singleRankInfo = singleRankBase
     ? adjustRankWithLiveComp(singleRankBase, buildLiveCompEntries(data, pbMap, result.e, 'single'), result.b, number, country)
@@ -3396,6 +3400,12 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
       {info?.world && <span className="comp-pr-mark-rank">/WR{info.world.rank}</span>}
     </span>
   );
+
+  // 地区纪录标签(NR/CR/AsR…)后附世界名次 /WRn(与 Bark 纪录文案同口径);WR 本身=世界第一不附。
+  const renderRecordWr = (tag: string, info: RankResult | null | undefined) =>
+    info?.world && tag.toUpperCase() !== 'WR'
+      ? <span className="comp-pr-mark-rank">/WR{info.world.rank}</span>
+      : null;
 
   async function handleCopy() {
     if (!hasEventsRef.current || !prefetchRef.current) {
@@ -3535,7 +3545,10 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
                   <span className="record-num-cell">
                     {formatLive(effectiveAvg(result), result.e, true)}
                     {result.ar
-                      ? <RecordBadge record={String(result.ar)} variant="inline" iso2={iso2} />
+                      ? <>
+                          <RecordBadge record={String(result.ar)} variant="inline" iso2={iso2} />
+                          {renderRecordWr(String(result.ar), avgRankInfo)}
+                        </>
                       : averageBadge ? <RecordBadge record={averageBadge} variant="inline" /> : null}
                   </span>
                 )
@@ -3556,7 +3569,10 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
                   <span className="record-num-cell">
                     {formatLive(result.b, result.e, false)}
                     {result.sr
-                      ? <RecordBadge record={result.sr} variant="inline" iso2={iso2} />
+                      ? <>
+                          <RecordBadge record={result.sr} variant="inline" iso2={iso2} />
+                          {renderRecordWr(String(result.sr), singleRankInfo)}
+                        </>
                       : singleBadge ? <RecordBadge record={singleBadge} variant="inline" /> : null}
                   </span>
                 )
