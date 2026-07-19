@@ -135,6 +135,77 @@ html[data-theme='dark'] .stsv {
 /* 底色 picker 嵌进工具栏:高度与相邻 select 对齐;菜单浮层用工具栏自己的 surface(本组件默认取全局 --popover) */
 .stsv-control-subset .subset-picker { min-height: 33px; --sp-surface: var(--sv-surface); }
 .stsv-control-subset .subset-picker-mode { color: var(--sv-text); }
+
+/* ── 槽位色标(F2L 槽两片侧贴纸颜色,左右竖分)+ 自绘槽位下拉 ──
+   槽位方位(BL/BR/FR/FL)对应两片侧面贴纸,这里画成两色竖分小块(竖线分隔),替代方位字母。
+   下拉:原生 <select> 无法在 <option> 里放色块,故自绘 listbox,交互对齐 SubsetColorPicker。 */
+.stsv-slot-chips { display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto; vertical-align: middle; }
+.stsv-slot-chip {
+  display: inline-flex;
+  align-items: stretch;
+  width: 20px;
+  height: 13px;
+  gap: 1.5px;                       /* 缝隙透出背景色 = 两色间的竖分隔线 */
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--sv-border-strong);
+  border: 1px solid var(--sv-border-strong);
+  vertical-align: middle;
+  flex: 0 0 auto;
+}
+.stsv-slot-chip > span { flex: 1 1 0; min-width: 0; }
+.stsv-slot-fallback { font-size: 10px; font-weight: 600; letter-spacing: 0.02em; color: var(--sv-text-mute); }
+
+.stsv-slotsel { position: relative; align-self: flex-start; }
+.stsv-slotsel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 13px;
+  min-height: 33px;                 /* 与相邻 .stsv-control-select 等高 */
+  padding: 5px 8px;
+  background: var(--sv-surface);
+  color: var(--sv-text);
+  border: 1px solid var(--sv-border-strong);
+  border-radius: 6px;
+  cursor: pointer;
+  width: fit-content;
+}
+.stsv-slotsel-btn.is-open, .stsv-slotsel-btn:focus-visible { outline: none; border-color: var(--sv-accent); }
+.stsv-slotsel-caret { color: var(--sv-text-mute); flex: 0 0 auto; }
+.stsv-slotsel-auto { white-space: nowrap; }
+/* anchored-panel: clamped(组件挂 usePanelClamp,触发钮靠右时面板右缘越界 → 实测左移) */
+.stsv-slotsel-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 100%;
+  padding: 4px;
+  background: var(--sv-surface);
+  border: 1px solid var(--sv-border-strong);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+.stsv-slotsel-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: var(--sv-text);
+  text-align: left;
+  white-space: nowrap;
+}
+.stsv-slotsel-opt:hover { background: var(--sv-accent-soft); }
+.stsv-slotsel-opt.is-active { background: var(--sv-accent-soft); color: var(--sv-accent); }
 .stsv-diag {
   margin-left: auto;
   align-self: center;
