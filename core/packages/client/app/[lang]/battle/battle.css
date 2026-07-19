@@ -1839,12 +1839,29 @@ body.solo .scramble-img {
     padding: 8px 16px;
     overflow: hidden;
 }
+/* 共享打乱的文字 / 图 / 来源行尺寸对齐单人模式(SoloView 的 .scramble-strip /
+   shell-corner-net / .scramble-src):公式 clamp(26,4.4vw,36),打乱图 --cube-h
+   同 solo,来源 24px + em 国旗。默认 battle 尺寸偏小,这里整体放大到 solo 一致。 */
 .side-scramble-row .scramble-text {
+    font-size: calc(clamp(26px, 4.4vw, 36px) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
+    line-height: 1.5;
     pointer-events: auto;
     cursor: pointer;
 }
 .side-scramble-row .scramble-text.hidden {
     pointer-events: none;
+}
+.side-scramble-row .scramble-svg-img {
+    max-height: min(30vw, 26dvh, 260px);
+}
+.side-scramble-row .battle-scramble-src {
+    font-size: 24px;
+    gap: 6px;
+    margin-top: 8px;
+}
+.side-scramble-row .battle-src-flag {
+    width: 1.25em;
+    height: 0.9em;
 }
 
 /* side 布局中间栏保持水平 */
