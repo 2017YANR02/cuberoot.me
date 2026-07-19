@@ -1,7 +1,7 @@
 // Synced-mesh sweep: does the SVG corner spur profile thread the gear teeth?
 // Replicates the engine's fold-glide crown (gearGeometry.ts) for the gear at
 // E=(0,H,H) (edge ∥ x), sweeps the two relative branches (spin/orbit ratio
-// ±480°/90°, full 360° orbit ≡ all 4 start slots since 120° is tooth-identical),
+// ±300°/90° — Jaap's GT — full 360° orbit ≡ all 4 start slots),
 // and reports the min signed distance from any tooth/decal sample point to the
 // corner plate prisms (traced polygon × depth band). Negative = interpenetration.
 //
@@ -341,7 +341,9 @@ function dBot(r) {
 // v12 RIGID crown: the crease is baked, the whole piece spins as a rigid body
 // about its axis n̂ = (0,1,1)/√2 (through the origin — E ∥ n̂), so a frame is
 // fold(rest) → rigid spin θ → orbit ω about x̂. θ = φ0 + ratio·ω with
-// ratio = ±480/90 (the two relative branches) and φ0 ∈ {0,120,240} — a tilted
+// ratio = ±300/90 (the two relative branches; Jaap's GT, net −60°/flip) and
+// φ0 ∈ {0,60,120} (rest tilts are multiples of 60°; the creased crown shape
+// is 180°-symmetric so these cover every distinct start shape) — a tilted
 // START phase changes the transit geometry now, unlike the old fold-glide
 // whose dev shape was 120°-periodic.
 function sweep(ratio, stepDeg, collect, phi0 = 0) {
@@ -389,8 +391,8 @@ function sweep(ratio, stepDeg, collect, phi0 = 0) {
 function sweepAll(stepDeg, collect) {
   let worst = Infinity, worstAt = null;
   const viol = [];
-  for (const ratio of [-480 / 90, 480 / 90]) {
-    for (const phi0 of [0, 120, 240]) {
+  for (const ratio of [-300 / 90, 300 / 90]) {
+    for (const phi0 of [0, 60, 120]) {
       const r = sweep(ratio, stepDeg, collect, phi0);
       if (r.worst < worst) { worst = r.worst; worstAt = r.worstAt; }
       viol.push(...r.viol);
@@ -760,11 +762,12 @@ const MARGIN = 0.5; // safety margin (units) beyond the pooled footprint —
   const R = sweepAll(0.5, false);
   console.log(`re-verify transit: min clearance ${R.worst.toFixed(2)}  at ${JSON.stringify(R.worstAt)}`);
 
-  // REST-phase clearance with the final polygon — the three RIGID rest tilts
+  // REST-phase clearance with the final polygon — the three RIGID rest shapes
+  // (rest tilts = multiples of 60°, crease shape 180°-symmetric → {0,60,120})
   {
     let worst = Infinity;
     const out = [0, 0, 0];
-    for (const phi0 of [0, 120, 240]) {
+    for (const phi0 of [0, 60, 120]) {
       const th = (phi0 * Math.PI) / 180, ct = Math.cos(th), st = Math.sin(th);
       for (let k = 0; k < TEETH; k++) {
         const rot = (k * 2 * Math.PI) / TEETH;
@@ -780,7 +783,7 @@ const MARGIN = 0.5; // safety margin (units) beyond the pooled footprint —
         }
       }
     }
-    console.log(`re-verify REST (θ=0/120/240 rigid tilts): min clearance ${worst.toFixed(2)}`);
+    console.log(`re-verify REST (θ=0/60/120 rigid rest shapes): min clearance ${worst.toFixed(2)}`);
   }
 
   // ── bake engine tables ──────────────────────────────────────────────────────
