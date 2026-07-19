@@ -125,6 +125,12 @@ export const CI_GUARDS_UI: CiGuard[] = [
     zh: { title: 'scramble/solver 复制粘贴求解器页', desc: '/scramble/solver 的单行 puzzle-optimal 求解器页(28 个)一律走共享基座 PuzzleSolverPage(config 驱动的 SolverSpec + 一行渲染),禁再各自手搓 SolveState / reqRef / renderSingle 那套 ~130 行样板。新写的 _*Solver.tsx 没 import PuzzleSolverPage → 集合变化直接红;真异形(自定义 UI,现只剩 Cube3 / Sq1)加进 BESPOKE 白名单当 review 信号。' },
     en: { title: 'scramble/solver copy-paste solver pages', desc: 'The single-line puzzle-optimal solver pages under /scramble/solver (28 of them) go through the shared PuzzleSolverPage base (config-driven SolverSpec + one-line render) — no more hand-rolled SolveState / reqRef / renderSingle (~130 lines each). A new _*Solver.tsx not importing PuzzleSolverPage changes the set and turns CI red; genuinely bespoke ones (custom UI — only Cube3 / Sq1 remain) join the BESPOKE allowlist as a review signal.' },
   },
+  {
+    id: 'hash-nav-single-source',
+    test: 'hash-nav-single-source.test.ts',
+    zh: { title: 'hash 锚点滚动+高亮各写一份', desc: '「点某项 → URL 片段 → 滚到它并高亮」原本六处各手搓(/wiki 词条、person 两张成绩表、/alg 公式卡、/wca/prediction 项目段、论坛帖子),ByCompList/ByEventView 更是逐字复制。已抽成 useHashHighlight(差异点 resolve / reveal / linger / highlightClass / onScroll / deps 全作 options)。除该 hook 外任何文件再挂 hashchange 监听 = CI 红,指回 hook;OAuth 回调等另类用途走 ALLOWLIST + 理由。' },
+    en: { title: 'Hand-rolled hash-anchor scroll+highlight', desc: '"Click a thing → URL fragment → scroll to it and highlight" was hand-rolled in six places (wiki entries, the two person result tables, alg cards, prediction event sections, forum posts) — ByCompList/ByEventView near-verbatim copies. Unified into useHashHighlight (differences are options: resolve / reveal / linger / highlightClass / onScroll / deps). Any file other than that hook adding a hashchange listener turns CI red and points back to it; genuinely different uses (OAuth callback, global infra) go through the ALLOWLIST with a reason.' },
+  },
 ];
 
 export const CI_GUARDS_DRIFT: CiGuard[] = [
