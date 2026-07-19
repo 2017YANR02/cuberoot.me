@@ -101,6 +101,8 @@ export default function TrainerRunClient() {
   const pinObserving = useTrainerStore(s => s.pinObserving);
   const nextScramble = useTrainerStore(s => s.nextScramble);
   const prevScramble = useTrainerStore(s => s.prevScramble);
+  const recapRoundDone = useTrainerStore(s => s.recapRoundDone);
+  const continueRecapRound = useTrainerStore(s => s.continueRecapRound);
   const getTimerReady = useTrainerStore(s => s.getTimerReady);
   const startTimer = useTrainerStore(s => s.startTimer);
   const stopTimer = useTrainerStore(s => s.stopTimer);
@@ -192,7 +194,7 @@ export default function TrainerRunClient() {
   useSpaceHoldTimer({
     state: timerState,
     delayMs: TIMER_DELAY_MS,
-    enabled: timing,
+    enabled: timing && !recapRoundDone, // 「本轮结束」弹窗开着时别让空格误起表
     getTimerReady,
     startTimer,
     stopTimer,
@@ -205,6 +207,15 @@ export default function TrainerRunClient() {
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA'
         || target.tagName === 'SELECT' || target.isContentEditable)) return;
+      // 「本轮结束」弹窗开着时:回车/空格/Esc/→ 进下一轮,其余键一律吞掉(别打标记/翻历史)
+      const st0 = useTrainerStore.getState();
+      if (st0.recapRoundDone) {
+        if (e.code === 'Enter' || e.code === 'Space' || e.code === 'Escape' || e.code === 'ArrowRight') {
+          e.preventDefault();
+          st0.continueRecapRound();
+        }
+        return;
+      }
       if (e.code === 'ArrowLeft') { e.preventDefault(); prevScramble(); return; }
       if (e.code === 'ArrowRight') { e.preventDefault(); nextScramble(); return; }
       // 1-4:直接给卡片当前 case 打标记(1 学习中 / 2 已掌握 / 3 搁置 / 4 星标);再按同键取消
@@ -893,6 +904,35 @@ export default function TrainerRunClient() {
           onClose={() => setMetaCase(null)}
           onJump={(c) => setMetaCase(c)}
         />
+      )}
+
+      {/* 协同复习:本机这一份出完 → 弹「本轮复习结束」,「继续下一轮」进下一轮。
+          零后端:各设备各自在自己那份出完时弹,不跨设备等齐(份额相近,大致同时)。 */}
+      {recapRoundDone && (
+        <div
+          className="trainer-round-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          onClick={continueRecapRound}
+        >
+          <div className="trainer-round-modal" onClick={e => e.stopPropagation()}>
+            <h2>{tr({ zh: '本轮复习结束', en: 'Round complete' })}</h2>
+            <p>
+              {tr({
+                zh: `本机第 ${coop.k + 1}/${coop.n} 份已全部过完${recapCur ? `(${recapCur.total} 把)` : ''}。各设备刷完自己那份即完成本轮 —— 大家一起进下一轮。`,
+                en: `This device finished its share (#${coop.k + 1} of ${coop.n}${recapCur ? `, ${recapCur.total} cases` : ''}). Every device completes its own share — start the next round together.`,
+              })}
+            </p>
+            <button
+              type="button"
+              className="trainer-round-modal-btn"
+              onClick={continueRecapRound}
+              autoFocus
+            >
+              {tr({ zh: '继续下一轮', en: 'Next round' })}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

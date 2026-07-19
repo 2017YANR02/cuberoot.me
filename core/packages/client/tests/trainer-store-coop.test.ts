@@ -101,3 +101,63 @@ describe('trainer-store coop sharding', () => {
     expect(useTrainerStore.getState().recapQueue.length).toBe(names.length); // 整集 4
   });
 });
+
+// 当前题的本轮进度 {pos,total}
+const curRecap = () => {
+  const h = useTrainerStore.getState().hist;
+  return h.idx >= 0 ? h.list[h.idx].recap : undefined;
+};
+
+describe('trainer-store coop round-end popup', () => {
+  beforeEach(() => { g.localStorage = makeLocalStorage(); });
+
+  it('协同:本机这一份出完 → recapRoundDone 暂停,continueRecapRound 进下一轮', () => {
+    boot(['A', 'B', 'C', 'D']);
+    const st = useTrainerStore.getState();
+    st.setMode('recap');
+    st.setRecapOrder('seq');
+    st.setCoop({ on: true, code: '', n: 2, k: 0 }); // 本机得 2 张(A、C)
+    expect(useTrainerStore.getState().recapQueue.length).toBe(2);
+    expect(curRecap()).toEqual({ pos: 1, total: 2 }); // 本轮第 1 张
+
+    useTrainerStore.getState().nextScramble();        // → 第 2 张(最后一张)
+    expect(curRecap()).toEqual({ pos: 2, total: 2 });
+    expect(useTrainerStore.getState().recapRoundDone).toBe(false);
+
+    const lastKey = useTrainerStore.getState().currentKey;
+    useTrainerStore.getState().nextScramble();        // 做完最后一张 → 暂停,不前进
+    expect(useTrainerStore.getState().recapRoundDone).toBe(true);
+    expect(useTrainerStore.getState().currentKey).toBe(lastKey);
+
+    // 弹窗开着时再点「下一个」被拦(不推进)
+    useTrainerStore.getState().nextScramble();
+    expect(useTrainerStore.getState().currentKey).toBe(lastKey);
+    expect(useTrainerStore.getState().recapRoundDone).toBe(true);
+
+    useTrainerStore.getState().continueRecapRound();  // 进下一轮
+    expect(useTrainerStore.getState().recapRoundDone).toBe(false);
+    expect(curRecap()).toEqual({ pos: 1, total: 2 }); // 下一轮第 1 张
+  });
+
+  it('单机复习不打断:整集出完无缝重洗,不置 recapRoundDone', () => {
+    boot(['A', 'B']);
+    const st = useTrainerStore.getState();
+    st.setMode('recap');
+    st.setRecapOrder('seq');
+    st.setCoop({ on: false, code: '', n: 2, k: 0 });
+    expect(curRecap()).toEqual({ pos: 1, total: 2 });
+    useTrainerStore.getState().nextScramble();        // {2,2}
+    useTrainerStore.getState().nextScramble();        // 出完 → 直接进下一轮,不暂停
+    expect(useTrainerStore.getState().recapRoundDone).toBe(false);
+    expect(curRecap()).toEqual({ pos: 1, total: 2 });
+  });
+
+  it('训练模式不受影响(无 recap 进度,永不暂停)', () => {
+    boot(['A', 'B', 'C']);
+    const st = useTrainerStore.getState();
+    st.setMode('train');
+    st.setCoop({ on: true, code: '', n: 2, k: 0 });
+    for (let i = 0; i < 6; i++) useTrainerStore.getState().nextScramble();
+    expect(useTrainerStore.getState().recapRoundDone).toBe(false);
+  });
+});
