@@ -1741,10 +1741,10 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'ReconPlayerCanvas',
-    import: "import ReconPlayerCanvas, { loadReconEngine, saveReconEngine } from '@/components/recon/ReconPlayerCanvas';",
+    import: "import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';",
     category: 'more',
-    zh: `复盘 3D 播放器(动画演示)的共享渲染层:按项目选引擎(sq1→Sq1ReconPlayer,NxN→cuber/cubing.js 二选一,其余→TwistySection),传 event/scramble/displayText/playerRef/engine 即播。/recon/[id] 详情页与成绩弹窗 AttemptPopover 共用,避免重复。引擎偏好持久化 localStorage(loadReconEngine/saveReconEngine,同 key);showEngineToggle 在 NxN 渲染左上角引擎切换(需父容器 position:relative)。`,
-    en: `Shared render layer for the reconstruction 3D player (animation demo): picks an engine by event (sq1→Sq1ReconPlayer, NxN→cuber/cubing.js, else→TwistySection); pass event/scramble/displayText/playerRef/engine to play. Shared by the /recon/[id] detail page and the AttemptPopover solve popup to avoid duplication. Engine preference persists in localStorage (loadReconEngine/saveReconEngine, same key); showEngineToggle renders the top-left engine switch on NxN (parent must be position:relative).`,
+    zh: `复盘 3D 播放器(动画演示)的详情页渲染层:委托 ReconEnginePlayer 按项目选引擎(sq1 / NxN → 自有 cuber 引擎,其余 → cubing.js TwistySection),传 event/scramble/displayText/playerRef 即播。/recon/[id] 详情页与成绩弹窗 AttemptPopover 共用,避免重复;hideControls 时改用画面内播放/暂停浮层。`,
+    en: `Detail-page render layer for the reconstruction 3D player (animation demo): delegates the engine choice to ReconEnginePlayer (sq1 / NxN → in-house cuber engine, else → cubing.js TwistySection); pass event/scramble/displayText/playerRef to play. Shared by the /recon/[id] detail page and the AttemptPopover solve popup to avoid duplication; hideControls switches to an in-frame play/pause overlay.`,
   },
   {
     name: 'ByCompList',
