@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
+import PersonLink from '@/components/PersonLink';
 import { Flag } from '@/components/Flag';
 import { EventIcon } from '@/components/EventIcon';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -248,7 +249,7 @@ function ChangeCard({ change: c, isZh, t, admin, onModerated }: {
 
       <div className="rw-card-person">
         {c.personIso2 && <Flag iso2={c.personIso2} spanClassName="rw-flag" imgClassName="rw-flag-ct" />}
-        <Link prefetch={false} href={`/wca/persons/${c.wcaId}`} className="rw-person-link">{personName}</Link>
+        <PersonLink wcaId={c.wcaId} className="rw-person-link">{personName}</PersonLink>
       </div>
 
       <div className="rw-card-context">

@@ -7,6 +7,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
+import PersonLink from '@/components/PersonLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { LogOut, TriangleAlert } from 'lucide-react';
@@ -198,7 +199,7 @@ export default function ReconPersonClient() {
         </div>
         <div className="recon-person-id">
           <h1>
-            <Link href={`/wca/persons/${wcaId}`} className="recon-person-name-link">{displayName}</Link>
+            <PersonLink wcaId={wcaId} className="recon-person-name-link">{displayName}</PersonLink>
           </h1>
           {avatarUrl && identity.country && (
             <div className="recon-person-meta">

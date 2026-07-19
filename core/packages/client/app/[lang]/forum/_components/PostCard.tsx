@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { Link2, Quote, Pencil, Trash2, Check, Flag, ShieldCheck, Hourglass, CircleX } from 'lucide-react';
-import Link from '@/components/AppLink';
+import PersonLink from '@/components/PersonLink';
 import { tr, useLang } from '@/i18n/tr';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
@@ -88,13 +88,9 @@ export function PostCard({
         )}
         <div className="forum-post-author-meta">
           {author?.wcaId ? (
-            <Link
-              href={`/wca/persons/${author.wcaId}`}
-              prefetch={false}
-              className="forum-post-author-name"
-            >
+            <PersonLink wcaId={author.wcaId} className="forum-post-author-name">
               {name}
-            </Link>
+            </PersonLink>
           ) : (
             <span className="forum-post-author-name">{name}</span>
           )}

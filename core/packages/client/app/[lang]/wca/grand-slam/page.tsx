@@ -6,7 +6,7 @@
  * Ported from packages/client-vite/src/pages/wca_stats/GrandSlamPage.tsx.
  */
 import { Suspense, useEffect, useState } from 'react';
-import Link from '@/components/AppLink';
+import PersonLink from '@/components/PersonLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { WcaStatsPageHeader } from '@/components/wca-stats/WcaStatsPageHeader';
@@ -17,7 +17,6 @@ import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
 import { loadFlagData } from '@/lib/country-flags';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { displayCuberName } from '@/lib/cuber-name-display';
 import { apiUrl } from '@/lib/api-base';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
@@ -158,9 +157,7 @@ function GrandSlamPageInner() {
                     <td className="wse-rank-col">{i + 1}</td>
                     <td>
                       {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-                      <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.wcaId}`}>
-                        {displayCuberName(r.name, isZh)}
-                      </Link>
+                      <PersonLink wcaId={r.wcaId} name={r.name} isZh={isZh} />
                     </td>
                     <td>{r.eventId}</td>
                     <td className="wse-value-col">{r.single != null ? formatWcaResult(r.single, r.eventId, 'single') : '—'}</td>

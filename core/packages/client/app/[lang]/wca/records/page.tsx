@@ -3,6 +3,7 @@
 // Ported from packages/client-vite/src/pages/wca_stats/RecordsPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
+import PersonLink from '@/components/PersonLink';
 import HomeLink from '@/components/HomeLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +15,6 @@ import { loadFlagData } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
 import { countryName } from '@/lib/country-name';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { displayCuberName } from '@/lib/cuber-name-display';
 import { eventDisplayName } from '@/lib/wca-events';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
@@ -27,7 +27,6 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import '../_wca_stats_extra.css';
 import '../_records.css';
 import { tr } from '@/i18n/tr';
-import i18n from '@/i18n/i18n-client';
 
 interface Row {
   e: string; t: 's' | 'a'; v: number; l: string;
@@ -343,9 +342,7 @@ function RowsTable({ rows, isZh, showEvent, showRank = true }: RowsTableProps) {
             <td className="wse-value-col">{r.t === 'a' ? formatWcaResult(r.v, r.e, 'average') : ''}</td>
             <td>
               {r.pc && <Flag iso2={r.pc} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
-              <Link prefetch={false} href={`/${(i18n.language.startsWith('zh') ? 'zh' : 'en')}/wca/persons/${r.p}`}>
-                {displayCuberName(r.pn, isZh)}
-              </Link>
+              <PersonLink wcaId={r.p} name={r.pn} isZh={isZh} />
             </td>
             <td>
               <Link {...compLinkProps(r.c)}>
