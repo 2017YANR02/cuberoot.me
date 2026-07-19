@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { User, Mail, Copy, Check, Info, Crown } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import './donate-modal.css';
@@ -56,17 +57,10 @@ export default function DonateModal({ lang, onClose }: Props) {
   const [copied, setCopied] = useState<string | null>(null);
   const copyTimer = useRef<number | null>(null);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-      if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
-    };
-  }, [onClose]);
+  useModalDismiss(onClose);
+  useEffect(() => () => {
+    if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
+  }, []);
 
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 

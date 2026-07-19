@@ -100,6 +100,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Sets the document title (CubeRoot suffix, resets on unmount), SSR-safe.',
   },
   {
+    name: 'useModalDismiss',
+    sig: 'useModalDismiss(onClose: () => void, disabled?: boolean): void',
+    imp: "import { useModalDismiss } from '@/hooks/useModalDismiss';",
+    usage: "useModalDismiss(onClose);  // Escape 关闭 + 锁 body 滚动",
+    category: 'hook',
+    zh: '模态框标准关闭接线:挂载期 Escape 关闭 + 锁 body 滚动,卸载复位。disabled(如提交中)不响应 Escape。遮罩点击 / 关闭按钮各模态自己写(onClick vs onMouseDown、✕ vs 图标 不统一,抽进壳会过度抽象)。',
+    en: 'Standard modal dismissal: Escape-to-close + body-scroll lock while mounted; disabled suppresses Escape (e.g. mid-submit). Backdrop/close-button stay per-modal.',
+  },
+  {
     name: 'useT',
     sig: 'useT(): (zh: string, en: string) => string',
     imp: "import { useT } from '@/hooks/useT';",
