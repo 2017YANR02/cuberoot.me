@@ -15,7 +15,11 @@
 // those same CSVs' `soln` column also gives us `opt` (id -> optimal equivalent scramble), which the
 // difficulty view displays instead of the raw scramble (same as /timer's 最优打乱 — same state,
 // its move count IS the difficulty value). The length view keeps the raw scramble by definition.
-// 3x3 is here for its **length** buckets only (its scramble length varies, 12–23 moves);
+// 单手/脚拧/最少步/三盲 (333oh/333ft/333fm/333bf) ALSO get a difficulty view = **whole-solve optimal
+// HTM** (+ its optimal scramble), joined from solver/333opt/out.0.csv — the SAME source as
+// recent_scrambles.json's `opt`. 三盲 solves the wide-suffix-stripped core state, so its optimal is a
+// plain face-turn scramble (same state up to a whole-cube rotation, identical difficulty).
+// Plain 3x3 is here for its **length** buckets only (its scramble length varies, 12–23 moves);
 // its difficulty / variant / colour widget stays in recent_scrambles.json.
 // Multi-blind (333mbf/333mbo, multi-cube blobs) is excluded — no single length / preview.
 //
@@ -36,6 +40,12 @@ const RECENT_WINDOW_DAYS = 30; // bootstrap window when no watermark exists yet
 // difficulty events → puzzle-pipeline data subdir (whole-solve optimal step count).
 // value column in <key>.csv = the puzzle key itself (see build_puzzle_dist.ts).
 const DIFFICULTY_PUZZLES: Record<string, string> = { '222': '222', pyram: 'pyraminx', skewb: 'skewb' };
+
+// 3x3-family events whose difficulty view = whole-solve optimal HTM (from solver/333opt/out.0.csv),
+// which also yields `opt` (纯面转最优打乱,同 recent_scrambles.json 的 opt)。plain 333 排除 —— 它在选择器
+// 里走 recent_scrambles.json 的富控件,这里只喂它的长度桶;333mbf/333mbo 上游已排除(多魔方无单一预览)。
+// 三盲(333bf)打乱含宽块定向后缀,解的是剥后核心态 → opt 为纯面转、与原打乱相差整体旋转(难度完全相同)。
+const DIFFICULTY_333_EVENTS = new Set(['333oh', '333ft', '333fm', '333bf']);
 
 // multi-blind = multi-cube blob (no single length / preview). 3x3 stays in (length buckets only —
 // no entry in DIFFICULTY_PUZZLES, so it gets no difficulty here; that lives in recent_scrambles.json).
@@ -130,6 +140,23 @@ async function loadPuzzleSteps(csvPath: string, valueCol: string, wanted: Set<st
     if (!Number.isFinite(v)) continue;
     const soln = solnIdx === -1 ? '' : (c[solnIdx] ?? '');
     out.set(id, { step: v, ...(soln && soln !== '-' ? { opt: invertAlg(soln) } : {}) });
+  }
+  return out;
+}
+
+// stream solver/333opt/out.0.csv (id,htm,solution) → id -> { step:htm, opt:invert(solution) } for wanted ids.
+// htm = 整解最优 HTM(难度值);opt = 纯面转最优打乱(无宽块后缀)。缺文件/缺 id -> 该条无难度 + 回退长度视图。
+async function loadOptimal333(outCsv: string, wanted: Set<string>): Promise<Map<string, { step: number; opt: string }>> {
+  const out = new Map<string, { step: number; opt: string }>();
+  if (wanted.size === 0 || !fs.existsSync(outCsv)) return out;
+  const rl = readline.createInterface({ input: fs.createReadStream(outCsv, 'utf-8'), crlfDelay: Infinity });
+  for await (const line of rl) {
+    if (!line) continue;
+    const c = line.split(',');
+    if (c.length < 3 || !c[2] || !wanted.has(c[0])) continue;
+    const step = Number(c[1]);
+    if (!Number.isFinite(step)) continue;
+    out.set(c[0], { step, opt: invertAlg(c[2]) });
   }
   return out;
 }
@@ -266,6 +293,34 @@ async function main() {
     }
     ev.difficulty = { metric: 'htm', byStep };
     console.log(`  [difficulty] ${event}: ${steps.size} joined, ${nOpt} with an optimal scramble`);
+  }
+
+  // 3x3-family difficulty (整解最优 HTM) + 最优打乱 via solver/333opt/out.0.csv —— 单手/脚拧/最少步/三盲。
+  // 与 recent_scrambles.json 的 opt 同源(纯面转,三盲已去宽块后缀);选择器里这些项目的「难度」视图显示这份。
+  {
+    // events-batch ids are raw Scrambles.id (e.g. 5749439);out.0.csv 按**语料 id** = rawId*1000 + 魔方序号
+    // (单魔方非多盲 → 序号 001,如 5749439001)。故按 `${rawId}001` 查 out.0.csv,再映射回原始 id 存桶
+    // (与本 JSON 其余 scr/meta 的 id 口径一致)。DIFFICULTY_333_EVENTS 全是单魔方项目,后缀恒为 001。
+    const corpusToRaw = new Map<string, string>();
+    for (const [id, b] of newRows) if (DIFFICULTY_333_EVENTS.has(b.event)) corpusToRaw.set(`${id}001`, id);
+    if (corpusToRaw.size > 0) {
+      const outCsv = path.join(repoRoot, 'solver', '333opt', 'out.0.csv');
+      const solved = await loadOptimal333(outCsv, new Set(corpusToRaw.keys()));
+      if (solved.size === 0) console.warn(`  [difficulty] 3x3-family: no rows joined from ${outCsv}`);
+      const byStepOf: Record<string, Record<string, string[]>> = {};
+      let nOpt = 0;
+      for (const [corpusId, { step, opt }] of solved) {
+        const id = corpusToRaw.get(corpusId)!;
+        const ev = newRows.get(id)!.event;
+        (byStepOf[ev] ??= {});
+        (byStepOf[ev][String(step)] ??= []);
+        insertCapped(byStepOf[ev][String(step)], id, PER_BUCKET);
+        if (opt) { optimal.set(id, opt); nOpt++; }
+      }
+      for (const [ev, byStep] of Object.entries(byStepOf)) ensure(ev).difficulty = { metric: 'htm', byStep };
+      const evList = Object.keys(byStepOf).join('/') || '(none)';
+      console.log(`  [difficulty] 3x3-family: ${solved.size}/${corpusToRaw.size} joined [${evList}], ${nOpt} with an optimal scramble`);
+    }
   }
 
   // collect referenced ids → scr + comp-name-joined meta.
