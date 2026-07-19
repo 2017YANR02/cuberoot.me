@@ -109,6 +109,15 @@ export const CATALOG: UtilEntry[] = [
     en: 'Standard modal dismissal: Escape-to-close + body-scroll lock while mounted; disabled suppresses Escape (e.g. mid-submit). Backdrop/close-button stay per-modal.',
   },
   {
+    name: 'useSingleLineSolve',
+    sig: 'useSingleLineSolve<R>(trimmed: string, lineCount: number, gateOk: boolean, invocation: SolveInvocation<R>): SolveState<R>',
+    imp: "import { useSingleLineSolve } from '@/hooks/useSingleLineSolve';",
+    usage: "useSingleLineSolve(trimmed, lineCount, gateOk, { async: false, solve: solveBsq });",
+    category: 'hook',
+    zh: '/scramble/solver 15 个「拼图最优解」页共用的单行求解状态机:同步(setTimeout 让出主线程再求解)/异步(Promise + 取消标志)两种引擎统一成同一个 idle/solving/done/error 状态;tableErrorMode 把离线表 fetch 失败与记号解析失败(message 前缀 bad:)分成两种 error。',
+    en: 'Shared single-line solve state machine for the 15 puzzle-optimal-solver pages: unifies sync (setTimeout-deferred) and async (cancellable Promise) engines into one idle/solving/done/error state; tableErrorMode splits offline-table fetch failures from notation-parse failures (message prefixed bad:).',
+  },
+  {
     name: 'useT',
     sig: 'useT(): (zh: string, en: string) => string',
     imp: "import { useT } from '@/hooks/useT';",
