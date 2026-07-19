@@ -19,7 +19,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/cl
 const SCAN_DIRS = ['app', 'components'];
 
 // 当前存量(按本测试口径)。修按钮 → 改小;别调大放新债。
-const BASELINE = 45;
+// 44: WcaStatView 拆分时把 metric-pill 的假按钮 div 补了 role="button"+tabIndex+onKeyDown(45→44)。
+const BASELINE = 44;
 
 // 整文件豁免(各文件已属特殊;尽量用行内 allow-static-onclick 而非整文件)
 const ALLOWLIST = new Set<string>([]);
