@@ -456,17 +456,30 @@ function roundTypeIdToNum(data: CompData | null, eventId: string, rtid: string):
   return idx >= 0 ? idx + 1 : 1;
 }
 
+// 键一律小写 —— 不同数据源(cubing.com / WCA Live)round 名大小写不一(如
+// "First round" vs "Second Round"),查表前统一 toLowerCase 规避漏译。
 const ROUND_NAME_ZH: Record<string, string> = {
-  'First round': '初赛',
-  'Second round': '复赛',
-  'Third round': '第三轮',
-  'Quarter Final': '1/4 决赛',
-  'Semi Final': '半决赛',
-  'Final': '决赛',
+  'qualification round': '资格赛',
+  'first round': '初赛',
+  'second round': '复赛',
+  'third round': '第三轮',
+  'quarter final': '1/4 决赛',
+  'semi final': '半决赛',
+  'final': '决赛',
+  'b final': 'B组决赛',
+  'combined qualification round': '组合制资格赛',
+  'combined first round': '组合制初赛',
+  'combined second round': '组合制复赛',
+  'combined third round': '组合制第三轮',
+  'combined final': '组合制决赛',
+  // WCA Live 偶用 "Round N" 形态
+  'round 1': '初赛',
+  'round 2': '复赛',
+  'round 3': '第三轮',
 };
 function roundDisplayName(rdName: string, isZh: boolean): string {
-  if (!isZh) return rdName;
-  return ROUND_NAME_ZH[rdName] || rdName;
+  if (!isZh || !rdName) return rdName;
+  return ROUND_NAME_ZH[rdName.trim().toLowerCase()] || rdName;
 }
 
 // ── 双轮赛制 (WCA Reg 9v, 2026) ──────────────────────────────────────────────
