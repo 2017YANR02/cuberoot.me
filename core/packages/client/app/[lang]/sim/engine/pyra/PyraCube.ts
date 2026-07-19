@@ -3,11 +3,14 @@
  *
  * 14 pivots at the origin (4 tips + 4 corners + 6 edges); a turn left-multiplies
  * R(vertexAxis, ±120°) into the affected pivots' quaternions (position fixed at the
- * origin). Tips and corners are permanently bound to their vertex; a big turn also
- * carries the 3 edges currently in that vertex's layer, found live from the geometry
- * (rotate each edge's home centroid by its pivot, test V_k·c > A/3). No discrete
- * permutation state — `complete` is "every pivot is back at identity", which is exact
- * because each piece's geometry is baked in home coords and turns are pure SO(3).
+ * origin). Which pieces a move carries is always read LIVE from the geometry (rotate
+ * each piece's home centroid by its pivot, test V_k·c > A/3): a corner-layer turn takes
+ * everything currently in the vertex's layer (corner + tip + 3 edges), a face turn takes
+ * the complementary far slab (3 corners + 3 tips + 3 edges — face turns permute corners
+ * and tips between vertices, so no piece is index-bound to a vertex), a tip turn takes
+ * the tip currently at the vertex. No discrete permutation state — `complete` is "every
+ * pivot is back at identity", which is exact because each piece's geometry is baked in
+ * home coords and turns are pure SO(3).
  */
 import * as THREE from 'three';
 import MoveHistory from '../MoveHistory';
@@ -66,11 +69,19 @@ export default class PyraCube extends THREE.Group implements TweenCube<PyraMove>
     this.twister = new PyraTwister(this);
   }
 
-  /** The 2 vertices edge `i` currently touches (its layer membership) — for drag
-   *  candidate resolution. Read live from the rotated centroid. */
-  edgeVertices(i: number): number[] {
-    const c = this.edges[i].center.clone().applyQuaternion(this.edges[i].pivot.quaternion);
-    return [0, 1, 2, 3].filter((k) => this.vdir[k].dot(c) > LAYER_T);
+  /** Is piece `p` currently in vertex k's turning layer? (Rotate its home centroid by
+   *  its pivot, test V_k·c > A/3 — exact, since every reachable pose is a tetra-group
+   *  rotation mapping cells onto cells.) */
+  private inLayer(p: PyraPiece, k: number): boolean {
+    const c = p.center.clone().applyQuaternion(p.pivot.quaternion);
+    return this.vdir[k].dot(c) > LAYER_T;
+  }
+
+  /** Per-vertex layer membership of one piece, read live — for drag candidate
+   *  resolution (tips/corners touch 1 vertex, edges 2). */
+  layersOf(kind: 'tip' | 'corner' | 'edge', i: number): boolean[] {
+    const p = (kind === 'tip' ? this.tips : kind === 'corner' ? this.corners : this.edges)[i];
+    return this.vdir.map((_, k) => this.inLayer(p, k));
   }
 
   /** Debug: hide vertex 0's whole turning layer (its corner + tip + the 3 edges
@@ -78,13 +89,7 @@ export default class PyraCube extends THREE.Group implements TweenCube<PyraMove>
    *  corner tripod off a real pyraminx. OFF restores everything. */
   setCarve(on: boolean): void {
     if (on) {
-      this.corners[0].pivot.visible = false;
-      this.tips[0].pivot.visible = false;
-      const n = this.vdir[0];
-      for (const e of this.edges) {
-        const c = e.center.clone().applyQuaternion(e.pivot.quaternion);
-        if (n.dot(c) > LAYER_T) e.pivot.visible = false;
-      }
+      for (const p of this.allPieces) if (this.inLayer(p, 0)) p.pivot.visible = false;
     } else {
       for (const p of this.allPieces) p.pivot.visible = true;
     }
@@ -95,18 +100,17 @@ export default class PyraCube extends THREE.Group implements TweenCube<PyraMove>
     return [...this.tips, ...this.corners, ...this.edges];
   }
 
-  /** Pivots a move rotates: tip-only → the tip; big → corner + tip + the 3 edges
-   *  currently in the vertex's layer (read live from each edge's rotated centroid). */
+  /** Pivots a move rotates, all selected live: tip → the tip currently AT the vertex
+   *  (face turns migrate tips); corner layer → everything in the vertex's layer (corner
+   *  + tip + 3 edges); face → the complementary far slab (3 corners + 3 tips + 3 edges). */
   private pivotsForMove(move: PyraMove): THREE.Object3D[] {
     const k = move.vertex;
-    if (move.tip) return [this.tips[k].pivot];
-    const out = [this.corners[k].pivot, this.tips[k].pivot];
-    const n = this.vdir[k];
-    for (const e of this.edges) {
-      const c = e.center.clone().applyQuaternion(e.pivot.quaternion);
-      if (n.dot(c) > LAYER_T) out.push(e.pivot);
+    if (move.part === 'tip') {
+      const tip = this.tips.find((t) => this.inLayer(t, k));
+      return tip ? [tip.pivot] : [];
     }
-    return out;
+    const inside = move.part === 'corner';
+    return this.allPieces.filter((p) => this.inLayer(p, k) === inside).map((p) => p.pivot);
   }
 
   beginMove(move: PyraMove): PieceAnim[] {
