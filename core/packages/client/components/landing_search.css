@@ -343,6 +343,16 @@
   flex: 1;
 }
 
+/* 富信息项(比赛 / 选手 / 复盘):名称与副文本完整换行显示,不省略号截断 —
+   比赛名 / 选手名常超一行,截断后看不全,这些卡片允许多行。 */
+.landing-search-item--rich .landing-search-item-name,
+.landing-search-item--rich .landing-search-item-meta {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .landing-search-empty {
   padding: 1.5rem 0;
   text-align: center;
