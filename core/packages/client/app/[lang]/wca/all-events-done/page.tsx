@@ -5,7 +5,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, HelpCircle } from 'lucide-react';
+import { WcaStatsPageHeader } from '@/components/wca-stats/WcaStatsPageHeader';
 import Paginator from '@/components/wca-stats/Paginator';
 import { loadFlagData } from '@/lib/country-flags';
 import { CompCell } from '@/components/CompCell/CompCell';
@@ -75,27 +75,11 @@ function AllEventsDonePageInner() {
 
   return (
     <div className="wse-page">
-      <header className="wse-header">
-        <div className="wse-header-row">
-          <Link href={`/wca?lang=${i18n.language}`} className="wse-back"><ChevronLeft size={16} /> {tr({ zh: '返回', en: 'Back' })}</Link>
-        </div>
-        <h1 className="wse-title-row">
-          {tr({ zh: '全项目达成排名', en: 'All Events Achievement'
-        })}
-          <Link
-            href="/wca/about/all-events-done"
-            className="wse-title-help"
-            title={tr({ zh: '这页是干啥的?', en: 'What is this page?'
-            })}
-            aria-label={tr({ zh: '查看说明', en: 'About this page'
-            })}
-          >
-            <HelpCircle size={18} strokeWidth={1.75} />
-          </Link>
-        </h1>
-        <p className="wse-subtitle">{tr({ zh: '完成全 17 项 WCA 官方项目所用天数(从首次参赛到最后一项达成),即「全项目大满贯」', en: 'Days from first WCA comp to completing all 17 events — the all-events grand slam'
-        })}</p>
-      </header>
+      <WcaStatsPageHeader
+        slug="all-events-done"
+        title={{ zh: '全项目达成排名', en: 'All Events Achievement' }}
+        subtitle={{ zh: '完成全 17 项 WCA 官方项目所用天数(从首次参赛到最后一项达成),即「全项目大满贯」', en: 'Days from first WCA comp to completing all 17 events — the all-events grand slam' }}
+      />
 
       <div className="wse-filters">
         <CountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
