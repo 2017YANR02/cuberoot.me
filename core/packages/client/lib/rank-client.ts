@@ -63,23 +63,25 @@ function parseRankResult(v: unknown): RankResult | null {
 const rankCache = new Map<string, RankResult | null>();
 const rankInflight = new Set<string>();
 
-function rankKey(wcaEvent: string, type: string, value: number, country?: string): string {
-  return `${wcaEvent}|${type}|${value}|${(country || '').toUpperCase()}`;
+function rankKey(wcaEvent: string, type: string, value: number, country?: string, excludeComp?: string): string {
+  return `${wcaEvent}|${type}|${value}|${(country || '').toUpperCase()}|${excludeComp || ''}`;
 }
 
-/** 同 fetchRankForWca 的入参校验,返回归一化后的 (value, key);非法返 null. */
+/** 同 fetchRankForWca 的入参校验,返回归一化后的 (value, key);非法返 null.
+ *  excludeComp:比赛页把本场排除(客户端已就本场实时成绩自订正,避免与服务端 overlay 重复计数)。 */
 function normRankArgs(
   wcaEvent: string,
   centis: number,
   type: 'single' | 'average',
   country?: string,
+  excludeComp?: string,
 ): { value: number; key: string } | null {
   if (!wcaEvent) return null;
   if (!Number.isFinite(centis) || centis <= 0) return null;
   const value = Math.round(centis);
   if (value <= 0) return null;
   if (type === 'average' && (wcaEvent === '333mbf' || wcaEvent === '333fm')) return null;
-  return { value, key: rankKey(wcaEvent, type, value, country) };
+  return { value, key: rankKey(wcaEvent, type, value, country, excludeComp) };
 }
 
 /**
@@ -91,8 +93,9 @@ export function getCachedRankForWca(
   centis: number,
   type: 'single' | 'average',
   country?: string,
+  excludeComp?: string,
 ): RankResult | null | undefined {
-  const n = normRankArgs(wcaEvent, centis, type, country);
+  const n = normRankArgs(wcaEvent, centis, type, country, excludeComp);
   if (!n) return null; // 非法 = 确定无名次,不触发 fetch
   return rankCache.get(n.key);
 }
@@ -100,11 +103,12 @@ export function getCachedRankForWca(
 interface RankQuery { event: string; type: 'single' | 'average'; value: number; country?: string }
 
 /** 批量预取一组 (event,type,value,country) 的名次进缓存(一次 POST /v1/wca/rank-for-batch).
+ *  excludeComp:整批同属一场比赛时传本场 id,服务端 overlay 排除本场(见 normRankArgs).
  *  已缓存/在途的自动跳过;失败静默(下次再试).不返回数据,只为预热缓存. */
-export async function prefetchRanksForWca(items: RankQuery[]): Promise<void> {
+export async function prefetchRanksForWca(items: RankQuery[], excludeComp?: string): Promise<void> {
   const toFetch: { q: RankQuery; value: number; key: string }[] = [];
   for (const it of items) {
-    const n = normRankArgs(it.event, it.value, it.type, it.country);
+    const n = normRankArgs(it.event, it.value, it.type, it.country, excludeComp);
     if (!n) continue;
     if (rankCache.has(n.key) || rankInflight.has(n.key)) continue;
     rankInflight.add(n.key);
@@ -116,6 +120,7 @@ export async function prefetchRanksForWca(items: RankQuery[]): Promise<void> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        excludeComp,
         items: toFetch.map(t => ({ event: t.q.event, type: t.q.type, value: t.value, country: t.q.country })),
       }),
     });
@@ -159,14 +164,16 @@ export async function fetchRankForWca(
   centis: number,
   type: 'single' | 'average',
   country?: string,
+  excludeComp?: string,
 ): Promise<RankResult | null> {
-  const n = normRankArgs(wcaEvent, centis, type, country);
+  const n = normRankArgs(wcaEvent, centis, type, country, excludeComp);
   if (!n) return null;
   if (rankCache.has(n.key)) return rankCache.get(n.key) ?? null; // 命中缓存,瞬时
 
   try {
     let path = `/v1/wca/rank-for?event=${encodeURIComponent(wcaEvent)}&type=${type}&centis=${n.value}`;
     if (country) path += `&country=${encodeURIComponent(country)}`;
+    if (excludeComp) path += `&exclude_comp=${encodeURIComponent(excludeComp)}`;
     const res = await fetch(apiUrl(path));
     if (!res.ok) return null;
     const result = parseRankResult(await res.json());
