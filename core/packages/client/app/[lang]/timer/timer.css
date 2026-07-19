@@ -134,7 +134,7 @@
   flex-wrap: wrap;
   gap: 6px;
   font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 24px;
+  font-size: var(--timer-scramble-src-fs);
   line-height: 1.3;
   word-spacing: normal;
   text-decoration: none;
