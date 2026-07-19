@@ -15,7 +15,7 @@
  * ~3.4k-line compiler never lands in the default bundle.
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useT } from '@/hooks/useT';
 import { Sigma, Shuffle, Wand2 } from 'lucide-react';
 import type { PgGroupFacts } from './engine/pgBackbone';
 import type { GroupKernel } from './engine/pgBinding';
@@ -64,9 +64,7 @@ interface LiveState { solved: boolean; order: number; solveLen: number; }
 export default function GroupTheoryPanel({
   puzzle, getWorld,
 }: { puzzle: string; getWorld: () => SimWorldView | null }) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-  const t = (zh: string, en: string): string => (isZh ? zh : en);
+  const t = useT();
 
   const bound = isBound(puzzle);
   const bindingRef = useRef<GroupKernel | null>(null);
