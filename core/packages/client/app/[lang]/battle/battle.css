@@ -1839,11 +1839,11 @@ body.solo .scramble-img {
     padding: 8px 16px;
     overflow: hidden;
 }
-/* 共享打乱的文字 / 图 / 来源行尺寸对齐单人模式(SoloView 的 .scramble-strip /
-   shell-corner-net / .scramble-src):公式 clamp(26,4.4vw,36),打乱图 --cube-h
-   同 solo,来源 24px + em 国旗。默认 battle 尺寸偏小,这里整体放大到 solo 一致。 */
+/* 共享打乱的文字 / 图 / 来源行尺寸对齐单人模式:三项尺寸都引用 shell.css 定义的
+   共享令牌(--timer-scramble-fs / --timer-cube-h / --timer-scramble-src-fs),单人和
+   这里同一真源,改一处两边一起变(默认 battle 尺寸偏小,这里放大到 solo 一致)。 */
 .side-scramble-row .scramble-text {
-    font-size: calc(clamp(26px, 4.4vw, 36px) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
+    font-size: calc(var(--timer-scramble-fs) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
     line-height: 1.5;
     pointer-events: auto;
     cursor: pointer;
@@ -1852,10 +1852,10 @@ body.solo .scramble-img {
     pointer-events: none;
 }
 .side-scramble-row .scramble-svg-img {
-    max-height: min(30vw, 26dvh, 260px);
+    max-height: var(--timer-cube-h);
 }
 .side-scramble-row .battle-scramble-src {
-    font-size: 24px;
+    font-size: var(--timer-scramble-src-fs);
     gap: 6px;
     margin-top: 8px;
 }
