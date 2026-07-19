@@ -1512,11 +1512,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 />
               )}
               {showCross && (
-                <PillToggle
+                <BoolToggle
                   value={includeExtras}
                   onChange={setIncludeExtras}
-                  onLabel={t('备打', 'Extras')}
-                  offLabel={t('备打', 'Extras')}
+                  label={t('备打', 'Extras')}
                   ariaLabel={t('含备用打乱', 'Include extra scrambles')}
                 />
               )}
