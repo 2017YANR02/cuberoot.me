@@ -219,6 +219,8 @@ html[data-theme='dark'] .stsv {
   color: var(--sv-text);
   text-align: left;
   white-space: nowrap;
+  font: inherit;
+  font-size: 13px;                  /* 与触发钮 .stsv-slotsel-btn 同号,不继承页面默认字号 */
 }
 .stsv-slotsel-opt:hover { background: var(--sv-accent-soft); }
 .stsv-slotsel-opt.is-active { background: var(--sv-accent-soft); color: var(--sv-accent); }
@@ -382,11 +384,13 @@ html[data-theme='dark'] .stsv {
 .stsv-hint { color: var(--sv-text-mute); font-size: 12px; margin: 2px 0 8px; }
 
 /* ── 6 视角对比 ── */
+/* 视角格现随控件同排(紧挨「数量上限」右侧):作为 .stsv-controls(align-items:end)的一个 flex 子项,
+   自身无外边距,底边与相邻 select 对齐;窄屏 controls 换行时整块一起下移。 */
 .stsv-angles {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 2px 0 10px;
+  margin: 0;
 }
 /* 视角格 = 该底面十字色填充(--face-bg / --face-fg 由组件注入),不再写字母。
    固定正方形,边长对齐工具栏「底色」picker 按钮的高度(33px,见 .stsv-control-subset .subset-picker)。 */
