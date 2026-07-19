@@ -17,6 +17,7 @@
 
   position: fixed;
   inset: 0;
+  top: var(--page-notice-h, 0); /* 给全局通知条(管理员 添加/环境切换、访客通知)让位,否则全屏基座会盖住它 */
   display: grid;
   grid-template-rows: auto 1fr;
   grid-template-columns: auto 1fr auto;
