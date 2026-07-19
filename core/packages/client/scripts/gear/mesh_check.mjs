@@ -1028,6 +1028,9 @@ const MARGIN = 0.5; // safety margin (units) beyond the pooled footprint —
     }
     const DEPTHS3 = [-PLATE_T, -PLATE_T / 2, 0, STICKER_LIFT, 1.8, STICKER_LIFT + STICKER_DEPTH, STICKER_LIFT + STICKER_DEPTH + 0.24];
     let minBand = Infinity, ceil = -Infinity, viol = 0;
+    // shallow-band footprint raster (gear frame, like trackFootprint but only
+    // material inside the SHELF band) — drives the EXT2 growth below
+    const FP_SH = new Uint8Array(FP_NA * FP_NQ);
     const out3 = [0, 0, 0];
     for (const ratio of [-300 / 90, 300 / 90]) {
       for (const phi0 of [0, 60, 120]) {
@@ -1060,6 +1063,21 @@ const MARGIN = 0.5; // safety margin (units) beyond the pooled footprint —
                     if (d < 0.25) viol++;
                   }
                 }
+                // shelf-band footprint in the gear frame (along = |X|)
+                {
+                  const ab2 = Math.round(Math.abs(u2) * FP_SCALE);
+                  if (ab2 < FP_NA) {
+                    const hy2 = Math.abs(co[1]), hz2 = Math.abs(co[2]);
+                    if (hy2 >= SHELF_LO - 0.4 && hy2 <= TOP + 0.4) {
+                      const qb2 = Math.round((H - hz2) * FP_SCALE);
+                      if (qb2 >= 0 && qb2 < FP_NQ) FP_SH[qb2 * FP_NA + ab2] = 1;
+                    }
+                    if (hz2 >= SHELF_LO - 0.4 && hz2 <= TOP + 0.4) {
+                      const qb2 = Math.round((H - hy2) * FP_SCALE);
+                      if (qb2 >= 0 && qb2 < FP_NQ) FP_SH[qb2 * FP_NA + ab2] = 1;
+                    }
+                  }
+                }
               }
             }
           }
@@ -1070,7 +1088,217 @@ const MARGIN = 0.5; // safety margin (units) beyond the pooled footprint —
     console.log(`  material ceiling inside outline: h = ${ceil.toFixed(2)}  (shelf bottom ${SHELF_LO.toFixed(1)} must exceed +0.5 → CORNER_SHELF_T ≤ ${(H - ceil - 0.5).toFixed(2)})`);
     console.log(`  min in-plane distance of band material to outline: ${minBand.toFixed(2)}  (${viol} samples < 0.25)`);
     console.log(`  ${viol === 0 && ceil + 0.5 <= SHELF_LO ? 'PASS' : 'FAIL'} — full SVG legal as sticker+shelf at T=${SHELF_T}`);
-    console.log(`CORNER_POLY_EXT (${ORIG_POLY.length}): [${fmt(ORIG_POLY)}]`);
+    console.log(`CORNER_POLY_EXT (svg verbatim, ${ORIG_POLY.length}): [${fmt(ORIG_POLY)}]`);
+
+    // dump the shallow-band footprint raster so growth experiments can iterate
+    // OFFLINE (.tmp/gear/fins_grow.mjs) without re-running this ~7 min sweep
+    {
+      const cells = [];
+      for (let i = 0; i < FP_SH.length; i++) if (FP_SH[i]) cells.push(i);
+      mkdirSync(new URL('../../../../../.tmp/gear/', import.meta.url), { recursive: true });
+      writeFileSync(new URL('../../../../../.tmp/gear/fp_sh.json', import.meta.url),
+        JSON.stringify({ FP_NA, FP_NQ, FP_SCALE, SHELF_LO, TOP, cells }));
+      console.log(`FP_SH raster dumped: ${cells.length} cells -> .tmp/gear/fp_sh.json`);
+    }
+
+    // ── EXT2 BOLD GROWTH (user-directed 2026-07-19 "大胆点,空白变得非常小"):
+    // grow the SVG outline OUTWARD along its normals into everything the
+    // shallow band leaves free — the fins/knobs advance until 0.4 short of
+    // the crown's shallow-band sweep (or the 118.6 arris setback / the
+    // center-arm envelopes / +12 cap). The result replaces CORNER_POLY_EXT
+    // in the engine; the collar derivation then closes the arris strip to
+    // the grown knob edge automatically.
+    {
+      const MB = 0.4; // bold margin
+      // dilate FP_SH by 1 bin, exact EDT (same guards as the deep clip)
+      const SHD = new Uint8Array(FP_NA * FP_NQ);
+      for (let qb = 0; qb < FP_NQ; qb++) {
+        for (let ab = 0; ab < FP_NA; ab++) {
+          if (!FP_SH[qb * FP_NA + ab]) continue;
+          for (let dy = -1; dy <= 1; dy++) {
+            const y2 = qb + dy;
+            if (y2 < 0 || y2 >= FP_NQ) continue;
+            for (let dx = -1; dx <= 1; dx++) {
+              const x2 = ab + dx;
+              if (x2 >= 0 && x2 < FP_NA) SHD[y2 * FP_NA + x2] = 1;
+            }
+          }
+        }
+      }
+      const DT2 = (() => {
+        const INF = 1e12;
+        const g = new Float64Array(FP_NA * FP_NQ);
+        const edt1d = (f, n, o) => {
+          const v = new Int32Array(n), z = new Float64Array(n + 1);
+          let k = 0;
+          v[0] = 0; z[0] = -Infinity; z[1] = Infinity;
+          for (let q = 1; q < n; q++) {
+            let s;
+            for (;;) {
+              const vk = v[k];
+              s = (f[q] + q * q - (f[vk] + vk * vk)) / (2 * q - 2 * vk);
+              if (k > 0 && s <= z[k]) k--; else break;
+            }
+            k++; v[k] = q; z[k] = s; z[k + 1] = Infinity;
+          }
+          k = 0;
+          for (let q = 0; q < n; q++) {
+            while (z[k + 1] < q) k++;
+            const vk = v[k];
+            o[q] = (q - vk) * (q - vk) + f[vk];
+          }
+        };
+        const col = new Float64Array(FP_NQ), co2 = new Float64Array(FP_NQ);
+        for (let ab = 0; ab < FP_NA; ab++) {
+          for (let qb = 0; qb < FP_NQ; qb++) col[qb] = SHD[qb * FP_NA + ab] ? 0 : INF;
+          edt1d(col, FP_NQ, co2);
+          for (let qb = 0; qb < FP_NQ; qb++) g[qb * FP_NA + ab] = co2[qb];
+        }
+        const row = new Float64Array(FP_NA), ro2 = new Float64Array(FP_NA);
+        const dt = new Float64Array(FP_NA * FP_NQ);
+        for (let qb = 0; qb < FP_NQ; qb++) {
+          for (let ab = 0; ab < FP_NA; ab++) row[ab] = g[qb * FP_NA + ab];
+          edt1d(row, FP_NA, ro2);
+          for (let ab = 0; ab < FP_NA; ab++) dt[qb * FP_NA + ab] = Math.sqrt(ro2[ab]) / FP_SCALE;
+        }
+        return dt;
+      })();
+      const dtShAt = (along, qp) => {
+        if (along * FP_SCALE >= FP_NA - 1 || qp * FP_SCALE >= FP_NQ - 1) return 99;
+        const x = Math.max(0, along * FP_SCALE), y = Math.max(0, qp * FP_SCALE);
+        const x0 = Math.floor(x), y0 = Math.floor(y);
+        const fx = x - x0, fy = y - y0;
+        const v00 = DT2[y0 * FP_NA + x0], v10 = DT2[y0 * FP_NA + x0 + 1];
+        const v01 = DT2[(y0 + 1) * FP_NA + x0], v11 = DT2[(y0 + 1) * FP_NA + x0 + 1];
+        return (v00 * (1 - fx) + v10 * fx) * (1 - fy) + (v01 * (1 - fx) + v11 * fx) * fy;
+      };
+      const sdGrow = (a, b) => {
+        if (a > 118.6 || b > 118.6) return -1;             // sticker keeps the arris setback
+        if (armSweepHit(a, b, H, MB) || armSweepHit(a, b, SHELF_LO, MB) ||
+            armSweepHit(a, b, TOP, MB)) return -1;          // center-arm envelopes
+        return Math.min(dtShAt(a, H - b), dtShAt(b, H - a)) - MB;
+      };
+      // dense CCW outline + OUTWARD normals
+      const ccw2 = polyArea2(ORIG_POLY) > 0 ? ORIG_POLY : ORIG_POLY.slice().reverse();
+      const dn = [];
+      for (let i = 0; i < ccw2.length; i++) {
+        const A = ccw2[i], B = ccw2[(i + 1) % ccw2.length];
+        const L = Math.hypot(B[0] - A[0], B[1] - A[1]);
+        const n = Math.max(1, Math.ceil(L / 0.2));
+        for (let k = 0; k < n; k++) dn.push([A[0] + ((B[0] - A[0]) * k) / n, A[1] + ((B[1] - A[1]) * k) / n]);
+      }
+      const N2 = dn.length;
+      const outN = dn.map((_, i) => {
+        let sx = 0, sy = 0;
+        for (let w = -4; w <= 4; w++) {
+          const P = dn[(i + w - 1 + N2) % N2], Q = dn[(i + w + 1 + N2) % N2];
+          const tx = Q[0] - P[0], ty = Q[1] - P[1];
+          const L = Math.hypot(tx, ty) || 1;
+          sx += ty / L; sy += -tx / L;                      // rot90cw(tangent) = EXTERIOR for CCW
+        }
+        const L = Math.hypot(sx, sy) || 1;
+        return [sx / L, sy / L];
+      });
+      let vg = dn.map((p, i) => {
+        const [nx, ny] = outN[i];
+        let s = 0;
+        for (let t = 0.1; t <= 12; t += 0.1) {
+          if (sdGrow(p[0] + nx * t, p[1] + ny * t) < 0) break;
+          s = t;
+        }
+        return s;
+      });
+      // concave envelope: no lone spike grows into a single-lane gap
+      for (let it = 0; it < 60; it++) {
+        const nx2 = vg.slice();
+        for (let i = 0; i < N2; i++) {
+          nx2[i] = Math.min(vg[i], (vg[(i + N2 - 1) % N2] + vg[(i + 1) % N2]) / 2 + 0.15);
+        }
+        vg = nx2;
+      }
+      let grown = dn.map((p, i) => [p[0] + outN[i][0] * vg[i], p[1] + outN[i][1] * vg[i]]);
+      // constrained fairing on the grown contour (same recipe as the clip)
+      {
+        const FAIR_CAP = 0.9, LAM = 0.5;
+        const base = grown.map((p) => p.slice());
+        for (let it = 0; it < 120; it++) {
+          const nxt = grown.map((p) => p.slice());
+          for (let i = 0; i < N2; i++) {
+            const P = grown[(i + N2 - 1) % N2], C = grown[i], Q = grown[(i + 1) % N2];
+            const tx = Q[0] - P[0], ty = Q[1] - P[1];
+            const tl = Math.hypot(tx, ty) || 1;
+            const nx3 = -ty / tl, ny3 = tx / tl;
+            const d = ((P[0] + Q[0]) / 2 - C[0]) * nx3 + ((P[1] + Q[1]) / 2 - C[1]) * ny3;
+            const q = [C[0] + nx3 * d * LAM, C[1] + ny3 * d * LAM];
+            if (Math.hypot(q[0] - base[i][0], q[1] - base[i][1]) > FAIR_CAP) continue;
+            if (sdGrow(q[0], q[1]) < -0.1) continue;
+            nxt[i] = q;
+          }
+          grown = nxt;
+        }
+      }
+      // resymmetrize about a=b (field is diagonally symmetric)
+      for (let round = 0; round < 3; round++) {
+        const mir = grown.map(([a2, b2]) => [b2, a2]);
+        grown = grown.map((p) => {
+          const [mx, my] = nearestOnPolyline(p, mir);
+          return [(p[0] + mx) / 2, (p[1] + my) / 2];
+        });
+      }
+      // closed RDP + quantize
+      let g2 = grown;
+      {
+        let i0 = 0, best = -1;
+        const c = g2.reduce(([sa, sb], [a, b]) => [sa + a / g2.length, sb + b / g2.length], [0, 0]);
+        for (let i = 0; i < g2.length; i++) {
+          const dd = Math.hypot(g2[i][0] - c[0], g2[i][1] - c[1]);
+          if (dd > best) { best = dd; i0 = i; }
+        }
+        let i1 = 0; best = -1;
+        for (let i = 0; i < g2.length; i++) {
+          const dd = Math.hypot(g2[i][0] - g2[i0][0], g2[i][1] - g2[i0][1]);
+          if (dd > best) { best = dd; i1 = i; }
+        }
+        if (i1 < i0) [i0, i1] = [i1, i0];
+        const sA = rdpOpen(g2.slice(i0, i1 + 1), 0.15), sB = rdpOpen(g2.slice(i1).concat(g2.slice(0, i0 + 1)), 0.15);
+        g2 = sA.slice(0, -1).concat(sB.slice(0, -1));
+      }
+      g2 = g2.map(([a, b]) => [Math.round(a * 10) / 10, Math.round(b * 10) / 10]);
+      g2 = g2.filter((p, i) => Math.hypot(p[0] - g2[(i + g2.length - 1) % g2.length][0], p[1] - g2[(i + g2.length - 1) % g2.length][1]) > 1e-9);
+      // sampled re-verify: min distance of shallow-band raster cells to EXT2
+      let minCell = Infinity;
+      {
+        const gx = g2.map((p) => p[0]), gy = g2.map((p) => p[1]);
+        const inG = (a, b) => {
+          let inside = false;
+          for (let i = 0, j = g2.length - 1; i < g2.length; j = i++) {
+            if ((gy[i] > b) !== (gy[j] > b) && a < ((gx[j] - gx[i]) * (b - gy[i])) / (gy[j] - gy[i]) + gx[i]) inside = !inside;
+          }
+          return inside;
+        };
+        for (let qb = 0; qb < FP_NQ; qb++) {
+          for (let ab = 0; ab < FP_NA; ab++) {
+            if (!FP_SH[qb * FP_NA + ab]) continue;
+            const a = ab / FP_SCALE, b = H - qb / FP_SCALE;
+            for (const [pa, pb] of [[a, b], [b, a]]) {
+              if (pb < 30) continue;
+              let dEdge = Infinity;
+              for (let i = 0, j = g2.length - 1; i < g2.length; j = i++) {
+                const ex = gx[j] - gx[i], ey = gy[j] - gy[i];
+                const L2 = ex * ex + ey * ey || 1;
+                const t = Math.max(0, Math.min(1, ((pa - gx[i]) * ex + (pb - gy[i]) * ey) / L2));
+                dEdge = Math.min(dEdge, Math.hypot(pa - gx[i] - t * ex, pb - gy[i] - t * ey));
+              }
+              minCell = Math.min(minCell, inG(pa, pb) ? -dEdge : dEdge);
+            }
+          }
+        }
+      }
+      const gmax = Math.max(...vg);
+      console.log(`\nEXT2 growth: max advance ${gmax.toFixed(1)}  bbox a:[${Math.min(...g2.map((p) => p[0]))}, ${Math.max(...g2.map((p) => p[0]))}] b:[${Math.min(...g2.map((p) => p[1]))}, ${Math.max(...g2.map((p) => p[1]))}]`);
+      console.log(`EXT2 re-verify: min shallow-cell distance ${minCell.toFixed(2)}  (target ≥ ~${(MB - 0.25).toFixed(2)}; negative = a cell inside)`);
+      console.log(`CORNER_POLY_EXT2 (${g2.length}): [${fmt(g2)}]`);
+    }
   }
 
   // overlay for the user: original trace (gray) vs clipped (red) + footprint edge
