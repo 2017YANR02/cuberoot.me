@@ -937,6 +937,16 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     return Number.isFinite(v) ? v : null;
   }, [counts, faceVisible]);
 
+  // 最优视角索引(min-count 的第一个可见面)—— 槽位/基态色标在「未选视角」时用它定色,
+  // 否则 SlotChip 无朝向可依 → 退回方位字母(BL/BR…)。选了视角就用 selFace。全 null 时给 null(退字母)。
+  const bestFaceIdx = useMemo(() => {
+    let best = -1, v = Infinity;
+    counts.forEach((c, i) => { if (faceVisible(i) && c != null && !isSentinel(c) && c < v) { v = c; best = i; } });
+    return best >= 0 ? best : null;
+  }, [counts, faceVisible]);
+  // 槽位/基态下拉的定色视角:优先当前选中面,未选时退最优面(总能出色块,不再显字母)。
+  const chipViewIdx = selFace ?? bestFaceIdx;
+
   // 当前 (方法, 阶段) 可选的槽位组合;.length<2 时(纯十字 k=0 / 满 F2L k=4)不显示选择器。
   const slotCombos = useMemo(() => kCombos(slotCount(method, stage)), [method, stage]);
   // 基态(自由对)可选项 = BL/BR/FR/FL 去掉已被「槽位」占用的固定槽(保证不交)。仅 pair/pseudo_pair 显示。
@@ -1006,7 +1016,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               label={t('槽位', 'Slot')}
               autoLabel={t('最优', 'Best')}
               value={selSlot}
-              viewIdx={selFace}
+              viewIdx={chipViewIdx}
               options={slotCombos.map((c) => ({ value: c.join(','), slots: c }))}
               onChange={changeSlot}
               complement={!hasBase(method)}
@@ -1021,7 +1031,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
               label={t('基态', 'Free Pair')}
               autoLabel={t('最优', 'Best')}
               value={selBase}
-              viewIdx={selFace}
+              viewIdx={chipViewIdx}
               options={baseOptions.map((i) => ({ value: String(i), slots: [i] }))}
               onChange={changeBase}
             />
@@ -1044,6 +1054,35 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             ))}
           </select>
         </label>
+        {/* 6 视角对比:点格选视角;最优(min)视角带 best 标记。紧挨「数量上限」右侧、同排展示。 */}
+        {status === 'ready' && (
+          <div className="stsv-angles">
+            {FACES.map((f, i) => {
+              if (!faceVisible(i)) return null; // 被「底色」过滤掉的面不显示
+              const loading = computing || (selFace === i && movesLoading);
+              const isBest = counts[i] != null && counts[i] === bestVal;
+              return (
+                <button
+                  key={f.face}
+                  className={`stsv-angle${selFace === i ? ' is-sel' : ''}${isBest ? ' is-best' : ''}`}
+                  onClick={() => clickFace(i)}
+                  data-empty={counts[i] == null}
+                  style={{ '--face-bg': CUBE_FILL[f.face], '--face-fg': CUBE_ON_FILL[f.face] } as CSSProperties}
+                  title={`${faceDesc(f.face)}${t(' · 点击求解', ' · click to solve')}`}
+                >
+                  {counts[i] != null ? (
+                    <span className="stsv-angle-n">{isTooBroad(counts[i]) ? '⋯' : isSentinel(counts[i]) ? '-' : counts[i]}</span>
+                  ) : loading ? (
+                    <Loader2 size={12} className="stsv-spin" />
+                  ) : (
+                    <span className="stsv-angle-dot">·</span>
+                  )}
+                  {isBest && <span className="stsv-angle-best">{t('最优', 'best')}</span>}
+                </button>
+              );
+            })}
+          </div>
+        )}
         {/* 终止:求解进行中(批算 / 枚举)显示在「最大数量」右侧,停掉跑飞的搜索(尤其无上限)。 */}
         {(computing || movesLoading) && (
           <button type="button" className="stsv-stop" onClick={stopMoves}>{t('终止', 'Stop')}</button>
@@ -1209,33 +1248,6 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
       {status === 'ready' && (
         <>
-          {/* 6 视角对比:点格选视角;最优(min)视角带 best 标记 */}
-          <div className="stsv-angles">
-            {FACES.map((f, i) => {
-              if (!faceVisible(i)) return null; // 被「底色」过滤掉的面不显示
-              const loading = computing || (selFace === i && movesLoading);
-              const isBest = counts[i] != null && counts[i] === bestVal;
-              return (
-                <button
-                  key={f.face}
-                  className={`stsv-angle${selFace === i ? ' is-sel' : ''}${isBest ? ' is-best' : ''}`}
-                  onClick={() => clickFace(i)}
-                  data-empty={counts[i] == null}
-                  style={{ '--face-bg': CUBE_FILL[f.face], '--face-fg': CUBE_ON_FILL[f.face] } as CSSProperties}
-                  title={`${faceDesc(f.face)}${t(' · 点击求解', ' · click to solve')}`}
-                >
-                  {counts[i] != null ? (
-                    <span className="stsv-angle-n">{isTooBroad(counts[i]) ? '⋯' : isSentinel(counts[i]) ? '-' : counts[i]}</span>
-                  ) : loading ? (
-                    <Loader2 size={12} className="stsv-spin" />
-                  ) : (
-                    <span className="stsv-angle-dot">·</span>
-                  )}
-                  {isBest && <span className="stsv-angle-best">{t('最优', 'best')}</span>}
-                </button>
-              );
-            })}
-          </div>
           {method === 'htr' && (
             <div className="stsv-hint">
               {t(
