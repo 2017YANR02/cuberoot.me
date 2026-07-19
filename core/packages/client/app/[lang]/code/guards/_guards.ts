@@ -119,6 +119,12 @@ export const CI_GUARDS_UI: CiGuard[] = [
     zh: { title: '下拉 root 死宽无 max-width', desc: '下拉 / 选择器 / 触发器的 root(类名以 -picker / -trigger / -dropdown / -combobox 结尾)禁写死宽 width ≥ 120px 而不配 max-width —— 塞进能被压窄的筛选栏 flex 列会窄屏溢出、压到相邻控件(国家框 .region-picker 220px 实测踩过)。root 应 width:100% / fit-content,或同规则块补 max-width:100%;真定尺小部件行内 allow-fixed-width 豁免。全机制经验式检查走 pnpm audit:overflow。' },
     en: { title: 'Fixed-width dropdown root without max-width', desc: 'A dropdown/picker/trigger root (class ending in -picker / -trigger / -dropdown / -combobox) can’t set a fixed width ≥ 120px without max-width — dropped into a squeezable filter-bar flex column it overflows on mobile and overlaps the next control (hit for real with the 220px .region-picker country box). Use width:100% / fit-content, or add max-width:100% in the same rule; genuinely fixed-size widgets exempt via inline allow-fixed-width. The full-mechanism empirical check is pnpm audit:overflow.' },
   },
+  {
+    id: 'solver-shared-base',
+    test: 'scramble-solver-shared-base.test.ts',
+    zh: { title: 'scramble/solver 复制粘贴求解器页', desc: '/scramble/solver 的单行 puzzle-optimal 求解器页(28 个)一律走共享基座 PuzzleSolverPage(config 驱动的 SolverSpec + 一行渲染),禁再各自手搓 SolveState / reqRef / renderSingle 那套 ~130 行样板。新写的 _*Solver.tsx 没 import PuzzleSolverPage → 集合变化直接红;真异形(自定义 UI,现只剩 Cube3 / Sq1)加进 BESPOKE 白名单当 review 信号。' },
+    en: { title: 'scramble/solver copy-paste solver pages', desc: 'The single-line puzzle-optimal solver pages under /scramble/solver (28 of them) go through the shared PuzzleSolverPage base (config-driven SolverSpec + one-line render) — no more hand-rolled SolveState / reqRef / renderSingle (~130 lines each). A new _*Solver.tsx not importing PuzzleSolverPage changes the set and turns CI red; genuinely bespoke ones (custom UI — only Cube3 / Sq1 remain) join the BESPOKE allowlist as a review signal.' },
+  },
 ];
 
 export const CI_GUARDS_DRIFT: CiGuard[] = [
