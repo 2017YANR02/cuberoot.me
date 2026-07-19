@@ -1468,14 +1468,22 @@ export default function BattleView({ playerCount, playersControl }: BattleViewPr
         </div>
       )}
 
-      {/* === Side 布局：左右分屏，每侧独立 scramble === */}
+      {/* === Side 布局：左右分屏(两人同向并坐)。同项目时中间共用一份打乱
+          (文字 + 图 + 来源),两侧只留计时,不再左右各画一份重复的打乱;
+          不同项目则各侧沿用格内独立打乱,中间退回细分隔线。 === */}
       {mode === '1v1' && !isGrid && store.layout === 'side' && (
         <>
           {middleBar}
           <div className="side-players">
-            <TimerArea playerId={0} />
-            <div className="side-divider" />
-            <TimerArea playerId={1} />
+            <TimerArea playerId={0} hideScramble={bottomSame} />
+            {bottomSame ? (
+              <div className="side-scramble-col">
+                <ScramblePanel ids={[0, 1]} />
+              </div>
+            ) : (
+              <div className="side-divider" />
+            )}
+            <TimerArea playerId={1} hideScramble={bottomSame} />
           </div>
         </>
       )}
