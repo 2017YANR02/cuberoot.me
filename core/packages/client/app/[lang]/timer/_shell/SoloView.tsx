@@ -43,7 +43,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { useAuthStore } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchMarks, addMark, markKey, type ScrambleMark } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
 import { warmup333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';

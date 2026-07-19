@@ -14,7 +14,7 @@ import { listPersonRecons, getRecon } from '@/lib/recon-api';
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import { localizeCompName } from '@/lib/comp-localize';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { formatRound, formatReconSingle } from '@/lib/recon-utils';
 import { tr } from '@/i18n/tr';
 

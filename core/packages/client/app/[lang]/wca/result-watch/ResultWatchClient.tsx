@@ -10,7 +10,7 @@ import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
 import { EventIcon } from '@/components/EventIcon';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { localizeCompName } from '@/lib/comp-localize';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

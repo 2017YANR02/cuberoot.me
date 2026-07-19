@@ -13,7 +13,7 @@ import HomeLink from '@/components/HomeLink';
 import FollowedComps from '@/components/FollowedComps';
 import AlgValidationAlert from '@/components/AlgValidationAlert';
 import { Flag } from '@/components/Flag';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryName } from '@/lib/country-name';
 import { useAuthStore } from '@/lib/auth-store';
 import { fetchWcaPerson, type WcaPersonProfile } from '@/lib/wca-person-api';

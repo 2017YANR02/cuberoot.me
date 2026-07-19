@@ -37,7 +37,7 @@ import ScramblePicker from './ScramblePicker';
 import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { fetchCompRounds, type RoundFormat } from '@/lib/comp-wcif';

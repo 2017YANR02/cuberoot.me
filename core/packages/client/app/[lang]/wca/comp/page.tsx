@@ -30,7 +30,7 @@ import {
 } from '@cuberoot/shared';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { formatDateRangeIso, toIsoDate } from '@/lib/wca-date';
 import { persistItem } from '@/lib/safe-storage';
 import { Flag as SharedFlag } from '@/components/Flag';

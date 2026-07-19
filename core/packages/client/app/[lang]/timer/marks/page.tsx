@@ -18,7 +18,7 @@ import { Flag } from '@/components/Flag';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
-import { displayCuberName } from '@/lib/name-utils';
+import { displayCuberName } from '@/lib/cuber-name-display';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { compSourceLine } from '@/lib/comp-schedule';
