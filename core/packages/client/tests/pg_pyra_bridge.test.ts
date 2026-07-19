@@ -61,9 +61,15 @@ describe('pyraminx PG binding — closed loop vs the rendered engine', () => {
       for (const m of randScramble(14)) cube.applyMoveInstant(m);
 
       // mirror from the engine's own move record via the bridge's φ-parse (the
-      // production path — rotations fold into the letter remap), assert faithfulness
+      // production path — rotations fold into the letter remap), assert faithfulness:
+      // group identity ⇔ every pivot at home. (`complete` is deliberately looser — it
+      // also accepts the 11 non-identity reorientations, e.g. U Dw'; solved ⇒ complete.)
       binding.rebuildFromString(cube.history.moves.join(' '));
-      expect(binding.solved).toBe(cube.complete);
+      const IDENT = cube.quaternion.clone().identity();
+      const atHome = [...cube.tips, ...cube.corners, ...cube.edges]
+        .every((p) => p.pivot.quaternion.angleTo(IDENT) < 0.05);
+      expect(binding.solved).toBe(atHome);
+      if (binding.solved) expect(cube.complete).toBe(true);
 
       const solution = binding.solveMoves();
       for (const m of solution) cube.applyMoveInstant(m);
@@ -95,6 +101,42 @@ describe('pyraminx PG binding — closed loop vs the rendered engine', () => {
     expect(c2.complete).toBe(false);
     binding.rebuild(pyraPgBridge.parse("y L y' L'"));
     expect(binding.solved).toBe(false);
+  });
+
+  it("user spec: a rotation IS its two-layer expansion — y ≡ U Dw', Lv ≡ L Rw', Rv ≡ R Lw', Bv ≡ B Fw'", async () => {
+    const { default: PyraCube } = await import('@/app/[lang]/sim/engine/pyra/PyraCube');
+    const { PgEngineBinding } = await import('@/app/[lang]/sim/engine/pgBinding');
+    const { pyraPgBridge } = await import('@/app/[lang]/sim/engine/pyra/pyraPgBridge');
+    type Cube = InstanceType<typeof PyraCube>;
+    // World-space rotation of every piece (group ∘ pivot) — equal per index ⇔ the two
+    // cubes render pixel-identically (geometry is baked per index in home coords).
+    const worldQuats = (c: Cube) =>
+      [...c.tips, ...c.corners, ...c.edges].map((p) => c.quaternion.clone().multiply(p.pivot.quaternion));
+    const pairs: Array<[rot: string, layers: string, stillSolved: boolean]> = [
+      ['y', "U Dw'", true],
+      ['Lv', "L Rw'", true],
+      ['Rv', "R Lw'", true],
+      ['Bv', "B Fw'", true],
+      // and letters stay world-fixed across BOTH forms: the trailing L hits the same layer
+      ['y L', "U Dw' L", false],
+    ];
+    for (const [rot, layers, stillSolved] of pairs) {
+      const a = new PyraCube(); a.twister.setup(rot);
+      const b = new PyraCube(); b.twister.setup(layers);
+      const wa = worldQuats(a), wb = worldQuats(b);
+      wa.forEach((q, i) => expect(q.angleTo(wb[i])).toBeLessThan(1e-6));
+      // a bare reorientation is NOT a scramble — both forms agree on solved
+      expect(a.complete).toBe(stillSolved);
+      expect(b.complete).toBe(stillSolved);
+    }
+    // Group side: the two forms differ only in bookkeeping — "y" φ-folds to the
+    // identity, "U Dw'" IS the reorientation element: non-identity, order 3.
+    const binding = new PgEngineBinding(pyraPgBridge);
+    binding.rebuild(pyraPgBridge.parse('y'));
+    expect(binding.solved).toBe(true);
+    binding.rebuild(pyraPgBridge.parse("U Dw'"));
+    expect(binding.solved).toBe(false);
+    expect(binding.currentOrder()).toBe(3);
   });
 
   it('face turns on the engine: order 3, and Dw really leaves solved', async () => {
