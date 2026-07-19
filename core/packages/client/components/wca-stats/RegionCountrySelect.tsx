@@ -5,7 +5,7 @@
 // RegionPicker 单选内部用 iso2(小写)+ 大洲 slug,这里在边界双向映射,对外仍暴露与 CountrySelect 同款接口。
 import { useMemo } from 'react';
 import { RegionPicker } from '@/components/RegionPicker/RegionPicker';
-import type { CountryOption } from './CountrySelect';
+import type { CountryOption } from './useCountries';
 import { tr } from '@/i18n/tr';
 
 // RegionPicker 大洲 slug ↔ WCA continent_id(DB / 后端口径)。

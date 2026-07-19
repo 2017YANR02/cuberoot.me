@@ -1096,14 +1096,6 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `/wca 子页选项目优先用 WcaEventSelector(21 图标行),此下拉用于空间紧凑或非 21 项场景。`, en: `For /wca subpages prefer WcaEventSelector (21-icon row); use this dropdown for compact or non-standard event lists.` },
   },
   {
-    name: 'CountrySelect',
-    import: "import CountrySelect from '@/components/wca-stats/CountrySelect';",
-    category: 'input',
-    zh: `国家下拉选择器,带搜索框、国旗、清除按钮和「全球」选项,点外面自动收起;WCA 统计页按国家筛选时用。`,
-    en: `Country dropdown selector with a search box, flags, clear button and a 'Worldwide' option, auto-closing on outside click; used to filter WCA stats by country.`,
-    note: { zh: `同文件还导出 useCountries() hook,从 historical-ranks/countries 端点拉国家列表。`, en: `The same file also exports the useCountries() hook, which fetches the country list from the historical-ranks/countries endpoint.` },
-  },
-  {
     name: 'RecordSelect',
     import: "import { RecordSelect } from '@/components/RecordSelect/RecordSelect';",
     category: 'input',
