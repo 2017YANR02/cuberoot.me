@@ -11,144 +11,47 @@
  * 每条真打乱都能解出。求解放进 setTimeout 异步执行,期间显示「求解中」spinner。打乱来源复用 cstimer 桥,记号与
  * cstimer 完全一致(U U' U2 u u' u2 3u 3u' 3u2 R2 L2 M2 F2 B2 S2)。
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryState, parseAsString } from 'nuqs';
-import { LoaderCircle } from 'lucide-react';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { tr } from '@/i18n/tr';
-import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { randomCuboid336Scramble, solveCuboid336, CUBOID336_STATE_COUNT_STR, CUBOID336_GROUP_ORDER_STR, type Cuboid336Solution } from '@/lib/cuboid336-solver';
-import SolveTabs from '../_components/SolveTabs';
-import { SolvePanel, type BatchSpec } from '../_components/BatchSolvePanel';
-import '../_components/puzzle_optimal_solver.css';
-import './ivy_solver.css';
+import PuzzleSolverPage, {
+  type SolverSpec, METRIC_TERNARY_OPTIMAL_NEAR, CAVEAT_TITLE_OPTIMAL,
+} from './_components/PuzzleSolverPage';
 
 const CUBOID336_TOKEN_RE = /^(U['2]?|u['2]?|3u['2]?|[RLMFBS]2)$/;
 
 // random-scramble length for the buttons (cstimer 336 default is long; this mirrors a real scramble).
 const RANDOM_LEN = 50;
 
-type SolveState =
-  | { kind: 'idle' }
-  | { kind: 'solving' }
-  | { kind: 'done'; result: Cuboid336Solution }
-  | { kind: 'error'; message: string };
+const SPEC: SolverSpec<Cuboid336Solution> = {
+  event: '336',
+  titleZh: '3×3×6 求解器',
+  titleEn: '3×3×6 Solver',
+  previewSize: 64,
+  invocation: { async: false, solve: solveCuboid336 },
+  leadText: {
+    zh: '3×3×6 在线求解:两阶段约简(先把所有块归约进全 180° 子群,再只用 180° 转还原),任何打乱都能解出一条有界的近最优解;很浅的打乱另用可采纳启发式给出可证最优解。记号 U U’ U2 u u’ u2 3u 3u’ 3u2 R2 L2 M2 F2 B2 S2,与 cstimer 一致。',
+    en: '3×3×6 online solver: a two-phase reduction (reduce every orbit into the all-180° subgroup, then finish with 180° turns only) returns a bounded near-optimal solution for ANY scramble; very shallow scrambles additionally get a provably optimal solution via an admissible heuristic. Notation U U’ U2 u u’ u2 3u 3u’ 3u2 R2 L2 M2 F2 B2 S2, matching cstimer.',
+  },
+  placeholder: {
+    zh: '每行一条打乱,如 U R2 u2 3u F2 U',
+    en: 'one scramble per line, e.g. U R2 u2 3u F2 U',
+  },
+  solvingText: { zh: '求解中…', en: 'Solving…' },
+  errorNotationText: { zh: '打乱记号无法识别(应为 U U’ U2 u u’ u2 3u 3u’ 3u2 R2 L2 M2 F2 B2 S2)', en: 'Unrecognized notation (expected U U’ U2 u u’ u2 3u 3u’ 3u2 R2 L2 M2 F2 B2 S2)' },
+  metricLabel: METRIC_TERNARY_OPTIMAL_NEAR,
+  caveatTitle: CAVEAT_TITLE_OPTIMAL,
+  caveatBody: {
+    zh: `3×3×6 有约 ${CUBOID336_STATE_COUNT_STR} 个状态(facelet 群阶 ${CUBOID336_GROUP_ORDER_STR},Schreier-Sims 实算),太大无法整图 BFS,浏览器里也建不出足够强的可采纳启发去逼近上帝之数,所以**不是**每条解都最优。采用两阶段约简:先把每个轨道归约进全 180° 子群(三组角轨道相互独立,启发取叠加),再只用 180° 转还原(三元联合 PDB 给紧启发);两阶段各自在自己的小坐标里最优,合起来就是有界的**近最优**解(任何打乱都能解)。很浅的打乱会额外尝试可采纳启发的可证最优解,标为「最优」;其余标为「近最优」。`,
+    en: `The 3×3×6 has about ${CUBOID336_STATE_COUNT_STR} states (facelet group order ${CUBOID336_GROUP_ORDER_STR}, computed by Schreier-Sims) — far too many to BFS, and no admissible heuristic strong enough to reach God's number is buildable in the browser, so NOT every solution is optimal. The solver uses a two-phase reduction: first reduce every orbit into the all-180° subgroup (the three corner orbits are mutually independent, so their guides add), then finish with 180° turns only (tight joint-triple PDBs). Each phase is optimal over its own small coordinate, so the total is a bounded NEAR-OPTIMAL solution (every scramble solves). Very shallow scrambles additionally try an admissible-heuristic optimal solve, labeled "optimal"; the rest are labeled "near-optimal".`,
+  },
+  validate: (line) => {
+    for (const tok of line.trim().split(/\s+/)) {
+      if (tok && !CUBOID336_TOKEN_RE.test(tok)) return tok;
+    }
+    return null;
+  },
+  randomOne: () => Promise.resolve(randomCuboid336Scramble(RANDOM_LEN)),
+};
 
 export default function Cuboid336SolverPage() {
-  useDocumentTitle('3×3×6 求解器', '3×3×6 Solver');
-
-  const [scramble, setScramble] = useQueryState('scramble', parseAsString.withDefault(''));
-  const [state, setState] = useState<SolveState>({ kind: 'idle' });
-
-  const lines = useMemo(() => scramble.split('\n').map((s) => s.trim()).filter(Boolean), [scramble]);
-  const lineCount = lines.length;
-  const trimmed = lines[0] ?? '';
-
-  // Solve off the render path: the two-phase search can take up to a couple seconds on a deep state (and the
-  // first call builds the orbit pattern databases), so defer to a macrotask and show a "solving" spinner.
-  // Only single (<=1 line); >=2 lines go through SolvePanel's batch solve.
-  const reqRef = useRef(0);
-  useEffect(() => {
-    if (!trimmed || lineCount > 1) { setState({ kind: 'idle' }); return; }
-    const myReq = ++reqRef.current;
-    setState({ kind: 'solving' });
-    const id = window.setTimeout(() => {
-      let next: SolveState;
-      try {
-        next = { kind: 'done', result: solveCuboid336(trimmed) };
-      } catch (e) {
-        next = { kind: 'error', message: String((e as Error)?.message ?? e) };
-      }
-      if (reqRef.current === myReq) setState(next);
-    }, 16);
-    return () => window.clearTimeout(id);
-  }, [trimmed, lineCount]);
-
-  const batchSpec: BatchSpec = useMemo(() => ({
-    event: '336',
-    metricLabel: 'moves',
-    placeholder: {
-      zh: '每行一条打乱,如 U R2 u2 3u F2 U',
-      en: 'one scramble per line, e.g. U R2 u2 3u F2 U',
-    },
-    validate: (line) => {
-      for (const tok of line.trim().split(/\s+/)) {
-        if (tok && !CUBOID336_TOKEN_RE.test(tok)) return tok;
-      }
-      return null;
-    },
-    solveOne: async (s) => {
-      const o = solveCuboid336(s);
-      return { len: o.length, solution: o.solution };
-    },
-    randomOne: () => Promise.resolve(randomCuboid336Scramble(RANDOM_LEN)),
-    concurrency: 1,
-  }), []);
-
-  return (
-    <div className="pos-page">
-      <SolveTabs puzzle="336" mode="solve" />
-
-      <SolvePanel
-        spec={batchSpec}
-        scramble={scramble}
-        onScrambleChange={(v) => void setScramble(v)}
-        renderSingle={() => (
-          <>
-            <p className="pos-lead">
-              {tr({
-                zh: '3×3×6 在线求解:两阶段约简(先把所有块归约进全 180° 子群,再只用 180° 转还原),任何打乱都能解出一条有界的近最优解;很浅的打乱另用可采纳启发式给出可证最优解。记号 U U’ U2 u u’ u2 3u 3u’ 3u2 R2 L2 M2 F2 B2 S2,与 cstimer 一致。',
-                en: '3×3×6 online solver: a two-phase reduction (reduce every orbit into the all-180° subgroup, then finish with 180° turns only) returns a bounded near-optimal solution for ANY scramble; very shallow scrambles additionally get a provably optimal solution via an admissible heuristic. Notation U U’ U2 u u’ u2 3u 3u’ 3u2 R2 L2 M2 F2 B2 S2, matching cstimer.',
-              })}
-            </p>
-
-            {trimmed && (
-              <div className="pos-result" aria-live="polite">
-                {state.kind !== 'error' && (
-                  <div className="ivy-preview">
-                    <ScramblePreview2D event="336" scramble={trimmed} size={64} />
-                  </div>
-                )}
-                {state.kind === 'solving' && (
-                  <p className="pos-result-solved">
-                    <LoaderCircle size={16} className="pos-spin" aria-hidden style={{ verticalAlign: '-3px', marginRight: 6 }} />
-                    {tr({ zh: '求解中…', en: 'Solving…' })}
-                  </p>
-                )}
-                {state.kind === 'error' && (
-                  <p className="pos-error">
-                    {tr({ zh: '打乱记号无法识别(应为 U U’ U2 u u’ u2 3u 3u’ 3u2 R2 L2 M2 F2 B2 S2)', en: 'Unrecognized notation (expected U U’ U2 u u’ u2 3u 3u’ 3u2 R2 L2 M2 F2 B2 S2)' })}: <code>{state.message}</code>
-                  </p>
-                )}
-                {state.kind === 'done' && state.result.length === 0 && (
-                  <p className="pos-result-solved">{tr({ zh: '已是还原态', en: 'Already solved' })}</p>
-                )}
-                {state.kind === 'done' && state.result.length > 0 && (
-                  <>
-                    <div className="ivy-metric">
-                      <span className="ivy-metric-num">{state.result.length}</span>
-                      <span className="ivy-metric-label">
-                        {state.result.optimal
-                          ? tr({ zh: '步 最优解', en: state.result.length === 1 ? 'move (optimal)' : 'moves (optimal)' })
-                          : tr({ zh: '步 近最优解', en: state.result.length === 1 ? 'move (near-optimal)' : 'moves (near-optimal)' })}
-                      </span>
-                    </div>
-                    <div className="ivy-solbox">{state.result.solution}</div>
-                  </>
-                )}
-              </div>
-            )}
-
-            <div className="ivy-caveat">
-              <strong>{tr({ zh: '关于「最优」', en: 'About "optimal"' })}</strong>{' '}
-              {tr({
-                zh: `3×3×6 有约 ${CUBOID336_STATE_COUNT_STR} 个状态(facelet 群阶 ${CUBOID336_GROUP_ORDER_STR},Schreier-Sims 实算),太大无法整图 BFS,浏览器里也建不出足够强的可采纳启发去逼近上帝之数,所以**不是**每条解都最优。采用两阶段约简:先把每个轨道归约进全 180° 子群(三组角轨道相互独立,启发取叠加),再只用 180° 转还原(三元联合 PDB 给紧启发);两阶段各自在自己的小坐标里最优,合起来就是有界的**近最优**解(任何打乱都能解)。很浅的打乱会额外尝试可采纳启发的可证最优解,标为「最优」;其余标为「近最优」。`,
-                en: `The 3×3×6 has about ${CUBOID336_STATE_COUNT_STR} states (facelet group order ${CUBOID336_GROUP_ORDER_STR}, computed by Schreier-Sims) — far too many to BFS, and no admissible heuristic strong enough to reach God's number is buildable in the browser, so NOT every solution is optimal. The solver uses a two-phase reduction: first reduce every orbit into the all-180° subgroup (the three corner orbits are mutually independent, so their guides add), then finish with 180° turns only (tight joint-triple PDBs). Each phase is optimal over its own small coordinate, so the total is a bounded NEAR-OPTIMAL solution (every scramble solves). Very shallow scrambles additionally try an admissible-heuristic optimal solve, labeled "optimal"; the rest are labeled "near-optimal".`,
-              })}
-            </div>
-          </>
-        )}
-      />
-    </div>
-  );
+  return <PuzzleSolverPage spec={SPEC} />;
 }
