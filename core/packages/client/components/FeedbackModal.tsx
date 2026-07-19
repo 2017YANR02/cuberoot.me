@@ -5,6 +5,7 @@
 // 页面/语言/主题/视口/UA 供 admin 复现。结构镜像 DonateModal(lang prop + 本地 t)。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { ImagePlus, Film, X, Loader2, Check, LogIn, Inbox, MessagesSquare } from 'lucide-react';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import AppLink from '@/components/AppLink';
@@ -75,17 +76,10 @@ export default function FeedbackModal({ lang, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const videoUrlRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !submitting) onClose(); };
-    window.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-      if (videoUrlRef.current) URL.revokeObjectURL(videoUrlRef.current);
-    };
-  }, [onClose, submitting]);
+  useModalDismiss(onClose, submitting);
+  useEffect(() => () => {
+    if (videoUrlRef.current) URL.revokeObjectURL(videoUrlRef.current);
+  }, []);
 
   const addImages = useCallback(async (files: File[]) => {
     if (files.length === 0) return;
