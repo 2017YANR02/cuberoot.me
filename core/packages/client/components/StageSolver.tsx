@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { Loader2, Copy, Check, Info, X, ChevronRight, ChevronDown } from 'lucide-react';
+import { Loader2, Check, Info, X, ChevronRight, ChevronDown } from 'lucide-react';
 import TwistySection from '@/components/TwistySection';
 import { SubsetColorPicker, useSubsetSelection, COLOR_NAME, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@/lib/cube-colors';
@@ -184,8 +184,9 @@ const ROT_PERM: Record<string, Partial<Record<CubeFace, CubeFace>>> = {
   z2: { U: 'D', D: 'U', L: 'R', R: 'L' },
 };
 const ALL_POS: CubeFace[] = ['U', 'D', 'F', 'B', 'L', 'R'];
+type SidePos = 'F' | 'R' | 'B' | 'L';
 // 视角 i 转动后,读出 F/R/B/L 四个侧位各是标准配色里的哪一面。
-function viewSideFaces(viewIdx: number): Record<'F' | 'R' | 'B' | 'L', CubeFace> {
+function viewSideFaces(viewIdx: number): Record<SidePos, CubeFace> {
   let o: Record<CubeFace, CubeFace> = { U: 'U', D: 'D', F: 'F', B: 'B', L: 'L', R: 'R' };
   for (const tok of (FACES[viewIdx]?.rot ?? '').split(/\s+/).filter(Boolean)) {
     const perm = ROT_PERM[tok];
@@ -196,8 +197,9 @@ function viewSideFaces(viewIdx: number): Record<'F' | 'R' | 'B' | 'L', CubeFace>
   }
   return { F: o.F, R: o.R, B: o.B, L: o.L };
 }
-// 槽位索引 → 两个侧位(BL=后+左, BR=后+右, FR=前+右, FL=前+左),第一位取前/后轴、第二位取左/右轴。
-const SLOT_SIDE_POS: ['F' | 'B', 'L' | 'R'][] = [['B', 'L'], ['B', 'R'], ['F', 'R'], ['F', 'L']];
+// 槽位索引 → 该槽两片侧贴纸的位置,左→右按赤道「向右」环序 F→R→B→L(每片的右邻是下一片)排,
+// 与真实魔方一致(白底:绿右邻橙、橙右邻蓝、蓝右邻红、红右邻绿)。故 BL=蓝|红、BR=橙|蓝、FR=绿|橙、FL=红|绿。
+const SLOT_SIDE_POS: [SidePos, SidePos][] = [['B', 'L'], ['R', 'B'], ['F', 'R'], ['L', 'F']];
 // (视角, 槽位) → 该槽两片侧贴纸的面。viewIdx 为 null(尚未选视角)时无法定色 → null。
 function slotFaces(viewIdx: number | null, slotIdx: number): [CubeFace, CubeFace] | null {
   if (viewIdx == null) return null;
@@ -1275,33 +1277,36 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                       {moves.sols.map((sol, i) => {
                         const rot = rowRot[i] ?? 0;
                         const dispAlg = rotateSolutionY(sol.m, rot);
+                        // 预转体 y 只此一处显示:视角朝向前缀(不含 y)原样,预转体做成 alg 里可点的 y token
+                        // (循环 y→y2→y′→无),不再另设左侧徽标。rot=0 时是暗提示「可加预转体」。
+                        const viewLead = splitLeadRot(sol.m).lead;   // 视角朝向前缀(z2 / x' 等,无预转体)
+                        const algBody = splitLeadRot(dispAlg).body;  // 实际转动(rot≠0 已按新朝向重写)
                         return (
                         <li
                           key={i}
                           className={`stsv-sol-row${selSol === i ? ' is-active' : ''}`}
-                          onClick={() => selectSol(i, true)}
+                          title={t('点击复制解法(并播放动画)', 'Click to copy this solve (and play its animation)')}
+                          onClick={() => { selectSol(i, true); copySol(i, dispAlg); }}
                         >
                           <span className="stsv-sol-num">{i + 1}</span>
-                          <button
-                            className="stsv-sol-copy"
-                            onClick={(e) => { e.stopPropagation(); copySol(i, dispAlg); }}
-                            aria-label={t('复制', 'Copy')}
-                          >
-                            {copiedIdx === i ? <Check size={12} /> : <Copy size={12} />}
-                          </button>
                           <span className="stsv-sol-len">{moveLen(dispAlg)}</span>
-                          <button
-                            type="button"
-                            className={`stsv-sol-rot${rot ? ' is-on' : ''}`}
-                            onClick={(e) => { e.stopPropagation(); cycleRot(i); }}
-                            title={t('加预转体:循环 y → y2 → y′ → 无(换个朝向做同一套公式)', 'Pre-rotation: cycle y → y2 → y′ → none (same solve, different orientation)')}
-                            aria-label={t('加 y 预转体', 'Add y pre-rotation')}
-                          >
-                            {Y_ROT_LABEL[rot]}
-                          </button>
                           {/* 槽位无可选(满 F2L XXXXCross 唯一组合 BL BR FR FL / 纯十字)时标签多余,隐藏(同选择器条件)。 */}
                           {sol.c && slotCombos.length >= 2 && renderSolSlots(sol.c)}
-                          <code>{dispAlg}</code>
+                          <code className="stsv-sol-alg">
+                            {viewLead && `${viewLead} `}
+                            <button
+                              type="button"
+                              className={`stsv-sol-yrot${rot ? ' is-on' : ''}`}
+                              onClick={(e) => { e.stopPropagation(); cycleRot(i); }}
+                              title={t('切换预转体:y → y2 → y′ → 无(换个朝向做同一套公式)', 'Toggle pre-rotation: y → y2 → y′ → none (same solve, different grip)')}
+                              aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
+                            >
+                              {rot ? Y_ROT_LABEL[rot] : null}
+                            </button>
+                            {algBody ? ` ${algBody}` : ''}
+                            {/* 点行即复制(无独立复制按钮);复制成功后解法末尾短暂浮现对勾,1.2s 后自动消失。 */}
+                            {copiedIdx === i && <Check size={13} className="stsv-sol-copied" aria-label={t('已复制', 'Copied')} />}
+                          </code>
                         </li>
                       );
                       })}
