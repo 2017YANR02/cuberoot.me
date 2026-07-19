@@ -27,8 +27,9 @@ import { AttemptRanksToggle } from './AttemptRanksToggle';
 import { rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { trimEmptyAttempts } from '@/lib/wca-ao5-brackets';
-import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import { fetchPersonRankHistory, type PersonRankHistoryResponse, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
+import { useHashHighlight } from '@/hooks/useHashHighlight';
+import { resolveResultRow, resultRowHash, resultRowIndex } from '@/lib/wca-result-anchor';
 import { isMbldEvent, effectiveMbldAverage as effectiveAverage } from '@/lib/mbf-average';
 import { useMbldAvgRecords, mbldAvgRecordKey } from '@/lib/mbld-avg-records';
 import { UnofficialMark } from '@/components/UnofficialMark';
@@ -155,37 +156,6 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
   );
 }
 
-// hash 形如 #r-{compId}-{eventId}-{round}.如果 round 是 recon 端 ('1'/'2'/'3'/'f'),
-// 实际 WCA 行 id 可能是 'd'/'g'/'b'/'c' 等 cutoff 子型.按 ROUND_VARIANTS 反查.
-function resolveHashRow(hash: string): HTMLElement | null {
-  if (!hash) return null;
-  const slug = hash.slice(1);
-  const direct = document.getElementById(slug);
-  if (direct) return direct;
-  const m = slug.match(/^(.+)-([^-]+)$/);
-  if (!m) return null;
-  const prefix = m[1];
-  const round = m[2];
-  const variants = ROUND_VARIANTS[round] ?? [round];
-  for (const v of variants) {
-    if (v === round) continue;
-    const el = document.getElementById(`${prefix}-${v}`);
-    if (el) return el;
-  }
-  return null;
-}
-
-// 深链目标 (#r-{comp}-{event}-{round}) 在渐进渲染列表中的下标:comp 尾段/round 头段夹出 comp,
-// round 按 ROUND_VARIANTS 容错。找不到返回 -1。用于把目标行立即纳入渲染范围(不必等 idle 追上)。
-function hashRowIndex(hash: string, rows: WcaResultRow[]): number {
-  if (!hash) return -1;
-  const m = hash.slice(1).match(/^r-(.+)-([^-]+)-([^-]+)$/); // r-{comp}-{event}-{round}
-  if (!m) return -1;
-  const comp = m[1];
-  const round = m[3];
-  const variants = ROUND_VARIANTS[round] ?? [round];
-  return rows.findIndex((r) => r.competition_id === comp && variants.includes(r.round_type_id));
-}
 
 // ─── 全部成绩 (按比赛倒序的轮次表) ───────────────────────────────────────
 // 轮次显示元数据已抽到 utils/wca_round_meta.ts 共用 (ByCompList / 复盘页同场比赛表也用)
@@ -230,13 +200,6 @@ function EventRoundsList({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const search = searchParams ? `?${searchParams.toString()}` : '';
-  const [hash, setHash] = useState<string>(() => (typeof window !== 'undefined' ? window.location.hash : ''));
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const onHash = () => setHash(window.location.hash);
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
-  }, []);
   // PR / 名次时间序口径必须用「订正后」的有效值:某把被加 +2(4.43→6.43)后,它本身的名次要按
   // 6.43 算(≈300 名),且后续成绩也不该被那个其实没发生的 4.43 压名次 → 先把变更链叠加到每条结果
   // 的 attempts/best/average 上,再喂 computePrRank。无变更链的结果原样返回(绝大多数)。
@@ -265,24 +228,8 @@ function EventRoundsList({
   // 名次数字优先用本地 prRankLive,cubing pS/pA 仅作兜底(本地无效时)。
   const livePrRanks = useLivePrRanks(rows, wcaId);
 
-  // /wca/regulations 风格的 hash 锚点:#r-{comp}-{event}-{round} 的定位副作用移到 displayRows /
-  // 渐进计数之后(需 count / ensureIndex),见下方。
-
-  const hashOf = (compId: string, roundType: string) =>
-    `#r-${compId}-${eventId}-${roundType}`;
-  const buildAnchorHref = (compId: string, roundType: string) =>
-    `${pathname}${search}${hashOf(compId, roundType)}`;
-
-  // 整行点击 → 切 hash,只是点 td 空白处生效;内部 Link/button 走自己 (closest 'a, button' 时跳过).
-  // Next App Router 改 hash 不触发 hashchange,故手动同步 hash state 让高亮立即生效.
-  const selectRow = (compId: string, roundType: string) => {
-    router.replace(buildAnchorHref(compId, roundType), { scroll: false });
-    setHash(hashOf(compId, roundType));
-  };
-  const handleRowClick = (e: React.MouseEvent, compId: string, roundType: string) => {
-    if ((e.target as HTMLElement).closest('a, button')) return;
-    selectRow(compId, roundType);
-  };
+  // 行级 hash 锚点(#r-{comp}-{event}-{round})的定位/高亮走共享 useHashHighlight,放到
+  // displayRows / 渐进计数之后(需 count / ensureIndex),见下方。
 
   // 按比赛日期倒序,组内按 round_type 顺序(决赛在上).
   const baseSorted = useMemo(() => {
@@ -322,18 +269,32 @@ function EventRoundsList({
   // 切项目 / 改排序 → displayRows 重排 → 重置重新渐进。
   const { count, ensureIndex } = useProgressiveCount(displayRows.length, `${eventId}|${sort.key ?? ''}|${sort.dir}`);
 
-  // hash 锚点 (#r-{comp}-{event}-{round}):目标行可能还没渐进渲染到 → 先 ensureIndex 纳入,
-  // count 涨到覆盖它后本副作用再跑一次(count 在 deps),此时元素已挂载即滚动高亮。
-  useEffect(() => {
-    document.querySelectorAll('.wp-row-target').forEach((el) => el.classList.remove('wp-row-target'));
-    if (!hash) return;
-    const idx = hashRowIndex(hash, displayRows);
-    if (idx >= 0 && idx >= count) { ensureIndex(idx); return; }
-    const el = resolveHashRow(hash);
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.classList.add('wp-row-target');
-  }, [hash, displayRows, count, ensureIndex]);
+  // 行级 hash 锚点(#r-{comp}-{event}-{round}):点整行 → URL 片段更新,该行黄色高亮持续到
+  // 换行。reveal 处理渐进渲染——目标行还没挂到 DOM 时先 ensureIndex 纳入并返回 false,count
+  // 涨到覆盖它后(在 deps 里)hook 重跑再滚动高亮。
+  const { setHash } = useHashHighlight({
+    resolve: resolveResultRow,
+    highlightClass: 'wp-row-target',
+    block: 'center',
+    reveal: (h) => {
+      const idx = resultRowIndex(h, displayRows);
+      if (idx >= 0 && idx >= count) { ensureIndex(idx); return false; }
+    },
+    deps: [displayRows, count],
+  });
+
+  const buildAnchorHref = (compId: string, roundType: string) =>
+    `${pathname}${search}${resultRowHash(compId, eventId, roundType)}`;
+  // 整行点击 → 切 hash,只是点 td 空白处生效;内部 Link/button 走自己 (closest 'a, button' 跳过).
+  // Next App Router 改 hash 不触发 hashchange,故手动 setHash 让高亮立即生效.
+  const selectRow = (compId: string, roundType: string) => {
+    router.replace(buildAnchorHref(compId, roundType), { scroll: false });
+    setHash(resultRowHash(compId, eventId, roundType));
+  };
+  const handleRowClick = (e: React.MouseEvent, compId: string, roundType: string) => {
+    if ((e.target as HTMLElement).closest('a, button')) return;
+    selectRow(compId, roundType);
+  };
 
   if (displayRows.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
 
@@ -451,7 +412,7 @@ function EventRoundsList({
                         href={buildAnchorHref(r.competition_id, r.round_type_id)}
                         replace
                         scroll={false}
-                        onClick={() => setHash(hashOf(r.competition_id, r.round_type_id))}
+                        onClick={() => setHash(resultRowHash(r.competition_id, eventId, r.round_type_id))}
                         className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
                         title={t('复制到链接', 'Copy link to this row')}
                       >

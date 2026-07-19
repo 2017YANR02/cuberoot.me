@@ -2,7 +2,7 @@
 // 按比赛:每场比赛一组,每行 (项目 / 轮次 / 排名 / 单次 / 平均 / 各次尝试).
 // 进步(PB)染色 + regional record 标签.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { formatDateRangeIso } from '@/lib/wca-date';
@@ -21,8 +21,9 @@ import { rowHasReconStats, computeReconRoundAvg, type ReconAttemptInfo } from '@
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { isMbldEvent, effectiveMbldAverage } from '@/lib/mbf-average';
 import { useMbldAvgRecords, mbldAvgRecordKey } from '@/lib/mbld-avg-records';
-import { ROUND_VARIANTS } from '@/lib/wca-results-api';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import { useHashHighlight } from '@/hooks/useHashHighlight';
+import { resolveResultRow, resultRowHash } from '@/lib/wca-result-anchor';
 import { rowChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
 import { useRowChangeMap } from '../../logic/use-row-change-map';
 import { useLivePrRanks } from '../../logic/use-live-pr-ranks';
@@ -31,25 +32,6 @@ import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
-
-// hash 形如 #r-{compId}-{eventId}-{round}.按 ROUND_VARIANTS 反查 cutoff 子型 ('d'/'g'/'b' etc).
-function resolveHashRow(hash: string): HTMLElement | null {
-  if (!hash) return null;
-  const slug = hash.slice(1);
-  const direct = document.getElementById(slug);
-  if (direct) return direct;
-  const m = slug.match(/^(.+)-([^-]+)$/);
-  if (!m) return null;
-  const prefix = m[1];
-  const round = m[2];
-  const variants = ROUND_VARIANTS[round] ?? [round];
-  for (const v of variants) {
-    if (v === round) continue;
-    const el = document.getElementById(`${prefix}-${v}`);
-    if (el) return el;
-  }
-  return null;
-}
 
 interface Props {
   wcaId: string;
@@ -78,14 +60,6 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  // Next App Router does not surface URL hash via hooks; track via window.
-  const [hash, setHash] = useState<string>(() => (typeof window !== 'undefined' ? window.location.hash : ''));
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const onHash = () => setHash(window.location.hash);
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
-  }, []);
   const search = searchParams ? `?${searchParams.toString()}` : '';
 
   // PR / 名次时间序口径用「订正后」有效值(同 ByEventView):某把被加 +2(4.43→6.43)后,它的名次
@@ -139,28 +113,23 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
       }));
   }, [results, comps]);
 
-  // /wca/regulations 风格的 hash 锚点:#r-{comp}-{event}-{round}
-  // 走 lazy import,:target 在 mount 后失效 → 手动 class,持续到 hash 改变.
+  // 行级 hash 锚点(#r-{comp}-{event}-{round}):点整行 → URL 片段更新,该行黄色高亮持续到
+  // 换行。走共享 useHashHighlight(grouped 就绪后再定位;懒挂载后 :target 失效故用 class）。
+  const { setHash } = useHashHighlight({
+    resolve: resolveResultRow,
+    highlightClass: 'wp-row-target',
+    block: 'center',
+    deps: [grouped],
+  });
 
-  useEffect(() => {
-    document.querySelectorAll('.wp-row-target').forEach((el) => el.classList.remove('wp-row-target'));
-    if (!grouped || !hash) return;
-    const el = resolveHashRow(hash);
-    if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    el.classList.add('wp-row-target');
-  }, [grouped, hash]);
-
-  const hashOf = (compId: string, eventId: string, roundType: string) =>
-    `#r-${compId}-${eventId}-${roundType}`;
   const buildAnchorHref = (compId: string, eventId: string, roundType: string) =>
-    `${pathname}${search}${hashOf(compId, eventId, roundType)}`;
+    `${pathname}${search}${resultRowHash(compId, eventId, roundType)}`;
 
   // 整行点击 → 切 hash (replace 防历史污染);内部 Link/button 走自己 (closest 检查跳过).
-  // Next App Router 改 hash 不触发 hashchange,故手动同步 hash state 让高亮立即生效.
+  // Next App Router 改 hash 不触发 hashchange,故手动 setHash 让高亮立即生效.
   const selectRow = (compId: string, eventId: string, roundType: string) => {
     router.replace(buildAnchorHref(compId, eventId, roundType), { scroll: false });
-    setHash(hashOf(compId, eventId, roundType));
+    setHash(resultRowHash(compId, eventId, roundType));
   };
   const handleRowClick = (e: React.MouseEvent, compId: string, eventId: string, roundType: string) => {
     if ((e.target as HTMLElement).closest('a, button')) return;
@@ -264,7 +233,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
                                 href={buildAnchorHref(comp.id, r.event_id, r.round_type_id)}
                                 replace
                                 scroll={false}
-                                onClick={() => setHash(hashOf(comp.id, r.event_id, r.round_type_id))}
+                                onClick={() => setHash(resultRowHash(comp.id, r.event_id, r.round_type_id))}
                                 className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
                                 title={t('复制到链接', 'Copy link to this row')}
                               >
