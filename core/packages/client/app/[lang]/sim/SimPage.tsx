@@ -86,7 +86,9 @@ import {
   loadSettings, saveSettings, applySettings,
   mapOrbitK, mapTurnDragFactor, type SimSettings,
 } from './SettingDrawer';
-import PlayerControls, { type SimPuzzle } from './PlayerControls';
+import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls';
+import AppLink from '@/components/AppLink';
+import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
 import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
@@ -329,6 +331,15 @@ export default function SimPage() {
   const twisty = (isTwistyPuzzle(puzzleParam) || pgDef !== undefined) && !useEngine;
   const useEngineRef = useRef(useEngine);
   useEffect(() => { useEngineRef.current = useEngine; }, [useEngine]);
+
+  // 「去复盘」头部链接:把当前打乱 / 解法交给 /recon/submit,与 recon 表单的「去模拟器」互为往返。
+  // 引擎版 skewb/pyra/mega/fto 用自有记号,/recon(WCA 记号)解析不了 → 不给链接(门槛同 useEngine)。
+  // 解法先剥手部记号(FTN / 换握 / 推法),否则 recon 的 alg 解析会被这些注解噎住。
+  const reconHref = useMemo(() => {
+    const ev = useEngine ? null : reconEventForSim(puzzleParam);
+    if (!ev) return null;
+    return `/recon/submit?${buildReconSubmitQuery(ev, setupParam, stripHandMarks(algParam))}`;
+  }, [useEngine, puzzleParam, setupParam, algParam]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   // Slot below the cube canvas that PlayerControls portals its playback bar into
@@ -1592,7 +1603,7 @@ export default function SimPage() {
         if (imgSpec.rotateAngle2 !== a2) patch.rotateAngle2 = a2;
       }
     }
-    if (Object.keys(patch).length > 0) setImgSpec(patch);
+    if (Object.keys(patch).length > 0) { if (typeof window !== 'undefined') { (window as any).__EFFA = ((window as any).__EFFA||0)+1; if ((window as any).__EFFA % 20 === 0) console.warn('[EFFA sim→spec]', (window as any).__EFFA, JSON.stringify(patch)); } setImgSpec(patch); }
   }, [imageStudioSupported, imgPuzzle, imgInherit, imgSpec,
       settings.viewAngle, settings.viewGradient, settings.perspective, setImgSpec]);
 
@@ -1607,6 +1618,15 @@ export default function SimPage() {
         </HomeLink>
         <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
         <div className="sim-spacer" />
+        {reconHref && (
+          <AppLink
+            href={reconHref}
+            className="sim-open-recon"
+            title={t('把当前打乱 / 解法带去发布复盘', 'Take this scramble / solution to a reconstruction')}
+          >
+            {t('去复盘', 'Open in Recon')}
+          </AppLink>
+        )}
       </header>
 
       <div className="sim-body">

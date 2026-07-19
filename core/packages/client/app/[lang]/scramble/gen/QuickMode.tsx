@@ -7,7 +7,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown } from 'lucide-react';
+import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown, Check } from 'lucide-react';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import Scramble555ModePicker from '@/components/Scramble555ModePicker';
@@ -545,7 +545,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                         <td className="gen-tn-attempt-scramble">
                           <ScrambleLines scramble={s} className="gen-tn-attempt-line" />
                           {copiedKey === key && (
-                            <span className="gen-tn-copy-toast" aria-live="polite">{t('已复制', 'Copied')}</span>
+                            <Check size={14} className="gen-tn-scr-copied" aria-label={t('已复制', 'Copied')} />
                           )}
                         </td>
                         {showPreview && (

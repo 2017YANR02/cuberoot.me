@@ -165,6 +165,42 @@ export async function fetchScrambleGroups(
   return groups;
 }
 
+export interface GroupScrambles {
+  group: string;
+  scrambles: (string | null)[]; // index 0..4 = scramble_num 1..5
+}
+
+/**
+ * 一场 comp/event/round 下每个分组(A/B/C…)的逐把打乱。给 recon 表单的「对照各组打乱」用:
+ * 用户拿不准自己在哪组时,一次性列出各组同一把的打乱来比对认领。基于 fetchWcaScrambles 的缓存,
+ * 无额外请求。返回 null 表示无打乱数据。
+ */
+export async function fetchGroupScrambles(
+  compId: string,
+  reconEvent: string,
+  round: string,
+): Promise<GroupScrambles[] | null> {
+  const wcaEventId = toWcaEventId(reconEvent);
+  const all = await fetchWcaScrambles(compId);
+  if (!all) return null;
+  const inRound = all.filter(s =>
+    s.event_id === wcaEventId &&
+    matchRoundType(round, s.round_type_id) &&
+    !s.is_extra
+  );
+  if (inRound.length === 0) return null;
+  const map = new Map<string, (string | null)[]>();
+  for (const s of inRound) {
+    if (!s.group_id) continue;
+    let arr = map.get(s.group_id);
+    if (!arr) { arr = Array(5).fill(null); map.set(s.group_id, arr); }
+    if (s.scramble_num >= 1 && s.scramble_num <= 5) arr[s.scramble_num - 1] = s.scramble;
+  }
+  const list = [...map.entries()].map(([group, scrambles]) => ({ group, scrambles }));
+  list.sort((a, b) => a.group.localeCompare(b.group));
+  return list;
+}
+
 /** 取某 comp/event/round/group 的逐 scramble_num(1..5)字段值。`pick` 选原始打乱还是最优打乱。 */
 async function fetchScramblesField(
   compId: string,
