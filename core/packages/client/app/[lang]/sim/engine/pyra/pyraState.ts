@@ -24,9 +24,10 @@
  * Same convention as Dino, so a single clockwise drag records the bare token.
  *
  * No discrete permutation/orientation state: each piece is rendered by a pivot whose
- * quaternion is the source of truth, and `complete` is "every pivot is at identity"
- * (see PyraCube) — rotations ride the group quaternion, so a solved-then-re-held
- * puzzle still counts complete. Which pieces a turn carries is read live from the
+ * quaternion is the source of truth, and `complete` is "every pivot carries the same
+ * rotation" (see PyraCube) — solved up to a whole-puzzle reorientation, so a rotation
+ * IS its two-layer expansion (y ≡ U Dw', Lv ≡ L Rw', Rv ≡ R Lw', Bv ≡ B Fw') and both
+ * forms leave a solved puzzle solved. Which pieces a turn carries is read live from the
  * geometry. So this module is pure notation — no three.js.
  */
 

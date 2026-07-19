@@ -9,7 +9,8 @@
  * the complementary far slab (3 corners + 3 tips + 3 edges — face turns permute corners
  * and tips between vertices, so no piece is index-bound to a vertex), a tip turn takes
  * the tip currently at the vertex. No discrete permutation state — `complete` is "every
- * pivot is back at identity", which is exact because each piece's geometry is baked in
+ * pivot carries the same rotation" (solved up to a whole-puzzle reorientation, so
+ * U Dw' ≡ y counts solved), which is exact because each piece's geometry is baked in
  * home coords and turns are pure SO(3).
  *
  * Whole-puzzle rotations (y / Lv / Rv / Bv) are re-holds: they ride the group's OWN
@@ -195,9 +196,14 @@ export default class PyraCube extends THREE.Group implements TweenCube<PyraMove>
     this.dirty = true;
   }
 
+  /** Solved = every pivot carries the SAME rotation. Pivots are products of ±120°
+   *  vertex-axis turns, so a common R is necessarily a tetra symmetry — a whole-puzzle
+   *  reorientation (identity is the R = 1 case). This makes `y` ≡ `U Dw'` hold at the
+   *  predicate level too: a rigidly re-oriented solved puzzle counts solved, whether the
+   *  re-hold was baked (rot move) or physically turned in as two layers. */
   get complete(): boolean {
-    const IDENT = new THREE.Quaternion();
-    return this.allPieces.every((p) => p.pivot.quaternion.angleTo(IDENT) < 0.05);
+    const q0 = this.allPieces[0].pivot.quaternion;
+    return this.allPieces.every((p) => p.pivot.quaternion.angleTo(q0) < 0.05);
   }
 
   dispose(): void {
