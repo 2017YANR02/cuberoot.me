@@ -49,6 +49,13 @@
     align-self: stretch;
 }
 
+/* 输入框 + 右侧清除按钮的定位容器:占满原输入框位置,清除按钮绝对定位钉在右侧。 */
+.analyze-scramble-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+}
 .analyze-scramble {
     flex: 1;
     min-width: 0;
@@ -70,6 +77,15 @@
 
 .analyze-scramble:focus {
     border-color: var(--az-accent);
+}
+/* 清除按钮腾出右内边距,避免打乱文字压到按钮下方;按钮钉在首行中线(输入框多行撑高时不随之下移)。 */
+.analyze-scramble-wrap .analyze-scramble {
+    padding-right: 2rem;
+}
+.analyze-scramble-clear {
+    right: 8px;
+    top: 1.15rem;
+    transform: translateY(-50%);
 }
 
 /* CFOP 枚举区的「分析」按钮(独立,不再与输入框拼接) */
