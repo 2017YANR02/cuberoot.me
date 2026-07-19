@@ -600,6 +600,8 @@
   background: transparent;
 }
 .gsp-body .gen-tn-sheet { margin: 0; }
+/* 标题已并入 SheetView 自带的表头(「三阶 第1轮第1把」),弹窗头只剩关闭按钮,靠右对齐。 */
+.gsp-head { justify-content: flex-end; }
 
 /* WcaPersonPicker (cuber-search) 默认 max-width:320px 是给独立行内场景用的;
    recon 表单里要跟同行其他字段一样铺满所在列 */

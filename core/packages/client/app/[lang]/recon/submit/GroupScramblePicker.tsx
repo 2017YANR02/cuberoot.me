@@ -85,10 +85,7 @@ export default function GroupScramblePicker({
       onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div className="rr-modal">
-        <div className="rr-head">
-          <h2 className="rr-title">
-            {tr({ zh: `对照各组打乱 · 第 ${solveLabel} 把`, en: `Compare groups · scramble #${solveLabel}` })}
-          </h2>
+        <div className="rr-head gsp-head">
           <button type="button" className="rr-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}>
             <X size={18} />
           </button>
@@ -108,6 +105,7 @@ export default function GroupScramblePicker({
                 t={t}
                 showPreview
                 analyzable={false}
+                titleSuffix={tr({ zh: `第 ${solveLabel} 把`, en: ` · scramble #${solveLabel}` })}
                 selectedLabel={currentGroup ?? null}
                 onSelectScramble={label => {
                   // analyzable 关 → 点行只「选中」,回传该行 label(=组号);
