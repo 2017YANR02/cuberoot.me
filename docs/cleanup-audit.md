@@ -8,7 +8,7 @@
 
 ## P0 大重构 ⏸（等 WIP 落定再动）
 
-- [ ] `scramble/stats` 里 **29 个 `*DistView` 组件是复制粘贴** → 抽 `<SampledDistView>` + `<EnumeratedDistView>` + per-puzzle spec 表。（`scramble/stats/_components/BsqDistView.tsx:48`）同区顺带：`stats(counts)` ×11、下载助手 ×28 → `lib/dist-stats.ts` + `lib/download.ts`
+- [x] `scramble/stats` 里 **29 个 `*DistView` 组件是复制粘贴** → 已抽 `<EnumeratedDistView>` 基座 + per-puzzle `ENUM_SPECS` 表(`_components/enumerated-specs.ts`),两数据源(js baked / json sampled)一个 hook。25 视图 5,925 行 → 281 行基座 + 559 行 spec 表 + 90 行 `lib/scramble-dist/{stats,download,types}`(替 ~11 份 inline `stats()` + 6 下载 + ~18 份 `DistJson`);page.tsx if-链 25×塌成一个 `ENUM_SPECS[event]` 查表(−491 行)。Bicube/Slide15/SuperFloppy 仍 bespoke(更重 async/confirm),WCA 采样走 `PuzzleDistView`,都在查表下方 fall through。commit `d56fc2dcf8`+`392bef6cad`,Playwright 逐路径 + 全测试 1653 绿。（Sampled 家族早已是 config 驱动的 `PuzzleDistView`,无需再抽。）
 - [ ] `scramble/solver` **15 个 `*Solver` 各自重造** `SolveState`+`reqRef`+renderSingle → `useAsyncSolve()` hook + `<NearOptimalSolver>`（`scramble/solver/_DinoSolver.tsx:32`）
 - [ ] `math/group/page.tsx` **16,508 行 god component**（~92 内联 demo）→ 按 `_components/sections/` 拆分
 - [ ] 其它 god component：`components/WcaStatView.tsx`（1290）、`wca/results/page.tsx:122`（1027，4 视图塞一函数）、`FrameCountPage.tsx`（2820）、`components/LandingSearch.tsx`（744）
@@ -20,11 +20,11 @@
 ## P1 跨区收口
 
 - [x] **`getIp(c)` 复制进 21 个后端 route**，都保留可伪造 `X-Forwarded-For` 回退 → 已加共享 `getIp(c)`（`analytics_helpers.ts`，委托权威 `getClientIp`、去 XFF 回退），21 route 删本地 def 改 import，111 调用点不变。server typecheck 绿。**★安全硬化，commit 未 push（需上线才生效）**。**分层防回归**（「立约束要分层」）：写入态 hook `.claude/hooks/block-server-forwarded-for.ps1`（→ `hook-detect-server-forwarded-for.mjs`，实活验证真拦）+ CI 兜底 `tests/server-no-forwarded-for.test.ts`，已登记 `/code/guards`（`_guards.ts` PAIRED_GUARDS）；新 route 再抄回 XFF 回退会被写入即拦 + CI 红。行内 `allow-forwarded-for` 豁免正当用途
-- [ ] **`lib/name-utils.ts` 与 `lib/cuber-name-display.ts` 重复**（三导出函数代码相同，仅注释差一行；消费者 17 vs 33）→ 保留有测试的 `cuber-name-display`，repoint 17 个后删 `name-utils`。**暂缓**：17 消费者之一 `timer/_shell/SoloView.tsx` 正被 timer AI 改（dirty），现在 repoint 会撞车 / 半途留 `name-utils`。等其 commit 后一次做完
+- [x] **`lib/name-utils.ts` 与 `lib/cuber-name-display.ts` 重复**（三导出函数字节相同，仅注释差一行）→ 保留有测试的 `cuber-name-display`（测试文件误名 `name_utils.test.ts`,实 import `cuber-name-display`,已改名 `cuber-name-display.test.ts`），repoint 17 消费者、删 `name-utils.ts`。commit `2c1c59140c`,typecheck + 10/10 name 测试绿。（原「暂缓」因 timer AI 改 SoloView;实做时工作区已干净,无撞车。）
 - [ ] 内联 `isZh ? '中' : 'EN'` 文案三元 → `tr({en,zh})` / `<T>`。**审查严重低估**：实测 **80+ 处**（非 ~15），密集落在正被改的 `alg/3bld|_roux|skewb-trainer` 树 + 暗锁 `WcaStatView`/`wiki`/`battle_store`，且混着**合法非文案** `isZh`（`'/zh'` 前缀、`u.lang='zh-CN'`、`countryName(t,isZh)` util 参数）不能一刀切。**暂缓**：全站 i18n 迁移撞 3 个 AI 的 alg/timer WIP，应等树静下来单独一轮 + 保留 `<T>` 订阅防切语言不重渲染。注：`code/architecture/arch-data.tsx` 还把旧 `isZh` 三元写成「推荐做法」，与现 CLAUDE.md 矛盾，属过期文案
 - [ ] 本地 `t=(zh,en)=>isZh?zh:en` shim **56 文件/66 处** → 先补导出 positional `t(zh,en)` 的响应式 `useT()`，再全仓收敛。**暂缓**：与上条同批(同是 isZh 家族、同撞 WIP)，一次做
-- [ ] 重复小 util：`fmtDate`、货币格式化 ×3、`firstGlyph` ×2、`statsUrl`（shared/client 双份**已漂移**）、MBLD decode ×2、`no-cache,no-store` 字面量 56 处
-- [ ] calc 重造的 `EventSelector` → 共享 `WcaEventSelector`（`calc/_components/components/EventSelector.tsx:26`）
+- [~] 重复小 util:逐个核对后**多数是伪重复或不该合**——`firstGlyph`(现只 1 份 `lib/first-glyph.ts`)、MBLD decode(现只 1 份 `mbf-average.ts`)已单;`fmtDate` 三份**签名/语义各异**(`epochSec:number` UTC / `Date` **本地时区**(练习热力图必须按本地日,合并会引 bug)/ `iso:string|null` UTC+空守卫),**不该合**;`statsUrl` shared/client 双份是**模块边界**副本(shared 不能 import client `lib/`,注释已写明),且 shared 那份带 Vite 死分支——与下面 viteDev 项同批**暂缓**(触 shared 需 rebuild + 撞 alg WIP);货币格式化实测仅 `support/page.tsx` 1 处真用;`no-store` 字面量是标准 HTTP 头串(client 16 处),抽常量属高扰动低收益,**不做**
+- [x] calc 重造的 `EventSelector` → 共享 `WcaEventSelector`。给 `WcaEventSelector` 加可选 `containerClassName`(默认 `'wca-stats-event-selector'`,其 css 全挂该 class 故不渗漏),calc 传 `containerClassName="event-selector"` 让 `calc.css` 奶油纸皮肤接管;calc 侧改薄封装保留 store 接线。commit `c532d71893`,Playwright 验奶油皮肤/绿色选中/废止项展开全一致(tooltip 改为全名 `EVENT_ZH/EN`,与全站其余选择器一致)。
 - [ ] `CountrySelect` / `RegionCountrySelect` 半截迁移收尾
 - [x] 硬编码色值 → token（部分）：`recognize:273/317` `#adb5bd`→`var(--muted-foreground)` + 同块 `rgba(255,255,255,.15)` hr→`color-mix`。**误报排除**：`recon-utils.ts:244` FACE_COLORS 是十字色块(色字母键+Tailwind 盘)非 UI token、也不等于 face 键的 `cube-colors`,留;`prediction/lucky:213` `#888` 是图表 series fallback 色(旁边 6 个 series 色也是硬码 hex),data-viz 非 chrome,留(真要收口是事件配色单一源,另立项)
 - [x] 命名：`CompPicker.extractWcaIdFromUrl` 实返比赛 id（非选手 WCA ID） → 已改 `extractCompIdFromUrl`（函数名+文档+2 调用点局部变量+`onUrlPaste` 形参，4 refs；`CompCuberPicker` 里真指选手 id 的 `wcaId` 没动）
