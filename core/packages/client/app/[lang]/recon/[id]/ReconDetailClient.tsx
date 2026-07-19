@@ -54,7 +54,7 @@ import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { useAuthStore, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { RecordBadge } from '@/components/RecordBadge';
-import ReconPlayerCanvas, { type ReconEngine, loadReconEngine, saveReconEngine } from '@/components/recon/ReconPlayerCanvas';
+import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
 import SolutionView from '@/components/SolutionView';
 import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@/lib/sq1-svg';
 import {
@@ -302,21 +302,6 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
     return [captionHeader, body].filter(Boolean).join('\n\n');
   }, [solutionText, scramble, displayScramble, optimalScrambleTag, displayText, captionHeader]);
 
-  // NxN puzzles can render with either engine (cuberoot = in-house cuber WebGL,
-  // the /sim look; or cubing.js). User-selectable + persisted, shared with the
-  // submit page + AttemptPopover via the same localStorage key (ReconPlayerCanvas
-  // owns the key). Other puzzles ignore it.
-  // Initial state must match the server's always-'cuber' render (loadReconEngine()
-  // returns 'cuber' during SSR since window is undefined there); reading the real
-  // localStorage preference is deferred to an effect to avoid a hydration mismatch
-  // when the stored preference is 'cubing'.
-  const [reconEngine, setReconEngine] = useState<ReconEngine>('cuber');
-  useEffect(() => { setReconEngine(loadReconEngine()); }, []);
-  const pickEngine = useCallback((e: ReconEngine) => {
-    setReconEngine(e);
-    saveReconEngine(e);
-  }, []);
-
   // 复盘者与提交者常是同一人——同一人时合并成一行,名字只显示一次(双图标)
   const sameContributor =
     !!solve.reconer && !!solve.addedBy &&
@@ -345,10 +330,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           scramble={scramble}
           displayText={displayText}
           playerRef={playerRef}
-          engine={reconEngine}
-          onPickEngine={pickEngine}
           fillPane
-          showEngineToggle
         />
       </div>
 

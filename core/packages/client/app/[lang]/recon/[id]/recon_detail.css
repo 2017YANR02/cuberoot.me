@@ -75,14 +75,6 @@
   background: rgba(0, 0, 0, 0.15);
 }
 
-/* 渲染引擎切换(cuberoot / cubing.js)— 浮在动画区左上,NxN 才出现 */
-.detail-engine-toggle {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 5;
-}
-
 /* TwistySection fillPane 撑满左栏 */
 .detail-player-pane .twisty-section--fill {
   width: 100%;

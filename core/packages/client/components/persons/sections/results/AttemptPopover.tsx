@@ -11,10 +11,10 @@
 // 触发件用真 <button>(iOS Safari tap 可靠),浮层 portal 到 body + position:fixed,逃出表格 overflow 裁切;
 // 结构/定位内联(dev CSS HMR 滞后也不塌),配色走主题 token。
 //
-// 性能:选手页一张表可有数千把成绩,若每把都常驻整套弹窗 state(~13 useState + 3 useEffect + 急切
-// loadReconEngine 读 localStorage),整表 re-render(reconLookup / changeMap / livePrRanks 陆续到达)
+// 性能:选手页一张表可有数千把成绩,若每把都常驻整套弹窗 state(~12 useState + 3 useEffect + 视频/复盘等重逻辑),
+// 整表 re-render(reconLookup / changeMap / livePrRanks 陆续到达)
 // 就要 reconcile 数千个重组件 → 100~350ms 长任务、鼠标一顿一顿。故拆成两层:
-//   · <AttemptPopover>(常驻)= 极轻触发 <button>,只持 open + anchorRef,无 recon/编辑 state、不碰 localStorage;
+//   · <AttemptPopover>(常驻)= 极轻触发 <button>,只持 open + anchorRef,无 recon/编辑 state;
 //   · <AttemptPopoverBody>(懒挂载)= 点开那一把才挂,承载复盘/编辑/视频/定位全部重逻辑。
 // 公开 API 不变(选手页 AttemptsList / comp 页 CompDetailPage 均无需改动)。
 
@@ -28,7 +28,7 @@ import { maxPenaltySteps, canPenalizeAttempt, PENALTY_STEP_CS } from '@cuberoot/
 import { getRecon } from '@/lib/recon-api';
 import type { ReconSolve } from '@cuberoot/shared';
 import { VideoCoverThumb } from '@/components/VideoCoverThumb';
-import ReconPlayerCanvas, { loadReconEngine, type ReconEngine } from '@/components/recon/ReconPlayerCanvas';
+import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
 import SolutionView from '@/components/SolutionView';
 import { SolveValue } from './SolveValue';
 import { AttemptBelow } from './AttemptBelow';
@@ -275,7 +275,6 @@ function AttemptPopoverBody({
   const [justAdded, setJustAdded] = useState<string[]>([]);
   const [vidInput, setVidInput] = useState('');
   const [vidBusy, setVidBusy] = useState(false);
-  const [engine] = useState<ReconEngine>(() => loadReconEngine());
 
   const reposition = useCallback(() => {
     const p = computePos();
@@ -405,7 +404,6 @@ function AttemptPopoverBody({
                     scramble={reconScramble}
                     displayText={reconSolution}
                     playerRef={playerRef}
-                    engine={engine}
                     fillPane
                     hideControls
                   />
