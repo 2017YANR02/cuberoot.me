@@ -131,9 +131,6 @@
 }
 .fb-done p { margin: 0; font-size: 15px; color: var(--foreground); }
 
-.fb-spin { animation: fb-spin 1s linear infinite; }
-@keyframes fb-spin { to { transform: rotate(360deg); } }
-
 @media (max-width: 480px) {
   .fb-modal { padding: 18px 16px 16px; border-radius: 14px; }
   .fb-title { font-size: 17px; }

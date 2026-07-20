@@ -66,7 +66,8 @@ import { simPuzzleForReconEvent, buildSimQuery } from '@/lib/sim-recon-link';
 import { formatScrambleForEvent } from '@/lib/sq1-svg';
 import { loadComps, type Comp } from '@/lib/comp-search';
 import type { WcaPersonLite } from '@/lib/wca-api';
-import { ArrowLeft, ArrowRightLeft, History, Home, Loader2, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3 } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, History, Home, LogIn, UserPlus, ListPlus, AlertTriangle, Rows3 } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import '../recon.css';
 import './recon_submit.css';
 import { tr } from '@/i18n/tr';
@@ -1762,7 +1763,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                                         }) : undefined}
                   />
                   {timeLoading
-                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
+                    ? <span className="submit-hint submit-hint-loading"><Spinner size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                     })}</span>
                     : singleAutoSource ? <span className="submit-hint">{singleAutoSource}</span> : null}
                 </label>
@@ -1775,7 +1776,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     official={form.official}
                   />
                   {recordLoading
-                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
+                    ? <span className="submit-hint submit-hint-loading"><Spinner size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                     })}</span>
                     : (!singleRecordUserTouched && form.regionalSingleRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
                 </label>
@@ -1797,7 +1798,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       : undefined}
                   />
                   {avgLoading
-                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
+                    ? <span className="submit-hint submit-hint-loading"><Spinner size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                     })}</span>
                     : avgAutoSource ? <span className="submit-hint">{avgAutoSource}</span> : null}
                 </label>
@@ -1810,7 +1811,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     official={form.official}
                   />
                   {recordLoading
-                    ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
+                    ? <span className="submit-hint submit-hint-loading"><Spinner size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                     })}</span>
                     : (!averageRecordUserTouched && form.regionalAverageRecord && recordAutoSource) ? <span className="submit-hint">{recordAutoSource}</span> : null}
                 </label>
@@ -1867,7 +1868,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 />
               )}
               {scrambleLoading
-                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
+                ? <span className="submit-hint submit-hint-loading"><Spinner size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…'
                 })}</span>
                 : scrambleAutoSource ? <span className="submit-hint">{scrambleAutoSource}</span> : null}
             </div>
@@ -1918,7 +1919,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 />
               )}
               {scrambleLoading
-                ? <span className="submit-hint submit-hint-loading"><Loader2 size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…' })}</span>
+                ? <span className="submit-hint submit-hint-loading"><Spinner size={12} /> {tr({ zh: '自动获取中…', en: 'fetching…' })}</span>
                 : optimalAutoSource ? <span className="submit-hint">{optimalAutoSource}</span> : null}
             </div>
 

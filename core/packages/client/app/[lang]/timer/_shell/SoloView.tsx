@@ -108,6 +108,7 @@ import { persistItem } from '@/lib/safe-storage';
 import RankBadge from './RankBadge';
 import SessionSwitcher from './SessionSwitcher';
 import { useRankCountry } from '@/app/[lang]/timer/_shared/use-rank-country';
+import { Spinner } from '@/components/Spinner/Spinner';
 
 import '../timer.css';
 import '../_components/charts/charts.css';
@@ -1559,7 +1560,9 @@ export default function SoloView({ playersControl }: SoloViewProps) {
                                       })}
             >
               <span className="scramble-text">{scrambleLoading
-                ? <span className="scramble-loading">{tr({ zh: '加载真实打乱…', en: 'Loading real scramble…' })}</span>
+                // 转圈取代了原来的「加载真实打乱…」文字,所以它是唯一的加载提示 → 传 label 供读屏。
+                // 原来包在外面的 .scramble-loading 没有任何 CSS 规则也没有别的消费者,一并去掉。
+                ? <Spinner size={22} label={tr({ zh: '加载真实打乱', en: 'Loading real scramble' })} />
                 : wcaSourceEmpty
                   ? <span className="scramble-empty">{
                       // 「按步数」过滤在 comp/date 两模式都生效,先判——真题近上帝数,低步数常无匹配。

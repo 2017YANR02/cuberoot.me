@@ -373,9 +373,6 @@
 }
 .mem-admin-empty { font-size: 13px; color: var(--faint-foreground); }
 
-.mem-spin { animation: mem-spin 0.9s linear infinite; }
-@keyframes mem-spin { to { transform: rotate(360deg); } }
-
 @media (max-width: 480px) {
   .mem-page { padding: 24px 14px 64px; }
   .mem-title { font-size: 22px; }

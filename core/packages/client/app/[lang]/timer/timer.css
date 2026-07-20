@@ -820,8 +820,6 @@
   cursor: pointer;
 }
 .solver-modal-x:hover { background: var(--shell-hover); color: var(--foreground); }
-.solver-modal-spin { animation: solver-modal-spin 0.8s linear infinite; }
-@keyframes solver-modal-spin { to { transform: rotate(360deg); } }
 
 /* --- SolveModal additions --- */
 .timer-modal .comment-textarea {

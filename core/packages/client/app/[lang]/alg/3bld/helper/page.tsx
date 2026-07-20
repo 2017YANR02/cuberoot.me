@@ -27,10 +27,11 @@ import {
   type JSX,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, Shuffle, GripVertical, Loader2, Wand2 } from 'lucide-react';
+import { Copy, Check, Shuffle, GripVertical, Wand2 } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import dynamic from 'next/dynamic';
 import { ClearButton } from '@/components/ClearButton';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { BldConfigBar } from '../_components/BldConfigBar';
 import { LetterReadout } from '../_components/LetterReadout';
 import {
@@ -52,7 +53,7 @@ const TwistySection = dynamic(() => import('@/components/TwistySection'), {
   ssr: false,
   loading: () => (
     <div className="bld-cube-loading">
-      <Loader2 size={18} />
+      <Spinner size={18} label={tr({ zh: '加载中', en: 'Loading' })} />
     </div>
   ),
 });
@@ -558,7 +559,7 @@ export default function HelperPage(): JSX.Element {
 
           {solving && (
             <span className="bld-spinner">
-              <Loader2 size={15} />
+              <Spinner size={15} />
               {tr({ zh: '推导还原…', en: 'Solving…'
             })}
             </span>
@@ -584,7 +585,7 @@ export default function HelperPage(): JSX.Element {
                 onClick={generateFromState}
                 disabled={genBusy || scramble.length === 0}
               >
-                {genBusy ? <Loader2 size={15} className="bld-inline-spin" /> : <Wand2 size={15} />}
+                {genBusy ? <Spinner size={15} /> : <Wand2 size={15} />}
                 {tr({ zh: '生成当前状态打乱', en: 'Generate scramble from state'
                 })}
               </button>

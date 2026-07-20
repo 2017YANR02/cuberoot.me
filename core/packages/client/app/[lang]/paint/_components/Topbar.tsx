@@ -14,10 +14,10 @@ import {
   Boxes,
   Images,
   Check,
-  Loader2,
   CloudOff,
   Keyboard,
 } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import { usePaint } from '../_lib/store';
@@ -239,7 +239,7 @@ export default function Topbar({ viewport, onOpenShorthand, onOpenDrawings, onOp
         )}
         {saveState === 'saving' && (
           <span className="paint-save-badge">
-            <Loader2 size={12} className="paint-spin" />
+            <Spinner size={12} />
             <span className="paint-hide-narrow">{t('保存中', 'Saving')}</span>
           </span>
         )}

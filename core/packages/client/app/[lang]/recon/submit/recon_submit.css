@@ -366,7 +366,6 @@
   color: var(--muted-foreground);
   font-size: 0.9rem;
 }
-.rr-spin { animation: submit-hint-spin 0.7s linear infinite; }
 .rr-grid {
   list-style: none;
   margin: 0;
@@ -786,11 +785,6 @@
   align-items: center;
   gap: 4px;
 }
-.submit-hint-loading svg {
-  animation: submit-hint-spin 0.7s linear infinite;
-}
-@keyframes submit-hint-spin { to { transform: rotate(360deg); } }
-
 /* --- 重复警告 --- */
 .submit-warning {
   display: flex;

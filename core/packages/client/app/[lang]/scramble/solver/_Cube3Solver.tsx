@@ -20,7 +20,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQueryState, parseAsStringEnum } from 'nuqs';
-import { Loader2, Download, X, HelpCircle } from 'lucide-react';
+import { Download, X, HelpCircle } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { streamApiUrl } from '@/lib/api-base';
 import { persistItem } from '@/lib/safe-storage';
@@ -1058,7 +1059,7 @@ export default function Cube3Solver() {
         <div className="cubeopt-info cubeopt-info-stack">
           {stateInfo && (
             <div className="ci-line">
-              {kociembaBusy && <Loader2 size={14} className="spinning" />}
+              {kociembaBusy && <Spinner size={14} />}
               <span className="ci-msg">{stateInfo}</span>
               {kociembaBusy && (
                 <ClearButton variant="standalone" onClick={cancelKociemba}
@@ -1068,7 +1069,7 @@ export default function Cube3Solver() {
           )}
           {cloudMode && cloudStatus && (
             <div className="ci-line">
-              {cloudBusy && <Loader2 size={14} className="spinning" />}
+              {cloudBusy && <Spinner size={14} />}
               <span className="ci-msg">{cloudStatus}</span>
               {cloudBusy && <span className="cloud-timer">{Math.floor(cloudLiveMs / 1000)}s</span>}
               {cloudBusy && (
@@ -1248,8 +1249,6 @@ const INLINE_CSS = `
   display: inline-flex; align-items: center; gap: 0.35rem;
   color: var(--text-muted, #aaa); font-size: 0.85rem;
 }
-.spinning { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 .progress {
   height: 6px; background: var(--panel-sub, #2a2a2a); border-radius: 3px;
   margin: 0.5rem 0; overflow: hidden;

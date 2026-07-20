@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { WcaPersonPicker } from '@cuberoot/shared';
 import { Download } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { useVizStore } from './_stores/viz_store';
 import { download as downloadCsv } from './_engine/csv_export';
 import { playerHSL } from './_engine/data_fetch';
@@ -161,7 +162,7 @@ export default function DistributionViz({ wcaId, eventId }: Props) {
 
       {loading && (
         <div className="loading-overlay">
-          <div className="loading-spinner" />
+          <Spinner size={40} className="loading-spinner" />
           <div className="loading-text">Loading...</div>
         </div>
       )}

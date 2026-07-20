@@ -8,7 +8,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { X, Search, Loader2, Film } from 'lucide-react';
+import { X, Search, Film } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listPersonRecons, getRecon } from '@/lib/recon-api';
 import { EventIcon } from '@/components/EventIcon';
@@ -123,7 +124,7 @@ export default function ReconReuseModal({ wcaId, isZh, onClose, onPick }: Props)
 
         <div className="rr-body">
           {all == null ? (
-            <div className="rr-state"><Loader2 size={18} className="rr-spin" /> {tr({ zh: '加载中…', en: 'Loading…'
+            <div className="rr-state"><Spinner size={18} /> {tr({ zh: '加载中…', en: 'Loading…'
             })}</div>
           ) : filtered.length === 0 ? (
             <div className="rr-state">
@@ -162,7 +163,7 @@ export default function ReconReuseModal({ wcaId, isZh, onClose, onPick }: Props)
                           </div>
                         )}
                         {single && <span className="rr-thumb-time">{single}</span>}
-                        {picking && <div className="rr-thumb-busy"><Loader2 size={20} className="rr-spin" /></div>}
+                        {picking && <div className="rr-thumb-busy"><Spinner size={20} label={tr({ zh: '加载中…', en: 'Loading…' })} /></div>}
                       </div>
                       <div className="rr-info">
                         <div className="rr-card-title">{title}</div>

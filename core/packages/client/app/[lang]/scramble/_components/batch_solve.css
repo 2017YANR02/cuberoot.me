@@ -107,14 +107,6 @@
   transition: width 0.15s linear;
 }
 
-.bsp-spin {
-  animation: bsp-spin 0.9s linear infinite;
-}
-
-@keyframes bsp-spin {
-  to { transform: rotate(360deg); }
-}
-
 /* ---- 汇总 ---- */
 .bsp-summary {
   display: flex;

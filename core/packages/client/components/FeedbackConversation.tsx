@@ -7,7 +7,8 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, CornerDownRight, Trash2 } from 'lucide-react';
+import { CornerDownRight, Trash2 } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { getOwnerKey, isAdmin } from '@/lib/auth-store';
 import { fetchFeedbackThread, replyToFeedback, deleteFeedbackMessage, type FeedbackMessage } from '@/lib/feedback-api';
@@ -96,7 +97,7 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
                     <span className="fbc-msg-confirm">
                       <button type="button" className="fbc-msg-del-yes" disabled={deleting === m.id}
                         onClick={() => void del(m.id)}>
-                        {deleting === m.id ? <Loader2 size={12} className="fbc-spin" /> : t('删除', 'Delete')}
+                        {deleting === m.id ? <Spinner size={12} label={t('删除中…', 'Deleting…')} /> : t('删除', 'Delete')}
                       </button>
                       <button type="button" className="fbc-msg-del-no" onClick={() => setConfirmId(null)}>
                         {t('取消', 'Cancel')}
@@ -129,7 +130,7 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
           placeholder={t('写一条回复…(Ctrl+Enter 发送)', 'Write a reply… (Ctrl+Enter to send)')}
         />
         <button type="button" className="fbc-send" onClick={() => void send()} disabled={!reply.trim() || sending}>
-          {sending ? <Loader2 size={14} className="fbc-spin" /> : <CornerDownRight size={14} />}
+          {sending ? <Spinner size={14} /> : <CornerDownRight size={14} />}
           {t('回复', 'Reply')}
         </button>
       </div>

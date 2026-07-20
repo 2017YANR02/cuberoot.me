@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import { useQueryStates, parseAsString } from 'nuqs';
 import Link from '@/components/AppLink';
 import { RefreshCw, Download, X, Edit3, Image as ImageIcon, ImageOff, Dices } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { EventIcon } from '@/components/EventIcon';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import NumberCommitInput from '@/components/NumberCommitInput';
@@ -1397,7 +1398,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         // 内嵌模式:加载中 / 加载失败(error 已在上方渲染)的占位。
         !error ? (
           <div className="gen-tn-empty">
-            <RefreshCw size={14} className="gen-spin" /> {t('加载打乱中…', 'Loading scrambles…')}
+            <Spinner size={14} /> {t('加载打乱中…', 'Loading scrambles…')}
           </div>
         ) : null
       ) : enabledEvents.length === 0 ? (

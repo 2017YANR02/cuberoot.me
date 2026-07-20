@@ -170,14 +170,6 @@
   padding: 10px 14px;
 }
 
-/* ─── spinner ─── */
-.forum-editor-spin {
-  animation: forum-editor-spin 0.9s linear infinite;
-}
-@keyframes forum-editor-spin {
-  to { transform: rotate(360deg); }
-}
-
 /* ─── 移动端:source 在上、preview 在下(不并排)─── */
 @media (max-width: 768px) {
   .forum-editor-split {

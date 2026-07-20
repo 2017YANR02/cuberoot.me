@@ -7,7 +7,8 @@
  * 返回二维码(微信 Native / 虎皮椒 PC)→ 弹窗内扫码 + 轮询查单,成功 onPaid()。
  */
 import { useEffect, useRef, useState } from 'react';
-import { X, Loader2, Smartphone, Check } from 'lucide-react';
+import { X, Smartphone, Check } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
@@ -88,14 +89,14 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
             <div className="mem-pay-channels">
               {showAlipay && (
                 <button className="mem-pay-ch mem-pay-ch-alipay" disabled={creating} onClick={() => start('alipay')}>
-                  {creating && channel === 'alipay' ? <Loader2 size={16} className="mem-spin" /> : null}
+                  {creating && channel === 'alipay' ? <Spinner size={16} /> : null}
                   {tr({ zh: '支付宝', en: 'Alipay'
                   })}
                 </button>
               )}
               {showWechat && (
                 <button className="mem-pay-ch mem-pay-ch-wechat" disabled={creating} onClick={() => start('wechat')}>
-                  {creating && channel === 'wechat' ? <Loader2 size={16} className="mem-spin" /> : null}
+                  {creating && channel === 'wechat' ? <Spinner size={16} /> : null}
                   {tr({ zh: '微信支付', en: 'WeChat Pay' })}
                 </button>
               )}
@@ -130,7 +131,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
               </a>
             )}
             <div className="mem-pay-waiting">
-              <Loader2 size={14} className="mem-spin" /> {tr({ zh: '等待支付结果…', en: 'Waiting for payment…'
+              <Spinner size={14} /> {tr({ zh: '等待支付结果…', en: 'Waiting for payment…'
             })}
             </div>
             <p className="mem-pay-tip">

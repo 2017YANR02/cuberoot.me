@@ -16,7 +16,7 @@
 
 import { useEffect, useMemo } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { LoaderCircle } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
@@ -157,7 +157,7 @@ export default function PuzzleSolverPage<R extends SolverResultBase>({ spec }: {
                 )}
                 {state.kind === 'solving' && (
                   <p className="pos-result-solved">
-                    <LoaderCircle size={16} className="pos-spin" aria-hidden style={{ verticalAlign: '-3px', marginRight: 6 }} />
+                    <Spinner size={16} />
                     {tr(spec.solvingText)}
                   </p>
                 )}

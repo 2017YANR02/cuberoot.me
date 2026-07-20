@@ -31,7 +31,8 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { X, Loader2 } from 'lucide-react';
+import { X } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { getCaretRect } from '@/lib/textarea_caret';
 import { isAlgPrefix } from '@/lib/cube3';
 import { buildCommentSuggestions } from '@/lib/popup_suggest';
@@ -630,7 +631,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
     >
       {loading && (
         <div className="recon-autofill-empty recon-autofill-loading">
-          <Loader2 size={13} className="recon-autofill-spin" />
+          <Spinner size={13} />
           {tr({ zh: '正在计算最优十字…', en: 'Solving optimal cross…' })}
         </div>
       )}
