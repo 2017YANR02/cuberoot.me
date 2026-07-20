@@ -28,8 +28,8 @@
   display: inline-flex;
 }
 .more-menu-btn.open {
-  background: #25252a;
-  border-color: #555;
+  background: var(--shell-hover);
+  border-color: var(--border-strong);
 }
 .more-menu-panel {
   position: absolute;
@@ -37,10 +37,10 @@
   right: 0;
   min-width: 200px;
   max-width: 240px;
-  background: #1a1a1d;
-  border: 1px solid #333;
+  background: var(--popover);
+  border: 1px solid var(--border-default);
   border-radius: 6px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--foreground) 40%, transparent);
   padding: 4px;
   z-index: 50;
   display: flex;
@@ -55,7 +55,7 @@
   background: transparent;
   border: 0;
   border-radius: 4px;
-  color: #ededed;
+  color: var(--foreground);
   font-size: 13px;
   text-align: left;
   cursor: pointer;
@@ -64,18 +64,17 @@
   text-overflow: ellipsis;
 }
 .more-menu-item:hover:not(:disabled) {
-  background: #25252a;
+  background: var(--shell-hover);
 }
 .more-menu-item:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 .more-menu-item.danger {
-  color: #e88;
+  color: var(--destructive);
 }
 .more-menu-item.danger:hover:not(:disabled) {
-  background: #4a1f1f;
-  color: #fcc;
+  background: color-mix(in srgb, var(--destructive) 14%, transparent);
 }
 .more-menu-icon {
   display: inline-flex;
@@ -83,9 +82,9 @@
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
-.more-menu-item.danger .more-menu-icon { color: #e88; }
+.more-menu-item.danger .more-menu-icon { color: var(--destructive); }
 .more-menu-label {
   flex: 1 1 auto;
   overflow: hidden;
@@ -93,26 +92,18 @@
 }
 
 /* --- Scramble strip ----------------------------------------- */
+/* 内距 / 字体 / 字号 / 底色 / 下边框都由 shell.css 的 .timing-surface-scramble .scramble-strip
+   接管(它把底色改成 transparent、边框去掉,让打乱区直接坐在壳背景上)。 */
 .scramble-strip {
-  padding: 14px 24px;
   text-align: center;
-  font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-  font-size: clamp(14px, 2vw, 20px);
   line-height: 1.5;
   word-spacing: 0.25em;
-  color: #ddd;
-  background: #131316;
-  border-bottom: 1px solid #1f1f23;
+  color: var(--foreground);
   flex: 0 0 auto;
   cursor: pointer;
   white-space: pre-wrap;
 }
-.scramble-strip:hover { color: #fff; }
-
-.scramble-strip .scramble-empty {
-  color: #555;
-  font-style: italic;
-}
+.scramble-strip .scramble-empty { font-style: italic; }
 
 /* WCA 真实打乱来源行(国旗 + 比赛名 + 项目 + 轮次 + 打卡 chip),复刻首页 RecentScrambles 的来源行。
    父 .scramble-strip 是 flex-wrap 行容器(见 shell.css),所以本行必须 flex-basis:100% 独占整行,
@@ -138,24 +129,17 @@
   line-height: 1.3;
   word-spacing: normal;
   text-decoration: none;
-  color: #7d7d85;
+  color: var(--muted-foreground);
 }
-.scramble-src-name { font-weight: 600; color: #b6b6bd; }
-.scramble-src:hover .scramble-src-name { color: #fff; }
+.scramble-src-name { font-weight: 600; color: var(--foreground); }
 .scramble-src-evt { width: 1.05em; height: 1.05em; flex-shrink: 0; }
-.scramble-src-meta { color: #7d7d85; }
-:root[data-timer-theme="light"] .scramble-src { color: #888; }
-:root[data-timer-theme="light"] .scramble-src-name { color: #444; }
-:root[data-timer-theme="light"] .scramble-src:hover .scramble-src-name { color: #111; }
-:root[data-timer-theme="light"] .scramble-src-meta { color: #888; }
+.scramble-src-meta { color: var(--muted-foreground); }
 
 /* 稀有筛选下的真题遍历计数(见 SoloView 的 poolRun):只有当匹配全集确切已知且有限时才渲染
    —— 常见档总数未知,整块不出现。默认与来源徽标同一档静音灰(只是背景信息);练满全集后转
    .done(琥珀 + 循环图标),明示之后是重复出题。与来源徽标同在 .scramble-src-row,间距靠该 row
    的 gap,不自带 margin、不加外框。字体/word-spacing 复位同 .scramble-src(父级是等宽打乱区),
-   nowrap 防这类短 CJK 标签在窄屏被拆行。
-   颜色沿用本区块的 data-timer-theme 双写而非 :root token:计时器外壳有自己的明暗(与站点主题
-   独立),用 --muted-foreground 会在「站点浅色 + 计时器深色」下变成深底深字。 */
+   nowrap 防这类短 CJK 标签在窄屏被拆行。 */
 .scramble-pool-run {
   display: inline-flex;
   align-items: center;
@@ -165,12 +149,10 @@
   line-height: 1.3;
   word-spacing: normal;
   white-space: nowrap;
-  color: #7d7d85;
+  color: var(--muted-foreground);
 }
 .scramble-pool-run svg { flex-shrink: 0; }
-.scramble-pool-run.done { color: #d4a259; }
-:root[data-timer-theme="light"] .scramble-pool-run { color: #888; }
-:root[data-timer-theme="light"] .scramble-pool-run.done { color: #9a6b28; }
+.scramble-pool-run.done { color: var(--signal-warning); }
 
 /* 打卡:来源行旁的「N 人做过」chip + 名单弹层。与 .scramble-src 同字体复位;和来源徽标同在
    .scramble-src-row 内,行内间距靠该 row 的 gap,这里不再自带 margin。 */
@@ -187,14 +169,14 @@
   gap: 4px;
   font-size: 12px;
   line-height: 1.3;
-  color: #7d7d85;
+  color: var(--muted-foreground);
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
 }
-.scramble-marks-chip:hover { color: #fff; }
-.scramble-marks-chip.marked { color: #66bb6a; }
+.scramble-marks-chip:hover { color: var(--foreground); }
+.scramble-marks-chip.marked { color: var(--signal-success); }
 .scramble-marks-pop {
   position: absolute;
   top: calc(100% + 8px);
@@ -206,11 +188,11 @@
   text-align: left;
   font-size: 12.5px;
   line-height: 1.4;
-  color: #ccc;
-  background: #1a1a1e;
-  border: 1px solid #2a2a30;
+  color: var(--foreground);
+  background: var(--popover);
+  border: 1px solid var(--shell-divider);
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 45%, transparent);
   cursor: default;
 }
 .scramble-marks-list {
@@ -228,192 +210,101 @@
   white-space: nowrap;
 }
 .scramble-marks-name {
-  color: #d6d6dc;
+  color: var(--foreground);
   text-decoration: none;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.scramble-marks-name:hover { color: #fff; }
-.scramble-marks-time { color: #66bb6a; font-variant-numeric: tabular-nums; }
-.scramble-marks-date { color: #6a6a72; margin-left: auto; font-size: 11px; }
+.scramble-marks-time { color: var(--signal-success); font-variant-numeric: tabular-nums; }
+.scramble-marks-date { color: var(--faint-foreground); margin-left: auto; font-size: 11px; }
 .scramble-marks-all {
   display: block;
   padding: 6px 12px 8px;
-  color: #7d7d85;
+  color: var(--muted-foreground);
   text-decoration: none;
   font-size: 12px;
 }
-.scramble-marks-all:hover { color: #fff; }
-:root[data-timer-theme="light"] .scramble-marks-chip { color: #888; }
-:root[data-timer-theme="light"] .scramble-marks-chip:hover { color: #111; }
-:root[data-timer-theme="light"] .scramble-marks-chip.marked { color: #2e7d32; }
-:root[data-timer-theme="light"] .scramble-marks-pop {
-  color: #333;
-  background: #fff;
-  border-color: #ddd;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
-:root[data-timer-theme="light"] .scramble-marks-name { color: #333; }
-:root[data-timer-theme="light"] .scramble-marks-name:hover { color: #000; }
-:root[data-timer-theme="light"] .scramble-marks-time { color: #2e7d32; }
-:root[data-timer-theme="light"] .scramble-marks-date { color: #999; }
-:root[data-timer-theme="light"] .scramble-marks-all { color: #888; }
-:root[data-timer-theme="light"] .scramble-marks-all:hover { color: #111; }
+.scramble-marks-all:hover { color: var(--foreground); }
 
+/* 字号是本文件唯一还生效的 .timer-display 声明 —— 字体 / 颜色 / 发光 / 过渡,以及全部状态色
+   (holding / ready / inspection 各档)都由 shell.css 的 .timing-surface .timer-display 接管
+   (那边有 --timer-idle / -holding / -warn8 等专用 token,特异性更高)。 */
 .timer-display {
-  font-family: 'Segment7Standard', 'SF Mono', Menlo, Consolas, 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
   font-size: clamp(64px, 14vw, 192px);
-  letter-spacing: 0.02em;
-  color: #ededed;
-  text-shadow: 0 0 30px rgba(240, 235, 227, 0.08);
-  transition: color 0.15s;
-  line-height: 1;
 }
 /* 分钟冒号(Segment7 的 ':' 是横杠)统一走 components/SegmentTime + globals.css 的
    .timer-colon —— /timer 与训练器共用一份,不再各存一份。 */
 
-.timer-display.holding { color: #ef5350; text-shadow: 0 0 30px rgba(239, 83, 80, 0.5); }
-.timer-display.ready   { color: #66bb6a; text-shadow: 0 0 40px rgba(102, 187, 106, 0.6); }
-.timer-display.running { color: #ededed; }
-.timer-display.dnf     { color: #aaa; }
-
-/* Inspection countdown coloring — gentle yellow → amber → red as it elapses.
-   Tiers mirror WCA judge calls (8s, 12s) and the 15s overrun threshold; at
-   plus-2 territory the display flashes to nudge the user to start. */
-.timer-display.inspection         { color: #ffd54f; }
-.timer-display.inspection-warn-8  { color: #ffb74d; text-shadow: 0 0 20px rgba(255, 183, 77, 0.4); }
-.timer-display.inspection-warn-12 { color: #ef5350; text-shadow: 0 0 22px rgba(239, 83, 80, 0.5); }
-.timer-display.inspection-plus2   {
-  color: #ef5350;
-  text-shadow: 0 0 28px rgba(239, 83, 80, 0.7);
-  animation: inspection-flash 0.5s steps(2, end) infinite;
-}
-.timer-display.inspection-dnf     { color: #b0bec5; }
+/* 检查计时进入 +2 档的闪烁:shell.css 只负责换颜色,动画留在这里。 */
+.timer-display.inspection-plus2 { animation: inspection-flash 0.5s steps(2, end) infinite; }
 @keyframes inspection-flash {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.4; }
 }
 
-/* Face-turn-during-inspection warning (smartcube only). */
+/* Face-turn-during-inspection warning (smartcube only)。排版 + 底色 + 文字色全部由 shell.css
+   的 .timing-surface .inspection-illegal-warn(0,2,0)接管,这里只剩它没设的边框和字距。 */
 .inspection-illegal-warn {
-  margin-top: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  background: rgba(239, 83, 80, 0.1);
-  border: 1px solid rgba(239, 83, 80, 0.45);
-  border-radius: 999px;
-  font-size: 12px;
-  color: #ef9a9a;
+  border: 1px solid color-mix(in srgb, var(--destructive) 45%, transparent);
   font-family: inherit;
   letter-spacing: 0.02em;
 }
 .inspection-illegal-warn svg { flex-shrink: 0; }
 
+/* 文字色 / code 底色由 shell.css 的 .timing-surface .timer-hint 定。 */
 .timer-hint {
   margin-top: 14px;
-  font-size: 13px;
-  color: #666;
   letter-spacing: 0.04em;
 }
 .timer-hint code {
-  background: #1a1a1d;
-  border: 1px solid #2a2a2e;
+  border: 1px solid var(--shell-divider);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: inherit;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 
-.timer-stage-splits {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+/* 弹性排布由 shell.css 的 .timing-surface .timer-stage-splits 定。 */
+.timer-stage-splits { margin-top: 12px; }
+/* 阶段计时 chip:底色 / 文字色 / 内距 / 字体都由 shell.css 的 .timing-surface .stage-chip
+   接管,这里只补它没设的边框和宽度。 */
 .stage-chip {
-  background: #1a1a1d;
-  border: 1px solid #2a2a2e;
-  border-radius: 999px;
-  padding: 4px 12px;
-  font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
-  font-size: 13px;
-  color: #888;
+  border: 1px solid var(--shell-divider);
   min-width: 56px;
   text-align: center;
 }
-.stage-chip.done {
-  background: #1f3d2a;
-  border-color: #4d995a;
-  color: #9fd9ad;
-}
+.stage-chip.done { border-color: color-mix(in srgb, var(--signal-success) 45%, transparent); }
 .stage-chip-action {
-  cursor: pointer;
   font: inherit;
-  background: #2a3a4d;
-  border-color: #4a6d99;
-  color: #cce0ff;
   min-width: 0;
-  padding: 6px 16px;
 }
-.stage-chip-action:hover { background: #344a66; }
-.stage-chip-action:active { background: #1f2a3a; }
 
 /* --- Target time (time-attack mode) ------------------------- */
 /* Live indicator under the running timer: small monospace pill with a target
    icon, the target time, and the live delta (target - current). */
+/* 排布 + 文字色由 shell.css 的 .timing-surface .timer-target-indicator 定;这里补药丸外观。 */
 .timer-target-indicator {
   margin-top: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   padding: 4px 12px;
-  background: rgba(91, 157, 217, 0.08);
-  border: 1px solid rgba(91, 157, 217, 0.35);
+  background: color-mix(in srgb, var(--signal-info) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal-info) 35%, transparent);
   border-radius: 999px;
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
-  font-size: 12px;
-  color: #aac9e0;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
 .timer-target-indicator svg { flex-shrink: 0; opacity: 0.85; }
-.timer-target-indicator .target-delta { color: #cde; }
+.timer-target-indicator .target-delta { color: var(--foreground); }
+/* 超时态:文字色由 shell.css 的 .timing-surface .timer-target-indicator.overshot 定。 */
 .timer-target-indicator.overshot {
-  background: rgba(239, 83, 80, 0.1);
-  border-color: rgba(239, 83, 80, 0.45);
-  color: #ef9a9a;
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
 }
-.timer-target-indicator.overshot .target-delta { color: #ffb1ad; }
+.timer-target-indicator.overshot .target-delta { color: var(--destructive); }
 
-/* Post-stop pulse: 1s subtle flash. Green if final <= target, red otherwise. */
-@keyframes target-pulse-good {
-  0%, 100% { color: inherit; text-shadow: none; }
-  40%      { color: #66bb6a; text-shadow: 0 0 36px rgba(102, 187, 106, 0.55); }
-}
-@keyframes target-pulse-bad {
-  0%, 100% { color: inherit; text-shadow: none; }
-  40%      { color: #ef5350; text-shadow: 0 0 36px rgba(239, 83, 80, 0.55); }
-}
-
-/* Light-theme tweaks for the indicator. */
-:root[data-timer-theme="light"] .timer-target-indicator {
-  background: rgba(47, 111, 176, 0.08);
-  border-color: rgba(47, 111, 176, 0.35);
-  color: #2f6fb0;
-}
-:root[data-timer-theme="light"] .timer-target-indicator .target-delta { color: #1d4d80; }
-:root[data-timer-theme="light"] .timer-target-indicator.overshot {
-  background: rgba(211, 47, 47, 0.08);
-  border-color: rgba(211, 47, 47, 0.35);
-  color: #c33;
-}
-:root[data-timer-theme="light"] .timer-target-indicator.overshot .target-delta { color: #b71c1c; }
+/* 停表脉冲(target-pulse-good/bad)不在这里 —— SoloView 把这两个类挂在 .timing-surface 上,
+   shell.css 用一次性换色实现,没有 @keyframes。 */
 
 /* Stats summary */
 .stats-panel {
@@ -626,21 +517,21 @@
 .case-stats-panel {
   padding: 14px 18px;
   overflow: hidden;
-  border-right: 1px solid #1f1f23;
+  border-right: 1px solid var(--shell-divider);
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 .case-stats-panel h3 {
   font-size: 12px;
-  color: #888;
+  color: var(--muted-foreground);
   margin: 0 0 8px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .case-stats-empty {
   font-size: 12px;
-  color: #555;
+  color: var(--faint-foreground);
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
 }
 .case-stats-scroll {
@@ -656,40 +547,27 @@
 .case-stats-table th {
   text-align: left;
   font-size: 10px;
-  color: #777;
+  color: var(--faint-foreground);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 4px 6px;
-  border-bottom: 1px solid #2a2a2e;
+  border-bottom: 1px solid var(--shell-divider);
   position: sticky;
   top: 0;
-  background: #131316;
+  background: var(--background);
 }
 .case-stats-table td {
   padding: 4px 6px;
-  border-bottom: 1px dashed #1f1f23;
-  color: #ededed;
+  border-bottom: 1px dashed var(--shell-divider);
+  color: var(--foreground);
 }
 .case-stats-table td:first-child {
-  color: #c8c2b8;
+  color: var(--foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 140px;
 }
-:root[data-timer-theme="light"] .case-stats-panel {
-  border-right-color: #e0e0e3;
-}
-:root[data-timer-theme="light"] .case-stats-table th {
-  background: #fff;
-  border-bottom-color: #e0e0e3;
-  color: #888;
-}
-:root[data-timer-theme="light"] .case-stats-table td {
-  color: #1d1d1f;
-  border-bottom-color: #eee;
-}
-:root[data-timer-theme="light"] .case-stats-table td:first-child { color: #444; }
 
 /* History list */
 .history-panel {
@@ -700,10 +578,10 @@
 .history-header {
   padding: 10px 14px;
   font-size: 12px;
-  color: #888;
+  color: var(--muted-foreground);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-bottom: 1px solid #1f1f23;
+  border-bottom: 1px solid var(--shell-divider);
   display: flex;
   justify-content: space-between;
 }
@@ -719,14 +597,14 @@
   gap: 8px;
   align-items: center;
   padding: 6px 14px;
-  border-bottom: 1px solid #15151a;
+  border-bottom: 1px solid var(--shell-divider);
   cursor: pointer;
   transition: background 0.1s;
 }
-.history-row:hover { background: #161619; }
-.history-row .idx { color: #555; font-size: 11px; text-align: right; }
+.history-row:hover { background: var(--shell-hover); }
+.history-row .idx { color: var(--faint-foreground); font-size: 11px; text-align: right; }
 .history-row .time .penalty-flag {
-  color: #aaa;
+  color: var(--muted-foreground);
   margin-left: 6px;
   font-size: 11px;
 }
@@ -746,17 +624,17 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #121214;
-  border-bottom: 1px solid #1f1f23;
+  background: var(--background);
+  border-bottom: 1px solid var(--shell-divider);
   font-size: 11px;
-  color: #888;
+  color: var(--muted-foreground);
 }
 .history-cols-head .idx { text-align: right; }
 /* Match .record-num-cell's badge reserve so the label sits over the numbers. */
-.history-cols-head .hao-head { text-align: right; color: #6aa3c8; padding-right: 22px; }
+.history-cols-head .hao-head { text-align: right; color: var(--signal-info); padding-right: 22px; }
 .history-row .hao {
   text-align: right;
-  color: #9a9aa0;
+  color: var(--muted-foreground);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
@@ -764,7 +642,7 @@
 .history-empty {
   padding: 30px 20px;
   text-align: center;
-  color: #555;
+  color: var(--faint-foreground);
   font-size: 13px;
 }
 
@@ -773,7 +651,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  border-bottom: 1px solid #1f1f23;
+  border-bottom: 1px solid var(--shell-divider);
 }
 .history-search-input-wrap {
   position: relative;
@@ -786,37 +664,29 @@
   flex: 1;
   min-width: 0;
   padding: 6px 26px 6px 10px;
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--background);
+  border: 1px solid var(--shell-divider);
   border-radius: 4px;
-  color: #ededed;
+  color: var(--foreground);
   font-family: inherit;
   font-size: 12px;
   box-sizing: border-box;
 }
-.history-search .history-search-input::placeholder { color: #555; }
+.history-search .history-search-input::placeholder { color: var(--faint-foreground); }
 .history-search .history-search-input:focus {
   outline: none;
-  border-color: #4d7a99;
+  border-color: color-mix(in srgb, var(--signal-info) 45%, transparent);
 }
 .history-search-count {
   flex-shrink: 0;
   font-size: 11px;
-  color: #777;
+  color: var(--faint-foreground);
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
-:root[data-timer-theme="light"] .history-search { border-bottom-color: #eee; }
-:root[data-timer-theme="light"] .history-search .history-search-input {
-  background: #fff;
-  color: #1d1d1f;
-  border-color: #d0d0d4;
-}
-:root[data-timer-theme="light"] .history-search .history-search-input::placeholder { color: #999; }
-:root[data-timer-theme="light"] .history-search-count { color: #888; }
 .history-row .comment-flag {
   margin-left: 6px;
-  color: #5b9dd9;
+  color: var(--signal-info);
   font-weight: 700;
   font-size: 14px;
   cursor: help;
@@ -846,7 +716,7 @@
 }
 .subx-fill {
   height: 100%;
-  background: linear-gradient(90deg, #5b9dd9, #66bb6a);
+  background: linear-gradient(90deg, var(--signal-info), var(--signal-success));
   transition: width 0.3s;
 }
 
@@ -854,7 +724,7 @@
 .timer-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: color-mix(in srgb, var(--foreground) 70%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -862,8 +732,8 @@
   padding: 20px;
 }
 .timer-modal {
-  background: #1a1a1d;
-  border: 1px solid #333;
+  background: var(--popover);
+  border: 1px solid var(--border-default);
   border-radius: 8px;
   padding: 20px;
   max-width: 480px;
@@ -874,19 +744,19 @@
 .timer-modal h2 {
   margin: 0 0 12px;
   font-size: 18px;
-  color: #fff;
+  color: var(--foreground);
 }
 .timer-modal .modal-section {
   margin-bottom: 14px;
   font-size: 13px;
-  color: #ccc;
+  color: var(--foreground);
 }
 .timer-modal .modal-section .scramble-text {
   font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-  background: #0e0e10;
+  background: var(--background);
   padding: 8px 10px;
   border-radius: 4px;
-  border: 1px solid #2a2a2e;
+  border: 1px solid var(--shell-divider);
   margin-top: 4px;
   word-spacing: 0.25em;
   white-space: pre-wrap;
@@ -897,11 +767,11 @@
   gap: 10px;
   flex-wrap: wrap;
 }
-.solve-move-label { color: #ccc; }
+.solve-move-label { color: var(--foreground); }
 .solve-move-select {
-  background: #0e0e10;
-  color: #ededed;
-  border: 1px solid #333;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
   border-radius: 4px;
   padding: 4px 8px;
   font-size: 13px;
@@ -915,19 +785,19 @@
   flex-wrap: wrap;
 }
 .timer-modal .modal-actions .modal-action-btn {
-  background: #25252a;
-  color: #ededed;
-  border: 1px solid #444;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
   border-radius: 6px;
   padding: 7px 14px;
   font-size: 13px;
   cursor: pointer;
 }
-.timer-modal .modal-actions .modal-action-btn:hover { background: #2f2f35; }
-.timer-modal .modal-actions .modal-action-btn.danger { color: #f88; border-color: #633; }
-.timer-modal .modal-actions .modal-action-btn.danger:hover { background: #4a1f1f; }
-.timer-modal .modal-actions .modal-action-btn.primary { background: #2a3d4d; border-color: #4d7a99; color: #cde; }
-.timer-modal .modal-actions .modal-action-btn.primary:hover { background: #345169; }
+.timer-modal .modal-actions .modal-action-btn:hover { background: var(--shell-hover); }
+.timer-modal .modal-actions .modal-action-btn.danger { color: var(--destructive); border-color: color-mix(in srgb, var(--destructive) 45%, transparent); }
+.timer-modal .modal-actions .modal-action-btn.danger:hover { background: color-mix(in srgb, var(--destructive) 14%, transparent); }
+.timer-modal .modal-actions .modal-action-btn.primary { background: color-mix(in srgb, var(--signal-info) 14%, transparent); border-color: color-mix(in srgb, var(--signal-info) 45%, transparent); color: var(--foreground); }
+.timer-modal .modal-actions .modal-action-btn.primary:hover { background: color-mix(in srgb, var(--signal-info) 22%, transparent); }
 .solver-modal-head {
   display: flex;
   align-items: center;
@@ -958,10 +828,10 @@
   width: 100%;
   margin-top: 4px;
   padding: 8px 10px;
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--background);
+  border: 1px solid var(--shell-divider);
   border-radius: 4px;
-  color: #ededed;
+  color: var(--foreground);
   font-family: inherit;
   font-size: 13px;
   resize: vertical;
@@ -969,7 +839,7 @@
 }
 .timer-modal .comment-textarea:focus {
   outline: none;
-  border-color: #4d7a99;
+  border-color: color-mix(in srgb, var(--signal-info) 45%, transparent);
 }
 .timer-modal .modal-cube-row {
   display: flex;
@@ -992,21 +862,21 @@
   border-radius: 3px;
 }
 .stage-splits-table .stage-row:nth-child(odd) { background: rgba(255, 255, 255, 0.02); }
-.stage-splits-table .stage-name { color: #aaa; }
-.stage-splits-table .stage-dur { color: #ededed; }
-.stage-splits-table .stage-cum { color: #5b9dd9; text-align: right; }
+.stage-splits-table .stage-name { color: var(--muted-foreground); }
+.stage-splits-table .stage-dur { color: var(--foreground); }
+.stage-splits-table .stage-cum { color: var(--signal-info); text-align: right; }
 .stage-splits-table .stage-total {
-  border-top: 1px solid #2a2a2e;
+  border-top: 1px solid var(--shell-divider);
   padding-top: 6px;
   margin-top: 4px;
 }
-.stage-splits-table .stage-total .stage-cum { color: #ffd54f; font-weight: 700; }
+.stage-splits-table .stage-total .stage-cum { color: var(--signal-warning); font-weight: 700; }
 
 /* --- SettingsPanel --- */
 .settings-modal { max-width: 540px; }
 .settings-modal .settings-h3 {
   font-size: 13px;
-  color: #aaa;
+  color: var(--muted-foreground);
   margin: 0 0 8px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1014,7 +884,7 @@
 .settings-gesture-hint {
   margin: 0 0 12px;
   font-size: 12px;
-  color: #888;
+  color: var(--muted-foreground);
 }
 @keyframes pb-toast-in {
   from { opacity: 0; transform: translateX(40px); }
@@ -1037,8 +907,8 @@
   justify-content: space-between;
   gap: 8px;
   padding: 6px 8px;
-  background: #1a1a1f;
-  border: 1px solid #2a2a30;
+  background: var(--popover);
+  border: 1px solid var(--shell-divider);
   border-radius: 4px;
 }
 .cstimer-import-info {
@@ -1048,7 +918,7 @@
   flex: 1;
 }
 .cstimer-import-name {
-  color: #ddd;
+  color: var(--foreground);
   font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1061,20 +931,15 @@
 }
 .cstimer-import-actions .hint-btn {
   background: transparent;
-  border: 1px solid #333;
-  color: #aaa;
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
   border-radius: 4px;
   padding: 2px 8px;
   cursor: pointer;
 }
-.cstimer-import-actions .hint-btn:hover { background: #25252a; color: #fff; }
+.cstimer-import-actions .hint-btn:hover { background: var(--shell-hover); color: var(--foreground); }
 .cstimer-import-actions .hint-btn:disabled { opacity: 0.5; cursor: default; }
-.cstimer-import-actions .hint-btn:disabled:hover { background: transparent; color: #aaa; }
-:root[data-timer-theme="light"] .cstimer-import-row {
-  background: #f4f4f6;
-  border-color: #ddd;
-}
-:root[data-timer-theme="light"] .cstimer-import-name { color: #222; }
+.cstimer-import-actions .hint-btn:disabled:hover { background: transparent; color: var(--muted-foreground); }
 
 .color-grid {
   display: grid;
@@ -1088,26 +953,26 @@
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 .color-cell input[type="color"] {
   width: 40px; height: 28px;
   background: transparent;
-  border: 1px solid #333;
+  border: 1px solid var(--border-default);
   border-radius: 4px;
   cursor: pointer;
   padding: 0;
 }
 .reset-btn {
-  background: #25252a;
-  color: #ccc;
-  border: 1px solid #333;
+  background: var(--shell-chip);
+  color: var(--muted-foreground);
+  border: 1px solid var(--border-default);
   border-radius: 4px;
   padding: 4px 10px;
   font-size: 12px;
   cursor: pointer;
 }
-.reset-btn:hover { background: #2f2f35; color: #fff; }
+.reset-btn:hover { background: var(--shell-hover); color: var(--foreground); }
 
 /* --- Shortcuts modal --- */
 .shortcuts-modal { max-width: 560px; }
@@ -1124,66 +989,32 @@
   font-size: 13px;
 }
 .shortcut-row .shortcut-keys { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
-.shortcut-row .shortcut-desc { color: #ccc; }
+.shortcut-row .shortcut-desc { color: var(--foreground); }
 .shortcut-row kbd {
-  background: #0e0e10;
-  border: 1px solid #333;
+  background: var(--background);
+  border: 1px solid var(--border-default);
   border-bottom-width: 2px;
   border-radius: 4px;
   padding: 2px 6px;
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-size: 12px;
-  color: #ededed;
+  color: var(--foreground);
   min-width: 18px;
   text-align: center;
   display: inline-block;
 }
-.shortcut-row .key-sep { color: #555; margin: 0 2px; }
-:root[data-timer-theme="light"] .shortcut-row kbd {
-  background: #fff; border-color: #d0d0d4; color: #1d1d1f;
-}
-.cube-preview-toggle {
-  /* Visible on every breakpoint — actual `display: inline-flex` is set by
-     the universal rule below the CollapseSection block. */
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: 0;
-  color: #888;
-  font-size: 11px;
-  padding: 4px 10px;
-  cursor: pointer;
-  letter-spacing: 0.04em;
-}
-.cube-preview-toggle:hover { color: #ccc; }
-:root[data-timer-theme="light"] .cube-preview-toggle { color: #888; }
-:root[data-timer-theme="light"] .cube-preview-toggle:hover { color: #333; }
-
-/* Desktop (>480px): cap the unfolded "+"-shape net so it doesn't dominate
-   the page. The inner SVG already scales — the wrapper enforces the ceiling. */
-@media (min-width: 481px) {
-  .timer-cube-preview {
-    max-height: 240px;
-    overflow: hidden;
-  }
-  .timer-cube-preview svg {
-    max-height: 240px;
-    width: auto;
-  }
-}
-
+.shortcut-row .key-sep { color: var(--faint-foreground); margin: 0 2px; }
 /* --- Empty-state hints for charts (Distribution / Trend).
    Replaces the previous full-frame "Need 5+ solves" SVG; just a single dim
    line so <5-solve users don't see two big empty rectangles in the bottom
    panel. */
 .chart-empty-hint {
   font-size: 12px;
-  color: #666;
+  color: var(--faint-foreground);
   font-style: italic;
   padding: 6px 2px 10px;
   letter-spacing: 0.02em;
 }
-:root[data-timer-theme="light"] .chart-empty-hint { color: #999; }
 
 /* --- Stats panel expand toggle (compact mode).
    Shown when fewer than 4 average rows are populated. Click to reveal the
@@ -1191,8 +1022,8 @@
 .stats-expand-toggle {
   margin-top: 8px;
   background: transparent;
-  border: 1px solid #2a2a2e;
-  color: #aaa;
+  border: 1px solid var(--shell-divider);
+  color: var(--muted-foreground);
   border-radius: 4px;
   padding: 4px 10px;
   font-size: 11px;
@@ -1200,18 +1031,9 @@
   cursor: pointer;
 }
 .stats-expand-toggle:hover {
-  background: #1a1a1d;
-  color: #fff;
-  border-color: #444;
-}
-:root[data-timer-theme="light"] .stats-expand-toggle {
-  border-color: #d0d0d4;
-  color: #666;
-}
-:root[data-timer-theme="light"] .stats-expand-toggle:hover {
-  background: #f0f0f3;
-  color: #1d1d1f;
-  border-color: #aab;
+  background: var(--popover);
+  color: var(--foreground);
+  border-color: var(--border-strong);
 }
 
 /* --- Practice heatmap "Show calendar" toggle (sparse mode).
@@ -1220,8 +1042,8 @@
 .tc-heatmap-expand-btn {
   margin-left: 8px;
   background: transparent;
-  border: 1px solid #2a2a2e;
-  color: #aaa;
+  border: 1px solid var(--shell-divider);
+  color: var(--muted-foreground);
   border-radius: 4px;
   padding: 2px 8px;
   font-size: 11px;
@@ -1229,54 +1051,10 @@
   letter-spacing: 0.02em;
 }
 .tc-heatmap-expand-btn:hover {
-  background: #1a1a1d;
-  color: #fff;
-  border-color: #444;
+  background: var(--popover);
+  color: var(--foreground);
+  border-color: var(--border-strong);
 }
-:root[data-timer-theme="light"] .tc-heatmap-expand-btn {
-  border-color: #d0d0d4;
-  color: #666;
-}
-:root[data-timer-theme="light"] .tc-heatmap-expand-btn:hover {
-  background: #f0f0f3;
-  color: #1d1d1f;
-  border-color: #aab;
-}
-:root[data-timer-theme="light"] .more-menu-btn.open {
-  background: #e8e8eb;
-  border-color: #aab;
-}
-:root[data-timer-theme="light"] .more-menu-panel {
-  background: #fff;
-  border-color: #d0d0d4;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
-}
-:root[data-timer-theme="light"] .more-menu-item {
-  color: #1d1d1f;
-}
-:root[data-timer-theme="light"] .more-menu-item:hover:not(:disabled) {
-  background: #f0f0f3;
-}
-:root[data-timer-theme="light"] .more-menu-item.danger { color: #b33; }
-:root[data-timer-theme="light"] .more-menu-item.danger:hover:not(:disabled) {
-  background: #fbe9e9;
-  color: #911;
-}
-:root[data-timer-theme="light"] .more-menu-icon { color: #666; }
-:root[data-timer-theme="light"] .more-menu-item.danger .more-menu-icon { color: #b33; }
-:root[data-timer-theme="light"] .scramble-strip {
-  background: #fafafb;
-  color: #333;
-  border-bottom-color: #e0e0e3;
-}
-:root[data-timer-theme="light"] .timer-display { color: #1d1d1f; text-shadow: none; }:root[data-timer-theme="light"] .stats-panel {
-  border-right-color: #e0e0e3;
-}
-:root[data-timer-theme="light"] .history-row { border-bottom-color: #eee; }
-:root[data-timer-theme="light"] .history-row:hover { background: #f0f0f3; }
-:root[data-timer-theme="light"] .history-cols-head { background: #f5f5f7; color: #666; border-bottom-color: #e6e6e9; }
-:root[data-timer-theme="light"] .history-cols-head .hao-head { color: #3a7bb5; }
-:root[data-timer-theme="light"] .history-row .hao { color: #555; }
 
 /* --- Live cube state mirror (smart cube): default desktop placement.
    Fixed to the bottom-right corner. Pointer-events disabled so it never
@@ -1287,7 +1065,7 @@
   bottom: 12px;
   z-index: 50;
   padding: 4px;
-  background: rgba(0, 0, 0, 0.35);
+  background: color-mix(in srgb, var(--foreground) 35%, transparent);
   border-radius: 6px;
   pointer-events: none;
 }
@@ -1307,16 +1085,9 @@
 
 /* --- Mobile (touch + narrow) --- */
 @media (max-width: 540px) {
-  .timer-topbar { padding: 4px 6px; flex-wrap: wrap; gap: 4px; }
-  .timer-topbar .left, .timer-topbar .right { gap: 4px; flex-wrap: wrap; }
-  .timer-topbar .timer-topbar-select { max-width: 110px; padding: 8px 10px; }
-  /* iOS HIG / Material recommend ≥44px tap targets. */
-  .timer-topbar button.tb-btn { min-width: 40px; min-height: 36px; padding: 8px 10px; }
   .scramble-strip { padding: 10px 12px; font-size: 14px; }
   .scramble-strip.compact { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .timer-display { font-size: clamp(48px, 18vw, 120px) !important; }
-  .timer-cube-preview svg { max-height: 14dvh; }
-  .timer-bottom { max-height: 50dvh; }
 
   /* Modals fill the screen on small phones. */
   .timer-modal {
@@ -1331,9 +1102,6 @@
   /* Wider tap target on history rows. */
   .history-row { padding: 10px 14px; }
 }
-
-/* Cube preview Eye toggle: visible on every breakpoint. */
-.cube-preview-toggle { display: inline-flex; min-height: 28px; }
 
 @media (max-width: 480px) {
   /* Live smart-cube state: hide entirely on phones. The user can still see
@@ -1359,35 +1127,35 @@
 .bluetooth-modal { max-width: 520px; }
 .bluetooth-modal h3 { margin: 0 0 8px; font-size: 14px; }
 .bluetooth-modal .bt-warn {
-  background: rgba(255, 138, 101, 0.08);
-  border: 1px solid rgba(255, 138, 101, 0.3);
+  background: color-mix(in srgb, var(--signal-warning) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal-warning) 30%, transparent);
   border-radius: 6px;
   padding: 12px 14px;
 }
-.bluetooth-modal .bt-warn-title { color: #ffb74d; }
+.bluetooth-modal .bt-warn-title { color: var(--signal-warning); }
 .bluetooth-modal .bt-tip {
-  background: rgba(91, 157, 217, 0.06);
-  border: 1px solid rgba(91, 157, 217, 0.2);
+  background: color-mix(in srgb, var(--signal-info) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal-info) 20%, transparent);
   border-radius: 6px;
   padding: 10px 14px;
   font-size: 12px;
-  color: #aaa;
+  color: var(--muted-foreground);
 }
 .bluetooth-modal .bt-status { display: grid; grid-template-columns: 100px 1fr; gap: 8px 12px; align-items: center; }
 .bluetooth-modal .bt-row { display: contents; }
-.bluetooth-modal .bt-label { color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
-.bluetooth-modal .bt-value { color: #ededed; font-size: 13px; }
+.bluetooth-modal .bt-label { color: var(--muted-foreground); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+.bluetooth-modal .bt-value { color: var(--foreground); font-size: 13px; }
 .bluetooth-modal .bt-value.mono { font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace; }
-.bluetooth-modal .bt-value.ok { color: #66bb6a; }
-.bluetooth-modal .bt-value.unsolved { color: #ef5350; }
+.bluetooth-modal .bt-value.ok { color: var(--signal-success); }
+.bluetooth-modal .bt-value.unsolved { color: var(--destructive); }
 .bluetooth-modal .bt-install-btn,
 .bluetooth-modal .bt-connect-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #2a3d4d;
-  border: 1px solid #4d7a99;
-  color: #cde;
+  background: color-mix(in srgb, var(--signal-info) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal-info) 45%, transparent);
+  color: var(--foreground);
   padding: 8px 14px;
   border-radius: 6px;
   cursor: pointer;
@@ -1395,25 +1163,15 @@
   text-decoration: none;
 }
 .bluetooth-modal .bt-install-btn:hover,
-.bluetooth-modal .bt-connect-btn:hover { background: #345169; }
-.trainer-subset-btn {
-  background: #1a1a1d;
-  color: #cde;
-  border: 1px solid #2a3d4d;
-  border-radius: 999px;
-  padding: 4px 14px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.trainer-subset-btn:hover {
-  background: #25252a;
-  border-color: #4d7a99;
-}
+.bluetooth-modal .bt-connect-btn:hover { background: color-mix(in srgb, var(--signal-info) 22%, transparent); }
+/* 外观整体由 shell.css 的 .trainer-subset-btn 定(同特异性、加载在后);这里只补它没设的过渡
+   和 hover 描边。 */
+.trainer-subset-btn { transition: background 0.15s, border-color 0.15s; }
+.trainer-subset-btn:hover { border-color: color-mix(in srgb, var(--signal-info) 45%, transparent); }
 
 .trainer-subset-modal { max-width: 720px; }
 .trainer-subset-modal .trainer-subset-count {
-  color: #888;
+  color: var(--muted-foreground);
   font-size: 13px;
   font-weight: 400;
   margin-left: 6px;
@@ -1425,17 +1183,17 @@
   margin-bottom: 12px;
 }
 .trainer-subset-modal .trainer-subset-toolbar .trainer-subset-toolbar-btn {
-  background: #25252a;
-  color: #ededed;
-  border: 1px solid #444;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
   border-radius: 6px;
   padding: 5px 12px;
   font-size: 12px;
   cursor: pointer;
 }
 .trainer-subset-modal .trainer-subset-toolbar .trainer-subset-toolbar-btn:hover {
-  background: #2f2f35;
-  border-color: #666;
+  background: var(--shell-hover);
+  border-color: var(--border-strong);
 }
 .trainer-subset-modal .trainer-subset-body {
   max-height: 60dvh;
@@ -1446,7 +1204,7 @@
 .trainer-case-group { margin-bottom: 14px; }
 .trainer-case-group-title {
   font-size: 12px;
-  color: #aaa;
+  color: var(--muted-foreground);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin: 0 0 6px;
@@ -1460,12 +1218,12 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--background);
+  border: 1px solid var(--shell-divider);
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 12px;
-  color: #ccc;
+  color: var(--foreground);
   cursor: pointer;
   user-select: none;
 }
@@ -1474,13 +1232,13 @@
   cursor: pointer;
 }
 .trainer-case-chip:hover {
-  background: #1a1a1d;
-  border-color: #444;
+  background: var(--popover);
+  border-color: var(--border-strong);
 }
 .trainer-case-chip.checked {
-  background: #1f3d2a;
-  border-color: #4d995a;
-  color: #cdebd0;
+  background: color-mix(in srgb, var(--signal-success) 14%, transparent);
+  border-color: color-mix(in srgb, var(--signal-success) 45%, transparent);
+  color: var(--signal-success);
 }
 .trainer-case-chip-label {
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
@@ -1499,36 +1257,33 @@
   justify-content: space-between;
   align-items: baseline;
   padding: 4px 0;
-  border-bottom: 1px dashed #1f1f23;
+  border-bottom: 1px dashed var(--shell-divider);
   font-size: 12px;
 }
-.stats-modal-lbl { color: #888; }
-.stats-modal-val { color: #ededed; font-weight: 600; }
+.stats-modal-lbl { color: var(--muted-foreground); }
+.stats-modal-val { color: var(--foreground); font-weight: 600; }
 .stats-modal-pb {
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   display: flex;
   flex-direction: column;
   gap: 6px;
   font-size: 14px;
-  color: #ffd54f;
+  color: var(--signal-warning);
 }
 .stats-modal-pb .scramble-text {
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--background);
+  border: 1px solid var(--shell-divider);
   border-radius: 4px;
   padding: 6px 8px;
-  color: #ddd;
+  color: var(--foreground);
   font-size: 12px;
 }
-:root[data-timer-theme="light"] .stats-modal-row { border-bottom-color: #eee; }
-:root[data-timer-theme="light"] .stats-modal-lbl { color: #777; }
-:root[data-timer-theme="light"] .stats-modal-val { color: #1d1d1f; }
 
 /* --- Manual entry / Solver / Bulk shared inputs --- */
 .manual-label {
   display: block;
   font-size: 12px;
-  color: #aaa;
+  color: var(--muted-foreground);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-bottom: 4px;
@@ -1547,10 +1302,10 @@
   width: 100%;
   margin-top: 4px;
   padding: 8px 10px;
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--background);
+  border: 1px solid var(--shell-divider);
   border-radius: 4px;
-  color: #ededed;
+  color: var(--foreground);
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
   font-size: 13px;
   resize: vertical;
@@ -1559,10 +1314,10 @@
 .manual-input:focus,
 .manual-textarea:focus {
   outline: none;
-  border-color: #4d7a99;
+  border-color: color-mix(in srgb, var(--signal-info) 45%, transparent);
 }
 .manual-err {
-  color: #ef9a9a;
+  color: var(--destructive);
   font-size: 12px;
   margin-top: 6px;
 }
@@ -1576,10 +1331,10 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #ccc;
+  color: var(--foreground);
   cursor: pointer;
 }
-.manual-radio.disabled { color: #666; cursor: not-allowed; }
+.manual-radio.disabled { color: var(--faint-foreground); cursor: not-allowed; }
 .manual-radio .manual-radio-input { cursor: inherit; }
 
 .manual-entry-modal { max-width: 480px; }
@@ -1594,12 +1349,12 @@
 .solver-input { font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace; }
 .solver-loading {
   text-align: center;
-  color: #888;
+  color: var(--muted-foreground);
   font-size: 12px;
   font-style: italic;
 }
 .solver-rev { margin-top: 10px; }
-.solver-rev-lbl { color: #888; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.solver-rev-lbl { color: var(--muted-foreground); font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
 
 /* --- Bulk scramble --- */
 .bulk-scramble-modal { max-width: 640px; }
@@ -1611,30 +1366,30 @@
 }
 .bulk-controls .bulk-controls-select,
 .bulk-controls input[type="number"] {
-  background: #0e0e10;
-  color: #ededed;
-  border: 1px solid #2a2a2e;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--shell-divider);
   border-radius: 4px;
   padding: 6px 8px;
   font-size: 13px;
 }
 .bulk-controls input[type="number"] { width: 80px; }
 .bulk-controls .primary {
-  background: #2a3d4d;
-  border: 1px solid #4d7a99;
-  color: #cde;
+  background: color-mix(in srgb, var(--signal-info) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal-info) 45%, transparent);
+  color: var(--foreground);
   border-radius: 6px;
   padding: 7px 14px;
   font-size: 13px;
   cursor: pointer;
 }
-.bulk-controls .primary:hover { background: #345169; }
+.bulk-controls .primary:hover { background: color-mix(in srgb, var(--signal-info) 22%, transparent); }
 .bulk-controls .primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .bulk-list {
   max-height: 50dvh;
   overflow-y: auto;
-  background: #0e0e10;
-  border: 1px solid #2a2a2e;
+  background: var(--background);
+  border: 1px solid var(--shell-divider);
   border-radius: 4px;
   padding: 8px 10px;
   font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
@@ -1645,22 +1400,12 @@
   grid-template-columns: 36px 1fr;
   gap: 6px;
   padding: 3px 0;
-  border-bottom: 1px dashed #1f1f23;
+  border-bottom: 1px dashed var(--shell-divider);
   align-items: baseline;
 }
 .bulk-row:last-child { border-bottom: 0; }
-.bulk-idx { color: #777; text-align: right; }
-.bulk-scramble { color: #ddd; word-break: break-word; }
-
-:root[data-timer-theme="light"] .manual-input,
-:root[data-timer-theme="light"] .manual-textarea,
-:root[data-timer-theme="light"] .bulk-list,
-:root[data-timer-theme="light"] .bulk-controls .bulk-controls-select,
-:root[data-timer-theme="light"] .bulk-controls input[type="number"] {
-  background: #fff;
-  color: #1d1d1f;
-  border-color: #d0d0d4;
-}
+.bulk-idx { color: var(--faint-foreground); text-align: right; }
+.bulk-scramble { color: var(--foreground); word-break: break-word; }
 
 /* PB single in history list is marked by the "PB" badge only (no star / gold). */
 
@@ -1668,8 +1413,11 @@
 .print-only-header { display: none; }
 
 /* --- Print styles --- */
+/* 打印:白纸黑字,硬码 #fff/#000 是对的(纸张不跟主题)。选择器用的是 shell 重构后的类名
+   —— 旧的 .timer-root / .timer-topbar / .timer-center / .timer-bottom 那批已经不存在于 DOM,
+   留着只是静默失效的死规则。 */
 @media print {
-  .timer-root {
+  .timer-shell {
     background: #fff !important;
     color: #000 !important;
     overflow: visible !important;
@@ -1678,16 +1426,12 @@
     padding: 0 !important;
     user-select: text !important;
   }
-  .timer-topbar,
-  .timer-cube-preview,
-  .timer-cube-preview-wrap,
-  .timer-quick-actions,
+  .shell-topbar,
+  .shell-bottombar,
+  .shell-corner-net,
   .timer-stage-splits,
   .timer-hint,
-  .charts-panel,
-  .timer-heatmap-row,
   .case-stats-panel,
-  .trainer-subset-row,
   .timer-modal-overlay {
     display: none !important;
   }
@@ -1713,16 +1457,17 @@
     border-bottom: 1px solid #ccc !important;
     padding: 8px 16px !important;
   }
-  .timer-center {
+  /* 可见的打乱文字在 .scramble-text 里(shell.css 接管),不给它上色打印会是屏幕上的浅灰。 */
+  .scramble-text { color: #000 !important; }
+  .timing-surface {
     display: block !important;
     padding: 10px 16px;
   }
   .timer-display {
     color: #000 !important;
-    text-shadow: none !important;
     font-size: 48px !important;
   }
-  .timer-bottom {
+  .shell-panel {
     display: block !important;
     grid-template-columns: none !important;
     grid-template-rows: none !important;

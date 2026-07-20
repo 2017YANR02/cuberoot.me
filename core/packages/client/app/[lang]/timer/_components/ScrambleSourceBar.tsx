@@ -9,7 +9,7 @@
  * 保证在其中操作不会触发按压计时(见 lib/timer-ignore-target)。
  *
  * 复用 .settings-row* / .wca-src-* 原语(样式来自 WcaSourceConfig 顺带 import 的
- * wca-source.css);.scramble-src-panel 标记保留,供 shell.css 给内部控件补 token 取色。
+ * wca-source.css),那些原语本身已经全走站点 token,这里不需要再补取色。
  */
 
 import { updateSettings, useSettings } from '../_lib/settings';
@@ -33,7 +33,7 @@ export default function ScrambleSourceBar({ event, isZh }: Props) {
   // 各来源的细项配置。random 且无「按步数」时无细项 → 整条为空,靠 CSS :empty 收起。
 
   return (
-    <div className="scramble-src-bar scramble-src-panel surface-chrome" data-no-timer>
+    <div className="scramble-src-bar surface-chrome" data-no-timer>
       {src === 'wca' && (
         <WcaSourceConfig isZh={isZh} event={event} settings={s} updateSettings={updateSettings} />
       )}
