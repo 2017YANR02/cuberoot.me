@@ -200,7 +200,12 @@
 /* mode="panel": a narrow sidebar mount. Same controls, stacked — nothing dropped. */
 .vc-studio-panel .vc-row { flex-direction: column; align-items: stretch; gap: 6px; }
 .vc-studio-panel .vc-label { min-width: 0; }
-.vc-studio-panel .vc-preview-wrap { position: static; padding: 12px; max-height: none; }
+/* 面板模式靠左上:侧栏比图窄不了多少,居中会在图左侧留一条对不齐的空带,而面板里
+   其它行都是左对齐的。独立 studio 页保持居中(那是整页的主视觉,不受此影响)。 */
+.vc-studio-panel .vc-preview-wrap {
+  position: static; padding: 12px; max-height: none;
+  justify-content: flex-start; align-items: flex-start;
+}
 .vc-studio-panel .vc-face-grid { grid-template-columns: repeat(3, 1fr); }
 .vc-studio-panel .vc-api-doc { margin-top: 16px; padding: 10px 12px; }
 .vc-studio-panel .vc-api-example { white-space: pre-wrap; }
